@@ -175,8 +175,7 @@ public class GameActions : MonoBehaviour
 		if( CozmoBusyPanel.instance != null ) 
 		{
 			string desc = null;
-			Description( "pick-up\n", selectedObject, ref desc );
-			CozmoBusyPanel.instance.SetDescription( desc );
+			CozmoBusyPanel.instance.SetDescription( "pick-up\n", selectedObject, ref desc );
 		}
 	}
 	
@@ -193,8 +192,7 @@ public class GameActions : MonoBehaviour
 		if( CozmoBusyPanel.instance != null ) 
 		{
 			string desc = null;
-			Description( "drop\n", selectedObject, ref desc );
-			CozmoBusyPanel.instance.SetDescription( desc );
+			CozmoBusyPanel.instance.SetDescription( "drop\n", selectedObject, ref desc );
 		}
 	}
 	
@@ -211,9 +209,8 @@ public class GameActions : MonoBehaviour
 		if( CozmoBusyPanel.instance != null ) 
 		{
 			string desc = null;
-			Description( "stack\n", robot.carryingObject, ref desc, string.Empty );
-			Description( "\n on top of ", selectedObject, ref desc );
-			CozmoBusyPanel.instance.SetDescription( desc );
+			CozmoBusyPanel.instance.SetDescription( "stack\n", robot.carryingObject, ref desc, string.Empty );
+			CozmoBusyPanel.instance.SetDescription( "\n on top of ", selectedObject, ref desc );
 		}
 	}
 	
@@ -230,8 +227,7 @@ public class GameActions : MonoBehaviour
 		if( CozmoBusyPanel.instance != null ) 
 		{
 			string desc = null;
-			Description( "roll\n", selectedObject, ref desc );
-			CozmoBusyPanel.instance.SetDescription( desc );
+			CozmoBusyPanel.instance.SetDescription( "roll\n", selectedObject, ref desc );
 		}
 	}
 	
@@ -274,17 +270,5 @@ public class GameActions : MonoBehaviour
 
 		robot.searching = true;
 		//Debug.Log( "On Press" );
-	}
-
-	protected void Description( string verb, ObservedObject selectedObject, ref string description, string period = "." )
-	{
-		if( selectedObject == null || CozmoPalette.instance == null ) return;
-
-		if( description == null || description == string.Empty ) description = "Cozmo is attempting to ";
-
-		string noun = CozmoPalette.instance.GetNameForObjectType( selectedObject.cubeType );
-		string article = "AEIOUaeiou".Contains( noun[0].ToString() ) ? "an " : "a ";
-
-		description += verb + article + noun + period;
 	}
 }

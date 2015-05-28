@@ -204,4 +204,66 @@ public class BuildInstructionsCube : MonoBehaviour {
 		lastBaseColor = baseColor;
 	}
 
+	public bool SatisfiedByObject(ObservedObject obj, float flatFudge, float verticalFudge, float angleFudge, bool allowCardinalAngleOffsets=true) {
+
+		if(!MatchesObject(obj)) return false;
+		if(!MatchesPosition(obj.WorldPosition, flatFudge, verticalFudge)) return false;
+		if(!MatchesRotation(obj.Rotation, angleFudge, allowCardinalAngleOffsets)) return false;
+
+		return true;
+	}
+
+	public bool PredictSatisfaction(ObservedObject obj, Vector3 predictedPos, Quaternion predictedRot, float flatFudge, float verticalFudge, float angleFudge, bool allowCardinalAngleOffsets=true) {
+		
+		if(!MatchesObject(obj)) return false;
+		if(!MatchesPosition(predictedPos, flatFudge, verticalFudge)) return false;
+		if(!MatchesRotation(predictedRot, angleFudge, allowCardinalAngleOffsets)) return false;
+		
+		return true;
+	}
+
+	public bool MatchesObject(ObservedObject obj, bool ignoreColor=true) {
+		if(obj == null) return false;
+		if(obj.cubeType != cubeType) return false;
+		if(!ignoreColor && obj.isActive) {
+			ActiveBlock activeBlock = obj as ActiveBlock;
+			if(activeBlock.mode != activeBlockMode) return false;
+		}
+
+		return true;
+	}
+	
+
+	public bool MatchesPosition(Vector3 actualPos, float flatFudge, float verticalFudge) {
+	
+		Vector3 idealPos = (CozmoUtil.Vector3UnityToCozmoSpace(transform.position) / Size) * CozmoUtil.BLOCK_LENGTH_MM;
+		
+		Vector3 error = actualPos - idealPos;
+		
+		if(Mathf.Abs(error.z) > (verticalFudge * CozmoUtil.BLOCK_LENGTH_MM)) return false;
+		if(Mathf.Abs(((Vector2)error).magnitude) > (flatFudge * CozmoUtil.BLOCK_LENGTH_MM)) return false;
+		
+		return true;
+	}
+
+	public bool MatchesRotation(Quaternion actualRot, float angleFudge, bool allowCardinalAngleOffsets) {
+		//dmd todo: try to care about rotation
+
+		//Vector3 idealFacing = CozmoUtil.Vector3UnityToCozmoSpace(transform.forward);
+		//float idealHeading = MathUtil.SignedVectorAngle(Vector2.right, (Vector2)idealFacing) * Mathf.Deg2Rad;
+		//Vector3 actualFacing = obj.Forward;
+
+		return true;
+	}
+
+	public Vector3 GetCozmoSpacePose(out float facing_rad) {
+		facing_rad = 0f;
+
+		Vector3 idealPos = (CozmoUtil.Vector3UnityToCozmoSpace(transform.position) / Size) * CozmoUtil.BLOCK_LENGTH_MM;
+		Vector3 idealFacing = CozmoUtil.Vector3UnityToCozmoSpace(transform.forward);
+		facing_rad = MathUtil.SignedVectorAngle(Vector2.right, (Vector2)idealFacing, Vector3.forward) * Mathf.Deg2Rad;
+
+		return idealPos;
+	}
+
 }

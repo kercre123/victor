@@ -57,5 +57,4 @@ public class CozmoPalette : MonoBehaviour {
 		if(index < 0 || index > objectSymbolInfos.Length - 1) return "Unknown Object";
 		return objectSymbolInfos[index].Name;
 	}
-
 }
