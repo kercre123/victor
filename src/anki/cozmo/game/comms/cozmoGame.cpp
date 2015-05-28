@@ -16,7 +16,7 @@
 #include "anki/cozmo/basestation/soundManager.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
 
-#include "anki/common/basestation/utils/logging/logging.h"
+#include "anki/util/logging/logging.h"
 #include "anki/common/basestation/math/rect_impl.h"
 #include "anki/common/basestation/math/quad_impl.h"
 
@@ -518,7 +518,6 @@ namespace Cozmo {
       const u32 numTotalBytes = nrows*ncols;
 
       G2U::ImageChunk m;
-      const int G2U_IMAGE_CHUNK_SIZE = m.data.size();
       
       // TODO: pass this in so it corresponds to actual frame capture time instead of send time
       m.frameTimeStamp = img.GetTimestamp();
