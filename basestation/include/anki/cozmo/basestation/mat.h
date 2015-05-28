@@ -70,8 +70,8 @@ namespace Anki {
       // (so robot doesn't drive off) or some kind of 3D obstacle built into the
       // mat.
       // Note these quads are _added_ to whatever is in the given vector.
-      virtual void GetUnsafeRegions(std::vector<Quad2f>& unsafeRegions, const Pose3d& atPose, const f32 padding_mm) const;
-      void GetUnsafeRegions(std::vector<Quad2f>& unsafeRegions, const f32 padding_mm) const; // at current pose
+      virtual void GetUnsafeRegions(std::vector<std::pair<Quad2f,ObjectID> >& unsafeRegions, const Pose3d& atPose, const f32 padding_mm) const;
+      void GetUnsafeRegions(std::vector<std::pair<Quad2f,ObjectID> >& unsafeRegions, const f32 padding_mm) const; // at current pose
       
       
     protected:
@@ -98,7 +98,7 @@ namespace Anki {
     }; // class MatPiece
 
     
-    inline void MatPiece::GetUnsafeRegions(std::vector<Quad2f>& unsafeRegions, const f32 padding_mm) const {
+    inline void MatPiece::GetUnsafeRegions(std::vector<std::pair<Quad2f,ObjectID> >& unsafeRegions, const f32 padding_mm) const {
       GetUnsafeRegions(unsafeRegions, GetPose(), padding_mm);
     }
     

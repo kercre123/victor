@@ -169,6 +169,8 @@ namespace Anki {
     {
       _localizedToID.UnSet();
       _localizedToFixedMat = false;
+
+      _blockWorld.ClearAllExistingObjects();
       
       // Add a new pose origin to use until the robot gets localized again
       _poseOrigins.emplace_back();
@@ -184,7 +186,8 @@ namespace Anki {
       _driveCenterPose.SetParent(_worldOrigin);
       
       _poseHistory->Clear();
-      ++_frameId;
+      //++_frameId;
+      
     }
 
     Result Robot::UpdateFullRobotState(const MessageRobotState& msg)
@@ -1755,7 +1758,7 @@ namespace Anki {
       if(object == nullptr) {
         PRINT_NAMED_ERROR("Robot.SetCarryingObject",
                           "Object %d no longer exists in the world. Can't set it as robot's carried object.\n",
-                          carryObjectID.GetValue(), GetID());
+                          carryObjectID.GetValue());
       } else {
         ActionableObject* carriedObject = dynamic_cast<ActionableObject*>(object);
         if(carriedObject == nullptr) {

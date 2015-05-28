@@ -83,7 +83,7 @@ namespace Anki
 
   template<typename Type> s32 ThreadSafeQueue<Type>::Size_unsafe() const
   {
-    return buffer.size();
+    return static_cast<s32>(buffer.size());
   } // template<typename Type> bool ThreadSafeQueue::Size_unsafe()
   
   template<typename Type> std::queue<Type>& ThreadSafeQueue<Type>::get_buffer()

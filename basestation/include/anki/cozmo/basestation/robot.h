@@ -482,6 +482,9 @@ namespace Anki {
                              const MakeRelativeMode makeRelative,
                              const Point2f& relativeToPoint);
       
+      // Shorthand for turning off all lights on an object
+      Result TurnOffObjectLights(const ObjectID& objectID);
+      
       // =========  Other State  ============
       f32 GetBatteryVoltage() const { return _battVoltage; }
       
@@ -819,6 +822,10 @@ namespace Anki {
       return _isAnimating;
     }
     
+    inline Result Robot::TurnOffObjectLights(const ObjectID& objectID) {
+      return SetObjectLights(objectID, WhichBlockLEDs::ALL, 0, 0, 10000, 10000, 0, 0,
+                             false, MakeRelativeMode::RELATIVE_LED_MODE_OFF, {0.f,0.f});
+    }
     
     
   } // namespace Cozmo

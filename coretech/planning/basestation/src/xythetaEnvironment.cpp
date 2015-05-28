@@ -649,7 +649,7 @@ FastPolygon xythetaEnvironment::ExpandCSpace(const Poly2f& obstacle,
   float startingAngle = obstacle.GetEdgeAngle(0);
 
   // compute the starting point for each polygon
-  size_t obstacleStart = 0;
+  //size_t obstacleStart = 0;
   size_t robotStart = 0;
 
   size_t robotSize = robot.size();
@@ -1047,7 +1047,7 @@ float xythetaEnvironment::GetDistanceBetween(const State_c& start, const State_c
 
 bool xythetaEnvironment::ReadEnvironment(FILE* fEnv)
 {
-  float x0,y0,x1,y1,len;
+  //float x0,y0,x1,y1,len;
 
   assert(false);
 
@@ -1088,7 +1088,7 @@ void xythetaEnvironment::AppendToPath(xythetaPlan& plan, Path& path) const
     // printf("(%d) %s\n", curr.theta, actionTypes_[actionID].GetName().c_str());
 
     const MotionPrimitive* prim = &allMotionPrimitives_[curr.theta][actionID];
-    u8 pathSegmentOffset = prim->AddSegmentsToPath(State2State_c(curr), path);
+    /*u8 pathSegmentOffset =*/ prim->AddSegmentsToPath(State2State_c(curr), path);
 
     curr.x += prim->endStateOffset.x;
     curr.y += prim->endStateOffset.y;

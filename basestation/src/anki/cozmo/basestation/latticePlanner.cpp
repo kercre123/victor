@@ -120,7 +120,7 @@ void LatticePlannerImpl::ImportBlockworldObstacles(const bool isReplanning, cons
   if(!isReplanning ||  // if not replanning, this must be a fresh, new plan, so we always should get obstacles
      didObjecsChange)
   {
-    std::vector<Quad2f> boundingBoxes;
+    std::vector<std::pair<Quad2f,ObjectID> > boundingBoxes;
 
     robot_->GetBlockWorld().GetObstacles(boundingBoxes, obstaclePadding);
     
@@ -147,9 +147,9 @@ void LatticePlannerImpl::ImportBlockworldObstacles(const bool isReplanning, cons
       for(auto boundingQuad : boundingBoxes) {
 
         Poly2f boundingPoly;
-        boundingPoly.ImportQuad2d(boundingQuad);
+        boundingPoly.ImportQuad2d(boundingQuad.first);
 
-        const FastPolygon& expandedPoly =
+        /*const FastPolygon& expandedPoly =*/
           env_.AddObstacleWithExpansion(boundingPoly, robotPoly, theta, DEFAULT_OBSTACLE_PENALTY);
 
         // only draw the angle we are currently at
@@ -166,7 +166,7 @@ void LatticePlannerImpl::ImportBlockworldObstacles(const bool isReplanning, cons
           // padding
           VizManager::getInstance()->DrawQuad (
             isReplanning ? VIZ_QUAD_PLANNER_OBSTACLE_REPLAN : VIZ_QUAD_PLANNER_OBSTACLE,
-            vizID++, boundingQuad, 0.1f, *vizColor );
+            vizID++, boundingQuad.first, 0.1f, *vizColor );
         }
         numAdded++;
       }
@@ -322,7 +322,7 @@ IPathPlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
   const float maxDistancetoFollowOldPlan_mm = 40.0;
 
   if(forceReplanFromScratch ||
-     !impl_->env_.PlanIsSafe(impl_->totalPlan_, maxDistancetoFollowOldPlan_mm, planIdx, lastSafeState, validOldPlan)) {
+     !impl_->env_.PlanIsSafe(impl_->totalPlan_, maxDistancetoFollowOldPlan_mm, static_cast<int>(planIdx), lastSafeState, validOldPlan)) {
     // at this point, we know the plan isn't completely
     // safe. lastSafeState will be set to the furthest state along the
     // plan (after planIdx) which is safe. validOldPlan will contain a

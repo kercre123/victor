@@ -16,7 +16,7 @@ import ankibuild.xcode
 def unpack_libraries():
 	saved_cwd = ankibuild.util.File.pwd()
 	ankibuild.util.File.cd(os.path.join(REPO_ROOT, 'tools', 'anki-util', 'libs', 'packaged'))
-	ankibuild.util.File.execute('./unpackLibs.sh')
+	ankibuild.util.File.execute(['./unpackLibs.sh'])
 	ankibuild.util.File.cd(saved_cwd)
 
 def parse_arguments():
@@ -84,7 +84,7 @@ def parse_arguments():
         action='store_const',
         const='debug',
         help='shortcut for --config Debug')
-    group.add_argument(
+    parser.add_argument(
         '-v',
         '--verbose',
         dest='verbose',
@@ -97,7 +97,10 @@ def parse_arguments():
     for configuration in configurations:
         if configuration.lower() == options.configuration:
             options.configuration = configuration
-    
+            break
+    else:
+      options.configuration = configurations[0]
+
     if options.platforms == 'all':
         options.platforms = 'mac+ios'
     options.platforms = options.platforms.replace(' ', '').split('+')
@@ -138,6 +141,7 @@ class PlatformConfiguration(object):
     
     def generate(self):
         ankibuild.cmake.generate(self.project_dir, REPO_ROOT, self.platform)
+        ankibuild.util.File.mkdir_p(os.path.join(self.project_dir, 'Xcode', 'lib', options.configuration))
 
     def build(self):
         if not os.path.exists(self.project_path):
@@ -183,6 +187,7 @@ def wipe_all():
 if __name__ == '__main__':
     options = parse_arguments()
     ankibuild.util.ECHO_ALL = options.verbose
+    ankibuild.xcode.RAW_OUTPUT = options.verbose
     
     if options.command == 'wipeall!':
     	wipe_all()

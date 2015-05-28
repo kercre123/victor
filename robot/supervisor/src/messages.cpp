@@ -230,7 +230,7 @@ namespace Anki {
         f32 currentMatX       = msg.xPosition;
         f32 currentMatY       = msg.yPosition;
         Radians currentMatHeading = msg.headingAngle;
-        Result res = Localization::UpdatePoseWithKeyframe(msg.pose_frame_id, msg.timestamp, currentMatX, currentMatY, currentMatHeading.ToFloat());
+        /*Result res =*/ Localization::UpdatePoseWithKeyframe(msg.pose_frame_id, msg.timestamp, currentMatX, currentMatY, currentMatHeading.ToFloat());
         //Localization::SetCurrentMatPose(currentMatX, currentMatY, currentMatHeading);
         //Localization::SetPoseFrameId(msg.pose_frame_id);
 
@@ -831,7 +831,7 @@ namespace Anki {
       // A little hacky, but this is technically not a message that supervisor level code needs to worry about
       // since it comes from the torpedo rather than basestation.
       void ProcessClientConnectionStatusMessage(const ClientConnectionStatus& msg) {
-        static bool firstConnectionUpdateSinceBoot = true;
+        //static bool firstConnectionUpdateSinceBoot = true;
 
         HAL::RadioUpdateState(msg.wifiState, msg.bluetoothState);
 /*
@@ -1041,7 +1041,7 @@ namespace Anki {
         cv::vector<u8> compressedBuffer;
         cv::imencode(".jpg",  cvImg, compressedBuffer, compressionParams);
         
-        const u32 numTotalBytes = compressedBuffer.size();
+        const u32 numTotalBytes = static_cast<u32>(compressedBuffer.size());
 
         //PRINT("Sending frame with capture time = %d at time = %d\n", captureTime, HAL::GetTimeStamp());
         
