@@ -25,6 +25,7 @@ public class GameActions : MonoBehaviour
 	protected ActionButton[] buttons { get { return ActionPanel.instance != null ? ActionPanel.instance.actionButtons : new ActionButton[0]; } }
 
 	public float actionButtonnDelay { get { return actionButtonSound != null ? actionButtonSound.length: 0f; } }
+	public float activeBlockModeDelay { get; private set; } // longest block mode sfx
 
 	public static GameActions instance = null;
 
@@ -37,6 +38,12 @@ public class GameActions : MonoBehaviour
 	{
 		//Debug.Log(gameObject.name + " GameActions OnEnable instance = this;");
 		instance = this;
+
+		activeBlockModeDelay = 0f;
+		for( int i = 0; i < activeBlockModeSounds.Length; ++i )
+		{
+			if( activeBlockModeSounds[i] != null && activeBlockModeDelay < activeBlockModeSounds[i].length ) activeBlockModeDelay = activeBlockModeSounds[i].length;			
+		}
 	}
 
 	public virtual void OnDisable()

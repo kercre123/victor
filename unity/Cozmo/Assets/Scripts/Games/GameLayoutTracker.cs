@@ -925,8 +925,6 @@ public class GameLayoutTracker : MonoBehaviour {
 
 	List<ObservedObject> unplacedObjects = new List<ObservedObject>();
 	ObservedObject GetObservedObjectForNextLayoutBlock() {
-
-
 		BuildInstructionsCube layoutCube = currentLayout.blocks.Find ( x => !x.Validated );
 
 		if (layoutCube == null) return null;
@@ -999,11 +997,11 @@ public class GameLayoutTracker : MonoBehaviour {
 
 	IEnumerator CycleLightCubeModes( ActiveBlock activeBlock, ActiveBlock.Mode mode )
 	{
-		while( activeBlock != null && activeBlock.mode != mode )
+		while( activeBlock != null && activeBlock.mode != mode && GameActions.instance != null )
 		{
 			activeBlock.CycleMode();
 
-			yield return new WaitForSeconds(activeBlock.modeDelay > 0f ? activeBlock.modeDelay : 0.25f);
+			yield return new WaitForSeconds(GameActions.instance.activeBlockModeDelay > 0f ? GameActions.instance.activeBlockModeDelay : 0.25f);
 		}
 	}
 
