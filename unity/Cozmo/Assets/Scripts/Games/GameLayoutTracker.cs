@@ -1004,7 +1004,10 @@ public class GameLayoutTracker : MonoBehaviour {
 		BuildInstructionsCube layoutActiveCube = currentLayout.blocks.Find (x => !x.Validated && x.isActive);
 		if(layoutActiveCube == null) return;
 		if(layoutActiveCube.activeBlockMode == activeBlock.mode) return;
-
+		if(CozmoBusyPanel.instance != null) {
+			string desc = null;
+			CozmoBusyPanel.instance.SetDescription("change mode of\n", activeBlock, ref desc);
+		}
 		robot.localBusyTimer = (cycleTime * cycleCount) + cycleDelayTime;
 		StartCoroutine(CycleLightCubeModes(activeBlock, layoutActiveCube.activeBlockMode));
 	}

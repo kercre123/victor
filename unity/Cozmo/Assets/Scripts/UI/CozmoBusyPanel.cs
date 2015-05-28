@@ -63,4 +63,17 @@ public class CozmoBusyPanel : MonoBehaviour {
 	public void SetDescription(string desc) {
 		text_actionDescription.text = desc;
 	}
+
+	public void SetDescription(string verb, ObservedObject selectedObject, ref string description, string period = ".") {
+		if(selectedObject == null || CozmoPalette.instance == null) return;
+		
+		if(description == null || description == string.Empty) description = "Cozmo is attempting to ";
+		
+		string noun = CozmoPalette.instance.GetNameForObjectType(selectedObject.cubeType);
+		string article = "AEIOUaeiou".Contains(noun[0].ToString()) ? "an " : "a ";
+		
+		description += verb + article + noun + period;
+
+		if(period == ".") SetDescription(description);
+	}
 }
