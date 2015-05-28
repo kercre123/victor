@@ -634,9 +634,6 @@ namespace Cozmo {
     // robots in the world.
     _robotMgr.UpdateAllRobots();
     
-    // Send messages
-    _robotComms.Update();
-    
     return RESULT_OK;
   } // UpdateInternal()
   
