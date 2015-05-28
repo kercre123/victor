@@ -11,7 +11,7 @@
  *
  **/
 
-#include "anki/common/basestation/utils/logging/logging.h"
+#include "anki/util/logging/logging.h"
 #include "anki/common/basestation/utils/helpers/printByteArray.h"
 #include "anki/common/basestation/utils/timer.h"
 
@@ -338,11 +338,12 @@ namespace Cozmo {
               break;
             }
             
-            int n = hPtr - c.recvBuf;
+            std::size_t n = hPtr - c.recvBuf;
             if (n != 0) {
               // Header was not found at the beginning.
               // Delete everything up until the header.
-              PRINT_NAMED_WARNING("MultiClientComms.PartialMsgRecvd", "Header not found where expected. Dropping preceding %d bytes\n", n);
+              PRINT_STREAM_WARNING("MultiClientComms.PartialMsgRecvd",
+                                   "Header not found where expected. Dropping preceding " << n << " bytes");
               c.recvDataSize -= n;
               memcpy(c.recvBuf, hPtr, c.recvDataSize);
             }
@@ -571,7 +572,7 @@ namespace Cozmo {
   {
     std::map<int, PacketQueue_t>::iterator it = sendMsgPackets_.find(devID);
     if (it != sendMsgPackets_.end()) {
-      return it->second.size();
+      return static_cast<u32>(it->second.size());
     }
     return 0;
   }

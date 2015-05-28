@@ -111,8 +111,8 @@ namespace Anki {
       // For x = speed in mm/s,
       // power = 5E-7x^3 - 0.0001x^2 + 0.0082x + 0.0149
       f32 x = ABS(desired_speed_mmps);
-      f32 x2 = x*x;
-      f32 x3 = x*x2;
+      //f32 x2 = x*x;
+      //f32 x3 = x*x2;
       
 #     ifdef SIMULATOR
       f32 out_ol = x * 0.004;
@@ -144,8 +144,8 @@ namespace Anki {
       // For x = speed in mm/s,
       // power = 4E-7x^3 - 0.00008x^2 + 0.0072x + 0.0203
       f32 x = ABS(desired_speed_mmps);
-      f32 x2 = x*x;
-      f32 x3 = x*x2;
+      //f32 x2 = x*x;
+      //f32 x3 = x*x2;
       
 #     ifdef SIMULATOR
       f32 out_ol = x * 0.004;

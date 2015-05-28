@@ -20,6 +20,10 @@ const s32 lbpcascade_frontalface_origWinWidth = 24;
 #define lbpcascade_frontalface_subsets_length 1112
 #define lbpcascade_frontalface_featureRectangles_length 136
 
+#ifdef __llvm__
+#pragma GCC diagnostic ignored "-Wmissing-braces"
+#endif
+
 #if defined(_MSC_VER)
 __declspec(align(MEMORY_ALIGNMENT_RAW))
 #endif
