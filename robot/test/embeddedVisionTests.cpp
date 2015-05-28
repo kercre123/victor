@@ -4221,6 +4221,8 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark)
   const s32 maxConnectedComponentSegments = 39000; // 322*240/2 = 38640
   //const s32 maxConnectedComponentSegments = 70000;
 
+  const s32 minLaplacianPeakRatio = 5;
+
   const s32 quadRefinementIterations = 5;
   const s32 numRefinementSamples = 100;
   const f32 quadRefinementMaxCornerChange = 5.f;
@@ -4263,48 +4265,16 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark)
     InitBenchmarking();
 
     // note: arglist is screwed up right now
-    const Result result_binomial = DetectFiducialMarkers(
-      image,
-      markers,
-      homographies,
-      false,
-      scaleImage_numPyramidLevels+1, scaleImage_thresholdMultiplier,
-      component1d_minComponentWidth, component1d_maxSkipDistance,
-      component_minimumNumPixels, component_maximumNumPixels,
-      component_sparseMultiplyThreshold, component_solidMultiplyThreshold,
-      component_minHollowRatio,
-      quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge,
-      decode_minContrastRatio,
-      maxConnectedComponentSegments,
-      maxExtractedQuads,
-      quadRefinementIterations,
-      numRefinementSamples,
-      quadRefinementMaxCornerChange,
-      quadRefinementMinCornerChange,
-      false,
-      scratchCcm,
-      scratchOnchip,
-      scratchOffchip);
-
-    ASSERT_TRUE(result_binomial == RESULT_OK);
-
-    benchmarkElements_binomial[iRun] = ComputeBenchmarkResults(scratchOffchip);
-
-    //PrintBenchmarkResults(benchmarkElements_binomial[iRun], true, true);
-
-    InitBenchmarking();
-
-    // note: arglist is screwed up right now
     const Result result_integral = DetectFiducialMarkers(
       image,
       markers,
       homographies,
-      true,
       scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier,
       component1d_minComponentWidth, component1d_maxSkipDistance,
       component_minimumNumPixels, component_maximumNumPixels,
       component_sparseMultiplyThreshold, component_solidMultiplyThreshold,
       component_minHollowRatio,
+      minLaplacianPeakRatio,
       quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge,
       decode_minContrastRatio,
       maxConnectedComponentSegments,
@@ -4331,10 +4301,9 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark)
   printf("Integral image benchmarks:\n");
   ASSERT_TRUE(PrintPercentileBenchmark(benchmarkElements_integral, numRuns, elementPercentile, scratchOffchip) == RESULT_OK);
 
-  printf("Binomial benchmarks:\n");
-  ASSERT_TRUE(PrintPercentileBenchmark(benchmarkElements_binomial, numRuns, elementPercentile, scratchOffchip) == RESULT_OK);
+  //markers.Print();
 
-  const f32 minDifference = 1e-4f;
+  const f32 minDifference = 1.0f;
   Point<f32> groundTruth[4];
   groundTruth[0] = Point<f32>(22.2537f,22.2517f);
   groundTruth[1] = Point<f32>(22.2359f,56.4778f);
