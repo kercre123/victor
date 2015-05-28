@@ -78,9 +78,8 @@ namespace Cozmo {
   
   void CozmoGameImpl::ProcessBadTag_Message(U2G::Message::Tag tag)
   {
-    PRINT_NAMED_WARNING("CozmoGameImpl.ProcessBadTag",
-                        "Got unknown message with id %d.\n",
-                        tag);
+    PRINT_STREAM_WARNING("CozmoGameImpl.ProcessBadTag",
+                        "Got unknown message with id " << U2G::MessageTagToString(tag) << ".");
   }
   
   void CozmoGameImpl::Process_Ping(U2G::Ping const& msg)
@@ -93,9 +92,8 @@ namespace Cozmo {
     _lastPingCounterFromUI = msg.counter;
     
     if(counterDiff > 1) {
-      PRINT_NAMED_WARNING("CozmoGameImpl.Update",
-                          "Counter difference > 1 betweeen last two pings from UI. (Difference was %d.)\n",
-                          counterDiff);
+      PRINT_STREAM_WARNING("CozmoGameImpl.Update",
+                          "Counter difference > 1 betweeen last two pings from UI. (Difference was " << counterDiff << ".)\n");
       
       // TODO: Take action if we've dropped pings?
     }

@@ -83,12 +83,8 @@ namespace Anki {
       
       U2G::Message message;
       if (message.Unpack(packet.data, Comms::MsgPacket::MAX_SIZE) != packet.dataLen) {
-        PRINT_NAMED_ERROR("UiMessageHandler.MessageBufferWrongSize",
-                          "Buffer's size does not match expected size for this message ID. (Msg %s, expected %d, recvd %d)\n",
-                          U2G::MessageTagToString(message.GetTag()),
-                          message.Size(), // not all messages are fixed size, so indeterminate
-                          packet.dataLen
-                          );
+        PRINT_STREAM_ERROR("UiMessageHandler.MessageBufferWrongSize",
+                          "Buffer's size does not match expected size for this message ID. (Msg " << U2G::MessageTagToString(message.GetTag()) << ", expected " << message.Size() << ", recvd " << packet.dataLen << ")");
       }
       
       if (messageCallback != nullptr) {
