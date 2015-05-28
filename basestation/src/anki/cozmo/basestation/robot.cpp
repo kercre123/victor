@@ -169,6 +169,8 @@ namespace Anki {
     {
       _localizedToID.UnSet();
       _localizedToFixedMat = false;
+
+      _blockWorld.ClearAllExistingObjects();
       
       // Add a new pose origin to use until the robot gets localized again
       _poseOrigins.emplace_back();
@@ -184,7 +186,8 @@ namespace Anki {
       _driveCenterPose.SetParent(_worldOrigin);
       
       _poseHistory->Clear();
-      ++_frameId;
+      //++_frameId;
+      
     }
 
     Result Robot::UpdateFullRobotState(const MessageRobotState& msg)

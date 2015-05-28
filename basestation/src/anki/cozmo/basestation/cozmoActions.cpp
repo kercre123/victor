@@ -211,6 +211,10 @@ namespace Anki {
           
           // Create a callback to respond to a robot world origin change that resets
           // the action since the goal pose is likely now invalid.
+          // NOTE: I'm not passing the robot reference in because it will get create
+          //  a copy of the robot inside the lambda. I believe using the pointer
+          //  is safe because this lambda can't outlive this action which can't
+          //  outlive the robot whose queue it exists in.
           Robot* robotPtr = &robot;
           auto cbRobotOriginChanged = [this,robotPtr](RobotID_t robotID) {
             if(robotID == robotPtr->GetID()) {
@@ -375,7 +379,12 @@ namespace Anki {
       possiblePoses.clear();
       
       std::vector<PreActionPose> possiblePreActionPoses;
-      object->GetCurrentPreActionPoses(possiblePreActionPoses, {_actionType}, std::set<Vision::Marker::Code>(), &robot.GetPose());
+      std::vector<std::pair<Quad2f,ObjectID> > obstacles;
+      robot.GetBlockWorld().GetObstacles(obstacles, ROBOT_BOUNDING_Y*0.5f);
+      object->GetCurrentPreActionPoses(possiblePreActionPoses, {_actionType},
+                                       std::set<Vision::Marker::Code>(),
+                                       obstacles,
+                                       &robot.GetPose());
       
       if(possiblePreActionPoses.empty()) {
         PRINT_NAMED_ERROR("DriveToObjectAction.CheckPreconditions.NoPreActionPoses",
@@ -455,7 +464,12 @@ namespace Anki {
       ActionResult result = ActionResult::RUNNING;
       
       std::vector<PreActionPose> possiblePreActionPoses;
-      object->GetCurrentPreActionPoses(possiblePreActionPoses, {_actionType}, std::set<Vision::Marker::Code>(), &robot.GetPose());
+      std::vector<std::pair<Quad2f,ObjectID> > obstacles;
+      robot.GetBlockWorld().GetObstacles(obstacles, ROBOT_BOUNDING_Y*0.5f);
+      object->GetCurrentPreActionPoses(possiblePreActionPoses, {_actionType},
+                                       std::set<Vision::Marker::Code>(),
+                                       obstacles,
+                                       &robot.GetPose());
       
       if(possiblePreActionPoses.empty()) {
         PRINT_NAMED_ERROR("DriveToObjectAction.CheckPreconditions.NoPreActionPoses",
@@ -1170,7 +1184,10 @@ namespace Anki {
       
       // Verify that we ended up near enough a PreActionPose of the right type
       std::vector<PreActionPose> preActionPoses;
-      dockObject->GetCurrentPreActionPoses(preActionPoses, {GetPreActionType()});
+      std::vector<std::pair<Quad2f, ObjectID> > obstacles;
+      robot.GetBlockWorld().GetObstacles(obstacles, ROBOT_BOUNDING_Y*0.5f);
+      dockObject->GetCurrentPreActionPoses(preActionPoses, {GetPreActionType()},
+                                           std::set<Vision::Marker::Code>(), obstacles);
       
       if(preActionPoses.empty()) {
         PRINT_NAMED_ERROR("IDockAction.Init.NoPreActionPoses",
