@@ -1144,7 +1144,7 @@ namespace Anki
     {
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
       const s32 MAX_NAME_LENGTH = 1024;
-      s32 nameLength = strlen(name);
+      std::size_t nameLength = strlen(name);
 
       // Remove the start "marker_" if it is present
       if(nameLength >= 7) {

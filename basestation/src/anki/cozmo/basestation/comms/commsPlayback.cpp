@@ -9,6 +9,8 @@
  * Copyright: Anki, Inc. 2012
  *
  **/
+#if COZMO_RECORDING_PLAYBACK
+
 #include "commsPlayback.h"
 #include "anki/common/basestation/utils/timer.h"
 //#include "basestation/utils/debug.h"
@@ -145,3 +147,5 @@ void CommsPlayback::PrepareLogFile()
 
 } // end namespace Cozmo
 } // end namespace Anki
+
+#endif

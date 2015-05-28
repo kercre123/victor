@@ -384,12 +384,12 @@ int TcpMultiClientServer::GetConnectedClientIDs(std::vector<int> &client_ids)
     client_ids.push_back(it->first);
   }
   client_info_mutex.unlock();
-  return client_ids.size();
+  return static_cast<int>(client_ids.size());
 }
 
 unsigned int TcpMultiClientServer::GetNumClients() const
 {
-  return client_info.size();
+  return static_cast<int>(client_info.size());
 }
 
 

@@ -169,6 +169,8 @@ namespace Anki {
     {
       _localizedToID.UnSet();
       _localizedToFixedMat = false;
+
+      _blockWorld.ClearAllExistingObjects();
       
       // Add a new pose origin to use until the robot gets localized again
       _poseOrigins.emplace_back();
@@ -184,7 +186,8 @@ namespace Anki {
       _driveCenterPose.SetParent(_worldOrigin);
       
       _poseHistory->Clear();
-      ++_frameId;
+      //++_frameId;
+      
     }
 
     Result Robot::UpdateFullRobotState(const MessageRobotState& msg)
@@ -446,11 +449,11 @@ namespace Anki {
           _headCamPose.RotateBy(RotationVector3d(-HEAD_CAM_PITCH_CORR, Y_AXIS_3D()));
           _headCamPose.RotateBy(RotationVector3d(HEAD_CAM_ROLL_CORR, X_AXIS_3D()));
           _headCamPose.SetTranslation({HEAD_CAM_POSITION[0] + HEAD_CAM_TRANS_X_CORR, HEAD_CAM_POSITION[1], HEAD_CAM_POSITION[2]});
-          PRINT_INFO("Slop factor applied to head cam pose for physical robot: yaw_corr=%f, pitch_corr=%f, roll_corr=%f, x_trans_corr=%fmm\n", HEAD_CAM_YAW_CORR, HEAD_CAM_PITCH_CORR, HEAD_CAM_ROLL_CORR, HEAD_CAM_TRANS_X_CORR);
+          PRINT_NAMED_INFO("Robot.SetPhysicalRobot", "Slop factor applied to head cam pose for physical robot: yaw_corr=%f, pitch_corr=%f, roll_corr=%f, x_trans_corr=%fmm", HEAD_CAM_YAW_CORR, HEAD_CAM_PITCH_CORR, HEAD_CAM_ROLL_CORR, HEAD_CAM_TRANS_X_CORR);
         } else {
           _headCamPose.SetRotation({0,0,1,  -1,0,0,  0,-1,0});
           _headCamPose.SetTranslation({HEAD_CAM_POSITION[0], HEAD_CAM_POSITION[1], HEAD_CAM_POSITION[2]});
-          PRINT_INFO("Slop factor removed from head cam pose for simulated robot\n");
+          PRINT_STREAM_INFO("Robot.SetPhysicalRobot", "Slop factor removed from head cam pose for simulated robot");
         }
         _isPhysical = isPhysical;
       }
@@ -768,7 +771,7 @@ namespace Anki {
           Result lastResult = QueueObservedMarker(visionMarker);
           if(lastResult != RESULT_OK) {
             PRINT_NAMED_ERROR("Robot.Update.FailedToQueueVisionMarker",
-                              "Got VisionMarker message from vision processing thread but failed to queue it.\n");
+                              "Got VisionMarker message from vision processing thread but failed to queue it.");
             return lastResult;
           }
           
@@ -781,7 +784,7 @@ namespace Anki {
         
         MessageFaceDetection faceDetection;
         while(true == _visionProcessor.CheckMailbox(faceDetection)) {
-          PRINT_INFO("Robot %d reported seeing a face at (x,y,w,h)=(%d,%d,%d,%d).\n",
+          PRINT_NAMED_INFO("Robot.ActiveObjectLightTest", "Robot %d reported seeing a face at (x,y,w,h)=(%d,%d,%d,%d).",
                      GetID(), faceDetection.x_upperLeft, faceDetection.y_upperLeft, faceDetection.width, faceDetection.height);
           
           
@@ -1748,7 +1751,7 @@ namespace Anki {
       if(object == nullptr) {
         PRINT_NAMED_ERROR("Robot.SetCarryingObject",
                           "Object %d no longer exists in the world. Can't set it as robot's carried object.\n",
-                          carryObjectID.GetValue(), GetID());
+                          carryObjectID.GetValue());
       } else {
         ActionableObject* carriedObject = dynamic_cast<ActionableObject*>(object);
         if(carriedObject == nullptr) {
@@ -1995,7 +1998,7 @@ namespace Anki {
         result = _msgHandler->SendMessage(_ID, m);
         
         // Reset pose on connect
-        PRINT_INFO("Setting pose to (0,0,0)\n");
+        PRINT_NAMED_INFO("Robot.SendSyncTime", "Setting pose to (0,0,0)");
         Pose3d zeroPose(0, Z_AXIS_3D(), {0,0,0});
         return SendAbsLocalizationUpdate(zeroPose, 0, GetPoseFrameID());
       } else {

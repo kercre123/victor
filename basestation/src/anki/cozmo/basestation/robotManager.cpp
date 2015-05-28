@@ -29,11 +29,11 @@ namespace Anki {
       }
       
       if (_robots.find(withID) == _robots.end()) {
-        PRINT_NAMED_INFO("RobotManager.AddRobot", "Adding robot with ID=%d\n", withID);
+        PRINT_STREAM_INFO("RobotManager.AddRobot", "Adding robot with ID=" << withID);
         _robots[withID] = new Robot(withID, msgHandler);
         _IDs.push_back(withID);
       } else {
-        PRINT_NAMED_WARNING("RobotManager.AddRobot.AlreadyAdded", "Robot with ID %d already exists. Ignoring.\n");
+        PRINT_STREAM_WARNING("RobotManager.AddRobot.AlreadyAdded", "Robot with ID " << withID << " already exists. Ignoring.");
       }
     }
     

@@ -51,7 +51,7 @@ namespace Anki {
     : MatPiece({GetLength(type), 74.5f, 5.f})
     , _type(type)
     {
-      Vision::MarkerType leftMarkerType, rightMarkerType, middleMarkerType;
+      Vision::MarkerType leftMarkerType = Vision::MARKER_0, rightMarkerType = Vision::MARKER_0, middleMarkerType = Vision::MARKER_0;
       f32 markerSize = 0.f;
       f32 length = 0.f;
       

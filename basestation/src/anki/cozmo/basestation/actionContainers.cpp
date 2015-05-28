@@ -14,7 +14,7 @@
 #include "anki/cozmo/basestation/actionContainers.h"
 #include "anki/cozmo/basestation/actionInterface.h"
 
-#include "anki/common/basestation/utils/logging/logging.h"
+#include "anki/util/logging/logging.h"
 
 namespace Anki {
   namespace Cozmo {
@@ -55,11 +55,10 @@ namespace Anki {
     void ActionList::Print() const
     {
       if(IsEmpty()) {
-        PRINT_INFO("ActionList is empty.\n");
+        PRINT_STREAM_INFO("ActionList.Print", "ActionList is empty.\n");
       } else {
-        PRINT_INFO("ActionList contains %d queues:\n", _queues.size());
+        PRINT_STREAM_INFO("ActionList.Print", "ActionList contains " << _queues.size() << " queues:\n");
         for(auto const& queuePair : _queues) {
-          PRINT_INFO("---");
           queuePair.second.Print();
         }
       }
@@ -239,13 +238,14 @@ namespace Anki {
     {
       
       if(IsEmpty()) {
-        PRINT_INFO("ActionQueue is empty.\n");
+        PRINT_STREAM_INFO("ActionQueue.Print", "ActionQueue is empty.\n");
       } else {
-        PRINT_INFO("ActionQueue with %d actions: ", _queue.size());
+        std::stringstream ss;
+        ss << "ActionQueue with " << _queue.size() << " actions: ";
         for(auto action : _queue) {
-          PRINT_INFO("%s, ", action->GetName().c_str());
+          ss << action->GetName() << ", ";
         }
-        PRINT_INFO("\b\b\n");
+        PRINT_STREAM_INFO("ActionQueue.Print", ss.str());
       }
       
     } // Print()

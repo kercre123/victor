@@ -222,7 +222,7 @@ namespace Anki {
                 // When we are "docking" with a ramp or crossing a bridge, we
                 // don't want to worry about the X angle being large (since we
                 // _expect_ it to be large, since the markers are facing upward).
-                const bool checkAngleX = !(action_ == DA_RAMP_ASCEND || action_ == DA_RAMP_DESCEND || action_ == DA_CROSS_BRIDGE);
+                //const bool checkAngleX = !(action_ == DA_RAMP_ASCEND || action_ == DA_RAMP_DESCEND || action_ == DA_CROSS_BRIDGE);
                 
                 // Set the distance to the marker beyond which
                 // we should ignore docking error signals since the lift occludes our view anyway.

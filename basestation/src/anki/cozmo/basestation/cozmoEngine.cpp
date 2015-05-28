@@ -24,6 +24,7 @@
 
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/common/basestation/utils/timer.h"
+#include "anki/util/logging/printfLoggerProvider.h"
 
 #include "robotMessageHandler.h"
 #include "recording/playback.h"
@@ -100,10 +101,13 @@ namespace Cozmo {
   CozmoEngineImpl::CozmoEngineImpl()
   : _isInitialized(false)
   {
+    if (Anki::Util::gTickTimeProvider == nullptr) {
+      Anki::Util::gTickTimeProvider = BaseStationTimer::getInstance();
+    }
     
     // Handle robot disconnection:
     auto cbRobotDisconnected = [this](RobotID_t robotID) {
-      PRINT_NAMED_INFO("CozmoEngineImpl.Constructor.cbRobotDisconnected", "Disconnecting from robot %d, haven't received message in too long.\n", robotID);
+      PRINT_NAMED_INFO("CozmoEngineImpl.Constructor.cbRobotDisconnected", "Disconnecting from robot %d, haven't received message in too long.", robotID);
       this->DisconnectFromRobot(robotID);
     };
     _signalHandles.emplace_back( CozmoEngineSignals::RobotDisconnectedSignal().ScopedSubscribe(cbRobotDisconnected));
@@ -111,36 +115,40 @@ namespace Cozmo {
   
   CozmoEngineImpl::~CozmoEngineImpl()
   {
+    if (Anki::Util::gTickTimeProvider == BaseStationTimer::getInstance()) {
+      Anki::Util::gTickTimeProvider = nullptr;
+    }
+    
     BaseStationTimer::removeInstance();
   }
   
   Result CozmoEngineImpl::Init(const Json::Value& config)
   {
     if(_isInitialized) {
-      PRINT_NAMED_INFO("CozmoEngineImpl.Init.ReInit", "Reinitializing already-initialized CozmoEngineImpl with new config.\n");
+      PRINT_NAMED_INFO("CozmoEngineImpl.Init.ReInit", "Reinitializing already-initialized CozmoEngineImpl with new config.");
     }
     
     _config = config;
     
     if(!_config.isMember(AnkiUtil::kP_ADVERTISING_HOST_IP)) {
-      PRINT_NAMED_ERROR("CozmoEngine.Init", "No AdvertisingHostIP defined in Json config.\n");
+      PRINT_NAMED_ERROR("CozmoEngine.Init", "No AdvertisingHostIP defined in Json config.");
       return RESULT_FAIL;
     }
     
     if(!_config.isMember(AnkiUtil::kP_ROBOT_ADVERTISING_PORT)) {
-      PRINT_NAMED_ERROR("CozmoEngine.Init", "No RobotAdvertisingPort defined in Json config.\n");
+      PRINT_NAMED_ERROR("CozmoEngine.Init", "No RobotAdvertisingPort defined in Json config.");
       return RESULT_FAIL;
     }
     
     if(!_config.isMember(AnkiUtil::kP_UI_ADVERTISING_PORT)) {
-      PRINT_NAMED_ERROR("CozmoEngine.Init", "No UiAdvertisingPort defined in Json config.\n");
+      PRINT_NAMED_ERROR("CozmoEngine.Init", "No UiAdvertisingPort defined in Json config.");
       return RESULT_FAIL;
     }
     
     Vision::CameraCalibration deviceCamCalib;
     if(!_config.isMember(AnkiUtil::kP_DEVICE_CAMERA_CALIBRATION)) {
       PRINT_NAMED_WARNING("CozmoEngine.Init",
-                          "No DeviceCameraCalibration defined in Json config. Using bogus settings.\n");
+                          "No DeviceCameraCalibration defined in Json config. Using bogus settings.");
     } else {
       deviceCamCalib.Set(_config[AnkiUtil::kP_DEVICE_CAMERA_CALIBRATION]);
     }
@@ -156,7 +164,7 @@ namespace Cozmo {
     
     if(!_config.isMember(AnkiUtil::kP_VIZ_HOST_IP)) {
       PRINT_NAMED_WARNING("CozmoEngineInit.NoVizHostIP",
-                          "No VizHostIP member in JSON config file. Not initializing VizManager.\n");
+                          "No VizHostIP member in JSON config file. Not initializing VizManager.");
     } else if(!_config[AnkiUtil::kP_VIZ_HOST_IP].empty()){
       VizManager::getInstance()->Connect(_config[AnkiUtil::kP_VIZ_HOST_IP].asCString(), VIZ_SERVER_PORT);
       
@@ -170,7 +178,7 @@ namespace Cozmo {
     
     lastResult = InitInternal();
     if(lastResult != RESULT_OK) {
-      PRINT_NAMED_ERROR("CozomEngine.Init", "Failed calling internal init.\n");
+      PRINT_NAMED_ERROR("CozomEngine.Init", "Failed calling internal init.");
       return lastResult;
     }
     
@@ -289,12 +297,20 @@ namespace Cozmo {
   
   CozmoEngine::CozmoEngine()
   : _impl(nullptr)
+  , _loggerProvider()
   {
-
+    _loggerProvider.SetMinLogLevel(0);
+    if (Anki::Util::gLoggerProvider == nullptr) {
+      Anki::Util::gLoggerProvider = &_loggerProvider;
+    }
   }
   
   CozmoEngine::~CozmoEngine()
   {
+    if (Anki::Util::gLoggerProvider == &_loggerProvider) {
+      Anki::Util::gLoggerProvider = nullptr;
+    }
+    
     if(_impl != nullptr) {
       delete _impl;
       _impl = nullptr;
@@ -373,9 +389,11 @@ namespace Cozmo {
     
     std::map<AdvertisingRobot, bool> _forceAddedRobots;
     
+#if COZMO_RECORDING_PLAYBACK
     // TODO: Make use of these for playback/recording
     IRecordingPlaybackModule *recordingPlaybackModule_;
     IRecordingPlaybackModule *uiRecordingPlaybackModule_;
+#endif
     
   }; // class CozmoEngineHostImpl
   
