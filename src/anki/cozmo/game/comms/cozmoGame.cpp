@@ -451,6 +451,10 @@ namespace Cozmo {
                   msg.status |= IS_PERFORMING_ACTION;
                 }
                 
+                msg.gameStatus = 0;
+                if (robot->IsLocalized() && !robot->IsPickedUp()) { msg.gameStatus |= IS_LOCALIZED; }
+                
+                
                 msg.headTrackingObjectID = robot->GetTrackHeadToObject();
                 
                 // TODO: Add proximity sensor data to state message
