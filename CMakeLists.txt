@@ -62,7 +62,7 @@ include_directories(
   "${ANKI_UTIL_DIR}/libs/packaged/include"
 )
 
-set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-Wno-unused-function -Wno-overloaded-virtual -Wno-deprecated-declarations -Wno-unused-variable")
+set(CMAKE_CXX_FLAGS "-Wno-unused-function -Wno-overloaded-virtual -Wno-deprecated-declarations -Wno-unused-variable")
 
 # Build these whether or not ANKI_IOS_BUILD is defined:
 add_subdirectory(clad)

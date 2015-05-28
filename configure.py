@@ -138,6 +138,7 @@ class PlatformConfiguration(object):
     
     def generate(self):
         ankibuild.cmake.generate(self.project_dir, REPO_ROOT, self.platform)
+        ankibuild.util.File.mkdir_p(os.path.join(self.project_dir, 'Xcode', 'lib'))
 
     def build(self):
         if not os.path.exists(self.project_path):
@@ -183,6 +184,7 @@ def wipe_all():
 if __name__ == '__main__':
     options = parse_arguments()
     ankibuild.util.ECHO_ALL = options.verbose
+    ankibuild.xcode.RAW_OUTPUT = options.verbose
     
     if options.command == 'wipeall!':
     	wipe_all()
