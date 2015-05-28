@@ -271,7 +271,7 @@ namespace Anki
 
       // Puts an entire message, with the usual header/footer
       // Returns false is there wasn't enough space to buffer the message
-      bool UARTPutPacket(u8* buffer, u32 length);
+      bool UARTPutPacket(const u8* buffer, const u32 length, const u8 socket=0);
 
       void UARTPutString(const char* s);
       int UARTGetChar(u32 timeout = 0);
@@ -418,9 +418,10 @@ namespace Anki
       /** Send a packet on the radio.
        * @param buffer [in] A pointer to the data to be sent
        * @param length [in] The number of bytes to be sent
+       * @param socket [in] Socket number, default 0 (base station)
        * @return true if the packet was queued for transmission, false if it couldn't be queued.
        */
-      bool RadioSendPacket(const void *buffer, const u32 length);
+      bool RadioSendPacket(const void *buffer, const u32 length, const u8 socket=0);
 
       /** Wrapper method for sending messages NOT PACKETS
        * @param msgID The ID (tag) of the message to be sent

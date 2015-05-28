@@ -233,7 +233,7 @@ namespace Anki
         return c;
       }
 
-      bool UARTPutPacket(u8* buffer, u32 length)
+      bool UARTPutPacket(const u8* buffer, const u32 length, const u8 socket)
       {
         bool result = false;
 
@@ -254,7 +254,7 @@ namespace Anki
           BufPutChar(length >>  0);
           BufPutChar(length >>  8);
           BufPutChar(length >> 16);
-          BufPutChar(length >> 24);
+          BufPutChar(socket);
 
           bytesLeft = sizeof(m_bufferWrite) - m_writeHead;
           if (length <= bytesLeft)

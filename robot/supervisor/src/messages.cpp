@@ -24,6 +24,8 @@
 #include "testModeController.h"
 #include "animationController.h"
 #include "backpackLightController.h"
+#include "anki/cozmo/shared/activeBlockTypes.h"
+
 
 namespace Anki {
   namespace Cozmo {
@@ -43,6 +45,35 @@ namespace Anki {
           return false;
         }
       }
+
+#ifndef SIMULATOR
+      Result SetBlockLight(const u8 blockID, const u32* onColor, const u32* offColor,
+                           const u32* onPeriod_ms, const u32* offPeriod_ms,
+                           const u32* transitionOnPeriod_ms, const u32* transitionOffPeriod_ms)
+      {
+         u8 buffer[256];
+         Anki::Cozmo::Messages::SetBlockLights m;
+         m.blockID = blockID;
+         for (int i=0; i<NUM_BLOCK_LEDS; ++i) {
+           m.onColor[i] = onColor[i];
+           m.offColor[i] = offColor[i];
+           m.onPeriod_ms[i] = onPeriod_ms[i];
+           m.offPeriod_ms[i] = offPeriod_ms[i];
+           m.transitionOnPeriod_ms[i] = (transitionOnPeriod_ms == NULL ? 0 : transitionOnPeriod_ms[i]);
+           m.transitionOffPeriod_ms[i] = (transitionOffPeriod_ms == NULL ? 0 : transitionOffPeriod_ms[i]);
+         }
+         buffer[0] = Anki::Cozmo::Messages::SetBlockLights_ID;
+         memcpy(buffer + 1, &m, sizeof(Anki::Cozmo::Messages::SetBlockLights));
+         return RadioSendPacket(buffer, sizeof(Anki::Cozmo::Messages::SetBlockLights)+1, blockID + 1) ? RESULT_OK : RESULT_FAIL;
+      }
+
+      void FlashBlockIDs()
+      {
+        // THIS DOESN'T WORK FOR now
+      }
+
+#endif
+
     }
 
     namespace Messages {
@@ -890,6 +921,7 @@ namespace Anki {
         // TODO: need to add this hal.h and implement
         // HAL::SetBlockBeingCarried(msg.blockID, msg.isBeingCarried);
       }
+
 
 // ----------- Send messages -----------------
 
