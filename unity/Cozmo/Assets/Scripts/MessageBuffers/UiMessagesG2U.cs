@@ -756,6 +756,7 @@ public class RobotState
 	private int _carryingObjectOnTopID; // int_32
 	private int _headTrackingObjectID; // int_32
 	private uint _status; // uint_32
+	private uint _gameStatus; // uint_32
 	private byte _robotID; // uint_8
 
 	public float pose_x { get { return _pose_x; } set { _pose_x = value; } }
@@ -792,6 +793,8 @@ public class RobotState
 
 	public uint status { get { return _status; } set { _status = value; } }
 
+	public uint gameStatus { get { return _gameStatus; } set { _gameStatus = value; } }
+
 	public byte robotID { get { return _robotID; } set { _robotID = value; } }
 
 
@@ -818,6 +821,7 @@ public class RobotState
 		int carryingObjectOnTopID,
 		int headTrackingObjectID,
 		uint status,
+		uint gameStatus,
 		byte robotID)
 	{
 		this.pose_x = pose_x;
@@ -837,6 +841,7 @@ public class RobotState
 		this.carryingObjectOnTopID = carryingObjectOnTopID;
 		this.headTrackingObjectID = headTrackingObjectID;
 		this.status = status;
+		this.gameStatus = gameStatus;
 		this.robotID = robotID;
 	}
 
@@ -875,6 +880,7 @@ public class RobotState
 		_carryingObjectOnTopID = reader.ReadInt32();
 		_headTrackingObjectID = reader.ReadInt32();
 		_status = reader.ReadUInt32();
+		_gameStatus = reader.ReadUInt32();
 		_robotID = reader.ReadByte();
 	}
 
@@ -903,13 +909,14 @@ public class RobotState
 		writer.Write((int)_carryingObjectOnTopID);
 		writer.Write((int)_headTrackingObjectID);
 		writer.Write((uint)_status);
+		writer.Write((uint)_gameStatus);
 		writer.Write((byte)_robotID);
 	}
 
 	public int Size 
 	{
 		get {
-			return 69;
+			return 73;
 		}
 	}
 
@@ -976,6 +983,7 @@ public class RobotState
 			&& this._carryingObjectOnTopID.Equals(p._carryingObjectOnTopID)
 			&& this._headTrackingObjectID.Equals(p._headTrackingObjectID)
 			&& this._status.Equals(p._status)
+			&& this._gameStatus.Equals(p._gameStatus)
 			&& this._robotID.Equals(p._robotID);
 	}
 
@@ -1001,6 +1009,7 @@ public class RobotState
 			hash = hash * 23 + this._carryingObjectOnTopID.GetHashCode();
 			hash = hash * 23 + this._headTrackingObjectID.GetHashCode();
 			hash = hash * 23 + this._status.GetHashCode();
+			hash = hash * 23 + this._gameStatus.GetHashCode();
 			hash = hash * 23 + this._robotID.GetHashCode();
 			return hash;
 		}

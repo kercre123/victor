@@ -91,7 +91,7 @@ public class ObservedObject
 		} else if (objectType == 4 || objectType == 5) {
 			cubeType = CubeType.BULLS_EYE;
 		}
-		else if (objectType == 11 || objectType == 12) {
+		else if (objectType == 11 || objectType == 12 || objectType == 13) {
 			cubeType = CubeType.FLAG;
 		} else {
 			cubeType = CubeType.UNKNOWN;

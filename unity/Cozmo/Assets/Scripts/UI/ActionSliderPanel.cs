@@ -157,11 +157,11 @@ public class ActionSliderPanel : ActionPanel
 
 			if(actionAnimation != null && secondaryActionsAvailableLastFrame != actionsAvailable) {
 				if(actionsAvailable) {
-					Debug.Log("actionAnimation.CrossFade(actionSheenAnim.name, 0.5f, PlayMode.StopAll);");
+					//Debug.Log("actionAnimation.CrossFade(actionSheenAnim.name, 0.5f, PlayMode.StopAll);");
 					actionAnimation.CrossFade(actionSheenAnim.name, 0.5f, PlayMode.StopAll);
 				}
 				else {
-					Debug.Log("actionAnimation.CrossFade(actionIdleAnim.name, 0.5f, PlayMode.StopAll);");
+					//Debug.Log("actionAnimation.CrossFade(actionIdleAnim.name, 0.5f, PlayMode.StopAll);");
 					actionAnimation.CrossFade(actionIdleAnim.name, 0.5f, PlayMode.StopAll);
 				}
 			}
