@@ -1,6 +1,6 @@
 #include "anki/cozmo/game/comms/gameMessageHandler.h"
 
-#include "anki/common/basestation/utils/logging/logging.h"
+#include "anki/util/logging/logging.h"
 
 
 namespace Anki {
@@ -63,12 +63,10 @@ namespace Cozmo {
         
         G2U::Message message;
         if (message.Unpack(packet.data, Comms::MsgPacket::MAX_SIZE) != packet.dataLen) {
-          PRINT_NAMED_ERROR("GameMessageHandler.MessageBufferWrongSize",
-                            "Buffer's size does not match expected size for this message ID. (Msg %s, expected %d, recvd %d)\n",
-                            G2U::MessageTagToString(message.GetTag()),
-                            message.Size(), // not all messages are fixed size, so indeterminate
-                            packet.dataLen
-                            );
+          PRINT_STREAM_ERROR("GameMessageHandler.MessageBufferWrongSize",
+                            "Buffer's size does not match expected size for this message ID. (Msg " <<
+                             G2U::MessageTagToString(message.GetTag()) << ", expected " << message.Size() <<
+                             ", recvd " << packet.dataLen << ")");
         }
         
         if (messageCallback != nullptr) {

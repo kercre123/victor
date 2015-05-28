@@ -20,7 +20,7 @@ import ankibuild.xcode
 def unpack_libraries():
 	saved_cwd = ankibuild.util.File.pwd()
 	ankibuild.util.File.cd(os.path.join(ENGINE_ROOT, 'tools', 'anki-util', 'libs', 'packaged'))
-	ankibuild.util.File.execute('./unpackLibs.sh')
+	ankibuild.util.File.execute(['./unpackLibs.sh'])
 	ankibuild.util.File.cd(saved_cwd)
 
 def parse_arguments():

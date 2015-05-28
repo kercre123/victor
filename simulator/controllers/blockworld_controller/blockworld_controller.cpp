@@ -9,7 +9,7 @@
 #include "anki/cozmo/game/cozmoGame.h"
 
 #include "anki/common/basestation/platformPathManager.h"
-#include "anki/common/basestation/utils/logging/logging.h"
+#include "anki/util/logging/logging.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "json/json.h"
@@ -123,7 +123,7 @@ int main(int argc, char **argv)
   CozmoGame cozmoGame;
   cozmoGame.Init(config);
   
-  PRINT_INFO("CozmoGame created and initialized.\n");
+  PRINT_STREAM_INFO("blockworld_controller.main", "CozmoGame created and initialized.");
   
   /*
   // TODO: Wait to receive this from UI (webots keyboard controller)
@@ -151,7 +151,7 @@ int main(int argc, char **argv)
 #ifndef USE_WEBOTS
     auto ms_left = std::chrono::milliseconds(BS_TIME_STEP) - (std::chrono::system_clock::now() - tick_start);
     if (ms_left < std::chrono::milliseconds(0)) {
-      PRINT_NAMED_WARNING("EngineHeartbeat.overtime", "over by %d", -ms_left);
+      PRINT_STREAM_WARNING("EngineHeartbeat.overtime", "over by " << std::chrono::duration_cast<std::chrono::seconds>(-ms_left).count() << "ms");
     }
     std::this_thread::sleep_for(ms_left);
 #endif

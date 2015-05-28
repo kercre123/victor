@@ -12,7 +12,7 @@
 #include "anki/cozmo/game/comms/gameComms.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 
-#include "anki/common/basestation/utils/logging/logging.h"
+#include "anki/util/logging/logging.h"
 #include "anki/common/basestation/utils/helpers/printByteArray.h"
 
 // For strcpy
@@ -32,7 +32,7 @@
 namespace Anki {
 namespace Cozmo {
   
-  const size_t HEADER_SIZE = sizeof(RADIO_PACKET_HEADER);
+  //const size_t HEADER_SIZE = sizeof(RADIO_PACKET_HEADER);
   
   GameComms::GameComms(int deviceID, int serverListenPort, const char* advertisementRegIP, int advertisementRegPort)
   : isInitialized_(false)
