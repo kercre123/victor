@@ -554,12 +554,6 @@ namespace Anki {
       {
       }
 
-      void ProcessPingMessage(const Ping& msg)
-      {
-        lastPingTime_ = HAL::GetTimeStamp();
-      }
-
-
       void ProcessAbortDockingMessage(const AbortDocking& msg)
       {
         DockingController::ResetDocker();
@@ -855,28 +849,6 @@ namespace Anki {
                                              turnVelocity, 5, -5, true);
 
 
-      }
-
-      // A little hacky, but this is technically not a message that supervisor level code needs to worry about
-      // since it comes from the torpedo rather than basestation.
-      void ProcessClientConnectionStatusMessage(const ClientConnectionStatus& msg) {
-        static bool firstConnectionUpdateSinceBoot = true;
-
-        HAL::RadioUpdateState(msg.wifiState, msg.bluetoothState);
-/*
-        // Simple startup animation so can tell he's ready
-        // TODO: Remove once we have other indicators? This is mostly for dev.
-        if (firstConnectionUpdateSinceBoot)
-        {
-          firstConnectionUpdateSinceBoot = false;
-          HeadController::StartNodding(DEG_TO_RAD(-15), DEG_TO_RAD(15),
-          400, 3, .25f, .25f);
-
-          //EyeController::SetEyeColor(LED_CYAN);
-          //EyeController::SetBlinkVariability(50);
-          //EyeController::StartBlinking(1000, 100);
-        }
-*/
       }
 
       void ProcessSetCarryStateMessage(const SetCarryState& msg)

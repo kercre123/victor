@@ -259,7 +259,7 @@ namespace Anki {
     // TODO: would be nice to implement this in a way that is not specific to
     //       hardware vs. simulated radio receivers, and just calls lower-level
     //       radio functions.
-    u32 HAL::RadioGetNextPacket(u8* buffer);
+    u32 HAL::RadioGetNextPacket(u8* buffer)
     {
       u32 retVal = 0;
 
