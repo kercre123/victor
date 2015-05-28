@@ -71,10 +71,10 @@ namespace Anki {
     }
 
 #ifndef RUN_EMBEDDED_TESTS
-    bool HAL::RadioSendPacket(const void *buffer, u32 length)
+    bool HAL::RadioSendPacket(const void *buffer, const u32 length, const u8 socket)
     {
 #if(USING_UART_RADIO)
-        return UARTPutPacket((u8*)buffer, length);
+        return UARTPutPacket((u8*)buffer, length, socket);
 #else
         return true;
 #endif
