@@ -46,7 +46,7 @@ namespace Anki
       MemoryStack scratchOnchip,
       MemoryStack scratchOffChip);
 
-    /*Result DetectFiducialMarkers(
+    Result DetectFiducialMarkers(
       const Array<u8> &image,
       FixedLengthList<VisionMarker> &markers,
       FixedLengthList<Array<f32> > &homographies,
@@ -68,7 +68,7 @@ namespace Anki
       const bool returnInvalidMarkers,
       MemoryStack scratchCcm,
       MemoryStack scratchOnchip,
-      MemoryStack scratchOffChip);*/
+      MemoryStack scratchOffChip);
 
     // Used by DetectFiducialMarkers
     //
