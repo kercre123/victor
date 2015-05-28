@@ -163,8 +163,7 @@ void ChannelBase::ClearPacketsForAddressUntilNewestConnection(const TransportAdd
     --current;
     
     // only looks at disconnect packets
-    if (current->tag == IncomingPacket::Tag::Disconnected &&
-        AddressEquals(current->sourceAddress, address)) {
+    if (current->tag == IncomingPacket::Tag::Disconnected && current->sourceAddress == address) {
       break;
     }
     
@@ -192,8 +191,7 @@ void ChannelBase::ClearPacketsForAddressAfterEarliestDisconnect(const TransportA
   auto first_disconnect = std::find_if(begin, end,
                [address](const IncomingPacket& packet)
                {
-                 return (packet.tag == IncomingPacket::Tag::Disconnected &&
-                         AddressEquals(packet.sourceAddress, address));
+                 return (packet.tag == IncomingPacket::Tag::Disconnected && packet.sourceAddress == address);
                });
   
   // early out

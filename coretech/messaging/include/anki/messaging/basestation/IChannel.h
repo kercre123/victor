@@ -33,14 +33,14 @@ namespace Anki {
         if (bufferDataSize > MAX_SIZE) {
           PRINT_STREAM_WARNING("PacketBase",
                                "Truncating packet size because packet is larger than buffer.");
+          bufferDataSize = MAX_SIZE;
         }
         
-        this->bufferSize = std::min(MAX_SIZE, bufferDataSize);
         std::memcpy(this->buffer, bufferData, bufferDataSize);
       }
       
       // The outgoing buffer.
-      static const unsigned int MAX_SIZE = 2000;
+      static constexpr unsigned int MAX_SIZE = 2000;
       uint8_t buffer[MAX_SIZE];
       unsigned int bufferSize = 0;
     };

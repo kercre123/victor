@@ -50,9 +50,6 @@ namespace Anki {
       virtual bool GetAddress(TransportAddress& address, ConnectionId connectionId) const override;
 
     protected:
-      // no equality operator defined, so use less-than
-      static bool AddressEquals(const TransportAddress& a, const TransportAddress& b);
-
       void PushIncomingPacket(const IncomingPacket& packet);
 
       void EmplaceIncomingPacket(const IncomingPacket&& packet);
