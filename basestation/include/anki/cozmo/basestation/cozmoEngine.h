@@ -33,6 +33,7 @@
 #define ANKI_COZMO_BASESTATION_COZMO_ENGINE_H
 
 #include "anki/cozmo/basestation/comms/robot/robotMessages.h"
+#include "anki/util/logging/printfLoggerProvider.h"
 
 #include "anki/vision/basestation/image.h"
 #include "anki/vision/basestation/cameraCalibration.h"
@@ -94,6 +95,7 @@ namespace Cozmo {
     // derived class
     CozmoEngineImpl* _impl;
     
+    Anki::Util::PrintfLoggerProvider _loggerProvider;
   }; // class CozmoEngine
   
   
@@ -134,7 +136,6 @@ namespace Cozmo {
     
   protected:
     CozmoEngineHostImpl* _hostImpl;
-    
   }; // class CozmoEngineHost
   
   

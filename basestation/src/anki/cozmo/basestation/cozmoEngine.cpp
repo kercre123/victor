@@ -24,6 +24,7 @@
 
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/common/basestation/utils/timer.h"
+#include "anki/util/logging/printfLoggerProvider.h"
 
 #include "robotMessageHandler.h"
 #include "recording/playback.h"
@@ -100,6 +101,9 @@ namespace Cozmo {
   CozmoEngineImpl::CozmoEngineImpl()
   : _isInitialized(false)
   {
+    if (Anki::Util::gTickTimeProvider == nullptr) {
+      Anki::Util::gTickTimeProvider = BaseStationTimer::getInstance();
+    }
     
     // Handle robot disconnection:
     auto cbRobotDisconnected = [this](RobotID_t robotID) {
@@ -111,6 +115,10 @@ namespace Cozmo {
   
   CozmoEngineImpl::~CozmoEngineImpl()
   {
+    if (Anki::Util::gTickTimeProvider == BaseStationTimer::getInstance()) {
+      Anki::Util::gTickTimeProvider = nullptr;
+    }
+    
     BaseStationTimer::removeInstance();
   }
   
@@ -289,12 +297,20 @@ namespace Cozmo {
   
   CozmoEngine::CozmoEngine()
   : _impl(nullptr)
+  , _loggerProvider()
   {
-
+    _loggerProvider.SetMinLogLevel(0);
+    if (Anki::Util::gLoggerProvider == nullptr) {
+      Anki::Util::gLoggerProvider = &_loggerProvider;
+    }
   }
   
   CozmoEngine::~CozmoEngine()
   {
+    if (Anki::Util::gLoggerProvider == &_loggerProvider) {
+      Anki::Util::gLoggerProvider = nullptr;
+    }
+    
     if(_impl != nullptr) {
       delete _impl;
       _impl = nullptr;

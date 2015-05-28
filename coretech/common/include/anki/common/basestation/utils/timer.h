@@ -44,7 +44,7 @@ const std::string GetCurrentDateTime();
 /*
  * Keep track of system time. Provides easy way to get time since the start of program.
  */
-class BaseStationTimer : Anki::Util::ITickTimeProvider
+class BaseStationTimer : public Anki::Util::ITickTimeProvider
 {
   public:
 
