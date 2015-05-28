@@ -15,6 +15,7 @@ public class BuildInstructionsCube : MonoBehaviour {
 	[SerializeField] public ActiveBlock.Mode activeBlockMode = ActiveBlock.Mode.Off;
 	[SerializeField] public Color baseColor = Color.blue;
 	[SerializeField] public bool isHeld = false;
+	[SerializeField] public bool ignorePosition = false;
 
 	//if this cube is stacked on another, we store a reference to simplify build validation
 	public BuildInstructionsCube cubeBelow = null;
@@ -207,7 +208,7 @@ public class BuildInstructionsCube : MonoBehaviour {
 	public bool SatisfiedByObject(ObservedObject obj, float flatFudge, float verticalFudge, float angleFudge, bool allowCardinalAngleOffsets=true) {
 
 		if(!MatchesObject(obj)) return false;
-		if(!MatchesPosition(obj.WorldPosition, flatFudge, verticalFudge)) return false;
+		if(!ignorePosition && !MatchesPosition(obj.WorldPosition, flatFudge, verticalFudge)) return false;
 		if(!MatchesRotation(obj.Rotation, angleFudge, allowCardinalAngleOffsets)) return false;
 
 		return true;

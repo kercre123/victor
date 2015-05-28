@@ -24,7 +24,7 @@ public class BuildActions : GameActions {
 			return;
 		}
 
-		if (GameLayoutTracker.instance != null && GameLayoutTracker.instance.Phase == GameLayoutTracker.LayoutTrackerPhase.COMPLETE) {
+		if (GameLayoutTracker.instance != null && GameLayoutTracker.instance.Phase == LayoutTrackerPhase.COMPLETE) {
 			buttons[2].SetMode( ActionButton.Mode.ALIGN, null, null, true );
 			return;
 		}
@@ -82,7 +82,7 @@ public class BuildActions : GameActions {
 			//drop location is one block forward and half a block up from robot's location
 			//  cozmo space up being Vector3.forward in unity
 			string error;
-			GameLayoutTracker.LayoutErrorType errorType;
+			LayoutErrorType errorType;
 
 			if(!tracker.PredictDropValidation(robot.carryingObject, out error, out errorType, out approveStandardDrop)) {
 				Debug.Log("PredictDropValidation failed for robot.carryingObject("+robot.carryingObject+") error("+error+")");
@@ -121,7 +121,7 @@ public class BuildActions : GameActions {
 			//drop location is one block forward and half a block up from robot's location
 			//  cozmo space up being Vector3.forward in unity
 			string error;
-			GameLayoutTracker.LayoutErrorType errorType;
+			LayoutErrorType errorType;
 			if(!tracker.PredictStackValidation(robot.carryingObject, selectedObject, out error, out errorType, true)) {
 				Debug.Log("PredictStackValidation failed for robot.carryingObject("+robot.carryingObject+") error("+error+")");
 				
@@ -144,49 +144,49 @@ public class BuildActions : GameActions {
 
 		GameLayoutTracker tracker = GameLayoutTracker.instance;
 		if (tracker != null) {
-			tracker.ValidateBuild();
+			tracker.StartGame();
 		}
 
 	}
 
 	public override void Cancel( bool onRelease, ObservedObject selectedObject ) {
 
-		if (GameLayoutTracker.instance.Phase == GameLayoutTracker.LayoutTrackerPhase.AUTO_BUILDING) {
+		if (GameLayoutTracker.instance.Phase == LayoutTrackerPhase.AUTO_BUILDING) {
 			//cancel during auto build switches to manual build
-			GameLayoutTracker.instance.RestartManualBuild();
+			GameLayoutTracker.instance.StartBuild();
 		}
 
 		base.Cancel (onRelease, selectedObject);
 	}
 
-	void PlaySoundsForErrorType(GameLayoutTracker.LayoutErrorType errorType) {
+	void PlaySoundsForErrorType(LayoutErrorType errorType) {
 	
 		//play denied sound
 		if(actionDeniedSound != null) AudioManager.PlayAudioClip(actionDeniedSound);
 
 		AudioClip clip = null;
 		switch(errorType) {
-			case GameLayoutTracker.LayoutErrorType.NONE:
+			case LayoutErrorType.NONE:
 				break;
-			case GameLayoutTracker.LayoutErrorType.TOO_CLOSE:
+			case LayoutErrorType.TOO_CLOSE:
 				clip = tooCloseVO;
 				break;
-			case GameLayoutTracker.LayoutErrorType.TOO_FAR:
+			case LayoutErrorType.TOO_FAR:
 				clip = tooFarVO;
 				break;
-			case GameLayoutTracker.LayoutErrorType.TOO_HIGH:
+			case LayoutErrorType.TOO_HIGH:
 				clip = tooHighVO;
 				break;
-			case GameLayoutTracker.LayoutErrorType.TOO_LOW:
+			case LayoutErrorType.TOO_LOW:
 				clip = tooLowVO;
 				break;
-			case GameLayoutTracker.LayoutErrorType.WRONG_BLOCK:
+			case LayoutErrorType.WRONG_BLOCK:
 				clip = wrongBlockVO;
 				break;
-			case GameLayoutTracker.LayoutErrorType.WRONG_STACK:
+			case LayoutErrorType.WRONG_STACK:
 				clip = wrongStackVO;
 				break;
-			case GameLayoutTracker.LayoutErrorType.WRONG_COLOR:
+			case LayoutErrorType.WRONG_COLOR:
 				clip = wrongColorVO;
 				break;
 		}

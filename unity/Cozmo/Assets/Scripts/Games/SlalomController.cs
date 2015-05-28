@@ -195,18 +195,19 @@ public class SlalomController : GameController {
 	protected override void Enter_PRE_GAME() {
 		base.Enter_PRE_GAME();
 
-		float rad;
+		GotoStartPose();
+		PrepareGameForPlay(startPosition, startFacing, true);
+		if(RobotEngineManager.instance != null) RobotEngineManager.instance.SuccessOrFailure += CheckForGotoPoseCompletion;
+		previewCourseLightsTimer = previewCourseLightsDelay;
+	}
 
+	void GotoStartPose() {
+		float rad;
 		startPosition = GameLayoutTracker.instance.GetStartingPositionFromLayout(out rad, out startFacing);
 		CozmoBusyPanel.instance.SetDescription("Cozmo is getting in the starting position.");
-		robot.GotoPose(startPosition.x, startPosition.y, rad);
-		PrepareGameForPlay(startPosition, startFacing, true);
 		atYourMark = false;
 		wasAtMark = false;
-		if(RobotEngineManager.instance != null) RobotEngineManager.instance.SuccessOrFailure += CheckForGotoPoseCompletion;
 		robot.isBusy = true;
-
-		previewCourseLightsTimer = previewCourseLightsDelay;
 	}
 
 	void CheckForGotoPoseCompletion(bool success, RobotActionType action_type) {
@@ -218,11 +219,7 @@ public class SlalomController : GameController {
 					if(RobotEngineManager.instance != null) RobotEngineManager.instance.SuccessOrFailure -= CheckForGotoPoseCompletion;
 				}
 				else { //try again or fail outright?
-					float rad;
-					Vector3 facing;
-					Vector3 pos = GameLayoutTracker.instance.GetStartingPositionFromLayout(out rad, out facing);
-					CozmoBusyPanel.instance.SetDescription("Cozmo is getting in the starting position.");
-					robot.GotoPose(pos.x, pos.y, rad);
+					GotoStartPose();
 				}
 				break;
 		}
@@ -231,7 +228,6 @@ public class SlalomController : GameController {
 	protected override void Update_PRE_GAME() {
 		//only let our countdown start when our goto command is done
 		//todo make it have to succeed?
-
 
 		if (!atYourMark) {
 			

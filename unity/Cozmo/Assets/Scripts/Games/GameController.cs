@@ -385,7 +385,8 @@ public class GameController : MonoBehaviour {
 		if(robot == null) return false;
 		if(GameLayoutTracker.instance == null) return false;
 
-		return GameLayoutTracker.instance.Validated;
+		//layout tracker dominates unless it is disabled
+		return GameLayoutTracker.instance.Phase == LayoutTrackerPhase.DISABLED;
 	}
 
 	protected virtual bool IsPreGameCompleted() {
@@ -421,7 +422,7 @@ public class GameController : MonoBehaviour {
 		Debug.Log ("BuildRequested");
 		buildRequested = true;
 		if (GameLayoutTracker.instance != null) {
-			GameLayoutTracker.instance.RestartManualBuild ();
+			GameLayoutTracker.instance.StartBuild();
 		}
 	}
 
