@@ -1755,7 +1755,7 @@ namespace Anki {
       if(object == nullptr) {
         PRINT_NAMED_ERROR("Robot.SetCarryingObject",
                           "Object %d no longer exists in the world. Can't set it as robot's carried object.\n",
-                          carryObjectID.GetValue(), GetID());
+                          carryObjectID.GetValue());
       } else {
         ActionableObject* carriedObject = dynamic_cast<ActionableObject*>(object);
         if(carriedObject == nullptr) {

@@ -659,7 +659,7 @@ namespace Anki
           AnkiConditionalErrorAndReturnValue(pyramid[iLevel].IsValid(),
             FixedLengthList<Array<OutType> >(), "BuildPyramid", "Out of memory");
 
-          const Result result = ImageProcessing::DownsampleByTwo<InType,IntermediateType,OutType>(pyramid[iLevel-1], pyramid[iLevel]);
+          /*const Result result = */ImageProcessing::DownsampleByTwo<InType,IntermediateType,OutType>(pyramid[iLevel-1], pyramid[iLevel]);
         } // for(s32 iLevel=1; iLevel<=numPyramidLevels; iLevel++)
 
         return pyramid;

@@ -149,7 +149,7 @@ void LatticePlannerImpl::ImportBlockworldObstacles(const bool isReplanning, cons
         Poly2f boundingPoly;
         boundingPoly.ImportQuad2d(boundingQuad);
 
-        const FastPolygon& expandedPoly =
+        /*const FastPolygon& expandedPoly =*/
           env_.AddObstacleWithExpansion(boundingPoly, robotPoly, theta, DEFAULT_OBSTACLE_PENALTY);
 
         // only draw the angle we are currently at

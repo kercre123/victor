@@ -294,7 +294,7 @@ namespace Anki
     const f64 mouseMoveSpeed = 1.0;
     const f64 mouseScrollSpeed = 1.0;
     
-    const Uint8 *state = SDL_GetKeyboardState(NULL);
+    /*const Uint8 *state =*/ SDL_GetKeyboardState(NULL);
     
     int lastMouseX = -1;
     int lastMouseY = -1;
