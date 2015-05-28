@@ -334,6 +334,16 @@ void MultiClientChannel::AddConnection(ConnectionId connectionId, const Transpor
   _reliableChannel.AddConnection(connectionId, address);
 }
 
+bool MultiClientChannel::AcceptIncomingConnection(ConnectionId connectionId, const TransportAddress& transportAddress)
+{
+  return false;
+};
+
+void MultiClientChannel::RefuseIncomingConnection(const TransportAddress& transportAddress)
+{
+  
+}
+
 void MultiClientChannel::RemoveAdvertisingConnection(ConnectionId connectionId)
 {
   _advertisingInfo.erase(connectionId);

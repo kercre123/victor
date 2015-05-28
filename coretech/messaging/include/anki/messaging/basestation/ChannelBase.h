@@ -39,6 +39,12 @@ namespace Anki {
       // assumes a consistent state
       virtual void AddConnection(ConnectionId connectionId, const TransportAddress& address) override;
 
+      // Default implementation just returns false.
+      virtual bool AcceptIncomingConnection(ConnectionId connectionId, const TransportAddress& address) override;
+      
+      // Default implementation is a no-op.
+      virtual void RefuseIncomingConnection(const TransportAddress& address) override;
+      
       // NOTE: Base class implementation does not actually do the disconnection part.
       virtual void RemoveConnection(ConnectionId connectionId) override;
 

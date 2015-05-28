@@ -52,15 +52,9 @@ namespace Anki {
       
       virtual void AddConnection(ConnectionId connectionId, const TransportAddress& address) override;
       
-      // Responds to the initial handshake, allowing the connection.
-      // Only send in response to ConnectionRequest packets.
-      // The alternative is RefuseIncomingConnection.
-      virtual bool AcceptIncomingConnection(ConnectionId connectionId, const TransportAddress& address);
+      virtual bool AcceptIncomingConnection(ConnectionId connectionId, const TransportAddress& address) override;
       
-      // Responds to the initial handshake, disallowing the connection.
-      // Only send in response to ConnectionRequest packets.
-      // The alternative is AcceptIncomingConnection.
-      virtual void RefuseIncomingConnection(const TransportAddress& address);
+      virtual void RefuseIncomingConnection(const TransportAddress& address) override;
       
       virtual void RemoveConnection(ConnectionId connectionId) override;
       

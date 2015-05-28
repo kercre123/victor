@@ -11,8 +11,8 @@
  *
  **/
 
-#ifndef BASESTATION_COMMS_MULTI_CLIENT_COMMS_H_
-#define BASESTATION_COMMS_MULTI_CLIENT_COMMS_H_
+#ifndef BASESTATION_COMMS_MULTI_CLIENT_CHANNEL_H_
+#define BASESTATION_COMMS_MULTI_CLIENT_CHANNEL_H_
 
 #include <unordered_map>
 #include <vector>
@@ -74,6 +74,11 @@ namespace Cozmo {
     bool AcceptAdvertisingConnection(ConnectionId connectionId);
     
     bool AcceptAllAdvertisingConnections();
+    
+    // Not implemented, as connection is done through advertising. Just returns false.
+    virtual bool AcceptIncomingConnection(ConnectionId connectionId, const TransportAddress& transportAddress) override;
+    // Not implemented, as connection is done through advertising. No-op.
+    virtual void RefuseIncomingConnection(const TransportAddress& transportAddress) override;
     
     
     // Force add an unadvertised connection; connecting directly to that location

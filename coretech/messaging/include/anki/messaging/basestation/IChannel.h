@@ -143,6 +143,19 @@ namespace Anki {
       // ConnectionId or TransportAddress mapping up to date.
       // Some IChannel implementations may have other ways of adding connections or auto-determining ids. This is sometimes just used for force-adding.
       virtual void AddConnection(ConnectionId connectionId, const TransportAddress& address) = 0;
+      
+      // Responds to the initial handshake, allowing the connection.
+      // Only send in response to ConnectionRequest packets.
+      // The alternative is RefuseIncomingConnection.
+      // Not always implemented. On connectionless channels, this is a no-op.
+      virtual bool AcceptIncomingConnection(ConnectionId connectionId, const TransportAddress& address) = 0;
+      
+      // Responds to the initial handshake, disallowing the connection.
+      // Only send in response to ConnectionRequest packets.
+      // The alternative is AcceptIncomingConnection.
+      // Not always implemented. On connectionless channels, this is a no-op.
+      virtual void RefuseIncomingConnection(const TransportAddress& address) = 0;
+      
       // Manually removes a connection, completely cleaning it up, including disconnecting.
       // Will already be removed if you get a disconnection notification.
       // It is OK to remove a non-existent connection. (Makes it easier to deal with disconnects.)

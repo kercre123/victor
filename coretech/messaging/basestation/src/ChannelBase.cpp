@@ -80,6 +80,16 @@ void ChannelBase::AddConnection(ConnectionId connectionId, const TransportAddres
   _connectionIdLookup.emplace(connectionId, address);
 }
 
+bool ChannelBase::AcceptIncomingConnection(ConnectionId connectionId, const TransportAddress& address)
+{
+  return false;
+}
+
+void ChannelBase::RefuseIncomingConnection(const TransportAddress& address)
+{
+  
+}
+
 void ChannelBase::RemoveConnection(ConnectionId connectionId)
 {
   TransportAddress address;
