@@ -25,6 +25,7 @@ public class GameActions : MonoBehaviour
 	protected ActionButton[] buttons { get { return ActionPanel.instance != null ? ActionPanel.instance.actionButtons : new ActionButton[0]; } }
 
 	public float actionButtonnDelay { get { return actionButtonSound != null ? actionButtonSound.length: 0f; } }
+	public float activeBlockModeDelay { get; private set; } // longest block mode sfx
 
 	public static GameActions instance = null;
 
@@ -37,6 +38,12 @@ public class GameActions : MonoBehaviour
 	{
 		//Debug.Log(gameObject.name + " GameActions OnEnable instance = this;");
 		instance = this;
+
+		activeBlockModeDelay = 0f;
+		for( int i = 0; i < activeBlockModeSounds.Length; ++i )
+		{
+			if( activeBlockModeSounds[i] != null && activeBlockModeDelay < activeBlockModeSounds[i].length ) activeBlockModeDelay = activeBlockModeSounds[i].length;			
+		}
 	}
 
 	public virtual void OnDisable()
@@ -168,8 +175,7 @@ public class GameActions : MonoBehaviour
 		if( CozmoBusyPanel.instance != null ) 
 		{
 			string desc = null;
-			Description( "pick-up\n", selectedObject, ref desc );
-			CozmoBusyPanel.instance.SetDescription( desc );
+			CozmoBusyPanel.instance.SetDescription( "pick-up\n", selectedObject, ref desc );
 		}
 	}
 	
@@ -186,8 +192,7 @@ public class GameActions : MonoBehaviour
 		if( CozmoBusyPanel.instance != null ) 
 		{
 			string desc = null;
-			Description( "drop\n", selectedObject, ref desc );
-			CozmoBusyPanel.instance.SetDescription( desc );
+			CozmoBusyPanel.instance.SetDescription( "drop\n", selectedObject, ref desc );
 		}
 	}
 	
@@ -204,9 +209,8 @@ public class GameActions : MonoBehaviour
 		if( CozmoBusyPanel.instance != null ) 
 		{
 			string desc = null;
-			Description( "stack\n", robot.carryingObject, ref desc, string.Empty );
-			Description( "\n on top of ", selectedObject, ref desc );
-			CozmoBusyPanel.instance.SetDescription( desc );
+			CozmoBusyPanel.instance.SetDescription( "stack\n", robot.carryingObject, ref desc, string.Empty );
+			CozmoBusyPanel.instance.SetDescription( "\n on top of ", selectedObject, ref desc );
 		}
 	}
 	
@@ -223,8 +227,7 @@ public class GameActions : MonoBehaviour
 		if( CozmoBusyPanel.instance != null ) 
 		{
 			string desc = null;
-			Description( "roll\n", selectedObject, ref desc );
-			CozmoBusyPanel.instance.SetDescription( desc );
+			CozmoBusyPanel.instance.SetDescription( "roll\n", selectedObject, ref desc );
 		}
 	}
 	
@@ -267,17 +270,5 @@ public class GameActions : MonoBehaviour
 
 		robot.searching = true;
 		//Debug.Log( "On Press" );
-	}
-
-	protected void Description( string verb, ObservedObject selectedObject, ref string description, string period = "." )
-	{
-		if( selectedObject == null || CozmoPalette.instance == null ) return;
-
-		if( description == null || description == string.Empty ) description = "Cozmo is attempting to ";
-
-		string noun = CozmoPalette.instance.GetNameForObjectType( selectedObject.cubeType );
-		string article = "AEIOUaeiou".Contains( noun[0].ToString() ) ? "an " : "a ";
-
-		description += verb + article + noun + period;
 	}
 }

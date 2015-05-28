@@ -70,6 +70,12 @@ public class GameLayoutTracker : MonoBehaviour {
 	[SerializeField] Image image_cozmoTD;
 	[SerializeField] LayoutBlock2d carriedBlock2d;
 	[SerializeField] ChangeCubeModeButton button_change;
+
+	[SerializeField] int cycleCount = 5;
+	[SerializeField] float cycleTime = 0.2f;
+	[SerializeField] float cycleDelayTime = 0.4f;
+	[SerializeField] AudioClip cycleSound;
+	[SerializeField] AudioClip cycleSuccessSound;
 	//dmd todo add vector lines from carried button to layout cubes it could satisfy?
 
 
@@ -483,7 +489,6 @@ public class GameLayoutTracker : MonoBehaviour {
 				break;
 			case RobotActionType.PICKUP_OBJECT_LOW:
 			case RobotActionType.PICKUP_OBJECT_HIGH:
-
 				if(robot.carryingObject != null && robot.carryingObject.isActive) {
 					ActiveBlock activeBlock = robot.carryingObject as ActiveBlock;
 					SetLightCubeToCorrectColor(activeBlock);
@@ -1018,8 +1023,6 @@ public class GameLayoutTracker : MonoBehaviour {
 
 	List<ObservedObject> unplacedObjects = new List<ObservedObject>();
 	ObservedObject GetObservedObjectForNextLayoutBlock() {
-
-
 		BuildInstructionsCube layoutCube = currentLayout.blocks.Find ( x => !x.Validated );
 
 		if (layoutCube == null) return null;
@@ -1089,18 +1092,31 @@ public class GameLayoutTracker : MonoBehaviour {
 			if(layoutActiveCube == null) return;
 		}
 		if(layoutActiveCube.activeBlockMode == activeBlock.mode) return;
-
+		if(CozmoBusyPanel.instance != null) {
+			string desc = null;
+			CozmoBusyPanel.instance.SetDescription("change mode of\n", activeBlock, ref desc);
+		}
+		robot.localBusyTimer = (cycleTime * cycleCount) + cycleDelayTime;
 		StartCoroutine(CycleLightCubeModes(activeBlock, layoutActiveCube.activeBlockMode));
 	}
 
-	IEnumerator CycleLightCubeModes( ActiveBlock activeBlock, ActiveBlock.Mode mode )
-	{
-		while( activeBlock != null && activeBlock.mode != mode )
-		{
+	IEnumerator CycleLightCubeModes(ActiveBlock activeBlock, ActiveBlock.Mode mode) {
+		yield return new WaitForSeconds(cycleDelayTime);
+
+		int startingIndex = (int)mode - cycleCount;
+		if(startingIndex < 0) startingIndex += ActiveBlock.Mode.Count;
+
+		activeBlock.SetMode((ActiveBlock.Mode)startingIndex);
+
+		while(activeBlock.mode != mode) {
+			AudioManager.PlayOneShot(cycleSound);
 			activeBlock.CycleMode();
 
-			yield return new WaitForSeconds(activeBlock.modeDelay > 0f ? activeBlock.modeDelay : 0.25f);
+			yield return new WaitForSeconds(cycleTime);
 		}
+
+		AudioManager.PlayOneShot(cycleSuccessSound);
+		robot.isBusy = false;
 	}
 
 	public bool AttemptAssistedPlacement() {

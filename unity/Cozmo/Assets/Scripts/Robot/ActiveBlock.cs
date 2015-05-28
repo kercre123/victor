@@ -276,21 +276,21 @@ public class ActiveBlock : ObservedObject
 		this.relativeToY = relativeToY;
 	}
 
-	public void SetMode( Mode m )
+	public void SetMode( Mode m, bool playSound = false )
 	{
 		mode = m;
 
 		if( CozmoPalette.instance != null ) SetLEDs( CozmoPalette.instance.GetUIntColorForActiveBlockType( mode ) );
-		if( GameActions.instance != null ) AudioManager.PlayOneShot( modeSound, GameActions.instance.actionButtonnDelay );
+		if( playSound && GameActions.instance != null ) AudioManager.PlayOneShot( modeSound, GameActions.instance.actionButtonnDelay );
 	}
 
-	public void CycleMode()
+	public void CycleMode( bool playSound = false )
 	{
 		int typeIndex = (int)mode + 1;
 		if(typeIndex >= (int)Mode.Count) typeIndex = 0;
 		
 		Debug.Log("active block id("+ID+") from " + mode + " to " + (ActiveBlock.Mode)typeIndex );
 		
-		SetMode( (ActiveBlock.Mode)typeIndex );
+		SetMode( (ActiveBlock.Mode)typeIndex, playSound );
 	}
 }
