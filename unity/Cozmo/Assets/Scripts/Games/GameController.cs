@@ -144,8 +144,8 @@ public class GameController : MonoBehaviour {
 		if(textError != null) textError.gameObject.SetActive(false);
 		if(playButton != null) playButton.gameObject.SetActive(false);
 		if(resultsPanel != null) resultsPanel.gameObject.SetActive(false);
-		if(robot != null) robot.isBusy = false;
-		Exit_RESULTS();
+		AudioManager.Stop(); // stop all sounds
+		if(robot != null) robot.ClearData();
 	}
 
 	GameState GetNextState() {
@@ -377,9 +377,8 @@ public class GameController : MonoBehaviour {
 
 		if(resultsPanel != null) resultsPanel.gameObject.SetActive(false);
 		if(textScore != null) textScore.gameObject.SetActive(false);
-
 		AudioManager.Stop(resultsLoopSound);
-		robot.TurnOffAllLights();
+		if(robot != null) robot.TurnOffAllLights();
 	}
 
 	protected virtual bool IsGameReady() {

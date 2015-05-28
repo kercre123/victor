@@ -55,6 +55,8 @@ public class RobotRelativeControls : MonoBehaviour {
 	float lastDebugAxesX = 0f;
 	bool headAngleSliderEngaged = false;
 	bool liftSliderEngaged = false;
+	float timeSinceInput = 0f;
+
 #endregion
 
 #region COMPONENT CALLBACKS
@@ -80,7 +82,7 @@ public class RobotRelativeControls : MonoBehaviour {
 		lastHorStickX = 0f;
 		lastHeadStickY = 0f;
 		lastDebugAxesX = 0f;
-
+		timeSinceInput = 0f;
 		headAngleSliderEngaged = false;
 		RefreshHeadAngleSlider();
 
@@ -90,7 +92,12 @@ public class RobotRelativeControls : MonoBehaviour {
 		ShowSticks();
 	}
 
+	
+	Quaternion lastAttitude = Quaternion.identity;
+
 	void Update() {
+
+		timeSinceInput += Time.deltaTime;
 
 		bool controlsDisabled = robot == null || robot.isBusy;
 		controlsDisabled |= GameLayoutTracker.instance != null && GameLayoutTracker.instance.Phase == GameLayoutTracker.LayoutTrackerPhase.INVENTORY;
@@ -147,6 +154,17 @@ public class RobotRelativeControls : MonoBehaviour {
 
 		CheckVerticalStick();
 		CheckVerticalDebugAxis();
+
+		if(Input.touchCount > 0) {
+			timeSinceInput = 0f;
+			//Debug.Log("Input.touchCount("+Input.touchCount+") timeSinceInput = 0f;");
+		}
+		if(Quaternion.Angle(Input.gyro.attitude, lastAttitude) >= 1f) {
+			timeSinceInput = 0f;
+			//Debug.Log("attitude changed! timeSinceInput = 0f;");
+		}
+
+		lastAttitude = Input.gyro.attitude;
 
 		if(!swipeTurning) swipeTurnIndex = 0;
 
@@ -376,7 +394,8 @@ public class RobotRelativeControls : MonoBehaviour {
 
 	void CheckGyroTurning() {
 		if(gyroInputs == null) return;
-			
+		if(timeSinceInput > 5f) return;
+		
 		float minRoll = turnInPlaceRollMin;
 		float maxRoll = turnInPlaceRollMax;
 

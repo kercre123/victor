@@ -187,59 +187,9 @@ public class CozmoVision : MonoBehaviour
 		}
 		
 		RequestImage();
-		ResizeToScreen();
 		VisionEnabled();
 
 		if(actionPanel != null) actionPanel.gameObject.SetActive(true);
-	}
-
-	protected virtual void ResizeToScreen() {
-		float dpi = Screen.dpi;//
-		IsSmallScreen = false;
-		if(dpi == 0f) return;
-		
-		float refW = Screen.width;
-		float refH = Screen.height;
-		
-		screenScaleFactor = 1f;
-		
-		if(canvasScaler != null) {
-			screenScaleFactor = canvasScaler.referenceResolution.y / Screen.height;
-			refW = canvasScaler.referenceResolution.x;
-			refH = canvasScaler.referenceResolution.y;
-		}
-		
-		float refAspect = refW / refH;
-		float actualAspect = (float)Screen.width / (float)Screen.height;
-		
-		float totalRefWidth = (refW / refAspect) * actualAspect;
-		float sideBarWidth = (totalRefWidth - refW) * 0.5f;
-		
-		if( sideBarWidth > 50f && anchorToSnapToSideBar != null) {
-			Vector2 size = anchorToSnapToSideBar.sizeDelta;
-			size.x = sideBarWidth * snapToSideBarScale;
-			anchorToSnapToSideBar.sizeDelta = size;
-			
-			if(anchorToCenterOnSideBar != null) {
-				Vector3 anchor = anchorToCenterOnSideBar.anchoredPosition;
-				anchor.x = size.x * 0.5f - sideBarWidth * 0.5f;
-				anchorToCenterOnSideBar.anchoredPosition = anchor;
-			}
-		}
-		
-		float screenHeightInches = (float)Screen.height / (float)dpi;
-		IsSmallScreen = screenHeightInches < CozmoUtil.SMALL_SCREEN_MAX_HEIGHT;
-		if(IsSmallScreen && anchorToScaleOnSmallScreens != null) {
-			
-			Vector2 size = anchorToScaleOnSmallScreens.sizeDelta;
-			float newScale = (refH * scaleOnSmallScreensFactor) / size.y;
-			
-			anchorToScaleOnSmallScreens.localScale = Vector3.one * newScale;
-			Vector3 anchor = anchorToScaleOnSmallScreens.anchoredPosition;
-			anchor.y = 0f;
-			anchorToScaleOnSmallScreens.anchoredPosition = anchor;
-		}
-		
 	}
 	
 	protected virtual void VisionEnabled()

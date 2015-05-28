@@ -7,9 +7,11 @@ using G2U = Anki.Cozmo.G2U;
 using U2G = Anki.Cozmo.U2G;
 
 public enum CubeType {
+	UNKNOWN = -1,
 	LIGHT_CUBE,
 	BULLS_EYE,
-	FLAG
+	FLAG,
+	Count
 }
 
 public class ObservedObject
@@ -89,8 +91,11 @@ public class ObservedObject
 		} else if (objectType == 4 || objectType == 5) {
 			cubeType = CubeType.BULLS_EYE;
 		}
-		else if (objectType == 11 || objectType == 12) {
+		else if (objectType == 11 || objectType == 12 || objectType == 13) {
 			cubeType = CubeType.FLAG;
+		} else {
+			cubeType = CubeType.UNKNOWN;
+			Debug.LogWarning("Object " + ID + " with type " + objectType + " is unsupported"); 
 		}
 
 		if(SignificantChangeDetected != null) SignificantChangeDetected();

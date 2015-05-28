@@ -68,7 +68,10 @@ public class ActionSliderPanel : ActionPanel
 	[SerializeField] private AudioClip slideInSound;
 	[SerializeField] private AudioClip slideOutSound;
 	[SerializeField] private GameObject background;
-	[SerializeField] private Animation sheenAnimation;
+	[SerializeField] private Animation actionAnimation;
+	[SerializeField] private AnimationClip actionIdleAnim;
+	[SerializeField] private AnimationClip actionSheenAnim;
+
 	[SerializeField] private AudioClip actionsAvailableSound;
 	[SerializeField] private AudioClip actionsNotAvailableSound;
 
@@ -93,6 +96,12 @@ public class ActionSliderPanel : ActionPanel
 		base.OnEnable();
 		
 		secondaryActionsAvailableLastFrame = false;
+
+		if(actionAnimation != null) {
+			actionAnimation.Stop();
+			actionAnimation.Play(actionIdleAnim.name);
+		}
+
 	}
 
 	protected override void OnDisable() {
@@ -146,20 +155,25 @@ public class ActionSliderPanel : ActionPanel
 			upLastFrame = true;
 			downLastFrame = false;
 
-			if(sheenAnimation != null) {
+			if(actionAnimation != null && secondaryActionsAvailableLastFrame != actionsAvailable) {
 				if(actionsAvailable) {
-					sheenAnimation.Play ();
+					//Debug.Log("actionAnimation.CrossFade(actionSheenAnim.name, 0.5f, PlayMode.StopAll);");
+					actionAnimation.CrossFade(actionSheenAnim.name, 0.5f, PlayMode.StopAll);
 				}
 				else {
-					sheenAnimation.Rewind();
-					sheenAnimation.Sample();
-					sheenAnimation.Stop ();
+					//Debug.Log("actionAnimation.CrossFade(actionIdleAnim.name, 0.5f, PlayMode.StopAll);");
+					actionAnimation.CrossFade(actionIdleAnim.name, 0.5f, PlayMode.StopAll);
 				}
 			}
 
-
 		}
 		else {
+
+			if(actionAnimation != null) {
+				actionAnimation.Stop();
+				actionAnimation.Play(actionIdleAnim.name);
+			}
+
 			if(!downLastFrame) actionSlider.currentAction.OnPress();
 
 			downLastFrame = true;
