@@ -170,7 +170,8 @@ namespace Anki
       // Wrapper for above that returns bounding boxes of objects that are
       // obstacles given the robot's current z height. Objects being carried
       // and the object the robot is localized to are not considered obstacles.
-      void GetObstacles(std::vector<std::pair<Quad2f,ObjectID> >& boundingBoxes, const f32 padding) const;
+      void GetObstacles(std::vector<std::pair<Quad2f,ObjectID> >& boundingBoxes,
+                        const f32 padding = 0.f) const;
       
       // Get objects newly-observed or re-observed objects in the last Update.
       /*

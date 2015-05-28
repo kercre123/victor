@@ -380,7 +380,7 @@ namespace Anki {
       
       std::vector<PreActionPose> possiblePreActionPoses;
       std::vector<std::pair<Quad2f,ObjectID> > obstacles;
-      robot.GetBlockWorld().GetObstacles(obstacles, ROBOT_BOUNDING_Y*0.5f);
+      robot.GetBlockWorld().GetObstacles(obstacles);
       object->GetCurrentPreActionPoses(possiblePreActionPoses, {_actionType},
                                        std::set<Vision::Marker::Code>(),
                                        obstacles,
@@ -465,7 +465,7 @@ namespace Anki {
       
       std::vector<PreActionPose> possiblePreActionPoses;
       std::vector<std::pair<Quad2f,ObjectID> > obstacles;
-      robot.GetBlockWorld().GetObstacles(obstacles, ROBOT_BOUNDING_Y*0.5f);
+      robot.GetBlockWorld().GetObstacles(obstacles);
       object->GetCurrentPreActionPoses(possiblePreActionPoses, {_actionType},
                                        std::set<Vision::Marker::Code>(),
                                        obstacles,
@@ -1185,7 +1185,7 @@ namespace Anki {
       // Verify that we ended up near enough a PreActionPose of the right type
       std::vector<PreActionPose> preActionPoses;
       std::vector<std::pair<Quad2f, ObjectID> > obstacles;
-      robot.GetBlockWorld().GetObstacles(obstacles, ROBOT_BOUNDING_Y*0.5f);
+      robot.GetBlockWorld().GetObstacles(obstacles);
       dockObject->GetCurrentPreActionPoses(preActionPoses, {GetPreActionType()},
                                            std::set<Vision::Marker::Code>(), obstacles);
       
