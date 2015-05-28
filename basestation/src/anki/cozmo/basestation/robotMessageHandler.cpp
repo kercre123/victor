@@ -40,102 +40,124 @@ namespace Anki {
   namespace Cozmo {
     
     RobotMessageHandler::RobotMessageHandler()
-    : comms_(NULL), robotMgr_(NULL)
+    : channel_(NULL), robotMgr_(NULL)
     {
       
     }
-    Result RobotMessageHandler::Init(Comms::IComms* comms,
+    Result RobotMessageHandler::Init(Comms::IChannel* channel,
                                      RobotManager*  robotMgr)
     {
       Result retVal = RESULT_OK;
       
       //TODO: PRINT_NAMED_DEBUG("RobotMessageHandler", "Initializing comms");
-      comms_ = comms;
+      channel_ = channel;
       robotMgr_ = robotMgr;
       
-      if(comms_) {
-        isInitialized_ = comms_->IsInitialized();
-        if (isInitialized_ == false) {
-          PRINT_NAMED_ERROR("RobotMessageHandler", "Expecting passed-in comms to be initialized!");
-          retVal = RESULT_FAIL;
-        }
-      }
-      
       return retVal;
     }
     
 
-    Result RobotMessageHandler::SendMessage(const RobotID_t robotID, const RobotMessage& msg)
+    Result RobotMessageHandler::SendMessage(const RobotID_t robotID, const RobotMessage& msg, bool reliable, bool hot)
     {
-      Comms::MsgPacket p;
-      p.data[0] = msg.GetID();
-      msg.GetBytes(p.data+1);
-      p.dataLen = msg.GetSize() + 1;
+      Comms::OutgoingPacket p;
+      p.buffer[0] = msg.GetID();
+      msg.GetBytes(p.buffer + 1);
+      p.bufferSize = msg.GetSize() + 1;
       p.destId = robotID;
+      p.reliable = reliable;
+      p.hot = hot;
       
-      return comms_->Send(p) > 0 ? RESULT_OK : RESULT_FAIL;
+      return channel_->Send(p) > 0 ? RESULT_OK : RESULT_FAIL;
     }
 
-    u32 RobotMessageHandler::GetNumMsgsSentThisTic(const RobotID_t robotID)
+    Result RobotMessageHandler::ProcessPacket(const Comms::IncomingPacket& packet)
     {
-      return comms_->GetNumMsgPacketsInSendQueue(robotID);
-    }
-    
-    Result RobotMessageHandler::ProcessPacket(const Comms::MsgPacket& packet)
-    {
-      Result retVal = RESULT_FAIL;
-      
       if(robotMgr_ == NULL) {
-        PRINT_NAMED_ERROR("RobotMessageHandler.NullRobotManager",
-                          "RobotManager NULL when RobotMessageHandler::ProcessPacket() called.\n");
+        PRINT_STREAM_ERROR("RobotMessageHandler.NullRobotManager",
+                          "RobotManager NULL when RobotMessageHandler::ProcessPacket() called.");
+        return RESULT_FAIL;
       }
-      else {
-        const u8 msgID = packet.data[0];
-        
-        // Check for invalid msgID
-        if (msgID >= NUM_MSG_IDS || msgID == 0) {
-          PRINT_NAMED_ERROR("RobotMessageHandler.InvalidMsgId",
-                            "Received msgID is invalid (Msg %d, MaxValidID %d)\n",
-                            msgID,
-                            NUM_MSG_IDS
-                            );
-          return RESULT_FAIL;
-        }
-        
-        // Check that the msg size matches expected size
-        if(lookupTable_[msgID].size != packet.dataLen-1) {
-          PRINT_NAMED_ERROR("RobotMessageHandler.MessageBufferWrongSize",
-                            "Buffer's size does not match expected size for this message ID. (Msg %d, expected %d, recvd %d)\n",
-                            msgID,
-                            lookupTable_[msgID].size,
-                            packet.dataLen - 1
-                            );
-        }
-        else {
-          const RobotID_t robotID = packet.sourceId;
-          //Robot* robot = RobotManager::getInstance()->GetRobotByID(robotID);
-          Robot* robot = robotMgr_->GetRobotByID(robotID);
-          if(robot == NULL) {
-            PRINT_NAMED_ERROR("MessageFromInvalidRobotSource",
-                              "Message %d received from invalid robot source ID %d.\n",
-                              msgID, robotID);
-          }
-          else if(this->lookupTable_[msgID].ProcessPacketAs == nullptr) {
-            PRINT_NAMED_ERROR("RobotMessageHandler.ProcessPacket.NullProcessPacketFcn",
-                              "Message %d received by robot %d, but no ProcessPacketAs function defined for it.\n",
-                              msgID, robotID);
-          }
-          else {
-            // This calls the (macro-generated) ProcessPacketAs_MessageX() method
-            // indicated by the lookup table, which will cast the buffer as the
-            // correct message type and call the specified robot's ProcessMessage(MessageX)
-            // method.
-            retVal = (this->*lookupTable_[msgID].ProcessPacketAs)(robot, packet.data+1);
-          }
-        }
-      } // if(robotMgr_ != NULL)
       
-      return retVal;
+      switch (packet.tag) {
+        case Comms::IncomingPacket::Tag::Connected:
+          if (!robotMgr_->DoesRobotExist(static_cast<RobotID_t>(packet.sourceId))) {
+            PRINT_STREAM_ERROR("RobotMessageHandler.Connected",
+                               "Incoming connection not found for robot id " << packet.sourceId << ", address " << packet.sourceAddress << ". Disconnecting.");
+            return RESULT_FAIL;
+          }
+          
+          PRINT_STREAM_DEBUG("RobotMessageHandler.Connected",
+                             "Connection accepted from connection id " << packet.sourceId << ", address " << packet.sourceAddress << ".");
+          return RESULT_OK;
+        case Comms::IncomingPacket::Tag::Disconnected:
+          PRINT_STREAM_INFO("RobotMessageHandler.Disconnected",
+                             "Disconnected from connection id " << packet.sourceId << ", address " << packet.sourceAddress << ".");
+          robotMgr_->RemoveRobot(static_cast<RobotID_t>(packet.sourceId));
+          return RESULT_OK;
+        
+        case Comms::IncomingPacket::Tag::NormalMessage:
+          break;
+        
+        // should be handled internally by MultiClientChannel, but in case it's a different IChannel
+        case Comms::IncomingPacket::Tag::ConnectionRequest:
+          channel_->RefuseIncomingConnection(packet.sourceAddress);
+          return RESULT_OK;
+        
+        default:
+          return RESULT_FAIL;
+      }
+      
+      if (packet.bufferSize == 0) {
+        PRINT_STREAM_ERROR("RobotMessageHandler.ZeroSizeNormalPacket",
+                           "Got a normal packet of zero length from " << packet.sourceAddress);
+        return RESULT_FAIL;
+      }
+      
+      const u8 msgID = packet.buffer[0];
+      
+      // Check for invalid msgID
+      if (msgID >= NUM_MSG_IDS || msgID == 0) {
+        PRINT_NAMED_ERROR("RobotMessageHandler.InvalidMsgId",
+                          "Received msgID is invalid (Msg %d, MaxValidID %d)\n",
+                          msgID,
+                          NUM_MSG_IDS
+                          );
+        return RESULT_FAIL;
+      }
+      
+      // Check that the msg size matches expected size
+      if(lookupTable_[msgID].size != packet.bufferSize-1) {
+        PRINT_NAMED_ERROR("RobotMessageHandler.MessageBufferWrongSize",
+                          "Buffer's size does not match expected size for this message ID. (Msg %d, expected %d, recvd %d)",
+                          msgID,
+                          lookupTable_[msgID].size,
+                          packet.bufferSize - 1
+                          );
+        return RESULT_FAIL;
+      }
+      
+      const RobotID_t robotID = packet.sourceId;
+      //Robot* robot = RobotManager::getInstance()->GetRobotByID(robotID);
+      Robot* robot = robotMgr_->GetRobotByID(robotID);
+      if(robot == NULL) {
+        PRINT_NAMED_ERROR("MessageFromInvalidRobotSource",
+                          "Message %d received from invalid robot source ID %d.",
+                          msgID, robotID);
+        return RESULT_FAIL;
+      }
+      
+      if(this->lookupTable_[msgID].ProcessPacketAs == nullptr) {
+        PRINT_NAMED_ERROR("RobotMessageHandler.ProcessPacket.NullProcessPacketFcn",
+                          "Message %d received by robot %d, but no ProcessPacketAs function defined for it.",
+                          msgID, robotID);
+        return RESULT_FAIL;
+      }
+      
+      // This calls the (macro-generated) ProcessPacketAs_MessageX() method
+      // indicated by the lookup table, which will cast the buffer as the
+      // correct message type and call the specified robot's ProcessMessage(MessageX)
+      // method.
+      return (this->*lookupTable_[msgID].ProcessPacketAs)(robot, packet.buffer+1);
     } // ProcessBuffer()
     
     Result RobotMessageHandler::ProcessMessages()
@@ -145,15 +167,12 @@ namespace Anki {
       if(isInitialized_) {
         retVal = RESULT_OK;
         
-        while(comms_->GetNumPendingMsgPackets() > 0)
-        {
-          Comms::MsgPacket packet;
-          comms_->GetNextMsgPacket(packet);
-          
+        Comms::IncomingPacket packet;
+        while (channel_->PopIncomingPacket(packet)) {
           if(ProcessPacket(packet) != RESULT_OK) {
             retVal = RESULT_FAIL;
           }
-        } // while messages are still available from comms
+        }
       }
       
       return retVal;

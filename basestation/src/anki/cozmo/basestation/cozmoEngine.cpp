@@ -14,7 +14,7 @@
 
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/cozmoEngine.h"
-#include "anki/cozmo/basestation/multiClientComms.h" // TODO: Remove?
+#include "anki/cozmo/basestation/multiClientChannel.h" // TODO: Remove?
 #include "anki/cozmo/basestation/robotManager.h"
 #include "anki/cozmo/basestation/visionProcessingThread.h"
 #include "anki/cozmo/basestation/signals/cozmoEngineSignals.h"
@@ -79,7 +79,7 @@ namespace Cozmo {
     
     Json::Value               _config;
     
-    MultiClientComms          _robotComms;
+    MultiClientChannel        _robotComms;
     
     // TODO: Merge this into RobotManager
     // Each engine can potetnailly talk to multiple physical robots.
@@ -154,12 +154,18 @@ namespace Cozmo {
     }
     
     Result lastResult = RESULT_OK;
-    lastResult = _robotComms.Init(_config[AnkiUtil::kP_ADVERTISING_HOST_IP].asCString(),
-                                  _config[AnkiUtil::kP_ROBOT_ADVERTISING_PORT].asInt(),
-                                  MAX_SENT_BYTES_PER_TIC_TO_ROBOT);
-    if(lastResult != RESULT_OK) {
-      PRINT_NAMED_ERROR("CozmoEngine.Init", "Failed to initialize RobotComms.\n");
-      return lastResult;
+    const char *ipString = _config[AnkiUtil::kP_ADVERTISING_HOST_IP].asCString();
+    int port =_config[AnkiUtil::kP_ROBOT_ADVERTISING_PORT].asInt();
+    if (port < 0 || port >= 0x10000) {
+      PRINT_NAMED_ERROR("CozmoEngine.Init", "Failed to initialize RobotComms; bad port.");
+      return RESULT_FAIL;
+    }
+    Anki::Util::TransportAddress address(ipString, static_cast<uint16_t>(port));
+    
+    _robotComms.Start(address);
+    if(!_robotComms.IsStarted()) {
+      PRINT_NAMED_ERROR("CozmoEngine.Init", "Failed to initialize RobotComms.");
+      return RESULT_FAIL;
     }
     
     if(!_config.isMember(AnkiUtil::kP_VIZ_HOST_IP)) {
@@ -205,8 +211,9 @@ namespace Cozmo {
   
   bool CozmoEngineImpl::ConnectToRobot(AdvertisingRobot whichRobot)
   {
-    const bool success = _robotComms.ConnectToDeviceByID(whichRobot);
-    if(success) {
+    Anki::Comms::ConnectionId id = static_cast<Anki::Comms::ConnectionId>(whichRobot);
+    bool success = _robotComms.AcceptAdvertisingConnection(id);
+    if (success) {
       _connectedRobots[whichRobot];
       //_connectedRobots[whichRobot].visionThread.Start();
       //_connectedRobots[whichRobot].visionMsgHandler.Init(<#Comms::IComms *comms#>, <#Anki::Cozmo::RobotManager *robotMgr#>)
@@ -217,7 +224,8 @@ namespace Cozmo {
   }
   
   void CozmoEngineImpl::DisconnectFromRobot(RobotID_t whichRobot) {
-    _robotComms.DisconnectDeviceByID(whichRobot);
+    Anki::Comms::ConnectionId id = static_cast<Anki::Comms::ConnectionId>(whichRobot);
+    _robotComms.RemoveConnection(id);
     auto connectedRobotIter = _connectedRobots.find(whichRobot);
     if(connectedRobotIter != _connectedRobots.end()) {
       _connectedRobots.erase(connectedRobotIter);
@@ -248,9 +256,9 @@ namespace Cozmo {
     
     
     // Notify any listeners that robots are advertising
-    std::vector<int> advertisingRobots;
-    _robotComms.GetAdvertisingDeviceIDs(advertisingRobots);
-    for(auto & robot : advertisingRobots) {
+    std::vector<Comms::ConnectionId> advertisingRobots;
+    _robotComms.GetAdvertisingConnections(advertisingRobots);
+    for(auto robot : advertisingRobots) {
       CozmoEngineSignals::RobotAvailableSignal().emit(robot);
     }
   
@@ -611,10 +619,7 @@ namespace Cozmo {
   {
      
     // Update robot comms
-    if(_robotComms.IsInitialized()) {
-      // Receive messages but don't send queued messages
-      _robotComms.Update(false);
-    }
+    _robotComms.Update();
     
     if(_isListeningForRobots) {
       _robotAdvertisementService.Update();
@@ -628,9 +633,6 @@ namespace Cozmo {
     // Let the robot manager do whatever it's gotta do to update the
     // robots in the world.
     _robotMgr.UpdateAllRobots();
-    
-    // Send messages
-    _robotComms.Update();
     
     return RESULT_OK;
   } // UpdateInternal()

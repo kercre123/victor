@@ -27,7 +27,7 @@
 
 #include "anki/vision/basestation/image.h"
 
-#include "anki/messaging/basestation/IComms.h"
+#include "anki/messaging/basestation/IChannel.h"
 
 namespace Anki {
   namespace Cozmo {
@@ -44,14 +44,12 @@ namespace Anki {
     public:
       
       // TODO: Change these to interface references so they can be stubbed as well
-      virtual Result Init(Comms::IComms* comms,
+      virtual Result Init(Comms::IChannel* comms,
                           RobotManager*  robotMgr) = 0;
       
       virtual Result ProcessMessages() = 0;
       
-      virtual Result SendMessage(const RobotID_t robotID, const RobotMessage& msg) = 0;
-
-      virtual u32 GetNumMsgsSentThisTic(const RobotID_t robotID) = 0;
+      virtual Result SendMessage(const RobotID_t robotID, const RobotMessage& msg, bool reliable = true, bool hot = false) = 0;
       
     }; // IRobotMessageHandler
     
@@ -63,7 +61,7 @@ namespace Anki {
       RobotMessageHandler(); // Force construction with stuff in Init()?
 
       // Set the message handler's communications manager
-      virtual Result Init(Comms::IComms* comms,
+      virtual Result Init(Comms::IChannel* comms,
                           RobotManager*  robotMgr);
       
       // As long as there are messages available from the comms object,
@@ -71,13 +69,11 @@ namespace Anki {
       virtual Result ProcessMessages();
       
       // Send a message to a specified ID
-      virtual Result SendMessage(const RobotID_t robotID, const RobotMessage& msg);
-      
-      virtual u32 GetNumMsgsSentThisTic(const RobotID_t robotID);
+      virtual Result SendMessage(const RobotID_t robotID, const RobotMessage& msg, bool reliable = true, bool hot = false) override;
       
     protected:
       
-      Comms::IComms* comms_;
+      Comms::IChannel* channel_;
       RobotManager* robotMgr_;
       
       bool isInitialized_;
@@ -86,7 +82,7 @@ namespace Anki {
       
       // Process a raw byte buffer as a message and send it to the specified
       // robot
-      Result ProcessPacket(const Comms::MsgPacket& packet);
+      Result ProcessPacket(const Comms::IncomingPacket& packet);
       
       // Auto-gen the ProcessBufferAs_MessageX() method prototypes using macros:
 #define MESSAGE_DEFINITION_MODE MESSAGE_PROCESS_METHODS_MODE
@@ -119,7 +115,7 @@ namespace Anki {
     public:
       MessageHandlerStub() { }
       
-      Result Init(Comms::IComms* comms,
+      Result Init(Comms::IChannel* comms,
                   RobotManager*  robotMgr)
       {
         return RESULT_OK;
@@ -132,7 +128,8 @@ namespace Anki {
       }
       
       // Send a message to a specified ID
-      Result SendMessage(const RobotID_t robotID, const RobotMessage& msg) {
+      Result SendMessage(const RobotID_t robotID, const RobotMessage& msg, bool reliable = true, bool hot = false) override
+      {
         return RESULT_OK;
       }
 
