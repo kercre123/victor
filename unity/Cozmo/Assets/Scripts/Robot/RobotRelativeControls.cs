@@ -6,6 +6,7 @@ using System.Collections.Generic;
 public class RobotRelativeControls : MonoBehaviour {
 
 #region INSPECTOR FIELDS
+
 	[SerializeField] VirtualStick verticalStick = null;
 	[SerializeField] VirtualStick horizontalStick = null;
 	[SerializeField] Slider headAngleSlider = null;
@@ -28,6 +29,7 @@ public class RobotRelativeControls : MonoBehaviour {
 #endregion
 
 #region MISC MEMBERS
+
 	Vector2 inputs = Vector2.zero;
 	Vector2 lastInputs = Vector2.zero;
 	float leftWheelSpeed = 0f;
@@ -56,6 +58,7 @@ public class RobotRelativeControls : MonoBehaviour {
 	bool headAngleSliderEngaged = false;
 	bool liftSliderEngaged = false;
 	float timeSinceInput = 0f;
+	Quaternion lastAttitude = Quaternion.identity;
 
 #endregion
 
@@ -92,15 +95,12 @@ public class RobotRelativeControls : MonoBehaviour {
 		ShowSticks();
 	}
 
-	
-	Quaternion lastAttitude = Quaternion.identity;
-
 	void Update() {
 
 		timeSinceInput += Time.deltaTime;
 
 		bool controlsDisabled = robot == null || robot.isBusy;
-		controlsDisabled |= GameLayoutTracker.instance != null && GameLayoutTracker.instance.Phase == GameLayoutTracker.LayoutTrackerPhase.INVENTORY;
+		controlsDisabled |= GameLayoutTracker.instance != null && GameLayoutTracker.instance.Phase == LayoutTrackerPhase.INVENTORY;
 
 		if(controlsDisabled) {
 			ShowSticks(false);
