@@ -730,7 +730,8 @@ public class Robot
 		FaceObjectMessage.robotID = ID;
 		FaceObjectMessage.maxTurnAngle = float.MaxValue;
 		FaceObjectMessage.turnAngleTol = Mathf.Deg2Rad; //one degree seems to work?
-
+		FaceObjectMessage.headTrackWhenDone = System.Convert.ToByte( true );
+		
 		Debug.Log( "Face Object " + FaceObjectMessage.objectID );
 
 		RobotEngineManager.instance.Message.FaceObject = FaceObjectMessage;

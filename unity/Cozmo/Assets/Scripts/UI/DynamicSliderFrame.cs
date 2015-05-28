@@ -6,6 +6,7 @@ using System.Collections;
 public class DynamicSliderFrame : MonoBehaviour, IPointerDownHandler, IPointerUpHandler, IDragHandler {
 	[SerializeField] Slider slider;
 	[SerializeField] RectTransform hintsToHide;
+	[SerializeField] Text description;
 
 	RectTransform rTrans;
 	RectTransform sliderTrans;
@@ -31,14 +32,16 @@ public class DynamicSliderFrame : MonoBehaviour, IPointerDownHandler, IPointerUp
 		ScreenMultiSettingsDetector.ShareSettings += RefreshToScreenSettings;
 
 		if(hintsToHide != null) hintsToHide.gameObject.SetActive(dynamic);
+		if(description != null) description.gameObject.SetActive(true);
 
 		sliderTrans.gameObject.SetActive(!dynamic);
 	}
 
 	void OnDisable() {
 		if(dynamic) slider.gameObject.SetActive(false);
+		if(hintsToHide != null) hintsToHide.gameObject.SetActive(false);
+		if(description != null) description.gameObject.SetActive(false);
 		ScreenMultiSettingsDetector.ShareSettings -= RefreshToScreenSettings;
-
 	}
 
 	public void OnPointerDown(PointerEventData eventData) {

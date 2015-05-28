@@ -38,7 +38,9 @@ public class GameLayoutTracker : MonoBehaviour {
 	[SerializeField] GameObject layoutPreviewPanel = null;
 	[SerializeField] GameObject hideDuringPreview = null;
 	[SerializeField] Text previewTitle;
-	[SerializeField] GameObject showWhenInventoryCompleted;
+	[SerializeField] Button button_manualBuild;
+	[SerializeField] Button button_autoBuild;
+	[SerializeField] Image image_localizedCheck;
 	[SerializeField] GameObject hideWhenInventoryComplete;
 
 	[SerializeField] GameObject layoutInstructionsPanel = null;
@@ -54,6 +56,7 @@ public class GameLayoutTracker : MonoBehaviour {
 	[SerializeField] ScreenMessage screenMessage = null;
 	[SerializeField] float coplanarFudge = 0.5f;
 	[SerializeField] float distanceFudge = 0.5f;
+	[SerializeField] float angleFudge = 10f;
 
 	[SerializeField] AudioClip inventoryCompleteSound = null;
 
@@ -150,7 +153,10 @@ public class GameLayoutTracker : MonoBehaviour {
 		previewTitle.text = fullName;
 		instructionsTitle.text = fullName;
 
-		if(showWhenInventoryCompleted != null) showWhenInventoryCompleted.SetActive(false);
+		if(button_manualBuild != null) button_manualBuild.gameObject.SetActive(false);
+		if(button_autoBuild != null) button_autoBuild.gameObject.SetActive(false);
+		if(image_localizedCheck != null) image_localizedCheck.gameObject.SetActive(false);
+		
 		if(hideWhenInventoryComplete != null) hideWhenInventoryComplete.SetActive(true);
 
 		RefreshLayout();
@@ -344,23 +350,33 @@ public class GameLayoutTracker : MonoBehaviour {
 				}
 	
 				//look down if not localized
-				if(robot != null && !robot.IsLocalized()) {
-					robot.SetHeadAngle();
-				}
-				else if(inventory.Count > 0) { //look at last seen object if any seen
-					//Debug.Log( "TrackHeadToObject " + inventory[inventory.Count-1] );
-					robot.TrackHeadToObject(inventory[inventory.Count-1],true);
-				}
-				else if(robot != null) { //look straight ahead to see objects
-					robot.SetHeadAngle(0f);
+				if(robot != null) {
+					if(!robot.IsLocalized()) {
+						Debug.Log( "look down because not localized" );
+	
+						robot.SetHeadAngle();
+					}
+					else if(inventory.Count > 0) { //look at last seen object if any seen
+						Debug.Log( "look at last seen object if any seen: TrackHeadToObject " + inventory[inventory.Count-1] );
+						robot.TrackHeadToObject(inventory[inventory.Count-1],true);
+					}
+					else { //look straight ahead to see objects
+						Debug.Log( "look straight ahead to see objects" );
+	
+						robot.SetHeadAngle(0f);
+					}
 				}
 				                        
-				if(showWhenInventoryCompleted != null) {
-					if(!showWhenInventoryCompleted.activeSelf && inventoryComplete) {
+				if(button_manualBuild != null) {
+					if(!button_manualBuild.gameObject.activeSelf && inventoryComplete) {
 						AudioManager.PlayOneShot(inventoryCompleteSound);
 					}
-					showWhenInventoryCompleted.SetActive(inventoryComplete);
+					button_manualBuild.gameObject.SetActive(inventoryComplete);
 				}
+
+				
+				if(image_localizedCheck != null) image_localizedCheck.gameObject.SetActive(robot.IsLocalized());
+				if(button_autoBuild != null) button_autoBuild.gameObject.SetActive(inventoryComplete && robot.IsLocalized());
 
 				if(hideWhenInventoryComplete != null) hideWhenInventoryComplete.SetActive(!inventoryComplete);
 
@@ -533,7 +549,7 @@ public class GameLayoutTracker : MonoBehaviour {
 	}
 
 	List<ObservedObject> potentialObservedObjects = new List<ObservedObject>();
-	string ValidateBlocks() {
+	string ValidateBlocksOld() {
 		string error = "";
 		validCount = 0;
 
@@ -704,6 +720,70 @@ public class GameLayoutTracker : MonoBehaviour {
 			AudioManager.PlayAudioClip(cubePlaced, 0, AudioManager.Source.Notification);
 		}
 
+
+		return error;
+	}
+
+	string ValidateBlocks() {
+		string error = "";
+		validCount = 0;
+		validated.Clear();
+
+		if(robot == null) return error;
+
+		GameLayout layout = currentLayout;
+		if(layout == null) return error;
+		
+		//first loop through and clear our old assignments
+		for(int layoutBlockIndex=0; layoutBlockIndex<layout.blocks.Count; layoutBlockIndex++) {
+			BuildInstructionsCube block = layout.blocks[layoutBlockIndex];
+			block.Hidden = false;
+			block.Highlighted = true;
+			block.Validated = false;
+			block.AssignedObject = null;
+		}
+		
+		potentialObservedObjects.Clear ();
+		potentialObservedObjects.AddRange (robot.knownObjects);
+		
+		if(debug) Debug.Log("ValidateBlocks with robot.knownObjects.Count("+robot.knownObjects.Count+")");
+		
+		//loop through our 'ideal' layout blocks and look for known objects that might satisfy the requirements of each
+		for(int layoutBlockIndex=0; layoutBlockIndex<layout.blocks.Count; layoutBlockIndex++) {
+			BuildInstructionsCube block = layout.blocks[layoutBlockIndex];
+			
+			if(debug) Debug.Log("attempting to validate block("+block.gameObject.name+") of type("+block.cubeType+")");
+			
+			//search through known objects for one that can be assigned
+			for(int objectIndex=0; objectIndex<potentialObservedObjects.Count; objectIndex++) {
+				
+				ObservedObject newObject = potentialObservedObjects[objectIndex];
+				
+				if(debug) Debug.Log("checking if knownObject("+newObject+"):index("+objectIndex+") can satisfy layoutCube("+block.gameObject.name+")");
+				
+				//cannot validate block in hand
+				if(!block.isHeld && newObject == robot.carryingObject) {
+					if(debug) Debug.Log("cannot validate layout cube with carryingObject("+robot.carryingObject+")");
+					continue;
+				}
+				
+				//skip objects of the wrong type
+				if(!block.SatisfiedByObject(newObject, distanceFudge, coplanarFudge, angleFudge, true) ) {
+					if(debug) Debug.Log("skip object("+CozmoPalette.instance.GetNameForObjectType(newObject.cubeType)+") because it isn't "+CozmoPalette.instance.GetNameForObjectType(block.cubeType));
+					continue;
+				}
+
+				ValidateBlock(layoutBlockIndex, newObject);
+				break;
+			}
+			
+		}
+		
+		validCount = validated.Count;
+		
+		if( validCount > lastValidCount && validCount < layout.blocks.Count ) {
+			AudioManager.PlayAudioClip(cubePlaced, 0, AudioManager.Source.Notification);
+		}
 
 		return error;
 	}
@@ -1027,6 +1107,59 @@ public class GameLayoutTracker : MonoBehaviour {
 		ObservedObject objectToPlace = robot.carryingObject;
 		Vector3 pos = Vector3.zero;
 		float facing_rad = 0f;
+		
+		ValidateBlocks ();
+		
+		if(robot == null) return false;
+		if(objectToPlace == null) return false;
+		
+		List<BuildInstructionsCube> newBlocks = currentLayout.blocks.FindAll(x => IsUnvalidatedMatchingGroundBlock(x, objectToPlace, true));
+		
+		if(newBlocks == null || newBlocks.Count == 0) {
+			//this is probably ok?  may need to do more processing to see if its ok
+			
+			newBlocks = currentLayout.blocks.FindAll(x => IsUnvalidatedMatchingStackedBlock(x, objectToPlace, true));
+			if(newBlocks == null || newBlocks.Count == 0) {
+				Debug.Log ("This block is not required in this layout.");
+				return false;
+			}
+			else {
+				return AttemptAssistedStack(objectToPlace, newBlocks);
+			}
+		}
+
+		BuildInstructionsCube bestBlock = newBlocks[0];
+		if(newBlocks.Count > 1) {
+			float closest = float.MaxValue;
+			for(int i=0;i<newBlocks.Count;i++) {
+
+				Vector2 robotPos = robot.WorldPosition;
+				Vector2 blockPos = (CozmoUtil.Vector3UnityToCozmoSpace(newBlocks[i].transform.position) / newBlocks[i].Size) * CozmoUtil.BLOCK_LENGTH_MM;
+
+				float range = (blockPos - robotPos).sqrMagnitude;
+				if(range < closest) {
+					closest = range;
+					bestBlock = newBlocks[i];
+				}
+			}
+		}	
+
+		if (bestBlock.isActive) {
+			ActiveBlock activeBlock = objectToPlace as ActiveBlock;
+			SetLightCubeToCorrectColor(activeBlock);
+		}
+		
+		pos = bestBlock.GetCozmoSpacePose(out facing_rad); 
+
+		robot.DropObjectAtPose(pos, facing_rad);
+		
+		return true;
+	}
+
+	public bool AttemptAssistedPlacementOld() {
+		ObservedObject objectToPlace = robot.carryingObject;
+		Vector3 pos = Vector3.zero;
+		float facing_rad = 0f;
 
 		ValidateBlocks ();
 
@@ -1050,7 +1183,6 @@ public class GameLayoutTracker : MonoBehaviour {
 			}
 		}
 
-		
 		List<BuildInstructionsCube> priorBlocks = currentLayout.blocks.FindAll(x => IsValidGroundBlock(x));
 		
 		if(priorBlocks == null || priorBlocks.Count == 0) {
@@ -1186,8 +1318,39 @@ public class GameLayoutTracker : MonoBehaviour {
 		return true;
 	}
 
-	bool ignoreCoplanerContraintsOnDrop = true;
+	bool ignoreCoplanerConstraintsOnDrop = true;
 	public bool PredictDropValidation( ObservedObject objectToDrop, out string errorText, out LayoutErrorType errorType, out bool approveStandardDrop) {
+		errorText = "";
+		errorType = LayoutErrorType.NONE;
+		approveStandardDrop = false;
+		
+		if(robot == null) return false;
+		if(objectToDrop == null) return false;
+		
+		Vector3 posToDrop = robot.WorldPosition + robot.Forward * CozmoUtil.BLOCK_LENGTH_MM + Vector3.forward * CozmoUtil.BLOCK_LENGTH_MM * 0.5f;
+		
+		List<BuildInstructionsCube> newBlocks = currentLayout.blocks.FindAll(x => IsUnvalidatedMatchingGroundBlock(x, objectToDrop));
+		
+		if(newBlocks == null || newBlocks.Count == 0) {
+			//this is probably ok?  may need to do more processing to see if its ok
+			//error = "No block of this type should be placed here.";
+			approveStandardDrop = true;
+			return false;
+		}
+
+		//see if this drop object will satisfy any layout blocks, set angleFudge to 180f to ignore angle for this prediction (our assisted placement logic will enforce rotation
+		for(int newIndex=0; newIndex < newBlocks.Count; newIndex++) {
+			BuildInstructionsCube block = newBlocks[newIndex];
+			if(!block.PredictSatisfaction(objectToDrop, posToDrop, robot.Rotation, distanceFudge * 2f, float.MaxValue, 180f, true)) continue;
+			return true;
+		}
+		
+		return false;
+	}
+	
+
+
+	public bool PredictDropValidationOld( ObservedObject objectToDrop, out string errorText, out LayoutErrorType errorType, out bool approveStandardDrop) {
 		errorText = "";
 		errorType = LayoutErrorType.NONE;
 		approveStandardDrop = false;
@@ -1231,7 +1394,7 @@ public class GameLayoutTracker : MonoBehaviour {
 				Vector3 realOffset = (posToDrop - priorObject.WorldPosition) / CozmoUtil.BLOCK_LENGTH_MM;
 				
 				//are we basically on the same plane and roughly the correct distance away?
-				if(!ignoreCoplanerContraintsOnDrop && Mathf.Abs(realOffset.z) > ( coplanarFudge * 0.9f )) {
+				if(!ignoreCoplanerConstraintsOnDrop && Mathf.Abs(realOffset.z) > ( coplanarFudge * 0.9f )) {
 					errorText = "Drop position is too " + ( realOffset.z > 0f ? "high" : "low" ) + ".";
 					errorType = realOffset.z > 0f ? LayoutErrorType.TOO_HIGH : LayoutErrorType.TOO_LOW;
 					failDistanceCheck = true;

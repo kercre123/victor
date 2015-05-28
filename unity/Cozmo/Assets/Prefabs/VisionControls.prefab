@@ -3536,11 +3536,6 @@ MonoBehaviour:
   - {fileID: 11473528}
   - {fileID: 11473526}
   - {fileID: 11473524}
-  anchorToSnapToSideBar: {fileID: 0}
-  snapToSideBarScale: 1
-  anchorToCenterOnSideBar: {fileID: 0}
-  anchorToScaleOnSmallScreens: {fileID: 0}
-  scaleOnSmallScreensFactor: .5
   actionSlider:
     slider: {fileID: 11473534}
     highlight: {fileID: 173404}
@@ -3569,7 +3564,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   slider: {fileID: 11473534}
   hintsToHide: {fileID: 22414530}
-  hintsThatFollow: {fileID: 0}
+  description: {fileID: 11473520}
 --- !u!114 &11473542
 MonoBehaviour:
   m_ObjectHideFlags: 1
