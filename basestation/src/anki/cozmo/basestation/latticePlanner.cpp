@@ -120,7 +120,7 @@ void LatticePlannerImpl::ImportBlockworldObstacles(const bool isReplanning, cons
   if(!isReplanning ||  // if not replanning, this must be a fresh, new plan, so we always should get obstacles
      didObjecsChange)
   {
-    std::vector<Quad2f> boundingBoxes;
+    std::vector<std::pair<Quad2f,ObjectID> > boundingBoxes;
 
     robot_->GetBlockWorld().GetObstacles(boundingBoxes, obstaclePadding);
     
@@ -147,7 +147,7 @@ void LatticePlannerImpl::ImportBlockworldObstacles(const bool isReplanning, cons
       for(auto boundingQuad : boundingBoxes) {
 
         Poly2f boundingPoly;
-        boundingPoly.ImportQuad2d(boundingQuad);
+        boundingPoly.ImportQuad2d(boundingQuad.first);
 
         const FastPolygon& expandedPoly =
           env_.AddObstacleWithExpansion(boundingPoly, robotPoly, theta, DEFAULT_OBSTACLE_PENALTY);
@@ -166,7 +166,7 @@ void LatticePlannerImpl::ImportBlockworldObstacles(const bool isReplanning, cons
           // padding
           VizManager::getInstance()->DrawQuad (
             isReplanning ? VIZ_QUAD_PLANNER_OBSTACLE_REPLAN : VIZ_QUAD_PLANNER_OBSTACLE,
-            vizID++, boundingQuad, 0.1f, *vizColor );
+            vizID++, boundingQuad.first, 0.1f, *vizColor );
         }
         numAdded++;
       }
