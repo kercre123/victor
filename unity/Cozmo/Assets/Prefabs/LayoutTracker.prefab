@@ -19573,6 +19573,11 @@ MonoBehaviour:
   image_cozmoTD: {fileID: 11496608}
   carriedBlock2d: {fileID: 11468942}
   button_change: {fileID: 11468932}
+  cycleCount: 5
+  cycleTime: .150000006
+  cycleDelayTime: .400000006
+  cycleSound: {fileID: 8300000, guid: aaf07e730b7dd4b3b8cb044277ac47b4, type: 3}
+  cycleSuccessSound: {fileID: 8300000, guid: 6886e1029a5504a5785834a9973da1e4, type: 3}
 --- !u!114 &11483382
 MonoBehaviour:
   m_ObjectHideFlags: 1

@@ -467,14 +467,14 @@ public class RobotEngineManager : MonoBehaviour {
 		
 		current.selectedObjects.Clear();
 		current.targetLockedObject = null;
-		
+
+		current.localBusyTimer = 0f;
+
 		current.SetHeadAngle();
 		
 		if(SuccessOrFailure != null) {
 			SuccessOrFailure(success, action_type);
 		}
-
-		current.localBusyTimer = 0f;
 
 		if(!success) {
 			if(current.Status(Robot.StatusFlag.IS_CARRYING_BLOCK)) {
