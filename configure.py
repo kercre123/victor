@@ -84,7 +84,7 @@ def parse_arguments():
         action='store_const',
         const='debug',
         help='shortcut for --config Debug')
-    group.add_argument(
+    parser.add_argument(
         '-v',
         '--verbose',
         dest='verbose',
@@ -97,7 +97,10 @@ def parse_arguments():
     for configuration in configurations:
         if configuration.lower() == options.configuration:
             options.configuration = configuration
-    
+            break
+    else:
+      options.configuration = configurations[0]
+
     if options.platforms == 'all':
         options.platforms = 'mac+ios'
     options.platforms = options.platforms.replace(' ', '').split('+')
@@ -138,7 +141,7 @@ class PlatformConfiguration(object):
     
     def generate(self):
         ankibuild.cmake.generate(self.project_dir, REPO_ROOT, self.platform)
-        ankibuild.util.File.mkdir_p(os.path.join(self.project_dir, 'Xcode', 'lib'))
+        ankibuild.util.File.mkdir_p(os.path.join(self.project_dir, 'Xcode', 'lib', options.configuration))
 
     def build(self):
         if not os.path.exists(self.project_path):
