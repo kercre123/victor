@@ -316,8 +316,6 @@ public class GameLayoutTracker : MonoBehaviour {
 				carriedBlock2d.gameObject.SetActive(false);
 				button_change.gameObject.SetActive(false);
 
-				if(robot != null) robot.SetHeadAngle(0f);
-
 				bool inventoryComplete = true;
 
 				for(int i=0;i<blocks2d.Count;i++) {
@@ -342,9 +340,16 @@ public class GameLayoutTracker : MonoBehaviour {
 					}
 				}
 	
-				if(inventory.Count > 0) {
+				//look down if not localized
+				if(robot != null && !robot.IsLocalized()) {
+					robot.SetHeadAngle();
+				}
+				else if(inventory.Count > 0) { //look at last seen object if any seen
 					//Debug.Log( "TrackHeadToObject " + inventory[inventory.Count-1] );
 					robot.TrackHeadToObject(inventory[inventory.Count-1],true);
+				}
+				else if(robot != null) { //look straight ahead to see objects
+					robot.SetHeadAngle(0f);
 				}
 				                        
 				if(showWhenInventoryCompleted != null) {
@@ -989,9 +994,12 @@ public class GameLayoutTracker : MonoBehaviour {
 		return false;
 	}
 
-	void SetLightCubeToCorrectColor(ActiveBlock activeBlock) {
-		BuildInstructionsCube layoutActiveCube = currentLayout.blocks.Find (x => !x.Validated && x.isActive);
-		if(layoutActiveCube == null) return;
+	//allow us to predetermine the target layout cube if we want to, if not we'll reference the first one we find
+	void SetLightCubeToCorrectColor(ActiveBlock activeBlock, BuildInstructionsCube layoutActiveCube=null) {
+		if(layoutActiveCube  == null) {
+			layoutActiveCube = currentLayout.blocks.Find (x => !x.Validated && x.isActive);
+			if(layoutActiveCube == null) return;
+		}
 		if(layoutActiveCube.activeBlockMode == activeBlock.mode) return;
 
 		StartCoroutine(CycleLightCubeModes(activeBlock, layoutActiveCube.activeBlockMode));
@@ -1125,7 +1133,7 @@ public class GameLayoutTracker : MonoBehaviour {
 
 		if(objectToStack.isActive) {
 			ActiveBlock activeBlock = objectToStack as ActiveBlock;
-			SetLightCubeToCorrectColor(activeBlock);
+			SetLightCubeToCorrectColor(activeBlock, layoutBlockToStack);
 		}
 
 		robot.PickAndPlaceObject( objectToStackUpon );

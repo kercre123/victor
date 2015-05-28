@@ -126,6 +126,7 @@ public class Robot
 	public Vector3 Right { get { return Rotation * -Vector3.up;	} }
 
 	public StatusFlag status { get; private set; }
+	public GameStatusFlag gameStatus { get; private set; }
 	public float batteryPercent { get; private set; }
 
 	public List<ObservedObject> markersVisibleObjects { get; private set; }
@@ -290,6 +291,13 @@ public class Robot
 		IS_PERFORMING_ACTION    = 0x80
 	};
 
+	[System.FlagsAttribute]
+	public enum GameStatusFlag
+	{
+		NONE                    = 0,
+		IS_LOCALIZED            = 0x1
+	}
+
 	[System.NonSerialized] public float localBusyTimer = 0f;
 	[System.NonSerialized] public bool localBusyOverride = false;
 	public bool isBusy
@@ -319,6 +327,10 @@ public class Robot
 	public bool Status( StatusFlag s )
 	{
 		return (status & s) == s;
+	}
+
+	public bool IsLocalized() {
+		return (gameStatus & GameStatusFlag.IS_LOCALIZED) != 0;
 	}
 
 	private Robot()
@@ -442,6 +454,7 @@ public class Robot
 		knownObjects.Clear();
 		activeBlocks.Clear();
 		status = StatusFlag.NONE;
+		gameStatus = GameStatusFlag.NONE;
 		WorldPosition = Vector3.zero;
 		Rotation = Quaternion.identity;
 		carryingObjectID = -1;
@@ -499,6 +512,7 @@ public class Robot
 		rightWheelSpeed_mmps = message.rightWheelSpeed_mmps;
 		liftHeight_mm = message.liftHeight_mm;
 		status = (StatusFlag)message.status;
+		gameStatus = (GameStatusFlag)message.gameStatus;
 		batteryPercent = (message.batteryVoltage / MaxVoltage);
 		carryingObjectID = message.carryingObjectID;
 		headTrackingObjectID = message.headTrackingObjectID;
