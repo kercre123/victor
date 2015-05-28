@@ -55,7 +55,7 @@ namespace Cozmo {
   Result CannedAnimationContainer::AddAnimation(const std::string& name) {
     auto retVal = _animations.find(name);
     if(retVal == _animations.end()) {
-      const s32 animID = _animations.size();
+      const s32 animID = static_cast<s32>(_animations.size());
       _animations[name].first = animID;
       
       PRINT_NAMED_INFO("CannedAnimationContainer.AddAnimation",

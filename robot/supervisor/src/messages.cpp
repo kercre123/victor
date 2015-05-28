@@ -1041,7 +1041,7 @@ namespace Anki {
         cv::vector<u8> compressedBuffer;
         cv::imencode(".jpg",  cvImg, compressedBuffer, compressionParams);
         
-        const u32 numTotalBytes = compressedBuffer.size();
+        const u32 numTotalBytes = static_cast<u32>(compressedBuffer.size());
 
         //PRINT("Sending frame with capture time = %d at time = %d\n", captureTime, HAL::GetTimeStamp());
         

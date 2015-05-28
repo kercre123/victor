@@ -4068,6 +4068,7 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
 
   {
     const f64 time0 = GetTimeF64();
+    // note: arglist is screwed up right now
     const Result result = DetectFiducialMarkers(
       image,
       markers,
@@ -4261,6 +4262,7 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark)
   for(s32 iRun=0; iRun<numRuns; iRun++) {
     InitBenchmarking();
 
+    // note: arglist is screwed up right now
     const Result result_binomial = DetectFiducialMarkers(
       image,
       markers,
@@ -4292,6 +4294,7 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark)
 
     InitBenchmarking();
 
+    // note: arglist is screwed up right now
     const Result result_integral = DetectFiducialMarkers(
       image,
       markers,

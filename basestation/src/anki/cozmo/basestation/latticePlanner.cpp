@@ -322,7 +322,7 @@ IPathPlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
   const float maxDistancetoFollowOldPlan_mm = 40.0;
 
   if(forceReplanFromScratch ||
-     !impl_->env_.PlanIsSafe(impl_->totalPlan_, maxDistancetoFollowOldPlan_mm, planIdx, lastSafeState, validOldPlan)) {
+     !impl_->env_.PlanIsSafe(impl_->totalPlan_, maxDistancetoFollowOldPlan_mm, static_cast<int>(planIdx), lastSafeState, validOldPlan)) {
     // at this point, we know the plan isn't completely
     // safe. lastSafeState will be set to the furthest state along the
     // plan (after planIdx) which is safe. validOldPlan will contain a
