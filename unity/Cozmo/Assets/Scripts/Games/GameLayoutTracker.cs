@@ -175,7 +175,7 @@ public class GameLayoutTracker : MonoBehaviour {
 
 	void Update () {
 		
-		if(Input.GetKeyDown(KeyCode.V)) {
+		if(revalidateThisFrame || Input.GetKeyDown(KeyCode.V)) {
 			AnalyzeLayoutForValidation();
 		}
 
@@ -216,6 +216,7 @@ public class GameLayoutTracker : MonoBehaviour {
 		iStartGame = false;
 		iStartBuild = false;
 		iStartAutoBuild = false;
+		revalidateThisFrame = false;
 	}
 
 	LayoutTrackerPhase GetNextPhase() {
@@ -570,12 +571,13 @@ public class GameLayoutTracker : MonoBehaviour {
 
 	}
 
-	//int lastFrameAnalysis = -1;
+	bool revalidateThisFrame = false;
 	void SignificantChangeDetectedInObservedObject() {
+		revalidateThisFrame = true;
 		//if(Time.frameCount == lastFrameAnalysis) return;
 		//lastFrameAnalysis = Time.frameCount;
 		Debug.Log("SignificantChangeDetectedInObservedObject, revalidating!");
-		AnalyzeLayoutForValidation();
+		//AnalyzeLayoutForValidation();
 	}
 
 	void SuccessOrFailure(bool success, RobotActionType action_type) {

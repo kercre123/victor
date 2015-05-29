@@ -602,6 +602,9 @@ public class Robot
 			newBlock = true;
 		}
 		
+		
+		Vector3 oldPos = knownObject.WorldPosition;
+
 		knownObject.UpdateInfo( message );
 		
 		if( observedObjects.Find( x => x == message.objectID ) == null )
@@ -614,7 +617,8 @@ public class Robot
 			markersVisibleObjects.Add( knownObject );
 		}
 
-		if(newBlock) {
+		//if block new or moved a lot since last time we saw it
+		if(newBlock || (carryingObject != knownObject && (oldPos - knownObject.WorldPosition).magnitude > CozmoUtil.BLOCK_LENGTH_MM) ) {
 			if(ObservedObject.SignificantChangeDetected != null) ObservedObject.SignificantChangeDetected();
 		}
 	}

@@ -248,8 +248,7 @@ public class BuildInstructionsCube : MonoBehaviour {
 			return false;
 		}
 		if(!ignorePosition && !MatchesPosition(obj, obj.WorldPosition, flatFudge, verticalFudge, debug)) {
-			//if(debug) 
-			Debug.Log("SatisfiedByObject failed because obj("+obj+").cubeType("+obj.cubeType+") MatchesPosition failed against "+ gameObject.name);
+			if(debug) Debug.Log("SatisfiedByObject failed because obj("+obj+").cubeType("+obj.cubeType+") MatchesPosition failed against "+ gameObject.name);
 			return false;
 		}
 		if(!MatchesRotation(obj.Rotation, angleFudge, allowCardinalAngleOffsets)) {

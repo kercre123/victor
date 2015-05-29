@@ -132,11 +132,6 @@ public class ObservedObject
 
 		Vector3 newPos = new Vector3( message.world_x, message.world_y, message.world_z );
 
-		//detect if this object has moved to a degree significant enough to warrant reValidating the build
-		if( robot != null && robot.carryingObject != this && (newPos - WorldPosition).magnitude > CozmoUtil.BLOCK_LENGTH_MM ){
-			if(SignificantChangeDetected != null) SignificantChangeDetected();
-		}
-
 		//dmdnote cozmo's space is Z up, keep in mind if we need to convert to unity's y up space.
 		WorldPosition = newPos;
 		Rotation = new Quaternion( message.quaternion1, message.quaternion2, message.quaternion3, message.quaternion0 );

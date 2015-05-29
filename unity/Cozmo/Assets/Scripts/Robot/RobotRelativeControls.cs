@@ -187,7 +187,7 @@ public class RobotRelativeControls : MonoBehaviour {
 
 			if(!newLock) CheckSwapTargetLock(targetSwapDirection);
 
-			robot.TrackHeadToObject( targetLock );
+			//robot.TrackHeadToObject( targetLock );
 		}
 
 		bool stopped = inputs.sqrMagnitude == 0f && moveCommandLastFrame;
