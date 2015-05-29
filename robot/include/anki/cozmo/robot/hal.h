@@ -219,8 +219,8 @@ namespace Anki
       void MicroWait(u32 microseconds);
 
       // Get a sync'd timestamp (e.g. for messages), in milliseconds
-      TimeStamp_t GetTimeStamp(void);
-      void SetTimeStamp(TimeStamp_t t);
+      extern "C" TimeStamp_t GetTimeStamp(void);
+      extern "C" void SetTimeStamp(TimeStamp_t t);
 
 // #pragma mark --- Audio ---
       /////////////////////////////////////////////////////////////////////
