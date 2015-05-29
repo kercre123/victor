@@ -573,25 +573,33 @@ public class Robot
 	private void AddActiveBlock( ActiveBlock activeBlock, G2U.RobotObservedObject message )
 	{
 		//Debug.Log( "AddActiveBlock" );
-
+		bool newBlock = false;
 		if( activeBlock == null )
 		{
 			activeBlock = new ActiveBlock( message.objectID, message.objectFamily, message.objectType );
 
 			activeBlocks.Add( activeBlock, activeBlock );
 			knownObjects.Add( activeBlock );
+			newBlock = true;
 		}
 
 		AddObservedObject( activeBlock, message );
+
+		if(newBlock) {
+	 		if(ObservedObject.SignificantChangeDetected != null) ObservedObject.SignificantChangeDetected();
+		}
 	}
 	
 	private void AddObservedObject( ObservedObject knownObject, G2U.RobotObservedObject message )
 	{
+
+		bool newBlock = false;
 		if( knownObject == null )
 		{
 			knownObject = new ObservedObject( message.objectID, message.objectFamily, message.objectType );
 			
 			knownObjects.Add( knownObject );
+			newBlock = true;
 		}
 		
 		knownObject.UpdateInfo( message );
@@ -604,6 +612,10 @@ public class Robot
 		if( knownObject.MarkersVisible && markersVisibleObjects.Find( x => x == message.objectID ) == null )
 		{
 			markersVisibleObjects.Add( knownObject );
+		}
+
+		if(newBlock) {
+			if(ObservedObject.SignificantChangeDetected != null) ObservedObject.SignificantChangeDetected();
 		}
 	}
 
