@@ -257,6 +257,11 @@ class PlatformConfiguration(object):
             print('')
             print('Generating files for platform {0}...'.format(self.platform))
         
+        cwd = ankibuild.util.File.pwd()
+        ankibuild.util.File.cd(os.path.join(ENGINE_ROOT, 'tools', 'anki-util', 'project', 'gyp'))
+        ankibuild.util.File.execute(['./configure.py', '--platform', 'cmake'])
+        ankibuild.util.File.cd(cwd)
+        
         rel_cmake_project = os.path.relpath(self.cmake_project_path, self.workspace_dir)
         
         workspace = ankibuild.xcode.XcodeWorkspace(self.workspace_name)
