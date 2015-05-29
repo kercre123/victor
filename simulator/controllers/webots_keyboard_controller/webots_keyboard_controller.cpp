@@ -1307,7 +1307,7 @@ namespace Anki {
                            colorList[colorIndex].b());
                     msg.onColor = colorList[colorIndex++];
                     msg.offColor = NamedColors::BLACK;
-                    msg.whichLEDs = static_cast<u8>(WhichBlockLEDs::TOP_FACE);
+                    msg.whichLEDs = static_cast<u8>(WhichBlockLEDs::TOP_FACE) | static_cast<u8>(WhichBlockLEDs::FRONT_FACE);
                     msg.makeRelative = 0;
                     msg.turnOffUnspecifiedLEDs = 1;
                   }
