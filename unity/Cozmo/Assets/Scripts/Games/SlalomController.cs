@@ -204,6 +204,7 @@ public class SlalomController : GameController {
 	void GotoStartPose() {
 		float rad;
 		startPosition = GameLayoutTracker.instance.GetStartingPositionFromLayout(out rad, out startFacing);
+		robot.GotoPose(startPosition.x, startPosition.y, rad);
 		CozmoBusyPanel.instance.SetDescription("Cozmo is getting in the starting position.");
 		atYourMark = false;
 		wasAtMark = false;
