@@ -167,6 +167,8 @@ namespace Anki {
     
     void Robot::Delocalize()
     {
+      PRINT_NAMED_INFO("Robot.Delocalize", "Delocalizing robot %d.\n", GetID());
+      
       _localizedToID.UnSet();
       _localizedToFixedMat = false;
 
