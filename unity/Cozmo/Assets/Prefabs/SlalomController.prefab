@@ -866,6 +866,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 62b7da07579bd474b88a194e3fa1ba99, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  debug: 0
   screenSettings:
   - anchoredPosition: {x: 0, y: 0}
     anchoredPosition3D: {x: 0, y: 0, z: 0}
@@ -875,6 +876,7 @@ MonoBehaviour:
     offsetMin: {x: 221, y: 56}
     pivot: {x: .5, y: .5}
     sizeDelta: {x: -442, y: -112}
+    localScale: {x: 1, y: 1, z: 1}
   - anchoredPosition: {x: 0, y: .5}
     anchoredPosition3D: {x: 0, y: .5, z: 0}
     anchorMax: {x: 1, y: 1}
@@ -883,6 +885,7 @@ MonoBehaviour:
     offsetMin: {x: 332, y: 56}
     pivot: {x: .5, y: .5}
     sizeDelta: {x: -664, y: -111}
+    localScale: {x: 1, y: 1, z: 1}
 --- !u!114 &11418320
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -2421,8 +2424,8 @@ RectTransform:
   m_RootOrder: 7
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: .5}
-  m_SizeDelta: {x: -664, y: -111}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: -442, y: -112}
   m_Pivot: {x: .5, y: .5}
 --- !u!224 &22475718
 RectTransform:
