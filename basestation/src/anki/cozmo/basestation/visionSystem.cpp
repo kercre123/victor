@@ -890,7 +890,7 @@ namespace Cozmo {
     }
     else {
       // Everything seems ok!
-      PRINT_STREAM_INFO("Tracker succeeded (%d)!", _trackingIteration);
+      PRINT_STREAM_INFO("Tracker succeeded", _trackingIteration);
       trackingSucceeded = true;
     }
     
