@@ -858,17 +858,17 @@ namespace Anki {
       }
       
       const TimeStamp_t lastObserved = object->GetLastObservedTime();
-      if (robot.GetLastMsgTimestamp() - lastObserved > DOCK_OBJECT_LAST_OBSERVED_TIME_THRESH_MS)
+      if (lastObserved < robot.GetLastImageTimeStamp() - DOCK_OBJECT_LAST_OBSERVED_TIME_THRESH_MS)
       {
         PRINT_NAMED_WARNING("FaceObjectAction.CheckIfDone.ObjectNotFound",
                             "Object still exists, but not seen since %d (Current time = %d)\n",
-                            lastObserved, robot.GetLastMsgTimestamp());
+                            lastObserved, robot.GetLastImageTimeStamp());
         return ActionResult::FAILURE_ABORT;
       }
       
       if(_whichCode != Vision::Marker::ANY_CODE) {
         std::vector<const Vision::KnownMarker*> observedMarkers;
-        object->GetObservedMarkers(observedMarkers, robot.GetLastMsgTimestamp() - DOCK_OBJECT_LAST_OBSERVED_TIME_THRESH_MS);
+        object->GetObservedMarkers(observedMarkers, robot.GetLastImageTimeStamp() - DOCK_OBJECT_LAST_OBSERVED_TIME_THRESH_MS);
         
         bool markerWithCodeSeen = false;
         for(auto marker : observedMarkers) {
