@@ -49,6 +49,9 @@ bool ChannelBase::PopIncomingPacket(IncomingPacket& packet)
 
 void ChannelBase::AddConnection(ConnectionId connectionId, const TransportAddress& address)
 {
+  PRINT_STREAM_DEBUG("ChannelBase.AddConnection",
+                       "ADDING CONNECTION ID " << connectionId << " = " << address);
+  
   auto foundAddress = _addressLookup.find(address);
   if (foundAddress != _addressLookup.end()) {
     // already added; ignore
@@ -138,6 +141,8 @@ void ChannelBase::EmplaceIncomingPacket(const IncomingPacket&& packet)
 void ChannelBase::ReceiveData(const uint8_t *buffer, unsigned int bufferSize, const TransportAddress& sourceAddress)
 {
   //f32 timestamp = BaseStationTimer::getInstance()->GetCurrentTimeInNanoSeconds();
+  PRINT_STREAM_WARNING("UnreliableUDPChannel.ReceiveData",
+                       "RECEIVING DATA SIZE " << bufferSize << " FROM " << sourceAddress);
 
   // will set sourceId on peek
   EmplaceIncomingPacket(IncomingPacket(IncomingPacket::Tag::NormalMessage, buffer, bufferSize, DEFAULT_CONNECTION_ID, sourceAddress));

@@ -100,6 +100,8 @@ void MultiClientChannel::Update()
   IncomingPacket packet;
   while (_advertisingChannel.PopIncomingPacket(packet)) {
     if (packet.tag == IncomingPacket::Tag::NormalMessage) {
+      PRINT_STREAM_DEBUG("MultiClientChannel.Update",
+                         "GOT PACKET! " << packet.sourceId << " " << packet.sourceAddress << " " << (int)packet.tag);
       if (packet.bufferSize == sizeof(Comms::AdvertisementMsg)) {
         Comms::AdvertisementMsg advertisementMessage;
         std::memcpy(&advertisementMessage, packet.buffer, sizeof(Comms::AdvertisementMsg));
@@ -381,6 +383,8 @@ uint32_t MultiClientChannel::GetMaxTotalBytesPerMessage() const
 
 void MultiClientChannel::SendZeroPacket()
 {
+  PRINT_STREAM_WARNING("MultiClientChannel.SendZeroPacket",
+                       "SENDING ZERO PACKET TO " << ADVERTISING_CLIENT_CONNECTION_ID);
   const uint8_t zero = 0;
   OutgoingPacket packet(&zero, 1, ADVERTISING_CLIENT_CONNECTION_ID, false, true);
   _advertisingChannel.Send(packet);

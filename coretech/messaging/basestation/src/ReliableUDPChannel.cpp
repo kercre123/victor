@@ -44,6 +44,10 @@ void ReliableUDPChannel::StartClient()
   std::lock_guard<std::mutex> guard(mutex);
   
   Stop_Internal();
+  
+  if (!unreliableTransport.IsConnected()) {
+    unreliableTransport.SetPort(0);
+  }
   reliableTransport.StartClient();
   isStarted = true;
   isHost = true;

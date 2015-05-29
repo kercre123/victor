@@ -149,8 +149,10 @@ namespace Anki {
       recvBufSize_ = 0;
     }
 
-    bool HAL::RadioSendPacket(const void *buffer, const u32 length)
+    bool HAL::RadioSendPacket(const void *buffer, const u32 length, u8 socket)
     {
+      (void)socket;
+      
       if (server.HasClient()) {
 
 #if(USE_UDP_ROBOT_COMMS==0)

@@ -39,6 +39,9 @@ void UnreliableUDPChannel::StartClient()
 {
   Stop();
   
+  if (!unreliableTransport.IsConnected()) {
+    unreliableTransport.SetPort(0);
+  }
   unreliableTransport.StartClient();
   isHost = false;
   isStarted = true;
@@ -86,6 +89,8 @@ Anki::Util::TransportAddress UnreliableUDPChannel::GetHostingAddress() const
 
 void UnreliableUDPChannel::Update()
 {
+  PRINT_STREAM_DEBUG("UnreliableUDPChannel.Update",
+                       "Updating");
   unreliableTransport.Update();
 }
 
@@ -104,6 +109,8 @@ bool UnreliableUDPChannel::Send(const Anki::Comms::OutgoingPacket& packet)
     return false;
   }
 
+  PRINT_STREAM_WARNING("UnreliableUDPChannel.Send",
+                       "SENDING PACKET LENGTH " << packet.bufferSize << " TO " << address);
   Anki::Util::SrcBufferSet srcBuffers;
   srcBuffers.AddBuffer(Anki::Util::SizedSrcBuffer(packet.buffer, packet.bufferSize));
   unreliableTransport.SendData(address, srcBuffers);
