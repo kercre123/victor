@@ -113,7 +113,21 @@ public class GameController : MonoBehaviour {
 		currentGameName = PlayerPrefs.GetString("CurrentGame", "Unknown");
 		currentLevelNumber = PlayerPrefs.GetInt(currentGameName + "_CurrentLevel", 1);
 
-		if(GameData.instance != null) levelData = GameData.instance.levelData[currentGameName + currentLevelNumber];
+		if(GameData.instance != null)
+		{
+			if(GameData.instance.levelData.ContainsKey(currentGameName + currentLevelNumber))
+			{
+				levelData = GameData.instance.levelData[currentGameName + currentLevelNumber];
+			}
+			else
+			{
+				Debug.LogError("GameData does not contain level: " + currentGameName + currentLevelNumber);
+			}
+		}
+		else
+		{
+			Debug.LogError("GameData is not in scene");
+		}
 
 		if(textError != null) textError.gameObject.SetActive(false);
 		if(playButton != null) playButton.gameObject.SetActive(false);

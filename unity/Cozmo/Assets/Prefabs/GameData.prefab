@@ -9,6 +9,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 409628}
   - 114: {fileID: 11409628}
+  - 114: {fileID: 11475924}
   m_Layer: 0
   m_Name: GameData
   m_TagString: Untagged
@@ -50,12 +51,23 @@ MonoBehaviour:
       stars: 780000005a00000050000000
       scoreToWin: 300
       maxPlayTime: 0
-  - name: EnergyHunt
+  - name: Energy Hunt
     levels:
     - name: 1
       stars: 640000006801000094020000
       scoreToWin: 0
       maxPlayTime: 90
+--- !u!114 &11475924
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 109628}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4020259f823df48a38576cf3965e053f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1

@@ -2,7 +2,6 @@
 using System.Collections;
 using System.Collections.Generic;
 
-[ExecuteInEditMode]
 public class GameData : MonoBehaviour
 {
 	public static GameData instance = null;
@@ -27,12 +26,25 @@ public class GameData : MonoBehaviour
 
 	public Game[] games;
 
+	private void Awake()
+	{
+		if( instance != null )
+		{
+			GameObject.Destroy( gameObject );
+			return;
+		}
+		
+		instance = this;
+		levelData = new Dictionary<string, LevelData>();
+	}
+	
+	private void OnDestroy()
+	{
+		if( instance == this ) instance = null;
+	}
+
 	private void OnEnable()
 	{
-		instance = this;
-
-		if( levelData == null ) levelData = new Dictionary<string, LevelData>();
-
 		levelData.Clear();
 
 		for( int i = 0; i < games.Length; ++i )
@@ -42,10 +54,5 @@ public class GameData : MonoBehaviour
 				levelData.Add( games[i].name + games[i].levels[j].name, games[i].levels[j] );
 			}
 		}
-	}
-
-	private void OnDisable()
-	{
-		if( instance == this ) instance = null;
 	}
 }
