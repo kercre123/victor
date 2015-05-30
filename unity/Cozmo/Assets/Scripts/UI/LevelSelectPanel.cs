@@ -41,7 +41,7 @@ public class LevelSelectPanel : MonoBehaviour {
 			bool interactive = i < 2;
 
 			int level = i+1;
-			selectButton.Initialize(level.ToString(), preview, interactive ? UnityEngine.Random.Range(1,3) : 0, interactive, delegate{LaunchGame(level);});
+			selectButton.Initialize(level.ToString(), preview, interactive ? PlayerPrefs.GetInt(gameName + level + "_stars", 0) : 0, interactive, delegate{LaunchGame(level);});
 
 			levelSelectButtons.Add(selectButton);
 		}

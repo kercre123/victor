@@ -123,7 +123,7 @@ public class GameLayoutTracker : MonoBehaviour {
 			blocksInitialized = true;
 		}
 
-		currentGameName = PlayerPrefs.GetString("CurrentGame", "Slalom");
+		currentGameName = PlayerPrefs.GetString("CurrentGame", "Unknown");
 		currentLevelNumber = PlayerPrefs.GetInt(currentGameName + "_CurrentLevel", 1);
 
 		currentLayout = null;

@@ -122,7 +122,7 @@ public class SlalomController : GameController {
 		score += pointsPerLap;
 		//Debug.Log("LapComplete scores[0](" + scores[0].ToString() + ")");
 		//PlayOneShot(playerScoreSound);
-		int lapsRemaining = (int)((float)scoreToWin / (float)pointsPerLap) - currentLap;
+		int lapsRemaining = (int)((float)levelData.scoreToWin / (float)pointsPerLap) - currentLap;
 		if(lapsRemaining == 0) {
 			if(finalLapSound != null) AudioManager.PlayAudioClip(finalLapSound, cornerTriggeredDelay, AudioManager.Source.Notification);
 			Debug.Log("final lap");
@@ -351,13 +351,16 @@ public class SlalomController : GameController {
 		}
 	}
 
-	protected override void Exit_PLAYING() {
-		base.Exit_PLAYING();
+	protected override void Exit_PLAYING(bool overrideStars = false) {
+		base.Exit_PLAYING(true);
 
 		stars = 0;
-		for(int i = 0; i < starThresholds.Length; ++i) {
-			if(stateTimer <= starThresholds[i]) stars = i + 1;
+		int[] starRequirements = levelData.stars;
+		for(int i = 0; i < starRequirements.Length; ++i) {
+			if(stateTimer <= starRequirements[i] && starRequirements[i] > 0) stars = i + 1;
 		}
+
+		if(stars >= savedStars) savedStars = stars;
 
 		for(int i = 0; i < obstacles.Count; ++i) {
 			obstacles[i].OnAxisChange -= OnActiveBlockRolled;
