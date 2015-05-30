@@ -30,6 +30,7 @@ public class ObservedObject
 	public Quaternion Rotation { get; private set; }
 	public Vector3 Forward { get { return Rotation * Vector3.right;	} }
 	public Vector3 Right { get { return Rotation * -Vector3.up;	} }
+	public Vector3 Up { get { return Rotation * Vector3.forward; } }
 	public Vector3 TopNorth { get { return Quaternion.AngleAxis( TopFaceNorthAngle * Mathf.Rad2Deg, Vector3.forward ) * Vector2.right; } }
 	public Vector3 TopEast { get { return Quaternion.AngleAxis( TopFaceNorthAngle * Mathf.Rad2Deg, Vector3.forward ) * -Vector2.up; } }
 	public Vector3 TopNorthEast { get { return ( TopNorth + TopEast ).normalized; } }
@@ -98,7 +99,6 @@ public class ObservedObject
 			Debug.LogWarning("Object " + ID + " with type " + objectType + " is unsupported"); 
 		}
 
-		if(SignificantChangeDetected != null) SignificantChangeDetected();
 		//Debug.Log ("ObservedObject cubeType("+cubeType+") from objectFamily("+objectFamily+") objectType("+objectType+")" );
 	}
 
@@ -131,11 +131,6 @@ public class ObservedObject
 		VizRect = new Rect( message.img_topLeft_x, message.img_topLeft_y, message.img_width, message.img_height );
 
 		Vector3 newPos = new Vector3( message.world_x, message.world_y, message.world_z );
-
-		//detect if this object has moved to a degree significant enough to warrant reValidating the build
-		if( robot != null && robot.carryingObject != this && (newPos - WorldPosition).magnitude > CozmoUtil.BLOCK_LENGTH_MM ){
-			if(SignificantChangeDetected != null) SignificantChangeDetected();
-		}
 
 		//dmdnote cozmo's space is Z up, keep in mind if we need to convert to unity's y up space.
 		WorldPosition = newPos;

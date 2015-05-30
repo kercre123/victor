@@ -83,7 +83,7 @@ public class GameController : MonoBehaviour {
 
 	//public float gameStartingInDelay = 1.3f;
 
-	private float gameStartingInDelay { get { return gameStartingIn != null ? gameStartingIn.length : 0f; } }
+	private float gameStartingInDelay { get { return gameStartingIn != null ? gameStartingIn.length + 0.1f : 0f; } }
 	private float instructionsDelay { get { return instructionsSound != null ? instructionsSound.length + 0.5f : 0f; } }
 
 	protected int lastTimerSeconds = 0;
@@ -447,7 +447,7 @@ public class GameController : MonoBehaviour {
 		bool played = false;
 		for(int i=0; i<timerSounds.Length; i++) {
 			if(secondsLeft == timerSounds[i].time && lastTimerSeconds != timerSounds[i].time) {
-				AudioManager.PlayOneShot(timerSounds[i].sound);
+				AudioManager.PlayAudioClipDeferred(timerSounds[i].sound, 0, AudioManager.Source.Notification);
 				played = true;
 				break;
 			}

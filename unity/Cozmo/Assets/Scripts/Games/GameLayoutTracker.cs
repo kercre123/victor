@@ -171,12 +171,11 @@ public class GameLayoutTracker : MonoBehaviour {
 		}
 
 		if(RobotEngineManager.instance != null) RobotEngineManager.instance.SuccessOrFailure += SuccessOrFailure;
-		ObservedObject.SignificantChangeDetected += SignificantChangeDetectedInObservedObject;
 	}
 
 	void Update () {
 		
-		if(Input.GetKeyDown(KeyCode.V)) {
+		if(revalidateThisFrame || Input.GetKeyDown(KeyCode.V)) {
 			AnalyzeLayoutForValidation();
 		}
 
@@ -196,6 +195,8 @@ public class GameLayoutTracker : MonoBehaviour {
 	
 	void OnDisable() {
 
+		ExitPhase();
+
 		if(instance == this) instance = null;
 		
 		if(ghostBlock != null) ghostBlock.gameObject.SetActive(false);
@@ -205,7 +206,6 @@ public class GameLayoutTracker : MonoBehaviour {
 		layoutInstructionsCamera.gameObject.SetActive(false);
 		
 		if(RobotEngineManager.instance != null) RobotEngineManager.instance.SuccessOrFailure -= SuccessOrFailure;
-		ObservedObject.SignificantChangeDetected -= SignificantChangeDetectedInObservedObject;
 	}
 	
 	#endregion
@@ -216,11 +216,15 @@ public class GameLayoutTracker : MonoBehaviour {
 		iStartGame = false;
 		iStartBuild = false;
 		iStartAutoBuild = false;
+		revalidateThisFrame = false;
 	}
 
 	LayoutTrackerPhase GetNextPhase() {
 		if(currentLayout == null) return LayoutTrackerPhase.DISABLED;
-		if(iStartGame) return LayoutTrackerPhase.DISABLED;
+		if(iStartGame) {
+			Debug.Log("GetNextPhase if(iStartGame) return LayoutTrackerPhase.DISABLED;");
+			return LayoutTrackerPhase.DISABLED;
+		}
 
 		bool completed = validCount == currentLayout.blocks.Count;
 
@@ -362,8 +366,9 @@ public class GameLayoutTracker : MonoBehaviour {
 		ShowAllBlocks();
 
 	}
+	
 	void Update_INVENTORY() {
-
+		int lastInventoryCount = inventory.Count;
 		inventoryPanel.SetActive(!hidden);
 
 		bool inventoryComplete = true;
@@ -391,17 +396,30 @@ public class GameLayoutTracker : MonoBehaviour {
 		}
 		
 		//look down if not localized
-		if(robot != null) {
+		if(!inventoryComplete && robot != null) {
 			if(!skipBuildForThisLayout && !robot.IsLocalized()) {
 				//Debug.Log( "look down because not localized" );
 				
 				robot.SetHeadAngle();
 			}
-			else if(inventory.Count > 0) { //look at last seen object if any seen
-				//Debug.Log( "look at last seen object if any seen: TrackHeadToObject " + inventory[inventory.Count-1] );
-				robot.TrackHeadToObject(inventory[inventory.Count-1],true);
-			}
-			else { //look straight ahead to see objects
+			else {
+
+				if(inventory.Count > lastInventoryCount) { //look at last seen object if any seen
+					//Debug.Log( "look at last seen object if any seen: TrackHeadToObject " + inventory[inventory.Count-1] );
+					float arc = 180f / currentLayout.blocks.Count;
+					Vector3 latestPos = inventory[inventory.Count-1].WorldPosition;
+					Vector2 toLatest = latestPos - robot.WorldPosition;
+					float angle = MathUtil.SignedVectorAngle(Vector2.right, toLatest.normalized, Vector3.forward) + arc;
+					Vector3 idealFacing = Quaternion.AngleAxis(angle, Vector3.forward) * Vector3.right;
+					Vector3 facePosition = robot.WorldPosition + idealFacing * CozmoUtil.BLOCK_LENGTH_MM * 10f;
+					angle *= Mathf.Deg2Rad;
+	
+					robot.TurnInPlace(angle);
+			
+					RobotEngineManager.instance.VisualizeQuad(33, CozmoPalette.ColorToUInt(Color.blue), robot.WorldPosition, robot.WorldPosition, latestPos, latestPos);
+					RobotEngineManager.instance.VisualizeQuad(34, CozmoPalette.ColorToUInt(Color.magenta), robot.WorldPosition, robot.WorldPosition, facePosition, facePosition);
+				}
+
 				//Debug.Log( "look straight ahead to see objects" );
 				
 				robot.SetHeadAngle(0f);
@@ -425,6 +443,7 @@ public class GameLayoutTracker : MonoBehaviour {
 	}
 
 	void Enter_AUTO_BUILDING() {
+		ObservedObject.SignificantChangeDetected += SignificantChangeDetectedInObservedObject;
 		autoBuildFails = 0;
 		AnalyzeLayoutForValidation();
 		buttonStartPlaying.gameObject.SetActive(false);
@@ -461,9 +480,11 @@ public class GameLayoutTracker : MonoBehaviour {
 	void Exit_AUTO_BUILDING() {
 		layoutInstructionsPanel.SetActive(false);
 		layoutInstructionsCamera.gameObject.SetActive(false);
+		ObservedObject.SignificantChangeDetected -= SignificantChangeDetectedInObservedObject;
 	}	
 
 	void Enter_BUILDING() {
+		ObservedObject.SignificantChangeDetected += SignificantChangeDetectedInObservedObject;
 		AnalyzeLayoutForValidation();
 		buttonStartPlaying.gameObject.SetActive(false);
 	}
@@ -478,6 +499,7 @@ public class GameLayoutTracker : MonoBehaviour {
 	void Exit_BUILDING() {
 		layoutInstructionsPanel.SetActive(false);
 		layoutInstructionsCamera.gameObject.SetActive(false);
+		ObservedObject.SignificantChangeDetected -= SignificantChangeDetectedInObservedObject;
 	}
 
 	void Enter_COMPLETE() {
@@ -493,10 +515,17 @@ public class GameLayoutTracker : MonoBehaviour {
 		layoutInstructionsCamera.gameObject.SetActive(!hidden);
 	}
 	void Exit_COMPLETE() {
+		layoutInstructionsPanel.SetActive(false);
+		layoutInstructionsCamera.gameObject.SetActive(false);
 		buttonStartPlaying.gameObject.SetActive(false);
 	}
 
-	void Enter_DISABLED() {}
+	void Enter_DISABLED() {
+		inventoryPanel.SetActive(false);
+		layoutInstructionsPanel.SetActive(false);
+		layoutInstructionsCamera.gameObject.SetActive(false);
+		buttonStartPlaying.gameObject.SetActive(false);
+	}
 	void Update_DISABLED() {}
 	void Exit_DISABLED() {}
 
@@ -542,9 +571,13 @@ public class GameLayoutTracker : MonoBehaviour {
 
 	}
 
+	bool revalidateThisFrame = false;
 	void SignificantChangeDetectedInObservedObject() {
+		revalidateThisFrame = true;
+		//if(Time.frameCount == lastFrameAnalysis) return;
+		//lastFrameAnalysis = Time.frameCount;
 		Debug.Log("SignificantChangeDetectedInObservedObject, revalidating!");
-		AnalyzeLayoutForValidation();
+		//AnalyzeLayoutForValidation();
 	}
 
 	void SuccessOrFailure(bool success, RobotActionType action_type) {
@@ -645,11 +678,14 @@ public class GameLayoutTracker : MonoBehaviour {
 			block.AssignedObject = null;
 		}
 		
-		potentialObservedObjects.Clear ();
-		potentialObservedObjects.AddRange (robot.knownObjects);
-		
 		if(debug) Debug.Log("ValidateBlocks with robot.knownObjects.Count("+robot.knownObjects.Count+")");
+
+		potentialObservedObjects.Clear();
 		
+		if(robot.knownObjects.Count == 0) return;
+
+		potentialObservedObjects.AddRange(robot.knownObjects);
+
 		//loop through our 'ideal' layout blocks and look for known objects that might satisfy the requirements of each
 		for(int layoutBlockIndex=0; layoutBlockIndex<layout.blocks.Count; layoutBlockIndex++) {
 			BuildInstructionsCube block = layout.blocks[layoutBlockIndex];
@@ -661,7 +697,7 @@ public class GameLayoutTracker : MonoBehaviour {
 				
 				ObservedObject newObject = potentialObservedObjects[objectIndex];
 				
-				if(debug) Debug.Log("checking if knownObject("+newObject+"):index("+objectIndex+") can satisfy layoutCube("+block.gameObject.name+")");
+				if(debug) Debug.Log("checking if knownObject("+newObject+"):index("+objectIndex+"):cubeType("+newObject.cubeType+") can satisfy layoutCube("+block.gameObject.name+")");
 				
 				//cannot validate block in hand
 				if(!block.isHeld && newObject == robot.carryingObject) {
@@ -670,8 +706,8 @@ public class GameLayoutTracker : MonoBehaviour {
 				}
 				
 				//skip objects of the wrong type
-				if(!block.SatisfiedByObject(newObject, distanceFudge, coplanarFudge, angleFudge, true) ) {
-					if(debug) Debug.Log("skip object("+CozmoPalette.instance.GetNameForObjectType(newObject.cubeType)+") because it isn't "+CozmoPalette.instance.GetNameForObjectType(block.cubeType));
+				if(!block.SatisfiedByObject(newObject, distanceFudge, coplanarFudge, angleFudge, true, debug) ) {
+					//if(debug) Debug.Log("skip object("+CozmoPalette.instance.GetNameForObjectType(newObject.cubeType)+") because it doesn't satisfy layoutCube("+block.gameObject.name+")");
 					continue;
 				}
 
@@ -889,6 +925,10 @@ public class GameLayoutTracker : MonoBehaviour {
 		Debug.Log("DebugQuickValidate validated("+validated.Count+")");
 	}
 
+	public void TryToValidate() {
+		AnalyzeLayoutForValidation();
+	}
+
 	public void StartGame() {
 		iStartGame = true;
 	}
@@ -901,6 +941,21 @@ public class GameLayoutTracker : MonoBehaviour {
 		iStartAutoBuild = true;
 	}
 
+	public Vector3 GetPoseFromLayoutForTransform(Transform t, out float facingAngle, out Vector3 facingVector, Vector3 directionOverride) {
+		facingAngle = 0f;
+		facingVector = Vector3.zero;
+		
+		if(currentLayout == null) return Vector3.zero;
+		if(t == null) return Vector3.zero;
+		
+		facingVector = CozmoUtil.Vector3UnityToCozmoSpace(t.forward);
+		facingAngle = MathUtil.SignedVectorAngle(Vector3.right, facingVector, Vector3.forward) * Mathf.Deg2Rad;
+		
+		Vector3 pose = (CozmoUtil.Vector3UnityToCozmoSpace(t.position) / currentLayout.scale) * CozmoUtil.BLOCK_LENGTH_MM;
+		return pose;
+	}
+	
+
 	public Vector3 GetStartingPositionFromLayout(out float facingAngle, out Vector3 facingVector) {
 		facingAngle = 0f;
 		facingVector = Vector3.zero;
@@ -911,7 +966,7 @@ public class GameLayoutTracker : MonoBehaviour {
 		return GetPoseFromLayoutForTransform(currentLayout.startPositionMarker, out facingAngle, out facingVector, Vector3.zero);
 	}
 
-	public Vector3 GetPoseFromLayoutForTransform(Transform t, out float facingAngle, out Vector3 facingVector, Vector3 directionOverride) {
+	public Vector3 GetPoseFromLayoutForTransformOld(Transform t, out float facingAngle, out Vector3 facingVector, Vector3 directionOverride) {
 		facingAngle = 0f;
 		facingVector = Vector3.zero;
 		
@@ -1192,7 +1247,7 @@ public class GameLayoutTracker : MonoBehaviour {
 
 	public void SetMessage(string message, Color color) {
 
-		screenMessage.ShowMessage(message, color);
+		screenMessage.ShowMessageForDuration(message, 5f, color);
 	}
 
 	public List<ObservedObject> GetTrackedObjectsInOrder() {

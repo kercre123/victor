@@ -8,6 +8,7 @@ public class GameLayout : MonoBehaviour {
 	[SerializeField] public int levelNumber = 1;
 	[SerializeField] public List<BuildInstructionsCube> blocks = new List<BuildInstructionsCube>();
 	[SerializeField] public Transform startPositionMarker;
+	[SerializeField] public float scale = 0.044f;
 
 	[TextArea(5,30)]
 	[SerializeField] public string initialInstruction = null;
@@ -15,11 +16,12 @@ public class GameLayout : MonoBehaviour {
 	[TextArea(5,30)]
 	[SerializeField] public string secondInstruction = null;
 
-	public void Initialize () {
+	public void Initialize() {
 
 		//init cubes in order, so their canvas draw order is apt
-		for (int i=0; i<blocks.Count; i++) {
-			blocks [i].Initialize ();
+		for(int i=0; i<blocks.Count; i++) {
+			blocks[i].Initialize ();
+			scale = blocks[i].transform.lossyScale.x;
 		}
 
 		for(int i=0; i<blocks.Count-1; i++) {
