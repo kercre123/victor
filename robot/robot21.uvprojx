@@ -469,11 +469,6 @@
               <FilePath>.\arm_oldhal\hal\system_stm32f4xx.c</FilePath>
             </File>
             <File>
-              <FileName>blocks.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\arm_hal\hal\blocks.cpp</FilePath>
-            </File>
-            <File>
               <FileName>battery.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\arm_hal\hal\battery.cpp</FilePath>
@@ -1043,7 +1038,7 @@
           <Files>
             <File>
               <FileName>reliableTransport.c</FileName>
-              <FileType>8</FileType>
+              <FileType>1</FileType>
               <FilePath>..\tools\anki-util\source\anki\embedded\transport\reliableTransport.c</FilePath>
             </File>
             <File>
@@ -1519,11 +1514,6 @@
               <FileName>system_stm32f4xx.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\arm_oldhal\hal\system_stm32f4xx.c</FilePath>
-            </File>
-            <File>
-              <FileName>blocks.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\arm_hal\hal\blocks.cpp</FilePath>
             </File>
             <File>
               <FileName>battery.cpp</FileName>
@@ -2112,7 +2102,7 @@
           <Files>
             <File>
               <FileName>reliableTransport.c</FileName>
-              <FileType>8</FileType>
+              <FileType>1</FileType>
               <FilePath>..\tools\anki-util\source\anki\embedded\transport\reliableTransport.c</FilePath>
             </File>
             <File>
