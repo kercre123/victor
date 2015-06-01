@@ -221,6 +221,8 @@ public class GoldRushController : GameController {
 		{
 			successOrFailureGameObject.SetActive(false);
 		}
+
+		RobotEngineManager.instance.SuccessOrFailure += CheckForAutoDepositFailure;
 	}
 
 	protected override void Exit_PLAYING(bool overrideStars = false)
@@ -252,6 +254,7 @@ public class GoldRushController : GameController {
 		{
 			successOrFailureGameObject.SetActive(true);
 		}
+		RobotEngineManager.instance.SuccessOrFailure -= CheckForAutoDepositFailure;
 	}
 
 	protected override void Update_PLAYING() 
@@ -309,7 +312,7 @@ public class GoldRushController : GameController {
 
 		lastCarriedObjectId = -1;
 		goldExtractingObject = null;
-		goldCollectingObject = null;
+		//goldCollectingObject = null;
 
 		RefreshGameProps();
 
@@ -591,6 +594,16 @@ public class GoldRushController : GameController {
 		}
 	}
 
+	void CheckForAutoDepositFailure(bool success, RobotActionType action_type)
+	{
+		if( !success && playState == PlayState.AUTO_DEPOSITING && action_type == RobotActionType.DRIVE_TO_POSE )
+		{
+			// failed our autodeposit, try again
+			SendRobotToCollector();
+			Debug.LogWarning("Robot failed to drivetopose during auto-deposit");
+		}
+	}
+
 	void UpdateSearching()
 	{
 		if(robot.Status(Robot.StatusFlag.IS_CARRYING_BLOCK) && robot.carryingObject != null) 
@@ -775,6 +788,21 @@ public class GoldRushController : GameController {
 		RobotEngineManager.instance.VisualizeQuad(22, CozmoPalette.ColorToUInt(Color.blue), spotY1, spotY1, spotY2, spotY2);
 		RobotEngineManager.instance.VisualizeQuad(23, CozmoPalette.ColorToUInt(Color.blue), spotX1, spotX1, spotX2, spotX2);
 	}
+
+	void SendRobotToCollector()
+	{
+		Vector3 to_collector = goldCollectingObject.WorldPosition - robot.WorldPosition;
+		float angle = Vector3.Angle(Vector3.right, to_collector.normalized);
+		float sign = Mathf.Sign(Vector3.Dot(Vector3.forward,Vector3.Cross(Vector3.right,to_collector.normalized)));
+		float signed_angle = angle * sign;
+		Debug.Log("angle: " + angle +", signed_angle: " + signed_angle);
+		
+		Vector3 depositSpot = robot.WorldPosition + to_collector;// - (to_collector.normalized*3*(returnRadius/4));
+		
+		signed_angle = Mathf.Deg2Rad*signed_angle;
+		
+		robot.GotoPose(depositSpot.x, depositSpot.y, signed_angle);
+	}
 #endregion
 
 #region IEnumerator
@@ -902,25 +930,16 @@ public class GoldRushController : GameController {
 	IEnumerator AutoDeposit()
 	{
 		// first need to get in range
-		Vector3 to_collector = goldCollectingObject.WorldPosition - robot.WorldPosition;
-		float angle = Vector3.Angle(Vector3.right, to_collector.normalized);
-		float sign = Mathf.Sign(Vector3.Dot(Vector3.forward,Vector3.Cross(Vector3.right,to_collector.normalized)));
-		float signed_angle = angle * sign;
-		Debug.Log("angle: " + angle +", signed_angle: " + signed_angle);
-
-		Vector3 depositSpot = robot.WorldPosition + to_collector;// - (to_collector.normalized*3*(returnRadius/4));
-
-		signed_angle = Mathf.Deg2Rad*signed_angle;
-
-		robot.GotoPose(depositSpot.x, depositSpot.y, signed_angle);
+		SendRobotToCollector();
 
 		while(!inDepositRange)
 		{
 			UpdateReturning(true);
 			yield return 0;
 		}
-		robot.CancelAction(RobotActionType.DRIVE_TO_POSE);
 		EnterPlayState(PlayState.DEPOSITING);
+		robot.CancelAction(RobotActionType.DRIVE_TO_POSE);
+
 
 	}
 #endregion
