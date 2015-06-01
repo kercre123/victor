@@ -245,6 +245,15 @@ namespace Anki {
         // Wait until robot reports it is no longer traversing a path
         if(robot.IsTraversingPath())
         {
+          {
+            static int ctr = 0;
+            if(ctr++ % 10 == 0) {
+              PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.WaitingForPathCompletion",
+                               "Waiting for robot to complete its path traversal (%d), _currPathSegment=%d, _lastSentPathID=%d, _lastRecvdPathID=%d.\n", ctr,
+                                robot.GetCurrentPathSegment(), robot.GetLastSentPathID(), robot.GetLastRecvdPathID());
+            }
+          }
+          
           // If the robot is traversing a path, consider replanning it
           if(robot.GetBlockWorld().DidObjectsChange())
           {
