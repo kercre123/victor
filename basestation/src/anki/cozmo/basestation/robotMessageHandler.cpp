@@ -53,6 +53,8 @@ namespace Anki {
       channel_ = channel;
       robotMgr_ = robotMgr;
       
+      isInitialized_ = true;
+      
       return retVal;
     }
     

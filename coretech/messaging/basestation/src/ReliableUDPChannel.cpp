@@ -23,25 +23,25 @@ ReliableUDPChannel::~ReliableUDPChannel()
 
 bool ReliableUDPChannel::IsStarted() const
 {
-  std::lock_guard<std::mutex> guard(mutex);
+  std::lock_guard<std::recursive_mutex> guard(mutex);
   return isStarted;
 }
 
 bool ReliableUDPChannel::IsHost() const
 {
-  std::lock_guard<std::mutex> guard(mutex);
+  std::lock_guard<std::recursive_mutex> guard(mutex);
   return isHost;
 }
 
 Anki::Util::TransportAddress ReliableUDPChannel::GetHostingAddress() const
 {
-  std::lock_guard<std::mutex> guard(mutex);
+  std::lock_guard<std::recursive_mutex> guard(mutex);
   return hostingAddress;
 }
 
 void ReliableUDPChannel::StartClient()
 {
-  std::lock_guard<std::mutex> guard(mutex);
+  std::lock_guard<std::recursive_mutex> guard(mutex);
   
   Stop_Internal();
   
@@ -55,7 +55,7 @@ void ReliableUDPChannel::StartClient()
 
 void ReliableUDPChannel::StartHost(const TransportAddress& bindAddress)
 {
-  std::lock_guard<std::mutex> guard(mutex);
+  std::lock_guard<std::recursive_mutex> guard(mutex);
   
   Stop_Internal();
   
@@ -74,7 +74,7 @@ void ReliableUDPChannel::StartHost(const TransportAddress& bindAddress)
 
 void ReliableUDPChannel::Stop()
 {
-  std::lock_guard<std::mutex> guard(mutex);
+  std::lock_guard<std::recursive_mutex> guard(mutex);
   
   Stop_Internal();
 }
@@ -86,7 +86,7 @@ void ReliableUDPChannel::Update()
 
 bool ReliableUDPChannel::Send(const Anki::Comms::OutgoingPacket& packet)
 {
-  std::lock_guard<std::mutex> guard(mutex);
+  std::lock_guard<std::recursive_mutex> guard(mutex);
   
   TransportAddress address;
   if (!UnreliableUDPChannel::GetAddress(address, packet.destId)) {
@@ -133,7 +133,7 @@ bool ReliableUDPChannel::Send(const Anki::Comms::OutgoingPacket& packet)
 
 bool ReliableUDPChannel::PopIncomingPacket(IncomingPacket& packet)
 {
-  std::lock_guard<std::mutex> guard(mutex);
+  std::lock_guard<std::recursive_mutex> guard(mutex);
   
   bool result = UnreliableUDPChannel::PopIncomingPacket(packet);
   if (result) {
@@ -144,19 +144,19 @@ bool ReliableUDPChannel::PopIncomingPacket(IncomingPacket& packet)
 
 bool ReliableUDPChannel::IsConnectionActive(ConnectionId connectionId) const
 {
-  std::lock_guard<std::mutex> guard(mutex);
+  std::lock_guard<std::recursive_mutex> guard(mutex);
   return UnreliableUDPChannel::IsConnectionActive(connectionId);
 }
 
 int32_t ReliableUDPChannel::CountActiveConnections() const
 {
-  std::lock_guard<std::mutex> guard(mutex);
+  std::lock_guard<std::recursive_mutex> guard(mutex);
   return UnreliableUDPChannel::CountActiveConnections();
 }
 
 void ReliableUDPChannel::AddConnection(ConnectionId connectionId, const TransportAddress& address)
 {
-  std::lock_guard<std::mutex> guard(mutex);
+  std::lock_guard<std::recursive_mutex> guard(mutex);
   
   // AddConnection should remove any old uses of connectionId and address
   // and send disconnects
@@ -172,7 +172,7 @@ void ReliableUDPChannel::AddConnection(ConnectionId connectionId, const Transpor
 // The alternative is RefuseIncomingConnection.
 bool ReliableUDPChannel::AcceptIncomingConnection(ConnectionId connectionId, const TransportAddress& address)
 {
-  std::lock_guard<std::mutex> guard(mutex);
+  std::lock_guard<std::recursive_mutex> guard(mutex);
   
   ConnectionData *data = GetConnectionData(address);
   if (data == nullptr) {
@@ -205,7 +205,7 @@ bool ReliableUDPChannel::AcceptIncomingConnection(ConnectionId connectionId, con
 // The alternative is AcceptIncomingConnection.
 void ReliableUDPChannel::RefuseIncomingConnection(const TransportAddress& address)
 {
-  std::lock_guard<std::mutex> guard(mutex);
+  std::lock_guard<std::recursive_mutex> guard(mutex);
   
   ConnectionData *data = GetConnectionData(address);
   if (data == nullptr) {
@@ -228,7 +228,7 @@ void ReliableUDPChannel::RefuseIncomingConnection(const TransportAddress& addres
 
 void ReliableUDPChannel::RemoveConnection(ConnectionId connectionId)
 {
-  std::lock_guard<std::mutex> guard(mutex);
+  std::lock_guard<std::recursive_mutex> guard(mutex);
   
   TransportAddress address;
   if (!GetAddress(address, connectionId)) {
@@ -240,7 +240,7 @@ void ReliableUDPChannel::RemoveConnection(ConnectionId connectionId)
 
 void ReliableUDPChannel::RemoveAllConnections()
 {
-  std::lock_guard<std::mutex> guard(mutex);
+  std::lock_guard<std::recursive_mutex> guard(mutex);
   
   UnreliableUDPChannel::RemoveAllConnections();
   
@@ -257,21 +257,21 @@ void ReliableUDPChannel::RemoveAllConnections()
 
 bool ReliableUDPChannel::GetConnectionId(ConnectionId& connectionId, const TransportAddress& address) const
 {
-  std::lock_guard<std::mutex> guard(mutex);
+  std::lock_guard<std::recursive_mutex> guard(mutex);
   
   return UnreliableUDPChannel::GetConnectionId(connectionId, address);
 }
 
 bool ReliableUDPChannel::GetAddress(TransportAddress& address, ConnectionId connectionId) const
 {
-  std::lock_guard<std::mutex> guard(mutex);
+  std::lock_guard<std::recursive_mutex> guard(mutex);
   
   return UnreliableUDPChannel::GetAddress(address, connectionId);
 }
 
 uint32_t ReliableUDPChannel::GetMaxTotalBytesPerMessage() const
 {
-  std::lock_guard<std::mutex> guard(mutex);
+  std::lock_guard<std::recursive_mutex> guard(mutex);
   
   return reliableTransport.MaxTotalBytesPerMessage();
 }
@@ -279,7 +279,7 @@ uint32_t ReliableUDPChannel::GetMaxTotalBytesPerMessage() const
 // NOTE: This method runs on a separate thread, and thus should never touch ConnectionData::state.
 void ReliableUDPChannel::ReceiveData(const uint8_t *buffer, unsigned int bufferSize, const TransportAddress& sourceAddress)
 {
-  std::lock_guard<std::mutex> guard(mutex);
+  std::lock_guard<std::recursive_mutex> guard(mutex);
   
   if (buffer == Anki::Util::INetTransportDataReceiver::OnConnectRequest) {
     QueueDisconnectionIfActuallyConnected(sourceAddress, true);
@@ -402,7 +402,7 @@ void ReliableUDPChannel::PostProcessIncomingPacket(IncomingPacket& packet)
       }
       break;
     case IncomingPacket::Tag::NormalMessage:
-      assert(data->state == ConnectionData::State::Connected);
+      //assert(data->state == ConnectionData::State::Connected);
       break;
     default:
       assert(false);
