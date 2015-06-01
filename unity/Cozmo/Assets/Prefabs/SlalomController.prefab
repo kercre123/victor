@@ -1703,7 +1703,7 @@ MonoBehaviour:
   button_PlayAgain: {fileID: 11475716}
   button_Rebuild: {fileID: 11475722}
   thereAndBackAgain: 1
-  pointsPerLap: 100
+  pointsPerObstacle: 100
   textObservedCount: {fileID: 11475734}
   textProgress: {fileID: 11475692}
   cornerTriggeredSound: {fileID: 8300000, guid: d25b930fe16ab479f897854c283d2c51,
@@ -1717,6 +1717,7 @@ MonoBehaviour:
   previewCourseLightsDelay: .100000001
   previewCourseLightsPause: 1
   previewCourseLightsTimer: 0
+  startingCornerIndexPerLevel: 0000000003000000
   testLightIndex: 0
 --- !u!114 &11475734
 MonoBehaviour:

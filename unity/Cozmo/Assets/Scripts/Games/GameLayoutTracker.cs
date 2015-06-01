@@ -397,7 +397,7 @@ public class GameLayoutTracker : MonoBehaviour {
 		
 		//look down if not localized
 		if(!inventoryComplete && robot != null) {
-			if(!skipBuildForThisLayout && !robot.IsLocalized()) {
+			if(/*!skipBuildForThisLayout && */!robot.IsLocalized()) {
 				//Debug.Log( "look down because not localized" );
 				
 				robot.SetHeadAngle();
@@ -720,7 +720,7 @@ public class GameLayoutTracker : MonoBehaviour {
 		
 		validCount = validated.Count;
 		
-		if( validCount > lastValidCount && validCount < layout.blocks.Count && !skipBuildForThisLayout) {
+		if( validCount > lastValidCount && validCount < layout.blocks.Count ) {
 			AudioManager.PlayAudioClip(cubePlaced, 0, AudioManager.Source.Notification);
 		}
 	}

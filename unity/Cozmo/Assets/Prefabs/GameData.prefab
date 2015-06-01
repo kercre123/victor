@@ -45,11 +45,11 @@ MonoBehaviour:
     levels:
     - name: 1
       stars: 5a0000003c00000032000000
-      scoreToWin: 300
+      scoreToWin: 600
       maxPlayTime: 0
     - name: 2
       stars: 780000005a00000050000000
-      scoreToWin: 300
+      scoreToWin: 900
       maxPlayTime: 0
   - name: Energy Hunt
     levels:

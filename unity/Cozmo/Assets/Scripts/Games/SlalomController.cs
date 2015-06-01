@@ -13,7 +13,7 @@ public class SlalomController : GameController {
 	[SerializeField] Button button_Rebuild;
 
 	[SerializeField] bool thereAndBackAgain = true;	//when reaching the end or beginning of obstacle list, reverse order
-	[SerializeField] int pointsPerLap = 100;
+	[SerializeField] int pointsPerObstacle = 100;
 	[SerializeField] Text textObservedCount = null;
 	[SerializeField] Text textProgress = null;
 
@@ -26,6 +26,10 @@ public class SlalomController : GameController {
 	[SerializeField] float previewCourseLightsDelay = 0.1f;
 	[SerializeField] float previewCourseLightsPause = 1f;
 	[SerializeField] float previewCourseLightsTimer = 0f;
+
+	[SerializeField] int[] startingCornerIndexPerLevel;
+
+	int startingCornerIndex = 0;
 
 	List<ActiveBlock> obstacles = new List<ActiveBlock>();
 
@@ -119,10 +123,10 @@ public class SlalomController : GameController {
 	}
 
 	void LapComplete() {
-		score += pointsPerLap;
+		//score += pointsPerObstacle;
 		//Debug.Log("LapComplete scores[0](" + scores[0].ToString() + ")");
 		//PlayOneShot(playerScoreSound);
-		int lapsRemaining = (int)((float)levelData.scoreToWin / (float)pointsPerLap) - currentLap;
+		int lapsRemaining = (int)((float)levelData.scoreToWin / ((float)pointsPerObstacle * obstacles.Count)) - currentLap;
 		if(lapsRemaining == 0) {
 			if(finalLapSound != null) AudioManager.PlayAudioClip(finalLapSound, cornerTriggeredDelay, AudioManager.Source.Notification);
 			Debug.Log("final lap");
@@ -175,6 +179,11 @@ public class SlalomController : GameController {
 			currentColor_unit = CozmoPalette.instance.GetUIntColorForActiveBlockType(currentColor);
 		}
 		MessageDelay = 0f;
+
+		startingCornerIndex = 0;
+		if(startingCornerIndexPerLevel != null && currentLevelNumber >= startingCornerIndexPerLevel.Length) {
+			startingCornerIndex = startingCornerIndexPerLevel[currentLevelNumber-1];
+		}
 	}
 	
 	protected override void OnDisable()
@@ -300,7 +309,7 @@ public class SlalomController : GameController {
 //
 //		RobotEngineManager.instance.VisualizeQuad(13, CozmoPalette.ColorToUInt(Color.yellow), startingPos, startingPos, currentObstacle.WorldPosition, currentObstacle.WorldPosition);
 
-		currentCorner = 0;
+		currentCorner = startingCornerIndex;
 		bool onNextObstacle;
 		int nextCorner = GetNextCorner(out onNextObstacle);
 		UpdateCornerLights(currentCorner, nextCorner, onNextObstacle, preview);
@@ -431,6 +440,7 @@ public class SlalomController : GameController {
 		currentCorner = GetNextCorner(out obstacleAdvanced);
 
 		if(obstacleAdvanced) {
+			score += pointsPerObstacle;
 			previousObstacle = currentObstacle;
 			currentObstacleIndex = GetNextIndex(true);
 			clockwise = !clockwise;
@@ -445,7 +455,7 @@ public class SlalomController : GameController {
 
 		//Debug.Log("AdvanceCorner obstacleAdvanced("+obstacleAdvanced+") clockwise("+clockwise+") currentCorner("+currentCorner+") nextCorner("+nextCorner+") nextCornerIsOnNextObstacle("+nextCornerIsOnNextObstacle+")");
 
-		UpdateCornerLights(currentCorner, nextCorner, nextCornerIsOnNextObstacle);
+		UpdateCornerLights(currentCorner, nextCorner, nextCornerIsOnNextObstacle, preview);
 		if(!preview) UpdateRobotLights(currentCorner);
 	}
 
