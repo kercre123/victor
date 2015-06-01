@@ -720,7 +720,7 @@ public class GameLayoutTracker : MonoBehaviour {
 		
 		validCount = validated.Count;
 		
-		if( validCount > lastValidCount && validCount < layout.blocks.Count ) {
+		if( validCount > lastValidCount && validCount < layout.blocks.Count && !skipBuildForThisLayout) {
 			AudioManager.PlayAudioClip(cubePlaced, 0, AudioManager.Source.Notification);
 		}
 	}
