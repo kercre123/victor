@@ -96,8 +96,8 @@ Anki::Util::TransportAddress UnreliableUDPChannel::GetHostingAddress() const
 
 void UnreliableUDPChannel::Update()
 {
-  PRINT_STREAM_DEBUG("UnreliableUDPChannel.Update",
-                       "Updating");
+  //PRINT_STREAM_DEBUG("UnreliableUDPChannel.Update",
+  //                     "Updating");
   unreliableTransport.Update();
 }
 

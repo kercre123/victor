@@ -57,8 +57,8 @@ namespace Anki {
       static TimeStamp_t lastAdvertisedTime = 0;
       if (lastAdvertisedTime + ROBOT_ADVERTISING_PERIOD_MS < HAL::GetTimeStamp()) {
 
-        PRINT("sim_radio: Sending registration for robot %d at address %s on port %d (time: %u)\n",
-              regMsg.id, regMsg.ip, regMsg.port, HAL::GetTimeStamp());
+        //printf("sim_radio: Sending registration for robot %d at address %s on port %d (time: %u)\n",
+        //      regMsg.id, regMsg.ip, regMsg.port, HAL::GetTimeStamp());
         regMsg.enableAdvertisement = 1;
         regMsg.oneShot = 1;
         advRegClient.Send((char*)&regMsg, sizeof(regMsg));
@@ -113,7 +113,10 @@ namespace Anki {
 
     Result InitSimRadio(const char* advertisementIP)
     {
-      server.StartListening(ROBOT_RADIO_BASE_PORT + HAL::GetIDCard()->esn);
+      printf("Cozmo START LISTENING (port %d) ...\n", ROBOT_RADIO_BASE_PORT + HAL::GetIDCard()->esn);
+      if (!server.StartListening(ROBOT_RADIO_BASE_PORT + HAL::GetIDCard()->esn)) {
+        printf("ERROR: Cozmo couldn't start UDP server\n");
+      }
 
       // Register with advertising service by sending IP and port info
       // NOTE: Since there is no ACK robot_advertisement_controller must be running before this happens!
