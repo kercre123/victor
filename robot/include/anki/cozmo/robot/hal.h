@@ -221,7 +221,17 @@ namespace Anki
       // Get a sync'd timestamp (e.g. for messages), in milliseconds
       extern "C" TimeStamp_t GetTimeStamp(void);
       extern "C" void SetTimeStamp(TimeStamp_t t);
-
+      
+// #pragma mark --- Processor ---
+      /////////////////////////////////////////////////////////////////////
+      // PROCESSOR
+      //
+      extern "C" {
+        void EnableIRQ();
+        void DisableIRQ();
+      }
+      
+      
 // #pragma mark --- Audio ---
       /////////////////////////////////////////////////////////////////////
       // AUDIO

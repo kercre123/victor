@@ -47,6 +47,17 @@ namespace Anki
         if (*(int*)(0x1FFF7A10) == 0x00250031)
           m_idCard.esn = 1;
       }
+      
+      extern "C" {
+        void EnableIRQ() {
+          __enable_irq();
+        }  
+        
+        void DisableIRQ() {
+          __disable_irq();
+        }
+      }
+      
     }
   }
 }
