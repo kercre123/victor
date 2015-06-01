@@ -480,7 +480,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 050c44e8b6b2c42daa4fabe43ef47cf0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  depth: 10
+  depth: 11
 --- !u!114 &11454560
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -591,7 +591,7 @@ Canvas:
   m_OverrideSorting: 0
   m_OverridePixelPerfect: 0
   m_SortingLayerID: 0
-  m_SortingOrder: 30
+  m_SortingOrder: 35
 --- !u!224 &22417606
 RectTransform:
   m_ObjectHideFlags: 1

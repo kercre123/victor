@@ -269,7 +269,10 @@ public class BuildInstructionsCube : MonoBehaviour {
 	}
 
 	public bool MatchesObject(ObservedObject obj, bool ignoreColor=true, bool debug=false) {
-		if(obj == null) return false;
+		if(obj == null) {
+			if(debug) Debug.Log("MatchesObject failed because obj is null and therefore cannot possibly match "+ gameObject.name);
+			return false;
+		}
 		if(obj.cubeType != cubeType) {
 			if(debug) Debug.Log("MatchesObject failed because obj("+obj+").cubeType("+obj.cubeType+") doesn't match "+ gameObject.name);
 			return false;

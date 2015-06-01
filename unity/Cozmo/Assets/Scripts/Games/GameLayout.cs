@@ -30,7 +30,7 @@ public class GameLayout : MonoBehaviour {
 				Vector2 flat = offset;
 				flat.y = 0f;
 
-				if( flat.magnitude > 0.1f) continue;
+				if( flat.magnitude > (scale * 0.1f)) continue;
 
 				if(offset.y > 0.1f) {
 					//Debug.Log ("GameLayout " + blocks[j].gameObject.name + " stacked on " + blocks[i].gameObject.name);
