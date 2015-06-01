@@ -410,7 +410,7 @@ public class GameLayoutTracker : MonoBehaviour {
 					Vector3 latestPos = inventory[inventory.Count-1].WorldPosition;
 					Vector2 toLatest = latestPos - robot.WorldPosition;
 					float angle = MathUtil.SignedVectorAngle(robot.Forward, toLatest.normalized, Vector3.forward) + arc;
-					Vector3 idealFacing = Quaternion.AngleAxis(angle, Vector3.forward) * Vector3.right;
+					Vector3 idealFacing = Quaternion.AngleAxis(angle, Vector3.forward) * robot.Forward;
 					Vector3 facePosition = robot.WorldPosition + idealFacing * CozmoUtil.BLOCK_LENGTH_MM * 10f;
 
 					angle *= Mathf.Deg2Rad;
