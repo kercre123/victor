@@ -313,7 +313,7 @@ LOCAL void handleUartRawRx(uint8 flag)
           if (blockMsgLen >= pktLen)
           {
             phase = 0;
-            blockRelaySendPacket(block, pktLen);
+            blockRelaySendPacket(block, blockMsgLen);
             block = NO_BLOCK;
           }
           break;

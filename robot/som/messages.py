@@ -507,7 +507,7 @@ class FlashBlockIDs(MessageBase):
 class SetBlockLights(MessageBase):
     """Instruct robot to instruct block to set lights to colors"""
     NUM_LIGHTS = 8
-    ID = 63
+    ID = 61
     FORMAT = [("%dI" % NUM_LIGHTS), # on color
               ("%dI" % NUM_LIGHTS), # off color
               ("%dI" % NUM_LIGHTS), # on period ms

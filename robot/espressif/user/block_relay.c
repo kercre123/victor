@@ -5,7 +5,7 @@
 #include "mem.h"
 #include "block_relay.h"
 
-#define DEBUG_BR
+//#define DEBUG_BR
 
 #define NUM_BLOCKS 5
 static struct espconn* blockServer;
@@ -73,7 +73,7 @@ LOCAL void ICACHE_FLASH_ATTR blockTask(os_event_t *event)
     else
     {
 #ifdef DEBUG_BR
-      os_printf("Sent %d[%d] to %d at %d\r\n", blocks[block].buffer[0], blocks[block].length, block, blockServer->proto.udp->remote_ip[3]);
+      os_printf("Sent %d[%d] to %d at %d\r\n", blocks[block].buffer[MESSAGE_START], blocks[block].length, block, blockServer->proto.udp->remote_ip[3]);
 #endif
     }
   }

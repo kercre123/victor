@@ -53,6 +53,7 @@ namespace Anki {
                            const u32* transitionOnPeriod_ms, const u32* transitionOffPeriod_ms)
       {
          u8 buffer[256];
+         const u32 size = Messages::GetSize(Messages::SetBlockLights_ID);
          Anki::Cozmo::Messages::SetBlockLights m;
          m.blockID = blockID;
          for (int i=0; i<NUM_BLOCK_LEDS; ++i) {
@@ -63,9 +64,9 @@ namespace Anki {
            m.transitionOnPeriod_ms[i] = (transitionOnPeriod_ms == NULL ? 0 : transitionOnPeriod_ms[i]);
            m.transitionOffPeriod_ms[i] = (transitionOffPeriod_ms == NULL ? 0 : transitionOffPeriod_ms[i]);
          }
-         buffer[0] = Anki::Cozmo::Messages::SetBlockLights_ID;
-         memcpy(buffer + 1, &m, sizeof(Anki::Cozmo::Messages::SetBlockLights));
-         return RadioSendPacket(buffer, sizeof(Anki::Cozmo::Messages::SetBlockLights)+1, blockID + 1) ? RESULT_OK : RESULT_FAIL;
+         buffer[0] = Messages::SetBlockLights_ID;
+         memcpy(buffer + 1, &m, size);
+         return RadioSendPacket(buffer, size+1, blockID + 1) ? RESULT_OK : RESULT_FAIL;
       }
 
       void FlashBlockIDs()
