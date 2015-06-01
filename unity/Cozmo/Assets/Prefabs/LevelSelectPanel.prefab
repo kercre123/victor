@@ -101,15 +101,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   textTitle: {fileID: 11458508}
   gameName: Slalom
-  gameControllerIndex: 1
   numLevels: 10
+  unlockedLevels: 2
   levelSelectionPrefab: {fileID: 172552, guid: a4f049233106842b78936aca7a5c7dc5, type: 2}
   scrollRect: {fileID: 11458504}
   previews:
   - {fileID: 21300000, guid: 08b7dd4e1dfc5492eaf04ec30dfc15e7, type: 3}
-  gameMenuSelector: {fileID: 0}
-  gameControllerSelector: {fileID: 0}
-  gameLayoutTracker: {fileID: 0}
 --- !u!114 &11458502
 MonoBehaviour:
   m_ObjectHideFlags: 1

@@ -10,6 +10,7 @@ public class LevelSelectPanel : MonoBehaviour {
 	[SerializeField] Text textTitle;
 	[SerializeField] string gameName = "Unknown";
 	[SerializeField] int numLevels = 10;
+	[SerializeField] int unlockedLevels = 1;
 	[SerializeField] GameObject levelSelectionPrefab;
 	[SerializeField] ScrollRect scrollRect;
 	[SerializeField] Sprite[] previews;
@@ -38,10 +39,11 @@ public class LevelSelectPanel : MonoBehaviour {
 				preview = previews[spriteIndex];
 			}
 
-			bool interactive = i < 2;
-
 			int level = i+1;
-			selectButton.Initialize(level.ToString(), preview, interactive ? UnityEngine.Random.Range(1,3) : 0, interactive, delegate{LaunchGame(level);});
+
+			bool interactive = level <= unlockedLevels;
+
+			selectButton.Initialize(level.ToString(), preview, interactive ? PlayerPrefs.GetInt(gameName + level + "_stars", 0) : 0, interactive, delegate{LaunchGame(level);});
 
 			levelSelectButtons.Add(selectButton);
 		}

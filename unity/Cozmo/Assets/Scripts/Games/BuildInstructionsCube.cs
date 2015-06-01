@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
+using System.Collections.Generic;
 using Vectrosity;
 
 [ExecuteInEditMode]
@@ -52,11 +53,20 @@ public class BuildInstructionsCube : MonoBehaviour {
 	Material clonedCornerMaterial = null;
 
 	bool initialized = false;
+	
+	uint visualizationID_01 = 100;
+	uint visualizationID_02 = 101;
+	uint visualizationID_03 = 102;
+	uint visualizationID_04 = 103;
+
+	public static List<uint> IDsInUse = new List<uint>(); 
 
 	void Awake() {
 		if(Application.isPlaying) {
 			checkMark = (GameObject)GameObject.Instantiate(checkMarkPrefab);
 			checkMark.transform.SetParent(transform, false);
+			
+			//ClaimUIDsForVisualization();
 		}
 	}
 
@@ -64,11 +74,38 @@ public class BuildInstructionsCube : MonoBehaviour {
 		if(!Application.isPlaying) Initialize();
 	}
 
+	void OnDestroy() {
+		//if(Application.isPlaying) {
+			//ReleaseUIDsForVisualization();
+		//}
+	}
+
+	void ClaimUIDsForVisualization() {
+		while(IDsInUse.Contains(visualizationID_01)) visualizationID_01 = (uint)Random.Range(0, uint.MaxValue);
+		IDsInUse.Add(visualizationID_01);
+		
+		while(IDsInUse.Contains(visualizationID_02)) visualizationID_02 = (uint)Random.Range(0, uint.MaxValue);
+		IDsInUse.Add(visualizationID_02);
+		
+		while(IDsInUse.Contains(visualizationID_03)) visualizationID_03 = (uint)Random.Range(0, uint.MaxValue);
+		IDsInUse.Add(visualizationID_03);
+		
+		while(IDsInUse.Contains(visualizationID_04)) visualizationID_04 = (uint)Random.Range(0, uint.MaxValue);
+		IDsInUse.Add(visualizationID_04);
+	}
+
+	void ReleaseUIDsForVisualization() {
+		IDsInUse.Remove(visualizationID_01);
+		IDsInUse.Remove(visualizationID_02);
+		IDsInUse.Remove(visualizationID_03);
+		IDsInUse.Remove(visualizationID_04);
+	}
+
 	public void Initialize() {
 		if(initialized) return;
 
 		BoxCollider box = GetComponent<BoxCollider>();
-		Size = box.size.x;
+		Size = box.size.x * transform.lossyScale.x;
 		
 		if(clonedBlockMaterial == null || clonedBlockMaterial.name != originalBlockMaterial.name) {
 			clonedBlockMaterial = new Material(originalBlockMaterial);
@@ -205,11 +242,19 @@ public class BuildInstructionsCube : MonoBehaviour {
 		lastBaseColor = baseColor;
 	}
 
-	public bool SatisfiedByObject(ObservedObject obj, float flatFudge, float verticalFudge, float angleFudge, bool allowCardinalAngleOffsets=true) {
+	public bool SatisfiedByObject(ObservedObject obj, float flatFudge, float verticalFudge, float angleFudge, bool allowCardinalAngleOffsets=true, bool debug=false) {
 
-		if(!MatchesObject(obj)) return false;
-		if(!ignorePosition && !MatchesPosition(obj.WorldPosition, flatFudge, verticalFudge)) return false;
-		if(!MatchesRotation(obj.Rotation, angleFudge, allowCardinalAngleOffsets)) return false;
+		if(!MatchesObject(obj, true, debug)) {
+			return false;
+		}
+		if(!ignorePosition && !MatchesPosition(obj, obj.WorldPosition, flatFudge, verticalFudge, debug)) {
+			if(debug) Debug.Log("SatisfiedByObject failed because obj("+obj+").cubeType("+obj.cubeType+") MatchesPosition failed against "+ gameObject.name);
+			return false;
+		}
+		if(!MatchesRotation(obj.Rotation, angleFudge, allowCardinalAngleOffsets)) {
+			if(debug) Debug.Log("SatisfiedByObject failed to satisfy because obj("+obj+")'s rotation doesnt match "+ gameObject.name);
+			return false;
+		}
 
 		return true;
 	}
@@ -223,26 +268,51 @@ public class BuildInstructionsCube : MonoBehaviour {
 		return true;
 	}
 
-	public bool MatchesObject(ObservedObject obj, bool ignoreColor=true) {
-		if(obj == null) return false;
-		if(obj.cubeType != cubeType) return false;
+	public bool MatchesObject(ObservedObject obj, bool ignoreColor=true, bool debug=false) {
+		if(obj == null) {
+			if(debug) Debug.Log("MatchesObject failed because obj is null and therefore cannot possibly match "+ gameObject.name);
+			return false;
+		}
+		if(obj.cubeType != cubeType) {
+			if(debug) Debug.Log("MatchesObject failed because obj("+obj+").cubeType("+obj.cubeType+") doesn't match "+ gameObject.name);
+			return false;
+		}
 		if(!ignoreColor && obj.isActive) {
 			ActiveBlock activeBlock = obj as ActiveBlock;
-			if(activeBlock.mode != activeBlockMode) return false;
+			if(activeBlock.mode != activeBlockMode) {
+				if(debug) Debug.Log("MatchesObject failed because activeBlock("+obj+").mode("+activeBlock.mode+") doesn't match "+ gameObject.name);
+				return false;
+			}
 		}
 
 		return true;
 	}
-	
 
-	public bool MatchesPosition(Vector3 actualPos, float flatFudge, float verticalFudge) {
+	public bool MatchesPosition(Vector3 actualPos, float flatFudge, float verticalFudge, bool debug=false) {
+		return MatchesPosition(null, actualPos, flatFudge, verticalFudge, debug);
+	}
+
+	//handing through observedObject solely for debugging
+	public bool MatchesPosition(ObservedObject obj, Vector3 actualPos, float flatFudge, float verticalFudge, bool debug=false) {
 	
 		Vector3 idealPos = (CozmoUtil.Vector3UnityToCozmoSpace(transform.position) / Size) * CozmoUtil.BLOCK_LENGTH_MM;
 		
 		Vector3 error = actualPos - idealPos;
 		
-		if(Mathf.Abs(error.z) > (verticalFudge * CozmoUtil.BLOCK_LENGTH_MM)) return false;
-		if(Mathf.Abs(((Vector2)error).magnitude) > (flatFudge * CozmoUtil.BLOCK_LENGTH_MM)) return false;
+		if(Mathf.Abs(error.z) > (verticalFudge * CozmoUtil.BLOCK_LENGTH_MM)) {
+			if(debug) Debug.Log("MatchesPosition failed because actualPos.z("+actualPos.z+") is too far from idealPos.z("+idealPos.z+")");
+//			VisualizeLayoutCube(idealPos, Color.magenta);
+//			VisualizeActualCube(obj, Color.cyan);
+			return false;
+		}
+		float flatRange = ((Vector2)error).magnitude;
+		float rangeFudge = flatFudge * CozmoUtil.BLOCK_LENGTH_MM;
+		if(flatRange > rangeFudge) {
+//			VisualizeLayoutCube(idealPos, Color.magenta);
+//			VisualizeActualCube(obj, Color.cyan);
+			if(debug) Debug.Log("MatchesPosition failed because flatRange("+flatRange+") is higher than rangeFudge("+rangeFudge+")");
+			return false;
+		}
 		
 		return true;
 	}
@@ -265,6 +335,52 @@ public class BuildInstructionsCube : MonoBehaviour {
 		facing_rad = MathUtil.SignedVectorAngle(Vector2.right, (Vector2)idealFacing, Vector3.forward) * Mathf.Deg2Rad;
 
 		return idealPos;
+	}
+
+	void VisualizeLayoutCube(Vector3 idealPos, Color color) {
+		
+		Vector3 xHalf = CozmoUtil.Vector3UnityToCozmoSpace(transform.right) * CozmoUtil.BLOCK_LENGTH_MM * 0.5f;
+		Vector3 yHalf = CozmoUtil.Vector3UnityToCozmoSpace(transform.forward) * CozmoUtil.BLOCK_LENGTH_MM * 0.5f;
+		Vector3 zHalf = CozmoUtil.Vector3UnityToCozmoSpace(transform.up) * CozmoUtil.BLOCK_LENGTH_MM * 0.5f;
+		
+		Vector3[] topCorners = new Vector3[] {
+			idealPos + xHalf + yHalf + zHalf,
+			idealPos - xHalf + yHalf + zHalf,
+			idealPos - xHalf - yHalf + zHalf,
+			idealPos + xHalf - yHalf + zHalf };
+		
+		Vector3[] bottomCorners = new Vector3[] {
+			idealPos + xHalf + yHalf - zHalf,
+			idealPos - xHalf + yHalf - zHalf,
+			idealPos - xHalf - yHalf - zHalf,
+			idealPos + xHalf - yHalf - zHalf };
+		
+		RobotEngineManager.instance.VisualizeQuad(visualizationID_01, CozmoPalette.ColorToUInt(color), topCorners[0], topCorners[1], topCorners[2], topCorners[3]);
+		RobotEngineManager.instance.VisualizeQuad(visualizationID_02, CozmoPalette.ColorToUInt(color), bottomCorners[0], bottomCorners[1], bottomCorners[2], bottomCorners[3]);
+	}
+
+	void VisualizeActualCube(ObservedObject obj, Color color) {
+		
+		Vector3 pos = obj.WorldPosition;
+
+		Vector3 xHalf = obj.Right * CozmoUtil.BLOCK_LENGTH_MM * 0.5f;
+		Vector3 yHalf = obj.Forward * CozmoUtil.BLOCK_LENGTH_MM * 0.5f;
+		Vector3 zHalf = obj.Up * CozmoUtil.BLOCK_LENGTH_MM * 0.5f;
+		
+		Vector3[] topCorners = new Vector3[] {
+			pos + xHalf + yHalf + zHalf,
+			pos - xHalf + yHalf + zHalf,
+			pos - xHalf - yHalf + zHalf,
+			pos + xHalf - yHalf + zHalf };
+		
+		Vector3[] bottomCorners = new Vector3[] {
+			pos + xHalf + yHalf - zHalf,
+			pos - xHalf + yHalf - zHalf,
+			pos - xHalf - yHalf - zHalf,
+			pos + xHalf - yHalf - zHalf };
+		
+		RobotEngineManager.instance.VisualizeQuad(visualizationID_03, CozmoPalette.ColorToUInt(color), topCorners[0], topCorners[1], topCorners[2], topCorners[3]);
+		RobotEngineManager.instance.VisualizeQuad(visualizationID_04, CozmoPalette.ColorToUInt(color), bottomCorners[0], bottomCorners[1], bottomCorners[2], bottomCorners[3]);
 	}
 
 }

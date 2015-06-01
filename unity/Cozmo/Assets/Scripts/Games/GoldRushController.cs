@@ -128,7 +128,7 @@ public class GoldRushController : GameController {
 		// need timer to reflect our games unique use of it
 		if (textTime != null && state == GameState.PLAYING) 
 		{
-			textTime.text = Mathf.FloorToInt (maxPlayTime+bonusTime - totalActiveTime).ToString () + suffix_seconds;
+			textTime.text = Mathf.FloorToInt (levelData.maxPlayTime+bonusTime - totalActiveTime).ToString () + suffix_seconds;
 		}
 
 		if (textScore != null && state == GameState.PLAYING) 
@@ -223,7 +223,7 @@ public class GoldRushController : GameController {
 		}
 	}
 
-	protected override void Exit_PLAYING()
+	protected override void Exit_PLAYING(bool overrideStars = false)
 	{
 		base.Exit_PLAYING();
 		AudioManager.Stop(); // stop all audio
@@ -260,7 +260,7 @@ public class GoldRushController : GameController {
 
 		playStateTimer += Time.deltaTime;
 
-		int secondsLeft = Mathf.CeilToInt((maxPlayTime + bonusTime) - totalActiveTime);
+		int secondsLeft = Mathf.CeilToInt((levelData.maxPlayTime + bonusTime) - totalActiveTime);
 		PlayCountdownAudio(secondsLeft);
 
 		if( robot != null )
@@ -449,7 +449,7 @@ public class GoldRushController : GameController {
 	protected override bool IsGameOver() 
 	{
 		//if(base.IsGameOver()) return true;
-		if(maxPlayTime > 0f && totalActiveTime >= maxPlayTime + bonusTime  ) return true;
+		if(levelData.maxPlayTime > 0f && totalActiveTime >= levelData.maxPlayTime + bonusTime) return true;
 
 		//game specific end conditions...
 		return false;

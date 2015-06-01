@@ -866,6 +866,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 62b7da07579bd474b88a194e3fa1ba99, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  debug: 0
   screenSettings:
   - anchoredPosition: {x: 0, y: 0}
     anchoredPosition3D: {x: 0, y: 0, z: 0}
@@ -875,6 +876,7 @@ MonoBehaviour:
     offsetMin: {x: 221, y: 56}
     pivot: {x: .5, y: .5}
     sizeDelta: {x: -442, y: -112}
+    localScale: {x: 1, y: 1, z: 1}
   - anchoredPosition: {x: 0, y: .5}
     anchoredPosition3D: {x: 0, y: .5, z: 0}
     anchorMax: {x: 1, y: 1}
@@ -883,6 +885,7 @@ MonoBehaviour:
     offsetMin: {x: 332, y: 56}
     pivot: {x: .5, y: .5}
     sizeDelta: {x: -664, y: -111}
+    localScale: {x: 1, y: 1, z: 1}
 --- !u!114 &11418320
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1622,7 +1625,6 @@ MonoBehaviour:
   countdownText: {fileID: 11473930}
   countdownToStart: 3
   countdownTickSound: {fileID: 0}
-  maxPlayTime: 0
   timerSounds:
   - time: 1
     sound: {fileID: 8300000, guid: 5cb604773e21245808f4e243aaa7223a, type: 3}
@@ -1659,8 +1661,6 @@ MonoBehaviour:
   - time: 80
     sound: {fileID: 8300000, guid: 98961ef30fcae4bc99a9fc0bccb9537b, type: 3}
   gameStartingIn: {fileID: 8300000, guid: 32dc09a7b8bf142d49dc82832f032f2a, type: 3}
-  scoreToWin: 300
-  starThresholds: 780000005a0000003c000000
   starPop: {fileID: 8300000, guid: 7813f32986da54042b875bb4ec23afc1, type: 3}
   textScore: {fileID: 11418322}
   textError: {fileID: 0}
@@ -1703,7 +1703,7 @@ MonoBehaviour:
   button_PlayAgain: {fileID: 11475716}
   button_Rebuild: {fileID: 11475722}
   thereAndBackAgain: 1
-  pointsPerLap: 100
+  pointsPerObstacle: 100
   textObservedCount: {fileID: 11475734}
   textProgress: {fileID: 11475692}
   cornerTriggeredSound: {fileID: 8300000, guid: d25b930fe16ab479f897854c283d2c51,
@@ -1717,6 +1717,7 @@ MonoBehaviour:
   previewCourseLightsDelay: .100000001
   previewCourseLightsPause: 1
   previewCourseLightsTimer: 0
+  startingCornerIndexPerLevel: 0000000003000000
   testLightIndex: 0
 --- !u!114 &11475734
 MonoBehaviour:
@@ -2421,8 +2422,8 @@ RectTransform:
   m_RootOrder: 7
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: .5}
-  m_SizeDelta: {x: -664, y: -111}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: -442, y: -112}
   m_Pivot: {x: .5, y: .5}
 --- !u!224 &22475718
 RectTransform:

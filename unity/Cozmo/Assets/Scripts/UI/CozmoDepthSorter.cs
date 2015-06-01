@@ -15,6 +15,7 @@ public enum CozmoCanvasDepth {
 	Overlay_Controls,
 	Overlay_Inventory,
 	Overlay_BackButton,
+	Overlay_Shell,
 	Overlay_Debug,
 	Overlay_Options,
 }
@@ -40,8 +41,9 @@ public class CozmoDepthSorter : MonoBehaviour {
 			case CozmoCanvasDepth.Overlay_Controls: 	return 15;
 			case CozmoCanvasDepth.Overlay_BackButton: 	return 20;
 			case CozmoCanvasDepth.Overlay_Inventory: 	return 25;
-			case CozmoCanvasDepth.Overlay_Debug: 		return 30;
-			case CozmoCanvasDepth.Overlay_Options: 		return 35;
+			case CozmoCanvasDepth.Overlay_Shell: 		return 30;
+			case CozmoCanvasDepth.Overlay_Debug: 		return 35;
+			case CozmoCanvasDepth.Overlay_Options: 		return 40;
 		}
 
 		return 0;
@@ -62,6 +64,7 @@ public class CozmoDepthSorter : MonoBehaviour {
 			case CozmoCanvasDepth.Overlay_Inventory:
 			case CozmoCanvasDepth.Overlay_BackButton:
 			case CozmoCanvasDepth.Overlay_Debug:
+			case CozmoCanvasDepth.Overlay_Shell:
 			case CozmoCanvasDepth.Overlay_Options:
 				return RenderMode.ScreenSpaceOverlay;
 		}

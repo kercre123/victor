@@ -990,7 +990,6 @@ MonoBehaviour:
   countdownText: {fileID: 11459744}
   countdownToStart: 5
   countdownTickSound: {fileID: 0}
-  maxPlayTime: 90
   timerSounds:
   - time: 1
     sound: {fileID: 8300000, guid: 5cb604773e21245808f4e243aaa7223a, type: 3}
@@ -1027,8 +1026,6 @@ MonoBehaviour:
   - time: 80
     sound: {fileID: 8300000, guid: 98961ef30fcae4bc99a9fc0bccb9537b, type: 3}
   gameStartingIn: {fileID: 8300000, guid: 32dc09a7b8bf142d49dc82832f032f2a, type: 3}
-  scoreToWin: 0
-  starThresholds: 640000006801000094020000
   starPop: {fileID: 8300000, guid: 7813f32986da54042b875bb4ec23afc1, type: 3}
   textScore: {fileID: 11459736}
   textError: {fileID: 0}
@@ -1110,7 +1107,7 @@ MonoBehaviour:
   findRadius: 75
   lostRadius: 75
   returnRadius: 75
-  autoReturnRadius: 25
+  autoReturnRadius: 35
   detectRadius: 300
   numDropsForBonusTime: 4
   baseTimeBonus: 30

@@ -19,16 +19,16 @@ public class GameController : MonoBehaviour {
 		public AudioClip sound;
 	}
 
-	private const int STAR_COUNT = 3;
+	public const int STAR_COUNT = 3;
 
 	[SerializeField] private Text countdownText = null;
 	[SerializeField] private float countdownToStart = 0f;
 	[SerializeField] private AudioClip countdownTickSound;
-	[SerializeField] protected float maxPlayTime = 0f;
+	//[SerializeField] protected float maxPlayTime = 0f;
 	[SerializeField] protected TimerAudio[] timerSounds;
 	[SerializeField] private AudioClip gameStartingIn;
-	[SerializeField] protected int scoreToWin = 0;
-	[SerializeField] protected int[] starThresholds = new int[STAR_COUNT];
+	//[SerializeField] protected int scoreToWin = 0;
+	//[SerializeField] protected int[] starThresholds = new int[STAR_COUNT];
 	[SerializeField] private AudioClip starPop;
 	[SerializeField] protected Text textScore = null;
 	[SerializeField] protected Text textError = null;
@@ -68,7 +68,13 @@ public class GameController : MonoBehaviour {
 	protected int score = 0;
 	protected int stars = 0;
 	protected bool win = false;
-	
+
+	protected string currentGameName { get; private set; }
+	protected int currentLevelNumber { get; private set; }
+
+	private string SAVED_STARS { get { return currentGameName + currentLevelNumber + "_stars"; } }
+	protected int savedStars { get { return PlayerPrefs.GetInt(SAVED_STARS, 0); } set { PlayerPrefs.SetInt(SAVED_STARS, value); } }
+
 	protected bool firstFrame = true;
 
 	protected float errorMsgTimer = 0f;
@@ -77,7 +83,7 @@ public class GameController : MonoBehaviour {
 
 	//public float gameStartingInDelay = 1.3f;
 
-	private float gameStartingInDelay { get { return gameStartingIn != null ? gameStartingIn.length : 0f; } }
+	private float gameStartingInDelay { get { return gameStartingIn != null ? gameStartingIn.length + 0.1f : 0f; } }
 	private float instructionsDelay { get { return instructionsSound != null ? instructionsSound.length + 0.5f : 0f; } }
 
 	protected int lastTimerSeconds = 0;
@@ -85,6 +91,8 @@ public class GameController : MonoBehaviour {
 
 	protected static float _MessageDelay = 0.5f;
 	public static float MessageDelay { get { return _MessageDelay; } protected set { _MessageDelay = value; } }
+
+	protected GameData.LevelData levelData { get; private set; }
 
 	protected virtual void Awake()
 	{
@@ -101,6 +109,25 @@ public class GameController : MonoBehaviour {
 		firstFrame = true;
 		playRequested = false;
 		buildRequested = false;
+
+		currentGameName = PlayerPrefs.GetString("CurrentGame", "Unknown");
+		currentLevelNumber = PlayerPrefs.GetInt(currentGameName + "_CurrentLevel", 1);
+
+		if(GameData.instance != null)
+		{
+			if(GameData.instance.levelData.ContainsKey(currentGameName + currentLevelNumber))
+			{
+				levelData = GameData.instance.levelData[currentGameName + currentLevelNumber];
+			}
+			else
+			{
+				Debug.LogError("GameData does not contain level: " + currentGameName + currentLevelNumber);
+			}
+		}
+		else
+		{
+			Debug.LogError("GameData is not in scene");
+		}
 
 		if(textError != null) textError.gameObject.SetActive(false);
 		if(playButton != null) playButton.gameObject.SetActive(false);
@@ -223,8 +250,8 @@ public class GameController : MonoBehaviour {
 		}
 
 		if (textTime != null && state == GameState.PLAYING) {
-			if (maxPlayTime > 0f) {
-				textTime.text = Mathf.CeilToInt (maxPlayTime - stateTimer).ToString () + suffix_seconds;
+			if (levelData.maxPlayTime > 0f) {
+				textTime.text = Mathf.CeilToInt (levelData.maxPlayTime - stateTimer).ToString () + suffix_seconds;
 			} else {
 				textTime.text = Mathf.CeilToInt (stateTimer).ToString () + suffix_seconds;
 			}
@@ -338,19 +365,24 @@ public class GameController : MonoBehaviour {
 	protected virtual void Update_PLAYING() {
 		//Debug.Log(gameObject.name + " Update_PLAYING");
 	}
-	protected virtual void Exit_PLAYING() {
+	protected virtual void Exit_PLAYING(bool overrideStars = false) {
 		win = false;
 		
-		if(scoreToWin > 0) {
-			win = score >= scoreToWin;
+		if(levelData.scoreToWin > 0) {
+			win = score >= levelData.scoreToWin;
 		}
 		else {
 			win = true;
 		}
-		
-		stars = 0;
-		for(int i = 0; i < starThresholds.Length; ++i) {
-			if(score >= starThresholds[i]) stars = i + 1;
+
+		if(!overrideStars) {
+			stars = 0;
+			int[] starRequirements = levelData.stars;
+			for(int i = 0; i < starRequirements.Length; ++i) {
+				if(score >= starRequirements[i] && starRequirements[i] > 0) stars = i + 1;
+			}
+
+			if(stars >= savedStars) savedStars = stars;
 		}
 
 		Debug.Log(gameObject.name + " Exit_PLAYING");
@@ -402,10 +434,9 @@ public class GameController : MonoBehaviour {
 	}
 
 	protected virtual bool IsGameOver() {
-		
-		if(maxPlayTime > 0f && stateTimer >= maxPlayTime) return true;
-		if(scoreToWin > 0) {
-			if(score >= scoreToWin) {
+		if(levelData.maxPlayTime > 0f && stateTimer >= levelData.maxPlayTime) return true;
+		if(levelData.scoreToWin > 0) {
+			if(score >= levelData.scoreToWin) {
 				return true;
 			}
 		}
@@ -430,7 +461,7 @@ public class GameController : MonoBehaviour {
 		bool played = false;
 		for(int i=0; i<timerSounds.Length; i++) {
 			if(secondsLeft == timerSounds[i].time && lastTimerSeconds != timerSounds[i].time) {
-				AudioManager.PlayOneShot(timerSounds[i].sound);
+				AudioManager.PlayAudioClipDeferred(timerSounds[i].sound, 0, AudioManager.Source.Notification);
 				played = true;
 				break;
 			}

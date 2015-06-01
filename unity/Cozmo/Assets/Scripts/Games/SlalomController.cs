@@ -13,7 +13,7 @@ public class SlalomController : GameController {
 	[SerializeField] Button button_Rebuild;
 
 	[SerializeField] bool thereAndBackAgain = true;	//when reaching the end or beginning of obstacle list, reverse order
-	[SerializeField] int pointsPerLap = 100;
+	[SerializeField] int pointsPerObstacle = 100;
 	[SerializeField] Text textObservedCount = null;
 	[SerializeField] Text textProgress = null;
 
@@ -26,6 +26,10 @@ public class SlalomController : GameController {
 	[SerializeField] float previewCourseLightsDelay = 0.1f;
 	[SerializeField] float previewCourseLightsPause = 1f;
 	[SerializeField] float previewCourseLightsTimer = 0f;
+
+	[SerializeField] int[] startingCornerIndexPerLevel;
+
+	int startingCornerIndex = 0;
 
 	List<ActiveBlock> obstacles = new List<ActiveBlock>();
 
@@ -119,10 +123,10 @@ public class SlalomController : GameController {
 	}
 
 	void LapComplete() {
-		score += pointsPerLap;
+		//score += pointsPerObstacle;
 		//Debug.Log("LapComplete scores[0](" + scores[0].ToString() + ")");
 		//PlayOneShot(playerScoreSound);
-		int lapsRemaining = (int)((float)scoreToWin / (float)pointsPerLap) - currentLap;
+		int lapsRemaining = (int)((float)levelData.scoreToWin / ((float)pointsPerObstacle * obstacles.Count)) - currentLap;
 		if(lapsRemaining == 0) {
 			if(finalLapSound != null) AudioManager.PlayAudioClip(finalLapSound, cornerTriggeredDelay, AudioManager.Source.Notification);
 			Debug.Log("final lap");
@@ -175,6 +179,11 @@ public class SlalomController : GameController {
 			currentColor_unit = CozmoPalette.instance.GetUIntColorForActiveBlockType(currentColor);
 		}
 		MessageDelay = 0f;
+
+		startingCornerIndex = 0;
+		if(startingCornerIndexPerLevel != null && currentLevelNumber >= startingCornerIndexPerLevel.Length) {
+			startingCornerIndex = startingCornerIndexPerLevel[currentLevelNumber-1];
+		}
 	}
 	
 	protected override void OnDisable()
@@ -204,6 +213,7 @@ public class SlalomController : GameController {
 	void GotoStartPose() {
 		float rad;
 		startPosition = GameLayoutTracker.instance.GetStartingPositionFromLayout(out rad, out startFacing);
+		robot.GotoPose(startPosition.x, startPosition.y, rad);
 		CozmoBusyPanel.instance.SetDescription("Cozmo is getting in the starting position.");
 		atYourMark = false;
 		wasAtMark = false;
@@ -299,7 +309,7 @@ public class SlalomController : GameController {
 //
 //		RobotEngineManager.instance.VisualizeQuad(13, CozmoPalette.ColorToUInt(Color.yellow), startingPos, startingPos, currentObstacle.WorldPosition, currentObstacle.WorldPosition);
 
-		currentCorner = 0;
+		currentCorner = startingCornerIndex;
 		bool onNextObstacle;
 		int nextCorner = GetNextCorner(out onNextObstacle);
 		UpdateCornerLights(currentCorner, nextCorner, onNextObstacle, preview);
@@ -350,13 +360,16 @@ public class SlalomController : GameController {
 		}
 	}
 
-	protected override void Exit_PLAYING() {
-		base.Exit_PLAYING();
+	protected override void Exit_PLAYING(bool overrideStars = false) {
+		base.Exit_PLAYING(true);
 
 		stars = 0;
-		for(int i = 0; i < starThresholds.Length; ++i) {
-			if(stateTimer <= starThresholds[i]) stars = i + 1;
+		int[] starRequirements = levelData.stars;
+		for(int i = 0; i < starRequirements.Length; ++i) {
+			if(stateTimer <= starRequirements[i] && starRequirements[i] > 0) stars = i + 1;
 		}
+
+		if(stars >= savedStars) savedStars = stars;
 
 		for(int i = 0; i < obstacles.Count; ++i) {
 			obstacles[i].OnAxisChange -= OnActiveBlockRolled;
@@ -427,6 +440,7 @@ public class SlalomController : GameController {
 		currentCorner = GetNextCorner(out obstacleAdvanced);
 
 		if(obstacleAdvanced) {
+			score += pointsPerObstacle;
 			previousObstacle = currentObstacle;
 			currentObstacleIndex = GetNextIndex(true);
 			clockwise = !clockwise;
@@ -441,7 +455,7 @@ public class SlalomController : GameController {
 
 		//Debug.Log("AdvanceCorner obstacleAdvanced("+obstacleAdvanced+") clockwise("+clockwise+") currentCorner("+currentCorner+") nextCorner("+nextCorner+") nextCornerIsOnNextObstacle("+nextCornerIsOnNextObstacle+")");
 
-		UpdateCornerLights(currentCorner, nextCorner, nextCornerIsOnNextObstacle);
+		UpdateCornerLights(currentCorner, nextCorner, nextCornerIsOnNextObstacle, preview);
 		if(!preview) UpdateRobotLights(currentCorner);
 	}
 
