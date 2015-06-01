@@ -1005,6 +1005,11 @@ namespace Anki {
     {
       return false; // XXX On Cozmo 3, head is off if robot is charging
     }
+
+    extern "C" {
+    void EnableIRQ() {}
+    void DisableIRQ() {}
+    }
     
     void HAL::FlashBlockIDs() {
       flashBlockIdx_ = 0;
