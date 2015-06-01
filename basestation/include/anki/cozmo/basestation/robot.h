@@ -203,8 +203,9 @@ namespace Anki {
       
       bool IsTraversingPath()   const {return (_currPathSegment >= 0) || (_lastSentPathID > _lastRecvdPathID);}
       
-      u16  GetLastRecvdPathID() const {return _lastRecvdPathID;}
-      u16  GetLastSentPathID()  const {return _lastSentPathID;}
+      u16  GetCurrentPathSegment() const { return _currPathSegment; }
+      u16  GetLastRecvdPathID()    const {return _lastRecvdPathID;}
+      u16  GetLastSentPathID()     const {return _lastSentPathID;}
 
       bool IsUsingManualPathSpeed() const {return _usingManualPathSpeed;}
       

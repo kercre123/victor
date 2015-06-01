@@ -431,18 +431,21 @@ IPathPlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
     
       // Get last non-point turn segment of path
       PathSegment& lastSeg = path[numSegments-1];
-      if(lastSeg.GetType() == Planning::PST_POINT_TURN) {
-        path.PopBack(1);
-        --numSegments;
-        lastSeg = path[numSegments-1];
-        
-        // There shouldn't be more than one point turn at the end of a path
-        // NOTE: Actually, there could be because of the way the pathFollower works
-        //assert(lastSeg.GetType() != Planning::PST_POINT_TURN);
-      }
-      
+
       f32 end_x, end_y, end_angle;
       lastSeg.GetEndPose(end_x, end_y, end_angle);
+      
+      while(lastSeg.GetType() == Planning::PST_POINT_TURN) {
+        path.PopBack(1);
+        --numSegments;
+        
+        if (numSegments > 0) {
+          lastSeg = path[numSegments-1];
+        } else {
+          break;
+        }
+      }
+      
       Radians plannedGoalAngle(end_angle);
       f32 angDiff = (desiredGoalAngle - plannedGoalAngle).ToFloat();
       
