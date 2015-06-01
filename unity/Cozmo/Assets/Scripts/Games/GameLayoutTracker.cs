@@ -409,9 +409,10 @@ public class GameLayoutTracker : MonoBehaviour {
 					float arc = 180f / currentLayout.blocks.Count;
 					Vector3 latestPos = inventory[inventory.Count-1].WorldPosition;
 					Vector2 toLatest = latestPos - robot.WorldPosition;
-					float angle = MathUtil.SignedVectorAngle(Vector2.right, toLatest.normalized, Vector3.forward) + arc;
+					float angle = MathUtil.SignedVectorAngle(robot.Forward, toLatest.normalized, Vector3.forward) + arc;
 					Vector3 idealFacing = Quaternion.AngleAxis(angle, Vector3.forward) * Vector3.right;
 					Vector3 facePosition = robot.WorldPosition + idealFacing * CozmoUtil.BLOCK_LENGTH_MM * 10f;
+
 					angle *= Mathf.Deg2Rad;
 	
 					robot.TurnInPlace(angle);
@@ -707,7 +708,7 @@ public class GameLayoutTracker : MonoBehaviour {
 				
 				//skip objects of the wrong type
 				if(!block.SatisfiedByObject(newObject, distanceFudge, coplanarFudge, angleFudge, true, debug) ) {
-					//if(debug) Debug.Log("skip object("+CozmoPalette.instance.GetNameForObjectType(newObject.cubeType)+") because it doesn't satisfy layoutCube("+block.gameObject.name+")");
+					if(debug) Debug.Log("skip object("+CozmoPalette.instance.GetNameForObjectType(newObject.cubeType)+") because it doesn't satisfy layoutCube("+block.gameObject.name+")");
 					continue;
 				}
 
@@ -879,7 +880,7 @@ public class GameLayoutTracker : MonoBehaviour {
 			string desc = null;
 			CozmoBusyPanel.instance.SetDescription("change mode of\n", activeBlock, ref desc);
 		}
-		robot.localBusyTimer = (cycleTime * cycleCount) + cycleDelayTime;
+		//robot.localBusyTimer = (cycleTime * cycleCount) + cycleDelayTime;
 		StartCoroutine(CycleLightCubeModes(activeBlock, layoutActiveCube.activeBlockMode));
 	}
 	
@@ -899,7 +900,7 @@ public class GameLayoutTracker : MonoBehaviour {
 		}
 		
 		AudioManager.PlayOneShot(cycleSuccessSound);
-		robot.isBusy = false;
+		//robot.isBusy = false;
 	}
 
 	#endregion

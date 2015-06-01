@@ -49,6 +49,10 @@ public class CozmoBusyPanel : MonoBehaviour {
 		panel.SetActive(true);
 	}
 
+//	void OnLevelWasLoaded(int level) {
+//		
+//		
+//	}
 
 	public void CancelCurrentActions() {
 		if(robot == null || !robot.isBusy) {
@@ -76,4 +80,5 @@ public class CozmoBusyPanel : MonoBehaviour {
 
 		if(period == ".") SetDescription(description);
 	}
+
 }

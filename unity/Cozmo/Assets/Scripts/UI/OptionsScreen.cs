@@ -19,7 +19,7 @@ public class OptionsScreen : MonoBehaviour {
 	[SerializeField] ComboBox pertinent_objects;
 	[SerializeField] InputField pertinent_object_range;
 
-	public const int REVERSE_LIKE_A_CAR = 1;
+	public const int REVERSE_LIKE_A_CAR = 0;
 	public const float DEFAULT_MAX_TURN_FACTOR = 0.25f;
 
 	public string[] controlStyles = { "GyroSliderHybrid", "SliderAndTilt", "TwoSliders", "TriThumb", "DriveThumb", "PlayerThumb" };
@@ -121,7 +121,7 @@ public class OptionsScreen : MonoBehaviour {
 		}
 
 		if(pertinent_object_range != null) {
-			pertinent_object_range.text = PlayerPrefs.GetInt("ObjectPertinenceRange" + GetVisionSelected().ToString(), 220).ToString();
+			pertinent_object_range.text = PlayerPrefs.GetInt("ObjectPertinenceRange" + GetVisionSelected().ToString(), 264).ToString();
 			pertinent_object_range.onValueChange.AddListener(ObjectPertinenceRange);
 		}
 

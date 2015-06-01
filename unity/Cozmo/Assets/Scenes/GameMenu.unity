@@ -548,6 +548,7 @@ GameObject:
   - 223: {fileID: 675491724}
   - 114: {fileID: 675491723}
   - 114: {fileID: 675491722}
+  - 114: {fileID: 675491725}
   m_Layer: 5
   m_Name: GameMenuCanvas
   m_TagString: Untagged
@@ -618,15 +619,27 @@ Canvas:
   m_GameObject: {fileID: 675491720}
   m_Enabled: 1
   serializedVersion: 2
-  m_RenderMode: 1
-  m_Camera: {fileID: 154288211}
+  m_RenderMode: 0
+  m_Camera: {fileID: 0}
   m_PlaneDistance: 100
   m_PixelPerfect: 0
   m_ReceivesEvents: 1
   m_OverrideSorting: 0
   m_OverridePixelPerfect: 0
   m_SortingLayerID: 0
-  m_SortingOrder: 1
+  m_SortingOrder: 30
+--- !u!114 &675491725
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 675491720}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 050c44e8b6b2c42daa4fabe43ef47cf0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  depth: 10
 --- !u!1 &728711169
 GameObject:
   m_ObjectHideFlags: 0
