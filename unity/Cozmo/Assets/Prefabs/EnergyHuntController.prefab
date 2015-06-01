@@ -1107,7 +1107,7 @@ MonoBehaviour:
   findRadius: 75
   lostRadius: 75
   returnRadius: 75
-  autoReturnRadius: 25
+  autoReturnRadius: 35
   detectRadius: 300
   numDropsForBonusTime: 4
   baseTimeBonus: 30
