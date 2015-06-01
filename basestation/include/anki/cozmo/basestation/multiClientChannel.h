@@ -22,6 +22,8 @@
 #include "anki/messaging/basestation/advertisementService.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 
+#include "anki/messaging/shared/UdpClient.h"
+
 // Set to 1 to simulate a send/receive latencies
 // beyond the actual latency of TCP.
 // Note that the resolution of these latencies is currently equal to
@@ -126,6 +128,9 @@ namespace Cozmo {
     bool AcceptAdvertisingConnectionInternal(ConnectionId connectionId, const AdvertisementConnectionInfo& info);
     
     Anki::Comms::UnreliableUDPChannel _advertisingChannel;
+    
+    // TODO: Remove this once advertisementService is updated to talk with UnreliableUDPChannel
+    UdpClient _advertisingClient;
     
     Anki::Comms::ReliableUDPChannel _reliableChannel;
     

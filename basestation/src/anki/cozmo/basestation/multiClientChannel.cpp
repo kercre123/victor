@@ -21,6 +21,12 @@
 
 #include <utility>
 
+
+// TODO: Get rid of this.
+// Using old UDPClient to talk to AdvertisingService because I don't want to update the
+// advertisement service class to use the new UDP lib.
+#define USE_OLD_UDP_CLIENT_FOR_ADVERTISING 1
+
 // simple adapter class that calls std::get<I> on the tuple result
 // so it also works with pairs or anything that supports std::get<I>
 template<size_t I, typename Iter>
@@ -69,11 +75,21 @@ Anki::Util::TransportAddress MultiClientChannel::GetAdvertisingAddress() const
 
 void MultiClientChannel::Start(const TransportAddress& advertisingAddress)
 {
-  _advertisingChannel.StartClient();
   _reliableChannel.StartClient();
-  
+
+#if(USE_OLD_UDP_CLIENT_FOR_ADVERTISING)
+  u32 ipAddr = advertisingAddress.GetIPAddress();
+  std::stringstream ss;
+  ss << (0x000000ff & ipAddr) << "." << (0x0000ff00 & ipAddr >> 8) << "." << (0x00ff0000 & ipAddr >> 16) << "." << (ipAddr >> 24);
+  u16 port = advertisingAddress.GetIPPort();
+  _advertisingClient.Disconnect();
+  _advertisingClient.Connect(ss.str().c_str(), port);
+  printf("MultiClientChannel connecting to advertising service at %s:%d\n", ss.str().c_str(), port);
+#else
+  _advertisingChannel.StartClient();
   _advertisingChannel.AddConnection(ADVERTISING_CLIENT_CONNECTION_ID, advertisingAddress);
   SendZeroPacket();
+#endif
 }
 
 void MultiClientChannel::Stop()
@@ -83,6 +99,8 @@ void MultiClientChannel::Stop()
     
     _advertisingChannel.Stop();
     _reliableChannel.Stop();
+    
+    _advertisingClient.Disconnect();
   }
 }
 
@@ -96,7 +114,33 @@ void MultiClientChannel::Update()
   
   _advertisingChannel.Update();
   _reliableChannel.Update();
+
   
+#if(USE_OLD_UDP_CLIENT_FOR_ADVERTISING)
+  // Read datagrams and update advertising device list.
+  Comms::AdvertisementMsg advertisementMessage;
+  int bytes_recvd = 0;
+  do {
+    bytes_recvd = _advertisingClient.Recv((char*)&advertisementMessage, sizeof(Comms::AdvertisementMsg));
+    if (bytes_recvd == sizeof(Comms::AdvertisementMsg)) {
+      
+      advertisementMessage.ip[sizeof(advertisementMessage.ip) - 1] = 0;
+      
+      if (!_reliableChannel.IsConnectionActive(advertisementMessage.id)) {
+        
+        if (_advertisingInfo.count(advertisementMessage.id) == 0) {
+          PRINT_STREAM_DEBUG("MultiClientChannel.Update",
+                             "Detected advertising connection id " << advertisementMessage.id <<
+                             " when hosting on host " << advertisementMessage.ip <<
+                             " at port " << advertisementMessage.port <<  ".");
+        }
+        _advertisingInfo[advertisementMessage.id] = AdvertisementConnectionInfo(advertisementMessage, currentTime);
+
+      }
+    }
+  } while(bytes_recvd > 0);
+
+#else
   IncomingPacket packet;
   while (_advertisingChannel.PopIncomingPacket(packet)) {
     if (packet.tag == IncomingPacket::Tag::NormalMessage) {
@@ -114,13 +158,15 @@ void MultiClientChannel::Update()
             PRINT_STREAM_DEBUG("MultiClientChannel.Update",
                                  "Detected advertising connection id " << advertisementMessage.id <<
                               " when hosting on host " << advertisementMessage.ip <<
-                              " at port" << advertisementMessage.port << ".");
+                              " at port " << advertisementMessage.port << ".");
           }
           _advertisingInfo[advertisementMessage.id] = AdvertisementConnectionInfo(advertisementMessage, currentTime);
         }
       }
     }
   }
+#endif
+
   
   auto iterator = _advertisingInfo.begin();
   auto end = _advertisingInfo.end();
@@ -383,11 +429,17 @@ uint32_t MultiClientChannel::GetMaxTotalBytesPerMessage() const
 
 void MultiClientChannel::SendZeroPacket()
 {
-  PRINT_STREAM_WARNING("MultiClientChannel.SendZeroPacket",
-                       "SENDING ZERO PACKET TO " << ADVERTISING_CLIENT_CONNECTION_ID);
+  //PRINT_STREAM_WARNING("MultiClientChannel.SendZeroPacket",
+  //                     "SENDING ZERO PACKET TO " << ADVERTISING_CLIENT_CONNECTION_ID);
+
+#if(USE_OLD_UDP_CLIENT_FOR_ADVERTISING)
+  const char zero = 0;
+  _advertisingClient.Send(&zero,1);
+#else
   const uint8_t zero = 0;
   OutgoingPacket packet(&zero, 1, ADVERTISING_CLIENT_CONNECTION_ID, false, true);
   _advertisingChannel.Send(packet);
+#endif
 }
 
 bool MultiClientChannel::AcceptAdvertisingConnectionInternal(ConnectionId connectionId, const AdvertisementConnectionInfo& info)

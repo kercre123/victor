@@ -14,11 +14,18 @@
 
 using namespace Anki::Comms;
 
+// Duplicated from embedded reliableTransport.h
+#define RELIABLE_PACKET_HEADER_PREFIX "COZ\x03RE\x01"
+#define RELIABLE_PACKET_HEADER_PREFIX_LENGTH 7
+
 UnreliableUDPChannel::UnreliableUDPChannel()
 {
   // TODO ANDROID: SET IP RETRIEVER
   //unreliableTransport.SetIpRetriever(nullptr);
   unreliableTransport.SetDataReceiver(this);
+  
+  unreliableTransport.SetHeaderPrefix((uint8_t*)(RELIABLE_PACKET_HEADER_PREFIX), RELIABLE_PACKET_HEADER_PREFIX_LENGTH);
+  unreliableTransport.SetDoesHeaderHaveCRC(false);
 }
 
 UnreliableUDPChannel::~UnreliableUDPChannel()
@@ -89,8 +96,8 @@ Anki::Util::TransportAddress UnreliableUDPChannel::GetHostingAddress() const
 
 void UnreliableUDPChannel::Update()
 {
-  PRINT_STREAM_DEBUG("UnreliableUDPChannel.Update",
-                       "Updating");
+  //PRINT_STREAM_DEBUG("UnreliableUDPChannel.Update",
+  //                     "Updating");
   unreliableTransport.Update();
 }
 

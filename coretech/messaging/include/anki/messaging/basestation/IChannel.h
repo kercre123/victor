@@ -37,6 +37,7 @@ namespace Anki {
         }
         
         std::memcpy(this->buffer, bufferData, bufferDataSize);
+        this->bufferSize = bufferDataSize;
       }
       
       // The outgoing buffer.

@@ -73,7 +73,7 @@ namespace Anki {
       
       Anki::Util::ReliableTransport reliableTransport;
       // need recursive for RemoveConnection to not be a pain
-      mutable std::mutex mutex;
+      mutable std::recursive_mutex mutex;
       
     private:
       struct ConnectionData {
