@@ -33,9 +33,8 @@ Block blocks[NUM_BLOCKS];
 
 static void ICACHE_FLASH_ATTR blockRecvCB(void *arg, char *usrdata, unsigned short len)
 {
-  struct espconn* socket = (struct espconn*)arg;
-
-  os_printf("BR recv %08x %d[%d]\r\n", arg, usrdata[0], len);
+  //struct espconn* socket = (struct espconn*)arg;
+  //os_printf("BR recv %08x %d[%d]\r\n", arg, usrdata[0], len);
 }
 
 LOCAL void ICACHE_FLASH_ATTR blockTask(os_event_t *event)
@@ -71,11 +70,17 @@ LOCAL void ICACHE_FLASH_ATTR blockTask(os_event_t *event)
     {
       os_printf("Failed to queue packet to send to block %d: %d\r\n", block, err);
     }
+    else
+    {
+#ifdef DEBUG_BR
+      os_printf("Sent %d[%d] to %d at %d\r\n", blocks[block].buffer[0], blocks[block].length, block, blockServer->proto.udp->remote_ip[3]);
+#endif
+    }
   }
   blocks[block].locked = false;
 
 #ifdef DEBUG_BR
-  os_printf("BReot %04x %04x %d %d\r\n", (uint16)(event->sig >> 16), (uint16)(event->sig & 0xff), event->par, err);
+  //os_printf("BReot %d %d %d %d\r\n", event->sig, event->par, blocks[block].length, err);
 #endif
 }
 
