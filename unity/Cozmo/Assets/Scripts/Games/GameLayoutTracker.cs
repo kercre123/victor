@@ -732,6 +732,11 @@ public class GameLayoutTracker : MonoBehaviour {
 		block.Validated = true;
 		block.Highlighted = false;
 		potentialObservedObjects.Remove(newObject);
+
+		if(newObject.isActive) {
+			ActiveBlock activeBlock = newObject as ActiveBlock;
+			SetLightCubeToCorrectColor(activeBlock, block);
+		}
 	}
 
 	//place our ghost block in the layout window at the position of the currently failing
