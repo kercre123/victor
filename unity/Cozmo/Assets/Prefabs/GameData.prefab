@@ -44,17 +44,17 @@ MonoBehaviour:
   - name: Slalom
     levels:
     - name: 1
-      stars: 5a0000003c00000032000000
+      stars: 809698003c00000032000000
       scoreToWin: 600
       maxPlayTime: 0
     - name: 2
-      stars: 780000005a00000050000000
+      stars: 809698005a00000050000000
       scoreToWin: 900
       maxPlayTime: 0
   - name: Energy Hunt
     levels:
     - name: 1
-      stars: 640000006801000094020000
+      stars: 0a0000006400000068010000
       scoreToWin: 0
       maxPlayTime: 90
 --- !u!114 &11475924
