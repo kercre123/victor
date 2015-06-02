@@ -186,6 +186,7 @@ public class Robot
 	private U2G.RollObject RollObjectMessage;
 	private U2G.PlaceObjectOnGround PlaceObjectOnGroundMessage;
 	private U2G.GotoPose GotoPoseMessage;
+	private U2G.GotoObject GotoObjectMessage;
 	private U2G.SetLiftHeight SetLiftHeightMessage;
 	private U2G.SetRobotCarryingObject SetRobotCarryingObjectMessage;
 	private U2G.ClearAllBlocks ClearAllBlocksMessage;
@@ -364,6 +365,7 @@ public class Robot
 		RollObjectMessage = new U2G.RollObject();
 		PlaceObjectOnGroundMessage = new U2G.PlaceObjectOnGround();
 		GotoPoseMessage = new U2G.GotoPose();
+		GotoObjectMessage = new U2G.GotoObject();
 		SetLiftHeightMessage = new U2G.SetLiftHeight();
 		SetRobotCarryingObjectMessage = new U2G.SetRobotCarryingObject();
 		ClearAllBlocksMessage = new U2G.ClearAllBlocks();
@@ -829,6 +831,19 @@ public class Robot
 		Debug.Log( "Go to Pose: x: " + GotoPoseMessage.x_mm + " y: " + GotoPoseMessage.y_mm + " useManualSpeed: " + GotoPoseMessage.useManualSpeed + " level: " + GotoPoseMessage.level );
 
 		RobotEngineManager.instance.Message.GotoPose = GotoPoseMessage;
+		RobotEngineManager.instance.SendMessage();
+		
+		localBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
+	}
+
+	public void GotoObject(ObservedObject obj, float distance_mm)
+	{
+		GotoObjectMessage.objectID = obj;
+		GotoObjectMessage.distance_mm = distance_mm;
+		GotoObjectMessage.useManualSpeed = System.Convert.ToByte( false );
+
+		RobotEngineManager.instance.Message.GotoObject = GotoObjectMessage;
+
 		RobotEngineManager.instance.SendMessage();
 		
 		localBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
