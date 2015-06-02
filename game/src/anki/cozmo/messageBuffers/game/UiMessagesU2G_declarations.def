@@ -24,6 +24,7 @@ void Process_SaveRobotState(const Anki::Cozmo::U2G::SaveRobotState& msg);
 void Process_EnableDisplay(const Anki::Cozmo::U2G::EnableDisplay& msg);
 void Process_SetHeadlights(const Anki::Cozmo::U2G::SetHeadlights& msg);
 void Process_GotoPose(const Anki::Cozmo::U2G::GotoPose& msg);
+void Process_GotoObject(const Anki::Cozmo::U2G::GotoObject& msg);
 void Process_PlaceObjectOnGround(const Anki::Cozmo::U2G::PlaceObjectOnGround& msg);
 void Process_PlaceObjectOnGroundHere(const Anki::Cozmo::U2G::PlaceObjectOnGroundHere& msg);
 void Process_ExecuteTestPlan(const Anki::Cozmo::U2G::ExecuteTestPlan& msg);

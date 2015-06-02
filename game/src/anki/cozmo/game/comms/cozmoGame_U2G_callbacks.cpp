@@ -505,6 +505,28 @@ namespace Cozmo {
       }
     }
   }
+  
+  void CozmoGameImpl::Process_GotoObject(U2G::GotoObject const& msg)
+  {
+    // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
+    const RobotID_t robotID = 1;
+    Robot* robot = GetRobotByID(robotID);
+    
+    if(robot != nullptr) {
+      const u8 numRetries = 0;
+      
+      ObjectID selectedObjectID;
+      if(msg.objectID < 0) {
+        selectedObjectID = robot->GetBlockWorld().GetSelectedObject();
+      } else {
+        selectedObjectID = msg.objectID;
+      }
+      
+      DriveToObjectAction* action = new DriveToObjectAction(selectedObjectID, msg.distance_mm, msg.useManualSpeed);
+      robot->GetActionList().AddAction(action, numRetries);
+      
+    }
+  }
 
   void CozmoGameImpl::Process_RollObject(U2G::RollObject const& msg)
   {
