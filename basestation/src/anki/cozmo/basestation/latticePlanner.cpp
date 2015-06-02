@@ -441,6 +441,7 @@ IPathPlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
         
         if (numSegments > 0) {
           lastSeg = path[numSegments-1];
+          lastSeg.GetEndPose(end_x, end_y, end_angle);
         } else {
           break;
         }

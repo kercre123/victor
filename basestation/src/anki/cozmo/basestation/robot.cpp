@@ -2905,24 +2905,35 @@ namespace Anki {
       
     void Robot::ComputeDriveCenterPose(const Pose3d &robotPose, Pose3d &driveCenterPose)
     {
+      MoveRobotPoseForward(robotPose, GetDriveCenterOffset(), driveCenterPose);
+    }
+      
+    void Robot::ComputeOriginPose(const Pose3d &driveCenterPose, Pose3d &robotPose)
+    {
+      MoveRobotPoseForward(driveCenterPose, -GetDriveCenterOffset(), robotPose);
+    }
+
+    void Robot::MoveRobotPoseForward(const Pose3d &startPose, f32 distance, Pose3d &movedPose) {
+      movedPose = startPose;
+      f32 angle = startPose.GetRotationAngle<'Z'>().ToFloat();
+      Vec3f trans;
+      trans.x() = startPose.GetTranslation().x() + distance * cosf(angle);
+      trans.y() = startPose.GetTranslation().y() + distance * sinf(angle);
+      movedPose.SetTranslation(trans);
+    }
+      
+    f32 Robot::GetDriveCenterOffset() {
       if (_isPhysical) {
-        // What is the current drive center pose based on carry state...
         f32 driveCenterOffset = DRIVE_CENTER_OFFSET;
         if (IsCarryingObject()) {
           driveCenterOffset = 0;
         }
-        
-        driveCenterPose = robotPose;
-        f32 angle = robotPose.GetRotationAngle<'Z'>().ToFloat();
-        Vec3f trans;
-        trans.x() = robotPose.GetTranslation().x() + driveCenterOffset * cosf(angle);
-        trans.y() = robotPose.GetTranslation().y() + driveCenterOffset * sinf(angle);
-        driveCenterPose.SetTranslation(trans);
-      } else {
-        // TODO: Simulated robot Webots proto needs to be updated with treads.
-        //       Til then assume no drive center offset.
-        driveCenterPose = robotPose;
+        return driveCenterOffset;
       }
+      
+      // TODO: Simulated robot Webots proto needs to be updated with treads.
+      //       Til then assume no drive center offset.
+      return 0.f;
     }
     
   } // namespace Cozmo
