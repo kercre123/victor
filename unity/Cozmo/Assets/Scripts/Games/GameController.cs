@@ -72,8 +72,9 @@ public class GameController : MonoBehaviour {
 	protected string currentGameName { get; private set; }
 	protected int currentLevelNumber { get; private set; }
 
-	private string SAVED_STARS { get { return currentGameName + currentLevelNumber + "_stars"; } }
-	protected int savedStars { get { return PlayerPrefs.GetInt(SAVED_STARS, 0); } set { PlayerPrefs.SetInt(SAVED_STARS, value); } }
+	public const string STARS_END =  "_stars";
+	public string SAVED_STARS { get { return currentGameName + currentLevelNumber + STARS_END; } }
+	public int savedStars { get { return PlayerPrefs.GetInt(SAVED_STARS, 0); } set { PlayerPrefs.SetInt(SAVED_STARS, value); } }
 
 	protected bool firstFrame = true;
 
