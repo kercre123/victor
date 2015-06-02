@@ -359,7 +359,7 @@ public class GameLayoutTracker : MonoBehaviour {
 		if(button_autoBuild != null) button_autoBuild.gameObject.SetActive(false);
 		if(image_localizedCheck != null) image_localizedCheck.gameObject.SetActive(false);
 		if(inventoryHints != null) inventoryHints.SetActive(true);
-
+		inventoryPanel.SetActive(true);
 		layoutInstructionsCamera.gameObject.SetActive(false);
 		layoutInstructionsPanel.SetActive(false);
 
@@ -456,7 +456,7 @@ public class GameLayoutTracker : MonoBehaviour {
 		layoutInstructionsPanel.SetActive(!hidden);
 		layoutInstructionsCamera.gameObject.SetActive(!hidden);
 		
-		if(robot != null) {
+		if(validCount != currentLayout.blocks.Count && robot != null) {
 			
 			if(robot.isBusy) {
 				//coz is doing shit
@@ -469,14 +469,19 @@ public class GameLayoutTracker : MonoBehaviour {
 			else {
 				ObservedObject nextObject = GetObservedObjectForNextLayoutBlock();
 				if(nextObject != null) {
+					string description = null;
+					CozmoBusyPanel.instance.SetDescription( "pick-up\n", nextObject, ref description );
 					Debug.Log("frame("+Time.frameCount+") AUTO_BUILDING GetObservedObjectForNextLayoutBlock nextObject("+nextObject+")");
 					robot.PickAndPlaceObject(nextObject);
 				}
+				else {
+					Debug.Log("frame("+Time.frameCount+") GetObservedObjectForNextLayoutBlock could not find an apt nextObject to place.");
+				}
 			}
+			RefreshValidationSounds();
+			RefreshDropLocationHint();
 		}
 
-		RefreshValidationSounds();
-		RefreshDropLocationHint();
 	}
 	void Exit_AUTO_BUILDING() {
 		layoutInstructionsPanel.SetActive(false);
@@ -819,14 +824,28 @@ public class GameLayoutTracker : MonoBehaviour {
 		unplacedObjects.Clear();
 		unplacedObjects.AddRange (robot.knownObjects);
 		
+		if(unplacedObjects.Count == 0) return null;
+
 		for (int i=0; i<currentLayout.blocks.Count; i++) {
 			if(!currentLayout.blocks[i].Validated) continue;
 			unplacedObjects.Remove (currentLayout.blocks[i].AssignedObject);
 		}
 		
-		//grab first observedObject that matches our layout cube
-		ObservedObject obj = unplacedObjects.Find ( x => IsMatchingBlock(layoutCube, x, true) );
-		
+		//if our carried object satisfies our needs, just use it
+		ObservedObject obj = (unplacedObjects.Contains(robot.carryingObject) && IsMatchingBlock(layoutCube, robot.carryingObject, true)) ? robot.carryingObject : null;
+
+		if(obj == null) {
+			//or find closest object that matches our needs
+			float closest = float.MaxValue;
+			for(int i=0;i<unplacedObjects.Count;i++) {
+				if(!IsMatchingBlock(layoutCube, unplacedObjects[i], true)) continue;
+				float dist = (unplacedObjects[i].WorldPosition - robot.WorldPosition).magnitude;
+				if(dist > closest) continue;
+				closest = dist;
+				obj = unplacedObjects[i];
+			}
+		}
+
 		return obj;
 	}
 	
@@ -1071,7 +1090,7 @@ public class GameLayoutTracker : MonoBehaviour {
 			for(int i=0;i<newBlocks.Count;i++) {
 
 				Vector2 robotPos = robot.WorldPosition;
-				Vector2 blockPos = (CozmoUtil.Vector3UnityToCozmoSpace(newBlocks[i].transform.position) / newBlocks[i].Size) * CozmoUtil.BLOCK_LENGTH_MM;
+				Vector2 blockPos = newBlocks[i].WorldPosition;
 
 				float range = (blockPos - robotPos).sqrMagnitude;
 				if(range < closest) {
@@ -1087,7 +1106,8 @@ public class GameLayoutTracker : MonoBehaviour {
 		}
 		
 		pos = bestBlock.GetCozmoSpacePose(out facing_rad); 
-
+		string description = null;
+		CozmoBusyPanel.instance.SetDescription( "drop\n", robot.carryingObject, ref description );
 		robot.DropObjectAtPose(pos, facing_rad);
 		
 		return true;
@@ -1133,7 +1153,7 @@ public class GameLayoutTracker : MonoBehaviour {
 			SetLightCubeToCorrectColor(activeBlock, layoutBlockToStack);
 		}
 
-		robot.PickAndPlaceObject( objectToStackUpon );
+
 		if(CozmoBusyPanel.instance != null)	{
 			
 			if(objectToStack != null) {
@@ -1171,6 +1191,8 @@ public class GameLayoutTracker : MonoBehaviour {
 				CozmoBusyPanel.instance.SetDescription(desc);
 			}
 		}
+
+		robot.PickAndPlaceObject( objectToStackUpon );
 
 		return true;
 	}
