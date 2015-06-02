@@ -123,7 +123,7 @@ user_init()
     // Configure DHCP range
     struct dhcps_lease dhcpconf;
     dhcpconf.start_ip.addr = ipaddr_addr("172.31.1.2");
-    dhcpconf.end_ip.addr   = ipaddr_addr("172.31.1.8");
+    dhcpconf.end_ip.addr   = ipaddr_addr("172.31.1.9");
     err = wifi_softap_set_dhcps_lease(&dhcpconf);
     if (err == false)
     {
