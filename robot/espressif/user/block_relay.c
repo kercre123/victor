@@ -29,6 +29,10 @@ typedef struct _BlockStruct
 
 Block blocks[NUM_BLOCKS];
 
+typedef enum {
+  BTSig_toBlock
+} BlockTaskSignal;
+
 
 
 static void ICACHE_FLASH_ATTR blockRecvCB(void *arg, char *usrdata, unsigned short len)
@@ -90,7 +94,7 @@ static void ICACHE_FLASH_ATTR blockTimer()
   int8 i;
   for (i=0; i<NUM_BLOCKS; ++i)
   {
-    system_os_post(blockTaskPrio, 0, i);
+    system_os_post(blockTaskPrio, BTSig_toBlock, i);
   }
 }
 
@@ -164,7 +168,7 @@ sint8 ICACHE_FLASH_ATTR blockRelayInit()
   // Set block broadcast timer
   os_timer_disarm(&timer);
   os_timer_setfn(&timer, blockTimer);
-  os_timer_arm(&timer, 33, true);
+  os_timer_arm(&timer, 99, true);
 
   os_printf("\tNo error\r\n");
   return ESPCONN_OK;
@@ -202,7 +206,7 @@ bool ICACHE_FLASH_ATTR blockRelaySendPacket(sint8 block, unsigned short len)
     blocks[block].buffer[5] = (len >> 8) & 0xff;
     blocks[block].length = len + MESSAGE_START;
     blocks[block].locked = false;
-    system_os_post(blockTaskPrio, 0, block);
+    system_os_post(blockTaskPrio, BTSig_toBlock, block);
     return true;
   }
 }
