@@ -23,7 +23,7 @@ namespace Anki {
   namespace Cozmo {
 
     namespace { // "Private members"
-      const u16 RECV_BUFFER_SIZE = 1024;
+      const u16 RECV_BUFFER_SIZE = 2048;
 
       u8 recvBuf_[RECV_BUFFER_SIZE];
       s32 recvBufSize_ = 0;
@@ -140,18 +140,12 @@ namespace Anki {
             memcpy(recvBuf_, hPtr, recvBufSize_);
           }
 
-          // Check if expected number of bytes are in the msg
+          // Check if expected number of bytes are in the packet
           if (recvBufSize_ > headerSize) {
             u32 dataLen = recvBuf_[headerSize] +
                           (recvBuf_[headerSize+1] << 8) +
                           (recvBuf_[headerSize+2] << 16) +
                           (recvBuf_[headerSize+3] << 24);
-
-            if (dataLen > 255) {
-              // We shouldn't be sending huge messages to the robot
-              PRINT("WARNING(RecvdMsgTooBig): %d bytes\n", dataLen);
-              dataLen = 255;
-            }
 
             if (recvBufSize_ >= headerSize + 4 + dataLen) {
 

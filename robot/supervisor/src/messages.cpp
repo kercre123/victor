@@ -339,9 +339,10 @@ namespace Anki {
         u32 dataLen;
         while((dataLen = HAL::RadioGetNextPacket(pktBuffer_)) > 0)
         {
-          if (ReliableTransport_ReceiveData(&connection, pktBuffer_, dataLen) == false)
+          s16 res = ReliableTransport_ReceiveData(&connection, pktBuffer_, dataLen);
+          if (res < 0)
           {
-            PRINT("ERROR: ReliableTransport didn't accept message %d[%d]\n", pktBuffer_[0], dataLen);
+            PRINT("ERROR (%d): ReliableTransport didn't accept message %d[%d]\n", res, pktBuffer_[0], dataLen);
           }
         }
 
