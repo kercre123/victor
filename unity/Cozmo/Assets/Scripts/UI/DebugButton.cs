@@ -20,4 +20,18 @@ public class DebugButton : MonoBehaviour
 			robot.ClearAllBlocks();
 		}
 	}
+
+	public void ForceClearStars()
+	{
+		for(int i = 0; i < GameData.instance.games.Length; i++)
+		{
+			GameData.Game game = GameData.instance.games[i];
+			for(int j = 0; j < game.levels.Length; j++)
+			{
+				string stars_string = game.name+game.levels[j].name+GameController.STARS_END;
+				Debug.Log(game.name+game.levels[j].name+", current stars: "+ PlayerPrefs.GetInt(stars_string,0));
+				PlayerPrefs.SetInt(stars_string, 0);
+			}
+		}
+	}
 }
