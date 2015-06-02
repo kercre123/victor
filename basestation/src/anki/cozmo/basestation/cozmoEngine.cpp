@@ -177,6 +177,12 @@ namespace Cozmo {
     } else if(!_config[AnkiUtil::kP_VIZ_HOST_IP].empty()){
       VizManager::getInstance()->Connect(_config[AnkiUtil::kP_VIZ_HOST_IP].asCString(), VIZ_SERVER_PORT);
       
+      // Erase anything that's still being visualized in case there were leftovers from
+      // a previous run?? (We should really be cleaning up after ourselves when
+      // we tear down, but it seems like Webots restarts aren't always allowing
+      // the cleanup to happen)
+      VizManager::getInstance()->EraseAllVizObjects();
+      
       // Only send images if the viz host is the same as the robot advertisement service
       // (so we don't waste bandwidth sending (uncompressed) viz data over the network
       //  to be displayed on another machine)
