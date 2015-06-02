@@ -34,6 +34,12 @@ public class BuildInstructionsCube : MonoBehaviour {
 
 	public bool isActive { get { return cubeType == CubeType.LIGHT_CUBE; } }
 
+	//translates between cozmo space and unity space for cube
+	public Vector3 WorldPosition {
+		get { return (CozmoUtil.Vector3UnityToCozmoSpace(transform.position) / Size) * CozmoUtil.BLOCK_LENGTH_MM; }
+		set { transform.position = (CozmoUtil.Vector3CozmoToUnitySpace(value) / CozmoUtil.BLOCK_LENGTH_MM) * Size; }
+	}
+
 	GameObject checkMark = null;
 
 	CubeType lastCubeType = CubeType.BULLS_EYE;
@@ -295,7 +301,7 @@ public class BuildInstructionsCube : MonoBehaviour {
 	//handing through observedObject solely for debugging
 	public bool MatchesPosition(ObservedObject obj, Vector3 actualPos, float flatFudge, float verticalFudge, bool debug=false) {
 	
-		Vector3 idealPos = (CozmoUtil.Vector3UnityToCozmoSpace(transform.position) / Size) * CozmoUtil.BLOCK_LENGTH_MM;
+		Vector3 idealPos = WorldPosition;
 		
 		Vector3 error = actualPos - idealPos;
 		

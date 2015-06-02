@@ -4566,7 +4566,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!1 &183086
 GameObject:
   m_ObjectHideFlags: 1
@@ -15258,10 +15258,10 @@ Camera:
   m_BackGroundColor: {r: .125, g: .125, b: .125, a: .0196078438}
   m_NormalizedViewPortRect:
     serializedVersion: 2
-    x: .215820312
-    y: .0729166642
-    width: .568359375
-    height: .85546875
+    x: .176197082
+    y: .0595296212
+    width: .647605896
+    height: .882003784
   near clip plane: .300000012
   far clip plane: 1000
   field of view: 60

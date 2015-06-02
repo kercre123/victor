@@ -34,6 +34,7 @@ public class GameController : MonoBehaviour {
 	[SerializeField] protected Text textError = null;
 	[SerializeField] protected Text textState = null;
 	[SerializeField] protected Text textTime = null;
+	[SerializeField] protected Text textAddaboy = null;
 	[SerializeField] private bool autoPlay = false;
 	[SerializeField] private Button playButton = null;
 	[SerializeField] protected string buildInstructionsLayoutFilter = null;
@@ -399,6 +400,22 @@ public class GameController : MonoBehaviour {
 		if(resultsPanel != null) resultsPanel.gameObject.SetActive(true);
 		if(textScore != null) textScore.gameObject.SetActive(true);
 		if(resultsLoopSound != null) AudioManager.PlayAudioClipLooping(resultsLoopSound, gameOverSound != null ? gameOverSound.length + 0.5f : 0.5f, AudioManager.Source.Gameplay);
+		if(textAddaboy != null) {
+			switch(stars) {
+				case 0: 
+					textAddaboy.text = "Better luck next time!";
+					break;
+				case 1: 
+					textAddaboy.text = "Not bad!";
+					break;
+				case 2: 
+					textAddaboy.text = "Good job!";
+					break;
+				case 3: 
+					textAddaboy.text = "Fantastic!";
+					break;
+			}
+		}
 	}
 
 	protected virtual void Update_RESULTS() {
