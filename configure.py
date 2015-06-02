@@ -12,7 +12,8 @@ GAME_ROOT = os.path.normpath(os.path.abspath(os.path.realpath(os.path.dirname(in
 
 ENGINE_ROOT = os.path.join(GAME_ROOT, 'lib', 'anki', 'cozmo-engine')
 sys.path.insert(0, ENGINE_ROOT)
-from configure import BUILD_TOOLS_ROOT, ArgumentParser, wipe_all, configure_anki_util, configure_platforms
+from configure import BUILD_TOOLS_ROOT, initialize_colors, 
+from configure import ArgumentParser, wipe_all, configure_anki_util, configure_platforms
 
 sys.path.insert(0, BUILD_TOOLS_ROOT)
 import ankibuild.cmake
@@ -46,10 +47,7 @@ def add_unity_arguments(parser):
             '--unity-dir',
             metavar='path',
             default=default_unity_dir,
-            help=textwrap.dedent('''\
-                the name of the Unity folder (default "%(default)s)
-                if it is in a standard location
-                '''))
+            help='The name of the Unity folder (default "%(default)s) if it is in a standard location.')
     group.add_argument(
         '--unity-binary-path',
         metavar='path',
@@ -102,22 +100,25 @@ def parse_game_arguments():
 # PLATFORM-DEPENDENT COMMANDS #
 ###############################
 
+def add_xcode_ios_scheme(workspace, scheme_name, project_path, mode='auto'):
+    scheme = dict(template=ankibuild.xcode.SCHEME_TEMPLATE_IOS, name=scheme_name, mode=mode, project_path=project_path)
+    workspace.schemes.append(scheme)
+    	
 class GamePlatformConfiguration(object):
     
     def __init__(self, platform, options):
         if options.verbose:
-            print('')
-            print('Initializing paths...')
+            print_status('Initializing paths for platform {0}...'.format(platform))
         
         self.platform = platform
         self.options = options
         
         self.scheme = 'BUILD_WORKSPACE'
-        self.derived_data_dir = os.path.join(self.options.output_path, 'derived-data-{0}'.format(self.platform))
+        self.derived_data_dir = os.path.join(self.options.output_dir, 'derived-data-{0}'.format(self.platform))
         self.config_path = os.path.join(self.options.output_dir, '{0}.xcconfig'.format(self.platform))
         
-        self.workspace_name = 'CozmoWorkspace_'.format(self.platform.upper())
-        self.workspace_path = os.path.join(self.output_dir, '{0}.xcworkspace'.format(self.workspace_name))
+        self.workspace_name = 'CozmoWorkspace_{0}'.format(self.platform.upper())
+        self.workspace_path = os.path.join(self.options.output_dir, '{0}.xcworkspace'.format(self.workspace_name))
         
         self.cmake_project_dir = os.path.join(self.options.output_dir, 'cmake-{0}'.format(self.platform))
         self.cmake_project_path = os.path.join(self.cmake_project_dir, 'CozmoGame_{0}.xcodeproj'.format(self.platform.upper()))
@@ -126,19 +127,18 @@ class GamePlatformConfiguration(object):
             self.unity_xcode_project_dir = os.path.join(GAME_ROOT, 'unity', self.platform)
             self.unity_xcode_project_path = os.path.join(self.unity_xcode_project_dir, 'CozmoUnity_{0}.xcodeproj'.format(self.platform.upper()))
             self.unity_output_dir = os.path.join(self.options.output_dir, 'unity-{0}'.format(self.platform))
-            self.unity_opencv_symlink = os.path.join(self.unity_build_dir, 'opencv')
+            self.unity_opencv_symlink = os.path.join(self.unity_output_dir, 'opencv')
             if not os.environ.get("CORETECH_EXTERNAL_DIR"):
                 sys.exit('ERROR: Environment variable "CORETECH_EXTERNAL_DIR" must be defined.')
             self.unity_opencv_symlink_target = os.path.join(os.environ.get("CORETECH_EXTERNAL_DIR"), 'build', 'opencv-ios', 'multiArchLibs')
             
-            self.unity_build_symlink = os.path.join(self.unity_xcode_project_dir, 'UnityBuild')
+            self.unity_output_symlink = os.path.join(self.unity_xcode_project_dir, 'UnityBuild')
             self.artifact_dir = os.path.join(self.options.output_dir, 'app-{0}'.format(self.platform))
             self.artifact_path = os.path.join(self.artifact_dir, 'cozmo.app')
     
     def process(self):
         if self.options.verbose:
-            print('')
-            print('Running {0} for configuration {1}...'.format(self.options.command, self.platform))
+            print_status('Running {0} for configuration {1}...'.format(self.options.command, self.platform))
         if self.options.command in ('generate', 'build', 'install', 'run'):
             self.generate()
         if self.options.command in ('build', 'clean', 'install', 'run'):
@@ -152,14 +152,13 @@ class GamePlatformConfiguration(object):
     
     def generate(self):
         if self.options.verbose:
-            print('')
-            print('Generating files for platform {0}...'.format(self.platform))
+            print_status('Generating files for platform {0}...'.format(self.platform))
         
         ankibuild.cmake.generate(self.cmake_project_dir, GAME_ROOT, self.platform)
         # to get rid of annoying warning
-        ankibuild.util.File.mkdir_p(os.path.join(self.cmake_project_dir, 'Xcode', 'lib', options.configuration))
+        ankibuild.util.File.mkdir_p(os.path.join(self.cmake_project_dir, 'Xcode', 'lib', self.options.configuration))
         
-        rel_cmake_project = os.path.relpath(self.cmake_project_path, self.output_dir)
+        rel_cmake_project = os.path.relpath(self.cmake_project_path, self.options.output_dir)
         workspace = ankibuild.xcode.XcodeWorkspace(self.workspace_name)
         workspace.add_project(rel_cmake_project)
         
@@ -167,10 +166,10 @@ class GamePlatformConfiguration(object):
             workspace.add_scheme_cmake(self.scheme, rel_cmake_project)
         
         elif self.platform == 'ios':
-            rel_unity_xcode_project = os.path.relpath(self.unity_xcode_project_path, self.output_dir)
+            rel_unity_xcode_project = os.path.relpath(self.unity_xcode_project_path, self.options.output_dir)
             workspace.add_project(rel_unity_xcode_project)
             
-            workspace.add_scheme_cmake(self.scheme, rel_unity_xcode_project)
+            add_xcode_ios_scheme(workspace, self.scheme, rel_unity_xcode_project)
         
             if not os.path.exists(self.unity_opencv_symlink_target):
                 sys.exit('ERROR: opencv does not appear to have been built for ios. Please build opencv for ios.')
@@ -179,8 +178,8 @@ class GamePlatformConfiguration(object):
                 'ANKI_BUILD_REPO_ROOT={0}'.format(GAME_ROOT),
                 'ANKI_BUILD_GENERATED_XCODE_PROJECT_DIR={0}'.format(self.cmake_project_dir),
                 'ANKI_BUILD_UNITY_PROJECT_PATH=${ANKI_BUILD_REPO_ROOT}/unity/Cozmo',
-                'ANKI_BUILD_UNITY_BUILD_DIR={0}'.format(self.unity_output_dir),
-                'ANKI_BUILD_UNITY_XCODE_BUILD_DIR=${ANKI_BUILD_UNITY_BUILD_DIR}/${CONFIGURATION}-${PLATFORM_NAME}',
+                'ANKI_BUILD_unity_output_DIR={0}'.format(self.unity_output_dir),
+                'ANKI_BUILD_UNITY_XCODE_BUILD_DIR=${ANKI_BUILD_unity_output_DIR}/${CONFIGURATION}-${PLATFORM_NAME}',
                 'ANKI_BUILD_UNITY_BINARY_PATH={0}'.format(self.options.unity_binary_path),
                 #'ANKI_BUILD_PREBUILT_URL={0}'.format(self.options.prebuilt_url),
                 'ANKI_BUILD_APP_PATH={0}'.format(self.artifact_path),
@@ -198,8 +197,7 @@ class GamePlatformConfiguration(object):
     
     def build(self):
         if self.options.verbose:
-            print('')
-            print('Building project for platform {0}...'.format(self.platform))
+            print_status('Building project for platform {0}...'.format(self.platform))
         
         if not os.path.exists(self.workspace_path):
             sys.exit('Workspace {0} does not exist. (clean does not generate workspaces.)'.format(self.workspace_path))
@@ -219,14 +217,13 @@ class GamePlatformConfiguration(object):
     
     def run(self):
         if self.options.verbose:
-            print('')
-            print('Installing built binaries for platform {0}...'.format(self.platform))
+            print_status('Installing built binaries for platform {0}...'.format(self.platform))
         
         if self.platform == 'ios':
             if self.options.command == 'install':
                 ankibuild.ios_deploy.install(self.artifact_path)
             elif self.options.command == 'run':
-                #ankibuild.ios_deploy.noninteractive(self.ios_app_path)
+                #ankibuild.ios_deploy.noninteractive(self.artifact_path)
                 ankibuild.ios_deploy.debug(self.artifact_path)
             
         #elif self.platform == 'mac':
@@ -236,8 +233,7 @@ class GamePlatformConfiguration(object):
     
     def uninstall(self):
         if self.options.verbose:
-            print('')
-            print('Uninstalling for platform {0}...'.format(self.platform))
+            print_status('Uninstalling for platform {0}...'.format(self.platform))
         
         if self.platform == 'ios':
             ankibuild.ios_deploy.uninstall(self.artifact_path)
@@ -246,18 +242,17 @@ class GamePlatformConfiguration(object):
     
     def delete(self):
         if self.options.verbose:
-            print('')
-            print('Deleting generated files for platform {0}...'.format(self.platform))
+            print_status('Deleting generated files for platform {0}...'.format(self.platform))
         
         # reverse generation
         ankibuild.util.File.rm_rf(self.workspace_path)
         ankibuild.util.File.rm_rf(self.derived_data_dir)
         ankibuild.util.File.rm_rf(self.cmake_project_path)
         if self.platform == 'ios':
-            ankibuild.util.File.rm_rf(self.ios_app_dir)
+            ankibuild.util.File.rm_rf(self.artifact_dir)
             ankibuild.util.File.rm(self.unity_opencv_symlink)
-            ankibuild.util.File.rm_rf(self.unity_build_dir)
-            ankibuild.util.File.rm(self.unity_build_symlink)
+            ankibuild.util.File.rm_rf(self.unity_output_dir)
+            ankibuild.util.File.rm(self.unity_output_symlink)
 
 
 ###############
@@ -265,6 +260,7 @@ class GamePlatformConfiguration(object):
 ###############
 
 def main():
+    initialize_colors()
     options = parse_game_arguments()
     
     if options.command == 'wipeall!':
