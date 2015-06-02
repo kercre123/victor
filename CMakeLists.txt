@@ -29,11 +29,11 @@ if(ANKI_IOS_BUILD)
   set(EMBEDDED_USE_MATLAB 0)
   message(STATUS "Doing iOS build. Forcibly disabling Matlab use.")
   
-  ankiProject(CozmoGame_iOS)
+  ankiProject(CozmoGame_IOS)
   
 else()
   
-  ankiProject(CozmoGame)
+  ankiProject(CozmoGame_MAC)
     
 endif(ANKI_IOS_BUILD)
 
