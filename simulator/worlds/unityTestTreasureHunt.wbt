@@ -102,8 +102,8 @@ WorldInfo {
   ]
 }
 Viewpoint {
-  orientation 0.626517 -0.395229 -0.671767 1.13077
-  position -1.09871 -0.805912 1.21384
+  orientation 0.714361 -0.389592 -0.581297 1.12173
+  position -1.0668 -0.981937 1.10534
 }
 Background {
   skyColor [
@@ -140,6 +140,7 @@ TargetCube {
 BlockWorldComms {
 }
 DEF Cozmo_1 CozmoBot {
+  translation -0.332238 0.0746305 0
   name "CozmoBot_1"
   usbChannel 10
 }

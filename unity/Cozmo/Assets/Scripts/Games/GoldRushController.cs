@@ -797,11 +797,20 @@ public class GoldRushController : GameController {
 		float signed_angle = angle * sign;
 		Debug.Log("angle: " + angle +", signed_angle: " + signed_angle);
 		
-		Vector3 depositSpot = robot.WorldPosition + to_collector;// - (to_collector.normalized*3*(returnRadius/4));
+		Vector3 depositSpot = robot.WorldPosition + to_collector - (to_collector.normalized*32); // adjust for width of cube so our path doesn't intersect
 		
 		signed_angle = Mathf.Deg2Rad*signed_angle;
 		
 		robot.GotoPose(depositSpot.x, depositSpot.y, signed_angle);
+
+		Vector3 spotZ = (Vector3)depositSpot + Vector3.forward * CozmoUtil.BLOCK_LENGTH_MM * 10f;
+		Vector3 spotY1 = (Vector3)depositSpot - Vector3.up * CozmoUtil.BLOCK_LENGTH_MM;
+		Vector3 spotY2 = (Vector3)depositSpot + Vector3.up * CozmoUtil.BLOCK_LENGTH_MM;
+		Vector3 spotX1 = (Vector3)depositSpot - Vector3.right * CozmoUtil.BLOCK_LENGTH_MM;
+		Vector3 spotX2 = (Vector3)depositSpot + Vector3.right * CozmoUtil.BLOCK_LENGTH_MM;
+		RobotEngineManager.instance.VisualizeQuad(21, CozmoPalette.ColorToUInt(Color.blue), depositSpot, depositSpot, spotZ, spotZ);
+		RobotEngineManager.instance.VisualizeQuad(22, CozmoPalette.ColorToUInt(Color.blue), spotY1, spotY1, spotY2, spotY2);
+		RobotEngineManager.instance.VisualizeQuad(23, CozmoPalette.ColorToUInt(Color.blue), spotX1, spotX1, spotX2, spotX2);
 	}
 #endregion
 
