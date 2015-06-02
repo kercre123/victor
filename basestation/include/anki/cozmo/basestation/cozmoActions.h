@@ -93,6 +93,7 @@ namespace Anki {
     {
     public:
       DriveToObjectAction(const ObjectID& objectID, const PreActionPose::ActionType& actionType, const bool useManualSpeed = false);
+      DriveToObjectAction(const ObjectID& objectID, const f32 distance_mm, const bool useManualSpeed = false);
       
       // TODO: Add version where marker code is specified instead of action?
       //DriveToObjectAction(Robot& robot, const ObjectID& objectID, Vision::Marker::Code code);
@@ -115,6 +116,7 @@ namespace Anki {
       // Not private b/c DriveToPlaceCarriedObject uses
       ObjectID                   _objectID;
       PreActionPose::ActionType  _actionType;
+      f32                        _distance_mm;
       bool                       _useManualSpeed;
       CompoundActionSequential   _compoundAction;
       
