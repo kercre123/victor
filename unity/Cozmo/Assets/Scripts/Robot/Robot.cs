@@ -798,6 +798,26 @@ public class Robot
 		localBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
 	}
 
+	public Vector3 NudgePositionOutOfObjects(Vector3 position) {
+
+		int attempts = 0;
+
+		while(attempts++ < 3) {
+			Vector3 nudge = Vector3.zero;
+			float padding = CozmoUtil.BLOCK_LENGTH_MM * 2f;
+			for(int i=0;i<knownObjects.Count;i++) {
+				Vector3 fromObject = position - knownObjects[i].WorldPosition;
+				if(fromObject.magnitude > padding) continue;
+				nudge += fromObject.normalized * padding;
+			}
+
+			if(nudge.sqrMagnitude == 0f) break;
+			position += nudge;
+		}
+
+		return position;
+	}
+
 	public void GotoPose( float x_mm, float y_mm, float rad, bool level = false, bool useManualSpeed = false )
 	{
 		GotoPoseMessage.level = System.Convert.ToByte( level );
