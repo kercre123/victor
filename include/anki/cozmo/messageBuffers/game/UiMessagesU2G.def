@@ -824,6 +824,46 @@ struct GotoPose
 	bool operator!=(const GotoPose& other) const;
 };
 
+// MESSAGE GotoObject
+struct GotoObject
+{
+	int32_t objectID;
+	float distance_mm;
+	uint8_t useManualSpeed;
+	
+	/**** Constructors ****/
+	GotoObject() = default;
+	GotoObject(const GotoObject& other) = default;
+	GotoObject(GotoObject& other) = default;
+	GotoObject(GotoObject&& other) noexcept = default;
+	GotoObject& operator=(const GotoObject& other) = default;
+	GotoObject& operator=(GotoObject&& other) noexcept = default;
+	
+	explicit GotoObject(int32_t objectID
+		,float distance_mm
+		,uint8_t useManualSpeed)
+	:objectID(objectID)
+	,distance_mm(distance_mm)
+	,useManualSpeed(useManualSpeed)
+	{}
+
+	explicit GotoObject(const uint8_t* buff, size_t len);
+	explicit GotoObject(const CLAD::SafeMessageBuffer& buffer);
+	
+	/**** Pack ****/
+	size_t Pack(uint8_t* buff, size_t len) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+
+	/**** Unpack ****/
+	size_t Unpack(const uint8_t* buff, const size_t len);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+
+	size_t Size() const;
+
+	bool operator==(const GotoObject& other) const;
+	bool operator!=(const GotoObject& other) const;
+};
+
 // MESSAGE PlaceObjectOnGround
 struct PlaceObjectOnGround
 {
@@ -2462,6 +2502,11 @@ public:
 	void Set_GotoPose(const Anki::Cozmo::U2G::GotoPose& new_GotoPose);
 	void Set_GotoPose(Anki::Cozmo::U2G::GotoPose&& new_GotoPose);
 
+	/** GotoObject **/
+	const Anki::Cozmo::U2G::GotoObject& Get_GotoObject() const;
+	void Set_GotoObject(const Anki::Cozmo::U2G::GotoObject& new_GotoObject);
+	void Set_GotoObject(Anki::Cozmo::U2G::GotoObject&& new_GotoObject);
+
 	/** PlaceObjectOnGround **/
 	const Anki::Cozmo::U2G::PlaceObjectOnGround& Get_PlaceObjectOnGround() const;
 	void Set_PlaceObjectOnGround(const Anki::Cozmo::U2G::PlaceObjectOnGround& new_PlaceObjectOnGround);
@@ -2692,6 +2737,7 @@ private:
 		Anki::Cozmo::U2G::EnableDisplay _EnableDisplay;
 		Anki::Cozmo::U2G::SetHeadlights _SetHeadlights;
 		Anki::Cozmo::U2G::GotoPose _GotoPose;
+		Anki::Cozmo::U2G::GotoObject _GotoObject;
 		Anki::Cozmo::U2G::PlaceObjectOnGround _PlaceObjectOnGround;
 		Anki::Cozmo::U2G::PlaceObjectOnGroundHere _PlaceObjectOnGroundHere;
 		Anki::Cozmo::U2G::ExecuteTestPlan _ExecuteTestPlan;

@@ -1423,6 +1423,76 @@ bool GotoPose::operator!=(const GotoPose& other) const
 }
 
 
+// MESSAGE GotoObject
+
+GotoObject::GotoObject(const uint8_t* buff, size_t len)
+{
+	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+	Unpack(buffer);
+}
+
+GotoObject::GotoObject(const CLAD::SafeMessageBuffer& buffer)
+{
+	Unpack(buffer);
+}
+
+size_t GotoObject::Pack(uint8_t* buff, size_t len) const
+{
+	CLAD::SafeMessageBuffer buffer(buff, len, false);
+	return Pack(buffer);
+}
+
+size_t GotoObject::Pack(CLAD::SafeMessageBuffer& buffer) const
+{
+	buffer.Write(this->objectID);
+	buffer.Write(this->distance_mm);
+	buffer.Write(this->useManualSpeed);
+	const size_t bytesWritten {buffer.GetBytesWritten()};
+	return bytesWritten;
+}
+
+size_t GotoObject::Unpack(const uint8_t* buff, const size_t len)
+{
+	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+	return Unpack(buffer);
+}
+
+size_t GotoObject::Unpack(const CLAD::SafeMessageBuffer& buffer)
+{
+	buffer.Read(this->objectID);
+	buffer.Read(this->distance_mm);
+	buffer.Read(this->useManualSpeed);
+	return buffer.GetBytesRead();
+}
+
+size_t GotoObject::Size() const
+{
+	size_t result = 0;
+	//objectID
+	result += 4; // = int_32
+	//distance_mm
+	result += 4; // = float_32
+	//useManualSpeed
+	result += 1; // = uint_8
+	return result;
+}
+
+bool GotoObject::operator==(const GotoObject& other) const
+{
+	if (objectID != other.objectID
+	|| distance_mm != other.distance_mm
+	|| useManualSpeed != other.useManualSpeed) {
+		return false;
+	}
+	return true;
+}
+
+bool GotoObject::operator!=(const GotoObject& other) const
+{
+	return !(operator==(other));
+}
+
+
 // MESSAGE PlaceObjectOnGround
 
 PlaceObjectOnGround::PlaceObjectOnGround(const uint8_t* buff, size_t len)
@@ -4160,6 +4230,8 @@ const char* MessageTagToString(const MessageTag tag) {
 		return "SetHeadlights";
 	case MessageTag::GotoPose:
 		return "GotoPose";
+	case MessageTag::GotoObject:
+		return "GotoObject";
 	case MessageTag::PlaceObjectOnGround:
 		return "PlaceObjectOnGround";
 	case MessageTag::PlaceObjectOnGroundHere:
@@ -4888,6 +4960,35 @@ void Message::Set_GotoPose(Anki::Cozmo::U2G::GotoPose&& new_GotoPose)
 		ClearCurrent();
 		new(&_GotoPose) Anki::Cozmo::U2G::GotoPose{std::move(new_GotoPose)};
 		_tag = Tag::GotoPose;
+	}
+}
+
+
+const Anki::Cozmo::U2G::GotoObject& Message::Get_GotoObject() const
+{
+	assert(_tag == Tag::GotoObject);
+	return _GotoObject;
+}
+void Message::Set_GotoObject(const Anki::Cozmo::U2G::GotoObject& new_GotoObject)
+{
+	if(this->_tag == Tag::GotoObject) {
+		_GotoObject = new_GotoObject;
+	}
+	else {
+		ClearCurrent();
+		new(&_GotoObject) Anki::Cozmo::U2G::GotoObject{new_GotoObject};
+		_tag = Tag::GotoObject;
+	}
+}
+void Message::Set_GotoObject(Anki::Cozmo::U2G::GotoObject&& new_GotoObject)
+{
+	if(this->_tag == Tag::GotoObject) {
+		_GotoObject = std::move(new_GotoObject);
+	}
+	else {
+		ClearCurrent();
+		new(&_GotoObject) Anki::Cozmo::U2G::GotoObject{std::move(new_GotoObject)};
+		_tag = Tag::GotoObject;
 	}
 }
 
@@ -6214,6 +6315,14 @@ size_t Message::Unpack(const CLAD::SafeMessageBuffer& buffer)
 			this->_GotoPose.Unpack(buffer);
 		}
 		break;
+	case Tag::GotoObject:
+		if (newTag != oldTag) {
+			new(&(this->_GotoObject)) Anki::Cozmo::U2G::GotoObject(buffer);
+		}
+		else {
+			this->_GotoObject.Unpack(buffer);
+		}
+		break;
 	case Tag::PlaceObjectOnGround:
 		if (newTag != oldTag) {
 			new(&(this->_PlaceObjectOnGround)) Anki::Cozmo::U2G::PlaceObjectOnGround(buffer);
@@ -6609,6 +6718,9 @@ size_t Message::Pack(CLAD::SafeMessageBuffer& buffer) const
 	case Tag::GotoPose:
 		this->_GotoPose.Pack(buffer);
 		break;
+	case Tag::GotoObject:
+		this->_GotoObject.Pack(buffer);
+		break;
 	case Tag::PlaceObjectOnGround:
 		this->_PlaceObjectOnGround.Pack(buffer);
 		break;
@@ -6803,6 +6915,9 @@ size_t Message::Size() const
 	case Tag::GotoPose:
 		result += _GotoPose.Size();
 		break;
+	case Tag::GotoObject:
+		result += _GotoObject.Size();
+		break;
 	case Tag::PlaceObjectOnGround:
 		result += _PlaceObjectOnGround.Size();
 		break;
@@ -6995,6 +7110,9 @@ void Message::ClearCurrent()
 		break;
 	case Tag::GotoPose:
 		_GotoPose.~GotoPose();
+		break;
+	case Tag::GotoObject:
+		_GotoObject.~GotoObject();
 		break;
 	case Tag::PlaceObjectOnGround:
 		_PlaceObjectOnGround.~PlaceObjectOnGround();
