@@ -307,14 +307,6 @@ namespace Anki {
             } // switch(GetPlan())
             
           } // if blocks changed
-        } else if(_successRadius_mm > 0.f &&
-                  (Point2f(robot.GetPose().GetTranslation()) -
-                   Point2f(_goalPoses[_selectedGoalIndex].GetTranslation())).Length() <= _successRadius_mm*_successRadius_mm)
-        {
-          PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.WithinSuccessRadius",
-                           "Robot %d is within %.1fmm of goal. Reporting success.\n", robot.GetID(), _successRadius_mm);
-          result = ActionResult::SUCCESS;
-        
         } else {
           // No longer traversing the path, so check to see if we ended up in the right place
           Vec3f Tdiff;
