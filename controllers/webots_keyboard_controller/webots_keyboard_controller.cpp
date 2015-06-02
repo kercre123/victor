@@ -1342,6 +1342,15 @@ namespace Anki {
                   U2G::Message msgWrapper;
                   msgWrapper.Set_FaceObject(msg);
                   SendMessage(msgWrapper);
+                } else if (modifier_key & webots::Supervisor::KEYBOARD_ALT) {
+                  U2G::GotoObject msg;
+                  msg.objectID = -1; // tell game to use blockworld's "selected" object
+                  msg.distance_mm = sqrtf(2.f)*44.f;
+                  msg.useManualSpeed = 0;
+                  
+                  U2G::Message msgWrapper;
+                  msgWrapper.Set_GotoObject(msg);
+                  SendMessage(msgWrapper);
                 } else {
                   SendIMURequest(2000);
                 }
