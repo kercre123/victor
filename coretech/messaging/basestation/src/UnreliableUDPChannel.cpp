@@ -14,16 +14,16 @@
 
 using namespace Anki::Comms;
 
-// Duplicated from embedded reliableTransport.h
-#define RELIABLE_PACKET_HEADER_PREFIX "COZ\x03RE\x01"
-#define RELIABLE_PACKET_HEADER_PREFIX_LENGTH 7
+// Match embedded reliableTransport.h
+#define RELIABLE_PACKET_HEADER_PREFIX "COZ\x03"
+#define RELIABLE_PACKET_HEADER_PREFIX_LENGTH 4
 
 UnreliableUDPChannel::UnreliableUDPChannel()
 {
   // TODO ANDROID: SET IP RETRIEVER
   //unreliableTransport.SetIpRetriever(nullptr);
   unreliableTransport.SetDataReceiver(this);
-  
+
   unreliableTransport.SetHeaderPrefix((uint8_t*)(RELIABLE_PACKET_HEADER_PREFIX), RELIABLE_PACKET_HEADER_PREFIX_LENGTH);
   unreliableTransport.SetDoesHeaderHaveCRC(false);
 }
@@ -45,7 +45,7 @@ bool UnreliableUDPChannel::IsHost() const
 void UnreliableUDPChannel::StartClient()
 {
   Stop();
-  
+
   if (!unreliableTransport.IsConnected()) {
     unreliableTransport.SetPort(0);
   }
@@ -57,7 +57,7 @@ void UnreliableUDPChannel::StartClient()
 void UnreliableUDPChannel::StartHost(const TransportAddress& bindAddress)
 {
   Stop();
-  
+
   // TODO: This check shouldn't be necessary
   // but it's needed because StopClient doesn't actually do anything
   if (!unreliableTransport.IsConnected()) {
@@ -65,7 +65,7 @@ void UnreliableUDPChannel::StartHost(const TransportAddress& bindAddress)
     //unreliableTransport.SetAddress(bindAddress.GetIPAddress());
     unreliableTransport.SetPort(bindAddress.GetIPPort());
   }
-  
+
   unreliableTransport.StartHost();
   isHost = true;
   isStarted = true;
@@ -75,11 +75,11 @@ void UnreliableUDPChannel::Stop()
 {
   if (isStarted) {
     RemoveAllConnections();
-    
+
     bool wasHost = isHost;
     isStarted = false;
     isHost = false;
-    
+
     if (wasHost) {
       unreliableTransport.StopHost();
     }

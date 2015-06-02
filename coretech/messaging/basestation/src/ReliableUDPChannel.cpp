@@ -42,9 +42,11 @@ Anki::Util::TransportAddress ReliableUDPChannel::GetHostingAddress() const
 void ReliableUDPChannel::StartClient()
 {
   std::lock_guard<std::recursive_mutex> guard(mutex);
-  
+
+  ConfigureReliableTransport();
+
   Stop_Internal();
-  
+
   if (!unreliableTransport.IsConnected()) {
     unreliableTransport.SetPort(0);
   }
@@ -56,9 +58,11 @@ void ReliableUDPChannel::StartClient()
 void ReliableUDPChannel::StartHost(const TransportAddress& bindAddress)
 {
   std::lock_guard<std::recursive_mutex> guard(mutex);
-  
+
+  ConfigureReliableTransport();
+
   Stop_Internal();
-  
+
   // TODO: This check shouldn't be necessary
   // but it's needed because StopClient doesn't actually do anything
   if (!unreliableTransport.IsConnected()) {
@@ -66,7 +70,7 @@ void ReliableUDPChannel::StartHost(const TransportAddress& bindAddress)
     //unreliableTransport.SetAddress(bindAddress.GetIPAddress());
     unreliableTransport.SetPort(bindAddress.GetIPPort());
   }
-  
+
   reliableTransport.StartHost();
   isHost = true;
   isStarted = true;
@@ -75,7 +79,7 @@ void ReliableUDPChannel::StartHost(const TransportAddress& bindAddress)
 void ReliableUDPChannel::Stop()
 {
   std::lock_guard<std::recursive_mutex> guard(mutex);
-  
+
   Stop_Internal();
 }
 
@@ -87,14 +91,14 @@ void ReliableUDPChannel::Update()
 bool ReliableUDPChannel::Send(const Anki::Comms::OutgoingPacket& packet)
 {
   std::lock_guard<std::recursive_mutex> guard(mutex);
-  
+
   TransportAddress address;
   if (!UnreliableUDPChannel::GetAddress(address, packet.destId)) {
     PRINT_STREAM_WARNING("ReliableUDPChannel.Send",
                          "No registered connected connection id " << packet.destId << ".");
     return false;
   }
-  
+
   ConnectionData *data = GetConnectionData(address);
   // shouldn't be null
   if (data == nullptr) {
@@ -102,7 +106,7 @@ bool ReliableUDPChannel::Send(const Anki::Comms::OutgoingPacket& packet)
                          "Cannot find state for connection id " << packet.destId << ". This indicates programmer error.");
     return false;
   }
-  
+
   switch (data->state) {
     case ConnectionData::State::Connected:
       // fake sending and throw out packet, since we have a disconnect queued
@@ -134,7 +138,7 @@ bool ReliableUDPChannel::Send(const Anki::Comms::OutgoingPacket& packet)
 bool ReliableUDPChannel::PopIncomingPacket(IncomingPacket& packet)
 {
   std::lock_guard<std::recursive_mutex> guard(mutex);
-  
+
   bool result = UnreliableUDPChannel::PopIncomingPacket(packet);
   if (result) {
     PostProcessIncomingPacket(packet);
@@ -157,13 +161,13 @@ int32_t ReliableUDPChannel::CountActiveConnections() const
 void ReliableUDPChannel::AddConnection(ConnectionId connectionId, const TransportAddress& address)
 {
   std::lock_guard<std::recursive_mutex> guard(mutex);
-  
+
   // AddConnection should remove any old uses of connectionId and address
   // and send disconnects
   UnreliableUDPChannel::AddConnection(connectionId, address);
   assert(_connectionDataMapping.count(address) == 0);
   _connectionDataMapping.emplace(address, ConnectionData(ConnectionData::State::WaitingForConnectionResponse));
-  
+
   reliableTransport.Connect(address);
 }
 
@@ -173,24 +177,24 @@ void ReliableUDPChannel::AddConnection(ConnectionId connectionId, const Transpor
 bool ReliableUDPChannel::AcceptIncomingConnection(ConnectionId connectionId, const TransportAddress& address)
 {
   std::lock_guard<std::recursive_mutex> guard(mutex);
-  
+
   ConnectionData *data = GetConnectionData(address);
   if (data == nullptr) {
     PRINT_STREAM_WARNING("ReliableUDPChannel.AcceptIncomingConnection",
                          "Cannot accept connection; cannot determine connection state for address " << address.ToString() << ".");
-    
+
     return false;
   }
-  
+
   if (data->state != ConnectionData::State::MustSendConnectionResponse) {
     PRINT_STREAM_WARNING("ReliableUDPChannel.AcceptIncomingConnection",
                          "Cannot accept connection; not in correct state to accept address " << address.ToString() << ".");
     return false;
   }
-  
+
   // Will disconnect old uses of connectionId and address
   UnreliableUDPChannel::AddConnection(connectionId, address);
-  
+
   data->state = ConnectionData::State::Connected;
   if (!data->isDisconnectionQueued) {
     assert(data->isRealConnectionActive);
@@ -206,30 +210,30 @@ bool ReliableUDPChannel::AcceptIncomingConnection(ConnectionId connectionId, con
 void ReliableUDPChannel::RefuseIncomingConnection(const TransportAddress& address)
 {
   std::lock_guard<std::recursive_mutex> guard(mutex);
-  
+
   ConnectionData *data = GetConnectionData(address);
   if (data == nullptr) {
     PRINT_STREAM_WARNING("ReliableUDPChannel.RefuseIncomingConnection",
                          "Cannot refuse connection; cannot determine connection state "
                          "for the connection to the specified address " << address.ToString() << ".");
-    
+
     return;
   }
-  
+
   if (data->state != ConnectionData::State::MustSendConnectionResponse) {
     PRINT_STREAM_WARNING("ReliableUDPChannel.RefuseIncomingConnection",
                          "Cannot refuse connection; not in correct state to refuse the "
                          "connection to the specified address " << address.ToString() << ".");
     return;
   }
-  
+
   RemoveConnectionData(address, false);
 }
 
 void ReliableUDPChannel::RemoveConnection(ConnectionId connectionId)
 {
   std::lock_guard<std::recursive_mutex> guard(mutex);
-  
+
   TransportAddress address;
   if (!GetAddress(address, connectionId)) {
     return;
@@ -241,13 +245,13 @@ void ReliableUDPChannel::RemoveConnection(ConnectionId connectionId)
 void ReliableUDPChannel::RemoveAllConnections()
 {
   std::lock_guard<std::recursive_mutex> guard(mutex);
-  
+
   UnreliableUDPChannel::RemoveAllConnections();
-  
+
   // swap not actually necessary, but just in case Disconnect triggers unexpected callbacks
   std::unordered_map<TransportAddress, ConnectionData> dataMapping;
   std::swap(dataMapping, _connectionDataMapping);
-  
+
   for (auto entry : dataMapping) {
     if (entry.second.isRealConnectionActive) {
       reliableTransport.Disconnect(entry.first);
@@ -258,21 +262,21 @@ void ReliableUDPChannel::RemoveAllConnections()
 bool ReliableUDPChannel::GetConnectionId(ConnectionId& connectionId, const TransportAddress& address) const
 {
   std::lock_guard<std::recursive_mutex> guard(mutex);
-  
+
   return UnreliableUDPChannel::GetConnectionId(connectionId, address);
 }
 
 bool ReliableUDPChannel::GetAddress(TransportAddress& address, ConnectionId connectionId) const
 {
   std::lock_guard<std::recursive_mutex> guard(mutex);
-  
+
   return UnreliableUDPChannel::GetAddress(address, connectionId);
 }
 
 uint32_t ReliableUDPChannel::GetMaxTotalBytesPerMessage() const
 {
   std::lock_guard<std::recursive_mutex> guard(mutex);
-  
+
   return reliableTransport.MaxTotalBytesPerMessage();
 }
 
@@ -280,7 +284,7 @@ uint32_t ReliableUDPChannel::GetMaxTotalBytesPerMessage() const
 void ReliableUDPChannel::ReceiveData(const uint8_t *buffer, unsigned int bufferSize, const TransportAddress& sourceAddress)
 {
   std::lock_guard<std::recursive_mutex> guard(mutex);
-  
+
   if (buffer == Anki::Util::INetTransportDataReceiver::OnConnectRequest) {
     QueueDisconnectionIfActuallyConnected(sourceAddress, true);
     EmplaceIncomingPacket(IncomingPacket(IncomingPacket::Tag::ConnectionRequest, sourceAddress));
@@ -288,12 +292,12 @@ void ReliableUDPChannel::ReceiveData(const uint8_t *buffer, unsigned int bufferS
   else if (buffer == Anki::Util::INetTransportDataReceiver::OnConnected) {
     QueueDisconnectionIfActuallyConnected(sourceAddress, true);
     EmplaceIncomingPacket(IncomingPacket(IncomingPacket::Tag::Connected, sourceAddress));
-    
+
     ConnectionData *data = GetConnectionData(sourceAddress);
     if (data != nullptr) {
       std::vector<OutgoingPacket> packetsToSend;
       std::swap(packetsToSend, data->connectionPackets);
-      
+
       for (const OutgoingPacket& packet : packetsToSend) {
         SendDirect(packet);
       }
@@ -311,22 +315,37 @@ void ReliableUDPChannel::ReceiveData(const uint8_t *buffer, unsigned int bufferS
       return;
     }
     assert(data->isRealConnectionActive);
-    
+
     UnreliableUDPChannel::ReceiveData(buffer, bufferSize, sourceAddress);
   }
+}
+
+void ReliableUDPChannel::ConfigureReliableTransport()
+{
+    // Set parameters for all reliable transport instances
+    reliableTransport.SetSendAckOnReceipt(false);
+    reliableTransport.SetSendUnreliableMessagesImmediately(false);
+    reliableTransport.SetSendPacketsImmediately(false);
+    // Set parameters for all reliable connections
+    ReliableConnection::SetTimeBetweenPingsInMS(100.0);
+    ReliableConnection::SetTimeBetweenResendsInMS(33.3);
+    ReliableConnection::SetConnectionTimeoutInMS(5000.0);
+    ReliableConnection::SetMaxPingRoundTripsToTrack(10);
+    ReliableConnection::SetMaxPacketsToReSendOnAck(1);
+    ReliableConnection::SetSendSeparatePingMessages(false);
 }
 
 bool ReliableUDPChannel::SendDirect(const OutgoingPacket& packet)
 {
   // TODO: Do not hold lock.
-  
+
   TransportAddress destAddress;
   if (!UnreliableUDPChannel::GetAddress(destAddress, packet.destId)) {
     PRINT_STREAM_WARNING("ReliableUDPChannel.SendDirect",
                          "Cannot determine address for connection id " << packet.destId << ".");
     return false;
   }
-  
+
   reliableTransport.SendData(packet.reliable, destAddress, packet.buffer, packet.bufferSize);
   return true;
 }
@@ -335,11 +354,11 @@ void ReliableUDPChannel::Stop_Internal()
 {
   if (isStarted) {
     RemoveAllConnections();
-    
+
     bool wasHost = isHost;
     isStarted = false;
     isHost = false;
-    
+
     if (wasHost) {
       reliableTransport.StopHost();
     }
@@ -368,23 +387,23 @@ void ReliableUDPChannel::PostProcessIncomingPacket(IncomingPacket& packet)
     PRINT_STREAM_WARNING("ReliableUDPChannel.PostProcessIncomingPacket",
                          "No connection data available for a queued packet from address " << packet.sourceAddress.ToString() <<
                          ". Disconnecting. (This shouldn't happen.)");
-    
+
     reliableTransport.Disconnect(packet.sourceAddress);
     return;
   }
-  
+
   // asserts are for state that is queued by this class, so any error is an error within this class
   switch (packet.tag) {
     case IncomingPacket::Tag::ConnectionRequest:
       assert(data->state == ConnectionData::State::Disconnected);
       assert(!data->isDisconnectionQueued);
-      
+
       data->state = ConnectionData::State::MustSendConnectionResponse;
       break;
     case IncomingPacket::Tag::Connected:
       assert(data->state == ConnectionData::State::Disconnected);
       assert(!data->isDisconnectionQueued);
-      
+
       data->state = ConnectionData::State::Connected;
       break;
     case IncomingPacket::Tag::Disconnected:
@@ -392,7 +411,7 @@ void ReliableUDPChannel::PostProcessIncomingPacket(IncomingPacket& packet)
              data->state == ConnectionData::State::MustSendConnectionResponse ||
              data->state == ConnectionData::State::WaitingForConnectionResponse);
       assert(data->isDisconnectionQueued);
-      
+
       data->state = ConnectionData::State::Disconnected;
       if (!data->isRealConnectionActive) {
         _connectionDataMapping.erase(packet.sourceAddress);
@@ -417,7 +436,7 @@ void ReliableUDPChannel::RemoveConnectionForOverwrite(ConnectionId connectionId)
   if (!GetAddress(address, connectionId)) {
     return;
   }
-  
+
   UnreliableUDPChannel::RemoveConnectionForOverwrite(connectionId);
   RemoveConnectionData(address, true);
 }
@@ -432,11 +451,11 @@ void ReliableUDPChannel::RemoveConnectionData(const TransportAddress& address, b
     return;
   }
   ConnectionData *data = &foundData->second;
-  
+
   // clear any queued packets past the last incoming disconnect
   if (data->isDisconnectionQueued && !full) {
     ClearPacketsForAddressUntilNewestConnection(address);
-    
+
     if (!data->isRealConnectionActive) {
       _connectionDataMapping.erase(foundData);
     }
@@ -448,7 +467,7 @@ void ReliableUDPChannel::RemoveConnectionData(const TransportAddress& address, b
   else {
     assert(data->isRealConnectionActive || full);
     ClearPacketsForAddress(address);
-    
+
     // if no disconnect is queued, the connection is current and we need to disconnect
     if (data->isRealConnectionActive) {
       reliableTransport.Disconnect(address);
@@ -460,7 +479,7 @@ void ReliableUDPChannel::RemoveConnectionData(const TransportAddress& address, b
 void ReliableUDPChannel::QueueDisconnectionIfActuallyConnected(const TransportAddress& sourceAddress, bool makeActive)
 {
   ConnectionData *data = GetConnectionData(sourceAddress);
-  
+
   if (data == nullptr) {
     if (makeActive) {
       _connectionDataMapping.emplace(sourceAddress, ConnectionData(ConnectionData::State::Disconnected));
