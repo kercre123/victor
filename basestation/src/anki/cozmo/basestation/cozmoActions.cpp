@@ -610,6 +610,10 @@ namespace Anki {
       return result;
     }
     
+    void DriveToObjectAction::Cleanup(Robot &robot)
+    {
+      _compoundAction.Cleanup(robot);
+    }
             
 #pragma mark ---- DriveToPlaceCarriedObjectAction ----
     
