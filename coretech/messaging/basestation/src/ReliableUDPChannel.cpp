@@ -7,6 +7,7 @@
 //
 
 #include "anki/messaging/basestation/ReliableUDPChannel.h"
+#include "util/transport/reliableConnection.h"
 
 #include "anki/util/logging/logging.h"
 
@@ -327,12 +328,12 @@ void ReliableUDPChannel::ConfigureReliableTransport()
     reliableTransport.SetSendUnreliableMessagesImmediately(false);
     reliableTransport.SetSendPacketsImmediately(false);
     // Set parameters for all reliable connections
-    ReliableConnection::SetTimeBetweenPingsInMS(100.0);
-    ReliableConnection::SetTimeBetweenResendsInMS(33.3);
-    ReliableConnection::SetConnectionTimeoutInMS(5000.0);
-    ReliableConnection::SetMaxPingRoundTripsToTrack(10);
-    ReliableConnection::SetMaxPacketsToReSendOnAck(1);
-    ReliableConnection::SetSendSeparatePingMessages(false);
+    Util::ReliableConnection::SetTimeBetweenPingsInMS(100.0);
+    Util::ReliableConnection::SetTimeBetweenResendsInMS(33.3);
+    Util::ReliableConnection::SetConnectionTimeoutInMS(5000.0);
+    Util::ReliableConnection::SetMaxPingRoundTripsToTrack(10);
+    Util::ReliableConnection::SetSendSeparatePingMessages(false);
+    Util::ReliableTransport::SetMaxPacketsToReSendOnAck(1);
 }
 
 bool ReliableUDPChannel::SendDirect(const OutgoingPacket& packet)
