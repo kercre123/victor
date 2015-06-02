@@ -10,31 +10,6 @@ set(CMAKE_C_OUTPUT_EXTENSION_REPLACE 1)
 set(CMAKE_CXX_OUTPUT_EXTENSION_REPLACE 1)
 
 
-#util.gyp:jsoncpp#target
-set(TARGET "jsoncpp")
-set(TOOLSET "target")
-list(APPEND jsoncpp__other_srcs
-  "anki-util/source/3rd/jsoncpp/json/json.h"
-  "anki-util/source/3rd/jsoncpp/json/json-forwards.h")
-add_library(jsoncpp STATIC ${jsoncpp__other_srcs}
-  anki-util/source/3rd/jsoncpp/jsoncpp.cpp
-)
-set_source_files_properties(${jsoncpp__other_srcs} PROPERTIES HEADER_FILE_ONLY "TRUE")
-set_target_properties(jsoncpp PROPERTIES ARCHIVE_OUTPUT_DIRECTORY "${obj}.${TOOLSET}/project/gyp")
-set_target_properties(jsoncpp PROPERTIES PREFIX "lib")
-set_target_properties(jsoncpp PROPERTIES ARCHIVE_OUTPUT_NAME "jsoncpp")
-set_target_properties(jsoncpp PROPERTIES SUFFIX ".a")
-set_source_files_properties(${obj}.${TOOLSET}/project/gyp/libjsoncpp.a PROPERTIES GENERATED "TRUE")
-set_target_properties(jsoncpp PROPERTIES EXCLUDE_FROM_ALL "FALSE")
-list(APPEND jsoncpp__include_dirs
-  "${CMAKE_SOURCE_DIR}/anki-util/tools/message-buffers/support/cpp/include"
-  "${CMAKE_SOURCE_DIR}/anki-util/source/3rd/jsoncpp")
-set_property(TARGET jsoncpp APPEND PROPERTY INCLUDE_DIRECTORIES ${jsoncpp__include_dirs})
-set_target_properties(jsoncpp PROPERTIES COMPILE_FLAGS "-std=c11 -fdiagnostics-show-category=name -Wall -Woverloaded-virtual -Werror -Wundef -Wheader-guard -fsigned-char -fvisibility-inlines-hidden -fvisibility=default -Wshorten-64-to-32 -Winit-self -Wconditional-uninitialized -Wno-deprecated-register -Wa,--noexecstack -Wformat -Werror=format-security -g -std=c++11 -stdlib=libc++ -fdiagnostics-show-category=name -Wall -Woverloaded-virtual -Werror -Wundef -Wheader-guard -fsigned-char -fvisibility-inlines-hidden -fvisibility=default -Wshorten-64-to-32 -Winit-self -Wconditional-uninitialized -Wno-deprecated-register -Wa,--noexecstack -Wformat -Werror=format-security -g ")
-set_target_properties(jsoncpp PROPERTIES LINK_FLAGS "-g ")
-unset(TOOLSET)
-unset(TARGET)
-
 #util.gyp:kazmath#target
 set(TARGET "kazmath")
 set(TOOLSET "target")
@@ -85,6 +60,31 @@ list(APPEND kazmath__include_dirs
 set_property(TARGET kazmath APPEND PROPERTY INCLUDE_DIRECTORIES ${kazmath__include_dirs})
 set_target_properties(kazmath PROPERTIES COMPILE_FLAGS "-std=c11 -fdiagnostics-show-category=name -Wall -Woverloaded-virtual -Werror -Wundef -Wheader-guard -fsigned-char -fvisibility-inlines-hidden -fvisibility=default -Wshorten-64-to-32 -Winit-self -Wconditional-uninitialized -Wno-deprecated-register -Wa,--noexecstack -Wformat -Werror=format-security -g ")
 set_target_properties(kazmath PROPERTIES LINK_FLAGS "-g ")
+unset(TOOLSET)
+unset(TARGET)
+
+#util.gyp:jsoncpp#target
+set(TARGET "jsoncpp")
+set(TOOLSET "target")
+list(APPEND jsoncpp__other_srcs
+  "anki-util/source/3rd/jsoncpp/json/json.h"
+  "anki-util/source/3rd/jsoncpp/json/json-forwards.h")
+add_library(jsoncpp STATIC ${jsoncpp__other_srcs}
+  anki-util/source/3rd/jsoncpp/jsoncpp.cpp
+)
+set_source_files_properties(${jsoncpp__other_srcs} PROPERTIES HEADER_FILE_ONLY "TRUE")
+set_target_properties(jsoncpp PROPERTIES ARCHIVE_OUTPUT_DIRECTORY "${obj}.${TOOLSET}/project/gyp")
+set_target_properties(jsoncpp PROPERTIES PREFIX "lib")
+set_target_properties(jsoncpp PROPERTIES ARCHIVE_OUTPUT_NAME "jsoncpp")
+set_target_properties(jsoncpp PROPERTIES SUFFIX ".a")
+set_source_files_properties(${obj}.${TOOLSET}/project/gyp/libjsoncpp.a PROPERTIES GENERATED "TRUE")
+set_target_properties(jsoncpp PROPERTIES EXCLUDE_FROM_ALL "FALSE")
+list(APPEND jsoncpp__include_dirs
+  "${CMAKE_SOURCE_DIR}/anki-util/tools/message-buffers/support/cpp/include"
+  "${CMAKE_SOURCE_DIR}/anki-util/source/3rd/jsoncpp")
+set_property(TARGET jsoncpp APPEND PROPERTY INCLUDE_DIRECTORIES ${jsoncpp__include_dirs})
+set_target_properties(jsoncpp PROPERTIES COMPILE_FLAGS "-std=c11 -fdiagnostics-show-category=name -Wall -Woverloaded-virtual -Werror -Wundef -Wheader-guard -fsigned-char -fvisibility-inlines-hidden -fvisibility=default -Wshorten-64-to-32 -Winit-self -Wconditional-uninitialized -Wno-deprecated-register -Wa,--noexecstack -Wformat -Werror=format-security -g -std=c++11 -stdlib=libc++ -fdiagnostics-show-category=name -Wall -Woverloaded-virtual -Werror -Wundef -Wheader-guard -fsigned-char -fvisibility-inlines-hidden -fvisibility=default -Wshorten-64-to-32 -Winit-self -Wconditional-uninitialized -Wno-deprecated-register -Wa,--noexecstack -Wformat -Werror=format-security -g ")
+set_target_properties(jsoncpp PROPERTIES LINK_FLAGS "-g ")
 unset(TOOLSET)
 unset(TARGET)
 
