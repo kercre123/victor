@@ -249,7 +249,8 @@ namespace Anki {
             static int ctr = 0;
             if(ctr++ % 10 == 0) {
               PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.WaitingForPathCompletion",
-                               "Waiting for robot to complete its path traversal (%d), _currPathSegment=%d, _lastSentPathID=%d, _lastRecvdPathID=%d.\n", ctr,
+                               "Waiting for robot to complete its path traversal (%d), "
+                               "_currPathSegment=%d, _lastSentPathID=%d, _lastRecvdPathID=%d.\n", ctr,
                                 robot.GetCurrentPathSegment(), robot.GetLastSentPathID(), robot.GetLastRecvdPathID());
             }
           }
