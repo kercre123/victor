@@ -166,7 +166,7 @@ GameObject:
   - 114: {fileID: 11461822}
   - 225: {fileID: 22550336}
   m_Layer: 5
-  m_Name: Text
+  m_Name: Text_Addaboy
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -404,7 +404,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!1 &175718
 GameObject:
   m_ObjectHideFlags: 1
@@ -1150,7 +1150,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Good job, little kid!
+  m_Text: Good job!
 --- !u!114 &11461824
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1666,6 +1666,7 @@ MonoBehaviour:
   textError: {fileID: 0}
   textState: {fileID: 11475706}
   textTime: {fileID: 11476680}
+  textAddaboy: {fileID: 11461822}
   autoPlay: 1
   playButton: {fileID: 0}
   buildInstructionsLayoutFilter: Slalom

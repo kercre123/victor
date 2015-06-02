@@ -174,23 +174,31 @@ public class RobotEngineManager : MonoBehaviour {
 	 
 	private void Update()
 	{
+
 		if(Input.GetKeyDown(KeyCode.Mouse3)) Debug.Break();
 
+		Profiler.BeginSample("channel.Update");
 		if (channel != null) {
 			channel.Update ();
 		}
+		Profiler.EndSample();
 
+		Profiler.BeginSample("robots CooldownTimers");
 		for(int i=0; i<robotList.Count; i++) {
 			robotList[i].CooldownTimers(Time.deltaTime);
 		}
+		Profiler.EndSample();
 
+		Profiler.BeginSample("isRobotConnected");
 		float robotStateTimeout = 20f;
 		if (isRobotConnected && lastRobotStateMessage + robotStateTimeout < Time.realtimeSinceStartup) {
 			Debug.LogError ("No robot state for " + robotStateTimeout.ToString("0.00") + " seconds.", this);
 			Disconnect ();
 			Disconnected (DisconnectionReason.RobotConnectionTimedOut);
 		}
+		Profiler.EndSample();
 
+		Profiler.BeginSample("lock (sync)");
 		// logging from async IO thread
 		lock (sync) {
 			if (safeLogs.Count > 0) {
@@ -205,11 +213,16 @@ public class RobotEngineManager : MonoBehaviour {
 				}
 			}
 		}
+		Profiler.EndSample();
+
 #if !UNITY_EDITOR
+		Profiler.BeginSample("logBuilder");
 		if (logBuilder == null) {
 			logBuilder = new StringBuilder (1024);
 		}
-		
+		Profiler.EndSample();
+
+		Profiler.BeginSample("CozmoBinding.cozmo_has_log(out length)");
 		int length;
 		while (CozmoBinding.cozmo_has_log(out length)) {
 			if (logBuilder.Capacity < length) {
@@ -219,13 +232,16 @@ public class RobotEngineManager : MonoBehaviour {
 			CozmoBinding.cozmo_pop_log (logBuilder, logBuilder.Capacity);
 			Debug.LogError (logBuilder.ToString (), this);
 		}
-		
+		Profiler.EndSample();
+
+		Profiler.BeginSample("engineHostInitialized");
 		if (engineHostInitialized) {
 			AnkiResult result = (AnkiResult)CozmoBinding.cozmo_update (Time.realtimeSinceStartup);
 			if (result != AnkiResult.RESULT_OK) {
 				Debug.LogError ("cozmo_engine_update error: " + result.ToString(), this);
 			}
 		}
+		Profiler.EndSample();
 #endif
 	}
 
