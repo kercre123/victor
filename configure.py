@@ -6,6 +6,7 @@ import argparse
 import inspect
 import os
 import os.path
+import platform
 import sys
 import time
 
@@ -17,6 +18,64 @@ import ankibuild.cmake
 import ankibuild.util
 import ankibuild.xcode
 
+def _monkeypatch_build_tools():
+    @staticmethod
+    def _raw_execute(func, arglists, ignore_result):
+        if ECHO_ALL:
+            print('')
+            print(File._escape_piped(arglists))
+        return File._run_subprocess(func, arglists, ignore_result)
+
+    ankibuild.util._raw_execute = _raw_execute
+
+_monkeypatch_build_tools()
+
+
+##################
+# COLORED OUTPUT #
+##################
+
+def initialize_colors():
+    if platform.system() == 'Windows':
+        try:
+            import colorama
+            colorama.init()
+            print('If you want colored output, use:')
+            print('pip install colorama')
+        except ImportError:
+            return
+    
+    # https://github.com/freelan-developers/chromalog/blob/master/chromalog/stream.py
+    if platform.system() == 'Windows' or getattr(sys.stdout, 'isatty', lambda: False)():
+        
+        def print_header_colored(text):
+            print('\033[1m{0}\033[0m'.format(text))
+        def print_status_colored(text):
+            print('\033[34m{0}\033[0m'.format(text))
+        def raw_dialog_colored(prompt):
+            return raw_input('\033[31m{0}\033[0m'.format(prompt))
+    
+        global print_header
+        global print_status
+        global raw_dialog
+        print_header = print_header_colored
+        print_status = print_status_colored
+        raw_dialog = raw_dialog_colored
+        
+def print_header(text):
+    print('\n{0}'.format(text))
+
+def print_status(text):
+    print(text)
+
+def raw_dialog(prompt):
+    return raw_input(prompt)
+
+def dialog(prompt):
+    result = None
+    while not result:
+        result = raw_dialog(prompt).strip().lower()
+    return result in ('y', 'yes')
 
 ####################
 # ARGUMENT PARSING #
@@ -185,6 +244,7 @@ class ArgumentParser(argparse.ArgumentParser):
             help='Echo all commands to the console.')
         
         def postprocess_verbose(args):
+            # TODO: Pass to cmake ANKI_OUTPUT_VERBOSE
             # global variables are Fun!
             ankibuild.util.ECHO_ALL = args.verbose
             ankibuild.xcode.RAW_OUTPUT = args.verbose
@@ -217,15 +277,9 @@ def parse_engine_arguments():
 # PLATFORM-INDEPENDENT COMMANDS #
 #################################
 
-def dialog(prompt):
-    result = None
-    while not result:
-        result = raw_input(prompt).strip().lower()
-    return result in ('y', 'yes')
-
 def wipe_all(options, root_path, kill_unity=False):
-    print('')
-    print('Checking what to remove:')
+    print_header('Running command {0}'.format(options.command))
+    print_status('Checking what to remove:')
     old_dir = ankibuild.util.File.pwd()
     ankibuild.util.File.cd(root_path)
     ankibuild.util.File.execute(['git', 'clean', '-Xdn'])
@@ -234,35 +288,32 @@ def wipe_all(options, root_path, kill_unity=False):
     if kill_unity:
         prompt += ('\nYou will need to do a full reimport in Unity and rebuild everything from scratch.' +
             '\nIf Unity is open, it will also be closed without saving.')
-    prompt += ' (Y/N)'
+    prompt += ' (Y/N) '
     if not dialog(prompt):
         ankibuild.util.File.cd(old_dir)
         sys.exit('Operation cancelled.')
     else:
         if kill_unity:
-            print('')
-            print('Killing Unity...')
+            print_status('Killing Unity...')
             ankibuild.util.File.execute(['killall', 'Unity'], ignore_result=True)
-        print('')
-        print('Wiping all ignored files from the entire repository...')
+        print_status('Wiping all ignored files from the entire repository...')
         ankibuild.util.File.execute(['git', 'clean', '-Xdf'])
         ankibuild.util.File.execute(['git', 'submodule', 'foreach', '--recursive', 'git', 'clean', '-Xdf'])
         ankibuild.util.File.cd(old_dir)
-        print('DONE command {0}'.format(options.command))
+        print_header('DONE command {0}'.format(options.command))
 
 def unpack_anki_util_dependencies(options):
     if options.verbose:
-        print('')
-        print('Unpacking anki-util dependencies...')
+        print_status('Unpacking anki-util dependencies...')
     saved_cwd = ankibuild.util.File.pwd()
     ankibuild.util.File.cd(os.path.join(ENGINE_ROOT, 'tools', 'anki-util', 'libs', 'packaged'))
-    ankibuild.util.File.execute(['./unpackLibs.sh'])
+    # HACK: Noisy; use evaluate instead of execute to suppress output.
+    ankibuild.util.File.evaluate(['./unpackLibs.sh'])
     ankibuild.util.File.cd(saved_cwd)
 
 def generate_anki_util_cmake(options):
     if options.verbose:
-        print('')
-        print('Generating anki-util CMake file...')
+        print_status('Generating anki-util CMake file...')
     
     gyp_path = os.path.join(ENGINE_ROOT, 'tools', 'anki-util', 'project', 'gyp')
     output_path = os.path.join(ENGINE_ROOT, 'tools', 'CMakeLists.txt')
@@ -280,7 +331,8 @@ def generate_anki_util_cmake(options):
     
     cwd = ankibuild.util.File.pwd()
     ankibuild.util.File.cd(gyp_path)
-    ankibuild.util.File.execute(['./configure.py', '--platform', 'cmake'])
+    # HACK: Noisy; use evaluate instead of execute to suppress output.
+    ankibuild.util.File.evaluate(['./configure.py', '--platform', 'cmake'])
     ankibuild.util.File.cd(cwd)
     
     new_contents = ankibuild.util.File.read(output_path)
@@ -314,8 +366,7 @@ class EnginePlatformConfiguration(object):
     
     def __init__(self, platform, options):
         if options.verbose:
-            print('')
-            print('Initializing paths...')
+            print_status('Initializing paths for platform {0}...'.format(platform))
         
         self.platform = platform
         self.options = options
@@ -335,11 +386,17 @@ class EnginePlatformConfiguration(object):
             self.delete()
     
     def generate(self):
+        if self.options.verbose:
+            print_status('Generating files for platform {0}...'.format(self.platform))
+        
         ankibuild.cmake.generate(self.project_dir, ENGINE_ROOT, self.platform)
         ankibuild.util.File.mkdir_p(os.path.join(self.project_dir, 'Xcode', 'lib', self.options.configuration))
         generate_xcode_workspace_settings(self.workspace_path, self.derived_data_dir)
 
     def build(self):
+        if self.options.verbose:
+            print_status('Building project for platform {0}...'.format(self.platform))
+        
         if not os.path.exists(self.project_path):
             sys.exit('Project {0} does not exist. (Note: clean does not generate projects.)'.format(self.project_path))
         else:
@@ -352,29 +409,32 @@ class EnginePlatformConfiguration(object):
                 simulator=self.options.simulator)
     
     def delete(self):
+        if self.options.verbose:
+            print_status('Deleting generated files for platform {0}...'.format(self.platform))
+        
         ankibuild.util.File.rm_rf(self.project_dir)
 
 def configure_platforms(options, platform_configuration_type, shared_generated_folders):
     if len(options.platforms) != 1:
-        platforms_text = 'platforms {{{0}}}'
+        platforms_text = 'PLATFORMS {{{0}}}'
     else:
-        platforms_text = 'platform {0}'
-    platforms_text = platforms_text.format(','.join(options.platforms))
+        platforms_text = 'PLATFORM {0}'
+    platforms_text = platforms_text.format(','.join(options.platforms).upper())
     
-    print('')
-    print('Running command {0} on {1}'.format(options.command, platforms_text))
+    print_header('RUNNING COMMAND {0} ON {1}'.format(options.command.upper(), platforms_text))
     for platform in options.platforms:
+        print_header('PLATFORM {0}:'.format(platform.upper()))
         config = platform_configuration_type(platform, options)
         config.process()
     
     if shared_generated_folders:
         if options.command == 'delete':
-            print('')
-            print('Deleting generated folders (if empty)...')
+            if options.verbose:
+                print_status('Deleting generated folders (if empty)...')
             for folder in shared_generated_folders:
                 ankibuild.util.File.rmdir(folder)
     
-    print('DONE command {0} on {1}'.format(options.command, platforms_text))
+    print_header('DONE COMMAND {0} ON {1}'.format(options.command.upper(), platforms_text))
 
 
 ###############
@@ -382,6 +442,7 @@ def configure_platforms(options, platform_configuration_type, shared_generated_f
 ###############
 
 def main():
+    initialize_colors()
     options = parse_engine_arguments()
     
     if options.command == 'wipeall!':
