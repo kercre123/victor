@@ -736,6 +736,10 @@ void webots_physics_cleanup() {
   server.StopListening();
 
   pathMap_.clear();
+  pathColorMap_.clear();
+  objectMap_.clear();
+  quadMap_.clear();
+  colorMap_.clear();
 }
 
 

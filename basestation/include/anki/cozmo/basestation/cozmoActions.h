@@ -254,7 +254,7 @@ namespace Anki {
       // Amount of time to wait before verifying after moving head that we are
       // indeed seeing the object/marker we expect.
       // TODO: Can this default be reduced?
-      virtual f32 GetWaitToVerifyTime() const { return 0.1f; }
+      virtual f32 GetWaitToVerifyTime() const { return 0.25f; }
       
       // Override to allow wheel control while facing the object
       virtual bool ShouldLockWheels() const override { return false; }

@@ -167,6 +167,8 @@ namespace Anki {
     
     void Robot::Delocalize()
     {
+      PRINT_NAMED_INFO("Robot.Delocalize", "Delocalizing robot %d.\n", GetID());
+      
       _localizedToID.UnSet();
       _localizedToFixedMat = false;
 
@@ -485,7 +487,8 @@ namespace Anki {
       TimeStamp_t t;
       RobotPoseStamp* p = nullptr;
       HistPoseKey poseKey;
-      lastResult = ComputeAndInsertPoseIntoHistory(msg.timestamp, t, &p, &poseKey);
+      lastResult = ComputeAndInsertPoseIntoHistory(msg.timestamp, t, &p, &poseKey, false);
+      //assert(msg.timestamp == t);
       if(lastResult != RESULT_OK) {
         PRINT_NAMED_WARNING("Robot.QueueObservedMarker.HistoricalPoseNotFound",
                             "Time: %d, hist: %d to %d\n",
