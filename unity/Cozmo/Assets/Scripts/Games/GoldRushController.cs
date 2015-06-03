@@ -950,8 +950,8 @@ public class GoldRushController : GameController {
 			UpdateReturning(true);
 			yield return 0;
 		}
-
-		robot.CancelAction(RobotActionType.DRIVE_TO_AND_TRAVERSE_OBJECT);
+		Debug.LogError("should be cancelling action");
+		robot.CancelAction(RobotActionType.DRIVE_TO_OBJECT);
 		EnterPlayState(PlayState.DEPOSITING);
 
 
