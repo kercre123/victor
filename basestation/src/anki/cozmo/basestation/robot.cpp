@@ -2037,7 +2037,7 @@ namespace Anki {
       MessageExecutePath m;
       m.pathID = _lastSentPathID;
       m.useManualSpeed = useManualSpeed;
-      PRINT_NAMED_INFO("Robot::SendExecutePath", "sending start execution message (manualSpeed == %d)\n", useManualSpeed);
+      PRINT_NAMED_INFO("Robot::SendExecutePath", "sending start execution message (pathID = %d, manualSpeed == %d)\n", _lastSentPathID, useManualSpeed);
       return _msgHandler->SendMessage(_ID, m);
     }
     
