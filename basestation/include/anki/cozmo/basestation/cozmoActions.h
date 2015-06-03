@@ -154,8 +154,11 @@ namespace Anki {
     protected:
       
       virtual ActionResult Init(Robot& robot) override;
+      virtual ActionResult CheckIfDone(Robot& robot) override;
       
+    private:
       Radians _turnAngle;
+      bool    _startedTraversingPath;
       
     }; // class TurnInPlaceAction
     

@@ -687,6 +687,7 @@ namespace Anki {
     TurnInPlaceAction::TurnInPlaceAction(const Radians& angle)
     : DriveToPoseAction(true)
     , _turnAngle(angle)
+    , _startedTraversingPath(false)
     {
       
     }
@@ -709,9 +710,29 @@ namespace Anki {
       
       SetGoal(rotatedPose);
       
+      _startedTraversingPath = false;
+      
       // Now that goal is set, call the base class init to send the path, etc.
       return DriveToPoseAction::Init(robot);
     }
+    
+    ActionResult TurnInPlaceAction::CheckIfDone(Robot& robot)
+    {
+      ActionResult result = ActionResult::RUNNING;
+      
+      if(!_startedTraversingPath) {
+        // Wait until robot reports it has started traversing the path
+        _startedTraversingPath = robot.IsTraversingPath();
+        
+      } else {
+        // Wait until robot reports it is no longer traversing a path
+        if(!robot.IsTraversingPath()) {
+            result = ActionResult::SUCCESS;
+        }
+      }
+      
+      return result;
+    } // TurnInPlaceAction::CheckIfDone()
     
     
 #pragma mark ---- FaceObjectAction ----
