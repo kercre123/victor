@@ -192,7 +192,10 @@ namespace Anki {
       
       _poseHistory->Clear();
       //++_frameId;
-      
+     
+      // Update VizText
+      VizManager::getInstance()->SetText(VizManager::LOCALIZED_TO, NamedColors::YELLOW,
+                                         "LocalizedTo: <nothing>");
     }
 
     Result Robot::UpdateFullRobotState(const MessageRobotState& msg)
