@@ -314,11 +314,16 @@ namespace Anki
           for(auto objectsByID : objectsByType.second) {
             MatPiece* mat = dynamic_cast<MatPiece*>(objectsByID.second);
             assert(mat != nullptr);
-            Pose3d newPoseWrtMat;
-            // TODO: Better height tolerance approach
-            if(mat->IsPoseOn(objSeen->GetPose(), objectDiagonal*.5f, objectDiagonal*.5f, newPoseWrtMat)) {
-              objSeen->SetPose(newPoseWrtMat);
-              parentMat = mat;
+            
+            // Don't make this mat the parent of any objects until it has been
+            // seen enough time
+            if(mat->GetNumTimesObserved() >= MIN_TIMES_TO_OBSERVE_OBJECT) {
+              Pose3d newPoseWrtMat;
+              // TODO: Better height tolerance approach
+              if(mat->IsPoseOn(objSeen->GetPose(), objectDiagonal*.5f, objectDiagonal*.5f, newPoseWrtMat)) {
+                objSeen->SetPose(newPoseWrtMat);
+                parentMat = mat;
+              }
             }
           }
         }
@@ -1754,6 +1759,9 @@ namespace Anki
                            _robot->GetID(), object->GetType().GetName().c_str(), object->GetID().GetValue());
           _robot->Delocalize();
         }
+        
+        // TODO: If this is a mat piece, check to see if there are any objects "on" it (COZMO-138)
+        // If so, delete them too or update their poses somehow? (Deleting seems easier)
         
         // Check to see if this object is the one the robot is carrying.
         if(_robot->GetCarryingObject() == object->GetID()) {
