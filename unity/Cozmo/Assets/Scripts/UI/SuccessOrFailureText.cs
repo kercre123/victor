@@ -9,6 +9,8 @@ public class SuccessOrFailureText : ScreenMessage
 	[SerializeField] private AudioClip failure;
 	[SerializeField] protected float timeOnScreen = 5f;
 
+	bool showText = true;
+
 	private void OnEnable()
 	{
 		if( RobotEngineManager.instance != null )
@@ -17,6 +19,8 @@ public class SuccessOrFailureText : ScreenMessage
 		}
 
 		text.text = string.Empty;
+
+		showText = PlayerPrefs.GetInt("ShowDebugInfo", 0) == 1;
 	}
 
 	private void OnDisable()
@@ -32,12 +36,12 @@ public class SuccessOrFailureText : ScreenMessage
 		if( s )
 		{
 			if(success != null) AudioManager.PlayOneShot( success );
-			ShowMessageForDuration( action_type + " SUCCEEDED", timeOnScreen, Color.green);
+			if(showText) ShowMessageForDuration( action_type + " SUCCEEDED", timeOnScreen, Color.green);
 		}
 		else
 		{
 			if(failure != null) AudioManager.PlayOneShot( failure );
-			ShowMessageForDuration( action_type + " FAILED", timeOnScreen, Color.red);
+			if(showText) ShowMessageForDuration( action_type + " FAILED", timeOnScreen, Color.red);
 		}
 	}
 }
