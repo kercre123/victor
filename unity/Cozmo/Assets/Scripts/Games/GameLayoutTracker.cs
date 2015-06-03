@@ -93,7 +93,7 @@ public class GameLayoutTracker : MonoBehaviour {
 	bool hidden = false;
 	bool ignoreActiveColor = false;
 	List<LayoutBlock2d> blocks2d = new List<LayoutBlock2d>();
-	bool lastValidPredictedDrop = false;
+	bool lastValidPredictedPlacement = false;
 	int autoBuildFails = 0;
 	
 	List<BuildInstructionsCube> validated = new List<BuildInstructionsCube>();
@@ -149,7 +149,7 @@ public class GameLayoutTracker : MonoBehaviour {
 
 		validCount = 0;
 		lastValidCount = 0;
-		lastValidPredictedDrop = false;
+		lastValidPredictedPlacement = false;
 		hidden = false;
 
 		string fullName = currentGameName + " #" + currentLevelNumber;
@@ -537,28 +537,35 @@ public class GameLayoutTracker : MonoBehaviour {
 
 	void RefreshDropLocationHint() {
 		
-		bool validPredictedDrop = false;
+		bool validPredictedPlacement = false;
 		bool shouldBeStackedInstedOfDropped = false;
-		
+		uint colorCode = CozmoPalette.ColorToUInt(Color.clear);
+
 		if(validCount < currentLayout.blocks.Count && robot != null && robot.carryingObject != null) {
 			string error;
 			LayoutErrorType errorType;
 			
-			validPredictedDrop = PredictDropValidation(robot.carryingObject, out error, out errorType, out shouldBeStackedInstedOfDropped);
+			validPredictedPlacement = PredictDropValidation(robot.carryingObject, out error, out errorType, out shouldBeStackedInstedOfDropped);
 			
-			if(!shouldBeStackedInstedOfDropped && lastValidPredictedDrop != validPredictedDrop) {
-				AudioManager.PlayOneShot(validPredictedDrop ? validPredictedDropSound : invalidPredictedDropSound);
+			if(shouldBeStackedInstedOfDropped && robot.selectedObjects.Count > 0) {
+				validPredictedPlacement = PredictStackValidation(robot.carryingObject,robot.selectedObjects[0], out error, out errorType, true);
+			}
+
+			if(lastValidPredictedPlacement != validPredictedPlacement) {
+				AudioManager.PlayOneShot(validPredictedPlacement ? validPredictedDropSound : invalidPredictedDropSound);
 			}
 		}
-		
-		if (shouldBeStackedInstedOfDropped && lastValidPredictedDrop) {
-			robot.SetBackpackLEDs(CozmoPalette.ColorToUInt(Color.clear));
+
+		if(validPredictedPlacement) {
+			colorCode = CozmoPalette.ColorToUInt(Color.green);
 		}
-		else if(lastValidPredictedDrop != validPredictedDrop) {
-			//Debug.Log ("validPredictedDrop("+validPredictedDrop+")");
-			robot.SetBackpackLEDs(validPredictedDrop ? CozmoPalette.ColorToUInt(Color.green) : CozmoPalette.ColorToUInt(Color.clear));
+		else if(shouldBeStackedInstedOfDropped && robot.selectedObjects.Count > 0) {
+			colorCode = CozmoPalette.ColorToUInt(Color.red);
 		}
-		lastValidPredictedDrop = validPredictedDrop;
+
+		robot.SetBackpackLEDs(colorCode);
+
+		lastValidPredictedPlacement = validPredictedPlacement;
 
 	}
 

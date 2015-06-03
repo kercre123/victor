@@ -169,7 +169,14 @@ public class CozmoVision_TargetLockSlider : CozmoVision {
 				return obj1.WorldPosition.z.CompareTo(obj2.WorldPosition.z);   
 			});
 			
-			if(robot.targetLockedObject == null) robot.targetLockedObject = robot.selectedObjects[0];
+			if(robot.targetLockedObject == null) {
+//				Vector2 atTarget = robot.selectedObjects[0].WorldPosition - robot.WorldPosition;
+//				float angle = Vector2.Angle(robot.Forward, atTarget);
+//				if(angle < 45f)
+				if(robot.selectedObjects[0].MarkersVisible) {
+					robot.targetLockedObject = robot.selectedObjects[0];
+				}
+			}
 		}
 		//Debug.Log("frame("+Time.frameCount+") AcquireTarget targets(" + robot.selectedObjects.Count + ") from pertinentObjects("+robot.pertinentObjects.Count+")");
 	}
