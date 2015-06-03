@@ -288,6 +288,7 @@ public class GameController : MonoBehaviour {
 		Debug.Log(gameObject.name + " Enter_BUILDING");
 
 		if(playButton != null) playButton.gameObject.SetActive(true);
+		if(robot != null) robot.SetObjectAdditionAndDeletion(true, true);
 	}
 	protected virtual void Update_BUILDING() {
 		//Debug.Log(gameObject.name + " Update_BUILDING");
@@ -296,6 +297,7 @@ public class GameController : MonoBehaviour {
 		Debug.Log(gameObject.name + " Exit_BUILDING");
 
 		if(playButton != null) playButton.gameObject.SetActive(false);
+		if(robot != null) robot.SetObjectAdditionAndDeletion(false, false);
 	}
 		
 	protected virtual void Enter_PRE_GAME() {
@@ -308,7 +310,7 @@ public class GameController : MonoBehaviour {
 		coundownTimer = 0f;
 		countdownAnnounced = false;
 
-		if(robot != null) robot.SetObjectAdditionAndDeletion(false, false);
+		//if(robot != null) robot.SetObjectAdditionAndDeletion(false, false);
 	}
 
 	protected virtual void Update_PRE_GAME() {
@@ -391,8 +393,6 @@ public class GameController : MonoBehaviour {
 		if(textScore != null) textScore.gameObject.SetActive(false);
 
 		if(gameOverSound != null) AudioManager.PlayOneShot(gameOverSound);
-
-		if(robot != null) robot.SetObjectAdditionAndDeletion(true, true);
 	}
 
 	protected virtual void Enter_RESULTS() {

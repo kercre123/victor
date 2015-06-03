@@ -332,7 +332,7 @@ public class Robot
 	}
 
 	public bool IsLocalized() {
-		return (gameStatus & GameStatusFlag.IS_LOCALIZED) != 0;
+		return (gameStatus & GameStatusFlag.IS_LOCALIZED) == GameStatusFlag.IS_LOCALIZED;
 	}
 
 	private Robot()
@@ -487,6 +487,8 @@ public class Robot
 		{
 			lights[i].ClearData();
 		}
+		//wasLoc = false;
+		//Debug.Log( "Robot data cleared IsLocalized("+IsLocalized()+")" );
 	}
 
 	public void ClearObservedObjects()
@@ -508,6 +510,7 @@ public class Robot
 		}
 	}
 
+	//bool wasLoc = false;
 	public void UpdateInfo( G2U.RobotState message )
 	{
 		headAngle_rad = message.headAngle_rad;
@@ -529,7 +532,9 @@ public class Robot
 		LastRotation = Rotation;
 		Rotation = new Quaternion( message.pose_quaternion1, message.pose_quaternion2, message.pose_quaternion3, message.pose_quaternion0 );
 
-		Debug.Log("robot.UpdateInfo IsLocalized("+IsLocalized()+") knownObjects("+knownObjects.Count+")");
+		//bool isLoc = IsLocalized();
+		///if(wasLoc != isLoc)	Debug.Log("robot.UpdateInfo IsLocalized("+IsLocalized()+") knownObjects("+knownObjects.Count+")");
+		//wasLoc = isLoc;
 	}
 
 	public void UpdateLightMessages( bool now = false )
@@ -896,7 +901,7 @@ public class Robot
 	public void ClearAllBlocks()
 	{
 		Debug.Log( "Clear All Blocks" );
-
+		ClearAllBlocksMessage.robotID = ID;
 		RobotEngineManager.instance.Message.ClearAllBlocks = ClearAllBlocksMessage;
 		RobotEngineManager.instance.SendMessage();
 		Reset();
@@ -908,7 +913,7 @@ public class Robot
 	public void ClearAllObjects()
 	{
 		Debug.Log( "Clear All Objects" );
-		
+		ClearAllObjectsMessage.robotID = ID;
 		RobotEngineManager.instance.Message.ClearAllObjects = ClearAllObjectsMessage;
 		RobotEngineManager.instance.SendMessage();
 		Reset();

@@ -693,23 +693,29 @@ public class GameLayoutTracker : MonoBehaviour {
 		//first loop through and clear our old assignments
 		for(int layoutBlockIndex=0; layoutBlockIndex<layout.blocks.Count; layoutBlockIndex++) {
 			BuildInstructionsCube block = layout.blocks[layoutBlockIndex];
-			if(block.Validated && potentialObservedObjects.Contains(block.AssignedObject)) {
-				potentialObservedObjects.Remove(block.AssignedObject);
-			}
-//			block.Hidden = false;
-//			block.Highlighted = true;
-//			block.Validated = false;
-//			block.AssignedObject = null;
+//			if(block.Validated && potentialObservedObjects.Contains(block.AssignedObject)) {
+//				potentialObservedObjects.Remove(block.AssignedObject);
+//				validated.Add(block);
+//			}
+			block.Hidden = false;
+			block.Highlighted = true;
+			//block.Validated = false;
+			//block.AssignedObject = null;
 		}
 		
 		if(debug) Debug.Log("ValidateBlocks with robot.knownObjects.Count("+robot.knownObjects.Count+")");
 
-
-
 		//loop through our 'ideal' layout blocks and look for known objects that might satisfy the requirements of each
 		for(int layoutBlockIndex=0; layoutBlockIndex<layout.blocks.Count; layoutBlockIndex++) {
 			BuildInstructionsCube block = layout.blocks[layoutBlockIndex];
-			if(block.Validated) continue;
+
+			//double the lenience for an object that previously satisfied this block
+			ObservedObject previouslyAssigned = null;
+			if(block.Validated) {
+				previouslyAssigned = block.AssignedObject;
+			}
+			block.Validated = false;
+			block.AssignedObject = null;
 
 			if(debug) Debug.Log("attempting to validate block("+block.gameObject.name+") of type("+block.cubeType+")");
 			
@@ -717,7 +723,10 @@ public class GameLayoutTracker : MonoBehaviour {
 			for(int objectIndex=0; objectIndex<potentialObservedObjects.Count; objectIndex++) {
 				
 				ObservedObject newObject = potentialObservedObjects[objectIndex];
-				
+				float extraFudgeFactor = 1f;
+				if(previouslyAssigned == newObject) {
+					extraFudgeFactor = 2f;
+				}
 				if(debug) Debug.Log("checking if knownObject("+newObject+"):index("+objectIndex+"):cubeType("+newObject.cubeType+") can satisfy layoutCube("+block.gameObject.name+")");
 				
 				//cannot validate block in hand
@@ -727,7 +736,7 @@ public class GameLayoutTracker : MonoBehaviour {
 				}
 				
 				//skip objects of the wrong type
-				if(!block.SatisfiedByObject(newObject, distanceFudge, coplanarFudge, angleFudge, true, debug) ) {
+				if(!block.SatisfiedByObject(newObject, distanceFudge*extraFudgeFactor, coplanarFudge*extraFudgeFactor, angleFudge, true, debug) ) {
 					if(debug) Debug.Log("skip object("+CozmoPalette.instance.GetNameForObjectType(newObject.cubeType)+") because it doesn't satisfy layoutCube("+block.gameObject.name+")");
 					continue;
 				}
