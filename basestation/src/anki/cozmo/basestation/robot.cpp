@@ -159,8 +159,9 @@ namespace Anki {
     void Robot::SetPickedUp(bool t)
     {
       if(_isPickedUp == false && t == true) {
-        // Robot is being picked up: de-localize it
+        // Robot is being picked up: de-localize it and clear all known objects
         Delocalize();
+        _blockWorld.ClearAllExistingObjects();
       }
       _isPickedUp = t;
     }
@@ -172,7 +173,9 @@ namespace Anki {
       _localizedToID.UnSet();
       _localizedToFixedMat = false;
 
-      _blockWorld.ClearAllExistingObjects();
+      // NOTE: no longer doing this here because Delocalize() can be called by
+      //  BlockWorld::ClearAllExistingObjects, resulting in a weird loop...
+      //_blockWorld.ClearAllExistingObjects();
       
       // Add a new pose origin to use until the robot gets localized again
       _poseOrigins.emplace_back();
