@@ -111,6 +111,7 @@ namespace Anki {
                                     std::vector<Pose3d>& possiblePoses,
                                     bool& alreadyInPosition);
       
+      virtual void Cleanup(Robot &robot) override;
       virtual void Reset() override;
       
       // Not private b/c DriveToPlaceCarriedObject uses
