@@ -84,6 +84,12 @@ namespace BackpackLightController {
     params.nextSwitchTime = 0;
   }
   
+  void TurnOffAll() {
+    for (u8 i = 0; i <NUM_BACKPACK_LEDS; ++i) {
+      HAL::SetLED((LEDId)i,0);
+    }
+  }
+  
 } // namespace BackpackLightController
 } // namespace Anki
 } // namespace Cozmo
