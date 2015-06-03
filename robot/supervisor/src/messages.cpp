@@ -385,6 +385,7 @@ namespace Anki {
       }
 
       void ProcessExecutePathMessage(const ExecutePath& msg) {
+        PRINT("Starting path %d\n", msg.pathID);
         PathFollower::StartPathTraversal(msg.pathID, msg.useManualSpeed);
       }
 
@@ -443,11 +444,13 @@ namespace Anki {
       }
 
       void ProcessSetLiftHeightMessage(const SetLiftHeight& msg) {
+        PRINT("Moving lift to %f\n", msg.height_mm);
         LiftController::SetMaxSpeedAndAccel(msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2);
         LiftController::SetDesiredHeight(msg.height_mm);
       }
 
       void ProcessSetHeadAngleMessage(const SetHeadAngle& msg) {
+        PRINT("Moving head to %f\n", msg.angle_rad);
         HeadController::SetMaxSpeedAndAccel(msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2);
         HeadController::SetDesiredAngle(msg.angle_rad);
       }
