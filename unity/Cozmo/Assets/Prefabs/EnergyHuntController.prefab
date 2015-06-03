@@ -1031,6 +1031,7 @@ MonoBehaviour:
   textError: {fileID: 0}
   textState: {fileID: 11459704}
   textTime: {fileID: 11402748}
+  textAddaboy: {fileID: 0}
   autoPlay: 1
   playButton: {fileID: 0}
   buildInstructionsLayoutFilter: 
@@ -2361,7 +2362,7 @@ RectTransform:
   m_AnchorMin: {x: .5, y: 1}
   m_AnchorMax: {x: .5, y: 1}
   m_AnchoredPosition: {x: 0, y: -30}
-  m_SizeDelta: {x: 60, y: 40}
+  m_SizeDelta: {x: 100, y: 40}
   m_Pivot: {x: .5, y: 1}
 --- !u!224 &22459726
 RectTransform:
