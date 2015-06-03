@@ -832,6 +832,11 @@ namespace Anki {
         MessageDockingErrorSignal dockingErrorSignal;
         if(true == _visionProcessor.CheckMailbox(dockingErrorSignal)) {
           
+          // HACK: Robot seems to dock slightly to the right rather consistently
+          if (_isPhysical) {
+            dockingErrorSignal.x_distErr -= DOCKING_LATERAL_OFFSET_HACK;
+          }
+          
           // Visualize docking error signal
           VizManager::getInstance()->SetDockingError(dockingErrorSignal.x_distErr,
                                                      dockingErrorSignal.y_horErr,
