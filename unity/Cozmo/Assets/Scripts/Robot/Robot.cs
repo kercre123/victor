@@ -190,6 +190,7 @@ public class Robot
 	private U2G.SetLiftHeight SetLiftHeightMessage;
 	private U2G.SetRobotCarryingObject SetRobotCarryingObjectMessage;
 	private U2G.ClearAllBlocks ClearAllBlocksMessage;
+	private U2G.ClearAllObjects ClearAllObjectsMessage;
 	private U2G.VisionWhileMoving VisionWhileMovingMessage;
 	private U2G.SetRobotImageSendMode SetRobotImageSendModeMessage;
 	private U2G.ImageRequest ImageRequestMessage;
@@ -369,6 +370,7 @@ public class Robot
 		SetLiftHeightMessage = new U2G.SetLiftHeight();
 		SetRobotCarryingObjectMessage = new U2G.SetRobotCarryingObject();
 		ClearAllBlocksMessage = new U2G.ClearAllBlocks();
+		ClearAllObjectsMessage = new U2G.ClearAllObjects();
 		VisionWhileMovingMessage = new U2G.VisionWhileMoving();
 		SetRobotImageSendModeMessage = new U2G.SetRobotImageSendMode();
 		ImageRequestMessage = new U2G.ImageRequest();
@@ -526,6 +528,8 @@ public class Robot
 
 		LastRotation = Rotation;
 		Rotation = new Quaternion( message.pose_quaternion1, message.pose_quaternion2, message.pose_quaternion3, message.pose_quaternion0 );
+
+		Debug.Log("robot.UpdateInfo IsLocalized("+IsLocalized()+") knownObjects("+knownObjects.Count+")");
 	}
 
 	public void UpdateLightMessages( bool now = false )
@@ -582,6 +586,7 @@ public class Robot
 
 			activeBlocks.Add( activeBlock, activeBlock );
 			knownObjects.Add( activeBlock );
+			Debug.Log( "knownObjects.Add( activeBlock );" );
 			newBlock = true;
 		}
 
@@ -601,6 +606,8 @@ public class Robot
 			knownObject = new ObservedObject( message.objectID, message.objectFamily, message.objectType );
 			
 			knownObjects.Add( knownObject );
+			Debug.Log( "knownObjects.Add( knownObject );" );
+
 			newBlock = true;
 		}
 		
@@ -897,6 +904,19 @@ public class Robot
 		SetLiftHeight( 0f );
 		SetHeadAngle();
 	}
+
+	public void ClearAllObjects()
+	{
+		Debug.Log( "Clear All Objects" );
+		
+		RobotEngineManager.instance.Message.ClearAllObjects = ClearAllObjectsMessage;
+		RobotEngineManager.instance.SendMessage();
+		Reset();
+		
+		SetLiftHeight( 0f );
+		SetHeadAngle();
+	}
+	
 	
 	public void VisionWhileMoving( bool enable )
 	{

@@ -331,6 +331,8 @@ public class GameLayoutTracker : MonoBehaviour {
 
 	void Enter_INVENTORY() {
 
+		if(robot != null) robot.ClearAllObjects();
+
 		inventory.Clear ();
 		blocks2d.Clear();
 		
@@ -460,7 +462,6 @@ public class GameLayoutTracker : MonoBehaviour {
 			
 			if(robot.isBusy) {
 				//coz is doing shit
-				
 			}
 			else if(robot.carryingObject != null) {
 				Debug.Log("frame("+Time.frameCount+") AUTO_BUILDING AttemptAssistedPlacement");
@@ -509,7 +510,8 @@ public class GameLayoutTracker : MonoBehaviour {
 	}
 
 	void Enter_COMPLETE() {
-		textProgress.text = currentLayout.blocks.Count + " / " + currentLayout.blocks.Count;
+		int blockCount = currentLayout.blocks.Count;
+		textProgress.text = blockCount.ToString() + " / " + blockCount.ToString();
 		layoutInstructionsPanel.SetActive(!hidden);
 		layoutInstructionsCamera.gameObject.SetActive(!hidden);
 
@@ -668,7 +670,7 @@ public class GameLayoutTracker : MonoBehaviour {
 		for(int i=0; i<layout.blocks.Count; i++) {
 			layout.blocks[i].Hidden = false;
 			layout.blocks[i].Highlighted = false;
-			layout.blocks[i].Validated = true;
+			layout.blocks[i].Validated = false;
 			layout.blocks[i].AssignedObject = null;
 		}
 	}
@@ -682,27 +684,33 @@ public class GameLayoutTracker : MonoBehaviour {
 		GameLayout layout = currentLayout;
 		if(layout == null) return;
 		
+		potentialObservedObjects.Clear();
+		
+		if(robot.knownObjects.Count == 0) return;
+		
+		potentialObservedObjects.AddRange(robot.knownObjects);
+
 		//first loop through and clear our old assignments
 		for(int layoutBlockIndex=0; layoutBlockIndex<layout.blocks.Count; layoutBlockIndex++) {
 			BuildInstructionsCube block = layout.blocks[layoutBlockIndex];
-			block.Hidden = false;
-			block.Highlighted = true;
-			block.Validated = false;
-			block.AssignedObject = null;
+			if(block.Validated && potentialObservedObjects.Contains(block.AssignedObject)) {
+				potentialObservedObjects.Remove(block.AssignedObject);
+			}
+//			block.Hidden = false;
+//			block.Highlighted = true;
+//			block.Validated = false;
+//			block.AssignedObject = null;
 		}
 		
 		if(debug) Debug.Log("ValidateBlocks with robot.knownObjects.Count("+robot.knownObjects.Count+")");
 
-		potentialObservedObjects.Clear();
-		
-		if(robot.knownObjects.Count == 0) return;
 
-		potentialObservedObjects.AddRange(robot.knownObjects);
 
 		//loop through our 'ideal' layout blocks and look for known objects that might satisfy the requirements of each
 		for(int layoutBlockIndex=0; layoutBlockIndex<layout.blocks.Count; layoutBlockIndex++) {
 			BuildInstructionsCube block = layout.blocks[layoutBlockIndex];
-			
+			if(block.Validated) continue;
+
 			if(debug) Debug.Log("attempting to validate block("+block.gameObject.name+") of type("+block.cubeType+")");
 			
 			//search through known objects for one that can be assigned
