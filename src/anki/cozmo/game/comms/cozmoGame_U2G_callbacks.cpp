@@ -394,11 +394,13 @@ namespace Cozmo {
     Robot* robot = GetRobotByID(robotID);
     
     if(robot != nullptr) {
+      const u8 numRetries = 1;
+      
       // Create an action to drive to specied pose and then put down the carried
       // object.
       // TODO: Better way to set the object's z height and parent? (This assumes object's origin is 22mm off the ground!)
       Pose3d targetPose(msg.rad, Z_AXIS_3D(), Vec3f(msg.x_mm, msg.y_mm, 22.f), robot->GetWorldOrigin());
-      robot->GetActionList().AddAction(new PlaceObjectOnGroundAtPoseAction(*robot, targetPose, msg.useManualSpeed));
+      robot->GetActionList().AddAction(new PlaceObjectOnGroundAtPoseAction(*robot, targetPose, msg.useManualSpeed), numRetries);
     }
   }
   
