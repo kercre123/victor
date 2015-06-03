@@ -38,7 +38,7 @@ public class CozmoStatus : MonoBehaviour {
 		else {
 			carriedBlock2d.Initialize(robot.carryingObject);
 			carriedBlock2d.gameObject.SetActive(true);
-			button_change.gameObject.SetActive(robot.carryingObject.isActive);
+			button_change.gameObject.SetActive(false); //robot.carryingObject.isActive);
 		}
 
 		if(fadeTimer > 0f) {

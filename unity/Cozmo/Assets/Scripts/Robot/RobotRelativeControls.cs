@@ -248,8 +248,8 @@ public class RobotRelativeControls : MonoBehaviour {
 	void ShowSticks(bool show=true) {
 		if(verticalStick != null) verticalStick.gameObject.SetActive(show);
 		if(horizontalStick != null) horizontalStick.gameObject.SetActive(show);
-		if(headAngleSlider != null) headAngleSlider.gameObject.SetActive(show);
-		if(liftSlider != null) liftSlider.gameObject.SetActive(show);
+		if(headAngleSlider != null) headAngleSlider.gameObject.SetActive(show && (GameLayoutTracker.instance == null || GameLayoutTracker.instance.Phase == LayoutTrackerPhase.DISABLED));
+		if(liftSlider != null) liftSlider.gameObject.SetActive(show && (GameLayoutTracker.instance == null || GameLayoutTracker.instance.Phase == LayoutTrackerPhase.DISABLED));
 	}
 
 	bool AboutFace() {
