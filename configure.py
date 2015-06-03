@@ -140,8 +140,13 @@ class PlatformConfiguration(object):
             self.delete()
     
     def generate(self):
-        ankibuild.cmake.generate(self.project_dir, REPO_ROOT, self.platform)
-        ankibuild.util.File.mkdir_p(os.path.join(self.project_dir, 'Xcode', 'lib', options.configuration))
+				cwd = ankibuild.util.File.pwd()
+				ankibuild.util.File.cd(os.path.join(REPO_ROOT, 'tools', 'anki-util', 'project', 'gyp'))
+				ankibuild.util.File.execute(['./configure.py', '--platform', 'cmake'])
+				ankibuild.util.File.cd(cwd)
+        
+				ankibuild.cmake.generate(self.project_dir, REPO_ROOT, self.platform)
+				ankibuild.util.File.mkdir_p(os.path.join(self.project_dir, 'Xcode', 'lib', options.configuration))
 
     def build(self):
         if not os.path.exists(self.project_path):

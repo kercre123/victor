@@ -12,33 +12,33 @@
       <ToolsetName>ARM-ADS</ToolsetName>
       <TargetOption>
         <TargetCommonOption>
-          <Device>STM32F429IG</Device>
+          <Device>STM32F427IGHx</Device>
           <Vendor>STMicroelectronics</Vendor>
           <PackID>Keil.STM32F4xx_DFP.2.3.0</PackID>
           <PackURL>http://www.keil.com/pack</PackURL>
-          <Cpu>IRAM(0x20000000-0x2002FFFF) IRAM2(0x10000000-0x1000FFFF) IROM(0x8000000-0x80FFFFF) CLOCK(25000000) CPUTYPE("Cortex-M4") FPU2</Cpu>
+          <Cpu>IROM(0x08000000,0x100000) IRAM(0x20000000,0x30000) IRAM2(0x10000000,0x10000) CPUTYPE("Cortex-M4") FPU2 CLOCK(12000000) ELITTLE</Cpu>
           <FlashUtilSpec></FlashUtilSpec>
-          <StartupFile>"Startup\ST\STM32F4xx\startup_stm32f429x.s" ("STM32F429 Startup Code")</StartupFile>
-          <FlashDriverDll>UL2CM3(-O207 -S0 -C0 -FO7 -FD20000000 -FC800 -FN1 -FF0STM32F4xx_1024 -FS08000000 -FL0100000)</FlashDriverDll>
-          <DeviceId>7030</DeviceId>
-          <RegisterFile>stm32f4xx.h</RegisterFile>
+          <StartupFile></StartupFile>
+          <FlashDriverDll>UL2CM3(-S0 -C0 -P0 -FD20000000 -FC1000 -FN1 -FF0STM32F4xx_1024 -FS08000000 -FL0100000 -FP0($$Device:STM32F427IGHx$CMSIS\Flash\STM32F4xx_1024.FLM))</FlashDriverDll>
+          <DeviceId>0</DeviceId>
+          <RegisterFile>$$Device:STM32F427IGHx$Drivers\CMSIS\Device\ST\STM32F4xx\Include\stm32f4xx.h</RegisterFile>
           <MemoryEnv></MemoryEnv>
           <Cmp></Cmp>
           <Asm></Asm>
           <Linker></Linker>
           <OHString></OHString>
           <InfinionOptionDll></InfinionOptionDll>
-          <SLE66CMisc>-DSTM32F429X</SLE66CMisc>
+          <SLE66CMisc></SLE66CMisc>
           <SLE66AMisc></SLE66AMisc>
           <SLE66LinkerMisc></SLE66LinkerMisc>
-          <SFDFile>SFD\ST\STM32F4xx\STM32F439x.SFR</SFDFile>
+          <SFDFile>$$Device:STM32F427IGHx$CMSIS\SVD\STM32F427x.svd</SFDFile>
           <bCustSvd>0</bCustSvd>
           <UseEnv>0</UseEnv>
           <BinPath></BinPath>
           <IncludePath></IncludePath>
           <LibPath></LibPath>
-          <RegisterFilePath>ST\STM32F4xx\</RegisterFilePath>
-          <DBRegisterFilePath>ST\STM32F4xx\</DBRegisterFilePath>
+          <RegisterFilePath></RegisterFilePath>
+          <DBRegisterFilePath></DBRegisterFilePath>
           <TargetStatus>
             <Error>0</Error>
             <ExitCodeStop>0</ExitCodeStop>
@@ -46,14 +46,14 @@
             <NotGenerated>0</NotGenerated>
             <InvalidFlash>1</InvalidFlash>
           </TargetStatus>
-          <OutputDirectory>.\build\</OutputDirectory>
+          <OutputDirectory>.\build\21\</OutputDirectory>
           <OutputName>robot</OutputName>
           <CreateExecutable>1</CreateExecutable>
           <CreateLib>0</CreateLib>
           <CreateHexFile>0</CreateHexFile>
           <DebugInformation>1</DebugInformation>
           <BrowseInformation>1</BrowseInformation>
-          <ListingPath>.\build\</ListingPath>
+          <ListingPath>.\build\21\</ListingPath>
           <HexFormatSelection>1</HexFormatSelection>
           <Merge32K>0</Merge32K>
           <CreateBatchFile>0</CreateBatchFile>
@@ -106,11 +106,11 @@
         </CommonProperty>
         <DllOption>
           <SimDllName>SARMCM3.DLL</SimDllName>
-          <SimDllArguments>-MPU -REMAP</SimDllArguments>
+          <SimDllArguments> -REMAP -MPU</SimDllArguments>
           <SimDlgDll>DCM.DLL</SimDlgDll>
           <SimDlgDllArguments>-pCM4</SimDlgDllArguments>
           <TargetDllName>SARMCM3.DLL</TargetDllName>
-          <TargetDllArguments>-MPU</TargetDllArguments>
+          <TargetDllArguments> -MPU</TargetDllArguments>
           <TargetDlgDll>TCM.DLL</TargetDlgDll>
           <TargetDlgDllArguments>-pCM4</TargetDlgDllArguments>
         </DllOption>
@@ -363,9 +363,9 @@
             <useXO>0</useXO>
             <VariousControls>
               <MiscControls>--asm</MiscControls>
-              <Define>USE_STDPERIPH_DRIVER,STM32F429_439xx,COZMO_ROBOT,ROBOT_HARDWARE,CORETECH_ROBOT,COZMO_ROBOT_V32</Define>
+              <Define>USE_STDPERIPH_DRIVER,STM32F429_439xx,USE_DEFAULT_TIMEOUT_CALLBACK,USE_EMBEDDED_PHY,USE_USB_OTG_FS,COZMO_ROBOT,ROBOT_HARDWARE,CORETECH_ROBOT,COZMO2,COZMO_ROBOT_V32</Define>
               <Undefine></Undefine>
-              <IncludePath>.\arm_hal;.\arm_hal\lib;..\include;..\coretech\common\include;..\coretech\messaging\include;..\coretech\planning\include;..\coretech\vision\include;.\supervisor\src;..\..\coretech-external\heatshrink;C:\Keil\ARM\Pack\ARM\CMSIS\3.20.4\Device\ARM\ARMCM4\Include;.\include;..\tools\anki-util\source\anki</IncludePath>
+              <IncludePath>.\arm_oldhal;.\arm_oldhal\lib;..\include;..\coretech\common\include;..\coretech\messaging\include;..\coretech\planning\include;..\coretech\vision\include;.\supervisor\src;..\..\coretech-external\heatshrink;C:\Keil\ARM\Pack\ARM\CMSIS\3.20.4\Device\ARM\ARMCM4\Include;.\include;..\tools\anki-util\source\anki</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -409,59 +409,64 @@
           <GroupName>hal</GroupName>
           <Files>
             <File>
+              <FileName>frontCamera.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\arm_oldhal\hal\frontCamera.cpp</FilePath>
+            </File>
+            <File>
               <FileName>imu.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>.\arm_hal\hal\imu.cpp</FilePath>
+              <FilePath>.\arm_oldhal\hal\imu.cpp</FilePath>
             </File>
             <File>
               <FileName>lights.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>.\arm_hal\hal\lights.cpp</FilePath>
+              <FilePath>.\arm_oldhal\hal\lights.cpp</FilePath>
             </File>
             <File>
               <FileName>main.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>.\arm_hal\hal\main.cpp</FilePath>
+              <FilePath>.\arm_oldhal\hal\main.cpp</FilePath>
             </File>
             <File>
               <FileName>motors.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>.\arm_hal\hal\motors.cpp</FilePath>
+              <FilePath>.\arm_oldhal\hal\motors.cpp</FilePath>
             </File>
             <File>
               <FileName>retarget.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>.\arm_hal\hal\retarget.cpp</FilePath>
+              <FilePath>.\arm_oldhal\hal\retarget.cpp</FilePath>
             </File>
             <File>
               <FileName>spi.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>.\arm_hal\hal\spi.cpp</FilePath>
+              <FilePath>.\arm_oldhal\hal\spi.cpp</FilePath>
             </File>
             <File>
               <FileName>startup.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>.\arm_hal\hal\startup.cpp</FilePath>
+              <FilePath>.\arm_oldhal\hal\startup.cpp</FilePath>
             </File>
             <File>
               <FileName>timer.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>.\arm_hal\hal\timer.cpp</FilePath>
+              <FilePath>.\arm_oldhal\hal\timer.cpp</FilePath>
             </File>
             <File>
               <FileName>uart.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>.\arm_hal\hal\uart.cpp</FilePath>
+              <FilePath>.\arm_oldhal\hal\uart.cpp</FilePath>
             </File>
             <File>
               <FileName>usb_radio.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>.\arm_hal\hal\usb_radio.cpp</FilePath>
+              <FilePath>.\arm_oldhal\hal\usb_radio.cpp</FilePath>
             </File>
             <File>
               <FileName>system_stm32f4xx.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\arm_hal\hal\system_stm32f4xx.c</FilePath>
+              <FilePath>.\arm_oldhal\hal\system_stm32f4xx.c</FilePath>
             </File>
             <File>
               <FileName>battery.cpp</FileName>
@@ -469,14 +474,62 @@
               <FilePath>.\arm_hal\hal\battery.cpp</FilePath>
             </File>
             <File>
-              <FileName>frontCamera.cpp</FileName>
+              <FileName>backpackLightController.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>.\arm_hal\hal\frontCamera.cpp</FilePath>
+              <FilePath>.\supervisor\src\backpackLightController.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>ledController.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\ledController.cpp</FilePath>
             </File>
             <File>
               <FileName>enjpeg.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\arm_hal\hal\enjpeg.cpp</FilePath>
+              <FileOption>
+                <CommonProperty>
+                  <UseCPPCompiler>2</UseCPPCompiler>
+                  <RVCTCodeConst>0</RVCTCodeConst>
+                  <RVCTZI>0</RVCTZI>
+                  <RVCTOtherData>0</RVCTOtherData>
+                  <ModuleSelection>0</ModuleSelection>
+                  <IncludeInBuild>2</IncludeInBuild>
+                  <AlwaysBuild>2</AlwaysBuild>
+                  <GenerateAssemblyFile>2</GenerateAssemblyFile>
+                  <AssembleAssemblyFile>2</AssembleAssemblyFile>
+                  <PublicsOnly>2</PublicsOnly>
+                  <StopOnExitCode>11</StopOnExitCode>
+                  <CustomArgument></CustomArgument>
+                  <IncludeLibraryModules></IncludeLibraryModules>
+                  <ComprImg>1</ComprImg>
+                </CommonProperty>
+                <FileArmAds>
+                  <Cads>
+                    <interw>2</interw>
+                    <Optim>4</Optim>
+                    <oTime>1</oTime>
+                    <SplitLS>2</SplitLS>
+                    <OneElfS>2</OneElfS>
+                    <Strict>2</Strict>
+                    <EnumInt>2</EnumInt>
+                    <PlainCh>2</PlainCh>
+                    <Ropi>2</Ropi>
+                    <Rwpi>2</Rwpi>
+                    <wLevel>0</wLevel>
+                    <uThumb>2</uThumb>
+                    <uSurpInc>2</uSurpInc>
+                    <uC99>2</uC99>
+                    <useXO>2</useXO>
+                    <VariousControls>
+                      <MiscControls></MiscControls>
+                      <Define></Define>
+                      <Undefine></Undefine>
+                      <IncludePath></IncludePath>
+                    </VariousControls>
+                  </Cads>
+                </FileArmAds>
+              </FileOption>
             </File>
           </Files>
         </Group>
@@ -486,167 +539,172 @@
             <File>
               <FileName>misc.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\misc.c</FilePath>
+              <FilePath>.\arm_oldhal\lib\misc.c</FilePath>
             </File>
             <File>
               <FileName>stm32f4xx_adc.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\stm32f4xx_adc.c</FilePath>
+              <FilePath>.\arm_oldhal\lib\stm32f4xx_adc.c</FilePath>
             </File>
             <File>
               <FileName>stm32f4xx_can.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\stm32f4xx_can.c</FilePath>
+              <FilePath>.\arm_oldhal\lib\stm32f4xx_can.c</FilePath>
             </File>
             <File>
               <FileName>stm32f4xx_crc.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\stm32f4xx_crc.c</FilePath>
+              <FilePath>.\arm_oldhal\lib\stm32f4xx_crc.c</FilePath>
             </File>
             <File>
               <FileName>stm32f4xx_cryp.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\stm32f4xx_cryp.c</FilePath>
+              <FilePath>.\arm_oldhal\lib\stm32f4xx_cryp.c</FilePath>
             </File>
             <File>
               <FileName>stm32f4xx_cryp_aes.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\stm32f4xx_cryp_aes.c</FilePath>
+              <FilePath>.\arm_oldhal\lib\stm32f4xx_cryp_aes.c</FilePath>
             </File>
             <File>
               <FileName>stm32f4xx_cryp_des.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\stm32f4xx_cryp_des.c</FilePath>
+              <FilePath>.\arm_oldhal\lib\stm32f4xx_cryp_des.c</FilePath>
             </File>
             <File>
               <FileName>stm32f4xx_cryp_tdes.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\stm32f4xx_cryp_tdes.c</FilePath>
+              <FilePath>.\arm_oldhal\lib\stm32f4xx_cryp_tdes.c</FilePath>
             </File>
             <File>
               <FileName>stm32f4xx_dac.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\stm32f4xx_dac.c</FilePath>
+              <FilePath>.\arm_oldhal\lib\stm32f4xx_dac.c</FilePath>
             </File>
             <File>
               <FileName>stm32f4xx_dbgmcu.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\stm32f4xx_dbgmcu.c</FilePath>
+              <FilePath>.\arm_oldhal\lib\stm32f4xx_dbgmcu.c</FilePath>
             </File>
             <File>
               <FileName>stm32f4xx_dcmi.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\stm32f4xx_dcmi.c</FilePath>
+              <FilePath>.\arm_oldhal\lib\stm32f4xx_dcmi.c</FilePath>
             </File>
             <File>
               <FileName>stm32f4xx_dma.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\stm32f4xx_dma.c</FilePath>
+              <FilePath>.\arm_oldhal\lib\stm32f4xx_dma.c</FilePath>
             </File>
             <File>
               <FileName>stm32f4xx_dma2d.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\stm32f4xx_dma2d.c</FilePath>
+              <FilePath>.\arm_oldhal\lib\stm32f4xx_dma2d.c</FilePath>
             </File>
             <File>
               <FileName>stm32f4xx_exti.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\stm32f4xx_exti.c</FilePath>
+              <FilePath>.\arm_oldhal\lib\stm32f4xx_exti.c</FilePath>
             </File>
             <File>
               <FileName>stm32f4xx_flash.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\stm32f4xx_flash.c</FilePath>
+              <FilePath>.\arm_oldhal\lib\stm32f4xx_flash.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f4xx_fmc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\arm_oldhal\lib\stm32f4xx_fmc.c</FilePath>
             </File>
             <File>
               <FileName>stm32f4xx_gpio.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\stm32f4xx_gpio.c</FilePath>
+              <FilePath>.\arm_oldhal\lib\stm32f4xx_gpio.c</FilePath>
             </File>
             <File>
               <FileName>stm32f4xx_hash.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\stm32f4xx_hash.c</FilePath>
+              <FilePath>.\arm_oldhal\lib\stm32f4xx_hash.c</FilePath>
             </File>
             <File>
               <FileName>stm32f4xx_hash_md5.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\stm32f4xx_hash_md5.c</FilePath>
+              <FilePath>.\arm_oldhal\lib\stm32f4xx_hash_md5.c</FilePath>
             </File>
             <File>
               <FileName>stm32f4xx_hash_sha1.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\stm32f4xx_hash_sha1.c</FilePath>
+              <FilePath>.\arm_oldhal\lib\stm32f4xx_hash_sha1.c</FilePath>
             </File>
             <File>
               <FileName>stm32f4xx_i2c.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\stm32f4xx_i2c.c</FilePath>
+              <FilePath>.\arm_oldhal\lib\stm32f4xx_i2c.c</FilePath>
             </File>
             <File>
               <FileName>stm32f4xx_iwdg.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\stm32f4xx_iwdg.c</FilePath>
+              <FilePath>.\arm_oldhal\lib\stm32f4xx_iwdg.c</FilePath>
             </File>
             <File>
               <FileName>stm32f4xx_ltdc.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\stm32f4xx_ltdc.c</FilePath>
+              <FilePath>.\arm_oldhal\lib\stm32f4xx_ltdc.c</FilePath>
             </File>
             <File>
               <FileName>stm32f4xx_pwr.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\stm32f4xx_pwr.c</FilePath>
+              <FilePath>.\arm_oldhal\lib\stm32f4xx_pwr.c</FilePath>
             </File>
             <File>
               <FileName>stm32f4xx_rcc.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\stm32f4xx_rcc.c</FilePath>
+              <FilePath>.\arm_oldhal\lib\stm32f4xx_rcc.c</FilePath>
             </File>
             <File>
               <FileName>stm32f4xx_rng.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\stm32f4xx_rng.c</FilePath>
+              <FilePath>.\arm_oldhal\lib\stm32f4xx_rng.c</FilePath>
             </File>
             <File>
               <FileName>stm32f4xx_rtc.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\stm32f4xx_rtc.c</FilePath>
+              <FilePath>.\arm_oldhal\lib\stm32f4xx_rtc.c</FilePath>
             </File>
             <File>
               <FileName>stm32f4xx_sai.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\stm32f4xx_sai.c</FilePath>
+              <FilePath>.\arm_oldhal\lib\stm32f4xx_sai.c</FilePath>
             </File>
             <File>
               <FileName>stm32f4xx_sdio.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\stm32f4xx_sdio.c</FilePath>
+              <FilePath>.\arm_oldhal\lib\stm32f4xx_sdio.c</FilePath>
             </File>
             <File>
               <FileName>stm32f4xx_spi.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\stm32f4xx_spi.c</FilePath>
+              <FilePath>.\arm_oldhal\lib\stm32f4xx_spi.c</FilePath>
             </File>
             <File>
               <FileName>stm32f4xx_syscfg.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\stm32f4xx_syscfg.c</FilePath>
+              <FilePath>.\arm_oldhal\lib\stm32f4xx_syscfg.c</FilePath>
             </File>
             <File>
               <FileName>stm32f4xx_tim.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\stm32f4xx_tim.c</FilePath>
+              <FilePath>.\arm_oldhal\lib\stm32f4xx_tim.c</FilePath>
             </File>
             <File>
               <FileName>stm32f4xx_usart.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\stm32f4xx_usart.c</FilePath>
+              <FilePath>.\arm_oldhal\lib\stm32f4xx_usart.c</FilePath>
             </File>
             <File>
               <FileName>stm32f4xx_wwdg.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\stm32f4xx_wwdg.c</FilePath>
+              <FilePath>.\arm_oldhal\lib\stm32f4xx_wwdg.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -656,7 +714,7 @@
             <File>
               <FileName>startup_stm32f429_439xx.s</FileName>
               <FileType>2</FileType>
-              <FilePath>.\arm_hal\startup\startup_stm32f429_439xx.s</FilePath>
+              <FilePath>.\arm_oldhal\startup\startup_stm32f429_439xx.s</FilePath>
             </File>
           </Files>
         </Group>
@@ -739,11 +797,6 @@
               <FilePath>.\supervisor\src\animationController.cpp</FilePath>
             </File>
             <File>
-              <FileName>faceTrackingController.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\faceTrackingController.cpp</FilePath>
-            </File>
-            <File>
               <FileName>eyeController.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\eyeController.cpp</FilePath>
@@ -757,16 +810,6 @@
               <FileName>keyFrame.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\keyFrame.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>backpackLightController.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\backpackLightController.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>ledController.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\ledController.cpp</FilePath>
             </File>
           </Files>
         </Group>
@@ -834,11 +877,6 @@
               <FilePath>..\coretech\common\robot\src\matrix.cpp</FilePath>
             </File>
             <File>
-              <FileName>memory.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\common\robot\src\memory.cpp</FilePath>
-            </File>
-            <File>
               <FileName>opencvLight.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\common\robot\src\opencvLight.cpp</FilePath>
@@ -882,6 +920,16 @@
               <FileName>velocityProfileGenerator.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\common\shared\src\velocityProfileGenerator.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>matlabConverters.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\common\shared\src\matlabConverters.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>memory.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\common\robot\src\memory.cpp</FilePath>
             </File>
           </Files>
         </Group>
@@ -989,14 +1037,14 @@
           <GroupName>anki-util</GroupName>
           <Files>
             <File>
-              <FileName>reliableSequenceId.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\tools\anki-util\source\anki\embedded\transport\reliableSequenceId.c</FilePath>
-            </File>
-            <File>
               <FileName>reliableTransport.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\tools\anki-util\source\anki\embedded\transport\reliableTransport.c</FilePath>
+            </File>
+            <File>
+              <FileName>reliableSequenceId.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\tools\anki-util\source\anki\util\transport\reliableSequenceId.cpp</FilePath>
             </File>
             <File>
               <FileName>reliableMessageTypes.cpp</FileName>
@@ -1364,7 +1412,7 @@
               <MiscControls>--asm</MiscControls>
               <Define>USE_STDPERIPH_DRIVER,STM32F429_439xx,USE_DEFAULT_TIMEOUT_CALLBACK,USE_EMBEDDED_PHY,USE_USB_OTG_FS,COZMO_ROBOT,ROBOT_HARDWARE,ANKICORETECH_EMBEDDED_USE_HEATSHRINK,CORETECH_ROBOT</Define>
               <Undefine></Undefine>
-              <IncludePath>.\arm_hal;.\arm_hal\lib;..\include;..\coretech\common\include;..\coretech\messaging\include;..\coretech\planning\include;..\coretech\vision\include;.\supervisor\src;..\..\coretech-external\heatshrink;C:\Keil\ARM\Pack\ARM\CMSIS\3.20.4\Device\ARM\ARMCM4\Include;.\include</IncludePath>
+              <IncludePath>.\arm_oldhal;.\arm_oldhal\lib;..\include;..\coretech\common\include;..\coretech\messaging\include;..\coretech\planning\include;..\coretech\vision\include;.\supervisor\src;..\..\coretech-external\heatshrink;C:\Keil\ARM\Pack\ARM\CMSIS\3.20.4\Device\ARM\ARMCM4\Include;.\include</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -1408,59 +1456,64 @@
           <GroupName>hal</GroupName>
           <Files>
             <File>
+              <FileName>frontCamera.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\arm_oldhal\hal\frontCamera.cpp</FilePath>
+            </File>
+            <File>
               <FileName>imu.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>.\arm_hal\hal\imu.cpp</FilePath>
+              <FilePath>.\arm_oldhal\hal\imu.cpp</FilePath>
             </File>
             <File>
               <FileName>lights.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>.\arm_hal\hal\lights.cpp</FilePath>
+              <FilePath>.\arm_oldhal\hal\lights.cpp</FilePath>
             </File>
             <File>
               <FileName>main.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>.\arm_hal\hal\main.cpp</FilePath>
+              <FilePath>.\arm_oldhal\hal\main.cpp</FilePath>
             </File>
             <File>
               <FileName>motors.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>.\arm_hal\hal\motors.cpp</FilePath>
+              <FilePath>.\arm_oldhal\hal\motors.cpp</FilePath>
             </File>
             <File>
               <FileName>retarget.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>.\arm_hal\hal\retarget.cpp</FilePath>
+              <FilePath>.\arm_oldhal\hal\retarget.cpp</FilePath>
             </File>
             <File>
               <FileName>spi.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>.\arm_hal\hal\spi.cpp</FilePath>
+              <FilePath>.\arm_oldhal\hal\spi.cpp</FilePath>
             </File>
             <File>
               <FileName>startup.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>.\arm_hal\hal\startup.cpp</FilePath>
+              <FilePath>.\arm_oldhal\hal\startup.cpp</FilePath>
             </File>
             <File>
               <FileName>timer.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>.\arm_hal\hal\timer.cpp</FilePath>
+              <FilePath>.\arm_oldhal\hal\timer.cpp</FilePath>
             </File>
             <File>
               <FileName>uart.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>.\arm_hal\hal\uart.cpp</FilePath>
+              <FilePath>.\arm_oldhal\hal\uart.cpp</FilePath>
             </File>
             <File>
               <FileName>usb_radio.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>.\arm_hal\hal\usb_radio.cpp</FilePath>
+              <FilePath>.\arm_oldhal\hal\usb_radio.cpp</FilePath>
             </File>
             <File>
               <FileName>system_stm32f4xx.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\arm_hal\hal\system_stm32f4xx.c</FilePath>
+              <FilePath>.\arm_oldhal\hal\system_stm32f4xx.c</FilePath>
             </File>
             <File>
               <FileName>battery.cpp</FileName>
@@ -1468,9 +1521,14 @@
               <FilePath>.\arm_hal\hal\battery.cpp</FilePath>
             </File>
             <File>
-              <FileName>frontCamera.cpp</FileName>
+              <FileName>backpackLightController.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>.\arm_hal\hal\frontCamera.cpp</FilePath>
+              <FilePath>.\supervisor\src\backpackLightController.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>ledController.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\ledController.cpp</FilePath>
             </File>
             <File>
               <FileName>enjpeg.cpp</FileName>
@@ -1485,167 +1543,172 @@
             <File>
               <FileName>misc.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\misc.c</FilePath>
+              <FilePath>.\arm_oldhal\lib\misc.c</FilePath>
             </File>
             <File>
               <FileName>stm32f4xx_adc.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\stm32f4xx_adc.c</FilePath>
+              <FilePath>.\arm_oldhal\lib\stm32f4xx_adc.c</FilePath>
             </File>
             <File>
               <FileName>stm32f4xx_can.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\stm32f4xx_can.c</FilePath>
+              <FilePath>.\arm_oldhal\lib\stm32f4xx_can.c</FilePath>
             </File>
             <File>
               <FileName>stm32f4xx_crc.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\stm32f4xx_crc.c</FilePath>
+              <FilePath>.\arm_oldhal\lib\stm32f4xx_crc.c</FilePath>
             </File>
             <File>
               <FileName>stm32f4xx_cryp.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\stm32f4xx_cryp.c</FilePath>
+              <FilePath>.\arm_oldhal\lib\stm32f4xx_cryp.c</FilePath>
             </File>
             <File>
               <FileName>stm32f4xx_cryp_aes.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\stm32f4xx_cryp_aes.c</FilePath>
+              <FilePath>.\arm_oldhal\lib\stm32f4xx_cryp_aes.c</FilePath>
             </File>
             <File>
               <FileName>stm32f4xx_cryp_des.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\stm32f4xx_cryp_des.c</FilePath>
+              <FilePath>.\arm_oldhal\lib\stm32f4xx_cryp_des.c</FilePath>
             </File>
             <File>
               <FileName>stm32f4xx_cryp_tdes.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\stm32f4xx_cryp_tdes.c</FilePath>
+              <FilePath>.\arm_oldhal\lib\stm32f4xx_cryp_tdes.c</FilePath>
             </File>
             <File>
               <FileName>stm32f4xx_dac.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\stm32f4xx_dac.c</FilePath>
+              <FilePath>.\arm_oldhal\lib\stm32f4xx_dac.c</FilePath>
             </File>
             <File>
               <FileName>stm32f4xx_dbgmcu.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\stm32f4xx_dbgmcu.c</FilePath>
+              <FilePath>.\arm_oldhal\lib\stm32f4xx_dbgmcu.c</FilePath>
             </File>
             <File>
               <FileName>stm32f4xx_dcmi.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\stm32f4xx_dcmi.c</FilePath>
+              <FilePath>.\arm_oldhal\lib\stm32f4xx_dcmi.c</FilePath>
             </File>
             <File>
               <FileName>stm32f4xx_dma.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\stm32f4xx_dma.c</FilePath>
+              <FilePath>.\arm_oldhal\lib\stm32f4xx_dma.c</FilePath>
             </File>
             <File>
               <FileName>stm32f4xx_dma2d.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\stm32f4xx_dma2d.c</FilePath>
+              <FilePath>.\arm_oldhal\lib\stm32f4xx_dma2d.c</FilePath>
             </File>
             <File>
               <FileName>stm32f4xx_exti.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\stm32f4xx_exti.c</FilePath>
+              <FilePath>.\arm_oldhal\lib\stm32f4xx_exti.c</FilePath>
             </File>
             <File>
               <FileName>stm32f4xx_flash.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\stm32f4xx_flash.c</FilePath>
+              <FilePath>.\arm_oldhal\lib\stm32f4xx_flash.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f4xx_fmc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\arm_oldhal\lib\stm32f4xx_fmc.c</FilePath>
             </File>
             <File>
               <FileName>stm32f4xx_gpio.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\stm32f4xx_gpio.c</FilePath>
+              <FilePath>.\arm_oldhal\lib\stm32f4xx_gpio.c</FilePath>
             </File>
             <File>
               <FileName>stm32f4xx_hash.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\stm32f4xx_hash.c</FilePath>
+              <FilePath>.\arm_oldhal\lib\stm32f4xx_hash.c</FilePath>
             </File>
             <File>
               <FileName>stm32f4xx_hash_md5.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\stm32f4xx_hash_md5.c</FilePath>
+              <FilePath>.\arm_oldhal\lib\stm32f4xx_hash_md5.c</FilePath>
             </File>
             <File>
               <FileName>stm32f4xx_hash_sha1.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\stm32f4xx_hash_sha1.c</FilePath>
+              <FilePath>.\arm_oldhal\lib\stm32f4xx_hash_sha1.c</FilePath>
             </File>
             <File>
               <FileName>stm32f4xx_i2c.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\stm32f4xx_i2c.c</FilePath>
+              <FilePath>.\arm_oldhal\lib\stm32f4xx_i2c.c</FilePath>
             </File>
             <File>
               <FileName>stm32f4xx_iwdg.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\stm32f4xx_iwdg.c</FilePath>
+              <FilePath>.\arm_oldhal\lib\stm32f4xx_iwdg.c</FilePath>
             </File>
             <File>
               <FileName>stm32f4xx_ltdc.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\stm32f4xx_ltdc.c</FilePath>
+              <FilePath>.\arm_oldhal\lib\stm32f4xx_ltdc.c</FilePath>
             </File>
             <File>
               <FileName>stm32f4xx_pwr.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\stm32f4xx_pwr.c</FilePath>
+              <FilePath>.\arm_oldhal\lib\stm32f4xx_pwr.c</FilePath>
             </File>
             <File>
               <FileName>stm32f4xx_rcc.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\stm32f4xx_rcc.c</FilePath>
+              <FilePath>.\arm_oldhal\lib\stm32f4xx_rcc.c</FilePath>
             </File>
             <File>
               <FileName>stm32f4xx_rng.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\stm32f4xx_rng.c</FilePath>
+              <FilePath>.\arm_oldhal\lib\stm32f4xx_rng.c</FilePath>
             </File>
             <File>
               <FileName>stm32f4xx_rtc.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\stm32f4xx_rtc.c</FilePath>
+              <FilePath>.\arm_oldhal\lib\stm32f4xx_rtc.c</FilePath>
             </File>
             <File>
               <FileName>stm32f4xx_sai.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\stm32f4xx_sai.c</FilePath>
+              <FilePath>.\arm_oldhal\lib\stm32f4xx_sai.c</FilePath>
             </File>
             <File>
               <FileName>stm32f4xx_sdio.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\stm32f4xx_sdio.c</FilePath>
+              <FilePath>.\arm_oldhal\lib\stm32f4xx_sdio.c</FilePath>
             </File>
             <File>
               <FileName>stm32f4xx_spi.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\stm32f4xx_spi.c</FilePath>
+              <FilePath>.\arm_oldhal\lib\stm32f4xx_spi.c</FilePath>
             </File>
             <File>
               <FileName>stm32f4xx_syscfg.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\stm32f4xx_syscfg.c</FilePath>
+              <FilePath>.\arm_oldhal\lib\stm32f4xx_syscfg.c</FilePath>
             </File>
             <File>
               <FileName>stm32f4xx_tim.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\stm32f4xx_tim.c</FilePath>
+              <FilePath>.\arm_oldhal\lib\stm32f4xx_tim.c</FilePath>
             </File>
             <File>
               <FileName>stm32f4xx_usart.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\stm32f4xx_usart.c</FilePath>
+              <FilePath>.\arm_oldhal\lib\stm32f4xx_usart.c</FilePath>
             </File>
             <File>
               <FileName>stm32f4xx_wwdg.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\arm_hal\lib\stm32f4xx_wwdg.c</FilePath>
+              <FilePath>.\arm_oldhal\lib\stm32f4xx_wwdg.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -1655,7 +1718,7 @@
             <File>
               <FileName>startup_stm32f429_439xx.s</FileName>
               <FileType>2</FileType>
-              <FilePath>.\arm_hal\startup\startup_stm32f429_439xx.s</FilePath>
+              <FilePath>.\arm_oldhal\startup\startup_stm32f429_439xx.s</FilePath>
             </File>
           </Files>
         </Group>
@@ -1798,11 +1861,6 @@
               <FilePath>.\supervisor\src\animationController.cpp</FilePath>
             </File>
             <File>
-              <FileName>faceTrackingController.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\faceTrackingController.cpp</FilePath>
-            </File>
-            <File>
               <FileName>eyeController.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\eyeController.cpp</FilePath>
@@ -1816,16 +1874,6 @@
               <FileName>keyFrame.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\keyFrame.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>backpackLightController.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\backpackLightController.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>ledController.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\ledController.cpp</FilePath>
             </File>
           </Files>
         </Group>
@@ -1893,11 +1941,6 @@
               <FilePath>..\coretech\common\robot\src\matrix.cpp</FilePath>
             </File>
             <File>
-              <FileName>memory.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\common\robot\src\memory.cpp</FilePath>
-            </File>
-            <File>
               <FileName>opencvLight.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\common\robot\src\opencvLight.cpp</FilePath>
@@ -1941,6 +1984,16 @@
               <FileName>velocityProfileGenerator.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\common\shared\src\velocityProfileGenerator.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>matlabConverters.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\common\shared\src\matlabConverters.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>memory.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\common\robot\src\memory.cpp</FilePath>
             </File>
           </Files>
         </Group>
@@ -2048,14 +2101,14 @@
           <GroupName>anki-util</GroupName>
           <Files>
             <File>
-              <FileName>reliableSequenceId.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\tools\anki-util\source\anki\embedded\transport\reliableSequenceId.c</FilePath>
-            </File>
-            <File>
               <FileName>reliableTransport.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\tools\anki-util\source\anki\embedded\transport\reliableTransport.c</FilePath>
+            </File>
+            <File>
+              <FileName>reliableSequenceId.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\tools\anki-util\source\anki\util\transport\reliableSequenceId.cpp</FilePath>
             </File>
             <File>
               <FileName>reliableMessageTypes.cpp</FileName>

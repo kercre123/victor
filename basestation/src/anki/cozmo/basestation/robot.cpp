@@ -851,13 +851,6 @@ namespace Anki {
 
       } // if(_visionProcessor.WasLastImageProcessed())
       
-      // Send ping to keep connection alive.
-      // TODO: Don't send ping if there are already outgoing messages this tic.
-      //       This should probably be done outside of Robot at the end of the basestation tic.
-      if (_msgHandler->GetNumMsgsSentThisTic(GetID()) == 0) {
-        SendPing();
-      }
-      
       ///////// Update the behavior manager ///////////
       
       // TODO: This object encompasses, for the time-being, what some higher level
@@ -2007,16 +2000,6 @@ namespace Anki {
         m.resolution    = Vision::CAMERA_RES_QVGA;
         result = _msgHandler->SendMessage(_ID, m);
         
-        
-        // Send client connection status message
-        // TODO: This message isn't supposed to be sent from the basestation
-        //       but it's the quickest way to let the robot know its radio is connected.
-        MessageClientConnectionStatus ccsMsg;
-        ccsMsg.wifiState = 1;
-        ccsMsg.bluetoothState = 0;
-        result = _msgHandler->SendMessage(_ID, ccsMsg);
-        
-        
         // Reset pose on connect
         PRINT_NAMED_INFO("Robot.SendSyncTime", "Setting pose to (0,0,0)");
         Pose3d zeroPose(0, Z_AXIS_3D(), {0,0,0});
@@ -2054,7 +2037,7 @@ namespace Anki {
       MessageExecutePath m;
       m.pathID = _lastSentPathID;
       m.useManualSpeed = useManualSpeed;
-      PRINT_NAMED_INFO("Robot::SendExecutePath", "sending start execution message (manualSpeed == %d)\n", useManualSpeed);
+      PRINT_NAMED_INFO("Robot::SendExecutePath", "sending start execution message (pathID = %d, manualSpeed == %d)\n", _lastSentPathID, useManualSpeed);
       return _msgHandler->SendMessage(_ID, m);
     }
     
@@ -2318,12 +2301,6 @@ namespace Anki {
     {
       MessageFaceTracking m;
       m.enabled = static_cast<u8>(false);
-      return _msgHandler->SendMessage(_ID, m);
-    }
-    
-    Result Robot::SendPing()
-    {
-      MessagePing m;
       return _msgHandler->SendMessage(_ID, m);
     }
 
@@ -2928,24 +2905,35 @@ namespace Anki {
       
     void Robot::ComputeDriveCenterPose(const Pose3d &robotPose, Pose3d &driveCenterPose)
     {
+      MoveRobotPoseForward(robotPose, GetDriveCenterOffset(), driveCenterPose);
+    }
+      
+    void Robot::ComputeOriginPose(const Pose3d &driveCenterPose, Pose3d &robotPose)
+    {
+      MoveRobotPoseForward(driveCenterPose, -GetDriveCenterOffset(), robotPose);
+    }
+
+    void Robot::MoveRobotPoseForward(const Pose3d &startPose, f32 distance, Pose3d &movedPose) {
+      movedPose = startPose;
+      f32 angle = startPose.GetRotationAngle<'Z'>().ToFloat();
+      Vec3f trans;
+      trans.x() = startPose.GetTranslation().x() + distance * cosf(angle);
+      trans.y() = startPose.GetTranslation().y() + distance * sinf(angle);
+      movedPose.SetTranslation(trans);
+    }
+      
+    f32 Robot::GetDriveCenterOffset() {
       if (_isPhysical) {
-        // What is the current drive center pose based on carry state...
         f32 driveCenterOffset = DRIVE_CENTER_OFFSET;
         if (IsCarryingObject()) {
           driveCenterOffset = 0;
         }
-        
-        driveCenterPose = robotPose;
-        f32 angle = robotPose.GetRotationAngle<'Z'>().ToFloat();
-        Vec3f trans;
-        trans.x() = robotPose.GetTranslation().x() + driveCenterOffset * cosf(angle);
-        trans.y() = robotPose.GetTranslation().y() + driveCenterOffset * sinf(angle);
-        driveCenterPose.SetTranslation(trans);
-      } else {
-        // TODO: Simulated robot Webots proto needs to be updated with treads.
-        //       Til then assume no drive center offset.
-        driveCenterPose = robotPose;
+        return driveCenterOffset;
       }
+      
+      // TODO: Simulated robot Webots proto needs to be updated with treads.
+      //       Til then assume no drive center offset.
+      return 0.f;
     }
     
   } // namespace Cozmo

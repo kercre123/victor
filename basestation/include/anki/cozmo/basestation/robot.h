@@ -170,8 +170,15 @@ namespace Anki {
       // Return pose of robot's drive center based on what it's currently carrying
       const Pose3d& GetDriveCenterPose() const;
       
+      // Computes the drive center offset from origin based on current carrying state
+      f32 GetDriveCenterOffset();
+      
       // Computes pose of drive center for the given robot pose
       void ComputeDriveCenterPose(const Pose3d &robotPose, Pose3d &driveCenterPose);
+      
+      // Computes robot origin pose for the given drive center pose
+      void ComputeOriginPose(const Pose3d &driveCenterPose, Pose3d &robotPose);
+
       
       
       //
@@ -611,6 +618,10 @@ namespace Anki {
       Result GetComputedPoseAt(const TimeStamp_t t_request, Pose3d& pose);
       
       RobotPoseHistory* _poseHistory;
+      
+      // Takes startPose and moves it forward as if it were a robot pose by distance mm and
+      // puts result in movedPose.
+      static void MoveRobotPoseForward(const Pose3d &startPose, const f32 distance, Pose3d &movedPose);
       
       // Leaves input liftPose's parent alone and computes its position w.r.t.
       // liftBasePose, given the angle

@@ -1,55 +1,13 @@
 cmake_minimum_required(VERSION 2.8.8 FATAL_ERROR)
 cmake_policy(VERSION 2.8.8)
-#project(util)
-#set(configuration "Debug")
+project(util)
+set(configuration ".")
 enable_language(ASM)
 set(builddir "${CMAKE_BINARY_DIR}")
 set(obj "${builddir}/obj")
 
 set(CMAKE_C_OUTPUT_EXTENSION_REPLACE 1)
 set(CMAKE_CXX_OUTPUT_EXTENSION_REPLACE 1)
-
-
-# CUSTOM ADDITIONS
-cmake_minimum_required(VERSION 2.8)
-
-if (NOT DEFINED ENV{CORETECH_EXTERNAL_DIR})
-  message(FATAL_ERROR "ERROR: CORETECH_EXTERNAL_DIR is undefined")
-endif(NOT DEFINED ENV{CORETECH_EXTERNAL_DIR})
-
-set(CORETECH_EXTERNAL_DIR $ENV{CORETECH_EXTERNAL_DIR})
-message("-- CORETECH_EXTERNAL_DIR = " ${CORETECH_EXTERNAL_DIR})
-
-include(${CORETECH_EXTERNAL_DIR}/anki.cmake)
-
-if(NOT DEFINED ANKI_IOS_BUILD)
-  set(ANKI_IOS_BUILD 0)
-endif()
-
-if(ANKI_IOS_BUILD)
-  set(CMAKE_XCODE_ATTRIBUTE_IPHONEOS_DEPLOYMENT_TARGET "6.0")
-
-  add_definitions(-DANKI_IOS_BUILD=1)
-    
-  # Matlab won't run on the phone of course, so override defaults or command-line
-  # specification to use Matlab.  This also disables mex targets:
-  set(USE_MATLAB 0) 
-  set(EMBEDDED_USE_MATLAB 0)
-  message(STATUS "Doing iOS build. Forcibly disabling Matlab use.")
-  
-  ankiProject(util_iOS)
-  
-else()
-  
-  ankiProject(util)
-    
-endif(ANKI_IOS_BUILD)
-
-# More additions
-include_directories(
-    anki-util/source/3rd
-    anki-util/source/anki
-    anki-util/libs/packaged/include)
 
 
 #util.gyp:jsoncpp#target
@@ -72,9 +30,8 @@ list(APPEND jsoncpp__include_dirs
   "${CMAKE_SOURCE_DIR}/anki-util/tools/message-buffers/support/cpp/include"
   "${CMAKE_SOURCE_DIR}/anki-util/source/3rd/jsoncpp")
 set_property(TARGET jsoncpp APPEND PROPERTY INCLUDE_DIRECTORIES ${jsoncpp__include_dirs})
-#set_target_properties(jsoncpp PROPERTIES COMPILE_DEFINITIONS "NDEBUG=1;PROFILE=1;")
-set_target_properties(jsoncpp PROPERTIES COMPILE_FLAGS "-std=c11 -fdiagnostics-show-category=name -Wall -Woverloaded-virtual -Werror -Wundef -Wheader-guard -fsigned-char -fvisibility-inlines-hidden -fvisibility=default -Wshorten-64-to-32 -Winit-self -Wconditional-uninitialized -Wno-deprecated-register -Wa,--noexecstack -Wformat -Werror=format-security -g -O0 -std=c++11 -stdlib=libc++ -fdiagnostics-show-category=name -Wall -Woverloaded-virtual -Werror -Wundef -Wheader-guard -fsigned-char -fvisibility-inlines-hidden -fvisibility=default -Wshorten-64-to-32 -Winit-self -Wconditional-uninitialized -Wno-deprecated-register -Wa,--noexecstack -Wformat -Werror=format-security -g ")#-O0 ")
-set_target_properties(jsoncpp PROPERTIES LINK_FLAGS "-g -std=c++11 -stdlib=libc++ -lpthread ")
+set_target_properties(jsoncpp PROPERTIES COMPILE_FLAGS "-std=c11 -fdiagnostics-show-category=name -Wall -Woverloaded-virtual -Werror -Wundef -Wheader-guard -fsigned-char -fvisibility-inlines-hidden -fvisibility=default -Wshorten-64-to-32 -Winit-self -Wconditional-uninitialized -Wno-deprecated-register -Wa,--noexecstack -Wformat -Werror=format-security -g -std=c++11 -stdlib=libc++ -fdiagnostics-show-category=name -Wall -Woverloaded-virtual -Werror -Wundef -Wheader-guard -fsigned-char -fvisibility-inlines-hidden -fvisibility=default -Wshorten-64-to-32 -Winit-self -Wconditional-uninitialized -Wno-deprecated-register -Wa,--noexecstack -Wformat -Werror=format-security -g ")
+set_target_properties(jsoncpp PROPERTIES LINK_FLAGS "-g ")
 unset(TOOLSET)
 unset(TARGET)
 
@@ -126,9 +83,8 @@ list(APPEND kazmath__include_dirs
   "${CMAKE_SOURCE_DIR}/anki-util/libs/packaged/include"
   "${CMAKE_SOURCE_DIR}/anki-util/source/3rd")
 set_property(TARGET kazmath APPEND PROPERTY INCLUDE_DIRECTORIES ${kazmath__include_dirs})
-#set_target_properties(kazmath PROPERTIES COMPILE_DEFINITIONS "NDEBUG=1;PROFILE=1;")
-set_target_properties(kazmath PROPERTIES COMPILE_FLAGS "-std=c11 -fdiagnostics-show-category=name -Wall -Woverloaded-virtual -Werror -Wundef -Wheader-guard -fsigned-char -fvisibility-inlines-hidden -fvisibility=default -Wshorten-64-to-32 -Winit-self -Wconditional-uninitialized -Wno-deprecated-register -Wa,--noexecstack -Wformat -Werror=format-security -g ")#-O0 ")
-set_target_properties(kazmath PROPERTIES LINK_FLAGS "-g -std=c++11 -stdlib=libc++ -lpthread ")
+set_target_properties(kazmath PROPERTIES COMPILE_FLAGS "-std=c11 -fdiagnostics-show-category=name -Wall -Woverloaded-virtual -Werror -Wundef -Wheader-guard -fsigned-char -fvisibility-inlines-hidden -fvisibility=default -Wshorten-64-to-32 -Winit-self -Wconditional-uninitialized -Wno-deprecated-register -Wa,--noexecstack -Wformat -Werror=format-security -g ")
+set_target_properties(kazmath PROPERTIES LINK_FLAGS "-g ")
 unset(TOOLSET)
 unset(TARGET)
 
@@ -334,13 +290,12 @@ list(APPEND util__include_dirs
   "${CMAKE_SOURCE_DIR}/anki-util/source/3rd/jsoncpp"
   "${CMAKE_SOURCE_DIR}/anki-util/source/3rd")
 set_property(TARGET util APPEND PROPERTY INCLUDE_DIRECTORIES ${util__include_dirs})
-#set_target_properties(util PROPERTIES COMPILE_DEFINITIONS "NDEBUG=1;PROFILE=1;")
 set_source_files_properties(
   anki-util/source/anki/util/crc/crc.c
   anki-util/source/anki/util/utilMessaging/utilMessaging.c
   anki-util/source/anki/util/UUID/UUID.c
  PROPERTIES
-  COMPILE_FLAGS "-std=c11 -fdiagnostics-show-category=name -Wall -Woverloaded-virtual -Werror -Wundef -Wheader-guard -fsigned-char -fvisibility-inlines-hidden -fvisibility=default -Wshorten-64-to-32 -Winit-self -Wconditional-uninitialized -Wno-deprecated-register -Wa,--noexecstack -Wformat -Werror=format-security -g " #-O0 "
+  COMPILE_FLAGS "-std=c11 -fdiagnostics-show-category=name -Wall -Woverloaded-virtual -Werror -Wundef -Wheader-guard -fsigned-char -fvisibility-inlines-hidden -fvisibility=default -Wshorten-64-to-32 -Winit-self -Wconditional-uninitialized -Wno-deprecated-register -Wa,--noexecstack -Wformat -Werror=format-security -g "
 )
 set_source_files_properties(
   anki-util/source/anki/util/color/color.cpp
@@ -408,8 +363,8 @@ set_source_files_properties(
   anki-util/source/anki/util/transport/transportStats.cpp
   anki-util/source/anki/util/transport/udpTransport.cpp
  PROPERTIES
-  COMPILE_FLAGS "-std=c11 -fdiagnostics-show-category=name -Wall -Woverloaded-virtual -Werror -Wundef -Wheader-guard -fsigned-char -fvisibility-inlines-hidden -fvisibility=default -Wshorten-64-to-32 -Winit-self -Wconditional-uninitialized -Wno-deprecated-register -Wa,--noexecstack -Wformat -Werror=format-security -g -O0 -std=c++11 -stdlib=libc++ -fdiagnostics-show-category=name -Wall -Woverloaded-virtual -Werror -Wundef -Wheader-guard -fsigned-char -fvisibility-inlines-hidden -fvisibility=default -Wshorten-64-to-32 -Winit-self -Wconditional-uninitialized -Wno-deprecated-register -Wa,--noexecstack -Wformat -Werror=format-security -g " #-O0 "
+  COMPILE_FLAGS "-std=c11 -fdiagnostics-show-category=name -Wall -Woverloaded-virtual -Werror -Wundef -Wheader-guard -fsigned-char -fvisibility-inlines-hidden -fvisibility=default -Wshorten-64-to-32 -Winit-self -Wconditional-uninitialized -Wno-deprecated-register -Wa,--noexecstack -Wformat -Werror=format-security -g -std=c++11 -stdlib=libc++ -fdiagnostics-show-category=name -Wall -Woverloaded-virtual -Werror -Wundef -Wheader-guard -fsigned-char -fvisibility-inlines-hidden -fvisibility=default -Wshorten-64-to-32 -Winit-self -Wconditional-uninitialized -Wno-deprecated-register -Wa,--noexecstack -Wformat -Werror=format-security -g "
 )
-set_target_properties(util PROPERTIES LINK_FLAGS "-g -std=c++11 -stdlib=libc++ -lpthread ")
+set_target_properties(util PROPERTIES LINK_FLAGS "-g ")
 unset(TOOLSET)
 unset(TARGET)

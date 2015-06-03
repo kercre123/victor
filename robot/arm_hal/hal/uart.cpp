@@ -233,7 +233,7 @@ namespace Anki
         return c;
       }
 
-      bool UARTPutMessage(u8 msgID, u8* buffer, u32 length)
+      bool UARTPutPacket(const u8* buffer, const u32 length, const u8 socket)
       {
         bool result = false;
         
@@ -244,21 +244,17 @@ namespace Anki
         int bytesLeft = UARTGetFreeSpace();
         
         // Leave one guard byte + header
-        if (bytesLeft > (length + 1 + 7))
+        if (bytesLeft > (length + 1 + 8))
         {
           result = true;
           
           // Write header first
           BufPutChar(0xBE);
           BufPutChar(0xEF);
-					
-          u32 lengthWithMsgID = length + 1;
-          BufPutChar(lengthWithMsgID);
-          BufPutChar(lengthWithMsgID >> 8);
-          BufPutChar(lengthWithMsgID >> 16);
-          BufPutChar(lengthWithMsgID >> 24);
-					
-          BufPutChar(msgID);
+          BufPutChar(length >>  0);
+          BufPutChar(length >>  8);
+          BufPutChar(length >> 16);
+          BufPutChar(socket);
           
           bytesLeft = sizeof(m_bufferWrite) - m_writeHead;
           if (length <= bytesLeft)

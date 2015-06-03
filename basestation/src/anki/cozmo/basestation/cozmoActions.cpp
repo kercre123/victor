@@ -685,7 +685,7 @@ namespace Anki {
 #pragma mark ---- TurnInPlaceAction ----
     
     TurnInPlaceAction::TurnInPlaceAction(const Radians& angle)
-    : DriveToPoseAction(true)
+    : DriveToPoseAction(false)
     , _turnAngle(angle)
     , _startedTraversingPath(false)
     {
@@ -701,12 +701,12 @@ namespace Anki {
     ActionResult TurnInPlaceAction::Init(Robot &robot)
     {
       // Compute a goal pose rotated by specified angle around robot's
-      // _current_ pose
+      // _current_ pose, taking into account the current driveCenter offset
       const Radians heading = robot.GetPose().GetRotationAngle<'Z'>();
-      
-      Pose3d rotatedPose(heading + _turnAngle, Z_AXIS_3D(),
-                         robot.GetPose().GetTranslation(),
-                         robot.GetPose().GetParent());
+      Pose3d rotatedPose;
+      Pose3d dcPose = robot.GetDriveCenterPose();
+      dcPose.SetRotation(heading + _turnAngle, Z_AXIS_3D());
+      robot.ComputeOriginPose(dcPose, rotatedPose);
       
       SetGoal(rotatedPose);
       

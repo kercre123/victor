@@ -5,70 +5,51 @@ Python command line interface for Robot over the network
 
 import sys, os, socket, threading, time, select
 
+if sys.version_info.major < 3:
+    sys.stderr.write("Cozmo CLI only works with python3+")
+    sys.exit(1)
+
+from ReliableTransport import *
+
 # XXX Replace this with importing the CLAD python messages
 assert os.path.split(os.path.abspath(os.path.curdir))[1] == 'products-cozmo', "Script must be run from root cozmo directory"
+sys.path.insert(0, 'python')
 sys.path.append(os.path.join(os.path.curdir, 'robot', 'som'))
 from messages import *
 
 ROBOT_PORT = 5551
 
 
-class Pinger(threading.Thread, socket.socket):
-    "A class that runs it's own thread to handle sending pings to the robot"
-
-    def __init__(self, robotAddress):
-        threading.Thread.__init__(self)
-        socket.socket.__init__(self, socket.AF_INET, socket.SOCK_DGRAM)
-        self.settimeout(0.030)
-        self.pingAddr = (robotAddress, ROBOT_PORT)
-        self.pingData = PingMessage().serialize()
-        self._continue = True
-
-    def __del__(self):
-        self.stop()
-
-    def run(self):
-        "Thread main method"
-        while self._continue:
-            self.sendto(self.pingData, self.pingAddr)
-            try:
-                msg = self.recv(1500)
-            except socket.timeout:
-                continue
-            else:
-                t = time.time()
-                #sys.stdout.write("%02d[%04d]\r\n" % (msg[0], len(msg)))
-                #if PrintText.isa(msg):
-                #    printMsg = PrintText(buffer=msg)
-                #      sys.stdout.write("\r\n%s\r\nCOZMO>>> " % printMsg.text)
-                #if ImageChunk.isa(msg):
-                #    ic = ImageChunk(buffer=msg)
-                #    sys.stdout.write("\rimgChunk %d[%02d] @ %fms: COZMO>>>" % (ic.imageId, ic.chunkId, t*1000.0))
-
-
-    def stop(self):
-        "Stop the thread running"
-        self._continue = False
-
-
-
-class CozmoCLI(socket.socket):
+class CozmoCLI(IDataReceiver):
     "A class for managing the CLI REPL"
 
-    def __init__(self, robotAddress):
-        socket.socket.__init__(self, socket.AF_INET, socket.SOCK_DGRAM)
-        sys.stdout.write("Connecting to robot at: %s\n" % robotAddress)
-        self.bind(('', 6551))
-        self.robot = (robotAddress, ROBOT_PORT)
-        self.pinger = Pinger(robotAddress)
-        self.pinger.start()
-        if sys.version_info.major < 3:
-            self.input = raw_input
-        else:
-            self.input = input
+    def __init__(self, unreliableTransport, robotAddress):
+        sys.stdout.write("Connecting to robot at: %s\n" % repr(robotAddress))
+        unreliableTransport.OpenSocket()
+        self.transport = ReliableTransport(unreliableTransport, self)
+        self.robot = robotAddress
+        self.transport.Connect(robotAddress)
+        self.transport.start()
+        self.input = input
 
     def __del__(self):
-        self.pinger.stop()
+        self.transport.KillThread()
+
+    def OnConnectionRequest(self, sourceAddress):
+        raise Exception("CozmoCLI wasn't expecing a connection request")
+
+    def OnConnected(self, sourceAddress):
+        sys.stdout.write("Connected to robot at %s\r\n" % repr(sourceAddress))
+
+    def OnDisconnected(self, sourceAddress):
+        sys.stdout.write("Lost connection to robot at %s\r\n" % repr(sourceAddress))
+
+    def ReceiveData(self, buffer, sourceAddress):
+        #sys.stdout.write("RX %d: %s\r\n" % (buffer[0], buffer[1:].decode("ASCII", "ignore")))
+        pass
+
+    def send(self, buffer):
+        return self.transport.SendData(True, False, self.robot, buffer)
 
     def helpFtn(self, *args):
         "Prints out help text on CLI functions"
@@ -105,7 +86,7 @@ class CozmoCLI(socket.socket):
 
     def FlashBlockIDs(self, *args):
         "Sends a FlashBlockIDs message to the robot"
-        self.sendto(FlashBlockIDs().serialize(), self.robot)
+        self.r(FlashBlockIDs().serialize(), self.robot)
         return True
 
     def SetBlockLights(self, *args):
@@ -123,7 +104,7 @@ class CozmoCLI(socket.socket):
                 sys.stderr.write("Incorrect arguments:\r\n%s\n\n" % str(e))
                 return False
             else:
-                self.sendto(msg.serialize(), self.robot)
+                self.send(msg.serialize())
                 return lights
 
     def ImageRequest(self, *args):
@@ -142,7 +123,7 @@ class CozmoCLI(socket.socket):
             except:
                 sys.stderr.write("Couldn't interprate \"%s\" as an image request resolution\n" % args[1])
                 return False
-            self.sendto(ImageRequest(imageSendMode=cmd, resolution=res).serialize(), self.robot)
+            self.send(ImageRequest(imageSendMode=cmd, resolution=res).serialize())
             return True
 
     def DriveWheels(self, *args):
@@ -161,12 +142,12 @@ class CozmoCLI(socket.socket):
             except:
                 sys.stderr.write("Couldn't interprate \"%s\" as a floating point wheel speed\n" % args[1])
                 return False
-            self.sendto(DriveWheelsMessage(lws, rws).serialize(), self.robot)
+            self.send(DriveWheelsMessage(lws, rws).serialize())
             return True
 
     def StopAllMotors(self, *args):
         "Full stop"
-        self.sendto(StopAllMotorsMessage().serialize(), self.robot)
+        self.send(StopAllMotorsMessage().serialize())
 
     def SetHeadAngle(self, *args):
         "Commands the head angle. Args: <angle (radians)> [<max speed> [<acceleration>]]"
@@ -180,7 +161,7 @@ class CozmoCLI(socket.socket):
                 sys.stderr.write("Couldn't interpret arguments as floats: %s\n" % repr(args))
                 return False
             else:
-                self.sendto(SetHeadAngleMessage(*params).serialize(), self.robot)
+                self.send(SetHeadAngleMessage(*params).serialize())
                 return True
 
     def SetLiftHeight(self, *args):
@@ -195,7 +176,7 @@ class CozmoCLI(socket.socket):
                 sys.stderr.write("Couldn't interpret arguments as floats: %s \n" % repr(args))
                 return False
             else:
-                self.sendto(SetLiftHeightMessage(*params).serialize(), self.robot)
+                self.send(SetLiftHeightMessage(*params).serialize())
                 return True
 
 
@@ -213,10 +194,17 @@ class CozmoCLI(socket.socket):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) == 2:
-        robot = sys.argv[1]
-    else:
-        robot = "172.31.1.1"
-    cli = CozmoCLI(robot)
+    from ReliableTransport.testbench import UartSimRadio
+    transport = UDPTransport()
+    #transport = UartSimRadio("com4", 115200)
+    cli = CozmoCLI(transport, ("172.31.1.1", ROBOT_PORT))
     cli.loop()
-    cli.pinger.stop()
+    cli.transport.KillThread()
+
+    #if len(sys.argv) == 2:
+    #    robot = sys.argv[1]
+    #else:
+    #    robot = "172.31.1.1"
+    #cli = CozmoCLI(robot)
+    #cli.loop()
+    #cli.pinger.stop()

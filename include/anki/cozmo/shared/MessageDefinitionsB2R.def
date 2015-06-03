@@ -544,22 +544,12 @@ ADD_MESSAGE_MEMBER(u8, enabled)
 ADD_MESSAGE_MEMBER(u8, timeout_sec)
 END_MESSAGE_DEFINITION(FaceTracking)
 
-// Ping
-START_MESSAGE_DEFINITION(Ping, 1)
-END_MESSAGE_DEFINITION(Ping)
-
 // PanAndTiltHead
 START_MESSAGE_DEFINITION(PanAndTiltHead, 1)
 // TODO: make these fixed point
 ADD_MESSAGE_MEMBER(f32, relativePanAngle_rad)
 ADD_MESSAGE_MEMBER(f32, relativeHeadTiltAngle_rad)
 END_MESSAGE_DEFINITION(PanAndTiltHead)
-
-// Client Connected message, not technically from the basestation but still received by robot
-START_MESSAGE_DEFINITION(ClientConnectionStatus, 1)
-ADD_MESSAGE_MEMBER(u8, wifiState)
-ADD_MESSAGE_MEMBER(u8, bluetoothState)
-END_MESSAGE_DEFINITION(ClientConnectionStatus)
 
 START_MESSAGE_DEFINITION(SetCarryState, 1)
 ADD_MESSAGE_MEMBER(u8, state)  // See CarryState_t

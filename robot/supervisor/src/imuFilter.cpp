@@ -182,7 +182,7 @@ namespace Anki {
       {
         // TEST WITH LIGHT
         if (pickupDetected) {
-          HAL::SetLED(INDICATOR_LED_ID, LED_RED);
+          HAL::SetLED(INDICATOR_LED_ID, LED_BLUE);
         } else {
           HAL::SetLED(INDICATOR_LED_ID, LED_OFF);
         }

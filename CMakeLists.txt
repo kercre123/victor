@@ -55,9 +55,9 @@ include_directories(
   coretech/vision/include
   coretech/planning/include
   ${CLAD_DIR}/support/cpp/include
+  "${ANKI_UTIL_DIR}/source"
   "${ANKI_UTIL_DIR}/source/3rd"
   "${ANKI_UTIL_DIR}/source/3rd/jsoncpp"
-  "${ANKI_UTIL_DIR}/source"
   "${ANKI_UTIL_DIR}/source/anki"
   "${ANKI_UTIL_DIR}/libs/packaged/include"
 )
@@ -70,7 +70,7 @@ add_subdirectory(basestation)
 add_subdirectory(coretech)
 
 # anki-util is a submodule we don't want to stick cmake in
-add_subdirectory(tools) #tools/anki-util)
+add_subdirectory(tools)
 
 
 # Don't build these if ANKI_IOS_BUILD is defined:
