@@ -31,6 +31,7 @@ PyObject* DetectFiducialMarkers_numpy(
   const int component_sparseMultiplyThreshold,
   const int component_solidMultiplyThreshold,
   const float component_minHollowRatio,
+  const int minLaplacianPeakRatio,
   const int quads_minQuadArea,
   const int quads_quadSymmetryThreshold,
   const int quads_minDistanceFromImageEdge,

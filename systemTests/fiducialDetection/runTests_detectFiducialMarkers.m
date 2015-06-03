@@ -73,6 +73,7 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
     algorithmParameters.component_solidMultiplyThreshold = 2.0;
     algorithmParameters.component_minHollowRatio = 1.0;
     algorithmParameters.quads_minQuadArea = 100 / 4;
+    algorithmParameters.quads_minLaplacianPeakRatio = 5;
     algorithmParameters.quads_quadSymmetryThreshold = 2.0;
     algorithmParameters.quads_minDistanceFromImageEdge = 2;
     algorithmParameters.decode_minContrastRatio = 0; % EVERYTHING has contrast >= 1, by definition

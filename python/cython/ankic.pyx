@@ -21,6 +21,7 @@ cdef extern from "ankic.h":
     const int component_sparseMultiplyThreshold,
     const int component_solidMultiplyThreshold,
     const float component_minHollowRatio,
+    const int minLaplacianPeakRatio,
     const int quads_minQuadArea,
     const int quads_quadSymmetryThreshold,
     const int quads_minDistanceFromImageEdge,
@@ -54,7 +55,7 @@ def saveEmbeddedArray(object numpyArray, const char * filename, const int compre
   except:
     raise Exception("Could not save to " + filename)
     
-def detectFiducialMarkers(object numpyImage, const int useIntegralImageFiltering, const int scaleImage_numPyramidLevels, const float scaleImage_thresholdMultiplierF32, const short component1d_minComponentWidth, const short component1d_maxSkipDistance, const int component_minimumNumPixels, const int component_maximumNumPixels, const float component_sparseMultiplyThresholdF32, const float component_solidMultiplyThresholdF32, const float component_minHollowRatio, const int quads_minQuadArea, const float quads_quadSymmetryThresholdF32, const int quads_minDistanceFromImageEdge, const float decode_minContrastRatio, const int quadRefinementIterations, const int numRefinementSamples, const float quadRefinementMaxCornerChange, const float quadRefinementMinCornerChange, const int returnInvalidMarkers):
+def detectFiducialMarkers(object numpyImage, const int useIntegralImageFiltering, const int scaleImage_numPyramidLevels, const float scaleImage_thresholdMultiplierF32, const short component1d_minComponentWidth, const short component1d_maxSkipDistance, const int component_minimumNumPixels, const int component_maximumNumPixels, const float component_sparseMultiplyThresholdF32, const float component_solidMultiplyThresholdF32, const float component_minHollowRatio, const int minLaplacianPeakRatio, const int quads_minQuadArea, const float quads_quadSymmetryThresholdF32, const int quads_minDistanceFromImageEdge, const float decode_minContrastRatio, const int quadRefinementIterations, const int numRefinementSamples, const float quadRefinementMaxCornerChange, const float quadRefinementMinCornerChange, const int returnInvalidMarkers):
   """
   Detect fiducial markers in image, and return the markers
   
@@ -78,6 +79,7 @@ def detectFiducialMarkers(object numpyImage, const int useIntegralImageFiltering
   component_sparseMultiplyThreshold = 1000.0
   component_solidMultiplyThreshold = 2.0
   component_minHollowRatio = 1.0
+  minLaplacianPeakRatio = 5;
   quads_minQuadArea = 100 / 4
   quads_quadSymmetryThreshold = 2.0
   quads_minDistanceFromImageEdge = 2
@@ -87,7 +89,7 @@ def detectFiducialMarkers(object numpyImage, const int useIntegralImageFiltering
   quadRefinementMaxCornerChange = 5.0
   quadRefinementMinCornerChange = 0.005
   returnInvalidMarkers = 0
-  quads, markerTypes, markerNames, markerValidity, binaryImage = ankic.detectFiducialMarkers(image, useIntegralImageFiltering, scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_minHollowRatio, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio, quadRefinementIterations, numRefinementSamples, quadRefinementMaxCornerChange, quadRefinementMinCornerChange, returnInvalidMarkers)
+  quads, markerTypes, markerNames, markerValidity, binaryImage = ankic.detectFiducialMarkers(image, useIntegralImageFiltering, scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_minHollowRatio, minLaplacianPeakRatio, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio, quadRefinementIterations, numRefinementSamples, quadRefinementMaxCornerChange, quadRefinementMinCornerChange, returnInvalidMarkers)
   """
 
   scaleImage_thresholdMultiplierS32    = int(round(pow(2,16)*scaleImage_thresholdMultiplierF32)) 
@@ -96,6 +98,6 @@ def detectFiducialMarkers(object numpyImage, const int useIntegralImageFiltering
   quads_quadSymmetryThresholdS32       = int(round(pow(2,8)*quads_quadSymmetryThresholdF32))
 
   try:
-    return DetectFiducialMarkers_numpy(numpyImage, useIntegralImageFiltering, scaleImage_numPyramidLevels, scaleImage_thresholdMultiplierS32, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThresholdS32, component_solidMultiplyThresholdS32, component_minHollowRatio, quads_minQuadArea, quads_quadSymmetryThresholdS32, quads_minDistanceFromImageEdge, decode_minContrastRatio, quadRefinementIterations, numRefinementSamples, quadRefinementMaxCornerChange, quadRefinementMinCornerChange, returnInvalidMarkers)
+    return DetectFiducialMarkers_numpy(numpyImage, useIntegralImageFiltering, scaleImage_numPyramidLevels, scaleImage_thresholdMultiplierS32, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThresholdS32, component_solidMultiplyThresholdS32, component_minHollowRatio, minLaplacianPeakRatio, quads_minQuadArea, quads_quadSymmetryThresholdS32, quads_minDistanceFromImageEdge, decode_minContrastRatio, quadRefinementIterations, numRefinementSamples, quadRefinementMaxCornerChange, quadRefinementMinCornerChange, returnInvalidMarkers)
   except:
     raise Exception("Could not detect fiducial markers")
