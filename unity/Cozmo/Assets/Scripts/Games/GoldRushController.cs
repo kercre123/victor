@@ -590,6 +590,7 @@ public class GoldRushController : GameController {
 		   && robot.carryingObject.isActive )
 		{
 			// turn on  the block's lights
+			goldExtractingObject = robot.carryingObject as ActiveBlock;
 			goldExtractingObject.SetLEDs(EXTRACTOR_COLOR);
 		}
 	}
@@ -687,7 +688,7 @@ public class GoldRushController : GameController {
 		if (goldCollectingObject != null && robot.knownObjects.Find(x => x == goldCollectingObject) != null )
 		{
 			home_base_pos = robot.knownObjects.Find(x => x == goldCollectingObject).WorldPosition;
-			Debug.Log("home_base_pos: "+home_base_pos.ToString());
+			//Debug.Log("home_base_pos: "+home_base_pos.ToString());
 		}
 		Vector2 collector_pos = (Vector2)robot.WorldPosition + (Vector2)robot.Forward*carryingObjectForwardOffset;
 		float distance = (home_base_pos - collector_pos).magnitude;
@@ -791,6 +792,7 @@ public class GoldRushController : GameController {
 
 	void SendRobotToCollector()
 	{
+		/*
 		Vector3 to_collector = goldCollectingObject.WorldPosition - robot.WorldPosition;
 		float angle = Vector3.Angle(Vector3.right, to_collector.normalized);
 		float sign = Mathf.Sign(Vector3.Dot(Vector3.forward,Vector3.Cross(Vector3.right,to_collector.normalized)));
@@ -811,6 +813,8 @@ public class GoldRushController : GameController {
 		RobotEngineManager.instance.VisualizeQuad(21, CozmoPalette.ColorToUInt(Color.blue), depositSpot, depositSpot, spotZ, spotZ);
 		RobotEngineManager.instance.VisualizeQuad(22, CozmoPalette.ColorToUInt(Color.blue), spotY1, spotY1, spotY2, spotY2);
 		RobotEngineManager.instance.VisualizeQuad(23, CozmoPalette.ColorToUInt(Color.blue), spotX1, spotX1, spotX2, spotX2);
+		*/
+		robot.GotoObject(goldCollectingObject, 50);
 	}
 #endregion
 
@@ -946,8 +950,9 @@ public class GoldRushController : GameController {
 			UpdateReturning(true);
 			yield return 0;
 		}
+		Debug.LogError("should be cancelling action");
+		robot.CancelAction(RobotActionType.DRIVE_TO_OBJECT);
 		EnterPlayState(PlayState.DEPOSITING);
-		robot.CancelAction(RobotActionType.DRIVE_TO_POSE);
 
 
 	}
