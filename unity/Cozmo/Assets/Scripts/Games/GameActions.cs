@@ -121,7 +121,9 @@ public class GameActions : MonoBehaviour
 			if( buttons.Length > 2 && robot.selectedObjects.Count == 1 )
 			{
 				buttons[1].SetMode( ActionButton.Mode.PICK_UP, robot.selectedObjects[0] );
+#if ALLOW_ROLL
 				buttons[0].SetMode( ActionButton.Mode.ROLL, robot.selectedObjects[0] );
+#endif
 			}
 			else
 			{
