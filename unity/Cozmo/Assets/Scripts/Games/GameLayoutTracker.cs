@@ -287,7 +287,7 @@ public class GameLayoutTracker : MonoBehaviour {
 	void EnterPhase() {
 		Debug.Log("EnterPhase("+Phase+")");
 		
-		if(textPhase != null) textPhase.text = Phase.ToString();
+		if(textPhase != null) textPhase.text = GetPhaseName(Phase);
 
 		switch(Phase) {
 			case LayoutTrackerPhase.INVENTORY:
@@ -491,7 +491,7 @@ public class GameLayoutTracker : MonoBehaviour {
 				//coz is doing shit
 			}
 			else if(robot.carryingObject != null) {
-				Debug.Log("frame("+Time.frameCount+") AUTO_BUILDING AttemptAssistedPlacement");
+				//Debug.Log("frame("+Time.frameCount+") AUTO_BUILDING AttemptAssistedPlacement");
 				AttemptAssistedPlacement();
 			}
 			else {
@@ -499,11 +499,11 @@ public class GameLayoutTracker : MonoBehaviour {
 				if(nextObjectToPlace != null) {
 					string description = null;
 					CozmoBusyPanel.instance.SetDescription( "pick-up\n", nextObjectToPlace, ref description );
-					Debug.Log("frame("+Time.frameCount+") AUTO_BUILDING GetObservedObjectForNextLayoutBlock nextObject("+nextObjectToPlace+")");
+					//Debug.Log("frame("+Time.frameCount+") AUTO_BUILDING GetObservedObjectForNextLayoutBlock nextObject("+nextObjectToPlace+")");
 					robot.PickAndPlaceObject(nextObjectToPlace);
 				}
 				else {
-					Debug.Log("frame("+Time.frameCount+") GetObservedObjectForNextLayoutBlock could not find an apt nextObject to place.");
+					Debug.LogWarning("frame("+Time.frameCount+") GetObservedObjectForNextLayoutBlock could not find an apt nextObject to place.");
 				}
 			}
 			RefreshValidationSounds();
@@ -575,11 +575,17 @@ public class GameLayoutTracker : MonoBehaviour {
 
 	void HideCozmoMarker() {
 		if(cozmoMarker != null) cozmoMarker.SetActive(false);
-		if(ghostBlock != null) ghostBlock.gameObject.SetActive(false);
+		if(ghostBlock != null) {
+			ghostBlock.Hidden = true;
+			ghostBlock.Highlighted = false;
+		}
 	}
 
 	void RefreshCozmoMarker() {
-		if(!showVisualizations) return;
+		if(!showVisualizations) {
+			HideCozmoMarker();
+			return;
+		}
 
 		if(cozmoMarker != null) {
 			cozmoMarker.SetActive(true);
@@ -831,8 +837,10 @@ public class GameLayoutTracker : MonoBehaviour {
 	}
 
 	void PlaceGhostForObservedObject(ObservedObject obj) {
+		if(ghostBlock == null) return;
 		if(obj == null) {
-			ghostBlock.gameObject.SetActive(false);
+			ghostBlock.Hidden = true;
+			ghostBlock.Highlighted = false;
 			return;
 		}
 		if(obj == robot.carryingObject) {
@@ -847,13 +855,14 @@ public class GameLayoutTracker : MonoBehaviour {
 	void PlaceGhostForObservedObject(ObservedObject obj, Vector3 position, Vector3 facing) {
 		if(ghostBlock == null) return;
 		if(obj == null) {
-			ghostBlock.gameObject.SetActive(false);
+			ghostBlock.Hidden = true;
+			ghostBlock.Highlighted = false;
 			return;
 		}
 
 		ghostBlock.WorldPosition = position;
 		ghostBlock.transform.rotation = Quaternion.LookRotation(CozmoUtil.Vector3CozmoToUnitySpace(facing), Vector3.up);
-		ghostBlock.gameObject.SetActive(true);
+		//ghostBlock.gameObject.SetActive(true);
 
 		ghostBlock.cubeType = obj.cubeType;
 		if(obj.isActive) {
@@ -1028,10 +1037,13 @@ public class GameLayoutTracker : MonoBehaviour {
 	}
 
 	void RefreshSettings() {
+
 		showVisualizations = PlayerPrefs.GetInt("ShowDebugInfo", 0) == 1;
 		if(!showVisualizations) {
 			HideCozmoMarker();		
 		}
+
+		//Debug.Log("GameLayoutTracker RefreshSettings showVisualizations("+showVisualizations+")" );
 	}
 
 	#endregion

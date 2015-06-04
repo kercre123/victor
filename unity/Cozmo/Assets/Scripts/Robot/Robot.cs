@@ -591,7 +591,7 @@ public class Robot
 
 			activeBlocks.Add( activeBlock, activeBlock );
 			knownObjects.Add( activeBlock );
-			Debug.Log( "knownObjects.Add( activeBlock );" );
+			//Debug.Log( "knownObjects.Add( activeBlock );" );
 			newBlock = true;
 		}
 
@@ -611,7 +611,7 @@ public class Robot
 			knownObject = new ObservedObject( message.objectID, message.objectFamily, message.objectType );
 			
 			knownObjects.Add( knownObject );
-			Debug.Log( "knownObjects.Add( knownObject );" );
+			//Debug.Log( "knownObjects.Add( knownObject );" );
 
 			newBlock = true;
 		}
@@ -713,7 +713,7 @@ public class Robot
 		headAngleRequested = radians;
 		lastHeadAngleRequestTime = Time.time;
 
-		Debug.Log( "Set Head Angle " + radians + " headAngle_rad: " + headAngle_rad + " headTrackingObject: " + headTrackingObject );
+		//Debug.Log( "Set Head Angle " + radians + " headAngle_rad: " + headAngle_rad + " headTrackingObject: " + headTrackingObject );
 
 		SetHeadAngleMessage.angle_rad = radians;
 
@@ -912,7 +912,7 @@ public class Robot
 
 	public void ClearAllObjects()
 	{
-		Debug.Log( "Clear All Objects" );
+		//Debug.Log( "Clear All Objects" );
 		ClearAllObjectsMessage.robotID = ID;
 		RobotEngineManager.instance.Message.ClearAllObjects = ClearAllObjectsMessage;
 		RobotEngineManager.instance.SendMessage();
@@ -925,7 +925,7 @@ public class Robot
 	
 	public void VisionWhileMoving( bool enable )
 	{
-		Debug.Log( "Vision While Moving " + enable );
+		//Debug.Log( "Vision While Moving " + enable );
 
 		VisionWhileMovingMessage.enable = System.Convert.ToByte( enable );
 
@@ -960,7 +960,7 @@ public class Robot
 		TurnInPlaceMessage.robotID = ID;
 		TurnInPlaceMessage.angle_rad = angle_rad;
 		
-		Debug.Log( "TurnInPlace(robotID:" + ID + ", angle_rad:" + angle_rad + ")" );
+		//Debug.Log( "TurnInPlace(robotID:" + ID + ", angle_rad:" + angle_rad + ")" );
 
 		RobotEngineManager.instance.Message.TurnInPlace = TurnInPlaceMessage;
 		RobotEngineManager.instance.SendMessage();

@@ -18168,6 +18168,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9811893f048d346158eaaa18635c80b1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  debug: 0
   vCube: {fileID: 11409672}
   meshCube: {fileID: 2309586}
   cubeType: 0
@@ -18300,6 +18301,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9811893f048d346158eaaa18635c80b1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  debug: 0
   vCube: {fileID: 11409688}
   meshCube: {fileID: 2309618}
   cubeType: 2
@@ -18425,6 +18427,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9811893f048d346158eaaa18635c80b1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  debug: 0
   vCube: {fileID: 11409698}
   meshCube: {fileID: 2309630}
   cubeType: 1
@@ -18728,6 +18731,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9811893f048d346158eaaa18635c80b1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  debug: 0
   vCube: {fileID: 11409736}
   meshCube: {fileID: 2309724}
   cubeType: 0
@@ -18852,6 +18856,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9811893f048d346158eaaa18635c80b1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  debug: 0
   vCube: {fileID: 11409748}
   meshCube: {fileID: 2309752}
   cubeType: 2
@@ -19626,6 +19631,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9811893f048d346158eaaa18635c80b1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  debug: 0
   vCube: {fileID: 11483344}
   meshCube: {fileID: 2383314}
   cubeType: 0
@@ -19904,6 +19910,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9811893f048d346158eaaa18635c80b1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  debug: 0
   vCube: {fileID: 11483376}
   meshCube: {fileID: 2383338}
   cubeType: 1
@@ -20086,6 +20093,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9811893f048d346158eaaa18635c80b1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  debug: 0
   vCube: {fileID: 11483390}
   meshCube: {fileID: 2383368}
   cubeType: 0
@@ -20182,6 +20190,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9811893f048d346158eaaa18635c80b1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  debug: 0
   vCube: {fileID: 11485164}
   meshCube: {fileID: 2385094}
   cubeType: 2
@@ -20249,6 +20258,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9811893f048d346158eaaa18635c80b1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  debug: 0
   vCube: {fileID: 11485168}
   meshCube: {fileID: 2385130}
   cubeType: 2
@@ -20316,6 +20326,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9811893f048d346158eaaa18635c80b1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  debug: 0
   vCube: {fileID: 11485172}
   meshCube: {fileID: 2385132}
   cubeType: 0
@@ -20408,6 +20419,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9811893f048d346158eaaa18635c80b1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  debug: 0
   vCube: {fileID: 11485178}
   meshCube: {fileID: 2385144}
   cubeType: 0
@@ -20461,6 +20473,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9811893f048d346158eaaa18635c80b1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  debug: 0
   vCube: {fileID: 11485184}
   meshCube: {fileID: 2385156}
   cubeType: 0
@@ -20528,6 +20541,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9811893f048d346158eaaa18635c80b1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  debug: 0
   vCube: {fileID: 11485188}
   meshCube: {fileID: 2385176}
   cubeType: 2
@@ -24748,7 +24762,7 @@ Canvas:
   m_OverrideSorting: 0
   m_OverridePixelPerfect: 0
   m_SortingLayerID: 0
-  m_SortingOrder: 20
+  m_SortingOrder: 35
 --- !u!223 &22309758
 Canvas:
   m_ObjectHideFlags: 1

@@ -285,7 +285,7 @@ public class GameController : MonoBehaviour {
 	}
 
 	protected virtual void Enter_BUILDING() {
-		Debug.Log(gameObject.name + " Enter_BUILDING");
+		//Debug.Log(gameObject.name + " Enter_BUILDING");
 
 		if(playButton != null) playButton.gameObject.SetActive(true);
 		if(robot != null) robot.SetObjectAdditionAndDeletion(true, false);
@@ -294,14 +294,14 @@ public class GameController : MonoBehaviour {
 		//Debug.Log(gameObject.name + " Update_BUILDING");
 	}
 	protected virtual void Exit_BUILDING() {
-		Debug.Log(gameObject.name + " Exit_BUILDING");
+		//Debug.Log(gameObject.name + " Exit_BUILDING");
 
 		if(playButton != null) playButton.gameObject.SetActive(false);
 		if(robot != null) robot.SetObjectAdditionAndDeletion(false, false);
 	}
 		
 	protected virtual void Enter_PRE_GAME() {
-		Debug.Log(gameObject.name + " Enter_PRE_GAME");
+		//Debug.Log(gameObject.name + " Enter_PRE_GAME");
 
 		if(countdownText != null) {
 			countdownText.gameObject.SetActive(false);
@@ -346,7 +346,7 @@ public class GameController : MonoBehaviour {
 	}
 
 	protected virtual void Exit_PRE_GAME() {
-		Debug.Log(gameObject.name + " Exit_PRE_GAME");
+		//Debug.Log(gameObject.name + " Exit_PRE_GAME");
 		if(countdownText != null) {
 			countdownText.gameObject.SetActive(false);
 		}
@@ -357,7 +357,7 @@ public class GameController : MonoBehaviour {
 		timerEventIndex = 0;
 		bonusTime = 0;
 
-		Debug.Log(gameObject.name + " Enter_PLAYING");
+		//Debug.Log(gameObject.name + " Enter_PLAYING");
 		if(gameStartSound != null) AudioManager.PlayOneShot(gameStartSound);
 
 		if(textScore != null) textScore.gameObject.SetActive(true);
@@ -389,7 +389,7 @@ public class GameController : MonoBehaviour {
 			if(stars >= savedStars) savedStars = stars;
 		}
 
-		Debug.Log(gameObject.name + " Exit_PLAYING");
+		//Debug.Log(gameObject.name + " Exit_PLAYING");
 		if(textScore != null) textScore.gameObject.SetActive(false);
 
 		if(gameOverSound != null) AudioManager.PlayOneShot(gameOverSound);
@@ -397,7 +397,7 @@ public class GameController : MonoBehaviour {
 
 	protected virtual void Enter_RESULTS() {
 
-		Debug.Log(gameObject.name + " Enter_RESULTS");
+		//Debug.Log(gameObject.name + " Enter_RESULTS");
 		StartCoroutine(PopInStars());
 		if(resultsPanel != null) resultsPanel.gameObject.SetActive(true);
 		if(textScore != null) textScore.gameObject.SetActive(true);
@@ -428,7 +428,7 @@ public class GameController : MonoBehaviour {
 		//Debug.Log(gameObject.name + " Update_RESULTS");
 	}
 	protected virtual void Exit_RESULTS() {
-		Debug.Log(gameObject.name + " Exit_RESULTS");
+		//Debug.Log(gameObject.name + " Exit_RESULTS");
 
 		if(resultsPanel != null) resultsPanel.gameObject.SetActive(false);
 		if(textScore != null) textScore.gameObject.SetActive(false);
@@ -471,12 +471,12 @@ public class GameController : MonoBehaviour {
 	}
 
 	public void PlayRequested() {
-		Debug.Log ("PlayRequested");
+		//Debug.Log ("PlayRequested");
 		playRequested = true;
 	}
 
 	public void BuildRequested() {
-		Debug.Log ("BuildRequested");
+		//Debug.Log ("BuildRequested");
 		buildRequested = true;
 		if (GameLayoutTracker.instance != null) {
 			GameLayoutTracker.instance.StartBuild();

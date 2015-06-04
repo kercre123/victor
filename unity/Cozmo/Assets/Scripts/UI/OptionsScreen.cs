@@ -300,5 +300,7 @@ public class OptionsScreen : MonoBehaviour {
 
 	public void Toggle(bool toggle) {
 		optionsAnchor.SetActive(toggle);
+
+		if(!toggle && RefreshSettings != null) RefreshSettings();
 	}
 }

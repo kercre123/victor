@@ -39,10 +39,10 @@ public class CozmoDepthSorter : MonoBehaviour {
 			case CozmoCanvasDepth.Overlay_Game: 		return 5;
 			case CozmoCanvasDepth.Overlay_Building: 	return 10;
 			case CozmoCanvasDepth.Overlay_Controls: 	return 15;
-			case CozmoCanvasDepth.Overlay_Inventory: 	return 20;
-			case CozmoCanvasDepth.Overlay_Shell: 		return 25;
-			case CozmoCanvasDepth.Overlay_Debug: 		return 30;
-			case CozmoCanvasDepth.Overlay_BackButton: 	return 35;
+			case CozmoCanvasDepth.Overlay_Shell: 		return 20;
+			case CozmoCanvasDepth.Overlay_Debug: 		return 25;
+			case CozmoCanvasDepth.Overlay_BackButton: 	return 30;
+			case CozmoCanvasDepth.Overlay_Inventory: 	return 35;
 			case CozmoCanvasDepth.Overlay_Options: 		return 40;
 		}
 

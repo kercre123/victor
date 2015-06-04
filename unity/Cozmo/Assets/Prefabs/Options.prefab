@@ -3226,8 +3226,8 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 165886}
-        m_MethodName: SetActive
+      - m_Target: {fileID: 11412394}
+        m_MethodName: Toggle
         m_Mode: 6
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -5380,7 +5380,7 @@ Canvas:
   m_OverrideSorting: 0
   m_OverridePixelPerfect: 0
   m_SortingLayerID: 0
-  m_SortingOrder: 35
+  m_SortingOrder: 30
 --- !u!224 &22404784
 RectTransform:
   m_ObjectHideFlags: 1
