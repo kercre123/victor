@@ -20,7 +20,8 @@ public class SuccessOrFailureText : ScreenMessage
 
 		text.text = string.Empty;
 
-		showText = PlayerPrefs.GetInt("ShowDebugInfo", 0) == 1;
+		RefreshSettings();
+		OptionsScreen.RefreshSettings += RefreshSettings;
 	}
 
 	private void OnDisable()
@@ -29,6 +30,7 @@ public class SuccessOrFailureText : ScreenMessage
 		{
 			RobotEngineManager.instance.SuccessOrFailure -= SuccessOrFailure;
 		}
+		OptionsScreen.RefreshSettings -= RefreshSettings;
 	}
 
 	private void SuccessOrFailure( bool s, RobotActionType action_type )
@@ -43,5 +45,10 @@ public class SuccessOrFailureText : ScreenMessage
 			if(failure != null) AudioManager.PlayOneShot( failure );
 			if(showText) ShowMessageForDuration( action_type + " FAILED", timeOnScreen, Color.red);
 		}
+	}
+
+	void RefreshSettings() {
+		showText = PlayerPrefs.GetInt("ShowDebugInfo", 0) == 1;
+		if(!showText) text.text = string.Empty;
 	}
 }

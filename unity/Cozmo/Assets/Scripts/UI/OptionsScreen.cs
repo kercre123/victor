@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using System;
 using System.Collections;
 
 public class OptionsScreen : MonoBehaviour {
@@ -18,6 +19,8 @@ public class OptionsScreen : MonoBehaviour {
 
 	[SerializeField] ComboBox pertinent_objects;
 	[SerializeField] InputField pertinent_object_range;
+
+	public static Action RefreshSettings = null;
 
 	public const int REVERSE_LIKE_A_CAR = 0;
 	public const float DEFAULT_MAX_TURN_FACTOR = 0.25f;

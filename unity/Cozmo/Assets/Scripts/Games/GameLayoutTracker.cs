@@ -35,7 +35,10 @@ public class GameLayoutTracker : MonoBehaviour {
 	[SerializeField] bool debug = false;
 	[SerializeField] List<GameLayout> layouts;
 
+	[SerializeField] GameObject cozmoMarker = null;
 	[SerializeField] GameObject inventoryPanel = null;
+	[SerializeField] Text textPhase;
+
 	[SerializeField] Text inventoryTitle;
 	[SerializeField] Button button_manualBuild;
 	[SerializeField] Button button_autoBuild;
@@ -107,6 +110,9 @@ public class GameLayoutTracker : MonoBehaviour {
 	bool iStartAutoBuild = false;
 
 	bool skipBuildForThisLayout = false;
+	bool showVisualizations = false;
+
+	ObservedObject nextObjectToPlace = null;
 
 	#endregion
 
@@ -115,6 +121,9 @@ public class GameLayoutTracker : MonoBehaviour {
 	void OnEnable () {
 
 		instance = this;
+
+		OptionsScreen.RefreshSettings += RefreshSettings;
+		RefreshSettings();
 
 		if(!blocksInitialized) {
 			for(int i=0; i<layouts.Count; i++) {
@@ -171,6 +180,8 @@ public class GameLayoutTracker : MonoBehaviour {
 		}
 
 		if(RobotEngineManager.instance != null) RobotEngineManager.instance.SuccessOrFailure += SuccessOrFailure;
+
+		HideCozmoMarker();
 	}
 
 	void Update () {
@@ -199,13 +210,14 @@ public class GameLayoutTracker : MonoBehaviour {
 
 		if(instance == this) instance = null;
 		
-		if(ghostBlock != null) ghostBlock.gameObject.SetActive(false);
+		HideCozmoMarker();
 	
 		inventoryPanel.SetActive(false);
 		layoutInstructionsPanel.SetActive(false);
 		layoutInstructionsCamera.gameObject.SetActive(false);
 		
 		if(RobotEngineManager.instance != null) RobotEngineManager.instance.SuccessOrFailure -= SuccessOrFailure;
+		OptionsScreen.RefreshSettings -= RefreshSettings;
 	}
 	
 	#endregion
@@ -263,8 +275,19 @@ public class GameLayoutTracker : MonoBehaviour {
 		return Phase;
 	}
 
+	string GetPhaseName(LayoutTrackerPhase phase) {
+		switch(phase) {
+			case LayoutTrackerPhase.AUTO_BUILDING: return "AUTO-BUILDING";
+
+		}
+		
+		return phase.ToString();
+	}
+
 	void EnterPhase() {
 		Debug.Log("EnterPhase("+Phase+")");
+		
+		if(textPhase != null) textPhase.text = Phase.ToString();
 
 		switch(Phase) {
 			case LayoutTrackerPhase.INVENTORY:
@@ -443,6 +466,8 @@ public class GameLayoutTracker : MonoBehaviour {
 	}
 	void Exit_INVENTORY() {
 		inventoryPanel.SetActive(false);
+		RobotEngineManager.instance.VisualizeQuad(33, CozmoPalette.ColorToUInt(Color.clear), Vector3.zero, Vector3.zero, Vector3.zero, Vector3.zero);
+		RobotEngineManager.instance.VisualizeQuad(34, CozmoPalette.ColorToUInt(Color.clear), Vector3.zero, Vector3.zero, Vector3.zero, Vector3.zero);
 	}
 
 	void Enter_AUTO_BUILDING() {
@@ -450,6 +475,8 @@ public class GameLayoutTracker : MonoBehaviour {
 		autoBuildFails = 0;
 		AnalyzeLayoutForValidation();
 		buttonStartPlaying.gameObject.SetActive(false);
+		nextObjectToPlace = null;
+		RefreshCozmoMarker();
 	}
 	void Update_AUTO_BUILDING() {
 		
@@ -468,12 +495,12 @@ public class GameLayoutTracker : MonoBehaviour {
 				AttemptAssistedPlacement();
 			}
 			else {
-				ObservedObject nextObject = GetObservedObjectForNextLayoutBlock();
-				if(nextObject != null) {
+				nextObjectToPlace = GetObservedObjectForNextLayoutBlock();
+				if(nextObjectToPlace != null) {
 					string description = null;
-					CozmoBusyPanel.instance.SetDescription( "pick-up\n", nextObject, ref description );
-					Debug.Log("frame("+Time.frameCount+") AUTO_BUILDING GetObservedObjectForNextLayoutBlock nextObject("+nextObject+")");
-					robot.PickAndPlaceObject(nextObject);
+					CozmoBusyPanel.instance.SetDescription( "pick-up\n", nextObjectToPlace, ref description );
+					Debug.Log("frame("+Time.frameCount+") AUTO_BUILDING GetObservedObjectForNextLayoutBlock nextObject("+nextObjectToPlace+")");
+					robot.PickAndPlaceObject(nextObjectToPlace);
 				}
 				else {
 					Debug.Log("frame("+Time.frameCount+") GetObservedObjectForNextLayoutBlock could not find an apt nextObject to place.");
@@ -482,24 +509,32 @@ public class GameLayoutTracker : MonoBehaviour {
 			RefreshValidationSounds();
 			RefreshDropLocationHint();
 		}
-
+		RefreshCozmoMarker();
 	}
 	void Exit_AUTO_BUILDING() {
 		layoutInstructionsPanel.SetActive(false);
 		layoutInstructionsCamera.gameObject.SetActive(false);
 		ObservedObject.SignificantChangeDetected -= SignificantChangeDetectedInObservedObject;
+		HideCozmoMarker();
 	}	
 
 	void Enter_BUILDING() {
 		ObservedObject.SignificantChangeDetected += SignificantChangeDetectedInObservedObject;
 		AnalyzeLayoutForValidation();
 		buttonStartPlaying.gameObject.SetActive(false);
+		nextObjectToPlace = null;
+		RefreshCozmoMarker();
 	}
 	void Update_BUILDING() {
 		textProgress.text = validCount + " / " + currentLayout.blocks.Count;
 		layoutInstructionsPanel.SetActive(!hidden);
 		layoutInstructionsCamera.gameObject.SetActive(!hidden);
 
+		if(robot.carryingObject != null) {
+			nextObjectToPlace = robot.carryingObject;
+		}
+
+		RefreshCozmoMarker();
 		RefreshValidationSounds();
 		RefreshDropLocationHint();
 	}
@@ -507,6 +542,7 @@ public class GameLayoutTracker : MonoBehaviour {
 		layoutInstructionsPanel.SetActive(false);
 		layoutInstructionsCamera.gameObject.SetActive(false);
 		ObservedObject.SignificantChangeDetected -= SignificantChangeDetectedInObservedObject;
+		HideCozmoMarker();
 	}
 
 	void Enter_COMPLETE() {
@@ -536,6 +572,24 @@ public class GameLayoutTracker : MonoBehaviour {
 	}
 	void Update_DISABLED() {}
 	void Exit_DISABLED() {}
+
+	void HideCozmoMarker() {
+		if(cozmoMarker != null) cozmoMarker.SetActive(false);
+		if(ghostBlock != null) ghostBlock.gameObject.SetActive(false);
+	}
+
+	void RefreshCozmoMarker() {
+		if(!showVisualizations) return;
+
+		if(cozmoMarker != null) {
+			cozmoMarker.SetActive(true);
+			cozmoMarker.transform.position = CozmoUtil.Vector3CozmoToUnitySpace(robot.WorldPosition) * currentLayout.scale / CozmoUtil.BLOCK_LENGTH_MM;
+			cozmoMarker.transform.rotation = Quaternion.LookRotation(CozmoUtil.Vector3CozmoToUnitySpace(robot.Forward), Vector3.up);
+		}
+		
+
+		PlaceGhostForObservedObject(nextObjectToPlace);
+	}
 
 	void RefreshDropLocationHint() {
 		
@@ -698,7 +752,7 @@ public class GameLayoutTracker : MonoBehaviour {
 //				validated.Add(block);
 //			}
 			block.Hidden = false;
-			block.Highlighted = true;
+			block.Highlighted = false;
 			//block.Validated = false;
 			//block.AssignedObject = null;
 		}
@@ -766,39 +820,61 @@ public class GameLayoutTracker : MonoBehaviour {
 			ActiveBlock activeBlock = newObject as ActiveBlock;
 			SetLightCubeToCorrectColor(activeBlock, block);
 		}
+	
+		//if we've successfully placed our intended object, stop visualizing it
+		if(newObject == nextObjectToPlace) nextObjectToPlace = null;
+	}
+
+	void PlaceGhostForCarriedObject() {
+		Vector3 carriedPos = robot.WorldPosition + robot.Forward * CozmoUtil.BLOCK_LENGTH_MM + Vector3.forward * (robot.liftHeight_mm + CozmoUtil.CARRIED_OBJECT_VERTICAL_OFFSET);
+		PlaceGhostForObservedObject(robot.carryingObject, carriedPos, robot.Forward);
+	}
+
+	void PlaceGhostForObservedObject(ObservedObject obj) {
+		if(obj == null) {
+			ghostBlock.gameObject.SetActive(false);
+			return;
+		}
+		if(obj == robot.carryingObject) {
+			PlaceGhostForCarriedObject();
+			return;
+		}
+
+		PlaceGhostForObservedObject(obj, obj.WorldPosition, obj.Forward);
 	}
 
 	//place our ghost block in the layout window at the position of the currently failing
-	void PlaceGhostForObservedObject(ObservedObject failingObject, BuildInstructionsCube failingLayoutBlock, ObservedObject validObject, BuildInstructionsCube validLayoutBlock) {
+	void PlaceGhostForObservedObject(ObservedObject obj, Vector3 position, Vector3 facing) {
 		if(ghostBlock == null) return;
-		//just use the ghost for the first fail detected
-		if(ghostBlock.Highlighted) return;
-
-		Vector3 objectOffset = (failingObject.WorldPosition - validObject.WorldPosition) / CozmoUtil.BLOCK_LENGTH_MM;
-		//convert to unity space
-		objectOffset = new Vector3(objectOffset.x, objectOffset.z, objectOffset.y) * validLayoutBlock.Size;
-
-		//if we failed a distance check, let's place the ghost along the relevant line
-		if(failingLayoutBlock.cubeBelow == null) {
-			Vector3 flatOffset = objectOffset;
-			flatOffset.y = 0;
-			float flatMag = flatOffset.magnitude;
-			flatOffset = failingLayoutBlock.transform.position - validLayoutBlock.transform.position;
-			flatOffset.y = 0;
-			flatOffset = flatOffset.normalized * flatMag;
-			objectOffset.x = flatOffset.x;
-			objectOffset.z = flatOffset.z;
+		if(obj == null) {
+			ghostBlock.gameObject.SetActive(false);
+			return;
 		}
 
-		//ghostBlock.gameObject.SetActive(true);
-		ghostBlock.transform.position = validLayoutBlock.transform.position + objectOffset;
-		ghostBlock.cubeType = failingLayoutBlock.cubeType;
-		ghostBlock.activeBlockMode = failingLayoutBlock.activeBlockMode;
-		ghostBlock.baseColor = failingLayoutBlock.baseColor;
+		ghostBlock.WorldPosition = position;
+		ghostBlock.transform.rotation = Quaternion.LookRotation(CozmoUtil.Vector3CozmoToUnitySpace(facing), Vector3.up);
+		ghostBlock.gameObject.SetActive(true);
+
+		ghostBlock.cubeType = obj.cubeType;
+		if(obj.isActive) {
+			ActiveBlock activeBlock = obj as ActiveBlock;
+			ghostBlock.activeBlockMode = activeBlock.mode;
+			if(activeBlock.mode == ActiveBlock.Mode.Off) {
+				ghostBlock.baseColor = Color.grey;
+			}
+			else {
+				ghostBlock.baseColor = CozmoPalette.instance.GetColorForActiveBlockMode(activeBlock.mode);
+			}
+		}
+		else {
+			ghostBlock.activeBlockMode = ActiveBlock.Mode.Off;
+			ghostBlock.baseColor = Color.black;
+		}
+
 		ghostBlock.Hidden = true;
 		ghostBlock.Highlighted = true;
 
-		//Debug.Log("ghostBlock type("+ghostBlock.objectType+") family("+ghostBlock.objectFamily+") baseColor("+ghostBlock.baseColor+")");
+		//Debug.Log("ghostBlock type("+ghostBlock.cubeType+") baseColor("+ghostBlock.baseColor+")");
 	}
 
 	ObservedObject GetKnownObjectForInventorySlot(BuildInstructionsCube block, int dupe) {
@@ -951,6 +1027,13 @@ public class GameLayoutTracker : MonoBehaviour {
 		//robot.isBusy = false;
 	}
 
+	void RefreshSettings() {
+		showVisualizations = PlayerPrefs.GetInt("ShowDebugInfo", 0) == 1;
+		if(!showVisualizations) {
+			HideCozmoMarker();		
+		}
+	}
+
 	#endregion
 
 	#region PUBLIC METHODS
@@ -1004,7 +1087,6 @@ public class GameLayoutTracker : MonoBehaviour {
 		return pose;
 	}
 	
-
 	public Vector3 GetStartingPositionFromLayout(out float facingAngle, out Vector3 facingVector) {
 		facingAngle = 0f;
 		facingVector = Vector3.zero;
@@ -1315,6 +1397,10 @@ public class GameLayoutTracker : MonoBehaviour {
 
 		Debug.Log("GetTrackedObjectsInOrder returning " + objects.Count + " objects.");
 		return objects;
+	}
+
+	public void SetNextObjectToPlace(ObservedObject obj) {
+		nextObjectToPlace = obj;
 	}
 
 	#endregion
