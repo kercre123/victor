@@ -288,7 +288,7 @@ public class GameController : MonoBehaviour {
 		Debug.Log(gameObject.name + " Enter_BUILDING");
 
 		if(playButton != null) playButton.gameObject.SetActive(true);
-		if(robot != null) robot.SetObjectAdditionAndDeletion(true, true);
+		if(robot != null) robot.SetObjectAdditionAndDeletion(true, false);
 	}
 	protected virtual void Update_BUILDING() {
 		//Debug.Log(gameObject.name + " Update_BUILDING");
