@@ -951,10 +951,18 @@ namespace Anki {
         }
         
         if(!markerWithCodeSeen) {
-          PRINT_NAMED_ERROR("FaceObjectAction.CheckIfDone.MarkerCodeNotSeen",
-                            "Object %d observed, but not marker with code %d.\n",
-                            _objectID.GetValue(), _whichCode);
-          return ActionResult::FAILURE_ABORT;
+          // TODO: Find causes of this and turn it back into an error/failure (COZMO-140)
+          
+          std::string observedMarkerNames;
+          for(auto marker : observedMarkers) {
+            observedMarkerNames += Vision::MarkerTypeStrings[marker->GetCode()];
+            observedMarkerNames += " ";
+          }
+          
+          PRINT_NAMED_WARNING("FaceObjectAction.CheckIfDone.MarkerCodeNotSeen",
+                              "Object %d observed, but not expected marker: %s. Instead saw: %s\n",
+                              _objectID.GetValue(), Vision::MarkerTypeStrings[_whichCode], observedMarkerNames.c_str());
+          //return ActionResult::FAILURE_ABORT;
         }
       }
 
