@@ -33,8 +33,6 @@ namespace Cozmo {
   // Forward declarations:
   class CozmoEngineHost;
   class CozmoGameImpl;
-  class CozmoGameHostImpl;
-  class CozmoGameClientImpl;
   
   // Common API whether host or client
   class CozmoGame

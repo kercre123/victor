@@ -93,7 +93,7 @@ namespace Cozmo {
     if(!config.isMember(AnkiUtil::kP_ADVERTISING_HOST_IP) ||
        !config.isMember(AnkiUtil::kP_UI_ADVERTISING_PORT)) {
       
-      PRINT_NAMED_ERROR("CozmoGameHostImpl.Init", "Missing advertising hosdt / UI advertising port in Json config file.\n");
+      PRINT_NAMED_ERROR("CozmoGameImpl.Init", "Missing advertising hosdt / UI advertising port in Json config file.\n");
       return RESULT_FAIL;
     }
     
@@ -101,7 +101,7 @@ namespace Cozmo {
                                       config[AnkiUtil::kP_UI_ADVERTISING_PORT].asInt());
 
     if(lastResult != RESULT_OK) {
-      PRINT_NAMED_ERROR("CozmoGameHostImpl.Init", "Failed to initialize host uiComms.\n");
+      PRINT_NAMED_ERROR("CozmoGameImpl.Init", "Failed to initialize host uiComms.\n");
       return lastResult;
     }
     
@@ -109,14 +109,14 @@ namespace Cozmo {
     RegisterCallbacksU2G();
     
     if(!config.isMember(AnkiUtil::kP_NUM_ROBOTS_TO_WAIT_FOR)) {
-      PRINT_NAMED_WARNING("CozmoGameHostImpl.Init", "No NumRobotsToWaitFor defined in Json config, defaulting to 1.\n");
+      PRINT_NAMED_WARNING("CozmoGameImpl.Init", "No NumRobotsToWaitFor defined in Json config, defaulting to 1.\n");
       _desiredNumRobots = 1;
     } else {
       _desiredNumRobots    = config[AnkiUtil::kP_NUM_ROBOTS_TO_WAIT_FOR].asInt();
     }
     
     if(!config.isMember(AnkiUtil::kP_NUM_UI_DEVICES_TO_WAIT_FOR)) {
-      PRINT_NAMED_WARNING("CozmoGameHostImpl.Init", "No NumUiDevicesToWaitFor defined in Json config, defaulting to 1.\n");
+      PRINT_NAMED_WARNING("CozmoGameImpl.Init", "No NumUiDevicesToWaitFor defined in Json config, defaulting to 1.\n");
       _desiredNumUiDevices = 1;
     } else {
       _desiredNumUiDevices = config[AnkiUtil::kP_NUM_UI_DEVICES_TO_WAIT_FOR].asInt();
@@ -169,12 +169,12 @@ namespace Cozmo {
       if(lastResult == RESULT_OK) {
         _isEngineStarted = true;
       } else {
-        PRINT_NAMED_ERROR("CozmoGameHostImpl.StartEngine",
+        PRINT_NAMED_ERROR("CozmoGameImpl.StartEngine",
                           "Failed to initialize the engine.\n");
       }
     /*
     } else {
-      PRINT_NAMED_ERROR("CozmoGameHostImpl.StartEngine",
+      PRINT_NAMED_ERROR("CozmoGameImpl.StartEngine",
                         "Engine already running, must start from stopped state.\n");
     }
      */
@@ -304,7 +304,7 @@ namespace Cozmo {
         if(device == _hostUiDeviceID) {
           // Force connection to first (local) UI device
           if(true == ConnectToUiDevice(device)) {
-            PRINT_NAMED_INFO("CozmoGameHostImpl.Update",
+            PRINT_NAMED_INFO("CozmoGameImpl.Update",
                              "Automatically connected to local UI device %d!\n", device);
           }
         } else {
@@ -357,7 +357,7 @@ namespace Cozmo {
           if(device == _hostUiDeviceID) {
             // Force connection to first (local) UI device
             if(true == ConnectToUiDevice(device)) {
-              PRINT_NAMED_INFO("CozmoGameHostImpl.Update",
+              PRINT_NAMED_INFO("CozmoGameImpl.Update",
                                "Automatically connected to local UI device %d!\n", device);
             }
           } else {
