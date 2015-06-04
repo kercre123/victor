@@ -81,6 +81,7 @@ namespace Cozmo {
     
     MultiClientChannel        _robotChannel;
     
+    /*
     // TODO: Merge this into RobotManager
     // Each engine can potetnailly talk to multiple physical robots.
     // Package up the stuff req'd to deal with one robot and store a map
@@ -90,6 +91,7 @@ namespace Cozmo {
       RobotMessageHandler       visionMsgHandler;
     };
     std::map<AdvertisingRobot, RobotContainer> _connectedRobots;
+    */
     
     VisionProcessingThread    _deviceVisionThread;
     
@@ -223,7 +225,7 @@ namespace Cozmo {
     Anki::Comms::ConnectionId id = static_cast<Anki::Comms::ConnectionId>(whichRobot);
     bool success = _robotChannel.AcceptAdvertisingConnection(id);
     if (success) {
-      _connectedRobots[whichRobot];
+      //_connectedRobots[whichRobot];
       //_connectedRobots[whichRobot].visionThread.Start();
       //_connectedRobots[whichRobot].visionMsgHandler.Init(<#Comms::IComms *comms#>, <#Anki::Cozmo::RobotManager *robotMgr#>)
     }
@@ -235,10 +237,12 @@ namespace Cozmo {
   void CozmoEngineImpl::DisconnectFromRobot(RobotID_t whichRobot) {
     Anki::Comms::ConnectionId id = static_cast<Anki::Comms::ConnectionId>(whichRobot);
     _robotChannel.RemoveConnection(id);
+    /*
     auto connectedRobotIter = _connectedRobots.find(whichRobot);
     if(connectedRobotIter != _connectedRobots.end()) {
       _connectedRobots.erase(connectedRobotIter);
     }
+     */
   }
   
   Result CozmoEngineImpl::Update(const BaseStationTime_t currTime_ns)
