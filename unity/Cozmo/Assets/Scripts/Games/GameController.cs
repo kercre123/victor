@@ -396,6 +396,7 @@ public class GameController : MonoBehaviour {
 	}
 
 	protected virtual void Enter_RESULTS() {
+
 		Debug.Log(gameObject.name + " Enter_RESULTS");
 		StartCoroutine(PopInStars());
 		if(resultsPanel != null) resultsPanel.gameObject.SetActive(true);
@@ -417,6 +418,10 @@ public class GameController : MonoBehaviour {
 					break;
 			}
 		}
+
+		if( robot != null ) {
+			robot.isBusy = true;
+		}
 	}
 
 	protected virtual void Update_RESULTS() {
@@ -428,7 +433,10 @@ public class GameController : MonoBehaviour {
 		if(resultsPanel != null) resultsPanel.gameObject.SetActive(false);
 		if(textScore != null) textScore.gameObject.SetActive(false);
 		AudioManager.Stop(resultsLoopSound);
-		if(robot != null) robot.TurnOffAllLights();
+		if(robot != null) {
+			robot.TurnOffAllLights();
+			robot.isBusy = true;
+		}
 	}
 
 	protected virtual bool IsGameReady() {
