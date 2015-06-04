@@ -170,11 +170,16 @@ public class CozmoVision_TargetLockSlider : CozmoVision {
 			});
 			
 			if(robot.targetLockedObject == null) {
-//				Vector2 atTarget = robot.selectedObjects[0].WorldPosition - robot.WorldPosition;
-//				float angle = Vector2.Angle(robot.Forward, atTarget);
-//				if(angle < 45f)
+
 				if(robot.selectedObjects[0].MarkersVisible) {
 					robot.targetLockedObject = robot.selectedObjects[0];
+				}
+				else {
+					Vector2 atTarget = robot.selectedObjects[0].WorldPosition - robot.WorldPosition;
+					float angle = Vector2.Angle(robot.Forward, atTarget);
+					if(angle < 45f) {
+						robot.targetLockedObject = robot.selectedObjects[0];
+					}
 				}
 			}
 		}

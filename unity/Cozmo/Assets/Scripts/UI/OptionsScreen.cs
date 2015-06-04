@@ -11,6 +11,7 @@ public class OptionsScreen : MonoBehaviour {
 	[SerializeField] ComboBox combo_controls;
 	[SerializeField] ComboBox combo_vision;
 	[SerializeField] Toggle toggle_debug;
+	[SerializeField] Toggle toggle_flushLogs;
 	[SerializeField] Toggle toggle_vision;
 	[SerializeField] Toggle toggle_visionFade;
 	[SerializeField] Toggle toggle_visionRecording;
@@ -76,6 +77,11 @@ public class OptionsScreen : MonoBehaviour {
 			//Debug.Log("Init toggle_debug.isOn("+toggle_debug.isOn+")");
 		}
 
+		if(toggle_flushLogs != null) {
+			toggle_flushLogs.isOn = PlayerPrefs.GetInt("FlushLogs", 1) == 1;
+			//Debug.Log("Init toggle_debug.isOn("+toggle_debug.isOn+")");
+		}
+
 		if(toggle_vision != null) {
 			toggle_vision.isOn = PlayerPrefs.GetInt("VisionDisabled" + GetVisionSelected().ToString(), 0) == 1;
 			//Debug.Log("Init toggle_debug.isOn("+toggle_debug.isOn+")");
@@ -124,7 +130,7 @@ public class OptionsScreen : MonoBehaviour {
 		}
 
 		if(pertinent_object_range != null) {
-			pertinent_object_range.text = PlayerPrefs.GetInt("ObjectPertinenceRange" + GetVisionSelected().ToString(), 264).ToString();
+			pertinent_object_range.text = PlayerPrefs.GetInt("ObjectPertinenceRange" + GetVisionSelected().ToString(), Mathf.RoundToInt(CozmoUtil.BLOCK_LENGTH_MM * 6)).ToString();
 			pertinent_object_range.onValueChange.AddListener(ObjectPertinenceRange);
 		}
 
@@ -141,6 +147,10 @@ public class OptionsScreen : MonoBehaviour {
 
 		if(toggle_debug != null) {
 			toggle_debug.onValueChanged.AddListener(ToggleShowDebugInfo);
+		}
+		
+		if(toggle_flushLogs != null) {
+			toggle_flushLogs.onValueChanged.AddListener(ToggleFlushLogs);
 		}
 
 		if(toggle_vision != null) {
@@ -230,6 +240,10 @@ public class OptionsScreen : MonoBehaviour {
 		PlayerPrefs.SetInt("ShowDebugInfo", val ? 1 : 0);
 	}
 
+	void ToggleFlushLogs(bool val) {
+		PlayerPrefs.SetInt("FlushLogs", val ? 1 : 0);
+	}
+
 	void ToggleDisableVision(bool val) {
 		PlayerPrefs.SetInt("VisionDisabled" + GetVisionSelected().ToString(), val ? 1 : 0);
 	}
@@ -251,7 +265,7 @@ public class OptionsScreen : MonoBehaviour {
 	}
 
 	public static int GetObjectPertinenceRangeOverride() {
-		return PlayerPrefs.GetInt("ObjectPertinenceRange" + GetVisionSelected().ToString(), 220);
+		return PlayerPrefs.GetInt("ObjectPertinenceRange" + GetVisionSelected().ToString(), Mathf.RoundToInt(CozmoUtil.BLOCK_LENGTH_MM * 6));
 	}
 
 	void ToggleUserTestMode(bool val) {
@@ -276,6 +290,7 @@ public class OptionsScreen : MonoBehaviour {
 		PlayerPrefs.DeleteKey("ShowDebugInfo");
 		PlayerPrefs.DeleteKey("ToggleUserTestMode");
 		PlayerPrefs.DeleteKey("EnergyHuntAutoCollect");
+		PlayerPrefs.DeleteKey("FlushLogs");
 
 		for(int i = 0; i < 5; ++i) {
 			PlayerPrefs.DeleteKey("ObjectPertinence" + i.ToString());

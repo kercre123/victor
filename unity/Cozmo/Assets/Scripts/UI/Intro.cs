@@ -54,10 +54,16 @@ public class Intro : MonoBehaviour {
 	}
 
 	protected void OnEnable() {
+
 		engineIP.text = lastEngineIp;
 		ip.text = lastIp;
 		simIP.text = lastSimIp;
 		visualizerIP.text = lastVisualizerIp;
+
+		engineIP.Rebuild(CanvasUpdate.PreRender);
+		ip.Rebuild(CanvasUpdate.PreRender);
+		simIP.Rebuild(CanvasUpdate.PreRender);
+		visualizerIP.Rebuild(CanvasUpdate.PreRender);
 
 		/*if (robot != null) {
 			Debug.Log("knownObjects cleared!");
@@ -94,6 +100,7 @@ public class Intro : MonoBehaviour {
 
 	private void Update()
 	{
+
 		if (RobotEngineManager.instance != null) {
 			DisconnectionReason reason = RobotEngineManager.instance.GetLastDisconnectionReason ();
 			if (reason != DisconnectionReason.None) {

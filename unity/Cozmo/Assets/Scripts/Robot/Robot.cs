@@ -223,10 +223,10 @@ public class Robot
 	}
 
 	public enum ObservedObjectListType {
-		OBSERVED_RECENTLY,
+		KNOWN_IN_RANGE,
 		MARKERS_SEEN,
 		KNOWN,
-		KNOWN_IN_RANGE
+		OBSERVED_RECENTLY
 	}
 	
 	protected ObservedObjectListType observedObjectListType = ObservedObjectListType.MARKERS_SEEN;
