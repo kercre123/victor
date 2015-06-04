@@ -23,13 +23,21 @@ public enum AnkiResult {
 	RESULT_FAIL_INVALID_SIZE         = 0x05000000,
 }
 
+// http://answers.unity3d.com/questions/191234/unity-ios-function-pointers.html
+[AttributeUsage(AttributeTargets.Method)]
+public class MonoPInvokeCallbackAttribute : System.Attribute
+{
+	private Type type;
+	public MonoPInvokeCallbackAttribute( Type t ) { type = t; }
+}
+
 public static class CozmoBinding {
 
-	[DllImport ("__Internal")]
-	public static extern bool cozmo_has_log(out int receive_length);
+	//[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+	public delegate void LogCallback(int logLevel, [MarshalAs(UnmanagedType.LPStr)] string message);
 
 	[DllImport ("__Internal")]
-	public static extern void cozmo_pop_log(StringBuilder buffer, int max_length);
+	public static extern bool cozmo_set_log_callback(LogCallback callback, int min_log_level);
 
 	[DllImport("__Internal")]
 	public static extern int cozmo_startup (string configuration_data);
