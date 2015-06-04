@@ -27,6 +27,8 @@
 namespace Anki {
 namespace Cozmo {
  
+  static const ActionList::SlotHandle DriveAndManipulateSlot = 0;
+  
   /*
    *  Helper macro for generating a callback lambda that captures "this" and 
    *  calls the corresponding ProcessMessage method. For example, for a 
@@ -186,7 +188,7 @@ namespace Cozmo {
     Robot* robot = GetRobotByID(msg.robotID);
     
     if(robot != nullptr) {
-      robot->GetActionList().AddAction(new TurnInPlaceAction(msg.angle_rad));
+      robot->GetActionList().QueueActionAtEnd(DriveAndManipulateSlot, new TurnInPlaceAction(msg.angle_rad));
     }
   }
   
@@ -265,10 +267,10 @@ namespace Cozmo {
       } else {
         objectID = msg.objectID;
       }
-      robot->GetActionList().AddAction(new FaceObjectAction(objectID,
-                                                            Radians(msg.turnAngleTol),
-                                                            Radians(msg.maxTurnAngle),
-                                                            msg.headTrackWhenDone));
+      robot->GetActionList().QueueActionAtEnd(DriveAndManipulateSlot, new FaceObjectAction(objectID,
+                                                                                           Radians(msg.turnAngleTol),
+                                                                                           Radians(msg.maxTurnAngle),
+                                                                                           msg.headTrackWhenDone));
     }
   }
   
@@ -383,7 +385,7 @@ namespace Cozmo {
       // TODO: Better way to specify the target pose's parent
       Pose3d targetPose(msg.rad, Z_AXIS_3D(), Vec3f(msg.x_mm, msg.y_mm, 0), robot->GetWorldOrigin());
       targetPose.SetName("GotoPoseTarget");
-      robot->GetActionList().AddAction(new DriveToPoseAction(targetPose, msg.useManualSpeed));
+      robot->GetActionList().QueueActionAtEnd(DriveAndManipulateSlot, new DriveToPoseAction(targetPose, msg.useManualSpeed));
     }
   }
   
@@ -400,7 +402,7 @@ namespace Cozmo {
       // object.
       // TODO: Better way to set the object's z height and parent? (This assumes object's origin is 22mm off the ground!)
       Pose3d targetPose(msg.rad, Z_AXIS_3D(), Vec3f(msg.x_mm, msg.y_mm, 22.f), robot->GetWorldOrigin());
-      robot->GetActionList().AddAction(new PlaceObjectOnGroundAtPoseAction(*robot, targetPose, msg.useManualSpeed), numRetries);
+      robot->GetActionList().QueueActionAtEnd(DriveAndManipulateSlot, new PlaceObjectOnGroundAtPoseAction(*robot, targetPose, msg.useManualSpeed), numRetries);
     }
   }
   
@@ -411,7 +413,7 @@ namespace Cozmo {
     Robot* robot = GetRobotByID(robotID);
     
     if(robot != nullptr) {
-      robot->GetActionList().AddAction(new PlaceObjectOnGroundAction());
+      robot->GetActionList().QueueActionAtEnd(DriveAndManipulateSlot, new PlaceObjectOnGroundAction());
     }
   }
   
@@ -499,11 +501,11 @@ namespace Cozmo {
       }
       
       if(static_cast<bool>(msg.usePreDockPose)) {
-        robot->GetActionList().AddAction(new DriveToPickAndPlaceObjectAction(selectedObjectID, msg.useManualSpeed), numRetries);
+        robot->GetActionList().QueueActionAtEnd(DriveAndManipulateSlot, new DriveToPickAndPlaceObjectAction(selectedObjectID, msg.useManualSpeed), numRetries);
       } else {
         PickAndPlaceObjectAction* action = new PickAndPlaceObjectAction(selectedObjectID, msg.useManualSpeed);
         action->SetPreActionPoseAngleTolerance(-1.f); // disable pre-action pose distance check
-        robot->GetActionList().AddAction(action, numRetries);
+        robot->GetActionList().QueueActionAtEnd(DriveAndManipulateSlot, action, numRetries);
       }
     }
   }
@@ -525,7 +527,7 @@ namespace Cozmo {
       }
       
       DriveToObjectAction* action = new DriveToObjectAction(selectedObjectID, msg.distance_mm, msg.useManualSpeed);
-      robot->GetActionList().AddAction(action, numRetries);
+      robot->GetActionList().QueueActionAtEnd(DriveAndManipulateSlot, action, numRetries);
       
     }
   }
@@ -547,11 +549,11 @@ namespace Cozmo {
       }
       
       if(static_cast<bool>(msg.usePreDockPose)) {
-        robot->GetActionList().AddAction(new DriveToRollObjectAction(selectedObjectID, msg.useManualSpeed), numRetries);
+        robot->GetActionList().QueueActionAtEnd(DriveAndManipulateSlot, new DriveToRollObjectAction(selectedObjectID, msg.useManualSpeed), numRetries);
       } else {
         RollObjectAction* action = new RollObjectAction(selectedObjectID, msg.useManualSpeed);
         action->SetPreActionPoseAngleTolerance(-1.f); // disable pre-action pose distance check
-        robot->GetActionList().AddAction(action, numRetries);
+        robot->GetActionList().QueueActionAtEnd(DriveAndManipulateSlot, action, numRetries);
       }
     }
   }
@@ -569,10 +571,10 @@ namespace Cozmo {
       ObjectID selectedObjectID = robot->GetBlockWorld().GetSelectedObject();
       
       if(static_cast<bool>(msg.usePreDockPose)) {
-        robot->GetActionList().AddAction(new DriveToAndTraverseObjectAction(selectedObjectID, msg.useManualSpeed), numRetries);
+        robot->GetActionList().QueueActionAtEnd(DriveAndManipulateSlot, new DriveToAndTraverseObjectAction(selectedObjectID, msg.useManualSpeed), numRetries);
       } else {
         TraverseObjectAction* action = new TraverseObjectAction(selectedObjectID, msg.useManualSpeed);
-        robot->GetActionList().AddAction(action, numRetries);
+        robot->GetActionList().QueueActionAtEnd(DriveAndManipulateSlot, action, numRetries);
       }
       
     }
