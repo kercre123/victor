@@ -61,10 +61,10 @@ public class TouchCamera : MonoBehaviour {
 
 				Vector2 delta = (Vector2)newTouchPosition - (Vector2)oldTouchPositions[0];
 
-				float panFactor = Mathf.Abs(delta.x) / camera.pixelWidth;
+				float panFactor = Mathf.Abs(delta.x) / GetComponent<Camera>().pixelWidth;
 				float panAngle = Mathf.Lerp(0f, 180f, panFactor ) * (delta.x >= 0f ? 1f : -1f);
 
-				float pitchFactor = Mathf.Abs(delta.y) / camera.pixelHeight;
+				float pitchFactor = Mathf.Abs(delta.y) / GetComponent<Camera>().pixelHeight;
 				float pitchAngle = Mathf.Lerp(0f, 90f, pitchFactor ) * (delta.y >= 0f ? -1f : 1f);
 
 				//for now target is origin...this will likely change to a transform
@@ -112,7 +112,7 @@ public class TouchCamera : MonoBehaviour {
 
 				//transform.position += transform.TransformDirection((Vector3)((oldTouchPositions[0] + oldTouchPositions[1] - screen) * camera.orthographicSize / screen.y));
 				//transform.localRotation *= Quaternion.Euler(new Vector3(0, 0, Mathf.Asin(Mathf.Clamp((oldTouchVector.y * newTouchVector.x - oldTouchVector.x * newTouchVector.y) / oldTouchDistance / newTouchDistance, -1f, 1f)) / 0.0174532924f));
-				camera.orthographicSize *= oldTouchDistance / newTouchDistance;
+				GetComponent<Camera>().orthographicSize *= oldTouchDistance / newTouchDistance;
 				//transform.position -= transform.TransformDirection((newTouchPositions[0] + newTouchPositions[1] - screen) * camera.orthographicSize / screen.y);
 
 				oldTouchPositions[0] = newTouchPositions[0];
