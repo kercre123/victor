@@ -428,6 +428,11 @@
               <FileType>8</FileType>
               <FilePath>.\hal\battery.cpp</FilePath>
             </File>
+            <File>
+              <FileName>lights.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\hal\lights.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
