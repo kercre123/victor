@@ -60,7 +60,7 @@ public class DynamicSliderFrame : MonoBehaviour, IPointerDownHandler, IPointerUp
 			slider.OnPointerDown(eventData);
 			if(sliderTrigger != null) sliderTrigger.OnPointerDown(eventData);
 		}
-		else if(RectTransformUtility.RectangleContainsScreenPoint(sliderTrans, eventData.position, canvas.camera)) {
+		else if(RectTransformUtility.RectangleContainsScreenPoint(sliderTrans, eventData.position, canvas.GetComponent<Camera>())) {
 			slider.OnPointerDown(eventData);
 			if(sliderTrigger != null) sliderTrigger.OnPointerDown(eventData);
 		}
@@ -75,7 +75,7 @@ public class DynamicSliderFrame : MonoBehaviour, IPointerDownHandler, IPointerUp
 
 			if(hintsToHide != null) hintsToHide.gameObject.SetActive(true);
 		}
-		else if(RectTransformUtility.RectangleContainsScreenPoint(sliderTrans, eventData.position, canvas.camera)) {
+		else if(RectTransformUtility.RectangleContainsScreenPoint(sliderTrans, eventData.position, canvas.GetComponent<Camera>())) {
 			slider.OnPointerUp(eventData);
 			if(sliderTrigger != null) sliderTrigger.OnPointerUp(eventData);
 		}
@@ -86,7 +86,7 @@ public class DynamicSliderFrame : MonoBehaviour, IPointerDownHandler, IPointerUp
 			slider.OnDrag(eventData);
 			if(sliderTrigger != null) sliderTrigger.OnDrag(eventData);
 		}
-		else if(RectTransformUtility.RectangleContainsScreenPoint(sliderTrans, eventData.position, canvas.camera)) {
+		else if(RectTransformUtility.RectangleContainsScreenPoint(sliderTrans, eventData.position, canvas.GetComponent<Camera>())) {
 			slider.OnDrag(eventData);
 			if(sliderTrigger != null) sliderTrigger.OnDrag(eventData);
 		}
