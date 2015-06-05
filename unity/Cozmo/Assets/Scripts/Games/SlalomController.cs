@@ -210,10 +210,22 @@ public class SlalomController : GameController {
 		previewCourseLightsTimer = previewCourseLightsDelay;
 	}
 
+	bool goingToFinalGoal = true;
 	void GotoStartPose() {
 		float rad;
 		startPosition = GameLayoutTracker.instance.GetStartingPositionFromLayout(out rad, out startFacing);
-		robot.GotoPose(startPosition.x, startPosition.y, rad);
+		Vector3 robotToStart = startPosition - robot.WorldPosition;
+		if(robotToStart.magnitude > CozmoUtil.BLOCK_LENGTH_MM * 4f) {
+			Vector3 halfWayPoint = robot.WorldPosition + robotToStart.normalized * CozmoUtil.BLOCK_LENGTH_MM * 4f;
+			halfWayPoint = robot.NudgePositionOutOfObjects(halfWayPoint);
+			rad = MathUtil.SignedVectorAngle(Vector3.right, robotToStart.normalized, Vector3.forward) * Mathf.Deg2Rad;
+			robot.GotoPose(halfWayPoint.x, halfWayPoint.y, rad);
+			goingToFinalGoal = false;
+		}
+		else {
+			goingToFinalGoal = true;
+			robot.GotoPose(startPosition.x, startPosition.y, rad);
+		}
 		CozmoBusyPanel.instance.SetDescription("Cozmo is getting in the starting position.");
 		atYourMark = false;
 		wasAtMark = false;
@@ -224,7 +236,7 @@ public class SlalomController : GameController {
 
 		switch(action_type) {
 			case RobotActionType.DRIVE_TO_POSE:
-				if(success) {
+				if(success && goingToFinalGoal) {
 					atYourMark = true;
 					if(RobotEngineManager.instance != null) RobotEngineManager.instance.SuccessOrFailure -= CheckForGotoPoseCompletion;
 				}

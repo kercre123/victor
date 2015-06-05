@@ -243,7 +243,7 @@ namespace Cozmo {
 #   endif
     
     if(!success) {
-      PRINT_NAMED_ERROR("CozmoGameHost.OnEventRaise.PlaySoundForRobot",
+      PRINT_NAMED_ERROR("CozmoGameImpl.OnEventRaise.PlaySoundForRobot",
                         "SoundManager failed to play sound ID %d.\n", soundID);
     }
   }
@@ -332,9 +332,9 @@ namespace Cozmo {
   {
     const bool success = ConnectToRobot(robotID);
     if(success) {
-      PRINT_NAMED_INFO("CozmoGameHost.OnEventRaised", "Connected to robot %d!\n", robotID);
+      PRINT_NAMED_INFO("CozmoGameImpl.OnEventRaised", "Connected to robot %d!\n", robotID);
     } else {
-      PRINT_NAMED_ERROR("CozmoGameHost.OnEventRaised", "Failed to connected to robot %d!\n", robotID);
+      PRINT_NAMED_ERROR("CozmoGameImpl.OnEventRaised", "Failed to connected to robot %d!\n", robotID);
     }
   }
   
@@ -342,9 +342,9 @@ namespace Cozmo {
   {
     const bool success = ConnectToUiDevice(deviceID);
     if(success) {
-      PRINT_NAMED_INFO("CozmoGameHost.OnEventRaised", "Connected to UI device %d!\n", deviceID);
+      PRINT_NAMED_INFO("CozmoGameImpl.OnEventRaised", "Connected to UI device %d!\n", deviceID);
     } else {
-      PRINT_NAMED_ERROR("CozmoGameHost.OnEventRaised", "Failed to connected to UI device %d!\n", deviceID);
+      PRINT_NAMED_ERROR("CozmoGameImpl.OnEventRaised", "Failed to connected to UI device %d!\n", deviceID);
     }
   }
    */

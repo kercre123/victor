@@ -14,6 +14,7 @@ public class LevelSelectPanel : MonoBehaviour {
 	[SerializeField] GameObject levelSelectionPrefab;
 	[SerializeField] ScrollRect scrollRect;
 	[SerializeField] Sprite[] previews;
+	[SerializeField] AudioClip clickSound;
 
 	List<LevelSelectButton> levelSelectButtons = new List<LevelSelectButton>();
 
@@ -55,14 +56,15 @@ public class LevelSelectPanel : MonoBehaviour {
 	}
 
 	void LaunchGame(int level) {
-
+		if(clickSound != null) AudioManager.PlayOneShot(clickSound);
 		//Debug.Log("LevelSelectPanel LaunchGame gameName("+gameName+") level("+level+")");
 		PlayerPrefs.SetString("CurrentGame", gameName);
 		PlayerPrefs.SetInt(gameName + "_CurrentLevel", level);
 
 		string sceneName = Regex.Replace(gameName, "[ ]", string.Empty);
-
+		
 		Application.LoadLevel(sceneName);
+
 	}
 
 }

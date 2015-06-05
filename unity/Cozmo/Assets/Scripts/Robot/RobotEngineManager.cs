@@ -66,7 +66,7 @@ public class RobotEngineManager : MonoBehaviour {
 	private bool engineHostInitialized = false;
 	
 	private StringBuilder logBuilder = null;
-	
+
 	private void Start()
 	{
 		if (engineHostInitialized) {
@@ -99,9 +99,153 @@ public class RobotEngineManager : MonoBehaviour {
 			}
 		}
 	}
+
+	// This reference pins the delegate in memory.
+	private CozmoBinding.LogCallback callback;
+
+	[MonoPInvokeCallback (typeof (CozmoBinding.LogCallback))]
+	private static void OnLogReceived(int logLevel, string message)
+	{
+		LogFromCpp (logLevel, message);
+	}
+
+	// finalizer to make sure that even in odd cases,
+	// the value of callback is 
+	~RobotEngineManager()
+	{
+		CozmoBinding.cozmo_set_log_callback (null, 0);
+		callback = null;
+	}
 #endif
+
+	#region Logging
+	private static object syncLogs = new object();
+	private static FileStream logFile = null;
+	private static TextWriter logWriter = null;
+	private static bool flushLogs = false;
+
+	private static bool IsLogOpen { get { return (logWriter != null); } }
+
+	public static void UpdateFlushLogsValue()
+	{
+		lock (syncLogs) {
+			flushLogs = PlayerPrefs.GetInt ("FlushLogs", 1) != 0;
+		}
+	}
+
+	private static void OpenLogFile()
+	{
+		lock (syncLogs) {
+			OptionsScreen.RefreshSettings -= UpdateFlushLogsValue;
+			OptionsScreen.RefreshSettings += UpdateFlushLogsValue;
+
+			UpdateFlushLogsValue();
+			CloseLogFile ();
+
+			try {
+				string logFilename = "CozmoLog_" + DateTime.Now.ToString ("yyyy-MM-dd_HH-mm-ss") + ".txt";
+				logFile = File.Open (Path.Combine (Application.persistentDataPath, logFilename), FileMode.Append, FileAccess.Write, FileShare.Read);
+				logWriter = new StreamWriter (logFile, Encoding.UTF8);
+
+				Application.RegisterLogCallbackThreaded (LogToFile);
+			} catch (Exception e) {
+				CloseLogFile ();
+				Debug.LogException (e); 
+			}
+		}
+	}
+
+	// there doesn't seem to be a good time to call this,
+	// so we'll just rely on destructors to close the files
+	private static void CloseLogFile()
+	{
+		lock (syncLogs) {
+			if (logWriter != null) {
+				try {
+					logWriter.Flush ();
+					logWriter.Close ();
+					logWriter = null;
+				} catch (Exception e) {
+					logWriter = null;
+					Debug.LogException (e);
+				}
+			}
+
+			if (logFile != null) {
+				try {
+					logFile.Flush ();
+					logFile.Close ();
+					logFile = null;
+				} catch (Exception e) {
+					logFile = null;
+					Debug.LogException (e);
+				}
+			}
+		}
+	}
+
+	private static void LogToFile(string condition, string stackTrace, LogType logType)
+	{
+		lock (syncLogs) {
+			if (logWriter != null) {
+				try {
+					logWriter.WriteLine (condition);
+					if (!string.IsNullOrEmpty (stackTrace)) {
+						logWriter.WriteLine (stackTrace);
+					}
+
+					// NOTE: Will take time to flush to file. Can be disabled for less-rigorous logging.
+					if (flushLogs) {
+						logWriter.Flush ();
+					}
+				} catch (Exception e) {
+					CloseLogFile ();
+					Debug.LogException (e);
+				}
+			}
+		}
+	}
+
+	private static void LogFromCpp(int logLevel, string message)
+	{
+		lock (syncLogs) {
+			if (logWriter != null) {
+				try {
+					logWriter.WriteLine (message);
+				
+					// NOTE: Will take time to flush to file. Can be disabled for less-rigorous logging.
+					if (flushLogs) {
+						logWriter.Flush ();
+					}
+				} catch (Exception e) {
+					CloseLogFile ();
+					Debug.LogException (e);
+				}
+			} else {
+				if (logLevel < 4) {
+					Debug.Log (message);
+				} else if (logLevel < 5) {
+					Debug.LogWarning (message);
+				} else {
+					Debug.LogError (message);
+				}
+			}
+		}
+	}
+	#endregion
+
 	private void Awake()
 	{
+		if (!IsLogOpen) {
+			OpenLogFile ();
+		}
+
+#if !UNITY_EDITOR
+		OnLogReceived(0, "Switching to Unity logging.");
+		callback = OnLogReceived;
+		CozmoBinding.cozmo_set_log_callback (callback, 0);
+#endif
+
 		EndSave_callback = EndSave;
 		Message = new U2G.Message();
 	}
@@ -136,6 +280,11 @@ public class RobotEngineManager : MonoBehaviour {
 	
 	private void OnEnable()
 	{
+		if (!IsLogOpen) {
+			OpenLogFile();
+		}
+		UpdateFlushLogsValue();
+
 		if (instance != null && instance != this) {
 			Destroy (gameObject);
 			return;
@@ -174,23 +323,31 @@ public class RobotEngineManager : MonoBehaviour {
 	 
 	private void Update()
 	{
+
 		if(Input.GetKeyDown(KeyCode.Mouse3)) Debug.Break();
 
+		Profiler.BeginSample("channel.Update");
 		if (channel != null) {
 			channel.Update ();
 		}
+		Profiler.EndSample();
 
+		Profiler.BeginSample("robots CooldownTimers");
 		for(int i=0; i<robotList.Count; i++) {
 			robotList[i].CooldownTimers(Time.deltaTime);
 		}
+		Profiler.EndSample();
 
+		Profiler.BeginSample("isRobotConnected");
 		float robotStateTimeout = 20f;
 		if (isRobotConnected && lastRobotStateMessage + robotStateTimeout < Time.realtimeSinceStartup) {
 			Debug.LogError ("No robot state for " + robotStateTimeout.ToString("0.00") + " seconds.", this);
 			Disconnect ();
 			Disconnected (DisconnectionReason.RobotConnectionTimedOut);
 		}
+		Profiler.EndSample();
 
+		Profiler.BeginSample("lock (sync)");
 		// logging from async IO thread
 		lock (sync) {
 			if (safeLogs.Count > 0) {
@@ -205,26 +362,16 @@ public class RobotEngineManager : MonoBehaviour {
 				}
 			}
 		}
+		Profiler.EndSample();
+
 #if !UNITY_EDITOR
-		if (logBuilder == null) {
-			logBuilder = new StringBuilder (1024);
-		}
-		
-		int length;
-		while (CozmoBinding.cozmo_has_log(out length)) {
-			if (logBuilder.Capacity < length) {
-				logBuilder.Capacity = Math.Max (logBuilder.Capacity * 2, length);
-			}
-			
-			CozmoBinding.cozmo_pop_log (logBuilder, logBuilder.Capacity);
-			Debug.LogError (logBuilder.ToString (), this);
-		}
-		
 		if (engineHostInitialized) {
+			Profiler.BeginSample("CozmoBinding.cozmo_update");
 			AnkiResult result = (AnkiResult)CozmoBinding.cozmo_update (Time.realtimeSinceStartup);
 			if (result != AnkiResult.RESULT_OK) {
 				Debug.LogError ("cozmo_engine_update error: " + result.ToString(), this);
 			}
+			Profiler.EndSample();
 		}
 #endif
 	}

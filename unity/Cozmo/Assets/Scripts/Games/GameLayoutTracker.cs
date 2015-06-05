@@ -35,7 +35,10 @@ public class GameLayoutTracker : MonoBehaviour {
 	[SerializeField] bool debug = false;
 	[SerializeField] List<GameLayout> layouts;
 
+	[SerializeField] GameObject cozmoMarker = null;
 	[SerializeField] GameObject inventoryPanel = null;
+	[SerializeField] Text textPhase;
+
 	[SerializeField] Text inventoryTitle;
 	[SerializeField] Button button_manualBuild;
 	[SerializeField] Button button_autoBuild;
@@ -93,7 +96,7 @@ public class GameLayoutTracker : MonoBehaviour {
 	bool hidden = false;
 	bool ignoreActiveColor = false;
 	List<LayoutBlock2d> blocks2d = new List<LayoutBlock2d>();
-	bool lastValidPredictedDrop = false;
+	bool lastValidPredictedPlacement = false;
 	int autoBuildFails = 0;
 	
 	List<BuildInstructionsCube> validated = new List<BuildInstructionsCube>();
@@ -107,6 +110,9 @@ public class GameLayoutTracker : MonoBehaviour {
 	bool iStartAutoBuild = false;
 
 	bool skipBuildForThisLayout = false;
+	bool showVisualizations = false;
+
+	ObservedObject nextObjectToPlace = null;
 
 	#endregion
 
@@ -115,6 +121,9 @@ public class GameLayoutTracker : MonoBehaviour {
 	void OnEnable () {
 
 		instance = this;
+
+		OptionsScreen.RefreshSettings += RefreshSettings;
+		RefreshSettings();
 
 		if(!blocksInitialized) {
 			for(int i=0; i<layouts.Count; i++) {
@@ -149,7 +158,7 @@ public class GameLayoutTracker : MonoBehaviour {
 
 		validCount = 0;
 		lastValidCount = 0;
-		lastValidPredictedDrop = false;
+		lastValidPredictedPlacement = false;
 		hidden = false;
 
 		string fullName = currentGameName + " #" + currentLevelNumber;
@@ -171,6 +180,8 @@ public class GameLayoutTracker : MonoBehaviour {
 		}
 
 		if(RobotEngineManager.instance != null) RobotEngineManager.instance.SuccessOrFailure += SuccessOrFailure;
+
+		HideCozmoMarker();
 	}
 
 	void Update () {
@@ -199,13 +210,14 @@ public class GameLayoutTracker : MonoBehaviour {
 
 		if(instance == this) instance = null;
 		
-		if(ghostBlock != null) ghostBlock.gameObject.SetActive(false);
+		HideCozmoMarker();
 	
 		inventoryPanel.SetActive(false);
 		layoutInstructionsPanel.SetActive(false);
 		layoutInstructionsCamera.gameObject.SetActive(false);
 		
 		if(RobotEngineManager.instance != null) RobotEngineManager.instance.SuccessOrFailure -= SuccessOrFailure;
+		OptionsScreen.RefreshSettings -= RefreshSettings;
 	}
 	
 	#endregion
@@ -263,8 +275,19 @@ public class GameLayoutTracker : MonoBehaviour {
 		return Phase;
 	}
 
+	string GetPhaseName(LayoutTrackerPhase phase) {
+		switch(phase) {
+			case LayoutTrackerPhase.AUTO_BUILDING: return "AUTO-BUILDING";
+
+		}
+		
+		return phase.ToString();
+	}
+
 	void EnterPhase() {
 		Debug.Log("EnterPhase("+Phase+")");
+		
+		if(textPhase != null) textPhase.text = GetPhaseName(Phase);
 
 		switch(Phase) {
 			case LayoutTrackerPhase.INVENTORY:
@@ -331,6 +354,8 @@ public class GameLayoutTracker : MonoBehaviour {
 
 	void Enter_INVENTORY() {
 
+		if(robot != null) robot.ClearAllObjects();
+
 		inventory.Clear ();
 		blocks2d.Clear();
 		
@@ -359,7 +384,7 @@ public class GameLayoutTracker : MonoBehaviour {
 		if(button_autoBuild != null) button_autoBuild.gameObject.SetActive(false);
 		if(image_localizedCheck != null) image_localizedCheck.gameObject.SetActive(false);
 		if(inventoryHints != null) inventoryHints.SetActive(true);
-
+		inventoryPanel.SetActive(true);
 		layoutInstructionsCamera.gameObject.SetActive(false);
 		layoutInstructionsPanel.SetActive(false);
 
@@ -441,6 +466,8 @@ public class GameLayoutTracker : MonoBehaviour {
 	}
 	void Exit_INVENTORY() {
 		inventoryPanel.SetActive(false);
+		RobotEngineManager.instance.VisualizeQuad(33, CozmoPalette.ColorToUInt(Color.clear), Vector3.zero, Vector3.zero, Vector3.zero, Vector3.zero);
+		RobotEngineManager.instance.VisualizeQuad(34, CozmoPalette.ColorToUInt(Color.clear), Vector3.zero, Vector3.zero, Vector3.zero, Vector3.zero);
 	}
 
 	void Enter_AUTO_BUILDING() {
@@ -448,6 +475,8 @@ public class GameLayoutTracker : MonoBehaviour {
 		autoBuildFails = 0;
 		AnalyzeLayoutForValidation();
 		buttonStartPlaying.gameObject.SetActive(false);
+		nextObjectToPlace = null;
+		RefreshCozmoMarker();
 	}
 	void Update_AUTO_BUILDING() {
 		
@@ -456,44 +485,56 @@ public class GameLayoutTracker : MonoBehaviour {
 		layoutInstructionsPanel.SetActive(!hidden);
 		layoutInstructionsCamera.gameObject.SetActive(!hidden);
 		
-		if(robot != null) {
+		if(validCount != currentLayout.blocks.Count && robot != null) {
 			
 			if(robot.isBusy) {
 				//coz is doing shit
-				
 			}
 			else if(robot.carryingObject != null) {
-				Debug.Log("frame("+Time.frameCount+") AUTO_BUILDING AttemptAssistedPlacement");
+				//Debug.Log("frame("+Time.frameCount+") AUTO_BUILDING AttemptAssistedPlacement");
 				AttemptAssistedPlacement();
 			}
 			else {
-				ObservedObject nextObject = GetObservedObjectForNextLayoutBlock();
-				if(nextObject != null) {
-					Debug.Log("frame("+Time.frameCount+") AUTO_BUILDING GetObservedObjectForNextLayoutBlock nextObject("+nextObject+")");
-					robot.PickAndPlaceObject(nextObject);
+				nextObjectToPlace = GetObservedObjectForNextLayoutBlock();
+				if(nextObjectToPlace != null) {
+					string description = null;
+					CozmoBusyPanel.instance.SetDescription( "pick-up\n", nextObjectToPlace, ref description );
+					//Debug.Log("frame("+Time.frameCount+") AUTO_BUILDING GetObservedObjectForNextLayoutBlock nextObject("+nextObjectToPlace+")");
+					robot.PickAndPlaceObject(nextObjectToPlace);
+				}
+				else {
+					Debug.LogWarning("frame("+Time.frameCount+") GetObservedObjectForNextLayoutBlock could not find an apt nextObject to place.");
 				}
 			}
+			RefreshValidationSounds();
+			RefreshDropLocationHint();
 		}
-
-		RefreshValidationSounds();
-		RefreshDropLocationHint();
+		RefreshCozmoMarker();
 	}
 	void Exit_AUTO_BUILDING() {
 		layoutInstructionsPanel.SetActive(false);
 		layoutInstructionsCamera.gameObject.SetActive(false);
 		ObservedObject.SignificantChangeDetected -= SignificantChangeDetectedInObservedObject;
+		HideCozmoMarker();
 	}	
 
 	void Enter_BUILDING() {
 		ObservedObject.SignificantChangeDetected += SignificantChangeDetectedInObservedObject;
 		AnalyzeLayoutForValidation();
 		buttonStartPlaying.gameObject.SetActive(false);
+		nextObjectToPlace = null;
+		RefreshCozmoMarker();
 	}
 	void Update_BUILDING() {
 		textProgress.text = validCount + " / " + currentLayout.blocks.Count;
 		layoutInstructionsPanel.SetActive(!hidden);
 		layoutInstructionsCamera.gameObject.SetActive(!hidden);
 
+		if(robot.carryingObject != null) {
+			nextObjectToPlace = robot.carryingObject;
+		}
+
+		RefreshCozmoMarker();
 		RefreshValidationSounds();
 		RefreshDropLocationHint();
 	}
@@ -501,10 +542,12 @@ public class GameLayoutTracker : MonoBehaviour {
 		layoutInstructionsPanel.SetActive(false);
 		layoutInstructionsCamera.gameObject.SetActive(false);
 		ObservedObject.SignificantChangeDetected -= SignificantChangeDetectedInObservedObject;
+		HideCozmoMarker();
 	}
 
 	void Enter_COMPLETE() {
-		textProgress.text = currentLayout.blocks.Count + " / " + currentLayout.blocks.Count;
+		int blockCount = currentLayout.blocks.Count;
+		textProgress.text = blockCount.ToString() + " / " + blockCount.ToString();
 		layoutInstructionsPanel.SetActive(!hidden);
 		layoutInstructionsCamera.gameObject.SetActive(!hidden);
 
@@ -530,30 +573,61 @@ public class GameLayoutTracker : MonoBehaviour {
 	void Update_DISABLED() {}
 	void Exit_DISABLED() {}
 
+	void HideCozmoMarker() {
+		if(cozmoMarker != null) cozmoMarker.SetActive(false);
+		if(ghostBlock != null) {
+			ghostBlock.Hidden = true;
+			ghostBlock.Highlighted = false;
+		}
+	}
+
+	void RefreshCozmoMarker() {
+		if(!showVisualizations) {
+			HideCozmoMarker();
+			return;
+		}
+
+		if(cozmoMarker != null) {
+			cozmoMarker.SetActive(true);
+			cozmoMarker.transform.position = CozmoUtil.Vector3CozmoToUnitySpace(robot.WorldPosition) * currentLayout.scale / CozmoUtil.BLOCK_LENGTH_MM;
+			cozmoMarker.transform.rotation = Quaternion.LookRotation(CozmoUtil.Vector3CozmoToUnitySpace(robot.Forward), Vector3.up);
+		}
+		
+
+		PlaceGhostForObservedObject(nextObjectToPlace);
+	}
+
 	void RefreshDropLocationHint() {
 		
-		bool validPredictedDrop = false;
+		bool validPredictedPlacement = false;
 		bool shouldBeStackedInstedOfDropped = false;
-		
+		uint colorCode = CozmoPalette.ColorToUInt(Color.clear);
+
 		if(validCount < currentLayout.blocks.Count && robot != null && robot.carryingObject != null) {
 			string error;
 			LayoutErrorType errorType;
 			
-			validPredictedDrop = PredictDropValidation(robot.carryingObject, out error, out errorType, out shouldBeStackedInstedOfDropped);
+			validPredictedPlacement = PredictDropValidation(robot.carryingObject, out error, out errorType, out shouldBeStackedInstedOfDropped);
 			
-			if(!shouldBeStackedInstedOfDropped && lastValidPredictedDrop != validPredictedDrop) {
-				AudioManager.PlayOneShot(validPredictedDrop ? validPredictedDropSound : invalidPredictedDropSound);
+			if(shouldBeStackedInstedOfDropped && robot.selectedObjects.Count > 0) {
+				validPredictedPlacement = PredictStackValidation(robot.carryingObject,robot.selectedObjects[0], out error, out errorType, true);
+			}
+
+			if(lastValidPredictedPlacement != validPredictedPlacement) {
+				AudioManager.PlayOneShot(validPredictedPlacement ? validPredictedDropSound : invalidPredictedDropSound);
 			}
 		}
-		
-		if (shouldBeStackedInstedOfDropped && lastValidPredictedDrop) {
-			robot.SetBackpackLEDs(CozmoPalette.ColorToUInt(Color.clear));
+
+		if(validPredictedPlacement) {
+			colorCode = CozmoPalette.ColorToUInt(Color.green);
 		}
-		else if(lastValidPredictedDrop != validPredictedDrop) {
-			//Debug.Log ("validPredictedDrop("+validPredictedDrop+")");
-			robot.SetBackpackLEDs(validPredictedDrop ? CozmoPalette.ColorToUInt(Color.green) : CozmoPalette.ColorToUInt(Color.clear));
+		else if(shouldBeStackedInstedOfDropped && robot.selectedObjects.Count > 0) {
+			colorCode = CozmoPalette.ColorToUInt(Color.red);
 		}
-		lastValidPredictedDrop = validPredictedDrop;
+
+		robot.SetBackpackLEDs(colorCode);
+
+		lastValidPredictedPlacement = validPredictedPlacement;
 
 	}
 
@@ -656,7 +730,7 @@ public class GameLayoutTracker : MonoBehaviour {
 		for(int i=0; i<layout.blocks.Count; i++) {
 			layout.blocks[i].Hidden = false;
 			layout.blocks[i].Highlighted = false;
-			layout.blocks[i].Validated = true;
+			layout.blocks[i].Validated = false;
 			layout.blocks[i].AssignedObject = null;
 		}
 	}
@@ -670,34 +744,49 @@ public class GameLayoutTracker : MonoBehaviour {
 		GameLayout layout = currentLayout;
 		if(layout == null) return;
 		
+		potentialObservedObjects.Clear();
+		
+		if(robot.knownObjects.Count == 0) return;
+		
+		potentialObservedObjects.AddRange(robot.knownObjects);
+
 		//first loop through and clear our old assignments
 		for(int layoutBlockIndex=0; layoutBlockIndex<layout.blocks.Count; layoutBlockIndex++) {
 			BuildInstructionsCube block = layout.blocks[layoutBlockIndex];
+//			if(block.Validated && potentialObservedObjects.Contains(block.AssignedObject)) {
+//				potentialObservedObjects.Remove(block.AssignedObject);
+//				validated.Add(block);
+//			}
 			block.Hidden = false;
-			block.Highlighted = true;
-			block.Validated = false;
-			block.AssignedObject = null;
+			block.Highlighted = false;
+			//block.Validated = false;
+			//block.AssignedObject = null;
 		}
 		
 		if(debug) Debug.Log("ValidateBlocks with robot.knownObjects.Count("+robot.knownObjects.Count+")");
 
-		potentialObservedObjects.Clear();
-		
-		if(robot.knownObjects.Count == 0) return;
-
-		potentialObservedObjects.AddRange(robot.knownObjects);
-
 		//loop through our 'ideal' layout blocks and look for known objects that might satisfy the requirements of each
 		for(int layoutBlockIndex=0; layoutBlockIndex<layout.blocks.Count; layoutBlockIndex++) {
 			BuildInstructionsCube block = layout.blocks[layoutBlockIndex];
-			
+
+			//double the lenience for an object that previously satisfied this block
+			ObservedObject previouslyAssigned = null;
+			if(block.Validated) {
+				previouslyAssigned = block.AssignedObject;
+			}
+			block.Validated = false;
+			block.AssignedObject = null;
+
 			if(debug) Debug.Log("attempting to validate block("+block.gameObject.name+") of type("+block.cubeType+")");
 			
 			//search through known objects for one that can be assigned
 			for(int objectIndex=0; objectIndex<potentialObservedObjects.Count; objectIndex++) {
 				
 				ObservedObject newObject = potentialObservedObjects[objectIndex];
-				
+				float extraFudgeFactor = 1f;
+				if(previouslyAssigned == newObject) {
+					extraFudgeFactor = 2f;
+				}
 				if(debug) Debug.Log("checking if knownObject("+newObject+"):index("+objectIndex+"):cubeType("+newObject.cubeType+") can satisfy layoutCube("+block.gameObject.name+")");
 				
 				//cannot validate block in hand
@@ -707,7 +796,7 @@ public class GameLayoutTracker : MonoBehaviour {
 				}
 				
 				//skip objects of the wrong type
-				if(!block.SatisfiedByObject(newObject, distanceFudge, coplanarFudge, angleFudge, true, debug) ) {
+				if(!block.SatisfiedByObject(newObject, distanceFudge*extraFudgeFactor, coplanarFudge*extraFudgeFactor, angleFudge, true, debug) ) {
 					if(debug) Debug.Log("skip object("+CozmoPalette.instance.GetNameForObjectType(newObject.cubeType)+") because it doesn't satisfy layoutCube("+block.gameObject.name+")");
 					continue;
 				}
@@ -732,39 +821,69 @@ public class GameLayoutTracker : MonoBehaviour {
 		block.Validated = true;
 		block.Highlighted = false;
 		potentialObservedObjects.Remove(newObject);
+
+		if(newObject.isActive) {
+			ActiveBlock activeBlock = newObject as ActiveBlock;
+			SetLightCubeToCorrectColor(activeBlock, block);
+		}
+	
+		//if we've successfully placed our intended object, stop visualizing it
+		if(newObject == nextObjectToPlace) nextObjectToPlace = null;
+	}
+
+	void PlaceGhostForCarriedObject() {
+		Vector3 carriedPos = robot.WorldPosition + robot.Forward * CozmoUtil.BLOCK_LENGTH_MM + Vector3.forward * (robot.liftHeight_mm + CozmoUtil.CARRIED_OBJECT_VERTICAL_OFFSET);
+		PlaceGhostForObservedObject(robot.carryingObject, carriedPos, robot.Forward);
+	}
+
+	void PlaceGhostForObservedObject(ObservedObject obj) {
+		if(ghostBlock == null) return;
+		if(obj == null) {
+			ghostBlock.Hidden = true;
+			ghostBlock.Highlighted = false;
+			return;
+		}
+		if(obj == robot.carryingObject) {
+			PlaceGhostForCarriedObject();
+			return;
+		}
+
+		PlaceGhostForObservedObject(obj, obj.WorldPosition, obj.Forward);
 	}
 
 	//place our ghost block in the layout window at the position of the currently failing
-	void PlaceGhostForObservedObject(ObservedObject failingObject, BuildInstructionsCube failingLayoutBlock, ObservedObject validObject, BuildInstructionsCube validLayoutBlock) {
+	void PlaceGhostForObservedObject(ObservedObject obj, Vector3 position, Vector3 facing) {
 		if(ghostBlock == null) return;
-		//just use the ghost for the first fail detected
-		if(ghostBlock.Highlighted) return;
-
-		Vector3 objectOffset = (failingObject.WorldPosition - validObject.WorldPosition) / CozmoUtil.BLOCK_LENGTH_MM;
-		//convert to unity space
-		objectOffset = new Vector3(objectOffset.x, objectOffset.z, objectOffset.y) * validLayoutBlock.Size;
-
-		//if we failed a distance check, let's place the ghost along the relevant line
-		if(failingLayoutBlock.cubeBelow == null) {
-			Vector3 flatOffset = objectOffset;
-			flatOffset.y = 0;
-			float flatMag = flatOffset.magnitude;
-			flatOffset = failingLayoutBlock.transform.position - validLayoutBlock.transform.position;
-			flatOffset.y = 0;
-			flatOffset = flatOffset.normalized * flatMag;
-			objectOffset.x = flatOffset.x;
-			objectOffset.z = flatOffset.z;
+		if(obj == null) {
+			ghostBlock.Hidden = true;
+			ghostBlock.Highlighted = false;
+			return;
 		}
 
+		ghostBlock.WorldPosition = position;
+		ghostBlock.transform.rotation = Quaternion.LookRotation(CozmoUtil.Vector3CozmoToUnitySpace(facing), Vector3.up);
 		//ghostBlock.gameObject.SetActive(true);
-		ghostBlock.transform.position = validLayoutBlock.transform.position + objectOffset;
-		ghostBlock.cubeType = failingLayoutBlock.cubeType;
-		ghostBlock.activeBlockMode = failingLayoutBlock.activeBlockMode;
-		ghostBlock.baseColor = failingLayoutBlock.baseColor;
+
+		ghostBlock.cubeType = obj.cubeType;
+		if(obj.isActive) {
+			ActiveBlock activeBlock = obj as ActiveBlock;
+			ghostBlock.activeBlockMode = activeBlock.mode;
+			if(activeBlock.mode == ActiveBlock.Mode.Off) {
+				ghostBlock.baseColor = Color.grey;
+			}
+			else {
+				ghostBlock.baseColor = CozmoPalette.instance.GetColorForActiveBlockMode(activeBlock.mode);
+			}
+		}
+		else {
+			ghostBlock.activeBlockMode = ActiveBlock.Mode.Off;
+			ghostBlock.baseColor = Color.black;
+		}
+
 		ghostBlock.Hidden = true;
 		ghostBlock.Highlighted = true;
 
-		//Debug.Log("ghostBlock type("+ghostBlock.objectType+") family("+ghostBlock.objectFamily+") baseColor("+ghostBlock.baseColor+")");
+		//Debug.Log("ghostBlock type("+ghostBlock.cubeType+") baseColor("+ghostBlock.baseColor+")");
 	}
 
 	ObservedObject GetKnownObjectForInventorySlot(BuildInstructionsCube block, int dupe) {
@@ -814,14 +933,28 @@ public class GameLayoutTracker : MonoBehaviour {
 		unplacedObjects.Clear();
 		unplacedObjects.AddRange (robot.knownObjects);
 		
+		if(unplacedObjects.Count == 0) return null;
+
 		for (int i=0; i<currentLayout.blocks.Count; i++) {
 			if(!currentLayout.blocks[i].Validated) continue;
 			unplacedObjects.Remove (currentLayout.blocks[i].AssignedObject);
 		}
 		
-		//grab first observedObject that matches our layout cube
-		ObservedObject obj = unplacedObjects.Find ( x => IsMatchingBlock(layoutCube, x, true) );
-		
+		//if our carried object satisfies our needs, just use it
+		ObservedObject obj = (unplacedObjects.Contains(robot.carryingObject) && IsMatchingBlock(layoutCube, robot.carryingObject, true)) ? robot.carryingObject : null;
+
+		if(obj == null) {
+			//or find closest object that matches our needs
+			float closest = float.MaxValue;
+			for(int i=0;i<unplacedObjects.Count;i++) {
+				if(!IsMatchingBlock(layoutCube, unplacedObjects[i], true)) continue;
+				float dist = (unplacedObjects[i].WorldPosition - robot.WorldPosition).magnitude;
+				if(dist > closest) continue;
+				closest = dist;
+				obj = unplacedObjects[i];
+			}
+		}
+
 		return obj;
 	}
 	
@@ -903,6 +1036,16 @@ public class GameLayoutTracker : MonoBehaviour {
 		//robot.isBusy = false;
 	}
 
+	void RefreshSettings() {
+
+		showVisualizations = PlayerPrefs.GetInt("ShowDebugInfo", 0) == 1;
+		if(!showVisualizations) {
+			HideCozmoMarker();		
+		}
+
+		//Debug.Log("GameLayoutTracker RefreshSettings showVisualizations("+showVisualizations+")" );
+	}
+
 	#endregion
 
 	#region PUBLIC METHODS
@@ -956,7 +1099,6 @@ public class GameLayoutTracker : MonoBehaviour {
 		return pose;
 	}
 	
-
 	public Vector3 GetStartingPositionFromLayout(out float facingAngle, out Vector3 facingVector) {
 		facingAngle = 0f;
 		facingVector = Vector3.zero;
@@ -1066,7 +1208,7 @@ public class GameLayoutTracker : MonoBehaviour {
 			for(int i=0;i<newBlocks.Count;i++) {
 
 				Vector2 robotPos = robot.WorldPosition;
-				Vector2 blockPos = (CozmoUtil.Vector3UnityToCozmoSpace(newBlocks[i].transform.position) / newBlocks[i].Size) * CozmoUtil.BLOCK_LENGTH_MM;
+				Vector2 blockPos = newBlocks[i].WorldPosition;
 
 				float range = (blockPos - robotPos).sqrMagnitude;
 				if(range < closest) {
@@ -1082,7 +1224,8 @@ public class GameLayoutTracker : MonoBehaviour {
 		}
 		
 		pos = bestBlock.GetCozmoSpacePose(out facing_rad); 
-
+		string description = null;
+		CozmoBusyPanel.instance.SetDescription( "drop\n", robot.carryingObject, ref description );
 		robot.DropObjectAtPose(pos, facing_rad);
 		
 		return true;
@@ -1128,7 +1271,7 @@ public class GameLayoutTracker : MonoBehaviour {
 			SetLightCubeToCorrectColor(activeBlock, layoutBlockToStack);
 		}
 
-		robot.PickAndPlaceObject( objectToStackUpon );
+
 		if(CozmoBusyPanel.instance != null)	{
 			
 			if(objectToStack != null) {
@@ -1166,6 +1309,8 @@ public class GameLayoutTracker : MonoBehaviour {
 				CozmoBusyPanel.instance.SetDescription(desc);
 			}
 		}
+
+		robot.PickAndPlaceObject( objectToStackUpon );
 
 		return true;
 	}
@@ -1264,6 +1409,10 @@ public class GameLayoutTracker : MonoBehaviour {
 
 		Debug.Log("GetTrackedObjectsInOrder returning " + objects.Count + " objects.");
 		return objects;
+	}
+
+	public void SetNextObjectToPlace(ObservedObject obj) {
+		nextObjectToPlace = obj;
 	}
 
 	#endregion

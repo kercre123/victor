@@ -11,28 +11,14 @@
 
 #include <string>
 
-namespace Anki {
-namespace Cozmo {
-namespace CSharpBinding {
-
-// Update tick
-void cozmo_add_log(const std::string& message);
-
-} // namespace CSharpBinding
-} // namespace Cozmo
-} // namespace Anki
-
 #ifndef _cplusplus
 extern "C" {
 #endif
-
-    // Determines if any logs are available; if so, set length.
-    // Exists independently of startup/shutdown.
-    bool cozmo_has_log(int* receive_length);
     
-    // Retrieves and remove the next log into the specified buffer with given max length.
-    // Exists independentkly of startup/shutdown.
-    void cozmo_pop_log(char* buffer, int max_length);
+    // Sets a logging callback, that may be called on any Unity thread.
+    // Can call indepdent of anything else.
+    typedef void (*LogCallback)(int log_level, const char* buffer);
+    void cozmo_set_log_callback(LogCallback callback, int min_log_level);
     
     // Hook for initialization code. If this errors out, do not run anything else.
     int cozmo_startup(const char *configuration_data);

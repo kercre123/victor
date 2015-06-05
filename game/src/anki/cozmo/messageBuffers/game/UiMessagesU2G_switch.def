@@ -72,6 +72,9 @@ case Anki::Cozmo::U2G::Message::Tag::SetHeadlights:
 case Anki::Cozmo::U2G::Message::Tag::GotoPose:
 	Process_GotoPose(msg.Get_GotoPose());
 	break;
+case Anki::Cozmo::U2G::Message::Tag::GotoObject:
+	Process_GotoObject(msg.Get_GotoObject());
+	break;
 case Anki::Cozmo::U2G::Message::Tag::PlaceObjectOnGround:
 	Process_PlaceObjectOnGround(msg.Get_PlaceObjectOnGround());
 	break;

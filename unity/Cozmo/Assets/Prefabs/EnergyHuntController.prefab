@@ -1031,11 +1031,12 @@ MonoBehaviour:
   textError: {fileID: 0}
   textState: {fileID: 11459704}
   textTime: {fileID: 11402748}
+  textAddaboy: {fileID: 0}
   autoPlay: 1
   playButton: {fileID: 0}
   buildInstructionsLayoutFilter: 
   resultsPanel: {fileID: 11459702}
-  instructionsSound: {fileID: 0}
+  instructionsSound: {fileID: 8300000, guid: 8a00506d8b6b24bf2aaafa4692c7d712, type: 3}
   gameStartSound: {fileID: 8300000, guid: 08703ad4536e54d47b9007f9d66b31b3, type: 3}
   playerScoreSound: {fileID: 8300000, guid: 6886e1029a5504a5785834a9973da1e4, type: 3}
   playingLoopSound: {fileID: 0}
@@ -1107,7 +1108,7 @@ MonoBehaviour:
   findRadius: 75
   lostRadius: 75
   returnRadius: 75
-  autoReturnRadius: 35
+  autoReturnRadius: 40
   detectRadius: 300
   numDropsForBonusTime: 4
   baseTimeBonus: 30
@@ -2361,7 +2362,7 @@ RectTransform:
   m_AnchorMin: {x: .5, y: 1}
   m_AnchorMax: {x: .5, y: 1}
   m_AnchoredPosition: {x: 0, y: -30}
-  m_SizeDelta: {x: 60, y: 40}
+  m_SizeDelta: {x: 100, y: 40}
   m_Pivot: {x: .5, y: 1}
 --- !u!224 &22459726
 RectTransform:

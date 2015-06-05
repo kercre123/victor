@@ -2726,6 +2726,141 @@ public class GotoPose
 	}
 }
 
+public class GotoObject
+{
+	private int _objectID; // int_32
+	private float _distance_mm; // float_32
+	private byte _useManualSpeed; // uint_8
+
+	public int objectID { get { return _objectID; } set { _objectID = value; } }
+
+	public float distance_mm { get { return _distance_mm; } set { _distance_mm = value; } }
+
+	public byte useManualSpeed { get { return _useManualSpeed; } set { _useManualSpeed = value; } }
+
+
+	/**** Constructors ****/
+
+	public GotoObject()
+	{
+	}
+
+	public GotoObject(int objectID,
+		float distance_mm,
+		byte useManualSpeed)
+	{
+		this.objectID = objectID;
+		this.distance_mm = distance_mm;
+		this.useManualSpeed = useManualSpeed;
+	}
+
+	public GotoObject(System.IO.Stream stream)
+	{
+		Unpack(stream);
+	}
+
+	public GotoObject(System.IO.BinaryReader reader)
+	{
+		Unpack(reader);
+	}
+
+	public void Unpack(System.IO.Stream stream)
+	{
+		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
+		Unpack(reader);
+	}
+
+	public void Unpack(System.IO.BinaryReader reader)
+	{
+		_objectID = reader.ReadInt32();
+		_distance_mm = reader.ReadSingle();
+		_useManualSpeed = reader.ReadByte();
+	}
+
+	public void Pack(System.IO.Stream stream)
+	{
+		System.IO.BinaryWriter writer = new System.IO.BinaryWriter(stream);
+		Pack(writer);
+	}
+
+	public void Pack(System.IO.BinaryWriter writer)
+	{
+		writer.Write((int)_objectID);
+		writer.Write((float)_distance_mm);
+		writer.Write((byte)_useManualSpeed);
+	}
+
+	public int Size 
+	{
+		get {
+			return 9;
+		}
+	}
+
+	public static bool ArrayEquals<T>(System.Collections.Generic.IList<T> a1, System.Collections.Generic.IList<T> a2) {
+		if (System.Object.ReferenceEquals(a1, a2))
+			return true;
+
+		if (System.Object.ReferenceEquals(a1, null) || System.Object.ReferenceEquals(a2, null))
+			return false;
+
+		if (a1.Count != a2.Count)
+			return false;
+
+		for (int i = 0; i < a1.Count; i++)
+		{
+			if (!a1[i].Equals(a2[i])) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	public static bool operator ==(GotoObject a, GotoObject b)
+	{
+		if (System.Object.ReferenceEquals(a, null))
+		{
+			return System.Object.ReferenceEquals(b, null);
+		}
+
+		return a.Equals(b);
+	}
+
+	public static bool operator !=(GotoObject a, GotoObject b)
+	{
+		return !(a == b);
+	}
+
+	public override bool Equals(System.Object obj)
+	{
+		return this.Equals(obj as GotoObject);
+	}
+
+	public bool Equals(GotoObject p)
+	{
+		if (System.Object.ReferenceEquals(p, null))
+		{
+			return false;
+		}
+
+		return this._objectID.Equals(p._objectID)
+			&& this._distance_mm.Equals(p._distance_mm)
+			&& this._useManualSpeed.Equals(p._useManualSpeed);
+	}
+
+	public override int GetHashCode()
+	{
+		unchecked
+		{
+			int hash = 17;
+			hash = hash * 23 + this._objectID.GetHashCode();
+			hash = hash * 23 + this._distance_mm.GetHashCode();
+			hash = hash * 23 + this._useManualSpeed.GetHashCode();
+			return hash;
+		}
+	}
+}
+
 public class PlaceObjectOnGround
 {
 	private float _x_mm; // float_32
@@ -7517,45 +7652,46 @@ public class Message {
 		EnableDisplay,	//19
 		SetHeadlights,	//20
 		GotoPose,	//21
-		PlaceObjectOnGround,	//22
-		PlaceObjectOnGroundHere,	//23
-		ExecuteTestPlan,	//24
-		SelectNextObject,	//25
-		PickAndPlaceObject,	//26
-		RollObject,	//27
-		TraverseObject,	//28
-		SetRobotCarryingObject,	//29
-		ClearAllBlocks,	//30
-		ClearAllObjects,	//31
-		SetObjectAdditionAndDeletion,	//32
-		VisionWhileMoving,	//33
-		ExecuteBehavior,	//34
-		SetBehaviorState,	//35
-		AbortPath,	//36
-		AbortAll,	//37
-		CancelAction,	//38
-		DrawPoseMarker,	//39
-		ErasePoseMarker,	//40
-		SetWheelControllerGains,	//41
-		SetHeadControllerGains,	//42
-		SetLiftControllerGains,	//43
-		SetSteeringControllerGains,	//44
-		SelectNextSoundScheme,	//45
-		StartTestMode,	//46
-		IMURequest,	//47
-		PlayAnimation,	//48
-		ReadAnimationFile,	//49
-		StartFaceTracking,	//50
-		StopFaceTracking,	//51
-		StartLookingForMarkers,	//52
-		StopLookingForMarkers,	//53
-		SetVisionSystemParams,	//54
-		SetFaceDetectParams,	//55
-		SetActiveObjectLEDs,	//56
-		SetAllActiveObjectLEDs,	//57
-		SetBackpackLEDs,	//58
-		VisualizeQuad,	//59
-		EraseQuad,	//60
+		GotoObject,	//22
+		PlaceObjectOnGround,	//23
+		PlaceObjectOnGroundHere,	//24
+		ExecuteTestPlan,	//25
+		SelectNextObject,	//26
+		PickAndPlaceObject,	//27
+		RollObject,	//28
+		TraverseObject,	//29
+		SetRobotCarryingObject,	//30
+		ClearAllBlocks,	//31
+		ClearAllObjects,	//32
+		SetObjectAdditionAndDeletion,	//33
+		VisionWhileMoving,	//34
+		ExecuteBehavior,	//35
+		SetBehaviorState,	//36
+		AbortPath,	//37
+		AbortAll,	//38
+		CancelAction,	//39
+		DrawPoseMarker,	//40
+		ErasePoseMarker,	//41
+		SetWheelControllerGains,	//42
+		SetHeadControllerGains,	//43
+		SetLiftControllerGains,	//44
+		SetSteeringControllerGains,	//45
+		SelectNextSoundScheme,	//46
+		StartTestMode,	//47
+		IMURequest,	//48
+		PlayAnimation,	//49
+		ReadAnimationFile,	//50
+		StartFaceTracking,	//51
+		StopFaceTracking,	//52
+		StartLookingForMarkers,	//53
+		StopLookingForMarkers,	//54
+		SetVisionSystemParams,	//55
+		SetFaceDetectParams,	//56
+		SetActiveObjectLEDs,	//57
+		SetAllActiveObjectLEDs,	//58
+		SetBackpackLEDs,	//59
+		VisualizeQuad,	//60
+		EraseQuad,	//61
 		INVALID
 	};
 
@@ -7935,6 +8071,23 @@ public class Message {
 		
 		set {
 			_tag = (value != null) ? Tag.GotoPose : Tag.INVALID;
+			_state = value;
+		}
+	}
+
+	public Anki.Cozmo.U2G.GotoObject GotoObject
+	{
+		get {
+			if (_tag != Tag.GotoObject) {
+				throw new System.InvalidOperationException(string.Format(
+					"Cannot access union member \"GotoObject\" when a value of type {0} is stored.",
+					_tag.ToString()));
+			}
+			return (Anki.Cozmo.U2G.GotoObject)this._state;
+		}
+		
+		set {
+			_tag = (value != null) ? Tag.GotoObject : Tag.INVALID;
 			_state = value;
 		}
 	}
@@ -8694,6 +8847,9 @@ public class Message {
 		case Tag.GotoPose:
 			GotoPose = new Anki.Cozmo.U2G.GotoPose(reader);
 			break;
+		case Tag.GotoObject:
+			GotoObject = new Anki.Cozmo.U2G.GotoObject(reader);
+			break;
 		case Tag.PlaceObjectOnGround:
 			PlaceObjectOnGround = new Anki.Cozmo.U2G.PlaceObjectOnGround(reader);
 			break;
@@ -8959,6 +9115,12 @@ public class Message {
 				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
 			}
 			GotoPose.Pack(writer);
+			break;
+		case Tag.GotoObject:
+			if (GotoObject == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
+			GotoObject.Pack(writer);
 			break;
 		case Tag.PlaceObjectOnGround:
 			if (PlaceObjectOnGround == null) {
@@ -9335,6 +9497,12 @@ public class Message {
 					throw new System.InvalidOperationException("Messages may not have null members.");
 				}
 				result += GotoPose.Size;
+				break;
+			case Tag.GotoObject:
+				if (GotoObject == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
+				result += GotoObject.Size;
 				break;
 			case Tag.PlaceObjectOnGround:
 				if (PlaceObjectOnGround == null) {

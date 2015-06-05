@@ -34,6 +34,7 @@ public class GameController : MonoBehaviour {
 	[SerializeField] protected Text textError = null;
 	[SerializeField] protected Text textState = null;
 	[SerializeField] protected Text textTime = null;
+	[SerializeField] protected Text textAddaboy = null;
 	[SerializeField] private bool autoPlay = false;
 	[SerializeField] private Button playButton = null;
 	[SerializeField] protected string buildInstructionsLayoutFilter = null;
@@ -72,8 +73,9 @@ public class GameController : MonoBehaviour {
 	protected string currentGameName { get; private set; }
 	protected int currentLevelNumber { get; private set; }
 
-	private string SAVED_STARS { get { return currentGameName + currentLevelNumber + "_stars"; } }
-	protected int savedStars { get { return PlayerPrefs.GetInt(SAVED_STARS, 0); } set { PlayerPrefs.SetInt(SAVED_STARS, value); } }
+	public const string STARS_END =  "_stars";
+	public string SAVED_STARS { get { return currentGameName + currentLevelNumber + STARS_END; } }
+	public int savedStars { get { return PlayerPrefs.GetInt(SAVED_STARS, 0); } set { PlayerPrefs.SetInt(SAVED_STARS, value); } }
 
 	protected bool firstFrame = true;
 
@@ -283,21 +285,23 @@ public class GameController : MonoBehaviour {
 	}
 
 	protected virtual void Enter_BUILDING() {
-		Debug.Log(gameObject.name + " Enter_BUILDING");
+		//Debug.Log(gameObject.name + " Enter_BUILDING");
 
 		if(playButton != null) playButton.gameObject.SetActive(true);
+		if(robot != null) robot.SetObjectAdditionAndDeletion(true, false);
 	}
 	protected virtual void Update_BUILDING() {
 		//Debug.Log(gameObject.name + " Update_BUILDING");
 	}
 	protected virtual void Exit_BUILDING() {
-		Debug.Log(gameObject.name + " Exit_BUILDING");
+		//Debug.Log(gameObject.name + " Exit_BUILDING");
 
 		if(playButton != null) playButton.gameObject.SetActive(false);
+		if(robot != null) robot.SetObjectAdditionAndDeletion(false, false);
 	}
 		
 	protected virtual void Enter_PRE_GAME() {
-		Debug.Log(gameObject.name + " Enter_PRE_GAME");
+		//Debug.Log(gameObject.name + " Enter_PRE_GAME");
 
 		if(countdownText != null) {
 			countdownText.gameObject.SetActive(false);
@@ -306,7 +310,7 @@ public class GameController : MonoBehaviour {
 		coundownTimer = 0f;
 		countdownAnnounced = false;
 
-		if(robot != null) robot.SetObjectAdditionAndDeletion(false, false);
+		//if(robot != null) robot.SetObjectAdditionAndDeletion(false, false);
 	}
 
 	protected virtual void Update_PRE_GAME() {
@@ -342,7 +346,7 @@ public class GameController : MonoBehaviour {
 	}
 
 	protected virtual void Exit_PRE_GAME() {
-		Debug.Log(gameObject.name + " Exit_PRE_GAME");
+		//Debug.Log(gameObject.name + " Exit_PRE_GAME");
 		if(countdownText != null) {
 			countdownText.gameObject.SetActive(false);
 		}
@@ -353,7 +357,7 @@ public class GameController : MonoBehaviour {
 		timerEventIndex = 0;
 		bonusTime = 0;
 
-		Debug.Log(gameObject.name + " Enter_PLAYING");
+		//Debug.Log(gameObject.name + " Enter_PLAYING");
 		if(gameStartSound != null) AudioManager.PlayOneShot(gameStartSound);
 
 		if(textScore != null) textScore.gameObject.SetActive(true);
@@ -385,32 +389,54 @@ public class GameController : MonoBehaviour {
 			if(stars >= savedStars) savedStars = stars;
 		}
 
-		Debug.Log(gameObject.name + " Exit_PLAYING");
+		//Debug.Log(gameObject.name + " Exit_PLAYING");
 		if(textScore != null) textScore.gameObject.SetActive(false);
 
 		if(gameOverSound != null) AudioManager.PlayOneShot(gameOverSound);
-
-		if(robot != null) robot.SetObjectAdditionAndDeletion(true, true);
 	}
 
 	protected virtual void Enter_RESULTS() {
-		Debug.Log(gameObject.name + " Enter_RESULTS");
+
+		//Debug.Log(gameObject.name + " Enter_RESULTS");
 		StartCoroutine(PopInStars());
 		if(resultsPanel != null) resultsPanel.gameObject.SetActive(true);
 		if(textScore != null) textScore.gameObject.SetActive(true);
 		if(resultsLoopSound != null) AudioManager.PlayAudioClipLooping(resultsLoopSound, gameOverSound != null ? gameOverSound.length + 0.5f : 0.5f, AudioManager.Source.Gameplay);
+		if(textAddaboy != null) {
+			switch(stars) {
+				case 0: 
+					textAddaboy.text = "Better luck next time!";
+					break;
+				case 1: 
+					textAddaboy.text = "Not bad!";
+					break;
+				case 2: 
+					textAddaboy.text = "Good job!";
+					break;
+				case 3: 
+					textAddaboy.text = "Fantastic!";
+					break;
+			}
+		}
+
+		if( robot != null ) {
+			robot.isBusy = true;
+		}
 	}
 
 	protected virtual void Update_RESULTS() {
 		//Debug.Log(gameObject.name + " Update_RESULTS");
 	}
 	protected virtual void Exit_RESULTS() {
-		Debug.Log(gameObject.name + " Exit_RESULTS");
+		//Debug.Log(gameObject.name + " Exit_RESULTS");
 
 		if(resultsPanel != null) resultsPanel.gameObject.SetActive(false);
 		if(textScore != null) textScore.gameObject.SetActive(false);
 		AudioManager.Stop(resultsLoopSound);
-		if(robot != null) robot.TurnOffAllLights();
+		if(robot != null) {
+			robot.TurnOffAllLights();
+			robot.isBusy = true;
+		}
 	}
 
 	protected virtual bool IsGameReady() {
@@ -445,12 +471,12 @@ public class GameController : MonoBehaviour {
 	}
 
 	public void PlayRequested() {
-		Debug.Log ("PlayRequested");
+		//Debug.Log ("PlayRequested");
 		playRequested = true;
 	}
 
 	public void BuildRequested() {
-		Debug.Log ("BuildRequested");
+		//Debug.Log ("BuildRequested");
 		buildRequested = true;
 		if (GameLayoutTracker.instance != null) {
 			GameLayoutTracker.instance.StartBuild();

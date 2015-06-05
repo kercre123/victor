@@ -186,9 +186,11 @@ public class Robot
 	private U2G.RollObject RollObjectMessage;
 	private U2G.PlaceObjectOnGround PlaceObjectOnGroundMessage;
 	private U2G.GotoPose GotoPoseMessage;
+	private U2G.GotoObject GotoObjectMessage;
 	private U2G.SetLiftHeight SetLiftHeightMessage;
 	private U2G.SetRobotCarryingObject SetRobotCarryingObjectMessage;
 	private U2G.ClearAllBlocks ClearAllBlocksMessage;
+	private U2G.ClearAllObjects ClearAllObjectsMessage;
 	private U2G.VisionWhileMoving VisionWhileMovingMessage;
 	private U2G.SetRobotImageSendMode SetRobotImageSendModeMessage;
 	private U2G.ImageRequest ImageRequestMessage;
@@ -221,10 +223,10 @@ public class Robot
 	}
 
 	public enum ObservedObjectListType {
-		OBSERVED_RECENTLY,
+		KNOWN_IN_RANGE,
 		MARKERS_SEEN,
 		KNOWN,
-		KNOWN_IN_RANGE
+		OBSERVED_RECENTLY
 	}
 	
 	protected ObservedObjectListType observedObjectListType = ObservedObjectListType.MARKERS_SEEN;
@@ -330,7 +332,7 @@ public class Robot
 	}
 
 	public bool IsLocalized() {
-		return (gameStatus & GameStatusFlag.IS_LOCALIZED) != 0;
+		return (gameStatus & GameStatusFlag.IS_LOCALIZED) == GameStatusFlag.IS_LOCALIZED;
 	}
 
 	private Robot()
@@ -364,9 +366,11 @@ public class Robot
 		RollObjectMessage = new U2G.RollObject();
 		PlaceObjectOnGroundMessage = new U2G.PlaceObjectOnGround();
 		GotoPoseMessage = new U2G.GotoPose();
+		GotoObjectMessage = new U2G.GotoObject();
 		SetLiftHeightMessage = new U2G.SetLiftHeight();
 		SetRobotCarryingObjectMessage = new U2G.SetRobotCarryingObject();
 		ClearAllBlocksMessage = new U2G.ClearAllBlocks();
+		ClearAllObjectsMessage = new U2G.ClearAllObjects();
 		VisionWhileMovingMessage = new U2G.VisionWhileMoving();
 		SetRobotImageSendModeMessage = new U2G.SetRobotImageSendMode();
 		ImageRequestMessage = new U2G.ImageRequest();
@@ -483,6 +487,8 @@ public class Robot
 		{
 			lights[i].ClearData();
 		}
+		//wasLoc = false;
+		//Debug.Log( "Robot data cleared IsLocalized("+IsLocalized()+")" );
 	}
 
 	public void ClearObservedObjects()
@@ -504,6 +510,7 @@ public class Robot
 		}
 	}
 
+	//bool wasLoc = false;
 	public void UpdateInfo( G2U.RobotState message )
 	{
 		headAngle_rad = message.headAngle_rad;
@@ -524,6 +531,10 @@ public class Robot
 
 		LastRotation = Rotation;
 		Rotation = new Quaternion( message.pose_quaternion1, message.pose_quaternion2, message.pose_quaternion3, message.pose_quaternion0 );
+
+		//bool isLoc = IsLocalized();
+		///if(wasLoc != isLoc)	Debug.Log("robot.UpdateInfo IsLocalized("+IsLocalized()+") knownObjects("+knownObjects.Count+")");
+		//wasLoc = isLoc;
 	}
 
 	public void UpdateLightMessages( bool now = false )
@@ -580,6 +591,7 @@ public class Robot
 
 			activeBlocks.Add( activeBlock, activeBlock );
 			knownObjects.Add( activeBlock );
+			//Debug.Log( "knownObjects.Add( activeBlock );" );
 			newBlock = true;
 		}
 
@@ -599,6 +611,8 @@ public class Robot
 			knownObject = new ObservedObject( message.objectID, message.objectFamily, message.objectType );
 			
 			knownObjects.Add( knownObject );
+			//Debug.Log( "knownObjects.Add( knownObject );" );
+
 			newBlock = true;
 		}
 		
@@ -699,7 +713,7 @@ public class Robot
 		headAngleRequested = radians;
 		lastHeadAngleRequestTime = Time.time;
 
-		Debug.Log( "Set Head Angle " + radians + " headAngle_rad: " + headAngle_rad + " headTrackingObject: " + headTrackingObject );
+		//Debug.Log( "Set Head Angle " + radians + " headAngle_rad: " + headAngle_rad + " headTrackingObject: " + headTrackingObject );
 
 		SetHeadAngleMessage.angle_rad = radians;
 
@@ -798,6 +812,26 @@ public class Robot
 		localBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
 	}
 
+	public Vector3 NudgePositionOutOfObjects(Vector3 position) {
+
+		int attempts = 0;
+
+		while(attempts++ < 3) {
+			Vector3 nudge = Vector3.zero;
+			float padding = CozmoUtil.BLOCK_LENGTH_MM * 2f;
+			for(int i=0;i<knownObjects.Count;i++) {
+				Vector3 fromObject = position - knownObjects[i].WorldPosition;
+				if(fromObject.magnitude > padding) continue;
+				nudge += fromObject.normalized * padding;
+			}
+
+			if(nudge.sqrMagnitude == 0f) break;
+			position += nudge;
+		}
+
+		return position;
+	}
+
 	public void GotoPose( float x_mm, float y_mm, float rad, bool level = false, bool useManualSpeed = false )
 	{
 		GotoPoseMessage.level = System.Convert.ToByte( level );
@@ -809,6 +843,19 @@ public class Robot
 		Debug.Log( "Go to Pose: x: " + GotoPoseMessage.x_mm + " y: " + GotoPoseMessage.y_mm + " useManualSpeed: " + GotoPoseMessage.useManualSpeed + " level: " + GotoPoseMessage.level );
 
 		RobotEngineManager.instance.Message.GotoPose = GotoPoseMessage;
+		RobotEngineManager.instance.SendMessage();
+		
+		localBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
+	}
+
+	public void GotoObject(ObservedObject obj, float distance_mm)
+	{
+		GotoObjectMessage.objectID = obj;
+		GotoObjectMessage.distance_mm = distance_mm;
+		GotoObjectMessage.useManualSpeed = System.Convert.ToByte( false );
+
+		RobotEngineManager.instance.Message.GotoObject = GotoObjectMessage;
+
 		RobotEngineManager.instance.SendMessage();
 		
 		localBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
@@ -854,7 +901,7 @@ public class Robot
 	public void ClearAllBlocks()
 	{
 		Debug.Log( "Clear All Blocks" );
-
+		ClearAllBlocksMessage.robotID = ID;
 		RobotEngineManager.instance.Message.ClearAllBlocks = ClearAllBlocksMessage;
 		RobotEngineManager.instance.SendMessage();
 		Reset();
@@ -862,10 +909,23 @@ public class Robot
 		SetLiftHeight( 0f );
 		SetHeadAngle();
 	}
+
+	public void ClearAllObjects()
+	{
+		//Debug.Log( "Clear All Objects" );
+		ClearAllObjectsMessage.robotID = ID;
+		RobotEngineManager.instance.Message.ClearAllObjects = ClearAllObjectsMessage;
+		RobotEngineManager.instance.SendMessage();
+		Reset();
+		
+		SetLiftHeight( 0f );
+		SetHeadAngle();
+	}
+	
 	
 	public void VisionWhileMoving( bool enable )
 	{
-		Debug.Log( "Vision While Moving " + enable );
+		//Debug.Log( "Vision While Moving " + enable );
 
 		VisionWhileMovingMessage.enable = System.Convert.ToByte( enable );
 
@@ -900,7 +960,7 @@ public class Robot
 		TurnInPlaceMessage.robotID = ID;
 		TurnInPlaceMessage.angle_rad = angle_rad;
 		
-		Debug.Log( "TurnInPlace(robotID:" + ID + ", angle_rad:" + angle_rad + ")" );
+		//Debug.Log( "TurnInPlace(robotID:" + ID + ", angle_rad:" + angle_rad + ")" );
 
 		RobotEngineManager.instance.Message.TurnInPlace = TurnInPlaceMessage;
 		RobotEngineManager.instance.SendMessage();
