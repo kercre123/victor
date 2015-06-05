@@ -590,6 +590,7 @@ public class GoldRushController : GameController {
 		   && robot.carryingObject.isActive )
 		{
 			// turn on  the block's lights
+			goldExtractingObject = robot.carryingObject as ActiveBlock;
 			goldExtractingObject.SetLEDs(EXTRACTOR_COLOR);
 		}
 	}
@@ -687,7 +688,7 @@ public class GoldRushController : GameController {
 		if (goldCollectingObject != null && robot.knownObjects.Find(x => x == goldCollectingObject) != null )
 		{
 			home_base_pos = robot.knownObjects.Find(x => x == goldCollectingObject).WorldPosition;
-			Debug.Log("home_base_pos: "+home_base_pos.ToString());
+			//Debug.Log("home_base_pos: "+home_base_pos.ToString());
 		}
 		Vector2 collector_pos = (Vector2)robot.WorldPosition + (Vector2)robot.Forward*carryingObjectForwardOffset;
 		float distance = (home_base_pos - collector_pos).magnitude;
@@ -791,17 +792,29 @@ public class GoldRushController : GameController {
 
 	void SendRobotToCollector()
 	{
+		/*
 		Vector3 to_collector = goldCollectingObject.WorldPosition - robot.WorldPosition;
 		float angle = Vector3.Angle(Vector3.right, to_collector.normalized);
 		float sign = Mathf.Sign(Vector3.Dot(Vector3.forward,Vector3.Cross(Vector3.right,to_collector.normalized)));
 		float signed_angle = angle * sign;
 		Debug.Log("angle: " + angle +", signed_angle: " + signed_angle);
 		
-		Vector3 depositSpot = robot.WorldPosition + to_collector;// - (to_collector.normalized*3*(returnRadius/4));
+		Vector3 depositSpot = robot.WorldPosition + to_collector - (to_collector.normalized*32); // adjust for width of cube so our path doesn't intersect
 		
 		signed_angle = Mathf.Deg2Rad*signed_angle;
 		
 		robot.GotoPose(depositSpot.x, depositSpot.y, signed_angle);
+
+		Vector3 spotZ = (Vector3)depositSpot + Vector3.forward * CozmoUtil.BLOCK_LENGTH_MM * 10f;
+		Vector3 spotY1 = (Vector3)depositSpot - Vector3.up * CozmoUtil.BLOCK_LENGTH_MM;
+		Vector3 spotY2 = (Vector3)depositSpot + Vector3.up * CozmoUtil.BLOCK_LENGTH_MM;
+		Vector3 spotX1 = (Vector3)depositSpot - Vector3.right * CozmoUtil.BLOCK_LENGTH_MM;
+		Vector3 spotX2 = (Vector3)depositSpot + Vector3.right * CozmoUtil.BLOCK_LENGTH_MM;
+		RobotEngineManager.instance.VisualizeQuad(21, CozmoPalette.ColorToUInt(Color.blue), depositSpot, depositSpot, spotZ, spotZ);
+		RobotEngineManager.instance.VisualizeQuad(22, CozmoPalette.ColorToUInt(Color.blue), spotY1, spotY1, spotY2, spotY2);
+		RobotEngineManager.instance.VisualizeQuad(23, CozmoPalette.ColorToUInt(Color.blue), spotX1, spotX1, spotX2, spotX2);
+		*/
+		robot.GotoObject(goldCollectingObject, 50);
 	}
 #endregion
 
@@ -937,8 +950,9 @@ public class GoldRushController : GameController {
 			UpdateReturning(true);
 			yield return 0;
 		}
+		//Debug.LogError("should be cancelling action");
+		robot.CancelAction(RobotActionType.DRIVE_TO_OBJECT);
 		EnterPlayState(PlayState.DEPOSITING);
-		robot.CancelAction(RobotActionType.DRIVE_TO_POSE);
 
 
 	}

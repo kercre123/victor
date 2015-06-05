@@ -68,6 +68,18 @@ public class BuildActions : GameActions {
 		}
 	}
 
+	
+	public override void PickUp( bool onRelease, ObservedObject selectedObject )
+	{
+		if( !onRelease || robot == null ) return;
+		
+		GameLayoutTracker tracker = GameLayoutTracker.instance;
+		if(tracker != null) {
+			tracker.SetNextObjectToPlace(selectedObject);
+		}
+
+		base.PickUp (onRelease, selectedObject);
+	}
 
 	public override void Drop( bool onRelease, ObservedObject selectedObject )
 	{
@@ -104,7 +116,7 @@ public class BuildActions : GameActions {
 		}
 
 		//this isn't a block that belongs on the ground, but we'll let the user drop it in case they want to switch to another block
-		ActionButtonClick();
+
 		base.Drop (onRelease, selectedObject);
 	}
 

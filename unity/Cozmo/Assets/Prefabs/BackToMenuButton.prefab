@@ -252,6 +252,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 62b7da07579bd474b88a194e3fa1ba99, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  debug: 0
   screenSettings:
   - anchoredPosition: {x: 28, y: 3}
     anchoredPosition3D: {x: 28, y: 3, z: 0}
@@ -261,6 +262,7 @@ MonoBehaviour:
     offsetMin: {x: -36, y: -125}
     pivot: {x: .5, y: 1}
     sizeDelta: {x: 128, y: 128}
+    localScale: {x: 1, y: 1, z: 1}
   - anchoredPosition: {x: -280, y: 3}
     anchoredPosition3D: {x: -280, y: 3, z: 0}
     anchorMax: {x: .5, y: 1}
@@ -269,6 +271,7 @@ MonoBehaviour:
     offsetMin: {x: -344, y: -125}
     pivot: {x: .5, y: 1}
     sizeDelta: {x: 128, y: 128}
+    localScale: {x: 1, y: 1, z: 1}
 --- !u!114 &11473760
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -384,7 +387,7 @@ Canvas:
   m_OverrideSorting: 0
   m_OverridePixelPerfect: 0
   m_SortingLayerID: 0
-  m_SortingOrder: 20
+  m_SortingOrder: 30
 --- !u!224 &22405478
 RectTransform:
   m_ObjectHideFlags: 1

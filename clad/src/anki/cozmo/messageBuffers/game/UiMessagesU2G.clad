@@ -49,6 +49,7 @@ message DriveWheels {
 }
 
 // TurnInPlace
+//  Turn the specified number of radians, *relative to the robot's current heading*
 message TurnInPlace {
     float_32 angle_rad, // postive turns left negative turns right
     uint_8 robotID
@@ -147,6 +148,13 @@ message GotoPose {
     float_32 y_mm,
     float_32 rad,
     uint_8 level,
+    uint_8 useManualSpeed
+}
+
+// GotoObject
+message GotoObject {
+    int_32 objectID,
+    float_32 distance_mm,
     uint_8 useManualSpeed
 }
 

@@ -16,6 +16,8 @@ public static class CozmoUtil {
 	public const float MIN_HEAD_ANGLE 		= -25f;
 	public const float MAX_HEAD_ANGLE 		= 34f;
 	public const float HEAD_ANGLE_REQUEST_TIME 	= 3f;
+	public const float CARRIED_OBJECT_HEIGHT 	= 75f;
+	public const float CARRIED_OBJECT_VERTICAL_OFFSET = -15f;  //this is fudged
 
 	public static Vector3 Vector3UnityToCozmoSpace(Vector3 vector) {
 		float forward = vector.z;

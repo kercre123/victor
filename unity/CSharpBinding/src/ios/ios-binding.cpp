@@ -14,6 +14,7 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 
 #include "anki/common/basestation/jsonTools.h"
+#include "anki/util/logging/logging.h"
 
 #include <algorithm>
 #include <string>
@@ -73,19 +74,19 @@ int Anki::Cozmo::CSharpBinding::cozmo_game_create(const char* configuration_data
     using namespace Cozmo;
   
     if (game != nullptr) {
-        cozmo_add_log("cozmo_game_create: Game already initialized.");
+        PRINT_STREAM_ERROR("Anki.Cozmo.CSharpBinding.cozmo_game_create", "Game already initialized.");
         return (int)RESULT_FAIL;
     }
     
     if (configuration_data == nullptr) {
-        cozmo_add_log("cozmo_game_create: Null pointer for configuration_data.");
+        PRINT_STREAM_ERROR("Anki.Cozmo.CSharpBinding.cozmo_game_create", "Null pointer for configuration_data.");
         return (int)RESULT_FAIL_INVALID_PARAMETER;
     }
     
     Json::Reader reader;
     Json::Value config;
     if (!reader.parse(configuration_data, configuration_data + std::strlen(configuration_data), config)) {
-        cozmo_add_log("cozmo_game_create: json  configuration parsing error: " + reader.getFormattedErrorMessages());
+        PRINT_STREAM_ERROR("Anki.Cozmo.CSharpBinding.cozmo_game_create", "json configuration parsing error: " << reader.getFormattedErrorMessages());
         return (int)RESULT_FAIL;
     }
   
@@ -116,7 +117,7 @@ int Anki::Cozmo::CSharpBinding::cozmo_game_destroy()
 int Anki::Cozmo::CSharpBinding::cozmo_game_update(float current_time)
 {
     if (game == nullptr) {
-        cozmo_add_log("cozmo_game_update: Game not initialized.");
+        PRINT_STREAM_ERROR("Anki.Cozmo.CSharpBinding.cozmo_game_update", "Game not initialized.");
         return (int)RESULT_FAIL;
     }
     game->Update(current_time);

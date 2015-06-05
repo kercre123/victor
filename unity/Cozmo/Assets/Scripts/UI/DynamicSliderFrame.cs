@@ -94,6 +94,6 @@ public class DynamicSliderFrame : MonoBehaviour, IPointerDownHandler, IPointerUp
 
 	void RefreshToScreenSettings() {
 		dynamic = ScreenMultiSettingsDetector.CurrentIndex == 0;
-		Debug.Log(gameObject.name + " RefreshToScreenSettings dynamic("+dynamic+")" );
+		//Debug.Log(gameObject.name + " RefreshToScreenSettings dynamic("+dynamic+")" );
 	}
 }
