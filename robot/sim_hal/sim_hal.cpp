@@ -123,6 +123,7 @@ namespace Anki {
       
       // Charge contact
       webots::Connector* chargeContact_;
+      bool wasOnCharger_ = false;
       
       // Emitter / receiver for block communication
       webots::Emitter *blockCommsEmitter_;
@@ -396,6 +397,7 @@ namespace Anki {
       // Charge contact
       chargeContact_ = webotRobot_.getConnector("ChargeContact");
       chargeContact_->enablePresence(TIME_STEP);
+      wasOnCharger_ = false;
       
       
       // Block radio
@@ -772,6 +774,16 @@ namespace Anki {
             printf("Received unknown-sized message (%d bytes) over block comms.\n", dataSize);
           }
           blockCommsReceiver_->nextPacket();
+        }
+        
+        
+        // Check charging status (Debug)
+        if (BatteryIsOnCharger() && !wasOnCharger_) {
+          PRINT("ON CHARGER\n");
+          wasOnCharger_ = true;
+        } else if (!BatteryIsOnCharger() && wasOnCharger_) {
+          PRINT("OFF CHARGER\n");
+          wasOnCharger_ = false;
         }
         
         return RESULT_OK;

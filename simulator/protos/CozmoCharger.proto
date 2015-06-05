@@ -1,0 +1,231 @@
+#VRML_SIM V7.3.0 utf8
+
+PROTO CozmoCharger [
+  field SFString name "CozmoCharger000"
+  
+  # Dimensions
+  field SFFloat wallWidth     .01
+  field SFFloat wallHeight    .03
+  field SFFloat platformWidth .06  # Platform is the flat part that robot sits on when charging
+  field SFFloat platformLength .08  
+  field SFFloat platformHeight .01  
+  field SFFloat rampLength     .06      # The ramp is the part that leads up to the platform
+  field SFFloat rampWidthAtGround  .08
+
+  field SFFloat rampMarkerWidth 0.03
+  
+  field SFVec3f translation 0 0 0
+  field SFRotation rotation 0 0 1 0
+  field SFFloat mass 0.1
+  field SFColor color .3 .3 .3
+
+]
+{
+Robot {
+
+  name IS name
+  translation IS translation
+  rotation IS rotation
+  contactMaterial "cmat_ramp"
+  
+  children [
+    
+    # Ramp marker
+    Transform {
+      rotation -0.540716 -0.540716 0.6444 1.99674  # -80 deg about y-axis and 90 deg about z-axis
+      translation %{=fields.wallWidth.value + fields.platformLength.value + fields.rampLength.value/2}%  0 %{=fields.platformHeight.value/2 + 0.001}%
+      children [
+        VisionMarker {
+          #rotation 0 0 1 1.5708
+          image "symbols/rampFront.png"
+          markerWidth IS rampMarkerWidth
+        }
+      ]
+    }
+      
+    DEF ChargerGroup Group {
+      children [
+      
+        # Back side
+        # Origin is center of back side of charger
+        # x-axis points toward ramp, y-axis points to robot left when robot is in charger, z-axis points up
+      	Transform {
+      	  translation %{=fields.wallWidth.value/2}% 0 %{=fields.wallHeight.value/2}%
+          children [
+            Shape {
+              appearance Appearance {
+				material DEF ChargerPlastic Material {
+				  diffuseColor 0.5 0.5 0.5
+				}
+	   		  }
+			  geometry Box {
+			    size %{=fields.wallWidth.value}% %{=fields.platformWidth.value + 2*fields.wallWidth.value}% %{=fields.wallHeight.value}%
+			  }
+			}
+		  ] 
+      	}
+      
+      
+        # Left Side      
+        Transform {
+          translation %{=fields.platformLength.value/2+fields.wallWidth.value}% %{=fields.platformWidth.value/2+fields.wallWidth.value/2}% %{=fields.wallHeight.value/2}%
+          children [
+            Shape {
+              appearance Appearance {
+				material USE ChargerPlastic
+	   		  }
+			  geometry Box {
+			    size %{=fields.platformLength.value}% %{=fields.wallWidth.value}% %{=fields.wallHeight.value}%
+			  }
+			}
+          ] 
+        } # Left Side Transform
+    
+        # Right Side      
+        Transform {
+          translation %{=fields.platformLength.value/2+fields.wallWidth.value}% %{=-fields.platformWidth.value/2-fields.wallWidth.value/2}% %{=fields.wallHeight.value/2}%
+          children [
+            Shape {
+              appearance Appearance {
+				material USE ChargerPlastic
+	   		  }
+			  geometry Box {
+			    size %{=fields.platformLength.value}% %{=fields.wallWidth.value}% %{=fields.wallHeight.value}%
+			  }
+			}
+          ] 
+        } # Right Side Transform    
+
+        
+        # Platform
+        Transform {
+          translation %{=fields.platformLength.value/2+fields.wallWidth.value}% 0 %{=fields.platformHeight.value/2}%
+          children [
+            Shape {
+              appearance Appearance {
+				material USE ChargerPlastic
+	   		  }
+			  geometry Box {
+			    size %{=fields.platformLength.value}% %{=fields.platformWidth.value}% %{=fields.platformHeight.value}%
+			  }
+			}
+          ] 
+        } # Platform Transform            
+        
+        
+        # Ramp
+        Transform {
+          translation %{=fields.platformLength.value+fields.wallWidth.value}% 0 0
+          children [
+            Shape {
+              appearance Appearance {
+				material USE ChargerPlastic
+	   		  }
+			  geometry IndexedFaceSet {
+				coord Coordinate {
+				  point [
+				    # Ramp
+				    0 %{=-fields.platformWidth.value/2}% 0,
+				    0 %{=-fields.platformWidth.value/2}% %{=fields.platformHeight.value}%,
+				    %{=fields.rampLength.value}% %{=-fields.rampWidthAtGround.value/2}% 0,
+				    0 %{=fields.platformWidth.value/2}% 0,
+				    0 %{=fields.platformWidth.value/2}% %{=fields.platformHeight.value}%,
+				    %{=fields.rampLength.value}% %{=fields.rampWidthAtGround.value/2}% 0,
+				    
+				    # Left ramp wall
+				    0 %{=-fields.platformWidth.value/2-fields.wallWidth.value}% 0,
+				    %{=fields.rampLength.value}% %{=-fields.rampWidthAtGround.value/2-fields.wallWidth.value}% 0,				    
+   				    %{=fields.rampLength.value}% %{=-fields.rampWidthAtGround.value/2-fields.wallWidth.value}% %{=fields.wallHeight.value-fields.platformHeight.value}%,
+   				    0 %{=-fields.platformWidth.value/2-fields.wallWidth.value}% %{=fields.wallHeight.value}%,   				    
+   				    0 %{=-fields.platformWidth.value/2}% %{=fields.wallHeight.value}%, 
+   				    %{=fields.rampLength.value}% %{=-fields.rampWidthAtGround.value/2}% %{=fields.wallHeight.value-fields.platformHeight.value}%,  				    
+
+				    # Right ramp wall
+				    0 %{=fields.platformWidth.value/2+fields.wallWidth.value}% 0,
+				    %{=fields.rampLength.value}% %{=fields.rampWidthAtGround.value/2+fields.wallWidth.value}% 0,				    
+   				    %{=fields.rampLength.value}% %{=fields.rampWidthAtGround.value/2+fields.wallWidth.value}% %{=fields.wallHeight.value-fields.platformHeight.value}%,
+   				    0 %{=fields.platformWidth.value/2+fields.wallWidth.value}% %{=fields.wallHeight.value}%,   				    
+   				    0 %{=fields.platformWidth.value/2}% %{=fields.wallHeight.value}%, 
+   				    %{=fields.rampLength.value}% %{=fields.rampWidthAtGround.value/2}% %{=fields.wallHeight.value-fields.platformHeight.value}%  				    
+				    
+				  ]
+				}
+				coordIndex [
+				  # Ramp
+				  0  2  1  -1
+			      0  1  4  -1
+			      0  4  3  -1
+			      3  4  5  -1
+			      2  4  1  -1
+			      2  5  4  -1
+			      2  0  3  -1
+			      2  3  5  -1
+			      
+			      # Left ramp wall
+			      6  2  7  -1
+			      6  0  2  -1
+			      6  8  9  -1
+			      6  7  8  -1
+			      6  9  10 -1
+			      6  0  10 -1
+			      11 9  8  -1
+			      11 10 9  -1
+			      11 8  7  -1
+			      11 7  2  -1
+			      11 2  0  -1
+			      11 0  10 -1
+			      
+			      # Right ramp wall
+			      12 5  3  -1
+			      12 13 5  -1
+			      12 3  16 -1
+			      12 16 15 -1
+			      12 15 14 -1
+			      12 14 13 -1
+			      17 3  5  -1
+			      17 16 3  -1
+			      17 15 16 -1
+			      17 14 15 -1
+			      17 13 14 -1
+			      17 5  13 -1
+				]
+			  }
+			}
+          ] 
+        } # Ramp Transform                    
+        
+      ] # ChargerGroup Children
+    } # ChargerGroup 
+    
+    Transform {
+      translation %{=fields.wallWidth.value + 0.045}% 0 %{=fields.platformHeight.value}%
+      rotation 1 0 0 0
+      children [
+		Connector {
+		  name			"ChargeContact"
+		  model         "ChargeContact"
+		  type 			"symmetric"
+		  isLocked		FALSE
+		  autoLock		FALSE
+		  distanceTolerance	0.01
+		  axisTolerance		0.2
+		  rotationTolerance 	1.5708
+		  numberOfRotations 	4
+		  snap			FALSE
+		}
+      ]
+    }
+    
+  ] # Solid Children
+  
+  boundingObject USE ChargerGroup
+  
+  physics Physics {
+    density -1
+    mass IS mass
+  }
+  
+} # Parent Solid (the actual ramp)
+
+  
+} # PROTO
