@@ -70,8 +70,8 @@ namespace Anki {
         const u32 MAX_FACE_DETECTIONS = 16;
         MultiMailbox<Messages::FaceDetection,MAX_FACE_DETECTIONS> faceDetectMailbox_;
 
-        uint8_t  imageChunkMailbox[sizeof(Messages::ImageChunk)+1];
-        uint16_t imageChunkMailboxLen = 0;
+        uint8_t imageChunkMailbox[sizeof(Messages::ImageChunk)+1];
+        volatile uint16_t imageChunkMailboxLen = 0;
 
         static RobotState robotState_;
 
