@@ -352,8 +352,7 @@ namespace Anki {
           {
             PRINT("WARN: Reliable transport has timed out\n");
             Receiver_OnDisconnect(&connection);
-            HAL::RadioUpdateState(0, 0);
-        }
+          }
         }
       }
 
