@@ -19,6 +19,7 @@ import ankibuild.util
 import ankibuild.xcode
 
 def _monkeypatch_build_tools():
+    "Monkeypatch build tools to reduce number of newlines output."
     @staticmethod
     def _raw_execute(func, arglists, ignore_result):
         if ECHO_ALL:
@@ -76,6 +77,7 @@ def dialog(prompt):
     while not result:
         result = raw_dialog(prompt).strip().lower()
     return result in ('y', 'yes')
+
 
 ####################
 # ARGUMENT PARSING #
@@ -337,7 +339,7 @@ def generate_anki_util_cmake(options):
     
     new_contents = ankibuild.util.File.read(output_path)
     
-    if old_contents != new_contents:
+    if old_contents == new_contents:
         if options.verbose:
             print('touch -t "{time}" {filename}'.format(time=time.ctime(stat.st_mtime), filename=output_path))
         os.utime(output_path, (stat.st_atime, stat.st_mtime))
