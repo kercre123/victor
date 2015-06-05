@@ -12,7 +12,7 @@ GAME_ROOT = os.path.normpath(os.path.abspath(os.path.realpath(os.path.dirname(in
 
 ENGINE_ROOT = os.path.join(GAME_ROOT, 'lib', 'anki', 'cozmo-engine')
 sys.path.insert(0, ENGINE_ROOT)
-from configure import BUILD_TOOLS_ROOT, initialize_colors, 
+from configure import BUILD_TOOLS_ROOT, initialize_colors
 from configure import ArgumentParser, wipe_all, configure_anki_util, configure_platforms
 
 sys.path.insert(0, BUILD_TOOLS_ROOT)
@@ -178,8 +178,8 @@ class GamePlatformConfiguration(object):
                 'ANKI_BUILD_REPO_ROOT={0}'.format(GAME_ROOT),
                 'ANKI_BUILD_GENERATED_XCODE_PROJECT_DIR={0}'.format(self.cmake_project_dir),
                 'ANKI_BUILD_UNITY_PROJECT_PATH=${ANKI_BUILD_REPO_ROOT}/unity/Cozmo',
-                'ANKI_BUILD_unity_output_DIR={0}'.format(self.unity_output_dir),
-                'ANKI_BUILD_UNITY_XCODE_BUILD_DIR=${ANKI_BUILD_unity_output_DIR}/${CONFIGURATION}-${PLATFORM_NAME}',
+                'ANKI_BUILD_UNITY_OUTPUT_DIR={0}'.format(self.unity_output_dir),
+                'ANKI_BUILD_UNITY_XCODE_BUILD_DIR=${ANKI_BUILD_UNITY_OUTPUT_DIR}/${CONFIGURATION}-${PLATFORM_NAME}',
                 'ANKI_BUILD_UNITY_BINARY_PATH={0}'.format(self.options.unity_binary_path),
                 #'ANKI_BUILD_PREBUILT_URL={0}'.format(self.options.prebuilt_url),
                 'ANKI_BUILD_APP_PATH={0}'.format(self.artifact_path),
