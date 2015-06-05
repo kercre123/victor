@@ -89,34 +89,19 @@ const f32 IMU_POSITION[3] = {5.8f, 0.f, -13.5f};
  **************************************************************************/
 
 static const u8 NUM_RADIAL_DISTORTION_COEFFS = 4;
-/*
- // From Calibration on May 7, 2015, Cozmo Proto 3.2, #1,  Wide lens with QVGA crop
- const u16 HEAD_CAM_CALIB_WIDTH  = 320;
- const u16 HEAD_CAM_CALIB_HEIGHT = 240;
- const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_X = 327.76450f;
- const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_Y = 329.90353f;
- const f32 HEAD_CAM_CALIB_CENTER_X       = 154.45148f;
- const f32 HEAD_CAM_CALIB_CENTER_Y       = 124.75227f;
- const f32 HEAD_CAM_CALIB_DISTORTION[NUM_RADIAL_DISTORTION_COEFFS] = {
- 0.04985f,
- -0.00000f,
- 0.00155f,
- 0.00689f
- };
- */
 
-// From Calibration on May 12, 2015, Cozmo Proto 3.2, #2,  Wide lens with QVGA crop
+// From Calibration on June 2, 2015, Cozmo Proto 3.2, #1,  Wide lens with QVGA crop
 const u16 HEAD_CAM_CALIB_WIDTH  = 320;
 const u16 HEAD_CAM_CALIB_HEIGHT = 240;
-const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_X = 259.58064f;
-const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_Y = 261.03465f;
-const f32 HEAD_CAM_CALIB_CENTER_X       = 138.78821f;
-const f32 HEAD_CAM_CALIB_CENTER_Y       = 137.96933f;
+const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_X = 261.81850f;
+const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_Y = 263.38254f;
+const f32 HEAD_CAM_CALIB_CENTER_X       = 175.97889f;
+const f32 HEAD_CAM_CALIB_CENTER_Y       = 96.93195f;
 const f32 HEAD_CAM_CALIB_DISTORTION[NUM_RADIAL_DISTORTION_COEFFS] = {
-  0.05442f,
-  -0.12389f,
-  0.00157f,
-  0.00203f
+  0.04694f,
+  -0.09543f,
+  0.f,
+  0.f
 };
 
 

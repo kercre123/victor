@@ -103,6 +103,7 @@ namespace Anki {
               }
             }
 
+            PRINT_NAMED_WARNING("RobotManager.UpdateAllRobots.FailIOTimeout", "Signaling robot disconnect\n");
             CozmoEngineSignals::RobotDisconnectedSignal().emit(r->first);
             
             delete r->second;

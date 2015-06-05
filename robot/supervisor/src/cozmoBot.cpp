@@ -265,6 +265,7 @@ namespace Anki {
         if (HAL::RadioIsConnected() && !wasConnected_) {
           PRINT("Robot radio is connected.\n");
           wasConnected_ = true;
+          BackpackLightController::TurnOffAll();
         } else if (!HAL::RadioIsConnected() && wasConnected_) {
           PRINT("Radio disconnected\n");
           Messages::ResetInit();
@@ -274,6 +275,8 @@ namespace Anki {
           HeadController::SetAngularVelocity(0);
           PickAndPlaceController::Reset();
           PickAndPlaceController::SetCarryState(CARRY_NONE);
+          BackpackLightController::TurnOffAll();
+          BackpackLightController::SetParams(LED_BACKPACK_INNER_LEFT, LED_RED, LED_OFF, 1000, 1000, 0, 0);
           wasConnected_ = false;
         }
 

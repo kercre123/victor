@@ -220,7 +220,8 @@ namespace Anki {
     {
       const std::vector<Point3f>& canonicalCorners = GetCanonicalCorners();
       
-      const RotationMatrix3d& R = atPose.GetRotationMatrix();
+      const Pose3d atPoseWrtOrigin = atPose.GetWithRespectToOrigin();
+      const RotationMatrix3d& R = atPoseWrtOrigin.GetRotationMatrix();
 
       Point3f paddedSize(_size);
       paddedSize += 2.f*padding_mm;
@@ -241,7 +242,7 @@ namespace Anki {
       Quad2f boundingQuad = GetBoundingQuad(points);
       
       // Re-center
-      Point2f center(atPose.GetTranslation().x(), atPose.GetTranslation().y());
+      Point2f center(atPoseWrtOrigin.GetTranslation().x(), atPoseWrtOrigin.GetTranslation().y());
       boundingQuad += center;
       
       return boundingQuad;

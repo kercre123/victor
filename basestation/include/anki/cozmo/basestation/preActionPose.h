@@ -34,6 +34,7 @@ namespace Anki {
         DOCKING,       // e.g. with objects to pick up with lifter down
         PLACEMENT,     // e.g. for putting a carried object down
         ENTRY,         // e.g. for entering a bridge or ascending/descending a ramp
+        NONE
       };
       
       // Simple case: pose is along the normal to the marker, at the given distance

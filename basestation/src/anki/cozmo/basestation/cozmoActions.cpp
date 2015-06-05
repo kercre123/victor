@@ -249,7 +249,8 @@ namespace Anki {
             static int ctr = 0;
             if(ctr++ % 10 == 0) {
               PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.WaitingForPathCompletion",
-                               "Waiting for robot to complete its path traversal (%d), _currPathSegment=%d, _lastSentPathID=%d, _lastRecvdPathID=%d.\n", ctr,
+                               "Waiting for robot to complete its path traversal (%d), "
+                               "_currPathSegment=%d, _lastSentPathID=%d, _lastRecvdPathID=%d.\n", ctr,
                                 robot.GetCurrentPathSegment(), robot.GetLastSentPathID(), robot.GetLastRecvdPathID());
             }
           }
@@ -264,50 +265,48 @@ namespace Anki {
               case IPathPlanner::DID_PLAN:
               {
                 // clear path, but flag that we are replanning
-              robot.ClearPath();
-              _forceReplanOnNextWorldChange = false;
-              
-              PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.UpdatePath", "sending new path to robot\n");
-              robot.ExecutePath(newPath, _useManualSpeed);
-              break;
-            } // case DID_PLAN:
-              
-            case IPathPlanner::PLAN_NEEDED_BUT_GOAL_FAILURE:
-            {
-              PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.NewGoalForReplanNeeded",
-                               "Replan failed due to bad goal. Aborting path.\n");
-              
-              robot.ClearPath();
-              break;
-            } // PLAN_NEEDED_BUT_GOAL_FAILURE:
-              
-            case IPathPlanner::PLAN_NEEDED_BUT_START_FAILURE:
-            {
-              PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.NewStartForReplanNeeded",
-                               "Replan failed during docking due to bad start. Will try again, and hope robot moves.\n");
-              break;
-            }
-              
-            case IPathPlanner::PLAN_NEEDED_BUT_PLAN_FAILURE:
-            {
-              PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.NewEnvironmentForReplanNeeded",
-                               "Replan failed during docking due to a planner failure. Will try again, and hope environment changes.\n");
-              // clear the path, but don't change the state
-              robot.ClearPath();
-              _forceReplanOnNextWorldChange = true;
-              break;
-            }
-              
-            default:
-            {
-              // Don't do anything just proceed with the current plan...
-              break;
-            }
+                robot.ClearPath();
+                _forceReplanOnNextWorldChange = false;
                 
-              
+                PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.UpdatePath", "sending new path to robot\n");
+                robot.ExecutePath(newPath, _useManualSpeed);
+                break;
+              } // case DID_PLAN:
+                
+              case IPathPlanner::PLAN_NEEDED_BUT_GOAL_FAILURE:
+              {
+                PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.NewGoalForReplanNeeded",
+                                 "Replan failed due to bad goal. Aborting path.\n");
+                
+                robot.ClearPath();
+                break;
+              } // PLAN_NEEDED_BUT_GOAL_FAILURE:
+                
+              case IPathPlanner::PLAN_NEEDED_BUT_START_FAILURE:
+              {
+                PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.NewStartForReplanNeeded",
+                                 "Replan failed during docking due to bad start. Will try again, and hope robot moves.\n");
+                break;
+              }
+                
+              case IPathPlanner::PLAN_NEEDED_BUT_PLAN_FAILURE:
+              {
+                PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.NewEnvironmentForReplanNeeded",
+                                 "Replan failed during docking due to a planner failure. Will try again, and hope environment changes.\n");
+                // clear the path, but don't change the state
+                robot.ClearPath();
+                _forceReplanOnNextWorldChange = true;
+                break;
+              }
+                
+              default:
+              {
+                // Don't do anything just proceed with the current plan...
+                break;
+              }
             } // switch(GetPlan())
+            
           } // if blocks changed
-          
         } else {
           // No longer traversing the path, so check to see if we ended up in the right place
           Vec3f Tdiff;
@@ -361,6 +360,16 @@ namespace Anki {
     DriveToObjectAction::DriveToObjectAction(const ObjectID& objectID, const PreActionPose::ActionType& actionType, const bool useManualSpeed)
     : _objectID(objectID)
     , _actionType(actionType)
+    , _distance_mm(-1.f)
+    , _useManualSpeed(useManualSpeed)
+    {
+      // NOTE: _goalPose will be set later, when we check preconditions
+    }
+    
+    DriveToObjectAction::DriveToObjectAction(const ObjectID& objectID, const f32 distance, const bool useManualSpeed)
+    : _objectID(objectID)
+    , _actionType(PreActionPose::ActionType::NONE)
+    , _distance_mm(distance)
     , _useManualSpeed(useManualSpeed)
     {
       // NOTE: _goalPose will be set later, when we check preconditions
@@ -472,42 +481,56 @@ namespace Anki {
     {
       ActionResult result = ActionResult::RUNNING;
       
-      std::vector<PreActionPose> possiblePreActionPoses;
-      std::vector<std::pair<Quad2f,ObjectID> > obstacles;
-      robot.GetBlockWorld().GetObstacles(obstacles);
-      object->GetCurrentPreActionPoses(possiblePreActionPoses, {_actionType},
-                                       std::set<Vision::Marker::Code>(),
-                                       obstacles,
-                                       &robot.GetPose());
+      std::vector<Pose3d> possiblePoses;
+      bool alreadyInPosition = false;
       
-      if(possiblePreActionPoses.empty()) {
-        PRINT_NAMED_ERROR("DriveToObjectAction.CheckPreconditions.NoPreActionPoses",
-                          "ActionableObject %d did not return any pre-action poses with action type %d.\n",
-                          _objectID.GetValue(), _actionType);
+      if(PreActionPose::ActionType::NONE == _actionType) {
         
-        result = ActionResult::FAILURE_ABORT;
+        if(_distance_mm < 0.f) {
+          PRINT_NAMED_ERROR("DriveToObjectAction.InitHelper.NoDistanceSet",
+                            "ActionType==NONE but no distance set either.\n");
+          result = ActionResult::FAILURE_ABORT;
+        } else {
         
-      } else {
-        
-        std::vector<Pose3d> possiblePoses;
-        bool alreadyInPosition = false;
-        result = GetPossiblePoses(robot, object, possiblePoses, alreadyInPosition);
-        
-        if(result == ActionResult::SUCCESS) {
-          if(!alreadyInPosition) {
-            _compoundAction.AddAction(new DriveToPoseAction(possiblePoses, _useManualSpeed));
+          Pose3d objectWrtRobotParent;
+          if(false == object->GetPose().GetWithRespectTo(*robot.GetPose().GetParent(), objectWrtRobotParent)) {
+            PRINT_NAMED_ERROR("DriveToObjectAction.InitHelper.PoseProblem",
+                              "Could not get object pose w.r.t. robot parent pose.\n");
+            result = ActionResult::FAILURE_ABORT;
+          } else {
+            Point2f vec(robot.GetPose().GetTranslation());
+            vec -= Point2f(objectWrtRobotParent.GetTranslation());
+            const f32 currentDistance = vec.MakeUnitLength();
+            if(currentDistance < _distance_mm) {
+              alreadyInPosition = true;
+            } else {
+              vec *= _distance_mm;
+              const Point3f T(vec.x() + objectWrtRobotParent.GetTranslation().x(),
+                              vec.y() + objectWrtRobotParent.GetTranslation().y(),
+                              robot.GetPose().GetTranslation().z());
+              possiblePoses.push_back(Pose3d(std::atan2f(-vec.y(), -vec.x()), Z_AXIS_3D(), T, objectWrtRobotParent.GetParent()));
+            }
+            result = ActionResult::SUCCESS;
           }
         }
-
-        // Make sure we can see the object, unless we are carrying it (i.e. if we
-        // are doing a DriveToPlaceCarriedObject action)
-        if(!object->IsBeingCarried()) {
-          _compoundAction.AddAction(new VisuallyVerifyObjectAction(_objectID));
+      } else {
+        
+        result = GetPossiblePoses(robot, object, possiblePoses, alreadyInPosition);
+      }
+      
+      if(result == ActionResult::SUCCESS) {
+        if(!alreadyInPosition) {
+          _compoundAction.AddAction(new DriveToPoseAction(possiblePoses, _useManualSpeed));
         }
-        
-        _compoundAction.SetIsPartOfCompoundAction(true);
-        
-      } // if/else possiblePreActionPoses.empty()
+      }
+      
+      // Make sure we can see the object, unless we are carrying it (i.e. if we
+      // are doing a DriveToPlaceCarriedObject action)
+      if(!object->IsBeingCarried()) {
+        _compoundAction.AddAction(new VisuallyVerifyObjectAction(_objectID));
+      }
+      
+      _compoundAction.SetIsPartOfCompoundAction(true);
       
       return result;
       
@@ -555,6 +578,21 @@ namespace Anki {
                             robot.GetID(), _objectID.GetValue());
           
           result = ActionResult::FAILURE_ABORT;
+        } else if( _actionType == PreActionPose::ActionType::NONE) {
+          
+          // Check to see if we got close enough
+          Pose3d objectPoseWrtRobotParent;
+          if(false == object->GetPose().GetWithRespectTo(*robot.GetPose().GetParent(), objectPoseWrtRobotParent)) {
+            PRINT_NAMED_ERROR("DriveToObjectAction.InitHelper.PoseProblem",
+                              "Could not get object pose w.r.t. robot parent pose.\n");
+            result = ActionResult::FAILURE_ABORT;
+          } else {
+            const f32 distanceSq = (Point2f(objectPoseWrtRobotParent.GetTranslation()) - Point2f(robot.GetPose().GetTranslation())).LengthSq();
+            if(distanceSq > _distance_mm*_distance_mm) {
+              PRINT_NAMED_WARNING("DriveToObjectAction.CheckIfDone", "Robot not close enough, will return FAILURE_RETRY.\n");
+              result = ActionResult::FAILURE_RETRY;
+            }
+          }
         } else {
           
           std::vector<Pose3d> possiblePoses; // don't really need these
@@ -572,6 +610,10 @@ namespace Anki {
       return result;
     }
     
+    void DriveToObjectAction::Cleanup(Robot &robot)
+    {
+      _compoundAction.Cleanup(robot);
+    }
             
 #pragma mark ---- DriveToPlaceCarriedObjectAction ----
     
@@ -643,8 +685,9 @@ namespace Anki {
 #pragma mark ---- TurnInPlaceAction ----
     
     TurnInPlaceAction::TurnInPlaceAction(const Radians& angle)
-    : DriveToPoseAction(true)
+    : DriveToPoseAction(false)
     , _turnAngle(angle)
+    , _startedTraversingPath(false)
     {
       
     }
@@ -658,18 +701,38 @@ namespace Anki {
     ActionResult TurnInPlaceAction::Init(Robot &robot)
     {
       // Compute a goal pose rotated by specified angle around robot's
-      // _current_ pose
+      // _current_ pose, taking into account the current driveCenter offset
       const Radians heading = robot.GetPose().GetRotationAngle<'Z'>();
-      
-      Pose3d rotatedPose(heading + _turnAngle, Z_AXIS_3D(),
-                         robot.GetPose().GetTranslation(),
-                         robot.GetPose().GetParent());
+      Pose3d rotatedPose;
+      Pose3d dcPose = robot.GetDriveCenterPose();
+      dcPose.SetRotation(heading + _turnAngle, Z_AXIS_3D());
+      robot.ComputeOriginPose(dcPose, rotatedPose);
       
       SetGoal(rotatedPose);
+      
+      _startedTraversingPath = false;
       
       // Now that goal is set, call the base class init to send the path, etc.
       return DriveToPoseAction::Init(robot);
     }
+    
+    ActionResult TurnInPlaceAction::CheckIfDone(Robot& robot)
+    {
+      ActionResult result = ActionResult::RUNNING;
+      
+      if(!_startedTraversingPath) {
+        // Wait until robot reports it has started traversing the path
+        _startedTraversingPath = robot.IsTraversingPath();
+        
+      } else {
+        // Wait until robot reports it is no longer traversing a path
+        if(!robot.IsTraversingPath()) {
+            result = ActionResult::SUCCESS;
+        }
+      }
+      
+      return result;
+    } // TurnInPlaceAction::CheckIfDone()
     
     
 #pragma mark ---- FaceObjectAction ----
@@ -888,10 +951,18 @@ namespace Anki {
         }
         
         if(!markerWithCodeSeen) {
-          PRINT_NAMED_ERROR("FaceObjectAction.CheckIfDone.MarkerCodeNotSeen",
-                            "Object %d observed, but not marker with code %d.\n",
-                            _objectID.GetValue(), _whichCode);
-          return ActionResult::FAILURE_ABORT;
+          // TODO: Find causes of this and turn it back into an error/failure (COZMO-140)
+          
+          std::string observedMarkerNames;
+          for(auto marker : observedMarkers) {
+            observedMarkerNames += Vision::MarkerTypeStrings[marker->GetCode()];
+            observedMarkerNames += " ";
+          }
+          
+          PRINT_NAMED_WARNING("FaceObjectAction.CheckIfDone.MarkerCodeNotSeen",
+                              "Object %d observed, but not expected marker: %s. Instead saw: %s\n",
+                              _objectID.GetValue(), Vision::MarkerTypeStrings[_whichCode], observedMarkerNames.c_str());
+          //return ActionResult::FAILURE_ABORT;
         }
       }
 

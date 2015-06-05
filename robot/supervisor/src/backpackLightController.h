@@ -21,6 +21,8 @@ namespace Anki {
       Result Init();
       Result Update();
       
+      void TurnOffAll();
+      
       void SetParams(LEDId whichLED, u32 onColor, u32 offColor,
                      u32 onPeriod_ms, u32 offPeriod_ms,
                      u32 transitionOnPeriod_ms, u32 transitionOffPeriod_ms);

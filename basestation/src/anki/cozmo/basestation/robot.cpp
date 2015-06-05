@@ -159,8 +159,9 @@ namespace Anki {
     void Robot::SetPickedUp(bool t)
     {
       if(_isPickedUp == false && t == true) {
-        // Robot is being picked up: de-localize it
+        // Robot is being picked up: de-localize it and clear all known objects
         Delocalize();
+        _blockWorld.ClearAllExistingObjects();
       }
       _isPickedUp = t;
     }
@@ -172,7 +173,9 @@ namespace Anki {
       _localizedToID.UnSet();
       _localizedToFixedMat = false;
 
-      _blockWorld.ClearAllExistingObjects();
+      // NOTE: no longer doing this here because Delocalize() can be called by
+      //  BlockWorld::ClearAllExistingObjects, resulting in a weird loop...
+      //_blockWorld.ClearAllExistingObjects();
       
       // Add a new pose origin to use until the robot gets localized again
       _poseOrigins.emplace_back();
@@ -189,7 +192,10 @@ namespace Anki {
       
       _poseHistory->Clear();
       //++_frameId;
-      
+     
+      // Update VizText
+      VizManager::getInstance()->SetText(VizManager::LOCALIZED_TO, NamedColors::YELLOW,
+                                         "LocalizedTo: <nothing>");
     }
 
     Result Robot::UpdateFullRobotState(const MessageRobotState& msg)
@@ -825,6 +831,11 @@ namespace Anki {
         
         MessageDockingErrorSignal dockingErrorSignal;
         if(true == _visionProcessor.CheckMailbox(dockingErrorSignal)) {
+          
+          // HACK: Robot seems to dock slightly to the right rather consistently
+          if (_isPhysical) {
+            dockingErrorSignal.x_distErr -= DOCKING_LATERAL_OFFSET_HACK;
+          }
           
           // Visualize docking error signal
           VizManager::getInstance()->SetDockingError(dockingErrorSignal.x_distErr,
@@ -2037,7 +2048,7 @@ namespace Anki {
       MessageExecutePath m;
       m.pathID = _lastSentPathID;
       m.useManualSpeed = useManualSpeed;
-      PRINT_NAMED_INFO("Robot::SendExecutePath", "sending start execution message (manualSpeed == %d)\n", useManualSpeed);
+      PRINT_NAMED_INFO("Robot::SendExecutePath", "sending start execution message (pathID = %d, manualSpeed == %d)\n", _lastSentPathID, useManualSpeed);
       return _msgHandler->SendMessage(_ID, m);
     }
     
@@ -2905,24 +2916,35 @@ namespace Anki {
       
     void Robot::ComputeDriveCenterPose(const Pose3d &robotPose, Pose3d &driveCenterPose)
     {
+      MoveRobotPoseForward(robotPose, GetDriveCenterOffset(), driveCenterPose);
+    }
+      
+    void Robot::ComputeOriginPose(const Pose3d &driveCenterPose, Pose3d &robotPose)
+    {
+      MoveRobotPoseForward(driveCenterPose, -GetDriveCenterOffset(), robotPose);
+    }
+
+    void Robot::MoveRobotPoseForward(const Pose3d &startPose, f32 distance, Pose3d &movedPose) {
+      movedPose = startPose;
+      f32 angle = startPose.GetRotationAngle<'Z'>().ToFloat();
+      Vec3f trans;
+      trans.x() = startPose.GetTranslation().x() + distance * cosf(angle);
+      trans.y() = startPose.GetTranslation().y() + distance * sinf(angle);
+      movedPose.SetTranslation(trans);
+    }
+      
+    f32 Robot::GetDriveCenterOffset() {
       if (_isPhysical) {
-        // What is the current drive center pose based on carry state...
         f32 driveCenterOffset = DRIVE_CENTER_OFFSET;
         if (IsCarryingObject()) {
           driveCenterOffset = 0;
         }
-        
-        driveCenterPose = robotPose;
-        f32 angle = robotPose.GetRotationAngle<'Z'>().ToFloat();
-        Vec3f trans;
-        trans.x() = robotPose.GetTranslation().x() + driveCenterOffset * cosf(angle);
-        trans.y() = robotPose.GetTranslation().y() + driveCenterOffset * sinf(angle);
-        driveCenterPose.SetTranslation(trans);
-      } else {
-        // TODO: Simulated robot Webots proto needs to be updated with treads.
-        //       Til then assume no drive center offset.
-        driveCenterPose = robotPose;
+        return driveCenterOffset;
       }
+      
+      // TODO: Simulated robot Webots proto needs to be updated with treads.
+      //       Til then assume no drive center offset.
+      return 0.f;
     }
     
   } // namespace Cozmo

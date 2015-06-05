@@ -130,21 +130,29 @@ namespace BlueCode
                             int id = m_header[0] + (m_header[1] << 8);
 
                             // Are we done with the old frame?  If so, ship it off
-                            if (id != m_frame)
+                            if (id != m_frame || m_header[12] != m_chunk+1)
                             {
                                 if (!m_eof)
+                                {
                                     Console.WriteLine("Dropped frame " + m_frame + " at chunk " + m_chunk);
+                                }
+                                else if (m_frame != -1)
+                                {
+                                    m_readyImage = m_image;
+                                    m_readyLen = m_imageLen;
+                                    this.scanPicBox.BeginInvoke(
+                                    (MethodInvoker)delegate()
+                                    {
+                                        scanPicBox.Refresh();
+                                    });
+                                    //System.Console.WriteLine("Frame: " + m_frame + "  ms: " + DateTime.Now.Millisecond);
+                                }
 
-                                m_readyImage = m_image;
-                                m_readyLen = m_imageLen;
                                 m_image = new byte[MAXLEN];
                                 m_frame = id;
-                                this.scanPicBox.BeginInvoke(
-                                (MethodInvoker)delegate()
-                                {
-                                    scanPicBox.Refresh();
-                                });
-                                System.Console.WriteLine("Frame: " + m_frame + "  ms: " + DateTime.Now.Millisecond);
+
+                                if (m_header[12] != 0) // A new frame must start at chunk 0
+                                    m_frame = -1;
                             }
 
                             int len = m_header[8] + (m_header[9] << 8);
@@ -244,6 +252,15 @@ namespace BlueCode
                 MemoryStream ms = new MemoryStream(image2, 0, image2.Length);
                 scanPicBox.Image = Image.FromStream(ms);
                 //m_udp.Send(new byte[] { 18, 0, 0, 0, 0, m_header[4], m_header[5], m_header[6], m_header[7] }, 9);
+
+                if (m_snapshot)
+                {
+                    String name = "cam-" + DateTime.UtcNow.ToString("HHmmssff") + ".jpg";
+                    Stream str = File.Create(name);
+                    str.Write(image2, 0, image2.Length);
+                    str.Close();
+                    m_snapshot = false;
+                }
             }
             catch (Exception e2)
             {
@@ -253,25 +270,10 @@ namespace BlueCode
             m_readyImage = null;
         }
 
+        private bool m_snapshot;
         private void butSnapshot_Click(object sender, EventArgs e)
         {
-            byte[] image = m_readyImage;
-            if (image == null)
-                return;
-
-            String name = "cam2d-" + DateTime.UtcNow.ToString("yyyyMMddTHHmmss") + ".csv";
-            TextWriter writer = File.CreateText(name);
-            for (int y = 0; y < 72; y += 2) {
-                for (int x = 0; x < IMGX; x += 2) {
-                    int sum = (image[y * IMGX + x] + image[(y + 1) * IMGX + x] +
-                        image[y * IMGX + x] + image[(y + 1) * IMGX + x + 1]) >> 2;
-                    if (x != 0)
-                        writer.Write(",");
-                    writer.Write(sum);
-                }
-                writer.Write("\n");
-            }
-            writer.Close();
+            m_snapshot = true;
         }
 
         private void btnCSV_Click(object sender, EventArgs e)

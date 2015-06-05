@@ -339,9 +339,10 @@ namespace Anki {
         u32 dataLen;
         while((dataLen = HAL::RadioGetNextPacket(pktBuffer_)) > 0)
         {
-          if (ReliableTransport_ReceiveData(&connection, pktBuffer_, dataLen) == false)
+          s16 res = ReliableTransport_ReceiveData(&connection, pktBuffer_, dataLen);
+          if (res < 0)
           {
-            PRINT("ERROR: ReliableTransport didn't accept message %d[%d]\n", pktBuffer_[0], dataLen);
+            PRINT("ERROR (%d): ReliableTransport didn't accept message %d[%d]\n", res, pktBuffer_[0], dataLen);
           }
         }
 
@@ -351,8 +352,7 @@ namespace Anki {
           {
             PRINT("WARN: Reliable transport has timed out\n");
             Receiver_OnDisconnect(&connection);
-            HAL::RadioUpdateState(0, 0);
-        }
+          }
         }
       }
 
@@ -384,6 +384,7 @@ namespace Anki {
       }
 
       void ProcessExecutePathMessage(const ExecutePath& msg) {
+        PRINT("Starting path %d\n", msg.pathID);
         PathFollower::StartPathTraversal(msg.pathID, msg.useManualSpeed);
       }
 
@@ -442,11 +443,13 @@ namespace Anki {
       }
 
       void ProcessSetLiftHeightMessage(const SetLiftHeight& msg) {
+        PRINT("Moving lift to %f\n", msg.height_mm);
         LiftController::SetMaxSpeedAndAccel(msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2);
         LiftController::SetDesiredHeight(msg.height_mm);
       }
 
       void ProcessSetHeadAngleMessage(const SetHeadAngle& msg) {
+        PRINT("Moving head to %f\n", msg.angle_rad);
         HeadController::SetMaxSpeedAndAccel(msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2);
         HeadController::SetDesiredAngle(msg.angle_rad);
       }

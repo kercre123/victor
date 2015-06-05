@@ -81,6 +81,7 @@ namespace Cozmo {
     
     MultiClientChannel        _robotChannel;
     
+    /*
     // TODO: Merge this into RobotManager
     // Each engine can potetnailly talk to multiple physical robots.
     // Package up the stuff req'd to deal with one robot and store a map
@@ -90,6 +91,7 @@ namespace Cozmo {
       RobotMessageHandler       visionMsgHandler;
     };
     std::map<AdvertisingRobot, RobotContainer> _connectedRobots;
+    */
     
     VisionProcessingThread    _deviceVisionThread;
     
@@ -177,6 +179,12 @@ namespace Cozmo {
     } else if(!_config[AnkiUtil::kP_VIZ_HOST_IP].empty()){
       VizManager::getInstance()->Connect(_config[AnkiUtil::kP_VIZ_HOST_IP].asCString(), VIZ_SERVER_PORT);
       
+      // Erase anything that's still being visualized in case there were leftovers from
+      // a previous run?? (We should really be cleaning up after ourselves when
+      // we tear down, but it seems like Webots restarts aren't always allowing
+      // the cleanup to happen)
+      VizManager::getInstance()->EraseAllVizObjects();
+      
       // Only send images if the viz host is the same as the robot advertisement service
       // (so we don't waste bandwidth sending (uncompressed) viz data over the network
       //  to be displayed on another machine)
@@ -217,7 +225,7 @@ namespace Cozmo {
     Anki::Comms::ConnectionId id = static_cast<Anki::Comms::ConnectionId>(whichRobot);
     bool success = _robotChannel.AcceptAdvertisingConnection(id);
     if (success) {
-      _connectedRobots[whichRobot];
+      //_connectedRobots[whichRobot];
       //_connectedRobots[whichRobot].visionThread.Start();
       //_connectedRobots[whichRobot].visionMsgHandler.Init(<#Comms::IComms *comms#>, <#Anki::Cozmo::RobotManager *robotMgr#>)
     }
@@ -229,10 +237,12 @@ namespace Cozmo {
   void CozmoEngineImpl::DisconnectFromRobot(RobotID_t whichRobot) {
     Anki::Comms::ConnectionId id = static_cast<Anki::Comms::ConnectionId>(whichRobot);
     _robotChannel.RemoveConnection(id);
+    /*
     auto connectedRobotIter = _connectedRobots.find(whichRobot);
     if(connectedRobotIter != _connectedRobots.end()) {
       _connectedRobots.erase(connectedRobotIter);
     }
+     */
   }
   
   Result CozmoEngineImpl::Update(const BaseStationTime_t currTime_ns)

@@ -47,6 +47,16 @@ namespace Anki
         if (*(int*)(0x1FFF7A10) == 0x00250031)
           m_idCard.esn = 1;
       }
+      
+      extern "C" {
+        void EnableIRQ() {
+          __enable_irq();
+        }  
+        
+        void DisableIRQ() {
+          __disable_irq();
+        }
+      }
     }
   }
 }
@@ -212,7 +222,7 @@ int main(void)
   Anki::Cozmo::Robot::Init();
   g_halInitComplete = true;
   //printf("init complete!\r\n");
-
+  
   // Give time for sync before video starts
   MicroWait(500000);
   StreamJPEG();

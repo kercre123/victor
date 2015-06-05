@@ -22,7 +22,6 @@ namespace Anki {
 #pragma mark ---- ActionList ----
     
     ActionList::ActionList()
-    : _slotCounter(0)
     {
       
     }
@@ -85,18 +84,20 @@ namespace Anki {
     } // Update()
     
     
-    ActionList::SlotHandle ActionList::AddAction(IActionRunner* action, u8 numRetries)
+    ActionList::SlotHandle ActionList::AddConcurrentAction(IActionRunner* action, u8 numRetries)
     {
       if(action == nullptr) {
         PRINT_NAMED_WARNING("ActionList.AddAction.NullActionPointer", "Refusing to add null action.\n");
-        return _slotCounter;
+        return -1;
       }
       
-      SlotHandle currentSlot = _slotCounter;
+      // Find an empty slot
+      SlotHandle currentSlot = 0;
+      while(_queues.find(currentSlot) != _queues.end()) {
+        ++currentSlot;
+      }
       
-      if(_queues[currentSlot].QueueAtEnd(action, numRetries) == RESULT_OK) {
-        _slotCounter++;
-      } else {
+      if(_queues[currentSlot].QueueAtEnd(action, numRetries) != RESULT_OK) {
         PRINT_NAMED_ERROR("ActionList.AddAction.FailedToAdd", "Failed to add action to new queue.\n");
       }
       
