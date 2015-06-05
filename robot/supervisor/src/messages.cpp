@@ -30,54 +30,6 @@
 namespace Anki {
   namespace Cozmo {
     ReliableConnection connection;
-
-    namespace HAL {
-      bool RadioSendMessage(const Messages::ID msgID, const void *buffer, const bool reliable, const bool hot)
-      {
-        const u32 size = Messages::GetSize(msgID);
-        if (RadioIsConnected())
-        {
-          const EReliableMessageType messgeType = reliable ? eRMT_SingleReliableMessage : eRMT_SingleUnreliableMessage;
-          return ReliableTransport_SendMessage((const uint8_t*)buffer, size, &connection, messgeType, hot, msgID);
-        }
-        else
-        {
-          return false;
-        }
-      }
-
-#ifndef SIMULATOR
-
-      Result SetBlockLight(const u8 blockID, const u32* onColor, const u32* offColor,
-                           const u32* onPeriod_ms, const u32* offPeriod_ms,
-                           const u32* transitionOnPeriod_ms, const u32* transitionOffPeriod_ms)
-      {
-         u8 buffer[256];
-         const u32 size = Messages::GetSize(Messages::SetBlockLights_ID);
-         Anki::Cozmo::Messages::SetBlockLights m;
-         m.blockID = blockID;
-         for (int i=0; i<NUM_BLOCK_LEDS; ++i) {
-           m.onColor[i] = onColor[i];
-           m.offColor[i] = offColor[i];
-           m.onPeriod_ms[i] = onPeriod_ms[i];
-           m.offPeriod_ms[i] = offPeriod_ms[i];
-           m.transitionOnPeriod_ms[i] = (transitionOnPeriod_ms == NULL ? 0 : transitionOnPeriod_ms[i]);
-           m.transitionOffPeriod_ms[i] = (transitionOffPeriod_ms == NULL ? 0 : transitionOffPeriod_ms[i]);
-         }
-         buffer[0] = Messages::SetBlockLights_ID;
-         memcpy(buffer + 1, &m, size);
-         return RadioSendPacket(buffer, size+1, blockID + 1) ? RESULT_OK : RESULT_FAIL;
-      }
-
-      void FlashBlockIDs()
-      {
-        // THIS DOESN'T WORK FOR now
-      }
-
-#endif
-
-    }
-
     namespace Messages {
 
       namespace {
@@ -117,6 +69,9 @@ namespace Anki {
 
         const u32 MAX_FACE_DETECTIONS = 16;
         MultiMailbox<Messages::FaceDetection,MAX_FACE_DETECTIONS> faceDetectMailbox_;
+
+        uint8_t  imageChunkMailbox[sizeof(Messages::ImageChunk)+1];
+        uint16_t imageChunkMailboxLen = 0;
 
         static RobotState robotState_;
 
@@ -337,6 +292,14 @@ namespace Anki {
       void ProcessBTLEMessages()
       {
         u32 dataLen;
+
+        // Send queued image message if present
+        if (imageChunkMailboxLen != 0)
+        {
+          ReliableTransport_SendMessage(imageChunkMailbox, imageChunkMailboxLen+1, &connection, eRMT_SingleUnreliableMessage, true, GLOBAL_INVALID_TAG);
+          imageChunkMailboxLen = 0;
+        }
+
         while((dataLen = HAL::RadioGetNextPacket(pktBuffer_)) > 0)
         {
           s16 res = ReliableTransport_ReceiveData(&connection, pktBuffer_, dataLen);
@@ -1120,6 +1083,72 @@ namespace Anki {
 
 
     } // namespace Messages
+
+    namespace HAL {
+      bool RadioSendMessage(const Messages::ID msgID, const void *buffer, const bool reliable, const bool hot)
+      {
+        const u32 size = Messages::GetSize(msgID);
+        if (RadioIsConnected())
+        {
+          const EReliableMessageType messgeType = reliable ? eRMT_SingleReliableMessage : eRMT_SingleUnreliableMessage;
+          return ReliableTransport_SendMessage((const uint8_t*)buffer, size, &connection, messgeType, hot, msgID);
+        }
+        else
+        {
+          return false;
+        }
+      }
+
+#ifndef SIMULATOR
+      bool RadioSendImageChunk(const void* chunkData, const uint16_t length)
+      {
+        if (Messages::imageChunkMailboxLen != 0)
+        {
+          return false;
+        }
+        else if (length > sizeof(Messages::ImageChunk))
+        {
+          PRINT("ERROR: Tried to queue image chunk that's too big for mailbox, %d bytes", length);
+          return false;
+        }
+        else
+        {
+          Messages::imageChunkMailboxLen = length;
+          Messages::imageChunkMailbox[0] = GET_MESSAGE_ID(Messages::ImageChunk);
+          memcpy(Messages::imageChunkMailbox+1, chunkData, length);
+          return true;
+        }
+      }
+
+      Result SetBlockLight(const u8 blockID, const u32* onColor, const u32* offColor,
+                           const u32* onPeriod_ms, const u32* offPeriod_ms,
+                           const u32* transitionOnPeriod_ms, const u32* transitionOffPeriod_ms)
+      {
+         u8 buffer[256];
+         const u32 size = Messages::GetSize(Messages::SetBlockLights_ID);
+         Anki::Cozmo::Messages::SetBlockLights m;
+         m.blockID = blockID;
+         for (int i=0; i<NUM_BLOCK_LEDS; ++i) {
+           m.onColor[i] = onColor[i];
+           m.offColor[i] = offColor[i];
+           m.onPeriod_ms[i] = onPeriod_ms[i];
+           m.offPeriod_ms[i] = offPeriod_ms[i];
+           m.transitionOnPeriod_ms[i] = (transitionOnPeriod_ms == NULL ? 0 : transitionOnPeriod_ms[i]);
+           m.transitionOffPeriod_ms[i] = (transitionOffPeriod_ms == NULL ? 0 : transitionOffPeriod_ms[i]);
+         }
+         buffer[0] = Messages::SetBlockLights_ID;
+         memcpy(buffer + 1, &m, size);
+         return RadioSendPacket(buffer, size+1, blockID + 1) ? RESULT_OK : RESULT_FAIL;
+      }
+
+      void FlashBlockIDs()
+      {
+        // THIS DOESN'T WORK FOR now
+      }
+#endif
+
+    } // namespace HAL
+
   } // namespace Cozmo
 } // namespace Anki
 

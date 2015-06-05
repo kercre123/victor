@@ -47,17 +47,17 @@ namespace Anki
         if (*(int*)(0x1FFF7A10) == 0x00250031)
           m_idCard.esn = 1;
       }
-      
+
       extern "C" {
         void EnableIRQ() {
           __enable_irq();
-        }  
-        
+        }
+
         void DisableIRQ() {
           __disable_irq();
         }
       }
-      
+
     }
   }
 }
@@ -167,7 +167,7 @@ void StreamJPEG()
           m->data[0] = QUALITY;
 
         // Keep trying to send this message, even if it means a frame tear
-        while (!HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::ImageChunk), m, false, true))
+        while (!HAL::RadioSendImageChunk(m, sizeof(m)))
           ;
 
         // Copy anything left at end to front of buffer
