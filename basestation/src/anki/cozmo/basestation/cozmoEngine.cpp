@@ -176,7 +176,7 @@ namespace Cozmo {
     if(!_config.isMember(AnkiUtil::kP_VIZ_HOST_IP)) {
       PRINT_NAMED_WARNING("CozmoEngineInit.NoVizHostIP",
                           "No VizHostIP member in JSON config file. Not initializing VizManager.");
-    } else if(!_config[AnkiUtil::kP_VIZ_HOST_IP].empty()){
+    } else if(!_config[AnkiUtil::kP_VIZ_HOST_IP].asString().empty()){
       VizManager::getInstance()->Connect(_config[AnkiUtil::kP_VIZ_HOST_IP].asCString(), VIZ_SERVER_PORT);
       
       // Erase anything that's still being visualized in case there were leftovers from
