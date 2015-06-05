@@ -147,7 +147,8 @@ public class RobotEngineManager : MonoBehaviour {
 				logFile = File.Open (Path.Combine (Application.persistentDataPath, logFilename), FileMode.Append, FileAccess.Write, FileShare.Read);
 				logWriter = new StreamWriter (logFile, Encoding.UTF8);
 
-				Application.RegisterLogCallbackThreaded (LogToFile);
+				Application.logMessageReceivedThreaded -= LogToFile;
+				Application.logMessageReceivedThreaded += LogToFile;
 			} catch (Exception e) {
 				CloseLogFile ();
 				Debug.LogException (e); 
@@ -181,6 +182,10 @@ public class RobotEngineManager : MonoBehaviour {
 					Debug.LogException (e);
 				}
 			}
+
+			// don't do this--might be on another thread
+			//OptionsScreen.RefreshSettings -= UpdateFlushLogsValue;
+			//Application.logMessageReceivedThreaded -= LogToFile;
 		}
 	}
 

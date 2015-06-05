@@ -50,6 +50,7 @@ public class ProjectBuilder {
     string config = null;
     string sdk = null;
     bool enableDebugging = false;
+    bool connectWithProfiler = false;
 
     int i = 0;
     while (i < argv.Length) {
@@ -80,6 +81,11 @@ public class ProjectBuilder {
           sdk = argv[i++];
           break;
         }
+      case "--profile":
+        {
+          connectWithProfiler = true;
+          break;
+        }
       default:
         break;
       }
@@ -104,11 +110,7 @@ public class ProjectBuilder {
       }
     case "ios":
       {
-#if UNITY_4_6
-        buildTarget = BuildTarget.iPhone;
-#else
         buildTarget = BuildTarget.iOS;
-#endif
         if (sdk == "iphoneos") {
           PlayerSettings.iOS.sdkVersion = iOSSdkVersion.DeviceSDK;
         }
@@ -123,7 +125,7 @@ public class ProjectBuilder {
     // EditorUserBuildSettings.SwitchActiveBuildTarget(BuildTarget.Android);
 		
     List<string> scenes = getScenes();
-    BuildOptions buildOptions = GetBuildOptions(buildTarget, config, enableDebugging);
+    BuildOptions buildOptions = GetBuildOptions(buildTarget, config, enableDebugging, connectWithProfiler);
 
     ConfigurePlayerSettings(buildTarget, config);
 
@@ -147,13 +149,9 @@ public class ProjectBuilder {
   /// <summary>
   /// returns build options apropriate for the given build config
   /// </summary>
-  public BuildOptions GetBuildOptions(BuildTarget target, string config, bool enableDebugging) {
+  public BuildOptions GetBuildOptions(BuildTarget target, string config, bool enableDebugging, bool connectWithProfiler) {
     BuildOptions options = BuildOptions.AcceptExternalModificationsToPlayer;
-#if UNITY_4_6
-	if (target == BuildTarget.iPhone) {
-#else
-	if (target == BuildTarget.iOS) {
-#endif
+    if (target == BuildTarget.iOS) {
       // Overwrite any existing xcodeproject files for iOS
       options = BuildOptions.None;
     }
@@ -162,6 +160,9 @@ public class ProjectBuilder {
     }
     if (enableDebugging) {
       options |= BuildOptions.AllowDebugging;
+    }
+    if (connectWithProfiler) {
+      options |= BuildOptions.ConnectWithProfiler;
     }
     return options;
   }
@@ -176,11 +177,7 @@ public class ProjectBuilder {
   /// <param name="config">Target build config</param>
   private void ConfigurePlayerSettings(BuildTarget target, string config) {
     // We currently only need to set custom options for iOS
-#if UNITY_4_6
-	if (target != BuildTarget.iPhone) {
-#else
-	if (target != BuildTarget.iOS) {
-#endif
+    if (target != BuildTarget.iOS) {
       return;
     }
 
@@ -193,7 +190,10 @@ public class ProjectBuilder {
     case "profile":
     case "release":
       {
-        PlayerSettings.iOS.scriptCallOptimization = ScriptCallOptimizationLevel.FastButNoExceptions;
+        // TODO: BRC - Remove me after Founder Demo
+        // Disable FastNoExceptions mode until we know what is causing the exception
+        // in the DOTween library.
+        PlayerSettings.iOS.scriptCallOptimization = ScriptCallOptimizationLevel.SlowAndSafe;
       }
       break;
     }

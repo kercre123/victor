@@ -8,7 +8,7 @@ PlayerSettings:
   defaultScreenOrientation: 2
   targetDevice: 2
   targetGlesGraphics: 1
-  targetIOSGraphics: -1
+  targetIOSGraphics: 2
   targetResolution: 0
   accelerometerFrequency: 100
   companyName: DefaultCompany
@@ -28,9 +28,9 @@ PlayerSettings:
   m_MobileMTRendering: 0
   m_UseDX11: 1
   m_Stereoscopic3D: 0
-  iosShowActivityIndicatorOnLoading: -1
+  iosShowActivityIndicatorOnLoading: 2
   androidShowActivityIndicatorOnLoading: -1
-  iosAppInBackgroundBehavior: 0
+  iosAppInBackgroundBehavior: -1
   displayResolutionDialog: 1
   allowedAutorotateToPortrait: 1
   allowedAutorotateToPortraitUpsideDown: 1
@@ -57,7 +57,7 @@ PlayerSettings:
   xboxEnableKinect: 0
   xboxEnableKinectAutoTracking: 0
   xboxEnableFitness: 0
-  visibleInBackground: 0
+  visibleInBackground: 1
   macFullscreenMode: 2
   d3d9FullscreenMode: 1
   d3d11FullscreenMode: 1
@@ -93,10 +93,10 @@ PlayerSettings:
   ForceSDCardPermission: 0
   CreateWallpaper: 0
   APKExpansionFiles: 0
-  preloadShaders: 0
+  preloadShaders: 1
   StripUnusedMeshComponents: 0
   iPhoneSdkVersion: 988
-  iPhoneTargetOSVersion: 22
+  iPhoneTargetOSVersion: 24
   uIPrerenderedIcon: 0
   uIRequiresPersistentWiFi: 0
   uIStatusBarHidden: 1
@@ -261,7 +261,7 @@ PlayerSettings:
   psmSplashimage: {fileID: 0}
   spritePackerPolicy: 
   scriptingDefineSymbols:
-    4: VUFORIA_IOS_SETTINGS
+    4: 
     7: VUFORIA_ANDROID_SETTINGS
   metroPackageName: Cozmo
   metroPackageLogo: 
@@ -388,7 +388,7 @@ PlayerSettings:
   WebGL::audioCompressionFormat: 4
   WebGL::exceptionSupport: 0
   WebGL::memorySize: 256
-  iOS::Architecture: 2
+  iOS::Architecture: 0
   iOS::ScriptingBackend: 0
   boolPropertyNames:
   - WebGL::dataCaching

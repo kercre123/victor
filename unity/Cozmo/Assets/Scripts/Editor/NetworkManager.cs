@@ -4,7 +4,7 @@
  * Author: damjan
  * Created: feb/4/2015
  *
- * Description: simple implementation of tcp server. listens for incomming connections and spawns a new worker thread for each connection.
+ * Description: simple implementation of tcp server. listens for incoming connections and spawns a new worker thread for each connection.
  *
  *
  * Copyright: Anki, Inc. 2015
@@ -22,7 +22,7 @@ using System.Threading;
 
   
 /// <summary>
-/// simple implementation of tcp server. listens for incomming connections and spawns a new worker thread for each connection
+/// simple implementation of tcp server. listens for incoming connections and spawns a new worker thread for each connection
 /// </summary>
 class NetworkManager {
   private int _listenPort = 48888;
