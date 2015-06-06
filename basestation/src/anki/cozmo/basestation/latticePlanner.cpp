@@ -15,7 +15,7 @@
 #include "anki/common/basestation/math/polygon_impl.h"
 #include "anki/common/basestation/math/quad_impl.h"
 #include "anki/common/basestation/math/rotatedRect.h"
-#include "anki/common/basestation/utils/logging/logging.h"
+#include "anki/util/logging/logging.h"
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
@@ -120,7 +120,7 @@ void LatticePlannerImpl::ImportBlockworldObstacles(const bool isReplanning, cons
   if(!isReplanning ||  // if not replanning, this must be a fresh, new plan, so we always should get obstacles
      didObjecsChange)
   {
-    std::vector<Quad2f> boundingBoxes;
+    std::vector<std::pair<Quad2f,ObjectID> > boundingBoxes;
 
     robot_->GetBlockWorld().GetObstacles(boundingBoxes, obstaclePadding);
     
@@ -147,9 +147,9 @@ void LatticePlannerImpl::ImportBlockworldObstacles(const bool isReplanning, cons
       for(auto boundingQuad : boundingBoxes) {
 
         Poly2f boundingPoly;
-        boundingPoly.ImportQuad2d(boundingQuad);
+        boundingPoly.ImportQuad2d(boundingQuad.first);
 
-        const FastPolygon& expandedPoly =
+        /*const FastPolygon& expandedPoly =*/
           env_.AddObstacleWithExpansion(boundingPoly, robotPoly, theta, DEFAULT_OBSTACLE_PENALTY);
 
         // only draw the angle we are currently at
@@ -166,7 +166,7 @@ void LatticePlannerImpl::ImportBlockworldObstacles(const bool isReplanning, cons
           // padding
           VizManager::getInstance()->DrawQuad (
             isReplanning ? VIZ_QUAD_PLANNER_OBSTACLE_REPLAN : VIZ_QUAD_PLANNER_OBSTACLE,
-            vizID++, boundingQuad, 0.1f, *vizColor );
+            vizID++, boundingQuad.first, 0.1f, *vizColor );
         }
         numAdded++;
       }
@@ -322,7 +322,7 @@ IPathPlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
   const float maxDistancetoFollowOldPlan_mm = 40.0;
 
   if(forceReplanFromScratch ||
-     !impl_->env_.PlanIsSafe(impl_->totalPlan_, maxDistancetoFollowOldPlan_mm, planIdx, lastSafeState, validOldPlan)) {
+     !impl_->env_.PlanIsSafe(impl_->totalPlan_, maxDistancetoFollowOldPlan_mm, static_cast<int>(planIdx), lastSafeState, validOldPlan)) {
     // at this point, we know the plan isn't completely
     // safe. lastSafeState will be set to the furthest state along the
     // plan (after planIdx) which is safe. validOldPlan will contain a
@@ -431,18 +431,22 @@ IPathPlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
     
       // Get last non-point turn segment of path
       PathSegment& lastSeg = path[numSegments-1];
-      if(lastSeg.GetType() == Planning::PST_POINT_TURN) {
-        path.PopBack(1);
-        --numSegments;
-        lastSeg = path[numSegments-1];
-        
-        // There shouldn't be more than one point turn at the end of a path
-        // NOTE: Actually, there could be because of the way the pathFollower works
-        //assert(lastSeg.GetType() != Planning::PST_POINT_TURN);
-      }
-      
+
       f32 end_x, end_y, end_angle;
       lastSeg.GetEndPose(end_x, end_y, end_angle);
+      
+      while(lastSeg.GetType() == Planning::PST_POINT_TURN) {
+        path.PopBack(1);
+        --numSegments;
+        
+        if (numSegments > 0) {
+          lastSeg = path[numSegments-1];
+          lastSeg.GetEndPose(end_x, end_y, end_angle);
+        } else {
+          break;
+        }
+      }
+      
       Radians plannedGoalAngle(end_angle);
       f32 angDiff = (desiredGoalAngle - plannedGoalAngle).ToFloat();
       
@@ -451,7 +455,7 @@ IPathPlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
         f32 turnDir = angDiff > 0 ? 1.f : -1.f;
         f32 rotSpeed = TERMINAL_POINT_TURN_SPEED * turnDir;
         
-        PRINT_INFO("LatticePlanner: Final angle off by %f rad. DesiredAng = %f, endAngle = %f, rotSpeed = %f. Adding point turn.\n", angDiff, desiredGoalAngle.ToFloat(), end_angle, rotSpeed);
+        PRINT_NAMED_INFO("LatticePlanner.ReplanIfNeeded.", "LatticePlanner: Final angle off by %f rad. DesiredAng = %f, endAngle = %f, rotSpeed = %f. Adding point turn.", angDiff, desiredGoalAngle.ToFloat(), end_angle, rotSpeed);
         
         path.AppendPointTurn(0, end_x, end_y, desiredGoalAngle.ToFloat(),
                              rotSpeed,

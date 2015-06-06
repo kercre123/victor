@@ -11,26 +11,27 @@
 /// Block ID for broadcast to all blocks
 #define ALL_BLOCKS 127
 
+/// Maximum length for block messages
+#define MAX_BLOCK_MESSAGE_LENGTH 256
+
 /// USER_TASK_PRIO_2 is the highest allowed user task priority USER_TASK_PRIO_0 is the lowest
 #define blockTaskPrio USER_TASK_PRIO_1
 
 /// Initalize the block relay module
 sint8 blockRelayInit();
 
-/** Check a message to see if it should be relayed to a block and if so which one
- * @param data A pointer to the buffer where the message is
- * @param len The number of bytes in data
- * @return The ID number of the block the message should be forwared to (to pass to blockRelaySendPacket) if it should
- * be forwarded or NO_BLOCK if it is not a block message to be relayed.
+/** Request the buffer for sending messages to the specified block
+ * @param block The block who's buffer is desired
+ * @return A pointer to the start of the buffer to write data into if available. Will return NULL if the requested
+ * buffer is busy or block is invalid.
  */
-sint8 blockRelayCheckMessage(uint8* data, unsigned short len);
+uint8* blockRelayGetBuffer(sint8 block);
 
-/** Send a message to the specified block
+/** Send buffered packed to the specified block
  * @param block The ID number of the block to forward to
- * @param data A pointer to the data to forward
  * @param len the Number of bytes of data to forward.
  * @return True on success or false on an error.
  */
-bool blockRelaySendPacket(sint8 block, uint8* data, unsigned short len);
+bool blockRelaySendPacket(sint8 block, unsigned short len);
 
 #endif

@@ -28,6 +28,8 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 
+#include <iomanip>
+
 // The angle wrt the mat at which the user is expected to be.
 // For happy head-nodding demo purposes.
 #define USER_LOC_ANGLE_WRT_MAT -1.57
@@ -39,16 +41,18 @@
 namespace Anki {
   namespace Cozmo {
     
+    static const ActionList::SlotHandle DriveAndManipulateSlot = 0;
+    
     static Result ScaredReaction(Robot* robot, Vision::ObservedMarker* marker)
     {
-      PRINT_INFO("Saw Scary Block!\n");
+      PRINT_STREAM_INFO("BehaviorManager.ScaredReaction", "Saw Scary Block!");
       robot->SetBehaviorState(BehaviorManager::SCARED_FLEE);
       return RESULT_OK;
     }
     
     static Result ExcitedReaction(Robot* robot, Vision::ObservedMarker* marker)
     {
-      PRINT_INFO("Saw Exciting Block!\n");
+      PRINT_STREAM_INFO("BehaviorManager.ExcitedReaction", "Saw Exciting Block!");
       robot->SetBehaviorState(BehaviorManager::EXCITABLE_CHASE);
       return RESULT_OK;
     }
@@ -95,27 +99,27 @@ namespace Anki {
         const f32 angle = atan2(upVector.y(), upVector.x());
         
         if(angle >= -3.f*M_PI_4 && angle < -M_PI_4) { // UP
-          PRINT_INFO("UP Arrow!\n");
+          PRINT_STREAM_INFO("BehaviorManager.ArrowCallback", "UP Arrow!");
           lastResult = robot->DriveWheels(driveSpeed, driveSpeed);
         }
         else if(angle >= -M_PI_4 && angle < M_PI_4) { // RIGHT
-          PRINT_INFO("RIGHT Arrow!\n");
+          PRINT_STREAM_INFO("BehaviorManager.ArrowCallback", "RIGHT Arrow!");
           //lastResult = robot->QueueAction(new TurnInPlaceAction(-M_PI_2));
-          robot->GetActionList().AddAction(new TurnInPlaceAction(-M_PI_2));
+          robot->GetActionList().QueueActionAtEnd(DriveAndManipulateSlot, new TurnInPlaceAction(-M_PI_2));
         }
         else if(angle >= M_PI_4 && angle < 3*M_PI_4) { // DOWN
-          PRINT_INFO("DOWN Arrow!\n");
+          PRINT_STREAM_INFO("BehaviorManager.ArrowCallback", "DOWN Arrow!");
           lastResult = robot->DriveWheels(-driveSpeed, -driveSpeed);
         }
         else if(angle >= 3*M_PI_4 || angle < -3*M_PI_4) { // LEFT
-          PRINT_INFO("LEFT Arrow!\n");
+          PRINT_STREAM_INFO("BehaviorManager.ArrowCallback", "LEFT Arrow!");
           //lastResult = robot->QueueAction(new TurnInPlaceAction(M_PI_2));
-          robot->GetActionList().AddAction(new TurnInPlaceAction(M_PI_2));
+          robot->GetActionList().QueueActionAtEnd(DriveAndManipulateSlot, new TurnInPlaceAction(M_PI_2));
         }
         else {
-          PRINT_NAMED_ERROR("TurnCallback.UnexpectedAngle",
-                            "Unexpected angle for arrow marker: %.3f radians (%.1f degrees)\n",
-                            angle, angle*180.f/M_PI);
+          PRINT_STREAM_ERROR("BehaviorManager.ArrowCallback.UnexpectedAngle",
+                             std::setprecision(5) <<
+                            "Unexpected angle for arrow marker: " << angle << " radians (" << (angle*180.f/M_PI) << " degrees)");
           lastResult = RESULT_FAIL;
         }
       } // IfMarkerIsCloseEnoughAndCentered()
@@ -129,9 +133,9 @@ namespace Anki {
       Result lastResult = RESULT_OK;
       
       if(robot->IsIdle() && IsMarkerCloseEnoughAndCentered(marker, robot->GetCamera().GetCalibration().GetNcols())) {
-        PRINT_INFO("TURNAROUND Arrow!\n");
+        PRINT_STREAM_INFO("BehaviorManager.TurnAroundCallback", "TURNAROUND Arrow!");
         //lastResult = robot->QueueAction(new TurnInPlaceAction(M_PI));
-        robot->GetActionList().AddAction(new TurnInPlaceAction(M_PI));
+        robot->GetActionList().QueueActionAtEnd(DriveAndManipulateSlot, new TurnInPlaceAction(M_PI));
       } // IfMarkerIsCloseEnoughAndCentered()
       
       return lastResult;
@@ -835,7 +839,7 @@ namespace Anki {
               Pose3d targetPose(targetAngle, Z_AXIS_3D(), Vec3f(0,0,0));
               
               if (ComputeDistanceBetween(targetPose, robotPose) > 50.f) {
-                PRINT_INFO("Going to mat center for exploration (%f %f %f)\n", targetPose.GetTranslation().x(), targetPose.GetTranslation().y(), targetAngle);
+                PRINT_STREAM_INFO("BehaviorManager.DiceDemo", std::setprecision(5) << "Going to mat center for exploration (" << targetPose.GetTranslation().x() << " " << targetPose.GetTranslation().y() << " " << targetAngle << ")");
                 _robot->GetPathPlanner()->AddIgnoreType(Block::Type::DICE);
                 _robot->GetActionList().QueueActionAtEnd(TraversalSlot, new DriveToPoseAction(targetPose));
               }
@@ -850,7 +854,7 @@ namespace Anki {
         } // case BEGIN_EXPLORING
         case START_EXPLORING_TURN:
         {
-          PRINT_INFO("Beginning exploring\n");
+          PRINT_STREAM_INFO("BehaviorManager.DiceDemo", "Beginning exploring");
           _robot->GetPathPlanner()->RemoveIgnoreType(Block::Type::DICE);
           _robot->DriveWheels(8.f, -8.f);
           _robot->MoveHeadToAngle(DEG_TO_RAD(-10), 1, 1);
@@ -880,14 +884,14 @@ namespace Anki {
 
             SoundManager::getInstance()->Play(SOUND_OK_GOT_IT);
             
-            PRINT_INFO("STARTING DOCKING\n");
+            PRINT_STREAM_INFO("BehaviorManager.DiceDemo", "STARTING DOCKING");
             break;
           }
           
           // Repeat turn-stop behavior for more reliable block detection
           Radians currAngle = _robot->GetPose().GetRotationAngle<'Z'>();
           if (_isTurning && (std::abs((_explorationStartAngle - currAngle).ToFloat()) > DEG_TO_RAD(40))) {
-            PRINT_INFO("Exploration - pause turning. Looking for %s\n", _objectTypeOfInterest.GetName().c_str());
+            PRINT_STREAM_INFO("BehaviorManager.DiceDemo", "Exploration - pause turning. Looking for " << _objectTypeOfInterest.GetName().c_str());
             _robot->DriveWheels(0.f,0.f);
             _isTurning = false;
             _waitUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.5f;
@@ -906,8 +910,7 @@ namespace Anki {
             const bool donePickingUp = _robot->IsCarryingObject() &&
                                        _robot->GetBlockWorld().GetObjectByID(_robot->GetCarryingObject())->GetType() == _objectToPickUp;
             if(donePickingUp) {
-              PRINT_INFO("Picked up block %d successfully! Going back to exploring for block to place on.\n",
-                         _robot->GetCarryingObject().GetValue());
+              PRINT_STREAM_INFO("BehaviorManager.DiceDemo", "Picked up block " << _robot->GetCarryingObject().GetValue() << " successfully! Going back to exploring for block to place on.");
               
               _state = BEGIN_EXPLORING;
               
@@ -918,8 +921,7 @@ namespace Anki {
             
             const bool donePlacing = !_robot->IsCarryingObject() && _wasCarryingBlockAtDockingStart;
             if(donePlacing) {
-              PRINT_INFO("Placed block %d on %d successfully! Going back to waiting for dice.\n",
-                         _objectToPickUp.GetValue(), _objectToPlaceOn.GetValue());
+              PRINT_STREAM_INFO("BehaviorManager.DiceDemo", "Placed block " << _objectToPickUp.GetValue() << " on " << _objectToPlaceOn.GetValue() << " successfully! Going back to waiting for dice.");
 
               _robot->MoveHeadToAngle(checkItOutAngleUp, checkItOutSpeed, 10);
               _state = CHECK_IT_OUT_UP;
@@ -934,9 +936,9 @@ namespace Anki {
             // Either pickup or placement failed
             const bool pickupFailed = !_robot->IsCarryingObject();
             if (pickupFailed) {
-              PRINT_INFO("Block pickup failed. Retrying...\n");
+              PRINT_STREAM_INFO("BehaviorManager.DiceDemo", "Block pickup failed. Retrying...");
             } else {
-              PRINT_INFO("Block placement failed. Retrying...\n");
+              PRINT_STREAM_INFO("BehaviorManager.DiceDemo", "Block placement failed. Retrying...");
             }
             
             // Backup to re-explore the block
@@ -993,7 +995,7 @@ namespace Anki {
             // Start nodding
             _robot->PlayAnimation("ANIM_HEAD_NOD");
             _state = HAPPY_NODDING;
-            PRINT_INFO("NODDING_HEAD\n");
+            PRINT_STREAM_INFO("BehaviorManager.DiceDemo", "NODDING_HEAD");
             SoundManager::getInstance()->Play(SOUND_OK_DONE);
             
             // Compute time to stop nodding
@@ -1024,8 +1026,8 @@ namespace Anki {
         }
         default:
         {
-          PRINT_NAMED_ERROR("BehaviorManager.UnknownBehaviorState",
-                            "Transitioned to unknown state %d!\n", _state);
+          PRINT_STREAM_ERROR("BehaviorManager.UnknownBehaviorState",
+                            "Transitioned to unknown state " << _state << "!");
           StartMode(None);
           return;
         }

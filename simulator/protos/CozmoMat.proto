@@ -3,8 +3,8 @@
 PROTO CozmoMat [
   field SFColor Color 1.0000 1.0000 1.0000
   field SFBool showMarkers TRUE
-  field SFFloat xSize 1.0
-  field SFFloat ySize 1.0
+  field SFFloat xSize 1.000
+  field SFFloat ySize 1.000
 ]
 {
 Solid {

@@ -81,7 +81,7 @@ namespace Anki {
 
         
         u32 lastMotionDetectedTime_us = 0;
-        const u32 MOTION_DETECT_TIMEOUT_US = 750000;
+        const u32 MOTION_DETECT_TIMEOUT_US = 500000;
         const f32 ACCEL_MOTION_THRESHOLD = 60.f;
         const f32 GYRO_MOTION_THRESHOLD = 0.24f;
         
@@ -182,7 +182,7 @@ namespace Anki {
       {
         // TEST WITH LIGHT
         if (pickupDetected) {
-          HAL::SetLED(INDICATOR_LED_ID, LED_RED);
+          HAL::SetLED(INDICATOR_LED_ID, LED_BLUE);
         } else {
           HAL::SetLED(INDICATOR_LED_ID, LED_OFF);
         }
@@ -277,14 +277,16 @@ namespace Anki {
           // Do simple check first.
           // If wheels aren't moving, any motion is because a person was messing with it!
           if (!WheelController::AreWheelsPowered() && !HeadController::IsMoving() && !LiftController::IsMoving()) {
-            if (ABS(pdFiltAccX_aligned_) > 1000 ||
-                ABS(pdFiltAccY_aligned_) > 1000 ||
+            if (ABS(pdFiltAccX_aligned_) > 5000 ||
+                ABS(pdFiltAccY_aligned_) > 3000 ||
                 ABS(pdFiltAccZ_aligned_) > 11000 ||
-                ABS(gyro_robot_frame_filt[0]) > 1.f ||
-                ABS(gyro_robot_frame_filt[1]) > 1.f ||
-                ABS(gyro_robot_frame_filt[2]) > 1.f) {
+                ABS(gyro_robot_frame_filt[0]) > 5.f ||
+                ABS(gyro_robot_frame_filt[1]) > 5.f ||
+                ABS(gyro_robot_frame_filt[2]) > 5.f) {
               if (++pdUnexpectedMotionCnt_ > 40) {
-                PRINT("PDWhileStationary: UnexpectedMontionCnt %d\n", pdUnexpectedMotionCnt_);
+                PRINT("PDWhileStationary: acc (%f, %f, %f), gyro (%f, %f, %f)\n",
+                      pdFiltAccX_aligned_, pdFiltAccY_aligned_, pdFiltAccZ_aligned_,
+                      gyro_robot_frame_filt[0], gyro_robot_frame_filt[1], gyro_robot_frame_filt[2]);
                 SetPickupDetect(true);
               }
             }
@@ -293,6 +295,24 @@ namespace Anki {
           }
 
           
+          // Do conservative check for pickup.
+          // Only when we're really sure it's moving!
+          // TODO: Make this smarter!
+          if (!IsPickedUp() &&
+              (ABS(pdFiltAccX_aligned_) > 5000 ||
+               ABS(pdFiltAccY_aligned_) > 3000 ||
+               ABS(pdFiltAccZ_aligned_) > 11000)) {
+            ++pdRiseCnt_;
+            if (pdRiseCnt_ > 40) {
+              SetPickupDetect(true);
+              PRINT("PickupDetect: accX = %f, accY = %f, accZ = %f\n",
+                    pdFiltAccX_aligned_, pdFiltAccY_aligned_, pdFiltAccZ_aligned_);
+            }
+          } else {
+            pdRiseCnt_ = 0;
+          }
+          
+          /*
           // If rise detected this tic...
           if (pdFiltAccZ_aligned_ > pdFiltPrevVal + PD_ACCEL_MIN_DELTA) {
             if (pdFallCnt_ > 0) {
@@ -364,6 +384,7 @@ namespace Anki {
             }
             
           }
+           */
         }
       }
       
@@ -598,7 +619,7 @@ namespace Anki {
         // XXX: Commenting this out because pickup detection seems to be firing
         //      when the robot drives up ramp (or the side of a platform) and
         //      clearing pose history.
-        //DetectPickup();
+        DetectPickup();
         
         //UpdateEventDetection();
         

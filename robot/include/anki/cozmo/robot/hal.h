@@ -219,9 +219,19 @@ namespace Anki
       void MicroWait(u32 microseconds);
 
       // Get a sync'd timestamp (e.g. for messages), in milliseconds
-      TimeStamp_t GetTimeStamp(void);
-      void SetTimeStamp(TimeStamp_t t);
-
+      extern "C" TimeStamp_t GetTimeStamp(void);
+      extern "C" void SetTimeStamp(TimeStamp_t t);
+      
+// #pragma mark --- Processor ---
+      /////////////////////////////////////////////////////////////////////
+      // PROCESSOR
+      //
+      extern "C" {
+        void EnableIRQ();
+        void DisableIRQ();
+      }
+      
+      
 // #pragma mark --- Audio ---
       /////////////////////////////////////////////////////////////////////
       // AUDIO
@@ -271,7 +281,7 @@ namespace Anki
 
       // Puts an entire message, with the usual header/footer
       // Returns false is there wasn't enough space to buffer the message
-      bool UARTPutMessage(u8 msgID, u8* buffer, u32 length);
+      bool UARTPutPacket(const u8* buffer, const u32 length, const u8 socket=0);
 
       void UARTPutString(const char* s);
       int UARTGetChar(u32 timeout = 0);
@@ -409,24 +419,41 @@ namespace Anki
 
       void DisconnectRadio();
 
-      Messages::ID RadioGetNextMessage(u8* buffer);
+      /** Gets the next packet from the radio
+       * @param buffer [out] A buffer into which to copy the packet. Must have MTU bytes available
+       * return The number of bytes of the packet or 0 if no packet was available.
+       */
+      u32 RadioGetNextPacket(u8* buffer);
 
-      // Returns true if the message has been sent to the basestation
-      bool RadioSendMessage(const Messages::ID msgID, const void *buffer);
+      /** Send a packet on the radio.
+       * @param buffer [in] A pointer to the data to be sent
+       * @param length [in] The number of bytes to be sent
+       * @param socket [in] Socket number, default 0 (base station)
+       * @return true if the packet was queued for transmission, false if it couldn't be queued.
+       */
+      bool RadioSendPacket(const void *buffer, const u32 length, const u8 socket=0);
 
+      /** Wrapper method for sending messages NOT PACKETS
+       * @param msgID The ID (tag) of the message to be sent
+       * @param buffer A pointer to the message to be sent
+       * @param reliable Specifify if the message should be transferred reliably. Default true.
+       * @param hot Specify if the message is hot and needs to be sent imeediately. Default false.
+       * @return True if sucessfully queued, false otherwise
+       */
+      bool RadioSendMessage(const Messages::ID msgID, const void *buffer, const bool reliable=true, const bool hot=false);
 
       /////////////////////////////////////////////////////////////////////
       // BLOCK COMMS
       //
       void FlashBlockIDs();
-      
+
       // Set the color and flashing of each LED on a block separately
       Result SetBlockLight(const u8 blockID, const u32* onColor, const u32* offColor,
                            const u32* onPeriod_ms, const u32* offPeriod_ms,
                            const u32* transitionOnPeriod_ms, const u32* transitionOffPeriod_ms);
-      
-      
-      
+
+
+
       /////////////////////////////////////////////////////////////////////
       // POWER MANAGEMENT
       //

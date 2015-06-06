@@ -131,6 +131,7 @@ namespace Anki {
 #         if IGNORE_ROTATION_FOR_IS_SAME_AS
           Point3f Tdiff(_pose.GetTranslation());
           Tdiff -= otherPose.GetTranslation();
+          Tdiff = _pose.GetRotation() * Tdiff;
           Tdiff.Abs();
           isSame = Tdiff < distThreshold;
 #         else

@@ -225,7 +225,7 @@ GTEST_TEST(TestPlanner, DISABLED_ReplanHard)
   xythetaPlan oldPlan;
 
   float distFromPlan = 9999.0;
-  int currentPlanIdx = env.FindClosestPlanSegmentToPose(planner.GetPlan(), newRobotPos, distFromPlan);
+  int currentPlanIdx = static_cast<int>(env.FindClosestPlanSegmentToPose(planner.GetPlan(), newRobotPos, distFromPlan));
   ASSERT_EQ(currentPlanIdx, 3) << "should be at action #3 in the plan (plan should have 1 short, then 3 long straights in a row)";
 
   EXPECT_LT(distFromPlan, 15.0) << "too far away from plan";

@@ -159,16 +159,23 @@ namespace Anki {
     void Robot::SetPickedUp(bool t)
     {
       if(_isPickedUp == false && t == true) {
-        // Robot is being picked up: de-localize it
+        // Robot is being picked up: de-localize it and clear all known objects
         Delocalize();
+        _blockWorld.ClearAllExistingObjects();
       }
       _isPickedUp = t;
     }
     
     void Robot::Delocalize()
     {
+      PRINT_NAMED_INFO("Robot.Delocalize", "Delocalizing robot %d.\n", GetID());
+      
       _localizedToID.UnSet();
       _localizedToFixedMat = false;
+
+      // NOTE: no longer doing this here because Delocalize() can be called by
+      //  BlockWorld::ClearAllExistingObjects, resulting in a weird loop...
+      //_blockWorld.ClearAllExistingObjects();
       
       // Add a new pose origin to use until the robot gets localized again
       _poseOrigins.emplace_back();
@@ -184,7 +191,11 @@ namespace Anki {
       _driveCenterPose.SetParent(_worldOrigin);
       
       _poseHistory->Clear();
-      ++_frameId;
+      //++_frameId;
+     
+      // Update VizText
+      VizManager::getInstance()->SetText(VizManager::LOCALIZED_TO, NamedColors::YELLOW,
+                                         "LocalizedTo: <nothing>");
     }
 
     Result Robot::UpdateFullRobotState(const MessageRobotState& msg)
@@ -446,11 +457,11 @@ namespace Anki {
           _headCamPose.RotateBy(RotationVector3d(-HEAD_CAM_PITCH_CORR, Y_AXIS_3D()));
           _headCamPose.RotateBy(RotationVector3d(HEAD_CAM_ROLL_CORR, X_AXIS_3D()));
           _headCamPose.SetTranslation({HEAD_CAM_POSITION[0] + HEAD_CAM_TRANS_X_CORR, HEAD_CAM_POSITION[1], HEAD_CAM_POSITION[2]});
-          PRINT_INFO("Slop factor applied to head cam pose for physical robot: yaw_corr=%f, pitch_corr=%f, roll_corr=%f, x_trans_corr=%fmm\n", HEAD_CAM_YAW_CORR, HEAD_CAM_PITCH_CORR, HEAD_CAM_ROLL_CORR, HEAD_CAM_TRANS_X_CORR);
+          PRINT_NAMED_INFO("Robot.SetPhysicalRobot", "Slop factor applied to head cam pose for physical robot: yaw_corr=%f, pitch_corr=%f, roll_corr=%f, x_trans_corr=%fmm", HEAD_CAM_YAW_CORR, HEAD_CAM_PITCH_CORR, HEAD_CAM_ROLL_CORR, HEAD_CAM_TRANS_X_CORR);
         } else {
           _headCamPose.SetRotation({0,0,1,  -1,0,0,  0,-1,0});
           _headCamPose.SetTranslation({HEAD_CAM_POSITION[0], HEAD_CAM_POSITION[1], HEAD_CAM_POSITION[2]});
-          PRINT_INFO("Slop factor removed from head cam pose for simulated robot\n");
+          PRINT_STREAM_INFO("Robot.SetPhysicalRobot", "Slop factor removed from head cam pose for simulated robot");
         }
         _isPhysical = isPhysical;
       }
@@ -482,7 +493,8 @@ namespace Anki {
       TimeStamp_t t;
       RobotPoseStamp* p = nullptr;
       HistPoseKey poseKey;
-      lastResult = ComputeAndInsertPoseIntoHistory(msg.timestamp, t, &p, &poseKey);
+      lastResult = ComputeAndInsertPoseIntoHistory(msg.timestamp, t, &p, &poseKey, false);
+      //assert(msg.timestamp == t);
       if(lastResult != RESULT_OK) {
         PRINT_NAMED_WARNING("Robot.QueueObservedMarker.HistoricalPoseNotFound",
                             "Time: %d, hist: %d to %d\n",
@@ -768,7 +780,7 @@ namespace Anki {
           Result lastResult = QueueObservedMarker(visionMarker);
           if(lastResult != RESULT_OK) {
             PRINT_NAMED_ERROR("Robot.Update.FailedToQueueVisionMarker",
-                              "Got VisionMarker message from vision processing thread but failed to queue it.\n");
+                              "Got VisionMarker message from vision processing thread but failed to queue it.");
             return lastResult;
           }
           
@@ -781,7 +793,7 @@ namespace Anki {
         
         MessageFaceDetection faceDetection;
         while(true == _visionProcessor.CheckMailbox(faceDetection)) {
-          PRINT_INFO("Robot %d reported seeing a face at (x,y,w,h)=(%d,%d,%d,%d).\n",
+          PRINT_NAMED_INFO("Robot.ActiveObjectLightTest", "Robot %d reported seeing a face at (x,y,w,h)=(%d,%d,%d,%d).",
                      GetID(), faceDetection.x_upperLeft, faceDetection.y_upperLeft, faceDetection.width, faceDetection.height);
           
           
@@ -820,6 +832,11 @@ namespace Anki {
         MessageDockingErrorSignal dockingErrorSignal;
         if(true == _visionProcessor.CheckMailbox(dockingErrorSignal)) {
           
+          // HACK: Robot seems to dock slightly to the right rather consistently
+          if (_isPhysical) {
+            dockingErrorSignal.x_distErr -= DOCKING_LATERAL_OFFSET_HACK;
+          }
+          
           // Visualize docking error signal
           VizManager::getInstance()->SetDockingError(dockingErrorSignal.x_distErr,
                                                      dockingErrorSignal.y_horErr,
@@ -844,13 +861,6 @@ namespace Anki {
         _blockWorld.Update(numBlocksObserved);
 
       } // if(_visionProcessor.WasLastImageProcessed())
-      
-      // Send ping to keep connection alive.
-      // TODO: Don't send ping if there are already outgoing messages this tic.
-      //       This should probably be done outside of Robot at the end of the basestation tic.
-      if (_msgHandler->GetNumMsgsSentThisTic(GetID()) == 0) {
-        SendPing();
-      }
       
       ///////// Update the behavior manager ///////////
       
@@ -1309,7 +1319,7 @@ namespace Anki {
         Vec3f rotAxis;
         robotPoseWrtMat.GetRotationVector().GetAngleAndAxis(rotAngle, rotAxis);
 
-        if(std::abs(rotAngle.ToFloat()) > DEG_TO_RAD(5) && !AreUnitVectorsAligned(rotAxis, Z_AXIS_3D(), DEG_TO_RAD(10))) {
+        if(std::abs(rotAngle.ToFloat()) > DEG_TO_RAD(5) && !AreUnitVectorsAligned(rotAxis, Z_AXIS_3D(), DEG_TO_RAD(15))) {
           PRINT_NAMED_WARNING("Robot.LocalizeToMat.OutOfPlaneRotation",
                               "Refusing to localize to %s because "
                               "Robot %d's Z axis would not be well aligned with the world Z axis. "
@@ -1755,7 +1765,7 @@ namespace Anki {
       if(object == nullptr) {
         PRINT_NAMED_ERROR("Robot.SetCarryingObject",
                           "Object %d no longer exists in the world. Can't set it as robot's carried object.\n",
-                          carryObjectID.GetValue(), GetID());
+                          carryObjectID.GetValue());
       } else {
         ActionableObject* carriedObject = dynamic_cast<ActionableObject*>(object);
         if(carriedObject == nullptr) {
@@ -2001,18 +2011,8 @@ namespace Anki {
         m.resolution    = Vision::CAMERA_RES_QVGA;
         result = _msgHandler->SendMessage(_ID, m);
         
-        
-        // Send client connection status message
-        // TODO: This message isn't supposed to be sent from the basestation
-        //       but it's the quickest way to let the robot know its radio is connected.
-        MessageClientConnectionStatus ccsMsg;
-        ccsMsg.wifiState = 1;
-        ccsMsg.bluetoothState = 0;
-        result = _msgHandler->SendMessage(_ID, ccsMsg);
-        
-        
         // Reset pose on connect
-        PRINT_INFO("Setting pose to (0,0,0)\n");
+        PRINT_NAMED_INFO("Robot.SendSyncTime", "Setting pose to (0,0,0)");
         Pose3d zeroPose(0, Z_AXIS_3D(), {0,0,0});
         return SendAbsLocalizationUpdate(zeroPose, 0, GetPoseFrameID());
       } else {
@@ -2048,7 +2048,7 @@ namespace Anki {
       MessageExecutePath m;
       m.pathID = _lastSentPathID;
       m.useManualSpeed = useManualSpeed;
-      PRINT_NAMED_INFO("Robot::SendExecutePath", "sending start execution message (manualSpeed == %d)\n", useManualSpeed);
+      PRINT_NAMED_INFO("Robot::SendExecutePath", "sending start execution message (pathID = %d, manualSpeed == %d)\n", _lastSentPathID, useManualSpeed);
       return _msgHandler->SendMessage(_ID, m);
     }
     
@@ -2312,12 +2312,6 @@ namespace Anki {
     {
       MessageFaceTracking m;
       m.enabled = static_cast<u8>(false);
-      return _msgHandler->SendMessage(_ID, m);
-    }
-    
-    Result Robot::SendPing()
-    {
-      MessagePing m;
       return _msgHandler->SendMessage(_ID, m);
     }
 
@@ -2922,24 +2916,35 @@ namespace Anki {
       
     void Robot::ComputeDriveCenterPose(const Pose3d &robotPose, Pose3d &driveCenterPose)
     {
+      MoveRobotPoseForward(robotPose, GetDriveCenterOffset(), driveCenterPose);
+    }
+      
+    void Robot::ComputeOriginPose(const Pose3d &driveCenterPose, Pose3d &robotPose)
+    {
+      MoveRobotPoseForward(driveCenterPose, -GetDriveCenterOffset(), robotPose);
+    }
+
+    void Robot::MoveRobotPoseForward(const Pose3d &startPose, f32 distance, Pose3d &movedPose) {
+      movedPose = startPose;
+      f32 angle = startPose.GetRotationAngle<'Z'>().ToFloat();
+      Vec3f trans;
+      trans.x() = startPose.GetTranslation().x() + distance * cosf(angle);
+      trans.y() = startPose.GetTranslation().y() + distance * sinf(angle);
+      movedPose.SetTranslation(trans);
+    }
+      
+    f32 Robot::GetDriveCenterOffset() {
       if (_isPhysical) {
-        // What is the current drive center pose based on carry state...
         f32 driveCenterOffset = DRIVE_CENTER_OFFSET;
         if (IsCarryingObject()) {
           driveCenterOffset = 0;
         }
-        
-        driveCenterPose = robotPose;
-        f32 angle = robotPose.GetRotationAngle<'Z'>().ToFloat();
-        Vec3f trans;
-        trans.x() = robotPose.GetTranslation().x() + driveCenterOffset * cosf(angle);
-        trans.y() = robotPose.GetTranslation().y() + driveCenterOffset * sinf(angle);
-        driveCenterPose.SetTranslation(trans);
-      } else {
-        // TODO: Simulated robot Webots proto needs to be updated with treads.
-        //       Til then assume no drive center offset.
-        driveCenterPose = robotPose;
+        return driveCenterOffset;
       }
+      
+      // TODO: Simulated robot Webots proto needs to be updated with treads.
+      //       Til then assume no drive center offset.
+      return 0.f;
     }
     
   } // namespace Cozmo

@@ -82,8 +82,8 @@ namespace Anki {
       
       // Add a new action to be run concurrently, generating a new slot, whose
       // handle is returned. If there is no desire to queue anything to run after
-      // this action, the SlotHandle can be ignored.
-      SlotHandle AddAction(IActionRunner* action, u8 numRetries = 0);
+      // this action, the returned SlotHandle can be ignored.
+      SlotHandle AddConcurrentAction(IActionRunner* action, u8 numRetries = 0);
       
       // Queue an action into a specific slot. If that slot does not exist
       // (perhaps because it completed before this call) it will be created.
@@ -110,7 +110,6 @@ namespace Anki {
       
     protected:
       
-      SlotHandle _slotCounter;
       std::map<SlotHandle, ActionQueue> _queues;
       
     }; // class ActionList

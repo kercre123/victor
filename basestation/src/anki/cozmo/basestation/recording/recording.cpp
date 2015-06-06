@@ -10,6 +10,9 @@
  * Copyright: Anki, Inc. 2012
  *
  **/
+
+#if COZMO_RECORDING_PLAYBACK
+
 #include "anki/common/basestation/utils/timer.h"
 #include "recording.h"
 #include "anki/messaging/basestation/IComms.h"
@@ -175,3 +178,5 @@ RecordingPlaybackStatus Recording::PostTickMessageProcess()
 
 } // namespace Cozmo
 } // namespace Anki
+
+#endif

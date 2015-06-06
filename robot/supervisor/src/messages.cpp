@@ -5,6 +5,10 @@
 
 #include "anki/common/robot/array2d.h"
 
+#include "embedded/transport/IUnreliableTransport.h"
+#include "embedded/transport/IReceiver.h"
+#include "embedded/transport/reliableTransport.h"
+
 #include "messages.h"
 #include "localization.h"
 #include "animationController.h"
@@ -20,9 +24,60 @@
 #include "testModeController.h"
 #include "animationController.h"
 #include "backpackLightController.h"
+#include "anki/cozmo/shared/activeBlockTypes.h"
+
 
 namespace Anki {
   namespace Cozmo {
+    ReliableConnection connection;
+
+    namespace HAL {
+      bool RadioSendMessage(const Messages::ID msgID, const void *buffer, const bool reliable, const bool hot)
+      {
+        const u32 size = Messages::GetSize(msgID);
+        if (RadioIsConnected())
+        {
+          const EReliableMessageType messgeType = reliable ? eRMT_SingleReliableMessage : eRMT_SingleUnreliableMessage;
+          return ReliableTransport_SendMessage((const uint8_t*)buffer, size, &connection, messgeType, hot, msgID);
+        }
+        else
+        {
+          return false;
+        }
+      }
+
+#ifndef SIMULATOR
+
+      Result SetBlockLight(const u8 blockID, const u32* onColor, const u32* offColor,
+                           const u32* onPeriod_ms, const u32* offPeriod_ms,
+                           const u32* transitionOnPeriod_ms, const u32* transitionOffPeriod_ms)
+      {
+         u8 buffer[256];
+         const u32 size = Messages::GetSize(Messages::SetBlockLights_ID);
+         Anki::Cozmo::Messages::SetBlockLights m;
+         m.blockID = blockID;
+         for (int i=0; i<NUM_BLOCK_LEDS; ++i) {
+           m.onColor[i] = onColor[i];
+           m.offColor[i] = offColor[i];
+           m.onPeriod_ms[i] = onPeriod_ms[i];
+           m.offPeriod_ms[i] = offPeriod_ms[i];
+           m.transitionOnPeriod_ms[i] = (transitionOnPeriod_ms == NULL ? 0 : transitionOnPeriod_ms[i]);
+           m.transitionOffPeriod_ms[i] = (transitionOffPeriod_ms == NULL ? 0 : transitionOffPeriod_ms[i]);
+         }
+         buffer[0] = Messages::SetBlockLights_ID;
+         memcpy(buffer + 1, &m, size);
+         return RadioSendPacket(buffer, size+1, blockID + 1) ? RESULT_OK : RESULT_FAIL;
+      }
+
+      void FlashBlockIDs()
+      {
+        // THIS DOESN'T WORK FOR now
+      }
+
+#endif
+
+    }
+
     namespace Messages {
 
       namespace {
@@ -45,7 +100,8 @@ namespace Anki {
           {0, 0, 0} // Final dummy entry without comma at end
         };
 
-        u8 msgBuffer_[256];
+        u8 pktBuffer_[2048];
+        u8 msgBuff_[256];
 
         // For waiting for a particular message ID
         const u32 LOOK_FOR_MESSAGE_TIMEOUT = 1000000;
@@ -76,13 +132,20 @@ namespace Anki {
 
         ImageSendMode_t imageSendMode_;
         Vision::CameraResolution imageSendResolution_;
-        
+
         const int IMAGE_SEND_JPEG_COMPRESSION_QUALITY = 80; // 0 to 100
 
       } // private namespace
 
 
 // #pragma mark --- Messages Method Implementations ---
+
+      Result Init()
+      {
+        ReliableTransport_Init();
+        ReliableConnection_Init(&connection, NULL); // We only have one connection so dest pointer is superfluous
+        return RESULT_OK;
+      }
 
       u16 GetSize(const ID msgID)
       {
@@ -154,7 +217,7 @@ namespace Anki {
         HAL::IMUReadData(imuData);
         robotState_.rawGyroZ = imuData.rate_z;
         robotState_.rawAccelY = imuData.acc_y;
-        
+
         //ProxSensors::GetValues(robotState_.proxLeft, robotState_.proxForward, robotState_.proxRight);
 
         robotState_.lastPathID = PathFollower::GetLastPathID();
@@ -164,7 +227,7 @@ namespace Anki {
         robotState_.battVolt10x = HAL::BatteryGetVoltage10x();
 
         robotState_.status = 0;
-        
+
         // TODO: Make this a parameters somewhere?
         const f32 WHEEL_SPEED_STOPPED = 2.f;
         robotState_.status |= (HeadController::IsMoving() ||
@@ -210,7 +273,7 @@ namespace Anki {
         if(!HAL::RadioSendMessage(SyncTimeAck_ID, &stMsg)) {
           PRINT("Failed to send sync time ack message.\n");
         }
-        
+
       } // ProcessRobotInit()
 
 
@@ -230,7 +293,7 @@ namespace Anki {
         f32 currentMatX       = msg.xPosition;
         f32 currentMatY       = msg.yPosition;
         Radians currentMatHeading = msg.headingAngle;
-        Result res = Localization::UpdatePoseWithKeyframe(msg.pose_frame_id, msg.timestamp, currentMatX, currentMatY, currentMatHeading.ToFloat());
+        /*Result res =*/ Localization::UpdatePoseWithKeyframe(msg.pose_frame_id, msg.timestamp, currentMatX, currentMatY, currentMatHeading.ToFloat());
         //Localization::SetCurrentMatPose(currentMatX, currentMatY, currentMatHeading);
         //Localization::SetPoseFrameId(msg.pose_frame_id);
 
@@ -273,26 +336,25 @@ namespace Anki {
 
       void ProcessBTLEMessages()
       {
-        ID msgID;
-
-        while((msgID = HAL::RadioGetNextMessage(msgBuffer_)) != NO_MESSAGE_ID)
+        u32 dataLen;
+        while((dataLen = HAL::RadioGetNextPacket(pktBuffer_)) > 0)
         {
-          ProcessMessage(msgID, msgBuffer_);
+          s16 res = ReliableTransport_ReceiveData(&connection, pktBuffer_, dataLen);
+          if (res < 0)
+          {
+            PRINT("ERROR (%d): ReliableTransport didn't accept message %d[%d]\n", res, pktBuffer_[0], dataLen);
+          }
         }
 
-        // If no messages received for PING_DISCONNECT_TIMEOUT_MS, then set disconnected state
-        if ((lastPingTime_ != 0) && (lastPingTime_ + B2R_PING_DISCONNECT_TIMEOUT_MS < HAL::GetTimeStamp())) {
-          
-          PRINT("WARN: Disconnecting radio due to ping timeout\n");
-          HAL::DisconnectRadio();
-          lastPingTime_ = 0;
-          
-          PRINT("WARN: Robot last received ping from Basestation at %d. Current time = %d.\n",
-                lastPingTime_, HAL::GetTimeStamp());
-          lastPingTime_ = 0;
+        if (HAL::RadioIsConnected())
+        {
+          if (ReliableTransport_Update(&connection) == false) // Connection has timed out
+          {
+            PRINT("WARN: Reliable transport has timed out\n");
+            Receiver_OnDisconnect(&connection);
+          }
         }
-
-      } // ProcessBTLEMessages()
+      }
 
       void ProcessClearPathMessage(const ClearPath& msg) {
         SpeedController::SetUserCommandedDesiredVehicleSpeed(0);
@@ -322,13 +384,14 @@ namespace Anki {
       }
 
       void ProcessExecutePathMessage(const ExecutePath& msg) {
+        PRINT("Starting path %d\n", msg.pathID);
         PathFollower::StartPathTraversal(msg.pathID, msg.useManualSpeed);
       }
 
       void ProcessDockWithObjectMessage(const DockWithObject& msg)
       {
           PRINT("RECVD DockToBlock (action %d, manualSpeed %d)\n", msg.dockAction, msg.useManualSpeed);
-        
+
           PickAndPlaceController::DockToBlock(msg.useManualSpeed,
                                               static_cast<DockAction_t>(msg.dockAction));
       }
@@ -380,11 +443,13 @@ namespace Anki {
       }
 
       void ProcessSetLiftHeightMessage(const SetLiftHeight& msg) {
+        PRINT("Moving lift to %f\n", msg.height_mm);
         LiftController::SetMaxSpeedAndAccel(msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2);
         LiftController::SetDesiredHeight(msg.height_mm);
       }
 
       void ProcessSetHeadAngleMessage(const SetHeadAngle& msg) {
+        PRINT("Moving head to %f\n", msg.angle_rad);
         HeadController::SetMaxSpeedAndAccel(msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2);
         HeadController::SetDesiredAngle(msg.angle_rad);
       }
@@ -414,12 +479,12 @@ namespace Anki {
 
         imageSendMode_ = static_cast<ImageSendMode_t>(msg.imageSendMode);
         imageSendResolution_ = static_cast<Vision::CameraResolution>(msg.resolution);
-        
+
         // Send back camera calibration for this resolution
         const HAL::CameraInfo* headCamInfo = HAL::GetHeadCamInfo();
-        
+
         // TODO: Just store CameraResolution in calibration data instead of height/width?
-        
+
         if(headCamInfo == NULL) {
           PRINT("NULL HeadCamInfo retrieved from HAL.\n");
         }
@@ -429,12 +494,12 @@ namespace Anki {
           const s32 height = Vision::CameraResInfo[msg.resolution].height;
           const f32 xScale = static_cast<f32>(width/headCamInfo->ncols);
           const f32 yScale = static_cast<f32>(height/headCamInfo->nrows);
-          
+
           if(xScale != 1.f || yScale != 1.f)
           {
             PRINT("Scaling [%dx%d] camera calibration by [%.1f %.1f] to match requested resolution.\n",
                   headCamInfo->ncols, headCamInfo->nrows, xScale, yScale);
-            
+
             // Stored calibration info does not requested resolution, so scale it
             // accordingly and adjust the pointer so we send this scaled info below.
             headCamInfoScaled.focalLength_x *= xScale;
@@ -443,7 +508,7 @@ namespace Anki {
             headCamInfoScaled.center_y      *= yScale;
             headCamInfoScaled.nrows = height;
             headCamInfoScaled.ncols = width;
-           
+
             headCamInfo = &headCamInfoScaled;
           }
 
@@ -461,7 +526,7 @@ namespace Anki {
             1 // This is a real robot
 #           endif
           };
-          
+
           if(!HAL::RadioSendMessage(CameraCalibration_ID, &headCalibMsg)) {
             PRINT("Failed to send camera calibration message.\n");
           }
@@ -495,7 +560,7 @@ namespace Anki {
         WheelController::SetGains(msg.kpLeft, msg.kiLeft, msg.maxIntegralErrorLeft,
                                   msg.kpRight, msg.kiRight, msg.maxIntegralErrorRight);
       }
-      
+
       void ProcessSetHeadControllerGainsMessage(const SetHeadControllerGains& msg) {
         HeadController::SetGains(msg.kp, msg.ki, msg.kd, msg.maxIntegralError);
       }
@@ -507,7 +572,7 @@ namespace Anki {
       void ProcessSetSteeringControllerGainsMessage(const SetSteeringControllerGains& msg) {
         SteeringController::SetGains(msg.k1, msg.k2);
       }
-      
+
       void ProcessSetVisionSystemParamsMessage(const SetVisionSystemParams& msg) {
         PRINT("Deprecated SetVisionSystemParams message received!\n");
       }
@@ -524,12 +589,6 @@ namespace Anki {
       void ProcessFaceTrackingMessage(const FaceTracking& msg)
       {
       }
-
-      void ProcessPingMessage(const Ping& msg)
-      {
-        lastPingTime_ = HAL::GetTimeStamp();
-      }
-
 
       void ProcessAbortDockingMessage(const AbortDocking& msg)
       {
@@ -828,28 +887,6 @@ namespace Anki {
 
       }
 
-      // A little hacky, but this is technically not a message that supervisor level code needs to worry about
-      // since it comes from the torpedo rather than basestation.
-      void ProcessClientConnectionStatusMessage(const ClientConnectionStatus& msg) {
-        static bool firstConnectionUpdateSinceBoot = true;
-
-        HAL::RadioUpdateState(msg.wifiState, msg.bluetoothState);
-/*
-        // Simple startup animation so can tell he's ready
-        // TODO: Remove once we have other indicators? This is mostly for dev.
-        if (firstConnectionUpdateSinceBoot)
-        {
-          firstConnectionUpdateSinceBoot = false;
-          HeadController::StartNodding(DEG_TO_RAD(-15), DEG_TO_RAD(15),
-          400, 3, .25f, .25f);
-
-          //EyeController::SetEyeColor(LED_CYAN);
-          //EyeController::SetBlinkVariability(50);
-          //EyeController::StartBlinking(1000, 100);
-        }
-*/
-      }
-
       void ProcessSetCarryStateMessage(const SetCarryState& msg)
       {
         PickAndPlaceController::SetCarryState((CarryState_t)msg.state);
@@ -863,7 +900,7 @@ namespace Anki {
                                              msg.transitionOnPeriod_ms[i], msg.transitionOffPeriod_ms[i]);
         }
       }
-      
+
       // --------- Block control messages ----------
 
       void ProcessFlashBlockIDsMessage(const FlashBlockIDs& msg)
@@ -883,13 +920,14 @@ namespace Anki {
                            msg.transitionOnPeriod_ms, msg.transitionOffPeriod_ms);
       }
 
-      
+
       void ProcessSetBlockBeingCarriedMessage(const SetBlockBeingCarried& msg)
       {
         // TODO: need to add this hal.h and implement
         // HAL::SetBlockBeingCarried(msg.blockID, msg.isBeingCarried);
       }
-      
+
+
 // ----------- Send messages -----------------
 
 
@@ -914,7 +952,7 @@ namespace Anki {
           }
         }
 
-        if(HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::RobotState), m) == true) {
+        if(HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::RobotState), m, false, false) == true) {
           // Update send history
           robotStateSendHist_[robotStateSendHistIdx_] = m->timestamp;
           if (++robotStateSendHistIdx_ > 1) robotStateSendHistIdx_ = 0;
@@ -991,7 +1029,7 @@ namespace Anki {
 
       bool ReceivedInit()
       {
-  
+
         return initReceived_;
       }
 
@@ -1000,30 +1038,30 @@ namespace Anki {
       {
         initReceived_ = false;
         lastPingTime_ = 0;
-        
+
         imageSendMode_ = ISM_STREAM;
         imageSendResolution_ = Vision::CAMERA_RES_QVGA;
       }
 
-      
+
 #     ifdef SIMULATOR
       Result CompressAndSendImage(const Embedded::Array<u8> &img, const TimeStamp_t captureTime)
       {
         Messages::ImageChunk m;
-        
+
         switch(img.get_size(0)) {
           case 240:
             AnkiConditionalErrorAndReturnValue(img.get_size(1)==320*3, RESULT_FAIL, "CompressAndSendImage",
                                                "Unrecognized resolution: %dx%d.\n", img.get_size(1)/3, img.get_size(0));
             m.resolution = Vision::CAMERA_RES_QVGA;
             break;
-            
+
           case 480:
             AnkiConditionalErrorAndReturnValue(img.get_size(1)==640*3, RESULT_FAIL, "CompressAndSendImage",
                                                "Unrecognized resolution: %dx%d.\n", img.get_size(1)/3, img.get_size(0));
             m.resolution = Vision::CAMERA_RES_VGA;
             break;
-            
+
           default:
             AnkiError("CompressAndSendImage", "Unrecognized resolution: %dx%d.\n", img.get_size(1)/3, img.get_size(0));
             return RESULT_FAIL;
@@ -1033,54 +1071,96 @@ namespace Anki {
         const cv::vector<int> compressionParams = {
           CV_IMWRITE_JPEG_QUALITY, IMAGE_SEND_JPEG_COMPRESSION_QUALITY
         };
-        
+
         cv::Mat cvImg;
         cvImg = cv::Mat(img.get_size(0), img.get_size(1)/3, CV_8UC3, const_cast<void*>(img.get_buffer()));
         cvtColor(cvImg, cvImg, CV_BGR2RGB);
-        
+
         cv::vector<u8> compressedBuffer;
         cv::imencode(".jpg",  cvImg, compressedBuffer, compressionParams);
-        
+
         const u32 numTotalBytes = compressedBuffer.size();
 
         //PRINT("Sending frame with capture time = %d at time = %d\n", captureTime, HAL::GetTimeStamp());
-        
+
         m.frameTimeStamp = captureTime;
         m.imageId = ++imgID;
         m.chunkId = 0;
         m.chunkSize = IMAGE_CHUNK_SIZE;
         m.imageChunkCount = ceilf((f32)numTotalBytes / IMAGE_CHUNK_SIZE);
         m.imageEncoding = Vision::IE_JPEG_COLOR;
-        
+
         u32 totalByteCnt = 0;
         u32 chunkByteCnt = 0;
-        
+
         for(s32 i=0; i<numTotalBytes; ++i)
         {
           m.data[chunkByteCnt] = compressedBuffer[i];
-          
+
           ++chunkByteCnt;
           ++totalByteCnt;
-          
+
           if (chunkByteCnt == IMAGE_CHUNK_SIZE) {
             //PRINT("Sending image chunk %d\n", m.chunkId);
-            HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::ImageChunk), &m);
+            HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::ImageChunk), &m, false, true);
             ++m.chunkId;
             chunkByteCnt = 0;
           } else if (totalByteCnt == numTotalBytes) {
             // This should be the last message!
             //PRINT("Sending LAST image chunk %d\n", m.chunkId);
             m.chunkSize = chunkByteCnt;
-            HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::ImageChunk), &m);
+            HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::ImageChunk), &m, false, true);
           }
         } // for each byte in the compressed buffer
-        
+
         return RESULT_OK;
       } // CompressAndSendImage()
-      
+
 #     endif // SIMULATOR
-      
-      
+
+
     } // namespace Messages
   } // namespace Cozmo
 } // namespace Anki
+
+// Shim for reliable transport
+bool UnreliableTransport_SendPacket(uint8_t* buffer, uint16_t bufferSize)
+{
+  return Anki::Cozmo::HAL::RadioSendPacket(buffer, bufferSize);
+}
+
+void Receiver_ReceiveData(uint8_t* buffer, uint16_t bufferSize, ReliableConnection* connection)
+{
+  const Anki::Cozmo::Messages::ID msgID = static_cast<Anki::Cozmo::Messages::ID>(buffer[0]);
+  const u32 size = Anki::Cozmo::Messages::GetSize(msgID);
+
+  if ((size + 1) == bufferSize)
+  {
+    memcpy(Anki::Cozmo::Messages::msgBuff_, buffer+1, bufferSize-1); // Copy message into aligned memory
+    Anki::Cozmo::Messages::ProcessMessage(msgID, Anki::Cozmo::Messages::msgBuff_);
+  }
+  else
+  {
+    Anki::Cozmo::PRINT("Receiver got %d expeted len %d was %d\n", msgID, size, bufferSize);
+  }
+}
+
+void Receiver_OnConnectionRequest(ReliableConnection* connection)
+{
+  Anki::Cozmo::PRINT("ReliableTransport new connection\n");
+  ReliableTransport_FinishConnection(connection); // Accept the connection
+  Anki::Cozmo::HAL::RadioUpdateState(1, 0);
+}
+
+void Receiver_OnConnected(ReliableConnection* connection)
+{
+  Anki::Cozmo::PRINT("ReliableTransport connection completed\n");
+  Anki::Cozmo::HAL::RadioUpdateState(1, 0);
+}
+
+void Receiver_OnDisconnect(ReliableConnection* connection)
+{
+  Anki::Cozmo::PRINT("ReliableTransport disconnected\n");
+  ReliableConnection_Init(connection, NULL); // Reset the connection
+  Anki::Cozmo::HAL::RadioUpdateState(0, 0);
+}

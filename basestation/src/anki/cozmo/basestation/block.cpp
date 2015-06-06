@@ -23,6 +23,13 @@
 #include "opencv2/imgproc/imgproc.hpp"
 #endif
 
+#define SAVE_SET_BLOCK_LIGHTS_MESSAGES_FOR_DEBUG 0
+
+#if SAVE_SET_BLOCK_LIGHTS_MESSAGES_FOR_DEBUG
+#  include <fstream>
+#endif
+#include <iomanip>
+
 namespace Anki {
   namespace Cozmo {
 
@@ -213,7 +220,8 @@ namespace Anki {
     {
       const std::vector<Point3f>& canonicalCorners = GetCanonicalCorners();
       
-      const RotationMatrix3d& R = atPose.GetRotationMatrix();
+      const Pose3d atPoseWrtOrigin = atPose.GetWithRespectToOrigin();
+      const RotationMatrix3d& R = atPoseWrtOrigin.GetRotationMatrix();
 
       Point3f paddedSize(_size);
       paddedSize += 2.f*padding_mm;
@@ -234,7 +242,7 @@ namespace Anki {
       Quad2f boundingQuad = GetBoundingQuad(points);
       
       // Re-center
-      Point2f center(atPose.GetTranslation().x(), atPose.GetTranslation().y());
+      Point2f center(atPoseWrtOrigin.GetTranslation().x(), atPoseWrtOrigin.GetTranslation().y());
       boundingQuad += center;
       
       return boundingQuad;
@@ -601,8 +609,8 @@ namespace Anki {
           return;
           
         default:
-          PRINT_NAMED_ERROR("ActiveCube.MakeStateRelativeToXY",
-                            "Unexpected reference LED %d.\n", referenceLED);
+          PRINT_STREAM_ERROR("ActiveCube.MakeStateRelativeToXY",
+                            "Unexpected reference LED " << static_cast<int>(referenceLED) << ".");
           return;
       }
     } // MakeStateRelativeToXY()
@@ -664,8 +672,8 @@ namespace Anki {
           return RotateWhichLEDsAroundTopFace(RotateWhichLEDsAroundTopFace(whichLEDs, true), true);
     
         default:
-          PRINT_NAMED_ERROR("ActiveCube.MakeStateRelativeToXY",
-                            "Unexpected reference LED %d.\n", referenceLED);
+          PRINT_STREAM_ERROR("ActiveCube.MakeStateRelativeToXY",
+                            "Unexpected reference LED " << static_cast<int>(referenceLED) << ".");
           return whichLEDs;
       }
     } // MakeWhichLEDsRelativeToXY()
@@ -777,10 +785,7 @@ namespace Anki {
       Vec2f v(xyPosition);
       v -= topMarkerCenter;
       
-      PRINT_INFO("ActiveCube %d's TopMarker is = %s, angle = %.1fdeg\n",
-                 GetID().GetValue(),
-                 Vision::MarkerTypeStrings[topMarker.GetCode()],
-                 topMarkerPose.GetRotation().GetAngleAroundZaxis().getDegrees());
+      PRINT_STREAM_INFO("ActiveCube.GetCornerClosestToXY", "ActiveCube " << GetID().GetValue() << "'s TopMarker is = " << Vision::MarkerTypeStrings[topMarker.GetCode()] << ", angle = " << std::setprecision(3) << topMarkerPose.GetRotation().GetAngleAroundZaxis().getDegrees() << "deg");
       
       Radians angle = std::atan2(v.y(), v.x());
       angle -= topMarkerPose.GetRotationAngle<'Z'>();
@@ -790,28 +795,24 @@ namespace Anki {
       if(angle > 0.f) {
         if(angle < M_PI_2) {
           // Between 0 and 90 degrees: Upper Right Corner
-          PRINT_INFO("Angle = %.1fdeg, Closest corner to (%.2f,%.2f): Upper Right\n",
-                     angle.getDegrees(), xyPosition.x(), xyPosition.y());
+          PRINT_STREAM_INFO("ActiveCube.GetCornerClosestToXY", "Angle = " << std::setprecision(3) << angle.getDegrees() <<  "deg, Closest corner to (" << xyPosition.x() << "," << xyPosition.y() << "): Upper Right");
           whichLEDs = (getTopAndBottom ? WhichBlockLEDs::TOP_BTM_UPPER_RIGHT : WhichBlockLEDs::TOP_UPPER_RIGHT);
         } else {
           // Between 90 and 180: Upper Left Corner
           //assert(angle<=M_PI);
-          PRINT_INFO("Angle = %.1fdeg, Closest corner to (%.2f,%.2f): Upper Left\n",
-                     angle.getDegrees(), xyPosition.x(), xyPosition.y());
+          PRINT_STREAM_INFO("ActiveCube.GetCornerClosestToXY", "Angle = " << std::setprecision(3) << angle.getDegrees() <<  "deg, Closest corner to (" << xyPosition.x() << "," << xyPosition.y() << "): Upper Left");
           whichLEDs = (getTopAndBottom ? WhichBlockLEDs::TOP_BTM_UPPER_LEFT : WhichBlockLEDs::TOP_UPPER_LEFT);
         }
       } else {
         //assert(angle >= -M_PI);
         if(angle > -M_PI_2) {
           // Between -90 and 0: Lower Right Corner
-          PRINT_INFO("Angle = %.1fdeg, Closest corner to (%.2f,%.2f): Lower Right\n",
-                     angle.getDegrees(), xyPosition.x(), xyPosition.y());
+          PRINT_STREAM_INFO("ActiveCube.GetCornerClosestToXY", "Angle = " << std::setprecision(3) << angle.getDegrees() <<  "deg, Closest corner to (" << xyPosition.x() << "," << xyPosition.y() << "): Lower Right");
           whichLEDs = (getTopAndBottom ? WhichBlockLEDs::TOP_BTM_LOWER_RIGHT : WhichBlockLEDs::TOP_LOWER_RIGHT);
         } else {
           // Between -90 and -180: Lower Left Corner
           //assert(angle >= -M_PI);
-          PRINT_INFO("Angle = %.1fdeg, Closest corner to (%.2f,%.2f): Lower Left\n",
-                     angle.getDegrees(), xyPosition.x(), xyPosition.y());
+          PRINT_STREAM_INFO("ActiveCube.GetCornerClosestToXY", "Angle = " << std::setprecision(3) << angle.getDegrees() <<  "deg, Closest corner to (" << xyPosition.x() << "," << xyPosition.y() << "): Lower Left");
           whichLEDs = (getTopAndBottom ? WhichBlockLEDs::TOP_BTM_LOWER_LEFT : WhichBlockLEDs::TOP_LOWER_LEFT);
         }
       }
@@ -927,6 +928,18 @@ namespace Anki {
         m.transitionOnPeriod_ms[iLED]  = _ledState[iLED].transitionOnPeriod_ms;
         m.transitionOffPeriod_ms[iLED] = _ledState[iLED].transitionOffPeriod_ms;
       }
+      
+#     if SAVE_SET_BLOCK_LIGHTS_MESSAGES_FOR_DEBUG
+      {
+        static int saveCtr=0;
+        Json::Value jsonMsg = m.CreateJson();
+        std::ofstream jsonFile("SetBlockLights_" + std::to_string(saveCtr++) + ".json", std::ofstream::out);
+        fprintf(stdout, "Writing SetBlockLights message to JSON file.\n");
+        jsonFile << jsonMsg.toStyledString();
+        jsonFile.close();
+      }
+#     endif 
+      
     }
     
   } // namespace Cozmo

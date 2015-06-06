@@ -14,7 +14,7 @@
 #include "anki/common/basestation/math/poseBase_impl.h"
 #include "anki/common/basestation/math/quad_impl.h"
 
-#include "anki/common/basestation/utils/logging/logging.h"
+#include "anki/util/logging/logging.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
@@ -218,9 +218,10 @@ namespace Anki {
     }
         
     bool Ramp::IsPreActionPoseValid(const PreActionPose& preActionPose,
-                                    const Pose3d* reachableFromPose) const
+                                    const Pose3d* reachableFromPose,
+                                    const std::vector<std::pair<Quad2f,ObjectID> >& obstacles) const
     {
-      bool isValid = ActionableObject::IsPreActionPoseValid(preActionPose, reachableFromPose);
+      bool isValid = ActionableObject::IsPreActionPoseValid(preActionPose, reachableFromPose, obstacles);
       if(isValid && reachableFromPose != nullptr && preActionPose.GetActionType() == PreActionPose::ENTRY) {
         // Valid according to default check, now continue with checking reachability:
         // Make sure reachableFrom pose is at about the same height of the ENTRY pose.

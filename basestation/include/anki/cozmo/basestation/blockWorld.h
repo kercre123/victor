@@ -140,10 +140,10 @@ namespace Anki
       void GetObjectBoundingBoxesXY(const f32 minHeight,
                                     const f32 maxHeight,
                                     const f32 padding,
-                                    std::vector<Quad2f>& boundingBoxes,
+                                    std::vector<std::pair<Quad2f,ObjectID> >& boundingBoxes,
                                     const std::set<ObjectFamily>& ignoreFamilies = {ObjectFamily::MATS},
-                                    const std::set<ObjectType>& ignoreTypes = {{}},
-                                    const std::set<ObjectID>& ignoreIDs = {{}}) const;
+                                    const std::set<ObjectType>& ignoreTypes = std::set<ObjectType>(),
+                                    const std::set<ObjectID>& ignoreIDs = std::set<ObjectID>()) const;
 
       // Finds an object nearest the specified distance (and optionally, rotation -- not implemented yet)
       // of the given pose. Returns nullptr if no objects match. Returns closest
@@ -170,7 +170,8 @@ namespace Anki
       // Wrapper for above that returns bounding boxes of objects that are
       // obstacles given the robot's current z height. Objects being carried
       // and the object the robot is localized to are not considered obstacles.
-      void GetObstacles(std::vector<Quad2f>& boundingBoxes, const f32 padding) const;
+      void GetObstacles(std::vector<std::pair<Quad2f,ObjectID> >& boundingBoxes,
+                        const f32 padding = 0.f) const;
       
       // Get objects newly-observed or re-observed objects in the last Update.
       /*

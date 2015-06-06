@@ -17,7 +17,7 @@
 
 #include "anki/common/basestation/exceptions.h"
 #include "anki/common/basestation/jsonTools.h"
-#include "anki/common/basestation/utils/logging/logging.h"
+#include "anki/util/logging/logging.h"
 
 #include "anki/cozmo/basestation/comms/robot/robotMessages.h"
 

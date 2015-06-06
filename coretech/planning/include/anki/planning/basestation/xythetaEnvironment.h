@@ -111,8 +111,8 @@ struct IntermediatePosition
 {
   IntermediatePosition(State_c s, StateTheta nearestTheta, float d)
     : position(s)
-    , oneOverDistanceFromLastPosition(d)
     , nearestTheta(nearestTheta)
+    , oneOverDistanceFromLastPosition(d)
     {
     }
 

@@ -17,7 +17,7 @@
 #endif
 
 #include "anki/cozmo/basestation/viz/vizManager.h"
-#include "anki/common/basestation/utils/logging/logging.h"
+#include "anki/util/logging/logging.h"
 #include "anki/common/basestation/utils/fileManagement.h"
 #include "anki/common/basestation/exceptions.h"
 #include "anki/common/basestation/math/point_impl.h"
@@ -51,11 +51,11 @@ namespace Anki {
       }
       
       if (!_vizClient.Connect(udp_host_address, port)) {
-        PRINT_INFO("Failed to init VizManager client (%s:%d)\n", udp_host_address, port);
+        PRINT_NAMED_INFO("VizManager.Connect", "Failed to init VizManager client (%s:%d)", udp_host_address, port);
         //_isInitialized = false;
       }
      
-      PRINT_INFO("VizManager connected.\n");
+      PRINT_STREAM_INFO("VizManager.Connect", "VizManager connected.");
       _isInitialized = true;
       
       return _isInitialized ? RESULT_OK : RESULT_FAIL;
@@ -66,7 +66,7 @@ namespace Anki {
       if(_isInitialized) {
         if (_vizClient.Disconnect()) {
           _isInitialized = false;
-          PRINT_INFO("VizManager disconnected.\n");
+          PRINT_NAMED_INFO("VizManager.Connect", "VizManager disconnected.");
           return RESULT_OK;
         }
         return RESULT_FAIL;

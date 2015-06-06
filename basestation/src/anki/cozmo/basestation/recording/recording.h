@@ -10,6 +10,8 @@
  * Copyright: Anki, Inc. 2012
  *
  **/
+#if COZMO_RECORDING_PLAYBACK
+
 #ifndef BASESTATION_RECORDING_RECORDING_H_
 #define BASESTATION_RECORDING_RECORDING_H_
 
@@ -105,3 +107,5 @@ protected:
 } // namespace Anki
 
 #endif //BASESTATION_RECORDING_RECORDING_H_
+
+#endif

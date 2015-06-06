@@ -50,6 +50,7 @@ namespace Anki {
       void GetCurrentPreActionPoses(std::vector<PreActionPose>& preActionPoses,
                                     const std::set<PreActionPose::ActionType>& withAction = std::set<PreActionPose::ActionType>(),
                                     const std::set<Vision::Marker::Code>& withCode = std::set<Vision::Marker::Code>(),
+                                    const std::vector<std::pair<Quad2f,ObjectID> >& obstacles = std::vector<std::pair<Quad2f,ObjectID> >(),
                                     const Pose3d* reachableFromPose = nullptr);
       
       // If the object is selected, draws it using the "selected" color.
@@ -60,7 +61,8 @@ namespace Anki {
       // Draws just the pre-action poses. The reachableFrom pose (e.g. the
       // current pose of the robot) is passed along to GetCurrenPreActionsPoses()
       // (see above).
-      void VisualizePreActionPoses(const Pose3d* reachableFrom = nullptr);
+      void VisualizePreActionPoses(const std::vector<std::pair<Quad2f,ObjectID> >& obstacles = std::vector<std::pair<Quad2f,ObjectID> >(),
+                                   const Pose3d* reachableFrom = nullptr);
       
       // Just erases pre-action poses (if any were drawn). Subclasses should
       // call this from their virtual EraseVisualization() implementations.
@@ -101,7 +103,8 @@ namespace Anki {
       // specific checks, but note that reachableFromPose could be nullptr
       // (meaning it was unspecified).
       virtual bool IsPreActionPoseValid(const PreActionPose& preActionPose,
-                                        const Pose3d* reachableFromPose) const;
+                                        const Pose3d* reachableFromPose,
+                                        const std::vector<std::pair<Quad2f,ObjectID> >& obstacles) const;
       
       // TODO: Define a method for adding LEDs to active objects
       //void AddActiveLED(const Pose3d& poseWrtObject);
@@ -134,6 +137,10 @@ namespace Anki {
     
     inline void ActionableObject::SetBeingCarried(const bool tf) {
       _isBeingCarried = tf;
+      if(_isBeingCarried) {
+        // Don't visualize pre-action poses for objects while they are being carried
+        ActionableObject::EraseVisualization();
+      }
     }
     
     inline bool ActionableObject::IsSelected() const {
@@ -142,6 +149,10 @@ namespace Anki {
     
     inline void ActionableObject::SetSelected(const bool tf) {
       _isSelected = tf;
+      if(_isSelected == false) {
+        // Don't draw pre-action poses if not selected
+        ActionableObject::EraseVisualization();
+      }
     }
     
   

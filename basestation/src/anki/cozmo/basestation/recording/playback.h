@@ -11,6 +11,8 @@
  *
  **/
 
+#if COZMO_RECORDING_PLAYBACK
+
 #ifndef BASESTATION_RECORDING_REPLAY_H_
 #define BASESTATION_RECORDING_REPLAY_H_
 #include "recording.h"
@@ -78,3 +80,5 @@ protected:
 } // namespace Anki
 
 #endif //BASESTATION_RECORDING_RECORDING_H_
+
+#endif

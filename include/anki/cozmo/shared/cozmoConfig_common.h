@@ -84,7 +84,7 @@ const u8 RADIO_PACKET_FOOTER[2] = {0xFF, 0x0F};
 const u16 ROBOT_RADIO_BASE_PORT = 5551;
 
 /*
- THESE LATENCY VALUES ARE NOT BEING USED -- SEE ALSO multiClientComms.h
+ THESE LATENCY VALUES ARE NOT BEING USED -- SEE ALSO multiClientChannel.h
  
  // Expected message receive latency
  // It is assumed that this value does not fluctuate greatly.

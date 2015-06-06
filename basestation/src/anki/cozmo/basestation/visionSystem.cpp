@@ -93,7 +93,7 @@ namespace Cozmo {
     _ccmScratch     = MemoryStack(ccmBuffer, CCM_BUFFER_SIZE);
     
     if(!_offchipScratch.IsValid() || !_onchipScratch.IsValid() || !_ccmScratch.IsValid()) {
-      PRINT_INFO("Error: InitializeScratchBuffers\n");
+      PRINT_STREAM_INFO("VisionSystem.VisionMemory.ResetBuffers", "Error: InitializeScratchBuffers");
       return RESULT_FAIL;
     }
     
@@ -158,7 +158,7 @@ namespace Cozmo {
     const bool modeAlreadyEnabled = _mode & mode;
     if(!modeAlreadyEnabled) {
       PRINT_NAMED_INFO("VisionSystem.EnableModeHelper",
-                       "Switching from vision mode %s to mode %s.\n",
+                       "Switching from vision mode %s to mode %s.",
                        VisionSystem::GetModeName(static_cast<Mode>(_mode)).c_str(),
                        VisionSystem::GetModeName(static_cast<Mode>(mode)).c_str());
       
@@ -251,7 +251,7 @@ namespace Cozmo {
     
     angleChange = Radians(_robotState.pose_angle) - Radians(_prevRobotState.pose_angle);
     
-    //PRINT_INFO("angleChange = %.1f\n", angleChange.getDegrees());
+    //PRINT_STREAM_INFO("angleChange = %.1f", angleChange.getDegrees());
     
     // Position change in world (mat) coordinates
     const f32 dx = _robotState.pose_x - _prevRobotState.pose_x;
@@ -463,13 +463,13 @@ namespace Cozmo {
     Matrix::MeanAndVar<u8, s32>(imageROI, mean, var);
     const f32 stddev = sqrt(static_cast<f32>(var));
     const f32 oneTwentyEightOverStdDev = 128.f / stddev;
-    //PRINT("Initial mean/std = %d / %.2f\n", mean, sqrt(static_cast<f32>(var)));
+    //PRINT("Initial mean/std = %d / %.2f", mean, sqrt(static_cast<f32>(var)));
 #else
     const u8 mean = Embedded::Matrix::Mean<u8, u32>(imageROI);
-    //PRINT("Initial mean = %d\n", mean);
+    //PRINT("Initial mean = %d", mean);
 #endif
     
-    //PRINT("quad mean = %d\n", mean);
+    //PRINT("quad mean = %d", mean);
     //const f32 oneOverMean = 1.f / static_cast<f32>(mean);
     
     // Remove mean (and variance) from image
@@ -493,9 +493,9 @@ namespace Cozmo {
     /*
      #if USE_VARIANCE
      Matrix::MeanAndVar<u8, s32>(imageROI, mean, var);
-     PRINT("Final mean/std = %d / %.2f\n", mean, sqrt(static_cast<f32>(var)));
+     PRINT("Final mean/std = %d / %.2f", mean, sqrt(static_cast<f32>(var)));
      #else
-     PRINT("Final mean = %d\n", Matrix::Mean<u8,u32>(imageROI));
+     PRINT("Final mean = %d", Matrix::Mean<u8,u32>(imageROI));
      #endif
      */
     
@@ -525,7 +525,7 @@ namespace Cozmo {
       AnkiConditionalErrorAndReturnValue(imageNormalized.IsValid(),
                                          RESULT_FAIL_OUT_OF_MEMORY,
                                          "VisionSystem::BrightnessNormalizeImage",
-                                         "Out of memory allocating imageNormalized.\n");
+                                         "Out of memory allocating imageNormalized.");
       
       BeginBenchmark("BoxFilterNormalize");
       
@@ -684,7 +684,7 @@ namespace Cozmo {
 #endif
     
     if(!tracker.IsValid()) {
-      PRINT_NAMED_ERROR("VisionSystem.InitTemplate", "Failed to initialize valid tracker.\n");
+      PRINT_NAMED_ERROR("VisionSystem.InitTemplate", "Failed to initialize valid tracker.");
       return RESULT_FAIL;
     }
     
@@ -844,54 +844,53 @@ namespace Cozmo {
        fabs((initAngleY - tracker.get_angleY()).ToFloat()) > parameters.successTolerance_angle ||
        fabs((initAngleZ - tracker.get_angleZ()).ToFloat()) > parameters.successTolerance_angle)
     {
-      PRINT_INFO("Tracker failed: angle(s) changed too much.\n");
+      PRINT_STREAM_INFO("VisionSystem.TrackTemplate", "Tracker failed: angle(s) changed too much.");
       trackingSucceeded = false;
     }
     else if(tracker.GetTranslation().z < TrackerParameters::MIN_TRACKER_DISTANCE)
     {
-      PRINT_INFO("Tracker failed: final distance too close.\n");
+      PRINT_STREAM_INFO("VisionSystem.TrackTemplate", "Tracker failed: final distance too close.");
       trackingSucceeded = false;
     }
     else if(tracker.GetTranslation().z > TrackerParameters::MAX_TRACKER_DISTANCE)
     {
-      PRINT_INFO("Tracker failed: final distance too far away.\n");
+      PRINT_STREAM_INFO("VisionSystem.TrackTemplate", "Tracker failed: final distance too far away.");
       trackingSucceeded = false;
     }
     else if((initTranslation - tracker.GetTranslation()).Length() > parameters.successTolerance_distance)
     {
-      PRINT_INFO("Tracker failed: position changed too much.\n");
+      PRINT_STREAM_INFO("VisionSystem.TrackTemplate", "Tracker failed: position changed too much.");
       trackingSucceeded = false;
     }
     else if(_markerToTrack.checkAngleX && fabs(tracker.get_angleX()) > TrackerParameters::MAX_BLOCK_DOCKING_ANGLE)
     {
-      PRINT_INFO("Tracker failed: target X angle too large.\n");
+      PRINT_STREAM_INFO("VisionSystem.TrackTemplate", "Tracker failed: target X angle too large.");
       trackingSucceeded = false;
     }
     else if(fabs(tracker.get_angleY()) > TrackerParameters::MAX_BLOCK_DOCKING_ANGLE)
     {
-      PRINT_INFO("Tracker failed: target Y angle too large.\n");
+      PRINT_STREAM_INFO("VisionSystem.TrackTemplate", "Tracker failed: target Y angle too large.");
       trackingSucceeded = false;
     }
     else if(fabs(tracker.get_angleZ()) > TrackerParameters::MAX_BLOCK_DOCKING_ANGLE)
     {
-      PRINT_INFO("Tracker failed: target Z angle too large.\n");
+      PRINT_STREAM_INFO("VisionSystem.TrackTemplate", "Tracker failed: target Z angle too large.");
       trackingSucceeded = false;
     }
     else if(atan_fast(fabs(tracker.GetTranslation().x) / tracker.GetTranslation().z) > TrackerParameters::MAX_DOCKING_FOV_ANGLE)
     {
-      PRINT_INFO("Tracker failed: FOV angle too large.\n");
+      PRINT_STREAM_INFO("VisionSystem.TrackTemplate", "Tracker failed: FOV angle too large.");
       trackingSucceeded = false;
     }
     else if( (static_cast<f32>(verify_numSimilarPixels) /
               static_cast<f32>(verify_numInBounds)) < parameters.successTolerance_matchingPixelsFraction)
     {
-      PRINT_INFO("Tracker failed: too many in-bounds pixels failed intensity verification (%d / %d < %f).\n",
-                 verify_numSimilarPixels, verify_numInBounds, parameters.successTolerance_matchingPixelsFraction);
+      PRINT_STREAM_INFO("VisionSystem.TrackTemplate", "Tracker failed: too many in-bounds pixels failed intensity verification (" << verify_numSimilarPixels << " / " << verify_numInBounds << " < " << parameters.successTolerance_matchingPixelsFraction << ").");
       trackingSucceeded = false;
     }
     else {
       // Everything seems ok!
-      PRINT_INFO("Tracker succeeded (%d)!\n", _trackingIteration);
+      PRINT_STREAM_INFO("Tracker succeeded", _trackingIteration);
       trackingSucceeded = true;
     }
     
@@ -1412,7 +1411,7 @@ namespace Cozmo {
       }
       _headCamInfo = new CameraInfo(camCalib);
       if(_headCamInfo == nullptr) {
-        PRINT_INFO("Initialize() - HeadCam Info pointer is NULL!\n");
+        PRINT_STREAM_INFO("VisionSystem.Init", "Initialize() - HeadCam Info pointer is NULL!");
         return RESULT_FAIL;
       }
       
@@ -1731,7 +1730,7 @@ namespace Cozmo {
          _snapshotROI.left   < 0 || _snapshotROI.left   >= ncolsFull-1 ||
          _snapshotROI.right  < 0 || _snapshotROI.right  >= ncolsFull-1)
       {
-        PRINT_INFO("VisionSystem::TakeSnapshotHelper(): Snapshot ROI out of bounds!\n");
+        PRINT_STREAM_INFO("VisionSystem.TakeSnapshotHelper", "VisionSystem::TakeSnapshotHelper(): Snapshot ROI out of bounds!");
         return RESULT_FAIL_INVALID_SIZE;
       }
       
@@ -1851,7 +1850,7 @@ namespace Cozmo {
         GetImageHelper(inputImage, grayscaleImage);
         
         if((lastResult = TakeSnapshotHelper(grayscaleImage)) != RESULT_OK) {
-          PRINT_INFO("VisionSystem::Update(): TakeSnapshotHelper() failed.\n");
+          PRINT_STREAM_INFO("VisionSystem.Update", "TakeSnapshotHelper() failed.\n");
           return lastResult;
         }
       }
@@ -1875,7 +1874,7 @@ namespace Cozmo {
       GetImageHelper(inputImage, grayscaleImage);
       
       if((lastResult = TakeSnapshotHelper(grayscaleImage)) != RESULT_OK) {
-        PRINT_INFO("VisionSystem::Update(): TakeSnapshotHelper() failed.\n");
+        PRINT_STREAM_INFO("VisionSystem.Update", "TakeSnapshotHelper() failed.\n");
         return lastResult;
       }
       
@@ -2048,7 +2047,7 @@ namespace Cozmo {
         //  _captureResolution, false);
         
         if((lastResult = TakeSnapshotHelper(grayscaleImage)) != RESULT_OK) {
-          PRINT_INFO("VisionSystem::Update(): TakeSnapshotHelper() failed.\n");
+          PRINT_STREAM_INFO("VisionSystem.Update", "TakeSnapshotHelper() failed.\n");
           return lastResult;
         }
         
@@ -2119,7 +2118,7 @@ namespace Cozmo {
         //
         
         if((lastResult =TrackerPredictionUpdate(grayscaleImage, _onchipScratchlocal)) != RESULT_OK) {
-          PRINT_INFO("VisionSystem::Update(): TrackTemplate() failed.\n");
+          PRINT_STREAM_INFO("VisionSystem.Update", " TrackTemplate() failed.\n");
           return lastResult;
         }
         
@@ -2136,7 +2135,7 @@ namespace Cozmo {
                                        _memory._ccmScratch,
                                        _onchipScratchlocal,
                                        _offchipScratchlocal)) != RESULT_OK) {
-          PRINT_INFO("VisionSystem::Update(): TrackTemplate() failed.\n");
+          PRINT_STREAM_INFO("VisionSystem.Update", "TrackTemplate() failed.\n");
           return lastResult;
         }
       } else {
@@ -2388,7 +2387,7 @@ namespace Cozmo {
                              NEAR(_robotState.pose_y,    _prevRobotState.pose_y,    1.f) &&
                              NEAR(_robotState.pose_angle,_prevRobotState.pose_angle, DEG_TO_RAD(1)));
       
-      //PRINT_INFO("pose_angle diff = %.1f\n", RAD_TO_DEG(std::abs(_robotState.pose_angle - _prevRobotState.pose_angle)));
+      //PRINT_STREAM_INFO("pose_angle diff = %.1f\n", RAD_TO_DEG(std::abs(_robotState.pose_angle - _prevRobotState.pose_angle)));
       
       if(headSame && poseSame && !_prevImage.IsEmpty()) {
         /*
@@ -2487,7 +2486,7 @@ namespace Cozmo {
     _autoExposure_highValue = highValue;
     _autoExposure_percentileToMakeHigh = percentileToMakeHigh;
     
-    PRINT_INFO("Changed VisionSystem params: autoExposureOn d exposureTime %f integerCountsInc %d, minExpTime %f, maxExpTime %f, highVal %d, percToMakeHigh %f\n",
+    PRINT_NAMED_INFO("VisionSystem.SetParams", "Changed VisionSystem params: autoExposureOn %d exposureTime %f integerCountsInc %d, minExpTime %f, maxExpTime %f, highVal %d, percToMakeHigh %f\n",
                _autoExposure_enabled,
                _exposureTime,
                _autoExposure_integerCountsIncrement,
@@ -2504,7 +2503,7 @@ namespace Cozmo {
                                          const s32 maxObjectHeight,
                                          const s32 maxObjectWidth)
   {
-    PRINT_INFO("Updated VisionSystem FaceDetect params\n");
+    PRINT_STREAM_INFO("VisionSystem::SetFaceDetectParams", "Updated VisionSystem FaceDetect params");
     _faceDetectionParameters.scaleFactor = scaleFactor;
     _faceDetectionParameters.minNeighbors = minNeighbors;
     _faceDetectionParameters.minHeight = minObjectHeight;

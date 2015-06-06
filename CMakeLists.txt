@@ -1,13 +1,26 @@
 # products-cozmo/CMakeLists.txt
 
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.0.0)
 
+# http://stackoverflow.com/questions/10509380/tell-cmake-to-be-quiet
+if(NOT DEFINED ANKI_OUTPUT_VERBOSE)
+  function(message)
+    list(GET ARGV 0 MessageType)
+    #if(MessageType STREQUAL FATAL_ERROR OR
+    #   MessageType STREQUAL SEND_ERROR OR
+    #   MessageType STREQUAL WARNING OR
+    #   MessageType STREQUAL AUTHOR_WARNING)
+    #  list(REMOVE_AT ARGV 0)
+    #  _message(${MessageType} "${ARGV}")
+    #endif()
+  endfunction()
+endif()
+
+# Check that path to coretech-external is defined in environment var
 if (NOT DEFINED ENV{CORETECH_EXTERNAL_DIR})
   message(FATAL_ERROR "ERROR: CORETECH_EXTERNAL_DIR is undefined")
 endif(NOT DEFINED ENV{CORETECH_EXTERNAL_DIR})
-
 set(CORETECH_EXTERNAL_DIR $ENV{CORETECH_EXTERNAL_DIR})
-message("-- CORETECH_EXTERNAL_DIR = " ${CORETECH_EXTERNAL_DIR})
 
 include(${CORETECH_EXTERNAL_DIR}/anki.cmake)
 
@@ -26,11 +39,11 @@ if(ANKI_IOS_BUILD)
   set(EMBEDDED_USE_MATLAB 0)
   message(STATUS "Doing iOS build. Forcibly disabling Matlab use.")
   
-  ankiProject(CozmoEngine_iOS)
+  ankiProject(CozmoEngine_IOS)
   
 else()
   
-  ankiProject(CozmoEngine)
+  ankiProject(CozmoEngine_MAC)
     
 endif(ANKI_IOS_BUILD)
 
@@ -55,18 +68,22 @@ include_directories(
   coretech/vision/include
   coretech/planning/include
   ${CLAD_DIR}/support/cpp/include
+  "${ANKI_UTIL_DIR}/source"
   "${ANKI_UTIL_DIR}/source/3rd"
   "${ANKI_UTIL_DIR}/source/3rd/jsoncpp"
   "${ANKI_UTIL_DIR}/source/anki"
   "${ANKI_UTIL_DIR}/libs/packaged/include"
 )
 
+set(CMAKE_CXX_FLAGS "-Wno-unused-function -Wno-overloaded-virtual -Wno-deprecated-declarations -Wno-unused-variable")
 
 # Build these whether or not ANKI_IOS_BUILD is defined:
 add_subdirectory(clad)
 add_subdirectory(basestation)
 add_subdirectory(coretech)
-add_subdirectory(tools/anki-util)
+
+# anki-util is a submodule we don't want to stick cmake in
+add_subdirectory(tools)
 
 
 # Don't build these if ANKI_IOS_BUILD is defined:

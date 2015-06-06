@@ -132,6 +132,11 @@ namespace Anki {
                                            "Robot::Init()", "HAL init failed.\n");
 #endif
 
+        lastResult = Messages::Init();
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
+                                           "Robot::Init()", "Messages / Reliable Transport init failed.\n");
+
+
         lastResult = Localization::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
                                            "Robot::Init()", "Localization System init failed.\n");
@@ -141,7 +146,7 @@ namespace Anki {
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
                                            "Robot::Init()", "Vision System init failed.\n");
          */
-        
+
         lastResult = PathFollower::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
                                            "Robot::Init()", "PathFollower System init failed.\n");
@@ -151,11 +156,11 @@ namespace Anki {
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
                                            "Robot::Init()", "EyeController init failed.\n");
          */
-        
+
         lastResult = BackpackLightController::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
                                            "Robot::Init()", "BackpackLightController init failed.\n");
-        
+
         // Initialize subsystems if/when available:
         /*
          if(WheelController::Init() == RESULT_FAIL) {
@@ -182,7 +187,7 @@ namespace Anki {
         lastResult = DockingController::Init();;
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
                                            "Robot::Init()", "DockingController init failed.\n");
-        
+
         // Before liftController?!
         lastResult = PickAndPlaceController::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
@@ -260,6 +265,7 @@ namespace Anki {
         if (HAL::RadioIsConnected() && !wasConnected_) {
           PRINT("Robot radio is connected.\n");
           wasConnected_ = true;
+          BackpackLightController::TurnOffAll();
         } else if (!HAL::RadioIsConnected() && wasConnected_) {
           PRINT("Radio disconnected\n");
           Messages::ResetInit();
@@ -269,6 +275,8 @@ namespace Anki {
           HeadController::SetAngularVelocity(0);
           PickAndPlaceController::Reset();
           PickAndPlaceController::SetCarryState(CARRY_NONE);
+          BackpackLightController::TurnOffAll();
+          BackpackLightController::SetParams(LED_BACKPACK_INNER_LEFT, LED_RED, LED_OFF, 1000, 1000, 0, 0);
           wasConnected_ = false;
         }
 
@@ -432,59 +440,59 @@ namespace Anki {
 
 
 
-      
+
       // Long Execution now just captures image
       Result step_LongExecution()
       {
         Result retVal = RESULT_OK;
 
 #       ifdef SIMULATOR
-        
+
         TimeStamp_t currentTime = HAL::GetTimeStamp();
-        
+
         // This computation is based on Cyberbotics support's explaination for how to compute
         // the actual capture time of the current available image from the simulated
         // camera, *except* I seem to need the extra "- VISION_TIME_STEP" for some reason.
         // (The available frame is still one frame behind? I.e. we are just *about* to capture
         //  the next one?)
         TimeStamp_t currentImageTime = std::floor((currentTime-HAL::GetCameraStartTime())/VISION_TIME_STEP) * VISION_TIME_STEP + HAL::GetCameraStartTime() - VISION_TIME_STEP;
-        
+
         // Keep up with the capture time of the last image we sent
         static TimeStamp_t lastImageSentTime = 0;
-        
+
         // Have we already sent the currently-available image?
         if(lastImageSentTime != currentImageTime)
         {
           // TODO: Provide a way to update this from message
           Vision::CameraResolution captureResolution_ = Vision::CAMERA_RES_QVGA;
-          
+
           // Nope, so get the (new) available frame from the camera:
           const s32 captureHeight = Vision::CameraResInfo[captureResolution_].height;
           const s32 captureWidth  = Vision::CameraResInfo[captureResolution_].width * 3; // The "*3" is a hack to get enough room for color
-          
+
           static const int bufferSize = 1000000;
           static u8 buffer[bufferSize];
           Embedded::MemoryStack scratch(buffer, bufferSize);
           Embedded::Array<u8> image(captureHeight, captureWidth,
                                     scratch, Embedded::Flags::Buffer(false,false,false));
-          
+
           HAL::CameraGetFrame(reinterpret_cast<u8*>(image.get_buffer()),
                               captureResolution_, false);
           if(!image.IsValid()) {
             retVal = RESULT_FAIL;
           } else {
-            
+
             // Send the image, with its actual capture time (not the current system time)
             Messages::CompressAndSendImage(image, currentImageTime);
-            
+
             //PRINT("Sending state message from time = %d to correspond to image at time = %d\n",
             //      robotState.timestamp, currentImageTime);
-            
+
             // Mark that we've already sent the image for the current time
             lastImageSentTime = currentImageTime;
           }
         } // if(lastImageSentTime != currentImageTime)
-        
+
 #       endif // ifdef SIMULATOR
 
         return retVal;

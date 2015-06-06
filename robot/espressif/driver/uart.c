@@ -26,6 +26,7 @@
 #include "os_type.h"
 #include "user_interface.h"
 #include "client.h"
+#include "block_relay.h"
 
 // UartDev is defined and initialized in rom code.
 extern UartDevice    UartDev;
@@ -198,8 +199,11 @@ void os_put_char(uint8 c)
 LOCAL void handleUartRawRx(uint8 flag)
 {
   static UDPPacket* outPkt = NULL;
+  static uint8* blockBuffer;
+  static uint16 blockMsgLen = 0;
   static uint16 pktLen = 0;
   static uint8  phase  = 0;
+  static sint8 block   = NO_BLOCK;
   bool continueTask = true;
   uint8 byte;
 
@@ -212,6 +216,11 @@ LOCAL void handleUartRawRx(uint8 flag)
     if (outPkt != NULL)
     {
       clientFreePacket(outPkt);
+    }
+    else if (block != NO_BLOCK)
+    {
+      blockRelaySendPacket(block, 0); // Calling send packet with 0 length cancels the message
+      block = NO_BLOCK;
     }
   }
 
@@ -243,39 +252,72 @@ LOCAL void handleUartRawRx(uint8 flag)
         phase++;
         break;
       }
-      case 4: // Ignore next two length bytes because we only handle 16 bit lengths
-      case 5:
+      case 4: // Skip unused byte
       {
+        phase++;
+        break;
+      }
+      case 5: // Block number + 1 or 0 if to base station
+      {
+        if (byte > 0) // A block!
+        {
+          block = byte - 1;
+          blockBuffer = blockRelayGetBuffer(block);
+          if (blockBuffer == NULL)
+          {
+            os_printf("WARN: Couldn't get buffer for block %d\r\n", byte-1);
+            phase = 0;
+            block = NO_BLOCK;
+            break;
+          }
+          blockMsgLen = 0;
+        }
         phase++;
         break;
       }
       case 6: // Start of payload
       {
-        outPkt = clientGetBuffer();
-        if (outPkt == NULL)
-        {
-          //os_printf("WARN: no radio buffer for %02x[%d]\r\n", byte, pktLen);
-          phase = 0;
-          break;
+        if (block == NO_BLOCK) {
+          outPkt = clientGetBuffer();
+          if (outPkt == NULL)
+          {
+            //os_printf("WARN: no radio buffer for %02x[%d]\r\n", byte, pktLen);
+            phase = 0;
+            break;
+          }
+          else
+          {
+            outPkt->len = 0;
+          }
         }
-        else
-        {
-          outPkt->len = 0;
-          phase++;
-        }
+        phase++;
         // No break, explicit fall through to next case
       }
       case 7:
       {
-        outPkt->data[outPkt->len++] = byte;
-        //os_printf("RX %02x\t%d\t%d\r\n", byte, outPkt->len, pktLen);
-        if (outPkt->len >= pktLen)
+        if (block == NO_BLOCK)
         {
-          phase = 0;
-          clientQueuePacket(outPkt);
-          continueTask = false;
+          outPkt->data[outPkt->len++] = byte;
+          //os_printf("RX %02x\t%d\t%d\r\n", byte, outPkt->len, pktLen);
+          if (outPkt->len >= pktLen)
+          {
+            phase = 0;
+            clientQueuePacket(outPkt);
+            continueTask = false;
+          }
+          break;
         }
-        break;
+        else
+        {
+          blockBuffer[blockMsgLen++] = byte;
+          if (blockMsgLen >= pktLen)
+          {
+            phase = 0;
+            blockRelaySendPacket(block, blockMsgLen);
+            block = NO_BLOCK;
+          }
+          break;
+        }
       }
       default:
       {

@@ -6,7 +6,6 @@
 #include "mem.h"
 #include "ets_sys.h"
 #include "osapi.h"
-#include "block_relay.h"
 #include "driver/uart.h"
 
 //#define DEBUG_CLIENT
@@ -42,8 +41,6 @@ static void udpServerSentCB(void * arg)
 
 static void ICACHE_FLASH_ATTR udpServerRecvCB(void *arg, char *usrdata, unsigned short len)
 {
-  sint8 block = NO_BLOCK;
-
   if (arg != (void*)udpServer)
   {
     os_printf("Client receive unexpected arg %08x\r\n", arg);
@@ -59,15 +56,7 @@ static void ICACHE_FLASH_ATTR udpServerRecvCB(void *arg, char *usrdata, unsigned
 
   haveClient = true;
 
-  block = blockRelayCheckMessage(usrdata, len); // Check if the message is for a block
-  if (block != NO_BLOCK) // This is a block message
-  {
-    blockRelaySendPacket(block, usrdata, len); // Relay it
-  }
-  else // Not a block message
-  {
-    uartQueuePacket(usrdata, len); // Pass to M4
-  }
+  uartQueuePacket(usrdata, len); // Pass to M4
 }
 
 

@@ -29,6 +29,9 @@ namespace Anki {
       
       void ClearActions();
       
+      // Call any unfinished constituent actions' Cleanup() methods
+      virtual void Cleanup(Robot& robot) override final;
+      
       // Constituent actions will be deleted upon destruction of the group
       virtual ~ICompoundAction();
       
@@ -47,9 +50,6 @@ namespace Anki {
       
       // Call the constituent actions' Reset() methods and mark them each not done.
       virtual void Reset() override;
-      
-      // Call any unfinished constituent actions' Cleanup() methods
-      virtual void Cleanup(Robot& robot) override final;
       
       std::list<std::pair<bool, IActionRunner*> > _actions;
       std::string _name;

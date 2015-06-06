@@ -498,14 +498,14 @@ namespace Anki {
                 
                 // Compute angle the head needs to face such that the bottom of the marker
                 // is at the bottom of the image.
-                f32 minDesiredHeadAngle1 = atan_fast( (dockMsg.z_height - NECK_JOINT_POSITION[2] - 20.f)/dockMsg.x_distErr) + 0.5f*GetVerticalFOV(); // TODO: Marker size should come from VisionSystem?
+                //f32 minDesiredHeadAngle1 = atan_fast( (dockMsg.z_height - NECK_JOINT_POSITION[2] - 20.f)/dockMsg.x_distErr) + 0.5f*GetVerticalFOV(); // TODO: Marker size should come from VisionSystem?
                 
                 // Compute the angle the head needs to face such that it is looking
                 // directly at the center of the marker
-                f32 minDesiredHeadAngle2 = atan_fast( (dockMsg.z_height - NECK_JOINT_POSITION[2])/dockMsg.x_distErr);
+                //f32 minDesiredHeadAngle2 = atan_fast( (dockMsg.z_height - NECK_JOINT_POSITION[2])/dockMsg.x_distErr);
                 
                 // Use the min of both angles
-                f32 desiredHeadAngle = MIN(minDesiredHeadAngle1, minDesiredHeadAngle2);
+                //f32 desiredHeadAngle = MIN(minDesiredHeadAngle1, minDesiredHeadAngle2);
                 
                 // KEVIN: Lens is wide enough now that we don't really need to do head tracking.
                 //        Docking is smoother without it!

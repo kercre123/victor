@@ -123,15 +123,20 @@ for iFile = 1:numImages
 
     if iFile > iFigure*numRows*numCols
         iFigure = iFigure + 1;
-        namedFigure(sprintf('VisionMarkerTrained CodeSheet %d', iFigure), ...
-            'Color', 'w', 'Units', 'centimeters');
+        h_fig = namedFigure(sprintf('VisionMarkerTrained CodeSheet %d', iFigure), ...
+          'Color', 'w', 'PaperUnits', 'centimeters', ...
+          'PaperPositionMode', 'manual', ...
+          'PaperOrientation', 'landscape', ...
+          'PaperSize', [pageWidth/10 pageHeight/10], ...
+          'PaperPosition', [0 0 pageWidth/10 pageHeight/10]);
         
-        clf
-    
-        h_axes = axes('Units', 'centimeters', 'Position', [0 0 pageWidth/10 pageHeight/10]); %#ok<*LAXES>
-        set(h_axes, 'XLim', [0 pageWidth/10], 'YLim', [0 pageHeight/10], 'Box', 'on');
+        delete(findall(gcf, 'Type', 'axes'))
+        
+        h_axes = axes('Pos', [0 0 1 1], 'Units', 'centimeters', 'Parent', h_fig); %#ok<*LAXES>
+        set(h_axes, 'XLim', [0 pageWidth/10], 'YLim', [0 pageHeight/10], 'Box', 'on', 'Units', 'norm');
         hold(h_axes, 'on')
-        axis(h_axes, 'ij');
+        rectangle('Pos', [0 0 pageWidth pageHeight]/10, 'LineStyle', '--', 'Parent', h_axes)
+        axis(h_axes, 'ij', 'off');
         
         colormap(h_axes, gray);
         
@@ -151,7 +156,7 @@ for iFile = 1:numImages
     
     iPos = mod(iFile-1, numRows*numCols) + 1;
     imagesc(xgrid(iPos)+markerSize/10*[-.5 .5], ...
-        ygrid(iPos)+markerSize/10*[-.5 .5], img);
+        ygrid(iPos)+markerSize/10*[-.5 .5], img, 'Parent', h_axes);
     
     if outsideBorderWidth > 0
         rectangle('Position', [xgrid(iPos)-outsideBorderWidth/20 ....

@@ -146,7 +146,9 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
       onchipMemory,
       offchipMemory);
 
-    mxAssert(tracker.IsValid(), "Failed to instantiate valid tracker!");
+    if(!tracker.IsValid()) {
+      mexErrMsgTxt("Failed to instantiate valid tracker!");
+    }
 
     /*
     // TODO: Set this elsewhere
@@ -182,7 +184,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
       }
     }
 
-    mexPrintf("Tracker initialized.\n");
+    //mexPrintf("Tracker initialized.\n");
   }
   else if(nrhs == 6 && nlhs == 12) {
     //

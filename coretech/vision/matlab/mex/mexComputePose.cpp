@@ -9,6 +9,7 @@
 #include "anki/vision/basestation/perspectivePoseEstimation.h"
 
 #include "anki/common/basestation/math/poseBase_impl.h"
+#include "anki/common/basestation/math/quad_impl.h"
 
 #include "anki/common/matlab/mexWrappers.h"
 #include "anki/common/shared/utilities_shared.h"

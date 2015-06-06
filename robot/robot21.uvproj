@@ -357,7 +357,7 @@
               <MiscControls>--asm</MiscControls>
               <Define>USE_STDPERIPH_DRIVER,STM32F429_439xx,USE_DEFAULT_TIMEOUT_CALLBACK,USE_EMBEDDED_PHY,USE_USB_OTG_FS,COZMO_ROBOT,ROBOT_HARDWARE,CORETECH_ROBOT,COZMO2,COZMO_ROBOT_V32</Define>
               <Undefine></Undefine>
-              <IncludePath>.\arm_oldhal;.\arm_oldhal\lib;..\include;..\coretech\common\include;..\coretech\messaging\include;..\coretech\planning\include;..\coretech\vision\include;.\supervisor\src;..\..\coretech-external\heatshrink;C:\Keil\ARM\Pack\ARM\CMSIS\3.20.4\Device\ARM\ARMCM4\Include;.\include</IncludePath>
+              <IncludePath>.\arm_oldhal;.\arm_oldhal\lib;..\include;..\coretech\common\include;..\coretech\messaging\include;..\coretech\planning\include;..\coretech\vision\include;.\supervisor\src;..\..\coretech-external\heatshrink;C:\Keil\ARM\Pack\ARM\CMSIS\3.20.4\Device\ARM\ARMCM4\Include;.\include; ..\tools\anki-util\source\anki</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -457,11 +457,6 @@
               <FileName>system_stm32f4xx.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\arm_oldhal\hal\system_stm32f4xx.c</FilePath>
-            </File>
-            <File>
-              <FileName>blocks.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\arm_hal\hal\blocks.cpp</FilePath>
             </File>
             <File>
               <FileName>battery.cpp</FileName>
@@ -1023,6 +1018,26 @@
             </File>
           </Files>
         </Group>
+        <Group>
+          <GroupName>anki-util</GroupName>
+          <Files>
+            <File>
+              <FileName>reliableSequenceId.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\tools\anki-util\source\anki\embedded\transport\reliableSequenceId.c</FilePath>
+            </File>
+            <File>
+              <FileName>reliableTransport.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\tools\anki-util\source\anki\embedded\transport\reliableTransport.c</FilePath>
+            </File>
+            <File>
+              <FileName>reliableMessageTypes.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\tools\anki-util\source\anki\util\transport\reliableMessageTypes.cpp</FilePath>
+            </File>
+          </Files>
+        </Group>
       </Groups>
     </Target>
     <Target>
@@ -1476,11 +1491,6 @@
               <FileName>system_stm32f4xx.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\arm_oldhal\hal\system_stm32f4xx.c</FilePath>
-            </File>
-            <File>
-              <FileName>blocks.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\arm_hal\hal\blocks.cpp</FilePath>
             </File>
             <File>
               <FileName>battery.cpp</FileName>
@@ -2055,6 +2065,26 @@
               <FileName>run_m4_embeddedTests.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\test\run_m4_embeddedTests.cpp</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>anki-util</GroupName>
+          <Files>
+            <File>
+              <FileName>reliableSequenceId.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\tools\anki-util\source\anki\embedded\transport\reliableSequenceId.c</FilePath>
+            </File>
+            <File>
+              <FileName>reliableTransport.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\tools\anki-util\source\anki\embedded\transport\reliableTransport.c</FilePath>
+            </File>
+            <File>
+              <FileName>reliableMessageTypes.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\tools\anki-util\source\anki\util\transport\reliableMessageTypes.cpp</FilePath>
             </File>
           </Files>
         </Group>

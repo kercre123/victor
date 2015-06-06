@@ -123,6 +123,12 @@ namespace Anki {
       LIFT_IN_POS             = 0x00000100,
       HEAD_IN_POS             = 0x00000200
     } RobotStatusFlag;
+    
+    // Status bit flags for game state
+    // TODO: This belongs in cozmo-game rather than cozmo-engine
+    typedef enum {
+      IS_LOCALIZED            = 0x00000001
+    } GameStatusFlag;
 
 
     // A key associated with each computed pose retrieved from history

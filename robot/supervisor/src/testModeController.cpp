@@ -327,6 +327,7 @@ namespace Anki {
         
         PRINT("\n==== PickAndPlaceTest DISABLED =====\n");
         Reset();
+        return RESULT_OK;
       }
       
       Result PickAndPlaceTestUpdate()

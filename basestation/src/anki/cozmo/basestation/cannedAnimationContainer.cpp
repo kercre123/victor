@@ -19,7 +19,7 @@
 
 #include "anki/cozmo/basestation/soundManager.h"
 
-#include "anki/common/basestation/utils/logging/logging.h"
+#include "anki/util/logging/logging.h"
 #include "anki/common/basestation/colorRGBA.h"
 
 #include <cassert>
@@ -55,7 +55,7 @@ namespace Cozmo {
   Result CannedAnimationContainer::AddAnimation(const std::string& name) {
     auto retVal = _animations.find(name);
     if(retVal == _animations.end()) {
-      const s32 animID = _animations.size();
+      const s32 animID = static_cast<s32>(_animations.size());
       _animations[name].first = animID;
       
       PRINT_NAMED_INFO("CannedAnimationContainer.AddAnimation",
@@ -122,9 +122,8 @@ namespace Cozmo {
     
     Result lastResult = RESULT_OK;
     
-    PRINT_NAMED_INFO("CannedAnimationContainer.Send",
-                     "Sending %d animations to robot %d.\n",
-                     _animations.size(), robotID);
+    PRINT_STREAM_INFO("CannedAnimationContainer.Send",
+                      "Sending " << _animations.size() << " animations to robot " << robotID << ".");
     
     for(auto & cannedAnimationByName : _animations)
     {
@@ -261,7 +260,7 @@ namespace Cozmo {
     if(json.isString()) {
       auto result = LUT.find(json.asString());
       if(result == LUT.end()) {
-        PRINT_NAMED_WARNING("GetHeight", "Unknown height '%s', returning default.\n");
+        PRINT_STREAM_WARNING("GetHeight", "Unknown height " << json.toStyledString() << ", returning default.\n");
         return DEFAULT;
       } else {
         return result->second;

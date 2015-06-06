@@ -50,7 +50,7 @@ namespace Anki {
   
       connectionInfoMapIt it;
   
-      double lastAdvertisingTime = 0;
+      //double lastAdvertisingTime = 0;
   
       
       // Update registered devices

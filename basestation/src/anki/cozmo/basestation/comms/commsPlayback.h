@@ -10,6 +10,8 @@
  *
  **/
 
+#if COZMO_RECORDING_PLAYBACK
+
 #ifndef BASESTATION_COMMS_COMMSLOGREADER_H_
 #define BASESTATION_COMMS_COMMSLOGREADER_H_
 
@@ -79,3 +81,5 @@ protected:
 } // end namespace Anki
 
 #endif //BASESTATION_COMMS_COMMSLOGREADER_H_
+
+#endif

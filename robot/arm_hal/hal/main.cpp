@@ -13,7 +13,7 @@ namespace Anki
     namespace HAL
     {
       extern u8 g_halInitComplete;
-      
+
       // Forward declarations
       void Startup();
       void SPIInit();
@@ -32,10 +32,6 @@ namespace Anki
 
       int UARTGetFreeSpace();
       
-      //const CameraInfo* GetHeadCamInfo(){ return 0; }
-      
-      //Messages::ID RadioGetNextMessage(u8* buffer){ return (Messages::ID)0; }
-      //bool RadioIsConnected(){ return false; }
       static IDCard m_idCard;
       IDCard* GetIDCard() { return &m_idCard; }
 
@@ -51,6 +47,16 @@ namespace Anki
         if (*(int*)(0x1FFF7A10) == 0x00250031)
           m_idCard.esn = 1;
       }
+      
+      extern "C" {
+        void EnableIRQ() {
+          __enable_irq();
+        }  
+        
+        void DisableIRQ() {
+          __disable_irq();
+        }
+      }
     }
   }
 }
@@ -59,7 +65,7 @@ namespace Anki
 static void Wait()
 {
   using namespace Anki::Cozmo::HAL;
-  
+
   u32 start = GetMicroCounter();
   while ((GetMicroCounter() - start) < 500000)
   {}
@@ -83,24 +89,24 @@ void JPEGInit();
 void StreamJPEG()
 {
   using namespace Anki::Cozmo;
-  
+
   const int FRAMESKIP = 0;  // Skip every other frame
   const int WIDTH = 400, HEIGHT = 296, QUALITY = 50;
- 
+
   // Stack-allocate enough space for two whole image chunks, to handle overflow
   u8 buffer[IMAGE_CHUNK_SIZE*2];
   // Point message buffer +2 bytes ahead, to round 14 byte header up to 16 bytes for buffer alignment
   Anki::Cozmo::Messages::ImageChunk* m = (Anki::Cozmo::Messages::ImageChunk*)(buffer + 2);
-  
+
   // Initialize the encoder
   JPEGStart(m->data, WIDTH, HEIGHT, QUALITY);
-  
+
   m->resolution = Anki::Vision::CAMERA_RES_QVGA;
   m->imageEncoding = Anki::Vision::IE_MINIPEG_GRAY;
   m->imageId = 0;
-  
+
   while (1)
-  {    
+  {
     // Skip frames (to prevent choking the Espressif)
     for (int i = 0; i < FRAMESKIP; i++)
     {
@@ -109,11 +115,11 @@ void StreamJPEG()
       while (HAL::CamGetReadyRow() == 0)
         ;
     }
-    
+
     // Synchronize the timestamp with camera - wait for first row to arrive
     while (HAL::CamGetReadyRow() != 0)
       ;
-    
+
     // Setup image header
     m->frameTimeStamp = HAL::GetTimeStamp() - 33;   // XXX: 30 FPS
     m->imageId++;
@@ -127,27 +133,27 @@ void StreamJPEG()
       while (HAL::CamGetReadyRow() != row)
         ;
       datalen += JPEGCompress(m->data + datalen, HAL::CamGetRaw());
-      
+
       // At EOF, finish frame
       int eof = (row == HEIGHT-8);
       if (eof)
         datalen += JPEGEnd(m->data + datalen);
-      
+
       // Write out any full chunks, or at EOF, anything left
       while (datalen >= IMAGE_CHUNK_SIZE || (eof && datalen))
       {
         // Leave imageChunkCount at 255 until the final chunk
         m->imageChunkCount = (eof && datalen <= IMAGE_CHUNK_SIZE) ? m->chunkId+1 : 255;
         m->chunkSize = MIN(datalen, IMAGE_CHUNK_SIZE);
-        
+
         // On the first chunk, write the quality into the image (cheesy hack)
         if (0 == m->chunkId)
           m->data[0] = QUALITY;
-        
+
         // Keep trying to send this message, even if it means a frame tear
-        while (!HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::ImageChunk), m))
+        while (!HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::ImageChunk), m, false, true))
           ;
-        
+
         // Copy anything left at end to front of buffer
         datalen -= m->chunkSize;
         if (datalen)
@@ -161,25 +167,25 @@ void StreamJPEG()
 int main(void)
 {
   using namespace Anki::Cozmo::HAL;
-  
+
   // Timer, than Startup, must be called FIRST in main() to do hardware sanity check
   TimerInit();
   Startup();
-  
+
   // Initialize the hardware
   LightsInit();
   UARTInit();
   printf("UART..");
   GetId();
-  
+
   FrontCameraInit();
   printf("camera..");
-  
-  IMUInit();  // The IMU must be configured before spineport  
+
+  IMUInit();  // The IMU must be configured before spineport
   printf("IMU..");
-  SPIInit();  
+  SPIInit();
   printf("spine..");
-  
+
 #if 0
   // Motor testing...
   while (1)
@@ -189,13 +195,13 @@ int main(void)
     MotorSetPower(MOTOR_LEFT_WHEEL, -0.6f);
     Wait();
     MotorSetPower(MOTOR_LEFT_WHEEL, 0.0f);
-    
+
     MotorSetPower(MOTOR_RIGHT_WHEEL, 0.6f);
     Wait();
     MotorSetPower(MOTOR_RIGHT_WHEEL, -0.6f);
     Wait();
     MotorSetPower(MOTOR_RIGHT_WHEEL, 0.0f);
-    
+
     MotorSetPower(MOTOR_LIFT, 0.6f);
     Wait();
     MotorSetPower(MOTOR_LIFT, -0.6f);
@@ -210,9 +216,9 @@ int main(void)
 
     MicroWait(500000);
   }
-  
+
 #else
-  
+
   Anki::Cozmo::Robot::Init();
   g_halInitComplete = true;
   //printf("init complete!\r\n");
@@ -231,4 +237,3 @@ extern "C"
 void __aeabi_assert(const char* s1, const char* s2, int s3)
 {
 }
-

@@ -53,9 +53,9 @@ namespace Anki {
     {
       const f32& length = GetSize().x();
       const f32& width  = GetSize().y();
-      const f32& height = GetSize().z();
+      //const f32& height = GetSize().z();
       
-      const f32 markerSize_sides = 30.f;
+      //const f32 markerSize_sides = 30.f;
       const f32 markerSize_top   = 30.f;
       
       /* COMMENTING OUT B/C THESE MARKERS DON'T CURRENTLY EXIST IN NN LIBRARY

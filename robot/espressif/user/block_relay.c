@@ -5,9 +5,9 @@
 #include "mem.h"
 #include "block_relay.h"
 
-#define DEBUG_BR
+//#define DEBUG_BR
 
-#define NUM_BLOCKS 3
+#define NUM_BLOCKS 5
 static struct espconn* blockServer;
 
 #define RELAY_PORT 6001
@@ -18,113 +18,84 @@ static struct espconn* blockServer;
 #define    blockTaskQueueLen    10
 os_event_t blockTaskQueue[blockTaskQueueLen];
 
-static UDPPacket* clientPkt;
+static volatile os_timer_t timer;
 
-static uint8 blockPkt[PKT_BUFFER_SIZE];
-static bool  blockPktQueued;
-
-typedef enum
+typedef struct _BlockStruct
 {
-  BR_SIG_TO_CLIENT = 1,
-  BR_SIG_TO_BLOCK  = 2,
-} BlockRelayTaskSignal;
+  uint8 buffer[MAX_BLOCK_MESSAGE_LENGTH + MESSAGE_START];
+  unsigned short length;
+  bool  locked;
+} Block;
+
+Block blocks[NUM_BLOCKS];
+
+typedef enum {
+  BTSig_toBlock
+} BlockTaskSignal;
+
 
 
 static void ICACHE_FLASH_ATTR blockRecvCB(void *arg, char *usrdata, unsigned short len)
 {
-  struct espconn* socket = (struct espconn*)arg;
-
-#ifdef DEBUG_BR
-  os_printf("BR recv %08x %d[%d]\r\n", arg, usrdata[0], len);
-#endif
-
-  if (clientPkt != NULL)
-  {
-    os_printf("Block relay couldn't forward packet from block because queue full\r\n");
-    return;
-  }
-
-  clientPkt = clientGetBuffer();
-
-  if (clientPkt != NULL)
-  {
-    os_memcpy(clientPkt->data, usrdata + MESSAGE_START, len-MESSAGE_START);
-    system_os_post(blockTaskPrio, BR_SIG_TO_CLIENT, len);
-  }
-  else
-  {
-    os_printf("Block relay couldn't get client buffer to forward packet, dropping %d[%d]\r\n", usrdata[0], len);
-  }
+  //struct espconn* socket = (struct espconn*)arg;
+  //os_printf("BR recv %08x %d[%d]\r\n", arg, usrdata[0], len);
 }
 
 LOCAL void ICACHE_FLASH_ATTR blockTask(os_event_t *event)
 {
   int8 err = 0;
+  sint8 block = event->par;
+  int8 i;
 
-  if (event->sig & BR_SIG_TO_CLIENT) // Have a packet to send
+  if (block < 0 || block > NUM_BLOCKS)
   {
-    if (clientPkt == NULL)
+    os_printf("ERROR: Block task called with invalid block %d\r\n", block);
+    return;
+  }
+
+  if (blocks[block].locked)
+  {
+    os_printf("INFO: Skipping message to block %d because locked\r\n", block);
+    return;
+  }
+
+  blocks[block].locked = true;
+
+  if (blocks[block].length > 0) // have message for block
+  {
+    blockServer->proto.udp->remote_port = BLOCK_PORT;
+    blockServer->proto.udp->remote_ip[0] = 172;
+    blockServer->proto.udp->remote_ip[1] = 31;
+    blockServer->proto.udp->remote_ip[2] = 1;
+    blockServer->proto.udp->remote_ip[3] = 10+block; // Set the block address
+    // Send out the packet
+    err = espconn_sent(blockServer, blocks[block].buffer, blocks[block].length);
+    if (err < 0) /// XXXX I think negative number is an error. 0 is OK, I don't know what positive numbers are
     {
-      os_printf("Error blockTask sig to client with null pkt\r\n");
+      os_printf("Failed to queue packet to send to block %d: %d\r\n", block, err);
     }
     else
     {
-      clientPkt->len = event->par;
-      clientQueuePacket(clientPkt);
-      clientPkt = NULL;
-    }
-  }
-  else if (event->sig & BR_SIG_TO_BLOCK) // Relay to block
-  {
-    sint8 block = event->sig >> 16;
-    int8 i;
-    if (block <= NO_BLOCK)
-    {
-      os_printf("Block relay send packet called with NO_BLOCK\r\n");
-      blockPktQueued = false;
-    }
-    else if(block == ALL_BLOCKS)
-    {
-      for (i=0; i<NUM_BLOCKS; ++i)
-      {
-        // Repost task for each individual block
-        system_os_post(blockTaskPrio, BR_SIG_TO_BLOCK | (i << 16), event->par);
-      }
-    }
-    else if(block < NUM_BLOCKS)
-    {
-      blockServer->proto.udp->remote_port = BLOCK_PORT;
-      blockServer->proto.udp->remote_ip[0] = 172;
-      blockServer->proto.udp->remote_ip[1] = 31;
-      blockServer->proto.udp->remote_ip[2] = 1;
-      blockServer->proto.udp->remote_ip[3] = 10+block; // Set the block address
 #ifdef DEBUG_BR
-      os_printf("\tSending to %d bytes to block %d @ %d.%d.%d.%d:%d\r\n", event->par, block, blockServer->proto.udp->remote_ip[0], blockServer->proto.udp->remote_ip[1], blockServer->proto.udp->remote_ip[2], blockServer->proto.udp->remote_ip[3], blockServer->proto.udp->remote_port);
+      os_printf("Sent %d[%d] to %d at %d\r\n", blocks[block].buffer[MESSAGE_START], blocks[block].length, block, blockServer->proto.udp->remote_ip[3]);
 #endif
-      // Put the length into the serial header
-      blockPkt[4] = (event->par-MESSAGE_START)        & 0xff;
-      blockPkt[5] = ((event->par-MESSAGE_START) >> 8) & 0xff;
-      // Send out the packet
-      err = espconn_sent(blockServer, blockPkt, event->par);
-      if (err < 0) /// XXXX I think negative number is an error. 0 is OK, I don't know what positive numbers are
-      {
-        os_printf("Failed to queue packet to send to block %d: %d\r\n", block, err);
-      }
-      blockPktQueued = false;
-    }
-    else
-    {
-      os_printf("Block relay send packet called for block %d but only %d blocks\r\n", block, NUM_BLOCKS);
-      blockPktQueued = false;
     }
   }
-  else
-  {
-    os_printf("ERROR: blockTask with unknown signal %08x\r\n", event->sig);
-  }
+  blocks[block].locked = false;
+
 #ifdef DEBUG_BR
-  os_printf("BReot %04x %04x %d %d\r\n", (uint16)(event->sig >> 16), (uint16)(event->sig & 0xff), event->par, err);
+  //os_printf("BReot %d %d %d %d\r\n", event->sig, event->par, blocks[block].length, err);
 #endif
+}
+
+static void ICACHE_FLASH_ATTR blockTimer()
+{
+  // Periodically post tasks to send messages to all blocks
+  int8 i;
+  for (i=0; i<NUM_BLOCKS; ++i)
+  {
+    system_os_post(blockTaskPrio, BTSig_toBlock, i);
+  }
 }
 
 
@@ -137,17 +108,19 @@ sint8 ICACHE_FLASH_ATTR blockRelayInit()
 
   system_os_task(blockTask, blockTaskPrio, blockTaskQueue, blockTaskQueueLen); // Setup task queue for handling UART
 
-  clientPkt = NULL;
-  blockPkt[0] = 0xaa;
-  blockPkt[1] = 0xaa;
-  blockPkt[2] = 0xbe;
-  blockPkt[3] = 0xef;
-  blockPkt[4] = 0x00;
-  blockPkt[5] = 0x00;
-  blockPkt[6] = 0x00;
-  blockPkt[7] = 0x00;
-
-  blockPktQueued = false;
+  for (i=0; i<NUM_BLOCKS; ++i)
+  {
+    blocks[i].buffer[0] = 0xaa;
+    blocks[i].buffer[1] = 0xaa;
+    blocks[i].buffer[2] = 0xbe;
+    blocks[i].buffer[3] = 0xef;
+    blocks[i].buffer[4] = 0x00;
+    blocks[i].buffer[5] = 0x00;
+    blocks[i].buffer[6] = 0x00;
+    blocks[i].buffer[7] = 0x00;
+    blocks[i].length = 0;
+    blocks[i].locked = false;
+  }
 
   err = wifi_get_ip_info(SOFTAP_IF, &ipconfig);
   if (err == false)
@@ -192,64 +165,48 @@ sint8 ICACHE_FLASH_ATTR blockRelayInit()
     return err;
   }
 
+  // Set block broadcast timer
+  os_timer_disarm(&timer);
+  os_timer_setfn(&timer, blockTimer);
+  os_timer_arm(&timer, 99, true);
+
   os_printf("\tNo error\r\n");
   return ESPCONN_OK;
 }
 
-sint8 blockRelayCheckMessage(uint8* data, unsigned short len)
+uint8* ICACHE_FLASH_ATTR blockRelayGetBuffer(sint8 block)
 {
-#if 0
-  os_printf("BR check message %d[%d]\r\n", data[0], len);
-#endif
-
-  switch (data[0])
+  if (block < 0 || block > NUM_BLOCKS)
   {
-    case 63:
-    {
-      if (len == 194)
-      {
-        return data[193];
-      }
-      else
-      {
-        os_printf("Got SetBlockLights (%d), expected %d bytes, but got %d\r\n", data[0], 194, len);
-        return NO_BLOCK;
-      }
-    }
-    case 64:
-    {
-      return ALL_BLOCKS; // Broadcast
-    }
-    case 65:
-    {
-      if (len == 3) // Message ID, Block ID, state
-      {
-        return data[1];
-      }
-      else
-      {
-        os_printf("Got SetBlockBeingCarried (%d), expected %d bytes but got %d\r\n", data[0], 3, len);
-        return NO_BLOCK;
-      }
-    }
-    default:
-    {
-      return NO_BLOCK;
-    }
+    os_printf("WARN: invalid block buffer, %d, requested\r\n", block);
+    return NULL;
+  }
+  else if (blocks[block].locked)
+  {
+    os_printf("INFO: Locked block buffer, %d, requested\r\n", block);
+    return NULL;
+  }
+  else
+  {
+    blocks[block].locked = true;
+    return blocks[block].buffer + MESSAGE_START;
   }
 }
 
-bool ICACHE_FLASH_ATTR blockRelaySendPacket(sint8 block, uint8* data, unsigned short len)
+bool ICACHE_FLASH_ATTR blockRelaySendPacket(sint8 block, unsigned short len)
 {
-  if (blockPktQueued)
+  if (block < 0 || block > NUM_BLOCKS)
   {
-    os_printf("WARN: blockRelaySendPacket can't relay because packet already queued\r\n");
+    os_printf("ERROR: Invalid block, %d, specified for send packet\r\n", block);
     return false;
   }
   else
   {
-    os_memcpy(blockPkt + MESSAGE_START, data, len + MESSAGE_START);
-    system_os_post(blockTaskPrio, BR_SIG_TO_BLOCK | (block << 16), len + MESSAGE_START);
+    blocks[block].buffer[4] = (len & 0xff);
+    blocks[block].buffer[5] = (len >> 8) & 0xff;
+    blocks[block].length = len + MESSAGE_START;
+    blocks[block].locked = false;
+    system_os_post(blockTaskPrio, BTSig_toBlock, block);
     return true;
   }
 }

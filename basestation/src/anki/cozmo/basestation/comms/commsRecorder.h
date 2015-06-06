@@ -10,6 +10,8 @@
  *
  **/
 
+#if COZMO_RECORDING_PLAYBACK
+
 #ifndef BASESTATION_COMMS_COMMSLOGWRITER_H_
 #define BASESTATION_COMMS_COMMSLOGWRITER_H_
 
@@ -57,13 +59,14 @@ public:
   // ICOMMS implementation
   virtual bool IsInitialized();
   virtual u32 GetNumPendingMsgPackets();
+  virtual bool IsConnected(s32 connectionId);
   virtual size_t Send(const Comms::MsgPacket &msg);
   virtual bool GetNextMsgPacket(Comms::MsgPacket &msg);
   //virtual void SetCurrentTimestamp(BaseStationTime_t timestamp) { realComms_->SetCurrentTimestamp(timestamp); }
   // Reads all data from buffer into provided data storage
   BaseStationTime_t ReadFromBuffer(unsigned char *buffer, unsigned int size, vector<CommsRecord> &data);
   virtual void ClearMsgPackets();
-  virtual u32 GetNumMsgPacketsInSendQueue(int devID);
+  virtual u32 GetNumMsgPacketsInSendQueue(s32 connectionId);
   virtual void Update(bool send_queued_msgs = true);
   // ICOMMS implementation
   //////////////////////////
@@ -93,3 +96,5 @@ protected:
 } // end namespace Anki
 
 #endif //BASESTATION_COMMS_COMMSLOGWRITER_H_
+
+#endif

@@ -11,7 +11,7 @@
 
 #include "anki/cozmo/basestation/soundManager.h"
 
-#include "anki/common/basestation/utils/logging/logging.h"
+#include "anki/util/logging/logging.h"
 #include "anki/common/basestation/exceptions.h"
 #include "anki/common/basestation/platformPathManager.h"
 
@@ -96,7 +96,7 @@ namespace Anki {
       
       void CmdLinePlayFeeder()
       {
-        PRINT_INFO("Started Sound Feeder thread...\n");
+        PRINT_STREAM_INFO("CmdLinePlayFeeder", "Started Sound Feeder thread...");
         while (_running) {
           usleep(10000);
           
@@ -122,7 +122,7 @@ namespace Anki {
         // Don't leave any sounds running
         KillPlayingSounds();
         
-        PRINT_INFO("Terminated Sound Feeder thread\n");
+        PRINT_STREAM_INFO("CmdLinePlayFeeder", "Terminated Sound Feeder thread");
       }
       
     } // anonymous namespace
@@ -286,7 +286,7 @@ namespace Anki {
 
       auto result = LUT.find(name);
       if(result == LUT.end()) {
-        PRINT_NAMED_WARNING("SoundManager.GetID.UnknownSound", "No sound named '%s', ignoring.\n");
+        PRINT_STREAM_WARNING("SoundManager.GetID.UnknownSound", "No sound named '" << name << "', ignoring.");
         return NUM_SOUNDS;
       } else {
         return result->second;

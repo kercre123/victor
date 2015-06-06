@@ -41,7 +41,7 @@ namespace Anki {
         
         // If angle is within this tolerance of the desired angle
         // we are considered to be in position
-        const f32 ANGLE_TOLERANCE = DEG_TO_RAD(1.f);
+        const f32 ANGLE_TOLERANCE = DEG_TO_RAD(1.5f);
         
         // Initialized in Init()
         f32 LIFT_ANGLE_LOW_LIMIT;

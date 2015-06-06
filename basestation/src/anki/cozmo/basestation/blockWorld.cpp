@@ -43,7 +43,7 @@
 
 #define DEBUG_ROBOT_POSE_UPDATES 0
 #if DEBUG_ROBOT_POSE_UPDATES
-#  define PRINT_LOCALIZATION_INFO PRINT_INFO
+#  define PRINT_LOCALIZATION_INFO(...) PRINT_NAMED_INFO("Localization", __VA_ARGS__)
 #else
 #  define PRINT_LOCALIZATION_INFO(...)
 #endif
@@ -129,6 +129,7 @@ namespace Anki
       _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::ARROW));
       
       _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::FLAG));
+      _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::FLAG2));
       _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::FLAG_INVERTED));
       
       // For CREEP Test
@@ -313,11 +314,16 @@ namespace Anki
           for(auto objectsByID : objectsByType.second) {
             MatPiece* mat = dynamic_cast<MatPiece*>(objectsByID.second);
             assert(mat != nullptr);
-            Pose3d newPoseWrtMat;
-            // TODO: Better height tolerance approach
-            if(mat->IsPoseOn(objSeen->GetPose(), objectDiagonal*.5f, objectDiagonal*.5f, newPoseWrtMat)) {
-              objSeen->SetPose(newPoseWrtMat);
-              parentMat = mat;
+            
+            // Don't make this mat the parent of any objects until it has been
+            // seen enough time
+            if(mat->GetNumTimesObserved() >= MIN_TIMES_TO_OBSERVE_OBJECT) {
+              Pose3d newPoseWrtMat;
+              // TODO: Better height tolerance approach
+              if(mat->IsPoseOn(objSeen->GetPose(), objectDiagonal*.5f, objectDiagonal*.5f, newPoseWrtMat)) {
+                objSeen->SetPose(newPoseWrtMat);
+                parentMat = mat;
+              }
             }
           }
         }
@@ -854,7 +860,7 @@ namespace Anki
       }
     }
 
-    void BlockWorld::GetObstacles(std::vector<Quad2f>& boundingBoxes, const f32 padding) const
+    void BlockWorld::GetObstacles(std::vector<std::pair<Quad2f,ObjectID> >& boundingBoxes, const f32 padding) const
     {
       std::set<ObjectID> ignoreIDs = {
         _robot->GetCarryingObject() // TODO: what if robot is carrying multiple objects?
@@ -901,7 +907,7 @@ namespace Anki
     void BlockWorld::GetObjectBoundingBoxesXY(const f32 minHeight,
                                               const f32 maxHeight,
                                               const f32 padding,
-                                              std::vector<Quad2f>& rectangles,
+                                              std::vector<std::pair<Quad2f,ObjectID> >& rectangles,
                                               const std::set<ObjectFamily>& ignoreFamiles,
                                               const std::set<ObjectType>& ignoreTypes,
                                               const std::set<ObjectID>& ignoreIDs) const
@@ -928,7 +934,7 @@ namespace Anki
                     const f32 objectHeight = objectAndId.second->GetPose().GetWithRespectToOrigin().GetTranslation().z();
                     if( (objectHeight >= minHeight) && (objectHeight <= maxHeight) )
                     {
-                      rectangles.emplace_back(objectAndId.second->GetBoundingQuadXY(padding));
+                      rectangles.emplace_back(objectAndId.second->GetBoundingQuadXY(padding), objectAndId.first);
                     }
                   }
                 } // if useID
@@ -984,7 +990,20 @@ namespace Anki
           MatPiece* mat = dynamic_cast<MatPiece*>(object);
           CORETECH_ASSERT(mat != nullptr);
           
-          if(mat->IsPoseOn(_robot->GetPose(), 0, 15.f)) { // TODO: get heightTol from robot
+          // Does this mat pose make sense? I.e., is the top surface flat enough
+          // that we could drive on it?
+          Vec3f rotAxis;
+          Radians rotAngle;
+          mat->GetPose().GetRotationVector().GetAngleAndAxis(rotAngle, rotAxis);
+          if(std::abs(rotAngle.ToFloat()) > DEG_TO_RAD(5) &&                // There's any rotation to speak of
+             !AreUnitVectorsAligned(rotAxis, Z_AXIS_3D(), DEG_TO_RAD(45)))  // That rotation's axis more than 45 degrees from vertical
+          {
+            PRINT_NAMED_INFO("BlockWorld.UpdateRobotPose",
+                             "Refusing to localize to %s mat with rotation %.1f degrees around (%.1f,%.1f,%.1f) axis.\n",
+                             mat->GetType().GetName().c_str(),
+                             rotAngle.getDegrees(),
+                             rotAxis.x(), rotAxis.y(), rotAxis.z());
+          }else if(mat->IsPoseOn(_robot->GetPose(), 0, 15.f)) { // TODO: get heightTol from robot
             if(onMat != nullptr) {
               PRINT_NAMED_WARNING("BlockWorld.UpdateRobotPose.OnMultiplMats",
                                   "Robot is 'on' multiple mats at the same time. Will just use the first for now.\n");
@@ -1040,10 +1059,10 @@ namespace Anki
             }
             else {
               if(overlappingMatsSeen.size() > 1) {
-                PRINT_NAMED_WARNING("BlockWorld.UpdateRobotPose.MultipleOverlappingMats",
-                                    "Robot %d is seeing %d (i.e. more than one) mats "
+                PRINT_STREAM_WARNING("BlockWorld.UpdateRobotPose.MultipleOverlappingMats",
+                                    "Robot " << _robot->GetID() << " is seeing " << overlappingMatsSeen.size() << " (i.e. more than one) mats "
                                     "overlapping with the existing mat it is localized to. "
-                                    "Will use first.\n", _robot->GetID(), overlappingMatsSeen.size());
+                                    "Will use first.");
               }
               
               PRINT_LOCALIZATION_INFO("BlockWorld.UpdateRobotPose.NotOnMatLocalization",
@@ -1116,8 +1135,8 @@ namespace Anki
           if(existingMatPieces.empty()) {
             // If this is the first mat piece, add it to the world using the world
             // origin as its pose
-            PRINT_INFO("BlockWorld.UpdateRobotPose.CreatingFirstMatPiece",
-                       "Instantiating first mat piece in the world.\n");
+            PRINT_STREAM_INFO("BlockWorld.UpdateRobotPose.CreatingFirstMatPiece",
+                       "Instantiating first mat piece in the world.");
             
             existingMatPiece = dynamic_cast<MatPiece*>(matToLocalizeTo->CloneType());
             assert(existingMatPiece != nullptr);
@@ -1149,10 +1168,9 @@ namespace Anki
               AddNewObject(existingMatPieces, existingMatPiece);
               existingMatPiece->SetPose(poseWrtWorldOrigin); // Do after AddNewObject, once ID is set
               
-              PRINT_INFO("BlockWorld.UpdateRobotPose.LocalizingToNewMat",
-                         "Robot %d localizing to new %s mat with ID=%d.\n",
-                         _robot->GetID(), existingMatPiece->GetType().GetName().c_str(),
-                         existingMatPiece->GetID().GetValue());
+              PRINT_STREAM_INFO("BlockWorld.UpdateRobotPose.LocalizingToNewMat",
+                         "Robot " << _robot->GetID() << " localizing to new "
+                                << existingMatPiece->GetType().GetName() << " mat with ID=" << existingMatPiece->GetID().GetValue() << ".");
               
             } else {
               if(existingObjects.size() > 1) {
@@ -1742,6 +1760,9 @@ namespace Anki
           _robot->Delocalize();
         }
         
+        // TODO: If this is a mat piece, check to see if there are any objects "on" it (COZMO-138)
+        // If so, delete them too or update their poses somehow? (Deleting seems easier)
+        
         // Check to see if this object is the one the robot is carrying.
         if(_robot->GetCarryingObject() == object->GetID()) {
           PRINT_NAMED_INFO("BlockWorld.ClearObjectHelper.ClearingCarriedObject",
@@ -1767,6 +1788,13 @@ namespace Anki
                            object->GetID().GetValue(),
                            _robot->GetID());
           _robot->DisableTrackHeadToObject();
+        }
+        
+        if(object->IsActive()) {
+          PRINT_NAMED_INFO("BlockWorld.ClearObjectHelper.TurningOffLights",
+                           "Sending message to turn off active object %d's lights because "
+                           "it is being deleted.\n", object->GetID().GetValue());
+          _robot->TurnOffObjectLights(object->GetID());
         }
         
         // Notify any listeners that this object is being deleted
@@ -2027,13 +2055,12 @@ namespace Anki
         
         newSelection->SetSelected(true);
         _selectedObject = objectID;
-        PRINT_INFO("Selected Object with ID=%d\n", objectID.GetValue());
+        PRINT_STREAM_INFO("BlockWorld.SelectObject", "Selected Object with ID=" << objectID.GetValue());
         
         return true;
       } else {
-        PRINT_NAMED_WARNING("BlockWorld.SelectObject.InvalidID",
-                            "Object with ID=%d not found. Not updating selected object.\n",
-                            objectID.GetValue());
+        PRINT_STREAM_WARNING("BlockWorld.SelectObject.InvalidID",
+                            "Object with ID=" << objectID.GetValue() << " not found. Not updating selected object.");
         return false;
       }
     } // SelectObject()
@@ -2137,9 +2164,9 @@ namespace Anki
       ActionableObject* object = dynamic_cast<ActionableObject*>(GetObjectByID(_selectedObject));
       if (object != nullptr) {
         object->SetSelected(true);
-        PRINT_INFO("Object of interest: ID = %d\n", _selectedObject.GetValue());
+        PRINT_STREAM_INFO("BlockWorld.CycleSelectedObject", "Object of interest: ID = " << _selectedObject.GetValue());
       } else {
-        PRINT_INFO("No object of interest found\n");
+        PRINT_STREAM_INFO("BlockWorld.CycleSelectedObject", "No object of interest found");
       }
   
     } // CycleSelectedObject()
@@ -2194,7 +2221,8 @@ namespace Anki
       }
       
       // (Re)Draw the selected object separately so we can get its pre-action poses
-      if(GetSelectedObject().IsSet()) {
+      if(GetSelectedObject().IsSet())
+      {
         ActionableObject* selectedObject = dynamic_cast<ActionableObject*>(GetObjectByID(GetSelectedObject()));
         if(selectedObject == nullptr) {
           PRINT_NAMED_ERROR("BlockWorld.DrawAllObjects.NullSelectedObject",
@@ -2206,7 +2234,10 @@ namespace Anki
                                 "Object %d is selected in BlockWorld but does not have its "
                                 "selection flag set.\n", GetSelectedObject().GetValue());
           }
-          selectedObject->VisualizePreActionPoses(&_robot->GetPose());
+          
+          std::vector<std::pair<Quad2f,ObjectID> > obstacles;
+          _robot->GetBlockWorld().GetObstacles(obstacles);
+          selectedObject->VisualizePreActionPoses(obstacles, &_robot->GetPose());
         }
       } // if selected object is set
       

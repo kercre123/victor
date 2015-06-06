@@ -8,6 +8,8 @@ BackgroundColor = [1 1 .7]; % Light yellow
 ProtoDir = fullfile(fileparts(mfilename('fullpath')), '../simulator/protos');
 WorldDir = fullfile(fileparts(mfilename('fullpath')), '../simulator/worlds');
 DefinitionFile  = '';
+MarkerSize = 30; % in mm
+MatSize = 1000; % in mm
 
 parseVarargin(varargin{:});
 
@@ -43,14 +45,24 @@ if fid == -1
     error('Unable to create proto file "%s".', fullfile(ProtoDir, 'CozomMat.proto'));
 end
 
+
+h_fig = figure('PaperUnits', 'centimeters', 'PaperPositionMode', 'manual', ...
+  'PaperSize', 2.54*[44 44], 'PaperPosition', [5 5 100 100]);
+
+h_axes = axes('Pos', [0 0 1 1], 'Units', 'centimeters', 'Parent', h_fig);
+axis(h_axes, 'off');
+rectangle('Parent', h_axes, 'Pos', [0 0 MatSize MatSize]/10, 'LineStyle', '--');
+set(h_axes, 'Units', 'norm');
+hold(h_axes, 'on')
+
 C = onCleanup(@()fclose(fid));
 
 fprintf(fid, '#VRML_SIM V7.3.0 utf8\n\n');
 fprintf(fid, 'PROTO CozmoMat [\n');
 fprintf(fid, '  field SFColor Color %.4f %.4f %.4f\n', BackgroundColor(1), BackgroundColor(2), BackgroundColor(3));
 fprintf(fid, '  field SFBool showMarkers TRUE\n');
-fprintf(fid, '  field SFFloat xSize 1.0\n');
-fprintf(fid, '  field SFFloat ySize 1.0\n');
+fprintf(fid, '  field SFFloat xSize %.3f\n', MatSize/1000);
+fprintf(fid, '  field SFFloat ySize %.3f\n', MatSize/1000);
 
 fprintf(fid, ']\n');
 fprintf(fid, '{\n');
@@ -68,9 +80,6 @@ fprintf(fid, '      geometry Box {\n');
 fprintf(fid, '        size %%{=fields.xSize.value}%% %%{=fields.ySize.value}%% 0.005\n');
 fprintf(fid, '      }\n');
 fprintf(fid, '    }\n');
-
-
-set(gcf, 'Pos', [100 100 800 650]);
 
 FG = repmat(reshape(ForegroundColor, [1 1 3]), [512 512]);
 BG = repmat(reshape(BackgroundColor, [1 1 3]), [512 512]);
@@ -104,6 +113,10 @@ for i = 1:numel(images)
         markerImg = (1-markerImg).*FG + markerImg.*BG;
     end
 
+    printImage = imrotate(markerImg, angles(i));
+    imagesc(xgrid(i)/10+MarkerSize/10*[-.5 .5]+MatSize/2/10, ...
+      ygrid(i)/10+MarkerSize/10*[-.5 .5]+MatSize/2/10, printImage, 'Parent', h_axes);
+      
     % Need this initial rotation b/c canonical VisionMarker orientation in
     % 3D is vertical, i.e. in the X-Z plane, for historical reasons.
     R_to_flat = rodrigues(-pi/2*[1 0 0]);
@@ -111,7 +124,7 @@ for i = 1:numel(images)
     pose = Pose(rodrigues(angles(i)*pi/180*[0 0 1])*R_to_flat, ...
         [xgrid(i) ygrid(i) -CozmoVisionProcessor.WHEEL_RADIUS]');
     
-    axis = pose.axis;
+    rotAxis = pose.axis;
     angle = pose.angle;
     T = pose.T;
     T(3)= 0;
@@ -123,7 +136,7 @@ for i = 1:numel(images)
     codeString{i} = sprintf(['AddMarker(Vision::MARKER_%s,\n', ...
         'Pose3d(%f, {%f,%f,%f}, {%f,%f,%f}),\n%f);\n'], ...
         upper(nameNoExt), angle, ...
-        axis(1), axis(2), axis(3), T(1), T(2), T(3), ...
+        rotAxis(1), rotAxis(2), rotAxis(3), T(1), T(2), T(3), ...
         sizes(i));
         
     filename = sprintf('textures/mat/ankiMat%d.png', i);

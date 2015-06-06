@@ -93,6 +93,7 @@ namespace Anki {
     {
     public:
       DriveToObjectAction(const ObjectID& objectID, const PreActionPose::ActionType& actionType, const bool useManualSpeed = false);
+      DriveToObjectAction(const ObjectID& objectID, const f32 distance_mm, const bool useManualSpeed = false);
       
       // TODO: Add version where marker code is specified instead of action?
       //DriveToObjectAction(Robot& robot, const ObjectID& objectID, Vision::Marker::Code code);
@@ -110,11 +111,13 @@ namespace Anki {
                                     std::vector<Pose3d>& possiblePoses,
                                     bool& alreadyInPosition);
       
+      virtual void Cleanup(Robot &robot) override;
       virtual void Reset() override;
       
       // Not private b/c DriveToPlaceCarriedObject uses
       ObjectID                   _objectID;
       PreActionPose::ActionType  _actionType;
+      f32                        _distance_mm;
       bool                       _useManualSpeed;
       CompoundActionSequential   _compoundAction;
       
@@ -151,8 +154,11 @@ namespace Anki {
     protected:
       
       virtual ActionResult Init(Robot& robot) override;
+      virtual ActionResult CheckIfDone(Robot& robot) override;
       
+    private:
       Radians _turnAngle;
+      bool    _startedTraversingPath;
       
     }; // class TurnInPlaceAction
     
@@ -254,7 +260,7 @@ namespace Anki {
       // Amount of time to wait before verifying after moving head that we are
       // indeed seeing the object/marker we expect.
       // TODO: Can this default be reduced?
-      virtual f32 GetWaitToVerifyTime() const { return 0.1f; }
+      virtual f32 GetWaitToVerifyTime() const { return 0.25f; }
       
       // Override to allow wheel control while facing the object
       virtual bool ShouldLockWheels() const override { return false; }

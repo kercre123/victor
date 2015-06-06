@@ -14,7 +14,7 @@
 #include "anki/cozmo/basestation/actionContainers.h"
 #include "anki/cozmo/basestation/actionInterface.h"
 
-#include "anki/common/basestation/utils/logging/logging.h"
+#include "anki/util/logging/logging.h"
 
 namespace Anki {
   namespace Cozmo {
@@ -22,7 +22,6 @@ namespace Anki {
 #pragma mark ---- ActionList ----
     
     ActionList::ActionList()
-    : _slotCounter(0)
     {
       
     }
@@ -55,11 +54,10 @@ namespace Anki {
     void ActionList::Print() const
     {
       if(IsEmpty()) {
-        PRINT_INFO("ActionList is empty.\n");
+        PRINT_STREAM_INFO("ActionList.Print", "ActionList is empty.\n");
       } else {
-        PRINT_INFO("ActionList contains %d queues:\n", _queues.size());
+        PRINT_STREAM_INFO("ActionList.Print", "ActionList contains " << _queues.size() << " queues:\n");
         for(auto const& queuePair : _queues) {
-          PRINT_INFO("---");
           queuePair.second.Print();
         }
       }
@@ -86,18 +84,20 @@ namespace Anki {
     } // Update()
     
     
-    ActionList::SlotHandle ActionList::AddAction(IActionRunner* action, u8 numRetries)
+    ActionList::SlotHandle ActionList::AddConcurrentAction(IActionRunner* action, u8 numRetries)
     {
       if(action == nullptr) {
         PRINT_NAMED_WARNING("ActionList.AddAction.NullActionPointer", "Refusing to add null action.\n");
-        return _slotCounter;
+        return -1;
       }
       
-      SlotHandle currentSlot = _slotCounter;
+      // Find an empty slot
+      SlotHandle currentSlot = 0;
+      while(_queues.find(currentSlot) != _queues.end()) {
+        ++currentSlot;
+      }
       
-      if(_queues[currentSlot].QueueAtEnd(action, numRetries) == RESULT_OK) {
-        _slotCounter++;
-      } else {
+      if(_queues[currentSlot].QueueAtEnd(action, numRetries) != RESULT_OK) {
         PRINT_NAMED_ERROR("ActionList.AddAction.FailedToAdd", "Failed to add action to new queue.\n");
       }
       
@@ -239,13 +239,14 @@ namespace Anki {
     {
       
       if(IsEmpty()) {
-        PRINT_INFO("ActionQueue is empty.\n");
+        PRINT_STREAM_INFO("ActionQueue.Print", "ActionQueue is empty.\n");
       } else {
-        PRINT_INFO("ActionQueue with %d actions: ", _queue.size());
+        std::stringstream ss;
+        ss << "ActionQueue with " << _queue.size() << " actions: ";
         for(auto action : _queue) {
-          PRINT_INFO("%s, ", action->GetName().c_str());
+          ss << action->GetName() << ", ";
         }
-        PRINT_INFO("\b\b\n");
+        PRINT_STREAM_INFO("ActionQueue.Print", ss.str());
       }
       
     } // Print()

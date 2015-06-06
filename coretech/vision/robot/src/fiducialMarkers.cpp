@@ -1016,14 +1016,14 @@ namespace Anki
 
       Initialize();
 
-      BeginBenchmark("vme_classify");
-
       //s16 multiClassLabel = static_cast<s16>(MARKER_UNKNOWN);
 
       bool verified = false;
       OrientedMarkerLabel selectedLabel = MARKER_UNKNOWN;
       
 #     if USE_NEAREST_NEIGHBOR_RECOGNITION
+
+      BeginBenchmark("vme_classify_nn");
       
       s32 label=-1;
       s32 distance = grayvalueThreshold;
@@ -1040,7 +1040,13 @@ namespace Anki
         selectedLabel = static_cast<OrientedMarkerLabel>(label);
       }
       
+      EndBenchmark("vme_classify_nn");
+      
+      BeginBenchmark("vme_verify");
+      
 #     else
+      BeginBenchmark("vme_classify_tree");
+      
       AnkiAssert(NUM_TREES <= u8_MAX);
       u8 predictedLabelsHist[NUM_MARKER_LABELS_ORIENTED];
       for(s32 iLabel=0; iLabel<NUM_MARKER_LABELS_ORIENTED; ++iLabel) {
@@ -1058,7 +1064,7 @@ namespace Anki
       }
       
       
-      EndBenchmark("vme_classify");
+      EndBenchmark("vme_classify_tree");
       
       BeginBenchmark("vme_verify");
       // See if a majority of the trees voted for the same label
@@ -1144,7 +1150,7 @@ namespace Anki
     {
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
       const s32 MAX_NAME_LENGTH = 1024;
-      s32 nameLength = strlen(name);
+      std::size_t nameLength = strlen(name);
 
       // Remove the start "marker_" if it is present
       if(nameLength >= 7) {

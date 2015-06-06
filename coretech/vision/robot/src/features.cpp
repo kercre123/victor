@@ -238,7 +238,7 @@ namespace Anki
         const s32 numValues = values.get_size();
         s32 numValuesNonzero = numValues;
 
-        const f32 * restrict pvalues = values.Pointer(0);
+        //const f32 * restrict pvalues = values.Pointer(0);
 
         f32 maxValue = FLT_MIN;
         for(s32 i=0; i<numValues; i++) {

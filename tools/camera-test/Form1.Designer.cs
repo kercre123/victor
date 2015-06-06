@@ -46,7 +46,7 @@
             this.scanPicBox.BackColor = System.Drawing.Color.Red;
             this.scanPicBox.Location = new System.Drawing.Point(12, 41);
             this.scanPicBox.Name = "scanPicBox";
-            this.scanPicBox.Size = new System.Drawing.Size(800, 600);
+            this.scanPicBox.Size = new System.Drawing.Size(400, 296);
             this.scanPicBox.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.scanPicBox.TabIndex = 35;
             this.scanPicBox.TabStop = false;
@@ -131,7 +131,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(821, 649);
+            this.ClientSize = new System.Drawing.Size(438, 353);
             this.Controls.Add(this.txtCSV);
             this.Controls.Add(this.btnCSV);
             this.Controls.Add(this.butSnapshot);

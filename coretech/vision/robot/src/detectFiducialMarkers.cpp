@@ -18,7 +18,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/matlabInterface.h"
 
 #if USE_NEAREST_NEIGHBOR_RECOGNITION
-#  define NEAREST_NEIGHBOR_DISTANCE_THRESHOLD 50 // TODO: Make this a VisionParameter and pass it in dynamically
+#  define NEAREST_NEIGHBOR_DISTANCE_THRESHOLD 40 // TODO: Make this a VisionParameter and pass it in dynamically
 #endif
 
 //#define SHOW_DRAWN_COMPONENTS
@@ -108,8 +108,9 @@ namespace Anki
       // 10% of the width, we use 0.2/sqrt(2)=0.14 as the multiplier.
       // This kernel size assumes we RE-filter the extracted probe values inside the nearest
       // neighbor code.
-      const s32 kernelSize = std::round(0.14f*((corners[Quadrilateral<f32>::TopLeft] - corners[Quadrilateral<f32>::BottomRight]).Length() +
-                                               (corners[Quadrilateral<f32>::TopRight] - corners[Quadrilateral<f32>::BottomLeft]).Length()));
+      const f32 kernelSize = std::round(1.4142f*FIDUCIAL_SQUARE_WIDTH_FRACTION *
+                                        ((corners[Quadrilateral<f32>::TopLeft] - corners[Quadrilateral<f32>::BottomRight]).Length() +
+                                         (corners[Quadrilateral<f32>::TopRight] - corners[Quadrilateral<f32>::BottomLeft]).Length()));
 
       cv::Mat_<s16> kernel(kernelSize, kernelSize);
       kernel = -1;
