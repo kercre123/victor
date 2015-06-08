@@ -1096,9 +1096,7 @@ namespace Anki {
 #ifndef SIMULATOR
       bool RadioSendImageChunk(const void* chunkData, const uint16_t length)
       {
-        __disable_irq();
         g_deferMainExec = 1;
-        __enable_irq();
         bool result = ReliableTransport_SendMessage((uint8_t*)chunkData, length, &connection, eRMT_SingleUnreliableMessage, true, Messages::ImageChunk_ID);
         // Wrap up main exec
         if (g_mainExecDeferred)
@@ -1106,6 +1104,7 @@ namespace Anki {
           Anki::Cozmo::Robot::step_MainExecution();
           g_mainExecDeferred = 0;
         }
+        // If interrupt fires right here we'll skip one iteration of main execution.
         g_deferMainExec = 0;
         return result;
       }
