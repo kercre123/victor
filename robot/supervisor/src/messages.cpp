@@ -70,9 +70,6 @@ namespace Anki {
         const u32 MAX_FACE_DETECTIONS = 16;
         MultiMailbox<Messages::FaceDetection,MAX_FACE_DETECTIONS> faceDetectMailbox_;
 
-        uint8_t imageChunkMailbox[sizeof(Messages::ImageChunk)+1];
-        volatile uint16_t imageChunkMailboxLen = 0;
-
         static RobotState robotState_;
 
         // History of the last 2 RobotState messages that were sent to the basestation.
@@ -292,13 +289,6 @@ namespace Anki {
       void ProcessBTLEMessages()
       {
         u32 dataLen;
-
-        // Send queued image message if present
-        if (imageChunkMailboxLen != 0)
-        {
-          ReliableTransport_SendMessage(imageChunkMailbox, imageChunkMailboxLen+1, &connection, eRMT_SingleUnreliableMessage, true, GLOBAL_INVALID_TAG);
-          imageChunkMailboxLen = 0;
-        }
 
         while((dataLen = HAL::RadioGetNextPacket(pktBuffer_)) > 0)
         {
@@ -1102,23 +1092,10 @@ namespace Anki {
 #ifndef SIMULATOR
       bool RadioSendImageChunk(const void* chunkData, const uint16_t length)
       {
-        static const size_t MAX_SIZE = Messages::GetSize(Messages::ImageChunk_ID);
-        if (Messages::imageChunkMailboxLen != 0)
-        {
-          return false;
-        }
-        else if (length > MAX_SIZE)
-        {
-          PRINT("ERROR: Tried to queue image chunk that's too big for mailbox, %d bytes", length);
-          return false;
-        }
-        else
-        {
-          Messages::imageChunkMailboxLen = length;
-          Messages::imageChunkMailbox[0] = GET_MESSAGE_ID(Messages::ImageChunk);
-          memcpy(Messages::imageChunkMailbox+1, chunkData, length);
-          return true;
-        }
+        __disable_irq();
+        bool result = ReliableTransport_SendMessage((uint8_t*)chunkData, length, &connection, eRMT_SingleUnreliableMessage, true, Messages::ImageChunk_ID);
+        __enable_irq();
+        return result;
       }
 
       Result SetBlockLight(const u8 blockID, const u32* onColor, const u32* offColor,
