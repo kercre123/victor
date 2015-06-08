@@ -110,7 +110,7 @@ void MultiClientChannel::Update()
     return;
   }
   
-  double currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  double currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInNanoSeconds();
   
   _advertisingChannel.Update();
   _reliableChannel.Update();
