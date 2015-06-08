@@ -1,5 +1,6 @@
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/shared/cozmoTypes.h"
+#include "anki/cozmo/robot/cozmoBot.h"
 
 #include "anki/common/shared/mailbox_impl.h"
 
@@ -1075,6 +1076,9 @@ namespace Anki {
     } // namespace Messages
 
     namespace HAL {
+
+      extern volatile u8 g_halInitComplete, g_deferMainExec, g_mainExecDeferred;
+
       bool RadioSendMessage(const Messages::ID msgID, const void *buffer, const bool reliable, const bool hot)
       {
         const u32 size = Messages::GetSize(msgID);
@@ -1093,8 +1097,16 @@ namespace Anki {
       bool RadioSendImageChunk(const void* chunkData, const uint16_t length)
       {
         __disable_irq();
-        bool result = ReliableTransport_SendMessage((uint8_t*)chunkData, length, &connection, eRMT_SingleUnreliableMessage, true, Messages::ImageChunk_ID);
+        g_deferMainExec = 1;
         __enable_irq();
+        bool result = ReliableTransport_SendMessage((uint8_t*)chunkData, length, &connection, eRMT_SingleUnreliableMessage, true, Messages::ImageChunk_ID);
+        // Wrap up main exec
+        if (g_mainExecDeferred)
+        {
+          Anki::Cozmo::Robot::step_MainExecution();
+          g_mainExecDeferred = 0;
+        }
+        g_deferMainExec = 0;
         return result;
       }
 
