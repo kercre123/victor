@@ -151,7 +151,7 @@ void StreamJPEG()
           m->data[0] = QUALITY;
 
         // Keep trying to send this message, even if it means a frame tear
-        while (!HAL::RadioSendImageChunk(m, sizeof(m)))
+        while (!HAL::RadioSendImageChunk(m, Messages::GetSize(Messages::ImageChunk_ID)))
           ;
 
         // Copy anything left at end to front of buffer

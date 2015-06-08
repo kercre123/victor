@@ -1102,11 +1102,12 @@ namespace Anki {
 #ifndef SIMULATOR
       bool RadioSendImageChunk(const void* chunkData, const uint16_t length)
       {
+        static const size_t MAX_SIZE = Messages::GetSize(Messages::ImageChunk_ID);
         if (Messages::imageChunkMailboxLen != 0)
         {
           return false;
         }
-        else if (length > sizeof(Messages::ImageChunk))
+        else if (length > MAX_SIZE)
         {
           PRINT("ERROR: Tried to queue image chunk that's too big for mailbox, %d bytes", length);
           return false;
