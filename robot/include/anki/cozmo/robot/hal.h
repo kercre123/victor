@@ -221,7 +221,7 @@ namespace Anki
       // Get a sync'd timestamp (e.g. for messages), in milliseconds
       extern "C" TimeStamp_t GetTimeStamp(void);
       extern "C" void SetTimeStamp(TimeStamp_t t);
-      
+
 // #pragma mark --- Processor ---
       /////////////////////////////////////////////////////////////////////
       // PROCESSOR
@@ -230,8 +230,8 @@ namespace Anki
         void EnableIRQ();
         void DisableIRQ();
       }
-      
-      
+
+
 // #pragma mark --- Audio ---
       /////////////////////////////////////////////////////////////////////
       // AUDIO
@@ -441,6 +441,15 @@ namespace Anki
        * @return True if sucessfully queued, false otherwise
        */
       bool RadioSendMessage(const Messages::ID msgID, const void *buffer, const bool reliable=true, const bool hot=false);
+
+      /** Special method for sending images (from long execution) for thread safety.
+       * This method always sends the message as unreliable and hot but is queued until the main execution thread picks
+       * it up and sends it through reliable transport.
+       * @param chunkData a pointer to the imageChunk Message data
+       * @param length The number of bytes of chunk data to send
+       * @return true if the message was successfully queued, false otherwise.
+       */
+      bool RadioSendImageChunk(const void* chunkData, const uint16_t length);
 
       /////////////////////////////////////////////////////////////////////
       // BLOCK COMMS

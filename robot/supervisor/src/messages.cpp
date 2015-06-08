@@ -1,5 +1,6 @@
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/shared/cozmoTypes.h"
+#include "anki/cozmo/robot/cozmoBot.h"
 
 #include "anki/common/shared/mailbox_impl.h"
 
@@ -30,54 +31,6 @@
 namespace Anki {
   namespace Cozmo {
     ReliableConnection connection;
-
-    namespace HAL {
-      bool RadioSendMessage(const Messages::ID msgID, const void *buffer, const bool reliable, const bool hot)
-      {
-        const u32 size = Messages::GetSize(msgID);
-        if (RadioIsConnected())
-        {
-          const EReliableMessageType messgeType = reliable ? eRMT_SingleReliableMessage : eRMT_SingleUnreliableMessage;
-          return ReliableTransport_SendMessage((const uint8_t*)buffer, size, &connection, messgeType, hot, msgID);
-        }
-        else
-        {
-          return false;
-        }
-      }
-
-#ifndef SIMULATOR
-
-      Result SetBlockLight(const u8 blockID, const u32* onColor, const u32* offColor,
-                           const u32* onPeriod_ms, const u32* offPeriod_ms,
-                           const u32* transitionOnPeriod_ms, const u32* transitionOffPeriod_ms)
-      {
-         u8 buffer[256];
-         const u32 size = Messages::GetSize(Messages::SetBlockLights_ID);
-         Anki::Cozmo::Messages::SetBlockLights m;
-         m.blockID = blockID;
-         for (int i=0; i<NUM_BLOCK_LEDS; ++i) {
-           m.onColor[i] = onColor[i];
-           m.offColor[i] = offColor[i];
-           m.onPeriod_ms[i] = onPeriod_ms[i];
-           m.offPeriod_ms[i] = offPeriod_ms[i];
-           m.transitionOnPeriod_ms[i] = (transitionOnPeriod_ms == NULL ? 0 : transitionOnPeriod_ms[i]);
-           m.transitionOffPeriod_ms[i] = (transitionOffPeriod_ms == NULL ? 0 : transitionOffPeriod_ms[i]);
-         }
-         buffer[0] = Messages::SetBlockLights_ID;
-         memcpy(buffer + 1, &m, size);
-         return RadioSendPacket(buffer, size+1, blockID + 1) ? RESULT_OK : RESULT_FAIL;
-      }
-
-      void FlashBlockIDs()
-      {
-        // THIS DOESN'T WORK FOR now
-      }
-
-#endif
-
-    }
-
     namespace Messages {
 
       namespace {
@@ -337,6 +290,7 @@ namespace Anki {
       void ProcessBTLEMessages()
       {
         u32 dataLen;
+
         while((dataLen = HAL::RadioGetNextPacket(pktBuffer_)) > 0)
         {
           s16 res = ReliableTransport_ReceiveData(&connection, pktBuffer_, dataLen);
@@ -1120,6 +1074,70 @@ namespace Anki {
 
 
     } // namespace Messages
+
+    namespace HAL {
+
+      extern volatile u8 g_halInitComplete, g_deferMainExec, g_mainExecDeferred;
+
+      bool RadioSendMessage(const Messages::ID msgID, const void *buffer, const bool reliable, const bool hot)
+      {
+        const u32 size = Messages::GetSize(msgID);
+        if (RadioIsConnected())
+        {
+          const EReliableMessageType messgeType = reliable ? eRMT_SingleReliableMessage : eRMT_SingleUnreliableMessage;
+          return ReliableTransport_SendMessage((const uint8_t*)buffer, size, &connection, messgeType, hot, msgID);
+        }
+        else
+        {
+          return false;
+        }
+      }
+
+#ifndef SIMULATOR
+      bool RadioSendImageChunk(const void* chunkData, const uint16_t length)
+      {
+        g_deferMainExec = 1;
+        bool result = ReliableTransport_SendMessage((uint8_t*)chunkData, length, &connection, eRMT_SingleUnreliableMessage, true, Messages::ImageChunk_ID);
+        // Wrap up main exec
+        if (g_mainExecDeferred)
+        {
+          Anki::Cozmo::Robot::step_MainExecution();
+          g_mainExecDeferred = 0;
+        }
+        // If interrupt fires right here we'll skip one iteration of main execution.
+        g_deferMainExec = 0;
+        return result;
+      }
+
+      Result SetBlockLight(const u8 blockID, const u32* onColor, const u32* offColor,
+                           const u32* onPeriod_ms, const u32* offPeriod_ms,
+                           const u32* transitionOnPeriod_ms, const u32* transitionOffPeriod_ms)
+      {
+         u8 buffer[256];
+         const u32 size = Messages::GetSize(Messages::SetBlockLights_ID);
+         Anki::Cozmo::Messages::SetBlockLights m;
+         m.blockID = blockID;
+         for (int i=0; i<NUM_BLOCK_LEDS; ++i) {
+           m.onColor[i] = onColor[i];
+           m.offColor[i] = offColor[i];
+           m.onPeriod_ms[i] = onPeriod_ms[i];
+           m.offPeriod_ms[i] = offPeriod_ms[i];
+           m.transitionOnPeriod_ms[i] = (transitionOnPeriod_ms == NULL ? 0 : transitionOnPeriod_ms[i]);
+           m.transitionOffPeriod_ms[i] = (transitionOffPeriod_ms == NULL ? 0 : transitionOffPeriod_ms[i]);
+         }
+         buffer[0] = Messages::SetBlockLights_ID;
+         memcpy(buffer + 1, &m, size);
+         return RadioSendPacket(buffer, size+1, blockID + 1) ? RESULT_OK : RESULT_FAIL;
+      }
+
+      void FlashBlockIDs()
+      {
+        // THIS DOESN'T WORK FOR now
+      }
+#endif
+
+    } // namespace HAL
+
   } // namespace Cozmo
 } // namespace Anki
 

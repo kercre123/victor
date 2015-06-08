@@ -31,7 +31,7 @@ namespace Anki
       void SetTimeStamp(TimeStamp_t t) {t_ = t;}
 
       int UARTGetFreeSpace();
-      
+
       static IDCard m_idCard;
       IDCard* GetIDCard() { return &m_idCard; }
 
@@ -47,12 +47,12 @@ namespace Anki
         if (*(int*)(0x1FFF7A10) == 0x00250031)
           m_idCard.esn = 1;
       }
-      
+
       extern "C" {
         void EnableIRQ() {
           __enable_irq();
-        }  
-        
+        }
+
         void DisableIRQ() {
           __disable_irq();
         }
@@ -151,7 +151,7 @@ void StreamJPEG()
           m->data[0] = QUALITY;
 
         // Keep trying to send this message, even if it means a frame tear
-        while (!HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::ImageChunk), m, false, true))
+        while (!HAL::RadioSendImageChunk(m, Messages::GetSize(Messages::ImageChunk_ID)))
           ;
 
         // Copy anything left at end to front of buffer
@@ -222,7 +222,7 @@ int main(void)
   Anki::Cozmo::Robot::Init();
   g_halInitComplete = true;
   //printf("init complete!\r\n");
-  
+
   // Give time for sync before video starts
   MicroWait(500000);
   StreamJPEG();
