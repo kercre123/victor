@@ -23,7 +23,7 @@ public class LineManager : MonoBehaviour {
 		lines = new List<VectorLine>();
 		transforms = new List<Transform>();
 		lineCount = 0;
-		//enabled = false;
+		enabled = false;
 	}
 
 	public void AddLine (VectorLine vectorLine, Transform thisTransform, float time) {
@@ -38,7 +38,7 @@ public class LineManager : MonoBehaviour {
 		lines.Add (vectorLine);
 		transforms.Add (thisTransform);
 		
-		if (++lineCount >= 1) {
+		if (++lineCount == 1) {
 			enabled = true;
 		}
 	}
@@ -101,8 +101,8 @@ public class LineManager : MonoBehaviour {
 	
 	public void DisableIfUnused () {
 		if (!destroyed) { // Prevent possible null reference exceptions
-			if (lineCount == 0 && VectorManager.arrayCount == 0 && VectorManager.arrayCount2 == 0) {
-				//enabled = false;
+			if (lineCount <= 0 && VectorManager.arrayCount <= 0 && VectorManager.arrayCount2 <= 0) {
+				enabled = false;
 			}
 		}
 	}

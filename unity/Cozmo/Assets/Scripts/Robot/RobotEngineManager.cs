@@ -444,7 +444,7 @@ public class RobotEngineManager : MonoBehaviour {
 	{
 		if( !IsConnected ) return;
 
-		Debug.Log ("frame("+Time.frameCount+") SendMessage " + Message.GetTag().ToString());
+		//Debug.Log ("frame("+Time.frameCount+") SendMessage " + Message.GetTag().ToString());
 		channel.Send( Message );
 	}
 
