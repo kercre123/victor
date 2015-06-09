@@ -87,7 +87,7 @@ public class ObservedObject
 		InfoString = "ID: " + ID + " Family: " + Family + " Type: " + ObjectType;
 		SelectInfoString = "Select ID: " + ID + " Family: " + Family + " Type: " + ObjectType;
 
-		if (objectFamily == 3) {
+		if (objectFamily == 4) {
 			cubeType = CubeType.LIGHT_CUBE;
 		} else if (objectType == 4 || objectType == 5) {
 			cubeType = CubeType.BULLS_EYE;
@@ -99,7 +99,7 @@ public class ObservedObject
 			Debug.LogWarning("Object " + ID + " with type " + objectType + " is unsupported"); 
 		}
 
-		//Debug.Log ("ObservedObject cubeType("+cubeType+") from objectFamily("+objectFamily+") objectType("+objectType+")" );
+		Debug.Log ("ObservedObject cubeType("+cubeType+") from objectFamily("+objectFamily+") objectType("+objectType+")" );
 	}
 
 	public static implicit operator uint( ObservedObject observedObject )

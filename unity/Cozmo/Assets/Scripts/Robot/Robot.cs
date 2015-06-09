@@ -569,7 +569,7 @@ public class Robot
 			return;
 		}
 
-		if( message.objectFamily == 3 )
+		if( message.objectFamily == 4 )
 		{
 			AddActiveBlock( activeBlocks.ContainsKey( message.objectID ) ? activeBlocks[ message.objectID ] : null, message );
 		}
