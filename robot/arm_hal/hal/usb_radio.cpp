@@ -79,7 +79,7 @@ namespace Anki {
         return true;
 #endif
 
-    } // RadioSendMessage()
+    } // RadioSendPacket()
 #endif // #ifndef RUN_EMBEDDED_TESTS
 
     u32 RadioGetNumBytesAvailable(void)
@@ -140,29 +140,14 @@ namespace Anki {
             memcpy(recvBuf_, hPtr, recvBufSize_);
           }
 
-          // Check if expected number of bytes are in the msg
+          // Check if expected number of bytes are in the packet
           if (recvBufSize_ > headerSize) {
             u32 dataLen = recvBuf_[headerSize] +
                           (recvBuf_[headerSize+1] << 8) +
                           (recvBuf_[headerSize+2] << 16) +
                           (recvBuf_[headerSize+3] << 24);
 
-            if (dataLen > 255) {
-              // We shouldn't be sending huge messages to the robot
-              PRINT("WARNING(RecvdMsgTooBig): %d bytes\n", dataLen);
-              dataLen = 255;
-            }
-
             if (recvBufSize_ >= headerSize + 4 + dataLen) {
-
-              // Check that message size is correct
-              Messages::ID msgID = static_cast<Messages::ID>(recvBuf_[headerSize+4]);
-              const u8 size = Messages::GetSize(msgID);
-              u32 msgLen = dataLen - 1;  // Doesn't include msgID
-
-              if (msgLen != size) {
-                PRINT("WARNING: Message size mismatch: ID %d, expected %d bytes, but got %d bytes\n", msgID, size, msgLen);
-              }
 
               // Copy message contents to buffer
               std::memcpy((void*)buffer, recvBuf_ + headerSize + 4, dataLen);
