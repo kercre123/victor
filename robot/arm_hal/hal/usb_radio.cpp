@@ -23,7 +23,7 @@ namespace Anki {
   namespace Cozmo {
 
     namespace { // "Private members"
-      const u16 RECV_BUFFER_SIZE = 1024;
+      const u16 RECV_BUFFER_SIZE = 1024 * 4;
 
       u8 recvBuf_[RECV_BUFFER_SIZE];
       s32 recvBufSize_ = 0;

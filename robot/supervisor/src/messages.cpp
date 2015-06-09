@@ -1084,8 +1084,25 @@ namespace Anki {
         const u32 size = Messages::GetSize(msgID);
         if (RadioIsConnected())
         {
-          const EReliableMessageType messgeType = reliable ? eRMT_SingleReliableMessage : eRMT_SingleUnreliableMessage;
-          return ReliableTransport_SendMessage((const uint8_t*)buffer, size, &connection, messgeType, hot, msgID);
+          if (reliable)
+          {
+            if (ReliableTransport_SendMessage((const uint8_t*)buffer, size, &connection, eRMT_SingleReliableMessage, hot, msgID) == false) // failed to queue reliable message!
+            {
+              // Have to drop the connection
+              PRINT("Dropping connection because can't queue reliable messages\r\n");
+              ReliableTransport_Disconnect(&connection);
+              Receiver_OnDisconnect(&connection);
+              return false;
+            }
+            else
+            {
+              return true;
+            }
+          }
+          else
+          {
+            return ReliableTransport_SendMessage((const uint8_t*)buffer, size, &connection, eRMT_SingleUnreliableMessage, hot, msgID);
+          }
         }
         else
         {

@@ -46,9 +46,9 @@ namespace Anki
 
       // TODO: Refactor this mess. PUNT!
       int BUFFER_WRITE_SIZE = 1024 * 32;
-      int BUFFER_READ_SIZE = 1024;
+      int BUFFER_READ_SIZE = 1024 * 4;
       ONCHIP u8 m_bufferWrite[1024 * 32];
-      ONCHIP u8 m_bufferRead[1024];
+      ONCHIP u8 m_bufferRead[1024 * 4];
 
       extern volatile u8 g_halInitComplete, g_deferMainExec, g_mainExecDeferred;
 
@@ -279,7 +279,7 @@ namespace Anki
             StartTransfer();
           }
         }
-        
+
         return result;
       }
 

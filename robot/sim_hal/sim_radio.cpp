@@ -35,7 +35,7 @@ namespace Anki {
   namespace Cozmo {
 
     namespace { // "Private members"
-      const size_t RECV_BUFFER_SIZE = 1024;
+      const size_t RECV_BUFFER_SIZE = 1024 * 4;
 
       // For communications with basestation
 #if(USE_UDP_ROBOT_COMMS)
@@ -155,7 +155,7 @@ namespace Anki {
     bool HAL::RadioSendPacket(const void *buffer, const u32 length, u8 socket)
     {
       (void)socket;
-      
+
       if (server.HasClient()) {
 
 #if(USE_UDP_ROBOT_COMMS==0)
