@@ -26,7 +26,7 @@ static void udpServerSentCB(void * arg)
 #ifdef DEBUG_CLIENT
   os_printf("cl scb qpc=%d\n", queuedPacketCount);
 #endif
-  os_intr_lock(); // Hopefully this is enough to prevent re-entrance issues with clientQueuePacket
+  ets_intr_lock(); // Hopefully this is enough to prevent re-entrance issues with clientQueuePacket
   if (queuedPacketCount > 0)
   {
     queuedPacketCount -= 1;
@@ -35,7 +35,7 @@ static void udpServerSentCB(void * arg)
   {
     os_printf("WARN: udp sent callback with no packet queued\n");
   }
-  os_intr_unlock();
+  ets_intr_unlock();
 
 }
 
@@ -115,14 +115,14 @@ UDPPacket* clientGetBuffer()
 
   if (haveClient)
   {
-    os_intr_lock();
+    ets_intr_lock();
     if (rtxbs[nextReserve].state == PKT_BUF_AVAILABLE)
     {
       rtxbs[nextReserve].state = PKT_BUF_RESERVED;
       ret = &(rtxbs[nextReserve]);
       nextReserve = (nextReserve + 1) % NUM_RTX_BUFS;
     }
-    os_intr_unlock();
+    ets_intr_unlock();
 #ifdef DEBUG_CLIENT
     if (ret == NULL)
     {
@@ -142,7 +142,7 @@ void clientQueuePacket(UDPPacket* pkt)
   os_printf("clientQueuePacket\n");
 #endif
 
-  os_intr_lock();
+  ets_intr_lock();
   if (pkt->state != PKT_BUF_RESERVED)
   {
     os_printf("Invalid pkt to queue. %d[%d] state=%d at %08x\r\n", pkt->data[0], pkt->len, pkt->state, pkt);
@@ -164,7 +164,7 @@ void clientQueuePacket(UDPPacket* pkt)
     }
     pkt->state = PKT_BUF_AVAILABLE;
   }
-  os_intr_unlock();
+  ets_intr_unlock();
 }
 
 void clientFreePacket(UDPPacket* pkt)

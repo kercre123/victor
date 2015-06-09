@@ -15,9 +15,6 @@ TARGET = eagle
 FLAVOR = release
 #FLAVOR = debug
 
-
-SDK=../../../coretech-external/espressif/iot_sdk/
-
 #EXTRA_CCFLAGS += -u
 
 ifndef PDIR # {
@@ -31,7 +28,7 @@ SUBDIRS=    \
 endif # } PDIR
 
 APPDIR = .
-LDDIR = $(SDK)ld
+LDDIR = ../ld
 
 CCFLAGS += -Os
 
@@ -55,6 +52,7 @@ COMPONENTS_eagle.app.v6 = \
 
 LINKFLAGS_eagle.app.v6 = \
 	-L../lib        \
+	-L../../../../coretech-external/espressif/lx106/lib \
 	-nostdlib	\
     -T$(LD_FILE)   \
 	-Wl,--no-check-sections	\

@@ -168,3 +168,8 @@ enjpeg-test
 build.old
 buildMakefile.old
 include/anki/cozmo/shared/msgIDs.txt
+
+**.output
+**.bin
+**.S
+**.dump

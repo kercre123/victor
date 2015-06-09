@@ -75,12 +75,12 @@ user_init(void)
     int8 err;
 
     REG_SET_BIT(0x3ff00014, BIT(0));
-    os_update_cpu_frequency(160);
+    err = system_update_cpu_freq(160);
 
     uart_init(BIT_RATE_5000000, BIT_RATE_115200);
     uart_rx_intr_disable(UART0);
 
-    os_printf("Espressif booting up...\r\n");
+    os_printf("Espressif booting up...\r\nCPU set freq rslt = %d\r\n", err);
 
     // Create config for Wifi AP
     struct softap_config ap_config;
@@ -98,8 +98,8 @@ user_init(void)
       os_printf("Error getting mac address info\r\n");
     }
 
-    os_sprintf(ap_config.ssid,     "AnkiTorpedo");
-    //os_sprintf(ap_config.ssid,     "AnkiEspressif%02x%02x", macaddr[4], macaddr[5]);
+    //os_sprintf(ap_config.ssid,     "AnkiTorpedo");
+    os_sprintf(ap_config.ssid,     "AnkiEspressif%02x%02x", macaddr[4], macaddr[5]);
     os_sprintf(ap_config.password, "2manysecrets");
     ap_config.ssid_len = 0;
     ap_config.channel = 2;
