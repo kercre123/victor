@@ -22,7 +22,8 @@ namespace Anki {
       DA_ROLL_LOW,        // Rolling a block at level 0 by pulling it towards you
       DA_RAMP_ASCEND,     // Going up a ramp
       DA_RAMP_DESCEND,    // Going down a ramp
-      DA_CROSS_BRIDGE
+      DA_CROSS_BRIDGE,    // Crossing a bridge
+      DA_MOUNT_CHARGER    // Reversing onto charger
     } DockAction_t;
 
 
