@@ -233,6 +233,35 @@ namespace Anki {
       
       return vizID;
     }
+    
+    VizManager::Handle_t VizManager::DrawCharger(const u32 chargerID,
+                                                 const f32 platformLength,
+                                                 const f32 slopeLength,
+                                                 const f32 width,
+                                                 const f32 height,
+                                                 const Pose3d& pose,
+                                                 const ColorRGBA& color)
+    {
+      if(chargerID >= _VizObjectMaxID[VIZ_OBJECT_CHARGER]) {
+        PRINT_NAMED_ERROR("VizManager.DrawCharger.IDtooLarge",
+                          "Specified charger ID=%d larger than maxID=%d\n",
+                          chargerID, _VizObjectMaxID[VIZ_OBJECT_CHARGER]);
+        return INVALID_HANDLE;
+      }
+      
+      // Ramps use one extra parameter which is the ratio of slopeLength to
+      // platformLength, which is stored as the x size.  So slopeLength
+      // can easily be computed from x size internally (in whatever dimensions
+      // the visuzalization uses).
+      f32 params[4] = {slopeLength/platformLength, 0, 0, 0};
+      
+      const u32 vizID = VizObjectBaseID[VIZ_OBJECT_CHARGER] + chargerID;
+      DrawObject(vizID, VIZ_OBJECT_CHARGER,
+                 {{platformLength, width, height}}, pose, color, params);
+      
+      return vizID;
+    }
+
 
     
     void VizManager::EraseRobot(const u32 robotID)

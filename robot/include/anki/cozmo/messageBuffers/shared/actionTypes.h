@@ -25,14 +25,15 @@ enum {
 	RobotActionType_PICK_AND_PLACE_INCOMPLETE,     // 10
 	RobotActionType_CROSS_BRIDGE,                  // 11
 	RobotActionType_ASCEND_OR_DESCEND_RAMP,        // 12
-	RobotActionType_TRAVERSE_OBJECT,               // 13
-	RobotActionType_DRIVE_TO_AND_TRAVERSE_OBJECT,  // 14
-	RobotActionType_FACE_OBJECT,                   // 15
-	RobotActionType_VISUALLY_VERIFY_OBJECT,        // 16
-	RobotActionType_PLAY_ANIMATION,                // 17
-	RobotActionType_PLAY_SOUND,                    // 18
-	RobotActionType_WAIT,                          // 19
-	RobotActionType_MOVE_LIFT_TO_HEIGHT            // 20
+	RobotActionType_MOUNT_CHARGER,                 // 13
+	RobotActionType_TRAVERSE_OBJECT,               // 14
+	RobotActionType_DRIVE_TO_AND_TRAVERSE_OBJECT,  // 15
+	RobotActionType_FACE_OBJECT,                   // 16
+	RobotActionType_VISUALLY_VERIFY_OBJECT,        // 17
+	RobotActionType_PLAY_ANIMATION,                // 18
+	RobotActionType_PLAY_SOUND,                    // 19
+	RobotActionType_WAIT,                          // 20
+	RobotActionType_MOVE_LIFT_TO_HEIGHT            // 21
 };
 typedef int32_t RobotActionType;
 

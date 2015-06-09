@@ -23,6 +23,7 @@ enum int_32 RobotActionType {
     PICK_AND_PLACE_INCOMPLETE, // type for PickAndPlaceAction if fail before SelectDockAction ()
     CROSS_BRIDGE,
     ASCEND_OR_DESCEND_RAMP,
+    MOUNT_CHARGER,
     TRAVERSE_OBJECT,
     DRIVE_TO_AND_TRAVERSE_OBJECT,
     FACE_OBJECT,

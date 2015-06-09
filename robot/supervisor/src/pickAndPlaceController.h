@@ -47,7 +47,9 @@ namespace Anki {
         TRAVERSE_RAMP_DOWN,
         ENTER_BRIDGE,
         TRAVERSE_BRIDGE,
-        LEAVE_BRIDGE
+        LEAVE_BRIDGE,
+        ROTATE_FOR_CHARGER_APPROACH,
+        BACKUP_ON_CHARGER
       } Mode;
       
       Result Init();

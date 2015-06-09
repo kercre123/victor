@@ -237,10 +237,6 @@ namespace Anki
       {
         bool result = false;
 
-        // This poor-man's mutex prevents longExec and mainExec from trampling each other's packets
-        // The only reason it works is because mainExec is an interrupt, not a thread
-        __disable_irq();
-        g_deferMainExec = 1;
         int bytesLeft = UARTGetFreeSpace();
 
         // Leave one guard byte + header
@@ -253,7 +249,7 @@ namespace Anki
           BufPutChar(0xEF);
           BufPutChar(length >>  0);
           BufPutChar(length >>  8);
-          BufPutChar(length >> 16);
+          BufPutChar(0);
           BufPutChar(socket);
 
           bytesLeft = sizeof(m_bufferWrite) - m_writeHead;
@@ -283,16 +279,7 @@ namespace Anki
             StartTransfer();
           }
         }
-        g_deferMainExec = 0;
-        __enable_irq();
-
-        // Wrap up main exec
-        if (g_mainExecDeferred)
-        {
-          g_mainExecDeferred = 0;
-          Anki::Cozmo::Robot::step_MainExecution();
-        }
-
+        
         return result;
       }
 

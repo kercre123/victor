@@ -15,6 +15,7 @@
 #include "bridge.h"
 #include "pathPlanner.h"
 #include "anki/cozmo/basestation/ramp.h"
+#include "anki/cozmo/basestation/charger.h"
 
 #include "anki/common/basestation/math/poseBase_impl.h"
 #include "anki/common/basestation/math/point_impl.h"
@@ -2141,6 +2142,51 @@ namespace Anki {
     } // Verify()
     
     
+#pragma mark ---- MountChargerAction ----
+    
+    MountChargerAction::MountChargerAction(ObjectID chargerID, const bool useManualSpeed)
+    : IDockAction(chargerID, useManualSpeed)
+    {
+      
+    }
+    
+    const std::string& MountChargerAction::GetName() const
+    {
+      static const std::string name("MountChargerAction");
+      return name;
+    }
+    
+    Result MountChargerAction::SelectDockAction(Robot& robot, ActionableObject* object)
+    {
+      Charger* charger = dynamic_cast<Charger*>(object);
+      if(charger == nullptr) {
+        PRINT_NAMED_ERROR("MountChargerAction.SelectDockAction.NotChargerObject",
+                          "Could not cast generic ActionableObject into Charger object.\n");
+        return RESULT_FAIL;
+      }
+      
+      Result result = RESULT_OK;
+      
+      _dockAction = DA_MOUNT_CHARGER;
+      
+      // Tell robot which ramp it will be using, and in which direction
+      //robot.SetRamp(_dockObjectID, direction);
+      
+      return result;
+      
+    } // SelectDockAction()
+    
+    
+    ActionResult MountChargerAction::Verify(Robot& robot)
+    {
+      // TODO: Need to do some kind of verification here?
+      PRINT_NAMED_INFO("MountChargerAction.Verify.MountingChargerComplete",
+                       "Robot has mounted charger.\n");
+      
+      return ActionResult::SUCCESS;
+    } // Verify()
+    
+    
 #pragma mark ---- TraverseObjectAction ----
     
     TraverseObjectAction::TraverseObjectAction(ObjectID objectID, const bool useManualSpeed)
@@ -2191,6 +2237,9 @@ namespace Anki {
         }
         else if(object->GetType() == Ramp::Type::BASIC_RAMP) {
           _chosenAction = new AscendOrDescendRampAction(_objectID, _useManualSpeed);
+        }
+        else if(object->GetType() == Charger::Type::BASIC_CHARGER) {
+          _chosenAction = new MountChargerAction(_objectID, _useManualSpeed);
         }
         else {
           PRINT_NAMED_ERROR("TraverseObjectAction.Init.CannotTraverseObjectType",

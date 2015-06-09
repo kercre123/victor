@@ -121,6 +121,10 @@ namespace Anki {
       webots::DistanceSensor *proxCenter_;
       webots::DistanceSensor *proxRight_;
       
+      // Charge contact
+      webots::Connector* chargeContact_;
+      bool wasOnCharger_ = false;
+      
       // Emitter / receiver for block communication
       webots::Emitter *blockCommsEmitter_;
       webots::Receiver *blockCommsReceiver_;
@@ -389,6 +393,12 @@ namespace Anki {
       proxLeft_->enable(TIME_STEP);
       proxCenter_->enable(TIME_STEP);
       proxRight_->enable(TIME_STEP);
+      
+      // Charge contact
+      chargeContact_ = webotRobot_.getConnector("ChargeContact");
+      chargeContact_->enablePresence(TIME_STEP);
+      wasOnCharger_ = false;
+      
       
       // Block radio
       blockCommsEmitter_ = webotRobot_.getEmitter("blockCommsEmitter");
@@ -766,6 +776,16 @@ namespace Anki {
           blockCommsReceiver_->nextPacket();
         }
         
+        
+        // Check charging status (Debug)
+        if (BatteryIsOnCharger() && !wasOnCharger_) {
+          PRINT("ON CHARGER\n");
+          wasOnCharger_ = true;
+        } else if (!BatteryIsOnCharger() && wasOnCharger_) {
+          PRINT("OFF CHARGER\n");
+          wasOnCharger_ = false;
+        }
+        
         return RESULT_OK;
       }
       
@@ -998,12 +1018,14 @@ namespace Anki {
     
     bool HAL::BatteryIsCharging()
     {
-      return false; // XXX On Cozmo 3, head is off if robot is charging
+      //return false; // XXX On Cozmo 3, head is off if robot is charging
+      return (chargeContact_->getPresence() == 1);
     }
     
     bool HAL::BatteryIsOnCharger()
     {
-      return false; // XXX On Cozmo 3, head is off if robot is charging
+      //return false; // XXX On Cozmo 3, head is off if robot is charging
+      return (chargeContact_->getPresence() == 1);
     }
 
     extern "C" {

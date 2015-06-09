@@ -79,7 +79,7 @@ namespace Anki {
         return true;
 #endif
 
-    } // RadioSendMessage()
+    } // RadioSendPacket()
 #endif // #ifndef RUN_EMBEDDED_TESTS
 
     u32 RadioGetNumBytesAvailable(void)

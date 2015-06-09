@@ -141,7 +141,7 @@ namespace Anki {
         PRINT("PAP: Last marker dist = %.1fmm. Starting %.1fmm backout (%.2fsec duration)\n",
               relMarkerX_, backoutDist_mm, backoutTime_sec);
         
-        transitionTime_ = HAL::GetMicroCounter() + (backoutTime_sec*1e6);
+        transitionTime_ = HAL::GetTimeStamp() + (backoutTime_sec*1e3);
         
         SteeringController::ExecuteDirectDrive(-BACKOUT_SPEED_MMPS, -BACKOUT_SPEED_MMPS);
         
@@ -199,6 +199,9 @@ namespace Anki {
               case DA_CROSS_BRIDGE:
                 dockOffsetDistX_ = BRIDGE_ALIGNED_MARKER_DISTANCE;
                 break;
+              case DA_MOUNT_CHARGER:
+                dockOffsetDistX_ = CHARGER_ALIGNED_MARKER_DISTANCE;
+                break;
               default:
                 PRINT("ERROR: Unknown PickAndPlaceAction %d\n", action_);
                 mode_ = IDLE;
@@ -222,7 +225,10 @@ namespace Anki {
                 // When we are "docking" with a ramp or crossing a bridge, we
                 // don't want to worry about the X angle being large (since we
                 // _expect_ it to be large, since the markers are facing upward).
-                //const bool checkAngleX = !(action_ == DA_RAMP_ASCEND || action_ == DA_RAMP_DESCEND || action_ == DA_CROSS_BRIDGE);
+                const bool checkAngleX = !(action_ == DA_RAMP_ASCEND ||
+                                           action_ == DA_RAMP_DESCEND ||
+                                           action_ == DA_CROSS_BRIDGE ||
+                                           action_ == DA_MOUNT_CHARGER);
                 
                 // Set the distance to the marker beyond which
                 // we should ignore docking error signals since the lift occludes our view anyway.
@@ -283,6 +289,13 @@ namespace Anki {
                   // Start driving forward (blindly) -- wheel guides!
                   SteeringController::ExecuteDirectDrive(BRIDGE_TRAVERSE_SPEED_MMPS, BRIDGE_TRAVERSE_SPEED_MMPS);
                   mode_ = ENTER_BRIDGE;
+                } else if (action_ == DA_MOUNT_CHARGER) {
+                  #if(DEBUG_PAP_CONTROLLER)
+                  PRINT("PAP: MOUNT_CHARGER\n");
+                  #endif
+                  f32 targetAngle = (Localization::GetCurrentMatOrientation() + PI_F).ToFloat();
+                  SteeringController::ExecutePointTurn(targetAngle, 2, 10, 10, true);
+                  mode_ = ROTATE_FOR_CHARGER_APPROACH;
                 } else {
                   #if(DEBUG_PAP_CONTROLLER)
                   PRINT("PAP: SET_LIFT_POSTDOCK\n");
@@ -441,7 +454,7 @@ namespace Anki {
             break;
             
           case BACKOUT:
-            if (HAL::GetMicroCounter() > transitionTime_)
+            if (HAL::GetTimeStamp() > transitionTime_)
             {
               SteeringController::ExecuteDirectDrive(0,0);
               
@@ -527,7 +540,31 @@ namespace Anki {
               Localization::SetOnBridge(false);
             }
             break;
-            
+          case ROTATE_FOR_CHARGER_APPROACH:
+            if (SteeringController::GetMode() != SteeringController::SM_POINT_TURN) {
+              // Move lift up, otherwise it drags on the ground when the robot gets on the ramp
+              LiftController::SetDesiredHeight(LIFT_HEIGHT_LOWDOCK + 15);
+              
+              // Start backing into charger
+              SteeringController::ExecuteDirectDrive(-30, -30);
+              transitionTime_ = HAL::GetTimeStamp() + 8000;
+              
+              mode_ = BACKUP_ON_CHARGER;
+            }
+            break;
+          case BACKUP_ON_CHARGER:
+            if (HAL::GetTimeStamp() > transitionTime_) {
+              PRINT("BACKUP_ON_CHARGER timeout\n");
+              SteeringController::ExecuteDirectDrive(0, 0);
+              mode_ = IDLE;
+              
+              // TODO: Some kind of recovery?
+              // ...
+            } else if (HAL::BatteryIsOnCharger()) {
+              SteeringController::ExecuteDirectDrive(0, 0);
+              lastActionSucceeded_ = true;
+            }
+            break;
           default:
             mode_ = IDLE;
             PRINT("Reached default case in DockingController "
