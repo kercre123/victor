@@ -23,7 +23,7 @@ const f32 MARKER_TO_OFF_BRIDGE_POSE_DIST = 80.f;
 // Distance to the charger ramp marker that the robot must
 // achieve before we can consider it aligned with the charger enough
 // to drive forward/reverse on to it.
-const f32 CHARGER_ALIGNED_MARKER_DISTANCE = 80.f;
+const f32 CHARGER_ALIGNED_MARKER_DISTANCE = 100.f;
 
 
 /***************************************************************************

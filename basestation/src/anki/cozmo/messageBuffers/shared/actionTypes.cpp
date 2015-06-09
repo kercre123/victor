@@ -26,6 +26,7 @@ const char* RobotActionTypeToString(const RobotActionType m)
 		case RobotActionType::PICK_AND_PLACE_INCOMPLETE: return "PICK_AND_PLACE_INCOMPLETE"; break;
 		case RobotActionType::CROSS_BRIDGE: return "CROSS_BRIDGE"; break;
 		case RobotActionType::ASCEND_OR_DESCEND_RAMP: return "ASCEND_OR_DESCEND_RAMP"; break;
+		case RobotActionType::MOUNT_CHARGER: return "MOUNT_CHARGER"; break;
 		case RobotActionType::TRAVERSE_OBJECT: return "TRAVERSE_OBJECT"; break;
 		case RobotActionType::DRIVE_TO_AND_TRAVERSE_OBJECT: return "DRIVE_TO_AND_TRAVERSE_OBJECT"; break;
 		case RobotActionType::FACE_OBJECT: return "FACE_OBJECT"; break;

@@ -566,6 +566,29 @@ namespace Anki {
     }; // class AscendOrDesceneRampAction
     
     
+    class MountChargerAction : public IDockAction
+    {
+    public:
+      MountChargerAction(ObjectID chargerID, const bool useManualSpeed);
+      
+      virtual const std::string& GetName() const override;
+      virtual RobotActionType GetType() const override { return RobotActionType::MOUNT_CHARGER; }
+      
+    protected:
+      
+      virtual Result SelectDockAction(Robot& robot, ActionableObject* object) override;
+      
+      virtual ActionResult Verify(Robot& robot) override;
+      
+      virtual PreActionPose::ActionType GetPreActionType() override { return PreActionPose::ENTRY; }
+      
+      // Give the robot a little longer to start ascending/descending before
+      // checking if it is done
+      virtual f32 GetCheckIfDoneDelayInSeconds() const override { return 1.f; }
+      
+    }; // class MountChargerAction
+    
+    
     // This is just a selector for AscendOrDescendRampAction or
     // CrossBridgeAction, depending on the object's type.
     class TraverseObjectAction : public IActionRunner
