@@ -838,7 +838,7 @@ public class GameLayoutTracker : MonoBehaviour {
 
 	void PlaceGhostForObservedObject(ObservedObject obj) {
 		if(ghostBlock == null) return;
-		if(obj == null) {
+		if(obj == null || hidden) {
 			ghostBlock.Hidden = true;
 			ghostBlock.Highlighted = false;
 			return;

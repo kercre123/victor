@@ -444,6 +444,7 @@ public class RobotEngineManager : MonoBehaviour {
 	{
 		if( !IsConnected ) return;
 
+		Debug.Log ("frame("+Time.frameCount+") SendMessage " + Message.GetTag().ToString());
 		channel.Send( Message );
 	}
 
@@ -734,6 +735,8 @@ public class RobotEngineManager : MonoBehaviour {
  
 	private void ReceivedSpecificMessage( G2U.ImageChunk message )
 	{
+		//Debug.Log("ReceivedSpecificMessage ImageChunk message.ncols("+message.ncols+") message.nrows("+message.nrows+")");
+
 		switch( (ImageEncoding_t)message.imageEncoding )
 		{
 			case ImageEncoding_t.IE_JPEG_COLOR:
