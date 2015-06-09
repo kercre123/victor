@@ -19,11 +19,7 @@ public class ActionPanel : MonoBehaviour
 		{
 			for( int i = 0, count = 0; i < actionButtons.Length; ++i )
 			{
-				if( actionButtons[i].mode != ActionButton.Mode.DISABLED )
-				{
-					++count;
-					if( count > 1 ) return true;
-				}
+				if( actionButtons[i].mode != ActionButton.Mode.DISABLED && ++count > 1 ) return true;
 			}
 
 			return false;

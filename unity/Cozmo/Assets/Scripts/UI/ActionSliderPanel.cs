@@ -26,8 +26,8 @@ public class ActionSlider {
 	public ActionButton currentAction { get; private set; }
 
 	public void SetMode(ActionButton button, bool down) {
-		if( button == null ) {
-			Debug.LogError( "Slider was given a current action of null" );
+		if(button == null) {
+			Debug.LogError("Slider was given a current action of null");
 			return;
 		}
 
@@ -86,6 +86,8 @@ public class ActionSliderPanel : ActionPanel
 
 	private bool secondaryActionsAvailableLastFrame = false;
 
+	public static new ActionSliderPanel instance = null;
+
 	protected override void Awake() {
 		base.Awake();
 		
@@ -94,7 +96,9 @@ public class ActionSliderPanel : ActionPanel
 
 	protected override void OnEnable() {
 		base.OnEnable();
-		
+
+		instance = this;
+
 		secondaryActionsAvailableLastFrame = false;
 
 		if(actionAnimation != null) {
@@ -106,6 +110,8 @@ public class ActionSliderPanel : ActionPanel
 
 	protected override void OnDisable() {
 		base.OnDisable();
+
+		if(instance == this) instance = null;
 
 		SetDefaults();
 
@@ -165,7 +171,7 @@ public class ActionSliderPanel : ActionPanel
 					actionAnimation.CrossFade(actionIdleAnim.name, 0.5f, PlayMode.StopAll);
 				}
 			}
-
+			actionSlider.SetMode(centerAction, actionSlider.Pressed);
 		}
 		else {
 
