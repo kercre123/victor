@@ -13,7 +13,7 @@ GAME_ROOT = os.path.normpath(os.path.abspath(os.path.realpath(os.path.dirname(in
 ENGINE_ROOT = os.path.join(GAME_ROOT, 'lib', 'anki', 'cozmo-engine')
 sys.path.insert(0, ENGINE_ROOT)
 from configure import BUILD_TOOLS_ROOT, initialize_colors
-from configure import ArgumentParser, wipe_all, configure_anki_util, configure_platforms
+from configure import ArgumentParser, wipe_all, configure_anki_util, configure_platforms, print_status
 
 sys.path.insert(0, BUILD_TOOLS_ROOT)
 import ankibuild.cmake
