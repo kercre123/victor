@@ -32,10 +32,19 @@ LOCAL void ICACHE_FLASH_ATTR userTask(os_event_t *event)
   system_os_post(userTaskPrio, 0, 0); // Repost ourselves
 }
 
+/** System calls this method before initalizing the radio.
+ * This method is only nessisary to call system_phy_set_rfoption which may only be called here.
+ * I think everything else should still happen in user_init and system_init_done
+ */
+void ICACHE_FLASH_ATTR user_rf_pre_init(void)
+{
+  system_phy_set_rfoption(1); // Do all the calibration, don't care how much power we burn
+}
+
 /** Callback after all the chip system initalization is done.
  * We shouldn't do any networking until after this is done.
  */
-static void ICACHE_FLASH_ATTR system_init_done()
+static void ICACHE_FLASH_ATTR system_init_done(void)
 {
   // Setup the block relay
   blockRelayInit();
@@ -60,7 +69,7 @@ static void ICACHE_FLASH_ATTR system_init_done()
  * It is called automatically from the os main function.
  */
 void ICACHE_FLASH_ATTR
-user_init()
+user_init(void)
 {
     uint32 i;
     int8 err;
