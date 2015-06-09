@@ -660,6 +660,12 @@ void webots_physics_draw(int pass, const char *view) {
           draw_ramp(obj->x_size_m, slopeLength, obj->y_size_m, obj->z_size_m);
           break;
         }
+        case Anki::Cozmo::VIZ_OBJECT_CHARGER:
+        {
+          float slopeLength = obj->params[0]*obj->x_size_m;
+          draw_ramp(obj->x_size_m, slopeLength, obj->y_size_m, obj->z_size_m);
+          break;
+        }
         case Anki::Cozmo::VIZ_OBJECT_PREDOCKPOSE:
           draw_predockpose();
           break;

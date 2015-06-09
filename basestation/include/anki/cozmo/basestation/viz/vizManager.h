@@ -97,6 +97,14 @@ namespace Anki {
                         const Pose3d& pose,
                         const ColorRGBA& color = NamedColors::DEFAULT);
       
+      Handle_t DrawCharger(const u32 chargerID,
+                           const f32 platformLength,
+                           const f32 slopeLength,
+                           const f32 width,
+                           const f32 height,
+                           const Pose3d& pose,
+                           const ColorRGBA& color = NamedColors::DEFAULT);
+      
       //void DrawRamp();
       
       

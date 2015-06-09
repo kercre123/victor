@@ -22,6 +22,7 @@
 #include "flatMat.h"
 #include "platform.h"
 #include "anki/cozmo/basestation/ramp.h"
+#include "anki/cozmo/basestation/charger.h"
 
 #include "robotMessageHandler.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
@@ -75,6 +76,7 @@ namespace Anki
     // Instantiate object families here:
     const BlockWorld::ObjectFamily BlockWorld::ObjectFamily::MATS;
     const BlockWorld::ObjectFamily BlockWorld::ObjectFamily::RAMPS;
+    const BlockWorld::ObjectFamily BlockWorld::ObjectFamily::CHARGERS;
     const BlockWorld::ObjectFamily BlockWorld::ObjectFamily::BLOCKS;
     const BlockWorld::ObjectFamily BlockWorld::ObjectFamily::ACTIVE_BLOCKS;
     const BlockWorld::ObjectFamily BlockWorld::ObjectFamily::MARKERLESS_OBJECTS;
@@ -177,6 +179,13 @@ namespace Anki
       // Ramps
       //
       //_objectLibrary[ObjectFamily::RAMPS].AddObject(new Ramp());
+      
+      
+      //////////////////////////////////////////////////////////////////////////
+      // Charger
+      //
+      _objectLibrary[ObjectFamily::CHARGERS].AddObject(new Charger());
+      
       
     } // BlockWorld() Constructor
     
@@ -1580,6 +1589,12 @@ namespace Anki
         //
         // Note that this removes markers from the list that it uses
         numObjectsObserved += UpdateObjectPoses(currentObsMarkers, ObjectFamily::RAMPS, atTimestamp);
+
+        //
+        // Find any observed chargers from the remaining markers
+        //
+        // Note that this removes markers from the list that it uses
+        numObjectsObserved += UpdateObjectPoses(currentObsMarkers, ObjectFamily::CHARGERS, atTimestamp);
         
         // TODO: Deal with unknown markers?
         
