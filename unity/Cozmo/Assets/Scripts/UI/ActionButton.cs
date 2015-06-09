@@ -74,6 +74,12 @@ public class ActionButton : MonoBehaviour
 
 	private string lastText;
 
+	private string append;
+	private string lastAppend;
+
+	private bool solidHint;
+	private bool lastSolidHint;
+
 	private Action<bool, ObservedObject> action;
 
 	public ObservedObject selectedObject { get; private set; }
@@ -109,20 +115,29 @@ public class ActionButton : MonoBehaviour
 		lastMode = mode;
 		lastSelectedObject = selectedObject;
 		lastText = text.text;
+		lastAppend = append;
+		lastSolidHint = solidHint;
 	}
 
-	public void SetMode( Mode m, ObservedObject selected, string append = null, bool solidHint = false )
+	public void SetToLastMode()
+	{
+		SetMode( lastMode, lastSelectedObject, lastAppend, lastSolidHint );
+	}
+
+	public void SetMode( Mode mode, ObservedObject selectedObject, string append = null, bool solidHint = false )
 	{
 		GameActions gameActions = GameActions.instance;
 
 		if( robot == null || gameActions == null )
 		{
-			m = Mode.DISABLED;
+			mode = Mode.DISABLED;
 		}
 
 		action = null;
-		mode = m;
-		selectedObject = selected;
+		this.mode = mode;
+		this.selectedObject = selectedObject;
+		this.append = append;
+		this.solidHint = solidHint;
 
 		if( mode == Mode.DISABLED ) 
 		{
