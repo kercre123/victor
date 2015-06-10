@@ -120,33 +120,70 @@ namespace Anki {
         lastKeyframeUpdate_ = 0;
       }
       
+      // Interpolates the pose at time targetTime which should be between historical pose1 time and historical pose2 time.
+      // Puts result in history at index poseResult_idx.
+      Result InterpolatePose(int pose1_idx, int pose2_idx, f32 targetTime, int poseResult_idx)
+      {
+        PoseStamp *p1 = &(hist_[pose1_idx]);
+        PoseStamp *p2 = &(hist_[pose2_idx]);
+
+        if (p1->t > p2->t) {
+          PRINT("ERROR (InterpolatePose): pose2 is older than pose1\n");
+          return RESULT_FAIL;
+        }
+
+        if (targetTime < p1->t || targetTime > p2->t) {
+          PRINT("ERROR (InterpolatePose): targetTime is outside of expected time range\n");
+          return RESULT_FAIL;
+        }
+        
+        f32 scale = (targetTime - p1->t) / (p2->t - p1->t);
+        
+        f32 x = p1->x + scale * (p2->x - p1->x);
+        f32 y = p1->y + scale * (p2->y - p1->y);
+        Radians angDiff = Radians(p2->angle) - Radians(p1->angle);
+        f32 angle = (Radians(p1->angle) + scale * angDiff).ToFloat();
+        
+        PoseStamp *pRes = &(hist_[poseResult_idx]);
+        pRes->x = x;
+        pRes->y = y;
+        pRes->angle = angle;
+        pRes->t = targetTime;
+        
+        return RESULT_OK;
+      }
+      
       
       Result GetHistIdx(TimeStamp_t t, u16& idx)
       {
         // TODO: Binary search for timestamp
         //       For now just doing a straight up linear search.
         
-        
-        if (hEnd_ < hStart_) {
-          for (idx = hStart_; idx < POSE_HISTORY_SIZE; ++idx) {
-            if (hist_[idx].t == t) {
-              return RESULT_OK;
-            }
-          }
-          
-          for (idx = 0; idx <= hEnd_; ++idx) {
-            if (hist_[idx].t == t) {
-              return RESULT_OK;
-            }
-          }
-          
-        } else {
-          for (idx = hStart_; idx <= hEnd_; ++idx) {
-            if (hist_[idx].t == t) {
-              return RESULT_OK;
-            }
-          }
+        // Check if t is older than oldest pose in history
+        // or newer than newest pose in history.
+        if (hSize_ < 1 || t < hist_[hStart_].t || t > hist_[hEnd_].t) {
+          return RESULT_FAIL;
         }
+        
+        u16 prevIdx = 0;
+        for (idx = hStart_; idx != hEnd_; ++idx) {
+          
+          // Check if we hit the end of the history array
+          if (idx >= POSE_HISTORY_SIZE) {
+            idx = 0;
+          }
+          
+          if (hist_[idx].t == t) {
+            return RESULT_OK;
+          } else if (hist_[idx].t > t) {
+            // TODO: Does this interpolation really help that much?
+            //       Poses in history are already really close together (5ms).
+            //       Maybe just pick the closest pose?
+            return InterpolatePose(prevIdx, idx, t, idx);
+          }
+          prevIdx = idx;
+        }
+
         return RESULT_FAIL;
       }
       
