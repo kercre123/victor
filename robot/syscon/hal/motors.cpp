@@ -11,10 +11,14 @@
 extern GlobalDataToHead g_dataToHead;
 extern GlobalDataToBody g_dataToBody;
 
+
+
+
 #define ABS(x) ((x) < 0 ? -(x) : (x))
 
+#define ROBOT4 // robot 4.0
 // Robot #2 (3.1) has nearly opposite wiring from #1
-#define ROBOT2
+//#define ROBOT2
 
   enum MotorID
   {
@@ -78,7 +82,7 @@ extern GlobalDataToBody g_dataToBody;
   const u8 ENCODER_HEADA_PIN = 11;   // M3/Head on schematic
   const u8 ENCODER_HEADB_PIN = 10;
   
-  // Encoder scaling reworked for Cozmo 3.2
+  // Encoder scaling reworked for Cozmo 4.0
   
 	// Given a gear ratio of 161.5:1 and 94mm wheel circumference and 2 ticks * 4 teeth
   // for 8 encoder ticks per revolution, we compute the meters per tick as:
@@ -89,10 +93,13 @@ extern GlobalDataToBody g_dataToBody;
   // compute the radians per tick on the lift as:
   const Fixed RADIANS_PER_LIFT_TICK = TO_FIXED((0.25 * 3.14159265359) / 172.68);
   
-  // Given a gear ratio of 324:1 and 8 encoder ticks per revolution, we
+  // Given a gear ratio of 348.77:1 and 8 encoder ticks per revolution, we
   // compute the radians per tick on the head as:
+#ifdef ROBOT4
+  const Fixed RADIANS_PER_HEAD_TICK = TO_FIXED((0.125 * 3.14159265359) / 348.77);
+#else 
   const Fixed RADIANS_PER_HEAD_TICK = TO_FIXED((0.125 * 3.14159265359) / 324.0);
-  
+#endif  
   // If no encoder activity for 200ms, we may as well be stopped
   const u32 ENCODER_TIMEOUT_COUNT = 200 * COUNT_PER_MS;
 
@@ -105,8 +112,12 @@ extern GlobalDataToBody g_dataToBody;
     {
       LEFT_N1_PIN,
       LEFT_N2_PIN,
-      LEFT_P_PIN,    
+      LEFT_P_PIN, 
+#ifdef ROBOT4
+      false,
+#else
       true,
+#endif
       0,
       ENCODER_LEFT_PIN,
       ENCODER_NONE,
@@ -117,7 +128,11 @@ extern GlobalDataToBody g_dataToBody;
       RIGHT_N1_PIN,
       RIGHT_N2_PIN,
       RIGHT_P_PIN,
+#ifdef ROBOT4
+      false,
+#else
       true,
+#endif
       0,
       ENCODER_RIGHT_PIN,
       ENCODER_NONE,
@@ -139,8 +154,8 @@ extern GlobalDataToBody g_dataToBody;
       HEAD_N1_PIN,
       HEAD_N2_PIN,
       HEAD_P_PIN,
-#ifdef ROBOT2      
-      true,
+#ifdef ROBOT4      
+      false,
 #else
       true,
 #endif 
