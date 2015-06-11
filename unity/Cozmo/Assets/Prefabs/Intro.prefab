@@ -550,9 +550,10 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 11407186}
   m_TextComponent: {fileID: 11407178}
   m_Placeholder: {fileID: 11407180}
-  m_ContentType: 0
+  m_ContentType: 9
   m_InputType: 0
-  m_KeyboardType: 0
+  m_AsteriskChar: 42
+  m_KeyboardType: 2
   m_LineType: 0
   m_HideMobileInput: 0
   m_CharacterValidation: 0
@@ -840,9 +841,10 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 11455024}
   m_TextComponent: {fileID: 11455020}
   m_Placeholder: {fileID: 11485828}
-  m_ContentType: 0
+  m_ContentType: 9
   m_InputType: 0
-  m_KeyboardType: 0
+  m_AsteriskChar: 42
+  m_KeyboardType: 2
   m_LineType: 0
   m_HideMobileInput: 0
   m_CharacterValidation: 0
@@ -892,8 +894,8 @@ MonoBehaviour:
   m_Script: {fileID: 1301386320, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ignoreReversedGraphics: 1
-  blockingObjects: 0
+  m_IgnoreReversedGraphics: 1
+  m_BlockingObjects: 0
   m_BlockingMask:
     serializedVersion: 2
     m_Bits: 4294967295
@@ -1037,9 +1039,10 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 11478926}
   m_TextComponent: {fileID: 11485832}
   m_Placeholder: {fileID: 11478922}
-  m_ContentType: 0
+  m_ContentType: 9
   m_InputType: 0
-  m_KeyboardType: 0
+  m_AsteriskChar: 42
+  m_KeyboardType: 2
   m_LineType: 0
   m_HideMobileInput: 0
   m_CharacterValidation: 0
@@ -1220,9 +1223,10 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 11485824}
   m_TextComponent: {fileID: 11478928}
   m_Placeholder: {fileID: 11485806}
-  m_ContentType: 0
+  m_ContentType: 9
   m_InputType: 0
-  m_KeyboardType: 0
+  m_AsteriskChar: 42
+  m_KeyboardType: 2
   m_LineType: 0
   m_HideMobileInput: 0
   m_CharacterValidation: 0
@@ -2050,4 +2054,3 @@ Prefab:
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 155020}
   m_IsPrefabParent: 1
-  m_IsExploded: 1
