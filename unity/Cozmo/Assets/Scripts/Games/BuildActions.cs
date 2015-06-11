@@ -24,7 +24,7 @@ public class BuildActions : GameActions {
 			return;
 		}
 
-		if (!robot.searching && GameLayoutTracker.instance != null && GameLayoutTracker.instance.Phase == LayoutTrackerPhase.COMPLETE) {
+		if (GameLayoutTracker.instance != null && GameLayoutTracker.instance.Phase == LayoutTrackerPhase.COMPLETE) {
 			buttons[2].SetMode( ActionButton.Mode.ALIGN, null, null, true );
 			return;
 		}
