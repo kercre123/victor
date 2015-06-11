@@ -512,8 +512,7 @@ namespace Anki {
       RobotID_t         _ID;
       bool              _isPhysical;
       
-      // Timestamp of last robotStateMessage (so we can check to see if we've lost connection)
-      double            _lastStateMsgTime_sec;
+      // Flag indicating whether a robotStateMessage was ever received
       bool              _newStateMsgAvailable;
       
       // Whether or not the robot acknowledged a SyncTime message
