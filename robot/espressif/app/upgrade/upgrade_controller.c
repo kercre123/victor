@@ -7,6 +7,8 @@
 #include "ets_sys.h"
 #include "osapi.h"
 #include "mem.h"
+#include "espconn.h"
+#include "upgrade.h"
 #include "upgrade_controller.h"
 
 /// Upgrade controller command server
@@ -14,109 +16,56 @@ static struct espconn* upccServer;
 /// TCP socket for making web server requests
 static struct espconn* upClient;
 /// Parameters for current upgrade process
-static struct UpgradeCommandParameters* upgradeParameters;
+static UpgradeCommandParameters* upgradeParameters;
 /// Espressif firmware upgrade process structure
 static struct upgrade_server_info* espUpgradeServer;
 
-#define UPGRADE_COMMAND_LENGTH (UPGRADE_COMMAND_PREFIX_LENGTH + sizeof(struct EspressifUpgradeParams))
-
-/// Callback method for command packets received
-static void ICACHE_FLASH_ATTR upgradeControllerCommandCallback(void *arg, char *usrdata, unsigned short len)
-{
-  if (arg != upccServer)
-  {
-    os_printf("upgradeControllerCommandCallback called with unexpected argument %08x != %08x\r\n", arg, upccServer);
-    return;
-  }
-  else if (len != UPGRADE_COMMAND_LENGTH)
-  {
-    os_printf("upgradeControllerCommandCallback got too short a packet %d[%d]\r\n", usrdata[0], len);
-    return;
-  }
-  else if (strncmp(UPGRADE_COMMAND_PREFIX, userData, UPGRADE_COMMAND_PREFIX_LENGTH) != 0)
-  {
-    os_printf("upgradeControllerCommandCallback got unexpected packet %d[%d]\r\n", usrdata[0], len);
-    return;
-  }
-  else
-  {
-    int8 err;
-    if (upgradeParameters == NULL)
-    {
-      upgradeParameters = os_zalloc(sizeof(struct UpgradeCommandParameters));
-      if (upgradeParameters == NULL)
-      {
-        os_printf("Couldn't allocate memory for upgrade parameters\r\n");
-        return;
-      }
-    }
-    os_memcpy(upgradeParameters, (struct UpgradeCommandParameters*)(usrdata + UPGRADE_COMMAND_PREFIX_LENGTH), sizeof(struct UpgradeCommandParameters));
-
-    if (upClient == NULL)
-    {
-      upClient = (struct espconn*)os_zalloc(sizeof(struct espconn));
-      if (upClient == NULL)
-      {
-        os_printf("Couldn't allocate memory for upgradeController client socket\r\n");
-        return;
-      }
-      os_memset(upClient, 0, sizeof(struct espconn));
-      upClient->state = ESPCONN_NONE;
-      upClient->type  = ESPCONN_TCP;
-      upClient->proto.tcp = (esp_tcp*)os_zalloc(sizeof(esp_tcp));
-      if (upClient->proto.tcp == NULL)
-      {
-        os_printf("Coulnt' allocate memory for upgrade controller client tcp parameters\r\n");
-        return;
-      }
-      upClient->proto.tcp.local_port = espconn_port();
-      err = espconn_regist_connectcb(upClient, upClientConnectCallback);
-      if (err != 0)
-      {
-        os_printf("Error registering upClient connect cb: %d\r\n", err);
-        return;
-      }
-      err = espconn_regist_disconcb(upClient,  upClientDisconectCallback);
-      if (err != 0)
-      {
-        os_printf("Error registering upClient disconnect cb: %d\r\n", err);
-        return;
-      }
-      err = espconn_regist_reconcb(upClient,   upClientReconnectCallback);
-      if (err != 0)
-      {
-        os_printf("Error registering upClient error cb: %d\r\n", err);
-        return;
-      }
-    }
-
-    os_memcpy(upClient->proto.tcp->remote_ip, upgradeParameters.serverIP, 4);
-    upClient->proto.tcp->remote_port = parms->serverPort;
-    err = espconn_connect(upClient);
-    if (err != 0)
-    {
-      os_printf("Error connecting upClient: %d\r\n", err);
-      return;
-    }
-  }
-}
+#define UPGRADE_COMMAND_LENGTH (UPGRADE_COMMAND_PREFIX_LENGTH + sizeof(UpgradeCommandParameters))
 
 LOCAL void ICACHE_FLASH_ATTR espressifUpgradeResponseCallback(void *arg)
 {
   struct upgrade_server_info *server = arg;
   struct espconn *conn = server->pespconn;
-  XXX handle upgrade response here
+  int8 err;
+
+  if (server->upgrade_flag == true)
+  {
+    os_printf("Espressif upgrade successful\r\n");
+    system_upgrade_reboot();
+  }
+  else
+  {
+    os_printf("Espressif upgrade FAILED\r\n");
+  }
+
+  os_free(espUpgradeServer);
+  espUpgradeServer = NULL;
+
+  if (upClient == NULL)
+  {
+    os_printf("ERROR: upClient is NULL!\r\n");
+  }
+  else
+  {
+    err = espconn_disconnect(upClient);
+    if (err != 0)
+    {
+      os_printf("ERROR: couldn't disconnect upClient: %d\r\n", err);
+      os_free(upClient);
+      upClient = NULL;
+    }
+  }
 }
 
 LOCAL void ICACHE_FLASH_ATTR upClientReceiveCallback(void *arg, char *usrdata, unsigned short length)
 {
-    XXX handle incoming user data here
+    os_printf("upClient recv %d[%d]\r\n", usrdata[0], length);
 }
 
 LOCAL void ICACHE_FLASH_ATTR upClientSentCallback(void *arg)
 {
-  struct espconn *pespconn = arg;
-  XXX handle send comletion here
+  struct espconn *conn = arg;
+  os_printf("upClient sent cb\r\n");
 }
 
 LOCAL void ICACHE_FLASH_ATTR upClientConnectCallback(void *arg)
@@ -156,15 +105,7 @@ LOCAL void ICACHE_FLASH_ATTR upClientConnectCallback(void *arg)
             break;
           }
         }
-        os_sprintf(espUpgradeServer->url, "GET /%s HTTP/1.0\r\nHost: "IPSTR":%d\
-\r\nConnection: keep-alive\r\n\
-Cache-Control: no-cache\r\n\
-User-Agent: Mozilla/5.0 (Windows NT 5.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/30.0.1599.101 Safari/537.36 \r\n\
-Accept: */*\r\n\
-Authorization: token %s\r\n\
-Accept-Encoding: gzip,deflate,sdch\r\n\
-Accept-Language: zh-CN,zh;q=0.8\r\n\r\n", \
-          (system_upgrade_userbin_check() ? USER2BIN : USER1BIN), IP2STR(server->ip), server->port);
+        os_sprintf(espUpgradeServer->url, "GET /%s\r\n\r\n", (system_upgrade_userbin_check() == UPGRADE_FW_BIN1 ? USER1BIN : USER2BIN));
         if (system_upgrade_start(espUpgradeServer) == false)
         {
           os_printf("Error starting espressif upgrade\r\n");
@@ -175,7 +116,7 @@ Accept-Language: zh-CN,zh;q=0.8\r\n\r\n", \
     }
     default:
     {
-      os_printf("Upgrade command %d not currently supported\r\n", upgradeParameters.command);
+      os_printf("Upgrade command %d not currently supported\r\n", upgradeParameters->command);
     }
   }
   // Disconnect by default
@@ -187,21 +128,114 @@ Accept-Language: zh-CN,zh;q=0.8\r\n\r\n", \
 }
 
 /// Called after successful disconnect from host
-LOCAL void ICACHE_FLASH_ATTR espconn_regist_disconcb(void *arg)
+LOCAL void ICACHE_FLASH_ATTR upClientDisconectCallback(void *arg)
 {
-  XXX Implement socket disconnect handling here
+  os_printf("upClient disconnected\r\n");
+  upClient->proto.tcp->local_port = espconn_port();
+  if (upgradeParameters->command == EspressifFirmwareUpgradeA && espUpgradeServer == NULL && upClient != NULL)
+  {
+    os_free(upClient);
+    upClient = NULL;
+  }
+  upgradeParameters->command = UpgradeCommandNone;
 }
 
 /// "Reconnect callback is really generic socket error callback"
 LOCAL void ICACHE_FLASH_ATTR upClientReconnectCallback(void *arg, sint8 err)
 {
-  XXX Implement socket error handling here
+  os_printf("upClient error: %d\r\n", err);
+  upClientDisconectCallback(arg);
 }
 
+
+/// Callback method for command packets received
+static void ICACHE_FLASH_ATTR upgradeControllerCommandCallback(void *arg, char *usrdata, unsigned short len)
+{
+  if (arg != upccServer)
+  {
+    os_printf("upgradeControllerCommandCallback called with unexpected argument %08x != %08x\r\n", arg, upccServer);
+    return;
+  }
+  else if (len != UPGRADE_COMMAND_LENGTH)
+  {
+    os_printf("upgradeControllerCommandCallback got wrong size packet %d[%d] expected [%d]\r\n", usrdata[0], len, UPGRADE_COMMAND_LENGTH);
+    return;
+  }
+  else if (strncmp(UPGRADE_COMMAND_PREFIX, usrdata, UPGRADE_COMMAND_PREFIX_LENGTH) != 0)
+  {
+    os_printf("upgradeControllerCommandCallback got unexpected packet %d[%d]\r\n", usrdata[0], len);
+    return;
+  }
+  else
+  {
+    int8 err;
+    os_printf("Received upgrade command\r\n");
+
+    if (upgradeParameters == NULL)
+    {
+      upgradeParameters = (UpgradeCommandParameters*)os_zalloc(sizeof(UpgradeCommandParameters));
+      if (upgradeParameters == NULL)
+      {
+        os_printf("Couldn't allocate memory for upgrade parameters\r\n");
+        return;
+      }
+    }
+    os_memcpy(upgradeParameters, (UpgradeCommandParameters*)(usrdata + UPGRADE_COMMAND_PREFIX_LENGTH), sizeof(UpgradeCommandParameters));
+
+    if (upClient == NULL)
+    {
+      upClient = (struct espconn*)os_zalloc(sizeof(struct espconn));
+      if (upClient == NULL)
+      {
+        os_printf("Couldn't allocate memory for upgradeController client socket\r\n");
+        return;
+      }
+      os_memset(upClient, 0, sizeof(struct espconn));
+      upClient->state = ESPCONN_NONE;
+      upClient->type  = ESPCONN_TCP;
+      upClient->proto.tcp = (esp_tcp*)os_zalloc(sizeof(esp_tcp));
+      if (upClient->proto.tcp == NULL)
+      {
+        os_printf("Coulnt' allocate memory for upgrade controller client tcp parameters\r\n");
+        return;
+      }
+      upClient->proto.tcp->local_port = espconn_port();
+      err = espconn_regist_connectcb(upClient, upClientConnectCallback);
+      if (err != 0)
+      {
+        os_printf("Error registering upClient connect cb: %d\r\n", err);
+        return;
+      }
+      err = espconn_regist_disconcb(upClient,  upClientDisconectCallback);
+      if (err != 0)
+      {
+        os_printf("Error registering upClient disconnect cb: %d\r\n", err);
+        return;
+      }
+      err = espconn_regist_reconcb(upClient,   upClientReconnectCallback);
+      if (err != 0)
+      {
+        os_printf("Error registering upClient error cb: %d\r\n", err);
+        return;
+      }
+    }
+
+    os_memcpy(upClient->proto.tcp->remote_ip, upgradeParameters->serverIP, 4);
+    upClient->proto.tcp->remote_port = upgradeParameters->serverPort;
+    err = espconn_connect(upClient);
+    if (err != 0)
+    {
+      os_printf("Error connecting upClient: %d\r\n", err);
+      return;
+    }
+  }
+}
 
 int8_t ICACHE_FLASH_ATTR upgradeControllerInit(void)
 {
   int8_t err;
+
+  os_printf("Upgrade controller init\r\n");
 
   upClient = NULL;
   upgradeParameters = NULL;
@@ -236,6 +270,8 @@ int8_t ICACHE_FLASH_ATTR upgradeControllerInit(void)
     os_printf("\tError creating upgradeController command socket: %d\r\n", err);
     return err;
   }
+
+  os_printf("\tNo error\r\n");
 
   return 0;
 }

@@ -7,6 +7,7 @@
 #include "user_interface.h"
 #include "client.h"
 #include "driver/uart.h"
+#include "upgrade_controller.h"
 
 /// USER_TASK_PRIO_0 is the lowest (idle) task priority
 #define userTaskPrio USER_TASK_PRIO_0
@@ -46,6 +47,9 @@ void ICACHE_FLASH_ATTR user_rf_pre_init(void)
  */
 static void ICACHE_FLASH_ATTR system_init_done(void)
 {
+  // Enable upgrade controller
+  upgradeControllerInit();
+  
   // Setup the block relay
   blockRelayInit();
 

@@ -26,9 +26,9 @@ typedef enum _UpgradeCommandTag
 } UpgradeCommandTag;
 
 /// Parameters for an firmware upgrade command
-struct UpradeCommandParameters
+typedef struct _UpradeCommandParameters
 {
   uint8_t  serverIP[4]; // IP address of the upgrade server
   uint16_t serverPort;  // Port number of ugprade server
-  UpgradeCommandTag command; // What operation to perform
-};
+  uint16_t command;     // What operation to perform
+} UpgradeCommandParameters;
