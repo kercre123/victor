@@ -7,10 +7,15 @@ PROTO CozmoBot [
   field SFRotation rotation 0 0 1 0
   field SFString name "Cozmo"
 
-  # QVGA Crop:
-  field SFInt32  cameraWidth  320
-  field SFInt32  cameraHeight 240
+  # CVGA Crop:
+  field SFInt32  cameraWidth  400
+  field SFInt32  cameraHeight 296
   field SFFloat  fieldOfView  0.72
+
+  # QVGA Crop:
+#  field SFInt32  cameraWidth  320
+#  field SFInt32  cameraHeight 240
+#  field SFFloat  fieldOfView  0.72
   
   # VGA Wide:
 #    field SFInt32  cameraWidth  640
@@ -398,6 +403,8 @@ Supervisor {
 						%{ else }%
               %{ if fields.cameraWidth.value == 640 then }%
                 pixelSize 0.5
+              %{ elseif fields.cameraWidth.value == 400 then }%
+                pixelSize 1
               %{ elseif fields.cameraWidth.value == 320 then }%
                 pixelSize 1
               %{ elseif fields.cameraWidth.value == 160 then }%

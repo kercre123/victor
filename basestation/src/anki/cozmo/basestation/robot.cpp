@@ -2008,7 +2008,7 @@ namespace Anki {
         // (Start with QVGA)
         MessageImageRequest m;
         m.imageSendMode = ISM_STREAM;
-        m.resolution    = Vision::CAMERA_RES_QVGA;
+        m.resolution    = Vision::CAMERA_RES_CVGA;
         result = _msgHandler->SendMessage(_ID, m);
         
         // Reset pose on connect

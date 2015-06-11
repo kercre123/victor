@@ -22,6 +22,7 @@ namespace Anki {
       CAMERA_RES_XGA,       // 1024 x 768
       CAMERA_RES_SVGA,      // 800 x 600
       CAMERA_RES_VGA,       // 640 x 480
+      CAMERA_RES_CVGA,      // 400 x 296
       CAMERA_RES_QVGA,      // 320 x 240
       CAMERA_RES_QQVGA,     // 160 x 120
       CAMERA_RES_QQQVGA,    // 80 x 60
@@ -46,6 +47,7 @@ namespace Anki {
       {1024, 768},
       {800,  600},
       {640,  480},
+      {400,  296},
       {320,  240},
       {160,  120},
       {80,   60},

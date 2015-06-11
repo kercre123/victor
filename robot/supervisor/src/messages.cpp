@@ -1010,6 +1010,12 @@ namespace Anki {
             m.resolution = Vision::CAMERA_RES_QVGA;
             break;
 
+          case 296:
+            AnkiConditionalErrorAndReturnValue(img.get_size(1)==400*3, RESULT_FAIL, "CompressAndSendImage",
+                                               "Unrecognized resolution: %dx%d.\n", img.get_size(1)/3, img.get_size(0));
+            m.resolution = Vision::CAMERA_RES_CVGA;
+            break;
+            
           case 480:
             AnkiConditionalErrorAndReturnValue(img.get_size(1)==640*3, RESULT_FAIL, "CompressAndSendImage",
                                                "Unrecognized resolution: %dx%d.\n", img.get_size(1)/3, img.get_size(0));

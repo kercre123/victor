@@ -464,7 +464,7 @@ namespace Anki {
         if(lastImageSentTime != currentImageTime)
         {
           // TODO: Provide a way to update this from message
-          Vision::CameraResolution captureResolution_ = Vision::CAMERA_RES_QVGA;
+          Vision::CameraResolution captureResolution_ = Vision::CAMERA_RES_CVGA;
 
           // Nope, so get the (new) available frame from the camera:
           const s32 captureHeight = Vision::CameraResInfo[captureResolution_].height;
