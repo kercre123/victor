@@ -287,14 +287,14 @@ namespace Anki
         // The IMU chip is not oriented along the robot's natural axes
         // Positive X is robot forward, positive Y is robot left, and positive Z is robot up
         // Thus:  Robot X = -IMU Z, Robot Y = IMU Y, Robot Z = -IMU X
-        imuData.acc_x = - ACC_CONVERT(ops.azl, ops.azm); 
-        imuData.rate_x= -GYRO_CONVERT(ops.gzl, ops.gzm);   
+        imuData.acc_x =  ACC_CONVERT(ops.azl, ops.azm); 
+        imuData.rate_x= GYRO_CONVERT(ops.gzl, ops.gzm);   
 
-        imuData.acc_y =   ACC_CONVERT(ops.ayl, ops.aym);  
-        imuData.rate_y=  GYRO_CONVERT(ops.gyl, ops.gym);
+        imuData.acc_y = -  ACC_CONVERT(ops.ayl, ops.aym);  
+        imuData.rate_y= - GYRO_CONVERT(ops.gyl, ops.gym);
 
-        imuData.acc_z = - ACC_CONVERT(ops.axl, ops.axm);     
-        imuData.rate_z= -GYRO_CONVERT(ops.gxl, ops.gxm);  
+        imuData.acc_z =  ACC_CONVERT(ops.axl, ops.axm);     
+        imuData.rate_z= GYRO_CONVERT(ops.gxl, ops.gxm);  
         
         // Set up the next sample and kick it off
         memcpy(&ops, &IMU_READ_OPS, sizeof(ops));

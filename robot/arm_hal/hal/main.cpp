@@ -101,7 +101,7 @@ void StreamJPEG()
   // Initialize the encoder
   JPEGStart(m->data, WIDTH, HEIGHT, QUALITY);
 
-  m->resolution = Anki::Vision::CAMERA_RES_QVGA;
+  m->resolution = Anki::Vision::CAMERA_RES_CVGA;
   m->imageEncoding = Anki::Vision::IE_MINIPEG_GRAY;
   m->imageId = 0;
 
