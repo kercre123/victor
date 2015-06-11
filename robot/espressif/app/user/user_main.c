@@ -74,6 +74,8 @@ user_init(void)
     uint32 i;
     int8 err;
 
+    wifi_status_led_uninstall();
+
     REG_SET_BIT(0x3ff00014, BIT(0));
     err = system_update_cpu_freq(160);
 
@@ -113,6 +115,9 @@ user_init(void)
     wifi_softap_set_config(&ap_config);
     wifi_set_phy_mode(PHY_MODE_11G);
 
+    // Disable radio sleep
+    wifi_set_sleep_type(NONE_SLEEP_T);
+
     // Disable DHCP server before setting static IP info
     wifi_softap_dhcps_stop();
 
@@ -138,7 +143,7 @@ user_init(void)
     {
       os_printf("Couldn't set DHCP server lease information\r\n");
     }
-    uint8 dhcps_offer_mode = 1;
+    uint8 dhcps_offer_mode = 0; // Disable default gateway information
     err = wifi_softap_set_dhcps_offer_option(OFFER_ROUTER, &dhcps_offer_mode);
     if (err == false)
     {
