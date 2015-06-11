@@ -2065,6 +2065,8 @@ namespace Anki {
             resolution = Vision::CAMERA_RES_VGA;
           } else if(resString == "QVGA") {
             resolution = Vision::CAMERA_RES_QVGA;
+          } else if(resString == "CVGA") {
+            resolution = Vision::CAMERA_RES_CVGA;
           } else {
             printf("Unsupported streamResolution = %s\n", resString.c_str());
           }

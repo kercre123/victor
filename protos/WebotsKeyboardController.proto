@@ -42,7 +42,7 @@ PROTO WebotsKeyboardController [
   field SFFloat steerK2 12
 
   # Vision system params
-  field SFString streamResolution "QVGA"
+  field SFString streamResolution "CVGA"
   field SFInt32 camera_autoexposureOn 1
   field SFFloat camera_exposureTime 0.2
   field SFInt32 camera_integerCountsIncrement 3
