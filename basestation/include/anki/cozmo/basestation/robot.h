@@ -171,13 +171,13 @@ namespace Anki {
       const Pose3d& GetDriveCenterPose() const;
       
       // Computes the drive center offset from origin based on current carrying state
-      f32 GetDriveCenterOffset();
+      f32 GetDriveCenterOffset() const;
       
       // Computes pose of drive center for the given robot pose
-      void ComputeDriveCenterPose(const Pose3d &robotPose, Pose3d &driveCenterPose);
+      void ComputeDriveCenterPose(const Pose3d &robotPose, Pose3d &driveCenterPose) const;
       
       // Computes robot origin pose for the given drive center pose
-      void ComputeOriginPose(const Pose3d &driveCenterPose, Pose3d &robotPose);
+      void ComputeOriginPose(const Pose3d &driveCenterPose, Pose3d &robotPose) const;
 
       
       

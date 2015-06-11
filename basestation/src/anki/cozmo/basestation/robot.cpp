@@ -2885,12 +2885,12 @@ namespace Anki {
     }
       
       
-    void Robot::ComputeDriveCenterPose(const Pose3d &robotPose, Pose3d &driveCenterPose)
+    void Robot::ComputeDriveCenterPose(const Pose3d &robotPose, Pose3d &driveCenterPose) const
     {
       MoveRobotPoseForward(robotPose, GetDriveCenterOffset(), driveCenterPose);
     }
       
-    void Robot::ComputeOriginPose(const Pose3d &driveCenterPose, Pose3d &robotPose)
+    void Robot::ComputeOriginPose(const Pose3d &driveCenterPose, Pose3d &robotPose) const
     {
       MoveRobotPoseForward(driveCenterPose, -GetDriveCenterOffset(), robotPose);
     }
@@ -2904,7 +2904,7 @@ namespace Anki {
       movedPose.SetTranslation(trans);
     }
       
-    f32 Robot::GetDriveCenterOffset() {
+    f32 Robot::GetDriveCenterOffset() const {
       if (_isPhysical) {
         f32 driveCenterOffset = DRIVE_CENTER_OFFSET;
         if (IsCarryingObject()) {
