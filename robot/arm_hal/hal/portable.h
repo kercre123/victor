@@ -19,6 +19,10 @@
 #define PIN_PP(gp, src)                 (gp)->OTYPER &= ~(1 << (src))
 #define PIN_OD(gp, src)                 (gp)->OTYPER |= (1 << (src))
 
+// 8 MHz input clock (external) with 180 MHz output
+#define CORE_CLOCK_MHZ (180)
+#define APB1_CLOCK_MHZ (CORE_CLOCK_MHZ >> 1)
+
 // Consistent naming scheme for GPIO, pins, and source variables
 #define GPIO_PIN_SOURCE(name, gpio, index) \
   const u8 SOURCE_##name = (index); \
