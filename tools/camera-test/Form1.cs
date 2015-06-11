@@ -98,7 +98,7 @@ namespace BlueCode
                 if (skipheader)
                 {
                     m_recvstate = 0;
-                    idx = 1;
+                    idx = 18;
                     count--;
                 }
 
@@ -338,7 +338,7 @@ namespace BlueCode
             {
                 Byte[] buf = m_udp.EndReceive(ar, ref m_ep);
 
-                if (buf.Length == 1415)
+                if (buf.Length == 1432)
                 {
                     receive(buf, buf.Length, true);
                 }

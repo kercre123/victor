@@ -17,8 +17,6 @@ extern GlobalDataToBody g_dataToBody;
 #define ABS(x) ((x) < 0 ? -(x) : (x))
 
 #define ROBOT4 // robot 4.0
-// Robot #2 (3.1) has nearly opposite wiring from #1
-//#define ROBOT2
 
   enum MotorID
   {
@@ -113,11 +111,7 @@ extern GlobalDataToBody g_dataToBody;
       LEFT_N1_PIN,
       LEFT_N2_PIN,
       LEFT_P_PIN, 
-#ifdef ROBOT4
-      false,
-#else
       true,
-#endif
       0,
       ENCODER_LEFT_PIN,
       ENCODER_NONE,
@@ -128,11 +122,7 @@ extern GlobalDataToBody g_dataToBody;
       RIGHT_N1_PIN,
       RIGHT_N2_PIN,
       RIGHT_P_PIN,
-#ifdef ROBOT4
-      false,
-#else
       true,
-#endif
       0,
       ENCODER_RIGHT_PIN,
       ENCODER_NONE,
@@ -143,7 +133,11 @@ extern GlobalDataToBody g_dataToBody;
       LIFT_N1_PIN,
       LIFT_N2_PIN,
       LIFT_P_PIN,
-      false,   // Wired backward
+#ifdef ROBOT4
+      true,
+#else
+      false,
+#endif
       0,
       ENCODER_LIFTA_PIN,
       ENCODER_LIFTB_PIN,

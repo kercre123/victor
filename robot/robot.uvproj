@@ -169,7 +169,7 @@
           </Flash1>
           <bUseTDR>1</bUseTDR>
           <Flash2>BIN\UL2CM3.DLL</Flash2>
-          <Flash3></Flash3>
+          <Flash3>"" ()</Flash3>
           <Flash4></Flash4>
           <pFcarmOut></pFcarmOut>
           <pFcarmGrp></pFcarmGrp>
@@ -467,6 +467,11 @@
               <FileName>enjpeg.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\arm_hal\hal\enjpeg.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>i2c.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\arm_hal\hal\i2c.cpp</FilePath>
             </File>
           </Files>
         </Group>
@@ -1455,6 +1460,11 @@
               <FileName>enjpeg.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\arm_hal\hal\enjpeg.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>i2c.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\arm_hal\hal\i2c.cpp</FilePath>
             </File>
           </Files>
         </Group>

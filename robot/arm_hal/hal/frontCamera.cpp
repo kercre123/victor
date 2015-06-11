@@ -7,6 +7,8 @@
 #include "anki/common/robot/config.h"
 #include "anki/common/robot/benchmarking.h"
 
+#include "hal/i2c.h"
+
 namespace Anki
 {
   namespace Cozmo
@@ -32,12 +34,9 @@ namespace Anki
       
       // GPIO_PIN_SOURCE(FSIN, GPIOA, 1);  // Not connected in 4.0
 
-      GPIO_PIN_SOURCE(SCL, GPIOE, 3);
-      GPIO_PIN_SOURCE(SDA, GPIOE, 5);
-
       const u32 DCMI_TIMEOUT_MAX = 10000;
 
-      const u8 I2C_ADDR = 0x78;        // Pre-shifted address for GC2145 (0x78 for Read, 0x79 for Write)
+      const u8 I2C_ADDR = 0x3C;        // Address for GC2145
       
       unsigned short m_camScript[] =
         {
@@ -965,122 +964,6 @@ namespace Anki
       // Get raw data from the camera
       u8* CamGetRaw() { return m_buffer[m_readyBuffer]; }
       int CamGetReadyRow() { return m_readyRow; }
-        
-      // This delay helps miss a race condition in Omnivision-supplied configuration scripts
-      // Omnivision is aware of this problem but could not suggest a workaround
-      const u32 I2C_WAIT = 8;   // 8uS between clock edges - or 62.5KHz I2C
-        
-      // Soft I2C stack, borrowed from Arduino (BSD license)
-      static void DriveSCL(u8 bit)
-      {
-        if (bit)
-          GPIO_SET(GPIO_SCL, PIN_SCL);
-        else
-          GPIO_RESET(GPIO_SCL, PIN_SCL);
-
-        MicroWait(I2C_WAIT);
-      }
-
-      static void DriveSDA(u8 bit)
-      {
-        if (bit)
-          GPIO_SET(GPIO_SDA, PIN_SDA);
-        else
-          GPIO_RESET(GPIO_SDA, PIN_SDA);
-
-        MicroWait(I2C_WAIT);
-      }
-
-      // Read SDA bit by allowing it to float for a while
-      // Make sure to start reading the bit before the clock edge that needs it
-      static u8 ReadSDA(void)
-      {
-        GPIO_SET(GPIO_SDA, PIN_SDA);
-        MicroWait(I2C_WAIT);
-        return !!(GPIO_READ(GPIO_SDA) & PIN_SDA);
-      }
-
-      static u8 Read(u8 last)
-      {
-        u8 b = 0, i;
-
-        for (i = 0; i < 8; i++)
-        {
-          b <<= 1;
-          ReadSDA();
-          DriveSCL(1);
-          b |= ReadSDA();
-          DriveSCL(0);
-        }
-
-        // send Ack or Nak
-        if (last)
-          DriveSDA(1);
-        else
-          DriveSDA(0);
-
-        DriveSCL(1);
-        DriveSCL(0);
-        DriveSDA(1);
-
-        return b;
-      }
-
-      // Issue a Stop condition
-      static void Stop(void)
-      {
-        DriveSDA(0);
-        DriveSCL(1);
-        DriveSDA(1);
-      }
-
-      // Write byte and return true for Ack or false for Nak
-      static u8 Write(u8 b)
-      {
-        u8 m;
-        // Write byte
-        for (m = 0x80; m != 0; m >>= 1)
-        {
-          DriveSDA(m & b);
-          DriveSCL(1);
-          DriveSCL(0);
-        }
-
-        DriveSCL(1);
-        b = ReadSDA();
-        DriveSCL(0);
-
-        return b;
-      }
-
-      // Issue a Start condition for I2C address with Read/Write bit
-      static u8 Start(u8 addressRW)
-      {
-        DriveSDA(0);
-        DriveSCL(0);
-
-        return Write(addressRW);
-      }
-
-      static void CamWrite(int reg, int val)
-      {
-        Start(I2C_ADDR);    // Base address is Write
-        Write(reg);
-        Write(val);
-        Stop();
-      }
-
-      static int CamRead(int reg)
-      {
-        int val;
-        Start(I2C_ADDR);    // Base address is Write (for writing address)
-        Write(reg);
-        Stop();
-        Start(I2C_ADDR+1);  // Base address + 1 is Read (for Reading address)
-        val = Read(1);      // 1 for 'last Read'
-        Stop();
-        return val;
-      }
 
       void UARTPutHex(u8 c);
       
@@ -1142,17 +1025,15 @@ namespace Anki
         DCMI_Init(&DCMI_InitStructure);
 
         // Read ID regs to get I2C state machine into proper state
-        CamRead(0xf0);
-        CamRead(0xf1);
+        I2CInit();
+        I2CRead(I2C_ADDR, 0xf0);
+        I2CRead(I2C_ADDR, 0xf1);
         
         // Write the configuration registers        
         unsigned short* p = m_camScript;
         while (*p) {
-          CamWrite(p[0], p[1]);
+          I2CWrite(I2C_ADDR, p[0], p[1]);
           p += 2;
-          // This delay helps miss a race condition in Omnivision-supplied configuration scripts
-          // Omnivision is aware of this problem but could not suggest a workaround
-          MicroWait(I2C_WAIT*12);
         }
 
         // Configure DMA2_Stream1 channel 1 for DMA from DCMI->DR to RAM
@@ -1285,17 +1166,6 @@ namespace Anki
         GPIO_InitStructure.GPIO_Pin = PIN_RESET_N;
         GPIO_Init(GPIO_RESET_N, &GPIO_InitStructure);
 
-        // Initialize the I2C pins
-        GPIO_SET(GPIO_SCL, PIN_SCL);
-        GPIO_SET(GPIO_SDA, PIN_SDA);
-
-        GPIO_InitStructure.GPIO_Pin = PIN_SCL | PIN_SDA;
-        GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
-        GPIO_InitStructure.GPIO_Speed = GPIO_Speed_2MHz;
-        GPIO_InitStructure.GPIO_OType = GPIO_OType_OD;
-        GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
-        GPIO_Init(GPIOE, &GPIO_InitStructure);       
-                
         // Configure XCLK for 12 MHz (unevenly divisible by 180 MHz)
         TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;
         TIM_OCInitTypeDef  TIM_OCInitStructure;

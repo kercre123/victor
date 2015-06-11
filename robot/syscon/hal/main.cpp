@@ -176,11 +176,10 @@ int main(void)
 
     UARTPutString("\r\nForward ends with...");
     #ifndef DO_GEAR_RATIO_TESTING
-      MotorsSetPower(2, 0x6800);
-			/*for (int i = 0; i < 2; i++)
-				MotorsSetPower(i, 0x4000);
-			for (int i = 2; i < 4; i++)
-				MotorsSetPower(i, 0x6800);*/
+    for (int i = 0; i < 2; i++)
+      MotorsSetPower(i, 0x4000);
+    for (int i = 2; i < 4; i++)
+      MotorsSetPower(i, 0x6800);
 		#endif
     MotorsUpdate();
     MicroWait(5000);
@@ -191,13 +190,10 @@ int main(void)
 
     UARTPutString("\r\nBackward ends with...");
     #ifndef DO_GEAR_RATIO_TESTING
-    MotorsSetPower(2, -0x6800);
-    /*
-			for (int i = 0; i < 2; i++)
-				MotorsSetPower(i, -0x4000);
-			for (int i = 2; i < 4; i++)
-				MotorsSetPower(i, -0x6800);
-        */
+    for (int i = 0; i < 2; i++)
+      MotorsSetPower(i, -0x4000);
+    for (int i = 2; i < 4; i++)
+      MotorsSetPower(i, -0x6800);
     #endif
 		MotorsUpdate();
     MicroWait(5000);
