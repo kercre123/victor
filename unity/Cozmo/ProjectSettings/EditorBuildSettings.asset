@@ -15,3 +15,5 @@ EditorBuildSettings:
     path: Assets/Scenes/Slalom.unity
   - enabled: 1
     path: Assets/Scenes/EnergyHunt.unity
+  - enabled: 1
+    path: Assets/Scenes/Vortex.unity

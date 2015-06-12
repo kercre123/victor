@@ -781,13 +781,15 @@ public class RobotEngineManager : MonoBehaviour {
 		}
 		
 		int chunkLength = Math.Min (minipegArray.Length - currentImageIndex, message.chunkSize);
-		Array.Copy (message.data, 0, minipegArray, currentImageIndex, chunkLength);
+		Array.Copy(message.data, 0, minipegArray, currentImageIndex, chunkLength);
 		currentImageIndex += chunkLength;
 		
 		if( ++currentChunkIndex == message.imageChunkCount )
 		{
 			ResetTexture (message.ncols, message.nrows, TextureFormat.RGB24);
-
+			float pixels = message.ncols*message.nrows;
+			float bytesPerPixel = currentImageIndex / pixels;
+			Debug.Log("imageLength("+(message.chunkSize * message.imageChunkCount)+") currentImageIndex("+currentImageIndex+") pixels("+pixels+") bytesPerPixel("+bytesPerPixel+")");
 			MiniGrayToJpeg( minipegArray, ref jpegArray );
 
 			texture.LoadImage( jpegArray );

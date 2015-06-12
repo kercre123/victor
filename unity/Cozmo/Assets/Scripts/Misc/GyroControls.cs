@@ -20,7 +20,7 @@ public class GyroControls : MonoBehaviour {
 		if(!SystemInfo.supportsGyroscope) return 0f;
 
 		float roll = MathUtil.ClampAngle(MSP_Input.GyroAccel.GetRoll());
-		x = Mathf.Clamp01((Mathf.Abs(roll) - rollAngleMin) / (rollAngleMax - rollAngleMin)) * (roll >= 0f ? -1f : 1f);
+		x = Mathf.Clamp01((Mathf.Abs(roll) - rollAngleMin) / (rollAngleMax - rollAngleMin)) * -Mathf.Sign(roll);
 		return x; 
 	}
 
@@ -32,7 +32,7 @@ public class GyroControls : MonoBehaviour {
 		if (max < 0) min = pitchAngleMax;
 
 		float pitch = MSP_Input.GyroAccel.GetPitch();
-		y = Mathf.Clamp01((Mathf.Abs(pitch) - pitchAngleMin) / (pitchAngleMax - pitchAngleMin)) * (pitch >= 0f ? -1f : 1f);
+		y = Mathf.Clamp01((Mathf.Abs(pitch) - pitchAngleMin) / (pitchAngleMax - pitchAngleMin)) * -Mathf.Sign(pitch);
 
 		return y; 
 	}
