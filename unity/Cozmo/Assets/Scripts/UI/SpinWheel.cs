@@ -20,16 +20,17 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 
 	[SerializeField] InputField inputField_numSlices = null;
 
-	[SerializeField] float maxAngularVelocity = 3600f;
-	[SerializeField] float minAngularVelocity = 1f;
-	[SerializeField] float minStartingVelocity = 360f;
-	[SerializeField] float spinMultiplier = 2f;
-	[SerializeField] float dragCoefficient = 0.1f;
-	[SerializeField] int maxSamples = 30;
-	[SerializeField] bool usePegs = true;
-	[SerializeField] float pegSlowDownThreshold = 360f;
+	float maxAngularVelocity = 3600f;
+	float minAngularVelocity = 1f;
+	float minStartingVelocity = 360f;
+	float spinMultiplier = 2f;
+	float dragCoefficient = 0.3f;
+	int maxSamples = 5;
+	bool usePegs = true;
+	float pegSlowDownThreshold = 360f;
 	//[SerializeField] float pegBounceThreshold = 5f;
-	[SerializeField] float pegSlowDownFactor = 0.95f;
+	float pegSlowDownFactor = 0.9f;
+
 	[SerializeField] Color[] imageColors = { Color.white, Color.black };
 	[SerializeField] Color[] textColors = { Color.black , Color.white };
 
@@ -73,7 +74,14 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 		locked = false;
 		Finished = false;
 
+		RefreshSettings();
+		OptionsScreen.RefreshSettings += RefreshSettings;
+
 		RefreshSlices();
+	}
+
+	void OnDisable() {
+		OptionsScreen.RefreshSettings -= RefreshSettings;
 	}
 
 	void Update() {
@@ -167,6 +175,21 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 		}
 
 		inputField_numSlices.text = numSlices.ToString();
+	}
+
+	void RefreshSettings() {
+		spinMultiplier = PlayerPrefs.GetFloat("SpinMultiplier", 2f);
+		minStartingVelocity = PlayerPrefs.GetFloat("SpinnerMinStartingVelocityDegPS", 360f);
+		maxAngularVelocity = PlayerPrefs.GetFloat("SpinnerMaxAngularVelocityDegPS", 3600f);
+		minAngularVelocity = PlayerPrefs.GetFloat("SpinnerMinAngularVelocityDegPS", 1f);
+
+		dragCoefficient = PlayerPrefs.GetFloat("DragCoefficient", 0.3f);
+		maxSamples = PlayerPrefs.GetInt("MaxDragSamples", 5);
+		pegSlowDownThreshold = PlayerPrefs.GetFloat("SpinnerPegsSlowDownThreshold", 360f);
+		//pegBounceThreshold = 5f;
+		pegSlowDownFactor = PlayerPrefs.GetFloat("SpinnerPegsSlowDownFactor", 0.9f);
+
+		usePegs = pegSlowDownThreshold != 0f;
 	}
 
 	public void OnPointerDown(PointerEventData eventData) {

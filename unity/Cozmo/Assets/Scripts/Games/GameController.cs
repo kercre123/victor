@@ -321,6 +321,12 @@ public class GameController : MonoBehaviour {
 		coundownTimer = 0f;
 		countdownAnnounced = false;
 
+		for(int i=0;i<scores.Count;i++) {
+			scores[i] = 0;
+		}
+
+		winners.Clear();
+
 		//if(robot != null) robot.SetObjectAdditionAndDeletion(false, false);
 	}
 
@@ -470,13 +476,21 @@ public class GameController : MonoBehaviour {
 		return true;
 	}
 
+	protected List<int> winners = new List<int>();
 	protected virtual bool IsGameOver() {
-		if(levelData.maxPlayTime > 0f && stateTimer >= levelData.maxPlayTime) return true;
+		winners.Clear();
+
 		if(levelData.scoreToWin > 0) {
-			if(score >= levelData.scoreToWin) {
-				return true;
+			for(int i=0;i<scores.Count;i++) {
+				if(scores[i] >= levelData.scoreToWin) {
+					winners.Add(i);
+				}
 			}
 		}
+
+		if(winners.Count > 0) return true;
+
+		if(levelData.maxPlayTime > 0f && stateTimer >= levelData.maxPlayTime) return true;
 		
 		return false;
 	}

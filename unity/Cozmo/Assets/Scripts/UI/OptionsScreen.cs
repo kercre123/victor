@@ -24,6 +24,16 @@ public class OptionsScreen : MonoBehaviour {
 	[SerializeField] InputField maxAngle;
 	[SerializeField] InputField maxDistanceInCubeLengths;
 
+	[SerializeField] InputField spinnerSettings_StartMultiplier;
+	[SerializeField] InputField spinnerSettings_MinStart;
+	[SerializeField] InputField spinnerSettings_MaxSpeed;
+	[SerializeField] InputField spinnerSettings_MinSpeed;
+	[SerializeField] InputField spinnerSettings_Drag;
+	[SerializeField] InputField spinnerSettings_MaxSamples;
+	[SerializeField] InputField spinnerSettings_PegThreshold;
+	[SerializeField] InputField spinnerSettings_PegSlowFactor;
+
+
 	public static Action RefreshSettings = null;
 
 	public const int REVERSE_LIKE_A_CAR = 0;
@@ -151,6 +161,71 @@ public class OptionsScreen : MonoBehaviour {
 			maxDistanceInCubeLengths.text = GetMaxDistanceInCubeLengths().ToString();
 			maxDistanceInCubeLengths.onValueChange.AddListener(MaxDistanceInCubeLengths);
 		}
+
+		spinnerSettings_StartMultiplier.text = PlayerPrefs.GetFloat("SpinMultiplier", 2f).ToString();
+		spinnerSettings_StartMultiplier.onValueChange.AddListener(SetSpinnerSetting_StartMultiplier);
+
+		spinnerSettings_MinStart.text = PlayerPrefs.GetFloat("SpinnerMinStartingVelocityDegPS", 360f).ToString();
+		spinnerSettings_MinStart.onValueChange.AddListener(SetSpinnerSetting_MinStart);
+
+		spinnerSettings_MaxSpeed.text = PlayerPrefs.GetFloat("SpinnerMaxAngularVelocityDegPS", 3600f).ToString();
+		spinnerSettings_MaxSpeed.onValueChange.AddListener(SetSpinnerSetting_MaxSpeed);
+
+		spinnerSettings_MinSpeed.text = PlayerPrefs.GetFloat("SpinnerMinAngularVelocityDegPS", 1f).ToString();
+		spinnerSettings_MinSpeed.onValueChange.AddListener(SetSpinnerSetting_MinSpeed);
+
+		spinnerSettings_Drag.text = PlayerPrefs.GetFloat("DragCoefficient", 0.3f).ToString();
+		spinnerSettings_Drag.onValueChange.AddListener(SetSpinnerSetting_Drag);
+
+		spinnerSettings_MaxSamples.text = PlayerPrefs.GetInt("MaxDragSamples", 5).ToString();
+		spinnerSettings_MaxSamples.onValueChange.AddListener(SetSpinnerSetting_MaxSamples);
+
+		spinnerSettings_PegThreshold.text = PlayerPrefs.GetFloat("SpinnerPegsSlowDownThreshold", 360f).ToString();
+		spinnerSettings_PegThreshold.onValueChange.AddListener(SetSpinnerSetting_PegThreshold);
+
+		spinnerSettings_PegSlowFactor.text = PlayerPrefs.GetFloat("SpinnerPegsSlowDownFactor", 0.9f).ToString();
+		spinnerSettings_PegSlowFactor.onValueChange.AddListener(SetSpinnerSetting_PegSlowFactor);
+	}
+
+	void SetSpinnerSetting_StartMultiplier(string text) {
+		float value;
+		if(!float.TryParse(text, out value)) return;
+		PlayerPrefs.SetFloat("SpinMultiplier", value);
+	}
+	void SetSpinnerSetting_MinStart(string text) {
+		float value;
+		if(!float.TryParse(text, out value)) return;
+		PlayerPrefs.SetFloat("SpinnerMinStartingVelocityDegPS", value);
+	}
+	void SetSpinnerSetting_MaxSpeed(string text) {
+		float value;
+		if(!float.TryParse(text, out value)) return;
+		PlayerPrefs.SetFloat("SpinnerMaxAngularVelocityDegPS", value);
+	}
+	void SetSpinnerSetting_MinSpeed(string text) {
+		float value;
+		if(!float.TryParse(text, out value)) return;
+		PlayerPrefs.SetFloat("SpinnerMinAngularVelocityDegPS", value);
+	}
+	void SetSpinnerSetting_Drag(string text) {
+		float value;
+		if(!float.TryParse(text, out value)) return;
+		PlayerPrefs.SetFloat("DragCoefficient", value);
+	}
+	void SetSpinnerSetting_MaxSamples(string text) {
+		int value;
+		if(!int.TryParse(text, out value)) return;
+		PlayerPrefs.SetInt("MaxDragSamples", value);
+	}
+	void SetSpinnerSetting_PegThreshold(string text) {
+		float value;
+		if(!float.TryParse(text, out value)) return;
+		PlayerPrefs.SetFloat("SpinnerPegsSlowDownThreshold", value);
+	}
+	void SetSpinnerSetting_PegSlowFactor(string text) {
+		float value;
+		if(!float.TryParse(text, out value)) return;
+		PlayerPrefs.SetFloat("SpinnerPegsSlowDownFactor", value);
 	}
 
 	void AddListeners() {
@@ -374,6 +449,15 @@ public class OptionsScreen : MonoBehaviour {
 		for(int i = 0; i < 5; ++i) {
 			PlayerPrefs.DeleteKey("MaxDistanceInCubeLengths" + i.ToString());
 		}
+
+		PlayerPrefs.DeleteKey("SpinMultiplier");
+		PlayerPrefs.DeleteKey("SpinnerMinStartingVelocityDegPS");
+		PlayerPrefs.DeleteKey("SpinnerMaxAngularVelocityDegPS");
+		PlayerPrefs.DeleteKey("SpinnerMinAngularVelocityDegPS");
+		PlayerPrefs.DeleteKey("DragCoefficient");
+		PlayerPrefs.DeleteKey("MaxDragSamples");
+		PlayerPrefs.DeleteKey("SpinnerPegsSlowDownThreshold");
+		PlayerPrefs.DeleteKey("SpinnerPegsSlowDownFactor");
 
 		RemoveListeners();
 		Init();

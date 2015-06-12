@@ -22,6 +22,8 @@ public class VortexController : GameController {
 	[SerializeField] Text textPlayState;
 	[SerializeField] Text textCurrentNumber;
 
+	[SerializeField] Text[] textfinalPlayerScores;
+
 	[SerializeField] AudioClip numberChangedSound;
 	[SerializeField] AudioClip buttonPressSound;
 	[SerializeField] AudioClip roundCompleteWinner;
@@ -110,6 +112,16 @@ public class VortexController : GameController {
 	
 	protected override void Exit_PLAYING (bool overrideStars = false) {
 		base.Exit_PLAYING();
+	}
+
+	protected override void Enter_RESULTS() {
+		base.Enter_RESULTS();
+
+		for(int i=0;i<textfinalPlayerScores.Length && i<scores.Count;i++) {
+			textfinalPlayerScores[i].text = "Player " + (i+1).ToString() + ": " + scores[i].ToString();
+			textfinalPlayerScores[i].color = winners.Contains(i) ? Color.green : Color.white;
+		}
+		
 	}
 
 	protected override bool IsPreGameCompleted() {
@@ -306,7 +318,15 @@ public class VortexController : GameController {
 		if(playState != VortexState.SPINNING) return;
 
 		while(index >= playerInputs.Count) playerInputs.Add (new VortexInput());
+		if(playerInputs[index].stamps.Count >= 4) return;
+
 		playerInputs[index].stamps.Add(Time.time);
+
+//		//if this is fifth stamp, then remove the prior 4 such that we go back to 1, 
+//		//	but still have our relevant 'last' time stamp at the end of the list
+//		if(playerInputs[index].stamps.Count > 4) {
+//			playerInputs[index].stamps.RemoveRange(0, 4);
+//		}
 
 		Color c1 = playerInputs[index].stamps.Count > 0 ? Color.white : Color.black;
 		Color c2 = playerInputs[index].stamps.Count > 1 ? Color.white : Color.black;
