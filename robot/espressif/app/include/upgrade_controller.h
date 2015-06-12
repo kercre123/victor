@@ -2,7 +2,8 @@
  * This module is responsible for reflashing the Espressif
  * @author Daniel Casner <daniel@anki.com>
  */
-
+#ifndef __upgrade_controller_h
+#define __upgrade_controller_h
 
 /// Initalize the upgrade controller
 int8_t upgradeControllerInit(void);
@@ -36,3 +37,5 @@ typedef struct _UpradeCommandParameters
   uint32_t size;                              ///< The number of bytes to expect and write
   uint8_t  flags;                             ///< Assorted flags for the upgrade
 } UpgradeCommandParameters;
+
+#endif
