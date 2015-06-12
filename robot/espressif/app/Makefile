@@ -23,9 +23,8 @@ GEN_BINS= eagle.app.v6.bin
 SPECIAL_MKTARGETS=$(APP_MKTARGETS)
 SUBDIRS=    \
 	user    \
-	driver  \
-	upgrade
-
+	driver
+	
 endif # } PDIR
 
 APPDIR = .
@@ -49,8 +48,7 @@ endif
 
 COMPONENTS_eagle.app.v6 = \
 	user/libuser.a  \
-	driver/libdriver.a \
-	upgrade/libupgrade.a
+	driver/libdriver.a
 
 LINKFLAGS_eagle.app.v6 = \
 	-L../lib        \
