@@ -41,7 +41,7 @@ bool initialized = false;
 
 UnityLoggerProvider logger_provider;
 
-void cozmo_set_log_callback(LogCallback callback, int min_log_level)
+int cozmo_set_log_callback(LogCallback callback, int min_log_level)
 {
     logger_provider.SetMinLogLevel(min_log_level);
     logger_provider.SetCallback(callback);
@@ -49,6 +49,8 @@ void cozmo_set_log_callback(LogCallback callback, int min_log_level)
     if (callback != nullptr) {
         Anki::Util::gLoggerProvider = &logger_provider;
     }
+    
+    return (int)RESULT_OK;
 }
 
 int cozmo_startup(const char *configuration_data)
@@ -69,7 +71,7 @@ int cozmo_shutdown()
 #ifdef USE_IOS
     result = cozmo_game_destroy();
 #endif
-
+    
     return result;
 }
 

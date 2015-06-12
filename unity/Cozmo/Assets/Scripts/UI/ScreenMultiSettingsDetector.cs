@@ -36,7 +36,7 @@ public class ScreenMultiSettingsDetector : MonoBehaviour {
 
 	void Update () {
 		if(Dirty()) {
-			Debug.Log("ScreenChangeDetector ChangeDetected!");
+			//Debug.Log("ScreenChangeDetector ChangeDetected!");
 			Refresh();
 		}	
 	}

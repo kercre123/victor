@@ -71,7 +71,6 @@ public class UdpChannel : ChannelBase {
 	private const int BufferStatePoolLength = 1280;
 	private const int MaxQueuedSends = 640;
 	private const int MaxQueuedReceives = 640;
-	private const int MaxQueuedLogs = 640;
 
 	// unique object used for locking
 	private readonly object sync = new object();
@@ -110,7 +109,6 @@ public class UdpChannel : ChannelBase {
 	private float lastPingTime = 0;
 
 	// various queues
-	private readonly List<object> queuedLogs = new List<object>(MaxQueuedLogs);
 	private readonly Queue<SocketBufferState> sentBuffers = new Queue<SocketBufferState>(MaxQueuedSends);
 	private readonly Queue<G2U.Message> receivedMessages = new Queue<G2U.Message> (MaxQueuedReceives);
 
@@ -177,7 +175,8 @@ public class UdpChannel : ChannelBase {
 				ServerReceive();
 			}
 			catch (Exception e) {
-				DestroySynchronously(DisconnectionReason.FailedToListen, e);
+				Debug.LogException(e);
+				DestroySynchronously(DisconnectionReason.FailedToListen);
 				return;
 			}
 
@@ -189,10 +188,10 @@ public class UdpChannel : ChannelBase {
 				Debug.Log ("Local IP: " + localIP);
 				int length = Encoding.UTF8.GetByteCount(localIP);
 				if (length + 1 > advertisementRegistrationMessage.ip.Length) {
-					DestroySynchronously(DisconnectionReason.FailedToAdvertise,
-					                   "Advertising host is too long: " +
-					                   advertisementRegistrationMessage.ip.Length.ToString() + " bytes allowed, " +
-					                   length.ToString () + " bytes used." );
+					Debug.LogError("Advertising host is too long: " +
+					               advertisementRegistrationMessage.ip.Length.ToString() + " bytes allowed, " +
+					               length.ToString () + " bytes used." );
+					DestroySynchronously(DisconnectionReason.FailedToAdvertise);
 					return;
 				}
 				Encoding.UTF8.GetBytes (localIP, 0, localIP.Length, advertisementRegistrationMessage.ip, 0);
@@ -213,7 +212,8 @@ public class UdpChannel : ChannelBase {
 				SendAdvertisement();
 			}
 			catch (Exception e) {
-				DestroySynchronously(DisconnectionReason.FailedToAdvertise, e);
+				Debug.LogException(e);
+				DestroySynchronously(DisconnectionReason.FailedToAdvertise);
 				return;
 			}
 
@@ -237,7 +237,6 @@ public class UdpChannel : ChannelBase {
 					Destroy (DisconnectionReason.ConnectionLost);
 					IsActive = false;
 					IsConnected = false;
-					ProcessLogs();
 					Debug.Log ("UdpConnection: Disconnected manually.");
 				}
 			}
@@ -278,7 +277,8 @@ public class UdpChannel : ChannelBase {
 
 				if (connectionState == ConnectionState.Advertising) {
 					if (startAdvertiseTime + AdvertiseTimeout < lastUpdateTime) {
-						DestroySynchronously(DisconnectionReason.ConnectionLost, "Connection attempt timed out after " + (lastUpdateTime - startAdvertiseTime).ToString("0.00") + " seconds.");
+						Debug.LogError ("Connection attempt timed out after " + (lastUpdateTime - startAdvertiseTime).ToString("0.00") + " seconds.");
+						DestroySynchronously(DisconnectionReason.ConnectionLost);
 						return;
 					}
 
@@ -286,14 +286,16 @@ public class UdpChannel : ChannelBase {
 						SendAdvertisement();
 					}
 					catch (Exception e) {
-						DestroySynchronously(DisconnectionReason.FailedToAdvertise, e);
+						Debug.LogException(e);
+						DestroySynchronously(DisconnectionReason.FailedToAdvertise);
 						return;
 					}
 				}
 
 				if (connectionState == ConnectionState.Connected) {
 					if (lastReceiveTime + ReceiveTimeout < lastUpdateTime) {
-						DestroySynchronously(DisconnectionReason.ConnectionLost, "Connection timed out after " + (lastUpdateTime - lastReceiveTime).ToString("0.00") + " seconds.");
+						Debug.LogError("Connection timed out after " + (lastUpdateTime - lastReceiveTime).ToString("0.00") + " seconds.");
+						DestroySynchronously(DisconnectionReason.ConnectionLost);
 						return;
 					}
 				}
@@ -314,8 +316,6 @@ public class UdpChannel : ChannelBase {
 	// synchronous
 	private void InternalUpdate()
 	{
-		ProcessLogs();
-		
 		if (!IsConnected && (connectionState == ConnectionState.Connected)) {
 			IsConnected = true;
 			Debug.Log ("UdpConnection: Connected to " + mainEndPoint.ToString() + ".");
@@ -343,23 +343,6 @@ public class UdpChannel : ChannelBase {
 			catch (Exception e) {
 				Debug.LogException(e);
 			}
-		}
-	}
-	
-	// synchronous
-	private void ProcessLogs()
-	{
-		int logCount = queuedLogs.Count;
-		if (logCount != 0) {
-			for (int i = 0; i < logCount; ++i) {
-				object log = queuedLogs [i];
-				if (log is Exception) {
-					Debug.LogException ((Exception)log);
-				} else {
-					Debug.LogWarning ("UdpConnection: " + log);
-				}
-			}
-			queuedLogs.Clear ();
 		}
 	}
 	
@@ -416,17 +399,10 @@ public class UdpChannel : ChannelBase {
 		advertisementEndPoint = null;
 	}
 
-	// either
-	private void Destroy(DisconnectionReason reason, object exceptionOrLog)
+	// synchronous
+	private void DestroySynchronously(DisconnectionReason reason)
 	{
 		Destroy (reason);
-	    queuedLogs.Add (exceptionOrLog);
-	}
-
-	// synchronous
-	private void DestroySynchronously(DisconnectionReason reason, object exceptionOrLog)
-	{
-		Destroy (reason, exceptionOrLog);
 		InternalUpdate ();
 	}
 	
@@ -444,7 +420,7 @@ public class UdpChannel : ChannelBase {
 			try {
 				EndSend (result);
 			} catch (Exception e) {
-				queuedLogs.Add (e);
+				Debug.LogException(e);
 			} finally {
 				state.Dispose ();
 			}
@@ -465,7 +441,7 @@ public class UdpChannel : ChannelBase {
 			}
 			catch (Exception e)
 			{
-				queuedLogs.Add(e);
+				Debug.LogException(e);
 				return false;
 			}
 
@@ -480,7 +456,7 @@ public class UdpChannel : ChannelBase {
 			return true;
 		}
 		catch (Exception e) {
-			queuedLogs.Add (e);
+			Debug.LogException(e);
 			return false;
 		}
 		finally {
@@ -502,7 +478,8 @@ public class UdpChannel : ChannelBase {
 			}
 			catch (Exception e)
 			{
-				DestroySynchronously(DisconnectionReason.AttemptedToSendInvalidData, e);
+				Debug.LogException(e);
+				DestroySynchronously(DisconnectionReason.AttemptedToSendInvalidData);
 				return;
 			}
 
@@ -511,7 +488,8 @@ public class UdpChannel : ChannelBase {
 					ServerSend (state);
 				}
 				catch (Exception e) {
-					DestroySynchronously(DisconnectionReason.ConnectionLost, e);
+					Debug.LogException(e);
+					DestroySynchronously(DisconnectionReason.ConnectionLost);
 					return;
 				}
 			}
@@ -520,8 +498,8 @@ public class UdpChannel : ChannelBase {
 					sentBuffers.Enqueue (state);
 				}
 				else {
-					DestroySynchronously(DisconnectionReason.ConnectionThrottled,
-					                     "Disconnecting. Too many messages queued to send. (" + MaxQueuedSends.ToString() + " messages allowed.)");
+					Debug.LogError ("Disconnecting. Too many messages queued to send. (" + MaxQueuedSends.ToString() + " messages allowed.)");
+					DestroySynchronously(DisconnectionReason.ConnectionThrottled);
 					return;
 				}
 			}
@@ -595,10 +573,11 @@ public class UdpChannel : ChannelBase {
 			}
 			catch (Exception e) {
 				if (isMain) {
-				    Destroy (DisconnectionReason.ConnectionLost, e);
+					Debug.LogException(e);
+				    Destroy (DisconnectionReason.ConnectionLost);
 				}
 				else if (!(e is ObjectDisposedException)) {
-					queuedLogs.Add (e);
+					Debug.LogException(e);
 				}
 			}
 			finally {
@@ -680,13 +659,14 @@ public class UdpChannel : ChannelBase {
 							}
 						}
 						catch (Exception e) {
-							Destroy (DisconnectionReason.ReceivedInvalidData, e);
+							Debug.LogException(e);
+							Destroy (DisconnectionReason.ReceivedInvalidData);
 							return;
 						}
 
 						if (receivedMessages.Count >= MaxQueuedReceives) {
-							Destroy (DisconnectionReason.ConnectionThrottled,
-							       "Too many messages received too quickly. (" + MaxQueuedReceives.ToString() + " messages allowed.)");
+							Debug.LogError ("Too many messages received too quickly. (" + MaxQueuedReceives.ToString() + " messages allowed.)");
+							Destroy (DisconnectionReason.ConnectionThrottled);
 							return;
 						}
 						
@@ -698,10 +678,11 @@ public class UdpChannel : ChannelBase {
 			}
 			catch (Exception e) {
 				if (isMain) {
-					Destroy(DisconnectionReason.ConnectionLost, e);
+					Debug.LogException(e);
+					Destroy(DisconnectionReason.ConnectionLost);
 				}
 				else if (!(e is ObjectDisposedException)) {
-					queuedLogs.Add (e);
+					Debug.LogException(e);
 				}
 			}
 			finally {
@@ -753,10 +734,11 @@ public class UdpChannel : ChannelBase {
 			}
 			catch (Exception e) {
 				if (isAdvert) {
-					Destroy(DisconnectionReason.FailedToAdvertise, e);
+					Debug.LogException(e);
+					Destroy(DisconnectionReason.FailedToAdvertise);
 				}
 				else if (!(e is ObjectDisposedException)) {
-					queuedLogs.Add (e);
+					Debug.LogException(e);
 				}
 			}
 			finally {
