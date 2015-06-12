@@ -15,20 +15,24 @@ int8_t upgradeControllerInit(void);
 /// Length of header
 #define UPGRADE_COMMAND_PREFIX_LENGTH 12
 
+/// An impossible flash address to invalidate the state
+#define INVALID_FLASH_ADDRESS (0xFFFFfffff)
 
-typedef enum _UpgradeCommandTag
-{
-  UpgradeCommandNone,        // Dummy, no upgrade
-  EspressifFirmwareUpgradeA, // Upgrading the main firmware for the espressif
-  EspressifFirmwareUpgradeB, // Upgrading the auxillary espressif firmware
-  SysconFirmwareUpgrade,     // Upgrading firmware on the syscon (body) board
-  FPGAFirmwareUpgrade,       // Upgrading firmware for the FPGA
-} UpgradeCommandTag;
+/// Upgrade command controll flags
+// One hot encoding is used, might mask in the future
+typedef enum {
+  UPCMD_FLAGS_NONE = 0x00, // No special actions
+  UPCMD_WIFI_FW    = 0x01, // Upgrade the wifi (Espressif firmware)
+  UPCMD_CTRL_FW    = 0x02, // Upgrade the robot supervisor firmware
+  UPCMD_FPGA_FW    = 0x04, // Upgrade the FPGA image
+  UPCMD_BODY_FW    = 0x08, // Upgrade the body board firmware
+} UpgradeCommandFlags;
 
 /// Parameters for an firmware upgrade command
 typedef struct _UpradeCommandParameters
 {
-  uint8_t  serverIP[4]; // IP address of the upgrade server
-  uint16_t serverPort;  // Port number of ugprade server
-  uint16_t command;     // What operation to perform
+  char PREFIX[UPGRADE_COMMAND_PREFIX_LENGTH]; ///< Communication header
+  uint32_t flashAddress;                      ///< Where to put the data
+  uint32_t size;                              ///< The number of bytes to expect and write
+  uint8_t  flags;                             ///< Assorted flags for the upgrade
 } UpgradeCommandParameters;
