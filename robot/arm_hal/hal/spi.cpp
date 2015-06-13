@@ -245,13 +245,6 @@ void DMA_HANDLER_RX(void)
 	// Hack to allow timing events longer than about 50ms
 	GetMicroCounter();
 	
-  // Run MainExecution if not deferred and init is done
-  if (g_deferMainExec)
-  {
-    g_mainExecDeferred = 1;
-  }
-  else if (g_halInitComplete)
-  {
-    Anki::Cozmo::Robot::step_MainExecution();
-  }
+  // Flag start of MainExecution
+  g_mainExecDeferred = 1;
 }

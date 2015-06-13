@@ -12,7 +12,7 @@ namespace Anki
   {
     namespace HAL
     {
-      extern u8 g_halInitComplete;
+      extern volatile u8 g_halInitComplete, g_deferMainExec, g_mainExecDeferred;
 
       // Forward declarations
       void Startup();
@@ -47,16 +47,6 @@ namespace Anki
         if (*(int*)(0x1FFF7A10) == 0x00250031)
           m_idCard.esn = 1;
       }
-
-      extern "C" {
-        void EnableIRQ() {
-          __enable_irq();
-        }
-
-        void DisableIRQ() {
-          __disable_irq();
-        }
-      }
     }
   }
 }
@@ -78,6 +68,17 @@ static void Wait()
   }
   printf("\n");
   PrintCrap();
+}
+
+// Yield to main execution - must be called every 1ms
+void Yield()
+{
+  using namespace Anki::Cozmo::HAL;
+  if (g_mainExecDeferred)
+  {
+    g_mainExecDeferred = 0;
+    Anki::Cozmo::Robot::step_MainExecution();
+  }
 }
 
 int JPEGStart(u8* out, int width, int height, int quality);
@@ -111,14 +112,14 @@ void StreamJPEG()
     for (int i = 0; i < FRAMESKIP; i++)
     {
       while (HAL::CamGetReadyRow() != 0)
-        ;
+        Yield();
       while (HAL::CamGetReadyRow() == 0)
-        ;
+        Yield();
     }
 
     // Synchronize the timestamp with camera - wait for first row to arrive
     while (HAL::CamGetReadyRow() != 0)
-      ;
+      Yield();
 
     // Setup image header
     m->frameTimeStamp = HAL::GetTimeStamp() - 33;   // XXX: 30 FPS
@@ -133,7 +134,10 @@ void StreamJPEG()
       while (HAL::CamGetReadyRow() != row)
         ;
       datalen += JPEGCompress(m->data + datalen, HAL::CamGetRaw());
-
+      
+      // Can only safely yield AFTER streaming image is read from buffer
+      Yield();
+      
       // At EOF, finish frame
       int eof = (row == HEIGHT-8);
       if (eof)
@@ -150,9 +154,7 @@ void StreamJPEG()
         if (0 == m->chunkId)
           m->data[0] = QUALITY;
 
-        // Keep trying to send this message, even if it means a frame tear
-        while (!HAL::RadioSendImageChunk(m, Messages::GetSize(Messages::ImageChunk_ID)))
-          ;
+        HAL::RadioSendImageChunk(m, Messages::GetSize(Messages::ImageChunk_ID));
 
         // Copy anything left at end to front of buffer
         datalen -= m->chunkSize;
