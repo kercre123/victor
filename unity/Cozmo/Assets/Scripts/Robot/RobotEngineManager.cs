@@ -444,6 +444,7 @@ public class RobotEngineManager : MonoBehaviour {
 	{
 		if( !IsConnected ) return;
 
+		//Debug.Log ("frame("+Time.frameCount+") SendMessage " + Message.GetTag().ToString());
 		channel.Send( Message );
 	}
 
@@ -734,6 +735,8 @@ public class RobotEngineManager : MonoBehaviour {
  
 	private void ReceivedSpecificMessage( G2U.ImageChunk message )
 	{
+		//Debug.Log("ReceivedSpecificMessage ImageChunk message.ncols("+message.ncols+") message.nrows("+message.nrows+")");
+
 		switch( (ImageEncoding_t)message.imageEncoding )
 		{
 			case ImageEncoding_t.IE_JPEG_COLOR:
@@ -778,13 +781,15 @@ public class RobotEngineManager : MonoBehaviour {
 		}
 		
 		int chunkLength = Math.Min (minipegArray.Length - currentImageIndex, message.chunkSize);
-		Array.Copy (message.data, 0, minipegArray, currentImageIndex, chunkLength);
+		Array.Copy(message.data, 0, minipegArray, currentImageIndex, chunkLength);
 		currentImageIndex += chunkLength;
 		
 		if( ++currentChunkIndex == message.imageChunkCount )
 		{
 			ResetTexture (message.ncols, message.nrows, TextureFormat.RGB24);
-
+			float pixels = message.ncols*message.nrows;
+			float bytesPerPixel = currentImageIndex / pixels;
+			Debug.Log("imageLength("+(message.chunkSize * message.imageChunkCount)+") currentImageIndex("+currentImageIndex+") pixels("+pixels+") bytesPerPixel("+bytesPerPixel+")");
 			MiniGrayToJpeg( minipegArray, ref jpegArray );
 
 			texture.LoadImage( jpegArray );

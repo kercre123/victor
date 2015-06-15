@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using System;
 using System.Collections;
+using System.Collections.Generic;
 
 public class GameController : MonoBehaviour {
 
@@ -66,7 +67,15 @@ public class GameController : MonoBehaviour {
 	protected int timerEventIndex = 0;
 	protected float bonusTime = 0; // bonus time is awarded each time the player numDropsForBonusTime drop offs 
 
-	protected int score = 0;
+	public const int MAX_PLAYERS = 5; //four plus cozmo?
+
+	//supporting four human players plus cozmo for now
+	protected List<int> scores = new List<int>();
+	protected int score {
+		get { return scores[0]; }
+		set { scores[0] = value; }
+	}
+
 	protected int stars = 0;
 	protected bool win = false;
 
@@ -102,6 +111,8 @@ public class GameController : MonoBehaviour {
 			if(stateActions[i] == null) continue;
 			stateActions[i].gameObject.SetActive(false);
 		}
+
+		while(scores.Count < MAX_PLAYERS) scores.Add(0);
 	}
 
 	protected virtual void OnEnable () {
@@ -257,7 +268,7 @@ public class GameController : MonoBehaviour {
 			} else {
 				textTime.text = Mathf.CeilToInt (stateTimer).ToString () + suffix_seconds;
 			}
-		} else {
+		} else if (textTime != null) {
 			textTime.text = string.Empty;
 		}
 
@@ -309,6 +320,12 @@ public class GameController : MonoBehaviour {
 
 		coundownTimer = 0f;
 		countdownAnnounced = false;
+
+		for(int i=0;i<scores.Count;i++) {
+			scores[i] = 0;
+		}
+
+		winners.Clear();
 
 		//if(robot != null) robot.SetObjectAdditionAndDeletion(false, false);
 	}
@@ -459,13 +476,21 @@ public class GameController : MonoBehaviour {
 		return true;
 	}
 
+	protected List<int> winners = new List<int>();
 	protected virtual bool IsGameOver() {
-		if(levelData.maxPlayTime > 0f && stateTimer >= levelData.maxPlayTime) return true;
+		winners.Clear();
+
 		if(levelData.scoreToWin > 0) {
-			if(score >= levelData.scoreToWin) {
-				return true;
+			for(int i=0;i<scores.Count;i++) {
+				if(scores[i] >= levelData.scoreToWin) {
+					winners.Add(i);
+				}
 			}
 		}
+
+		if(winners.Count > 0) return true;
+
+		if(levelData.maxPlayTime > 0f && stateTimer >= levelData.maxPlayTime) return true;
 		
 		return false;
 	}

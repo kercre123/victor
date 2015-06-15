@@ -23,22 +23,19 @@ public class DynamicSliderFrame : MonoBehaviour, IPointerDownHandler, IPointerUp
 
 		canvas = GetComponentInParent<Canvas>();
 	}
-
-
+	
 	void OnEnable() {
-
 		RefreshToScreenSettings();
 
 		ScreenMultiSettingsDetector.ShareSettings += RefreshToScreenSettings;
 
 		if(hintsToHide != null) hintsToHide.gameObject.SetActive(dynamic);
 		if(description != null) description.gameObject.SetActive(true);
-
-		sliderTrans.gameObject.SetActive(!dynamic);
+		if(sliderTrans != null) sliderTrans.gameObject.SetActive(!dynamic);
 	}
 
 	void OnDisable() {
-		if(dynamic) slider.gameObject.SetActive(false);
+		if(sliderTrans != null) sliderTrans.gameObject.SetActive(false);
 		if(hintsToHide != null) hintsToHide.gameObject.SetActive(false);
 		if(description != null) description.gameObject.SetActive(false);
 		ScreenMultiSettingsDetector.ShareSettings -= RefreshToScreenSettings;

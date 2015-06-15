@@ -427,7 +427,7 @@ public class Robot
 			//Debug.Log("CozmoVision.OnEnable observedObjectListType("+observedObjectListType+")");
 		}
 
-		float objectPertinenceRangeOverride = OptionsScreen.GetObjectPertinenceRangeOverride();
+		float objectPertinenceRangeOverride = OptionsScreen.GetMaxDistanceInCubeLengths() * CozmoUtil.BLOCK_LENGTH_MM;
 		if( objectPertinenceRangeOverride >= 0 )
 		{
 			objectPertinenceRange = objectPertinenceRangeOverride;
@@ -569,7 +569,7 @@ public class Robot
 			return;
 		}
 
-		if( message.objectFamily == 3 )
+		if( message.objectFamily == 4 )
 		{
 			AddActiveBlock( activeBlocks.ContainsKey( message.objectID ) ? activeBlocks[ message.objectID ] : null, message );
 		}

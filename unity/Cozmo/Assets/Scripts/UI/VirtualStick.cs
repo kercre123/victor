@@ -80,7 +80,7 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 		get { 
 			
 			float hor = JoystickData.x;
-			if(Mathf.Abs(hor) > horClampThrow) hor = horClampThrow * (hor >= 0f ? 1f : -1f);
+			if(Mathf.Abs(hor) > horClampThrow) hor = horClampThrow * Mathf.Sign(hor);
 			
 			return hor; 
 		}
@@ -130,7 +130,7 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 				}
 				else if(scaleMagFromDeadZone && deadZone.x > 0f) {
 					//smooth scale magnitude from deadzone to full throw
-					res.x = (res.x >= 0f ? 1f : -1f) * Mathf.Lerp(0f, 1f, (Mathf.Abs(res.x) - deadZone.x) / (1f - deadZone.x));
+					res.x = Mathf.Sign(res.x) * Mathf.Lerp(0f, 1f, (Mathf.Abs(res.x) - deadZone.x) / (1f - deadZone.x));
 				}
 				
 				if(Mathf.Abs(res.y) < deadZone.y) {
@@ -138,7 +138,7 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 				}
 				else if(scaleMagFromDeadZone && deadZone.y > 0f) {
 					//smooth scale magnitude from deadzone to full throw
-					res.y = (res.y >= 0f ? 1f : -1f) * Mathf.Lerp(0f, 1f, (Mathf.Abs(res.y) - deadZone.y) / (1f - deadZone.y));
+					res.y = Mathf.Sign(res.y) * Mathf.Lerp(0f, 1f, (Mathf.Abs(res.y) - deadZone.y) / (1f - deadZone.y));
 				}
 			}
 			
@@ -491,8 +491,8 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 			delta = Vector3.ClampMagnitude(delta, radius);
 		}
 		else {
-			delta.x = Mathf.Clamp(Mathf.Abs(delta.x), 0f, bg.rect.width * 0.5f) * (delta.x >= 0f ? 1f : -1f);
-			delta.y = Mathf.Clamp(Mathf.Abs(delta.y), 0f, bg.rect.height * 0.5f) * (delta.y >= 0f ? 1f : -1f);
+			delta.x = Mathf.Clamp(Mathf.Abs(delta.x), 0f, bg.rect.width * 0.5f) * Mathf.Sign(delta.x);
+			delta.y = Mathf.Clamp(Mathf.Abs(delta.y), 0f, bg.rect.height * 0.5f) * Mathf.Sign(delta.y);
 		}
 
 		if(delta.sqrMagnitude <= 0f) {

@@ -1,4 +1,4 @@
-// Version 4.1.2
+// Version 4.2
 // ©2015 Starscene Software. All rights reserved. Redistribution of source code without permission not allowed.
 
 using UnityEngine;
@@ -15,7 +15,7 @@ public enum Brightness {Fog, None}
 [System.Serializable]
 public class VectorLine {
 	public static string Version () {
-		return "Vectrosity version 4.1.1";
+		return "Vectrosity version 4.2";
 	}
 	
 	UIVertex[] m_UIVertices;
@@ -37,7 +37,7 @@ public class VectorLine {
 	bool m_on2DCanvas;
 	int adjustEnd;
 	Color32 m_color;
-	public Color color {
+	public Color32 color {
 		get {return m_color;}
 		set {
 			m_color = value;
@@ -127,15 +127,12 @@ public class VectorLine {
 		set {
 			m_active = value;
 			if (m_canvasRenderer != null) {
-				//Debug.Log(name + " m_active("+m_active+") m_canvasRenderer.SetVertices");
 				m_canvasRenderer.SetVertices (m_UIVertices, m_active? GetVertexCount() : 0);
 			}
 			if (m_capRenderer != null) {
-				//Debug.Log(name + " m_active("+m_active+") m_capRenderer.SetVertices");
 				m_capRenderer.SetVertices (m_capVertices, m_active? 8 : 0);
 			}
 			if (m_fillRenderer != null) {
-				//Debug.Log(name + " m_active("+m_active+") m_fillRenderer.SetVertices");
 				m_fillRenderer.SetVertices (m_fillVertices, m_active? m_fillVertexCount : 0);
 			}
 		}
@@ -218,8 +215,19 @@ public class VectorLine {
 	}
 	int m_endPointsUpdate;
 	public int endPointsUpdate {
-		get {return m_endPointsUpdate;}
+		get {
+			if (m_continuous) {
+				return m_endPointsUpdate;
+			}
+			// Actually works with odd numbers for discrete lines (except 0), but makes more intuitive sense to work with even numbers, so we fake it
+			return (m_endPointsUpdate == 0)? 0 : m_endPointsUpdate + 1;
+		}
 		set {
+			if (!m_continuous) {
+				if (value > 1 && (value & 1) == 0) { // No even numbers for discrete lines
+					value--;
+				}
+			}
 			m_endPointsUpdate = Mathf.Max (0, value);
 		}
 	}
@@ -587,8 +595,10 @@ public class VectorLine {
 	}
 	
 	private void SetupEndCap () {		
+		if (m_UIVertices == null) return;
 		m_capVertices = new UIVertex[8];
 		Color32 endColor = color;
+		
 		if (m_UIVertices.Length > 0) {
 			endColor = m_UIVertices[m_vertexCount-1].color;
 		}
@@ -825,7 +835,7 @@ public class VectorLine {
 			float s2 = w3.x - w1.x;
 			float t1 = w2.y - w1.y;
 			float t2 = w3.y - w1.y;
-	
+			
 			float r = 1.0f / (s1 * t2 - s2 * t1);
 			Vector3 sdir = new Vector3((t2 * x1 - t1 * x2) * r, (t2 * y1 - t1 * y2) * r, (t2 * z1 - t1 * z2) * r);
 			Vector3 tdir = new Vector3((s1 * x2 - s2 * x1) * r, (s1 * y2 - s2 * y1) * r, (s1 * z2 - s2 * z1) * r);
@@ -838,7 +848,7 @@ public class VectorLine {
 			tan2[i2] += tdir;
 			tan2[i3] += tdir;
 		}
-	
+		
 		for (int i = 0; i < m_vertexCount; i++) {
 			Vector3 n = m_UIVertices[i].normal;
 			Vector3 t = tan1[i];
@@ -881,12 +891,11 @@ public class VectorLine {
 		}
 		while (m_canvases.Count < id+1) {
 			var go = new GameObject((m_canvases.Count == 0)? "VectorCanvas" : "VectorCanvas_"+(m_canvases.Count));
-			//go.layer = LayerMask.NameToLayer ("UI");
+			go.layer = LayerMask.NameToLayer ("UI");
 			var pos = go.transform.position;
 			go.transform.position = pos;
 			var canvas = go.AddComponent<Canvas>();
 			canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-			//canvas.worldCamera = Camera.main;
 			canvas.sortingOrder = 1;
 			m_canvases.Add (canvas);
 		}
@@ -936,7 +945,7 @@ public class VectorLine {
 		if (m_canvases == null || m_canvases.Count < id+1 || m_canvases[id] == null) {
 			SetCanvas (id);
 		}
-		m_canvases[id].renderMode = RenderMode.ScreenSpaceOverlay;
+		m_canvases[id].renderMode = RenderMode.ScreenSpaceCamera;
 		m_canvases[id].worldCamera = cam;
 	}
 	
@@ -958,7 +967,7 @@ public class VectorLine {
 				if (m_canvases3D[i] == null) {
 					break;
 				}
-				m_canvases3D[i].worldCamera = cam3D;				
+				m_canvases3D[i].worldCamera = cam3D;
 			}
 		}
 	}
@@ -1012,7 +1021,7 @@ public class VectorLine {
 					return false;
 				}
 				Debug.LogError ("VectorLine: Calling " + functionNames[(int)functionName] + " with an index of " + index + " would exceed the length of the Vector array for \"" + name + "\"");
-				return false;				
+				return false;
 			}
 			return true;
 		}
@@ -1035,16 +1044,18 @@ public class VectorLine {
 				}
 				Debug.LogError ("VectorLine: Calling " + functionNames[(int)functionName] + " with an index of " + index + " would exceed the length of the Vector array for \"" + name + "\"");
 				return false;
-			}	
+			}
 		}
 		return true;
 	}
 	
-	private void SetEndCapColors () {		
+	private void SetEndCapColors () {
+		if (m_UIVertices.Length < 4) return;
+		
 		if (m_capType <= EndCap.Mirror) {
 			int vIndex = m_continuous? m_drawStart * 4 : m_drawStart * 2;
 			for (int i = 0; i < 4; i++) {
-				m_capVertices[i].color = m_UIVertices[i + vIndex].color;
+				m_capVertices[i].color = m_UIVertices[vIndex].color;
 			}
 		}
 		if (m_capType >= EndCap.Both) {
@@ -1060,21 +1071,21 @@ public class VectorLine {
 				vIndex = -4;
 			}
 			for (int i = 4; i < 8; i++) {
-				m_capVertices[i].color = m_UIVertices[i + vIndex].color;
+				m_capVertices[i].color = m_UIVertices[5 + vIndex].color;
 			}
 		}
 		m_capRenderer.SetVertices (m_capVertices, m_active? 8 : 0);
 	}
 	
-	public void SetColor (Color color) {
+	public void SetColor (Color32 color) {
 		SetColor (color, 0, pointsCount);
 	}
 	
-	public void SetColor (Color color, int index) {
+	public void SetColor (Color32 color, int index) {
 		SetColor (color, index, index);
 	}
 	
-	public void SetColor (Color color, int startIndex, int endIndex) {
+	public void SetColor (Color32 color, int startIndex, int endIndex) {
 		int max = MaxSegmentIndex();
 		startIndex = Mathf.Clamp (startIndex*4 + (smoothColor? 2 : 0), 0, max*4);
 		endIndex = Mathf.Clamp ((endIndex + 1)*4 + (smoothColor? 2 : 0), 0, max*4);
@@ -1096,11 +1107,11 @@ public class VectorLine {
 		}
 	}
 
-	public void SetColors (List<Color> lineColors) {
+	public void SetColors (List<Color32> lineColors) {
 		SetColors (lineColors.ToArray());
 	}
 
-	public void SetColors (Color[] lineColors) {
+	public void SetColors (Color32[] lineColors) {
 		if (lineColors == null) {
 			Debug.LogError ("VectorLine.SetColors: lineColors array must not be null");
 			return;
@@ -1588,9 +1599,7 @@ public class VectorLine {
 	
 	private bool CheckPointCount () {
 		if (pointsCount < (m_isPoints? 1 : 2)) {
-			if (m_canvasRenderer != null) {
-				m_canvasRenderer.SetVertices (m_UIVertices, 0);
-			}
+			m_canvasRenderer.SetVertices (m_UIVertices, 0);
 			if (m_capType != EndCap.None) {
 				m_capRenderer.SetVertices (m_capVertices, 0);
 			}
@@ -1773,6 +1782,7 @@ public class VectorLine {
 			}
 			m_UIVertices[idx+2].position.x = p2.x + px.x; m_UIVertices[idx+2].position.y = p2.y + px.y;
 			m_UIVertices[idx+1].position.x = p2.x - px.x; m_UIVertices[idx+1].position.y = p2.y - px.y;
+			
 			idx += 4;
 			widthIdx += widthIdxAdd;
 		}
@@ -1833,7 +1843,7 @@ public class VectorLine {
 					pos2 = cam3D.WorldToScreenPoint (m_points3[i+1]);
 				}
 			}
-			if ((pos1.x == pos2.x && pos1.y == pos2.y) || (pos1.z < 0.0f && pos2.z < 0.0f) || (pos1.x > sw && pos2.x > sw) || (pos1.y > sh && pos2.y > sh)) {
+			if ((pos1.x == pos2.x && pos1.y == pos2.y) || (pos1.z < 0.0f && pos2.z < 0.0f) || ((pos1.x > sw && pos1.z < 0.0f) || (pos2.x > sw && pos2.z < 0.0f)) || ((pos1.y > sh && pos1.z < 0.0f) || (pos2.y > sh && pos2.z < 0.0f)) ) {
 				SkipQuad (ref idx, ref widthIdx, ref widthIdxAdd);
 				continue;
 			}
@@ -1920,7 +1930,7 @@ public class VectorLine {
 				pos1 = cam3D.WorldToScreenPoint (m_points3[i]);
 				pos2 = cam3D.WorldToScreenPoint (m_points3[i+1]);
 			}
-			if ((pos1.x == pos2.x && pos1.y == pos2.y) || (pos1.z < 0.0f && pos2.z < 0.0f) || (pos1.x > sw && pos2.x > sw) || (pos1.y > sh && pos2.y > sh)) {
+			if ((pos1.x == pos2.x && pos1.y == pos2.y) || (pos1.z < 0.0f && pos2.z < 0.0f) || ((pos1.x > sw && pos1.z < 0.0f) || (pos2.x > sw && pos2.z < 0.0f)) || ((pos1.y > sh && pos1.z < 0.0f) || (pos2.y > sh && pos2.z < 0.0f)) ) {
 				SkipQuad3D (ref idx, ref widthIdx, ref widthIdxAdd);
 				continue;
 			}
@@ -2195,10 +2205,12 @@ public class VectorLine {
 	}
 	
 	public static void LineManagerDisable () {
+		Debug.Log ("LineManagerDisable");
 		lineManager.DisableIfUnused();
 	}
 	
 	public static void LineManagerEnable () {
+		Debug.Log ("LineManagerEnable");
 		lineManager.EnableIfUsed();
 	}
 

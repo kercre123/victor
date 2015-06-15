@@ -116,7 +116,10 @@ public class VectrosityCube : MonoBehaviour {
 	}
 
 	void OnDestroy() {
-		if(line != null) VectorLine.Destroy(ref line);
+		if(line != null) {
+			Debug.Log("VectrosityCube OnDestroy VectorLine.Destroy(ref line);");
+			VectorLine.Destroy(ref line);
+		}
 	}
 
 }

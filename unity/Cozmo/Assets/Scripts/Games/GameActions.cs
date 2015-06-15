@@ -88,6 +88,8 @@ public class GameActions : MonoBehaviour
 
 		_SetActionButtons( isSlider );
 
+		if( isSlider && ActionSliderPanel.instance.actionSlider.Pressed && buttons[2].changed ) buttons[2].SetToLastMode();
+
 		CheckChangedButtons();
 	}
 

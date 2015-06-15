@@ -69,7 +69,7 @@ public class PlayerRelativeControls : MonoBehaviour {
 		float relativeRobotFacing = MathUtil.AngleDelta(robotStartHeading, robotFacing);
 
 		float screenToRobot = MathUtil.AngleDelta(relativeScreenFacing, relativeRobotFacing);
-		float throwAngle = Vector2.Angle(Vector2.up, inputs.normalized) * (Vector2.Dot(inputs.normalized, Vector2.right) >= 0f ? -1f : 1f);
+		float throwAngle = Vector2.Angle(Vector2.up, inputs.normalized) * -Mathf.Sign(Vector2.Dot(inputs.normalized, Vector2.right));
 		float relativeAngle = MathUtil.AngleDelta(screenToRobot, throwAngle);
 
 		Debug.Log("RobotRelativeControls relativeScreenFacing("+relativeScreenFacing+") relativeRobotFacing("+relativeRobotFacing+") screenToRobot("+screenToRobot+") throwAngle("+throwAngle+") relativeAngle("+relativeAngle+")");

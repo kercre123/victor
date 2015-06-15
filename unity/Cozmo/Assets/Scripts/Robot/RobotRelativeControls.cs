@@ -314,7 +314,7 @@ public class RobotRelativeControls : MonoBehaviour {
 		if(turn > targetLockMinTurnAngle) {
 			turn = Mathf.Lerp(0f, 1f, turn / targetLockMaxTurnAngle);
 			turn = turn * turn;
-			inputs.x = turn * (Vector2.Dot(atTarget, robotRight) >= 0f ? 1f : -1f);
+			inputs.x = turn * Mathf.Sign(Vector2.Dot(atTarget, robotRight));
 			if(debugTargetLock) Debug.Log("frame("+Time.frameCount+") time("+Time.timeSinceLevelLoad+") snapHeadingToSelectedObject turn("+turn+") selected("+robot.selectedObjects[0]+") robot.Rotation("+robot.Rotation+")");
 		}
 	

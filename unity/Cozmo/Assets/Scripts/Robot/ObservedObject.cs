@@ -44,12 +44,42 @@ public class ObservedObject
 	public float TimeLastSeen { get; private set; }
 	public float TimeCreated { get; private set; }
 
-	private Robot robot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.current : null; } }
+	protected Robot robot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.current : null; } }
 
 	public bool isActive { get { return cubeType == CubeType.LIGHT_CUBE; } }
 
 	public event Action<ObservedObject> OnDelete;
 	public static Action SignificantChangeDetected = null;
+
+	public float targetingScore
+	{
+		get
+		{
+			float score = -1f;
+
+			if( robot.carryingObject != ID )
+			{
+				float distanceFromRobot = Vector2.Distance( robot.WorldPosition, WorldPosition ) - ( CozmoUtil.BLOCK_LENGTH_MM * 0.5f ) + CozmoUtil.CARRIED_OBJECT_HORIZONTAL_OFFSET;
+				float angleFromRobot = Vector2.Angle( robot.Forward, WorldPosition - robot.WorldPosition );
+				float maxDistanceInMM = maxDistanceInCubeLengths * CozmoUtil.BLOCK_LENGTH_MM;
+
+				if( maxDistanceInMM > distanceFromRobot && maxAngle > angleFromRobot )
+				{
+					float distanceScore = ( 100f - Mathf.Lerp( 0f, 100f, distanceFromRobot / maxDistanceInMM ) ) * distanceScoreMultiplier;
+					float angleScore = ( 100f - Mathf.Lerp( 0f, 100f, angleFromRobot / maxAngle ) ) * angleScoreMultiplier;
+
+					score = distanceScore + angleScore;
+				}
+			}
+
+			return score;
+		}
+	}
+
+	private static float angleScoreMultiplier = 1f;
+	private static float distanceScoreMultiplier = 1f;
+	private static float maxAngle = 45f;
+	private static float maxDistanceInCubeLengths = 8f;
 
 	public bool canBeStackedOn
 	{
@@ -65,8 +95,6 @@ public class ObservedObject
 	}
 	
 	public const float RemoveDelay = 0.15f;
-
-	public float Distance { get { return Vector2.Distance( RobotEngineManager.instance.current.WorldPosition, WorldPosition ); } }
 
 	public string InfoString { get; private set; }
 	public string SelectInfoString { get; private set; }
@@ -87,7 +115,7 @@ public class ObservedObject
 		InfoString = "ID: " + ID + " Family: " + Family + " Type: " + ObjectType;
 		SelectInfoString = "Select ID: " + ID + " Family: " + Family + " Type: " + ObjectType;
 
-		if (objectFamily == 3) {
+		if (objectFamily == 4) {
 			cubeType = CubeType.LIGHT_CUBE;
 		} else if (objectType == 4 || objectType == 5) {
 			cubeType = CubeType.BULLS_EYE;
@@ -99,7 +127,9 @@ public class ObservedObject
 			Debug.LogWarning("Object " + ID + " with type " + objectType + " is unsupported"); 
 		}
 
-		//Debug.Log ("ObservedObject cubeType("+cubeType+") from objectFamily("+objectFamily+") objectType("+objectType+")" );
+		Debug.Log ("ObservedObject cubeType("+cubeType+") from objectFamily("+objectFamily+") objectType("+objectType+")" );
+
+		SetTargetingScoreSettings();
 	}
 
 	public static implicit operator uint( ObservedObject observedObject )
@@ -164,5 +194,33 @@ public class ObservedObject
 		}
 		
 		return face;
+	}
+
+	public static void RefreshAngleScoreMultiplier()
+	{
+		angleScoreMultiplier = OptionsScreen.GetAngleScoreMultiplier();
+	}
+
+	public static void RefreshDistanceScoreMultiplier()
+	{
+		distanceScoreMultiplier = OptionsScreen.GetDistanceScoreMultiplier();
+	}
+
+	public static void RefreshMaxAngle()
+	{
+		maxAngle = OptionsScreen.GetMaxAngle();
+	}
+
+	public static void RefreshMaxDistanceInCubeLengths()
+	{
+		maxDistanceInCubeLengths = OptionsScreen.GetMaxDistanceInCubeLengths();
+	}
+
+	private void SetTargetingScoreSettings()
+	{
+		RefreshAngleScoreMultiplier();
+		RefreshDistanceScoreMultiplier();
+		RefreshMaxAngle();
+		RefreshMaxDistanceInCubeLengths();
 	}
 }

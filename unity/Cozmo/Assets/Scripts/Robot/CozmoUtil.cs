@@ -18,6 +18,7 @@ public static class CozmoUtil {
 	public const float HEAD_ANGLE_REQUEST_TIME 	= 3f;
 	public const float CARRIED_OBJECT_HEIGHT 	= 75f;
 	public const float CARRIED_OBJECT_VERTICAL_OFFSET = -15f;  //this is fudged
+	public const float CARRIED_OBJECT_HORIZONTAL_OFFSET = -30f;
 
 	public static Vector3 Vector3UnityToCozmoSpace(Vector3 vector) {
 		float forward = vector.z;
@@ -49,26 +50,25 @@ public static class CozmoUtil {
 		float speed = inputs.magnitude;
 		float turn = inputs.x;
 
-		speed = Mathf.Clamp01(speed*speed) * (inputs.y >= 0f ? 1f : -1f);
-		//turn = Mathf.Clamp01(turn*turn) * (turn >= 0f ? 1f : -1f);
+		speed = Mathf.Clamp01(speed*speed) * Mathf.Sign(inputs.y);
 
 		if(turn == 0f) { 
 			//forward or backwards, scale speed from min to max
-			speed = Mathf.Lerp(MIN_WHEEL_SPEED_MM, MAX_WHEEL_SPEED_MM, Mathf.Abs(speed)) * (speed >= 0f ? 1f : -1f);
+			speed = Mathf.Lerp(MIN_WHEEL_SPEED_MM, MAX_WHEEL_SPEED_MM, Mathf.Abs(speed)) * Mathf.Sign(speed);
 
 			leftWheelSpeed = speed;
 			rightWheelSpeed = speed;
 		}
 		else if(inputs.y == 0f) {
 			//turn in place left or right, scale speed from min to max including maxTurnFactor
-			speed = Mathf.Lerp(MIN_WHEEL_SPEED_MM, MAX_WHEEL_SPEED_MM, Mathf.Abs(speed) * maxTurnFactor) * (speed >= 0f ? 1f : -1f);
+			speed = Mathf.Lerp(MIN_WHEEL_SPEED_MM, MAX_WHEEL_SPEED_MM, Mathf.Abs(speed) * maxTurnFactor) * Mathf.Sign(speed);
 
 			leftWheelSpeed = turn > 0f ? speed : -speed;
 			rightWheelSpeed = turn > 0f ? -speed : speed;
 		}
 		else {
 			//drive and turn
-			speed = Mathf.Lerp(MIN_WHEEL_SPEED_MM, MAX_WHEEL_SPEED_MM, Mathf.Abs(speed)) * (speed >= 0f ? 1f : -1f);
+			speed = Mathf.Lerp(MIN_WHEEL_SPEED_MM, MAX_WHEEL_SPEED_MM, Mathf.Abs(speed)) * Mathf.Sign(speed);
 
 			float speedA = speed;
 			float speedB = Mathf.Lerp(speed, speed*0.5f*(1f-maxTurnFactor), Mathf.Abs(turn));
@@ -99,17 +99,17 @@ public static class CozmoUtil {
 		float turn = 0f;
 
 		if(!reverse) {
-			if(maxAngle > 0f) turn = Mathf.Clamp01(Vector2.Angle(Vector2.up, inputs) / maxAngle) * (inputs.x >= 0f ? 1f : -1f);
+			if(maxAngle > 0f) turn = Mathf.Clamp01(Vector2.Angle(Vector2.up, inputs) / maxAngle) * Mathf.Sign(inputs.x);
 		}
 		else {
-			if(maxAngle > 0f) turn = Mathf.Clamp01(Vector2.Angle(-Vector2.up, inputs) / maxAngle) * (inputs.x >= 0f ? 1f : -1f);
+			if(maxAngle > 0f) turn = Mathf.Clamp01(Vector2.Angle(-Vector2.up, inputs) / maxAngle) * Mathf.Sign(inputs.x);
 			speed = -speed;
 		}
 
 		speed = speed*speed * (speed < 0f ? -1f : 1f);
 		//turn = turn*turn * (turn < 0f ? -1f : 1f);
 
-		speed = Mathf.Lerp(MIN_WHEEL_SPEED_MM, MAX_WHEEL_SPEED_MM, Mathf.Abs(speed)) * (speed >= 0f ? 1f : -1f);
+		speed = Mathf.Lerp(MIN_WHEEL_SPEED_MM, MAX_WHEEL_SPEED_MM, Mathf.Abs(speed)) * Mathf.Sign(speed);
 
 		float speedA = speed;
 		float speedB = speed;
@@ -130,7 +130,7 @@ public static class CozmoUtil {
 		rightWheelSpeed = 0f;
 		if(x == 0f) return;
 
-		float speed = Mathf.Lerp(MIN_WHEEL_SPEED_MM, MAX_WHEEL_SPEED_MM, Mathf.Abs(x) * maxTurnFactor) * (x >= 0f ? 1f : -1f);
+		float speed = Mathf.Lerp(MIN_WHEEL_SPEED_MM, MAX_WHEEL_SPEED_MM, Mathf.Abs(x) * maxTurnFactor) * Mathf.Sign(x);
 
 		leftWheelSpeed = speed;
 		rightWheelSpeed = -speed;
@@ -150,17 +150,17 @@ public static class CozmoUtil {
 		bool reverse = inputs.y < 0f;
 
 		if(!reverse) {
-			if(maxAngle > 0f) turn = Mathf.Clamp01(Vector2.Angle(Vector2.up, inputs) / maxAngle) * (inputs.x >= 0f ? 1f : -1f);
+			if(maxAngle > 0f) turn = Mathf.Clamp01(Vector2.Angle(Vector2.up, inputs) / maxAngle) * Mathf.Sign(inputs.x);
 		}
 		else {
-			if(maxAngle > 0f) turn = Mathf.Clamp01(Vector2.Angle(-Vector2.up, inputs) / maxAngle) * (inputs.x >= 0f ? 1f : -1f);
+			if(maxAngle > 0f) turn = Mathf.Clamp01(Vector2.Angle(-Vector2.up, inputs) / maxAngle) * Mathf.Sign(inputs.x);
 			speed = -speed;
 		}
 		
 		speed = speed*speed * (speed < 0f ? -1f : 1f);
 		//turn = turn*turn * (turn < 0f ? -1f : 1f);
 		
-		speed = Mathf.Lerp(MIN_WHEEL_SPEED_MM, MAX_WHEEL_SPEED_MM, Mathf.Abs(speed)) * (speed >= 0f ? 1f : -1f);
+		speed = Mathf.Lerp(MIN_WHEEL_SPEED_MM, MAX_WHEEL_SPEED_MM, Mathf.Abs(speed)) * Mathf.Sign(speed);
 		
 		float speedA = speed;
 		float speedB = speed;

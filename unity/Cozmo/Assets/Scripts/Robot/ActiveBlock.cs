@@ -110,8 +110,6 @@ public class ActiveBlock : ObservedObject
 
 	private U2G.SetAllActiveObjectLEDs SetAllActiveObjectLEDsMessage;
 
-	private Robot robot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.current : null; } }
-
 	public AudioClip modeSound { get { return GameActions.instance != null ? GameActions.instance.GetActiveBlockModeSound( mode ) : null; } } 
 	public float modeDelay { get { return modeSound != null ? modeSound.length : 0f; } }
 

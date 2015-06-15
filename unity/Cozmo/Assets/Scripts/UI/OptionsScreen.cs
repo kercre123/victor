@@ -19,7 +19,20 @@ public class OptionsScreen : MonoBehaviour {
 	[SerializeField] Toggle toggle_autoCollect;
 
 	[SerializeField] ComboBox pertinent_objects;
-	[SerializeField] InputField pertinent_object_range;
+	[SerializeField] InputField angleScoreMultiplier;
+	[SerializeField] InputField distanceScoreMultiplier;
+	[SerializeField] InputField maxAngle;
+	[SerializeField] InputField maxDistanceInCubeLengths;
+
+	[SerializeField] InputField spinnerSettings_StartMultiplier;
+	[SerializeField] InputField spinnerSettings_MinStart;
+	[SerializeField] InputField spinnerSettings_MaxSpeed;
+	[SerializeField] InputField spinnerSettings_MinSpeed;
+	[SerializeField] InputField spinnerSettings_Drag;
+	[SerializeField] InputField spinnerSettings_MaxSamples;
+	[SerializeField] InputField spinnerSettings_PegThreshold;
+	[SerializeField] InputField spinnerSettings_PegSlowFactor;
+
 
 	public static Action RefreshSettings = null;
 
@@ -46,9 +59,9 @@ public class OptionsScreen : MonoBehaviour {
 
 	void Awake () {
 		if(instance != null) {
-			//Debug.Log("OptionsScreen destroying self, because instance already exists.");
-			GameObject.Destroy(gameObject);
-			return;
+			//Debug.Log("OptionsScreen destroying old options, because scene specific layouts might differ.");
+			GameObject.Destroy(instance.gameObject);
+			//return;
 		}
 		instance = this;
 		DontDestroyOnLoad(gameObject);
@@ -126,14 +139,93 @@ public class OptionsScreen : MonoBehaviour {
 			pertinent_objects.ClearItems();
 			pertinent_objects.AddItems(pertinentObjectTypes);
 			pertinent_objects.OnSelectionChanged = ObjectPertinence;
-			pertinent_objects.SelectedIndex = PlayerPrefs.GetInt("ObjectPertinence" + GetVisionSelected().ToString(), 0);
+			pertinent_objects.SelectedIndex = GetObjectPertinenceTypeOverride();
 		}
 
-		if(pertinent_object_range != null) {
-			pertinent_object_range.text = PlayerPrefs.GetInt("ObjectPertinenceRange" + GetVisionSelected().ToString(), Mathf.RoundToInt(CozmoUtil.BLOCK_LENGTH_MM * 6)).ToString();
-			pertinent_object_range.onValueChange.AddListener(ObjectPertinenceRange);
+		if(angleScoreMultiplier != null) {
+			angleScoreMultiplier.text = GetAngleScoreMultiplier().ToString();
+			angleScoreMultiplier.onValueChange.AddListener(AngleScoreMultiplier);
 		}
 
+		if(distanceScoreMultiplier != null) {
+			distanceScoreMultiplier.text = GetDistanceScoreMultiplier().ToString();
+			distanceScoreMultiplier.onValueChange.AddListener(DistanceScoreMultiplier);
+		}
+
+		if(maxAngle != null) {
+			maxAngle.text = GetMaxAngle().ToString();
+			maxAngle.onValueChange.AddListener(MaxAngle);
+		}
+
+		if(maxDistanceInCubeLengths != null) {
+			maxDistanceInCubeLengths.text = GetMaxDistanceInCubeLengths().ToString();
+			maxDistanceInCubeLengths.onValueChange.AddListener(MaxDistanceInCubeLengths);
+		}
+
+		spinnerSettings_StartMultiplier.text = PlayerPrefs.GetFloat("SpinMultiplier", 2f).ToString();
+		spinnerSettings_StartMultiplier.onValueChange.AddListener(SetSpinnerSetting_StartMultiplier);
+
+		spinnerSettings_MinStart.text = PlayerPrefs.GetFloat("SpinnerMinStartingVelocityDegPS", 360f).ToString();
+		spinnerSettings_MinStart.onValueChange.AddListener(SetSpinnerSetting_MinStart);
+
+		spinnerSettings_MaxSpeed.text = PlayerPrefs.GetFloat("SpinnerMaxAngularVelocityDegPS", 3600f).ToString();
+		spinnerSettings_MaxSpeed.onValueChange.AddListener(SetSpinnerSetting_MaxSpeed);
+
+		spinnerSettings_MinSpeed.text = PlayerPrefs.GetFloat("SpinnerMinAngularVelocityDegPS", 1f).ToString();
+		spinnerSettings_MinSpeed.onValueChange.AddListener(SetSpinnerSetting_MinSpeed);
+
+		spinnerSettings_Drag.text = PlayerPrefs.GetFloat("DragCoefficient", 0.3f).ToString();
+		spinnerSettings_Drag.onValueChange.AddListener(SetSpinnerSetting_Drag);
+
+		spinnerSettings_MaxSamples.text = PlayerPrefs.GetInt("MaxDragSamples", 5).ToString();
+		spinnerSettings_MaxSamples.onValueChange.AddListener(SetSpinnerSetting_MaxSamples);
+
+		spinnerSettings_PegThreshold.text = PlayerPrefs.GetFloat("SpinnerPegsSlowDownThreshold", 360f).ToString();
+		spinnerSettings_PegThreshold.onValueChange.AddListener(SetSpinnerSetting_PegThreshold);
+
+		spinnerSettings_PegSlowFactor.text = PlayerPrefs.GetFloat("SpinnerPegsSlowDownFactor", 0.9f).ToString();
+		spinnerSettings_PegSlowFactor.onValueChange.AddListener(SetSpinnerSetting_PegSlowFactor);
+	}
+
+	void SetSpinnerSetting_StartMultiplier(string text) {
+		float value;
+		if(!float.TryParse(text, out value)) return;
+		PlayerPrefs.SetFloat("SpinMultiplier", value);
+	}
+	void SetSpinnerSetting_MinStart(string text) {
+		float value;
+		if(!float.TryParse(text, out value)) return;
+		PlayerPrefs.SetFloat("SpinnerMinStartingVelocityDegPS", value);
+	}
+	void SetSpinnerSetting_MaxSpeed(string text) {
+		float value;
+		if(!float.TryParse(text, out value)) return;
+		PlayerPrefs.SetFloat("SpinnerMaxAngularVelocityDegPS", value);
+	}
+	void SetSpinnerSetting_MinSpeed(string text) {
+		float value;
+		if(!float.TryParse(text, out value)) return;
+		PlayerPrefs.SetFloat("SpinnerMinAngularVelocityDegPS", value);
+	}
+	void SetSpinnerSetting_Drag(string text) {
+		float value;
+		if(!float.TryParse(text, out value)) return;
+		PlayerPrefs.SetFloat("DragCoefficient", value);
+	}
+	void SetSpinnerSetting_MaxSamples(string text) {
+		int value;
+		if(!int.TryParse(text, out value)) return;
+		PlayerPrefs.SetInt("MaxDragSamples", value);
+	}
+	void SetSpinnerSetting_PegThreshold(string text) {
+		float value;
+		if(!float.TryParse(text, out value)) return;
+		PlayerPrefs.SetFloat("SpinnerPegsSlowDownThreshold", value);
+	}
+	void SetSpinnerSetting_PegSlowFactor(string text) {
+		float value;
+		if(!float.TryParse(text, out value)) return;
+		PlayerPrefs.SetFloat("SpinnerPegsSlowDownFactor", value);
 	}
 
 	void AddListeners() {
@@ -218,13 +310,40 @@ public class OptionsScreen : MonoBehaviour {
 		if(robot != null) robot.RefreshObjectPertinence();
 	}
 
-	void ObjectPertinenceRange(string value) {
-
-		int range;
-		if(int.TryParse(value, out range)) {
-			PlayerPrefs.SetInt("ObjectPertinenceRange" + GetVisionSelected().ToString(), range);
+	void AngleScoreMultiplier(string value) {
+		float multiplier;
+		if(float.TryParse(value, out multiplier)) {
+			PlayerPrefs.SetFloat("AngleScoreMultiplier" + GetVisionSelected().ToString(), multiplier);
 		}
+		
+		ObservedObject.RefreshAngleScoreMultiplier();
+	}
 
+	void DistanceScoreMultiplier(string value) {
+		float multiplier;
+		if(float.TryParse(value, out multiplier)) {
+			PlayerPrefs.SetFloat("DistanceScoreMultiplier" + GetVisionSelected().ToString(), multiplier);
+		}
+		
+		ObservedObject.RefreshDistanceScoreMultiplier();
+	}
+
+	void MaxAngle(string value) {
+		float ignore;
+		if(float.TryParse(value, out ignore)) {
+			PlayerPrefs.SetFloat("MaxAngle" + GetVisionSelected().ToString(), ignore);
+		}
+		
+		ObservedObject.RefreshMaxAngle();
+	}
+
+	void MaxDistanceInCubeLengths(string value) {
+		float ignore;
+		if(float.TryParse(value, out ignore)) {
+			PlayerPrefs.SetFloat("MaxDistanceInCubeLengths" + GetVisionSelected().ToString(), ignore);
+		}
+		
+		ObservedObject.RefreshMaxDistanceInCubeLengths();
 		if(robot != null) robot.RefreshObjectPertinence();
 	}
 
@@ -260,12 +379,24 @@ public class OptionsScreen : MonoBehaviour {
 		return PlayerPrefs.GetInt("VisionFadeDisabled" + GetVisionSelected().ToString(), defaultValue ? 1 : 0) > 0 ? true : false;
 	}
 
-	public static int GetObjectPertinenceTypeOverride() {
-		return PlayerPrefs.GetInt("ObjectPertinence" + GetVisionSelected().ToString(), 0);
+	public static int GetObjectPertinenceTypeOverride(int defaultValue = 0) {
+		return PlayerPrefs.GetInt("ObjectPertinence" + GetVisionSelected().ToString(), defaultValue);
 	}
 
-	public static int GetObjectPertinenceRangeOverride() {
-		return PlayerPrefs.GetInt("ObjectPertinenceRange" + GetVisionSelected().ToString(), Mathf.RoundToInt(CozmoUtil.BLOCK_LENGTH_MM * 6));
+	public static float GetAngleScoreMultiplier(float defaultValue = 1f) {
+		return PlayerPrefs.GetFloat("AngleScoreMultiplier" + GetVisionSelected().ToString(), defaultValue);
+	}
+
+	public static float GetDistanceScoreMultiplier(float defaultValue = 1f) {
+		return PlayerPrefs.GetFloat("DistanceScoreMultiplier" + GetVisionSelected().ToString(), defaultValue);
+	}
+
+	public static float GetMaxAngle(float defaultValue = 45f) {
+		return PlayerPrefs.GetFloat("MaxAngle" + GetVisionSelected().ToString(), defaultValue);
+	}
+
+	public static float GetMaxDistanceInCubeLengths(float defaultValue = 8f) {
+		return PlayerPrefs.GetFloat("MaxDistanceInCubeLengths" + GetVisionSelected().ToString(), defaultValue);
 	}
 
 	void ToggleUserTestMode(bool val) {
@@ -297,16 +428,36 @@ public class OptionsScreen : MonoBehaviour {
 		}
 
 		for(int i = 0; i < 5; ++i) {
-			PlayerPrefs.DeleteKey("ObjectPertinenceRange" + i.ToString());
-		}
-
-		for(int i = 0; i < 5; ++i) {
 			PlayerPrefs.DeleteKey("VisionDisabled" + i.ToString());
 		}
 
 		for(int i = 0; i < 5; ++i) {
 			PlayerPrefs.DeleteKey("VisionFadeDisabled" + i.ToString());
 		}
+
+		for(int i = 0; i < 5; ++i) {
+			PlayerPrefs.DeleteKey("AngleScoreMultiplier" + i.ToString());
+		}
+
+		for(int i = 0; i < 5; ++i) {
+			PlayerPrefs.DeleteKey("DistanceScoreMultiplier" + i.ToString());
+		}
+
+		for(int i = 0; i < 5; ++i) {
+			PlayerPrefs.DeleteKey("MaxAngle" + i.ToString());
+		}
+		for(int i = 0; i < 5; ++i) {
+			PlayerPrefs.DeleteKey("MaxDistanceInCubeLengths" + i.ToString());
+		}
+
+		PlayerPrefs.DeleteKey("SpinMultiplier");
+		PlayerPrefs.DeleteKey("SpinnerMinStartingVelocityDegPS");
+		PlayerPrefs.DeleteKey("SpinnerMaxAngularVelocityDegPS");
+		PlayerPrefs.DeleteKey("SpinnerMinAngularVelocityDegPS");
+		PlayerPrefs.DeleteKey("DragCoefficient");
+		PlayerPrefs.DeleteKey("MaxDragSamples");
+		PlayerPrefs.DeleteKey("SpinnerPegsSlowDownThreshold");
+		PlayerPrefs.DeleteKey("SpinnerPegsSlowDownFactor");
 
 		RemoveListeners();
 		Init();
