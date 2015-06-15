@@ -99,7 +99,7 @@ public class VortexController : GameController {
 		VortexState nextPlayState = GetNextPlayState();
 
 		if(playState != nextPlayState) {
-			Debug.Log("frame("+Time.frameCount+") playState("+playState+")->("+nextPlayState+")");
+			//Debug.Log("frame("+Time.frameCount+") playState("+playState+")->("+nextPlayState+")");
 			ExitPlayState();
 			playState = nextPlayState;
 			EnterPlayState();

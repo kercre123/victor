@@ -28,8 +28,13 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 	int maxSamples = 5;
 	bool usePegs = true;
 	float pegSlowDownThreshold = 360f;
-	//[SerializeField] float pegBounceThreshold = 5f;
+	[SerializeField] float pegBounceThreshold = 5f;
+	[SerializeField] float pegBounceVelFactor = 0.25f;
+	[SerializeField] float pegVelFactor = 0.25f;
+	[SerializeField] float pegDegrees = 1f;
 	float pegSlowDownFactor = 0.9f;
+
+	[SerializeField] bool useRigidbodyPhysics = false;
 
 	[SerializeField] Color[] imageColors = { Color.white, Color.black };
 	[SerializeField] Color[] textColors = { Color.black , Color.white };
@@ -95,18 +100,15 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 
 		bool wasSpinning = angularVelocity != 0f;
 
+//		if(useRigidbodyPhysics) {
+//			angularVelocity = wheel.gameObject
+//		}
 		DecayVelocity();
 
 		if(angularVelocity != 0f) {
-
-			float delta = angularVelocity * Time.deltaTime;
-
-			//for simplicity, we don't apply our peg slow down until next frame
-			PegSlowDown();
-
-			//Debug.Log ("released angularVelocity("+angularVelocity+")");
-			wheel.localRotation = Quaternion.AngleAxis(delta, Vector3.forward) * wheel.localRotation;
-
+			if(!useRigidbodyPhysics) {
+				ApplyAngularVelocity(MathUtil.SignedVectorAngle(Vector3.up, wheel.localRotation*Vector3.up, Vector3.forward));
+			}
 		}
 		else if(wasSpinning) {
 			Finished = true;
@@ -126,26 +128,45 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 		if(Mathf.Abs (angularVelocity) <= minAngularVelocity) angularVelocity = 0f;
 	}
 
-	void PegSlowDown() {
-		if(!usePegs) return;
-		if(Mathf.Abs(angularVelocity) > pegSlowDownThreshold) return;
+	void ApplyAngularVelocity(float currentAngle) {
+		if(angularVelocity == 0f) return;
 
-		float pegArc = 360f / numSlices;
-		float frameArc = angularVelocity * Time.deltaTime;
-		float currentAngle = MathUtil.SignedVectorAngle(Vector3.up, wheel.localRotation*Vector3.up, Vector3.forward);
-		float angleToPeg = pegArc - Mathf.Abs(currentAngle % pegArc);
-		int pegsTraversed = 0;
+		float remainingArc = angularVelocity * Time.deltaTime;
+
+		if(usePegs) {
+			if(Mathf.Abs(angularVelocity) <= pegSlowDownThreshold) {
+	
+				float pegArc = 360f / numSlices;
+				float angleToNextPeg = pegArc - Mathf.Abs(currentAngle % pegArc);
 		
-		if(Mathf.Abs(frameArc) > angleToPeg) {
-			pegsTraversed = 1 + Mathf.FloorToInt( (Mathf.Abs(frameArc) - angleToPeg) / pegArc);
+				//step through each peg traversed and remove angular vel as necessary
+				while(Mathf.Abs(remainingArc) > angleToNextPeg) {
+					float traversedToPeg = angleToNextPeg * Mathf.Sign(angularVelocity);
+					currentAngle += traversedToPeg;
+					remainingArc -= traversedToPeg;
+
+					remainingArc -= pegDegrees * pegBounceVelFactor * Mathf.Sign(angularVelocity);
+
+					if(Mathf.Abs(angularVelocity) < pegBounceThreshold) {
+						//nudge back to before this peg?
+						angularVelocity = -angularVelocity * pegBounceVelFactor;
+						remainingArc = -remainingArc;// * pegBounceVelFactor;
+						Debug.Log ("frame("+Time.frameCount+") ApplyAngularVelocity bounced off peg at currentAngle("+currentAngle+")");
+						//ApplyAngularVelocity(currentAngle);
+						break;
+					}
+
+					angleToNextPeg = pegArc - Mathf.Abs(currentAngle % pegArc);
+					angularVelocity *= pegSlowDownFactor;
+				}
+			}
 		}
 		
-		//Debug.Log("PegSlowDown pegsTraversed("+pegsTraversed+")");
+		//add our frame's remaining arc
+		currentAngle += remainingArc;
 
-		while(pegsTraversed > 0) {
-			angularVelocity *= pegSlowDownFactor;
-			pegsTraversed--;
-		}
+
+		wheel.localRotation = Quaternion.AngleAxis(currentAngle, Vector3.forward);
 	}
 
 	void RefreshSlices() {
@@ -201,7 +222,7 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 		angularVelocity = 0f;
 		lastTime = Time.time;
 		samples.Clear();
-		Debug.Log ("SpinWheel OnPointerDown");
+		//Debug.Log ("SpinWheel OnPointerDown");
 	}
 	
 	public void OnPointerUp(PointerEventData eventData) {
@@ -229,14 +250,14 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 			angularVelocity = minStartingVelocity * Mathf.Sign(angularVelocity);
 		}
 
-		string debugString = "SpinWheel OnPointerUp angularVelocity("+angularVelocity+") samples["+samples.Count+"] { ";
-		for(int i=0;i<samples.Count;i++) {
-			debugString += (samples[i].deltaAngle / samples[i].deltaTime);
-			if(i<samples.Count-1) debugString += ", ";
-		}
-		debugString += "}";
+		//string debugString = "SpinWheel OnPointerUp angularVelocity("+angularVelocity+") samples["+samples.Count+"] { ";
+		//for(int i=0;i<samples.Count;i++) {
+		//	debugString += (samples[i].deltaAngle / samples[i].deltaTime);
+		//	if(i<samples.Count-1) debugString += ", ";
+		//}
+		//debugString += "}";
 
-		Debug.Log (debugString);
+		//Debug.Log (debugString);
 
 	}
 
@@ -285,12 +306,12 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 	}
 
 	public void OnSubmitNumSlices() {
-		Debug.Log("OnSubmitNumSlices");
+		//Debug.Log("OnSubmitNumSlices");
 		int newSlices;
 		
 		if(int.TryParse(inputField_numSlices.text, out newSlices)) {
 			if(newSlices != numSlices) {
-				Debug.Log("SetNumSlices");
+				//Debug.Log("SetNumSlices");
 				SetNumSlices(newSlices);
 			}
 		}
