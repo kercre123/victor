@@ -132,6 +132,10 @@ Supervisor {
       width 640
       height 480
       pixelSize 0.5
+      %{ elseif fields.streamResolution.value == "CVGA" then }%
+      width 400
+      height 296
+      pixelSize 1
       %{ elseif fields.streamResolution.value == "QVGA" then }%
       width 320
       height 240
