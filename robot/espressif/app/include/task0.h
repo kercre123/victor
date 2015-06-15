@@ -1,4 +1,5 @@
 /** @ file Header file for task0 (lowest priority / background / whatever) task
+ * @author Daniel Casner <daniel@anki.com>
  * The Espressif OS only suports 3 tasks 0, 1, 2. We have reserved 1 and 2 for specific time critical functions.
  * Everything else hast to share task 0. Hence it is further multi-plexed with function pointer passed into the
  * the functions here.
@@ -6,6 +7,7 @@
 #ifndef __task0_h
 #define __task0_h
 
+#define TASK0_PRIO USER_TASK_PRIO_0
 
 /** Initalize the task0 structures.
  * Must be called before any other functions in this module can be used.

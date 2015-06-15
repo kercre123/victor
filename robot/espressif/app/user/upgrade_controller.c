@@ -9,7 +9,12 @@
 #include "mem.h"
 #include "espconn.h"
 #include "upgrade.h"
+#include "task0.h"
 #include "upgrade_controller.h"
+
+#define FLASH_SECTOR_SIZE 4096
+
+#define MAX_RETRIES 2
 
 /// Upgrade controller server
 static struct espconn* upccServer;
@@ -19,6 +24,17 @@ static uint32 bytesExpected  = 0;
 static uint32 bytesReceived  = 0;
 static uint8  flags          = 0;
 
+typedef enum {
+  UPGRADE_TASK_IDLE,
+  UPGRADE_TASK_ERASE,
+  UPGRADE_TASK_WRITE,
+  UPGRADE_TASK_FINISH,
+} UpgradeTaskState;
+
+static UpgradeTaskState taskState = UPGRADE_TASK_IDLE;
+static uint16 flashEraseSector = 0;
+static uint16 flashEraseEnd    = 0;
+static uint16 retryCount = 0;
 
 /// Resets the upgrade state
 LOCAL void ICACHE_FLASH_ATTR resetUpgradeState(void)
@@ -27,14 +43,95 @@ LOCAL void ICACHE_FLASH_ATTR resetUpgradeState(void)
   fwWriteAddress = INVALID_FLASH_ADDRESS;
   bytesExpected  = 0;
   bytesReceived  = 0;
-  flags = UPCMD_FLAGS_NONE;
+  flags     = UPCMD_FLAGS_NONE;
+  taskState = UPGRADE_TASK_IDLE;
+  flashEraseSector = 0;
+  flashEraseEnd    = 0;
+  retryCount       = 0;
 }
 
 LOCAL void ICACHE_FLASH_ATTR printUpgradeState(void)
 {
-  os_printf("Upgrade state: fww = %08x, bytesE = %d, bytesR = %d, flags = %d, esp = %d\r\n", fwWriteAddress, bytesExpected, bytesReceived, flags, system_upgrade_flag_check());
+  os_printf("Upgrade state: fww = %08x, bytesE = %d, bytesR = %d, flags = %d, ts= %d, esp = %d\r\n", fwWriteAddress, bytesExpected, bytesReceived, flags, taskState, system_upgrade_flag_check());
 }
 
+LOCAL bool upgradeTask(uint32_t param)
+{
+  SpiFlashOpResult flashResult;
+  struct espconn* conn = (struct espconn*)param;
+
+  switch (taskState)
+  {
+    case UPGRADE_TASK_IDLE:
+    {
+      os_printf("WARN: upgradeTask called with taskState idle\r\n\t");
+      printUpgradeState();
+      return false;
+    }
+    case UPGRADE_TASK_ERASE:
+    {
+      os_printf("UP: Erase %d..%d\r\n", flashEraseSector, flashEraseEnd);
+      flashResult = spi_flash_erase_sector(flashEraseSector);
+      switch (flashResult)
+      {
+        case SPI_FLASH_RESULT_OK:
+        {
+          if (flashEraseSector == flashEraseEnd)
+          {
+            os_printf("UP: Erase complete\r\n");
+            taskState = UPGRADE_TASK_WRITE;
+
+          }
+          else
+          {
+            flashEraseSector++;
+          }
+          retryCount = 0;
+          return true;
+        }
+        case SPI_FLASH_RESULT_ERR:
+        {
+          os_printf("\tError erasing sector\r\n");
+          resetUpgradeState();
+          return false;
+        }
+        case SPI_FLASH_RESULT_TIMEOUT:
+        {
+          if (retryCount++ < MAX_RETRIES)
+          {
+            os_printf("\tflash timeout, retrying\r\n");
+            return true;
+          }
+          else
+          {
+            os_printf("\tflash timeout, aborting\r\n");
+            return false;
+          }
+        }
+        default:
+        {
+          os_printf("\tUnhandled flash result: %d\r\n", flashResult);
+          resetUpgradeState();
+          return false;
+        }
+      }
+    }
+    case UPGRADE_TASK_WRITE:
+    {
+
+    }
+    case UPGRADE_TASK_FINISH:
+    {
+
+    }
+    default:
+    {
+      os_printf("WARN: upgradeTask unexpected state: %d\r\n\t", taskState);
+      printUpgradeState();
+      return false;
+    }
+  }
+}
 
 LOCAL void ICACHE_FLASH_ATTR upccReceiveCallback(void *arg, char *usrdata, unsigned short length)
 {
@@ -61,16 +158,18 @@ LOCAL void ICACHE_FLASH_ATTR upccReceiveCallback(void *arg, char *usrdata, unsig
     }
     else
     {
-      fwWriteAddress = cmd->flashAddress;
-      bytesExpected  = cmd->size;
-      flags          = cmd->flags;
+      fwWriteAddress   = cmd->flashAddress;
+      bytesExpected    = cmd->size;
+      flags            = cmd->flags;
+      flashEraseSector = cmd->flashAddress / FLASH_SECTOR_SIZE;
+      flashEraseEnd    = (cmd->flashAddress + cmd->size) / FLASH_SECTOR_SIZE;
       if (flags & UPCMD_WIFI_FW)
       {
         uint8 response[4];
         response[0] = 'O';
         response[1] = 'K';
         response[2] = flags;
-        response[4] system_upgrade_userbin_check();
+        response[4] = system_upgrade_userbin_check();
         err = espconn_sent(conn, response, 4);
         if (err != 0)
         {
@@ -78,10 +177,22 @@ LOCAL void ICACHE_FLASH_ATTR upccReceiveCallback(void *arg, char *usrdata, unsig
           resetUpgradeState();
           return;
         }
+        err = esp_conn_hold(conn);
+        if (err != 0)
+        {
+          os_printf("ERROR: UPCC couldn't set receive hold: %d\r\n", err);
+          resetUpgradeState();
+          return;
+        }
         system_upgrade_flag_set(UPGRADE_FLAG_START);
-
+        taskState = UPGRADE_TASK_ERASE;
+        task0Post(upgradeTask, conn);
       }
     }
+  }
+  else
+  {
+    XXX handle receiving the rest of the data
   }
 }
 
