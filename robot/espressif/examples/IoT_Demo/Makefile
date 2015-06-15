@@ -117,7 +117,7 @@ DDEFINES +=				\
 #
 
 INCLUDES := $(INCLUDES) -I $(PDIR)include
-PDIR := ../../$(PDIR)
+PDIR := ../$(PDIR)
 sinclude $(PDIR)Makefile
 
 .PHONY: FORCE
