@@ -1099,10 +1099,6 @@ namespace Anki
         DCMI_CaptureCmd(ENABLE);
         
         __enable_irq();
-        
-        // Let the I2C lines float after config
-        //PIN_IN(GPIO_SDA, SOURCE_SDA);
-        //PIN_IN(GPIO_SCL, SOURCE_SCL);
       }
 
       void FrontCameraInit()
@@ -1183,9 +1179,9 @@ namespace Anki
         TIM_OCInitStructure.TIM_OCIdleState = TIM_OCIdleState_Set;
         TIM_OCInitStructure.TIM_OCNIdleState = TIM_OCIdleState_Reset;
 
-        // XXX-NDM:  I screwed up the duty cycle here to get 12MHz/15fps, so shoot me
-        TIM_TimeBaseStructure.TIM_Period = 14;  // clockFrequency = 180MHz / (period+1)
-        TIM_OCInitStructure.TIM_Pulse = 8;     // pulse = (period+1) / 2
+        // XXX-NDM:  I screwed up the duty cycle here to get 10.6MHz - 15fps at 400x300, so shoot me
+        TIM_TimeBaseStructure.TIM_Period = 16;  // clockFrequency = 180MHz / (period+1)
+        TIM_OCInitStructure.TIM_Pulse = 9;     // pulse = (period+1) / 2
 
         TIM_TimeBaseInit(TIM9, &TIM_TimeBaseStructure);
         TIM_OC2Init(TIM9, &TIM_OCInitStructure);

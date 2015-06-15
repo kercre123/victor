@@ -99,7 +99,7 @@ namespace BlueCode
                 {
                     m_recvstate = 0;
                     idx = 18;
-                    count--;
+                    count -= 18;
                 }
 
                 while (count-- > 0)
@@ -145,7 +145,7 @@ namespace BlueCode
                                     {
                                         scanPicBox.Refresh();
                                     });
-                                    //System.Console.WriteLine("Frame: " + m_frame + "  ms: " + DateTime.Now.Millisecond);
+                                    System.Console.WriteLine("Frame: " + m_frame + "  ms: " + DateTime.Now.Millisecond);
                                 }
 
                                 m_image = new byte[MAXLEN];
@@ -343,10 +343,11 @@ namespace BlueCode
                     receive(buf, buf.Length, true);
                 }
                 else
+                {
                     ; // Console.WriteLine(System.Text.Encoding.Default.GetString(buf));
-
-                if (buf.Length > 1415)
-                    Console.WriteLine("WTF buffer is " + buf.Length);
+                    if (buf.Length > 1415)
+                        Console.WriteLine("WTF buffer is " + buf.Length);
+                }
             }
             catch (Exception x)
             {
