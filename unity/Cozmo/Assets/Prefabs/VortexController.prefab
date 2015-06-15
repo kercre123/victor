@@ -4419,6 +4419,11 @@ MonoBehaviour:
   numSlices: 8
   slicePrefab: {fileID: 22475134, guid: 9e2e5ab470ed54090820c243b326221a, type: 2}
   inputField_numSlices: {fileID: 11429916}
+  pegBounceThreshold: 5
+  pegBounceVelFactor: .25
+  pegVelFactor: .25
+  pegDegrees: 1
+  useRigidbodyPhysics: 0
   imageColors:
   - {r: .752941251, g: .752941251, b: .752941251, a: 1}
   - {r: .21960786, g: .278431386, b: .313725501, a: 1}
