@@ -62,7 +62,7 @@ namespace Anki {
         u32 lastCycleStartTime_ = 0;
         u32 lastMainCycleTimeErrorReportTime_ = 0;
         const u32 MAIN_TOO_LATE_TIME_THRESH = TIME_STEP * 1500;  // Normal cycle time plus 50% margin
-        const u32 MAIN_TOO_LONG_TIME_THRESH = TIME_STEP * 1000;
+        const u32 MAIN_TOO_LONG_TIME_THRESH = TIME_STEP * 1500;
         const u32 MAIN_CYCLE_ERROR_REPORTING_PERIOD = 1000000;
 
       } // Robot private namespace
