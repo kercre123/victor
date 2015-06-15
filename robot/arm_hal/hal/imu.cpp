@@ -282,7 +282,7 @@ namespace Anki
       {
         // Wait for previous IMU sample to complete, then convert and copy the data
         static IMUOps ops;
-        //I2CWait();
+        I2CWait();
         
         // The IMU chip is not oriented along the robot's natural axes
         // Positive X is robot forward, positive Y is robot left, and positive Z is robot up

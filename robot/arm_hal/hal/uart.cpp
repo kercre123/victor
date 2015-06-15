@@ -49,9 +49,6 @@ namespace Anki
       int BUFFER_READ_SIZE = 1024 * 4;
       ONCHIP u8 m_bufferWrite[1024 * 8];
       ONCHIP u8 m_bufferRead[1024 * 4];
-
-      extern volatile u8 g_halInitComplete, g_deferMainExec, g_mainExecDeferred;
-
       static void UARTStartTransfer()
       {
         int tail = m_writeTail;

@@ -32,10 +32,19 @@ LOCAL void ICACHE_FLASH_ATTR userTask(os_event_t *event)
   system_os_post(userTaskPrio, 0, 0); // Repost ourselves
 }
 
+/** System calls this method before initalizing the radio.
+ * This method is only nessisary to call system_phy_set_rfoption which may only be called here.
+ * I think everything else should still happen in user_init and system_init_done
+ */
+void ICACHE_FLASH_ATTR user_rf_pre_init(void)
+{
+  system_phy_set_rfoption(1); // Do all the calibration, don't care how much power we burn
+}
+
 /** Callback after all the chip system initalization is done.
  * We shouldn't do any networking until after this is done.
  */
-static void ICACHE_FLASH_ATTR system_init_done()
+static void ICACHE_FLASH_ATTR system_init_done(void)
 {
   // Setup the block relay
   blockRelayInit();
@@ -60,18 +69,20 @@ static void ICACHE_FLASH_ATTR system_init_done()
  * It is called automatically from the os main function.
  */
 void ICACHE_FLASH_ATTR
-user_init()
+user_init(void)
 {
     uint32 i;
     int8 err;
 
+    wifi_status_led_uninstall();
+
     REG_SET_BIT(0x3ff00014, BIT(0));
-    os_update_cpu_frequency(160);
+    err = system_update_cpu_freq(160);
 
     uart_init(BIT_RATE_5000000, BIT_RATE_115200);
     uart_rx_intr_disable(UART0);
 
-    os_printf("Espressif booting up...\r\n");
+    os_printf("Espressif booting up...\r\nCPU set freq rslt = %d\r\n", err);
 
     // Create config for Wifi AP
     struct softap_config ap_config;
@@ -89,8 +100,8 @@ user_init()
       os_printf("Error getting mac address info\r\n");
     }
 
-    os_sprintf(ap_config.ssid,     "AnkiTorpedo");
-    //os_sprintf(ap_config.ssid,     "AnkiEspressif%02x%02x", macaddr[4], macaddr[5]);
+    //os_sprintf(ap_config.ssid,     "AnkiTorpedo");
+    os_sprintf(ap_config.ssid,     "AnkiEspressif%02x%02x", macaddr[4], macaddr[5]);
     os_sprintf(ap_config.password, "2manysecrets");
     ap_config.ssid_len = 0;
     ap_config.channel = 2;
@@ -103,6 +114,9 @@ user_init()
     wifi_set_opmode(SOFTAP_MODE);
     wifi_softap_set_config(&ap_config);
     wifi_set_phy_mode(PHY_MODE_11G);
+
+    // Disable radio sleep
+    wifi_set_sleep_type(NONE_SLEEP_T);
 
     // Disable DHCP server before setting static IP info
     wifi_softap_dhcps_stop();
@@ -129,7 +143,7 @@ user_init()
     {
       os_printf("Couldn't set DHCP server lease information\r\n");
     }
-    uint8 dhcps_offer_mode = 1;
+    uint8 dhcps_offer_mode = 0; // Disable default gateway information
     err = wifi_softap_set_dhcps_offer_option(OFFER_ROUTER, &dhcps_offer_mode);
     if (err == false)
     {

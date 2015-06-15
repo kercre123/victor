@@ -1082,9 +1082,6 @@ namespace Anki {
     } // namespace Messages
 
     namespace HAL {
-
-      extern volatile u8 g_halInitComplete, g_deferMainExec, g_mainExecDeferred;
-
       bool RadioSendMessage(const Messages::ID msgID, const void *buffer, const bool reliable, const bool hot)
       {
         const u32 size = Messages::GetSize(msgID);
@@ -1119,16 +1116,7 @@ namespace Anki {
 #ifndef SIMULATOR
       bool RadioSendImageChunk(const void* chunkData, const uint16_t length)
       {
-        g_deferMainExec = 1;
         bool result = ReliableTransport_SendMessage((uint8_t*)chunkData, length, &connection, eRMT_SingleUnreliableMessage, true, Messages::ImageChunk_ID);
-        // Wrap up main exec
-        if (g_mainExecDeferred)
-        {
-          Anki::Cozmo::Robot::step_MainExecution();
-          g_mainExecDeferred = 0;
-        }
-        // If interrupt fires right here we'll skip one iteration of main execution.
-        g_deferMainExec = 0;
         return result;
       }
 

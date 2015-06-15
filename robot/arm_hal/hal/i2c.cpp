@@ -27,7 +27,7 @@ namespace Anki
       #define IRQHandler TIM7_IRQHandler
 
       // Set I2C speed
-      #define I2C_KHZ   100
+      #define I2C_KHZ   400
       #define TICKS_PER_EDGE (APB1_CLOCK_MHZ * 1000 / I2C_KHZ / 2)
 
       extern "C" void IRQHandler(void);
@@ -120,9 +120,7 @@ namespace Anki
       // @param list Pointer to an array of I2COps (see below)
       void I2CRun(s16* list)
       {
-        if (m_list != NULL) // Don't wait if a list is already in progress
-          return;
-        
+        I2CWait();
         m_list = list;
         IRQHandler();   // Kick off the interrupt handler
       }
