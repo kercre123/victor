@@ -17,7 +17,7 @@ int8_t upgradeControllerInit(void);
 #define UPGRADE_COMMAND_PREFIX_LENGTH 12
 
 /// An impossible flash address to invalidate the state
-#define INVALID_FLASH_ADDRESS (0xFFFFfffff)
+#define INVALID_FLASH_ADDRESS (0xFFFFffff)
 
 /// Upgrade command controll flags
 // One hot encoding is used, might mask in the future
@@ -27,6 +27,7 @@ typedef enum {
   UPCMD_CTRL_FW    = 0x02, // Upgrade the robot supervisor firmware
   UPCMD_FPGA_FW    = 0x04, // Upgrade the FPGA image
   UPCMD_BODY_FW    = 0x08, // Upgrade the body board firmware
+  UPCMD_ASK_WHICH  = 0x80, // Ask the espressif which firmware it wants
 } UpgradeCommandFlags;
 
 /// Parameters for an firmware upgrade command
