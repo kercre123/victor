@@ -23,7 +23,7 @@ public class ObservedObject
 
 	protected int ID;
 
-	public bool MarkersVisible { get { return Time.time - TimeLastSeen < 0.25f; } }
+	public bool MarkersVisible { get { return Time.time - TimeLastSeen < 0.025f; } }
 
 	public Rect VizRect { get; private set; }
 	public Vector3 WorldPosition { get; private set; }

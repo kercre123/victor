@@ -718,7 +718,7 @@ public class Robot
 		SetHeadAngleMessage.angle_rad = radians;
 
 		SetHeadAngleMessage.accel_rad_per_sec2 = 2f;
-		SetHeadAngleMessage.max_speed_rad_per_sec = 5f;
+		SetHeadAngleMessage.max_speed_rad_per_sec = CozmoUtil.MAX_SPEED_RAD_PER_SEC;
 
 		RobotEngineManager.instance.Message.SetHeadAngle = SetHeadAngleMessage;
 		RobotEngineManager.instance.SendMessage();
