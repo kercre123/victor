@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.EventSystems;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.UI;
@@ -18,9 +19,28 @@ public class VortexController : GameController {
 		public List<float> stamps = new List<float>();
 	}
 
-	[SerializeField] SpinWheel wheel;
+	[Serializable]
+	public class VortexSettings {
+		public int rings;
+		public int[] slicesPerRing;
+		public int roundsPerRing;
+	}
+
+	SpinWheel wheel { 
+		get {
+			if(rings == 1) return wheels[0];
+
+			int index = rings - Mathf.CeilToInt(round / roundsPerRing);
+			index = Mathf.Clamp(index, 0, wheels.Length-1);
+			return wheels[index];
+		}
+	}
+
+	[SerializeField] SpinWheel[] wheels;
 	[SerializeField] Text textPlayState;
-	[SerializeField] Text textCurrentNumber;
+	[SerializeField] Text textCurrentNumber; // only use for single ring matches
+	[SerializeField] Text textRoundNumber;
+	[SerializeField] Text[] textPlayerCurrentNumbers; // only use for single ring matches
 
 	[SerializeField] Text[] textfinalPlayerScores;
 
@@ -40,8 +60,11 @@ public class VortexController : GameController {
 	[SerializeField] int pointsForRoundWin = 30;
 	[SerializeField] int pointsForRoundCorrect = 10;
 
+	[SerializeField] VortexSettings[] settingsPerLevel;
+
 	int numPlayers = 0;
 	int currentPlayerIndex = 0;
+	int round = 0;
 
 	VortexState playState = VortexState.INTRO;
 
@@ -51,7 +74,21 @@ public class VortexController : GameController {
 
 	protected override void OnEnable () {
 		base.OnEnable();
+		
+		rings = settingsPerLevel[currentLevelNumber-1].rings;
+		roundsPerRing = settingsPerLevel[currentLevelNumber-1].roundsPerRing;
+		slicesPerRing = settingsPerLevel[currentLevelNumber-1].slicesPerRing;
+		
+		for(int i=0;i<slicesPerRing.Length && i<wheels.Length;i++) {
+			wheels[i].SetNumSlices(slicesPerRing[i]);
+		}
 
+		for(int i=0;i<wheels.Length;i++) {
+			wheels[i].Lock();
+			wheels[i].HidePeg();
+			wheels[i].gameObject.SetActive(i < rings);
+		}
+		
 		MessageDelay = .1f;
 	}
 
@@ -89,6 +126,7 @@ public class VortexController : GameController {
 	protected override void Enter_PLAYING () {
 		ClearInputs();
 		playState = VortexState.INTRO;
+
 		EnterPlayState();
 		base.Enter_PLAYING();
 	}
@@ -135,24 +173,33 @@ public class VortexController : GameController {
 	}
 
 	protected override bool IsGameOver() {
-		if(base.IsGameOver()) return true;
-		return false;
+		//if(base.IsGameOver()) return true;
+		return round > (roundsPerRing * rings);
 	}
-	
+
+	int rings = 1;
+	int roundsPerRing = 5;
+	int[] slicesPerRing;
 	int lastNumber = 0;
 	protected override void RefreshHUD() {
 		base.RefreshHUD();
 
-		int newNumber = wheel.CurrentNumber;
-		if(numberChangedSound != null && lastNumber != newNumber && lastNumber != 0) {
-			AudioManager.PlayOneShot(numberChangedSound);
-		}
+		textRoundNumber.text = "ROUND " + Mathf.Max(1, round).ToString();
+
+		int newNumber = wheel.GetCurrentNumber();
+
+
+//		if(numberChangedSound != null && lastNumber != newNumber && lastNumber != 0) {
+//			AudioManager.PlayOneShot(numberChangedSound);
+//		}
+
 
 		textCurrentNumber.text = newNumber.ToString();
 		textPlayState.text = state == GameState.PLAYING ? playState.ToString() : "";
 		lastNumber = newNumber;
 	}
 
+	float playStateTimer = 0f;
 	VortexState GetNextPlayState() {
 		switch(playState) {
 			case VortexState.INTRO:
@@ -167,7 +214,7 @@ public class VortexController : GameController {
 				}
 				break;
 			case VortexState.SPIN_COMPLETE:
-				if(!IsGameOver()) return VortexState.REQUEST_SPIN;
+				if(!IsGameOver() && playStateTimer > 5f) return VortexState.REQUEST_SPIN;
 				break;
 		}
 
@@ -175,6 +222,7 @@ public class VortexController : GameController {
 	}
 
 	void EnterPlayState() {
+		playStateTimer = 0f;
 		switch(playState) {
 			case VortexState.INTRO: 		Enter_INTRO(); break;
 			case VortexState.REQUEST_SPIN: 	Enter_REQUEST_SPIN(); break;
@@ -184,6 +232,7 @@ public class VortexController : GameController {
 	}
 	
 	void UpdatePlayState() {
+		playStateTimer += Time.deltaTime;
 		switch(playState) {
 			case VortexState.INTRO: 		Update_INTRO(); break;
 			case VortexState.REQUEST_SPIN: 	Update_REQUEST_SPIN(); break;
@@ -203,6 +252,7 @@ public class VortexController : GameController {
 
 	void Enter_INTRO() {
 		currentPlayerIndex = UnityEngine.Random.Range(0, numPlayers);
+		round = 0;
 		//enable intro text
 	}
 	void Update_INTRO() {}
@@ -211,11 +261,22 @@ public class VortexController : GameController {
 	}
 
 	void Enter_REQUEST_SPIN() {
+
 		currentPlayerIndex++;
 		if(currentPlayerIndex >= numPlayers) currentPlayerIndex = 0;
 
+		round++;
+		for(int i=0;i<wheels.Length;i++) {
+			if(wheel == wheels[i]) continue;
+			wheels[i].Lock();
+			wheels[i].HidePeg();
+			wheels[i].gameObject.SetActive(round <= (wheels.Length-i)*roundsPerRing);
+		}
+
 		//enable intro text
 		wheel.Unlock();
+		wheel.ShowPeg();
+
 	}
 	void Update_REQUEST_SPIN() {}
 	void Exit_REQUEST_SPIN() {
@@ -239,7 +300,7 @@ public class VortexController : GameController {
 		int fastestPlayer = -1;
 		float earliestFinalStamp = float.MaxValue;
 
-		int number = wheel.CurrentNumber;
+		int number = wheel.GetCurrentNumber();
 		for(int i=0;i<playerInputs.Count;i++) {
 			if(playerInputs[i].stamps.Count != number) continue;
 			if(playerInputs[i].stamps.Count == 0) continue;
@@ -299,7 +360,11 @@ public class VortexController : GameController {
 	}
 
 	void Update_SPIN_COMPLETE() {}
-	void Exit_SPIN_COMPLETE() {}
+	void Exit_SPIN_COMPLETE() {
+
+
+
+	}
 
 	void ClearInputs() {
 		for(int i=0;i<playerInputs.Count;i++) {
@@ -337,4 +402,5 @@ public class VortexController : GameController {
 
 		if(buttonPressSound != null) AudioManager.PlayOneShot(buttonPressSound);
 	}
+
 }

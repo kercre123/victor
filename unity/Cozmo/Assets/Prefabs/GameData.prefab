@@ -61,7 +61,11 @@ MonoBehaviour:
     levels:
     - name: 1
       stars: 0a0000006400000068010000
-      scoreToWin: 100
+      scoreToWin: 0
+      maxPlayTime: 0
+    - name: 2
+      stars: 0a0000006400000068010000
+      scoreToWin: 0
       maxPlayTime: 0
 --- !u!114 &11475924
 MonoBehaviour:
