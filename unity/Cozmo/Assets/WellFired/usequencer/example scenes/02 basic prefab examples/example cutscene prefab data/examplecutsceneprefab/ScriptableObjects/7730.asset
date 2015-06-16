@@ -1,0 +1,41 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bb3ef6ef1638d4a54a597ab9962507e7, type: 1}
+  m_Name: 7730
+  propertyType: 6
+  component: {fileID: 0}
+  componentType: Transform
+  propertyName: localScale
+  fieldName: 
+  curves:
+  - {fileID: 11400000, guid: 9a4c383d81c7a4b86945d0d24d83f380, type: 2}
+  - {fileID: 11400000, guid: 9175016cda7b449dd97104a3eb0caeed, type: 2}
+  - {fileID: 11400000, guid: 2bf6d37b2facd4c2eb7fae520b28a15a, type: 2}
+  curves0:
+    serializedVersion: 2
+    m_Curve: []
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+  curves1:
+    serializedVersion: 2
+    m_Curve: []
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+  curves2:
+    serializedVersion: 2
+    m_Curve: []
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+  curves3:
+    serializedVersion: 2
+    m_Curve: []
+    m_PreInfinity: 2
+    m_PostInfinity: 2
