@@ -39,6 +39,7 @@ LOCAL void ICACHE_FLASH_ATTR userTask(os_event_t *event)
 void ICACHE_FLASH_ATTR user_rf_pre_init(void)
 {
   system_phy_set_rfoption(1); // Do all the calibration, don't care how much power we burn
+  system_phy_set_max_tpw(82); // Set the maximum  TX power allowed
 }
 
 /** Callback after all the chip system initalization is done.
