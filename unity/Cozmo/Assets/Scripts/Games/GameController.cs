@@ -22,6 +22,7 @@ public class GameController : MonoBehaviour {
 
 	public const int STAR_COUNT = 3;
 
+	[SerializeField] private int currentLevelOverride = -1;
 	[SerializeField] private Text countdownText = null;
 	[SerializeField] private float countdownToStart = 0f;
 	[SerializeField] private AudioClip countdownTickSound;
@@ -38,7 +39,6 @@ public class GameController : MonoBehaviour {
 	[SerializeField] protected Text textAddaboy = null;
 	[SerializeField] private bool autoPlay = false;
 	[SerializeField] private Button playButton = null;
-	[SerializeField] protected string buildInstructionsLayoutFilter = null;
 	[SerializeField] private Image resultsPanel = null;
 	[SerializeField] protected AudioClip instructionsSound;
 	[SerializeField] private AudioClip gameStartSound;
@@ -53,6 +53,7 @@ public class GameController : MonoBehaviour {
 	[SerializeField] private float starPopInTime = .5f;
 	[SerializeField] private float maxStarPop = 1.5f;
 	[SerializeField] private float minStarPop = 0.3f;
+
 
 	private AudioClip gameOverSound { get { if(win) return stars < winSounds.Length ? winSounds[stars] : null; return loseSound; } }
 	private AudioClip resultsLoopSound { get { if(win) return stars < winLoopSounds.Length ? winLoopSounds[stars] : null; return loseLoopSound; } }
@@ -125,6 +126,8 @@ public class GameController : MonoBehaviour {
 
 		currentGameName = PlayerPrefs.GetString("CurrentGame", "Unknown");
 		currentLevelNumber = PlayerPrefs.GetInt(currentGameName + "_CurrentLevel", 1);
+
+		if(currentLevelOverride > 0) currentLevelNumber = currentLevelOverride;
 
 		if(GameData.instance != null)
 		{
