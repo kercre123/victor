@@ -62,7 +62,7 @@ namespace Anki {
         u32 lastCycleStartTime_ = 0;
         u32 lastMainCycleTimeErrorReportTime_ = 0;
         const u32 MAIN_TOO_LATE_TIME_THRESH = TIME_STEP * 1500;  // Normal cycle time plus 50% margin
-        const u32 MAIN_TOO_LONG_TIME_THRESH = TIME_STEP * 1500;
+        const u32 MAIN_TOO_LONG_TIME_THRESH = 1500;
         const u32 MAIN_CYCLE_ERROR_REPORTING_PERIOD = 1000000;
 
       } // Robot private namespace
@@ -224,6 +224,17 @@ namespace Anki {
 
       Result step_MainExecution()
       {
+        // HACK: Manually setting timestamp here in mainExecution until
+        // until Nathan implements this the correct way.
+        HAL::SetTimeStamp(HAL::GetTimeStamp()+TIME_STEP);
+        
+        // TBD - This should be moved to simulator just before step_MainExecution is called
+#ifndef ROBOT_HARDWARE
+        // If the hardware interface needs to be advanced (as in the case of
+        // a Webots simulation), do that first.
+        HAL::Step();
+#endif
+        
         // Detect if it took too long in between mainExecution calls
         u32 cycleStartTime = HAL::GetMicroCounter();
         if (lastCycleStartTime_ != 0) {
@@ -233,17 +244,6 @@ namespace Anki {
             avgMainTooLateTime_ = (u32)((f32)(avgMainTooLateTime_ * (mainTooLateCnt_ - 1) + timeBetweenCycles)) / mainTooLateCnt_;
           }
         }
-
-        // HACK: Manually setting timestamp here in mainExecution until
-        // until Nathan implements this the correct way.
-        HAL::SetTimeStamp(HAL::GetTimeStamp()+TIME_STEP);
-
-// TBD - This should be moved to simulator just before step_MainExecution is called
-#ifndef ROBOT_HARDWARE
-        // If the hardware interface needs to be advanced (as in the case of
-        // a Webots simulation), do that first.
-        HAL::Step();
-#endif
 
         //////////////////////////////////////////////////////////////
         // Test Mode
