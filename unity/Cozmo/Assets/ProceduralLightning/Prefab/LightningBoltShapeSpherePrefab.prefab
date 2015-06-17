@@ -1,0 +1,110 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &163822
+GameObject:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  serializedVersion: 4
+  m_Component:
+  - 4: {fileID: 424252}
+  - 114: {fileID: 11494734}
+  - 114: {fileID: 11408928}
+  m_Layer: 0
+  m_Name: LightningBoltShapeSpherePrefab
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &424252
+Transform:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 163822}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 2}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 0
+--- !u!114 &11408928
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 163822}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: daf89196d51fcf24a88bd071f1e59b25, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  RenderMode: 1
+  LightningMaterialMesh: {fileID: 2100000, guid: c6b8576004384974191b466f0bdef64b,
+    type: 2}
+  LightningMaterialMeshNoGlow: {fileID: 2100000, guid: db76dde8469c5834887c024ae9f43289,
+    type: 2}
+  LightningTexture: {fileID: 0}
+  LightningOriginParticleSystem: {fileID: 0}
+  LightningDestinationParticleSystem: {fileID: 0}
+  LightningTintColor: {r: .482352972, g: .960784376, b: .933333397, a: 1}
+  GlowTintColor: {r: .0352941193, g: .572549045, b: .556862772, a: 1}
+  JitterMultiplier: 0
+--- !u!114 &11494734
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 163822}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8d243770104e35341ac9c388b9dd58fc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  RenderMode: 1
+  LightningMaterialMesh: {fileID: 2100000, guid: c6b8576004384974191b466f0bdef64b,
+    type: 2}
+  LightningMaterialMeshNoGlow: {fileID: 2100000, guid: db76dde8469c5834887c024ae9f43289,
+    type: 2}
+  LightningTexture: {fileID: 0}
+  LightningOriginParticleSystem: {fileID: 0}
+  LightningDestinationParticleSystem: {fileID: 0}
+  LightningTintColor: {r: .490196109, g: .980392218, b: .952941239, a: .501960814}
+  GlowTintColor: {r: .0313725509, g: .568627477, b: .552941203, a: .501960814}
+  JitterMultiplier: 0
+  IntervalRange:
+    Minimum: .100000001
+    Maximum: .200000003
+  CountRange:
+    Minimum: 0
+    Maximum: 0
+  DurationRange:
+    Minimum: .100000001
+    Maximum: .300000012
+  TrunkWidthRange:
+    Minimum: .00999999978
+    Maximum: .0299999993
+  LifeTime: 0
+  Generations: 5
+  ChaosFactor: .200000003
+  GlowIntensity: .5
+  GlowWidthMultiplier: 5
+  Forkedness: .75
+  FadePercent: .5
+  GrowthMultiplier: 0
+  EndWidthMultiplier: .25
+  InnerRadius: .100000001
+  Radius: 4.5
+  flattenToCircle: 0
+--- !u!1001 &100100000
+Prefab:
+  m_ObjectHideFlags: 1
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications: []
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 0}
+  m_RootGameObject: {fileID: 163822}
+  m_IsPrefabParent: 1
