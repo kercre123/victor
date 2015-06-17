@@ -324,7 +324,7 @@ LOCAL void ICACHE_FLASH_ATTR upccReceiveCallback(void *arg, char *usrdata, unsig
       }
       else
       {
-        os_printf("Unsupported upgrade command flag: %d\r\n", flags)
+        os_printf("Unsupported upgrade command flag: %d\r\n", flags);
         err = espconn_sent(conn, "BAD", 3);
         if (err != 0)
         {
