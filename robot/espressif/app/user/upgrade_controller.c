@@ -200,9 +200,27 @@ LOCAL bool upgradeTask(uint32_t param)
     }
     case UPGRADE_TASK_FINISH:
     {
-      // TODO check new firmware integrity
-      system_upgrade_flag_set(UPGRADE_FLAG_FINISH);
-      system_upgrade_reboot();
+      if (flags & UPCMD_WIFI_FW)
+      {
+        // TODO check new firmware integrity
+        system_upgrade_flag_set(UPGRADE_FLAG_FINISH);
+        system_upgrade_reboot();
+      }
+      if (flags & UPCMD_CTRL_FW)
+      {
+        // TODO check new firmware integrity
+        // TODO restart with new firmware
+      }
+      if (flags & UPCMD_FPGA_FW)
+      {
+        // TODO check new firmware integrity
+        // TODO Reboot the FPGA with new firmware
+      }
+      if (flags & UPCMD_BODY_FW)
+      {
+        // TODO check new firmware integrity
+        // TODO Reboot the body with new firmware
+      }
       return false;
     }
     default:
@@ -281,6 +299,38 @@ LOCAL void ICACHE_FLASH_ATTR upccReceiveCallback(void *arg, char *usrdata, unsig
             return;
           }
         }
+      }
+      else if (flags & UPCMD_FPGA_FW)
+      {
+        fwWriteAddress   = cmd->flashAddress;
+        bytesExpected    = cmd->size;
+        flags            = cmd->flags;
+        flashEraseSector = cmd->flashAddress / FLASH_SECTOR_SIZE;
+        flashEraseEnd    = (cmd->flashAddress + cmd->size) / FLASH_SECTOR_SIZE;
+        err = espconn_recv_hold(conn);
+        if (err != 0)
+        {
+          os_printf("ERROR: UPCC couldn't set receive hold: %d\r\n", err);
+          resetUpgradeState();
+          return;
+        }
+        taskState = UPGRADE_TASK_ERASE;
+        if (task0Post(upgradeTask, 0) == false)
+        {
+          os_printf("ERROR: Couldn't queue upgrade task\r\n");
+          resetUpgradeState();
+          return;
+        }
+      }
+      else
+      {
+        os_printf("Unsupported upgrade command flag: %d\r\n", flags)
+        err = espconn_sent(conn, "BAD", 3);
+        if (err != 0)
+        {
+          os_printf("ERROR: UPCC couldn't sent error response on socket: %d\r\n", err);
+        }
+        return;
       }
     }
   }
