@@ -23,6 +23,7 @@ public class VortexController : GameController {
 	public class VortexSettings {
 		public int rings;
 		public int[] slicesPerRing;
+		public int[] maxSurvivePerRound;
 		public int roundsPerRing;
 	}
 
@@ -52,13 +53,16 @@ public class VortexController : GameController {
 	[SerializeField] AudioClip timeUp;
 	[SerializeField] AudioClip newHighScore;
 
+	[SerializeField] RectTransform[] playerTokens;
 	[SerializeField] Button[] playerButtons;
 	[SerializeField] LayoutBlock2d[] playerMockBlocks;
 	[SerializeField] Text[] textPlayerScores;
 	[SerializeField] List<VortexInput> playerInputs = new List<VortexInput>();
 	
-	[SerializeField] int pointsForRoundWin = 30;
-	[SerializeField] int pointsForRoundCorrect = 10;
+	int pointsFirstPlace = 30;
+	int pointsSecondPlace = 20;
+	int pointsThirdPlace = 10;
+	int pointsFourthPlace = 5;
 
 	[SerializeField] VortexSettings[] settingsPerLevel;
 
@@ -67,6 +71,9 @@ public class VortexController : GameController {
 	int round = 0;
 
 	VortexState playState = VortexState.INTRO;
+	bool[] playersEliminated = { false, false, false, false };
+
+	VortexSettings settings;
 
 	protected override void Awake () {
 		base.Awake();
@@ -75,10 +82,13 @@ public class VortexController : GameController {
 	protected override void OnEnable () {
 		base.OnEnable();
 		
-		rings = settingsPerLevel[currentLevelNumber-1].rings;
-		roundsPerRing = settingsPerLevel[currentLevelNumber-1].roundsPerRing;
-		slicesPerRing = settingsPerLevel[currentLevelNumber-1].slicesPerRing;
+		settings = settingsPerLevel[currentLevelNumber-1];
+
+		rings = settings.rings;
+		roundsPerRing = settings.roundsPerRing;
+		slicesPerRing = settings.slicesPerRing;
 		
+
 		for(int i=0;i<slicesPerRing.Length && i<wheels.Length;i++) {
 			wheels[i].SetNumSlices(slicesPerRing[i]);
 		}
@@ -89,6 +99,8 @@ public class VortexController : GameController {
 			wheels[i].gameObject.SetActive(i < rings);
 		}
 		
+		PlaceTokens();
+
 		MessageDelay = .1f;
 	}
 
@@ -126,8 +138,8 @@ public class VortexController : GameController {
 	protected override void Enter_PLAYING () {
 		ClearInputs();
 		playState = VortexState.INTRO;
-
 		EnterPlayState();
+
 		base.Enter_PLAYING();
 	}
 	
@@ -174,7 +186,14 @@ public class VortexController : GameController {
 
 	protected override bool IsGameOver() {
 		//if(base.IsGameOver()) return true;
-		return round > (roundsPerRing * rings);
+
+		if(round > (roundsPerRing * rings)) return true;
+
+		for(int i=0;i<playersEliminated.Length;i++) {
+			if(!playersEliminated[i]) return false;
+		}
+
+		return true;
 	}
 
 	int rings = 1;
@@ -253,6 +272,13 @@ public class VortexController : GameController {
 	void Enter_INTRO() {
 		currentPlayerIndex = UnityEngine.Random.Range(0, numPlayers);
 		round = 0;
+
+		for(int i=0;i<playersEliminated.Length;i++) {
+			playersEliminated[i] = false;
+		}
+
+		PlaceTokens();
+
 		//enable intro text
 	}
 	void Update_INTRO() {}
@@ -267,15 +293,20 @@ public class VortexController : GameController {
 
 		round++;
 		for(int i=0;i<wheels.Length;i++) {
+
 			if(wheel == wheels[i]) continue;
+
 			wheels[i].Lock();
 			wheels[i].HidePeg();
 			wheels[i].gameObject.SetActive(round <= (wheels.Length-i)*roundsPerRing);
 		}
 
+		PlaceTokens();
+
 		//enable intro text
 		wheel.Unlock();
 		wheel.ShowPeg();
+		wheel.gameObject.SetActive(true);
 
 	}
 	void Update_REQUEST_SPIN() {}
@@ -298,7 +329,7 @@ public class VortexController : GameController {
 		
 		playersThatAreCorrect.Clear();
 		int fastestPlayer = -1;
-		float earliestFinalStamp = float.MaxValue;
+
 
 		int number = wheel.GetCurrentNumber();
 		for(int i=0;i<playerInputs.Count;i++) {
@@ -306,14 +337,30 @@ public class VortexController : GameController {
 			if(playerInputs[i].stamps.Count == 0) continue;
 
 			playersThatAreCorrect.Add(i);
-			float finalStamp = playerInputs[i].stamps[playerInputs[i].stamps.Count-1];
-			if(finalStamp < earliestFinalStamp) {
-				earliestFinalStamp = finalStamp;
-				fastestPlayer = i;
-			}
 		}
 
-		for(int i=0;i<scores.Count;i++) {
+		playersThatAreCorrect.Sort( ( obj1, obj2 ) =>  {
+			int index1 = playersThatAreCorrect.IndexOf(obj1);
+			int index2 = playersThatAreCorrect.IndexOf(obj2);
+			float finalStamp1 = playerInputs[index1].stamps[playerInputs[index1].stamps.Count-1];
+			float finalStamp2 = playerInputs[index2].stamps[playerInputs[index2].stamps.Count-1];
+
+			return finalStamp2.CompareTo(finalStamp1);   
+		} );
+
+		if(playersThatAreCorrect.Count > 0) {
+			fastestPlayer = playersThatAreCorrect[0];
+		}
+
+		for(int i=0;i<playersEliminated.Length;i++) {
+			if(playersEliminated[i]) continue;
+			
+			playersEliminated[i] = !playersThatAreCorrect.Contains(i) || playersThatAreCorrect.IndexOf(i) >= settings.maxSurvivePerRound[round-1];
+
+			Debug.Log("playersEliminated["+i+"] = " + playersEliminated[i]);
+		}
+
+		for(int i=0;i<playerInputs.Count;i++) {
 
 			Color c1 = Color.black;
 			Color c2 = Color.black;
@@ -321,17 +368,13 @@ public class VortexController : GameController {
 			Color c4 = Color.black;
 
 			if(i == fastestPlayer) {
-				scores[i] += pointsForRoundWin;
 
 				c1 = playerInputs[i].stamps.Count > 0 ? Color.green : Color.black;
 				c2 = playerInputs[i].stamps.Count > 1 ? Color.green : Color.black;
 				c3 = playerInputs[i].stamps.Count > 2 ? Color.green : Color.black;
 				c4 = playerInputs[i].stamps.Count > 3 ? Color.green : Color.black;
-
 			}
 			else if(playersThatAreCorrect.Contains(i)) {
-				scores[i] += pointsForRoundCorrect;
-
 				c1 = playerInputs[i].stamps.Count > 0 ? Color.blue : Color.black;
 				c2 = playerInputs[i].stamps.Count > 1 ? Color.blue : Color.black;
 				c3 = playerInputs[i].stamps.Count > 2 ? Color.blue : Color.black;
@@ -348,15 +391,29 @@ public class VortexController : GameController {
 				playerMockBlocks[i].SetLights(c1, c2, c3, c4);
 			}
 
-			if(i < textPlayerScores.Length) textPlayerScores[i].text = "P" + (i+1).ToString() + ": " + scores[i].ToString();
+
 		}
 
+		for(int i=0;i<playersThatAreCorrect.Count;i++) {
+			if(playersEliminated[playersThatAreCorrect[i]]) continue;
+
+			switch(i) {
+				case 0: scores[i] += pointsFirstPlace; break;
+				case 1: scores[i] += pointsSecondPlace; break;
+				case 2: scores[i] += pointsThirdPlace; break;
+				case 3: scores[i] += pointsFourthPlace; break;
+			}
+
+			if(i < textPlayerScores.Length) textPlayerScores[i].text = "P" + (i+1).ToString() + ": " + scores[i].ToString();
+		}
+		
 		if(playersThatAreCorrect.Count > 0) {
 			if(roundCompleteWinner != null) AudioManager.PlayOneShot(roundCompleteWinner);
 		}
 		else {
 			if(roundCompleteNoWinner != null) AudioManager.PlayOneShot(roundCompleteNoWinner);
 		}
+
 	}
 
 	void Update_SPIN_COMPLETE() {}
@@ -364,6 +421,25 @@ public class VortexController : GameController {
 
 
 
+	}
+
+	void PlaceTokens() {
+		
+		for(int i=0;i<playerTokens.Length && i<playerButtons.Length;i++) {
+			playerTokens[i].gameObject.SetActive(!playersEliminated[i]);
+			if(playersEliminated[i]) continue;
+
+			Canvas tokenCanvas = playerTokens[i].gameObject.GetComponentInParent<Canvas>();
+			RectTransform buttonT = playerButtons[i].transform as RectTransform;
+			
+			Vector2 screenButtonPos = RectTransformUtility.WorldToScreenPoint(null, buttonT.position);
+			Vector2 localPos;
+			RectTransformUtility.ScreenPointToLocalPointInRectangle(playerTokens[i], screenButtonPos, tokenCanvas.renderMode != RenderMode.ScreenSpaceOverlay ? tokenCanvas.worldCamera : null, out localPos);
+
+			Vector2 anchorPos = localPos.normalized * wheel.TokenRadius;
+			playerTokens[i].anchoredPosition = anchorPos;
+		}
+		
 	}
 
 	void ClearInputs() {
@@ -381,6 +457,7 @@ public class VortexController : GameController {
 	public void PlayerInputTap(int index) {
 		if(state != GameState.PLAYING) return;
 		if(playState != VortexState.SPINNING) return;
+		if(playersEliminated[index]) return;
 
 		while(index >= playerInputs.Count) playerInputs.Add (new VortexInput());
 		if(playerInputs[index].stamps.Count >= 4) return;
@@ -402,5 +479,7 @@ public class VortexController : GameController {
 
 		if(buttonPressSound != null) AudioManager.PlayOneShot(buttonPressSound);
 	}
+
+
 
 }

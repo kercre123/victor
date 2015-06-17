@@ -39,11 +39,11 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 	[SerializeField] float pegBounceVelFactor = 0.25f;
 	[SerializeField] float pegDegrees = 1f;
 	[SerializeField] float pegBendAngle = 30f;
-	
-	[SerializeField] bool useRigidbodyPhysics = false;
 
 	[SerializeField] Color[] imageColors = { Color.white, Color.black };
 	[SerializeField] Color[] textColors = { Color.black , Color.white };
+
+	[SerializeField] float tokenRadius = 300f;
 
 	RectTransform rTrans = null;
 	Canvas canvas = null;
@@ -52,9 +52,6 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 	float angularVelocity = 0f;
 	bool dragging = false;
 	bool locked = false;
-	
-	Rigidbody2D wheelBody;
-	WheelJoint2D wheelJoint;
 
 	List<PieSlice> slices = new List<PieSlice>();
 	List<RectTransform> pegs = new List<RectTransform>();
@@ -85,16 +82,13 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 		}
 	}
 
+	public float TokenRadius { get { return tokenRadius; } }
+
 	void Awake() {
 		rTrans = transform as RectTransform;
 		canvas = GetComponentInParent<Canvas>();
 
 		Application.targetFrameRate = 60;
-
-		if(useRigidbodyPhysics) {
-			wheelBody = wheel.gameObject.GetComponent<Rigidbody2D>();
-			wheelJoint = wheel.gameObject.GetComponent<WheelJoint2D>();
-		}
 	}
 
 	void OnEnable() {
@@ -114,7 +108,10 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 	float pegBendFactor = 0f;
 	AudioSource loopingSource = null;
 	void Update() {
-		if(locked) return;
+		if(locked) {
+			StopLoopingSound();
+			return;
+		}
 
 		if(dragging) {
 			//doing this in update instead of OnDrag callback so as to sample from a reasonable deltaTime
@@ -124,55 +121,57 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 
 		bool wasSpinning = angularVelocity != 0f;
 
-		if(useRigidbodyPhysics) {
-			angularVelocity = wheelBody.angularVelocity;
-		}
-		else {
-			DecayVelocity();
-		}
+		DecayVelocity();
 
 		if(angularVelocity != 0f) {
-			if(!useRigidbodyPhysics) {
-				pegPassed = false;
-				float direction = -Mathf.Sign(angularVelocity);
-				pegBendFactor = Mathf.Lerp(pegBendFactor, 0f, 0.25f);
-				float angle = MathUtil.SignedVectorAngle(Vector3.up, wheel.localRotation*Vector3.up, Vector3.forward);
-				angle = ApplySpin(angle, Time.deltaTime);
-				wheel.localRotation = Quaternion.AngleAxis(angle, Vector3.forward);
-
-				if(peg != null) peg.localRotation = Quaternion.AngleAxis(pegBendAngle * pegBendFactor * direction, Vector3.forward);
-
-				if(pegPassed && pegSound != null && Mathf.Abs(angularVelocity) < pegSlowDownThreshold) {
-					//Debug.Log ("frame("+Time.frameCount+") pegSound!");
-					float pitchFactor = Mathf.Clamp01(Mathf.Abs(angularVelocity) / pegSlowDownThreshold);
-					float volumeFactor = 1f - Mathf.Clamp01(Mathf.Abs(angularVelocity) / pegSlowDownThreshold);
-
-					float p = Mathf.Lerp(0.75f, 1.5f, pitchFactor);
-					float v = Mathf.Lerp(0f, 1f, volumeFactor);
-					
-					AudioManager.PlayOneShot(pegSound, 0f, p, v);
-				}
-
-				if(spinLoopSound != null) {
-					if(loopingSource == null) {
-						loopingSource = AudioManager.PlayAudioClipLooping(spinLoopSound, 0f, AudioManager.Source.Gameplay);
-					}
-					float pitchFactor = Mathf.Abs(angularVelocity) / (pegSlowDownThreshold * 2f);
-					float volumeFactor = Mathf.Abs(angularVelocity) / pegSlowDownThreshold;
-					loopingSource.pitch = Mathf.Lerp(0.5f, 2f, pitchFactor);
-					loopingSource.volume = Mathf.Lerp(0f, 1f, volumeFactor);
-				}
-			}
+			UpdateRotation();
 		}
 		else if(wasSpinning) {
-			if(spinLoopSound != null && loopingSource != null) {
-				AudioManager.Stop(spinLoopSound);
-				loopingSource = null;
-			}
+			StopLoopingSound();
 			Finished = true;
 		}
 	}
 
+	void UpdateRotation() {
+		pegPassed = false;
+		float direction = -Mathf.Sign(angularVelocity);
+		pegBendFactor = Mathf.Lerp(pegBendFactor, 0f, 0.25f);
+		float angle = MathUtil.SignedVectorAngle(Vector3.up, wheel.localRotation*Vector3.up, Vector3.forward);
+		angle = ApplySpin(angle, Time.deltaTime);
+		wheel.localRotation = Quaternion.AngleAxis(angle, Vector3.forward);
+		
+		if(peg != null) peg.localRotation = Quaternion.AngleAxis(pegBendAngle * pegBendFactor * direction, Vector3.forward);
+		
+		if(pegPassed && pegSound != null && Mathf.Abs(angularVelocity) < pegSlowDownThreshold) {
+			//Debug.Log ("frame("+Time.frameCount+") pegSound!");
+			float pitchFactor = Mathf.Clamp01(Mathf.Abs(angularVelocity) / pegSlowDownThreshold);
+			float volumeFactor = 1f - Mathf.Clamp01(Mathf.Abs(angularVelocity) / pegSlowDownThreshold);
+			
+			float p = Mathf.Lerp(0.75f, 1.5f, pitchFactor);
+			float v = Mathf.Lerp(0f, 1f, volumeFactor);
+			
+			AudioManager.PlayOneShot(pegSound, 0f, p, v);
+		}
+		
+		if(spinLoopSound != null) {
+			if(loopingSource == null) {
+				loopingSource = AudioManager.PlayAudioClipLooping(spinLoopSound, 0f, AudioManager.Source.Gameplay);
+			}
+			float pitchFactor = Mathf.Abs(angularVelocity) / (pegSlowDownThreshold * 2f);
+			float volumeFactor = Mathf.Abs(angularVelocity) / pegSlowDownThreshold;
+			loopingSource.pitch = Mathf.Lerp(0.5f, 2f, pitchFactor);
+			loopingSource.volume = Mathf.Lerp(0f, 1f, volumeFactor);
+		}
+	}
+	
+	void StopLoopingSound() {
+		if(spinLoopSound == null) return;
+		if(loopingSource == null) return;
+		AudioManager.Stop(spinLoopSound);
+		loopingSource = null;
+	}
+	
+	
 	void DecayVelocity() {
 		if(angularVelocity == 0f) return;
 
@@ -350,10 +349,6 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 			angularVelocity = minStartingVelocity * Mathf.Sign(angularVelocity);
 		}
 
-		if(useRigidbodyPhysics) {
-			wheelBody.angularVelocity = angularVelocity;
-		}
-
 		//string debugString = "SpinWheel OnPointerUp angularVelocity("+angularVelocity+") samples["+samples.Count+"] { ";
 		//for(int i=0;i<samples.Count;i++) {
 		//	debugString += (samples[i].deltaAngle / samples[i].deltaTime);
@@ -366,7 +361,10 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 	}
 
 	public void DragUpdate() {
-		
+
+		pegBendFactor = Mathf.Lerp(pegBendFactor, 0f, 0.25f);
+
+		int lastNum = GetCurrentNumber();
 		Vector2 touchPos;
 		RectTransformUtility.ScreenPointToLocalPointInRectangle(rTrans, Input.mousePosition, canvas.renderMode != RenderMode.ScreenSpaceOverlay ? canvas.worldCamera : null, out touchPos);
 		float deltaAngle = MathUtil.SignedVectorAngle(lastTouchPos, touchPos, Vector3.forward);
@@ -383,7 +381,27 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 
 			lastTouchPos = touchPos;
 			lastTime = Time.time;
+
+			float velocity = deltaAngle / deltaTime;
+	
+			int newNum = GetCurrentNumber();
+			if(newNum != lastNum && pegSound != null && Mathf.Abs(velocity) < pegSlowDownThreshold) {
+				//Debug.Log ("frame("+Time.frameCount+") pegSound!");
+				float pitchFactor = Mathf.Clamp01(Mathf.Abs(velocity) / pegSlowDownThreshold);
+				float volumeFactor = 1f - Mathf.Clamp01(Mathf.Abs(velocity) / pegSlowDownThreshold);
+				
+				float p = Mathf.Lerp(0.75f, 1.5f, pitchFactor);
+				float v = Mathf.Lerp(0.25f, 1f, volumeFactor);
+				
+				AudioManager.PlayOneShot(pegSound, 0f, p, v);
+				pegBendFactor = 1f;
+			}
+
 		}
+
+		float direction = -Mathf.Sign(deltaAngle);
+		
+		if(peg != null) peg.localRotation = Quaternion.AngleAxis(pegBendAngle * pegBendFactor * direction, Vector3.forward);
 
 		//Debug.Log ("OnDrag delta("+delta+")");
 	}
