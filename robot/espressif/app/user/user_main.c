@@ -7,6 +7,7 @@
 #include "user_interface.h"
 #include "client.h"
 #include "driver/uart.h"
+#include "user_config.h"
 
 /// USER_TASK_PRIO_0 is the lowest (idle) task priority
 #define userTaskPrio USER_TASK_PRIO_0
