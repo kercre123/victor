@@ -26,7 +26,7 @@ https://github.com/jcmvbkbc/xtensa-toolchain-build
 The commands you will need are as follows:
 ```
 cd ~/Documents/GitHub/coretech-external/espressif/xtensa-toolchain-build
-git clone --depth=1 https://github.com/jcmvbkbc/gcc-xtensa.git gcc-xtensa gcc-4.9.1
+git clone --depth=1 https://github.com/jcmvbkbc/gcc-xtensa.git gcc-4.9.1
 ./prepare.sh lx106
 ./build-elf.sh lx106
 ```

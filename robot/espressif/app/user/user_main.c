@@ -103,8 +103,8 @@ user_init(void)
     }
 
     //os_sprintf(ap_config.ssid,     "AnkiTorpedo");
-    os_sprintf(ap_config.ssid,     "AnkiEspressif%02x%02x", macaddr[4], macaddr[5]);
-    os_sprintf(ap_config.password, "2manysecrets");
+    os_sprintf(ap_config.ssid,     AP_SSID_FMT, macaddr[4], macaddr[5]);
+    os_sprintf(ap_config.password, AP_KEY);
     ap_config.ssid_len = 0;
     ap_config.channel = 2;
     ap_config.authmode = AUTH_WPA2_PSK;
@@ -125,9 +125,9 @@ user_init(void)
 
     // Create ip config
     struct ip_info ipinfo;
-    ipinfo.gw.addr = ipaddr_addr("0.0.0.0");
-    ipinfo.ip.addr = ipaddr_addr("172.31.1.1");
-    ipinfo.netmask.addr = ipaddr_addr("255.255.255.0");
+    ipinfo.gw.addr = ipaddr_addr(AP_GATEWAY);
+    ipinfo.ip.addr = ipaddr_addr(AP_IP);
+    ipinfo.netmask.addr = ipaddr_addr(AP_NETMASK);
 
     // Assign ip config
     err = wifi_set_ip_info(SOFTAP_IF, &ipinfo);
@@ -138,8 +138,8 @@ user_init(void)
 
     // Configure DHCP range
     struct dhcps_lease dhcpconf;
-    dhcpconf.start_ip.addr = ipaddr_addr("172.31.1.2");
-    dhcpconf.end_ip.addr   = ipaddr_addr("172.31.1.9");
+    dhcpconf.start_ip.addr = ipaddr_addr(DHCP_START);
+    dhcpconf.end_ip.addr   = ipaddr_addr(DHCP_END);
     err = wifi_softap_set_dhcps_lease(&dhcpconf);
     if (err == false)
     {

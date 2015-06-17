@@ -18,6 +18,7 @@
 #define AP_IP       "172.31.1.1"
 #define AP_NETMASK  "255.255.255.0"
 #define AP_GATEWAY  "0.0.0.0"
-#define DHCP
+#define DHCP_START  "171.31.1.2"
+#define DHCP_END    "172.31.1.9"
 
 #endif
