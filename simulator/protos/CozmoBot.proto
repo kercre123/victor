@@ -138,27 +138,28 @@ Supervisor {
 							}
 						}
 
-						Transform {
-						  translation 0 0 -0.013
-						  rotation 0 1 0 3.14159
-						  children [
-							Connector {
-							  name			"ChargeContact"
-							  model         	"ChargeContact"
-							  type 			"symmetric"
-							  isLocked		FALSE
-							  autoLock		FALSE
-							  distanceTolerance	0.01
-							  axisTolerance		0.2
-							  rotationTolerance 	1.5708
-							  numberOfRotations 	4
-							  snap			FALSE
-							}
-						  ]
-						}
-
 					] # BODY_SHAPE Group children
 				} # BODY_SHAPE Group
+
+				Transform {
+				  translation 0 0 -0.013
+				  rotation 0 1 0 3.14159
+				  children [
+					Connector {
+					  name			"ChargeContact"
+					  model         "ChargeContact"
+					  type 			"symmetric"
+					  isLocked		FALSE
+					  autoLock		FALSE
+					  distanceTolerance	0.01
+					  axisTolerance		0.2
+					  rotationTolerance 	1.5708
+					  numberOfRotations 	4
+					  snap			FALSE
+					}
+				  ]
+				}
+
 		  ] # BODY Solid children
 		  %{ if not fields.vizMode.value then }%
 		  boundingObject USE BODY_SHAPE

@@ -766,7 +766,7 @@ namespace Anki {
         _haveNewImage = false;
         
 #     else
-      if(_visionProcessor.WasLastImageProcessed())
+      //if(_visionProcessor.WasLastImageProcessed())
       {
 #endif
         
