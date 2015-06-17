@@ -33,23 +33,13 @@ namespace Cozmo {
   , _isCamCalibSet(false)
   , _running(false)
   , _isLocked(false)
-  , _wasLastImageProcessed(false)
   {
     
   } // VisionSystem()
 
   void VisionProcessingThread::SetCameraCalibration(const Vision::CameraCalibration& camCalib)
   {
-    // Updating camera calibration invalidates the current vision system
-    // (assuming it is a different calibration!)
-    if(_visionSystem != nullptr) {
-      PRINT_NAMED_INFO("VisionProcessingThread.SetCameraCalibration", "Destroying existing VisionSystem upon receipt of new calibration.\n");
-      delete _visionSystem;
-      _visionSystem = nullptr;
-    }
-    
     _camCalib = camCalib;
-    
     _isCamCalibSet = true;
   }
   
@@ -71,7 +61,7 @@ namespace Cozmo {
     // Note that we're giving the Processor a pointer to "this", so we
     // have to ensure this VisionSystem object outlives the thread.
     _processingThread = std::thread(&VisionProcessingThread::Processor, this);
-    _processingThread.detach();
+    //_processingThread.detach();
     
   }
   
@@ -95,20 +85,7 @@ namespace Cozmo {
     _currentImg = {};
     _nextImg    = {};
     _lastImg    = {};
-    
-    /*
-    // Now that processing is complete, we can delete any images that we're
-    // holding onto
-    if(_currentImg != nullptr) {
-      delete _currentImg;
-      _currentImg = nullptr;
-    }
-    
-    if(_nextImg != nullptr) {
-      delete _nextImg;
-      _nextImg = nullptr;
-    }
-     */
+
   }
 
 
@@ -128,25 +105,12 @@ namespace Cozmo {
   {
     Lock();
     
-    // TODO: Avoid all the allocation and deletion here!
-    
-    /*
-    if(_nextImg != nullptr) {
-      // There's already a next image queued up. Get rid of it and replace it
-      // with this new one.
-      PRINT_NAMED_INFO("VisionProcessingThread.SetNextImage.DiscardingImage",
-                       "Discarding previously-set next image before processing it.\n");
-      delete _nextImg;
-    }
-     */
-    
-    //_nextImg = new Vision::Image(image);
+    // TODO: Avoid the copying here (shared memory?)
     image.CopyDataTo(_nextImg);
     _nextImg.SetTimestamp(image.GetTimestamp());
     
     //_nextImg = Vision::Image(image);
     _nextRobotState = robotState;
-    _wasLastImageProcessed = false;
     
     Unlock();
     
@@ -204,6 +168,16 @@ namespace Cozmo {
     return retVal;
   }
 
+  TimeStamp_t VisionProcessingThread::GetLastProcessedImageTimeStamp()
+  {
+    
+    Lock();
+    const TimeStamp_t t = (_lastImg.IsEmpty() ? 0 : _lastImg.GetTimestamp());
+    Unlock();
+
+    return t;
+  }
+  
   void VisionProcessingThread::EnableMarkerDetection(bool enable)
   {
     if(enable) {
@@ -272,7 +246,10 @@ namespace Cozmo {
   {
     PRINT_STREAM_INFO("VisionProcessingThread.Processor", "Starting Robot VisionProcessingThread::Processor thread...");
     
-    _visionSystem = new VisionSystem();
+    if(_visionSystem == nullptr) {
+      _visionSystem = new VisionSystem();
+    }
+    
     _visionSystem->Init(_camCalib);
     
     // Wait for initialization to complete (i.e. Matlab to start up, if needed)
@@ -295,7 +272,6 @@ namespace Cozmo {
         Lock();
         // Save the image we just processed
         _lastImg = _currentImg;
-        _wasLastImageProcessed = true;
         
         // Clear it when done.
         _currentImg = {};

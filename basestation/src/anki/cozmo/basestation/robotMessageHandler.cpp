@@ -225,7 +225,7 @@ namespace Anki {
     Result RobotMessageHandler::ProcessMessage(Robot* robot, MessageCameraCalibration const& msg)
     {
       PRINT_NAMED_INFO("RobotMessageHandler.CameraCalibration",
-                       "Recived new %dx%d camera calibration from robot.\n",
+                       "Received new %dx%d camera calibration from robot.\n",
                        msg.ncols, msg.nrows);
       
       // Convert calibration message into a calibration object to pass to

@@ -487,7 +487,7 @@ namespace Cozmo {
           break;
           
         case LIGHTS:
-          EyeController::StopAnimating();
+          //EyeController::StopAnimating();
           break;
           
         case POSE:
