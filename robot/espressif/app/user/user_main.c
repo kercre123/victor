@@ -86,6 +86,47 @@ user_init(void)
 
     os_printf("Espressif booting up...\r\nCPU set freq rslt = %d\r\n", err);
 
+#ifdef STATION_MODE
+    struct station_config sta_config;
+    err = wifi_station_get_config_default(&sta_config);
+    if (err != 0)
+    {
+      os_printf("Error getting wifi station default config\r\n");
+    }
+
+    // Setup station parameters
+    os_sprintf(sta_config.ssid, STATION_SSID)
+    os_sprintf(sta_config.password, STATION_KEY);
+#ifdef STATION_BSSID
+    os_sprintf(sta_config.bssid, STATION_BSSID)
+    sta_config.bssid_set = 1;
+#else
+    sta_config.bssid_set = 0;
+#endif
+
+    // Setup ESP module to station mode and apply settings
+    // Setup ESP module to AP mode and apply settings
+    wifi_set_opmode(STATION_MODE);
+    wifi_station_set_config(&sta_config);
+    wifi_set_phy_mode(PHY_MODE_11G);
+    // Disable radio sleep
+    wifi_set_sleep_type(NONE_SLEEP_T);
+
+    // Create ip config
+    struct ip_info ipinfo;
+    ipinfo.gw.addr = ipaddr_addr(STATION_GATEWAY);
+    ipinfo.ip.addr = ipaddr_addr(STATION_IP);
+    ipinfo.netmask.addr = ipaddr_addr(STATION_NETMASK);
+
+    // Assign ip config
+    err = wifi_set_ip_info(SOFTAP_IF, &ipinfo);
+    if (err == false)
+    {
+      os_printf("Couldn't set IP info\r\n");
+    }
+
+
+#else // AP MODE (default)
     // Create config for Wifi AP
     struct softap_config ap_config;
     err = wifi_softap_get_config(&ap_config);
@@ -116,7 +157,6 @@ user_init(void)
     wifi_set_opmode(SOFTAP_MODE);
     wifi_softap_set_config(&ap_config);
     wifi_set_phy_mode(PHY_MODE_11G);
-
     // Disable radio sleep
     wifi_set_sleep_type(NONE_SLEEP_T);
 
@@ -158,6 +198,7 @@ user_init(void)
     {
       os_printf("Couldn't start DHCP server\r\n");
     }
+#endif
 
     // Register callback
     system_init_done_cb(&system_init_done);
