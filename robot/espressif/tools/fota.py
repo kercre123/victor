@@ -27,6 +27,12 @@ class UpgradeCommand(struct.Struct):
     def pack(self):
         return struct.Struct.pack(self, self.PREFIX, self.flashAddress, self.length, self.flags)
 
+def sendFW(roboCon, fw):
+    "Send data to the robot in 1KB chunks spaced out to allow time for flash writes"
+    for i in range(0, len(fw), 1024):
+        time.sleep(0.05)
+        roboCon.send(fw[i:i+1024])
+        sys.stdout.write('.')
 
 def doWifiUpgrade(roboConn):
     roboConn.send(UpgradeCommand(flags=UpgradeCommandFlags.WIFI_FW | UpgradeCommandFlags.ASK_WHICH).pack())
@@ -34,40 +40,53 @@ def doWifiUpgrade(roboConn):
     if len(answer) != 4:
         sys.stderr.write("Unexpected answer from Espressif: %s\r\n" % str(answer))
         return
-    
+    header, flags, which = struct.unpack("2sBB", answer)
+    if not (header = b"OK" and flags == UpgradeCommandFlags.WIFI_FW | UpgradeCommandFlags.ASK_WHICH):
+        sys.stderr.write("Unexpected answer from Espressif for wifi upgrade: %s%s %d %d\r\n" % (chr(h1)))
+        return
+    if which == 0:
+        fw = open(USERBIN1, "rb").read()
+        fwWriteAddr = USERBIN1_ADDR
+        sys.stdout.write("Sending userbin1\r\n")
+    elif which == 1:
+        fw = open(USERBIN2), "rb").read()
+        fwWriteAddr = USERBIN2_ADDR
+        sys.stdout.write("Sending userbin2\r\n")
+    else:
+        sys.stderr.write("Unexpected userbin specified for Espressif WiFi upgrade: %d\r\n" % which)
+    roboCon.send(UpgradeCommand(fwWriteAddr, len(fw), UpgradeCommandFlags.WIFI_FW).pack())
+    sendFW(roboCon, fw)
+    roboCon.close()
+    sys.stdout.write("\r\nFinished sending WiFi firmware\r\n")
 
+def doFPGAUpgrade(roboCon):
+    "Send new FPGA firmware to the robot"
+    fw = open(FPGA_BIN, 'rw').read()
+    sys.stdout.write("Sending FPGA FW\r\n")
+    roboCon.send(UpgradeCommand(FPGA_FW_ADDR, sizeof(fw), UpgradeCommandFlags.FPGA_FW).pack())
+    sendFW(roboCon, fw)
+    roboCon.close()
+    sys.stdout.write("\r\nFinished sending FPGA firmware\r\n")
 
 def doUpgrade(robotIp, kind):
     "Communicate with the espressif for the upgrade"
     conn = socket.socket()
     socket.connect((robotIp, COMMAND_PORT))
-    if kind == WIFI_FW:
+    if kind == UpgradeCommandFlags.WIFI_FW:
         doWifiUpgrade(conn)
+    elif kind == UpgradeCommandFlags.FPGA_FW:
+        doFPGAUpgrade(conn)
     else:
         raise ValueError("Upgrade type implemented yet :-(")
 
 if __name__ == '__main__':
-    if len(sys.argv) != 4:
+    if len(sys.argv) != 2:
         sys.stderr.write(USAGE)
         sys.exit(-1)
-    try:
-        serverIp = [int(o) for o in sys.argv[1].split('.')]
-        assert len(serverIp) == 4
-    except:
-        sys.stderr.write("Couldn't parse server IP address \"%s\"\r\n" % sys.argv[1])
-        sys.exit(1)
-    try:
-        robotIp = [int(o) for o in sys.argv[2].split('.')]
-        assert len(robotIp) == 4
-    except:
-        sys.stderr.write("Couldn't parse robot IP address \"%s\"\r\n" % sys.argv[2])
-        sys.exit(2)
-    try:
-        upgradeCommand = int(sys.argv[3])
-        assert upgradeCommand in (0, 1, 2, 3, 4)
-    except:
-        sys.stderr.write("Couldn't parse robot upgrade command \"%s\"\r\n" % sys.argv[3])
-        sys.exit(3)
+    robotHostname = sys.argv[1]
+
+    doUpgrade(robotHostname, UpgradeCommandFlags.WIFI_FW)
+
 
     httpd = httpServer.HTTPServer(('%d.%d.%d.%d' % tuple(serverIp), HTTP_SERVER_PORT), UpgradeRequestHandler)
     httpdThread = threading.Thread(target=httpd.serve_forever)
