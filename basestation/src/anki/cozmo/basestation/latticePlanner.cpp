@@ -138,11 +138,16 @@ void LatticePlannerImpl::ImportBlockworldObstacles(const bool isReplanning, cons
 
       float thetaRads = env_.GetTheta_c(theta);
 
+      // Since the planner is given the driveCenter poses to be the robot's origin,
+      // compute the actual robot origin given a driveCenter pose at (0,0,0) in order
+      // to get the actual bounding box of the robot.
+      Pose3d robotDriveCenterPose = Pose3d(thetaRads, Z_AXIS_3D(), {0.0f, 0.0f, 0.0f});
+      Pose3d robotOriginPose;
+      robot_->ComputeOriginPose(robotDriveCenterPose, robotOriginPose);
+      
       // Get the robot polygon, and inflate it by a bit to handle error
       Poly2f robotPoly;
-      robotPoly.ImportQuad2d(robot_->GetBoundingQuadXY(
-                               Pose3d{thetaRads, Z_AXIS_3D(), {0.0f, 0.0f, 0.0f}},
-                               robotPadding ) );
+      robotPoly.ImportQuad2d(robot_->GetBoundingQuadXY(robotOriginPose, robotPadding) );
 
       for(auto boundingQuad : boundingBoxes) {
 

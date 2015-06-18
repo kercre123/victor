@@ -133,12 +133,3 @@ const u32 UI_MESSAGE_SERVER_LISTEN_PORT = 5200;
 // Number of frames to skip when streaming images to basestation
 const u8 IMG_STREAM_SKIP_FRAMES = 2;
 
-
-// Timeout for how long we are willing to wait to get a state message from
-// the robot to the basestation
-const f32 R2B_STATE_MESSAGE_TIMEOUT_SEC = 3.0f;
-
-// Timeout for how long the robot is willing to wait before receiving a ping
-// (or any message) from basestatin
-const u32 B2R_PING_DISCONNECT_TIMEOUT_MS = 3000;
-

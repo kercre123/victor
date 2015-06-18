@@ -83,9 +83,6 @@ namespace Anki {
         // Flag for receipt of Init message
         bool initReceived_ = false;
 
-        ImageSendMode_t imageSendMode_;
-        Vision::CameraResolution imageSendResolution_;
-
         const int IMAGE_SEND_JPEG_COMPRESSION_QUALITY = 80; // 0 to 100
 
       } // private namespace
@@ -431,8 +428,10 @@ namespace Anki {
       {
         PRINT("Image requested (mode: %d, resolution: %d)\n", msg.imageSendMode, msg.resolution);
 
-        imageSendMode_ = static_cast<ImageSendMode_t>(msg.imageSendMode);
-        imageSendResolution_ = static_cast<Vision::CameraResolution>(msg.resolution);
+        ImageSendMode_t imageSendMode = static_cast<ImageSendMode_t>(msg.imageSendMode);
+        Vision::CameraResolution imageSendResolution = static_cast<Vision::CameraResolution>(msg.resolution);
+        
+        HAL::SetImageSendMode(imageSendMode, imageSendResolution);
 
         // Send back camera calibration for this resolution
         const HAL::CameraInfo* headCamInfo = HAL::GetHeadCamInfo();
@@ -993,8 +992,7 @@ namespace Anki {
         initReceived_ = false;
         lastPingTime_ = 0;
 
-        imageSendMode_ = ISM_STREAM;
-        imageSendResolution_ = Vision::CAMERA_RES_QVGA;
+        HAL::SetImageSendMode(ISM_STREAM, Vision::CAMERA_RES_CVGA);
       }
 
 
@@ -1010,6 +1008,12 @@ namespace Anki {
             m.resolution = Vision::CAMERA_RES_QVGA;
             break;
 
+          case 296:
+            AnkiConditionalErrorAndReturnValue(img.get_size(1)==400*3, RESULT_FAIL, "CompressAndSendImage",
+                                               "Unrecognized resolution: %dx%d.\n", img.get_size(1)/3, img.get_size(0));
+            m.resolution = Vision::CAMERA_RES_CVGA;
+            break;
+            
           case 480:
             AnkiConditionalErrorAndReturnValue(img.get_size(1)==640*3, RESULT_FAIL, "CompressAndSendImage",
                                                "Unrecognized resolution: %dx%d.\n", img.get_size(1)/3, img.get_size(0));

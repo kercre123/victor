@@ -171,13 +171,13 @@ namespace Anki {
       const Pose3d& GetDriveCenterPose() const;
       
       // Computes the drive center offset from origin based on current carrying state
-      f32 GetDriveCenterOffset();
+      f32 GetDriveCenterOffset() const;
       
       // Computes pose of drive center for the given robot pose
-      void ComputeDriveCenterPose(const Pose3d &robotPose, Pose3d &driveCenterPose);
+      void ComputeDriveCenterPose(const Pose3d &robotPose, Pose3d &driveCenterPose) const;
       
       // Computes robot origin pose for the given drive center pose
-      void ComputeOriginPose(const Pose3d &driveCenterPose, Pose3d &robotPose);
+      void ComputeOriginPose(const Pose3d &driveCenterPose, Pose3d &robotPose) const;
 
       
       
@@ -513,8 +513,7 @@ namespace Anki {
       RobotID_t         _ID;
       bool              _isPhysical;
       
-      // Timestamp of last robotStateMessage (so we can check to see if we've lost connection)
-      double            _lastStateMsgTime_sec;
+      // Flag indicating whether a robotStateMessage was ever received
       bool              _newStateMsgAvailable;
       
       // Whether or not the robot acknowledged a SyncTime message
