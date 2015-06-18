@@ -41,9 +41,12 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 	[SerializeField] float pegBendAngle = 30f;
 
 	[SerializeField] Color[] imageColors = { Color.white, Color.black };
+	[SerializeField] Color[] spokeColors = { Color.black, Color.white };
 	[SerializeField] Color[] textColors = { Color.black , Color.white };
+	[SerializeField] Color[] outlineColors = { Color.black , Color.white };
 
 	[SerializeField] float tokenRadius = 300f;
+	[SerializeField] float tokenOuterRadius = 300f;
 
 	RectTransform rTrans = null;
 	Canvas canvas = null;
@@ -58,6 +61,7 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 
 	public bool Finished { get; private set; }
 	public bool Spinning { get { return angularVelocity != 0f; } }
+	public float Speed { get { return Mathf.Abs(angularVelocity / 360f); } }
 
 	public int GetCurrentNumber() { 
 		if(numSlices <= 0) return 0;
@@ -83,7 +87,8 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 	}
 
 	public float TokenRadius { get { return tokenRadius; } }
-
+	public float TokenOuterRadius { get { return tokenOuterRadius; } }
+	
 	void Awake() {
 		rTrans = transform as RectTransform;
 		canvas = GetComponentInParent<Canvas>();
@@ -92,7 +97,7 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 	}
 
 	void OnEnable() {
-		Unlock();
+		//Unlock();
 
 		//RefreshSettings();
 		//OptionsScreen.RefreshSettings += RefreshSettings;
@@ -290,9 +295,13 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 			for(int i=0;i<numSlices;i++) {
 				Color imageColor = imageColors[i % imageColors.Length];
 				Color textColor = textColors[i % textColors.Length];
-				
-				slices[i].Initialize(fillAmount, angle*i, (i % 4) + 1, imageColor, textColor);
+				Color outlineColor = outlineColors[i % outlineColors.Length];
+
+				slices[i].Initialize(fillAmount, angle*i, (i % 4) + 1, imageColor, textColor, outlineColor);
 				pegs[i].localRotation = Quaternion.AngleAxis(angle*i, Vector3.forward);
+
+				Image pegImage = pegs[i].gameObject.GetComponentInChildren<Image>();
+				pegImage.color = spokeColors[i % spokeColors.Length];
 			}
 		}
 
@@ -407,6 +416,7 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 	}
 
 	public void Lock() {
+		//Debug.Log("Lock wheel("+gameObject.name+")");
 		locked = true;
 		angularVelocity = 0f;
 		dragImage.enabled = false;
@@ -421,6 +431,7 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 	}
 
 	public void Unlock() {
+		//Debug.Log("Unlock wheel("+gameObject.name+")");
 		locked = false;
 		Finished = false;
 		dragImage.enabled = true;

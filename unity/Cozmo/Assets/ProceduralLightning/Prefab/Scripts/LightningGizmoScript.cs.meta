@@ -1,0 +1,22 @@
+fileFormatVersion: 2
+guid: 2b0da1ce395d39840a307f76887f32ca
+labels:
+- Lightning
+- Bolt
+- Procedural
+- Weather
+- Electricity
+- Static
+- Seed
+- Storm
+- Effect
+timeCreated: 1433802205
+licenseType: Store
+MonoImporter:
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
