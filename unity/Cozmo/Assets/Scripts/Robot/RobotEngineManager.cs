@@ -343,6 +343,8 @@ public class RobotEngineManager : MonoBehaviour {
 
 	private void ReceivedSpecificMessage( G2U.ActiveObjectMoved message )
 	{
+		if( current == null ) return;
+
 		int ID = (int)message.objectID;
 
 		if( current.activeBlocks.ContainsKey( ID ) )
@@ -355,6 +357,8 @@ public class RobotEngineManager : MonoBehaviour {
 
 	private void ReceivedSpecificMessage( G2U.ActiveObjectStoppedMoving message )
 	{
+		if( current == null ) return;
+
 		int ID = (int)message.objectID;
 		
 		if( current.activeBlocks.ContainsKey( ID ) )
@@ -367,6 +371,7 @@ public class RobotEngineManager : MonoBehaviour {
 
 	private void ReceivedSpecificMessage(G2U.RobotObservedObject message)
 	{
+		if( current == null ) return;
 		//Debug.Log( "box found with ID:" + message.objectID + " at " + Time.time );
 
 		current.UpdateObservedObjectInfo( message );
@@ -374,6 +379,8 @@ public class RobotEngineManager : MonoBehaviour {
 
 	private void ReceivedSpecificMessage( G2U.RobotObservedNothing message )
 	{
+		if( current == null ) return;
+
 		if( current.selectedObjects.Count == 0 && !current.isBusy )
 		{
 			//Debug.Log( "no box found" );
@@ -385,6 +392,8 @@ public class RobotEngineManager : MonoBehaviour {
 
 	private void ReceivedSpecificMessage( G2U.RobotDeletedObject message )
 	{
+		if( current == null ) return;
+
 		Debug.Log( "Deleted object with ID " +message.objectID );
 
 		ObservedObject deleted = current.knownObjects.Find( x=> x == message.objectID );
@@ -412,6 +421,8 @@ public class RobotEngineManager : MonoBehaviour {
 
 	private void ReceivedSpecificMessage( G2U.RobotCompletedAction message )
 	{
+		if( current == null ) return;
+
 		bool success = (message.result == ActionResult.SUCCESS);
 		RobotActionType action_type = (RobotActionType)message.actionType;
 		Debug.Log("Action completed " + success);
@@ -574,6 +585,8 @@ public class RobotEngineManager : MonoBehaviour {
  
 	private void ReceivedSpecificMessage( G2U.ImageChunk message )
 	{
+		if( current == null ) return;
+
 		//Debug.Log("ReceivedSpecificMessage ImageChunk message.ncols("+message.ncols+") message.nrows("+message.nrows+")");
 
 		switch( (ImageEncoding_t)message.imageEncoding )
