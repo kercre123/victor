@@ -7,6 +7,7 @@
 #include "user_interface.h"
 #include "client.h"
 #include "driver/uart.h"
+#include "user_config.h"
 
 /// USER_TASK_PRIO_0 is the lowest (idle) task priority
 #define userTaskPrio USER_TASK_PRIO_0
@@ -39,6 +40,7 @@ LOCAL void ICACHE_FLASH_ATTR userTask(os_event_t *event)
 void ICACHE_FLASH_ATTR user_rf_pre_init(void)
 {
   system_phy_set_rfoption(1); // Do all the calibration, don't care how much power we burn
+  system_phy_set_max_tpw(82); // Set the maximum  TX power allowed
 }
 
 /** Callback after all the chip system initalization is done.
@@ -84,8 +86,9 @@ user_init(void)
 
     os_printf("Espressif booting up...\r\nCPU set freq rslt = %d\r\n", err);
 
-    // Create config for Wifi AP
+#ifdef COZMO_AS_AP
     struct softap_config ap_config;
+    // Create config for Wifi AP
     err = wifi_softap_get_config(&ap_config);
     if (err == false)
     {
@@ -101,8 +104,8 @@ user_init(void)
     }
 
     //os_sprintf(ap_config.ssid,     "AnkiTorpedo");
-    os_sprintf(ap_config.ssid,     "AnkiEspressif%02x%02x", macaddr[4], macaddr[5]);
-    os_sprintf(ap_config.password, "2manysecrets");
+    os_sprintf(ap_config.ssid,     AP_SSID_FMT, macaddr[4], macaddr[5]);
+    os_sprintf(ap_config.password, AP_KEY);
     ap_config.ssid_len = 0;
     ap_config.channel = 2;
     ap_config.authmode = AUTH_WPA2_PSK;
@@ -114,7 +117,6 @@ user_init(void)
     wifi_set_opmode(SOFTAP_MODE);
     wifi_softap_set_config(&ap_config);
     wifi_set_phy_mode(PHY_MODE_11G);
-
     // Disable radio sleep
     wifi_set_sleep_type(NONE_SLEEP_T);
 
@@ -123,9 +125,9 @@ user_init(void)
 
     // Create ip config
     struct ip_info ipinfo;
-    ipinfo.gw.addr = ipaddr_addr("0.0.0.0");
-    ipinfo.ip.addr = ipaddr_addr("172.31.1.1");
-    ipinfo.netmask.addr = ipaddr_addr("255.255.255.0");
+    ipinfo.gw.addr = ipaddr_addr(AP_GATEWAY);
+    ipinfo.ip.addr = ipaddr_addr(AP_IP);
+    ipinfo.netmask.addr = ipaddr_addr(AP_NETMASK);
 
     // Assign ip config
     err = wifi_set_ip_info(SOFTAP_IF, &ipinfo);
@@ -136,8 +138,8 @@ user_init(void)
 
     // Configure DHCP range
     struct dhcps_lease dhcpconf;
-    dhcpconf.start_ip.addr = ipaddr_addr("172.31.1.2");
-    dhcpconf.end_ip.addr   = ipaddr_addr("172.31.1.9");
+    dhcpconf.start_ip.addr = ipaddr_addr(DHCP_START);
+    dhcpconf.end_ip.addr   = ipaddr_addr(DHCP_END);
     err = wifi_softap_set_dhcps_lease(&dhcpconf);
     if (err == false)
     {
@@ -156,6 +158,47 @@ user_init(void)
     {
       os_printf("Couldn't start DHCP server\r\n");
     }
+
+#else // Cozmo as station
+    struct station_config sta_config;
+    err = wifi_station_get_config_default(&sta_config);
+    if (err != 0)
+    {
+      os_printf("Error getting wifi station default config\r\n");
+    }
+
+    // Setup station parameters
+    os_sprintf(sta_config.ssid, STATION_SSID);
+    os_sprintf(sta_config.password, STATION_KEY);
+    #ifdef STATION_BSSID
+    os_sprintf(sta_config.bssid, STATION_BSSID)
+    sta_config.bssid_set = 1;
+    #else
+    sta_config.bssid_set = 0;
+    #endif
+
+    // Setup ESP module to station mode and apply settings
+    // Setup ESP module to AP mode and apply settings
+    wifi_set_opmode(STATION_MODE);
+    wifi_station_set_config(&sta_config);
+    wifi_set_phy_mode(PHY_MODE_11G);
+    // Disable radio sleep
+    wifi_set_sleep_type(NONE_SLEEP_T);
+
+    // Create ip config
+    struct ip_info ipinfo;
+    ipinfo.gw.addr = ipaddr_addr(STATION_GATEWAY);
+    ipinfo.ip.addr = ipaddr_addr(STATION_IP);
+    ipinfo.netmask.addr = ipaddr_addr(STATION_NETMASK);
+
+    // Assign ip config
+    err = wifi_set_ip_info(SOFTAP_IF, &ipinfo);
+    if (err == false)
+    {
+      os_printf("Couldn't set IP info\r\n");
+    }
+
+#endif
 
     // Register callback
     system_init_done_cb(&system_init_done);

@@ -578,7 +578,7 @@ namespace Anki {
       static void AddKeyFrameHelper(const MSG_TYPE& msg,
                                     KeyFrame& kf)
       {
-        PRINT("Adding keyframe with type %d to animation %d\n", kf.type, msg.animationID);
+        //PRINT("Adding keyframe with type %d to animation %d\n", kf.type, msg.animationID);
 
         kf.relTime_ms    = msg.relTime_ms;
 

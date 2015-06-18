@@ -123,7 +123,7 @@ namespace Cozmo {
         HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::StopSoundOnBaseStation), &msg);
         break;
       }
-        
+        /*
       case KeyFrame::BLINK_EYES:
       {
         EyeController::SetEyeColor(BlinkEyes.color);
@@ -181,7 +181,7 @@ namespace Cozmo {
         EyeController::StopAnimating();
         break;
       }
-        
+        */
       case KeyFrame::TRIGGER_ANIMATION:
       {
         AnimationController::Play(TriggerAnimation.animID, TriggerAnimation.numLoops);

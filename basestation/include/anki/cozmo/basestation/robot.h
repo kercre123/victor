@@ -53,7 +53,7 @@
 #include "anki/cozmo/basestation/ramp.h"
 #include "anki/cozmo/basestation/soundManager.h"
 
-#define ASYNC_VISION_PROCESSING 0
+#define ASYNC_VISION_PROCESSING 1
 
 namespace Anki {
   namespace Cozmo {
@@ -301,7 +301,8 @@ namespace Anki {
       // Set how to save incoming robot images to file
       void SetSaveImageMode(const SaveMode_t mode);
       
-      TimeStamp_t GetLastImageTimeStamp() const { return _lastImgTimeStamp; }
+      // Return the timestamp of the last _processed_ image
+      TimeStamp_t GetLastImageTimeStamp() { return _visionProcessor.GetLastProcessedImageTimeStamp(); }
       
       // =========== Actions Commands =============
       
