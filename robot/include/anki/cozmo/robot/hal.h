@@ -354,7 +354,9 @@ namespace Anki
       // Get the number of lines received so far for the specified camera
       //u32 CameraGetReceivedLines(CameraID cameraID);
 
-
+      // Set the streaming mode of camera images
+      void SetImageSendMode(const ImageSendMode_t mode, const Vision::CameraResolution res);
+      
       /////////////////////////////////////////////////////////////////////
       // PROXIMITY SENSORS
       //
