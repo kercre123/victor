@@ -62,10 +62,10 @@ public class TouchCamera : MonoBehaviour {
 				Vector2 delta = (Vector2)newTouchPosition - (Vector2)oldTouchPositions[0];
 
 				float panFactor = Mathf.Abs(delta.x) / GetComponent<Camera>().pixelWidth;
-				float panAngle = Mathf.Lerp(0f, 180f, panFactor ) * (delta.x >= 0f ? 1f : -1f);
+				float panAngle = Mathf.Lerp(0f, 180f, panFactor ) * Mathf.Sign(delta.x);
 
 				float pitchFactor = Mathf.Abs(delta.y) / GetComponent<Camera>().pixelHeight;
-				float pitchAngle = Mathf.Lerp(0f, 90f, pitchFactor ) * (delta.y >= 0f ? -1f : 1f);
+				float pitchAngle = Mathf.Lerp(0f, 90f, pitchFactor ) * -Mathf.Sign(delta.y);
 
 				//for now target is origin...this will likely change to a transform
 				Vector3 targetToCam = transform.position - Vector3.zero;

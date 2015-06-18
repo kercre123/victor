@@ -96,8 +96,11 @@ public class CozmoDepthSorter : MonoBehaviour {
 
 		if(canvas.renderMode == RenderMode.ScreenSpaceCamera) {
 			if(transform.parent != null) {
-				Camera cam = transform.parent.gameObject.GetComponentInChildren<Camera>();
-				canvas.worldCamera = cam;
+				Camera cam = canvas.worldCamera;
+				if(cam == null) {
+					cam = transform.parent.gameObject.GetComponentInChildren<Camera>();
+					canvas.worldCamera = cam;
+				}
 				cam.depth = sortOrder;
 			}
 			else {

@@ -15,8 +15,10 @@ public class RobotEngineManager : MonoBehaviour {
 	
 	public Dictionary<int, Robot> robots { get; private set; }
 	public List<Robot> robotList = new List<Robot>();
-	
-	public Robot current { get { return robots[ Intro.CurrentRobotID ]; } }
+
+	public int currentRobotID { get; private set; }
+
+	public Robot current { get { return robots.ContainsKey( currentRobotID ) ? robots[ currentRobotID ] : null; } }
 
 	public bool IsConnected { get { return (channel != null && channel.IsConnected); } }
 	
@@ -93,9 +95,10 @@ public class RobotEngineManager : MonoBehaviour {
 
 	public void AddRobot( byte robotID )
 	{
-		Robot robot = new Robot(robotID);
+		Robot robot = new Robot( robotID );
 		robots.Add( robotID, robot );
-		robotList.Add(robot);
+		robotList.Add( robot );
+		currentRobotID = robotID;
 	}
 	
 	private void OnEnable()
@@ -129,7 +132,6 @@ public class RobotEngineManager : MonoBehaviour {
 		channel.MessageReceived += ReceivedMessage;
 
 		robots = new Dictionary<int, Robot>();
-		AddRobot( Intro.CurrentRobotID );
 	}
 
 	private void OnDisable()
@@ -456,6 +458,9 @@ public class RobotEngineManager : MonoBehaviour {
 		if (!isRobotConnected) {
 			Debug.Log ("Robot " + message.robotID.ToString() + " sent first state message.");
 			isRobotConnected = true;
+
+			AddRobot( message.robotID );
+
 			if (RobotConnected != null) {
 			    RobotConnected(message.robotID);
 			}
@@ -607,7 +612,7 @@ public class RobotEngineManager : MonoBehaviour {
 		}
 		
 		int chunkLength = Math.Min (minipegArray.Length - currentImageIndex, message.chunkSize);
-		Array.Copy (message.data, 0, minipegArray, currentImageIndex, chunkLength);
+		Array.Copy(message.data, 0, minipegArray, currentImageIndex, chunkLength);
 		currentImageIndex += chunkLength;
 		
 		if( ++currentChunkIndex == message.imageChunkCount )

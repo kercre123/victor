@@ -57,6 +57,24 @@ MonoBehaviour:
       stars: 0a0000006400000068010000
       scoreToWin: 0
       maxPlayTime: 90
+  - name: Vortex
+    levels:
+    - name: 1
+      stars: 0a0000006400000068010000
+      scoreToWin: 0
+      maxPlayTime: 0
+    - name: 2
+      stars: 0a0000006400000068010000
+      scoreToWin: 0
+      maxPlayTime: 0
+    - name: 3
+      stars: 0a0000006400000068010000
+      scoreToWin: 0
+      maxPlayTime: 0
+    - name: 4
+      stars: 0a0000006400000068010000
+      scoreToWin: 0
+      maxPlayTime: 0
 --- !u!114 &11475924
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -79,4 +97,3 @@ Prefab:
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 109628}
   m_IsPrefabParent: 1
-  m_IsExploded: 1

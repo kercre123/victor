@@ -1131,7 +1131,7 @@ public class GameLayoutTracker : MonoBehaviour {
 		Vector3 offsetFromFirstBlock = CozmoUtil.Vector3UnityToCozmoSpace(t.position - layoutBlock1.transform.position) * scaleToCozmo;
 		offsetFromFirstBlock.z = 0f;
 		facingVector = CozmoUtil.Vector3UnityToCozmoSpace(t.forward).normalized;
-		facingAngle = Vector3.Angle(Vector3.right, facingVector) * (Vector3.Dot(facingVector, Vector3.up) >= 0f ? 1f : -1f) * Mathf.Deg2Rad;
+		facingAngle = Vector3.Angle(Vector3.right, facingVector) * Mathf.Sign(Vector3.Dot(facingVector, Vector3.up)) * Mathf.Deg2Rad;
 		
 		//if layout has only one block for some reason, just use default rotation
 		if(layoutBlocksOnGround.Count == 1) {
@@ -1163,7 +1163,7 @@ public class GameLayoutTracker : MonoBehaviour {
 			offsetFromFirstBlock = observedRotation * offsetFromFirstBlock;
 			facingVector = observedRotation * facingVector;
 			
-			float signedAngleOffsetRad = Vector3.Angle(Vector3.right, facingVector) * (Vector3.Dot(facingVector, Vector3.up) >= 0f ? 1f : -1f) * Mathf.Deg2Rad;
+			float signedAngleOffsetRad = Vector3.Angle(Vector3.right, facingVector) * Mathf.Sign(Vector3.Dot(facingVector, Vector3.up)) * Mathf.Deg2Rad;
 			
 			Debug.Log("GetStartingPositionFromLayout facingAngle("+facingAngle+") signedAngleRad("+signedAngleOffsetRad+") newFacing("+(facingAngle + signedAngleOffsetRad)+") axis.z("+axis.z+")");
 			facingAngle = signedAngleOffsetRad;
