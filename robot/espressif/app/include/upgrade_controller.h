@@ -19,8 +19,10 @@ int8_t upgradeControllerInit(void);
 /// An impossible flash address to invalidate the state
 #define INVALID_FLASH_ADDRESS (0xFFFFffff)
 
-/// Upgrade command controll flags
-// One hot encoding is used, might mask in the future
+/** Upgrade command controll flags
+ * One hot encoding is used, might mask in the future
+ * Assume limited to 8 bits regardless of storage.
+ */
 typedef enum {
   UPCMD_FLAGS_NONE = 0x00, // No special actions
   UPCMD_WIFI_FW    = 0x01, // Upgrade the wifi (Espressif firmware)
@@ -36,7 +38,7 @@ typedef struct _UpradeCommandParameters
   char PREFIX[UPGRADE_COMMAND_PREFIX_LENGTH]; ///< Communication header
   uint32_t flashAddress;                      ///< Where to put the data
   uint32_t size;                              ///< The number of bytes to expect and write
-  uint8_t  flags;                             ///< Assorted flags for the upgrade
+  uint32_t flags;                             ///< Assorted flags for the upgrade. @NOTE Flags are stored as 32bits for alignment consistancy but assume only 8 bits are usable
 } UpgradeCommandParameters;
 
 #endif

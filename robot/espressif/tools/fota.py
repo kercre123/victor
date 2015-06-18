@@ -27,41 +27,56 @@ class UpgradeCommandFlags:
 class UpgradeCommand(struct.Struct):
     PREFIX = b"robotsRising"
     def __init__(self, flashAddress=0xFFFFffff, length=0, flags=UpgradeCommandFlags.NONE):
-        struct.Struct.__init__(self, "12sIIB")
+        struct.Struct.__init__(self, "<12sIII")
         self.flashAddress = flashAddress
         self.length = length
         self.flags  = flags
     def pack(self):
-        return struct.Struct.pack(self, self.PREFIX, self.flashAddress, self.length, self.flags)
+        data = struct.Struct.pack(self, self.PREFIX, self.flashAddress, self.length, self.flags)
+        print("-->", str(data))
+        return data
 
 def sendFW(roboCon, fw):
     "Send data to the robot in 1KB chunks spaced out to allow time for flash writes"
     for i in range(0, len(fw), 1024):
-        time.sleep(0.05)
-        roboCon.send(fw[i:i+1024])
-        sys.stdout.write('.')
+        cmd = roboCon.recv(1600)
+        if cmd == b"next":
+            roboCon.send(fw[i:i+1024])
+            sys.stdout.write('.')
+        else:
+            sys.stderr.write("Unexpected response while sending FW: \"{}\"\r\n".format(cmd))
+            break
 
-def doWifiUpgrade(roboConn):
-    roboConn.send(UpgradeCommand(flags=UpgradeCommandFlags.WIFI_FW | UpgradeCommandFlags.ASK_WHICH).pack())
-    answer = roboConn.recv(1600);
+def doWifiUpgrade(roboCon):
+    roboCon.send(UpgradeCommand(flags=UpgradeCommandFlags.WIFI_FW | UpgradeCommandFlags.ASK_WHICH).pack())
+    answer = roboCon.recv(1600);
     if len(answer) != 4:
         sys.stderr.write("Unexpected answer from Espressif: %s\r\n" % str(answer))
         return
     header, flags, which = struct.unpack("2sBB", answer)
-    if not (header = b"OK" and flags == UpgradeCommandFlags.WIFI_FW | UpgradeCommandFlags.ASK_WHICH):
-        sys.stderr.write("Unexpected answer from Espressif for wifi upgrade: %s%s %d %d\r\n" % (chr(h1)))
+    if not ((header == b"OK") and (flags == (UpgradeCommandFlags.WIFI_FW | UpgradeCommandFlags.ASK_WHICH))):
+        sys.stderr.write("Unexpected answer from Espressif for wifi upgrade: {} {} {}\r\n".format(header, flags, which))
         return
-    if which == 0:
+    if which == 1:
         fw = open(USERBIN1, "rb").read()
         fwWriteAddr = USERBIN1_ADDR
         sys.stdout.write("Sending userbin1\r\n")
-    elif which == 1:
-        fw = open(USERBIN2), "rb").read()
+    elif which == 0:
+        fw = open(USERBIN2, "rb").read()
         fwWriteAddr = USERBIN2_ADDR
         sys.stdout.write("Sending userbin2\r\n")
     else:
         sys.stderr.write("Unexpected userbin specified for Espressif WiFi upgrade: %d\r\n" % which)
+        return
     roboCon.send(UpgradeCommand(fwWriteAddr, len(fw), UpgradeCommandFlags.WIFI_FW).pack())
+    answer = roboCon.recv(1600)
+    if (len(answer) != 4):
+        sys.stderr.write("Unexpected answer from Espressif {}\r\n".format(answer))
+        return
+    header, flags, which = struct.unpack("2sBB", answer)
+    if header != b"OK":
+        sys.stderr.write("Unexpected answer from Espressif {} {} {}\r\n".format(header, flags, which))
+        return
     sendFW(roboCon, fw)
     roboCon.close()
     sys.stdout.write("\r\nFinished sending WiFi firmware\r\n")
@@ -78,7 +93,7 @@ def doFPGAUpgrade(roboCon):
 def doUpgrade(robotIp, kind):
     "Communicate with the espressif for the upgrade"
     conn = socket.socket()
-    socket.connect((robotIp, COMMAND_PORT))
+    conn.connect((robotIp, COMMAND_PORT))
     if kind == UpgradeCommandFlags.WIFI_FW:
         doWifiUpgrade(conn)
     elif kind == UpgradeCommandFlags.FPGA_FW:
@@ -93,20 +108,3 @@ if __name__ == '__main__':
     robotHostname = sys.argv[1]
 
     doUpgrade(robotHostname, UpgradeCommandFlags.WIFI_FW)
-
-
-    httpd = httpServer.HTTPServer(('%d.%d.%d.%d' % tuple(serverIp), HTTP_SERVER_PORT), UpgradeRequestHandler)
-    httpdThread = threading.Thread(target=httpd.serve_forever)
-    sys.stdout.write("Starting HTTP server\r\n")
-    httpdThread.start()
-
-    sys.stdout.write("Commanding upgrade\r\n")
-    commandUpgrade(serverIp, robotIp, upgradeCommand)
-
-    sys.stdout.write("^C to quit\r\n")
-    try:
-        time.sleep(120)
-    except KeyboardInterrupt:
-        pass
-
-    httpd.server_close()

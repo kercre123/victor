@@ -22,19 +22,20 @@
 /// Stuct for holding incoming data to write to flash
 typedef struct {
   uint32 data[FLASH_WRITE_SIZE/4]; // 4 byte aligned data to write
-  uint32 length;    // Number of BYTES to write
+  uint32 length; // Number of BYTES to write
 } FlashWriteData;
 
 
 /// Upgrade controller server
 static struct espconn* upccServer;
+/// Current connection for upgrade transaction
+static struct espconn* upccConn;
 
 static uint32 fwWriteAddress = 0;
 static uint32 bytesExpected  = 0;
 static uint32 bytesReceived  = 0;
 static uint32 bytesWritten   = 0;
-static uint8  flags          = 0;
-static uint8  writesQueued   = 0;
+static uint32 flags          = 0;
 
 typedef enum {
   UPGRADE_TASK_IDLE,
@@ -57,11 +58,11 @@ LOCAL void ICACHE_FLASH_ATTR resetUpgradeState(void)
   bytesReceived  = 0;
   bytesWritten   = 0;
   flags          = UPCMD_FLAGS_NONE;
-  writesQueued   = 0;
   taskState      = UPGRADE_TASK_IDLE;
   flashEraseSector = 0;
   flashEraseEnd    = 0;
   retryCount       = 0;
+  upccConn = NULL;
 }
 
 LOCAL void ICACHE_FLASH_ATTR printUpgradeState(void)
@@ -95,10 +96,17 @@ LOCAL bool upgradeTask(uint32_t param)
           {
             os_printf("UP: Erase complete\r\n");
             taskState = UPGRADE_TASK_WRITE;
-            err = espconn_recv_unhold(upccServer);
-            if (err != 0)
+            if (upccConn != NULL)
             {
-              os_printf("ERROR: couldn't unhold socket: %d\r\n", err);
+              err = espconn_sent(upccConn, "next", 4);
+              if (err != 0)
+              {
+                os_printf("ERROR: couldn't unhold socket: %d\r\n", err);
+              }
+            }
+            else
+            {
+              os_printf("ERROR: upccConn NULL\r\n");
             }
             return false;
           }
@@ -139,16 +147,15 @@ LOCAL bool upgradeTask(uint32_t param)
     case UPGRADE_TASK_WRITE:
     {
       FlashWriteData* fwd = (FlashWriteData*)param;
-      os_printf("UP: Write 0x%08x 0x%x\r\n", fwWriteAddress, fwd->length);
+      os_printf("UP: Write 0x%08x 0x%x\r\n", fwWriteAddress + bytesWritten, fwd->length);
       flashResult = spi_flash_write(fwWriteAddress + bytesWritten, fwd->data, fwd->length);
       switch (flashResult)
       {
         case SPI_FLASH_RESULT_OK:
         {
           retryCount = 0;
-          bytesWritten   += fwd->length;
+          bytesWritten += fwd->length;
           os_free(fwd); // Free the memory used
-          writesQueued -= 1;
           if (bytesWritten == bytesExpected)
           {
             taskState = UPGRADE_TASK_FINISH;
@@ -156,13 +163,18 @@ LOCAL bool upgradeTask(uint32_t param)
           }
           else
           {
-            if (writesQueued == 0)
+            if (upccConn != NULL)
             {
-              err = espconn_recv_unhold(upccServer);
+              err = espconn_sent(upccConn, "next", 4);
               if (err != 0)
               {
                 os_printf("\tCouldn't unhold socket: %d\r\n", err);
               }
+            }
+            else
+            {
+              os_printf("ERROR: upccConn NULL\r\n");
+              resetUpgradeState();
             }
             return false;
           }
@@ -237,12 +249,8 @@ LOCAL void ICACHE_FLASH_ATTR upccReceiveCallback(void *arg, char *usrdata, unsig
   struct espconn* conn = (struct espconn*)arg;
   uint8 err;
 
-  if (conn != upccServer)
-  {
-    os_printf("ASSERT: conn != upccServer\r\n");
-  }
+  //os_printf("INFO: UPCC recv %d[%d]\r\n", usrdata[0], length);
 
-  os_printf("INFO: UPCC recv %d[%d]\r\n", usrdata[0], length);
   if (fwWriteAddress == INVALID_FLASH_ADDRESS) // Start of new command
   {
     if (length != sizeof(UpgradeCommandParameters))
@@ -262,13 +270,13 @@ LOCAL void ICACHE_FLASH_ATTR upccReceiveCallback(void *arg, char *usrdata, unsig
     }
     else
     {
-      if (flags & UPCMD_WIFI_FW)
+      if (cmd->flags & UPCMD_WIFI_FW)
       {
         uint8 response[4];
         response[0] = 'O';
         response[1] = 'K';
-        response[2] = flags;
-        response[4] = system_upgrade_userbin_check();
+        response[2] = cmd->flags & 0xff;
+        response[3] = system_upgrade_userbin_check();
         err = espconn_sent(conn, response, 4);
         if (err != 0)
         {
@@ -276,20 +284,15 @@ LOCAL void ICACHE_FLASH_ATTR upccReceiveCallback(void *arg, char *usrdata, unsig
           resetUpgradeState();
           return;
         }
-        if (!(flags & UPCMD_ASK_WHICH)) // Wasn't just an inquiry
+        if (!(cmd->flags & UPCMD_ASK_WHICH)) // Wasn't just an inquiry
         {
           fwWriteAddress   = cmd->flashAddress;
           bytesExpected    = cmd->size;
           flags            = cmd->flags;
           flashEraseSector = cmd->flashAddress / FLASH_SECTOR_SIZE;
           flashEraseEnd    = (cmd->flashAddress + cmd->size) / FLASH_SECTOR_SIZE;
-          err = espconn_recv_hold(conn);
-          if (err != 0)
-          {
-            os_printf("ERROR: UPCC couldn't set receive hold: %d\r\n", err);
-            resetUpgradeState();
-            return;
-          }
+          upccConn         = conn;
+          os_printf("fwWriteAddr = %08x [%x], Erase sectors: %d..%d\r\n", fwWriteAddress, bytesExpected, flashEraseSector, flashEraseEnd);
           system_upgrade_flag_set(UPGRADE_FLAG_START);
           taskState = UPGRADE_TASK_ERASE;
           if (task0Post(upgradeTask, 0) == false)
@@ -300,20 +303,14 @@ LOCAL void ICACHE_FLASH_ATTR upccReceiveCallback(void *arg, char *usrdata, unsig
           }
         }
       }
-      else if (flags & UPCMD_FPGA_FW)
+      else if (cmd->flags & UPCMD_FPGA_FW)
       {
         fwWriteAddress   = cmd->flashAddress;
         bytesExpected    = cmd->size;
         flags            = cmd->flags;
         flashEraseSector = cmd->flashAddress / FLASH_SECTOR_SIZE;
         flashEraseEnd    = (cmd->flashAddress + cmd->size) / FLASH_SECTOR_SIZE;
-        err = espconn_recv_hold(conn);
-        if (err != 0)
-        {
-          os_printf("ERROR: UPCC couldn't set receive hold: %d\r\n", err);
-          resetUpgradeState();
-          return;
-        }
+        upccConn = conn;
         taskState = UPGRADE_TASK_ERASE;
         if (task0Post(upgradeTask, 0) == false)
         {
@@ -355,15 +352,8 @@ LOCAL void ICACHE_FLASH_ATTR upccReceiveCallback(void *arg, char *usrdata, unsig
       return;
     }
     os_memcpy((void*)fwd->data, usrdata, length);
+    fwd->length = length;
     bytesReceived += length;
-    err = espconn_recv_hold(conn);
-    if (err != 0)
-    {
-      os_printf("ERROR: UPCC couldn't set receive hold: %d\r\n", err);
-      resetUpgradeState();
-      os_free(fwd);
-      return;
-    }
     if (task0Post(upgradeTask, (uint32)fwd) == false)
     {
       os_printf("ERROR: Couldn't post upgrade task\r\n");
@@ -376,7 +366,7 @@ LOCAL void ICACHE_FLASH_ATTR upccReceiveCallback(void *arg, char *usrdata, unsig
 LOCAL void ICACHE_FLASH_ATTR upccSentCallback(void *arg)
 {
   struct espconn *conn = arg;
-  os_printf("INFO: UPCC sent cb\r\n");
+  //os_printf("INFO: UPCC sent cb\r\n");
 }
 
 LOCAL void ICACHE_FLASH_ATTR upccConnectCallback(void *arg)
@@ -413,12 +403,17 @@ LOCAL void ICACHE_FLASH_ATTR upccDisconectCallback(void *arg)
 {
   if (bytesReceived != bytesExpected)
   {
-    os_printf("INFO: UPCC disconnected without receiving expected data\r\n\t");
+    os_printf("INFO: UPCC disconnected without receiving expected data: %d <> %d\r\n\t", bytesReceived, bytesExpected);
     printUpgradeState();
+    resetUpgradeState();
   }
   else
   {
     os_printf("INFO: UPCC disconnected\r\n");
+  }
+  if (arg == upccConn)
+  {
+    upccConn = NULL;
   }
 }
 
