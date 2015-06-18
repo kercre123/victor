@@ -14,6 +14,8 @@ public class Intro : MonoBehaviour {
 	private string currentScene;
 	private string currentVizHostIP;
 
+	private const int ROBOT_ID = 1;
+
 	private Robot robot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.current : null; } }
 
 	private string lastEngineIp
@@ -148,7 +150,7 @@ public class Intro : MonoBehaviour {
 	{
 		error.text = "<color=#ffffff>Connected to " + connectionIdentifier + ". Force-adding robot...</color>";
 		RobotEngineManager.instance.StartEngine (currentVizHostIP);
-		RobotEngineManager.instance.ForceAddRobot(RobotEngineManager.instance.currentRobotID, currentRobotIP, simulated);
+		RobotEngineManager.instance.ForceAddRobot(ROBOT_ID, currentRobotIP, simulated);
 	}
 
 	private void Disconnected(DisconnectionReason reason)
