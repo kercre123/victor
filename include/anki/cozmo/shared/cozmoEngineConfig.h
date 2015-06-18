@@ -16,6 +16,18 @@ namespace Anki {
     // TODO: The headCamPose is eventually to be calibrated
     //       if it can't be manufactured to sufficient tolerance.
 #if(1)
+    // Cozmo v4 #1
+    const f32 HEAD_CAM_YAW_CORR = DEG_TO_RAD_F32(0.f);
+    const f32 HEAD_CAM_PITCH_CORR = DEG_TO_RAD_F32(0.f);
+    const f32 HEAD_CAM_ROLL_CORR = DEG_TO_RAD_F32(0.f);
+    const f32 HEAD_CAM_TRANS_X_CORR = 0.f;
+
+    
+    // ===  Magic numbers ===
+    
+    // Robot seems to consistently dock to the right
+    const f32 DOCKING_LATERAL_OFFSET_HACK = 0.f;
+#elif(0)
     // Cozmo v3.2 #1
     const f32 HEAD_CAM_YAW_CORR = DEG_TO_RAD_F32(2.f);
     const f32 HEAD_CAM_PITCH_CORR = DEG_TO_RAD_F32(-1.5f);
@@ -27,12 +39,6 @@ namespace Anki {
     
     // Robot seems to consistently dock to the right
     const f32 DOCKING_LATERAL_OFFSET_HACK = 2.f;
-#elif(0)
-    // Cozmo v3.1
-    const f32 HEAD_CAM_YAW_CORR = DEG_TO_RAD_F32(-3);
-    const f32 HEAD_CAM_PITCH_CORR = DEG_TO_RAD_F32(3);
-    const f32 HEAD_CAM_ROLL_CORR = DEG_TO_RAD_F32(0.f);
-    const f32 HEAD_CAM_TRANS_X_CORR = 6.f;
 #else
     const f32 HEAD_CAM_YAW_CORR = 0.f;
     const f32 HEAD_CAM_PITCH_CORR = 0.f;
