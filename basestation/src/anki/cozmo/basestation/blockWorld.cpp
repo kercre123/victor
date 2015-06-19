@@ -758,6 +758,10 @@ namespace Anki
             case 640:
               xBorderPad = static_cast<u16>(0.225f * static_cast<f32>(camera.GetCalibration().GetNcols()));
               break;
+            case 400:
+              // TODO: How much should be occluded?
+              xBorderPad = static_cast<u16>(0.20f * static_cast<f32>(camera.GetCalibration().GetNcols()));
+              break;
             case 320:
               // Nothing to do, leave at zero
               break;
@@ -2200,6 +2204,7 @@ namespace Anki
             const Quad2f& q = poseKeyMarkerMap.second.GetImageCorners();
             f32 scaleF = 1.0f;
             switch(IMG_STREAM_RES) {
+              case Vision::CAMERA_RES_CVGA:
               case Vision::CAMERA_RES_QVGA:
                 break;
               case Vision::CAMERA_RES_QQVGA:

@@ -1381,7 +1381,10 @@ namespace Cozmo {
           calibSizeValid = camCalib.GetNrows() == 480;
           _captureResolution = Vision::CAMERA_RES_VGA;
           break;
-          
+        case 400:
+          calibSizeValid = camCalib.GetNrows() == 296;
+          _captureResolution = Vision::CAMERA_RES_CVGA;
+          break;
         case 320:
           calibSizeValid = camCalib.GetNrows() == 240;
           _captureResolution = Vision::CAMERA_RES_QVGA;
@@ -2158,7 +2161,7 @@ namespace Cozmo {
         // Send tracker quad if image streaming
         if (_imageSendMode == ISM_STREAM) {
           f32 scale = 1.f;
-          for (u8 s = (u8)Vision::CAMERA_RES_QVGA; s<(u8)_nextSendImageResolution; ++s) {
+          for (u8 s = (u8)Vision::CAMERA_RES_CVGA; s<(u8)_nextSendImageResolution; ++s) {
             scale *= 0.5f;
           }
           

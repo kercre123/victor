@@ -47,6 +47,15 @@ namespace Anki
         if (*(int*)(0x1FFF7A10) == 0x00250031)
           m_idCard.esn = 1;
       }
+      
+      volatile ImageSendMode_t imageSendMode_ = ISM_STREAM;
+      volatile Vision::CameraResolution captureResolution_ = Vision::CAMERA_RES_CVGA;
+      void SetImageSendMode(const ImageSendMode_t mode, const Vision::CameraResolution res)
+      {
+        imageSendMode_ = mode;
+        captureResolution_ = res;  // TODO: Currently ignored
+      }
+      
     }
   }
 }
@@ -102,66 +111,75 @@ void StreamJPEG()
   // Initialize the encoder
   JPEGStart(m->data, WIDTH, HEIGHT, QUALITY);
 
-  m->resolution = Anki::Vision::CAMERA_RES_QVGA;
+  m->resolution = Anki::Vision::CAMERA_RES_CVGA;
   m->imageEncoding = Anki::Vision::IE_MINIPEG_GRAY;
   m->imageId = 0;
 
   while (1)
   {
-    // Skip frames (to prevent choking the Espressif)
-    for (int i = 0; i < FRAMESKIP; i++)
-    {
+    if (HAL::imageSendMode_ != ISM_OFF) {
+      
+      // Skip frames (to prevent choking the Espressif)
+      for (int i = 0; i < FRAMESKIP; i++)
+      {
+        while (HAL::CamGetReadyRow() != 0)
+          Yield();
+        while (HAL::CamGetReadyRow() == 0)
+          Yield();
+      }
+
+      // Synchronize the timestamp with camera - wait for first row to arrive
       while (HAL::CamGetReadyRow() != 0)
         Yield();
-      while (HAL::CamGetReadyRow() == 0)
-        Yield();
-    }
 
-    // Synchronize the timestamp with camera - wait for first row to arrive
-    while (HAL::CamGetReadyRow() != 0)
-      Yield();
+      // Setup image header
+      m->frameTimeStamp = HAL::GetTimeStamp() - 33;   // XXX: 30 FPS
+      m->imageId++;
+      m->chunkId = 0;
 
-    // Setup image header
-    m->frameTimeStamp = HAL::GetTimeStamp() - 33;   // XXX: 30 FPS
-    m->imageId++;
-    m->chunkId = 0;
-
-    // Convert JPEG while writing it out
-    int datalen = 0;
-    for (int row = 0; row < HEIGHT; row += 8)
-    {
-      // Wait for data to be valid before compressing it
-      while (HAL::CamGetReadyRow() != row)
-        ;
-      datalen += JPEGCompress(m->data + datalen, HAL::CamGetRaw());
-      
-      // Can only safely yield AFTER streaming image is read from buffer
-      Yield();
-      
-      // At EOF, finish frame
-      int eof = (row == HEIGHT-8);
-      if (eof)
-        datalen += JPEGEnd(m->data + datalen);
-
-      // Write out any full chunks, or at EOF, anything left
-      while (datalen >= IMAGE_CHUNK_SIZE || (eof && datalen))
+      // Convert JPEG while writing it out
+      int datalen = 0;
+      for (int row = 0; row < HEIGHT; row += 8)
       {
-        // Leave imageChunkCount at 255 until the final chunk
-        m->imageChunkCount = (eof && datalen <= IMAGE_CHUNK_SIZE) ? m->chunkId+1 : 255;
-        m->chunkSize = MIN(datalen, IMAGE_CHUNK_SIZE);
+        // Wait for data to be valid before compressing it
+        while (HAL::CamGetReadyRow() != row)
+          ;
+        datalen += JPEGCompress(m->data + datalen, HAL::CamGetRaw());
+        
+        // Can only safely yield AFTER streaming image is read from buffer
+        Yield();
+        
+        // At EOF, finish frame
+        int eof = (row == HEIGHT-8);
+        if (eof)
+          datalen += JPEGEnd(m->data + datalen);
 
-        // On the first chunk, write the quality into the image (cheesy hack)
-        if (0 == m->chunkId)
-          m->data[0] = QUALITY;
+        // Write out any full chunks, or at EOF, anything left
+        while (datalen >= IMAGE_CHUNK_SIZE || (eof && datalen))
+        {
+          // Leave imageChunkCount at 255 until the final chunk
+          m->imageChunkCount = (eof && datalen <= IMAGE_CHUNK_SIZE) ? m->chunkId+1 : 255;
+          m->chunkSize = MIN(datalen, IMAGE_CHUNK_SIZE);
 
-        HAL::RadioSendImageChunk(m, Messages::GetSize(Messages::ImageChunk_ID));
+          // On the first chunk, write the quality into the image (cheesy hack)
+          if (0 == m->chunkId)
+            m->data[0] = QUALITY;
 
-        // Copy anything left at end to front of buffer
-        datalen -= m->chunkSize;
-        if (datalen)
-          memcpy(m->data, m->data + IMAGE_CHUNK_SIZE, datalen);
-        m->chunkId++;
+          HAL::RadioSendImageChunk(m, Messages::GetSize(Messages::ImageChunk_ID));
+
+          // Copy anything left at end to front of buffer
+          datalen -= m->chunkSize;
+          if (datalen)
+            memcpy(m->data, m->data + IMAGE_CHUNK_SIZE, datalen);
+          m->chunkId++;
+        }
       }
+      
+      if (HAL::imageSendMode_ == ISM_SINGLE_SHOT) {
+        HAL::imageSendMode_ = ISM_OFF;
+      }
+    } else {
+      Yield();
     }
   }
 }

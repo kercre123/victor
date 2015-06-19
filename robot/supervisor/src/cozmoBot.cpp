@@ -34,6 +34,19 @@
 
 namespace Anki {
   namespace Cozmo {
+    
+#ifdef SIMULATOR
+    namespace HAL {
+      ImageSendMode_t imageSendMode_;
+      Vision::CameraResolution captureResolution_ = Vision::CAMERA_RES_CVGA;
+      void SetImageSendMode(const ImageSendMode_t mode, const Vision::CameraResolution res)
+      {
+        imageSendMode_ = mode;
+        captureResolution_ = res;
+      }
+    }
+#endif
+    
     namespace Robot {
 
       // "Private Member Variables"
@@ -62,7 +75,7 @@ namespace Anki {
         u32 lastCycleStartTime_ = 0;
         u32 lastMainCycleTimeErrorReportTime_ = 0;
         const u32 MAIN_TOO_LATE_TIME_THRESH = TIME_STEP * 1500;  // Normal cycle time plus 50% margin
-        const u32 MAIN_TOO_LONG_TIME_THRESH = TIME_STEP * 1500;
+        const u32 MAIN_TOO_LONG_TIME_THRESH = 1500;
         const u32 MAIN_CYCLE_ERROR_REPORTING_PERIOD = 1000000;
 
       } // Robot private namespace
@@ -224,6 +237,17 @@ namespace Anki {
 
       Result step_MainExecution()
       {
+        // HACK: Manually setting timestamp here in mainExecution until
+        // until Nathan implements this the correct way.
+        HAL::SetTimeStamp(HAL::GetTimeStamp()+TIME_STEP);
+        
+        // TBD - This should be moved to simulator just before step_MainExecution is called
+#ifndef ROBOT_HARDWARE
+        // If the hardware interface needs to be advanced (as in the case of
+        // a Webots simulation), do that first.
+        HAL::Step();
+#endif
+        
         // Detect if it took too long in between mainExecution calls
         u32 cycleStartTime = HAL::GetMicroCounter();
         if (lastCycleStartTime_ != 0) {
@@ -233,17 +257,6 @@ namespace Anki {
             avgMainTooLateTime_ = (u32)((f32)(avgMainTooLateTime_ * (mainTooLateCnt_ - 1) + timeBetweenCycles)) / mainTooLateCnt_;
           }
         }
-
-        // HACK: Manually setting timestamp here in mainExecution until
-        // until Nathan implements this the correct way.
-        HAL::SetTimeStamp(HAL::GetTimeStamp()+TIME_STEP);
-
-// TBD - This should be moved to simulator just before step_MainExecution is called
-#ifndef ROBOT_HARDWARE
-        // If the hardware interface needs to be advanced (as in the case of
-        // a Webots simulation), do that first.
-        HAL::Step();
-#endif
 
         //////////////////////////////////////////////////////////////
         // Test Mode
@@ -448,50 +461,56 @@ namespace Anki {
 
 #       ifdef SIMULATOR
 
-        TimeStamp_t currentTime = HAL::GetTimeStamp();
+        if (HAL::imageSendMode_ != ISM_OFF) {
+        
+          TimeStamp_t currentTime = HAL::GetTimeStamp();
 
-        // This computation is based on Cyberbotics support's explaination for how to compute
-        // the actual capture time of the current available image from the simulated
-        // camera, *except* I seem to need the extra "- VISION_TIME_STEP" for some reason.
-        // (The available frame is still one frame behind? I.e. we are just *about* to capture
-        //  the next one?)
-        TimeStamp_t currentImageTime = std::floor((currentTime-HAL::GetCameraStartTime())/VISION_TIME_STEP) * VISION_TIME_STEP + HAL::GetCameraStartTime() - VISION_TIME_STEP;
+          // This computation is based on Cyberbotics support's explaination for how to compute
+          // the actual capture time of the current available image from the simulated
+          // camera, *except* I seem to need the extra "- VISION_TIME_STEP" for some reason.
+          // (The available frame is still one frame behind? I.e. we are just *about* to capture
+          //  the next one?)
+          TimeStamp_t currentImageTime = std::floor((currentTime-HAL::GetCameraStartTime())/VISION_TIME_STEP) * VISION_TIME_STEP + HAL::GetCameraStartTime() - VISION_TIME_STEP;
 
-        // Keep up with the capture time of the last image we sent
-        static TimeStamp_t lastImageSentTime = 0;
+          // Keep up with the capture time of the last image we sent
+          static TimeStamp_t lastImageSentTime = 0;
 
-        // Have we already sent the currently-available image?
-        if(lastImageSentTime != currentImageTime)
-        {
-          // TODO: Provide a way to update this from message
-          Vision::CameraResolution captureResolution_ = Vision::CAMERA_RES_QVGA;
+          // Have we already sent the currently-available image?
+          if(lastImageSentTime != currentImageTime)
+          {
+            // Nope, so get the (new) available frame from the camera:
+            const s32 captureHeight = Vision::CameraResInfo[HAL::captureResolution_].height;
+            const s32 captureWidth  = Vision::CameraResInfo[HAL::captureResolution_].width * 3; // The "*3" is a hack to get enough room for color
 
-          // Nope, so get the (new) available frame from the camera:
-          const s32 captureHeight = Vision::CameraResInfo[captureResolution_].height;
-          const s32 captureWidth  = Vision::CameraResInfo[captureResolution_].width * 3; // The "*3" is a hack to get enough room for color
+            static const int bufferSize = 1000000;
+            static u8 buffer[bufferSize];
+            Embedded::MemoryStack scratch(buffer, bufferSize);
+            Embedded::Array<u8> image(captureHeight, captureWidth,
+                                      scratch, Embedded::Flags::Buffer(false,false,false));
 
-          static const int bufferSize = 1000000;
-          static u8 buffer[bufferSize];
-          Embedded::MemoryStack scratch(buffer, bufferSize);
-          Embedded::Array<u8> image(captureHeight, captureWidth,
-                                    scratch, Embedded::Flags::Buffer(false,false,false));
+            HAL::CameraGetFrame(reinterpret_cast<u8*>(image.get_buffer()),
+                                HAL::captureResolution_, false);
+            if(!image.IsValid()) {
+              retVal = RESULT_FAIL;
+            } else {
 
-          HAL::CameraGetFrame(reinterpret_cast<u8*>(image.get_buffer()),
-                              captureResolution_, false);
-          if(!image.IsValid()) {
-            retVal = RESULT_FAIL;
-          } else {
+              // Send the image, with its actual capture time (not the current system time)
+              Messages::CompressAndSendImage(image, currentImageTime);
 
-            // Send the image, with its actual capture time (not the current system time)
-            Messages::CompressAndSendImage(image, currentImageTime);
+              //PRINT("Sending state message from time = %d to correspond to image at time = %d\n",
+              //      robotState.timestamp, currentImageTime);
 
-            //PRINT("Sending state message from time = %d to correspond to image at time = %d\n",
-            //      robotState.timestamp, currentImageTime);
-
-            // Mark that we've already sent the image for the current time
-            lastImageSentTime = currentImageTime;
+              // Mark that we've already sent the image for the current time
+              lastImageSentTime = currentImageTime;
+            }
+          } // if(lastImageSentTime != currentImageTime)
+          
+          
+          if (HAL::imageSendMode_ == ISM_SINGLE_SHOT) {
+            HAL::imageSendMode_ = ISM_OFF;
           }
-        } // if(lastImageSentTime != currentImageTime)
+          
+        } // if (HAL::imageSendMode_ != ISM_OFF)
 
 #       endif // ifdef SIMULATOR
 

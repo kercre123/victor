@@ -233,7 +233,7 @@ namespace Anki
       bool UARTPutPacket(const u8* buffer, const u32 length, const u8 socket)
       {
         bool result = false;
-
+        __disable_irq();
         int bytesLeft = UARTGetFreeSpace();
 
         // Leave one guard byte + header
@@ -276,7 +276,7 @@ namespace Anki
             StartTransfer();
           }
         }
-
+        __enable_irq();
         return result;
       }
 

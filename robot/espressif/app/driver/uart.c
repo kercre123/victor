@@ -202,6 +202,7 @@ LOCAL void handleUartRawRx(uint8 flag)
   static uint8* blockBuffer;
   static uint16 blockMsgLen = 0;
   static uint16 pktLen = 0;
+  static uint16 ebiup  = 0; // Counter for extrenous bytes in UART pipe
   static uint8  phase  = 0;
   static sint8 block   = NO_BLOCK;
   bool continueTask = true;
@@ -232,6 +233,7 @@ LOCAL void handleUartRawRx(uint8 flag)
       case 0: // Not synchronized / looking for header byte 1
       {
         if (byte == UART_PACKET_HEADER[0]) phase++;
+        else ebiup++;
         break;
       }
       case 1: // Header byte 2
@@ -277,6 +279,12 @@ LOCAL void handleUartRawRx(uint8 flag)
       }
       case 6: // Start of payload
       {
+        if (ebiup != 0)
+        {
+          os_printf("EBIUP: %d\r\n", ebiup);
+          ebiup = 0;
+        }
+
         if (block == NO_BLOCK) {
           outPkt = clientGetBuffer();
           if (outPkt == NULL)
