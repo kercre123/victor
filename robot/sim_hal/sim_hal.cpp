@@ -770,6 +770,12 @@ namespace Anki {
             msgOut.upAxis   = msgIn->upAxis;
             msgOut.rolled   = msgIn->rolled;
             HAL::RadioSendMessage(Messages::ActiveObjectStoppedMoving_ID, &msgOut);
+          } else if(dataSize == BlockMessages::GetSize(BlockMessages::BlockTapped_ID)) {
+            BlockMessages::BlockTapped* msgIn = reinterpret_cast<BlockMessages::BlockTapped*>(data);
+            Messages::ActiveObjectTapped msgOut;
+            msgOut.objectID = msgIn->blockID;
+            msgOut.numTaps  = msgIn->numTaps;
+            HAL::RadioSendMessage(Messages::ActiveObjectTapped_ID, &msgOut);
           } else {
             printf("Received unknown-sized message (%d bytes) over block comms.\n", dataSize);
           }
