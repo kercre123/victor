@@ -117,6 +117,7 @@ classdef VisionMarkerTrained
             Initialize = true;
             ThresholdMethod = 'FiducialProbes'; % 'Otsu' or 'FiducialProbes'
             NearestNeighborLibrary = [];
+            CNN = [];
             
             parseVarargin(varargin{:});
             
@@ -171,7 +172,19 @@ classdef VisionMarkerTrained
                     end
                 end
                 
-                if ~isempty(NearestNeighborLibrary)
+                if ~isempty(CNN)
+                  assert(all(isfield(CNN, {'labels', 'labelNames'})), ...
+                    'Expecting CNN to have "labels" and "labelNames" fields.');
+                  
+                  probeValues = VisionMarkerTrained.GetProbeValues(img, tform);
+                  res = vl_simplenn(CNN, single(probeValues));
+                  [~,index] = max(squeeze(sum(sum(res(end).x,1),2)));
+                  
+                  this.codeID = CNN.labels(index);
+                  this.codeName = CNN.labelNames(this.codeID);
+                  this.isValid  = true;
+                  
+                elseif ~isempty(NearestNeighborLibrary)
                   VerifyLabel = false;
                   assert(size(NearestNeighborLibrary.probeValues,1) == VisionMarkerTrained.ProbeParameters.GridSize^2, ...
                     'NearestNeighborLibrary should be from a %dx%d probe pattern.', ...
