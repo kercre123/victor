@@ -143,6 +143,12 @@ namespace Cozmo {
     };
     _signalHandles.emplace_back(CozmoEngineSignals::ActiveObjectStoppedMovingSignal().ScopedSubscribe(cbActiveObjectStoppedMoving));
     
+    auto cbActiveObjectTapped = [this](uint8_t robotID, uint32_t objectID, uint8_t numTaps)
+    {
+      this->HandleActiveObjectTapped(robotID, objectID, numTaps);
+    };
+    _signalHandles.emplace_back(CozmoEngineSignals::ActiveObjectTappedSignal().ScopedSubscribe(cbActiveObjectTapped));
+    
   } // SetupSignalHandlers()
   
   
@@ -455,6 +461,20 @@ namespace Cozmo {
     msgWrapper.Set_ActiveObjectStoppedMoving(msg);
     _uiMsgHandler.SendMessage(_hostUiDeviceID, msgWrapper);
   }
+  
+  void CozmoGameImpl::HandleActiveObjectTapped(uint8_t robotID, uint32_t objectID, uint8_t numTaps)
+  {
+    G2U::ActiveObjectTapped msg;
+    
+    msg.robotID  = robotID;
+    msg.objectID = objectID;
+    msg.numTaps   = numTaps;
+    
+    G2U::Message msgWrapper;
+    msgWrapper.Set_ActiveObjectTapped(msg);
+    _uiMsgHandler.SendMessage(_hostUiDeviceID, msgWrapper);
+  }
+
 
 } // namespace Cozmo
 } // namespace Anki

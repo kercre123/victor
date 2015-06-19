@@ -31,6 +31,7 @@ enum class MessageTag : uint8_t {
 	StopSound,	// 14
 	ActiveObjectMoved,	// 15
 	ActiveObjectStoppedMoving,	// 16
+	ActiveObjectTapped,	// 17
 	INVALID
 };
 

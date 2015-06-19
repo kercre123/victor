@@ -2608,6 +2608,141 @@ public class ActiveObjectStoppedMoving
 	}
 }
 
+public class ActiveObjectTapped
+{
+	private uint _objectID; // uint_32
+	private byte _robotID; // uint_8
+	private byte _numTaps; // uint_8
+
+	public uint objectID { get { return _objectID; } set { _objectID = value; } }
+
+	public byte robotID { get { return _robotID; } set { _robotID = value; } }
+
+	public byte numTaps { get { return _numTaps; } set { _numTaps = value; } }
+
+
+	/**** Constructors ****/
+
+	public ActiveObjectTapped()
+	{
+	}
+
+	public ActiveObjectTapped(uint objectID,
+		byte robotID,
+		byte numTaps)
+	{
+		this.objectID = objectID;
+		this.robotID = robotID;
+		this.numTaps = numTaps;
+	}
+
+	public ActiveObjectTapped(System.IO.Stream stream)
+	{
+		Unpack(stream);
+	}
+
+	public ActiveObjectTapped(System.IO.BinaryReader reader)
+	{
+		Unpack(reader);
+	}
+
+	public void Unpack(System.IO.Stream stream)
+	{
+		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
+		Unpack(reader);
+	}
+
+	public void Unpack(System.IO.BinaryReader reader)
+	{
+		_objectID = reader.ReadUInt32();
+		_robotID = reader.ReadByte();
+		_numTaps = reader.ReadByte();
+	}
+
+	public void Pack(System.IO.Stream stream)
+	{
+		System.IO.BinaryWriter writer = new System.IO.BinaryWriter(stream);
+		Pack(writer);
+	}
+
+	public void Pack(System.IO.BinaryWriter writer)
+	{
+		writer.Write((uint)_objectID);
+		writer.Write((byte)_robotID);
+		writer.Write((byte)_numTaps);
+	}
+
+	public int Size 
+	{
+		get {
+			return 6;
+		}
+	}
+
+	public static bool ArrayEquals<T>(System.Collections.Generic.IList<T> a1, System.Collections.Generic.IList<T> a2) {
+		if (System.Object.ReferenceEquals(a1, a2))
+			return true;
+
+		if (System.Object.ReferenceEquals(a1, null) || System.Object.ReferenceEquals(a2, null))
+			return false;
+
+		if (a1.Count != a2.Count)
+			return false;
+
+		for (int i = 0; i < a1.Count; i++)
+		{
+			if (!a1[i].Equals(a2[i])) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	public static bool operator ==(ActiveObjectTapped a, ActiveObjectTapped b)
+	{
+		if (System.Object.ReferenceEquals(a, null))
+		{
+			return System.Object.ReferenceEquals(b, null);
+		}
+
+		return a.Equals(b);
+	}
+
+	public static bool operator !=(ActiveObjectTapped a, ActiveObjectTapped b)
+	{
+		return !(a == b);
+	}
+
+	public override bool Equals(System.Object obj)
+	{
+		return this.Equals(obj as ActiveObjectTapped);
+	}
+
+	public bool Equals(ActiveObjectTapped p)
+	{
+		if (System.Object.ReferenceEquals(p, null))
+		{
+			return false;
+		}
+
+		return this._objectID.Equals(p._objectID)
+			&& this._robotID.Equals(p._robotID)
+			&& this._numTaps.Equals(p._numTaps);
+	}
+
+	public override int GetHashCode()
+	{
+		unchecked
+		{
+			int hash = 17;
+			hash = hash * 23 + this._objectID.GetHashCode();
+			hash = hash * 23 + this._robotID.GetHashCode();
+			hash = hash * 23 + this._numTaps.GetHashCode();
+			return hash;
+		}
+	}
+}
+
 public class Message {
 	public enum Tag {
 		Ping,	//0
@@ -2627,6 +2762,7 @@ public class Message {
 		StopSound,	//14
 		ActiveObjectMoved,	//15
 		ActiveObjectStoppedMoving,	//16
+		ActiveObjectTapped,	//17
 		INVALID
 	};
 
@@ -2925,6 +3061,23 @@ public class Message {
 		}
 	}
 
+	public Anki.Cozmo.G2U.ActiveObjectTapped ActiveObjectTapped
+	{
+		get {
+			if (_tag != Tag.ActiveObjectTapped) {
+				throw new System.InvalidOperationException(string.Format(
+					"Cannot access union member \"ActiveObjectTapped\" when a value of type {0} is stored.",
+					_tag.ToString()));
+			}
+			return (Anki.Cozmo.G2U.ActiveObjectTapped)this._state;
+		}
+		
+		set {
+			_tag = (value != null) ? Tag.ActiveObjectTapped : Tag.INVALID;
+			_state = value;
+		}
+	}
+
 	/**** Constructors ****/
 
 	public Message()
@@ -3001,6 +3154,9 @@ public class Message {
 			break;
 		case Tag.ActiveObjectStoppedMoving:
 			ActiveObjectStoppedMoving = new Anki.Cozmo.G2U.ActiveObjectStoppedMoving(reader);
+			break;
+		case Tag.ActiveObjectTapped:
+			ActiveObjectTapped = new Anki.Cozmo.G2U.ActiveObjectTapped(reader);
 			break;
 		default:
 			break;
@@ -3121,6 +3277,12 @@ public class Message {
 			}
 			ActiveObjectStoppedMoving.Pack(writer);
 			break;
+		case Tag.ActiveObjectTapped:
+			if (ActiveObjectTapped == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
+			ActiveObjectTapped.Pack(writer);
+			break;
 		default:
 			break;
 		}
@@ -3232,6 +3394,12 @@ public class Message {
 					throw new System.InvalidOperationException("Messages may not have null members.");
 				}
 				result += ActiveObjectStoppedMoving.Size;
+				break;
+			case Tag.ActiveObjectTapped:
+				if (ActiveObjectTapped == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
+				result += ActiveObjectTapped.Size;
 				break;
 			default:
 				// Just tag size
