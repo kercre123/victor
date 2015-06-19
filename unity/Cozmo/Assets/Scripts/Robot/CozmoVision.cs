@@ -52,7 +52,7 @@ public class CozmoVision : MonoBehaviour
 	private static bool dingEnabled = true;
 	
 	public bool IsSmallScreen { get; protected set; }
-	protected static readonly Vector2 NativeResolution = new Vector2( 320f, 240f );
+	protected static readonly Vector2 NativeResolution = new Vector2( 400f, 296f );
 
 	protected Robot robot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.current : null; } }
 
