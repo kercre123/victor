@@ -83,4 +83,7 @@ DEF_SIGNAL(ActiveObjectStoppedMoving,
            uint8_t  upAxis,
            uint8_t  rolled);
 
-
+DEF_SIGNAL(ActiveObjectTapped,
+           uint8_t  robotID,
+           uint32_t objectID,
+           uint8_t  numTaps);

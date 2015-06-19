@@ -671,5 +671,31 @@ namespace Anki {
       return RESULT_FAIL;
     }
     
+    Result RobotMessageHandler::ProcessMessage(Robot* robot, MessageActiveObjectTapped const& msg)
+    {
+      const BlockWorld::ObjectsMapByType_t& activeBlocksByType = robot->GetBlockWorld().GetExistingObjectsByFamily(BlockWorld::ObjectFamily::ACTIVE_BLOCKS);
+      
+      for(auto objectsByID : activeBlocksByType) {
+        for(auto objectWithID : objectsByID.second) {
+          Vision::ObservableObject* object = objectWithID.second;
+          assert(object->IsActive());
+          if(object->GetActiveID() == msg.objectID) {
+
+            PRINT_STREAM_INFO("RobotMessageHandler.ProcessMessage."
+                              "MessageActiveObjectTapped",
+                              "Received message that object " << objectWithID.first.GetValue() << " (Active ID " << msg.objectID << ") was tapped " << (uint32_t)msg.numTaps << " times.");
+            
+            CozmoEngineSignals::ActiveObjectTappedSignal().emit(robot->GetID(), objectWithID.first, msg.numTaps);
+            
+            return RESULT_OK;
+          }
+        }
+      }
+      
+      PRINT_STREAM_INFO("RobotMessageHandler.ProcessMessage."
+                        "MessageActiveObjectTapped", "Could not find match for active object ID " << msg.objectID);
+      return RESULT_FAIL;
+    }
+    
   } // namespace Cozmo
 } // namespace Anki

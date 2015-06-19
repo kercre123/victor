@@ -249,3 +249,7 @@ ADD_MESSAGE_MEMBER(u8,  upAxis)  // See UpAxis type in ActiveBlockTypes.h
 ADD_MESSAGE_MEMBER(u8,  rolled)  // Whether the up orientation changed during movement
 END_MESSAGE_DEFINITION(ActiveObjectStoppedMoving)
 
+START_MESSAGE_DEFINITION(ActiveObjectTapped, 1)
+ADD_MESSAGE_MEMBER(u32, objectID)
+ADD_MESSAGE_MEMBER(u8,  numTaps)
+END_MESSAGE_DEFINITION(ActiveObjectTapped)
