@@ -453,6 +453,13 @@ namespace Anki {
                          msg.objectID, (msg.rolled ? " and rolled" : ""), msg.upAxis);
       }
       
+      void HandleActiveObjectTapped(G2U::ActiveObjectTapped const& msg)
+      {
+        PRINT_NAMED_INFO("HandleActiveObjectTapped", "Received message that object %d was tapped %d times.\n",
+                         msg.objectID, msg.numTaps);
+      }
+
+      
       // ===== End of message handler callbacks ====
       
       
@@ -501,6 +508,9 @@ namespace Anki {
               break;
             case G2U::Message::Tag::ActiveObjectStoppedMoving:
               HandleActiveObjectStoppedMoving(message.Get_ActiveObjectStoppedMoving());
+              break;
+            case G2U::Message::Tag::ActiveObjectTapped:
+              HandleActiveObjectTapped(message.Get_ActiveObjectTapped());
               break;
             default:
               // ignore
