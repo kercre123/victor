@@ -1369,6 +1369,76 @@ bool ActiveObjectStoppedMoving::operator!=(const ActiveObjectStoppedMoving& othe
 }
 
 
+// MESSAGE ActiveObjectTapped
+
+ActiveObjectTapped::ActiveObjectTapped(const uint8_t* buff, size_t len)
+{
+	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+	Unpack(buffer);
+}
+
+ActiveObjectTapped::ActiveObjectTapped(const CLAD::SafeMessageBuffer& buffer)
+{
+	Unpack(buffer);
+}
+
+size_t ActiveObjectTapped::Pack(uint8_t* buff, size_t len) const
+{
+	CLAD::SafeMessageBuffer buffer(buff, len, false);
+	return Pack(buffer);
+}
+
+size_t ActiveObjectTapped::Pack(CLAD::SafeMessageBuffer& buffer) const
+{
+	buffer.Write(this->objectID);
+	buffer.Write(this->robotID);
+	buffer.Write(this->numTaps);
+	const size_t bytesWritten {buffer.GetBytesWritten()};
+	return bytesWritten;
+}
+
+size_t ActiveObjectTapped::Unpack(const uint8_t* buff, const size_t len)
+{
+	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+	return Unpack(buffer);
+}
+
+size_t ActiveObjectTapped::Unpack(const CLAD::SafeMessageBuffer& buffer)
+{
+	buffer.Read(this->objectID);
+	buffer.Read(this->robotID);
+	buffer.Read(this->numTaps);
+	return buffer.GetBytesRead();
+}
+
+size_t ActiveObjectTapped::Size() const
+{
+	size_t result = 0;
+	//objectID
+	result += 4; // = uint_32
+	//robotID
+	result += 1; // = uint_8
+	//numTaps
+	result += 1; // = uint_8
+	return result;
+}
+
+bool ActiveObjectTapped::operator==(const ActiveObjectTapped& other) const
+{
+	if (objectID != other.objectID
+	|| robotID != other.robotID
+	|| numTaps != other.numTaps) {
+		return false;
+	}
+	return true;
+}
+
+bool ActiveObjectTapped::operator!=(const ActiveObjectTapped& other) const
+{
+	return !(operator==(other));
+}
+
+
 // UNION Message
 
 const char* MessageTagToString(const MessageTag tag) {
@@ -1407,6 +1477,8 @@ const char* MessageTagToString(const MessageTag tag) {
 		return "ActiveObjectMoved";
 	case MessageTag::ActiveObjectStoppedMoving:
 		return "ActiveObjectStoppedMoving";
+	case MessageTag::ActiveObjectTapped:
+		return "ActiveObjectTapped";
 	default:
 		return "INVALID";
 	}
@@ -1916,6 +1988,35 @@ void Message::Set_ActiveObjectStoppedMoving(Anki::Cozmo::G2U::ActiveObjectStoppe
 }
 
 
+const Anki::Cozmo::G2U::ActiveObjectTapped& Message::Get_ActiveObjectTapped() const
+{
+	assert(_tag == Tag::ActiveObjectTapped);
+	return _ActiveObjectTapped;
+}
+void Message::Set_ActiveObjectTapped(const Anki::Cozmo::G2U::ActiveObjectTapped& new_ActiveObjectTapped)
+{
+	if(this->_tag == Tag::ActiveObjectTapped) {
+		_ActiveObjectTapped = new_ActiveObjectTapped;
+	}
+	else {
+		ClearCurrent();
+		new(&_ActiveObjectTapped) Anki::Cozmo::G2U::ActiveObjectTapped{new_ActiveObjectTapped};
+		_tag = Tag::ActiveObjectTapped;
+	}
+}
+void Message::Set_ActiveObjectTapped(Anki::Cozmo::G2U::ActiveObjectTapped&& new_ActiveObjectTapped)
+{
+	if(this->_tag == Tag::ActiveObjectTapped) {
+		_ActiveObjectTapped = std::move(new_ActiveObjectTapped);
+	}
+	else {
+		ClearCurrent();
+		new(&_ActiveObjectTapped) Anki::Cozmo::G2U::ActiveObjectTapped{std::move(new_ActiveObjectTapped)};
+		_tag = Tag::ActiveObjectTapped;
+	}
+}
+
+
 size_t Message::Unpack(const uint8_t* buff, const size_t len)
 {
 	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
@@ -2067,6 +2168,14 @@ size_t Message::Unpack(const CLAD::SafeMessageBuffer& buffer)
 			this->_ActiveObjectStoppedMoving.Unpack(buffer);
 		}
 		break;
+	case Tag::ActiveObjectTapped:
+		if (newTag != oldTag) {
+			new(&(this->_ActiveObjectTapped)) Anki::Cozmo::G2U::ActiveObjectTapped(buffer);
+		}
+		else {
+			this->_ActiveObjectTapped.Unpack(buffer);
+		}
+		break;
 	default:
 		break;
 	}
@@ -2135,6 +2244,9 @@ size_t Message::Pack(CLAD::SafeMessageBuffer& buffer) const
 	case Tag::ActiveObjectStoppedMoving:
 		this->_ActiveObjectStoppedMoving.Pack(buffer);
 		break;
+	case Tag::ActiveObjectTapped:
+		this->_ActiveObjectTapped.Pack(buffer);
+		break;
 	default:
 		break;
 	}
@@ -2197,6 +2309,9 @@ size_t Message::Size() const
 	case Tag::ActiveObjectStoppedMoving:
 		result += _ActiveObjectStoppedMoving.Size();
 		break;
+	case Tag::ActiveObjectTapped:
+		result += _ActiveObjectTapped.Size();
+		break;
 	default:
 		return 0;
 	}
@@ -2257,6 +2372,9 @@ void Message::ClearCurrent()
 		break;
 	case Tag::ActiveObjectStoppedMoving:
 		_ActiveObjectStoppedMoving.~ActiveObjectStoppedMoving();
+		break;
+	case Tag::ActiveObjectTapped:
+		_ActiveObjectTapped.~ActiveObjectTapped();
 		break;
 	default:
 		break;

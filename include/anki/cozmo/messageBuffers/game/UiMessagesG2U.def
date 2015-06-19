@@ -801,6 +801,46 @@ struct ActiveObjectStoppedMoving
 	bool operator!=(const ActiveObjectStoppedMoving& other) const;
 };
 
+// MESSAGE ActiveObjectTapped
+struct ActiveObjectTapped
+{
+	uint32_t objectID;
+	uint8_t robotID;
+	uint8_t numTaps;
+	
+	/**** Constructors ****/
+	ActiveObjectTapped() = default;
+	ActiveObjectTapped(const ActiveObjectTapped& other) = default;
+	ActiveObjectTapped(ActiveObjectTapped& other) = default;
+	ActiveObjectTapped(ActiveObjectTapped&& other) noexcept = default;
+	ActiveObjectTapped& operator=(const ActiveObjectTapped& other) = default;
+	ActiveObjectTapped& operator=(ActiveObjectTapped&& other) noexcept = default;
+	
+	explicit ActiveObjectTapped(uint32_t objectID
+		,uint8_t robotID
+		,uint8_t numTaps)
+	:objectID(objectID)
+	,robotID(robotID)
+	,numTaps(numTaps)
+	{}
+
+	explicit ActiveObjectTapped(const uint8_t* buff, size_t len);
+	explicit ActiveObjectTapped(const CLAD::SafeMessageBuffer& buffer);
+	
+	/**** Pack ****/
+	size_t Pack(uint8_t* buff, size_t len) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+
+	/**** Unpack ****/
+	size_t Unpack(const uint8_t* buff, const size_t len);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+
+	size_t Size() const;
+
+	bool operator==(const ActiveObjectTapped& other) const;
+	bool operator!=(const ActiveObjectTapped& other) const;
+};
+
 // UNION Message
 class Message
 {
@@ -899,6 +939,11 @@ public:
 	void Set_ActiveObjectStoppedMoving(const Anki::Cozmo::G2U::ActiveObjectStoppedMoving& new_ActiveObjectStoppedMoving);
 	void Set_ActiveObjectStoppedMoving(Anki::Cozmo::G2U::ActiveObjectStoppedMoving&& new_ActiveObjectStoppedMoving);
 
+	/** ActiveObjectTapped **/
+	const Anki::Cozmo::G2U::ActiveObjectTapped& Get_ActiveObjectTapped() const;
+	void Set_ActiveObjectTapped(const Anki::Cozmo::G2U::ActiveObjectTapped& new_ActiveObjectTapped);
+	void Set_ActiveObjectTapped(Anki::Cozmo::G2U::ActiveObjectTapped&& new_ActiveObjectTapped);
+
 
 	size_t Unpack(const uint8_t* buff, const size_t len);
 	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
@@ -929,6 +974,7 @@ private:
 		Anki::Cozmo::G2U::StopSound _StopSound;
 		Anki::Cozmo::G2U::ActiveObjectMoved _ActiveObjectMoved;
 		Anki::Cozmo::G2U::ActiveObjectStoppedMoving _ActiveObjectStoppedMoving;
+		Anki::Cozmo::G2U::ActiveObjectTapped _ActiveObjectTapped;
 	};
 };
 
