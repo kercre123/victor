@@ -10,7 +10,7 @@ import textwrap
 
 def _modify_path():
     currentpath = os.path.dirname(inspect.getfile(inspect.currentframe()))
-    searchpath = os.path.join(currentpath, '..', '..', 'tools', 'message-buffers')
+    searchpath = os.path.join(currentpath, '..', '..', 'tools', 'anki-util', 'tools', 'message-buffers')
     searchpath = os.path.normpath(os.path.abspath(os.path.realpath(searchpath)))
     if searchpath not in sys.path:
         sys.path.insert(0, searchpath)
