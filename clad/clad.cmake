@@ -8,7 +8,7 @@ set(COZMO_ENGINE_CLAD_INCLUDE_LIST_DIR "${CMAKE_CURRENT_LIST_DIR}")
 
 # The directory of the CLAD submodule
 # ABSOLUTE also cleans up .. entries
-get_filename_component(CLAD_DIR "${COZMO_ENGINE_CLAD_INCLUDE_LIST_DIR}/../tools/message-buffers" ABSOLUTE)
+get_filename_component(CLAD_DIR "${COZMO_ENGINE_CLAD_INCLUDE_LIST_DIR}/../tools/anki-util/tools/message-buffers" ABSOLUTE)
 
 
 # Sets a variable to a relative version of a path or lists of paths after normalizing.
