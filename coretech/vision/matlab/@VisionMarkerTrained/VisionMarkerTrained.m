@@ -162,9 +162,14 @@ classdef VisionMarkerTrained
             else
                 if CornerRefinementIterations > 0
                     if UseMexCornerRefinment
+                      try
                         [this.corners, this.H] = mexRefineQuadrilateral(im2uint8(img), int16(this.corners-1), single(this.H), ...
                             CornerRefinementIterations, VisionMarkerTrained.SquareWidthFraction, dark*255, bright*255, 100, 5, .005);
                         this.corners = this.corners + 1;
+                      catch E
+                        warning('mexRefineQuadrilateral failed: %s', E.message);
+                        this.isValid = false;
+                      end
                     else
                         [this.corners, this.H] = this.RefineCorners(img, 'NumSamples', 100, ... 'DebugDisplay', true,  ...
                             'MaxIterations', CornerRefinementIterations, ...
