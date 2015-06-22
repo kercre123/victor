@@ -183,11 +183,23 @@ classdef VisionMarkerTrained
                   
                   probeValues = VisionMarkerTrained.GetProbeValues(img, tform);
                   res = vl_simplenn(CNN, single(probeValues));
-                  [~,index] = max(squeeze(sum(sum(res(end).x,1),2)));
+                  %[maxResponse,index] = max(squeeze(sum(sum(res(end).x,1),2)));
+                  [sortedResponses, index] = sort(squeeze(sum(sum(res(end).x,1),2)), 'descend');
                   
-                  this.codeID = CNN.labels(index);
-                  this.codeName = CNN.labelNames(this.codeID);
-                  this.isValid  = true;
+                  % Max response has to be significantly better than
+                  % second-best response for this to be a valid marker
+                  responseRatio = sortedResponses(1)/sortedResponses(2);
+                  %fprintf('responseRatio = %f\n', responseRatio);
+                  
+                  if responseRatio > 1.2
+                    this.codeID = CNN.labels(index(1));
+                    this.codeName = CNN.labelNames(this.codeID);
+                    this.isValid  = true;
+                  else
+                    this.codeID = 0;
+                    this.codeName = 'UNKNOWN';
+                    this.isValid = false;
+                  end
                   
                 elseif ~isempty(NearestNeighborLibrary)
                   VerifyLabel = false;
