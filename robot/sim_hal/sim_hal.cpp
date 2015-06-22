@@ -25,6 +25,7 @@
 #include <webots/GPS.hpp>
 #include <webots/Compass.hpp>
 #include <webots/Camera.hpp>
+#include <webots/Display.hpp>
 #include <webots/Gyro.hpp>
 #include <webots/DistanceSensor.hpp>
 #include <webots/Accelerometer.hpp>
@@ -146,6 +147,9 @@ namespace Anki {
       
       // Lights
       webots::LED* leds_[NUM_BACKPACK_LEDS] = {0};
+      
+      // Face display
+      webots::Display* face_;
       
 #pragma mark --- Simulated Hardware Interface "Private Methods" ---
       // Localization
@@ -479,6 +483,10 @@ namespace Anki {
       leds_[LED_BACKPACK_RIGHT]       = webotRobot_.getLED("backpackLED3");
       leds_[LED_BACKPACK_MIDDLE]      = leds_[LED_BACKPACK_INNER_RIGHT];
       
+      
+      // Face display
+      face_ = webotRobot_.getDisplay("face_display");
+      face_->setColor(0x0000f0ff);
       
       isInitialized = true;
       return RESULT_OK;
