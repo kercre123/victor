@@ -150,6 +150,15 @@ namespace Anki {
       
       // Face display
       webots::Display* face_;
+      const u32 DISPLAY_WIDTH = 128;
+      const u32 DISPLAY_HEIGHT = 64;
+      const u32 NUM_DISPLAY_PIXELS = DISPLAY_WIDTH * DISPLAY_HEIGHT;
+      u8 lastFaceFrameDecoded_[NUM_DISPLAY_PIXELS];  // Each byte represents one pixel
+      u32 facePosX_ = 0;
+      u32 facePosY_ = 0;
+      TimeStamp_t faceBlinkStartTime_ = 0;
+      const u32 FACE_BLINK_DURATION_MS = 200;
+      
       
 #pragma mark --- Simulated Hardware Interface "Private Methods" ---
       // Localization
@@ -214,6 +223,18 @@ namespace Anki {
         }
       }
       
+      void FaceUpdate()
+      {
+        // Check if blinking
+        if (faceBlinkStartTime_ != 0) {
+          if (HAL::GetTimeStamp() - faceBlinkStartTime_ > FACE_BLINK_DURATION_MS) {
+            HAL::FaceMove(facePosX_, facePosY_);
+            faceBlinkStartTime_ = 0;
+          }
+        }
+        
+        
+      }
       
       void SetHeadAngularVelocity(const f32 rad_per_sec)
       {
@@ -486,7 +507,9 @@ namespace Anki {
       
       // Face display
       face_ = webotRobot_.getDisplay("face_display");
-      face_->setColor(0x0000f0ff);
+      assert(face_->getWidth() == DISPLAY_WIDTH);
+      assert(face_->getHeight() == DISPLAY_HEIGHT);
+      ClearFace();
       
       isInitialized = true;
       return RESULT_OK;
@@ -715,6 +738,7 @@ namespace Anki {
       } else {
         MotorUpdate();
         RadioUpdate();
+        FaceUpdate();
         
         /*
         // Always display ground truth pose:
@@ -975,6 +999,110 @@ namespace Anki {
     {
       // TODO: ...
     }
+
+    void HAL::ClearFace()
+    {
+      face_->setColor(0);
+      face_->fillRectangle(0,0, DISPLAY_WIDTH, DISPLAY_HEIGHT);
+      face_->setColor(0x0000f0ff);
+    }
+    
+    // Update the face to the next frame of an animation
+    // @param frame - a pointer to a variable length frame of face animation data
+    void HAL::FaceAnimate(u8* frame)
+    {
+      u32 pixelCounter = 0;
+      u32 frameByteCount = 0;
+      bool zeroByte = true;
+      
+      // Clear the display
+      ClearFace();
+      
+      // Clear the last face frame buffer
+      memset(lastFaceFrameDecoded_, 0, NUM_DISPLAY_PIXELS);
+      
+      // Reset face position
+      facePosX_ = facePosY_ = 0;
+      
+      // Draw pixels
+      while (pixelCounter < NUM_DISPLAY_PIXELS) {
+        u8 numPixels = *frame;
+        
+        // Adjust number of pixels this byte if it exceeds screen total
+        if (pixelCounter + numPixels > NUM_DISPLAY_PIXELS) {
+          numPixels = NUM_DISPLAY_PIXELS - pixelCounter;
+        }
+        
+        // Draw pixels if this is no a zero byte
+        if (!zeroByte) {
+          for (u8 i=0; i<numPixels; ++i) {
+            u32 y = pixelCounter / DISPLAY_WIDTH;
+            u32 x = pixelCounter - (y * DISPLAY_WIDTH);
+            ++pixelCounter;
+            
+            face_->drawPixel(x,y);
+            lastFaceFrameDecoded_[x + (y * DISPLAY_WIDTH)] = 1;
+          }
+        } else {
+          // Update total pixels drawn thus far
+          pixelCounter += numPixels;
+        }
+        
+        // Toggle whether we're looking at a 0s byte or a 1s byte
+        zeroByte = !zeroByte;
+        
+        // Go to next byte
+        ++frame;
+      }
+      
+    }
+    
+    
+    // Move the face to an X, Y offset - where 0, 0 is centered, negative is left/up
+    void HAL::FaceMove(int x, int y)
+    {
+      // Compute starting pixel of source image (i.e. lastFaceFrameDecoded) and dest image (i.e. face_ display)
+      u8 srcX = 0, srcY = 0;
+      u8 destX = 0, destY = 0;
+      
+      if (x > 0) {
+        destX += x;
+      } else {
+        srcX -= x;
+      }
+
+      if (y > 0) {
+        destY += y;
+      } else {
+        srcY -= y;
+      }
+      
+      // Compute dimensions of overlapping region
+      u8 w = DISPLAY_WIDTH - ABS(x);
+      u8 h = DISPLAY_HEIGHT - ABS(y);
+      
+      ClearFace();
+      
+      for (u8 i = 0; i < w; ++i) {
+        for (u8 j = 0; j < h; ++j) {
+          if (lastFaceFrameDecoded_[(srcX+i) + (DISPLAY_WIDTH * (srcY+j))]) {
+            face_->drawPixel(destX + i, destY + j);
+          }
+        }
+      }
+      
+      facePosX_ = x;
+      facePosY_ = y;
+      
+    }
+  
+    // Blink the eyes
+    void HAL::FaceBlink()
+    {
+      faceBlinkStartTime_ = GetTimeStamp();
+      ClearFace();
+    }
+    
     
     HAL::IDCard* HAL::GetIDCard()
     {

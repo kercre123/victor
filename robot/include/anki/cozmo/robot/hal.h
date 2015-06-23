@@ -410,6 +410,23 @@ namespace Anki
 
       // Turn headlights on (true) and off (false)
       void SetHeadlights(bool state);
+      
+// #pragma mark --- Face ---
+      /////////////////////////////////////////////////////////////////////
+      // Face
+
+      // Blackout the face display
+      void ClearFace();
+      
+      // Update the face to the next frame of an animation
+      // @param frame - a pointer to a variable length frame of face animation data
+      void FaceAnimate(u8* frame);
+      
+      // Move the face to an X, Y offset - where 0, 0 is centered, negative is left/up
+      void FaceMove(int x, int y);
+      
+      // Blink the eyes
+      void FaceBlink();
 
 // #pragma mark --- Radio ---
       /////////////////////////////////////////////////////////////////////
