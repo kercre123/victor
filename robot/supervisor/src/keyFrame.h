@@ -22,6 +22,60 @@
 namespace Anki {
 namespace Cozmo {
 
+  struct StreamedKeyFrame
+  {
+    // Bit flag to specify which things this keyframe sets
+    typedef enum {
+      NONE = 0x00, // Not setting anything: signifies "end of animation"
+      
+      AUDIO          = 0x01,
+      FACE_FRAME     = 0x02,
+      FACE_POSITION  = 0x04,
+      HEAD           = 0x08,
+      LIFT           = 0x10,
+      BACKPACK_LEDS  = 0x20,
+      WHEELS         = 0x40,
+    } WhichTracks;
+    
+    u8 setsWhichTracks; // bits set using the enum values above
+    
+    // Audio
+    s16 audioSample[HAL::AUDIO_SAMPLE_SIZE];
+    
+    // Face
+    s8 faceCenX, faceCenY;
+    u8 faceFrame[HAL::FACE_FRAME_SIZE];
+    
+    // Head speed in rad/sec
+    // TODO: discretize / use fixed point
+    //f32 headSpeed;
+    
+    // Desired head angle and how long from "now" we want to reach that angle
+    // NOTE: we store angle and time instead of storing speed directly so that
+    //  the robot can compute the speed on the fly, using the *actual* current
+    //  angle of the head when this keyframe is played, rather than the
+    //  *assumed* angle we expect to be at.
+    s8  headAngle_rad;
+    u16 headTime_ms;
+    
+    
+    // Lift speed in mm/sec
+    // TODO: discretize / use fixed point
+    //f32 liftSpeed;
+    
+    // Desired lift height and how long from "now" we want to reach that height
+    // (See "NOTE" above for head angle)
+    u8  liftHeight_mm;
+    u16 liftTime_ms;
+    
+    // Backpack light colors
+    u32 backpackLEDs[NUM_BACKPACK_LEDS];
+    
+    // Wheel speeds
+    f32 wheelSpeedL, wheelSpeedR;
+    
+  }; // StreamedKeyFrame
+  
 struct KeyFrame
 {
   // Add a new KeyFrame Type by adding it to this enumerated list and then
