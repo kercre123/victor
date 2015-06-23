@@ -154,8 +154,8 @@ namespace Anki {
       const u32 DISPLAY_HEIGHT = 64;
       const u32 NUM_DISPLAY_PIXELS = DISPLAY_WIDTH * DISPLAY_HEIGHT;
       u8 lastFaceFrameDecoded_[NUM_DISPLAY_PIXELS];  // Each byte represents one pixel
-      u32 facePosX_ = 0;
-      u32 facePosY_ = 0;
+      s32 facePosX_ = 0;
+      s32 facePosY_ = 0;
       TimeStamp_t faceBlinkStartTime_ = 0;
       const u32 FACE_BLINK_DURATION_MS = 200;
       
@@ -232,8 +232,6 @@ namespace Anki {
             faceBlinkStartTime_ = 0;
           }
         }
-        
-        
       }
       
       void SetHeadAngularVelocity(const f32 rad_per_sec)
@@ -1059,7 +1057,7 @@ namespace Anki {
     
     
     // Move the face to an X, Y offset - where 0, 0 is centered, negative is left/up
-    void HAL::FaceMove(int x, int y)
+    void HAL::FaceMove(s32 x, s32 y)
     {
       // Compute starting pixel of source image (i.e. lastFaceFrameDecoded) and dest image (i.e. face_ display)
       u8 srcX = 0, srcY = 0;

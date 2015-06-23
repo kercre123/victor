@@ -423,7 +423,7 @@ namespace Anki
       void FaceAnimate(u8* frame);
       
       // Move the face to an X, Y offset - where 0, 0 is centered, negative is left/up
-      void FaceMove(int x, int y);
+      void FaceMove(s32 x, s32 y);
       
       // Blink the eyes
       void FaceBlink();
