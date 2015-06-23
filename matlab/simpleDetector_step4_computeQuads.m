@@ -213,12 +213,25 @@ for i_region = 1:numRegions
         r_smooth = sum(r_smooth.^2, 2);
         
       case 'lineFits'
+        useMatlab2015A = false;
+        
         boundaryLength = size(boundary,1);
         
         sigma = boundaryLength/64;
         [~,dg] = gaussian_kernel(sigma);
         dB = imfilter(boundary, dg(:), 'circular');
-        [counts,~,bin] = histcounts(atan2(dB(:,2), dB(:,1)), linspace(-pi, pi, 16));
+        
+        % TODO: verify that these are the same
+        if useMatlab2015A
+            [counts,~,bin] = histcounts(atan2(dB(:,2), dB(:,1)), linspace(-pi, pi, 16));
+        else
+            edges = linspace(-pi, pi, 16);
+            edges(1) = -Inf;
+            edges(end) = Inf;
+            
+            [counts,bin] = histc(atan2(dB(:,2), dB(:,1)), edges);
+        end
+        
         [~,maxBins] = sort(counts,'descend');
         p = cell(1,4);
         lineFits = struct('slope', cell(1,4), ...

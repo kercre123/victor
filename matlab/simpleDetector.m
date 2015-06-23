@@ -16,7 +16,7 @@ minQuadArea = 100; % about 10 pixels per side
 computeTransformFromBoundary = true;
 %quadRefinementMethod = 'none'; % 'ICP' or 'fminsearch' or 'none'
 quadRefinementIterations = 25;
-cornerMethod = 'laplacianPeaks'; % 'laplacianPeaks', 'harrisScore', or 'radiusPeaks'
+cornerMethod = 'laplacianPeaks'; % 'laplacianPeaks', 'harrisScore', 'radiusPeaks', or 'lineFits'
 decodeDownsampleFactor = 1; % use lower resolution image for decoding
 minDistanceFromImageEdge = 2; % if a quad has an corner that is too close to the edge, reject it
 DEBUG_DISPLAY = nargout==0;

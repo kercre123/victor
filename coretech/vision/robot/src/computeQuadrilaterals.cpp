@@ -124,7 +124,7 @@ namespace Anki
     // A reasonable value for minQuadArea is 100
     //
     // Required ??? bytes of scratch
-    Result ComputeQuadrilateralsFromConnectedComponents(const ConnectedComponents &components, const s32 minQuadArea, const s32 quadSymmetryThreshold, const s32 minDistanceFromImageEdge, const s32 minLaplacianPeakRatio, const s32 imageHeight, const s32 imageWidth, FixedLengthList<Quadrilateral<s16> > &extractedQuads, MemoryStack scratch)
+    Result ComputeQuadrilateralsFromConnectedComponents(const ConnectedComponents &components, const s32 minQuadArea, const s32 quadSymmetryThreshold, const s32 minDistanceFromImageEdge, const s32 minLaplacianPeakRatio, const s32 imageHeight, const s32 imageWidth, const CornerMethod cornerMethod, FixedLengthList<Quadrilateral<s16> > &extractedQuads, MemoryStack scratch)
     {
       const s32 MAX_BOUNDARY_LENTH = 10000; // Probably significantly longer than would ever be needed
 

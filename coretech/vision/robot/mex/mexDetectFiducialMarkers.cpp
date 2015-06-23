@@ -88,6 +88,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   const f32 quadRefinementMinCornerChange     = static_cast<f32>(mxGetScalar(prhs[19]));
   const bool returnInvalidMarkers             = static_cast<bool>(Round<s32>(mxGetScalar(prhs[20])));
 
+  const CornerMethod cornerMethod = CORNER_METHOD_LAPLACIAN_PEAKS; // {CORNER_METHOD_LAPLACIAN_PEAKS, CORNER_METHOD_LINE_FITS};
+
   AnkiConditionalErrorAndReturn(image.IsValid(), "mexDetectFiducialMarkers", "Could not allocate image");
 
   MemoryStack scratch0(mxCalloc(bufferSize,1), bufferSize);
@@ -124,7 +126,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
       component_minimumNumPixels, component_maximumNumPixels,
       component_sparseMultiplyThreshold, component_solidMultiplyThreshold,
       component_minHollowRatio,
-      minLaplacianPeakRatio,
+      cornerMethod, minLaplacianPeakRatio,
       quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge,
       decode_minContrastRatio,
       maxConnectedComponentSegments,

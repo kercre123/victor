@@ -4020,6 +4020,8 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
   //const s32 component_percentVertical = 1 << 7; // 0.5, in SQ 23.8
   const f32 component_minHollowRatio = 1.0f;
 
+  const s32 minLaplacianPeakRatio = 5;
+
   const s32 maxExtractedQuads = 1000/2;
   const s32 quads_minQuadArea = 100/4;
   const s32 quads_quadSymmetryThreshold = 384;
@@ -4036,6 +4038,8 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
   const s32 numRefinementSamples = 100;
   const f32 quadRefinementMaxCornerChange = 5.f;
   const f32 quadRefinementMinCornerChange = .005f;
+  
+  const CornerMethod cornerMethod = CORNER_METHOD_LAPLACIAN_PEAKS; // {CORNER_METHOD_LAPLACIAN_PEAKS, CORNER_METHOD_LINE_FITS};
 
   MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
   MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
@@ -4079,6 +4083,7 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
       component_minimumNumPixels, component_maximumNumPixels,
       component_sparseMultiplyThreshold, component_solidMultiplyThreshold,
       component_minHollowRatio,
+      cornerMethod, minLaplacianPeakRatio,
       quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge,
       decode_minContrastRatio,
       maxConnectedComponentSegments,
@@ -4221,6 +4226,8 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark)
   const s32 maxConnectedComponentSegments = 39000; // 322*240/2 = 38640
   //const s32 maxConnectedComponentSegments = 70000;
 
+  const CornerMethod cornerMethod = CORNER_METHOD_LAPLACIAN_PEAKS; // {CORNER_METHOD_LAPLACIAN_PEAKS, CORNER_METHOD_LINE_FITS};
+
   const s32 minLaplacianPeakRatio = 5;
 
   const s32 quadRefinementIterations = 5;
@@ -4274,7 +4281,7 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark)
       component_minimumNumPixels, component_maximumNumPixels,
       component_sparseMultiplyThreshold, component_solidMultiplyThreshold,
       component_minHollowRatio,
-      minLaplacianPeakRatio,
+      cornerMethod, minLaplacianPeakRatio,
       quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge,
       decode_minContrastRatio,
       maxConnectedComponentSegments,
@@ -4496,6 +4503,7 @@ GTEST_TEST(CoreTech_Vision, ComputeQuadrilateralsFromConnectedComponents)
   const s32 imageWidth = 640;
   const s32 minDistanceFromImageEdge = 2;
   const s32 minLaplacianPeakRatio = 5;
+  const CornerMethod cornerMethod = CORNER_METHOD_LAPLACIAN_PEAKS; // {CORNER_METHOD_LAPLACIAN_PEAKS, CORNER_METHOD_LINE_FITS};
 
   MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
   MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
@@ -4537,7 +4545,7 @@ GTEST_TEST(CoreTech_Vision, ComputeQuadrilateralsFromConnectedComponents)
 
   components.SortConnectedComponentSegments();
 
-  const Result result =  ComputeQuadrilateralsFromConnectedComponents(components, minQuadArea, quadSymmetryThreshold, minDistanceFromImageEdge, minLaplacianPeakRatio, imageHeight, imageWidth, extractedQuads, scratchOnchip);
+  const Result result =  ComputeQuadrilateralsFromConnectedComponents(components, minQuadArea, quadSymmetryThreshold, minDistanceFromImageEdge, minLaplacianPeakRatio, imageHeight, imageWidth, cornerMethod, extractedQuads, scratchOnchip);
   ASSERT_TRUE(result == RESULT_OK);
 
   // extractedQuads.Print("extractedQuads");
