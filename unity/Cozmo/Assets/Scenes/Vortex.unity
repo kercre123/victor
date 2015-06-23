@@ -921,10 +921,6 @@ Prefab:
       propertyPath: lightingBall
       value: 
       objectReference: {fileID: 218952732}
-    - target: {fileID: 11407834, guid: ca1b5f0d2529d4cf2b14006fcd54e62b, type: 2}
-      propertyPath: currentLevelOverride
-      value: -1
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: ca1b5f0d2529d4cf2b14006fcd54e62b, type: 2}
   m_IsPrefabParent: 0

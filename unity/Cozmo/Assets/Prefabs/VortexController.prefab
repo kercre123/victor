@@ -2832,7 +2832,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7d4d90070c73e4cfe9ee0f9ed1c688d3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  currentLevelOverride: 3
+  currentLevelOverride: -1
   countdownText: {fileID: 11470074}
   countdownToStart: 0
   countdownTickSound: {fileID: 0}
@@ -2952,9 +2952,11 @@ MonoBehaviour:
   settingsPerLevel:
   - rings: 1
     slicesPerRing: 10000000
-    maxSurvivePerRound: 04000000
+    maxSurvivePerRound: 0400000004000000040000000400000004000000
     roundsPerRing: 5
     inward: 1
+    showTokens: 0
+    elimination: 0
     winnerEliminated: 0
     pointsFirstPlace: 30
     pointsSecondPlace: 20
@@ -2965,6 +2967,8 @@ MonoBehaviour:
     maxSurvivePerRound: 030000000200000001000000
     roundsPerRing: 1
     inward: 0
+    showTokens: 1
+    elimination: 1
     winnerEliminated: 0
     pointsFirstPlace: 30
     pointsSecondPlace: 20
@@ -2975,6 +2979,8 @@ MonoBehaviour:
     maxSurvivePerRound: 040000000400000004000000
     roundsPerRing: 1
     inward: 1
+    showTokens: 1
+    elimination: 0
     winnerEliminated: 1
     pointsFirstPlace: 300
     pointsSecondPlace: 200
@@ -2985,6 +2991,8 @@ MonoBehaviour:
     maxSurvivePerRound: 040000000400000004000000
     roundsPerRing: 2
     inward: 0
+    showTokens: 1
+    elimination: 0
     winnerEliminated: 0
     pointsFirstPlace: 30
     pointsSecondPlace: 20

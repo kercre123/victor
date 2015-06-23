@@ -34,6 +34,8 @@ public class VortexController : GameController {
 		public int[] maxSurvivePerRound = { 4 };
 		public int roundsPerRing = 5;
 		public bool inward = true;
+		public bool showTokens = true;
+		public bool elimination = false;
 		public bool winnerEliminated = false;
 		public int pointsFirstPlace = 30;
 		public int pointsSecondPlace = 20;
@@ -404,8 +406,11 @@ public class VortexController : GameController {
 			if(settings.winnerEliminated) {
 				playersEliminated[i] = fastestPlayer == i;
 			}
-			else {
+			else if(settings.elimination) {
 				playersEliminated[i] = !playersThatAreCorrect.Contains(i) || playersThatAreCorrect.IndexOf(i) >= settings.maxSurvivePerRound[round-1];
+//				if(playersEliminated[i]) {
+//					Debug.Log("playersEliminated["+i+"] is true! playersThatAreCorrect.IndexOf(i)("+playersThatAreCorrect.IndexOf(i)+") maxSurvivePerRound["+(round-1)+"]("+settings.maxSurvivePerRound[round-1]+")");
+//				}
 			}
 
 			//Debug.Log("playersEliminated["+i+"] = " + playersEliminated[i]);
@@ -497,7 +502,13 @@ public class VortexController : GameController {
 	}
 
 	void PlaceTokens() {
-		
+		if(!settings.showTokens) {
+			for(int i=0;i<playerTokens.Length;i++) {
+				playerTokens[i].gameObject.SetActive(false);
+			}
+			return;
+		}
+
 		for(int i=0;i<playerTokens.Length && i<playerButtons.Length;i++) {
 			playerTokens[i].gameObject.SetActive(!playersEliminated[i]);
 			if(playersEliminated[i]) continue;
