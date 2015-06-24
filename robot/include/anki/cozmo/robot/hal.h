@@ -275,6 +275,7 @@ namespace Anki
       // x-axis points out cozmo's face
       // y-axis points out of cozmo's left
       // z-axis points out the top of cozmo's head
+      // NB: DO NOT CALL THIS MORE THAN ONCE PER MAINEXECUTION TIC!!!
       void IMUReadData(IMU_DataStructure &IMUData);
 
 // #pragma mark --- UART/Wifi ---

@@ -972,8 +972,7 @@ namespace Anki {
         if (++ticCnt_ >= 200 / TIME_STEP) {
           
           // Raw HAL readings
-          HAL::IMU_DataStructure data;
-          HAL::IMUReadData(data);
+          HAL::IMU_DataStructure data = IMUFilter::GetLatestRawData();
           
           PRINT("Gyro (%f,%f,%f) rad/s, (%f,%f,%f) mm/s^2\n",
                 data.rate_x, data.rate_y, data.rate_z,
