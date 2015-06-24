@@ -240,7 +240,14 @@ namespace Anki
       const u32 AUDIO_SAMPLE_SIZE = 480;
 
       // Play an audio sample at 24 kHz. Returns true if it was played.
-      bool AudioPlay(s16 buffer[AUDIO_SAMPLE_SIZE]);
+      //bool AudioPlay(s16 buffer[AUDIO_SAMPLE_SIZE]);
+      
+      // @return true if the audio clock says it is time for the next frame
+      bool AudioReady();
+      
+      // Play one frame of audio or silence
+      // @param frame - a pointer to an audio frame or NULL to play one frame of silence
+      void AudioPlayFrame(u8* frame);
 
 // #pragma mark --- Flash Memory ---
       /////////////////////////////////////////////////////////////////////

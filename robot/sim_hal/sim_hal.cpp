@@ -159,6 +159,12 @@ namespace Anki {
       TimeStamp_t faceBlinkStartTime_ = 0;
       const u32 FACE_BLINK_DURATION_MS = 200;
       
+      // Audio
+      // (Can't actually play sound in simulator, but proper handling of audio frames is still
+      // necessary for proper animation timing)
+      TimeStamp_t audioEndTime_ = 0;    // Expected end of audio
+      u32 AUDIO_FRAME_TIME_MS = 33;     // Duration of single audio frame
+      bool audioReadyForFrame_ = true;  // Whether or not ready to receive another audio frame
       
 #pragma mark --- Simulated Hardware Interface "Private Methods" ---
       // Localization
@@ -233,6 +239,21 @@ namespace Anki {
           }
         }
       }
+      
+      void AudioUpdate()
+      {
+        if (audioEndTime_ != 0) {
+          if (HAL::GetTimeStamp() > audioEndTime_) {
+            audioEndTime_ = 0;
+            audioReadyForFrame_ = true;
+          } else if (HAL::GetTimeStamp() > audioEndTime_ - (0.5*AUDIO_FRAME_TIME_MS)) {
+            // Audio ready flag is raised ~16ms before the end of the current frame.
+            // This means audio lags other tracks but the amount should be imperceptible.
+            audioReadyForFrame_ = true;
+          }
+        }
+      }
+      
       
       void SetHeadAngularVelocity(const f32 rad_per_sec)
       {
@@ -737,6 +758,7 @@ namespace Anki {
         MotorUpdate();
         RadioUpdate();
         FaceUpdate();
+        AudioUpdate();
         
         /*
         // Always display ground truth pose:
@@ -996,6 +1018,20 @@ namespace Anki {
     void HAL::SetHeadlights(bool state)
     {
       // TODO: ...
+    }
+
+    // @return true if the audio clock says it is time for the next frame
+    bool HAL::AudioReady()
+    {
+      return audioReadyForFrame_;
+    }
+    
+    // Play one frame of audio or silence
+    // @param frame - a pointer to an audio frame or NULL to play one frame of silence
+    void HAL::AudioPlayFrame(u8* frame)
+    {
+      audioEndTime_ += AUDIO_FRAME_TIME_MS;
+      audioReadyForFrame_ = false;
     }
 
     void HAL::ClearFace()
