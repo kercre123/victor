@@ -509,20 +509,11 @@ namespace Anki {
       leds_[LED_RIGHT_EYE_BOTTOM] = webotRobot_.getLED("RightEyeLED_bottom");
       */
       
-      /*
       leds_[LED_BACKPACK_BACK]   = webotRobot_.getLED("ledHealth0");
       leds_[LED_BACKPACK_MIDDLE] = webotRobot_.getLED("ledHealth1");
       leds_[LED_BACKPACK_FRONT]  = webotRobot_.getLED("ledHealth2");
       leds_[LED_BACKPACK_LEFT]   = webotRobot_.getLED("ledDirLeft");
       leds_[LED_BACKPACK_RIGHT]  = webotRobot_.getLED("ledDirRight");
-       */
-      
-      leds_[LED_BACKPACK_LEFT]        = webotRobot_.getLED("backpackLED0");
-      leds_[LED_BACKPACK_INNER_LEFT]  = webotRobot_.getLED("backpackLED1");
-      leds_[LED_BACKPACK_INNER_RIGHT] = webotRobot_.getLED("backpackLED2");
-      leds_[LED_BACKPACK_RIGHT]       = webotRobot_.getLED("backpackLED3");
-      leds_[LED_BACKPACK_MIDDLE]      = leds_[LED_BACKPACK_INNER_RIGHT];
-      
       
       // Face display
       face_ = webotRobot_.getDisplay("face_display");

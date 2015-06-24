@@ -320,7 +320,7 @@ Supervisor {
 							}
 							
 							Transform {
-							  translation 0.005 0 0
+							  translation 0.00451 0 0
 							  rotation 1 0 0 1.5708
 							  children[
 								Display {
@@ -557,107 +557,71 @@ Supervisor {
 		    }     
 		    
 
-#			#Backpack lights (directional)
-#			Transform {
-#				translation -0.009 0 0.025
-#				children [
-#					%{
-#					  for i=0,2 do
-#					    led_name = string.format("ledHealth%d", i)
-#					    xpos = (i)*0.006
-#					}%
-#					LED {
-#					  name "%{=led_name}%"
-#					  children [
-#						DEF BACKPACK_HEALTH_LED_SHAPE Group {
-#						  children [
-#							Shape {
-#							  appearance Appearance {
-#								material Material {
-#                 diffuseColor 0.3 0.3 0.3
-#								}
-#							  }
-#							  geometry Box {
-#								size 0.005 0.005 0.005
-#							  }
-#							}
-#						  ]
-#						}
-#					  ]
-#					  translation %{=xpos}% 0 0
-#					  color []
-#					  gradual TRUE
-#					}
-#					%{ end }%   # End light for loop
-#					%{
-#					  for i=0,1 do
-#					    if (i == 0) then
-#					      led_name = "ledDirLeft"
-#					      ypos = 0.006
-#					    else 
-#					      led_name = "ledDirRight"
-#					      ypos = -0.006
-#					    end
-#					}%
-#					LED {
-#					  name "%{=led_name}%"
-#					  children [
-#						DEF BACKPACK_DIR_LED_SHAPE Group {
-#						  children [
-#							Shape {
-#							  appearance Appearance {
-#								material Material {
-#                 diffuseColor 0.3 0.3 0.3
-#								}
-#							  }
-#							  geometry Box {
-#								size 0.003 0.005 0.005
-#							  }
-#							}
-#						  ]
-#						}
-#					  ]
-#					  translation 0.003 %{=ypos}% 0
-#					  color []
-#					  gradual TRUE
-#					}
-#					%{ end }%							
-#				]
-#			} # Backpack lights
-
-
-			#Backpack lights (horizontal strip)
+			#Backpack lights (directional)
 			Transform {
-				translation -0.009 0.012 0.025
+				translation -0.009 0 0.025
 				children [
 					%{
-					  for i=0,3 do
-					    led_name = string.format("backpackLED%d", i)
-					    ypos = -(i)*0.008
+					  for i=0,2 do
+					    led_name = string.format("ledHealth%d", i)
+					    xpos = (i)*0.006
 					}%
 					LED {
 					  name "%{=led_name}%"
 					  children [
-              DEF BACKPACK_HEALTH_LED_SHAPE Group {
-                children [
-                  Shape {
-                    appearance Appearance {
-                      material Material {
-                       diffuseColor 0.3 0.3 0.3
-                      }
-                    }
-                    geometry Box {
-                      size 0.005 0.007 0.005
-                    }
-                  }
-                ]
-              }
+						DEF BACKPACK_HEALTH_LED_SHAPE Group {
+						  children [
+							Shape {
+							  appearance Appearance {
+								material Material {
+                 				diffuseColor 0.3 0.3 0.3
+								}
+							  }
+							  geometry Box {
+								size 0.005 0.005 0.005
+							  }
+							}
+						  ]
+						}
 					  ]
-					  translation 0 %{=ypos}% 0
+					  translation %{=xpos}% 0 0
 					  color []
 					  gradual TRUE
 					}
 					%{ end }%   # End light for loop
+					%{
+					  for i=0,1 do
+					    if (i == 0) then
+					      led_name = "ledDirLeft"
+					      ypos = 0.006
+					    else 
+					      led_name = "ledDirRight"
+					      ypos = -0.006
+					    end
+					}%
+					LED {
+					  name "%{=led_name}%"
+					  children [
+						DEF BACKPACK_DIR_LED_SHAPE Group {
+						  children [
+							Shape {
+							  appearance Appearance {
+								material Material {
+                 				diffuseColor 0.3 0.3 0.3
+								}
+							  }
+							  geometry Box {
+								size 0.003 0.005 0.005
+							  }
+							}
+						  ]
+						}
+					  ]
+					  translation 0.003 %{=ypos}% 0
+					  color []
+					  gradual TRUE
+					}
+					%{ end }%							
 				]
 			} # Backpack lights
 		                     
