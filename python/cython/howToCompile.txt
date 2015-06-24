@@ -20,7 +20,7 @@ On OSX
 4. Install python setup tools
   https://pypi.python.org/pypi/setuptools
   
-5. Install python packages
+5. Install python packages (Warning: pyside was broken for OSX 10.10 as of early June 2015, though it will probably be fixed eventually)
   sudo easy_install ipython cython pyside numpy
   
 6. In python/cython, run "sudo make.sh" to build and install the anki cython packages
