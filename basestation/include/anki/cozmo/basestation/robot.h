@@ -366,6 +366,10 @@ namespace Anki {
       // that name is known.
       s32 GetAnimationID(const std::string& animationName) const;
       
+      // Return the approximate number of available slots in the robot's
+      // keyframe buffer, to let us know if we can stream any more
+      s32 GetNumAnimationFramesFree() const;
+      
       // Ask the UI to play a sound for us
       Result PlaySound(SoundID_t soundID, u8 numLoops, u8 volume);
       void   StopSound();
@@ -682,7 +686,7 @@ namespace Anki {
       ///////// Animation /////////
       
       CannedAnimationContainer _cannedAnimations;
-      
+      s32 _numFreeAnimationSlots;
       
       ///////// Messaging ////////
       // These methods actually do the creation of messages and sending
@@ -842,6 +846,9 @@ namespace Anki {
                              false, MakeRelativeMode::RELATIVE_LED_MODE_OFF, {0.f,0.f});
     }
     
+    inline s32 Robot::GetNumAnimationFramesFree() const {
+      return _numFreeAnimationSlots;
+    }
     
   } // namespace Cozmo
 } // namespace Anki
