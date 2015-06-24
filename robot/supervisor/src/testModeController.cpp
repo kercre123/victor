@@ -276,6 +276,14 @@ namespace Anki {
         bool ledCycleTest_ = true;
         ///// End of LightTest ///
         
+        
+        /////// FaceDisplayTest ////////
+        u8 faceFrame_[180];
+        s32 facePosX_ = 0;
+        s32 facePosY_ = 0;
+        ///// End of FaceDisplayTest ///
+        
+        
         // The number of cycles in between printouts
         // in those tests that print something out.
         u32 printCyclePeriod_;
@@ -1097,6 +1105,68 @@ namespace Anki {
       }
 
       
+      Result FaceDisplayTestInit()
+      {
+        PRINT("\n==== Starting FaceDisplayTest =====\n");
+        ticCnt_ = 0;
+        
+        // Generate a test face
+        u32 i = 0;
+        u8 numLines = 20;
+        while (numLines-- > 0) {
+          faceFrame_[i++] = 128;
+          faceFrame_[i++] = 0;
+        }
+        
+        numLines = 24;
+        faceFrame_[i++] = 29;
+        while (numLines-- > 0) {
+          faceFrame_[i++] = 25;
+          faceFrame_[i++] = 20;
+          faceFrame_[i++] = 25;
+          faceFrame_[i++] = 58;
+        }
+        faceFrame_[i++] = 0;
+        
+        numLines = 20;
+        while (numLines-- > 0) {
+          faceFrame_[i++] = 128;
+          faceFrame_[i++] = 0;
+        }
+
+        // Draw face
+        HAL::FaceAnimate(faceFrame_);
+        
+        return RESULT_OK;
+      }
+      
+      Result FaceDisplayTestUpdate()
+      {
+        if (ticCnt_++ == 200) {
+          
+          if (facePosX_ == 0) {
+            facePosX_ = 10;
+            facePosY_ = -10;
+          } else if (facePosX_ == 10) {
+            facePosX_ = -10;
+            facePosY_ = -10;
+          } else {
+            facePosX_ = 0;
+            facePosY_ = 0;
+          }
+          HAL::FaceMove(facePosX_, facePosY_);
+          PRINT("Face move to %d %d\n", facePosX_, facePosY_);
+          
+        } else if (ticCnt_ > 400) {
+          PRINT("Face blink\n");
+          HAL::FaceBlink();
+          ticCnt_ = 0;
+        }
+        
+        return RESULT_OK;
+      }
+      
+      
       Result StopTestInit()
       {
         PRINT("\n==== Starting StopTest =====\n");
@@ -1250,6 +1320,10 @@ namespace Anki {
           case TM_LIGHTS:
             ret = LightTestInit(p1,p2,p3);
             updateFunc = LightTestUpdate;
+            break;
+          case TM_FACE_DISPLAY:
+            ret = FaceDisplayTestInit();
+            updateFunc = FaceDisplayTestUpdate;
             break;
           case TM_STOP_TEST:
             ret = StopTestInit();
