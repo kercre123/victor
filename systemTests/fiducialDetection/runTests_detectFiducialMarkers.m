@@ -1,12 +1,12 @@
 % function allCompiledResults = runTests_detectFiducialMarkers()
 
 % On PC
-% allCompiledResults = runTests_detectFiducialMarkers('C:/Anki/products-cozmo-large-files/systemTestsData/detectionScripts/fiducialDetection_*.json', 'C:/Anki/products-cozmo-large-files/systemTestsData/results/', 'z:/Box Sync');
+% allCompiledResults = runTests_detectFiducialMarkers('C:/Anki/products-cozmo-large-files/systemTestsData/detectionScripts/fiducialDetection_*.json', 'C:/Anki/products-cozmo-large-files/systemTestsData/results/', 'z:/products-cozmo-large-files/VisionMarkers/');
 
 % On Mac
-% allCompiledResults = runTests_detectFiducialMarkers('~/Documents/Anki/products-cozmo-large-files/systemTestsData/detectionScripts/fiducialDetection_*.json', '~/Documents/Anki/products-cozmo-large-files/systemTestsData/results/', '~/Box Sync');
+% allCompiledResults = runTests_detectFiducialMarkers('~/Documents/Anki/products-cozmo-large-files/systemTestsData/detectionScripts/fiducialDetection_*.json', '~/Documents/Anki/products-cozmo-large-files/systemTestsData/results/', '~/Documents/Anki/products-cozmo-large-files/VisionMarkers/');
 
-function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, resultsDirectory, boxSyncDirectory)
+function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, resultsDirectory, visionMarkersDirectory)
     % To be a match, all corners of a quad must be within these thresholds
     maxMatchDistance_pixels = 10;
     maxMatchDistance_percent = 0.2;
@@ -44,11 +44,11 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
     
     assert(exist('testJsonPattern', 'var') == 1);
     assert(exist('resultsDirectory', 'var') == 1);
-    assert(exist('boxSyncDirectory', 'var') == 1);
+    assert(exist('visionMarkersDirectory', 'var') == 1);
     
     testJsonPattern = strrep(testJsonPattern, '~/', [tildeToPath(),'/']);
     resultsDirectory = strrep(resultsDirectory, '~/', [tildeToPath(),'/']);
-    boxSyncDirectory = strrep(boxSyncDirectory, '~/', [tildeToPath(),'/']);
+    visionMarkersDirectory = strrep(visionMarkersDirectory, '~/', [tildeToPath(),'/']);
     
     thisFilename = [mfilename('fullpath'), '.m'];
     thisFileChangeTime = dir(thisFilename);
@@ -146,7 +146,7 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
                 algorithmParametersN.extractionFunctionName = sprintf('matlab_with_refinement_jpg%d', jpgCompression(iJpg));
                 algorithmParametersN.imageCompression = {'jpg', jpgCompression(iJpg)};
                 
-                curResults = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, thisFileChangeTime, false);
+                curResults = compileAll(algorithmParametersN, visionMarkersDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, thisFileChangeTime, false);
                 resultsData.(algorithmParametersN.extractionFunctionName) = curResults;
                 
                 percentMarkersCorrect_jpg(iJpg) = 100 * curResults.percentMarkersCorrect;
@@ -184,7 +184,7 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
                 algorithmParametersN.extractionFunctionName = sprintf('c_with_refinement_jpg%d', jpgCompression(iJpg));
                 algorithmParametersN.imageCompression = {'jpg', jpgCompression(iJpg)};
                 
-                curResults = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, thisFileChangeTime, false);
+                curResults = compileAll(algorithmParametersN, visionMarkersDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, thisFileChangeTime, false);
                 resultsData.(algorithmParametersN.extractionFunctionName) = curResults;
                 
                 percentMarkersCorrect_jpg(iJpg) = 100 * curResults.percentMarkersCorrect;
@@ -223,7 +223,7 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
                 algorithmParametersN.extractionFunctionName = sprintf('c_with_refinement_nathanJpg%d', jpgCompression(iJpg));
                 algorithmParametersN.imageCompression = {'nathanJpg', jpgCompression(iJpg)};
                 
-                curResults = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, thisFileChangeTime, false);
+                curResults = compileAll(algorithmParametersN, visionMarkersDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, thisFileChangeTime, false);
                 resultsData.(algorithmParametersN.extractionFunctionName) = curResults;
                 
                 percentMarkersCorrect_nathanJpg(iJpg) = 100 * curResults.percentMarkersCorrect;
@@ -282,7 +282,7 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
                     algorithmParametersN.imageCompression = {'jpg', jpgCompression(iJpg)};
                     algorithmParametersN.preprocessingFunction = preprocessingFunctions{iPreprocess};
                     
-                    curResults = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, thisFileChangeTime, false);
+                    curResults = compileAll(algorithmParametersN, visionMarkersDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, thisFileChangeTime, false);
                     resultsData.(algorithmParametersN.extractionFunctionName) = curResults;
                     
                     percentMarkersCorrect_jpgPreprocess(iJpg,iPreprocess) = 100 * curResults.percentMarkersCorrect;
@@ -325,7 +325,7 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
         
         % If it's a simple test (without loops or whatnot)
         if isSimpleTest
-            curResults = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, thisFileChangeTime, false);
+            curResults = compileAll(algorithmParametersN, visionMarkersDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, thisFileChangeTime, false);
             resultsData.(runWhichAlgorithms{iAlgorithm}) = curResults;
             disp(sprintf('Results for %s percentQuadsExtracted:%f percentMarkersCorrect:%f numMarkerErrors:%d fileSizePercent:%f', runWhichAlgorithms{iAlgorithm}, curResults.percentQuadsExtracted, curResults.percentMarkersCorrect, curResults.numMarkerErrors, curResults.compressedFileSizeTotal / curResults.uncompressedFileSizeTotal));
         end
@@ -361,13 +361,13 @@ function allTestData = getTestData(testJsonPattern)
     end
 end % getTestFilenames()
 
-function resultsData_overall = compileAll(algorithmParameters, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, thisFileChangeTime, showPlots)
+function resultsData_overall = compileAll(algorithmParameters, visionMarkersDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, thisFileChangeTime, showPlots)
     compileAllTic = tic();
     
     markerDirectoryList = {
-        [boxSyncDirectory, '/Cozmo SE/VisionMarkers/symbols/withFiducials/'],...
-        [boxSyncDirectory, '/Cozmo SE/VisionMarkers/letters/withFiducials/'],...
-        [boxSyncDirectory, '/Cozmo SE/VisionMarkers/dice/withFiducials/']};
+        [visionMarkersDirectory, '/symbols/withFiducials/'],...
+        [visionMarkersDirectory, '/letters/withFiducials/'],...
+        [visionMarkersDirectory, '/dice/withFiducials/']};
     
     rotationList = getListOfSymmetricMarkers(markerDirectoryList);
     

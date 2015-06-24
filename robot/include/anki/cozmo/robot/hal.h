@@ -29,6 +29,7 @@
  *
  **/
 
+#include "messages.h"
 
 #ifndef ANKI_COZMO_ROBOT_HARDWAREINTERFACE_H
 #define ANKI_COZMO_ROBOT_HARDWAREINTERFACE_H
@@ -37,8 +38,6 @@
 #include "anki/common/types.h"
 #include "anki/common/constantsAndMacros.h"
 #include "anki/vision/CameraSettings.h"
-#include "messages.h"
-
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoTypes.h"
 #include "anki/cozmo/shared/ledTypes.h"
@@ -240,7 +239,14 @@ namespace Anki
       const u32 AUDIO_SAMPLE_SIZE = 480;
 
       // Play an audio sample at 24 kHz. Returns true if it was played.
-      bool AudioPlay(s16 buffer[AUDIO_SAMPLE_SIZE]);
+      //bool AudioPlay(s16 buffer[AUDIO_SAMPLE_SIZE]);
+      
+      // @return true if the audio clock says it is time for the next frame
+      bool AudioReady();
+      
+      // Play one frame of audio or silence
+      // @param frame - a pointer to an audio frame or NULL to play one frame of silence
+      void AudioPlayFrame(u8* frame);
 
 // #pragma mark --- Flash Memory ---
       /////////////////////////////////////////////////////////////////////
@@ -410,6 +416,23 @@ namespace Anki
 
       // Turn headlights on (true) and off (false)
       void SetHeadlights(bool state);
+      
+// #pragma mark --- Face ---
+      /////////////////////////////////////////////////////////////////////
+      // Face
+
+      // Blackout the face display
+      void ClearFace();
+      
+      // Update the face to the next frame of an animation
+      // @param frame - a pointer to a variable length frame of face animation data
+      void FaceAnimate(u8* frame);
+      
+      // Move the face to an X, Y offset - where 0, 0 is centered, negative is left/up
+      void FaceMove(s32 x, s32 y);
+      
+      // Blink the eyes
+      void FaceBlink();
 
 // #pragma mark --- Radio ---
       /////////////////////////////////////////////////////////////////////
@@ -442,7 +465,7 @@ namespace Anki
        * @param hot Specify if the message is hot and needs to be sent imeediately. Default false.
        * @return True if sucessfully queued, false otherwise
        */
-      bool RadioSendMessage(const Messages::ID msgID, const void *buffer, const bool reliable=true, const bool hot=false);
+      bool RadioSendMessage(const int msgID, const void *buffer, const bool reliable=true, const bool hot=false);
 
       /** Special method for sending images (from long execution) for thread safety.
        * This method always sends the message as unreliable and hot but is queued until the main execution thread picks

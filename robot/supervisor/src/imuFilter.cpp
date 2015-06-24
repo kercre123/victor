@@ -476,7 +476,7 @@ namespace Anki {
         }
       }
       
-      Result Update()
+      Result Update(HAL::IMU_DataStructure &imu_data)
       {
         Result retVal = RESULT_OK;
         
@@ -484,12 +484,6 @@ namespace Anki {
         if (!HeadController::IsCalibrated()) {
           return retVal;
         }
-        
-        
-        // Get IMU data
-        HAL::IMU_DataStructure imu_data;
-        HAL::IMUReadData(imu_data);
-        
         
         ////// Gyro Update //////
         

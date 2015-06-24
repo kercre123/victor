@@ -24,6 +24,7 @@
 
 #include "anki/common/types.h"
 #include "anki/common/robot/array2d_declarations.h"
+#include "anki/cozmo/robot/hal.h" 
 
 namespace Anki {
   namespace Cozmo {
@@ -56,6 +57,8 @@ namespace Anki {
 #     define MESSAGE_DEFINITION_MODE MESSAGE_DISPATCH_DEFINITION_MODE
 #     include "anki/cozmo/shared/MessageDefinitionsB2R.def"
 
+      using namespace Anki::Cozmo;
+      
       Result Init();
 
       void ProcessBTLEMessages();
@@ -77,7 +80,7 @@ namespace Anki {
       bool StillLookingForID(void);
 
       // Used by visionSystem for prediction during tracking
-      void UpdateRobotStateMsg();
+      void UpdateRobotStateMsg(HAL::IMU_DataStructure &imu_data);
 
       // Sends robot state message, either the one passed in or the one
       // stored internally that is updated by UpdateRobotStateMsg().

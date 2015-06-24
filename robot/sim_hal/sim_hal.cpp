@@ -25,6 +25,7 @@
 #include <webots/GPS.hpp>
 #include <webots/Compass.hpp>
 #include <webots/Camera.hpp>
+#include <webots/Display.hpp>
 #include <webots/Gyro.hpp>
 #include <webots/DistanceSensor.hpp>
 #include <webots/Accelerometer.hpp>
@@ -147,6 +148,24 @@ namespace Anki {
       // Lights
       webots::LED* leds_[NUM_BACKPACK_LEDS] = {0};
       
+      // Face display
+      webots::Display* face_;
+      const u32 DISPLAY_WIDTH = 128;
+      const u32 DISPLAY_HEIGHT = 64;
+      const u32 NUM_DISPLAY_PIXELS = DISPLAY_WIDTH * DISPLAY_HEIGHT;
+      u8 lastFaceFrameDecoded_[NUM_DISPLAY_PIXELS];  // Each byte represents one pixel
+      s32 facePosX_ = 0;
+      s32 facePosY_ = 0;
+      TimeStamp_t faceBlinkStartTime_ = 0;
+      const u32 FACE_BLINK_DURATION_MS = 200;
+      
+      // Audio
+      // (Can't actually play sound in simulator, but proper handling of audio frames is still
+      // necessary for proper animation timing)
+      TimeStamp_t audioEndTime_ = 0;    // Expected end of audio
+      u32 AUDIO_FRAME_TIME_MS = 33;     // Duration of single audio frame
+      bool audioReadyForFrame_ = true;  // Whether or not ready to receive another audio frame
+      
 #pragma mark --- Simulated Hardware Interface "Private Methods" ---
       // Localization
       //void GetGlobalPose(f32 &x, f32 &y, f32& rad);
@@ -206,6 +225,31 @@ namespace Anki {
             motorSpeeds_[i] = (posDelta * ONE_OVER_CONTROL_DT) * (1.0 - motorSpeedCoeffs_[i]) + motorSpeeds_[i] * motorSpeedCoeffs_[i];
             
             motorPrevPositions_[i] = pos;
+          }
+        }
+      }
+      
+      void FaceUpdate()
+      {
+        // Check if blinking
+        if (faceBlinkStartTime_ != 0) {
+          if (HAL::GetTimeStamp() - faceBlinkStartTime_ > FACE_BLINK_DURATION_MS) {
+            HAL::FaceMove(facePosX_, facePosY_);
+            faceBlinkStartTime_ = 0;
+          }
+        }
+      }
+      
+      void AudioUpdate()
+      {
+        if (audioEndTime_ != 0) {
+          if (HAL::GetTimeStamp() > audioEndTime_) {
+            audioEndTime_ = 0;
+            audioReadyForFrame_ = true;
+          } else if (HAL::GetTimeStamp() > audioEndTime_ - (0.5*AUDIO_FRAME_TIME_MS)) {
+            // Audio ready flag is raised ~16ms before the end of the current frame.
+            // This means audio lags other tracks but the amount should be imperceptible.
+            audioReadyForFrame_ = true;
           }
         }
       }
@@ -465,20 +509,17 @@ namespace Anki {
       leds_[LED_RIGHT_EYE_BOTTOM] = webotRobot_.getLED("RightEyeLED_bottom");
       */
       
-      /*
       leds_[LED_BACKPACK_BACK]   = webotRobot_.getLED("ledHealth0");
       leds_[LED_BACKPACK_MIDDLE] = webotRobot_.getLED("ledHealth1");
       leds_[LED_BACKPACK_FRONT]  = webotRobot_.getLED("ledHealth2");
       leds_[LED_BACKPACK_LEFT]   = webotRobot_.getLED("ledDirLeft");
       leds_[LED_BACKPACK_RIGHT]  = webotRobot_.getLED("ledDirRight");
-       */
       
-      leds_[LED_BACKPACK_LEFT]        = webotRobot_.getLED("backpackLED0");
-      leds_[LED_BACKPACK_INNER_LEFT]  = webotRobot_.getLED("backpackLED1");
-      leds_[LED_BACKPACK_INNER_RIGHT] = webotRobot_.getLED("backpackLED2");
-      leds_[LED_BACKPACK_RIGHT]       = webotRobot_.getLED("backpackLED3");
-      leds_[LED_BACKPACK_MIDDLE]      = leds_[LED_BACKPACK_INNER_RIGHT];
-      
+      // Face display
+      face_ = webotRobot_.getDisplay("face_display");
+      assert(face_->getWidth() == DISPLAY_WIDTH);
+      assert(face_->getHeight() == DISPLAY_HEIGHT);
+      ClearFace();
       
       isInitialized = true;
       return RESULT_OK;
@@ -707,6 +748,8 @@ namespace Anki {
       } else {
         MotorUpdate();
         RadioUpdate();
+        FaceUpdate();
+        AudioUpdate();
         
         /*
         // Always display ground truth pose:
@@ -967,6 +1010,124 @@ namespace Anki {
     {
       // TODO: ...
     }
+
+    // @return true if the audio clock says it is time for the next frame
+    bool HAL::AudioReady()
+    {
+      return audioReadyForFrame_;
+    }
+    
+    // Play one frame of audio or silence
+    // @param frame - a pointer to an audio frame or NULL to play one frame of silence
+    void HAL::AudioPlayFrame(u8* frame)
+    {
+      audioEndTime_ += AUDIO_FRAME_TIME_MS;
+      audioReadyForFrame_ = false;
+    }
+
+    void HAL::ClearFace()
+    {
+      face_->setColor(0);
+      face_->fillRectangle(0,0, DISPLAY_WIDTH, DISPLAY_HEIGHT);
+      face_->setColor(0x0000f0ff);
+    }
+    
+    // Update the face to the next frame of an animation
+    // @param frame - a pointer to a variable length frame of face animation data
+    void HAL::FaceAnimate(u8* frame)
+    {
+      u32 pixelCounter = 0;
+      u32 frameByteCount = 0;
+      bool zeroByte = true;
+      
+      // Clear the display
+      ClearFace();
+      
+      // Clear the last face frame buffer
+      memset(lastFaceFrameDecoded_, 0, NUM_DISPLAY_PIXELS);
+      
+      // Reset face position
+      facePosX_ = facePosY_ = 0;
+      
+      // Draw pixels
+      while (pixelCounter < NUM_DISPLAY_PIXELS) {
+        u8 numPixels = *frame;
+        
+        // Adjust number of pixels this byte if it exceeds screen total
+        if (pixelCounter + numPixels > NUM_DISPLAY_PIXELS) {
+          numPixels = NUM_DISPLAY_PIXELS - pixelCounter;
+        }
+        
+        // Draw pixels if this is no a zero byte
+        if (!zeroByte) {
+          for (u8 i=0; i<numPixels; ++i) {
+            u32 y = pixelCounter / DISPLAY_WIDTH;
+            u32 x = pixelCounter - (y * DISPLAY_WIDTH);
+            ++pixelCounter;
+            
+            face_->drawPixel(x,y);
+            lastFaceFrameDecoded_[x + (y * DISPLAY_WIDTH)] = 1;
+          }
+        } else {
+          // Update total pixels drawn thus far
+          pixelCounter += numPixels;
+        }
+        
+        // Toggle whether we're looking at a 0s byte or a 1s byte
+        zeroByte = !zeroByte;
+        
+        // Go to next byte
+        ++frame;
+      }
+      
+    }
+    
+    
+    // Move the face to an X, Y offset - where 0, 0 is centered, negative is left/up
+    void HAL::FaceMove(s32 x, s32 y)
+    {
+      // Compute starting pixel of source image (i.e. lastFaceFrameDecoded) and dest image (i.e. face_ display)
+      u8 srcX = 0, srcY = 0;
+      u8 destX = 0, destY = 0;
+      
+      if (x > 0) {
+        destX += x;
+      } else {
+        srcX -= x;
+      }
+
+      if (y > 0) {
+        destY += y;
+      } else {
+        srcY -= y;
+      }
+      
+      // Compute dimensions of overlapping region
+      u8 w = DISPLAY_WIDTH - ABS(x);
+      u8 h = DISPLAY_HEIGHT - ABS(y);
+      
+      ClearFace();
+      
+      for (u8 i = 0; i < w; ++i) {
+        for (u8 j = 0; j < h; ++j) {
+          if (lastFaceFrameDecoded_[(srcX+i) + (DISPLAY_WIDTH * (srcY+j))]) {
+            face_->drawPixel(destX + i, destY + j);
+          }
+        }
+      }
+      
+      facePosX_ = x;
+      facePosY_ = y;
+      
+    }
+  
+    // Blink the eyes
+    void HAL::FaceBlink()
+    {
+      faceBlinkStartTime_ = GetTimeStamp();
+      ClearFace();
+    }
+    
     
     HAL::IDCard* HAL::GetIDCard()
     {

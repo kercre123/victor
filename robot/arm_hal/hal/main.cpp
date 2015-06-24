@@ -22,9 +22,18 @@ namespace Anki
       void FrontCameraInit();
       void IMUInit();
       void LightsInit();
+      void OLEDInit(); 
 
       void PrintCrap();
 
+      // Stubs
+      // TODO: Move and implement these in some other file
+      void ClearFace() {};
+      void FaceAnimate(u8* frame) {};
+      void FaceMove(s32 x, s32 y) {};
+      void FaceBlink() {};
+      
+      
       //TimeStamp_t GetTimeStamp(void){ return (TimeStamp_t)0; }
       TimeStamp_t t_;
       TimeStamp_t GetTimeStamp(void){ return t_; }
@@ -205,6 +214,8 @@ int main(void)
   printf("IMU..");
   SPIInit();
   printf("spine..");
+  OLEDInit();
+  printf("oled..");
 
 #if 0
   // Motor testing...

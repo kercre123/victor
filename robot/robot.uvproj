@@ -473,6 +473,11 @@
               <FileType>8</FileType>
               <FilePath>.\arm_hal\hal\i2c.cpp</FilePath>
             </File>
+            <File>
+              <FileName>oled.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\arm_hal\hal\oled.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -1465,6 +1470,11 @@
               <FileName>i2c.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\arm_hal\hal\i2c.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>oled.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\arm_hal\hal\oled.cpp</FilePath>
             </File>
           </Files>
         </Group>

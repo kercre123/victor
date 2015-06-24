@@ -68,6 +68,9 @@ namespace Anki {
       // Cycle through all LEDs with different colors
       TM_LIGHTS,
 
+      // Draw and blink a test face
+      TM_FACE_DISPLAY,
+      
       // Drives slow and then stops.
       // Drives fast and then stops.
       // Reports stopping distance and time (in tics).
