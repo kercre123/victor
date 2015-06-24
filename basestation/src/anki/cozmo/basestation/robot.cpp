@@ -1968,7 +1968,11 @@ namespace Anki {
     
     Result Robot::SendMessage(const RobotMessage& msg) const
     {
-      return _msgHandler->SendMessage(_ID, msg);
+      Result sendResult = _msgHandler->SendMessage(_ID, msg);
+      if(sendResult != RESULT_OK) {
+        PRINT_NAMED_ERROR("Robot.SendMessage", "Robot %d failed to send a message.\n", _ID);
+      }
+      return sendResult;
     }
       
     // Sync time with physical robot and trigger it robot to send back camera calibration
