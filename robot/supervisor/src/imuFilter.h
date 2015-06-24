@@ -17,6 +17,7 @@
 
 #include "anki/common/shared/radians.h"
 #include "anki/common/types.h"
+#include "anki/cozmo/robot/hal.h"
 
 namespace Anki {
   
@@ -28,7 +29,7 @@ namespace Anki {
       
       // TODO: Add if/when needed?
       // ReturnCode Init();
-      Result Update();
+      Result Update(HAL::IMU_DataStructure &imu_data);
 
       // Rotation (or "yaw"). Turning left is positive.
       f32 GetRotation();

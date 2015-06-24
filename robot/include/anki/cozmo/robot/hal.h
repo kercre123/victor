@@ -29,6 +29,7 @@
  *
  **/
 
+#include "messages.h"
 
 #ifndef ANKI_COZMO_ROBOT_HARDWAREINTERFACE_H
 #define ANKI_COZMO_ROBOT_HARDWAREINTERFACE_H
@@ -37,8 +38,6 @@
 #include "anki/common/types.h"
 #include "anki/common/constantsAndMacros.h"
 #include "anki/vision/CameraSettings.h"
-#include "messages.h"
-
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoTypes.h"
 #include "anki/cozmo/shared/ledTypes.h"
@@ -466,7 +465,7 @@ namespace Anki
        * @param hot Specify if the message is hot and needs to be sent imeediately. Default false.
        * @return True if sucessfully queued, false otherwise
        */
-      bool RadioSendMessage(const Messages::ID msgID, const void *buffer, const bool reliable=true, const bool hot=false);
+      bool RadioSendMessage(const int msgID, const void *buffer, const bool reliable=true, const bool hot=false);
 
       /** Special method for sending images (from long execution) for thread safety.
        * This method always sends the message as unreliable and hot but is queued until the main execution thread picks
