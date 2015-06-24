@@ -117,6 +117,7 @@ ADD_MESSAGE_MEMBER(TimeStamp_t, timestamp)
 //        void GetBytes(u8* buffer) const;
 //
 //        Json::Value CreateJson() const;
+//        Result FillFromJson(const Json::Value& root);
 //
 //        f32 foo;
 //        u16 bar;
@@ -144,11 +145,12 @@ class GET_MESSAGE_CLASSNAME(__MSG_TYPE__) : public MESSAGE_BASECLASS_NAME \
 public: \
   GET_MESSAGE_CLASSNAME(__MSG_TYPE__)() { } \
   GET_MESSAGE_CLASSNAME(__MSG_TYPE__)(const u8* buffer); \
-  GET_MESSAGE_CLASSNAME(__MSG_TYPE__)(const Json::Value& root); \
-  virtual u8 GetID() const; \
-  virtual u16 GetSize() const; \
-  virtual void GetBytes(u8* buffer) const; \
-  virtual Json::Value CreateJson() const;
+  GET_MESSAGE_CLASSNAME(__MSG_TYPE__)(const Json::Value& root) { FillFromJson(root); } \
+  virtual u8 GetID() const override; \
+  virtual u16 GetSize() const overrie; \
+  virtual void GetBytes(u8* buffer) const override; \
+  virtual Json::Value CreateJson() const override; \
+  virtual Result FillFromJson(const Json::Value& root) override;
 
 #define ADD_MESSAGE_MEMBER(__TYPE__, __NAME__) \
 __TYPE__ __NAME__;
@@ -471,20 +473,20 @@ return root; \
 //
 // For example:
 //
-// MessageFooBar(const Json::Value& root)
+// Result MessageFooBar::FillFromJson(const Json::Value& root)
 // {
 //    if(not root.isMember("Name") || root["Name"].asString() != "FooBar") {
-//      fprintf(stderr, "No 'Name' member matching 'FooBar' found!\n");
+//      PRINT_NAMED_ERROR("MessageFooBar.FillFromJson", "No 'Name' member matching 'FooBar' found!\n");
 //      return RESULT_FAIL;
 //    }
 //    if(not root.isMember("foo")) {
-//      fprintf(stderr, "No 'foo' member found!\n");
-//      CORETECH_THROW("Unable to get message member from JSON file.");
+//      PRINT_NAMED_ERROR("MessageFooBar.FillFromJson", "No 'foo' member found!\n");
+//      return RESULT_FAIL;
 //    }
 //    this->foo = root["foo"];
 //    if(not root.isMember("bar")) {
-//      fprintf(stderr, "No 'bar' member found!\n");
-//      CORETECH_THROW("Unable to get message member from JSON file.");
+//      PRINT_NAMED_ERROR("MessageFooBar.FillFromJson", "No 'bar' member found!\n");
+//      return RESULT_FAIL;
 //    }
 //    this->bar = root["bar"];
 //
@@ -502,25 +504,23 @@ return root; \
 #endif
 
 #define START_MESSAGE_DEFINITION(__MSG_TYPE__, __PRIORITY__) \
-GET_MESSAGE_CLASSNAME(__MSG_TYPE__)::GET_MESSAGE_CLASSNAME(__MSG_TYPE__)(const Json::Value& root) { \
+Result GET_MESSAGE_CLASS(__MSG_TYPE__)::FillFromJson(const Json::Value& root) { \
 if(not root.isMember(QUOTE(Name)) || root[QUOTE(Name)].asString() != GET_QUOTED_MESSAGE_CLASSNAME(__MSG_TYPE__)) { \
-  fprintf(stderr, QUOTE(No matching 'Name' member found!\n)); \
-  CORETECH_THROW(QUOTE(JSON name member did not match message type.)); \
+  PRINT_NAMED_ERROR(QUOTE(GET_MESSAGE_CLASS(__MSG_TYPE__).FillFromJson), QUOTE(No matching 'Name' member found!\n)); \
+  return RESULT_FAIL; \
 }
 
-// TODO: don't use fprintf/CORETECH_THROW here?
 #define ADD_MESSAGE_MEMBER(__TYPE__, __NAME__) \
 if(not JsonTools::GetValueOptional(root, QUOTE(__NAME__), this->__NAME__)) { \
-  fprintf(stderr, QUOTE(No '%s' member found!\n), QUOTE(__NAME__)); \
+  PRINT_NAMED_ERROR(QUOTE(Message.FillFromJson), QUOTE(No '%s' member found!\n), QUOTE(__NAME__)); \
+  return RESULT_FAIL; \
 }
-//CORETECH_THROW(QUOTE(Unable to get message member from JSON file.));
-
 
 #define ADD_MESSAGE_MEMBER_ARRAY(__TYPE__, __NAME__, __LENGTH__) \
 if(not JsonTools::GetArrayOptional(root, QUOTE(__NAME__), this->__NAME__)) { \
-  fprintf(stderr, QUOTE(No '%s' member found!\n), QUOTE(__NAME__)); \
+  PRINT_NAMED_ERROR(QUOTE(Message.FillFromJson), QUOTE(No '%s' member found!\n), QUOTE(__NAME__)); \
+  return RESULT_FAIL; \
 }
-//CORETECH_THROW(QUOTE(Unable to get array message member from JSON file.));
 
 #define END_MESSAGE_DEFINITION(__MSG_TYPE__) }
 

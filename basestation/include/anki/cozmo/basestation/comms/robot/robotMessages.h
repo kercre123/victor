@@ -51,6 +51,10 @@ namespace Anki {
       
       virtual u16 GetSize() const = 0;
       
+      virtual Json::Value CreateJson() const = 0;
+      
+      virtual Result FillFromJson(const Json::Value& root) = 0;
+      
       static RobotMessage* CreateFromJson(const Json::Value& jsonRoot);
       
     }; // class RobotMessage
