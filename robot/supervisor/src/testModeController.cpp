@@ -17,6 +17,7 @@
 #include "steeringController.h"
 #include "wheelController.h"
 #include "animationController.h"
+#include "backpackLightController.h"
 
 #include "anki/common/robot/trig_fast.h"
 
@@ -270,8 +271,8 @@ namespace Anki {
         /////// LightTest ////////
         LEDId ledID_ = (LEDId)0;
         u8 ledColorIdx_ = 0;
-        const u8 LED_COLOR_LIST_SIZE = 3;
-        const LEDColor LEDColorList_[LED_COLOR_LIST_SIZE] = {LED_RED, LED_GREEN, LED_BLUE};
+        const u8 LED_COLOR_LIST_SIZE = 4;
+        const LEDColor LEDColorList_[LED_COLOR_LIST_SIZE] = {LED_RED, LED_GREEN, LED_BLUE, LED_OFF};
         
         bool ledCycleTest_ = true;
         ///// End of LightTest ///
@@ -319,6 +320,9 @@ namespace Anki {
         LiftController::SetAngularVelocity(0);
         HeadController::Enable();
         HeadController::SetAngularVelocity(0);
+        
+        // Backpack lights
+        BackpackLightController::Enable();
         
         return RESULT_OK;
       }
@@ -1059,6 +1063,7 @@ namespace Anki {
       Result LightTestInit(s32 flags, s32 ledID, s32 color)
       {
         PRINT("\n==== Starting LightTest  (flags = %x, ledID = %d, color = %x) =====\n", flags, ledID, color);
+        BackpackLightController::Disable();
         
         ledCycleTest_ = flags & LTF_CYCLE_ALL;
 
