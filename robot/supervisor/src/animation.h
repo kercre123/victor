@@ -50,7 +50,7 @@ namespace Cozmo {
     // Called while the animation is playing
     void Update();
     
-    // Stop the animatin prematurely (called internally when an animation completes)
+    // Stop the animation prematurely (called internally when an animation completes)
     void Stop();
     
     // Query whether the animation is currently playing

@@ -26,15 +26,14 @@ namespace Cozmo {
   {
     // Bit flag to specify which things this keyframe sets
     typedef enum {
-      NONE = 0x00, // Not setting anything: signifies "end of animation"
-      
-      AUDIO          = 0x01,
-      FACE_FRAME     = 0x02,
-      FACE_POSITION  = 0x04,
-      HEAD           = 0x08,
-      LIFT           = 0x10,
-      BACKPACK_LEDS  = 0x20,
-      WHEELS         = 0x40,
+      KF_SETS_AUDIO          = 0x01,
+      KF_SETS_FACE_FRAME     = 0x02,
+      KF_SETS_FACE_POSITION  = 0x04,
+      KF_SETS_HEAD           = 0x08,
+      KF_SETS_LIFT           = 0x10,
+      KF_SETS_BACKPACK_LEDS  = 0x20,
+      KF_SETS_WHEELS         = 0x40,
+      KF_IS_TERMINATION      = 0x80
     } WhichTracks;
     
     u8 setsWhichTracks; // bits set using the enum values above
@@ -74,6 +73,11 @@ namespace Cozmo {
     // Wheel speeds
     f32 wheelSpeedL, wheelSpeedR;
     
+    
+//    StreamedKeyFrame() : setsWhichTracks(0) { }
+//    
+    Result SetFrom(const Messages::AddAnimKeyFrame_SetHeadAngle& msg);
+//    Play
   }; // StreamedKeyFrame
   
 struct KeyFrame

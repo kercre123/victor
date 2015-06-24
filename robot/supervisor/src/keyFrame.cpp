@@ -28,6 +28,11 @@ namespace Cozmo {
   
   static const u8 MIN_TRANSITION_PERCENT = 1;
   
+  Result StreamedKeyFrame::SetFrom(const Messages::AddAnimKeyFrame_SetHeadAngle &msg)
+  {
+    
+    return RESULT_OK;
+  }
   
   static inline f32 GetAngleRad(s32 angle_deg)
   {

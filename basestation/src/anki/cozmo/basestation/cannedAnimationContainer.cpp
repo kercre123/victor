@@ -12,6 +12,9 @@
  **/
 
 #include "anki/cozmo/basestation/cannedAnimationContainer.h"
+
+#include "anki/cozmo/basestation/robot.h"
+
 #include "robotMessageHandler.h"
 
 #include "anki/cozmo/shared/cozmoTypes.h"
@@ -21,12 +24,347 @@
 
 #include "anki/util/logging/logging.h"
 #include "anki/common/basestation/colorRGBA.h"
+#include "anki/common/basestation/utils/timer.h"
 
 #include <cassert>
 
 
 namespace Anki {
 namespace Cozmo {
+  
+  IKeyFrame::IKeyFrame()
+  : _msg(nullptr)
+  , _triggerTime_ms(0)
+  , _isValid(false)
+  {
+    
+  }
+  
+  IKeyFrame::IKeyFrame(const Json::Value& root)
+  : _isValid(false)
+  {
+    if(RESULT_OK == ReadFromJson(root)) {
+      _isValid = true;
+    }
+  }
+  
+  IKeyFrame::~IKeyFrame()
+  {
+
+  }
+  
+  bool IKeyFrame::IsTimeToPlay(TimeStamp_t startTime_ms, TimeStamp_t currTime_ms) const
+  {
+    return (GetTriggerTime() + startTime_ms >= currTime_ms);
+  }
+  
+  Result IKeyFrame::ReadFromJson(const Json::Value &json)
+  {
+    Result lastResult = RESULT_OK;
+    if(_msg != nullptr) {
+      delete _msg;
+      _msg = nullptr;
+    }
+    
+    _msg = RobotMessage::CreateFromJson(json);
+    
+    // Read the frame time from the json file as well
+    if(!json.isMember("triggerTime_ms")) {
+      PRINT_NAMED_ERROR("IKeyFrame.ReadFromJson", "Expecting 'triggerTime_ms' field in KeyFrame Json.\n");
+      lastResult = RESULT_FAIL;
+    } else {
+      _triggerTime_ms = json["triggerTime_ms"].asUInt();
+    }
+    
+    return lastResult;
+  }
+  
+  Result FaceImageKeyFrame::ReadFromJson(const Json::Value &json)
+  {
+    Result lastResult = IKeyFrame::ReadFromJson(json);
+    if(lastResult != RESULT_FAIL) {
+      return lastResult;
+    }
+    
+    // This will (should) be a MessageAnimKeyFrame_FaceImageID initially. We
+    // then want to convert it to a MessageAnimKeyFrame_FaceImage instead
+    MessageAnimKeyFrame_FaceImageID* idMsg = reinterpret_cast<MessageAnimKeyFrame_FaceImageID*>(_msg);
+    if(idMsg == nullptr) {
+      PRINT_NAMED_ERROR("FaceImageKeyFrame.ReadFromJson",
+                        "Failed to dynamically cast to MessageAnimKeyFrame_FaceImageID.\n");
+      return RESULT_FAIL;
+    }
+    
+    MessageAnimKeyFrame_FaceImage* imgMsg = new MessageAnimKeyFrame_FaceImage();
+    
+    // TODO: Populate the message with the current face sample
+    // memcpy(imgMsg.image, LoadFace(idMsg.imageID));
+    
+    // Point the base class message pointer at this new image message, so future
+    // calls to GetMessage() will return this face image for sending.
+    // (Base class destructor will delete it for us.)
+    _msg = imgMsg;
+    
+    // Don't need the ID message anymore
+    delete(idMsg);
+
+    return RESULT_OK;
+    
+  } // FaceImageKeyFrame::ReadFromJson()
+  
+  
+  template<typename FRAME_TYPE>
+  void Animation::Track<FRAME_TYPE>::Init()
+  {
+    _frameIter = _frames.begin();
+  }
+  
+  template<typename FRAME_TYPE>
+  RobotMessage* Animation::Track<FRAME_TYPE>::GetNextMessage(TimeStamp_t startTime_ms,
+                                                             TimeStamp_t currTime_ms)
+  {
+    RobotMessage* msg = nullptr;
+    
+    if(HasFramesLeft() && GetNextFrame().IsTimeToPlay(startTime_ms, currTime_ms))
+    {
+      msg = GetNextFrame().GetMessage();
+      Increment();
+    }
+    
+    return msg;
+  }
+  
+  template<typename FRAME_TYPE>
+  Result Animation::Track<FRAME_TYPE>::AddKeyFrame(const Json::Value &jsonRoot)
+  {
+    _frames.emplace_back(jsonRoot);
+    if(_frames.back().IsValid()) {
+      return RESULT_OK;
+    } else {
+      return RESULT_FAIL;
+    }
+  }
+  
+  MessageAnimKeyFrame_AudioSample* RobotAudioKeyFrame::GetAudioSampleMessage()
+  {
+    if(_idMsg == nullptr) {
+      _idMsg = dynamic_cast<MessageAnimKeyFrame_PlayAudioID*>(GetMessage());
+      
+      if(_idMsg == nullptr) {
+        PRINT_NAMED_ERROR("RobotAudioKeyFrame.GetAudioSampleMessage",
+                          "Failed to dynamically cast to MessageAnimKeyFrame_PlayAudioID.\n");
+        return nullptr;
+      }
+      
+      // TODO: Compute number of samples for this audio ID
+      // _numSamples = wwise::GetNumSamples(_idMsg.audioID, SAMPLE_SIZE);
+      _sampleIndex = 0;
+    }
+    
+    // Populate the message with the next chunk of audio data and send it out
+    if(_sampleIndex < _numSamples) {
+      
+      // TODO: Get next chunk of audio from wwise or something?
+      //wwise::GetNextSample(_msg.sample, 480);
+
+      ++_sampleIndex;
+      
+      return &_audioSampleMsg;
+    } else {
+      return nullptr;
+    }
+  }
+  
+  
+  Result Animation::DefineFromJson(Json::Value &jsonRoot)
+  {
+    if(!jsonRoot.isMember("Name")) {
+      PRINT_NAMED_ERROR("Animation.DefineFromJson.NoName",
+                        "Missing 'Name' field for animation.\n");
+      return RESULT_FAIL;
+    }
+    
+    _name = jsonRoot["Name"].asString();
+    
+    
+    const s32 numFrames = jsonRoot.size();
+    for(s32 iFrame = 0; iFrame < numFrames; ++iFrame)
+    {
+      Json::Value& jsonFrame = jsonRoot[iFrame];
+      
+      // Semi-hack to make sure each message has the animatino ID in it.
+      // We do this here since the CreateFromJson() call below returns a
+      // pointer to a base-class message (without accessible "animationID"
+      // field).
+      //      jsonFrame["animationID"] = animID;
+      
+      /*
+      if(!jsonFrame.isMember("transitionIn")) {
+        PRINT_NAMED_ERROR("CannedAnimationContainer.DefineFromJson.NoTransitionIn",
+                          "Missing 'transitionIn' field for '%s' frame of '%s' animation.\n",
+                          jsonFrame["Name"].asString().c_str(),
+                          _name.c_str());
+        return RESULT_FAIL;
+      }
+      
+      if(!jsonFrame.isMember("transitionOut")) {
+        PRINT_NAMED_ERROR("CannedAnimationContainer.DefineFromJson.NoTransitionOut",
+                          "Missing 'transitionOut' field for '%s' frame of '%s' animation.\n",
+                          jsonFrame["Name"].asString().c_str(),
+                          _name.c_str());
+        return RESULT_FAIL;
+      }
+       */
+      
+      /*
+      if(jsonFrame.isMember("animToPlay")) {
+        if(!jsonFrame["animToPlay"].isString()) {
+          PRINT_NAMED_ERROR("CannedAnimationContainer.DefineFromJson.animToPlayString",
+                            "Expecting 'animToPlay' field for '%s' frame of '%s' animation to be a string.\n",
+                            jsonFrame["Name"].asString().c_str(),
+                            animationName.c_str());
+        } else {
+          jsonFrame["animToPlay"] = GetID(jsonFrame["animToPlay"].asString());
+        }
+      }
+       */
+      
+      if(!jsonFrame.isMember("Name")) {
+        PRINT_NAMED_ERROR("Animation.DefineFromJson.NoFrameName",
+                          "Missing 'Name' field for frame %d of '%s' animation.\n",
+                          iFrame, _name.c_str());
+        return RESULT_FAIL;
+      }
+      
+      const std::string& frameName = jsonFrame["Name"].asString();
+      
+      Result addResult = RESULT_FAIL;
+      
+      // Map from string name of frame to which track we want to store it in:
+      if(frameName == "AnimKeyFrame_HeadAngle") {
+        addResult = _headTrack.AddKeyFrame(jsonFrame);
+      } else if(frameName == "AnimKeyFrame_LiftHeight") {
+        addResult = _liftTrack.AddKeyFrame(jsonFrame);
+      } else if(frameName == "AnimKeyFrame_FaceFrameID") {
+        addResult = _faceImageTrack.AddKeyFrame(jsonFrame);
+      } else if(frameName == "AnimKeyFrame_FacePosition") {
+        addResult = _facePosTrack.AddKeyFrame(jsonFrame);
+      } else {
+        PRINT_NAMED_ERROR("Animation.DefineFromJson.UnrecognizedFrameName",
+                          "Frame %d in '%s' animation has unrecognized name '%s'.\n",
+                          iFrame, _name.c_str(), frameName.c_str());
+        return RESULT_FAIL;
+      }
+      
+      if(addResult != RESULT_OK) {
+        PRINT_NAMED_ERROR("Animation.DefineFromJson.AddKeyFrameFailure",
+                          "Adding %s frame %d failed.\n",
+                          frameName.c_str(), iFrame);
+        return addResult;
+      }
+      
+    } // for each frame
+    
+    return RESULT_OK;
+  }
+  
+  Result Animation::Init(Robot& robot)
+  {
+    _startTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+    
+    _headTrack.Init();
+    _liftTrack.Init();
+    _deviceAudioTrack.Init();
+    _robotAudioTrack.Init();
+    
+    return RESULT_OK;
+  }
+  
+  Result Animation::Update(Robot& robot)
+  {
+    const TimeStamp_t currTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+    
+    // Is it time to play device audio?
+    if(_deviceAudioTrack.GetNextFrame().IsTimeToPlay(_startTime_ms, currTime_ms)) {
+      _deviceAudioTrack.GetNextFrame().PlayOnDevice();
+      _deviceAudioTrack.Increment();
+    }
+
+    // Don't send frames if robot has no space for them
+    //const bool isRobotReadyForFrames = !robot.IsAnimationBufferFull();
+    s32 numFramesToSend = robot.GetNumAnimationFramesFree();
+    
+    while(numFramesToSend-- > 0) {
+      RobotMessage* msg = nullptr;
+      
+      // Have to always send an audio frame to keep time, whether that's the next
+      // audio sample or a silent frame
+      // NOTE: Audio frame must be first!
+      if(_robotAudioTrack.HasFramesLeft() &&
+         _robotAudioTrack.GetNextFrame().IsTimeToPlay(_startTime_ms, currTime_ms))
+      {
+        msg = _robotAudioTrack.GetNextFrame().GetAudioSampleMessage();
+        if(msg != nullptr) {
+          // Still have samples to send, don't increment to the next frame in the track
+          robot.SendMessage(*msg);
+          
+        } else {
+          // Nothing left to send in this frame, move to next, and for now
+          // send silence
+          _robotAudioTrack.Increment();
+          robot.SendMessage(_silenceMsg);
+        }
+      } else {
+        // No frames left or not time to play next frame yet, so send silence
+        robot.SendMessage(_silenceMsg);
+      }
+      
+      //
+      // We are guaranteed to have sent some kind of audio frame at this point.
+      // Now send any other frames that are ready, so they will be timed with
+      // that audio frame (silent or not).
+      //
+      // Note that these frames don't actually use up additional slots in the
+      // robot's keyframe buffer, so we don't have to decrement numFramesToSend
+      // for each one, just once for each audio/silence frame.
+      //
+      
+      Result sendResult = RESULT_OK;
+      
+      msg = _headTrack.GetNextMessage(_startTime_ms, currTime_ms);
+      if(msg != nullptr) {
+        sendResult = robot.SendMessage(*msg);
+        if(sendResult != RESULT_OK) { return sendResult; }
+      }
+      
+      msg = _liftTrack.GetNextMessage(_startTime_ms, currTime_ms);
+      if(msg != nullptr) {
+        sendResult = robot.SendMessage(*msg);
+        if(sendResult != RESULT_OK) { return sendResult; }
+      }
+      
+      msg = _facePosTrack.GetNextMessage(_startTime_ms, currTime_ms);
+      if(msg != nullptr) {
+        sendResult = robot.SendMessage(*msg);
+        if(sendResult != RESULT_OK) { return sendResult; }
+      }
+      
+      msg = _faceImageTrack.GetNextMessage(_startTime_ms, currTime_ms);
+      if(msg != nullptr) {
+        sendResult = robot.SendMessage(*msg);
+        if(sendResult != RESULT_OK) { return sendResult; }
+      }
+      
+      
+    } // while(numFramesToSend > 0)
+    
+    
+    return RESULT_OK;
+    
+  } // Animation::Update()
+  
+  
+  //////////////////////////////////////////////
   
   CannedAnimationContainer::CannedAnimationContainer()
   {

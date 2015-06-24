@@ -25,17 +25,18 @@ namespace AnimationController {
   
   namespace {
     
-    const AnimationID_t ANIM_IDLE = -1;
-    //static const AnimationID_t ANIM_IDLE = MAX_KNOWN_ANIMATIONS;
+    // Circular buffer of keyframes
+    StreamedKeyFrame _keyFrameBuffer[KEYFRAME_BUFFER_LENGTH];
+    s32  _currentFrame;
+    s32  _lastFrame;
+    s32  _numFramesBuffered;
+    bool _haveReceivedTerminationFrame;
+    bool _isPlaying;
     
-    AnimationID_t _currAnimID   = ANIM_IDLE;
-    AnimationID_t _queuedAnimID = ANIM_IDLE;
-    ONCHIP Animation     _cannedAnimations[MAX_CANNED_ANIMATIONS];
-    
-    s32 _currDesiredLoops   = 0;
-    s32 _queuedDesiredLoops = 0;
-    s32 _numLoopsComplete   = 0;
-    u32 _waitUntilTime_us   = 0;
+//    s32 _currDesiredLoops   = 0;
+//    s32 _queuedDesiredLoops = 0;
+//    s32 _numLoopsComplete   = 0;
+//    u32 _waitUntilTime_us   = 0;
     
     //bool _isStopping  = false;
     //bool _wasStopping = false;
@@ -263,6 +264,15 @@ namespace AnimationController {
   
   Result Init()
   {
+    _currentFrame = 0;
+    _lastFrame    = 0;
+    _numFramesBuffered = 0;
+    _haveReceivedTerminationFrame = false;
+    _isPlaying = false;
+    
+    // Necessary?
+    //memset(_keyFrameBuffer, KEYFRAME_BUFFER_LENGTH, sizeof(StreamedKeyFrame));
+    
     DefineHardCodedAnimations();
     
     return RESULT_OK;
@@ -316,22 +326,7 @@ namespace AnimationController {
   }
    */
   
-  Result ClearCannedAnimation(const AnimationID_t whichAnimation)
-  {
-    AnkiConditionalErrorAndReturnValue(whichAnimation>=0 && whichAnimation < MAX_CANNED_ANIMATIONS, RESULT_FAIL,
-                                       "AnimationController.ClearCannedAnimation.InvalidAnimationID",
-                                       "Out-of-range animation ID = %d\n", whichAnimation);
-    
-    if(_currAnimID == whichAnimation) {
-      // Don't try to clear an animation that's currently playing
-      Stop();
-    }
-    
-    _cannedAnimations[whichAnimation].Clear();
-    _cannedAnimations[whichAnimation].SetID(whichAnimation);
-    
-    return RESULT_OK;
-  }
+
   
   Result AddKeyFrameToCannedAnimation(const KeyFrame&     keyframe,
                                       const AnimationID_t whichAnimation)
@@ -344,26 +339,189 @@ namespace AnimationController {
   }
   
   
+  static Result AdvanceLastFrame()
+  {
+    // Move to next frame in the buffer, and deal with the fact that this is a
+    // circular buffer
+    ++_lastFrame;
+    if(_lastFrame == KEYFRAME_BUFFER_LENGTH) {
+      _lastFrame = 0;
+    }
+    
+    if(_lastFrame == _currentFrame) {
+      // Ran out of buffer!
+      AnkiError("AnimationController.BufferKeyFrame.BufferFull",
+                "KeyFrame buffer full, can't add given KeyFrame!\n");
+      
+      // Put lastFrame back to what it was
+      if(_lastFrame == 0) {
+        _lastFrame = KEYFRAME_BUFFER_LENGTH-1;
+      } else {
+        --_lastFrame;
+      }
+      
+      return RESULT_FAIL_OUT_OF_MEMORY;
+    }
+
+    // "Reset" the frame:
+    _keyFrameBuffer[_lastFrame].setsWhichTracks = 0;
+    
+    ++_numFramesBuffered;
+    
+    return RESULT_OK;
+    
+  } // AdvanceLastFrame()
+  
+  Result BufferKeyFrame(const Messages::AnimKeyFrame_AudioSample& msg)
+  {
+    // New audio frame: advance to the next frame in the buffer and then
+    // populate it
+    Result lastResult = AdvanceLastFrame();
+    AnkiConditionalErrorAndReturnValue(lastResult== RESULT_OK, lastResult,
+                                       "BufferKeyFrame", "Failed to advance last frame counter.\n");
+    
+    StreamedKeyFrame& lastKeyFrame = _keyFrameBuffer[_lastFrame];
+    
+    lastKeyFrame.setsWhichTracks |= StreamedKeyFrame::KF_SETS_AUDIO;
+    
+    assert(sizeof(msg.sample)==sizeof(StreamedKeyFrame::audioSample));
+    
+    memcpy(lastKeyFrame.audioSample, msg.sample, sizeof(StreamedKeyFrame::audioSample));
+
+    return lastResult;
+  }
+  
+  Result BufferKeyFrame(const Messages::AnimKeyFrame_AudioSilence& msg)
+  {
+    // Silent audio frame just advances us to the next frame in the buffer
+    return AdvanceLastFrame();
+  }
+  
+  
+  Result BufferKeyframe(const Messages::AnimKeyFrame_HeadAngle& msg)
+  {
+    // Just set the last frame's head properties:
+    StreamedKeyFrame& lastKeyFrame = _keyFrameBuffer[_lastFrame];
+    lastKeyFrame.setsWhichTracks |= StreamedKeyFrame::KF_SETS_HEAD;
+    lastKeyFrame.headAngle_rad = msg.angle_rad;
+    lastKeyFrame.headTime_ms   = msg.time_ms;
+    
+    return RESULT_OK;
+  }
+  
+  Result BufferKeyFrame(const Messages::AnimKeyFrame_LiftHeight&   msg)
+  {
+    StreamedKeyFrame& lastKeyFrame = _keyFrameBuffer[_lastFrame];
+    lastKeyFrame.setsWhichTracks |= StreamedKeyFrame::KF_SETS_LIFT;
+    lastKeyFrame.liftHeight_mm = msg.height_mm;
+    lastKeyFrame.liftTime_ms   = msg.time_ms;
+    
+    return RESULT_OK;
+  }
+  
+  bool IsBufferFull()
+  {
+    return _numFramesBuffered > (KEYFRAME_BUFFER_LENGTH - KEYFRAME_BUFFER_PADDING);
+  }
+  
+  s32 GetNumFramesFree()
+  {
+    const s32 framesFree = MAX(0, KEYFRAME_BUFFER_LENGTH-KEYFRAME_BUFFER_PADDING-_numFramesBuffered);
+
+    return framesFree;
+  }
+  
+  bool IsPlaying()
+  {
+    return _isPlaying;
+  }
+  
+  static inline bool IsReadyToPlay()
+  {
+    
+    bool ready = false;
+    
+    if(_isPlaying) {
+      // If we are already in progress playing something, we are "ready to play"
+      // until we run out of keyframes in the buffer
+      ready = _numFramesBuffered > 0;
+    } else {
+      // Otherwise, wait until we get enough frames to start
+      ready = (_numFramesBuffered > PREROLL_BUFFER_LENGTH ||
+               (_numFramesBuffered > 0 && _haveReceivedTerminationFrame));
+    }
+    
+    assert(_currentFrame <= _lastFrame);
+    
+    return ready;
+  } // IsReadyToPlay()
+  
   void Update()
   {
-    if (IsPlaying()) {
+    if(IsReadyToPlay()) {
       
-      _cannedAnimations[_currAnimID].Update();
-      
-      if(!_cannedAnimations[_currAnimID].IsPlaying()) {
-        // If current animation just finished
-        ++_numLoopsComplete;
-        if(_currDesiredLoops == 0 ||  _numLoopsComplete < _currDesiredLoops) {
-          // Looping: play again
-          _cannedAnimations[_currAnimID].Init();
-        } else if(_queuedAnimID != ANIM_IDLE) {
-          Play(_queuedAnimID, _queuedDesiredLoops);
-          _queuedAnimID = ANIM_IDLE;
+      // If AudioReady() returns true, we are ready to move to the next keyframe
+      if(HAL::AudioReady()) {
+        
+        const StreamedKeyFrame& keyFrame = _keyFrameBuffer[_currentFrame];
+        
+        // Go through each track and see if this keyframe specifies anything
+        // for it. If so, take appropriate action.
+        if( !(keyFrame.setsWhichTracks & StreamedKeyFrame::KF_IS_TERMINATION) ) {
+          _isPlaying = true;
+          
+          if(keyFrame.setsWhichTracks & StreamedKeyFrame::KF_SETS_AUDIO) {
+            HAL::AudioPlayFrame(keyFrame.audioSample);
+          } else {
+            
+            // Play "silence"
+            HAL::AudioPlayFrame(NULL);
+            
+          } // if(setsAudio)
+          
+          if(keyFrame.setsWhichTracks & StreamedKeyFrame::KF_SETS_BACKPACK_LEDS) {
+            
+          } // if(setsBackPackLEDs)
+          
+          if(keyFrame.setsWhichTracks & StreamedKeyFrame::KF_SETS_HEAD) {
+            
+            HeadController::SetDesiredAngle(static_cast<f32>(keyFrame.headAngle_rad), 0.5f, 0.5f,
+                                            static_cast<f32>(keyFrame.headTime_ms)*.001f);
+            
+          } // if(setsHead)
+          
+          if(keyFrame.setsWhichTracks & StreamedKeyFrame::KF_SETS_LIFT) {
+            
+            LiftController::SetDesiredHeight(static_cast<f32>(keyFrame.liftHeight_mm), 0.5f, 0.5f,
+                                             static_cast<f32>(keyFrame.liftTime_ms)*.001f);
+          } // if(setsLift)
+          
+          
+          if(keyFrame.setsWhichTracks & StreamedKeyFrame::KF_SETS_WHEELS) {
+            
+            WheelController::SetDesiredWheelSpeeds(keyFrame.wheelSpeedL, keyFrame.wheelSpeedR);
+          }
+          
         } else {
-          _currAnimID = ANIM_IDLE;
+          // Termination frame reached!
+          _isPlaying = false;
+          _haveReceivedTerminationFrame = false;
+          
+#         if DEBUG_ANIMATION_CONTROLLER
+          PRINT("Reached animation termination frame.\n");
+#         endif
+        } // if(sets *any* tracks)
+        
+        // Move to next keyframe in the (circular) buffer
+        ++_currentFrame;
+        if(_currentFrame == KEYFRAME_BUFFER_LENGTH) {
+          _currentFrame = 0;
         }
-      }
-    } // if(IsPlaying())
+        
+        --_numFramesBuffered;
+        
+      } // if(AudioReady())
+    } // if(IsReadyToPlay())
     
   } // Update()
 

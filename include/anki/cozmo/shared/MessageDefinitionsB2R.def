@@ -319,6 +319,7 @@ END_MESSAGE_DEFINITION(ClearCannedAnimation)
 
 // TODO: Make a macro for common keyframe members (but how to deal with decreasing size order?)
 
+
 // AddAnimKeyFrame_SetHeadAngle
 START_MESSAGE_DEFINITION(AddAnimKeyFrame_SetHeadAngle, 2)
 ADD_MESSAGE_MEMBER(u16, relTime_ms)
@@ -328,6 +329,7 @@ ADD_MESSAGE_MEMBER(u8,  animationID)
 ADD_MESSAGE_MEMBER(s8,  angle_deg)
 ADD_MESSAGE_MEMBER(u8,  variability_deg)
 END_MESSAGE_DEFINITION(AddAnimKeyFrame_SetHeadAngle)
+
 
 // AddAnimKeyFrame_HoldHeadAngle
 START_MESSAGE_DEFINITION(AddAnimKeyFrame_HoldHeadAngle, 2)
@@ -587,3 +589,63 @@ START_MESSAGE_DEFINITION(SetBlockBeingCarried, 1)
 ADD_MESSAGE_MEMBER(u8, blockID)
 ADD_MESSAGE_MEMBER(u8, isBeingCarried)
 END_MESSAGE_DEFINITION(SetBlockBeingCarried)
+
+
+/////// Animation Streaming ///////
+
+// AnimKeyFrame_AudioSample
+#define AUDIO_SAMPLE_SIZE 480 // Must match HAL::AUDIO_SAMPLE_SIZE!!
+START_MESSAGE_DEFINITION(AnimKeyFrame_AudioSample, 1)
+ADD_MESSAGE_MEMBER_ARRAY(u8, sample, AUDIO_SAMPLE_SIZE)
+END_MESSAGE_DEFINITION(AnimKeyFrame_AudioSample)
+
+// AnimKeyFrame_PlayAudioID
+START_MESSAGE_DEFINITION(AnimKeyFrame_PlayAudioID, 1)
+ADD_MESSAGE_MEMBER(u32, audioID)
+ADD_MESSAGE_MEMBER(u16, triggerTime_ms)
+END_MESSAGE_DEFINITION(AnimKeyFrame_PlayAudioID)
+
+// AnimKeyFrame_AudioSilence
+START_MESSAGE_DEFINITION(AnimKeyFrame_AudioSilence, 1)
+END_MESSAGE_DEFINITION(AnimKeyFrame_AudioSilence)
+
+// AnimKeyFrame_HeadAngle
+START_MESSAGE_DEFINITION(AnimKeyFrame_HeadAngle, 1)
+ADD_MESSAGE_MEMBER(u16, triggerTime_ms)
+ADD_MESSAGE_MEMBER(u16, time_ms)
+ADD_MESSAGE_MEMBER(s8, angle_rad)
+END_MESSAGE_DEFINITION(AnimKeyFrame_HeadAngle)
+
+// AnimKeyFrame_LiftHeight
+START_MESSAGE_DEFINITION(AnimKeyFrame_LiftHeight, 1)
+ADD_MESSAGE_MEMBER(u16, triggerTime_ms)
+ADD_MESSAGE_MEMBER(u16, time_ms)
+ADD_MESSAGE_MEMBER(u8,  height_mm)
+END_MESSAGE_DEFINITION(AnimKeyFrame_LiftHeight)
+
+// AnimKeyFrame_FacePosition
+START_MESSAGE_DEFINITION(AnimKeyFrame_FacePosition, 1)
+ADD_MESSAGE_MEMBER(u16, triggerTime_ms)
+ADD_MESSAGE_MEMBER(s8, xCen)
+ADD_MESSAGE_MEMBER(s8, yCen)
+END_MESSAGE_DEFINITION(AnimKeyFrame_FacePosition)
+
+// AnimKeyFrame_FaceImage
+// TODO: Need variable-length arrays!
+#define FACE_IMAGE_SIZE 1024
+START_MESSAGE_DEFINITION(AnimKeyFrame_FaceImage, 1)
+ADD_MESSAGE_MEMBER(u16, triggerTime_ms)
+ADD_MESSAGE_MEMBER_ARRAY(u8, image, FACE_IMAGE_SIZE)
+END_MESSAGE_DEFINITION(AnimKeyFrame_FaceImage)
+
+// AnimKeyFrame_FaceImageID
+START_MESSAGE_DEFINITION(AnimKeyFrame_FaceImageID, 1)
+ADD_MESSAGE_MEMBER(u32, imageID)
+ADD_MESSAGE_MEMBER(u16, triggerTime_ms)
+END_MESSAGE_DEFINITION(AnimKeyFrame_FaceImageID)
+
+// AnimKeyFrame_BackpackLights
+
+
+
+
