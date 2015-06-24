@@ -240,7 +240,14 @@ namespace Anki
       const u32 AUDIO_SAMPLE_SIZE = 480;
 
       // Play an audio sample at 24 kHz. Returns true if it was played.
-      bool AudioPlay(s16 buffer[AUDIO_SAMPLE_SIZE]);
+      //bool AudioPlay(s16 buffer[AUDIO_SAMPLE_SIZE]);
+      
+      // @return true if the audio clock says it is time for the next frame
+      bool AudioReady();
+      
+      // Play one frame of audio or silence
+      // @param frame - a pointer to an audio frame or NULL to play one frame of silence
+      void AudioPlayFrame(u8* frame);
 
 // #pragma mark --- Flash Memory ---
       /////////////////////////////////////////////////////////////////////
@@ -410,6 +417,23 @@ namespace Anki
 
       // Turn headlights on (true) and off (false)
       void SetHeadlights(bool state);
+      
+// #pragma mark --- Face ---
+      /////////////////////////////////////////////////////////////////////
+      // Face
+
+      // Blackout the face display
+      void ClearFace();
+      
+      // Update the face to the next frame of an animation
+      // @param frame - a pointer to a variable length frame of face animation data
+      void FaceAnimate(u8* frame);
+      
+      // Move the face to an X, Y offset - where 0, 0 is centered, negative is left/up
+      void FaceMove(s32 x, s32 y);
+      
+      // Blink the eyes
+      void FaceBlink();
 
 // #pragma mark --- Radio ---
       /////////////////////////////////////////////////////////////////////

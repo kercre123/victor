@@ -101,7 +101,7 @@ Supervisor {
 							translation 0.015 0 0
 							children [
 							Shape {
-								appearance Appearance {
+								appearance DEF MAIN_BODY_APPEARANCE Appearance {
 								material Material {
 									diffuseColor IS bodyColor
 									shininess 0
@@ -119,11 +119,7 @@ Supervisor {
 							translation -0.015 0 0
 							children [
 								Shape {
-									appearance Appearance {
-										material Material {
-											diffuseColor IS bodyColor
-										}
-									}  
+									appearance USE MAIN_BODY_APPEARANCE 
 									geometry Cylinder {
 										height 0.0322
 										radius 0.013
@@ -133,11 +129,7 @@ Supervisor {
 							]
 						}
 						Shape {
-							appearance Appearance {
-								material Material {
-									diffuseColor IS bodyColor
-								}
-							}  
+							appearance USE MAIN_BODY_APPEARANCE  
 							geometry Box {
 								size 0.03 0.0322 0.026
 							}
@@ -219,175 +211,7 @@ Supervisor {
 								subdivision 12
 							}
 						}
-						DEF EYES Transform {
-							translation 0.02 0 0.002
-							children [
 
-							# Create master eye segment since changing the color of the LED of the segment
-							# that the other segments are copied from changes all of them which is not the
-							# behavior we want.
-							DEF MASTER_EYE_SEGMENT Transform {
-								# Hide segment behind face plate
-								translation -0.001 0.006 0.003
-								children [
-
-								  DEF EYE_SHAPE Shape {
-									appearance Appearance {
-										material Material {
-											ambientIntensity 0.6
-											diffuseColor 0.5 0.5 0.5
-										}
-									}
-									geometry IndexedFaceSet {
-										coord Coordinate {
-										  point [ 0 0.004 0.0005, 0 0.0037  0.0015,  0 0.0028 0.0028, 0 0.0015  0.0037,  0 0.0005 0.004,  # Outside arc
-										          0 0.002 0.0005, 0 0.00185 0.00075, 0 0.0014 0.0014, 0 0.00075 0.00185, 0 0.0005 0.002   # Inside arc
-										  ]
-										}
-										coordIndex [ 
-										  0 1 5 -1
-										  5 1 6 -1
-										  6 1 2 -1     
-										  6 2 7 -1
-    										  7 2 8 -1
-										  8 2 3 -1
-										  8 3 4 -1 
-										  9 8 4 -1
-										]
-									}
-
-
-
-								  }
-
-								]
-							}
-
-
-							DEF LEFT_EYE_TOP Transform {
-								translation 0.001 0.006 0
-								rotation 1 0 0 0.7854
-								children [
-								  LED {
-								    name "LeftEyeLED_top"
-                                                                    color []
-								    gradual TRUE
-								    children [
-								      USE EYE_SHAPE
-								    ]
-								  }
-								]
-							}
-
-							
-							DEF LEFT_EYE_LEFT Transform {
-								translation 0.001 0.006 0
-								rotation 1 0 0 -0.7854
-								children [
-								  LED {
-								    name "LeftEyeLED_left"
-								    color []
-								    gradual TRUE
-								    children [
-								      USE EYE_SHAPE
-								    ]
-								  }
-								]
-							}
-
-							DEF LEFT_EYE_BOTTOM Transform {
-								translation 0.001 0.006 0
-								rotation 1 0 0 -2.3562
-								children [
-								  LED {
-								    name "LeftEyeLED_bottom"
-								    color []
-								    gradual TRUE
-								    children [
-								      USE EYE_SHAPE
-								    ]
-								  }
-								]
-							}
-
-							DEF LEFT_EYE_RIGHT Transform {
-								translation 0.001 0.006 0
-								rotation 1 0 0 2.3562
-								children [
-								  LED {
-								    name "LeftEyeLED_right"
-								    color []
-								    gradual TRUE
-								    children [
-								      USE EYE_SHAPE
-								    ]
-								  }
-								]
-							}
-
-							DEF RIGHT_EYE_TOP Transform {
-								translation 0.001 -0.006 0
-								rotation 1 0 0 0.7854
-								children [
-								  LED {
-								    name "RightEyeLED_top"
-								    color []
-								    gradual TRUE
-								    children [
-								      USE EYE_SHAPE
-								    ]
-								  }
-								]
-							}
-						
-							DEF RIGHT_EYE_LEFT Transform {
-								translation 0.001 -0.006 0
-								rotation 1 0 0 -0.7854
-								children [
-								  LED {
-								    name "RightEyeLED_left"
-								    color []
-								    gradual TRUE
-								    children [
-								      USE EYE_SHAPE
-								    ]
-								  }
-								]
-							}
-
-							DEF RIGHT_EYE_BOTTOM Transform {
-								translation 0.001 -0.006 0
-								rotation 1 0 0 -2.3562
-								children [
-								  LED {
-								    name "RightEyeLED_bottom"
-								    color []
-								    gradual TRUE
-								    children [
-								      USE EYE_SHAPE
-								    ]
-								  }
-								]
-							}
-
-							DEF RIGHT_EYE_RIGHT Transform {
-								translation 0.001 -0.006 0
-								rotation 1 0 0 2.3562
-								children [
-								  LED {
-								    name "RightEyeLED_right"
-								    color []
-								    gradual TRUE
-								    children [
-								      USE EYE_SHAPE
-								    ]
-								  }
-								]
-							}
-
-
-							]
-				  		}
 				  Camera {
 						name "HeadCamera"
 						# Note: 8.8mm to lens face, 5.8mm to PCB mount, optical center = ?
@@ -483,7 +307,6 @@ Supervisor {
 				  }
 				  DEF FACE Transform {
 						translation 0.016 0 0
-						rotation 0 0 1 1.5708
 						children [
 							Shape {
 								appearance Appearance {
@@ -491,30 +314,195 @@ Supervisor {
 										diffuseColor 0.5 0.5 0.5
 									}
 								}
-								geometry DEF FACE Cylinder {
-									height 0.008
-									radius 0.015
-									subdivision 18
+								geometry DEF FACE_PLATE Box {
+									size  0.01 0.032 0.025 
 								}
+							}
+							
+							Transform {
+							  translation 0.00451 0 0
+							  rotation 1 0 0 1.5708
+							  children[
+								Display {
+								  name           "face_display"
+								  width          128
+								  height         64
+								  windowPosition 0 0
+								  pixelSize      1.0
+								  children [
+								    Shape {
+								      appearance Appearance {
+								        texture ImageTexture {
+								        }
+								      }
+								      geometry Box {
+								        size 0.001 0.013 0.026
+								      }
+								    }
+								  ]
+								}
+							  ]
 							}
 						]
 				  }
-				  DEF HEAD_SPHERE Shape {
-						geometry Sphere {
-							radius 0.020
-							subdivision 2
-						}
-						appearance Appearance {
-							material Material {
-								diffuseColor IS bodyColor
+				  
+				  DEF HEAD_SHAPE Group {
+				    children [
+					  Transform {
+						translation 0.016 0 0.012 
+						children [
+							DEF HEAD_CAPSULE_WIDTH Shape {
+							  geometry Capsule {
+							    height 0.03
+							    radius 0.005
+							  }
+							  appearance USE MAIN_BODY_APPEARANCE 
 							}
-						}
-				  }
+					    ]				          
+				      }
+				      
+				      Transform {
+				        translation 0.016 0 -0.012 
+				        children [
+				          USE HEAD_CAPSULE_WIDTH
+				        ]
+				      }
+				      
+				      Transform {
+				        translation -0.01 0 0.007
+				        children [
+				          USE HEAD_CAPSULE_WIDTH
+				        ]
+				      }
+				      
+				      Transform {
+				        translation -0.01 0 -0.007
+				        children [
+				          USE HEAD_CAPSULE_WIDTH
+				        ]
+				      }
+				      
+				      # Front height capsules
+					  Transform {
+						translation 0.016 0.015 0
+						rotation 1 0 0 1.5708
+						children [
+							DEF HEAD_CAPSULE_HEIGHT_FRONT Shape {
+							  geometry Capsule {
+							    height 0.024
+							    radius 0.005
+							  }
+							  appearance USE MAIN_BODY_APPEARANCE
+							}
+					    ]				          
+				      }			
+
+				      Transform {
+				        translation 0.016 -0.015 0
+						rotation 1 0 0 1.5708				        
+				        children [
+				          USE HEAD_CAPSULE_HEIGHT_FRONT
+				        ]
+				      }
+				      
+				      # Rear height capsules
+				      Transform {
+						translation -0.01 0.015 0
+						rotation 1 0 0 1.5708
+						children [
+							DEF HEAD_CAPSULE_HEIGHT_REAR Shape {
+							  geometry Capsule {
+							    height 0.014
+							    radius 0.005
+							  }
+							  appearance USE MAIN_BODY_APPEARANCE
+							}
+					    ]				          
+				      }			
+
+				      Transform {
+				        translation -0.01 -0.015 0
+						rotation 1 0 0 1.5708				        
+				        children [
+				          USE HEAD_CAPSULE_HEIGHT_REAR
+				        ]
+				      }
+				      
+				      # Length-wise capsules
+				      Transform {
+						translation 0.003 0.015 0.0095
+						rotation -0.0944316 -0.0944316 0.991043 1.57979
+						children [
+							DEF HEAD_CAPSULE_LENGTH Shape {
+							  geometry Capsule {
+							    height 0.02648
+							    radius 0.005
+							  }
+							  appearance USE MAIN_BODY_APPEARANCE 
+							}
+					    ]				          
+				      }
+				      
+				      Transform {
+						translation 0.003 0.015 -0.0095
+						rotation 0.0944316 0.0944316 0.991043 1.57979
+				        children [
+				          USE HEAD_CAPSULE_LENGTH
+				        ]
+				      }
+
+				      Transform {
+						translation 0.003 -0.015 0.0095
+						rotation -0.0944316 -0.0944316 0.991043 1.57979
+				        children [
+				          USE HEAD_CAPSULE_LENGTH
+				        ]
+				      }
+
+				      Transform {
+						translation 0.003 -0.015 -0.0095
+						rotation 0.0944316 0.0944316 0.991043 1.57979
+				        children [
+				          USE HEAD_CAPSULE_LENGTH
+				        ]
+				      }
+
+					  # Head cap (top)
+					  Transform {
+					    translation 0.003 0 0.014
+						rotation 0 -1 0 0.189997				    
+					    children [
+					      Shape {
+					        geometry Box {
+					          size 0.027 0.03 0.001
+					        }
+ 							appearance USE MAIN_BODY_APPEARANCE 
+					      }
+					    ]
+					  }
+					  
+					  # Head cap (back)
+					  Transform {
+					    translation -0.0145 0 0
+					    children [
+					      Shape {
+					        geometry Box {
+					          size 0.001 0.03 0.014
+					        }
+ 							appearance USE MAIN_BODY_APPEARANCE 
+					      }
+					    ]
+					  }
+				      
+				      
+				    ]
+				  } # End of HEAD_SHAPE
+				  
 				]
 				name "head"
 
 				%{ if not fields.vizMode.value then }%
-				boundingObject USE HEAD_SPHERE
+				boundingObject USE HEAD_SHAPE
 				physics Physics {
 					density 100
 				}
@@ -532,11 +520,7 @@ Supervisor {
 						Transform {
 							children [
 							Shape {
-								appearance Appearance {
-								material Material {
-									diffuseColor IS bodyColor
-								}
-								}  
+								appearance USE MAIN_BODY_APPEARANCE 
 								geometry Box {
 								size 0.03 0.03905 0.0206
 								}
@@ -547,11 +531,7 @@ Supervisor {
 							translation 0 0 0.0113
 							children [
 							Shape {
-								appearance Appearance {
-								material Material {
-									diffuseColor IS bodyColor
-								}
-								}  
+								appearance USE MAIN_BODY_APPEARANCE 
 								geometry Cylinder {
 								height 0.039
 								radius 0.015
@@ -564,11 +544,7 @@ Supervisor {
 							translation 0 0 -0.0113
 							children [
 								Shape {
-									appearance Appearance {
-										material Material {
-											diffuseColor IS bodyColor
-										}
-									}  
+									appearance USE MAIN_BODY_APPEARANCE
 									geometry Cylinder {
 										height 0.039
 										radius 0.015
@@ -581,107 +557,71 @@ Supervisor {
 		    }     
 		    
 
-#			#Backpack lights (directional)
-#			Transform {
-#				translation -0.009 0 0.025
-#				children [
-#					%{
-#					  for i=0,2 do
-#					    led_name = string.format("ledHealth%d", i)
-#					    xpos = (i)*0.006
-#					}%
-#					LED {
-#					  name "%{=led_name}%"
-#					  children [
-#						DEF BACKPACK_HEALTH_LED_SHAPE Group {
-#						  children [
-#							Shape {
-#							  appearance Appearance {
-#								material Material {
-#                 diffuseColor 0.3 0.3 0.3
-#								}
-#							  }
-#							  geometry Box {
-#								size 0.005 0.005 0.005
-#							  }
-#							}
-#						  ]
-#						}
-#					  ]
-#					  translation %{=xpos}% 0 0
-#					  color []
-#					  gradual TRUE
-#					}
-#					%{ end }%   # End light for loop
-#					%{
-#					  for i=0,1 do
-#					    if (i == 0) then
-#					      led_name = "ledDirLeft"
-#					      ypos = 0.006
-#					    else 
-#					      led_name = "ledDirRight"
-#					      ypos = -0.006
-#					    end
-#					}%
-#					LED {
-#					  name "%{=led_name}%"
-#					  children [
-#						DEF BACKPACK_DIR_LED_SHAPE Group {
-#						  children [
-#							Shape {
-#							  appearance Appearance {
-#								material Material {
-#                 diffuseColor 0.3 0.3 0.3
-#								}
-#							  }
-#							  geometry Box {
-#								size 0.003 0.005 0.005
-#							  }
-#							}
-#						  ]
-#						}
-#					  ]
-#					  translation 0.003 %{=ypos}% 0
-#					  color []
-#					  gradual TRUE
-#					}
-#					%{ end }%							
-#				]
-#			} # Backpack lights
-
-
-			#Backpack lights (horizontal strip)
+			#Backpack lights (directional)
 			Transform {
-				translation -0.009 0.012 0.025
+				translation -0.009 0 0.025
 				children [
 					%{
-					  for i=0,3 do
-					    led_name = string.format("backpackLED%d", i)
-					    ypos = -(i)*0.008
+					  for i=0,2 do
+					    led_name = string.format("ledHealth%d", i)
+					    xpos = (i)*0.006
 					}%
 					LED {
 					  name "%{=led_name}%"
 					  children [
-              DEF BACKPACK_HEALTH_LED_SHAPE Group {
-                children [
-                  Shape {
-                    appearance Appearance {
-                      material Material {
-                       diffuseColor 0.3 0.3 0.3
-                      }
-                    }
-                    geometry Box {
-                      size 0.005 0.007 0.005
-                    }
-                  }
-                ]
-              }
+						DEF BACKPACK_HEALTH_LED_SHAPE Group {
+						  children [
+							Shape {
+							  appearance Appearance {
+								material Material {
+                 				diffuseColor 0.3 0.3 0.3
+								}
+							  }
+							  geometry Box {
+								size 0.005 0.005 0.005
+							  }
+							}
+						  ]
+						}
 					  ]
-					  translation 0 %{=ypos}% 0
+					  translation %{=xpos}% 0 0
 					  color []
 					  gradual TRUE
 					}
 					%{ end }%   # End light for loop
+					%{
+					  for i=0,1 do
+					    if (i == 0) then
+					      led_name = "ledDirLeft"
+					      ypos = 0.006
+					    else 
+					      led_name = "ledDirRight"
+					      ypos = -0.006
+					    end
+					}%
+					LED {
+					  name "%{=led_name}%"
+					  children [
+						DEF BACKPACK_DIR_LED_SHAPE Group {
+						  children [
+							Shape {
+							  appearance Appearance {
+								material Material {
+                 				diffuseColor 0.3 0.3 0.3
+								}
+							  }
+							  geometry Box {
+								size 0.003 0.005 0.005
+							  }
+							}
+						  ]
+						}
+					  ]
+					  translation 0.003 %{=ypos}% 0
+					  color []
+					  gradual TRUE
+					}
+					%{ end }%							
 				]
 			} # Backpack lights
 		                     
@@ -1079,11 +1019,7 @@ Supervisor {
 					radius 0.0035
 					subdivision 10
 					}
-					appearance Appearance {
-					  material Material { 
-					    diffuseColor IS bodyColor
-					  }
-					}
+					appearance USE MAIN_BODY_APPEARANCE
 				}
 			
 				DEF SHOULDER HingeJoint {
@@ -1126,11 +1062,7 @@ Supervisor {
 										DEF GRIPPER_FINGER Group {
 											children [
 												Shape {
-													appearance Appearance {
-														material Material { 
-															diffuseColor IS bodyColor
-														}
-													}
+													appearance USE MAIN_BODY_APPEARANCE
 													geometry IndexedFaceSet {
 														coord Coordinate {
 															point [
@@ -1183,11 +1115,7 @@ Supervisor {
 											geometry Box {
 											size 0.007 0.004 0.0289
 											}
-											appearance Appearance {
-												material Material {
-													diffuseColor IS bodyColor
-												}
-											}
+											appearance USE MAIN_BODY_APPEARANCE
 										}
 										]
 									}
@@ -1204,11 +1132,7 @@ Supervisor {
 											geometry Box {
 											size 0.005 0.029 0.005
 											}
-											appearance Appearance {
-												material Material {
-													diffuseColor IS bodyColor
-												}
-											}
+											appearance USE MAIN_BODY_APPEARANCE
 										}
 										]
 									}
@@ -1400,11 +1324,7 @@ Supervisor {
 								]
 								creaseAngle 12
 							}
-							appearance Appearance {
-								material Material {
-									diffuseColor IS bodyColor
-									}
-								}
+							appearance USE MAIN_BODY_APPEARANCE
 							} # DEF LIFT_ARM_SHIFT
 						
 							Transform {
@@ -1415,11 +1335,7 @@ Supervisor {
 										height 0.006
 										radius 0.0025
 									}
-									appearance Appearance {
-										material Material {
-											diffuseColor IS bodyColor
-										}
-										}
+									appearance USE MAIN_BODY_APPEARANCE
 									}
 								]
 							}
@@ -1438,11 +1354,7 @@ Supervisor {
 											height 0.006
 											radius 0.0025
 										}
-										appearance Appearance {
-											material Material {
-												diffuseColor IS bodyColor
-											}
-											}
+										appearance USE MAIN_BODY_APPEARANCE
 										}
 									]
 								}
@@ -1490,11 +1402,7 @@ Supervisor {
 							radius 0.0045
 							 subdivision 10
 							}
-							appearance Appearance {
-							  material Material { 
-							    diffuseColor IS bodyColor
-							  }
-							}
+							appearance USE MAIN_BODY_APPEARANCE
 						}
 					
 						# Lower set of arms
@@ -1536,11 +1444,7 @@ Supervisor {
 															height 0.006
 															radius 0.0025
 														}
-														appearance Appearance {
-															material Material {
-																diffuseColor IS bodyColor
-															}
-														}
+														appearance USE MAIN_BODY_APPEARANCE
 													}
 												]
 											}
@@ -1559,11 +1463,7 @@ Supervisor {
 															height 0.006
 															radius 0.0025
 														}
-														appearance Appearance {
-															material Material {
-															diffuseColor IS bodyColor
-															}
-														}
+														appearance USE MAIN_BODY_APPEARANCE
 													}
 												]
 											}
