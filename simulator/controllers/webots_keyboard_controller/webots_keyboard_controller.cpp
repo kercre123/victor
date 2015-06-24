@@ -1012,15 +1012,9 @@ namespace Anki {
                 if(!backpackLightsOn) {
                   msg.onColor[LED_BACKPACK_RIGHT]  = NamedColors::GREEN;
                   msg.onColor[LED_BACKPACK_LEFT]   = NamedColors::RED;
-                  
-                  //msg.onColor[LED_BACKPACK_BACK]   = NamedColors::BLUE;
-                  //msg.onColor[LED_BACKPACK_MIDDLE] = NamedColors::CYAN;
-                  //msg.onColor[LED_BACKPACK_FRONT]  = NamedColors::YELLOW;
-                  msg.onColor[LED_BACKPACK_INNER_LEFT]   = NamedColors::BLUE;
-                  msg.onColor[LED_BACKPACK_INNER_RIGHT]   = NamedColors::YELLOW;
-                  
-                  msg.offColor[LED_BACKPACK_LEFT]  = NamedColors::GREEN;
-                  msg.offColor[LED_BACKPACK_RIGHT] = NamedColors::RED;
+                  msg.onColor[LED_BACKPACK_BACK]   = NamedColors::BLUE;
+                  msg.onColor[LED_BACKPACK_MIDDLE] = NamedColors::CYAN;
+                  msg.onColor[LED_BACKPACK_FRONT]  = NamedColors::YELLOW;
                 }
                 
                 U2G::Message msgWrapper;
