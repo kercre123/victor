@@ -67,6 +67,7 @@ ADD_MESSAGE_MEMBER(u8, proxRight)
 ADD_MESSAGE_MEMBER(s8, currPathSegment) // -1 if not traversing a path
 ADD_MESSAGE_MEMBER(u8, numFreeSegmentSlots)
 ADD_MESSAGE_MEMBER(u8, battVolt10x)
+ADD_MESSAGE_MEMBER(u8, numFreeAnimationFrames)
 END_MESSAGE_DEFINITION(RobotState)
 
 
