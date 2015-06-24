@@ -781,7 +781,7 @@ namespace Anki {
                                                        left_x, bottom_y);
           }
           
-          _msgHandler->SendMessage(_ID, faceDetection);
+          SendMessage(faceDetection);
           
           // Signal the detection of a face
           CozmoEngineSignals::RobotObservedFaceSignal().emit(GetID(),
@@ -814,14 +814,14 @@ namespace Anki {
                                                      dockingErrorSignal.angleErr);
           
           // Try to use this for closed-loop control by sending it on to the robot
-          _msgHandler->SendMessage(_ID, dockingErrorSignal);
+          SendMessage(dockingErrorSignal);
           
         }
         
         MessagePanAndTiltHead panTiltHead;
         if(true == _visionProcessor.CheckMailbox(panTiltHead)) {
           
-          _msgHandler->SendMessage(_ID, panTiltHead);
+          SendMessage(panTiltHead);
           
         }
         
@@ -1727,7 +1727,7 @@ namespace Anki {
       msg.dockAction     = dockAction;
       
       
-      return _msgHandler->SendMessage(_ID, msg);
+      return SendMessage(msg);
     }
     
     void Robot::SetCarryingObject(ObjectID carryObjectID)
@@ -1965,6 +1965,11 @@ namespace Anki {
     
     // ============ Messaging ================
     
+    Result Robot::SendMessage(const RobotMessage& msg) const
+    {
+      return _msgHandler->SendMessage(_ID, msg);
+    }
+      
     // Sync time with physical robot and trigger it robot to send back camera calibration
     Result Robot::SendSyncTime() const
     {
@@ -1972,7 +1977,7 @@ namespace Anki {
       m.robotID  = _ID;
       m.syncTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
       
-      Result result = _msgHandler->SendMessage(_ID, m);
+      Result result = SendMessage(m);
       
       if(result == RESULT_OK) {
         // For specifying resolution for basestation vision:
@@ -1980,7 +1985,7 @@ namespace Anki {
         MessageImageRequest m;
         m.imageSendMode = ISM_STREAM;
         m.resolution    = Vision::CAMERA_RES_CVGA;
-        result = _msgHandler->SendMessage(_ID, m);
+        result = SendMessage(m);
         
         // Reset pose on connect
         PRINT_NAMED_INFO("Robot.SendSyncTime", "Setting pose to (0,0,0)");
@@ -1999,7 +2004,7 @@ namespace Anki {
       MessageClearPath m;
       m.pathID = 0;
       
-      return _msgHandler->SendMessage(_ID, m);
+      return SendMessage(m);
     }
     
     // Removes the specified number of segments from the front and back of the path
@@ -2009,7 +2014,7 @@ namespace Anki {
       m.numPopFrontSegments = numPopFrontSegments;
       m.numPopBackSegments = numPopBackSegments;
 
-      return _msgHandler->SendMessage(_ID, m);
+      return SendMessage(m);
     }
     
     // Sends a path to the robot to be immediately executed
@@ -2020,7 +2025,8 @@ namespace Anki {
       m.pathID = _lastSentPathID;
       m.useManualSpeed = useManualSpeed;
       PRINT_NAMED_INFO("Robot::SendExecutePath", "sending start execution message (pathID = %d, manualSpeed == %d)\n", _lastSentPathID, useManualSpeed);
-      return _msgHandler->SendMessage(_ID, m);
+      
+      return SendMessage(m);
     }
     
     Result Robot::SendPlaceObjectOnGround(const f32 rel_x, const f32 rel_y, const f32 rel_angle, const bool useManualSpeed)
@@ -2032,7 +2038,7 @@ namespace Anki {
       m.rel_y_mm  = rel_y;
       m.useManualSpeed = useManualSpeed;
       
-      return _msgHandler->SendMessage(_ID, m);
+      return SendMessage(m);
     } // SendPlaceBlockOnGround()
     
     Result Robot::SendMoveLift(const f32 speed_rad_per_sec) const
@@ -2106,7 +2112,7 @@ namespace Anki {
       
       m.headingAngle = pose.GetRotation().GetAngleAroundZaxis().ToFloat();
       
-      return _msgHandler->SendMessage(_ID, m);
+      return SendMessage(m);
     }
     
     Result Robot::SendAbsLocalizationUpdate() const
@@ -2128,7 +2134,7 @@ namespace Anki {
       
       m.newAngle = _currentHeadAngle;
       
-      return _msgHandler->SendMessage(_ID, m);
+      return SendMessage(m);
     }
 
     Result Robot::SendImageRequest(const ImageSendMode_t mode, const Vision::CameraResolution resolution) const
@@ -2138,7 +2144,7 @@ namespace Anki {
       m.imageSendMode = mode;
       m.resolution    = resolution;
       
-      return _msgHandler->SendMessage(_ID, m);
+      return SendMessage(m);
     }
 
     Result Robot::SendIMURequest(const u32 length_ms) const
@@ -2146,7 +2152,7 @@ namespace Anki {
       MessageIMURequest m;
       m.length_ms = length_ms;
       
-      return _msgHandler->SendMessage(_ID, m);
+      return SendMessage(m);
     }
     
     Result Robot::SendStartTestMode(const TestMode mode, s32 p1, s32 p2, s32 p3) const
@@ -2158,14 +2164,14 @@ namespace Anki {
       m.p2 = p2;
       m.p3 = p3;
       
-      return _msgHandler->SendMessage(_ID, m);
+      return SendMessage(m);
     }
     
     Result Robot::SendHeadlight(u8 intensity)
     {
       MessageSetHeadlight m;
       m.intensity = intensity;
-      return _msgHandler->SendMessage(_ID, m);
+      return SendMessage(m);
     }
 
     void Robot::SetSaveStateMode(const SaveMode_t mode)
@@ -2276,14 +2282,14 @@ namespace Anki {
       MessageFaceTracking m;
       m.enabled = static_cast<u8>(true);
       m.timeout_sec = timeout_sec;
-      return _msgHandler->SendMessage(_ID, m);
+      return SendMessage(m);
     }
     
     Result Robot::SendStopFaceTracking()
     {
       MessageFaceTracking m;
       m.enabled = static_cast<u8>(false);
-      return _msgHandler->SendMessage(_ID, m);
+      return SendMessage(m);
     }
 
     Result Robot::StartLookingForMarkers()
@@ -2361,7 +2367,7 @@ namespace Anki {
       m.kiRight = kiRight;
       m.maxIntegralErrorRight = maxIntegralErrorRight;
       
-      return _msgHandler->SendMessage(_ID, m);
+      return SendMessage(m);
     }
       
     Result Robot::SetHeadControllerGains(const f32 kp, const f32 ki, const f32 kd, const f32 maxIntegralError)
@@ -2371,7 +2377,7 @@ namespace Anki {
       m.ki = ki;
       m.kd = kd;
       m.maxIntegralError = maxIntegralError;
-      return _msgHandler->SendMessage(_ID, m);
+      return SendMessage(m);
     }
     
     Result Robot::SetLiftControllerGains(const f32 kp, const f32 ki, const f32 kd, const f32 maxIntegralError)
@@ -2381,7 +2387,7 @@ namespace Anki {
       m.ki = ki;
       m.kd = kd;      
       m.maxIntegralError = maxIntegralError;
-      return _msgHandler->SendMessage(_ID, m);
+      return SendMessage(m);
     }
     
     Result Robot::SetSteeringControllerGains(const f32 k1, const f32 k2)
@@ -2389,7 +2395,7 @@ namespace Anki {
       MessageSetSteeringControllerGains m;
       m.k1 = k1;
       m.k2 = k2;
-      return _msgHandler->SendMessage(_ID, m);
+      return SendMessage(m);
     }
       
     Result Robot::SendVisionSystemParams(VisionSystemParams_t p)
@@ -2415,7 +2421,7 @@ namespace Anki {
       m.minObjectWidth = p.minObjectWidth;
       m.maxObjectHeight = p.maxObjectHeight;
       m.maxObjectWidth = p.maxObjectWidth;
-      return _msgHandler->SendMessage(_ID, m);
+      return SendMessage(m);
     }
 
     Result Robot::SendPlayAnimation(const char *name, const u32 numLoops)
@@ -2424,7 +2430,7 @@ namespace Anki {
       m.animationID = _cannedAnimations.GetID(name);
       if(m.animationID >= 0) {
         m.numLoops = numLoops;
-        return _msgHandler->SendMessage(_ID, m);
+        return SendMessage(m);
       }
       return RESULT_FAIL;
     }
@@ -2436,7 +2442,7 @@ namespace Anki {
       m.transitionAnimID = _cannedAnimations.GetID(transitionAnimName);
       m.stateAnimID      = _cannedAnimations.GetID(stateAnimName);
       if(m.transitionAnimID >= 0 && m.stateAnimID >= 0) {
-        return _msgHandler->SendMessage(_ID, m);
+        return SendMessage(m);
       }
       return RESULT_FAIL;
     }

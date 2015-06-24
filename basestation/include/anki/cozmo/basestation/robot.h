@@ -507,6 +507,9 @@ namespace Anki {
       Result AbortAnimation();
       Result AbortDocking(); // a.k.a. PickAndPlace
       
+      // Send a message to the physical robot
+      Result SendMessage(const RobotMessage& message) const;
+      
     protected:
       
       // The robot's identifier
