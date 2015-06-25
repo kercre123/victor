@@ -1170,12 +1170,6 @@ namespace Anki {
     } // StopSound()
       
       
-//    Result Robot::TransitionToStateAnimation(const char *transitionAnimName,
-//                                             const char *stateAnimName)
-//    {
-//      return SendTransitionToStateAnimation(transitionAnimName, stateAnimName);
-//    }
-    
     Result Robot::StopAnimation()
     {
       return SendAbortAnimation();
@@ -2427,29 +2421,6 @@ namespace Anki {
       m.maxObjectWidth = p.maxObjectWidth;
       return SendMessage(m);
     }
-
-//    Result Robot::SendPlayAnimation(const char *name, const u32 numLoops)
-//    {
-//      MessagePlayAnimation m;
-//      m.animationID = _cannedAnimations.GetID(name);
-//      if(m.animationID >= 0) {
-//        m.numLoops = numLoops;
-//        return SendMessage(m);
-//      }
-//      return RESULT_FAIL;
-//    }
-//    
-//    Result Robot::SendTransitionToStateAnimation(const char *transitionAnimName,
-//                                                 const char *stateAnimName)
-//    {
-//      MessageTransitionToStateAnimation m;
-//      m.transitionAnimID = _cannedAnimations.GetID(transitionAnimName);
-//      m.stateAnimID      = _cannedAnimations.GetID(stateAnimName);
-//      if(m.transitionAnimID >= 0 && m.stateAnimID >= 0) {
-//        return SendMessage(m);
-//      }
-//      return RESULT_FAIL;
-//    }
     
     Result Robot::StartTestMode(const TestMode mode, s32 p1, s32 p2, s32 p3) const
     {

@@ -382,10 +382,6 @@ namespace Anki {
       // to most recent state message.
       bool IsAnimating() const;
 
-      //      // Plays transition animation once, then plays state animatin in a loop
-      //      Result TransitionToStateAnimation(const char *transitionAnimName,
-      //                                        const char *stateAnimName);
-
       
       // Ask the UI to play a sound for us
       Result PlaySound(SoundID_t soundID, u8 numLoops, u8 volume);
@@ -755,14 +751,7 @@ namespace Anki {
       Result SendStartTestMode(const TestMode mode, s32 p1, s32 p2, s32 p3) const;
       
       Result SendPlaceObjectOnGround(const f32 rel_x, const f32 rel_y, const f32 rel_angle, const bool useManualSpeed);
-      
-//      // Play animation
-//      // If numLoops == 0, animation repeats forever.
-//      Result SendPlayAnimation(const char* animName, const u32 numLoops = 0);
-//      
-//      Result SendTransitionToStateAnimation(const char *transitionAnimName,
-//                                            const char *stateAnimName);
-      
+            
       Result SendDockWithObject(const DockAction_t dockAction,
                                 const bool useManualSpeed);
       
