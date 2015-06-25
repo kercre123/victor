@@ -1097,6 +1097,11 @@ namespace Anki {
       return SendSetHeadAngle(angle_rad, max_speed_rad_per_sec, accel_rad_per_sec2);
     }
       
+    Result Robot::TapBlockOnGround(const u8 numTaps)
+    {
+      return SendTapBlockOnGround(numTaps);
+    }
+      
     Result Robot::EnableTrackHeadToObject(const u32 objectID)
     {
       _trackHeadToObjectID = objectID;
@@ -2071,6 +2076,14 @@ namespace Anki {
       m.angle_rad = angle_rad;
       m.max_speed_rad_per_sec = max_speed_rad_per_sec;
       m.accel_rad_per_sec2 = accel_rad_per_sec2;
+      
+      return _msgHandler->SendMessage(_ID,m);
+    }
+      
+    Result Robot::SendTapBlockOnGround(const u8 numTaps) const
+    {
+      MessageTapBlockOnGround m;
+      m.numTaps = numTaps;
       
       return _msgHandler->SendMessage(_ID,m);
     }

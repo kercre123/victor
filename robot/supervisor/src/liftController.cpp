@@ -625,6 +625,11 @@ namespace Anki {
         return isNodding_;
       }
       
+      void TapBlockOnGround(u8 numTaps)
+      {
+        PRINT("RECVD TapBlockOnGround %d\n", numTaps);
+      }
+      
     } // namespace LiftController
   } // namespace Cozmo
 } // namespace Anki

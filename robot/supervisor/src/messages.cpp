@@ -853,6 +853,12 @@ namespace Anki {
         }
       }
 
+      void ProcessTapBlockOnGroundMessage(const TapBlockOnGround& msg)
+      {
+        LiftController::TapBlockOnGround(msg.numTaps);
+      }
+      
+      
       // --------- Block control messages ----------
 
       void ProcessFlashBlockIDsMessage(const FlashBlockIDs& msg)

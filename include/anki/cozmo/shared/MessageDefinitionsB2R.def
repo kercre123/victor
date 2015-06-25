@@ -564,6 +564,11 @@ ADD_MESSAGE_MEMBER_ARRAY(u32, transitionOnPeriod_ms, 5)
 ADD_MESSAGE_MEMBER_ARRAY(u32, transitionOffPeriod_ms, 5)
 END_MESSAGE_DEFINITION(SetBackpackLights)
 
+START_MESSAGE_DEFINITION(TapBlockOnGround, 1)
+ADD_MESSAGE_MEMBER(u8, numTaps)  // 0 taps means stop tapping
+END_MESSAGE_DEFINITION(TapBlockOnGround)
+
+
 
 ///////// Block messages ////////
 
