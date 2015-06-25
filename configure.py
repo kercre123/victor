@@ -346,7 +346,10 @@ def generate_anki_util_cmake(options):
     cwd = ankibuild.util.File.pwd()
     ankibuild.util.File.cd(gyp_path)
     # HACK: Noisy; use evaluate instead of execute to suppress output.
-    ankibuild.util.File.evaluate(['./configure.py', '--platform', 'cmake'])
+    ankibuild_args = ['./configure.py', '--platform', 'cmake']
+    if options.verbose:
+        ankibuild_args += ['-v']
+    ankibuild.util.File.evaluate(ankibuild_args)
     ankibuild.util.File.cd(cwd)
     
     new_contents = ankibuild.util.File.read(output_path)
