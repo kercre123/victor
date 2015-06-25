@@ -1146,7 +1146,10 @@ namespace Anki {
     
     Result Robot::PlayAnimation(const char* animName, const u32 numLoops)
     {
-      return SendPlayAnimation(animName, numLoops);
+      Result lastResult = _cannedAnimations.SetStreamingAnimation(animName, numLoops);
+      
+      return lastResult;
+      //return SendPlayAnimation(animName, numLoops);
     }
     
     s32 Robot::GetAnimationID(const std::string& animationName) const

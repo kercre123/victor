@@ -876,13 +876,28 @@ return RESULT_FAIL; \
     
     if(_streamingAnimation != nullptr) {
       if(_streamingAnimation->IsFinished()) {
-#       if DEBUG_ANIMATION_STREAMING
-        PRINT_NAMED_INFO("CannedAnimationContainer.Update.FinishedStreaming",
+        
+        ++_loopCtr;
+        
+        if(_numLoops == 0 || _loopCtr < _numLoops) {
+#         if DEBUG_ANIMATION_STREAMING
+          PRINT_NAMED_INFO("CannedAnimationContainer.Update.Looping",
+                           "Finished loop %d of %d of '%s' animation. Restarting.\n",
+                           _loopCtr, _numLoops,
+                           _streamingAnimation->GetName().c_str());
+#         endif
+          
+          _streamingAnimation->Init(robot);
+          
+        } else {
+#         if DEBUG_ANIMATION_STREAMING
+          PRINT_NAMED_INFO("CannedAnimationContainer.Update.FinishedStreaming",
                          "Finished streaming '%s' animation.\n",
                          _streamingAnimation->GetName().c_str());
-#       endif
+#         endif
         
-        _streamingAnimation = nullptr;
+          _streamingAnimation = nullptr;
+        }
         
       } else {
         lastResult = _streamingAnimation->Update(robot);
