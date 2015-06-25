@@ -5,13 +5,12 @@
 #include "anki/common/shared/radians.h"
 #include "anki/common/shared/velocityProfileGenerator.h"
 
-#include "animation.h"
-#include "keyFrame.h"
 #include "localization.h"
 #include "headController.h"
 #include "liftController.h"
 #include "wheelController.h"
 #include "steeringController.h"
+#include "streamedKeyFrame.h"
 #include "speedController.h"
 
 

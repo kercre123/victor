@@ -23,8 +23,6 @@
 #include "anki/common/types.h"
 #include "anki/cozmo/shared/cozmoTypes.h"
 
-#include "keyFrame.h"
-#include "animation.h"
 
 namespace Anki {
   namespace Cozmo {
