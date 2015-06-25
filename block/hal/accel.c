@@ -82,7 +82,9 @@
 #define RANGE_4G            0x05
 #define RANGE_8G            0x08
 #define RANGE_16G           0x0B
+#define BW_62_5             0x0B
 #define BW_250              0x0D
+
 
 #define ACC_INT_OPEN_DRAIN  0x0F  // Active high, open drain
 
@@ -183,8 +185,13 @@ static void VerifyAck(ack)
 {
   if (ack == I2C_NACK)
   {
-    LightOn(0); // ERROR (RED)
-    while(1);
+    while(1)
+    {
+      LightOn(0); // ERROR (RED)
+      delay_ms(100);
+      LightsOff();
+      delay_ms(100);
+    }
   }
   return;
 }
@@ -265,8 +272,13 @@ static void WriteVerify(u8 ctrlByte, u8 dataByte)
   DataWrite(ctrlByte, dataByte);
   if(DataRead(ctrlByte) != dataByte)
   {
-    LightOn(0); // ERROR (RED)
-    while(1);
+    while(1)
+    {
+      LightOn(0); // ERROR (RED)
+      delay_ms(250);
+      LightsOff();
+      delay_ms(250);
+    }
   }
   return;
 }
@@ -284,11 +296,28 @@ void InitAcc()
   }
   delay_ms(1);
 
-  WriteVerify(PMU_RANGE, RANGE_2G);
+  // 2G range
+  WriteVerify(PMU_RANGE, RANGE_4G);
   delay_ms(1);
   
-  WriteVerify(PMU_BW, BW_250);
+  // 62.5 Hz bandwidth
+  WriteVerify(PMU_BW, BW_62_5);
   delay_ms(1);
+  /*
+  // Enable tap detection
+  // status in 0x09 s_tap_int
+  // enabled s_tap_en
+  WriteVerify(INT_EN_0, 1<<5); // Single tap enable XXX: make define
+  //WriteVerify(INT_SRC, 1<<4); // unfiltered data for single tap
+  //WriteVerify(INT_8, 1<<7 | 4); // 20ms quiet, 50 ms shock
+  WriteVerify(INT_9, 0x01); // low tap threshold
+  WriteVerify(INT_RST_LATCH, 0x0F); // latched //25 ms latch
+  */
+  WriteVerify(INT_EN_1, 1<<2 | 1<<1 | 1<<0); //high-g interrupt enable all axes
+  //WriteVerify(INT_SRC, 1<<1); // unfiltered data for high interrupt
+  WriteVerify(INT_3, 0x01); // 2ms duration
+  WriteVerify(INT_4, 112); // lower threshold 1.75g
+  WriteVerify(INT_RST_LATCH, 0x0F); // latched 
 }
 
 void ReadAcc(s8 *accData)
@@ -298,4 +327,12 @@ void ReadAcc(s8 *accData)
   accData[0] = (s8)buffer[1];
   accData[1] = (s8)buffer[3];
   accData[2] = (s8)buffer[5];
+}
+
+u8 GetTaps()
+{
+  //u8 taps = !!(DataRead(INT_STATUS_0) & (1 << 5));
+  u8 taps = !!(DataRead(INT_STATUS_0) & (1 << 1)); // high int
+  DataWrite(INT_RST_LATCH, 1<<7 | 0x0F);// clear intterupt
+  return taps;
 }
