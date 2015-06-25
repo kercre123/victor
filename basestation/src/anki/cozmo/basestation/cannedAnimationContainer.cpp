@@ -233,6 +233,12 @@ return RESULT_FAIL; \
     return nullptr;
   }
   
+  void DeviceAudioKeyFrame::PlayOnDevice()
+  {
+    // TODO: Replace with real call to wwise or something
+    SoundManager::getInstance()->Play(static_cast<SoundID_t>(_audioID));
+  }
+  
   //
   // FacePositionKeyFrame
   //
