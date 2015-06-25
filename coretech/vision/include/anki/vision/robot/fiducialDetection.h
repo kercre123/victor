@@ -135,6 +135,9 @@ namespace Anki
     // Requires ??? bytes of scratch
     Result ExtractLaplacianPeaks(const FixedLengthList<Point<s16> > &boundary, const s32 minPeakRatio, FixedLengthList<Point<s16> > &peaks, MemoryStack scratch);
 
+    // Extract the best peaks, using the line fits method. Works with curved corner fiducials
+    Result ExtractLineFitsPeaks(const FixedLengthList<Point<s16> > &boundary, FixedLengthList<Point<s16> > &peaks, const s32 imageHeight, const s32 imageWidth, MemoryStack scratch);
+
     // Used by DetectFiducialMarkers
     //
     // Uses projective Lucas-Kanade to refine an initial on-pixel quadrilateral

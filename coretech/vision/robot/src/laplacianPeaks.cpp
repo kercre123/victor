@@ -14,10 +14,290 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 //using namespace std;
 
+typedef struct
+{
+  f32 slope;
+  f32 intercept;
+  bool switched;
+} LineFits;
+
 namespace Anki
 {
   namespace Embedded
   {
+    Result ExtractLineFitsPeaks(const FixedLengthList<Point<s16> > &boundary, FixedLengthList<Point<s16> > &peaks, const s32 imageHeight, const s32 imageWidth, MemoryStack scratch)
+    {
+      AnkiConditionalErrorAndReturnValue(boundary.IsValid(),
+        RESULT_FAIL_INVALID_OBJECT, "ComputeQuadrilateralsFromConnectedComponents", "boundary is not valid");
+
+      AnkiConditionalErrorAndReturnValue(peaks.IsValid(),
+        RESULT_FAIL_INVALID_OBJECT, "ComputeQuadrilateralsFromConnectedComponents", "peaks is not valid");
+
+      AnkiConditionalErrorAndReturnValue(scratch.IsValid(),
+        RESULT_FAIL_INVALID_OBJECT, "ComputeQuadrilateralsFromConnectedComponents", "scratch is not valid");
+
+      AnkiConditionalErrorAndReturnValue(peaks.get_maximumSize() == 4,
+          RESULT_FAIL_INVALID_PARAMETER, "ComputeQuadrilateralsFromConnectedComponents", "Currently only four peaks supported");
+      
+      const s32 boundaryLength = boundary.get_size();
+        
+      const f32 sigma = static_cast<f32>(boundaryLength) / 64.0f;
+
+      // Copy the boundary to a f32 openCV array
+      cv::Mat_<f32> boundaryCv(2, boundaryLength);
+      const Point<s16> * restrict pBoundary = boundary.Pointer(0);
+      f32 * restrict pBoundaryCv0 = boundaryCv.ptr<f32>(0,0);
+      f32 * restrict pBoundaryCv1 = boundaryCv.ptr<f32>(1,0);
+      for(s32 i=0; i<boundaryLength; i++) {
+        pBoundaryCv0[i] = pBoundary[i].x;
+        pBoundaryCv1[i] = pBoundary[i].y;
+      }
+      
+      const s32 ksize = static_cast<s32>(ceilf((((sigma - 0.8f)/0.3f) + 1.0f)*2.0f + 1.0f) );
+      cv::Mat gk = cv::getGaussianKernel(ksize, sigma, CV_32F).t();
+      
+      cv::Mat_<f32> dxKernel(1,3);
+      dxKernel.at<f32>(0,0) = -0.5f; dxKernel.at<f32>(0,1) = 0; dxKernel.at<f32>(0,2) = 0.5f;
+
+      cv::Mat_<f32> dg;
+      cv::Mat_<f32> dB;
+      
+      cv::filter2D(gk, dg, CV_32F, dxKernel, cv::Point(-1,-1), 0, cv::BORDER_DEFAULT);
+
+      /*printf("gk %d:\n", gk.cols);
+      for(s32 i=0; i<gk.cols; i++) {
+        printf("%0.3f ", gk.at<f32>(0,i));
+      }
+      printf("\n");
+      
+      printf("dB %d:\n", dB.cols);
+      for(s32 i=0; i<dB.cols; i++) {
+        printf("%0.3f ", dB.at<f32>(0,i));
+      }
+      printf("\n");*/
+      
+/*      printf("dg %d:\n", dg.cols);
+      for(s32 i=0; i<dg.cols; i++) {
+        printf("%0.3f ", dg.at<f32>(0,i));
+      }
+      printf("\n\n");*/
+      
+      // TODO: when cv::filter2D supports cv::BORDER_WRAP, this can be done faster
+      //cv::filter2D(boundaryCv, dB, CV_32F, dg, cv::Point(-1,-1), 0, cv::BORDER_WRAP);
+      
+/*      cv::Mat_<f32> boundaryLarge(2, boundaryLength + dg.cols + 2);
+      boundaryLarge.setTo(0);
+      boundaryCv.copyTo(boundaryLarge(cv::Rect(dg.cols/2+1, 0, boundaryLength, 2)));*/
+      cv::Mat_<f32> boundaryLarge(2, boundaryLength + 2*dg.cols + 2);
+      boundaryLarge.setTo(0);
+      boundaryCv(cv::Rect(boundaryLength-dg.cols, 0, dg.cols, 2)).copyTo(boundaryLarge(cv::Rect(0, 0, dg.cols, 2)));
+      boundaryCv(cv::Rect(0, 0, dg.cols, 2)).copyTo(boundaryLarge(cv::Rect(boundaryLarge.cols-dg.cols-2, 0, dg.cols, 2)));
+      boundaryCv.copyTo(boundaryLarge(cv::Rect(dg.cols, 0, boundaryLength, 2)));
+      
+      cv::filter2D(boundaryLarge, dB, CV_32F, dg, cv::Point(-1,-1), 0, cv::BORDER_DEFAULT);
+      
+      //dB = dB(cv::Range::all(), cv::Range(dg.cols, dg.cols+boundaryLength)).clone();
+      dB = dB(cv::Rect(dg.cols, 0, boundaryLength, 2)).clone();
+      
+      //boundaryLarge(cv::Range::all(), cv::Range(dg.cols/2+1, dg.cols/2+1+boundaryLength)) = 5;
+      
+      /*GaussianBlur(repeat(points, 3, 1), ret, cv::Size(0,0), sigma);
+int rows = points.rows;
+result = Mat(result, Range(rows, 2 * rows - 1), Range::all());*/
+      /*
+      printf("boundaryCv %d:\n", boundaryCv.cols);
+      for(s32 i=0; i<boundaryCv.cols; i++) {
+        printf("%0.3f ", boundaryCv.at<f32>(0,i));
+      }
+      printf("\n");
+      for(s32 i=0; i<boundaryCv.cols; i++) {
+        printf("%0.3f ", boundaryCv.at<f32>(1,i));
+      }
+      printf("\n\n");
+      
+      printf("boundaryLarge %d:\n", boundaryLarge.cols);
+      for(s32 i=0; i<boundaryLarge.cols; i++) {
+        printf("%0.3f ", boundaryLarge.at<f32>(0,i));
+      }
+      printf("\n");
+      for(s32 i=0; i<boundaryLarge.cols; i++) {
+        printf("%0.3f ", boundaryLarge.at<f32>(1,i));
+      }
+      printf("\n\n");
+      
+      
+      printf("dB %d:\n", dB.cols);
+      for(s32 i=0; i<dB.cols; i++) {
+        printf("%0.3f ", dB.at<f32>(0,i));
+      }
+      printf("\n\n");*/
+
+
+      cv::Mat_<f32> bin(1, boundaryLength);
+      
+      const f32 * restrict pDB0 = dB.ptr<f32>(0,0);
+      const f32 * restrict pDB1 = dB.ptr<f32>(1,0);
+      f32 * restrict pBin = bin.ptr<f32>(0,0);
+      for(s32 i=0; i<boundaryLength; i++) {
+        pBin[i] = atan2f(pDB1[i], pDB0[i]);
+      }
+      
+/*      printf("angles %d:\n", bin.cols);
+      for(s32 i=0; i<bin.cols; i++) {
+        printf("%0.3f ", bin.at<f32>(0,i));
+      }
+      printf("\n\n");*/
+
+      // NOTE: this histogram is a bit different than matlab's
+      s32 histSize = 16;
+      f32 range[] = {-PI_F, PI_F};
+      const f32 *ranges[] = { range };
+
+      cv::Mat hist;
+      cv::calcHist(&bin, 1, 0, cv::Mat(), hist, 1, &histSize, ranges, true, false);
+
+/*      printf("hist %d:\n", hist.rows);
+      for(s32 i=0; i<hist.rows; i++) {
+        printf("%0.3f ", hist.at<f32>(i,0));
+      }
+      printf("\n\n");*/
+
+      cv::Mat maxBins;
+      cv::sortIdx(hist, maxBins, CV_SORT_EVERY_COLUMN | CV_SORT_DESCENDING);
+      
+/*      printf("maxBins %d:\n", maxBins.rows);
+      for(s32 i=0; i<maxBins.rows; i++) {
+        printf("%d ", maxBins.at<s32>(i,0));
+      }
+      printf("\n\n");*/
+      
+      bool didFitFourLines = true;
+      
+      LineFits lineFits[4];
+      f32 p[4][2];
+      
+      for(s32 iBin=0; iBin<4; iBin++) {
+        // boundaryIndex = find(bin==maxBins(iBin));
+        std::vector<s32> boundaryIndex;
+        
+        // WARNING: May have some corner cases
+        const f32 minAngle = -PI_F + PI_F/16*2*  maxBins.at<s32>(iBin,0);
+        const f32 maxAngle = -PI_F + PI_F/16*2* (maxBins.at<s32>(iBin,0)+1);
+        
+        for(s32 i=0; i<boundaryLength; i++) {
+          if(pBin[i] >= minAngle && pBin[i] <= maxAngle) {
+            boundaryIndex.push_back(i);
+          }
+        }
+        
+        const s32 numSide = boundaryIndex.size();
+        
+        if(numSide > 1) {
+          // all(boundary(boundaryIndex,2)==boundary(boundaryIndex(1),2))
+          bool allAreTheFirst = true;
+          for(s32 i=0; i<numSide; i++) {
+            if(boundaryIndex[i] == boundaryIndex[0]) {
+              allAreTheFirst = false;
+              break;
+            }
+          }
+
+          if(allAreTheFirst) {
+            p[iBin][0] = 0;
+            p[iBin][1] = boundary.Pointer(boundaryIndex[0])->y;
+            lineFits[iBin].switched = true;
+          } else {
+            // A = [boundary(boundaryIndex,2) ones(numSide,1)];
+            // p{iBin} = A \ boundary(boundaryIndex,1);
+          
+            cv::Mat_<f32> A(boundaryIndex.size(),2);
+            cv::Mat_<f32> b(boundaryIndex.size(), 1);
+            cv::Mat_<f32> x(2, 1);
+
+            for(s32 i=0; i<boundaryIndex.size(); i++) {
+              A.at<f32>(i,0) = boundary.Pointer(boundaryIndex[i])->y;
+              A.at<f32>(i,1) = 1;
+              b.at<f32>(i,0) = boundary.Pointer(boundaryIndex[i])->x;
+            }
+            
+            // TODO: for speed, switch to QR with gram
+            cv::solve(A, b, x, cv::DECOMP_SVD);
+            
+            p[iBin][0] = x.at<f32>(0,0);
+            p[iBin][1] = x.at<f32>(1,0);
+            
+            lineFits[iBin].switched = false;
+          }
+          
+          lineFits[iBin].slope = p[iBin][0];
+          lineFits[iBin].intercept = p[iBin][1];
+        } else {
+          didFitFourLines = false;
+          break;
+        } // if(numSide > 1) ... else
+      } // for(s32 iBin=0; iBin<4; iBin++)
+      
+      std::vector<cv::Point_<f32> > corners;
+      
+      if(didFitFourLines) {
+        for(s32 iLine=0; iLine<4; iLine++) {
+          for(s32 jLine=iLine+1; jLine<4; jLine++) {
+            f32 xInt = 0;
+            f32 yInt = 0;
+            
+            if(lineFits[iLine].switched == lineFits[jLine].switched) {
+              xInt = (lineFits[jLine].intercept - lineFits[iLine].intercept) / (lineFits[iLine].slope - lineFits[jLine].slope);
+              yInt = lineFits[iLine].slope*xInt + lineFits[iLine].intercept;
+              
+              if(lineFits[iLine].switched == true) {
+                std::swap(xInt, yInt);
+              }
+            } else if(lineFits[iLine].switched == true && lineFits[jLine].switched == false) {
+              yInt = (lineFits[iLine].slope*lineFits[jLine].intercept + lineFits[iLine].intercept) / (1 - lineFits[iLine].slope*lineFits[jLine].slope);
+              xInt = lineFits[jLine].slope*yInt + lineFits[jLine].intercept;
+            } else if(lineFits[iLine].switched == false && lineFits[jLine].switched == true) {
+              yInt = (lineFits[jLine].slope*lineFits[iLine].intercept + lineFits[jLine].intercept) / (1 - lineFits[iLine].slope*lineFits[jLine].slope);
+              xInt = lineFits[iLine].slope*yInt + lineFits[iLine].intercept;
+            }
+            
+            if(xInt >= 1 && xInt <= imageWidth && yInt >= 1 && yInt <= imageHeight) {
+              corners.push_back(cv::Point_<f32>(xInt, yInt));
+            }
+          } // for(s32 jLine=0; jLine<4; jLine++)
+        } // for(s32 iLine=0; iLine<4; iLine++)
+      } // if(didFitFourLines)
+      
+      if(corners.size() == 4) {
+        Quadrilateral<f32> quad(
+          Point<f32>(corners[0].x, corners[0].y),
+          Point<f32>(corners[1].x, corners[1].y),
+          Point<f32>(corners[2].x, corners[2].y),
+          Point<f32>(corners[3].x, corners[3].y));
+        
+        Quadrilateral<f32> sortedQuad = quad.ComputeClockwiseCorners<f32>();
+        
+        peaks.set_size(4);
+        
+        for(s32 i=0; i<4; i++) {
+          peaks[i] = Point<s16>(saturate_cast<s16>(sortedQuad.corners[i].x), saturate_cast<s16>(sortedQuad.corners[i].y));
+        }
+        
+        // Reorder the indexes to be in the order
+        // [corner1, theCornerOppositeCorner1, corner2, corner3]
+        //corners = corners([1 4 2 3],:);
+      } else {
+        corners.clear();
+        
+        for(s32 i=0; i<4; i++) {
+          peaks[i] = Point<s16>(0, 0);
+        }
+        
+        peaks.Clear();
+      }
+      
+      return RESULT_OK;
+    } // ExtractLineFitsPeaks()
+  
     Result ExtractLaplacianPeaks(const FixedLengthList<Point<s16> > &boundary, const s32 minPeakRatio, FixedLengthList<Point<s16> > &peaks, MemoryStack scratch)
     {
       //BeginBenchmark("elp_part1");

@@ -182,11 +182,19 @@ namespace Anki
         if(extractedBoundary.get_size() == 0)
           continue;
 
-        //BeginBenchmark("ExtractLaplacianPeaks");
         // 2. Compute the Laplacian peaks
-        if((lastResult = ExtractLaplacianPeaks(extractedBoundary, minLaplacianPeakRatio, peaks, scratch)) != RESULT_OK)
-          return lastResult;
-        //EndBenchmark("ExtractLaplacianPeaks");
+        //BeginBenchmark("ExtractPeaks");
+        if(cornerMethod == CORNER_METHOD_LAPLACIAN_PEAKS) {
+          if((lastResult = ExtractLaplacianPeaks(extractedBoundary, minLaplacianPeakRatio, peaks, scratch)) != RESULT_OK)
+            return lastResult;
+        } else if(cornerMethod == CORNER_METHOD_LINE_FITS) {
+          if((lastResult = ExtractLineFitsPeaks(extractedBoundary, peaks, imageHeight, imageWidth, scratch)) != RESULT_OK)
+            return lastResult;
+        } else {
+          AnkiAssert(false);
+        }
+        
+        //EndBenchmark("ExtractPeaks");
 
         if(peaks.get_size() != 4)
           continue;
