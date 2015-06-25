@@ -43,6 +43,8 @@ namespace Anki
         
       const f32 sigma = static_cast<f32>(boundaryLength) / 64.0f;
 
+      //boundary.Print();
+
       // Copy the boundary to a f32 openCV array
       cv::Mat_<f32> boundaryCv(2, boundaryLength);
       const Point<s16> * restrict pBoundary = boundary.Pointer(0);
@@ -53,86 +55,128 @@ namespace Anki
         pBoundaryCv1[i] = pBoundary[i].y;
       }
       
-      const s32 ksize = static_cast<s32>(ceilf((((sigma - 0.8f)/0.3f) + 1.0f)*2.0f + 1.0f) );
+      CoreTechPrint("boundaryCv %d:\n", boundaryCv.cols);
+      for(s32 i=0; i<boundaryCv.cols; i++) {
+        CoreTechPrint("%0.3f ", boundaryCv.at<f32>(0,i));
+      }
+      CoreTechPrint("\n");
+      for(s32 i=0; i<boundaryCv.cols; i++) {
+        CoreTechPrint("%0.3f ", boundaryCv.at<f32>(1,i));
+      }
+      CoreTechPrint("\n\n");
+      
+      //s32 ksize = static_cast<s32>(ceilf((((sigma - 0.8f)/0.3f) + 1.0f)*2.0f + 1.0f) ); // Equation from opencv docs
+      //ksize = 2*(ksize/2) + 1;
+
+      const s32 ksize = boundaryLength;
       cv::Mat gk = cv::getGaussianKernel(ksize, sigma, CV_32F).t();
       
       cv::Mat_<f32> dxKernel(1,3);
       dxKernel.at<f32>(0,0) = -0.5f; dxKernel.at<f32>(0,1) = 0; dxKernel.at<f32>(0,2) = 0.5f;
 
       cv::Mat_<f32> dg;
-      cv::Mat_<f32> dB;
       
       cv::filter2D(gk, dg, CV_32F, dxKernel, cv::Point(-1,-1), 0, cv::BORDER_DEFAULT);
 
-      /*printf("gk %d:\n", gk.cols);
+      /*CoreTechPrint("gk %d:\n", gk.cols);
       for(s32 i=0; i<gk.cols; i++) {
-        printf("%0.3f ", gk.at<f32>(0,i));
+        CoreTechPrint("%0.3f ", gk.at<f32>(0,i));
       }
-      printf("\n");
+      CoreTechPrint("\n");
       
-      printf("dB %d:\n", dB.cols);
+      CoreTechPrint("dB %d:\n", dB.cols);
       for(s32 i=0; i<dB.cols; i++) {
-        printf("%0.3f ", dB.at<f32>(0,i));
+        CoreTechPrint("%0.3f ", dB.at<f32>(0,i));
       }
-      printf("\n");*/
+      CoreTechPrint("\n");
       
-/*      printf("dg %d:\n", dg.cols);
+      CoreTechPrint("dg %d:\n", dg.cols);
       for(s32 i=0; i<dg.cols; i++) {
-        printf("%0.3f ", dg.at<f32>(0,i));
+        CoreTechPrint("%0.3f ", dg.at<f32>(0,i));
       }
-      printf("\n\n");*/
+      CoreTechPrint("\n\n");
+      */
       
-      // TODO: when cv::filter2D supports cv::BORDER_WRAP, this can be done faster
-      //cv::filter2D(boundaryCv, dB, CV_32F, dg, cv::Point(-1,-1), 0, cv::BORDER_WRAP);
+      cv::Mat_<f32> dB(2, boundaryLength);
       
-/*      cv::Mat_<f32> boundaryLarge(2, boundaryLength + dg.cols + 2);
-      boundaryLarge.setTo(0);
-      boundaryCv.copyTo(boundaryLarge(cv::Rect(dg.cols/2+1, 0, boundaryLength, 2)));*/
-      cv::Mat_<f32> boundaryLarge(2, boundaryLength + 2*dg.cols + 2);
-      boundaryLarge.setTo(0);
-      boundaryCv(cv::Rect(boundaryLength-dg.cols, 0, dg.cols, 2)).copyTo(boundaryLarge(cv::Rect(0, 0, dg.cols, 2)));
-      boundaryCv(cv::Rect(0, 0, dg.cols, 2)).copyTo(boundaryLarge(cv::Rect(boundaryLarge.cols-dg.cols-2, 0, dg.cols, 2)));
-      boundaryCv.copyTo(boundaryLarge(cv::Rect(dg.cols, 0, boundaryLength, 2)));
+      const bool useFFT = true;
       
-      cv::filter2D(boundaryLarge, dB, CV_32F, dg, cv::Point(-1,-1), 0, cv::BORDER_DEFAULT);
+      // Circular convolution via fft
+      // From example at http://docs.opencv.org/modules/core/doc/operations_on_arrays.html#void dft(InputArray src, OutputArray dst, int flags, int nonzeroRows)
+      if(useFFT) {
+        //cv::Mat_<f32> boundaryCvFrequency;
+        //cv::Mat_<f32> dgFrequency;
+        cv::Mat_<f32> dgReplicated(2, boundaryLength);
       
-      //dB = dB(cv::Range::all(), cv::Range(dg.cols, dg.cols+boundaryLength)).clone();
-      dB = dB(cv::Rect(dg.cols, 0, boundaryLength, 2)).clone();
+        dg.copyTo(dgReplicated(cv::Rect(0,0,boundaryLength,1)));
+        dg.copyTo(dgReplicated(cv::Rect(0,1,boundaryLength,1)));
       
-      //boundaryLarge(cv::Range::all(), cv::Range(dg.cols/2+1, dg.cols/2+1+boundaryLength)) = 5;
-      
-      /*GaussianBlur(repeat(points, 3, 1), ret, cv::Size(0,0), sigma);
-int rows = points.rows;
-result = Mat(result, Range(rows, 2 * rows - 1), Range::all());*/
-      /*
-      printf("boundaryCv %d:\n", boundaryCv.cols);
-      for(s32 i=0; i<boundaryCv.cols; i++) {
-        printf("%0.3f ", boundaryCv.at<f32>(0,i));
+        cv::Size dftSize;
+        // calculate the size of DFT transform
+        dftSize.width = cv::getOptimalDFTSize(boundaryCv.cols + dgReplicated.cols - 1);
+        dftSize.height = cv::getOptimalDFTSize(boundaryCv.rows + dgReplicated.rows - 1);
+
+        // allocate temporary buffers and initialize them with 0's
+        cv::Mat tempA(dftSize, boundaryCv.type(), cv::Scalar::all(0));
+        cv::Mat tempB(dftSize, dgReplicated.type(), cv::Scalar::all(0));
+
+        // copy A and B to the top-left corners of tempA and tempB, respectively
+        cv::Mat roiA(tempA, cv::Rect(0,0,boundaryCv.cols,boundaryCv.rows));
+        boundaryCv.copyTo(roiA);
+        cv::Mat roiB(tempB, cv::Rect(0,0,dgReplicated.cols,dgReplicated.rows));
+        dgReplicated.copyTo(roiB);
+
+        // now transform the padded A & B in-place;
+        // use "nonzeroRows" hint for faster processing
+        cv::dft(tempA, tempA, cv::DFT_ROWS, boundaryCv.rows);
+        cv::dft(tempB, tempB, cv::DFT_ROWS, dgReplicated.rows);
+
+        // multiply the spectrums;
+        // the function handles packed spectrum representations well
+        cv::mulSpectrums(tempA, tempB, tempA, cv::DFT_ROWS);
+
+        // transform the product back from the frequency domain.
+        // Even though all the result rows will be non-zero,
+        // you need only the first C.rows of them, and thus you
+        // pass nonzeroRows == C.rows
+        cv::dft(tempA, tempA, cv::DFT_INVERSE + cv::DFT_SCALE, dB.rows);
+
+        // now copy the result back to C.
+        tempA(cv::Rect(0, 0, dB.cols, dB.rows)).copyTo(dB);
+      } else {
+        cv::Mat_<f32> boundaryLarge(2, boundaryLength + 2*dg.cols + 2);
+        boundaryLarge.setTo(0);
+        boundaryCv(cv::Rect(boundaryLength-dg.cols, 0, dg.cols, 2)).copyTo(boundaryLarge(cv::Rect(0, 0, dg.cols, 2)));
+        boundaryCv(cv::Rect(0, 0, dg.cols, 2)).copyTo(boundaryLarge(cv::Rect(boundaryLarge.cols-dg.cols-2, 0, dg.cols, 2)));
+        boundaryCv.copyTo(boundaryLarge(cv::Rect(dg.cols, 0, boundaryLength, 2)));
+        
+        cv::filter2D(boundaryLarge, dB, CV_32F, dg, cv::Point(-1,-1), 0, cv::BORDER_DEFAULT);
+        
+        dB = dB(cv::Rect(dg.cols, 0, boundaryLength, 2)).clone();
       }
-      printf("\n");
-      for(s32 i=0; i<boundaryCv.cols; i++) {
-        printf("%0.3f ", boundaryCv.at<f32>(1,i));
-      }
-      printf("\n\n");
       
-      printf("boundaryLarge %d:\n", boundaryLarge.cols);
-      for(s32 i=0; i<boundaryLarge.cols; i++) {
-        printf("%0.3f ", boundaryLarge.at<f32>(0,i));
-      }
-      printf("\n");
-      for(s32 i=0; i<boundaryLarge.cols; i++) {
-        printf("%0.3f ", boundaryLarge.at<f32>(1,i));
-      }
-      printf("\n\n");
-      
-      
-      printf("dB %d:\n", dB.cols);
+      CoreTechPrint("dB %d:\n", dB.cols);
       for(s32 i=0; i<dB.cols; i++) {
-        printf("%0.3f ", dB.at<f32>(0,i));
+        CoreTechPrint("%0.3f ", dB.at<f32>(0,i));
       }
-      printf("\n\n");*/
-
-
+      CoreTechPrint("\n");
+      for(s32 i=0; i<dB.cols; i++) {
+        CoreTechPrint("%0.3f ", dB.at<f32>(1,i));
+      }
+      CoreTechPrint("\n\n");
+      
+      /*
+      CoreTechPrint("boundaryLarge %d:\n", boundaryLarge.cols);
+      for(s32 i=0; i<boundaryLarge.cols; i++) {
+        CoreTechPrint("%0.3f ", boundaryLarge.at<f32>(0,i));
+      }
+      CoreTechPrint("\n");
+      for(s32 i=0; i<boundaryLarge.cols; i++) {
+        CoreTechPrint("%0.3f ", boundaryLarge.at<f32>(1,i));
+      }
+      CoreTechPrint("\n\n");
+      */
+      
       cv::Mat_<f32> bin(1, boundaryLength);
       
       const f32 * restrict pDB0 = dB.ptr<f32>(0,0);
@@ -142,11 +186,11 @@ result = Mat(result, Range(rows, 2 * rows - 1), Range::all());*/
         pBin[i] = atan2f(pDB1[i], pDB0[i]);
       }
       
-/*      printf("angles %d:\n", bin.cols);
+      CoreTechPrint("angles %d:\n", bin.cols);
       for(s32 i=0; i<bin.cols; i++) {
-        printf("%0.3f ", bin.at<f32>(0,i));
+        CoreTechPrint("%0.3f ", bin.at<f32>(0,i));
       }
-      printf("\n\n");*/
+      CoreTechPrint("\n\n");
 
       // NOTE: this histogram is a bit different than matlab's
       s32 histSize = 16;
@@ -156,20 +200,20 @@ result = Mat(result, Range(rows, 2 * rows - 1), Range::all());*/
       cv::Mat hist;
       cv::calcHist(&bin, 1, 0, cv::Mat(), hist, 1, &histSize, ranges, true, false);
 
-/*      printf("hist %d:\n", hist.rows);
+      CoreTechPrint("hist %d:\n", hist.rows);
       for(s32 i=0; i<hist.rows; i++) {
-        printf("%0.3f ", hist.at<f32>(i,0));
+        CoreTechPrint("%0.3f ", hist.at<f32>(i,0));
       }
-      printf("\n\n");*/
+      CoreTechPrint("\n\n");
 
       cv::Mat maxBins;
       cv::sortIdx(hist, maxBins, CV_SORT_EVERY_COLUMN | CV_SORT_DESCENDING);
       
-/*      printf("maxBins %d:\n", maxBins.rows);
+      CoreTechPrint("maxBins %d:\n", maxBins.rows);
       for(s32 i=0; i<maxBins.rows; i++) {
-        printf("%d ", maxBins.at<s32>(i,0));
+        CoreTechPrint("%d ", maxBins.at<s32>(i,0));
       }
-      printf("\n\n");*/
+      CoreTechPrint("\n\n");
       
       bool didFitFourLines = true;
       
@@ -496,7 +540,7 @@ result = Mat(result, Range(rows, 2 * rows - 1), Range::all());*/
       
       // Ratio of last of the 4 peaks to the next (fifth) peak should be fairly large
       // if there are 4 distinct corners.
-      //printf("Ratio of 4th to 5th local maxima: %f\n", ((f32)maximaValues[3])/((f32)maximaValues[4]));
+      //CoreTechPrint("Ratio of 4th to 5th local maxima: %f\n", ((f32)maximaValues[3])/((f32)maximaValues[4]));
       if(maximaValues[3] < minPeakRatio * maximaValues[4]) {
         // Just return no peaks, which will skip this quad
         return RESULT_OK;
