@@ -163,7 +163,7 @@
       <Focus>0</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\main.c</PathWithFileName>
+      <PathWithFileName>.\hal\main.c</PathWithFileName>
       <FilenameWithoutPath>main.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
@@ -184,8 +184,8 @@
       <Focus>0</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\..\..\..\hal\nrf24le1\hal_clk.c</PathWithFileName>
-      <FilenameWithoutPath>hal_clk.c</FilenameWithoutPath>
+      <PathWithFileName>.\nordic_hal\hal_delay.c</PathWithFileName>
+      <FilenameWithoutPath>hal_delay.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -193,12 +193,12 @@
       <GroupNumber>2</GroupNumber>
       <FileNumber>3</FileNumber>
       <FileType>1</FileType>
-      <tvExp>0</tvExp>
+      <tvExp>1</tvExp>
       <Focus>0</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\..\..\..\hal\nrf24le1\hal_nrf_hw.c</PathWithFileName>
-      <FilenameWithoutPath>hal_nrf_hw.c</FilenameWithoutPath>
+      <PathWithFileName>.\nordic_hal\nrf24l01p\hal_nrf.c</PathWithFileName>
+      <FilenameWithoutPath>hal_nrf.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -210,8 +210,8 @@
       <Focus>0</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\..\..\..\hal\nrf24l01p\hal_nrf.c</PathWithFileName>
-      <FilenameWithoutPath>hal_nrf.c</FilenameWithoutPath>
+      <PathWithFileName>.\nordic_hal\nrf24le1\hal_nrf_hw.c</PathWithFileName>
+      <FilenameWithoutPath>hal_nrf_hw.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -223,8 +223,8 @@
       <Focus>0</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>.\lights.c</PathWithFileName>
-      <FilenameWithoutPath>lights.c</FilenameWithoutPath>
+      <PathWithFileName>.\nordic_hal\nrf24le1\hal_clk.c</PathWithFileName>
+      <FilenameWithoutPath>hal_clk.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -236,8 +236,8 @@
       <Focus>0</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\..\..\..\hal\hal_delay.c</PathWithFileName>
-      <FilenameWithoutPath>hal_delay.c</FilenameWithoutPath>
+      <PathWithFileName>.\hal\accel.c</PathWithFileName>
+      <FilenameWithoutPath>accel.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -249,8 +249,8 @@
       <Focus>0</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>.\accel.c</PathWithFileName>
-      <FilenameWithoutPath>accel.c</FilenameWithoutPath>
+      <PathWithFileName>.\hal\lights.c</PathWithFileName>
+      <FilenameWithoutPath>lights.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>

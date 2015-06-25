@@ -275,6 +275,7 @@ namespace Anki
       // x-axis points out cozmo's face
       // y-axis points out of cozmo's left
       // z-axis points out the top of cozmo's head
+      // NB: DO NOT CALL THIS MORE THAN ONCE PER MAINEXECUTION TIC!!!
       void IMUReadData(IMU_DataStructure &IMUData);
 
 // #pragma mark --- UART/Wifi ---
@@ -426,9 +427,15 @@ namespace Anki
       
       // Update the face to the next frame of an animation
       // @param frame - a pointer to a variable length frame of face animation data
+      //
+      //   'frame' is a run-length-encoded frame where each byte represents the number
+      //   of 0s or 1s. Odd bytes represent 0s and even bytes represent 1s. The end of
+      //   the frame is reached when 8192 (128 x 64) pixels have been processed.
       void FaceAnimate(u8* frame);
       
       // Move the face to an X, Y offset - where 0, 0 is centered, negative is left/up
+      // This position is relative to the animation displayed when FaceAnimate() was
+      // last called.
       void FaceMove(s32 x, s32 y);
       
       // Blink the eyes

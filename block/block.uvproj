@@ -311,7 +311,7 @@
               <MiscControls></MiscControls>
               <Define></Define>
               <Undefine></Undefine>
-              <IncludePath>..\..\..\..\hal\nrf24le1;..\..\..\..\compiler\c51;..\..\..\..\compiler\common;..\..\..\..\hal;..\..\..\..\hal\nrf24l01p</IncludePath>
+              <IncludePath>.\compiler\c51;.\compiler\common;.\hal;.\nordic_hal;.\nordic_hal\nrf24l01p;.\nordic_hal\nrf24le1</IncludePath>
             </VariousControls>
           </C51>
           <Ax51>
@@ -366,7 +366,7 @@
             <File>
               <FileName>main.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\main.c</FilePath>
+              <FilePath>.\hal\main.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -374,34 +374,34 @@
           <GroupName>hal</GroupName>
           <Files>
             <File>
-              <FileName>hal_clk.c</FileName>
+              <FileName>hal_delay.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\..\hal\nrf24le1\hal_clk.c</FilePath>
-            </File>
-            <File>
-              <FileName>hal_nrf_hw.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\..\..\hal\nrf24le1\hal_nrf_hw.c</FilePath>
+              <FilePath>.\nordic_hal\hal_delay.c</FilePath>
             </File>
             <File>
               <FileName>hal_nrf.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\..\hal\nrf24l01p\hal_nrf.c</FilePath>
+              <FilePath>.\nordic_hal\nrf24l01p\hal_nrf.c</FilePath>
             </File>
             <File>
-              <FileName>lights.c</FileName>
+              <FileName>hal_nrf_hw.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\lights.c</FilePath>
+              <FilePath>.\nordic_hal\nrf24le1\hal_nrf_hw.c</FilePath>
             </File>
             <File>
-              <FileName>hal_delay.c</FileName>
+              <FileName>hal_clk.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\..\hal\hal_delay.c</FilePath>
+              <FilePath>.\nordic_hal\nrf24le1\hal_clk.c</FilePath>
             </File>
             <File>
               <FileName>accel.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\accel.c</FilePath>
+              <FilePath>.\hal\accel.c</FilePath>
+            </File>
+            <File>
+              <FileName>lights.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\hal\lights.c</FilePath>
             </File>
           </Files>
         </Group>

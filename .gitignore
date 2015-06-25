@@ -175,3 +175,4 @@ include/anki/cozmo/shared/msgIDs.txt
 **.dump
 *.htm
 block/build/
+*.m51

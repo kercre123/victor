@@ -144,7 +144,7 @@ namespace Anki {
       }
 
 
-      void UpdateRobotStateMsg(HAL::IMU_DataStructure &imuData)
+      void UpdateRobotStateMsg()
       {
         robotState_.timestamp = HAL::GetTimeStamp();
 
@@ -163,6 +163,7 @@ namespace Anki {
         robotState_.liftAngle  = LiftController::GetAngleRad();
         robotState_.liftHeight = LiftController::GetHeightMM();
 
+        HAL::IMU_DataStructure imuData = IMUFilter::GetLatestRawData();
         robotState_.rawGyroZ = imuData.rate_z;
         robotState_.rawAccelY = imuData.acc_y;
 

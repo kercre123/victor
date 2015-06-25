@@ -6,7 +6,16 @@
 //#define DO_SIMPLE_LED_TEST
 //#define DO_LED_TEST
 #define DO_RECEIVER_BEHAVIOR
+#define LISTEN_FOREVER
 //#define DO_TRANSMITTER_BEHAVIOR
+//#define DO_TAPS_TEST
+//#define DO_MISSED_PACKET_TEST
+
+static const u8 BLOCK_ID[5] = {0xC2, 0xC2, 0xC2, 0xC2, 0xC2};
+
+static const u8 TIMER30HZ_L = 0x9C;
+static const u8 TIMER30HZ_H = 0xAD;
+static const u8 WAKEUP_OFFSET = 0x0F;
 
 // Global variables
 static volatile bool radioBusy;
@@ -19,8 +28,8 @@ void InitTimer0()
   TMOD &= 0xF0;
   TMOD |=  0x01; // Mode 1, 16 bit counter/timer
   
-  TL0 = 0xBF; // 40k ticks till overflow 
-  TH0 = 0x63;
+  TL0 = 0xFF - TIMER30HZ_L; 
+  TH0 = 0xFF - TIMER30HZ_H;
   
   ET0 = 1; // enable timer 1 interrupt
   EA = 1; // enable global interrupts
@@ -64,8 +73,12 @@ void InitPRX()
   EA = 1;
   // Configure radio as primary receiver (PRX)
   hal_nrf_set_operation_mode(HAL_NRF_PRX);
+  // Set address
+  hal_nrf_set_address(HAL_NRF_PIPE1, BLOCK_ID);
+  // Set datarate
+  hal_nrf_set_datarate(HAL_NRF_1MBPS);
   // Set payload width to 13 bytes
-  hal_nrf_set_rx_payload_width((int)HAL_NRF_PIPE0, 13U);
+  hal_nrf_set_rx_payload_width((int)HAL_NRF_PIPE1, 13U);
   // Power up radio
   hal_nrf_set_power_mode(HAL_NRF_PWR_UP);
   // Enable receiver
@@ -92,10 +105,12 @@ void ReceiveData(u8 msTimeout)
   radioBusy = true;
   while(radioBusy)
   {    
+    #ifndef LISTEN_FOREVER
     if(TH0>(5*msTimeout))
     {
       radioBusy = false;
     }
+    #endif
   }
   PowerDownRadio();
 }
@@ -109,15 +124,17 @@ void InitPTX()
   
   // Enable the radio clock
   RFCKEN = 1U;
-
   // Enable RF interrupt
   RF = 1U;
-
   // Enable global interrupt
   EA = 1U;
-
   hal_nrf_set_operation_mode(HAL_NRF_PTX);
-  
+  // Set datarate
+  hal_nrf_set_datarate(HAL_NRF_1MBPS);
+  // Set address
+  #ifndef DO_RECEIVER_BEHAVIOR
+  hal_nrf_set_address(HAL_NRF_TX, BLOCK_ID);
+  #endif
   // Power up radio
   hal_nrf_set_power_mode(HAL_NRF_PWR_UP);
 }
@@ -126,7 +143,7 @@ void TransmitData()
 {
   InitPTX();
    // Write payload to radio TX FIFO
-  hal_nrf_write_tx_payload(payload, 13U); // XXX _noack
+  hal_nrf_write_tx_payload_noack(payload, 13U);
 
   // Toggle radio CE signal to start transmission
   CE_PULSE();
@@ -145,8 +162,20 @@ void main(void)
   char led;
   volatile bool sync;
   s8 accData[3];
-  u8 tapCount;
+  volatile u8 tapCount = 0;
  
+  #ifdef DO_TAPS_TEST
+  InitAcc();
+  while(1)
+  {
+    tapCount += GetTaps();
+    //tapCount += GetTaps();
+    //tapCount += GetTaps();
+    LightOn(tapCount % 12);
+    delay_ms(30);
+  }
+  
+  #endif
   
   #ifdef DO_SIMPLE_LED_TEST
   while(1)
@@ -223,8 +252,8 @@ void main(void)
         radioTimerState = 0; // 30 ms
         // Set to 30 mS
         TR0 = 0; // Stop timer 
-        TL0 = 0xBF;
-        TH0 = 0x63;
+        TL0 = 0xFF - TIMER30HZ_L; 
+        TH0 = 0xFF - TIMER30HZ_H;
         TR0 = 1; // Start timer 
         LightsOff();      // Turn off light
         TransmitData();
@@ -310,6 +339,7 @@ void main(void)
     radioTimerState = 0; 
     // Accelerometer read
     ReadAcc(accData);
+    tapCount += GetTaps();
     // Turn off lights timer
     StopTimer2();  
     // Make sure lights are off before using the radio
@@ -317,7 +347,8 @@ void main(void)
 
     // Receive data
     ReceiveData(10); // timeout = 4ms
-    /*
+    
+#ifdef DO_MISSED_PACKET_TEST
     if( gDataReceived == true)
     {
       for(led = 0; led<13; led++)
@@ -327,24 +358,24 @@ void main(void)
       SetLedValue(5, 255);
     }
     gDataReceived = false;
-    */
+#endif
     
     // Copy packet to LEDs
     for(led = 0; led<13; led++)
     {
       SetLedValue(led, payload[led]);
     }
-    
-    
-    // Fill payload with a response 
+    // Fill payload with a response
     payload[0] = accData[0];
     payload[1] = accData[1];
     payload[2] = accData[2];
+    payload[3] = tapCount;
     // Respond with accelerometer data
     TransmitData();
     payload[0] = 0;
     payload[1] = 0;
     payload[2] = 0;
+    payload[3] = 0;
     
   }
 #endif
@@ -375,8 +406,8 @@ NRF_ISR()
       
       // Set timer for ~28 ms from now
       TR0 = 0; // Stop timer 
-      TL0 = 0xBF;
-      TH0 = 0x63+10;
+      TL0 = 0xFF - TIMER30HZ_L; 
+      TH0 = 0xFF - TIMER30HZ_H + WAKEUP_OFFSET;
       TR0 = 1; // Start timer 
       
       break;

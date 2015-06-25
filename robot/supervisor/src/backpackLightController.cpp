@@ -29,8 +29,18 @@ namespace BackpackLightController {
     //LEDId       _ledLUT[NUM_LEDS];
     
     LEDParams_t _ledParams[NUM_BACKPACK_LEDS];
-    
+    bool        _enable;
   };
+  
+  void Enable()
+  {
+    _enable = true;
+  }
+  
+  void Disable()
+  {
+    _enable = false;
+  }
   
   Result Init()
   {
@@ -47,12 +57,17 @@ namespace BackpackLightController {
       _ledParams[i].offColor = 0;
       _ledParams[i].nextSwitchTime = u32_MAX;
     }
+    _enable = true;
     
     return RESULT_OK;
   }
   
   Result Update()
   {
+    if (!_enable) {
+      return RESULT_OK;
+    }
+    
     TimeStamp_t currentTime = HAL::GetTimeStamp();
     
     for(int i=0; i<NUM_BACKPACK_LEDS; ++i)

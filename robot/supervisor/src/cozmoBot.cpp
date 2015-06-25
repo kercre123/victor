@@ -299,9 +299,7 @@ namespace Anki {
         //////////////////////////////////////////////////////////////
         // Sensor updates
         //////////////////////////////////////////////////////////////
-        HAL::IMU_DataStructure imu_data;
-        HAL::IMUReadData(imu_data);
-        IMUFilter::Update(imu_data);
+        IMUFilter::Update();
 
         //////////////////////////////////////////////////////////////
         // Head & Lift Position Updates
@@ -383,7 +381,7 @@ namespace Anki {
         // Feedback / Display
         //////////////////////////////////////////////////////////////
 
-        Messages::UpdateRobotStateMsg(imu_data);
+        Messages::UpdateRobotStateMsg();
 #if(!STREAM_DEBUG_IMAGES)
         ++robotStateMessageCounter_;
         if(robotStateMessageCounter_ >= STATE_MESSAGE_FREQUENCY) {

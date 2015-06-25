@@ -19,5 +19,6 @@ void StopTimer2();
 
 void InitAcc();
 void ReadAcc(u8 *accData);
+u8 GetTaps();
 
 #endif /* HAL_H__ */

@@ -29,7 +29,10 @@ namespace Anki {
       
       // TODO: Add if/when needed?
       // ReturnCode Init();
-      Result Update(HAL::IMU_DataStructure &imu_data);
+      Result Update();
+      
+      // Returns the latest IMU data read in the last Update() call.
+      HAL::IMU_DataStructure GetLatestRawData();
 
       // Rotation (or "yaw"). Turning left is positive.
       f32 GetRotation();
