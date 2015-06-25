@@ -416,6 +416,10 @@ message SetBackpackLEDs {
   uint_8   robotID
 }
 
+message TapBlockOnGround {
+  uint_8   numTaps
+}
+
 // VisualizeQuad
 //  Draws the specified quadrilateral using the Visualization system.
 //  The quadID will be created if new or replaced if it already exists (i.e., you

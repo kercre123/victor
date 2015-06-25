@@ -2272,6 +2272,40 @@ struct SetBackpackLEDs
 	bool operator!=(const SetBackpackLEDs& other) const;
 };
 
+// MESSAGE TapBlockOnGround
+struct TapBlockOnGround
+{
+	uint8_t numTaps;
+	
+	/**** Constructors ****/
+	TapBlockOnGround() = default;
+	TapBlockOnGround(const TapBlockOnGround& other) = default;
+	TapBlockOnGround(TapBlockOnGround& other) = default;
+	TapBlockOnGround(TapBlockOnGround&& other) noexcept = default;
+	TapBlockOnGround& operator=(const TapBlockOnGround& other) = default;
+	TapBlockOnGround& operator=(TapBlockOnGround&& other) noexcept = default;
+	
+	explicit TapBlockOnGround(uint8_t numTaps)
+	:numTaps(numTaps)
+	{}
+
+	explicit TapBlockOnGround(const uint8_t* buff, size_t len);
+	explicit TapBlockOnGround(const CLAD::SafeMessageBuffer& buffer);
+	
+	/**** Pack ****/
+	size_t Pack(uint8_t* buff, size_t len) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+
+	/**** Unpack ****/
+	size_t Unpack(const uint8_t* buff, const size_t len);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+
+	size_t Size() const;
+
+	bool operator==(const TapBlockOnGround& other) const;
+	bool operator!=(const TapBlockOnGround& other) const;
+};
+
 // MESSAGE VisualizeQuad
 struct VisualizeQuad
 {
@@ -2692,6 +2726,11 @@ public:
 	void Set_SetBackpackLEDs(const Anki::Cozmo::U2G::SetBackpackLEDs& new_SetBackpackLEDs);
 	void Set_SetBackpackLEDs(Anki::Cozmo::U2G::SetBackpackLEDs&& new_SetBackpackLEDs);
 
+	/** TapBlockOnGround **/
+	const Anki::Cozmo::U2G::TapBlockOnGround& Get_TapBlockOnGround() const;
+	void Set_TapBlockOnGround(const Anki::Cozmo::U2G::TapBlockOnGround& new_TapBlockOnGround);
+	void Set_TapBlockOnGround(Anki::Cozmo::U2G::TapBlockOnGround&& new_TapBlockOnGround);
+
 	/** VisualizeQuad **/
 	const Anki::Cozmo::U2G::VisualizeQuad& Get_VisualizeQuad() const;
 	void Set_VisualizeQuad(const Anki::Cozmo::U2G::VisualizeQuad& new_VisualizeQuad);
@@ -2775,6 +2814,7 @@ private:
 		Anki::Cozmo::U2G::SetActiveObjectLEDs _SetActiveObjectLEDs;
 		Anki::Cozmo::U2G::SetAllActiveObjectLEDs _SetAllActiveObjectLEDs;
 		Anki::Cozmo::U2G::SetBackpackLEDs _SetBackpackLEDs;
+		Anki::Cozmo::U2G::TapBlockOnGround _TapBlockOnGround;
 		Anki::Cozmo::U2G::VisualizeQuad _VisualizeQuad;
 		Anki::Cozmo::U2G::EraseQuad _EraseQuad;
 	};

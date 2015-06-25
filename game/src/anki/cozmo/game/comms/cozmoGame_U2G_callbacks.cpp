@@ -311,6 +311,23 @@ namespace Cozmo {
       }
     }
   }
+
+  void CozmoGameImpl::Process_TapBlockOnGround(U2G::TapBlockOnGround const& msg)
+  {
+    // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
+    const RobotID_t robotID = 1;
+    Robot* robot = GetRobotByID(robotID);
+    
+    if(robot != nullptr) {
+      
+      if(robot->IsLiftLocked()) {
+        PRINT_NAMED_INFO("CozmoGameImpl.Process_TapBlockOnGround.LiftLocked",
+                         "Ignoring U2G::TapBlockOnGround while lift is locked.\n");
+      } else {
+        robot->TapBlockOnGround(msg.numTaps);
+      }
+    }
+  }
   
   void CozmoGameImpl::Process_SetRobotImageSendMode(U2G::SetRobotImageSendMode const& msg)
   {
