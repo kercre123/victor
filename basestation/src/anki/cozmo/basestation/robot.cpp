@@ -1170,11 +1170,11 @@ namespace Anki {
     } // StopSound()
       
       
-    Result Robot::TransitionToStateAnimation(const char *transitionAnimName,
-                                             const char *stateAnimName)
-    {
-      return SendTransitionToStateAnimation(transitionAnimName, stateAnimName);
-    }
+//    Result Robot::TransitionToStateAnimation(const char *transitionAnimName,
+//                                             const char *stateAnimName)
+//    {
+//      return SendTransitionToStateAnimation(transitionAnimName, stateAnimName);
+//    }
     
     Result Robot::StopAnimation()
     {

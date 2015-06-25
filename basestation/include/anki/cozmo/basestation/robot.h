@@ -358,6 +358,9 @@ namespace Anki {
       // anything.
       Result PlaceObjectOnGround(const bool useManualSpeed = false);
       
+      
+      // =========== Animation Commands =============
+      
       // Plays specified animation numLoops times.
       // If numLoops == 0, animation repeats forever.
       Result PlayAnimation(const char* animName, const u32 numLoops = 1);
@@ -370,14 +373,6 @@ namespace Anki {
       // keyframe buffer, to let us know if we can stream any more
       s32 GetNumAnimationFramesFree() const;
       
-      // Ask the UI to play a sound for us
-      Result PlaySound(SoundID_t soundID, u8 numLoops, u8 volume);
-      void   StopSound();
-      
-      // Plays transition animation once, then plays state animatin in a loop
-      Result TransitionToStateAnimation(const char *transitionAnimName,
-                                        const char *stateAnimName);
-      
       Result StopAnimation();
       
       // (Re-)Read the animation JSON file and send it to the physical robot
@@ -386,6 +381,16 @@ namespace Anki {
       // Returns true if the robot is currently playing an animation, according
       // to most recent state message.
       bool IsAnimating() const;
+
+      //      // Plays transition animation once, then plays state animatin in a loop
+      //      Result TransitionToStateAnimation(const char *transitionAnimName,
+      //                                        const char *stateAnimName);
+
+      
+      // Ask the UI to play a sound for us
+      Result PlaySound(SoundID_t soundID, u8 numLoops, u8 volume);
+      void   StopSound();
+      
       
       Result SyncTime();
       void SetSyncTimeAcknowledged(bool ack);
@@ -506,7 +511,7 @@ namespace Anki {
       // TODO: Probably need a more elegant way of doing this.
       Result AbortAll();
       
-      // Abort things individual
+      // Abort things individually
       // NOTE: Use ClearPath() above to abort a path
       Result AbortAnimation();
       Result AbortDocking(); // a.k.a. PickAndPlace
@@ -751,12 +756,12 @@ namespace Anki {
       
       Result SendPlaceObjectOnGround(const f32 rel_x, const f32 rel_y, const f32 rel_angle, const bool useManualSpeed);
       
-      // Play animation
-      // If numLoops == 0, animation repeats forever.
-      Result SendPlayAnimation(const char* animName, const u32 numLoops = 0);
-      
-      Result SendTransitionToStateAnimation(const char *transitionAnimName,
-                                            const char *stateAnimName);
+//      // Play animation
+//      // If numLoops == 0, animation repeats forever.
+//      Result SendPlayAnimation(const char* animName, const u32 numLoops = 0);
+//      
+//      Result SendTransitionToStateAnimation(const char *transitionAnimName,
+//                                            const char *stateAnimName);
       
       Result SendDockWithObject(const DockAction_t dockAction,
                                 const bool useManualSpeed);

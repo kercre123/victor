@@ -200,7 +200,7 @@ namespace Cozmo {
   class Animation
   {
   public:
-    Animation();
+    Animation() { }
     
     Result DefineFromJson(Json::Value& json);
     
