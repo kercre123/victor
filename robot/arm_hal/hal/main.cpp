@@ -22,6 +22,7 @@ namespace Anki
       void FrontCameraInit();
       void IMUInit();
       void LightsInit();
+      void OLEDInit(); 
 
       void PrintCrap();
 
@@ -213,6 +214,8 @@ int main(void)
   printf("IMU..");
   SPIInit();
   printf("spine..");
+  OLEDInit();
+  printf("oled..");
 
 #if 0
   // Motor testing...

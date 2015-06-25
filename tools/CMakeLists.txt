@@ -205,7 +205,9 @@ list(APPEND util__other_srcs
   "anki-util/source/anki/util/transport/transportStats.h"
   "anki-util/source/anki/util/transport/udpTransport.h"
   "anki-util/source/anki/util/utilMessaging/utilMessaging.h"
-  "anki-util/source/anki/util/UUID/UUID.h")
+  "anki-util/source/anki/util/UUID/UUID.h"
+  "anki-util/source/anki/util/ptree/includeJSONParser.h"
+  "anki-util/source/anki/util/ptree/ptreeToJSON.h")
 add_library(util STATIC ${util__other_srcs}
   anki-util/source/anki/util/color/color.cpp
   anki-util/source/anki/util/console/consoleArgument.cpp
@@ -274,6 +276,9 @@ add_library(util STATIC ${util__other_srcs}
   anki-util/source/anki/util/transport/udpTransport.cpp
   anki-util/source/anki/util/utilMessaging/utilMessaging.c
   anki-util/source/anki/util/UUID/UUID.c
+  anki-util/source/anki/util/global/globalDefinitions.cpp
+  anki-util/source/anki/util/ptree/includePtree.cpp
+  anki-util/source/anki/util/ptree/ptreeToJSON.cpp
 )
 set_source_files_properties(${util__other_srcs} PROPERTIES HEADER_FILE_ONLY "TRUE")
 set_target_properties(util PROPERTIES ARCHIVE_OUTPUT_DIRECTORY "${obj}.${TOOLSET}/project/gyp")
@@ -362,6 +367,9 @@ set_source_files_properties(
   anki-util/source/anki/util/transport/transportAddress.cpp
   anki-util/source/anki/util/transport/transportStats.cpp
   anki-util/source/anki/util/transport/udpTransport.cpp
+  anki-util/source/anki/util/global/globalDefinitions.cpp
+  anki-util/source/anki/util/ptree/includePtree.cpp
+  anki-util/source/anki/util/ptree/ptreeToJSON.cpp
  PROPERTIES
   COMPILE_FLAGS "-std=c11 -fdiagnostics-show-category=name -Wall -Woverloaded-virtual -Werror -Wundef -Wheader-guard -fsigned-char -fvisibility-inlines-hidden -fvisibility=default -Wshorten-64-to-32 -Winit-self -Wconditional-uninitialized -Wno-deprecated-register -Wa,--noexecstack -Wformat -Werror=format-security -g -std=c++11 -stdlib=libc++ -fdiagnostics-show-category=name -Wall -Woverloaded-virtual -Werror -Wundef -Wheader-guard -fsigned-char -fvisibility-inlines-hidden -fvisibility=default -Wshorten-64-to-32 -Winit-self -Wconditional-uninitialized -Wno-deprecated-register -Wa,--noexecstack -Wformat -Werror=format-security -g "
 )

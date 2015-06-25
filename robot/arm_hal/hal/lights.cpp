@@ -11,7 +11,7 @@ namespace Anki
     {
 
       extern volatile GlobalDataToBody g_dataToBody;
-      char const backpackLightLUT[5] = {0, 1, 2, 2, 3};
+      char const backpackLightLUT[5] = {3, 2, 1, 0, 0};
 
       GPIO_PIN_SOURCE(IRLED, GPIOE, 0);
 
@@ -35,7 +35,14 @@ namespace Anki
       // Light up one of the backpack LEDs to the specified 24-bit RGB color
       void SetLED(LEDId led_id, u32 color)
       {
-        g_dataToBody.backpackColors[ backpackLightLUT[led_id] ] = color;    
+        volatile u32* channel = &g_dataToBody.backpackColors[ backpackLightLUT[led_id] ];
+        if (led_id == LED_BACKPACK_LEFT) {
+          *channel = (*channel & 0x000000ff) | (color > 0 ? 0xff00 : 0);
+        } else if (led_id == LED_BACKPACK_RIGHT) {
+          *channel = (*channel & 0x0000ff00) | (color > 0 ? 0xff : 0);
+        } else {
+          *channel = color;
+        }
       }
 
       // Turn headlights on (true) and off (false)
