@@ -263,6 +263,16 @@ namespace AnimationController {
   
   Result Init()
   {
+    Clear();
+    
+    DefineHardCodedAnimations();
+    
+    return RESULT_OK;
+  }
+  
+  
+  void Clear()
+  {
     _currentFrame = 0;
     _lastFrame    = 0;
     _numFramesBuffered = 0;
@@ -271,12 +281,7 @@ namespace AnimationController {
     
     // Necessary?
     //memset(_keyFrameBuffer, KEYFRAME_BUFFER_LENGTH, sizeof(StreamedKeyFrame));
-    
-    DefineHardCodedAnimations();
-    
-    return RESULT_OK;
   }
-  
   
   /*
   void Update()
