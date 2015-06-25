@@ -147,7 +147,7 @@ public: \
   GET_MESSAGE_CLASSNAME(__MSG_TYPE__)(const u8* buffer); \
   GET_MESSAGE_CLASSNAME(__MSG_TYPE__)(const Json::Value& root) { FillFromJson(root); } \
   virtual u8 GetID() const override; \
-  virtual u16 GetSize() const overrie; \
+  virtual u16 GetSize() const override; \
   virtual void GetBytes(u8* buffer) const override; \
   virtual Json::Value CreateJson() const override; \
   virtual Result FillFromJson(const Json::Value& root) override;
@@ -504,25 +504,25 @@ return root; \
 #endif
 
 #define START_MESSAGE_DEFINITION(__MSG_TYPE__, __PRIORITY__) \
-Result GET_MESSAGE_CLASS(__MSG_TYPE__)::FillFromJson(const Json::Value& root) { \
+Result GET_MESSAGE_CLASSNAME(__MSG_TYPE__)::FillFromJson(const Json::Value& root) { \
 if(not root.isMember(QUOTE(Name)) || root[QUOTE(Name)].asString() != GET_QUOTED_MESSAGE_CLASSNAME(__MSG_TYPE__)) { \
-  PRINT_NAMED_ERROR(QUOTE(GET_MESSAGE_CLASS(__MSG_TYPE__).FillFromJson), QUOTE(No matching 'Name' member found!\n)); \
+  PRINT_NAMED_ERROR(QUOTE(GET_MESSAGE_CLASSNAME(__MSG_TYPE__).FillFromJson), QUOTE(No matching 'Name' member found!\n)); \
   return RESULT_FAIL; \
 }
 
 #define ADD_MESSAGE_MEMBER(__TYPE__, __NAME__) \
 if(not JsonTools::GetValueOptional(root, QUOTE(__NAME__), this->__NAME__)) { \
-  PRINT_NAMED_ERROR(QUOTE(Message.FillFromJson), QUOTE(No '%s' member found!\n), QUOTE(__NAME__)); \
+  PRINT_NAMED_ERROR(QUOTE(GET_MESSAGE_CLASSNAME(__MSG_TYPE__).FillFromJson), QUOTE(No '%s' member found!\n), QUOTE(__NAME__)); \
   return RESULT_FAIL; \
 }
 
 #define ADD_MESSAGE_MEMBER_ARRAY(__TYPE__, __NAME__, __LENGTH__) \
 if(not JsonTools::GetArrayOptional(root, QUOTE(__NAME__), this->__NAME__)) { \
-  PRINT_NAMED_ERROR(QUOTE(Message.FillFromJson), QUOTE(No '%s' member found!\n), QUOTE(__NAME__)); \
+  PRINT_NAMED_ERROR(QUOTE(GET_MESSAGE_CLASSNAME(__MSG_TYPE__).FillFromJson), QUOTE(No '%s' member found!\n), QUOTE(__NAME__)); \
   return RESULT_FAIL; \
 }
 
-#define END_MESSAGE_DEFINITION(__MSG_TYPE__) }
+#define END_MESSAGE_DEFINITION(__MSG_TYPE__) return RESULT_OK; }
 
 
 //
