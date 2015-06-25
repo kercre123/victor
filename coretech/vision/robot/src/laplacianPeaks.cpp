@@ -14,6 +14,8 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 //using namespace std;
 
+//#define DISPLAY_DEBUG
+
 typedef struct
 {
   f32 slope;
@@ -51,10 +53,11 @@ namespace Anki
       f32 * restrict pBoundaryCv0 = boundaryCv.ptr<f32>(0,0);
       f32 * restrict pBoundaryCv1 = boundaryCv.ptr<f32>(1,0);
       for(s32 i=0; i<boundaryLength; i++) {
-        pBoundaryCv0[i] = pBoundary[i].x;
-        pBoundaryCv1[i] = pBoundary[i].y;
+        pBoundaryCv0[i] = pBoundary[i].y; // Note that order is (y,x)
+        pBoundaryCv1[i] = pBoundary[i].x;
       }
       
+#ifdef DISPLAY_DEBUG
       CoreTechPrint("boundaryCv %d:\n", boundaryCv.cols);
       for(s32 i=0; i<boundaryCv.cols; i++) {
         CoreTechPrint("%0.3f ", boundaryCv.at<f32>(0,i));
@@ -64,11 +67,11 @@ namespace Anki
         CoreTechPrint("%0.3f ", boundaryCv.at<f32>(1,i));
       }
       CoreTechPrint("\n\n");
+#endif // #ifdef DISPLAY_DEBUG
       
-      //s32 ksize = static_cast<s32>(ceilf((((sigma - 0.8f)/0.3f) + 1.0f)*2.0f + 1.0f) ); // Equation from opencv docs
-      //ksize = 2*(ksize/2) + 1;
+      s32 ksize = static_cast<s32>(ceilf((((sigma - 0.8f)/0.3f) + 1.0f)*2.0f + 1.0f) ); // Equation from opencv docs
+      ksize = 2*(ksize/2) + 1;
 
-      const s32 ksize = boundaryLength;
       cv::Mat gk = cv::getGaussianKernel(ksize, sigma, CV_32F).t();
       
       cv::Mat_<f32> dxKernel(1,3);
@@ -99,62 +102,43 @@ namespace Anki
       
       cv::Mat_<f32> dB(2, boundaryLength);
       
-      const bool useFFT = true;
-      
-      // Circular convolution via fft
-      // From example at http://docs.opencv.org/modules/core/doc/operations_on_arrays.html#void dft(InputArray src, OutputArray dst, int flags, int nonzeroRows)
-      if(useFFT) {
-        //cv::Mat_<f32> boundaryCvFrequency;
-        //cv::Mat_<f32> dgFrequency;
-        cv::Mat_<f32> dgReplicated(2, boundaryLength);
-      
-        dg.copyTo(dgReplicated(cv::Rect(0,0,boundaryLength,1)));
-        dg.copyTo(dgReplicated(cv::Rect(0,1,boundaryLength,1)));
-      
-        cv::Size dftSize;
-        // calculate the size of DFT transform
-        dftSize.width = cv::getOptimalDFTSize(boundaryCv.cols + dgReplicated.cols - 1);
-        dftSize.height = cv::getOptimalDFTSize(boundaryCv.rows + dgReplicated.rows - 1);
-
-        // allocate temporary buffers and initialize them with 0's
-        cv::Mat tempA(dftSize, boundaryCv.type(), cv::Scalar::all(0));
-        cv::Mat tempB(dftSize, dgReplicated.type(), cv::Scalar::all(0));
-
-        // copy A and B to the top-left corners of tempA and tempB, respectively
-        cv::Mat roiA(tempA, cv::Rect(0,0,boundaryCv.cols,boundaryCv.rows));
-        boundaryCv.copyTo(roiA);
-        cv::Mat roiB(tempB, cv::Rect(0,0,dgReplicated.cols,dgReplicated.rows));
-        dgReplicated.copyTo(roiB);
-
-        // now transform the padded A & B in-place;
-        // use "nonzeroRows" hint for faster processing
-        cv::dft(tempA, tempA, cv::DFT_ROWS, boundaryCv.rows);
-        cv::dft(tempB, tempB, cv::DFT_ROWS, dgReplicated.rows);
-
-        // multiply the spectrums;
-        // the function handles packed spectrum representations well
-        cv::mulSpectrums(tempA, tempB, tempA, cv::DFT_ROWS);
-
-        // transform the product back from the frequency domain.
-        // Even though all the result rows will be non-zero,
-        // you need only the first C.rows of them, and thus you
-        // pass nonzeroRows == C.rows
-        cv::dft(tempA, tempA, cv::DFT_INVERSE + cv::DFT_SCALE, dB.rows);
-
-        // now copy the result back to C.
-        tempA(cv::Rect(0, 0, dB.cols, dB.rows)).copyTo(dB);
-      } else {
-        cv::Mat_<f32> boundaryLarge(2, boundaryLength + 2*dg.cols + 2);
-        boundaryLarge.setTo(0);
-        boundaryCv(cv::Rect(boundaryLength-dg.cols, 0, dg.cols, 2)).copyTo(boundaryLarge(cv::Rect(0, 0, dg.cols, 2)));
-        boundaryCv(cv::Rect(0, 0, dg.cols, 2)).copyTo(boundaryLarge(cv::Rect(boundaryLarge.cols-dg.cols-2, 0, dg.cols, 2)));
-        boundaryCv.copyTo(boundaryLarge(cv::Rect(dg.cols, 0, boundaryLength, 2)));
+      // Circular convolution
+      // TODO: may be slow? If/when openCv circular convolution is fixed, switch to that
+      {
+        const f32 * restrict pDg = dg.ptr<f32>();
         
-        cv::filter2D(boundaryLarge, dB, CV_32F, dg, cv::Point(-1,-1), 0, cv::BORDER_DEFAULT);
+        const f32 * restrict pBoundary0 = boundaryCv.ptr<f32>(0,0);
+        const f32 * restrict pBoundary1 = boundaryCv.ptr<f32>(1,0);
         
-        dB = dB(cv::Rect(dg.cols, 0, boundaryLength, 2)).clone();
+        f32 * restrict pDB0 = dB.ptr<f32>(0,0);
+        f32 * restrict pDB1 = dB.ptr<f32>(1,0);
+        
+        const s32 ksize2 = ksize / 2;
+        
+        for(s32 xBoundary=0; xBoundary<boundaryLength; xBoundary++) {
+        
+          f64 curSum0 = 0;
+          f64 curSum1 = 0;
+          for(s32 xFilter=0; xFilter<ksize; xFilter++) {
+            const s32 dx = xFilter - ksize2;
+            
+            s32 xBoundaryOffset = xBoundary + dx;
+            if(xBoundaryOffset >= boundaryLength) {
+              xBoundaryOffset -= boundaryLength;
+            } else if(xBoundaryOffset < 0) {
+              xBoundaryOffset += boundaryLength;
+            }
+            
+            curSum0 += pBoundary0[xBoundaryOffset] * pDg[xFilter];
+            curSum1 += pBoundary1[xBoundaryOffset] * pDg[xFilter];
+          }
+          
+          pDB0[xBoundary] = curSum0;
+          pDB1[xBoundary] = curSum1;
+        }
       }
       
+#ifdef DISPLAY_DEBUG
       CoreTechPrint("dB %d:\n", dB.cols);
       for(s32 i=0; i<dB.cols; i++) {
         CoreTechPrint("%0.3f ", dB.at<f32>(0,i));
@@ -164,19 +148,8 @@ namespace Anki
         CoreTechPrint("%0.3f ", dB.at<f32>(1,i));
       }
       CoreTechPrint("\n\n");
-      
-      /*
-      CoreTechPrint("boundaryLarge %d:\n", boundaryLarge.cols);
-      for(s32 i=0; i<boundaryLarge.cols; i++) {
-        CoreTechPrint("%0.3f ", boundaryLarge.at<f32>(0,i));
-      }
-      CoreTechPrint("\n");
-      for(s32 i=0; i<boundaryLarge.cols; i++) {
-        CoreTechPrint("%0.3f ", boundaryLarge.at<f32>(1,i));
-      }
-      CoreTechPrint("\n\n");
-      */
-      
+#endif // #ifdef DISPLAY_DEBUG
+  
       cv::Mat_<f32> bin(1, boundaryLength);
       
       const f32 * restrict pDB0 = dB.ptr<f32>(0,0);
@@ -186,11 +159,13 @@ namespace Anki
         pBin[i] = atan2f(pDB1[i], pDB0[i]);
       }
       
+#ifdef DISPLAY_DEBUG
       CoreTechPrint("angles %d:\n", bin.cols);
       for(s32 i=0; i<bin.cols; i++) {
         CoreTechPrint("%0.3f ", bin.at<f32>(0,i));
       }
       CoreTechPrint("\n\n");
+#endif // #ifdef DISPLAY_DEBUG
 
       // NOTE: this histogram is a bit different than matlab's
       s32 histSize = 16;
@@ -200,20 +175,24 @@ namespace Anki
       cv::Mat hist;
       cv::calcHist(&bin, 1, 0, cv::Mat(), hist, 1, &histSize, ranges, true, false);
 
+#ifdef DISPLAY_DEBUG
       CoreTechPrint("hist %d:\n", hist.rows);
       for(s32 i=0; i<hist.rows; i++) {
         CoreTechPrint("%0.3f ", hist.at<f32>(i,0));
       }
       CoreTechPrint("\n\n");
+#endif // #ifdef DISPLAY_DEBUG
 
       cv::Mat maxBins;
       cv::sortIdx(hist, maxBins, CV_SORT_EVERY_COLUMN | CV_SORT_DESCENDING);
       
+#ifdef DISPLAY_DEBUG
       CoreTechPrint("maxBins %d:\n", maxBins.rows);
       for(s32 i=0; i<maxBins.rows; i++) {
         CoreTechPrint("%d ", maxBins.at<s32>(i,0));
       }
       CoreTechPrint("\n\n");
+#endif // #ifdef DISPLAY_DEBUG
       
       bool didFitFourLines = true;
       
@@ -259,9 +238,9 @@ namespace Anki
             cv::Mat_<f32> x(2, 1);
 
             for(s32 i=0; i<boundaryIndex.size(); i++) {
-              A.at<f32>(i,0) = boundary.Pointer(boundaryIndex[i])->y;
+              A.at<f32>(i,0) = boundary.Pointer(boundaryIndex[i])->x;
               A.at<f32>(i,1) = 1;
-              b.at<f32>(i,0) = boundary.Pointer(boundaryIndex[i])->x;
+              b.at<f32>(i,0) = boundary.Pointer(boundaryIndex[i])->y;
             }
             
             // TODO: for speed, switch to QR with gram
@@ -304,7 +283,8 @@ namespace Anki
               xInt = lineFits[iLine].slope*yInt + lineFits[iLine].intercept;
             }
             
-            if(xInt >= 1 && xInt <= imageWidth && yInt >= 1 && yInt <= imageHeight) {
+            //if(xInt >= 1 && xInt <= imageWidth && yInt >= 1 && yInt <= imageHeight) {
+            if(xInt >= 0 && xInt < imageWidth && yInt >= 0 && yInt < imageHeight) {
               corners.push_back(cv::Point_<f32>(xInt, yInt));
             }
           } // for(s32 jLine=0; jLine<4; jLine++)
@@ -325,6 +305,11 @@ namespace Anki
         for(s32 i=0; i<4; i++) {
           peaks[i] = Point<s16>(saturate_cast<s16>(sortedQuad.corners[i].x), saturate_cast<s16>(sortedQuad.corners[i].y));
         }
+        
+#ifdef DISPLAY_DEBUG
+        CoreTechPrint("sortedQuad: ");
+        sortedQuad.Print();
+#endif // #ifdef DISPLAY_DEBUG
         
         // Reorder the indexes to be in the order
         // [corner1, theCornerOppositeCorner1, corner2, corner3]

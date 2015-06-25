@@ -4656,10 +4656,10 @@ GTEST_TEST(CoreTech_Vision, LineFitsPeaks)
   peaks.Print("peaks");
 
   ASSERT_TRUE(peaks.get_size() == 4);
-  ASSERT_TRUE(*peaks.Pointer(0) == Point<s16>(163,118));
-  ASSERT_TRUE(*peaks.Pointer(1) == Point<s16>(437,116));
-  ASSERT_TRUE(*peaks.Pointer(2) == Point<s16>(466,371));
-  ASSERT_TRUE(*peaks.Pointer(3) == Point<s16>(182,364));
+  ASSERT_TRUE(*peaks.Pointer(0) == Point<s16>(121,163));
+  ASSERT_TRUE(*peaks.Pointer(1) == Point<s16>(361,182));
+  ASSERT_TRUE(*peaks.Pointer(2) == Point<s16>(375,467));
+  ASSERT_TRUE(*peaks.Pointer(3) == Point<s16>(111,437));
   
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, LineFitsPeaks)
