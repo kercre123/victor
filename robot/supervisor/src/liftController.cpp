@@ -114,6 +114,9 @@ namespace Anki {
         f32 nodEaseOutFraction_ = 0.5f;
         f32 nodHalfPeriod_sec_  = 0.5f;
 
+        // Tapping
+        const u8 MAX_NUM_TAPS_REMAINING = 10;
+        
         
         // Calibration parameters
         typedef enum {
@@ -627,7 +630,29 @@ namespace Anki {
       
       void TapBlockOnGround(u8 numTaps)
       {
-        PRINT("RECVD TapBlockOnGround %d\n", numTaps);
+        //PRINT("RECVD TapBlockOnGround %d\n", numTaps);
+       
+        if (isNodding_) {
+          // If already nodding, just increase the number of nods to do
+          numNodsDesired_ += numTaps;
+          if (numNodsDesired_ > MAX_NUM_TAPS_REMAINING) {
+            numNodsDesired_ = MAX_NUM_TAPS_REMAINING;
+          }
+        } else {
+          // Add tap if the lift is already in a low position
+          if (GetDesiredHeight() <= LIFT_HEIGHT_LOWDOCK + 5) {
+            ++numTaps;
+          }
+          
+          StartNodding(LIFT_HEIGHT_LOWDOCK, LIFT_HEIGHT_LOWDOCK + 20,
+                       300, numTaps,
+                       0, 0);
+        }
+      }
+      
+      void StopTapping()
+      {
+        
       }
       
     } // namespace LiftController
