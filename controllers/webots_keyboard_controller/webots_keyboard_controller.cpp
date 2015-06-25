@@ -211,6 +211,7 @@ namespace Anki {
       void SendMoveLift(const f32 speed_rad_per_sec);
       void SendMoveHeadToAngle(const f32 rad, const f32 speed, const f32 accel);
       void SendMoveLiftToHeight(const f32 mm, const f32 speed, const f32 accel);
+      void SendTapBlockOnGround(const u8 numTaps);
       void SendStopAllMotors();
       void SendImageRequest(u8 mode, u8 robotID);
       void SendSetRobotImageSendMode(u8 mode);
@@ -796,8 +797,13 @@ namespace Anki {
                 
               case (s32)'Z':
               {
-                commandedLiftSpeed -= liftSpeed;
-                movingLift = true;
+                if(modifier_key == webots::Supervisor::KEYBOARD_ALT) {
+                  // Tap carried block on the ground
+                  SendTapBlockOnGround(1);
+                } else {
+                  commandedLiftSpeed -= liftSpeed;
+                  movingLift = true;
+                }
                 break;
               }
                 
@@ -2035,6 +2041,15 @@ namespace Anki {
         m.accel_rad_per_sec2 = accel;
         U2G::Message message;
         message.Set_SetLiftHeight(m);
+        SendMessage(message);
+      }
+      
+      void SendTapBlockOnGround(const u8 numTaps)
+      {
+        U2G::TapBlockOnGround m;
+        m.numTaps = numTaps;
+        U2G::Message message;
+        message.Set_TapBlockOnGround(m);
         SendMessage(message);
       }
       
