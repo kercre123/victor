@@ -17,6 +17,8 @@
 
 #include "anki/cozmo/basestation/comms/robot/robotMessages.h"
 
+#include "anki/cozmo/shared/cozmoTypes.h"
+
 namespace Anki {
 namespace Cozmo {
   
@@ -58,12 +60,13 @@ namespace Cozmo {
   class HeadAngleKeyFrame : public IKeyFrame
   {
   public:
+    HeadAngleKeyFrame() { }
     
     //HeadAngleKeyFrame(s8 angle_deg, u8 angle_variability_deg, TimeStamp_t duration);
     
     virtual RobotMessage* GetStreamMessage() override;
     
-    static const std::string& GetClassName() const {
+    static const std::string& GetClassName() {
       static const std::string ClassName("HeadAngleKeyFrame");
       return ClassName;
     }
@@ -76,16 +79,18 @@ namespace Cozmo {
     s8          _angle_deg;
     u8          _angleVariability_deg;
     
-    MessageAnimStreamKeyFrame_HeadAngle _streamHeadMsg;
+    MessageAnimKeyFrame_HeadAngle _streamHeadMsg;
     
   };
   
   class LiftHeightKeyFrame : public IKeyFrame
   {
   public:
+    LiftHeightKeyFrame() { }
+    
     virtual RobotMessage* GetStreamMessage() override;
     
-    static const std::string& GetClassName() const {
+    static const std::string& GetClassName() {
       static const std::string ClassName("LiftHeightKeyFrame");
       return ClassName;
     }
@@ -105,12 +110,14 @@ namespace Cozmo {
   class DeviceAudioKeyFrame : public IKeyFrame
   {
   public:
+    DeviceAudioKeyFrame() { }
+    
     // Play sound on device
     void PlayOnDevice();
     
     virtual RobotMessage* GetStreamMessage() override;
     
-    static const std::string& GetClassName() const {
+    static const std::string& GetClassName() {
       static const std::string ClassName("DeviceAudioKeyFrame");
       return ClassName;
     }
@@ -125,9 +132,11 @@ namespace Cozmo {
   class RobotAudioKeyFrame : public IKeyFrame
   {
   public:
+    RobotAudioKeyFrame() { }
+    
     virtual RobotMessage* GetStreamMessage() override;
     
-    static const std::string& GetClassName() const {
+    static const std::string& GetClassName() {
       static const std::string ClassName("RobotAudioKeyFrame");
       return ClassName;
     }
@@ -147,9 +156,11 @@ namespace Cozmo {
   class FaceImageKeyFrame : public IKeyFrame
   {
   public:
+    FaceImageKeyFrame() { }
+    
     virtual RobotMessage* GetStreamMessage() override;
     
-    static const std::string& GetClassName() const {
+    static const std::string& GetClassName() {
       static const std::string ClassName("FaceImageKeyFrame");
       return ClassName;
     }
@@ -167,9 +178,11 @@ namespace Cozmo {
   class FacePositionKeyFrame : public IKeyFrame
   {
   public:
+    FacePositionKeyFrame() { }
+    
     virtual RobotMessage* GetStreamMessage() override;
     
-    static const std::string& GetClassName() const {
+    static const std::string& GetClassName() {
       static const std::string ClassName("FacePositionKeyFrame");
       return ClassName;
     }
@@ -204,7 +217,7 @@ namespace Cozmo {
     
     void Clear();
     
-    const std::string& GetName() const { return _name_; }
+    const std::string& GetName() const { return _name; }
     
   private:
     
@@ -224,7 +237,7 @@ namespace Cozmo {
       
       void Init();
       
-      Result AddKeyFrame(const FRAME_TYPE& keyFrame) { _frames.emplace_back(keyFrame); }
+      Result AddKeyFrame(const FRAME_TYPE& keyFrame) { _frames.emplace_back(keyFrame); return RESULT_OK; }
       
       Result AddKeyFrame(const Json::Value& jsonRoot);
       
@@ -233,12 +246,15 @@ namespace Cozmo {
       FRAME_TYPE& GetNextFrame() { return *_frameIter; }
       
       void Increment() { ++_frameIter; }
-      bool HasFramesLeft() const { _frameIter != _frames.end(); }
+      
+      bool HasFramesLeft() const { return _frameIter != _frames.end(); }
       
       bool IsEmpty() const { return _frames.empty(); }
       
+      void Clear() { _frames.clear(); _frameIter = _frames.end(); }
+      
     private:
-      using FrameList = std::vector<IKeyFrame>;
+      using FrameList = std::vector<FRAME_TYPE>;
       FrameList                    _frames;
       typename FrameList::iterator _frameIter;
     };

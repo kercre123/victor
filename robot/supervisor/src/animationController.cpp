@@ -327,7 +327,7 @@ namespace AnimationController {
    */
   
 
-  
+  /*
   Result AddKeyFrameToCannedAnimation(const KeyFrame&     keyframe,
                                       const AnimationID_t whichAnimation)
   {
@@ -337,6 +337,7 @@ namespace AnimationController {
     
     return _cannedAnimations[whichAnimation].AddKeyFrame(keyframe);
   }
+   */
   
   
   static Result AdvanceLastFrame()
@@ -403,7 +404,7 @@ namespace AnimationController {
     // Just set the last frame's head properties:
     StreamedKeyFrame& lastKeyFrame = _keyFrameBuffer[_lastFrame];
     lastKeyFrame.setsWhichTracks |= StreamedKeyFrame::KF_SETS_HEAD;
-    lastKeyFrame.headAngle_rad = msg.angle_rad;
+    lastKeyFrame.headAngle_deg = msg.angle_deg;
     lastKeyFrame.headTime_ms   = msg.time_ms;
     
     return RESULT_OK;
@@ -463,7 +464,7 @@ namespace AnimationController {
       // If AudioReady() returns true, we are ready to move to the next keyframe
       if(HAL::AudioReady()) {
         
-        const StreamedKeyFrame& keyFrame = _keyFrameBuffer[_currentFrame];
+        StreamedKeyFrame& keyFrame = _keyFrameBuffer[_currentFrame];
         
         // Go through each track and see if this keyframe specifies anything
         // for it. If so, take appropriate action.
@@ -485,7 +486,7 @@ namespace AnimationController {
           
           if(keyFrame.setsWhichTracks & StreamedKeyFrame::KF_SETS_HEAD) {
             
-            HeadController::SetDesiredAngle(static_cast<f32>(keyFrame.headAngle_rad), 0.5f, 0.5f,
+            HeadController::SetDesiredAngle(DEG_TO_RAD(static_cast<f32>(keyFrame.headAngle_deg)), 0.5f, 0.5f,
                                             static_cast<f32>(keyFrame.headTime_ms)*.001f);
             
           } // if(setsHead)
@@ -525,6 +526,7 @@ namespace AnimationController {
     
   } // Update()
 
+  /*
   void TransitionAndPlay(const AnimationID_t transitionAnim,
                          const AnimationID_t stateAnim)
   {
@@ -572,7 +574,7 @@ namespace AnimationController {
     
     _cannedAnimations[_currAnimID].Init();
     
-    /*
+    // *
     startingRobotAngle_ = Localization::GetCurrentMatOrientation();
     startingHeadAngle_ = HeadController::GetAngleRad();
     HeadController::GetSpeedAndAccel(startingHeadMaxSpeed_, startingHeadStartAccel_);
@@ -582,10 +584,11 @@ namespace AnimationController {
     {
       animStartFn_[currAnim_]();
     }
-     */
+    * //
     
   } // Play()
-
+*/
+  
   /*
   // Stops the current animation
   void StopCurrent() {
@@ -611,41 +614,44 @@ namespace AnimationController {
   void ReallyStop()
   {
    */
-  void Stop()
-  {
-    if(_currAnimID != ANIM_IDLE) {
-      _cannedAnimations[_currAnimID].Stop();
-    }
-    
-    //_isStopping = _wasStopping = false;
-    //_queuedAnimID = ANIM_IDLE;
-    _currAnimID = ANIM_IDLE;
-   
-    /* This should all be done by Animation::Stop() now?
-    // Stop all motors, lights, and sounds
-    LiftController::Enable();
-    LiftController::SetAngularVelocity(0);
-    HeadController::Enable();
-    HeadController::SetAngularVelocity(0);
-    
-    SteeringController::ExecuteDirectDrive(0, 0);
-    SpeedController::SetBothDesiredAndCurrentUserSpeed(0);
-     */
-  }
   
   
-  bool IsPlaying()
-  {
-    return _currAnimID != ANIM_IDLE;
-  }
+//  
+//  void Stop()
+//  {
+//    if(_currAnimID != ANIM_IDLE) {
+//      _cannedAnimations[_currAnimID].Stop();
+//    }
+//    
+//    //_isStopping = _wasStopping = false;
+//    //_queuedAnimID = ANIM_IDLE;
+//    _currAnimID = ANIM_IDLE;
+//   
+//    /* This should all be done by Animation::Stop() now?
+//    // Stop all motors, lights, and sounds
+//    LiftController::Enable();
+//    LiftController::SetAngularVelocity(0);
+//    HeadController::Enable();
+//    HeadController::SetAngularVelocity(0);
+//    
+//    SteeringController::ExecuteDirectDrive(0, 0);
+//    SpeedController::SetBothDesiredAndCurrentUserSpeed(0);
+//     */
+//  }
   
-  bool IsDefined(const AnimationID_t anim)
-  {
-    if(anim < 0 || anim >= MAX_CANNED_ANIMATIONS) {
-      return false;
-    }
-    return _cannedAnimations[anim].IsDefined();
-  }
+//  
+//  bool IsPlaying()
+//  {
+//    return _currAnimID != ANIM_IDLE;
+//  }
+//  
+//  bool IsDefined(const AnimationID_t anim)
+//  {
+//    if(anim < 0 || anim >= MAX_CANNED_ANIMATIONS) {
+//      return false;
+//    }
+//    return _cannedAnimations[anim].IsDefined();
+//  }
   
 } // namespace AnimationController
 } // namespace Cozmo

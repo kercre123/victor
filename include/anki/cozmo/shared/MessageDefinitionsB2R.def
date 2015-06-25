@@ -296,6 +296,7 @@ ADD_MESSAGE_MEMBER(s32, maxObjectHeight)
 ADD_MESSAGE_MEMBER(s32, maxObjectWidth)
 END_MESSAGE_DEFINITION(SetFaceDetectParams)
 
+/*
 // PlayAnimation
 START_MESSAGE_DEFINITION(PlayAnimation, 1)
 ADD_MESSAGE_MEMBER(u32, numLoops)
@@ -307,19 +308,22 @@ START_MESSAGE_DEFINITION(TransitionToStateAnimation, 1)
 ADD_MESSAGE_MEMBER(u8, transitionAnimID)
 ADD_MESSAGE_MEMBER(u8, stateAnimID)
 END_MESSAGE_DEFINITION(TransitionToStateAnimation)
+*/
 
 // AbortAnimation
 START_MESSAGE_DEFINITION(AbortAnimation, 1)
 END_MESSAGE_DEFINITION(AbortAnimation)
 
+/*
 // ClearCannedAnimation
 START_MESSAGE_DEFINITION(ClearCannedAnimation, 2)
 ADD_MESSAGE_MEMBER(u8, animationID)
 END_MESSAGE_DEFINITION(ClearCannedAnimation)
+*/
 
 // TODO: Make a macro for common keyframe members (but how to deal with decreasing size order?)
 
-
+/*
 // AddAnimKeyFrame_SetHeadAngle
 START_MESSAGE_DEFINITION(AddAnimKeyFrame_SetHeadAngle, 2)
 ADD_MESSAGE_MEMBER(u16, relTime_ms)
@@ -396,7 +400,6 @@ ADD_MESSAGE_MEMBER(u8,  finalHeight_mm)
 ADD_MESSAGE_MEMBER(u8,  animationID)
 END_MESSAGE_DEFINITION(AddAnimKeyFrame_StopLiftNod)
 
-/*
 // AddAnimKeyFrame_SetLEDColors
 START_MESSAGE_DEFINITION(AddAnimKeyFrame_SetLEDColors, 2)
 //ADD_MESSAGE_MEMBER_ARRAY(u32, LEDcolors, 8) // TODO: How do we make NUM_LEDS here match HAL::NUM_LEDS?
@@ -413,7 +416,6 @@ ADD_MESSAGE_MEMBER(u8,  transitionIn)
 ADD_MESSAGE_MEMBER(u8,  transitionOut)
 ADD_MESSAGE_MEMBER(u8,  animationID)
 END_MESSAGE_DEFINITION(AddAnimKeyFrame_SetLEDColors)
-*/
 
 // AddAnimKeyFrame_DriveLine
 START_MESSAGE_DEFINITION(AddAnimKeyFrame_DriveLine, 2)
@@ -534,6 +536,8 @@ ADD_MESSAGE_MEMBER(u8,  animationID)
 ADD_MESSAGE_MEMBER(u8,  animToPlay)
 ADD_MESSAGE_MEMBER(u8,  numLoops)
 END_MESSAGE_DEFINITION(AddAnimKeyFrame_TriggerAnimation)
+*/
+
 
 // IMURequest
 START_MESSAGE_DEFINITION(IMURequest, 1)

@@ -1202,10 +1202,6 @@ namespace Anki {
       if(lastResult == RESULT_OK) {
         _cannedAnimations.Clear();
         lastResult = _cannedAnimations.DefineFromJson(animDefs);
-        if(lastResult == RESULT_OK) {
-          // Immediately send the canned animations out
-          lastResult = _cannedAnimations.Send(_ID, _msgHandler);
-        }
       }
       
       return lastResult;
@@ -2432,28 +2428,28 @@ namespace Anki {
       return SendMessage(m);
     }
 
-    Result Robot::SendPlayAnimation(const char *name, const u32 numLoops)
-    {
-      MessagePlayAnimation m;
-      m.animationID = _cannedAnimations.GetID(name);
-      if(m.animationID >= 0) {
-        m.numLoops = numLoops;
-        return SendMessage(m);
-      }
-      return RESULT_FAIL;
-    }
-    
-    Result Robot::SendTransitionToStateAnimation(const char *transitionAnimName,
-                                                 const char *stateAnimName)
-    {
-      MessageTransitionToStateAnimation m;
-      m.transitionAnimID = _cannedAnimations.GetID(transitionAnimName);
-      m.stateAnimID      = _cannedAnimations.GetID(stateAnimName);
-      if(m.transitionAnimID >= 0 && m.stateAnimID >= 0) {
-        return SendMessage(m);
-      }
-      return RESULT_FAIL;
-    }
+//    Result Robot::SendPlayAnimation(const char *name, const u32 numLoops)
+//    {
+//      MessagePlayAnimation m;
+//      m.animationID = _cannedAnimations.GetID(name);
+//      if(m.animationID >= 0) {
+//        m.numLoops = numLoops;
+//        return SendMessage(m);
+//      }
+//      return RESULT_FAIL;
+//    }
+//    
+//    Result Robot::SendTransitionToStateAnimation(const char *transitionAnimName,
+//                                                 const char *stateAnimName)
+//    {
+//      MessageTransitionToStateAnimation m;
+//      m.transitionAnimID = _cannedAnimations.GetID(transitionAnimName);
+//      m.stateAnimID      = _cannedAnimations.GetID(stateAnimName);
+//      if(m.transitionAnimID >= 0 && m.stateAnimID >= 0) {
+//        return SendMessage(m);
+//      }
+//      return RESULT_FAIL;
+//    }
     
     Result Robot::StartTestMode(const TestMode mode, s32 p1, s32 p2, s32 p3) const
     {

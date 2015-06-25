@@ -268,7 +268,7 @@ return RESULT_FAIL; \
     
     if(HasFramesLeft() && GetNextFrame().IsTimeToPlay(startTime_ms, currTime_ms))
     {
-      msg = GetNextFrame().GetMessage();
+      msg = GetNextFrame().GetStreamMessage();
       Increment();
     }
     
@@ -278,7 +278,7 @@ return RESULT_FAIL; \
   template<typename FRAME_TYPE>
   Result Animation::Track<FRAME_TYPE>::AddKeyFrame(const Json::Value &jsonRoot)
   {
-    _frames.push_back();
+    _frames.emplace_back();
     return _frames.back().DefineFromJson(jsonRoot);
   }
 
@@ -292,7 +292,9 @@ return RESULT_FAIL; \
     }
     
     _name = jsonRoot["Name"].asString();
-    
+   
+    // Clear whatever is in the existing animation
+    Clear();
     
     const s32 numFrames = jsonRoot.size();
     for(s32 iFrame = 0; iFrame < numFrames; ++iFrame)
@@ -353,6 +355,8 @@ return RESULT_FAIL; \
     
     _headTrack.Init();
     _liftTrack.Init();
+    _faceImageTrack.Init();
+    _facePosTrack.Init();
     _deviceAudioTrack.Init();
     _robotAudioTrack.Init();
     
@@ -444,7 +448,12 @@ return RESULT_FAIL; \
   
   void Animation::Clear()
   {
-    
+    _headTrack.Clear();
+    _liftTrack.Clear();
+    _faceImageTrack.Clear();
+    _facePosTrack.Clear();
+    _deviceAudioTrack.Clear();
+    _robotAudioTrack.Clear();
   }
   
   bool Animation::IsEmpty() const
@@ -470,7 +479,7 @@ return RESULT_FAIL; \
   //////////////////////////////////////////////
   
   CannedAnimationContainer::CannedAnimationContainer()
-  : _streamingAnimationIter(_animations.end())
+  : _streamingAnimation(nullptr)
   {
     DefineHardCoded();
   }
@@ -530,17 +539,18 @@ return RESULT_FAIL; \
     return animID;
   }
   
-  Result CannedAnimationContainer::SetStreamingAnimation(const std::string& name)
+  Result CannedAnimationContainer::SetStreamingAnimation(const std::string& name, u32 numLoops)
   {
     _streamingAnimation = GetAnimation(name);
     if(_streamingAnimation == nullptr) {
       return RESULT_FAIL;
     } else {
+      _numLoops = numLoops;
+      _loopCtr = 0;
       return RESULT_OK;
     }
   }
   
-
   /*
   u16 CannedAnimationContainer::GetLengthInMilliSeconds(const std::string& name) const
   {
@@ -749,23 +759,21 @@ return RESULT_FAIL; \
     
     for(auto const& animationName : animationNames)
     {
-      Result lastResult = AddAnimation(animationName);
-      if(lastResult != RESULT_OK) {
-        PRINT_NAMED_ERROR("CannedAnimationContainer.DefineFromJson",
-                          "Failed to add animation named '%s'.",
+      if(RESULT_OK != AddAnimation(animationName)) {
+        PRINT_NAMED_INFO("CannedAnimationContainer.DefineFromJson.ReplaceName",
+                          "Replacing existing animation named '%s'.\n",
                           animationName.c_str());
-        return lastResult;
       }
       
       Animation* animation = GetAnimation(animationName);
       if(animation == nullptr) {
         PRINT_NAMED_ERROR("CannedAnimationContainer.DefineFromJson",
-                          "Added animation named '%s' but getting it returned nullptr.",
+                          "Could not GetAnimation named '%s'.",
                           animationName.c_str());
         return RESULT_FAIL;
       }
       
-      lastResult = animation->DefineFromJson(jsonRoot[animationName]);
+      Result lastResult = animation->DefineFromJson(jsonRoot[animationName]);
       
       // Sanity check
       if(animation->GetName() != animationName) {
