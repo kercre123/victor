@@ -142,6 +142,7 @@ namespace Anki {
 
     // Animation ID
     typedef s32 AnimationID_t;
+    static const AnimationID_t INVALID_ANIMATION_ID = -1;
 
     // Prox sensors
     typedef enum {

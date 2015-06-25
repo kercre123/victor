@@ -24,38 +24,82 @@ namespace Cozmo {
   class Robot;
   class IRobotMessageHandler;
   
-  class AnimationStreamer {
-    
-    
-  };
-  
   class IKeyFrame
   {
   public:
     IKeyFrame();
-    IKeyFrame(const Json::Value& root);
+    //IKeyFrame(const Json::Value& root);
     
     ~IKeyFrame();
     
     bool IsValid() const { return _isValid; }
     
-    static const u32 SAMPLE_LENGTH_MS = 33;
-    
-    Result ReadFromJson(const Json::Value &json);
-    
     bool IsTimeToPlay(TimeStamp_t startTime_ms, TimeStamp_t currTime_ms) const;
     
     TimeStamp_t GetTriggerTime() const { return _triggerTime_ms; }
+
+    Result DefineFromJson(const Json::Value &json);
     
-    virtual RobotMessage* GetMessage() = 0; // { return &_msg; }
+    // Fill some kind of message for streaming and return it. Return nullptr
+    // if not available.
+    virtual RobotMessage* GetStreamMessage() = 0;
     
-        //virtual RobotMessage* GetMessage() = 0;
-    //virtual Result Send(IRobotMessageHandler* msgHandler) const = 0;
+  protected:
+    virtual Result SetMembersFromJson(const Json::Value &jsonRoot) = 0;
+    
+    //void SetIsValid(bool isValid) { _isValid = isValid; }
     
   private:
     //RobotMessage* _msg;
     TimeStamp_t   _triggerTime_ms;
     bool          _isValid;
+  };
+  
+  class HeadAngleKeyFrame : public IKeyFrame
+  {
+  public:
+    
+    //HeadAngleKeyFrame(s8 angle_deg, u8 angle_variability_deg, TimeStamp_t duration);
+    
+    virtual RobotMessage* GetStreamMessage() override;
+    
+    static const std::string& GetClassName() const {
+      static const std::string ClassName("HeadAngleKeyFrame");
+      return ClassName;
+    }
+    
+  protected:
+    virtual Result SetMembersFromJson(const Json::Value &jsonRoot) override;
+    
+  private:
+    TimeStamp_t _durationTime_ms;
+    s8          _angle_deg;
+    u8          _angleVariability_deg;
+    
+    MessageAnimStreamKeyFrame_HeadAngle _streamHeadMsg;
+    
+  };
+  
+  class LiftHeightKeyFrame : public IKeyFrame
+  {
+  public:
+    virtual RobotMessage* GetStreamMessage() override;
+    
+    static const std::string& GetClassName() const {
+      static const std::string ClassName("LiftHeightKeyFrame");
+      return ClassName;
+    }
+    
+  protected:
+    virtual Result SetMembersFromJson(const Json::Value &jsonRoot) override;
+    
+  private:
+    TimeStamp_t _durationTime_ms;
+    u8          _height_mm;
+    u8          _heightVariability_mm;
+    
+    MessageAnimKeyFrame_LiftHeight _streamLiftMsg;
+    
   };
   
   class DeviceAudioKeyFrame : public IKeyFrame
@@ -64,32 +108,81 @@ namespace Cozmo {
     // Play sound on device
     void PlayOnDevice();
     
-    virtual RobotMessage* GetMessage() override { return nullptr; }
+    virtual RobotMessage* GetStreamMessage() override;
+    
+    static const std::string& GetClassName() const {
+      static const std::string ClassName("DeviceAudioKeyFrame");
+      return ClassName;
+    }
+    
+  protected:
+    virtual Result SetMembersFromJson(const Json::Value &jsonRoot) override;
+    
+  private:
+    u32 _audioID;
   };
   
   class RobotAudioKeyFrame : public IKeyFrame
   {
   public:
-
-    // Returns nullptr when no more samples are available
-    MessageAnimKeyFrame_AudioSample* GetAudioSampleMessage();
+    virtual RobotMessage* GetStreamMessage() override;
     
+    static const std::string& GetClassName() const {
+      static const std::string ClassName("RobotAudioKeyFrame");
+      return ClassName;
+    }
+    
+  protected:
+    virtual Result SetMembersFromJson(const Json::Value &jsonRoot) override;
+  
   private:
-    MessageAnimKeyFrame_PlayAudioID* _idMsg;
-    MessageAnimKeyFrame_AudioSample  _audioSampleMsg;
+    u32 _audioID;
+    
     s32 _numSamples;
     s32 _sampleIndex;
+    
+    MessageAnimKeyFrame_AudioSample  _audioSampleMsg;
   };
   
   class FaceImageKeyFrame : public IKeyFrame
   {
   public:
+    virtual RobotMessage* GetStreamMessage() override;
     
-    // Override ReadFromJson() to turn stored image into a FaceImage keyframe
-    // instead of a FaceID message
-    Result ReadFromJson(const Json::Value &json);
+    static const std::string& GetClassName() const {
+      static const std::string ClassName("FaceImageKeyFrame");
+      return ClassName;
+    }
+    
+  protected:
+    virtual Result SetMembersFromJson(const Json::Value &jsonRoot) override;
+    
+  private:
+    u32 _imageID;
+    
+    MessageAnimKeyFrame_FaceImage _streamMsg;
     
   };
+  
+  class FacePositionKeyFrame : public IKeyFrame
+  {
+  public:
+    virtual RobotMessage* GetStreamMessage() override;
+    
+    static const std::string& GetClassName() const {
+      static const std::string ClassName("FacePositionKeyFrame");
+      return ClassName;
+    }
+    
+  protected:
+    virtual Result SetMembersFromJson(const Json::Value &jsonRoot) override;
+    
+  private:
+    s8 _xcen, _ycen;
+    
+    MessageAnimKeyFrame_FacePosition _streamMsg;
+  };
+  
   
   class Animation
   {
@@ -97,9 +190,21 @@ namespace Cozmo {
     Animation();
     
     Result DefineFromJson(Json::Value& json);
+    
+    Result AddKeyFrame(const HeadAngleKeyFrame& kf);
 
     Result Init(Robot& robot);
     Result Update(Robot& robot);
+    
+    // An animation is Empty if *all* its tracks are empty
+    bool IsEmpty() const;
+    
+    // An animation is finished when none of its track have frames left to play
+    bool IsFinished() const;
+    
+    void Clear();
+    
+    const std::string& GetName() const { return _name_; }
     
   private:
     
@@ -108,8 +213,19 @@ namespace Cozmo {
     template<typename FRAME_TYPE>
     class Track {
     public:
+      enum class Type : u8 {
+        HEAD,
+        LIFT,
+        FACE_IMAGE,
+        FACE_POSITION,
+        DEVICE_AUDIO,
+        ROBOT_AUDIO
+      };
       
       void Init();
+      
+      Result AddKeyFrame(const FRAME_TYPE& keyFrame) { _frames.emplace_back(keyFrame); }
+      
       Result AddKeyFrame(const Json::Value& jsonRoot);
       
       RobotMessage* GetNextMessage(TimeStamp_t startTime_ms, TimeStamp_t currTime_ms);
@@ -118,6 +234,8 @@ namespace Cozmo {
       
       void Increment() { ++_frameIter; }
       bool HasFramesLeft() const { _frameIter != _frames.end(); }
+      
+      bool IsEmpty() const { return _frames.empty(); }
       
     private:
       using FrameList = std::vector<IKeyFrame>;
@@ -135,10 +253,10 @@ namespace Cozmo {
     MessageAnimKeyFrame_AudioSilence _silenceMsg;
     
     // All the animation tracks, storing different kinds of KeyFrames
-    Track<IKeyFrame>         _headTrack;
-    Track<IKeyFrame>         _liftTrack;
-    Track<FaceImageKeyFrame> _faceImageTrack;
-    Track<IKeyFrame>         _facePosTrack;
+    Track<HeadAngleKeyFrame>    _headTrack;
+    Track<LiftHeightKeyFrame>   _liftTrack;
+    Track<FaceImageKeyFrame>    _faceImageTrack;
+    Track<FacePositionKeyFrame> _facePosTrack;
     
     Track<DeviceAudioKeyFrame>  _deviceAudioTrack;
     Track<RobotAudioKeyFrame>   _robotAudioTrack;
@@ -152,27 +270,6 @@ namespace Cozmo {
   {
   public:
     
-    class KeyFrameList
-    {
-    public:
-      ~KeyFrameList();
-      
-      void AddKeyFrame(RobotMessage* msg);
-      
-      bool IsEmpty() const {
-        return _keyFrameMessages.empty();
-      }
-      
-      const std::vector<RobotMessage*>& GetMessages() const {
-        return _keyFrameMessages;
-      }
-      
-    private:
-      
-      // TODO: Store some kind of KeyFrame wrapper that holds Message* instead of Message* directly
-      std::vector<RobotMessage*> _keyFrameMessages;
-    }; // class KeyFrameList
-    
     
     CannedAnimationContainer();
     
@@ -182,21 +279,26 @@ namespace Cozmo {
     
     Result AddAnimation(const std::string& name);
     
-    KeyFrameList* GetKeyFrameList(const std::string& name);
+    Animation* GetAnimation(const std::string& name);
     
-    s32 GetID(const std::string& name) const;
+    AnimationID_t GetID(const std::string& name) const;
+    
+    // Sets an animation to be streamed. Actual streaming occurs on calls to Update().
+    Result SetStreamingAnimation(const std::string& name);
+    
+    // If any animation is set for streaming and isn't done yet, stream it.
+    Result Update(Robot& robot);
     
     // TODO: Add a way to ask how long an animation is
     //u16 GetLengthInMilliSeconds(const std::string& name) const;
-    
-    // Is there a better way to do this?
-    Result Send(RobotID_t robotID, IRobotMessageHandler* msgHandler);
     
     void Clear();
     
   private:
     
-    std::map<std::string, std::pair<s32, KeyFrameList> > _animations;
+    std::map<std::string, std::pair<AnimationID_t, Animation> > _animations;
+    
+    Animation* _streamingAnimation;
     
   }; // class Animation
 

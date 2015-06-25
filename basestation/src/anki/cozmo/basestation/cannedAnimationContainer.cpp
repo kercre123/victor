@@ -26,26 +26,22 @@
 #include "anki/common/basestation/colorRGBA.h"
 #include "anki/common/basestation/utils/timer.h"
 
+#include "anki/common/basestation/jsonTools.h"
+
 #include <cassert>
 
+#define DEBUG_ANIMATION_STREAMING 1
 
 namespace Anki {
 namespace Cozmo {
   
+  
+  
   IKeyFrame::IKeyFrame()
-  : _msg(nullptr)
-  , _triggerTime_ms(0)
+  : _triggerTime_ms(0)
   , _isValid(false)
   {
     
-  }
-  
-  IKeyFrame::IKeyFrame(const Json::Value& root)
-  : _isValid(false)
-  {
-    if(RESULT_OK == ReadFromJson(root)) {
-      _isValid = true;
-    }
   }
   
   IKeyFrame::~IKeyFrame()
@@ -58,59 +54,204 @@ namespace Cozmo {
     return (GetTriggerTime() + startTime_ms >= currTime_ms);
   }
   
-  Result IKeyFrame::ReadFromJson(const Json::Value &json)
+  Result IKeyFrame::DefineFromJson(const Json::Value &json)
   {
-    Result lastResult = RESULT_OK;
-    if(_msg != nullptr) {
-      delete _msg;
-      _msg = nullptr;
-    }
+    Result lastResult = SetMembersFromJson(json);
     
-    _msg = RobotMessage::CreateFromJson(json);
-    
-    // Read the frame time from the json file as well
-    if(!json.isMember("triggerTime_ms")) {
-      PRINT_NAMED_ERROR("IKeyFrame.ReadFromJson", "Expecting 'triggerTime_ms' field in KeyFrame Json.\n");
-      lastResult = RESULT_FAIL;
-    } else {
-      _triggerTime_ms = json["triggerTime_ms"].asUInt();
+    if(lastResult == RESULT_OK) {
+      
+      // Read the frame time from the json file as well
+      if(!json.isMember("triggerTime_ms")) {
+        PRINT_NAMED_ERROR("IKeyFrame.ReadFromJson", "Expecting 'triggerTime_ms' field in KeyFrame Json.\n");
+        lastResult = RESULT_FAIL;
+      } else {
+        _triggerTime_ms = json["triggerTime_ms"].asUInt();
+        
+        // Only way to set isValid=true is that SetMembersFromJson succeeded and
+        // triggerTime was found:
+        _isValid = true;
+      }
     }
     
     return lastResult;
   }
   
-  Result FaceImageKeyFrame::ReadFromJson(const Json::Value &json)
+  static s32 RandHelper(const s32 minLimit, const s32 maxLimit)
   {
-    Result lastResult = IKeyFrame::ReadFromJson(json);
-    if(lastResult != RESULT_FAIL) {
-      return lastResult;
-    }
-    
-    // This will (should) be a MessageAnimKeyFrame_FaceImageID initially. We
-    // then want to convert it to a MessageAnimKeyFrame_FaceImage instead
-    MessageAnimKeyFrame_FaceImageID* idMsg = reinterpret_cast<MessageAnimKeyFrame_FaceImageID*>(_msg);
-    if(idMsg == nullptr) {
-      PRINT_NAMED_ERROR("FaceImageKeyFrame.ReadFromJson",
-                        "Failed to dynamically cast to MessageAnimKeyFrame_FaceImageID.\n");
-      return RESULT_FAIL;
-    }
-    
-    MessageAnimKeyFrame_FaceImage* imgMsg = new MessageAnimKeyFrame_FaceImage();
-    
-    // TODO: Populate the message with the current face sample
-    // memcpy(imgMsg.image, LoadFace(idMsg.imageID));
-    
-    // Point the base class message pointer at this new image message, so future
-    // calls to GetMessage() will return this face image for sending.
-    // (Base class destructor will delete it for us.)
-    _msg = imgMsg;
-    
-    // Don't need the ID message anymore
-    delete(idMsg);
+    const s32 num = (std::rand() % (maxLimit - minLimit + 1)) + minLimit;
 
-    return RESULT_OK;
+    assert(num >= minLimit && num <= maxLimit);
     
-  } // FaceImageKeyFrame::ReadFromJson()
+    return num;
+  }
+  
+  
+  // Helper macro used in SetMembersFromJson() overrides below to look for
+  // member variable in Json node and fail if it doesn't exist
+# define GET_MEMBER_FROM_JSON(__JSON__, __NAME__) do { \
+if(!JsonTools::GetValueOptional(__JSON__, QUOTE(__NAME__), this->__NAME__)) { \
+PRINT_NAMED_ERROR("IKeyFrame.GetMemberFromJsonMacro", \
+"Failed to get '%s' from Json file.", QUOTE(__NAME__)); \
+return RESULT_FAIL; \
+} } while(0)
+  
+  //
+  // HeadAngleKeyFrame
+  //
+  
+  /*
+  HeadAngleKeyFrame::HeadAngleKeyFrame(s8 angle_deg, u8 angle_variability_deg, TimeStamp_t duration)
+  : _durationTime_ms(duration)
+  , _angle_deg(angle_deg)
+  , _angleVariability_deg(angle_variability_deg)
+  {
+    IKeyFrame::SetIsValid(true);
+  }
+   */
+  
+  RobotMessage* HeadAngleKeyFrame::GetStreamMessage()
+  {
+    _streamHeadMsg.time_ms = _durationTime_ms;
+    
+    // Add variability:
+    if(_angleVariability_deg > 0) {
+      _streamHeadMsg.angle_deg = static_cast<s8>(RandHelper(_angle_deg - _angleVariability_deg,
+                                                            _angle_deg + _angleVariability_deg));
+    } else {
+      _streamHeadMsg.angle_deg = _angle_deg;
+    }
+    
+    return &_streamHeadMsg;
+  }
+  
+  Result HeadAngleKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot)
+  {
+    GET_MEMBER_FROM_JSON(jsonRoot, _durationTime_ms);
+    GET_MEMBER_FROM_JSON(jsonRoot, _angle_deg);
+    GET_MEMBER_FROM_JSON(jsonRoot, _angleVariability_deg);
+    
+    return RESULT_OK;
+  }
+  
+  //
+  // LiftHeightKeyFrame
+  //
+  
+  RobotMessage* LiftHeightKeyFrame::GetStreamMessage()
+  {
+    _streamLiftMsg.time_ms = _durationTime_ms;
+    
+    // Add variability:
+    if(_heightVariability_mm > 0) {
+      _streamLiftMsg.height_mm = static_cast<s8>(RandHelper(_height_mm - _heightVariability_mm,
+                                                            _height_mm + _heightVariability_mm));
+    } else {
+      _streamLiftMsg.height_mm = _height_mm;
+    }
+    
+    return &_streamLiftMsg;
+  }
+  
+  Result LiftHeightKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot)
+  {
+    GET_MEMBER_FROM_JSON(jsonRoot, _durationTime_ms);
+    GET_MEMBER_FROM_JSON(jsonRoot, _height_mm);
+    GET_MEMBER_FROM_JSON(jsonRoot, _heightVariability_mm);
+    
+    return RESULT_OK;
+  }
+  
+  //
+  // FaceImageKeyFrame
+  //
+  
+  Result FaceImageKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot)
+  {
+    GET_MEMBER_FROM_JSON(jsonRoot, _imageID);
+    
+    return RESULT_OK;
+  }
+  
+  RobotMessage* FaceImageKeyFrame::GetStreamMessage()
+  {
+    // Fill the message for streaming using the imageID
+    // memcpy(_streamMsg.image, LoadFaceImage(_imageID);
+    
+    return &_streamMsg;
+  }
+  
+  
+  
+  //
+  // RobotAudioKeyFrame
+  //
+  
+  Result RobotAudioKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot)
+  {
+    GET_MEMBER_FROM_JSON(jsonRoot, _audioID);
+    
+    // TODO: Compute number of samples for this audio ID
+    // TODO: Catch failure if ID is invalid
+    // _numSamples = wwise::GetNumSamples(_idMsg.audioID, SAMPLE_SIZE);
+    
+    _sampleIndex = 0;
+    
+    return RESULT_OK;
+  }
+  
+  RobotMessage* RobotAudioKeyFrame::GetStreamMessage()
+  {
+    // Populate the message with the next chunk of audio data and send it out
+    if(_sampleIndex < _numSamples) {
+      
+      // TODO: Get next chunk of audio from wwise or something?
+      //wwise::GetNextSample(_audioSampleMsg.sample, 480);
+      
+      ++_sampleIndex;
+      
+      return &_audioSampleMsg;
+    } else {
+      return nullptr;
+    }
+  }
+  
+  //
+  // DeviceAudioKeyFrame
+  //
+  
+  Result DeviceAudioKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot)
+  {
+    GET_MEMBER_FROM_JSON(jsonRoot, _audioID);
+    
+    return RESULT_OK;
+  }
+  
+  RobotMessage* DeviceAudioKeyFrame::GetStreamMessage()
+  {
+    // Device audio is not streamed to the robot, by definition, so it always
+    // returns nullptr
+    return nullptr;
+  }
+  
+  //
+  // FacePositionKeyFrame
+  //
+  
+  RobotMessage* FacePositionKeyFrame::GetStreamMessage()
+  {
+    _streamMsg.xCen = _xcen;
+    _streamMsg.yCen = _ycen;
+    
+    return &_streamMsg;
+  }
+  
+  Result FacePositionKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot)
+  {
+    GET_MEMBER_FROM_JSON(jsonRoot, _xcen);
+    GET_MEMBER_FROM_JSON(jsonRoot, _ycen);
+    
+    return RESULT_OK;
+  }
   
   
   template<typename FRAME_TYPE>
@@ -137,44 +278,10 @@ namespace Cozmo {
   template<typename FRAME_TYPE>
   Result Animation::Track<FRAME_TYPE>::AddKeyFrame(const Json::Value &jsonRoot)
   {
-    _frames.emplace_back(jsonRoot);
-    if(_frames.back().IsValid()) {
-      return RESULT_OK;
-    } else {
-      return RESULT_FAIL;
-    }
+    _frames.push_back();
+    return _frames.back().DefineFromJson(jsonRoot);
   }
-  
-  MessageAnimKeyFrame_AudioSample* RobotAudioKeyFrame::GetAudioSampleMessage()
-  {
-    if(_idMsg == nullptr) {
-      _idMsg = dynamic_cast<MessageAnimKeyFrame_PlayAudioID*>(GetMessage());
-      
-      if(_idMsg == nullptr) {
-        PRINT_NAMED_ERROR("RobotAudioKeyFrame.GetAudioSampleMessage",
-                          "Failed to dynamically cast to MessageAnimKeyFrame_PlayAudioID.\n");
-        return nullptr;
-      }
-      
-      // TODO: Compute number of samples for this audio ID
-      // _numSamples = wwise::GetNumSamples(_idMsg.audioID, SAMPLE_SIZE);
-      _sampleIndex = 0;
-    }
-    
-    // Populate the message with the next chunk of audio data and send it out
-    if(_sampleIndex < _numSamples) {
-      
-      // TODO: Get next chunk of audio from wwise or something?
-      //wwise::GetNextSample(_msg.sample, 480);
 
-      ++_sampleIndex;
-      
-      return &_audioSampleMsg;
-    } else {
-      return nullptr;
-    }
-  }
-  
   
   Result Animation::DefineFromJson(Json::Value &jsonRoot)
   {
@@ -192,43 +299,6 @@ namespace Cozmo {
     {
       Json::Value& jsonFrame = jsonRoot[iFrame];
       
-      // Semi-hack to make sure each message has the animatino ID in it.
-      // We do this here since the CreateFromJson() call below returns a
-      // pointer to a base-class message (without accessible "animationID"
-      // field).
-      //      jsonFrame["animationID"] = animID;
-      
-      /*
-      if(!jsonFrame.isMember("transitionIn")) {
-        PRINT_NAMED_ERROR("CannedAnimationContainer.DefineFromJson.NoTransitionIn",
-                          "Missing 'transitionIn' field for '%s' frame of '%s' animation.\n",
-                          jsonFrame["Name"].asString().c_str(),
-                          _name.c_str());
-        return RESULT_FAIL;
-      }
-      
-      if(!jsonFrame.isMember("transitionOut")) {
-        PRINT_NAMED_ERROR("CannedAnimationContainer.DefineFromJson.NoTransitionOut",
-                          "Missing 'transitionOut' field for '%s' frame of '%s' animation.\n",
-                          jsonFrame["Name"].asString().c_str(),
-                          _name.c_str());
-        return RESULT_FAIL;
-      }
-       */
-      
-      /*
-      if(jsonFrame.isMember("animToPlay")) {
-        if(!jsonFrame["animToPlay"].isString()) {
-          PRINT_NAMED_ERROR("CannedAnimationContainer.DefineFromJson.animToPlayString",
-                            "Expecting 'animToPlay' field for '%s' frame of '%s' animation to be a string.\n",
-                            jsonFrame["Name"].asString().c_str(),
-                            animationName.c_str());
-        } else {
-          jsonFrame["animToPlay"] = GetID(jsonFrame["animToPlay"].asString());
-        }
-      }
-       */
-      
       if(!jsonFrame.isMember("Name")) {
         PRINT_NAMED_ERROR("Animation.DefineFromJson.NoFrameName",
                           "Missing 'Name' field for frame %d of '%s' animation.\n",
@@ -241,14 +311,18 @@ namespace Cozmo {
       Result addResult = RESULT_FAIL;
       
       // Map from string name of frame to which track we want to store it in:
-      if(frameName == "AnimKeyFrame_HeadAngle") {
+      if(frameName == HeadAngleKeyFrame::GetClassName()) {
         addResult = _headTrack.AddKeyFrame(jsonFrame);
-      } else if(frameName == "AnimKeyFrame_LiftHeight") {
+      } else if(frameName == LiftHeightKeyFrame::GetClassName()) {
         addResult = _liftTrack.AddKeyFrame(jsonFrame);
-      } else if(frameName == "AnimKeyFrame_FaceFrameID") {
+      } else if(frameName == FaceImageKeyFrame::GetClassName()) {
         addResult = _faceImageTrack.AddKeyFrame(jsonFrame);
-      } else if(frameName == "AnimKeyFrame_FacePosition") {
+      } else if(frameName == FacePositionKeyFrame::GetClassName()) {
         addResult = _facePosTrack.AddKeyFrame(jsonFrame);
+      } else if(frameName == DeviceAudioKeyFrame::GetClassName()) {
+        addResult = _deviceAudioTrack.AddKeyFrame(jsonFrame);
+      } else if(frameName == RobotAudioKeyFrame::GetClassName()) {
+        addResult = _robotAudioTrack.AddKeyFrame(jsonFrame);
       } else {
         PRINT_NAMED_ERROR("Animation.DefineFromJson.UnrecognizedFrameName",
                           "Frame %d in '%s' animation has unrecognized name '%s'.\n",
@@ -266,6 +340,11 @@ namespace Cozmo {
     } // for each frame
     
     return RESULT_OK;
+  }
+  
+  Result Animation::AddKeyFrame(const HeadAngleKeyFrame& kf)
+  {
+    return _headTrack.AddKeyFrame(kf);
   }
   
   Result Animation::Init(Robot& robot)
@@ -303,14 +382,14 @@ namespace Cozmo {
       if(_robotAudioTrack.HasFramesLeft() &&
          _robotAudioTrack.GetNextFrame().IsTimeToPlay(_startTime_ms, currTime_ms))
       {
-        msg = _robotAudioTrack.GetNextFrame().GetAudioSampleMessage();
+        msg = _robotAudioTrack.GetNextFrame().GetStreamMessage();
         if(msg != nullptr) {
           // Still have samples to send, don't increment to the next frame in the track
           robot.SendMessage(*msg);
           
         } else {
-          // Nothing left to send in this frame, move to next, and for now
-          // send silence
+          // No samples left to send in for this keyframe. Move to next, and for now
+          // send silence.
           _robotAudioTrack.Increment();
           robot.SendMessage(_silenceMsg);
         }
@@ -363,34 +442,43 @@ namespace Cozmo {
     
   } // Animation::Update()
   
+  void Animation::Clear()
+  {
+    
+  }
+  
+  bool Animation::IsEmpty() const
+  {
+    return (_headTrack.IsEmpty() &&
+            _liftTrack.IsEmpty() &&
+            _faceImageTrack.IsEmpty() &&
+            _facePosTrack.IsEmpty() &&
+            _deviceAudioTrack.IsEmpty() &&
+            _robotAudioTrack.IsEmpty());
+  }
+  
+  bool Animation::IsFinished() const
+  {
+    return !(_headTrack.HasFramesLeft() ||
+             _liftTrack.HasFramesLeft() ||
+             _faceImageTrack.HasFramesLeft() ||
+             _facePosTrack.HasFramesLeft() ||
+             _deviceAudioTrack.HasFramesLeft() ||
+             _robotAudioTrack.HasFramesLeft());
+  }
   
   //////////////////////////////////////////////
   
   CannedAnimationContainer::CannedAnimationContainer()
+  : _streamingAnimationIter(_animations.end())
   {
     DefineHardCoded();
   }
-      
-  CannedAnimationContainer::KeyFrameList::~KeyFrameList()
+  
+  Result CannedAnimationContainer::AddAnimation(const std::string& name)
   {
-    for(RobotMessage* msg : _keyFrameMessages) {
-      if(msg != nullptr) {
-        delete msg;
-      }
-    }
-  }
-
-  void CannedAnimationContainer::KeyFrameList::AddKeyFrame(RobotMessage* msg)
-  {
-    if(msg != nullptr) {
-      _keyFrameMessages.push_back(msg);
-    } else {
-      PRINT_NAMED_WARNING("Robot.KeyFrameList.AddKeyFrame.NullMessagePtr",
-                          "Encountered NULL message adding canned keyframe.\n");
-    }
-  }
-
-  Result CannedAnimationContainer::AddAnimation(const std::string& name) {
+    Result lastResult = RESULT_OK;
+    
     auto retVal = _animations.find(name);
     if(retVal == _animations.end()) {
       const s32 animID = static_cast<s32>(_animations.size());
@@ -400,38 +488,58 @@ namespace Cozmo {
                        "Adding new animation named '%s' with ID=%d\n",
                        name.c_str(), animID);
       
-      return RESULT_OK;
     } else {
       PRINT_NAMED_ERROR("CannedAnimationContainer.AddAnimation.DuplicateName",
                         "Animation named '%s' already exists. Not adding.\n",
                         name.c_str());
-      return RESULT_FAIL;
+      lastResult = RESULT_FAIL;
     }
+    
+    return lastResult;
   }
 
-  CannedAnimationContainer::KeyFrameList* CannedAnimationContainer::GetKeyFrameList(const std::string& name) {
+  Animation* CannedAnimationContainer::GetAnimation(const std::string& name)
+  {
+    Animation* animPtr = nullptr;
+    
     auto retVal = _animations.find(name);
     if(retVal == _animations.end()) {
       PRINT_NAMED_ERROR("CannedAnimationContainer.GetKeyFrameList.InvalidName",
-                        "KeyFrameList requested for unknown animation '%s'.\n",
+                        "Animation requested for unknown animation '%s'.\n",
                         name.c_str());
-      return nullptr;
     } else {
-      return &retVal->second.second;
+      animPtr = &retVal->second.second;
     }
+    
+    return animPtr;
   }
 
-  s32 CannedAnimationContainer::GetID(const std::string& name) const {
+  AnimationID_t CannedAnimationContainer::GetID(const std::string& name) const
+  {
+    AnimationID_t animID = INVALID_ANIMATION_ID;
+    
     auto retVal = _animations.find(name);
     if(retVal == _animations.end()) {
       PRINT_NAMED_ERROR("CannedAnimationContainer.GetID.InvalidName",
                         "ID requested for unknown animation '%s'.\n",
                         name.c_str());
-      return -1;
     } else {
-      return retVal->second.first;
+      animID = retVal->second.first;
+    }
+    
+    return animID;
+  }
+  
+  Result CannedAnimationContainer::SetStreamingAnimation(const std::string& name)
+  {
+    _streamingAnimation = GetAnimation(name);
+    if(_streamingAnimation == nullptr) {
+      return RESULT_FAIL;
+    } else {
+      return RESULT_OK;
     }
   }
+  
 
   /*
   u16 CannedAnimationContainer::GetLengthInMilliSeconds(const std::string& name) const
@@ -450,7 +558,8 @@ namespace Cozmo {
     }
   } // GetLengthInMilliSeconds()
    */
-   
+  
+  /*
   Result CannedAnimationContainer::Send(RobotID_t robotID, IRobotMessageHandler* msgHandler)
   {
     Result lastResult = RESULT_OK;
@@ -462,7 +571,7 @@ namespace Cozmo {
     {
       const std::string&  name         = cannedAnimationByName.first;
       const s32           animID       = cannedAnimationByName.second.first;
-      const KeyFrameList& keyFrameList = cannedAnimationByName.second.second;
+      const Animation&    keyFrameList = cannedAnimationByName.second.second;
       
       if(keyFrameList.IsEmpty()) {
         PRINT_NAMED_WARNING("CannedAnimationContainer.Send.EmptyAnimation",
@@ -511,8 +620,9 @@ namespace Cozmo {
     return lastResult;
     
   } // SendCannedAnimations()
+  */
   
-  
+  /*
   static EyeShape GetEyeShape(const Json::Value& json)
   {
     static const std::map<std::string, EyeShape> LUT = {
@@ -621,22 +731,59 @@ namespace Cozmo {
     }
     
   } // GetColor()
-  
+  */
   
   Result CannedAnimationContainer::DefineFromJson(Json::Value& jsonRoot)
   {
     
     Json::Value::Members animationNames = jsonRoot.getMemberNames();
     
+    /*
     // Add _all_ the animations first to register the IDs, so Trigger keyframes
     // which specify another animation's name will still work (because that
     // name should already exist, no matter the order the Json is parsed)
     for(auto const& animationName : animationNames) {
       AddAnimation(animationName);
     }
+     */
     
     for(auto const& animationName : animationNames)
     {
+      Result lastResult = AddAnimation(animationName);
+      if(lastResult != RESULT_OK) {
+        PRINT_NAMED_ERROR("CannedAnimationContainer.DefineFromJson",
+                          "Failed to add animation named '%s'.",
+                          animationName.c_str());
+        return lastResult;
+      }
+      
+      Animation* animation = GetAnimation(animationName);
+      if(animation == nullptr) {
+        PRINT_NAMED_ERROR("CannedAnimationContainer.DefineFromJson",
+                          "Added animation named '%s' but getting it returned nullptr.",
+                          animationName.c_str());
+        return RESULT_FAIL;
+      }
+      
+      lastResult = animation->DefineFromJson(jsonRoot[animationName]);
+      
+      // Sanity check
+      if(animation->GetName() != animationName) {
+        PRINT_NAMED_ERROR("CannedAnimationContainer.DefineFromJson",
+                          "Animation's internal name ('%s') doesn't match container's name for it ('%s').\n",
+                          animation->GetName().c_str(),
+                          animationName.c_str());
+        return RESULT_FAIL;
+      }
+      
+      if(lastResult != RESULT_OK) {
+        PRINT_NAMED_ERROR("CannedAnimationContainer.DefineFromJson",
+                          "Failed to define animation '%s' from Json.\n",
+                          animationName.c_str());
+        return lastResult;
+      }
+      
+      /*
       const s32 animID = GetID(animationName);
       if(animID < 0) {
         return RESULT_FAIL;
@@ -717,14 +864,37 @@ namespace Cozmo {
         }
         
       } // for each frame
+       */
     } // for each animation
     
     return RESULT_OK;
   }
 
+  Result CannedAnimationContainer::Update(Robot& robot)
+  {
+    Result lastResult = RESULT_OK;
+    
+    if(_streamingAnimation != nullptr) {
+      if(_streamingAnimation->IsFinished()) {
+#       if DEBUG_ANIMATION_STREAMING
+        PRINT_NAMED_INFO("CannedAnimationContainer.Update.FinishedStreaming",
+                         "Finished streaming '%s' animation.\n",
+                         _streamingAnimation->GetName().c_str());
+#       endif
+        
+        _streamingAnimation = nullptr;
+        
+      } else {
+        lastResult = _streamingAnimation->Update(robot);
+      }
+    }
+    
+    return lastResult;
+  }
+  
   Result CannedAnimationContainer::DefineHardCoded()
   {
-    
+    /*
     //
     // SLOW HEAD NOD - 2 slow nods
     //
@@ -753,7 +923,7 @@ namespace Cozmo {
       stopNodMsg->finalAngle_deg = 0;
       keyFrames->AddKeyFrame(stopNodMsg);
     } // SLOW HEAD NOD
-      
+    */
     return RESULT_OK;
     
   } // DefineHardCodedAnimations()
