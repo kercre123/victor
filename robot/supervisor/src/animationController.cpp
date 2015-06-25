@@ -398,7 +398,7 @@ namespace AnimationController {
   }
   
   
-  Result BufferKeyframe(const Messages::AnimKeyFrame_HeadAngle& msg)
+  Result BufferKeyFrame(const Messages::AnimKeyFrame_HeadAngle& msg)
   {
     // Just set the last frame's head properties:
     StreamedKeyFrame& lastKeyFrame = _keyFrameBuffer[_lastFrame];
@@ -415,6 +415,27 @@ namespace AnimationController {
     lastKeyFrame.setsWhichTracks |= StreamedKeyFrame::KF_SETS_LIFT;
     lastKeyFrame.liftHeight_mm = msg.height_mm;
     lastKeyFrame.liftTime_ms   = msg.time_ms;
+    
+    return RESULT_OK;
+  }
+  
+  Result BufferKeyFrame(const Messages::AnimKeyFrame_FaceImage& msg)
+  {
+    StreamedKeyFrame& lastKeyFrame = _keyFrameBuffer[_lastFrame];
+    lastKeyFrame.setsWhichTracks |= StreamedKeyFrame::KF_SETS_FACE_FRAME;
+    
+    // TODO: Update this to copy out a variable-length amount of data
+    memcpy(lastKeyFrame.faceFrame, msg.image, sizeof(msg.image));
+    
+    return RESULT_OK;
+  }
+  
+  Result BufferKeyFrame(const Messages::AnimKeyFrame_FacePosition& msg)
+  {
+    StreamedKeyFrame& lastKeyFrame = _keyFrameBuffer[_lastFrame];
+    lastKeyFrame.setsWhichTracks |= StreamedKeyFrame::KF_SETS_FACE_POSITION;
+    lastKeyFrame.faceCenX = msg.xCen;
+    lastKeyFrame.faceCenY = msg.yCen;
     
     return RESULT_OK;
   }

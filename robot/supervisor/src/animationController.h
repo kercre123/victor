@@ -23,6 +23,7 @@
 #include "anki/common/types.h"
 #include "anki/cozmo/shared/cozmoTypes.h"
 
+#include "messages.h"
 
 namespace Anki {
   namespace Cozmo {
@@ -46,7 +47,8 @@ namespace Anki {
       Result BufferKeyFrame(const Messages::AnimKeyFrame_LiftHeight&   msg);
       Result BufferKeyFrame(const Messages::AnimKeyFrame_AudioSample&  msg);
       Result BufferKeyFrame(const Messages::AnimKeyFrame_AudioSilence& msg);
-      
+      Result BufferKeyFrame(const Messages::AnimKeyFrame_FaceImage&    msg);
+      Result BufferKeyFrame(const Messages::AnimKeyFrame_FacePosition& msg);
       
 
       // Plays any buffered keyframes available, if enough of a pre-roll is

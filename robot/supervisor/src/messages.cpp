@@ -565,6 +565,25 @@ namespace Anki {
       {
         AnimationController::Clear();
       }
+      
+      template<typename KF_TYPE>
+      static inline void ProcessAnimKeyFrameHelper(const KF_TYPE& msg)
+      {
+        if(AnimationController::BufferKeyFrame(msg) != RESULT_OK) {
+          PRINT("Failed to buffer keyframe!\n");
+        }
+      }
+      
+#     define DEFINE_PROCESS_KEYFRAME_METHOD(__MSG_TYPE__) \
+void Process##__MSG_TYPE__##Message(const __MSG_TYPE__& msg) { ProcessAnimKeyFrameHelper(msg); }
+
+      DEFINE_PROCESS_KEYFRAME_METHOD(AnimKeyFrame_AudioSample)
+      DEFINE_PROCESS_KEYFRAME_METHOD(AnimKeyFrame_AudioSilence)
+      DEFINE_PROCESS_KEYFRAME_METHOD(AnimKeyFrame_FaceImage)
+      DEFINE_PROCESS_KEYFRAME_METHOD(AnimKeyFrame_FacePosition)
+      DEFINE_PROCESS_KEYFRAME_METHOD(AnimKeyFrame_HeadAngle)
+      DEFINE_PROCESS_KEYFRAME_METHOD(AnimKeyFrame_LiftHeight)
+      
 
 //      void ProcessClearCannedAnimationMessage(const ClearCannedAnimation& msg)
 //      {
