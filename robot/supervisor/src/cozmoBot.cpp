@@ -75,7 +75,7 @@ namespace Anki {
         u32 lastCycleStartTime_ = 0;
         u32 lastMainCycleTimeErrorReportTime_ = 0;
         const u32 MAIN_TOO_LATE_TIME_THRESH = TIME_STEP * 1500;  // Normal cycle time plus 50% margin
-        const u32 MAIN_TOO_LONG_TIME_THRESH = 1500;
+        const u32 MAIN_TOO_LONG_TIME_THRESH = 400;
         const u32 MAIN_CYCLE_ERROR_REPORTING_PERIOD = 1000000;
 
       } // Robot private namespace
@@ -296,31 +296,10 @@ namespace Anki {
         // Process any messages from the basestation
         Messages::ProcessBTLEMessages();
 
-        /*
-        Messages::MatMarkerObserved matMsg;
-        while( Messages::CheckMailbox(matMsg) )
-        {
-          HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::MatMarkerObserved), &matMsg);
-        }
-
-        Messages::BlockMarkerObserved blockMsg;
-        while( Messages::CheckMailbox(blockMsg) )
-        {
-          HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::BlockMarkerObserved), &blockMsg);
-
-        } // while blockMarkerMailbox has mail
-        */
-
         //////////////////////////////////////////////////////////////
         // Sensor updates
         //////////////////////////////////////////////////////////////
-#if !defined(THIS_IS_PETES_BOARD)
         IMUFilter::Update();
-#endif
-
-#ifdef HAVE_PROX_SENSORS // Most robots don't have these right now
-        ProxSensors::Update();
-#endif
 
         //////////////////////////////////////////////////////////////
         // Head & Lift Position Updates
@@ -425,8 +404,7 @@ namespace Anki {
           avgMainTooLongTime_ = (u32)((f32)(avgMainTooLongTime_ * (mainTooLongCnt_ - 1) + cycleTime)) / mainTooLongCnt_;
         }
         lastCycleStartTime_ = cycleStartTime;
-
-
+        
         // Report main cycle time error
         if ((mainTooLateCnt_ > 0 || mainTooLongCnt_ > 0) &&
             (cycleEndTime - lastMainCycleTimeErrorReportTime_ > MAIN_CYCLE_ERROR_REPORTING_PERIOD)) {
