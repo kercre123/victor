@@ -405,7 +405,7 @@ namespace DigitalRuby.ThunderAndLightning
                 obj.name = "LightningBoltMeshRenderer";
                 obj.transform.parent = lightningBolt.Parent.transform;
                 obj.transform.position = lightningBolt.Parent.transform.position;
-                obj.hideFlags = HideFlags.HideAndDontSave;
+                //obj.hideFlags = HideFlags.HideAndDontSave;
                 lineRenderer = obj.AddComponent<LineRendererMesh>();
             }
             else

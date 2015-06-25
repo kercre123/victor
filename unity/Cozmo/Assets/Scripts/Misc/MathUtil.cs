@@ -28,23 +28,37 @@ public class MathUtil {
 		tempChild.parent = tempParent;
 	}
 
+	public static float nfModulo(float a,float b) {
+		return a - b * Mathf.FloorToInt(a / b);
+	}
+
 	//clamps an angle in degrees between -180 to 180
-	public static float ClampAngle(float angle) {
+	public static float ClampAngle180(float angle) {
 		float clamped = angle % 360f;
-		
-		//Debug.Log("ClampAngle "+angle+" % 360f = "+clamped);
-		
 		if(clamped < -180f) clamped += 360f;
 		if(clamped > 180f) clamped -= 360f;
 		
 		return clamped;
 	}
 
-	//finds the difference between two angles in degrees, clamped between -180 and 180
+	//clamps an angle in degrees between -360 to 360
+	public static float ClampAngle360(float angle) {
+		return angle % 360f;
+	}
+
+	//clamps an angle in degrees between 0 to 360
+	public static float ClampAngle0_360(float angle) {
+		float clamped = angle % 360f;
+		if(clamped < 0f) clamped += 360f;
+
+		return clamped;
+	}
+
+	//finds the nearest difference between two angles in degrees, clamped between -180 and 180
 	public static float AngleDelta(float from, float to) {
 		
-		from = ClampAngle(from);
-		to = ClampAngle(to);
+		from = ClampAngle180(from);
+		to = ClampAngle180(to);
 		
 		if(from > 0f && to < 0f) {
 			from -= 360f;
@@ -53,7 +67,7 @@ public class MathUtil {
 			from += 360f;
 		} 
 		
-		return ClampAngle(to - from);
+		return ClampAngle180(to - from);
 	}
 
 	

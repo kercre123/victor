@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
 
@@ -19,7 +19,7 @@ public class GyroControls : MonoBehaviour {
 
 		if(!SystemInfo.supportsGyroscope) return 0f;
 
-		float roll = MathUtil.ClampAngle(MSP_Input.GyroAccel.GetRoll());
+		float roll = MathUtil.ClampAngle180(MSP_Input.GyroAccel.GetRoll());
 		x = Mathf.Clamp01((Mathf.Abs(roll) - rollAngleMin) / (rollAngleMax - rollAngleMin)) * -Mathf.Sign(roll);
 		return x; 
 	}

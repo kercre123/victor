@@ -110,7 +110,7 @@ public class RobotRelativeControls : MonoBehaviour {
 			ShowSticks();
 		}
 
-		robotFacing = MathUtil.ClampAngle(robot.poseAngle_rad * Mathf.Rad2Deg);
+		robotFacing = MathUtil.ClampAngle180(robot.poseAngle_rad * Mathf.Rad2Deg);
 
 		if(DebugOverride()) return;
 

@@ -123,6 +123,7 @@ public class VortexController : GameController {
 		}
 
 		for(int i=0;i<wheels.Count;i++) {
+			wheels[i].ResetWheel();
 			wheels[i].Lock();
 			wheels[i].HidePeg();
 			wheels[i].gameObject.SetActive(i < rings);
@@ -248,7 +249,7 @@ public class VortexController : GameController {
 				return VortexState.REQUEST_SPIN;
 				//break;
 			case VortexState.REQUEST_SPIN:
-				if(wheel.Spinning) return VortexState.SPINNING;
+				if(wheel.SpinUnderway) return VortexState.SPINNING;
 				break;
 			case VortexState.SPINNING:
 				if(wheel.Finished) {
@@ -319,6 +320,7 @@ public class VortexController : GameController {
 
 			if(wheel == wheels[i]) continue;
 
+			//wheels[i].ResetWheel();
 			wheels[i].Lock();
 			wheels[i].HidePeg();
 		
