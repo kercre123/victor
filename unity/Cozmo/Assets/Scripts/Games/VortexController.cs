@@ -85,6 +85,7 @@ public class VortexController : GameController {
 	[SerializeField] RectTransform[] playerTokens;
 	[SerializeField] Button[] playerButtons;
 	[SerializeField] LayoutBlock2d[] playerMockBlocks;
+	[SerializeField] Text[] textPlayerBids;
 	[SerializeField] Text[] textPlayerScores;
 	[SerializeField] List<VortexInput> playerInputs = new List<VortexInput>();
 
@@ -134,6 +135,15 @@ public class VortexController : GameController {
 		lightingBall.CountRange = new RangeOfIntegers { Minimum = 0, Maximum = 0 };
 
 		MessageDelay = .1f;
+
+		for(int i=0;i<playerButtons.Length;i++) {
+			playerButtons[i].interactable = false;
+		}
+
+		for(int i=0;i<textPlayerScores.Length;i++) {
+			textPlayerScores[i].text = "SCORE: 0";
+		}
+		
 	}
 
 	protected override void OnDisable () {
@@ -168,6 +178,10 @@ public class VortexController : GameController {
 	}
 
 	protected override void Enter_PLAYING () {
+		for(int i=0;i<textPlayerScores.Length;i++) {
+			textPlayerScores[i].text = "SCORE: 0";
+		}
+
 		ClearInputs();
 		playState = VortexState.INTRO;
 		EnterPlayState();
@@ -206,6 +220,15 @@ public class VortexController : GameController {
 		
 	}
 
+	protected override void Exit_RESULTS() {
+		base.Exit_RESULTS();
+		
+		for(int i=0;i<textPlayerScores.Length;i++) {
+			textPlayerScores[i].text = "SCORE: 0";
+		}
+		
+	}
+
 	protected override bool IsPreGameCompleted() {
 		return true;
 	}
@@ -237,7 +260,7 @@ public class VortexController : GameController {
 
 		textRoundNumber.text = "ROUND " + Mathf.Max(1, round).ToString();
 
-		int newNumber = wheel.GetCurrentNumber();
+		int newNumber = wheel.GetActualNumber();
 		textCurrentNumber.text = newNumber.ToString();
 		textPlayState.text = state == GameState.PLAYING ? playState.ToString() : "";
 	}
@@ -352,13 +375,18 @@ public class VortexController : GameController {
 
 	void Enter_SPINNING() {
 		lightingBall.Radius = wheelLightningRadii[currentWheelIndex];
+
+		for(int i=0;i<playerButtons.Length;i++) {
+			playerButtons[i].interactable = true;
+		}
+
 	}
 	void Update_SPINNING() {
 		int lightingMin = Mathf.FloorToInt(Mathf.Lerp(0, lightningMinCountAtSpeedMax, (wheel.Speed - 1f) * 0.1f));
 		int lightingMax = Mathf.FloorToInt(Mathf.Lerp(0, lightningMaxCountAtSpeedMax, (wheel.Speed - 1f) * 0.1f));
 		lightingBall.CountRange = new RangeOfIntegers { Minimum = lightingMin, Maximum = lightingMax };
 		
-		int newNumber = wheel.GetCurrentNumber();
+		int newNumber = wheel.GetActualNumber();
 		//Debug.Log("Update_SPINNING lightingMax("+lightingMax+") wheel.Speed("+wheel.Speed+") newNumber("+newNumber+") lastNumber("+lastNumber+")");
 		if(lightingMax == 0 && newNumber != lastNumber) {
 			lightingBall.SingleLightningBolt();
@@ -370,6 +398,10 @@ public class VortexController : GameController {
 		//play spin finished audio
 		wheel.Lock();
 		lightingBall.CountRange = new RangeOfIntegers { Minimum = 0, Maximum = 0 };
+
+		for(int i=0;i<playerButtons.Length;i++) {
+			playerButtons[i].interactable = false;
+		}
 	}
 
 	List<int> playersThatAreCorrect = new List<int>();
@@ -379,7 +411,7 @@ public class VortexController : GameController {
 		int fastestPlayer = -1;
 
 
-		int number = wheel.GetCurrentNumber();
+		int number = wheel.GetActualNumber();
 		for(int i=0;i<playerInputs.Count;i++) {
 			if(playerInputs[i].stamps.Count != number) continue;
 			if(playerInputs[i].stamps.Count == 0) continue;
@@ -449,7 +481,7 @@ public class VortexController : GameController {
 				playerMockBlocks[i].SetLights(c1, c2, c3, c4);
 			}
 
-
+			textPlayerBids[i].text = playerInputs[i].stamps.Count.ToString();
 		}
 
 
@@ -471,20 +503,21 @@ public class VortexController : GameController {
 		}
 		else {
 			for(int i=0;i<playersThatAreCorrect.Count;i++) {
-				if(playersEliminated[playersThatAreCorrect[i]]) continue;
+				int playerIndex = playersThatAreCorrect[i];
+				if(playersEliminated[playerIndex]) continue;
 				
 				switch(i) {
-					case 0: scores[i] += settings.pointsFirstPlace; break;
-					case 1: scores[i] += settings.pointsSecondPlace; break;
-					case 2: scores[i] += settings.pointsThirdPlace; break;
-					case 3: scores[i] += settings.pointsFourthPlace; break;
+					case 0: scores[playerIndex] += settings.pointsFirstPlace; break;
+					case 1: scores[playerIndex] += settings.pointsSecondPlace; break;
+					case 2: scores[playerIndex] += settings.pointsThirdPlace; break;
+					case 3: scores[playerIndex] += settings.pointsFourthPlace; break;
 				}
 			}
 		}
 		
 
-		for(int i=0;i<playersThatAreCorrect.Count;i++) {
-			if(i < textPlayerScores.Length) textPlayerScores[i].text = "P" + (i+1).ToString() + ": " + scores[i].ToString();
+		for(int i=0;i<scores.Count;i++) {
+			if(i < textPlayerScores.Length) textPlayerScores[i].text = "SCORE: " + scores[i].ToString();
 		}
 		
 		if(playersThatAreCorrect.Count > 0) {
@@ -536,6 +569,7 @@ public class VortexController : GameController {
 		for(int i=0;i<playerMockBlocks.Length;i++) {
 			playerMockBlocks[i].Initialize(CubeType.LIGHT_CUBE);
 			playerMockBlocks[i].SetLights(Color.black, Color.black, Color.black, Color.black);
+			textPlayerBids[i].text = "";
 		}
 	}
 
@@ -562,6 +596,7 @@ public class VortexController : GameController {
 		Color c4 = playerInputs[index].stamps.Count > 3 ? Color.white : Color.black;
 
 		playerMockBlocks[index].SetLights(c1, c2, c3, c4);
+		textPlayerBids[index].text = playerInputs[index].stamps.Count.ToString();
 
 		if(buttonPressSound != null) AudioManager.PlayOneShot(buttonPressSound);
 	}
