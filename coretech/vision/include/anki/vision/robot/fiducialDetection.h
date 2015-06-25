@@ -22,7 +22,9 @@ namespace Anki
     // TODO: make this into a parameter stored elsewhere?
     const f32 FIDUCIAL_SQUARE_WIDTH_FRACTION = 0.1f;
     
-    enum CornerMethod {CORNER_METHOD_LAPLACIAN_PEAKS, CORNER_METHOD_LINE_FITS};
+    enum CornerMethod {
+      CORNER_METHOD_LAPLACIAN_PEAKS = 0,
+      CORNER_METHOD_LINE_FITS = 1};
 
     // The primary wrapper function for detecting fiducial markers in an image
     Result DetectFiducialMarkers(
