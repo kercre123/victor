@@ -132,6 +132,8 @@ namespace Cozmo {
   class RobotAudioKeyFrame : public IKeyFrame
   {
   public:
+    static const u32 SAMPLE_LENGTH_MS = 33;
+    
     RobotAudioKeyFrame() { }
     
     virtual RobotMessage* GetStreamMessage() override;
@@ -262,8 +264,16 @@ namespace Cozmo {
     // Name of this animation
     std::string _name;
     
-    // When this animation started playing (was initialized) in milliseconds
+    // When this animation started playing (was initialized) in milliseconds, in
+    // "real" basestation time
     TimeStamp_t _startTime_ms;
+    
+    // Where we are in the animation in terms of what has been streamed out, since
+    // we don't stream in real time. Each time we send an audio frame to the
+    // robot (silence or actual audio), this increments by one audio sample
+    // length, since that's what keeps time for streaming animations (not a
+    // clock)
+    TimeStamp_t _streamingTime_ms;
     
     // A reusable "Silence" message for when we have no audio to send robot
     MessageAnimKeyFrame_AudioSilence _silenceMsg;

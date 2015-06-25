@@ -365,6 +365,9 @@ return RESULT_FAIL; \
     _facePosTrack.Init();
     _deviceAudioTrack.Init();
     _robotAudioTrack.Init();
+    // Initialize "fake" streaming time to the same start time so we can compare
+    // to it for determining when its time to stream out a keyframe
+    _streamingTime_ms = _startTime_ms;
     
     return RESULT_OK;
   }
@@ -373,7 +376,7 @@ return RESULT_FAIL; \
   {
     const TimeStamp_t currTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
     
-    // Is it time to play device audio?
+    // Is it time to play device audio? (using actual basestation time)
     if(_deviceAudioTrack.GetNextFrame().IsTimeToPlay(_startTime_ms, currTime_ms)) {
       _deviceAudioTrack.GetNextFrame().PlayOnDevice();
       _deviceAudioTrack.Increment();
@@ -383,14 +386,14 @@ return RESULT_FAIL; \
     //const bool isRobotReadyForFrames = !robot.IsAnimationBufferFull();
     s32 numFramesToSend = robot.GetNumAnimationFramesFree();
     
-    while(numFramesToSend-- > 0) {
+    while(numFramesToSend-- > 0 && !IsEmpty())
+    {
       RobotMessage* msg = nullptr;
       
       // Have to always send an audio frame to keep time, whether that's the next
-      // audio sample or a silent frame
+      // audio sample or a silent frame. This increments "streamingTime"
       // NOTE: Audio frame must be first!
-      if(_robotAudioTrack.HasFramesLeft() &&
-         _robotAudioTrack.GetNextFrame().IsTimeToPlay(_startTime_ms, currTime_ms))
+      if(_robotAudioTrack.HasFramesLeft())
       {
         msg = _robotAudioTrack.GetNextFrame().GetStreamMessage();
         if(msg != nullptr) {
@@ -398,7 +401,7 @@ return RESULT_FAIL; \
           robot.SendMessage(*msg);
           
         } else {
-          // No samples left to send in for this keyframe. Move to next, and for now
+          // No samples left to send for this keyframe. Move to next, and for now
           // send silence.
           _robotAudioTrack.Increment();
           robot.SendMessage(_silenceMsg);
@@ -407,6 +410,11 @@ return RESULT_FAIL; \
         // No frames left or not time to play next frame yet, so send silence
         robot.SendMessage(_silenceMsg);
       }
+      
+      // Increment fake "streaming" time, so we can evaluate below whether
+      // it's time to stream out any of the other tracks. Note that it is still
+      // relative to the same start time.
+      _streamingTime_ms += RobotAudioKeyFrame::SAMPLE_LENGTH_MS;
       
       //
       // We are guaranteed to have sent some kind of audio frame at this point.
@@ -420,25 +428,25 @@ return RESULT_FAIL; \
       
       Result sendResult = RESULT_OK;
       
-      msg = _headTrack.GetNextMessage(_startTime_ms, currTime_ms);
+      msg = _headTrack.GetNextMessage(_startTime_ms, _streamingTime_ms);
       if(msg != nullptr) {
         sendResult = robot.SendMessage(*msg);
         if(sendResult != RESULT_OK) { return sendResult; }
       }
       
-      msg = _liftTrack.GetNextMessage(_startTime_ms, currTime_ms);
+      msg = _liftTrack.GetNextMessage(_startTime_ms, _streamingTime_ms);
       if(msg != nullptr) {
         sendResult = robot.SendMessage(*msg);
         if(sendResult != RESULT_OK) { return sendResult; }
       }
       
-      msg = _facePosTrack.GetNextMessage(_startTime_ms, currTime_ms);
+      msg = _facePosTrack.GetNextMessage(_startTime_ms, _streamingTime_ms);
       if(msg != nullptr) {
         sendResult = robot.SendMessage(*msg);
         if(sendResult != RESULT_OK) { return sendResult; }
       }
       
-      msg = _faceImageTrack.GetNextMessage(_startTime_ms, currTime_ms);
+      msg = _faceImageTrack.GetNextMessage(_startTime_ms, _streamingTime_ms);
       if(msg != nullptr) {
         sendResult = robot.SendMessage(*msg);
         if(sendResult != RESULT_OK) { return sendResult; }
