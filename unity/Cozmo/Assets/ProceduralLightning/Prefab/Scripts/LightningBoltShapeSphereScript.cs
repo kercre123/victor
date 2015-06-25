@@ -35,6 +35,7 @@ namespace DigitalRuby.ThunderAndLightning
 
         public override void BatchLightningBolt(LightningBoltParameters parameters)
         {
+			//Debug.Log("frame("+Time.frameCount+") BatchLightningBolt!");
             Vector3 start = UnityEngine.Random.insideUnitSphere * InnerRadius;
             Vector3 end = UnityEngine.Random.onUnitSphere * Radius;
 

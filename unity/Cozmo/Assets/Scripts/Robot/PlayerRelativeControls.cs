@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
 
@@ -32,11 +32,11 @@ public class PlayerRelativeControls : MonoBehaviour {
 
 		moveCommandLastFrame = false;
 		if(robot != null) {
-			robotStartHeading = MathUtil.ClampAngle(robot.poseAngle_rad * Mathf.Rad2Deg);
+			robotStartHeading = MathUtil.ClampAngle180(robot.poseAngle_rad * Mathf.Rad2Deg);
 				//Debug.Log("frame("+Time.frameCount+") robotFacing(" + robotFacing + ")");
 		}
 
-		compassStartHeading = MathUtil.ClampAngle(-Input.compass.trueHeading);
+		compassStartHeading = MathUtil.ClampAngle180(-Input.compass.trueHeading);
 		Debug.Log("frame("+Time.frameCount+") robotStartHeading(" + robotStartHeading + ") compassStartHeading(" + compassStartHeading + ")");
 	}
 
@@ -45,7 +45,7 @@ public class PlayerRelativeControls : MonoBehaviour {
 	void Update() {
 		if(robot == null) return;
 
-		robotFacing = MathUtil.ClampAngle(robot.poseAngle_rad * Mathf.Rad2Deg);
+		robotFacing = MathUtil.ClampAngle180(robot.poseAngle_rad * Mathf.Rad2Deg);
 			//robotFacingStale = false;
 			//Debug.Log("frame("+Time.frameCount+") robotFacing(" + robotFacing + ")");
 
@@ -65,7 +65,7 @@ public class PlayerRelativeControls : MonoBehaviour {
 			return; // command zero'd, let's full stop
 		}
 
-		float relativeScreenFacing = MathUtil.AngleDelta(compassStartHeading, MathUtil.ClampAngle(-Input.compass.trueHeading));
+		float relativeScreenFacing = MathUtil.AngleDelta(compassStartHeading, MathUtil.ClampAngle180(-Input.compass.trueHeading));
 		float relativeRobotFacing = MathUtil.AngleDelta(robotStartHeading, robotFacing);
 
 		float screenToRobot = MathUtil.AngleDelta(relativeScreenFacing, relativeRobotFacing);
