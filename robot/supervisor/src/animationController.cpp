@@ -32,14 +32,6 @@ namespace AnimationController {
     bool _haveReceivedTerminationFrame;
     bool _isPlaying;
     
-//    s32 _currDesiredLoops   = 0;
-//    s32 _queuedDesiredLoops = 0;
-//    s32 _numLoopsComplete   = 0;
-//    u32 _waitUntilTime_us   = 0;
-    
-    //bool _isStopping  = false;
-    //bool _wasStopping = false;
-    
   } // "private" members
 
   
@@ -282,67 +274,7 @@ namespace AnimationController {
     // Necessary?
     //memset(_keyFrameBuffer, KEYFRAME_BUFFER_LENGTH, sizeof(StreamedKeyFrame));
   }
-  
-  /*
-  void Update()
-  {
-    
-    if (IsPlaying()) {
-      if (isStopping_)
-      {
-        // Execute stopping action
-        if (animStopFn_[currAnim_])
-        {
-          animStopFn_[currAnim_]();
-          
-          // Stopping conditions have been met.
-          // Stop the robot.
-          if (!isStopping_) {
-            ReallyStop();
-          }
-        } else {
-          PRINT("WARNING (AnimationController): Entered stopping state without a defined stoppping function\n");
-          isStopping_ = false;
-        }
-        
-      } else {
-        
-        // Execute animation
-        if (animUpdateFn_[currAnim_])
-        {
-          animUpdateFn_[currAnim_]();
-        }
-        
-        // Stop once the commanded number of animation loops has been reached
-        if ((currDesiredLoops_ > 0) && (numLoopsComplete_ >= currDesiredLoops_)) {
-          Stop();
-        }
-      }
-    } else {
-      // If there's a queued animation, start it.
-      if (queuedAnim_ != ANIM_IDLE) {
-        Play(queuedAnim_, queuedDesiredLoops_);
-        queuedAnim_ = ANIM_IDLE;
-      }
-    }
-    
-    wasStopping_ = isStopping_;
-  }
-   */
-  
-
-  /*
-  Result AddKeyFrameToCannedAnimation(const KeyFrame&     keyframe,
-                                      const AnimationID_t whichAnimation)
-  {
-    AnkiConditionalErrorAndReturnValue(whichAnimation>=0 && whichAnimation < MAX_CANNED_ANIMATIONS, RESULT_FAIL,
-                                       "AnimationController.AddKeyFrameToCannedAnimation.InvalidAnimationID",
-                                       "Out-of-range animation ID = %d\n", whichAnimation);
-    
-    return _cannedAnimations[whichAnimation].AddKeyFrame(keyframe);
-  }
-   */
-  
+ 
   
   static Result AdvanceLastFrame()
   {
@@ -551,132 +483,6 @@ namespace AnimationController {
     
   } // Update()
 
-  /*
-  void TransitionAndPlay(const AnimationID_t transitionAnim,
-                         const AnimationID_t stateAnim)
-  {
-    _queuedAnimID = stateAnim;
-    _queuedDesiredLoops = 0;
-    
-    Play(transitionAnim, 1);
-  }
-  
-  
-  void Play(const AnimationID_t anim, const u32 numLoops)
-  {
-    AnkiConditionalErrorAndReturn(anim < MAX_CANNED_ANIMATIONS,
-                                  "AnimationController.Play.InvalidAnimation",
-                                  "Animation ID out of range.\n");
-    
-    AnkiConditionalWarnAndReturn(_cannedAnimations[anim].IsDefined(),
-                                 "AnimationController.Play.EmptyAnimation",
-                                 "Asked to play empty animation %d. Ignoring.\n", anim);
-    
-    // If animation requested is the one already playing, don't do anything
-    // Is this what we always want?
-    if(anim == _currAnimID) {
-      return;
-    }
-    
-    // If an animation is currently playing, stop it
-    if (IsPlaying()) {
-      Stop();
-    }
-    
-    // Playing IDLE animation is equivalent to stopping currently playing
-    // animation and clearing queued animation
-    if (anim == ANIM_IDLE) {
-      Stop();
-      return;
-    }
-    
-    PRINT("Playing Animation %d, %d loops\n", anim, numLoops);
-    
-    _currAnimID       = anim;
-    _currDesiredLoops = numLoops;
-    _numLoopsComplete = 0;
-    _waitUntilTime_us = 0;
-    
-    _cannedAnimations[_currAnimID].Init();
-    
-    // *
-    startingRobotAngle_ = Localization::GetCurrentMatOrientation();
-    startingHeadAngle_ = HeadController::GetAngleRad();
-    HeadController::GetSpeedAndAccel(startingHeadMaxSpeed_, startingHeadStartAccel_);
-    
-    // Initialize the animation
-    if (animStartFn_[currAnim_])
-    {
-      animStartFn_[currAnim_]();
-    }
-    * //
-    
-  } // Play()
-*/
-  
-  /*
-  // Stops the current animation
-  void StopCurrent() {
-
-    // If a stop function is defined, set stopping flag.
-    // Otherwise, just stop.
-    if (animStopFn_[currAnim_]) {
-      isStopping_ = true;
-    } else {
-      ReallyStop();
-    }
-  }
-
-  
-  // Stops current animation and clears queued animation if one exists.
-  void Stop()
-  {
-    StopCurrent();
-    queuedAnim_ = ANIM_IDLE;
-  }
-  
-  // Stops all motors. Called when stopping conditions have finally been met.
-  void ReallyStop()
-  {
-   */
-  
-  
-//  
-//  void Stop()
-//  {
-//    if(_currAnimID != ANIM_IDLE) {
-//      _cannedAnimations[_currAnimID].Stop();
-//    }
-//    
-//    //_isStopping = _wasStopping = false;
-//    //_queuedAnimID = ANIM_IDLE;
-//    _currAnimID = ANIM_IDLE;
-//   
-//    /* This should all be done by Animation::Stop() now?
-//    // Stop all motors, lights, and sounds
-//    LiftController::Enable();
-//    LiftController::SetAngularVelocity(0);
-//    HeadController::Enable();
-//    HeadController::SetAngularVelocity(0);
-//    
-//    SteeringController::ExecuteDirectDrive(0, 0);
-//    SpeedController::SetBothDesiredAndCurrentUserSpeed(0);
-//     */
-//  }
-  
-//  
-//  bool IsPlaying()
-//  {
-//    return _currAnimID != ANIM_IDLE;
-//  }
-//  
-//  bool IsDefined(const AnimationID_t anim)
-//  {
-//    if(anim < 0 || anim >= MAX_CANNED_ANIMATIONS) {
-//      return false;
-//    }
-//    return _cannedAnimations[anim].IsDefined();
-//  }
   
 } // namespace AnimationController
 } // namespace Cozmo
