@@ -62,5 +62,6 @@ void Process_SetFaceDetectParams(const Anki::Cozmo::U2G::SetFaceDetectParams& ms
 void Process_SetActiveObjectLEDs(const Anki::Cozmo::U2G::SetActiveObjectLEDs& msg);
 void Process_SetAllActiveObjectLEDs(const Anki::Cozmo::U2G::SetAllActiveObjectLEDs& msg);
 void Process_SetBackpackLEDs(const Anki::Cozmo::U2G::SetBackpackLEDs& msg);
+void Process_TapBlockOnGround(const Anki::Cozmo::U2G::TapBlockOnGround& msg);
 void Process_VisualizeQuad(const Anki::Cozmo::U2G::VisualizeQuad& msg);
 void Process_EraseQuad(const Anki::Cozmo::U2G::EraseQuad& msg);

@@ -186,6 +186,9 @@ case Anki::Cozmo::U2G::Message::Tag::SetAllActiveObjectLEDs:
 case Anki::Cozmo::U2G::Message::Tag::SetBackpackLEDs:
 	Process_SetBackpackLEDs(msg.Get_SetBackpackLEDs());
 	break;
+case Anki::Cozmo::U2G::Message::Tag::TapBlockOnGround:
+	Process_TapBlockOnGround(msg.Get_TapBlockOnGround());
+	break;
 case Anki::Cozmo::U2G::Message::Tag::VisualizeQuad:
 	Process_VisualizeQuad(msg.Get_VisualizeQuad());
 	break;

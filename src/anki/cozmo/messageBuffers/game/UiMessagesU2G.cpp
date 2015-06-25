@@ -3997,6 +3997,66 @@ bool SetBackpackLEDs::operator!=(const SetBackpackLEDs& other) const
 }
 
 
+// MESSAGE TapBlockOnGround
+
+TapBlockOnGround::TapBlockOnGround(const uint8_t* buff, size_t len)
+{
+	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+	Unpack(buffer);
+}
+
+TapBlockOnGround::TapBlockOnGround(const CLAD::SafeMessageBuffer& buffer)
+{
+	Unpack(buffer);
+}
+
+size_t TapBlockOnGround::Pack(uint8_t* buff, size_t len) const
+{
+	CLAD::SafeMessageBuffer buffer(buff, len, false);
+	return Pack(buffer);
+}
+
+size_t TapBlockOnGround::Pack(CLAD::SafeMessageBuffer& buffer) const
+{
+	buffer.Write(this->numTaps);
+	const size_t bytesWritten {buffer.GetBytesWritten()};
+	return bytesWritten;
+}
+
+size_t TapBlockOnGround::Unpack(const uint8_t* buff, const size_t len)
+{
+	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+	return Unpack(buffer);
+}
+
+size_t TapBlockOnGround::Unpack(const CLAD::SafeMessageBuffer& buffer)
+{
+	buffer.Read(this->numTaps);
+	return buffer.GetBytesRead();
+}
+
+size_t TapBlockOnGround::Size() const
+{
+	size_t result = 0;
+	//numTaps
+	result += 1; // = uint_8
+	return result;
+}
+
+bool TapBlockOnGround::operator==(const TapBlockOnGround& other) const
+{
+	if (numTaps != other.numTaps) {
+		return false;
+	}
+	return true;
+}
+
+bool TapBlockOnGround::operator!=(const TapBlockOnGround& other) const
+{
+	return !(operator==(other));
+}
+
+
 // MESSAGE VisualizeQuad
 
 VisualizeQuad::VisualizeQuad(const uint8_t* buff, size_t len)
@@ -4306,6 +4366,8 @@ const char* MessageTagToString(const MessageTag tag) {
 		return "SetAllActiveObjectLEDs";
 	case MessageTag::SetBackpackLEDs:
 		return "SetBackpackLEDs";
+	case MessageTag::TapBlockOnGround:
+		return "TapBlockOnGround";
 	case MessageTag::VisualizeQuad:
 		return "VisualizeQuad";
 	case MessageTag::EraseQuad:
@@ -6066,6 +6128,35 @@ void Message::Set_SetBackpackLEDs(Anki::Cozmo::U2G::SetBackpackLEDs&& new_SetBac
 }
 
 
+const Anki::Cozmo::U2G::TapBlockOnGround& Message::Get_TapBlockOnGround() const
+{
+	assert(_tag == Tag::TapBlockOnGround);
+	return _TapBlockOnGround;
+}
+void Message::Set_TapBlockOnGround(const Anki::Cozmo::U2G::TapBlockOnGround& new_TapBlockOnGround)
+{
+	if(this->_tag == Tag::TapBlockOnGround) {
+		_TapBlockOnGround = new_TapBlockOnGround;
+	}
+	else {
+		ClearCurrent();
+		new(&_TapBlockOnGround) Anki::Cozmo::U2G::TapBlockOnGround{new_TapBlockOnGround};
+		_tag = Tag::TapBlockOnGround;
+	}
+}
+void Message::Set_TapBlockOnGround(Anki::Cozmo::U2G::TapBlockOnGround&& new_TapBlockOnGround)
+{
+	if(this->_tag == Tag::TapBlockOnGround) {
+		_TapBlockOnGround = std::move(new_TapBlockOnGround);
+	}
+	else {
+		ClearCurrent();
+		new(&_TapBlockOnGround) Anki::Cozmo::U2G::TapBlockOnGround{std::move(new_TapBlockOnGround)};
+		_tag = Tag::TapBlockOnGround;
+	}
+}
+
+
 const Anki::Cozmo::U2G::VisualizeQuad& Message::Get_VisualizeQuad() const
 {
 	assert(_tag == Tag::VisualizeQuad);
@@ -6619,6 +6710,14 @@ size_t Message::Unpack(const CLAD::SafeMessageBuffer& buffer)
 			this->_SetBackpackLEDs.Unpack(buffer);
 		}
 		break;
+	case Tag::TapBlockOnGround:
+		if (newTag != oldTag) {
+			new(&(this->_TapBlockOnGround)) Anki::Cozmo::U2G::TapBlockOnGround(buffer);
+		}
+		else {
+			this->_TapBlockOnGround.Unpack(buffer);
+		}
+		break;
 	case Tag::VisualizeQuad:
 		if (newTag != oldTag) {
 			new(&(this->_VisualizeQuad)) Anki::Cozmo::U2G::VisualizeQuad(buffer);
@@ -6832,6 +6931,9 @@ size_t Message::Pack(CLAD::SafeMessageBuffer& buffer) const
 	case Tag::SetBackpackLEDs:
 		this->_SetBackpackLEDs.Pack(buffer);
 		break;
+	case Tag::TapBlockOnGround:
+		this->_TapBlockOnGround.Pack(buffer);
+		break;
 	case Tag::VisualizeQuad:
 		this->_VisualizeQuad.Pack(buffer);
 		break;
@@ -7029,6 +7131,9 @@ size_t Message::Size() const
 	case Tag::SetBackpackLEDs:
 		result += _SetBackpackLEDs.Size();
 		break;
+	case Tag::TapBlockOnGround:
+		result += _TapBlockOnGround.Size();
+		break;
 	case Tag::VisualizeQuad:
 		result += _VisualizeQuad.Size();
 		break;
@@ -7224,6 +7329,9 @@ void Message::ClearCurrent()
 		break;
 	case Tag::SetBackpackLEDs:
 		_SetBackpackLEDs.~SetBackpackLEDs();
+		break;
+	case Tag::TapBlockOnGround:
+		_TapBlockOnGround.~TapBlockOnGround();
 		break;
 	case Tag::VisualizeQuad:
 		_VisualizeQuad.~VisualizeQuad();
