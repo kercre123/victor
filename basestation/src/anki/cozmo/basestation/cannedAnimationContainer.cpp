@@ -355,22 +355,30 @@ return RESULT_FAIL; \
     return _headTrack.AddKeyFrame(kf);
   }
   
+  // Helper macro for running a given method of all tracks and combining the result
+  // in the specified way. To just call a method, use ";" for COMBINE_WITH, or
+  // use "&&" or "||" to combine into a single result.
+# define ALL_TRACKS(__METHOD__, __COMBINE_WITH__) \
+_headTrack.__METHOD__() __COMBINE_WITH__ \
+_liftTrack.__METHOD__() __COMBINE_WITH__ \
+_faceImageTrack.__METHOD__() __COMBINE_WITH__ \
+_facePosTrack.__METHOD__() __COMBINE_WITH__ \
+_deviceAudioTrack.__METHOD__() __COMBINE_WITH__ \
+_robotAudioTrack.__METHOD__()
+  
   Result Animation::Init(Robot& robot)
   {
     _startTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
     
-    _headTrack.Init();
-    _liftTrack.Init();
-    _faceImageTrack.Init();
-    _facePosTrack.Init();
-    _deviceAudioTrack.Init();
-    _robotAudioTrack.Init();
     // Initialize "fake" streaming time to the same start time so we can compare
     // to it for determining when its time to stream out a keyframe
     _streamingTime_ms = _startTime_ms;
     
+    ALL_TRACKS(Init, ;);
+    
     return RESULT_OK;
-  }
+  } // Animation::Init()
+  
   
   Result Animation::Update(Robot& robot)
   {
@@ -462,32 +470,17 @@ return RESULT_FAIL; \
   
   void Animation::Clear()
   {
-    _headTrack.Clear();
-    _liftTrack.Clear();
-    _faceImageTrack.Clear();
-    _facePosTrack.Clear();
-    _deviceAudioTrack.Clear();
-    _robotAudioTrack.Clear();
+    ALL_TRACKS(Clear, ;);
   }
   
   bool Animation::IsEmpty() const
   {
-    return (_headTrack.IsEmpty() &&
-            _liftTrack.IsEmpty() &&
-            _faceImageTrack.IsEmpty() &&
-            _facePosTrack.IsEmpty() &&
-            _deviceAudioTrack.IsEmpty() &&
-            _robotAudioTrack.IsEmpty());
+    return ALL_TRACKS(IsEmpty, &&);
   }
   
   bool Animation::IsFinished() const
   {
-    return !(_headTrack.HasFramesLeft() ||
-             _liftTrack.HasFramesLeft() ||
-             _faceImageTrack.HasFramesLeft() ||
-             _facePosTrack.HasFramesLeft() ||
-             _deviceAudioTrack.HasFramesLeft() ||
-             _robotAudioTrack.HasFramesLeft());
+    return !(ALL_TRACKS(HasFramesLeft, ||));
   }
   
   //////////////////////////////////////////////
