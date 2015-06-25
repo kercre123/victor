@@ -48,10 +48,13 @@
 #include "anki/cozmo/basestation/visionProcessingThread.h"
 
 #include "anki/cozmo/basestation/actionContainers.h"
+#include "anki/cozmo/basestation/animationStreamer.h"
 #include "anki/cozmo/basestation/cannedAnimationContainer.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/ramp.h"
 #include "anki/cozmo/basestation/soundManager.h"
+
+
 
 #define ASYNC_VISION_PROCESSING 1
 
@@ -687,6 +690,7 @@ namespace Anki {
       ///////// Animation /////////
       
       CannedAnimationContainer _cannedAnimations;
+      AnimationStreamer        _animationStreamer;
       s32 _numFreeAnimationSlots;
       
       ///////// Messaging ////////

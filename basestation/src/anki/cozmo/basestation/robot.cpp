@@ -90,6 +90,7 @@ namespace Anki {
     , _imageSaveMode(SAVE_OFF)
     , _imgFramePeriod(0)
     , _lastImgTimeStamp(0)
+    , _animationStreamer(_cannedAnimations)
     {
       _poseHistory = new RobotPoseHistory();
       
@@ -1146,7 +1147,7 @@ namespace Anki {
     
     Result Robot::PlayAnimation(const char* animName, const u32 numLoops)
     {
-      Result lastResult = _cannedAnimations.SetStreamingAnimation(animName, numLoops);
+      Result lastResult = _animationStreamer.SetStreamingAnimation(animName, numLoops);
       
       return lastResult;
       //return SendPlayAnimation(animName, numLoops);

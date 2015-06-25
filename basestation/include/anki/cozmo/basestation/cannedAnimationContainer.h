@@ -280,13 +280,9 @@ namespace Cozmo {
   }; // class Animation
   
   
-  
-  
   class CannedAnimationContainer
   {
   public:
-    
-    
     CannedAnimationContainer();
     
     Result DefineHardCoded(); // called at construction
@@ -299,14 +295,6 @@ namespace Cozmo {
     
     AnimationID_t GetID(const std::string& name) const;
     
-    // Sets an animation to be streamed and how many times to stream it.
-    // Use zero to play the animation indefinitely.
-    // Actual streaming occurs on calls to Update().
-    Result SetStreamingAnimation(const std::string& name, u32 numLoops = 1);
-    
-    // If any animation is set for streaming and isn't done yet, stream it.
-    Result Update(Robot& robot);
-    
     // TODO: Add a way to ask how long an animation is
     //u16 GetLengthInMilliSeconds(const std::string& name) const;
     
@@ -316,13 +304,8 @@ namespace Cozmo {
     
     std::map<std::string, std::pair<AnimationID_t, Animation> > _animations;
     
-    Animation* _streamingAnimation;
-    
-    u32 _numLoops;
-    u32 _loopCtr;
-    
   }; // class Animation
-
+  
 } // namespace Cozmo
 } // namespace Anki
 
