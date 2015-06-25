@@ -163,8 +163,7 @@ namespace Anki {
         robotState_.liftAngle  = LiftController::GetAngleRad();
         robotState_.liftHeight = LiftController::GetHeightMM();
 
-        HAL::IMU_DataStructure imuData;
-        HAL::IMUReadData(imuData);
+        HAL::IMU_DataStructure imuData = IMUFilter::GetLatestRawData();
         robotState_.rawGyroZ = imuData.rate_z;
         robotState_.rawAccelY = imuData.acc_y;
 
@@ -1081,9 +1080,9 @@ namespace Anki {
     } // namespace Messages
 
     namespace HAL {
-      bool RadioSendMessage(const Messages::ID msgID, const void *buffer, const bool reliable, const bool hot)
+      bool RadioSendMessage(const int msgID, const void *buffer, const bool reliable, const bool hot)
       {
-        const u32 size = Messages::GetSize(msgID);
+        const u32 size = Messages::GetSize((const Messages::ID)msgID);
         if (RadioIsConnected())
         {
           if (reliable)

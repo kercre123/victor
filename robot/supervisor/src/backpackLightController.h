@@ -21,6 +21,11 @@ namespace Anki {
       Result Init();
       Result Update();
       
+      // Enable/Disable the controller.
+      // Mostly only useful for test mode or special simluation modes.
+      void Enable();
+      void Disable();
+      
       void TurnOffAll();
       
       void SetParams(LEDId whichLED, u32 onColor, u32 offColor,
