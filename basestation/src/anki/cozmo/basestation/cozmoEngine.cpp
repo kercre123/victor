@@ -677,7 +677,7 @@ namespace Cozmo {
       _lastAnimationFolderScan = currTime_ns;
       Robot* robot = _robotMgr.GetFirstRobot();
       if (robot != nullptr) {
-        robot->ReadAnimationDir();
+        robot->ReadAnimationDir(true);
       }
     }
   }

@@ -127,8 +127,8 @@ namespace Anki {
         }
         jsonFile.close();
       }
-      
-      ReadAnimationFile();
+
+      ReadAnimationDir(false);
       
       SetHeadAngle(_currentHeadAngle);
       _pdo = new PathDolerOuter(msgHandler, robotID);
@@ -1155,7 +1155,7 @@ namespace Anki {
       return SendPlaceObjectOnGround(0, 0, 0, useManualSpeed);
     }
     
-    Result Robot::PlayAnimation(const char* animName, const u32 numLoops)
+    Result Robot::PlayAnimation(const std::string& animName, const u32 numLoops)
     {
       Result lastResult = _animationStreamer.SetStreamingAnimation(animName, numLoops);
       _lastPlayedAnimationId = animName;
@@ -1205,7 +1205,7 @@ namespace Anki {
 
 
     // Read the animations in a dir
-    void Robot::ReadAnimationDir()
+    void Robot::ReadAnimationDir(bool playLoadedAnimation)
     {
       const std::string animationFolder = PREPEND_SCOPED_PATH(Animation, "");
       std::string animationId;
@@ -1247,22 +1247,13 @@ namespace Anki {
         PRINT_NAMED_INFO("Robot.ReadAnimationFile", "folder not found %s", animationFolder.c_str());
       }
 
-      if (!animationId.empty() && loadedFileCount == 1) {
+      if (!animationId.empty() && loadedFileCount == 1 && playLoadedAnimation) {
         // send message to play animation
         PRINT_NAMED_INFO("Robot.ReadAnimationFile", "playing animation id %s", animationId.c_str());
-        PlayAnimation(animationId.c_str(), 1);
+        PlayAnimation(animationId, 1);
       }
     }
 
-
-    Result Robot::ReadAnimationFile()
-    {
-      Result lastResult = RESULT_OK;
-      ReadAnimationDir();
-      PRINT_NAMED_INFO("Robot.ReadAnimationFile", "done");
-      return lastResult;
-    } // ReadAnimationFile()
-    
     Result Robot::SyncTime()
     {
       return SendSyncTime();

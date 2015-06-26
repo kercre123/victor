@@ -2269,7 +2269,7 @@ namespace Anki {
     
     ActionResult PlayAnimationAction::Init(Robot& robot)
     {
-      if(robot.PlayAnimation(_animName.c_str()) == RESULT_OK) {
+      if(robot.PlayAnimation(_animName) == RESULT_OK) {
         return ActionResult::SUCCESS;
       } else {
         return ActionResult::FAILURE_ABORT;

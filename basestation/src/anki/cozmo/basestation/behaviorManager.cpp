@@ -1087,11 +1087,11 @@ namespace Anki {
           } else {
             // Transition animation but no state animation: just play the
             // transition animation once
-            _robot->PlayAnimation(transitionAnimName.c_str(), 1);
+            _robot->PlayAnimation(transitionAnimName, 1);
           }
         } else if(!stateAnimationName.empty()) {
           // No transition animation: just loop the state animation
-          _robot->PlayAnimation(stateAnimationName.c_str(), 0);
+          _robot->PlayAnimation(stateAnimationName, 0);
         }
         
         _state = _nextState;

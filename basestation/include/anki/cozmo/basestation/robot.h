@@ -372,7 +372,7 @@ namespace Anki {
       
       // Plays specified animation numLoops times.
       // If numLoops == 0, animation repeats forever.
-      Result PlayAnimation(const char* animName, const u32 numLoops = 1);
+      Result PlayAnimation(const std::string& animName, const u32 numLoops = 1);
       
       // Return the approximate number of available slots in the robot's
       // keyframe buffer, to let us know if we can stream any more
@@ -390,11 +390,8 @@ namespace Anki {
       void ReadAnimationFile(const char* filename, std::string& animationID);
 
       // Read the animations in a dir
-      void ReadAnimationDir();
+      void ReadAnimationDir(bool playLoadedAnimation);
 
-      // (Re-)Read the animation JSON file and send it to the physical robot
-      Result ReadAnimationFile();
-      
       // Returns true if the robot is currently playing an animation, according
       // to most recent state message.
       bool IsAnimating() const;
