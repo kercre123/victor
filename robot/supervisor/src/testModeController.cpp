@@ -279,7 +279,6 @@ namespace Anki {
         
         
         /////// FaceDisplayTest ////////
-        u8 faceFrame_[180];
         s32 facePosX_ = 0;
         s32 facePosY_ = 0;
         ///// End of FaceDisplayTest ///
@@ -1114,32 +1113,20 @@ namespace Anki {
         PRINT("\n==== Starting FaceDisplayTest =====\n");
         ticCnt_ = 0;
         
-        // Generate a test face
-        u32 i = 0;
-        u8 numLines = 20;
-        while (numLines-- > 0) {
-          faceFrame_[i++] = 128;
-          faceFrame_[i++] = 0;
-        }
-        
-        numLines = 24;
-        faceFrame_[i++] = 29;
-        while (numLines-- > 0) {
-          faceFrame_[i++] = 25;
-          faceFrame_[i++] = 20;
-          faceFrame_[i++] = 25;
-          faceFrame_[i++] = 58;
-        }
-        faceFrame_[i++] = 0;
-        
-        numLines = 20;
-        while (numLines-- > 0) {
-          faceFrame_[i++] = 128;
-          faceFrame_[i++] = 0;
-        }
+        // Draw "programmer art" face until we get real assets
+        u8 faceFrame[] = { 24, 64+24,      // Start 24 lines down and 24 pixels right
+          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
+          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
+          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
+          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
+          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
+          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
+          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
+          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
+          0 };
 
         // Draw face
-        HAL::FaceAnimate(faceFrame_);
+        HAL::FaceAnimate(faceFrame);
         
         return RESULT_OK;
       }
