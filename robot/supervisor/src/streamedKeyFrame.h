@@ -41,7 +41,7 @@ namespace Anki {
       u8 setsWhichTracks; // bits set using the enum values above
       
       // Audio
-      u8 audioSample[HAL::AUDIO_SAMPLE_SIZE];
+      u8 audioSample[AUDIO_SAMPLE_SIZE];
       
       // Face
       s8 faceCenX, faceCenY;

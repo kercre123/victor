@@ -364,7 +364,7 @@ END_MESSAGE_DEFINITION(SetBlockBeingCarried)
 
 // AnimKeyFrame_AudioSample
 START_MESSAGE_DEFINITION(AnimKeyFrame_AudioSample, 1)
-ADD_MESSAGE_MEMBER_ARRAY(u8, sample, 480) // Must match HAL::AUDIO_SAMPLE_SIZE!!
+ADD_MESSAGE_MEMBER_ARRAY(u8, sample, 800) // TODO: Somehow make this use AUDIO_SAMPLE_SIZE
 END_MESSAGE_DEFINITION(AnimKeyFrame_AudioSample)
 
 // AnimKeyFrame_AudioSilence
@@ -391,9 +391,8 @@ END_MESSAGE_DEFINITION(AnimKeyFrame_FacePosition)
 
 // AnimKeyFrame_FaceImage
 // TODO: Need variable-length arrays!
-#define FACE_IMAGE_SIZE 1024
 START_MESSAGE_DEFINITION(AnimKeyFrame_FaceImage, 1)
-ADD_MESSAGE_MEMBER_ARRAY(u8, image, FACE_IMAGE_SIZE)
+ADD_MESSAGE_MEMBER_ARRAY(u8, image, 512) // TODO: Somehow make this use MAX_FACE_FRAME_SIZE
 END_MESSAGE_DEFINITION(AnimKeyFrame_FaceImage)
 
 // AnimKeyFrame_BackpackLights
