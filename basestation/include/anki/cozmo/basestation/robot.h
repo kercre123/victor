@@ -341,6 +341,11 @@ namespace Anki {
                              const f32 max_speed_rad_per_sec,
                              const f32 accel_rad_per_sec2);
       
+      
+      // Sends a message to robot to tap the carried block on the ground the
+      // specified number of times
+      Result TapBlockOnGround(const u8 numTaps);
+      
       // If robot observes the given object ID, it will adjust its head angle to look
       // at last-observed marker. Fails if objectID doesn't exist.
       Result EnableTrackHeadToObject(const u32 objectID);
@@ -704,6 +709,8 @@ namespace Anki {
       Result SendSetHeadAngle(const f32 angle_rad,
                               const f32 max_speed_rad_per_sec,
                               const f32 accel_rad_per_sec2) const;
+
+      Result SendTapBlockOnGround(const u8 numTaps) const;
       
       Result SendDriveWheels(const f32 lwheel_speed_mmps,
                              const f32 rwheel_speed_mmps) const;

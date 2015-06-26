@@ -30,10 +30,6 @@ For internal use only. No part of this code may be used without a signed non-dis
 #define ABS(a) ((a) < 0 ? -(a) : (a))
 #endif
 
-#ifndef SIGN
-#define SIGN(a) ((a) >= 0)
-#endif
-
 #define SWAP(type, a, b) { type t = a; a = b; b = t; }
 
 // ct_assert is a compile time assertion, useful for checking sizeof() and other compile time knowledge
