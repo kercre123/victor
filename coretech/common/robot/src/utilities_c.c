@@ -187,7 +187,7 @@ void PrintF64(int (*writeChar)(int), f64 value)
     }
 
     if (FLT_NEAR(value, ceilf(value))) {
-      curDigit = (s32) DBL_ROUND(value);
+      curDigit = (s32) round(value);
       numDecimalDigitsUsed = maxDecimalDigits; // To exit while loop since this is the last digit we want to print
     } else {
       curDigit = (s32)(floorf((f32)(value)));

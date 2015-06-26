@@ -875,6 +875,12 @@ void Process##__MSG_TYPE__##Message(const __MSG_TYPE__& msg) { ProcessAnimKeyFra
         }
       }
 
+      void ProcessTapBlockOnGroundMessage(const TapBlockOnGround& msg)
+      {
+        LiftController::TapBlockOnGround(msg.numTaps);
+      }
+      
+      
       // --------- Block control messages ----------
 
       void ProcessFlashBlockIDsMessage(const FlashBlockIDs& msg)

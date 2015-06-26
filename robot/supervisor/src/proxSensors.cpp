@@ -143,9 +143,8 @@ namespace Anki {
       // Returns the proximity sensor values
       void GetValues(u8 &left, u8 &forward, u8 &right)
       {
-        left = MIN(static_cast<u8>(FLT_ROUND(_proxLeft)), u8_MAX);
-        forward = MIN(static_cast<u8>(FLT_ROUND(_proxFwd)), u8_MAX);
-        right = MIN(static_cast<u8>(FLT_ROUND(_proxRight)), u8_MAX);
+        // TEMP: Until we actually have prox sensors
+        left=forward=right=0;
         
         //PERIODIC_PRINT(200, "PROX: %f  %f  %f (%d %d %d) (%d %d %d)\n",
         //               _proxLeft, _proxFwd, _proxRight,
