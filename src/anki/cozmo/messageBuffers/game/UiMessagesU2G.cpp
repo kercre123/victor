@@ -3225,6 +3225,66 @@ bool PlayAnimation::operator!=(const PlayAnimation& other) const
 }
 
 
+// MESSAGE ReplayLastAnimation
+
+ReplayLastAnimation::ReplayLastAnimation(const uint8_t* buff, size_t len)
+{
+	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+	Unpack(buffer);
+}
+
+ReplayLastAnimation::ReplayLastAnimation(const CLAD::SafeMessageBuffer& buffer)
+{
+	Unpack(buffer);
+}
+
+size_t ReplayLastAnimation::Pack(uint8_t* buff, size_t len) const
+{
+	CLAD::SafeMessageBuffer buffer(buff, len, false);
+	return Pack(buffer);
+}
+
+size_t ReplayLastAnimation::Pack(CLAD::SafeMessageBuffer& buffer) const
+{
+	buffer.Write(this->numLoops);
+	const size_t bytesWritten {buffer.GetBytesWritten()};
+	return bytesWritten;
+}
+
+size_t ReplayLastAnimation::Unpack(const uint8_t* buff, const size_t len)
+{
+	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+	return Unpack(buffer);
+}
+
+size_t ReplayLastAnimation::Unpack(const CLAD::SafeMessageBuffer& buffer)
+{
+	buffer.Read(this->numLoops);
+	return buffer.GetBytesRead();
+}
+
+size_t ReplayLastAnimation::Size() const
+{
+	size_t result = 0;
+	//numLoops
+	result += 4; // = uint_32
+	return result;
+}
+
+bool ReplayLastAnimation::operator==(const ReplayLastAnimation& other) const
+{
+	if (numLoops != other.numLoops) {
+		return false;
+	}
+	return true;
+}
+
+bool ReplayLastAnimation::operator!=(const ReplayLastAnimation& other) const
+{
+	return !(operator==(other));
+}
+
+
 // MESSAGE ReadAnimationFile
 
 ReadAnimationFile::ReadAnimationFile(const uint8_t* buff, size_t len)
@@ -4346,6 +4406,8 @@ const char* MessageTagToString(const MessageTag tag) {
 		return "IMURequest";
 	case MessageTag::PlayAnimation:
 		return "PlayAnimation";
+	case MessageTag::ReplayLastAnimation:
+		return "ReplayLastAnimation";
 	case MessageTag::ReadAnimationFile:
 		return "ReadAnimationFile";
 	case MessageTag::StartFaceTracking:
@@ -5838,6 +5900,35 @@ void Message::Set_PlayAnimation(Anki::Cozmo::U2G::PlayAnimation&& new_PlayAnimat
 }
 
 
+const Anki::Cozmo::U2G::ReplayLastAnimation& Message::Get_ReplayLastAnimation() const
+{
+	assert(_tag == Tag::ReplayLastAnimation);
+	return _ReplayLastAnimation;
+}
+void Message::Set_ReplayLastAnimation(const Anki::Cozmo::U2G::ReplayLastAnimation& new_ReplayLastAnimation)
+{
+	if(this->_tag == Tag::ReplayLastAnimation) {
+		_ReplayLastAnimation = new_ReplayLastAnimation;
+	}
+	else {
+		ClearCurrent();
+		new(&_ReplayLastAnimation) Anki::Cozmo::U2G::ReplayLastAnimation{new_ReplayLastAnimation};
+		_tag = Tag::ReplayLastAnimation;
+	}
+}
+void Message::Set_ReplayLastAnimation(Anki::Cozmo::U2G::ReplayLastAnimation&& new_ReplayLastAnimation)
+{
+	if(this->_tag == Tag::ReplayLastAnimation) {
+		_ReplayLastAnimation = std::move(new_ReplayLastAnimation);
+	}
+	else {
+		ClearCurrent();
+		new(&_ReplayLastAnimation) Anki::Cozmo::U2G::ReplayLastAnimation{std::move(new_ReplayLastAnimation)};
+		_tag = Tag::ReplayLastAnimation;
+	}
+}
+
+
 const Anki::Cozmo::U2G::ReadAnimationFile& Message::Get_ReadAnimationFile() const
 {
 	assert(_tag == Tag::ReadAnimationFile);
@@ -6630,6 +6721,14 @@ size_t Message::Unpack(const CLAD::SafeMessageBuffer& buffer)
 			this->_PlayAnimation.Unpack(buffer);
 		}
 		break;
+	case Tag::ReplayLastAnimation:
+		if (newTag != oldTag) {
+			new(&(this->_ReplayLastAnimation)) Anki::Cozmo::U2G::ReplayLastAnimation(buffer);
+		}
+		else {
+			this->_ReplayLastAnimation.Unpack(buffer);
+		}
+		break;
 	case Tag::ReadAnimationFile:
 		if (newTag != oldTag) {
 			new(&(this->_ReadAnimationFile)) Anki::Cozmo::U2G::ReadAnimationFile(buffer);
@@ -6901,6 +7000,9 @@ size_t Message::Pack(CLAD::SafeMessageBuffer& buffer) const
 	case Tag::PlayAnimation:
 		this->_PlayAnimation.Pack(buffer);
 		break;
+	case Tag::ReplayLastAnimation:
+		this->_ReplayLastAnimation.Pack(buffer);
+		break;
 	case Tag::ReadAnimationFile:
 		this->_ReadAnimationFile.Pack(buffer);
 		break;
@@ -7101,6 +7203,9 @@ size_t Message::Size() const
 	case Tag::PlayAnimation:
 		result += _PlayAnimation.Size();
 		break;
+	case Tag::ReplayLastAnimation:
+		result += _ReplayLastAnimation.Size();
+		break;
 	case Tag::ReadAnimationFile:
 		result += _ReadAnimationFile.Size();
 		break;
@@ -7299,6 +7404,9 @@ void Message::ClearCurrent()
 		break;
 	case Tag::PlayAnimation:
 		_PlayAnimation.~PlayAnimation();
+		break;
+	case Tag::ReplayLastAnimation:
+		_ReplayLastAnimation.~ReplayLastAnimation();
 		break;
 	case Tag::ReadAnimationFile:
 		_ReadAnimationFile.~ReadAnimationFile();
