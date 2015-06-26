@@ -74,7 +74,7 @@ Material:
       data:
         first:
           name: _InnerRadius
-        second: .32249999
+        second: .330000013
       data:
         first:
           name: _Hardness

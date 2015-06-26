@@ -86,6 +86,8 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 
 	#region INSPECTOR FIELDS
 
+
+
 	[SerializeField] RectTransform wheel = null;
 	[SerializeField] RectTransform peg = null;
 	[SerializeField] RectTransform pegBase = null;
@@ -117,10 +119,13 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 	[SerializeField] Color finalSliceColor = Color.magenta;
 	[SerializeField] Color finalTextColor = Color.cyan;
 	[SerializeField] Color finalTextOutlineColor = Color.cyan;
+	[SerializeField] Color unfocusedColor = Color.grey;
 
 	[SerializeField] float tokenRadius = 300f;
 	[SerializeField] float tokenOuterRadius = 300f;
 	[SerializeField] Text textPrediction;
+
+	[SerializeField] GameObject supplentalEffects;
 
 	#endregion
 
@@ -162,6 +167,7 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 	List<SpinSample> samples = new List<SpinSample>();
 
 	List<RectTransform> pegs = new List<RectTransform>();
+	List<Image> pegImages = new List<Image>();
 	float pegBendFactor = 0f;
 
 	List<PieSlice> slices = new List<PieSlice>();
@@ -522,7 +528,8 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 	void RefreshPegs() {
 		
 		numSlices = Mathf.Max(0, numSlices);
-		
+		pegImages.Clear();
+
 		while(pegs.Count < numSlices) {
 			Transform peg = (Transform)GameObject.Instantiate(pegPrefab);
 			peg.SetParent(wheel, false);
@@ -540,6 +547,7 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 				
 				Image pegImage = pegs[i].gameObject.GetComponentInChildren<Image>();
 				pegImage.color = spokeColors[i % spokeColors.Length];
+				pegImages.Add(pegImage);
 			}
 		}
 
@@ -652,17 +660,20 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 		data.degToPegEnd = MathUtil.AngleDelta(angle, endOfPegAngle);
 		//arc from current wheel peg angle to the end of slice peg's range, if still pressed against peg, set apt angle
 		if(Mathf.Abs(degToPeg) < halfPeg) {
-			pegBendFactor = (1f - Mathf.Clamp01(Mathf.Abs(data.degToPegEnd) / pegDegrees)) * data.pegBendDirection;	
+			float factor = Mathf.Clamp01(Mathf.Abs(data.degToPegEnd) / pegDegrees);
+			factor *= factor;
+			factor = 1f - factor;
+			pegBendFactor = factor * data.pegBendDirection;	
 			touching = true;
 		}
 		
-//		for(int i=0;i<numSlices;i++) {
-//			Color first = (data.pegIndex != i || !touching) ? Color.green : (data.pegBendDirection > 0 ? Color.red : Color.magenta);
-//			Color second = (data.pegIndex != i || !touching) ? Color.green : (data.pegBendDirection < 0 ? Color.red : Color.magenta);
-//			
-//			Debug.DrawRay(transform.position, Quaternion.AngleAxis(i*sliceArc + pegDegrees * 0.5f, Vector3.forward)*wheel.transform.up*1000f, first);
-//			Debug.DrawRay(transform.position, Quaternion.AngleAxis(i*sliceArc - pegDegrees * 0.5f, Vector3.forward)*wheel.transform.up*1000f, second);
-//		}
+		for(int i=0;i<numSlices;i++) {
+			Color first = (data.pegIndex != i || !touching) ? Color.green : (data.pegBendDirection > 0 ? Color.red : Color.magenta);
+			Color second = (data.pegIndex != i || !touching) ? Color.green : (data.pegBendDirection < 0 ? Color.red : Color.magenta);
+			
+			Debug.DrawRay(transform.position, Quaternion.AngleAxis(i*sliceArc + pegDegrees * 0.5f, Vector3.forward)*wheel.transform.up*1000f, first);
+			Debug.DrawRay(transform.position, Quaternion.AngleAxis(i*sliceArc - pegDegrees * 0.5f, Vector3.forward)*wheel.transform.up*1000f, second);
+		}
 		
 
 //		Debug.Log (	"frame("+Time.frameCount+") "+
@@ -694,16 +705,25 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 		return diff;
 	}
 
+	float lastPegBendFactor = 0f;
 	void RefreshPegAngle() {
 		//if we've passed a peg, then just throw it full tilt
 		if(!actualData.pegTouching && actualData.pegsHit > 0) {
 			pegBendFactor = Mathf.Sign(actualData.angularVel);
 		}
 
+//		if(actualData.pegTouching) {
+//			pegBendFactor = Mathf.Lerp(lastPegBendFactor, pegBendFactor, 0.5f);
+//		}
+
 		if(peg != null) peg.localRotation = Quaternion.AngleAxis(pegBendAngle * pegBendFactor, Vector3.forward);
 		
 		//decay by default to immitate elasticity
-		pegBendFactor = Mathf.Lerp(pegBendFactor, 0f, 0.25f);
+		if(!actualData.pegTouching) {
+			pegBendFactor = Mathf.Lerp(pegBendFactor, 0f, 0.25f);
+		}
+
+		lastPegBendFactor = pegBendFactor;
 		//if(Mathf.Abs(pegBendFactor) < 0.1f) pegBendFactor = 0f;
 	}
 	
@@ -725,12 +745,43 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 		StopLoopingSound();
 	}
 
-	public void HidePeg() {
+
+	public void Unfocus() {
 		pegBase.gameObject.SetActive(false);
+		if(supplentalEffects != null) supplentalEffects.SetActive(false);
+
+		for(int i=0;i<numSlices;i++) {
+
+			if(slices[i] != null) {
+				Color imageColor = unfocusedColor;
+				Color textColor = unfocusedColor;
+				Color outlineColor = unfocusedColor;
+				slices[i].SetColors(imageColor, textColor, outlineColor);
+			}
+
+			if(pegImages[i] != null) {
+				pegImages[i].color = unfocusedColor;
+			}
+		}
 	}
 
-	public void ShowPeg() {
+	public void Focus() {
 		pegBase.gameObject.SetActive(true);
+		if(supplentalEffects != null) supplentalEffects.SetActive(true);
+
+		for(int i=0;i<numSlices;i++) {
+
+			if(slices[i] != null) {
+				Color imageColor = imageColors[i % imageColors.Length];
+				Color textColor = textColors[i % textColors.Length];
+				Color outlineColor = outlineColors[i % outlineColors.Length];
+				slices[i].SetColors(imageColor, textColor, outlineColor);
+			}
+
+			if(pegImages[i] != null) {
+				pegImages[i].color = spokeColors[i % spokeColors.Length];
+			}
+		}
 	}
 
 	public void Unlock() {
@@ -740,11 +791,19 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 		Finished = false;
 		dragImage.enabled = true;
 
+		
 		for(int i=0;i<numSlices;i++) {
-			Color imageColor = imageColors[i % imageColors.Length];
-			Color textColor = textColors[i % textColors.Length];
-			Color outlineColor = outlineColors[i % outlineColors.Length];
-			slices[i].SetColors(imageColor, textColor, outlineColor);
+			
+			if(slices[i] != null) {
+				Color imageColor = imageColors[i % imageColors.Length];
+				Color textColor = textColors[i % textColors.Length];
+				Color outlineColor = outlineColors[i % outlineColors.Length];
+				slices[i].SetColors(imageColor, textColor, outlineColor);
+			}
+			
+			if(pegImages[i] != null) {
+				pegImages[i].color = spokeColors[i % spokeColors.Length];
+			}
 		}
 	}
 
@@ -759,6 +818,7 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 		Finished = false;
 		allowTouches = true;
 		pegBendFactor = 0f;
+		lastPegBendFactor = 0f;
 	}
 
 	public void SetNumSlices(int num) {

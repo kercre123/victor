@@ -96,6 +96,8 @@ public class VortexController : GameController {
 	[SerializeField] int lightningMinCountAtSpeedMax = 8;
 	[SerializeField] int lightningMaxCountAtSpeedMax = 16;
 
+	CanvasGroup[] playerButtonCanvasGroups;
+
 	int numPlayers = 0;
 	int currentPlayerIndex = 0;
 	int round = 0;
@@ -107,6 +109,11 @@ public class VortexController : GameController {
 
 	protected override void Awake () {
 		base.Awake();
+
+		playerButtonCanvasGroups = new CanvasGroup[playerButtons.Length];
+		for(int i=0;i<playerButtons.Length;i++) {
+			playerButtonCanvasGroups[i] = playerButtons[i].gameObject.GetComponent<CanvasGroup>();
+		}
 	}
 
 	protected override void OnEnable () {
@@ -126,7 +133,7 @@ public class VortexController : GameController {
 		for(int i=0;i<wheels.Count;i++) {
 			wheels[i].ResetWheel();
 			wheels[i].Lock();
-			wheels[i].HidePeg();
+			wheels[i].Unfocus();
 			wheels[i].gameObject.SetActive(i < rings);
 		}
 		
@@ -136,8 +143,9 @@ public class VortexController : GameController {
 
 		MessageDelay = .1f;
 
-		for(int i=0;i<playerButtons.Length;i++) {
-			playerButtons[i].interactable = false;
+		for(int i=0;i<playerButtonCanvasGroups.Length;i++) {
+			playerButtonCanvasGroups[i].interactable = false;
+			playerButtonCanvasGroups[i].blocksRaycasts = false;
 		}
 
 		for(int i=0;i<textPlayerScores.Length;i++) {
@@ -345,7 +353,7 @@ public class VortexController : GameController {
 
 			//wheels[i].ResetWheel();
 			wheels[i].Lock();
-			wheels[i].HidePeg();
+			wheels[i].Unfocus();
 		
 			bool show = rings > i;
 
@@ -363,7 +371,7 @@ public class VortexController : GameController {
 
 		//enable intro text
 		wheel.Unlock();
-		wheel.ShowPeg();
+		wheel.Focus();
 		wheel.gameObject.SetActive(true);
 
 	}
@@ -376,8 +384,9 @@ public class VortexController : GameController {
 	void Enter_SPINNING() {
 		lightingBall.Radius = wheelLightningRadii[currentWheelIndex];
 
-		for(int i=0;i<playerButtons.Length;i++) {
-			playerButtons[i].interactable = true;
+		for(int i=0;i<playerButtonCanvasGroups.Length;i++) {
+			playerButtonCanvasGroups[i].interactable = true;
+			playerButtonCanvasGroups[i].blocksRaycasts = true;
 		}
 
 	}
@@ -399,8 +408,9 @@ public class VortexController : GameController {
 		wheel.Lock();
 		lightingBall.CountRange = new RangeOfIntegers { Minimum = 0, Maximum = 0 };
 
-		for(int i=0;i<playerButtons.Length;i++) {
-			playerButtons[i].interactable = false;
+		for(int i=0;i<playerButtonCanvasGroups.Length;i++) {
+			playerButtonCanvasGroups[i].interactable = false;
+			playerButtonCanvasGroups[i].blocksRaycasts = false;
 		}
 	}
 
