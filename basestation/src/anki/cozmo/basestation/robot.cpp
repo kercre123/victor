@@ -92,7 +92,6 @@ namespace Anki {
     , _imageSaveMode(SAVE_OFF)
     , _imgFramePeriod(0)
     , _lastImgTimeStamp(0)
-    , _lastPlayedAnimationId(-1)
     , _animationStreamer(_cannedAnimations)
     {
       _poseHistory = new RobotPoseHistory();
@@ -1159,9 +1158,8 @@ namespace Anki {
     Result Robot::PlayAnimation(const char* animName, const u32 numLoops)
     {
       Result lastResult = _animationStreamer.SetStreamingAnimation(animName, numLoops);
-      
+      _lastPlayedAnimationId = animName;
       return lastResult;
-      //return SendPlayAnimation(animName, numLoops);
     }
     
     s32 Robot::GetAnimationID(const std::string& animationName) const
@@ -1189,11 +1187,11 @@ namespace Anki {
 
     void Robot::ReplayLastAnimation(const s32 loopCount)
     {
-      //SendPlayAnimation(_lastPlayedAnimationId, loopCount);
+      Result lastResult = _animationStreamer.SetStreamingAnimation(_lastPlayedAnimationId, loopCount);
     }
 
     // Read the animations in a dir
-    void Robot::ReadAnimationFile(const char* filename, s32& animationId)
+    void Robot::ReadAnimationFile(const char* filename, std::string& animationId)
     {
       Json::Reader reader;
       Json::Value animDefs;
@@ -1205,8 +1203,7 @@ namespace Anki {
       jsonFile.close();
       if (!animDefs.empty()) {
         PRINT_NAMED_INFO("Robot.ReadAnimationFile", "reading");
-        std::vector<s32> loadedAnimations;
-        _cannedAnimations.DefineFromJson(animDefs, loadedAnimations);
+        _cannedAnimations.DefineFromJson(animDefs, animationId);
       }
 
     }
@@ -1216,7 +1213,7 @@ namespace Anki {
     void Robot::ReadAnimationDir()
     {
       const std::string animationFolder = PREPEND_SCOPED_PATH(Animation, "");
-      s32 animationId = -1;
+      std::string animationId;
       s32 loadedFileCount = 0;
       DIR* dir = opendir(animationFolder.c_str());
       if ( dir != nullptr) {
@@ -1255,9 +1252,10 @@ namespace Anki {
         PRINT_NAMED_INFO("Robot.ReadAnimationFile", "folder not found %s", animationFolder.c_str());
       }
 
-      if (animationId >= 0 && loadedFileCount == 1) {
+      if (!animationId.empty() && loadedFileCount == 1) {
         // send message to play animation
-        PRINT_NAMED_INFO("Robot.ReadAnimationFile", "playing animation id %d", animationId);
+        PRINT_NAMED_INFO("Robot.ReadAnimationFile", "playing animation id %s", animationId.c_str());
+        PlayAnimation(animationId.c_str(), 1);
       }
     }
 

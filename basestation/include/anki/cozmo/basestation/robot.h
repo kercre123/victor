@@ -391,7 +391,7 @@ namespace Anki {
       void ReplayLastAnimation(const s32 loopCount);
 
       // Read the animations in a dir
-      void ReadAnimationFile(const char* filename, s32& animationID);
+      void ReadAnimationFile(const char* filename, std::string& animationID);
 
       // Read the animations in a dir
       void ReadAnimationDir();
@@ -689,7 +689,7 @@ namespace Anki {
       // Maintains an average period of incoming robot images
       u32 _imgFramePeriod;
       TimeStamp_t _lastImgTimeStamp;
-      s32 _lastPlayedAnimationId;
+      std::string _lastPlayedAnimationId;
 
       std::unordered_map<std::string, time_t> _loadedAnimationFiles;
       
