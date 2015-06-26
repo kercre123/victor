@@ -285,7 +285,7 @@ namespace Cozmo {
   } // GetColor()
   
   
-  Result CannedAnimationContainer::DefineFromJson(Json::Value& jsonRoot)
+  Result CannedAnimationContainer::DefineFromJson(Json::Value& jsonRoot, std::vector<s32>& loadedAnims)
   {
     
     Json::Value::Members animationNames = jsonRoot.getMemberNames();
@@ -301,7 +301,7 @@ namespace Cozmo {
     {
       const s32 animID = GetID(animationName);
       if(animID < 0) {
-        return RESULT_FAIL;
+        continue;
       }
       
       const s32 numFrames = jsonRoot[animationName].size();
@@ -379,6 +379,8 @@ namespace Cozmo {
         }
         
       } // for each frame
+
+      loadedAnims.push_back(animID);
     } // for each animation
     
     return RESULT_OK;

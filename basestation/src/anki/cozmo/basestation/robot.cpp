@@ -17,7 +17,7 @@
 #include "anki/cozmo/basestation/signals/cozmoEngineSignals.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
-
+#include "anki/common/basestation/math/point.h"
 #include "anki/common/basestation/math/quad_impl.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/poseBase_impl.h"
@@ -39,6 +39,8 @@
 #include "opencv2/opencv.hpp"
 
 #include <fstream>
+#include <dirent.h>
+#include <sys/stat.h>
 
 #define MAX_DISTANCE_FOR_SHORT_PLANNER 40.0f
 #define MAX_DISTANCE_TO_PREDOCK_POSE 20.0f
@@ -90,6 +92,7 @@ namespace Anki {
     , _imageSaveMode(SAVE_OFF)
     , _imgFramePeriod(0)
     , _lastImgTimeStamp(0)
+    , _lastPlayedAnimationId(-1)
     {
       _poseHistory = new RobotPoseHistory();
       
@@ -1181,11 +1184,94 @@ namespace Anki {
     {
       return SendAbortAnimation();
     }
-    
+
+    void Robot::ReplayLastAnimation(const s32 loopCount)
+    {
+      SendPlayAnimation(_lastPlayedAnimationId, loopCount);
+    }
+
+    // Read the animations in a dir
+    void Robot::ReadAnimationFile(const char* filename, s32& animationId)
+    {
+      Json::Reader reader;
+      Json::Value animDefs;
+      std::ifstream jsonFile(filename);
+      if(reader.parse(jsonFile, animDefs) == false) {
+        PRINT_NAMED_ERROR("Robot.ReadAnimationFile.JsonParseFailure",
+          "Failed to parse Json animation file %s.", filename);
+      }
+      jsonFile.close();
+      if (!animDefs.empty()) {
+        PRINT_NAMED_INFO("Robot.ReadAnimationFile", "reading");
+        _cannedAnimations.Clear();
+        std::vector<s32> loadedAnimations;
+        _cannedAnimations.DefineFromJson(animDefs, loadedAnimations);
+      }
+
+    }
+
+
+    // Read the animations in a dir
+    void Robot::ReadAnimationDir()
+    {
+      const std::string animationFolder = PREPEND_SCOPED_PATH(Animation, "");
+      s32 animationId = -1;
+      s32 loadedFileCount = 0;
+      DIR* dir = opendir(animationFolder.c_str());
+      if ( dir != nullptr) {
+        dirent* ent = nullptr;
+        while ( (ent = readdir(dir)) != nullptr) {
+          if (ent->d_type == DT_REG) {
+            std::string fullFileName = animationFolder + ent->d_name;
+            struct stat attrib{0};
+            int result = stat(fullFileName.c_str(), &attrib);
+            if (result == -1) {
+              PRINT_NAMED_WARNING("Robot.ReadAnimationFile", "could not get mtime for %s", fullFileName.c_str());
+              continue;
+            }
+            bool loadFile = false;
+            auto mapIt = _loadedAnimationFiles.find(fullFileName);
+            if (mapIt == _loadedAnimationFiles.end()) {
+              _loadedAnimationFiles.insert({fullFileName, attrib.st_mtimespec.tv_sec});
+              loadFile = true;
+            } else {
+              if (mapIt->second < attrib.st_mtimespec.tv_sec) {
+                mapIt->second = attrib.st_mtimespec.tv_sec;
+                loadFile = true;
+              } else {
+                //PRINT_NAMED_INFO("Robot.ReadAnimationFile", "old time stamp for %s", fullFileName.c_str());
+              }
+            }
+            if (loadFile) {
+              PRINT_NAMED_INFO("Robot.ReadAnimationFile", "importing file %s", fullFileName.c_str());
+              ReadAnimationFile(fullFileName.c_str(), animationId);
+              ++loadedFileCount;
+            }
+          }
+        }
+        closedir(dir);
+      } else {
+        PRINT_NAMED_INFO("Robot.ReadAnimationFile", "folder not found %s", animationFolder.c_str());
+      }
+
+      if (loadedFileCount > 0) {
+        // send the canned animations out
+        _cannedAnimations.Send(_ID, _msgHandler);
+      }
+
+      if (animationId >= 0 && loadedFileCount == 1) {
+        // send message to play animation
+        PRINT_NAMED_INFO("Robot.ReadAnimationFile", "playing animation id %d", animationId);
+      }
+    }
+
+
     Result Robot::ReadAnimationFile()
     {
       Result lastResult = RESULT_OK;
-      
+      ReadAnimationDir();
+      PRINT_NAMED_INFO("Robot.ReadAnimationFile", "done");
+      return lastResult;
       Json::Reader reader;
       
       Json::Value animDefs;
@@ -1194,7 +1280,7 @@ namespace Anki {
       const std::string jsonFilename = PREPEND_SCOPED_PATH(Animation, subPath);
       std::ifstream jsonFile(jsonFilename);
       if(reader.parse(jsonFile, animDefs) == false) {
-        PRINT_NAMED_ERROR("Robot.ReadAnimationFaile.JsonParseFailure",
+        PRINT_NAMED_ERROR("Robot.ReadAnimationFile.JsonParseFailure",
                           "Failed to parse Json animation file %s.\n", jsonFilename.c_str());
 //        lastResult = RESULT_FAIL;
       }
@@ -1202,7 +1288,8 @@ namespace Anki {
       
       if(lastResult == RESULT_OK) {
         _cannedAnimations.Clear();
-        lastResult = _cannedAnimations.DefineFromJson(animDefs);
+        std::vector<s32> loadedAnimations;
+        lastResult = _cannedAnimations.DefineFromJson(animDefs, loadedAnimations);
         if(lastResult == RESULT_OK) {
           // Immediately send the canned animations out
           lastResult = _cannedAnimations.Send(_ID, _msgHandler);
@@ -2431,11 +2518,24 @@ namespace Anki {
       return _msgHandler->SendMessage(_ID, m);
     }
 
+    Result Robot::SendPlayAnimation(const s32 animationId, const u32 numLoops)
+    {
+      MessagePlayAnimation m;
+      m.animationID = animationId;
+      if(m.animationID >= 0) {
+        _lastPlayedAnimationId = animationId;
+        m.numLoops = numLoops;
+        return _msgHandler->SendMessage(_ID, m);
+      }
+      return RESULT_FAIL;
+    }
+
     Result Robot::SendPlayAnimation(const char *name, const u32 numLoops)
     {
       MessagePlayAnimation m;
       m.animationID = _cannedAnimations.GetID(name);
       if(m.animationID >= 0) {
+        _lastPlayedAnimationId = m.animationID;
         m.numLoops = numLoops;
         return _msgHandler->SendMessage(_ID, m);
       }

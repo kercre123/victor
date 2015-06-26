@@ -62,7 +62,16 @@ namespace Anki {
     {
       return _IDs;
     }
-    
+
+    // for when you don't care and you just want a damn robot
+    Robot* RobotManager::GetFirstRobot()
+    {
+      if (_IDs.empty()) {
+        return nullptr;
+      }
+      return GetRobotByID(_IDs.front());
+    }
+
     // Get a pointer to a robot by ID
     Robot* RobotManager::GetRobotByID(const RobotID_t robotID)
     {
