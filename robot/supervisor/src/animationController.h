@@ -29,17 +29,6 @@ namespace Anki {
   namespace Cozmo {
     namespace AnimationController {
       
-      // Amount of "pre-roll" that needs to be buffered before a streamed animation
-      // will start playing, in number of keyframes (noting that each keyframe is 33ms)
-      static const s32 PREROLL_BUFFER_LENGTH = 500/33; // 1/2 a second (500ms / (33ms per frame))
-      
-      // Streaming KeyFrame buffer size, in number of keyframes
-      static const s32 KEYFRAME_BUFFER_LENGTH = 128;
-      
-      // If buffer gets within this number of keyframes of the buffer length,
-      // then it is considered "full" for the purposes of IsBufferFull() below.
-      static const s32 KEYFRAME_BUFFER_PADDING = 32;
-      
       Result Init();
 
       // Buffer up a new KeyFrame for playing, using a KeyFrame message

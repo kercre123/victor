@@ -24,13 +24,36 @@ namespace AnimationController {
   
   namespace {
     
+    // Streaming KeyFrame buffer size, in number of keyframes
+    static const s32 KEYFRAME_BUFFER_LENGTH = 16384 / sizeof(StreamedKeyFrame);
+    
+    // Amount of "pre-roll" that needs to be buffered before a streamed animation
+    // will start playing, in number of keyframes
+    static const s32 PREROLL_BUFFER_LENGTH = KEYFRAME_BUFFER_LENGTH / 3;
+    
+    // If buffer gets within this number of keyframes of the buffer length,
+    // then it is considered "full" for the purposes of IsBufferFull() below.
+    static const s32 KEYFRAME_BUFFER_PADDING = KEYFRAME_BUFFER_LENGTH / 2;
+    
+    // Anticipating that the face images will change less frequently, the
+    // number of face images we can buffer is smaller
+    static const s32 FACE_FRAME_BUFFER_LENGTH = KEYFRAME_BUFFER_LENGTH / 4;
+    
     // Circular buffer of keyframes
     StreamedKeyFrame _keyFrameBuffer[KEYFRAME_BUFFER_LENGTH];
+    
+    u8 _faceImageBuffer[MAX_FACE_FRAME_SIZE][FACE_FRAME_BUFFER_LENGTH];
+    
     s32  _currentFrame;
     s32  _lastFrame;
     s32  _numFramesBuffered;
+    
+    s32  _currentFaceFrame;
+    s32  _lastFaceFrame;
+    
     bool _haveReceivedTerminationFrame;
     bool _isPlaying;
+    
     
 #   if DEBUG_ANIMATION_CONTROLLER
     TimeStamp_t _currentTime_ms;
@@ -281,6 +304,10 @@ namespace AnimationController {
     _currentFrame = 0;
     _lastFrame    = 0;
     _numFramesBuffered = 0;
+    
+    _currentFaceFrame = 0;
+    _lastFaceFrame    = 0;
+    
     _haveReceivedTerminationFrame = false;
     _isPlaying = false;
     
@@ -400,8 +427,26 @@ namespace AnimationController {
 //    PRINT("AnimationController is buffering FaceImage keyframe.\n");
 //#   endif
 
+    // Move to next spot in the circular face frame buffer
+    s32 oldLastFrame = _lastFaceFrame;
+    ++_lastFaceFrame;
+    if(_lastFaceFrame == FACE_FRAME_BUFFER_LENGTH) {
+      _lastFaceFrame = 0;
+    }
+    
+    // Make sure there's enough room in the separate face frame buffer
+    if(_lastFaceFrame == _currentFaceFrame) {
+      // Restore old last frame:
+      _lastFaceFrame = oldLastFrame;
+      PRINT("No room left in face frame buffer!");
+      return RESULT_FAIL;
+    }
+    
     StreamedKeyFrame& lastKeyFrame = _keyFrameBuffer[_lastFrame];
     lastKeyFrame.setsWhichTracks |= StreamedKeyFrame::KF_SETS_FACE_FRAME;
+    
+    // Point the faceFrame pointer at the current slot in the face image buffer
+    lastKeyFrame.faceFrame = _faceImageBuffer[_lastFaceFrame];
     
     // TODO: Update this to copy out a variable-length amount of data
     memcpy(lastKeyFrame.faceFrame, msg.image, sizeof(msg.image));

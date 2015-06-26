@@ -43,9 +43,11 @@ namespace Anki {
       // Audio
       u8 audioSample[AUDIO_SAMPLE_SIZE];
       
-      // Face
+      // Face Center Position
       s8 faceCenX, faceCenY;
-      u8 faceFrame[HAL::MAX_FACE_FRAME_SIZE];
+      
+      // Pointer to a face frame to use
+      u8 *faceFrame;
       
       // Head speed in rad/sec
       // TODO: discretize / use fixed point
