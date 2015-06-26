@@ -4,7 +4,7 @@
 #ifndef USER_CONFIG_H_
 #define USER_CONFIG_H_
 
-#define COZMO_AS_AP
+//#define COZMO_AS_AP
 
 #ifdef COZMO_AS_AP
 
