@@ -59,6 +59,7 @@ public class RobotRelativeControls : MonoBehaviour {
 	bool liftSliderEngaged = false;
 	float timeSinceInput = 0f;
 	Quaternion lastAttitude = Quaternion.identity;
+	InputField hiddenInputField;
 
 #endregion
 
@@ -93,6 +94,9 @@ public class RobotRelativeControls : MonoBehaviour {
 		RefreshLiftSlider();
 
 		ShowSticks();
+
+
+		hiddenInputField = CozmoAssistedControls.instance.gameObject.GetComponent<InputField>();
 	}
 
 	void Update() {
@@ -153,6 +157,7 @@ public class RobotRelativeControls : MonoBehaviour {
 		Vector2 targetSwapDirection = Vector2.zero;
 
 		CheckVerticalStick();
+		hiddenInputField.ActivateInputField();
 		CheckVerticalDebugAxis();
 
 		if(Input.touchCount > 0) {
@@ -189,11 +194,15 @@ public class RobotRelativeControls : MonoBehaviour {
 
 			//robot.TrackHeadToObject( targetLock );
 		}
+		Debug.Log("hiddenInputField.text: " +hiddenInputField.text);
+		hiddenInputField.text = string.Empty;
 
-		bool stopped = inputs.sqrMagnitude == 0f && moveCommandLastFrame;
-		if(!stopped) {
-			Vector3 delta = inputs - lastInputs;
-			if(delta.sqrMagnitude <= 0f) return; // command not changed
+		if ( PlayerPrefs.GetInt("CozmoAssistedControls", 0) == 0 ) {
+			bool stopped = inputs.sqrMagnitude == 0f && moveCommandLastFrame;
+			if(!stopped) {
+				Vector3 delta = inputs - lastInputs;
+				if(delta.sqrMagnitude <= 0f) return; // command not changed
+			}
 		}
 
 		lastInputs = inputs;
@@ -218,7 +227,12 @@ public class RobotRelativeControls : MonoBehaviour {
 			CozmoUtil.CalcWheelSpeedsForTwoAxisInputs(inputs, out leftWheelSpeed, out rightWheelSpeed, maxTurnFactor);
 		}
 
-		robot.DriveWheels(leftWheelSpeed, rightWheelSpeed);
+		if ( PlayerPrefs.GetInt("CozmoAssistedControls", 0) == 0 ) {
+			robot.DriveWheels(leftWheelSpeed, rightWheelSpeed);
+		} else {
+			float[] wheelSpeeds = CozmoAssistedControls.instance.AdjustForCollsion(leftWheelSpeed, rightWheelSpeed);
+			robot.DriveWheels(wheelSpeeds[0], wheelSpeeds[1]);
+		}
 
 		moveCommandLastFrame = inputs.sqrMagnitude > 0f;
 
@@ -436,12 +450,25 @@ public class RobotRelativeControls : MonoBehaviour {
 	void CheckVerticalDebugAxis() {
 		if(inputs.y == 0f) {
 			inputs.y = Input.GetKey(KeyCode.W) ? 1f : Input.GetKey(KeyCode.S) ? -1f : 0f;
+			/*
+			if( hiddenInputField != null )
+			{
+				inputs.y = hiddenInputField.text.Contains("w") ? 1f : hiddenInputField.text.Contains("s") ? -1f : 0f;
+			}
+			*/
+
 		}
 	}
 
 	void CheckDebugHorizontalAxesTurning() {
 		if(inputs.x == 0f) {
 			inputs.x = Input.GetKey(KeyCode.D) ? 1f : Input.GetKey(KeyCode.A) ? -1f : 0f;
+			/*
+			if( hiddenInputField != null )
+			{
+				inputs.x = hiddenInputField.text.Contains("d") ? 1f : hiddenInputField.text.Contains("a") ? -1f : 0f;
+			}
+			*/
 		}
 	}
 

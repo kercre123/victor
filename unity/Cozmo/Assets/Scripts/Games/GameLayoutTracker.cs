@@ -110,6 +110,7 @@ public class GameLayoutTracker : MonoBehaviour {
 	bool iStartAutoBuild = false;
 
 	bool skipBuildForThisLayout = false;
+	bool skipBuildForThisLayoutWaitForBlocks = false;
 	bool showVisualizations = false;
 
 	ObservedObject nextObjectToPlace = null;
@@ -145,12 +146,13 @@ public class GameLayoutTracker : MonoBehaviour {
 		}
 
 		//no apt layout found?  then just disable
-		if(currentLayout == null) {
+		if(currentLayout == null || PlayerPrefs.GetInt("DebugSkipLayoutTracker",0) == 1) {
 			gameObject.SetActive(false);
 			return;
 		}
 
 		skipBuildForThisLayout = currentLayout.blocks.Find( x => x.isHeld ) != null;
+		skipBuildForThisLayoutWaitForBlocks = (currentLayout.blocks.Find( x => x.isHeld ) != null) && currentLayout.blocks.FindAll( x => x.cubeType == CubeType.LIGHT_CUBE).Count > 1;
 
 		Phase = LayoutTrackerPhase.INVENTORY;
 
@@ -239,6 +241,11 @@ public class GameLayoutTracker : MonoBehaviour {
 		}
 
 		bool completed = validCount == currentLayout.blocks.Count;
+		if( currentLayout.blocks.Find( x => x.isHeld ) )
+		{
+			// make sure cozmo is holding a block if he needs to be
+			completed &= (robot.carryingObject != null);
+		}
 
 		if(iStartBuild) return LayoutTrackerPhase.BUILDING;
 		if(iStartAutoBuild) return LayoutTrackerPhase.AUTO_BUILDING;
@@ -252,17 +259,18 @@ public class GameLayoutTracker : MonoBehaviour {
 				break;
 			case LayoutTrackerPhase.BUILDING:
 
-				if(skipBuildForThisLayout) {
+				if(skipBuildForThisLayout && !skipBuildForThisLayoutWaitForBlocks) {
 					BuildInstructionsCube unfinished = currentLayout.blocks.Find( x => !x.Validated && !x.isHeld );
 					bool skipBuild = unfinished == null;
 					if(skipBuild) {
 						return LayoutTrackerPhase.DISABLED;
 					}
-					else {
+					else if(unfinished != null){
 						Debug.Log("unfinished("+unfinished.name+")");
 					}
+				} else if (skipBuildForThisLayoutWaitForBlocks ) {
+					return LayoutTrackerPhase.DISABLED;
 				}
-
 				if(completed) return LayoutTrackerPhase.COMPLETE;
 				break;
 			case LayoutTrackerPhase.COMPLETE:
@@ -461,7 +469,7 @@ public class GameLayoutTracker : MonoBehaviour {
 		
 		
 		if(image_localizedCheck != null) image_localizedCheck.gameObject.SetActive(robot.IsLocalized());
-		if(button_autoBuild != null) button_autoBuild.gameObject.SetActive(!skipBuildForThisLayout && inventoryComplete && robot.IsLocalized());
+		if(button_autoBuild != null) button_autoBuild.gameObject.SetActive(!skipBuildForThisLayout && (!skipBuildForThisLayoutWaitForBlocks || validCount >= currentLayout.blocks.Count) && inventoryComplete && robot.IsLocalized());
 		if(inventoryHints != null) inventoryHints.SetActive(!inventoryComplete);
 	}
 	void Exit_INVENTORY() {
@@ -569,6 +577,9 @@ public class GameLayoutTracker : MonoBehaviour {
 		layoutInstructionsPanel.SetActive(false);
 		layoutInstructionsCamera.gameObject.SetActive(false);
 		buttonStartPlaying.gameObject.SetActive(false);
+		if( currentLayout != null ) {
+			currentLayout.gameObject.SetActive(false);
+		}
 	}
 	void Update_DISABLED() {}
 	void Exit_DISABLED() {}
