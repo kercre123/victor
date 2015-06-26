@@ -28,20 +28,23 @@ namespace Anki {
     class Robot;
     class IRobotMessageHandler;
     
+    // IKeyFrame defines an abstract interface for all KeyFrames below.
     class IKeyFrame
     {
     public:
       IKeyFrame();
       //IKeyFrame(const Json::Value& root);
-      
       ~IKeyFrame();
       
       bool IsValid() const { return _isValid; }
       
       bool IsTimeToPlay(TimeStamp_t startTime_ms, TimeStamp_t currTime_ms) const;
       
+      // Returns the time to trigger whatever change is implied by the KeyFrame
       TimeStamp_t GetTriggerTime() const { return _triggerTime_ms; }
       
+      // Set all members from Json. Calls virtual SetMembersFromJson() method so
+      // subclasses can specify how to populate their members.
       Result DefineFromJson(const Json::Value &json);
       
       // Fill some kind of message for streaming and return it. Return nullptr
@@ -49,16 +52,22 @@ namespace Anki {
       virtual RobotMessage* GetStreamMessage() = 0;
       
     protected:
+      
+      // Populate members from Json
       virtual Result SetMembersFromJson(const Json::Value &jsonRoot) = 0;
       
       //void SetIsValid(bool isValid) { _isValid = isValid; }
       
     private:
-      //RobotMessage* _msg;
+      
       TimeStamp_t   _triggerTime_ms;
       bool          _isValid;
-    };
+      
+    }; // class IKeyFrame
     
+    
+    // A HeadAngleKeyFrame specifies the time to _start_ moving the head towards
+    // a given angle (with optional variation), and how long to take to get there.
     class HeadAngleKeyFrame : public IKeyFrame
     {
     public:
@@ -83,8 +92,11 @@ namespace Anki {
       
       MessageAnimKeyFrame_HeadAngle _streamHeadMsg;
       
-    };
+    }; // class HeadAngleKeyFrame
     
+    
+    // A LiftHeightKeyFrame specifies the time to _start_ moving the lift towards
+    // a given height (with optional variation), and how long to take to get there.
     class LiftHeightKeyFrame : public IKeyFrame
     {
     public:
@@ -107,8 +119,12 @@ namespace Anki {
       
       MessageAnimKeyFrame_LiftHeight _streamLiftMsg;
       
-    };
+    }; // class LiftHeightKeyFrame
     
+    
+    // A DeviceAudioKeyFrame references a single "sound" to be played on the
+    // device directly. It is not streamed at all, and thus its GetStreamMessage()
+    // method always returns nullptr.
     class DeviceAudioKeyFrame : public IKeyFrame
     {
     public:
@@ -129,8 +145,12 @@ namespace Anki {
       
     private:
       u32 _audioID;
-    };
+      
+    }; // class DeviceAudioKeyFrame
     
+    
+    // A RobotAudioKeyFrame references a single "sound" which is made of lots
+    // of "samples" to be individually streamed to the robot.
     class RobotAudioKeyFrame : public IKeyFrame
     {
     public:
@@ -155,8 +175,14 @@ namespace Anki {
       s32 _sampleIndex;
       
       MessageAnimKeyFrame_AudioSample  _audioSampleMsg;
-    };
+      
+    }; // class RobotAudioKeyFrame
     
+    
+    // A FaceImageKeyFrame stores a reference to a particular image / sprite to
+    // be displayed on the robot's LED face display. When its GetStreamMessage()
+    // is requested, it looks up the actual RLE-compressed image matching the
+    // reference in the KeyFrame and fills the streamed message with it.
     class FaceImageKeyFrame : public IKeyFrame
     {
     public:
@@ -177,8 +203,11 @@ namespace Anki {
       
       MessageAnimKeyFrame_FaceImage _streamMsg;
       
-    };
+    }; // class FaceImageKeyFrame
     
+    
+    // A FacePositionKeyFrame sets the center of the currently displayed face
+    // image/sprite, in LED screen coordinates.
     class FacePositionKeyFrame : public IKeyFrame
     {
     public:
@@ -198,7 +227,8 @@ namespace Anki {
       s8 _xcen, _ycen;
       
       MessageAnimKeyFrame_FacePosition _streamMsg;
-    };
+      
+    }; // class FacePositionKeyFrame
     
   } // namespace Cozmo
 } // namespace Anki

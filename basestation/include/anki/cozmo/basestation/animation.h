@@ -53,29 +53,25 @@ namespace Anki {
       
     private:
     
+      // Internal templated class for storing/accessing various "tracks", which
+      // hold different types of KeyFrames.
       template<typename FRAME_TYPE>
       class Track {
       public:
-        enum class Type : u8 {
-          HEAD,
-          LIFT,
-          FACE_IMAGE,
-          FACE_POSITION,
-          DEVICE_AUDIO,
-          ROBOT_AUDIO
-        };
-        
         void Init();
         
         Result AddKeyFrame(const FRAME_TYPE& keyFrame) { _frames.emplace_back(keyFrame); return RESULT_OK; }
-        
         Result AddKeyFrame(const Json::Value& jsonRoot);
         
-        RobotMessage* GetNextMessage(TimeStamp_t startTime_ms, TimeStamp_t currTime_ms);
+        // Return the Streaming message for the current KeyFrame if it is time,
+        // nullptr otherwise. Also returns nullptr if there are no KeyFrames
+        // left in the track.
+        RobotMessage* GetCurrentStreamingMessage(TimeStamp_t startTime_ms, TimeStamp_t currTime_ms);
         
-        FRAME_TYPE& GetNextFrame() { return *_frameIter; }
+        // Get a reference to the current KeyFrame in the track
+        FRAME_TYPE& GetCurrentKeyFrame() { return *_frameIter; }
         
-        void Increment() { ++_frameIter; }
+        void MoveToNextKeyFrame() { ++_frameIter; }
         
         bool HasFramesLeft() const { return _frameIter != _frames.end(); }
         

@@ -47,15 +47,15 @@ namespace Cozmo {
   }
   
   template<typename FRAME_TYPE>
-  RobotMessage* Animation::Track<FRAME_TYPE>::GetNextMessage(TimeStamp_t startTime_ms,
-                                                             TimeStamp_t currTime_ms)
+  RobotMessage* Animation::Track<FRAME_TYPE>::GetCurrentStreamingMessage(TimeStamp_t startTime_ms,
+                                                                         TimeStamp_t currTime_ms)
   {
     RobotMessage* msg = nullptr;
     
-    if(HasFramesLeft() && GetNextFrame().IsTimeToPlay(startTime_ms, currTime_ms))
+    if(HasFramesLeft() && GetCurrentKeyFrame().IsTimeToPlay(startTime_ms, currTime_ms))
     {
-      msg = GetNextFrame().GetStreamMessage();
-      Increment();
+      msg = GetCurrentKeyFrame().GetStreamMessage();
+      MoveToNextKeyFrame();
     }
     
     return msg;
@@ -213,9 +213,9 @@ _robotAudioTrack.__METHOD__()
     
     // Is it time to play device audio? (using actual basestation time)
     if(_deviceAudioTrack.HasFramesLeft() && 
-       _deviceAudioTrack.GetNextFrame().IsTimeToPlay(_startTime_ms, currTime_ms)) {
-      _deviceAudioTrack.GetNextFrame().PlayOnDevice();
-      _deviceAudioTrack.Increment();
+       _deviceAudioTrack.GetCurrentKeyFrame().IsTimeToPlay(_startTime_ms, currTime_ms)) {
+      _deviceAudioTrack.GetCurrentKeyFrame().PlayOnDevice();
+      _deviceAudioTrack.MoveToNextKeyFrame();
     }
     
     // Don't send frames if robot has no space for them
@@ -229,17 +229,18 @@ _robotAudioTrack.__METHOD__()
       // Have to always send an audio frame to keep time, whether that's the next
       // audio sample or a silent frame. This increments "streamingTime"
       // NOTE: Audio frame must be first!
-      if(_robotAudioTrack.HasFramesLeft())
+      if(_robotAudioTrack.HasFramesLeft() &&
+         _robotAudioTrack.GetCurrentKeyFrame().IsTimeToPlay(_startTime_ms, _streamingTime_ms))
       {
-        msg = _robotAudioTrack.GetNextFrame().GetStreamMessage();
+        msg = _robotAudioTrack.GetCurrentKeyFrame().GetStreamMessage();
         if(msg != nullptr) {
           // Still have samples to send, don't increment to the next frame in the track
           robot.SendMessage(*msg);
           
         } else {
-          // No samples left to send for this keyframe. Move to next, and for now
-          // send silence.
-          _robotAudioTrack.Increment();
+          // No samples left to send for this keyframe. Move to next keyframe,
+          // and for now send silence.
+          _robotAudioTrack.MoveToNextKeyFrame();
           robot.SendMessage(_silenceMsg);
         }
       } else {
@@ -264,25 +265,25 @@ _robotAudioTrack.__METHOD__()
       
       Result sendResult = RESULT_OK;
       
-      msg = _headTrack.GetNextMessage(_startTime_ms, _streamingTime_ms);
+      msg = _headTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms);
       if(msg != nullptr) {
         sendResult = robot.SendMessage(*msg);
         if(sendResult != RESULT_OK) { return sendResult; }
       }
       
-      msg = _liftTrack.GetNextMessage(_startTime_ms, _streamingTime_ms);
+      msg = _liftTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms);
       if(msg != nullptr) {
         sendResult = robot.SendMessage(*msg);
         if(sendResult != RESULT_OK) { return sendResult; }
       }
       
-      msg = _facePosTrack.GetNextMessage(_startTime_ms, _streamingTime_ms);
+      msg = _facePosTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms);
       if(msg != nullptr) {
         sendResult = robot.SendMessage(*msg);
         if(sendResult != RESULT_OK) { return sendResult; }
       }
       
-      msg = _faceImageTrack.GetNextMessage(_startTime_ms, _streamingTime_ms);
+      msg = _faceImageTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms);
       if(msg != nullptr) {
         sendResult = robot.SendMessage(*msg);
         if(sendResult != RESULT_OK) { return sendResult; }
