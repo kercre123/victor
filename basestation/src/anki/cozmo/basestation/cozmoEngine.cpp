@@ -62,7 +62,8 @@ namespace Cozmo {
     virtual bool ConnectToRobot(AdvertisingRobot whichRobot);
     
     void DisconnectFromRobot(RobotID_t whichRobot);
-    
+
+    virtual void StartAnimationTool() {};
   protected:
   
     // Derived classes must implement any special initialization in this method,
@@ -96,7 +97,7 @@ namespace Cozmo {
     VisionProcessingThread    _deviceVisionThread;
     
     std::vector<Signal::SmartHandle> _signalHandles;
-    
+
   }; // class CozmoEngineImpl
 
   
@@ -363,6 +364,10 @@ namespace Cozmo {
   void CozmoEngine::ProcessDeviceImage(const Vision::Image &image) {
     _impl->ProcessDeviceImage(image);
   }
+
+  void CozmoEngine::StartAnimationTool() {
+    _impl->StartAnimationTool();
+  }
   
 #if 0
 #pragma mark -
@@ -382,7 +387,8 @@ namespace Cozmo {
                        bool             robotIsSimulated);
     
     void ListenForRobotConnections(bool listen);
-    
+
+    Robot* GetFirstRobot();
     int    GetNumRobots() const;
     Robot* GetRobotByID(const RobotID_t robotID); // returns nullptr for invalid ID
     std::vector<RobotID_t> const& GetRobotIDList() const;
@@ -392,14 +398,16 @@ namespace Cozmo {
       
     // TODO: Remove these in favor of it being handled via messages instead of direct API polling
     bool GetCurrentRobotImage(RobotID_t robotId, Vision::Image& img, TimeStamp_t newerThanTime);
-    
+
+    void StartAnimationTool() override { _animationReloadActive = true; };
   protected:
     
     virtual Result InitInternal() override;
     virtual Result UpdateInternal(const BaseStationTime_t currTime_ns) override;
     
     void InitPlaybackAndRecording();
-    
+
+    void ReloadAnimations(const BaseStationTime_t currTime_ns);
     
     Result AddRobot(RobotID_t robotID);
     
@@ -409,7 +417,8 @@ namespace Cozmo {
     RobotMessageHandler          _robotMsgHandler;
     
     std::map<AdvertisingRobot, bool> _forceAddedRobots;
-    
+    BaseStationTime_t _lastAnimationFolderScan;
+    bool _animationReloadActive;
 #if COZMO_RECORDING_PLAYBACK
     // TODO: Make use of these for playback/recording
     IRecordingPlaybackModule *recordingPlaybackModule_;
@@ -422,6 +431,8 @@ namespace Cozmo {
   CozmoEngineHostImpl::CozmoEngineHostImpl()
   : _isListeningForRobots(false)
   , _robotAdvertisementService("RobotAdvertisementService")
+  , _lastAnimationFolderScan(0)
+  , _animationReloadActive(false)
   {
     
     PRINT_NAMED_INFO("CozmoEngineHostImpl.Constructor",
@@ -579,8 +590,12 @@ namespace Cozmo {
     
     return lastResult;
   }
-  
-  
+
+  Robot* CozmoEngineHostImpl::GetFirstRobot()
+  {
+    return _robotMgr.GetFirstRobot();
+  }
+
   int CozmoEngineHostImpl::GetNumRobots() const
   {
     const size_t N = _robotMgr.GetNumRobots();
@@ -630,7 +645,8 @@ namespace Cozmo {
   
   Result CozmoEngineHostImpl::UpdateInternal(const BaseStationTime_t currTime_ns)
   {
-     
+    ReloadAnimations(currTime_ns);
+
     // Update robot comms
     _robotChannel.Update();
     
@@ -640,7 +656,8 @@ namespace Cozmo {
     
     // Update time
     BaseStationTimer::getInstance()->UpdateTime(currTime_ns);
-    
+
+
     _robotMsgHandler.ProcessMessages();
     
     // Let the robot manager do whatever it's gotta do to update the
@@ -649,7 +666,22 @@ namespace Cozmo {
     
     return RESULT_OK;
   } // UpdateInternal()
-  
+
+  void CozmoEngineHostImpl::ReloadAnimations(const BaseStationTime_t currTime_ns)
+  {
+    if (!_animationReloadActive) {
+      return;
+    }
+    const BaseStationTime_t reloadFrequency = static_cast<BaseStationTime_t>SEC_TO_NANOS(0.5f);
+    if (_lastAnimationFolderScan + reloadFrequency < currTime_ns) {
+      _lastAnimationFolderScan = currTime_ns;
+      Robot* robot = _robotMgr.GetFirstRobot();
+      if (robot != nullptr) {
+        robot->ReadAnimationDir();
+      }
+    }
+  }
+
   bool CozmoEngineHostImpl::GetCurrentRobotImage(RobotID_t robotID, Vision::Image& img, TimeStamp_t newerThanTime)
   {
     Robot* robot = _robotMgr.GetRobotByID(robotID);
@@ -696,7 +728,11 @@ namespace Cozmo {
   {
     return _hostImpl->ConnectToRobot(whichRobot);
   }
-  
+
+  Robot* CozmoEngineHost::GetFirstRobot() {
+    return _hostImpl->GetFirstRobot();
+  }
+
   int    CozmoEngineHost::GetNumRobots() const {
     return _hostImpl->GetNumRobots();
   }
