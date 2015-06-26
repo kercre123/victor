@@ -296,242 +296,9 @@ ADD_MESSAGE_MEMBER(s32, maxObjectHeight)
 ADD_MESSAGE_MEMBER(s32, maxObjectWidth)
 END_MESSAGE_DEFINITION(SetFaceDetectParams)
 
-// PlayAnimation
-START_MESSAGE_DEFINITION(PlayAnimation, 1)
-ADD_MESSAGE_MEMBER(u32, numLoops)
-ADD_MESSAGE_MEMBER(u8,  animationID)
-END_MESSAGE_DEFINITION(PlayAnimation)
-
-// TransitionToStateAnimation
-START_MESSAGE_DEFINITION(TransitionToStateAnimation, 1)
-ADD_MESSAGE_MEMBER(u8, transitionAnimID)
-ADD_MESSAGE_MEMBER(u8, stateAnimID)
-END_MESSAGE_DEFINITION(TransitionToStateAnimation)
-
 // AbortAnimation
 START_MESSAGE_DEFINITION(AbortAnimation, 1)
 END_MESSAGE_DEFINITION(AbortAnimation)
-
-// ClearCannedAnimation
-START_MESSAGE_DEFINITION(ClearCannedAnimation, 2)
-ADD_MESSAGE_MEMBER(u8, animationID)
-END_MESSAGE_DEFINITION(ClearCannedAnimation)
-
-// TODO: Make a macro for common keyframe members (but how to deal with decreasing size order?)
-
-// AddAnimKeyFrame_SetHeadAngle
-START_MESSAGE_DEFINITION(AddAnimKeyFrame_SetHeadAngle, 2)
-ADD_MESSAGE_MEMBER(u16, relTime_ms)
-ADD_MESSAGE_MEMBER(u8,  transitionIn)
-ADD_MESSAGE_MEMBER(u8,  transitionOut)
-ADD_MESSAGE_MEMBER(u8,  animationID)
-ADD_MESSAGE_MEMBER(s8,  angle_deg)
-ADD_MESSAGE_MEMBER(u8,  variability_deg)
-END_MESSAGE_DEFINITION(AddAnimKeyFrame_SetHeadAngle)
-
-// AddAnimKeyFrame_HoldHeadAngle
-START_MESSAGE_DEFINITION(AddAnimKeyFrame_HoldHeadAngle, 2)
-ADD_MESSAGE_MEMBER(u16, relTime_ms)
-ADD_MESSAGE_MEMBER(u8,  transitionIn)
-ADD_MESSAGE_MEMBER(u8,  transitionOut)
-ADD_MESSAGE_MEMBER(u8,  animationID)
-END_MESSAGE_DEFINITION(AddAnimKeyFrame_HoldHeadAngle)
-
-// AddAnimKeyFrame_StartHeadNod
-START_MESSAGE_DEFINITION(AddAnimKeyFrame_StartHeadNod, 2)
-ADD_MESSAGE_MEMBER(u16, relTime_ms)
-ADD_MESSAGE_MEMBER(u16, period_ms)
-ADD_MESSAGE_MEMBER(u8,  transitionIn)
-ADD_MESSAGE_MEMBER(u8,  transitionOut)
-ADD_MESSAGE_MEMBER(u8,  animationID)
-ADD_MESSAGE_MEMBER(s8,  lowAngle_deg)
-ADD_MESSAGE_MEMBER(s8,  highAngle_deg)
-END_MESSAGE_DEFINITION(AddAnimKeyFrame_StartHeadNod)
-
-// AddAnimKeyFrame_StopHeadNod
-START_MESSAGE_DEFINITION(AddAnimKeyFrame_StopHeadNod, 2)
-ADD_MESSAGE_MEMBER(u16, relTime_ms)
-ADD_MESSAGE_MEMBER(u8,  transitionIn)
-ADD_MESSAGE_MEMBER(u8,  transitionOut)
-ADD_MESSAGE_MEMBER(u8,  animationID)
-ADD_MESSAGE_MEMBER(s8, finalAngle_deg)
-END_MESSAGE_DEFINITION(AddAnimKeyFrame_StopHeadNod)
-
-// AddAnimKeyFrame_SetLiftHeight
-START_MESSAGE_DEFINITION(AddAnimKeyFrame_SetLiftHeight, 2)
-ADD_MESSAGE_MEMBER(u16, height_mm)
-ADD_MESSAGE_MEMBER(u16, relTime_ms)
-ADD_MESSAGE_MEMBER(u8,  transitionIn)
-ADD_MESSAGE_MEMBER(u8,  transitionOut)
-ADD_MESSAGE_MEMBER(u8,  animationID)
-END_MESSAGE_DEFINITION(AddAnimKeyFrame_SetLiftHeight)
-
-// AddAnimKeyFrame_HoldLiftHeight
-START_MESSAGE_DEFINITION(AddAnimKeyFrame_HoldLiftHeight, 2)
-ADD_MESSAGE_MEMBER(u16, relTime_ms)
-ADD_MESSAGE_MEMBER(u8,  transitionIn)
-ADD_MESSAGE_MEMBER(u8,  transitionOut)
-ADD_MESSAGE_MEMBER(u8,  animationID)
-END_MESSAGE_DEFINITION(AddAnimKeyFrame_HoldLiftHeight)
-
-// AddAnimKeyFrame_StartLiftNod
-START_MESSAGE_DEFINITION(AddAnimKeyFrame_StartLiftNod, 2)
-ADD_MESSAGE_MEMBER(u16, relTime_ms)
-ADD_MESSAGE_MEMBER(u16, period_ms)
-ADD_MESSAGE_MEMBER(u8,  transitionIn)
-ADD_MESSAGE_MEMBER(u8,  transitionOut)
-ADD_MESSAGE_MEMBER(u8,  lowHeight_mm)
-ADD_MESSAGE_MEMBER(u8,  highHeight_mm)
-ADD_MESSAGE_MEMBER(u8,  animationID)
-END_MESSAGE_DEFINITION(AddAnimKeyFrame_StartLiftNod)
-
-// AddAnimKeyFrame_StopLiftNod
-START_MESSAGE_DEFINITION(AddAnimKeyFrame_StopLiftNod, 2)
-ADD_MESSAGE_MEMBER(u16, relTime_ms)
-ADD_MESSAGE_MEMBER(u8,  transitionIn)
-ADD_MESSAGE_MEMBER(u8,  transitionOut)
-ADD_MESSAGE_MEMBER(u8,  finalHeight_mm)
-ADD_MESSAGE_MEMBER(u8,  animationID)
-END_MESSAGE_DEFINITION(AddAnimKeyFrame_StopLiftNod)
-
-/*
-// AddAnimKeyFrame_SetLEDColors
-START_MESSAGE_DEFINITION(AddAnimKeyFrame_SetLEDColors, 2)
-//ADD_MESSAGE_MEMBER_ARRAY(u32, LEDcolors, 8) // TODO: How do we make NUM_LEDS here match HAL::NUM_LEDS?
-ADD_MESSAGE_MEMBER(u16, relTime_ms)
-ADD_MESSAGE_MEMBER_ARRAY(u8, rightEye_top,    3)
-ADD_MESSAGE_MEMBER_ARRAY(u8, rightEye_right,  3)
-ADD_MESSAGE_MEMBER_ARRAY(u8, rightEye_bottom, 3)
-ADD_MESSAGE_MEMBER_ARRAY(u8, rightEye_left,   3)
-ADD_MESSAGE_MEMBER_ARRAY(u8, leftEye_top,    3)
-ADD_MESSAGE_MEMBER_ARRAY(u8, leftEye_right,  3)
-ADD_MESSAGE_MEMBER_ARRAY(u8, leftEye_bottom, 3)
-ADD_MESSAGE_MEMBER_ARRAY(u8, leftEye_left,   3)
-ADD_MESSAGE_MEMBER(u8,  transitionIn)
-ADD_MESSAGE_MEMBER(u8,  transitionOut)
-ADD_MESSAGE_MEMBER(u8,  animationID)
-END_MESSAGE_DEFINITION(AddAnimKeyFrame_SetLEDColors)
-*/
-
-// AddAnimKeyFrame_DriveLine
-START_MESSAGE_DEFINITION(AddAnimKeyFrame_DriveLine, 2)
-ADD_MESSAGE_MEMBER(s16, relativeDistance_mm)
-ADD_MESSAGE_MEMBER(u16, relTime_ms)
-ADD_MESSAGE_MEMBER(u8,  transitionIn)
-ADD_MESSAGE_MEMBER(u8,  transitionOut)
-ADD_MESSAGE_MEMBER(u8,  animationID)
-ADD_MESSAGE_MEMBER(u8,  variability_mm)
-END_MESSAGE_DEFINITION(AddAnimKeyFrame_DriveLine)
-
-// AddAnimKeyFrame_TurnInplace
-START_MESSAGE_DEFINITION(AddAnimKeyFrame_TurnInPlace, 2)
-ADD_MESSAGE_MEMBER(s16, relativeAngle_deg)
-ADD_MESSAGE_MEMBER(u16, relTime_ms)
-ADD_MESSAGE_MEMBER(u8,  transitionIn)
-ADD_MESSAGE_MEMBER(u8,  transitionOut)
-ADD_MESSAGE_MEMBER(u8,  animationID)
-ADD_MESSAGE_MEMBER(u8,  variability_deg)
-END_MESSAGE_DEFINITION(AddAnimKeyFrame_TurnInPlace)
-
-// AddAnimKeyFrame_HoldPose
-START_MESSAGE_DEFINITION(AddAnimKeyFrame_HoldPose, 2)
-ADD_MESSAGE_MEMBER(u16, relTime_ms)
-ADD_MESSAGE_MEMBER(u8,  transitionIn)
-ADD_MESSAGE_MEMBER(u8,  transitionOut)
-ADD_MESSAGE_MEMBER(u8,  animationID)
-END_MESSAGE_DEFINITION(AddAnimKeyFrame_HoldPose)
-
-// AddAnimKeyFrame_PlaySound
-START_MESSAGE_DEFINITION(AddAnimKeyFrame_PlaySound, 2)
-ADD_MESSAGE_MEMBER(u16, soundID)
-ADD_MESSAGE_MEMBER(u16, relTime_ms)
-ADD_MESSAGE_MEMBER(u8,  transitionIn)
-ADD_MESSAGE_MEMBER(u8,  transitionOut)
-ADD_MESSAGE_MEMBER(u8,  animationID)
-ADD_MESSAGE_MEMBER(u8,  numLoops)
-ADD_MESSAGE_MEMBER(u8,  volume)
-END_MESSAGE_DEFINITION(AddAnimKeyFrame_PlaySound)
-
-// AddAnimKeyFrame_WaitForSound
-START_MESSAGE_DEFINITION(AddAnimKeyFrame_WaitForSound, 2)
-ADD_MESSAGE_MEMBER(u16, relTime_ms)
-ADD_MESSAGE_MEMBER(u8,  transitionIn)
-ADD_MESSAGE_MEMBER(u8,  transitionOut)
-ADD_MESSAGE_MEMBER(u8,  animationID)
-END_MESSAGE_DEFINITION(AddAnimKeyFrame_WaitForSound)
-
-// AddAnimKeyFrame_StopSound
-START_MESSAGE_DEFINITION(AddAnimKeyFrame_StopSound, 2)
-ADD_MESSAGE_MEMBER(u16, relTime_ms)
-ADD_MESSAGE_MEMBER(u8,  transitionIn)
-ADD_MESSAGE_MEMBER(u8,  transitionOut)
-ADD_MESSAGE_MEMBER(u8,  animationID)
-END_MESSAGE_DEFINITION(AddAnimKeyFrame_StopSound)
-
-// AddAnimKeyFrame_StartBlinking
-START_MESSAGE_DEFINITION(AddAnimKeyFrame_StartBlinking, 2)
-ADD_MESSAGE_MEMBER(u16, onPeriod_ms)
-ADD_MESSAGE_MEMBER(u16, offPeriod_ms)
-ADD_MESSAGE_MEMBER(u16, relTime_ms)
-ADD_MESSAGE_MEMBER_ARRAY(u8, color, 3)
-ADD_MESSAGE_MEMBER(u8,  transitionIn)
-ADD_MESSAGE_MEMBER(u8,  transitionOut)
-ADD_MESSAGE_MEMBER(u8,  animationID)
-ADD_MESSAGE_MEMBER(u8,  variability_ms) // amount of variation in "open" time
-END_MESSAGE_DEFINITION(AddAnimKeyFrame_StartBlinking)
-
-// AddAnimKeyFrame_SetEyeShapeAndColor
-START_MESSAGE_DEFINITION(AddAnimKeyFrame_SetEyeShapeAndColor, 2)
-ADD_MESSAGE_MEMBER(u16, relTime_ms)
-ADD_MESSAGE_MEMBER_ARRAY(u8, color, 3)
-ADD_MESSAGE_MEMBER(u8,  transitionIn)
-ADD_MESSAGE_MEMBER(u8,  transitionOut)
-ADD_MESSAGE_MEMBER(u8,  animationID)
-ADD_MESSAGE_MEMBER(u8,  shape)
-ADD_MESSAGE_MEMBER(u8,  whichEye)  // See WhichEye enum
-END_MESSAGE_DEFINITION(AddAnimKeyFrame_SetEyeShapeAndColor)
-
-// AddAnimKeyFrame_StartFlashingEyes
-START_MESSAGE_DEFINITION(AddAnimKeyFrame_StartFlashingEyes, 2)
-ADD_MESSAGE_MEMBER(u16, onPeriod_ms)
-ADD_MESSAGE_MEMBER(u16, offPeriod_ms)
-ADD_MESSAGE_MEMBER(u16, relTime_ms)
-ADD_MESSAGE_MEMBER_ARRAY(u8, color, 3)
-ADD_MESSAGE_MEMBER(u8,  transitionIn)
-ADD_MESSAGE_MEMBER(u8,  transitionOut)
-ADD_MESSAGE_MEMBER(u8,  animationID)
-ADD_MESSAGE_MEMBER(u8,  shape)
-END_MESSAGE_DEFINITION(AddAnimKeyFrame_StartFlashingEyes)
-
-// AddAnimKeyFrame_StartSpinningEyes
-START_MESSAGE_DEFINITION(AddAnimKeyFrame_StartSpinningEyes, 2)
-ADD_MESSAGE_MEMBER(u16, period_ms)
-ADD_MESSAGE_MEMBER(u16, relTime_ms)
-ADD_MESSAGE_MEMBER_ARRAY(u8, color, 3)
-ADD_MESSAGE_MEMBER(u8,  transitionIn)
-ADD_MESSAGE_MEMBER(u8,  transitionOut)
-ADD_MESSAGE_MEMBER(u8,  animationID)
-ADD_MESSAGE_MEMBER(u8,  leftClockwise)    // TODO: Could combine the two clockwise flags into one u8
-ADD_MESSAGE_MEMBER(u8,  rightClockwise)   //         "
-END_MESSAGE_DEFINITION(AddAnimKeyFrame_StartSpinningEyes)
-
-// AddAnimKeyFrame_StopEyeAnimation
-START_MESSAGE_DEFINITION(AddAnimKeyFrame_StopEyeAnimation, 2)
-ADD_MESSAGE_MEMBER(u16, relTime_ms)
-ADD_MESSAGE_MEMBER(u8,  transitionIn)
-ADD_MESSAGE_MEMBER(u8,  transitionOut)
-ADD_MESSAGE_MEMBER(u8,  animationID)
-END_MESSAGE_DEFINITION(AddAnimKeyFrame_StopEyeAnimation)
-
-// AddAnimKeyFrame_TriggerAnimation
-START_MESSAGE_DEFINITION(AddAnimKeyFrame_TriggerAnimation, 2)
-ADD_MESSAGE_MEMBER(u16, relTime_ms)
-ADD_MESSAGE_MEMBER(u8,  transitionIn)
-ADD_MESSAGE_MEMBER(u8,  transitionOut)
-ADD_MESSAGE_MEMBER(u8,  animationID)
-ADD_MESSAGE_MEMBER(u8,  animToPlay)
-ADD_MESSAGE_MEMBER(u8,  numLoops)
-END_MESSAGE_DEFINITION(AddAnimKeyFrame_TriggerAnimation)
 
 // IMURequest
 START_MESSAGE_DEFINITION(IMURequest, 1)
@@ -569,7 +336,6 @@ ADD_MESSAGE_MEMBER(u8, numTaps)  // 0 taps means stop tapping
 END_MESSAGE_DEFINITION(TapBlockOnGround)
 
 
-
 ///////// Block messages ////////
 
 // SetBlockLights
@@ -592,3 +358,48 @@ START_MESSAGE_DEFINITION(SetBlockBeingCarried, 1)
 ADD_MESSAGE_MEMBER(u8, blockID)
 ADD_MESSAGE_MEMBER(u8, isBeingCarried)
 END_MESSAGE_DEFINITION(SetBlockBeingCarried)
+
+
+/////// Animation KeyFrame Streaming ///////
+
+// AnimKeyFrame_AudioSample
+START_MESSAGE_DEFINITION(AnimKeyFrame_AudioSample, 1)
+ADD_MESSAGE_MEMBER_ARRAY(u8, sample, 480) // Must match HAL::AUDIO_SAMPLE_SIZE!!
+END_MESSAGE_DEFINITION(AnimKeyFrame_AudioSample)
+
+// AnimKeyFrame_AudioSilence
+START_MESSAGE_DEFINITION(AnimKeyFrame_AudioSilence, 1)
+END_MESSAGE_DEFINITION(AnimKeyFrame_AudioSilence)
+
+// AnimKeyFrame_HeadAngle
+START_MESSAGE_DEFINITION(AnimKeyFrame_HeadAngle, 1)
+ADD_MESSAGE_MEMBER(u16, time_ms)
+ADD_MESSAGE_MEMBER(s8,  angle_deg)
+END_MESSAGE_DEFINITION(AnimKeyFrame_HeadAngle)
+
+// AnimKeyFrame_LiftHeight
+START_MESSAGE_DEFINITION(AnimKeyFrame_LiftHeight, 1)
+ADD_MESSAGE_MEMBER(u16, time_ms)
+ADD_MESSAGE_MEMBER(u8,  height_mm)
+END_MESSAGE_DEFINITION(AnimKeyFrame_LiftHeight)
+
+// AnimKeyFrame_FacePosition
+START_MESSAGE_DEFINITION(AnimKeyFrame_FacePosition, 1)
+ADD_MESSAGE_MEMBER(s8, xCen)
+ADD_MESSAGE_MEMBER(s8, yCen)
+END_MESSAGE_DEFINITION(AnimKeyFrame_FacePosition)
+
+// AnimKeyFrame_FaceImage
+// TODO: Need variable-length arrays!
+#define FACE_IMAGE_SIZE 1024
+START_MESSAGE_DEFINITION(AnimKeyFrame_FaceImage, 1)
+ADD_MESSAGE_MEMBER_ARRAY(u8, image, FACE_IMAGE_SIZE)
+END_MESSAGE_DEFINITION(AnimKeyFrame_FaceImage)
+
+// AnimKeyFrame_BackpackLights
+START_MESSAGE_DEFINITION(AnimKeyFrame_BackpackLights, 1)
+ADD_MESSAGE_MEMBER_ARRAY(u32, colors, 5) // TODO: Use NUM_BACKPACK_LEDS instead of "5"
+END_MESSAGE_DEFINITION(AnimKeyFrame_BackpackLights)
+
+
+

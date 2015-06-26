@@ -431,6 +431,7 @@ namespace Anki
       //   'frame' is a run-length-encoded frame where each byte represents the number
       //   of 0s or 1s. Odd bytes represent 0s and even bytes represent 1s. The end of
       //   the frame is reached when 8192 (128 x 64) pixels have been processed.
+      const s32 MAX_FACE_FRAME_SIZE = 8192;
       void FaceAnimate(u8* frame);
       
       // Move the face to an X, Y offset - where 0, 0 is centered, negative is left/up

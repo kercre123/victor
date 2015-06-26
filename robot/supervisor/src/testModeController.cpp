@@ -309,7 +309,7 @@ namespace Anki {
         PRINT("TestMode reset\n");
         
         // Stop animations that might be playing
-        AnimationController::Stop();
+        AnimationController::Clear();
         
         // Stop wheels and vision system
         WheelController::Enable();
@@ -991,39 +991,39 @@ namespace Anki {
         return RESULT_OK;
       }
       
-      Result AnimTestInit()
-      {
-        PRINT("\n==== Starting AnimationTest =====\n");
-        AT_currAnim = 0;
-        AnimationController::Play(AT_currAnim, 0);
-        ticCnt_ = 0;
-        return RESULT_OK;
-      }
+//      Result AnimTestInit()
+//      {
+//        PRINT("\n==== Starting AnimationTest =====\n");
+//        AT_currAnim = 0;
+//        AnimationController::Play(AT_currAnim, 0);
+//        ticCnt_ = 0;
+//        return RESULT_OK;
+//      }
       
-      Result AnimTestUpdate()
-      {
-        if (ticCnt_++ > AT_periodTics) {
-          ticCnt_ = 0;
-          
-          AT_currAnim = (AnimationID_t)(AT_currAnim + 1);
-          
-          // Skip undefined animIDs
-          while(!AnimationController::IsDefined(AT_currAnim)) {
-            if (AT_currAnim == AnimationController::MAX_CANNED_ANIMATIONS) {
-              // Go back to start
-              AT_currAnim = 0;
-            } else {
-              // otherwise just incrememnt
-              AT_currAnim = (AnimationID_t)(AT_currAnim + 1);
-            }
-          }
-          
-          PRINT("Playing animation %d\n", AT_currAnim);
-          AnimationController::Play(AT_currAnim, 0);
-        }
-        
-        return RESULT_OK;
-      }
+//      Result AnimTestUpdate()
+//      {
+//        if (ticCnt_++ > AT_periodTics) {
+//          ticCnt_ = 0;
+//          
+//          AT_currAnim = (AnimationID_t)(AT_currAnim + 1);
+//          
+//          // Skip undefined animIDs
+//          while(!AnimationController::IsDefined(AT_currAnim)) {
+//            if (AT_currAnim == AnimationController::MAX_CANNED_ANIMATIONS) {
+//              // Go back to start
+//              AT_currAnim = 0;
+//            } else {
+//              // otherwise just incrememnt
+//              AT_currAnim = (AnimationID_t)(AT_currAnim + 1);
+//            }
+//          }
+//          
+//          PRINT("Playing animation %d\n", AT_currAnim);
+//          AnimationController::Play(AT_currAnim, 0);
+//        }
+//        
+//        return RESULT_OK;
+//      }
       
       Result GripperTestInit()
       {
@@ -1312,8 +1312,9 @@ namespace Anki {
             updateFunc = IMUTestUpdate;
             break;
           case TM_ANIMATION:
-            ret = AnimTestInit();
-            updateFunc = AnimTestUpdate;
+            PRINT("Animation test mode needs updating!\n");
+            ret = RESULT_FAIL; // AnimTestInit();
+            updateFunc = NULL; // AnimTestUpdate;
             break;
 #if defined(HAVE_ACTIVE_GRIPPER) && HAVE_ACTIVE_GRIPPER
           case TM_GRIPPER:

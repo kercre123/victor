@@ -48,6 +48,7 @@
 #include "anki/cozmo/basestation/visionProcessingThread.h"
 
 #include "anki/cozmo/basestation/actionContainers.h"
+#include "anki/cozmo/basestation/animationStreamer.h"
 #include "anki/cozmo/basestation/cannedAnimationContainer.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/ramp.h"
@@ -366,6 +367,9 @@ namespace Anki {
       // anything.
       Result PlaceObjectOnGround(const bool useManualSpeed = false);
       
+      
+      // =========== Animation Commands =============
+      
       // Plays specified animation numLoops times.
       // If numLoops == 0, animation repeats forever.
       Result PlayAnimation(const char* animName, const u32 numLoops = 1);
@@ -374,20 +378,20 @@ namespace Anki {
       // that name is known.
       s32 GetAnimationID(const std::string& animationName) const;
       
+      // Return the approximate number of available slots in the robot's
+      // keyframe buffer, to let us know if we can stream any more
+      s32 GetNumAnimationFramesFree() const;
+      
       // Ask the UI to play a sound for us
       Result PlaySound(SoundID_t soundID, u8 numLoops, u8 volume);
       void   StopSound();
       
-      // Plays transition animation once, then plays state animatin in a loop
-      Result TransitionToStateAnimation(const char *transitionAnimName,
-                                        const char *stateAnimName);
-
       Result StopAnimation();
 
       void ReplayLastAnimation(const s32 loopCount);
 
       // Read the animations in a dir
-      void ReadAnimationFile(const char* filename, s32& animationID);
+      void ReadAnimationFile(const char* filename, std::string& animationID);
 
       // Read the animations in a dir
       void ReadAnimationDir();
@@ -398,7 +402,7 @@ namespace Anki {
       // Returns true if the robot is currently playing an animation, according
       // to most recent state message.
       bool IsAnimating() const;
-      
+
       Result SyncTime();
       void SetSyncTimeAcknowledged(bool ack);
       
@@ -518,10 +522,13 @@ namespace Anki {
       // TODO: Probably need a more elegant way of doing this.
       Result AbortAll();
       
-      // Abort things individual
+      // Abort things individually
       // NOTE: Use ClearPath() above to abort a path
       Result AbortAnimation();
       Result AbortDocking(); // a.k.a. PickAndPlace
+      
+      // Send a message to the physical robot
+      Result SendMessage(const RobotMessage& message) const;
       
     protected:
       
@@ -682,7 +689,7 @@ namespace Anki {
       // Maintains an average period of incoming robot images
       u32 _imgFramePeriod;
       TimeStamp_t _lastImgTimeStamp;
-      s32 _lastPlayedAnimationId;
+      std::string _lastPlayedAnimationId;
 
       std::unordered_map<std::string, time_t> _loadedAnimationFiles;
       
@@ -698,7 +705,8 @@ namespace Anki {
       ///////// Animation /////////
       
       CannedAnimationContainer _cannedAnimations;
-      
+      AnimationStreamer        _animationStreamer;
+      s32 _numFreeAnimationSlots;
       
       ///////// Messaging ////////
       // These methods actually do the creation of messages and sending
@@ -765,15 +773,6 @@ namespace Anki {
       
       Result SendPlaceObjectOnGround(const f32 rel_x, const f32 rel_y, const f32 rel_angle, const bool useManualSpeed);
 
-      Result SendPlayAnimation(const s32 animationId, const u32 numLoops = 0);
-
-    // Play animation
-      // If numLoops == 0, animation repeats forever.
-      Result SendPlayAnimation(const char* animName, const u32 numLoops = 0);
-      
-      Result SendTransitionToStateAnimation(const char *transitionAnimName,
-                                            const char *stateAnimName);
-      
       Result SendDockWithObject(const DockAction_t dockAction,
                                 const bool useManualSpeed);
       
@@ -862,6 +861,9 @@ namespace Anki {
                              false, MakeRelativeMode::RELATIVE_LED_MODE_OFF, {0.f,0.f});
     }
     
+    inline s32 Robot::GetNumAnimationFramesFree() const {
+      return _numFreeAnimationSlots;
+    }
     
   } // namespace Cozmo
 } // namespace Anki

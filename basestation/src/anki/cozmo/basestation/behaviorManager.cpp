@@ -1082,8 +1082,8 @@ namespace Anki {
         if(!transitionAnimName.empty()) {
           if(!stateAnimationName.empty()) {
             // There is a transition and state animatino defined
-            _robot->TransitionToStateAnimation(transitionAnimName.c_str(),
-                                               stateAnimationName.c_str());
+            //_robot->TransitionToStateAnimation(transitionAnimName.c_str(),
+            //                                   stateAnimationName.c_str());
           } else {
             // Transition animation but no state animation: just play the
             // transition animation once

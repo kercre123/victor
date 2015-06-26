@@ -8,6 +8,10 @@
  *
  *   Controller for playing animations that comprise coordinated motor, light, and sound actions.
  *
+ * Update: Andrew Stein, 6/22/2015
+ *   Updating to support streaming animations from Basestation instead of a set of static, 
+ *   canned animations stored on the Robot.
+ *
  * Copyright: Anki, Inc. 2014
  *
  **/
@@ -19,41 +23,57 @@
 #include "anki/common/types.h"
 #include "anki/cozmo/shared/cozmoTypes.h"
 
-#include "keyFrame.h"
-#include "animation.h"
+#include "messages.h"
 
 namespace Anki {
   namespace Cozmo {
     namespace AnimationController {
       
-      const s32 MAX_CANNED_ANIMATIONS = 20;
+      // Amount of "pre-roll" that needs to be buffered before a streamed animation
+      // will start playing, in number of keyframes (noting that each keyframe is 33ms)
+      static const s32 PREROLL_BUFFER_LENGTH = 500/33; // 1/2 a second (500ms / (33ms per frame))
+      
+      // Streaming KeyFrame buffer size, in number of keyframes
+      static const s32 KEYFRAME_BUFFER_LENGTH = 128;
+      
+      // If buffer gets within this number of keyframes of the buffer length,
+      // then it is considered "full" for the purposes of IsBufferFull() below.
+      static const s32 KEYFRAME_BUFFER_PADDING = 32;
       
       Result Init();
-      
+
+      // Buffer up a new KeyFrame for playing, using a KeyFrame message
+      Result BufferKeyFrame(const Messages::AnimKeyFrame_HeadAngle&      msg);
+      Result BufferKeyFrame(const Messages::AnimKeyFrame_LiftHeight&     msg);
+      Result BufferKeyFrame(const Messages::AnimKeyFrame_AudioSample&    msg);
+      Result BufferKeyFrame(const Messages::AnimKeyFrame_AudioSilence&   msg);
+      Result BufferKeyFrame(const Messages::AnimKeyFrame_FaceImage&      msg);
+      Result BufferKeyFrame(const Messages::AnimKeyFrame_FacePosition&   msg);
+      Result BufferKeyFrame(const Messages::AnimKeyFrame_BackpackLights& msg);
+
+      // Plays any buffered keyframes available, if enough of a pre-roll is
+      // buffered up or we've received all the keyframes for the animation
+      // that's currently playing.
       void Update();
       
-      // Plays animation numLoops times.
-      // If numLoops == 0, then repeats until Stop() is called.
-      void Play(const AnimationID_t anim, const u32 numLoops);
+      // Clears any remaining buffered keyframes and thus immediately stops
+      // animation from playing
+      void Clear();
       
-      // Plays tranisition animation once, then starts looping the state animation
-      void TransitionAndPlay(const AnimationID_t transitionAnim,
-                             const AnimationID_t stateAnim);
-      
-      void Stop();
-      
+      // Returns true if there are buffered keyframes being played
       bool IsPlaying();
       
-      bool IsDefined(const AnimationID_t anim);
+      // Returns true if there is no more room left in the buffer for new
+      // frames to be streamed. (With some padding for what may already be
+      // on the way)
+      bool IsBufferFull();
       
-      // For updating "canned" animations (e.g. using definitions sent over
-      // from the Basestation):
-      Result ClearCannedAnimation(const AnimationID_t whichAnimation);
+      // Get approximate number of frames available in the streaming buffer,
+      // subject to some padding to leave space for frames that might be on
+      // their way in the comms channel.
+      s32  GetNumFramesFree();
       
-      // (Adds frame to end of specified animation/subsystem)
-      Result AddKeyFrameToCannedAnimation(const KeyFrame&     keyframe,
-                                          const AnimationID_t whichAnimation);
-
+      
     } // namespace AnimationController
   } // namespcae Cozmo
 } // namespace Anki

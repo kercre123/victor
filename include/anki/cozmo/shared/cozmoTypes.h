@@ -124,7 +124,8 @@ namespace Anki {
       IS_ANIMATING            = 0x00000040,
       IS_PERFORMING_ACTION    = 0x00000080,
       LIFT_IN_POS             = 0x00000100,
-      HEAD_IN_POS             = 0x00000200
+      HEAD_IN_POS             = 0x00000200,
+      IS_ANIM_BUFFER_FULL     = 0x00000400
     } RobotStatusFlag;
     
     // Status bit flags for game state
@@ -140,16 +141,8 @@ namespace Anki {
 
 
     // Animation ID
-    // TODO: Eventually, we might want a way of sending animation definitions down from basestation
-    //       but for now they're hard-coded on the robot
-    /*typedef enum {
-      ANIM_IDLE
-      ,ANIM_HEAD_NOD
-      ,ANIM_BACK_AND_FORTH_EXCITED
-      ,ANIM_WIGGLE
-      ,ANIM_NUM_ANIMATIONS
-    } AnimationID_t;*/
     typedef s32 AnimationID_t;
+    static const AnimationID_t INVALID_ANIMATION_ID = -1;
 
     // Prox sensors
     typedef enum {

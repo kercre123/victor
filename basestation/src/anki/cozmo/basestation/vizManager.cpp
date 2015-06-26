@@ -606,6 +606,7 @@ namespace Anki {
       m.proxRight = msg.proxRight;
       m.battVolt10x = msg.battVolt10x;
       m.status = msg.status;
+      m.numAnimBufferFree = msg.numFreeAnimationFrames;
       
       m.videoFramerateHZ = videoFramefateHz;
       
