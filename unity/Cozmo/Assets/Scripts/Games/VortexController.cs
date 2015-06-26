@@ -176,7 +176,7 @@ public class VortexController : GameController {
 
 		base.Enter_PRE_GAME();
 
-		if( robot.carryingObject == null && PlayerPrefs.GetInt("DebugSkipLayoutTracker",0) == 0)
+		if( robot != null && robot.carryingObject == null && PlayerPrefs.GetInt("DebugSkipLayoutTracker",0) == 0)
 		{
 			foreach(ObservedObject obj in robot.knownObjects)
 			{
@@ -255,14 +255,14 @@ public class VortexController : GameController {
 	}
 
 	protected override bool IsPreGameCompleted() {
-		if( PlayerPrefs.GetInt("DebugSkipLayoutTracker",0) == 0 ) {
+		if( robot != null && PlayerPrefs.GetInt("DebugSkipLayoutTracker",0) == 0 ) {
 			if(!base.IsPreGameCompleted()) return false;
 		}
 		return true;
 	}
 
 	protected override bool IsGameReady () {
-		if( PlayerPrefs.GetInt("DebugSkipLayoutTracker",0) == 0 ) {
+		if( robot != null && PlayerPrefs.GetInt("DebugSkipLayoutTracker",0) == 0 ) {
 			if(!base.IsGameReady()) return false;
 		}
 

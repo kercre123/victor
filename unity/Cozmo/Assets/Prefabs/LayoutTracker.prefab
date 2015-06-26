@@ -2222,7 +2222,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!1 &109612
 GameObject:
   m_ObjectHideFlags: 1
@@ -2563,7 +2563,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!1 &109710
 GameObject:
   m_ObjectHideFlags: 1
@@ -5569,7 +5569,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!1 &183102
 GameObject:
   m_ObjectHideFlags: 1
@@ -17160,10 +17160,10 @@ Camera:
   m_BackGroundColor: {r: .125, g: .125, b: .125, a: .0196078438}
   m_NormalizedViewPortRect:
     serializedVersion: 2
-    x: .380506247
-    y: .128618822
-    width: .238987476
-    height: .745059133
+    x: .215820312
+    y: .0729166642
+    width: .568359375
+    height: .85546875
   near clip plane: .300000012
   far clip plane: 1000
   field of view: 60
@@ -25424,6 +25424,7 @@ MonoBehaviour:
   - {fileID: 11409742}
   cozmoMarker: {fileID: 137424}
   inventoryPanel: {fileID: 183084}
+  layoutsAnchor: {fileID: 109610}
   textPhase: {fileID: 11419344}
   inventoryTitle: {fileID: 11483394}
   button_manualBuild: {fileID: 11495022}

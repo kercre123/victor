@@ -37,6 +37,7 @@ public class GameLayoutTracker : MonoBehaviour {
 
 	[SerializeField] GameObject cozmoMarker = null;
 	[SerializeField] GameObject inventoryPanel = null;
+	[SerializeField] GameObject layoutsAnchor = null;
 	[SerializeField] Text textPhase;
 
 	[SerializeField] Text inventoryTitle;
@@ -120,6 +121,13 @@ public class GameLayoutTracker : MonoBehaviour {
 	#region COMPONENT CALLBACKS
 
 	void OnEnable () {
+
+		if(robot == null) {
+			gameObject.SetActive(false);
+			return;
+		}
+
+		layoutsAnchor.SetActive(true);
 
 		instance = this;
 
@@ -244,7 +252,7 @@ public class GameLayoutTracker : MonoBehaviour {
 		if( currentLayout.blocks.Find( x => x.isHeld ) )
 		{
 			// make sure cozmo is holding a block if he needs to be
-			completed &= (robot.carryingObject != null);
+			completed &= robot == null || robot.carryingObject != null;
 		}
 
 		if(iStartBuild) return LayoutTrackerPhase.BUILDING;
@@ -468,14 +476,17 @@ public class GameLayoutTracker : MonoBehaviour {
 		}
 		
 		
-		if(image_localizedCheck != null) image_localizedCheck.gameObject.SetActive(robot.IsLocalized());
+		if(image_localizedCheck != null) image_localizedCheck.gameObject.SetActive(robot != null && robot.IsLocalized());
 		if(button_autoBuild != null) button_autoBuild.gameObject.SetActive(!skipBuildForThisLayout && (!skipBuildForThisLayoutWaitForBlocks || validCount >= currentLayout.blocks.Count) && inventoryComplete && robot.IsLocalized());
 		if(inventoryHints != null) inventoryHints.SetActive(!inventoryComplete);
 	}
 	void Exit_INVENTORY() {
 		inventoryPanel.SetActive(false);
-		RobotEngineManager.instance.VisualizeQuad(33, CozmoPalette.ColorToUInt(Color.clear), Vector3.zero, Vector3.zero, Vector3.zero, Vector3.zero);
-		RobotEngineManager.instance.VisualizeQuad(34, CozmoPalette.ColorToUInt(Color.clear), Vector3.zero, Vector3.zero, Vector3.zero, Vector3.zero);
+
+		if(RobotEngineManager.instance != null) {
+			RobotEngineManager.instance.VisualizeQuad(33, CozmoPalette.ColorToUInt(Color.clear), Vector3.zero, Vector3.zero, Vector3.zero, Vector3.zero);
+			RobotEngineManager.instance.VisualizeQuad(34, CozmoPalette.ColorToUInt(Color.clear), Vector3.zero, Vector3.zero, Vector3.zero, Vector3.zero);
+		}
 	}
 
 	void Enter_AUTO_BUILDING() {
@@ -598,7 +609,7 @@ public class GameLayoutTracker : MonoBehaviour {
 			return;
 		}
 
-		if(cozmoMarker != null) {
+		if(cozmoMarker != null && robot != null) {
 			cozmoMarker.SetActive(true);
 			cozmoMarker.transform.position = CozmoUtil.Vector3CozmoToUnitySpace(robot.WorldPosition) * currentLayout.scale / CozmoUtil.BLOCK_LENGTH_MM;
 			cozmoMarker.transform.rotation = Quaternion.LookRotation(CozmoUtil.Vector3CozmoToUnitySpace(robot.Forward), Vector3.up);

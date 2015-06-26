@@ -1462,7 +1462,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!1 &165888
 GameObject:
   m_ObjectHideFlags: 1
@@ -3356,8 +3356,8 @@ MonoBehaviour:
   toggle_visionRecording: {fileID: 11465934}
   toggle_userTestMode: {fileID: 0}
   toggle_autoCollect: {fileID: 11419492}
-  toggle_assistedControls: {fileID: 11474088}
-  toggle_skipLayoutTracker: {fileID: 11451914}
+  toggle_assistedControls: {fileID: 0}
+  toggle_skipLayoutTracker: {fileID: 0}
   pertinent_objects: {fileID: 11474596}
   angleScoreMultiplier: {fileID: 11475660}
   distanceScoreMultiplier: {fileID: 11412092}
@@ -11898,7 +11898,7 @@ RectTransform:
   m_RootOrder: 0
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 192, y: 0}
+  m_AnchoredPosition: {x: 240, y: 15}
   m_SizeDelta: {x: 10, y: 0}
   m_Pivot: {x: .5, y: .5}
 --- !u!224 &22490300
@@ -11933,7 +11933,7 @@ RectTransform:
   m_RootOrder: 0
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 144, y: 0}
+  m_AnchoredPosition: {x: 240, y: 30}
   m_SizeDelta: {x: 20, y: 0}
   m_Pivot: {x: .5, y: .5}
 --- !u!224 &22493200
