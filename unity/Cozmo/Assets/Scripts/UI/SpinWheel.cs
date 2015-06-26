@@ -17,7 +17,7 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 
 	public class SpinData {
 
-		public float _wheelAngle = 0f;
+		float _wheelAngle = 0f;
 		public float wheelAngle {
 			get {
 				return _wheelAngle;
@@ -27,6 +27,8 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 				if(!spinWheel.PegTouching(ref myDataRef)) sliceIndex = spinWheel.GetSliceIndexAtAngle(_wheelAngle);
 			}		
 		}
+
+		public float wheelAngleAtSpinStart = 0f;
 
 		public float angularVel = 0f;
 		public float lastTime = 0f;
@@ -40,6 +42,7 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 		public PieSlice slice { get { return (sliceIndex >= 0 && sliceIndex < spinWheel.slices.Count) ? spinWheel.slices[sliceIndex] : null; } }
 
 		public int pegsHit = 0;
+
 		bool _pegTouching = false;
 		public bool pegTouching {
 			get { return _pegTouching; }
@@ -52,6 +55,8 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 		}
 
 		public int pegIndex = -1;
+		public float totalTime = 0f;
+
 
 		SpinWheel spinWheel;
 		SpinData myDataRef;
@@ -63,6 +68,7 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 
 		public void Copy(SpinData data) {
 			wheelAngle = data.wheelAngle;
+			wheelAngleAtSpinStart = data.wheelAngleAtSpinStart;
 			angularVel = data.angularVel;
 			lastTime = data.lastTime;
 			lastAngle = data.lastAngle;
@@ -83,15 +89,12 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 	[SerializeField] RectTransform wheel = null;
 	[SerializeField] RectTransform peg = null;
 	[SerializeField] RectTransform pegBase = null;
-	
 	[SerializeField] int numSlices = 8;
 	[SerializeField] Transform slicePrefab;
 	[SerializeField] Transform pegPrefab;
 	[SerializeField] AudioClip pegSound;
 	[SerializeField] AudioClip spinLoopSound;
-
 	[SerializeField] InputField inputField_numSlices = null;
-
 	[SerializeField] float maxAngularVelocity = 3600f;
 	[SerializeField] float fadeBelowAngularVelocity = 2f;
 	[SerializeField] float minAngularVelocity = 1f;
@@ -107,14 +110,17 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 	[SerializeField] float pegDegrees = 1f;
 	[SerializeField] float pegBendAngle = 30f;
 	[SerializeField] float pegMaxAngularAccel = 10f;
-
 	[SerializeField] Color[] imageColors = { Color.white, Color.black };
 	[SerializeField] Color[] spokeColors = { Color.black, Color.white };
 	[SerializeField] Color[] textColors = { Color.black , Color.white };
 	[SerializeField] Color[] outlineColors = { Color.black , Color.white };
+	[SerializeField] Color finalSliceColor = Color.magenta;
+	[SerializeField] Color finalTextColor = Color.cyan;
+	[SerializeField] Color finalTextOutlineColor = Color.cyan;
 
 	[SerializeField] float tokenRadius = 300f;
 	[SerializeField] float tokenOuterRadius = 300f;
+	[SerializeField] Text textPrediction;
 
 	#endregion
 
@@ -134,6 +140,10 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 	public float Speed { get { return Mathf.Abs(actualData.angularVel / 360f); } }
 	public float TokenRadius { get { return tokenRadius; } }
 	public float TokenOuterRadius { get { return tokenOuterRadius; } }
+
+	public int PredictedNumber { get; private set; }
+	public float PredictedDurationSeconds { get; private set; }
+	public float PredictedTotalRotations { get; private set; }
 
 	#endregion
 
@@ -159,10 +169,16 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 	//some members need a separate version for prediction logic to occur simultaneously 
 	//	(without having to maintain a separate instance of this component just for prediction)
 	SpinData actualData;
-	SpinData predictedData;
+	float lastActualTimeStamp = -1f;
+	Coroutine spinCoroutine;
 
-	//
-	
+	SpinData predictedData;
+	float maxPredictionTimePerFrame = 0.00833333333f;
+	float lastPredictionTimeStamp = -1f;
+	float predictionStartStamp = -1f;
+	int predictionStartFrame = -1;
+	Coroutine predictionCoroutine;
+
 	float sliceArc { get { return 360f / numSlices; } }
 
 	int GetSliceIndexAtAngle(float angle) {
@@ -210,25 +226,29 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 	void OnDisable() {
 		//OptionsScreen.RefreshSettings -= RefreshSettings;
 		StopLoopingSound();
+
+		if(predictionCoroutine != null) StopCoroutine(predictionCoroutine);
+		if(spinCoroutine != null) StopCoroutine(spinCoroutine);
+		
 	}
 
-	void FixedUpdate() {
-		//Debug.Log("SpinWheel FixedUpdate");
-
-		if(locked) return;
-		if(dragging) return;
-
-		bool wasSpinning = SpinUnderway;
-
-		DecayVelocity(Time.deltaTime, ref actualData);
-
-		if(SpinUnderway) {
-			SpinUpdate(Time.time, ref actualData);
-		}
-		else if(wasSpinning) {
-			SpinEnd();
-		}
-	}
+//	void FixedUpdate() {
+//		//Debug.Log("SpinWheel FixedUpdate");
+//
+//		if(locked) return;
+//		if(dragging) return;
+//
+//		bool wasSpinning = SpinUnderway;
+//
+//		DecayVelocity(Time.deltaTime, ref actualData);
+//
+//		if(SpinUnderway) {
+//			SpinUpdate(Time.time, ref actualData);
+//		}
+//		else if(wasSpinning) {
+//			SpinEnd();
+//		}
+//	}
 
 	void Update() {
 
@@ -248,12 +268,22 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 
 	void SpinStart() {
 		Finished = false;
+		actualData.totalTime = 0f;
+		actualData.wheelAngleAtSpinStart = actualData.wheelAngle;
+
 		//do effect?
+
+		if(predictionCoroutine != null) StopCoroutine(predictionCoroutine);
+		if(spinCoroutine != null) StopCoroutine(spinCoroutine);
+
+		predictionCoroutine = StartCoroutine(PredictSpinResults());
+		spinCoroutine = StartCoroutine(RefreshActualSpin());
 	}
 
 	void SpinUpdate(float time, ref SpinData data) {
-		//currentAngle = 
-		ApplySpin(time - data.lastTime, ref data);
+		float deltaTime = time - data.lastTime;
+		ApplySpin(deltaTime, ref data);
+		data.totalTime += deltaTime;
 		data.lastTime = time;
 		data.lastAngle = data.wheelAngle;
 	}
@@ -261,6 +291,115 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 	void SpinEnd() {
 		StopLoopingSound();
 		Finished = true;
+
+		if(predictionCoroutine != null) StopCoroutine(predictionCoroutine);
+		if(spinCoroutine != null) StopCoroutine(spinCoroutine);
+
+		for(int i=0;i<numSlices;i++) {
+
+			Color imageColor = imageColors[i % imageColors.Length];
+			Color textColor = textColors[i % textColors.Length];
+			Color outlineColor = outlineColors[i % outlineColors.Length];
+
+			if(i == actualData.sliceIndex) {
+				imageColor = finalSliceColor;
+				textColor = finalTextColor;
+				outlineColor = finalTextOutlineColor;
+			}
+
+
+			slices[i].SetColors(imageColor, textColor, outlineColor);
+		}
+	}
+
+	IEnumerator RefreshActualSpin() {
+		Debug.Log(	"frame("+Time.frameCount+") "+
+		          "RefreshActualSpin BEGIN "+
+		          "wheelAngleAtSpinStart("+actualData.wheelAngleAtSpinStart+") "+
+		          "angularVel("+actualData.angularVel+")");
+		
+		lastActualTimeStamp = Time.realtimeSinceStartup;
+		
+		float time = 0f;
+		while(actualData.angularVel != 0f) {
+		
+			DecayVelocity(time - actualData.lastTime, ref actualData);
+			SpinUpdate(time, ref actualData);
+			time += Time.fixedDeltaTime;
+
+			yield return new WaitForSeconds(Time.fixedDeltaTime);
+		}
+		
+		int actual = GetActualNumber();
+		float actualDuraction = actualData.totalTime;
+		float actualRotations = Mathf.Abs(actualData.wheelAngle - actualData.wheelAngleAtSpinStart) / 360f;
+
+		SpinEnd();
+
+		Debug.Log(	"frame("+Time.frameCount+") "+
+		          "RefreshActualSpin "+
+		          "Number("+actual+") "+
+		          "Duration("+actualDuraction+") "+
+		          "Spins("+actualRotations+") "+
+		          "wheelAngle("+actualData.wheelAngle+") "+
+		          "wheelAngleAtSpinStart("+actualData.wheelAngleAtSpinStart+")");
+		
+	}
+
+	IEnumerator PredictSpinResults() {
+		predictedData.Copy(actualData);
+
+		Debug.Log(	"frame("+Time.frameCount+") "+
+		          "PredictSpinResults BEGIN "+
+		          "wheelAngleAtSpinStart("+predictedData.wheelAngleAtSpinStart+") "+
+		          "angularVel("+predictedData.angularVel+")");
+
+		//start prediction coroutine that will hopefully not take too long...
+		maxPredictionTimePerFrame = Time.fixedDeltaTime * 0.5f;
+
+		predictionStartFrame = Time.frameCount;
+		predictionStartStamp = Time.realtimeSinceStartup;
+		lastPredictionTimeStamp = predictionStartStamp;
+
+		PredictedNumber = -1;
+		PredictedDurationSeconds = -1f;
+		PredictedTotalRotations = -1f;
+		
+		float time = 0f;
+		while(predictedData.angularVel != 0f) {
+			//do not take too much time per frame
+			if((Time.realtimeSinceStartup - lastPredictionTimeStamp) > maxPredictionTimePerFrame) {
+				//Debug.Log(	"frame("+Time.frameCount+") realtimeSinceStartup("+Time.realtimeSinceStartup+") PredictSpinResults yield one frame!");
+				yield return 0;
+				//Debug.Log(	"frame("+Time.frameCount+") realtimeSinceStartup("+Time.realtimeSinceStartup+") PredictSpinResults frame yielded");
+				lastPredictionTimeStamp = Time.realtimeSinceStartup;
+			}
+
+			DecayVelocity(time - predictedData.lastTime, ref predictedData);
+			SpinUpdate(time, ref predictedData);
+			time += Time.fixedDeltaTime;
+		}
+
+		int predicted = GetPredictedNumber();
+		if(textPrediction != null) textPrediction.text = predicted.ToString();
+
+		PredictedNumber = GetPredictedNumber();
+		PredictedDurationSeconds = predictedData.totalTime;
+		PredictedTotalRotations = Mathf.Abs(predictedData.wheelAngle - predictedData.wheelAngleAtSpinStart) / 360f;
+
+		float totalPredictionTime = Time.realtimeSinceStartup - predictionStartStamp;
+		int totalPredictionFrames = Time.frameCount - predictionStartFrame;
+
+		Debug.Log(	"frame("+Time.frameCount+") "+
+		          	"PredictSpinResults "+
+		          	"Number("+PredictedNumber+") "+
+		          	"Duration("+PredictedDurationSeconds+") "+
+		          	"Spins("+PredictedTotalRotations+") "+
+		          	"wheelAngle("+predictedData.wheelAngle+") "+
+		          	"wheelAngleAtSpinStart("+predictedData.wheelAngleAtSpinStart+") "+
+		         	"predictionFrames("+totalPredictionFrames+") "+
+		          	"predictionTime("+totalPredictionTime+")");
+
 	}
 
 	void RefreshDisplay(bool doPegSound, bool doLoopSound) {
@@ -499,7 +638,7 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 
 		float angle = MathUtil.ClampAngle0_360(-data.wheelAngle);
 
-		data.pegBendDirection = Mathf.Sign(MathUtil.AngleDelta(data.sliceCenterAngle, angle));
+		data.pegBendDirection = -Mathf.Sign(MathUtil.AngleDelta(data.sliceCenterAngle, angle));
 		//force the wheel peg to an apt angle if it is still within pegDegrees of a slice peg
 
 		data.pegIndex = Mathf.RoundToInt(angle / sliceArc);
@@ -507,7 +646,7 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 
 		float pegAngle = data.pegIndex*sliceArc;
 		float halfPeg = pegDegrees * 0.5f;
-		float endOfPegAngle = pegAngle + halfPeg * Mathf.Sign(data.pegBendDirection);
+		float endOfPegAngle = pegAngle + halfPeg * -Mathf.Sign(data.pegBendDirection);
 		float degToPeg = MathUtil.AngleDelta(angle, pegAngle);
 
 		data.degToPegEnd = MathUtil.AngleDelta(angle, endOfPegAngle);
@@ -558,7 +697,7 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 	void RefreshPegAngle() {
 		//if we've passed a peg, then just throw it full tilt
 		if(!actualData.pegTouching && actualData.pegsHit > 0) {
-			pegBendFactor = -Mathf.Sign(actualData.angularVel);
+			pegBendFactor = Mathf.Sign(actualData.angularVel);
 		}
 
 		if(peg != null) peg.localRotation = Quaternion.AngleAxis(pegBendAngle * pegBendFactor, Vector3.forward);
@@ -600,6 +739,13 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 		allowTouches = true;
 		Finished = false;
 		dragImage.enabled = true;
+
+		for(int i=0;i<numSlices;i++) {
+			Color imageColor = imageColors[i % imageColors.Length];
+			Color textColor = textColors[i % textColors.Length];
+			Color outlineColor = outlineColors[i % outlineColors.Length];
+			slices[i].SetColors(imageColor, textColor, outlineColor);
+		}
 	}
 
 	public void ResetWheel() {
@@ -632,6 +778,7 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 			}
 		}
 	}
+
 
 	#endregion
 
