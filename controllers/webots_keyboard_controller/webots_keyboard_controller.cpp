@@ -1375,7 +1375,8 @@ namespace Anki {
 
               case (s32)'@':
               {
-                SendAnimation("ANIM_BACK_AND_FORTH_EXCITED", 3);
+                //SendAnimation("ANIM_BACK_AND_FORTH_EXCITED", 3);
+                SendAnimation("ANIM_TEST", 1);
                 break;
               }
               case (s32)'#':
@@ -2386,7 +2387,7 @@ namespace Anki {
         {
           U2G::PlayAnimation m;
           //m.animationID = animId;
-          strncpy(&(m.animationName[0]), animName, 32);
+          m.animationName = animName;
           m.numLoops = numLoops;
           U2G::Message message;
           message.Set_PlayAnimation(m);
