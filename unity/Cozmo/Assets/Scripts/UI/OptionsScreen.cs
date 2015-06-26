@@ -17,6 +17,8 @@ public class OptionsScreen : MonoBehaviour {
 	[SerializeField] Toggle toggle_visionRecording;
 	[SerializeField] Toggle toggle_userTestMode;
 	[SerializeField] Toggle toggle_autoCollect;
+	[SerializeField] Toggle toggle_assistedControls;
+	[SerializeField] Toggle toggle_skipLayoutTracker;
 
 	[SerializeField] ComboBox pertinent_objects;
 	[SerializeField] InputField angleScoreMultiplier;
@@ -112,6 +114,14 @@ public class OptionsScreen : MonoBehaviour {
 
 		if(toggle_autoCollect != null) {
 			toggle_autoCollect.isOn = PlayerPrefs.GetInt("EnergyHuntAutoCollect", 0) == 1;
+		}
+
+		if(toggle_assistedControls != null) {
+			toggle_assistedControls.isOn = PlayerPrefs.GetInt("CozmoAssistedControls", 0) == 1;
+		}
+
+		if(toggle_skipLayoutTracker != null) {
+			toggle_skipLayoutTracker.isOn = PlayerPrefs.GetInt("DebugSkipLayoutTracker",0) == 1;
 		}
 
 		if(toggle_visionRecording != null) {
@@ -264,6 +274,12 @@ public class OptionsScreen : MonoBehaviour {
 		if(toggle_autoCollect != null) {
 			toggle_autoCollect.onValueChanged.AddListener(ToggleEnergyHuntAutoCollect);
 		}
+		if(toggle_assistedControls != null) {
+			toggle_assistedControls.onValueChanged.AddListener(ToggleAssitedControls);
+		}
+		if(toggle_skipLayoutTracker != null) {
+			toggle_skipLayoutTracker.onValueChanged.AddListener(ToggleSkipLayoutTracker);
+		}
 	}
 
 	void OnDisable () {
@@ -413,6 +429,14 @@ public class OptionsScreen : MonoBehaviour {
 		//Debug.Log("ToggleUserTestMode("+val+")");
 	}
 
+	void ToggleAssitedControls(bool val) {
+		PlayerPrefs.SetInt("CozmoAssistedControls", val ? 1 : 0);
+	}
+
+	void ToggleSkipLayoutTracker(bool val) {
+		PlayerPrefs.SetInt("DebugSkipLayoutTracker", val ? 1 : 0);
+	}
+
 	public void ResetToDefaultSettings() {
 		PlayerPrefs.DeleteKey("MaxTurnFactor");
 		PlayerPrefs.DeleteKey("ReverseLikeACar");
@@ -422,6 +446,9 @@ public class OptionsScreen : MonoBehaviour {
 		PlayerPrefs.DeleteKey("ToggleUserTestMode");
 		PlayerPrefs.DeleteKey("EnergyHuntAutoCollect");
 		PlayerPrefs.DeleteKey("FlushLogs");
+		PlayerPrefs.DeleteKey("CozmoAssistedControls");
+		PlayerPrefs.DeleteKey("DebugSkipLayoutTracker");
+
 
 		for(int i = 0; i < 5; ++i) {
 			PlayerPrefs.DeleteKey("ObjectPertinence" + i.ToString());

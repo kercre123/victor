@@ -167,6 +167,23 @@ public class VortexController : GameController {
 		ClearInputs();
 
 		base.Enter_PRE_GAME();
+
+		if( robot.carryingObject == null && PlayerPrefs.GetInt("DebugSkipLayoutTracker",0) == 0)
+		{
+			foreach(ObservedObject obj in robot.knownObjects)
+			{
+				if( obj.isActive )
+				{
+					//PlayNotificationAudio (pickupEnergyScanner);
+					robot.PickAndPlaceObject(obj);
+					if(CozmoBusyPanel.instance != null)	{
+						string desc = "Cozmo is attempting to pick-up\n a game cube.";
+						CozmoBusyPanel.instance.SetDescription(desc);
+					}
+					break;
+				}
+			}
+		}
 	}
 
 	protected override void Update_PRE_GAME () {
@@ -230,11 +247,16 @@ public class VortexController : GameController {
 	}
 
 	protected override bool IsPreGameCompleted() {
+		if( PlayerPrefs.GetInt("DebugSkipLayoutTracker",0) == 0 ) {
+			if(!base.IsPreGameCompleted()) return false;
+		}
 		return true;
 	}
 
 	protected override bool IsGameReady () {
-		//if(!base.IsGameReady()) return false;
+		if( PlayerPrefs.GetInt("DebugSkipLayoutTracker",0) == 0 ) {
+			if(!base.IsGameReady()) return false;
+		}
 
 		return true;
 	}
