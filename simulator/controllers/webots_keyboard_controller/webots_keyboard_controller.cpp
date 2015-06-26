@@ -244,6 +244,7 @@ namespace Anki {
       void SendStartTestMode(TestMode mode, s32 p1 = 0, s32 p2 = 0, s32 p3 = 0);
       void SendIMURequest(u32 length_ms);
       void SendAnimation(const char* animName, u32 numLoops);
+      void SendReplayLastAnimation();
       void SendReadAnimationFile();
       void SendStartFaceTracking(u8 timeout_sec);
       void SendStopFaceTracking();
@@ -771,8 +772,13 @@ namespace Anki {
                 
               case (s32)'S':
               {
-                commandedHeadSpeed += headSpeed;
-                movingHead = true;
+                if(modifier_key == webots::Supervisor::KEYBOARD_ALT) {
+                  // Re-read animations and send them to physical robot
+                  SendReplayLastAnimation();
+                } else {
+                  commandedHeadSpeed += headSpeed;
+                  movingHead = true;
+                }
                 break;
               }
                 
@@ -2392,7 +2398,16 @@ namespace Anki {
         }
         
       }
-      
+
+      void SendReplayLastAnimation()
+      {
+        U2G::ReplayLastAnimation m;
+        m.numLoops = 1;
+        U2G::Message message;
+        message.Set_ReplayLastAnimation(m);
+        SendMessage(message);
+      }
+
       void SendReadAnimationFile()
       {
         U2G::ReadAnimationFile m;
