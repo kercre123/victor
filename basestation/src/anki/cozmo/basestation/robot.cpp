@@ -74,7 +74,7 @@ namespace Anki {
     , _driveCenterPose(-M_PI_2, Z_AXIS_3D(), {{0.f, 0.f, 0.f}}, _worldOrigin, "Robot_" + std::to_string(_ID))
     , _frameId(0)
     , _neckPose(0.f,Y_AXIS_3D(), {{NECK_JOINT_POSITION[0], NECK_JOINT_POSITION[1], NECK_JOINT_POSITION[2]}}, &_pose, "RobotNeck")
-    , _headCamPose({0,0,1,  -1,0,0,  0,-1,0},
+    , _headCamPose(RotationMatrix3d({0,0,1,  -1,0,0,  0,-1,0}),
                   {{HEAD_CAM_POSITION[0], HEAD_CAM_POSITION[1], HEAD_CAM_POSITION[2]}}, &_neckPose, "RobotHeadCam")
     , _liftBasePose(0.f, Y_AXIS_3D(), {{LIFT_BASE_POSITION[0], LIFT_BASE_POSITION[1], LIFT_BASE_POSITION[2]}}, &_pose, "RobotLiftBase")
     , _liftPose(0.f, Y_AXIS_3D(), {{LIFT_ARM_LENGTH, 0.f, 0.f}}, &_liftBasePose, "RobotLift")
@@ -2282,11 +2282,7 @@ namespace Anki {
                                                   Pose3d(0, Z_AXIS_3D(), Vec3f(50, 0, 0)),
                                                   Pose3d(0, Z_AXIS_3D(), Vec3f(50, -25, 0)) };
     
-    const Quad2f Robot::CanonicalBoundingBoxXY({{ROBOT_BOUNDING_X_FRONT, -0.5f*ROBOT_BOUNDING_Y}},
-                                               {{ROBOT_BOUNDING_X_FRONT,  0.5f*ROBOT_BOUNDING_Y}},
-                                               {{ROBOT_BOUNDING_X_FRONT - ROBOT_BOUNDING_X, -0.5f*ROBOT_BOUNDING_Y}},
-                                               {{ROBOT_BOUNDING_X_FRONT - ROBOT_BOUNDING_X,  0.5f*ROBOT_BOUNDING_Y}});
-    
+
     Quad2f Robot::GetBoundingQuadXY(const f32 padding_mm) const
     {
       return GetBoundingQuadXY(_pose, padding_mm);
@@ -2295,10 +2291,16 @@ namespace Anki {
     Quad2f Robot::GetBoundingQuadXY(const Pose3d& atPose, const f32 padding_mm) const
     {
       const RotationMatrix2d R(atPose.GetRotation().GetAngleAroundZaxis());
-      
-      Quad2f boundingQuad(Robot::CanonicalBoundingBoxXY);
+
+      static const Quad2f CanonicalBoundingBoxXY(
+        (Point2f){{ROBOT_BOUNDING_X_FRONT, -0.5f*ROBOT_BOUNDING_Y}},
+        {{ROBOT_BOUNDING_X_FRONT,  0.5f*ROBOT_BOUNDING_Y}},
+        {{ROBOT_BOUNDING_X_FRONT - ROBOT_BOUNDING_X, -0.5f*ROBOT_BOUNDING_Y}},
+        {{ROBOT_BOUNDING_X_FRONT - ROBOT_BOUNDING_X,  0.5f*ROBOT_BOUNDING_Y}});
+
+      Quad2f boundingQuad(CanonicalBoundingBoxXY);
       if(padding_mm != 0.f) {
-        Quad2f paddingQuad({{ padding_mm, -padding_mm}},
+        Quad2f paddingQuad((const Point2f){{ padding_mm, -padding_mm}},
                            {{ padding_mm,  padding_mm}},
                            {{-padding_mm, -padding_mm}},
                            {{-padding_mm,  padding_mm}});
@@ -2308,7 +2310,7 @@ namespace Anki {
       using namespace Quad;
       for(CornerName iCorner = FirstCorner; iCorner < NumCorners; ++iCorner) {
         // Rotate to given pose
-        boundingQuad[iCorner] = R*Robot::CanonicalBoundingBoxXY[iCorner];
+        boundingQuad[iCorner] = R * CanonicalBoundingBoxXY[iCorner];
       }
       
       // Re-center
