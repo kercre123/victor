@@ -546,6 +546,17 @@ namespace AnimationController {
             HAL::FaceAnimate(keyFrame.faceFrame);
           }
           
+          if(keyFrame.setsWhichTracks & StreamedKeyFrame::KF_SETS_FACE_POSITION) {
+#           if DEBUG_ANIMATION_CONTROLLER
+            PRINT("AnimationController[t=%dms(%d)] setting face position to (%d,%d).\n",
+                  _currentTime_ms, HAL::GetTimeStamp(), keyFrame.faceCenX, keyFrame.faceCenY);
+#           endif
+            
+            HAL::FaceMove(keyFrame.faceCenX, keyFrame.faceCenY);
+          }
+          
+
+          
         } else {
           // Termination frame reached!
           _isPlaying = false;
