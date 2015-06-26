@@ -37,7 +37,8 @@
 namespace Anki {
   namespace Cozmo {
     
-    
+#pragma mark -
+#pragma mark IKeyFrame
     
     IKeyFrame::IKeyFrame()
     : _triggerTime_ms(0)
@@ -78,6 +79,10 @@ namespace Anki {
       return lastResult;
     }
     
+    
+#pragma mark -
+#pragma mark Helpers
+    
     static s32 RandHelper(const s32 minLimit, const s32 maxLimit)
     {
       const s32 num = (std::rand() % (maxLimit - minLimit + 1)) + minLimit;
@@ -90,13 +95,18 @@ namespace Anki {
     
     // Helper macro used in SetMembersFromJson() overrides below to look for
     // member variable in Json node and fail if it doesn't exist
-# define GET_MEMBER_FROM_JSON(__JSON__, __NAME__) do { \
-if(!JsonTools::GetValueOptional(__JSON__, QUOTE(__NAME__), this->_##__NAME__)) { \
+#define GET_MEMBER_FROM_JSON_AND_STORE_IN(__JSON__, __NAME__, __MEMBER_NAME__) do { \
+if(!JsonTools::GetValueOptional(__JSON__, QUOTE(__NAME__), this->_##__MEMBER_NAME__)) { \
 PRINT_NAMED_ERROR("IKeyFrame.GetMemberFromJsonMacro", \
 "Failed to get '%s' from Json file.", QUOTE(__NAME__)); \
 return RESULT_FAIL; \
 } } while(0)
     
+#define GET_MEMBER_FROM_JSON(__JSON__, __NAME__) GET_MEMBER_FROM_JSON_AND_STORE_IN(__JSON__, __NAME__, __NAME__)
+
+    
+#pragma mark -
+#pragma mark HeadAngleKeyFrame
     //
     // HeadAngleKeyFrame
     //
@@ -135,6 +145,8 @@ return RESULT_FAIL; \
       return RESULT_OK;
     }
     
+#pragma mark -
+#pragma mark LiftHeightKeyFrame
     //
     // LiftHeightKeyFrame
     //
@@ -163,6 +175,8 @@ return RESULT_FAIL; \
       return RESULT_OK;
     }
     
+#pragma mark -
+#pragma mark FaceImageKeyFrame
     //
     // FaceImageKeyFrame
     //
@@ -176,14 +190,59 @@ return RESULT_FAIL; \
     
     RobotMessage* FaceImageKeyFrame::GetStreamMessage()
     {
-      // Fill the message for streaming using the imageID
+      // TODO: Fill the message for streaming using the imageID
       // memcpy(_streamMsg.image, LoadFaceImage(_imageID);
+
+      u32 i = 0;
+      u8 numLines;
+      
+      // For now, just put some stuff for display in there, using a few hard-coded
+      // patterns depending on ID
+      if(_imageID == 0) {
+        numLines = 64;
+        while(numLines-- > 0) {
+          _streamMsg.image[i++] = 128;
+          _streamMsg.image[i++] = 0;
+        }
+      } else if(_imageID == 1) {
+        numLines = 64;
+        while(numLines-- > 0) {
+          _streamMsg.image[i++] = 0;
+          _streamMsg.image[i++] = 128;
+        }
+      } else {
+        numLines = 20;
+        while (numLines-- > 0) {
+          _streamMsg.image[i++] = 128;
+          _streamMsg.image[i++] = 0;
+        }
+        
+        numLines = 24;
+        _streamMsg.image[i++] = 29;
+        while (numLines-- > 0) {
+          _streamMsg.image[i++] = 25;
+          _streamMsg.image[i++] = 20;
+          _streamMsg.image[i++] = 25;
+          _streamMsg.image[i++] = 58;
+        }
+        _streamMsg.image[i++] = 0;
+        
+        numLines = 20;
+        while (numLines-- > 0) {
+          _streamMsg.image[i++] = 128;
+          _streamMsg.image[i++] = 0;
+        }
+      }
+      
+      // Die if we just walked over the end of the array above
+      assert(i < _streamMsg.image.size());
       
       return &_streamMsg;
     }
     
     
-    
+#pragma mark - 
+#pragma mark RobotAudioKeyFrame
     //
     // RobotAudioKeyFrame
     //
@@ -217,6 +276,8 @@ return RESULT_FAIL; \
       }
     }
     
+#pragma mark -
+#pragma mark DeviceAudioKeyFrame
     //
     // DeviceAudioKeyFrame
     //
@@ -241,6 +302,8 @@ return RESULT_FAIL; \
       SoundManager::getInstance()->Play(static_cast<SoundID_t>(_audioID));
     }
     
+#pragma mark -
+#pragma mark FacePositionKeyFrame
     //
     // FacePositionKeyFrame
     //
@@ -261,6 +324,59 @@ return RESULT_FAIL; \
       return RESULT_OK;
     }
     
+#pragma mark -
+#pragma mark BackpackLightsKeyFrame
+    
+    static u32 GetColorAsU32(Json::Value& json)
+    {
+      u32 retVal = 0;
+      
+      if(json.isString()) {
+        Json::Value temp; // can't seem to turn input json into array directly
+        const ColorRGBA color( NamedColors::GetByString(json.asString()));
+        retVal = u32(color);
+        
+      } else if(json.isArray() && json.size() == 3) {
+        const ColorRGBA color(static_cast<u8>(json[0].asUInt()),
+                              static_cast<u8>(json[1].asUInt()),
+                              static_cast<u8>(json[2].asUInt()));
+        retVal = u32(color);
+      } else {
+        PRINT_NAMED_WARNING("GetColor", "Expecting color in Json to be a string or 3-element array, not changing.\n");
+      }
+      
+      return retVal;
+    } // GetColor()
+    
+    
+    Result BackpackLightsKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot)
+    {
+      ColorRGBA color;
+     
+      // Special helper macro for getting the LED colors out of the Json and
+      // store them directly in the streamMsg
+#define GET_COLOR_FROM_JSON(__NAME__, __LED_NAME__) do { \
+if(!JsonTools::GetColorOptional(jsonRoot, QUOTE(__NAME__), color)) { \
+PRINT_NAMED_ERROR("BackpackLightsKeyFrame.SetMembersFromJson", \
+"Failed to get '%s' LED color from Json file.\n", QUOTE(__NAME__)); \
+return RESULT_FAIL; \
+} \
+_streamMsg.colors[__LED_NAME__] = u32(color) >> 8; } while(0) // Note we shift the Alpha out, since it's unused
+    
+      GET_COLOR_FROM_JSON(Back,   LED_BACKPACK_BACK);
+      GET_COLOR_FROM_JSON(Front,  LED_BACKPACK_FRONT);
+      GET_COLOR_FROM_JSON(Middle, LED_BACKPACK_MIDDLE);
+      GET_COLOR_FROM_JSON(Left,   LED_BACKPACK_LEFT);
+      GET_COLOR_FROM_JSON(Right,  LED_BACKPACK_RIGHT);
+      
+      return RESULT_OK;
+    }
+    
+    
+    RobotMessage* BackpackLightsKeyFrame::GetStreamMessage()
+    {
+      return &_streamMsg;
+    }
   
   } // namespace Cozmo
 } // namespace Anki

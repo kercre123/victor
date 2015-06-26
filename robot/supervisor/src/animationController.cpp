@@ -423,6 +423,17 @@ namespace AnimationController {
     return RESULT_OK;
   }
   
+  Result BufferKeyFrame(const Messages::AnimKeyFrame_BackpackLights& msg)
+  {
+    StreamedKeyFrame& lastKeyFrame = _keyFrameBuffer[_lastFrame];
+    lastKeyFrame.setsWhichTracks |= StreamedKeyFrame::KF_SETS_BACKPACK_LEDS;
+    for(s32 iLED=0; iLED < NUM_BACKPACK_LEDS; ++iLED) {
+      lastKeyFrame.backpackLEDs[iLED] = msg.colors[iLED];
+    }
+    
+    return RESULT_OK;
+  }
+  
   bool IsBufferFull()
   {
     return _numFramesBuffered > (KEYFRAME_BUFFER_LENGTH - KEYFRAME_BUFFER_PADDING);
@@ -487,10 +498,6 @@ namespace AnimationController {
             
           } // if(setsAudio)
           
-          if(keyFrame.setsWhichTracks & StreamedKeyFrame::KF_SETS_BACKPACK_LEDS) {
-            
-          } // if(setsBackPackLEDs)
-          
           if(keyFrame.setsWhichTracks & StreamedKeyFrame::KF_SETS_HEAD) {
 #           if DEBUG_ANIMATION_CONTROLLER
             PRINT("AnimationController[t=%dms(%d)] requesting head angle of %ddeg over %.2fsec\n",
@@ -518,6 +525,25 @@ namespace AnimationController {
           if(keyFrame.setsWhichTracks & StreamedKeyFrame::KF_SETS_WHEELS) {
             
             WheelController::SetDesiredWheelSpeeds(keyFrame.wheelSpeedL, keyFrame.wheelSpeedR);
+          }
+          
+          if(keyFrame.setsWhichTracks & StreamedKeyFrame::KF_SETS_BACKPACK_LEDS) {
+#           if DEBUG_ANIMATION_CONTROLLER
+            PRINT("AnimationController[t=%dms(%d)] setting backpack LEDs.\n",
+                  _currentTime_ms, HAL::GetTimeStamp());
+#           endif
+            for(s32 iLED=0; iLED<NUM_BACKPACK_LEDS; ++iLED) {
+              HAL::SetLED(static_cast<LEDId>(iLED), keyFrame.backpackLEDs[iLED]);
+            }
+          }
+          
+          if(keyFrame.setsWhichTracks & StreamedKeyFrame::KF_SETS_FACE_FRAME) {
+#           if DEBUG_ANIMATION_CONTROLLER
+            PRINT("AnimationController[t=%dms(%d)] setting face frame.\n",
+                  _currentTime_ms, HAL::GetTimeStamp());
+#           endif
+            
+            HAL::FaceAnimate(keyFrame.faceFrame);
           }
           
         } else {

@@ -17,9 +17,12 @@
 #ifndef ANKI_COZMO_CANNED_KEYFRAME_H
 #define ANKI_COZMO_CANNED_KEYFRAME_H
 
+#include "anki/common/basestation/colorRGBA.h"
+
 #include "anki/cozmo/basestation/comms/robot/robotMessages.h"
 
 #include "anki/cozmo/shared/cozmoTypes.h"
+#include "anki/cozmo/shared/ledTypes.h"
 
 namespace Anki {
   namespace Cozmo {
@@ -229,6 +232,29 @@ namespace Anki {
       MessageAnimKeyFrame_FacePosition _streamMsg;
       
     }; // class FacePositionKeyFrame
+    
+    
+    // A BackpackLightsKeyFrame sets the colors of the robot's five backpack lights
+    class BackpackLightsKeyFrame : public IKeyFrame
+    {
+    public:
+      BackpackLightsKeyFrame() { }
+      
+      virtual RobotMessage* GetStreamMessage() override;
+      
+      static const std::string& GetClassName() {
+        static const std::string ClassName("BackpackLightsKeyFrame");
+        return ClassName;
+      }
+      
+    protected:
+      virtual Result SetMembersFromJson(const Json::Value &jsonRoot) override;
+      
+    private:
+      
+      MessageAnimKeyFrame_BackpackLights _streamMsg;
+      
+    }; // class BackpackLightsKeyFrame
     
   } // namespace Cozmo
 } // namespace Anki

@@ -105,10 +105,11 @@ namespace Anki {
       MessageAnimKeyFrame_AudioSilence _silenceMsg;
       
       // All the animation tracks, storing different kinds of KeyFrames
-      Track<HeadAngleKeyFrame>    _headTrack;
-      Track<LiftHeightKeyFrame>   _liftTrack;
-      Track<FaceImageKeyFrame>    _faceImageTrack;
-      Track<FacePositionKeyFrame> _facePosTrack;
+      Track<HeadAngleKeyFrame>      _headTrack;
+      Track<LiftHeightKeyFrame>     _liftTrack;
+      Track<FaceImageKeyFrame>      _faceImageTrack;
+      Track<FacePositionKeyFrame>   _facePosTrack;
+      Track<BackpackLightsKeyFrame> _backpackLightsTrack;
       
       Track<DeviceAudioKeyFrame>  _deviceAudioTrack;
       Track<RobotAudioKeyFrame>   _robotAudioTrack;

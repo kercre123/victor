@@ -48,6 +48,48 @@
       "durationTime_ms" : 500,
       "height_mm"       : 50,
       "heightVariability_mm" : 5
+    },
+    {
+      "Name" : "FaceImageKeyFrame", 
+      "triggerTime_ms"  : 0,
+      "imageID"         : 0
+    },
+    {
+      "Name" : "FaceImageKeyFrame", 
+      "triggerTime_ms"  : 500,
+      "imageID"         : 1
+    },
+    {
+      "Name" : "FaceImageKeyFrame", 
+      "triggerTime_ms"  : 1000,
+      "imageID"         : 2
+    }, 
+    { 
+      "Name" : "BackpackLightsKeyFrame", 
+      "triggerTime_ms"  : 0, 
+      "Back"            : "RED",
+      "Middle"          : "GREEN", 
+      "Front"           : "BLUE",
+      "Left"            : "BLACK", 
+      "Right"           : "BLACK"
+    },
+    { 
+      "Name" : "BackpackLightsKeyFrame", 
+      "triggerTime_ms"  : 500, 
+      "Back"            : "GREEN",
+      "Middle"          : "BLUE", 
+      "Front"           : "RED",
+      "Left"            : "YELLOW", 
+      "Right"           : "YELLOW"
+    }, 
+    { 
+      "Name" : "BackpackLightsKeyFrame", 
+      "triggerTime_ms"  : 1000, 
+      "Back"            : "BLUE",
+      "Middle"          : "RED", 
+      "Front"           : "GREEN",
+      "Left"            : "MAGENTA", 
+      "Right"           : "MAGENTA"
     }
   ]
 } 
