@@ -3,64 +3,59 @@
 #include "nrf_gpio.h"
 #include "timer.h"
 
-// It looks like we might not be able to go above 1Mbaud with this chip.
-#define NRF_BAUD(x) (int)(x * 268.435456)   // 2^28/1MHz
-const u32 UART_BAUDRATE = NRF_BAUD(1000000);
+#include "hardware.h"
 
-const u8 PIN_TX = 1;   // 3.0
+bool UART::initialized = false;
+bool m_isTransmit = false;
 
-bool m_isInitialized = false;
-
-void UARTInit()
+void UART::configure()
 {
-  // Power on the peripheral
-  NRF_UART0->POWER = 1;
-
-  // Initialize the UART for the specified baudrate
-  NRF_UART0->BAUDRATE = UART_BAUDRATE;
-  
-  // Disable parity and hardware flow-control
-  NRF_UART0->CONFIG = 0;
-  
-  // Enable the peripheral and start the tasks
-  NRF_UART0->ENABLE = UART_ENABLE_ENABLE_Enabled << UART_ENABLE_ENABLE_Pos;
- 
-  // Transmit is disabled by default
-  UARTSetTransmit(0);
-  
-  m_isInitialized = true;
+  if (m_isTransmit) {
+    NRF_UART0->PSELRXD = 0xFFFFFFFF;
+    NRF_UART0->PSELTXD = PIN_TX_DEBUG;
+    nrf_gpio_cfg_output(PIN_TX_DEBUG);  
+  } else {
+    NRF_UART0->PSELRXD = PIN_TX_DEBUG;
+    NRF_UART0->PSELTXD = 0xFFFFFFFF;
+    nrf_gpio_cfg_input(PIN_TX_DEBUG, NRF_GPIO_PIN_NOPULL);
+  }
 }
 
 // Set/clear transmit mode - you can't receive while in transmit mode
-static u8 m_transmitting = 0;
-void UARTSetTransmit(u8 doTransmit)
+void UART::setTransmit(bool doTransmit)
 {
-  // Connect the peripheral to the pin and change directions
-  if (doTransmit) {
-    NRF_UART0->PSELTXD = PIN_TX;
-    NRF_UART0->PSELRXD = 0xFFFFffff;
-    NRF_UART0->TASKS_STARTTX = 1;
-    nrf_gpio_cfg_output(PIN_TX);
-  } else {
-    nrf_gpio_cfg_input(PIN_TX, NRF_GPIO_PIN_PULLUP);
-    NRF_UART0->TASKS_STARTRX = 1;
-    NRF_UART0->EVENTS_RXDRDY = 0;
-    NRF_UART0->PSELRXD = PIN_TX;
-    NRF_UART0->PSELTXD = 0xFFFFffff; 
+  if (m_isTransmit == doTransmit) {
+    return ;
   }
-  // Leave time for turnaround (about two bytes worth)
-  MicroWait(20);
-  m_transmitting = doTransmit;
+  
+  m_isTransmit = doTransmit;
+  UART::configure();
 }
 
-void UARTPutChar(u8 c)
+int UART::get()
 {
-  if (!m_isInitialized)
-    return;
-  if (!m_transmitting)
-    UARTSetTransmit(1);
+  if(!UART::initialized) {
+    return -1;
+  }
+
+  UART::setTransmit(false);
   
-  NRF_UART0->TXD = (u8)c;
+  // Wait for data to be received
+  if (NRF_UART0->EVENTS_RXDRDY != 1)
+    return -1;
+  
+  NRF_UART0->EVENTS_RXDRDY = 0;
+  return (u8)NRF_UART0->RXD;
+}
+
+void UART::put(uint8_t c)
+{
+  if(!UART::initialized) {
+    return ;
+  }
+
+  UART::setTransmit(true);
+  NRF_UART0->TXD = c;
 
   // Wait for the data to transmit
   while (NRF_UART0->EVENTS_TXDRDY != 1)
@@ -69,47 +64,37 @@ void UARTPutChar(u8 c)
   NRF_UART0->EVENTS_TXDRDY = 0;
 }
 
-void UARTPutString(const char* s)
+void UART::put(const char* s)
 {
   while (*s)
-    UARTPutChar(*s++);
+    UART::put(*s++);
 }
 
-void UARTPutHex(u8 c)
+void UART::dump(const uint8_t* data, uint32_t len) {
+  while(len--) UART::hex(*(data++));
+}
+
+void UART::hex(uint8_t c)
 {
-  static u8 hex[] = "0123456789ABCDEF";
-  UARTPutChar(hex[c >> 4]);
-  UARTPutChar(hex[c & 0xF]);
+  static const u8 hex[] = "0123456789ABCDEF";
+  UART::put(hex[c >> 4]);
+  UART::put(hex[c & 0xF]);
 }
 
-void UARTPutHex32(u32 value)
+void UART::hex(uint32_t value)
 {
-  UARTPutHex(value >> 24);
-  UARTPutHex(value >> 16);
-  UARTPutHex(value >> 8);
-  UARTPutHex(value);
+  for (int i = 24; i >= 0; i -= 8) {
+    UART::hex((u8)(value >> i));
+  }
 }
 
-void UARTPutDec(s32 value)
+void UART::dec(int value)
 {
   if (value < 0) {
-    UARTPutChar('-');
+    UART::put('-');
     value = -value;
   }
   if (value > 9)
-    UARTPutDec(value / 10);
-  UARTPutChar((value % 10) + '0');
-}
-
-int UARTGetChar()
-{
-  if (m_transmitting)
-    UARTSetTransmit(0);
-  
-  // Wait for data to be received
-  if (NRF_UART0->EVENTS_RXDRDY != 1)
-    return -1;
-  
-  NRF_UART0->EVENTS_RXDRDY = 0;
-  return (u8)NRF_UART0->RXD;
+    UART::dec(value / 10);
+  UART::put((value % 10) + '0');
 }
