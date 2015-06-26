@@ -14,7 +14,7 @@
 #include "speedController.h"
 
 
-#define DEBUG_ANIMATION_CONTROLLER 0
+#define DEBUG_ANIMATION_CONTROLLER 1
 
 #define USE_HARDCODED_ANIMATIONS 0
 
@@ -31,6 +31,11 @@ namespace AnimationController {
     s32  _numFramesBuffered;
     bool _haveReceivedTerminationFrame;
     bool _isPlaying;
+    
+#   if DEBUG_ANIMATION_CONTROLLER
+    TimeStamp_t _currentTime_ms;
+#   endif
+
     
   } // "private" members
 
@@ -255,6 +260,10 @@ namespace AnimationController {
   
   Result Init()
   {
+#   if DEBUG_ANIMATION_CONTROLLER
+    PRINT("Initializing AnimationController\n");
+#   endif
+    
     Clear();
     
     DefineHardCodedAnimations();
@@ -265,11 +274,19 @@ namespace AnimationController {
   
   void Clear()
   {
+#   if DEBUG_ANIMATION_CONTROLLER
+    PRINT("Clearing AnimationController\n");
+#   endif
+    
     _currentFrame = 0;
     _lastFrame    = 0;
     _numFramesBuffered = 0;
     _haveReceivedTerminationFrame = false;
     _isPlaying = false;
+    
+#   if DEBUG_ANIMATION_CONTROLLER
+    _currentTime_ms = 0;
+#   endif
     
     // Necessary?
     //memset(_keyFrameBuffer, KEYFRAME_BUFFER_LENGTH, sizeof(StreamedKeyFrame));
@@ -305,12 +322,21 @@ namespace AnimationController {
     
     ++_numFramesBuffered;
     
+//#   if DEBUG_ANIMATION_CONTROLLER
+//    PRINT("Advanced LastFrame in AnimationController: lastFrame=%d, numBuffered=%d\n",
+//          _lastFrame, _numFramesBuffered);
+//#   endif
+    
     return RESULT_OK;
     
   } // AdvanceLastFrame()
   
   Result BufferKeyFrame(const Messages::AnimKeyFrame_AudioSample& msg)
   {
+//#   if DEBUG_ANIMATION_CONTROLLER
+//    PRINT("AnimationController is buffering AudioSample keyframe.\n");
+//#   endif
+    
     // New audio frame: advance to the next frame in the buffer and then
     // populate it
     Result lastResult = AdvanceLastFrame();
@@ -330,6 +356,10 @@ namespace AnimationController {
   
   Result BufferKeyFrame(const Messages::AnimKeyFrame_AudioSilence& msg)
   {
+//#   if DEBUG_ANIMATION_CONTROLLER
+//    PRINT("AnimationController is buffering AudioSilence keyframe.\n");
+//#   endif
+
     // Silent audio frame just advances us to the next frame in the buffer
     return AdvanceLastFrame();
   }
@@ -337,6 +367,10 @@ namespace AnimationController {
   
   Result BufferKeyFrame(const Messages::AnimKeyFrame_HeadAngle& msg)
   {
+//#   if DEBUG_ANIMATION_CONTROLLER
+//    PRINT("AnimationController is buffering HeadAngle keyframe.\n");
+//#   endif
+
     // Just set the last frame's head properties:
     StreamedKeyFrame& lastKeyFrame = _keyFrameBuffer[_lastFrame];
     lastKeyFrame.setsWhichTracks |= StreamedKeyFrame::KF_SETS_HEAD;
@@ -348,6 +382,10 @@ namespace AnimationController {
   
   Result BufferKeyFrame(const Messages::AnimKeyFrame_LiftHeight&   msg)
   {
+//#   if DEBUG_ANIMATION_CONTROLLER
+//    PRINT("AnimationController is buffering LiftHeight keyframe.\n");
+//#   endif
+
     StreamedKeyFrame& lastKeyFrame = _keyFrameBuffer[_lastFrame];
     lastKeyFrame.setsWhichTracks |= StreamedKeyFrame::KF_SETS_LIFT;
     lastKeyFrame.liftHeight_mm = msg.height_mm;
@@ -358,6 +396,10 @@ namespace AnimationController {
   
   Result BufferKeyFrame(const Messages::AnimKeyFrame_FaceImage& msg)
   {
+//#   if DEBUG_ANIMATION_CONTROLLER
+//    PRINT("AnimationController is buffering FaceImage keyframe.\n");
+//#   endif
+
     StreamedKeyFrame& lastKeyFrame = _keyFrameBuffer[_lastFrame];
     lastKeyFrame.setsWhichTracks |= StreamedKeyFrame::KF_SETS_FACE_FRAME;
     
@@ -369,6 +411,10 @@ namespace AnimationController {
   
   Result BufferKeyFrame(const Messages::AnimKeyFrame_FacePosition& msg)
   {
+//#   if DEBUG_ANIMATION_CONTROLLER
+//    PRINT("AnimationController is buffering FacePosition keyframe.\n");
+//#   endif
+
     StreamedKeyFrame& lastKeyFrame = _keyFrameBuffer[_lastFrame];
     lastKeyFrame.setsWhichTracks |= StreamedKeyFrame::KF_SETS_FACE_POSITION;
     lastKeyFrame.faceCenX = msg.xCen;
@@ -409,7 +455,7 @@ namespace AnimationController {
                (_numFramesBuffered > 0 && _haveReceivedTerminationFrame));
     }
     
-    assert(_currentFrame <= _lastFrame);
+    //assert(_currentFrame <= _lastFrame);
     
     return ready;
   } // IsReadyToPlay()
@@ -420,6 +466,10 @@ namespace AnimationController {
       
       // If AudioReady() returns true, we are ready to move to the next keyframe
       if(HAL::AudioReady()) {
+        
+#       if DEBUG_ANIMATION_CONTROLLER
+        _currentTime_ms += 33;
+#       endif
         
         StreamedKeyFrame& keyFrame = _keyFrameBuffer[_currentFrame];
         
@@ -442,15 +492,25 @@ namespace AnimationController {
           } // if(setsBackPackLEDs)
           
           if(keyFrame.setsWhichTracks & StreamedKeyFrame::KF_SETS_HEAD) {
+#           if DEBUG_ANIMATION_CONTROLLER
+            PRINT("AnimationController[t=%dms(%d)] requesting head angle of %ddeg over %.2fsec\n",
+                  _currentTime_ms, HAL::GetTimeStamp(),
+                  keyFrame.headAngle_deg, static_cast<f32>(keyFrame.headTime_ms)*.001f);
+#           endif
             
-            HeadController::SetDesiredAngle(DEG_TO_RAD(static_cast<f32>(keyFrame.headAngle_deg)), 0.5f, 0.5f,
+            HeadController::SetDesiredAngle(DEG_TO_RAD(static_cast<f32>(keyFrame.headAngle_deg)), 0.1f, 0.1f,
                                             static_cast<f32>(keyFrame.headTime_ms)*.001f);
             
           } // if(setsHead)
           
           if(keyFrame.setsWhichTracks & StreamedKeyFrame::KF_SETS_LIFT) {
-            
-            LiftController::SetDesiredHeight(static_cast<f32>(keyFrame.liftHeight_mm), 0.5f, 0.5f,
+#           if DEBUG_ANIMATION_CONTROLLER
+            PRINT("AnimationController[t=%dms(%d)] requesting lift height of %dmm over %.2fsec\n",
+                  _currentTime_ms, HAL::GetTimeStamp(),
+                  keyFrame.liftHeight_mm, static_cast<f32>(keyFrame.liftTime_ms)*.001f);
+#           endif
+
+            LiftController::SetDesiredHeight(static_cast<f32>(keyFrame.liftHeight_mm), 0.1f, 0.1f,
                                              static_cast<f32>(keyFrame.liftTime_ms)*.001f);
           } // if(setsLift)
           

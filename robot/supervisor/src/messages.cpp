@@ -192,6 +192,8 @@ namespace Anki {
         robotState_.status |=  (LiftController::IsInPosition() ? LIFT_IN_POS : 0);
         robotState_.status |=  (HeadController::IsInPosition() ? HEAD_IN_POS : 0);
         robotState_.status |= (AnimationController::IsBufferFull() ? IS_ANIM_BUFFER_FULL : 0);
+        
+        robotState_.numFreeAnimationFrames = AnimationController::GetNumFramesFree();
       }
 
       RobotState const& GetRobotStateMsg() {

@@ -1,6 +1,10 @@
 
 #include "anki/cozmo/basestation/animationStreamer.h"
 
+#include "anki/util/logging/logging.h"
+
+#define DEBUG_ANIMATION_STREAMING 1
+
 namespace Anki {
 namespace Cozmo {
 
@@ -18,8 +22,18 @@ namespace Cozmo {
     if(_streamingAnimation == nullptr) {
       return RESULT_FAIL;
     } else {
+      
+      // Get the animation ready to play
+      _streamingAnimation->Init();
+      
       _numLoops = numLoops;
       _loopCtr = 0;
+      
+#     if DEBUG_ANIMATION_STREAMING
+      PRINT_NAMED_INFO("AnimationStreamer.SetStreamingAnimation",
+                       "Will start streaming '%s' animation %d times.\n",
+                       name.c_str(), numLoops);
+#     endif
       return RESULT_OK;
     }
   }
@@ -43,7 +57,8 @@ namespace Cozmo {
                            _streamingAnimation->GetName().c_str());
 #         endif
           
-          _streamingAnimation->Init(robot);
+          // Reset the animation so it can be played again:
+          _streamingAnimation->Init();
           
         } else {
 #         if DEBUG_ANIMATION_STREAMING

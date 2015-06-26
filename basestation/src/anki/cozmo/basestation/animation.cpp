@@ -27,14 +27,22 @@
 
 //#include <cassert>
 
-#define DEBUG_ANIMATION_STREAMING 1
+#define DEBUG_ANIMATIONS 1
 
 namespace Anki {
 namespace Cozmo {
   
+#pragma mark -
+#pragma mark Animation::Track
+  
   template<typename FRAME_TYPE>
   void Animation::Track<FRAME_TYPE>::Init()
   {
+#   if DEBUG_ANIMATIONS
+    PRINT_NAMED_INFO("Animation.Track.Init", "Initializing %s Track.\n",
+                     FRAME_TYPE::GetClassName().c_str());
+#   endif
+    
     _frameIter = _frames.begin();
   }
   
@@ -57,19 +65,53 @@ namespace Cozmo {
   Result Animation::Track<FRAME_TYPE>::AddKeyFrame(const Json::Value &jsonRoot)
   {
     _frames.emplace_back();
-    return _frames.back().DefineFromJson(jsonRoot);
+    Result lastResult = _frames.back().DefineFromJson(jsonRoot);
+    
+#   if DEBUG_ANIMATIONS
+    PRINT_NAMED_INFO("Animation.Track.AddKeyFrame",
+                     "Adding %s keyframe to track to trigger at %dms.\n",
+                     _frames.back().GetClassName().c_str(),
+                     _frames.back().GetTriggerTime());
+#   endif
+    
+    if(lastResult == RESULT_OK) {
+      if(_frames.size() > 1) {
+        auto nextToLastFrame = _frames.rend();
+        --nextToLastFrame;
+        
+        if(_frames.back().GetTriggerTime() <= nextToLastFrame->GetTriggerTime()) {
+          PRINT_NAMED_ERROR("Animation.Track.AddKeyFrame.BadTriggerTime",
+                            "New keyframe must be after the last keyframe.\n");
+          _frames.pop_back();
+          lastResult = RESULT_FAIL;
+        }
+      }
+    }
+    
+    return lastResult;
+  }
+  
+#pragma mark -
+#pragma mark Animation
+  
+  Animation::Animation()
+  : _isInitialized(false)
+  {
+    
   }
   
   
-  Result Animation::DefineFromJson(Json::Value &jsonRoot)
+  Result Animation::DefineFromJson(const std::string& name, Json::Value &jsonRoot)
   {
+    /*
     if(!jsonRoot.isMember("Name")) {
       PRINT_NAMED_ERROR("Animation.DefineFromJson.NoName",
                         "Missing 'Name' field for animation.\n");
       return RESULT_FAIL;
     }
+     */
     
-    _name = jsonRoot["Name"].asString();
+    _name = name; //jsonRoot["Name"].asString();
     
     // Clear whatever is in the existing animation
     Clear();
@@ -140,8 +182,12 @@ _facePosTrack.__METHOD__() __COMBINE_WITH__ \
 _deviceAudioTrack.__METHOD__() __COMBINE_WITH__ \
 _robotAudioTrack.__METHOD__()
   
-  Result Animation::Init(Robot& robot)
+  Result Animation::Init()
   {
+#   if DEBUG_ANIMATIONS
+    PRINT_NAMED_INFO("Animation.Init", "Initializing animation '%s'\n", GetName().c_str());
+#   endif
+    
     _startTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
     
     // Initialize "fake" streaming time to the same start time so we can compare
@@ -150,16 +196,24 @@ _robotAudioTrack.__METHOD__()
     
     ALL_TRACKS(Init, ;);
     
+    _isInitialized = true;
+    
     return RESULT_OK;
   } // Animation::Init()
   
   
   Result Animation::Update(Robot& robot)
   {
+    if(!_isInitialized) {
+      PRINT_NAMED_ERROR("Animation.Update", "Animation must be initialized before it can be played/updated.\n");
+      return RESULT_FAIL;
+    }
+    
     const TimeStamp_t currTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
     
     // Is it time to play device audio? (using actual basestation time)
-    if(_deviceAudioTrack.GetNextFrame().IsTimeToPlay(_startTime_ms, currTime_ms)) {
+    if(_deviceAudioTrack.HasFramesLeft() && 
+       _deviceAudioTrack.GetNextFrame().IsTimeToPlay(_startTime_ms, currTime_ms)) {
       _deviceAudioTrack.GetNextFrame().PlayOnDevice();
       _deviceAudioTrack.Increment();
     }
@@ -245,6 +299,7 @@ _robotAudioTrack.__METHOD__()
   void Animation::Clear()
   {
     ALL_TRACKS(Clear, ;);
+    _isInitialized = false;
   }
   
   bool Animation::IsEmpty() const

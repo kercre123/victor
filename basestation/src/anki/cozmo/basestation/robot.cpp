@@ -850,6 +850,9 @@ namespace Anki {
         PRINT_NAMED_WARNING("Robot.Update", "Robot %d had an action fail.\n", GetID());
       }
         
+      //////// Stream Animations /////////
+      _animationStreamer.Update(*this);
+        
       
       /////////// Update visualization ////////////
       

@@ -240,6 +240,7 @@ ADD_MESSAGE_MEMBER(u8, proxForward)
 ADD_MESSAGE_MEMBER(u8, proxRight)
 ADD_MESSAGE_MEMBER(u8, battVolt10x)
 ADD_MESSAGE_MEMBER(u8, videoFramerateHZ)
+ADD_MESSAGE_MEMBER(u8, numAnimBufferFree)
 END_MESSAGE_DEFINITION(VizRobotState)
 
 

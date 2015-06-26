@@ -53,7 +53,7 @@ namespace Anki {
     
     bool IKeyFrame::IsTimeToPlay(TimeStamp_t startTime_ms, TimeStamp_t currTime_ms) const
     {
-      return (GetTriggerTime() + startTime_ms >= currTime_ms);
+      return (GetTriggerTime() + startTime_ms <= currTime_ms);
     }
     
     Result IKeyFrame::DefineFromJson(const Json::Value &json)
@@ -91,7 +91,7 @@ namespace Anki {
     // Helper macro used in SetMembersFromJson() overrides below to look for
     // member variable in Json node and fail if it doesn't exist
 # define GET_MEMBER_FROM_JSON(__JSON__, __NAME__) do { \
-if(!JsonTools::GetValueOptional(__JSON__, QUOTE(__NAME__), this->__NAME__)) { \
+if(!JsonTools::GetValueOptional(__JSON__, QUOTE(__NAME__), this->_##__NAME__)) { \
 PRINT_NAMED_ERROR("IKeyFrame.GetMemberFromJsonMacro", \
 "Failed to get '%s' from Json file.", QUOTE(__NAME__)); \
 return RESULT_FAIL; \
@@ -128,9 +128,9 @@ return RESULT_FAIL; \
     
     Result HeadAngleKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot)
     {
-      GET_MEMBER_FROM_JSON(jsonRoot, _durationTime_ms);
-      GET_MEMBER_FROM_JSON(jsonRoot, _angle_deg);
-      GET_MEMBER_FROM_JSON(jsonRoot, _angleVariability_deg);
+      GET_MEMBER_FROM_JSON(jsonRoot, durationTime_ms);
+      GET_MEMBER_FROM_JSON(jsonRoot, angle_deg);
+      GET_MEMBER_FROM_JSON(jsonRoot, angleVariability_deg);
       
       return RESULT_OK;
     }
@@ -156,9 +156,9 @@ return RESULT_FAIL; \
     
     Result LiftHeightKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot)
     {
-      GET_MEMBER_FROM_JSON(jsonRoot, _durationTime_ms);
-      GET_MEMBER_FROM_JSON(jsonRoot, _height_mm);
-      GET_MEMBER_FROM_JSON(jsonRoot, _heightVariability_mm);
+      GET_MEMBER_FROM_JSON(jsonRoot, durationTime_ms);
+      GET_MEMBER_FROM_JSON(jsonRoot, height_mm);
+      GET_MEMBER_FROM_JSON(jsonRoot, heightVariability_mm);
       
       return RESULT_OK;
     }
@@ -169,7 +169,7 @@ return RESULT_FAIL; \
     
     Result FaceImageKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot)
     {
-      GET_MEMBER_FROM_JSON(jsonRoot, _imageID);
+      GET_MEMBER_FROM_JSON(jsonRoot, imageID);
       
       return RESULT_OK;
     }
@@ -190,7 +190,7 @@ return RESULT_FAIL; \
     
     Result RobotAudioKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot)
     {
-      GET_MEMBER_FROM_JSON(jsonRoot, _audioID);
+      GET_MEMBER_FROM_JSON(jsonRoot, audioID);
       
       // TODO: Compute number of samples for this audio ID
       // TODO: Catch failure if ID is invalid
@@ -223,7 +223,7 @@ return RESULT_FAIL; \
     
     Result DeviceAudioKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot)
     {
-      GET_MEMBER_FROM_JSON(jsonRoot, _audioID);
+      GET_MEMBER_FROM_JSON(jsonRoot, audioID);
       
       return RESULT_OK;
     }
@@ -255,8 +255,8 @@ return RESULT_FAIL; \
     
     Result FacePositionKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot)
     {
-      GET_MEMBER_FROM_JSON(jsonRoot, _xcen);
-      GET_MEMBER_FROM_JSON(jsonRoot, _ycen);
+      GET_MEMBER_FROM_JSON(jsonRoot, xcen);
+      GET_MEMBER_FROM_JSON(jsonRoot, ycen);
       
       return RESULT_OK;
     }

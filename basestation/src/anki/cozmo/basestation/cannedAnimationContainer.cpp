@@ -52,7 +52,7 @@ namespace Cozmo {
     
     auto retVal = _animations.find(name);
     if(retVal == _animations.end()) {
-      PRINT_NAMED_ERROR("CannedAnimationContainer.GetKeyFrameList.InvalidName",
+      PRINT_NAMED_ERROR("CannedAnimationContainer.GetAnimation.InvalidName",
                         "Animation requested for unknown animation '%s'.\n",
                         name.c_str());
     } else {
@@ -301,7 +301,8 @@ namespace Cozmo {
         return RESULT_FAIL;
       }
       
-      Result lastResult = animation->DefineFromJson(jsonRoot[animationName]);
+      Result lastResult = animation->DefineFromJson(animationName,
+                                                    jsonRoot[animationName]);
       
       // Sanity check
       if(animation->GetName() != animationName) {

@@ -32,13 +32,13 @@ namespace Anki {
     class Animation
     {
     public:
-      Animation() { }
+      Animation();
       
-      Result DefineFromJson(Json::Value& json);
+      Result DefineFromJson(const std::string& name, Json::Value& json);
       
       //Result AddKeyFrame(const HeadAngleKeyFrame& kf);
       
-      Result Init(Robot& robot);
+      Result Init();
       Result Update(Robot& robot);
       
       // An animation is Empty if *all* its tracks are empty
@@ -91,6 +91,8 @@ namespace Anki {
       
       // Name of this animation
       std::string _name;
+      
+      bool _isInitialized;
       
       // When this animation started playing (was initialized) in milliseconds, in
       // "real" basestation time
