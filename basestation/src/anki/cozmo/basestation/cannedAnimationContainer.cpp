@@ -79,7 +79,7 @@ namespace Cozmo {
   }
   
   
-  Result CannedAnimationContainer::DefineFromJson(Json::Value& jsonRoot, std::vector<s32>& loadedAnims)
+  Result CannedAnimationContainer::DefineFromJson(Json::Value& jsonRoot, std::string& loadedAnimName)
   {
     
     Json::Value::Members animationNames = jsonRoot.getMemberNames();
@@ -127,9 +127,9 @@ namespace Cozmo {
                           animationName.c_str());
         return lastResult;
       }
-      
 
-      loadedAnims.push_back(GetID(animationName));
+
+      loadedAnimName = animationName;
     } // for each animation
     
     return RESULT_OK;
