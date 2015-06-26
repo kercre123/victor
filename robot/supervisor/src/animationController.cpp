@@ -25,7 +25,7 @@ namespace AnimationController {
   namespace {
     
     // Circular buffer of keyframes
-    StreamedKeyFrame _keyFrameBuffer[KEYFRAME_BUFFER_LENGTH];
+    ONCHIP StreamedKeyFrame _keyFrameBuffer[KEYFRAME_BUFFER_LENGTH];
     s32  _currentFrame;
     s32  _lastFrame;
     s32  _numFramesBuffered;

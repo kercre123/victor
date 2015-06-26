@@ -749,16 +749,6 @@
               <FilePath>.\supervisor\src\eyeController.cpp</FilePath>
             </File>
             <File>
-              <FileName>animation.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\animation.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>keyFrame.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\keyFrame.cpp</FilePath>
-            </File>
-            <File>
               <FileName>backpackLightController.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\backpackLightController.cpp</FilePath>
@@ -1802,16 +1792,6 @@
               <FileName>eyeController.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\eyeController.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>animation.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\animation.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>keyFrame.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\keyFrame.cpp</FilePath>
             </File>
             <File>
               <FileName>backpackLightController.cpp</FileName>
