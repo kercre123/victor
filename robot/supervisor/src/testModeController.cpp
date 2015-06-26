@@ -264,7 +264,7 @@ namespace Anki {
         ///// End of IMUTest /////
         
         ///////// AnimationTest ////////
-        AnimationID_t AT_currAnim;
+        //AnimationID_t AT_currAnim;
         const u32 AT_periodTics = 2000;
         
         

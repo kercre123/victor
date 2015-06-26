@@ -1162,11 +1162,6 @@ namespace Anki {
       return lastResult;
     }
     
-    s32 Robot::GetAnimationID(const std::string& animationName) const
-    {
-      return _cannedAnimations.GetID(animationName);
-    }
-      
     Result Robot::PlaySound(SoundID_t soundID, u8 numLoops, u8 volume)
     {
       CozmoEngineSignals::PlaySoundForRobotSignal().emit(GetID(),soundID, numLoops, volume);

@@ -29,18 +29,7 @@ namespace Cozmo {
     
     auto retVal = _animations.find(name);
     if(retVal == _animations.end()) {
-      const s32 animID = static_cast<s32>(_animations.size());
-      _animations[name].first = animID;
-      
-      PRINT_NAMED_INFO("CannedAnimationContainer.AddAnimation",
-                       "Adding new animation named '%s' with ID=%d\n",
-                       name.c_str(), animID);
-      
-    } else {
-      PRINT_NAMED_ERROR("CannedAnimationContainer.AddAnimation.DuplicateName",
-                        "Animation named '%s' already exists. Not adding.\n",
-                        name.c_str());
-      lastResult = RESULT_FAIL;
+      _animations.emplace(name,Animation());
     }
     
     return lastResult;
@@ -56,29 +45,12 @@ namespace Cozmo {
                         "Animation requested for unknown animation '%s'.\n",
                         name.c_str());
     } else {
-      animPtr = &retVal->second.second;
+      animPtr = &retVal->second;
     }
     
     return animPtr;
   }
 
-  AnimationID_t CannedAnimationContainer::GetID(const std::string& name) const
-  {
-    AnimationID_t animID = INVALID_ANIMATION_ID;
-    
-    auto retVal = _animations.find(name);
-    if(retVal == _animations.end()) {
-      PRINT_NAMED_ERROR("CannedAnimationContainer.GetID.InvalidName",
-                        "ID requested for unknown animation '%s'.\n",
-                        name.c_str());
-    } else {
-      animID = retVal->second.first;
-    }
-    
-    return animID;
-  }
-  
-  
   Result CannedAnimationContainer::DefineFromJson(Json::Value& jsonRoot, std::string& loadedAnimName)
   {
     

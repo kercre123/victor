@@ -18,7 +18,7 @@
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/cozmo/shared/cozmoTypes.h"
 #include "anki/cozmo/basestation/animation.h"
-#include <map>
+#include <unordered_map>
 #include <vector>
 
 namespace Anki {
@@ -37,16 +37,11 @@ namespace Cozmo {
     
     Animation* GetAnimation(const std::string& name);
     
-    AnimationID_t GetID(const std::string& name) const;
-    
-    // TODO: Add a way to ask how long an animation is
-    //u16 GetLengthInMilliSeconds(const std::string& name) const;
-    
     void Clear();
     
   private:
     
-    std::map<std::string, std::pair<AnimationID_t, Animation> > _animations;
+    std::unordered_map<std::string, Animation> _animations;
     
   }; // class CannedAnimationContainer
   
