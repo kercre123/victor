@@ -53,6 +53,9 @@
 #include "anki/cozmo/basestation/ramp.h"
 #include "anki/cozmo/basestation/soundManager.h"
 
+#include <unordered_map>
+#include <time.h>
+
 #define ASYNC_VISION_PROCESSING 1
 
 namespace Anki {
@@ -378,9 +381,17 @@ namespace Anki {
       // Plays transition animation once, then plays state animatin in a loop
       Result TransitionToStateAnimation(const char *transitionAnimName,
                                         const char *stateAnimName);
-      
+
       Result StopAnimation();
-      
+
+      void ReplayLastAnimation(const s32 loopCount);
+
+      // Read the animations in a dir
+      void ReadAnimationFile(const char* filename, s32& animationID);
+
+      // Read the animations in a dir
+      void ReadAnimationDir();
+
       // (Re-)Read the animation JSON file and send it to the physical robot
       Result ReadAnimationFile();
       
@@ -671,6 +682,9 @@ namespace Anki {
       // Maintains an average period of incoming robot images
       u32 _imgFramePeriod;
       TimeStamp_t _lastImgTimeStamp;
+      s32 _lastPlayedAnimationId;
+
+      std::unordered_map<std::string, time_t> _loadedAnimationFiles;
       
       ///////// Modifiers ////////
       
@@ -750,8 +764,10 @@ namespace Anki {
       Result SendStartTestMode(const TestMode mode, s32 p1, s32 p2, s32 p3) const;
       
       Result SendPlaceObjectOnGround(const f32 rel_x, const f32 rel_y, const f32 rel_angle, const bool useManualSpeed);
-      
-      // Play animation
+
+      Result SendPlayAnimation(const s32 animationId, const u32 numLoops = 0);
+
+    // Play animation
       // If numLoops == 0, animation repeats forever.
       Result SendPlayAnimation(const char* animName, const u32 numLoops = 0);
       
