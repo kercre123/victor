@@ -401,5 +401,11 @@ START_MESSAGE_DEFINITION(AnimKeyFrame_BackpackLights, 1)
 ADD_MESSAGE_MEMBER_ARRAY(u32, colors, 5) // TODO: Use NUM_BACKPACK_LEDS instead of "5"
 END_MESSAGE_DEFINITION(AnimKeyFrame_BackpackLights)
 
+// AnimKeyFrame_BodyMotion
+// TODO: Decide what this really contains. For now, just wheel speeds.
+START_MESSAGE_DEFINITION(AnimKeyFrame_BodyMotion, 1)
+ADD_MESSAGE_MEMBER(s16, wheelSpeedL_mmps)
+ADD_MESSAGE_MEMBER(s16, wheelSpeedR_mmps)
+END_MESSAGE_DEFINITION(AnimKeyFrame_BodyMotion)
 
 

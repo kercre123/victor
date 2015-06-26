@@ -147,6 +147,8 @@ namespace Cozmo {
         addResult = _robotAudioTrack.AddKeyFrame(jsonFrame);
       } else if(frameName == BackpackLightsKeyFrame::GetClassName()) {
         addResult = _backpackLightsTrack.AddKeyFrame(jsonFrame);
+      } else if(frameName == BodyPositionKeyFrame::GetClassName()) {
+        addResult = _bodyPosTrack.AddKeyFrame(jsonFrame);
       } else {
         PRINT_NAMED_ERROR("Animation.DefineFromJson.UnrecognizedFrameName",
                           "Frame %d in '%s' animation has unrecognized name '%s'.\n",
@@ -183,7 +185,8 @@ _faceImageTrack.__METHOD__() __COMBINE_WITH__ \
 _facePosTrack.__METHOD__() __COMBINE_WITH__ \
 _deviceAudioTrack.__METHOD__() __COMBINE_WITH__ \
 _robotAudioTrack.__METHOD__() __COMBINE_WITH__ \
-_backpackLightsTrack.__METHOD__()
+_backpackLightsTrack.__METHOD__() __COMBINE_WITH__ \
+_bodyPosTrack.__METHOD__()
   
   Result Animation::Init()
   {
@@ -298,6 +301,11 @@ _backpackLightsTrack.__METHOD__()
         if(sendResult != RESULT_OK) { return sendResult; }
       }
       
+      msg = _bodyPosTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms);
+      if(msg != nullptr) {
+        sendResult = robot.SendMessage(*msg);
+        if(sendResult != RESULT_OK) { return sendResult; }
+      }
       
     } // while(numFramesToSend > 0)
     

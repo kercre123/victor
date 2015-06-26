@@ -227,7 +227,6 @@ namespace Anki {
       virtual Result SetMembersFromJson(const Json::Value &jsonRoot) override;
       
     private:
-      s8 _xcen, _ycen;
       
       MessageAnimKeyFrame_FacePosition _streamMsg;
       
@@ -255,6 +254,29 @@ namespace Anki {
       MessageAnimKeyFrame_BackpackLights _streamMsg;
       
     }; // class BackpackLightsKeyFrame
+    
+    
+    // A BodyPositionKeyFrame
+    // TODO: Decide what this actually stores (direct wheel speeds or something more abstracted?)
+    class BodyPositionKeyFrame : public IKeyFrame
+    {
+    public:
+      BodyPositionKeyFrame() { }
+      
+      virtual RobotMessage* GetStreamMessage() override;
+      
+      static const std::string& GetClassName() {
+        static const std::string ClassName("BodyPositionKeyFrame");
+        return ClassName;
+      }
+      
+    protected:
+      virtual Result SetMembersFromJson(const Json::Value &jsonRoot) override;
+      
+    private:
+      MessageAnimKeyFrame_BodyMotion _streamMsg;
+      
+    }; // class BodyPositionKeyFrame
     
   } // namespace Cozmo
 } // namespace Anki

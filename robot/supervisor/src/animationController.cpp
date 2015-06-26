@@ -434,6 +434,16 @@ namespace AnimationController {
     return RESULT_OK;
   }
   
+  Result BufferKeyFrame(const Messages::AnimKeyFrame_BodyMotion&     msg)
+  {
+    StreamedKeyFrame& lastKeyFrame = _keyFrameBuffer[_lastFrame];
+    lastKeyFrame.setsWhichTracks |= StreamedKeyFrame::KF_SETS_WHEELS;
+    lastKeyFrame.wheelSpeedL = msg.wheelSpeedL_mmps;
+    lastKeyFrame.wheelSpeedR = msg.wheelSpeedR_mmps;
+    
+    return RESULT_OK;
+  }
+  
   bool IsBufferFull()
   {
     return _numFramesBuffered > (KEYFRAME_BUFFER_LENGTH - KEYFRAME_BUFFER_PADDING);
@@ -521,12 +531,7 @@ namespace AnimationController {
                                              static_cast<f32>(keyFrame.liftTime_ms)*.001f);
           } // if(setsLift)
           
-          
-          if(keyFrame.setsWhichTracks & StreamedKeyFrame::KF_SETS_WHEELS) {
-            
-            WheelController::SetDesiredWheelSpeeds(keyFrame.wheelSpeedL, keyFrame.wheelSpeedR);
-          }
-          
+         
           if(keyFrame.setsWhichTracks & StreamedKeyFrame::KF_SETS_BACKPACK_LEDS) {
 #           if DEBUG_ANIMATION_CONTROLLER
             PRINT("AnimationController[t=%dms(%d)] setting backpack LEDs.\n",
@@ -555,7 +560,14 @@ namespace AnimationController {
             HAL::FaceMove(keyFrame.faceCenX, keyFrame.faceCenY);
           }
           
-
+          if(keyFrame.setsWhichTracks & StreamedKeyFrame::KF_SETS_WHEELS) {
+#           if DEBUG_ANIMATION_CONTROLLER
+            PRINT("AnimationController[t=%dms(%d)] setting wheel speeds L=%dmmps, R=%dmmps.\n",
+                  _currentTime_ms, HAL::GetTimeStamp(), keyFrame.wheelSpeedL, keyFrame.wheelSpeedR);
+#           endif
+            
+            WheelController::SetDesiredWheelSpeeds(keyFrame.wheelSpeedL, keyFrame.wheelSpeedR);
+          }
           
         } else {
           // Termination frame reached!

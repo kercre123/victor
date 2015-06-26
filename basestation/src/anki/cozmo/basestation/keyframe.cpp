@@ -311,16 +311,19 @@ return RESULT_FAIL; \
     
     RobotMessage* FacePositionKeyFrame::GetStreamMessage()
     {
-      _streamMsg.xCen = _xcen;
-      _streamMsg.yCen = _ycen;
+      //_streamMsg.xCen = _xcen;
+      //_streamMsg.yCen = _ycen;
       
       return &_streamMsg;
     }
     
     Result FacePositionKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot)
     {
-      GET_MEMBER_FROM_JSON(jsonRoot, xcen);
-      GET_MEMBER_FROM_JSON(jsonRoot, ycen);
+      // Just store the center point directly in the message.
+      // No need to duplicate since we don't do anything extra to the stored
+      // values before streaming.
+      GET_MEMBER_FROM_JSON_AND_STORE_IN(jsonRoot, xcen, streamMsg.xCen);
+      GET_MEMBER_FROM_JSON_AND_STORE_IN(jsonRoot, ycen, streamMsg.yCen);
       
       return RESULT_OK;
     }
@@ -379,5 +382,26 @@ _streamMsg.colors[__LED_NAME__] = u32(color) >> 8; } while(0) // Note we shift t
       return &_streamMsg;
     }
   
+    
+#pragma mark -
+#pragma mark BodyPositionKeyFrame
+    
+    Result BodyPositionKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot)
+    {
+      // For now just store the wheel speeds directly in the message.
+      // Once we decide what the Json will actually contain, we may need
+      // to read into some private members and fill the streaming message
+      // dynamically in GetStreamMessage()
+      GET_MEMBER_FROM_JSON_AND_STORE_IN(jsonRoot, wheelSpeedL, streamMsg.wheelSpeedL_mmps);
+      GET_MEMBER_FROM_JSON_AND_STORE_IN(jsonRoot, wheelSpeedR, streamMsg.wheelSpeedR_mmps);
+      
+      return RESULT_OK;
+    }
+    
+    RobotMessage* BodyPositionKeyFrame::GetStreamMessage()
+    {
+      return &_streamMsg;
+    }
+    
   } // namespace Cozmo
 } // namespace Anki
