@@ -31,7 +31,10 @@ namespace Anki {
       
       // Get the list of known robot ID's
       std::vector<RobotID_t> const& GetRobotIDList() const;
-      
+
+      // for when you don't care and you just want a damn robot
+      Robot* GetFirstRobot();
+
       // Get a pointer to a robot by ID
       Robot* GetRobotByID(const RobotID_t robotID);
       

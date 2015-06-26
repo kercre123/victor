@@ -16,6 +16,7 @@
 #define ANKI_COZMO_CANNED_ANIMATION_CONTAINER_H
 
 #include "anki/cozmo/basestation/comms/robot/robotMessages.h"
+#include <vector>
 
 namespace Anki {
 namespace Cozmo {
@@ -53,7 +54,7 @@ namespace Cozmo {
     
     Result DefineHardCoded(); // called at construction
     
-    Result DefineFromJson(Json::Value& jsonRoot);
+    Result DefineFromJson(Json::Value& jsonRoot, std::vector<s32>& loadedAnims);
     
     Result AddAnimation(const std::string& name);
     
