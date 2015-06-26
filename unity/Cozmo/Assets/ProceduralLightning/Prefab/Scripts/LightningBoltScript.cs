@@ -250,6 +250,7 @@ namespace DigitalRuby.ThunderAndLightning
 					mesh.normals = ends.ToArray();
                     mesh.triangles = indices.ToArray();
                     needsUpdate = false;
+					//Debug.Log("LightningBoltMeshRenderer Update meshRenderer.enabled("+meshRenderer.enabled+")");
                 }
             }
 
@@ -267,6 +268,7 @@ namespace DigitalRuby.ThunderAndLightning
             public void Begin()
             {
                 meshRenderer.enabled = true;
+				//Debug.Log("LightningBoltMeshRenderer Begin meshRenderer.enabled("+meshRenderer.enabled+")");
             }
 
             public bool PrepareForLines(int lineCount)
@@ -405,7 +407,7 @@ namespace DigitalRuby.ThunderAndLightning
                 obj.name = "LightningBoltMeshRenderer";
                 obj.transform.parent = lightningBolt.Parent.transform;
                 obj.transform.position = lightningBolt.Parent.transform.position;
-                obj.hideFlags = HideFlags.HideAndDontSave;
+                //obj.hideFlags = HideFlags.HideAndDontSave;
                 lineRenderer = obj.AddComponent<LineRendererMesh>();
             }
             else
