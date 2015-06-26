@@ -79,20 +79,20 @@
     {
       "Name" : "FacePositionKeyFrame", 
       "triggerTime_ms"  : 1100, 
-      "xcen"            : 0, 
-      "ycen"            : 5
+      "xcen"            : -20, 
+      "ycen"            : -10
     },
     {
       "Name" : "FacePositionKeyFrame", 
       "triggerTime_ms"  : 1200, 
-      "xcen"            : 0, 
+      "xcen"            : 20, 
       "ycen"            : 10
     },
     {
       "Name" : "FacePositionKeyFrame", 
       "triggerTime_ms"  : 1300, 
       "xcen"            : 0, 
-      "ycen"            : 5
+      "ycen"            : 0
     },
     { 
       "Name" : "BackpackLightsKeyFrame", 

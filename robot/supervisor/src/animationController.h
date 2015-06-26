@@ -34,11 +34,11 @@ namespace Anki {
       static const s32 PREROLL_BUFFER_LENGTH = 500/33; // 1/2 a second (500ms / (33ms per frame))
       
       // Streaming KeyFrame buffer size, in number of keyframes
-      static const s32 KEYFRAME_BUFFER_LENGTH = 64;
+      static const s32 KEYFRAME_BUFFER_LENGTH = 128;
       
       // If buffer gets within this number of keyframes of the buffer length,
       // then it is considered "full" for the purposes of IsBufferFull() below.
-      static const s32 KEYFRAME_BUFFER_PADDING = 10;
+      static const s32 KEYFRAME_BUFFER_PADDING = 32;
       
       Result Init();
 

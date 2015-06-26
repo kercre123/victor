@@ -198,6 +198,7 @@ return RESULT_FAIL; \
       
       // For now, just put some stuff for display in there, using a few hard-coded
       // patterns depending on ID
+      _streamMsg.image.fill(0);
       if(_imageID == 0) {
         numLines = 64;
         while(numLines-- > 0) {
