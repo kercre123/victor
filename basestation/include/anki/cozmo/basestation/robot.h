@@ -374,10 +374,6 @@ namespace Anki {
       // If numLoops == 0, animation repeats forever.
       Result PlayAnimation(const char* animName, const u32 numLoops = 1);
       
-      // Return the ID matching the given name, or -1 if no animation with
-      // that name is known.
-      s32 GetAnimationID(const std::string& animationName) const;
-      
       // Return the approximate number of available slots in the robot's
       // keyframe buffer, to let us know if we can stream any more
       s32 GetNumAnimationFramesFree() const;
