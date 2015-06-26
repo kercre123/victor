@@ -95,8 +95,7 @@ public class RobotRelativeControls : MonoBehaviour {
 
 		ShowSticks();
 
-
-		hiddenInputField = CozmoAssistedControls.instance.gameObject.GetComponent<InputField>();
+		//hiddenInputField = CozmoAssistedControls.instance.gameObject.GetComponent<InputField>();
 	}
 
 	void Update() {
@@ -157,7 +156,7 @@ public class RobotRelativeControls : MonoBehaviour {
 		Vector2 targetSwapDirection = Vector2.zero;
 
 		CheckVerticalStick();
-		hiddenInputField.ActivateInputField();
+		//hiddenInputField.ActivateInputField();
 		CheckVerticalDebugAxis();
 
 		if(Input.touchCount > 0) {
@@ -194,8 +193,8 @@ public class RobotRelativeControls : MonoBehaviour {
 
 			//robot.TrackHeadToObject( targetLock );
 		}
-		Debug.Log("hiddenInputField.text: " +hiddenInputField.text);
-		hiddenInputField.text = string.Empty;
+//		Debug.Log("hiddenInputField.text: " +hiddenInputField.text);
+//		hiddenInputField.text = string.Empty;
 
 		if ( PlayerPrefs.GetInt("CozmoAssistedControls", 0) == 0 ) {
 			bool stopped = inputs.sqrMagnitude == 0f && moveCommandLastFrame;
