@@ -156,6 +156,9 @@ case Anki::Cozmo::U2G::Message::Tag::IMURequest:
 case Anki::Cozmo::U2G::Message::Tag::PlayAnimation:
 	Process_PlayAnimation(msg.Get_PlayAnimation());
 	break;
+case Anki::Cozmo::U2G::Message::Tag::ReplayLastAnimation:
+	Process_ReplayLastAnimation(msg.Get_ReplayLastAnimation());
+	break;
 case Anki::Cozmo::U2G::Message::Tag::ReadAnimationFile:
 	Process_ReadAnimationFile(msg.Get_ReadAnimationFile());
 	break;

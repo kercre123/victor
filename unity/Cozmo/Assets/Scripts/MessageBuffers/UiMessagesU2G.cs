@@ -5815,6 +5815,123 @@ public class PlayAnimation
 	}
 }
 
+public class ReplayLastAnimation
+{
+	private uint _numLoops; // uint_32
+
+	public uint numLoops { get { return _numLoops; } set { _numLoops = value; } }
+
+
+	/**** Constructors ****/
+
+	public ReplayLastAnimation()
+	{
+	}
+
+	public ReplayLastAnimation(uint numLoops)
+	{
+		this.numLoops = numLoops;
+	}
+
+	public ReplayLastAnimation(System.IO.Stream stream)
+	{
+		Unpack(stream);
+	}
+
+	public ReplayLastAnimation(System.IO.BinaryReader reader)
+	{
+		Unpack(reader);
+	}
+
+	public void Unpack(System.IO.Stream stream)
+	{
+		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
+		Unpack(reader);
+	}
+
+	public void Unpack(System.IO.BinaryReader reader)
+	{
+		_numLoops = reader.ReadUInt32();
+	}
+
+	public void Pack(System.IO.Stream stream)
+	{
+		System.IO.BinaryWriter writer = new System.IO.BinaryWriter(stream);
+		Pack(writer);
+	}
+
+	public void Pack(System.IO.BinaryWriter writer)
+	{
+		writer.Write((uint)_numLoops);
+	}
+
+	public int Size 
+	{
+		get {
+			return 4;
+		}
+	}
+
+	public static bool ArrayEquals<T>(System.Collections.Generic.IList<T> a1, System.Collections.Generic.IList<T> a2) {
+		if (System.Object.ReferenceEquals(a1, a2))
+			return true;
+
+		if (System.Object.ReferenceEquals(a1, null) || System.Object.ReferenceEquals(a2, null))
+			return false;
+
+		if (a1.Count != a2.Count)
+			return false;
+
+		for (int i = 0; i < a1.Count; i++)
+		{
+			if (!a1[i].Equals(a2[i])) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	public static bool operator ==(ReplayLastAnimation a, ReplayLastAnimation b)
+	{
+		if (System.Object.ReferenceEquals(a, null))
+		{
+			return System.Object.ReferenceEquals(b, null);
+		}
+
+		return a.Equals(b);
+	}
+
+	public static bool operator !=(ReplayLastAnimation a, ReplayLastAnimation b)
+	{
+		return !(a == b);
+	}
+
+	public override bool Equals(System.Object obj)
+	{
+		return this.Equals(obj as ReplayLastAnimation);
+	}
+
+	public bool Equals(ReplayLastAnimation p)
+	{
+		if (System.Object.ReferenceEquals(p, null))
+		{
+			return false;
+		}
+
+		return this._numLoops.Equals(p._numLoops);
+	}
+
+	public override int GetHashCode()
+	{
+		unchecked
+		{
+			int hash = 17;
+			hash = hash * 23 + this._numLoops.GetHashCode();
+			return hash;
+		}
+	}
+}
+
 public class ReadAnimationFile
 {
 	/**** Constructors ****/
@@ -7797,19 +7914,20 @@ public class Message {
 		StartTestMode,	//47
 		IMURequest,	//48
 		PlayAnimation,	//49
-		ReadAnimationFile,	//50
-		StartFaceTracking,	//51
-		StopFaceTracking,	//52
-		StartLookingForMarkers,	//53
-		StopLookingForMarkers,	//54
-		SetVisionSystemParams,	//55
-		SetFaceDetectParams,	//56
-		SetActiveObjectLEDs,	//57
-		SetAllActiveObjectLEDs,	//58
-		SetBackpackLEDs,	//59
-		TapBlockOnGround,	//60
-		VisualizeQuad,	//61
-		EraseQuad,	//62
+		ReplayLastAnimation,	//50
+		ReadAnimationFile,	//51
+		StartFaceTracking,	//52
+		StopFaceTracking,	//53
+		StartLookingForMarkers,	//54
+		StopLookingForMarkers,	//55
+		SetVisionSystemParams,	//56
+		SetFaceDetectParams,	//57
+		SetActiveObjectLEDs,	//58
+		SetAllActiveObjectLEDs,	//59
+		SetBackpackLEDs,	//60
+		TapBlockOnGround,	//61
+		VisualizeQuad,	//62
+		EraseQuad,	//63
 		INVALID
 	};
 
@@ -8669,6 +8787,23 @@ public class Message {
 		}
 	}
 
+	public Anki.Cozmo.U2G.ReplayLastAnimation ReplayLastAnimation
+	{
+		get {
+			if (_tag != Tag.ReplayLastAnimation) {
+				throw new System.InvalidOperationException(string.Format(
+					"Cannot access union member \"ReplayLastAnimation\" when a value of type {0} is stored.",
+					_tag.ToString()));
+			}
+			return (Anki.Cozmo.U2G.ReplayLastAnimation)this._state;
+		}
+		
+		set {
+			_tag = (value != null) ? Tag.ReplayLastAnimation : Tag.INVALID;
+			_state = value;
+		}
+	}
+
 	public Anki.Cozmo.U2G.ReadAnimationFile ReadAnimationFile
 	{
 		get {
@@ -9066,6 +9201,9 @@ public class Message {
 		case Tag.PlayAnimation:
 			PlayAnimation = new Anki.Cozmo.U2G.PlayAnimation(reader);
 			break;
+		case Tag.ReplayLastAnimation:
+			ReplayLastAnimation = new Anki.Cozmo.U2G.ReplayLastAnimation(reader);
+			break;
 		case Tag.ReadAnimationFile:
 			ReadAnimationFile = new Anki.Cozmo.U2G.ReadAnimationFile(reader);
 			break;
@@ -9421,6 +9559,12 @@ public class Message {
 				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
 			}
 			PlayAnimation.Pack(writer);
+			break;
+		case Tag.ReplayLastAnimation:
+			if (ReplayLastAnimation == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
+			ReplayLastAnimation.Pack(writer);
 			break;
 		case Tag.ReadAnimationFile:
 			if (ReadAnimationFile == null) {
@@ -9809,6 +9953,12 @@ public class Message {
 					throw new System.InvalidOperationException("Messages may not have null members.");
 				}
 				result += PlayAnimation.Size;
+				break;
+			case Tag.ReplayLastAnimation:
+				if (ReplayLastAnimation == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
+				result += ReplayLastAnimation.Size;
 				break;
 			case Tag.ReadAnimationFile:
 				if (ReadAnimationFile == null) {
