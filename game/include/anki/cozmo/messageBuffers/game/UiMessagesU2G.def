@@ -1836,6 +1836,40 @@ struct PlayAnimation
 	bool operator!=(const PlayAnimation& other) const;
 };
 
+// MESSAGE ReplayLastAnimation
+struct ReplayLastAnimation
+{
+	uint32_t numLoops;
+	
+	/**** Constructors ****/
+	ReplayLastAnimation() = default;
+	ReplayLastAnimation(const ReplayLastAnimation& other) = default;
+	ReplayLastAnimation(ReplayLastAnimation& other) = default;
+	ReplayLastAnimation(ReplayLastAnimation&& other) noexcept = default;
+	ReplayLastAnimation& operator=(const ReplayLastAnimation& other) = default;
+	ReplayLastAnimation& operator=(ReplayLastAnimation&& other) noexcept = default;
+	
+	explicit ReplayLastAnimation(uint32_t numLoops)
+	:numLoops(numLoops)
+	{}
+
+	explicit ReplayLastAnimation(const uint8_t* buff, size_t len);
+	explicit ReplayLastAnimation(const CLAD::SafeMessageBuffer& buffer);
+	
+	/**** Pack ****/
+	size_t Pack(uint8_t* buff, size_t len) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+
+	/**** Unpack ****/
+	size_t Unpack(const uint8_t* buff, const size_t len);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+
+	size_t Size() const;
+
+	bool operator==(const ReplayLastAnimation& other) const;
+	bool operator!=(const ReplayLastAnimation& other) const;
+};
+
 // MESSAGE ReadAnimationFile
 struct ReadAnimationFile
 {
@@ -2676,6 +2710,11 @@ public:
 	void Set_PlayAnimation(const Anki::Cozmo::U2G::PlayAnimation& new_PlayAnimation);
 	void Set_PlayAnimation(Anki::Cozmo::U2G::PlayAnimation&& new_PlayAnimation);
 
+	/** ReplayLastAnimation **/
+	const Anki::Cozmo::U2G::ReplayLastAnimation& Get_ReplayLastAnimation() const;
+	void Set_ReplayLastAnimation(const Anki::Cozmo::U2G::ReplayLastAnimation& new_ReplayLastAnimation);
+	void Set_ReplayLastAnimation(Anki::Cozmo::U2G::ReplayLastAnimation&& new_ReplayLastAnimation);
+
 	/** ReadAnimationFile **/
 	const Anki::Cozmo::U2G::ReadAnimationFile& Get_ReadAnimationFile() const;
 	void Set_ReadAnimationFile(const Anki::Cozmo::U2G::ReadAnimationFile& new_ReadAnimationFile);
@@ -2804,6 +2843,7 @@ private:
 		Anki::Cozmo::U2G::StartTestMode _StartTestMode;
 		Anki::Cozmo::U2G::IMURequest _IMURequest;
 		Anki::Cozmo::U2G::PlayAnimation _PlayAnimation;
+		Anki::Cozmo::U2G::ReplayLastAnimation _ReplayLastAnimation;
 		Anki::Cozmo::U2G::ReadAnimationFile _ReadAnimationFile;
 		Anki::Cozmo::U2G::StartFaceTracking _StartFaceTracking;
 		Anki::Cozmo::U2G::StopFaceTracking _StopFaceTracking;

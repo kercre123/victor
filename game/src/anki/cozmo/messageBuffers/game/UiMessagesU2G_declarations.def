@@ -52,6 +52,7 @@ void Process_SelectNextSoundScheme(const Anki::Cozmo::U2G::SelectNextSoundScheme
 void Process_StartTestMode(const Anki::Cozmo::U2G::StartTestMode& msg);
 void Process_IMURequest(const Anki::Cozmo::U2G::IMURequest& msg);
 void Process_PlayAnimation(const Anki::Cozmo::U2G::PlayAnimation& msg);
+void Process_ReplayLastAnimation(const Anki::Cozmo::U2G::ReplayLastAnimation& msg);
 void Process_ReadAnimationFile(const Anki::Cozmo::U2G::ReadAnimationFile& msg);
 void Process_StartFaceTracking(const Anki::Cozmo::U2G::StartFaceTracking& msg);
 void Process_StopFaceTracking(const Anki::Cozmo::U2G::StopFaceTracking& msg);

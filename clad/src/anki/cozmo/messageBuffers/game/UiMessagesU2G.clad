@@ -328,6 +328,11 @@ message PlayAnimation {
     string animationName
 }
 
+// ReplayLastAnimation
+message ReplayLastAnimation {
+    uint_32 numLoops
+}
+
 // ReadAnimationFile
 message ReadAnimationFile {
 }

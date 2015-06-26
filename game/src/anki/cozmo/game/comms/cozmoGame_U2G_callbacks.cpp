@@ -757,16 +757,20 @@ namespace Cozmo {
       robot->PlayAnimation(&(msg.animationName[0]), msg.numLoops);
     }
   }
-  
+
+  void CozmoGameImpl::Process_ReplayLastAnimation(U2G::ReplayLastAnimation const& msg)
+  {
+    PRINT_NAMED_INFO("CozmoGame.ReadAnimationFile", "replaying last animation");
+    Robot* robot = _cozmoEngine->GetFirstRobot();
+    if (robot != nullptr) {
+      robot->ReplayLastAnimation(msg.numLoops);
+    }
+  }
+
   void CozmoGameImpl::Process_ReadAnimationFile(U2G::ReadAnimationFile const& msg)
   {
-    // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
-    const RobotID_t robotID = 1;
-    Robot* robot = GetRobotByID(robotID);
-    
-    if(robot != nullptr) {
-      robot->ReadAnimationFile();
-    }
+    PRINT_NAMED_INFO("CozmoGame.ReadAnimationFile", "started animation tool");
+    _cozmoEngine->StartAnimationTool();
   }
   
   void CozmoGameImpl::Process_StartFaceTracking(U2G::StartFaceTracking const& msg)

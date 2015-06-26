@@ -85,4 +85,4 @@ webots orphaned processes
 ==========================
 
  * happens often when simulator crashes
- * 
+ * `ps -ef | grep simulator\/controllers | cut -d ' ' -f 4 | xargs kill`
