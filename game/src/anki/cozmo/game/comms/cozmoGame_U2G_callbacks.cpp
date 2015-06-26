@@ -765,7 +765,7 @@ namespace Cozmo {
     Robot* robot = GetRobotByID(robotID);
     
     if(robot != nullptr) {
-      robot->ReadAnimationFile();
+      robot->ReadAnimationDir(true);
     }
   }
   
