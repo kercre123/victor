@@ -88,6 +88,7 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
     algorithmParameters.showImageDetections = false;
     algorithmParameters.preprocessingFunction = []; % If non-empty, preprocessing is applied before compression
     algorithmParameters.imageCompression = {'none', 0}; % Applies compression before running the algorithm
+    algorithmParameters.cornerMethod = 'lineFits'; % {'laplacianPeaks', 'lineFits'}
     
     algorithmParametersOrig = algorithmParameters;
     
