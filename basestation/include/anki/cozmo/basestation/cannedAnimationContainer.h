@@ -16,12 +16,10 @@
 #define ANKI_COZMO_CANNED_ANIMATION_CONTAINER_H
 
 #include "anki/common/basestation/jsonTools.h"
-
 #include "anki/cozmo/shared/cozmoTypes.h"
-
 #include "anki/cozmo/basestation/animation.h"
-
 #include <map>
+#include <vector>
 
 namespace Anki {
 namespace Cozmo {
@@ -33,7 +31,7 @@ namespace Cozmo {
     
     Result DefineHardCoded(); // called at construction
     
-    Result DefineFromJson(Json::Value& jsonRoot);
+    Result DefineFromJson(Json::Value& jsonRoot, std::vector<s32>& loadedAnims);
     
     Result AddAnimation(const std::string& name);
     
