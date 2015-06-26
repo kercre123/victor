@@ -100,7 +100,7 @@ namespace Anki {
       // It makes no sense to try to slow down before speeding up!
       s16 desiredAndCurrentSpeedDiff = userCommandedDesiredVehicleSpeed_ - userCommandedCurrentVehicleSpeed_;
       s16 desiredAndMeasuredSpeedDiff = userCommandedDesiredVehicleSpeed_ - GetCurrentMeasuredVehicleSpeed();
-      if ( SIGN(desiredAndCurrentSpeedDiff) == SIGN(desiredAndMeasuredSpeedDiff)
+      if ( signbit(desiredAndCurrentSpeedDiff) == signbit(desiredAndMeasuredSpeedDiff)
           && ABS(desiredAndCurrentSpeedDiff) > ABS(desiredAndMeasuredSpeedDiff) ) {
         userCommandedCurrentVehicleSpeed_ = GetCurrentMeasuredVehicleSpeed();
       }
@@ -108,7 +108,7 @@ namespace Anki {
       // Similarly, if the current measured speed and the current user commanded speed
       // are on opposite sides of the user desired speed, set the user commanded speed
       // to be the desired speed.
-      if ( SIGN(desiredAndCurrentSpeedDiff) != SIGN(desiredAndMeasuredSpeedDiff) ) {
+      if ( signbit(desiredAndCurrentSpeedDiff) != signbit(desiredAndMeasuredSpeedDiff) ) {
         userCommandedCurrentVehicleSpeed_ = userCommandedDesiredVehicleSpeed_;
       }
     }
