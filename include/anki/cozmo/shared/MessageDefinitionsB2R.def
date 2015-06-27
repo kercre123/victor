@@ -407,4 +407,8 @@ ADD_MESSAGE_MEMBER(s16, wheelSpeedL_mmps)
 ADD_MESSAGE_MEMBER(s16, wheelSpeedR_mmps)
 END_MESSAGE_DEFINITION(AnimKeyFrame_BodyMotion)
 
+// AnimKeyFrame_EndOfAnimation
+START_MESSAGE_DEFINITION(AnimKeyFrame_EndOfAnimation, 1)
+END_MESSAGE_DEFINITION(AnimKeyFrame_EndOfAnimation)
+
 

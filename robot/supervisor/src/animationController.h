@@ -40,6 +40,7 @@ namespace Anki {
       Result BufferKeyFrame(const Messages::AnimKeyFrame_FacePosition&   msg);
       Result BufferKeyFrame(const Messages::AnimKeyFrame_BackpackLights& msg);
       Result BufferKeyFrame(const Messages::AnimKeyFrame_BodyMotion&     msg);
+      Result BufferKeyFrame(const Messages::AnimKeyFrame_EndOfAnimation& msg);
 
       // Plays any buffered keyframes available, if enough of a pre-roll is
       // buffered up or we've received all the keyframes for the animation

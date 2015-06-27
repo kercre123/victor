@@ -1,5 +1,6 @@
 
 #include "anki/cozmo/basestation/animationStreamer.h"
+#include "anki/cozmo/basestation/robot.h"
 
 #include "anki/util/logging/logging.h"
 
@@ -46,6 +47,10 @@ namespace Cozmo {
     
     if(_streamingAnimation != nullptr) {
       if(_streamingAnimation->IsFinished()) {
+        
+        // Send an end-of-animation keyframe
+        MessageAnimKeyFrame_EndOfAnimation endMsg;
+        robot.SendMessage(endMsg);
         
         ++_loopCtr;
         
