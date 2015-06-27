@@ -352,6 +352,8 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 		
 	}
 
+	[SerializeField] float maxPredictionFramePortion = 0.05f;
+
 	IEnumerator PredictSpinResults() {
 		predictedData.Copy(actualData);
 
@@ -361,7 +363,7 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 		          "angularVel("+predictedData.angularVel+")");
 
 		//start prediction coroutine that will hopefully not take too long...
-		maxPredictionTimePerFrame = Time.fixedDeltaTime * 0.5f;
+		maxPredictionTimePerFrame = Time.fixedDeltaTime * maxPredictionFramePortion;
 
 		predictionStartFrame = Time.frameCount;
 		predictionStartStamp = Time.realtimeSinceStartup;
@@ -750,7 +752,7 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 		pegBase.gameObject.SetActive(false);
 		if(supplentalEffects != null) supplentalEffects.SetActive(false);
 
-		for(int i=0;i<numSlices;i++) {
+		for(int i=0;i<slices.Count;i++) {
 
 			if(slices[i] != null) {
 				Color imageColor = unfocusedColor;
@@ -758,7 +760,10 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 				Color outlineColor = unfocusedColor;
 				slices[i].SetColors(imageColor, textColor, outlineColor);
 			}
+		}
+		
 
+		for(int i=0;i<pegImages.Count;i++) {
 			if(pegImages[i] != null) {
 				pegImages[i].color = unfocusedColor;
 			}
@@ -769,7 +774,7 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 		pegBase.gameObject.SetActive(true);
 		if(supplentalEffects != null) supplentalEffects.SetActive(true);
 
-		for(int i=0;i<numSlices;i++) {
+		for(int i=0;i<slices.Count;i++) {
 
 			if(slices[i] != null) {
 				Color imageColor = imageColors[i % imageColors.Length];
@@ -777,7 +782,9 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 				Color outlineColor = outlineColors[i % outlineColors.Length];
 				slices[i].SetColors(imageColor, textColor, outlineColor);
 			}
-
+		}
+		
+		for(int i=0;i<pegImages.Count;i++) {
 			if(pegImages[i] != null) {
 				pegImages[i].color = spokeColors[i % spokeColors.Length];
 			}

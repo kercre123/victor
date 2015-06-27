@@ -3234,22 +3234,22 @@ Prefab:
       propertyPath: m_RootOrder
       value: 10
       objectReference: {fileID: 0}
-    - target: {fileID: 11437560, guid: ca1b5f0d2529d4cf2b14006fcd54e62b, type: 2}
-      propertyPath: supplentalEffects
-      value: 
-      objectReference: {fileID: 614658108}
-    - target: {fileID: 11436292, guid: ca1b5f0d2529d4cf2b14006fcd54e62b, type: 2}
-      propertyPath: supplentalEffects
-      value: 
-      objectReference: {fileID: 1576210312}
-    - target: {fileID: 11421874, guid: ca1b5f0d2529d4cf2b14006fcd54e62b, type: 2}
-      propertyPath: supplentalEffects
-      value: 
-      objectReference: {fileID: 1631961819}
     - target: {fileID: 11407834, guid: ca1b5f0d2529d4cf2b14006fcd54e62b, type: 2}
       propertyPath: lightingBall
       value: 
       objectReference: {fileID: 218952732}
+    - target: {fileID: 11421874, guid: ca1b5f0d2529d4cf2b14006fcd54e62b, type: 2}
+      propertyPath: supplentalEffects
+      value: 
+      objectReference: {fileID: 1631961819}
+    - target: {fileID: 11436292, guid: ca1b5f0d2529d4cf2b14006fcd54e62b, type: 2}
+      propertyPath: supplentalEffects
+      value: 
+      objectReference: {fileID: 1576210312}
+    - target: {fileID: 11437560, guid: ca1b5f0d2529d4cf2b14006fcd54e62b, type: 2}
+      propertyPath: supplentalEffects
+      value: 
+      objectReference: {fileID: 614658108}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: ca1b5f0d2529d4cf2b14006fcd54e62b, type: 2}
   m_IsPrefabParent: 0
@@ -3463,15 +3463,15 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 22473488, guid: 16dbf128a64674341b52383440032021, type: 2}
       propertyPath: m_AnchorMin.y
-      value: 0
+      value: .5
       objectReference: {fileID: 0}
     - target: {fileID: 22473488, guid: 16dbf128a64674341b52383440032021, type: 2}
       propertyPath: m_AnchorMax.x
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 22473488, guid: 16dbf128a64674341b52383440032021, type: 2}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: .5
       objectReference: {fileID: 0}
     - target: {fileID: 22473500, guid: 16dbf128a64674341b52383440032021, type: 2}
       propertyPath: m_SizeDelta.x
@@ -8368,7 +8368,7 @@ GameObject:
   - 20: {fileID: 1691359448}
   - 81: {fileID: 1691359447}
   m_Layer: 0
-  m_Name: Lightning Camera
+  m_Name: Effects Camera
   m_TagString: MainCamera
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -8405,7 +8405,7 @@ Camera:
   m_Depth: 3
   m_CullingMask:
     serializedVersion: 2
-    m_Bits: 33
+    m_Bits: 1
   m_RenderingPath: -1
   m_TargetTexture: {fileID: 0}
   m_TargetDisplay: 0
