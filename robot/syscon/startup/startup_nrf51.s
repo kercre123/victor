@@ -1,19 +1,51 @@
-; Copyright (c) 2009 Nordic Semiconductor. All Rights Reserved.
-; The information contained herein is confidential property of Nordic
-; Semiconductor ASA.Terms and conditions of usage are described in detail
-; in NORDIC SEMICONDUCTOR STANDARD SOFTWARE LICENSE AGREEMENT.
-; Licensees are granted free, non-transferable use of the information. NO
-; WARRANTY of ANY KIND is provided. This heading must NOT be removed from
-; the file.
+; Copyright (c) 2015, Nordic Semiconductor ASA
+; All rights reserved.
+; 
+; Redistribution and use in source and binary forms, with or without
+; modification, are permitted provided that the following conditions are met:
+; 
+; * Redistributions of source code must retain the above copyright notice, this
+;   list of conditions and the following disclaimer.
+; 
+; * Redistributions in binary form must reproduce the above copyright notice,
+;   this list of conditions and the following disclaimer in the documentation
+;   and/or other materials provided with the distribution.
+; 
+; * Neither the name of Nordic Semiconductor ASA nor the names of its
+;   contributors may be used to endorse or promote products derived from
+;   this software without specific prior written permission.
+; 
+; THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+; AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+; IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+; DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+; FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+; DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+; SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+; CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+; OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+; OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ 
+; NOTE: Template files (including this one) are application specific and therefore 
+; expected to be copied into the application project folder prior to its use!
 
 ; Description message
 
+                IF :DEF: __STACK_SIZE
+Stack_Size      EQU     __STACK_SIZE
+                ELSE
 Stack_Size      EQU     2048
+                ENDIF
+
                 AREA    STACK, NOINIT, READWRITE, ALIGN=3
 Stack_Mem       SPACE   Stack_Size
 __initial_sp
 
+                IF :DEF: __HEAP_SIZE
+Heap_Size       EQU     __HEAP_SIZE
+                ELSE
 Heap_Size       EQU     2048
+                ENDIF
 
                 AREA    HEAP, NOINIT, READWRITE, ALIGN=3
 __heap_base
@@ -31,9 +63,9 @@ __heap_limit
                 EXPORT  __Vectors_Size
 
 __Vectors       DCD     __initial_sp              ; Top of Stack
-                DCD     Reset_Handler             ; Reset Handler
-                DCD     NMI_Handler               ; NMI Handler
-                DCD     HardFault_Handler         ; Hard Fault Handler
+                DCD     Reset_Handler
+                DCD     NMI_Handler
+                DCD     HardFault_Handler
                 DCD     0                         ; Reserved
                 DCD     0                         ; Reserved
                 DCD     0                         ; Reserved
@@ -41,46 +73,45 @@ __Vectors       DCD     __initial_sp              ; Top of Stack
                 DCD     0                         ; Reserved
                 DCD     0                         ; Reserved
                 DCD     0                         ; Reserved
-                DCD     SVC_Handler               ; SVCall Handler
+                DCD     SVC_Handler
                 DCD     0                         ; Reserved
                 DCD     0                         ; Reserved
-                DCD     PendSV_Handler            ; PendSV Handler
-                DCD     SysTick_Handler           ; SysTick Handler
+                DCD     PendSV_Handler
+                DCD     SysTick_Handler
 
                 ; External Interrupts
-                DCD      POWER_CLOCK_IRQHandler ;POWER_CLOCK
-                DCD      RADIO_IRQHandler ;RADIO
-                DCD      UART0_IRQHandler ;UART0
-                DCD      SPI0_TWI0_IRQHandler ;SPI0_TWI0
-                DCD      SPI1_TWI1_IRQHandler ;SPI1_TWI1
-                DCD      0 ;Reserved
-                DCD      GPIOTE_IRQHandler ;GPIOTE
-                DCD      ADC_IRQHandler ;ADC
-                DCD      TIMER0_IRQHandler ;TIMER0
-                DCD      TIMER1_IRQHandler ;TIMER1
-                DCD      TIMER2_IRQHandler ;TIMER2
-                DCD      RTC0_IRQHandler ;RTC0
-                DCD      TEMP_IRQHandler ;TEMP
-                DCD      RNG_IRQHandler ;RNG
-                DCD      ECB_IRQHandler ;ECB
-                DCD      CCM_AAR_IRQHandler ;CCM_AAR
-                DCD      WDT_IRQHandler ;WDT
-                DCD      RTC1_IRQHandler ;RTC1
-                DCD      QDEC_IRQHandler ;QDEC
-                DCD      WUCOMP_COMP_IRQHandler ;WUCOMP_COMP
-                DCD      SWI0_IRQHandler ;SWI0
-                DCD      SWI1_IRQHandler ;SWI1
-                DCD      SWI2_IRQHandler ;SWI2
-                DCD      SWI3_IRQHandler ;SWI3
-                DCD      SWI4_IRQHandler ;SWI4
-                DCD      SWI5_IRQHandler ;SWI5
-                DCD      0 ;Reserved
-                DCD      0 ;Reserved
-                DCD      0 ;Reserved
-                DCD      0 ;Reserved
-                DCD      0 ;Reserved
-                DCD      0 ;Reserved
-
+                DCD     POWER_CLOCK_IRQHandler
+                DCD     RADIO_IRQHandler
+                DCD     UART0_IRQHandler
+                DCD     SPI0_TWI0_IRQHandler
+                DCD     SPI1_TWI1_IRQHandler
+                DCD     0                         ; Reserved
+                DCD     GPIOTE_IRQHandler
+                DCD     ADC_IRQHandler
+                DCD     TIMER0_IRQHandler
+                DCD     TIMER1_IRQHandler
+                DCD     TIMER2_IRQHandler
+                DCD     RTC0_IRQHandler
+                DCD     TEMP_IRQHandler
+                DCD     RNG_IRQHandler
+                DCD     ECB_IRQHandler
+                DCD     CCM_AAR_IRQHandler
+                DCD     WDT_IRQHandler
+                DCD     RTC1_IRQHandler
+                DCD     QDEC_IRQHandler
+                DCD     LPCOMP_IRQHandler
+                DCD     SWI0_IRQHandler
+                DCD     SWI1_IRQHandler
+                DCD     SWI2_IRQHandler
+                DCD     SWI3_IRQHandler
+                DCD     SWI4_IRQHandler
+                DCD     SWI5_IRQHandler
+                DCD     0                         ; Reserved
+                DCD     0                         ; Reserved
+                DCD     0                         ; Reserved
+                DCD     0                         ; Reserved
+                DCD     0                         ; Reserved
+                DCD     0                         ; Reserved
 
 __Vectors_End
 
@@ -90,18 +121,27 @@ __Vectors_Size  EQU     __Vectors_End - __Vectors
 
 ; Reset Handler
 
-NRF_POWER_RAMON_ADDRESS           EQU   0x40000524  ; NRF_POWER->RAMON address
-NRF_POWER_RAMON_RAMxON_ONMODE_Msk EQU   0xF         ; All RAM blocks on in onmode bit mask
+NRF_POWER_RAMON_ADDRESS              EQU   0x40000524  ; NRF_POWER->RAMON address
+NRF_POWER_RAMONB_ADDRESS             EQU   0x40000554  ; NRF_POWER->RAMONB address
+NRF_POWER_RAMONx_RAMxON_ONMODE_Msk   EQU   0x3         ; All RAM blocks on in onmode bit mask
 
 Reset_Handler   PROC
                 EXPORT  Reset_Handler             [WEAK]
                 IMPORT  SystemInit
                 IMPORT  __main
+                
+                MOVS    R1, #NRF_POWER_RAMONx_RAMxON_ONMODE_Msk
+                
                 LDR     R0, =NRF_POWER_RAMON_ADDRESS
                 LDR     R2, [R0]
-                MOVS    R1, #NRF_POWER_RAMON_RAMxON_ONMODE_Msk
                 ORRS    R2, R2, R1
                 STR     R2, [R0]
+                
+                LDR     R0, =NRF_POWER_RAMONB_ADDRESS
+                LDR     R2, [R0]
+                ORRS    R2, R2, R1
+                STR     R2, [R0]
+                
                 LDR     R0, =SystemInit
                 BLX     R0
                 LDR     R0, =__main
@@ -152,7 +192,7 @@ Default_Handler PROC
                 EXPORT   WDT_IRQHandler [WEAK]
                 EXPORT   RTC1_IRQHandler [WEAK]
                 EXPORT   QDEC_IRQHandler [WEAK]
-                EXPORT   WUCOMP_COMP_IRQHandler [WEAK]
+                EXPORT   LPCOMP_IRQHandler [WEAK]
                 EXPORT   SWI0_IRQHandler [WEAK]
                 EXPORT   SWI1_IRQHandler [WEAK]
                 EXPORT   SWI2_IRQHandler [WEAK]
@@ -177,14 +217,13 @@ CCM_AAR_IRQHandler
 WDT_IRQHandler
 RTC1_IRQHandler
 QDEC_IRQHandler
-WUCOMP_COMP_IRQHandler
+LPCOMP_IRQHandler
 SWI0_IRQHandler
 SWI1_IRQHandler
 SWI2_IRQHandler
 SWI3_IRQHandler
 SWI4_IRQHandler
 SWI5_IRQHandler
-
                 B .
                 ENDP
                 ALIGN
@@ -214,4 +253,3 @@ __user_initial_stackheap
                 ENDIF
 
                 END
-

@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include "hal/portable.h"
 
+#pragma anon_unions
+
 // Definition of the data structures being transferred between SYSCON and
 // the vision processor
 
@@ -31,18 +33,39 @@ struct GlobalCommon
   uint8_t SYNC[3];
 };
 
-struct GlobalDataToHead
-{
-  GlobalCommon common;
-  Fixed speeds[4];
-  Fixed positions[4];
-  Fixed IBat;
-  Fixed VBat;
-  Fixed Vusb;
-  u8    chargeStat;
+struct AcceleratorPacket {
+  int8_t    accelData[3];
+  uint8_t   shockCount;
+  uint16_t  timestamp;
+};
 
-  uint8_t RESERVED[14];  // Pad out to 64 bytes
-  char tail;
+struct LEDPacket {
+  uint8_t ledStatus[12]; // 4-LEDs, three colors
+  uint8_t ledDark;       // Dark byte
+};
+
+union GlobalDataToHead
+{
+  struct {
+    GlobalCommon common;
+    Fixed speeds[4];
+    Fixed positions[4];
+    Fixed IBat;
+    Fixed VBat;
+    Fixed Vusb;
+    u8    chargeStat;
+
+    u8                cubeToUpdate;
+    AcceleratorPacket cubeStatus;
+
+    uint8_t _TAIL;
+  };
+
+  // Force alignment
+  struct {
+    uint8_t _RESERVED[63];
+    uint8_t tail;
+  };
 };
 
 static_assert(sizeof(GlobalDataToHead) == 64,
@@ -50,13 +73,24 @@ static_assert(sizeof(GlobalDataToHead) == 64,
 
 // TODO: get static_assert to work so we can verify sizeof
 
-struct GlobalDataToBody
+union GlobalDataToBody
 {
-  GlobalCommon common;
-  int16_t motorPWM[4];
-  u32 backpackColors[4];
-  uint8_t RESERVED[35];  // Pad out to 64 bytes
-  char tail;
+  struct {
+    GlobalCommon common;
+    int16_t motorPWM[4];
+    u32 backpackColors[4];
+    
+    u8          cubeToUpdate;
+    LEDPacket   cubeStatus;
+    
+    uint8_t _TAIL;
+  };
+  
+  // Force alignment
+  struct {
+    uint8_t _RESERVED[63];  // Pad out to 64 bytes
+    uint8_t tail;
+  };
 };
 
 static_assert(sizeof(GlobalDataToBody) == 64,

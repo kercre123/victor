@@ -605,8 +605,6 @@ namespace Anki {
       f32              _leftWheelSpeed_mmps;
       f32              _rightWheelSpeed_mmps;
       
-      static const Quad2f CanonicalBoundingBoxXY;
-      
       // Ramping
       bool             _onRamp;
       ObjectID         _rampID;

@@ -5,6 +5,8 @@
 #include "timer.h"
 #include "anki/cozmo/robot/spineData.h"
 
+#include "hardware.h"
+
 namespace
 {
   // Updated to 3.0
@@ -14,30 +16,21 @@ namespace
   const Fixed IBAT_SCALE  = TO_FIXED(0.91); // Cozmo 3 transducer scaling
   const Fixed VUSB_SCALE  = TO_FIXED(4.0); // Cozmo 3 voltage divider
   const Fixed VBAT_SCALE  = TO_FIXED(4.0); // Cozmo 3 voltage divider
-
+  
   const Fixed VBAT_CHGD_HI_THRESHOLD = TO_FIXED(4.05); // V
   const Fixed VBAT_CHGD_LO_THRESHOLD = TO_FIXED(3.70); // V
-  const Fixed VBAT_EMPTY_THRESHOLD   = TO_FIXED(3.50); // V
+  const Fixed VBAT_EMPTY_THRESHOLD   = TO_FIXED(2.90); // V
   const Fixed VUSB_DETECT_THRESHOLD  = TO_FIXED(4.40); // V
-
-  const u8 PIN_I_SENSE     = 6;
-  const u8 PIN_V_BAT_SENSE = 26;
-  const u8 PIN_V_USB_SENSE = 27;
+  
   const u8 ANALOG_I_SENSE     = ADC_CONFIG_PSEL_AnalogInput7;
   const u8 ANALOG_V_BAT_SENSE = ADC_CONFIG_PSEL_AnalogInput0;
   const u8 ANALOG_V_USB_SENSE = ADC_CONFIG_PSEL_AnalogInput1;
-
-  const u8 PIN_VUSBs_EN = 5; // equivalent to old CHARGE_EN
-
-  const u8 PIN_VDD_EN = 3;             // 3.0
-  const u8 PIN_VBATs_EN = 12;
-  const u8 PIN_VDDs_EN = 8;
-
-  // Read battery dead state N times before we believe it is dead
+  
+  // Read battery dead state N times before w e believe it is dead
   const u8 BATTERY_DEAD_CYCLES = 60;
   // Read charger contact state N times before we believe it changed
   const u8 CONTACT_DEBOUNCE_CYCLES = 30;
-
+  
   // Are we currently on charge contacts?
   u8 m_onContacts = 0;
 
@@ -66,15 +59,15 @@ void BatteryInit()
   // Syscon power - this should always be on until battery fail
   nrf_gpio_pin_set(PIN_VDD_EN);        // On
   nrf_gpio_cfg_output(PIN_VDD_EN);
-
+  
   // Motor and headboard power
   nrf_gpio_pin_clear(PIN_VBATs_EN);    // Off
   nrf_gpio_cfg_output(PIN_VBATs_EN);
-
+  
   // Encoder and headboard power
-  nrf_gpio_pin_set(PIN_VDDs_EN);      // Off
+  nrf_gpio_pin_set(PIN_VDDs_EN);       // Off
   nrf_gpio_cfg_output(PIN_VDDs_EN);
-
+  
   // Initially set charge en to disable charging by default
   nrf_gpio_pin_clear(PIN_VUSBs_EN);
   nrf_gpio_cfg_output(PIN_VUSBs_EN);
@@ -83,18 +76,18 @@ void BatteryInit()
   nrf_gpio_cfg_input(PIN_I_SENSE, NRF_GPIO_PIN_NOPULL);
   nrf_gpio_cfg_input(PIN_V_BAT_SENSE, NRF_GPIO_PIN_NOPULL);
   nrf_gpio_cfg_input(PIN_V_USB_SENSE, NRF_GPIO_PIN_NOPULL);
-
+    
   // Just in case we need to power on the peripheral ourselves
   NRF_ADC->POWER = 1;
-
+  
   NRF_ADC->CONFIG =
     (ADC_CONFIG_RES_10bit << ADC_CONFIG_RES_Pos) | // 10 bit resolution
     (ADC_CONFIG_INPSEL_AnalogInputOneThirdPrescaling << ADC_CONFIG_INPSEL_Pos) | // External inputs with 1/3rd analog prescaling
     (ADC_CONFIG_REFSEL_VBG << ADC_CONFIG_REFSEL_Pos) | // 1.2V Bandgap reference
     (ADC_CONFIG_EXTREFSEL_None << ADC_CONFIG_EXTREFSEL_None); // Disable external analog reference pins
-
+  
   NRF_ADC->ENABLE = ADC_ENABLE_ENABLE_Enabled;
-
+  
   // Start initial conversions for the volatge and current
   // Battery current
   startADCsample(ANALOG_I_SENSE);
@@ -114,10 +107,10 @@ void BatteryInit()
   { /* spin */ }
   NRF_ADC->TASKS_STOP = 1;
   g_dataToHead.Vusb = FIXED_MUL(FIXED_DIV(TO_FIXED(NRF_ADC->RESULT * V_REFERNCE_MV * V_PRESCALE / V_SCALE), TO_FIXED(1000)), VUSB_SCALE);
-
+  
   // Sample charger pin
   //g_dataToHead.chargeStat = XXX (we no longer have charge status as of v3.2)
-
+  
   m_pinIndex = 0; // Set ADC phase index to 0
   startADCsample(ANALOG_I_SENSE); // Start conversion
 }
@@ -139,7 +132,7 @@ void BatteryUpdate()
       {
         g_dataToHead.VBat = FIXED_MUL(FIXED_DIV(TO_FIXED(NRF_ADC->RESULT * V_REFERNCE_MV * V_PRESCALE / V_SCALE), TO_FIXED(1000)), VBAT_SCALE);
         static u8 debounceBattery = 0;
-
+        
         // Is battery dead AND we are not on the contacts
         if (!m_onContacts && g_dataToHead.VBat < VBAT_EMPTY_THRESHOLD)
         {
@@ -171,25 +164,25 @@ void BatteryUpdate()
         if (onContacts == m_onContacts)
         {
           debounceContacts = 0;   // Reset debounce time
-
+          
         // If contact state has changed, debounce it first
         } else if (debounceContacts < CONTACT_DEBOUNCE_CYCLES) {
             debounceContacts++;
-
+          
         // If contact state has changed, and we are debounced, commit the change
         } else {
           debounceContacts = 0;   // Reset debounce time
-
+         
           m_onContacts = onContacts;
-
+          
           // If we are now on contacts, start charging
           if (m_onContacts)
           {
             // MUST disable VBATs (and thus head power) while charging, to protect battery
             nrf_gpio_pin_clear(PIN_VBATs_EN);   // Off
-            nrf_gpio_pin_set(PIN_VDDs_EN);      // Off
+            nrf_gpio_pin_set(PIN_VDDs_EN);      // Off            
             nrf_gpio_pin_set(PIN_VUSBs_EN);  // Enable charging
-
+            
           // If we are now off contacts, stop charging and reboot
           } else {
             nrf_gpio_pin_clear(PIN_VUSBs_EN);    // Disable charging
@@ -206,7 +199,7 @@ void BatteryUpdate()
       }
     }
   }
-
+  
   //g_dataToHead.chargeStat = XXX (we no longer have charge status as of v3.2)
   // Act on charge S1 if need be
 }
@@ -216,7 +209,7 @@ void PowerOn()
 {
   // Let power drain out - 10ms is plenty long enough
   MicroWait(10000);
-
+  
   // Bring up VDDs first, because IMU requires VDDs before 1V8 (via VBATs)
   // WARNING:  This might affect camera and/or leakage into M4/Torpedo prior to 1V8
   nrf_gpio_pin_clear(PIN_VDDs_EN);    // On  - XXX: VDDs is a PITA right now due to power sags

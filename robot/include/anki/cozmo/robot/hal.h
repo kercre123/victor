@@ -416,16 +416,14 @@ namespace Anki
 // #pragma mark --- Face ---
       /////////////////////////////////////////////////////////////////////
       // Face
-
-      // Blackout the face display
-      void ClearFace();
       
       // Update the face to the next frame of an animation
       // @param frame - a pointer to a variable length frame of face animation data
-      //
-      //   'frame' is a run-length-encoded frame where each byte represents the number
-      //   of 0s or 1s. Odd bytes represent 0s and even bytes represent 1s. The end of
-      //   the frame is reached when 8192 (128 x 64) pixels have been processed.
+      // Frame is in 8-bit RLE format:
+      //  0 terminates the image
+      //  1-63 draw N full lines (N*128 pixels) of black or blue
+      //  64-255 draw 0-191 pixels (N-64) of black or blue, then invert the color for the next run
+      // The decoder starts out drawing black, and inverts the color on every byte >= 64
       void FaceAnimate(u8* frame);
       
       // Move the face to an X, Y offset - where 0, 0 is centered, negative is left/up
