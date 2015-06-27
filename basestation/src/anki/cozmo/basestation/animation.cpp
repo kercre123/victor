@@ -241,6 +241,8 @@ _bodyPosTrack.__METHOD__()
       
       RobotMessage* msg = nullptr;
       
+      Result sendResult = RESULT_OK;
+      
       // Have to always send an audio frame to keep time, whether that's the next
       // audio sample or a silent frame. This increments "streamingTime"
       // NOTE: Audio frame must be first!
@@ -252,7 +254,8 @@ _bodyPosTrack.__METHOD__()
           // Still have samples to send, don't increment to the next frame in the track
           //PRINT_NAMED_INFO("Animation.Update", "Streaming AudioSampleKeyFrame.\n");
           robot.SendMessage(*msg);
-          numBytesToSend -= msg->GetSize();
+          numBytesToSend -= msg->GetSize() + sizeof(RobotMessage::ID);
+          if(sendResult != RESULT_OK) { return sendResult; }
         } else {
           // No samples left to send for this keyframe. Move to next keyframe,
           // and for now send silence.
@@ -260,12 +263,14 @@ _bodyPosTrack.__METHOD__()
           _robotAudioTrack.MoveToNextKeyFrame();
           robot.SendMessage(_silenceMsg);
           numBytesToSend -= _silenceMsg.GetSize() + sizeof(RobotMessage::ID);
+          if(sendResult != RESULT_OK) { return sendResult; }
         }
       } else {
         // No frames left or not time to play next frame yet, so send silence
         //PRINT_NAMED_INFO("Animation.Update", "Streaming AudioSilenceKeyFrame.\n");
         robot.SendMessage(_silenceMsg);
         numBytesToSend -= _silenceMsg.GetSize() + sizeof(RobotMessage::ID);
+        if(sendResult != RESULT_OK) { return sendResult; }
       }
       
       // Increment fake "streaming" time, so we can evaluate below whether
@@ -282,8 +287,6 @@ _bodyPosTrack.__METHOD__()
       // robot's keyframe buffer, so we don't have to decrement numFramesToSend
       // for each one, just once for each audio/silence frame.
       //
-      
-      Result sendResult = RESULT_OK;
       
       msg = _headTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms);
       if(msg != nullptr) {

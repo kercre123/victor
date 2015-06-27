@@ -493,8 +493,12 @@ namespace AnimationController {
               break;
               
             case Messages::AnimKeyFrame_EndOfAnimation_ID:
+            {
+              Messages::AnimKeyFrame_EndOfAnimation msg;
+              GetFromBuffer((u8*)&msg, sizeof(msg)); // just pull it out of the buffer
               terminatorFound = true;
               break;
+            }
               
             case Messages::AnimKeyFrame_HeadAngle_ID:
             {
