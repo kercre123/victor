@@ -192,51 +192,36 @@ return RESULT_FAIL; \
     {
       // TODO: Fill the message for streaming using the imageID
       // memcpy(_streamMsg.image, LoadFaceImage(_imageID);
-
-      u32 i = 0;
-      u8 numLines;
       
       // For now, just put some stuff for display in there, using a few hard-coded
       // patterns depending on ID
       _streamMsg.image.fill(0);
       if(_imageID == 0) {
-        numLines = 64;
-        while(numLines-- > 0) {
-          _streamMsg.image[i++] = 128;
-          _streamMsg.image[i++] = 0;
-        }
+        // All black
+        _streamMsg.image[0] = 0;
       } else if(_imageID == 1) {
-        numLines = 64;
-        while(numLines-- > 0) {
-          _streamMsg.image[i++] = 0;
-          _streamMsg.image[i++] = 128;
-        }
+        // All blue
+        _streamMsg.image[0] = 64; // Switch to blue
+        _streamMsg.image[1] = 63; // Fill lines
+        _streamMsg.image[2] = 0;  // Done
       } else {
-        numLines = 20;
-        while (numLines-- > 0) {
-          _streamMsg.image[i++] = 128;
-          _streamMsg.image[i++] = 0;
-        }
+        // Draw "programmer art" face until we get real assets
         
-        numLines = 24;
-        _streamMsg.image[i++] = 29;
-        while (numLines-- > 0) {
-          _streamMsg.image[i++] = 25;
-          _streamMsg.image[i++] = 20;
-          _streamMsg.image[i++] = 25;
-          _streamMsg.image[i++] = 58;
-        }
-        _streamMsg.image[i++] = 0;
+        static const u8 simpleFace[] = { 24, 64+24,   // Start 24 lines down and 24 pixels right
+          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
+          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
+          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
+          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
+          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
+          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
+          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
+          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
+          0 };
         
-        numLines = 20;
-        while (numLines-- > 0) {
-          _streamMsg.image[i++] = 128;
-          _streamMsg.image[i++] = 0;
+        for(s32 i=0; i<sizeof(simpleFace); ++i) {
+          _streamMsg.image[i] = simpleFace[i];
         }
       }
-      
-      // Die if we just walked over the end of the array above
-      assert(i < _streamMsg.image.size());
       
       return &_streamMsg;
     }
