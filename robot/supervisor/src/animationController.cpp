@@ -35,7 +35,7 @@ namespace AnimationController {
     static const s32 KEYFRAME_BUFFER_PADDING = KEYFRAME_BUFFER_SIZE / 8;
     
     // Circular byte buffer for keyframe messages
-    u8 _keyFrameBuffer[KEYFRAME_BUFFER_SIZE];
+    ONCHIP u8 _keyFrameBuffer[KEYFRAME_BUFFER_SIZE];
     s32 _currentBufferPos;
     s32 _lastBufferPos;
     
