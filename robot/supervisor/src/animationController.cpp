@@ -10,11 +10,10 @@
 #include "liftController.h"
 #include "wheelController.h"
 #include "steeringController.h"
-#include "streamedKeyFrame.h"
 #include "speedController.h"
 
 
-#define DEBUG_ANIMATION_CONTROLLER 1
+#define DEBUG_ANIMATION_CONTROLLER 0
 
 #define USE_HARDCODED_ANIMATIONS 0
 
@@ -35,21 +34,12 @@ namespace AnimationController {
     // then it is considered "full" for the purposes of IsBufferFull() below.
     static const s32 KEYFRAME_BUFFER_PADDING = KEYFRAME_BUFFER_SIZE / 8;
     
-    // Circular buffer of keyframes
+    // Circular byte buffer for keyframe messages
     u8 _keyFrameBuffer[KEYFRAME_BUFFER_SIZE];
     s32 _currentBufferPos;
     s32 _lastBufferPos;
     
-    //StreamedKeyFrame _keyFrameBuffer[KEYFRAME_BUFFER_LENGTH];
-    
-//    u8 _faceImageBuffer[MAX_FACE_FRAME_SIZE][FACE_FRAME_BUFFER_LENGTH];
-    
-//    s32  _currentFrame;
-//    s32  _lastFrame;
     s32  _numFramesBuffered;
-    
-//    s32  _currentFaceFrame;
-//    s32  _lastFaceFrame;
     
     bool _haveReceivedTerminationFrame;
     bool _isPlaying;
@@ -59,16 +49,7 @@ namespace AnimationController {
     TimeStamp_t _currentTime_ms;
 #   endif
 
-    
   } // "private" members
-
-  
-  // Forward decl.
-//  void ReallyStop();
-//  void StopCurrent();
-  
-  
-  // ========== End of Animation Start/Update/Stop functions ===========
   
   static void DefineHardCodedAnimations()
   {
@@ -319,7 +300,7 @@ namespace AnimationController {
 #   endif
     
     // Necessary?
-    //memset(_keyFrameBuffer, KEYFRAME_BUFFER_LENGTH, sizeof(StreamedKeyFrame));
+    //memset(_keyFrameBuffer, KEYFRAME_BUFFER_SIZE, sizeof(u8));
   }
  
   static s32 GetNumBytesAvailable()

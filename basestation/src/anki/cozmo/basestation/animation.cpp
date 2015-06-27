@@ -27,7 +27,7 @@
 
 //#include <cassert>
 
-#define DEBUG_ANIMATIONS 1
+#define DEBUG_ANIMATIONS 0
 
 namespace Anki {
 namespace Cozmo {
@@ -234,8 +234,10 @@ _bodyPosTrack.__METHOD__()
     
     while(numFramesToSend-- > 0 && numBytesToSend > 0 && !IsFinished())
     {
+#     if DEBUG_ANIMATIONS
       PRINT_NAMED_INFO("Animation.Update", "%d bytes / %d frames left to send this Update.\n",
                        numBytesToSend, numFramesToSend);
+#     endif
       
       RobotMessage* msg = nullptr;
       
@@ -285,7 +287,9 @@ _bodyPosTrack.__METHOD__()
       
       msg = _headTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms);
       if(msg != nullptr) {
+#       if DEBUG_ANIMATIONS
         PRINT_NAMED_INFO("Animation.Update", "Streaming HeadAngleKeyFrame.\n");
+#       endif
         sendResult = robot.SendMessage(*msg);
         numBytesToSend -= msg->GetSize() + sizeof(RobotMessage::ID);
         if(sendResult != RESULT_OK) { return sendResult; }
@@ -293,7 +297,9 @@ _bodyPosTrack.__METHOD__()
       
       msg = _liftTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms);
       if(msg != nullptr) {
+#       if DEBUG_ANIMATIONS
         PRINT_NAMED_INFO("Animation.Update", "Streaming LiftHeightKeyFrame.\n");
+#       endif
         sendResult = robot.SendMessage(*msg);
         numBytesToSend -= msg->GetSize() + sizeof(RobotMessage::ID);
         if(sendResult != RESULT_OK) { return sendResult; }
@@ -301,7 +307,9 @@ _bodyPosTrack.__METHOD__()
       
       msg = _facePosTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms);
       if(msg != nullptr) {
+#       if DEBUG_ANIMATIONS
         PRINT_NAMED_INFO("Animation.Update", "Streaming FacePositionKeyFrame.\n");
+#       endif
         sendResult = robot.SendMessage(*msg);
         numBytesToSend -= msg->GetSize() + sizeof(RobotMessage::ID);
         if(sendResult != RESULT_OK) { return sendResult; }
@@ -309,7 +317,9 @@ _bodyPosTrack.__METHOD__()
       
       msg = _faceImageTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms);
       if(msg != nullptr) {
+#       if DEBUG_ANIMATIONS
         PRINT_NAMED_INFO("Animation.Update", "Streaming FaceImageKeyFrame.\n");
+#       endif
         sendResult = robot.SendMessage(*msg);
         numBytesToSend -= msg->GetSize() + sizeof(RobotMessage::ID);
         if(sendResult != RESULT_OK) { return sendResult; }
@@ -317,7 +327,9 @@ _bodyPosTrack.__METHOD__()
       
       msg = _backpackLightsTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms);
       if(msg != nullptr) {
+#       if DEBUG_ANIMATIONS
         PRINT_NAMED_INFO("Animation.Update", "Streaming BackpackLightsKeyFrame.\n");
+#       endif
         sendResult = robot.SendMessage(*msg);
         numBytesToSend -= msg->GetSize() + sizeof(RobotMessage::ID);
         if(sendResult != RESULT_OK) { return sendResult; }
@@ -325,7 +337,9 @@ _bodyPosTrack.__METHOD__()
       
       msg = _bodyPosTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms);
       if(msg != nullptr) {
+#       if DEBUG_ANIMATIONS
         PRINT_NAMED_INFO("Animation.Update", "Streaming BodyPositionKeyFrame.\n");
+#       endif
         sendResult = robot.SendMessage(*msg);
         numBytesToSend -= msg->GetSize() + sizeof(RobotMessage::ID);
         if(sendResult != RESULT_OK) { return sendResult; }
