@@ -374,9 +374,9 @@ namespace Anki {
       // If numLoops == 0, animation repeats forever.
       Result PlayAnimation(const std::string& animName, const u32 numLoops = 1);
       
-      // Return the approximate number of available slots in the robot's
+      // Return the approximate number of available bytes in the robot's
       // keyframe buffer, to let us know if we can stream any more
-      s32 GetNumAnimationFramesFree() const;
+      s32 GetNumAnimationBytesFree() const;
       
       // Ask the UI to play a sound for us
       Result PlaySound(SoundID_t soundID, u8 numLoops, u8 volume);
@@ -699,7 +699,7 @@ namespace Anki {
       
       CannedAnimationContainer _cannedAnimations;
       AnimationStreamer        _animationStreamer;
-      s32 _numFreeAnimationSlots;
+      s32 _numFreeAnimationBytes;
       
       ///////// Messaging ////////
       // These methods actually do the creation of messages and sending
@@ -854,8 +854,8 @@ namespace Anki {
                              false, MakeRelativeMode::RELATIVE_LED_MODE_OFF, {0.f,0.f});
     }
     
-    inline s32 Robot::GetNumAnimationFramesFree() const {
-      return _numFreeAnimationSlots;
+    inline s32 Robot::GetNumAnimationBytesFree() const {
+      return _numFreeAnimationBytes;
     }
     
   } // namespace Cozmo

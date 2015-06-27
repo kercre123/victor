@@ -193,7 +193,8 @@ namespace Anki {
         robotState_.status |=  (HeadController::IsInPosition() ? HEAD_IN_POS : 0);
         robotState_.status |= (AnimationController::IsBufferFull() ? IS_ANIM_BUFFER_FULL : 0);
         
-        robotState_.numFreeAnimationFrames = AnimationController::GetNumFramesFree();
+        //robotState_.numFreeAnimationFrames = AnimationController::GetNumFramesFree();
+        robotState_.numAnimBytesFree = AnimationController::GetApproximateNumBytesFree();
       }
 
       RobotState const& GetRobotStateMsg() {
@@ -570,9 +571,10 @@ namespace Anki {
       
       template<typename KF_TYPE>
       static inline void ProcessAnimKeyFrameHelper(const KF_TYPE& msg)
-      {
+      { 
         if(AnimationController::BufferKeyFrame(msg) != RESULT_OK) {
-          PRINT("Failed to buffer keyframe!\n");
+          PRINT("Failed to buffer a keyframe! Clearing Animation buffer!\n");
+          AnimationController::Clear();
         }
       }
       

@@ -305,7 +305,7 @@ namespace Anki {
       SetPickedUp( msg.status & IS_PICKED_UP );
       
       _isAnimating = static_cast<bool>(msg.status & IS_ANIMATING);
-      _numFreeAnimationSlots = msg.numFreeAnimationFrames;
+      _numFreeAnimationBytes = msg.numAnimBytesFree;
       
       _battVoltage = (f32)msg.battVolt10x * 0.1f;
       

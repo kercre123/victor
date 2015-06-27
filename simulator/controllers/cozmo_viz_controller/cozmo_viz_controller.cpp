@@ -402,7 +402,7 @@ namespace Anki {
       DrawText(TEXT_LABEL_BATTERY, Anki::NamedColors::GREEN, txt);
 
       sprintf(txt, "Video: %d HZ   AnimBufFree: %d",
-              msg.videoFramerateHZ, msg.numAnimBufferFree);
+              msg.videoFramerateHZ, msg.numAnimBytesFree);
       DrawText(TEXT_LABEL_VID_RATE, Anki::NamedColors::GREEN, txt);
       
       sprintf(txt, "Status: %5s %5s",

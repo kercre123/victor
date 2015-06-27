@@ -45,7 +45,7 @@ namespace Anki {
       // Plays any buffered keyframes available, if enough of a pre-roll is
       // buffered up or we've received all the keyframes for the animation
       // that's currently playing.
-      void Update();
+      Result Update();
       
       // Clears any remaining buffered keyframes and thus immediately stops
       // animation from playing
@@ -62,7 +62,9 @@ namespace Anki {
       // Get approximate number of frames available in the streaming buffer,
       // subject to some padding to leave space for frames that might be on
       // their way in the comms channel.
-      s32  GetNumFramesFree();
+      //s32  GetNumFramesFree();
+      
+      s32 GetApproximateNumBytesFree();
       
       
     } // namespace AnimationController
