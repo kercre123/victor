@@ -1,7 +1,7 @@
 function detectAndDisplay(img, h_axes, h_img, varargin)
 
 markerLibrary = [];
-useMexDetector = true;
+useMexDetector = false;
 
 simpleDetectorArgs = parseVarargin(varargin{:});
 

@@ -28,11 +28,10 @@ namespace Anki
 
       // Stubs
       // TODO: Move and implement these in some other file
-      void ClearFace() {};
-      void FaceAnimate(u8* frame) {};
       void FaceMove(s32 x, s32 y) {};
       void FaceBlink() {};
-      
+      bool AudioReady() {return true;};
+      void AudioPlayFrame(u8* frame) {};
       
       //TimeStamp_t GetTimeStamp(void){ return (TimeStamp_t)0; }
       TimeStamp_t t_;

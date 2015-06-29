@@ -51,7 +51,7 @@ namespace Anki {
         u32 accelBufferSize_ = 0;
         
         // High-pass filter params for tap detection
-        const f32 TAP_DETECT_THRESH = 10;
+        const f32 TAP_DETECT_THRESH = 9;
         const u32 TAP_DETECT_WINDOW_MS = 100;
         const f32 CUTOFF_FREQ = 50;
         const f32 RC = 1.0/(CUTOFF_FREQ*2*3.14);
@@ -250,7 +250,7 @@ namespace Anki {
 
         s32 whichAxis = -1;
         for(s32 i=0; i<3; ++i) {
-          absAccel[i] = abs(accelVals[i]);
+          absAccel[i] = fabs(accelVals[i]);
           if(absAccel[i] > maxAbsAccel) {
             whichAxis = i;
             maxAbsAccel = absAccel[i];

@@ -28,6 +28,7 @@ decodeMarkers = true;
 showComponents = false;
 returnInvalid = false;
 NearestNeighborLibrary = [];
+CNN = [];
 
 parseVarargin(varargin{:});
 
@@ -180,7 +181,7 @@ else % if strcmp(embeddedConversions.completeCImplementationType, 'c_DetectFiduc
     % Decode to find BlockMarker2D objects
     [markers, validQuads] = simpleDetector_step5_decodeMarkers(img_decode, ...
         quads_decode, quadTforms, minQuadArea, quadRefinementIterations, ...
-        embeddedConversions, showTiming, NearestNeighborLibrary, DEBUG_DISPLAY);
+        embeddedConversions, showTiming, NearestNeighborLibrary, CNN, DEBUG_DISPLAY);
 
     if returnInvalid
         validQuads = 1:length(quads);

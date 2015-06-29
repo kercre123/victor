@@ -127,28 +127,6 @@ namespace Anki {
       void Update_TraverseObject();
       void Update_CREEP();
       
-      // Waits until the current path is complete / timeout occurs.
-      // If the blockOfInterest_ is no longer present in the
-      //   world at the end of the path, we transition to problemState_.
-      // Otherwise, we tilt the head and transition to nextState_.
-      // If we don't end up at the right position at the end of the path, we
-      //   reset, calling StartMode(BM_None)
-      void FollowPathHelper();
-      
-      // Confirms dockingMarker_ is present in image where expected, chooses
-      // low or high dock, actually begins docking procedure, and transitions
-      // to EXECUTING_DOCK state.
-      void BeginDockingHelper();
-      
-      // Gets the closest predock pose to the robot for the Block currently
-      //  pointed to by dockBlock_, at the specified pre-dock distance, with
-      //  the specified head angle.
-      // Sets nearestPreDockPose_, dockMarker_, and waitUntilTime_ accordingly.
-      // Sets state_ to EXECUTING_PATH_DOCK_POSE on success, leaves state_
-      //  unchanged otherwise.
-      // If no pre-dock pose is found, StartMode(BM_None) is called.
-      void GoToNearestPreDockPoseHelper(const f32 preDockDistance,
-                                        const f32 desiredHeadAngle);
       
       /////// PickAndPlace vars ///////
     

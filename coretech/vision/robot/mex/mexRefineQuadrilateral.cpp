@@ -56,9 +56,12 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
   Anki::Result lastResult = RefineQuadrilateral(initialQuadF32, initialHomography, image, squareWidthFraction, iterations, darkGray, brightGray, numSamples, maxCornerChange, minCornerChange, refinedQuad, refinedHomography, scratch);
   
+  // Create outputs before the next error check, in case it fails (for example, if homography refinement failed)
+  plhs[0] = mxCreateDoubleMatrix(4,2, mxREAL);
+  plhs[1] = arrayToMxArray(refinedHomography);
+  
   AnkiConditionalErrorAndReturn(lastResult == Anki::RESULT_OK, "mexRefineQuadrilateral", "RefineQuadrilateral failed.");
 
-  plhs[0] = mxCreateDoubleMatrix(4,2, mxREAL);
   double* refinedQuadData_x = mxGetPr(plhs[0]);
   double* refinedQuadData_y = refinedQuadData_x + 4;
   refinedQuadData_x[0] = refinedQuad[0].x;
@@ -69,8 +72,6 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   refinedQuadData_y[2] = refinedQuad[2].y;
   refinedQuadData_x[3] = refinedQuad[3].x;
   refinedQuadData_y[3] = refinedQuad[3].y;
-  
-  plhs[1] = arrayToMxArray(refinedHomography);
   
   return;
 }

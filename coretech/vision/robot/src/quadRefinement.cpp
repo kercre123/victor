@@ -583,10 +583,10 @@ namespace Anki {
           //xTransformedArray[0][iSample] = xTransformed;
           //yTransformedArray[0][iSample] = yTransformed;
 
-          const f32 x0 = FLT_FLOOR(xTransformed);
+          const f32 x0 = floorf(xTransformed);
           const f32 x1 = ceilf(xTransformed); // x0 + 1.0f;
 
-          const f32 y0 = FLT_FLOOR(yTransformed);
+          const f32 y0 = floorf(yTransformed);
           const f32 y1 = ceilf(yTransformed); // y0 + 1.0f;
 
           // If out of bounds, continue

@@ -1,23 +1,29 @@
 #ifndef UART_H
 #define UART_H
 
-#include "portable.h"
+#include <stdint.h>
 
-// Initialize the UART peripheral on the designated pins in the source file.
-void UARTInit();
+namespace UART {
+  extern bool initialized;
+  
+  // Set/clear transmit mode - you can't receive while in transmit mode
+  void setTransmit(bool doTransmit);
+  void configure();
+  
+  // Return true if we are receiving a break from the host
+  int isBreak();
 
-// Set/clear transmit mode - you can't receive while in transmit mode
-void UARTSetTransmit(u8 enabled);
+  void put(uint8_t c);
+  void put(const char* s);
 
-// Return true if we are receiving a break from the host
-int UARTIsBreak();
+  void hex(uint8_t c);
+  void hex(uint32_t value);
 
-void UARTPutChar(u8 c);
-void UARTPutString(const char* s);
-void UARTPutHex(u8 c);
-void UARTPutHex32(u32 value);
-void UARTPutDec(s32 value);
+  void dec(int value);
 
-int UARTGetChar();
+  void dump(const uint8_t* data, uint32_t len);
 
+  int get();
+}
+  
 #endif

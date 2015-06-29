@@ -91,10 +91,6 @@ namespace Anki {
       webots::PositionSensor* liftPosSensor_;
       webots::PositionSensor* motorPosSensors_[HAL::MOTOR_COUNT];
       
-      // Commanded wheel speeds
-      f32 leftWheelSpeedCmd_ = 0;
-      f32 rightWheelSpeedCmd_ = 0;
-      
       // Gripper
       webots::Connector* con_;
       //bool gripperEngaged_ = false;
@@ -179,7 +175,7 @@ namespace Anki {
        
         if (usingTreads_) {
           // Return linear speed m/s when usingTreads
-          return -speed_mm_per_s / 1000;
+          return -speed_mm_per_s / 1000.f;
         }
         
         // Convert mm/s to rad/s
@@ -202,18 +198,11 @@ namespace Anki {
         for(int i = 0; i < HAL::MOTOR_COUNT; i++)
         {
           if (motors_[i]) {
-            f32 pos;
-            
+            f32 pos = motorPosSensors_[i]->getValue();
             if (usingTreads_) {
-              if (i == HAL::MOTOR_LEFT_WHEEL) {
-                pos = motorPrevPositions_[i] - leftWheelSpeedCmd_ * TIME_STEP;  // leftWheelSpeedCmd is in m/s
-              } else if (i == HAL::MOTOR_RIGHT_WHEEL) {
-                pos = motorPrevPositions_[i] - rightWheelSpeedCmd_ * TIME_STEP; // rightWheelSpeedCmd is in m/s
-              } else{
-                pos = motorPosSensors_[i]->getValue();
+              if (i == HAL::MOTOR_LEFT_WHEEL || i == HAL::MOTOR_RIGHT_WHEEL) {
+                pos = motorPosSensors_[i]->getValue() * -1000.f;
               }
-            } else {
-              pos = motorPosSensors_[i]->getValue();
             }
             
             posDelta = pos - motorPrevPositions_[i];
@@ -229,6 +218,13 @@ namespace Anki {
         }
       }
       
+      void ClearFace()
+      {
+        face_->setColor(0);
+        face_->fillRectangle(0,0, DISPLAY_WIDTH, DISPLAY_HEIGHT);
+        face_->setColor(0x0000f0ff);
+      }
+
       void FaceUpdate()
       {
         // Check if blinking
@@ -319,10 +315,8 @@ namespace Anki {
       headMotor_  = webotRobot_.getMotor("HeadMotor");
       liftMotor_  = webotRobot_.getMotor("LiftMotor");
       
-      if (!usingTreads_) {
-        leftWheelPosSensor_ = webotRobot_.getPositionSensor("LeftWheelMotorPosSensor");
-        rightWheelPosSensor_ = webotRobot_.getPositionSensor("RightWheelMotorPosSensor");
-      }
+      leftWheelPosSensor_ = webotRobot_.getPositionSensor("LeftWheelMotorPosSensor");
+      rightWheelPosSensor_ = webotRobot_.getPositionSensor("RightWheelMotorPosSensor");
       
       headPosSensor_ = webotRobot_.getPositionSensor("HeadMotorPosSensor");
       liftPosSensor_ = webotRobot_.getPositionSensor("LiftMotorPosSensor");
@@ -402,10 +396,9 @@ namespace Anki {
       }
       
       // Enable position measurements on head, lift, and wheel motors
-      if (!usingTreads_) {
-        leftWheelPosSensor_->enable(TIME_STEP);
-        rightWheelPosSensor_->enable(TIME_STEP);
-      }
+      leftWheelPosSensor_->enable(TIME_STEP);
+      rightWheelPosSensor_->enable(TIME_STEP);
+
       headPosSensor_->enable(TIME_STEP);
       liftPosSensor_->enable(TIME_STEP);
       
@@ -599,12 +592,10 @@ namespace Anki {
     {
       switch(motor) {
         case MOTOR_LEFT_WHEEL:
-          leftWheelSpeedCmd_ = WheelPowerToAngSpeed(power);
-          leftWheelMotor_->setVelocity(leftWheelSpeedCmd_);
+          leftWheelMotor_->setVelocity(WheelPowerToAngSpeed(power));
           break;
         case MOTOR_RIGHT_WHEEL:
-          rightWheelSpeedCmd_ = WheelPowerToAngSpeed(power);
-          rightWheelMotor_->setVelocity(rightWheelSpeedCmd_);
+          rightWheelMotor_->setVelocity(WheelPowerToAngSpeed(power));
           break;
         case MOTOR_LIFT:
           liftMotor_->setVelocity(LiftPowerToAngSpeed(power));
@@ -1021,15 +1012,11 @@ namespace Anki {
     // @param frame - a pointer to an audio frame or NULL to play one frame of silence
     void HAL::AudioPlayFrame(u8* frame)
     {
+      if (audioEndTime_ == 0) {
+        audioEndTime_ = HAL::GetTimeStamp();
+      }
       audioEndTime_ += AUDIO_FRAME_TIME_MS;
       audioReadyForFrame_ = false;
-    }
-
-    void HAL::ClearFace()
-    {
-      face_->setColor(0);
-      face_->fillRectangle(0,0, DISPLAY_WIDTH, DISPLAY_HEIGHT);
-      face_->setColor(0x0000f0ff);
     }
     
     // Update the face to the next frame of an animation
@@ -1037,8 +1024,7 @@ namespace Anki {
     void HAL::FaceAnimate(u8* frame)
     {
       u32 pixelCounter = 0;
-      u32 frameByteCount = 0;
-      bool zeroByte = true;
+      bool draw = false;
       
       // Clear the display
       ClearFace();
@@ -1050,17 +1036,18 @@ namespace Anki {
       facePosX_ = facePosY_ = 0;
       
       // Draw pixels
-      while (pixelCounter < NUM_DISPLAY_PIXELS) {
-        u8 numPixels = *frame;
+      while (*frame != 0) {
+        u8 run = *frame++;
+        u32 numPixels = run < 64 ? run * DISPLAY_WIDTH : run - 64;
         
         // Adjust number of pixels this byte if it exceeds screen total
         if (pixelCounter + numPixels > NUM_DISPLAY_PIXELS) {
           numPixels = NUM_DISPLAY_PIXELS - pixelCounter;
         }
         
-        // Draw pixels if this is no a zero byte
-        if (!zeroByte) {
-          for (u8 i=0; i<numPixels; ++i) {
+        // Draw pixels
+        if (draw) {
+          for (u32 i=0; i<numPixels; ++i) {
             u32 y = pixelCounter / DISPLAY_WIDTH;
             u32 x = pixelCounter - (y * DISPLAY_WIDTH);
             ++pixelCounter;
@@ -1073,11 +1060,11 @@ namespace Anki {
           pixelCounter += numPixels;
         }
         
-        // Toggle whether we're looking at a 0s byte or a 1s byte
-        zeroByte = !zeroByte;
-        
-        // Go to next byte
-        ++frame;
+        // Toggle whether we're drawing 0s or 1s
+        if (run >= 64) {
+          draw = !draw;
+        }
+
       }
       
     }

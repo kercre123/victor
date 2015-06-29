@@ -17,7 +17,7 @@
 #include "anki/cozmo/basestation/signals/cozmoEngineSignals.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
-
+#include "anki/common/basestation/math/point.h"
 #include "anki/common/basestation/math/quad_impl.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/poseBase_impl.h"
@@ -39,6 +39,8 @@
 #include "opencv2/opencv.hpp"
 
 #include <fstream>
+#include <dirent.h>
+#include <sys/stat.h>
 
 #define MAX_DISTANCE_FOR_SHORT_PLANNER 40.0f
 #define MAX_DISTANCE_TO_PREDOCK_POSE 20.0f
@@ -72,7 +74,7 @@ namespace Anki {
     , _driveCenterPose(-M_PI_2, Z_AXIS_3D(), {{0.f, 0.f, 0.f}}, _worldOrigin, "Robot_" + std::to_string(_ID))
     , _frameId(0)
     , _neckPose(0.f,Y_AXIS_3D(), {{NECK_JOINT_POSITION[0], NECK_JOINT_POSITION[1], NECK_JOINT_POSITION[2]}}, &_pose, "RobotNeck")
-    , _headCamPose({0,0,1,  -1,0,0,  0,-1,0},
+    , _headCamPose(RotationMatrix3d({0,0,1,  -1,0,0,  0,-1,0}),
                   {{HEAD_CAM_POSITION[0], HEAD_CAM_POSITION[1], HEAD_CAM_POSITION[2]}}, &_neckPose, "RobotHeadCam")
     , _liftBasePose(0.f, Y_AXIS_3D(), {{LIFT_BASE_POSITION[0], LIFT_BASE_POSITION[1], LIFT_BASE_POSITION[2]}}, &_pose, "RobotLiftBase")
     , _liftPose(0.f, Y_AXIS_3D(), {{LIFT_ARM_LENGTH, 0.f, 0.f}}, &_liftBasePose, "RobotLift")
@@ -90,6 +92,7 @@ namespace Anki {
     , _imageSaveMode(SAVE_OFF)
     , _imgFramePeriod(0)
     , _lastImgTimeStamp(0)
+    , _animationStreamer(_cannedAnimations)
     {
       _poseHistory = new RobotPoseHistory();
       
@@ -124,8 +127,8 @@ namespace Anki {
         }
         jsonFile.close();
       }
-      
-      ReadAnimationFile();
+
+      ReadAnimationDir(false);
       
       SetHeadAngle(_currentHeadAngle);
       _pdo = new PathDolerOuter(msgHandler, robotID);
@@ -302,6 +305,7 @@ namespace Anki {
       SetPickedUp( msg.status & IS_PICKED_UP );
       
       _isAnimating = static_cast<bool>(msg.status & IS_ANIMATING);
+      _numFreeAnimationBytes = msg.numAnimBytesFree;
       
       _battVoltage = (f32)msg.battVolt10x * 0.1f;
       
@@ -781,7 +785,7 @@ namespace Anki {
                                                        left_x, bottom_y);
           }
           
-          _msgHandler->SendMessage(_ID, faceDetection);
+          SendMessage(faceDetection);
           
           // Signal the detection of a face
           CozmoEngineSignals::RobotObservedFaceSignal().emit(GetID(),
@@ -814,14 +818,14 @@ namespace Anki {
                                                      dockingErrorSignal.angleErr);
           
           // Try to use this for closed-loop control by sending it on to the robot
-          _msgHandler->SendMessage(_ID, dockingErrorSignal);
+          SendMessage(dockingErrorSignal);
           
         }
         
         MessagePanAndTiltHead panTiltHead;
         if(true == _visionProcessor.CheckMailbox(panTiltHead)) {
           
-          _msgHandler->SendMessage(_ID, panTiltHead);
+          SendMessage(panTiltHead);
           
         }
         
@@ -847,6 +851,9 @@ namespace Anki {
       if(actionResult != RESULT_OK) {
         PRINT_NAMED_WARNING("Robot.Update", "Robot %d had an action fail.\n", GetID());
       }
+        
+      //////// Stream Animations /////////
+      _animationStreamer.Update(*this);
         
       
       /////////// Update visualization ////////////
@@ -1097,6 +1104,11 @@ namespace Anki {
       return SendSetHeadAngle(angle_rad, max_speed_rad_per_sec, accel_rad_per_sec2);
     }
       
+    Result Robot::TapBlockOnGround(const u8 numTaps)
+    {
+      return SendTapBlockOnGround(numTaps);
+    }
+      
     Result Robot::EnableTrackHeadToObject(const u32 objectID)
     {
       _trackHeadToObjectID = objectID;
@@ -1143,16 +1155,13 @@ namespace Anki {
       return SendPlaceObjectOnGround(0, 0, 0, useManualSpeed);
     }
     
-    Result Robot::PlayAnimation(const char* animName, const u32 numLoops)
+    Result Robot::PlayAnimation(const std::string& animName, const u32 numLoops)
     {
-      return SendPlayAnimation(animName, numLoops);
+      Result lastResult = _animationStreamer.SetStreamingAnimation(animName, numLoops);
+      _lastPlayedAnimationId = animName;
+      return lastResult;
     }
     
-    s32 Robot::GetAnimationID(const std::string& animationName) const
-    {
-      return _cannedAnimations.GetID(animationName);
-    }
-      
     Result Robot::PlaySound(SoundID_t soundID, u8 numLoops, u8 volume)
     {
       CozmoEngineSignals::PlaySoundForRobotSignal().emit(GetID(),soundID, numLoops, volume);
@@ -1166,47 +1175,85 @@ namespace Anki {
     } // StopSound()
       
       
-    Result Robot::TransitionToStateAnimation(const char *transitionAnimName,
-                                             const char *stateAnimName)
-    {
-      return SendTransitionToStateAnimation(transitionAnimName, stateAnimName);
-    }
-    
     Result Robot::StopAnimation()
     {
       return SendAbortAnimation();
     }
-    
-    Result Robot::ReadAnimationFile()
+
+    void Robot::ReplayLastAnimation(const s32 loopCount)
     {
-      Result lastResult = RESULT_OK;
-      
+      Result lastResult = _animationStreamer.SetStreamingAnimation(_lastPlayedAnimationId, loopCount);
+    }
+
+    // Read the animations in a dir
+    void Robot::ReadAnimationFile(const char* filename, std::string& animationId)
+    {
       Json::Reader reader;
-      
       Json::Value animDefs;
-      // TODO: Point DefineCannedAnimations at a json file with all animations
-      const std::string subPath("animations.json");
-      const std::string jsonFilename = PREPEND_SCOPED_PATH(Animation, subPath);
-      std::ifstream jsonFile(jsonFilename);
+      std::ifstream jsonFile(filename);
       if(reader.parse(jsonFile, animDefs) == false) {
-        PRINT_NAMED_ERROR("Robot.ReadAnimationFaile.JsonParseFailure",
-                          "Failed to parse Json animation file %s.\n", jsonFilename.c_str());
-//        lastResult = RESULT_FAIL;
+        PRINT_NAMED_ERROR("Robot.ReadAnimationFile.JsonParseFailure",
+          "Failed to parse Json animation file %s.", filename);
       }
       jsonFile.close();
-      
-      if(lastResult == RESULT_OK) {
-        _cannedAnimations.Clear();
-        lastResult = _cannedAnimations.DefineFromJson(animDefs);
-        if(lastResult == RESULT_OK) {
-          // Immediately send the canned animations out
-          lastResult = _cannedAnimations.Send(_ID, _msgHandler);
-        }
+      if (!animDefs.empty()) {
+        PRINT_NAMED_INFO("Robot.ReadAnimationFile", "reading");
+        _cannedAnimations.DefineFromJson(animDefs, animationId);
       }
-      
-      return lastResult;
-    } // ReadAnimationFile()
-    
+
+    }
+
+
+    // Read the animations in a dir
+    void Robot::ReadAnimationDir(bool playLoadedAnimation)
+    {
+      const std::string animationFolder = PREPEND_SCOPED_PATH(Animation, "");
+      std::string animationId;
+      s32 loadedFileCount = 0;
+      DIR* dir = opendir(animationFolder.c_str());
+      if ( dir != nullptr) {
+        dirent* ent = nullptr;
+        while ( (ent = readdir(dir)) != nullptr) {
+          if (ent->d_type == DT_REG) {
+            std::string fullFileName = animationFolder + ent->d_name;
+            struct stat attrib{0};
+            int result = stat(fullFileName.c_str(), &attrib);
+            if (result == -1) {
+              PRINT_NAMED_WARNING("Robot.ReadAnimationFile", "could not get mtime for %s", fullFileName.c_str());
+              continue;
+            }
+            bool loadFile = false;
+            auto mapIt = _loadedAnimationFiles.find(fullFileName);
+            if (mapIt == _loadedAnimationFiles.end()) {
+              _loadedAnimationFiles.insert({fullFileName, attrib.st_mtimespec.tv_sec});
+              loadFile = true;
+            } else {
+              if (mapIt->second < attrib.st_mtimespec.tv_sec) {
+                mapIt->second = attrib.st_mtimespec.tv_sec;
+                loadFile = true;
+              } else {
+                //PRINT_NAMED_INFO("Robot.ReadAnimationFile", "old time stamp for %s", fullFileName.c_str());
+              }
+            }
+            if (loadFile) {
+              PRINT_NAMED_INFO("Robot.ReadAnimationFile", "importing file %s", fullFileName.c_str());
+              ReadAnimationFile(fullFileName.c_str(), animationId);
+              ++loadedFileCount;
+            }
+          }
+        }
+        closedir(dir);
+      } else {
+        PRINT_NAMED_INFO("Robot.ReadAnimationFile", "folder not found %s", animationFolder.c_str());
+      }
+
+      if (!animationId.empty() && loadedFileCount == 1 && playLoadedAnimation) {
+        // send message to play animation
+        PRINT_NAMED_INFO("Robot.ReadAnimationFile", "playing animation id %s", animationId.c_str());
+        PlayAnimation(animationId, 1);
+      }
+    }
+
     Result Robot::SyncTime()
     {
       return SendSyncTime();
@@ -1560,91 +1607,6 @@ namespace Anki {
       
     } // SetOnPose()
     
-    /*
-    
-    Result Robot::ExecuteRampingSequence(Ramp* ramp)
-    {
-      if(ramp == nullptr) {
-        PRINT_NAMED_ERROR("Robot.ExecuteRampingSequence.NullPointer",
-                          "Given ramp object pointer is null.\n");
-        return RESULT_FAIL;
-      }
-      
-      //_actionQueue.QueueAtEnd(new ActionGroupSequential({
-      _actionList.QueueActionAtEnd(ExecuteSequenceSlot, new CompoundActionSequential({
-        new DriveToObjectAction(ramp->GetID(), PreActionPose::ENTRY),
-        new AscendOrDescendRampAction(ramp->GetID())}), 3);
-      
-      return RESULT_OK;
-      
-    } // ExecuteRampingSequence()
-    
-    
-    Result Robot::ExecuteBridgeCrossingSequence(ActionableObject *bridge)
-    {
-    
-      if(bridge == nullptr) {
-        PRINT_NAMED_ERROR("Robot.ExecuteBridgeCrossingSequence.NullPointer",
-                          "Given bridge object pointer is null.\n");
-        return RESULT_FAIL;
-      }
-    
-      //_actionQueue.QueueAtEnd(new ActionGroupSequential({
-      _actionList.QueueActionAtEnd(ExecuteSequenceSlot, new CompoundActionSequential({
-        new DriveToObjectAction(bridge->GetID(), PreActionPose::ENTRY),
-        new CrossBridgeAction(bridge->GetID())}), 3);
-      
-      return RESULT_OK;
-    
-    } // ExecuteBridgeCrossingSequence()
-  
-    Result Robot::ExecuteDockingSequence(ObjectID objectIDtoDockWith)
-    {
-      Result lastResult = RESULT_OK;
-      
-      const u8 numRetries = 3;
-      //_actionQueue.QueueAtEnd(new ActionGroupSequential({
-      _actionList.QueueActionAtEnd(ExecuteSequenceSlot, new CompoundActionSequential({
-        new DriveToObjectAction(objectIDtoDockWith, PreActionPose::DOCKING),
-        new PickUpObjectAction(objectIDtoDockWith)}), numRetries);
-      
-      return lastResult;
-      
-    } // ExecuteDockingSequence()
-    
-    
-    Result Robot::ExecutePlaceObjectOnGroundSequence()
-    {
-      //_actionQueue.QueueAtEnd(new PutDownObjectAction());
-      _actionList.AddAction(new PutDownObjectAction());
-      
-      return RESULT_OK;
-      
-    } // ExecutePlaceObjectOnGroundSequence()
-    
-  
-    Result Robot::ExecutePlaceObjectOnGroundSequence(const Pose3d& atPose)
-    {
-      Result lastResult = RESULT_OK;
-      
-      // TODO: Better way to set atPose's origin/parent?
-      Pose3d atPoseWithParent(atPose);
-      atPoseWithParent.SetParent(GetWorldOrigin());
-      
-      // TODO: Better way to set final height off the ground
-      atPoseWithParent.SetTranslation({{atPose.GetTranslation().x(), atPose.GetTranslation().y(), GetPose().GetTranslation().z() + 22.f}});
-      
-      //_actionQueue.QueueAtEnd(new DriveToPlaceCarriedObjectAction(*this, atPoseWithParent));
-      //_actionQueue.QueueAtEnd(new PutDownObjectAction());
-      _actionList.QueueActionAtEnd(ExecuteSequenceSlot, new CompoundActionSequential({
-        new DriveToPlaceCarriedObjectAction(*this, atPoseWithParent),
-        new PutDownObjectAction()}));
-      
-      return lastResult;
-      
-    } // ExecutePlaceObjectOnGroundSequence(atPose)
-    */
-    
     Result Robot::StopDocking()
     {
       _visionProcessor.StopMarkerTracking();
@@ -1727,7 +1689,7 @@ namespace Anki {
       msg.dockAction     = dockAction;
       
       
-      return _msgHandler->SendMessage(_ID, msg);
+      return SendMessage(msg);
     }
     
     void Robot::SetCarryingObject(ObjectID carryObjectID)
@@ -1965,6 +1927,15 @@ namespace Anki {
     
     // ============ Messaging ================
     
+    Result Robot::SendMessage(const RobotMessage& msg) const
+    {
+      Result sendResult = _msgHandler->SendMessage(_ID, msg);
+      if(sendResult != RESULT_OK) {
+        PRINT_NAMED_ERROR("Robot.SendMessage", "Robot %d failed to send a message.\n", _ID);
+      }
+      return sendResult;
+    }
+      
     // Sync time with physical robot and trigger it robot to send back camera calibration
     Result Robot::SendSyncTime() const
     {
@@ -1972,7 +1943,7 @@ namespace Anki {
       m.robotID  = _ID;
       m.syncTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
       
-      Result result = _msgHandler->SendMessage(_ID, m);
+      Result result = SendMessage(m);
       
       if(result == RESULT_OK) {
         // For specifying resolution for basestation vision:
@@ -1980,7 +1951,7 @@ namespace Anki {
         MessageImageRequest m;
         m.imageSendMode = ISM_STREAM;
         m.resolution    = Vision::CAMERA_RES_CVGA;
-        result = _msgHandler->SendMessage(_ID, m);
+        result = SendMessage(m);
         
         // Reset pose on connect
         PRINT_NAMED_INFO("Robot.SendSyncTime", "Setting pose to (0,0,0)");
@@ -1999,7 +1970,7 @@ namespace Anki {
       MessageClearPath m;
       m.pathID = 0;
       
-      return _msgHandler->SendMessage(_ID, m);
+      return SendMessage(m);
     }
     
     // Removes the specified number of segments from the front and back of the path
@@ -2009,7 +1980,7 @@ namespace Anki {
       m.numPopFrontSegments = numPopFrontSegments;
       m.numPopBackSegments = numPopBackSegments;
 
-      return _msgHandler->SendMessage(_ID, m);
+      return SendMessage(m);
     }
     
     // Sends a path to the robot to be immediately executed
@@ -2020,7 +1991,8 @@ namespace Anki {
       m.pathID = _lastSentPathID;
       m.useManualSpeed = useManualSpeed;
       PRINT_NAMED_INFO("Robot::SendExecutePath", "sending start execution message (pathID = %d, manualSpeed == %d)\n", _lastSentPathID, useManualSpeed);
-      return _msgHandler->SendMessage(_ID, m);
+      
+      return SendMessage(m);
     }
     
     Result Robot::SendPlaceObjectOnGround(const f32 rel_x, const f32 rel_y, const f32 rel_angle, const bool useManualSpeed)
@@ -2032,7 +2004,7 @@ namespace Anki {
       m.rel_y_mm  = rel_y;
       m.useManualSpeed = useManualSpeed;
       
-      return _msgHandler->SendMessage(_ID, m);
+      return SendMessage(m);
     } // SendPlaceBlockOnGround()
     
     Result Robot::SendMoveLift(const f32 speed_rad_per_sec) const
@@ -2074,6 +2046,14 @@ namespace Anki {
       
       return _msgHandler->SendMessage(_ID,m);
     }
+      
+    Result Robot::SendTapBlockOnGround(const u8 numTaps) const
+    {
+      MessageTapBlockOnGround m;
+      m.numTaps = numTaps;
+      
+      return _msgHandler->SendMessage(_ID,m);
+    }
     
     Result Robot::SendDriveWheels(const f32 lwheel_speed_mmps, const f32 rwheel_speed_mmps) const
     {
@@ -2106,7 +2086,7 @@ namespace Anki {
       
       m.headingAngle = pose.GetRotation().GetAngleAroundZaxis().ToFloat();
       
-      return _msgHandler->SendMessage(_ID, m);
+      return SendMessage(m);
     }
     
     Result Robot::SendAbsLocalizationUpdate() const
@@ -2128,7 +2108,7 @@ namespace Anki {
       
       m.newAngle = _currentHeadAngle;
       
-      return _msgHandler->SendMessage(_ID, m);
+      return SendMessage(m);
     }
 
     Result Robot::SendImageRequest(const ImageSendMode_t mode, const Vision::CameraResolution resolution) const
@@ -2138,7 +2118,7 @@ namespace Anki {
       m.imageSendMode = mode;
       m.resolution    = resolution;
       
-      return _msgHandler->SendMessage(_ID, m);
+      return SendMessage(m);
     }
 
     Result Robot::SendIMURequest(const u32 length_ms) const
@@ -2146,7 +2126,7 @@ namespace Anki {
       MessageIMURequest m;
       m.length_ms = length_ms;
       
-      return _msgHandler->SendMessage(_ID, m);
+      return SendMessage(m);
     }
     
     Result Robot::SendStartTestMode(const TestMode mode, s32 p1, s32 p2, s32 p3) const
@@ -2158,14 +2138,14 @@ namespace Anki {
       m.p2 = p2;
       m.p3 = p3;
       
-      return _msgHandler->SendMessage(_ID, m);
+      return SendMessage(m);
     }
     
     Result Robot::SendHeadlight(u8 intensity)
     {
       MessageSetHeadlight m;
       m.intensity = intensity;
-      return _msgHandler->SendMessage(_ID, m);
+      return SendMessage(m);
     }
 
     void Robot::SetSaveStateMode(const SaveMode_t mode)
@@ -2276,14 +2256,14 @@ namespace Anki {
       MessageFaceTracking m;
       m.enabled = static_cast<u8>(true);
       m.timeout_sec = timeout_sec;
-      return _msgHandler->SendMessage(_ID, m);
+      return SendMessage(m);
     }
     
     Result Robot::SendStopFaceTracking()
     {
       MessageFaceTracking m;
       m.enabled = static_cast<u8>(false);
-      return _msgHandler->SendMessage(_ID, m);
+      return SendMessage(m);
     }
 
     Result Robot::StartLookingForMarkers()
@@ -2302,11 +2282,7 @@ namespace Anki {
                                                   Pose3d(0, Z_AXIS_3D(), Vec3f(50, 0, 0)),
                                                   Pose3d(0, Z_AXIS_3D(), Vec3f(50, -25, 0)) };
     
-    const Quad2f Robot::CanonicalBoundingBoxXY({{ROBOT_BOUNDING_X_FRONT, -0.5f*ROBOT_BOUNDING_Y}},
-                                               {{ROBOT_BOUNDING_X_FRONT,  0.5f*ROBOT_BOUNDING_Y}},
-                                               {{ROBOT_BOUNDING_X_FRONT - ROBOT_BOUNDING_X, -0.5f*ROBOT_BOUNDING_Y}},
-                                               {{ROBOT_BOUNDING_X_FRONT - ROBOT_BOUNDING_X,  0.5f*ROBOT_BOUNDING_Y}});
-    
+
     Quad2f Robot::GetBoundingQuadXY(const f32 padding_mm) const
     {
       return GetBoundingQuadXY(_pose, padding_mm);
@@ -2315,10 +2291,16 @@ namespace Anki {
     Quad2f Robot::GetBoundingQuadXY(const Pose3d& atPose, const f32 padding_mm) const
     {
       const RotationMatrix2d R(atPose.GetRotation().GetAngleAroundZaxis());
-      
-      Quad2f boundingQuad(Robot::CanonicalBoundingBoxXY);
+
+      static const Quad2f CanonicalBoundingBoxXY(
+        (Point2f){{ROBOT_BOUNDING_X_FRONT, -0.5f*ROBOT_BOUNDING_Y}},
+        {{ROBOT_BOUNDING_X_FRONT,  0.5f*ROBOT_BOUNDING_Y}},
+        {{ROBOT_BOUNDING_X_FRONT - ROBOT_BOUNDING_X, -0.5f*ROBOT_BOUNDING_Y}},
+        {{ROBOT_BOUNDING_X_FRONT - ROBOT_BOUNDING_X,  0.5f*ROBOT_BOUNDING_Y}});
+
+      Quad2f boundingQuad(CanonicalBoundingBoxXY);
       if(padding_mm != 0.f) {
-        Quad2f paddingQuad({{ padding_mm, -padding_mm}},
+        Quad2f paddingQuad((const Point2f){{ padding_mm, -padding_mm}},
                            {{ padding_mm,  padding_mm}},
                            {{-padding_mm, -padding_mm}},
                            {{-padding_mm,  padding_mm}});
@@ -2328,7 +2310,7 @@ namespace Anki {
       using namespace Quad;
       for(CornerName iCorner = FirstCorner; iCorner < NumCorners; ++iCorner) {
         // Rotate to given pose
-        boundingQuad[iCorner] = R*Robot::CanonicalBoundingBoxXY[iCorner];
+        boundingQuad[iCorner] = R * CanonicalBoundingBoxXY[iCorner];
       }
       
       // Re-center
@@ -2361,7 +2343,7 @@ namespace Anki {
       m.kiRight = kiRight;
       m.maxIntegralErrorRight = maxIntegralErrorRight;
       
-      return _msgHandler->SendMessage(_ID, m);
+      return SendMessage(m);
     }
       
     Result Robot::SetHeadControllerGains(const f32 kp, const f32 ki, const f32 kd, const f32 maxIntegralError)
@@ -2371,7 +2353,7 @@ namespace Anki {
       m.ki = ki;
       m.kd = kd;
       m.maxIntegralError = maxIntegralError;
-      return _msgHandler->SendMessage(_ID, m);
+      return SendMessage(m);
     }
     
     Result Robot::SetLiftControllerGains(const f32 kp, const f32 ki, const f32 kd, const f32 maxIntegralError)
@@ -2381,7 +2363,7 @@ namespace Anki {
       m.ki = ki;
       m.kd = kd;      
       m.maxIntegralError = maxIntegralError;
-      return _msgHandler->SendMessage(_ID, m);
+      return SendMessage(m);
     }
     
     Result Robot::SetSteeringControllerGains(const f32 k1, const f32 k2)
@@ -2389,7 +2371,7 @@ namespace Anki {
       MessageSetSteeringControllerGains m;
       m.k1 = k1;
       m.k2 = k2;
-      return _msgHandler->SendMessage(_ID, m);
+      return SendMessage(m);
     }
       
     Result Robot::SendVisionSystemParams(VisionSystemParams_t p)
@@ -2415,30 +2397,7 @@ namespace Anki {
       m.minObjectWidth = p.minObjectWidth;
       m.maxObjectHeight = p.maxObjectHeight;
       m.maxObjectWidth = p.maxObjectWidth;
-      return _msgHandler->SendMessage(_ID, m);
-    }
-
-    Result Robot::SendPlayAnimation(const char *name, const u32 numLoops)
-    {
-      MessagePlayAnimation m;
-      m.animationID = _cannedAnimations.GetID(name);
-      if(m.animationID >= 0) {
-        m.numLoops = numLoops;
-        return _msgHandler->SendMessage(_ID, m);
-      }
-      return RESULT_FAIL;
-    }
-    
-    Result Robot::SendTransitionToStateAnimation(const char *transitionAnimName,
-                                                 const char *stateAnimName)
-    {
-      MessageTransitionToStateAnimation m;
-      m.transitionAnimID = _cannedAnimations.GetID(transitionAnimName);
-      m.stateAnimID      = _cannedAnimations.GetID(stateAnimName);
-      if(m.transitionAnimID >= 0 && m.stateAnimID >= 0) {
-        return _msgHandler->SendMessage(_ID, m);
-      }
-      return RESULT_FAIL;
+      return SendMessage(m);
     }
     
     Result Robot::StartTestMode(const TestMode mode, s32 p1, s32 p2, s32 p3) const

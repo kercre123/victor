@@ -264,7 +264,7 @@ namespace Anki {
         ///// End of IMUTest /////
         
         ///////// AnimationTest ////////
-        AnimationID_t AT_currAnim;
+        //AnimationID_t AT_currAnim;
         const u32 AT_periodTics = 2000;
         
         
@@ -279,7 +279,6 @@ namespace Anki {
         
         
         /////// FaceDisplayTest ////////
-        u8 faceFrame_[180];
         s32 facePosX_ = 0;
         s32 facePosY_ = 0;
         ///// End of FaceDisplayTest ///
@@ -309,7 +308,7 @@ namespace Anki {
         PRINT("TestMode reset\n");
         
         // Stop animations that might be playing
-        AnimationController::Stop();
+        AnimationController::Clear();
         
         // Stop wheels and vision system
         WheelController::Enable();
@@ -991,39 +990,39 @@ namespace Anki {
         return RESULT_OK;
       }
       
-      Result AnimTestInit()
-      {
-        PRINT("\n==== Starting AnimationTest =====\n");
-        AT_currAnim = 0;
-        AnimationController::Play(AT_currAnim, 0);
-        ticCnt_ = 0;
-        return RESULT_OK;
-      }
+//      Result AnimTestInit()
+//      {
+//        PRINT("\n==== Starting AnimationTest =====\n");
+//        AT_currAnim = 0;
+//        AnimationController::Play(AT_currAnim, 0);
+//        ticCnt_ = 0;
+//        return RESULT_OK;
+//      }
       
-      Result AnimTestUpdate()
-      {
-        if (ticCnt_++ > AT_periodTics) {
-          ticCnt_ = 0;
-          
-          AT_currAnim = (AnimationID_t)(AT_currAnim + 1);
-          
-          // Skip undefined animIDs
-          while(!AnimationController::IsDefined(AT_currAnim)) {
-            if (AT_currAnim == AnimationController::MAX_CANNED_ANIMATIONS) {
-              // Go back to start
-              AT_currAnim = 0;
-            } else {
-              // otherwise just incrememnt
-              AT_currAnim = (AnimationID_t)(AT_currAnim + 1);
-            }
-          }
-          
-          PRINT("Playing animation %d\n", AT_currAnim);
-          AnimationController::Play(AT_currAnim, 0);
-        }
-        
-        return RESULT_OK;
-      }
+//      Result AnimTestUpdate()
+//      {
+//        if (ticCnt_++ > AT_periodTics) {
+//          ticCnt_ = 0;
+//          
+//          AT_currAnim = (AnimationID_t)(AT_currAnim + 1);
+//          
+//          // Skip undefined animIDs
+//          while(!AnimationController::IsDefined(AT_currAnim)) {
+//            if (AT_currAnim == AnimationController::MAX_CANNED_ANIMATIONS) {
+//              // Go back to start
+//              AT_currAnim = 0;
+//            } else {
+//              // otherwise just incrememnt
+//              AT_currAnim = (AnimationID_t)(AT_currAnim + 1);
+//            }
+//          }
+//          
+//          PRINT("Playing animation %d\n", AT_currAnim);
+//          AnimationController::Play(AT_currAnim, 0);
+//        }
+//        
+//        return RESULT_OK;
+//      }
       
       Result GripperTestInit()
       {
@@ -1114,32 +1113,20 @@ namespace Anki {
         PRINT("\n==== Starting FaceDisplayTest =====\n");
         ticCnt_ = 0;
         
-        // Generate a test face
-        u32 i = 0;
-        u8 numLines = 20;
-        while (numLines-- > 0) {
-          faceFrame_[i++] = 128;
-          faceFrame_[i++] = 0;
-        }
-        
-        numLines = 24;
-        faceFrame_[i++] = 29;
-        while (numLines-- > 0) {
-          faceFrame_[i++] = 25;
-          faceFrame_[i++] = 20;
-          faceFrame_[i++] = 25;
-          faceFrame_[i++] = 58;
-        }
-        faceFrame_[i++] = 0;
-        
-        numLines = 20;
-        while (numLines-- > 0) {
-          faceFrame_[i++] = 128;
-          faceFrame_[i++] = 0;
-        }
+        // Draw "programmer art" face until we get real assets
+        u8 faceFrame[] = { 24, 64+24,      // Start 24 lines down and 24 pixels right
+          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
+          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
+          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
+          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
+          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
+          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
+          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
+          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
+          0 };
 
         // Draw face
-        HAL::FaceAnimate(faceFrame_);
+        HAL::FaceAnimate(faceFrame);
         
         return RESULT_OK;
       }
@@ -1312,8 +1299,9 @@ namespace Anki {
             updateFunc = IMUTestUpdate;
             break;
           case TM_ANIMATION:
-            ret = AnimTestInit();
-            updateFunc = AnimTestUpdate;
+            PRINT("Animation test mode needs updating!\n");
+            ret = RESULT_FAIL; // AnimTestInit();
+            updateFunc = NULL; // AnimTestUpdate;
             break;
 #if defined(HAVE_ACTIVE_GRIPPER) && HAVE_ACTIVE_GRIPPER
           case TM_GRIPPER:
