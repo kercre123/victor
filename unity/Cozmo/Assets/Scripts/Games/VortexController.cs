@@ -89,6 +89,7 @@ public class VortexController : GameController {
 	[SerializeField] Text[] textPlayerScores;
 	[SerializeField] List<VortexInput> playerInputs = new List<VortexInput>();
 
+
 	[SerializeField] VortexSettings[] settingsPerLevel;
 
 	[SerializeField] LightningBoltShapeSphereScript lightingBall;
@@ -106,6 +107,8 @@ public class VortexController : GameController {
 	bool[] playersEliminated = { false, false, false, false };
 
 	VortexSettings settings;
+
+	List<ActiveBlock> playerInputBlocks = new List<ActiveBlock>();
 
 	protected override void Awake () {
 		base.Awake();
@@ -156,6 +159,8 @@ public class VortexController : GameController {
 
 	protected override void OnDisable () {
 		base.OnDisable();
+
+		if(playState == VortexState.SPINNING) ActiveBlock.TappedAction -= BlockTapped;
 	}
 
 	protected override void Enter_BUILDING () {
@@ -176,21 +181,23 @@ public class VortexController : GameController {
 
 		base.Enter_PRE_GAME();
 
-		if( robot != null && robot.carryingObject == null && PlayerPrefs.GetInt("DebugSkipLayoutTracker",0) == 0)
-		{
-			foreach(ObservedObject obj in robot.knownObjects)
-			{
-				if( obj.isActive )
-				{
-					//PlayNotificationAudio (pickupEnergyScanner);
-					robot.PickAndPlaceObject(obj);
-					if(CozmoBusyPanel.instance != null)	{
-						string desc = "Cozmo is attempting to pick-up\n a game cube.";
-						CozmoBusyPanel.instance.SetDescription(desc);
-					}
-					break;
+		playerInputBlocks.Clear();
+
+		if( robot != null && PlayerPrefs.GetInt("DebugSkipLayoutTracker",0) == 0) {
+			for(int i=0;i<robot.activeBlocks.Count;i++) {
+				ActiveBlock block = robot.activeBlocks[i];
+				Debug.Log("adding playerInputBlocks["+i+"] with PlayerInputTap("+i+")");
+				playerInputBlocks.Add(block);
+			}
+	
+			if(robot.carryingObject == null) {
+				robot.PickAndPlaceObject(playerInputBlocks[1]);
+				if(CozmoBusyPanel.instance != null)	{
+					string desc = "Cozmo is attempting to pick-up\n a game cube.";
+					CozmoBusyPanel.instance.SetDescription(desc);
 				}
 			}
+
 		}
 	}
 
@@ -256,6 +263,9 @@ public class VortexController : GameController {
 
 	protected override bool IsPreGameCompleted() {
 		if( robot != null && PlayerPrefs.GetInt("DebugSkipLayoutTracker",0) == 0 ) {
+
+			if(robot.carryingObject == null || !robot.carryingObject.isActive) return false;
+
 			if(!base.IsPreGameCompleted()) return false;
 		}
 		return true;
@@ -263,6 +273,9 @@ public class VortexController : GameController {
 
 	protected override bool IsGameReady () {
 		if( robot != null && PlayerPrefs.GetInt("DebugSkipLayoutTracker",0) == 0 ) {
+
+			if(robot.activeBlocks.Count < 2) return false;
+
 			if(!base.IsGameReady()) return false;
 		}
 
@@ -403,6 +416,10 @@ public class VortexController : GameController {
 		ClearInputs();
 	}
 
+	bool cozmoBidSubmitted = false;
+	int predictedNum = -1;
+	float predictedDuration = -1f;
+	
 	void Enter_SPINNING() {
 		lightingBall.Radius = wheelLightningRadii[currentWheelIndex];
 
@@ -410,7 +427,12 @@ public class VortexController : GameController {
 			playerButtonCanvasGroups[i].interactable = true;
 			playerButtonCanvasGroups[i].blocksRaycasts = true;
 		}
+		predictedNum = -1;
+		predictedDuration = -1f;
+		cozmoBidSubmitted = false;
 
+		
+		ActiveBlock.TappedAction += BlockTapped;
 	}
 	void Update_SPINNING() {
 		int lightingMin = Mathf.FloorToInt(Mathf.Lerp(0, lightningMinCountAtSpeedMax, (wheel.Speed - 1f) * 0.1f));
@@ -423,6 +445,37 @@ public class VortexController : GameController {
 			lightingBall.SingleLightningBolt();
 		}
 		lastNumber = newNumber;
+
+		if(predictedNum < 0) {
+
+			int numCheck = wheel.PredictedNumber;
+	
+			if(numCheck > 0) {
+				predictedNum = numCheck;
+				predictedDuration = wheel.PredictedDurationSeconds;
+			}
+		}
+
+		if(!cozmoBidSubmitted && predictedNum > 0) {
+			float time = Time.time - wheel.SpinStartTime;
+			if(time > (predictedDuration - 5f) ) {
+
+	
+				if(robot != null) {
+					robot.TapBlockOnGround(predictedNum);
+				}
+				else {
+					for(int i=0;i<predictedNum;i++) {
+						PlayerInputTap(1);
+					}
+				}
+
+				cozmoBidSubmitted = true;
+	
+				Debug.Log("cozmo predictedNum("+predictedNum+") time("+time+") predictedDuration("+predictedDuration+")");
+			}
+		}
+		
 	}
 	void Exit_SPINNING() {
 		//stop looping spin audio
@@ -434,6 +487,9 @@ public class VortexController : GameController {
 			playerButtonCanvasGroups[i].interactable = false;
 			playerButtonCanvasGroups[i].blocksRaycasts = false;
 		}
+
+		
+		ActiveBlock.TappedAction -= BlockTapped;
 	}
 
 	List<int> playersThatAreCorrect = new List<int>();
@@ -605,6 +661,14 @@ public class VortexController : GameController {
 		}
 	}
 
+	void BlockTapped(ActiveBlock block) {
+		for(int i=0;i<playerInputBlocks.Count;i++) {
+			if(playerInputBlocks[i] != block) continue;
+			PlayerInputTap(i);
+			break;
+		}
+	}
+
 ///
 	public void PlayerInputTap(int index) {
 		if(state != GameState.PLAYING) return;
@@ -631,6 +695,8 @@ public class VortexController : GameController {
 		textPlayerBids[index].text = playerInputs[index].stamps.Count.ToString();
 
 		if(buttonPressSound != null) AudioManager.PlayOneShot(buttonPressSound);
+
+		Debug.Log("PlayerInputTap index: "+index);
 	}
 
 

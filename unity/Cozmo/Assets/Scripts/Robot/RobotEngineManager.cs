@@ -307,6 +307,9 @@ public class RobotEngineManager : MonoBehaviour {
 		case G2U.Message.Tag.ActiveObjectStoppedMoving:
 			ReceivedSpecificMessage(message.ActiveObjectStoppedMoving);
 			break;
+		case G2U.Message.Tag.ActiveObjectTapped:
+			ReceivedSpecificMessage(message.ActiveObjectTapped);
+			break;
 		default:
 			Debug.LogWarning( message.GetTag() + " is not supported", this );
 			break;
@@ -374,6 +377,20 @@ public class RobotEngineManager : MonoBehaviour {
 			ActiveBlock activeBlock = current.activeBlocks[ID];
 			
 			activeBlock.StoppedMoving( message );
+		}
+	}
+	
+	private void ReceivedSpecificMessage( G2U.ActiveObjectTapped message )
+	{
+		if( current == null ) return;
+		
+		int ID = (int)message.objectID;
+		
+		if( current.activeBlocks.ContainsKey( ID ) )
+		{
+			ActiveBlock activeBlock = current.activeBlocks[ID];
+			
+			activeBlock.Tapped( message );
 		}
 	}
 

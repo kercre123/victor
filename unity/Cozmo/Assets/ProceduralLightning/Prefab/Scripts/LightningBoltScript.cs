@@ -699,7 +699,7 @@ namespace DigitalRuby.ThunderAndLightning
                 CurrentDelayAmount += ((float)parameters.Random.NextDouble() * minDelayValue) + delayDiff;
             }
 
-			Debug.Log("RenderLightningBolt totalVerts("+lightningBoltRenderer.GetVertsForLightningBolt(this)+")");
+			//Debug.Log("RenderLightningBolt totalVerts("+lightningBoltRenderer.GetVertsForLightningBolt(this)+")");
         }
 
         private IEnumerator RenderGroupGlow(LightningBoltSegmentGroup g, ParticleSystem glowParticleSystem, float glowTime, float delayTime, float glowIntensity, float glowWidthMultiplier)

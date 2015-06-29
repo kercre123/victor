@@ -78,6 +78,7 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 			pegsHit = data.pegsHit;
 			pegTouching = data.pegTouching;
 			pegIndex = data.pegIndex;
+			totalTime = data.totalTime;
 		}
 
 	}
@@ -85,8 +86,6 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 	#endregion
 
 	#region INSPECTOR FIELDS
-
-
 
 	[SerializeField] RectTransform wheel = null;
 	[SerializeField] RectTransform peg = null;
@@ -127,6 +126,8 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 
 	[SerializeField] GameObject supplentalEffects;
 
+	[SerializeField] float maxPredictionFramePortion = 0.05f;
+
 	#endregion
 
 	#region PUBLIC MEMBERS
@@ -141,6 +142,7 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 
 	public bool Finished { get; private set; }
 	public bool SpinUnderway { get { return actualData.angularVel != 0f && !dragging; } }
+	public float SpinStartTime { get; private set; }
 
 	public float Speed { get { return Mathf.Abs(actualData.angularVel / 360f); } }
 	public float TokenRadius { get { return tokenRadius; } }
@@ -184,6 +186,9 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 	float predictionStartStamp = -1f;
 	int predictionStartFrame = -1;
 	Coroutine predictionCoroutine;
+
+
+	float lastPegBendFactor = 0f;
 
 	float sliceArc { get { return 360f / numSlices; } }
 
@@ -238,24 +243,6 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 		
 	}
 
-//	void FixedUpdate() {
-//		//Debug.Log("SpinWheel FixedUpdate");
-//
-//		if(locked) return;
-//		if(dragging) return;
-//
-//		bool wasSpinning = SpinUnderway;
-//
-//		DecayVelocity(Time.deltaTime, ref actualData);
-//
-//		if(SpinUnderway) {
-//			SpinUpdate(Time.time, ref actualData);
-//		}
-//		else if(wasSpinning) {
-//			SpinEnd();
-//		}
-//	}
-
 	void Update() {
 
 		if(dragging) {
@@ -273,14 +260,15 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 	#region PRIVATE METHODS
 
 	void SpinStart() {
-		Finished = false;
-		actualData.totalTime = 0f;
-		actualData.wheelAngleAtSpinStart = actualData.wheelAngle;
-
-		//do effect?
 
 		if(predictionCoroutine != null) StopCoroutine(predictionCoroutine);
 		if(spinCoroutine != null) StopCoroutine(spinCoroutine);
+
+		Finished = false;
+		actualData.wheelAngleAtSpinStart = actualData.wheelAngle;
+
+		SpinStartTime = Time.time;
+		//do effect?
 
 		predictionCoroutine = StartCoroutine(PredictSpinResults());
 		spinCoroutine = StartCoroutine(RefreshActualSpin());
@@ -288,6 +276,7 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 
 	void SpinUpdate(float time, ref SpinData data) {
 		float deltaTime = time - data.lastTime;
+
 		ApplySpin(deltaTime, ref data);
 		data.totalTime += deltaTime;
 		data.lastTime = time;
@@ -325,8 +314,10 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 		          "angularVel("+actualData.angularVel+")");
 		
 		lastActualTimeStamp = Time.realtimeSinceStartup;
-		
-		float time = 0f;
+		actualData.lastTime = 0f;
+		actualData.totalTime = 0f;
+
+		float time = Time.fixedDeltaTime;
 		while(actualData.angularVel != 0f) {
 		
 			DecayVelocity(time - actualData.lastTime, ref actualData);
@@ -337,7 +328,7 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 		}
 		
 		int actual = GetActualNumber();
-		float actualDuraction = actualData.totalTime;
+		float actualDuration = actualData.totalTime;
 		float actualRotations = Mathf.Abs(actualData.wheelAngle - actualData.wheelAngleAtSpinStart) / 360f;
 
 		SpinEnd();
@@ -345,14 +336,12 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 		Debug.Log(	"frame("+Time.frameCount+") "+
 		          "RefreshActualSpin "+
 		          "Number("+actual+") "+
-		          "Duration("+actualDuraction+") "+
+		          "Duration("+actualDuration+") "+
 		          "Spins("+actualRotations+") "+
 		          "wheelAngle("+actualData.wheelAngle+") "+
 		          "wheelAngleAtSpinStart("+actualData.wheelAngleAtSpinStart+")");
 		
 	}
-
-	[SerializeField] float maxPredictionFramePortion = 0.05f;
 
 	IEnumerator PredictSpinResults() {
 		predictedData.Copy(actualData);
@@ -372,8 +361,11 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 		PredictedNumber = -1;
 		PredictedDurationSeconds = -1f;
 		PredictedTotalRotations = -1f;
-		
-		float time = 0f;
+
+		predictedData.lastTime = 0f;
+		predictedData.totalTime = 0f;
+
+		float time = Time.fixedDeltaTime;
 		while(predictedData.angularVel != 0f) {
 			//do not take too much time per frame
 			if((Time.realtimeSinceStartup - lastPredictionTimeStamp) > maxPredictionTimePerFrame) {
@@ -382,8 +374,12 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 				//Debug.Log(	"frame("+Time.frameCount+") realtimeSinceStartup("+Time.realtimeSinceStartup+") PredictSpinResults frame yielded");
 				lastPredictionTimeStamp = Time.realtimeSinceStartup;
 			}
+			
+			float delta = time - predictedData.lastTime;
+			DecayVelocity(delta, ref predictedData);
 
-			DecayVelocity(time - predictedData.lastTime, ref predictedData);
+			//Debug.Log("PredictSpinResults SpinUpdate delta("+delta+") time("+time+") angularVel("+predictedData.angularVel+")");
+
 			SpinUpdate(time, ref predictedData);
 			time += Time.fixedDeltaTime;
 		}
@@ -402,6 +398,7 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 		          	"PredictSpinResults "+
 		          	"Number("+PredictedNumber+") "+
 		          	"Duration("+PredictedDurationSeconds+") "+
+		          	"time("+time+") "+
 		          	"Spins("+PredictedTotalRotations+") "+
 		          	"wheelAngle("+predictedData.wheelAngle+") "+
 		          	"wheelAngleAtSpinStart("+predictedData.wheelAngleAtSpinStart+") "+
@@ -707,7 +704,6 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 		return diff;
 	}
 
-	float lastPegBendFactor = 0f;
 	void RefreshPegAngle() {
 		//if we've passed a peg, then just throw it full tilt
 		if(!actualData.pegTouching && actualData.pegsHit > 0) {

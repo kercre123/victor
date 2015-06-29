@@ -326,6 +326,14 @@ Prefab:
       propertyPath: CountRange.Maximum
       value: 10
       objectReference: {fileID: 0}
+    - target: {fileID: 11494734, guid: b218bf5f424256540b6996f80414d6b0, type: 2}
+      propertyPath: LightningMaterialMesh
+      value: 
+      objectReference: {fileID: 2100000, guid: c6b8576004384974191b466f0bdef64b, type: 2}
+    - target: {fileID: 11494734, guid: b218bf5f424256540b6996f80414d6b0, type: 2}
+      propertyPath: LightningMaterialMeshNoGlow
+      value: 
+      objectReference: {fileID: 2100000, guid: db76dde8469c5834887c024ae9f43289, type: 2}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: b218bf5f424256540b6996f80414d6b0, type: 2}
   m_IsPrefabParent: 0
@@ -884,7 +892,7 @@ ParticleSystem:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 362711038}
-  lengthInSec: 5
+  lengthInSec: 5.69999981
   startDelay: 0
   speed: 1
   randomSeed: 0
@@ -1102,7 +1110,7 @@ ParticleSystem:
       minMaxState: 3
     gravityModifier: 0
     inheritVelocity: 0
-    maxNumParticles: 1000
+    maxNumParticles: 60
   ShapeModule:
     serializedVersion: 2
     enabled: 1
@@ -2286,7 +2294,7 @@ ParticleSystem:
       minMaxState: 0
     gravityModifier: 0
     inheritVelocity: 0
-    maxNumParticles: 1000
+    maxNumParticles: 60
   ShapeModule:
     serializedVersion: 2
     enabled: 1
@@ -3238,10 +3246,6 @@ Prefab:
       propertyPath: lightingBall
       value: 
       objectReference: {fileID: 218952732}
-    - target: {fileID: 11421874, guid: ca1b5f0d2529d4cf2b14006fcd54e62b, type: 2}
-      propertyPath: supplentalEffects
-      value: 
-      objectReference: {fileID: 1631961819}
     - target: {fileID: 11436292, guid: ca1b5f0d2529d4cf2b14006fcd54e62b, type: 2}
       propertyPath: supplentalEffects
       value: 
@@ -3250,6 +3254,10 @@ Prefab:
       propertyPath: supplentalEffects
       value: 
       objectReference: {fileID: 614658108}
+    - target: {fileID: 11421874, guid: ca1b5f0d2529d4cf2b14006fcd54e62b, type: 2}
+      propertyPath: supplentalEffects
+      value: 
+      objectReference: {fileID: 1631961819}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: ca1b5f0d2529d4cf2b14006fcd54e62b, type: 2}
   m_IsPrefabParent: 0
@@ -3587,7 +3595,7 @@ ParticleSystem:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 1061645520}
-  lengthInSec: 5
+  lengthInSec: 5.69999981
   startDelay: 0
   speed: 1
   randomSeed: 0
@@ -3805,7 +3813,7 @@ ParticleSystem:
       minMaxState: 3
     gravityModifier: 0
     inheritVelocity: 0
-    maxNumParticles: 1000
+    maxNumParticles: 60
   ShapeModule:
     serializedVersion: 2
     enabled: 1
@@ -4685,7 +4693,7 @@ ParticleSystem:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 1120222116}
-  lengthInSec: 5
+  lengthInSec: 5.69999981
   startDelay: 0
   speed: 1
   randomSeed: 0
@@ -4903,7 +4911,7 @@ ParticleSystem:
       minMaxState: 3
     gravityModifier: 0
     inheritVelocity: 0
-    maxNumParticles: 1000
+    maxNumParticles: 60
   ShapeModule:
     serializedVersion: 2
     enabled: 1
@@ -6207,7 +6215,7 @@ ParticleSystem:
       minMaxState: 0
     gravityModifier: 0
     inheritVelocity: 0
-    maxNumParticles: 1000
+    maxNumParticles: 60
   ShapeModule:
     serializedVersion: 2
     enabled: 1
@@ -7548,7 +7556,7 @@ ParticleSystem:
       minMaxState: 0
     gravityModifier: 0
     inheritVelocity: 0
-    maxNumParticles: 1000
+    maxNumParticles: 60
   ShapeModule:
     serializedVersion: 2
     enabled: 1
@@ -8406,7 +8414,7 @@ Camera:
   m_CullingMask:
     serializedVersion: 2
     m_Bits: 1
-  m_RenderingPath: -1
+  m_RenderingPath: 3
   m_TargetTexture: {fileID: 0}
   m_TargetDisplay: 0
   m_HDR: 0
