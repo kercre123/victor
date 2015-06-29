@@ -19,6 +19,7 @@ public class OptionsScreen : MonoBehaviour {
 	[SerializeField] Toggle toggle_autoCollect;
 	[SerializeField] Toggle toggle_assistedControls;
 	[SerializeField] Toggle toggle_skipLayoutTracker;
+	[SerializeField] Toggle toggle_useAltConfig;
 
 	[SerializeField] ComboBox pertinent_objects;
 	[SerializeField] InputField angleScoreMultiplier;
@@ -124,6 +125,10 @@ public class OptionsScreen : MonoBehaviour {
 			toggle_skipLayoutTracker.isOn = PlayerPrefs.GetInt("DebugSkipLayoutTracker",0) == 1;
 		}
 
+		if(toggle_useAltConfig != null) {
+			toggle_useAltConfig.isOn = PlayerPrefs.GetInt("DebugUseAltConfig",0) == 1;
+		}
+		
 		if(toggle_visionRecording != null) {
 			toggle_visionRecording.isOn = RobotEngineManager.instance != null ? RobotEngineManager.instance.AllowImageSaving : false;
 		}
@@ -280,6 +285,10 @@ public class OptionsScreen : MonoBehaviour {
 		if(toggle_skipLayoutTracker != null) {
 			toggle_skipLayoutTracker.onValueChanged.AddListener(ToggleSkipLayoutTracker);
 		}
+		if(toggle_useAltConfig != null) {
+			toggle_useAltConfig.onValueChanged.AddListener(ToggleUseAltConfig);
+		}
+		
 	}
 
 	void OnDisable () {
@@ -437,6 +446,10 @@ public class OptionsScreen : MonoBehaviour {
 		PlayerPrefs.SetInt("DebugSkipLayoutTracker", val ? 1 : 0);
 	}
 
+	void ToggleUseAltConfig(bool val) {
+		PlayerPrefs.SetInt("DebugUseAltConfig", val ? 1 : 0);
+	}
+
 	public void ResetToDefaultSettings() {
 		PlayerPrefs.DeleteKey("MaxTurnFactor");
 		PlayerPrefs.DeleteKey("ReverseLikeACar");
@@ -448,7 +461,8 @@ public class OptionsScreen : MonoBehaviour {
 		PlayerPrefs.DeleteKey("FlushLogs");
 		PlayerPrefs.DeleteKey("CozmoAssistedControls");
 		PlayerPrefs.DeleteKey("DebugSkipLayoutTracker");
-
+		PlayerPrefs.DeleteKey("DebugUseAltConfig");
+		
 
 		for(int i = 0; i < 5; ++i) {
 			PlayerPrefs.DeleteKey("ObjectPertinence" + i.ToString());

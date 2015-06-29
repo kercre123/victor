@@ -23,6 +23,8 @@ public class RobotEngineManager : MonoBehaviour {
 	public bool IsConnected { get { return (channel != null && channel.IsConnected); } }
 	
 	[SerializeField] private TextAsset configuration;
+	[SerializeField] private TextAsset alternateConfiguration;
+
 	[SerializeField] private GameObject robotBusyPanelPrefab;
 
 	private CozmoBusyPanel busyPanel = null;
@@ -105,10 +107,16 @@ public class RobotEngineManager : MonoBehaviour {
 	{
 		CozmoLogging.OpenLogFile ();
 
-		if (configuration == null) {
+		TextAsset config = configuration;
+
+		if( PlayerPrefs.GetInt("DebugUseAltConfig",0) == 1) {
+			config = alternateConfiguration;
+		}
+
+		if (config == null) {
 			Debug.LogError ("Error initializing CozmoBinding: No configuration.", this);
 		} else {
-			CozmoBinding.Startup (configuration.text);
+			CozmoBinding.Startup (config.text);
 		}
 
 		if (instance != null && instance != this) {

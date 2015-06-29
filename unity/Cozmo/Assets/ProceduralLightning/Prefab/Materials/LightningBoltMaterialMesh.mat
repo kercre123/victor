@@ -139,6 +139,10 @@ Material:
         second: 0
       data:
         first:
+          name: _InvFade
+        second: 1
+      data:
+        first:
           name: _CameraTangent
         second: 1.15470052
       data:
@@ -165,6 +169,10 @@ Material:
         first:
           name: _GlowIntensityMultiplier
         second: 1
+      data:
+        first:
+          name: _JitterMultiplier
+        second: 0
     m_Colors:
       data:
         first:
