@@ -176,3 +176,4 @@ include/anki/cozmo/shared/msgIDs.txt
 *.htm
 block/build/
 *.m51
+*.m51
