@@ -91,10 +91,6 @@ namespace Anki {
       webots::PositionSensor* liftPosSensor_;
       webots::PositionSensor* motorPosSensors_[HAL::MOTOR_COUNT];
       
-      // Commanded wheel speeds
-      f32 leftWheelSpeedCmd_ = 0;
-      f32 rightWheelSpeedCmd_ = 0;
-      
       // Gripper
       webots::Connector* con_;
       //bool gripperEngaged_ = false;
@@ -179,7 +175,7 @@ namespace Anki {
        
         if (usingTreads_) {
           // Return linear speed m/s when usingTreads
-          return -speed_mm_per_s / 1000;
+          return -speed_mm_per_s / 1000.f;
         }
         
         // Convert mm/s to rad/s
@@ -202,18 +198,11 @@ namespace Anki {
         for(int i = 0; i < HAL::MOTOR_COUNT; i++)
         {
           if (motors_[i]) {
-            f32 pos;
-            
+            f32 pos = motorPosSensors_[i]->getValue();
             if (usingTreads_) {
-              if (i == HAL::MOTOR_LEFT_WHEEL) {
-                pos = motorPrevPositions_[i] - leftWheelSpeedCmd_ * TIME_STEP;  // leftWheelSpeedCmd is in m/s
-              } else if (i == HAL::MOTOR_RIGHT_WHEEL) {
-                pos = motorPrevPositions_[i] - rightWheelSpeedCmd_ * TIME_STEP; // rightWheelSpeedCmd is in m/s
-              } else{
-                pos = motorPosSensors_[i]->getValue();
+              if (i == HAL::MOTOR_LEFT_WHEEL || i == HAL::MOTOR_RIGHT_WHEEL) {
+                pos = motorPosSensors_[i]->getValue() * -1000.f;
               }
-            } else {
-              pos = motorPosSensors_[i]->getValue();
             }
             
             posDelta = pos - motorPrevPositions_[i];
@@ -326,10 +315,8 @@ namespace Anki {
       headMotor_  = webotRobot_.getMotor("HeadMotor");
       liftMotor_  = webotRobot_.getMotor("LiftMotor");
       
-      if (!usingTreads_) {
-        leftWheelPosSensor_ = webotRobot_.getPositionSensor("LeftWheelMotorPosSensor");
-        rightWheelPosSensor_ = webotRobot_.getPositionSensor("RightWheelMotorPosSensor");
-      }
+      leftWheelPosSensor_ = webotRobot_.getPositionSensor("LeftWheelMotorPosSensor");
+      rightWheelPosSensor_ = webotRobot_.getPositionSensor("RightWheelMotorPosSensor");
       
       headPosSensor_ = webotRobot_.getPositionSensor("HeadMotorPosSensor");
       liftPosSensor_ = webotRobot_.getPositionSensor("LiftMotorPosSensor");
@@ -409,10 +396,9 @@ namespace Anki {
       }
       
       // Enable position measurements on head, lift, and wheel motors
-      if (!usingTreads_) {
-        leftWheelPosSensor_->enable(TIME_STEP);
-        rightWheelPosSensor_->enable(TIME_STEP);
-      }
+      leftWheelPosSensor_->enable(TIME_STEP);
+      rightWheelPosSensor_->enable(TIME_STEP);
+
       headPosSensor_->enable(TIME_STEP);
       liftPosSensor_->enable(TIME_STEP);
       
@@ -606,12 +592,10 @@ namespace Anki {
     {
       switch(motor) {
         case MOTOR_LEFT_WHEEL:
-          leftWheelSpeedCmd_ = WheelPowerToAngSpeed(power);
-          leftWheelMotor_->setVelocity(leftWheelSpeedCmd_);
+          leftWheelMotor_->setVelocity(WheelPowerToAngSpeed(power));
           break;
         case MOTOR_RIGHT_WHEEL:
-          rightWheelSpeedCmd_ = WheelPowerToAngSpeed(power);
-          rightWheelMotor_->setVelocity(rightWheelSpeedCmd_);
+          rightWheelMotor_->setVelocity(WheelPowerToAngSpeed(power));
           break;
         case MOTOR_LIFT:
           liftMotor_->setVelocity(LiftPowerToAngSpeed(power));

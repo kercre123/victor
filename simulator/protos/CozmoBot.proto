@@ -643,14 +643,14 @@ Supervisor {
 		  translation 0 0.023 0
 		  rotation 1 0 0 -1.5707963
 		  children [
-			Transform {  
-			  rotation 1 0 0 1.5707963
-			  children [
-			  
-				DEF WHEELS Group {    
-				children [
-					Transform {
-						children [
+
+                DEF FRONT_TRACK_WHEEL TrackWheel {
+                  position 0 0
+                  radius 0.0145
+                  children [
+                    DEF TRACK_WHEEL_BIG Transform {
+                    rotation 1 0 0 1.5707963  
+                    children [
 					    Shape {
 							appearance DEF WHEEL_MATERIAL Appearance {
 							  material Material {
@@ -664,11 +664,18 @@ Supervisor {
 							}
 					    }
 					  ]
-					}
-					Transform {
-					    translation -0.048 0 -0.00375
-						children [
-						Shape {
+                    }
+                  ]
+                }
+                
+                DEF REAR_TRACK_WHEEL TrackWheel {
+                  position -0.048 -0.00375
+                  radius 0.01075
+                  children [
+                    DEF TRACK_WHEEL_SMALL Transform {
+                    rotation 1 0 0 1.5707963  
+                    children [
+					    Shape {
 							appearance USE WHEEL_MATERIAL
 							geometry Cylinder {
 							  height 0.01
@@ -676,13 +683,11 @@ Supervisor {
 							  subdivision 14
 							}
 					    }
-					    ]
-				  } 
-				  ] # children
-				} # WHEELS Group
-			  ]  # children
-			} # Transform
-		
+                      ]					    
+                    }
+                  ]
+                }
+                		
 		  ]
 		  name "left track"
 		  contactMaterial "highfriction"
@@ -728,9 +733,14 @@ Supervisor {
 		  physics Physics {
 		  }
 		  %{ end }%
-		  motor LinearMotor {
-			name "LeftWheelMotor"
-		  }
+		  device [
+		    LinearMotor {
+			  name "LeftWheelMotor"
+		    }
+  		    PositionSensor {
+		      name "LeftWheelMotorPosSensor"
+		    }
+		  ]
 		  
 		  # Shape of tread studs
 		  animatedGeometry DEF ANIMATED_SHAPE Shape {
@@ -744,27 +754,16 @@ Supervisor {
 			}
 		  }
 		  geometriesCount 40
-		  wheelsCenter [
-			0 0.0      
-			-0.048 0.00375
-		  ]
-		  wheelsRadius [
-			0.0145, 0.01075
-		  ]
-		  wheelsStatus [
-			1, 1
-		  ]
 		}
+
 		Track {
 		  translation 0 -0.023 0
 		  rotation 1 0 0 -1.5707963       
 		  children [
-			Transform {
-			  rotation 1 0 0 1.5707963     
-			  children [
-				USE WHEELS
-			  ]
-			}
+		  
+			USE FRONT_TRACK_WHEEL
+			USE REAR_TRACK_WHEEL
+			
 		  ]
 		  name "right track"
 		  contactMaterial "highfriction"
@@ -774,21 +773,16 @@ Supervisor {
 		  physics Physics {
 		  }
 		  %{ end }%
-		  motor LinearMotor {
-			name "RightWheelMotor"
-		  }
+		  device [
+		    LinearMotor {
+			  name "RightWheelMotor"
+		    }
+		    PositionSensor {
+		      name "RightWheelMotorPosSensor"
+		    }		    
+		  ]
 		  animatedGeometry USE ANIMATED_SHAPE
 		  geometriesCount 40
-		  wheelsCenter [
-			0 0.0      
-			-0.048 0.00375
-		  ]
-		  wheelsRadius [
-			0.0145, 0.01075
-		  ]
-		  wheelsStatus [
-			1, 1
-		  ]
 		}
 
 
