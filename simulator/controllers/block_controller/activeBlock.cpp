@@ -250,7 +250,7 @@ namespace Anki {
 
         s32 whichAxis = -1;
         for(s32 i=0; i<3; ++i) {
-          absAccel[i] = abs(accelVals[i]);
+          absAccel[i] = fabs(accelVals[i]);
           if(absAccel[i] > maxAbsAccel) {
             whichAxis = i;
             maxAbsAccel = absAccel[i];

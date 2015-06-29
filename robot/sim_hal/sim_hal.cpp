@@ -218,6 +218,13 @@ namespace Anki {
         }
       }
       
+      void ClearFace()
+      {
+        face_->setColor(0);
+        face_->fillRectangle(0,0, DISPLAY_WIDTH, DISPLAY_HEIGHT);
+        face_->setColor(0x0000f0ff);
+      }
+
       void FaceUpdate()
       {
         // Check if blinking
@@ -1011,21 +1018,13 @@ namespace Anki {
       audioEndTime_ += AUDIO_FRAME_TIME_MS;
       audioReadyForFrame_ = false;
     }
-
-    void HAL::ClearFace()
-    {
-      face_->setColor(0);
-      face_->fillRectangle(0,0, DISPLAY_WIDTH, DISPLAY_HEIGHT);
-      face_->setColor(0x0000f0ff);
-    }
     
     // Update the face to the next frame of an animation
     // @param frame - a pointer to a variable length frame of face animation data
     void HAL::FaceAnimate(u8* frame)
     {
       u32 pixelCounter = 0;
-      u32 frameByteCount = 0;
-      bool zeroByte = true;
+      bool draw = false;
       
       // Clear the display
       ClearFace();
@@ -1037,17 +1036,18 @@ namespace Anki {
       facePosX_ = facePosY_ = 0;
       
       // Draw pixels
-      while (pixelCounter < NUM_DISPLAY_PIXELS) {
-        u8 numPixels = *frame;
+      while (*frame != 0) {
+        u8 run = *frame++;
+        u32 numPixels = run < 64 ? run * DISPLAY_WIDTH : run - 64;
         
         // Adjust number of pixels this byte if it exceeds screen total
         if (pixelCounter + numPixels > NUM_DISPLAY_PIXELS) {
           numPixels = NUM_DISPLAY_PIXELS - pixelCounter;
         }
         
-        // Draw pixels if this is no a zero byte
-        if (!zeroByte) {
-          for (u8 i=0; i<numPixels; ++i) {
+        // Draw pixels
+        if (draw) {
+          for (u32 i=0; i<numPixels; ++i) {
             u32 y = pixelCounter / DISPLAY_WIDTH;
             u32 x = pixelCounter - (y * DISPLAY_WIDTH);
             ++pixelCounter;
@@ -1060,11 +1060,11 @@ namespace Anki {
           pixelCounter += numPixels;
         }
         
-        // Toggle whether we're looking at a 0s byte or a 1s byte
-        zeroByte = !zeroByte;
-        
-        // Go to next byte
-        ++frame;
+        // Toggle whether we're drawing 0s or 1s
+        if (run >= 64) {
+          draw = !draw;
+        }
+
       }
       
     }

@@ -5,8 +5,8 @@
 #include "hal/portable.h"
 
 // Definitions for SSD1306 controller
-#define LCDWIDTH                  128
-#define LCDHEIGHT                 64
+#define COLS                  128
+#define ROWS                  64
 
 #define SETCONTRAST 0x81
 #define DISPLAYALLON_RESUME 0xA4
@@ -112,7 +112,7 @@ namespace Anki
         SPI_InitStructure.SPI_CPOL = SPI_CPOL_High;
         SPI_InitStructure.SPI_CPHA = SPI_CPHA_2Edge;
         SPI_InitStructure.SPI_NSS = SPI_NSS_Soft;
-        SPI_InitStructure.SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_128;
+        SPI_InitStructure.SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_32;
         SPI_InitStructure.SPI_FirstBit = SPI_FirstBit_MSB;
         SPI_InitStructure.SPI_CRCPolynomial = 7;
         SPI_Init(SPI3, &SPI_InitStructure);
@@ -145,12 +145,12 @@ namespace Anki
         SPIWrite(cmd);    
       }
 
-      static u8 m_frame[LCDHEIGHT/8][LCDWIDTH];
+      static u8 m_frame[ROWS/8][COLS];
       static void SendFrame(void)
       {
         SendCommand(COLUMNADDR);
         SendCommand(0);   // Column start address (0 = reset)
-        SendCommand(LCDWIDTH-1); // Column end address (127 = reset)
+        SendCommand(COLS-1); // Column end address (127 = reset)
 
         SendCommand(PAGEADDR);
         SendCommand(0); // Page start address (0 = reset)
@@ -196,15 +196,54 @@ namespace Anki
         SendCommand(DISPLAYON);
         
         // Draw "programmer art" face until we get real assets
+        u8 face[] = { 24, 64+24,           // Start 24 lines down and 24 pixels right
+          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
+          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
+          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
+          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
+          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
+          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
+          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
+          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
+          0 };
+        FaceAnimate(face);
+      }
+      
+      // Plot a blue pixel on the SSD1306 framebuffer with row/column swizzling
+      #define PLOT(x, y)  m_frame[((y)>>3)][(x)] |= 1 << ((y) & 7)
+      
+      // Update the face to the next frame of an animation
+      // @param frame - a pointer to a variable length frame of face animation data
+      // Frame is in 8-bit RLE format:
+      //  0 terminates the image
+      //  1-63 draw N full lines (N*128 pixels) of black or blue
+      //  64-255 draw 0-191 pixels (N-64) of black or blue, then invert the color for the next run
+      // The decoder starts out drawing black, and inverts the color on every byte >= 64
+      void FaceAnimate(u8* src)
+      {
+        int draw = 0;
+        int dest = 0;
+        
+        // Start with all black
         memset(m_frame, 0, sizeof(m_frame));
-        for (int x = 24; x < 40; x++)
+        while (0 != *src)
         {
-          m_frame[3][x] = 0xaa;
-          m_frame[4][x] = 0xaa;
-          m_frame[3][x+64] = 0xaa;
-          m_frame[4][x+64] = 0xaa;
+          // Decide whether to draw lines or pixels
+          int run = *src++;
+          int count = run < 64 ? run * COLS : run - 64;
+            
+          // If we are drawing blue, plot it - otherwise, skip it
+          if (draw && dest+count < ROWS * COLS)
+            for (int i = dest; i < dest+count; i++)
+              PLOT(i & (COLS-1), i / COLS);
+            
+          dest += count;
+          
+          // Invert draw color after plotting pixels
+          if (run >= 64)
+            draw = !draw;
         }
-        SendFrame();
+        SendFrame();        
       }
     }
   }

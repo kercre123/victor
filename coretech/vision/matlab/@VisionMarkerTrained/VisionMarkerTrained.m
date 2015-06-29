@@ -117,6 +117,7 @@ classdef VisionMarkerTrained
             Initialize = true;
             ThresholdMethod = 'FiducialProbes'; % 'Otsu' or 'FiducialProbes'
             NearestNeighborLibrary = [];
+            CNN = [];
             
             parseVarargin(varargin{:});
             
@@ -161,9 +162,14 @@ classdef VisionMarkerTrained
             else
                 if CornerRefinementIterations > 0
                     if UseMexCornerRefinment
+                      try
                         [this.corners, this.H] = mexRefineQuadrilateral(im2uint8(img), int16(this.corners-1), single(this.H), ...
                             CornerRefinementIterations, VisionMarkerTrained.SquareWidthFraction, dark*255, bright*255, 100, 5, .005);
                         this.corners = this.corners + 1;
+                      catch E
+                        warning('mexRefineQuadrilateral failed: %s', E.message);
+                        this.isValid = false;
+                      end
                     else
                         [this.corners, this.H] = this.RefineCorners(img, 'NumSamples', 100, ... 'DebugDisplay', true,  ...
                             'MaxIterations', CornerRefinementIterations, ...
@@ -171,7 +177,31 @@ classdef VisionMarkerTrained
                     end
                 end
                 
-                if ~isempty(NearestNeighborLibrary)
+                if ~isempty(CNN)
+                  assert(all(isfield(CNN, {'labels', 'labelNames'})), ...
+                    'Expecting CNN to have "labels" and "labelNames" fields.');
+                  
+                  probeValues = VisionMarkerTrained.GetProbeValues(img, tform);
+                  res = vl_simplenn(CNN, single(probeValues));
+                  %[maxResponse,index] = max(squeeze(sum(sum(res(end).x,1),2)));
+                  [sortedResponses, index] = sort(squeeze(sum(sum(res(end).x,1),2)), 'descend');
+                  
+                  % Max response has to be significantly better than
+                  % second-best response for this to be a valid marker
+                  responseRatio = sortedResponses(1)/sortedResponses(2);
+                  %fprintf('responseRatio = %f\n', responseRatio);
+                  
+                  if responseRatio > 1.2
+                    this.codeID = CNN.labels(index(1));
+                    this.codeName = CNN.labelNames(this.codeID);
+                    this.isValid  = true;
+                  else
+                    this.codeID = 0;
+                    this.codeName = 'UNKNOWN';
+                    this.isValid = false;
+                  end
+                  
+                elseif ~isempty(NearestNeighborLibrary)
                   VerifyLabel = false;
                   assert(size(NearestNeighborLibrary.probeValues,1) == VisionMarkerTrained.ProbeParameters.GridSize^2, ...
                     'NearestNeighborLibrary should be from a %dx%d probe pattern.', ...

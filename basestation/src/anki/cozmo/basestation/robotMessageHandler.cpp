@@ -118,11 +118,11 @@ namespace Anki {
       const u8 msgID = packet.buffer[0];
       
       // Check for invalid msgID
-      if (msgID >= NUM_MSG_IDS || msgID == 0) {
+      if (msgID >= RobotMessage::NUM_MSG_IDS || msgID == 0) {
         PRINT_NAMED_ERROR("RobotMessageHandler.InvalidMsgId",
                           "Received msgID is invalid (Msg %d, MaxValidID %d)\n",
                           msgID,
-                          NUM_MSG_IDS
+                          RobotMessage::NUM_MSG_IDS
                           );
         return RESULT_FAIL;
       }
