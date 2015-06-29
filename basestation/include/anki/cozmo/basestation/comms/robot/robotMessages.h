@@ -30,18 +30,18 @@ namespace Anki {
 #undef MESSAGE_DEFINITION_MODE
 #include "anki/cozmo/shared/RobotMessageDefinitions.h"
     
-    // Create the enumerated message IDs from the MessageDefinitions file:
-    typedef enum {
-      NO_MESSAGE_ID = 0,
-#define MESSAGE_DEFINITION_MODE MESSAGE_ENUM_DEFINITION_MODE
-#include "anki/cozmo/shared/RobotMessageDefinitions.h"
-      NUM_MSG_IDS // Final entry without comma at end
-    } ID;
     
     // Base message class
     class RobotMessage
     {
     public:
+      // Create the enumerated message IDs from the MessageDefinitions file:
+      typedef enum {
+        NO_MESSAGE_ID = 0,
+#define MESSAGE_DEFINITION_MODE MESSAGE_ENUM_DEFINITION_MODE
+#include "anki/cozmo/shared/RobotMessageDefinitions.h"
+        NUM_MSG_IDS // Final entry without comma at end
+      } ID;
       
       virtual ~RobotMessage();
       
@@ -50,6 +50,10 @@ namespace Anki {
       virtual void GetBytes(u8* buffer) const = 0;
       
       virtual u16 GetSize() const = 0;
+      
+      virtual Json::Value CreateJson() const = 0;
+      
+      virtual Result FillFromJson(const Json::Value& root) = 0;
       
       static RobotMessage* CreateFromJson(const Json::Value& jsonRoot);
       

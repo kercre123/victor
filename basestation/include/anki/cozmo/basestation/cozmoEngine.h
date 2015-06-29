@@ -80,7 +80,10 @@ namespace Cozmo {
     // Returns true on successful connection, false otherwise.
     // NOTE: This is virtual for now so derived Host can do something different for force-added robots.
     virtual bool ConnectToRobot(AdvertisingRobot whichRobot);
-    
+
+    void StartAnimationTool();
+    virtual Robot* GetFirstRobot() { return nullptr; };
+
     void DisconnectFromRobot(RobotID_t whichRobot);
     
     // TODO: Add IsConnected methods
@@ -122,7 +125,8 @@ namespace Cozmo {
     void ListenForRobotConnections(bool listen);
     
     // TODO: Add ability to playback/record
-    
+
+    Robot* GetFirstRobot() override;
     int    GetNumRobots() const;
     Robot* GetRobotByID(const RobotID_t robotID); // returns nullptr for invalid ID
     std::vector<RobotID_t> const& GetRobotIDList() const;

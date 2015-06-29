@@ -84,7 +84,7 @@ namespace Anki
         quadSwapped[0].x-quadSwapped[1].x, quadSwapped[0].y-quadSwapped[1].y,
         quadSwapped[3].x-quadSwapped[1].x, quadSwapped[3].y-quadSwapped[1].y);
 
-      if( !(SIGN(detA) == SIGN(detB) && SIGN(detC) == SIGN(detD)) )
+      if( !(signbit(detA) == signbit(detB) && signbit(detC) == signbit(detD)) )
         return false;
 
       detA = abs(detA);

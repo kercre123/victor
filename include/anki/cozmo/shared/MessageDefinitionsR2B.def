@@ -60,6 +60,7 @@ ADD_MESSAGE_MEMBER(f32, liftHeight) // TODO: Need this?
 ADD_MESSAGE_MEMBER(f32, rawGyroZ)
 ADD_MESSAGE_MEMBER(f32, rawAccelY)
 ADD_MESSAGE_MEMBER(u32, status)  // See RobotStatusFlag
+ADD_MESSAGE_MEMBER(s32, numAnimBytesFree)
 ADD_MESSAGE_MEMBER(u16, lastPathID)
 ADD_MESSAGE_MEMBER(u8, proxLeft)
 ADD_MESSAGE_MEMBER(u8, proxForward)
@@ -249,3 +250,7 @@ ADD_MESSAGE_MEMBER(u8,  upAxis)  // See UpAxis type in ActiveBlockTypes.h
 ADD_MESSAGE_MEMBER(u8,  rolled)  // Whether the up orientation changed during movement
 END_MESSAGE_DEFINITION(ActiveObjectStoppedMoving)
 
+START_MESSAGE_DEFINITION(ActiveObjectTapped, 1)
+ADD_MESSAGE_MEMBER(u32, objectID)
+ADD_MESSAGE_MEMBER(u8,  numTaps)
+END_MESSAGE_DEFINITION(ActiveObjectTapped)

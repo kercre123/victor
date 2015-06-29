@@ -95,7 +95,7 @@ namespace Anki {
         u8 priority;
         u16 size;
         Result (RobotMessageHandler::*ProcessPacketAs)(Robot*, const u8*);
-      } lookupTable_[NUM_MSG_IDS+1] = {
+      } lookupTable_[RobotMessage::NUM_MSG_IDS+1] = {
         {0, 0, 0}, // Empty entry for NO_MESSAGE_ID
 #define MESSAGE_DEFINITION_MODE MESSAGE_TABLE_DEFINITION_NO_FUNC_MODE
 #include "anki/cozmo/shared/MessageDefinitionsB2R.def"

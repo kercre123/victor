@@ -17,6 +17,7 @@ sys.path.insert(0, BUILD_TOOLS_ROOT)
 import ankibuild.cmake
 import ankibuild.util
 import ankibuild.xcode
+from ankibuild import installBuildDeps
 
 def _monkeypatch_build_tools():
     "Monkeypatch build tools to reduce number of newlines output."
@@ -279,6 +280,17 @@ def parse_engine_arguments():
 # PLATFORM-INDEPENDENT COMMANDS #
 #################################
 
+def installDependencies(options):
+  # TODO: is this fast engouh to run as part of every configure run? should this be a tool on its own?
+  options.deps = ['cmake'] #, 'ninja']
+  installer = installBuildDeps.DependencyInstaller(options);
+
+  if not installer.install():
+    print ("Failed to verify build tool dependencies")
+    return False
+  return True
+
+
 def wipe_all(options, root_path, kill_unity=False):
     print_header('Running command {0}'.format(options.command))
     print_status('Checking what to remove:')
@@ -334,7 +346,10 @@ def generate_anki_util_cmake(options):
     cwd = ankibuild.util.File.pwd()
     ankibuild.util.File.cd(gyp_path)
     # HACK: Noisy; use evaluate instead of execute to suppress output.
-    ankibuild.util.File.evaluate(['./configure.py', '--platform', 'cmake'])
+    ankibuild_args = ['./configure.py', '--platform', 'cmake']
+    if options.verbose:
+        ankibuild_args += ['-v']
+    ankibuild.util.File.evaluate(ankibuild_args)
     ankibuild.util.File.cd(cwd)
     
     new_contents = ankibuild.util.File.read(output_path)
@@ -345,6 +360,7 @@ def generate_anki_util_cmake(options):
         os.utime(output_path, (stat.st_atime, stat.st_mtime))
 
 def configure_anki_util(options):
+    installDependencies(options)
     unpack_anki_util_dependencies(options)
     generate_anki_util_cmake(options)
 

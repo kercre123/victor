@@ -26,15 +26,14 @@ namespace Cozmo {
   
   // Health / direction bar on the top of the backpack
   typedef enum {
-    /*
     // Directional arrangement
     LED_BACKPACK_BACK = 0,
     LED_BACKPACK_MIDDLE,
     LED_BACKPACK_FRONT,
     LED_BACKPACK_LEFT,
     LED_BACKPACK_RIGHT,
-    */
     
+    /*
     // Horizontal strip
     LED_BACKPACK_LEFT = 0,
     LED_BACKPACK_INNER_LEFT,
@@ -42,6 +41,7 @@ namespace Cozmo {
                          // and we don't have to change message sizes all over the place.
     LED_BACKPACK_INNER_RIGHT,
     LED_BACKPACK_RIGHT,
+    */
     
     NUM_BACKPACK_LEDS
   } LEDId;

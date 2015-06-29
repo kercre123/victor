@@ -612,7 +612,7 @@ namespace Anki
         f32 startAccelDist = vpg.GetStartAccelDist();
         f32 endAccelDist = vpg.GetEndAccelDist();
         if (fabsf(endAccelDist) > LOOK_AHEAD_DIST_MM) {
-          endAccelDist -= LOOK_AHEAD_DIST_MM * SIGN(endAccelDist);
+          endAccelDist += LOOK_AHEAD_DIST_MM * signbit(endAccelDist);
         }
         PRINT("DRIVE STRAIGHT: total dist %f, startDist %f, endDist %f\n", dist_mm, startAccelDist, endAccelDist);
         
@@ -696,7 +696,7 @@ namespace Anki
         f32 endAngAccel = fabsf(vpg.GetEndAccel());
         
         
-        u8 drivingFwd = SIGN(sweep_rad) != SIGN(radius_mm) ? 1 : -1;
+        u8 drivingFwd = (signbit(sweep_rad) != signbit(radius_mm)) ? 1 : -1;
         f32 targetSpeed = drivingFwd * targetAngSpeed * absRadius;
         f32 startAccel = startAngAccel * absRadius;
         f32 endAccel = endAngAccel * absRadius;

@@ -70,6 +70,10 @@ namespace Anki {
       void StopNodding();
       bool IsNodding();
 
+      // Tap carried block on ground.
+      // Successive calls to TapBlockOnGround() will accumulate the number of times to tap.
+      void TapBlockOnGround(u8 numTaps);
+      
       // Whether or not the lift is moving.
       // False if speed is 0 for more than LIFT_STOP_TIME.
       bool IsMoving();
