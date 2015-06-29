@@ -17,7 +17,9 @@ make this work.
 
 ### STEP 1: Checkout coretech-external
 Most of the packages have already been collected in the [coretech-external repository](https://github.com/anki/coretech-external).
-The Makefile assumes that this repository is in the same folder as the product-cozmo folder.
+
+After setting up coretech-external, you need to add an environmental variable ```CORETECH_EXTERNAL_DIR``` to tell
+scripts where to find it.
 
 ###STEP 2: Build the xtensa-toolchain
 Get and build a copy of the xtensa build toolchain here:
@@ -25,7 +27,7 @@ https://github.com/jcmvbkbc/xtensa-toolchain-build
 ... you're building the lx106 version.  You will also need the patched GCC here: https://github.com/jcmvbkbc/gcc-xtensa/commits/call0-4.8.2
 The commands you will need are as follows:
 ```
-cd ~/Documents/GitHub/coretech-external/espressif/xtensa-toolchain-build
+cd $CORETECH_EXTERNAL_DIR/espressif/xtensa-toolchain-build
 git clone --depth=1 https://github.com/jcmvbkbc/gcc-xtensa.git gcc-4.9.1
 ./prepare.sh lx106
 ./build-elf.sh lx106
@@ -39,7 +41,7 @@ This is where you will probably have to iterate with installing system dependanc
 ## Build the firmware
 
 ```
-cd ~/Documents/GitHub/products-cozmo/robot/espressif
+cd <PRODUCTS COZMO REPOSITORY>/robot/espressif
 ./build.sh
 ```
 The build.sh script sets the appropriate variables for our project before calling the Espressif Makefile.
