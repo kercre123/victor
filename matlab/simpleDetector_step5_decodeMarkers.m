@@ -1,4 +1,4 @@
-function [markers, validQuads] = simpleDetector_step5_decodeMarkers(img, quads, quadTforms, minQuadArea, quadRefinementIterations, embeddedConversions, showTiming, NearestNeighborLibrary, DEBUG_DISPLAY)
+function [markers, validQuads] = simpleDetector_step5_decodeMarkers(img, quads, quadTforms, minQuadArea, quadRefinementIterations, embeddedConversions, showTiming, NearestNeighborLibrary, CNN, DEBUG_DISPLAY)
     
     markers = {};
     validQuads = false(size(quads));
@@ -66,7 +66,8 @@ function [markers, validQuads] = simpleDetector_step5_decodeMarkers(img, quads, 
             if strcmp(embeddedConversions.extractFiducialMethod, 'matlab_original')
                 markers{end+1} = VisionMarkerTrained(img, 'Corners', corners, ...
                     'CornerRefinementIterations', quadRefinementIterations, ...
-                    'NearestNeighborLibrary', NearestNeighborLibrary);  %#ok<AGROW>
+                    'NearestNeighborLibrary', NearestNeighborLibrary, ...
+                    'CNN', CNN);  %#ok<AGROW>
             elseif strcmp(embeddedConversions.extractFiducialMethod, 'matlab_exhaustive')
                 markerTmp = VisionMarkerTrained([], 'Corners', corners, 'Initialize', false);
                 

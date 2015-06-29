@@ -29,6 +29,7 @@
  *
  **/
 
+#include "messages.h"
 
 #ifndef ANKI_COZMO_ROBOT_HARDWAREINTERFACE_H
 #define ANKI_COZMO_ROBOT_HARDWAREINTERFACE_H
@@ -37,8 +38,6 @@
 #include "anki/common/types.h"
 #include "anki/common/constantsAndMacros.h"
 #include "anki/vision/CameraSettings.h"
-#include "messages.h"
-
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoTypes.h"
 #include "anki/cozmo/shared/ledTypes.h"
@@ -236,11 +235,13 @@ namespace Anki
       /////////////////////////////////////////////////////////////////////
       // AUDIO
       //
-
-      const u32 AUDIO_SAMPLE_SIZE = 480;
-
-      // Play an audio sample at 24 kHz. Returns true if it was played.
-      bool AudioPlay(s16 buffer[AUDIO_SAMPLE_SIZE]);
+      
+      // @return true if the audio clock says it is time for the next frame
+      bool AudioReady();
+      
+      // Play one frame of audio or silence
+      // @param frame - a pointer to an audio frame or NULL to play one frame of silence
+      void AudioPlayFrame(u8* frame);
 
 // #pragma mark --- Flash Memory ---
       /////////////////////////////////////////////////////////////////////
@@ -269,6 +270,7 @@ namespace Anki
       // x-axis points out cozmo's face
       // y-axis points out of cozmo's left
       // z-axis points out the top of cozmo's head
+      // NB: DO NOT CALL THIS MORE THAN ONCE PER MAINEXECUTION TIC!!!
       void IMUReadData(IMU_DataStructure &IMUData);
 
 // #pragma mark --- UART/Wifi ---
@@ -410,6 +412,27 @@ namespace Anki
 
       // Turn headlights on (true) and off (false)
       void SetHeadlights(bool state);
+      
+// #pragma mark --- Face ---
+      /////////////////////////////////////////////////////////////////////
+      // Face
+      
+      // Update the face to the next frame of an animation
+      // @param frame - a pointer to a variable length frame of face animation data
+      // Frame is in 8-bit RLE format:
+      //  0 terminates the image
+      //  1-63 draw N full lines (N*128 pixels) of black or blue
+      //  64-255 draw 0-191 pixels (N-64) of black or blue, then invert the color for the next run
+      // The decoder starts out drawing black, and inverts the color on every byte >= 64
+      void FaceAnimate(u8* frame);
+      
+      // Move the face to an X, Y offset - where 0, 0 is centered, negative is left/up
+      // This position is relative to the animation displayed when FaceAnimate() was
+      // last called.
+      void FaceMove(s32 x, s32 y);
+      
+      // Blink the eyes
+      void FaceBlink();
 
 // #pragma mark --- Radio ---
       /////////////////////////////////////////////////////////////////////
@@ -442,7 +465,7 @@ namespace Anki
        * @param hot Specify if the message is hot and needs to be sent imeediately. Default false.
        * @return True if sucessfully queued, false otherwise
        */
-      bool RadioSendMessage(const Messages::ID msgID, const void *buffer, const bool reliable=true, const bool hot=false);
+      bool RadioSendMessage(const int msgID, const void *buffer, const bool reliable=true, const bool hot=false);
 
       /** Special method for sending images (from long execution) for thread safety.
        * This method always sends the message as unreliable and hot but is queued until the main execution thread picks

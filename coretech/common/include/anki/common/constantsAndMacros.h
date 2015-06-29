@@ -190,15 +190,6 @@
 #ifndef ABS
 #define ABS(a)    (((a) >= 0) ? (a) : -(a))
 #endif
-#ifndef SIGN
-#define SIGN(a) ((a) >= 0)
-#endif
-
-#define FLT_FLOOR(x) floorf((x) + (f32)FLOATING_POINT_COMPARISON_TOLERANCE)
-#define DBL_FLOOR(x) floor( (x) + (f64)FLOATING_POINT_COMPARISON_TOLERANCE)
-
-#define FLT_ROUND(x) ( ((x) > 0) ? floorf((x) + 0.5f) : ceilf((x) - 0.5f) )
-#define DBL_ROUND(x) ( ((x) > 0) ? floor((x) + 0.5) : ceil((x) - 0.5) )
 
 // Square of a number
 #define SQUARE(x) ((x) * (x))

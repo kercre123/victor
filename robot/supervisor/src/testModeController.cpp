@@ -17,6 +17,7 @@
 #include "steeringController.h"
 #include "wheelController.h"
 #include "animationController.h"
+#include "backpackLightController.h"
 
 #include "anki/common/robot/trig_fast.h"
 
@@ -263,18 +264,25 @@ namespace Anki {
         ///// End of IMUTest /////
         
         ///////// AnimationTest ////////
-        AnimationID_t AT_currAnim;
+        //AnimationID_t AT_currAnim;
         const u32 AT_periodTics = 2000;
         
         
         /////// LightTest ////////
         LEDId ledID_ = (LEDId)0;
         u8 ledColorIdx_ = 0;
-        const u8 LED_COLOR_LIST_SIZE = 3;
-        const LEDColor LEDColorList_[LED_COLOR_LIST_SIZE] = {LED_RED, LED_GREEN, LED_BLUE};
+        const u8 LED_COLOR_LIST_SIZE = 4;
+        const LEDColor LEDColorList_[LED_COLOR_LIST_SIZE] = {LED_RED, LED_GREEN, LED_BLUE, LED_OFF};
         
         bool ledCycleTest_ = true;
         ///// End of LightTest ///
+        
+        
+        /////// FaceDisplayTest ////////
+        s32 facePosX_ = 0;
+        s32 facePosY_ = 0;
+        ///// End of FaceDisplayTest ///
+        
         
         // The number of cycles in between printouts
         // in those tests that print something out.
@@ -300,7 +308,7 @@ namespace Anki {
         PRINT("TestMode reset\n");
         
         // Stop animations that might be playing
-        AnimationController::Stop();
+        AnimationController::Clear();
         
         // Stop wheels and vision system
         WheelController::Enable();
@@ -311,6 +319,9 @@ namespace Anki {
         LiftController::SetAngularVelocity(0);
         HeadController::Enable();
         HeadController::SetAngularVelocity(0);
+        
+        // Backpack lights
+        BackpackLightController::Enable();
         
         return RESULT_OK;
       }
@@ -960,8 +971,7 @@ namespace Anki {
         if (++ticCnt_ >= 200 / TIME_STEP) {
           
           // Raw HAL readings
-          HAL::IMU_DataStructure data;
-          HAL::IMUReadData(data);
+          HAL::IMU_DataStructure data = IMUFilter::GetLatestRawData();
           
           PRINT("Gyro (%f,%f,%f) rad/s, (%f,%f,%f) mm/s^2\n",
                 data.rate_x, data.rate_y, data.rate_z,
@@ -980,39 +990,39 @@ namespace Anki {
         return RESULT_OK;
       }
       
-      Result AnimTestInit()
-      {
-        PRINT("\n==== Starting AnimationTest =====\n");
-        AT_currAnim = 0;
-        AnimationController::Play(AT_currAnim, 0);
-        ticCnt_ = 0;
-        return RESULT_OK;
-      }
+//      Result AnimTestInit()
+//      {
+//        PRINT("\n==== Starting AnimationTest =====\n");
+//        AT_currAnim = 0;
+//        AnimationController::Play(AT_currAnim, 0);
+//        ticCnt_ = 0;
+//        return RESULT_OK;
+//      }
       
-      Result AnimTestUpdate()
-      {
-        if (ticCnt_++ > AT_periodTics) {
-          ticCnt_ = 0;
-          
-          AT_currAnim = (AnimationID_t)(AT_currAnim + 1);
-          
-          // Skip undefined animIDs
-          while(!AnimationController::IsDefined(AT_currAnim)) {
-            if (AT_currAnim == AnimationController::MAX_CANNED_ANIMATIONS) {
-              // Go back to start
-              AT_currAnim = 0;
-            } else {
-              // otherwise just incrememnt
-              AT_currAnim = (AnimationID_t)(AT_currAnim + 1);
-            }
-          }
-          
-          PRINT("Playing animation %d\n", AT_currAnim);
-          AnimationController::Play(AT_currAnim, 0);
-        }
-        
-        return RESULT_OK;
-      }
+//      Result AnimTestUpdate()
+//      {
+//        if (ticCnt_++ > AT_periodTics) {
+//          ticCnt_ = 0;
+//          
+//          AT_currAnim = (AnimationID_t)(AT_currAnim + 1);
+//          
+//          // Skip undefined animIDs
+//          while(!AnimationController::IsDefined(AT_currAnim)) {
+//            if (AT_currAnim == AnimationController::MAX_CANNED_ANIMATIONS) {
+//              // Go back to start
+//              AT_currAnim = 0;
+//            } else {
+//              // otherwise just incrememnt
+//              AT_currAnim = (AnimationID_t)(AT_currAnim + 1);
+//            }
+//          }
+//          
+//          PRINT("Playing animation %d\n", AT_currAnim);
+//          AnimationController::Play(AT_currAnim, 0);
+//        }
+//        
+//        return RESULT_OK;
+//      }
       
       Result GripperTestInit()
       {
@@ -1051,6 +1061,7 @@ namespace Anki {
       Result LightTestInit(s32 flags, s32 ledID, s32 color)
       {
         PRINT("\n==== Starting LightTest  (flags = %x, ledID = %d, color = %x) =====\n", flags, ledID, color);
+        BackpackLightController::Disable();
         
         ledCycleTest_ = flags & LTF_CYCLE_ALL;
 
@@ -1096,6 +1107,56 @@ namespace Anki {
         return RESULT_OK;
       }
 
+      
+      Result FaceDisplayTestInit()
+      {
+        PRINT("\n==== Starting FaceDisplayTest =====\n");
+        ticCnt_ = 0;
+        
+        // Draw "programmer art" face until we get real assets
+        u8 faceFrame[] = { 24, 64+24,      // Start 24 lines down and 24 pixels right
+          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
+          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
+          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
+          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
+          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
+          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
+          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
+          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
+          0 };
+
+        // Draw face
+        HAL::FaceAnimate(faceFrame);
+        
+        return RESULT_OK;
+      }
+      
+      Result FaceDisplayTestUpdate()
+      {
+        if (ticCnt_++ == 200) {
+          
+          if (facePosX_ == 0) {
+            facePosX_ = 10;
+            facePosY_ = -10;
+          } else if (facePosX_ == 10) {
+            facePosX_ = -10;
+            facePosY_ = -10;
+          } else {
+            facePosX_ = 0;
+            facePosY_ = 0;
+          }
+          HAL::FaceMove(facePosX_, facePosY_);
+          PRINT("Face move to %d %d\n", facePosX_, facePosY_);
+          
+        } else if (ticCnt_ > 400) {
+          PRINT("Face blink\n");
+          HAL::FaceBlink();
+          ticCnt_ = 0;
+        }
+        
+        return RESULT_OK;
+      }
+      
       
       Result StopTestInit()
       {
@@ -1238,8 +1299,9 @@ namespace Anki {
             updateFunc = IMUTestUpdate;
             break;
           case TM_ANIMATION:
-            ret = AnimTestInit();
-            updateFunc = AnimTestUpdate;
+            PRINT("Animation test mode needs updating!\n");
+            ret = RESULT_FAIL; // AnimTestInit();
+            updateFunc = NULL; // AnimTestUpdate;
             break;
 #if defined(HAVE_ACTIVE_GRIPPER) && HAVE_ACTIVE_GRIPPER
           case TM_GRIPPER:
@@ -1250,6 +1312,10 @@ namespace Anki {
           case TM_LIGHTS:
             ret = LightTestInit(p1,p2,p3);
             updateFunc = LightTestUpdate;
+            break;
+          case TM_FACE_DISPLAY:
+            ret = FaceDisplayTestInit();
+            updateFunc = FaceDisplayTestUpdate;
             break;
           case TM_STOP_TEST:
             ret = StopTestInit();

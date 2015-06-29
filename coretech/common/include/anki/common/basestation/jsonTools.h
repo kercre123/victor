@@ -27,6 +27,7 @@ namespace Anki
 {
   // Forward declaration
   class Pose3d;
+  class ColorRGBA;
   
   namespace JsonTools
   {
@@ -58,6 +59,12 @@ namespace Anki
     // Get an Anki::Pose3d object by name (translation, rotation axis/angle).
     // Returns true if Pose is set successfully, false otherwise.
     bool GetPoseOptional(const Json::Value& node, const std::string& key, Anki::Pose3d& pose);
+    
+    // Get a ColorRGBA either by name, 4-element u8/float array [R G B A], or
+    // 3-element u8/float array [R G B] (with A = 255/1.0).
+    // NOTE: In the ambiguous case of [1 1 1 (1)], the values will be interpreted as
+    // floats and the color will be white.
+    bool GetColorOptional(const Json::Value& node, const std::string& key, Anki::ColorRGBA& color);
     
     // Dump the json to stdout (pretty-printed). The depth argument limits
     // the depth of the tree that is printed. It is 0 by default, which

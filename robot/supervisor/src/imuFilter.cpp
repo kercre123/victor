@@ -33,6 +33,8 @@ namespace Anki {
     namespace IMUFilter {
       
       namespace {
+        // Last read IMU data
+        HAL::IMU_DataStructure imu_data_;
         
         // Orientation and speed in XY-plane (i.e. horizontal plane) of robot
         f32 rot_ = 0;   // radians
@@ -487,17 +489,16 @@ namespace Anki {
         
         
         // Get IMU data
-        HAL::IMU_DataStructure imu_data;
-        HAL::IMUReadData(imu_data);
+        HAL::IMUReadData(imu_data_);
         
         
         ////// Gyro Update //////
         
         // Filter rotation speeds
         // TODO: Do this in hardware?
-        gyro_filt[0] = imu_data.rate_x * RATE_FILT_COEFF + gyro_filt[0] * (1.f-RATE_FILT_COEFF);
-        gyro_filt[1] = imu_data.rate_y * RATE_FILT_COEFF + gyro_filt[1] * (1.f-RATE_FILT_COEFF);
-        gyro_filt[2] = imu_data.rate_z * RATE_FILT_COEFF + gyro_filt[2] * (1.f-RATE_FILT_COEFF);
+        gyro_filt[0] = imu_data_.rate_x * RATE_FILT_COEFF + gyro_filt[0] * (1.f-RATE_FILT_COEFF);
+        gyro_filt[1] = imu_data_.rate_y * RATE_FILT_COEFF + gyro_filt[1] * (1.f-RATE_FILT_COEFF);
+        gyro_filt[2] = imu_data_.rate_z * RATE_FILT_COEFF + gyro_filt[2] * (1.f-RATE_FILT_COEFF);
       
         
         // Compute head angle wrt to world horizontal plane
@@ -531,9 +532,9 @@ namespace Anki {
         
         
         ///// Accelerometer update /////
-        accel_filt[0] = imu_data.acc_x * ACCEL_FILT_COEFF + accel_filt[0] * (1.f-ACCEL_FILT_COEFF);
-        accel_filt[1] = imu_data.acc_y * ACCEL_FILT_COEFF + accel_filt[1] * (1.f-ACCEL_FILT_COEFF);
-        accel_filt[2] = imu_data.acc_z * ACCEL_FILT_COEFF + accel_filt[2] * (1.f-ACCEL_FILT_COEFF);
+        accel_filt[0] = imu_data_.acc_x * ACCEL_FILT_COEFF + accel_filt[0] * (1.f-ACCEL_FILT_COEFF);
+        accel_filt[1] = imu_data_.acc_y * ACCEL_FILT_COEFF + accel_filt[1] * (1.f-ACCEL_FILT_COEFF);
+        accel_filt[2] = imu_data_.acc_z * ACCEL_FILT_COEFF + accel_filt[2] * (1.f-ACCEL_FILT_COEFF);
         //printf("accel: %f %f %f\n", accel_filt[0], accel_filt[1], accel_filt[2]);
         pitch_ = atan2(accel_filt[0], accel_filt[2]) - headAngle;
         
@@ -612,9 +613,9 @@ namespace Anki {
         //UpdateEventDetection();
         
         // Pickup detection
-        pdFiltAccX_ = imu_data.acc_x * ACCEL_PICKUP_FILT_COEFF + pdFiltAccX_ * (1.f - ACCEL_PICKUP_FILT_COEFF);
-        pdFiltAccY_ = imu_data.acc_y * ACCEL_PICKUP_FILT_COEFF + pdFiltAccY_ * (1.f - ACCEL_PICKUP_FILT_COEFF);
-        pdFiltAccZ_ = imu_data.acc_z * ACCEL_PICKUP_FILT_COEFF + pdFiltAccZ_ * (1.f - ACCEL_PICKUP_FILT_COEFF);
+        pdFiltAccX_ = imu_data_.acc_x * ACCEL_PICKUP_FILT_COEFF + pdFiltAccX_ * (1.f - ACCEL_PICKUP_FILT_COEFF);
+        pdFiltAccY_ = imu_data_.acc_y * ACCEL_PICKUP_FILT_COEFF + pdFiltAccY_ * (1.f - ACCEL_PICKUP_FILT_COEFF);
+        pdFiltAccZ_ = imu_data_.acc_z * ACCEL_PICKUP_FILT_COEFF + pdFiltAccZ_ * (1.f - ACCEL_PICKUP_FILT_COEFF);
         
         // XXX: Commenting this out because pickup detection seems to be firing
         //      when the robot drives up ramp (or the side of a platform) and
@@ -662,6 +663,10 @@ namespace Anki {
         
       } // Update()
       
+      HAL::IMU_DataStructure GetLatestRawData()
+      {
+        return imu_data_;
+      }
       
       f32 GetRotation()
       {

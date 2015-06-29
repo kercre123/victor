@@ -44,6 +44,21 @@ namespace Anki {
         
         webots::Accelerometer* accel_;
         
+        // Accelerometer filter window
+        const u32 MAX_ACCEL_BUFFER_SIZE = 30;
+        f32 accelBuffer_[3][MAX_ACCEL_BUFFER_SIZE];
+        u32 accelBufferStartIdx_ = 0;
+        u32 accelBufferSize_ = 0;
+        
+        // High-pass filter params for tap detection
+        const f32 TAP_DETECT_THRESH = 9;
+        const u32 TAP_DETECT_WINDOW_MS = 100;
+        const f32 CUTOFF_FREQ = 50;
+        const f32 RC = 1.0/(CUTOFF_FREQ*2*3.14);
+        const f32 dt = 0.001*TIMESTEP;
+        const f32 alpha = RC/(RC + dt);
+        
+        
         typedef enum {
           NORMAL = 0,
           FLASHING_ID,
@@ -235,7 +250,7 @@ namespace Anki {
 
         s32 whichAxis = -1;
         for(s32 i=0; i<3; ++i) {
-          absAccel[i] = abs(accelVals[i]);
+          absAccel[i] = fabs(accelVals[i]);
           if(absAccel[i] > maxAbsAccel) {
             whichAxis = i;
             maxAbsAccel = absAccel[i];
@@ -345,6 +360,68 @@ namespace Anki {
         }
       }
       
+      // Returns true if a tap was detected
+      // Given the unfiltered accel values of the current frame, these values are
+      // accumulated into a buffer. Once the buffer has filled, apply high-pass
+      // filter to each axis' buffer. If there is a value that exceeds a threshold
+      // a tap is considered to have been detected.
+      // When a tap is detected
+      bool CheckForTap(f32 accelX, f32 accelY, f32 accelZ)
+      {
+        bool tapDetected = false;
+        
+        // Add accel values to buffer
+        u32 newIdx = accelBufferStartIdx_;
+        if (accelBufferSize_ < MAX_ACCEL_BUFFER_SIZE-1) {
+          newIdx += accelBufferSize_;
+          ++accelBufferSize_;
+        } else {
+          if (++accelBufferStartIdx_ >= MAX_ACCEL_BUFFER_SIZE) {
+            accelBufferStartIdx_ = 0;
+          }
+          accelBufferSize_ = MAX_ACCEL_BUFFER_SIZE;
+        }
+        accelBuffer_[0][newIdx] = accelX;
+        accelBuffer_[1][newIdx] = accelY;
+        accelBuffer_[2][newIdx] = accelZ;
+        
+        if (accelBufferSize_ == MAX_ACCEL_BUFFER_SIZE) {
+          
+          // Compute high-pass filtered values
+          for (u8 axis = 0; axis < 3 && !tapDetected; ++axis) {
+            
+            f32 prevAccelVal = accelBuffer_[axis][accelBufferStartIdx_];
+            f32 prevAccelFiltVal = prevAccelVal;
+            for (u32 i=1; i<MAX_ACCEL_BUFFER_SIZE; ++i) {
+              u32 idx = (accelBufferStartIdx_ + i) % MAX_ACCEL_BUFFER_SIZE;
+              f32 currAccelFiltVal = alpha * (prevAccelFiltVal + accelBuffer_[axis][idx] - prevAccelVal);
+              prevAccelVal = accelBuffer_[axis][idx];
+              prevAccelFiltVal = currAccelFiltVal;
+              
+              if (currAccelFiltVal > TAP_DETECT_THRESH) {
+                printf("ActiveBlock.TapDetected: axis %d, val %f\n", axis, currAccelFiltVal);
+                tapDetected = true;
+                
+                // Fast forward in buffer so that we don't allow tap detection again until
+                // TAP_DETECT_WINDOW_MS later.
+                u32 idxOffset = i + (TAP_DETECT_WINDOW_MS / TIMESTEP);
+                accelBufferStartIdx_ = (accelBufferStartIdx_ + idxOffset) % MAX_ACCEL_BUFFER_SIZE;
+                if (accelBufferSize_ > idxOffset) {
+                  accelBufferSize_ -= idxOffset;
+                } else {
+                  accelBufferSize_ = 0;
+                }
+                
+                break;
+              }
+            }
+          }
+        }
+        
+        return tapDetected;
+      }
+      
+      
       Result Update() {
         if (block_controller.step(TIMESTEP) != -1) {
           
@@ -386,6 +463,25 @@ namespace Anki {
           // TODO: Time probably won't be in seconds on the real blocks...
           const double currTime_sec = block_controller.getTime();
           
+          // Get accel values
+          const double* accelVals = accel_->getValues();
+          const double accelMagSq = accelVals[0]*accelVals[0] + accelVals[1]*accelVals[1] + accelVals[2]*accelVals[2];
+          
+          
+          
+          //////////////////////
+          // Check for taps
+          //////////////////////
+          if (CheckForTap(accelVals[0], accelVals[1], accelVals[2])) {
+            BlockMessages::BlockTapped msg;
+            msg.blockID = blockID_;
+            msg.numTaps = 1;
+            emitter_->send(&msg, BlockMessages::GetSize(BlockMessages::BlockTapped_ID));
+          }
+
+          
+          
+          
           // Run FSM
           switch(state_)
           {
@@ -399,8 +495,6 @@ namespace Anki {
                 
                 // Determine if block is moving by seeing if the magnitude of the
                 // acceleration vector is different from gravity
-                const double* accelVals = accel_->getValues();
-                const double accelMagSq = accelVals[0]*accelVals[0] + accelVals[1]*accelVals[1] + accelVals[2]*accelVals[2];
                 const bool isMoving = !NEAR(accelMagSq, 9.81*9.81, 1.0);
                 
                 if(!isMoving) {

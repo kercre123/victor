@@ -69,8 +69,8 @@ namespace Anki
           //const s32 curTemplateWidth = templateImageWidth >> iScale;
 
           templateCoordinates[iScale] = Meshgrid<f32>(
-            Linspace(-this->templateRegionWidth/2.0f, this->templateRegionWidth/2.0f, static_cast<s32>(FLT_FLOOR(this->templateRegionWidth/scale))),
-            Linspace(-this->templateRegionHeight/2.0f, this->templateRegionHeight/2.0f, static_cast<s32>(FLT_FLOOR(this->templateRegionHeight/scale))));
+            Linspace(-this->templateRegionWidth/2.0f, this->templateRegionWidth/2.0f, static_cast<s32>(floorf(this->templateRegionWidth/scale))),
+            Linspace(-this->templateRegionHeight/2.0f, this->templateRegionHeight/2.0f, static_cast<s32>(floorf(this->templateRegionHeight/scale))));
 
           const s32 numPointsY = templateCoordinates[iScale].get_yGridVector().get_size();
           const s32 numPointsX = templateCoordinates[iScale].get_xGridVector().get_size();
@@ -174,8 +174,8 @@ namespace Anki
         }
 
         Meshgrid<f32> originalCoordinates(
-          Linspace(-this->templateRegionWidth/2.0f, this->templateRegionWidth/2.0f, static_cast<s32>(FLT_FLOOR(this->templateRegionWidth/scale))),
-          Linspace(-this->templateRegionHeight/2.0f, this->templateRegionHeight/2.0f, static_cast<s32>(FLT_FLOOR(this->templateRegionHeight/scale))));
+          Linspace(-this->templateRegionWidth/2.0f, this->templateRegionWidth/2.0f, static_cast<s32>(floorf(this->templateRegionWidth/scale))),
+          Linspace(-this->templateRegionHeight/2.0f, this->templateRegionHeight/2.0f, static_cast<s32>(floorf(this->templateRegionHeight/scale))));
 
         // Unused, remove?
         //const s32 outHeight = originalCoordinates.get_yGridVector().get_size();
@@ -229,10 +229,10 @@ namespace Anki
 
             xOriginal += xGridDelta;
 
-            const f32 x0 = FLT_FLOOR(xTransformed);
+            const f32 x0 = floorf(xTransformed);
             const f32 x1 = ceilf(xTransformed); // x0 + 1.0f;
 
-            const f32 y0 = FLT_FLOOR(yTransformed);
+            const f32 y0 = floorf(yTransformed);
             const f32 y1 = ceilf(yTransformed); // y0 + 1.0f;
 
             // If out of bounds, continue

@@ -58,7 +58,7 @@ template<typename Type> s32 computeSize_float(const Type start, const Type incre
   const Type validRange = maxLimit - minLimit;
 
   const Type diff = (validRange+incrementMagnitude) / incrementMagnitude;
-  const s32 size = static_cast<s32>(FLT_FLOOR(static_cast<f32>(diff)));
+  const s32 size = static_cast<s32>(floorf(static_cast<f32>(diff)));
 
   AnkiConditionalErrorAndReturnValue(size >= 0,
     0, "LinearSequence<Type>::computeSize", "size estimation failed");

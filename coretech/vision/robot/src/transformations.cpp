@@ -781,8 +781,8 @@ namespace Anki
         const f32 roi_maxY = templateRegionOfInterest.bottom - templateRegionHeight/2.0f;
 
         Meshgrid<f32> originalCoordinates(
-          Linspace(roi_minX, roi_maxX, static_cast<s32>(FLT_FLOOR((roi_maxX-roi_minX+1)/(scale)))),
-          Linspace(roi_minY, roi_maxY, static_cast<s32>(FLT_FLOOR((roi_maxY-roi_minY+1)/(scale)))));
+          Linspace(roi_minX, roi_maxX, static_cast<s32>(floorf((roi_maxX-roi_minX+1)/(scale)))),
+          Linspace(roi_minY, roi_maxY, static_cast<s32>(floorf((roi_maxY-roi_minY+1)/(scale)))));
 
         const f32 templateCoordinateIncrementF32 = static_cast<f32>(templateCoordinateIncrement);
 
@@ -924,8 +924,8 @@ namespace Anki
         const f32 roi_maxY = templateRegionOfInterest.bottom - templateRegionHeight/2.0f;
 
         Meshgrid<f32> originalCoordinates(
-          Linspace(roi_minX, roi_maxX, static_cast<s32>(FLT_FLOOR((roi_maxX-roi_minX+1)/(scale)))),
-          Linspace(roi_minY, roi_maxY, static_cast<s32>(FLT_FLOOR((roi_maxY-roi_minY+1)/(scale)))));
+          Linspace(roi_minX, roi_maxX, static_cast<s32>(floorf((roi_maxX-roi_minX+1)/(scale)))),
+          Linspace(roi_minY, roi_maxY, static_cast<s32>(floorf((roi_maxY-roi_minY+1)/(scale)))));
 
         // Unused, remove?
         //const s32 outHeight = originalCoordinates.get_yGridVector().get_size();
@@ -980,10 +980,10 @@ namespace Anki
 
             xOriginal += xGridDelta * templateCoordinateIncrement;
 
-            const f32 x0 = FLT_FLOOR(xTransformed);
+            const f32 x0 = floorf(xTransformed);
             const f32 x1 = x0 + 1.0f; // ceilf(xTransformed);
 
-            const f32 y0 = FLT_FLOOR(yTransformed);
+            const f32 y0 = floorf(yTransformed);
             const f32 y1 = y0 + 1.0f; // ceilf(yTransformed);
 
             // If out of bounds, continue

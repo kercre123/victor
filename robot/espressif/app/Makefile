@@ -52,7 +52,7 @@ COMPONENTS_eagle.app.v6 = \
 
 LINKFLAGS_eagle.app.v6 = \
 	-L../lib        \
-	-L../../../../coretech-external/espressif/lx106/lib \
+	-L$(CORETECH_EXTERNAL_DIR)/espressif/lx106/lib \
 	-nostdlib	\
     -T$(LD_FILE)   \
 	-Wl,--no-check-sections	\

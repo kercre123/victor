@@ -296,7 +296,7 @@ namespace Anki
         // If the point (x_intersect,y_intersect) is not between startPt and endPt,
         // and the robot is closer to the end point than it is to the start point,
         // then we've passed this segment and should go to next one
-        if ( SIGN(seg->startPt_y - y) == SIGN(seg->endPt_y - y)) {
+        if ( signbit(seg->startPt_y - y) == signbit(seg->endPt_y - y)) {
             if (sqDistToStartPt > sqDistToEndPt) {
               return OOR_NEAR_END;
             } else {
@@ -318,7 +318,7 @@ namespace Anki
         // If the point (x_intersect,y_intersect) is not between startPt and endPt,
         // and the robot is closer to the end point than it is to the start point,
         // then we've passed this segment and should go to next one
-        if ( SIGN(seg->startPt_x - x) == SIGN(seg->endPt_x - x)) {
+        if ( signbit(seg->startPt_x - x) == signbit(seg->endPt_x - x)) {
           if (sqDistToStartPt > sqDistToEndPt) {
             return OOR_NEAR_END;
           } else {
@@ -342,13 +342,13 @@ namespace Anki
         CoreTechPrint("m: %f, b: %f\n",line_m_,line_b_);
         CoreTechPrint("x_int: %f, y_int: %f, b_inv: %f\n", x_intersect, y_intersect, b_inv);
         CoreTechPrint("dy: %f, dx: %f, dist: %f\n", dy, dx, shortestDistanceToPath);
-        CoreTechPrint("SIGN(dx): %d, dy_sign: %f\n", (SIGN(dx) ? 1 : -1), line_dy_sign_);
+        CoreTechPrint("signbit(dx): %d, dy_sign: %f\n", signbit(dx), line_dy_sign_);
         CoreTechPrint("lineTheta: %f\n", line_theta_.ToFloat());
         //PRINT("lineTheta: %f, robotTheta: %f\n", seg->theta.ToFloat(), currPose.GetAngle().ToFloat());
 #endif
         
         // Compute the sign of the error distance
-        shortestDistanceToPath *= (SIGN(line_m_) ? 1 : -1) * (SIGN(dy) ? 1 : -1) * line_dy_sign_;
+        shortestDistanceToPath *= (signbit(line_m_) ? -1 : 1) * (signbit(dy) ? -1 : 1) * line_dy_sign_;
         
         
         // Compute angle difference
@@ -359,8 +359,8 @@ namespace Anki
         // If the point (x_intersect,y_intersect) is not between startPt and endPt,
         // and the robot is closer to the end point than it is to the start point,
         // then we've passed this segment and should go to next one
-        if ( (SIGN(seg->startPt_x - x_intersect) == SIGN(seg->endPt_x - x_intersect))
-            && (SIGN(seg->startPt_y - y_intersect) == SIGN(seg->endPt_y - y_intersect)) ) {
+        if ( (signbit(seg->startPt_x - x_intersect) == signbit(seg->endPt_x - x_intersect))
+            && (signbit(seg->startPt_y - y_intersect) == signbit(seg->endPt_y - y_intersect)) ) {
           if (sqDistToStartPt > sqDistToEndPt){
             return OOR_NEAR_END;
           } else {
@@ -441,7 +441,7 @@ namespace Anki
         // Now we have 2 roots.
         // Select the one that's on the same side of the circle center as the robot is.
         x_intersect = x_intersect_2;
-        if (SIGN(dx) == SIGN(x_intersect_1 - x_center)) {
+        if (signbit(dx) == signbit(x_intersect_1 - x_center)) {
           x_intersect = x_intersect_1;
         }
         
