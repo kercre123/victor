@@ -12,10 +12,6 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include "anki/common/robot/benchmarking.h"
 
-//using namespace std;
-
-//#define DISPLAY_DEBUG
-
 typedef struct
 {
   f32 slope;
@@ -45,8 +41,6 @@ namespace Anki
         
       const f32 sigma = static_cast<f32>(boundaryLength) / 64.0f;
 
-      //boundary.Print();
-
       // Copy the boundary to a f32 openCV array
       cv::Mat_<f32> boundaryCv(2, boundaryLength);
       const Point<s16> * restrict pBoundary = boundary.Pointer(0);
@@ -57,18 +51,7 @@ namespace Anki
         pBoundaryCv1[i] = pBoundary[i].x;
       }
       
-#ifdef DISPLAY_DEBUG
-      CoreTechPrint("boundaryCv %d:\n", boundaryCv.cols);
-      for(s32 i=0; i<boundaryCv.cols; i++) {
-        CoreTechPrint("%0.3f ", boundaryCv.at<f32>(0,i));
-      }
-      CoreTechPrint("\n");
-      for(s32 i=0; i<boundaryCv.cols; i++) {
-        CoreTechPrint("%0.3f ", boundaryCv.at<f32>(1,i));
-      }
-      CoreTechPrint("\n\n");
-#endif // #ifdef DISPLAY_DEBUG
-      
+      // Create a DoG filter kernel
       s32 ksize = static_cast<s32>(ceilf((((sigma - 0.8f)/0.3f) + 1.0f)*2.0f + 1.0f) ); // Equation from opencv docs
       ksize = 2*(ksize/2) + 1;
 
@@ -80,25 +63,6 @@ namespace Anki
       cv::Mat_<f32> dg;
       
       cv::filter2D(gk, dg, CV_32F, dxKernel, cv::Point(-1,-1), 0, cv::BORDER_DEFAULT);
-
-      /*CoreTechPrint("gk %d:\n", gk.cols);
-      for(s32 i=0; i<gk.cols; i++) {
-        CoreTechPrint("%0.3f ", gk.at<f32>(0,i));
-      }
-      CoreTechPrint("\n");
-      
-      CoreTechPrint("dB %d:\n", dB.cols);
-      for(s32 i=0; i<dB.cols; i++) {
-        CoreTechPrint("%0.3f ", dB.at<f32>(0,i));
-      }
-      CoreTechPrint("\n");
-      
-      CoreTechPrint("dg %d:\n", dg.cols);
-      for(s32 i=0; i<dg.cols; i++) {
-        CoreTechPrint("%0.3f ", dg.at<f32>(0,i));
-      }
-      CoreTechPrint("\n\n");
-      */
       
       cv::Mat_<f32> dB(2, boundaryLength);
       
@@ -137,18 +101,6 @@ namespace Anki
           pDB1[xBoundary] = curSum1;
         }
       }
-      
-#ifdef DISPLAY_DEBUG
-      CoreTechPrint("dB %d:\n", dB.cols);
-      for(s32 i=0; i<dB.cols; i++) {
-        CoreTechPrint("%0.3f ", dB.at<f32>(0,i));
-      }
-      CoreTechPrint("\n");
-      for(s32 i=0; i<dB.cols; i++) {
-        CoreTechPrint("%0.3f ", dB.at<f32>(1,i));
-      }
-      CoreTechPrint("\n\n");
-#endif // #ifdef DISPLAY_DEBUG
   
       cv::Mat_<f32> bin(1, boundaryLength);
       
@@ -158,15 +110,8 @@ namespace Anki
       for(s32 i=0; i<boundaryLength; i++) {
         pBin[i] = atan2f(pDB1[i], pDB0[i]);
       }
-      
-#ifdef DISPLAY_DEBUG
-      CoreTechPrint("angles %d:\n", bin.cols);
-      for(s32 i=0; i<bin.cols; i++) {
-        CoreTechPrint("%0.3f ", bin.at<f32>(0,i));
-      }
-      CoreTechPrint("\n\n");
-#endif // #ifdef DISPLAY_DEBUG
 
+      // Compute the histogram of orientations, and find the top 4 bins
       // NOTE: this histogram is a bit different than matlab's
       s32 histSize = 16;
       f32 range[] = {-PI_F, PI_F};
@@ -175,24 +120,8 @@ namespace Anki
       cv::Mat hist;
       cv::calcHist(&bin, 1, 0, cv::Mat(), hist, 1, &histSize, ranges, true, false);
 
-#ifdef DISPLAY_DEBUG
-      CoreTechPrint("hist %d:\n", hist.rows);
-      for(s32 i=0; i<hist.rows; i++) {
-        CoreTechPrint("%0.3f ", hist.at<f32>(i,0));
-      }
-      CoreTechPrint("\n\n");
-#endif // #ifdef DISPLAY_DEBUG
-
       cv::Mat maxBins;
       cv::sortIdx(hist, maxBins, CV_SORT_EVERY_COLUMN | CV_SORT_DESCENDING);
-      
-#ifdef DISPLAY_DEBUG
-      CoreTechPrint("maxBins %d:\n", maxBins.rows);
-      for(s32 i=0; i<maxBins.rows; i++) {
-        CoreTechPrint("%d ", maxBins.at<s32>(i,0));
-      }
-      CoreTechPrint("\n\n");
-#endif // #ifdef DISPLAY_DEBUG
       
       bool didFitFourLines = true;
       
@@ -215,19 +144,21 @@ namespace Anki
         
         const s32 numSide = boundaryIndex.size();
         
+        // Solve all the line fit equations in slope-intercept format
+        // TODO: what about horizontal lines?
         if(numSide > 1) {
           // all(boundary(boundaryIndex,2)==boundary(boundaryIndex(1),2))
-          bool allAreTheFirst = true;
-          for(s32 i=0; i<numSide; i++) {
-            if(boundaryIndex[i] == boundaryIndex[0]) {
-              allAreTheFirst = false;
+          bool isVerticalLine = true;
+          for(s32 i=1; i<numSide; i++) {
+            if(pBoundary[boundaryIndex[i]].x != pBoundary[boundaryIndex[0]].x) {
+              isVerticalLine = false;
               break;
             }
           }
 
-          if(allAreTheFirst) {
+          if(isVerticalLine) {
             p[iBin][0] = 0;
-            p[iBin][1] = boundary.Pointer(boundaryIndex[0])->y;
+            p[iBin][1] = boundary.Pointer(boundaryIndex[0])->x;
             lineFits[iBin].switched = true;
           } else {
             // A = [boundary(boundaryIndex,2) ones(numSide,1)];
@@ -243,7 +174,7 @@ namespace Anki
               b.at<f32>(i,0) = boundary.Pointer(boundaryIndex[i])->y;
             }
             
-            // TODO: for speed, switch to QR with gram
+            // TODO: for speed, switch to QR with Gram
             cv::solve(A, b, x, cv::DECOMP_SVD);
             
             p[iBin][0] = x.at<f32>(0,0);
@@ -283,7 +214,6 @@ namespace Anki
               xInt = lineFits[iLine].slope*yInt + lineFits[iLine].intercept;
             }
             
-            //if(xInt >= 1 && xInt <= imageWidth && yInt >= 1 && yInt <= imageHeight) {
             if(xInt >= 0 && xInt < imageWidth && yInt >= 0 && yInt < imageHeight) {
               corners.push_back(cv::Point_<f32>(xInt, yInt));
             }
@@ -306,14 +236,8 @@ namespace Anki
           peaks[i] = Point<s16>(saturate_cast<s16>(sortedQuad.corners[i].x), saturate_cast<s16>(sortedQuad.corners[i].y));
         }
         
-#ifdef DISPLAY_DEBUG
-        CoreTechPrint("sortedQuad: ");
-        sortedQuad.Print();
-#endif // #ifdef DISPLAY_DEBUG
-        
-        // Reorder the indexes to be in the order
-        // [corner1, theCornerOppositeCorner1, corner2, corner3]
-        //corners = corners([1 4 2 3],:);
+        // NOTE: The output is not reordered like the matlab version, because the next step
+        //       after ExtractLaplacianPeaks() or ExtractLineFitsPeaks() expects sorted corners.
       } else {
         corners.clear();
         
