@@ -5,14 +5,21 @@
 uint32 ICACHE_FLASH_ATTR spi_master_init(const SPIBus spi_no, uint32 frequency)
 {
 	uint32 regvalue;
+	const uint32 CPU_MHZ = ((uint32)system_get_cpu_freq()) * 1000000;
 
 	if(spi_no>1) return; //handle invalid input number
 
 	// Calculate the actual frequency
-	if (frequency > 40000000)
+	if (frequency > (CPU_MHZ/2))
 	{
-		frequency = 80000000;
+		frequency = CPU_MHZ;
 	}
+	else
+	{
+		if (frequency < (CPU_MHZ / SPI_CLKDIV_PRE))
+	}
+
+
 
 
   // Setup the GPIO PIN_FUNC_SELECT

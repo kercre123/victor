@@ -54,6 +54,7 @@ bool spi_mast_write(const SPIBus spi_no, const uint32 data);
  */
 uint32 spi_mast_read(const SPIBus spi_no);
 
+#ifdef 0
 //esp8266 slave mode initial
 void spi_slave_init(uint8 spi_no,uint8 data_len);
 //transmit data to esp8266 slave buffer,which needs 16bit transmission ,
@@ -66,5 +67,6 @@ void spi_byte_read_espslave(uint8 spi_no,uint8 *data);
 //esp8266 slave isr handle funtion,tiggered when any transmission is finished.
 //the function is registered in spi_slave_init.
 void spi_slave_isr_handler(void *para);
+#endif
 
 #endif
