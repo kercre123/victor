@@ -192,51 +192,36 @@ return RESULT_FAIL; \
     {
       // TODO: Fill the message for streaming using the imageID
       // memcpy(_streamMsg.image, LoadFaceImage(_imageID);
-
-      u32 i = 0;
-      u8 numLines;
       
       // For now, just put some stuff for display in there, using a few hard-coded
       // patterns depending on ID
       _streamMsg.image.fill(0);
       if(_imageID == 0) {
-        numLines = 64;
-        while(numLines-- > 0) {
-          _streamMsg.image[i++] = 128;
-          _streamMsg.image[i++] = 0;
-        }
+        // All black
+        _streamMsg.image[0] = 0;
       } else if(_imageID == 1) {
-        numLines = 64;
-        while(numLines-- > 0) {
-          _streamMsg.image[i++] = 0;
-          _streamMsg.image[i++] = 128;
-        }
+        // All blue
+        _streamMsg.image[0] = 64; // Switch to blue
+        _streamMsg.image[1] = 63; // Fill lines
+        _streamMsg.image[2] = 0;  // Done
       } else {
-        numLines = 20;
-        while (numLines-- > 0) {
-          _streamMsg.image[i++] = 128;
-          _streamMsg.image[i++] = 0;
-        }
+        // Draw "programmer art" face until we get real assets
         
-        numLines = 24;
-        _streamMsg.image[i++] = 29;
-        while (numLines-- > 0) {
-          _streamMsg.image[i++] = 25;
-          _streamMsg.image[i++] = 20;
-          _streamMsg.image[i++] = 25;
-          _streamMsg.image[i++] = 58;
-        }
-        _streamMsg.image[i++] = 0;
+        static const u8 simpleFace[] = { 24, 64+24,   // Start 24 lines down and 24 pixels right
+          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
+          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
+          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
+          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
+          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
+          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
+          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
+          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
+          0 };
         
-        numLines = 20;
-        while (numLines-- > 0) {
-          _streamMsg.image[i++] = 128;
-          _streamMsg.image[i++] = 0;
+        for(s32 i=0; i<sizeof(simpleFace); ++i) {
+          _streamMsg.image[i] = simpleFace[i];
         }
       }
-      
-      // Die if we just walked over the end of the array above
-      assert(i < _streamMsg.image.size());
       
       return &_streamMsg;
     }
@@ -311,16 +296,19 @@ return RESULT_FAIL; \
     
     RobotMessage* FacePositionKeyFrame::GetStreamMessage()
     {
-      _streamMsg.xCen = _xcen;
-      _streamMsg.yCen = _ycen;
+      //_streamMsg.xCen = _xcen;
+      //_streamMsg.yCen = _ycen;
       
       return &_streamMsg;
     }
     
     Result FacePositionKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot)
     {
-      GET_MEMBER_FROM_JSON(jsonRoot, xcen);
-      GET_MEMBER_FROM_JSON(jsonRoot, ycen);
+      // Just store the center point directly in the message.
+      // No need to duplicate since we don't do anything extra to the stored
+      // values before streaming.
+      GET_MEMBER_FROM_JSON_AND_STORE_IN(jsonRoot, xcen, streamMsg.xCen);
+      GET_MEMBER_FROM_JSON_AND_STORE_IN(jsonRoot, ycen, streamMsg.yCen);
       
       return RESULT_OK;
     }
@@ -379,5 +367,26 @@ _streamMsg.colors[__LED_NAME__] = u32(color) >> 8; } while(0) // Note we shift t
       return &_streamMsg;
     }
   
+    
+#pragma mark -
+#pragma mark BodyPositionKeyFrame
+    
+    Result BodyPositionKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot)
+    {
+      // For now just store the wheel speeds directly in the message.
+      // Once we decide what the Json will actually contain, we may need
+      // to read into some private members and fill the streaming message
+      // dynamically in GetStreamMessage()
+      GET_MEMBER_FROM_JSON_AND_STORE_IN(jsonRoot, wheelSpeedL, streamMsg.wheelSpeedL_mmps);
+      GET_MEMBER_FROM_JSON_AND_STORE_IN(jsonRoot, wheelSpeedR, streamMsg.wheelSpeedR_mmps);
+      
+      return RESULT_OK;
+    }
+    
+    RobotMessage* BodyPositionKeyFrame::GetStreamMessage()
+    {
+      return &_streamMsg;
+    }
+    
   } // namespace Cozmo
 } // namespace Anki

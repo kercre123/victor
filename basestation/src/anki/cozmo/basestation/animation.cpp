@@ -27,7 +27,7 @@
 
 //#include <cassert>
 
-#define DEBUG_ANIMATIONS 1
+#define DEBUG_ANIMATIONS 0
 
 namespace Anki {
 namespace Cozmo {
@@ -147,6 +147,8 @@ namespace Cozmo {
         addResult = _robotAudioTrack.AddKeyFrame(jsonFrame);
       } else if(frameName == BackpackLightsKeyFrame::GetClassName()) {
         addResult = _backpackLightsTrack.AddKeyFrame(jsonFrame);
+      } else if(frameName == BodyPositionKeyFrame::GetClassName()) {
+        addResult = _bodyPosTrack.AddKeyFrame(jsonFrame);
       } else {
         PRINT_NAMED_ERROR("Animation.DefineFromJson.UnrecognizedFrameName",
                           "Frame %d in '%s' animation has unrecognized name '%s'.\n",
@@ -183,7 +185,8 @@ _faceImageTrack.__METHOD__() __COMBINE_WITH__ \
 _facePosTrack.__METHOD__() __COMBINE_WITH__ \
 _deviceAudioTrack.__METHOD__() __COMBINE_WITH__ \
 _robotAudioTrack.__METHOD__() __COMBINE_WITH__ \
-_backpackLightsTrack.__METHOD__()
+_backpackLightsTrack.__METHOD__() __COMBINE_WITH__ \
+_bodyPosTrack.__METHOD__()
   
   Result Animation::Init()
   {
@@ -221,13 +224,24 @@ _backpackLightsTrack.__METHOD__()
       _deviceAudioTrack.MoveToNextKeyFrame();
     }
     
-    // Don't send frames if robot has no space for them
+    // FlowControl: Don't send frames if robot has no space for them
     //const bool isRobotReadyForFrames = !robot.IsAnimationBufferFull();
-    s32 numFramesToSend = robot.GetNumAnimationFramesFree();
+    s32 numBytesToSend = robot.GetNumAnimationBytesFree();
     
-    while(numFramesToSend-- > 0 && !IsEmpty())
+    // FlowControl: Also don't send too many messages (even if small) because it
+    // will overwhelm the reliable transport buffer on the robot
+    s32 numFramesToSend = 10;
+    
+    while(numFramesToSend-- > 0 && numBytesToSend > 0 && !IsFinished())
     {
+#     if DEBUG_ANIMATIONS
+      PRINT_NAMED_INFO("Animation.Update", "%d bytes / %d frames left to send this Update.\n",
+                       numBytesToSend, numFramesToSend);
+#     endif
+      
       RobotMessage* msg = nullptr;
+      
+      Result sendResult = RESULT_OK;
       
       // Have to always send an audio frame to keep time, whether that's the next
       // audio sample or a silent frame. This increments "streamingTime"
@@ -238,17 +252,25 @@ _backpackLightsTrack.__METHOD__()
         msg = _robotAudioTrack.GetCurrentKeyFrame().GetStreamMessage();
         if(msg != nullptr) {
           // Still have samples to send, don't increment to the next frame in the track
+          //PRINT_NAMED_INFO("Animation.Update", "Streaming AudioSampleKeyFrame.\n");
           robot.SendMessage(*msg);
-          
+          numBytesToSend -= msg->GetSize() + sizeof(RobotMessage::ID);
+          if(sendResult != RESULT_OK) { return sendResult; }
         } else {
           // No samples left to send for this keyframe. Move to next keyframe,
           // and for now send silence.
+          //PRINT_NAMED_INFO("Animation.Update", "Streaming AudioSilenceKeyFrame.\n");
           _robotAudioTrack.MoveToNextKeyFrame();
           robot.SendMessage(_silenceMsg);
+          numBytesToSend -= _silenceMsg.GetSize() + sizeof(RobotMessage::ID);
+          if(sendResult != RESULT_OK) { return sendResult; }
         }
       } else {
         // No frames left or not time to play next frame yet, so send silence
+        //PRINT_NAMED_INFO("Animation.Update", "Streaming AudioSilenceKeyFrame.\n");
         robot.SendMessage(_silenceMsg);
+        numBytesToSend -= _silenceMsg.GetSize() + sizeof(RobotMessage::ID);
+        if(sendResult != RESULT_OK) { return sendResult; }
       }
       
       // Increment fake "streaming" time, so we can evaluate below whether
@@ -266,38 +288,65 @@ _backpackLightsTrack.__METHOD__()
       // for each one, just once for each audio/silence frame.
       //
       
-      Result sendResult = RESULT_OK;
-      
       msg = _headTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms);
       if(msg != nullptr) {
+#       if DEBUG_ANIMATIONS
+        PRINT_NAMED_INFO("Animation.Update", "Streaming HeadAngleKeyFrame.\n");
+#       endif
         sendResult = robot.SendMessage(*msg);
+        numBytesToSend -= msg->GetSize() + sizeof(RobotMessage::ID);
         if(sendResult != RESULT_OK) { return sendResult; }
       }
       
       msg = _liftTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms);
       if(msg != nullptr) {
+#       if DEBUG_ANIMATIONS
+        PRINT_NAMED_INFO("Animation.Update", "Streaming LiftHeightKeyFrame.\n");
+#       endif
         sendResult = robot.SendMessage(*msg);
+        numBytesToSend -= msg->GetSize() + sizeof(RobotMessage::ID);
         if(sendResult != RESULT_OK) { return sendResult; }
       }
       
       msg = _facePosTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms);
       if(msg != nullptr) {
+#       if DEBUG_ANIMATIONS
+        PRINT_NAMED_INFO("Animation.Update", "Streaming FacePositionKeyFrame.\n");
+#       endif
         sendResult = robot.SendMessage(*msg);
+        numBytesToSend -= msg->GetSize() + sizeof(RobotMessage::ID);
         if(sendResult != RESULT_OK) { return sendResult; }
       }
       
       msg = _faceImageTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms);
       if(msg != nullptr) {
+#       if DEBUG_ANIMATIONS
+        PRINT_NAMED_INFO("Animation.Update", "Streaming FaceImageKeyFrame.\n");
+#       endif
         sendResult = robot.SendMessage(*msg);
+        numBytesToSend -= msg->GetSize() + sizeof(RobotMessage::ID);
         if(sendResult != RESULT_OK) { return sendResult; }
       }
       
       msg = _backpackLightsTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms);
       if(msg != nullptr) {
+#       if DEBUG_ANIMATIONS
+        PRINT_NAMED_INFO("Animation.Update", "Streaming BackpackLightsKeyFrame.\n");
+#       endif
         sendResult = robot.SendMessage(*msg);
+        numBytesToSend -= msg->GetSize() + sizeof(RobotMessage::ID);
         if(sendResult != RESULT_OK) { return sendResult; }
       }
       
+      msg = _bodyPosTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms);
+      if(msg != nullptr) {
+#       if DEBUG_ANIMATIONS
+        PRINT_NAMED_INFO("Animation.Update", "Streaming BodyPositionKeyFrame.\n");
+#       endif
+        sendResult = robot.SendMessage(*msg);
+        numBytesToSend -= msg->GetSize() + sizeof(RobotMessage::ID);
+        if(sendResult != RESULT_OK) { return sendResult; }
+      }
       
     } // while(numFramesToSend > 0)
     

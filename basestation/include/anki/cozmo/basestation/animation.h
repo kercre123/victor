@@ -110,6 +110,7 @@ namespace Anki {
       Track<FaceImageKeyFrame>      _faceImageTrack;
       Track<FacePositionKeyFrame>   _facePosTrack;
       Track<BackpackLightsKeyFrame> _backpackLightsTrack;
+      Track<BodyPositionKeyFrame>   _bodyPosTrack;
       
       Track<DeviceAudioKeyFrame>  _deviceAudioTrack;
       Track<RobotAudioKeyFrame>   _robotAudioTrack;

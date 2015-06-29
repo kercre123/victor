@@ -29,17 +29,6 @@ namespace Anki {
   namespace Cozmo {
     namespace AnimationController {
       
-      // Amount of "pre-roll" that needs to be buffered before a streamed animation
-      // will start playing, in number of keyframes (noting that each keyframe is 33ms)
-      static const s32 PREROLL_BUFFER_LENGTH = 500/33; // 1/2 a second (500ms / (33ms per frame))
-      
-      // Streaming KeyFrame buffer size, in number of keyframes
-      static const s32 KEYFRAME_BUFFER_LENGTH = 128;
-      
-      // If buffer gets within this number of keyframes of the buffer length,
-      // then it is considered "full" for the purposes of IsBufferFull() below.
-      static const s32 KEYFRAME_BUFFER_PADDING = 32;
-      
       Result Init();
 
       // Buffer up a new KeyFrame for playing, using a KeyFrame message
@@ -50,11 +39,13 @@ namespace Anki {
       Result BufferKeyFrame(const Messages::AnimKeyFrame_FaceImage&      msg);
       Result BufferKeyFrame(const Messages::AnimKeyFrame_FacePosition&   msg);
       Result BufferKeyFrame(const Messages::AnimKeyFrame_BackpackLights& msg);
+      Result BufferKeyFrame(const Messages::AnimKeyFrame_BodyMotion&     msg);
+      Result BufferKeyFrame(const Messages::AnimKeyFrame_EndOfAnimation& msg);
 
       // Plays any buffered keyframes available, if enough of a pre-roll is
       // buffered up or we've received all the keyframes for the animation
       // that's currently playing.
-      void Update();
+      Result Update();
       
       // Clears any remaining buffered keyframes and thus immediately stops
       // animation from playing
@@ -71,7 +62,9 @@ namespace Anki {
       // Get approximate number of frames available in the streaming buffer,
       // subject to some padding to leave space for frames that might be on
       // their way in the comms channel.
-      s32  GetNumFramesFree();
+      //s32  GetNumFramesFree();
+      
+      s32 GetApproximateNumBytesFree();
       
       
     } // namespace AnimationController

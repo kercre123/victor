@@ -305,7 +305,10 @@ namespace Anki {
         // Head & Lift Position Updates
         //////////////////////////////////////////////////////////////
 
-        AnimationController::Update();
+        if(AnimationController::Update() != RESULT_OK) {
+          PRINT("Failed updating AnimationController. Clearing.\n");
+          AnimationController::Clear();
+        }
         //EyeController::Update(); // Deprecated! Needs updating for OLED screen
         HeadController::Update();
         LiftController::Update();

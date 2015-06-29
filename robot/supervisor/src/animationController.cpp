@@ -10,11 +10,10 @@
 #include "liftController.h"
 #include "wheelController.h"
 #include "steeringController.h"
-#include "streamedKeyFrame.h"
 #include "speedController.h"
 
 
-#define DEBUG_ANIMATION_CONTROLLER 1
+#define DEBUG_ANIMATION_CONTROLLER 0
 
 #define USE_HARDCODED_ANIMATIONS 0
 
@@ -24,28 +23,33 @@ namespace AnimationController {
   
   namespace {
     
-    // Circular buffer of keyframes
-    ONCHIP StreamedKeyFrame _keyFrameBuffer[KEYFRAME_BUFFER_LENGTH];
-    s32  _currentFrame;
-    s32  _lastFrame;
+    // Streaming KeyFrame buffer size, in bytes
+    static const s32 KEYFRAME_BUFFER_SIZE = 16384;
+    
+    // Amount of "pre-roll" that needs to be buffered before a streamed animation
+    // will start playing, in number of keyframes
+    static const s32 PREROLL_BUFFER_LENGTH = 5;
+    
+    // If buffer gets within this number of bytes of the buffer length,
+    // then it is considered "full" for the purposes of IsBufferFull() below.
+    static const s32 KEYFRAME_BUFFER_PADDING = KEYFRAME_BUFFER_SIZE / 8;
+    
+    // Circular byte buffer for keyframe messages
+    ONCHIP u8 _keyFrameBuffer[KEYFRAME_BUFFER_SIZE];
+    s32 _currentBufferPos;
+    s32 _lastBufferPos;
+    
     s32  _numFramesBuffered;
+    
     bool _haveReceivedTerminationFrame;
     bool _isPlaying;
+    
     
 #   if DEBUG_ANIMATION_CONTROLLER
     TimeStamp_t _currentTime_ms;
 #   endif
 
-    
   } // "private" members
-
-  
-  // Forward decl.
-//  void ReallyStop();
-//  void StopCurrent();
-  
-  
-  // ========== End of Animation Start/Update/Stop functions ===========
   
   static void DefineHardCodedAnimations()
   {
@@ -278,9 +282,16 @@ namespace AnimationController {
     PRINT("Clearing AnimationController\n");
 #   endif
     
-    _currentFrame = 0;
-    _lastFrame    = 0;
+    _currentBufferPos = 0;
+    _lastBufferPos = 0;
+    
+//    _currentFrame = 0;
+//    _lastFrame    = 0;
     _numFramesBuffered = 0;
+    
+//    _currentFaceFrame = 0;
+//    _lastFaceFrame    = 0;
+    
     _haveReceivedTerminationFrame = false;
     _isPlaying = false;
     
@@ -289,161 +300,125 @@ namespace AnimationController {
 #   endif
     
     // Necessary?
-    //memset(_keyFrameBuffer, KEYFRAME_BUFFER_LENGTH, sizeof(StreamedKeyFrame));
+    //memset(_keyFrameBuffer, KEYFRAME_BUFFER_SIZE, sizeof(u8));
   }
  
-  
-  static Result AdvanceLastFrame()
+  static s32 GetNumBytesAvailable()
   {
-    // Move to next frame in the buffer, and deal with the fact that this is a
-    // circular buffer
-    ++_lastFrame;
-    if(_lastFrame == KEYFRAME_BUFFER_LENGTH) {
-      _lastFrame = 0;
+    if(_lastBufferPos >= _currentBufferPos) {
+      return sizeof(_keyFrameBuffer) - (_lastBufferPos - _currentBufferPos);
+    } else {
+      return _currentBufferPos - _lastBufferPos;
     }
+  }
+  
+  s32 GetApproximateNumBytesFree()
+  {
+    return MAX(0, GetNumBytesAvailable() - KEYFRAME_BUFFER_PADDING);
+  }
+  
+  static void CopyIntoBuffer(const u8* data, s32 numBytes)
+  {
+    assert(numBytes < sizeof(_keyFrameBuffer));
     
-    if(_lastFrame == _currentFrame) {
-      // Ran out of buffer!
-      AnkiError("AnimationController.BufferKeyFrame.BufferFull",
-                "KeyFrame buffer full, can't add given KeyFrame!\n");
+    if(_lastBufferPos + numBytes < sizeof(_keyFrameBuffer)) {
+      // There's enough room from current end position to end of buffer to just
+      // copy directly
+      memcpy(_keyFrameBuffer + _lastBufferPos, data, numBytes);
+      _lastBufferPos += numBytes;
+    } else {
+      // Copy the first chunk into whatever fits from current position to end of
+      // the buffer
+      const s32 firstChunk = sizeof(_keyFrameBuffer) - _lastBufferPos;
+      memcpy(_keyFrameBuffer + _lastBufferPos, data, firstChunk);
       
-      // Put lastFrame back to what it was
-      if(_lastFrame == 0) {
-        _lastFrame = KEYFRAME_BUFFER_LENGTH-1;
-      } else {
-        --_lastFrame;
-      }
+      // Copy the remaining data starting at the beginning of the buffer
+      memcpy(_keyFrameBuffer, data+firstChunk, numBytes - firstChunk);
+      _lastBufferPos = numBytes-firstChunk;
+     }
+  }
+  
+  static void RewindBufferOneType()
+  {
+    _currentBufferPos -= sizeof(Messages::ID);
+    if(_currentBufferPos < 0) {
+      _currentBufferPos += sizeof(_keyFrameBuffer);
+    }
+  }
+  
+  static inline void SetTypeIndicator(Messages::ID msgType)
+  {
+    CopyIntoBuffer((u8*)&msgType, sizeof(msgType));
+  }
+  
+  static void GetFromBuffer(u8* data, s32 numBytes)
+  {
+    assert(numBytes < sizeof(_keyFrameBuffer));
+    
+    if(_currentBufferPos + numBytes < sizeof(_keyFrameBuffer)) {
+      // There's enough room from current position to end of buffer to just
+      // copy directly
+      memcpy(data, _keyFrameBuffer + _currentBufferPos, numBytes);
+      _currentBufferPos += numBytes;
+    } else {
+      // Copy the first chunk from whatever remains from current position to end of
+      // the buffer
+      const s32 firstChunk = sizeof(_keyFrameBuffer) - _currentBufferPos;
+      memcpy(data, _keyFrameBuffer + _currentBufferPos, firstChunk);
       
-      return RESULT_FAIL_OUT_OF_MEMORY;
+      // Copy the remaining data starting at the beginning of the buffer
+      memcpy(data+firstChunk, _keyFrameBuffer, numBytes - firstChunk);
+      _currentBufferPos = numBytes-firstChunk;
     }
-
-    // "Reset" the frame:
-    _keyFrameBuffer[_lastFrame].setsWhichTracks = 0;
-    
-    ++_numFramesBuffered;
-    
-//#   if DEBUG_ANIMATION_CONTROLLER
-//    PRINT("Advanced LastFrame in AnimationController: lastFrame=%d, numBuffered=%d\n",
-//          _lastFrame, _numFramesBuffered);
-//#   endif
-    
-    return RESULT_OK;
-    
-  } // AdvanceLastFrame()
-  
-  Result BufferKeyFrame(const Messages::AnimKeyFrame_AudioSample& msg)
-  {
-//#   if DEBUG_ANIMATION_CONTROLLER
-//    PRINT("AnimationController is buffering AudioSample keyframe.\n");
-//#   endif
-    
-    // New audio frame: advance to the next frame in the buffer and then
-    // populate it
-    Result lastResult = AdvanceLastFrame();
-    AnkiConditionalErrorAndReturnValue(lastResult== RESULT_OK, lastResult,
-                                       "BufferKeyFrame", "Failed to advance last frame counter.\n");
-    
-    StreamedKeyFrame& lastKeyFrame = _keyFrameBuffer[_lastFrame];
-    
-    lastKeyFrame.setsWhichTracks |= StreamedKeyFrame::KF_SETS_AUDIO;
-    
-    assert(sizeof(msg.sample)==sizeof(StreamedKeyFrame::audioSample));
-    
-    memcpy(lastKeyFrame.audioSample, msg.sample, sizeof(StreamedKeyFrame::audioSample));
-
-    return lastResult;
   }
   
-  Result BufferKeyFrame(const Messages::AnimKeyFrame_AudioSilence& msg)
+  static inline Messages::ID GetTypeIndicator()
   {
-//#   if DEBUG_ANIMATION_CONTROLLER
-//    PRINT("AnimationController is buffering AudioSilence keyframe.\n");
-//#   endif
-
-    // Silent audio frame just advances us to the next frame in the buffer
-    return AdvanceLastFrame();
+    Messages::ID msgID;
+    GetFromBuffer((u8*)&msgID, sizeof(Messages::ID));
+    return msgID;
   }
   
-  
-  Result BufferKeyFrame(const Messages::AnimKeyFrame_HeadAngle& msg)
-  {
-//#   if DEBUG_ANIMATION_CONTROLLER
-//    PRINT("AnimationController is buffering HeadAngle keyframe.\n");
-//#   endif
-
-    // Just set the last frame's head properties:
-    StreamedKeyFrame& lastKeyFrame = _keyFrameBuffer[_lastFrame];
-    lastKeyFrame.setsWhichTracks |= StreamedKeyFrame::KF_SETS_HEAD;
-    lastKeyFrame.headAngle_deg = msg.angle_deg;
-    lastKeyFrame.headTime_ms   = msg.time_ms;
-    
-    return RESULT_OK;
+//  PRINT("Buffering anim keyframe %s, ID=%d\n", QUOTE(__MSG_TYPE__), Messages::GET_MESSAGE_ID(__MSG_TYPE__));
+#define DEFINE_BUFFER_KEY_FRAME(__MSG_TYPE__) \
+  Result BufferKeyFrame(const Messages::__MSG_TYPE__& msg) \
+  { \
+    const s32 numBytesAvailable = GetNumBytesAvailable(); \
+    const s32 numBytesNeeded = sizeof(msg) + sizeof(Messages::ID); \
+    AnkiConditionalErrorAndReturnValue(numBytesAvailable >= numBytesNeeded, RESULT_OK , \
+                                       "BufferKeyFrame", \
+                                       "Not enough buffer available for keyframe (%d bytes available, %d needed).\n", \
+                                       numBytesAvailable, numBytesNeeded); \
+    SetTypeIndicator(Messages::GET_MESSAGE_ID(__MSG_TYPE__)); \
+    CopyIntoBuffer((u8*)&msg, sizeof(msg)); \
+    if(Messages::GET_MESSAGE_ID(__MSG_TYPE__) == Messages::AnimKeyFrame_AudioSample_ID || \
+       Messages::GET_MESSAGE_ID(__MSG_TYPE__) == Messages::AnimKeyFrame_AudioSilence_ID) \
+    { ++_numFramesBuffered; } \
+    return RESULT_OK; \
   }
   
-  Result BufferKeyFrame(const Messages::AnimKeyFrame_LiftHeight&   msg)
-  {
-//#   if DEBUG_ANIMATION_CONTROLLER
-//    PRINT("AnimationController is buffering LiftHeight keyframe.\n");
-//#   endif
-
-    StreamedKeyFrame& lastKeyFrame = _keyFrameBuffer[_lastFrame];
-    lastKeyFrame.setsWhichTracks |= StreamedKeyFrame::KF_SETS_LIFT;
-    lastKeyFrame.liftHeight_mm = msg.height_mm;
-    lastKeyFrame.liftTime_ms   = msg.time_ms;
-    
-    return RESULT_OK;
-  }
+  DEFINE_BUFFER_KEY_FRAME(AnimKeyFrame_AudioSample)
   
-  Result BufferKeyFrame(const Messages::AnimKeyFrame_FaceImage& msg)
-  {
-//#   if DEBUG_ANIMATION_CONTROLLER
-//    PRINT("AnimationController is buffering FaceImage keyframe.\n");
-//#   endif
-
-    StreamedKeyFrame& lastKeyFrame = _keyFrameBuffer[_lastFrame];
-    lastKeyFrame.setsWhichTracks |= StreamedKeyFrame::KF_SETS_FACE_FRAME;
-    
-    // TODO: Update this to copy out a variable-length amount of data
-    memcpy(lastKeyFrame.faceFrame, msg.image, sizeof(msg.image));
-    
-    return RESULT_OK;
-  }
+  DEFINE_BUFFER_KEY_FRAME(AnimKeyFrame_AudioSilence)
   
-  Result BufferKeyFrame(const Messages::AnimKeyFrame_FacePosition& msg)
-  {
-//#   if DEBUG_ANIMATION_CONTROLLER
-//    PRINT("AnimationController is buffering FacePosition keyframe.\n");
-//#   endif
-
-    StreamedKeyFrame& lastKeyFrame = _keyFrameBuffer[_lastFrame];
-    lastKeyFrame.setsWhichTracks |= StreamedKeyFrame::KF_SETS_FACE_POSITION;
-    lastKeyFrame.faceCenX = msg.xCen;
-    lastKeyFrame.faceCenY = msg.yCen;
-    
-    return RESULT_OK;
-  }
+  DEFINE_BUFFER_KEY_FRAME(AnimKeyFrame_HeadAngle)
   
-  Result BufferKeyFrame(const Messages::AnimKeyFrame_BackpackLights& msg)
-  {
-    StreamedKeyFrame& lastKeyFrame = _keyFrameBuffer[_lastFrame];
-    lastKeyFrame.setsWhichTracks |= StreamedKeyFrame::KF_SETS_BACKPACK_LEDS;
-    for(s32 iLED=0; iLED < NUM_BACKPACK_LEDS; ++iLED) {
-      lastKeyFrame.backpackLEDs[iLED] = msg.colors[iLED];
-    }
-    
-    return RESULT_OK;
-  }
+  DEFINE_BUFFER_KEY_FRAME(AnimKeyFrame_LiftHeight)
+  
+  DEFINE_BUFFER_KEY_FRAME(AnimKeyFrame_FaceImage)
+  
+  DEFINE_BUFFER_KEY_FRAME(AnimKeyFrame_FacePosition)
+  
+  DEFINE_BUFFER_KEY_FRAME(AnimKeyFrame_BackpackLights)
+  
+  DEFINE_BUFFER_KEY_FRAME(AnimKeyFrame_BodyMotion)
+  
+  DEFINE_BUFFER_KEY_FRAME(AnimKeyFrame_EndOfAnimation)
+  
   
   bool IsBufferFull()
   {
-    return _numFramesBuffered > (KEYFRAME_BUFFER_LENGTH - KEYFRAME_BUFFER_PADDING);
-  }
-  
-  s32 GetNumFramesFree()
-  {
-    const s32 framesFree = MAX(0, KEYFRAME_BUFFER_LENGTH-KEYFRAME_BUFFER_PADDING-_numFramesBuffered);
-
-    return framesFree;
+    return GetNumBytesAvailable() > 0;
   }
   
   bool IsPlaying()
@@ -471,106 +446,168 @@ namespace AnimationController {
     return ready;
   } // IsReadyToPlay()
   
-  void Update()
+  Result Update()
   {
     if(IsReadyToPlay()) {
       
       // If AudioReady() returns true, we are ready to move to the next keyframe
-      if(HAL::AudioReady()) {
+      if(HAL::AudioReady())
+      {
+        
+        // Next thing in the buffer should be audio or silence:
+        switch(GetTypeIndicator())
+        {
+          case Messages::AnimKeyFrame_AudioSilence_ID:
+          {
+            Messages::AnimKeyFrame_AudioSilence msg;
+            GetFromBuffer((u8*)&msg, sizeof(msg));
+            HAL::AudioPlayFrame(NULL);
+            break;
+          }
+          case Messages::AnimKeyFrame_AudioSample_ID:
+          {
+            Messages::AnimKeyFrame_AudioSample msg;
+            GetFromBuffer((u8*)&msg, sizeof(msg));
+            HAL::AudioPlayFrame(msg.sample);
+            break;
+          }
+          default:
+            PRINT("Expecting either audio sample or audio sample next in animation buffer.\n");
+            return RESULT_FAIL;
+        }
         
 #       if DEBUG_ANIMATION_CONTROLLER
         _currentTime_ms += 33;
 #       endif
         
-        StreamedKeyFrame& keyFrame = _keyFrameBuffer[_currentFrame];
-        
-        // Go through each track and see if this keyframe specifies anything
-        // for it. If so, take appropriate action.
-        if( !(keyFrame.setsWhichTracks & StreamedKeyFrame::KF_IS_TERMINATION) ) {
-          _isPlaying = true;
-          
-          if(keyFrame.setsWhichTracks & StreamedKeyFrame::KF_SETS_AUDIO) {
-            HAL::AudioPlayFrame(keyFrame.audioSample);
-          } else {
-            
-            // Play "silence"
-            HAL::AudioPlayFrame(NULL);
-            
-          } // if(setsAudio)
-          
-          if(keyFrame.setsWhichTracks & StreamedKeyFrame::KF_SETS_HEAD) {
-#           if DEBUG_ANIMATION_CONTROLLER
-            PRINT("AnimationController[t=%dms(%d)] requesting head angle of %ddeg over %.2fsec\n",
-                  _currentTime_ms, HAL::GetTimeStamp(),
-                  keyFrame.headAngle_deg, static_cast<f32>(keyFrame.headTime_ms)*.001f);
-#           endif
-            
-            HeadController::SetDesiredAngle(DEG_TO_RAD(static_cast<f32>(keyFrame.headAngle_deg)), 0.1f, 0.1f,
-                                            static_cast<f32>(keyFrame.headTime_ms)*.001f);
-            
-          } // if(setsHead)
-          
-          if(keyFrame.setsWhichTracks & StreamedKeyFrame::KF_SETS_LIFT) {
-#           if DEBUG_ANIMATION_CONTROLLER
-            PRINT("AnimationController[t=%dms(%d)] requesting lift height of %dmm over %.2fsec\n",
-                  _currentTime_ms, HAL::GetTimeStamp(),
-                  keyFrame.liftHeight_mm, static_cast<f32>(keyFrame.liftTime_ms)*.001f);
-#           endif
-
-            LiftController::SetDesiredHeight(static_cast<f32>(keyFrame.liftHeight_mm), 0.1f, 0.1f,
-                                             static_cast<f32>(keyFrame.liftTime_ms)*.001f);
-          } // if(setsLift)
-          
-          
-          if(keyFrame.setsWhichTracks & StreamedKeyFrame::KF_SETS_WHEELS) {
-            
-            WheelController::SetDesiredWheelSpeeds(keyFrame.wheelSpeedL, keyFrame.wheelSpeedR);
-          }
-          
-          if(keyFrame.setsWhichTracks & StreamedKeyFrame::KF_SETS_BACKPACK_LEDS) {
-#           if DEBUG_ANIMATION_CONTROLLER
-            PRINT("AnimationController[t=%dms(%d)] setting backpack LEDs.\n",
-                  _currentTime_ms, HAL::GetTimeStamp());
-#           endif
-            for(s32 iLED=0; iLED<NUM_BACKPACK_LEDS; ++iLED) {
-              HAL::SetLED(static_cast<LEDId>(iLED), keyFrame.backpackLEDs[iLED]);
+        // Keep reading until we hit another audio type, then rewind one
+        // (The rewind is a little icky, but I'm leaving it for now)
+        bool nextAudioFrameFound = false;
+        bool terminatorFound = false;
+        while(!nextAudioFrameFound && !terminatorFound) {
+          switch(GetTypeIndicator())
+          {
+            case Messages::AnimKeyFrame_AudioSample_ID:
+            case Messages::AnimKeyFrame_AudioSilence_ID:
+              nextAudioFrameFound = true;
+              break;
+              
+            case Messages::AnimKeyFrame_EndOfAnimation_ID:
+            {
+              Messages::AnimKeyFrame_EndOfAnimation msg;
+              GetFromBuffer((u8*)&msg, sizeof(msg)); // just pull it out of the buffer
+              terminatorFound = true;
+              break;
             }
-          }
-          
-          if(keyFrame.setsWhichTracks & StreamedKeyFrame::KF_SETS_FACE_FRAME) {
-#           if DEBUG_ANIMATION_CONTROLLER
-            PRINT("AnimationController[t=%dms(%d)] setting face frame.\n",
-                  _currentTime_ms, HAL::GetTimeStamp());
-#           endif
-            
-            HAL::FaceAnimate(keyFrame.faceFrame);
-          }
-          
-          if(keyFrame.setsWhichTracks & StreamedKeyFrame::KF_SETS_FACE_POSITION) {
-#           if DEBUG_ANIMATION_CONTROLLER
-            PRINT("AnimationController[t=%dms(%d)] setting face position to (%d,%d).\n",
-                  _currentTime_ms, HAL::GetTimeStamp(), keyFrame.faceCenX, keyFrame.faceCenY);
-#           endif
-            
-            HAL::FaceMove(keyFrame.faceCenX, keyFrame.faceCenY);
-          }
-          
-
-          
-        } else {
-          // Termination frame reached!
+              
+            case Messages::AnimKeyFrame_HeadAngle_ID:
+            {
+              Messages::AnimKeyFrame_HeadAngle msg;
+              GetFromBuffer((u8*)&msg, sizeof(msg));
+              
+#             if DEBUG_ANIMATION_CONTROLLER
+              PRINT("AnimationController[t=%dms(%d)] requesting head angle of %ddeg over %.2fsec\n",
+                    _currentTime_ms, HAL::GetTimeStamp(),
+                    msg.angle_deg, static_cast<f32>(msg.time_ms)*.001f);
+#             endif
+              
+              HeadController::SetDesiredAngle(DEG_TO_RAD(static_cast<f32>(msg.angle_deg)), 0.1f, 0.1f,
+                                              static_cast<f32>(msg.time_ms)*.001f);
+              break;
+            }
+              
+            case Messages::AnimKeyFrame_LiftHeight_ID:
+            {
+              Messages::AnimKeyFrame_LiftHeight msg;
+              GetFromBuffer((u8*)&msg, sizeof(msg));
+              
+#             if DEBUG_ANIMATION_CONTROLLER
+              PRINT("AnimationController[t=%dms(%d)] requesting lift height of %dmm over %.2fsec\n",
+                    _currentTime_ms, HAL::GetTimeStamp(),
+                    msg.height_mm, static_cast<f32>(msg.time_ms)*.001f);
+#             endif
+              
+              LiftController::SetDesiredHeight(static_cast<f32>(msg.height_mm), 0.1f, 0.1f,
+                                               static_cast<f32>(msg.time_ms)*.001f);
+              break;
+            }
+              
+            case Messages::AnimKeyFrame_BackpackLights_ID:
+            {
+              Messages::AnimKeyFrame_BackpackLights msg;
+              GetFromBuffer((u8*)&msg, sizeof(msg));
+              
+#             if DEBUG_ANIMATION_CONTROLLER
+              PRINT("AnimationController[t=%dms(%d)] setting backpack LEDs.\n",
+                    _currentTime_ms, HAL::GetTimeStamp());
+#             endif
+              
+              for(s32 iLED=0; iLED<NUM_BACKPACK_LEDS; ++iLED) {
+                HAL::SetLED(static_cast<LEDId>(iLED), msg.colors[iLED]);
+              }
+              break;
+            }
+              
+            case Messages::AnimKeyFrame_FaceImage_ID:
+            {
+              Messages::AnimKeyFrame_FaceImage msg;
+              GetFromBuffer((u8*)&msg, sizeof(msg));
+              
+#             if DEBUG_ANIMATION_CONTROLLER
+              PRINT("AnimationController[t=%dms(%d)] setting face frame.\n",
+                    _currentTime_ms, HAL::GetTimeStamp());
+#             endif
+              
+              HAL::FaceAnimate(msg.image);
+              break;
+            }
+              
+            case Messages::AnimKeyFrame_FacePosition_ID:
+            {
+              Messages::AnimKeyFrame_FacePosition msg;
+              GetFromBuffer((u8*)&msg, sizeof(msg));
+              
+#             if DEBUG_ANIMATION_CONTROLLER
+              PRINT("AnimationController[t=%dms(%d)] setting face position to (%d,%d).\n",
+                    _currentTime_ms, HAL::GetTimeStamp(), msg.xCen, msg.yCen);
+#             endif
+              
+              HAL::FaceMove(msg.xCen, msg.yCen);
+              break;
+            }
+              
+            case Messages::AnimKeyFrame_BodyMotion_ID:
+            {
+              Messages::AnimKeyFrame_BodyMotion msg;
+              GetFromBuffer((u8*)&msg, sizeof(msg));
+              
+#             if DEBUG_ANIMATION_CONTROLLER
+              PRINT("AnimationController[t=%dms(%d)] setting wheel speeds L=%dmmps, R=%dmmps.\n",
+                    _currentTime_ms, HAL::GetTimeStamp(), msg.wheelSpeedL_mmps, msg.wheelSpeedR_mmps);
+#             endif
+              
+              WheelController::SetDesiredWheelSpeeds(msg.wheelSpeedL_mmps, msg.wheelSpeedR_mmps);
+              break;
+            }
+              
+            default:
+            {
+              PRINT("Unexpected message type %d in animation buffer!\n");
+              return RESULT_FAIL;
+            }
+              
+          } // switch(GetTypeIndicator())
+        } // while(!nextAudioFrameFound && !terminatorFound)
+        
+        if(nextAudioFrameFound) {
+          // Rewind so we re-see this type again on next update (a little icky, yes...)
+          RewindBufferOneType();
+        } else if(terminatorFound) {
           _isPlaying = false;
           _haveReceivedTerminationFrame = false;
-          
 #         if DEBUG_ANIMATION_CONTROLLER
           PRINT("Reached animation termination frame.\n");
 #         endif
-        } // if(sets *any* tracks)
-        
-        // Move to next keyframe in the (circular) buffer
-        ++_currentFrame;
-        if(_currentFrame == KEYFRAME_BUFFER_LENGTH) {
-          _currentFrame = 0;
         }
         
         --_numFramesBuffered;
@@ -578,6 +615,7 @@ namespace AnimationController {
       } // if(AudioReady())
     } // if(IsReadyToPlay())
     
+    return RESULT_OK;
   } // Update()
 
   
