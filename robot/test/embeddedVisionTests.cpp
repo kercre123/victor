@@ -4649,7 +4649,7 @@ GTEST_TEST(CoreTech_Vision, LineFitsPeaks)
   const s32 componentsY_groundTruth2[LineFitsPeaks_test2_BOUNDARY_LENGTH] = {50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 89, 88, 87, 86, 85, 84, 83, 82, 81, 80, 79, 78, 77, 76, 75, 74, 73, 72, 71, 70, 69, 68, 67, 66, 65, 64, 63, 62, 61, 60, 59, 58, 57, 56, 55, 54, 53, 52, 51};
   
   // Test 1
-  /*{
+  {
     PUSH_MEMORY_STACK(scratchOnchip);
     
     FixedLengthList<Point<s16> > boundary(LineFitsPeaks_test1_BOUNDARY_LENGTH, scratchOnchip);
@@ -4670,7 +4670,7 @@ GTEST_TEST(CoreTech_Vision, LineFitsPeaks)
     ASSERT_TRUE(*peaks.Pointer(1) == Point<s16>(361,182));
     ASSERT_TRUE(*peaks.Pointer(2) == Point<s16>(375,467));
     ASSERT_TRUE(*peaks.Pointer(3) == Point<s16>(111,437));
-  }*/
+  }
   
   // Test 2
   {
