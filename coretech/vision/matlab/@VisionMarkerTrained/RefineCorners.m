@@ -118,7 +118,7 @@ while iteration < MaxIterations
     It = imgi(:) - template;
     
     AtA = A(inBounds,:)'*A(inBounds,:);
-    if rank(AtA) < 8
+    if any(isnan(AtA(:))) || rank(AtA) < 8
       break;
     end
     

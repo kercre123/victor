@@ -33,6 +33,74 @@ LOCAL void ICACHE_FLASH_ATTR userTask(os_event_t *event)
   system_os_post(userTaskPrio, 0, 0); // Repost ourselves
 }
 
+/** Handle wifi events passed by the OS
+ */
+void ICACHE_FLASH_ATTR wifi_event_callback(System_Event_t *evt)
+{
+  switch (evt->event)
+  {
+    case EVENT_STAMODE_CONNECTED:
+    {
+      os_printf("Station connected to %s %d\r\n", evt->event_info.connected.ssid, evt->event_info.connected.channel);
+#ifndef COZMO_AS_AP
+      // Create ip config
+      struct ip_info ipinfo;
+      ipinfo.gw.addr = ipaddr_addr(STATION_GATEWAY);
+      ipinfo.ip.addr = ipaddr_addr(STATION_IP);
+      ipinfo.netmask.addr = ipaddr_addr(STATION_NETMASK);
+
+      // Assign ip config
+      if (wifi_set_ip_info(STATION_IF, &ipinfo) == false)
+      {
+        os_printf("Couldn't set IP info\r\n");
+      }
+#endif
+      break;
+    }
+    case EVENT_STAMODE_DISCONNECTED:
+    {
+      os_printf("Station disconnected from %s because %d\r\n",
+                evt->event_info.disconnected.ssid,
+                evt->event_info.disconnected.reason);
+      break;
+    }
+    case EVENT_STAMODE_AUTHMODE_CHANGE:
+    {
+      os_printf("Station authmode %d -> %d\r\n",
+                evt->event_info.auth_change.old_mode,
+                evt->event_info.auth_change.new_mode);
+      break;
+    }
+    case EVENT_STAMODE_GOT_IP:
+    {
+      os_printf("Station got IP " IPSTR ", " IPSTR ", " IPSTR "\r\n",
+                IP2STR(&evt->event_info.got_ip.ip),
+                IP2STR(&evt->event_info.got_ip.mask),
+                IP2STR(&evt->event_info.got_ip.gw));
+      break;
+    }
+    case EVENT_SOFTAPMODE_STACONNECTED:
+    {
+      os_printf("AP station %d jointed: " MACSTR "\r\n",
+                evt->event_info.sta_connected.aid,
+                MAC2STR(evt->event_info.sta_connected.mac));
+      break;
+    }
+    case EVENT_SOFTAPMODE_STADISCONNECTED:
+    {
+      os_printf("AP station %d left: " MACSTR "\r\n",
+                evt->event_info.sta_connected.aid,
+                MAC2STR(evt->event_info.sta_connected.mac));
+      break;
+    }
+    default:
+    {
+      os_printf("Unhandled wifi event: %d\r\n", evt->event);
+    }
+  }
+}
+
+
 /** System calls this method before initalizing the radio.
  * This method is only nessisary to call system_phy_set_rfoption which may only be called here.
  * I think everything else should still happen in user_init and system_init_done
@@ -85,6 +153,8 @@ user_init(void)
     uart_rx_intr_disable(UART0);
 
     os_printf("Espressif booting up...\r\nCPU set freq rslt = %d\r\n", err);
+
+    wifi_set_event_handler_cb(wifi_event_callback);
 
 #ifdef COZMO_AS_AP
     struct softap_config ap_config;
@@ -160,6 +230,7 @@ user_init(void)
     }
 
 #else // Cozmo as station
+
     struct station_config sta_config;
     err = wifi_station_get_config_default(&sta_config);
     if (err != 0)
@@ -185,18 +256,8 @@ user_init(void)
     // Disable radio sleep
     wifi_set_sleep_type(NONE_SLEEP_T);
 
-    // Create ip config
-    struct ip_info ipinfo;
-    ipinfo.gw.addr = ipaddr_addr(STATION_GATEWAY);
-    ipinfo.ip.addr = ipaddr_addr(STATION_IP);
-    ipinfo.netmask.addr = ipaddr_addr(STATION_NETMASK);
-
-    // Assign ip config
-    err = wifi_set_ip_info(SOFTAP_IF, &ipinfo);
-    if (err == false)
-    {
-      os_printf("Couldn't set IP info\r\n");
-    }
+    // Don't do DHCP client
+    wifi_station_dhcpc_stop();
 
 #endif
 

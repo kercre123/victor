@@ -11,7 +11,7 @@
 //#define DO_TAPS_TEST
 //#define DO_MISSED_PACKET_TEST
 
-static const u8 BLOCK_ID[5] = {0xC2, 0xC2, 0xC2, 0xC2, 0xC2};
+static const u8 BLOCK_ID[5] = {0xC5, 0xC2, 0xC2, 0xC2, 0xC2};
 
 static const u8 TIMER30HZ_L = 0x9C;
 static const u8 TIMER30HZ_H = 0xAD;
@@ -79,6 +79,8 @@ void InitPRX()
   hal_nrf_set_datarate(HAL_NRF_1MBPS);
   // Set payload width to 13 bytes
   hal_nrf_set_rx_payload_width((int)HAL_NRF_PIPE1, 13U);
+  // Flush RX FIFO
+  hal_nrf_flush_rx();
   // Power up radio
   hal_nrf_set_power_mode(HAL_NRF_PWR_UP);
   // Enable receiver
@@ -131,6 +133,8 @@ void InitPTX()
   hal_nrf_set_operation_mode(HAL_NRF_PTX);
   // Set datarate
   hal_nrf_set_datarate(HAL_NRF_1MBPS);
+  // Turn off auto-retransmit
+  hal_nrf_set_auto_retr(0, 250);
   // Set address
   #ifndef DO_RECEIVER_BEHAVIOR
   hal_nrf_set_address(HAL_NRF_TX, BLOCK_ID);
