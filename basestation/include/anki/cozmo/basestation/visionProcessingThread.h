@@ -21,6 +21,7 @@
 #include "anki/vision/basestation/visionMarker.h"
 
 #include <thread>
+#include <mutex>
 
 namespace Anki {  
 namespace Cozmo {
@@ -92,7 +93,7 @@ namespace Cozmo {
     bool   _isCamCalibSet;
     
     bool   _running;
-    bool   _isLocked; // mutex for setting image and state
+    std::mutex _lock;
     
     Vision::Image _currentImg;
     Vision::Image _nextImg;

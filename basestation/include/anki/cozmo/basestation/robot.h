@@ -813,16 +813,21 @@ namespace Anki {
     
     inline void Robot::SetCameraCalibration(const Vision::CameraCalibration& calib)
     {
-      _cameraCalibration = calib;
-      _camera.SetSharedCalibration(&_cameraCalibration);
+      if (_cameraCalibration != calib) {
       
-#if ASYNC_VISION_PROCESSING
-      // Now that we have camera calibration, we can start the vision
-      // processing thread
-      _visionProcessor.Start(_cameraCalibration);
-#else
-      _visionProcessor.SetCameraCalibration(_cameraCalibration);
-#endif
+        _cameraCalibration = calib;
+        _camera.SetSharedCalibration(&_cameraCalibration);
+        
+  #if ASYNC_VISION_PROCESSING
+        // Now that we have camera calibration, we can start the vision
+        // processing thread
+        _visionProcessor.Start(_cameraCalibration);
+  #else
+        _visionProcessor.SetCameraCalibration(_cameraCalibration);
+  #endif
+      } else {
+        PRINT_NAMED_INFO("Robot.SetCameraCalibration.IgnoringDuplicateCalib","");
+      }
     }
 
     inline const Vision::CameraCalibration& Robot::GetCameraCalibration() const

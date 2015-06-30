@@ -18,6 +18,8 @@
 #define ANKI_CORETECH_COMMON_MAILBOX_H
 
 
+#include <mutex>
+
 namespace Anki {
   
   // Single-message Mailbox Class
@@ -34,7 +36,7 @@ namespace Anki {
   protected:
     MsgType message_;
     bool    beenRead_;
-    bool    isLocked_;
+    std::mutex lock_;
   };
   
   // Multiple-message Mailbox Class
@@ -43,12 +45,15 @@ namespace Anki {
   {
   public:
     
+    MultiMailbox();
+    
     bool putMessage(const MSG_TYPE newMsg);
     bool getMessage(MSG_TYPE& msg);
     
   protected:
     Mailbox<MSG_TYPE> mailboxes_[NUM_BOXES];
     u8 readIndex_, writeIndex_;
+    std::mutex lock_;
     
     void advanceIndex(u8 &index);
   };
