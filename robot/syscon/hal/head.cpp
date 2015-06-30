@@ -77,7 +77,7 @@ void Head::RxPacket(u16 length, u8* dataRX)
   {
     // Timeout after 5ms of no communication
     while (NRF_UART0->EVENTS_RXDRDY != 1) {
-      if (GetCounter() - startTime > 41666*2) { // 5ms
+      if (0&&GetCounter() - startTime > 41666*2) { // 5ms
         dataRX[0] = 0;
         return;
       }
@@ -106,8 +106,8 @@ void Head::RxPacket(u16 length, u8* dataRX)
 // Transmit first, then wait for a reply
 void Head::TxRx(u16 length, const u8* dataTX, u8* dataRX)
 {
-  //Head::TxPacket(length, dataTX);
-  //Head::RxPacket(length, dataRX);
+  Head::TxPacket(length, dataTX);
+  Head::RxPacket(length, dataRX);
  
   UART::configure();
 }
