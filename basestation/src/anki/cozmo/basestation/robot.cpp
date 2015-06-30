@@ -488,7 +488,6 @@ namespace Anki {
       RobotPoseStamp* p = nullptr;
       HistPoseKey poseKey;
       lastResult = ComputeAndInsertPoseIntoHistory(msg.timestamp, t, &p, &poseKey, true);
-      assert(msg.timestamp == t);
       if(lastResult != RESULT_OK) {
         PRINT_NAMED_WARNING("Robot.QueueObservedMarker.HistoricalPoseNotFound",
                             "Time: %d, hist: %d to %d\n",
@@ -496,6 +495,10 @@ namespace Anki {
                             _poseHistory->GetNewestTimeStamp());
         return lastResult;
       }
+      
+      // If we get here, ComputeAndInsertPoseIntoHistory() should have succeeded
+      // and this should be true
+      assert(msg.timestamp == t);
       
       if(!_visionWhileMovingEnabled && !IsPickingOrPlacing()) {
         
