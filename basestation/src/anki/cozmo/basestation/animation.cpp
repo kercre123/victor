@@ -280,7 +280,7 @@ _bodyPosTrack.__METHOD__()
         if(msg != nullptr) {
           // Still have samples to send, don't increment to the next frame in the track
           //PRINT_NAMED_INFO("Animation.Update", "Streaming AudioSampleKeyFrame.\n");
-          robot.SendMessage(*msg, true, SEND_HOT);
+          robot.SendMessage(*msg, true, SEND_LARGE_KEYFRAMES_HOT);
           numBytesToSend -= msg->GetSize() + sizeof(RobotMessage::ID);
           if(sendResult != RESULT_OK) { return sendResult; }
         } else {
@@ -288,14 +288,14 @@ _bodyPosTrack.__METHOD__()
           // and for now send silence.
           //PRINT_NAMED_INFO("Animation.Update", "Streaming AudioSilenceKeyFrame.\n");
           _robotAudioTrack.MoveToNextKeyFrame();
-          robot.SendMessage(_silenceMsg, true, SEND_HOT);
+          robot.SendMessage(_silenceMsg);
           numBytesToSend -= _silenceMsg.GetSize() + sizeof(RobotMessage::ID);
           if(sendResult != RESULT_OK) { return sendResult; }
         }
       } else {
         // No frames left or not time to play next frame yet, so send silence
         //PRINT_NAMED_INFO("Animation.Update", "Streaming AudioSilenceKeyFrame.\n");
-        robot.SendMessage(_silenceMsg, true, SEND_HOT);
+        robot.SendMessage(_silenceMsg);
         numBytesToSend -= _silenceMsg.GetSize() + sizeof(RobotMessage::ID);
         if(sendResult != RESULT_OK) { return sendResult; }
       }
@@ -321,7 +321,7 @@ _bodyPosTrack.__METHOD__()
         PRINT_NAMED_INFO("Animation.Update", "Streaming HeadAngleKeyFrame at t=%dms.\n",
                          _streamingTime_ms - _startTime_ms);
 #       endif
-        sendResult = robot.SendMessage(*msg, true, SEND_HOT);
+        sendResult = robot.SendMessage(*msg);
         numBytesToSend -= msg->GetSize() + sizeof(RobotMessage::ID);
         if(sendResult != RESULT_OK) { return sendResult; }
       }
@@ -332,7 +332,7 @@ _bodyPosTrack.__METHOD__()
         PRINT_NAMED_INFO("Animation.Update", "Streaming LiftHeightKeyFrame at t=%dms.\n",
                          _streamingTime_ms - _startTime_ms);
 #       endif
-        sendResult = robot.SendMessage(*msg, true, SEND_HOT);
+        sendResult = robot.SendMessage(*msg);
         numBytesToSend -= msg->GetSize() + sizeof(RobotMessage::ID);
         if(sendResult != RESULT_OK) { return sendResult; }
       }
@@ -343,7 +343,7 @@ _bodyPosTrack.__METHOD__()
         PRINT_NAMED_INFO("Animation.Update", "Streaming FacePositionKeyFrame at t=%dms.\n",
                          _streamingTime_ms - _startTime_ms);
 #       endif
-        sendResult = robot.SendMessage(*msg, true, SEND_HOT);
+        sendResult = robot.SendMessage(*msg);
         numBytesToSend -= msg->GetSize() + sizeof(RobotMessage::ID);
         if(sendResult != RESULT_OK) { return sendResult; }
       }
@@ -354,7 +354,7 @@ _bodyPosTrack.__METHOD__()
         PRINT_NAMED_INFO("Animation.Update", "Streaming FaceImageKeyFrame at t=%dms.\n",
                          _streamingTime_ms - _startTime_ms);
 #       endif
-        sendResult = robot.SendMessage(*msg, true, SEND_HOT);
+        sendResult = robot.SendMessage(*msg, true, SEND_LARGE_KEYFRAMES_HOT);
         numBytesToSend -= msg->GetSize() + sizeof(RobotMessage::ID);
         if(sendResult != RESULT_OK) { return sendResult; }
       }
@@ -365,7 +365,7 @@ _bodyPosTrack.__METHOD__()
         PRINT_NAMED_INFO("Animation.Update", "Streaming BackpackLightsKeyFrame at t=%dms.\n",
                          _streamingTime_ms - _startTime_ms);
 #       endif
-        sendResult = robot.SendMessage(*msg, true, SEND_HOT);
+        sendResult = robot.SendMessage(*msg);
         numBytesToSend -= msg->GetSize() + sizeof(RobotMessage::ID);
         if(sendResult != RESULT_OK) { return sendResult; }
       }
@@ -376,7 +376,7 @@ _bodyPosTrack.__METHOD__()
         PRINT_NAMED_INFO("Animation.Update", "Streaming BodyPositionKeyFrame at t=%dms.\n",
                          _streamingTime_ms - _startTime_ms);
 #       endif
-        sendResult = robot.SendMessage(*msg, true, SEND_HOT);
+        sendResult = robot.SendMessage(*msg);
         numBytesToSend -= msg->GetSize() + sizeof(RobotMessage::ID);
         if(sendResult != RESULT_OK) { return sendResult; }
       }
@@ -392,7 +392,7 @@ _bodyPosTrack.__METHOD__()
 #     endif
       
       MessageAnimKeyFrame_EndOfAnimation endMsg;
-      Result sendResult = robot.SendMessage(endMsg, true, SEND_HOT);
+      Result sendResult = robot.SendMessage(endMsg);
       if(sendResult != RESULT_OK) { return sendResult; }
     }
     
