@@ -264,7 +264,7 @@ public class VortexController : GameController {
 	protected override bool IsPreGameCompleted() {
 		if( robot != null && PlayerPrefs.GetInt("DebugSkipLayoutTracker",0) == 0 ) {
 
-			if(robot.carryingObject == null || !robot.carryingObject.isActive) return false;
+			if(robot.carryingObject == null || !robot.carryingObject.isActive || robot.isBusy) return false;
 
 			if(!base.IsPreGameCompleted()) return false;
 		}
