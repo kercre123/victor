@@ -350,6 +350,18 @@ _bodyPosTrack.__METHOD__()
       
     } // while(numFramesToSend > 0)
     
+    if(IsFinished()) {
+      // Send an end-of-animation keyframe
+      
+#     if DEBUG_ANIMATIONS
+      PRINT_NAMED_INFO("Animation.Update", "Streaming EndOfAnimation at t=%dms.\n",
+                       _streamingTime_ms - _startTime_ms);
+#     endif
+      
+      MessageAnimKeyFrame_EndOfAnimation endMsg;
+      Result sendResult = robot.SendMessage(endMsg, true, SEND_HOT);
+      if(sendResult != RESULT_OK) { return sendResult; }
+    }
     
     return RESULT_OK;
     

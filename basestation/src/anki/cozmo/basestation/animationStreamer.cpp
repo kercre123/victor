@@ -48,10 +48,6 @@ namespace Cozmo {
     if(_streamingAnimation != nullptr) {
       if(_streamingAnimation->IsFinished()) {
         
-        // Send an end-of-animation keyframe
-        MessageAnimKeyFrame_EndOfAnimation endMsg;
-        robot.SendMessage(endMsg);
-        
         ++_loopCtr;
         
         if(_numLoops == 0 || _loopCtr < _numLoops) {
