@@ -313,7 +313,8 @@ _bodyPosTrack.__METHOD__()
       msg = _headTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms);
       if(msg != nullptr) {
 #       if DEBUG_ANIMATIONS
-        PRINT_NAMED_INFO("Animation.Update", "Streaming HeadAngleKeyFrame.\n");
+        PRINT_NAMED_INFO("Animation.Update", "Streaming HeadAngleKeyFrame at t=%dms.\n",
+                         _streamingTime_ms - _startTime_ms);
 #       endif
         sendResult = robot.SendMessage(*msg, true, SEND_HOT);
         numBytesToSend -= msg->GetSize() + sizeof(RobotMessage::ID);
@@ -323,7 +324,8 @@ _bodyPosTrack.__METHOD__()
       msg = _liftTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms);
       if(msg != nullptr) {
 #       if DEBUG_ANIMATIONS
-        PRINT_NAMED_INFO("Animation.Update", "Streaming LiftHeightKeyFrame.\n");
+        PRINT_NAMED_INFO("Animation.Update", "Streaming LiftHeightKeyFrame at t=%dms.\n",
+                         _streamingTime_ms - _startTime_ms);
 #       endif
         sendResult = robot.SendMessage(*msg, true, SEND_HOT);
         numBytesToSend -= msg->GetSize() + sizeof(RobotMessage::ID);
@@ -333,7 +335,8 @@ _bodyPosTrack.__METHOD__()
       msg = _facePosTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms);
       if(msg != nullptr) {
 #       if DEBUG_ANIMATIONS
-        PRINT_NAMED_INFO("Animation.Update", "Streaming FacePositionKeyFrame.\n");
+        PRINT_NAMED_INFO("Animation.Update", "Streaming FacePositionKeyFrame at t=%dms.\n",
+                         _streamingTime_ms - _startTime_ms);
 #       endif
         sendResult = robot.SendMessage(*msg, true, SEND_HOT);
         numBytesToSend -= msg->GetSize() + sizeof(RobotMessage::ID);
@@ -343,7 +346,8 @@ _bodyPosTrack.__METHOD__()
       msg = _faceImageTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms);
       if(msg != nullptr) {
 #       if DEBUG_ANIMATIONS
-        PRINT_NAMED_INFO("Animation.Update", "Streaming FaceImageKeyFrame.\n");
+        PRINT_NAMED_INFO("Animation.Update", "Streaming FaceImageKeyFrame at t=%dms.\n",
+                         _streamingTime_ms - _startTime_ms);
 #       endif
         sendResult = robot.SendMessage(*msg, true, SEND_HOT);
         numBytesToSend -= msg->GetSize() + sizeof(RobotMessage::ID);
@@ -353,7 +357,8 @@ _bodyPosTrack.__METHOD__()
       msg = _backpackLightsTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms);
       if(msg != nullptr) {
 #       if DEBUG_ANIMATIONS
-        PRINT_NAMED_INFO("Animation.Update", "Streaming BackpackLightsKeyFrame.\n");
+        PRINT_NAMED_INFO("Animation.Update", "Streaming BackpackLightsKeyFrame at t=%dms.\n",
+                         _streamingTime_ms - _startTime_ms);
 #       endif
         sendResult = robot.SendMessage(*msg, true, SEND_HOT);
         numBytesToSend -= msg->GetSize() + sizeof(RobotMessage::ID);
@@ -363,7 +368,8 @@ _bodyPosTrack.__METHOD__()
       msg = _bodyPosTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms);
       if(msg != nullptr) {
 #       if DEBUG_ANIMATIONS
-        PRINT_NAMED_INFO("Animation.Update", "Streaming BodyPositionKeyFrame.\n");
+        PRINT_NAMED_INFO("Animation.Update", "Streaming BodyPositionKeyFrame at t=%dms.\n",
+                         _streamingTime_ms - _startTime_ms);
 #       endif
         sendResult = robot.SendMessage(*msg, true, SEND_HOT);
         numBytesToSend -= msg->GetSize() + sizeof(RobotMessage::ID);
