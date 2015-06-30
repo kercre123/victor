@@ -7,24 +7,25 @@
 #include "user_interface.h"
 #include "client.h"
 #include "driver/uart.h"
+#include "driver/spi.h"
 #include "task0.h"
 #include "upgrade_controller.h"
 #include "user_config.h"
 
 /** User "idle" task
  * Called by OS with lowest priority.
- * Always requeues itself.
  */
-LOCAL bool ICACHE_FLASH_ATTR userTask(uint32 param)
+LOCAL bool ICACHE_FLASH_ATTR userTask(uint32_t param)
 {
-  static const uint32 INTERVAL = 100000;
-  static uint32 counter = 0;
-  if (counter++ > INTERVAL)
-  {
-    uart_tx_one_char_no_wait(UART1, '.'); // Print a dot to show we're executing
-    counter = 0;
-  }
-  return true;
+
+  spi_mast_write(HSPI, 0x7EAA997E);
+  spi_mast_write(HSPI, 0x00FF0FCC);
+  spi_mast_start_transaction(HSPI, 0, 0, 0, 0, 64, 64, 0);
+  os_printf("SPI transaction started\r\n");
+  while (spi_mast_busy(HSPI));
+  os_printf("SPI readback: %08x %08x\r\n", spi_mast_read(HSPI), spi_mast_read(HSPI));
+
+  return false;
 }
 
 /** Handle wifi events passed by the OS
@@ -113,7 +114,7 @@ static void ICACHE_FLASH_ATTR system_init_done(void)
   // Enable upgrade controller
   upgradeControllerInit();
 
-  // Setup the block relay
+  // Setup the block relay0x7EAA997E
   blockRelayInit();
 
   // Setup Basestation client
@@ -123,10 +124,11 @@ static void ICACHE_FLASH_ATTR system_init_done(void)
   // Only after clientInit
   uart_rx_intr_enable(UART0);
 
+  spi_master_init(HSPI, 400000);
+
   // Set up shared background tasks
   task0Init();
-
-  //task0Post(userTask, 0);
+  task0Post(userTask, 0);
 
   os_printf("user initalization complete\r\n");
 }

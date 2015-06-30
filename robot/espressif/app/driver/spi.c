@@ -17,8 +17,8 @@ uint32 ICACHE_FLASH_ATTR spi_master_init(const SPIBus spi_no, uint32 frequency)
 	}
 	else // Calculate dividers
 	{
-		uint16 prediv = min((CPU_HZ/frequency)-1, SPI_CLKDIV_PRE);
-		uint16 cntdiv = min((CPU_HZ/((prediv + 1)*frequency))-1, SPI_CLKCNT_N);
+		uint16 prediv = MIN((CPU_HZ/frequency)-1, SPI_CLKDIV_PRE);
+		uint16 cntdiv = MIN((CPU_HZ/((prediv + 1)*frequency))-1, SPI_CLKCNT_N);
 		frequency = CPU_HZ / ((prediv + 1) * (prediv + 1));
 
 		WRITE_PERI_REG(SPI_CLOCK(spi_no),
