@@ -74,6 +74,12 @@ PROTO WebotsKeyboardController [
   field SFInt32  forcedRobotID 1
   field SFBool   forcedRobotIsSimulated FALSE  
   
+  # Cozmo engine location
+  field SFString engineIP "127.0.0.1"
+  
+  # UI device ID 
+  # TODO: Get rid of this. The UI should not be assigning it's own ID.
+  field SFInt32  deviceID 1
 ]
 {
 Supervisor {
