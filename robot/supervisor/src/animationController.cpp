@@ -392,7 +392,9 @@ namespace AnimationController {
   Result BufferKeyFrame(const Messages::AnimKeyFrame_EndOfAnimation& msg)
   {
     DEFINE_BUFFER_KEY_FRAME(AnimKeyFrame_EndOfAnimation)
+#   if DEBUG_ANIMATION_CONTROLLER
     PRINT("Buffering EndOfAnimation KeyFrame\n");
+#   endif
     _haveReceivedTerminationFrame = true;
     ++_numFramesBuffered;
     return RESULT_OK;
@@ -416,37 +418,49 @@ namespace AnimationController {
 
   Result BufferKeyFrame(const Messages::AnimKeyFrame_HeadAngle& msg) {
     DEFINE_BUFFER_KEY_FRAME(AnimKeyFrame_HeadAngle)
+#   if DEBUG_ANIMATION_CONTROLLER
     PRINT("Buffering HeadAngle KeyFrame\n");
+#   endif
     return RESULT_OK;
   }
   
   Result BufferKeyFrame(const Messages::AnimKeyFrame_LiftHeight& msg) {
     DEFINE_BUFFER_KEY_FRAME(AnimKeyFrame_LiftHeight)
+#   if DEBUG_ANIMATION_CONTROLLER
     PRINT("Buffering LiftHeight KeyFrame\n");
+#   endif
     return RESULT_OK;
   }
   
   Result BufferKeyFrame(const Messages::AnimKeyFrame_FaceImage& msg) {
     DEFINE_BUFFER_KEY_FRAME(AnimKeyFrame_FaceImage)
+#   if DEBUG_ANIMATION_CONTROLLER
     PRINT("Buffering FaceImage KeyFrame\n");
+#   endif
     return RESULT_OK;
   }
   
   Result BufferKeyFrame(const Messages::AnimKeyFrame_FacePosition& msg) {
     DEFINE_BUFFER_KEY_FRAME(AnimKeyFrame_FacePosition)
+#   if DEBUG_ANIMATION_CONTROLLER
     PRINT("Buffering FacePosition KeyFrame\n");
+#   endif
     return RESULT_OK;
   }
   
   Result BufferKeyFrame(const Messages::AnimKeyFrame_BackpackLights& msg) {
     DEFINE_BUFFER_KEY_FRAME(AnimKeyFrame_BackpackLights)
+#   if DEBUG_ANIMATION_CONTROLLER
     PRINT("Buffering BackpackLights KeyFrame\n");
+#   endif
     return RESULT_OK;
   }
   
   Result BufferKeyFrame(const Messages::AnimKeyFrame_BodyMotion& msg) {
     DEFINE_BUFFER_KEY_FRAME(AnimKeyFrame_BodyMotion)
+#   if DEBUG_ANIMATION_CONTROLLER
     PRINT("Buffering BodyMotion KeyFrame\n");
+#   endif
     return RESULT_OK;
   }
   
@@ -517,7 +531,6 @@ namespace AnimationController {
             PRINT("Expecting either audio sample or silence next in animation buffer.\n");
             return RESULT_FAIL;
         }
-        
       
 #       if DEBUG_ANIMATION_CONTROLLER
         _currentTime_ms += 33;
@@ -530,9 +543,13 @@ namespace AnimationController {
         while(!nextAudioFrameFound && !terminatorFound)
         {
           if(_currentBufferPos == _lastBufferPos) {
+            // We should not be here if there isn't at least another audio sample,
+            // silence, or end-of-animation keyframe in the buffer to find.
+            // (Note that IsReadyToPlay() checks for there being at least _two_
+            //  keyframes in the buffer, where a "keyframe" is considered an
+            //  audio sample (or silence) or an end-of-animation indicator.)
             PRINT("Ran out of animation buffer after getting audio/silence.\n");
-            break;
-            //return RESULT_FAIL;
+            return RESULT_FAIL;
           }
           
           const Messages::ID msgID = GetTypeIndicator();
