@@ -16,7 +16,7 @@
 typedef enum {
   SPI  = 0, ///< Shared with program flash
   HSPI = 1, ///< Independent SPI bus
-  NUM_SPI_BUS = 2; ///< Number of buses in system
+  NUM_SPI_BUS = 2 ///< Number of buses in system
 } SPIBus;
 
 /** Initalize the specified SPI peripheral for master mode
@@ -27,6 +27,8 @@ typedef enum {
 uint32 spi_master_init(const SPIBus spi_no, uint32 frequency);
 
 /** Setup an SPI transaction to be followed by data
+ * Calling this function will start an SPI master transaction so the FIFO should already be filled with exactly
+ * mosi_bits of data to prevent underrun or overflow
  * @param spi_no Which SPI bus to use
  * @param cmd_bits The number of bits of command data @range 0-16
  * @param cmd_data Command data, only the lower cmd_bits of data will be used
@@ -42,20 +44,28 @@ void spi_mast_start_transaction(const SPIBus spi_no, const uint8 cmd_bits, const
                                 const uint8 addr_bits, const uint32 addr_data, \
                                 const uint16 mosi_bits, const uint16 miso_bits, const uint16 dummy_bits);
 
+/** Check if the SPI bus in master mode is in the middle of a transaction
+ * @return True if in the middle of a transaction, false if not. MISO bits are only valid after the transaction has
+ * finished and this function returns false.
+ */
+bool spi_mast_busy(const SPIBus spi_no);
+
 /** Queue a 32 bit word for transmission during the mosi phase of an SPI transaction
  * @param spi_no Which SPI bus to use
  * @param data A 32 bit words to transmit.
  * @return true if the word was added to the FIFO. False if there was no room
  */
-bool spi_mast_write(const SPIBus spi_no, const uint32 data);
+void spi_mast_write(const SPIBus spi_no, const uint32 data);
 
 /** Read a received 32 bit word from the FIFO
+ * Call this after calling spi_mast_start_transaction and waiting for spi_mast_busy to return false. Only call until
+ * miso_bits have been returned.
  * @param spi_no Which SPI bus to use
- * @return The read word. @note if the FIFO is empty 0 will be returned.
+ * @return The read word.
  */
 uint32 spi_mast_read(const SPIBus spi_no);
 
-#ifdef 0
+#if 0
 //esp8266 slave mode initial
 void spi_slave_init(uint8 spi_no,uint8 data_len);
 //transmit data to esp8266 slave buffer,which needs 16bit transmission ,
