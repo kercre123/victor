@@ -117,6 +117,16 @@ namespace Anki {
       jsonNode["skew"]          = _skew;
     }
     
+    bool CameraCalibration::operator==(const CameraCalibration& other) const
+    {
+      return (_nrows == other._nrows
+              &&  _ncols == other._ncols
+              && _focalLength_x == other._focalLength_x
+              && _focalLength_y == other._focalLength_y
+              && _center == other._center
+              && _skew == other._skew);
+
+    }
     
     template<typename PRECISION>
     SmallSquareMatrix<3,PRECISION> CameraCalibration::GetCalibrationMatrix() const

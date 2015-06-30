@@ -84,6 +84,9 @@ namespace Anki {
       
       void CreateJson(Json::Value& jsonNode) const;
       
+      bool operator==(const CameraCalibration& other) const;
+      bool operator!=(const CameraCalibration& other) const {return !(*this == other);}
+      
     protected:
       
       u16     _nrows, _ncols;

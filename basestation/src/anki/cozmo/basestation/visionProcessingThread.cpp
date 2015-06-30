@@ -32,7 +32,6 @@ namespace Cozmo {
   : _visionSystem(nullptr)
   , _isCamCalibSet(false)
   , _running(false)
-  , _isLocked(false)
   {
     
   } // VisionSystem()
@@ -203,17 +202,12 @@ namespace Cozmo {
 
   void VisionProcessingThread::Lock()
   {
-    // Wait for unlock
-    BOUNDED_WHILE(10000, _isLocked) {
-      usleep(100);
-    }
-    
-    _isLocked = true;
+    _lock.lock();
   }
 
   void VisionProcessingThread::Unlock()
   {
-    _isLocked = false;
+    _lock.unlock();
   }
 
   void VisionProcessingThread::Update(const Vision::Image& image,
@@ -231,6 +225,7 @@ namespace Cozmo {
       }
       
       _visionSystem->Update(robotState, image);
+      _lastImg = image;
       
       VizManager::getInstance()->SetText(VizManager::VISION_MODE, NamedColors::CYAN,
                                          "Vision: %s", _visionSystem->GetCurrentModeName().c_str());
