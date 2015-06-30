@@ -1927,9 +1927,9 @@ namespace Anki {
     
     // ============ Messaging ================
     
-    Result Robot::SendMessage(const RobotMessage& msg) const
+    Result Robot::SendMessage(const RobotMessage& msg, bool reliable, bool hot) const
     {
-      Result sendResult = _msgHandler->SendMessage(_ID, msg);
+      Result sendResult = _msgHandler->SendMessage(_ID, msg, reliable, hot);
       if(sendResult != RESULT_OK) {
         PRINT_NAMED_ERROR("Robot.SendMessage", "Robot %d failed to send a message.\n", _ID);
       }
