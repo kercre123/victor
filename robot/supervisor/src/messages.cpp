@@ -888,27 +888,6 @@ void Process##__MSG_TYPE__##Message(const __MSG_TYPE__& msg) { ProcessAnimKeyFra
         return result;
       }
 
-      Result SetBlockLight(const u8 blockID, const u32* onColor, const u32* offColor,
-                           const u32* onPeriod_ms, const u32* offPeriod_ms,
-                           const u32* transitionOnPeriod_ms, const u32* transitionOffPeriod_ms)
-      {
-         u8 buffer[256];
-         const u32 size = Messages::GetSize(Messages::SetBlockLights_ID);
-         Anki::Cozmo::Messages::SetBlockLights m;
-         m.blockID = blockID;
-         for (int i=0; i<NUM_BLOCK_LEDS; ++i) {
-           m.onColor[i] = onColor[i];
-           m.offColor[i] = offColor[i];
-           m.onPeriod_ms[i] = onPeriod_ms[i];
-           m.offPeriod_ms[i] = offPeriod_ms[i];
-           m.transitionOnPeriod_ms[i] = (transitionOnPeriod_ms == NULL ? 0 : transitionOnPeriod_ms[i]);
-           m.transitionOffPeriod_ms[i] = (transitionOffPeriod_ms == NULL ? 0 : transitionOffPeriod_ms[i]);
-         }
-         buffer[0] = Messages::SetBlockLights_ID;
-         memcpy(buffer + 1, &m, size);
-         return RadioSendPacket(buffer, size+1, blockID + 1) ? RESULT_OK : RESULT_FAIL;
-      }
-
       void FlashBlockIDs()
       {
         // THIS DOESN'T WORK FOR now
