@@ -853,7 +853,11 @@ namespace Anki {
       }
         
       //////// Stream Animations /////////
-      _animationStreamer.Update(*this);
+      Result animStreamResult = _animationStreamer.Update(*this);
+      if(animStreamResult != RESULT_OK) {
+        PRINT_NAMED_WARNING("Robot.Update",
+                            "Robot %d had an animation streaming failure.\n", GetID());
+      }
         
       
       /////////// Update visualization ////////////
