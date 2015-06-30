@@ -184,6 +184,7 @@ public class Robot
 	private U2G.FaceObject FaceObjectMessage;
 	private U2G.PickAndPlaceObject PickAndPlaceObjectMessage;
 	private U2G.RollObject RollObjectMessage;
+	private U2G.TapBlockOnGround TapBlockMessage;
 	private U2G.PlaceObjectOnGround PlaceObjectOnGroundMessage;
 	private U2G.GotoPose GotoPoseMessage;
 	private U2G.GotoObject GotoObjectMessage;
@@ -364,6 +365,7 @@ public class Robot
 		FaceObjectMessage = new U2G.FaceObject();
 		PickAndPlaceObjectMessage = new U2G.PickAndPlaceObject();
 		RollObjectMessage = new U2G.RollObject();
+		TapBlockMessage = new U2G.TapBlockOnGround();
 		PlaceObjectOnGroundMessage = new U2G.PlaceObjectOnGround();
 		GotoPoseMessage = new U2G.GotoPose();
 		GotoObjectMessage = new U2G.GotoObject();
@@ -793,6 +795,18 @@ public class Robot
 		RobotEngineManager.instance.Message.RollObject = RollObjectMessage;
 		RobotEngineManager.instance.SendMessage();
 
+		localBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
+	}
+
+	public void TapBlockOnGround(int taps)
+	{
+		TapBlockMessage.numTaps = System.Convert.ToByte( taps );
+		
+		Debug.Log( "TapBlockOnGround numTaps(" + TapBlockMessage.numTaps + ")" );
+		
+		RobotEngineManager.instance.Message.TapBlockOnGround = TapBlockMessage;
+		RobotEngineManager.instance.SendMessage();
+		
 		localBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
 	}
 

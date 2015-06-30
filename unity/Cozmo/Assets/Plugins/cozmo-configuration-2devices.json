@@ -1,0 +1,12 @@
+{
+  "basestation_mode" : 0,
+  "playback_log_folder" : "UNSPECIFIED",
+  "test_value" : 1234.567,
+  "AdvertisingHostIP" : "127.0.0.1",
+  "VizHostIP" : "127.0.0.1",
+  "RobotAdvertisingPort" : 5100,
+  "UiAdvertisingPort" : 5102,
+  "engine_playback_mode" : 0,
+  "NumRobotsToWaitFor" : 1,
+  "NumUiDevicesToWaitFor" : 2
+}

@@ -59,7 +59,7 @@ public class RobotRelativeControls : MonoBehaviour {
 	bool liftSliderEngaged = false;
 	float timeSinceInput = 0f;
 	Quaternion lastAttitude = Quaternion.identity;
-	//InputField hiddenInputField;
+	InputField hiddenInputField;
 
 #endregion
 
@@ -94,7 +94,6 @@ public class RobotRelativeControls : MonoBehaviour {
 		RefreshLiftSlider();
 
 		ShowSticks();
-
 
 		//hiddenInputField = CozmoAssistedControls.instance.gameObject.GetComponent<InputField>();
 	}
@@ -194,8 +193,8 @@ public class RobotRelativeControls : MonoBehaviour {
 
 			//robot.TrackHeadToObject( targetLock );
 		}
-		//Debug.Log("hiddenInputField.text: " +hiddenInputField.text);
-		//hiddenInputField.text = string.Empty;
+//		Debug.Log("hiddenInputField.text: " +hiddenInputField.text);
+//		hiddenInputField.text = string.Empty;
 
 		if ( PlayerPrefs.GetInt("CozmoAssistedControls", 0) == 0 ) {
 			bool stopped = inputs.sqrMagnitude == 0f && moveCommandLastFrame;

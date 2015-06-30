@@ -169,9 +169,3 @@ build_xcode/game_sim
 generated
 unity/ios/UnityBuild
 unity/ios/build
-unity/Cozmo/Assets/Vectrosity.meta
-unity/Cozmo/Assets/Vectrosity/Demos.meta
-unity/Cozmo/Assets/Vectrosity/Editor.meta
-unity/Cozmo/Assets/Vectrosity/Demos/Meshes.meta
-unity/Cozmo/Assets/Vectrosity/Editor/Demos.meta
-unity/Cozmo/Assets/Vectrosity/Editor/Demos/Meshes.meta

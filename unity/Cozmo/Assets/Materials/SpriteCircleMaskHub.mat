@@ -6,7 +6,7 @@ Material:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
-  m_Name: SpriteCircleMask1
+  m_Name: SpriteCircleMaskHub
   m_Shader: {fileID: 4800000, guid: 272a868d1e927451c8d6243e344f7996, type: 3}
   m_ShaderKeywords: 
   m_LightmapFlags: 5
@@ -70,20 +70,20 @@ Material:
       data:
         first:
           name: _OuterRadius
-        second: 1
+        second: .474999994
       data:
         first:
           name: _InnerRadius
-        second: .330000013
+        second: .100000001
       data:
         first:
           name: _Hardness
-        second: 100
+        second: 1
     m_Colors:
       data:
         first:
           name: _Color
-        second: {r: 1, g: 1, b: 1, a: .501960814}
+        second: {r: 0, g: 0, b: 0, a: 1}
       data:
         first:
           name: _SpecColor

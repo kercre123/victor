@@ -21,16 +21,16 @@ public class PieSlice : MonoBehaviour {
 	public void Initialize(float fillAmount, float angle, float textAngleOffset, int num, Color imageColor, Color textColor, Color outlineColor) {
 		image.fillAmount = fillAmount;
 		transform.localRotation = Quaternion.AngleAxis(angle, Vector3.forward);
-		//image.color = imageColor;
-		//MaterialPropertyBlock block = new MaterialPropertyBlock();
-		//block.AddColor("_Color", imageColor);
-		//image.canvasRenderer.SetColor(imageColor);
-		image.material.SetColor("_Color", imageColor);
+		textAnchor.localRotation = Quaternion.AngleAxis(textAngleOffset, Vector3.forward);
 		Number = num;
 		text.text = num.ToString();
+		SetColors(imageColor, textColor, outlineColor);
+	}
+
+	public void SetColors(Color imageColor, Color textColor, Color outlineColor) {
+		image.material.SetColor("_Color", imageColor);
 		text.color = textColor;
 		if(textOutline != null) textOutline.effectColor = outlineColor;
-		textAnchor.localRotation = Quaternion.AngleAxis(textAngleOffset, Vector3.forward);
 	}
 
 }

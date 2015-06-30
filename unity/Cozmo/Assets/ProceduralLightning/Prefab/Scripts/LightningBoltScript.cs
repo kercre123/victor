@@ -79,6 +79,8 @@ namespace DigitalRuby.ThunderAndLightning
         /// Glow intensity multiplier (0 for none)
         /// </summary>
         public float GlowIntensityMultiplier { get; set; }
+
+		public virtual int GetVertsForLightningBolt(LightningBolt bolt) { return 0; }
     }
 
 #if ENABLE_LINE_RENDERER
@@ -206,183 +208,6 @@ namespace DigitalRuby.ThunderAndLightning
     /// </summary>
     public class LightningBoltMeshRenderer : LightningBoltRenderer
     {
-        [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
-        public class LineRendererMesh : MonoBehaviour
-        {
-            private static readonly Vector2 uv1 = new Vector2(0.0f, 0.0f);
-            private static readonly Vector2 uv2 = new Vector2(1.0f, 0.0f);
-            private static readonly Vector2 uv3 = new Vector2(0.0f, 1.0f);
-            private static readonly Vector2 uv4 = new Vector2(1.0f, 1.0f);
-
-            private Mesh mesh;
-            private MeshRenderer meshRenderer;
-            private readonly List<int> indices = new List<int>();
-            private readonly List<Vector2> texCoords = new List<Vector2>();
-            private readonly List<Vector3> vertices = new List<Vector3>();
-            private readonly List<Vector4> lineDirs = new List<Vector4>();
-            private readonly List<Color> colors = new List<Color>();
-            private readonly List<Vector2> glowModifiers = new List<Vector2>();
-            private readonly List<Vector3> ends = new List<Vector3>();
-            private bool needsUpdate = true;
-
-            private void Awake()
-            {
-                mesh = new Mesh();
-                GetComponent<MeshFilter>().sharedMesh = mesh;
-
-                meshRenderer = GetComponent<MeshRenderer>();
-                meshRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-                meshRenderer.useLightProbes = false;
-                meshRenderer.receiveShadows = false;
-                meshRenderer.reflectionProbeUsage = UnityEngine.Rendering.ReflectionProbeUsage.Off;
-                meshRenderer.enabled = false;
-            }
-
-            private void Update()
-            {
-                if (needsUpdate)
-                {
-                    mesh.vertices = vertices.ToArray();
-                    mesh.tangents = lineDirs.ToArray();
-                    mesh.colors = colors.ToArray();
-                    mesh.uv = texCoords.ToArray();
-                    mesh.uv2 = glowModifiers.ToArray();
-					mesh.normals = ends.ToArray();
-                    mesh.triangles = indices.ToArray();
-                    needsUpdate = false;
-					//Debug.Log("LightningBoltMeshRenderer Update meshRenderer.enabled("+meshRenderer.enabled+")");
-                }
-            }
-
-            private void AddIndices()
-            {
-                int vertexIndex = vertices.Count;
-                indices.Add(vertexIndex++);
-                indices.Add(vertexIndex++);
-                indices.Add(vertexIndex);
-                indices.Add(vertexIndex--);
-                indices.Add(vertexIndex);
-                indices.Add(vertexIndex += 2);
-            }
-
-            public void Begin()
-            {
-                meshRenderer.enabled = true;
-				//Debug.Log("LightningBoltMeshRenderer Begin meshRenderer.enabled("+meshRenderer.enabled+")");
-            }
-
-            public bool PrepareForLines(int lineCount)
-            {
-                int vertexCount = lineCount * 4;
-                if (vertices.Count + vertexCount >= 65000)
-                {
-                    return false;
-                }
-                return true;
-            }
-
-            public void BeginLine(Vector3 start, Vector3 end, float radius, Color c, float glowWidthModifier, float glowIntensity)
-            {
-                AddIndices();
-
-                Vector2 glowModifier = new Vector2(glowWidthModifier, glowIntensity);
-                Vector4 dir = (end - start);
-                dir.w = radius;
-
-                vertices.Add(start);
-                texCoords.Add(uv1);
-                lineDirs.Add(dir);
-                colors.Add(c);
-                glowModifiers.Add(glowModifier);
-				ends.Add(dir);
-
-                vertices.Add(end);
-                texCoords.Add(uv2);
-                lineDirs.Add(dir);
-                colors.Add(c);
-                glowModifiers.Add(glowModifier);
-				ends.Add(dir);
-
-                dir.w = -radius;
-
-                vertices.Add(start);
-                texCoords.Add(uv3);
-                lineDirs.Add(dir);
-                colors.Add(c);
-                glowModifiers.Add(glowModifier);
-				ends.Add(dir);
-
-                vertices.Add(end);
-                texCoords.Add(uv4);
-                lineDirs.Add(dir);
-                colors.Add(c);
-                glowModifiers.Add(glowModifier);
-				ends.Add(dir);
-
-                needsUpdate = true;
-            }
-
-            public void AppendLine(Vector3 start, Vector3 end, float radius, Color c, float glowWidthModifier, float glowIntensity)
-            {
-                AddIndices();
-
-                Vector2 glowModifier = new Vector2(glowWidthModifier, glowIntensity);
-                Vector4 dir = (end - start);
-                dir.w = radius;
-
-                vertices.Add(start);
-                texCoords.Add(uv1);
-                // rotation will be in the same direction as the previous connected vertices
-                lineDirs.Add(lineDirs[lineDirs.Count - 3]);
-                colors.Add(c);
-                glowModifiers.Add(glowModifier);
-				ends.Add(dir);
-
-                vertices.Add(end);
-                texCoords.Add(uv2);
-                lineDirs.Add(dir);
-                colors.Add(c);
-                glowModifiers.Add(glowModifier);
-				ends.Add(dir);
-
-                dir.w = -radius;
-
-                vertices.Add(start);
-                texCoords.Add(uv3);
-                // rotation will be in the same direction as the previous connected vertices
-                lineDirs.Add(lineDirs[lineDirs.Count - 3]);
-                colors.Add(c);
-                glowModifiers.Add(glowModifier);
-				ends.Add(dir);
-
-                vertices.Add(end);
-                texCoords.Add(uv4);
-                lineDirs.Add(dir);
-                colors.Add(c);
-                glowModifiers.Add(glowModifier);
-				ends.Add(dir);
-            }
-
-            public void Reset()
-            {
-                mesh.triangles = null;
-                meshRenderer.enabled = false;
-                indices.Clear();
-                vertices.Clear();
-                colors.Clear();
-                lineDirs.Clear();
-                texCoords.Clear();
-                glowModifiers.Clear();
-                ends.Clear();
-            }
-
-            public Material Material
-            {
-                get { return GetComponent<MeshRenderer>().sharedMaterial; }
-                set { GetComponent<MeshRenderer>().sharedMaterial = value; }
-            }
-        }
-
         private readonly Dictionary<LightningBolt, List<LineRendererMesh>> renderers = new Dictionary<LightningBolt, List<LineRendererMesh>>();
         private readonly List<LineRendererMesh> rendererCache = new List<LineRendererMesh>();
 
@@ -498,6 +323,23 @@ namespace DigitalRuby.ThunderAndLightning
         public override bool CanGlow { get { return true; } }
 
         public Material MaterialNoGlow { get; set; }
+
+		public override int GetVertsForLightningBolt(LightningBolt bolt) {
+
+			if(!renderers.ContainsKey(bolt)) {
+				Debug.Log("GetVertsForLightningBolt !renderers.ContainsKey(bolt)");
+				return 0;
+			}
+
+			List<LineRendererMesh> lineRendererMeshes = renderers[bolt];
+
+			int count = 0;
+			for(int i=0;i<lineRendererMeshes.Count;i++) {
+				count += lineRendererMeshes[i].VertCount;
+			}
+
+			return count;
+		}
     }
 
     /// <summary>
@@ -856,6 +698,8 @@ namespace DigitalRuby.ThunderAndLightning
                 lightningBoltRenderer.AddGroup(this, group, parameters.GrowthMultiplier);
                 CurrentDelayAmount += ((float)parameters.Random.NextDouble() * minDelayValue) + delayDiff;
             }
+
+			//Debug.Log("RenderLightningBolt totalVerts("+lightningBoltRenderer.GetVertsForLightningBolt(this)+")");
         }
 
         private IEnumerator RenderGroupGlow(LightningBoltSegmentGroup g, ParticleSystem glowParticleSystem, float glowTime, float delayTime, float glowIntensity, float glowWidthMultiplier)

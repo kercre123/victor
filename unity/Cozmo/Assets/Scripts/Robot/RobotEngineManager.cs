@@ -23,6 +23,8 @@ public class RobotEngineManager : MonoBehaviour {
 	public bool IsConnected { get { return (channel != null && channel.IsConnected); } }
 	
 	[SerializeField] private TextAsset configuration;
+	[SerializeField] private TextAsset alternateConfiguration;
+
 	[SerializeField] private GameObject robotBusyPanelPrefab;
 
 	private CozmoBusyPanel busyPanel = null;
@@ -105,10 +107,16 @@ public class RobotEngineManager : MonoBehaviour {
 	{
 		CozmoLogging.OpenLogFile ();
 
-		if (configuration == null) {
+		TextAsset config = configuration;
+
+		if( PlayerPrefs.GetInt("DebugUseAltConfig",0) == 1) {
+			config = alternateConfiguration;
+		}
+
+		if (config == null) {
 			Debug.LogError ("Error initializing CozmoBinding: No configuration.", this);
 		} else {
-			CozmoBinding.Startup (configuration.text);
+			CozmoBinding.Startup (config.text);
 		}
 
 		if (instance != null && instance != this) {
@@ -299,6 +307,9 @@ public class RobotEngineManager : MonoBehaviour {
 		case G2U.Message.Tag.ActiveObjectStoppedMoving:
 			ReceivedSpecificMessage(message.ActiveObjectStoppedMoving);
 			break;
+		case G2U.Message.Tag.ActiveObjectTapped:
+			ReceivedSpecificMessage(message.ActiveObjectTapped);
+			break;
 		default:
 			Debug.LogWarning( message.GetTag() + " is not supported", this );
 			break;
@@ -366,6 +377,20 @@ public class RobotEngineManager : MonoBehaviour {
 			ActiveBlock activeBlock = current.activeBlocks[ID];
 			
 			activeBlock.StoppedMoving( message );
+		}
+	}
+	
+	private void ReceivedSpecificMessage( G2U.ActiveObjectTapped message )
+	{
+		if( current == null ) return;
+		
+		int ID = (int)message.objectID;
+		
+		if( current.activeBlocks.ContainsKey( ID ) )
+		{
+			ActiveBlock activeBlock = current.activeBlocks[ID];
+			
+			activeBlock.Tapped( message );
 		}
 	}
 

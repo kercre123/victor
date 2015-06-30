@@ -2205,12 +2205,12 @@ public class VectorLine {
 	}
 	
 	public static void LineManagerDisable () {
-		Debug.Log ("LineManagerDisable");
+		//Debug.Log ("LineManagerDisable");
 		lineManager.DisableIfUnused();
 	}
 	
 	public static void LineManagerEnable () {
-		Debug.Log ("LineManagerEnable");
+		//Debug.Log ("LineManagerEnable");
 		lineManager.EnableIfUsed();
 	}
 
