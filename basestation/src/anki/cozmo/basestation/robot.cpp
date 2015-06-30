@@ -488,7 +488,6 @@ namespace Anki {
       RobotPoseStamp* p = nullptr;
       HistPoseKey poseKey;
       lastResult = ComputeAndInsertPoseIntoHistory(msg.timestamp, t, &p, &poseKey, true);
-      assert(msg.timestamp == t);
       if(lastResult != RESULT_OK) {
         PRINT_NAMED_WARNING("Robot.QueueObservedMarker.HistoricalPoseNotFound",
                             "Time: %d, hist: %d to %d\n",
@@ -496,6 +495,10 @@ namespace Anki {
                             _poseHistory->GetNewestTimeStamp());
         return lastResult;
       }
+      
+      // If we get here, ComputeAndInsertPoseIntoHistory() should have succeeded
+      // and this should be true
+      assert(msg.timestamp == t);
       
       if(!_visionWhileMovingEnabled && !IsPickingOrPlacing()) {
         
@@ -853,7 +856,11 @@ namespace Anki {
       }
         
       //////// Stream Animations /////////
-      _animationStreamer.Update(*this);
+      Result animStreamResult = _animationStreamer.Update(*this);
+      if(animStreamResult != RESULT_OK) {
+        PRINT_NAMED_WARNING("Robot.Update",
+                            "Robot %d had an animation streaming failure.\n", GetID());
+      }
         
       
       /////////// Update visualization ////////////
@@ -1927,9 +1934,9 @@ namespace Anki {
     
     // ============ Messaging ================
     
-    Result Robot::SendMessage(const RobotMessage& msg) const
+    Result Robot::SendMessage(const RobotMessage& msg, bool reliable, bool hot) const
     {
-      Result sendResult = _msgHandler->SendMessage(_ID, msg);
+      Result sendResult = _msgHandler->SendMessage(_ID, msg, reliable, hot);
       if(sendResult != RESULT_OK) {
         PRINT_NAMED_ERROR("Robot.SendMessage", "Robot %d failed to send a message.\n", _ID);
       }

@@ -1,12 +1,12 @@
 % function allCompiledResults = runTests_tracking()
 
 % On PC
-% allCompiledResults = runTests_tracking('C:/Anki/products-cozmo-large-files/systemTestsData/trackingScripts/tracking_*.json', 'C:/Anki/products-cozmo-large-files/systemTestsData/results/', 'z:/Box Sync');
+% allCompiledResults = runTests_tracking('C:/Anki/products-cozmo-large-files/systemTestsData/trackingScripts/tracking_*.json', 'C:/Anki/products-cozmo-large-files/systemTestsData/results/', , 'z:/Documents/Anki/products-cozmo-large-files/VisionMarkers/');
 
 % On Mac
-% allCompiledResults = runTests_tracking('~/Documents/Anki/products-cozmo-large-files/systemTestsData/trackingScripts/tracking_*.json', '~/Documents/Anki/products-cozmo-large-files/systemTestsData/results/', '~/Box Sync');
+% allCompiledResults = runTests_tracking('~/Documents/Anki/products-cozmo-large-files/systemTestsData/trackingScripts/tracking_*.json', '~/Documents/Anki/products-cozmo-large-files/systemTestsData/results/', '~/Documents/Anki/products-cozmo-large-files/VisionMarkers/');
 
-function allCompiledResults = runTests_tracking(testJsonPattern, resultsDirectory, boxSyncDirectory)
+function allCompiledResults = runTests_tracking(testJsonPattern, resultsDirectory, visionMarkersDirectory)
     % To be a match, all corners of a quad must be within these thresholds
     maxMatchDistance_pixels = 5;
     maxMatchDistance_percent = 0.06;
@@ -28,11 +28,11 @@ function allCompiledResults = runTests_tracking(testJsonPattern, resultsDirector
     
     assert(exist('testJsonPattern', 'var') == 1);
     assert(exist('resultsDirectory', 'var') == 1);
-    assert(exist('boxSyncDirectory', 'var') == 1);
+    assert(exist('visionMarkersDirectory', 'var') == 1);
     
     testJsonPattern = strrep(testJsonPattern, '~/', [tildeToPath(),'/']);
     resultsDirectory = strrep(resultsDirectory, '~/', [tildeToPath(),'/']);
-    boxSyncDirectory = strrep(boxSyncDirectory, '~/', [tildeToPath(),'/']);
+    visionMarkersDirectory = strrep(visionMarkersDirectory, '~/', [tildeToPath(),'/']);
     
     thisFilename = [mfilename('fullpath'), '.m'];
     thisFileChangeTime = dir(thisFilename);
@@ -90,6 +90,8 @@ function allCompiledResults = runTests_tracking(testJsonPattern, resultsDirector
     algorithmParameters.detection.showImageDetections = false;
     algorithmParameters.detection.preprocessingFunction = []; % If non-empty, preprocessing is applied before compression
     algorithmParameters.detection.imageCompression = {'none', 0}; % Applies compression before running the algorithm
+    algorithmParameters.detection.cornerMethod = 'laplacianPeaks'; % {'laplacianPeaks', 'lineFits'}
+    algorithmParameters.cornerMethod = 'laplacianPeaks'; % {'laplacianPeaks', 'lineFits'}
     
     % Display and compression options
     algorithmParameters.showImageDetectionWidth = 640;
@@ -126,8 +128,11 @@ function allCompiledResults = runTests_tracking(testJsonPattern, resultsDirector
         elseif strcmp(runWhichAlgorithms{iAlgorithm}{1}, 'tracking_variableTimes')
             isSimpleTest = false;
             
-            numShakingPixels = [0, 2, 8, 12];
-            pixelGravaluePercentDifferences = [0.0, 0.05, 0.1, 0.2, 0.3, 0.5];
+            %numShakingPixels = [0, 2, 8, 12];
+            %pixelGravaluePercentDifferences = [0.0, 0.05, 0.1, 0.2, 0.3, 0.5];
+            
+            numShakingPixels = [0, 2];
+            pixelGravaluePercentDifferences = [0.0, 0.1];
             
             temporalFrameFractions = [1, 10];
             
@@ -178,7 +183,7 @@ function allCompiledResults = runTests_tracking(testJsonPattern, resultsDirector
                                     localNumComputeThreads.perPose = 1;
                                 end
 
-                                curResults = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, curAllTestData, localNumComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, thisFileChangeTime, false);
+                                curResults = compileAll(algorithmParametersN, visionMarkersDirectory, resultsDirectory, curAllTestData, localNumComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, thisFileChangeTime, false);
 
                                 percentMarkersCorrect_window{iShake}{iGrayvaluePercent}{iMaxFraction}(iTest, iPiece) = curResults.percentMarkersCorrect;
                             end % for iTest = 1:length(allTestData)
@@ -233,7 +238,7 @@ function allCompiledResults = runTests_tracking(testJsonPattern, resultsDirector
         
         % If it's a simple test (without loops or whatnot)
         if isSimpleTest
-            curResults = compileAll(algorithmParametersN, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, thisFileChangeTime, false);
+            curResults = compileAll(algorithmParametersN, visionMarkersDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, thisFileChangeTime, false);
             resultsData.(runWhichAlgorithms{iAlgorithm}) = curResults;
             disp(sprintf('Results for %s percentQuadsExtracted:%f percentMarkersCorrect:%f numMarkerErrors:%d fileSizePercent:%f', runWhichAlgorithms{iAlgorithm}, curResults.percentQuadsExtracted, curResults.percentMarkersCorrect, curResults.numMarkerErrors, curResults.compressedFileSizeTotal / curResults.uncompressedFileSizeTotal));
         end
@@ -269,13 +274,14 @@ function allTestData = getTestData(testJsonPattern)
     end
 end % getTestFilenames()
 
-function resultsData_overall = compileAll(algorithmParameters, boxSyncDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, thisFileChangeTime, showPlots)
+function resultsData_overall = compileAll(algorithmParameters, visionMarkersDirectory, resultsDirectory, allTestData, numComputeThreads, maxMatchDistance_pixels, maxMatchDistance_percent, thisFileChangeTime, showPlots)
     compileAllTic = tic();
-    
+
     markerDirectoryList = {
-        [boxSyncDirectory, '/Cozmo SE/VisionMarkers/symbols/withFiducials/'],...
-        [boxSyncDirectory, '/Cozmo SE/VisionMarkers/letters/withFiducials/'],...
-        [boxSyncDirectory, '/Cozmo SE/VisionMarkers/dice/withFiducials/']};
+        [visionMarkersDirectory, '/symbols/withFiducials/'],...
+        [visionMarkersDirectory, '/letters/withFiducials/'],...
+        [visionMarkersDirectory, '/dice/withFiducials/']};
+    
     
     rotationList = getListOfSymmetricMarkers(markerDirectoryList);
     

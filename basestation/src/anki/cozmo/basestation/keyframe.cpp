@@ -33,7 +33,6 @@
 
 #include <cassert>
 
-
 namespace Anki {
   namespace Cozmo {
     
@@ -229,13 +228,20 @@ return RESULT_FAIL; \
     
 #pragma mark - 
 #pragma mark RobotAudioKeyFrame
+    
     //
     // RobotAudioKeyFrame
     //
     
     Result RobotAudioKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot)
     {
-      GET_MEMBER_FROM_JSON(jsonRoot, audioID);
+      GET_MEMBER_FROM_JSON(jsonRoot, audioName);
+      //GET_MEMBER_FROM_JSON(jsonRoot, audioID);
+      
+      _audioID = SoundManager::getInstance()->GetID(_audioName);
+      
+      const u32 duration_ms = SoundManager::getInstance()->GetSoundDurationInMilliseconds(_audioID);
+      _numSamples = duration_ms / SAMPLE_LENGTH_MS;
       
       // TODO: Compute number of samples for this audio ID
       // TODO: Catch failure if ID is invalid
@@ -249,15 +255,17 @@ return RESULT_FAIL; \
     RobotMessage* RobotAudioKeyFrame::GetStreamMessage()
     {
       // Populate the message with the next chunk of audio data and send it out
-      if(_sampleIndex < _numSamples) {
-        
+      if(_sampleIndex < _numSamples)
+      {
         // TODO: Get next chunk of audio from wwise or something?
-        //wwise::GetNextSample(_audioSampleMsg.sample, 480);
+        //wwise::GetNextSample(_audioSampleMsg.sample, 800);
+        _audioSampleMsg.sample.fill(0);
         
         ++_sampleIndex;
         
         return &_audioSampleMsg;
       } else {
+        _sampleIndex = 0;
         return nullptr;
       }
     }

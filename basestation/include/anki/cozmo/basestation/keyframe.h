@@ -24,6 +24,8 @@
 #include "anki/cozmo/shared/cozmoTypes.h"
 #include "anki/cozmo/shared/ledTypes.h"
 
+#include "anki/cozmo/basestation/soundManager.h"
+
 namespace Anki {
   namespace Cozmo {
     
@@ -168,11 +170,14 @@ namespace Anki {
         return ClassName;
       }
       
+      SoundID_t GetAudioID() const { return _audioID; }
+      
     protected:
       virtual Result SetMembersFromJson(const Json::Value &jsonRoot) override;
       
     private:
-      u32 _audioID;
+      std::string _audioName;
+      SoundID_t   _audioID;
       
       s32 _numSamples;
       s32 _sampleIndex;
