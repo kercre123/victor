@@ -192,12 +192,12 @@ LightCube {
   rotation 0 0 1 0.23
   ID 2
 }
-Block2x1 {
-  translation -0.172268 -0.170815 0.0219949
-  rotation 0.0839046 -1.83002e-06 0.996474 4.37836e-05
-  longSideMarker "symbols/bangBangBang.png"
-  shortSideMarker "symbols/inverted/bangBangBang.png"
-}
+#Block2x1 {
+#  translation -0.172268 -0.170815 0.0219949
+#  rotation 0.0839046 -1.83002e-06 0.996474 4.37836e-05
+#  longSideMarker "symbols/bangBangBang.png"
+#  shortSideMarker "symbols/inverted/bangBangBang.png"
+#}
 BlockWorldComms {
 }
 DEF Cozmo_1 CozmoBot {
