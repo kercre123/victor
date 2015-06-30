@@ -1,44 +1,89 @@
 #include "driver/spi.h"
 #include "driver/spi_overlap.h"
 
+#define spi_busy(spi_no) READ_PERI_REG(SPI_CMD(spi_no))&SPI_USR
 
 uint32 ICACHE_FLASH_ATTR spi_master_init(const SPIBus spi_no, uint32 frequency)
 {
 	uint32 regvalue;
-	const uint32 CPU_MHZ = ((uint32)system_get_cpu_freq()) * 1000000;
+	const uint32 CPU_HZ = ((uint32)system_get_cpu_freq()) * 1000000;
+	uint32 clock_div_flag = 0;
 
 	if(spi_no>1) return; //handle invalid input number
 
-	// Calculate the actual frequency
-	if (frequency > (CPU_MHZ/2))
+	// Setup the SPI clock
+	if (frequency > (CPU_HZ/2)) // If more than half the clock frequency, we use the system clock directly
 	{
-		frequency = CPU_MHZ;
+		frequency = CPU_HZ;
+		clock_div_flag = 0x0001;
+		WRITE_PERI_REG(SPI_CLOCK(spi_no), SPI_CLK_EQU_SYSCLK);
 	}
-	else
+	else // Calculate dividers
 	{
-		if (frequency < (CPU_MHZ / SPI_CLKDIV_PRE))
+		uint16 prediv = min((CPU_HZ/frequency)-1, SPI_CLKDIV_PRE);
+		uint16 cntdiv = min((CPU_HZ/((prediv + 1)*frequency))-1, SPI_CLKCNT_N);
+		frequency = CPU_HZ / ((prediv + 1) * (prediv + 1));
+
+		WRITE_PERI_REG(SPI_CLOCK(spi_no),
+					(((prediv-1)&SPI_CLKDIV_PRE)<<SPI_CLKDIV_PRE_S)|
+					(((cntdiv-1)&SPI_CLKCNT_N)<<SPI_CLKCNT_N_S)|
+					(((cntdiv>>1)&SPI_CLKCNT_H)<<SPI_CLKCNT_H_S)|
+					((0&SPI_CLKCNT_L)<<SPI_CLKCNT_L_S));
 	}
 
+	if (spi_no == SPI)
+	{
+		WRITE_PERI_REG(PERIPHS_IO_MUX, 0x005|(clock_div_flag<<8)); //Set bit 8 if 80MHz sysclock required
+		PIN_FUNC_SELECT(PERIPHS_IO_MUX_SD_CLK_U, 1);
+		PIN_FUNC_SELECT(PERIPHS_IO_MUX_SD_CMD_U, 1);
+		PIN_FUNC_SELECT(PERIPHS_IO_MUX_SD_DATA0_U, 1);
+		PIN_FUNC_SELECT(PERIPHS_IO_MUX_SD_DATA1_U, 1);
+	}
+	else if (spi_no == HSPI)
+	{
+		WRITE_PERI_REG(PERIPHS_IO_MUX, 0x105|(clock_div_flag<<9)); // Set bit 9 if sysclock required
+		PIN_FUNC_SELECT(PERIPHS_IO_MUX_MTDI_U, 2); //GPIO12 is HSPI MISO pin (Master Data In)
+		PIN_FUNC_SELECT(PERIPHS_IO_MUX_MTCK_U, 2); //GPIO13 is HSPI MOSI pin (Master Data Out)
+		PIN_FUNC_SELECT(PERIPHS_IO_MUX_MTMS_U, 2); //GPIO14 is HSPI CLK pin (Clock)
+		PIN_FUNC_SELECT(PERIPHS_IO_MUX_MTDO_U, 2); //GPIO15 is HSPI CS pin (Chip Select / Slave Select)
+		// TODO What is this doing?
+		SET_PERI_REG_MASK(SPI_USER(spi_no), SPI_CS_SETUP|SPI_CS_HOLD|SPI_USR_COMMAND);
+		CLEAR_PERI_REG_MASK(SPI_USER(spi_no), SPI_FLASH_MODE);
+	}
 
+	// Big endian
+	CLEAR_PERI_REG_MASK(SPI_USER(spi_no), SPI_WR_BYTE_ORDER);
+	CLEAR_PERI_REG_MASK(SPI_USER(spi_no), SPI_RD_BYTE_ORDER);
 
+	return frequency;
 
-  // Setup the GPIO PIN_FUNC_SELECT
-  if (spi_no == SPI)
-  {
-		WRITE_PERI_REG(PERIPHS_IO_MUX, 0x005 )
-  }
-  else
-
-  }
-
-	SET_PERI_REG_MASK(SPI_USER(spi_no), SPI_CS_SETUP|SPI_CS_HOLD|SPI_USR_COMMAND);
-	CLEAR_PERI_REG_MASK(SPI_USER(spi_no), SPI_FLASH_MODE);
-
-	WRITE_PERI_REG(SPI_CLOCK(spi_no),
-					((3&SPI_CLKCNT_N)<<SPI_CLKCNT_N_S)|
-					((1&SPI_CLKCNT_H)<<SPI_CLKCNT_H_S)|
-					((3&SPI_CLKCNT_L)<<SPI_CLKCNT_L_S)); //clear bit 31,set SPI clock div
 }
+
+void spi_mast_start_transaction(const SPIBus spi_no, const uint8 cmd_bits, const uint16 cmd_data, \
+                                const uint8 addr_bits, const uint32 addr_data, \
+                                const uint16 mosi_bits, const uint16 miso_bits, const uint16 dummy_bits)
+{
+	static uint32 userRegs[NUM_SPI_BUS] = {0};
+
+	if (spi_no > 1) return; // Invalid bus
+	while(spi_busy(spi_no)); // Wait for SPI to be ready
+
+	uint32 newUserReg = (cmd_bits  > 0 ? SPI_USR_COMMAND : 0) |
+											(addr_bits > 0 ? SPI_USR_ADDR    : 0) |
+											(mosi_bits > 0 ? SPI_USR_MOSI    : 0) |
+											(miso_bits > 0 ? SPI_USR_MISO    : 0)
+
+	// Reset registers
+	CLEAR_PERI_REG_MASK(SPI_USER(spi_no), SPI_USR_MOSI|SPI_USR_MISO|SPI_USR_COMMAND|SPI_USR_ADDR|SPI_USR_DUMMY);
+	SET_PERI_REG_MASK()
+
+}
+
+
+
+
+
+
 /******************************************************************************
  * FunctionName : spi_lcd_9bit_write
  * Description  : SPI 9bits transmission function for driving LCD TM035PDZV36

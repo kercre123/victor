@@ -16,6 +16,7 @@
 typedef enum {
   SPI  = 0, ///< Shared with program flash
   HSPI = 1, ///< Independent SPI bus
+  NUM_SPI_BUS = 2; ///< Number of buses in system
 } SPIBus;
 
 /** Initalize the specified SPI peripheral for master mode
