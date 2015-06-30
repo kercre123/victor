@@ -669,7 +669,7 @@ Supervisor {
                 }
                 
                 DEF REAR_TRACK_WHEEL TrackWheel {
-                  position -0.048 -0.00375
+                  position -0.048 0.00375
                   radius 0.01075
                   children [
                     DEF TRACK_WHEEL_SMALL Transform {

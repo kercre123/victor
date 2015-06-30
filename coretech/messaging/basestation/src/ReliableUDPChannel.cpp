@@ -163,6 +163,13 @@ void ReliableUDPChannel::AddConnection(ConnectionId connectionId, const Transpor
 {
   std::lock_guard<std::recursive_mutex> guard(mutex);
 
+  // Check if connection already exists
+  if (IsConnectionActive(connectionId)) {
+    PRINT_STREAM_DEBUG("ReliableUDPChannel.AddConnection.AlreadyConnected",
+                       "Already connected to connectionId " << connectionId);
+    return;
+  }
+  
   // AddConnection should remove any old uses of connectionId and address
   // and send disconnects
   UnreliableUDPChannel::AddConnection(connectionId, address);
