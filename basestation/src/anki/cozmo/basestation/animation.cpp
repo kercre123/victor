@@ -28,6 +28,9 @@
 //#include <cassert>
 
 #define DEBUG_ANIMATIONS 0
+// Until we have a speaker in the robot, use this to play RobotAudioKeyFrames using
+// the device's SoundManager
+#define PLAY_ROBOT_AUDIO_ON_DEVICE 1
 
 namespace Anki {
 namespace Cozmo {
@@ -200,6 +203,11 @@ _bodyPosTrack.__METHOD__()
     // to it for determining when its time to stream out a keyframe
     _streamingTime_ms = _startTime_ms;
     
+#   if PLAY_ROBOT_AUDIO_ON_DEVICE
+    // This prevents us from replaying the same keyframe
+    _playedRobotAudio_ms = 0;
+#   endif
+    
     ALL_TRACKS(Init, ;);
     
     _isInitialized = true;
@@ -227,6 +235,20 @@ _bodyPosTrack.__METHOD__()
     // FlowControl: Don't send frames if robot has no space for them
     //const bool isRobotReadyForFrames = !robot.IsAnimationBufferFull();
     s32 numBytesToSend = robot.GetNumAnimationBytesFree();
+#   if PLAY_ROBOT_AUDIO_ON_DEVICE
+    if(_robotAudioTrack.HasFramesLeft())
+    {
+      const RobotAudioKeyFrame& audioKF = _robotAudioTrack.GetCurrentKeyFrame();
+      if(_playedRobotAudio_ms < audioKF.GetTriggerTime() &&
+         audioKF.IsTimeToPlay(_startTime_ms,  currTime_ms))
+      {
+        // TODO: Insert some kind of small delay to simulate latency?
+        SoundID_t soundID = static_cast<SoundID_t>(audioKF.GetAudioID());
+        SoundManager::getInstance()->Play(soundID);
+        _playedRobotAudio_ms = currTime_ms;
+      }
+    }
+#   endif
     
     // FlowControl: Also don't send too many messages (even if small) because it
     // will overwhelm the reliable transport buffer on the robot
