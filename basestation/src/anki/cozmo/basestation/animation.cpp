@@ -253,7 +253,7 @@ _bodyPosTrack.__METHOD__()
         if(msg != nullptr) {
           // Still have samples to send, don't increment to the next frame in the track
           //PRINT_NAMED_INFO("Animation.Update", "Streaming AudioSampleKeyFrame.\n");
-          robot.SendMessage(*msg);
+          robot.SendMessage(*msg, true, SEND_HOT);
           numBytesToSend -= msg->GetSize() + sizeof(RobotMessage::ID);
           if(sendResult != RESULT_OK) { return sendResult; }
         } else {
@@ -261,14 +261,14 @@ _bodyPosTrack.__METHOD__()
           // and for now send silence.
           //PRINT_NAMED_INFO("Animation.Update", "Streaming AudioSilenceKeyFrame.\n");
           _robotAudioTrack.MoveToNextKeyFrame();
-          robot.SendMessage(_silenceMsg);
+          robot.SendMessage(_silenceMsg, true, SEND_HOT);
           numBytesToSend -= _silenceMsg.GetSize() + sizeof(RobotMessage::ID);
           if(sendResult != RESULT_OK) { return sendResult; }
         }
       } else {
         // No frames left or not time to play next frame yet, so send silence
         //PRINT_NAMED_INFO("Animation.Update", "Streaming AudioSilenceKeyFrame.\n");
-        robot.SendMessage(_silenceMsg);
+        robot.SendMessage(_silenceMsg, true, SEND_HOT);
         numBytesToSend -= _silenceMsg.GetSize() + sizeof(RobotMessage::ID);
         if(sendResult != RESULT_OK) { return sendResult; }
       }
@@ -293,7 +293,7 @@ _bodyPosTrack.__METHOD__()
 #       if DEBUG_ANIMATIONS
         PRINT_NAMED_INFO("Animation.Update", "Streaming HeadAngleKeyFrame.\n");
 #       endif
-        sendResult = robot.SendMessage(*msg);
+        sendResult = robot.SendMessage(*msg, true, SEND_HOT);
         numBytesToSend -= msg->GetSize() + sizeof(RobotMessage::ID);
         if(sendResult != RESULT_OK) { return sendResult; }
       }
@@ -303,7 +303,7 @@ _bodyPosTrack.__METHOD__()
 #       if DEBUG_ANIMATIONS
         PRINT_NAMED_INFO("Animation.Update", "Streaming LiftHeightKeyFrame.\n");
 #       endif
-        sendResult = robot.SendMessage(*msg);
+        sendResult = robot.SendMessage(*msg, true, SEND_HOT);
         numBytesToSend -= msg->GetSize() + sizeof(RobotMessage::ID);
         if(sendResult != RESULT_OK) { return sendResult; }
       }
@@ -313,7 +313,7 @@ _bodyPosTrack.__METHOD__()
 #       if DEBUG_ANIMATIONS
         PRINT_NAMED_INFO("Animation.Update", "Streaming FacePositionKeyFrame.\n");
 #       endif
-        sendResult = robot.SendMessage(*msg);
+        sendResult = robot.SendMessage(*msg, true, SEND_HOT);
         numBytesToSend -= msg->GetSize() + sizeof(RobotMessage::ID);
         if(sendResult != RESULT_OK) { return sendResult; }
       }
@@ -323,7 +323,7 @@ _bodyPosTrack.__METHOD__()
 #       if DEBUG_ANIMATIONS
         PRINT_NAMED_INFO("Animation.Update", "Streaming FaceImageKeyFrame.\n");
 #       endif
-        sendResult = robot.SendMessage(*msg);
+        sendResult = robot.SendMessage(*msg, true, SEND_HOT);
         numBytesToSend -= msg->GetSize() + sizeof(RobotMessage::ID);
         if(sendResult != RESULT_OK) { return sendResult; }
       }
@@ -333,7 +333,7 @@ _bodyPosTrack.__METHOD__()
 #       if DEBUG_ANIMATIONS
         PRINT_NAMED_INFO("Animation.Update", "Streaming BackpackLightsKeyFrame.\n");
 #       endif
-        sendResult = robot.SendMessage(*msg);
+        sendResult = robot.SendMessage(*msg, true, SEND_HOT);
         numBytesToSend -= msg->GetSize() + sizeof(RobotMessage::ID);
         if(sendResult != RESULT_OK) { return sendResult; }
       }
@@ -343,7 +343,7 @@ _bodyPosTrack.__METHOD__()
 #       if DEBUG_ANIMATIONS
         PRINT_NAMED_INFO("Animation.Update", "Streaming BodyPositionKeyFrame.\n");
 #       endif
-        sendResult = robot.SendMessage(*msg);
+        sendResult = robot.SendMessage(*msg, true, SEND_HOT);
         numBytesToSend -= msg->GetSize() + sizeof(RobotMessage::ID);
         if(sendResult != RESULT_OK) { return sendResult; }
       }

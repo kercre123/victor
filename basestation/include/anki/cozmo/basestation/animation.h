@@ -115,6 +115,10 @@ namespace Anki {
       Track<DeviceAudioKeyFrame>  _deviceAudioTrack;
       Track<RobotAudioKeyFrame>   _robotAudioTrack;
       
+      // TODO: Remove this once we aren't playing robot audio on the device
+      TimeStamp_t _playedRobotAudio_ms;
+      
+      static const bool SEND_HOT = true;
     }; // class Animation
 
   } // namespace Cozmo
