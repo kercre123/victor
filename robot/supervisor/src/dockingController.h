@@ -20,7 +20,7 @@
 #include "anki/common/types.h"
 #include "anki/vision/MarkerCodeDefinitions.h"
 #include "anki/common/robot/geometry_declarations.h"
-
+#include "messages.h"
 
 namespace Anki {
   
@@ -73,6 +73,9 @@ namespace Anki {
       // If a marker pose was received from VisionSystem,
       // returns true along with that pose.
       bool GetLastMarkerPose(f32 &x, f32 &y, f32 &angle);
+      
+      // Sets the latest docking error signal message coming from engine
+      void SetDockingErrorSignalMessage(const Messages::DockingErrorSignal& msg);
       
     } // namespace DockingController
   } // namespace Cozmo

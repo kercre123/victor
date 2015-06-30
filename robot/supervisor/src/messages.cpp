@@ -2,8 +2,6 @@
 #include "anki/cozmo/shared/cozmoTypes.h"
 #include "anki/cozmo/robot/cozmoBot.h"
 
-#include "anki/common/shared/mailbox_impl.h"
-
 #include "anki/common/robot/array2d.h"
 
 #include "embedded/transport/IUnreliableTransport.h"
@@ -21,6 +19,7 @@
 #include "headController.h"
 #include "imuFilter.h"
 #include "dockingController.h"
+#include "faceTrackingController.h"
 #include "pickAndPlaceController.h"
 #include "testModeController.h"
 #include "animationController.h"
@@ -60,16 +59,6 @@ namespace Anki {
         const u32 LOOK_FOR_MESSAGE_TIMEOUT = 1000000;
         ID lookForID_ = NO_MESSAGE_ID;
         u32 lookingStartTime_ = 0;
-
-
-        // Mailboxes for different types of messages that the vision
-        // system communicates to main execution:
-        //MultiMailbox<Messages::BlockMarkerObserved, MAX_BLOCK_MARKER_MESSAGES> blockMarkerMailbox_;
-        //Mailbox<Messages::MatMarkerObserved>    matMarkerMailbox_;
-        Mailbox<Messages::DockingErrorSignal>   dockingMailbox_;
-
-        const u32 MAX_FACE_DETECTIONS = 16;
-        MultiMailbox<Messages::FaceDetection,MAX_FACE_DETECTIONS> faceDetectMailbox_;
 
         static RobotState robotState_;
 
@@ -274,17 +263,12 @@ namespace Anki {
 
       void ProcessDockingErrorSignalMessage(const DockingErrorSignal& msg)
       {
-        // Just pass the docking error signal along to the mainExecution to
-        // deal with. Note that if the message indicates tracking failed,
-        // the mainExecution thread should handle it, and put the vision
-        // system back in LOOKING_FOR_BLOCKS mode.
-        dockingMailbox_.putMessage(msg);
+        DockingController::SetDockingErrorSignalMessage(msg);
       }
 
       void ProcessFaceDetectionMessage(const FaceDetection& msg)
       {
-        // Just pass the face detection along to mainExecution to deal with.
-        faceDetectMailbox_.putMessage(msg);
+        FaceTrackingController::SetObjectPositionMessage(msg);
       }
 
       void ProcessBTLEMessages()
@@ -736,18 +720,6 @@ void Process##__MSG_TYPE__##Message(const __MSG_TYPE__& msg) { ProcessAnimKeyFra
         return matMarkerMailbox_.getMessage(msg);
       }
        */
-
-
-
-      bool CheckMailbox(DockingErrorSignal&  msg)
-      {
-        return dockingMailbox_.getMessage(msg);
-      }
-
-      bool CheckMailbox(FaceDetection&       msg)
-      {
-        return faceDetectMailbox_.getMessage(msg);
-      }
 
 
       bool ReceivedInit()

@@ -12,7 +12,6 @@
 #include "speedController.h"
 #include "steeringController.h"
 #include "pathFollower.h"
-#include "messages.h"
 
 
 #define DEBUG_DOCK_CONTROLLER 0
@@ -151,6 +150,9 @@ namespace Anki {
         const int BUFFER_SIZE = 256;
         u8 buffer[BUFFER_SIZE];
         Embedded::MemoryStack scratch_(buffer, BUFFER_SIZE);
+        
+        Messages::DockingErrorSignal dockingErrSignalMsg_;
+        bool dockingErrSignalMsgReady_ = false;
         
       } // "private" namespace
       
@@ -411,11 +413,11 @@ namespace Anki {
         
         // Get any docking error signal available from the vision system
         // and update our path accordingly.
-        Messages::DockingErrorSignal dockMsg;
-        while( Messages::CheckMailbox(dockMsg) )
+        while( dockingErrSignalMsgReady_ )
         {
+          dockingErrSignalMsgReady_ = false;
           
-          // If we're not actually docking, just toss the dockMsg.
+          // If we're not actually docking, just toss the dockingErrSignalMsg_.
           if (mode_ == IDLE) {
             break;
           }
@@ -432,35 +434,35 @@ namespace Anki {
 #endif
           
           
-          if(dockMsg.didTrackingSucceed) {
+          if(dockingErrSignalMsg_.didTrackingSucceed) {
             
-            //PRINT("ErrSignal %d (msgTime %d)\n", HAL::GetMicroCounter(), dockMsg.timestamp);
+            //PRINT("ErrSignal %d (msgTime %d)\n", HAL::GetMicroCounter(), dockingErrSignalMsg_.timestamp);
             
             // Convert from camera coordinates to robot coordinates
-            if(dockMsg.isApproximate) 
+            if(dockingErrSignalMsg_.isApproximate)
             {
-              dockMsg.x_distErr += HEAD_CAM_POSITION[0]*cosf(HeadController::GetAngleRad()) + NECK_JOINT_POSITION[0];
+              dockingErrSignalMsg_.x_distErr += HEAD_CAM_POSITION[0]*cosf(HeadController::GetAngleRad()) + NECK_JOINT_POSITION[0];
             }
             else {
               Embedded::Point3<f32> tempPoint;
-              GetWithRespectToRobot(Embedded::Point3<f32>(dockMsg.x_distErr, dockMsg.y_horErr, dockMsg.z_height),
+              GetWithRespectToRobot(Embedded::Point3<f32>(dockingErrSignalMsg_.x_distErr, dockingErrSignalMsg_.y_horErr, dockingErrSignalMsg_.z_height),
                                                   tempPoint);
               
-              dockMsg.x_distErr = tempPoint.x;
-              dockMsg.y_horErr  = tempPoint.y;
-              dockMsg.z_height  = tempPoint.z;
+              dockingErrSignalMsg_.x_distErr = tempPoint.x;
+              dockingErrSignalMsg_.y_horErr  = tempPoint.y;
+              dockingErrSignalMsg_.z_height  = tempPoint.z;
             }
             
             // Update last observed marker pose
-            lastMarkerDistX_ = dockMsg.x_distErr;
-            lastMarkerDistY_ = dockMsg.y_horErr;
-            lastMarkerAng_ = dockMsg.angleErr;
+            lastMarkerDistX_ = dockingErrSignalMsg_.x_distErr;
+            lastMarkerDistY_ = dockingErrSignalMsg_.y_horErr;
+            lastMarkerAng_ = dockingErrSignalMsg_.angleErr;
             
             
             // Check if we are beyond point of no return distance
             if (pastPointOfNoReturn_) {
 #if(DEBUG_DOCK_CONTROLLER)
-              PRINT("DockingController: Ignoring error msg because past point of no return (%f < %d)\n", dockMsg.x_distErr, pointOfNoReturnDistMM_);
+              PRINT("DockingController: Ignoring error msg because past point of no return (%f < %d)\n", dockingErrSignalMsg_.x_distErr, pointOfNoReturnDistMM_);
 #endif
               break; // out of while
             }
@@ -470,22 +472,22 @@ namespace Anki {
             PRINT("Received%sdocking error signal: x_distErr=%f, y_horErr=%f, "
                   "z_height=%f, angleErr=%fdeg\n",
                   (dockMsg.isApproximate ? " approximate " : " "),
-                  dockMsg.x_distErr, dockMsg.y_horErr,
-                  dockMsg.z_height, RAD_TO_DEG_F32(dockMsg.angleErr));
+                  dockingErrSignalMsg_.x_distErr, dockingErrSignalMsg_.y_horErr,
+                  dockingErrSignalMsg_.z_height, RAD_TO_DEG_F32(dockingErrSignalMsg_.angleErr));
 #endif
             
             // Check that error signal is plausible
             // If not, treat as if tracking failed.
             // TODO: Get tracker to detect these situations and not even send the error message here.
-            if (dockMsg.x_distErr > 0.f && ABS(dockMsg.angleErr) < 0.75f*PIDIV2_F) {
+            if (dockingErrSignalMsg_.x_distErr > 0.f && ABS(dockingErrSignalMsg_.angleErr) < 0.75f*PIDIV2_F) {
              
               // Update time that last good error signal was received
               lastDockingErrorSignalRecvdTime_ = HAL::GetTimeStamp();
               
               // Set relative block pose to start/continue docking
-              SetRelDockPose(dockMsg.x_distErr, dockMsg.y_horErr, dockMsg.angleErr, dockMsg.timestamp);
+              SetRelDockPose(dockingErrSignalMsg_.x_distErr, dockingErrSignalMsg_.y_horErr, dockingErrSignalMsg_.angleErr, dockingErrSignalMsg_.timestamp);
 
-              if(!dockMsg.isApproximate) // will be -1 if not computed
+              if(!dockingErrSignalMsg_.isApproximate) // will be -1 if not computed
               {
                 // If we have the height of the marker for docking, we can also
                 // compute the head angle to keep it centered
@@ -513,7 +515,7 @@ namespace Anki {
                 //PRINT("desHeadAngle %f (min1: %f, min2: %f)\n", desiredHeadAngle, minDesiredHeadAngle1, minDesiredHeadAngle2);
 
                 // If docking to a high block, assumes we're trying to pick it up!
-                if (dockMsg.z_height > START_LIFT_TRACKING_HEIGHT_MM) {
+                if (dockingErrSignalMsg_.z_height > START_LIFT_TRACKING_HEIGHT_MM) {
                   doHighDockLiftTracking_ = true;
                 }
 
@@ -950,6 +952,13 @@ namespace Anki {
         }
         return false;
       }
+      
+      void SetDockingErrorSignalMessage(const Messages::DockingErrorSignal& msg)
+      {
+        dockingErrSignalMsg_ = msg;
+        dockingErrSignalMsgReady_ = true;
+      }
+      
       
       } // namespace DockingController
     } // namespace Cozmo
