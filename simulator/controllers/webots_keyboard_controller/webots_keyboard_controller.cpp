@@ -52,9 +52,6 @@
 #define DEBUG_GAMEPAD 0
 #endif
 
-#define BASESTATION_IP "127.0.0.1"
-#define UI_DEVICE_ADVERTISEMENT_REGISTRATION_IP "127.0.0.1"
-
 namespace Anki {
   namespace Cozmo {
     
@@ -175,10 +172,7 @@ namespace Anki {
         UI_State_t uiState_;
         
         GameMessageHandler msgHandler_;
-        const int deviceID = 1;
-        GameComms gameComms_(deviceID, UI_MESSAGE_SERVER_LISTEN_PORT,
-                             UI_DEVICE_ADVERTISEMENT_REGISTRATION_IP,
-                             UI_ADVERTISEMENT_REGISTRATION_PORT);
+        GameComms *gameComms_ = nullptr;
         
         
         // For displaying cozmo's POV:
@@ -469,13 +463,31 @@ namespace Anki {
       {
         memcpy(sendBuf, RADIO_PACKET_HEADER, sizeof(RADIO_PACKET_HEADER));
         
-        while(!gameComms_.IsInitialized()) {
+        // Make root point to WebotsKeyBoardController node
+        root_ = inputController.getSelf();
+        
+        // Set deviceID
+        int deviceID = root_->getField("deviceID")->getSFInt32();
+        
+        // Get engine IP
+        std::string engineIP = root_->getField("engineIP")->getSFString();
+        
+        // Startup comms with engine
+        if (!gameComms_) {
+          printf("Registering with advertising service at %s:%d\n", engineIP.c_str(), UI_ADVERTISEMENT_REGISTRATION_PORT);
+          gameComms_ = new GameComms(deviceID, UI_MESSAGE_SERVER_LISTEN_PORT,
+                                     engineIP.c_str(),
+                                     UI_ADVERTISEMENT_REGISTRATION_PORT);
+        }
+        
+        
+        while(!gameComms_->IsInitialized()) {
           PRINT_NAMED_INFO("KeyboardController.Init",
                            "Waiting for gameComms to initialize...\n");
           inputController.step(KB_TIME_STEP);
-          gameComms_.Update();
+          gameComms_->Update();
         }
-        msgHandler_.Init(&gameComms_);
+        msgHandler_.Init(gameComms_);
         
         // Register callbacks for incoming messages from game
         // TODO: Have CLAD generate this?
@@ -528,8 +540,6 @@ namespace Anki {
         gps_->enable(BS_TIME_STEP);
         compass_->enable(BS_TIME_STEP);
         
-        // Make root point to WebotsKeyBoardController node
-        root_ = inputController.getSelf();
         poseMarkerDiffuseColor_ = root_->getField("poseMarkerDiffuseColor");
         
         #if(ENABLE_GAMEPAD_SUPPORT)
@@ -1890,12 +1900,12 @@ namespace Anki {
       } // ForceAddRobotIfSpecified()       
       void Update()
       {
-        gameComms_.Update();
+        gameComms_->Update();
         
         switch(uiState_) {
           case UI_WAITING_FOR_GAME:
           {
-            if (!gameComms_.HasClient()) {
+            if (!gameComms_->HasClient()) {
               return;
             } else {
               // Once gameComms has a client, tell the engine to start, force-add
