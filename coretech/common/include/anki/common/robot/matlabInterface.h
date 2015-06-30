@@ -88,7 +88,7 @@ return;\
     template<typename Type> Quadrilateral<Type> GetQuad(const std::string name);
 
     // Overload the templated Put() coming from base class for Point<s16>
-    Result Put(const Point<s16> * values, s32 nValues, const std::string name);
+    Result PutPoints(const Point<s16> * values, s32 nValues, const std::string name);
 
     
   }; // class Matlab
