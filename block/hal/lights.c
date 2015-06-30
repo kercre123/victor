@@ -1,5 +1,7 @@
+#include <string.h>
 #include "hal.h"
 #include "portable.h"
+
 
 #define GAMMA_CORRECT(x)           ((x)*(x) >> 8)
 
@@ -33,7 +35,7 @@ const u8 ledAnode[13] = {0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 0};
 const u8 ledCathode[13] = {1, 2, 3, 0, 2, 3, 0, 1, 3, 0, 1, 2, 0};
 //const u8 ledScale[12] = {8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8};
 
-unsigned char ledValues[13] = {255, 0, 0, 0, 32, 0, 0, 0, 255, 255, 0, 255, 0};
+volatile u8 ledValues[13] = {255, 0, 0, 0, 32, 0, 0, 0, 255, 255, 0, 255, 0};
 
 static u8 gCurrentLed = 0;
 
@@ -41,6 +43,12 @@ void SetLedValue(char led, char value)
 {
   ledValues[led] = value;
 }
+
+void SetLedValues(char *newValues)
+{
+  memcpy(ledValues, newValues, sizeof(ledValues));
+}  
+
 
 void InitTimer2()
 {  
