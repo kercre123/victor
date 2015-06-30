@@ -232,9 +232,6 @@ _bodyPosTrack.__METHOD__()
       _deviceAudioTrack.MoveToNextKeyFrame();
     }
     
-    // FlowControl: Don't send frames if robot has no space for them
-    //const bool isRobotReadyForFrames = !robot.IsAnimationBufferFull();
-    s32 numBytesToSend = robot.GetNumAnimationBytesFree();
 #   if PLAY_ROBOT_AUDIO_ON_DEVICE
     if(_robotAudioTrack.HasFramesLeft())
     {
@@ -250,15 +247,23 @@ _bodyPosTrack.__METHOD__()
     }
 #   endif
     
-    // FlowControl: Also don't send too many messages (even if small) because it
-    // will overwhelm the reliable transport buffer on the robot
+    // FlowControl: Don't send frames if robot has no space for them, and be
+    // careful not to overwhel reliable transport either, in terms of bytes or
+    // sheer number of messages
+
+    // TODO: define this elsewhere
+    const s32 MAX_BYTES_FOR_RELIABLE_TRANSPORT = 2000;
+    
+    s32 numBytesToSend = std::min(MAX_BYTES_FOR_RELIABLE_TRANSPORT,
+                                  robot.GetNumAnimationBytesFree());
+    
     s32 numFramesToSend = 10;
     
     while(numFramesToSend-- > 0 && numBytesToSend > 0 && !IsFinished())
     {
 #     if DEBUG_ANIMATIONS
-      PRINT_NAMED_INFO("Animation.Update", "%d bytes / %d frames left to send this Update.\n",
-                       numBytesToSend, numFramesToSend);
+      //PRINT_NAMED_INFO("Animation.Update", "%d bytes left to send this Update.\n",
+      //                 numBytesToSend);
 #     endif
       
       RobotMessage* msg = nullptr;

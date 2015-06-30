@@ -32,7 +32,7 @@ namespace AnimationController {
     
     // If buffer gets within this number of bytes of the buffer length,
     // then it is considered "full" for the purposes of IsBufferFull() below.
-    static const s32 KEYFRAME_BUFFER_PADDING = KEYFRAME_BUFFER_SIZE / 8;
+    static const s32 KEYFRAME_BUFFER_PADDING = KEYFRAME_BUFFER_SIZE / 4;
     
     // Circular byte buffer for keyframe messages
     ONCHIP u8 _keyFrameBuffer[KEYFRAME_BUFFER_SIZE];
@@ -285,13 +285,8 @@ namespace AnimationController {
     _currentBufferPos = 0;
     _lastBufferPos = 0;
     
-//    _currentFrame = 0;
-//    _lastFrame    = 0;
     _numFramesBuffered = 0;
-    
-//    _currentFaceFrame = 0;
-//    _lastFaceFrame    = 0;
-    
+
     _haveReceivedTerminationFrame = false;
     _isPlaying = false;
     
@@ -336,6 +331,8 @@ namespace AnimationController {
       memcpy(_keyFrameBuffer, data+firstChunk, numBytes - firstChunk);
       _lastBufferPos = numBytes-firstChunk;
      }
+    
+    assert(_lastBufferPos >= 0 && _lastBufferPos < sizeof(_keyFrameBuffer));
   }
   
   static void RewindBufferOneType()
@@ -370,6 +367,8 @@ namespace AnimationController {
       memcpy(data+firstChunk, _keyFrameBuffer, numBytes - firstChunk);
       _currentBufferPos = numBytes-firstChunk;
     }
+    
+    assert(_currentBufferPos >= 0 && _currentBufferPos < sizeof(_keyFrameBuffer));
   }
   
   static inline Messages::ID GetTypeIndicator()
@@ -381,8 +380,6 @@ namespace AnimationController {
   
 //  PRINT("Buffering anim keyframe %s, ID=%d\n", QUOTE(__MSG_TYPE__), Messages::GET_MESSAGE_ID(__MSG_TYPE__));
 #define DEFINE_BUFFER_KEY_FRAME(__MSG_TYPE__) \
-  Result BufferKeyFrame(const Messages::__MSG_TYPE__& msg) \
-  { \
     const s32 numBytesAvailable = GetNumBytesAvailable(); \
     const s32 numBytesNeeded = sizeof(msg) + sizeof(Messages::ID); \
     AnkiConditionalErrorAndReturnValue(numBytesAvailable >= numBytesNeeded, RESULT_OK , \
@@ -390,31 +387,68 @@ namespace AnimationController {
                                        "Not enough buffer available for keyframe (%d bytes available, %d needed).\n", \
                                        numBytesAvailable, numBytesNeeded); \
     SetTypeIndicator(Messages::GET_MESSAGE_ID(__MSG_TYPE__)); \
-    CopyIntoBuffer((u8*)&msg, sizeof(msg)); \
-    if(Messages::GET_MESSAGE_ID(__MSG_TYPE__) == Messages::AnimKeyFrame_AudioSample_ID || \
-       Messages::GET_MESSAGE_ID(__MSG_TYPE__) == Messages::AnimKeyFrame_AudioSilence_ID) \
-    { ++_numFramesBuffered; } \
-    return RESULT_OK; \
+    CopyIntoBuffer((u8*)&msg, sizeof(msg));
+  
+  Result BufferKeyFrame(const Messages::AnimKeyFrame_EndOfAnimation& msg)
+  {
+    DEFINE_BUFFER_KEY_FRAME(AnimKeyFrame_EndOfAnimation)
+    PRINT("Buffering EndOfAnimation KeyFrame\n");
+    _haveReceivedTerminationFrame = true;
+    ++_numFramesBuffered;
+    return RESULT_OK;
   }
   
-  DEFINE_BUFFER_KEY_FRAME(AnimKeyFrame_AudioSample)
+  Result BufferKeyFrame(const Messages::AnimKeyFrame_AudioSample& msg)
+  {
+    DEFINE_BUFFER_KEY_FRAME(AnimKeyFrame_AudioSample)
+    //PRINT("Buffering AudioSample KeyFrame\n");
+    ++_numFramesBuffered;
+    return RESULT_OK;
+  }
   
-  DEFINE_BUFFER_KEY_FRAME(AnimKeyFrame_AudioSilence)
+  Result BufferKeyFrame(const Messages::AnimKeyFrame_AudioSilence& msg)
+  {
+    DEFINE_BUFFER_KEY_FRAME(AnimKeyFrame_AudioSilence)
+    //PRINT("Buffering AudioSilence KeyFrame\n");
+    ++_numFramesBuffered;
+    return RESULT_OK;
+  }
+
+  Result BufferKeyFrame(const Messages::AnimKeyFrame_HeadAngle& msg) {
+    DEFINE_BUFFER_KEY_FRAME(AnimKeyFrame_HeadAngle)
+    PRINT("Buffering HeadAngle KeyFrame\n");
+    return RESULT_OK;
+  }
   
-  DEFINE_BUFFER_KEY_FRAME(AnimKeyFrame_HeadAngle)
+  Result BufferKeyFrame(const Messages::AnimKeyFrame_LiftHeight& msg) {
+    DEFINE_BUFFER_KEY_FRAME(AnimKeyFrame_LiftHeight)
+    PRINT("Buffering LiftHeight KeyFrame\n");
+    return RESULT_OK;
+  }
   
-  DEFINE_BUFFER_KEY_FRAME(AnimKeyFrame_LiftHeight)
+  Result BufferKeyFrame(const Messages::AnimKeyFrame_FaceImage& msg) {
+    DEFINE_BUFFER_KEY_FRAME(AnimKeyFrame_FaceImage)
+    PRINT("Buffering FaceImage KeyFrame\n");
+    return RESULT_OK;
+  }
   
-  DEFINE_BUFFER_KEY_FRAME(AnimKeyFrame_FaceImage)
+  Result BufferKeyFrame(const Messages::AnimKeyFrame_FacePosition& msg) {
+    DEFINE_BUFFER_KEY_FRAME(AnimKeyFrame_FacePosition)
+    PRINT("Buffering FacePosition KeyFrame\n");
+    return RESULT_OK;
+  }
   
-  DEFINE_BUFFER_KEY_FRAME(AnimKeyFrame_FacePosition)
+  Result BufferKeyFrame(const Messages::AnimKeyFrame_BackpackLights& msg) {
+    DEFINE_BUFFER_KEY_FRAME(AnimKeyFrame_BackpackLights)
+    PRINT("Buffering BackpackLights KeyFrame\n");
+    return RESULT_OK;
+  }
   
-  DEFINE_BUFFER_KEY_FRAME(AnimKeyFrame_BackpackLights)
-  
-  DEFINE_BUFFER_KEY_FRAME(AnimKeyFrame_BodyMotion)
-  
-  DEFINE_BUFFER_KEY_FRAME(AnimKeyFrame_EndOfAnimation)
-  
+  Result BufferKeyFrame(const Messages::AnimKeyFrame_BodyMotion& msg) {
+    DEFINE_BUFFER_KEY_FRAME(AnimKeyFrame_BodyMotion)
+    PRINT("Buffering BodyMotion KeyFrame\n");
+    return RESULT_OK;
+  }
   
   bool IsBufferFull()
   {
@@ -434,11 +468,19 @@ namespace AnimationController {
     if(_isPlaying) {
       // If we are already in progress playing something, we are "ready to play"
       // until we run out of keyframes in the buffer
-      ready = _numFramesBuffered > 0;
+      // Note that we need at least two "frames" in the buffer so we can always
+      // read from the current one to the next one without reaching end of buffer.
+      ready = _numFramesBuffered > 1;
     } else {
       // Otherwise, wait until we get enough frames to start
-      ready = (_numFramesBuffered > PREROLL_BUFFER_LENGTH ||
-               (_numFramesBuffered > 0 && _haveReceivedTerminationFrame));
+      ready = (_numFramesBuffered > PREROLL_BUFFER_LENGTH || _haveReceivedTerminationFrame);
+      if(ready) {
+        _isPlaying = true;
+        
+#       if DEBUG_ANIMATION_CONTROLLER
+        _currentTime_ms = 0;
+#       endif
+      }
     }
     
     //assert(_currentFrame <= _lastFrame);
@@ -472,10 +514,11 @@ namespace AnimationController {
             break;
           }
           default:
-            PRINT("Expecting either audio sample or audio sample next in animation buffer.\n");
+            PRINT("Expecting either audio sample or silence next in animation buffer.\n");
             return RESULT_FAIL;
         }
         
+      
 #       if DEBUG_ANIMATION_CONTROLLER
         _currentTime_ms += 33;
 #       endif
@@ -484,16 +527,32 @@ namespace AnimationController {
         // (The rewind is a little icky, but I'm leaving it for now)
         bool nextAudioFrameFound = false;
         bool terminatorFound = false;
-        while(!nextAudioFrameFound && !terminatorFound) {
-          switch(GetTypeIndicator())
+        while(!nextAudioFrameFound && !terminatorFound)
+        {
+          if(_currentBufferPos == _lastBufferPos) {
+            PRINT("Ran out of animation buffer after getting audio/silence.\n");
+            break;
+            //return RESULT_FAIL;
+          }
+          
+          const Messages::ID msgID = GetTypeIndicator();
+          switch(msgID)
           {
             case Messages::AnimKeyFrame_AudioSample_ID:
             case Messages::AnimKeyFrame_AudioSilence_ID:
+              
+              // Rewind so we re-see this type again on next update (a little icky, yes...)
+              RewindBufferOneType();
+              
               nextAudioFrameFound = true;
               break;
               
             case Messages::AnimKeyFrame_EndOfAnimation_ID:
             {
+#             if DEBUG_ANIMATION_CONTROLLER
+              PRINT("AnimationController[t=%dms(%d)] hit EndOfAnimation\n",
+                    _currentTime_ms, HAL::GetTimeStamp());
+#             endif
               Messages::AnimKeyFrame_EndOfAnimation msg;
               GetFromBuffer((u8*)&msg, sizeof(msg)); // just pull it out of the buffer
               terminatorFound = true;
@@ -598,19 +657,18 @@ namespace AnimationController {
               
           } // switch(GetTypeIndicator())
         } // while(!nextAudioFrameFound && !terminatorFound)
+
+        --_numFramesBuffered;
         
-        if(nextAudioFrameFound) {
-          // Rewind so we re-see this type again on next update (a little icky, yes...)
-          RewindBufferOneType();
-        } else if(terminatorFound) {
+        if(terminatorFound) {
           _isPlaying = false;
           _haveReceivedTerminationFrame = false;
+          --_numFramesBuffered;
 #         if DEBUG_ANIMATION_CONTROLLER
-          PRINT("Reached animation termination frame.\n");
+          PRINT("Reached animation termination frame (%d frames still buffered, curPos/lastPos = %d/%d).\n",
+                _numFramesBuffered, _currentBufferPos, _lastBufferPos);
 #         endif
         }
-        
-        --_numFramesBuffered;
         
       } // if(AudioReady())
     } // if(IsReadyToPlay())
