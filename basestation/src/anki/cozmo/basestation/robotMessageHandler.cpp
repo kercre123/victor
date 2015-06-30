@@ -424,8 +424,9 @@ namespace Anki {
         robot->SetLastPickOrPlaceSucceeded(false);
       }
       
+      // Note: this returns the vision system to whatever mode it was in before
+      // it was docking/tracking
       robot->StopDocking();
-      robot->StartLookingForMarkers();
       
       return lastResult;
     }

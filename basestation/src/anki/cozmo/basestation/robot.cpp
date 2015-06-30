@@ -771,8 +771,9 @@ namespace Anki {
         
         MessageFaceDetection faceDetection;
         while(true == _visionProcessor.CheckMailbox(faceDetection)) {
-          PRINT_NAMED_INFO("Robot.ActiveObjectLightTest", "Robot %d reported seeing a face at (x,y,w,h)=(%d,%d,%d,%d).",
-                     GetID(), faceDetection.x_upperLeft, faceDetection.y_upperLeft, faceDetection.width, faceDetection.height);
+          PRINT_NAMED_INFO("Robot.Update",
+                           "Robot %d reported seeing a face at (x,y,w,h)=(%d,%d,%d,%d).",
+                           GetID(), faceDetection.x_upperLeft, faceDetection.y_upperLeft, faceDetection.width, faceDetection.height);
           
           
           if(faceDetection.visualize > 0) {

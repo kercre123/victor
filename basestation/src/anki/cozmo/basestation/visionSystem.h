@@ -185,8 +185,8 @@ namespace Cozmo {
     
     const FaceDetectionParameters& GetFaceDetectionParams();
     
-    static const std::string& GetModeName(Mode mode);
-    const std::string& GetCurrentModeName() const;
+    std::string GetModeName(Mode mode) const;
+    std::string GetCurrentModeName() const;
     
     void SetParams(const bool autoExposureOn,
                    const f32 exposureTime,
@@ -257,6 +257,7 @@ namespace Cozmo {
     Embedded::Array<f32> _RcamWrtRobot;
     
     u32 _mode;
+    u32 _modeBeforeTracking;
     
     // Camera parameters
     // TODO: Should these be moved to (their own struct in) visionParameters.h/cpp?
