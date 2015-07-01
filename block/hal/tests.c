@@ -1,10 +1,6 @@
 #include "hal.h"
 
-//#define DO_SIMPLE_LED_TEST
-//#define DO_LED_TEST
-//#define DO_TAPS_TEST
-//#define DO_MISSED_PACKET_TEST
-//#define DO_RADIO_LED_TEST
+
 
 // Blink lights for each tap
 void TapsTest()
@@ -38,26 +34,28 @@ void SimpleLedTest(bool loop)
 // Test light controller
 void LedTest()
 {
-  char i;
+  u8 i;
   InitTimer2();
   for(i = 0; i<13; i++)
   {
     SetLedValue(i,0);
   }
+  SetLedValue(12,255);
   while(1)
   {
+    
     for(i=0; i<255; i++)
     {
-      SetLedValue(4, i);
-      SetLedValue(3, 0xFF-i);
-      SetLedValue(5, 0xFF-i);
+      SetLedValue(3, i);
+      SetLedValue(7, i);
+      SetLedValue(11, i);
       delay_ms(5);
     }
-    for(i=255; i>0; i--)
+    for(i=0; i<255; i++)
     {
-      SetLedValue(4, i);
       SetLedValue(3, 0xFF-i);
-      SetLedValue(5, 0xFF-i);
+      SetLedValue(7, 0xFF-i);
+      SetLedValue(11, 0xFF-i);
       delay_ms(5);
     }
   }

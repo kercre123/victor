@@ -4,21 +4,21 @@
 #include "nrf24le1.h"
 #include "hal.h"
 
-//#define LISTEN_FOREVER
-//#define DO_TRANSMITTER_BEHAVIOR
+
 
 // Global variables
 extern volatile bool radioBusy;
 extern volatile bool gDataReceived;
 extern volatile u8 radioPayload[13];
-extern volatile u8 radioTimerState;
+extern volatile enum eRadioTimerState radioTimerState;
 
 
 void main(void)
 {
-  int i;
-  char state = 0;
-  char led;
+  u8 i;
+  u8 state = 0;
+  u8 led;
+  u8 numRepeat;
   volatile bool sync;
   volatile s8 accData[3];
   volatile u8 tapCount = 0;
@@ -38,38 +38,35 @@ void main(void)
   {
     for(i=0; i<13; i++)
     {
-      // Reset LEDs
-      for(led = 0; led<13; led++)
+      for(numRepeat=0; numRepeat<10; numRepeat++)
       {
-        radioPayload[led] = 0;
-      }
-      radioPayload[i] = 255;
-      if (radioTimerState == 1) // 30 ms
-      {
-        radioTimerState = 0; // 30 ms
-        // Set to 30 mS
+        LightOn(0);       // Transmitting indication light  
+        while(radioTimerState == radioSleep);
+        {
+          // doing lights stuff
+        }
+        LightsOff();
+        
+        // Set payload
+        memset(radioPayload, 0, sizeof(radioPayload));
+        //radioPayload[i] = 255;
+        radioPayload[10] = 255;
+        TransmitData();
+        
+        // Set to 30 mS wait
         TR0 = 0; // Stop timer 
         TL0 = 0xFF - TIMER30HZ_L; 
         TH0 = 0xFF - TIMER30HZ_H;
         TR0 = 1; // Start timer 
-        LightsOff();      // Turn off light
-        TransmitData();
+        radioTimerState = radioSleep; 
       }
-      else
-      {  
-        LightOn(0);       // Transmitting indication light    
-      }
-      //ReceiveData(1);
-      //ReceiveData(3);
-      //delay_ms(10);
-      //delay_us(333);
     }
   }
 #endif 
   
   // Initialize accelerometer
   InitAcc();
-  
+
   // Initialize radioPayload and LED values to zeros
   for(led = 0; led<13; led++)
   {
@@ -83,11 +80,16 @@ void main(void)
   
   // Initialize radio timer
   InitTimer0();
-  
+
   // Synchronize with transmitter
   sync = false;
   SetLedValue(3, 0xFF); // No sync light
   gDataReceived = false;
+  
+  // Initalize Radio Sync Timer // XXX  
+  InitTimer0();
+  TR0 = 0; // Stop timer 
+  
   while(sync == false)
   {
     #ifdef DO_RADIO_LED_TEST
@@ -98,22 +100,19 @@ void main(void)
     delay_ms(1);
     StopTimer2();
     
-    // Initalize Radio Sync Timer // XXX  
-    InitTimer0();
     ReceiveData(5U); // 5 ms wait (max)
-    for(led = 0; led<13; led++)
+
+    if(gDataReceived)
     {
-      if(radioPayload[led] != 0)
-      {
-        sync = true;
-        break;
-      }
+      sync = true;
     }
+    
   }
   SetLedValue(4, 0xFF); 
   StartTimer2();
   delay_ms(1);
-  
+  LightsOff();
+
   // Begin main loop. Time = 0
   while(1) 
   {    
@@ -123,11 +122,11 @@ void main(void)
     // Accelerometer read
     ReadAcc(accData);
     tapCount += GetTaps();
-    while(radioTimerState == 0)
+    while(radioTimerState == radioSleep);
     {
       // doing lights stuff
     }
-    radioTimerState = 0; 
+    radioTimerState = radioSleep; 
     // Turn off lights timer (and lights)
     StopTimer2();  
 

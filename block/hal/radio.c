@@ -1,18 +1,10 @@
 #include "hal.h"
 
-#define BLOCK_ID 0xC5
-
-static const u8 ADDRESS[5] = {BLOCK_ID, 0xC2, 0xC2, 0xC2, 0xC2};
-
-static const u8 TIMER30HZ_L = 0x9C;
-static const u8 TIMER30HZ_H = 0xAD;
-static const u8 WAKEUP_OFFSET = 0x0F;
-
 // Global variables
 volatile bool radioBusy;
 volatile bool gDataReceived;
 volatile u8 radioPayload[13];
-volatile u8 radioTimerState = 0;
+volatile enum eRadioTimerState radioTimerState = radioSleep;
 
 void InitTimer0()
 {  
@@ -79,10 +71,9 @@ void ReceiveData(u8 msTimeout)
   // 1333 ticks per ms
   // ~5.2 per unit of TH0!!!!! XXX XXX everything on radio should be timer 0! 
   TR0 = 0; // Stop timer 
-  TL0 = 0x00;
-  TH0 = 0x00;
+  TL0 = 0;
+  TH0 = 0;
   TR0 = 1; // Start timer 
-  
   
   // Wait for a packet, or time out
   radioBusy = true;
@@ -117,8 +108,8 @@ void InitPTX()
   hal_nrf_set_datarate(HAL_NRF_1MBPS);
   // Turn off auto-retransmit
   hal_nrf_set_auto_retr(0, 250);
-  // Set address
-  #ifndef DO_RECEIVER_BEHAVIOR
+  // Set address (only if acting as transmitter)
+  #ifdef DO_TRANSMITTER_BEHAVIOR
   hal_nrf_set_address(HAL_NRF_TX, ADDRESS);
   #endif
   // Power up radio
@@ -158,16 +149,13 @@ NRF_ISR()
       // Set timer for ~28 ms from now
       TR0 = 0; // Stop timer 
       TL0 = 0xFF - TIMER30HZ_L; 
-      TH0 = 0xFF - TIMER30HZ_H + WAKEUP_OFFSET;
+      TH0 = 0xFF - TIMER30HZ_H; + WAKEUP_OFFSET;
       TR0 = 1; // Start timer   
       // Read payload
       while(!hal_nrf_rx_fifo_empty())
       {
         hal_nrf_read_rx_payload(radioPayload);
       }
-      //LightOn(10);
-      //while(1);
-      // Process radioPayload
       radioBusy = false;
       gDataReceived = true;       
       break;
@@ -196,5 +184,5 @@ NRF_ISR()
 // Overflow flag auto-resets
 T0_ISR()
 {
-  radioTimerState = 1;  
+  radioTimerState = radioWakeup;  
 }
