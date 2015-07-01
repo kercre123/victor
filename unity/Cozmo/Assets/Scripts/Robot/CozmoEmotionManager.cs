@@ -7,6 +7,8 @@ public class CozmoEmotionManager : MonoBehaviour {
 	public static CozmoEmotionManager instance = null;
 	private U2G.PlayAnimation PlayAnimationMessage;
 
+	public string testAnim = "ANIM_TEST";
+	
 	void Awake()
 	{
 		PlayAnimationMessage = new U2G.PlayAnimation();
@@ -20,11 +22,12 @@ public class CozmoEmotionManager : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-		if( Input.GetKeyDown(KeyCode.L) )
+#if UNITY_EDITOR
+		if( Input.GetKeyDown(KeyCode.T) )
 		{
-			SendAnimation("ANIM_TEST", 1);
+			SendAnimation(testAnim, 1);
 		}
-	
+#endif
 	}
 
 	public void SendAnimation(string anim_name, uint num_loops)
