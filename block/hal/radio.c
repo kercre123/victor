@@ -20,7 +20,6 @@ void InitTimer0()
   TR0 = 1; // Start timer 
 }
 
-
 void PowerDownRadio()
 {
   hal_nrf_set_power_mode(HAL_NRF_PWR_DOWN);
@@ -62,25 +61,21 @@ void InitPRX()
 
 void ReceiveData(u8 msTimeout)
 {
-  //char now;
-  //now = TH0;
-  
+  u8 now;
+
+  // get time
+  now = TH0;
+
   // Initialize as primary receiver
   InitPRX();
   
-  // 1333 ticks per ms
-  // ~5.2 per unit of TH0!!!!! XXX XXX everything on radio should be timer 0! 
-  TR0 = 0; // Stop timer 
-  TL0 = 0;
-  TH0 = 0;
-  TR0 = 1; // Start timer 
   
   // Wait for a packet, or time out
   radioBusy = true;
   while(radioBusy)
   {    
     #ifndef LISTEN_FOREVER
-    if(TH0>(5*msTimeout))
+    if((TH0-now+1)>(5*msTimeout))
     {
       radioBusy = false;
     }
@@ -149,7 +144,7 @@ NRF_ISR()
       // Set timer for ~28 ms from now
       TR0 = 0; // Stop timer 
       TL0 = 0xFF - TIMER30HZ_L; 
-      TH0 = 0xFF - TIMER30HZ_H; + WAKEUP_OFFSET;
+      TH0 = 0xFF - TIMER30HZ_H + WAKEUP_OFFSET;
       TR0 = 1; // Start timer   
       // Read payload
       while(!hal_nrf_rx_fifo_empty())
@@ -184,5 +179,15 @@ NRF_ISR()
 // Overflow flag auto-resets
 T0_ISR()
 {
-  radioTimerState = radioWakeup;  
+  radioTimerState = radioWakeup; 
+  // set for 30 Hz wakeup
+  TR0 = 0; // Stop timer 
+  TL0 = 0xFF - TIMER30HZ_L; 
+  TH0 = 0xFF - TIMER30HZ_H;;
+  TR0 = 1; // Start timer   
 }
+
+/*
+If we miss a packet, we're still on for 30 Hz. 
+If we receive a packet, we wake up at 30 Hz - offset
+*/

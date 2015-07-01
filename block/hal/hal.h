@@ -16,7 +16,7 @@
 //#define DO_MISSED_PACKET_TEST
 //#define DO_RADIO_LED_TEST
 
-#define LISTEN_FOREVER
+//#define LISTEN_FOREVER
 //#define DO_TRANSMITTER_BEHAVIOR
 
 // lights.c
@@ -37,11 +37,11 @@ u8 GetTaps();
 void RunTests();
 
 // radio.c
-static const u8 RADIO_TIMEOUT_MS = 5;
+static const u8 RADIO_TIMEOUT_MS = 2;
 static const u8 ADDRESS[5] = {BLOCK_ID, 0xC2, 0xC2, 0xC2, 0xC2};
 static const u8 TIMER30HZ_L = 0x9C;
 static const u8 TIMER30HZ_H = 0xAD;
-static const u8 WAKEUP_OFFSET = 0x0F; // 0.75 us per tick, 191.25 on H byte
+static const u8 WAKEUP_OFFSET = 0x02; // 0.75 us per tick, 191.25 on H byte
 
 typedef enum eRadioTimerState
 {

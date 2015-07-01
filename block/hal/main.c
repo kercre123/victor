@@ -36,7 +36,7 @@ void main(void)
   InitTimer0();
   while(1)
   {
-    for(i=0; i<13; i++)
+    for(i=0; i<12; i++)
     {
       for(numRepeat=0; numRepeat<10; numRepeat++)
       {
@@ -49,8 +49,8 @@ void main(void)
         
         // Set payload
         memset(radioPayload, 0, sizeof(radioPayload));
-        //radioPayload[i] = 255;
-        radioPayload[10] = 255;
+        radioPayload[i] = numRepeat*25;
+        radioPayload[12] = 128;
         TransmitData();
         
         // Set to 30 mS wait
