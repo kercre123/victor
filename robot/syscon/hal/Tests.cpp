@@ -22,11 +22,11 @@ void TestRun(u8 cmd, s16 arg)
   // Execute motor setpower commands (0-3)
   if (cmd <= 4)
   {
-    MotorsSetPower(cmd, arg);
-    MotorsUpdate();
+    Motors::setPower(cmd, arg);
+    Motors::update();
     MicroWait(5000);
-    MotorPrintEncoder(cmd);
-    MotorsUpdate();
+    Motors::printEncoder(cmd);
+    Motors::update();
     MicroWait(5000);
   }
   // Execute read sensors command (4)
@@ -85,63 +85,63 @@ void TestFixtures::motors() {
   {
     #ifdef DO_FIXED_DISTANCE_TESTING
       MicroWait(3000000);
-      while(DebugWheelsGetTicks(0) <= 3987) // go 0.25m
+      while(Motors::debugWheelsGetTicks(0) <= 3987) // go 0.25m
       {
-        MotorsSetPower(0, 0x2000);
-        MotorsSetPower(1, 0x2000);
-        MotorsUpdate();
+        Motors::setPower(0, 0x2000);
+        Motors::setPower(1, 0x2000);
+        Motors::update();
         MicroWait(5000);
-        MotorsUpdate();
+        Motors::update();
       }
-      MotorsSetPower(0, 0);
-      MotorsSetPower(1, 0);
-      MotorsUpdate();
+      Motors::setPower(0, 0);
+      Motors::setPower(1, 0);
+      Motors::update();
       MicroWait(5000);
-      MotorsUpdate();
+      Motors::update();
 
       MicroWait(3000000);
-      while(DebugWheelsGetTicks(0) >= 0) // go back 0.25m
+      while(Motors::debugWheelsGetTicks(0) >= 0) // go back 0.25m
       {
-        MotorsSetPower(0, -0x2000);
-        MotorsSetPower(1, -0x2000);
-        MotorsUpdate();
+        Motors::setPower(0, -0x2000);
+        Motors::setPower(1, -0x2000);
+        Motors::update();
         MicroWait(5000);
-        MotorsUpdate();
+        Motors::update();
       }
-      MotorsSetPower(0, 0);
-      MotorsSetPower(1, 0);
-      MotorsUpdate();
+      Motors::setPower(0, 0);
+      Motors::setPower(1, 0);
+      Motors::update();
       MicroWait(5000);
-      MotorsUpdate();
+      Motors::update();
     #endif
 
-    UARTPutString("\r\nForward ends with...");
+    UART::put("\r\nForward: ");
     #ifndef DO_GEAR_RATIO_TESTING
     for (int i = 0; i < 2; i++)
-      MotorsSetPower(i, 0x4000);
+      Motors::setPower(i, 0x4000);
     for (int i = 2; i < 4; i++)
-      MotorsSetPower(i, 0x6800);
+      Motors::setPower(i, 0x2800);
     #endif
-    MotorsUpdate();
-    MicroWait(5000);
-    MotorsUpdate();
+    Motors::update();
+    MicroWait(50000);
+    Motors::update();
 
+    Motors::printEncodersRaw();
     MicroWait(500000);
-    MotorsPrintEncodersRaw();
 
-    UARTPutString("\r\nBackward ends with...");
+    UART::put("  Backward: ");
     #ifndef DO_GEAR_RATIO_TESTING
     for (int i = 0; i < 2; i++)
-      MotorsSetPower(i, -0x4000);
+      Motors::setPower(i, -0x4000);
     for (int i = 2; i < 4; i++)
-      MotorsSetPower(i, -0x6800);
+      Motors::setPower(i, -0x2800);
     #endif
-    MotorsUpdate();
-    MicroWait(5000);
-    MotorsUpdate();
+    Motors::update();
+    MicroWait(50000);
+    Motors::update();
 
-    MicroWait(500000);
-    MotorsPrintEncodersRaw();
+    Motors::printEncodersRaw();
+    MicroWait(5000000);
 
     BatteryUpdate();
   }

@@ -478,6 +478,11 @@
               <FileType>8</FileType>
               <FilePath>.\arm_hal\hal\oled.cpp</FilePath>
             </File>
+            <File>
+              <FileName>cube.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\arm_hal\hal\cube.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -1465,6 +1470,11 @@
               <FileName>oled.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\arm_hal\hal\oled.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>cube.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\arm_hal\hal\cube.cpp</FilePath>
             </File>
           </Files>
         </Group>

@@ -28,7 +28,7 @@
 
 #include "anki/common/types.h"
 
-#include "anki/common/shared/mailbox.h"
+#include "anki/common/basestation/mailbox.h"
 
 // Robot includes should eventually go away once Basestation vision is natively
 // implemented

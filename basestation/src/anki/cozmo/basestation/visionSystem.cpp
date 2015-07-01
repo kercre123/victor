@@ -19,7 +19,7 @@
 #include "anki/cozmo/basestation/comms/robot/robotMessages.h"
 #include "anki/cozmo/basestation/robot.h"
 
-#include "anki/common/shared/mailbox_impl.h"
+#include "anki/common/basestation/mailbox_impl.h"
 #include "anki/vision/basestation/image_impl.h"
 
 #include "anki/common/basestation/platformPathManager.h"
