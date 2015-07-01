@@ -46,9 +46,9 @@ namespace Anki
 
       // TODO: Refactor this mess. PUNT!
       int BUFFER_WRITE_SIZE = 1024 * 8;
-      int BUFFER_READ_SIZE = 1024 * 4;
+      int BUFFER_READ_SIZE = 1024 * 16;
       ONCHIP u8 m_bufferWrite[1024 * 8];
-      ONCHIP u8 m_bufferRead[1024 * 4];
+      ONCHIP u8 m_bufferRead[1024 * 16];
       static void UARTStartTransfer()
       {
         int tail = m_writeTail;
