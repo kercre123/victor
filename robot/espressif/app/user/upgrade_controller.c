@@ -10,6 +10,7 @@
 #include "espconn.h"
 #include "upgrade.h"
 #include "task0.h"
+#include "driver/spi.h"
 #include "upgrade_controller.h"
 
 /// Flash sector size for erasing, 4KB
@@ -305,6 +306,7 @@ LOCAL void ICACHE_FLASH_ATTR upccReceiveCallback(void *arg, char *usrdata, unsig
       }
       else if (cmd->flags & UPCMD_FPGA_FW)
       {
+        /*
         fwWriteAddress   = cmd->flashAddress;
         bytesExpected    = cmd->size;
         flags            = cmd->flags;
@@ -318,6 +320,21 @@ LOCAL void ICACHE_FLASH_ATTR upccReceiveCallback(void *arg, char *usrdata, unsig
           resetUpgradeState();
           return;
         }
+        */
+        spi_mast_write(HSPI, 0x7EAA997E);
+        spi_mast_write(HSPI, cmd->flashAddress);
+        spi_mast_write(HSPI, cmd->size);
+        spi_mast_write(HSPI, 4);
+        spi_mast_write(HSPI, 5);
+        spi_mast_write(HSPI, 6);
+        spi_mast_write(HSPI, 7);
+        spi_mast_write(HSPI, 8);
+        spi_mast_write(HSPI, 9);
+        spi_mast_start_transaction(HSPI, 0, 0, 0, 0, 32*9, 0, 0);
+        while (spi_mast_busy(HSPI));
+        spi_mast_start_transaction(HSPI, 0, 0, 0, 0, 0, 42*4, 0);
+        while (spi_mast_busy(HSPI));
+        os_printf("SPI readback: %08x %08x %08x %08x\r\n", spi_mast_read(HSPI), spi_mast_read(HSPI), spi_mast_read(HSPI), spi_mast_read(HSPI));
       }
       else
       {

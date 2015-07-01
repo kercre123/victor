@@ -55,7 +55,7 @@ bool spi_mast_busy(const SPIBus spi_no);
  * @param data A 32 bit words to transmit.
  * @return true if the word was added to the FIFO. False if there was no room
  */
-void spi_mast_write(const SPIBus spi_no, const uint32 data);
+bool spi_mast_write(const SPIBus spi_no, const uint32 data);
 
 /** Read a received 32 bit word from the FIFO
  * Call this after calling spi_mast_start_transaction and waiting for spi_mast_busy to return false. Only call until

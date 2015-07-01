@@ -13,7 +13,13 @@ USERBIN2_ADDR = 0x41000
 
 FPGA_FW_ADDR = 0x80000
 
-USAGE = """%s <robot IP address>\r\n""" % (sys.argv[0])
+USAGE = """
+%s <mode> <robot IP address>
+
+Where mode is one of:
+e   Upgrade espressif firmware
+f   Write FPGA firmware
+""" % (sys.argv[0])
 
 class UpgradeCommandFlags:
     NONE       = 0x00 # No special actions
@@ -43,6 +49,7 @@ def sendFW(roboCon, fw):
         if cmd == b"next":
             roboCon.send(fw[i:i+1024])
             sys.stdout.write('.')
+            sys.stdout.flush()
         else:
             sys.stderr.write("Unexpected response while sending FW: \"{}\"\r\n".format(cmd))
             break
@@ -83,10 +90,11 @@ def doWifiUpgrade(roboCon):
 
 def doFPGAUpgrade(roboCon):
     "Send new FPGA firmware to the robot"
-    fw = open(FPGA_BIN, 'rw').read()
+    #fw = open(FPGA_BIN, 'rw').read()
     sys.stdout.write("Sending FPGA FW\r\n")
-    roboCon.send(UpgradeCommand(FPGA_FW_ADDR, sizeof(fw), UpgradeCommandFlags.FPGA_FW).pack())
-    sendFW(roboCon, fw)
+    #roboCon.send(UpgradeCommand(FPGA_FW_ADDR, len(fw), UpgradeCommandFlags.FPGA_FW).pack())
+    roboCon.send(UpgradeCommand(int(sys.argv[3], 16), int(sys.argv[4], 16), UpgradeCommandFlags.FPGA_FW).pack())
+    #sendFW(roboCon, fw)
     roboCon.close()
     sys.stdout.write("\r\nFinished sending FPGA firmware\r\n")
 
@@ -102,9 +110,15 @@ def doUpgrade(robotIp, kind):
         raise ValueError("Upgrade type implemented yet :-(")
 
 if __name__ == '__main__':
-    if len(sys.argv) != 2:
+    if len(sys.argv) < 3:
         sys.stderr.write(USAGE)
         sys.exit(-1)
-    robotHostname = sys.argv[1]
-
-    doUpgrade(robotHostname, UpgradeCommandFlags.WIFI_FW)
+    mode = sys.argv[1]
+    robotHostname = sys.argv[2]
+    if mode == "e":
+        doUpgrade(robotHostname, UpgradeCommandFlags.WIFI_FW)
+    elif mode == "f":
+        doUpgrade(robotHostname, UpgradeCommandFlags.FPGA_FW)
+    else:
+        sys,stderr.write(USAGE)
+        sys.exit(-2)

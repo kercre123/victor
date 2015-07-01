@@ -35,9 +35,9 @@
 #define SPI_FASTRD_MODE (BIT(13))
 
 #define SPI_CTRL1(i)                         (REG_SPI_BASE(i)  + 0xc)
-#define  SPI_CS_HOLD_DELAY  0xf  
+#define  SPI_CS_HOLD_DELAY  0xf
 #define  SPI_CS_HOLD_DELAY_S   28
-#define  SPI_CS_HOLD_DELAY_RES  0xfff 
+#define  SPI_CS_HOLD_DELAY_RES  0xfff
 #define  SPI_CS_HOLD_DELAY_RES_S   16
 
 
@@ -193,6 +193,8 @@
 #define SPI_W13(i) 							(REG_SPI_BASE(i) +0x74)
 #define SPI_W14(i) 							(REG_SPI_BASE(i) +0x78)
 #define SPI_W15(i) 							(REG_SPI_BASE(i) +0x7C)
+
+#define SPI_FIFO(i, j)             (SPI_W0(i) + (0x04)*j)
 
 #define SPI_EXT2(i)                           (REG_SPI_BASE(i)  + 0xF8)
 

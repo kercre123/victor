@@ -1,5 +1,13 @@
 #include "driver/spi.h"
 
+#define MIN(a, b) (a < b ? a : b)
+
+static uint8 winds[NUM_SPI_BUS]; ///< Which point in the write FIFO are we at for each bus
+static uint8 rinds[NUM_SPI_BUS]; ///< Which point in the read FIFO are we at for each bus
+
+#define W_FIFO_DEPTH 16
+#define R_FIFO_DEPTH 16
+
 uint32 ICACHE_FLASH_ATTR spi_master_init(const SPIBus spi_no, uint32 frequency)
 {
 	uint32 regvalue;
@@ -7,6 +15,9 @@ uint32 ICACHE_FLASH_ATTR spi_master_init(const SPIBus spi_no, uint32 frequency)
 	uint32 clock_div_flag = 0;
 
 	if(spi_no>1) return; //handle invalid input number
+
+	winds[spi_no] = 0;
+	rinds[spi_no] = 0;
 
 	// Setup the SPI clock
 	if (frequency > (CPU_HZ/2)) // If more than half the clock frequency, we use the system clock directly
@@ -17,15 +28,20 @@ uint32 ICACHE_FLASH_ATTR spi_master_init(const SPIBus spi_no, uint32 frequency)
 	}
 	else // Calculate dividers
 	{
-		uint16 prediv = MIN((CPU_HZ/frequency)-1, SPI_CLKDIV_PRE);
-		uint16 cntdiv = MIN((CPU_HZ/((prediv + 1)*frequency))-1, SPI_CLKCNT_N);
-		frequency = CPU_HZ / ((prediv + 1) * (prediv + 1));
+		uint32 prediv = MIN((CPU_HZ/frequency)-1, SPI_CLKDIV_PRE);
+		uint32 cntdiv = MIN((CPU_HZ/((prediv + 1)*frequency))-1, SPI_CLKCNT_N);
+		uint32 cntH   = cntdiv > 0 ? (cntdiv + 1)/2 - 1 : 0;
+		uint32 cntL   = cntdiv;
+
+		frequency = CPU_HZ / ((prediv + 1) * (cntdiv + 1));
+
+		os_printf("SPI master frequency: %dHz [%04x %02x %02x %02x]\r\n", frequency, prediv, cntdiv, cntH, cntL);
 
 		WRITE_PERI_REG(SPI_CLOCK(spi_no),
-					(((prediv-1)&SPI_CLKDIV_PRE)<<SPI_CLKDIV_PRE_S)|
-					(((cntdiv-1)&SPI_CLKCNT_N)<<SPI_CLKCNT_N_S)|
-					(((cntdiv>>1)&SPI_CLKCNT_H)<<SPI_CLKCNT_H_S)|
-					((0&SPI_CLKCNT_L)<<SPI_CLKCNT_L_S));
+				  				 ((prediv & SPI_CLKDIV_PRE) << SPI_CLKDIV_PRE_S) |
+									 ((cntdiv & SPI_CLKCNT_N)   << SPI_CLKCNT_N_S)   |
+									 ((cntH   & SPI_CLKCNT_H)   << SPI_CLKCNT_H_S)   |
+									 ((cntL   & SPI_CLKCNT_L)   << SPI_CLKCNT_L_S));
 	}
 
 	if (spi_no == SPI)
@@ -53,7 +69,6 @@ uint32 ICACHE_FLASH_ATTR spi_master_init(const SPIBus spi_no, uint32 frequency)
 	CLEAR_PERI_REG_MASK(SPI_USER(spi_no), SPI_RD_BYTE_ORDER);
 
 	return frequency;
-
 }
 
 void spi_mast_start_transaction(const SPIBus spi_no, const uint8 cmd_bits, const uint16 cmd_data, \
@@ -96,7 +111,11 @@ void spi_mast_start_transaction(const SPIBus spi_no, const uint8 cmd_bits, const
 		WRITE_PERI_REG(SPI_ADDR(spi_no), addr_data<<(32-addr_bits)); //align address data to high bits
 	}
 
+	// Fire off the SPI transaction
+	SET_PERI_REG_MASK(SPI_CMD(spi_no), SPI_USR);
 
+	winds[spi_no] = 0;
+	rinds[spi_no] = 0;
 }
 
 bool inline spi_mast_busy(const SPIBus spi_no)
@@ -104,12 +123,28 @@ bool inline spi_mast_busy(const SPIBus spi_no)
 	return READ_PERI_REG(SPI_CMD(spi_no)) & SPI_USR;
 }
 
-void inline spi_mast_write(const SPIBus spi_no, const uint32 data)
+bool inline spi_mast_write(const SPIBus spi_no, const uint32 data)
 {
-	WRITE_PERI_REG(SPI_W0(spi_no), data);
+	if (winds[spi_no] == W_FIFO_DEPTH)
+	{
+		return false;
+	}
+	else
+	{
+		WRITE_PERI_REG(SPI_FIFO(spi_no, winds[spi_no]), data);
+		winds[spi_no]++;
+		return true;
+	}
 }
 
 uint32 inline spi_mast_read(const SPIBus spi_no)
 {
-	return READ_PERI_REG(SPI_W0(spi_no));
+	if (rinds[spi_no] == R_FIFO_DEPTH)
+	{
+		return 0;
+	}
+	else
+	{
+		return READ_PERI_REG(SPI_FIFO(spi_no, rinds[spi_no]++));
+	}
 }

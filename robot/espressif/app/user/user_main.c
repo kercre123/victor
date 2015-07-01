@@ -19,7 +19,7 @@ LOCAL bool ICACHE_FLASH_ATTR userTask(uint32_t param)
 {
 
   spi_mast_write(HSPI, 0x7EAA997E);
-  spi_mast_write(HSPI, 0x00FF0FCC);
+  spi_mast_write(HSPI, 0x00FF0F32);
   spi_mast_start_transaction(HSPI, 0, 0, 0, 0, 64, 64, 0);
   os_printf("SPI transaction started\r\n");
   while (spi_mast_busy(HSPI));
@@ -111,6 +111,45 @@ void ICACHE_FLASH_ATTR user_rf_pre_init(void)
  */
 static void ICACHE_FLASH_ATTR system_init_done(void)
 {
+  int8 err;
+#ifdef COZMO_AS_AP
+  // Create ip config
+  struct ip_info ipinfo;
+  ipinfo.gw.addr = ipaddr_addr(AP_GATEWAY);
+  ipinfo.ip.addr = ipaddr_addr(AP_IP);
+  ipinfo.netmask.addr = ipaddr_addr(AP_NETMASK);
+
+  // Assign ip config
+  err = wifi_set_ip_info(SOFTAP_IF, &ipinfo);
+  if (err == false)
+  {
+    os_printf("Couldn't set IP info\r\n");
+  }
+
+  // Configure DHCP range
+  struct dhcps_lease dhcpconf;
+  dhcpconf.start_ip.addr = ipaddr_addr(DHCP_START);
+  dhcpconf.end_ip.addr   = ipaddr_addr(DHCP_END);
+  err = wifi_softap_set_dhcps_lease(&dhcpconf);
+  if (err == false)
+  {
+    os_printf("Couldn't set DHCP server lease information\r\n");
+  }
+  uint8 dhcps_offer_mode = 0; // Disable default gateway information
+  err = wifi_softap_set_dhcps_offer_option(OFFER_ROUTER, &dhcps_offer_mode);
+  if (err == false)
+  {
+    os_printf("Couldn't configure DHCPS offer mode\r\n");
+  }
+
+  // Start DHCP server
+  err = wifi_softap_dhcps_start();
+  if (err == false)
+  {
+    os_printf("Couldn't start DHCP server\r\n");
+  }
+#endif
+
   // Enable upgrade controller
   upgradeControllerInit();
 
@@ -128,7 +167,7 @@ static void ICACHE_FLASH_ATTR system_init_done(void)
 
   // Set up shared background tasks
   task0Init();
-  task0Post(userTask, 0);
+  //task0Post(userTask, 0);
 
   os_printf("user initalization complete\r\n");
 }
@@ -192,42 +231,6 @@ user_init(void)
 
     // Disable DHCP server before setting static IP info
     wifi_softap_dhcps_stop();
-
-    // Create ip config
-    struct ip_info ipinfo;
-    ipinfo.gw.addr = ipaddr_addr(AP_GATEWAY);
-    ipinfo.ip.addr = ipaddr_addr(AP_IP);
-    ipinfo.netmask.addr = ipaddr_addr(AP_NETMASK);
-
-    // Assign ip config
-    err = wifi_set_ip_info(SOFTAP_IF, &ipinfo);
-    if (err == false)
-    {
-      os_printf("Couldn't set IP info\r\n");
-    }
-
-    // Configure DHCP range
-    struct dhcps_lease dhcpconf;
-    dhcpconf.start_ip.addr = ipaddr_addr(DHCP_START);
-    dhcpconf.end_ip.addr   = ipaddr_addr(DHCP_END);
-    err = wifi_softap_set_dhcps_lease(&dhcpconf);
-    if (err == false)
-    {
-      os_printf("Couldn't set DHCP server lease information\r\n");
-    }
-    uint8 dhcps_offer_mode = 0; // Disable default gateway information
-    err = wifi_softap_set_dhcps_offer_option(OFFER_ROUTER, &dhcps_offer_mode);
-    if (err == false)
-    {
-      os_printf("Couldn't configure DHCPS offer mode\r\n");
-    }
-
-    // Start DHCP server
-    err = wifi_softap_dhcps_start();
-    if (err == false)
-    {
-      os_printf("Couldn't start DHCP server\r\n");
-    }
 
 #else // Cozmo as station
 
