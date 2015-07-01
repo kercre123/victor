@@ -71,6 +71,7 @@ namespace Anki
         static const ObjectFamily BLOCKS;              // Blocks
         static const ObjectFamily ACTIVE_BLOCKS;       // Blocks with LEDs
         static const ObjectFamily MARKERLESS_OBJECTS;  // Obstacles that are detected by means other than camera (e.g. prox obstacles)
+        static const ObjectFamily FACES;
         
       protected:
         static int UniqueFamilyCounter;

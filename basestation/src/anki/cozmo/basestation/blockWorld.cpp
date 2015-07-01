@@ -80,6 +80,7 @@ namespace Anki
     const BlockWorld::ObjectFamily BlockWorld::ObjectFamily::BLOCKS;
     const BlockWorld::ObjectFamily BlockWorld::ObjectFamily::ACTIVE_BLOCKS;
     const BlockWorld::ObjectFamily BlockWorld::ObjectFamily::MARKERLESS_OBJECTS;
+    const BlockWorld::ObjectFamily BlockWorld::ObjectFamily::FACES;
     
     // Instantiating an object family increments the unique counter:
     BlockWorld::ObjectFamily::ObjectFamily() {
