@@ -19,7 +19,6 @@
 #include "headController.h"
 #include "imuFilter.h"
 #include "dockingController.h"
-#include "faceTrackingController.h"
 #include "pickAndPlaceController.h"
 #include "testModeController.h"
 #include "animationController.h"
@@ -268,7 +267,7 @@ namespace Anki {
 
       void ProcessFaceDetectionMessage(const FaceDetection& msg)
       {
-        FaceTrackingController::SetObjectPositionMessage(msg);
+        // TODO: Delete this Process method once FaceDetection message goes away
       }
 
       void ProcessBTLEMessages()
