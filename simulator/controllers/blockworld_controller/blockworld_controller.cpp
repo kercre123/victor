@@ -105,12 +105,22 @@ int main(int argc, char **argv)
     playbackMode = (CozmoGame::PlaybackMode)pmInt;
     assert(playbackMode <= CozmoGame::PLAYBACK_SESSION);
   } 
+
+  int numUIDevicesToWaitFor = 1;
+#ifdef USE_WEBOTS
+  webots::Field* numUIsField = basestationController.getSelf()->getField("numUIDevicesToWaitFor");
+  if (numUIsField) {
+    numUIDevicesToWaitFor = numUIsField->getSFInt32();
+  } else {
+    printf("blockworldController.main.MissingField: numUIDevicesToWaitFor not found in BlockworldComms\n");
+  }
+#endif
   
   if (playbackMode != CozmoGame::PLAYBACK_SESSION) {
     
     // Wait for at least one robot and UI device to connect
     config[AnkiUtil::kP_NUM_ROBOTS_TO_WAIT_FOR] = 1;
-    config[AnkiUtil::kP_NUM_UI_DEVICES_TO_WAIT_FOR] = 1;
+    config[AnkiUtil::kP_NUM_UI_DEVICES_TO_WAIT_FOR] = numUIDevicesToWaitFor;
     
   } else {
     
