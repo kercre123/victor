@@ -89,6 +89,12 @@ namespace Cozmo {
     
     _lastPingTimeFromUI_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     
+    
+    if (_uiComms.GetNumConnectedDevices() > 1) {
+      // The ping counter check doesn't work for more than 1 UI client
+      return;
+    }
+    
     // Check to see if the ping counter is sequential or if we've dropped packets/pings
     const u32 counterDiff = msg.counter - _lastPingCounterFromUI;
     _lastPingCounterFromUI = msg.counter;
@@ -151,6 +157,11 @@ namespace Cozmo {
   
   void CozmoGameImpl::Process_StartEngine(U2G::StartEngine const& msg)
   {
+    if (_isEngineStarted) {
+      PRINT_NAMED_INFO("CozmoGameImpl.Process_StartEngine.AlreadyStarted", "");
+      return;
+    }
+    
     // Populate the Json configuration from the message members:
     Json::Value config;
     
