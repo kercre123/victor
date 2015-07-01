@@ -278,7 +278,7 @@ END_MESSAGE_DEFINITION(SetVisionSystemParams)
 
 // TODO: Remove this now that face detection happens on Basestation and is not sent to robot
 // FaceDetection
-START_MESSAGE_DEFINITION(FaceDetection, 1)
+START_TIMESTAMPED_MESSAGE_DEFINITION(FaceDetection, 1)
 ADD_MESSAGE_MEMBER(u16, x_upperLeft)
 ADD_MESSAGE_MEMBER(u16, y_upperLeft)
 ADD_MESSAGE_MEMBER(u16, width)

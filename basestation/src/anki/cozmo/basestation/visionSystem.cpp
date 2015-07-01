@@ -2244,6 +2244,7 @@ namespace Cozmo {
       for(auto & currentFace : faces)
       {
         MessageFaceDetection msg;
+        msg.timestamp   = inputImage.GetTimestamp();
         msg.width       = static_cast<u16>(currentFace.width);
         msg.height      = static_cast<u16>(currentFace.height);
         msg.x_upperLeft = static_cast<u16>(currentFace.x);
