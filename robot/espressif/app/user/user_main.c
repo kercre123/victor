@@ -163,7 +163,7 @@ static void ICACHE_FLASH_ATTR system_init_done(void)
   // Only after clientInit
   uart_rx_intr_enable(UART0);
 
-  spi_master_init(HSPI, 400000);
+  spi_master_init(HSPI, 10000);
 
   // Set up shared background tasks
   task0Init();

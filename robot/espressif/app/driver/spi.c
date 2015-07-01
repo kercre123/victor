@@ -28,7 +28,7 @@ uint32 ICACHE_FLASH_ATTR spi_master_init(const SPIBus spi_no, uint32 frequency)
 	}
 	else // Calculate dividers
 	{
-		uint32 prediv = MIN((CPU_HZ/((2+1)*frequency))-1, SPI_CLKDIV_PRE); // Start with a cntdiv of 2, the minimum value we'll allow
+		uint32 prediv = MIN((CPU_HZ/((4+1)*frequency))-1, SPI_CLKDIV_PRE); // Start with a cntdiv of 4, to make things work out
 		uint32 cntdiv = MIN((CPU_HZ/((prediv + 1)*frequency))-1, SPI_CLKCNT_N);
 		uint32 cntH   = cntdiv > 0 ? (cntdiv + 1)/2 - 1 : 0;
 		uint32 cntL   = cntdiv;
