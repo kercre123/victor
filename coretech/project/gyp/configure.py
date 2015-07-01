@@ -137,13 +137,15 @@ def main(scriptArgs):
   generator.processFolder(['messaging/basestation/src', 'messaging/include', 'messaging/shared/src'], ['project/gyp/messaging.lst'])
   generator.processFolder(['messaging/robot/src', 'messaging/shared/src'], ['project/gyp/messaging-robot.lst'])
 
-
-  # # update subprojects
-  # for platform in options.platforms:
-  #   if (subprocess.call([os.path.join(options.ankiUtilPath, 'project/gyp/configure.py') , '--platform', platform ]) != 0):
-  #     print "error executing submodule configure"
-  #     return False
-
+  # update subprojects
+  for platform in options.platforms:
+    # TODO: we should pass in our own options with any additional overides..
+    # subproject might need to know about the build-tools location, --verbose, and other args...
+    # TODO: remove dependency on abspath. 
+    # there is a bug due to 'os.chdir' and user passed rel path
+    if (subprocess.call([os.path.abspath(os.path.join(options.ankiUtilPath, 'project/gyp/configure.py')) , '--platform', platform ]) != 0):
+      print "error executing submodule configure"
+      return False
 
   configurePath = os.path.join(projectRoot, 'project/gyp')
 
