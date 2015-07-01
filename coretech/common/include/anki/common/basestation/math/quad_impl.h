@@ -372,6 +372,7 @@ namespace Anki {
     
 #else
     CORETECH_THROW("GetBoundingQuad() currently requires OpenCV.");
+    Quad2f boundingQuad;
 #endif
     
     return boundingQuad;

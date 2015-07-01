@@ -18,6 +18,7 @@
 #include "anki/common/basestation/math/point.h"
 
 #include <array>
+#include <vector>
 
 namespace Anki {
 

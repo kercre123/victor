@@ -11,7 +11,7 @@
 
 #include "anki/common/basestation/math/quad_impl.h"
 #include "anki/common/basestation/math/poseBase_impl.h"
-#include "anki/util/logging/logging.h"
+#include "util/logging/logging.h"
 
 namespace Anki {
   namespace Vision{

@@ -1,8 +1,6 @@
 #include "gtest/gtest.h"
-#include "anki/math/matrix.h"
 
 
-using namespace Anki;
 
 #pragma mark --- Pose Tests ---
 
