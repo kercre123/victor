@@ -1,24 +1,27 @@
 /**
- * File: observedFaceObject.cpp
+ * File: humanHead.cpp
  *
  * Author: Andrew Stein
  * Date:   6/30/2015
  *
- * Description: A subclass of the generic ObservableObject for holding faces.
+ * Description: A subclass of the generic ObservableObject for holding a human
+ *   head with a face on the front treated as a "Marker"
  *
+ *   For head/face dimensions, reference is:
+ *     https://upload.wikimedia.org/wikipedia/commons/6/61/HeadAnthropometry.JPG
  *
  * Copyright: Anki, Inc. 2015
  **/
 
-#include "anki/vision/basestation/observedFaceObject.h"
+#include "anki/vision/basestation/humanHead.h"
 
 namespace Anki {
 namespace Vision {
 
-  const ObservedFaceObject::Type ObservedFaceObject::Type::UNKNOWN_FACE("UNKNOWN_FACE");
+  const HumanHead::Type HumanHead::Type::UNKNOWN_FACE("UNKNOWN_FACE");
   
   
-  const std::vector<Point3f>& ObservedFaceObject::GetCanonicalCorners() const
+  const std::vector<Point3f>& HumanHead::GetCanonicalCorners() const
   {
     static const std::vector<Point3f> CanonicalCorners = {{
       Point3f(-0.5f, -0.5f,  0.5f),
@@ -35,12 +38,13 @@ namespace Vision {
   }
   
   
-  // https://upload.wikimedia.org/wikipedia/commons/6/61/HeadAnthropometry.JPG
-  static const Point3f& GetSizeByType(ObservedFaceObject::Type type)
+  static const Point3f& GetSizeByType(HumanHead::Type type)
   {
-    // x is face width, y is face height, z is depth of head, in mm
-    static const std::map<ObservedFaceObject::Type, Point3f> Sizes = {
-      {ObservedFaceObject::Type::UNKNOWN_FACE, {134.f, 118.f, 195.f}},
+    // x is head width, y is head depth, z is head height, in mm
+    // this is to match Marker coordinates, where the marker is in the X-Z plane,
+    // so we want the face to also be in the X-Z plane
+    static const std::map<HumanHead::Type, Point3f> Sizes = {
+      {HumanHead::Type::UNKNOWN_FACE, {148.f, 195.f,225.f}},
     };
     
     auto iter = Sizes.find(type);
@@ -56,7 +60,7 @@ namespace Vision {
   }
   
   
-  ObservedFaceObject::ObservedFaceObject(Type type)
+  HumanHead::HumanHead(Type type)
   : _type(type)
   , _size(GetSizeByType(_type))
   {
@@ -71,21 +75,26 @@ namespace Vision {
       Point3f( 0.5f*_size.x(),  0.5f*_size.y(), -0.5f*_size.z())
     }};
     
+    // Add the face as a "marker" at a known location on the head:
+    // ("Code" will be bogus for now: just zero, but could perhaps be used for recognition?)
+    const Pose3d facePose(0, Z_AXIS_3D(), {0,-0.5f*_size.y(),0.f});
+    AddMarker(0, facePose, 135.f); // Using "face breadth" for size here
+    
   } // MarkerlessObject(type) Constructor
   
-  ObservedFaceObject::~ObservedFaceObject() {
+  HumanHead::~HumanHead() {
     EraseVisualization();
   }
   
   
-  void ObservedFaceObject::Visualize(const ColorRGBA& color)
+  void HumanHead::Visualize(const ColorRGBA& color)
   {
     // TODO: How to visualize without a (cozmo-specific) VizManager?
     Pose3d vizPose = GetPose().GetWithRespectToOrigin();
     //_vizHandle = VizManager::getInstance()->DrawCuboid(GetID().GetValue(), _size, vizPose, color);
   }
   
-  void ObservedFaceObject::EraseVisualization()
+  void HumanHead::EraseVisualization()
   {
     // TODO: How to visualize without a (cozmo-specific) VizManager?
     /*

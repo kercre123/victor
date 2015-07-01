@@ -1,24 +1,25 @@
 /**
- * File: observedFaceObject.h
+ * File: humanHead.h
  *
  * Author: Andrew Stein
  * Date:   6/30/2015
  *
- * Description: A subclass of the generic ObservableObject for holding faces.
+ * Description: A subclass of the generic ObservableObject for holding a human 
+ *   head with a face on the front treated as a "Marker".
  *
  *
  * Copyright: Anki, Inc. 2015
  **/
 
-#ifndef ANKI_VISION_OBSERVED_FACE_OBJECT_H
-#define ANKI_VISION_OBSERVED_FACE_OBJECT_H
+#ifndef ANKI_VISION_HUMAN_HEAD_H
+#define ANKI_VISION_HUMAN_HEAD_H
 
 #include "anki/vision/basestation/observableObject.h"
 
 namespace Anki {
 namespace Vision {
   
-  class ObservedFaceObject : public ObservableObject
+  class HumanHead : public ObservableObject
   {
   public:
     
@@ -33,9 +34,9 @@ namespace Vision {
       static const Type UNKNOWN_FACE;
     };
     
-    ObservedFaceObject(Type faceType = Type::UNKNOWN_FACE);
+    HumanHead(Type faceType = Type::UNKNOWN_FACE);
   
-    virtual ~ObservedFaceObject();
+    virtual ~HumanHead();
     
     //
     // Inherited Virtual Methods
@@ -43,7 +44,7 @@ namespace Vision {
     
     virtual ObjectType GetType() const override;
     
-    virtual ObservedFaceObject* CloneType() const override;
+    virtual HumanHead* CloneType() const override;
     
     virtual void Visualize(const ColorRGBA& color) override;
     virtual void EraseVisualization() override;
@@ -60,24 +61,24 @@ namespace Vision {
     
     std::vector<Point3f> _canonicalCorners;
     
-  }; // class ObservedFaceObject
+  }; // class HumanHead
 
   
   //
   // Inlined implementations
   //
   
-  inline ObjectType ObservedFaceObject::GetType() const {
+  inline ObjectType HumanHead::GetType() const {
     return _type;
   }
   
-  inline ObservedFaceObject* ObservedFaceObject::CloneType() const
+  inline HumanHead* HumanHead::CloneType() const
   {
     // Call the copy constructor
-    return new ObservedFaceObject(this->_type);
+    return new HumanHead(this->_type);
   }
   
 } // namespace Vision
 } // namespace Anki
 
-#endif // ANKI_VISION_OBSERVED_FACE_OBJECT_H
+#endif // ANKI_VISION_HUMAN_HEAD_H
