@@ -767,6 +767,7 @@ namespace Anki {
         }
         
         MessageFaceDetection faceDetection;
+        //std::vector<Rectangle<s32> > faceTargets;
         while(true == _visionProcessor.CheckMailbox(faceDetection)) {
           PRINT_NAMED_INFO("Robot.Update",
                            "Robot %d reported seeing a face at (x,y,w,h)=(%d,%d,%d,%d).",
@@ -792,6 +793,12 @@ namespace Anki {
                                                                 faceDetection.y_upperLeft,
                                                                 faceDetection.width,
                                                                 faceDetection.height);
+          /*
+          faceTargets.emplace_back(faceDetection.x_upperLeft,
+                                   faceDetection.y_upperLeft,
+                                   faceDetection.width,
+                                   faceDetection.height);
+           */
         }
         
         MessageTrackerQuad trackerQuad;

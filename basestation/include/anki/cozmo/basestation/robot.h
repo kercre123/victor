@@ -34,6 +34,7 @@
 
 #include "anki/vision/basestation/camera.h"
 #include "anki/vision/basestation/image.h"
+//#include "anki/vision/basestation/panTiltTracker.h"
 #include "anki/vision/basestation/visionMarker.h"
 
 #include "anki/planning/shared/path.h"
@@ -543,6 +544,7 @@ namespace Anki {
       BlockWorld        _blockWorld;
       
       VisionProcessingThread _visionProcessor;
+      //Vision::PanTiltTracker _faceTracker;
 #     if !ASYNC_VISION_PROCESSING
       Vision::Image     _image;
       MessageRobotState _robotStateForImage;
@@ -818,6 +820,8 @@ namespace Anki {
       
         _cameraCalibration = calib;
         _camera.SetSharedCalibration(&_cameraCalibration);
+        
+        //_faceTracker.Init(calib);
         
   #if ASYNC_VISION_PROCESSING
         // Now that we have camera calibration, we can start the vision
