@@ -727,26 +727,23 @@ namespace Anki {
 #endif
       
       /* DEBUG
-      const double currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-      static double lastUpdateTime = currentTime_sec;
-      
-      const double updateTimeDiff = currentTime_sec - lastUpdateTime;
-      if(updateTimeDiff > 1.0) {
-        PRINT_NAMED_WARNING("Robot.Update", "Gap between robot update calls = %f\n", updateTimeDiff);
-      }
-      lastUpdateTime = currentTime_sec;
-      */
+       const double currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+       static double lastUpdateTime = currentTime_sec;
+       
+       const double updateTimeDiff = currentTime_sec - lastUpdateTime;
+       if(updateTimeDiff > 1.0) {
+       PRINT_NAMED_WARNING("Robot.Update", "Gap between robot update calls = %f\n", updateTimeDiff);
+       }
+       lastUpdateTime = currentTime_sec;
+       */
       
 #     if !ASYNC_VISION_PROCESSING
-      if(_haveNewImage) {
+      if(_haveNewImage)
         
         _visionProcessor.Update(_image, _robotStateForImage);
         _haveNewImage = false;
-        
-#     else
-      //if(_visionProcessor.WasLastImageProcessed())
+#     endif
       {
-#endif
         
         // Signal the availability of an image
         //CozmoEngineSignals::RobotImageAvailableSignal().emit(GetID());
@@ -788,8 +785,6 @@ namespace Anki {
                                                        right_x, bottom_y,
                                                        left_x, bottom_y);
           }
-          
-          SendMessage(faceDetection);
           
           // Signal the detection of a face
           CozmoEngineSignals::RobotObservedFaceSignal().emit(GetID(),
