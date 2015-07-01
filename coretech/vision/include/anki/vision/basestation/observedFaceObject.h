@@ -29,7 +29,7 @@ namespace Vision {
       // Define new markerless object types here, as static const Type:
       // (Note: don't forget to instantiate each in the .cpp file)
       
-      // TODO: Use "Types" for known vs. unknown, or gender, or what?
+      // TODO: Use "Types" for known vs. unknown, age, gender, or what?
       static const Type UNKNOWN_FACE;
     };
     
@@ -45,12 +45,8 @@ namespace Vision {
     
     virtual ObservedFaceObject* CloneType() const override;
     
-    virtual void GetCorners(const Pose3d& atPose, std::vector<Point3f>& corners) const override;
-    
     virtual void Visualize(const ColorRGBA& color) override;
     virtual void EraseVisualization() override;
-    
-    virtual Point3f GetSameDistanceTolerance() const override;
     
     virtual const Point3f& GetSize() const override { return _size; }
     
