@@ -13,10 +13,10 @@
  * Copyright: Anki, Inc. 2015
  **/
 
-#include "anki/vision/basestation/humanHead.h"
+#include "anki/cozmo/basestation/humanHead.h"
 
 namespace Anki {
-namespace Vision {
+namespace Cozmo {
 
   const HumanHead::Type HumanHead::Type::UNKNOWN_FACE("UNKNOWN_FACE");
   
@@ -44,7 +44,7 @@ namespace Vision {
     // this is to match Marker coordinates, where the marker is in the X-Z plane,
     // so we want the face to also be in the X-Z plane
     static const std::map<HumanHead::Type, Point3f> Sizes = {
-      {HumanHead::Type::UNKNOWN_FACE, {148.f, 195.f,225.f}},
+      {HumanHead::Type::UNKNOWN_FACE, {148.f, 225.f, 195.f}},
     };
     
     auto iter = Sizes.find(type);
@@ -76,9 +76,8 @@ namespace Vision {
     }};
     
     // Add the face as a "marker" at a known location on the head:
-    // ("Code" will be bogus for now: just zero, but could perhaps be used for recognition?)
-    const Pose3d facePose(0, Z_AXIS_3D(), {0,-0.5f*_size.y(),0.f});
-    AddMarker(0, facePose, 135.f); // Using "face breadth" for size here
+    const Pose3d facePose(0, Z_AXIS_3D(), {0,0.5f*_size.y(),0.f});
+    AddMarker(Vision::Marker::FACE_CODE, facePose, _size.x()); // Using entire head width for face size
     
   } // MarkerlessObject(type) Constructor
   
@@ -91,21 +90,18 @@ namespace Vision {
   {
     // TODO: How to visualize without a (cozmo-specific) VizManager?
     Pose3d vizPose = GetPose().GetWithRespectToOrigin();
-    //_vizHandle = VizManager::getInstance()->DrawCuboid(GetID().GetValue(), _size, vizPose, color);
+    _vizHandle = VizManager::getInstance()->DrawHumanHead(GetID().GetValue(), _size, vizPose, color);
   }
   
   void HumanHead::EraseVisualization()
   {
-    // TODO: How to visualize without a (cozmo-specific) VizManager?
-    /*
     // Erase the main object
     if(_vizHandle != VizManager::INVALID_HANDLE) {
       VizManager::getInstance()->EraseVizObject(_vizHandle);
       _vizHandle = VizManager::INVALID_HANDLE;
     }
-     */
   }
   
   
-} // namespace Vision
+} // namespace Cozmo
 } // namespace Anki

@@ -11,15 +11,16 @@
  * Copyright: Anki, Inc. 2015
  **/
 
-#ifndef ANKI_VISION_HUMAN_HEAD_H
-#define ANKI_VISION_HUMAN_HEAD_H
+#ifndef ANKI_COZMO_HUMAN_HEAD_H
+#define ANKI_COZMO_HUMAN_HEAD_H
 
 #include "anki/vision/basestation/observableObject.h"
+#include "anki/cozmo/basestation/viz/vizManager.h"
 
 namespace Anki {
-namespace Vision {
+namespace Cozmo {
   
-  class HumanHead : public ObservableObject
+  class HumanHead : public Vision::ObservableObject
   {
   public:
     
@@ -61,6 +62,8 @@ namespace Vision {
     
     std::vector<Point3f> _canonicalCorners;
     
+    VizManager::Handle_t _vizHandle;
+    
   }; // class HumanHead
 
   
@@ -78,7 +81,7 @@ namespace Vision {
     return new HumanHead(this->_type);
   }
   
-} // namespace Vision
+} // namespace Cozmo
 } // namespace Anki
 
-#endif // ANKI_VISION_HUMAN_HEAD_H
+#endif // ANKI_COZMO_HUMAN_HEAD_H

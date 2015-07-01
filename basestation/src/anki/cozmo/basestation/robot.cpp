@@ -769,10 +769,11 @@ namespace Anki {
         MessageFaceDetection faceDetection;
         //std::vector<Rectangle<s32> > faceTargets;
         while(true == _visionProcessor.CheckMailbox(faceDetection)) {
+          /*
           PRINT_NAMED_INFO("Robot.Update",
                            "Robot %d reported seeing a face at (x,y,w,h)=(%d,%d,%d,%d).",
                            GetID(), faceDetection.x_upperLeft, faceDetection.y_upperLeft, faceDetection.width, faceDetection.height);
-          
+          */
           
           if(faceDetection.visualize > 0) {
             // Send tracker quad info to viz
@@ -785,6 +786,28 @@ namespace Anki {
                                                        right_x, top_y,
                                                        right_x, bottom_y,
                                                        left_x, bottom_y);
+          }
+          
+          // Create a "visionMarker" message from the face detection so we will
+          // add this face to BlockWorld
+          MessageVisionMarker markerMsg;
+          markerMsg.x_imgUpperLeft  = faceDetection.x_upperLeft;
+          markerMsg.y_imgUpperLeft  = faceDetection.y_upperLeft;
+          markerMsg.x_imgUpperRight = faceDetection.x_upperLeft + faceDetection.width;
+          markerMsg.y_imgUpperRight = faceDetection.y_upperLeft;
+          markerMsg.x_imgLowerLeft  = faceDetection.x_upperLeft;
+          markerMsg.y_imgLowerLeft  = faceDetection.y_upperLeft + faceDetection.height;
+          markerMsg.x_imgLowerRight = faceDetection.x_upperLeft + faceDetection.width;
+          markerMsg.y_imgLowerRight = faceDetection.y_upperLeft + faceDetection.height;
+          markerMsg.timestamp = faceDetection.timestamp;
+          markerMsg.markerType = Vision::Marker::FACE_CODE; // TODO: Use face identity when we have recognition?
+          
+          Result lastResult = QueueObservedMarker(markerMsg);
+          if(lastResult != RESULT_OK) {
+            PRINT_NAMED_ERROR("Robot.Update.FailedToQueueFaceVisionMarker",
+                              "Got FaceDetection message from vision processing thread "
+                              "but failed to queue it as a VisionMarker.");
+            return lastResult;
           }
           
           // Signal the detection of a face

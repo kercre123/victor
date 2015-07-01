@@ -23,6 +23,7 @@
 #include "platform.h"
 #include "anki/cozmo/basestation/ramp.h"
 #include "anki/cozmo/basestation/charger.h"
+#include "anki/cozmo/basestation/humanHead.h"
 
 #include "robotMessageHandler.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
@@ -80,7 +81,7 @@ namespace Anki
     const BlockWorld::ObjectFamily BlockWorld::ObjectFamily::BLOCKS;
     const BlockWorld::ObjectFamily BlockWorld::ObjectFamily::ACTIVE_BLOCKS;
     const BlockWorld::ObjectFamily BlockWorld::ObjectFamily::MARKERLESS_OBJECTS;
-    const BlockWorld::ObjectFamily BlockWorld::ObjectFamily::FACES;
+    const BlockWorld::ObjectFamily BlockWorld::ObjectFamily::HUMAN_HEADS;
     
     // Instantiating an object family increments the unique counter:
     BlockWorld::ObjectFamily::ObjectFamily() {
@@ -187,6 +188,12 @@ namespace Anki
       //
       _objectLibrary[ObjectFamily::CHARGERS].AddObject(new Charger());
       
+      
+      //////////////////////////////////////////////////////////////////////////
+      // Faces
+      //
+      _objectLibrary[ObjectFamily::HUMAN_HEADS].AddObject(new HumanHead());
+
       
     } // BlockWorld() Constructor
     
@@ -1550,9 +1557,9 @@ namespace Anki
               }
               
               if(marker2isInsideMarker1) {
-                PRINT_NAMED_INFO("BlockWorld.Update", "Removing %s marker completely contained within %s marker.\n",
-                                 Vision::MarkerTypeStrings[marker2.GetCode()],
-                                 Vision::MarkerTypeStrings[marker1.GetCode()]);
+                PRINT_NAMED_INFO("BlockWorld.Update",
+                                 "Removing %s marker completely contained within %s marker.\n",
+                                 marker1.GetCodeName(), marker2.GetCodeName());
                 // Note: erase does increment of iterator for us
                 markerIter2 = currentObsMarkers.erase(markerIter2);
               } else {
@@ -1601,6 +1608,12 @@ namespace Anki
         // Note that this removes markers from the list that it uses
         numObjectsObserved += UpdateObjectPoses(currentObsMarkers, ObjectFamily::CHARGERS, atTimestamp);
         
+        //
+        // Find any observed human heads from the remaining "markers"
+        //
+        // Note that this removes markers from the list that it uses
+        numObjectsObserved += UpdateObjectPoses(currentObsMarkers, ObjectFamily::HUMAN_HEADS, atTimestamp);
+        
         // TODO: Deal with unknown markers?
         
         // Keep track of how many markers went unused by either robot or block
@@ -1634,7 +1647,9 @@ namespace Anki
         // For now, look for collision with anything other than Mat objects
         // NOTE: This assumes all other objects are DockableObjects below!!! (Becuase of IsBeingCarried() check)
         // TODO: How can we delete Mat objects (like platforms) whose positions we drive through
-        if(objectsByFamily.first != ObjectFamily::MATS && objectsByFamily.first != ObjectFamily::MARKERLESS_OBJECTS)
+        if(objectsByFamily.first != ObjectFamily::MATS &&
+           objectsByFamily.first != ObjectFamily::MARKERLESS_OBJECTS &&
+           objectsByFamily.first != ObjectFamily::HUMAN_HEADS)
         {
           for(auto & objectsByType : objectsByFamily.second)
           {
