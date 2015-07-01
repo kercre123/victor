@@ -38,6 +38,8 @@ namespace Anki {
         CENTERED
       };
       
+      PanTiltTracker() : _isInitialized(false) { }
+      
       Result Init(const CameraCalibration& camCalib);
       
       Result StartTracking(TargetSelectionMethod method, u32 timeout_ms);
