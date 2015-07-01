@@ -39,7 +39,7 @@ namespace Anki {
       // Constructor, based on Type
       MarkerlessObject(Type type);
       
-      ~MarkerlessObject();
+      virtual ~MarkerlessObject();
       
       //
       // Inherited Virtual Methods
