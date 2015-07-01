@@ -12,6 +12,7 @@ extern volatile bool gDataReceived;
 extern volatile u8 radioPayload[13];
 extern volatile enum eRadioTimerState radioTimerState;
 extern volatile u8 missedPacketCount;
+extern volatile u8 cumMissedPacketCount;
 
 
 void main(void)
@@ -49,20 +50,20 @@ void main(void)
         {
           // doing lights stuff
         }
+        // Set wait period
+        TR0 = 0; // Stop timer 
+        TL0 = 0xFF - TIMER35MS_L; 
+        TH0 = 0xFF - TIMER35MS_H;
+        TR0 = 1; // Start timer 
+        radioTimerState = radioSleep; 
         LightsOff();
         
         // Set payload
         memset(radioPayload, 0, sizeof(radioPayload));
-        radioPayload[i] = numRepeat*25;
-        radioPayload[12] = 128;
+        //radioPayload[i] = numRepeat*25;
+        //radioPayload[12] = 128;
+        radioPayload[10] = 255;
         TransmitData();
-        
-        // Set to 30 mS wait
-        TR0 = 0; // Stop timer 
-        TL0 = 0xFF - TIMER30HZ_L; 
-        TH0 = 0xFF - TIMER30HZ_H;
-        TR0 = 1; // Start timer 
-        radioTimerState = radioSleep; 
       }
     }
   }
@@ -149,6 +150,7 @@ void main(void)
     // Fill radioPayload with a response
     memcpy(radioPayload, accData, sizeof(accData));
     radioPayload[3] = tapCount;
+    radioPayload[4] = cumMissedPacketCount;
     // Respond with accelerometer data
     TransmitData();
     // Reset Payload

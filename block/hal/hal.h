@@ -40,9 +40,9 @@ void RunTests();
 // radio.c
 static const u8 RADIO_TIMEOUT_MS = 2;
 static const u8 ADDRESS[5] = {BLOCK_ID, 0xC2, 0xC2, 0xC2, 0xC2};
-static const u8 TIMER30HZ_L = 0x9C;
-static const u8 TIMER30HZ_H = 0xAD;
-static const u8 WAKEUP_OFFSET = 0x02; // 0.75 us per tick, 191.25 on H byte
+static const u8 TIMER35MS_H = 0xB6;
+static const u8 TIMER35MS_L = 0x4B;
+static const u8 WAKEUP_OFFSET = 0x04; // 0.75 us per tick, 191.25 on H byte
 
 typedef enum eRadioTimerState
 {

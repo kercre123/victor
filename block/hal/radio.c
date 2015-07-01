@@ -6,14 +6,15 @@ volatile bool gDataReceived;
 volatile u8 radioPayload[13];
 volatile enum eRadioTimerState radioTimerState = radioSleep;
 volatile u8 missedPacketCount = 0;
+volatile u8 cumMissedPacketCount = 0;
 
 void InitTimer0()
 {  
   TMOD &= 0xF0;
   TMOD |=  0x01; // Mode 1, 16 bit counter/timer
   
-  TL0 = 0xFF - TIMER30HZ_L; 
-  TH0 = 0xFF - TIMER30HZ_H;
+  TL0 = 0xFF - TIMER35MS_L; 
+  TH0 = 0xFF - TIMER35MS_H;
   
   ET0 = 1; // enable timer 1 interrupt
   EA = 1; // enable global interrupts
@@ -83,6 +84,7 @@ void ReceiveData(u8 msTimeout)
         if(missedPacketCount!=255)
         {
           missedPacketCount++;
+          cumMissedPacketCount++;
         }
         radioBusy = false;
       }
@@ -142,6 +144,8 @@ NRF_ISR()
 {
   uint8_t irq_flags;
   
+  EA = 0; // disable interrupts
+  
   // Read and clear IRQ flags from radio
   irq_flags = hal_nrf_get_clear_irq_flags();
   
@@ -149,10 +153,10 @@ NRF_ISR()
   {
     // Data received
     case ((1<<(uint8_t)HAL_NRF_RX_DR)):
-      // Set timer for ~28 ms from now
+      // Set timer for ~35-offset ms from now
       TR0 = 0; // Stop timer 
-      TL0 = 0xFF - TIMER30HZ_L; 
-      TH0 = 0xFF - TIMER30HZ_H + WAKEUP_OFFSET;
+      TL0 = 0xFF - TIMER35MS_L; 
+      TH0 = 0xFF - TIMER35MS_H + WAKEUP_OFFSET;
       TR0 = 1; // Start timer   
       // Read payload
       while(!hal_nrf_rx_fifo_empty())
@@ -181,6 +185,7 @@ NRF_ISR()
     default:
       break;
   }
+  EA = 1; // enable interrupts
 }
 
 
@@ -188,12 +193,14 @@ NRF_ISR()
 // Overflow flag auto-resets
 T0_ISR()
 {
+  EA = 0; // disable interrupts
   radioTimerState = radioWakeup; 
-  // set for 30 Hz wakeup
+  // set for 35ms wakeup
   TR0 = 0; // Stop timer 
-  TL0 = 0xFF - TIMER30HZ_L; 
-  TH0 = 0xFF - TIMER30HZ_H;;
-  TR0 = 1; // Start timer   
+  TL0 = 0xFF - TIMER35MS_L; 
+  TH0 = 0xFF - TIMER35MS_H;;
+  TR0 = 1; // Start timer 
+  EA = 1; // enable interrupts  
 }
 
 /*
