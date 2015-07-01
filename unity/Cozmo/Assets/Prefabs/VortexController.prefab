@@ -3768,12 +3768,11 @@ MonoBehaviour:
   minAngularVelocity: .00999999978
   minStartingVelocity: 360
   spinMultiplier: 2
-  dragCoefficient: .25
+  dragCoefficientUnderPegThreshold: .25
+  dragCoefficientOverPegThreshold: .699999988
   maxSamples: 5
   pegSlowDownThreshold: 360
   pegSlowDownFactor: .975000024
-  pegTraversalCostFactor: 10
-  pegBounceBelowVel: 10
   pegBounceVelFactor: .5
   pegDegrees: 2.5
   pegBendAngle: 10
@@ -4302,12 +4301,11 @@ MonoBehaviour:
   minAngularVelocity: .100000001
   minStartingVelocity: 360
   spinMultiplier: 2
-  dragCoefficient: .25
+  dragCoefficientUnderPegThreshold: .25
+  dragCoefficientOverPegThreshold: .699999988
   maxSamples: 5
   pegSlowDownThreshold: 360
   pegSlowDownFactor: .975000024
-  pegTraversalCostFactor: 10
-  pegBounceBelowVel: 10
   pegBounceVelFactor: .5
   pegDegrees: 4
   pegBendAngle: 10
@@ -4405,12 +4403,11 @@ MonoBehaviour:
   minAngularVelocity: .100000001
   minStartingVelocity: 360
   spinMultiplier: 2
-  dragCoefficient: .25
+  dragCoefficientUnderPegThreshold: .25
+  dragCoefficientOverPegThreshold: .699999988
   maxSamples: 5
   pegSlowDownThreshold: 360
   pegSlowDownFactor: .975000024
-  pegTraversalCostFactor: 10
-  pegBounceBelowVel: 10
   pegBounceVelFactor: .5
   pegDegrees: 8
   pegBendAngle: 12

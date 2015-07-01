@@ -188,6 +188,13 @@ public class VortexController : GameController {
 				ActiveBlock block = robot.activeBlocks[i];
 				Debug.Log("adding playerInputBlocks["+i+"] with PlayerInputTap("+i+")");
 				playerInputBlocks.Add(block);
+				
+				switch(i) {
+					case 0: block.SetMode(ActiveBlock.Mode.Blue); break;
+					case 1: block.SetMode(ActiveBlock.Mode.Green); break;
+					case 2: block.SetMode(ActiveBlock.Mode.Yellow); break;
+					case 3: block.SetMode(ActiveBlock.Mode.Red); break;
+				}
 			}
 	
 			if(robot.carryingObject == null) {
@@ -303,7 +310,7 @@ public class VortexController : GameController {
 
 		textRoundNumber.text = "ROUND " + Mathf.Max(1, round).ToString();
 
-		int newNumber = wheel.GetActualNumber();
+		int newNumber = wheel.GetDisplayedNumber();
 		textCurrentNumber.text = newNumber.ToString();
 		textPlayState.text = state == GameState.PLAYING ? playState.ToString() : "";
 	}
@@ -315,10 +322,15 @@ public class VortexController : GameController {
 				return VortexState.REQUEST_SPIN;
 				//break;
 			case VortexState.REQUEST_SPIN:
-				if(wheel.SpinUnderway) return VortexState.SPINNING;
+				if(wheel.SpinUnderway) {
+					Debug.Log("cozmo SpinUnderway");
+					return VortexState.SPINNING;
+				}
 				break;
 			case VortexState.SPINNING:
 				if(wheel.Finished) {
+					float fullTime = Time.time - wheel.SpinStartTime;
+					Debug.Log("cozmo wheel.Finished playStateTimer("+playStateTimer+") fullTime("+fullTime+")");
 					return VortexState.SPIN_COMPLETE;
 				}
 				break;
@@ -419,7 +431,8 @@ public class VortexController : GameController {
 	bool cozmoBidSubmitted = false;
 	int predictedNum = -1;
 	float predictedDuration = -1f;
-	
+	float cozmoTimePerTap = 1f;
+
 	void Enter_SPINNING() {
 		lightingBall.Radius = wheelLightningRadii[currentWheelIndex];
 
@@ -439,7 +452,7 @@ public class VortexController : GameController {
 		int lightingMax = Mathf.FloorToInt(Mathf.Lerp(0, lightningMaxCountAtSpeedMax, (wheel.Speed - 1f) * 0.1f));
 		lightingBall.CountRange = new RangeOfIntegers { Minimum = lightingMin, Maximum = lightingMax };
 		
-		int newNumber = wheel.GetActualNumber();
+		int newNumber = wheel.GetDisplayedNumber();
 		//Debug.Log("Update_SPINNING lightingMax("+lightingMax+") wheel.Speed("+wheel.Speed+") newNumber("+newNumber+") lastNumber("+lastNumber+")");
 		if(lightingMax == 0 && newNumber != lastNumber) {
 			lightingBall.SingleLightningBolt();
@@ -458,7 +471,8 @@ public class VortexController : GameController {
 
 		if(!cozmoBidSubmitted && predictedNum > 0) {
 			float time = Time.time - wheel.SpinStartTime;
-			if(time > (predictedDuration - 5f) ) {
+			float timeToBid = predictedDuration - (1f + predictedNum * cozmoTimePerTap);
+			if(time > timeToBid) {
 
 	
 				if(robot != null) {
@@ -472,7 +486,7 @@ public class VortexController : GameController {
 
 				cozmoBidSubmitted = true;
 	
-				Debug.Log("cozmo predictedNum("+predictedNum+") time("+time+") predictedDuration("+predictedDuration+")");
+				Debug.Log("cozmo predictedNum("+predictedNum+") time("+time+") timeToBid("+timeToBid+") predictedDuration("+predictedDuration+")");
 			}
 		}
 		
@@ -499,7 +513,7 @@ public class VortexController : GameController {
 		int fastestPlayer = -1;
 
 
-		int number = wheel.GetActualNumber();
+		int number = wheel.GetDisplayedNumber();
 		for(int i=0;i<playerInputs.Count;i++) {
 			if(playerInputs[i].stamps.Count != number) continue;
 			if(playerInputs[i].stamps.Count == 0) continue;
