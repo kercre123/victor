@@ -1,0 +1,37 @@
+#VRML_SIM V8.0.5 utf8
+WorldInfo {
+  info [
+    "Cozmo world for use with an iOS device running Unity app"
+    "when a secondary UI for drive control is needed."
+    "All rights reserved. Copyright (c) Anki, Inc."
+    "Author: Hanns Tappeiner <hanns@anki.com>"
+    "Author: Andrew Stein <andrew@anki.com>"
+    "Author: Kevin Yoon <kevin@anki.com>"
+    "Date: 23 Apr 2014"
+    ""
+  ]
+  gravity 0 0 -9.81
+  physics "cozmo_physics"
+  basicTimeStep 5
+}
+Viewpoint {
+  fieldOfView 0.8
+  orientation 1 0 0 0.56
+  position 0 -0.55 0.84
+}
+Background {
+  skyColor [
+    0.4 0.7 1
+  ]
+}
+DirectionalLight {
+  ambientIntensity 0.75
+}
+CozmoMat {
+}
+
+WebotsKeyboardController {
+  deviceID 2
+  engineIP "192.168.5.160"  # Set this to the IP of the iOS device
+  forceAddRobot FALSE
+}
