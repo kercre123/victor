@@ -21,6 +21,7 @@
 
 // lights.c
 void SetLedValues(char *newValues);
+void SetLedValuesByDelta();
 void SetLedValue(char led, char value);
 void InitTimer2();
 void LightsOff();

@@ -11,6 +11,7 @@ extern volatile bool radioBusy;
 extern volatile bool gDataReceived;
 extern volatile u8 radioPayload[13];
 extern volatile enum eRadioTimerState radioTimerState;
+extern volatile u8 missedPacketCount;
 
 
 void main(void)
@@ -20,9 +21,12 @@ void main(void)
   u8 led;
   u8 numRepeat;
   volatile bool sync;
+  
   volatile s8 accData[3];
   volatile u8 tapCount = 0;
  
+  u8 lightDeltas[13];
+  
   while(hal_clk_get_16m_source() != HAL_CLK_XOSC16M)
   {
     // Wait until 16 MHz crystal oscillator is running
@@ -132,14 +136,15 @@ void main(void)
 
     // Receive data
     ReceiveData(RADIO_TIMEOUT_MS); 
-    
+    if(missedPacketCount>0)
+    {
+      SetLedValuesByDelta();
+    }
+    else
+    {
     // Copy packet to LEDs
-    SetLedValues(radioPayload);
-    #ifdef DO_RADIO_LED_TEST
-    memset(radioPayload, 0, sizeof(radioPayload));
-    radioPayload[0] = 0xFF;
-    state++;
-    #endif
+      SetLedValues(radioPayload);
+    }
 
     // Fill radioPayload with a response
     memcpy(radioPayload, accData, sizeof(accData));

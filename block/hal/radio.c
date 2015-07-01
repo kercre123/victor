@@ -5,6 +5,7 @@ volatile bool radioBusy;
 volatile bool gDataReceived;
 volatile u8 radioPayload[13];
 volatile enum eRadioTimerState radioTimerState = radioSleep;
+volatile u8 missedPacketCount = 0;
 
 void InitTimer0()
 {  
@@ -75,9 +76,16 @@ void ReceiveData(u8 msTimeout)
   while(radioBusy)
   {    
     #ifndef LISTEN_FOREVER
-    if((TH0-now+1)>(5*msTimeout))
+    if(missedPacketCount<3)
     {
-      radioBusy = false;
+      if((TH0-now+1)>(5*msTimeout))
+      {
+        if(missedPacketCount!=255)
+        {
+          missedPacketCount++;
+        }
+        radioBusy = false;
+      }
     }
     #endif
   }
@@ -152,7 +160,8 @@ NRF_ISR()
         hal_nrf_read_rx_payload(radioPayload);
       }
       radioBusy = false;
-      gDataReceived = true;       
+      gDataReceived = true; 
+      missedPacketCount = 0;
       break;
       
     // Transmission success

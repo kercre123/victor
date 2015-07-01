@@ -36,6 +36,7 @@ const u8 ledCathode[13] = {1, 2, 3, 0, 2, 3, 0, 1, 3, 0, 1, 2, 0};
 //const u8 ledScale[12] = {8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8};
 
 volatile u8 ledValues[13];
+volatile u8 ledValueDeltas[13];
 
 volatile u8 gCurrentLed = 0;
 
@@ -46,7 +47,18 @@ void SetLedValue(char led, char value)
 
 void SetLedValues(char *newValues)
 {
+  u8 i;
+  for(i=0; i<13; i++)
+  {
+    ledValueDeltas[i] = newValues[i]-ledValues[i];
+  }
   memcpy(ledValues, newValues, sizeof(ledValues));
+
+} 
+
+void SetLedValuesByDelta()
+{
+  
 }  
 
 
