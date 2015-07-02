@@ -268,7 +268,6 @@ namespace Anki {
 
       void ProcessFaceDetectionMessage(const FaceDetection& msg)
       {
-        FaceTrackingController::SetObjectPositionMessage(msg);
       }
 
       void ProcessBTLEMessages()
