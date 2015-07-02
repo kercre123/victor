@@ -620,7 +620,7 @@ namespace DigitalRuby.ThunderAndLightning
                 lightningLight.color = Color.white;
                 lightningLight.range = 5000.0f;
                 lightningLight.bounceIntensity = 1.0f;
-                lightningLight.intensity = 0.0f;
+				lightningLight.intensity = UnityEngine.Random.Range(2.8f, 3.2f);;
                 lightningLight.enabled = (Delay <= 0.0f);
                 lightningLightObject.transform.parent = Parent.transform;
             }
@@ -813,7 +813,7 @@ namespace DigitalRuby.ThunderAndLightning
 
             lightningBoltRenderer.Render(this);
 
-            return true;
+			return lightningLight != null;
         }
 
         private LightningBoltSegmentGroup CreateGroup()

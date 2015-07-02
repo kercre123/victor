@@ -361,9 +361,9 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 
 		for(int i=0;i<numSlices;i++) {
 
-			Color imageColor = imageColors[i % imageColors.Length];
-			Color textColor = textColors[i % textColors.Length];
-			Color outlineColor = outlineColors[i % outlineColors.Length];
+			Color imageColor = unfocusedColor;
+			Color textColor = unfocusedColor;
+			Color outlineColor = unfocusedColor;
 
 			if(i == displayData.sliceIndex) {
 				imageColor = finalSliceColor;
