@@ -153,7 +153,7 @@ static void ICACHE_FLASH_ATTR system_init_done(void)
   // Enable upgrade controller
   upgradeControllerInit();
 
-  // Setup the block relay0x7EAA997E
+  // Setup the block relay
   blockRelayInit();
 
   // Setup Basestation client
@@ -168,6 +168,10 @@ static void ICACHE_FLASH_ATTR system_init_done(void)
   // Set up shared background tasks
   task0Init();
   //task0Post(userTask, 0);
+
+  // Set CPU frequency again here just in case
+  REG_SET_BIT(0x3ff00014, BIT(0)); //< Set CPU frequency to 160MHz
+  err = system_update_cpu_freq(160);
 
   os_printf("user initalization complete\r\n");
 }
@@ -185,7 +189,7 @@ user_init(void)
 
     wifi_status_led_uninstall();
 
-    REG_SET_BIT(0x3ff00014, BIT(0));
+    REG_SET_BIT(0x3ff00014, BIT(0)); //< Set CPU frequency to 160MHz
     err = system_update_cpu_freq(160);
 
     uart_init(BIT_RATE_5000000, BIT_RATE_115200);

@@ -11,7 +11,7 @@ static uint8 rinds[NUM_SPI_BUS]; ///< Which point in the read FIFO are we at for
 uint32 ICACHE_FLASH_ATTR spi_master_init(const SPIBus spi_no, uint32 frequency)
 {
 	uint32 regvalue;
-	const uint32 CPU_HZ = ((uint32)system_get_cpu_freq()) * 1000000;
+	const uint32 CPU_HZ = 80000000; // Apparently this is 80MHz even if running at 160MHz ((uint32)system_get_cpu_freq()) * 1000000;
 	uint32 clock_div_flag = 0;
 
 	if(spi_no>1) return; //handle invalid input number
@@ -55,12 +55,12 @@ uint32 ICACHE_FLASH_ATTR spi_master_init(const SPIBus spi_no, uint32 frequency)
 	else if (spi_no == HSPI)
 	{
 		WRITE_PERI_REG(PERIPHS_IO_MUX, 0x105|(clock_div_flag<<9)); // Set bit 9 if sysclock required
-		PIN_FUNC_SELECT(PERIPHS_IO_MUX_MTDI_U, 2); //GPIO12 is HSPI MISO pin (Master Data In)
+		//PIN_FUNC_SELECT(PERIPHS_IO_MUX_MTDI_U, 2); //GPIO12 is HSPI MISO pin (Master Data In), not used for SIO
 		PIN_FUNC_SELECT(PERIPHS_IO_MUX_MTCK_U, 2); //GPIO13 is HSPI MOSI pin (Master Data Out)
 		PIN_FUNC_SELECT(PERIPHS_IO_MUX_MTMS_U, 2); //GPIO14 is HSPI CLK pin (Clock)
 		PIN_FUNC_SELECT(PERIPHS_IO_MUX_MTDO_U, 2); //GPIO15 is HSPI CS pin (Chip Select / Slave Select)
 		// TODO What is this doing?
-		SET_PERI_REG_MASK(SPI_USER(spi_no), SPI_CS_SETUP|SPI_CS_HOLD|SPI_USR_COMMAND);
+		SET_PERI_REG_MASK(SPI_USER(spi_no), SPI_CS_SETUP|SPI_CS_HOLD|SPI_USR_COMMAND|SPI_USR_MISO);
 		CLEAR_PERI_REG_MASK(SPI_USER(spi_no), SPI_FLASH_MODE);
 	}
 

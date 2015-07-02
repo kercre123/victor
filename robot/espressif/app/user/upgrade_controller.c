@@ -348,9 +348,9 @@ LOCAL void ICACHE_FLASH_ATTR upccReceiveCallback(void *arg, char *usrdata, unsig
         spi_mast_write(HSPI, 9);
         spi_mast_start_transaction(HSPI, 0, 0, 0, 0, 32*9, 0, 0);
         while (spi_mast_busy(HSPI));
-        spi_mast_start_transaction(HSPI, 0, 0, 0, 0, 0, 42*4, 0);
+        /*spi_mast_start_transaction(HSPI, 0, 0, 0, 0, 0, 42*4, 0);
         while (spi_mast_busy(HSPI));
-        os_printf("SPI readback: %08x %08x %08x %08x\r\n", spi_mast_read(HSPI), spi_mast_read(HSPI), spi_mast_read(HSPI), spi_mast_read(HSPI));
+        os_printf("SPI readback: %08x %08x %08x %08x\r\n", spi_mast_read(HSPI), spi_mast_read(HSPI), spi_mast_read(HSPI), spi_mast_read(HSPI));*/
       }
       else
       {
