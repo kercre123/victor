@@ -179,3 +179,4 @@ include/anki/cozmo/shared/msgIDs.txt
 block/build/
 *.m51
 *.m51
+rx-packet-log.txt
