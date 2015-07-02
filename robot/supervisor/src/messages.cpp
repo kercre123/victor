@@ -578,11 +578,10 @@ void Process##__MSG_TYPE__##Message(const __MSG_TYPE__& msg) { ProcessAnimKeyFra
       {
         // TODO: Move this to some kind of VisualInterestTrackingController or something
 
-        HeadController::SetDesiredAngle(msg.relativeHeadTiltAngle_rad + HeadController::GetAngleRad());
+        HeadController::SetDesiredAngle(msg.headTiltAngle_rad, 0.1f, 0.1f, 0.1f);
 
-        const f32 turnVelocity = (msg.relativePanAngle_rad < 0 ? -50.f : 50.f);
-        SteeringController::ExecutePointTurn(msg.relativePanAngle_rad + Localization::GetCurrentMatOrientation().ToFloat(),
-                                             turnVelocity, 5, -5, true);
+        const f32 turnVelocity = (msg.bodyPanAngle_rad < 0 ? -100.f : 100.f);
+        SteeringController::ExecutePointTurn(msg.bodyPanAngle_rad, 50.f, 10.f, 10.f, true);
 
 
       }

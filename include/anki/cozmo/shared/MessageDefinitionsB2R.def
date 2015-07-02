@@ -315,8 +315,8 @@ END_MESSAGE_DEFINITION(FaceTracking)
 // PanAndTiltHead
 START_MESSAGE_DEFINITION(PanAndTiltHead, 1)
 // TODO: make these fixed point
-ADD_MESSAGE_MEMBER(f32, relativePanAngle_rad)
-ADD_MESSAGE_MEMBER(f32, relativeHeadTiltAngle_rad)
+ADD_MESSAGE_MEMBER(f32, bodyPanAngle_rad)
+ADD_MESSAGE_MEMBER(f32, headTiltAngle_rad)
 END_MESSAGE_DEFINITION(PanAndTiltHead)
 
 START_MESSAGE_DEFINITION(SetCarryState, 1)

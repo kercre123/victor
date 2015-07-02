@@ -351,12 +351,14 @@ namespace Anki {
       // specified number of times
       Result TapBlockOnGround(const u8 numTaps);
       
-      // If robot observes the given object ID, it will adjust its head angle to look
-      // at last-observed marker. Fails if objectID doesn't exist.
-      Result EnableTrackHeadToObject(const u32 objectID);
-      Result DisableTrackHeadToObject();
+      // If robot observes the given object ID, it will tilt its head and rotate its
+      // body to keep looking at the last-observed marker. Fails if objectID doesn't exist.
+      // If "headOnly" is true, then body rotation is not performed.
+      Result EnableTrackToObject(const u32 objectID, bool headOnly);
+      Result DisableTrackToObject();
       
-      const ObjectID& GetTrackHeadToObject() const { return _trackHeadToObjectID; }
+      const ObjectID& GetTrackToObject() const { return _trackHeadToObjectID; }
+      bool    IsTrackingObjectWithHeadOnly() const { return _trackObjectWithHeadOnly; }
       
       Result DriveWheels(const f32 lwheel_speed_mmps,
                          const f32 rwheel_speed_mmps);
@@ -659,6 +661,7 @@ namespace Anki {
       
       // Object to keep head tracked to this object whenever it is observed
       ObjectID                    _trackHeadToObjectID;
+      bool                        _trackObjectWithHeadOnly;
       
       /*
       // Plan a path to the pre-ascent/descent pose (depending on current
