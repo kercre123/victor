@@ -36,7 +36,9 @@
 #include "anki/cozmo/basestation/ramp.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
 
-#include "opencv2/opencv.hpp"
+// For imwrite() in ProcessImage
+#include "opencv2/highgui/highgui.hpp"
+
 
 #include <fstream>
 #include <dirent.h>

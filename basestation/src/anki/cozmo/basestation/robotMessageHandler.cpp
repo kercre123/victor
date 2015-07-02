@@ -28,7 +28,7 @@
 
 #include <fstream>
 
-#include "opencv2/opencv.hpp"
+#include "opencv2/imgproc/imgproc.hpp"
 
 // Uncomment to allow interprocess access to the camera stream (e.g. Matlab)
 //#define STREAM_IMAGES_VIA_FILESYSTEM 1
