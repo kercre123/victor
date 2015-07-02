@@ -4,7 +4,6 @@
 #include "hal/portable.h"
 #include "lib/stm32f4xx.h"
 #include "anki/cozmo/robot/spineData.h"
-#include "hal/cube.h"
 
 namespace Anki
 {
@@ -23,8 +22,8 @@ namespace Anki
       volatile ONCHIP GlobalDataToHead g_dataToHead;
       volatile ONCHIP GlobalDataToBody g_dataToBody;
       
-      // Set to true when it is safe to call MainExecution
-      volatile u8 g_halInitComplete = 0, g_deferMainExec = 0, g_mainExecDeferred = 0;
+      // True when main exec should run, false when it is ready to run
+      volatile u8 g_runMainExec = 0;
       
       #define BAUDRATE 350000
 
@@ -207,13 +206,14 @@ void DMA_HANDLER_RX(void)
   //PrintCrap();
   //UARTPutChar('R');
   
-  // Atomically copy "live" buffers to/from the DMA copies
-  // XXX: There is a timing error causing an off-by-one, but I have to get into Kevin's hands
-  memcpy((void*)&g_dataToHead, ((u8*)&m_DMAtoHead) + 1, sizeof(g_dataToHead) - 1);
-  memcpy((void*)&m_DMAtoBody, (void*)&g_dataToBody, sizeof(m_DMAtoBody));
-  
-  g_dataToBody.cubeToUpdate = Anki::Cozmo::HAL::EnqueueLightUpdate(&g_dataToBody.cubeStatus);
-  
+  // If main execution isn't already running, copy live buffers to/from the DMA copies
+  if (!g_runMainExec)
+  {
+    // XXX: There is a timing error causing an off-by-one, but I have to get into Kevin's hands
+    memcpy((void*)&g_dataToHead, ((u8*)&m_DMAtoHead) + 1, sizeof(g_dataToHead) - 1);
+    memcpy((void*)&m_DMAtoBody, (void*)&g_dataToBody, sizeof(m_DMAtoBody));
+  }
+    
   // Wait 80uS before replying
   MicroWait(80);
   
@@ -249,5 +249,5 @@ void DMA_HANDLER_RX(void)
 	GetMicroCounter();
 	
   // Flag start of MainExecution
-  g_mainExecDeferred = 1;
+  g_runMainExec = 1;
 }
