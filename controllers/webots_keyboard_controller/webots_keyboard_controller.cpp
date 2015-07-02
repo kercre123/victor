@@ -1404,6 +1404,29 @@ namespace Anki {
                 SendAnimation("ANIM_ALERT", 1);
                 break;
               }
+              case (s32)'^':
+              {
+                // Send whatever animation is specified in the animationToSendName field
+                webots::Field* animToSendNameField = root_->getField("animationToSendName");
+                if (animToSendNameField == nullptr) {
+                  printf("ERROR: No animationToSendName field found in WebotsKeyboardController.proto\n");
+                  break;
+                }
+                std::string animToSendName = animToSendNameField->getSFString();
+                if (animToSendName.empty()) {
+                  printf("ERROR: animationToSendName field is empty\n");
+                  break;
+                }
+                
+                webots::Field* animNumLoopsField = root_->getField("animationNumLoops");
+                u32 animNumLoops = 1;
+                if (animNumLoopsField && (animNumLoopsField->getSFInt32() > 0)) {
+                  animNumLoops = animNumLoopsField->getSFInt32();
+                }
+
+                SendAnimation(animToSendName.c_str(), animNumLoops);
+                break;
+              }
               case (s32)'~':
               {
                 //const s32 NUM_ANIM_TESTS = 4;
