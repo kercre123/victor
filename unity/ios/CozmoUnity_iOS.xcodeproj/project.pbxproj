@@ -83,6 +83,12 @@
 		465677091B2253D400FE56E6 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4644A9E51B223A85005BFF16 /* Images.xcassets */; };
 		4656770B1B22597400FE56E6 /* RegisterMonoModules.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4644A9DC1B223A85005BFF16 /* RegisterMonoModules.cpp */; };
 		468C75E91A96C18D001011B7 /* libc++.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 468C75E81A96C18D001011B7 /* libc++.dylib */; };
+		49C4E76B1B45F5B100C305B8 /* liblibintraface_core122.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 49C4E7661B45F5B100C305B8 /* liblibintraface_core122.a */; };
+		49C4E76C1B45F5B100C305B8 /* liblibintraface_emo122.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 49C4E7671B45F5B100C305B8 /* liblibintraface_emo122.a */; };
+		49C4E76D1B45F5B100C305B8 /* liblibintraface_license_anki.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 49C4E7681B45F5B100C305B8 /* liblibintraface_license_anki.a */; };
+		49C4E76E1B45F5B100C305B8 /* libcryptopp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 49C4E7691B45F5B100C305B8 /* libcryptopp.a */; };
+		49C4E76F1B45F5B100C305B8 /* libcurl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 49C4E76A1B45F5B100C305B8 /* libcurl.a */; };
+		49C4E7711B45F67600C305B8 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 49C4E7701B45F67600C305B8 /* Security.framework */; };
 		5623C57617FDCB0800090B9E /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1D30AB110D05D00D00671497 /* Foundation.framework */; };
 		5623C57717FDCB0800090B9E /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 830B5C100E5ED4C100C7819F /* UIKit.framework */; };
 		5682F4B20F3B34FF007A219C /* MediaPlayer.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5682F4B10F3B34FF007A219C /* MediaPlayer.framework */; };
@@ -247,6 +253,12 @@
 		468C75DE1A96C17D001011B7 /* libopencv_objdetect.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libopencv_objdetect.a; path = "../../../coretech-external/build/opencv-ios/multiArchLibs/libopencv_objdetect.a"; sourceTree = "<group>"; };
 		468C75DF1A96C17D001011B7 /* libzlib.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libzlib.a; path = "../../../coretech-external/build/opencv-ios/multiArchLibs/libzlib.a"; sourceTree = "<group>"; };
 		468C75E81A96C18D001011B7 /* libc++.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = "libc++.dylib"; path = "usr/lib/libc++.dylib"; sourceTree = SDKROOT; };
+		49C4E7661B45F5B100C305B8 /* liblibintraface_core122.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = liblibintraface_core122.a; path = "../../../coretech-external/IntraFace/Files/Anki/Library/liblibintraface_core122.a"; sourceTree = "<group>"; };
+		49C4E7671B45F5B100C305B8 /* liblibintraface_emo122.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = liblibintraface_emo122.a; path = "../../../coretech-external/IntraFace/Files/Anki/Library/liblibintraface_emo122.a"; sourceTree = "<group>"; };
+		49C4E7681B45F5B100C305B8 /* liblibintraface_license_anki.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = liblibintraface_license_anki.a; path = "../../../coretech-external/IntraFace/Files/Anki/Library/liblibintraface_license_anki.a"; sourceTree = "<group>"; };
+		49C4E7691B45F5B100C305B8 /* libcryptopp.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libcryptopp.a; path = "../../../coretech-external/IntraFace/Files/CommonFiles/Library/libcryptopp.a"; sourceTree = "<group>"; };
+		49C4E76A1B45F5B100C305B8 /* libcurl.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libcurl.a; path = "../../../coretech-external/IntraFace/Files/CommonFiles/Library/libcurl.a"; sourceTree = "<group>"; };
+		49C4E7701B45F67600C305B8 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
 		5623C57317FDCB0800090B9E /* cozmo.octest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = cozmo.octest; sourceTree = BUILT_PRODUCTS_DIR; };
 		5682F4B10F3B34FF007A219C /* MediaPlayer.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MediaPlayer.framework; path = System/Library/Frameworks/MediaPlayer.framework; sourceTree = SDKROOT; };
 		5692F3DC0FA9D8E500EBA2F1 /* CoreLocation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreLocation.framework; path = System/Library/Frameworks/CoreLocation.framework; sourceTree = SDKROOT; };
@@ -274,6 +286,12 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				49C4E7711B45F67600C305B8 /* Security.framework in Frameworks */,
+				49C4E76B1B45F5B100C305B8 /* liblibintraface_core122.a in Frameworks */,
+				49C4E76C1B45F5B100C305B8 /* liblibintraface_emo122.a in Frameworks */,
+				49C4E76D1B45F5B100C305B8 /* liblibintraface_license_anki.a in Frameworks */,
+				49C4E76E1B45F5B100C305B8 /* libcryptopp.a in Frameworks */,
+				49C4E76F1B45F5B100C305B8 /* libcurl.a in Frameworks */,
 				462D5BC51B0576230027DC17 /* libopencv_video.a in Frameworks */,
 				462D5BC61B0576230027DC17 /* libopencv_features2d.a in Frameworks */,
 				462D5BBB1B0576230027DC17 /* libopencv_calib3d.a in Frameworks */,
@@ -354,6 +372,12 @@
 		29B97323FDCFA39411CA2CEA /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				49C4E7701B45F67600C305B8 /* Security.framework */,
+				49C4E7661B45F5B100C305B8 /* liblibintraface_core122.a */,
+				49C4E7671B45F5B100C305B8 /* liblibintraface_emo122.a */,
+				49C4E7681B45F5B100C305B8 /* liblibintraface_license_anki.a */,
+				49C4E7691B45F5B100C305B8 /* libcryptopp.a */,
+				49C4E76A1B45F5B100C305B8 /* libcurl.a */,
 				4644A8391B22269B005BFF16 /* libiPhone-lib.a */,
 				DCA1B9D41B06CDE400173FF4 /* libjsoncpp.a */,
 				F88FB90F1B06BD4400755437 /* libjsoncpp.a */,
@@ -857,6 +881,8 @@
 					"$(ANKI_BUILD_UNITY_OUTPUT_DIR)/opencv",
 					"$(ANKI_BUILD_UNITY_XCODE_BUILD_DIR)/Libraries",
 					"${ANKI_BUILD_GENERATED_XCODE_PROJECT_DIR}/obj.target/project/gyp/${CONFIGURATION}",
+					"/Users/andrew/Code/coretech-external/IntraFace/Files/Anki/Library",
+					"/Users/andrew/Code/coretech-external/IntraFace/Files/CommonFiles/Library",
 				);
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = "-mno-thumb";
@@ -903,6 +929,8 @@
 					"$(ANKI_BUILD_UNITY_OUTPUT_DIR)/opencv",
 					"$(ANKI_BUILD_UNITY_XCODE_BUILD_DIR)/Libraries",
 					"${ANKI_BUILD_GENERATED_XCODE_PROJECT_DIR}/obj.target/project/gyp/${CONFIGURATION}",
+					"/Users/andrew/Code/coretech-external/IntraFace/Files/Anki/Library",
+					"/Users/andrew/Code/coretech-external/IntraFace/Files/CommonFiles/Library",
 				);
 				ONLY_ACTIVE_ARCH = NO;
 				OTHER_CFLAGS = "-mno-thumb";
