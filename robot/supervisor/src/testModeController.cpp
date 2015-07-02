@@ -5,7 +5,6 @@
 #include "pickAndPlaceController.h"
 #include "dockingController.h"
 #include "faceTrackingController.h"
-#include "gripController.h"
 #include "headController.h"
 #include "liftController.h"
 #include "imuFilter.h"
@@ -1024,36 +1023,6 @@ namespace Anki {
 //        return RESULT_OK;
 //      }
       
-      Result GripperTestInit()
-      {
-        PRINT("\n==== Starting GripperTest =====\n");
-        ticCnt_ = 0;
-        return RESULT_OK;
-      }
-      
-      
-      Result GripperTestUpdate()
-      {
-#if defined(HAVE_ACTIVE_GRIPPER) && HAVE_ACTIVE_GRIPPER
-        static bool up = false;
-        
-        // Change direction
-        if (ticCnt_++ >= 4000 / TIME_STEP) {
-          
-          up = !up;
-          if (up) {
-            PRINT("Gripper ENGAGED\n");
-            GripController::EngageGripper();
-          } else {
-            PRINT("Gripper DISENGAGED\n");
-            GripController::DisengageGripper();
-          }
-          
-          ticCnt_ = 0;
-        }
-#endif
-        return RESULT_OK;
-      }
       
       // flags: See LightTestFlags
       // ledID: The LED channel to activate (applies if LTF_CYCLE_ALL not enabled)
@@ -1303,12 +1272,6 @@ namespace Anki {
             ret = RESULT_FAIL; // AnimTestInit();
             updateFunc = NULL; // AnimTestUpdate;
             break;
-#if defined(HAVE_ACTIVE_GRIPPER) && HAVE_ACTIVE_GRIPPER
-          case TM_GRIPPER:
-            ret = GripperTestInit();
-            updateFunc = GripperTestUpdate;
-            break;
-#endif
           case TM_LIGHTS:
             ret = LightTestInit(p1,p2,p3);
             updateFunc = LightTestUpdate;

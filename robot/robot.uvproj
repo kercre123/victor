@@ -679,11 +679,6 @@
               <FilePath>.\supervisor\src\dockingController.cpp</FilePath>
             </File>
             <File>
-              <FileName>gripController.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\gripController.cpp</FilePath>
-            </File>
-            <File>
               <FileName>headController.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\headController.cpp</FilePath>
@@ -1560,11 +1555,6 @@
               <FileName>dockingController.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\dockingController.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>gripController.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\gripController.cpp</FilePath>
             </File>
             <File>
               <FileName>headController.cpp</FileName>

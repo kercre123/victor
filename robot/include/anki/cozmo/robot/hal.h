@@ -42,8 +42,6 @@
 #include "anki/cozmo/shared/cozmoTypes.h"
 #include "anki/cozmo/shared/ledTypes.h"
 
-#define HAVE_ACTIVE_GRIPPER 0
-
 // Set to 0 if you want to read printf output in a terminal and you're not
 // using UART as radio. The radio is effectively disabled in this case.
 // Set to 1 if using UART as radio. This disables PRINT calls only from

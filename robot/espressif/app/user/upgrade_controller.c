@@ -146,6 +146,12 @@ LOCAL bool upgradeTask(uint32_t param)
     }
     case UPGRADE_TASK_WRITE:
     {
+      if (fwWriteAddress < FW_START_ADDRESS)
+      {
+        os_printf("UP ERROR: Won't write to %08x below %08x\r\n", fwWriteAddress, FW_START_ADDRESS);
+        resetUpgradeState();
+        return false;
+      }
       FlashWriteData* fwd = (FlashWriteData*)param;
       os_printf("UP: Write 0x%08x 0x%x\r\n", fwWriteAddress + bytesWritten, fwd->length);
       flashResult = spi_flash_write(fwWriteAddress + bytesWritten, fwd->data, fwd->length);
@@ -267,6 +273,16 @@ LOCAL void ICACHE_FLASH_ATTR upccReceiveCallback(void *arg, char *usrdata, unsig
     if (strncmp(cmd->PREFIX, UPGRADE_COMMAND_PREFIX, UPGRADE_COMMAND_PREFIX_LENGTH) != 0) // Wrong PREFIX
     {
       os_printf("ERROR: UPCC received invalid header\r\n");
+    }
+    else if (cmd->flashAddress < FW_START_ADDRESS)
+    {
+      os_printf("ERROR: fwWriteAddress %08x is in protected region\r\n", cmd->flashAddress);
+      err = espconn_sent(conn, "BAD", 3);
+      if (err != 0)
+      {
+        os_printf("ERROR: UPCC couldn't sent error response on socket: %d \r\n", err);
+      }
+      return;
     }
     else
     {
