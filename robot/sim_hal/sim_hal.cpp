@@ -1191,6 +1191,10 @@ namespace Anki {
       return SendBlockMessage(blockID, BlockMessages::SetBlockLights_ID, (u8*)&m);
     }
     
+    void HAL::ManageCubes(void)
+    {
+      // Stub
+    }
     
   } // namespace Cozmo
 } // namespace Anki
