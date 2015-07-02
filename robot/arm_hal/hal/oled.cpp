@@ -123,20 +123,30 @@ namespace Anki
         GPIO_SET(GPIO_RES, PIN_RES);
       }
       
-      // Slow write - to improve performance, switch to DMA!
-      static void SPIWrite(u8 data)
+      // Slow write - to improve performance, switch to DMA!      
+      static void SPIWrites(int len, u8* data)
       {
         MicroWait(1);
         GPIO_RESET(GPIO_CS, PIN_CS);
         MicroWait(1);
-        while (!(SPI3->SR & SPI_FLAG_TXE))
-            ;
-        SPI3->DR = data;
+        
+        while (len--)
+        {
+          while (!(SPI3->SR & SPI_FLAG_TXE))
+              ;
+          SPI3->DR = *data++;
+        }
+        
         while (!(SPI3->SR & SPI_FLAG_TXE))
             ;
         while (SPI3->SR & SPI_FLAG_BSY)
           ;
         GPIO_SET(GPIO_CS, PIN_CS); 
+      }
+        
+      static void SPIWrite(u8 data)
+      {
+        SPIWrites(1, &data);
       }
       
       static void SendCommand(u8 cmd)
@@ -157,9 +167,7 @@ namespace Anki
         SendCommand(7); // Page end address
 
         GPIO_SET(GPIO_CMD, PIN_CMD);
-        u8* p = m_frame[0];
-        for (u16 i=0; i<sizeof(m_frame); i++)
-          SPIWrite(*p++);
+        SPIWrites(sizeof(m_frame), m_frame[0]);
       }
       
       void OLEDInit(void)
