@@ -1414,7 +1414,7 @@ namespace Cozmo {
       // Initialize the VisionSystem's state (i.e. its "private member variables")
       //
       
-      _mode                      = LOOKING_FOR_MARKERS | DETECTING_FACES;
+      _mode                      = LOOKING_FOR_MARKERS;
       _markerToTrack.Clear();
       _numTrackFailures          = 0;
       
