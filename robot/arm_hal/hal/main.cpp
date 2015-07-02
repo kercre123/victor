@@ -12,8 +12,9 @@ namespace Anki
   {
     namespace HAL
     {
-      extern volatile u8 g_halInitComplete, g_deferMainExec, g_mainExecDeferred;
-
+      // True when main exec should run, false when it is ready to run
+      extern volatile u8 g_runMainExec;
+     
       // Forward declarations
       void Startup();
       void SPIInit();
@@ -118,11 +119,11 @@ static void Wait()
 void Yield()
 {
   using namespace Anki::Cozmo::HAL;
-  if (g_mainExecDeferred)
+  if (g_runMainExec)
   {
-    g_mainExecDeferred = 0;
     Anki::Cozmo::Robot::step_MainExecution();
     AudioUpdate();
+    g_runMainExec = 0;
   }
 }
 
@@ -278,7 +279,6 @@ int main(void)
 #else
 
   Anki::Cozmo::Robot::Init();
-  g_halInitComplete = true;
   //printf("init complete!\r\n");
 
   // Give time for sync before video starts
