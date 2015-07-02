@@ -7,21 +7,15 @@
 #include "user_interface.h"
 #include "client.h"
 #include "driver/uart.h"
+#include "task0.h"
+#include "upgrade_controller.h"
 #include "user_config.h"
-
-/// USER_TASK_PRIO_0 is the lowest (idle) task priority
-#define userTaskPrio USER_TASK_PRIO_0
-
-/// The depth of the user idle task
-#define    userTaskQueueLen    4
-/// Queue for user idle task
-os_event_t userTaskQueue[userTaskQueueLen];
 
 /** User "idle" task
  * Called by OS with lowest priority.
  * Always requeues itself.
  */
-LOCAL void ICACHE_FLASH_ATTR userTask(os_event_t *event)
+LOCAL bool ICACHE_FLASH_ATTR userTask(uint32 param)
 {
   static const uint32 INTERVAL = 100000;
   static uint32 counter = 0;
@@ -30,7 +24,7 @@ LOCAL void ICACHE_FLASH_ATTR userTask(os_event_t *event)
     uart_tx_one_char_no_wait(UART1, '.'); // Print a dot to show we're executing
     counter = 0;
   }
-  system_os_post(userTaskPrio, 0, 0); // Repost ourselves
+  return true;
 }
 
 /** Handle wifi events passed by the OS
@@ -116,6 +110,9 @@ void ICACHE_FLASH_ATTR user_rf_pre_init(void)
  */
 static void ICACHE_FLASH_ATTR system_init_done(void)
 {
+  // Enable upgrade controller
+  upgradeControllerInit();
+
   // Setup the block relay
   blockRelayInit();
 
@@ -126,9 +123,10 @@ static void ICACHE_FLASH_ATTR system_init_done(void)
   // Only after clientInit
   uart_rx_intr_enable(UART0);
 
-  // Setup user task
-  system_os_task(userTask, userTaskPrio, userTaskQueue, userTaskQueueLen); // Initalize OS task
-  //system_os_post(userTaskPrio, 0, 0); // Post user task
+  // Set up shared background tasks
+  task0Init();
+
+  //task0Post(userTask, 0);
 
   os_printf("user initalization complete\r\n");
 }
