@@ -486,7 +486,7 @@ namespace Anki
                            const u32* onPeriod_ms, const u32* offPeriod_ms,
                            const u32* transitionOnPeriod_ms, const u32* transitionOffPeriod_ms);
 
-
+      void ManageCubes(void);
 
       /////////////////////////////////////////////////////////////////////
       // POWER MANAGEMENT

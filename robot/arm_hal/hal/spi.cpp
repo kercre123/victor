@@ -4,7 +4,6 @@
 #include "hal/portable.h"
 #include "lib/stm32f4xx.h"
 #include "anki/cozmo/robot/spineData.h"
-#include "hal/cube.h"
 
 namespace Anki
 {
@@ -211,9 +210,7 @@ void DMA_HANDLER_RX(void)
   // XXX: There is a timing error causing an off-by-one, but I have to get into Kevin's hands
   memcpy((void*)&g_dataToHead, ((u8*)&m_DMAtoHead) + 1, sizeof(g_dataToHead) - 1);
   memcpy((void*)&m_DMAtoBody, (void*)&g_dataToBody, sizeof(m_DMAtoBody));
-  
-  g_dataToBody.cubeToUpdate = Anki::Cozmo::HAL::EnqueueLightUpdate(&g_dataToBody.cubeStatus);
-  
+   
   // Wait 80uS before replying
   MicroWait(80);
   

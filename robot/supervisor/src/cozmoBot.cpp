@@ -366,7 +366,8 @@ namespace Anki {
         SpeedController::Manage();
         SteeringController::Manage();
         WheelController::Manage();
-
+        Anki::Cozmo::HAL::ManageCubes();
+        
 
         //////////////////////////////////////////////////////////////
         // Pickup reaction
