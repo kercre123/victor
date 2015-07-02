@@ -267,7 +267,6 @@ namespace Anki {
 
       void ProcessFaceDetectionMessage(const FaceDetection& msg)
       {
-        // TODO: Delete this Process method once FaceDetection message goes away
       }
 
       void ProcessBTLEMessages()
