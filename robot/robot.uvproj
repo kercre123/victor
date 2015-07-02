@@ -744,11 +744,6 @@
               <FilePath>.\supervisor\src\animationController.cpp</FilePath>
             </File>
             <File>
-              <FileName>faceTrackingController.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\faceTrackingController.cpp</FilePath>
-            </File>
-            <File>
               <FileName>backpackLightController.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\backpackLightController.cpp</FilePath>
@@ -1630,11 +1625,6 @@
               <FileName>animationController.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\animationController.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>faceTrackingController.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\faceTrackingController.cpp</FilePath>
             </File>
             <File>
               <FileName>backpackLightController.cpp</FileName>
