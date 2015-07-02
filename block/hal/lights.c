@@ -1,5 +1,7 @@
+#include <string.h>
 #include "hal.h"
 #include "portable.h"
+
 
 #define GAMMA_CORRECT(x)           ((x)*(x) >> 8)
 
@@ -33,14 +35,32 @@ const u8 ledAnode[13] = {0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 0};
 const u8 ledCathode[13] = {1, 2, 3, 0, 2, 3, 0, 1, 3, 0, 1, 2, 0};
 //const u8 ledScale[12] = {8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8};
 
-unsigned char ledValues[13] = {255, 0, 0, 0, 32, 0, 0, 0, 255, 255, 0, 255, 0};
+volatile u8 ledValues[13];
+volatile u8 ledValueDeltas[13];
 
-static u8 gCurrentLed = 0;
+volatile u8 gCurrentLed = 0;
 
 void SetLedValue(char led, char value)
 {
   ledValues[led] = value;
 }
+
+void SetLedValues(char *newValues)
+{
+  u8 i;
+  for(i=0; i<13; i++)
+  {
+    ledValueDeltas[i] = newValues[i]-ledValues[i];
+  }
+  memcpy(ledValues, newValues, sizeof(ledValues));
+
+} 
+
+void SetLedValuesByDelta()
+{
+  
+}  
+
 
 void InitTimer2()
 {  
@@ -73,7 +93,7 @@ void StopTimer2()
   // Turn off all lights
   PIN_IN(P0DIR, ledPins[0] | ledPins[1] | ledPins[2] | ledPins[3]);   
   /*
-      TL2 = 0xFF - (waitTime & 0xFF); // XXX do I need to save these values?
+  TL2 = 0xFF - (waitTime & 0xFF); // XXX do I need to save these values?
   TH2 = 0xFF;
   */
 }
@@ -95,13 +115,14 @@ void LightOn(char i)
 T2_ISR()
 {
   static unsigned int waitTime;
-
+  
   // turn everyone off
-  PIN_IN(P0DIR, ledPins[0] | ledPins[1] | ledPins[2] | ledPins[3]);  
+  PIN_IN(P0DIR, ledPins[0] | ledPins[1] | ledPins[2] | ledPins[3]); 
+  
   // Turn on an LED
   do
   {
-    if (gCurrentLed<13)
+    if(gCurrentLed<12)
     {
       gCurrentLed++;
     }
@@ -109,14 +130,19 @@ T2_ISR()
     {
       gCurrentLed=0;
     }
-    waitTime = (int)(ledValues[gCurrentLed]);
-    waitTime = (waitTime*waitTime)>>8;
-  }while(waitTime == 0);
-    
+  }while(ledValues[gCurrentLed] == 0 && gCurrentLed != 12); // need a way to break out
+  
+  waitTime = (unsigned int)(ledValues[gCurrentLed]);
+  waitTime = (waitTime*waitTime)>>8;
+  
+ 
+//  if(gCurrentLed != 2)
+//  {
+  // Turn on LED
   PIN_OUT(P0DIR, ledPins[ledAnode[ledMux[gCurrentLed]]] | ledPins[ledCathode[ledMux[gCurrentLed]]]);
   GPIO_SET(P0, ledPins[ledAnode[ledMux[gCurrentLed]]]);
   GPIO_RESET(P0, ledPins[ledCathode[ledMux[gCurrentLed]]]);
-
+//  }
   TL2 = 0xFF - (waitTime & 0xFF);
   TH2 = 0xFF;
   

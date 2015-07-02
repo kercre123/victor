@@ -192,7 +192,7 @@ namespace Anki {
       
     } // SetRootDir()
     
-    const std::string& SoundManager::GetSoundFile(SoundID_t soundID)
+    const std::string& SoundManager::GetSoundFile(SoundID_t soundID) const
     {
       // Table of sound files relative to root dir
       static const std::map<SoundID_t, std::string> soundTable[NUM_SOUND_SCHEMES] =
@@ -264,24 +264,29 @@ namespace Anki {
     SoundID_t SoundManager::GetID(const std::string& name)
     {
       static const std::map<std::string, SoundID_t> LUT = {
-        {"TADA",          SOUND_TADA},
-        {"OK_GOT_IT",     SOUND_OK_GOT_IT},
-        {"OK_DONE",       SOUND_OK_DONE},
-        {"STARTOVER",     SOUND_STARTOVER},
-        {"SCAN",          SOUND_SCAN},
-        {"POWER_ON",      SOUND_POWER_ON},
-        {"POWER_DOWN",    SOUND_POWER_DOWN},
-        {"PHEW",          SOUND_PHEW},
-        {"OOH",           SOUND_OOH},
-        {"SCREAM",        SOUND_SCREAM},
-        {"WHATS_NEXT",    SOUND_WHATS_NEXT},
-        {"HELP_ME",       SOUND_HELP_ME},
-        {"HAPPY_CHASE",   SOUND_HAPPY_CHASE},
+        {"DROID",         SOUND_DROID},
         {"FLEES",         SOUND_FLEES},
-        {"SINGING",       SOUND_SINGING},
+        {"NOPROBLEMO",    SOUND_NOPROBLEMO},
+        {"NOTIMPRESSED",  SOUND_NOTIMPRESSED},
+        {"OK_DONE",       SOUND_OK_DONE},
+        {"OK_GOT_IT",     SOUND_OK_GOT_IT},
+        {"OOH",           SOUND_OOH},
+        {"PHEW",          SOUND_PHEW},
+        {"POWER_DOWN",    SOUND_POWER_DOWN},
+        {"POWER_ON",      SOUND_POWER_ON},
+        {"HAPPY_CHASE",   SOUND_HAPPY_CHASE},
+        {"HELP_ME",       SOUND_HELP_ME},
+        {"INPUT",         SOUND_INPUT},
+        {"SCAN",          SOUND_SCAN},
+        {"SCREAM",        SOUND_SCREAM},
         {"SHOT_HIT",      SOUND_SHOT_HIT},
         {"SHOT_MISSED",   SOUND_SHOT_MISSED},
-        {"SHOOT",         SOUND_SHOOT}
+        {"SHOOT",         SOUND_SHOOT},
+        {"SINGING",       SOUND_SINGING},
+        {"STARTOVER",     SOUND_STARTOVER},
+        {"SWEAR",         SOUND_SWEAR},
+        {"TADA",          SOUND_TADA},
+        {"WHATS_NEXT",    SOUND_WHATS_NEXT},
       };
 
       auto result = LUT.find(name);
@@ -326,5 +331,54 @@ namespace Anki {
     {
       return _currScheme;
     }
+    
+    std::string GetStdoutFromCommand(std::string cmd)
+    {
+      std::string data;
+      FILE * stream;
+      const int max_buffer = 256;
+      char buffer[max_buffer];
+      cmd.append(" 2>&1");
+      
+      stream = popen(cmd.c_str(), "r");
+      if (stream) {
+        while (!feof(stream))
+          if (fgets(buffer, max_buffer, stream) != NULL) data.append(buffer);
+        pclose(stream);
+      }
+      return data;
+    }
+    
+    const u32 SoundManager::GetSoundDurationInMilliseconds(SoundID_t soundID) const
+    {
+      const std::string soundFile = GetSoundFile(soundID);
+      
+      // This is disgusting.
+      // grep the result of afinfo to parse out the sound duration
+      const std::string cmd("afinfo -b -r " + _rootDir + soundFile +
+                            " | grep -o '[0-9]\\{1,\\}\\.[0-9]\\{1,\\}'");
+      
+#     if DEBUG_SOUND_MANAGER
+      printf("GetSoundDurationInMilliseconds command: %s\n", cmd.c_str());
+#     endif
+      
+      std::string output = GetStdoutFromCommand(cmd);
+      
+      u32 duration_ms = 0;
+      
+      if(output.empty()) {
+        PRINT_NAMED_WARNING("SoundManager.GetSoundDurationInMilliseconds",
+                            "Failed to get duration string for soundID=%d, file %s.\n",
+                            soundID, soundFile.c_str());
+      } else {
+        const float duration_sec = std::stof(output);
+        duration_ms = static_cast<u32>(duration_sec * 1000);
+      }
+      
+      return duration_ms;
+    }
+    
+
+    
   } // namespace Cozmo
 } // namespace Anki

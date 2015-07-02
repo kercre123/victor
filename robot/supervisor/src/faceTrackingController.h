@@ -23,6 +23,8 @@
 
 #include "anki/common/robot/geometry_declarations.h"
 
+#include "messages.h"
+
 
 namespace Anki {
   namespace Cozmo {
@@ -49,6 +51,9 @@ namespace Anki {
       // Returns true if tracker is currently looking for faces, whether or not
       // it is actively tracking. If tracking times out, this will return false.
       bool IsBusy();
+
+      // Sets the latest object position message coming from engine
+      void SetObjectPositionMessage(const Messages::FaceDetection& msg);
       
     } // namespace FaceTrackingController
   } // namespace Cozmo

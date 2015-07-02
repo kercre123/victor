@@ -42,8 +42,6 @@
 #include "anki/cozmo/shared/cozmoTypes.h"
 #include "anki/cozmo/shared/ledTypes.h"
 
-#define HAVE_ACTIVE_GRIPPER 0
-
 // Set to 0 if you want to read printf output in a terminal and you're not
 // using UART as radio. The radio is effectively disabled in this case.
 // Set to 1 if using UART as radio. This disables PRINT calls only from
@@ -235,10 +233,10 @@ namespace Anki
       /////////////////////////////////////////////////////////////////////
       // AUDIO
       //
-      
+
       // @return true if the audio clock says it is time for the next frame
       bool AudioReady();
-      
+
       // Play one frame of audio or silence
       // @param frame - a pointer to an audio frame or NULL to play one frame of silence
       void AudioPlayFrame(u8* frame);
@@ -286,7 +284,7 @@ namespace Anki
       bool UARTPutPacket(const u8* buffer, const u32 length, const u8 socket=0);
 
       void UARTPutString(const char* s);
-      int UARTGetChar(u32 timeout = 0);
+      int UARTGetChar();
 
 // #pragma mark --- Motors ---
       /////////////////////////////////////////////////////////////////////
@@ -358,7 +356,7 @@ namespace Anki
 
       // Set the streaming mode of camera images
       void SetImageSendMode(const ImageSendMode_t mode, const Vision::CameraResolution res);
-      
+
       /////////////////////////////////////////////////////////////////////
       // PROXIMITY SENSORS
       //
@@ -412,11 +410,11 @@ namespace Anki
 
       // Turn headlights on (true) and off (false)
       void SetHeadlights(bool state);
-      
+
 // #pragma mark --- Face ---
       /////////////////////////////////////////////////////////////////////
       // Face
-      
+
       // Update the face to the next frame of an animation
       // @param frame - a pointer to a variable length frame of face animation data
       // Frame is in 8-bit RLE format:
@@ -425,12 +423,12 @@ namespace Anki
       //  64-255 draw 0-191 pixels (N-64) of black or blue, then invert the color for the next run
       // The decoder starts out drawing black, and inverts the color on every byte >= 64
       void FaceAnimate(u8* frame);
-      
+
       // Move the face to an X, Y offset - where 0, 0 is centered, negative is left/up
       // This position is relative to the animation displayed when FaceAnimate() was
       // last called.
       void FaceMove(s32 x, s32 y);
-      
+
       // Blink the eyes
       void FaceBlink();
 

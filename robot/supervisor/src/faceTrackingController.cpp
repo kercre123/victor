@@ -23,7 +23,6 @@
 #include "faceTrackingController.h"
 #include "headController.h"
 #include "localization.h"
-#include "messages.h"
 #include "steeringController.h"
 
 
@@ -67,6 +66,8 @@ namespace Anki {
         
         TrackedFace _currentFace, _previousFace;
         
+        Messages::FaceDetection faceDetectMsg_;
+        bool faceDetectMsgReady_ = false;
       } // "private" namespace
       
       
@@ -99,8 +100,7 @@ namespace Anki {
       Result Reset()
       {
         // Clear any remaining face detections left in the mailbox
-        Messages::FaceDetection faceDetectMsg;
-        while( Messages::CheckMailbox(faceDetectMsg) );
+        faceDetectMsgReady_ = false;
         
         _isStarted = false;
         _isTracking = false;
@@ -156,24 +156,24 @@ namespace Anki {
         {
           // Get any docking error signal available from the vision system
           // and update our path accordingly.
-          Messages::FaceDetection faceDetectMsg;
           bool gotNewTrack = false;
           _previousFace = _currentFace;
           s32 largestDiagSizeSq = -1;
           s32 smallestCenterDistSq = s32_MAX;
-          while( Messages::CheckMailbox(faceDetectMsg) )
+          while( faceDetectMsgReady_ )
           {
+            faceDetectMsgReady_ = false;
             if(_isTracking) {
               // If we are currently tracking a face, use the detection closest
               // to the one we've been tracking
-              const s32 xCen = faceDetectMsg.x_upperLeft + faceDetectMsg.width/2;
-              const s32 yCen = faceDetectMsg.y_upperLeft + faceDetectMsg.height/2;
+              const s32 xCen = faceDetectMsg_.x_upperLeft + faceDetectMsg_.width/2;
+              const s32 yCen = faceDetectMsg_.y_upperLeft + faceDetectMsg_.height/2;
               const s32 xDist = xCen - _currentFace.xCen;
               const s32 yDist = yCen - _currentFace.yCen;
               const s32 centerDistSq = xDist*xDist + yDist*yDist;
               if(centerDistSq < smallestCenterDistSq) {
                 smallestCenterDistSq = centerDistSq;
-                _currentFace.Set(xCen, yCen, faceDetectMsg.height);
+                _currentFace.Set(xCen, yCen, faceDetectMsg_.height);
                 
                 gotNewTrack = true;
               }
@@ -185,15 +185,15 @@ namespace Anki {
               {
                 case LARGEST:
                 {
-                  const s32 diagSizeSq = (faceDetectMsg.height*faceDetectMsg.height +
-                                          faceDetectMsg.width*faceDetectMsg.width);
+                  const s32 diagSizeSq = (faceDetectMsg_.height*faceDetectMsg_.height +
+                                          faceDetectMsg_.width*faceDetectMsg_.width);
                   
                   if(diagSizeSq > largestDiagSizeSq) {
                     largestDiagSizeSq = diagSizeSq;
                     
-                    _currentFace.Set(faceDetectMsg.x_upperLeft + faceDetectMsg.width/2,
-                                     faceDetectMsg.y_upperLeft + faceDetectMsg.height/2,
-                                     faceDetectMsg.height);
+                    _currentFace.Set(faceDetectMsg_.x_upperLeft + faceDetectMsg_.width/2,
+                                     faceDetectMsg_.y_upperLeft + faceDetectMsg_.height/2,
+                                     faceDetectMsg_.height);
                     
                     gotNewTrack = true;
                   }
@@ -203,15 +203,15 @@ namespace Anki {
                   
                 case CENTERED:
                 {
-                  const s32 xCen = faceDetectMsg.x_upperLeft + faceDetectMsg.width/2;
-                  const s32 yCen = faceDetectMsg.y_upperLeft + faceDetectMsg.height/2;
+                  const s32 xCen = faceDetectMsg_.x_upperLeft + faceDetectMsg_.width/2;
+                  const s32 yCen = faceDetectMsg_.y_upperLeft + faceDetectMsg_.height/2;
                   const s32 xDist = xCen - _xImageCenter;
                   const s32 yDist = yCen - _yImageCenter;
                   const s32 centerDistSq = xDist*xDist + yDist*yDist;
                   if(centerDistSq < smallestCenterDistSq) {
                     smallestCenterDistSq = centerDistSq;
                     
-                    _currentFace.Set(xCen, yCen, faceDetectMsg.height);
+                    _currentFace.Set(xCen, yCen, faceDetectMsg_.height);
                     
                     gotNewTrack = true;
                   }
@@ -264,6 +264,13 @@ namespace Anki {
         return lastResult;
       } // Update()
 
+      
+      void SetObjectPositionMessage(const Messages::FaceDetection& msg)
+      {
+        faceDetectMsg_ = msg;
+        faceDetectMsgReady_ = true;
+      }
+      
     } // namespace FaceTrackingController
   } // namespace Cozmo
 } // namespace Anki

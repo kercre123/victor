@@ -33,6 +33,13 @@ PROTO LightCube [
       markerImg_right  "lightCubes/inverted/lightningBolt_04.png"
       markerImg_top    "lightCubes/inverted/lightningBolt_05.png"
       markerImg_bottom "lightCubes/inverted/lightningBolt_06.png"  
+    %{ elseif fields.ID.value == 3 then }%
+      markerImg_front  "lightCubes/inverted/lightningBoltHollow_01.png"
+      markerImg_back   "lightCubes/inverted/lightningBoltHollow_02.png"
+      markerImg_left   "lightCubes/inverted/lightningBoltHollow_03.png"
+      markerImg_right  "lightCubes/inverted/lightningBoltHollow_04.png"
+      markerImg_top    "lightCubes/inverted/lightningBoltHollow_05.png"
+      markerImg_bottom "lightCubes/inverted/lightningBoltHollow_06.png"  
     %{ else 
       error("Markers not defined for LightCube with specified ID")
     end }%

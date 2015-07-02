@@ -120,6 +120,11 @@
       "Front"           : "GREEN",
       "Left"            : "MAGENTA", 
       "Right"           : "MAGENTA"
+    }, 
+    {
+      "Name" : "RobotAudioKeyFrame", 
+      "triggerTime_ms"  : 500,
+      "audioName"       : "POWER_ON"
     }
   ]
 } 

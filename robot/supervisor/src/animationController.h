@@ -61,7 +61,8 @@ namespace Anki {
       
       // Get approximate number of frames available in the streaming buffer,
       // subject to some padding to leave space for frames that might be on
-      // their way in the comms channel.
+      // their way in the comms channel.det
+
       //s32  GetNumFramesFree();
       
       s32 GetApproximateNumBytesFree();

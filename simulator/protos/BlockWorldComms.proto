@@ -1,5 +1,7 @@
 PROTO BlockWorldComms [
   field SFString name "BlockWorldComms"
+  
+  field SFInt32 numUIDevicesToWaitFor 1
 ]
 {
 Supervisor {

@@ -28,6 +28,9 @@
 //#include <cassert>
 
 #define DEBUG_ANIMATIONS 0
+// Until we have a speaker in the robot, use this to play RobotAudioKeyFrames using
+// the device's SoundManager
+#define PLAY_ROBOT_AUDIO_ON_DEVICE 1
 
 namespace Anki {
 namespace Cozmo {
@@ -200,6 +203,11 @@ _bodyPosTrack.__METHOD__()
     // to it for determining when its time to stream out a keyframe
     _streamingTime_ms = _startTime_ms;
     
+#   if PLAY_ROBOT_AUDIO_ON_DEVICE
+    // This prevents us from replaying the same keyframe
+    _playedRobotAudio_ms = 0;
+#   endif
+    
     ALL_TRACKS(Init, ;);
     
     _isInitialized = true;
@@ -224,19 +232,38 @@ _bodyPosTrack.__METHOD__()
       _deviceAudioTrack.MoveToNextKeyFrame();
     }
     
-    // FlowControl: Don't send frames if robot has no space for them
-    //const bool isRobotReadyForFrames = !robot.IsAnimationBufferFull();
-    s32 numBytesToSend = robot.GetNumAnimationBytesFree();
+#   if PLAY_ROBOT_AUDIO_ON_DEVICE
+    if(_robotAudioTrack.HasFramesLeft())
+    {
+      const RobotAudioKeyFrame& audioKF = _robotAudioTrack.GetCurrentKeyFrame();
+      if(_playedRobotAudio_ms < audioKF.GetTriggerTime() &&
+         audioKF.IsTimeToPlay(_startTime_ms,  currTime_ms))
+      {
+        // TODO: Insert some kind of small delay to simulate latency?
+        SoundID_t soundID = static_cast<SoundID_t>(audioKF.GetAudioID());
+        SoundManager::getInstance()->Play(soundID);
+        _playedRobotAudio_ms = currTime_ms;
+      }
+    }
+#   endif
     
-    // FlowControl: Also don't send too many messages (even if small) because it
-    // will overwhelm the reliable transport buffer on the robot
+    // FlowControl: Don't send frames if robot has no space for them, and be
+    // careful not to overwhel reliable transport either, in terms of bytes or
+    // sheer number of messages
+
+    // TODO: define this elsewhere
+    const s32 MAX_BYTES_FOR_RELIABLE_TRANSPORT = 2000;
+    
+    s32 numBytesToSend = std::min(MAX_BYTES_FOR_RELIABLE_TRANSPORT,
+                                  robot.GetNumAnimationBytesFree());
+    
     s32 numFramesToSend = 10;
     
     while(numFramesToSend-- > 0 && numBytesToSend > 0 && !IsFinished())
     {
 #     if DEBUG_ANIMATIONS
-      PRINT_NAMED_INFO("Animation.Update", "%d bytes / %d frames left to send this Update.\n",
-                       numBytesToSend, numFramesToSend);
+      //PRINT_NAMED_INFO("Animation.Update", "%d bytes left to send this Update.\n",
+      //                 numBytesToSend);
 #     endif
       
       RobotMessage* msg = nullptr;
@@ -253,7 +280,7 @@ _bodyPosTrack.__METHOD__()
         if(msg != nullptr) {
           // Still have samples to send, don't increment to the next frame in the track
           //PRINT_NAMED_INFO("Animation.Update", "Streaming AudioSampleKeyFrame.\n");
-          robot.SendMessage(*msg);
+          robot.SendMessage(*msg, true, SEND_LARGE_KEYFRAMES_HOT);
           numBytesToSend -= msg->GetSize() + sizeof(RobotMessage::ID);
           if(sendResult != RESULT_OK) { return sendResult; }
         } else {
@@ -291,7 +318,8 @@ _bodyPosTrack.__METHOD__()
       msg = _headTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms);
       if(msg != nullptr) {
 #       if DEBUG_ANIMATIONS
-        PRINT_NAMED_INFO("Animation.Update", "Streaming HeadAngleKeyFrame.\n");
+        PRINT_NAMED_INFO("Animation.Update", "Streaming HeadAngleKeyFrame at t=%dms.\n",
+                         _streamingTime_ms - _startTime_ms);
 #       endif
         sendResult = robot.SendMessage(*msg);
         numBytesToSend -= msg->GetSize() + sizeof(RobotMessage::ID);
@@ -301,7 +329,8 @@ _bodyPosTrack.__METHOD__()
       msg = _liftTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms);
       if(msg != nullptr) {
 #       if DEBUG_ANIMATIONS
-        PRINT_NAMED_INFO("Animation.Update", "Streaming LiftHeightKeyFrame.\n");
+        PRINT_NAMED_INFO("Animation.Update", "Streaming LiftHeightKeyFrame at t=%dms.\n",
+                         _streamingTime_ms - _startTime_ms);
 #       endif
         sendResult = robot.SendMessage(*msg);
         numBytesToSend -= msg->GetSize() + sizeof(RobotMessage::ID);
@@ -311,7 +340,8 @@ _bodyPosTrack.__METHOD__()
       msg = _facePosTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms);
       if(msg != nullptr) {
 #       if DEBUG_ANIMATIONS
-        PRINT_NAMED_INFO("Animation.Update", "Streaming FacePositionKeyFrame.\n");
+        PRINT_NAMED_INFO("Animation.Update", "Streaming FacePositionKeyFrame at t=%dms.\n",
+                         _streamingTime_ms - _startTime_ms);
 #       endif
         sendResult = robot.SendMessage(*msg);
         numBytesToSend -= msg->GetSize() + sizeof(RobotMessage::ID);
@@ -321,9 +351,10 @@ _bodyPosTrack.__METHOD__()
       msg = _faceImageTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms);
       if(msg != nullptr) {
 #       if DEBUG_ANIMATIONS
-        PRINT_NAMED_INFO("Animation.Update", "Streaming FaceImageKeyFrame.\n");
+        PRINT_NAMED_INFO("Animation.Update", "Streaming FaceImageKeyFrame at t=%dms.\n",
+                         _streamingTime_ms - _startTime_ms);
 #       endif
-        sendResult = robot.SendMessage(*msg);
+        sendResult = robot.SendMessage(*msg, true, SEND_LARGE_KEYFRAMES_HOT);
         numBytesToSend -= msg->GetSize() + sizeof(RobotMessage::ID);
         if(sendResult != RESULT_OK) { return sendResult; }
       }
@@ -331,7 +362,8 @@ _bodyPosTrack.__METHOD__()
       msg = _backpackLightsTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms);
       if(msg != nullptr) {
 #       if DEBUG_ANIMATIONS
-        PRINT_NAMED_INFO("Animation.Update", "Streaming BackpackLightsKeyFrame.\n");
+        PRINT_NAMED_INFO("Animation.Update", "Streaming BackpackLightsKeyFrame at t=%dms.\n",
+                         _streamingTime_ms - _startTime_ms);
 #       endif
         sendResult = robot.SendMessage(*msg);
         numBytesToSend -= msg->GetSize() + sizeof(RobotMessage::ID);
@@ -341,7 +373,8 @@ _bodyPosTrack.__METHOD__()
       msg = _bodyPosTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms);
       if(msg != nullptr) {
 #       if DEBUG_ANIMATIONS
-        PRINT_NAMED_INFO("Animation.Update", "Streaming BodyPositionKeyFrame.\n");
+        PRINT_NAMED_INFO("Animation.Update", "Streaming BodyPositionKeyFrame at t=%dms.\n",
+                         _streamingTime_ms - _startTime_ms);
 #       endif
         sendResult = robot.SendMessage(*msg);
         numBytesToSend -= msg->GetSize() + sizeof(RobotMessage::ID);
@@ -350,6 +383,18 @@ _bodyPosTrack.__METHOD__()
       
     } // while(numFramesToSend > 0)
     
+    if(IsFinished()) {
+      // Send an end-of-animation keyframe
+      
+#     if DEBUG_ANIMATIONS
+      PRINT_NAMED_INFO("Animation.Update", "Streaming EndOfAnimation at t=%dms.\n",
+                       _streamingTime_ms - _startTime_ms);
+#     endif
+      
+      MessageAnimKeyFrame_EndOfAnimation endMsg;
+      Result sendResult = robot.SendMessage(endMsg);
+      if(sendResult != RESULT_OK) { return sendResult; }
+    }
     
     return RESULT_OK;
     
