@@ -776,14 +776,13 @@ namespace Anki {
                            "Robot %d reported seeing a face at (x,y,w,h)=(%d,%d,%d,%d).",
                            GetID(), faceDetection.x_upperLeft, faceDetection.y_upperLeft, faceDetection.width, faceDetection.height);
           */
-          
+          const u16 left_x   = faceDetection.x_upperLeft;
+          const u16 right_x  = left_x + faceDetection.width;
+          const u16 top_y    = faceDetection.y_upperLeft;
+          const u16 bottom_y = top_y + faceDetection.height;
+
           if(faceDetection.visualize > 0) {
             // Send tracker quad info to viz
-            const u16 left_x   = faceDetection.x_upperLeft;
-            const u16 right_x  = left_x + faceDetection.width;
-            const u16 top_y    = faceDetection.y_upperLeft;
-            const u16 bottom_y = top_y + faceDetection.height;
-            
             VizManager::getInstance()->SendTrackerQuad(left_x, top_y,
                                                        right_x, top_y,
                                                        right_x, bottom_y,
@@ -793,14 +792,14 @@ namespace Anki {
           // Create a "visionMarker" message from the face detection so we will
           // add this face to BlockWorld
           MessageVisionMarker markerMsg;
-          markerMsg.x_imgUpperLeft  = faceDetection.x_upperLeft;
-          markerMsg.y_imgUpperLeft  = faceDetection.y_upperLeft;
-          markerMsg.x_imgUpperRight = faceDetection.x_upperLeft + faceDetection.width;
-          markerMsg.y_imgUpperRight = faceDetection.y_upperLeft;
-          markerMsg.x_imgLowerLeft  = faceDetection.x_upperLeft;
-          markerMsg.y_imgLowerLeft  = faceDetection.y_upperLeft + faceDetection.height;
-          markerMsg.x_imgLowerRight = faceDetection.x_upperLeft + faceDetection.width;
-          markerMsg.y_imgLowerRight = faceDetection.y_upperLeft + faceDetection.height;
+          markerMsg.x_imgUpperLeft  = left_x;
+          markerMsg.y_imgUpperLeft  = top_y;
+          markerMsg.x_imgUpperRight = right_x;
+          markerMsg.y_imgUpperRight = top_y;
+          markerMsg.x_imgLowerLeft  = left_x;
+          markerMsg.y_imgLowerLeft  = bottom_y;
+          markerMsg.x_imgLowerRight = right_x;
+          markerMsg.y_imgLowerRight = bottom_y;
           markerMsg.timestamp = faceDetection.timestamp;
           markerMsg.markerType = Vision::Marker::FACE_CODE; // TODO: Use face identity when we have recognition?
           
@@ -812,12 +811,15 @@ namespace Anki {
             return lastResult;
           }
           
+          /*
           // Signal the detection of a face
           CozmoEngineSignals::RobotObservedFaceSignal().emit(GetID(),
                                                                 faceDetection.x_upperLeft,
                                                                 faceDetection.y_upperLeft,
                                                                 faceDetection.width,
                                                                 faceDetection.height);
+           */
+          
           /*
           faceTargets.emplace_back(faceDetection.x_upperLeft,
                                    faceDetection.y_upperLeft,
