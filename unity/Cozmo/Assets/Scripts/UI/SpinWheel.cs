@@ -231,6 +231,8 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 
 		displayData.sliceIndex = GetSliceIndexAtAngle(displayData.wheelAngle);
 		predictedData.sliceIndex = GetSliceIndexAtAngle(predictedData.wheelAngle);
+
+		lastSliceIndex = displayData.sliceIndex;
 	}
 
 	void OnDisable() {

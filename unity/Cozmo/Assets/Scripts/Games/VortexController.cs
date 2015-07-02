@@ -85,6 +85,7 @@ public class VortexController : GameController {
 	[SerializeField] RectTransform[] playerTokens;
 	[SerializeField] Button[] playerButtons;
 	[SerializeField] LayoutBlock2d[] playerMockBlocks;
+	[SerializeField] Image[] playerPanelFills;
 	[SerializeField] Text[] textPlayerBids;
 	[SerializeField] Text[] textPlayerScores;
 	[SerializeField] List<VortexInput> playerInputs = new List<VortexInput>();
@@ -155,6 +156,15 @@ public class VortexController : GameController {
 			textPlayerScores[i].text = "SCORE: 0";
 		}
 		
+		for(int i=0;i<playerPanelFills.Length;i++) {
+			Color col = playerPanelFills[i].color;
+			col.a = 0f;
+			playerPanelFills[i].color = col;
+		}
+
+		for(int i=0;i<textPlayerBids.Length;i++) {
+			textPlayerBids[i].text = "";
+		}
 	}
 
 	protected override void OnDisable () {
@@ -335,7 +345,7 @@ public class VortexController : GameController {
 				}
 				break;
 			case VortexState.SPIN_COMPLETE:
-				if(!IsGameOver() && playStateTimer > 5f) return VortexState.REQUEST_SPIN;
+				if(!IsGameOver() && playStateTimer > 10f) return VortexState.REQUEST_SPIN;
 				break;
 		}
 
@@ -437,6 +447,7 @@ public class VortexController : GameController {
 		lightingBall.Radius = wheelLightningRadii[currentWheelIndex];
 
 		for(int i=0;i<playerButtonCanvasGroups.Length;i++) {
+			if(i == 1) continue; // player 2 is cozmo, no button
 			playerButtonCanvasGroups[i].interactable = true;
 			playerButtonCanvasGroups[i].blocksRaycasts = true;
 		}
@@ -522,10 +533,8 @@ public class VortexController : GameController {
 		}
 
 		playersThatAreCorrect.Sort( ( obj1, obj2 ) =>  {
-			int index1 = playersThatAreCorrect.IndexOf(obj1);
-			int index2 = playersThatAreCorrect.IndexOf(obj2);
-			float finalStamp1 = playerInputs[index1].InputTime;
-			float finalStamp2 = playerInputs[index2].InputTime;
+			float finalStamp1 = playerInputs[obj1].InputTime;
+			float finalStamp2 = playerInputs[obj2].InputTime;
 
 			if(finalStamp1 == finalStamp2) return 0;
 			if(finalStamp1 > finalStamp2) return 1;
@@ -617,25 +626,63 @@ public class VortexController : GameController {
 			}
 		}
 		
-
-		for(int i=0;i<scores.Count;i++) {
-			if(i < textPlayerScores.Length) textPlayerScores[i].text = "SCORE: " + scores[i].ToString();
-		}
-		
-		if(playersThatAreCorrect.Count > 0) {
-			if(roundCompleteWinner != null) AudioManager.PlayOneShot(roundCompleteWinner);
-		}
-		else {
+		if(playersThatAreCorrect.Count == 0) {
 			if(roundCompleteNoWinner != null) AudioManager.PlayOneShot(roundCompleteNoWinner);
 		}
 
+		resultsDisplayIndex = 0;
+		fadeTimer = scoreDisplayFillFade;
 	}
 
-	void Update_SPIN_COMPLETE() {}
+	[SerializeField] float scoreDisplayFillFade = 0.5f;
+	[SerializeField] float scoreDisplayFillAlpha = 0.5f;
+	[SerializeField] float scoreDisplayEmptyAlpha = 0.1f;
+
+	float fadeTimer = 1f;
+	int resultsDisplayIndex = 0;
+	void Update_SPIN_COMPLETE() {
+		if(playersThatAreCorrect.Count == 0) return;
+		if(resultsDisplayIndex >= playersThatAreCorrect.Count) return;
+
+		bool wasPositive = fadeTimer > 0f;
+
+		fadeTimer -= Time.deltaTime;
+
+		int playerIndex = playersThatAreCorrect[resultsDisplayIndex];
+
+		Color col = playerPanelFills[playerIndex].color;
+		
+		if(fadeTimer > 0f) {
+			col.a = Mathf.Lerp(scoreDisplayFillAlpha, 0f, fadeTimer / scoreDisplayFillFade);
+		}
+		else {
+			col.a = Mathf.Lerp(scoreDisplayFillAlpha, scoreDisplayEmptyAlpha, Mathf.Abs(fadeTimer) / scoreDisplayFillFade);
+
+			if(wasPositive) {
+				textPlayerScores[playerIndex].text = "SCORE: " + scores[playerIndex].ToString();
+				
+				if(roundCompleteWinner != null) AudioManager.PlayOneShot(roundCompleteWinner);
+			}
+		}
+
+		playerPanelFills[playerIndex].color = col;
+
+		if(fadeTimer <= -scoreDisplayFillFade) {
+			resultsDisplayIndex++;
+			fadeTimer = scoreDisplayFillFade;
+		}
+	}
+
 	void Exit_SPIN_COMPLETE() {
+		for(int i=0;i<playerPanelFills.Length;i++) {
+			Color col = playerPanelFills[i].color;
+			col.a = 0f;
+			playerPanelFills[i].color = col;
+		}
 
-
-
+		for(int i=0;i<textPlayerBids.Length;i++) {
+			textPlayerBids[i].text = "";
+		}
 	}
 
 	void PlaceTokens() {
