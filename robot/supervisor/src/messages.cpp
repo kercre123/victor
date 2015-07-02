@@ -53,7 +53,7 @@ namespace Anki {
         };
 
         u8 pktBuffer_[2048];
-        u8 msgBuff_[256];
+        u8 msgBuff_[2048];
 
         // For waiting for a particular message ID
         const u32 LOOK_FOR_MESSAGE_TIMEOUT = 1000000;

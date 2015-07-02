@@ -147,6 +147,12 @@ namespace Anki {
                           (recvBuf_[headerSize+2] << 16) +
                           (recvBuf_[headerSize+3] << 24);
 
+            // Sanity check
+            if (dataLen > 1600) {
+              recvBufSize_ = 0;
+              return retVal;
+            }
+            
             if (recvBufSize_ >= headerSize + 4 + dataLen) {
 
               // Copy message contents to buffer
