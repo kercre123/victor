@@ -41,8 +41,14 @@ def main(scriptArgs):
                       help='Use build tools located at BUILD_TOOLS_PATH')
   parser.add_argument('--ankiUtil', metavar='ANKI_UTIL_PATH', dest='ankiUtilPath', action='store', default=None,
                       help='Use anki-util repo checked out at ANKI_UTIL_PATH')
-  parser.add_argument('--projectRoot', '-p', dest='projectRoot', action='store', default=None,
+  parser.add_argument('--coretechExternal', metavar='CORETECH_EXTERNAL_DIR', dest='coretechExternalPath', action='store', default=None,
+                      help='Use coretech-external repo checked out at CORETECH_EXTERNAL_DIR')
+  parser.add_argument('--coretechInternal', metavar='CORETECH_INTERNAL_DIR', dest='coretechInternalPath', action='store', default=None,
+                      help='Use coretech-internal repo checked out at CORETECH_INTERNAL_DIR')
+  parser.add_argument('--projectRoot', dest='projectRoot', action='store', default=None,
                       help='project location, assumed to be same as git repo root')
+  parser.add_argument('--updateListsOnly', dest='updateListsOnly', action='store_true', default=False,
+                      help='forces configure to only update .lst files and not run gyp project generation')
 
   # options controlling gyp output
   parser.add_argument('--arch', action='store',
@@ -81,42 +87,55 @@ def main(scriptArgs):
     return False
 
   sys.path.insert(0, os.path.join(options.buildToolsPath, 'tools/ankibuild'))
-  # import ankibuild.cmake
-  # import ankibuild.util
-  # import ankibuild.xcode
   import installBuildDeps
   import updateFileLists
 
+  if not options.coretechInternalPath:
+    options.coretechInternalPath = os.path.join(options.projectRoot, 'coretech')
+  if not os.path.exists(options.coretechInternalPath):
+    UtilLog.error('coretech-internal not found [%s]' % (options.coretechInternalPath) )
+    return False
+  coretechInternalProjectPath = os.path.join(options.coretechInternalPath, 'project/gyp/coretech-internal.gyp')
 
   if not options.ankiUtilPath:
     options.ankiUtilPath = os.path.join(options.projectRoot, 'tools/anki-util')
   if not os.path.exists(options.ankiUtilPath):
     UtilLog.error('anki-util not found [%s]' % (options.ankiUtilPath) )
     return False
+  ankiUtilProjectPath = os.path.join(options.ankiUtilPath, 'project/gyp/util.gyp')
+  gtestPath = os.path.join(options.ankiUtilPath, 'libs/framework')
 
-  gypPath = os.path.join(options.buildToolsPath, 'gyp')
-  if (options.gypPath is not None):
-    gypPath = options.gypPath
+  # do not check for coretech external, and gyp if we are only updating list files
+  if not options.updateListsOnly:
 
-  # import gyp
-  sys.path.insert(0, os.path.join(gypPath, 'pylib'))
-  import gyp
+    if not options.coretechExternalPath or not os.path.exists(options.coretechExternalPath):
+      UtilLog.error('coretech-external not found [%s]' % (options.coretechExternalPath) )
+      return False
+    coretechExternalPath = options.coretechExternalPath
 
-  #check gyp version
-  stdOutCapture = StringIO.StringIO()
-  oldStdOut = sys.stdout
-  sys.stdout = stdOutCapture
-  try:
-      gyp.main(['--version'])
-  except:
-      print("Wrong version of gyp")
-  sys.stdout = oldStdOut
-  gypVersion = stdOutCapture.getvalue();
-  #subprocess.check_output([gypLocation, '--version']).rstrip("\r\n")
-  if ('ANKI' not in gypVersion):
-    print 'wrong version of gyp found'
-    gypHelp()
-    return False
+    gypPath = os.path.join(options.buildToolsPath, 'gyp')
+    if (options.gypPath is not None):
+      gypPath = options.gypPath
+
+    # import gyp
+    sys.path.insert(0, os.path.join(gypPath, 'pylib'))
+    import gyp
+
+    #check gyp version
+    stdOutCapture = StringIO.StringIO()
+    oldStdOut = sys.stdout
+    sys.stdout = stdOutCapture
+    try:
+        gyp.main(['--version'])
+    except:
+        print("Wrong version of gyp")
+    sys.stdout = oldStdOut
+    gypVersion = stdOutCapture.getvalue();
+    #subprocess.check_output([gypLocation, '--version']).rstrip("\r\n")
+    if ('ANKI' not in gypVersion):
+      print 'wrong version of gyp found'
+      gypHelp()
+      return False
 
   if options.clean:
     shutil.rmtree(os.path.join(projectRoot, 'generated', folder), True)
@@ -124,16 +143,34 @@ def main(scriptArgs):
 
   # update file lists
   generator = updateFileLists.FileListGenerator(options)
-  generator.processFolder(['basestation/src/anki/cozmo/basestation', 'basestation/include/anki/cozmo'], ['project/gyp/cozmoEngine.lst'])
+  generator.processFolder(['basestation/src/anki/cozmo/basestation', 'basestation/include/anki/cozmo', 'include'], ['project/gyp/cozmoEngine.lst'])
+  generator.processFolder(['basestation/test'], ['project/gyp/cozmoEngine-test.lst'])
+  if options.updateListsOnly:
+    # TODO: remove dependency on abspath. 
+    # there is a bug due to 'os.chdir' and user passed rel path
+    if (subprocess.call([os.path.join(options.coretechInternalPath, 'project/gyp/configure.py'),
+     '--updateListsOnly', '--buildTools', options.buildToolsPath, '--ankiUtil', options.ankiUtilPath]) != 0):
+      print "error executing anki-util configure"
+      return False
+    return True
 
   # update subprojects
   for platform in options.platforms:
-    if (subprocess.call([os.path.join(options.ankiUtilPath, 'project/gyp/configure.py') , '--platform', platform ]) != 0):
+    # TODO: we should pass in our own options with any additional overides..
+    # subproject might need to know about the build-tools location, --verbose, and other args...
+    if (subprocess.call([os.path.join(options.coretechInternalPath, 'project/gyp/configure.py'),
+     '--platform', platform, '--buildTools', options.buildToolsPath, '--ankiUtil', options.ankiUtilPath, '--updateListsOnly']) != 0):
       print "error executing submodule configure"
       return False
 
 
   configurePath = os.path.join(projectRoot, 'project/gyp')
+  gypFile = 'cozmoEngine.gyp'
+  # gypify path names
+  gtestPath = os.path.relpath(gtestPath, configurePath)
+  # coretechExternalPath = os.path.relpath(coretechExternalPath, configurePath)
+  # ankiUtilProjectPath = os.path.relpath(ankiUtilProjectPath, configurePath)
+  # coretechInternalProjectPath = os.path.relpath(coretechInternalProjectPath, configurePath)
 
   # mac
   if 'mac' in options.platforms:
@@ -142,23 +179,28 @@ def main(scriptArgs):
                                   # audio_library_build=profile
                                   # bs_library_type=static_library
                                   # de_library_type=shared_library
-                                  # kazmath_library_type=static_library
-                                  # jsoncpp_library_type=static_library
-                                  # util_library_type=static_library
-                                  # worldviz_library_type=static_library
                                   # gyp_location={1}
                                   # configure_location={2}
                                   # output_location={0}
       #################### GYP_DEFINES ####
       os.environ['GYP_DEFINES'] = """ 
                                   OS=mac
-                                  energy_library_type=static_library
-                                  arch_group={0}
                                   ndk_root=INVALID
-                                  """.format(options.arch)
-      gypArgs = ['--check', '--depth', '.', '-f', 'xcode', '--toplevel-dir', '../..', '--generator-output', '../../generated/mac']
+                                  kazmath_library_type=static_library
+                                  jsoncpp_library_type=static_library
+                                  util_library_type=static_library
+                                  worldviz_library_type=static_library
+                                  arch_group={0}
+                                  gtest_path={1}
+                                  coretech_external_path={2}
+                                  util_gyp_path={3}
+                                  cozmo_engine_path={4}
+                                  cti_gyp_path={5}
+                                  """.format(options.arch, gtestPath, coretechExternalPath, ankiUtilProjectPath, 
+                                    projectRoot, coretechInternalProjectPath )
+      gypArgs = ['--check', '--depth', '.', '-f', 'xcode', '--toplevel-dir', '../..', '--generator-output', '../../generated/mac', gypFile]
       gyp.main(gypArgs)
-      # gyp driveEngine.gyp --check --depth . -f xcode --generator-output=../gyp-mac
+      
 
 
 

@@ -1,8 +1,8 @@
 {
   'variables': {
 
-    'comon_library_type': 'static_library',
-    'comon_robot_library_type': 'static_library',
+    'common_library_type': 'static_library',
+    'common_robot_library_type': 'static_library',
     'vision_library_type': 'static_library',
     'vision_robot_library_type': 'static_library',
     'planning_library_type': 'static_library',
@@ -24,6 +24,7 @@
     'messaging_source': 'messaging.lst',
     'messaging_robot_source': 'messaging-robot.lst',
 
+    # TODO: should this be passed in, or shared?
     'coretech_defines': [
       'ANKICORETECH_USE_MATLAB=0',
       # 'ANKICORETECH_USE_GTEST=1',
@@ -33,7 +34,9 @@
       'ANKICORETECH_EMBEDDED_USE_OPENCV=1',
     ],
 
+    # TODO: should this be passed in, or shared?
     'opencv_includes': [
+      # '<(coretech_external_path)/opencv-2.4.8/include',
       '<(coretech_external_path)/opencv-2.4.8/modules/core/include',
       '<(coretech_external_path)/opencv-2.4.8/modules/highgui/include',
       '<(coretech_external_path)/opencv-2.4.8/modules/imgproc/include',
@@ -44,40 +47,6 @@
       '<(coretech_external_path)/opencv-2.4.8/modules/features2d/include',
       '<(coretech_external_path)/opencv-2.4.8/modules/flann/include',
     ],
-      # opencv_core
-      # opencv_imgproc
-      # opencv_highgui
-      # opencv_calib3d
-      # opencv_contrib
-      # opencv_objdetect
-      # opencv_video
-      # opencv_features2d
-
-      # '<(coretech_external_path)/opencv-2.4.8/modules/androidcamera/include',
-      # '<(coretech_external_path)/opencv-2.4.8/modules/calib3d/include',
-      # '<(coretech_external_path)/opencv-2.4.8/modules/contrib/include',
-      # '<(coretech_external_path)/opencv-2.4.8/modules/core/include',
-      # '<(coretech_external_path)/opencv-2.4.8/modules/dynamicuda/include',
-      # '<(coretech_external_path)/opencv-2.4.8/modules/features2d/include',
-      # '<(coretech_external_path)/opencv-2.4.8/modules/flann/include',
-      # '<(coretech_external_path)/opencv-2.4.8/modules/gpu/include',
-      # '<(coretech_external_path)/opencv-2.4.8/modules/highgui/include',
-      # '<(coretech_external_path)/opencv-2.4.8/modules/imgproc/include',
-      # '<(coretech_external_path)/opencv-2.4.8/modules/java/include',
-      # '<(coretech_external_path)/opencv-2.4.8/modules/legacy/include',
-      # '<(coretech_external_path)/opencv-2.4.8/modules/ml/include',
-      # '<(coretech_external_path)/opencv-2.4.8/modules/nonfree/include',
-      # '<(coretech_external_path)/opencv-2.4.8/modules/objdetect/include',
-      # '<(coretech_external_path)/opencv-2.4.8/modules/ocl/include',
-      # '<(coretech_external_path)/opencv-2.4.8/modules/photo/include',
-      # '<(coretech_external_path)/opencv-2.4.8/modules/python/include',
-      # '<(coretech_external_path)/opencv-2.4.8/modules/stitching/include',
-      # '<(coretech_external_path)/opencv-2.4.8/modules/superres/include',
-      # '<(coretech_external_path)/opencv-2.4.8/modules/ts/include',
-      # '<(coretech_external_path)/opencv-2.4.8/modules/video/include',
-      # '<(coretech_external_path)/opencv-2.4.8/modules/videostab/include',
-      # '<(coretech_external_path)/opencv-2.4.8/modules/world/include',
-
 
     'compiler_flags': [
       '-Wno-unused-function',
@@ -299,6 +268,13 @@
     #     ],
     #   },
     # ],
+
+
+    # UNITTEST CRAP HERE
+    # UNITTEST CRAP HERE
+    # UNITTEST CRAP HERE
+    # UNITTEST CRAP HERE
+
     [
       "OS=='mac'",
       {
@@ -388,6 +364,15 @@
   ], #end conditions
 
 
+
+
+
+  # CORE TARGETS HERE
+  # CORE TARGETS HERE
+  # CORE TARGETS HERE
+  # CORE TARGETS HERE
+
+
   'targets': [
 
     {
@@ -404,15 +389,13 @@
         ],
       },
       'defines': [
-        'SYSTEM_ROOT_PATH=<(COZMO_ENGINE_DIR)'
+        'SYSTEM_ROOT_PATH=<(cozmo_engine_path)'
       ],
       'dependencies': [
         '<(util_gyp_path):util',
         '<(util_gyp_path):jsoncpp',
       ],
-      'type': '<(comon_library_type)',
-      # 'target_conditions': [
-      # ],
+      'type': '<(common_library_type)',
       'conditions': [
         ['OS!="mac"',     {'sources/': [['exclude', '_osx\\.']]}],
         ['OS!="ios"',     {'sources/': [['exclude', '_ios\\.|_iOS\\.']]}],
@@ -428,13 +411,14 @@
       'include_dirs': [
         '../../common/robot/src',
         '../../common/include',
+        '<@(opencv_includes)',
       ],
       'direct_dependent_settings': {
         'include_dirs': [
           '../../common/include',
         ],
       },
-      'type': '<(comon_robot_library_type)',
+      'type': '<(common_robot_library_type)',
     },
 
     {
@@ -562,80 +546,6 @@
       ],
       'type': '<(vision_robot_library_type)',
     },
-
-    # # Post-build target to strip Android libs
-    # {
-    #   'target_name': 'strip_android_libs',
-    #   'type': 'none',
-    #   'dependencies': [
-    #     '<(driveengine_target_name)',
-    #     '<(basestation_target_name)',
-    #   ],
-    #   'target_conditions': [
-    #     [
-    #       "OS=='android' and use_das==1",
-    #       {
-    #         'actions': [
-    #           {
-    #             'action_name': 'strip_debug_symbols',
-    #             'inputs': [
-    #               '<(SHARED_LIB_DIR)/lib<(driveengine_target_name).so',
-    #               '<(SHARED_LIB_DIR)/libDriveAudioEngine.so',
-    #               '<(SHARED_LIB_DIR)/libDAS.so',
-    #               '<(SHARED_LIB_DIR)/libc++_shared.so',
-    #             ],
-    #             'outputs': [
-    #               '<(SHARED_LIB_DIR)/../libs-debug/lib<(driveengine_target_name).so',
-    #               '<(SHARED_LIB_DIR)/../libs-debug/libDriveAudioEngine.so',
-    #               '<(SHARED_LIB_DIR)/../libs-debug/libDAS.so',
-    #               '<(SHARED_LIB_DIR)/../libs-debug/libc++_shared.so',
-    #             ],
-    #             'action': [
-    #               'python',
-    #               'android-strip-libs.py',
-    #               '--ndk-toolchain',
-    #               '<(ndk_root)/toolchains/arm-linux-androideabi-4.8/prebuilt/darwin-x86_64',
-    #               '--symbolicated-libs-dir',
-    #               '<(SHARED_LIB_DIR)/../lib-debug',
-    #               '<@(_inputs)',
-    #             ],
-    #           },
-    #         ],
-    #       },
-    #     ], #end android
-    #     [
-    #       "OS=='android' and use_das==0",
-    #       {
-    #         'actions': [
-    #           {
-    #             'action_name': 'strip_debug_symbols',
-    #             'inputs': [
-    #               '<(SHARED_LIB_DIR)/lib<(driveengine_target_name).so',
-    #               '<(SHARED_LIB_DIR)/libDriveAudioEngine.so',
-    #               '<(SHARED_LIB_DIR)/libc++_shared.so',
-    #             ],
-    #             'outputs': [
-    #               '<(SHARED_LIB_DIR)/../libs-debug/lib<(driveengine_target_name).so',
-    #               '<(SHARED_LIB_DIR)/../libs-debug/libDriveAudioEngine.so',
-    #               '<(SHARED_LIB_DIR)/../libs-debug/libc++_shared.so',
-    #             ],
-    #             'action': [
-    #               'python',
-    #               'android-strip-libs.py',
-    #               '--ndk-toolchain',
-    #               '<(ndk_root)/toolchains/arm-linux-androideabi-4.8/prebuilt/darwin-x86_64',
-    #               '--symbolicated-libs-dir',
-    #               '<(SHARED_LIB_DIR)/../lib-debug',
-    #               '<@(_inputs)',
-    #             ],
-    #           },
-    #         ],
-    #       },
-    #     ], #end android
-    #   ],
-
-
-    # },
 
 
   ] # end targets

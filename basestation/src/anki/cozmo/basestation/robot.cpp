@@ -7,9 +7,8 @@
 //
 
 // TODO:(bn) should these be a full path?
-#include "pathPlanner.h"
-#include "pathDolerOuter.h"
-
+#include "anki/cozmo/basestation/pathPlanner.h"
+#include "anki/cozmo/basestation/pathDolerOuter.h"
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/comms/robot/robotMessages.h"
@@ -24,20 +23,14 @@
 #include "anki/common/basestation/platformPathManager.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/common/basestation/utils/fileManagement.h"
-
-
 #include "anki/vision/CameraSettings.h"
-
 // TODO: This is shared between basestation and robot and should be moved up
 #include "anki/cozmo/shared/cozmoConfig.h"
-
-#include "robotMessageHandler.h"
-#include "robotPoseHistory.h"
+#include "anki/cozmo/basestation/robotMessageHandler.h"
+#include "anki/cozmo/basestation/robotPoseHistory.h"
 #include "anki/cozmo/basestation/ramp.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
-
-#include "opencv2/opencv.hpp"
-
+#include "opencv2/highgui/highgui.hpp"
 #include <fstream>
 #include <dirent.h>
 #include <sys/stat.h>

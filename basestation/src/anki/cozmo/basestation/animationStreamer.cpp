@@ -2,7 +2,7 @@
 #include "anki/cozmo/basestation/animationStreamer.h"
 #include "anki/cozmo/basestation/robot.h"
 
-#include "anki/util/logging/logging.h"
+#include "util/logging/logging.h"
 
 #define DEBUG_ANIMATION_STREAMING 1
 

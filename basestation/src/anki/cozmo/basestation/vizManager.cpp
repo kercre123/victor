@@ -17,7 +17,7 @@
 #endif
 
 #include "anki/cozmo/basestation/viz/vizManager.h"
-#include "anki/util/logging/logging.h"
+#include "util/logging/logging.h"
 #include "anki/common/basestation/utils/fileManagement.h"
 #include "anki/common/basestation/exceptions.h"
 #include "anki/common/basestation/math/point_impl.h"

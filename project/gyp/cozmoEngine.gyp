@@ -1,9 +1,39 @@
 {
   'variables': {
 
-    'engine_source_file_name': 'cozmoEngine.lst',
+    'engine_source': 'cozmoEngine.lst',
+    'engine_test_source': 'cozmoEngine-test.lst',
+    'energy_library_type': 'static_library',
     
+    # TODO: should this be passed in, or shared?
+    'coretech_defines': [
+      'ANKICORETECH_USE_MATLAB=0',
+      # 'ANKICORETECH_USE_GTEST=1',
+      'ANKICORETECH_USE_OPENCV=1',
+      'ANKICORETECH_EMBEDDED_USE_MATLAB=0',
+      'ANKICORETECH_EMBEDDED_USE_GTEST=1',
+      'ANKICORETECH_EMBEDDED_USE_OPENCV=1',
+    ],
+
+    # TODO: should this be passed in, or shared?
+    'opencv_includes': [
+      # '<(coretech_external_path)/opencv-2.4.8/include',
+      '<(coretech_external_path)/opencv-2.4.8/modules/core/include',
+      '<(coretech_external_path)/opencv-2.4.8/modules/highgui/include',
+      '<(coretech_external_path)/opencv-2.4.8/modules/imgproc/include',
+      '<(coretech_external_path)/opencv-2.4.8/modules/contrib/include',
+      '<(coretech_external_path)/opencv-2.4.8/modules/calib3d/include',
+      '<(coretech_external_path)/opencv-2.4.8/modules/objdetect/include',
+      '<(coretech_external_path)/opencv-2.4.8/modules/video/include',
+      '<(coretech_external_path)/opencv-2.4.8/modules/features2d/include',
+      '<(coretech_external_path)/opencv-2.4.8/modules/flann/include',
+    ],
+
     'compiler_flags': [
+      '-Wno-unused-function',
+      '-Wno-overloaded-virtual',
+      '-Wno-deprecated-declarations',
+      '-Wno-unused-variable',
       # '-fdiagnostics-show-category=name',
       # '-Wall',
       # '-Woverloaded-virtual',
@@ -125,6 +155,7 @@
     'cflags': ['<@(compiler_c_flags)'],
     'cflags_cc': ['<@(compiler_cpp_flags)'],
     'ldflags': ['<@(linker_flags)'],
+    'defines': ['<@(coretech_defines)'],
     'include_dirs': [
       '../../tools/message-buffers/support/cpp/include',
     ],
@@ -132,7 +163,7 @@
       'OTHER_CFLAGS': ['<@(compiler_c_flags)'],
       'OTHER_CPLUSPLUSFLAGS': ['<@(compiler_cpp_flags)'],
       'ALWAYS_SEARCH_USER_PATHS': 'NO',
-      'FRAMEWORK_SEARCH_PATHS':'../../libs/framework/',
+      # 'FRAMEWORK_SEARCH_PATHS':'../../libs/framework/',
       'CLANG_CXX_LANGUAGE_STANDARD':'c++11',
       'CLANG_CXX_LIBRARY':'libc++',
       'DEBUG_INFORMATION_FORMAT': 'dwarf',
@@ -140,7 +171,7 @@
       #'GCC_PREFIX_HEADER': '../../source/anki/basestation/basestation.pch',
       #'GCC_PRECOMPILE_PREFIX_HEADER': 'YES',
       'GCC_ENABLE_SYMBOL_SEPARATION': 'YES',
-      'GENERATE_MASTER_OBJECT_FILE': 'YES',
+      # 'GENERATE_MASTER_OBJECT_FILE': 'YES',
     },
     'configurations': {
       'Debug': {
@@ -203,115 +234,153 @@
         },
       },
     ],
-    [
-      "OS=='ios' or OS=='mac'",
-      {
-          'targets': [
-          {
-            # fake target to see all of the sources...
-            'target_name': 'all_lib_targets',
-            'type': 'none',
-            'sources': [
-              '<!@(cat <(engine_source_file_name))',
-            ],
-            'dependencies': [
-              'cozmoEngine',
-            ]
-          },
-        ],
-      },
-    ],
     # [
-    #   "OS=='mac'",
+    #   "OS=='ios' or OS=='mac'",
     #   {
-    #     'target_defaults': {
-    #       'variables': {
-    #         'mac_target_archs%': [ '<@(target_archs)' ]
-    #       },
-    #       'xcode_settings': {
-    #         'ARCHS': [ '>@(mac_target_archs)' ],
-    #         'SDKROOT': 'macosx',
-    #         'MACOSX_DEPLOYMENT_TARGET': '10.9',
-    #       },
-    #     },
-
-
-    #     'targets': [
+    #       'targets': [
     #       {
-    #         'target_name': 'UnitTest',
-    #         'type': 'executable',
-    #         'variables': {
-    #           'mac_target_archs': [ '$(ARCHS_STANDARD)' ]
-    #         },
-    #         'xcode_settings': {
-    #         },
-    #         'include_dirs': [
-    #           '../../source/anki',
-    #           '../../libs/anki-util/source/anki',
-    #         ],
-    #         'defines': [
-    #           'UNIT_TEST=1',
+    #         # fake target to see all of the sources...
+    #         'target_name': 'all_lib_targets',
+    #         'type': 'none',
+    #         'sources': [
+    #           '<!@(cat <(engine_source))',
     #         ],
     #         'dependencies': [
     #           'cozmoEngine',
-    #         ],
-    #         'sources': [ '<!@(cat <(unittest_source_file_name))' ],
-    #         'libraries': [
-    #           '../../libs/anki-util/libs/framework/gtest.framework',
-    #         ],
-    #         'copies': [
-    #           {
-    #             'files': [
-    #               '../../libs/anki-util/libs/framework/gtest.framework',
-    #             ],
-    #             'destination': '<(PRODUCT_DIR)',
-    #           },
-    #           {
-    #             # this replaces copyUnitTestData.sh
-    #             'files': [
-    #               '../../resources/config',
-    #             ],
-    #             'destination': '<(PRODUCT_DIR)/BaseStation',
-    #           },
-    #         ],
-    #       }, # end unittest target
-
-
-
-    #     ], # end targets
+    #         ]
+    #       },
+    #     ],
     #   },
-    # ] # end if mac
+    # ],
+
+
+    # UNITTEST CRAP HERE
+    # UNITTEST CRAP HERE
+    # UNITTEST CRAP HERE
+    # UNITTEST CRAP HERE
+
+    [
+      "OS=='mac'",
+      {
+        'target_defaults': {
+          'variables': {
+            'mac_target_archs%': [ '<@(target_archs)' ]
+          },
+          'xcode_settings': {
+            'ARCHS': [ '>@(mac_target_archs)' ],
+            'SDKROOT': 'macosx',
+            'MACOSX_DEPLOYMENT_TARGET': '10.9',
+          },
+        },
+
+
+        'targets': [
+          {
+            'target_name': 'cozmoEngineUnitTest',
+            'type': 'executable',
+            'variables': {
+              'mac_target_archs': [ '$(ARCHS_STANDARD)' ]
+            },
+            'include_dirs': [
+              '../../basestation/test',
+              '<@(opencv_includes)',
+            ],
+            'dependencies': [
+              'cozmoEngine',
+              '<(cti_gyp_path):ctiCommon',
+              '<(cti_gyp_path):ctiCommonRobot',
+              '<(cti_gyp_path):ctiMessaging',
+              '<(cti_gyp_path):ctiPlanning',
+              '<(cti_gyp_path):ctiVision',
+              '<(cti_gyp_path):ctiVisionRobot',
+              '<(util_gyp_path):jsoncpp',
+              '<(util_gyp_path):util',
+            ],
+            'sources': [ '<!@(cat <(engine_test_source))' ],
+            'libraries': [
+              '<(gtest_path)/gtest.framework',
+              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_core.dylib',
+              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_imgproc.dylib',
+              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_highgui.dylib',
+              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_calib3d.dylib',
+              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_contrib.dylib',
+              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_objdetect.dylib',
+              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_video.dylib',
+              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_features2d.dylib',
+            ],
+            'copies': [
+              {
+                'files': [
+                  '<(gtest_path)/gtest.framework',
+                ],
+                'destination': '<(PRODUCT_DIR)',
+              },
+              # {
+              #   # this replaces copyUnitTestData.sh
+              #   'files': [
+              #     '../../resources/config',
+              #   ],
+              #   'destination': '<(PRODUCT_DIR)/BaseStation',
+              # },
+            ],
+          }, # end unittest target
+
+
+
+        ], # end targets
+      },
+    ] # end if mac
 
 
   ], #end conditions
+
+
+
+
+
+
+  # CORE TARGETS HERE
+  # CORE TARGETS HERE
+  # CORE TARGETS HERE
+  # CORE TARGETS HERE
+
+
 
 
   'targets': [
 
     {
       'target_name': 'cozmoEngine',
-      'sources': [ "<!@(cat <(engine_source_file_name))" ],
+      'sources': [ "<!@(cat <(engine_source))" ],
+      'sources/': [
+        ['exclude', 'bleRobotManager.mm'],
+        ['exclude', 'bleComms.mm'],
+      ],
       'include_dirs': [
         '../../basestation/src',
         '../../basestation/include',
+        '../../include',
+        '<@(opencv_includes)',
       ],
-      'target_conditions': [
-        [
-          "OS=='mac'",
-          {
-            'xcode_settings': {
-              'LD_RUNPATH_SEARCH_PATHS': '@loader_path',
-              'LD_DYLIB_INSTALL_NAME': '@loader_path/$(EXECUTABLE_PATH)'
-            },
-          } #end not android
+      'direct_dependent_settings': {
+        'include_dirs': [
+          '../../basestation/include',
+          '../../include',
         ],
+        'defines': [
+          'COZMO_BASESTATION'
+        ],
+      },
+      'defines': [
+        'COZMO_BASESTATION'
       ],
-      # 'dependencies': [
-      #   'worldviz',
-      #   '../../libs/anki-util/project/gyp/util.gyp:util',
-      #   '../../libs/anki-util/project/gyp/util.gyp:jsoncpp',
-      #   '../../libs/anki-util/project/gyp/util.gyp:kazmath'        
-      # ],
+      'dependencies': [
+        '<(util_gyp_path):util',
+        '<(cti_gyp_path):ctiCommon',
+        '<(cti_gyp_path):ctiMessaging',
+        '<(cti_gyp_path):ctiPlanning',
+        '<(cti_gyp_path):ctiVision',
+      ],
       'type': '<(energy_library_type)',
     },
     
