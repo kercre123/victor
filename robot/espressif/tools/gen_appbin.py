@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python2
 #
 # File	: gen_appbin.py
 # This file is part of Espressif's generate bin script.
@@ -192,13 +192,13 @@ def gen_appbin():
     #============================
     byte2=int(flash_mode)&0xff
     byte3=(((int(flash_size_map)<<4)| int(flash_clk_div))&0xff)
-	
+
     if boot_mode == '2':
         # write irom bin head
         data_bin = struct.pack('<BBBBI',BIN_MAGIC_IROM,4,byte2,byte3,long(entry_addr,16))
         sum_size = len(data_bin)
         write_file(flash_bin_name,data_bin)
-        
+
         # irom0.text.bin
         combine_bin(irom0text_bin_name,flash_bin_name,0x0,0)
 
@@ -224,7 +224,7 @@ def gen_appbin():
         data_bin = binascii.a2b_hex(''.join(data_str))
         write_file(flash_bin_name,data_bin)
     write_file(flash_bin_name,chr(chk_sum & 0xFF))
-    	
+
     if boot_mode == '1':
         sum_size = os.path.getsize(flash_bin_name)
         data_str = ['FF']*(0x10000-sum_size)
