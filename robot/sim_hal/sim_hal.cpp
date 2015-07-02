@@ -53,13 +53,6 @@ namespace Anki {
       // Const paramters / settings
       // TODO: some of these should be defined elsewhere (e.g. comms)
       
-      // Represents the number of cycles it takes to engage or disengage an active gripper
-#if defined(HAVE_ACTIVE_GRIPPER) && HAVE_ACTIVE_GRIPPER
-      const s32 UNLOCK_HYSTERESIS = 50;
-#else
-      //const s32 UNLOCK_HYSTERESIS = 0;
-#endif
-      
       const f64 WEBOTS_INFINITY = std::numeric_limits<f64>::infinity();
       
       const f32 MIN_WHEEL_POWER_FOR_MOTION = 0.15;
@@ -600,15 +593,6 @@ namespace Anki {
         case MOTOR_LIFT:
           liftMotor_->setVelocity(LiftPowerToAngSpeed(power));
           break;
-#if defined(HAVE_ACTIVE_GRIPPER) && HAVE_ACTIVE_GRIPPER
-        case MOTOR_GRIP:
-          if (power > 0) {
-            EngageGripper();
-          } else {
-            DisengageGripper();
-          }
-          break;
-#endif
         case MOTOR_HEAD:
           // TODO: Assuming linear relationship, but it's not!
           SetHeadAngularVelocity(power * MAX_HEAD_SPEED);
