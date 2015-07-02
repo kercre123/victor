@@ -25,10 +25,6 @@ public class RobotEngineManager : MonoBehaviour {
 	[SerializeField] private TextAsset configuration;
 	[SerializeField] private TextAsset alternateConfiguration;
 
-	[SerializeField] private GameObject robotBusyPanelPrefab;
-
-	private CozmoBusyPanel busyPanel = null;
-
 	[SerializeField]
 	[HideInInspector]
 	private DisconnectionReason lastDisconnectionReason = DisconnectionReason.None;
@@ -125,11 +121,6 @@ public class RobotEngineManager : MonoBehaviour {
 		} else {
 			instance = this;
 			DontDestroyOnLoad (gameObject);
-		}
-
-		if(busyPanel == null && robotBusyPanelPrefab != null) {
-			GameObject busyPanelObject = (GameObject)GameObject.Instantiate(robotBusyPanelPrefab);
-			busyPanel = busyPanelObject.GetComponent<CozmoBusyPanel>();
 		}
 
 		Application.runInBackground = true;

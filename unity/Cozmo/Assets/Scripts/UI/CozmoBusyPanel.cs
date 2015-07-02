@@ -18,12 +18,12 @@ public class CozmoBusyPanel : MonoBehaviour {
 
 	void Awake() {
 		//enforce singleton
-		if(instance != null && instance != this) {
-			GameObject.Destroy(instance.gameObject);
-			return;
-		}
+//		if(instance != null && instance != this) {
+//			GameObject.Destroy(instance.gameObject);
+//			return;
+//		}
 		instance = this;
-		DontDestroyOnLoad(gameObject);
+		//DontDestroyOnLoad(gameObject);
 	}
 
 	void OnEnable() {
@@ -48,11 +48,6 @@ public class CozmoBusyPanel : MonoBehaviour {
 
 		panel.SetActive(true);
 	}
-
-//	void OnLevelWasLoaded(int level) {
-//		
-//		
-//	}
 
 	public void CancelCurrentActions() {
 		if(robot == null || !robot.isBusy) {

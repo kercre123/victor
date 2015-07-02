@@ -3399,6 +3399,7 @@ MonoBehaviour:
     type: 3}
   timeUp: {fileID: 8300000, guid: 588d9e8829ac64e99868d70a6aabe550, type: 3}
   newHighScore: {fileID: 8300000, guid: 603a00990d2934bf387c43566baa582d, type: 3}
+  spinRequestSound: {fileID: 8300000, guid: df6b76c87d7954d0396b70dd49c0c444, type: 3}
   playerTokens:
   - {fileID: 22467502}
   - {fileID: 22441288}
@@ -3487,6 +3488,7 @@ MonoBehaviour:
   lightningMaxCountAtSpeedMax: 16
   scoreDisplayFillFade: .5
   scoreDisplayFillAlpha: .5
+  scoreDisplayEmptyAlpha: .100000001
 --- !u!114 &11408256
 MonoBehaviour:
   m_ObjectHideFlags: 1
