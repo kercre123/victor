@@ -88,6 +88,7 @@ public class VortexController : GameController {
 	[SerializeField] LayoutBlock2d[] playerMockBlocks;
 	[SerializeField] Image[] playerPanelFills;
 	[SerializeField] Text[] textPlayerBids;
+	[SerializeField] Animation[] playerBidFlashAnimations;
 	[SerializeField] Text[] textPlayerScores;
 	[SerializeField] List<VortexInput> playerInputs = new List<VortexInput>();
 
@@ -258,6 +259,8 @@ public class VortexController : GameController {
 	
 	protected override void Exit_PLAYING (bool overrideStars = false) {
 		base.Exit_PLAYING();
+
+		ExitPlayState();
 	}
 
 	protected override void Enter_RESULTS() {
@@ -514,7 +517,15 @@ public class VortexController : GameController {
 			}
 		}
 		
+		for(int i=0;i<playerPanelFills.Length;i++) {
+			if(playerPanelFills[i].color.a == 0f) continue;
+			Color col = playerPanelFills[i].color;
+			col.a = Mathf.Max(0f, col.a - Time.deltaTime * 4f);
+			playerPanelFills[i].color = col;
+		}
+
 	}
+
 	void Exit_SPINNING() {
 		//stop looping spin audio
 		//play spin finished audio
@@ -528,6 +539,13 @@ public class VortexController : GameController {
 
 		
 		ActiveBlock.TappedAction -= BlockTapped;
+
+		for(int i=0;i<playerPanelFills.Length;i++) {
+			if(playerPanelFills[i].color.a == 0f) continue;
+			Color col = playerPanelFills[i].color;
+			col.a = 0f;
+			playerPanelFills[i].color = col;
+		}
 	}
 
 	List<int> playersThatAreCorrect = new List<int>();
@@ -696,6 +714,11 @@ public class VortexController : GameController {
 		for(int i=0;i<textPlayerBids.Length;i++) {
 			textPlayerBids[i].text = "";
 		}
+
+		for(int i=0;i<playerBidFlashAnimations.Length;i++) {
+			playerBidFlashAnimations[i].Play();
+		}
+		
 	}
 
 	void PlaceTokens() {
@@ -733,6 +756,11 @@ public class VortexController : GameController {
 			playerMockBlocks[i].SetLights(Color.black, Color.black, Color.black, Color.black);
 			textPlayerBids[i].text = "";
 		}
+
+		for(int i=0;i<playerBidFlashAnimations.Length;i++) {
+			playerBidFlashAnimations[i].Stop();
+			playerBidFlashAnimations[i].Rewind();
+		}
 	}
 
 	void BlockTapped(ActiveBlock block) {
@@ -767,6 +795,13 @@ public class VortexController : GameController {
 
 		playerMockBlocks[index].SetLights(c1, c2, c3, c4);
 		textPlayerBids[index].text = playerInputs[index].stamps.Count.ToString();
+
+		playerBidFlashAnimations[index].Rewind();
+		playerBidFlashAnimations[index].Play();
+
+		Color fillCol = playerPanelFills[index].color;
+		fillCol.a = 0.5f;
+		playerPanelFills[index].color = fillCol;
 
 		if(buttonPressSound != null) AudioManager.PlayOneShot(buttonPressSound);
 
