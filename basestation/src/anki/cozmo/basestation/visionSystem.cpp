@@ -58,6 +58,9 @@
 //#include "localization.h"
 //#include "visionDebugStream.h"
 
+// FacioMetric SDK
+#include "intraface/core/core.h"
+
 #if USE_MATLAB_TRACKER || USE_MATLAB_DETECTOR
 #include "matlabVisionProcessor.h"
 #endif
@@ -2231,6 +2234,28 @@ namespace Cozmo {
         const bool loadResult = _faceCascade.load(cascadeFilename);
         AnkiConditionalError(loadResult == true, "VisionSystem.Update.LoadFaceCascade",
                              "Failed to load face cascade from %s\n", cascadeFilename.c_str());
+        
+        
+        //DeclareLandmarkTracker
+        facio::FaceAlignmentSDM<facio::AlignmentFeature,facio::NO_CONTOUR, facio::LicenseManager>* fa;
+        
+        //DeclareHeadPoseEstimator
+        facio::HPEstimatorProcrustes<facio::LicenseManager>* hpe;
+        
+        //DeclareHeadPosestructure
+        facio::HeadPose hp;
+        
+        //DeclareLicenseManager
+        facio::LicenseManager*lm;
+        
+        //InitializerLicenseManager
+        lm = new facio::LicenseManager("/path/to/folder/that/has/the/config/files");
+        
+        //Getinstance(itisasingleton)ofthetrackerwiththeinstanceoftheLicense Manager
+        fa = &facio::FaceAlignmentSDM<facio::AlignmentFeature,facio::NO_CONTOUR, facio::LicenseManager>::getInstance("/path/to/tracker_model_49_122.bin",lm);
+        
+        //InitializetheHeadPoseEstimatorwiththeLicenseManager
+        hpe = new facio::HPEstimatorProcrustes<facio::LicenseManager>("/path/to/hp_model_122.bin",lm);
       }
       
       std::vector<cv::Rect> faces;
