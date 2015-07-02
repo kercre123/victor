@@ -36,7 +36,9 @@
 #include "anki/cozmo/basestation/ramp.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
 
-#include "opencv2/opencv.hpp"
+// For imwrite() in ProcessImage
+#include "opencv2/highgui/highgui.hpp"
+
 
 #include <fstream>
 #include <dirent.h>
@@ -1116,11 +1118,12 @@ namespace Anki {
       return SendTapBlockOnGround(numTaps);
     }
       
-    Result Robot::EnableTrackHeadToObject(const u32 objectID)
+    Result Robot::EnableTrackToObject(const u32 objectID, bool headOnly)
     {
       _trackHeadToObjectID = objectID;
       
       if(_blockWorld.GetObjectByID(_trackHeadToObjectID) != nullptr) {
+        _trackObjectWithHeadOnly = headOnly;
         return RESULT_OK;
       } else {
         PRINT_NAMED_ERROR("Robot.TrackHeadToObject",
@@ -1131,7 +1134,7 @@ namespace Anki {
       }
     }
       
-    Result Robot::DisableTrackHeadToObject()
+    Result Robot::DisableTrackToObject()
     {
       _trackHeadToObjectID.UnSet();
       return RESULT_OK;
