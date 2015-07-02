@@ -288,24 +288,6 @@ namespace Anki {
             currentlyObservedObject.area   = area;
           //}
           
-          /*
-          // DEBUG!!!
-          // Track head to last object seen
-          static u32 lastObjectID = u32_MAX;
-          if(msg.objectID != lastObjectID && msg.markersVisible)
-          {
-            lastObjectID = msg.objectID;
-            
-            printf("Telling robot to track head to object %d\n", msg.objectID);
-            U2G::TrackHeadToObject m;
-            m.robotID = msg.robotID;
-            m.objectID = msg.objectID;
-            
-            U2G::Message message;
-            message.Set_TrackHeadToObject(m);
-            SendMessage(message);
-          }
-           */
         }
       }
       
@@ -1050,7 +1032,35 @@ namespace Anki {
                 
               case (s32)'T':
               {
-                SendExecuteTestPlan();
+                if(modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
+                  static bool trackingObject = false;
+                  
+                  trackingObject = !trackingObject;
+
+                  U2G::TrackToObject m;
+                  m.robotID = 1;
+
+                  if(trackingObject) {
+                    const bool headOnly = modifier_key & webots::Supervisor::KEYBOARD_ALT;
+                    
+                    printf("Telling robot to track %sto the selected object %d\n",
+                           headOnly ? "its head " : "",
+                           currentlyObservedObject.id);
+                    
+                    m.objectID = currentlyObservedObject.id;
+                    m.headOnly = headOnly;
+                  } else {
+                    // Disable tracking
+                    m.objectID = u32_MAX;
+                  }
+                    
+                  U2G::Message message;
+                  message.Set_TrackToObject(m);
+                  SendMessage(message);
+
+                } else {
+                  SendExecuteTestPlan();
+                }
                 break;
               }
                 
@@ -1386,7 +1396,7 @@ namespace Anki {
               case (s32)'@':
               {
                 //SendAnimation("ANIM_BACK_AND_FORTH_EXCITED", 3);
-                SendAnimation("ANIM_TEST", 1);
+                SendAnimation("ANIM_TEST2", 1);
                 break;
               }
               case (s32)'#':
