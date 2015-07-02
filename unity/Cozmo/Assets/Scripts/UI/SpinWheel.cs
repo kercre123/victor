@@ -321,7 +321,7 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 	void SpinStart() {
 		
 		pegBendDirection = 0f;
-		lastSliceIndex = -1;
+		lastSliceIndex = displayData.sliceIndex;
 		lastTouching = false;
 
 //		if(predictionCoroutine != null) StopCoroutine(predictionCoroutine);

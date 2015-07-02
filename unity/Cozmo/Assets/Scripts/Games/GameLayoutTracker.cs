@@ -273,9 +273,9 @@ public class GameLayoutTracker : MonoBehaviour {
 					if(skipBuild) {
 						return LayoutTrackerPhase.DISABLED;
 					}
-					else if(unfinished != null){
-						Debug.Log("unfinished("+unfinished.name+")");
-					}
+//					else if(unfinished != null){
+//						Debug.Log("unfinished("+unfinished.name+")");
+//					}
 				} else if (skipBuildForThisLayoutWaitForBlocks ) {
 					return LayoutTrackerPhase.DISABLED;
 				}

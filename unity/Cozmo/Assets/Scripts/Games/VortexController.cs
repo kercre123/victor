@@ -81,6 +81,7 @@ public class VortexController : GameController {
 
 	[SerializeField] AudioClip timeUp;
 	[SerializeField] AudioClip newHighScore;
+	[SerializeField] AudioClip spinRequestSound;
 
 	[SerializeField] RectTransform[] playerTokens;
 	[SerializeField] Button[] playerButtons;
@@ -431,8 +432,20 @@ public class VortexController : GameController {
 		wheel.Focus();
 		wheel.gameObject.SetActive(true);
 
+		lightingBall.Radius = wheelLightningRadii[currentWheelIndex];
+
+		if(spinRequestSound != null) AudioManager.PlayOneShot(spinRequestSound);
+		lastNumber = wheel.GetDisplayedNumber();
 	}
 	void Update_REQUEST_SPIN() {
+
+		int newNumber = wheel.GetDisplayedNumber();
+		//Debug.Log("Update_SPINNING lightingMax("+lightingMax+") wheel.Speed("+wheel.Speed+") newNumber("+newNumber+") lastNumber("+lastNumber+")");
+		if(newNumber != lastNumber) {
+			lightingBall.SingleLightningBolt();
+		}
+		lastNumber = newNumber;
+
 	}
 	void Exit_REQUEST_SPIN() {
 		ClearInputs();
@@ -441,7 +454,7 @@ public class VortexController : GameController {
 	bool cozmoBidSubmitted = false;
 	int predictedNum = -1;
 	float predictedDuration = -1f;
-	float cozmoTimePerTap = 1f;
+	float cozmoTimePerTap = 1.25f;
 
 	void Enter_SPINNING() {
 		lightingBall.Radius = wheelLightningRadii[currentWheelIndex];
