@@ -68,6 +68,10 @@ PROTO WebotsKeyboardController [
   field SFInt32 headTest_flags 0
   field SFInt32 headTest_nodCycleTimeMS 2000  
 
+  # Animation to send
+  field SFString animationToSendName "ANIM_TEST"
+  field SFInt32  animationNumLoops 1
+
   # Force-add robot options
   field SFBool   forceAddRobot FALSE
   field SFString forcedRobotIP "172.31.1.1"
