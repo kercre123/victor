@@ -21,7 +21,7 @@ namespace Embedded {
   }
 
   
-  Result Matlab::Put(const Point<s16> * values, s32 nValues, const std::string name)
+  Result Matlab::PutPoints(const Point<s16> * values, s32 nValues, const std::string name)
   {
     AnkiConditionalErrorAndReturnValue(this->ep, RESULT_FAIL, "Anki.Put", "Matlab engine is not started/connected");
     

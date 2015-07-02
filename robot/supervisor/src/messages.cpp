@@ -2,8 +2,6 @@
 #include "anki/cozmo/shared/cozmoTypes.h"
 #include "anki/cozmo/robot/cozmoBot.h"
 
-#include "anki/common/shared/mailbox_impl.h"
-
 #include "anki/common/robot/array2d.h"
 
 #include "embedded/transport/IUnreliableTransport.h"
@@ -21,6 +19,7 @@
 #include "headController.h"
 #include "imuFilter.h"
 #include "dockingController.h"
+#include "faceTrackingController.h"
 #include "pickAndPlaceController.h"
 #include "testModeController.h"
 #include "animationController.h"
@@ -54,22 +53,12 @@ namespace Anki {
         };
 
         u8 pktBuffer_[2048];
-        u8 msgBuff_[256];
+        u8 msgBuff_[2048];
 
         // For waiting for a particular message ID
         const u32 LOOK_FOR_MESSAGE_TIMEOUT = 1000000;
         ID lookForID_ = NO_MESSAGE_ID;
         u32 lookingStartTime_ = 0;
-
-
-        // Mailboxes for different types of messages that the vision
-        // system communicates to main execution:
-        //MultiMailbox<Messages::BlockMarkerObserved, MAX_BLOCK_MARKER_MESSAGES> blockMarkerMailbox_;
-        //Mailbox<Messages::MatMarkerObserved>    matMarkerMailbox_;
-        Mailbox<Messages::DockingErrorSignal>   dockingMailbox_;
-
-        const u32 MAX_FACE_DETECTIONS = 16;
-        MultiMailbox<Messages::FaceDetection,MAX_FACE_DETECTIONS> faceDetectMailbox_;
 
         static RobotState robotState_;
 
@@ -274,17 +263,11 @@ namespace Anki {
 
       void ProcessDockingErrorSignalMessage(const DockingErrorSignal& msg)
       {
-        // Just pass the docking error signal along to the mainExecution to
-        // deal with. Note that if the message indicates tracking failed,
-        // the mainExecution thread should handle it, and put the vision
-        // system back in LOOKING_FOR_BLOCKS mode.
-        dockingMailbox_.putMessage(msg);
+        DockingController::SetDockingErrorSignalMessage(msg);
       }
 
       void ProcessFaceDetectionMessage(const FaceDetection& msg)
       {
-        // Just pass the face detection along to mainExecution to deal with.
-        faceDetectMailbox_.putMessage(msg);
       }
 
       void ProcessBTLEMessages()
@@ -738,18 +721,6 @@ void Process##__MSG_TYPE__##Message(const __MSG_TYPE__& msg) { ProcessAnimKeyFra
        */
 
 
-
-      bool CheckMailbox(DockingErrorSignal&  msg)
-      {
-        return dockingMailbox_.getMessage(msg);
-      }
-
-      bool CheckMailbox(FaceDetection&       msg)
-      {
-        return faceDetectMailbox_.getMessage(msg);
-      }
-
-
       bool ReceivedInit()
       {
 
@@ -886,27 +857,6 @@ void Process##__MSG_TYPE__##Message(const __MSG_TYPE__& msg) { ProcessAnimKeyFra
       {
         bool result = ReliableTransport_SendMessage((uint8_t*)chunkData, length, &connection, eRMT_SingleUnreliableMessage, true, Messages::ImageChunk_ID);
         return result;
-      }
-
-      Result SetBlockLight(const u8 blockID, const u32* onColor, const u32* offColor,
-                           const u32* onPeriod_ms, const u32* offPeriod_ms,
-                           const u32* transitionOnPeriod_ms, const u32* transitionOffPeriod_ms)
-      {
-         u8 buffer[256];
-         const u32 size = Messages::GetSize(Messages::SetBlockLights_ID);
-         Anki::Cozmo::Messages::SetBlockLights m;
-         m.blockID = blockID;
-         for (int i=0; i<NUM_BLOCK_LEDS; ++i) {
-           m.onColor[i] = onColor[i];
-           m.offColor[i] = offColor[i];
-           m.onPeriod_ms[i] = onPeriod_ms[i];
-           m.offPeriod_ms[i] = offPeriod_ms[i];
-           m.transitionOnPeriod_ms[i] = (transitionOnPeriod_ms == NULL ? 0 : transitionOnPeriod_ms[i]);
-           m.transitionOffPeriod_ms[i] = (transitionOffPeriod_ms == NULL ? 0 : transitionOffPeriod_ms[i]);
-         }
-         buffer[0] = Messages::SetBlockLights_ID;
-         memcpy(buffer + 1, &m, size);
-         return RadioSendPacket(buffer, size+1, blockID + 1) ? RESULT_OK : RESULT_FAIL;
       }
 
       void FlashBlockIDs()

@@ -85,7 +85,11 @@ namespace Anki {
       static SoundID_t GetID(const std::string& name);
       
       // Lookup a relative filename by ID
-      const std::string& GetSoundFile(SoundID_t soundID);
+      const std::string& GetSoundFile(SoundID_t soundID) const;
+      
+      // Get the duration of the sound in milliseconds
+      const u32 GetSoundDurationInMilliseconds(SoundID_t soundID) const;
+      const u32 GetSoundDurationInMilliseconds(const std::string& name) const;
       
     protected:
       
@@ -113,6 +117,10 @@ namespace Anki {
       }
       
       return singletonInstance_;
+    }
+    
+    inline const u32 SoundManager::GetSoundDurationInMilliseconds(const std::string& name) const {
+      return GetSoundDurationInMilliseconds(GetID(name));
     }
     
   } // namespace Cozmo

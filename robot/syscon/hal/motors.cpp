@@ -1,153 +1,169 @@
-#include <limits.h>
-
+#include "motors.h"
+#include "anki/cozmo/robot/spineData.h"
+#include "timer.h"
 #include "nrf.h"
 #include "nrf_gpio.h"
 #include "nrf_gpiote.h"
+#include <limits.h>
 
-#include "timer.h"
-#include "motors.h"
 #include "uart.h"
-
-#include "hardware.h"
-
-#include "anki/cozmo/robot/spineData.h"
-
 
 extern GlobalDataToHead g_dataToHead;
 extern GlobalDataToBody g_dataToBody;
 
-#define MOTOR_TIMER1 NRF_TIMER1
-#define MOTOR_TIMER2 NRF_TIMER2
+
+
 
 #define ABS(x) ((x) < 0 ? -(x) : (x))
 
 #define ROBOT4 // robot 4.0
 
-  enum MotorID
-  {
-    MOTOR_LEFT_WHEEL,
-    MOTOR_RIGHT_WHEEL,
-    MOTOR_LIFT,
-    MOTOR_HEAD
-  };
-  
-  struct MotorInfo
-  {
-    // These few are constant; will refactor into separate structs again soon.
-    u8 n1Pin;
-    u8 n2Pin;
-    u8 pPin;
-    u8 isBackward;   // True if wired backward
-    u8 lastP;        // Last value of pPin
-    u8 encoderPins[2];
-    
-    Fixed unitsPerTick;
-    Fixed64 position;
-    Fixed64 lastPosition;
-    u32 count;
-    u32 lastCount;
-    
-    s16 nextPWM;
-    s16 oldPWM;    
-  };
- 
-  const u32 IRQ_PRIORITY = 0;
-  
-  // 16 MHz timer with PWM running at 20kHz
-  const s16 TIMER_TICKS_END = (16000000 / 20000) - 1;
-  
-  const s16 PWM_DIVISOR = SHRT_MAX / TIMER_TICKS_END;
-  
-  // Updated for 3.2
-  // N1+N2 are 0 when off, 1 when on
-  // P is 0 for P2+N1, P 1 is 1 for P1+N2
+enum MotorID
+{
+  MOTOR_LEFT_WHEEL,
+  MOTOR_RIGHT_WHEEL,
+  MOTOR_LIFT,
+  MOTOR_HEAD
+};
 
-  const u8 ENCODER_NONE = 0xFF;
+struct MotorInfo
+{
+  // These few are constant; will refactor into separate structs again soon.
+  u8 n1Pin;
+  u8 n2Pin;
+  u8 pPin;
+  u8 isBackward;   // True if wired backward
+  u8 lastP;        // Last value of pPin
+  u8 encoderPins[2];
   
-  // Encoder scaling reworked for Cozmo 4.0
+  Fixed unitsPerTick;
+  Fixed64 position;
+  Fixed64 lastPosition;
+  u32 count;
+  u32 lastCount;
   
-	// Given a gear ratio of 161.5:1 and 94mm wheel circumference and 2 ticks * 4 teeth
-  // for 8 encoder ticks per revolution, we compute the meters per tick as:
-	// Applying a slip factor correction of 94.8%
-	const Fixed_8_24 METERS_PER_TICK = TO_FIXED_8_24((0.948 * 0.125 * 0.0292 * 3.14159265359) / 173.43); // 1052
-	
-  // Given a gear ratio of 172.68:1 and 4 encoder ticks per revolution, we
-  // compute the radians per tick on the lift as:
-  const Fixed RADIANS_PER_LIFT_TICK = TO_FIXED((0.25 * 3.14159265359) / 172.68);
+  s16 nextPWM;
+  s16 oldPWM;    
+};
+
+const u32 IRQ_PRIORITY = 1;
+
+// 16 MHz timer with PWM running at 20kHz
+const s16 TIMER_TICKS_END = (16000000 / 20000) - 1;
+
+const s16 PWM_DIVISOR = SHRT_MAX / TIMER_TICKS_END;
+
+// Updated for 3.2
+// N1+N2 are 0 when off, 1 when on
+// P is 0 for P2+N1, P 1 is 1 for P1+N2
+const u8 LEFT_P_PIN = 17;
+const u8 LEFT_N1_PIN = 16;   // M1/Left on schematic
+const u8 LEFT_N2_PIN = 15;
+
+const u8 RIGHT_P_PIN = 23;
+const u8 RIGHT_N1_PIN = 22;  // M2/Right on schematic
+const u8 RIGHT_N2_PIN = 21;
   
-  // Given a gear ratio of 348.77:1 and 8 encoder ticks per revolution, we
-  // compute the radians per tick on the head as:
+const u8 HEAD_P_PIN = 7; 
+const u8 HEAD_N1_PIN = 13;   // M3/Head on schematic
+const u8 HEAD_N2_PIN = 14;
+
+const u8 LIFT_P_PIN = 0;
+const u8 LIFT_N1_PIN = 30;   // M4/Lift on schematic
+const u8 LIFT_N2_PIN = 25;
+
+const u8 ENCODER_NONE = 0xFF;
+const u8 ENCODER_LEFT_PIN = 20;    // M1/Left on schematic
+const u8 ENCODER_RIGHT_PIN = 24;   // M2/Right on schematic
+const u8 ENCODER_LIFTA_PIN = 4;    // M4/Lift on schematic
+const u8 ENCODER_LIFTB_PIN = 28;
+const u8 ENCODER_HEADA_PIN = 11;   // M3/Head on schematic
+const u8 ENCODER_HEADB_PIN = 10;
+
+// Encoder scaling reworked for Cozmo 4.0
+
+// Given a gear ratio of 161.5:1 and 94mm wheel circumference and 2 ticks * 4 teeth
+// for 8 encoder ticks per revolution, we compute the meters per tick as:
+// Applying a slip factor correction of 94.8%
+const Fixed_8_24 METERS_PER_TICK = TO_FIXED_8_24((0.948 * 0.125 * 0.0292 * 3.14159265359) / 173.43); // 1052
+
+// Given a gear ratio of 172.68:1 and 4 encoder ticks per revolution, we
+// compute the radians per tick on the lift as:
+const Fixed RADIANS_PER_LIFT_TICK = TO_FIXED((0.25 * 3.14159265359) / 172.68);
+
+// Given a gear ratio of 348.77:1 and 8 encoder ticks per revolution, we
+// compute the radians per tick on the head as:
 #ifdef ROBOT4
-  const Fixed RADIANS_PER_HEAD_TICK = TO_FIXED((0.125 * 3.14159265359) / 348.77);
+const Fixed RADIANS_PER_HEAD_TICK = TO_FIXED((0.125 * 3.14159265359) / 348.77);
 #else 
-  const Fixed RADIANS_PER_HEAD_TICK = TO_FIXED((0.125 * 3.14159265359) / 324.0);
+const Fixed RADIANS_PER_HEAD_TICK = TO_FIXED((0.125 * 3.14159265359) / 324.0);
 #endif  
-  // If no encoder activity for 200ms, we may as well be stopped
-  const u32 ENCODER_TIMEOUT_COUNT = 200 * COUNT_PER_MS;
+// If no encoder activity for 200ms, we may as well be stopped
+const u32 ENCODER_TIMEOUT_COUNT = 200 * COUNT_PER_MS;
 
-  // Set the debounce to reject all noise above it
-  const u32 DEBOUNCE_COUNT = 511;   // About 60uS?
-  
-  // NOTE: Do NOT re-order the MotorID enum, because this depends on it
-  MotorInfo m_motors[MOTOR_COUNT] =
+// Set the debounce to reject all noise above it
+const u32 DEBOUNCE_COUNT = 511;   // About 60uS?
+
+// NOTE: Do NOT re-order the MotorID enum, because this depends on it
+MotorInfo m_motors[MOTOR_COUNT] =
+{
   {
-    {
-      PIN_LEFT_N1,
-      PIN_LEFT_N2,
-      PIN_LEFT_P, 
-      true,
-      0,
-      PIN_ENCODER_LEFT,
-      ENCODER_NONE,
-      1, // units per tick = 1 tick
-      0, 0, 0, 0, 0, 0
-    },
-    {
-      PIN_RIGHT_N1,
-      PIN_RIGHT_N2,
-      PIN_RIGHT_P,
-      true,
-      0,
-      PIN_ENCODER_RIGHT,
-      ENCODER_NONE,
-      1, // units per tick = 1 tick
-      0, 0, 0, 0, 0, 0
-    },
-    {
-      PIN_LIFT_N1,
-      PIN_LIFT_N2,
-      PIN_LIFT_P,
+    LEFT_N1_PIN,
+    LEFT_N2_PIN,
+    LEFT_P_PIN, 
+    true,
+    0,
+    ENCODER_LEFT_PIN,
+    ENCODER_NONE,
+    1, // units per tick = 1 tick
+    0, 0, 0, 0, 0, 0
+  },
+  {
+    RIGHT_N1_PIN,
+    RIGHT_N2_PIN,
+    RIGHT_P_PIN,
+    true,
+    0,
+    ENCODER_RIGHT_PIN,
+    ENCODER_NONE,
+    1, // units per tick = 1 tick
+    0, 0, 0, 0, 0, 0
+  },
+  {
+    LIFT_N1_PIN,
+    LIFT_N2_PIN,
+    LIFT_P_PIN,
 #ifdef ROBOT4
-      true,
+    true,
 #else
-      false,
+    false,
 #endif
-      0,
-      PIN_ENCODER_LIFTA,
-      PIN_ENCODER_LIFTB,
-      RADIANS_PER_LIFT_TICK,
-      0, 0, 0, 0, 0, 0
-    },
-    {
-      PIN_HEAD_N1,
-      PIN_HEAD_N2,
-      PIN_HEAD_P,
+    0,
+    ENCODER_LIFTA_PIN,
+    ENCODER_LIFTB_PIN,
+    RADIANS_PER_LIFT_TICK,
+    0, 0, 0, 0, 0, 0
+  },
+  {
+    HEAD_N1_PIN,
+    HEAD_N2_PIN,
+    HEAD_P_PIN,
 #ifdef ROBOT4      
-      false,
+    false,
 #else
-      true,
+    true,
 #endif 
-      0,
-      PIN_ENCODER_HEADA,
-      PIN_ENCODER_HEADB,
-      RADIANS_PER_HEAD_TICK,
-      0, 0, 0, 0, 0, 0
-    },
-  };
-  
-  //const u32 MOTOR_COUNT = sizeof(m_motors) / sizeof(MotorInfo);
-  
-  u32 m_lastState = 0;
+    0,
+    ENCODER_HEADA_PIN,
+    ENCODER_HEADB_PIN,
+    RADIANS_PER_HEAD_TICK,
+    0, 0, 0, 0, 0, 0
+  },
+};
+
+//const u32 MOTOR_COUNT = sizeof(m_motors) / sizeof(MotorInfo);
+
+u32 m_lastState = 0;
 
 static void ConfigureTimer(NRF_TIMER_Type* timer, const u8 taskChannel, const u8 ppiChannel)
 {
@@ -244,6 +260,7 @@ static void ConfigureTask(u8 motorID, volatile u32 *timer)
     } else {
       nrf_gpiote_task_configure(motorID, motorInfo->n1Pin,
         NRF_GPIOTE_POLARITY_TOGGLE, NRF_GPIOTE_INITIAL_VALUE_HIGH);      
+      nrf_gpiote_task_enable(motorID);
     }
     
   // Backward
@@ -265,6 +282,7 @@ static void ConfigureTask(u8 motorID, volatile u32 *timer)
     } else {
       nrf_gpiote_task_configure(motorID, motorInfo->n2Pin,
         NRF_GPIOTE_POLARITY_TOGGLE, NRF_GPIOTE_INITIAL_VALUE_HIGH);    
+      nrf_gpiote_task_enable(motorID);
     }
   }
   
@@ -280,20 +298,20 @@ static void ConfigureTask(u8 motorID, volatile u32 *timer)
   *timer = motorInfo->nextPWM < 0 ? -motorInfo->nextPWM : motorInfo->nextPWM;  
 }
 
-void MotorsInit()
+void Motors::init()
 {
   int i;
   
   // Configure TIMER1 and TIMER2 with the appropriate task and PPI channels
-  ConfigureTimer(MOTOR_TIMER1, 0, PPI_MOTOR_CHANNEL_0);
-  ConfigureTimer(MOTOR_TIMER2, 2, PPI_MOTOR_CHANNEL_4);
+  ConfigureTimer(NRF_TIMER1, 0, 0);
+  ConfigureTimer(NRF_TIMER2, 2, 4);
   
   // Enable PPI channels for timer PWM and reset
   NRF_PPI->CHEN = 0xFF;
   
   // Start the timers
-  MOTOR_TIMER1->TASKS_START = 1;
-  MOTOR_TIMER2->TASKS_START = 1;
+  NRF_TIMER1->TASKS_START = 1;
+  NRF_TIMER2->TASKS_START = 1;
   
   // Clear all GPIOTE interrupts
   NRF_GPIOTE->INTENCLR = 0xFFFFFFFF;
@@ -333,7 +351,7 @@ void MotorsInit()
   }
 }
 
-void MotorsSetPower(u8 motorID, s16 power)
+void Motors::setPower(u8 motorID, s16 power)
 {
   // Scale from [0, SHRT_MAX] to [0, TIMER_TICKS_END-1]
   power /= PWM_DIVISOR;
@@ -349,7 +367,7 @@ void MotorsSetPower(u8 motorID, s16 power)
   motorInfo->nextPWM = power;
 }
 
-Fixed MotorsGetSpeed(u8 motorID)
+Fixed Motors::getSpeed(u8 motorID)
 {
   MotorInfo* motorInfo = &m_motors[motorID];
   
@@ -379,94 +397,94 @@ Fixed MotorsGetSpeed(u8 motorID)
   return FIXED_DIV(deltaPosition, deltaSeconds);
 }
 
-void MotorsUpdate()
+void Motors::update()
 {
   // Stop the timer task and clear it, along with GPIO for the motors
   if ((m_motors[0].nextPWM != m_motors[0].oldPWM) ||
       (m_motors[1].nextPWM != m_motors[1].oldPWM))
   {
-    MOTOR_TIMER1->TASKS_STOP = 1;
-    MOTOR_TIMER1->TASKS_CLEAR = 1;
+    NRF_TIMER1->TASKS_STOP = 1;
+    NRF_TIMER1->TASKS_CLEAR = 1;
     
     // Try to reconfigure the motors - if there are any faults, bail out
-    ConfigureTask(MOTOR_LEFT_WHEEL, &(MOTOR_TIMER1->CC[0]));
-    ConfigureTask(MOTOR_RIGHT_WHEEL, &(MOTOR_TIMER1->CC[1]));
+    ConfigureTask(MOTOR_LEFT_WHEEL, &(NRF_TIMER1->CC[0]));
+    ConfigureTask(MOTOR_RIGHT_WHEEL, &(NRF_TIMER1->CC[1]));
 
     // Restart the timer
-    MOTOR_TIMER1->TASKS_START = 1;
+    NRF_TIMER1->TASKS_START = 1;
   }
   
   if ((m_motors[2].nextPWM != m_motors[2].oldPWM) ||
       (m_motors[3].nextPWM != m_motors[3].oldPWM))
   {
-    MOTOR_TIMER2->TASKS_STOP = 1;
-    MOTOR_TIMER2->TASKS_CLEAR = 1;
+    NRF_TIMER2->TASKS_STOP = 1;
+    NRF_TIMER2->TASKS_CLEAR = 1;
     
     // Try to reconfigure the motors - if there are any faults, bail out
-    ConfigureTask(MOTOR_LIFT, &(MOTOR_TIMER2->CC[0]));
-    ConfigureTask(MOTOR_HEAD, &(MOTOR_TIMER2->CC[1]));
+    ConfigureTask(MOTOR_LIFT, &(NRF_TIMER2->CC[0]));
+    ConfigureTask(MOTOR_HEAD, &(NRF_TIMER2->CC[1]));
 
     // Restart the timer
-    MOTOR_TIMER2->TASKS_START = 1;
+    NRF_TIMER2->TASKS_START = 1;
   }
-	
-  // Update the SPI data structure to send data back to the head
-	// Wheel position and speed are recorded in encoder ticks, so we
-	// are applying conversions here for now, until code is refactored
-	Fixed64 tmp;
-	tmp = METERS_PER_TICK;
-	tmp *= MotorsGetSpeed(0);
-  g_dataToHead.speeds[0] = (Fixed)TO_FIXED_8_24_TO_16_16(tmp);
-	tmp = METERS_PER_TICK;
-	tmp *= MotorsGetSpeed(1);
-  g_dataToHead.speeds[1] = (Fixed)TO_FIXED_8_24_TO_16_16(tmp);
-  g_dataToHead.speeds[2] = MotorsGetSpeed(2);
-  g_dataToHead.speeds[3] = MotorsGetSpeed(3);
   
-	tmp = METERS_PER_TICK;
-	tmp *= m_motors[0].position;
+  // Update the SPI data structure to send data back to the head
+  // Wheel position and speed are recorded in encoder ticks, so we
+  // are applying conversions here for now, until code is refactored
+  Fixed64 tmp;
+  tmp = METERS_PER_TICK;
+  tmp *= Motors::getSpeed(0);
+  g_dataToHead.speeds[0] = (Fixed)TO_FIXED_8_24_TO_16_16(tmp);
+  tmp = METERS_PER_TICK;
+  tmp *= Motors::getSpeed(1);
+  g_dataToHead.speeds[1] = (Fixed)TO_FIXED_8_24_TO_16_16(tmp);
+  g_dataToHead.speeds[2] = Motors::getSpeed(2);
+  g_dataToHead.speeds[3] = Motors::getSpeed(3);
+  
+  tmp = METERS_PER_TICK;
+  tmp *= m_motors[0].position;
   g_dataToHead.positions[0] = (s32)TO_FIXED_8_24_TO_16_16(tmp);
-	tmp = METERS_PER_TICK;
-	tmp *= m_motors[1].position;
-	g_dataToHead.positions[1] = (s32)TO_FIXED_8_24_TO_16_16(tmp);
+  tmp = METERS_PER_TICK;
+  tmp *= m_motors[1].position;
+  g_dataToHead.positions[1] = (s32)TO_FIXED_8_24_TO_16_16(tmp);
   g_dataToHead.positions[2] = m_motors[2].position;
   g_dataToHead.positions[3] = m_motors[3].position;
 }
 
-void MotorsPrintEncodersRaw()
+void Motors::printEncodersRaw()
 {
-  UART::put('\n');
   UART::put('L');
-  UART::put('0' + nrf_gpio_pin_read(PIN_ENCODER_LEFT));
+  UART::put('0' + nrf_gpio_pin_read(ENCODER_LEFT_PIN));
   UART::put('R');
-  UART::put('0' + nrf_gpio_pin_read(PIN_ENCODER_RIGHT));
+  UART::put('0' + nrf_gpio_pin_read(ENCODER_RIGHT_PIN));
   UART::put('A'); // Arms
-  UART::put('0' + nrf_gpio_pin_read(PIN_ENCODER_LIFTA));
-  UART::put('0' + nrf_gpio_pin_read(PIN_ENCODER_LIFTB));
+  UART::put('0' + nrf_gpio_pin_read(ENCODER_LIFTA_PIN));
+  UART::put('0' + nrf_gpio_pin_read(ENCODER_LIFTB_PIN));
   UART::put('H');
-  UART::put('0' + nrf_gpio_pin_read(PIN_ENCODER_HEADA));
-  UART::put('0' + nrf_gpio_pin_read(PIN_ENCODER_HEADB));
+  UART::put('0' + nrf_gpio_pin_read(ENCODER_HEADA_PIN));
+  UART::put('0' + nrf_gpio_pin_read(ENCODER_HEADB_PIN));
   UART::put(' ');  
   UART::put('L');
-	Fixed64 tmp;
-	tmp = METERS_PER_TICK;
-	tmp *= m_motors[0].position;
+  Fixed64 tmp;
+  tmp = METERS_PER_TICK;
+  tmp *= m_motors[0].position;
   UART::dec((Fixed)TO_FIXED_8_24_TO_16_16(tmp));
   UART::put('R');
-	tmp = METERS_PER_TICK;
-	tmp *= m_motors[1].position;
+  tmp = METERS_PER_TICK;
+  tmp *= m_motors[1].position;
   UART::dec((Fixed)TO_FIXED_8_24_TO_16_16(tmp));
   UART::put('A');
   UART::dec(m_motors[2].position);
   UART::put('H');
   UART::dec(m_motors[3].position);
-  UART::put('\n');
 }
 
+
+
 // Get wheel ticks
-s32 DebugWheelsGetTicks(u8 motorID)
+s32 Motors::debugWheelsGetTicks(u8 motorID)
 {
-	return m_motors[motorID].position;
+  return m_motors[motorID].position;
 }
 
 // Encoder code must be optimized for speed - this macro is faster than Nordic's
@@ -519,7 +537,7 @@ static void HandlePinTransition(MotorInfo* motorInfo, u32 pinState, u32 count)
   }
 }
 
-void MotorPrintEncoder(u8 motorID) // XXX: wheels are in encoder ticks, not meters
+void Motors::printEncoder(u8 motorID) // XXX: wheels are in encoder ticks, not meters
 {
   int i = m_motors[motorID].position;
   UART::put(i);
@@ -545,62 +563,62 @@ void GPIOTE_IRQHandler()
     u32 count = GetCounter();
     
     // Head encoder (since it moves fastest)
-    if (whatChanged & (1 << PIN_ENCODER_HEADA))
+    if (whatChanged & (1 << ENCODER_HEADA_PIN))
     {
       m_motors[MOTOR_HEAD].count = count;
-      if (!(state & (1 << PIN_ENCODER_HEADA)))  // High to low transition
+      if (!(state & (1 << ENCODER_HEADA_PIN)))  // High to low transition
       {
-        fast_gpio_cfg_sense_input(PIN_ENCODER_HEADA, NRF_GPIO_PIN_SENSE_HIGH);      
-        if (state & (1 << PIN_ENCODER_HEADB))    // Forward vs backward
+        fast_gpio_cfg_sense_input(ENCODER_HEADA_PIN, NRF_GPIO_PIN_SENSE_HIGH);      
+        if (state & (1 << ENCODER_HEADB_PIN))    // Forward vs backward
           m_motors[MOTOR_HEAD].position += RADIANS_PER_HEAD_TICK;
         else
           m_motors[MOTOR_HEAD].position -= RADIANS_PER_HEAD_TICK;      
       } else {
-        fast_gpio_cfg_sense_input(PIN_ENCODER_HEADA, NRF_GPIO_PIN_SENSE_LOW);
-        if (state & (1 << PIN_ENCODER_HEADB))   // Forward vs backward
+        fast_gpio_cfg_sense_input(ENCODER_HEADA_PIN, NRF_GPIO_PIN_SENSE_LOW);
+        if (state & (1 << ENCODER_HEADB_PIN))   // Forward vs backward
           m_motors[MOTOR_HEAD].position -= RADIANS_PER_HEAD_TICK;
         else
           m_motors[MOTOR_HEAD].position += RADIANS_PER_HEAD_TICK;      
       }    
     }           
     // Lift encoder (next fastest)
-    if (whatChanged & (1 << PIN_ENCODER_LIFTA))
+    if (whatChanged & (1 << ENCODER_LIFTA_PIN))
     {
       m_motors[MOTOR_LIFT].count = count;
-      if (!(state & (1 << PIN_ENCODER_LIFTA)))  // High to low transition
+      if (!(state & (1 << ENCODER_LIFTA_PIN)))  // High to low transition
       {
-        fast_gpio_cfg_sense_input(PIN_ENCODER_LIFTA, NRF_GPIO_PIN_SENSE_HIGH);      
-        if (state & (1 << PIN_ENCODER_LIFTB))   // Forward vs backward
+        fast_gpio_cfg_sense_input(ENCODER_LIFTA_PIN, NRF_GPIO_PIN_SENSE_HIGH);      
+        if (state & (1 << ENCODER_LIFTB_PIN))   // Forward vs backward
           m_motors[MOTOR_LIFT].position += RADIANS_PER_LIFT_TICK;
         else
           m_motors[MOTOR_LIFT].position -= RADIANS_PER_LIFT_TICK;      
       } else {
-        fast_gpio_cfg_sense_input(PIN_ENCODER_LIFTA, NRF_GPIO_PIN_SENSE_LOW);
-        if (state & (1 << PIN_ENCODER_LIFTB))   // Forward vs backward
+        fast_gpio_cfg_sense_input(ENCODER_LIFTA_PIN, NRF_GPIO_PIN_SENSE_LOW);
+        if (state & (1 << ENCODER_LIFTB_PIN))   // Forward vs backward
           m_motors[MOTOR_LIFT].position -= RADIANS_PER_LIFT_TICK;
         else
           m_motors[MOTOR_LIFT].position += RADIANS_PER_LIFT_TICK;  
       }    
     }       
     // Left wheel
-    if (whatChanged & (1 << PIN_ENCODER_LEFT))
+    if (whatChanged & (1 << ENCODER_LEFT_PIN))
     {
       m_motors[MOTOR_LEFT_WHEEL].count = count;
       m_motors[MOTOR_LEFT_WHEEL].position += m_motors[MOTOR_LEFT_WHEEL].unitsPerTick;
-      if (!(state & (1 << PIN_ENCODER_LEFT)))  // High to low transition
-        fast_gpio_cfg_sense_input(PIN_ENCODER_LEFT, NRF_GPIO_PIN_SENSE_HIGH);      
+      if (!(state & (1 << ENCODER_LEFT_PIN)))  // High to low transition
+        fast_gpio_cfg_sense_input(ENCODER_LEFT_PIN, NRF_GPIO_PIN_SENSE_HIGH);      
       else
-        fast_gpio_cfg_sense_input(PIN_ENCODER_LEFT, NRF_GPIO_PIN_SENSE_LOW);
+        fast_gpio_cfg_sense_input(ENCODER_LEFT_PIN, NRF_GPIO_PIN_SENSE_LOW);
     }       
     // Right wheel
-    if (whatChanged & (1 << PIN_ENCODER_RIGHT))
+    if (whatChanged & (1 << ENCODER_RIGHT_PIN))
     {
       m_motors[MOTOR_RIGHT_WHEEL].count = count;
       m_motors[MOTOR_RIGHT_WHEEL].position += m_motors[MOTOR_RIGHT_WHEEL].unitsPerTick;
-      if (!(state & (1 << PIN_ENCODER_RIGHT)))  // High to low transition
-        fast_gpio_cfg_sense_input(PIN_ENCODER_RIGHT, NRF_GPIO_PIN_SENSE_HIGH);      
+      if (!(state & (1 << ENCODER_RIGHT_PIN)))  // High to low transition
+        fast_gpio_cfg_sense_input(ENCODER_RIGHT_PIN, NRF_GPIO_PIN_SENSE_HIGH);      
       else
-        fast_gpio_cfg_sense_input(PIN_ENCODER_RIGHT, NRF_GPIO_PIN_SENSE_LOW);
+        fast_gpio_cfg_sense_input(ENCODER_RIGHT_PIN, NRF_GPIO_PIN_SENSE_LOW);
     }       
   }
 }
@@ -630,7 +648,7 @@ void encoderAnalyzer(void)
   u16 last = start;
   for (int i = 0; 0 && i < logLen; i++)
   {
-    UART::hex((u8)(m_log[i] & 0x11));
+    UART::hex((uint8_t)(m_log[i] & 0x11));
     UART::put(' ');
     UART::dec((u16)((m_log[i] & 0xffe0) - last));
     last = m_log[i] & 0xffe0;

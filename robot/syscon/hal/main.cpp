@@ -17,6 +17,32 @@ const u32 MAX_FAILED_TRANSFER_COUNT = 10;
 GlobalDataToHead g_dataToHead;
 GlobalDataToBody g_dataToBody;
 
+void EncoderIRQTest(void) {
+  static bool direction = false;
+  static int counter = 0;
+  int now = GetCounter();
+  
+  return ;
+    UART::put("\r\nForward: ");
+    Motors::setPower(2, 0x6800);
+    Motors::update();
+    MicroWait(50000);
+    Motors::update();
+
+    MicroWait(500000);
+    Motors::printEncodersRaw();
+
+    UART::put("  Backward: ");
+    Motors::setPower(2, -0x6800);
+    Motors::update();
+    MicroWait(50000);
+    Motors::update();
+
+    MicroWait(500000);
+    Motors::printEncodersRaw();
+
+}
+
 int main(void)
 {
   // 
@@ -25,7 +51,7 @@ int main(void)
   // Initialize the hardware peripherals
   BatteryInit();
   TimerInit();
-  MotorsInit();   // Must init before power goes on
+  Motors::init();   // Must init before power goes on
   Head::init();
 
   UART::put("\r\nUnbrick me now...");
@@ -51,7 +77,7 @@ int main(void)
     g_dataToBody.common.source = SPI_SOURCE_CLEAR;
 
     // If we're not on the charge contacts, exchange data with the head board
-    if (0 && !IsOnContacts())
+    if (!IsOnContacts())
     {
       Head::TxRx(
         sizeof(GlobalDataToBody),
@@ -73,23 +99,23 @@ int main(void)
 
         // Stop all motors
         for (int i = 0; i < MOTOR_COUNT; i++)
-          MotorsSetPower(i, 0);
+          Motors::setPower(i, 0);
       }
     } else {
       failedTransferCount = 0;
       // Copy (valid) data to update motors
       for (int i = 0; i < MOTOR_COUNT; i++)
       {
-        MotorsSetPower(i, g_dataToBody.motorPWM[i]);
+        Motors::setPower(i, g_dataToBody.motorPWM[i]);
       }
     }
     
     // Only call every loop through - not all the time
-    MotorsUpdate();
+    Motors::update();
     BatteryUpdate();
-    //Radio::manage();
+    Radio::manage();
     Lights::manage(g_dataToBody.backpackColors);
-
+    
     // Update at 200Hz
     // 41666 ticks * 120 ns is roughly 5ms
     while ((GetCounter() - timerStart) < 41666)

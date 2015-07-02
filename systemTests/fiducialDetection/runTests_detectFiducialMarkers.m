@@ -17,25 +17,8 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
     % If makeNewResultsDirectory is true, make a new directory if runTests_detectFiducialMarkers.m is changed. Otherwise, use the last created directory.
     %     makeNewResultsDirectory = true;
     makeNewResultsDirectory = false;
-    
-    % Run everything
-    %     runWhichAlgorithms = {...
-    %         'c_with_refinement',...
-    %         'c_with_refinement_binomial',...
-    %         'c_no_refinement',...
-    %         'matlab_with_refinement_altTree',...
-    %         'matlab_no_refinement_altTree',...
-    %         'matlab_with_refinement',...
-    %         'matlab_no_refinement',...
-    %         'matlab_with_refinement_jpg'};
-    
-    % Run just the tests you want
-    %     runWhichAlgorithms = {...
-    %         'matlab_with_refinement',...
-    %         'matlab_with_refinement_jpg',...
-    %         'matlab_with_refinement_jpg_preprocess',...
-    %         };
-    
+
+    % Which types of tests do you want to run? c_with_refinement is the primary algorithm.
     runWhichAlgorithms = {...
         'c_with_refinement',...
         %'c_with_refinement_jpg',...
@@ -88,6 +71,7 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
     algorithmParameters.showImageDetections = false;
     algorithmParameters.preprocessingFunction = []; % If non-empty, preprocessing is applied before compression
     algorithmParameters.imageCompression = {'none', 0}; % Applies compression before running the algorithm
+    algorithmParameters.cornerMethod = 'laplacianPeaks'; % {'laplacianPeaks', 'lineFits'}
     
     algorithmParametersOrig = algorithmParameters;
     
@@ -133,7 +117,7 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
         elseif strcmp(runWhichAlgorithms{iAlgorithm}, 'matlab_with_refinement_jpg')
             isSimpleTest = false;
             
-            showJpgResults = true;
+            plotResults = true;
             
             jpgCompression = round(linspace(0,100,10));
             %             jpgCompression = jpgCompression(end:-1:1);
@@ -155,7 +139,7 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
                 disp(sprintf('Results for %s percentQuadsExtracted:%f percentMarkersCorrect:%f numMarkerErrors:%d fileSizePercent:%f', [runWhichAlgorithms{iAlgorithm}, '{', sprintf('%d',iJpg), '} (', sprintf('%d',jpgCompression(iJpg)), ')'], curResults.percentQuadsExtracted, curResults.percentMarkersCorrect, curResults.numMarkerErrors, curResults.compressedFileSizeTotal / curResults.uncompressedFileSizeTotal));
             end % for iJpg = 1:length(jpgCompression)
             
-            if showJpgResults
+            if plotResults
                 figure();
                 percentMarkersCorrect_jpg((length(jpgCompression)+1):end) = 100 * resultsData.('matlab_with_refinement').percentMarkersCorrect;
                 compressionPercent_jpg(length(jpgCompression)+1) = 100 * resultsData.('matlab_with_refinement').compressedFileSizeTotal / resultsData.('matlab_with_refinement').uncompressedFileSizeTotal;
@@ -167,11 +151,11 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
                 title('Accuracy of fiducial detection with different amounts of compression')
                 disp(['percentMarkersCorrect = [', sprintf(' %0.2f', percentMarkersCorrect_jpg), ']'])
                 disp(['compressionPercent = [', sprintf(' %0.2f', compressionPercent_jpg), ']'])
-            end % showJpgResults
+            end % plotResults
         elseif strcmp(runWhichAlgorithms{iAlgorithm}, 'c_with_refinement_jpg')
             isSimpleTest = false;
             
-            showJpgResults = true;
+            plotResults = true;
             
             jpgCompression = round(linspace(0,100,10));
             %             jpgCompression = jpgCompression(end:-1:1);
@@ -193,7 +177,7 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
                 disp(sprintf('Results for %s percentQuadsExtracted:%f percentMarkersCorrect:%f numMarkerErrors:%d fileSizePercent:%f', [runWhichAlgorithms{iAlgorithm}, '{', sprintf('%d',iJpg), '} (', sprintf('%d',jpgCompression(iJpg)), ')'], curResults.percentQuadsExtracted, curResults.percentMarkersCorrect, curResults.numMarkerErrors, curResults.compressedFileSizeTotal / curResults.uncompressedFileSizeTotal));
             end % for iJpg = 1:length(jpgCompression)
             
-            if showJpgResults
+            if plotResults
                 figure();
                 percentMarkersCorrect_jpg((length(jpgCompression)+1):end) = 100 * resultsData.('c_with_refinement').percentMarkersCorrect;
                 compressionPercent_jpg(length(jpgCompression)+1) = 100 * resultsData.('c_with_refinement').compressedFileSizeTotal / resultsData.('c_with_refinement').uncompressedFileSizeTotal;
@@ -205,12 +189,12 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
                 title('Accuracy of fiducial detection with different amounts of jpg compression')
                 disp(['percentMarkersCorrect = [', sprintf(' %0.2f', percentMarkersCorrect_jpg), ']'])
                 disp(['compressionPercent = [', sprintf(' %0.2f', compressionPercent_jpg), ']'])
-            end % showJpgResults
+            end % plotResults
             
         elseif strcmp(runWhichAlgorithms{iAlgorithm}, 'c_with_refinement_nathanJpg')
             isSimpleTest = false;
             
-            showJpgResults = true;
+            plotResults = true;
             
             jpgCompression = round(linspace(0,100,10));
             %             jpgCompression = jpgCompression(end:-1:1);
@@ -232,7 +216,7 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
                 disp(sprintf('Results for %s percentQuadsExtracted:%f percentMarkersCorrect:%f numMarkerErrors:%d fileSizePercent:%f', [runWhichAlgorithms{iAlgorithm}, '{', sprintf('%d',iJpg), '} (', sprintf('%d',jpgCompression(iJpg)), ')'], curResults.percentQuadsExtracted, curResults.percentMarkersCorrect, curResults.numMarkerErrors, curResults.compressedFileSizeTotal / curResults.uncompressedFileSizeTotal));
             end % for iJpg = 1:length(jpgCompression)
             
-            if showJpgResults
+            if plotResults
                 figure();
                 percentMarkersCorrect_nathanJpg((length(jpgCompression)+1):end) = 100 * resultsData.('c_with_refinement').percentMarkersCorrect;
                 compressionPercent_nathanJpg(length(jpgCompression)+1) = 100 * resultsData.('c_with_refinement').compressedFileSizeTotal / resultsData.('c_with_refinement').uncompressedFileSizeTotal;
@@ -250,12 +234,12 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
                 title('Accuracy of fiducial detection with different amounts of nathanJpg compression')
                 disp(['percentMarkersCorrect = [', sprintf(' %0.2f', percentMarkersCorrect_nathanJpg), ']'])
                 disp(['compressionPercent = [', sprintf(' %0.2f', compressionPercent_nathanJpg), ']'])
-            end % showJpgResults
+            end % plotResults
             
         elseif strcmp(runWhichAlgorithms{iAlgorithm}, 'matlab_with_refinement_jpg_preprocess')
             isSimpleTest = false;
             
-            showJpgResults = true;
+            plotResults = true;
             
             preprocessingFunctions = {...
                 @(image) (uint8((255/(255^0.4)) * double(rgb2gray2(image)).^0.4)),... % gamma correct with a factor of 0.4
@@ -292,7 +276,7 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
                 end % for iPreprocess = 1:length(preprocessingFunctions)
             end % for iJpg = 1:length(jpgCompression)
             
-            if showJpgResults
+            if plotResults
                 figure();
                 
                 % Add the non-preprocessed results to the beginning;
@@ -316,7 +300,7 @@ function allCompiledResults = runTests_detectFiducialMarkers(testJsonPattern, re
                 legend(legendArray);
                 
                 disp(toShowString);
-            end % showJpgResults
+            end % plotResults
             
         else
             % Unknown runWhichAlgorithms{iAlgorithm}

@@ -124,7 +124,7 @@ namespace Anki
     // A reasonable value for minQuadArea is 100
     //
     // Required ??? bytes of scratch
-    Result ComputeQuadrilateralsFromConnectedComponents(const ConnectedComponents &components, const s32 minQuadArea, const s32 quadSymmetryThreshold, const s32 minDistanceFromImageEdge, const s32 minLaplacianPeakRatio, const s32 imageHeight, const s32 imageWidth, FixedLengthList<Quadrilateral<s16> > &extractedQuads, MemoryStack scratch)
+    Result ComputeQuadrilateralsFromConnectedComponents(const ConnectedComponents &components, const s32 minQuadArea, const s32 quadSymmetryThreshold, const s32 minDistanceFromImageEdge, const s32 minLaplacianPeakRatio, const s32 imageHeight, const s32 imageWidth, const CornerMethod cornerMethod, FixedLengthList<Quadrilateral<s16> > &extractedQuads, MemoryStack scratch)
     {
       const s32 MAX_BOUNDARY_LENTH = 10000; // Probably significantly longer than would ever be needed
 
@@ -182,11 +182,19 @@ namespace Anki
         if(extractedBoundary.get_size() == 0)
           continue;
 
-        //BeginBenchmark("ExtractLaplacianPeaks");
         // 2. Compute the Laplacian peaks
-        if((lastResult = ExtractLaplacianPeaks(extractedBoundary, minLaplacianPeakRatio, peaks, scratch)) != RESULT_OK)
-          return lastResult;
-        //EndBenchmark("ExtractLaplacianPeaks");
+        //BeginBenchmark("ExtractPeaks");
+        if(cornerMethod == CORNER_METHOD_LAPLACIAN_PEAKS) {
+          if((lastResult = ExtractLaplacianPeaks(extractedBoundary, minLaplacianPeakRatio, peaks, scratch)) != RESULT_OK)
+            return lastResult;
+        } else if(cornerMethod == CORNER_METHOD_LINE_FITS) {
+          if((lastResult = ExtractLineFitsPeaks(extractedBoundary, peaks, imageHeight, imageWidth, scratch)) != RESULT_OK)
+            return lastResult;
+        } else {
+          AnkiAssert(false);
+        }
+        
+        //EndBenchmark("ExtractPeaks");
 
         if(peaks.get_size() != 4)
           continue;

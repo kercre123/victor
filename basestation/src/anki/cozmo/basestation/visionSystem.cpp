@@ -19,7 +19,7 @@
 #include "anki/cozmo/basestation/comms/robot/robotMessages.h"
 #include "anki/cozmo/basestation/robot.h"
 
-#include "anki/common/shared/mailbox_impl.h"
+#include "anki/common/basestation/mailbox_impl.h"
 #include "anki/vision/basestation/image_impl.h"
 
 #include "anki/common/basestation/math/point_impl.h"
@@ -398,6 +398,8 @@ namespace Cozmo {
 #if USE_MATLAB_DETECTOR
     const Result result = MatlabVisionProcessor::DetectMarkers(grayscaleImage, markers, homographies, ccmScratch);
 #else
+    const CornerMethod cornerMethod = CORNER_METHOD_LAPLACIAN_PEAKS; // {CORNER_METHOD_LAPLACIAN_PEAKS, CORNER_METHOD_LINE_FITS};
+    
     const Result result = DetectFiducialMarkers(
                                                 grayscaleImage,
                                                 markers,
@@ -407,7 +409,7 @@ namespace Cozmo {
                                                 parameters.component_minimumNumPixels, parameters.component_maximumNumPixels,
                                                 parameters.component_sparseMultiplyThreshold, parameters.component_solidMultiplyThreshold,
                                                 parameters.component_minHollowRatio,
-                                                parameters.minLaplacianPeakRatio,
+                                                cornerMethod, parameters.minLaplacianPeakRatio,
                                                 parameters.quads_minQuadArea, parameters.quads_quadSymmetryThreshold, parameters.quads_minDistanceFromImageEdge,
                                                 parameters.decode_minContrastRatio,
                                                 parameters.maxConnectedComponentSegments,

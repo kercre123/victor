@@ -19,12 +19,15 @@
 #include "nrf51.h"
 #include "nrf51_bitfields.h"
 
+#pragma anon_unions
+
 // Hard coded parameters - change if necessary
 #define     UESB_CORE_MAX_PAYLOAD_LENGTH    32
 #define     UESB_CORE_TX_FIFO_SIZE          8
 #define     UESB_CORE_RX_FIFO_SIZE          8
 
 #define     UESB_MAX_CHANNEL                125
+#define     UESB_MAX_PIPES                  8
 
 // Interrupt flags
 #define     UESB_INT_TX_SUCCESS_MSK         0x01
@@ -83,13 +86,9 @@ typedef enum {
     UESB_STATE_PRX
 } uesb_mainstate_t;
 
-typedef void (*uesb_event_handler_t)();
-
 // Main UESB configuration struct, contains all radio parameters
 typedef struct
 {
-    uesb_event_handler_t    event_handler;
-
     // General RF parameters
     uesb_bitrate_t          bitrate;
     uesb_crc_t              crc;
@@ -131,7 +130,12 @@ typedef struct
     uint8_t length;
     uint8_t pipe;
     int8_t  rssi;
-    uint8_t data[UESB_CORE_MAX_PAYLOAD_LENGTH];
+
+    struct {
+        uint8_t pid;
+        uint8_t null;
+        uint8_t data[UESB_CORE_MAX_PAYLOAD_LENGTH];
+    };
 } uesb_payload_t;
 
 typedef struct
@@ -151,7 +155,7 @@ uint32_t uesb_start(void);
 uint32_t uesb_stop(void);
 uint32_t uesb_flush_tx(void);
 uint32_t uesb_flush_rx(void);
-uint32_t uesb_get_clear_interrupts(uint32_t *interrupts);
+uint32_t uesb_get_clear_interrupts(void);
 uint32_t uesb_set_address(uesb_address_type_t address, const uint8_t *data_ptr);
 uint32_t uesb_set_rf_channel(uint32_t channel);
 uint32_t uesb_set_tx_power(uesb_tx_power_t tx_output_power);
