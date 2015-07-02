@@ -80,6 +80,7 @@ simulator/controllers/block_controller/block_controller
 simulator/controllers/cozmo_c_controller/cozmo_c_controller
 world_comms_controller
 screenshot.png
+rx-packet-log.txt
 blockworld_controller
 *.mvlib
 *.shv*lib
