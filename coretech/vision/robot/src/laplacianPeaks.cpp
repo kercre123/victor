@@ -142,7 +142,7 @@ namespace Anki
           }
         }
         
-        const s32 numSide = boundaryIndex.size();
+        const s32 numSide = static_cast<s32>(boundaryIndex.size());
         
         // Solve all the line fit equations in slope-intercept format
         // TODO: what about horizontal lines?
@@ -164,8 +164,9 @@ namespace Anki
             // A = [boundary(boundaryIndex,2) ones(numSide,1)];
             // p{iBin} = A \ boundary(boundaryIndex,1);
           
-            cv::Mat_<f32> A(boundaryIndex.size(),2);
-            cv::Mat_<f32> b(boundaryIndex.size(), 1);
+            const s32 nrows = static_cast<s32>(boundaryIndex.size());
+            cv::Mat_<f32> A(nrows, 2);
+            cv::Mat_<f32> b(nrows, 1);
             cv::Mat_<f32> x(2, 1);
 
             for(s32 i=0; i<boundaryIndex.size(); i++) {
