@@ -855,66 +855,71 @@ bool SetHeadAngle::operator!=(const SetHeadAngle& other) const
 }
 
 
-// MESSAGE TrackHeadToObject
+// MESSAGE TrackToObject
 
-TrackHeadToObject::TrackHeadToObject(const uint8_t* buff, size_t len)
+TrackToObject::TrackToObject(const uint8_t* buff, size_t len)
 {
 	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
 	Unpack(buffer);
 }
 
-TrackHeadToObject::TrackHeadToObject(const CLAD::SafeMessageBuffer& buffer)
+TrackToObject::TrackToObject(const CLAD::SafeMessageBuffer& buffer)
 {
 	Unpack(buffer);
 }
 
-size_t TrackHeadToObject::Pack(uint8_t* buff, size_t len) const
+size_t TrackToObject::Pack(uint8_t* buff, size_t len) const
 {
 	CLAD::SafeMessageBuffer buffer(buff, len, false);
 	return Pack(buffer);
 }
 
-size_t TrackHeadToObject::Pack(CLAD::SafeMessageBuffer& buffer) const
+size_t TrackToObject::Pack(CLAD::SafeMessageBuffer& buffer) const
 {
 	buffer.Write(this->objectID);
 	buffer.Write(this->robotID);
+	buffer.Write(this->headOnly);
 	const size_t bytesWritten {buffer.GetBytesWritten()};
 	return bytesWritten;
 }
 
-size_t TrackHeadToObject::Unpack(const uint8_t* buff, const size_t len)
+size_t TrackToObject::Unpack(const uint8_t* buff, const size_t len)
 {
 	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
 	return Unpack(buffer);
 }
 
-size_t TrackHeadToObject::Unpack(const CLAD::SafeMessageBuffer& buffer)
+size_t TrackToObject::Unpack(const CLAD::SafeMessageBuffer& buffer)
 {
 	buffer.Read(this->objectID);
 	buffer.Read(this->robotID);
+	buffer.Read(this->headOnly);
 	return buffer.GetBytesRead();
 }
 
-size_t TrackHeadToObject::Size() const
+size_t TrackToObject::Size() const
 {
 	size_t result = 0;
 	//objectID
 	result += 4; // = uint_32
 	//robotID
 	result += 1; // = uint_8
+	//headOnly
+	result += 1; // = bool
 	return result;
 }
 
-bool TrackHeadToObject::operator==(const TrackHeadToObject& other) const
+bool TrackToObject::operator==(const TrackToObject& other) const
 {
 	if (objectID != other.objectID
-	|| robotID != other.robotID) {
+	|| robotID != other.robotID
+	|| headOnly != other.headOnly) {
 		return false;
 	}
 	return true;
 }
 
-bool TrackHeadToObject::operator!=(const TrackHeadToObject& other) const
+bool TrackToObject::operator!=(const TrackToObject& other) const
 {
 	return !(operator==(other));
 }
@@ -4332,8 +4337,8 @@ const char* MessageTagToString(const MessageTag tag) {
 		return "SetLiftHeight";
 	case MessageTag::SetHeadAngle:
 		return "SetHeadAngle";
-	case MessageTag::TrackHeadToObject:
-		return "TrackHeadToObject";
+	case MessageTag::TrackToObject:
+		return "TrackToObject";
 	case MessageTag::StopAllMotors:
 		return "StopAllMotors";
 	case MessageTag::ImageRequest:
@@ -4827,31 +4832,31 @@ void Message::Set_SetHeadAngle(Anki::Cozmo::U2G::SetHeadAngle&& new_SetHeadAngle
 }
 
 
-const Anki::Cozmo::U2G::TrackHeadToObject& Message::Get_TrackHeadToObject() const
+const Anki::Cozmo::U2G::TrackToObject& Message::Get_TrackToObject() const
 {
-	assert(_tag == Tag::TrackHeadToObject);
-	return _TrackHeadToObject;
+	assert(_tag == Tag::TrackToObject);
+	return _TrackToObject;
 }
-void Message::Set_TrackHeadToObject(const Anki::Cozmo::U2G::TrackHeadToObject& new_TrackHeadToObject)
+void Message::Set_TrackToObject(const Anki::Cozmo::U2G::TrackToObject& new_TrackToObject)
 {
-	if(this->_tag == Tag::TrackHeadToObject) {
-		_TrackHeadToObject = new_TrackHeadToObject;
+	if(this->_tag == Tag::TrackToObject) {
+		_TrackToObject = new_TrackToObject;
 	}
 	else {
 		ClearCurrent();
-		new(&_TrackHeadToObject) Anki::Cozmo::U2G::TrackHeadToObject{new_TrackHeadToObject};
-		_tag = Tag::TrackHeadToObject;
+		new(&_TrackToObject) Anki::Cozmo::U2G::TrackToObject{new_TrackToObject};
+		_tag = Tag::TrackToObject;
 	}
 }
-void Message::Set_TrackHeadToObject(Anki::Cozmo::U2G::TrackHeadToObject&& new_TrackHeadToObject)
+void Message::Set_TrackToObject(Anki::Cozmo::U2G::TrackToObject&& new_TrackToObject)
 {
-	if(this->_tag == Tag::TrackHeadToObject) {
-		_TrackHeadToObject = std::move(new_TrackHeadToObject);
+	if(this->_tag == Tag::TrackToObject) {
+		_TrackToObject = std::move(new_TrackToObject);
 	}
 	else {
 		ClearCurrent();
-		new(&_TrackHeadToObject) Anki::Cozmo::U2G::TrackHeadToObject{std::move(new_TrackHeadToObject)};
-		_tag = Tag::TrackHeadToObject;
+		new(&_TrackToObject) Anki::Cozmo::U2G::TrackToObject{std::move(new_TrackToObject)};
+		_tag = Tag::TrackToObject;
 	}
 }
 
@@ -6425,12 +6430,12 @@ size_t Message::Unpack(const CLAD::SafeMessageBuffer& buffer)
 			this->_SetHeadAngle.Unpack(buffer);
 		}
 		break;
-	case Tag::TrackHeadToObject:
+	case Tag::TrackToObject:
 		if (newTag != oldTag) {
-			new(&(this->_TrackHeadToObject)) Anki::Cozmo::U2G::TrackHeadToObject(buffer);
+			new(&(this->_TrackToObject)) Anki::Cozmo::U2G::TrackToObject(buffer);
 		}
 		else {
-			this->_TrackHeadToObject.Unpack(buffer);
+			this->_TrackToObject.Unpack(buffer);
 		}
 		break;
 	case Tag::StopAllMotors:
@@ -6889,8 +6894,8 @@ size_t Message::Pack(CLAD::SafeMessageBuffer& buffer) const
 	case Tag::SetHeadAngle:
 		this->_SetHeadAngle.Pack(buffer);
 		break;
-	case Tag::TrackHeadToObject:
-		this->_TrackHeadToObject.Pack(buffer);
+	case Tag::TrackToObject:
+		this->_TrackToObject.Pack(buffer);
 		break;
 	case Tag::StopAllMotors:
 		this->_StopAllMotors.Pack(buffer);
@@ -7092,8 +7097,8 @@ size_t Message::Size() const
 	case Tag::SetHeadAngle:
 		result += _SetHeadAngle.Size();
 		break;
-	case Tag::TrackHeadToObject:
-		result += _TrackHeadToObject.Size();
+	case Tag::TrackToObject:
+		result += _TrackToObject.Size();
 		break;
 	case Tag::StopAllMotors:
 		result += _StopAllMotors.Size();
@@ -7294,8 +7299,8 @@ void Message::ClearCurrent()
 	case Tag::SetHeadAngle:
 		_SetHeadAngle.~SetHeadAngle();
 		break;
-	case Tag::TrackHeadToObject:
-		_TrackHeadToObject.~TrackHeadToObject();
+	case Tag::TrackToObject:
+		_TrackToObject.~TrackToObject();
 		break;
 	case Tag::StopAllMotors:
 		_StopAllMotors.~StopAllMotors();
