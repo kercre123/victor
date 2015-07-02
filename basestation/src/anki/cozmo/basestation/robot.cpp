@@ -1118,12 +1118,11 @@ namespace Anki {
       return SendTapBlockOnGround(numTaps);
     }
       
-    Result Robot::EnableTrackToObject(const u32 objectID, bool headOnly)
+    Result Robot::EnableTrackHeadToObject(const u32 objectID)
     {
       _trackHeadToObjectID = objectID;
       
       if(_blockWorld.GetObjectByID(_trackHeadToObjectID) != nullptr) {
-        _trackObjectWithHeadOnly = headOnly;
         return RESULT_OK;
       } else {
         PRINT_NAMED_ERROR("Robot.TrackHeadToObject",
@@ -1134,7 +1133,7 @@ namespace Anki {
       }
     }
       
-    Result Robot::DisableTrackToObject()
+    Result Robot::DisableTrackHeadToObject()
     {
       _trackHeadToObjectID.UnSet();
       return RESULT_OK;
