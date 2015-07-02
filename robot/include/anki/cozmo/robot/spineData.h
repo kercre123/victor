@@ -34,7 +34,7 @@ struct GlobalCommon
 };
 
 struct AcceleratorPacket {
-  int8_t    accelData[3];
+  int8_t    x, y, z;
   uint8_t   shockCount;
   uint16_t  timestamp;
 };
