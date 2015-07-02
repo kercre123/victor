@@ -749,11 +749,6 @@
               <FilePath>.\supervisor\src\faceTrackingController.cpp</FilePath>
             </File>
             <File>
-              <FileName>eyeController.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\eyeController.cpp</FilePath>
-            </File>
-            <File>
               <FileName>backpackLightController.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\backpackLightController.cpp</FilePath>
@@ -769,39 +764,9 @@
           <GroupName>coretech-common</GroupName>
           <Files>
             <File>
-              <FileName>comparisons.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\common\robot\src\comparisons.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>compress.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\common\robot\src\compress.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>decisionTree.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\common\robot\src\decisionTree.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>draw.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\common\robot\src\draw.cpp</FilePath>
-            </File>
-            <File>
               <FileName>errorHandling.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\common\robot\src\errorHandling.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>find.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\common\robot\src\find.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>fixedLengthList.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\common\robot\src\fixedLengthList.cpp</FilePath>
             </File>
             <File>
               <FileName>flags.cpp</FileName>
@@ -809,64 +774,14 @@
               <FilePath>..\coretech\common\robot\src\flags.cpp</FilePath>
             </File>
             <File>
-              <FileName>geometry.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\common\robot\src\geometry.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>interpolate.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\common\robot\src\interpolate.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>matlabInterface.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\common\robot\src\matlabInterface.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>matrix.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\common\robot\src\matrix.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>memory.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\common\robot\src\memory.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>opencvLight.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\common\robot\src\opencvLight.cpp</FilePath>
-            </File>
-            <File>
               <FileName>radians.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\common\shared\src\radians.cpp</FilePath>
             </File>
             <File>
-              <FileName>sequences.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\common\robot\src\sequences.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>serialize.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\common\robot\src\serialize.cpp</FilePath>
-            </File>
-            <File>
               <FileName>trig_fast.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\common\robot\src\trig_fast.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>utilities.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\common\robot\src\utilities.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>utilities_c.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\coretech\common\robot\src\utilities_c.c</FilePath>
             </File>
             <File>
               <FileName>utilities_shared.cpp</FileName>
@@ -878,6 +793,16 @@
               <FileType>8</FileType>
               <FilePath>..\coretech\common\shared\src\velocityProfileGenerator.cpp</FilePath>
             </File>
+            <File>
+              <FileName>memory.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\common\robot\src\memory.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>utilities.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\common\robot\src\utilities.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -887,93 +812,6 @@
               <FileName>path.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\planning\shared\src\path.cpp</FilePath>
-            </File>
-          </Files>
-        </Group>
-        <Group>
-          <GroupName>embedded-tests</GroupName>
-          <GroupOption>
-            <CommonProperty>
-              <UseCPPCompiler>0</UseCPPCompiler>
-              <RVCTCodeConst>0</RVCTCodeConst>
-              <RVCTZI>0</RVCTZI>
-              <RVCTOtherData>0</RVCTOtherData>
-              <ModuleSelection>0</ModuleSelection>
-              <IncludeInBuild>0</IncludeInBuild>
-              <AlwaysBuild>2</AlwaysBuild>
-              <GenerateAssemblyFile>2</GenerateAssemblyFile>
-              <AssembleAssemblyFile>2</AssembleAssemblyFile>
-              <PublicsOnly>2</PublicsOnly>
-              <StopOnExitCode>11</StopOnExitCode>
-              <CustomArgument></CustomArgument>
-              <IncludeLibraryModules></IncludeLibraryModules>
-              <ComprImg>0</ComprImg>
-            </CommonProperty>
-            <GroupArmAds>
-              <Cads>
-                <interw>2</interw>
-                <Optim>0</Optim>
-                <oTime>2</oTime>
-                <SplitLS>2</SplitLS>
-                <OneElfS>2</OneElfS>
-                <Strict>2</Strict>
-                <EnumInt>2</EnumInt>
-                <PlainCh>2</PlainCh>
-                <Ropi>2</Ropi>
-                <Rwpi>2</Rwpi>
-                <wLevel>0</wLevel>
-                <uThumb>2</uThumb>
-                <uSurpInc>2</uSurpInc>
-                <VariousControls>
-                  <MiscControls></MiscControls>
-                  <Define></Define>
-                  <Undefine></Undefine>
-                  <IncludePath></IncludePath>
-                </VariousControls>
-              </Cads>
-              <Aads>
-                <interw>2</interw>
-                <Ropi>2</Ropi>
-                <Rwpi>2</Rwpi>
-                <thumb>2</thumb>
-                <SplitLS>2</SplitLS>
-                <SwStkChk>2</SwStkChk>
-                <NoWarn>2</NoWarn>
-                <uSurpInc>2</uSurpInc>
-                <VariousControls>
-                  <MiscControls></MiscControls>
-                  <Define></Define>
-                  <Undefine></Undefine>
-                  <IncludePath></IncludePath>
-                </VariousControls>
-              </Aads>
-            </GroupArmAds>
-          </GroupOption>
-          <Files>
-            <File>
-              <FileName>embeddedCommonTests.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\test\embeddedCommonTests.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>embeddedTests.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\test\embeddedTests.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>embeddedTests.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>.\test\embeddedTests.h</FilePath>
-            </File>
-            <File>
-              <FileName>embeddedVisionTests.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\test\embeddedVisionTests.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>run_m4_embeddedTests.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\test\run_m4_embeddedTests.cpp</FilePath>
             </File>
           </Files>
         </Group>
@@ -1799,11 +1637,6 @@
               <FilePath>.\supervisor\src\faceTrackingController.cpp</FilePath>
             </File>
             <File>
-              <FileName>eyeController.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\eyeController.cpp</FilePath>
-            </File>
-            <File>
               <FileName>backpackLightController.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\backpackLightController.cpp</FilePath>
@@ -1819,39 +1652,9 @@
           <GroupName>coretech-common</GroupName>
           <Files>
             <File>
-              <FileName>comparisons.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\common\robot\src\comparisons.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>compress.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\common\robot\src\compress.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>decisionTree.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\common\robot\src\decisionTree.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>draw.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\common\robot\src\draw.cpp</FilePath>
-            </File>
-            <File>
               <FileName>errorHandling.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\common\robot\src\errorHandling.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>find.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\common\robot\src\find.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>fixedLengthList.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\common\robot\src\fixedLengthList.cpp</FilePath>
             </File>
             <File>
               <FileName>flags.cpp</FileName>
@@ -1859,64 +1662,14 @@
               <FilePath>..\coretech\common\robot\src\flags.cpp</FilePath>
             </File>
             <File>
-              <FileName>geometry.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\common\robot\src\geometry.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>interpolate.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\common\robot\src\interpolate.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>matlabInterface.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\common\robot\src\matlabInterface.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>matrix.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\common\robot\src\matrix.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>memory.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\common\robot\src\memory.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>opencvLight.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\common\robot\src\opencvLight.cpp</FilePath>
-            </File>
-            <File>
               <FileName>radians.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\common\shared\src\radians.cpp</FilePath>
             </File>
             <File>
-              <FileName>sequences.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\common\robot\src\sequences.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>serialize.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\common\robot\src\serialize.cpp</FilePath>
-            </File>
-            <File>
               <FileName>trig_fast.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\common\robot\src\trig_fast.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>utilities.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\coretech\common\robot\src\utilities.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>utilities_c.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\coretech\common\robot\src\utilities_c.c</FilePath>
             </File>
             <File>
               <FileName>utilities_shared.cpp</FileName>
@@ -1927,6 +1680,16 @@
               <FileName>velocityProfileGenerator.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\common\shared\src\velocityProfileGenerator.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>memory.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\common\robot\src\memory.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>utilities.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\coretech\common\robot\src\utilities.cpp</FilePath>
             </File>
           </Files>
         </Group>
@@ -1994,36 +1757,6 @@
               <FileName>path.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\coretech\planning\shared\src\path.cpp</FilePath>
-            </File>
-          </Files>
-        </Group>
-        <Group>
-          <GroupName>embedded-tests</GroupName>
-          <Files>
-            <File>
-              <FileName>embeddedCommonTests.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\test\embeddedCommonTests.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>embeddedTests.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\test\embeddedTests.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>embeddedTests.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>.\test\embeddedTests.h</FilePath>
-            </File>
-            <File>
-              <FileName>embeddedVisionTests.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\test\embeddedVisionTests.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>run_m4_embeddedTests.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\test\run_m4_embeddedTests.cpp</FilePath>
             </File>
           </Files>
         </Group>
