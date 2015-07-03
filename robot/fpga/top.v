@@ -13,6 +13,8 @@ module top (
   input wire [5:0] camD; ///< Camera pixel data
   );
 
+//////////////// SPI Testing /////////////////////
+
   reg inNOut; ///< SIO direction is in / not out
   reg [31:0] testFifo;
 
@@ -36,5 +38,58 @@ module top (
       testFifo <= {testFifo[30:0], 0};
     end
   end
+
+///////// Camera buffering ////////////////////////////////////////////////////
+
+  /// Camera timing signals
+  wire blankCounterReset; ///< Hold the blank counters in reset
+  wire hBlankStrobe; ///< Strobe signal when h blank is detected
+  wire vBlankStrobe; ///< Strobe signal when v blank is detected
+
+  /// Wire these ^^ into LFSR counters here
+
+  /// Block ram control signals
+  wire [7:0] ebrRData;
+  reg  [8:0] ebrRAddr;
+  wire       ebrRClk;
+  reg        ebrRE;
+  wire [7:0] ebrWData;
+  reg  [8:0] ebrWAddr;
+  wire       ebrWClk;
+  reg        ebrWE;
+
+  SB_RAM512x8 ebr0 (
+    .RDATA(ebrRData),
+    .RADDR(ebrRAddr),
+    .RCLK(ebrRClk),
+    .RCLKE(ebrRE),
+    .RE(ebrRE),
+    .WADDR(ebrWAddr),
+    .WCLK(ebrWClk),
+    .WCLKE(ebrWE),
+    .WDATA(ebrWData),
+    .WE(ebrWE)
+  );
+  defparam ebr0.INIT_0 = 256'h0000000000000000000000000000000000000000000000000000000000000000;
+  defparam ebr0.INIT_1 = 256'h0000000000000000000000000000000000000000000000000000000000000000;
+  defparam ebr0.INIT_2 = 256'h0000000000000000000000000000000000000000000000000000000000000000;
+  defparam ebr0.INIT_3 = 256'h0000000000000000000000000000000000000000000000000000000000000000;
+  defparam ebr0.INIT_4 = 256'h0000000000000000000000000000000000000000000000000000000000000000;
+  defparam ebr0.INIT_5 = 256'h0000000000000000000000000000000000000000000000000000000000000000;
+  defparam ebr0.INIT_6 = 256'h0000000000000000000000000000000000000000000000000000000000000000;
+  defparam ebr0.INIT_7 = 256'h0000000000000000000000000000000000000000000000000000000000000000;
+  defparam ebr0.INIT_8 = 256'h0000000000000000000000000000000000000000000000000000000000000000;
+  defparam ebr0.INIT_9 = 256'h0000000000000000000000000000000000000000000000000000000000000000;
+  defparam ebr0.INIT_A = 256'h0000000000000000000000000000000000000000000000000000000000000000;
+  defparam ebr0.INIT_B = 256'h0000000000000000000000000000000000000000000000000000000000000000;
+  defparam ebr0.INIT_C = 256'h0000000000000000000000000000000000000000000000000000000000000000;
+  defparam ebr0.INIT_D = 256'h0000000000000000000000000000000000000000000000000000000000000000;
+  defparam ebr0.INIT_E = 256'h0000000000000000000000000000000000000000000000000000000000000000;
+  defparam ebr0.INIT_F = 256'h0000000000000000000000000000000000000000000000000000000000000000;
+
+
+
+
+
 
 endmodule
