@@ -176,11 +176,13 @@ def main(scriptArgs):
                                   util_library_type=static_library
                                   worldviz_library_type=static_library
                                   arch_group={0}
-                                  gtest_path={1}
-                                  coretech_external_path={2}
-                                  util_gyp_path={3}
-                                  cozmo_engine_path={4}
-                                  """.format(options.arch, gtestPath, coretechExternalPath, ankiUtilProjectPath, 
+                                  output_location={1}
+                                  cti_gtest_path={2}
+                                  coretech_external_path={3}
+                                  cti_util_gyp_path={4}
+                                  cozmo_engine_path={5}
+                                  """.format(options.arch, os.path.join(projectRoot, 'generated/mac'), gtestPath, 
+                                    coretechExternalPath, ankiUtilProjectPath, 
                                     subprocess.check_output(['git', 'rev-parse', '--show-toplevel']).rstrip("\r\n"))
       gypArgs = ['--check', '--depth', '.', '-f', 'xcode', '--toplevel-dir', '../..', '--generator-output', '../../generated/mac', gypFile]
       gyp.main(gypArgs)

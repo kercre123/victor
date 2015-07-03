@@ -165,12 +165,14 @@ def main(scriptArgs):
 
 
   configurePath = os.path.join(projectRoot, 'project/gyp')
+  coretechInternalConfigurePath = os.path.join(options.coretechInternalPath, 'project/gyp')
   gypFile = 'cozmoEngine.gyp'
   # gypify path names
   gtestPath = os.path.relpath(gtestPath, configurePath)
-  # coretechExternalPath = os.path.relpath(coretechExternalPath, configurePath)
-  # ankiUtilProjectPath = os.path.relpath(ankiUtilProjectPath, configurePath)
-  # coretechInternalProjectPath = os.path.relpath(coretechInternalProjectPath, configurePath)
+  ctiGtestPath = os.path.relpath(gtestPath, coretechInternalConfigurePath)
+  ankiUtilProjectPath = os.path.relpath(ankiUtilProjectPath, configurePath)
+  ctiAnkiUtilProjectPath = os.path.relpath(ankiUtilProjectPath, coretechInternalConfigurePath)
+  coretechInternalProjectPath = os.path.relpath(coretechInternalProjectPath, configurePath)
 
   # mac
   if 'mac' in options.platforms:
@@ -181,7 +183,6 @@ def main(scriptArgs):
                                   # de_library_type=shared_library
                                   # gyp_location={1}
                                   # configure_location={2}
-                                  # output_location={0}
       #################### GYP_DEFINES ####
       os.environ['GYP_DEFINES'] = """ 
                                   OS=mac
@@ -191,12 +192,16 @@ def main(scriptArgs):
                                   util_library_type=static_library
                                   worldviz_library_type=static_library
                                   arch_group={0}
-                                  gtest_path={1}
-                                  coretech_external_path={2}
-                                  util_gyp_path={3}
-                                  cozmo_engine_path={4}
-                                  cti_gyp_path={5}
-                                  """.format(options.arch, gtestPath, coretechExternalPath, ankiUtilProjectPath, 
+                                  output_location={1}
+                                  gtest_path={2}
+                                  cti_gtest_path={3}
+                                  coretech_external_path={4}
+                                  util_gyp_path={5}
+                                  cti_util_gyp_path={6}
+                                  cozmo_engine_path={7}
+                                  cti_gyp_path={8}
+                                  """.format(options.arch, os.path.join(options.projectRoot, 'generated/mac'),
+                                    gtestPath, ctiGtestPath, coretechExternalPath, ankiUtilProjectPath, ctiAnkiUtilProjectPath,
                                     projectRoot, coretechInternalProjectPath )
       gypArgs = ['--check', '--depth', '.', '-f', 'xcode', '--toplevel-dir', '../..', '--generator-output', '../../generated/mac', gypFile]
       gyp.main(gypArgs)
