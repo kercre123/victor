@@ -3019,205 +3019,131 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledProjective)
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledProjective)
 
-//GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledPlanar6dof)
-//{
-//MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
-//MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
-//MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
+GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledPlanar6dof)
+{
+  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
 
-//ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
-//
-//  Array<u8> templateImage(cozmo_date2014_01_29_time11_41_05_frame10_320x240_HEIGHT, cozmo_date2014_01_29_time11_41_05_frame10_320x240_WIDTH, scratchOffchip);
-//  Array<u8> nextImage(cozmo_date2014_01_29_time11_41_05_frame12_320x240_HEIGHT, cozmo_date2014_01_29_time11_41_05_frame12_320x240_WIDTH, scratchOnchip);
-//
-//  const Quadrilateral<f32> templateQuad(Point<f32>(128,78), Point<f32>(220,74), Point<f32>(229,167), Point<f32>(127,171));
-//
-//  const s32 numPyramidLevels = 4;
-//
-//  const s32 maxIterations = 25;
-//  const f32 convergenceTolerance = .05f;
-//
-//  const f32 scaleTemplateRegionPercent = 1.05f;
-//
-//  const u8 verify_maxPixelDifference = 30;
-//
-//  const s32 maxSamplesAtBaseLevel = 2000;
-//
-//  // Are these correct?
-//  const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_X = 317.23763f;
-//  const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_Y = 318.38113f;
-//  const f32 HEAD_CAM_CALIB_CENTER_X       = 151.88373f;
-//  const f32 HEAD_CAM_CALIB_CENTER_Y       = 129.03379f;
-//  const f32 DEFAULT_BLOCK_MARKER_WIDTH_MM = 26.f;
-//
-//  // TODO: add check that images were loaded correctly
-//
-//  templateImage.Set(&cozmo_date2014_01_29_time11_41_05_frame10_320x240[0], cozmo_date2014_01_29_time11_41_05_frame10_320x240_WIDTH*cozmo_date2014_01_29_time11_41_05_frame10_320x240_HEIGHT);
-//  nextImage.Set(&cozmo_date2014_01_29_time11_41_05_frame12_320x240[0], cozmo_date2014_01_29_time11_41_05_frame12_320x240_WIDTH*cozmo_date2014_01_29_time11_41_05_frame12_320x240_HEIGHT);
-//
-//  // Translation-only LK_Projective
-//  {
-//    PUSH_MEMORY_STACK(scratchCcm);
-//    PUSH_MEMORY_STACK(scratchOnchip);
-//    PUSH_MEMORY_STACK(scratchOffchip);
-//
-//    InitBenchmarking();
-//
-//    const f64 time0 = GetTimeF64();
-//
-//    TemplateTracker::LucasKanadeTracker_SampledPlanar6dof tracker(templateImage, templateQuad, scaleTemplateRegionPercent, numPyramidLevels, Transformations::TRANSFORM_TRANSLATION, maxSamplesAtBaseLevel,
-//      HEAD_CAM_CALIB_FOCAL_LENGTH_X,
-//      HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
-//      HEAD_CAM_CALIB_CENTER_X,
-//      HEAD_CAM_CALIB_CENTER_Y,
-//      DEFAULT_BLOCK_MARKER_WIDTH_MM,
-//      scratchCcm, scratchOnchip, scratchOffchip);
-//
-//    ASSERT_TRUE(tracker.IsValid());
-//
-//    //tracker.ShowTemplate("tracker", true, true);
-//
-//    const f64 time1 = GetTimeF64();
-//
-//    bool verify_converged = false;
-//    s32 verify_meanAbsoluteDifference;
-//    s32 verify_numInBounds;
-//    s32 verify_numSimilarPixels;
-//
-//    ASSERT_TRUE(tracker.UpdateTrack(nextImage, maxIterations, convergenceTolerance, verify_maxPixelDifference, verify_converged, verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels, scratchCcm) == RESULT_OK);
-//
-//    ASSERT_TRUE(verify_converged == true);
-//    /*ASSERT_TRUE(verify_meanAbsoluteDifference == 10);
-//    ASSERT_TRUE(verify_numInBounds == 121);
-//    ASSERT_TRUE(verify_numSimilarPixels == 115);*/
-//
-//    const f64 time2 = GetTimeF64();
-//
-//    CoreTechPrint("Translation-only LK_SampledPlanar6dof totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
-//    ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
-//
-//    tracker.get_transformation().Print("Translation-only LK_SampledPlanar6dof");
-//
-//    // This ground truth is from the PC c++ version
-//    Array<f32> transform_groundTruth = Eye<f32>(3, 3, scratchOffchip);
-//    transform_groundTruth[0][2] = 3.143f;;
-//    transform_groundTruth[1][2] = -4.952f;
-//
-//    Array<u8> warpedImage(cozmo_date2014_01_29_time11_41_05_frame10_320x240_HEIGHT, cozmo_date2014_01_29_time11_41_05_frame10_320x240_WIDTH, scratchOffchip);
-//    tracker.get_transformation().Transform(templateImage, warpedImage, scratchOffchip);
-//    //warpedImage.Show("translationWarped", false, false, false);
-//    //nextImage.Show("nextImage", true, false, false);
-//
-//    ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .01));
-//  }
-//
-//#if 0 // Affine updates not supported with planar 6dof tracker (?)
-//  // Affine LK_SampledProjective
-//  {
-//    PUSH_MEMORY_STACK(scratchCcm);
-//    PUSH_MEMORY_STACK(scratchOnchip);
-//    PUSH_MEMORY_STACK(scratchOffchip);
-//
-//    InitBenchmarking();
-//
-//    const f64 time0 = GetTimeF64();
-//
-//    TemplateTracker::LucasKanadeTracker_SampledProjective tracker(templateImage, templateQuad, scaleTemplateRegionPercent, numPyramidLevels, Transformations::TRANSFORM_AFFINE, maxSamplesAtBaseLevel, scratchCcm, scratchOnchip, scratchOffchip);
-//
-//    ASSERT_TRUE(tracker.IsValid());
-//
-//    const f64 time1 = GetTimeF64();
-//
-//    bool verify_converged = false;
-//    s32 verify_meanAbsoluteDifference;
-//    s32 verify_numInBounds;
-//    s32 verify_numSimilarPixels;
-//
-//    ASSERT_TRUE(tracker.UpdateTrack(nextImage, maxIterations, convergenceTolerance, verify_maxPixelDifference, verify_converged, verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels, scratchCcm) == RESULT_OK);
-//
-//    ASSERT_TRUE(verify_converged == true);
-//    /*ASSERT_TRUE(verify_meanAbsoluteDifference == 8);
-//    ASSERT_TRUE(verify_numInBounds == 121);
-//    ASSERT_TRUE(verify_numSimilarPixels == 119);*/
-//
-//    const f64 time2 = GetTimeF64();
-//
-//    CoreTechPrint("Affine LK_SampledProjective totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
-//    ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
-//
-//    tracker.get_transformation().Print("Affine LK_SampledProjective");
-//
-//    Array<u8> warpedImage(cozmo_date2014_01_29_time11_41_05_frame10_320x240_HEIGHT, cozmo_date2014_01_29_time11_41_05_frame10_320x240_WIDTH, scratchOffchip);
-//    tracker.get_transformation().TransformArray(templateImage, warpedImage, scratchOffchip);
-//    //warpedImage.Show("affineWarped", false, false, false);
-//    //nextImage.Show("nextImage", true, false, false);
-//
-//    // This ground truth is from the PC c++ version
-//    Array<f32> transform_groundTruth = Eye<f32>(3,3,scratchOffchip);
-//    transform_groundTruth[0][0] = 1.064f; transform_groundTruth[0][1] = -0.004f; transform_groundTruth[0][2] = 3.225f;
-//    transform_groundTruth[1][0] = 0.002f; transform_groundTruth[1][1] = 1.058f;  transform_groundTruth[1][2] = -4.375f;
-//    transform_groundTruth[2][0] = 0.0f;   transform_groundTruth[2][1] = 0.0f;    transform_groundTruth[2][2] = 1.0f;
-//
-//    ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .01));
-//  }
-//#endif
-//
-//  // Projective LK_SampledPlanar6dof
-//  {
-//    PUSH_MEMORY_STACK(scratchCcm);
-//    PUSH_MEMORY_STACK(scratchOnchip);
-//    PUSH_MEMORY_STACK(scratchOffchip);
-//
-//    InitBenchmarking();
-//
-//    const f64 time0 = GetTimeF64();
-//
-//    TemplateTracker::LucasKanadeTracker_SampledPlanar6dof tracker(templateImage, templateQuad, scaleTemplateRegionPercent, numPyramidLevels, Transformations::TRANSFORM_PROJECTIVE, maxSamplesAtBaseLevel,
-//      HEAD_CAM_CALIB_FOCAL_LENGTH_X,
-//      HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
-//      HEAD_CAM_CALIB_CENTER_X,
-//      HEAD_CAM_CALIB_CENTER_Y,
-//      DEFAULT_BLOCK_MARKER_WIDTH_MM,
-//      scratchCcm, scratchOnchip, scratchOffchip);
-//
-//    ASSERT_TRUE(tracker.IsValid());
-//
-//    const f64 time1 = GetTimeF64();
-//
-//    bool verify_converged = false;
-//    s32 verify_meanAbsoluteDifference;
-//    s32 verify_numInBounds;
-//    s32 verify_numSimilarPixels;
-//
-//    ASSERT_TRUE(tracker.UpdateTrack(nextImage, maxIterations, convergenceTolerance, verify_maxPixelDifference, verify_converged, verify_meanAbsoluteDifference, verify_numInBounds, verify_numSimilarPixels, scratchCcm) == RESULT_OK);
-//
-//    ASSERT_TRUE(verify_converged == true);
-//    /*ASSERT_TRUE(verify_meanAbsoluteDifference == 8);
-//    ASSERT_TRUE(verify_numInBounds == 121);
-//    ASSERT_TRUE(verify_numSimilarPixels == 119);*/
-//
-//    const f64 time2 = GetTimeF64();
-//
-//    CoreTechPrint("Projective LK_SampledPlanar6dof totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
-//    ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
-//
-//    tracker.get_transformation().Print("Projective LK_SampledPlanar6dof");
-//
-//    Array<u8> warpedImage(cozmo_date2014_01_29_time11_41_05_frame10_320x240_HEIGHT, cozmo_date2014_01_29_time11_41_05_frame10_320x240_WIDTH, scratchOffchip);
-//    tracker.get_transformation().Transform(templateImage, warpedImage, scratchOffchip);
-//    //warpedImage.Show("projectiveWarped", false, false, false);
-//    //nextImage.Show("nextImage", true, false, false);
-//
-//    // This ground truth is from the PC c++ version
-//    Array<f32> transform_groundTruth = Eye<f32>(3,3,scratchOffchip);
-//    transform_groundTruth[0][0] = 1.065f;  transform_groundTruth[0][1] = 0.003f; transform_groundTruth[0][2] = 3.215f;
-//    transform_groundTruth[1][0] = 0.002f; transform_groundTruth[1][1] = 1.059f;   transform_groundTruth[1][2] = -4.453f;
-//    transform_groundTruth[2][0] = 0.0f;    transform_groundTruth[2][1] = 0.0f;   transform_groundTruth[2][2] = 1.0f;
-//
-//    ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .01));
-//  }
-//GTEST_RETURN_HERE;
-//} // GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledPlanar6dof)
+  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
+
+  Array<u8> templateImage(cozmo_date2014_01_29_time11_41_05_frame10_320x240_HEIGHT, cozmo_date2014_01_29_time11_41_05_frame10_320x240_WIDTH, scratchOffchip);
+  Array<u8> nextImage(cozmo_date2014_01_29_time11_41_05_frame12_320x240_HEIGHT, cozmo_date2014_01_29_time11_41_05_frame12_320x240_WIDTH, scratchOnchip);
+
+  const Quadrilateral<f32> templateQuad(Point<f32>(128,78), Point<f32>(220,74), Point<f32>(229,167), Point<f32>(127,171));
+
+  const s32 numPyramidLevels = 3;
+
+  const s32 maxIterations = 100;
+
+  const f32 convergenceTolerance_angle = 0.05f * PI_F / 180.0f;
+  const f32 convergenceTolerance_distance = 0.05f;
+
+  const f32 scaleTemplateRegionPercent = 1.05f;
+
+  const u8 verify_maxPixelDifference = 30;
+
+  const s32 numFiducialSquareSamples = 100;
+  const f32 fiducialSquareWidthFraction = 0.1f;
+
+  const s32 maxSamplesAtBaseLevel = 500;
+  
+  const s32 numSamplingRegions = 5;
+
+  // Are these correct?
+  const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_X = 317.23763f;
+  const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_Y = 318.38113f;
+  const f32 HEAD_CAM_CALIB_CENTER_X       = 151.88373f;
+  const f32 HEAD_CAM_CALIB_CENTER_Y       = 129.03379f;
+  const f32 DEFAULT_BLOCK_MARKER_WIDTH_MM = 26.f;
+
+  // TODO: add check that images were loaded correctly
+
+  templateImage.Set(&cozmo_date2014_01_29_time11_41_05_frame10_320x240[0], cozmo_date2014_01_29_time11_41_05_frame10_320x240_WIDTH*cozmo_date2014_01_29_time11_41_05_frame10_320x240_HEIGHT);
+  nextImage.Set(&cozmo_date2014_01_29_time11_41_05_frame12_320x240[0], cozmo_date2014_01_29_time11_41_05_frame12_320x240_WIDTH*cozmo_date2014_01_29_time11_41_05_frame12_320x240_HEIGHT);
+
+  // Projective LK_SampledPlanar6dof
+  {
+    PUSH_MEMORY_STACK(scratchCcm);
+    PUSH_MEMORY_STACK(scratchOnchip);
+    PUSH_MEMORY_STACK(scratchOffchip);
+
+    InitBenchmarking();
+
+    const f64 time0 = GetTimeF64();
+
+    TemplateTracker::LucasKanadeTracker_SampledPlanar6dof tracker(
+      templateImage,
+      templateQuad,
+      scaleTemplateRegionPercent,
+      numPyramidLevels,
+      Transformations::TRANSFORM_PROJECTIVE,
+      numFiducialSquareSamples,
+      fiducialSquareWidthFraction,
+      maxSamplesAtBaseLevel,
+      numSamplingRegions,
+      HEAD_CAM_CALIB_FOCAL_LENGTH_X,
+      HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
+      HEAD_CAM_CALIB_CENTER_X,
+      HEAD_CAM_CALIB_CENTER_Y,
+      DEFAULT_BLOCK_MARKER_WIDTH_MM,
+      scratchCcm,
+      scratchOnchip,
+      scratchOffchip);
+
+    ASSERT_TRUE(tracker.IsValid());
+
+    const f64 time1 = GetTimeF64();
+
+    bool verify_converged = false;
+    s32 verify_meanAbsoluteDifference;
+    s32 verify_numInBounds;
+    s32 verify_numSimilarPixels;
+
+    const Anki::Result updateResult =
+      tracker.UpdateTrack(
+        nextImage,
+        maxIterations,
+        convergenceTolerance_angle,
+        convergenceTolerance_distance,
+        verify_maxPixelDifference,
+        verify_converged,
+        verify_meanAbsoluteDifference,
+        verify_numInBounds,
+        verify_numSimilarPixels,
+        scratchCcm);
+    
+    ASSERT_TRUE(updateResult == RESULT_OK);
+
+    ASSERT_TRUE(verify_converged == true);
+    ASSERT_TRUE(verify_meanAbsoluteDifference == 8);
+    ASSERT_TRUE(verify_numInBounds == 1024);
+    ASSERT_TRUE(verify_numSimilarPixels == 945);
+
+    const f64 time2 = GetTimeF64();
+
+    CoreTechPrint("Projective LK_SampledPlanar6dof totalTime:%dms initTime:%dms updateTrack:%dms\n", Round<s32>(1000*(time2-time0)), Round<s32>(1000*(time1-time0)), Round<s32>(1000*(time2-time1)));
+    ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
+
+    tracker.get_transformation().Print("Projective LK_SampledPlanar6dof");
+
+    Array<u8> warpedImage(cozmo_date2014_01_29_time11_41_05_frame10_320x240_HEIGHT, cozmo_date2014_01_29_time11_41_05_frame10_320x240_WIDTH, scratchOffchip);
+    tracker.get_transformation().Transform(templateImage, warpedImage, scratchOffchip);
+    
+    //warpedImage.Show("projectiveWarped", false, false, false);
+    //nextImage.Show("nextImage", true, false, false);
+
+    // This ground truth is from the PC c++ version
+    Array<f32> transform_groundTruth = Eye<f32>(3,3,scratchOffchip);
+    transform_groundTruth[0][0] = 316.928528f; transform_groundTruth[0][1] = 4.862291f;   transform_groundTruth[0][2] = 2220.859619f;
+    transform_groundTruth[1][0] = -7.790151f;  transform_groundTruth[1][1] = 309.719971f; transform_groundTruth[1][2] = -1013.155518f;
+    transform_groundTruth[2][0] = -0.036730f;  transform_groundTruth[2][1] = -0.231155f;  transform_groundTruth[2][2] = 81.568863f;
+
+    ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .01));
+  } // Projective LK_SampledPlanar6dof
+  
+  GTEST_RETURN_HERE;
+} // GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledPlanar6dof)
 
 GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageFiltering)
 {
