@@ -61,6 +61,8 @@ namespace Anki {
     , _usingManualPathSpeed(false)
     , _camera(robotID)
     , _visionWhileMovingEnabled(false)
+    , _proxVals{{0}}
+    , _proxBlocked{{false}}
     , _poseOrigins(1)
     , _worldOrigin(&_poseOrigins.front())
     , _pose(-M_PI_2, Z_AXIS_3D(), {{0.f, 0.f, 0.f}}, _worldOrigin, "Robot_" + std::to_string(_ID))

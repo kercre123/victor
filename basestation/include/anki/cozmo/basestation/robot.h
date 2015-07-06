@@ -585,8 +585,8 @@ namespace Anki {
       bool                      _visionWhileMovingEnabled;
       
       // Proximity sensors
-      u8               _proxVals[NUM_PROX];
-      bool             _proxBlocked[NUM_PROX];
+      std::array<u8,   NUM_PROX>  _proxVals;
+      std::array<bool, NUM_PROX>  _proxBlocked;
       
       // Geometry / Pose
       std::list<Pose3d>_poseOrigins; // placeholder origin poses while robot isn't localized
