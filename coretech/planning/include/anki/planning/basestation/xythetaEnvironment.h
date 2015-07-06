@@ -8,7 +8,8 @@
 #include "json/json-forwards.h"
 #include "xythetaPlanner_definitions.h"
 #include <assert.h>
-#include <math.h>
+#include <cmath>
+#include <cfloat>
 #include <string>
 #include <vector>
 

@@ -14,7 +14,7 @@
 
 #include <assert.h>
 
-#include "anki/util/logging/logging.h"
+#include "util/logging/logging.h"
 #include "anki/cozmo/basestation/comms/robot/robotMessages.h"
 
 #include "robotMessageHandler.h"

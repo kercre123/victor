@@ -8,9 +8,9 @@
 
 #include "anki/messaging/basestation/UnreliableUDPChannel.h"
 
-#include "anki/util/logging/logging.h"
+#include "util/logging/logging.h"
 
-#include "anki/util/transport/srcBufferSet.h"
+#include "util/transport/srcBufferSet.h"
 
 using namespace Anki::Comms;
 
