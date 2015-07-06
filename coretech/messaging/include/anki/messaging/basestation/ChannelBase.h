@@ -11,7 +11,7 @@
 
 #include "anki/messaging/basestation/IChannel.h"
 
-#include "anki/util/transport/iNetTransportDataReceiver.h"
+#include "util/transport/iNetTransportDataReceiver.h"
 
 #include <deque>
 #include <map>

@@ -22,7 +22,7 @@
  **/
 
 #include "anki/common/basestation/objectTypesAndIDs.h"
-#include "anki/util/logging/logging.h"
+#include "util/logging/logging.h"
 
 #include <cassert>
 

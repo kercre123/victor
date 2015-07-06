@@ -13,8 +13,8 @@
 #include "anki/common/types.h"
 #include "anki/common/basestation/exceptions.h"
 
-#include "anki/util/logging/logging.h"
-#include "anki/util/transport/transportAddress.h"
+#include "util/logging/logging.h"
+#include "util/transport/transportAddress.h"
 
 namespace Anki {
   namespace Comms {

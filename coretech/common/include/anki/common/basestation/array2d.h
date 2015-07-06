@@ -24,7 +24,8 @@
 #define _ANKICORETECH_COMMON_ARRAY2D_H_
 
 #include "anki/common/types.h"
-
+#include <vector>
+#include <functional>
 #include <limits.h>
 
 #if ANKICORETECH_USE_OPENCV
@@ -107,7 +108,11 @@ namespace Anki
     // Absolute value, in place
     Array2d<T>& Abs();
     
+#if ANKICORETECH_USE_OPENCV
     bool IsContinuous() const { return cv::Mat_<T>::isContinuous(); }
+#else
+    bool IsContinuous() const { return false; }
+#endif
     
   protected:
     // Sub-classes can get write access to the data:

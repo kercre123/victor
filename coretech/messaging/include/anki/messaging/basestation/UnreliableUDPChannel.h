@@ -11,7 +11,7 @@
 
 #include "anki/messaging/basestation/ChannelBase.h"
 
-#include "anki/util/transport/udpTransport.h"
+#include "util/transport/udpTransport.h"
 
 namespace Anki {
   namespace Comms {

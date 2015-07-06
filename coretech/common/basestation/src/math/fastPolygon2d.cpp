@@ -17,6 +17,7 @@
 #include "anki/common/basestation/utils/helpers/boundedWhile.h"
 
 #include <cmath>
+#include <cfloat>
 
 namespace Anki {
 
