@@ -4591,7 +4591,7 @@ GTEST_TEST(CoreTech_Vision, Correlate1dCircularAndSameSizeOutput)
 
 GTEST_TEST(CoreTech_Vision, LaplacianPeaks)
 {
-  const s32 minLaplacianPeakRatio = 5;
+  const s32 minLaplacianPeakRatio = 0;
   
 #define LaplacianPeaks_BOUNDARY_LENGTH 65
   MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
