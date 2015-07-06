@@ -19,7 +19,6 @@
 #include "headController.h"
 #include "imuFilter.h"
 #include "dockingController.h"
-#include "faceTrackingController.h"
 #include "pickAndPlaceController.h"
 #include "testModeController.h"
 #include "animationController.h"
@@ -53,7 +52,7 @@ namespace Anki {
         };
 
         u8 pktBuffer_[2048];
-        u8 msgBuff_[256];
+        u8 msgBuff_[2048];
 
         // For waiting for a particular message ID
         const u32 LOOK_FOR_MESSAGE_TIMEOUT = 1000000;
@@ -268,7 +267,6 @@ namespace Anki {
 
       void ProcessFaceDetectionMessage(const FaceDetection& msg)
       {
-        FaceTrackingController::SetObjectPositionMessage(msg);
       }
 
       void ProcessBTLEMessages()
@@ -578,14 +576,11 @@ void Process##__MSG_TYPE__##Message(const __MSG_TYPE__& msg) { ProcessAnimKeyFra
       void ProcessPanAndTiltHeadMessage(const PanAndTiltHead& msg)
       {
         // TODO: Move this to some kind of VisualInterestTrackingController or something
-
-        HeadController::SetDesiredAngle(msg.relativeHeadTiltAngle_rad + HeadController::GetAngleRad());
-
-        const f32 turnVelocity = (msg.relativePanAngle_rad < 0 ? -50.f : 50.f);
-        SteeringController::ExecutePointTurn(msg.relativePanAngle_rad + Localization::GetCurrentMatOrientation().ToFloat(),
-                                             turnVelocity, 5, -5, true);
-
-
+        
+        HeadController::SetDesiredAngle(msg.headTiltAngle_rad, 0.1f, 0.1f, 0.1f);
+        if(msg.bodyPanAngle_rad != 0.f) {
+          SteeringController::ExecutePointTurn(msg.bodyPanAngle_rad, 50.f, 10.f, 10.f, true);
+        }
       }
 
       void ProcessSetCarryStateMessage(const SetCarryState& msg)

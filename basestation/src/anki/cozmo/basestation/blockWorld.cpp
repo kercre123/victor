@@ -23,6 +23,7 @@
 #include "platform.h"
 #include "anki/cozmo/basestation/ramp.h"
 #include "anki/cozmo/basestation/charger.h"
+#include "anki/cozmo/basestation/humanHead.h"
 
 #include "robotMessageHandler.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
@@ -80,6 +81,7 @@ namespace Anki
     const BlockWorld::ObjectFamily BlockWorld::ObjectFamily::BLOCKS;
     const BlockWorld::ObjectFamily BlockWorld::ObjectFamily::ACTIVE_BLOCKS;
     const BlockWorld::ObjectFamily BlockWorld::ObjectFamily::MARKERLESS_OBJECTS;
+    const BlockWorld::ObjectFamily BlockWorld::ObjectFamily::HUMAN_HEADS;
     
     // Instantiating an object family increments the unique counter:
     BlockWorld::ObjectFamily::ObjectFamily() {
@@ -146,7 +148,7 @@ namespace Anki
       _objectLibrary[ObjectFamily::ACTIVE_BLOCKS].AddObject(new ActiveCube(Block::Type::LIGHTCUBE1));
       _objectLibrary[ObjectFamily::ACTIVE_BLOCKS].AddObject(new ActiveCube(Block::Type::LIGHTCUBE2));
       _objectLibrary[ObjectFamily::ACTIVE_BLOCKS].AddObject(new ActiveCube(Block::Type::LIGHTCUBE3));
-      //_objectLibrary[ObjectFamily::ACTIVE_BLOCKS].AddObject(new ActiveCube(Block::Type::LIGHTCUBE4));
+      _objectLibrary[ObjectFamily::ACTIVE_BLOCKS].AddObject(new ActiveCube(Block::Type::LIGHTCUBE4));
 
       
       //////////////////////////////////////////////////////////////////////////
@@ -186,6 +188,12 @@ namespace Anki
       //
       _objectLibrary[ObjectFamily::CHARGERS].AddObject(new Charger());
       
+      
+      //////////////////////////////////////////////////////////////////////////
+      // Faces
+      //
+      _objectLibrary[ObjectFamily::HUMAN_HEADS].AddObject(new HumanHead());
+
       
     } // BlockWorld() Constructor
     
@@ -578,11 +586,11 @@ namespace Anki
                                                                observedObject->IsActive());
         } // if(observedObject->GetNumTimesObserved() > MIN_TIMES_TO_OBSERVE_OBJECT)
         
-        if(_robot->GetTrackHeadToObject().IsSet() &&
-           obsID == _robot->GetTrackHeadToObject() &&
+        if(_robot->GetTrackToObject().IsSet() &&
+           obsID == _robot->GetTrackToObject() &&
            !_robot->IsHeadLocked())
         {
-          UpdateTrackHeadToObject(observedObject);
+          UpdateTrackToObject(observedObject);
         }
 
         _didObjectsChange = true;
@@ -591,7 +599,7 @@ namespace Anki
       
     } // AddAndUpdateObjects()
     
-    void BlockWorld::UpdateTrackHeadToObject(const Vision::ObservableObject* observedObject)
+    void BlockWorld::UpdateTrackToObject(const Vision::ObservableObject* observedObject)
     {
       assert(observedObject != nullptr);
       
@@ -601,7 +609,7 @@ namespace Anki
       observedObject->GetObservedMarkers(observedMarkers, observedObject->GetLastObservedTime());
       
       if(observedMarkers.empty()) {
-        PRINT_NAMED_ERROR("BlockWorld.AddAndUpdateObjects",
+        PRINT_NAMED_ERROR("BlockWorld.UpdateTrackToObject",
                           "No markers on observed object %d marked as observed since time %d, "
                           "expecting at least one.\n",
                           observedObject->GetID().GetValue(), observedObject->GetLastObservedTime());
@@ -610,22 +618,24 @@ namespace Anki
         
         const Vision::KnownMarker* closestMarker = nullptr;
         f32 minDistSq = std::numeric_limits<f32>::max();
-        f32 zDist = 0.f;
+        f32 xDist = 0.f, yDist = 0.f, zDist = 0.f;
         
         for(auto marker : observedMarkers) {
           Pose3d markerPose;
           if(false == marker->GetPose().GetWithRespectTo(*_robot->GetWorldOrigin(), markerPose)) {
-            PRINT_NAMED_ERROR("BlockWorld.AddAndUpdateObjects",
+            PRINT_NAMED_ERROR("BlockWorld.UpdateTrackToObject",
                               "Could not get pose of observed marker w.r.t. world for head tracking.\n");
           } else {
             
-            const f32 xDist = markerPose.GetTranslation().x() - robotTrans.x();
-            const f32 yDist = markerPose.GetTranslation().y() - robotTrans.y();
+            const f32 xDist_crnt = markerPose.GetTranslation().x() - robotTrans.x();
+            const f32 yDist_crnt = markerPose.GetTranslation().y() - robotTrans.y();
             
-            const f32 currentDistSq = xDist*xDist + yDist*yDist;
+            const f32 currentDistSq = xDist_crnt*xDist_crnt + yDist_crnt*yDist_crnt;
             if(currentDistSq < minDistSq) {
               closestMarker = marker;
               minDistSq = currentDistSq;
+              xDist = xDist_crnt;
+              yDist = yDist_crnt;
               
               // Keep track of best zDist too, so we don't have to redo the GetWithRespectTo call outside this loop
               // NOTE: This isn't perfectly accurate since it doesn't take into account the
@@ -637,14 +647,31 @@ namespace Anki
         } // For all markers
         
         if(closestMarker == nullptr) {
-          PRINT_NAMED_ERROR("BlockWorld.AddAndUpdateObjects", "No closest marker found!\n");
+          PRINT_NAMED_ERROR("BlockWorld.UpdateTrackToObject", "No closest marker found!\n");
         } else {
-          const f32 headAngle = atanf(zDist/(sqrtf(minDistSq + 1e-6f)));
-          _robot->MoveHeadToAngle(headAngle, 5.f, 2.f);
+          const f32 minDist = std::sqrt(minDistSq);
+          const f32 headAngle = std::atan(zDist/(minDist + 1e-6f));
+          //_robot->MoveHeadToAngle(headAngle, 5.f, 2.f);
+          MessagePanAndTiltHead msg;
+          msg.headTiltAngle_rad = headAngle;
+          msg.bodyPanAngle_rad = 0.f;
+          
+          if(false == _robot->IsTrackingObjectWithHeadOnly()) {
+            // Also rotate ("pan") body:
+            const Radians panAngle = std::atan2(yDist, xDist);// - _robot->GetPose().GetRotationAngle<'Z'>();
+            msg.bodyPanAngle_rad = panAngle.ToFloat();
+          }
+          /*
+          PRINT_NAMED_INFO("BlockWorld.UpdateTrackToObject",
+                           "Tilt = %.1fdeg, pan = %.1fdeg\n",
+                           RAD_TO_DEG(msg.headTiltAngle_rad),
+                           RAD_TO_DEG(msg.bodyPanAngle_rad));
+          */
+          _robot->SendMessage(msg);
         }
       } // if/else observedMarkers.empty()
       
-    } // UpdateTrackHeadToObject()
+    } // UpdateTrackToObject()
     
     u32 BlockWorld::CheckForUnobservedObjects(TimeStamp_t atTimestamp)
     {
@@ -1549,9 +1576,9 @@ namespace Anki
               }
               
               if(marker2isInsideMarker1) {
-                PRINT_NAMED_INFO("BlockWorld.Update", "Removing %s marker completely contained within %s marker.\n",
-                                 Vision::MarkerTypeStrings[marker2.GetCode()],
-                                 Vision::MarkerTypeStrings[marker1.GetCode()]);
+                PRINT_NAMED_INFO("BlockWorld.Update",
+                                 "Removing %s marker completely contained within %s marker.\n",
+                                 marker1.GetCodeName(), marker2.GetCodeName());
                 // Note: erase does increment of iterator for us
                 markerIter2 = currentObsMarkers.erase(markerIter2);
               } else {
@@ -1600,6 +1627,12 @@ namespace Anki
         // Note that this removes markers from the list that it uses
         numObjectsObserved += UpdateObjectPoses(currentObsMarkers, ObjectFamily::CHARGERS, atTimestamp);
         
+        //
+        // Find any observed human heads from the remaining "markers"
+        //
+        // Note that this removes markers from the list that it uses
+        numObjectsObserved += UpdateObjectPoses(currentObsMarkers, ObjectFamily::HUMAN_HEADS, atTimestamp);
+        
         // TODO: Deal with unknown markers?
         
         // Keep track of how many markers went unused by either robot or block
@@ -1633,7 +1666,9 @@ namespace Anki
         // For now, look for collision with anything other than Mat objects
         // NOTE: This assumes all other objects are DockableObjects below!!! (Becuase of IsBeingCarried() check)
         // TODO: How can we delete Mat objects (like platforms) whose positions we drive through
-        if(objectsByFamily.first != ObjectFamily::MATS && objectsByFamily.first != ObjectFamily::MARKERLESS_OBJECTS)
+        if(objectsByFamily.first != ObjectFamily::MATS &&
+           objectsByFamily.first != ObjectFamily::MARKERLESS_OBJECTS &&
+           objectsByFamily.first != ObjectFamily::HUMAN_HEADS)
         {
           for(auto & objectsByType : objectsByFamily.second)
           {
@@ -1800,13 +1835,13 @@ namespace Anki
           _selectedObject.UnSet();
         }
         
-        if(_robot->GetTrackHeadToObject() == object->GetID()) {
+        if(_robot->GetTrackToObject() == object->GetID()) {
           PRINT_NAMED_INFO("BlockWorld.ClearObjectHelper.ClearingTrackHeadToObject",
                            "Clearing %s object %d which robot %d is currently tracking its head to.\n",
                            object->GetType().GetName().c_str(),
                            object->GetID().GetValue(),
                            _robot->GetID());
-          _robot->DisableTrackHeadToObject();
+          _robot->DisableTrackToObject();
         }
         
         if(object->IsActive()) {

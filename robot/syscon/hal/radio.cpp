@@ -21,6 +21,7 @@ void uesb_event_handler();
 #define PACKET_SIZE 13
 #define TIME_PER_CUBE (int)(COUNT_PER_MS * 33.0 / MAX_CUBES)
 //#define NATHAN_WANTS_DEMO
+//#define DEBUG_MESSAGES
 
 extern GlobalDataToHead g_dataToHead;
 extern GlobalDataToBody g_dataToBody;
@@ -53,15 +54,12 @@ void Radio::init() {
   
   memset(cubeRx, 0, sizeof(cubeRx));
   #ifdef NATHAN_WANTS_DEMO
-  //memset(cubeTx, 0xFF, sizeof(cubeTx));
   for (int g = 0; g < MAX_CUBES; g++) {
-    for (int i = 1; i < 12; i += 3) 
-      cubeTx[g].ledStatus[i] = 0xFF;
+    cubeTx[g].ledStatus[0] = 0xFF;
     cubeTx[g].ledDark = 0;
   }
   #endif
 }
-
 
 void uesb_event_handler()
 {
@@ -69,8 +67,10 @@ void uesb_event_handler()
 
   if(rf_interrupts & UESB_INT_TX_SUCCESS_MSK)
   {
-    //UART::put("\r\nTx");
-    //UART::dec(currentCube);
+    #ifdef DEBUG_MESSAGES
+    UART::put("\r\nTx");
+    UART::dec(lastTransmit);
+    #endif
   }
   
   if(rf_interrupts & UESB_INT_RX_DR_MSK)
@@ -78,13 +78,15 @@ void uesb_event_handler()
     uesb_payload_t rx_payload;
     uesb_read_rx_payload(&rx_payload);
     memcpy((uint8_t*)&cubeRx[lastTransmit], rx_payload.data, sizeof(AcceleratorPacket));
-    cubeRx[lastTransmit].timestamp = GetCounter();
+    //cubeRx[lastTransmit].timestamp = GetCounter();
 
-    //UART::put("\r\nRx");
-    //UART::dec(rx_payload.pipe);
-    //UART::dec(currentCube);
-    //UART::put(" :");
-    //UART::dump((uint8_t*)&cubeRx[currentCube], sizeof(AcceleratorPacket));
+    #ifdef DEBUG_MESSAGES
+    UART::put("\r\nRx");
+    UART::dec(rx_payload.pipe);
+    UART::dec(lastTransmit);
+    UART::put(" :");
+    UART::dump((uint8_t*)&cubeRx[lastTransmit], sizeof(AcceleratorPacket));
+    #endif
   }
 }
 
@@ -109,7 +111,7 @@ void Radio::manage() {
   currentCube = (currentCube + 1) % 7;
 
   uesb_event_handler();
-
+  
   // Transmit cubes round-robin
   if (currentCube < MAX_CUBES)
   {

@@ -105,6 +105,11 @@ namespace Anki {
                            const Pose3d& pose,
                            const ColorRGBA& color = NamedColors::DEFAULT);
       
+      Handle_t DrawHumanHead(const u32 headID,
+                             const Point3f& size,
+                             const Pose3d& pose,
+                             const ColorRGBA& color = NamedColors::DEFAULT);
+      
       //void DrawRamp();
       
       

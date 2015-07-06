@@ -60,11 +60,6 @@ namespace Anki {
       // Cycles through all known animations
       TM_ANIMATION,
 
-#if defined(HAVE_ACTIVE_GRIPPER) && HAVE_ACTIVE_GRIPPER
-      // Engages and disengages gripper
-      TM_GRIPPER,
-#endif
-
       // Cycle through all LEDs with different colors
       TM_LIGHTS,
 

@@ -24,7 +24,7 @@ SPECIAL_MKTARGETS=$(APP_MKTARGETS)
 SUBDIRS=    \
 	user    \
 	driver
-
+	
 endif # } PDIR
 
 APPDIR = .

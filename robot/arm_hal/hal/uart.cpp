@@ -35,20 +35,18 @@ namespace Anki
       volatile bool m_isTransferring = false;
 
       static void UARTStartTransfer();
-      static s32 UARTGetCharacter(u32 timeout);
 
       extern s32 WifiGetCharacter(u32 timeout);
       extern bool WifiInit();
 
       // Function pointers depending on whether wifi or UART is used
       void (*StartTransfer)() =  UARTStartTransfer;
-      s32 (*GetChar)(u32 timeout) = UARTGetCharacter;
 
       // TODO: Refactor this mess. PUNT!
       int BUFFER_WRITE_SIZE = 1024 * 8;
-      int BUFFER_READ_SIZE = 1024 * 4;
+      int BUFFER_READ_SIZE = 1024 * 16;
       ONCHIP u8 m_bufferWrite[1024 * 8];
-      ONCHIP u8 m_bufferRead[1024 * 4];
+      ONCHIP u8 m_bufferRead[1024 * 16];
       static void UARTStartTransfer()
       {
         int tail = m_writeTail;
@@ -301,31 +299,23 @@ namespace Anki
         UARTPutHex(value);
       }
 
-      static s32 UARTGetCharacter(u32 timeout)
+      s32 UARTGetChar()
       {
-        u32 startTime = GetMicroCounter();
-
-        do
+        // Make sure there's data in the FIFO
+        // NDTR counts down...
+        if (DMA_STREAM_RX->NDTR != sizeof(m_bufferRead) - m_readTail)
         {
-          // Make sure there's data in the FIFO
-          // NDTR counts down...
-          if (DMA_STREAM_RX->NDTR != sizeof(m_bufferRead) - m_readTail)
-          {
-            u8 value = m_bufferRead[m_readTail];
-            m_readTail = (m_readTail + 1) % sizeof(m_bufferRead);
-            return value;
-          }
+          u8 value = m_bufferRead[m_readTail];
+          m_readTail = (m_readTail + 1) % sizeof(m_bufferRead);
+          return value;
         }
-        while ((GetMicroCounter() - startTime) < timeout);
-
-        // No data, so return with an error
-        return -1;
+        else
+        {
+          // No data, so return with an error
+          return -1;
+        }
       }
 
-      s32 UARTGetChar(u32 timeout)
-      {
-        return GetChar(timeout);
-      }
     }
   }
 }

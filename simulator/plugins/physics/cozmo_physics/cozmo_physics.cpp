@@ -456,6 +456,41 @@ void draw_ramp(float platformLength, float slopeLength, float width, float heigh
 
 }
 
+void draw_head(float width, float height, float depth)
+{
+  const float back_scale = 0.8f;
+  const float r_hor_front = width*0.5f;
+  const float r_hor_back  = r_hor_front*0.8f;
+  const float r_ver_front = height*0.5f;
+  const float r_ver_back  = r_ver_front*0.8f;
+  
+  const int N = 20;
+
+  float x_front_next = r_hor_front;
+  float z_front_next = 0.f;
+
+  glBegin(GL_LINES);
+  for(int i=0; i<=N; ++i) {
+    glVertex3f(x_front_next, 0.f, z_front_next);
+    glVertex3f(back_scale*x_front_next, depth, back_scale*z_front_next);
+    
+    float x_front_prev = x_front_next;
+    float z_front_prev = z_front_next;
+    
+    const float angle = (2*M_PI*float(i))/float(N);
+    x_front_next = r_hor_front*cos(angle);
+    z_front_next = r_ver_front*sin(angle);
+  
+    glVertex3f(x_front_prev, 0.f, z_front_prev);
+    glVertex3f(x_front_next, 0.f, z_front_next);
+    
+    glVertex3f(back_scale*x_front_prev, depth, back_scale*z_front_prev);
+    glVertex3f(back_scale*x_front_next, depth, back_scale*z_front_next);
+    
+  }
+  glEnd();
+  
+}
 
 // x,y,z: Position of tetrahedron main tip with respect to its origin
 // length_x, length_y, length_z: Dimensions of tetrahedron
@@ -669,6 +704,11 @@ void webots_physics_draw(int pass, const char *view) {
         case Anki::Cozmo::VIZ_OBJECT_PREDOCKPOSE:
           draw_predockpose();
           break;
+          
+        case Anki::Cozmo::VIZ_OBJECT_HUMAN_HEAD:
+          draw_head(obj->x_size_m, obj->y_size_m, obj->z_size_m);
+          break;
+          
         default:
           PRINT("Unknown objectTypeID %d\n", obj->objectTypeID);
           break;

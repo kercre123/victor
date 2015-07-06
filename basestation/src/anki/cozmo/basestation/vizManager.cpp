@@ -262,7 +262,23 @@ namespace Anki {
       return vizID;
     }
 
+    VizManager::Handle_t VizManager::DrawHumanHead(const u32 headID,
+                                                   const Point3f& size,
+                                                   const Pose3d& pose,
+                                                   const ColorRGBA& color)
+    {
+      if(headID >= _VizObjectMaxID[VIZ_OBJECT_HUMAN_HEAD]) {
+        PRINT_NAMED_ERROR("VizManager.DrawHumanHead.IDtooLarge",
+                          "Specified head ID=%d larger than maxID=%d\n",
+                          headID, _VizObjectMaxID[VIZ_OBJECT_HUMAN_HEAD]);
+        return INVALID_HANDLE;
 
+      }
+      
+      const u32 vizID = VizObjectBaseID[VIZ_OBJECT_HUMAN_HEAD] + headID;
+      DrawObject(vizID, VIZ_OBJECT_HUMAN_HEAD, size, pose, color);
+      return vizID;
+    }
     
     void VizManager::EraseRobot(const u32 robotID)
     {

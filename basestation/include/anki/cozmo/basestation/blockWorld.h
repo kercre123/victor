@@ -71,6 +71,7 @@ namespace Anki
         static const ObjectFamily BLOCKS;              // Blocks
         static const ObjectFamily ACTIVE_BLOCKS;       // Blocks with LEDs
         static const ObjectFamily MARKERLESS_OBJECTS;  // Obstacles that are detected by means other than camera (e.g. prox obstacles)
+        static const ObjectFamily HUMAN_HEADS;
         
       protected:
         static int UniqueFamilyCounter;
@@ -279,7 +280,7 @@ namespace Anki
       void ClearObjectHelper(Vision::ObservableObject* object);
       ObjectsMapByID_t::iterator ClearObject(ObjectsMapByID_t::iterator objectIter, ObjectsMapByID_t& inContainer);
       
-      void UpdateTrackHeadToObject(const Vision::ObservableObject* observedObject);
+      void UpdateTrackToObject(const Vision::ObservableObject* observedObject);
       
       //
       // Member Variables

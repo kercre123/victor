@@ -30,7 +30,7 @@
 #include "anki/cozmo/basestation/robotPoseHistory.h"
 #include "anki/cozmo/basestation/ramp.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
-#include "opencv2/highgui/highgui.hpp"
+#include "opencv2/highgui/highgui.hpp" // For imwrite() in ProcessImage
 #include <fstream>
 #include <dirent.h>
 #include <sys/stat.h>
@@ -720,26 +720,23 @@ namespace Anki {
 #endif
       
       /* DEBUG
-      const double currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-      static double lastUpdateTime = currentTime_sec;
-      
-      const double updateTimeDiff = currentTime_sec - lastUpdateTime;
-      if(updateTimeDiff > 1.0) {
-        PRINT_NAMED_WARNING("Robot.Update", "Gap between robot update calls = %f\n", updateTimeDiff);
-      }
-      lastUpdateTime = currentTime_sec;
-      */
+       const double currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+       static double lastUpdateTime = currentTime_sec;
+       
+       const double updateTimeDiff = currentTime_sec - lastUpdateTime;
+       if(updateTimeDiff > 1.0) {
+       PRINT_NAMED_WARNING("Robot.Update", "Gap between robot update calls = %f\n", updateTimeDiff);
+       }
+       lastUpdateTime = currentTime_sec;
+       */
       
 #     if !ASYNC_VISION_PROCESSING
-      if(_haveNewImage) {
+      if(_haveNewImage)
         
         _visionProcessor.Update(_image, _robotStateForImage);
         _haveNewImage = false;
-        
-#     else
-      //if(_visionProcessor.WasLastImageProcessed())
+#     endif
       {
-#endif
         
         // Signal the availability of an image
         //CozmoEngineSignals::RobotImageAvailableSignal().emit(GetID());
@@ -763,32 +760,63 @@ namespace Anki {
         }
         
         MessageFaceDetection faceDetection;
+        //std::vector<Rectangle<s32> > faceTargets;
         while(true == _visionProcessor.CheckMailbox(faceDetection)) {
-          PRINT_NAMED_INFO("Robot.ActiveObjectLightTest", "Robot %d reported seeing a face at (x,y,w,h)=(%d,%d,%d,%d).",
-                     GetID(), faceDetection.x_upperLeft, faceDetection.y_upperLeft, faceDetection.width, faceDetection.height);
-          
-          
+          /*
+          PRINT_NAMED_INFO("Robot.Update",
+                           "Robot %d reported seeing a face at (x,y,w,h)=(%d,%d,%d,%d).",
+                           GetID(), faceDetection.x_upperLeft, faceDetection.y_upperLeft, faceDetection.width, faceDetection.height);
+          */
+          const u16 left_x   = faceDetection.x_upperLeft;
+          const u16 right_x  = left_x + faceDetection.width;
+          const u16 top_y    = faceDetection.y_upperLeft;
+          const u16 bottom_y = top_y + faceDetection.height;
+
           if(faceDetection.visualize > 0) {
             // Send tracker quad info to viz
-            const u16 left_x   = faceDetection.x_upperLeft;
-            const u16 right_x  = left_x + faceDetection.width;
-            const u16 top_y    = faceDetection.y_upperLeft;
-            const u16 bottom_y = top_y + faceDetection.height;
-            
             VizManager::getInstance()->SendTrackerQuad(left_x, top_y,
                                                        right_x, top_y,
                                                        right_x, bottom_y,
                                                        left_x, bottom_y);
           }
           
-          SendMessage(faceDetection);
+          // Create a "visionMarker" message from the face detection so we will
+          // add this face to BlockWorld
+          MessageVisionMarker markerMsg;
+          markerMsg.x_imgUpperLeft  = left_x;
+          markerMsg.y_imgUpperLeft  = top_y;
+          markerMsg.x_imgUpperRight = right_x;
+          markerMsg.y_imgUpperRight = top_y;
+          markerMsg.x_imgLowerLeft  = left_x;
+          markerMsg.y_imgLowerLeft  = bottom_y;
+          markerMsg.x_imgLowerRight = right_x;
+          markerMsg.y_imgLowerRight = bottom_y;
+          markerMsg.timestamp = faceDetection.timestamp;
+          markerMsg.markerType = Vision::Marker::FACE_CODE; // TODO: Use face identity when we have recognition?
           
+          Result lastResult = QueueObservedMarker(markerMsg);
+          if(lastResult != RESULT_OK) {
+            PRINT_NAMED_ERROR("Robot.Update.FailedToQueueFaceVisionMarker",
+                              "Got FaceDetection message from vision processing thread "
+                              "but failed to queue it as a VisionMarker.");
+            return lastResult;
+          }
+          
+          /*
           // Signal the detection of a face
           CozmoEngineSignals::RobotObservedFaceSignal().emit(GetID(),
                                                                 faceDetection.x_upperLeft,
                                                                 faceDetection.y_upperLeft,
                                                                 faceDetection.width,
                                                                 faceDetection.height);
+           */
+          
+          /*
+          faceTargets.emplace_back(faceDetection.x_upperLeft,
+                                   faceDetection.y_upperLeft,
+                                   faceDetection.width,
+                                   faceDetection.height);
+           */
         }
         
         MessageTrackerQuad trackerQuad;
@@ -1109,11 +1137,12 @@ namespace Anki {
       return SendTapBlockOnGround(numTaps);
     }
       
-    Result Robot::EnableTrackHeadToObject(const u32 objectID)
+    Result Robot::EnableTrackToObject(const u32 objectID, bool headOnly)
     {
       _trackHeadToObjectID = objectID;
       
       if(_blockWorld.GetObjectByID(_trackHeadToObjectID) != nullptr) {
+        _trackObjectWithHeadOnly = headOnly;
         return RESULT_OK;
       } else {
         PRINT_NAMED_ERROR("Robot.TrackHeadToObject",
@@ -1124,7 +1153,7 @@ namespace Anki {
       }
     }
       
-    Result Robot::DisableTrackHeadToObject()
+    Result Robot::DisableTrackToObject()
     {
       _trackHeadToObjectID.UnSet();
       return RESULT_OK;
