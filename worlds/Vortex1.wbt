@@ -102,8 +102,8 @@ WorldInfo {
   ]
 }
 Viewpoint {
-  orientation -0.966938 0.145043 0.209746 5.04153
-  position -0.556738 -1.73647 0.794634
+  orientation -0.717546 0.38171 0.582602 4.80319
+  position -0.969914 -0.944714 0.674201
 }
 Background {
   skyColor [
@@ -142,6 +142,10 @@ LightCube {
 LightCube {
   translation 0.3 -0.0333333 0.0219969
   rotation 0 1 0 0
+}
+Face {
+  translation 0.7 0 0.4
+  rotation 0 0 1 1.5708
 }
 BlockWorldComms {
 }
