@@ -262,7 +262,7 @@ namespace DigitalRuby.ThunderAndLightning
         {
             List<LineRendererMesh> lineRenderers = renderers[lightningBolt];
             LineRendererMesh lineRenderer = lineRenderers[lineRenderers.Count - 1];
-            float timeStart = Time.time + group.Delay + lightningBolt.Delay;
+            float timeStart = Time.timeSinceLevelLoad + group.Delay + lightningBolt.Delay;
             Color c = new Color(timeStart, timeStart + group.PeakStart, timeStart + group.PeakEnd, timeStart + group.LifeTime);
             float radius = group.LineWidth * 0.5f;
             int lineCount = group.Segments.Count - group.StartIndex;
@@ -620,7 +620,7 @@ namespace DigitalRuby.ThunderAndLightning
                 lightningLight.color = Color.white;
                 lightningLight.range = 5000.0f;
                 lightningLight.bounceIntensity = 1.0f;
-                lightningLight.intensity = 0.0f;
+				lightningLight.intensity = 0f;
                 lightningLight.enabled = (Delay <= 0.0f);
                 lightningLightObject.transform.parent = Parent.transform;
             }
@@ -813,7 +813,7 @@ namespace DigitalRuby.ThunderAndLightning
 
             lightningBoltRenderer.Render(this);
 
-            return true;
+			return true; //lightningLight != null;
         }
 
         private LightningBoltSegmentGroup CreateGroup()

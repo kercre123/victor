@@ -45,8 +45,8 @@ case Anki::Cozmo::U2G::Message::Tag::SetLiftHeight:
 case Anki::Cozmo::U2G::Message::Tag::SetHeadAngle:
 	Process_SetHeadAngle(msg.Get_SetHeadAngle());
 	break;
-case Anki::Cozmo::U2G::Message::Tag::TrackHeadToObject:
-	Process_TrackHeadToObject(msg.Get_TrackHeadToObject());
+case Anki::Cozmo::U2G::Message::Tag::TrackToObject:
+	Process_TrackToObject(msg.Get_TrackToObject());
 	break;
 case Anki::Cozmo::U2G::Message::Tag::StopAllMotors:
 	Process_StopAllMotors(msg.Get_StopAllMotors());

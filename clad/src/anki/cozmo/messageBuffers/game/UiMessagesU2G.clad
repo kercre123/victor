@@ -95,12 +95,15 @@ message SetHeadAngle {
     float_32 accel_rad_per_sec2
 }
 
-// TrackHeadToObject
-//   Robot will automatically adjust head angle to look at this object ID, if it
+// TrackToObject
+//   Robot will automatically adjust head and body angle to look at this object ID, if it
 //   is observed. Sending SetHeadAngle message (above) will disable this behavior.
-message TrackHeadToObject {
+//   Set headOnly to true to only use the head and not turn the body.
+//   Use objectID = u32_MAX to disable tracking.
+message TrackToObject {
     uint_32 objectID,
-    uint_8 robotID
+    uint_8  robotID,
+    bool    headOnly
 }
 
 // StopAllMotors

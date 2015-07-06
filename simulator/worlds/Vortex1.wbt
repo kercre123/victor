@@ -1,4 +1,4 @@
-#VRML_SIM V8.1.0 utf8
+#VRML_SIM V8.2.1 utf8
 WorldInfo {
   info [
     "Cozmo test world. All rights reserved. Copyright (c) Anki, Inc."
@@ -102,8 +102,8 @@ WorldInfo {
   ]
 }
 Viewpoint {
-  orientation -0.684038 0.346516 0.641887 4.94695
-  position -1.26107 -0.963278 1.17731
+  orientation -0.966938 0.145043 0.209746 5.04153
+  position -0.556738 -1.73647 0.794634
 }
 Background {
   skyColor [
@@ -130,17 +130,17 @@ CozmoMat {
   ySize 1.5
 }
 LightCube {
-  translation 0.239415 0.0784297 0.0219969
+  translation 0.3 0.1 0.0219969
   rotation 0 1 0 0
   ID 1
 }
 LightCube {
-  translation 0.233371 0.0139778 0.0219969
+  translation 0.3 0.0333333 0.0219969
   rotation 0 1 0 0
   ID 2
 }
 LightCube {
-  translation 0.225474 -0.0479458 0.0219969
+  translation 0.3 -0.0333333 0.0219969
   rotation 0 1 0 0
 }
 BlockWorldComms {

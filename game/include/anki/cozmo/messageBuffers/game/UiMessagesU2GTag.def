@@ -27,7 +27,7 @@ enum class MessageTag : uint8_t {
 	MoveLift,	// 10
 	SetLiftHeight,	// 11
 	SetHeadAngle,	// 12
-	TrackHeadToObject,	// 13
+	TrackToObject,	// 13
 	StopAllMotors,	// 14
 	ImageRequest,	// 15
 	SetRobotImageSendMode,	// 16

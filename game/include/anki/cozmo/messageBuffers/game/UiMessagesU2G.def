@@ -503,28 +503,31 @@ struct SetHeadAngle
 	bool operator!=(const SetHeadAngle& other) const;
 };
 
-// MESSAGE TrackHeadToObject
-struct TrackHeadToObject
+// MESSAGE TrackToObject
+struct TrackToObject
 {
 	uint32_t objectID;
 	uint8_t robotID;
+	bool headOnly;
 	
 	/**** Constructors ****/
-	TrackHeadToObject() = default;
-	TrackHeadToObject(const TrackHeadToObject& other) = default;
-	TrackHeadToObject(TrackHeadToObject& other) = default;
-	TrackHeadToObject(TrackHeadToObject&& other) noexcept = default;
-	TrackHeadToObject& operator=(const TrackHeadToObject& other) = default;
-	TrackHeadToObject& operator=(TrackHeadToObject&& other) noexcept = default;
+	TrackToObject() = default;
+	TrackToObject(const TrackToObject& other) = default;
+	TrackToObject(TrackToObject& other) = default;
+	TrackToObject(TrackToObject&& other) noexcept = default;
+	TrackToObject& operator=(const TrackToObject& other) = default;
+	TrackToObject& operator=(TrackToObject&& other) noexcept = default;
 	
-	explicit TrackHeadToObject(uint32_t objectID
-		,uint8_t robotID)
+	explicit TrackToObject(uint32_t objectID
+		,uint8_t robotID
+		,bool headOnly)
 	:objectID(objectID)
 	,robotID(robotID)
+	,headOnly(headOnly)
 	{}
 
-	explicit TrackHeadToObject(const uint8_t* buff, size_t len);
-	explicit TrackHeadToObject(const CLAD::SafeMessageBuffer& buffer);
+	explicit TrackToObject(const uint8_t* buff, size_t len);
+	explicit TrackToObject(const CLAD::SafeMessageBuffer& buffer);
 	
 	/**** Pack ****/
 	size_t Pack(uint8_t* buff, size_t len) const;
@@ -536,8 +539,8 @@ struct TrackHeadToObject
 
 	size_t Size() const;
 
-	bool operator==(const TrackHeadToObject& other) const;
-	bool operator!=(const TrackHeadToObject& other) const;
+	bool operator==(const TrackToObject& other) const;
+	bool operator!=(const TrackToObject& other) const;
 };
 
 // MESSAGE StopAllMotors
@@ -2525,10 +2528,10 @@ public:
 	void Set_SetHeadAngle(const Anki::Cozmo::U2G::SetHeadAngle& new_SetHeadAngle);
 	void Set_SetHeadAngle(Anki::Cozmo::U2G::SetHeadAngle&& new_SetHeadAngle);
 
-	/** TrackHeadToObject **/
-	const Anki::Cozmo::U2G::TrackHeadToObject& Get_TrackHeadToObject() const;
-	void Set_TrackHeadToObject(const Anki::Cozmo::U2G::TrackHeadToObject& new_TrackHeadToObject);
-	void Set_TrackHeadToObject(Anki::Cozmo::U2G::TrackHeadToObject&& new_TrackHeadToObject);
+	/** TrackToObject **/
+	const Anki::Cozmo::U2G::TrackToObject& Get_TrackToObject() const;
+	void Set_TrackToObject(const Anki::Cozmo::U2G::TrackToObject& new_TrackToObject);
+	void Set_TrackToObject(Anki::Cozmo::U2G::TrackToObject&& new_TrackToObject);
 
 	/** StopAllMotors **/
 	const Anki::Cozmo::U2G::StopAllMotors& Get_StopAllMotors() const;
@@ -2806,7 +2809,7 @@ private:
 		Anki::Cozmo::U2G::MoveLift _MoveLift;
 		Anki::Cozmo::U2G::SetLiftHeight _SetLiftHeight;
 		Anki::Cozmo::U2G::SetHeadAngle _SetHeadAngle;
-		Anki::Cozmo::U2G::TrackHeadToObject _TrackHeadToObject;
+		Anki::Cozmo::U2G::TrackToObject _TrackToObject;
 		Anki::Cozmo::U2G::StopAllMotors _StopAllMotors;
 		Anki::Cozmo::U2G::ImageRequest _ImageRequest;
 		Anki::Cozmo::U2G::SetRobotImageSendMode _SetRobotImageSendMode;

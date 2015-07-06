@@ -246,13 +246,13 @@ namespace Cozmo {
         PRINT_NAMED_INFO("CozmoGameImpl.Process_SetHeadAngle.HeadLocked",
                          "Ignoring U2G::SetHeadAngle while head is locked.\n");
       } else {
-        robot->DisableTrackHeadToObject();
+        robot->DisableTrackToObject();
         robot->MoveHeadToAngle(msg.angle_rad, msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2);
       }
     }
   }
   
-  void CozmoGameImpl::Process_TrackHeadToObject(U2G::TrackHeadToObject const& msg)
+  void CozmoGameImpl::Process_TrackToObject(U2G::TrackToObject const& msg)
   {
     Robot* robot = GetRobotByID(msg.robotID);
     
@@ -261,7 +261,12 @@ namespace Cozmo {
         PRINT_NAMED_INFO("CozmoGameImpl.Process_TrackHeadToObject.HeadLocked",
                          "Ignoring U2G::TrackHeadToObject while head is locked.\n");
       } else {
-        robot->EnableTrackHeadToObject(msg.objectID);
+        
+        if(msg.objectID == u32_MAX) {
+          robot->DisableTrackToObject();
+        } else {
+          robot->EnableTrackToObject(msg.objectID, msg.headOnly);
+        }
       }
     }
   }

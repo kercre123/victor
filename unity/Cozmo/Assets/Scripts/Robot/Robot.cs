@@ -180,7 +180,7 @@ public class Robot
 	private U2G.PlaceObjectOnGroundHere PlaceObjectOnGroundHereMessage;
 	private U2G.CancelAction CancelActionMessage;
 	private U2G.SetHeadAngle SetHeadAngleMessage;
-	private U2G.TrackHeadToObject TrackHeadToObjectMessage;
+	private U2G.TrackToObject TrackToObjectMessage;
 	private U2G.FaceObject FaceObjectMessage;
 	private U2G.PickAndPlaceObject PickAndPlaceObjectMessage;
 	private U2G.RollObject RollObjectMessage;
@@ -361,7 +361,7 @@ public class Robot
 		PlaceObjectOnGroundHereMessage = new U2G.PlaceObjectOnGroundHere();
 		CancelActionMessage = new U2G.CancelAction();
 		SetHeadAngleMessage = new U2G.SetHeadAngle();
-		TrackHeadToObjectMessage = new U2G.TrackHeadToObject();
+		TrackToObjectMessage = new U2G.TrackToObject();
 		FaceObjectMessage = new U2G.FaceObject();
 		PickAndPlaceObjectMessage = new U2G.PickAndPlaceObject();
 		RollObjectMessage = new U2G.RollObject();
@@ -746,12 +746,13 @@ public class Robot
 		}
 		else
 		{
-			TrackHeadToObjectMessage.objectID = (uint)observedObject;
-			TrackHeadToObjectMessage.robotID = ID;
+			TrackToObjectMessage.objectID = (uint)observedObject;
+			TrackToObjectMessage.robotID = ID;
+			TrackToObjectMessage.headOnly = true;
 
-			Debug.Log( "Track Head To Object " + TrackHeadToObjectMessage.objectID );
+			Debug.Log( "Track Head To Object " + TrackToObjectMessage.objectID );
 
-			RobotEngineManager.instance.Message.TrackHeadToObject = TrackHeadToObjectMessage;
+			RobotEngineManager.instance.Message.TrackToObject = TrackToObjectMessage;
 			RobotEngineManager.instance.SendMessage();
 		}
 	}

@@ -81,11 +81,14 @@ public class VortexController : GameController {
 
 	[SerializeField] AudioClip timeUp;
 	[SerializeField] AudioClip newHighScore;
+	[SerializeField] AudioClip spinRequestSound;
 
 	[SerializeField] RectTransform[] playerTokens;
 	[SerializeField] Button[] playerButtons;
 	[SerializeField] LayoutBlock2d[] playerMockBlocks;
+	[SerializeField] Image[] playerPanelFills;
 	[SerializeField] Text[] textPlayerBids;
+	[SerializeField] Animation[] playerBidFlashAnimations;
 	[SerializeField] Text[] textPlayerScores;
 	[SerializeField] List<VortexInput> playerInputs = new List<VortexInput>();
 
@@ -155,6 +158,15 @@ public class VortexController : GameController {
 			textPlayerScores[i].text = "SCORE: 0";
 		}
 		
+		for(int i=0;i<playerPanelFills.Length;i++) {
+			Color col = playerPanelFills[i].color;
+			col.a = 0f;
+			playerPanelFills[i].color = col;
+		}
+
+		for(int i=0;i<textPlayerBids.Length;i++) {
+			textPlayerBids[i].text = "";
+		}
 	}
 
 	protected override void OnDisable () {
@@ -247,6 +259,8 @@ public class VortexController : GameController {
 	
 	protected override void Exit_PLAYING (bool overrideStars = false) {
 		base.Exit_PLAYING();
+
+		ExitPlayState();
 	}
 
 	protected override void Enter_RESULTS() {
@@ -335,7 +349,7 @@ public class VortexController : GameController {
 				}
 				break;
 			case VortexState.SPIN_COMPLETE:
-				if(!IsGameOver() && playStateTimer > 5f) return VortexState.REQUEST_SPIN;
+				if(!IsGameOver() && playStateTimer > 10f) return VortexState.REQUEST_SPIN;
 				break;
 		}
 
@@ -421,8 +435,20 @@ public class VortexController : GameController {
 		wheel.Focus();
 		wheel.gameObject.SetActive(true);
 
+		lightingBall.Radius = wheelLightningRadii[currentWheelIndex];
+
+		if(spinRequestSound != null) AudioManager.PlayOneShot(spinRequestSound);
+		lastNumber = wheel.GetDisplayedNumber();
 	}
 	void Update_REQUEST_SPIN() {
+
+		int newNumber = wheel.GetDisplayedNumber();
+		//Debug.Log("Update_SPINNING lightingMax("+lightingMax+") wheel.Speed("+wheel.Speed+") newNumber("+newNumber+") lastNumber("+lastNumber+")");
+		if(newNumber != lastNumber) {
+			lightingBall.SingleLightningBolt();
+		}
+		lastNumber = newNumber;
+
 	}
 	void Exit_REQUEST_SPIN() {
 		ClearInputs();
@@ -431,12 +457,13 @@ public class VortexController : GameController {
 	bool cozmoBidSubmitted = false;
 	int predictedNum = -1;
 	float predictedDuration = -1f;
-	float cozmoTimePerTap = 1f;
+	float cozmoTimePerTap = 1.25f;
 
 	void Enter_SPINNING() {
 		lightingBall.Radius = wheelLightningRadii[currentWheelIndex];
 
 		for(int i=0;i<playerButtonCanvasGroups.Length;i++) {
+			if(i == 1) continue; // player 2 is cozmo, no button
 			playerButtonCanvasGroups[i].interactable = true;
 			playerButtonCanvasGroups[i].blocksRaycasts = true;
 		}
@@ -490,7 +517,15 @@ public class VortexController : GameController {
 			}
 		}
 		
+		for(int i=0;i<playerPanelFills.Length;i++) {
+			if(playerPanelFills[i].color.a == 0f) continue;
+			Color col = playerPanelFills[i].color;
+			col.a = Mathf.Max(0f, col.a - Time.deltaTime * 4f);
+			playerPanelFills[i].color = col;
+		}
+
 	}
+
 	void Exit_SPINNING() {
 		//stop looping spin audio
 		//play spin finished audio
@@ -504,6 +539,13 @@ public class VortexController : GameController {
 
 		
 		ActiveBlock.TappedAction -= BlockTapped;
+
+		for(int i=0;i<playerPanelFills.Length;i++) {
+			if(playerPanelFills[i].color.a == 0f) continue;
+			Color col = playerPanelFills[i].color;
+			col.a = 0f;
+			playerPanelFills[i].color = col;
+		}
 	}
 
 	List<int> playersThatAreCorrect = new List<int>();
@@ -522,10 +564,8 @@ public class VortexController : GameController {
 		}
 
 		playersThatAreCorrect.Sort( ( obj1, obj2 ) =>  {
-			int index1 = playersThatAreCorrect.IndexOf(obj1);
-			int index2 = playersThatAreCorrect.IndexOf(obj2);
-			float finalStamp1 = playerInputs[index1].InputTime;
-			float finalStamp2 = playerInputs[index2].InputTime;
+			float finalStamp1 = playerInputs[obj1].InputTime;
+			float finalStamp2 = playerInputs[obj2].InputTime;
 
 			if(finalStamp1 == finalStamp2) return 0;
 			if(finalStamp1 > finalStamp2) return 1;
@@ -617,25 +657,68 @@ public class VortexController : GameController {
 			}
 		}
 		
-
-		for(int i=0;i<scores.Count;i++) {
-			if(i < textPlayerScores.Length) textPlayerScores[i].text = "SCORE: " + scores[i].ToString();
-		}
-		
-		if(playersThatAreCorrect.Count > 0) {
-			if(roundCompleteWinner != null) AudioManager.PlayOneShot(roundCompleteWinner);
-		}
-		else {
+		if(playersThatAreCorrect.Count == 0) {
 			if(roundCompleteNoWinner != null) AudioManager.PlayOneShot(roundCompleteNoWinner);
 		}
 
+		resultsDisplayIndex = 0;
+		fadeTimer = scoreDisplayFillFade;
 	}
 
-	void Update_SPIN_COMPLETE() {}
+	[SerializeField] float scoreDisplayFillFade = 0.5f;
+	[SerializeField] float scoreDisplayFillAlpha = 0.5f;
+	[SerializeField] float scoreDisplayEmptyAlpha = 0.1f;
+
+	float fadeTimer = 1f;
+	int resultsDisplayIndex = 0;
+	void Update_SPIN_COMPLETE() {
+		if(playersThatAreCorrect.Count == 0) return;
+		if(resultsDisplayIndex >= playersThatAreCorrect.Count) return;
+
+		bool wasPositive = fadeTimer > 0f;
+
+		fadeTimer -= Time.deltaTime;
+
+		int playerIndex = playersThatAreCorrect[resultsDisplayIndex];
+
+		Color col = playerPanelFills[playerIndex].color;
+		
+		if(fadeTimer > 0f) {
+			col.a = Mathf.Lerp(scoreDisplayFillAlpha, 0f, fadeTimer / scoreDisplayFillFade);
+		}
+		else {
+			col.a = Mathf.Lerp(scoreDisplayFillAlpha, scoreDisplayEmptyAlpha, Mathf.Abs(fadeTimer) / scoreDisplayFillFade);
+
+			if(wasPositive) {
+				textPlayerScores[playerIndex].text = "SCORE: " + scores[playerIndex].ToString();
+				
+				if(roundCompleteWinner != null) AudioManager.PlayOneShot(roundCompleteWinner);
+			}
+		}
+
+		playerPanelFills[playerIndex].color = col;
+
+		if(fadeTimer <= -scoreDisplayFillFade) {
+			resultsDisplayIndex++;
+			fadeTimer = scoreDisplayFillFade;
+		}
+	}
+
 	void Exit_SPIN_COMPLETE() {
+		for(int i=0;i<playerPanelFills.Length;i++) {
+			Color col = playerPanelFills[i].color;
+			col.a = 0f;
+			playerPanelFills[i].color = col;
+		}
 
+		for(int i=0;i<textPlayerBids.Length;i++) {
+			textPlayerBids[i].text = "";
+		}
 
-
+		for(int i=0;i<playerBidFlashAnimations.Length;i++) {
+			playerBidFlashAnimations[i].Play();
+		}
+		
 	}
 
 	void PlaceTokens() {
@@ -673,6 +756,11 @@ public class VortexController : GameController {
 			playerMockBlocks[i].SetLights(Color.black, Color.black, Color.black, Color.black);
 			textPlayerBids[i].text = "";
 		}
+
+		for(int i=0;i<playerBidFlashAnimations.Length;i++) {
+			playerBidFlashAnimations[i].Stop();
+			playerBidFlashAnimations[i].Rewind();
+		}
 	}
 
 	void BlockTapped(ActiveBlock block) {
@@ -707,6 +795,13 @@ public class VortexController : GameController {
 
 		playerMockBlocks[index].SetLights(c1, c2, c3, c4);
 		textPlayerBids[index].text = playerInputs[index].stamps.Count.ToString();
+
+		playerBidFlashAnimations[index].Rewind();
+		playerBidFlashAnimations[index].Play();
+
+		Color fillCol = playerPanelFills[index].color;
+		fillCol.a = 0.5f;
+		playerPanelFills[index].color = fillCol;
 
 		if(buttonPressSound != null) AudioManager.PlayOneShot(buttonPressSound);
 

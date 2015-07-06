@@ -15,7 +15,7 @@ void Process_MoveHead(const Anki::Cozmo::U2G::MoveHead& msg);
 void Process_MoveLift(const Anki::Cozmo::U2G::MoveLift& msg);
 void Process_SetLiftHeight(const Anki::Cozmo::U2G::SetLiftHeight& msg);
 void Process_SetHeadAngle(const Anki::Cozmo::U2G::SetHeadAngle& msg);
-void Process_TrackHeadToObject(const Anki::Cozmo::U2G::TrackHeadToObject& msg);
+void Process_TrackToObject(const Anki::Cozmo::U2G::TrackToObject& msg);
 void Process_StopAllMotors(const Anki::Cozmo::U2G::StopAllMotors& msg);
 void Process_ImageRequest(const Anki::Cozmo::U2G::ImageRequest& msg);
 void Process_SetRobotImageSendMode(const Anki::Cozmo::U2G::SetRobotImageSendMode& msg);

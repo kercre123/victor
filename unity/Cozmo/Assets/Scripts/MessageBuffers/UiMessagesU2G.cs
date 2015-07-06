@@ -1684,35 +1684,40 @@ public class SetHeadAngle
 	}
 }
 
-public class TrackHeadToObject
+public class TrackToObject
 {
 	private uint _objectID; // uint_32
 	private byte _robotID; // uint_8
+	private bool _headOnly; // bool
 
 	public uint objectID { get { return _objectID; } set { _objectID = value; } }
 
 	public byte robotID { get { return _robotID; } set { _robotID = value; } }
 
+	public bool headOnly { get { return _headOnly; } set { _headOnly = value; } }
+
 
 	/**** Constructors ****/
 
-	public TrackHeadToObject()
+	public TrackToObject()
 	{
 	}
 
-	public TrackHeadToObject(uint objectID,
-		byte robotID)
+	public TrackToObject(uint objectID,
+		byte robotID,
+		bool headOnly)
 	{
 		this.objectID = objectID;
 		this.robotID = robotID;
+		this.headOnly = headOnly;
 	}
 
-	public TrackHeadToObject(System.IO.Stream stream)
+	public TrackToObject(System.IO.Stream stream)
 	{
 		Unpack(stream);
 	}
 
-	public TrackHeadToObject(System.IO.BinaryReader reader)
+	public TrackToObject(System.IO.BinaryReader reader)
 	{
 		Unpack(reader);
 	}
@@ -1727,6 +1732,7 @@ public class TrackHeadToObject
 	{
 		_objectID = reader.ReadUInt32();
 		_robotID = reader.ReadByte();
+		_headOnly = reader.ReadBoolean();
 	}
 
 	public void Pack(System.IO.Stream stream)
@@ -1739,12 +1745,13 @@ public class TrackHeadToObject
 	{
 		writer.Write((uint)_objectID);
 		writer.Write((byte)_robotID);
+		writer.Write((bool)_headOnly);
 	}
 
 	public int Size 
 	{
 		get {
-			return 5;
+			return 6;
 		}
 	}
 
@@ -1767,7 +1774,7 @@ public class TrackHeadToObject
 		return true;
 	}
 
-	public static bool operator ==(TrackHeadToObject a, TrackHeadToObject b)
+	public static bool operator ==(TrackToObject a, TrackToObject b)
 	{
 		if (System.Object.ReferenceEquals(a, null))
 		{
@@ -1777,17 +1784,17 @@ public class TrackHeadToObject
 		return a.Equals(b);
 	}
 
-	public static bool operator !=(TrackHeadToObject a, TrackHeadToObject b)
+	public static bool operator !=(TrackToObject a, TrackToObject b)
 	{
 		return !(a == b);
 	}
 
 	public override bool Equals(System.Object obj)
 	{
-		return this.Equals(obj as TrackHeadToObject);
+		return this.Equals(obj as TrackToObject);
 	}
 
-	public bool Equals(TrackHeadToObject p)
+	public bool Equals(TrackToObject p)
 	{
 		if (System.Object.ReferenceEquals(p, null))
 		{
@@ -1795,7 +1802,8 @@ public class TrackHeadToObject
 		}
 
 		return this._objectID.Equals(p._objectID)
-			&& this._robotID.Equals(p._robotID);
+			&& this._robotID.Equals(p._robotID)
+			&& this._headOnly.Equals(p._headOnly);
 	}
 
 	public override int GetHashCode()
@@ -1805,6 +1813,7 @@ public class TrackHeadToObject
 			int hash = 17;
 			hash = hash * 23 + this._objectID.GetHashCode();
 			hash = hash * 23 + this._robotID.GetHashCode();
+			hash = hash * 23 + this._headOnly.GetHashCode();
 			return hash;
 		}
 	}
@@ -7877,7 +7886,7 @@ public class Message {
 		MoveLift,	//10
 		SetLiftHeight,	//11
 		SetHeadAngle,	//12
-		TrackHeadToObject,	//13
+		TrackToObject,	//13
 		StopAllMotors,	//14
 		ImageRequest,	//15
 		SetRobotImageSendMode,	//16
@@ -8158,19 +8167,19 @@ public class Message {
 		}
 	}
 
-	public Anki.Cozmo.U2G.TrackHeadToObject TrackHeadToObject
+	public Anki.Cozmo.U2G.TrackToObject TrackToObject
 	{
 		get {
-			if (_tag != Tag.TrackHeadToObject) {
+			if (_tag != Tag.TrackToObject) {
 				throw new System.InvalidOperationException(string.Format(
-					"Cannot access union member \"TrackHeadToObject\" when a value of type {0} is stored.",
+					"Cannot access union member \"TrackToObject\" when a value of type {0} is stored.",
 					_tag.ToString()));
 			}
-			return (Anki.Cozmo.U2G.TrackHeadToObject)this._state;
+			return (Anki.Cozmo.U2G.TrackToObject)this._state;
 		}
 		
 		set {
-			_tag = (value != null) ? Tag.TrackHeadToObject : Tag.INVALID;
+			_tag = (value != null) ? Tag.TrackToObject : Tag.INVALID;
 			_state = value;
 		}
 	}
@@ -9090,8 +9099,8 @@ public class Message {
 		case Tag.SetHeadAngle:
 			SetHeadAngle = new Anki.Cozmo.U2G.SetHeadAngle(reader);
 			break;
-		case Tag.TrackHeadToObject:
-			TrackHeadToObject = new Anki.Cozmo.U2G.TrackHeadToObject(reader);
+		case Tag.TrackToObject:
+			TrackToObject = new Anki.Cozmo.U2G.TrackToObject(reader);
 			break;
 		case Tag.StopAllMotors:
 			StopAllMotors = new Anki.Cozmo.U2G.StopAllMotors(reader);
@@ -9338,11 +9347,11 @@ public class Message {
 			}
 			SetHeadAngle.Pack(writer);
 			break;
-		case Tag.TrackHeadToObject:
-			if (TrackHeadToObject == null) {
+		case Tag.TrackToObject:
+			if (TrackToObject == null) {
 				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
 			}
-			TrackHeadToObject.Pack(writer);
+			TrackToObject.Pack(writer);
 			break;
 		case Tag.StopAllMotors:
 			if (StopAllMotors == null) {
@@ -9732,11 +9741,11 @@ public class Message {
 				}
 				result += SetHeadAngle.Size;
 				break;
-			case Tag.TrackHeadToObject:
-				if (TrackHeadToObject == null) {
+			case Tag.TrackToObject:
+				if (TrackToObject == null) {
 					throw new System.InvalidOperationException("Messages may not have null members.");
 				}
-				result += TrackHeadToObject.Size;
+				result += TrackToObject.Size;
 				break;
 			case Tag.StopAllMotors:
 				if (StopAllMotors == null) {

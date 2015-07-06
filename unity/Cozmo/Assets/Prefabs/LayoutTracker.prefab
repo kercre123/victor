@@ -23983,6 +23983,7 @@ MonoBehaviour:
   - {fileID: 11431478}
   - {fileID: 11466486}
   - {fileID: 11448982}
+  - {fileID: 11409738}
   startPositionMarker: {fileID: 0}
   scale: .0439999998
   initialInstruction: 
@@ -24777,6 +24778,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   scene: GameMenu
+  onEnable: 0
+  onUpdateFrame: -1
 --- !u!114 &11464910
 MonoBehaviour:
   m_ObjectHideFlags: 1
