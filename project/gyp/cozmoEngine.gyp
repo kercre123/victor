@@ -297,6 +297,11 @@
               '<(util_gyp_path):util',
             ],
             'sources': [ '<!@(cat <(engine_test_source))' ],
+            'sources/': [
+              ['exclude', 'run_pc_embeddedTests.cpp'],
+              ['exclude', 'run_m4_embeddedTests.cpp'],
+              ['exclude', 'resaveBlockImages.m'],
+            ],
             'libraries': [
               '<(gtest_path)/gtest.framework',
               '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_core.dylib',

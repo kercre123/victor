@@ -144,7 +144,7 @@ def main(scriptArgs):
   # update file lists
   generator = updateFileLists.FileListGenerator(options)
   generator.processFolder(['basestation/src/anki/cozmo/basestation', 'basestation/include/anki/cozmo', 'include'], ['project/gyp/cozmoEngine.lst'])
-  generator.processFolder(['basestation/test'], ['project/gyp/cozmoEngine-test.lst'])
+  generator.processFolder(['basestation/test', 'robot/test'], ['project/gyp/cozmoEngine-test.lst'])
   if options.updateListsOnly:
     # TODO: remove dependency on abspath. 
     # there is a bug due to 'os.chdir' and user passed rel path

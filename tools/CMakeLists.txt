@@ -155,9 +155,11 @@ list(APPEND util__other_srcs
   "anki-util/source/anki/util/parsingConstants/parsingConstants.def"
   "anki-util/source/anki/util/parsingConstants/parsingConstants.h"
   "anki-util/source/anki/util/parsingConstants/soundNames.def"
+  "anki-util/source/anki/util/ptree/includeJSONParser.h"
   "anki-util/source/anki/util/ptree/includePtree.h"
   "anki-util/source/anki/util/ptree/ptreeKey.h"
   "anki-util/source/anki/util/ptree/ptreeMandatory.h"
+  "anki-util/source/anki/util/ptree/ptreeToJSON.h"
   "anki-util/source/anki/util/ptree/ptreeTools.h"
   "anki-util/source/anki/util/ptree/ptreeTraverser.h"
   "anki-util/source/anki/util/random/randomGenerator.h"
@@ -165,20 +167,23 @@ list(APPEND util__other_srcs
   "anki-util/source/anki/util/signals/simpleSignal.hpp"
   "anki-util/source/anki/util/signals/simpleSignal_fwd.h"
   "anki-util/source/anki/util/singleton/dynamicSingleton.h"
+  "anki-util/source/anki/util/statEngine/abstractAction.h"
+  "anki-util/source/anki/util/statEngine/abstractCondition.h"
+  "anki-util/source/anki/util/statEngine/combinationCondition.h"
+  "anki-util/source/anki/util/statEngine/countThresholdCondition.h"
+  "anki-util/source/anki/util/statEngine/dateCondition.h"
+  "anki-util/source/anki/util/statEngine/multiAction.h"
+  "anki-util/source/anki/util/statEngine/noticeAction.h"
+  "anki-util/source/anki/util/statEngine/resetAction.h"
+  "anki-util/source/anki/util/statEngine/statEngine.h"
+  "anki-util/source/anki/util/statEngine/statEngineMessages.h"
+  "anki-util/source/anki/util/statEngine/statNotice.h"
+  "anki-util/source/anki/util/statEngine/statRule.h"
+  "anki-util/source/anki/util/statEngine/statRuleBuilder.h"
+  "anki-util/source/anki/util/statEngine/timeCondition.h"
+  "anki-util/source/anki/util/stats/recentStatsAccumulator.h"
   "anki-util/source/anki/util/stats/runningStat.h"
   "anki-util/source/anki/util/stats/statsAccumulator.h"
-  "anki-util/source/anki/util/statService/abstractAction.h"
-  "anki-util/source/anki/util/statService/abstractCondition.h"
-  "anki-util/source/anki/util/statService/combinationCondition.h"
-  "anki-util/source/anki/util/statService/countThresholdCondition.h"
-  "anki-util/source/anki/util/statService/dateCondition.h"
-  "anki-util/source/anki/util/statService/noticeAction.h"
-  "anki-util/source/anki/util/statService/statNotice.h"
-  "anki-util/source/anki/util/statService/statRule.h"
-  "anki-util/source/anki/util/statService/statRuleBuilder.h"
-  "anki-util/source/anki/util/statService/statService.h"
-  "anki-util/source/anki/util/statService/statServiceMessages.h"
-  "anki-util/source/anki/util/statService/timeCondition.h"
   "anki-util/source/anki/util/stringTable/hashStringTable.h"
   "anki-util/source/anki/util/stringTable/stringID.h"
   "anki-util/source/anki/util/stringTable/stringTable.h"
@@ -205,9 +210,7 @@ list(APPEND util__other_srcs
   "anki-util/source/anki/util/transport/transportStats.h"
   "anki-util/source/anki/util/transport/udpTransport.h"
   "anki-util/source/anki/util/utilMessaging/utilMessaging.h"
-  "anki-util/source/anki/util/UUID/UUID.h"
-  "anki-util/source/anki/util/ptree/includeJSONParser.h"
-  "anki-util/source/anki/util/ptree/ptreeToJSON.h")
+  "anki-util/source/anki/util/UUID/UUID.h")
 add_library(util STATIC ${util__other_srcs}
   anki-util/source/anki/util/color/color.cpp
   anki-util/source/anki/util/console/consoleArgument.cpp
@@ -223,6 +226,7 @@ add_library(util STATIC ${util__other_srcs}
   anki-util/source/anki/util/dispatchQueue/dispatchQueue.cpp
   anki-util/source/anki/util/dispatchQueue/taskExecutor.cpp
   anki-util/source/anki/util/fileUtils/fileUtils.cpp
+  anki-util/source/anki/util/global/globalDefinitions.cpp
   anki-util/source/anki/util/hashing/hashing.cpp
   anki-util/source/anki/util/helpers/base64.cpp
   anki-util/source/anki/util/helpers/callbackProvider.cpp
@@ -237,23 +241,28 @@ add_library(util STATIC ${util__other_srcs}
   anki-util/source/anki/util/md5/md5.cpp
   anki-util/source/anki/util/parsingConstants/namedConstants.cpp
   anki-util/source/anki/util/parsingConstants/parsingConstants.cpp
+  anki-util/source/anki/util/ptree/includePtree.cpp
   anki-util/source/anki/util/ptree/ptreeKey.cpp
   anki-util/source/anki/util/ptree/ptreeMandatory.cpp
+  anki-util/source/anki/util/ptree/ptreeToJSON.cpp
   anki-util/source/anki/util/ptree/ptreeTools.cpp
   anki-util/source/anki/util/ptree/ptreeTraverser.cpp
   anki-util/source/anki/util/random/randomGenerator.cpp
+  anki-util/source/anki/util/statEngine/abstractCondition.cpp
+  anki-util/source/anki/util/statEngine/combinationCondition.cpp
+  anki-util/source/anki/util/statEngine/countThresholdCondition.cpp
+  anki-util/source/anki/util/statEngine/dateCondition.cpp
+  anki-util/source/anki/util/statEngine/multiAction.cpp
+  anki-util/source/anki/util/statEngine/noticeAction.cpp
+  anki-util/source/anki/util/statEngine/resetAction.cpp
+  anki-util/source/anki/util/statEngine/statEngine.cpp
+  anki-util/source/anki/util/statEngine/statEngineMessages.cpp
+  anki-util/source/anki/util/statEngine/statNotice.cpp
+  anki-util/source/anki/util/statEngine/statRule.cpp
+  anki-util/source/anki/util/statEngine/statRuleBuilder.cpp
+  anki-util/source/anki/util/statEngine/timeCondition.cpp
+  anki-util/source/anki/util/stats/recentStatsAccumulator.cpp
   anki-util/source/anki/util/stats/runningStat.cpp
-  anki-util/source/anki/util/statService/abstractCondition.cpp
-  anki-util/source/anki/util/statService/combinationCondition.cpp
-  anki-util/source/anki/util/statService/countThresholdCondition.cpp
-  anki-util/source/anki/util/statService/dateCondition.cpp
-  anki-util/source/anki/util/statService/noticeAction.cpp
-  anki-util/source/anki/util/statService/statNotice.cpp
-  anki-util/source/anki/util/statService/statRule.cpp
-  anki-util/source/anki/util/statService/statRuleBuilder.cpp
-  anki-util/source/anki/util/statService/statService.cpp
-  anki-util/source/anki/util/statService/statServiceMessages.cpp
-  anki-util/source/anki/util/statService/timeCondition.cpp
   anki-util/source/anki/util/stringTable/hashStringTable.cpp
   anki-util/source/anki/util/stringTable/stringID.cpp
   anki-util/source/anki/util/stringTable/stringTable.cpp
@@ -276,9 +285,7 @@ add_library(util STATIC ${util__other_srcs}
   anki-util/source/anki/util/transport/udpTransport.cpp
   anki-util/source/anki/util/utilMessaging/utilMessaging.c
   anki-util/source/anki/util/UUID/UUID.c
-  anki-util/source/anki/util/global/globalDefinitions.cpp
-  anki-util/source/anki/util/ptree/includePtree.cpp
-  anki-util/source/anki/util/ptree/ptreeToJSON.cpp
+  anki-util/tools/message-buffers/support/cpp/source/SafeMessageBuffer.cpp
 )
 set_source_files_properties(${util__other_srcs} PROPERTIES HEADER_FILE_ONLY "TRUE")
 set_target_properties(util PROPERTIES ARCHIVE_OUTPUT_DIRECTORY "${obj}.${TOOLSET}/project/gyp")
@@ -316,6 +323,7 @@ set_source_files_properties(
   anki-util/source/anki/util/dispatchQueue/dispatchQueue.cpp
   anki-util/source/anki/util/dispatchQueue/taskExecutor.cpp
   anki-util/source/anki/util/fileUtils/fileUtils.cpp
+  anki-util/source/anki/util/global/globalDefinitions.cpp
   anki-util/source/anki/util/hashing/hashing.cpp
   anki-util/source/anki/util/helpers/base64.cpp
   anki-util/source/anki/util/helpers/callbackProvider.cpp
@@ -330,23 +338,28 @@ set_source_files_properties(
   anki-util/source/anki/util/md5/md5.cpp
   anki-util/source/anki/util/parsingConstants/namedConstants.cpp
   anki-util/source/anki/util/parsingConstants/parsingConstants.cpp
+  anki-util/source/anki/util/ptree/includePtree.cpp
   anki-util/source/anki/util/ptree/ptreeKey.cpp
   anki-util/source/anki/util/ptree/ptreeMandatory.cpp
+  anki-util/source/anki/util/ptree/ptreeToJSON.cpp
   anki-util/source/anki/util/ptree/ptreeTools.cpp
   anki-util/source/anki/util/ptree/ptreeTraverser.cpp
   anki-util/source/anki/util/random/randomGenerator.cpp
+  anki-util/source/anki/util/statEngine/abstractCondition.cpp
+  anki-util/source/anki/util/statEngine/combinationCondition.cpp
+  anki-util/source/anki/util/statEngine/countThresholdCondition.cpp
+  anki-util/source/anki/util/statEngine/dateCondition.cpp
+  anki-util/source/anki/util/statEngine/multiAction.cpp
+  anki-util/source/anki/util/statEngine/noticeAction.cpp
+  anki-util/source/anki/util/statEngine/resetAction.cpp
+  anki-util/source/anki/util/statEngine/statEngine.cpp
+  anki-util/source/anki/util/statEngine/statEngineMessages.cpp
+  anki-util/source/anki/util/statEngine/statNotice.cpp
+  anki-util/source/anki/util/statEngine/statRule.cpp
+  anki-util/source/anki/util/statEngine/statRuleBuilder.cpp
+  anki-util/source/anki/util/statEngine/timeCondition.cpp
+  anki-util/source/anki/util/stats/recentStatsAccumulator.cpp
   anki-util/source/anki/util/stats/runningStat.cpp
-  anki-util/source/anki/util/statService/abstractCondition.cpp
-  anki-util/source/anki/util/statService/combinationCondition.cpp
-  anki-util/source/anki/util/statService/countThresholdCondition.cpp
-  anki-util/source/anki/util/statService/dateCondition.cpp
-  anki-util/source/anki/util/statService/noticeAction.cpp
-  anki-util/source/anki/util/statService/statNotice.cpp
-  anki-util/source/anki/util/statService/statRule.cpp
-  anki-util/source/anki/util/statService/statRuleBuilder.cpp
-  anki-util/source/anki/util/statService/statService.cpp
-  anki-util/source/anki/util/statService/statServiceMessages.cpp
-  anki-util/source/anki/util/statService/timeCondition.cpp
   anki-util/source/anki/util/stringTable/hashStringTable.cpp
   anki-util/source/anki/util/stringTable/stringID.cpp
   anki-util/source/anki/util/stringTable/stringTable.cpp
@@ -367,9 +380,7 @@ set_source_files_properties(
   anki-util/source/anki/util/transport/transportAddress.cpp
   anki-util/source/anki/util/transport/transportStats.cpp
   anki-util/source/anki/util/transport/udpTransport.cpp
-  anki-util/source/anki/util/global/globalDefinitions.cpp
-  anki-util/source/anki/util/ptree/includePtree.cpp
-  anki-util/source/anki/util/ptree/ptreeToJSON.cpp
+  anki-util/tools/message-buffers/support/cpp/source/SafeMessageBuffer.cpp
  PROPERTIES
   COMPILE_FLAGS "-std=c11 -fdiagnostics-show-category=name -Wall -Woverloaded-virtual -Werror -Wundef -Wheader-guard -fsigned-char -fvisibility-inlines-hidden -fvisibility=default -Wshorten-64-to-32 -Winit-self -Wconditional-uninitialized -Wno-deprecated-register -Wa,--noexecstack -Wformat -Werror=format-security -g -std=c++11 -stdlib=libc++ -fdiagnostics-show-category=name -Wall -Woverloaded-virtual -Werror -Wundef -Wheader-guard -fsigned-char -fvisibility-inlines-hidden -fvisibility=default -Wshorten-64-to-32 -Winit-self -Wconditional-uninitialized -Wno-deprecated-register -Wa,--noexecstack -Wformat -Werror=format-security -g "
 )
