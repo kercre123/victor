@@ -4,7 +4,7 @@ Version=Lattice Semiconductor Corporation iCEcube - Release: 2015.04.27409 - Bui
 ProjectName=fpgaisp
 Vendor=SiliconBlue
 Synthesis=synplify
-ProjectVFiles=
+ProjectVFiles=top.v=work
 ProjectCFiles=
 CurImplementation=fpgaisp_Implmnt
 Implementations=fpgaisp_Implmnt
@@ -12,20 +12,20 @@ StartFromSynthesis=yes
 IPGeneration=false
 
 [fpgaisp_Implmnt]
-DeviceFamily=iCE40LM
+DeviceFamily=iCE5LP
 Device=4K
-DevicePackage=SWG25TR
+DevicePackage=SWG36
 DevicePower=
-NetlistFile=
+NetlistFile=fpgaisp_Implmnt/fpgaisp.edf
 AdditionalEDIFFile=
 IPEDIFFile=
-DesignLib=
-DesignView=
-DesignCell=
-SynthesisSDCFile=
+DesignLib=fpgaisp_Implmnt/sbt/netlist/oadb-top
+DesignView=_rt
+DesignCell=top
+SynthesisSDCFile=fpgaisp_Implmnt/fpgaisp.scf
 UserPinConstraintFile=
 UserSDCFile=
-PhysicalConstraintFile=
+PhysicalConstraintFile=fpgaisp_Implmnt/sbt/constraint/top_pcf_sbt.pcf
 BackendImplPathName=
 Devicevoltage=1.14
 DevicevoltagePerformance=+/-5%(datasheet default)
@@ -35,7 +35,7 @@ OperationRange=Commercial
 TypicalCustomTemperature=25
 WorstCustomTemperature=85
 BestCustomTemperature=0
-IOBankVoltages=topBank,1.8 bottomBank,1.8
+IOBankVoltages=topBank,3.3 bottomBank,3.3
 derValue=1.32445
 TimingPathNumberStick=0
 
