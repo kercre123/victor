@@ -61,7 +61,7 @@ void Head::RxPacket(u16 length, u8* dataRX)
  {
   // Switch to receive mode and wait for a reply
   nrf_gpio_cfg_input(PIN_TX_HEAD, NRF_GPIO_PIN_NOPULL);
-  NRF_UART0->PSELTXD = 0xFFFFFFFF;  // Disconne ct TX
+  NRF_UART0->PSELTXD = 0xFFFFFFFF;  // Disconnect TX
 
   // Wait 10uS for turnaround - 80uS on the other side
   MicroWait(10);

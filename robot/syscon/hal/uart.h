@@ -16,8 +16,8 @@ namespace UART {
   void put(uint8_t c);
   void put(const char* s);
 
+  void hex(uint32_t c);
   void hex(uint8_t c);
-  void hex(uint32_t value);
 
   void dec(int value);
 

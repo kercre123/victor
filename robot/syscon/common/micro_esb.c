@@ -188,7 +188,6 @@ uint32_t uesb_write_tx_payload(uint8_t pipe, uint8_t *data, uint8_t length)
     payload->length = length;
     memcpy(payload->data, data, length);
     
-
     if (m_uesb_mainstate == UESB_STATE_PRX) {
       uesb_stop();
     }
