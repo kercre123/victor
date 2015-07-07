@@ -135,8 +135,9 @@ public class GameLayoutTracker : MonoBehaviour {
 		RefreshSettings();
 
 		if(!blocksInitialized) {
+			int numPlayers = PlayerPrefs.GetInt("NumberOfPlayers", 1);
 			for(int i=0; i<layouts.Count; i++) {
-				layouts[i].Initialize();
+				layouts[i].Initialize(numPlayers);
 			}
 			blocksInitialized = true;
 		}
@@ -159,8 +160,8 @@ public class GameLayoutTracker : MonoBehaviour {
 			return;
 		}
 
-		skipBuildForThisLayout = currentLayout.blocks.Find( x => x.isHeld ) != null;
-		skipBuildForThisLayoutWaitForBlocks = (currentLayout.blocks.Find( x => x.isHeld ) != null) && currentLayout.blocks.FindAll( x => x.cubeType == CubeType.LIGHT_CUBE).Count > 1;
+		skipBuildForThisLayout = currentLayout.Blocks.Find( x => x.isHeld ) != null;
+		skipBuildForThisLayoutWaitForBlocks = (currentLayout.Blocks.Find( x => x.isHeld ) != null) && currentLayout.Blocks.FindAll( x => x.cubeType == CubeType.LIGHT_CUBE).Count > 1;
 
 		Phase = LayoutTrackerPhase.INVENTORY;
 
@@ -248,8 +249,8 @@ public class GameLayoutTracker : MonoBehaviour {
 			return LayoutTrackerPhase.DISABLED;
 		}
 
-		bool completed = validCount == currentLayout.blocks.Count;
-		if( currentLayout.blocks.Find( x => x.isHeld ) )
+		bool completed = validCount == currentLayout.Blocks.Count;
+		if( currentLayout.Blocks.Find( x => x.isHeld ) )
 		{
 			// make sure cozmo is holding a block if he needs to be
 			completed &= robot == null || robot.carryingObject != null;
@@ -268,7 +269,7 @@ public class GameLayoutTracker : MonoBehaviour {
 			case LayoutTrackerPhase.BUILDING:
 
 				if(skipBuildForThisLayout && !skipBuildForThisLayoutWaitForBlocks) {
-					BuildInstructionsCube unfinished = currentLayout.blocks.Find( x => !x.Validated && !x.isHeld );
+					BuildInstructionsCube unfinished = currentLayout.Blocks.Find( x => !x.Validated && !x.isHeld );
 					bool skipBuild = unfinished == null;
 					if(skipBuild) {
 						return LayoutTrackerPhase.DISABLED;
@@ -375,9 +376,9 @@ public class GameLayoutTracker : MonoBehaviour {
 		inventory.Clear ();
 		blocks2d.Clear();
 		
-		int count = currentLayout.blocks.Count;
+		int count = currentLayout.Blocks.Count;
 		for(int i=0; i<count; i++) {
-			BuildInstructionsCube block = currentLayout.blocks[i];
+			BuildInstructionsCube block = currentLayout.Blocks[i];
 			GameObject block2dObj = (GameObject)GameObject.Instantiate(block2dPrefab);
 			RectTransform blockTrans = block2dObj.transform as RectTransform;
 			blockTrans.SetParent(block2dAnchor, false);
@@ -447,7 +448,7 @@ public class GameLayoutTracker : MonoBehaviour {
 
 				if(inventory.Count > lastInventoryCount) { //look at last seen object if any seen
 					//Debug.Log( "look at last seen object if any seen: TrackHeadToObject " + inventory[inventory.Count-1] );
-					float arc = 180f / currentLayout.blocks.Count;
+					float arc = 180f / currentLayout.Blocks.Count;
 					Vector3 latestPos = inventory[inventory.Count-1].WorldPosition;
 					Vector2 toLatest = latestPos - robot.WorldPosition;
 					float angle = MathUtil.SignedVectorAngle(robot.Forward, toLatest.normalized, Vector3.forward) + arc;
@@ -477,7 +478,7 @@ public class GameLayoutTracker : MonoBehaviour {
 		
 		
 		if(image_localizedCheck != null) image_localizedCheck.gameObject.SetActive(robot != null && robot.IsLocalized());
-		if(button_autoBuild != null) button_autoBuild.gameObject.SetActive(!skipBuildForThisLayout && (!skipBuildForThisLayoutWaitForBlocks || validCount >= currentLayout.blocks.Count) && inventoryComplete && robot.IsLocalized());
+		if(button_autoBuild != null) button_autoBuild.gameObject.SetActive(!skipBuildForThisLayout && (!skipBuildForThisLayoutWaitForBlocks || validCount >= currentLayout.Blocks.Count) && inventoryComplete && robot.IsLocalized());
 		if(inventoryHints != null) inventoryHints.SetActive(!inventoryComplete);
 	}
 	void Exit_INVENTORY() {
@@ -499,12 +500,12 @@ public class GameLayoutTracker : MonoBehaviour {
 	}
 	void Update_AUTO_BUILDING() {
 		
-		textProgress.text = validCount + " / " + currentLayout.blocks.Count;
+		textProgress.text = validCount + " / " + currentLayout.Blocks.Count;
 		
 		layoutInstructionsPanel.SetActive(!hidden);
 		layoutInstructionsCamera.gameObject.SetActive(!hidden);
 		
-		if(validCount != currentLayout.blocks.Count && robot != null) {
+		if(validCount != currentLayout.Blocks.Count && robot != null) {
 			
 			if(robot.isBusy) {
 				//coz is doing shit
@@ -545,7 +546,7 @@ public class GameLayoutTracker : MonoBehaviour {
 		RefreshCozmoMarker();
 	}
 	void Update_BUILDING() {
-		textProgress.text = validCount + " / " + currentLayout.blocks.Count;
+		textProgress.text = validCount + " / " + currentLayout.Blocks.Count;
 		layoutInstructionsPanel.SetActive(!hidden);
 		layoutInstructionsCamera.gameObject.SetActive(!hidden);
 
@@ -565,7 +566,7 @@ public class GameLayoutTracker : MonoBehaviour {
 	}
 
 	void Enter_COMPLETE() {
-		int blockCount = currentLayout.blocks.Count;
+		int blockCount = currentLayout.Blocks.Count;
 		textProgress.text = blockCount.ToString() + " / " + blockCount.ToString();
 		layoutInstructionsPanel.SetActive(!hidden);
 		layoutInstructionsCamera.gameObject.SetActive(!hidden);
@@ -625,7 +626,7 @@ public class GameLayoutTracker : MonoBehaviour {
 		bool shouldBeStackedInstedOfDropped = false;
 		uint colorCode = CozmoPalette.ColorToUInt(Color.clear);
 
-		if(validCount < currentLayout.blocks.Count && robot != null && robot.carryingObject != null) {
+		if(validCount < currentLayout.Blocks.Count && robot != null && robot.carryingObject != null) {
 			string error;
 			LayoutErrorType errorType;
 			
@@ -655,8 +656,8 @@ public class GameLayoutTracker : MonoBehaviour {
 
 	void RefreshValidationSounds() {
 		
-		if(validCount == currentLayout.blocks.Count) {
-			if(lastValidCount != currentLayout.blocks.Count) {
+		if(validCount == currentLayout.Blocks.Count) {
+			if(lastValidCount != currentLayout.Blocks.Count) {
 				AudioManager.PlayOneShot(layoutValidatedSound);
 			}
 		}
@@ -749,11 +750,11 @@ public class GameLayoutTracker : MonoBehaviour {
 		GameLayout layout = currentLayout;
 		if(layout == null) return;
 
-		for(int i=0; i<layout.blocks.Count; i++) {
-			layout.blocks[i].Hidden = false;
-			layout.blocks[i].Highlighted = false;
-			layout.blocks[i].Validated = false;
-			layout.blocks[i].AssignedObject = null;
+		for(int i=0; i<layout.Blocks.Count; i++) {
+			layout.Blocks[i].Hidden = false;
+			layout.Blocks[i].Highlighted = false;
+			layout.Blocks[i].Validated = false;
+			layout.Blocks[i].AssignedObject = null;
 		}
 	}
 
@@ -773,8 +774,8 @@ public class GameLayoutTracker : MonoBehaviour {
 		potentialObservedObjects.AddRange(robot.knownObjects);
 
 		//first loop through and clear our old assignments
-		for(int layoutBlockIndex=0; layoutBlockIndex<layout.blocks.Count; layoutBlockIndex++) {
-			BuildInstructionsCube block = layout.blocks[layoutBlockIndex];
+		for(int layoutBlockIndex=0; layoutBlockIndex<layout.Blocks.Count; layoutBlockIndex++) {
+			BuildInstructionsCube block = layout.Blocks[layoutBlockIndex];
 //			if(block.Validated && potentialObservedObjects.Contains(block.AssignedObject)) {
 //				potentialObservedObjects.Remove(block.AssignedObject);
 //				validated.Add(block);
@@ -788,8 +789,8 @@ public class GameLayoutTracker : MonoBehaviour {
 		if(debug) Debug.Log("ValidateBlocks with robot.knownObjects.Count("+robot.knownObjects.Count+")");
 
 		//loop through our 'ideal' layout blocks and look for known objects that might satisfy the requirements of each
-		for(int layoutBlockIndex=0; layoutBlockIndex<layout.blocks.Count; layoutBlockIndex++) {
-			BuildInstructionsCube block = layout.blocks[layoutBlockIndex];
+		for(int layoutBlockIndex=0; layoutBlockIndex<layout.Blocks.Count; layoutBlockIndex++) {
+			BuildInstructionsCube block = layout.Blocks[layoutBlockIndex];
 
 			//double the lenience for an object that previously satisfied this block
 			ObservedObject previouslyAssigned = null;
@@ -831,13 +832,13 @@ public class GameLayoutTracker : MonoBehaviour {
 		
 		validCount = validated.Count;
 		
-		if( validCount > lastValidCount && validCount < layout.blocks.Count ) {
+		if( validCount > lastValidCount && validCount < layout.Blocks.Count ) {
 			AudioManager.PlayAudioClip(cubePlaced, 0, AudioManager.Source.Notification);
 		}
 	}
 
 	void SetBlockValidated(int layoutBlockIndex, ObservedObject newObject) {
-		BuildInstructionsCube block = currentLayout.blocks[layoutBlockIndex];
+		BuildInstructionsCube block = currentLayout.Blocks[layoutBlockIndex];
 		validated.Add(block);
 		block.AssignedObject = newObject;
 		block.Validated = true;
@@ -948,7 +949,7 @@ public class GameLayoutTracker : MonoBehaviour {
 	}
 
 	ObservedObject GetObservedObjectForNextLayoutBlock() {
-		BuildInstructionsCube layoutCube = currentLayout.blocks.Find ( x => !x.Validated );
+		BuildInstructionsCube layoutCube = currentLayout.Blocks.Find ( x => !x.Validated );
 		
 		if (layoutCube == null) return null;
 		
@@ -957,9 +958,9 @@ public class GameLayoutTracker : MonoBehaviour {
 		
 		if(unplacedObjects.Count == 0) return null;
 
-		for (int i=0; i<currentLayout.blocks.Count; i++) {
-			if(!currentLayout.blocks[i].Validated) continue;
-			unplacedObjects.Remove (currentLayout.blocks[i].AssignedObject);
+		for (int i=0; i<currentLayout.Blocks.Count; i++) {
+			if(!currentLayout.Blocks[i].Validated) continue;
+			unplacedObjects.Remove (currentLayout.Blocks[i].AssignedObject);
 		}
 		
 		//if our carried object satisfies our needs, just use it
@@ -1014,8 +1015,8 @@ public class GameLayoutTracker : MonoBehaviour {
 	
 	bool IsActiveBlockCorrectColor(ActiveBlock activeBlockToMatch) {
 		
-		for(int i=0; i<currentLayout.blocks.Count; i++) {
-			BuildInstructionsCube block = currentLayout.blocks[i];
+		for(int i=0; i<currentLayout.Blocks.Count; i++) {
+			BuildInstructionsCube block = currentLayout.Blocks[i];
 			if(block.Validated) continue;
 			if(!block.isActive) continue;
 			if(activeBlockToMatch.mode == block.activeBlockMode) return true;
@@ -1027,7 +1028,7 @@ public class GameLayoutTracker : MonoBehaviour {
 	//allow us to predetermine the target layout cube if we want to, if not we'll reference the first one we find
 	void SetLightCubeToCorrectColor(ActiveBlock activeBlock, BuildInstructionsCube layoutActiveCube=null) {
 		if(layoutActiveCube  == null) {
-			layoutActiveCube = currentLayout.blocks.Find (x => !x.Validated && x.isActive);
+			layoutActiveCube = currentLayout.Blocks.Find (x => !x.Validated && x.isActive);
 			if(layoutActiveCube == null) return;
 		}
 		if(layoutActiveCube.activeBlockMode == activeBlock.mode) return;
@@ -1138,7 +1139,7 @@ public class GameLayoutTracker : MonoBehaviour {
 		if(currentLayout == null) return Vector3.zero;
 		if(t == null) return Vector3.zero;
 		
-		List<BuildInstructionsCube> layoutBlocksOnGround = currentLayout.blocks.FindAll(x => x.cubeBelow == null && x.Validated);
+		List<BuildInstructionsCube> layoutBlocksOnGround = currentLayout.Blocks.FindAll(x => x.cubeBelow == null && x.Validated);
 
 		if(layoutBlocksOnGround.Count == 0)
 		{
@@ -1209,12 +1210,12 @@ public class GameLayoutTracker : MonoBehaviour {
 		if(robot == null) return false;
 		if(objectToPlace == null) return false;
 		
-		List<BuildInstructionsCube> newBlocks = currentLayout.blocks.FindAll(x => IsUnvalidatedMatchingGroundBlock(x, objectToPlace, true));
+		List<BuildInstructionsCube> newBlocks = currentLayout.Blocks.FindAll(x => IsUnvalidatedMatchingGroundBlock(x, objectToPlace, true));
 		
 		if(newBlocks == null || newBlocks.Count == 0) {
 			//this is probably ok?  may need to do more processing to see if its ok
 			
-			newBlocks = currentLayout.blocks.FindAll(x => IsUnvalidatedMatchingStackedBlock(x, objectToPlace, true));
+			newBlocks = currentLayout.Blocks.FindAll(x => IsUnvalidatedMatchingStackedBlock(x, objectToPlace, true));
 			if(newBlocks == null || newBlocks.Count == 0) {
 				Debug.Log ("This block is not required in this layout.");
 				return false;
@@ -1255,7 +1256,7 @@ public class GameLayoutTracker : MonoBehaviour {
 
 	public bool AttemptAssistedStack( ObservedObject objectToStack, List<BuildInstructionsCube> potentiallyStackable)  {
 
-		List<BuildInstructionsCube> potentiallyStackedUpon = currentLayout.blocks.FindAll (x => x.cubeAbove != null && !x.cubeAbove.Validated); //newBlocks.Find ( y => y.cubeBelow == x ) != null );
+		List<BuildInstructionsCube> potentiallyStackedUpon = currentLayout.Blocks.FindAll (x => x.cubeAbove != null && !x.cubeAbove.Validated); //newBlocks.Find ( y => y.cubeBelow == x ) != null );
 		
 		if(potentiallyStackedUpon == null || potentiallyStackedUpon.Count == 0) {
 			//if this will be our first ground block to validate, automatically valid location
@@ -1347,7 +1348,7 @@ public class GameLayoutTracker : MonoBehaviour {
 		
 		Vector3 posToDrop = robot.WorldPosition + robot.Forward * CozmoUtil.BLOCK_LENGTH_MM + Vector3.forward * CozmoUtil.BLOCK_LENGTH_MM * 0.5f;
 		
-		List<BuildInstructionsCube> newBlocks = currentLayout.blocks.FindAll(x => IsUnvalidatedMatchingGroundBlock(x, objectToDrop));
+		List<BuildInstructionsCube> newBlocks = currentLayout.Blocks.FindAll(x => IsUnvalidatedMatchingGroundBlock(x, objectToDrop));
 		
 		if(newBlocks == null || newBlocks.Count == 0) {
 			//this is probably ok?  may need to do more processing to see if its ok
@@ -1371,9 +1372,9 @@ public class GameLayoutTracker : MonoBehaviour {
 		errorText = "";
 		errorType = LayoutErrorType.NONE;
 
-		BuildInstructionsCube layoutBlockToStackUpon = currentLayout.blocks.Find(x => x.AssignedObject == objectToStackUpon);
+		BuildInstructionsCube layoutBlockToStackUpon = currentLayout.Blocks.Find(x => x.AssignedObject == objectToStackUpon);
 		if(layoutBlockToStackUpon == null) {
-			layoutBlockToStackUpon = currentLayout.blocks.Find(x => IsUnvalidatedMatchingGroundBlock(x, objectToStackUpon, ignoreColor) );
+			layoutBlockToStackUpon = currentLayout.Blocks.Find(x => IsUnvalidatedMatchingGroundBlock(x, objectToStackUpon, ignoreColor) );
 		
 			if(layoutBlockToStackUpon == null) {
 				//this is probably ok?  may need to do more processing to see if its ok
@@ -1383,7 +1384,7 @@ public class GameLayoutTracker : MonoBehaviour {
 			}
 		}
 
-		BuildInstructionsCube layoutBlockToStack = currentLayout.blocks.Find(x => x.cubeBelow == layoutBlockToStackUpon);
+		BuildInstructionsCube layoutBlockToStack = currentLayout.Blocks.Find(x => x.cubeBelow == layoutBlockToStackUpon);
 		if(layoutBlockToStack == null) {
 			errorText = "You are attempting to stack upon the wrong block.";
 			errorType = LayoutErrorType.WRONG_STACK;
@@ -1422,10 +1423,10 @@ public class GameLayoutTracker : MonoBehaviour {
 		List<ObservedObject> objects = new List<ObservedObject>();
 
 		if(currentLayout != null) {
-			for(int i=0;i<currentLayout.blocks.Count;i++) {
-				if(!currentLayout.blocks[i].Validated) continue;
-				if(currentLayout.blocks[i].AssignedObject == null) continue;
-				objects.Add(currentLayout.blocks[i].AssignedObject);
+			for(int i=0;i<currentLayout.Blocks.Count;i++) {
+				if(!currentLayout.Blocks[i].Validated) continue;
+				if(currentLayout.Blocks[i].AssignedObject == null) continue;
+				objects.Add(currentLayout.Blocks[i].AssignedObject);
 			}
 		}
 

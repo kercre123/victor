@@ -68,7 +68,7 @@ public class GameController : MonoBehaviour {
 	protected int timerEventIndex = 0;
 	protected float bonusTime = 0; // bonus time is awarded each time the player numDropsForBonusTime drop offs 
 
-	public const int MAX_PLAYERS = 5; //four plus cozmo?
+	public const int MAX_PLAYERS = 4; //four plus cozmo?
 
 	//supporting four human players plus cozmo for now
 	protected List<int> scores = new List<int>();

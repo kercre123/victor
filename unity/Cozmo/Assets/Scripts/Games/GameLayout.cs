@@ -7,8 +7,10 @@ public class GameLayout : MonoBehaviour {
 	[SerializeField] public string gameName = "Unknown";
 	[SerializeField] public int levelNumber = 1;
 	[SerializeField] public List<BuildInstructionsCube> blocks = new List<BuildInstructionsCube>();
+
 	[SerializeField] public Transform startPositionMarker;
 	[SerializeField] public float scale = 0.044f;
+	[SerializeField] public List<int> gateBlocksAtPlayerCount = new List<int>();
 
 	[TextArea(5,30)]
 	[SerializeField] public string initialInstruction = null;
@@ -16,17 +18,30 @@ public class GameLayout : MonoBehaviour {
 	[TextArea(5,30)]
 	[SerializeField] public string secondInstruction = null;
 
-	public void Initialize() {
+	public List<BuildInstructionsCube> Blocks = new List<BuildInstructionsCube>();
 
-		//init cubes in order, so their canvas draw order is apt
-		for(int i=0; i<blocks.Count; i++) {
-			blocks[i].Initialize ();
-			scale = blocks[i].transform.lossyScale.x;
+	public void Initialize(int players=1) {
+
+		Blocks.Clear();
+
+		for(int i=0;i<blocks.Count;i++) {
+			if(i < gateBlocksAtPlayerCount.Count && players > gateBlocksAtPlayerCount[i]) {
+				blocks[i].gameObject.SetActive(false);
+				continue;
+			}
+			blocks[i].gameObject.SetActive(true);
+			Blocks.Add(blocks[i]);
 		}
 
-		for(int i=0; i<blocks.Count-1; i++) {
-			for(int j=i+1; j<blocks.Count; j++) {
-				Vector3 offset = blocks[j].transform.position - blocks[i].transform.position;
+		//init cubes in order, so their canvas draw order is apt
+		for(int i=0; i<Blocks.Count; i++) {
+			Blocks[i].Initialize ();
+			scale = Blocks[i].transform.lossyScale.x;
+		}
+
+		for(int i=0; i<Blocks.Count-1; i++) {
+			for(int j=i+1; j<Blocks.Count; j++) {
+				Vector3 offset = Blocks[j].transform.position - Blocks[i].transform.position;
 				Vector2 flat = offset;
 				flat.y = 0f;
 
@@ -34,13 +49,13 @@ public class GameLayout : MonoBehaviour {
 
 				if(offset.y > 0.1f) {
 					//Debug.Log ("GameLayout " + blocks[j].gameObject.name + " stacked on " + blocks[i].gameObject.name);
-					blocks[j].cubeBelow = blocks[i];
-					blocks[i].cubeAbove = blocks[j];
+					Blocks[j].cubeBelow = Blocks[i];
+					Blocks[i].cubeAbove = Blocks[j];
 				}
 				else if(offset.y < -0.1f) {
 					//Debug.Log ("GameLayout " + blocks[i].gameObject.name + " stacked on " + blocks[j].gameObject.name);
-					blocks[j].cubeAbove = blocks[i];
-					blocks[i].cubeBelow = blocks[j];
+					Blocks[j].cubeAbove = Blocks[i];
+					Blocks[i].cubeBelow = Blocks[j];
 				}
 			}
 		}

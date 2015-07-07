@@ -23592,8 +23592,10 @@ MonoBehaviour:
   - {fileID: 11409674}
   startPositionMarker: {fileID: 0}
   scale: .0439999998
+  gateBlocksAtPlayerCount: 
   initialInstruction: 
   secondInstruction: 
+  Blocks: []
 --- !u!114 &11409698
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -23986,8 +23988,10 @@ MonoBehaviour:
   - {fileID: 11409738}
   startPositionMarker: {fileID: 0}
   scale: .0439999998
+  gateBlocksAtPlayerCount: 01000000020000000300000004000000
   initialInstruction: 
   secondInstruction: 
+  Blocks: []
 --- !u!114 &11409744
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -25218,11 +25222,13 @@ MonoBehaviour:
   - {fileID: 11483346}
   startPositionMarker: {fileID: 415420}
   scale: .0439999998
+  gateBlocksAtPlayerCount: 
   initialInstruction: All right.  Let's establish the first block in the game set-up.  Tell
     Cozmo to pick-up and drop any BLUE block.
   secondInstruction: That's a good start.  Now either pick up and place the other
     BLUE block 10 cubes away from the first, or pick up an ACTIVE block, set its color
     to RED and stack it on your first block.
+  Blocks: []
 --- !u!114 &11483350
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -25859,11 +25865,13 @@ MonoBehaviour:
   - {fileID: 11485174}
   startPositionMarker: {fileID: 484956}
   scale: .0439999998
+  gateBlocksAtPlayerCount: 
   initialInstruction: All right.  Let's establish the first block in the game set-up.  Tell
     Cozmo to pick-up and drop any BLUE block.
   secondInstruction: That's a good start.  Now either pick up and place the other
     BLUE block 10 cubes away from the first, or pick up an ACTIVE block, set its color
     to RED and stack it on your first block.
+  Blocks: []
 --- !u!114 &11485178
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -26186,8 +26194,10 @@ MonoBehaviour:
   - {fileID: 11444684}
   startPositionMarker: {fileID: 0}
   scale: .0439999998
+  gateBlocksAtPlayerCount: 
   initialInstruction: 
   secondInstruction: 
+  Blocks: []
 --- !u!114 &11495020
 MonoBehaviour:
   m_ObjectHideFlags: 1
