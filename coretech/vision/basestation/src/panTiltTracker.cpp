@@ -19,7 +19,7 @@
 #include "anki/common/basestation/math/rect_impl.h"
 
 #include "anki/common/basestation/utils/timer.h"
-#include "anki/util/logging/logging.h"
+#include "util/logging/logging.h"
 
 namespace Anki {
   namespace Vision {

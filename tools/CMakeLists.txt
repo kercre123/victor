@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8.8 FATAL_ERROR)
 cmake_policy(VERSION 2.8.8)
-project(util)
+project(utilEmbedded)
 set(configuration ".")
 enable_language(ASM)
 set(builddir "${CMAKE_BINARY_DIR}")
@@ -385,5 +385,46 @@ set_source_files_properties(
   COMPILE_FLAGS "-std=c11 -fdiagnostics-show-category=name -Wall -Woverloaded-virtual -Werror -Wundef -Wheader-guard -fsigned-char -fvisibility-inlines-hidden -fvisibility=default -Wshorten-64-to-32 -Winit-self -Wconditional-uninitialized -Wno-deprecated-register -Wa,--noexecstack -Wformat -Werror=format-security -g -std=c++11 -stdlib=libc++ -fdiagnostics-show-category=name -Wall -Woverloaded-virtual -Werror -Wundef -Wheader-guard -fsigned-char -fvisibility-inlines-hidden -fvisibility=default -Wshorten-64-to-32 -Winit-self -Wconditional-uninitialized -Wno-deprecated-register -Wa,--noexecstack -Wformat -Werror=format-security -g "
 )
 set_target_properties(util PROPERTIES LINK_FLAGS "-g ")
+unset(TOOLSET)
+unset(TARGET)
+
+#util.gyp:utilEmbedded#target
+set(TARGET "utilEmbedded")
+set(TOOLSET "target")
+list(APPEND utilEmbedded__other_srcs
+  "anki-util/source/anki/embedded/cBool.h"
+  "anki-util/source/anki/embedded/transport/IReceiver.h"
+  "anki-util/source/anki/embedded/transport/IUnreliableTransport.h"
+  "anki-util/source/anki/embedded/transport/reliableTransport.h"
+  "anki-util/source/anki/util/transport/reliableMessageTypes.h")
+add_library(utilEmbedded STATIC ${utilEmbedded__other_srcs}
+  anki-util/source/anki/embedded/transport/reliableSequenceId.c
+  anki-util/source/anki/embedded/transport/reliableTransport.c
+  anki-util/source/anki/util/transport/reliableMessageTypes.cpp
+)
+set_source_files_properties(${utilEmbedded__other_srcs} PROPERTIES HEADER_FILE_ONLY "TRUE")
+set_target_properties(utilEmbedded PROPERTIES ARCHIVE_OUTPUT_DIRECTORY "${obj}.${TOOLSET}/project/gyp")
+set_target_properties(utilEmbedded PROPERTIES PREFIX "lib")
+set_target_properties(utilEmbedded PROPERTIES ARCHIVE_OUTPUT_NAME "utilEmbedded")
+set_target_properties(utilEmbedded PROPERTIES SUFFIX ".a")
+set_source_files_properties(${obj}.${TOOLSET}/project/gyp/libutilEmbedded.a PROPERTIES GENERATED "TRUE")
+set_target_properties(utilEmbedded PROPERTIES EXCLUDE_FROM_ALL "FALSE")
+list(APPEND utilEmbedded__include_dirs
+  "${CMAKE_SOURCE_DIR}/anki-util/tools/message-buffers/support/cpp/include"
+  "${CMAKE_SOURCE_DIR}/anki-util/source/anki")
+set_property(TARGET utilEmbedded APPEND PROPERTY INCLUDE_DIRECTORIES ${utilEmbedded__include_dirs})
+set_target_properties(utilEmbedded PROPERTIES COMPILE_DEFINITIONS "COZMO_ROBOT;")
+set_source_files_properties(
+  anki-util/source/anki/embedded/transport/reliableSequenceId.c
+  anki-util/source/anki/embedded/transport/reliableTransport.c
+ PROPERTIES
+  COMPILE_FLAGS "-std=c11 -fdiagnostics-show-category=name -Wall -Woverloaded-virtual -Werror -Wundef -Wheader-guard -fsigned-char -fvisibility-inlines-hidden -fvisibility=default -Wshorten-64-to-32 -Winit-self -Wconditional-uninitialized -Wno-deprecated-register -Wa,--noexecstack -Wformat -Werror=format-security -g "
+)
+set_source_files_properties(
+  anki-util/source/anki/util/transport/reliableMessageTypes.cpp
+ PROPERTIES
+  COMPILE_FLAGS "-std=c11 -fdiagnostics-show-category=name -Wall -Woverloaded-virtual -Werror -Wundef -Wheader-guard -fsigned-char -fvisibility-inlines-hidden -fvisibility=default -Wshorten-64-to-32 -Winit-self -Wconditional-uninitialized -Wno-deprecated-register -Wa,--noexecstack -Wformat -Werror=format-security -g -std=c++11 -stdlib=libc++ -fdiagnostics-show-category=name -Wall -Woverloaded-virtual -Werror -Wundef -Wheader-guard -fsigned-char -fvisibility-inlines-hidden -fvisibility=default -Wshorten-64-to-32 -Winit-self -Wconditional-uninitialized -Wno-deprecated-register -Wa,--noexecstack -Wformat -Werror=format-security -g "
+)
+set_target_properties(utilEmbedded PROPERTIES LINK_FLAGS "-g ")
 unset(TOOLSET)
 unset(TARGET)
