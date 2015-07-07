@@ -29,6 +29,7 @@ Supervisor {
     hWidth = fields.width.value/2
     ledWidth = 0.007
     ledHWidth = ledWidth/2
+    ledLength = 0.019
   }%
 
   %{ if fields.active.value then }%
@@ -141,23 +142,13 @@ Supervisor {
     if fields.active.value then
       # Index array of LED positions
       idx = {}
-      idx[1] = {-1, 1, 1}
-      idx[2] = {-1,-1, 1}
-      idx[3] = {-1, 1,-1}
-      idx[4] = {-1,-1,-1}
+      idx[1] = { 1, 0, 1}
+      idx[2] = { 0, 1, 1}
+      idx[3] = {-1, 0, 1}
+      idx[4] = { 0,-1, 1}
 
-      idx[5] = { 1, 1, 1}
-      idx[6] = { 1,-1, 1}
-      idx[7] = { 1, 1,-1}
-      idx[8] = { 1,-1,-1}
-
-      for i=1,8 do
+      for i=1,4 do
         led_name = string.format("led%d", i-1)
-
-        # Position of PointLight wrt LED center
-        px = idx[i][1] * (ledHWidth + 0.0001)
-        py = idx[i][2] * (ledHWidth + 0.0001)
-        pz = idx[i][3] * (ledHWidth + 0.0001)
 
         # Position of LED center wrt block origin
         lx = idx[i][1] * (hWidth - ledWidth/2 + 0.0001)
@@ -169,12 +160,6 @@ Supervisor {
       children [
         DEF LED_SHAPE Group {
           children [
-            # NOTE: PointLight slows down simulation significantly!
-            #PointLight {
-            # attenuation 0 0 5000
-            # location    %{=px}% %{=py}% %{=pz}%
-            # color       1 1 1
-            #}
             Shape {
       	      appearance Appearance {
                 material Material {
@@ -182,7 +167,11 @@ Supervisor {
                 }
               }
               geometry Box {
-                size %{=ledWidth}% %{=ledWidth}% %{=ledWidth}%
+                %{if i%2==0 then }%
+                size %{=ledLength}% %{=ledWidth}% %{=ledWidth}%
+                %{ else }%                
+                size %{=ledWidth}% %{=ledLength}% %{=ledWidth}%
+                %{ end }%                
               }
             }
           ]

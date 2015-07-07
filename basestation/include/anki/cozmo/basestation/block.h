@@ -275,7 +275,7 @@ namespace Anki {
     class ActiveCube : public Block
     {
     public:
-      static const s32 NUM_LEDS = 8;
+      static const s32 NUM_LEDS = 4;
       
       ActiveCube(Type type) : ActiveCube(static_cast<ObjectType>(type)) { }
       
@@ -340,8 +340,7 @@ namespace Anki {
       
       // Get the LED specification for the top (and bottom) LEDs on the corner closest
       // to the specified (x,y) position, using the ActiveCube's current pose.
-      WhichBlockLEDs GetCornerClosestToXY(const Point2f& xyPosition,
-                                          bool getTopAndBottom) const;
+      WhichBlockLEDs GetCornerClosestToXY(const Point2f& xyPosition) const;
       
       // Get the LED specification for the four LEDs on the face closest
       // to the specified (x,y) position, using the ActiveCube's current pose.
