@@ -1,15 +1,16 @@
 #ifndef HAL_H__
 #define HAL_H__
 
+#include <string.h>
 #include "nrf24le1.h"
 #include "hal_nrf.h"
 #include "hal_clk.h"
 #include "hal_delay.h"
 #include "portable.h"
-//#include "hal_uart.h"
 
-#define BLOCK_ID 0xC0
+#define BLOCK_ID 0xC2
 
+//#define STREAM_ACCELEROMETER
 //#define DO_SIMPLE_LED_TEST
 //#define DO_LED_TEST
 //#define DO_TAPS_TEST

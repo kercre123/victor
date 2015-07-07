@@ -21,12 +21,6 @@ file(GLOB COZMO_ROBOT_PRIV_HEADER_FILES "${ROBOT_SRC_DIR}/*.h")
 file(GLOB COZMO_SIMULATOR_SOURCE_FILES "${SIMULATOR_SRC_DIR}/*.cpp")
 file(GLOB COZMO_SIMULATOR_HEADER_FILES "${COZMO_INCLUDE_DIR}/anki/cozmo/simulator/*.h")
 
-file(GLOB_RECURSE ANKI_UTIL_EMBEDDED_SOURCE_FILES
-  "${ANKI_UTIL_DIR}/source/anki/embedded/*.c"
-  "${ANKI_UTIL_DIR}/source/anki/embedded/*.cpp")
-file(GLOB_RECURSE ANKI_UTIL_EMBEDDED_HEADER_FILES
-  "${ANKI_UTIL_DIR}/source/anki/embedded/*.h")
-
 include_directories( 
   ${ROBOT_SRC_DIR}
   ${ROBOT_INCLUDE_DIR}
@@ -59,7 +53,6 @@ set(SOURCE_FILES
 
   ${COZMO_SIMULATOR_SOURCE_FILES}
   ${COZMO_ROBOT_SUPERVISOR_SRC}
-  ${ANKI_UTIL_EMBEDDED_SOURCE_FILES}
 )
 
 source_group(Supervisor FILES ${COZMO_ROBOT_SUPERVISOR_SRC})
@@ -71,7 +64,6 @@ set(HEADER_FILES
  ${COZMO_ROBOT_HEADER_FILES}
  ${COZMO_INCLUDE_FILES}
  ${COZMO_SIMULATOR_HEADER_FILES}
- ${ANKI_UTIL_EMBEDDED_HEADER_FILES}
 )
 
 add_executable(cozmo_c_controller ${SOURCE_FILES} ${HEADER_FILES})
@@ -83,6 +75,7 @@ target_link_libraries(cozmo_c_controller
   CoreTech_Messaging_Robot
   CoreTech_Planning_Robot
   util
+  utilEmbedded
   ${ALL_EMBEDDED_LIBRARIES}
 )
 

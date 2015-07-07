@@ -403,6 +403,16 @@
               <FileType>1</FileType>
               <FilePath>.\hal\lights.c</FilePath>
             </File>
+            <File>
+              <FileName>tests.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\hal\tests.c</FilePath>
+            </File>
+            <File>
+              <FileName>radio.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\hal\radio.c</FilePath>
+            </File>
           </Files>
         </Group>
       </Groups>

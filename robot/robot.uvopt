@@ -1658,7 +1658,7 @@
       <TopLine>0</TopLine>
       <CurrentLine>0</CurrentLine>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\tools\anki-util\source\anki\embedded\transport\reliableSequenceId.c</PathWithFileName>
+      <PathWithFileName>..\tools\anki-util\source\anki\utilEmbedded\transport\reliableSequenceId.c</PathWithFileName>
       <FilenameWithoutPath>reliableSequenceId.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
@@ -1674,7 +1674,7 @@
       <TopLine>402</TopLine>
       <CurrentLine>403</CurrentLine>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\tools\anki-util\source\anki\embedded\transport\reliableTransport.c</PathWithFileName>
+      <PathWithFileName>..\tools\anki-util\source\anki\utilEmbedded\transport\reliableTransport.c</PathWithFileName>
       <FilenameWithoutPath>reliableTransport.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>

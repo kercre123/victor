@@ -4,9 +4,9 @@
 
 #include "anki/common/robot/array2d.h"
 
-#include "embedded/transport/IUnreliableTransport.h"
-#include "embedded/transport/IReceiver.h"
-#include "embedded/transport/reliableTransport.h"
+#include "utilEmbedded/transport/IUnreliableTransport.h"
+#include "utilEmbedded/transport/IReceiver.h"
+#include "utilEmbedded/transport/reliableTransport.h"
 
 #include "messages.h"
 #include "localization.h"

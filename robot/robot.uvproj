@@ -811,12 +811,12 @@
             <File>
               <FileName>reliableSequenceId.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\tools\anki-util\source\anki\embedded\transport\reliableSequenceId.c</FilePath>
+              <FilePath>..\tools\anki-util\source\anki\utilEmbedded\transport\reliableSequenceId.c</FilePath>
             </File>
             <File>
               <FileName>reliableTransport.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\tools\anki-util\source\anki\embedded\transport\reliableTransport.c</FilePath>
+              <FilePath>..\tools\anki-util\source\anki\utilEmbedded\transport\reliableTransport.c</FilePath>
             </File>
             <File>
               <FileName>reliableMessageTypes.cpp</FileName>

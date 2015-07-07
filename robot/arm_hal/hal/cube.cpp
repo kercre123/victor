@@ -48,7 +48,7 @@ namespace Anki
       extern volatile ONCHIP GlobalDataToBody g_dataToBody;
 
       void ManageCubes(void) {
-        #ifndef OLD_CUBE_EXPERIMENT        
+        #ifndef OLD_CUBE_EXPERIMENT
         // LED status
         static int blockID = 0;
 
@@ -57,17 +57,20 @@ namespace Anki
         g_dataToBody.cubeToUpdate = blockID;
 
         // Tap detection
+        if (g_dataToHead.common.source != SPI_SOURCE_BODY){
+          return ;
+        }
+
         uint8_t id = g_dataToHead.cubeToUpdate;
         
         if (id >= MAX_CUBES) {
           return ;
         }
 
-        uint8_t shocks = g_dataToHead.cubeStatus.shockCount,
-                count = shocks - g_AccelStatus[id].shockCount;
-        //memcpy(&g_AccelStatus[id], (void*)&g_dataToHead.cubeStatus, sizeof(AcceleratorPacket));
-        g_AccelStatus[id].shockCount = shocks;
-
+        uint8_t shocks = g_dataToHead.cubeStatus.shockCount;
+        uint8_t count = shocks - g_AccelStatus[id].shockCount;
+        memcpy(&g_AccelStatus[id], (void*)&g_dataToHead.cubeStatus, sizeof(AcceleratorPacket));
+        
         if (count) {
           Messages::ActiveObjectTapped m;
           m.numTaps = count;
@@ -109,7 +112,7 @@ namespace Anki
         
         return RESULT_OK;
       }
-#else
+      #else
       #define NUM_BLOCK_LEDS 8
 
       Result SetBlockLight(const u8 blockID, const u32* onColor, const u32* offColor,

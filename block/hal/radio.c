@@ -112,7 +112,7 @@ void InitPTX()
   // Set datarate
   hal_nrf_set_datarate(HAL_NRF_1MBPS);
   // Turn off auto-retransmit
-  hal_nrf_set_auto_retr(0, 250);
+  hal_nrf_set_auto_retr(0, 0);
   // Set address (only if acting as transmitter)
   #ifdef DO_TRANSMITTER_BEHAVIOR
   hal_nrf_set_address(HAL_NRF_TX, ADDRESS);
