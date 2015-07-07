@@ -25,7 +25,7 @@ public class GameLayout : MonoBehaviour {
 		Blocks.Clear();
 
 		for(int i=0;i<blocks.Count;i++) {
-			if(i < gateBlocksAtPlayerCount.Count && players > gateBlocksAtPlayerCount[i]) {
+			if(i < gateBlocksAtPlayerCount.Count && players < gateBlocksAtPlayerCount[i]) {
 				blocks[i].gameObject.SetActive(false);
 				continue;
 			}

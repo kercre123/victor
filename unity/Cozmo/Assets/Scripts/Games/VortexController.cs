@@ -229,6 +229,9 @@ public class VortexController : GameController {
 		base.OnDisable();
 
 		if(playState == VortexState.SPINNING) ActiveBlock.TappedAction -= BlockTapped;
+
+		//revert to single player incase this ever matters to other games
+		PlayerPrefs.SetInt("NumberOfPlayers", 1);
 	}
 
 	protected override void Enter_BUILDING () {
@@ -507,7 +510,7 @@ public class VortexController : GameController {
 	}
 
 	void Enter_INTRO() {
-		currentPlayerIndex = -1;//UnityEngine.Random.Range(0, numPlayers);
+		currentPlayerIndex = UnityEngine.Random.Range(0, numPlayers) - 1;
 		round = 0;
 
 		for(int i=0;i<playersEliminated.Length;i++) {
@@ -527,6 +530,12 @@ public class VortexController : GameController {
 	[SerializeField] Vector2 cozmoEndDragPos = Vector2.zero;
 	[SerializeField] float cozmoDragDelay = 2f;
 	[SerializeField] float cozmoDragTime = 2f;
+	[SerializeField] float cozmoFinalDragTime = 0.2f;
+	Vector2 startDragPos;
+	Vector2 endDragPos;
+	float dragTimer = 0f;
+	int dragCount = 0;
+	int dragCountMax = 2;
 
 	void Enter_REQUEST_SPIN() {
 
@@ -559,8 +568,22 @@ public class VortexController : GameController {
 		if(currentPlayerIndex == 1) {
 			wheel.AutomateMode();
 
-			Vector3 startDragPos = new Vector2(cozmoStartDragPos.x * Screen.width, cozmoStartDragPos.y * Screen.height);
+			startDragPos = new Vector2(cozmoStartDragPos.x * Screen.width, cozmoStartDragPos.y * Screen.height);
+			startDragPos += UnityEngine.Random.insideUnitCircle * Screen.height * 0.1f;
+
+			endDragPos = new Vector2(cozmoEndDragPos.x * Screen.width, cozmoEndDragPos.y * Screen.height);
+			endDragPos += UnityEngine.Random.insideUnitCircle * Screen.height * 0.1f;
+			dragTimer = cozmoDragTime;
+			dragCount = 0;
+			dragCountMax = UnityEngine.Random.Range(2,4);
 			wheel.DragStart(startDragPos, Time.time);
+
+			Vector3 startWorld = Camera.main.ScreenToWorldPoint(startDragPos);
+			Vector3 endWorld = Camera.main.ScreenToWorldPoint(startDragPos);
+			startWorld.z = 1f;
+			endWorld.z = 1f;
+			
+			Debug.DrawLine(startWorld, endWorld, (dragCount % 2 == 0) ? Color.green : Color.blue, 30f); 
 		}
 		else  {
 			wheel.Unlock();
@@ -584,18 +607,45 @@ public class VortexController : GameController {
 		}
 	}
 	void Update_REQUEST_SPIN() {
-
+		
+		//cozmo's automated spinWheel dragging
 		if(currentPlayerIndex == 1 && playStateTimer > cozmoDragDelay) {
-			if(playStateTimer < cozmoDragTime + cozmoDragDelay) {
 
-				Vector3 startDragPos = new Vector2(cozmoStartDragPos.x * Screen.width, cozmoStartDragPos.y * Screen.height);
-				Vector3 endDragPos = new Vector2(cozmoEndDragPos.x * Screen.width, cozmoEndDragPos.y * Screen.height);
 
-				float factor = Mathf.Clamp01( (playStateTimer - cozmoDragDelay) / cozmoDragTime);
+			dragTimer -= Time.deltaTime;
+		
+			if(dragTimer <= 0f) {
+
+				Vector2 temp = startDragPos;
+				startDragPos = endDragPos;
+				endDragPos = temp;
+				dragTimer = cozmoDragTime;
+				dragCount++;
+
+				if(dragCount >= dragCountMax) {
+					Vector2 delta = endDragPos - startDragPos;
+					endDragPos += delta * 2f;
+					dragTimer = cozmoFinalDragTime;
+				}
+				//Debug.Log("frame("+Time.frameCount+") Update_REQUEST_SPIN dragCount("+dragCount+")");
+			}
+
+
+
+			//we drag back and forth some to make it obvious coz is spinning
+			if(dragCount < dragCountMax) {
+				float factor = 1f - Mathf.Clamp01(dragTimer / cozmoDragTime);
+				//Debug.Log("frame("+Time.frameCount+") Update_REQUEST_SPIN DragUpdate factor("+factor+")");
 				wheel.DragUpdate(Vector2.Lerp(startDragPos, endDragPos, factor), Time.time);
 			}
 			else {
-				wheel.DragEnd();
+				float factor = 1f - Mathf.Clamp01(dragTimer / cozmoFinalDragTime);
+				//Debug.Log("frame("+Time.frameCount+") Update_REQUEST_SPIN DragUpdate factor("+factor+")");
+				wheel.DragUpdate(Vector2.Lerp(startDragPos, endDragPos, factor), Time.time);
+				//Debug.Log("frame("+Time.frameCount+") Update_REQUEST_SPIN DragEnd dragCount("+dragCount+")");
+				if(factor > 0.7f) {
+					wheel.DragEnd();
+				}
 			}
 		}
 

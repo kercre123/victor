@@ -136,6 +136,7 @@ public class GameLayoutTracker : MonoBehaviour {
 
 		if(!blocksInitialized) {
 			int numPlayers = PlayerPrefs.GetInt("NumberOfPlayers", 1);
+			Debug.Log("initializing layout blocks for NumberOfPlayers = " + numPlayers);
 			for(int i=0; i<layouts.Count; i++) {
 				layouts[i].Initialize(numPlayers);
 			}

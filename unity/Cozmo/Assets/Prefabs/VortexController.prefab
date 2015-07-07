@@ -4029,7 +4029,7 @@ MonoBehaviour:
   cozmoStartDragPos: {x: .25, y: .75}
   cozmoEndDragPos: {x: .75, y: .75}
   cozmoDragDelay: 2
-  cozmoDragTime: 2
+  cozmoDragTime: .5
 --- !u!114 &11408142
 MonoBehaviour:
   m_ObjectHideFlags: 1
