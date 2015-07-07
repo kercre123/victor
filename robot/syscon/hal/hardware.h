@@ -4,6 +4,10 @@
 #define NRF_BAUD(x) (int)(x * 268.435456) // 2^28/1MHz
 #define UART_BAUDRATE NRF_BAUD(350000)
 
+//#define NATHAN_WANTS_DEMO
+//#define BACKPACK_DEMO
+//#define DEBUG_MESSAGES
+
 enum e_nrf_gpio {
   PIN_LIFT_P        = 0,
   PIN_TX_DEBUG      = 1,

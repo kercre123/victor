@@ -92,18 +92,17 @@ namespace Anki
         }
        
         uint8_t *light  = g_LedStatus[blockID].ledStatus;
-        uint8_t *status = (uint8_t*) onColor;
         uint32_t sum = 0;
         
-        for (int c = 0; c < NUM_BLOCK_LEDS * 4; c++, status++) {
-          // Skip every 4th byte
-          if (!(~c & 0x3)) {
-            continue ;
-          }
+        for (int c = 0; c < NUM_BLOCK_LEDS * 4; c++) {
+          uint32_t color = *(onColor++);
           
-          uint32_t bright = *status;
-          sum += bright*bright;
-          *(light++) = bright;
+          for (int ch = 24; ch > 0; ch -= 8) {
+            uint8_t status = (color >> ch) & 0xFF;
+            uint32_t bright = status;
+            sum += bright * bright;
+            *(light++) = bright;
+          }
         }
 
         uint32_t sq_sum = isqrt(sum);

@@ -216,7 +216,7 @@ uint32_t uesb_read_rx_payload(uesb_payload_t *payload)
     return UESB_SUCCESS;
 }
 
-//void BlinkPack(int);
+void BlinkPack(int);
 
 uint32_t uesb_start() {
     if(m_uesb_mainstate != UESB_STATE_IDLE) return UESB_ERROR_NOT_IDLE;
@@ -268,11 +268,11 @@ uint32_t uesb_start() {
     switch(m_uesb_mainstate) {
         case UESB_STATE_PTX:
             NRF_RADIO->TASKS_TXEN  = 1;
-            //BlinkPack(0);
+            BlinkPack(0);
             break ;
         case UESB_STATE_PRX:
             NRF_RADIO->TASKS_RXEN  = 1;
-            //BlinkPack(1);
+            BlinkPack(1);
             break;
         default:
           break ;

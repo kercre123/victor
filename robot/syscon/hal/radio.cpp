@@ -19,13 +19,15 @@ extern "C" {
 #define PACKET_SIZE 13
 #define TIME_PER_CUBE (int)(COUNT_PER_MS * 33.0 / MAX_CUBES)
 #define TICK_LOOP   7
-//#define NATHAN_WANTS_DEMO
-//#define DEBUG_MESSAGES
 
 extern GlobalDataToHead g_dataToHead;
 extern GlobalDataToBody g_dataToBody;
 
+#ifndef BACKPACK_DEMO
 const uint8_t     cubePipe[] = {1,2,3,4};
+#else
+const uint8_t     cubePipe[] = {1};
+#endif
 
 #define MAX_CUBES sizeof(cubePipe)
 
@@ -42,7 +44,11 @@ void Radio::init() {
     5,
     {0xE7,0xE7,0xE7,0xE7},
     {0xC2,0xC2,0xC2,0xC2},
+#ifndef BACKPACK_DEMO
     {0xE7,0xC2,0xC3,0xC4,0xC5,0xC6,0xC7,0xC8},
+#else
+    {0xE7,0xC0,0xC3,0xC4,0xC5,0xC6,0xC7,0xC8},
+#endif
     0x3F,
     3
   };
@@ -89,6 +95,7 @@ extern "C" void uesb_event_handler(void)
 #include "hardware.h"
 
 extern "C" void BlinkPack(int toggle) {
+  #ifdef BACKPACK_DEMO
   nrf_gpio_pin_set(PIN_LED2);
   nrf_gpio_cfg_output(PIN_LED2);
 
@@ -104,6 +111,7 @@ extern "C" void BlinkPack(int toggle) {
     nrf_gpio_pin_clear(PIN_LED1);
     nrf_gpio_cfg_output(PIN_LED1);
   }
+  #endif
 }
 
 void Radio::manage() {

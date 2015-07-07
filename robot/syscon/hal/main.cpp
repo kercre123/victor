@@ -1,6 +1,7 @@
 #include "nrf.h"
 #include "nrf_gpio.h"
 
+#include "hardware.h"
 #include "battery.h"
 #include "motors.h"
 #include "head.h"
@@ -78,6 +79,7 @@ int main(void)
 
     Radio::manage();
 
+    #ifndef BACKPACK_DEMO
     // If we're not on the charge contacts, exchange data with the head board
     if (!IsOnContacts())
     {
@@ -111,11 +113,13 @@ int main(void)
         Motors::setPower(i, g_dataToBody.motorPWM[i]);
       }
     }
+
+    Lights::manage(g_dataToBody.backpackColors);
+    #endif
     
     // Only call every loop through - not all the time
     Motors::update();
     BatteryUpdate();
-    Lights::manage(g_dataToBody.backpackColors);
    
     // Update at 200Hz (5ms delay)
     const int   RTC_CLOCK        = 32768;
