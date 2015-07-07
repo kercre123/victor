@@ -76,6 +76,8 @@ int main(void)
     u32 timerStart = GetCounter();
     g_dataToBody.common.source = SPI_SOURCE_CLEAR;
 
+    Radio::manage();
+
     // If we're not on the charge contacts, exchange data with the head board
     if (!IsOnContacts())
     {
@@ -116,13 +118,13 @@ int main(void)
     Lights::manage(g_dataToBody.backpackColors);
    
     // Update at 200Hz (5ms delay)
-    const int RTC_CLOCK = 32768;
-    const int SYNC_RATE = 200;
-    const int TICKS_PER_CYCLE = (int)(RTC_CLOCK * 256 / (float)SYNC_RATE);
+    const int   RTC_CLOCK        = 32768;
+    const float SECONDS_PER_TICK = 0.035f; //35ms
+    const int   SUBDIVIDE        = 7;
+    
+    const int TICKS_PER_CYCLE = (int)(RTC_CLOCK * 256 * SECONDS_PER_TICK / SUBDIVIDE);
 
     while ((GetCounter() - timerStart) < TICKS_PER_CYCLE)
       ;
-
-    Radio::manage();
   }
 }

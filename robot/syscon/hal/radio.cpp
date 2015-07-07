@@ -18,13 +18,14 @@ extern "C" {
 
 #define PACKET_SIZE 13
 #define TIME_PER_CUBE (int)(COUNT_PER_MS * 33.0 / MAX_CUBES)
+#define TICK_LOOP   7
 //#define NATHAN_WANTS_DEMO
 //#define DEBUG_MESSAGES
 
 extern GlobalDataToHead g_dataToHead;
 extern GlobalDataToBody g_dataToBody;
 
-const uint8_t     cubePipe[] = {2,1,3,4};
+const uint8_t     cubePipe[] = {1,2,3,4};
 
 #define MAX_CUBES sizeof(cubePipe)
 
@@ -52,9 +53,12 @@ void Radio::init() {
   memset(cubeRx, 0, sizeof(cubeRx));
   #ifdef NATHAN_WANTS_DEMO
   for (int g = 0; g < MAX_CUBES; g++) {
-    memset(cubeTx[g].ledStatus, 0xFF, sizeof(cubeTx[g].ledStatus));
+    cubeTx[g].ledStatus[2] = 0xFF;
+    //memset(cubeTx[g].ledStatus, 0xFF, 12);
     cubeTx[g].ledDark = 0;
   }
+  #else
+  memset(cubeTx, 0, sizeof(cubeTx));
   #endif
 }
 
@@ -81,6 +85,27 @@ extern "C" void uesb_event_handler(void)
   }
 }
 
+#include "nrf_gpio.h"
+#include "hardware.h"
+
+extern "C" void BlinkPack(int toggle) {
+  nrf_gpio_pin_set(PIN_LED2);
+  nrf_gpio_cfg_output(PIN_LED2);
+
+  if (toggle) {
+    nrf_gpio_cfg_input(PIN_LED1, NRF_GPIO_PIN_NOPULL);
+  } else {
+    static int lastC = GetCounter();
+    int currentC = GetCounter();
+    UART::dec((currentC - lastC) / 256.0f / 32768.0f * 1000);
+    UART::put("\n\r");
+    lastC = currentC;
+
+    nrf_gpio_pin_clear(PIN_LED1);
+    nrf_gpio_cfg_output(PIN_LED1);
+  }
+}
+
 void Radio::manage() {
   if (Head::spokenTo) {
     // Transmit to the head our cube status
@@ -100,7 +125,7 @@ void Radio::manage() {
 
   uesb_event_handler();
   static uint8_t currentCube = 0;
-  currentCube = (currentCube + 1) % 7;
+  currentCube = (currentCube + 1) % TICK_LOOP;
 
   // Transmit cubes round-robin
   if (currentCube < MAX_CUBES)
