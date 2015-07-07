@@ -16,7 +16,7 @@
 #include "anki/cozmo/basestation/soundManager.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
 
-#include "anki/util/logging/logging.h"
+#include "util/logging/logging.h"
 #include "anki/common/basestation/math/rect_impl.h"
 #include "anki/common/basestation/math/quad_impl.h"
 
