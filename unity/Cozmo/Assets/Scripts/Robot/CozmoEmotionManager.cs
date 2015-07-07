@@ -1,6 +1,8 @@
 ﻿using UnityEngine;
 using System.Collections;
 using U2G = Anki.Cozmo.U2G;
+using System.Collections.Generic;
+using System;
 
 public class CozmoEmotionManager : MonoBehaviour {
 
@@ -12,11 +14,27 @@ public class CozmoEmotionManager : MonoBehaviour {
 	{
 		NONE              = 0,
 		HAPPY    = 0x01,
-		SAD    = 0x10,
-		EXCITED    = 0x02,
-		BORED    = 0x20,
+		SAD    = 0x02,
+		EXCITED    = 0x04,
+		BORED    = 0x08,
+		SURPRISED = 0x10,
+
 		ALL = 0xff
 	};
+
+	[Serializable]
+	public struct CozmoAnimation
+	{
+		public string animName;
+		public string animTarget;
+		public EmotionFlag emotionType;
+		public int emotionIntensity;
+			
+	}
+
+	public List<CozmoAnimation> anims;
+
+	uint currentTarget; 
 
 	EmotionFlag currentEmotions = EmotionFlag.NONE;
 	EmotionFlag lastEmotions = EmotionFlag.NONE;
