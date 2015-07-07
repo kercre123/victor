@@ -51,6 +51,7 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 		public bool pegTouching = false;
 
 		public float totalTime = 0f;
+		public float timeAfterLastPeg = 0f;
 
 		SpinWheel spinWheel;
 		SpinData myDataRef;
@@ -70,6 +71,7 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 			sliceIndex = data.sliceIndex;
 			pegTouching = data.pegTouching;
 			totalTime = data.totalTime;
+			timeAfterLastPeg = data.timeAfterLastPeg;
 		}
 
 	}
@@ -77,8 +79,10 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 	public enum SpinWheelState {
 		LOCKED,
 		UNLOCKED,
+		AUTOMATED,
 		DRAGGING,
-		SPINNING
+		SPINNING,
+		FINISHED
 	}
 
 	#endregion
@@ -137,8 +141,8 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 		return predictedData.slice != null ? predictedData.slice.Number : 0;
 	}
 
-	public bool Finished { get; private set; }
-	public bool SpinUnderway { get; private set; }
+	public bool Finished { get { return state == SpinWheelState.FINISHED; }  }
+	public bool Spinning { get { return state == SpinWheelState.SPINNING; }  }
 	public float SpinStartTime { get; private set; }
 
 	public float Speed { get { return Mathf.Abs(displayData.angularVel / 360f); } }
@@ -146,8 +150,9 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 	public float TokenOuterRadius { get { return tokenOuterRadius; } }
 
 	public int PredictedNumber { get; private set; }
-	public float PredictedDurationSeconds { get; private set; }
-	public float PredictedTotalRotations { get; private set; }
+	public float TotalDuration { get; private set; }
+	public float TimeAfterLastPeg { get; private set; }
+	public float TotalRotations { get; private set; }
 
 	#endregion
 
@@ -157,11 +162,6 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 	Canvas canvas = null;
 	AudioSource loopingAudioSource = null;
 
-
-	//touching
-	bool locked = false;
-	bool allowTouches = false;
-	bool dragging = false;
 	Vector2 lastTouchPos = Vector2.zero;
 	List<DragSample> samples = new List<DragSample>();
 
@@ -247,14 +247,14 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 		float vel = displayData.angularVel;
 		int sliceIndex = displayData.sliceIndex;
 
-		if(dragging) {
+		if(state == SpinWheelState.DRAGGING) {
 			//doing this in update instead of OnDrag callback so as to sample from a reasonable deltaTime
 			DragUpdate(Input.mousePosition, Time.time);
 			angle = displayData.wheelAngle;
 			vel = displayData.angularVel;
 			sliceIndex = displayData.sliceIndex;
 		}
-		else if(SpinUnderway) {
+		else if(state == SpinWheelState.SPINNING) {
 			
 			InterpolateSpinValues(ref angle, ref vel, ref sliceIndex);
 
@@ -327,8 +327,6 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 //		if(predictionCoroutine != null) StopCoroutine(predictionCoroutine);
 //		if(spinCoroutine != null) StopCoroutine(spinCoroutine);
 
-		Finished = false;
-
 		displayData.wheelAngleAtSpinStart = displayData.wheelAngle;
 
 		SpinStartTime = Time.time;
@@ -341,10 +339,11 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 		CalculateSpin(ref predictedData);
 
 		PredictedNumber = GetPredictedNumber();
-		PredictedDurationSeconds = predictedData.totalTime;
-		PredictedTotalRotations = Mathf.Abs(predictedData.wheelAngle - predictedData.wheelAngleAtSpinStart) / 360f;
+		TotalDuration = predictedData.totalTime;
+		TimeAfterLastPeg = predictedData.timeAfterLastPeg;
+		TotalRotations = Mathf.Abs(predictedData.wheelAngle - predictedData.wheelAngleAtSpinStart) / 360f;
 
-		SpinUnderway = true;
+		state = SpinWheelState.SPINNING;
 	}
 
 	void SpinUpdate(float time, ref SpinData data) {
@@ -352,14 +351,16 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 
 		ApplySpin(deltaTime, ref data);
 		data.totalTime += deltaTime;
+		data.timeAfterLastPeg += deltaTime;
+		if(data.pegTouching) data.timeAfterLastPeg = 0f;
+
 		data.lastTime = time;
 		data.lastAngle = data.wheelAngle;
 	}
 
 	void SpinEnd() {
 		StopLoopingSound();
-		Finished = true;
-		SpinUnderway = false;
+
 
 		for(int i=0;i<numSlices;i++) {
 
@@ -380,6 +381,9 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 		float realTotal = Time.time - SpinStartTime;
 
 		Debug.Log("SpinEnd totalTime("+displayData.totalTime+") realTotal("+realTotal+")");
+
+		
+		state = SpinWheelState.FINISHED;
 	}
 
 	void CalculateSpin(ref SpinData data) {
@@ -389,7 +393,8 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 		float time = 0f;
 		data.lastTime = 0f;
 		data.totalTime = 0f;
-
+		data.timeAfterLastPeg = 0f;
+		
 		SpinFrame first;
 		first.time = time;
 		first.angle = data.wheelAngle;
@@ -528,75 +533,6 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 		}
 
 	}
-
-	void StartDrag(Vector2 position, float time) {
-		//Debug.Log ("SpinWheel StartDrag");
-		RectTransformUtility.ScreenPointToLocalPointInRectangle(rTrans, position, canvas.renderMode != RenderMode.ScreenSpaceOverlay ? canvas.worldCamera : null, out lastTouchPos);
-		dragging = true;
-		displayData.angularVel = 0f;
-		displayData.lastTime = time;
-		samples.Clear();
-	}
-	
-	void DragUpdate(Vector2 position, float time) {
-		//Debug.Log ("SpinWheel DragUpdate position("+position+") time("+time+")");		
-
-		Vector2 touchPos;
-		RectTransformUtility.ScreenPointToLocalPointInRectangle(rTrans, position, canvas.renderMode != RenderMode.ScreenSpaceOverlay ? canvas.worldCamera : null, out touchPos);
-		float deltaAngle = MathUtil.SignedVectorAngle(lastTouchPos, touchPos, Vector3.forward);
-		
-		displayData.wheelAngle += deltaAngle;
-
-		float deltaTime = time - displayData.lastTime;
-		if(deltaTime > 0f) {
-			DragSample sample = new DragSample();
-			sample.deltaTime = deltaTime;
-			sample.deltaAngle = deltaAngle;
-			samples.Add(sample);
-			while(samples.Count > maxSamples) samples.RemoveAt(0);
-
-			displayData.angularVel = deltaAngle / deltaTime;
-		}
-
-		lastTouchPos = touchPos;
-		displayData.lastTime = time;
-	}
-	
-	void EndDrag() {
-		//Debug.Log ("SpinWheel EndDrag");
-
-		dragging = false;
-		displayData.angularVel = 0f;
-		if(samples.Count < 2) return;
-		
-		float totalTime = 0f;
-		float totalAngle = 0f;
-		
-		for(int i=1;i<samples.Count;i++) {
-			totalTime += samples[i].deltaTime;
-			totalAngle += samples[i].deltaAngle;
-		}
-		
-		if(totalTime == 0f) return;
-		
-		displayData.angularVel = totalAngle / totalTime;
-		displayData.angularVel *= spinMultiplier;
-		
-		if(Mathf.Abs(displayData.angularVel) < minStartingVelocity) {
-			displayData.angularVel = minStartingVelocity * Mathf.Sign(displayData.angularVel);
-		}
-		
-		//string debugString = "SpinWheel OnPointerUp angularVelocity("+angularVelocity+") samples["+samples.Count+"] { ";
-		//for(int i=0;i<samples.Count;i++) {
-		//	debugString += (samples[i].deltaAngle / samples[i].deltaTime);
-		//	if(i<samples.Count-1) debugString += ", ";
-		//}
-		//debugString += "}";
-		
-		//Debug.Log (debugString);
-		allowTouches = false;
-		SpinStart();
-	}
 	
 	bool PegTouch(ref SpinData data) {
 
@@ -733,7 +669,16 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 	public void Lock() {
 		InitData();
 		//Debug.Log("Lock wheel("+gameObject.name+")");
-		locked = true;
+		state = SpinWheelState.LOCKED;
+		displayData.angularVel = 0f;
+		dragImage.enabled = false;
+		StopLoopingSound();
+	}
+
+	public void AutomateMode() {
+		InitData();
+		//Debug.Log("Lock wheel("+gameObject.name+")");
+		state = SpinWheelState.AUTOMATED;
 		displayData.angularVel = 0f;
 		dragImage.enabled = false;
 		StopLoopingSound();
@@ -759,6 +704,7 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 				pegImages[i].color = unfocusedColor;
 			}
 		}
+		state = SpinWheelState.LOCKED;
 	}
 
 	public void Focus() {
@@ -784,12 +730,10 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 
 	public void Unlock() {
 		//Debug.Log("Unlock wheel("+gameObject.name+")");
-		locked = false;
-		allowTouches = true;
-		Finished = false;
+		state = SpinWheelState.UNLOCKED;
+
 		dragImage.enabled = true;
 
-		
 		for(int i=0;i<numSlices;i++) {
 			
 			if(slices[i] != null) {
@@ -813,8 +757,6 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 
 		wheel.localRotation = Quaternion.AngleAxis(displayData.wheelAngle, Vector3.forward);
 
-		Finished = false;
-		allowTouches = true;
 		pegBendFactor = 0f;
 		lastPegBendFactor = 0f;
 	}
@@ -837,23 +779,87 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 		}
 	}
 
+	
+	public void DragStart(Vector2 position, float time) {
+		//Debug.Log ("SpinWheel StartDrag");
+		RectTransformUtility.ScreenPointToLocalPointInRectangle(rTrans, position, canvas.renderMode != RenderMode.ScreenSpaceOverlay ? canvas.worldCamera : null, out lastTouchPos);
+
+		displayData.angularVel = 0f;
+		displayData.lastTime = time;
+		samples.Clear();
+	}
+	
+	public void DragUpdate(Vector2 position, float time) {
+		//Debug.Log ("SpinWheel DragUpdate position("+position+") time("+time+")");		
+		
+		Vector2 touchPos;
+		RectTransformUtility.ScreenPointToLocalPointInRectangle(rTrans, position, canvas.renderMode != RenderMode.ScreenSpaceOverlay ? canvas.worldCamera : null, out touchPos);
+		float deltaAngle = MathUtil.SignedVectorAngle(lastTouchPos, touchPos, Vector3.forward);
+		
+		displayData.wheelAngle += deltaAngle;
+		
+		float deltaTime = time - displayData.lastTime;
+		if(deltaTime > 0f) {
+			DragSample sample = new DragSample();
+			sample.deltaTime = deltaTime;
+			sample.deltaAngle = deltaAngle;
+			samples.Add(sample);
+			while(samples.Count > maxSamples) samples.RemoveAt(0);
+			
+			displayData.angularVel = deltaAngle / deltaTime;
+		}
+		
+		lastTouchPos = touchPos;
+		displayData.lastTime = time;
+	}
+	
+	public void DragEnd() {
+		//Debug.Log ("SpinWheel EndDrag");
+
+		displayData.angularVel = 0f;
+		if(samples.Count < 2) return;
+		
+		float totalTime = 0f;
+		float totalAngle = 0f;
+		
+		for(int i=1;i<samples.Count;i++) {
+			totalTime += samples[i].deltaTime;
+			totalAngle += samples[i].deltaAngle;
+		}
+		
+		if(totalTime == 0f) return;
+		
+		displayData.angularVel = totalAngle / totalTime;
+		displayData.angularVel *= spinMultiplier;
+		
+		if(Mathf.Abs(displayData.angularVel) < minStartingVelocity) {
+			displayData.angularVel = minStartingVelocity * Mathf.Sign(displayData.angularVel);
+		}
+		
+		//string debugString = "SpinWheel OnPointerUp angularVelocity("+angularVelocity+") samples["+samples.Count+"] { ";
+		//for(int i=0;i<samples.Count;i++) {
+		//	debugString += (samples[i].deltaAngle / samples[i].deltaTime);
+		//	if(i<samples.Count-1) debugString += ", ";
+		//}
+		//debugString += "}";
+		
+		SpinStart();
+	}
 
 	#endregion
 
 	#region INTERFACE METHODS	
 
 	public void OnPointerDown(PointerEventData eventData) {
-		if(locked) return;
-		if(!allowTouches) return;
-
-		StartDrag(eventData.position, Time.time);
+		if(state != SpinWheelState.UNLOCKED) return;
+		state = SpinWheelState.DRAGGING;
+		DragStart(eventData.position, Time.time);
 	}
 	
 	public void OnPointerUp(PointerEventData eventData) {
-		if(locked) return;
-		if(!allowTouches) return;
+		if(state != SpinWheelState.DRAGGING) return;
 		
-		EndDrag();
+		DragEnd();
 	}
 
 	#endregion
