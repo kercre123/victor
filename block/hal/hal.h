@@ -1,12 +1,11 @@
 #ifndef HAL_H__
 #define HAL_H__
 
+#include <string.h>
 #include "nrf24le1.h"
-#include "hal_nrf.h"
 #include "hal_clk.h"
 #include "hal_delay.h"
 #include "portable.h"
-//#include "hal_uart.h"
 
 #define BLOCK_ID 0xC0
 
@@ -14,10 +13,16 @@
 //#define DO_LED_TEST
 //#define DO_TAPS_TEST
 //#define DO_MISSED_PACKET_TEST
-//#define DO_RADIO_LED_TEST
 
+//#define STREAM_ACCELEROMETER
+#define DEBUG_PAYLOAD
 //#define LISTEN_FOREVER
 //#define DO_TRANSMITTER_BEHAVIOR
+
+#if defined(STREAM_ACCELEROMETER) || defined(DEBUG_PAYLOAD)
+#define USE_UART
+#endif
+
 
 // lights.c
 void SetLedValues(char *newValues);
@@ -33,6 +38,14 @@ void StopTimer2();
 void InitAcc();
 void ReadAcc(u8 *accData);
 u8 GetTaps();
+
+#ifdef USE_UART
+// uart.c
+void InitUart();
+char putchar(char c);
+void putstring(char *s);
+void puthex(char h);
+#endif
 
 // tests.c
 void RunTests();

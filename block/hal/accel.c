@@ -82,7 +82,9 @@
 #define RANGE_4G            0x05
 #define RANGE_8G            0x08
 #define RANGE_16G           0x0B
+#define BW_31_25            0x0A
 #define BW_62_5             0x0B
+#define BW_125              0x0C
 #define BW_250              0x0D
 
 
@@ -94,6 +96,10 @@ const u8 I2C_READ_BIT = 1;
 const u8 I2C_WRITE_BIT = 0;
 
 const u8 I2C_WAIT = 1;    
+
+static s8 newAcc[3];
+static s8 oldAcc[3];
+static diffBuffer[7];
 
 
 static void DriveSCL(u8 b)
@@ -286,6 +292,10 @@ static void WriteVerify(u8 ctrlByte, u8 dataByte)
 // Initialize accelerometer
 void InitAcc()
 {
+  memset(newAcc, 0, sizeof(newAcc));
+  memset(oldAcc, 0, sizeof(oldAcc));
+  memset(diffBuffer, 0, sizeof(diffBuffer));
+  
   delay_ms(5);
   InitI2C();
   delay_ms(5);
@@ -297,10 +307,10 @@ void InitAcc()
   delay_ms(1);
 
   // 2G range
-  WriteVerify(PMU_RANGE, RANGE_4G);
+  WriteVerify(PMU_RANGE, RANGE_2G);
   delay_ms(1);
   
-  // 62.5 Hz bandwidth
+  // 62_5 Hz bandwidth
   WriteVerify(PMU_BW, BW_62_5);
   delay_ms(1);
   /*
@@ -313,11 +323,14 @@ void InitAcc()
   WriteVerify(INT_9, 0x01); // low tap threshold
   WriteVerify(INT_RST_LATCH, 0x0F); // latched //25 ms latch
   */
+  /*
   WriteVerify(INT_EN_1, 1<<2 | 1<<1 | 1<<0); //high-g interrupt enable all axes
   //WriteVerify(INT_SRC, 1<<1); // unfiltered data for high interrupt
-  WriteVerify(INT_3, 0x01); // 2ms duration
+  WriteVerify(INT_3, 0x0F); // 2ms/unit duration
   WriteVerify(INT_4, 112); // lower threshold 1.75g
   WriteVerify(INT_RST_LATCH, 0x0F); // latched 
+  */
+  
 }
 
 void ReadAcc(s8 *accData)
@@ -331,8 +344,48 @@ void ReadAcc(s8 *accData)
 
 u8 GetTaps()
 {
+  static u8 buffPtr = 0;
+  static u8 debounceCounter = 0;
+  static u8 i;
+  s8 min, max;
+  
+  ReadAcc(newAcc);
+  diffBuffer[buffPtr] = newAcc[2] - oldAcc[2];
+  memcpy(oldAcc,newAcc,sizeof(newAcc));
+  
+  buffPtr++;
+  if(buffPtr == 7)
+  {
+    buffPtr = 0;
+  }
+  
+  if(debounceCounter == 0)
+  {
+    min = 127;
+    max = -128;
+    for(i=0; i<7; i++)
+    {
+      if(diffBuffer[i]>max)
+      {
+        max = diffBuffer[i];
+      }
+      if(diffBuffer[i]<min)
+      {
+        min = diffBuffer[i];
+      }
+    }
+    if ((min < -20) && (max > 20))
+    {
+      debounceCounter = 10;
+      return 1;
+    }
+  }
+  else
+  {
+    debounceCounter--;
+  }
   //u8 taps = !!(DataRead(INT_STATUS_0) & (1 << 5));
-  u8 taps = !!(DataRead(INT_STATUS_0) & (1 << 1)); // high int
-  DataWrite(INT_RST_LATCH, 1<<7 | 0x0F);// clear intterupt
-  return taps;
+  //u8 taps = !!(DataRead(INT_STATUS_0) & (1 << 1)); // high int
+  //DataWrite(INT_RST_LATCH, 1<<7 | 0x0F);// clear interrupt
+  return 0;
 }
