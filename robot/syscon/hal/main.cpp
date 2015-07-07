@@ -118,7 +118,7 @@ int main(void)
     // Update at 200Hz (5ms delay)
     const int RTC_CLOCK = 32768;
     const int SYNC_RATE = 200;
-    const int TICKS_PER_CYCLE = (int)(RTC_CLOCK / (float)SYNC_RATE) << 8;
+    const int TICKS_PER_CYCLE = (int)(RTC_CLOCK * 256 / (float)SYNC_RATE);
 
     while ((GetCounter() - timerStart) < TICKS_PER_CYCLE)
       ;
