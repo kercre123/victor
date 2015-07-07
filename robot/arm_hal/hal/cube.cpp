@@ -5,14 +5,12 @@
 #include "anki/cozmo/robot/spineData.h"
 #include "hal/portable.h"
 
-#include "cube.h"
+//#define OLD_CUBE_EXPERIMENT 1 // for testing
 
-#define OLD_CUBE_EXPERIMENT 1 // for testing
+#define MAX_CUBES 20
 
-#define MAX_CUBES 4
-
-LEDPacket         g_LedStatus[MAX_CUBES];
-AcceleratorPacket g_AccelStatus[MAX_CUBES];
+static LEDPacket         g_LedStatus[MAX_CUBES];
+static AcceleratorPacket g_AccelStatus[MAX_CUBES];
 
 uint32_t isqrt(uint32_t a_nInput)
 {
@@ -46,15 +44,36 @@ namespace Anki
   {
     namespace HAL
     {
-      uint8_t EnqueueLightUpdate(volatile LEDPacket* packet) {
-        #ifndef OLD_CUBE_EXPERIMENT
-        static int updateCube = 0;
-               
-        updateCube = (updateCube+1) % MAX_CUBES;
-        memcpy((void*)packet, &g_LedStatus[updateCube], sizeof(LEDPacket));
-        return updateCube;
-        #else
-        return 0;
+      extern volatile ONCHIP GlobalDataToHead g_dataToHead;
+      extern volatile ONCHIP GlobalDataToBody g_dataToBody;
+
+      void ManageCubes(void) {
+        #ifndef OLD_CUBE_EXPERIMENT        
+        // LED status
+        static int blockID = 0;
+
+        blockID = (blockID+1) % MAX_CUBES;
+        memcpy((void*)&g_dataToBody.cubeStatus, &g_LedStatus[blockID], sizeof(LEDPacket));
+        g_dataToBody.cubeToUpdate = blockID;
+
+        // Tap detection
+        uint8_t id = g_dataToHead.cubeToUpdate;
+        
+        if (id >= MAX_CUBES) {
+          return ;
+        }
+
+        uint8_t shocks = g_dataToHead.cubeStatus.shockCount,
+                count = shocks - g_AccelStatus[id].shockCount;
+        //memcpy(&g_AccelStatus[id], (void*)&g_dataToHead.cubeStatus, sizeof(AcceleratorPacket));
+        g_AccelStatus[id].shockCount = shocks;
+
+        if (count) {
+          Messages::ActiveObjectTapped m;
+          m.numTaps = count;
+          m.objectID = id;
+          RadioSendMessage(GET_MESSAGE_ID(Messages::ActiveObjectTapped), &m);
+        }
         #endif
       }
 

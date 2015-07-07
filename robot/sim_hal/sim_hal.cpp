@@ -1016,9 +1016,6 @@ namespace Anki {
       // Clear the last face frame buffer
       memset(lastFaceFrameDecoded_, 0, NUM_DISPLAY_PIXELS);
       
-      // Reset face position
-      facePosX_ = facePosY_ = 0;
-      
       // Draw pixels
       while (*frame != 0) {
         u8 run = *frame++;
@@ -1029,14 +1026,13 @@ namespace Anki {
           numPixels = NUM_DISPLAY_PIXELS - pixelCounter;
         }
         
-        // Draw pixels
+        // Set pixels
         if (draw) {
           for (u32 i=0; i<numPixels; ++i) {
             u32 y = pixelCounter / DISPLAY_WIDTH;
             u32 x = pixelCounter - (y * DISPLAY_WIDTH);
             ++pixelCounter;
             
-            face_->drawPixel(x,y);
             lastFaceFrameDecoded_[x + (y * DISPLAY_WIDTH)] = 1;
           }
         } else {
@@ -1051,6 +1047,8 @@ namespace Anki {
 
       }
       
+      // Draw face
+      FaceMove(facePosX_, facePosY_);
     }
     
     
@@ -1193,6 +1191,10 @@ namespace Anki {
       return SendBlockMessage(blockID, BlockMessages::SetBlockLights_ID, (u8*)&m);
     }
     
+    void HAL::ManageCubes(void)
+    {
+      // Stub
+    }
     
   } // namespace Cozmo
 } // namespace Anki

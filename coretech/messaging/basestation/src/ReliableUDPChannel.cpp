@@ -9,7 +9,7 @@
 #include "anki/messaging/basestation/ReliableUDPChannel.h"
 #include "util/transport/reliableConnection.h"
 
-#include "anki/util/logging/logging.h"
+#include "util/logging/logging.h"
 
 using namespace Anki::Comms;
 

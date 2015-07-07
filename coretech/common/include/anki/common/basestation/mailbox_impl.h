@@ -56,8 +56,8 @@ namespace Anki {
 
   template<typename MSG_TYPE, u8 NUM_BOXES>
   MultiMailbox<MSG_TYPE, NUM_BOXES>::MultiMailbox()
-  : writeIndex_(0)
-  , readIndex_(0)
+  : readIndex_(0)
+  , writeIndex_(0)
   {
     
   }

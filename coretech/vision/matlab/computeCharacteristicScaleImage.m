@@ -1,8 +1,8 @@
-function [scaleImage, whichScale, imgPyr] = computeCharacteristicScaleImage( ...
+function [scaleImage, whichScale, imgPyr, DoG_pyr] = computeCharacteristicScaleImage( ...
     img, numLevels, kernel, computeDogAtFullSize)
 % Returns an image with each pixel at its characteristic scale.
 %
-% [scaleImage, whichScale, imgPyr] = computeCharacteristicScaleImage( ...
+% [scaleImage, whichScale, imgPyr, <DoG_pyr>] = computeCharacteristicScaleImage( ...
 %    img, numLevels, <kernel>)
 %
 %  Computes a scale-space pyramid and then finds the characteristic scale
@@ -53,6 +53,10 @@ end
 imgPyr = cell(1, numLevels+1);
 imgPyr{1} = separable_filter(img, kernel);
 
+if nargout > 3
+  DoG_pyr = cell(1, numLevels);
+end
+
 for k = 2:numLevels+1
 
     blurred = separable_filter(imgPyr{k-1}, kernel);
@@ -62,6 +66,10 @@ for k = 2:numLevels+1
     else
         DoG = abs(blurred - imgPyr{k-1});
         DoG = imresize(DoG, [nrows ncols], 'bilinear');
+    end
+    
+    if nargout > 3
+      DoG_pyr{k-1} = DoG;
     end
     
     larger = DoG > DoG_max;

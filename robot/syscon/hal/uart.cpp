@@ -71,7 +71,7 @@ void UART::put(const char* s)
 }
 
 void UART::dump(const uint8_t* data, uint32_t len) {
-  while(len--) UART::hex(*(data++));
+  while(len--) { UART::put(' '); UART::hex(*(data++)); }
 }
 
 void UART::hex(uint8_t c)

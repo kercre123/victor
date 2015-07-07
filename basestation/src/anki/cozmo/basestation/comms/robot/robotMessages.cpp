@@ -17,7 +17,7 @@
 
 #include "anki/common/basestation/exceptions.h"
 #include "anki/common/basestation/jsonTools.h"
-#include "anki/util/logging/logging.h"
+#include "util/logging/logging.h"
 
 #include "anki/cozmo/basestation/comms/robot/robotMessages.h"
 
@@ -44,8 +44,8 @@ namespace Anki {
         
         const std::string msgType = jsonRoot["Name"].asString();
         
-#define MESSAGE_DEFINITION_MODE MESSAGE_CREATEFROMJSON_LADDER_MODE
-#include "anki/cozmo/shared/RobotMessageDefinitions.h"
+#       define MESSAGE_DEFINITION_MODE MESSAGE_CREATEFROMJSON_LADDER_MODE
+#       include "anki/cozmo/shared/RobotMessageDefinitions.h"
         {
           PRINT_NAMED_WARNING("RobotMessage.CreateFromJson.UnknownMessageType",
                               "Encountered unknown RobotMessage type '%s' in Json file.\n",
@@ -58,30 +58,33 @@ namespace Anki {
       
     } // CreateFromJson()
 
+    // Implement all the message classes' default constructors
+#   define MESSAGE_DEFINITION_MODE MESSAGE_CLASS_DEFAULT_CONSTRUCTOR_MODE
+#   include "anki/cozmo/shared/RobotMessageDefinitions.h"
     
-    // Impelement all the message classes' constructors from byte buffers
-#define MESSAGE_DEFINITION_MODE MESSAGE_CLASS_BUFFER_CONSTRUCTOR_MODE
-#include "anki/cozmo/shared/RobotMessageDefinitions.h"
+    // Implement all the message classes' constructors from byte buffers
+#   define MESSAGE_DEFINITION_MODE MESSAGE_CLASS_BUFFER_CONSTRUCTOR_MODE
+#   include "anki/cozmo/shared/RobotMessageDefinitions.h"
     
     // Implement all the message classes' constructors from json files
-#define MESSAGE_DEFINITION_MODE MESSAGE_CLASS_JSON_CONSTRUCTOR_MODE
-#include "anki/cozmo/shared/RobotMessageDefinitions.h"
+#   define MESSAGE_DEFINITION_MODE MESSAGE_CLASS_JSON_CONSTRUCTOR_MODE
+#   include "anki/cozmo/shared/RobotMessageDefinitions.h"
 
     // Implement all the message classes' GetID() methods
-#define MESSAGE_DEFINITION_MODE MESSAGE_CLASS_GETID_MODE
-#include "anki/cozmo/shared/RobotMessageDefinitions.h"
+#   define MESSAGE_DEFINITION_MODE MESSAGE_CLASS_GETID_MODE
+#   include "anki/cozmo/shared/RobotMessageDefinitions.h"
     
     // Implement all the message classes' GetSize() methods
-#define MESSAGE_DEFINITION_MODE MESSAGE_CLASS_GETSIZE_MODE
-#include "anki/cozmo/shared/RobotMessageDefinitions.h"
+#   define MESSAGE_DEFINITION_MODE MESSAGE_CLASS_GETSIZE_MODE
+#   include "anki/cozmo/shared/RobotMessageDefinitions.h"
 
     // Implement all the message classes' GetBytes() methods
-#define MESSAGE_DEFINITION_MODE MESSAGE_CLASS_GETBYTES_MODE
-#include "anki/cozmo/shared/RobotMessageDefinitions.h"
+#   define MESSAGE_DEFINITION_MODE MESSAGE_CLASS_GETBYTES_MODE
+#   include "anki/cozmo/shared/RobotMessageDefinitions.h"
 
     // Implement all the message classes' CreatJson() methods
-#define MESSAGE_DEFINITION_MODE MESSAGE_CREATE_JSON_MODE
-#include "anki/cozmo/shared/RobotMessageDefinitions.h"
+#   define MESSAGE_DEFINITION_MODE MESSAGE_CREATE_JSON_MODE
+#   include "anki/cozmo/shared/RobotMessageDefinitions.h"
     
 #undef MESSAGE_BASECLASS_NAME
 

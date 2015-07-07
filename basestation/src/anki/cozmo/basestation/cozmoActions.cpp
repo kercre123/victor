@@ -883,7 +883,7 @@ namespace Anki {
       _compoundAction.SetIsPartOfCompoundAction(true);
       
       // Can't track head to an object and face it
-      robot.DisableTrackHeadToObject();
+      robot.DisableTrackToObject();
       
       // Get lift out of the way
       _compoundAction.AddAction(new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::OUT_OF_FOV));
@@ -968,7 +968,7 @@ namespace Anki {
       }
 
       if(_headTrackWhenDone) {
-        if(robot.EnableTrackHeadToObject(_objectID) == RESULT_OK) {
+        if(robot.EnableTrackToObject(_objectID, true) == RESULT_OK) {
           return ActionResult::SUCCESS;
         } else {
           PRINT_NAMED_WARNING("FaceObjectAction.CheckIfDone.HeadTracKFail",

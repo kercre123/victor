@@ -11,7 +11,7 @@
 
 #include "anki/messaging/basestation/UnreliableUDPChannel.h"
 
-#include "anki/util/transport/reliableTransport.h"
+#include "util/transport/reliableTransport.h"
 
 #include <map>
 #include <mutex>

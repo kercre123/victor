@@ -22,6 +22,7 @@
 #include "anki/common/basestation/mailbox_impl.h"
 #include "anki/vision/basestation/image_impl.h"
 
+#include "anki/common/basestation/platformPathManager.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/quad_impl.h"
 
@@ -158,13 +159,9 @@ namespace Cozmo {
     const bool modeAlreadyEnabled = _mode & mode;
     if(!modeAlreadyEnabled) {
       PRINT_NAMED_INFO("VisionSystem.EnableModeHelper",
-                       "Switching from vision mode %s to mode %s.",
-                       VisionSystem::GetModeName(static_cast<Mode>(_mode)).c_str(),
-                       VisionSystem::GetModeName(static_cast<Mode>(mode)).c_str());
-      
-      // For now only allow one thing to be enabled at a time:
-      // TODO: Allow multiple modes to run simultaneously (remove this line)
-      _mode = IDLE;
+                       "Adding mode %s to current mode %s.",
+                       VisionSystem::GetModeName(static_cast<Mode>(mode)).c_str(),
+                       VisionSystem::GetModeName(static_cast<Mode>(_mode)).c_str());
       
       _mode |= mode;
     }
@@ -189,6 +186,9 @@ namespace Cozmo {
   {
     SetMarkerToTrack(Vision::MARKER_UNKNOWN, 0.f, true);
     DisableModeHelper(TRACKING);
+    
+    // Restore whatever we were doing before tracking
+    _mode = _modeBeforeTracking;
   }
   
   Result VisionSystem::StartDetectingFaces()
@@ -1321,12 +1321,13 @@ namespace Cozmo {
     return _faceDetectionParameters;
   }
   
-  const std::string& VisionSystem::GetCurrentModeName() const {
+  std::string VisionSystem::GetCurrentModeName() const {
     return VisionSystem::GetModeName(static_cast<Mode>(_mode));
   }
   
-  const std::string& VisionSystem::GetModeName(Mode mode)
+  std::string VisionSystem::GetModeName(Mode mode) const
   {
+    
     static const std::map<Mode, std::string> LUT = {
       {IDLE,                  "IDLE"}
       ,{LOOKING_FOR_MARKERS,  "LOOKING_FOR_MARKERS"}
@@ -1336,13 +1337,23 @@ namespace Cozmo {
       ,{LOOKING_FOR_SALIENCY, "LOOKING_FOR_SALIENCY"}
     };
     
-    static const std::string UNKNOWN("UNKNOWN_VISION_MODE");
-    
-    auto result = LUT.find(static_cast<Mode>(mode));
-    if(result == LUT.end()) {
-      return UNKNOWN;
+    if(mode == 0) {
+      return LUT.at(IDLE);
     } else {
-      return result->second;
+      std::string retStr("");
+      
+      for(auto possibleMode : LUT) {
+        if(possibleMode.first != IDLE &&
+           mode & possibleMode.first)
+        {
+          if(!retStr.empty()) {
+            retStr += "+";
+          }
+          retStr += possibleMode.second;
+        }
+      }
+      
+      return retStr;
     }
   } // GetModeName()
   
@@ -2015,13 +2026,14 @@ namespace Cozmo {
           
           trackerJustInitialzed = true;
           
+          // store the current mode so we can put it back when done tracking
+          _modeBeforeTracking = _mode;
+          
           // Template initialization succeeded, switch to tracking mode:
           // TODO: Log or issue message?
+          // NOTE: this disables any other modes so we are *only* tracking
+          _mode = IDLE;
           EnableModeHelper(TRACKING);
-
-          // Probably due to inherited shared usage of Embedded::MemoryStack usage,
-          // we can't (yet) keep looking for markers while tracking
-          DisableModeHelper(LOOKING_FOR_MARKERS);
           
         } // if(isTrackingMarkerSpecified && !isTrackingMarkerFound && markerType == markerToTrack)
       } // for(each marker)
@@ -2213,172 +2225,34 @@ namespace Cozmo {
     if(_mode & DETECTING_FACES) {
       Simulator::SetFaceDetectionReadyTime();
       
-      _memory.ResetBuffers();
-      
-      AnkiConditionalErrorAndReturnValue(_faceDetectionParameters.isInitialized, RESULT_FAIL,
-                                         "VisionSystem::Update::FaceDetectionParametersNotInitialized",
-                                         "Face detection parameters not initialized before Update() in DETECTING_FACES mode.\n");
-      
-      const s32 captureHeight = Vision::CameraResInfo[_captureResolution].height;
-      const s32 captureWidth  = Vision::CameraResInfo[_captureResolution].width;
-      
-      Array<u8> grayscaleImage(captureHeight, captureWidth,
-                               _memory._offchipScratch, Flags::Buffer(false,false,false));
-      
-      GetImageHelper(inputImage, grayscaleImage);
-      //memcpy(reinterpret_cast<u8*>(grayscaleImage.get_buffer()), inputImage, captureHeight*captureWidth*sizeof(u8));
-      //HAL::CameraGetFrame(reinterpret_cast<u8*>(grayscaleImage.get_buffer()),
-      //                    _captureResolution, false);
-      
-      BeginBenchmark("VisionSystem_CameraImagingPipeline");
-      
-      if(_vignettingCorrection == VignettingCorrection_Software) {
-        BeginBenchmark("VisionSystem_CameraImagingPipeline_Vignetting");
-        
-        MemoryStack _onchipScratchlocal = _memory._onchipScratch;
-        FixedLengthList<f32> polynomialParameters(5, _onchipScratchlocal, Flags::Buffer(false, false, true));
-        
-        for(s32 i=0; i<5; i++)
-          polynomialParameters[i] = _vignettingCorrectionParameters[i];
-        
-        CorrectVignetting(grayscaleImage, polynomialParameters);
-        
-        EndBenchmark("VisionSystem_CameraImagingPipeline_Vignetting");
-      } // if(_vignettingCorrection == VignettingCorrection_Software)
-      
-      if(_autoExposure_enabled && (_frameNumber % _autoExposure_adjustEveryNFrames) == 0) {
-        BeginBenchmark("VisionSystem_CameraImagingPipeline_AutoExposure");
-        
-        ComputeBestCameraParameters(
-                                    grayscaleImage,
-                                    Embedded::Rectangle<s32>(0, grayscaleImage.get_size(1)-1, 0, grayscaleImage.get_size(0)-1),
-                                    _autoExposure_integerCountsIncrement,
-                                    _autoExposure_highValue,
-                                    _autoExposure_percentileToMakeHigh,
-                                    _autoExposure_minExposureTime, _autoExposure_maxExposureTime,
-                                    _autoExposure_tooHighPercentMultiplier,
-                                    _exposureTime,
-                                    _memory._ccmScratch);
-        
-        EndBenchmark("VisionSystem_CameraImagingPipeline_AutoExposure");
+      static cv::CascadeClassifier _faceCascade;
+      if(_faceCascade.empty()) {
+        const std::string cascadeFilename = PREPEND_SCOPED_PATH(Config, "haarcascade_frontalface_alt2.xml");
+        const bool loadResult = _faceCascade.load(cascadeFilename);
+        AnkiConditionalError(loadResult == true, "VisionSystem.Update.LoadFaceCascade",
+                             "Failed to load face cascade from %s\n", cascadeFilename.c_str());
       }
       
-      // TODO: Re-enable setting camera paramters from basestation vision
-      //HAL::CameraSetParameters(_exposureTime, _vignettingCorrection == VignettingCorrection_CameraHardware);
+      std::vector<cv::Rect> faces;
       
-      EndBenchmark("VisionSystem_CameraImagingPipeline");
+      cv::Mat equalizedImage;
+      cv::equalizeHist(inputImage.get_CvMat_(), equalizedImage);
       
-      Array<u8> smallImage(
-                           _faceDetectionParameters.faceDetectionHeight,
-                           _faceDetectionParameters.faceDetectionWidth,
-                           _memory._onchipScratch, Flags::Buffer(false,false,false));
+      _faceCascade.detectMultiScale(equalizedImage, faces,
+                                    1.1, 2, 0|CV_HAAR_SCALE_IMAGE, cv::Size(30, 30));
       
-      DownsampleHelper(grayscaleImage, smallImage, _memory._ccmScratch);
-      
-      // TODO: Re-enable sending of images from basestation vision
-      //DownsampleAndSendImage(smallImage);
-      
-      const FixedLengthList<Classifier::CascadeClassifier::Stage> &stages = FixedLengthList<Classifier::CascadeClassifier::Stage>(lbpcascade_frontalface_stages_length, const_cast<Classifier::CascadeClassifier::Stage*>(&lbpcascade_frontalface_stages_data[0]), lbpcascade_frontalface_stages_length*sizeof(Classifier::CascadeClassifier::Stage) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));
-      const FixedLengthList<Classifier::CascadeClassifier::DTree> &classifiers = FixedLengthList<Classifier::CascadeClassifier::DTree>(lbpcascade_frontalface_classifiers_length, const_cast<Classifier::CascadeClassifier::DTree*>(&lbpcascade_frontalface_classifiers_data[0]), lbpcascade_frontalface_classifiers_length*sizeof(Classifier::CascadeClassifier::DTree) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));
-      const FixedLengthList<Classifier::CascadeClassifier::DTreeNode> &nodes =  FixedLengthList<Classifier::CascadeClassifier::DTreeNode>(lbpcascade_frontalface_nodes_length, const_cast<Classifier::CascadeClassifier::DTreeNode*>(&lbpcascade_frontalface_nodes_data[0]), lbpcascade_frontalface_nodes_length*sizeof(Classifier::CascadeClassifier::DTreeNode) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));;
-      const FixedLengthList<f32> &leaves = FixedLengthList<f32>(lbpcascade_frontalface_leaves_length, const_cast<f32*>(&lbpcascade_frontalface_leaves_data[0]), lbpcascade_frontalface_leaves_length*sizeof(f32) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));
-      const FixedLengthList<s32> &subsets = FixedLengthList<s32>(lbpcascade_frontalface_subsets_length, const_cast<s32*>(&lbpcascade_frontalface_subsets_data[0]), lbpcascade_frontalface_subsets_length*sizeof(s32) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));
-      const FixedLengthList<Embedded::Rectangle<s32> > &featureRectangles = FixedLengthList<Embedded::Rectangle<s32> >(lbpcascade_frontalface_featureRectangles_length, const_cast<Embedded::Rectangle<s32>*>(reinterpret_cast<const Embedded::Rectangle<s32>*>(&lbpcascade_frontalface_featureRectangles_data[0])), lbpcascade_frontalface_featureRectangles_length*sizeof(Embedded::Rectangle<s32>) + MEMORY_ALIGNMENT_RAW, Flags::Buffer(false,false,true));
-      
-      Classifier::CascadeClassifier_LBP cc(
-                                           lbpcascade_frontalface_isStumpBased,
-                                           lbpcascade_frontalface_stageType,
-                                           lbpcascade_frontalface_featureType,
-                                           lbpcascade_frontalface_ncategories,
-                                           lbpcascade_frontalface_origWinHeight,
-                                           lbpcascade_frontalface_origWinWidth,
-                                           stages,
-                                           classifiers,
-                                           nodes,
-                                           leaves,
-                                           subsets,
-                                           featureRectangles,
-                                           _memory._ccmScratch);
-      
-      FixedLengthList<Embedded::Rectangle<s32> > detectedFaces(_faceDetectionParameters.MAX_CANDIDATES, _memory._offchipScratch);
-      
-      lastResult = cc.DetectMultiScale(
-                                       smallImage,
-                                       static_cast<f32>(_faceDetectionParameters.scaleFactor),
-                                       _faceDetectionParameters.minNeighbors,
-                                       _faceDetectionParameters.minHeight,
-                                       _faceDetectionParameters.minWidth,
-                                       _faceDetectionParameters.maxHeight,
-                                       _faceDetectionParameters.maxWidth,
-                                       detectedFaces,
-                                       _memory._onchipScratch,
-                                       _memory._offchipScratch);
-      
-      f32 sendScale = 1.f;
-      if (_imageSendMode == ISM_STREAM) {
-        //const u8 scaleFactor = (1 << CameraModeInfo[_faceDetectionParameters.detectionResolution].downsamplePower[_nextSendImageResolution]);
-        const u8 scaleFactor = (Vision::CameraResInfo[_faceDetectionParameters.detectionResolution].width /
-                                Vision::CameraResInfo[_nextSendImageResolution].width);
-        if(scaleFactor > 1) {
-          // Send additional downsampled image, marked for visualization
-          sendScale /= static_cast<f32>(scaleFactor);
-        }
-      }
-      
-      const s32 numFaces = detectedFaces.get_size();
-      for(s32 i_face = 0; i_face < numFaces; ++i_face)
+      for(auto & currentFace : faces)
       {
         MessageFaceDetection msg;
-        const Embedded::Rectangle<s32>& currentFace = detectedFaces[i_face];
-        msg.width       = static_cast<u16>(currentFace.get_width());
-        msg.height      = static_cast<u16>(currentFace.get_height());
-        msg.x_upperLeft = static_cast<u16>(currentFace.left);
-        msg.y_upperLeft = static_cast<u16>(currentFace.top);
+        msg.timestamp   = inputImage.GetTimestamp();
+        msg.width       = static_cast<u16>(currentFace.width);
+        msg.height      = static_cast<u16>(currentFace.height);
+        msg.x_upperLeft = static_cast<u16>(currentFace.x);
+        msg.y_upperLeft = static_cast<u16>(currentFace.y);
         msg.visualize   = static_cast<u8>(true);
         
-        /*
-        if (_imageSendMode == ISM_STREAM) {
-          
-          if(sendScale != 1.f) {
-            // Send additional downsampled message, marked for visualization
-            MessageFaceDetection debugMsg;
-            debugMsg.x_upperLeft = static_cast<u16>(static_cast<f32>(msg.x_upperLeft) * sendScale);
-            debugMsg.y_upperLeft = static_cast<u16>(static_cast<f32>(msg.y_upperLeft) * sendScale);
-            debugMsg.width       = static_cast<u16>(static_cast<f32>(msg.width)  * sendScale);
-            debugMsg.height      = static_cast<u16>(static_cast<f32>(msg.height) * sendScale);
-            debugMsg.visualize   = static_cast<u8>(true);
-            
-            //HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::FaceDetection), &debugMsg);
-            _faceDetectMailbox.putMessage(debugMsg);
-            
-          } else {
-            // Send original message, marked for visualization
-            msg.visualize = static_cast<u8>(true);
-          }
-        } // if _imageSendMode == ISM_STREAM
-        */
-        
-        // Process the face detection message (i.e. drop it off for main
-        // execution to deal with if we are tracking)
-        //Messages::ProcessFaceDetectionMessage(msg);
-        
-        // Also send a copy to the basestation
-        //HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::FaceDetection), &msg);
-        
         _faceDetectMailbox.putMessage(msg);
-        
       } // for each face detection
-      
-      // TODO: Re-enable debug stream for face detections on basestation
-      /*
-       DebugStream::SendFaceDetections(
-       grayscaleImage,
-       detectedFaces,
-       smallImage.get_size(1),
-       VisionMemory::_ccmScratch,
-       VisionMemory::_onchipScratch,
-       VisionMemory::_offchipScratch);
-       */
       
     } // if(_mode & DETECTING_FACES)
     

@@ -10,7 +10,7 @@
  **/
 
 #include "pathPlanner.h"
-#include "anki/util/logging/logging.h"
+#include "util/logging/logging.h"
 #include "anki/common/basestation/math/quad_impl.h"
 //#include "anki/cozmo/shared/cozmoConfig.h"
 

@@ -25,7 +25,7 @@
 
 #include "anki/cozmo/basestation/soundManager.h"
 
-#include "anki/util/logging/logging.h"
+#include "util/logging/logging.h"
 #include "anki/common/basestation/colorRGBA.h"
 #include "anki/common/basestation/utils/timer.h"
 

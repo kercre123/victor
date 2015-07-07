@@ -10,24 +10,19 @@
  * Copyright: Anki, Inc. 2014
  **/
 
-#include "anki/util/logging/logging.h"
+#include "util/logging/logging.h"
 #include "anki/common/basestation/utils/fileManagement.h"
 #include "anki/common/basestation/array2d_impl.h"
-
 #include "anki/vision/CameraSettings.h"
 #include "anki/vision/basestation/image.h"
-
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotManager.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
 #include "anki/cozmo/basestation/signals/cozmoEngineSignals.h"
-
-#include "robotMessageHandler.h"
+#include "anki/cozmo/basestation/robotMessageHandler.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
-
 #include <fstream>
-
 #include "opencv2/imgproc/imgproc.hpp"
 
 // Uncomment to allow interprocess access to the camera stream (e.g. Matlab)
@@ -424,8 +419,9 @@ namespace Anki {
         robot->SetLastPickOrPlaceSucceeded(false);
       }
       
+      // Note: this returns the vision system to whatever mode it was in before
+      // it was docking/tracking
       robot->StopDocking();
-      robot->StartLookingForMarkers();
       
       return lastResult;
     }

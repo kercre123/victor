@@ -26,7 +26,7 @@
 #include <sys/time.h>
 
 #include "anki/common/types.h"
-#include "anki/util/logging/iTickTimeProvider.h"
+#include "util/logging/iTickTimeProvider.h"
 
 
 namespace Anki {

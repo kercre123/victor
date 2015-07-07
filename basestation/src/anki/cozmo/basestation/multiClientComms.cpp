@@ -11,7 +11,7 @@
  *
  **/
 
-#include "anki/util/logging/logging.h"
+#include "util/logging/logging.h"
 #include "anki/common/basestation/utils/helpers/printByteArray.h"
 #include "anki/common/basestation/utils/timer.h"
 

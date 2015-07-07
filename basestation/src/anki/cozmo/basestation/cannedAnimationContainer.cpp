@@ -13,7 +13,7 @@
 
 #include "anki/cozmo/basestation/cannedAnimationContainer.h"
 
-#include "anki/util/logging/logging.h"
+#include "util/logging/logging.h"
 
 namespace Anki {
 namespace Cozmo {

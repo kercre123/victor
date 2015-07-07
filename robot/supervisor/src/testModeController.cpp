@@ -4,7 +4,6 @@
 #include "anki/cozmo/robot/debug.h"
 #include "pickAndPlaceController.h"
 #include "dockingController.h"
-#include "faceTrackingController.h"
 #include "headController.h"
 #include "liftController.h"
 #include "imuFilter.h"
@@ -1206,19 +1205,6 @@ namespace Anki {
         }
         return RESULT_OK;
       }
-      
-/*      
-      Result FaceTrackTestInit()
-      {
-        HeadController::SetDesiredAngle(0.1f);
-        return FaceTrackingController::StartTracking(FaceTrackingController::CENTERED, 500);
-      }
-      
-      Result FaceTrackTestUpdate()
-      {
-        return RESULT_OK;
-      }
-*/      
       
       Result Start(const TestMode mode, s32 p1, s32 p2, s32 p3)
       {
