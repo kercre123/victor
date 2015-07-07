@@ -46,7 +46,7 @@
 
 // SDL for gamepad control (specifically Logitech Rumblepad F510)
 // Gamepad should be in Direct mode (switch on back)
-#define ENABLE_GAMEPAD_SUPPORT 1
+#define ENABLE_GAMEPAD_SUPPORT 0
 #if(ENABLE_GAMEPAD_SUPPORT)
 #include <SDL.h>
 #define DEBUG_GAMEPAD 0
