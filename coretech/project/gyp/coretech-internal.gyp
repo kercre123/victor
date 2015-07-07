@@ -288,7 +288,7 @@
             'MACOSX_DEPLOYMENT_TARGET': '10.9',
             'LD_RUNPATH_SEARCH_PATHS': '@loader_path',
             'LD_DYLIB_INSTALL_NAME': '@loader_path/$(EXECUTABLE_PATH)',
-            'FRAMEWORK_SEARCH_PATHS':'<(cti_gtest_path)',
+            'FRAMEWORK_SEARCH_PATHS':'<(cti-gtest_path)',
             }
         },
 
@@ -312,8 +312,8 @@
               'ctiCommon',
               'ctiVision',
               'ctiPlanning',
-              '<(cti_util_gyp_path):util',
-              '<(cti_util_gyp_path):jsoncpp',
+              '<(cti-util_gyp_path):util',
+              '<(cti-util_gyp_path):jsoncpp',
             ],
             'sources': [ 
               '<!@(cat <(common_test_source))',
@@ -327,7 +327,7 @@
               ['exclude', 'run_coreTechPlanningStandalone.cpp'],
             ],
             'libraries': [
-              '<(cti_gtest_path)/gtest.framework',
+              '<(cti-gtest_path)/gtest.framework',
               '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_core.dylib',
               '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_imgproc.dylib',
               '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_highgui.dylib',
@@ -340,7 +340,7 @@
             'copies': [
               {
                 'files': [
-                  '<(cti_gtest_path)/gtest.framework',
+                  '<(cti-gtest_path)/gtest.framework',
                 ],
                 'destination': '<(PRODUCT_DIR)',
               },
@@ -389,11 +389,11 @@
         ],
       },
       'defines': [
-        'SYSTEM_ROOT_PATH=<(cozmo_engine_path)'
+        'SYSTEM_ROOT_PATH=<(cti-cozmo_engine_path)'
       ],
       'dependencies': [
-        '<(cti_util_gyp_path):util',
-        '<(cti_util_gyp_path):jsoncpp',
+        '<(cti-util_gyp_path):util',
+        '<(cti-util_gyp_path):jsoncpp',
       ],
       'type': '<(common_library_type)',
       'conditions': [
@@ -435,7 +435,7 @@
       },
       'dependencies': [
         'ctiCommon',
-        '<(cti_util_gyp_path):util',
+        '<(cti-util_gyp_path):util',
       ],
       'type': '<(messaging_library_type)',
     },
@@ -473,7 +473,7 @@
       },
       'dependencies': [
         'ctiCommon',
-        '<(cti_util_gyp_path):jsoncpp',
+        '<(cti-util_gyp_path):jsoncpp',
       ],
       'defines': [
         'CORETECH_BASESTATION'
@@ -520,8 +520,8 @@
       },
       'dependencies': [
         'ctiCommon',
-        '<(cti_util_gyp_path):jsoncpp',
-        '<(cti_util_gyp_path):util',
+        '<(cti-util_gyp_path):jsoncpp',
+        '<(cti-util_gyp_path):util',
       ],
       'type': '<(vision_library_type)',
     },

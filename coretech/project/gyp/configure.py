@@ -166,8 +166,6 @@ def main(scriptArgs):
 
   # mac
   if 'mac' in options.platforms:
-      print 'generating mac project'
-      #################### GYP_DEFINES ####
       os.environ['GYP_DEFINES'] = """ 
                                   OS=mac
                                   ndk_root=INVALID
@@ -177,16 +175,19 @@ def main(scriptArgs):
                                   worldviz_library_type=static_library
                                   arch_group={0}
                                   output_location={1}
-                                  cti_gtest_path={2}
-                                  coretech_external_path={3}
-                                  cti_util_gyp_path={4}
-                                  cozmo_engine_path={5}
-                                  """.format(options.arch, os.path.join(projectRoot, 'generated/mac'), gtestPath, 
-                                    coretechExternalPath, ankiUtilProjectPath, 
-                                    subprocess.check_output(['git', 'rev-parse', '--show-toplevel']).rstrip("\r\n"))
+                                  coretech_external_path={2}
+                                  cti-gtest_path={3}
+                                  cti-util_gyp_path={4}
+                                  cti-cozmo_engine_path={5}
+                                  """.format(options.arch, 
+                                    os.path.join(projectRoot, 'generated/mac'), 
+                                    coretechExternalPath,
+                                    gtestPath, 
+                                    ankiUtilProjectPath, 
+                                    subprocess.check_output(['git', 'rev-parse', '--show-toplevel']).rstrip("\r\n")
+                                  )
       gypArgs = ['--check', '--depth', '.', '-f', 'xcode', '--toplevel-dir', '../..', '--generator-output', '../../generated/mac', gypFile]
       gyp.main(gypArgs)
-      # gyp driveEngine.gyp --check --depth . -f xcode --generator-output=../gyp-mac
 
 
 

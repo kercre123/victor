@@ -31,6 +31,17 @@
       '<(coretech_external_path)/opencv-2.4.8/modules/features2d/include',
       '<(coretech_external_path)/opencv-2.4.8/modules/flann/include',
     ],
+    'opencv_libs': [
+      '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_core.dylib',
+      '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_imgproc.dylib',
+      '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_highgui.dylib',
+      '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_calib3d.dylib',
+      '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_contrib.dylib',
+      '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_objdetect.dylib',
+      '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_video.dylib',
+      '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_features2d.dylib',
+    ],
+
     'webots_includes': [
       '<(webots_path)/include/controller/cpp'
     ],
@@ -162,9 +173,6 @@
     'cflags_cc': ['<@(compiler_cpp_flags)'],
     'ldflags': ['<@(linker_flags)'],
     'defines': ['<@(coretech_defines)'],
-    'include_dirs': [
-      '../../tools/message-buffers/support/cpp/include',
-    ],
     'xcode_settings': {
       'OTHER_CFLAGS': ['<@(compiler_c_flags)'],
       'OTHER_CPLUSPLUSFLAGS': ['<@(compiler_cpp_flags)'],
@@ -291,7 +299,7 @@
               '<@(webots_includes)',
             ],
             'dependencies': [
-              '<(cti_gyp_path):ctiCommonRobot',
+              '<(ce-cti_gyp_path):ctiCommonRobot',
             ],
             'sources': [ '<!@(cat <(ctrlLightCube_source))' ],
             'defines': [
@@ -314,10 +322,10 @@
               '<@(opencv_includes)',
             ],
             'dependencies': [
-              '<(cti_gyp_path):ctiCommon',
-              '<(cti_gyp_path):ctiVision',
-              '<(cti_gyp_path):ctiMessaging',
-              '<(util_gyp_path):util',
+              '<(ce-cti_gyp_path):ctiCommon',
+              '<(ce-cti_gyp_path):ctiVision',
+              '<(ce-cti_gyp_path):ctiMessaging',
+              '<(ce-util_gyp_path):util',
             ],
             'sources': [ '<!@(cat <(ctrlViz_source))' ],
             'defines': [
@@ -326,14 +334,7 @@
             ],
             'libraries': [
               '<(webots_path)/lib/libCppController.dylib',
-              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_core.dylib',
-              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_imgproc.dylib',
-              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_highgui.dylib',
-              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_calib3d.dylib',
-              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_contrib.dylib',
-              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_objdetect.dylib',
-              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_video.dylib',
-              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_features2d.dylib',
+              '<@(opencv_libs)',
             ],
           }, # end controller viz
 
@@ -348,11 +349,11 @@
               '<@(opencv_includes)',
             ],
             'dependencies': [
-              '<(cti_gyp_path):ctiCommonRobot',
-              '<(cti_gyp_path):ctiVisionRobot',
-              '<(cti_gyp_path):ctiMessagingRobot',
-              '<(cti_gyp_path):ctiPlanningRobot',
-              '<(util_gyp_path):utilEmbedded',
+              '<(ce-cti_gyp_path):ctiCommonRobot',
+              '<(ce-cti_gyp_path):ctiVisionRobot',
+              '<(ce-cti_gyp_path):ctiMessagingRobot',
+              '<(ce-cti_gyp_path):ctiPlanningRobot',
+              '<(ce-util_gyp_path):utilEmbedded',
             ],
             'sources': [ '<!@(cat <(ctrlRobot_source))' ],
             'defines': [
@@ -361,14 +362,7 @@
             ],
             'libraries': [
               '<(webots_path)/lib/libCppController.dylib',
-              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_core.dylib',
-              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_imgproc.dylib',
-              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_highgui.dylib',
-              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_calib3d.dylib',
-              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_contrib.dylib',
-              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_objdetect.dylib',
-              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_video.dylib',
-              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_features2d.dylib',
+              '<@(opencv_libs)',
             ],
           }, # end controller Robot
 
@@ -381,14 +375,14 @@
             ],
             'dependencies': [
               'cozmoEngine',
-              '<(cti_gyp_path):ctiCommon',
-              '<(cti_gyp_path):ctiCommonRobot',
-              '<(cti_gyp_path):ctiMessaging',
-              '<(cti_gyp_path):ctiPlanning',
-              '<(cti_gyp_path):ctiVision',
-              '<(cti_gyp_path):ctiVisionRobot',
-              '<(util_gyp_path):jsoncpp',
-              '<(util_gyp_path):util',
+              '<(ce-cti_gyp_path):ctiCommon',
+              '<(ce-cti_gyp_path):ctiCommonRobot',
+              '<(ce-cti_gyp_path):ctiMessaging',
+              '<(ce-cti_gyp_path):ctiPlanning',
+              '<(ce-cti_gyp_path):ctiVision',
+              '<(ce-cti_gyp_path):ctiVisionRobot',
+              '<(ce-util_gyp_path):jsoncpp',
+              '<(ce-util_gyp_path):util',
             ],
             'sources': [ '<!@(cat <(engine_test_source))' ],
             'sources/': [
@@ -397,20 +391,13 @@
               ['exclude', 'resaveBlockImages.m'],
             ],
             'libraries': [
-              '<(gtest_path)/gtest.framework',
-              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_core.dylib',
-              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_imgproc.dylib',
-              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_highgui.dylib',
-              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_calib3d.dylib',
-              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_contrib.dylib',
-              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_objdetect.dylib',
-              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_video.dylib',
-              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_features2d.dylib',
+              '<(ce-gtest_path)/gtest.framework',
+              '<@(opencv_libs)',
             ],
             'copies': [
               {
                 'files': [
-                  '<(gtest_path)/gtest.framework',
+                  '<(ce-gtest_path)/gtest.framework',
                 ],
                 'destination': '<(PRODUCT_DIR)',
               },
@@ -474,11 +461,11 @@
         'COZMO_BASESTATION'
       ],
       'dependencies': [
-        '<(util_gyp_path):util',
-        '<(cti_gyp_path):ctiCommon',
-        '<(cti_gyp_path):ctiMessaging',
-        '<(cti_gyp_path):ctiPlanning',
-        '<(cti_gyp_path):ctiVision',
+        '<(ce-util_gyp_path):util',
+        '<(ce-cti_gyp_path):ctiCommon',
+        '<(ce-cti_gyp_path):ctiMessaging',
+        '<(ce-cti_gyp_path):ctiPlanning',
+        '<(ce-cti_gyp_path):ctiVision',
       ],
       'type': '<(energy_library_type)',
     },
