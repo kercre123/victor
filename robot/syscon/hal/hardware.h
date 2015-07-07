@@ -3,6 +3,7 @@
 
 #define NRF_BAUD(x) (int)(x * 268.435456) // 2^28/1MHz
 #define UART_BAUDRATE NRF_BAUD(350000)
+#define CYCLES_MS(ms) (int)(32768 * 256.0f * ms / 1000.0f)
 
 //#define NATHAN_WANTS_DEMO
 //#define BACKPACK_DEMO

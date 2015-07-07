@@ -8,6 +8,7 @@ extern "C" {
   #include "micro_esb.h"
 }
   
+#include "hardware.h"
 #include "uart.h"
 #include "radio.h"
 #include "timer.h"
@@ -57,7 +58,7 @@ void Radio::init() {
   uesb_start();
   
   memset(cubeRx, 0, sizeof(cubeRx));
-  #ifdef NATHAN_WANTS_DEMO
+  #if defined(NATHAN_WANTS_DEMO) || defined(BACKPACK_DEMO)
   for (int g = 0; g < MAX_CUBES; g++) {
     cubeTx[g].ledStatus[2] = 0xFF;
     //memset(cubeTx[g].ledStatus, 0xFF, 12);
@@ -94,20 +95,24 @@ extern "C" void uesb_event_handler(void)
 #include "nrf_gpio.h"
 #include "hardware.h"
 
+static int lastC = GetCounter();
+
+void BenchMark() {
+    static int lastC = GetCounter();
+    int currentC = GetCounter();
+    UART::dec((currentC - lastC) / 256.0f / 32768.0f * 1000);
+    UART::put("\n\r");
+    lastC = currentC;
+}
+
 extern "C" void BlinkPack(int toggle) {
-  #ifdef BACKPACK_DEMO
+  #if defined(BACKPACK_DEMO)
   nrf_gpio_pin_set(PIN_LED2);
   nrf_gpio_cfg_output(PIN_LED2);
 
   if (toggle) {
     nrf_gpio_cfg_input(PIN_LED1, NRF_GPIO_PIN_NOPULL);
   } else {
-    static int lastC = GetCounter();
-    int currentC = GetCounter();
-    UART::dec((currentC - lastC) / 256.0f / 32768.0f * 1000);
-    UART::put("\n\r");
-    lastC = currentC;
-
     nrf_gpio_pin_clear(PIN_LED1);
     nrf_gpio_cfg_output(PIN_LED1);
   }
@@ -125,16 +130,16 @@ void Radio::manage() {
     
     // Transmit to cube our line status
     if (g_dataToBody.cubeToUpdate < MAX_CUBES) {
-      #ifndef NATHAN_WANTS_DEMO
+      #if !defined(BACKPACK_DEMO) && !defined(NATHAN_WANTS_DEMO)
       memcpy(&cubeTx[g_dataToBody.cubeToUpdate], &g_dataToBody.cubeStatus, sizeof(LEDPacket));
       #endif
     }
   }
-
+  
   uesb_event_handler();
   static uint8_t currentCube = 0;
   currentCube = (currentCube + 1) % TICK_LOOP;
-
+  
   // Transmit cubes round-robin
   if (currentCube < MAX_CUBES)
   {

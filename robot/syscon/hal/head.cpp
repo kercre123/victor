@@ -58,16 +58,16 @@ void Head::TxPacket(u16 length, const u8* dataTX)
 }
 
 void Head::RxPacket(u16 length, u8* dataRX)
- {
-  // Switch to receive mode and wait for a reply
+{
+  u32 startTime = GetCounter();
+
+   // Switch to receive mode and wait for a reply
   nrf_gpio_cfg_input(PIN_TX_HEAD, NRF_GPIO_PIN_NOPULL);
   NRF_UART0->PSELTXD = 0xFFFFFFFF;  // Disconnect TX
 
   // Wait 10uS for turnaround - 80uS on the other side
   MicroWait(10);
   NRF_UART0->PSELRXD = PIN_TX_HEAD;
-
-  u32 startTime = GetCounter();
 
   NRF_UART0->EVENTS_RXDRDY = 0;
  
@@ -76,7 +76,7 @@ void Head::RxPacket(u16 length, u8* dataRX)
   {
     // Timeout after 5ms of no communication
     while (NRF_UART0->EVENTS_RXDRDY != 1) {
-      if (GetCounter() - startTime > 41666*2) { // 5ms
+      if (GetCounter() - startTime > CYCLES_MS(4.0f)) { // 4ms
         dataRX[0] = 0;
         return;
       }
