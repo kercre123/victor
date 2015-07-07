@@ -21,6 +21,7 @@ void main(void)
   u8 state = 0;
   u8 led;
   u8 numRepeat;
+  u8 packetCount = 0;
   volatile bool sync;
   
   volatile s8 accData[3];
@@ -126,7 +127,7 @@ void main(void)
     StartTimer2();
     // Accelerometer read
     ReadAcc(accData);
-    tapCount += GetTaps();
+//    tapCount += GetTaps();
     while(radioTimerState == radioSleep);
     {
       // doing lights stuff
@@ -151,6 +152,8 @@ void main(void)
     memcpy(radioPayload, accData, sizeof(accData));
     radioPayload[3] = tapCount;
     radioPayload[4] = cumMissedPacketCount;
+    radioPayload[5] = packetCount++;
+    radioPayload[6] = BLOCK_ID;
     // Respond with accelerometer data
     TransmitData();
     // Reset Payload
