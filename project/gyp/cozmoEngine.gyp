@@ -300,7 +300,7 @@
             'libraries': [
               '<(webots_path)/lib/libCppController.dylib',
             ],
-          }, # end controllerBlock
+          }, # end controller Block
 
           {
             'target_name': 'webotsCtrlRobot',
@@ -310,9 +310,14 @@
               '../../include',
               '../../simulator/include',
               '<@(webots_includes)',
+              '<@(opencv_includes)',
             ],
             'dependencies': [
               '<(cti_gyp_path):ctiCommonRobot',
+              '<(cti_gyp_path):ctiVisionRobot',
+              '<(cti_gyp_path):ctiMessagingRobot',
+              '<(cti_gyp_path):ctiPlanningRobot',
+              '<(util_gyp_path):utilEmbedded',
             ],
             'sources': [ '<!@(cat <(ctrlRobot_source))' ],
             'defines': [
@@ -321,8 +326,16 @@
             ],
             'libraries': [
               '<(webots_path)/lib/libCppController.dylib',
+              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_core.dylib',
+              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_imgproc.dylib',
+              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_highgui.dylib',
+              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_calib3d.dylib',
+              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_contrib.dylib',
+              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_objdetect.dylib',
+              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_video.dylib',
+              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_features2d.dylib',
             ],
-          }, # end controllerBlock
+          }, # end controller Robot
 
           {
             'target_name': 'cozmoEngineUnitTest',
