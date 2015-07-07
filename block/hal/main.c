@@ -13,6 +13,9 @@ extern volatile enum eRadioTimerState radioTimerState;
 extern volatile u8 missedPacketCount;
 extern volatile u8 cumMissedPacketCount;
 
+#ifdef DO_LOSSY_TRANSMITTER
+const u8 skipPacket[6] = {0,0,1,1,1,1};
+#endif
 
 void main(void)
 {
@@ -41,7 +44,7 @@ void main(void)
   {
     for(i=0; i<12; i++)
     {
-      for(numRepeat=0; numRepeat<10; numRepeat++)
+      for(numRepeat=0; numRepeat<1; numRepeat++)
       {
         LightOn(0);       // Transmitting indication light  
         while(radioTimerState == radioSleep);
@@ -53,7 +56,6 @@ void main(void)
         TL0 = 0xFF - TIMER35MS_L; 
         TH0 = 0xFF - TIMER35MS_H;
         TR0 = 1; // Start timer 
-        radioTimerState = radioSleep; 
         LightsOff();
         
         // Set payload
@@ -61,7 +63,14 @@ void main(void)
         //radioPayload[i] = numRepeat*25;
         //radioPayload[12] = 128;
         radioPayload[10] = 255;
-        TransmitData();
+        #ifdef DO_LOSSY_TRANSMITTER
+        if(skipPacket[i%6] == 0)
+        {
+          TransmitData();
+        }
+        #elif
+        //TransmitData();
+        #endif
       }
     }
   }
@@ -133,7 +142,6 @@ void main(void)
     {
       // doing lights stuff
     }
-    radioTimerState = radioSleep; 
     // Turn off lights timer (and lights)
     #ifndef USE_UART
     StopTimer2();  
