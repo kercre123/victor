@@ -2197,12 +2197,12 @@ struct SetActiveObjectLEDs
 struct SetAllActiveObjectLEDs
 {
 	uint32_t objectID;
-	std::array<uint32_t, 8> onColor;
-	std::array<uint32_t, 8> offColor;
-	std::array<uint32_t, 8> onPeriod_ms;
-	std::array<uint32_t, 8> offPeriod_ms;
-	std::array<uint32_t, 8> transitionOnPeriod_ms;
-	std::array<uint32_t, 8> transitionOffPeriod_ms;
+	std::array<uint32_t, 4> onColor;
+	std::array<uint32_t, 4> offColor;
+	std::array<uint32_t, 4> onPeriod_ms;
+	std::array<uint32_t, 4> offPeriod_ms;
+	std::array<uint32_t, 4> transitionOnPeriod_ms;
+	std::array<uint32_t, 4> transitionOffPeriod_ms;
 	float relativeToX;
 	float relativeToY;
 	uint8_t makeRelative;
@@ -2217,12 +2217,12 @@ struct SetAllActiveObjectLEDs
 	SetAllActiveObjectLEDs& operator=(SetAllActiveObjectLEDs&& other) noexcept = default;
 	
 	explicit SetAllActiveObjectLEDs(uint32_t objectID
-		,const std::array<uint32_t, 8>& onColor
-		,const std::array<uint32_t, 8>& offColor
-		,const std::array<uint32_t, 8>& onPeriod_ms
-		,const std::array<uint32_t, 8>& offPeriod_ms
-		,const std::array<uint32_t, 8>& transitionOnPeriod_ms
-		,const std::array<uint32_t, 8>& transitionOffPeriod_ms
+		,const std::array<uint32_t, 4>& onColor
+		,const std::array<uint32_t, 4>& offColor
+		,const std::array<uint32_t, 4>& onPeriod_ms
+		,const std::array<uint32_t, 4>& offPeriod_ms
+		,const std::array<uint32_t, 4>& transitionOnPeriod_ms
+		,const std::array<uint32_t, 4>& transitionOffPeriod_ms
 		,float relativeToX
 		,float relativeToY
 		,uint8_t makeRelative
