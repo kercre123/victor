@@ -1492,24 +1492,37 @@ namespace Anki
         }
       } // end for all prox sensors
       
-      
-      // Delete object if too old
-      for (auto proxObsIter = _existingObjects[ObjectFamily::MARKERLESS_OBJECTS][MarkerlessObject::Type::PROX_OBSTACLE].begin(); proxObsIter != _existingObjects[ObjectFamily::MARKERLESS_OBJECTS][MarkerlessObject::Type::PROX_OBSTACLE].end(); ) {
-        if (lastTimestamp - proxObsIter->second->GetLastObservedTime() > PROX_OBSTACLE_LIFETIME_MS) {
-          
-          proxObsIter = ClearObject(proxObsIter, MarkerlessObject::Type::PROX_OBSTACLE,
-                                    ObjectFamily::MARKERLESS_OBJECTS);
-
-          continue;
+      // Delete any existing prox objects that are too old.
+      // Note that we use find() here because there may not be any markerless objects
+      // yet, and using [] indexing will create things.
+      auto markerlessFamily = _existingObjects.find(ObjectFamily::MARKERLESS_OBJECTS);
+      if(markerlessFamily != _existingObjects.end())
+      {
+        auto proxTypeMap = markerlessFamily->second.find(MarkerlessObject::Type::PROX_OBSTACLE);
+        if(proxTypeMap != markerlessFamily->second.end())
+        {
+          for (auto proxObsIter = proxTypeMap->second.begin();
+               proxObsIter != proxTypeMap->second.end();
+               /* increment iter in loop, depending on erase*/)
+          {
+            if (lastTimestamp - proxObsIter->second->GetLastObservedTime() > PROX_OBSTACLE_LIFETIME_MS)
+            {
+              proxObsIter = ClearObject(proxObsIter, MarkerlessObject::Type::PROX_OBSTACLE,
+                                        ObjectFamily::MARKERLESS_OBJECTS);
+              
+            } else {
+              // Didn't erase anything, increment iterator
+              ++proxObsIter;
+            }
+          }
         }
-        ++proxObsIter;
       }
       
       return RESULT_OK;
     }
     
     
-    void BlockWorld::Update(uint32_t& numObjectsObserved)
+    Result BlockWorld::Update(uint32_t& numObjectsObserved)
     {
       numObjectsObserved = 0;
       
@@ -1726,8 +1739,9 @@ namespace Anki
                     
                     if( inSamePlane && bboxIntersects )
                     {
-                      CoreTechPrint("Removing object %d, which intersects robot %d's bounding quad.\n",
-                                    object->GetID().GetValue(), _robot->GetID());
+                      PRINT_NAMED_INFO("BlockWorld.Update",
+                                       "Removing object %d, which intersects robot %d's bounding quad.\n",
+                                       object->GetID().GetValue(), _robot->GetID());
                       
                       // Erase the vizualized block and its projected quad
                       //VizManager::getInstance()->EraseCuboid(object->GetID());
@@ -1754,16 +1768,22 @@ namespace Anki
       
       if(numUnusedMarkers > 0) {
         if (!_robot->IsPhysical() || !SKIP_PHYS_ROBOT_LOCALIZATION) {
-          CoreTechPrint("%u observed markers did not match any known objects and went unused.\n",
-                        numUnusedMarkers);
+          PRINT_NAMED_WARNING("BlockWorld.Update.UnusedMarkers",
+                              "%zu observed markers did not match any known objects and went unused.\n",
+                              numUnusedMarkers);
         }
       }
      
       // Toss any remaining markers?
       ClearAllObservedMarkers();
       
-      UpdateProxObstaclePoses();
+      Result lastResult = UpdateProxObstaclePoses();
+      if(lastResult != RESULT_OK) {
+        return lastResult;
+      }
 
+      return RESULT_OK;
+      
     } // Update()
     
     
@@ -2054,7 +2074,7 @@ namespace Anki
     
     
     
-    BlockWorld::ObjectsMapByID_t::iterator BlockWorld::ClearObject(ObjectsMapByID_t::iterator objIter,
+    BlockWorld::ObjectsMapByID_t::iterator BlockWorld::ClearObject(const ObjectsMapByID_t::iterator objIter,
                                                                    const ObjectType&   withType,
                                                                    const ObjectFamily& fromFamily)
     {
@@ -2068,7 +2088,8 @@ namespace Anki
         PRINT_NAMED_WARNING("BlockWorld.ClearObject",
                             "Will not delete object %d because object deletion is disabled.\n",
                             object->GetID().GetValue());
-        return ++objIter;
+        auto retIter(objIter);
+        return ++retIter;
       }
       
     }

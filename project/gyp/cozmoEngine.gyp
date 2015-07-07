@@ -4,6 +4,8 @@
     'engine_source': 'cozmoEngine.lst',
     'engine_test_source': 'cozmoEngine-test.lst',
     'energy_library_type': 'static_library',
+    'ctrlLightCube_source': 'ctrlLightCube.lst',
+    'ctrlRobot_source': 'ctrlRobot.lst',
     
     # TODO: should this be passed in, or shared?
     'coretech_defines': [
@@ -27,6 +29,9 @@
       '<(coretech_external_path)/opencv-2.4.8/modules/video/include',
       '<(coretech_external_path)/opencv-2.4.8/modules/features2d/include',
       '<(coretech_external_path)/opencv-2.4.8/modules/flann/include',
+    ],
+    'webots_includes': [
+      '<(webots_path)/include/controller/cpp'
     ],
 
     'compiler_flags': [
@@ -264,23 +269,77 @@
       {
         'target_defaults': {
           'variables': {
-            'mac_target_archs%': [ '<@(target_archs)' ]
+            'mac_target_archs': [ '$(ARCHS_STANDARD)' ]
           },
           'xcode_settings': {
             'ARCHS': [ '>@(mac_target_archs)' ],
             'SDKROOT': 'macosx',
-            'MACOSX_DEPLOYMENT_TARGET': '10.9',
+            # 'MACOSX_DEPLOYMENT_TARGET': '10.9', # latest
           },
         },
 
 
         'targets': [
           {
+            'target_name': 'webotsCtrlLightCube',
+            'type': 'executable',
+            'include_dirs': [
+              '../../robot/include',
+              '../../include',
+              '../../simulator/include',
+              '<@(webots_includes)',
+            ],
+            'dependencies': [
+              '<(cti_gyp_path):ctiCommonRobot',
+            ],
+            'sources': [ '<!@(cat <(ctrlLightCube_source))' ],
+            'defines': [
+              'COZMO_ROBOT',
+              'SIMULATOR'
+            ],
+            'libraries': [
+              '<(webots_path)/lib/libCppController.dylib',
+            ],
+          }, # end controller Block
+
+          {
+            'target_name': 'webotsCtrlRobot',
+            'type': 'executable',
+            'include_dirs': [
+              '../../robot/include',
+              '../../include',
+              '../../simulator/include',
+              '<@(webots_includes)',
+              '<@(opencv_includes)',
+            ],
+            'dependencies': [
+              '<(cti_gyp_path):ctiCommonRobot',
+              '<(cti_gyp_path):ctiVisionRobot',
+              '<(cti_gyp_path):ctiMessagingRobot',
+              '<(cti_gyp_path):ctiPlanningRobot',
+              '<(util_gyp_path):utilEmbedded',
+            ],
+            'sources': [ '<!@(cat <(ctrlRobot_source))' ],
+            'defines': [
+              'COZMO_ROBOT',
+              'SIMULATOR'
+            ],
+            'libraries': [
+              '<(webots_path)/lib/libCppController.dylib',
+              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_core.dylib',
+              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_imgproc.dylib',
+              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_highgui.dylib',
+              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_calib3d.dylib',
+              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_contrib.dylib',
+              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_objdetect.dylib',
+              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_video.dylib',
+              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_features2d.dylib',
+            ],
+          }, # end controller Robot
+
+          {
             'target_name': 'cozmoEngineUnitTest',
             'type': 'executable',
-            'variables': {
-              'mac_target_archs': [ '$(ARCHS_STANDARD)' ]
-            },
             'include_dirs': [
               '../../basestation/test',
               '<@(opencv_includes)',
