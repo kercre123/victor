@@ -26,10 +26,11 @@ def checkResult(ret, exitOnFail=True):
             return False
 
 def programFPGA(program_file_path_name):
-    port = MPSSE(SPI0, ONE_MHZ, MSB)
+    port = MPSSE(SPI0, TWO_MHZ, MSB)
     sys.stdout.write("Opened {}\r\n".format(port.GetDescription()))
     checkResult(port.PinLow(GPIOL0))
     checkResult(port.PinLow(GPIOL3))
+    checkResult(port.PinHigh(GPIOL2))
     time.sleep(0.016)
     checkResult(port.PinHigh(GPIOL3))
     time.sleep(0.1)
@@ -39,12 +40,12 @@ def programFPGA(program_file_path_name):
     checkResult(port.PinLow(GPIOL0))
     checkResult(port.Start())
     checkResult(port.Write(progFile)) # Write programming file 
-    checkResult(port.Write(b"\x00"*500))# Write the dummy bits
+    checkResult(port.Write(bytes(range(256))))# Write the dummy bits
     time.sleep(0.300)
     checkResult(port.Stop())
     checkResult(port.PinHigh(GPIOL0))
-    checkResult(port.PinHigh(GPIOL1))
-    checkResult(port.PinHigh(GPIOL2))
+    #checkResult(port.PinHigh(GPIOL1))
+    #checkResult(port.PinHigh(GPIOL2))
     checkResult(port.PinHigh(GPIOL3))
     checkResult(port.Close())
 
