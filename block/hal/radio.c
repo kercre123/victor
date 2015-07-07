@@ -1,4 +1,5 @@
 #include "hal.h"
+#include "hal_nrf.h"
 
 // Global variables
 volatile bool radioBusy;
@@ -77,15 +78,12 @@ void ReceiveData(u8 msTimeout)
   while(radioBusy)
   {    
     #ifndef LISTEN_FOREVER
-    if(missedPacketCount<3)
+    if(missedPacketCount<3) // listen forever if 3 missed packets
     {
       if((TH0-now+1)>(5*msTimeout))
       {
-        if(missedPacketCount!=255)
-        {
-          missedPacketCount++;
-          cumMissedPacketCount++;
-        }
+        missedPacketCount++;
+        cumMissedPacketCount++; 
         radioBusy = false;
       }
     }

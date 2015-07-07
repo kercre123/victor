@@ -5,7 +5,6 @@
 #include "hal.h"
 
 
-
 // Global variables
 extern volatile bool radioBusy;
 extern volatile bool gDataReceived;
@@ -26,8 +25,6 @@ void main(void)
   
   volatile s8 accData[3];
   volatile u8 tapCount = 0;
- 
-  u8 lightDeltas[13];
   
   while(hal_clk_get_16m_source() != HAL_CLK_XOSC16M)
   {
@@ -98,9 +95,6 @@ void main(void)
   
   while(sync == false)
   {
-    #ifdef DO_RADIO_LED_TEST
-      sync = true;
-    #endif
     // Process lights
     StartTimer2();
     delay_ms(1);
@@ -118,26 +112,42 @@ void main(void)
   StartTimer2();
   delay_ms(1);
   LightsOff();
-
+  
+  #ifdef USE_UART
+  StopTimer2();
+  InitUart();
+  #endif
+  
   // Begin main loop. Time = 0
   while(1) 
   {    
     // Spin during dead time until ready to receive
     // Turn on lights
+    #ifndef USE_UART
     StartTimer2();
+    #endif
     // Accelerometer read
     ReadAcc(accData);
-//    tapCount += GetTaps();
+    tapCount += GetTaps();
     while(radioTimerState == radioSleep);
     {
       // doing lights stuff
     }
     radioTimerState = radioSleep; 
     // Turn off lights timer (and lights)
+    #ifndef USE_UART
     StopTimer2();  
-
+    #endif
+    
     // Receive data
-    ReceiveData(RADIO_TIMEOUT_MS); 
+    ReceiveData(RADIO_TIMEOUT_MS);
+    #ifdef USE_UART
+    for(i=0; i<13; i++)
+    {
+      puthex(radioPayload[i]);
+    }
+    putstring("\r\n");
+    #endif
     if(missedPacketCount>0)
     {
       SetLedValuesByDelta();
@@ -154,6 +164,13 @@ void main(void)
     radioPayload[4] = cumMissedPacketCount;
     radioPayload[5] = packetCount++;
     radioPayload[6] = BLOCK_ID;
+    #ifdef USE_UART
+    for(i=0; i<7; i++)
+    {
+      puthex(radioPayload[i]);
+    }
+    putstring("\r\n");
+    #endif
     // Respond with accelerometer data
     TransmitData();
     // Reset Payload
