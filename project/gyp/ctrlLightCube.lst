@@ -1,0 +1,8 @@
+../../simulator/controllers/block_controller/activeBlock.cpp
+../../simulator/controllers/block_controller/activeBlock.h
+../../simulator/controllers/block_controller/block_controller
+../../simulator/controllers/block_controller/block_controller.cpp
+../../robot/sim_hal/BlockMessageDefinitions.def
+../../robot/sim_hal/BlockMessages.cpp
+../../robot/sim_hal/BlockMessages.h
+../../robot/supervisor/src/ledController.cpp

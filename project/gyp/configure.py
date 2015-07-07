@@ -156,6 +156,9 @@ def main(scriptArgs):
   generator.processFolder(['basestation/src/anki/cozmo/basestation', 'basestation/include/anki/cozmo', 'include'], ['project/gyp/cozmoEngine.lst'])
   generator.processFolder(['basestation/test', 'robot/test'], ['project/gyp/cozmoEngine-test.lst'])
   generator.processFolder(['robot/sim_hal', 'robot/supervisor/src', 'simulator/src', 'simulator/controllers/cozmo_c_controller'], ['project/gyp/ctrlRobot.lst'])
+  generator.processFolder(['simulator/controllers/cozmo_viz_controller'], ['project/gyp/ctrlViz.lst'])
+  
+
   # this is too big of a scope, we need to manualy maintain ceCtrlBlock.lst for now
   # generator.processFolder(['simulator/controllers/block_controller', 'robot/sim_hal/', 'robot/supervisor/src/'], ['project/gyp/ctrlLightCube.lst'])
   

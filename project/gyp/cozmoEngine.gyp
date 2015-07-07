@@ -6,6 +6,7 @@
     'energy_library_type': 'static_library',
     'ctrlLightCube_source': 'ctrlLightCube.lst',
     'ctrlRobot_source': 'ctrlRobot.lst',
+    'ctrlViz_source': 'ctrlViz.lst',
     
     # TODO: should this be passed in, or shared?
     'coretech_defines': [
@@ -301,6 +302,40 @@
               '<(webots_path)/lib/libCppController.dylib',
             ],
           }, # end controller Block
+
+          {
+            'target_name': 'webotsCtrlViz',
+            'type': 'executable',
+            'include_dirs': [
+              # '../../robot/include',
+              '../../include',
+              # '../../simulator/include',
+              '<@(webots_includes)',
+              '<@(opencv_includes)',
+            ],
+            'dependencies': [
+              '<(cti_gyp_path):ctiCommon',
+              '<(cti_gyp_path):ctiVision',
+              '<(cti_gyp_path):ctiMessaging',
+              '<(util_gyp_path):util',
+            ],
+            'sources': [ '<!@(cat <(ctrlViz_source))' ],
+            'defines': [
+              # 'COZMO_ROBOT',
+              # 'SIMULATOR'
+            ],
+            'libraries': [
+              '<(webots_path)/lib/libCppController.dylib',
+              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_core.dylib',
+              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_imgproc.dylib',
+              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_highgui.dylib',
+              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_calib3d.dylib',
+              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_contrib.dylib',
+              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_objdetect.dylib',
+              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_video.dylib',
+              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_features2d.dylib',
+            ],
+          }, # end controller viz
 
           {
             'target_name': 'webotsCtrlRobot',
