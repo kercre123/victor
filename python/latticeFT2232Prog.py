@@ -4,7 +4,7 @@ Script for writing Lattice FPGA bit files over an FT2232 doing SPI
 """
 author = "Daniel Casner <daniel@anki.com>"
 
-import sys, os
+import sys, os, time
 
 from mpsse import *
 
@@ -26,16 +26,26 @@ def checkResult(ret, exitOnFail=True):
             return False
 
 def programFPGA(program_file_path_name):
-    port = MPSSE(SPI0, THIRTY_MHZ, MSB)
-    checkResult(port.Start())
-    checkResult(port.SetCSIdle(0)) # Set CS low for Reset
-    input("Reset the FPGA") # Wait for the user
-    checkResult(port.Stop())
-    checkResult(port.Start())
-    checkResult(port.SetCSIdle(1)) # Put CS back into the right mode
+    port = MPSSE(SPI0, ONE_MHZ, MSB)
+    sys.stdout.write("Opened {}\r\n".format(port.GetDescription()))
+    checkResult(port.PinLow(GPIOL0))
+    checkResult(port.PinLow(GPIOL3))
+    time.sleep(0.016)
+    checkResult(port.PinHigh(GPIOL3))
+    time.sleep(0.1)
+    checkResult(port.PinHigh(GPIOL0))
+    time.sleep(0.016)
     progFile = open(program_file_path_name, 'rb').read() # Read in the programming file
-    checkResult(port.Write(progFile + (b"\x00"*50))) # Write programming file plus dummy bits
+    checkResult(port.PinLow(GPIOL0))
+    checkResult(port.Start())
+    checkResult(port.Write(progFile)) # Write programming file 
+    checkResult(port.Write(b"\x00"*500))# Write the dummy bits
+    time.sleep(0.300)
     checkResult(port.Stop())
+    checkResult(port.PinHigh(GPIOL0))
+    checkResult(port.PinHigh(GPIOL1))
+    checkResult(port.PinHigh(GPIOL2))
+    checkResult(port.PinHigh(GPIOL3))
     checkResult(port.Close())
 
 if __name__ == "__main__":
