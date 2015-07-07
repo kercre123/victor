@@ -41,6 +41,8 @@ def main(scriptArgs):
                       help='Use build tools located at BUILD_TOOLS_PATH')
   parser.add_argument('--ankiUtil', metavar='ANKI_UTIL_PATH', dest='ankiUtilPath', action='store', default=None,
                       help='Use anki-util repo checked out at ANKI_UTIL_PATH')
+  parser.add_argument('--webots', metavar='WEBOTS_PATH', dest='webotsPath', action='store', default=None,
+                      help='Use webots aplication at WEBOTS_PATH')
   parser.add_argument('--coretechExternal', metavar='CORETECH_EXTERNAL_DIR', dest='coretechExternalPath', action='store', default=None,
                       help='Use coretech-external repo checked out at CORETECH_EXTERNAL_DIR')
   parser.add_argument('--coretechInternal', metavar='CORETECH_INTERNAL_DIR', dest='coretechInternalPath', action='store', default=None,
@@ -49,6 +51,7 @@ def main(scriptArgs):
                       help='project location, assumed to be same as git repo root')
   parser.add_argument('--updateListsOnly', dest='updateListsOnly', action='store_true', default=False,
                       help='forces configure to only update .lst files and not run gyp project generation')
+
 
   # options controlling gyp output
   parser.add_argument('--arch', action='store',
@@ -105,6 +108,13 @@ def main(scriptArgs):
   ankiUtilProjectPath = os.path.join(options.ankiUtilPath, 'project/gyp/util.gyp')
   gtestPath = os.path.join(options.ankiUtilPath, 'libs/framework')
 
+  if not options.webotsPath:
+    options.webotsPath = '/Applications/Webots'
+  if not os.path.exists(options.webotsPath):
+    UtilLog.error('webots not found [%s]' % options.webotsPath)
+    return False
+  webotsPath = options.webotsPath
+
   # do not check for coretech external, and gyp if we are only updating list files
   if not options.updateListsOnly:
 
@@ -145,6 +155,10 @@ def main(scriptArgs):
   generator = updateFileLists.FileListGenerator(options)
   generator.processFolder(['basestation/src/anki/cozmo/basestation', 'basestation/include/anki/cozmo', 'include'], ['project/gyp/cozmoEngine.lst'])
   generator.processFolder(['basestation/test', 'robot/test'], ['project/gyp/cozmoEngine-test.lst'])
+  generator.processFolder(['robot/sim_hal', 'robot/supervisor/src', 'simulator/src', 'simulator/controllers/cozmo_c_controller'], ['project/gyp/ctrlRobot.lst'])
+  # this is too big of a scope, we need to manualy maintain ceCtrlBlock.lst for now
+  # generator.processFolder(['simulator/controllers/block_controller', 'robot/sim_hal/', 'robot/supervisor/src/'], ['project/gyp/ctrlLightCube.lst'])
+  
   if options.updateListsOnly:
     # TODO: remove dependency on abspath. 
     # there is a bug due to 'os.chdir' and user passed rel path
@@ -196,12 +210,13 @@ def main(scriptArgs):
                                   gtest_path={2}
                                   cti_gtest_path={3}
                                   coretech_external_path={4}
-                                  util_gyp_path={5}
-                                  cti_util_gyp_path={6}
-                                  cozmo_engine_path={7}
-                                  cti_gyp_path={8}
+                                  webots_path={5}
+                                  util_gyp_path={6}
+                                  cti_util_gyp_path={7}
+                                  cozmo_engine_path={8}
+                                  cti_gyp_path={9}
                                   """.format(options.arch, os.path.join(options.projectRoot, 'generated/mac'),
-                                    gtestPath, ctiGtestPath, coretechExternalPath, ankiUtilProjectPath, ctiAnkiUtilProjectPath,
+                                    gtestPath, ctiGtestPath, coretechExternalPath, webotsPath, ankiUtilProjectPath, ctiAnkiUtilProjectPath,
                                     projectRoot, coretechInternalProjectPath )
       gypArgs = ['--check', '--depth', '.', '-f', 'xcode', '--toplevel-dir', '../..', '--generator-output', '../../generated/mac', gypFile]
       gyp.main(gypArgs)
