@@ -287,8 +287,9 @@ int main(void)
 #endif
 
   // Never return from this function
-  while(1)
-  {}
+  while(1) {
+    Yield(); 
+  }
 }
 
 extern "C"
