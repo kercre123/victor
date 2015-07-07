@@ -8,6 +8,7 @@
 //#define OLD_CUBE_EXPERIMENT 1 // for testing
 
 #define MAX_CUBES 20
+#define NUM_BLOCK_LEDS 4
 
 static LEDPacket         g_LedStatus[MAX_CUBES];
 static AcceleratorPacket g_AccelStatus[MAX_CUBES];
@@ -81,7 +82,6 @@ namespace Anki
       }
 
       #ifndef OLD_CUBE_EXPERIMENT
-      #define NUM_BLOCK_LEDS 4
 
       Result SetBlockLight(const u8 blockID, const u32* onColor, const u32* offColor,
                            const u32* onPeriod_ms, const u32* offPeriod_ms,
@@ -113,7 +113,6 @@ namespace Anki
         return RESULT_OK;
       }
       #else
-      #define NUM_BLOCK_LEDS 8
 
       Result SetBlockLight(const u8 blockID, const u32* onColor, const u32* offColor,
                            const u32* onPeriod_ms, const u32* offPeriod_ms,
