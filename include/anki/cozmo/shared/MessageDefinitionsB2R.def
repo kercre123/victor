@@ -276,8 +276,9 @@ ADD_MESSAGE_MEMBER(s32, limitFramerate)
 ADD_MESSAGE_MEMBER(u8, highValue)
 END_MESSAGE_DEFINITION(SetVisionSystemParams)
 
+// TODO: Remove this now that face detection happens on Basestation and is not sent to robot
 // FaceDetection
-START_MESSAGE_DEFINITION(FaceDetection, 1)
+START_TIMESTAMPED_MESSAGE_DEFINITION(FaceDetection, 1)
 ADD_MESSAGE_MEMBER(u16, x_upperLeft)
 ADD_MESSAGE_MEMBER(u16, y_upperLeft)
 ADD_MESSAGE_MEMBER(u16, width)
@@ -314,8 +315,8 @@ END_MESSAGE_DEFINITION(FaceTracking)
 // PanAndTiltHead
 START_MESSAGE_DEFINITION(PanAndTiltHead, 1)
 // TODO: make these fixed point
-ADD_MESSAGE_MEMBER(f32, relativePanAngle_rad)
-ADD_MESSAGE_MEMBER(f32, relativeHeadTiltAngle_rad)
+ADD_MESSAGE_MEMBER(f32, bodyPanAngle_rad)
+ADD_MESSAGE_MEMBER(f32, headTiltAngle_rad)
 END_MESSAGE_DEFINITION(PanAndTiltHead)
 
 START_MESSAGE_DEFINITION(SetCarryState, 1)

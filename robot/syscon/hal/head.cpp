@@ -2,7 +2,6 @@
 #include "timer.h"
 #include "nrf.h"
 #include "nrf_gpio.h"
-#include "spi_master.h"
 #include "uart.h"
 
 #include "hardware.h"
@@ -62,7 +61,7 @@ void Head::RxPacket(u16 length, u8* dataRX)
  {
   // Switch to receive mode and wait for a reply
   nrf_gpio_cfg_input(PIN_TX_HEAD, NRF_GPIO_PIN_NOPULL);
-  NRF_UART0->PSELTXD = 0xFFFFFFFF;  // Disconne ct TX
+  NRF_UART0->PSELTXD = 0xFFFFFFFF;  // Disconnect TX
 
   // Wait 10uS for turnaround - 80uS on the other side
   MicroWait(10);
@@ -77,7 +76,7 @@ void Head::RxPacket(u16 length, u8* dataRX)
   {
     // Timeout after 5ms of no communication
     while (NRF_UART0->EVENTS_RXDRDY != 1) {
-      if (0&&GetCounter() - startTime > 41666*2) { // 5ms
+      if (GetCounter() - startTime > 41666*2) { // 5ms
         dataRX[0] = 0;
         return;
       }

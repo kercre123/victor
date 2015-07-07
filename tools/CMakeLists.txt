@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8.8 FATAL_ERROR)
 cmake_policy(VERSION 2.8.8)
-project(util)
+project(utilEmbedded)
 set(configuration ".")
 enable_language(ASM)
 set(builddir "${CMAKE_BINARY_DIR}")
@@ -167,18 +167,6 @@ list(APPEND util__other_srcs
   "anki-util/source/anki/util/singleton/dynamicSingleton.h"
   "anki-util/source/anki/util/stats/runningStat.h"
   "anki-util/source/anki/util/stats/statsAccumulator.h"
-  "anki-util/source/anki/util/statService/abstractAction.h"
-  "anki-util/source/anki/util/statService/abstractCondition.h"
-  "anki-util/source/anki/util/statService/combinationCondition.h"
-  "anki-util/source/anki/util/statService/countThresholdCondition.h"
-  "anki-util/source/anki/util/statService/dateCondition.h"
-  "anki-util/source/anki/util/statService/noticeAction.h"
-  "anki-util/source/anki/util/statService/statNotice.h"
-  "anki-util/source/anki/util/statService/statRule.h"
-  "anki-util/source/anki/util/statService/statRuleBuilder.h"
-  "anki-util/source/anki/util/statService/statService.h"
-  "anki-util/source/anki/util/statService/statServiceMessages.h"
-  "anki-util/source/anki/util/statService/timeCondition.h"
   "anki-util/source/anki/util/stringTable/hashStringTable.h"
   "anki-util/source/anki/util/stringTable/stringID.h"
   "anki-util/source/anki/util/stringTable/stringTable.h"
@@ -207,7 +195,22 @@ list(APPEND util__other_srcs
   "anki-util/source/anki/util/utilMessaging/utilMessaging.h"
   "anki-util/source/anki/util/UUID/UUID.h"
   "anki-util/source/anki/util/ptree/includeJSONParser.h"
-  "anki-util/source/anki/util/ptree/ptreeToJSON.h")
+  "anki-util/source/anki/util/ptree/ptreeToJSON.h"
+  "anki-util/source/anki/util/statEngine/abstractAction.h"
+  "anki-util/source/anki/util/statEngine/abstractCondition.h"
+  "anki-util/source/anki/util/statEngine/combinationCondition.h"
+  "anki-util/source/anki/util/statEngine/countThresholdCondition.h"
+  "anki-util/source/anki/util/statEngine/dateCondition.h"
+  "anki-util/source/anki/util/statEngine/multiAction.h"
+  "anki-util/source/anki/util/statEngine/noticeAction.h"
+  "anki-util/source/anki/util/statEngine/resetAction.h"
+  "anki-util/source/anki/util/statEngine/statEngine.h"
+  "anki-util/source/anki/util/statEngine/statEngineMessages.h"
+  "anki-util/source/anki/util/statEngine/statNotice.h"
+  "anki-util/source/anki/util/statEngine/statRule.h"
+  "anki-util/source/anki/util/statEngine/statRuleBuilder.h"
+  "anki-util/source/anki/util/statEngine/timeCondition.h"
+  "anki-util/source/anki/util/stats/recentStatsAccumulator.h")
 add_library(util STATIC ${util__other_srcs}
   anki-util/source/anki/util/color/color.cpp
   anki-util/source/anki/util/console/consoleArgument.cpp
@@ -243,17 +246,6 @@ add_library(util STATIC ${util__other_srcs}
   anki-util/source/anki/util/ptree/ptreeTraverser.cpp
   anki-util/source/anki/util/random/randomGenerator.cpp
   anki-util/source/anki/util/stats/runningStat.cpp
-  anki-util/source/anki/util/statService/abstractCondition.cpp
-  anki-util/source/anki/util/statService/combinationCondition.cpp
-  anki-util/source/anki/util/statService/countThresholdCondition.cpp
-  anki-util/source/anki/util/statService/dateCondition.cpp
-  anki-util/source/anki/util/statService/noticeAction.cpp
-  anki-util/source/anki/util/statService/statNotice.cpp
-  anki-util/source/anki/util/statService/statRule.cpp
-  anki-util/source/anki/util/statService/statRuleBuilder.cpp
-  anki-util/source/anki/util/statService/statService.cpp
-  anki-util/source/anki/util/statService/statServiceMessages.cpp
-  anki-util/source/anki/util/statService/timeCondition.cpp
   anki-util/source/anki/util/stringTable/hashStringTable.cpp
   anki-util/source/anki/util/stringTable/stringID.cpp
   anki-util/source/anki/util/stringTable/stringTable.cpp
@@ -279,6 +271,21 @@ add_library(util STATIC ${util__other_srcs}
   anki-util/source/anki/util/global/globalDefinitions.cpp
   anki-util/source/anki/util/ptree/includePtree.cpp
   anki-util/source/anki/util/ptree/ptreeToJSON.cpp
+  anki-util/source/anki/util/statEngine/abstractCondition.cpp
+  anki-util/source/anki/util/statEngine/combinationCondition.cpp
+  anki-util/source/anki/util/statEngine/countThresholdCondition.cpp
+  anki-util/source/anki/util/statEngine/dateCondition.cpp
+  anki-util/source/anki/util/statEngine/multiAction.cpp
+  anki-util/source/anki/util/statEngine/noticeAction.cpp
+  anki-util/source/anki/util/statEngine/resetAction.cpp
+  anki-util/source/anki/util/statEngine/statEngine.cpp
+  anki-util/source/anki/util/statEngine/statEngineMessages.cpp
+  anki-util/source/anki/util/statEngine/statNotice.cpp
+  anki-util/source/anki/util/statEngine/statRule.cpp
+  anki-util/source/anki/util/statEngine/statRuleBuilder.cpp
+  anki-util/source/anki/util/statEngine/timeCondition.cpp
+  anki-util/source/anki/util/stats/recentStatsAccumulator.cpp
+  anki-util/tools/message-buffers/support/cpp/source/SafeMessageBuffer.cpp
 )
 set_source_files_properties(${util__other_srcs} PROPERTIES HEADER_FILE_ONLY "TRUE")
 set_target_properties(util PROPERTIES ARCHIVE_OUTPUT_DIRECTORY "${obj}.${TOOLSET}/project/gyp")
@@ -336,17 +343,6 @@ set_source_files_properties(
   anki-util/source/anki/util/ptree/ptreeTraverser.cpp
   anki-util/source/anki/util/random/randomGenerator.cpp
   anki-util/source/anki/util/stats/runningStat.cpp
-  anki-util/source/anki/util/statService/abstractCondition.cpp
-  anki-util/source/anki/util/statService/combinationCondition.cpp
-  anki-util/source/anki/util/statService/countThresholdCondition.cpp
-  anki-util/source/anki/util/statService/dateCondition.cpp
-  anki-util/source/anki/util/statService/noticeAction.cpp
-  anki-util/source/anki/util/statService/statNotice.cpp
-  anki-util/source/anki/util/statService/statRule.cpp
-  anki-util/source/anki/util/statService/statRuleBuilder.cpp
-  anki-util/source/anki/util/statService/statService.cpp
-  anki-util/source/anki/util/statService/statServiceMessages.cpp
-  anki-util/source/anki/util/statService/timeCondition.cpp
   anki-util/source/anki/util/stringTable/hashStringTable.cpp
   anki-util/source/anki/util/stringTable/stringID.cpp
   anki-util/source/anki/util/stringTable/stringTable.cpp
@@ -370,9 +366,65 @@ set_source_files_properties(
   anki-util/source/anki/util/global/globalDefinitions.cpp
   anki-util/source/anki/util/ptree/includePtree.cpp
   anki-util/source/anki/util/ptree/ptreeToJSON.cpp
+  anki-util/source/anki/util/statEngine/abstractCondition.cpp
+  anki-util/source/anki/util/statEngine/combinationCondition.cpp
+  anki-util/source/anki/util/statEngine/countThresholdCondition.cpp
+  anki-util/source/anki/util/statEngine/dateCondition.cpp
+  anki-util/source/anki/util/statEngine/multiAction.cpp
+  anki-util/source/anki/util/statEngine/noticeAction.cpp
+  anki-util/source/anki/util/statEngine/resetAction.cpp
+  anki-util/source/anki/util/statEngine/statEngine.cpp
+  anki-util/source/anki/util/statEngine/statEngineMessages.cpp
+  anki-util/source/anki/util/statEngine/statNotice.cpp
+  anki-util/source/anki/util/statEngine/statRule.cpp
+  anki-util/source/anki/util/statEngine/statRuleBuilder.cpp
+  anki-util/source/anki/util/statEngine/timeCondition.cpp
+  anki-util/source/anki/util/stats/recentStatsAccumulator.cpp
+  anki-util/tools/message-buffers/support/cpp/source/SafeMessageBuffer.cpp
  PROPERTIES
   COMPILE_FLAGS "-std=c11 -fdiagnostics-show-category=name -Wall -Woverloaded-virtual -Werror -Wundef -Wheader-guard -fsigned-char -fvisibility-inlines-hidden -fvisibility=default -Wshorten-64-to-32 -Winit-self -Wconditional-uninitialized -Wno-deprecated-register -Wa,--noexecstack -Wformat -Werror=format-security -g -std=c++11 -stdlib=libc++ -fdiagnostics-show-category=name -Wall -Woverloaded-virtual -Werror -Wundef -Wheader-guard -fsigned-char -fvisibility-inlines-hidden -fvisibility=default -Wshorten-64-to-32 -Winit-self -Wconditional-uninitialized -Wno-deprecated-register -Wa,--noexecstack -Wformat -Werror=format-security -g "
 )
 set_target_properties(util PROPERTIES LINK_FLAGS "-g ")
+unset(TOOLSET)
+unset(TARGET)
+
+#util.gyp:utilEmbedded#target
+set(TARGET "utilEmbedded")
+set(TOOLSET "target")
+list(APPEND utilEmbedded__other_srcs
+  "anki-util/source/anki/utilEmbedded/cBool.h"
+  "anki-util/source/anki/utilEmbedded/transport/IReceiver.h"
+  "anki-util/source/anki/utilEmbedded/transport/IUnreliableTransport.h"
+  "anki-util/source/anki/utilEmbedded/transport/reliableTransport.h"
+  "anki-util/source/anki/util/transport/reliableMessageTypes.h")
+add_library(utilEmbedded STATIC ${utilEmbedded__other_srcs}
+  anki-util/source/anki/utilEmbedded/transport/reliableSequenceId.c
+  anki-util/source/anki/utilEmbedded/transport/reliableTransport.c
+  anki-util/source/anki/util/transport/reliableMessageTypes.cpp
+)
+set_source_files_properties(${utilEmbedded__other_srcs} PROPERTIES HEADER_FILE_ONLY "TRUE")
+set_target_properties(utilEmbedded PROPERTIES ARCHIVE_OUTPUT_DIRECTORY "${obj}.${TOOLSET}/project/gyp")
+set_target_properties(utilEmbedded PROPERTIES PREFIX "lib")
+set_target_properties(utilEmbedded PROPERTIES ARCHIVE_OUTPUT_NAME "utilEmbedded")
+set_target_properties(utilEmbedded PROPERTIES SUFFIX ".a")
+set_source_files_properties(${obj}.${TOOLSET}/project/gyp/libutilEmbedded.a PROPERTIES GENERATED "TRUE")
+set_target_properties(utilEmbedded PROPERTIES EXCLUDE_FROM_ALL "FALSE")
+list(APPEND utilEmbedded__include_dirs
+  "${CMAKE_SOURCE_DIR}/anki-util/tools/message-buffers/support/cpp/include"
+  "${CMAKE_SOURCE_DIR}/anki-util/source/anki")
+set_property(TARGET utilEmbedded APPEND PROPERTY INCLUDE_DIRECTORIES ${utilEmbedded__include_dirs})
+set_target_properties(utilEmbedded PROPERTIES COMPILE_DEFINITIONS "COZMO_ROBOT;")
+set_source_files_properties(
+  anki-util/source/anki/utilEmbedded/transport/reliableSequenceId.c
+  anki-util/source/anki/utilEmbedded/transport/reliableTransport.c
+ PROPERTIES
+  COMPILE_FLAGS "-std=c11 -fdiagnostics-show-category=name -Wall -Woverloaded-virtual -Werror -Wundef -Wheader-guard -fsigned-char -fvisibility-inlines-hidden -fvisibility=default -Wshorten-64-to-32 -Winit-self -Wconditional-uninitialized -Wno-deprecated-register -Wa,--noexecstack -Wformat -Werror=format-security -g "
+)
+set_source_files_properties(
+  anki-util/source/anki/util/transport/reliableMessageTypes.cpp
+ PROPERTIES
+  COMPILE_FLAGS "-std=c11 -fdiagnostics-show-category=name -Wall -Woverloaded-virtual -Werror -Wundef -Wheader-guard -fsigned-char -fvisibility-inlines-hidden -fvisibility=default -Wshorten-64-to-32 -Winit-self -Wconditional-uninitialized -Wno-deprecated-register -Wa,--noexecstack -Wformat -Werror=format-security -g -std=c++11 -stdlib=libc++ -fdiagnostics-show-category=name -Wall -Woverloaded-virtual -Werror -Wundef -Wheader-guard -fsigned-char -fvisibility-inlines-hidden -fvisibility=default -Wshorten-64-to-32 -Winit-self -Wconditional-uninitialized -Wno-deprecated-register -Wa,--noexecstack -Wformat -Werror=format-security -g "
+)
+set_target_properties(utilEmbedded PROPERTIES LINK_FLAGS "-g ")
 unset(TOOLSET)
 unset(TARGET)

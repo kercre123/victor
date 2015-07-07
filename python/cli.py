@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 Python command line interface for Robot over the network
 """
@@ -14,7 +14,6 @@ from ReliableTransport import *
 # XXX Replace this with importing the CLAD python messages
 assert os.path.split(os.path.abspath(os.path.curdir))[1] == 'products-cozmo', "Script must be run from root cozmo directory"
 sys.path.insert(0, 'python')
-sys.path.append(os.path.join(os.path.curdir, 'robot', 'som'))
 from messages import *
 
 ROBOT_PORT = 5551

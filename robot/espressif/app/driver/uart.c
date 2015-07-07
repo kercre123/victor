@@ -189,7 +189,8 @@ uart_tx_buffer(uint8 uart, uint8 *buf, uint16 len)
 *******************************************************************************/
 void os_put_char(uint8 c)
 {
-  uart_tx_one_char_no_wait(UART1, c);
+  //uart_tx_one_char_no_wait(UART1, c);
+  uart_tx_one_char(UART1, c);
 }
 
 /** Handles raw UART RX

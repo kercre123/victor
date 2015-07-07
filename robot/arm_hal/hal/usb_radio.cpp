@@ -88,9 +88,11 @@ namespace Anki {
       // Pull as many inbound chars as we can into our local buffer
       while (recvBufSize_ < RECV_BUFFER_SIZE)
       {
-        int c = HAL::UARTGetChar(0);
+        int c = HAL::UARTGetChar();
         if (c < 0)    // Nothing more to grab
+        {
           return recvBufSize_;
+        }
         recvBuf_[recvBufSize_++] = c;
       }
 #endif
@@ -147,6 +149,12 @@ namespace Anki {
                           (recvBuf_[headerSize+2] << 16) +
                           (recvBuf_[headerSize+3] << 24);
 
+            // Sanity check
+            if (dataLen > 1600) {
+              recvBufSize_ = 0;
+              return retVal;
+            }
+            
             if (recvBufSize_ >= headerSize + 4 + dataLen) {
 
               // Copy message contents to buffer

@@ -1,5 +1,5 @@
 %% Init
-rootPath = '../robot/simulator/worlds/';
+rootPath = 'lib/anki/cozmo-engine/simulator/worlds/';
 if ~isdir(rootPath)
     mkdir(rootPath)
 end

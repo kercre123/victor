@@ -16,17 +16,15 @@ extern "C" {
 // Blinky status lights!
 #include "anki/cozmo/robot/spineData.h"
 
-void uesb_event_handler();
-
 #define PACKET_SIZE 13
 #define TIME_PER_CUBE (int)(COUNT_PER_MS * 33.0 / MAX_CUBES)
 //#define NATHAN_WANTS_DEMO
+//#define DEBUG_MESSAGES
 
 extern GlobalDataToHead g_dataToHead;
 extern GlobalDataToBody g_dataToBody;
 
-uint8_t           lastTransmit = 0;
-const uint8_t     cubePipe[] = {1,2,3,4};
+const uint8_t     cubePipe[] = {2,1,3,4};
 
 #define MAX_CUBES sizeof(cubePipe)
 
@@ -53,38 +51,33 @@ void Radio::init() {
   
   memset(cubeRx, 0, sizeof(cubeRx));
   #ifdef NATHAN_WANTS_DEMO
-  //memset(cubeTx, 0xFF, sizeof(cubeTx));
   for (int g = 0; g < MAX_CUBES; g++) {
-    for (int i = 1; i < 12; i += 3) 
-      cubeTx[g].ledStatus[i] = 0xFF;
+    memset(cubeTx[g].ledStatus, 0xFF, sizeof(cubeTx[g].ledStatus));
     cubeTx[g].ledDark = 0;
   }
   #endif
 }
 
-
-void uesb_event_handler()
+extern "C" void uesb_event_handler(void)
 {
   uint32_t rf_interrupts = uesb_get_clear_interrupts();
 
-  if(rf_interrupts & UESB_INT_TX_SUCCESS_MSK)
-  {
-    //UART::put("\r\nTx");
-    //UART::dec(currentCube);
-  }
-  
   if(rf_interrupts & UESB_INT_RX_DR_MSK)
   {
     uesb_payload_t rx_payload;
     uesb_read_rx_payload(&rx_payload);
-    memcpy((uint8_t*)&cubeRx[lastTransmit], rx_payload.data, sizeof(AcceleratorPacket));
-    cubeRx[lastTransmit].timestamp = GetCounter();
+    uint8_t addr = rx_payload.data[sizeof(AcceleratorPacket)] - 0xC2;
+    
+    if (addr < MAX_CUBES) {
+      memcpy((uint8_t*)&cubeRx[addr], rx_payload.data, sizeof(AcceleratorPacket));
+    }
 
-    //UART::put("\r\nRx");
-    //UART::dec(rx_payload.pipe);
-    //UART::dec(currentCube);
-    //UART::put(" :");
-    //UART::dump((uint8_t*)&cubeRx[currentCube], sizeof(AcceleratorPacket));
+    #ifdef DEBUG_MESSAGES
+    UART::put("\r\nRx");
+    UART::hex((uint8_t)addr);
+    UART::put(":");
+    UART::dump((uint8_t*)rx_payload.data, rx_payload.length);
+    #endif
   }
 }
 
@@ -104,16 +97,19 @@ void Radio::manage() {
       #endif
     }
   }
-  
-  static uint8_t currentCube = 0;
-  currentCube = (currentCube + 1) % 7;
 
   uesb_event_handler();
+  static uint8_t currentCube = 0;
+  currentCube = (currentCube + 1) % 7;
 
   // Transmit cubes round-robin
   if (currentCube < MAX_CUBES)
   {
-    lastTransmit = currentCube;
+    #ifdef DEBUG_MESSAGES
+    UART::put("\r\nTx");
+    UART::dec(currentCube);
+    #endif
+    
     uesb_write_tx_payload(cubePipe[currentCube], (uint8_t*)&cubeTx[currentCube], sizeof(LEDPacket));
   }
 }

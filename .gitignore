@@ -80,6 +80,7 @@ simulator/controllers/block_controller/block_controller
 simulator/controllers/cozmo_c_controller/cozmo_c_controller
 world_comms_controller
 screenshot.png
+rx-packet-log.txt
 blockworld_controller
 *.mvlib
 *.shv*lib
@@ -151,6 +152,8 @@ coretech/vision/matlab/@VisionMarkerTrained/trainingState_*.*
 *.saved_uv4
 tools/modulate_led/Project/LCD/MDK-ARM/Demo/
 *.uvgui.*
+*.uvoptx*
+*.uvprojx*
 uImage
 robot/som/ov2686/ov2686_code_timestamp.h
 robot/som/*.jpg
@@ -177,3 +180,4 @@ include/anki/cozmo/shared/msgIDs.txt
 block/build/
 *.m51
 *.m51
+rx-packet-log.txt

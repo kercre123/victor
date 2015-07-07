@@ -24,7 +24,7 @@
 
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/common/basestation/utils/timer.h"
-#include "anki/util/logging/printfLoggerProvider.h"
+#include "util/logging/printfLoggerProvider.h"
 
 #include "robotMessageHandler.h"
 #include "recording/playback.h"

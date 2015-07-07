@@ -8,7 +8,7 @@
 
 #include "anki/messaging/basestation/ChannelBase.h"
 
-#include "anki/util/logging/logging.h"
+#include "util/logging/logging.h"
 
 using namespace Anki::Comms;
 

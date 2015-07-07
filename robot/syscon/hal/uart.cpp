@@ -71,25 +71,30 @@ void UART::put(const char* s)
 }
 
 void UART::dump(const uint8_t* data, uint32_t len) {
-  while(len--) UART::hex(*(data++));
+  while(len--) { UART::hex(*(data++)); }
 }
 
 void UART::hex(uint8_t c)
 {
-  static const u8 hex[] = "0123456789ABCDEF";
-  UART::put(hex[c >> 4]);
-  UART::put(hex[c & 0xF]);
+  static const u8 hex_chars[] = "0123456789ABCDEF";
+  UART::put(' ');
+  for (int i = (sizeof(c)*8 - 4); i >= 0; i -= 4) {
+    UART::put(hex_chars[(c >> i) & 0xF]);
+  }
 }
 
-void UART::hex(uint32_t value)
+void UART::hex(uint32_t c)
 {
-  for (int i = 24; i >= 0; i -= 8) {
-    UART::hex((u8)(value >> i));
+  static const u8 hex_chars[] = "0123456789ABCDEF";
+  UART::put(' ');
+  for (int i = (sizeof(c)*8 - 4); i >= 0; i -= 4) {
+    UART::put(hex_chars[(c >> i) & 0xF]);
   }
 }
 
 void UART::dec(int value)
 {
+  UART::put(' ');
   if (value < 0) {
     UART::put('-');
     value = -value;

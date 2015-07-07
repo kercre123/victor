@@ -9,7 +9,6 @@
 #include "pickAndPlaceController.h"
 #include "dockingController.h"
 #include "eyeController.h"
-#include "gripController.h"
 #include "headController.h"
 #include "liftController.h"
 #include "testModeController.h"
@@ -97,9 +96,6 @@ namespace Anki {
       {
         LiftController::StartCalibrationRoutine();
         HeadController::StartCalibrationRoutine();
-#if defined(HAVE_ACTIVE_GRIPPER) && HAVE_ACTIVE_GRIPPER
-        GripController::DisengageGripper();
-#endif
         SteeringController::ExecuteDirectDrive(0,0);
       }
 
@@ -312,9 +308,6 @@ namespace Anki {
         //EyeController::Update(); // Deprecated! Needs updating for OLED screen
         HeadController::Update();
         LiftController::Update();
-#if defined(HAVE_ACTIVE_GRIPPER) && HAVE_ACTIVE_GRIPPER
-        GripController::Update();
-#endif
 
         PathFollower::Update();
         PickAndPlaceController::Update();
@@ -366,7 +359,8 @@ namespace Anki {
         SpeedController::Manage();
         SteeringController::Manage();
         WheelController::Manage();
-
+        Anki::Cozmo::HAL::ManageCubes();
+        
 
         //////////////////////////////////////////////////////////////
         // Pickup reaction
