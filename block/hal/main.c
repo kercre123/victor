@@ -23,11 +23,12 @@ void main(void)
   u8 state = 0;
   u8 led;
   u8 numRepeat;
+  #ifndef DO_TRANSMITTER_BEHAVIOR
   u8 packetCount = 0;
   volatile bool sync;
-  
   volatile s8 accData[3];
   volatile u8 tapCount = 0;
+  #endif
   
   while(hal_clk_get_16m_source() != HAL_CLK_XOSC16M)
   {
@@ -68,13 +69,17 @@ void main(void)
         {
           TransmitData();
         }
-        #elif
-        //TransmitData();
+        else
+        {
+          radioTimerState = radioSleep;
+        }
+        #else
+        TransmitData();
         #endif
       }
     }
   }
-#endif 
+#else
   
   // Initialize accelerometer
   InitAcc();
@@ -183,6 +188,7 @@ void main(void)
     TransmitData();
     // Reset Payload
     memset(radioPayload, 0, sizeof(radioPayload));
-  }  
+  }
+#endif // transmitter behavior
 }
 

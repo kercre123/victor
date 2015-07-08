@@ -93,7 +93,6 @@ void ReceiveData(u8 msTimeout)
     }
     #endif
   }
-  radioTimerState = radioSleep; 
   TR0 = 1; // turn timer back on
   PowerDownRadio();
 }
@@ -141,6 +140,7 @@ void TransmitData()
   {
   }
   PowerDownRadio();
+  radioTimerState = radioSleep; 
 }
 
 // Radio interrupt
