@@ -117,7 +117,7 @@ int main(void)
     Motors::update();
     BatteryUpdate();
     #ifndef BACKPACK_DEMO
-    //Lights::manage(g_dataToBody.backpackColors);
+    Lights::manage(g_dataToBody.backpackColors);
     #endif
 
     // Update at 200Hz (5ms delay)

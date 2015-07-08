@@ -85,7 +85,7 @@ void Head::RxPacket(u16 length, u8* dataRX)
     // Timeout after 5ms of no communication
     while (NRF_UART0->EVENTS_RXDRDY != 1) {
       if (GetCounter() - startTime > CYCLES_MS(4.0f)) { // 4ms
-        Blink();
+        //Blink();
         dataRX[0] = 0;
         return;
       }
