@@ -78,29 +78,32 @@ namespace Anki {
         double wasLastMovingTime_sec_;
         UpAxis startingUpAxis_;
         
-        // Lookup table for which four LEDs are on top, given the current up axis
-        // (in the order upper left, upper right, lower left, lower right)
-        // Note that these always assume the the orientation of the top side is
-        // such that the upper left corner of the marker is at position 0.
+        // Lookup table for which four LEDs are in the back, left, front, and right positions,
+        // given the current up axis.
+        // When the top marker is facing up, these positions are with respect to the top marker.
+        // When the top marker is facing horizontally, these positions are with respect to the marker
+        // as if it were oriented front-side up.
+        // When the top marker is facing down, these positions are with respect to the marker
+        // as if you were looking down on it (through the top of the block).
         const u8 ledIndexLUT[NUM_UP_AXES][NUM_BLOCK_LEDS] =
         {
           // Xneg (Front Face on top)
-          {0, 2, 4, 6, 1, 3, 5, 7},
+          {0, 1, 2, 3},
           
           // Xpos (Back Face on top)
-          {5, 7, 1, 3, 4, 6, 0, 2},
+          {2, 3, 0, 1},
           
           // Yneg (Right on top)
-          {1, 3, 0, 2, 5, 7, 4, 6},
+          {1, 2, 3, 0},
           
           // Ypos (Left Face on top)
-          {4, 6, 5, 7, 0, 2, 1, 3},
+          {3, 0, 1, 2},
           
           // Zneg (Bottom Face on top) -- NOTE: Flipped 180deg around X axis!!
-          {3, 2, 1, 0, 7, 6, 5, 4},
+          {0, 3, 2, 1},
           
           // Zpos (Top Face on top)
-          {0, 1, 2, 3, 4, 5, 6, 7}
+          {0, 1, 2, 3}
         };
         
         // Flash ID params
@@ -193,7 +196,7 @@ namespace Anki {
         
         // Get all LED handles
         for (int i=0; i<NUM_BLOCK_LEDS; ++i) {
-          char led_name[NUM_BLOCK_LEDS];
+          char led_name[32];
           sprintf(led_name, "led%d", i);
           led_[i] = block_controller.getLED(led_name);
           assert(led_[i] != nullptr);

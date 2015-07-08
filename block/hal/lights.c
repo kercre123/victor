@@ -29,14 +29,10 @@ typedef enum color
 };
 
 const u8 ledPins[4] = {1<<2, 1<<3, 1<<4, 1<<5};
-const u8 ledColor[13] = {red, green, blue, red, green, blue, red, green, blue, red, green, blue, black};
-const u8 ledMux[13] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
 const u8 ledAnode[13] = {0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 0};
 const u8 ledCathode[13] = {1, 2, 3, 0, 2, 3, 0, 1, 3, 0, 1, 2, 0};
-//const u8 ledScale[12] = {8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8};
 
 volatile u8 ledValues[13];
-volatile u8 ledValueDeltas[13];
 
 volatile u8 gCurrentLed = 0;
 
@@ -47,13 +43,7 @@ void SetLedValue(char led, char value)
 
 void SetLedValues(char *newValues)
 {
-  u8 i;
-  for(i=0; i<13; i++)
-  {
-    ledValueDeltas[i] = newValues[i]-ledValues[i];
-  }
   memcpy(ledValues, newValues, sizeof(ledValues));
-
 } 
 
 void SetLedValuesByDelta()
@@ -78,9 +68,9 @@ void InitTimer2()
 void StartTimer2()
 {
   // Turn on current light
-  PIN_OUT(P0DIR, ledPins[ledAnode[ledMux[gCurrentLed]]] | ledPins[ledCathode[ledMux[gCurrentLed]]]);
-  GPIO_SET(P0, ledPins[ledAnode[ledMux[gCurrentLed]]]);
-  GPIO_RESET(P0, ledPins[ledCathode[ledMux[gCurrentLed]]]);
+  PIN_OUT(P0DIR, ledPins[ledAnode[gCurrentLed]] | ledPins[ledCathode[gCurrentLed]]);
+  GPIO_SET(P0, ledPins[ledAnode[gCurrentLed]]);
+  GPIO_RESET(P0, ledPins[ledCathode[gCurrentLed]]);
   
   T2I0 = 1;
   ET2 = 1;
@@ -107,9 +97,9 @@ void LightsOff()
 void LightOn(char i)
 {
   LightsOff(); // first turn everything off
-  PIN_OUT(P0DIR, ledPins[ledAnode[ledMux[i]]] | ledPins[ledCathode[ledMux[i]]]);
-  GPIO_SET(P0, ledPins[ledAnode[ledMux[i]]]);
-  GPIO_RESET(P0, ledPins[ledCathode[ledMux[i]]]);
+  PIN_OUT(P0DIR, ledPins[ledAnode[i]] | ledPins[ledCathode[i]]);
+  GPIO_SET(P0, ledPins[ledAnode[i]]);
+  GPIO_RESET(P0, ledPins[ledCathode[i]]);
 }
 
 T2_ISR()
@@ -139,9 +129,9 @@ T2_ISR()
 //  if(gCurrentLed != 2)
 //  {
   // Turn on LED
-  PIN_OUT(P0DIR, ledPins[ledAnode[ledMux[gCurrentLed]]] | ledPins[ledCathode[ledMux[gCurrentLed]]]);
-  GPIO_SET(P0, ledPins[ledAnode[ledMux[gCurrentLed]]]);
-  GPIO_RESET(P0, ledPins[ledCathode[ledMux[gCurrentLed]]]);
+  PIN_OUT(P0DIR, ledPins[ledAnode[gCurrentLed]] | ledPins[ledCathode[gCurrentLed]]);
+  GPIO_SET(P0, ledPins[ledAnode[gCurrentLed]]);
+  GPIO_RESET(P0, ledPins[ledCathode[gCurrentLed]]);
 //  }
   TL2 = 0xFF - (waitTime & 0xFF);
   TH2 = 0xFF;

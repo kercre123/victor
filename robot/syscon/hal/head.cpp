@@ -12,6 +12,20 @@
 // Don't speak until spoken to (part of handshaking)
 bool Head::spokenTo;
 
+void Blink() {
+  nrf_gpio_pin_set(PIN_LED2);
+  nrf_gpio_cfg_output(PIN_LED2);
+
+  static bool toggle = false;
+  toggle = !toggle;
+  if (toggle) {
+    nrf_gpio_cfg_input(PIN_LED4, NRF_GPIO_PIN_NOPULL);
+  } else {
+    nrf_gpio_pin_clear(PIN_LED4);
+    nrf_gpio_cfg_output(PIN_LED4);
+  }
+}
+
 void Head::init()
 {
   Head::spokenTo = false;
@@ -38,12 +52,6 @@ void Head::init()
 
 void Head::TxPacket(u16 length, const u8* dataTX)
 {
-  // If spoken to, switch to transmit mode and send the data
-  if (!Head::spokenTo)
-  {
-    return ;
-  }
-  
   MicroWait(80);    // Other side waits 40uS
   NRF_UART0->PSELRXD = 0xFFFFffff;  // Disconnect RX
   NRF_UART0->PSELTXD = PIN_TX_HEAD;
@@ -58,16 +66,16 @@ void Head::TxPacket(u16 length, const u8* dataTX)
 }
 
 void Head::RxPacket(u16 length, u8* dataRX)
- {
-  // Switch to receive mode and wait for a reply
+{
+  u32 startTime = GetCounter();
+
+   // Switch to receive mode and wait for a reply
   nrf_gpio_cfg_input(PIN_TX_HEAD, NRF_GPIO_PIN_NOPULL);
-  NRF_UART0->PSELTXD = 0xFFFFFFFF;  // Disconne ct TX
+  NRF_UART0->PSELTXD = 0xFFFFFFFF;  // Disconnect TX
 
   // Wait 10uS for turnaround - 80uS on the other side
   MicroWait(10);
   NRF_UART0->PSELRXD = PIN_TX_HEAD;
-
-  u32 startTime = GetCounter();
 
   NRF_UART0->EVENTS_RXDRDY = 0;
  
@@ -76,7 +84,8 @@ void Head::RxPacket(u16 length, u8* dataRX)
   {
     // Timeout after 5ms of no communication
     while (NRF_UART0->EVENTS_RXDRDY != 1) {
-      if (GetCounter() - startTime > 41666*2) { // 5ms
+      if (GetCounter() - startTime > CYCLES_MS(4.0f)) { // 4ms
+        //Blink();
         dataRX[0] = 0;
         return;
       }
@@ -95,10 +104,7 @@ void Head::RxPacket(u16 length, u8* dataRX)
   }
 
   // Wait before first reply
-  if (!Head::spokenTo) {
-    MicroWait(5000);
-    Head::spokenTo = true;
-  }
+  Head::spokenTo = true;
 }
 
 

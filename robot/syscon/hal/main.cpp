@@ -1,6 +1,7 @@
 #include "nrf.h"
 #include "nrf_gpio.h"
 
+#include "hardware.h"
 #include "battery.h"
 #include "motors.h"
 #include "head.h"
@@ -76,6 +77,9 @@ int main(void)
     u32 timerStart = GetCounter();
     g_dataToBody.common.source = SPI_SOURCE_CLEAR;
 
+    // Only call every loop through - not all the time
+    Radio::manage();
+
     // If we're not on the charge contacts, exchange data with the head board
     if (!IsOnContacts())
     {
@@ -110,19 +114,14 @@ int main(void)
       }
     }
     
-    // Only call every loop through - not all the time
     Motors::update();
     BatteryUpdate();
+    #ifndef BACKPACK_DEMO
     Lights::manage(g_dataToBody.backpackColors);
-   
+    #endif
+
     // Update at 200Hz (5ms delay)
-    const int RTC_CLOCK = 32768;
-    const int SYNC_RATE = 200;
-    const int TICKS_PER_CYCLE = (int)(RTC_CLOCK / (float)SYNC_RATE) << 8;
-
-    while ((GetCounter() - timerStart) < TICKS_PER_CYCLE)
+    while ((GetCounter() - timerStart) < CYCLES_MS(35.0f / 7.0f))
       ;
-
-    Radio::manage();
   }
 }

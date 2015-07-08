@@ -8,6 +8,7 @@
 //#define OLD_CUBE_EXPERIMENT 1 // for testing
 
 #define MAX_CUBES 20
+#define NUM_BLOCK_LEDS 4
 
 static LEDPacket         g_LedStatus[MAX_CUBES];
 static AcceleratorPacket g_AccelStatus[MAX_CUBES];
@@ -48,7 +49,7 @@ namespace Anki
       extern volatile ONCHIP GlobalDataToBody g_dataToBody;
 
       void ManageCubes(void) {
-        #ifndef OLD_CUBE_EXPERIMENT        
+        #ifndef OLD_CUBE_EXPERIMENT
         // LED status
         static int blockID = 0;
 
@@ -57,17 +58,20 @@ namespace Anki
         g_dataToBody.cubeToUpdate = blockID;
 
         // Tap detection
+        if (g_dataToHead.common.source != SPI_SOURCE_BODY){
+          return ;
+        }
+
         uint8_t id = g_dataToHead.cubeToUpdate;
         
         if (id >= MAX_CUBES) {
           return ;
         }
 
-        uint8_t shocks = g_dataToHead.cubeStatus.shockCount,
-                count = shocks - g_AccelStatus[id].shockCount;
-        //memcpy(&g_AccelStatus[id], (void*)&g_dataToHead.cubeStatus, sizeof(AcceleratorPacket));
-        g_AccelStatus[id].shockCount = shocks;
-
+        uint8_t shocks = g_dataToHead.cubeStatus.shockCount;
+        uint8_t count = shocks - g_AccelStatus[id].shockCount;
+        memcpy(&g_AccelStatus[id], (void*)&g_dataToHead.cubeStatus, sizeof(AcceleratorPacket));
+        
         if (count) {
           Messages::ActiveObjectTapped m;
           m.numTaps = count;
@@ -78,7 +82,6 @@ namespace Anki
       }
 
       #ifndef OLD_CUBE_EXPERIMENT
-      #define NUM_BLOCK_LEDS 4
 
       Result SetBlockLight(const u8 blockID, const u32* onColor, const u32* offColor,
                            const u32* onPeriod_ms, const u32* offPeriod_ms,
@@ -89,18 +92,18 @@ namespace Anki
         }
        
         uint8_t *light  = g_LedStatus[blockID].ledStatus;
-        uint8_t *status = (uint8_t*) onColor;
         uint32_t sum = 0;
+        int order[] = {0,3,2,1};
         
-        for (int c = 0; c < NUM_BLOCK_LEDS * 4; c++, status++) {
-          // Skip every 4th byte
-          if (!(~c & 0x3)) {
-            continue ;
-          }
+        for (int c = 0; c < NUM_BLOCK_LEDS; c++) {
+          uint32_t color = onColor[order[c]];
           
-          uint32_t bright = *status;
-          sum += bright*bright;
-          *(light++) = bright;
+          for (int ch = 24; ch > 0; ch -= 8) {
+            uint8_t status = (color >> ch) & 0xFF;
+            uint32_t bright = status;
+            sum += bright * bright;
+            *(light++) = bright;
+          }
         }
 
         uint32_t sq_sum = isqrt(sum);
@@ -109,8 +112,7 @@ namespace Anki
         
         return RESULT_OK;
       }
-#else
-      #define NUM_BLOCK_LEDS 8
+      #else
 
       Result SetBlockLight(const u8 blockID, const u32* onColor, const u32* offColor,
                            const u32* onPeriod_ms, const u32* offPeriod_ms,
