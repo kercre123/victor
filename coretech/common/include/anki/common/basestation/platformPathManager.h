@@ -54,7 +54,8 @@ namespace Anki {
       Config,
       Animation,
       Sound,
-      Resource
+      Resource,
+      FaceAnimation
       //Temp
     };
     
