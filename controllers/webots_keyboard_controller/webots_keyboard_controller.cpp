@@ -1294,41 +1294,31 @@ namespace Anki {
                   msg.transitionOffPeriod_ms = 100;
                   msg.turnOffUnspecifiedLEDs = 1;
                   if(modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
-                    printf("Updating active block corner\n");
+                    printf("Updating active block edge\n");
                     msg.onColor = NamedColors::RED;
                     msg.offColor = NamedColors::BLACK;
-                    
-                    /*
-                    static WhichBlockLEDs cornerList[NUM_COLORS] = {
-                      WhichBlockLEDs::TOP_BTM_UPPER_LEFT,
-                      WhichBlockLEDs::TOP_BTM_UPPER_RIGHT,
-                      WhichBlockLEDs::TOP_BTM_LOWER_RIGHT,
-                      WhichBlockLEDs::TOP_BTM_LOWER_LEFT
-                    };
-                    msg.whichLEDs = static_cast<u8>(cornerList[colorIndex++]);
-                    */
-                    msg.whichLEDs = static_cast<u8>(WhichBlockLEDs::TOP_BTM_UPPER_LEFT);
-                    msg.makeRelative = 1;
+                    msg.whichLEDs = static_cast<u8>(WhichBlockLEDs::FRONT);
+                    msg.makeRelative = 2;
                     msg.relativeToX = robotPosition_.x();
                     msg.relativeToY = robotPosition_.y();
                     
                   } else if( modifier_key & webots::Supervisor::KEYBOARD_ALT) {
-                    static s32 cornerIndex = 0;
+                    static s32 edgeIndex = 0;
                     
-                    printf("Turning corner %d new color %d (%x)\n",
-                           cornerIndex, colorIndex, u32(colorList[colorIndex]));
+                    printf("Turning edge %d new color %d (%x)\n",
+                           edgeIndex, colorIndex, u32(colorList[colorIndex]));
                     
-                    msg.whichLEDs = (1 << cornerIndex);
+                    msg.whichLEDs = (1 << edgeIndex);
                     msg.onColor = colorList[colorIndex];
                     msg.offColor = 0;
                     msg.turnOffUnspecifiedLEDs = 0;
-                    msg.makeRelative = 1;
+                    msg.makeRelative = 2;
                     msg.relativeToX = robotPosition_.x();
                     msg.relativeToY = robotPosition_.y();
                     
-                    ++cornerIndex;
-                    if(cornerIndex == NUM_BLOCK_LEDS) {
-                      cornerIndex = 0;
+                    ++edgeIndex;
+                    if(edgeIndex == NUM_BLOCK_LEDS) {
+                      edgeIndex = 0;
                       ++colorIndex;
                     }
                     
@@ -1343,7 +1333,7 @@ namespace Anki {
                            colorList[colorIndex].b());
                     msg.onColor = colorList[colorIndex++];
                     msg.offColor = NamedColors::BLACK;
-                    msg.whichLEDs = static_cast<u8>(WhichBlockLEDs::TOP_FACE) | static_cast<u8>(WhichBlockLEDs::FRONT_FACE);
+                    msg.whichLEDs = static_cast<u8>(WhichBlockLEDs::FRONT);
                     msg.makeRelative = 0;
                     msg.turnOffUnspecifiedLEDs = 1;
                   }
@@ -1832,14 +1822,10 @@ namespace Anki {
           NamedColors::CYAN, NamedColors::ORANGE, NamedColors::YELLOW
         }};
         static std::vector<WhichBlockLEDs> leds = {{
-          WhichBlockLEDs::TOP_UPPER_LEFT,
-          WhichBlockLEDs::TOP_UPPER_RIGHT,
-          WhichBlockLEDs::TOP_LOWER_LEFT,
-          WhichBlockLEDs::TOP_LOWER_RIGHT,
-          WhichBlockLEDs::BTM_UPPER_LEFT,
-          WhichBlockLEDs::BTM_UPPER_RIGHT,
-          WhichBlockLEDs::BTM_LOWER_LEFT, 
-          WhichBlockLEDs::BTM_LOWER_RIGHT
+          WhichBlockLEDs::BACK,
+          WhichBlockLEDs::LEFT,
+          WhichBlockLEDs::FRONT,
+          WhichBlockLEDs::RIGHT
         }};
         
         static auto colorIter = colors.begin();
