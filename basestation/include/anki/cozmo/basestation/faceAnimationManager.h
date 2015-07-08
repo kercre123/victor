@@ -32,6 +32,7 @@ namespace Cozmo {
   public:
     static const s32 IMAGE_WIDTH = 128;
     static const s32 IMAGE_HEIGHT = 64;
+    static const s32 FRAME_NUM_DIGITS = 4;
     
     // Get a pointer to the singleton instance
     inline static FaceAnimationManager* getInstance();
@@ -41,17 +42,17 @@ namespace Cozmo {
     // animations in it.
     bool SetRootDir(const char* dir);
 
-    // Grab the requested frame for the given animation and populate the
-    // buffer with it.
-    Result GetFrame(const std::string& animName, u32 frameNum, u8* buffer) const;
+    // Get a pointer to an RLE-compressed frame for the given animation.
+    // Returns nullptr if animation or frame do not exist.
+    const std::vector<u8>* GetFrame(const std::string& animName, u32 frameNum) const;
     
     // Return the total number of frames in the given animation. Returns 0 if the
     // animation doesn't exist.
     u32  GetNumFrames(const std::string& animName) const;
     
-  protected:
+    static Result CompressRLE(const cv::Mat& image, std::vector<u8>& rleData);
     
-    static Result CompressRLE(const cv::Mat& image, u8* rleData);
+  protected:
     
     // Protected default constructor for singleton.
     FaceAnimationManager();
@@ -63,8 +64,9 @@ namespace Cozmo {
     
     struct AvailableAnim {
       time_t lastLoadedTime;
-      std::vector<std::string> filenames;
-      size_t GetNumFrames() const { return filenames.size(); }
+      //std::vector<std::string> filenames;
+      std::vector<std::vector<u8> > rleFrames;
+      size_t GetNumFrames() const { return rleFrames.size(); }
     };
     
     std::unordered_map<std::string, AvailableAnim> _availableAnimations;

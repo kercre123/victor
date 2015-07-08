@@ -244,8 +244,32 @@ return RESULT_FAIL; \
       // Populate the message with the next chunk of audio data and send it out
       if(_curFrame < _numFrames)
       {
+        const std::vector<u8>* rleFrame = FaceAnimationManager::getInstance()->GetFrame(_animName, _curFrame);
+        
+        if(rleFrame == nullptr) {
+          PRINT_NAMED_ERROR("FaceAnimationKeyFrame.GetStreamMesssage",
+                            "Failed to get frame %d from animation %s.\n",
+                            _curFrame, _animName.c_str());
+          return nullptr;
+        }
+        
+        if(rleFrame->empty()) {
+          // No face in this frame, return nullptr so we don't stream anything to
+          // the robot, but don't complain because this is not an error.
+          // Still increment the frame counter.
+          ++_curFrame;
+          return nullptr;
+        }
+        
+        if(rleFrame->size() >= sizeof(_faceImageMsg.image)) {
+          PRINT_NAMED_ERROR("FaceAnimationKeyFrame.GetStreamMessage",
+                            "RLE frame %d for animation %s too large to fit in message (>=%lu).\n",
+                            _curFrame, _animName.c_str(), sizeof(_faceImageMsg.image));
+          return nullptr;
+        }
+        
         _faceImageMsg.image.fill(0); // Necessary??
-        FaceAnimationManager::getInstance()->GetFrame(_animName, _curFrame, &_faceImageMsg.image[0]);
+        std::copy(rleFrame->begin(), rleFrame->end(), _faceImageMsg.image.begin());
         ++_curFrame;
         
         return &_faceImageMsg;

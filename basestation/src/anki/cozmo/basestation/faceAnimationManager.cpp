@@ -87,7 +87,81 @@ namespace Cozmo {
               dirent* frameEntry = nullptr;
               while ( (frameEntry = readdir(animDir)) != nullptr) {
                 if(frameEntry->d_type == DT_REG) {
-                  _availableAnimations[animName].filenames.emplace_back(fullDirName + PATH_SEPARATOR + frameEntry->d_name);
+                  
+                  // Get the frame number in this filename
+                  const std::string filename(frameEntry->d_name);
+                  size_t dotPos = filename.find_last_of(".");
+                  if(dotPos == std::string::npos) {
+                    PRINT_NAMED_ERROR("FaceAnimationManager.ReadFaceAnimationDir",
+                                      "Could not find '.' in frame filename %s\n",
+                                      filename.c_str());
+                    return RESULT_FAIL;
+                  } else if(dotPos < FRAME_NUM_DIGITS) {
+                    PRINT_NAMED_ERROR("FaceAnimationManager.ReadFaceAnimationDir",
+                                      "Unexpected position (%lu) for '.' in frame filename %s\n",
+                                      dotPos, filename.c_str());
+                    return RESULT_FAIL;
+                  }
+                  
+                  const std::string digitStr(filename.substr(dotPos-FRAME_NUM_DIGITS, FRAME_NUM_DIGITS));
+                  
+                  s32 frameNum = 0;
+                  try {
+                    frameNum = std::stoi(digitStr);
+                  } catch (std::invalid_argument&) {
+                    PRINT_NAMED_ERROR("FaceAnimationManager.ReadFaceAnimationDir",
+                                      "Could not get %d-digit frame number from substring '%s' "
+                                      "of filename '%s'.\n",
+                                      FRAME_NUM_DIGITS, digitStr.c_str(), filename.c_str());
+                    return RESULT_FAIL;
+                  }
+                  
+                  AvailableAnim& anim = _availableAnimations[animName];
+                  
+                  if(frameNum > 0) {
+                    
+                    if(anim.rleFrames.empty()) {
+                      PRINT_NAMED_ERROR("FaceAnimationManager.ReadFaceAnimationDir",
+                                        "No frame zero found in '%s'.\n", filename.c_str());
+                      return RESULT_FAIL;
+                    }
+                    
+                    // Add empty frames if there's a gap
+                    s32 emptyFramesAdded = 0;
+                    while(anim.rleFrames.size() < frameNum-1) {
+                      anim.rleFrames.push_back({});
+                      ++emptyFramesAdded;
+                    }
+                    
+                    if(emptyFramesAdded > 0) {
+                      PRINT_NAMED_INFO("FaceAnimationManager.ReadFaceAnimationDir",
+                                       "Inserted %d empty frames before frame %d in animation %s.\n",
+                                       emptyFramesAdded, frameNum, animName.c_str());
+                    }
+                  }
+                  
+                  // Read the image
+                  const std::string fullFilename(fullDirName + PATH_SEPARATOR + frameEntry->d_name);
+                  cv::Mat img = cv::imread(fullFilename, CV_LOAD_IMAGE_GRAYSCALE);
+                  
+                  if(img.rows != IMAGE_HEIGHT || img.cols != IMAGE_WIDTH) {
+                    PRINT_NAMED_ERROR("FaceAnimationManager.ReadFaceAnimationDir",
+                                      "Image in %s is %dx%d instead of %dx%d.\n",
+                                      fullFilename.c_str(),
+                                      img.cols, img.rows,
+                                      IMAGE_WIDTH, IMAGE_HEIGHT);
+                    return RESULT_FAIL;
+                  }
+                  
+                  // Binarize
+                  img = img > 128;
+                  
+                  // DEBUG
+                  //cv::imshow("FaceAnimImage", img);
+                  //cv::waitKey(30);
+                  
+                  anim.rleFrames.push_back({});
+                  Result compressResult = CompressRLE(img, anim.rleFrames.back());
                 }
               }
             }
@@ -153,45 +227,20 @@ namespace Cozmo {
     }
   } // GetNumFrames()
   
-  Result FaceAnimationManager::GetFrame(const std::string &animName, u32 frameNum, u8 *buffer) const
+  const std::vector<u8>* FaceAnimationManager::GetFrame(const std::string& animName, u32 frameNum) const
   {
     auto animIter = _availableAnimations.find(animName);
     if(animIter == _availableAnimations.end()) {
       PRINT_NAMED_ERROR("FaceAnimationManager.GetFrame",
                         "Unknown animation requested: %s.\n",
                         animName.c_str());
-      return RESULT_FAIL;
+      return nullptr;
     } else {
       const AvailableAnim& anim = animIter->second;
       
       if(frameNum < anim.GetNumFrames()) {
-        cv::Mat img = cv::imread(anim.filenames[frameNum], CV_LOAD_IMAGE_GRAYSCALE);
         
-        if(img.rows != IMAGE_HEIGHT || img.cols != IMAGE_WIDTH) {
-          PRINT_NAMED_ERROR("FaceAnimationManager.GetFrame",
-                            "Image in %s is %dx%d instead of %dx%d.\n",
-                            anim.filenames[frameNum].c_str(),
-                            img.cols, img.rows,
-                            IMAGE_WIDTH, IMAGE_HEIGHT);
-          return RESULT_FAIL;
-        }
-        
-        // Binarize
-        img = img > 128;
-        
-        cv::imshow("FaceAnimImage", img);
-        cv::waitKey(30);
-        
-        Result compressResult = CompressRLE(img, buffer);
-        
-        if(compressResult != RESULT_OK) {
-          PRINT_NAMED_ERROR("FaceAnimationManager.GetFrame",
-                            "Failed to compress image %s into RLE format.\n",
-                            anim.filenames[frameNum].c_str());
-          return compressResult;
-        }
-        
-        return RESULT_OK;
+        return &(anim.rleFrames[frameNum]);
         
       } else {
         PRINT_NAMED_ERROR("FaceAnimationManager.GetFrame",
@@ -199,12 +248,12 @@ namespace Cozmo {
                           "Only %lu frames available in animatino %s.\n",
                           frameNum, animIter->second.GetNumFrames(),
                           animName.c_str());
-        return RESULT_FAIL;
+        return nullptr;
       }
     }
-  }
+  } // GetFrame()
   
-  Result FaceAnimationManager::CompressRLE(const cv::Mat& img, u8 *rleData)
+  Result FaceAnimationManager::CompressRLE(const cv::Mat& img, std::vector<u8>& rleData)
   {
     // Frame is in 8-bit RLE format:
     //  0 terminates the image
@@ -223,9 +272,9 @@ namespace Cozmo {
       return RESULT_FAIL;
     }
     
-    s32 iRLE = 0;
     bool drawingBlack = true;
-    rleData[0] = 0;
+    rleData.clear();
+    rleData.push_back(0);
     
     s32 *rowSumData = rowSums.ptr<s32>(0);
     
@@ -236,23 +285,31 @@ namespace Cozmo {
       if(sum == 0) {
         // All-zero row
         if(drawingBlack) {
-          ++rleData[iRLE];
+          rleData.back()++;
         } else {
-          rleData[++iRLE] = 64; // change color
-          rleData[++iRLE] = 1;
+          rleData.push_back(64); // change color
+          rleData.push_back(1);
           drawingBlack = true;
         }
       } else if(sum >= 255*IMAGE_WIDTH) {
         // All-one row       
         if(drawingBlack) {
           if(iRow > 0) {
-            ++iRLE;
+            rleData.push_back(64);
+          } else {
+            rleData.back() = 64; // change color
           }
-          rleData[iRLE] = 64; // change color
-          rleData[++iRLE] = 1;
+          rleData.push_back(1);
           drawingBlack = false;
         } else {
-          ++rleData[iRLE];
+          if(rleData.back()==63) {
+            // Special case: we are about to fill the whole screen with "on" lines, but
+            // we can't use "64" because that means "change color without drawing
+            // anything". So leave this as 63 and stick a "1" in the next byte.
+            rleData.push_back(1);
+          } else {
+            rleData.back()++;
+          }
         }
       } else {
         // Arbitrary number of "on" pixels on this row
@@ -260,29 +317,34 @@ namespace Cozmo {
         const bool isBlack = row[0] == 0;
         if(drawingBlack != isBlack) {
           // Need to change the drawing color
-          rleData[++iRLE] = 64;
+          rleData.push_back(64);
           drawingBlack = !drawingBlack;
         }
         
         // Init new RLE counter at next byte
-        rleData[++iRLE] = 65;
+        rleData.push_back(65);
         drawingBlack = !drawingBlack;
         
         for(s32 jCol=1; jCol<IMAGE_WIDTH; ++jCol) {
           if(row[jCol] == row[jCol-1]) {
             // Haven't changed color, keep incrementing current RLE count
-            ++rleData[iRLE];
+            rleData.back()++;
           } else {
             // Color just changed, move to next byte
-            rleData[++iRLE] = 65;
+            rleData.push_back(65);
             drawingBlack = !drawingBlack;
           }
         }
       }
     }
     
-    ++iRLE;
-    rleData[iRLE] = 0;
+    // Special case for all-zero:
+    if(rleData.size() == 1 && rleData[0] == 64) {
+      rleData.clear();
+    }
+    
+    // Terminator
+    rleData.push_back(0);
     
     return RESULT_OK;
   }
