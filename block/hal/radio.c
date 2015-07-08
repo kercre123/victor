@@ -1,4 +1,5 @@
 #include "hal.h"
+#include "hal_nrf.h"
 
 // Global variables
 volatile bool radioBusy;
@@ -71,26 +72,29 @@ void ReceiveData(u8 msTimeout)
   // Initialize as primary receiver
   InitPRX();
   
-  
   // Wait for a packet, or time out
   radioBusy = true;
   while(radioBusy)
   {    
     #ifndef LISTEN_FOREVER
-    if(missedPacketCount<3)
+    if(missedPacketCount<MAX_MISSED_PACKETS) // do timeout if less than MAX_MISSED_PACKETS, else listen forever
     {
-      if((TH0-now+1)>(5*msTimeout))
+      if((TH0-now+1)>(5*msTimeout)) 
       {
-        if(missedPacketCount!=255)
-        {
-          missedPacketCount++;
-          cumMissedPacketCount++;
-        }
+        // we timed out
+        missedPacketCount++;
+        cumMissedPacketCount++; 
         radioBusy = false;
       }
     }
+    if(missedPacketCount == MAX_MISSED_PACKETS)
+    {
+      TR0 = 0; // turn off timer
+    }
     #endif
   }
+  radioTimerState = radioSleep; 
+  TR0 = 1; // turn timer back on
   PowerDownRadio();
 }
 
@@ -112,7 +116,7 @@ void InitPTX()
   // Set datarate
   hal_nrf_set_datarate(HAL_NRF_1MBPS);
   // Turn off auto-retransmit
-  hal_nrf_set_auto_retr(0, 250);
+  hal_nrf_set_auto_retr(0, 0);
   // Set address (only if acting as transmitter)
   #ifdef DO_TRANSMITTER_BEHAVIOR
   hal_nrf_set_address(HAL_NRF_TX, ADDRESS);
