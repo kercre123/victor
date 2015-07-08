@@ -174,8 +174,6 @@ def main(scriptArgs):
       UtilLog.error("error executing submodule configure")
       return False
 
-
-  return True
   configurePath = os.path.join(projectRoot, 'project/gyp')
   coretechInternalConfigurePath = os.path.join(options.coretechInternalPath, 'project/gyp')
   gypFile = 'cozmoEngine.gyp'
