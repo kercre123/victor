@@ -40,9 +40,15 @@ namespace Anki {
     class DriveToPoseAction : public IAction
     {
     public:
-      DriveToPoseAction(const Pose3d& pose, const bool useManualSpeed = false);
-      DriveToPoseAction(const bool useManualSpeed = false); // Note that SetGoal() must be called befure Update()!
-      DriveToPoseAction(const std::vector<Pose3d>& poses, const bool useManualSpeed = false);
+      DriveToPoseAction(const Pose3d& pose,
+                        const bool forceHeadDown  = true,
+                        const bool useManualSpeed = false);
+      
+      DriveToPoseAction(const bool forceHeadDown  = true,
+                        const bool useManualSpeed = false); // Note that SetGoal() must be called befure Update()!
+      DriveToPoseAction(const std::vector<Pose3d>& poses,
+                        const bool forceHeadDown  = true,
+                        const bool useManualSpeed = false);
       
       // TODO: Add methods to adjust the goal thresholds from defaults
       
@@ -70,6 +76,7 @@ namespace Anki {
       
     private:
       bool     _isGoalSet;
+      bool     _driveWithHeadDown;
       
       std::vector<Pose3d> _goalPoses;
       size_t              _selectedGoalIndex;

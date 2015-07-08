@@ -74,8 +74,10 @@ namespace Anki {
     
 #pragma mark ---- DriveToPoseAction ----
     
-    DriveToPoseAction::DriveToPoseAction(const bool useManualSpeed) //, const Pose3d& pose)
+    DriveToPoseAction::DriveToPoseAction(const bool forceHeadDown,
+                                         const bool useManualSpeed) //, const Pose3d& pose)
     : _isGoalSet(false)
+    , _driveWithHeadDown(forceHeadDown)
     , _goalDistanceThreshold(DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM)
     , _goalAngleThreshold(DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD)
     , _useManualSpeed(useManualSpeed)
@@ -90,14 +92,18 @@ namespace Anki {
       _startedTraversingPath = false;
     }
     
-    DriveToPoseAction::DriveToPoseAction(const Pose3d& pose, const bool useManualSpeed)
-    : DriveToPoseAction(useManualSpeed)
+    DriveToPoseAction::DriveToPoseAction(const Pose3d& pose,
+                                         const bool forceHeadDown,
+                                         const bool useManualSpeed)
+    : DriveToPoseAction(forceHeadDown, useManualSpeed)
     {
       SetGoal(pose);
     }
     
-    DriveToPoseAction::DriveToPoseAction(const std::vector<Pose3d>& poses, const bool useManualSpeed)
-    : DriveToPoseAction(useManualSpeed)
+    DriveToPoseAction::DriveToPoseAction(const std::vector<Pose3d>& poses,
+                                         const bool forceHeadDown,
+                                         const bool useManualSpeed)
+    : DriveToPoseAction(forceHeadDown, useManualSpeed)
     {
       SetGoals(poses);
     }
@@ -203,11 +209,15 @@ namespace Anki {
         }
         
         if(result == ActionResult::SUCCESS) {
-          // So far so good. Now put the head at the right angle for following paths
-          // TODO: Make it possible to set the speed/accel somewhere?
-          if(robot.MoveHeadToAngle(HEAD_ANGLE_WHILE_FOLLOWING_PATH, 2.f, 5.f) != RESULT_OK) {
-            PRINT_NAMED_ERROR("DriveToPoseAction.Init", "Failed to move head to path-following angle.\n");
-            result = ActionResult::FAILURE_ABORT;
+          // So far so good.
+          
+          if(_driveWithHeadDown) {
+            // Now put the head at the right angle for following paths
+            // TODO: Make it possible to set the speed/accel somewhere?
+            if(robot.MoveHeadToAngle(HEAD_ANGLE_WHILE_FOLLOWING_PATH, 2.f, 5.f) != RESULT_OK) {
+              PRINT_NAMED_ERROR("DriveToPoseAction.Init", "Failed to move head to path-following angle.\n");
+              result = ActionResult::FAILURE_ABORT;
+            }
           }
           
           // Create a callback to respond to a robot world origin change that resets
@@ -521,7 +531,7 @@ namespace Anki {
       
       if(result == ActionResult::SUCCESS) {
         if(!alreadyInPosition) {
-          _compoundAction.AddAction(new DriveToPoseAction(possiblePoses, _useManualSpeed));
+          _compoundAction.AddAction(new DriveToPoseAction(possiblePoses, true, _useManualSpeed));
         }
       }
       
@@ -686,7 +696,7 @@ namespace Anki {
 #pragma mark ---- TurnInPlaceAction ----
     
     TurnInPlaceAction::TurnInPlaceAction(const Radians& angle)
-    : DriveToPoseAction(false)
+    : DriveToPoseAction(false, false)
     , _turnAngle(angle)
     , _startedTraversingPath(false)
     {
