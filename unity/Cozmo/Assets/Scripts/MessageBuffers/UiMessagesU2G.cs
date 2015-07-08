@@ -6800,12 +6800,12 @@ public class SetActiveObjectLEDs
 public class SetAllActiveObjectLEDs
 {
 	private uint _objectID; // uint_32
-	private uint[] _onColor; // uint_32[8]
-	private uint[] _offColor; // uint_32[8]
-	private uint[] _onPeriod_ms; // uint_32[8]
-	private uint[] _offPeriod_ms; // uint_32[8]
-	private uint[] _transitionOnPeriod_ms; // uint_32[8]
-	private uint[] _transitionOffPeriod_ms; // uint_32[8]
+	private uint[] _onColor; // uint_32[4]
+	private uint[] _offColor; // uint_32[4]
+	private uint[] _onPeriod_ms; // uint_32[4]
+	private uint[] _offPeriod_ms; // uint_32[4]
+	private uint[] _transitionOnPeriod_ms; // uint_32[4]
+	private uint[] _transitionOffPeriod_ms; // uint_32[4]
 	private float _relativeToX; // float_32
 	private float _relativeToY; // float_32
 	private byte _makeRelative; // uint_8
@@ -6820,10 +6820,10 @@ public class SetAllActiveObjectLEDs
 		}
 		set {
 			if (value == null) {
-				throw new System.ArgumentException("onColor fixed-length array is null. Must have a length of 8.", "value");
+				throw new System.ArgumentException("onColor fixed-length array is null. Must have a length of 4.", "value");
 			}
-			if (value.Length != 8) {
-				throw new System.ArgumentException("onColor fixed-length array is the wrong size. Must have a length of 8.", "value");
+			if (value.Length != 4) {
+				throw new System.ArgumentException("onColor fixed-length array is the wrong size. Must have a length of 4.", "value");
 			}
 			_onColor = value;
 		}
@@ -6836,10 +6836,10 @@ public class SetAllActiveObjectLEDs
 		}
 		set {
 			if (value == null) {
-				throw new System.ArgumentException("offColor fixed-length array is null. Must have a length of 8.", "value");
+				throw new System.ArgumentException("offColor fixed-length array is null. Must have a length of 4.", "value");
 			}
-			if (value.Length != 8) {
-				throw new System.ArgumentException("offColor fixed-length array is the wrong size. Must have a length of 8.", "value");
+			if (value.Length != 4) {
+				throw new System.ArgumentException("offColor fixed-length array is the wrong size. Must have a length of 4.", "value");
 			}
 			_offColor = value;
 		}
@@ -6852,10 +6852,10 @@ public class SetAllActiveObjectLEDs
 		}
 		set {
 			if (value == null) {
-				throw new System.ArgumentException("onPeriod_ms fixed-length array is null. Must have a length of 8.", "value");
+				throw new System.ArgumentException("onPeriod_ms fixed-length array is null. Must have a length of 4.", "value");
 			}
-			if (value.Length != 8) {
-				throw new System.ArgumentException("onPeriod_ms fixed-length array is the wrong size. Must have a length of 8.", "value");
+			if (value.Length != 4) {
+				throw new System.ArgumentException("onPeriod_ms fixed-length array is the wrong size. Must have a length of 4.", "value");
 			}
 			_onPeriod_ms = value;
 		}
@@ -6868,10 +6868,10 @@ public class SetAllActiveObjectLEDs
 		}
 		set {
 			if (value == null) {
-				throw new System.ArgumentException("offPeriod_ms fixed-length array is null. Must have a length of 8.", "value");
+				throw new System.ArgumentException("offPeriod_ms fixed-length array is null. Must have a length of 4.", "value");
 			}
-			if (value.Length != 8) {
-				throw new System.ArgumentException("offPeriod_ms fixed-length array is the wrong size. Must have a length of 8.", "value");
+			if (value.Length != 4) {
+				throw new System.ArgumentException("offPeriod_ms fixed-length array is the wrong size. Must have a length of 4.", "value");
 			}
 			_offPeriod_ms = value;
 		}
@@ -6884,10 +6884,10 @@ public class SetAllActiveObjectLEDs
 		}
 		set {
 			if (value == null) {
-				throw new System.ArgumentException("transitionOnPeriod_ms fixed-length array is null. Must have a length of 8.", "value");
+				throw new System.ArgumentException("transitionOnPeriod_ms fixed-length array is null. Must have a length of 4.", "value");
 			}
-			if (value.Length != 8) {
-				throw new System.ArgumentException("transitionOnPeriod_ms fixed-length array is the wrong size. Must have a length of 8.", "value");
+			if (value.Length != 4) {
+				throw new System.ArgumentException("transitionOnPeriod_ms fixed-length array is the wrong size. Must have a length of 4.", "value");
 			}
 			_transitionOnPeriod_ms = value;
 		}
@@ -6900,10 +6900,10 @@ public class SetAllActiveObjectLEDs
 		}
 		set {
 			if (value == null) {
-				throw new System.ArgumentException("transitionOffPeriod_ms fixed-length array is null. Must have a length of 8.", "value");
+				throw new System.ArgumentException("transitionOffPeriod_ms fixed-length array is null. Must have a length of 4.", "value");
 			}
-			if (value.Length != 8) {
-				throw new System.ArgumentException("transitionOffPeriod_ms fixed-length array is the wrong size. Must have a length of 8.", "value");
+			if (value.Length != 4) {
+				throw new System.ArgumentException("transitionOffPeriod_ms fixed-length array is the wrong size. Must have a length of 4.", "value");
 			}
 			_transitionOffPeriod_ms = value;
 		}
@@ -6922,12 +6922,12 @@ public class SetAllActiveObjectLEDs
 
 	public SetAllActiveObjectLEDs()
 	{
-		this.onColor = new uint[8];
-		this.offColor = new uint[8];
-		this.onPeriod_ms = new uint[8];
-		this.offPeriod_ms = new uint[8];
-		this.transitionOnPeriod_ms = new uint[8];
-		this.transitionOffPeriod_ms = new uint[8];
+		this.onColor = new uint[4];
+		this.offColor = new uint[4];
+		this.onPeriod_ms = new uint[4];
+		this.offPeriod_ms = new uint[4];
+		this.transitionOnPeriod_ms = new uint[4];
+		this.transitionOffPeriod_ms = new uint[4];
 	}
 
 	public SetAllActiveObjectLEDs(uint objectID,
@@ -6974,28 +6974,28 @@ public class SetAllActiveObjectLEDs
 	public void Unpack(System.IO.BinaryReader reader)
 	{
 		_objectID = reader.ReadUInt32();
-		_onColor = new uint[8];
-		for (int i = 0; i < 8; ++i) {
+		_onColor = new uint[4];
+		for (int i = 0; i < 4; ++i) {
 			_onColor[i] = reader.ReadUInt32();
 		}
-		_offColor = new uint[8];
-		for (int i = 0; i < 8; ++i) {
+		_offColor = new uint[4];
+		for (int i = 0; i < 4; ++i) {
 			_offColor[i] = reader.ReadUInt32();
 		}
-		_onPeriod_ms = new uint[8];
-		for (int i = 0; i < 8; ++i) {
+		_onPeriod_ms = new uint[4];
+		for (int i = 0; i < 4; ++i) {
 			_onPeriod_ms[i] = reader.ReadUInt32();
 		}
-		_offPeriod_ms = new uint[8];
-		for (int i = 0; i < 8; ++i) {
+		_offPeriod_ms = new uint[4];
+		for (int i = 0; i < 4; ++i) {
 			_offPeriod_ms[i] = reader.ReadUInt32();
 		}
-		_transitionOnPeriod_ms = new uint[8];
-		for (int i = 0; i < 8; ++i) {
+		_transitionOnPeriod_ms = new uint[4];
+		for (int i = 0; i < 4; ++i) {
 			_transitionOnPeriod_ms[i] = reader.ReadUInt32();
 		}
-		_transitionOffPeriod_ms = new uint[8];
-		for (int i = 0; i < 8; ++i) {
+		_transitionOffPeriod_ms = new uint[4];
+		for (int i = 0; i < 4; ++i) {
 			_transitionOffPeriod_ms[i] = reader.ReadUInt32();
 		}
 		_relativeToX = reader.ReadSingle();
@@ -7013,22 +7013,22 @@ public class SetAllActiveObjectLEDs
 	public void Pack(System.IO.BinaryWriter writer)
 	{
 		writer.Write((uint)_objectID);
-		for (int i = 0; i < 8; ++i) {
+		for (int i = 0; i < 4; ++i) {
 			writer.Write((uint)_onColor[i]);
 		}
-		for (int i = 0; i < 8; ++i) {
+		for (int i = 0; i < 4; ++i) {
 			writer.Write((uint)_offColor[i]);
 		}
-		for (int i = 0; i < 8; ++i) {
+		for (int i = 0; i < 4; ++i) {
 			writer.Write((uint)_onPeriod_ms[i]);
 		}
-		for (int i = 0; i < 8; ++i) {
+		for (int i = 0; i < 4; ++i) {
 			writer.Write((uint)_offPeriod_ms[i]);
 		}
-		for (int i = 0; i < 8; ++i) {
+		for (int i = 0; i < 4; ++i) {
 			writer.Write((uint)_transitionOnPeriod_ms[i]);
 		}
-		for (int i = 0; i < 8; ++i) {
+		for (int i = 0; i < 4; ++i) {
 			writer.Write((uint)_transitionOffPeriod_ms[i]);
 		}
 		writer.Write((float)_relativeToX);
@@ -7040,7 +7040,7 @@ public class SetAllActiveObjectLEDs
 	public int Size 
 	{
 		get {
-			return 206;
+			return 110;
 		}
 	}
 

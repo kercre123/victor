@@ -180,7 +180,7 @@ public class RobotRelativeControls : MonoBehaviour {
 			CheckGyroTurning();
 			CheckDebugHorizontalAxesTurning();
 
-			if(inputs.y != 0 && !headAngleSliderEngaged && !robot.searching && robot.selectedObjects.Count == 0) {
+			if(inputs.y != 0 && !headAngleSliderEngaged && !robot.searching && robot.selectedObjects.Count == 0 && robot.headTrackingObject == null) {
 				robot.SetHeadAngle();
 			}
 		}

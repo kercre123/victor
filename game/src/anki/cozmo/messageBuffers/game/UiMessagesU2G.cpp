@@ -3884,12 +3884,12 @@ size_t SetAllActiveObjectLEDs::Pack(uint8_t* buff, size_t len) const
 size_t SetAllActiveObjectLEDs::Pack(CLAD::SafeMessageBuffer& buffer) const
 {
 	buffer.Write(this->objectID);
-	buffer.WriteFArray<uint32_t, 8>(this->onColor);
-	buffer.WriteFArray<uint32_t, 8>(this->offColor);
-	buffer.WriteFArray<uint32_t, 8>(this->onPeriod_ms);
-	buffer.WriteFArray<uint32_t, 8>(this->offPeriod_ms);
-	buffer.WriteFArray<uint32_t, 8>(this->transitionOnPeriod_ms);
-	buffer.WriteFArray<uint32_t, 8>(this->transitionOffPeriod_ms);
+	buffer.WriteFArray<uint32_t, 4>(this->onColor);
+	buffer.WriteFArray<uint32_t, 4>(this->offColor);
+	buffer.WriteFArray<uint32_t, 4>(this->onPeriod_ms);
+	buffer.WriteFArray<uint32_t, 4>(this->offPeriod_ms);
+	buffer.WriteFArray<uint32_t, 4>(this->transitionOnPeriod_ms);
+	buffer.WriteFArray<uint32_t, 4>(this->transitionOffPeriod_ms);
 	buffer.Write(this->relativeToX);
 	buffer.Write(this->relativeToY);
 	buffer.Write(this->makeRelative);
@@ -3907,12 +3907,12 @@ size_t SetAllActiveObjectLEDs::Unpack(const uint8_t* buff, const size_t len)
 size_t SetAllActiveObjectLEDs::Unpack(const CLAD::SafeMessageBuffer& buffer)
 {
 	buffer.Read(this->objectID);
-	buffer.ReadFArray<uint32_t, 8>(this->onColor);
-	buffer.ReadFArray<uint32_t, 8>(this->offColor);
-	buffer.ReadFArray<uint32_t, 8>(this->onPeriod_ms);
-	buffer.ReadFArray<uint32_t, 8>(this->offPeriod_ms);
-	buffer.ReadFArray<uint32_t, 8>(this->transitionOnPeriod_ms);
-	buffer.ReadFArray<uint32_t, 8>(this->transitionOffPeriod_ms);
+	buffer.ReadFArray<uint32_t, 4>(this->onColor);
+	buffer.ReadFArray<uint32_t, 4>(this->offColor);
+	buffer.ReadFArray<uint32_t, 4>(this->onPeriod_ms);
+	buffer.ReadFArray<uint32_t, 4>(this->offPeriod_ms);
+	buffer.ReadFArray<uint32_t, 4>(this->transitionOnPeriod_ms);
+	buffer.ReadFArray<uint32_t, 4>(this->transitionOffPeriod_ms);
 	buffer.Read(this->relativeToX);
 	buffer.Read(this->relativeToY);
 	buffer.Read(this->makeRelative);
@@ -3926,17 +3926,17 @@ size_t SetAllActiveObjectLEDs::Size() const
 	//objectID
 	result += 4; // = uint_32
 	//onColor
-	result += 4 * 8; // = uint_32 * 8
+	result += 4 * 4; // = uint_32 * 4
 	//offColor
-	result += 4 * 8; // = uint_32 * 8
+	result += 4 * 4; // = uint_32 * 4
 	//onPeriod_ms
-	result += 4 * 8; // = uint_32 * 8
+	result += 4 * 4; // = uint_32 * 4
 	//offPeriod_ms
-	result += 4 * 8; // = uint_32 * 8
+	result += 4 * 4; // = uint_32 * 4
 	//transitionOnPeriod_ms
-	result += 4 * 8; // = uint_32 * 8
+	result += 4 * 4; // = uint_32 * 4
 	//transitionOffPeriod_ms
-	result += 4 * 8; // = uint_32 * 8
+	result += 4 * 4; // = uint_32 * 4
 	//relativeToX
 	result += 4; // = float_32
 	//relativeToY
