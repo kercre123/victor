@@ -1,4 +1,4 @@
-#VRML_SIM V8.1.0 utf8
+#VRML_SIM V8.2.1 utf8
 WorldInfo {
   info [
     "Cozmo test world. All rights reserved. Copyright (c) Anki, Inc."
@@ -131,21 +131,17 @@ CozmoMat {
 }
 FlagCube {
   translation -0.133785 0.133785 0.0219969
-  rotation 0 0 1 0.785398
 }
 FlagCube {
   translation 0.133785 -0.133785 0.0219969
-  rotation 0 0 1 0.785398
   useInverted TRUE
 }
 LightCube {
   translation -0.133785 0.133785 0.0659907
-  rotation 0 0 1 0.785398
   ID 1
 }
 LightCube {
   translation 0.133785 -0.133785 0.0659907
-  rotation 0 0 1 0.785398
   ID 2
 }
 BlockWorldComms {
