@@ -6,6 +6,6 @@ PROTO BlockWorldComms [
 {
 Supervisor {
   name IS name
-  controller "blockworld_controller"
+  controller "webotsCtrlGameEngine"
 } # Supervisor definition
 } # PROTO definition
