@@ -6,12 +6,18 @@ __author__ = "Daniel Casner <daniel@anki.com>"
 
 import sys, os, struct
 
+UnreliablePacketPrefix = b"COZ\x03"
+ReliablePacketPrefix = b"RE\x01"
 ReliablePacketHeader = struct.Struct("3sBHHH")
 
 
-def loadPackets(file_path_name):
+def loadPackets(file_path_name, has_unreliable_header=True):
     "Loads a binary dump of packets and returns the individual packets stripped of unreliable transport headers."
-    return open(file_path_name, "rb").read().split(b"COZ\x03")
+    dump = open(file_path_name, "rb").read()
+    if has_unreliable_header:
+        return dump.split(UnreliablePacketPrefix)
+    else:
+        return [ReliablePacketPrefix + p for p in dump.split(ReliablePacketPrefix)]
 
 def parseReliableHeader(packet):
     "Parses the reliable transport header from a packet."
