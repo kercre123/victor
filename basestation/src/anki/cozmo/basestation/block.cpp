@@ -490,7 +490,7 @@ namespace Anki {
     {
       static const u8 FIRST_BIT = 0x01;
       u8 shiftedLEDs = static_cast<u8>(whichLEDs);
-      for(u8 iLED=0; iLED<8; ++iLED) {
+      for(u8 iLED=0; iLED<NUM_LEDS; ++iLED) {
         // If this LED is specified in whichLEDs (its bit is set), then
         // update
         if(shiftedLEDs & FIRST_BIT) {
@@ -560,7 +560,7 @@ namespace Anki {
           return;
           
         case RELATIVE_LED_MODE_BY_CORNER:
-          referenceLED = GetCornerClosestToXY(xyPosition, false);
+          referenceLED = GetCornerClosestToXY(xyPosition);
           break;
           
         case RELATIVE_LED_MODE_BY_SIDE:
@@ -583,25 +583,25 @@ namespace Anki {
         // (Note this is the current "Left" face of the block.)
         //
           
-        case WhichBlockLEDs::TOP_UPPER_LEFT:
-        case WhichBlockLEDs::LEFT_FACE:
+        case WhichBlockLEDs::FRONT_RIGHT:
+        case WhichBlockLEDs::FRONT:
           // Nothing to do
           return;
           
-        case WhichBlockLEDs::TOP_UPPER_RIGHT:
-        case WhichBlockLEDs::BACK_FACE:
+        case WhichBlockLEDs::FRONT_LEFT:
+        case WhichBlockLEDs::LEFT:
           // Rotate clockwise one slot
           RotatePatternAroundTopFace(true);
           return;
           
-        case WhichBlockLEDs::TOP_LOWER_LEFT:
-        case WhichBlockLEDs::FRONT_FACE:
+        case WhichBlockLEDs::BACK_RIGHT:
+        case WhichBlockLEDs::RIGHT:
           // Rotate counterclockwise one slot
           RotatePatternAroundTopFace(false);
           return;
           
-        case WhichBlockLEDs::TOP_LOWER_RIGHT:
-        case WhichBlockLEDs::RIGHT_FACE:
+        case WhichBlockLEDs::BACK_LEFT:
+        case WhichBlockLEDs::BACK:
           // Rotate two slots (either direction)
           // TODO: Do this in one shot
           RotatePatternAroundTopFace(true);
@@ -627,7 +627,7 @@ namespace Anki {
           return whichLEDs;
           
         case RELATIVE_LED_MODE_BY_CORNER:
-          referenceLED = GetCornerClosestToXY(xyPosition, false);
+          referenceLED = GetCornerClosestToXY(xyPosition);
           break;
           
         case RELATIVE_LED_MODE_BY_SIDE:
@@ -650,23 +650,23 @@ namespace Anki {
         // (Note this is the current "Left" face of the block.)
         //
         
-        case WhichBlockLEDs::TOP_UPPER_LEFT:
-        case WhichBlockLEDs::LEFT_FACE:
+        case WhichBlockLEDs::FRONT_RIGHT:
+        case WhichBlockLEDs::FRONT:
           // Nothing to do
           return whichLEDs;
           
-        case WhichBlockLEDs::TOP_UPPER_RIGHT:
-        case WhichBlockLEDs::BACK_FACE:
+        case WhichBlockLEDs::FRONT_LEFT:
+        case WhichBlockLEDs::LEFT:
           // Rotate clockwise one slot
           return RotateWhichLEDsAroundTopFace(whichLEDs, true);
           
-        case WhichBlockLEDs::TOP_LOWER_LEFT:
-        case WhichBlockLEDs::FRONT_FACE:
+        case WhichBlockLEDs::BACK_RIGHT:
+        case WhichBlockLEDs::RIGHT:
           // Rotate counterclockwise one slot
           return RotateWhichLEDsAroundTopFace(whichLEDs, false);
-          
-        case WhichBlockLEDs::TOP_LOWER_RIGHT:
-        case WhichBlockLEDs::RIGHT_FACE:
+
+        case WhichBlockLEDs::BACK_LEFT:
+        case WhichBlockLEDs::BACK:
           // Rotate two slots (either direction)
           // TODO: Do this in one shot
           return RotateWhichLEDsAroundTopFace(RotateWhichLEDsAroundTopFace(whichLEDs, true), true);
@@ -775,8 +775,7 @@ namespace Anki {
       return angle;
     }
     
-    WhichBlockLEDs ActiveCube::GetCornerClosestToXY(const Point2f& xyPosition,
-                                               bool getTopAndBottom) const
+    WhichBlockLEDs ActiveCube::GetCornerClosestToXY(const Point2f& xyPosition) const
     {
       // Get a vector from center of marker in its current pose to given xyPosition
       Pose3d topMarkerPose;
@@ -784,6 +783,11 @@ namespace Anki {
       const Vec2f topMarkerCenter(topMarkerPose.GetTranslation());
       Vec2f v(xyPosition);
       v -= topMarkerCenter;
+      
+      if (topMarker.GetCode() != GetMarker(FaceName::TOP_FACE).GetCode()) {
+        PRINT_NAMED_WARNING("ActiveCube.GetCornerClosestToXY.IgnoringBecauseBlockOnSide", "");
+        return WhichBlockLEDs::FRONT_LEFT;
+      }
       
       PRINT_STREAM_INFO("ActiveCube.GetCornerClosestToXY", "ActiveCube " << GetID().GetValue() << "'s TopMarker is = " << Vision::MarkerTypeStrings[topMarker.GetCode()] << ", angle = " << std::setprecision(3) << topMarkerPose.GetRotation().GetAngleAroundZaxis().getDegrees() << "deg");
       
@@ -795,25 +799,25 @@ namespace Anki {
       if(angle > 0.f) {
         if(angle < M_PI_2) {
           // Between 0 and 90 degrees: Upper Right Corner
-          PRINT_STREAM_INFO("ActiveCube.GetCornerClosestToXY", "Angle = " << std::setprecision(3) << angle.getDegrees() <<  "deg, Closest corner to (" << xyPosition.x() << "," << xyPosition.y() << "): Upper Right");
-          whichLEDs = (getTopAndBottom ? WhichBlockLEDs::TOP_BTM_UPPER_RIGHT : WhichBlockLEDs::TOP_UPPER_RIGHT);
+          PRINT_STREAM_INFO("ActiveCube.GetCornerClosestToXY", "Angle = " << std::setprecision(3) << angle.getDegrees() <<  "deg, Closest corner to (" << xyPosition.x() << "," << xyPosition.y() << "): Back Left");
+          whichLEDs = WhichBlockLEDs::BACK_LEFT;
         } else {
           // Between 90 and 180: Upper Left Corner
           //assert(angle<=M_PI);
-          PRINT_STREAM_INFO("ActiveCube.GetCornerClosestToXY", "Angle = " << std::setprecision(3) << angle.getDegrees() <<  "deg, Closest corner to (" << xyPosition.x() << "," << xyPosition.y() << "): Upper Left");
-          whichLEDs = (getTopAndBottom ? WhichBlockLEDs::TOP_BTM_UPPER_LEFT : WhichBlockLEDs::TOP_UPPER_LEFT);
+          PRINT_STREAM_INFO("ActiveCube.GetCornerClosestToXY", "Angle = " << std::setprecision(3) << angle.getDegrees() <<  "deg, Closest corner to (" << xyPosition.x() << "," << xyPosition.y() << "): Front Left");
+          whichLEDs = WhichBlockLEDs::FRONT_LEFT;
         }
       } else {
         //assert(angle >= -M_PI);
         if(angle > -M_PI_2) {
           // Between -90 and 0: Lower Right Corner
-          PRINT_STREAM_INFO("ActiveCube.GetCornerClosestToXY", "Angle = " << std::setprecision(3) << angle.getDegrees() <<  "deg, Closest corner to (" << xyPosition.x() << "," << xyPosition.y() << "): Lower Right");
-          whichLEDs = (getTopAndBottom ? WhichBlockLEDs::TOP_BTM_LOWER_RIGHT : WhichBlockLEDs::TOP_LOWER_RIGHT);
+          PRINT_STREAM_INFO("ActiveCube.GetCornerClosestToXY", "Angle = " << std::setprecision(3) << angle.getDegrees() <<  "deg, Closest corner to (" << xyPosition.x() << "," << xyPosition.y() << "): Back Right");
+          whichLEDs = WhichBlockLEDs::BACK_RIGHT;
         } else {
           // Between -90 and -180: Lower Left Corner
           //assert(angle >= -M_PI);
-          PRINT_STREAM_INFO("ActiveCube.GetCornerClosestToXY", "Angle = " << std::setprecision(3) << angle.getDegrees() <<  "deg, Closest corner to (" << xyPosition.x() << "," << xyPosition.y() << "): Lower Left");
-          whichLEDs = (getTopAndBottom ? WhichBlockLEDs::TOP_BTM_LOWER_LEFT : WhichBlockLEDs::TOP_LOWER_LEFT);
+          PRINT_STREAM_INFO("ActiveCube.GetCornerClosestToXY", "Angle = " << std::setprecision(3) << angle.getDegrees() <<  "deg, Closest corner to (" << xyPosition.x() << "," << xyPosition.y() << "): Front Right");
+          whichLEDs = WhichBlockLEDs::FRONT_RIGHT;
         }
       }
       
@@ -824,9 +828,17 @@ namespace Anki {
     {
       // Get a vector from center of marker in its current pose to given xyPosition
       Pose3d topMarkerPose;
-      GetTopMarker(topMarkerPose);
+      const Vision::KnownMarker& topMarker = GetTopMarker(topMarkerPose);
       const Vec3f topMarkerCenter(topMarkerPose.GetTranslation());
       const Vec2f v(xyPosition.x()-topMarkerCenter.x(), xyPosition.y()-topMarkerCenter.y());
+      
+      if (topMarker.GetCode() != GetMarker(FaceName::TOP_FACE).GetCode()) {
+        PRINT_NAMED_WARNING("ActiveCube.GetFaceClosestToXY.IgnoringBecauseBlockOnSide", "");
+        return WhichBlockLEDs::FRONT;
+      }
+      
+      
+      PRINT_STREAM_INFO("ActiveCube.GetFaceClosestToXY", "ActiveCube " << GetID().GetValue() << "'s TopMarker is = " << Vision::MarkerTypeStrings[topMarker.GetCode()] << ", angle = " << std::setprecision(3) << topMarkerPose.GetRotation().GetAngleAroundZaxis().getDegrees() << "deg");
       
       Radians angle = std::atan2(v.y(), v.x());
       angle -= topMarkerPose.GetRotationAngle<'Z'>();
@@ -834,20 +846,24 @@ namespace Anki {
       WhichBlockLEDs whichLEDs = WhichBlockLEDs::NONE;
       if(angle < M_PI_4 && angle >= -M_PI_4) {
         // Between -45 and 45 degrees: Right Face
-        whichLEDs = WhichBlockLEDs::BACK_FACE;
+        whichLEDs = WhichBlockLEDs::BACK;
+        PRINT_STREAM_INFO("ActiveCube.GetFaceClosestToXY", "Angle = " << std::setprecision(3) << angle.getDegrees() <<  "deg, Closest face to (" << xyPosition.x() << "," << xyPosition.y() << "): Back");
       }
       else if(angle < 3*M_PI_4 && angle >= M_PI_4) {
         // Between 45 and 135 degrees: Back Face
-        whichLEDs = WhichBlockLEDs::LEFT_FACE;
+        whichLEDs = WhichBlockLEDs::LEFT;
+        PRINT_STREAM_INFO("ActiveCube.GetFaceClosestToXY", "Angle = " << std::setprecision(3) << angle.getDegrees() <<  "deg, Closest face to (" << xyPosition.x() << "," << xyPosition.y() << "): Left");
       }
       else if(angle < -M_PI_4 && angle >= -3*M_PI_4) {
         // Between -45 and -135: Front Face
-        whichLEDs = WhichBlockLEDs::RIGHT_FACE;
+        whichLEDs = WhichBlockLEDs::RIGHT;
+        PRINT_STREAM_INFO("ActiveCube.GetFaceClosestToXY", "Angle = " << std::setprecision(3) << angle.getDegrees() <<  "deg, Closest face to (" << xyPosition.x() << "," << xyPosition.y() << "): Right");
       }
       else {
         // Between -135 && +135: Left Face
         assert(angle < -3*M_PI_4 || angle > 3*M_PI_4);
-        whichLEDs = WhichBlockLEDs::FRONT_FACE;
+        whichLEDs = WhichBlockLEDs::FRONT;
+        PRINT_STREAM_INFO("ActiveCube.GetFaceClosestToXY", "Angle = " << std::setprecision(3) << angle.getDegrees() <<  "deg, Closest face to (" << xyPosition.x() << "," << xyPosition.y() << "): Front");
       }
       
       return whichLEDs;
@@ -869,10 +885,10 @@ namespace Anki {
     inline const u8* GetRotationLUT(bool clockwise)
     {
       static const u8 cwRotatedPosition[ActiveCube::NUM_LEDS] = {
-        4, 0, 6, 2, 5, 1, 7, 3
+        3, 0, 1, 2
       };
       static const u8 ccwRotatedPosition[ActiveCube::NUM_LEDS] = {
-        1, 5, 3, 7, 0, 4, 2, 6
+        1, 2, 3, 0
       };
       
       // Choose the appropriate LUT

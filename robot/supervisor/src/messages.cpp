@@ -827,7 +827,7 @@ void Process##__MSG_TYPE__##Message(const __MSG_TYPE__& msg) { ProcessAnimKeyFra
             if (ReliableTransport_SendMessage((const uint8_t*)buffer, size, &connection, eRMT_SingleReliableMessage, hot, msgID) == false) // failed to queue reliable message!
             {
               // Have to drop the connection
-              PRINT("Dropping connection because can't queue reliable messages\r\n");
+              //PRINT("Dropping connection because can't queue reliable messages\r\n");
               ReliableTransport_Disconnect(&connection);
               Receiver_OnDisconnect(&connection);
               return false;

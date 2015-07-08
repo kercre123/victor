@@ -192,6 +192,8 @@ user_init(void)
     REG_SET_BIT(0x3ff00014, BIT(0)); //< Set CPU frequency to 160MHz
     err = system_update_cpu_freq(160);
 
+    gpio_init();
+
     uart_init(BIT_RATE_5000000, BIT_RATE_115200);
     uart_rx_intr_disable(UART0);
 

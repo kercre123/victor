@@ -13,18 +13,18 @@ namespace Cozmo {
   // faces are defined (imagine the robot is looking along the x axis, facing
   // the "Front" of the block, then it makes sense...)
   // NOTE: In the orientation displayed below, the Top marker is rightside up on screen
-  //   and we are looking at the back side (i.e. inside) of the Bottom marker
-  //   which is upside down.
   //
-  //         (Left)                             Y
-  //        0 ----- 4         2 ----- 6        ^
-  //        |   ^   |         |       |        |
-  // (Front)|  TOP  |(Back)   |  BTM  |        |
-  //        |       |         |   \/  |        +----> X
-  //        1 ----- 5         3 ----- 7
-  //         (Right)
   //
-  const s32 NUM_BLOCK_LEDS = 8;
+  //                 (Left)             Y
+  //                 ---1---            ^
+  //                |   ^   |           |
+  //        (Front) 2  TOP  0 (Back)    |
+  //                |       |           +----> X
+  //                 ---3---
+  //                 (Right)
+  //
+  //  When the block is on its side, FRONT is synonymous with the upper LED.
+  const s32 NUM_BLOCK_LEDS = 4;
   
 # if __cplusplus >= 201103L
   enum class WhichBlockLEDs : u8 {
@@ -35,28 +35,15 @@ namespace Cozmo {
     ALL         = 0xFF,
     
     // Individual LEDs (indicated by a single bit set):
-    TOP_UPPER_LEFT  = 0x01,
-    TOP_UPPER_RIGHT = 0x10,
-    TOP_LOWER_LEFT  = 0x02,
-    TOP_LOWER_RIGHT = 0x20,
-    BTM_UPPER_LEFT  = 0x04,
-    BTM_UPPER_RIGHT = 0x40,
-    BTM_LOWER_LEFT  = 0x08,
-    BTM_LOWER_RIGHT = 0x80,
-    
-    // Top/Bottom Pairs:
-    TOP_BTM_UPPER_LEFT  = TOP_UPPER_LEFT  | BTM_UPPER_LEFT,
-    TOP_BTM_UPPER_RIGHT = TOP_UPPER_RIGHT | BTM_UPPER_RIGHT,
-    TOP_BTM_LOWER_LEFT  = TOP_LOWER_LEFT  | BTM_LOWER_LEFT,
-    TOP_BTM_LOWER_RIGHT = TOP_LOWER_RIGHT | BTM_LOWER_RIGHT,
-    
-    // Faces of 4 LEDs:
-    TOP_FACE   = TOP_UPPER_LEFT  | TOP_UPPER_RIGHT | TOP_LOWER_LEFT  | TOP_LOWER_RIGHT,
-    BTM_FACE   = BTM_UPPER_LEFT  | BTM_UPPER_RIGHT | BTM_LOWER_LEFT  | BTM_LOWER_RIGHT,
-    LEFT_FACE  = TOP_UPPER_LEFT  | TOP_UPPER_RIGHT | BTM_UPPER_LEFT  | BTM_UPPER_RIGHT,
-    RIGHT_FACE = TOP_LOWER_RIGHT | TOP_LOWER_LEFT  | BTM_LOWER_RIGHT | BTM_LOWER_LEFT,
-    FRONT_FACE = TOP_LOWER_LEFT  | TOP_UPPER_LEFT  | BTM_LOWER_LEFT  | BTM_UPPER_LEFT,
-    BACK_FACE  = TOP_UPPER_RIGHT | TOP_LOWER_RIGHT | BTM_UPPER_RIGHT | BTM_LOWER_RIGHT
+    BACK   = 0x01,
+    LEFT   = 0x02,
+    FRONT  = 0x04,
+    RIGHT  = 0x08,
+
+    FRONT_LEFT  = FRONT | LEFT,
+    FRONT_RIGHT = FRONT | RIGHT,
+    BACK_LEFT   = BACK | LEFT,
+    BACK_RIGHT  = BACK | RIGHT
   }
 # if __cplusplus < 201103L
   WhichBlockLEDs
