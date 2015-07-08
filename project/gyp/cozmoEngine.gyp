@@ -248,24 +248,7 @@
         },
       },
     ],
-    # [
-    #   "OS=='ios' or OS=='mac'",
-    #   {
-    #       'targets': [
-    #       {
-    #         # fake target to see all of the sources...
-    #         'target_name': 'all_lib_targets',
-    #         'type': 'none',
-    #         'sources': [
-    #           '<!@(cat <(engine_source))',
-    #         ],
-    #         'dependencies': [
-    #           'cozmoEngine',
-    #         ]
-    #       },
-    #     ],
-    #   },
-    # ],
+
 
 
     # UNITTEST CRAP HERE
@@ -401,13 +384,6 @@
                 ],
                 'destination': '<(PRODUCT_DIR)',
               },
-              # {
-              #   # this replaces copyUnitTestData.sh
-              #   'files': [
-              #     '../../resources/config',
-              #   ],
-              #   'destination': '<(PRODUCT_DIR)/BaseStation',
-              # },
             ],
           }, # end unittest target
 
@@ -470,80 +446,6 @@
       'type': '<(energy_library_type)',
     },
     
-
-    # # Post-build target to strip Android libs
-    # {
-    #   'target_name': 'strip_android_libs',
-    #   'type': 'none',
-    #   'dependencies': [
-    #     '<(driveengine_target_name)',
-    #     '<(basestation_target_name)',
-    #   ],
-    #   'target_conditions': [
-    #     [
-    #       "OS=='android' and use_das==1",
-    #       {
-    #         'actions': [
-    #           {
-    #             'action_name': 'strip_debug_symbols',
-    #             'inputs': [
-    #               '<(SHARED_LIB_DIR)/lib<(driveengine_target_name).so',
-    #               '<(SHARED_LIB_DIR)/libDriveAudioEngine.so',
-    #               '<(SHARED_LIB_DIR)/libDAS.so',
-    #               '<(SHARED_LIB_DIR)/libc++_shared.so',
-    #             ],
-    #             'outputs': [
-    #               '<(SHARED_LIB_DIR)/../libs-debug/lib<(driveengine_target_name).so',
-    #               '<(SHARED_LIB_DIR)/../libs-debug/libDriveAudioEngine.so',
-    #               '<(SHARED_LIB_DIR)/../libs-debug/libDAS.so',
-    #               '<(SHARED_LIB_DIR)/../libs-debug/libc++_shared.so',
-    #             ],
-    #             'action': [
-    #               'python',
-    #               'android-strip-libs.py',
-    #               '--ndk-toolchain',
-    #               '<(ndk_root)/toolchains/arm-linux-androideabi-4.8/prebuilt/darwin-x86_64',
-    #               '--symbolicated-libs-dir',
-    #               '<(SHARED_LIB_DIR)/../lib-debug',
-    #               '<@(_inputs)',
-    #             ],
-    #           },
-    #         ],
-    #       },
-    #     ], #end android
-    #     [
-    #       "OS=='android' and use_das==0",
-    #       {
-    #         'actions': [
-    #           {
-    #             'action_name': 'strip_debug_symbols',
-    #             'inputs': [
-    #               '<(SHARED_LIB_DIR)/lib<(driveengine_target_name).so',
-    #               '<(SHARED_LIB_DIR)/libDriveAudioEngine.so',
-    #               '<(SHARED_LIB_DIR)/libc++_shared.so',
-    #             ],
-    #             'outputs': [
-    #               '<(SHARED_LIB_DIR)/../libs-debug/lib<(driveengine_target_name).so',
-    #               '<(SHARED_LIB_DIR)/../libs-debug/libDriveAudioEngine.so',
-    #               '<(SHARED_LIB_DIR)/../libs-debug/libc++_shared.so',
-    #             ],
-    #             'action': [
-    #               'python',
-    #               'android-strip-libs.py',
-    #               '--ndk-toolchain',
-    #               '<(ndk_root)/toolchains/arm-linux-androideabi-4.8/prebuilt/darwin-x86_64',
-    #               '--symbolicated-libs-dir',
-    #               '<(SHARED_LIB_DIR)/../lib-debug',
-    #               '<@(_inputs)',
-    #             ],
-    #           },
-    #         ],
-    #       },
-    #     ], #end android
-    #   ],
-
-
-    # },
 
 
   ] # end targets
