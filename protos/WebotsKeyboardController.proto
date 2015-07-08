@@ -163,6 +163,6 @@ Supervisor {
     }
   ]
   name IS name
-  controller "webots_keyboard_controller"
+  controller "webotsCtrlKeyboard"
 } # Supervisor definition
 } # PROTO definition
