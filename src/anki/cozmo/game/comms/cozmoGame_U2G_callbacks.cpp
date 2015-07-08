@@ -418,7 +418,11 @@ namespace Cozmo {
       // TODO: Better way to specify the target pose's parent
       Pose3d targetPose(msg.rad, Z_AXIS_3D(), Vec3f(msg.x_mm, msg.y_mm, 0), robot->GetWorldOrigin());
       targetPose.SetName("GotoPoseTarget");
-      robot->GetActionList().QueueActionAtEnd(DriveAndManipulateSlot, new DriveToPoseAction(targetPose, msg.useManualSpeed));
+      
+      // TODO: expose whether or not to drive with head down in message?
+      // (For now it is hard-coded to true)
+      const bool driveWithHeadDown = true;
+      robot->GetActionList().QueueActionAtEnd(DriveAndManipulateSlot, new DriveToPoseAction(targetPose, driveWithHeadDown, msg.useManualSpeed));
     }
   }
   
