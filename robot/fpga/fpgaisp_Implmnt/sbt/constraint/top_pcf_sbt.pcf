@@ -4,20 +4,15 @@
 
 # Version:            2015.04.27409
 
-# File Generated:     Jul 7 2015 15:59:11
+# File Generated:     Jul 7 2015 21:04:08
 
-# Family & Device:    iCE5LP4K
+# Family & Device:    iCE40LM4K
 
-# Package:            SWG36
+# Package:            SWG25TR
 
 # ##############################################################################
 
-###IOSet List 7
-set_io debug[0] B1
-set_io debug[1] B2
-set_io debug[2] F4
-set_io miso F2
-set_io mosi D1
-set_io sck E1
-set_io scsn F1
-
+###IOSet List 3
+set_io sck D1
+set_io sio C1
+set_io scsn E1

@@ -11,9 +11,9 @@ set_option -vlog_std v2001
 set_option -project_relative_includes 1
 
 #device options
-set_option -technology SBTiCE5LP
-set_option -part iCE5LP4K
-set_option -package SWG36
+set_option -technology SBTiCE40LM
+set_option -part iCE40LM4K
+set_option -package SWG25TR
 set_option -speed_grade 
 set_option -part_companion ""
 

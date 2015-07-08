@@ -12,9 +12,9 @@ StartFromSynthesis=yes
 IPGeneration=false
 
 [fpgaisp_Implmnt]
-DeviceFamily=iCE5LP
+DeviceFamily=iCE40LM
 Device=4K
-DevicePackage=SWG36
+DevicePackage=SWG25TR
 DevicePower=
 NetlistFile=fpgaisp_Implmnt/fpgaisp.edf
 AdditionalEDIFFile=
@@ -35,7 +35,7 @@ OperationRange=Commercial
 TypicalCustomTemperature=25
 WorstCustomTemperature=85
 BestCustomTemperature=0
-IOBankVoltages=topBank,3.3 bottomBank,3.3
+IOBankVoltages=topBank,1.8 bottomBank,1.8
 derValue=1.32445
 TimingPathNumberStick=0
 
@@ -79,7 +79,7 @@ BitmapOscillatorFR=low
 BitmapEnableWarmBoot=yes
 BitmapDisableHeader=yes
 BitmapSetSecurity=no
-BitmapSetNoUsedIONoPullup=no
+BitmapSetNoUsedIONoPullup=yes
 FloorPlannerShowFanInNets=yes
 FloorPlannerShowFanOutNets=yes
 HookTo3rdPartyTextEditor=no
