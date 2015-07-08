@@ -110,6 +110,8 @@ void ICACHE_FLASH_ATTR user_rf_pre_init(void)
  */
 static void ICACHE_FLASH_ATTR system_init_done(void)
 {
+
+
   // Enable upgrade controller
   upgradeControllerInit();
 
@@ -146,6 +148,8 @@ user_init(void)
 
     REG_SET_BIT(0x3ff00014, BIT(0));
     err = system_update_cpu_freq(160);
+
+    gpio_init();
 
     uart_init(BIT_RATE_5000000, BIT_RATE_115200);
     uart_rx_intr_disable(UART0);
