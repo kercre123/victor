@@ -12,6 +12,13 @@ simulator/plugins/physics/cozmo_physics
 simulator/controllers/cozmo_viz_controller
 simulator/controllers/cozmo_c_controller
 
+simulator/controllers/webotsCtrlRobot
+simulator/controllers/webotsCtrlViz
+simulator/controllers/webotsCtrlLightCube
+simulator/controllers/webotsCtrlGameEngine/webotsCtrlGameEngine
+simulator/controllers/webotsCtrlKeyboard/webotsCtrlKeyboard
+
+
 # Mac OS
 *.DS_Store
 # Xcode

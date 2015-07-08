@@ -382,7 +382,17 @@
                 ],
                 'destination': '../../simulator/controllers/webotsCtrlLightCube/',
               },
+              
+              # Copy over protos
+              {
+                'files': [
+                  '../../lib/anki/cozmo-engine/simulator/protos',
+                ],
+                'destination': '../../simulator/protos/CozmoEngineProtos-DO_NOT_MODIFY/',
+              },
+
             ],
+            
           }, # end webotsControllers
 
         ], # end targets
