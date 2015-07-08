@@ -56,19 +56,19 @@
       "ycen"            : 0
     },
     {
-      "Name" : "FaceImageKeyFrame", 
+      "Name" : "FaceAnimationKeyFrame", 
       "triggerTime_ms"  : 0,
-      "imageID"         : 0
+      "animName"        : "happyFace"
     },
     {
-      "Name" : "FaceImageKeyFrame", 
+      "Name" : "FaceAnimationKeyFrame", 
       "triggerTime_ms"  : 500,
-      "imageID"         : 1
+      "animName"        : "sadFace"
     },
     {
-      "Name" : "FaceImageKeyFrame", 
+      "Name" : "FaceAnimationKeyFrame", 
       "triggerTime_ms"  : 1000,
-      "imageID"         : 2
+      "animName"        : "happyFace"
     }, 
     {
       "Name" : "FacePositionKeyFrame", 
