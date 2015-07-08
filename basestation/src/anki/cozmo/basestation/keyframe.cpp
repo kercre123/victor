@@ -24,6 +24,7 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 
 #include "anki/cozmo/basestation/soundManager.h"
+#include "anki/cozmo/basestation/faceAnimationManager.h"
 
 #include "util/logging/logging.h"
 #include "anki/common/basestation/colorRGBA.h"
@@ -225,6 +226,34 @@ return RESULT_FAIL; \
       return &_streamMsg;
     }
     
+#pragma mark -
+#pragma mark FaceAnimationKeyFrame
+    
+    Result FaceAnimationKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot)
+    {
+      GET_MEMBER_FROM_JSON(jsonRoot, animName);
+      
+      _numFrames = FaceAnimationManager::getInstance()->GetNumFrames(_animName);
+      _curFrame = 0;
+      
+      return RESULT_OK;
+    }
+    
+    RobotMessage* FaceAnimationKeyFrame::GetStreamMessage()
+    {
+      // Populate the message with the next chunk of audio data and send it out
+      if(_curFrame < _numFrames)
+      {
+        _faceImageMsg.image.fill(0); // Necessary??
+        FaceAnimationManager::getInstance()->GetFrame(_animName, _curFrame, &_faceImageMsg.image[0]);
+        ++_curFrame;
+        
+        return &_faceImageMsg;
+      } else {
+        _curFrame = 0;
+        return nullptr;
+      }
+    }
     
 #pragma mark - 
 #pragma mark RobotAudioKeyFrame
@@ -239,6 +268,12 @@ return RESULT_FAIL; \
       //GET_MEMBER_FROM_JSON(jsonRoot, audioID);
       
       _audioID = SoundManager::getInstance()->GetID(_audioName);
+      if(_audioID == NUM_SOUNDS) {
+        PRINT_NAMED_ERROR("RobotAudioKeyFrame.SetMembersFromJson.InvalidAudioName",
+                          "SoundManager could not find the sound associated with name '%s'.\n",
+                          _audioName.c_str());
+        return RESULT_FAIL;
+      }
       
       const u32 duration_ms = SoundManager::getInstance()->GetSoundDurationInMilliseconds(_audioID);
       _numSamples = duration_ms / SAMPLE_LENGTH_MS;

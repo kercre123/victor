@@ -107,7 +107,8 @@ namespace Anki {
       // All the animation tracks, storing different kinds of KeyFrames
       Track<HeadAngleKeyFrame>      _headTrack;
       Track<LiftHeightKeyFrame>     _liftTrack;
-      Track<FaceImageKeyFrame>      _faceImageTrack;
+      //Track<FaceImageKeyFrame>      _faceImageTrack;
+      Track<FaceAnimationKeyFrame>  _faceAnimTrack;
       Track<FacePositionKeyFrame>   _facePosTrack;
       Track<BackpackLightsKeyFrame> _backpackLightsTrack;
       Track<BodyPositionKeyFrame>   _bodyPosTrack;
