@@ -592,9 +592,14 @@ public class RobotEngineManager : MonoBehaviour {
 			}
 			
 			texture = new Texture2D( width, height, format, false );
+			// HACK: Grayscale is broken from about 5.0 until 5.1.1p2
+			// note p2 means patch release, after 5.1.1 proper;
+			// 5.1.2 and 5.2.0 should be OK; we won't upgrade until one of those come out
+#if UNITY_5_0
 			if (USE_HACK_TO_FIX_GRAYSCALE_ISSUE) {
 				width /= 3;
 			}
+#endif
 			sprite = Sprite.Create (texture, new Rect(0, 0, width, height), spritePivot);
 		}
 	}

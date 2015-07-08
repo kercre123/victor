@@ -201,8 +201,8 @@ public class CozmoAssistedControls : MonoBehaviour {
 					float timeToCollsion = potentialCollisionTime - Time.realtimeSinceStartup;
 
 					Vector3 newDesiredHeading;
-					float angle;
-					float speed=0;
+					//float angle;
+					//float speed=0;
 
 					heading =timeToCollsion*(left_speed*robot.Right - right_speed*robot.Right + (left_speed + right_speed)*robot.Forward);
 					Vector3 circle_center = new Vector3();
@@ -212,7 +212,7 @@ public class CozmoAssistedControls : MonoBehaviour {
 						// need to move right, so slow right treads
 						newDesiredHeading = heading + min_overlap*heading_right;
 
-						angle = Vector3.Angle(heading, newDesiredHeading);
+						//angle = Vector3.Angle(heading, newDesiredHeading);
 						Vector3 new_desired_pos = newDesiredHeading+robot.WorldPosition;
 						
 						GetCircleOriginForPoints(new_desired_pos, out circle_center);
@@ -226,7 +226,7 @@ public class CozmoAssistedControls : MonoBehaviour {
 					{
 						// need to move left, so slow left treads
 						newDesiredHeading = heading - min_overlap*heading_right;
-						angle = Vector3.Angle(heading, newDesiredHeading);
+						//angle = Vector3.Angle(heading, newDesiredHeading);
 						Vector3 new_desired_pos = newDesiredHeading+robot.WorldPosition;
 
 						GetCircleOriginForPoints(new_desired_pos, out circle_center);
