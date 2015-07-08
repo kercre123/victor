@@ -339,20 +339,46 @@
             # fake target to see all of the sources...
             'target_name': 'webotsControllers',
             'type': 'none',
-            # 'sources': [
-            #   # '<!@(cat <(driveengine_and_source_file_name))',
-            #   # '<!@(cat <(driveengine_ios_source_file_name))',
-            #   # '<!@(cat <(driveengine_osx_source_file_name))',
-            #   # '<!@(cat <(messageBuffers_source_file_name))',
-            # ],
             'dependencies': [
               'webotsCtrlKeyboard',
               'webotsCtrlGameEngine',
               '<(cg-ce_gyp_path):webotsCtrlRobot',
               '<(cg-ce_gyp_path):webotsCtrlViz',
               '<(cg-ce_gyp_path):webotsCtrlLightCube',
-            ]
-          },
+            ],
+            'copies': [
+              {
+                'files': [
+                  '<(PRODUCT_DIR)/webotsCtrlKeyboard',
+                ],
+                'destination': '../../simulator/controllers/webotsCtrlKeyboard/',
+              },
+              {
+                'files': [
+                  '<(PRODUCT_DIR)/webotsCtrlGameEngine',
+                ],
+                'destination': '../../simulator/controllers/webotsCtrlGameEngine/',
+              },
+              {
+                'files': [
+                  '<(PRODUCT_DIR)/webotsCtrlRobot',
+                ],
+                'destination': '../../simulator/controllers/webotsCtrlRobot/',
+              },
+              {
+                'files': [
+                  '<(PRODUCT_DIR)/webotsCtrlViz',
+                ],
+                'destination': '../../simulator/controllers/webotsCtrlViz/',
+              },
+              {
+                'files': [
+                  '<(PRODUCT_DIR)/webotsCtrlLightCube',
+                ],
+                'destination': '../../simulator/controllers/webotsCtrlLightCube/',
+              },
+            ],
+          }, # end webotsControllers
 
         ], # end targets
       },
