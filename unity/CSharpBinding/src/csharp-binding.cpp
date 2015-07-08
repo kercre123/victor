@@ -13,7 +13,7 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 
 #include "anki/common/basestation/jsonTools.h"
-#include "anki/util/logging/logging.h"
+#include "util/logging/logging.h"
 #include "unity-logger-provider.h"
 
 #include <algorithm>

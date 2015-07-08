@@ -164,6 +164,7 @@ def main(scriptArgs):
   generator.processFolder(['game/src/anki/cozmo', 'game/include'], ['project/gyp/cozmoGame.lst'])
   generator.processFolder(['simulator/controllers/webots_keyboard_controller'], ['project/gyp/ctrlKeyboard.lst'])
   generator.processFolder(['simulator/controllers/blockworld_controller'], ['project/gyp/ctrlGameEngine.lst'])
+  generator.processFolder(['unity/CSharpBinding/src'], ['project/gyp/csharp.lst'])
 
   if options.updateListsOnly:
     # TODO: remove dependency on abspath. 

@@ -5,6 +5,7 @@
     'game_library_type': 'static_library',
     'ctrlGameEngine_source': 'ctrlGameEngine.lst',
     'ctrlKeyboard_source': 'ctrlKeyboard.lst',
+    'csharp_source': 'csharp.lst',
     
     # TODO: should this be passed in, or shared?
     'coretech_defines': [
@@ -271,6 +272,29 @@
 
         'targets': [
           {
+            'target_name': 'CSharpBinding',
+            'type': 'shared_library',
+            'include_dirs': [
+              '../../unit/CSharpBinding/src',
+              '<@(opencv_includes)',
+            ],
+            'dependencies': [
+              'cozmoGame',
+              '<(cg-ce_gyp_path):cozmoEngine',
+              '<(cg-cti_gyp_path):ctiCommon',
+              '<(cg-cti_gyp_path):ctiCommonRobot',
+              '<(cg-cti_gyp_path):ctiVision',
+              '<(cg-cti_gyp_path):ctiVisionRobot',
+              '<(cg-util_gyp_path):util',
+              '<(cg-util_gyp_path):jsoncpp',
+            ],
+            'sources': [ '<!@(cat <(csharp_source))' ],
+            'libraries': [
+              '<@(opencv_libs)',
+            ],
+          }, # end CSharpBinding
+
+          {
             'target_name': 'webotsCtrlGameEngine',
             'type': 'executable',
             'include_dirs': [
@@ -318,7 +342,6 @@
           }, # end controller Keyboard
 
           {
-            # fake target to see all of the sources...
             'target_name': 'webotsControllers',
             'type': 'none',
             'dependencies': [
