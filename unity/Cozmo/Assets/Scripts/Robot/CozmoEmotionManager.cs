@@ -22,14 +22,11 @@ public class CozmoEmotionManager : MonoBehaviour {
 		ALL = 0xff
 	};
 
-	[Serializable]
-	public struct CozmoAnimation
+	public enum EmotionIntensity
 	{
-		public string animName;
-		public string animTarget;
-		public EmotionFlag emotionType;
-		public int emotionIntensity;
-			
+		MILD,
+		MODERATE,
+		INTENSE
 	}
 
 	public List<CozmoAnimation> anims;
