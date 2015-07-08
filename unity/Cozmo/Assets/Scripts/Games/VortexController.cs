@@ -222,6 +222,10 @@ public class VortexController : GameController {
 			textPlayerSpinNow[i].gameObject.SetActive(false);
 		}
 
+		if(imageCozmoDragHand != null) {
+			cozmoDragHandRectTransform = imageCozmoDragHand.transform.parent as RectTransform;
+			imageCozmoDragHand.gameObject.SetActive(false);
+		}
 
 	}
 
@@ -229,6 +233,9 @@ public class VortexController : GameController {
 		base.OnDisable();
 
 		if(playState == VortexState.SPINNING) ActiveBlock.TappedAction -= BlockTapped;
+
+		//revert to single player incase this ever matters to other games
+		PlayerPrefs.SetInt("NumberOfPlayers", 1);
 	}
 
 	protected override void Enter_BUILDING () {
@@ -243,6 +250,7 @@ public class VortexController : GameController {
 		base.Update_BUILDING();
 	}
 
+	ObservedObject humanHead;
 	protected override void Enter_PRE_GAME () {
 		
 		ClearInputs();
@@ -250,34 +258,92 @@ public class VortexController : GameController {
 		base.Enter_PRE_GAME();
 
 		playerInputBlocks.Clear();
-
+		
+		humanHead = null;
+		
 		if( robot != null && PlayerPrefs.GetInt("DebugSkipLayoutTracker",0) == 0) {
-			for(int i=0;i<robot.activeBlocks.Count && i<numPlayers;i++) {
-				ActiveBlock block = robot.activeBlocks[i];
-				Debug.Log("adding playerInputBlocks["+i+"] with PlayerInputTap("+i+")");
-				playerInputBlocks.Add(block);
-				
-				switch(i) {
+			
+
+			robot.DriveWheels(-CozmoUtil.MAX_WHEEL_SPEED_MM, CozmoUtil.MAX_WHEEL_SPEED_MM);
+
+
+			for(int i=0;i<robot.knownObjects.Count;i++) {
+				if(!robot.knownObjects[i].isActive) continue;
+
+				ActiveBlock block = robot.knownObjects[i] as ActiveBlock;
+				//Debug.Log("adding playerInputBlocks["+i+"] with PlayerInputTap("+i+")");
+
+				switch(playerInputBlocks.Count) {
 					case 0: block.SetMode(ActiveBlock.Mode.Blue); break;
 					case 1: block.SetMode(ActiveBlock.Mode.Green); break;
 					case 2: block.SetMode(ActiveBlock.Mode.Yellow); break;
 					case 3: block.SetMode(ActiveBlock.Mode.Red); break;
 				}
+
+				playerInputBlocks.Add(block);
 			}
-	
-			if(robot.carryingObject == null) {
+
+			for(int i=0;i<robot.knownObjects.Count;i++) {
+				if(!robot.knownObjects[i].isFace) continue;
+				humanHead = robot.knownObjects[i];
+				break;
+			}
+			
+			if(humanHead == null) {
+				float height = 0.75f;
+				robot.SetHeadAngle(height);
+			}
+			
+		}
+
+		headTimer = 0.1f;
+	}
+
+	float frequency = 0.1f;
+	float headTimer = 0f;
+	float turnStartAngle = 0f;
+	protected override void Update_PRE_GAME () {
+		base.Update_PRE_GAME();
+
+		if( robot != null) {
+
+			if(humanHead == null) {
+
+				for(int i=0;i<robot.knownObjects.Count;i++) {
+					if(!robot.knownObjects[i].isFace) continue;
+					humanHead = robot.knownObjects[i];
+					break;
+				}
+
+				if(humanHead == null) {
+					if(headTimer > 0f) {
+						headTimer -= Time.deltaTime;
+		
+						if(headTimer <= 0f) {
+							//oscillate
+							//float height = 1f + Mathf.Sin(2*Mathf.PI*frequency*Time.time) * 0.5f;
+							turnStartAngle = robot.poseAngle_rad * Mathf.Rad2Deg;
+							Debug.Log("DriveWheels turn!");
+							robot.DriveWheels(-CozmoUtil.MAX_WHEEL_SPEED_MM*0.1f, CozmoUtil.MAX_WHEEL_SPEED_MM*0.1f);
+
+						}
+					}
+					else if(Mathf.Abs(MathUtil.AngleDelta(turnStartAngle, robot.poseAngle_rad * Mathf.Rad2Deg)) > 5f) {
+						Debug.Log("DriveWheels stop!");
+						robot.DriveWheels(0f, 0f);
+						headTimer = 1f;
+					}
+				}
+			}
+			else if(robot.carryingObject == null && !robot.isBusy) {
 				robot.PickAndPlaceObject(playerInputBlocks[1]);
 				if(CozmoBusyPanel.instance != null)	{
 					string desc = "Cozmo is attempting to pick-up\n a game cube.";
 					CozmoBusyPanel.instance.SetDescription(desc);
 				}
 			}
-
+			
 		}
-	}
-
-	protected override void Update_PRE_GAME () {
-		base.Update_PRE_GAME();
 	}
 
 	protected override void Exit_PRE_GAME () {
@@ -310,6 +376,21 @@ public class VortexController : GameController {
 		else {
 			UpdatePlayState();
 		}
+
+		if(robot != null) {
+			if(playState != VortexState.SPINNING && robot.headTrackingObject == null && humanHead != null) {
+
+				//if(robot.liftHeight_mm > (CozmoUtil.MIN_LIFT_HEIGHT_MM + (CozmoUtil.MAX_LIFT_HEIGHT_MM - CozmoUtil.MIN_LIFT_HEIGHT_MM) * 0.5f)) {
+					//Debug.Log("frame("+Time.frameCount+") Update_PLAYING SetLiftHeight(0.1f);");
+					//robot.SetLiftHeight(0.1f);
+				//}
+				//else {
+					robot.TrackHeadToObject(humanHead, true);
+				//}
+
+			}
+		}
+
 
 	}
 	
@@ -458,7 +539,7 @@ public class VortexController : GameController {
 				//break;
 			case VortexState.REQUEST_SPIN:
 				if(wheel.Spinning) {
-					Debug.Log("cozmo SpinUnderway");
+					//Debug.Log("cozmo SpinUnderway");
 					return VortexState.SPINNING;
 				}
 				break;
@@ -507,7 +588,7 @@ public class VortexController : GameController {
 	}
 
 	void Enter_INTRO() {
-		currentPlayerIndex = -1;//UnityEngine.Random.Range(0, numPlayers);
+		currentPlayerIndex = UnityEngine.Random.Range(0, numPlayers) - 1;
 		round = 0;
 
 		for(int i=0;i<playersEliminated.Length;i++) {
@@ -523,10 +604,19 @@ public class VortexController : GameController {
 		//disable intro text
 	}
 
+	[SerializeField] Image imageCozmoDragHand;
 	[SerializeField] Vector2 cozmoStartDragPos = Vector2.zero;
 	[SerializeField] Vector2 cozmoEndDragPos = Vector2.zero;
 	[SerializeField] float cozmoDragDelay = 2f;
 	[SerializeField] float cozmoDragTime = 2f;
+	[SerializeField] float cozmoFinalDragTime = 0.2f;
+
+	RectTransform cozmoDragHandRectTransform;
+	Vector2 startDragPos;
+	Vector2 endDragPos;
+	float dragTimer = 0f;
+	int dragCount = 0;
+	int dragCountMax = 2;
 
 	void Enter_REQUEST_SPIN() {
 
@@ -557,14 +647,28 @@ public class VortexController : GameController {
 		PlaceTokens();
 
 		if(currentPlayerIndex == 1) {
-			wheel.AutomateMode();
+			wheel.AutomatedMode();
 
-			Vector3 startDragPos = new Vector2(cozmoStartDragPos.x * Screen.width, cozmoStartDragPos.y * Screen.height);
+			startDragPos = new Vector2(cozmoStartDragPos.x * Screen.width, cozmoStartDragPos.y * Screen.height);
+			startDragPos += UnityEngine.Random.insideUnitCircle * Screen.height * 0.1f;
+
+			endDragPos = new Vector2(cozmoEndDragPos.x * Screen.width, cozmoEndDragPos.y * Screen.height);
+			endDragPos += UnityEngine.Random.insideUnitCircle * Screen.height * 0.1f;
+			dragTimer = cozmoDragTime;
+			dragCount = 0;
+			dragCountMax = UnityEngine.Random.Range(2,4);
 			wheel.DragStart(startDragPos, Time.time);
+
+//			Vector3 startWorld = Camera.main.ScreenToWorldPoint(startDragPos);
+//			Vector3 endWorld = Camera.main.ScreenToWorldPoint(startDragPos);
+//			startWorld.z = 1f;
+//			endWorld.z = 1f;
+//			Debug.DrawLine(startWorld, endWorld, (dragCount % 2 == 0) ? Color.green : Color.blue, 30f);
 		}
 		else  {
 			wheel.Unlock();
 		}
+
 		wheel.Focus();
 		wheel.gameObject.SetActive(true);
 
@@ -583,19 +687,53 @@ public class VortexController : GameController {
 			textPlayerSpinNow[i].gameObject.SetActive(currentPlayerIndex == i);
 		}
 	}
+
 	void Update_REQUEST_SPIN() {
-
+		
+		//cozmo's automated spinWheel dragging
 		if(currentPlayerIndex == 1 && playStateTimer > cozmoDragDelay) {
-			if(playStateTimer < cozmoDragTime + cozmoDragDelay) {
 
-				Vector3 startDragPos = new Vector2(cozmoStartDragPos.x * Screen.width, cozmoStartDragPos.y * Screen.height);
-				Vector3 endDragPos = new Vector2(cozmoEndDragPos.x * Screen.width, cozmoEndDragPos.y * Screen.height);
+			dragTimer -= Time.deltaTime;
+		
+			if(dragTimer <= 0f) {
 
-				float factor = Mathf.Clamp01( (playStateTimer - cozmoDragDelay) / cozmoDragTime);
-				wheel.DragUpdate(Vector2.Lerp(startDragPos, endDragPos, factor), Time.time);
+				Vector2 temp = startDragPos;
+				startDragPos = endDragPos;
+				endDragPos = temp;
+				dragTimer = cozmoDragTime;
+				dragCount++;
+
+				if(dragCount >= dragCountMax) {
+					Vector2 delta = endDragPos - startDragPos;
+					endDragPos += delta * 2f;
+					dragTimer = cozmoFinalDragTime;
+				}
+				//Debug.Log("frame("+Time.frameCount+") Update_REQUEST_SPIN dragCount("+dragCount+")");
+			}
+
+			//we drag back and forth some to make it obvious coz is spinning
+			if(dragCount < dragCountMax) {
+				float factor = 1f - Mathf.Clamp01(dragTimer / cozmoDragTime);
+				//Debug.Log("frame("+Time.frameCount+") Update_REQUEST_SPIN DragUpdate factor("+factor+")");
+				Vector2 currentPos = Vector2.Lerp(startDragPos, endDragPos, factor);
+				wheel.DragUpdate(currentPos, Time.time);
+				PlaceCozmoTouch(currentPos);
 			}
 			else {
-				wheel.DragEnd();
+				float factor = 1f - Mathf.Clamp01(dragTimer / cozmoFinalDragTime);
+				Vector2 currentPos = Vector2.Lerp(startDragPos, endDragPos, factor);
+				wheel.DragUpdate(currentPos, Time.time);
+
+				//Debug.Log("frame("+Time.frameCount+") Update_REQUEST_SPIN DragEnd dragCount("+dragCount+")");
+				if(factor > 0.7f) {
+					wheel.DragEnd();
+					if(imageCozmoDragHand != null) {
+						imageCozmoDragHand.gameObject.SetActive(false);
+					}
+				}
+				else {	
+					PlaceCozmoTouch(currentPos);
+				}
 			}
 		}
 
@@ -605,14 +743,15 @@ public class VortexController : GameController {
 			lightingBall.SingleLightningBolt();
 		}
 		lastNumber = newNumber;
-
-		
-
 	}
+
 	void Exit_REQUEST_SPIN() {
 		ClearInputs();
 		for(int i=0;i<textPlayerSpinNow.Length;i++) {
 			textPlayerSpinNow[i].gameObject.SetActive(false);
+		}
+		if(imageCozmoDragHand != null) {
+			imageCozmoDragHand.gameObject.SetActive(false);
 		}
 	}
 
@@ -671,14 +810,14 @@ public class VortexController : GameController {
 					cozmoTapsSubmitted = 1;
 				}
 
-				Debug.Log("cozmo predictedNum("+predictedNum+") time("+time+") timeToBid("+timeToBid+") predictedDuration("+predictedDuration+")");
+				//Debug.Log("cozmo predictedNum("+predictedNum+") time("+time+") timeToBid("+timeToBid+") predictedDuration("+predictedDuration+")");
 			}
 		}
 		else if(predictedNum > 0 && cozmoTapsSubmitted < predictedNum) {
 			if(Time.time - playerInputs[1].FinalTime >= cozmoTimePerTap) {
 				PlayerInputTap(1);
 				cozmoTapsSubmitted++;
-				Debug.Log("cozmo predictedNum("+predictedNum+") cozmoTapsSubmitted("+cozmoTapsSubmitted+")");
+				//Debug.Log("cozmo predictedNum("+predictedNum+") cozmoTapsSubmitted("+cozmoTapsSubmitted+")");
 			}
 		}
 		
@@ -930,6 +1069,18 @@ public class VortexController : GameController {
 		}
 	}
 
+	void PlaceCozmoTouch(Vector2 screenPos) {
+		if(imageCozmoDragHand == null) return;
+
+		imageCozmoDragHand.gameObject.SetActive(true);
+		RectTransform rTrans = cozmoDragHandRectTransform;
+		Camera cam = imageCozmoDragHand.canvas.renderMode != RenderMode.ScreenSpaceOverlay ? imageCozmoDragHand.canvas.worldCamera : null;
+		Vector2 anchor;
+		RectTransformUtility.ScreenPointToLocalPointInRectangle(rTrans, screenPos, cam, out anchor);
+		imageCozmoDragHand.rectTransform.anchoredPosition = anchor;
+		//Debug.Log("PlaceCozmoTouch screenPos("+screenPos+") anchor("+anchor+")");
+	}
+
 ///
 	public void PlayerInputTap(int index) {
 		if(state != GameState.PLAYING) return;
@@ -968,7 +1119,7 @@ public class VortexController : GameController {
 
 		if(buttonPressSound != null) AudioManager.PlayOneShot(buttonPressSound);
 
-		Debug.Log("PlayerInputTap index: "+index);
+		//Debug.Log("PlayerInputTap index: "+index);
 
 		if(playerInputs[index].stamps.Count == 1) {
 			StartCoroutine(DelayBidLockedEffect(index));

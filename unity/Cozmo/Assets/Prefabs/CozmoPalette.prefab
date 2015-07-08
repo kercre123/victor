@@ -55,6 +55,8 @@ MonoBehaviour:
     sprite: {fileID: 21300000, guid: 031136385e7d143b08ed2fb7c03ae4fc, type: 3}
   - Name: Flag Cube
     sprite: {fileID: 21300000, guid: 5bbd8d6b09bf74384b37acaa93eb8a4d, type: 3}
+  - Name: Human Face
+    sprite: {fileID: 21300000, guid: 5bbd8d6b09bf74384b37acaa93eb8a4d, type: 3}
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1
@@ -66,4 +68,3 @@ Prefab:
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 177574}
   m_IsPrefabParent: 1
-  m_IsExploded: 1
