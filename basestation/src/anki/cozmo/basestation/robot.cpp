@@ -495,8 +495,13 @@ namespace Anki {
       // and this should be true
       assert(msg.timestamp == t);
       
-      if(!_visionWhileMovingEnabled && !IsPickingOrPlacing()) {
-        
+      // If this is not a face marker and "Vision while moving" is disabled and
+      // we aren't picking/placing, check to see if the robot's body or head are
+      // moving too fast to queue this marker
+      if(msg.markerType != Vision::Marker::FACE_CODE &&
+         !_visionWhileMovingEnabled &&
+         !IsPickingOrPlacing())
+      {
         TimeStamp_t t_prev, t_next;
         RobotPoseStamp p_prev, p_next;
         
