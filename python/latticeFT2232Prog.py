@@ -14,6 +14,10 @@ USAGE ="""
 Writes the program file to the 0th FT2232 channel available
 """.format(sys.argv[0])
 
+nCS    = GPIOL0
+CDONE  = GPIOL2
+nReset = GPIOL3
+
 def checkResult(ret, exitOnFail=True):
     "Checks the result of an MPSSE call"
     if ret is None or ret == MPSSE_OK:
@@ -25,29 +29,31 @@ def checkResult(ret, exitOnFail=True):
         else:
             return False
 
-def programFPGA(program_file_path_name):
+def setupFTDI():
     port = MPSSE(SPI0, TWO_MHZ, MSB)
     sys.stdout.write("Opened {}\r\n".format(port.GetDescription()))
-    checkResult(port.PinLow(GPIOL0))
-    checkResult(port.PinLow(GPIOL3))
-    checkResult(port.PinHigh(GPIOL2))
+    checkResult(port.PinHigh(nCS))
+    checkResult(port.PinHigh(CDONE))
+    checkResult(port.PinHigh(nReset))
+    return port
+
+def programFPGA(port, program_file_path_name):
+    checkResult(port.PinLow(nCS))
+    checkResult(port.PinLow(nReset))
     time.sleep(0.016)
-    checkResult(port.PinHigh(GPIOL3))
+    checkResult(port.PinHigh(nReset))
     time.sleep(0.1)
-    checkResult(port.PinHigh(GPIOL0))
+    checkResult(port.PinHigh(nCS))
     time.sleep(0.016)
     progFile = open(program_file_path_name, 'rb').read() # Read in the programming file
-    checkResult(port.PinLow(GPIOL0))
+    checkResult(port.PinLow(nCS))
     checkResult(port.Start())
     checkResult(port.Write(progFile)) # Write programming file 
     checkResult(port.Write(bytes(range(256))))# Write the dummy bits
-    time.sleep(0.300)
+    time.sleep(0.030)
     checkResult(port.Stop())
-    checkResult(port.PinHigh(GPIOL0))
-    #checkResult(port.PinHigh(GPIOL1))
-    #checkResult(port.PinHigh(GPIOL2))
-    checkResult(port.PinHigh(GPIOL3))
-    checkResult(port.Close())
+    checkResult(port.PinHigh(nCS))
+    checkResult(port.PinHigh(nReset))
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
@@ -55,4 +61,6 @@ if __name__ == "__main__":
     elif not os.path.isfile(sys.argv[1]):
         exit("{} Doesn't seem to be a readable file\r\n".format(sys.argv[1]))
     else:
-        programFPGA(sys.argv[1])
+        port = setupFTDI()
+        programFPGA(port, sys.argv[1])
+        port.Close()

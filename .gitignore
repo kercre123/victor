@@ -200,6 +200,11 @@ robot/fpga/fpgaisp_Implmnt/scratchproject.prs
 robot/fpga/fpgaisp_Implmnt/synlog/
 robot/fpga/fpgaisp_Implmnt/syntmp/
 robot/fpga/fpgaisp_Implmnt/synwork/
+robot/fpga/fpgaisp_Implmnt/fpgaisp_XXXXXOLD.edf
+robot/fpga/fpgaisp_Implmnt/fpgaisp_XXXXXOLD.scf
+robot/fpga/fpgaisp_Implmnt/sbt/outputs/gui/fpgaisp_top_timingviewer.cfg
+robot/fpga/fpgaisp_Implmnt/sbt/outputs/netlister/
+
 robot/fpga/synlog.tcl
 
 **.output

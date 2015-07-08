@@ -77,10 +77,10 @@ BitmapRAM4KInit=yes
 BitmapInitRamBank=1111
 BitmapOscillatorFR=low
 BitmapEnableWarmBoot=yes
-BitmapDisableHeader=no
+BitmapDisableHeader=yes
 BitmapSetSecurity=no
 BitmapSetNoUsedIONoPullup=no
 FloorPlannerShowFanInNets=yes
 FloorPlannerShowFanOutNets=yes
-HookTo3rdPartyTextEditor=
+HookTo3rdPartyTextEditor=no
 

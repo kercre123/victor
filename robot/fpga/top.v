@@ -6,13 +6,14 @@
 module top (
   // Pins
   //inout  wire sio,  ///< SPI data in and data out in SIO mode
-  input  wire mosi; ///< Master out slave in
-  output reg miso; ///< Master in slave out
-  input  wire sck,  ///< SPI clock
-  input  wire scsn, ///< SPI chip select, active low
-  input  wire xclk, ///< Camera clock input (12MHz?)
-  input  wire pclk, ///< Camera pixel clock (>12MHz)
-  input  wire [5:0] camD ///< Camera pixel data
+	    input wire 	      mosi, ///< Master out slave in
+	    output wire	      miso, ///< Master in slave out
+	    input wire 	      sck, ///< SPI clock
+	    input wire 	      scsn, ///< SPI chip select, active low
+	    input wire 	      xclk, ///< Camera clock input (12MHz?)
+	    input wire 	      pclk, ///< Camera pixel clock (>12MHz)
+	    input wire [5:0]  camD, ///< Camera pixel data
+	    output wire [2:0] debug ///< Logic debug outputs
   );
 
 //////////////// SPI Testing /////////////////////
@@ -21,17 +22,21 @@ module top (
   //reg  miso;   ///< Master in slave out data register for when SIO is an output
   //wire mosi;   ///< Master out slave in mirror of SIO when it's an input
 
-  reg [31:0] testFifo;
-
+  reg [31:0] testFifo; /* synthesis syn_keep = 1 */;
+  assign miso = testFifo[31]; 
+   
+  assign debug[0] = inNOut;
+  assign debug[1] = testFifo[30];
+  assign debug[2] = testFifo[31]; 
+   
   //assign sio  = (inNOut) ? 1'bz : miso; // Assign output if outputing, otherwise tristate SIO
   //assign mosi = (inNOut) ? sio  : 1'bx; // Assign input if inputting, otherwise tristate internal logic.
 
   initial begin
-    miso   <= 1'b0;
     inNOut <= 1'b1;
-    testFifo <= 32'h00000000;
+    testFifo <= 0;
   end
-
+   
   always @(posedge scsn) begin
     inNOut <= ! inNOut; // Reverse direction for next transaction
   end
@@ -42,12 +47,12 @@ module top (
         testFifo <= {testFifo[30:0], mosi};
       end
       else begin // Transmistting data
-        miso <= testFifo[31];
-        testFifo <= {testFifo[30:0], 0};
+        testFifo <= {testFifo[30:0], 1'b0};
       end
     end
   end
 
+   
 ///////// Camera buffering ////////////////////////////////////////////////////
 
   /// Camera timing signals
