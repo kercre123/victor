@@ -311,6 +311,7 @@
               '<(cg-util_gyp_path):util',
               '<(cg-util_gyp_path):jsoncpp',
             ],
+            'defines': ['USE_WEBOTS'],
             'sources': [ '<!@(cat <(ctrlGameEngine_source))' ],
             'libraries': [
               '<(webots_path)/lib/libCppController.dylib',
