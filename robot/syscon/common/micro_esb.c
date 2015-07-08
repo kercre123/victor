@@ -46,7 +46,6 @@ static uesb_mainstate_t         m_uesb_mainstate        = UESB_STATE_UNINITIALIZ
 
 #define                         RADIO_SHORTS_COMMON ( RADIO_SHORTS_READY_START_Msk | RADIO_SHORTS_END_DISABLE_Msk | \
                                                       RADIO_SHORTS_ADDRESS_RSSISTART_Msk | RADIO_SHORTS_DISABLED_RSSISTOP_Msk )
-
 static void update_rf_payload_format(uint32_t payload_length)
 {
     NRF_RADIO->PCNF0 =  (1 << RADIO_PCNF0_S0LEN_Pos) | 
@@ -217,6 +216,8 @@ uint32_t uesb_read_rx_payload(uesb_payload_t *payload)
     return UESB_SUCCESS;
 }
 
+void BlinkPack(int);
+
 uint32_t uesb_start() {
     if(m_uesb_mainstate != UESB_STATE_IDLE) return UESB_ERROR_NOT_IDLE;
       
@@ -267,9 +268,11 @@ uint32_t uesb_start() {
     switch(m_uesb_mainstate) {
         case UESB_STATE_PTX:
             NRF_RADIO->TASKS_TXEN  = 1;
+            BlinkPack(0);
             break ;
         case UESB_STATE_PRX:
             NRF_RADIO->TASKS_RXEN  = 1;
+            BlinkPack(1);
             break;
         default:
           break ;
