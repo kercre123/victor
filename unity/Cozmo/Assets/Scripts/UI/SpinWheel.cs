@@ -675,7 +675,7 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 		StopLoopingSound();
 	}
 
-	public void AutomateMode() {
+	public void AutomatedMode() {
 		InitData();
 		//Debug.Log("Lock wheel("+gameObject.name+")");
 		state = SpinWheelState.AUTOMATED;

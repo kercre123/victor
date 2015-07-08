@@ -26,7 +26,15 @@ public class GameObjectSelector : MonoBehaviour {
 		}
 	}
 
+	protected virtual void Awake() {
+		InitializeDefault();
+	}
+
 	protected virtual void OnEnable() {
+		InitializeDefault();
+	}
+
+	protected void InitializeDefault() {
 		if(gameObjects == null || gameObjects.Length == 0) {
 			enabled = false;
 			return;

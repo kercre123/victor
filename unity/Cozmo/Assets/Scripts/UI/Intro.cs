@@ -166,7 +166,8 @@ public class Intro : MonoBehaviour {
 		}
 
 		if(simulated && robot != null) {
-			robot.VisionWhileMoving(true);				
+			robot.VisionWhileMoving(true);		
+			robot.StartFaceAwareness();		
 		}
 
 		error.text = "";

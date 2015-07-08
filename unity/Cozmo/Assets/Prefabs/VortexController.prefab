@@ -2351,6 +2351,23 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!1 &180822
+GameObject:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  serializedVersion: 4
+  m_Component:
+  - 224: {fileID: 22494684}
+  - 222: {fileID: 22254844}
+  - 114: {fileID: 11437106}
+  m_Layer: 5
+  m_Name: Image_CozmoTouch
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
 --- !u!1 &182052
 GameObject:
   m_ObjectHideFlags: 1
@@ -4026,10 +4043,12 @@ MonoBehaviour:
   scoreDisplayFillFade: .5
   scoreDisplayFillAlpha: .5
   scoreDisplayEmptyAlpha: .100000001
+  imageCozmoDragHand: {fileID: 11437106}
   cozmoStartDragPos: {x: .25, y: .75}
   cozmoEndDragPos: {x: .75, y: .75}
   cozmoDragDelay: 2
   cozmoDragTime: .5
+  cozmoFinalDragTime: .200000003
 --- !u!114 &11408142
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -5456,6 +5475,27 @@ MonoBehaviour:
     m_VerticalOverflow: 0
     m_LineSpacing: 1
   m_Text: number of slices
+--- !u!114 &11437106
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 180822}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -765806418, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Sprite: {fileID: 21300000, guid: ea50afe86c2ce4fa6b5f6a6d37ed2357, type: 3}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
 --- !u!114 &11437458
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -8754,6 +8794,12 @@ CanvasRenderer:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 172718}
+--- !u!222 &22254844
+CanvasRenderer:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 180822}
 --- !u!222 &22255968
 CanvasRenderer:
   m_ObjectHideFlags: 1
@@ -10802,6 +10848,7 @@ RectTransform:
   - {fileID: 22485426}
   - {fileID: 22467034}
   - {fileID: 22462602}
+  - {fileID: 22494684}
   m_Father: {fileID: 485116}
   m_RootOrder: 6
   m_AnchorMin: {x: 0, y: 0}
@@ -11683,6 +11730,23 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 20, y: 20}
   m_Pivot: {x: 0, y: 0}
+--- !u!224 &22494684
+RectTransform:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 180822}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 22463550}
+  m_RootOrder: 12
+  m_AnchorMin: {x: .5, y: .5}
+  m_AnchorMax: {x: .5, y: .5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 64, y: 64}
+  m_Pivot: {x: .5, y: .5}
 --- !u!224 &22495268
 RectTransform:
   m_ObjectHideFlags: 1
