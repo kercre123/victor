@@ -1,3 +1,8 @@
+/** @file Espressif SPI driver interface
+ * @author Daniel Casner <daniel@anki.com>
+ * Hacked together driver for SPI
+ */
+ 
 #ifndef SPI_APP_H
 #define SPI_APP_H
 

@@ -43,6 +43,8 @@ typedef enum {
   UPGRADE_TASK_ERASE,
   UPGRADE_TASK_WRITE,
   UPGRADE_TASK_FINISH,
+  UPGRADE_TASK_RESET_FPGA,
+  UPGRADE_TASK_WRITE_FPGA,
 } UpgradeTaskState;
 
 static UpgradeTaskState taskState = UPGRADE_TASK_IDLE;
@@ -149,7 +151,9 @@ LOCAL bool upgradeTask(uint32_t param)
     {
       if (fwWriteAddress < FW_START_ADDRESS)
       {
-        os_printf("UP ERROR: Won't write to %08x below %08x\r\n", fwWriteAddress, FW_START_ADDRESS);
+        os_printf("UP ERROR: Won't write to %08x below %08x\r\n", fwWriteAddress,        flashEraseSector = cmd->flashAddress / FLASH_SECTOR_SIZE;
+        flashEraseEnd    = (cmd->flashAddress + cmd->size) / FLASH_SECTOR_SIZE;
+ FW_START_ADDRESS);
         resetUpgradeState();
         return false;
       }
@@ -242,6 +246,20 @@ LOCAL bool upgradeTask(uint32_t param)
       }
       return false;
     }
+    case UPGRADE_TASK_RESET_FPGA:
+    {
+      if (flags & UPCMD_FPGA_FW)
+      {
+        
+      }
+      else
+      {
+        os_printf("ERR: upgradeTask state RESET_FPGA but flags don't say FPGA?\r\n");
+        printUpgradeState();
+        resetUpgradeState;
+        return false;
+      }
+    }
     default:
     {
       os_printf("WARN: upgradeTask unexpected state: %d\r\n\t", taskState);
@@ -322,35 +340,17 @@ LOCAL void ICACHE_FLASH_ATTR upccReceiveCallback(void *arg, char *usrdata, unsig
       }
       else if (cmd->flags & UPCMD_FPGA_FW)
       {
-        /*
-        fwWriteAddress   = cmd->flashAddress;
         bytesExpected    = cmd->size;
         flags            = cmd->flags;
-        flashEraseSector = cmd->flashAddress / FLASH_SECTOR_SIZE;
-        flashEraseEnd    = (cmd->flashAddress + cmd->size) / FLASH_SECTOR_SIZE;
         upccConn = conn;
-        taskState = UPGRADE_TASK_ERASE;
+        taskState = UPGRADE_TASK_RESET_FPGA;
+        os_printf("FPGA write firmware %d bytes, flags = %x \r\n", bytesExpected, flags);
         if (task0Post(upgradeTask, 0) == false)
         {
           os_printf("ERROR: Couldn't queue upgrade task\r\n");
           resetUpgradeState();
           return;
         }
-        */
-        spi_mast_write(HSPI, 0x7EAA997E);
-        spi_mast_write(HSPI, cmd->flashAddress);
-        spi_mast_write(HSPI, cmd->size);
-        spi_mast_write(HSPI, 4);
-        spi_mast_write(HSPI, 5);
-        spi_mast_write(HSPI, 6);
-        spi_mast_write(HSPI, 7);
-        spi_mast_write(HSPI, 8);
-        spi_mast_write(HSPI, 9);
-        spi_mast_start_transaction(HSPI, 0, 0, 0, 0, 32*9, 0, 0);
-        while (spi_mast_busy(HSPI));
-        /*spi_mast_start_transaction(HSPI, 0, 0, 0, 0, 0, 42*4, 0);
-        while (spi_mast_busy(HSPI));
-        os_printf("SPI readback: %08x %08x %08x %08x\r\n", spi_mast_read(HSPI), spi_mast_read(HSPI), spi_mast_read(HSPI), spi_mast_read(HSPI));*/
       }
       else
       {
