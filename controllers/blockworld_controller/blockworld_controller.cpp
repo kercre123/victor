@@ -20,7 +20,7 @@
 #include <fstream>
 
 
-#ifdef USE_WEBOTS
+#ifndef NO_WEBOTS
 #include <webots/Supervisor.hpp>
 webots::Supervisor basestationController;
 #else
@@ -107,7 +107,7 @@ int main(int argc, char **argv)
   } 
 
   int numUIDevicesToWaitFor = 1;
-#ifdef USE_WEBOTS
+#ifndef NO_WEBOTS
   webots::Field* numUIsField = basestationController.getSelf()->getField("numUIDevicesToWaitFor");
   if (numUIsField) {
     numUIDevicesToWaitFor = numUIsField->getSFInt32();
@@ -152,13 +152,13 @@ int main(int argc, char **argv)
   //
   while (basestationController.step(BS_TIME_STEP) != -1)
   {
-#ifndef USE_WEBOTS
+#ifdef NO_WEBOTS
     auto tick_start = std::chrono::system_clock::now();
 #endif
     
     cozmoGame.Update(basestationController.getTime());
     
-#ifndef USE_WEBOTS
+#ifdef NO_WEBOTS
     auto ms_left = std::chrono::milliseconds(BS_TIME_STEP) - (std::chrono::system_clock::now() - tick_start);
     if (ms_left < std::chrono::milliseconds(0)) {
       PRINT_STREAM_WARNING("EngineHeartbeat.overtime", "over by " << std::chrono::duration_cast<std::chrono::seconds>(-ms_left).count() << "ms");
