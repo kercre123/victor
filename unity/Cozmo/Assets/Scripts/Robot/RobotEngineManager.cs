@@ -93,6 +93,12 @@ public class RobotEngineManager : MonoBehaviour {
 
 	public void AddRobot( byte robotID )
 	{
+		if(robots.ContainsKey(robotID)) {
+			robotList.RemoveAll( x => x.ID == robotID);
+			robots.Remove(robotID);
+		}
+
+
 		Robot robot = new Robot( robotID );
 		robots.Add( robotID, robot );
 		robotList.Add( robot );

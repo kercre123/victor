@@ -396,7 +396,7 @@ public class VortexController : GameController {
 		if(robot != null) {
 			//turn back towards ipad
 			robot.SetLiftHeight(1f);
-			robot.TrackToObject(null, false);
+			//robot.TrackToObject(null, false);
 		}
 
 		base.Enter_PLAYING();

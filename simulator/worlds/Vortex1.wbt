@@ -132,12 +132,11 @@ CozmoMat {
 LightCube {
   translation -0.143503 0.11584 0.0219969
   rotation 0 1 0 0
-  ID 1
 }
 LightCube {
   translation -0.141054 0.0348738 0.0219969
   rotation 0 1 0 0
-  ID 2
+  ID 3
 }
 Face {
   translation 0.026673 0.0807419 0.1
