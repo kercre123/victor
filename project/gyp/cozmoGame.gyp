@@ -352,37 +352,7 @@
               '<(cg-ce_gyp_path):webotsCtrlLightCube',
             ],
             'copies': [
-              {
-                'files': [
-                  '<(PRODUCT_DIR)/webotsCtrlKeyboard',
-                ],
-                'destination': '../../simulator/controllers/webotsCtrlKeyboard/',
-              },
-              {
-                'files': [
-                  '<(PRODUCT_DIR)/webotsCtrlGameEngine',
-                ],
-                'destination': '../../simulator/controllers/webotsCtrlGameEngine/',
-              },
-              {
-                'files': [
-                  '<(PRODUCT_DIR)/webotsCtrlRobot',
-                ],
-                'destination': '../../simulator/controllers/webotsCtrlRobot/',
-              },
-              {
-                'files': [
-                  '<(PRODUCT_DIR)/webotsCtrlViz',
-                ],
-                'destination': '../../simulator/controllers/webotsCtrlViz/',
-              },
-              {
-                'files': [
-                  '<(PRODUCT_DIR)/webotsCtrlLightCube',
-                ],
-                'destination': '../../simulator/controllers/webotsCtrlLightCube/',
-              },
-              
+            
               # Copy over protos
               {
                 'files': [
@@ -391,6 +361,91 @@
                 'destination': '../../simulator/protos/CozmoEngineProtos-DO_NOT_MODIFY/',
               },
 
+            ],
+            
+            # Create symlinks to controller binaries
+            # For some reason this is necessary in order to be able to attach to their processes from Xcode.
+            'actions': [
+              {
+                'action_name': 'create_symlink_webotsCtrlKeyboard',
+                'inputs': [
+                  '<(PRODUCT_DIR)/webotsCtrlKeyboard',
+                ],
+                'outputs': [
+                  '../../simulator/controllers/webotsCtrlKeyboard/webotsCtrlKeyboard',
+                ],
+                'action': [
+                  'ln',
+                  '-s',
+                  '-f',
+                  '<@(_inputs)',
+                  '<@(_outputs)',
+                ],
+              },
+              {
+                'action_name': 'create_symlink_webotsCtrlGameEngine',
+                'inputs': [
+                  '<(PRODUCT_DIR)/webotsCtrlGameEngine',
+                ],
+                'outputs': [
+                  '../../simulator/controllers/webotsCtrlGameEngine/webotsCtrlGameEngine',
+                ],
+                'action': [
+                  'ln',
+                  '-s',
+                  '-f',
+                  '<@(_inputs)',
+                  '<@(_outputs)',
+                ],
+              },
+              {
+                'action_name': 'create_symlink_webotsCtrlRobot',
+                'inputs': [
+                  '<(PRODUCT_DIR)/webotsCtrlRobot',
+                ],
+                'outputs': [
+                  '../../simulator/controllers/webotsCtrlRobot/webotsCtrlRobot',
+                ],
+                'action': [
+                  'ln',
+                  '-s',
+                  '-f',
+                  '<@(_inputs)',
+                  '<@(_outputs)',
+                ],
+              },
+              {
+                'action_name': 'create_symlink_webotsCtrlViz',
+                'inputs': [
+                  '<(PRODUCT_DIR)/webotsCtrlViz',
+                ],
+                'outputs': [
+                  '../../simulator/controllers/webotsCtrlViz/webotsCtrlViz',
+                ],
+                'action': [
+                  'ln',
+                  '-s',
+                  '-f',
+                  '<@(_inputs)',
+                  '<@(_outputs)',
+                ],
+              },
+              {
+                'action_name': 'create_symlink_webotsCtrlLightCube',
+                'inputs': [
+                  '<(PRODUCT_DIR)/webotsCtrlLightCube',
+                ],
+                'outputs': [
+                  '../../simulator/controllers/webotsCtrlLightCube/webotsCtrlLightCube',
+                ],
+                'action': [
+                  'ln',
+                  '-s',
+                  '-f',
+                  '<@(_inputs)',
+                  '<@(_outputs)',
+                ],
+              },
             ],
             
           }, # end webotsControllers
