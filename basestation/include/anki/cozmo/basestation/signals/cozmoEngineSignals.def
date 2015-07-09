@@ -14,7 +14,7 @@ DEF_SIGNAL(RobotAvailable, RobotID_t robotID)
 DEF_SIGNAL(RobotDisconnected, RobotID_t robotID)
       
 // Robot signals
-DEF_SIGNAL(PlaySoundForRobot, RobotID_t robotID, u32 soundID, u8 numLoops, u8 volume)
+DEF_SIGNAL(PlaySoundForRobot, RobotID_t robotID, std::string soundName, u8 numLoops, u8 volume)
 
 DEF_SIGNAL(StopSoundForRobot, RobotID_t robotID)
       
@@ -65,8 +65,7 @@ DEF_SIGNAL(RobotCompletedAction,
            uint8_t robotID,
            RobotActionType actionType,   // See actionTypes.def
            ActionResult result,          // See actionTypes.def
-           std::array<int32_t,5> objectIDs, // Optional
-           uint8_t numObjects)           // Optional
+           ActionCompletedStruct completionInfo)
 
 
 DEF_SIGNAL(ActiveObjectMoved,

@@ -1,0 +1,353 @@
+/**
+ * File: faceAnimationManager.cpp
+ *
+ * Author: Andrew Stein
+ * Date:   7/7/2015
+ *
+ * Description: Implements container for managing available animations for the robot's face display.
+ *
+ * Copyright: Anki, Inc. 2015
+ **/
+
+#include "anki/cozmo/basestation/faceAnimationManager.h"
+
+#include "anki/common/basestation/platformPathManager.h"
+
+#include "util/logging/logging.h"
+
+#include "opencv2/highgui/highgui.hpp"
+
+#include <sys/stat.h>
+#include <errno.h>
+#include <dirent.h>
+
+#if defined(WIN32) || defined(_WIN32)
+#define PATH_SEPARATOR "\\"
+#else
+#define PATH_SEPARATOR "/"
+#endif
+
+namespace Anki {
+namespace Cozmo {
+
+  FaceAnimationManager* FaceAnimationManager::_singletonInstance = nullptr;
+  
+  FaceAnimationManager::FaceAnimationManager()
+  : _hasRootDir(false)
+  {
+    SetRootDir("");
+  }
+  
+  void FaceAnimationManager::removeInstance()
+  {
+    // check if the instance has been created yet
+    if(nullptr != _singletonInstance) {
+      delete _singletonInstance;
+      _singletonInstance = nullptr;
+    }
+  }
+  
+  
+  // Read the animations in a dir
+  Result FaceAnimationManager::ReadFaceAnimationDir()
+  {
+    const std::string animationFolder = _rootDir;
+
+    DIR* dir = opendir(animationFolder.c_str());
+    if ( dir != nullptr) {
+      dirent* ent = nullptr;
+      while ( (ent = readdir(dir)) != nullptr) {
+        if (ent->d_type == DT_DIR && ent->d_name[0] != '.') {
+          const std::string animName(ent->d_name);
+          std::string fullDirName = animationFolder + ent->d_name;
+          struct stat attrib{0};
+          int result = stat(fullDirName.c_str(), &attrib);
+          if (result == -1) {
+            PRINT_NAMED_WARNING("FaceAnimationManager.ReadFaceAnimationDir",
+                                "could not get mtime for %s", fullDirName.c_str());
+            continue;
+          }
+          bool loadAnimDir = false;
+          auto mapIt = _availableAnimations.find(animName);
+          if (mapIt == _availableAnimations.end()) {
+            _availableAnimations[animName].lastLoadedTime = attrib.st_mtimespec.tv_sec;
+            loadAnimDir = true;
+          } else {
+            if (mapIt->second.lastLoadedTime < attrib.st_mtimespec.tv_sec) {
+              mapIt->second.lastLoadedTime = attrib.st_mtimespec.tv_sec;
+              loadAnimDir = true;
+            } else {
+              //PRINT_NAMED_INFO("Robot.ReadAnimationFile", "old time stamp for %s", fullFileName.c_str());
+            }
+          }
+          if (loadAnimDir) {
+            
+            DIR* animDir = opendir(fullDirName.c_str());
+            if(animDir != nullptr) {
+              dirent* frameEntry = nullptr;
+              while ( (frameEntry = readdir(animDir)) != nullptr) {
+                if(frameEntry->d_type == DT_REG) {
+                  
+                  // Get the frame number in this filename
+                  const std::string filename(frameEntry->d_name);
+                  size_t dotPos = filename.find_last_of(".");
+                  if(dotPos == std::string::npos) {
+                    PRINT_NAMED_ERROR("FaceAnimationManager.ReadFaceAnimationDir",
+                                      "Could not find '.' in frame filename %s\n",
+                                      filename.c_str());
+                    return RESULT_FAIL;
+                  } else if(dotPos < FRAME_NUM_DIGITS) {
+                    PRINT_NAMED_ERROR("FaceAnimationManager.ReadFaceAnimationDir",
+                                      "Unexpected position (%lu) for '.' in frame filename %s\n",
+                                      dotPos, filename.c_str());
+                    return RESULT_FAIL;
+                  }
+                  
+                  const std::string digitStr(filename.substr(dotPos-FRAME_NUM_DIGITS, FRAME_NUM_DIGITS));
+                  
+                  s32 frameNum = 0;
+                  try {
+                    frameNum = std::stoi(digitStr);
+                  } catch (std::invalid_argument&) {
+                    PRINT_NAMED_ERROR("FaceAnimationManager.ReadFaceAnimationDir",
+                                      "Could not get %d-digit frame number from substring '%s' "
+                                      "of filename '%s'.\n",
+                                      FRAME_NUM_DIGITS, digitStr.c_str(), filename.c_str());
+                    return RESULT_FAIL;
+                  }
+                  
+                  AvailableAnim& anim = _availableAnimations[animName];
+                  
+                  if(frameNum > 0) {
+                    
+                    if(anim.rleFrames.empty()) {
+                      PRINT_NAMED_ERROR("FaceAnimationManager.ReadFaceAnimationDir",
+                                        "No frame zero found in '%s'.\n", filename.c_str());
+                      return RESULT_FAIL;
+                    }
+                    
+                    // Add empty frames if there's a gap
+                    s32 emptyFramesAdded = 0;
+                    while(anim.rleFrames.size() < frameNum-1) {
+                      anim.rleFrames.push_back({});
+                      ++emptyFramesAdded;
+                    }
+                    
+                    if(emptyFramesAdded > 0) {
+                      PRINT_NAMED_INFO("FaceAnimationManager.ReadFaceAnimationDir",
+                                       "Inserted %d empty frames before frame %d in animation %s.\n",
+                                       emptyFramesAdded, frameNum, animName.c_str());
+                    }
+                  }
+                  
+                  // Read the image
+                  const std::string fullFilename(fullDirName + PATH_SEPARATOR + frameEntry->d_name);
+                  cv::Mat img = cv::imread(fullFilename, CV_LOAD_IMAGE_GRAYSCALE);
+                  
+                  if(img.rows != IMAGE_HEIGHT || img.cols != IMAGE_WIDTH) {
+                    PRINT_NAMED_ERROR("FaceAnimationManager.ReadFaceAnimationDir",
+                                      "Image in %s is %dx%d instead of %dx%d.\n",
+                                      fullFilename.c_str(),
+                                      img.cols, img.rows,
+                                      IMAGE_WIDTH, IMAGE_HEIGHT);
+                    return RESULT_FAIL;
+                  }
+                  
+                  // Binarize
+                  img = img > 128;
+                  
+                  // DEBUG
+                  //cv::imshow("FaceAnimImage", img);
+                  //cv::waitKey(30);
+                  
+                  anim.rleFrames.push_back({});
+                  Result compressResult = CompressRLE(img, anim.rleFrames.back());
+                }
+              }
+            }
+            
+            PRINT_NAMED_INFO("FaceAnimationManager.ReadFaceAnimationDir",
+                             "Added %lu files/frames to animation %s",
+                             _availableAnimations[animName].GetNumFrames(),
+                             animName.c_str());
+          }
+        }
+      }
+      closedir(dir);
+    } else {
+      PRINT_NAMED_INFO("FaceAnimationManager.ReadFaceAnimationDir", "folder not found %s", animationFolder.c_str());
+    }
+    
+    return RESULT_OK;
+    
+  } // ReadFaceAnimationDir()
+  
+  
+  bool FaceAnimationManager::SetRootDir(const char* dir)
+  {
+    _hasRootDir = false;
+    
+    std::string fullPath(PREPEND_SCOPED_PATH(PlatformPathManager::FaceAnimation, dir));
+    
+    // Check if directory exists
+    struct stat info;
+    if( stat( fullPath.c_str(), &info ) != 0 ) {
+      PRINT_NAMED_WARNING("FaceAnimationManager.SetRootDir.NoAccess",
+                          "Could not access path %s (errno %d)\n",
+                          fullPath.c_str(), errno);
+      return false;
+    }
+    if (!S_ISDIR(info.st_mode)) {
+      PRINT_NAMED_WARNING("FaceAnimationManager.SetRootDir.NotADir", "\n");
+      return false;
+    }
+    
+    _hasRootDir = true;
+    _rootDir = fullPath;
+    
+    // Every sub-directory in the root directory is considered an available
+    // animation, with as many frames as there are files
+    ReadFaceAnimationDir();
+    
+    return true;
+    
+  } // SetRootDir()
+  
+  u32 FaceAnimationManager::GetNumFrames(const std::string &animName) const
+  {
+
+    auto animIter = _availableAnimations.find(animName);
+    if(animIter == _availableAnimations.end()) {
+      PRINT_NAMED_WARNING("FaceAnimationManager.GetNumFrames",
+                          "Unknown animation requested: %s.\n",
+                          animName.c_str());
+      return 0;
+    } else {
+      return animIter->second.GetNumFrames();
+    }
+  } // GetNumFrames()
+  
+  const std::vector<u8>* FaceAnimationManager::GetFrame(const std::string& animName, u32 frameNum) const
+  {
+    auto animIter = _availableAnimations.find(animName);
+    if(animIter == _availableAnimations.end()) {
+      PRINT_NAMED_ERROR("FaceAnimationManager.GetFrame",
+                        "Unknown animation requested: %s.\n",
+                        animName.c_str());
+      return nullptr;
+    } else {
+      const AvailableAnim& anim = animIter->second;
+      
+      if(frameNum < anim.GetNumFrames()) {
+        
+        return &(anim.rleFrames[frameNum]);
+        
+      } else {
+        PRINT_NAMED_ERROR("FaceAnimationManager.GetFrame",
+                          "Requested frame number %d is invalid. "
+                          "Only %lu frames available in animatino %s.\n",
+                          frameNum, animIter->second.GetNumFrames(),
+                          animName.c_str());
+        return nullptr;
+      }
+    }
+  } // GetFrame()
+  
+  Result FaceAnimationManager::CompressRLE(const cv::Mat& img, std::vector<u8>& rleData)
+  {
+    // Frame is in 8-bit RLE format:
+    //  0 terminates the image
+    //  1-63 draw N full lines (N*128 pixels) of black or blue
+    //  64-255 draw 0-191 pixels (N-64) of black or blue, then invert the color for the next run
+    // The decoder starts out drawing black, and inverts the color on every byte >= 64
+    
+    // Count how many pixels are in each row
+    cv::Mat rowSums;
+    cv::reduce(img, rowSums, 1, CV_REDUCE_SUM, CV_32S);
+    
+    if(rowSums.rows != IMAGE_HEIGHT) {
+      PRINT_NAMED_ERROR("FaceAnimationManager.CompressRLE",
+                        "Unexpected number of rows in rowSums: %d instead of %d\n",
+                        rowSums.rows, IMAGE_HEIGHT);
+      return RESULT_FAIL;
+    }
+    
+    bool drawingBlack = true;
+    rleData.clear();
+    rleData.push_back(0);
+    
+    s32 *rowSumData = rowSums.ptr<s32>(0);
+    
+    for(s32 iRow=0; iRow<rowSums.rows; ++iRow)
+    {
+      const s32 sum = rowSumData[iRow];
+      
+      if(sum == 0) {
+        // All-zero row
+        if(drawingBlack) {
+          rleData.back()++;
+        } else {
+          rleData.push_back(64); // change color
+          rleData.push_back(1);
+          drawingBlack = true;
+        }
+      } else if(sum >= 255*IMAGE_WIDTH) {
+        // All-one row       
+        if(drawingBlack) {
+          if(iRow > 0) {
+            rleData.push_back(64);
+          } else {
+            rleData.back() = 64; // change color
+          }
+          rleData.push_back(1);
+          drawingBlack = false;
+        } else {
+          if(rleData.back()==63) {
+            // Special case: we are about to fill the whole screen with "on" lines, but
+            // we can't use "64" because that means "change color without drawing
+            // anything". So leave this as 63 and stick a "1" in the next byte.
+            rleData.push_back(1);
+          } else {
+            rleData.back()++;
+          }
+        }
+      } else {
+        // Arbitrary number of "on" pixels on this row
+        const u8* row = img.ptr<u8>(iRow);
+        const bool isBlack = row[0] == 0;
+        if(drawingBlack != isBlack) {
+          // Need to change the drawing color
+          rleData.push_back(64);
+          drawingBlack = !drawingBlack;
+        }
+        
+        // Init new RLE counter at next byte
+        rleData.push_back(65);
+        drawingBlack = !drawingBlack;
+        
+        for(s32 jCol=1; jCol<IMAGE_WIDTH; ++jCol) {
+          if(row[jCol] == row[jCol-1]) {
+            // Haven't changed color, keep incrementing current RLE count
+            rleData.back()++;
+          } else {
+            // Color just changed, move to next byte
+            rleData.push_back(65);
+            drawingBlack = !drawingBlack;
+          }
+        }
+      }
+    }
+    
+    // Special case for all-zero:
+    if(rleData.size() == 1 && rleData[0] == 64) {
+      rleData.clear();
+    }
+    
+    // Terminator
+    rleData.push_back(0);
+    
+    return RESULT_OK;
+  }
+  
+} // namespace Cozmo
+} // namespace Anki

@@ -111,6 +111,7 @@ TEST(BlockWorld, AddAndRemoveObject)
   
 } // BlockWorld.AddAndRemoveObject
 
+
 // This test object allows us to reuse the TEST_P below with different
 // Json filenames as a parameter
 class BlockWorldTest : public ::testing::TestWithParam<const char*>

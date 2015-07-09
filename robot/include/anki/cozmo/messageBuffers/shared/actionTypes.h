@@ -51,4 +51,9 @@ enum {
 typedef int32_t ActionResult;
 
 
-#endif // __ANKI_COZMO_MESSAGE_BUFFERS_SHARED_ACTION_TYPES_H__
+// STRUCTURE ActionCompletedStruct
+typedef struct
+{
+	int32_t objectIDs[5];
+	uint8_t numObjects;
+	

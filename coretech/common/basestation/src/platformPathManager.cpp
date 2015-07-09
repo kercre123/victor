@@ -66,6 +66,8 @@ namespace Anki {
     _scopePrefixes[Sound]     = std::string(QUOTE(SYSTEM_ROOT_PATH)) + "/../products-cozmo-assets/sounds/";
     _scopePrefixes[Resource]  = std::string(QUOTE(SYSTEM_ROOT_PATH)) + "/";
     
+    _scopePrefixes[FaceAnimation] = std::string(QUOTE(SYSTEM_ROOT_PATH)) + "/resources/basestation/faceAnimations/";
+    
 #   else
 #   error PlatformPathManager scopes will not be set.
 #   endif

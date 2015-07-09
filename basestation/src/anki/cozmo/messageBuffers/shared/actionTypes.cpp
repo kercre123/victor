@@ -53,6 +53,77 @@ const char* ActionResultToString(const ActionResult m)
 	}
 	return nullptr;
 }
+// STRUCTURE ActionCompletedStruct
+
+ActionCompletedStruct::ActionCompletedStruct(const uint8_t* buff, size_t len)
+{
+	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+	Unpack(buffer);
+}
+
+ActionCompletedStruct::ActionCompletedStruct(const CLAD::SafeMessageBuffer& buffer)
+{
+	Unpack(buffer);
+}
+
+size_t ActionCompletedStruct::Pack(uint8_t* buff, size_t len) const
+{
+	CLAD::SafeMessageBuffer buffer(buff, len, false);
+	return Pack(buffer);
+}
+
+size_t ActionCompletedStruct::Pack(CLAD::SafeMessageBuffer& buffer) const
+{
+	buffer.WriteFArray<int32_t, 5>(this->objectIDs);
+	buffer.Write(this->numObjects);
+	buffer.WritePString<uint8_t>(this->animName);
+	const size_t bytesWritten {buffer.GetBytesWritten()};
+	return bytesWritten;
+}
+
+size_t ActionCompletedStruct::Unpack(const uint8_t* buff, const size_t len)
+{
+	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+	return Unpack(buffer);
+}
+
+size_t ActionCompletedStruct::Unpack(const CLAD::SafeMessageBuffer& buffer)
+{
+	buffer.ReadFArray<int32_t, 5>(this->objectIDs);
+	buffer.Read(this->numObjects);
+	buffer.ReadPString<uint8_t>(this->animName);
+	return buffer.GetBytesRead();
+}
+
+size_t ActionCompletedStruct::Size() const
+{
+	size_t result = 0;
+	//objectIDs
+	result += 4 * 5; // = int_32 * 5
+	//numObjects
+	result += 1; // = uint_8
+	//animName
+	result += 1; // length = uint_8
+	result += 1 * animName.size(); //string
+	return result;
+}
+
+bool ActionCompletedStruct::operator==(const ActionCompletedStruct& other) const
+{
+	if (objectIDs != other.objectIDs
+	|| numObjects != other.numObjects
+	|| animName != other.animName) {
+		return false;
+	}
+	return true;
+}
+
+bool ActionCompletedStruct::operator!=(const ActionCompletedStruct& other) const
+{
+	return !(operator==(other));
+}
+
+
 } // namespace Cozmo
 
 } // namespace Anki

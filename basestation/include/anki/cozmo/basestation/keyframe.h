@@ -56,6 +56,11 @@ namespace Anki {
       // if not available.
       virtual RobotMessage* GetStreamMessage() = 0;
       
+      // Whether or not this KeyFrame is "done" after calling GetStreamMessage().
+      // Override for special keyframes that need to keep parceling out data into
+      // multiple returned messages.
+      virtual bool IsDone() { return true; }
+      
     protected:
       
       // Populate members from Json
@@ -149,7 +154,7 @@ namespace Anki {
       virtual Result SetMembersFromJson(const Json::Value &jsonRoot) override;
       
     private:
-      u32 _audioID;
+      std::string _audioName;
       
     }; // class DeviceAudioKeyFrame
     
@@ -170,14 +175,13 @@ namespace Anki {
         return ClassName;
       }
       
-      SoundID_t GetAudioID() const { return _audioID; }
+      const std::string& GetSoundName() const { return _audioName; }
       
     protected:
       virtual Result SetMembersFromJson(const Json::Value &jsonRoot) override;
       
     private:
       std::string _audioName;
-      SoundID_t   _audioID;
       
       s32 _numSamples;
       s32 _sampleIndex;
@@ -212,6 +216,40 @@ namespace Anki {
       MessageAnimKeyFrame_FaceImage _streamMsg;
       
     }; // class FaceImageKeyFrame
+    
+    
+    // A FaceAnimationKeyFrame is for streaming a set of images to display on the
+    // robot's face. It is a cross between an AudioKeyFrame and an ImageKeyFrame.
+    // Like an ImageKeyFrame, it populates single messages with RLE-compressed
+    // data for display on the face display. Like an AudioKeyFrame, it will
+    // return a non-NULL message each time GetStreamMessage() is called until there
+    // are no more frames left in the animation.
+    class FaceAnimationKeyFrame : public IKeyFrame
+    {
+    public:
+      FaceAnimationKeyFrame() { }
+      
+      virtual RobotMessage* GetStreamMessage() override;
+      
+      static const std::string& GetClassName() {
+        static const std::string ClassName("FaceAnimationKeyFrame");
+        return ClassName;
+      }
+
+      virtual bool IsDone() override { return _curFrame >= _numFrames; }
+      
+    protected:
+      virtual Result SetMembersFromJson(const Json::Value &jsonRoot) override;
+      
+    private:
+      std::string  _animName;
+      
+      s32 _numFrames;
+      s32 _curFrame;
+      
+      MessageAnimKeyFrame_FaceImage _faceImageMsg;
+      
+    }; // class FaceAnimationKeyFrame
     
     
     // A FacePositionKeyFrame sets the center of the currently displayed face

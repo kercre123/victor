@@ -704,11 +704,9 @@ namespace Anki {
           _activeID = 2;
           break;
 
-          /*
-        case Vision::MARKER_INVERTED_LIGHTNINGBOLTHOLLOW_000:
+        case Vision::MARKER_INVERTED_LIGHTNINGBOLTHOLLOW_01:
           _activeID = 3;
           break;
-          */
           
         default:
           _activeID = -1;

@@ -43,6 +43,101 @@ namespace Anki {
     
     static const ActionList::SlotHandle DriveAndManipulateSlot = 0;
     
+    // List of sound IDs
+    typedef enum {
+      SOUND_TADA
+      ,SOUND_NOPROBLEMO
+      ,SOUND_INPUT
+      ,SOUND_SWEAR
+      ,SOUND_STARTOVER
+      ,SOUND_NOTIMPRESSED
+      ,SOUND_60PERCENT
+      ,SOUND_DROID
+      ,SOUND_DEMO_START
+      ,SOUND_WAITING4DICE
+      ,SOUND_WAITING4DICE2DISAPPEAR
+      ,SOUND_OK_GOT_IT
+      ,SOUND_OK_DONE
+      ,SOUND_POWER_ON
+      ,SOUND_POWER_DOWN
+      ,SOUND_PHEW
+      ,SOUND_OOH
+      ,SOUND_SCREAM
+      ,SOUND_WHATS_NEXT
+      ,SOUND_HELP_ME
+      ,SOUND_SCAN
+      ,SOUND_HAPPY_CHASE
+      ,SOUND_FLEES
+      ,SOUND_SINGING
+      ,SOUND_SHOOT
+      ,SOUND_SHOT_HIT
+      ,SOUND_SHOT_MISSED
+      ,NUM_SOUNDS
+    } SoundID_t;
+
+    
+    const std::string& GetSoundName(SoundID_t soundID)
+    {
+      // Table of sound files relative to root dir
+      static const std::map<SoundID_t, std::string> soundTable =
+      {
+        // Cozmo default sound scheme
+        {SOUND_STARTOVER, "demo/WaitingForDice2.wav"}
+        ,{SOUND_NOTIMPRESSED, "demo/OKGotIt.wav"}
+        
+        ,{SOUND_WAITING4DICE, "demo/WaitingForDice1.wav"}
+        ,{SOUND_WAITING4DICE2DISAPPEAR, "demo/WaitingForDice2.wav"}
+        ,{SOUND_OK_GOT_IT, "demo/OKGotIt.wav"}
+        ,{SOUND_OK_DONE, "demo/OKDone.wav"}
+        
+        // Movie sound scheme
+        ,{SOUND_TADA, "misc/tada.mp3"}
+        ,{SOUND_NOPROBLEMO, "misc/nproblem.wav"}
+        ,{SOUND_INPUT, "misc/input.wav"}
+        ,{SOUND_SWEAR, "misc/swear.wav"}
+        ,{SOUND_STARTOVER, "anchorman/startover.wav"}
+        ,{SOUND_NOTIMPRESSED, "anchorman/notimpressed.wav"}
+        ,{SOUND_60PERCENT, "anchorman/60percent.wav"}
+        ,{SOUND_DROID, "droid/droid.wav"}
+        
+        ,{SOUND_DEMO_START, "misc/swear.wav"}
+        ,{SOUND_WAITING4DICE, "misc/input.wav"}
+        ,{SOUND_WAITING4DICE2DISAPPEAR, "misc/input.wav"}
+        ,{SOUND_OK_GOT_IT, "misc/nproblem.wav"}
+        ,{SOUND_OK_DONE, "anchorman/60percent.wav"}
+        
+        // CREEP Sound Scheme
+        // TODO: Update these mappings for real playtest sounds
+        ,{SOUND_POWER_ON,     "creep/Robot-PowerOn1Rev2.mp3"}
+        ,{SOUND_POWER_DOWN,  "creep/Robot-PowerDown13B.mp3"}
+        ,{SOUND_PHEW,        "creep/Robot-ReliefPhew1.mp3"}
+        ,{SOUND_SCREAM,      "creep/Robot-Scream7.mp3"}
+        ,{SOUND_OOH,         "creep/Robot-OohScream12.mp3"}
+        ,{SOUND_WHATS_NEXT,  "creep/Robot-WhatsNext1A.mp3"}
+        ,{SOUND_HELP_ME,     "creep/Robot-WahHelpMe2.mp3"}
+        ,{SOUND_SCAN,        "creep/Robot-Scanning2Rev1.mp3"}
+        ,{SOUND_HAPPY_CHASE, "creep/Robot-Happy2.mp3"}
+        ,{SOUND_FLEES,       "creep/Robot-Happy1.mp3"}
+        ,{SOUND_SINGING,     "creep/Robot-Singing1Part1-2.mp3"}
+        ,{SOUND_SHOOT,       "codeMonsterShooter/shoot.wav"}
+        ,{SOUND_SHOT_HIT,    "codeMonsterShooter/hit.wav"}
+        ,{SOUND_SHOT_MISSED, "codeMonsterShooter/miss.wav"}
+      };
+      
+      static const std::string DEFAULT("");
+
+      auto result = soundTable.find(soundID);
+      if(result == soundTable.end()) {
+        PRINT_NAMED_WARNING("SoundManager.GetSoundFile.UndefinedID",
+                            "No file defined for sound ID %d.\n",
+                            soundID);
+        return DEFAULT;
+      } else {
+        return result->second;
+      }
+    }
+
+    
     static Result ScaredReaction(Robot* robot, Vision::ObservedMarker* marker)
     {
       PRINT_STREAM_INFO("BehaviorManager.ScaredReaction", "Saw Scary Block!");
@@ -191,7 +286,7 @@ namespace Anki {
           _updateFcn = &BehaviorManager::Update_June2014DiceDemo;
           _idleState = IDLE_NONE;
           _timesIdle = 0;
-          SoundManager::getInstance()->Play(SOUND_DEMO_START);
+          SoundManager::getInstance()->Play(GetSoundName(SOUND_DEMO_START));
           break;
           
         case ReactToMarkers:
@@ -220,7 +315,7 @@ namespace Anki {
           
           VizManager::getInstance()->SetText(VizManager::BEHAVIOR_STATE, NamedColors::YELLOW, GetBehaviorStateName(_state).c_str());
           
-          SoundManager::getInstance()->SetScheme(SOUND_SCHEME_CREEP);
+          //SoundManager::getInstance()->SetScheme(SOUND_SCHEME_CREEP);
          
           // Transitions are played once when changing states. Use "NUM_STATES" to specify
           // "any" state. Only one transition will be played, if multiple ones
@@ -468,7 +563,7 @@ namespace Anki {
               CoreTechPrint("Please move first dice away.\n");
               _robot->PlayAnimation("ANIM_HEAD_NOD", 2);
               _waitUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 5;
-              SoundManager::getInstance()->Play(SOUND_WAITING4DICE2DISAPPEAR);
+              SoundManager::getInstance()->Play(GetSoundName(SOUND_WAITING4DICE2DISAPPEAR));
             }
           }
           break;
@@ -603,7 +698,7 @@ namespace Anki {
                     // Wait for first dice to disappear
                     _state = WAITING_FOR_DICE_TO_DISAPPEAR;
 
-                    SoundManager::getInstance()->Play(SOUND_OK_GOT_IT);
+                    SoundManager::getInstance()->Play(GetSoundName(SOUND_OK_GOT_IT));
                     
                     _waitUntilTime = 0;
                   } else {
@@ -623,7 +718,7 @@ namespace Anki {
 
                       _state = BEGIN_EXPLORING;
 
-                      SoundManager::getInstance()->Play(SOUND_OK_GOT_IT);
+                      SoundManager::getInstance()->Play(GetSoundName(SOUND_OK_GOT_IT));
                     }
                   }
                 } else {
@@ -679,7 +774,7 @@ namespace Anki {
                   // if its been long enough, look up
                   if (_waitUntilTime < BaseStationTimer::getInstance()->GetCurrentTimeInSeconds()) {
                     if(++_timesIdle >= numIdleForFrustrated) {
-                      SoundManager::getInstance()->Play(SOUND_WAITING4DICE);
+                      SoundManager::getInstance()->Play(GetSoundName(SOUND_WAITING4DICE));
 
                       _originalPose = _robot->GetPose();
 
@@ -706,12 +801,12 @@ namespace Anki {
 
                   if (_waitUntilTime < BaseStationTimer::getInstance()->GetCurrentTimeInSeconds()) {
                     CoreTechPrint("idle: playing sound\n");
-                    SoundManager::getInstance()->Play(SOUND_WAITING4DICE);
+                    SoundManager::getInstance()->Play(GetSoundName(SOUND_WAITING4DICE));
                     _idleState = IDLE_PLAYING_SOUND;
                     if(_timesIdle >= numIdleForFrustrated) {
                       _waitUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 2.0;
-                      SoundManager::getInstance()->Play(SOUND_WAITING4DICE);
-                      SoundManager::getInstance()->Play(SOUND_WAITING4DICE);
+                      SoundManager::getInstance()->Play(GetSoundName(SOUND_WAITING4DICE));
+                      SoundManager::getInstance()->Play(GetSoundName(SOUND_WAITING4DICE));
                     }
                     else {
                       _waitUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.5;
@@ -727,7 +822,7 @@ namespace Anki {
                     CoreTechPrint("idle: looking back down\n");
                     _robot->MoveHeadToAngle(diceViewingHeadAngle, 1.5, 10);
                     if(_timesIdle >= numIdleForFrustrated) {
-                      SoundManager::getInstance()->Play(SOUND_WAITING4DICE);
+                      SoundManager::getInstance()->Play(GetSoundName(SOUND_WAITING4DICE));
                       _waitUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 2;
                       _idleState = IDLE_LOOKING_DOWN;
                     }
@@ -743,7 +838,7 @@ namespace Anki {
                 {
                   // once we get there, look up
                   if(_robot->IsIdle()) {
-                    SoundManager::getInstance()->Play(SOUND_WAITING4DICE);
+                    SoundManager::getInstance()->Play(GetSoundName(SOUND_WAITING4DICE));
                     CoreTechPrint("idle: looking up\n");
                     _robot->MoveHeadToAngle(headUpWaitingAngleFrustrated, 3.0, 10);
                     _idleState = IDLE_LOOKING_UP;
@@ -759,7 +854,7 @@ namespace Anki {
                      _robot->IsIdle()) {
 
                     CoreTechPrint("idle: turning back\n");
-                    SoundManager::getInstance()->Play(SOUND_WAITING4DICE);
+                    SoundManager::getInstance()->Play(GetSoundName(SOUND_WAITING4DICE));
                     _robot->GetActionList().QueueActionAtEnd(TraversalSlot, new DriveToPoseAction(_originalPose));
                     _idleState = IDLE_TURNING_BACK;
                     _waitUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.25;
@@ -882,7 +977,7 @@ namespace Anki {
             
             _wasCarryingBlockAtDockingStart = _robot->IsCarryingObject();
 
-            SoundManager::getInstance()->Play(SOUND_OK_GOT_IT);
+            SoundManager::getInstance()->Play(GetSoundName(SOUND_OK_GOT_IT));
             
             PRINT_STREAM_INFO("BehaviorManager.DiceDemo", "STARTING DOCKING");
             break;
@@ -914,7 +1009,7 @@ namespace Anki {
               
               _state = BEGIN_EXPLORING;
               
-              SoundManager::getInstance()->Play(SOUND_NOTIMPRESSED);
+              SoundManager::getInstance()->Play(GetSoundName(SOUND_NOTIMPRESSED));
               
               return;
             } // if donePickingUp
@@ -949,7 +1044,7 @@ namespace Anki {
             _desiredBackupDistance = 30;
             _goalPose = _robot->GetPose();
             
-            SoundManager::getInstance()->Play(SOUND_STARTOVER);
+            SoundManager::getInstance()->Play(GetSoundName(SOUND_STARTOVER));
             
           } // if robot IDLE
           
@@ -981,7 +1076,7 @@ namespace Anki {
             userFacingPose.SetRotation(USER_LOC_ANGLE_WRT_MAT, Z_AXIS_3D());
             _robot->GetActionList().QueueActionAtEnd(TraversalSlot, new DriveToPoseAction(userFacingPose));
 
-            SoundManager::getInstance()->Play(SOUND_OK_GOT_IT);
+            SoundManager::getInstance()->Play(GetSoundName(SOUND_OK_GOT_IT));
             _state = FACE_USER;
           }
           break;
@@ -996,7 +1091,7 @@ namespace Anki {
             _robot->PlayAnimation("ANIM_HEAD_NOD");
             _state = HAPPY_NODDING;
             PRINT_STREAM_INFO("BehaviorManager.DiceDemo", "NODDING_HEAD");
-            SoundManager::getInstance()->Play(SOUND_OK_DONE);
+            SoundManager::getInstance()->Play(GetSoundName(SOUND_OK_DONE));
             
             // Compute time to stop nodding
             _waitUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 2;
