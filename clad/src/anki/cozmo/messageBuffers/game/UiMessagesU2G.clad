@@ -451,6 +451,35 @@ message EraseQuad {
   uint_32 quadID
 }
 
+structure RobotActionUnion {
+   PickAndPlaceObject pickAndPlaceObject,
+   RollObject         rollObject,
+   GotoPose           goToPose,
+   GotoObject         goToObject,
+   TurnInPlace        turnInPlace,
+   SetLiftHeight      setLiftHeight,
+   SetHeadAngle       setHeadAngle
+}
+
+// QueueSingleAction
+message QueueSingleAction {
+  uint_8  robotID,
+  uint_32 inSlot,
+  bool    next,  // if false, queue's at end of current slot
+  RobotActionType  actionType,
+  RobotActionUnion action
+}
+
+// QueueCompoundAction
+message QueueCompoundAction {
+  uint_8  robotID,
+  uint_32 inSlot,
+  bool    next,
+  bool    parallel,
+  RobotActionType   actionTypes[uint_8],
+  RobotActionUnion  actions[uint_8]
+}
+
 // keep empty to generate an auto-union that includes all messages in this file
 // if you do not want to include messages in this union, use the keyword "structure" instead of "message"
 union Message { }

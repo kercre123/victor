@@ -7828,6 +7828,648 @@ public class EraseQuad
 	}
 }
 
+public class RobotActionUnion
+{
+	private Anki.Cozmo.U2G.PickAndPlaceObject _pickAndPlaceObject; // PickAndPlaceObject
+	private Anki.Cozmo.U2G.RollObject _rollObject; // RollObject
+	private Anki.Cozmo.U2G.GotoPose _goToPose; // GotoPose
+	private Anki.Cozmo.U2G.GotoObject _goToObject; // GotoObject
+	private Anki.Cozmo.U2G.TurnInPlace _turnInPlace; // TurnInPlace
+	private Anki.Cozmo.U2G.SetLiftHeight _setLiftHeight; // SetLiftHeight
+	private Anki.Cozmo.U2G.SetHeadAngle _setHeadAngle; // SetHeadAngle
+
+	public Anki.Cozmo.U2G.PickAndPlaceObject pickAndPlaceObject
+	{
+		get {
+			return _pickAndPlaceObject;
+		}
+		set {
+			if (value == null) {
+				throw new System.ArgumentNullException("pickAndPlaceObject cannot be null.", "value");
+			}
+			_pickAndPlaceObject = value;
+		}
+	}
+
+	public Anki.Cozmo.U2G.RollObject rollObject
+	{
+		get {
+			return _rollObject;
+		}
+		set {
+			if (value == null) {
+				throw new System.ArgumentNullException("rollObject cannot be null.", "value");
+			}
+			_rollObject = value;
+		}
+	}
+
+	public Anki.Cozmo.U2G.GotoPose goToPose
+	{
+		get {
+			return _goToPose;
+		}
+		set {
+			if (value == null) {
+				throw new System.ArgumentNullException("goToPose cannot be null.", "value");
+			}
+			_goToPose = value;
+		}
+	}
+
+	public Anki.Cozmo.U2G.GotoObject goToObject
+	{
+		get {
+			return _goToObject;
+		}
+		set {
+			if (value == null) {
+				throw new System.ArgumentNullException("goToObject cannot be null.", "value");
+			}
+			_goToObject = value;
+		}
+	}
+
+	public Anki.Cozmo.U2G.TurnInPlace turnInPlace
+	{
+		get {
+			return _turnInPlace;
+		}
+		set {
+			if (value == null) {
+				throw new System.ArgumentNullException("turnInPlace cannot be null.", "value");
+			}
+			_turnInPlace = value;
+		}
+	}
+
+	public Anki.Cozmo.U2G.SetLiftHeight setLiftHeight
+	{
+		get {
+			return _setLiftHeight;
+		}
+		set {
+			if (value == null) {
+				throw new System.ArgumentNullException("setLiftHeight cannot be null.", "value");
+			}
+			_setLiftHeight = value;
+		}
+	}
+
+	public Anki.Cozmo.U2G.SetHeadAngle setHeadAngle
+	{
+		get {
+			return _setHeadAngle;
+		}
+		set {
+			if (value == null) {
+				throw new System.ArgumentNullException("setHeadAngle cannot be null.", "value");
+			}
+			_setHeadAngle = value;
+		}
+	}
+
+
+	/**** Constructors ****/
+
+	public RobotActionUnion()
+	{
+		this.pickAndPlaceObject = new Anki.Cozmo.U2G.PickAndPlaceObject();
+		this.rollObject = new Anki.Cozmo.U2G.RollObject();
+		this.goToPose = new Anki.Cozmo.U2G.GotoPose();
+		this.goToObject = new Anki.Cozmo.U2G.GotoObject();
+		this.turnInPlace = new Anki.Cozmo.U2G.TurnInPlace();
+		this.setLiftHeight = new Anki.Cozmo.U2G.SetLiftHeight();
+		this.setHeadAngle = new Anki.Cozmo.U2G.SetHeadAngle();
+	}
+
+	public RobotActionUnion(Anki.Cozmo.U2G.PickAndPlaceObject pickAndPlaceObject,
+		Anki.Cozmo.U2G.RollObject rollObject,
+		Anki.Cozmo.U2G.GotoPose goToPose,
+		Anki.Cozmo.U2G.GotoObject goToObject,
+		Anki.Cozmo.U2G.TurnInPlace turnInPlace,
+		Anki.Cozmo.U2G.SetLiftHeight setLiftHeight,
+		Anki.Cozmo.U2G.SetHeadAngle setHeadAngle)
+	{
+		this.pickAndPlaceObject = pickAndPlaceObject;
+		this.rollObject = rollObject;
+		this.goToPose = goToPose;
+		this.goToObject = goToObject;
+		this.turnInPlace = turnInPlace;
+		this.setLiftHeight = setLiftHeight;
+		this.setHeadAngle = setHeadAngle;
+	}
+
+	public RobotActionUnion(System.IO.Stream stream)
+	{
+		Unpack(stream);
+	}
+
+	public RobotActionUnion(System.IO.BinaryReader reader)
+	{
+		Unpack(reader);
+	}
+
+	public void Unpack(System.IO.Stream stream)
+	{
+		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
+		Unpack(reader);
+	}
+
+	public void Unpack(System.IO.BinaryReader reader)
+	{
+		_pickAndPlaceObject = new Anki.Cozmo.U2G.PickAndPlaceObject(reader);
+		_rollObject = new Anki.Cozmo.U2G.RollObject(reader);
+		_goToPose = new Anki.Cozmo.U2G.GotoPose(reader);
+		_goToObject = new Anki.Cozmo.U2G.GotoObject(reader);
+		_turnInPlace = new Anki.Cozmo.U2G.TurnInPlace(reader);
+		_setLiftHeight = new Anki.Cozmo.U2G.SetLiftHeight(reader);
+		_setHeadAngle = new Anki.Cozmo.U2G.SetHeadAngle(reader);
+	}
+
+	public void Pack(System.IO.Stream stream)
+	{
+		System.IO.BinaryWriter writer = new System.IO.BinaryWriter(stream);
+		Pack(writer);
+	}
+
+	public void Pack(System.IO.BinaryWriter writer)
+	{
+		_pickAndPlaceObject.Pack(writer);
+		_rollObject.Pack(writer);
+		_goToPose.Pack(writer);
+		_goToObject.Pack(writer);
+		_turnInPlace.Pack(writer);
+		_setLiftHeight.Pack(writer);
+		_setHeadAngle.Pack(writer);
+	}
+
+	public int Size 
+	{
+		get {
+			return 64;
+		}
+	}
+
+	public static bool ArrayEquals<T>(System.Collections.Generic.IList<T> a1, System.Collections.Generic.IList<T> a2) {
+		if (System.Object.ReferenceEquals(a1, a2))
+			return true;
+
+		if (System.Object.ReferenceEquals(a1, null) || System.Object.ReferenceEquals(a2, null))
+			return false;
+
+		if (a1.Count != a2.Count)
+			return false;
+
+		for (int i = 0; i < a1.Count; i++)
+		{
+			if (!a1[i].Equals(a2[i])) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	public static bool operator ==(RobotActionUnion a, RobotActionUnion b)
+	{
+		if (System.Object.ReferenceEquals(a, null))
+		{
+			return System.Object.ReferenceEquals(b, null);
+		}
+
+		return a.Equals(b);
+	}
+
+	public static bool operator !=(RobotActionUnion a, RobotActionUnion b)
+	{
+		return !(a == b);
+	}
+
+	public override bool Equals(System.Object obj)
+	{
+		return this.Equals(obj as RobotActionUnion);
+	}
+
+	public bool Equals(RobotActionUnion p)
+	{
+		if (System.Object.ReferenceEquals(p, null))
+		{
+			return false;
+		}
+
+		return this._pickAndPlaceObject.Equals(p._pickAndPlaceObject)
+			&& this._rollObject.Equals(p._rollObject)
+			&& this._goToPose.Equals(p._goToPose)
+			&& this._goToObject.Equals(p._goToObject)
+			&& this._turnInPlace.Equals(p._turnInPlace)
+			&& this._setLiftHeight.Equals(p._setLiftHeight)
+			&& this._setHeadAngle.Equals(p._setHeadAngle);
+	}
+
+	public override int GetHashCode()
+	{
+		unchecked
+		{
+			int hash = 17;
+			hash = hash * 23 + this._pickAndPlaceObject.GetHashCode();
+			hash = hash * 23 + this._rollObject.GetHashCode();
+			hash = hash * 23 + this._goToPose.GetHashCode();
+			hash = hash * 23 + this._goToObject.GetHashCode();
+			hash = hash * 23 + this._turnInPlace.GetHashCode();
+			hash = hash * 23 + this._setLiftHeight.GetHashCode();
+			hash = hash * 23 + this._setHeadAngle.GetHashCode();
+			return hash;
+		}
+	}
+}
+
+public class QueueSingleAction
+{
+	private byte _robotID; // uint_8
+	private uint _inSlot; // uint_32
+	private bool _next; // bool
+	private Anki.Cozmo.RobotActionType _actionType; // RobotActionType
+	private Anki.Cozmo.U2G.RobotActionUnion _action; // RobotActionUnion
+
+	public byte robotID { get { return _robotID; } set { _robotID = value; } }
+
+	public uint inSlot { get { return _inSlot; } set { _inSlot = value; } }
+
+	public bool next { get { return _next; } set { _next = value; } }
+
+	public Anki.Cozmo.RobotActionType actionType { get { return _actionType; } set { _actionType = value; } }
+
+	public Anki.Cozmo.U2G.RobotActionUnion action
+	{
+		get {
+			return _action;
+		}
+		set {
+			if (value == null) {
+				throw new System.ArgumentNullException("action cannot be null.", "value");
+			}
+			_action = value;
+		}
+	}
+
+
+	/**** Constructors ****/
+
+	public QueueSingleAction()
+	{
+		this.action = new Anki.Cozmo.U2G.RobotActionUnion();
+	}
+
+	public QueueSingleAction(byte robotID,
+		uint inSlot,
+		bool next,
+		Anki.Cozmo.RobotActionType actionType,
+		Anki.Cozmo.U2G.RobotActionUnion action)
+	{
+		this.robotID = robotID;
+		this.inSlot = inSlot;
+		this.next = next;
+		this.actionType = actionType;
+		this.action = action;
+	}
+
+	public QueueSingleAction(System.IO.Stream stream)
+	{
+		Unpack(stream);
+	}
+
+	public QueueSingleAction(System.IO.BinaryReader reader)
+	{
+		Unpack(reader);
+	}
+
+	public void Unpack(System.IO.Stream stream)
+	{
+		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
+		Unpack(reader);
+	}
+
+	public void Unpack(System.IO.BinaryReader reader)
+	{
+		_robotID = reader.ReadByte();
+		_inSlot = reader.ReadUInt32();
+		_next = reader.ReadBoolean();
+		_actionType = (Anki.Cozmo.RobotActionType)reader.ReadInt32();
+		_action = new Anki.Cozmo.U2G.RobotActionUnion(reader);
+	}
+
+	public void Pack(System.IO.Stream stream)
+	{
+		System.IO.BinaryWriter writer = new System.IO.BinaryWriter(stream);
+		Pack(writer);
+	}
+
+	public void Pack(System.IO.BinaryWriter writer)
+	{
+		writer.Write((byte)_robotID);
+		writer.Write((uint)_inSlot);
+		writer.Write((bool)_next);
+		writer.Write((int)_actionType);
+		_action.Pack(writer);
+	}
+
+	public int Size 
+	{
+		get {
+			return 74;
+		}
+	}
+
+	public static bool ArrayEquals<T>(System.Collections.Generic.IList<T> a1, System.Collections.Generic.IList<T> a2) {
+		if (System.Object.ReferenceEquals(a1, a2))
+			return true;
+
+		if (System.Object.ReferenceEquals(a1, null) || System.Object.ReferenceEquals(a2, null))
+			return false;
+
+		if (a1.Count != a2.Count)
+			return false;
+
+		for (int i = 0; i < a1.Count; i++)
+		{
+			if (!a1[i].Equals(a2[i])) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	public static bool operator ==(QueueSingleAction a, QueueSingleAction b)
+	{
+		if (System.Object.ReferenceEquals(a, null))
+		{
+			return System.Object.ReferenceEquals(b, null);
+		}
+
+		return a.Equals(b);
+	}
+
+	public static bool operator !=(QueueSingleAction a, QueueSingleAction b)
+	{
+		return !(a == b);
+	}
+
+	public override bool Equals(System.Object obj)
+	{
+		return this.Equals(obj as QueueSingleAction);
+	}
+
+	public bool Equals(QueueSingleAction p)
+	{
+		if (System.Object.ReferenceEquals(p, null))
+		{
+			return false;
+		}
+
+		return this._robotID.Equals(p._robotID)
+			&& this._inSlot.Equals(p._inSlot)
+			&& this._next.Equals(p._next)
+			&& this._actionType.Equals(p._actionType)
+			&& this._action.Equals(p._action);
+	}
+
+	public override int GetHashCode()
+	{
+		unchecked
+		{
+			int hash = 17;
+			hash = hash * 23 + this._robotID.GetHashCode();
+			hash = hash * 23 + this._inSlot.GetHashCode();
+			hash = hash * 23 + this._next.GetHashCode();
+			hash = hash * 23 + this._actionType.GetHashCode();
+			hash = hash * 23 + this._action.GetHashCode();
+			return hash;
+		}
+	}
+}
+
+public class QueueCompoundAction
+{
+	private byte _robotID; // uint_8
+	private uint _inSlot; // uint_32
+	private bool _next; // bool
+	private bool _parallel; // bool
+	private Anki.Cozmo.RobotActionType[] _actionTypes; // RobotActionType[uint_8]
+	private Anki.Cozmo.U2G.RobotActionUnion[] _actions; // RobotActionUnion[uint_8]
+
+	public byte robotID { get { return _robotID; } set { _robotID = value; } }
+
+	public uint inSlot { get { return _inSlot; } set { _inSlot = value; } }
+
+	public bool next { get { return _next; } set { _next = value; } }
+
+	public bool parallel { get { return _parallel; } set { _parallel = value; } }
+
+	public Anki.Cozmo.RobotActionType[] actionTypes
+	{
+		get {
+			return _actionTypes;
+		}
+		set {
+			if (value != null && value.Length > 255) {
+				throw new System.ArgumentException("actionTypes variable-length array is too long. Must be less than or equal to 255.", "value");
+			}
+			_actionTypes = value;
+		}
+	}
+
+	public Anki.Cozmo.U2G.RobotActionUnion[] actions
+	{
+		get {
+			return _actions;
+		}
+		set {
+			if (value != null && value.Length > 255) {
+				throw new System.ArgumentException("actions variable-length array is too long. Must be less than or equal to 255.", "value");
+			}
+			_actions = value;
+		}
+	}
+
+
+	/**** Constructors ****/
+
+	public QueueCompoundAction()
+	{
+	}
+
+	public QueueCompoundAction(byte robotID,
+		uint inSlot,
+		bool next,
+		bool parallel,
+		Anki.Cozmo.RobotActionType[] actionTypes,
+		Anki.Cozmo.U2G.RobotActionUnion[] actions)
+	{
+		this.robotID = robotID;
+		this.inSlot = inSlot;
+		this.next = next;
+		this.parallel = parallel;
+		this.actionTypes = actionTypes;
+		this.actions = actions;
+	}
+
+	public QueueCompoundAction(System.IO.Stream stream)
+	{
+		Unpack(stream);
+	}
+
+	public QueueCompoundAction(System.IO.BinaryReader reader)
+	{
+		Unpack(reader);
+	}
+
+	public void Unpack(System.IO.Stream stream)
+	{
+		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
+		Unpack(reader);
+	}
+
+	public void Unpack(System.IO.BinaryReader reader)
+	{
+		_robotID = reader.ReadByte();
+		_inSlot = reader.ReadUInt32();
+		_next = reader.ReadBoolean();
+		_parallel = reader.ReadBoolean();
+		int _actionTypes_length = (int)reader.ReadByte();
+		_actionTypes = new Anki.Cozmo.RobotActionType[_actionTypes_length];
+		for (int i = 0; i < _actionTypes_length; ++i) {
+			_actionTypes[i] = (Anki.Cozmo.RobotActionType)reader.ReadInt32();
+		}
+		int _actions_length = (int)reader.ReadByte();
+		_actions = new Anki.Cozmo.U2G.RobotActionUnion[_actions_length];
+		for (int i = 0; i < _actions_length; ++i) {
+			_actions[i] = new Anki.Cozmo.U2G.RobotActionUnion(reader);
+		}
+	}
+
+	public void Pack(System.IO.Stream stream)
+	{
+		System.IO.BinaryWriter writer = new System.IO.BinaryWriter(stream);
+		Pack(writer);
+	}
+
+	public void Pack(System.IO.BinaryWriter writer)
+	{
+		writer.Write((byte)_robotID);
+		writer.Write((uint)_inSlot);
+		writer.Write((bool)_next);
+		writer.Write((bool)_parallel);
+		if (_actionTypes != null) {
+			writer.Write((byte)_actionTypes.Length);
+			for (int i = 0; i < _actionTypes.Length; ++i) {
+				writer.Write((int)_actionTypes[i]);
+			}
+		}
+		else {
+			writer.Write((byte)0);
+		}
+		if (_actions != null) {
+			writer.Write((byte)_actions.Length);
+			for (int i = 0; i < _actions.Length; ++i) {
+				if (_actions[i] == null) {
+					throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+				}
+				_actions[i].Pack(writer);
+			}
+		}
+		else {
+			writer.Write((byte)0);
+		}
+	}
+
+	public int Size 
+	{
+		get {
+			int result = 0;
+			result += 1; // uint_8
+			result += 4; // uint_32
+			result += 1; // bool
+			result += 1; // bool
+			result += 1; // uint_8
+			if (actionTypes != null) {
+				result += actionTypes.Length * 4; // RobotActionType
+			}
+			result += 1; // uint_8
+			if (actions != null) {
+				result += actions.Length * 64; // RobotActionUnion
+			}
+			return result;
+		}
+	}
+
+	public static bool ArrayEquals<T>(System.Collections.Generic.IList<T> a1, System.Collections.Generic.IList<T> a2) {
+		if (System.Object.ReferenceEquals(a1, a2))
+			return true;
+
+		if (System.Object.ReferenceEquals(a1, null) || System.Object.ReferenceEquals(a2, null))
+			return false;
+
+		if (a1.Count != a2.Count)
+			return false;
+
+		for (int i = 0; i < a1.Count; i++)
+		{
+			if (!a1[i].Equals(a2[i])) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	public static bool operator ==(QueueCompoundAction a, QueueCompoundAction b)
+	{
+		if (System.Object.ReferenceEquals(a, null))
+		{
+			return System.Object.ReferenceEquals(b, null);
+		}
+
+		return a.Equals(b);
+	}
+
+	public static bool operator !=(QueueCompoundAction a, QueueCompoundAction b)
+	{
+		return !(a == b);
+	}
+
+	public override bool Equals(System.Object obj)
+	{
+		return this.Equals(obj as QueueCompoundAction);
+	}
+
+	public bool Equals(QueueCompoundAction p)
+	{
+		if (System.Object.ReferenceEquals(p, null))
+		{
+			return false;
+		}
+
+		return this._robotID.Equals(p._robotID)
+			&& this._inSlot.Equals(p._inSlot)
+			&& this._next.Equals(p._next)
+			&& this._parallel.Equals(p._parallel)
+			&& ArrayEquals<Anki.Cozmo.RobotActionType>(this._actionTypes,p._actionTypes)
+			&& ArrayEquals<Anki.Cozmo.U2G.RobotActionUnion>(this._actions,p._actions);
+	}
+
+	public override int GetHashCode()
+	{
+		unchecked
+		{
+			int hash = 17;
+			hash = hash * 23 + this._robotID.GetHashCode();
+			hash = hash * 23 + this._inSlot.GetHashCode();
+			hash = hash * 23 + this._next.GetHashCode();
+			hash = hash * 23 + this._parallel.GetHashCode();
+			return hash;
+		}
+	}
+}
+
 public class Message {
 	public enum Tag {
 		Ping,	//0
@@ -7893,6 +8535,8 @@ public class Message {
 		TapBlockOnGround,	//60
 		VisualizeQuad,	//61
 		EraseQuad,	//62
+		QueueSingleAction,	//63
+		QueueCompoundAction,	//64
 		INVALID
 	};
 
@@ -8973,6 +9617,40 @@ public class Message {
 		}
 	}
 
+	public Anki.Cozmo.U2G.QueueSingleAction QueueSingleAction
+	{
+		get {
+			if (_tag != Tag.QueueSingleAction) {
+				throw new System.InvalidOperationException(string.Format(
+					"Cannot access union member \"QueueSingleAction\" when a value of type {0} is stored.",
+					_tag.ToString()));
+			}
+			return (Anki.Cozmo.U2G.QueueSingleAction)this._state;
+		}
+		
+		set {
+			_tag = (value != null) ? Tag.QueueSingleAction : Tag.INVALID;
+			_state = value;
+		}
+	}
+
+	public Anki.Cozmo.U2G.QueueCompoundAction QueueCompoundAction
+	{
+		get {
+			if (_tag != Tag.QueueCompoundAction) {
+				throw new System.InvalidOperationException(string.Format(
+					"Cannot access union member \"QueueCompoundAction\" when a value of type {0} is stored.",
+					_tag.ToString()));
+			}
+			return (Anki.Cozmo.U2G.QueueCompoundAction)this._state;
+		}
+		
+		set {
+			_tag = (value != null) ? Tag.QueueCompoundAction : Tag.INVALID;
+			_state = value;
+		}
+	}
+
 	/**** Constructors ****/
 
 	public Message()
@@ -9187,6 +9865,12 @@ public class Message {
 			break;
 		case Tag.EraseQuad:
 			EraseQuad = new Anki.Cozmo.U2G.EraseQuad(reader);
+			break;
+		case Tag.QueueSingleAction:
+			QueueSingleAction = new Anki.Cozmo.U2G.QueueSingleAction(reader);
+			break;
+		case Tag.QueueCompoundAction:
+			QueueCompoundAction = new Anki.Cozmo.U2G.QueueCompoundAction(reader);
 			break;
 		default:
 			break;
@@ -9583,6 +10267,18 @@ public class Message {
 			}
 			EraseQuad.Pack(writer);
 			break;
+		case Tag.QueueSingleAction:
+			if (QueueSingleAction == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
+			QueueSingleAction.Pack(writer);
+			break;
+		case Tag.QueueCompoundAction:
+			if (QueueCompoundAction == null) {
+				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
+			}
+			QueueCompoundAction.Pack(writer);
+			break;
 		default:
 			break;
 		}
@@ -9970,6 +10666,18 @@ public class Message {
 					throw new System.InvalidOperationException("Messages may not have null members.");
 				}
 				result += EraseQuad.Size;
+				break;
+			case Tag.QueueSingleAction:
+				if (QueueSingleAction == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
+				result += QueueSingleAction.Size;
+				break;
+			case Tag.QueueCompoundAction:
+				if (QueueCompoundAction == null) {
+					throw new System.InvalidOperationException("Messages may not have null members.");
+				}
+				result += QueueCompoundAction.Size;
 				break;
 			default:
 				// Just tag size

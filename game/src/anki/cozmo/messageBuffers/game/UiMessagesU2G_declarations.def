@@ -65,3 +65,5 @@ void Process_SetBackpackLEDs(const Anki::Cozmo::U2G::SetBackpackLEDs& msg);
 void Process_TapBlockOnGround(const Anki::Cozmo::U2G::TapBlockOnGround& msg);
 void Process_VisualizeQuad(const Anki::Cozmo::U2G::VisualizeQuad& msg);
 void Process_EraseQuad(const Anki::Cozmo::U2G::EraseQuad& msg);
+void Process_QueueSingleAction(const Anki::Cozmo::U2G::QueueSingleAction& msg);
+void Process_QueueCompoundAction(const Anki::Cozmo::U2G::QueueCompoundAction& msg);

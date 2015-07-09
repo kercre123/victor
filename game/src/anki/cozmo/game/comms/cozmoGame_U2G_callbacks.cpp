@@ -974,5 +974,79 @@ namespace Cozmo {
     VizManager::getInstance()->EraseQuad(VIZ_QUAD_GENERIC_3D, msg.quadID);
   }
   
+  void CozmoGameImpl::Process_QueueSingleAction(const U2G::QueueSingleAction &msg)
+  {
+    Robot* robot = GetRobotByID(msg.robotID);
+    
+    if(robot != nullptr) {
+      IActionRunner* action = nullptr;
+      switch(msg.actionType)
+      {
+        case RobotActionType::TURN_IN_PLACE:
+          action = new TurnInPlaceAction(msg.action.turnInPlace.angle_rad);
+          break;
+          
+          // TODO: Add cases for other actions
+      }
+      
+      if(action == nullptr) {
+        PRINT_NAMED_ERROR("CozmoGameImpl.Process_QueueSingleAction.InvalidActionType",
+                          "Failed to create an action for the given actionType.\n");
+        return;
+      }
+      
+      if(msg.next) {
+        robot->GetActionList().QueueActionNext(msg.inSlot, action);
+      } else {
+        robot->GetActionList().QueueActionAtEnd(msg.inSlot, action);
+      }
+      
+    }
+    
+  }
+  
+  void CozmoGameImpl::Process_QueueCompoundAction(const U2G::QueueCompoundAction &msg)
+  {
+    Robot* robot = GetRobotByID(msg.robotID);
+    if(robot != nullptr) {
+      
+      // Create either a parallel or sequential compound action:
+      ICompoundAction* compoundAction = nullptr;
+      if(msg.parallel) {
+        compoundAction = new CompoundActionParallel();
+      } else {
+        compoundAction = new CompoundActionSequential();
+      }
+      
+      // Make sure sizes match
+      if(msg.actions.size() != msg.actionTypes.size()) {
+        PRINT_NAMED_ERROR("CozmoGameImpl.Process_QueueCompoundAction.MismatchedSizes",
+                          "Number of actions (%lu) and actionTypes (%lu) should match!\n",
+                          msg.actions.size(), msg.actionTypes.size());
+        return;
+      }
+      
+      // Add all the actions in the message to the compound action, according
+      // to their type
+      for(size_t iAction=0; iAction < msg.actions.size(); ++iAction) {
+        switch(msg.actionTypes[iAction])
+        {
+          case RobotActionType::TURN_IN_PLACE:
+            compoundAction->AddAction(new TurnInPlaceAction(msg.actions[iAction].turnInPlace.angle_rad));
+            break;
+            
+            // TODO: Add cases for other actions
+        }
+      } // for each action/actionType
+      
+      // Put the action in the given position of the specified queue:
+      if(msg.next) {
+        robot->GetActionList().QueueActionNext(msg.inSlot, compoundAction);
+      } else {
+        robot->GetActionList().QueueActionAtEnd(msg.inSlot, compoundAction);
+      }
+    }
+  }
+  
 }
 }

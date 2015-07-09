@@ -2422,6 +2422,153 @@ struct EraseQuad
 	bool operator!=(const EraseQuad& other) const;
 };
 
+// STRUCTURE RobotActionUnion
+struct RobotActionUnion
+{
+	Anki::Cozmo::U2G::PickAndPlaceObject pickAndPlaceObject;
+	Anki::Cozmo::U2G::RollObject rollObject;
+	Anki::Cozmo::U2G::GotoPose goToPose;
+	Anki::Cozmo::U2G::GotoObject goToObject;
+	Anki::Cozmo::U2G::TurnInPlace turnInPlace;
+	Anki::Cozmo::U2G::SetLiftHeight setLiftHeight;
+	Anki::Cozmo::U2G::SetHeadAngle setHeadAngle;
+	
+	/**** Constructors ****/
+	RobotActionUnion() = default;
+	RobotActionUnion(const RobotActionUnion& other) = default;
+	RobotActionUnion(RobotActionUnion& other) = default;
+	RobotActionUnion(RobotActionUnion&& other) noexcept = default;
+	RobotActionUnion& operator=(const RobotActionUnion& other) = default;
+	RobotActionUnion& operator=(RobotActionUnion&& other) noexcept = default;
+	
+	explicit RobotActionUnion(const Anki::Cozmo::U2G::PickAndPlaceObject& pickAndPlaceObject
+		,const Anki::Cozmo::U2G::RollObject& rollObject
+		,const Anki::Cozmo::U2G::GotoPose& goToPose
+		,const Anki::Cozmo::U2G::GotoObject& goToObject
+		,const Anki::Cozmo::U2G::TurnInPlace& turnInPlace
+		,const Anki::Cozmo::U2G::SetLiftHeight& setLiftHeight
+		,const Anki::Cozmo::U2G::SetHeadAngle& setHeadAngle)
+	:pickAndPlaceObject(pickAndPlaceObject)
+	,rollObject(rollObject)
+	,goToPose(goToPose)
+	,goToObject(goToObject)
+	,turnInPlace(turnInPlace)
+	,setLiftHeight(setLiftHeight)
+	,setHeadAngle(setHeadAngle)
+	{}
+
+	explicit RobotActionUnion(const uint8_t* buff, size_t len);
+	explicit RobotActionUnion(const CLAD::SafeMessageBuffer& buffer);
+	
+	/**** Pack ****/
+	size_t Pack(uint8_t* buff, size_t len) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+
+	/**** Unpack ****/
+	size_t Unpack(const uint8_t* buff, const size_t len);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+
+	size_t Size() const;
+
+	bool operator==(const RobotActionUnion& other) const;
+	bool operator!=(const RobotActionUnion& other) const;
+};
+
+// MESSAGE QueueSingleAction
+struct QueueSingleAction
+{
+	uint8_t robotID;
+	uint32_t inSlot;
+	bool next;
+	Anki::Cozmo::RobotActionType actionType;
+	Anki::Cozmo::U2G::RobotActionUnion action;
+	
+	/**** Constructors ****/
+	QueueSingleAction() = default;
+	QueueSingleAction(const QueueSingleAction& other) = default;
+	QueueSingleAction(QueueSingleAction& other) = default;
+	QueueSingleAction(QueueSingleAction&& other) noexcept = default;
+	QueueSingleAction& operator=(const QueueSingleAction& other) = default;
+	QueueSingleAction& operator=(QueueSingleAction&& other) noexcept = default;
+	
+	explicit QueueSingleAction(uint8_t robotID
+		,uint32_t inSlot
+		,bool next
+		,Anki::Cozmo::RobotActionType actionType
+		,const Anki::Cozmo::U2G::RobotActionUnion& action)
+	:robotID(robotID)
+	,inSlot(inSlot)
+	,next(next)
+	,actionType(actionType)
+	,action(action)
+	{}
+
+	explicit QueueSingleAction(const uint8_t* buff, size_t len);
+	explicit QueueSingleAction(const CLAD::SafeMessageBuffer& buffer);
+	
+	/**** Pack ****/
+	size_t Pack(uint8_t* buff, size_t len) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+
+	/**** Unpack ****/
+	size_t Unpack(const uint8_t* buff, const size_t len);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+
+	size_t Size() const;
+
+	bool operator==(const QueueSingleAction& other) const;
+	bool operator!=(const QueueSingleAction& other) const;
+};
+
+// MESSAGE QueueCompoundAction
+struct QueueCompoundAction
+{
+	uint8_t robotID;
+	uint32_t inSlot;
+	bool next;
+	bool parallel;
+	std::vector<Anki::Cozmo::RobotActionType> actionTypes;
+	std::vector<Anki::Cozmo::U2G::RobotActionUnion> actions;
+	
+	/**** Constructors ****/
+	QueueCompoundAction() = default;
+	QueueCompoundAction(const QueueCompoundAction& other) = default;
+	QueueCompoundAction(QueueCompoundAction& other) = default;
+	QueueCompoundAction(QueueCompoundAction&& other) noexcept = default;
+	QueueCompoundAction& operator=(const QueueCompoundAction& other) = default;
+	QueueCompoundAction& operator=(QueueCompoundAction&& other) noexcept = default;
+	
+	explicit QueueCompoundAction(uint8_t robotID
+		,uint32_t inSlot
+		,bool next
+		,bool parallel
+		,const std::vector<Anki::Cozmo::RobotActionType>& actionTypes
+		,const std::vector<Anki::Cozmo::U2G::RobotActionUnion>& actions)
+	:robotID(robotID)
+	,inSlot(inSlot)
+	,next(next)
+	,parallel(parallel)
+	,actionTypes(actionTypes)
+	,actions(actions)
+	{}
+
+	explicit QueueCompoundAction(const uint8_t* buff, size_t len);
+	explicit QueueCompoundAction(const CLAD::SafeMessageBuffer& buffer);
+	
+	/**** Pack ****/
+	size_t Pack(uint8_t* buff, size_t len) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+
+	/**** Unpack ****/
+	size_t Unpack(const uint8_t* buff, const size_t len);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+
+	size_t Size() const;
+
+	bool operator==(const QueueCompoundAction& other) const;
+	bool operator!=(const QueueCompoundAction& other) const;
+};
+
 // UNION Message
 class Message
 {
@@ -2750,6 +2897,16 @@ public:
 	void Set_EraseQuad(const Anki::Cozmo::U2G::EraseQuad& new_EraseQuad);
 	void Set_EraseQuad(Anki::Cozmo::U2G::EraseQuad&& new_EraseQuad);
 
+	/** QueueSingleAction **/
+	const Anki::Cozmo::U2G::QueueSingleAction& Get_QueueSingleAction() const;
+	void Set_QueueSingleAction(const Anki::Cozmo::U2G::QueueSingleAction& new_QueueSingleAction);
+	void Set_QueueSingleAction(Anki::Cozmo::U2G::QueueSingleAction&& new_QueueSingleAction);
+
+	/** QueueCompoundAction **/
+	const Anki::Cozmo::U2G::QueueCompoundAction& Get_QueueCompoundAction() const;
+	void Set_QueueCompoundAction(const Anki::Cozmo::U2G::QueueCompoundAction& new_QueueCompoundAction);
+	void Set_QueueCompoundAction(Anki::Cozmo::U2G::QueueCompoundAction&& new_QueueCompoundAction);
+
 
 	size_t Unpack(const uint8_t* buff, const size_t len);
 	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
@@ -2826,6 +2983,8 @@ private:
 		Anki::Cozmo::U2G::TapBlockOnGround _TapBlockOnGround;
 		Anki::Cozmo::U2G::VisualizeQuad _VisualizeQuad;
 		Anki::Cozmo::U2G::EraseQuad _EraseQuad;
+		Anki::Cozmo::U2G::QueueSingleAction _QueueSingleAction;
+		Anki::Cozmo::U2G::QueueCompoundAction _QueueCompoundAction;
 	};
 };
 
