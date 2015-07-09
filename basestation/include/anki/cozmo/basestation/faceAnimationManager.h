@@ -32,7 +32,6 @@ namespace Cozmo {
   public:
     static const s32 IMAGE_WIDTH = 128;
     static const s32 IMAGE_HEIGHT = 64;
-    static const s32 FRAME_NUM_DIGITS = 4;
     
     // Get a pointer to the singleton instance
     inline static FaceAnimationManager* getInstance();
@@ -40,7 +39,7 @@ namespace Cozmo {
     
     // Set the root directory of animations, and trigger a read of available
     // animations in it.
-    bool SetRootDir(const char* dir);
+    bool SetRootDir(const std::string dir="");
 
     // Get a pointer to an RLE-compressed frame for the given animation.
     // Returns nullptr if animation or frame do not exist.

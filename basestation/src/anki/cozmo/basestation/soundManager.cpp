@@ -168,7 +168,7 @@ namespace Anki {
     }
     
     
-    bool SoundManager::SetRootDir(const char* dir)
+    bool SoundManager::SetRootDir(const std::string dir)
     {
       _hasRootDir = false;
       
@@ -225,7 +225,7 @@ namespace Anki {
       if ( dir != nullptr) {
         dirent* ent = nullptr;
         while ( (ent = readdir(dir)) != nullptr) {
-          if (ent->d_type == DT_REG) {
+          if (ent->d_type == DT_REG && ent->d_name[0] != '.') {
             const std::string soundName(subDir + ent->d_name);
             std::string fullSoundFilename = _rootDir + subDir + ent->d_name;
             struct stat attrib{0};
