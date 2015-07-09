@@ -57,6 +57,46 @@ enum class ActionResult : int32_t {
 };
 
 const char* ActionResultToString(const ActionResult m);
+// STRUCTURE ActionCompletedStruct
+struct ActionCompletedStruct
+{
+	std::array<int32_t, 5> objectIDs;
+	uint8_t numObjects;
+	std::string animName;
+	
+	/**** Constructors ****/
+	ActionCompletedStruct() = default;
+	ActionCompletedStruct(const ActionCompletedStruct& other) = default;
+	ActionCompletedStruct(ActionCompletedStruct& other) = default;
+	ActionCompletedStruct(ActionCompletedStruct&& other) noexcept = default;
+	ActionCompletedStruct& operator=(const ActionCompletedStruct& other) = default;
+	ActionCompletedStruct& operator=(ActionCompletedStruct&& other) noexcept = default;
+	
+	explicit ActionCompletedStruct(const std::array<int32_t, 5>& objectIDs
+		,uint8_t numObjects
+		,const std::string& animName)
+	:objectIDs(objectIDs)
+	,numObjects(numObjects)
+	,animName(animName)
+	{}
+
+	explicit ActionCompletedStruct(const uint8_t* buff, size_t len);
+	explicit ActionCompletedStruct(const CLAD::SafeMessageBuffer& buffer);
+	
+	/**** Pack ****/
+	size_t Pack(uint8_t* buff, size_t len) const;
+	size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+
+	/**** Unpack ****/
+	size_t Unpack(const uint8_t* buff, const size_t len);
+	size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+
+	size_t Size() const;
+
+	bool operator==(const ActionCompletedStruct& other) const;
+	bool operator!=(const ActionCompletedStruct& other) const;
+};
+
 } // namespace Cozmo
 
 } // namespace Anki
