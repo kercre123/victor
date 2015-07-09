@@ -569,8 +569,9 @@ namespace Anki {
     
     Result RobotMessageHandler::ProcessMessage(Robot* robot, MessagePlaySoundOnBaseStation const& msg)
     {
-      robot->PlaySound(static_cast<SoundID_t>(msg.soundID), msg.numLoops, msg.volume);
-      return RESULT_OK;
+      PRINT_NAMED_ERROR("RobotMessageHandler.ProcessMessage",
+                        "MessagePlaySoundOnBaseStation is deprecated!\n");
+      return RESULT_FAIL;
     }
     
     Result RobotMessageHandler::ProcessMessage(Robot* robot, MessageStopSoundOnBaseStation const& msg)

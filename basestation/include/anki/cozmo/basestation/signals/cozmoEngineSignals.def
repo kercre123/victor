@@ -14,7 +14,7 @@ DEF_SIGNAL(RobotAvailable, RobotID_t robotID)
 DEF_SIGNAL(RobotDisconnected, RobotID_t robotID)
       
 // Robot signals
-DEF_SIGNAL(PlaySoundForRobot, RobotID_t robotID, u32 soundID, u8 numLoops, u8 volume)
+DEF_SIGNAL(PlaySoundForRobot, RobotID_t robotID, std::string soundName, u8 numLoops, u8 volume)
 
 DEF_SIGNAL(StopSoundForRobot, RobotID_t robotID)
       

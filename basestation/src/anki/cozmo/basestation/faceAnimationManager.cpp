@@ -51,7 +51,7 @@ namespace Cozmo {
   // Read the animations in a dir
   Result FaceAnimationManager::ReadFaceAnimationDir()
   {
-    const std::string animationFolder = PREPEND_SCOPED_PATH(FaceAnimation, "");
+    const std::string animationFolder = _rootDir;
 
     DIR* dir = opendir(animationFolder.c_str());
     if ( dir != nullptr) {

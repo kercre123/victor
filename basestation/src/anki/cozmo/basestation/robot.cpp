@@ -1198,9 +1198,9 @@ namespace Anki {
       return lastResult;
     }
     
-    Result Robot::PlaySound(SoundID_t soundID, u8 numLoops, u8 volume)
+    Result Robot::PlaySound(const std::string& soundName, u8 numLoops, u8 volume)
     {
-      CozmoEngineSignals::PlaySoundForRobotSignal().emit(GetID(),soundID, numLoops, volume);
+      CozmoEngineSignals::PlaySoundForRobotSignal().emit(GetID(), soundName, numLoops, volume);
       return RESULT_OK;
     } // PlaySound()
       

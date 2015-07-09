@@ -246,8 +246,7 @@ _bodyPosTrack.__METHOD__()
          audioKF.IsTimeToPlay(_startTime_ms,  currTime_ms))
       {
         // TODO: Insert some kind of small delay to simulate latency?
-        SoundID_t soundID = static_cast<SoundID_t>(audioKF.GetAudioID());
-        SoundManager::getInstance()->Play(soundID);
+        SoundManager::getInstance()->Play(audioKF.GetSoundName());
         _playedRobotAudio_ms = currTime_ms;
       }
     }

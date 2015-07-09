@@ -154,7 +154,7 @@ namespace Anki {
       virtual Result SetMembersFromJson(const Json::Value &jsonRoot) override;
       
     private:
-      u32 _audioID;
+      std::string _audioName;
       
     }; // class DeviceAudioKeyFrame
     
@@ -175,14 +175,13 @@ namespace Anki {
         return ClassName;
       }
       
-      SoundID_t GetAudioID() const { return _audioID; }
+      const std::string& GetSoundName() const { return _audioName; }
       
     protected:
       virtual Result SetMembersFromJson(const Json::Value &jsonRoot) override;
       
     private:
       std::string _audioName;
-      SoundID_t   _audioID;
       
       s32 _numSamples;
       s32 _sampleIndex;

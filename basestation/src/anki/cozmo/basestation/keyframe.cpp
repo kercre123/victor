@@ -291,15 +291,15 @@ return RESULT_FAIL; \
       GET_MEMBER_FROM_JSON(jsonRoot, audioName);
       //GET_MEMBER_FROM_JSON(jsonRoot, audioID);
       
-      _audioID = SoundManager::getInstance()->GetID(_audioName);
-      if(_audioID == NUM_SOUNDS) {
+      const u32 duration_ms = SoundManager::getInstance()->GetSoundDurationInMilliseconds(_audioName);
+      
+      if(duration_ms == 0) {
         PRINT_NAMED_ERROR("RobotAudioKeyFrame.SetMembersFromJson.InvalidAudioName",
                           "SoundManager could not find the sound associated with name '%s'.\n",
                           _audioName.c_str());
         return RESULT_FAIL;
       }
       
-      const u32 duration_ms = SoundManager::getInstance()->GetSoundDurationInMilliseconds(_audioID);
       _numSamples = duration_ms / SAMPLE_LENGTH_MS;
       
       // TODO: Compute number of samples for this audio ID
@@ -337,7 +337,7 @@ return RESULT_FAIL; \
     
     Result DeviceAudioKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot)
     {
-      GET_MEMBER_FROM_JSON(jsonRoot, audioID);
+      GET_MEMBER_FROM_JSON(jsonRoot, audioName);
       
       return RESULT_OK;
     }
@@ -352,7 +352,7 @@ return RESULT_FAIL; \
     void DeviceAudioKeyFrame::PlayOnDevice()
     {
       // TODO: Replace with real call to wwise or something
-      SoundManager::getInstance()->Play(static_cast<SoundID_t>(_audioID));
+      SoundManager::getInstance()->Play(_audioName);
     }
     
 #pragma mark -
