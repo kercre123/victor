@@ -83,7 +83,8 @@ public class VortexController : GameController {
 
 	[SerializeField] List<SpinWheel> wheels;
 	[SerializeField] Text textPlayState;
-	[SerializeField] Text textCurrentNumber; // only use for single ring matches
+	[SerializeField] Image imageHub;
+	[SerializeField] Text textCurrentNumber;
 	[SerializeField] Text textRoundNumber;
 	[SerializeField] Text[] textPlayerCurrentNumbers; // only use for single ring matches
 
@@ -227,6 +228,10 @@ public class VortexController : GameController {
 			imageCozmoDragHand.gameObject.SetActive(false);
 		}
 
+		if(imageHub != null) {
+			imageHub.gameObject.SetActive(false);
+		}
+
 	}
 
 	protected override void OnDisable () {
@@ -359,6 +364,10 @@ public class VortexController : GameController {
 		playState = VortexState.INTRO;
 		EnterPlayState();
 
+		if(imageHub != null) {
+			imageHub.gameObject.SetActive(true);
+		}
+
 		base.Enter_PLAYING();
 	}
 	
@@ -377,19 +386,12 @@ public class VortexController : GameController {
 			UpdatePlayState();
 		}
 
-		if(robot != null) {
-			if(playState != VortexState.SPINNING && robot.headTrackingObject == null && humanHead != null) {
-
-				//if(robot.liftHeight_mm > (CozmoUtil.MIN_LIFT_HEIGHT_MM + (CozmoUtil.MAX_LIFT_HEIGHT_MM - CozmoUtil.MIN_LIFT_HEIGHT_MM) * 0.5f)) {
-					//Debug.Log("frame("+Time.frameCount+") Update_PLAYING SetLiftHeight(0.1f);");
-					//robot.SetLiftHeight(0.1f);
-				//}
-				//else {
-					robot.TrackHeadToObject(humanHead, true);
-				//}
-
-			}
-		}
+//		if(robot != null) {
+//			if(playState != VortexState.SPINNING && robot.headTrackingObject == null && humanHead != null) {
+//				robot.SetLiftHeight(0.1f);
+//				robot.TrackHeadToObject(humanHead, true);
+//			}
+//		}
 
 
 	}
@@ -398,6 +400,10 @@ public class VortexController : GameController {
 		base.Exit_PLAYING();
 
 		ExitPlayState();
+
+		if(imageHub != null) {
+			imageHub.gameObject.SetActive(false);
+		}
 	}
 
 	protected override void Enter_RESULTS() {
@@ -594,6 +600,7 @@ public class VortexController : GameController {
 		for(int i=0;i<playersEliminated.Length;i++) {
 			playersEliminated[i] = false;
 		}
+
 
 		PlaceTokens();
 

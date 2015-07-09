@@ -307,10 +307,6 @@ message SetSteeringControllerGains {
   float_32 k2
 }
 
-// SelectNextSoundScheme
-message SelectNextSoundScheme {
-}
-
 // StartTestMode
 message StartTestMode {
     int_32 p1,

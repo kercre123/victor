@@ -97,7 +97,7 @@ namespace Cozmo {
     void HandleRobotConnectedSignal(RobotID_t robotID, bool successful);
     void HandleRobotDisconnectedSignal(RobotID_t robotID);
     void HandleUiDeviceConnectedSignal(UserDeviceID_t deviceID, bool successful);
-    void HandlePlaySoundForRobotSignal(RobotID_t robotID, u32 soundID, u8 numLoops, u8 volume);
+    void HandlePlaySoundForRobotSignal(RobotID_t robotID, const std::string& soundName, u8 numLoops, u8 volume);
     void HandleStopSoundForRobotSignal(RobotID_t robotID);
     void HandleRobotObservedObjectSignal(uint8_t robotID, uint32_t objectFamily,
                                          uint32_t objectType, uint32_t objectID,
@@ -122,8 +122,7 @@ namespace Cozmo {
                                                 float x_upperRight, float y_upperRight,
                                                 float x_lowerRight, float y_lowerRight);
     void HandleRobotCompletedAction(uint8_t robotID, RobotActionType actionType,
-                                    ActionResult result,
-                                    std::array<int32_t,5> objectIDs, uint8_t numObjects);
+                                    ActionResult result, ActionCompletedStruct completionInfo);
     void HandleActiveObjectMoved(uint8_t robotID, uint32_t objectID,
                                  float xAccel, float yAccel, float zAccel,
                                  uint8_t upAxis);
