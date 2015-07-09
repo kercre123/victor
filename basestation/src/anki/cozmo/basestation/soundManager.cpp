@@ -301,9 +301,11 @@ namespace Anki {
         return RESULT_FAIL;
       }
 
-      PRINT_NAMED_INFO("SoundManager.ReadSoundDir",
-                       "SoundManager now contains %lu available sounds.\n",
-                       _availableSounds.size());
+      if(subDir.empty()) { // Only display this message at the root
+        PRINT_NAMED_INFO("SoundManager.ReadSoundDir",
+                         "SoundManager now contains %lu available sounds.\n",
+                         _availableSounds.size());
+      }
       
       return RESULT_OK;
     }

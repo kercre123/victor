@@ -646,10 +646,13 @@ namespace Anki {
     class PlayAnimationAction : public IAction
     {
     public:
-      PlayAnimationAction(const std::string& animName);
+      PlayAnimationAction(const std::string& animName,
+                          const u32 numLoops = 1);
       
       virtual const std::string& GetName() const override { return _name; }
       virtual RobotActionType GetType() const override { return RobotActionType::PLAY_ANIMATION; }
+      
+      virtual void EmitCompletionSignal(Robot& robot, ActionResult result) const override;
       
     protected:
       
@@ -660,6 +663,7 @@ namespace Anki {
       //AnimationID_t _animID;
       std::string   _animName;
       std::string   _name;
+      u32           _numLoops;
       
     }; // class PlayAnimationAction
     
