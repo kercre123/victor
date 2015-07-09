@@ -144,9 +144,6 @@ case Anki::Cozmo::U2G::Message::Tag::SetLiftControllerGains:
 case Anki::Cozmo::U2G::Message::Tag::SetSteeringControllerGains:
 	Process_SetSteeringControllerGains(msg.Get_SetSteeringControllerGains());
 	break;
-case Anki::Cozmo::U2G::Message::Tag::SelectNextSoundScheme:
-	Process_SelectNextSoundScheme(msg.Get_SelectNextSoundScheme());
-	break;
 case Anki::Cozmo::U2G::Message::Tag::StartTestMode:
 	Process_StartTestMode(msg.Get_StartTestMode());
 	break;

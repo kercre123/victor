@@ -60,24 +60,23 @@ enum class MessageTag : uint8_t {
 	SetHeadControllerGains,	// 43
 	SetLiftControllerGains,	// 44
 	SetSteeringControllerGains,	// 45
-	SelectNextSoundScheme,	// 46
-	StartTestMode,	// 47
-	IMURequest,	// 48
-	PlayAnimation,	// 49
-	ReplayLastAnimation,	// 50
-	ReadAnimationFile,	// 51
-	StartFaceTracking,	// 52
-	StopFaceTracking,	// 53
-	StartLookingForMarkers,	// 54
-	StopLookingForMarkers,	// 55
-	SetVisionSystemParams,	// 56
-	SetFaceDetectParams,	// 57
-	SetActiveObjectLEDs,	// 58
-	SetAllActiveObjectLEDs,	// 59
-	SetBackpackLEDs,	// 60
-	TapBlockOnGround,	// 61
-	VisualizeQuad,	// 62
-	EraseQuad,	// 63
+	StartTestMode,	// 46
+	IMURequest,	// 47
+	PlayAnimation,	// 48
+	ReplayLastAnimation,	// 49
+	ReadAnimationFile,	// 50
+	StartFaceTracking,	// 51
+	StopFaceTracking,	// 52
+	StartLookingForMarkers,	// 53
+	StopLookingForMarkers,	// 54
+	SetVisionSystemParams,	// 55
+	SetFaceDetectParams,	// 56
+	SetActiveObjectLEDs,	// 57
+	SetAllActiveObjectLEDs,	// 58
+	SetBackpackLEDs,	// 59
+	TapBlockOnGround,	// 60
+	VisualizeQuad,	// 61
+	EraseQuad,	// 62
 	INVALID
 };
 
