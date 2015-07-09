@@ -10,6 +10,8 @@
 #include "espconn.h"
 #include "upgrade.h"
 #include "task0.h"
+#include "driver/spi.h"
+#include "fpga.h"
 #include "upgrade_controller.h"
 
 /// Flash sector size for erasing, 4KB
@@ -42,6 +44,8 @@ typedef enum {
   UPGRADE_TASK_ERASE,
   UPGRADE_TASK_WRITE,
   UPGRADE_TASK_FINISH,
+  UPGRADE_TASK_FPGA_RESET,
+  UPGRADE_TASK_FPGA_WRITE,
 } UpgradeTaskState;
 
 static UpgradeTaskState taskState = UPGRADE_TASK_IDLE;
@@ -70,6 +74,23 @@ LOCAL void ICACHE_FLASH_ATTR printUpgradeState(void)
   os_printf("Upgrade state: fww = %08x, bytesE = %d, bytesR = %d, bytesW = %d, flags = %d, ts= %d, esp = %d\r\n", fwWriteAddress, bytesExpected, bytesReceived, bytesWritten, flags, taskState, system_upgrade_flag_check());
 }
 
+LOCAL inline void requestNext(void)
+{
+  if (upccConn != NULL)
+  {
+    int8_t err = espconn_sent(upccConn, "next", 4);
+    if (err != 0)
+    {
+      os_printf("\tCouldn't unhold socket: %d\r\n", err);
+    }
+  }
+  else
+  {
+    os_printf("ERROR: upccConn NULL\r\n");
+    resetUpgradeState();
+  }
+}
+
 LOCAL bool upgradeTask(uint32_t param)
 {
   SpiFlashOpResult flashResult;
@@ -96,18 +117,7 @@ LOCAL bool upgradeTask(uint32_t param)
           {
             os_printf("UP: Erase complete\r\n");
             taskState = UPGRADE_TASK_WRITE;
-            if (upccConn != NULL)
-            {
-              err = espconn_sent(upccConn, "next", 4);
-              if (err != 0)
-              {
-                os_printf("ERROR: couldn't unhold socket: %d\r\n", err);
-              }
-            }
-            else
-            {
-              os_printf("ERROR: upccConn NULL\r\n");
-            }
+            requestNext();
             return false;
           }
           else
@@ -152,6 +162,12 @@ LOCAL bool upgradeTask(uint32_t param)
         resetUpgradeState();
         return false;
       }
+      else if (param == 0)
+      {
+        os_printf("UP ERROR: UPGRADE TASK WRITE but param = 0\r\n");
+        resetUpgradeState();
+        return false;
+      }
       FlashWriteData* fwd = (FlashWriteData*)param;
       os_printf("UP: Write 0x%08x 0x%x\r\n", fwWriteAddress + bytesWritten, fwd->length);
       flashResult = spi_flash_write(fwWriteAddress + bytesWritten, fwd->data, fwd->length);
@@ -169,19 +185,7 @@ LOCAL bool upgradeTask(uint32_t param)
           }
           else
           {
-            if (upccConn != NULL)
-            {
-              err = espconn_sent(upccConn, "next", 4);
-              if (err != 0)
-              {
-                os_printf("\tCouldn't unhold socket: %d\r\n", err);
-              }
-            }
-            else
-            {
-              os_printf("ERROR: upccConn NULL\r\n");
-              resetUpgradeState();
-            }
+            requestNext();
             return false;
           }
         }
@@ -233,6 +237,9 @@ LOCAL bool upgradeTask(uint32_t param)
       {
         // TODO check new firmware integrity
         // TODO Reboot the FPGA with new firmware
+        os_printf("UP: FPGA upgrade complete\r\n\t");
+        printUpgradeState();
+        resetUpgradeState();
       }
       if (flags & UPCMD_BODY_FW)
       {
@@ -240,6 +247,75 @@ LOCAL bool upgradeTask(uint32_t param)
         // TODO Reboot the body with new firmware
       }
       return false;
+    }
+    case UPGRADE_TASK_FPGA_RESET:
+    {
+      if (flags & UPCMD_FPGA_FW)
+      {
+        fpgaDisable();
+        os_delay_us(2);
+        fpgaEnable();
+        os_delay_us(300);
+        taskState = UPGRADE_TASK_FPGA_WRITE;
+        requestNext();
+        return false;
+      }
+      else
+      {
+        os_printf("ERR: upgradeTask state RESET FPGA but flags don't say FPGA?\r\n");
+        printUpgradeState();
+        resetUpgradeState();
+        return false;
+      }
+    }
+    case UPGRADE_TASK_FPGA_WRITE:
+    {
+      if (param == 0)
+      {
+        os_printf("UP ERROR: UPGRADE TASK FPGA WRITE but param = 0\r\n");
+        resetUpgradeState();
+        return false;
+      }
+      if (flags & UPCMD_FPGA_FW)
+      {
+        uint32_t spiWritten = 0;
+        FlashWriteData* fwd = (FlashWriteData*)param;
+        uint32_t wordsToWrite = fwd->length / 4;
+        os_printf("UP: FPGA Write 0x%08x 0x%x\r\n", fwWriteAddress + bytesWritten, fwd->length);
+        while (spiWritten < wordsToWrite)
+        {
+          if (!fpgaWriteBitstream((fwd->data + spiWritten)))
+          {
+            os_printf("UP ERR: Couldn't write bytes to FPGA\r\n");
+            resetUpgradeState();
+            return false;
+          }
+          else
+          {
+            spiWritten += SPI_FIFO_DEPTH;
+          }
+        }
+
+        os_free(fwd); // Free the memory used
+        bytesWritten += fwd->length;
+        if (bytesWritten >= bytesExpected)
+        {
+          taskState = UPGRADE_TASK_FINISH;
+          return true;
+        }
+        else
+        {
+          requestNext();
+          return false;
+        }
+      }
+      else
+      {
+        os_printf("ERR: upgradeTask state WRITE FPGA but flags don't say FPGA?\r\n");
+        printUpgradeState();
+        resetUpgradeState();
+        return false;
+      }
     }
     default:
     {
@@ -324,10 +400,9 @@ LOCAL void ICACHE_FLASH_ATTR upccReceiveCallback(void *arg, char *usrdata, unsig
         fwWriteAddress   = cmd->flashAddress;
         bytesExpected    = cmd->size;
         flags            = cmd->flags;
-        flashEraseSector = cmd->flashAddress / FLASH_SECTOR_SIZE;
-        flashEraseEnd    = (cmd->flashAddress + cmd->size) / FLASH_SECTOR_SIZE;
         upccConn = conn;
-        taskState = UPGRADE_TASK_ERASE;
+        taskState = UPGRADE_TASK_FPGA_RESET;
+        os_printf("FPGA write firmware %d bytes, flags = %x \r\n", bytesExpected, flags);
         if (task0Post(upgradeTask, 0) == false)
         {
           os_printf("ERROR: Couldn't queue upgrade task\r\n");
