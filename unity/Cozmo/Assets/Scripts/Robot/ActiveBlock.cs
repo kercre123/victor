@@ -13,57 +13,34 @@ public class ActiveBlock : ObservedObject
 		[System.FlagsAttribute]
 		public new enum PositionFlag
 		{
-			NONE              = 0,
-			TOP_NORTH_WEST    = 0x01,
-			TOP_NORTH_EAST    = 0x10,
-			TOP_SOUTH_WEST    = 0x02,
-			TOP_SOUTH_EAST    = 0x20,
-			BOTTOM_NORTH_WEST = 0x04,
-			BOTTOM_NORTH_EAST = 0x40,
-			BOTTOM_SOUTH_WEST = 0x08,
-			BOTTOM_SOUTH_EAST = 0x80,
-			ALL = 0xff
+			NONE    = 0,
+			BACK_EAST   = 0x01,
+			LEFT_NORTH  = 0x02,
+			FRONT_WEST  = 0x04,
+			RIGHT_SOUTH = 0x08,
+			ALL 		= 0xff
 		};
 		
-		private PositionFlag IndexToPosition( int i )
+		public static PositionFlag IndexToPosition( int i )
 		{
 			switch( i )
 			{
-				case 0:
-					return PositionFlag.TOP_NORTH_WEST;
-				case 1:
-					return PositionFlag.TOP_SOUTH_WEST;
-				case 2:
-					return PositionFlag.BOTTOM_NORTH_WEST;
-				case 3:
-					return PositionFlag.BOTTOM_SOUTH_WEST;
-				case 4:
-					return PositionFlag.TOP_NORTH_EAST;
-				case 5:
-					return PositionFlag.TOP_SOUTH_EAST;
-				case 6:
-					return PositionFlag.BOTTOM_NORTH_EAST;
-				case 7:
-					return PositionFlag.BOTTOM_SOUTH_EAST;
+				case 0: return PositionFlag.BACK_EAST;
+				case 1: return PositionFlag.LEFT_NORTH;
+				case 2: return PositionFlag.FRONT_WEST;
+				case 3: return PositionFlag.RIGHT_SOUTH;
 			}
 			
 			return PositionFlag.NONE;
 		}
 		
-		public static int GetIndexForCornerClosestToAngle(float angleFromEast, bool top=true)
+		public static int GetIndexForEdgeClosestToAngle(float angleFromNorth)
 		{
-			//north west
-			if(angleFromEast >= 0f && angleFromEast < 90f) return top ? 0 : 2;
-			
-			//south west
-			if(angleFromEast >= 90f && angleFromEast < 180f) return top ? 1 : 3;
-			
-			//north east
-			if(angleFromEast < 0f && angleFromEast > -90f) return top ? 4 : 6;
-			
-			//south east
-			if(angleFromEast < -90f && angleFromEast > -180f) return top ? 5 : 7;
-			
+			if(angleFromNorth >= -45f && angleFromNorth < 45f) return 1; //LEFT_NORTH
+			if(angleFromNorth >= 45f && angleFromNorth < 135f) return 2; //FRONT_WEST
+			if(angleFromNorth >= 135f || angleFromNorth < -135f) return 3; //RIGHT_SOUTH
+			if(angleFromNorth >= -135f && angleFromNorth < -45f) return 0; //BACK_EAST
+
 			return 0;
 		}
 
@@ -237,6 +214,9 @@ public class ActiveBlock : ObservedObject
 	public void SetLEDs( uint onColor = 0, uint offColor = 0, byte whichLEDs = byte.MaxValue, uint onPeriod_ms = Light.FOREVER, uint offPeriod_ms = 0, 
 	                    uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0, byte turnOffUnspecifiedLEDs = 1 )
 	{
+
+		//Debug.Log("SetLEDs transitionOnPeriod_ms("+transitionOnPeriod_ms+")");
+
 		for( int i = 0; i < lights.Length; ++i )
 		{
 			if( lights[i].Position( (Light.PositionFlag)whichLEDs ) )

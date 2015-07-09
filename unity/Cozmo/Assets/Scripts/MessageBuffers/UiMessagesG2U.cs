@@ -1931,8 +1931,7 @@ public class RobotCompletedAction
 	private uint _robotID; // uint_32
 	private Anki.Cozmo.RobotActionType _actionType; // RobotActionType
 	private Anki.Cozmo.ActionResult _result; // ActionResult
-	private int[] _objectIDs; // int_32[5]
-	private byte _numObjects; // uint_8
+	private Anki.Cozmo.ActionCompletedStruct _completionInfo; // ActionCompletedStruct
 
 	public uint robotID { get { return _robotID; } set { _robotID = value; } }
 
@@ -1940,43 +1939,36 @@ public class RobotCompletedAction
 
 	public Anki.Cozmo.ActionResult result { get { return _result; } set { _result = value; } }
 
-	public int[] objectIDs
+	public Anki.Cozmo.ActionCompletedStruct completionInfo
 	{
 		get {
-			return _objectIDs;
+			return _completionInfo;
 		}
 		set {
 			if (value == null) {
-				throw new System.ArgumentException("objectIDs fixed-length array is null. Must have a length of 5.", "value");
+				throw new System.ArgumentNullException("completionInfo cannot be null.", "value");
 			}
-			if (value.Length != 5) {
-				throw new System.ArgumentException("objectIDs fixed-length array is the wrong size. Must have a length of 5.", "value");
-			}
-			_objectIDs = value;
+			_completionInfo = value;
 		}
 	}
-
-	public byte numObjects { get { return _numObjects; } set { _numObjects = value; } }
 
 
 	/**** Constructors ****/
 
 	public RobotCompletedAction()
 	{
-		this.objectIDs = new int[5];
+		this.completionInfo = new Anki.Cozmo.ActionCompletedStruct();
 	}
 
 	public RobotCompletedAction(uint robotID,
 		Anki.Cozmo.RobotActionType actionType,
 		Anki.Cozmo.ActionResult result,
-		int[] objectIDs,
-		byte numObjects)
+		Anki.Cozmo.ActionCompletedStruct completionInfo)
 	{
 		this.robotID = robotID;
 		this.actionType = actionType;
 		this.result = result;
-		this.objectIDs = objectIDs;
-		this.numObjects = numObjects;
+		this.completionInfo = completionInfo;
 	}
 
 	public RobotCompletedAction(System.IO.Stream stream)
@@ -2000,11 +1992,7 @@ public class RobotCompletedAction
 		_robotID = reader.ReadUInt32();
 		_actionType = (Anki.Cozmo.RobotActionType)reader.ReadInt32();
 		_result = (Anki.Cozmo.ActionResult)reader.ReadInt32();
-		_objectIDs = new int[5];
-		for (int i = 0; i < 5; ++i) {
-			_objectIDs[i] = reader.ReadInt32();
-		}
-		_numObjects = reader.ReadByte();
+		_completionInfo = new Anki.Cozmo.ActionCompletedStruct(reader);
 	}
 
 	public void Pack(System.IO.Stream stream)
@@ -2018,16 +2006,18 @@ public class RobotCompletedAction
 		writer.Write((uint)_robotID);
 		writer.Write((int)_actionType);
 		writer.Write((int)_result);
-		for (int i = 0; i < 5; ++i) {
-			writer.Write((int)_objectIDs[i]);
-		}
-		writer.Write((byte)_numObjects);
+		_completionInfo.Pack(writer);
 	}
 
 	public int Size 
 	{
 		get {
-			return 33;
+			int result = 0;
+			result += 4; // uint_32
+			result += 4; // RobotActionType
+			result += 4; // ActionResult
+			result += completionInfo.Size;
+			return result;
 		}
 	}
 
@@ -2080,8 +2070,7 @@ public class RobotCompletedAction
 		return this._robotID.Equals(p._robotID)
 			&& this._actionType.Equals(p._actionType)
 			&& this._result.Equals(p._result)
-			&& ArrayEquals<int>(this._objectIDs,p._objectIDs)
-			&& this._numObjects.Equals(p._numObjects);
+			&& this._completionInfo.Equals(p._completionInfo);
 	}
 
 	public override int GetHashCode()
@@ -2092,7 +2081,7 @@ public class RobotCompletedAction
 			hash = hash * 23 + this._robotID.GetHashCode();
 			hash = hash * 23 + this._actionType.GetHashCode();
 			hash = hash * 23 + this._result.GetHashCode();
-			hash = hash * 23 + this._numObjects.GetHashCode();
+			hash = hash * 23 + this._completionInfo.GetHashCode();
 			return hash;
 		}
 	}

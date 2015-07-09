@@ -11,6 +11,7 @@ public enum CubeType {
 	LIGHT_CUBE,
 	BULLS_EYE,
 	FLAG,
+	FACE,
 	Count
 }
 
@@ -47,6 +48,7 @@ public class ObservedObject
 	protected Robot robot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.current : null; } }
 
 	public bool isActive { get { return cubeType == CubeType.LIGHT_CUBE; } }
+	public bool isFace { get { return cubeType == CubeType.FACE; } }
 
 	public event Action<ObservedObject> OnDelete;
 	public static Action SignificantChangeDetected = null;
@@ -59,7 +61,7 @@ public class ObservedObject
 
 			if( robot.carryingObject != ID )
 			{
-				float distanceFromRobot = Vector2.Distance( robot.WorldPosition, WorldPosition ) - ( CozmoUtil.BLOCK_LENGTH_MM * 0.5f ) + CozmoUtil.CARRIED_OBJECT_HORIZONTAL_OFFSET;
+				float distanceFromRobot = Vector2.Distance( robot.WorldPosition + robot.Forward * CozmoUtil.CARRIED_OBJECT_HORIZONTAL_OFFSET, WorldPosition ) - ( CozmoUtil.BLOCK_LENGTH_MM * 0.5f );
 				float angleFromRobot = Vector2.Angle( robot.Forward, WorldPosition - robot.WorldPosition );
 				float maxDistanceInMM = maxDistanceInCubeLengths * CozmoUtil.BLOCK_LENGTH_MM;
 
@@ -98,6 +100,7 @@ public class ObservedObject
 
 	public string InfoString { get; private set; }
 	public string SelectInfoString { get; private set; }
+
 	public ObservedObject() { }
 
 	public ObservedObject( int objectID, uint objectFamily, uint objectType )
@@ -117,6 +120,9 @@ public class ObservedObject
 
 		if (objectFamily == 4) {
 			cubeType = CubeType.LIGHT_CUBE;
+		} else if (objectFamily == 6) {
+			cubeType = CubeType.FACE;
+			Debug.LogWarning("FACE " + ID + " !!!"); 
 		} else if (objectType == 4 || objectType == 5) {
 			cubeType = CubeType.BULLS_EYE;
 		}

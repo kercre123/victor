@@ -601,8 +601,7 @@ struct RobotCompletedAction
 	uint32_t robotID;
 	Anki::Cozmo::RobotActionType actionType;
 	Anki::Cozmo::ActionResult result;
-	std::array<int32_t, 5> objectIDs;
-	uint8_t numObjects;
+	Anki::Cozmo::ActionCompletedStruct completionInfo;
 	
 	/**** Constructors ****/
 	RobotCompletedAction() = default;
@@ -615,13 +614,11 @@ struct RobotCompletedAction
 	explicit RobotCompletedAction(uint32_t robotID
 		,Anki::Cozmo::RobotActionType actionType
 		,Anki::Cozmo::ActionResult result
-		,const std::array<int32_t, 5>& objectIDs
-		,uint8_t numObjects)
+		,const Anki::Cozmo::ActionCompletedStruct& completionInfo)
 	:robotID(robotID)
 	,actionType(actionType)
 	,result(result)
-	,objectIDs(objectIDs)
-	,numObjects(numObjects)
+	,completionInfo(completionInfo)
 	{}
 
 	explicit RobotCompletedAction(const uint8_t* buff, size_t len);

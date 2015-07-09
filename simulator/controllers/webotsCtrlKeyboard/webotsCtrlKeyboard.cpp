@@ -234,7 +234,6 @@ namespace Anki {
       void SendHeadControllerGains(const f32 kp, const f32 ki, const f32 kd, const f32 maxErrorSum);
       void SendLiftControllerGains(const f32 kp, const f32 ki, const f32 kd, const f32 maxErrorSum);
       void SendSteeringControllerGains(const f32 k1, const f32 k2);
-      void SendSelectNextSoundScheme();
       void SendStartTestMode(TestMode mode, s32 p1 = 0, s32 p2 = 0, s32 p3 = 0);
       void SendIMURequest(u32 length_ms);
       void SendAnimation(const char* animName, u32 numLoops);
@@ -339,9 +338,10 @@ namespace Anki {
           case RobotActionType::PICKUP_OBJECT_HIGH:
           case RobotActionType::PICKUP_OBJECT_LOW:
             printf("Robot %d %s picking up stack of %d objects with IDs: ",
-                   msg.robotID, (success ? "SUCCEEDED" : "FAILED"), msg.numObjects);
-            for(int i=0; i<msg.numObjects; ++i) {
-              printf("%d ", msg.objectIDs[i]);
+                   msg.robotID, (success ? "SUCCEEDED" : "FAILED"),
+                   msg.completionInfo.numObjects);
+            for(int i=0; i<msg.completionInfo.numObjects; ++i) {
+              printf("%d ", msg.completionInfo.objectIDs[i]);
             }
             printf("\n");
             break;
@@ -349,13 +349,19 @@ namespace Anki {
           case RobotActionType::PLACE_OBJECT_HIGH:
           case RobotActionType::PLACE_OBJECT_LOW:
             printf("Robot %d %s placing stack of %d objects with IDs: ",
-                   msg.robotID, (success ? "SUCCEEDED" : "FAILED"), msg.numObjects);
-            for(int i=0; i<msg.numObjects; ++i) {
-              printf("%d ", msg.objectIDs[i]);
+                   msg.robotID, (success ? "SUCCEEDED" : "FAILED"),
+                   msg.completionInfo.numObjects);
+            for(int i=0; i<msg.completionInfo.numObjects; ++i) {
+              printf("%d ", msg.completionInfo.objectIDs[i]);
             }
             printf("\n");
             break;
 
+          case RobotActionType::PLAY_ANIMATION:
+            printf("Robot %d finished playing animation %s.\n",
+                   msg.robotID, msg.completionInfo.animName.c_str());
+            break;
+            
           default:
             printf("Robot %d completed action with type=%d: %s.\n",
                    msg.robotID, msg.actionType, ActionResultToString((ActionResult)msg.result));
@@ -1346,12 +1352,6 @@ namespace Anki {
                   msgWrapper.Set_SetActiveObjectLEDs(msg);
                   SendMessage(msgWrapper);
                 }
-                break;
-              }
-                
-              case (s32)'M':
-              {
-                SendSelectNextSoundScheme();
                 break;
               }
                 
@@ -2374,15 +2374,6 @@ namespace Anki {
         m.k2 = k2;
         U2G::Message message;
         message.Set_SetSteeringControllerGains(m);
-        SendMessage(message);
-      }
-      
-      
-      void SendSelectNextSoundScheme()
-      {
-        U2G::SelectNextSoundScheme m;
-        U2G::Message message;
-        message.Set_SelectNextSoundScheme(m);
         SendMessage(message);
       }
       

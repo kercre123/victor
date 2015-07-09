@@ -1029,8 +1029,7 @@ size_t RobotCompletedAction::Pack(CLAD::SafeMessageBuffer& buffer) const
 	buffer.Write(this->robotID);
 	buffer.Write(this->actionType);
 	buffer.Write(this->result);
-	buffer.WriteFArray<int32_t, 5>(this->objectIDs);
-	buffer.Write(this->numObjects);
+	this->completionInfo.Pack(buffer);
 	const size_t bytesWritten {buffer.GetBytesWritten()};
 	return bytesWritten;
 }
@@ -1046,8 +1045,7 @@ size_t RobotCompletedAction::Unpack(const CLAD::SafeMessageBuffer& buffer)
 	buffer.Read(this->robotID);
 	buffer.Read(this->actionType);
 	buffer.Read(this->result);
-	buffer.ReadFArray<int32_t, 5>(this->objectIDs);
-	buffer.Read(this->numObjects);
+	this->completionInfo.Unpack(buffer);
 	return buffer.GetBytesRead();
 }
 
@@ -1060,10 +1058,8 @@ size_t RobotCompletedAction::Size() const
 	result += 4; // = RobotActionType
 	//result
 	result += 4; // = ActionResult
-	//objectIDs
-	result += 4 * 5; // = int_32 * 5
-	//numObjects
-	result += 1; // = uint_8
+	//completionInfo
+	result += completionInfo.Size(); // = completionInfo
 	return result;
 }
 
@@ -1072,8 +1068,7 @@ bool RobotCompletedAction::operator==(const RobotCompletedAction& other) const
 	if (robotID != other.robotID
 	|| actionType != other.actionType
 	|| result != other.result
-	|| objectIDs != other.objectIDs
-	|| numObjects != other.numObjects) {
+	|| completionInfo != other.completionInfo) {
 		return false;
 	}
 	return true;

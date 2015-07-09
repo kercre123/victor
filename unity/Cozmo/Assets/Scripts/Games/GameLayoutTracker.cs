@@ -136,6 +136,7 @@ public class GameLayoutTracker : MonoBehaviour {
 
 		if(!blocksInitialized) {
 			int numPlayers = PlayerPrefs.GetInt("NumberOfPlayers", 1);
+			Debug.Log("initializing layout blocks for NumberOfPlayers = " + numPlayers);
 			for(int i=0; i<layouts.Count; i++) {
 				layouts[i].Initialize(numPlayers);
 			}
@@ -430,9 +431,11 @@ public class GameLayoutTracker : MonoBehaviour {
 					}
 					
 					inventory.Add(inventoriedObject);
+					Debug.Log( "Update_INVENTORY Add("+inventoriedObject+") inventory("+inventory.Count+")" );
 				}  
 				else {
 					inventory.Remove(inventoriedObject);
+					Debug.Log( "Update_INVENTORY Remove("+inventoriedObject+") inventory("+inventory.Count+")" );
 				}
 			}
 		}
@@ -446,7 +449,7 @@ public class GameLayoutTracker : MonoBehaviour {
 			}
 			else {
 
-				if(inventory.Count > lastInventoryCount) { //look at last seen object if any seen
+				if(inventory.Count > lastInventoryCount && inventory.Count != currentLayout.Blocks.Count) { //look at last seen object if any seen
 					//Debug.Log( "look at last seen object if any seen: TrackHeadToObject " + inventory[inventory.Count-1] );
 					float arc = 180f / currentLayout.Blocks.Count;
 					Vector3 latestPos = inventory[inventory.Count-1].WorldPosition;
@@ -461,12 +464,16 @@ public class GameLayoutTracker : MonoBehaviour {
 			
 					RobotEngineManager.instance.VisualizeQuad(33, CozmoPalette.ColorToUInt(Color.blue), robot.WorldPosition, robot.WorldPosition, latestPos, latestPos);
 					RobotEngineManager.instance.VisualizeQuad(34, CozmoPalette.ColorToUInt(Color.magenta), robot.WorldPosition, robot.WorldPosition, facePosition, facePosition);
+					Debug.Log( "Update_INVENTORY TurnInPlace("+angle+") inventory("+inventory.Count+")" );
 				}
 
 				//Debug.Log( "look straight ahead to see objects" );
 				
 				robot.SetHeadAngle(0f);
 			}
+		}
+		else if(inventoryComplete && robot != null && robot.isBusy) {
+			robot.CancelAction();
 		}
 		
 		if(button_manualBuild != null) {

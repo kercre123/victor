@@ -200,6 +200,7 @@ public class Robot
 	private U2G.TraverseObject TraverseObjectMessage;
 	private U2G.SetBackpackLEDs SetBackpackLEDsMessage;
 	private U2G.SetObjectAdditionAndDeletion SetObjectAdditionAndDeletionMessage;
+	private U2G.StartFaceTracking StartFaceTrackingMessage;
 
 	private ObservedObject _carryingObject;
 	public ObservedObject carryingObject
@@ -381,6 +382,7 @@ public class Robot
 		TraverseObjectMessage = new U2G.TraverseObject();
 		SetBackpackLEDsMessage = new U2G.SetBackpackLEDs();
 		SetObjectAdditionAndDeletionMessage = new U2G.SetObjectAdditionAndDeletion();
+		StartFaceTrackingMessage = new U2G.StartFaceTracking();
 
 		lights = new Light[SetBackpackLEDsMessage.onColor.Length];
 
@@ -694,7 +696,7 @@ public class Robot
 	/// </summary>
 	/// <param name="angleFactor">Angle factor.</param> usually from -1 (MIN_HEAD_ANGLE) to 1 (MAX_HEAD_ANGLE)
 	/// <param name="useExactAngle">If set to <c>true</c> angleFactor is treated as an exact angle in radians.</param>
-	public void SetHeadAngle( float angleFactor = -0.8f, bool useExactAngle = false )
+	public void SetHeadAngle( float angleFactor = -0.8f, bool useExactAngle = false, float accelRadSec=2f, float maxSpeedFactor=1f )
 	{
 		//Debug.Log("SetHeadAngle("+angleFactor+")");
 
@@ -719,8 +721,8 @@ public class Robot
 
 		SetHeadAngleMessage.angle_rad = radians;
 
-		SetHeadAngleMessage.accel_rad_per_sec2 = 2f;
-		SetHeadAngleMessage.max_speed_rad_per_sec = CozmoUtil.MAX_SPEED_RAD_PER_SEC;
+		SetHeadAngleMessage.accel_rad_per_sec2 = accelRadSec;
+		SetHeadAngleMessage.max_speed_rad_per_sec = maxSpeedFactor*CozmoUtil.MAX_SPEED_RAD_PER_SEC;
 
 		RobotEngineManager.instance.Message.SetHeadAngle = SetHeadAngleMessage;
 		RobotEngineManager.instance.SendMessage();
@@ -1068,6 +1070,13 @@ public class Robot
 		SetObjectAdditionAndDeletionMessage.enableDeletion = enableDeletion;
 
 		RobotEngineManager.instance.Message.SetObjectAdditionAndDeletion = SetObjectAdditionAndDeletionMessage;
+		RobotEngineManager.instance.SendMessage();
+	}
+
+	public void StartFaceAwareness()
+	{
+		//StartFaceTrackingMessage.timeout_sec = ID;
+		RobotEngineManager.instance.Message.StartFaceTracking = StartFaceTrackingMessage;
 		RobotEngineManager.instance.SendMessage();
 	}
 

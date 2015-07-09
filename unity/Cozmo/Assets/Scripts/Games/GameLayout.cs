@@ -6,7 +6,7 @@ public class GameLayout : MonoBehaviour {
 
 	[SerializeField] public string gameName = "Unknown";
 	[SerializeField] public int levelNumber = 1;
-	[SerializeField] public List<BuildInstructionsCube> blocks = new List<BuildInstructionsCube>();
+	[SerializeField] List<BuildInstructionsCube> blocks = new List<BuildInstructionsCube>();
 
 	[SerializeField] public Transform startPositionMarker;
 	[SerializeField] public float scale = 0.044f;
@@ -25,7 +25,7 @@ public class GameLayout : MonoBehaviour {
 		Blocks.Clear();
 
 		for(int i=0;i<blocks.Count;i++) {
-			if(i < gateBlocksAtPlayerCount.Count && players > gateBlocksAtPlayerCount[i]) {
+			if(i < gateBlocksAtPlayerCount.Count && players < gateBlocksAtPlayerCount[i]) {
 				blocks[i].gameObject.SetActive(false);
 				continue;
 			}

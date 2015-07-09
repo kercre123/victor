@@ -5369,49 +5369,6 @@ public class SetSteeringControllerGains
 	}
 }
 
-public class SelectNextSoundScheme
-{
-	/**** Constructors ****/
-
-	public SelectNextSoundScheme()
-	{
-	}
-
-	public SelectNextSoundScheme(System.IO.Stream stream)
-	{
-		Unpack(stream);
-	}
-
-	public SelectNextSoundScheme(System.IO.BinaryReader reader)
-	{
-		Unpack(reader);
-	}
-
-	public void Unpack(System.IO.Stream stream)
-	{
-	}
-
-	public void Unpack(System.IO.BinaryReader reader)
-	{
-	}
-
-	public void Pack(System.IO.Stream stream)
-	{
-	}
-
-	public void Pack(System.IO.BinaryWriter writer)
-	{
-	}
-
-	public int Size 
-	{
-		get {
-			return 0;
-		}
-	}
-
-}
-
 public class StartTestMode
 {
 	private int _p1; // int_32
@@ -7919,24 +7876,23 @@ public class Message {
 		SetHeadControllerGains,	//43
 		SetLiftControllerGains,	//44
 		SetSteeringControllerGains,	//45
-		SelectNextSoundScheme,	//46
-		StartTestMode,	//47
-		IMURequest,	//48
-		PlayAnimation,	//49
-		ReplayLastAnimation,	//50
-		ReadAnimationFile,	//51
-		StartFaceTracking,	//52
-		StopFaceTracking,	//53
-		StartLookingForMarkers,	//54
-		StopLookingForMarkers,	//55
-		SetVisionSystemParams,	//56
-		SetFaceDetectParams,	//57
-		SetActiveObjectLEDs,	//58
-		SetAllActiveObjectLEDs,	//59
-		SetBackpackLEDs,	//60
-		TapBlockOnGround,	//61
-		VisualizeQuad,	//62
-		EraseQuad,	//63
+		StartTestMode,	//46
+		IMURequest,	//47
+		PlayAnimation,	//48
+		ReplayLastAnimation,	//49
+		ReadAnimationFile,	//50
+		StartFaceTracking,	//51
+		StopFaceTracking,	//52
+		StartLookingForMarkers,	//53
+		StopLookingForMarkers,	//54
+		SetVisionSystemParams,	//55
+		SetFaceDetectParams,	//56
+		SetActiveObjectLEDs,	//57
+		SetAllActiveObjectLEDs,	//58
+		SetBackpackLEDs,	//59
+		TapBlockOnGround,	//60
+		VisualizeQuad,	//61
+		EraseQuad,	//62
 		INVALID
 	};
 
@@ -8728,23 +8684,6 @@ public class Message {
 		}
 	}
 
-	public Anki.Cozmo.U2G.SelectNextSoundScheme SelectNextSoundScheme
-	{
-		get {
-			if (_tag != Tag.SelectNextSoundScheme) {
-				throw new System.InvalidOperationException(string.Format(
-					"Cannot access union member \"SelectNextSoundScheme\" when a value of type {0} is stored.",
-					_tag.ToString()));
-			}
-			return (Anki.Cozmo.U2G.SelectNextSoundScheme)this._state;
-		}
-		
-		set {
-			_tag = (value != null) ? Tag.SelectNextSoundScheme : Tag.INVALID;
-			_state = value;
-		}
-	}
-
 	public Anki.Cozmo.U2G.StartTestMode StartTestMode
 	{
 		get {
@@ -9198,9 +9137,6 @@ public class Message {
 		case Tag.SetSteeringControllerGains:
 			SetSteeringControllerGains = new Anki.Cozmo.U2G.SetSteeringControllerGains(reader);
 			break;
-		case Tag.SelectNextSoundScheme:
-			SelectNextSoundScheme = new Anki.Cozmo.U2G.SelectNextSoundScheme(reader);
-			break;
 		case Tag.StartTestMode:
 			StartTestMode = new Anki.Cozmo.U2G.StartTestMode(reader);
 			break;
@@ -9544,12 +9480,6 @@ public class Message {
 				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
 			}
 			SetSteeringControllerGains.Pack(writer);
-			break;
-		case Tag.SelectNextSoundScheme:
-			if (SelectNextSoundScheme == null) {
-				throw new System.InvalidOperationException("Arrays in messages may not have null entries.");
-			}
-			SelectNextSoundScheme.Pack(writer);
 			break;
 		case Tag.StartTestMode:
 			if (StartTestMode == null) {
@@ -9938,12 +9868,6 @@ public class Message {
 					throw new System.InvalidOperationException("Messages may not have null members.");
 				}
 				result += SetSteeringControllerGains.Size;
-				break;
-			case Tag.SelectNextSoundScheme:
-				if (SelectNextSoundScheme == null) {
-					throw new System.InvalidOperationException("Messages may not have null members.");
-				}
-				result += SelectNextSoundScheme.Size;
 				break;
 			case Tag.StartTestMode:
 				if (StartTestMode == null) {
