@@ -4254,6 +4254,268 @@ bool EraseQuad::operator!=(const EraseQuad& other) const
 }
 
 
+// STRUCTURE RobotActionUnion
+
+RobotActionUnion::RobotActionUnion(const uint8_t* buff, size_t len)
+{
+	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+	Unpack(buffer);
+}
+
+RobotActionUnion::RobotActionUnion(const CLAD::SafeMessageBuffer& buffer)
+{
+	Unpack(buffer);
+}
+
+size_t RobotActionUnion::Pack(uint8_t* buff, size_t len) const
+{
+	CLAD::SafeMessageBuffer buffer(buff, len, false);
+	return Pack(buffer);
+}
+
+size_t RobotActionUnion::Pack(CLAD::SafeMessageBuffer& buffer) const
+{
+	this->pickAndPlaceObject.Pack(buffer);
+	this->rollObject.Pack(buffer);
+	this->goToPose.Pack(buffer);
+	this->goToObject.Pack(buffer);
+	this->turnInPlace.Pack(buffer);
+	this->setLiftHeight.Pack(buffer);
+	this->setHeadAngle.Pack(buffer);
+	const size_t bytesWritten {buffer.GetBytesWritten()};
+	return bytesWritten;
+}
+
+size_t RobotActionUnion::Unpack(const uint8_t* buff, const size_t len)
+{
+	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+	return Unpack(buffer);
+}
+
+size_t RobotActionUnion::Unpack(const CLAD::SafeMessageBuffer& buffer)
+{
+	this->pickAndPlaceObject.Unpack(buffer);
+	this->rollObject.Unpack(buffer);
+	this->goToPose.Unpack(buffer);
+	this->goToObject.Unpack(buffer);
+	this->turnInPlace.Unpack(buffer);
+	this->setLiftHeight.Unpack(buffer);
+	this->setHeadAngle.Unpack(buffer);
+	return buffer.GetBytesRead();
+}
+
+size_t RobotActionUnion::Size() const
+{
+	size_t result = 0;
+	//pickAndPlaceObject
+	result += pickAndPlaceObject.Size(); // = pickAndPlaceObject
+	//rollObject
+	result += rollObject.Size(); // = rollObject
+	//goToPose
+	result += goToPose.Size(); // = goToPose
+	//goToObject
+	result += goToObject.Size(); // = goToObject
+	//turnInPlace
+	result += turnInPlace.Size(); // = turnInPlace
+	//setLiftHeight
+	result += setLiftHeight.Size(); // = setLiftHeight
+	//setHeadAngle
+	result += setHeadAngle.Size(); // = setHeadAngle
+	return result;
+}
+
+bool RobotActionUnion::operator==(const RobotActionUnion& other) const
+{
+	if (pickAndPlaceObject != other.pickAndPlaceObject
+	|| rollObject != other.rollObject
+	|| goToPose != other.goToPose
+	|| goToObject != other.goToObject
+	|| turnInPlace != other.turnInPlace
+	|| setLiftHeight != other.setLiftHeight
+	|| setHeadAngle != other.setHeadAngle) {
+		return false;
+	}
+	return true;
+}
+
+bool RobotActionUnion::operator!=(const RobotActionUnion& other) const
+{
+	return !(operator==(other));
+}
+
+
+// MESSAGE QueueSingleAction
+
+QueueSingleAction::QueueSingleAction(const uint8_t* buff, size_t len)
+{
+	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+	Unpack(buffer);
+}
+
+QueueSingleAction::QueueSingleAction(const CLAD::SafeMessageBuffer& buffer)
+{
+	Unpack(buffer);
+}
+
+size_t QueueSingleAction::Pack(uint8_t* buff, size_t len) const
+{
+	CLAD::SafeMessageBuffer buffer(buff, len, false);
+	return Pack(buffer);
+}
+
+size_t QueueSingleAction::Pack(CLAD::SafeMessageBuffer& buffer) const
+{
+	buffer.Write(this->robotID);
+	buffer.Write(this->inSlot);
+	buffer.Write(this->next);
+	buffer.Write(this->actionType);
+	this->action.Pack(buffer);
+	const size_t bytesWritten {buffer.GetBytesWritten()};
+	return bytesWritten;
+}
+
+size_t QueueSingleAction::Unpack(const uint8_t* buff, const size_t len)
+{
+	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+	return Unpack(buffer);
+}
+
+size_t QueueSingleAction::Unpack(const CLAD::SafeMessageBuffer& buffer)
+{
+	buffer.Read(this->robotID);
+	buffer.Read(this->inSlot);
+	buffer.Read(this->next);
+	buffer.Read(this->actionType);
+	this->action.Unpack(buffer);
+	return buffer.GetBytesRead();
+}
+
+size_t QueueSingleAction::Size() const
+{
+	size_t result = 0;
+	//robotID
+	result += 1; // = uint_8
+	//inSlot
+	result += 4; // = uint_32
+	//next
+	result += 1; // = bool
+	//actionType
+	result += 4; // = RobotActionType
+	//action
+	result += action.Size(); // = action
+	return result;
+}
+
+bool QueueSingleAction::operator==(const QueueSingleAction& other) const
+{
+	if (robotID != other.robotID
+	|| inSlot != other.inSlot
+	|| next != other.next
+	|| actionType != other.actionType
+	|| action != other.action) {
+		return false;
+	}
+	return true;
+}
+
+bool QueueSingleAction::operator!=(const QueueSingleAction& other) const
+{
+	return !(operator==(other));
+}
+
+
+// MESSAGE QueueCompoundAction
+
+QueueCompoundAction::QueueCompoundAction(const uint8_t* buff, size_t len)
+{
+	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+	Unpack(buffer);
+}
+
+QueueCompoundAction::QueueCompoundAction(const CLAD::SafeMessageBuffer& buffer)
+{
+	Unpack(buffer);
+}
+
+size_t QueueCompoundAction::Pack(uint8_t* buff, size_t len) const
+{
+	CLAD::SafeMessageBuffer buffer(buff, len, false);
+	return Pack(buffer);
+}
+
+size_t QueueCompoundAction::Pack(CLAD::SafeMessageBuffer& buffer) const
+{
+	buffer.Write(this->robotID);
+	buffer.Write(this->inSlot);
+	buffer.Write(this->next);
+	buffer.Write(this->parallel);
+	buffer.WriteVArray<Anki::Cozmo::RobotActionType, uint8_t>(this->actionTypes);
+	buffer.Write(static_cast<uint8_t>(actions.size()));
+	for (const auto& m : actions) {
+		m.Pack(buffer);
+	}
+	const size_t bytesWritten {buffer.GetBytesWritten()};
+	return bytesWritten;
+}
+
+size_t QueueCompoundAction::Unpack(const uint8_t* buff, const size_t len)
+{
+	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+	return Unpack(buffer);
+}
+
+size_t QueueCompoundAction::Unpack(const CLAD::SafeMessageBuffer& buffer)
+{
+	buffer.Read(this->robotID);
+	buffer.Read(this->inSlot);
+	buffer.Read(this->next);
+	buffer.Read(this->parallel);
+	buffer.ReadVArray<Anki::Cozmo::RobotActionType, uint8_t>(this->actionTypes);
+	buffer.ReadCompoundTypeVArray<Anki::Cozmo::U2G::RobotActionUnion, uint8_t>(this->actions);
+	return buffer.GetBytesRead();
+}
+
+size_t QueueCompoundAction::Size() const
+{
+	size_t result = 0;
+	//robotID
+	result += 1; // = uint_8
+	//inSlot
+	result += 4; // = uint_32
+	//next
+	result += 1; // = bool
+	//parallel
+	result += 1; // = bool
+	//actionTypes
+	result += 1; //length = uint_8
+	result += 4 * actionTypes.size(); //member = int_32
+	//actions
+	result += 1; //length = uint_8
+	for (const auto& m : actions) {
+		result += m.Size();
+	}
+	return result;
+}
+
+bool QueueCompoundAction::operator==(const QueueCompoundAction& other) const
+{
+	if (robotID != other.robotID
+	|| inSlot != other.inSlot
+	|| next != other.next
+	|| parallel != other.parallel
+	|| actionTypes != other.actionTypes
+	|| actions != other.actions) {
+		return false;
+	}
+	return true;
+}
+
+bool QueueCompoundAction::operator!=(const QueueCompoundAction& other) const
+{
+	return !(operator==(other));
+}
+
+
 // UNION Message
 
 const char* MessageTagToString(const MessageTag tag) {
@@ -4384,6 +4646,10 @@ const char* MessageTagToString(const MessageTag tag) {
 		return "VisualizeQuad";
 	case MessageTag::EraseQuad:
 		return "EraseQuad";
+	case MessageTag::QueueSingleAction:
+		return "QueueSingleAction";
+	case MessageTag::QueueCompoundAction:
+		return "QueueCompoundAction";
 	default:
 		return "INVALID";
 	}
@@ -6227,6 +6493,64 @@ void Message::Set_EraseQuad(Anki::Cozmo::U2G::EraseQuad&& new_EraseQuad)
 }
 
 
+const Anki::Cozmo::U2G::QueueSingleAction& Message::Get_QueueSingleAction() const
+{
+	assert(_tag == Tag::QueueSingleAction);
+	return _QueueSingleAction;
+}
+void Message::Set_QueueSingleAction(const Anki::Cozmo::U2G::QueueSingleAction& new_QueueSingleAction)
+{
+	if(this->_tag == Tag::QueueSingleAction) {
+		_QueueSingleAction = new_QueueSingleAction;
+	}
+	else {
+		ClearCurrent();
+		new(&_QueueSingleAction) Anki::Cozmo::U2G::QueueSingleAction{new_QueueSingleAction};
+		_tag = Tag::QueueSingleAction;
+	}
+}
+void Message::Set_QueueSingleAction(Anki::Cozmo::U2G::QueueSingleAction&& new_QueueSingleAction)
+{
+	if(this->_tag == Tag::QueueSingleAction) {
+		_QueueSingleAction = std::move(new_QueueSingleAction);
+	}
+	else {
+		ClearCurrent();
+		new(&_QueueSingleAction) Anki::Cozmo::U2G::QueueSingleAction{std::move(new_QueueSingleAction)};
+		_tag = Tag::QueueSingleAction;
+	}
+}
+
+
+const Anki::Cozmo::U2G::QueueCompoundAction& Message::Get_QueueCompoundAction() const
+{
+	assert(_tag == Tag::QueueCompoundAction);
+	return _QueueCompoundAction;
+}
+void Message::Set_QueueCompoundAction(const Anki::Cozmo::U2G::QueueCompoundAction& new_QueueCompoundAction)
+{
+	if(this->_tag == Tag::QueueCompoundAction) {
+		_QueueCompoundAction = new_QueueCompoundAction;
+	}
+	else {
+		ClearCurrent();
+		new(&_QueueCompoundAction) Anki::Cozmo::U2G::QueueCompoundAction{new_QueueCompoundAction};
+		_tag = Tag::QueueCompoundAction;
+	}
+}
+void Message::Set_QueueCompoundAction(Anki::Cozmo::U2G::QueueCompoundAction&& new_QueueCompoundAction)
+{
+	if(this->_tag == Tag::QueueCompoundAction) {
+		_QueueCompoundAction = std::move(new_QueueCompoundAction);
+	}
+	else {
+		ClearCurrent();
+		new(&_QueueCompoundAction) Anki::Cozmo::U2G::QueueCompoundAction{std::move(new_QueueCompoundAction)};
+		_tag = Tag::QueueCompoundAction;
+	}
+}
+
+
 size_t Message::Unpack(const uint8_t* buff, const size_t len)
 {
 	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
@@ -6746,6 +7070,22 @@ size_t Message::Unpack(const CLAD::SafeMessageBuffer& buffer)
 			this->_EraseQuad.Unpack(buffer);
 		}
 		break;
+	case Tag::QueueSingleAction:
+		if (newTag != oldTag) {
+			new(&(this->_QueueSingleAction)) Anki::Cozmo::U2G::QueueSingleAction(buffer);
+		}
+		else {
+			this->_QueueSingleAction.Unpack(buffer);
+		}
+		break;
+	case Tag::QueueCompoundAction:
+		if (newTag != oldTag) {
+			new(&(this->_QueueCompoundAction)) Anki::Cozmo::U2G::QueueCompoundAction(buffer);
+		}
+		else {
+			this->_QueueCompoundAction.Unpack(buffer);
+		}
+		break;
 	default:
 		break;
 	}
@@ -6952,6 +7292,12 @@ size_t Message::Pack(CLAD::SafeMessageBuffer& buffer) const
 	case Tag::EraseQuad:
 		this->_EraseQuad.Pack(buffer);
 		break;
+	case Tag::QueueSingleAction:
+		this->_QueueSingleAction.Pack(buffer);
+		break;
+	case Tag::QueueCompoundAction:
+		this->_QueueCompoundAction.Pack(buffer);
+		break;
 	default:
 		break;
 	}
@@ -7152,6 +7498,12 @@ size_t Message::Size() const
 	case Tag::EraseQuad:
 		result += _EraseQuad.Size();
 		break;
+	case Tag::QueueSingleAction:
+		result += _QueueSingleAction.Size();
+		break;
+	case Tag::QueueCompoundAction:
+		result += _QueueCompoundAction.Size();
+		break;
 	default:
 		return 0;
 	}
@@ -7350,6 +7702,12 @@ void Message::ClearCurrent()
 		break;
 	case Tag::EraseQuad:
 		_EraseQuad.~EraseQuad();
+		break;
+	case Tag::QueueSingleAction:
+		_QueueSingleAction.~QueueSingleAction();
+		break;
+	case Tag::QueueCompoundAction:
+		_QueueCompoundAction.~QueueCompoundAction();
 		break;
 	default:
 		break;

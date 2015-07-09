@@ -195,4 +195,10 @@ case Anki::Cozmo::U2G::Message::Tag::VisualizeQuad:
 case Anki::Cozmo::U2G::Message::Tag::EraseQuad:
 	Process_EraseQuad(msg.Get_EraseQuad());
 	break;
+case Anki::Cozmo::U2G::Message::Tag::QueueSingleAction:
+	Process_QueueSingleAction(msg.Get_QueueSingleAction());
+	break;
+case Anki::Cozmo::U2G::Message::Tag::QueueCompoundAction:
+	Process_QueueCompoundAction(msg.Get_QueueCompoundAction());
+	break;
 }

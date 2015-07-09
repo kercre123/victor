@@ -77,6 +77,8 @@ enum class MessageTag : uint8_t {
 	TapBlockOnGround,	// 60
 	VisualizeQuad,	// 61
 	EraseQuad,	// 62
+	QueueSingleAction,	// 63
+	QueueCompoundAction,	// 64
 	INVALID
 };
 
