@@ -50,6 +50,12 @@ namespace Cozmo {
     // animation doesn't exist.
     u32  GetNumFrames(const std::string& animName) const;
     
+    // Clear all FaceAnimations
+    void Clear();
+    
+    // Get the total number of available animations
+    size_t GetNumAvailableAnimations() const;
+    
     static Result CompressRLE(const cv::Mat& image, std::vector<u8>& rleData);
     
   protected:
@@ -88,6 +94,15 @@ namespace Cozmo {
     }
     
     return _singletonInstance;
+  }
+  
+  inline void FaceAnimationManager::Clear() {
+    _availableAnimations.clear();
+  }
+  
+  // Get the total number of available animations
+  inline size_t FaceAnimationManager::GetNumAvailableAnimations() const {
+    return _availableAnimations.size();
   }
   
   

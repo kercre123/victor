@@ -29,7 +29,14 @@ namespace Anki {
       inline static SoundManager* getInstance();
       static void removeInstance();
       
-      // Set the root directory of sound files
+      // Clears all available sounds
+      void Clear();
+      
+      // Get the total number of sounds currently available in SoundManager
+      size_t GetNumAvailableSounds() const;
+      
+      // Set the root directory of sound files and causes a (re-)read of available
+      // sound files there.
       bool SetRootDir(const char* dir);
       
       // Volume for Play() methods is expressed a percentage of saved volume
@@ -79,6 +86,13 @@ namespace Anki {
       return singletonInstance_;
     }
 
+    inline void SoundManager::Clear() {
+      _availableSounds.clear();
+    }
+    
+    inline size_t SoundManager::GetNumAvailableSounds() const {
+      return _availableSounds.size();
+    }
     
   } // namespace Cozmo
 } // namespace Anki
