@@ -8,6 +8,7 @@ public class CozmoEmotionManager : MonoBehaviour {
 
 	public static CozmoEmotionManager instance = null;
 	private U2G.PlayAnimation PlayAnimationMessage;
+	CozmoEmotionMachine currentEmotionMachine;
 
 	[System.FlagsAttribute]
 	public new enum EmotionFlag
@@ -47,6 +48,9 @@ public class CozmoEmotionManager : MonoBehaviour {
 	{
 		PlayAnimationMessage = new U2G.PlayAnimation();
 		instance = this;
+
+		// default machine resides on the master object
+		currentEmotionMachine = GetComponent<CozmoEmotionMachine>();
 	}
 
 	// Use this for initialization
@@ -67,6 +71,24 @@ public class CozmoEmotionManager : MonoBehaviour {
 			SetEmotion(EmotionFlag.HAPPY, true);
 		}
 #endif
+
+		if( currentEmotionMachine != null )
+		{
+			currentEmotionMachine.UpdateMachine();
+		}
+	}
+
+	public void RegisterMachine(CozmoEmotionMachine machine)
+	{
+		currentEmotionMachine = machine;
+	}
+
+	public void UnregisterMachine()
+	{
+		currentEmotionMachine = null;
+
+		// try to go back to default
+		currentEmotionMachine = GetComponent<CozmoEmotionMachine>();
 	}
 
 	public void SetEmotion(EmotionFlag emo, bool clear_current = false)
