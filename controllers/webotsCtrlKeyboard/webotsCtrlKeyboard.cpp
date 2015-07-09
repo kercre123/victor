@@ -1,5 +1,5 @@
 /*
- * File:          webots_keyboard_controller.cpp
+ * File:          webotsCtrlKeyboard.cpp
  * Date:
  * Description:   
  * Author:        
@@ -1244,12 +1244,12 @@ namespace Anki {
                   static int jsonMsgCtr = 0;
                   Json::Value jsonMsg;
                   Json::Reader reader;
-                  std::string jsonFilename("../blockworld_controller/SetBlockLights_" + std::to_string(jsonMsgCtr++) + ".json");
+                  std::string jsonFilename("../webotsCtrlGameEngine/SetBlockLights_" + std::to_string(jsonMsgCtr++) + ".json");
                   std::ifstream jsonFile(jsonFilename);
                   
                   if(jsonFile.fail()) {
                     jsonMsgCtr = 0;
-                    jsonFilename = "../blockworld_controller/SetBlockLights_" + std::to_string(jsonMsgCtr++) + ".json";
+                    jsonFilename = "../webotsCtrlGameEngine/SetBlockLights_" + std::to_string(jsonMsgCtr++) + ".json";
                     jsonFile.open(jsonFilename);
                   }
                   

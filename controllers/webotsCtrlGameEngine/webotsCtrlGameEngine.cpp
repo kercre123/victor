@@ -1,5 +1,5 @@
 /*
- * File:          blockworld_controller.cpp
+ * File:          webotsCtrlGameEngine.cpp
  * Date:
  * Description:   
  * Author:        
@@ -112,7 +112,7 @@ int main(int argc, char **argv)
   if (numUIsField) {
     numUIDevicesToWaitFor = numUIsField->getSFInt32();
   } else {
-    printf("blockworldController.main.MissingField: numUIDevicesToWaitFor not found in BlockworldComms\n");
+    printf("webotsCtrlGameEngine.main.MissingField: numUIDevicesToWaitFor not found in BlockworldComms\n");
   }
 #endif
   
@@ -133,7 +133,7 @@ int main(int argc, char **argv)
   CozmoGame cozmoGame;
   cozmoGame.Init(config);
   
-  PRINT_STREAM_INFO("blockworld_controller.main", "CozmoGame created and initialized.");
+  PRINT_STREAM_INFO("webotsCtrlGameEngine.main", "CozmoGame created and initialized.");
   
   /*
   // TODO: Wait to receive this from UI (webots keyboard controller)
