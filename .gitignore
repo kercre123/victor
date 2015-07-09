@@ -48,7 +48,6 @@ simulator/controllers/webotsCtrlKeyboard/webotsCtrlKeyboard
 *.xccheckout
 xcuserdata
 *.moved-aside
-DerivedData
 
 # MSVC
 *.res
@@ -173,6 +172,8 @@ build_xcode/*.xcworkspace
 build_xcode/game_osx
 build_xcode/game_ios
 build_xcode/game_sim
-generated
 unity/ios/UnityBuild
 unity/ios/build
+generated/ios
+generated/mac
+generated/android
