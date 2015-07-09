@@ -4321,7 +4321,7 @@ MonoBehaviour:
   - rings: 1
     slicesPerRing: 10000000
     maxSurvivePerRound: 0400000004000000040000000400000004000000
-    roundsPerRing: 1
+    roundsPerRing: 5
     inward: 1
     showTokens: 0
     elimination: 0
