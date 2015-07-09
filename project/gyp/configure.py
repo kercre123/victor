@@ -162,8 +162,8 @@ def main(scriptArgs):
   # update file lists
   generator = updateFileLists.FileListGenerator(options)
   generator.processFolder(['game/src/anki/cozmo', 'game/include'], ['project/gyp/cozmoGame.lst'])
-  generator.processFolder(['simulator/controllers/webots_keyboard_controller'], ['project/gyp/ctrlKeyboard.lst'])
-  generator.processFolder(['simulator/controllers/blockworld_controller'], ['project/gyp/ctrlGameEngine.lst'])
+  generator.processFolder(['simulator/controllers/webotsCtrlKeyboard'], ['project/gyp/ctrlKeyboard.lst'])
+  generator.processFolder(['simulator/controllers/webotsCtrlGameEngine'], ['project/gyp/ctrlGameEngine.lst'])
   generator.processFolder(['unity/CSharpBinding/src'], ['project/gyp/csharp.lst'])
 
   if options.updateListsOnly:
