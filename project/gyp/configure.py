@@ -223,101 +223,114 @@ def main(scriptArgs):
 
   # ios
   if 'ios' in options.platforms:
-      print 'generating ios project'
-      #################### GYP_DEFINES ####
-      os.environ['GYP_DEFINES'] = """  
-                                  audio_library_type=static_library
-                                  audio_library_build=profile
-                                  bs_library_type=static_library
-                                  de_library_type=static_library
-                                  kazmath_library_type=static_library
-                                  jsoncpp_library_type=static_library
-                                  util_library_type=static_library
-                                  worldviz_library_type=static_library
-                                  basestation_target_name=Basestation
-                                  driveengine_target_name=DriveEngine
-                                  OS=ios
-                                  das_location=
-                                  output_location={0}
-                                  gyp_location={1}
-                                  configure_location={2}
-                                  arch_group={3}
-                                  ndk_root=INVALID
-                                  """.format('gyp-ios', gypPath, configurePath, options.arch)
-      gypArgs = ['--check', '--depth', '.', '-f', 'xcode', '--toplevel-dir', '../..', '--generator-output', '../gyp-ios']
-      gyp.main(gypArgs)
+    os.environ['GYP_DEFINES'] = """
+                                OS=ios
+                                kazmath_library_type=static_library
+                                jsoncpp_library_type=static_library
+                                util_library_type=static_library
+                                worldviz_library_type=static_library
+                                arch_group={0}
+                                output_location={1}
+                                coretech_external_path={2}
+                                webots_path={3}
+                                cti-gtest_path={4}
+                                cti-util_gyp_path={5}
+                                cti-cozmo_engine_path={6}
+                                ce-gtest_path={7}
+                                ce-util_gyp_path={8}
+                                ce-cti_gyp_path={9}
+                                """.format(
+                                  options.arch, 
+                                  os.path.join(options.projectRoot, 'generated/ios'),
+                                  coretechExternalPath, 
+                                  webotsPath,
+                                  ctiGtestPath, 
+                                  ctiAnkiUtilProjectPath,
+                                  projectRoot,
+                                  gtestPath, 
+                                  ankiUtilProjectPath, 
+                                  coretechInternalProjectPath
+                                )
+    gypArgs = ['--check', '--depth', '.', '-f', 'xcode', '--toplevel-dir', '../..', '--generator-output', '../../generated/ios', gypFile]
+    gyp.main(gypArgs)
+
+
 
   if 'android' in options.platforms:
-      print 'generating android project'
+    ### Install android build deps if necessary
+    # TODO: We should only check for deps in configure.py, not actuall install anything
+    # TODO: We should not install any deps here, only check that valid depdendencies exist
+    deps = ['ninja']
+    if not 'ANDROID_HOME' in os.environ:
+      deps.append('android-sdk')
 
-      ### Install android build deps if necessary
-      # TODO: We should only check for deps in configure.py, not actuall install anything
-      # TODO: We should not install any deps here, only check that valid depdendencies exist
-      deps = ['ninja']
-      if not 'ANDROID_HOME' in os.environ:
-        deps.append('android-sdk')
+    if not 'ANDROID_NDK_ROOT' in os.environ:
+      deps.append('android-ndk')
 
-      if not 'ANDROID_NDK_ROOT' in os.environ:
-        deps.append('android-ndk')
+    if len(deps) > 0:
+      # Install Android build dependencies
+      options.deps = deps
+      installer = installBuildDeps.DependencyInstaller(options);
+      if not installer.install():
+        UtilLog.error("Failed to verify build tool dependencies")
+        return False
 
-      if len(deps) > 0:
-        # Install Android build dependencies
-        installBuildDeps.main(deps)
+    for dep in deps:
+      if dep == 'android-sdk':
+        os.environ['ANDROID_HOME'] = os.path.join('/', 'usr', 'local', 'opt', dep)
+      elif dep == 'android-ndk':
+        os.environ['ANDROID_NDK_ROOT'] = os.path.join('/', 'usr', 'local', 'opt', dep)
+    ### android deps installed
 
-      for dep in deps:
-        if dep == 'android-sdk':
-          os.environ['ANDROID_HOME'] = os.path.join('/', 'usr', 'local', 'opt', dep)
-        elif dep == 'android-ndk':
-          os.environ['ANDROID_NDK_ROOT'] = os.path.join('/', 'usr', 'local', 'opt', dep)
-      ### android deps installed
+    ndk_root = os.environ['ANDROID_NDK_ROOT']
 
-      ndk_root = os.environ['ANDROID_NDK_ROOT']
+    os.environ['ANDROID_BUILD_TOP'] = configurePath
+    ##################### GYP_DEFINES ####
+    os.environ['GYP_DEFINES'] = """ 
+                                kazmath_library_type=static_library
+                                jsoncpp_library_type=static_library
+                                util_library_type=static_library
+                                worldviz_library_type=static_library
+                                os_posix=1
+                                OS=android
+                                GYP_CROSSCOMPILE=1
+                                target_arch=arm
+                                clang=1
+                                component=static_library
+                                use_system_stlport=0
+                                arch_group={0}
+                                output_location={1}
+                                coretech_external_path={2}
+                                webots_path={3}
+                                cti-gtest_path={4}
+                                cti-util_gyp_path={5}
+                                cti-cozmo_engine_path={6}
+                                ce-gtest_path={7}
+                                ce-util_gyp_path={8}
+                                ce-cti_gyp_path={9}
+                                ndk_root={10}
+                                """.format(
+                                  options.arch, 
+                                  os.path.join(options.projectRoot, 'generated/android'),
+                                  coretechExternalPath, 
+                                  webotsPath,
+                                  ctiGtestPath, 
+                                  ctiAnkiUtilProjectPath,
+                                  projectRoot,
+                                  gtestPath, 
+                                  ankiUtilProjectPath, 
+                                  coretechInternalProjectPath,
+                                  ndk_root
+                                )
+    os.environ['CC_target'] = os.path.join(ndk_root, 'toolchains/llvm-3.5/prebuilt/darwin-x86_64/bin/clang')
+    os.environ['CXX_target'] = os.path.join(ndk_root, 'toolchains/llvm-3.5/prebuilt/darwin-x86_64/bin/clang++')
+    os.environ['AR_target'] = os.path.join(ndk_root, 'toolchains/arm-linux-androideabi-4.8/prebuilt/darwin-x86_64/bin/arm-linux-androideabi-gcc-ar')
+    os.environ['LD_target'] = os.path.join(ndk_root, 'toolchains/llvm-3.5/prebuilt/darwin-x86_64/bin/clang++')
+    os.environ['NM_target'] = os.path.join(ndk_root, 'toolchains/arm-linux-androideabi-4.8/prebuilt/darwin-x86_64/arm-linux-androideabi/bin/nm')
+    os.environ['READELF_target'] = os.path.join(ndk_root, 'toolchains/arm-linux-androideabi-4.8/prebuilt/darwin-x86_64/bin/arm-linux-androideabi-readelf')
+    gypArgs = ['--check', '--depth', '.', '-f', 'ninja-android', '--toplevel-dir', '../..', '--generator-output', 'generated/android', gypFile]
+    gyp.main(gypArgs)
 
-      os.environ['ANDROID_BUILD_TOP'] = configurePath
-      ##################### GYP_DEFINES ####
-      os.environ['GYP_DEFINES'] = """ 
-                                      audio_library_type=shared_library
-                                      audio_library_build=profile
-                                      bs_library_type=static_library
-                                      de_library_type=shared_library
-                                      kazmath_library_type=static_library
-                                      jsoncpp_library_type=static_library
-                                      util_library_type=static_library
-                                      worldviz_library_type=static_library
-                                      das_library_type=shared_library
-                                      basestation_target_name=Basestation
-                                      driveengine_target_name=DriveEngine
-                                      os_posix=1
-                                      OS=android
-                                      GYP_CROSSCOMPILE=1
-                                      das_location={0}
-                                      output_location={1}
-                                      gyp_location={2}
-                                      configure_location={3}
-                                      target_arch=arm
-                                      clang=1
-                                      component=static_library
-                                      use_system_stlport=0
-                                      ndk_root={4}
-                                      use_das={5}
-                                  """.format(dasPath, 'gyp-android', gypPath, configurePath, ndk_root, useDas)
-      os.environ['CC_target'] = os.path.join(ndk_root, 'toolchains/llvm-3.5/prebuilt/darwin-x86_64/bin/clang')
-      os.environ['CXX_target'] = os.path.join(ndk_root, 'toolchains/llvm-3.5/prebuilt/darwin-x86_64/bin/clang++')
-      os.environ['AR_target'] = os.path.join(ndk_root, 'toolchains/arm-linux-androideabi-4.8/prebuilt/darwin-x86_64/bin/arm-linux-androideabi-gcc-ar')
-      os.environ['LD_target'] = os.path.join(ndk_root, 'toolchains/llvm-3.5/prebuilt/darwin-x86_64/bin/clang++')
-      os.environ['NM_target'] = os.path.join(ndk_root, 'toolchains/arm-linux-androideabi-4.8/prebuilt/darwin-x86_64/arm-linux-androideabi/bin/nm')
-      os.environ['READELF_target'] = os.path.join(ndk_root, 'toolchains/arm-linux-androideabi-4.8/prebuilt/darwin-x86_64/bin/arm-linux-androideabi-readelf')
-      gypArgs = ['--check', '--depth', '.', '-f', 'ninja-android', '--toplevel-dir', '../..', '--generator-output', 'project/gyp-android']
-      gyp.main(gypArgs)
-
-
-  # # pre build setup: versionGenerator
-  # if (subprocess.call([os.path.join(projectRoot, 'tools/build/versionGenerator/versionGenerator.sh')]) != 0):
-  #   print "error executing versionGenerator"
-
-  # #pre build setup: decompress audio libs
-  # if (subprocess.call([os.path.join(projectRoot, 'libs/drive-audio/gyp/decompressAudioLibs.sh')]) != 0):
-  #   print "error decompressing audio libs"
     
 
   return True
