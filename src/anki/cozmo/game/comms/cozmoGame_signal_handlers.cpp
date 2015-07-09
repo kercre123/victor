@@ -233,8 +233,7 @@ namespace Cozmo {
     G2U::PlaySound msg;
     msg.numLoops = numLoops;
     msg.volume   = volume;
-    const std::string& filename = SoundManager::getInstance()->GetSoundFile((SoundID_t)soundID);
-    strncpy(&(msg.soundFilename[0]), filename.c_str(), msg.soundFilename.size());
+    msg.soundFilename = soundName;
     
     G2U::Message message;
     message.Set_PlaySound(msg);
