@@ -2,7 +2,7 @@
  * @author Daniel Casner <daniel@anki.com>
  * Hacked together driver for SPI
  */
- 
+
 #ifndef SPI_APP_H
 #define SPI_APP_H
 
@@ -16,6 +16,11 @@
 #define SPI_FLASH_BYTES_LEN                24
 #define IODATA_START_ADDR                 BIT0
 #define SPI_BUFF_BYTE_NUM                    32
+
+/// Number of 32 bit words that can be put into the fifo in single direction mode
+#define SPI_FIFO_DEPTH 16
+/// Number of 32 bit words that can be put into the fifo in bidirectional mode
+#define SPI_HALF_FIFO_DEPTH 8
 
 // SPI number define
 typedef enum {
@@ -37,7 +42,7 @@ uint32 spi_master_init(const SPIBus spi_no, uint32 frequency);
  * @param spi_no Which SPI bus to use
  * @param cmd_bits The number of bits of command data @range 0-16
  * @param cmd_data Command data, only the lower cmd_bits of data will be used
- * @param addr_bits The number of bits of address data @rante 0-32
+ * @param addr_bits The number of bits of address data @range 0-32
  * @param addr_data Address data, only the lower addr_bits will be used.
  * @param mosi_bits The number of bits of master out / slave in data to transmit @range 0-512
  * @param miso_bits The number of bits of master in / slave out data to receive. @range 0-512

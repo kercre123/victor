@@ -11,6 +11,8 @@ USERBIN2 = os.path.join("bin", "upgrade", "user2.512.new.0.bin")
 USERBIN1_ADDR = 0x01000
 USERBIN2_ADDR = 0x41000
 
+FPGA_BIN = os.path.join("..", "fpga", "fpgaisp_Implmnt", "sbt", "outputs", "bitmap", "top_bitmap.bin")
+
 FPGA_FW_ADDR = 0x80000
 
 USAGE = """
@@ -90,11 +92,10 @@ def doWifiUpgrade(roboCon):
 
 def doFPGAUpgrade(roboCon):
     "Send new FPGA firmware to the robot"
-    #fw = open(FPGA_BIN, 'rw').read()
+    fw = open(FPGA_BIN, 'rb').read() + bytes(range(64))
     sys.stdout.write("Sending FPGA FW\r\n")
-    #roboCon.send(UpgradeCommand(FPGA_FW_ADDR, len(fw), UpgradeCommandFlags.FPGA_FW).pack())
-    roboCon.send(UpgradeCommand(int(sys.argv[3], 16), int(sys.argv[4], 16), UpgradeCommandFlags.FPGA_FW).pack())
-    #sendFW(roboCon, fw)
+    roboCon.send(UpgradeCommand(FPGA_FW_ADDR, len(fw), UpgradeCommandFlags.FPGA_FW).pack())
+    sendFW(roboCon, fw)
     roboCon.close()
     sys.stdout.write("\r\nFinished sending FPGA firmware\r\n")
 
