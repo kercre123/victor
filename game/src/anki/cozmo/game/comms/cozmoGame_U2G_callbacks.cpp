@@ -735,16 +735,6 @@ namespace Cozmo {
     }
   }
   
-  void CozmoGameImpl::Process_SelectNextSoundScheme(U2G::SelectNextSoundScheme const& msg)
-  {
-    SoundSchemeID_t nextSoundScheme = (SoundSchemeID_t)(SoundManager::getInstance()->GetScheme() + 1);
-    if (nextSoundScheme == NUM_SOUND_SCHEMES) {
-      nextSoundScheme = SOUND_SCHEME_COZMO;
-    }
-    printf("Sound scheme: %d\n", nextSoundScheme);
-    SoundManager::getInstance()->SetScheme(nextSoundScheme);
-  }
-  
   void CozmoGameImpl::Process_StartTestMode(U2G::StartTestMode const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
@@ -772,9 +762,12 @@ namespace Cozmo {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
     const RobotID_t robotID = 1;
     Robot* robot = GetRobotByID(robotID);
-    
+
     if(robot != nullptr) {
-      robot->PlayAnimation(&(msg.animationName[0]), msg.numLoops);
+      //robot->PlayAnimation(&(msg.animationName[0]), msg.numLoops);
+      robot->GetActionList().QueueActionAtEnd(DriveAndManipulateSlot,
+                                              new PlayAnimationAction(msg.animationName,
+                                                                      msg.numLoops));
     }
   }
 

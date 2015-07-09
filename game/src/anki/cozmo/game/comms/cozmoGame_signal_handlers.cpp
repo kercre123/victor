@@ -64,8 +64,8 @@ namespace Cozmo {
     };
     _signalHandles.emplace_back( CozmoGameSignals::UiDeviceAvailableSignal().ScopedSubscribe(cbUiDeviceAvailableSignal));
     
-    auto cbPlaySoundForRobotSignal = [this](RobotID_t robotID, u32 soundID, u8 numLoops, u8 volume) {
-      this->HandlePlaySoundForRobotSignal(robotID, soundID, numLoops, volume);
+    auto cbPlaySoundForRobotSignal = [this](RobotID_t robotID, const std::string& soundName, u8 numLoops, u8 volume) {
+      this->HandlePlaySoundForRobotSignal(robotID, soundName, numLoops, volume);
     };
     _signalHandles.emplace_back( CozmoEngineSignals::PlaySoundForRobotSignal().ScopedSubscribe(cbPlaySoundForRobotSignal));
     
@@ -123,9 +123,8 @@ namespace Cozmo {
     auto cbRobotCompletedAction = [this](RobotID_t robotID,
                                          RobotActionType actionType,
                                          ActionResult result,
-                                         std::array<int32_t,5> objectIDs,
-                                         uint8_t numObjects) {
-      this->HandleRobotCompletedAction(robotID, actionType, result, objectIDs, numObjects);
+                                         ActionCompletedStruct completionInfo) {
+      this->HandleRobotCompletedAction(robotID, actionType, result, completionInfo);
     };
     _signalHandles.emplace_back(CozmoEngineSignals::RobotCompletedActionSignal().ScopedSubscribe(cbRobotCompletedAction));
     
@@ -227,7 +226,7 @@ namespace Cozmo {
     _uiMsgHandler.SendMessage(_hostUiDeviceID, message);
   }
   
-  void CozmoGameImpl::HandlePlaySoundForRobotSignal(RobotID_t robotID, u32 soundID, u8 numLoops, u8 volume)
+  void CozmoGameImpl::HandlePlaySoundForRobotSignal(RobotID_t robotID, const std::string& soundName, u8 numLoops, u8 volume)
   {
 #   if ANKI_IOS_BUILD
     // Tell the host UI device to play a sound:
@@ -243,14 +242,14 @@ namespace Cozmo {
     
 #   else
     // Use SoundManager:
-    bool success = SoundManager::getInstance()->Play((SoundID_t)soundID,
+    bool success = SoundManager::getInstance()->Play(soundName,
                                                      numLoops,
                                                      volume);
 #   endif
     
     if(!success) {
       PRINT_NAMED_ERROR("CozmoGameImpl.OnEventRaise.PlaySoundForRobot",
-                        "SoundManager failed to play sound ID %d.\n", soundID);
+                        "SoundManager failed to play sound %s.\n", soundName.c_str());
     }
   }
   
@@ -411,7 +410,7 @@ namespace Cozmo {
   
   void CozmoGameImpl::HandleRobotCompletedAction(uint8_t robotID, RobotActionType actionType,
                                                  ActionResult result,
-                                                 std::array<int32_t,5> objectIDs, uint8_t numObjects)
+                                                 ActionCompletedStruct completionInfo)
   {
     G2U::RobotCompletedAction msg;
   
@@ -419,8 +418,7 @@ namespace Cozmo {
     msg.actionType = actionType;
     msg.result = result;
     
-    msg.objectIDs  = objectIDs;
-    msg.numObjects = numObjects;
+    msg.completionInfo = completionInfo;
     
     G2U::Message message;
     message.Set_RobotCompletedAction(msg);
