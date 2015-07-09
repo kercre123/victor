@@ -2976,59 +2976,6 @@ bool SetSteeringControllerGains::operator!=(const SetSteeringControllerGains& ot
 }
 
 
-// MESSAGE SelectNextSoundScheme
-
-SelectNextSoundScheme::SelectNextSoundScheme(const uint8_t* buff, size_t len)
-{
-	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
-	Unpack(buffer);
-}
-
-SelectNextSoundScheme::SelectNextSoundScheme(const CLAD::SafeMessageBuffer& buffer)
-{
-	Unpack(buffer);
-}
-
-size_t SelectNextSoundScheme::Pack(uint8_t* buff, size_t len) const
-{
-	CLAD::SafeMessageBuffer buffer(buff, len, false);
-	return Pack(buffer);
-}
-
-size_t SelectNextSoundScheme::Pack(CLAD::SafeMessageBuffer& buffer) const
-{
-	const size_t bytesWritten {buffer.GetBytesWritten()};
-	return bytesWritten;
-}
-
-size_t SelectNextSoundScheme::Unpack(const uint8_t* buff, const size_t len)
-{
-	const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
-	return Unpack(buffer);
-}
-
-size_t SelectNextSoundScheme::Unpack(const CLAD::SafeMessageBuffer& buffer)
-{
-	return buffer.GetBytesRead();
-}
-
-size_t SelectNextSoundScheme::Size() const
-{
-	size_t result = 0;
-	return result;
-}
-
-bool SelectNextSoundScheme::operator==(const SelectNextSoundScheme& other) const
-{
-	return true;
-}
-
-bool SelectNextSoundScheme::operator!=(const SelectNextSoundScheme& other) const
-{
-	return !(operator==(other));
-}
-
-
 // MESSAGE StartTestMode
 
 StartTestMode::StartTestMode(const uint8_t* buff, size_t len)
@@ -4403,8 +4350,6 @@ const char* MessageTagToString(const MessageTag tag) {
 		return "SetLiftControllerGains";
 	case MessageTag::SetSteeringControllerGains:
 		return "SetSteeringControllerGains";
-	case MessageTag::SelectNextSoundScheme:
-		return "SelectNextSoundScheme";
 	case MessageTag::StartTestMode:
 		return "StartTestMode";
 	case MessageTag::IMURequest:
@@ -5789,35 +5734,6 @@ void Message::Set_SetSteeringControllerGains(Anki::Cozmo::U2G::SetSteeringContro
 }
 
 
-const Anki::Cozmo::U2G::SelectNextSoundScheme& Message::Get_SelectNextSoundScheme() const
-{
-	assert(_tag == Tag::SelectNextSoundScheme);
-	return _SelectNextSoundScheme;
-}
-void Message::Set_SelectNextSoundScheme(const Anki::Cozmo::U2G::SelectNextSoundScheme& new_SelectNextSoundScheme)
-{
-	if(this->_tag == Tag::SelectNextSoundScheme) {
-		_SelectNextSoundScheme = new_SelectNextSoundScheme;
-	}
-	else {
-		ClearCurrent();
-		new(&_SelectNextSoundScheme) Anki::Cozmo::U2G::SelectNextSoundScheme{new_SelectNextSoundScheme};
-		_tag = Tag::SelectNextSoundScheme;
-	}
-}
-void Message::Set_SelectNextSoundScheme(Anki::Cozmo::U2G::SelectNextSoundScheme&& new_SelectNextSoundScheme)
-{
-	if(this->_tag == Tag::SelectNextSoundScheme) {
-		_SelectNextSoundScheme = std::move(new_SelectNextSoundScheme);
-	}
-	else {
-		ClearCurrent();
-		new(&_SelectNextSoundScheme) Anki::Cozmo::U2G::SelectNextSoundScheme{std::move(new_SelectNextSoundScheme)};
-		_tag = Tag::SelectNextSoundScheme;
-	}
-}
-
-
 const Anki::Cozmo::U2G::StartTestMode& Message::Get_StartTestMode() const
 {
 	assert(_tag == Tag::StartTestMode);
@@ -6694,14 +6610,6 @@ size_t Message::Unpack(const CLAD::SafeMessageBuffer& buffer)
 			this->_SetSteeringControllerGains.Unpack(buffer);
 		}
 		break;
-	case Tag::SelectNextSoundScheme:
-		if (newTag != oldTag) {
-			new(&(this->_SelectNextSoundScheme)) Anki::Cozmo::U2G::SelectNextSoundScheme(buffer);
-		}
-		else {
-			this->_SelectNextSoundScheme.Unpack(buffer);
-		}
-		break;
 	case Tag::StartTestMode:
 		if (newTag != oldTag) {
 			new(&(this->_StartTestMode)) Anki::Cozmo::U2G::StartTestMode(buffer);
@@ -6993,9 +6901,6 @@ size_t Message::Pack(CLAD::SafeMessageBuffer& buffer) const
 	case Tag::SetSteeringControllerGains:
 		this->_SetSteeringControllerGains.Pack(buffer);
 		break;
-	case Tag::SelectNextSoundScheme:
-		this->_SelectNextSoundScheme.Pack(buffer);
-		break;
 	case Tag::StartTestMode:
 		this->_StartTestMode.Pack(buffer);
 		break;
@@ -7196,9 +7101,6 @@ size_t Message::Size() const
 	case Tag::SetSteeringControllerGains:
 		result += _SetSteeringControllerGains.Size();
 		break;
-	case Tag::SelectNextSoundScheme:
-		result += _SelectNextSoundScheme.Size();
-		break;
 	case Tag::StartTestMode:
 		result += _StartTestMode.Size();
 		break;
@@ -7397,9 +7299,6 @@ void Message::ClearCurrent()
 		break;
 	case Tag::SetSteeringControllerGains:
 		_SetSteeringControllerGains.~SetSteeringControllerGains();
-		break;
-	case Tag::SelectNextSoundScheme:
-		_SelectNextSoundScheme.~SelectNextSoundScheme();
 		break;
 	case Tag::StartTestMode:
 		_StartTestMode.~StartTestMode();

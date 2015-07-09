@@ -61,7 +61,7 @@ public class ObservedObject
 
 			if( robot.carryingObject != ID )
 			{
-				float distanceFromRobot = Vector2.Distance( robot.WorldPosition, WorldPosition ) - ( CozmoUtil.BLOCK_LENGTH_MM * 0.5f ) + CozmoUtil.CARRIED_OBJECT_HORIZONTAL_OFFSET;
+				float distanceFromRobot = Vector2.Distance( robot.WorldPosition + robot.Forward * CozmoUtil.CARRIED_OBJECT_HORIZONTAL_OFFSET, WorldPosition ) - ( CozmoUtil.BLOCK_LENGTH_MM * 0.5f );
 				float angleFromRobot = Vector2.Angle( robot.Forward, WorldPosition - robot.WorldPosition );
 				float maxDistanceInMM = maxDistanceInCubeLengths * CozmoUtil.BLOCK_LENGTH_MM;
 

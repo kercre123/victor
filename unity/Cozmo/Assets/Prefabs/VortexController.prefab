@@ -3912,6 +3912,7 @@ MonoBehaviour:
   - {fileID: 11436292}
   - {fileID: 11437560}
   textPlayState: {fileID: 11476844}
+  imageHub: {fileID: 11470788}
   textCurrentNumber: {fileID: 11423742}
   textRoundNumber: {fileID: 11445316}
   textPlayerCurrentNumbers: []

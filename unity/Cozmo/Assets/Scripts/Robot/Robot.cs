@@ -698,7 +698,7 @@ public class Robot
 	/// <param name="useExactAngle">If set to <c>true</c> angleFactor is treated as an exact angle in radians.</param>
 	public void SetHeadAngle( float angleFactor = -0.8f, bool useExactAngle = false, float accelRadSec=2f, float maxSpeedFactor=1f )
 	{
-		Debug.Log("SetHeadAngle("+angleFactor+")");
+		//Debug.Log("SetHeadAngle("+angleFactor+")");
 
 		float radians = angleFactor;
 
