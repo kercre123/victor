@@ -9,18 +9,28 @@ public class CozmoEmotionManager : MonoBehaviour {
 	public static CozmoEmotionManager instance = null;
 	private U2G.PlayAnimation PlayAnimationMessage;
 	CozmoEmotionMachine currentEmotionMachine;
-
-	[System.FlagsAttribute]
-	public new enum EmotionFlag
+	
+	public new enum EmotionType
 	{
-		NONE              = 0,
-		HAPPY    = 0x01,
-		SAD    = 0x02,
-		EXCITED    = 0x04,
-		BORED    = 0x08,
-		SURPRISED = 0x10,
-
-		ALL = 0xff
+		NONE,
+		IDLE,
+		LETS_PLAY,
+		PRE_GAME,
+		YOUR_TURN,
+		SPIN_WHEEL,
+		WATCH_SPIN,
+		TAP_WHEEL,
+		WATCH_RESULT,
+		EXPECT_REWARD,
+		KNOWS_WRONG,
+		SHOCKED,
+		MINOR_WIN,
+		MAJOR_WIN,
+		MINOR_FAIL,
+		MAJOR_FAIL,
+		WIN_MATCH,
+		LOSE_MATCH,
+		TAUNT
 	};
 
 	public enum EmotionIntensity
@@ -30,14 +40,12 @@ public class CozmoEmotionManager : MonoBehaviour {
 		INTENSE
 	}
 
-	public List<CozmoAnimation> anims;
-
 	uint currentTarget; 
 
-	EmotionFlag currentEmotions = EmotionFlag.NONE;
-	EmotionFlag lastEmotions = EmotionFlag.NONE;
+	EmotionType currentEmotions = EmotionType.NONE;
+	EmotionType lastEmotions = EmotionType.NONE;
 
-	public bool HasEmotion( EmotionFlag emo )
+	public bool HasEmotion( EmotionType emo )
 	{
 		return (currentEmotions | emo) == emo;
 	}
@@ -63,12 +71,12 @@ public class CozmoEmotionManager : MonoBehaviour {
 #if UNITY_EDITOR
 		if( Input.GetKeyDown(KeyCode.T) )
 		{
-			SetEmotion(EmotionFlag.HAPPY);
+			SetEmotion(EmotionType.IDLE);
 		}
 
 		if( Input.GetKeyDown(KeyCode.Y) )
 		{
-			SetEmotion(EmotionFlag.HAPPY, true);
+			SetEmotion(EmotionType.IDLE, true);
 		}
 #endif
 
@@ -91,7 +99,7 @@ public class CozmoEmotionManager : MonoBehaviour {
 		currentEmotionMachine = GetComponent<CozmoEmotionMachine>();
 	}
 
-	public void SetEmotion(EmotionFlag emo, bool clear_current = false)
+	public void SetEmotion(EmotionType emo, bool clear_current = false)
 	{
 		if( clear_current )
 		{
@@ -105,7 +113,7 @@ public class CozmoEmotionManager : MonoBehaviour {
 		if( currentEmotions != lastEmotions || clear_current )
 		{
 			// send approriate animation
-			if (HasEmotion( EmotionFlag.HAPPY) )
+			if (HasEmotion( EmotionType.IDLE) )
 			{
 				SendAnimation(testAnim, 1);
 			}

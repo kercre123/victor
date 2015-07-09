@@ -7,7 +7,7 @@ using System.Collections.Generic;
 public struct CozmoAnimation
 {
 	public string animName;
-	public CozmoEmotionManager.EmotionFlag emotionType;
+	public CozmoEmotionManager.EmotionType emotionType;
 	public CozmoEmotionManager.EmotionIntensity emotionIntensity;
 	
 }
@@ -16,17 +16,14 @@ public struct CozmoAnimation
 public struct CozmoEmotionState
 {
 	public string stateName;
-	public CozmoEmotionManager.EmotionFlag emotionType;
-	public CozmoEmotionManager.EmotionIntensity emotionIntensity;
-	public List<CozmoEmotionManager.EmotionFlag> incrementEmotions;
-	public List<CozmoEmotionManager.EmotionFlag> decrementEmotions;
+	public List<CozmoAnimation> emotionAnims;
+	public CozmoEmotionManager.EmotionType emotionType;
 	
 }
 
 public class CozmoEmotionMachine : MonoBehaviour {
-
+		
 	public List<CozmoEmotionState> emotionStates;
-
 	// initailization
 	public void StartMachine()
 	{
