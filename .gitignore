@@ -39,7 +39,6 @@ matlab.mat
 *.xccheckout
 xcuserdata
 *.moved-aside
-DerivedData
 
 # MSVC
 *.res
@@ -161,7 +160,6 @@ buildMakefile
 build_xcode_osx
 build_xcode_ios
 build_xcode_sim
-generated
 c-source.txt
 robot/build
 robot/syscon/build
@@ -197,3 +195,4 @@ project/gyp/cozmoEngine-test.lst
 project/gyp/cozmoEngine.lst
 project/gyp/ctrlRobot.lst
 project/gyp/ctrlViz.lst
+generated/
