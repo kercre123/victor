@@ -26,7 +26,6 @@
 #include "os_type.h"
 #include "user_interface.h"
 #include "client.h"
-#include "block_relay.h"
 
 // UartDev is defined and initialized in rom code.
 extern UartDevice    UartDev;
@@ -200,12 +199,10 @@ void os_put_char(uint8 c)
 LOCAL void handleUartRawRx(uint8 flag)
 {
   static UDPPacket* outPkt = NULL;
-  static uint8* blockBuffer;
-  static uint16 blockMsgLen = 0;
+  static int32  ebiup  = 0; // Counter for extrenous bytes in UART pipe
+  static uint8  ebuf[16];   // Buffer for extreneous bytes
   static uint16 pktLen = 0;
-  static uint16 ebiup  = 0; // Counter for extrenous bytes in UART pipe
   static uint8  phase  = 0;
-  static sint8 block   = NO_BLOCK;
   bool continueTask = true;
   uint8 byte;
 
@@ -219,11 +216,6 @@ LOCAL void handleUartRawRx(uint8 flag)
     {
       clientFreePacket(outPkt);
     }
-    else if (block != NO_BLOCK)
-    {
-      blockRelaySendPacket(block, 0); // Calling send packet with 0 length cancels the message
-      block = NO_BLOCK;
-    }
   }
 
   while (continueTask && ((READ_PERI_REG(UART_STATUS(UART0))>>UART_RXFIFO_CNT_S)&UART_RXFIFO_CNT))
@@ -234,7 +226,11 @@ LOCAL void handleUartRawRx(uint8 flag)
       case 0: // Not synchronized / looking for header byte 1
       {
         if (byte == UART_PACKET_HEADER[0]) phase++;
-        else ebiup++;
+        else
+        {
+          if (0 <= ebiup && ebiup < 15) ebuf[ebiup] = byte;
+          ebiup++;
+        }
         break;
       }
       case 1: // Header byte 2
@@ -260,73 +256,46 @@ LOCAL void handleUartRawRx(uint8 flag)
         phase++;
         break;
       }
-      case 5: // Block number + 1 or 0 if to base station
+      case 5:
       {
-        if (byte > 0) // A block!
-        {
-          block = byte - 1;
-          blockBuffer = blockRelayGetBuffer(block);
-          if (blockBuffer == NULL)
-          {
-            os_printf("WARN: Couldn't get buffer for block %d\r\n", byte-1);
-            phase = 0;
-            block = NO_BLOCK;
-            break;
-          }
-          blockMsgLen = 0;
-        }
         phase++;
         break;
       }
       case 6: // Start of payload
       {
-        if (ebiup != 0)
+        if (ebiup > 0)
         {
-          os_printf("EBIUP: %d\r\n", ebiup);
+          ebuf[15] = 0;
+          os_printf("EBIUP: %d \"%s\"\r\n", ebiup, ebuf);
           ebiup = 0;
         }
 
-        if (block == NO_BLOCK) {
-          outPkt = clientGetBuffer();
-          if (outPkt == NULL)
-          {
-            //os_printf("WARN: no radio buffer for %02x[%d]\r\n", byte, pktLen);
-            phase = 0;
-            break;
-          }
-          else
-          {
-            outPkt->len = 0;
-          }
+        outPkt = clientGetBuffer();
+        if (outPkt == NULL)
+        {
+          //os_printf("WARN: no radio buffer for %02x[%d]\r\n", byte, pktLen);
+          phase = 0;
+          ebiup = 1-pktLen; // Expect to receive that many bytes before seeing header again
+          break;
+        }
+        else
+        {
+          outPkt->len = 0;
         }
         phase++;
         // No break, explicit fall through to next case
       }
       case 7:
       {
-        if (block == NO_BLOCK)
+        outPkt->data[outPkt->len++] = byte;
+        //os_printf("RX %02x\t%d\t%d\r\n", byte, outPkt->len, pktLen);
+        if (outPkt->len >= pktLen)
         {
-          outPkt->data[outPkt->len++] = byte;
-          //os_printf("RX %02x\t%d\t%d\r\n", byte, outPkt->len, pktLen);
-          if (outPkt->len >= pktLen)
-          {
-            phase = 0;
-            clientQueuePacket(outPkt);
-            continueTask = false;
-          }
-          break;
+          phase = 0;
+          clientQueuePacket(outPkt);
+          continueTask = false;
         }
-        else
-        {
-          blockBuffer[blockMsgLen++] = byte;
-          if (blockMsgLen >= pktLen)
-          {
-            phase = 0;
-            blockRelaySendPacket(block, blockMsgLen);
-            block = NO_BLOCK;
-          }
-          break;
-        }
+        break;
       }
       default:
       {
@@ -349,7 +318,7 @@ LOCAL void handleUartRawRx(uint8 flag)
 /** Length of the TX buffer
  * @warning Must be a power of 2
  */
-#define TX_BUF_LEN 4096
+#define TX_BUF_LEN 8192
 /** Mask for TX buffer indexing
  */
 #define TX_BUF_LENMSK (TX_BUF_LEN - 1)

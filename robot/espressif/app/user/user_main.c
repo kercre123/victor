@@ -154,9 +154,6 @@ static void ICACHE_FLASH_ATTR system_init_done(void)
   // Enable upgrade controller
   upgradeControllerInit();
 
-  // Setup the block relay
-  blockRelayInit();
-
   // Setup Basestation client
   clientInit();
 
