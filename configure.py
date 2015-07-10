@@ -182,7 +182,7 @@ class GamePlatformConfiguration(object):
                 'ANKI_BUILD_REPO_ROOT={0}'.format(GAME_ROOT),
                 'ANKI_BUILD_UNITY_PROJECT_PATH=${ANKI_BUILD_REPO_ROOT}/unity/Cozmo',
                 'ANKI_BUILD_UNITY_BUILD_DIR={0}'.format(self.unity_build_dir),
-                'ANKI_BUILD_UNITY_XCODE_BUILD_DIR=${ANKI_BUILD_UNITY_OUTPUT_DIR}/${CONFIGURATION}-${PLATFORM_NAME}',
+                'ANKI_BUILD_UNITY_XCODE_BUILD_DIR=${ANKI_BUILD_UNITY_BUILD_DIR}/${CONFIGURATION}-${PLATFORM_NAME}',
                 'ANKI_BUILD_UNITY_EXE={0}'.format(self.options.unity_binary_path),
                 '// ANKI_BUILD_USE_PREBUILT_UNITY=1',
                 
