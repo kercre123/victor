@@ -240,6 +240,16 @@
           ],
       },
     },
+    'conditions': [    
+      [
+        "OS=='ios'",
+        {
+          'defines': [
+            'ANKI_IOS_BUILD=1',
+          ],
+        },
+      ],
+    ],
   },
 
   'conditions': [    
