@@ -23518,6 +23518,7 @@ MonoBehaviour:
   blocks:
   - {fileID: 11409700}
   - {fileID: 11409674}
+  needsLocalization: 1
   startPositionMarker: {fileID: 0}
   scale: .0439999998
   gateBlocksAtPlayerCount: 
@@ -23898,6 +23899,7 @@ MonoBehaviour:
   - {fileID: 11466486}
   - {fileID: 11448982}
   - {fileID: 11409738}
+  needsLocalization: 0
   startPositionMarker: {fileID: 0}
   scale: .0439999998
   gateBlocksAtPlayerCount: 01000000020000000300000004000000
@@ -25076,6 +25078,7 @@ MonoBehaviour:
   - {fileID: 11483392}
   - {fileID: 11485182}
   - {fileID: 11483346}
+  needsLocalization: 1
   startPositionMarker: {fileID: 415420}
   scale: .0439999998
   gateBlocksAtPlayerCount: 
@@ -25687,6 +25690,7 @@ MonoBehaviour:
   - {fileID: 11485170}
   - {fileID: 11485180}
   - {fileID: 11485174}
+  needsLocalization: 1
   startPositionMarker: {fileID: 484956}
   scale: .0439999998
   gateBlocksAtPlayerCount: 
@@ -25992,6 +25996,7 @@ MonoBehaviour:
   blocks:
   - {fileID: 11472356}
   - {fileID: 11444684}
+  needsLocalization: 1
   startPositionMarker: {fileID: 0}
   scale: .0439999998
   gateBlocksAtPlayerCount: 

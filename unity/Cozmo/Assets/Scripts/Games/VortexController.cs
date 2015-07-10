@@ -301,8 +301,7 @@ public class VortexController : GameController {
 		if( robot != null && PlayerPrefs.GetInt("DebugSkipLayoutTracker",0) == 0) {
 			
 
-			robot.DriveWheels(-CozmoUtil.MAX_WHEEL_SPEED_MM, CozmoUtil.MAX_WHEEL_SPEED_MM);
-
+			//robot.DriveWheels(-CozmoUtil.MAX_WHEEL_SPEED_MM, CozmoUtil.MAX_WHEEL_SPEED_MM);
 
 			for(int i=0;i<robot.knownObjects.Count;i++) {
 				if(!robot.knownObjects[i].isActive) continue;
@@ -954,6 +953,8 @@ public class VortexController : GameController {
 
 	}
 
+	[SerializeField] float scoreScaleUp = 1.5f;
+
 	void Enter_SPIN_COMPLETE() {
 		
 		playersThatAreCorrect.Clear();
@@ -1088,10 +1089,14 @@ public class VortexController : GameController {
 		Color col = playerPanelFills[playerIndex].color;
 		
 		if(fadeTimer > 0f) {
-			col.a = Mathf.Lerp(scoreDisplayFillAlpha, 0f, fadeTimer / scoreDisplayFillFade);
+			float factor = fadeTimer / scoreDisplayFillFade;
+			col.a = Mathf.Lerp(scoreDisplayFillAlpha, 0f, factor);
+			textPlayerScores[playerIndex].rectTransform.localScale = Vector3.Lerp(Vector3.one*scoreScaleUp, Vector3.one, factor);
 		}
 		else {
-			col.a = Mathf.Lerp(scoreDisplayFillAlpha, scoreDisplayEmptyAlpha, Mathf.Abs(fadeTimer) / scoreDisplayFillFade);
+			float factor = Mathf.Abs(fadeTimer) / scoreDisplayFillFade;
+			col.a = Mathf.Lerp(scoreDisplayFillAlpha, scoreDisplayEmptyAlpha, factor);
+			textPlayerScores[playerIndex].rectTransform.localScale = Vector3.Lerp(Vector3.one*scoreScaleUp, Vector3.one, factor);
 
 			if(wasPositive) {
 				textPlayerScores[playerIndex].text = "SCORE: " + scores[playerIndex].ToString();
@@ -1129,6 +1134,9 @@ public class VortexController : GameController {
 			playerInputBlocks[i].SetMode(GetPlayerColorMode(i));
 		}
 
+		for(int i=0;i<textPlayerScores.Length && i<numPlayers;i++) {
+			textPlayerScores[i].rectTransform.localScale = Vector3.one;
+		}
 	}
 
 	void PlaceTokens() {
@@ -1233,17 +1241,19 @@ public class VortexController : GameController {
 //			playerInputs[index].stamps.RemoveRange(0, 4);
 //		}
 
-		Color playerColor = CozmoPalette.instance.GetColorForActiveBlockMode(GetPlayerColorMode(index));
-
-		uint c1 = CozmoPalette.ColorToUInt(playerInputs[index].stamps.Count > 0 ? playerColor : Color.black);
-		uint c2 = CozmoPalette.ColorToUInt(playerInputs[index].stamps.Count > 1 ? playerColor : Color.black);
-        uint c3 = CozmoPalette.ColorToUInt(playerInputs[index].stamps.Count > 2 ? playerColor : Color.black);
-        uint c4 = CozmoPalette.ColorToUInt(playerInputs[index].stamps.Count > 3 ? playerColor : Color.black);
-
-		playerInputBlocks[index].SetLEDs(c1, 0, (byte)ActiveBlock.Light.IndexToPosition(0), Robot.Light.FOREVER, 0, 0, 0, 0 );
-		playerInputBlocks[index].SetLEDs(c2, 0, (byte)ActiveBlock.Light.IndexToPosition(1), Robot.Light.FOREVER, 0, 0, 0, 0 );
-		playerInputBlocks[index].SetLEDs(c3, 0, (byte)ActiveBlock.Light.IndexToPosition(2), Robot.Light.FOREVER, 0, 0, 0, 0 );
-		playerInputBlocks[index].SetLEDs(c4, 0, (byte)ActiveBlock.Light.IndexToPosition(3), Robot.Light.FOREVER, 0, 0, 0, 0 );
+		if(index < playerInputBlocks.Count) {
+			Color playerColor = CozmoPalette.instance.GetColorForActiveBlockMode(GetPlayerColorMode(index));
+	
+			uint c1 = CozmoPalette.ColorToUInt(playerInputs[index].stamps.Count > 0 ? playerColor : Color.black);
+			uint c2 = CozmoPalette.ColorToUInt(playerInputs[index].stamps.Count > 1 ? playerColor : Color.black);
+	        uint c3 = CozmoPalette.ColorToUInt(playerInputs[index].stamps.Count > 2 ? playerColor : Color.black);
+	        uint c4 = CozmoPalette.ColorToUInt(playerInputs[index].stamps.Count > 3 ? playerColor : Color.black);
+	
+			playerInputBlocks[index].SetLEDs(c1, 0, (byte)ActiveBlock.Light.IndexToPosition(0), Robot.Light.FOREVER, 0, 0, 0, 0 );
+			playerInputBlocks[index].SetLEDs(c2, 0, (byte)ActiveBlock.Light.IndexToPosition(1), Robot.Light.FOREVER, 0, 0, 0, 0 );
+			playerInputBlocks[index].SetLEDs(c3, 0, (byte)ActiveBlock.Light.IndexToPosition(2), Robot.Light.FOREVER, 0, 0, 0, 0 );
+			playerInputBlocks[index].SetLEDs(c4, 0, (byte)ActiveBlock.Light.IndexToPosition(3), Robot.Light.FOREVER, 0, 0, 0, 0 );
+		}
 
 		textPlayerBids[index].text = playerInputs[index].stamps.Count.ToString();
 

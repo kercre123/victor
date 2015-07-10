@@ -442,7 +442,7 @@ public class GameLayoutTracker : MonoBehaviour {
 		
 		//look down if not localized
 		if(!inventoryComplete && robot != null) {
-			if(/*!skipBuildForThisLayout && */!robot.IsLocalized()) {
+			if(/*!skipBuildForThisLayout && */ currentLayout.needsLocalization && !robot.IsLocalized()) {
 				//Debug.Log( "look down because not localized" );
 				
 				robot.SetHeadAngle();
@@ -468,7 +468,7 @@ public class GameLayoutTracker : MonoBehaviour {
 				}
 
 				//Debug.Log( "look straight ahead to see objects" );
-				
+				robot.SetLiftHeight(1f);
 				robot.SetHeadAngle(0f);
 			}
 		}
