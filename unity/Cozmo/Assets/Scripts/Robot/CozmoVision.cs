@@ -437,7 +437,7 @@ public class CozmoVision : MonoBehaviour
 		{
 			robot.selectedObjects.Clear();
 			robot.selectedObjects.Add(obj);
-			robot.TrackHeadToObject(obj);
+			robot.TrackToObject(obj);
 		}
 		
 		AudioManager.PlayOneShot( selectSound );

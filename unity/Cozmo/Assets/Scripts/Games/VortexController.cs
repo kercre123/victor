@@ -108,6 +108,8 @@ public class VortexController : GameController {
 	[SerializeField] Image[] imageInputLocked;
 	[SerializeField] Text[] textPlayerBids;
 	[SerializeField] Text[] textPlayerSpinNow;
+	[SerializeField] RectTransform[] preGameNotices;
+	[SerializeField] RectTransform preGameAlert;
 	[SerializeField] Animation[] playerBidFlashAnimations;
 	[SerializeField] Text[] textPlayerScores;
 
@@ -231,7 +233,12 @@ public class VortexController : GameController {
 		if(imageHub != null) {
 			imageHub.gameObject.SetActive(false);
 		}
+		
+		if(preGameNotices != null) {
+			foreach(RectTransform rTrans in preGameNotices) rTrans.gameObject.SetActive(false);
+		}
 
+		if(preGameAlert != null) preGameAlert.gameObject.SetActive(false);
 	}
 
 	protected override void OnDisable () {
@@ -258,6 +265,14 @@ public class VortexController : GameController {
 	ObservedObject humanHead;
 	protected override void Enter_PRE_GAME () {
 		
+		if(preGameNotices != null) {
+			for(int i=0;i<preGameNotices.Length;i++) {
+				preGameNotices[i].gameObject.SetActive(i < numPlayers);
+			}
+		}
+
+		if(preGameAlert != null) preGameAlert.gameObject.SetActive(true);
+
 		ClearInputs();
 
 		base.Enter_PRE_GAME();
@@ -312,40 +327,41 @@ public class VortexController : GameController {
 
 		if( robot != null) {
 
-			if(humanHead == null) {
 
-				for(int i=0;i<robot.knownObjects.Count;i++) {
-					if(!robot.knownObjects[i].isFace) continue;
-					humanHead = robot.knownObjects[i];
-					break;
-				}
-
-				if(humanHead == null) {
-					if(headTimer > 0f) {
-						headTimer -= Time.deltaTime;
-		
-						if(headTimer <= 0f) {
-							//oscillate
-							//float height = 1f + Mathf.Sin(2*Mathf.PI*frequency*Time.time) * 0.5f;
-							turnStartAngle = robot.poseAngle_rad * Mathf.Rad2Deg;
-							Debug.Log("DriveWheels turn!");
-							robot.DriveWheels(-CozmoUtil.MAX_WHEEL_SPEED_MM*0.1f, CozmoUtil.MAX_WHEEL_SPEED_MM*0.1f);
-
-						}
-					}
-					else if(Mathf.Abs(MathUtil.AngleDelta(turnStartAngle, robot.poseAngle_rad * Mathf.Rad2Deg)) > 5f) {
-						Debug.Log("DriveWheels stop!");
-						robot.DriveWheels(0f, 0f);
-						headTimer = 1f;
-					}
-				}
-			}
-			else if(robot.carryingObject == null && !robot.isBusy) {
+			if(robot.carryingObject == null && !robot.isBusy) {
 				robot.PickAndPlaceObject(playerInputBlocks[1]);
 				if(CozmoBusyPanel.instance != null)	{
 					string desc = "Cozmo is attempting to pick-up\n a game cube.";
 					CozmoBusyPanel.instance.SetDescription(desc);
 				}
+			}
+			else if(humanHead == null) {
+				
+				for(int i=0;i<robot.knownObjects.Count;i++) {
+					if(!robot.knownObjects[i].isFace) continue;
+					humanHead = robot.knownObjects[i];
+					break;
+				}
+				
+//				if(humanHead == null) {
+//					if(headTimer > 0f) {
+//						headTimer -= Time.deltaTime;
+//						
+//						if(headTimer <= 0f) {
+//							//oscillate
+//							//float height = 1f + Mathf.Sin(2*Mathf.PI*frequency*Time.time) * 0.5f;
+//							turnStartAngle = robot.poseAngle_rad * Mathf.Rad2Deg;
+//							Debug.Log("DriveWheels turn!");
+//							robot.DriveWheels(-CozmoUtil.MAX_WHEEL_SPEED_MM*0.1f, CozmoUtil.MAX_WHEEL_SPEED_MM*0.1f);
+//							
+//						}
+//					}
+//					else if(Mathf.Abs(MathUtil.AngleDelta(turnStartAngle, robot.poseAngle_rad * Mathf.Rad2Deg)) > 5f) {
+//						Debug.Log("DriveWheels stop!");
+//						robot.DriveWheels(0f, 0f);
+//						headTimer = 1f;
+//					}
+//				}
 			}
 			
 		}
@@ -353,6 +369,15 @@ public class VortexController : GameController {
 
 	protected override void Exit_PRE_GAME () {
 		base.Exit_PRE_GAME();
+
+		if(preGameNotices != null) {
+			for(int i=0;i<preGameNotices.Length;i++) {
+				preGameNotices[i].gameObject.SetActive(false);
+			}
+		}
+
+		if(preGameAlert != null) preGameAlert.gameObject.SetActive(false);
+
 	}
 
 	protected override void Enter_PLAYING () {
@@ -366,6 +391,12 @@ public class VortexController : GameController {
 
 		if(imageHub != null) {
 			imageHub.gameObject.SetActive(true);
+		}
+
+		if(robot != null) {
+			//turn back towards ipad
+			robot.SetLiftHeight(1f);
+			//robot.TrackToObject(null, false);
 		}
 
 		base.Enter_PLAYING();
@@ -386,12 +417,21 @@ public class VortexController : GameController {
 			UpdatePlayState();
 		}
 
-//		if(robot != null) {
+		if(robot != null) {
+			if(humanHead == null) {
+				
+				for(int i=0;i<robot.knownObjects.Count;i++) {
+					if(!robot.knownObjects[i].isFace) continue;
+					humanHead = robot.knownObjects[i];
+					break;
+				}
+
 //			if(playState != VortexState.SPINNING && robot.headTrackingObject == null && humanHead != null) {
+
 //				robot.SetLiftHeight(0.1f);
 //				robot.TrackHeadToObject(humanHead, true);
-//			}
-//		}
+			}
+		}
 
 
 	}
@@ -484,6 +524,46 @@ public class VortexController : GameController {
 			imageFinalPlayerScoreBGs[i].gameObject.SetActive(true);
 		}
 		
+		if(robot != null) {
+			if(humanHead == null) {
+				
+				for(int i=0;i<robot.knownObjects.Count;i++) {
+					if(!robot.knownObjects[i].isFace) continue;
+					humanHead = robot.knownObjects[i];
+					break;
+				}
+			}
+			Debug.Log("Enter_RESULTS robot.SetLiftHeight(0.1f);");
+			//robot.SetLiftHeight(0.1f);
+
+			if(humanHead != null) {
+				robot.FaceObject(humanHead, false);
+			}
+		}
+
+	}
+
+	protected override void Update_RESULTS() {
+		base.Update_RESULTS();
+
+		
+		if(robot != null) {
+			if(humanHead == null) {
+				
+				for(int i=0;i<robot.knownObjects.Count;i++) {
+					if(!robot.knownObjects[i].isFace) continue;
+					humanHead = robot.knownObjects[i];
+					break;
+				}
+			}
+
+			//Debug.Log( "Update_RESULTS robot.isBusy("+robot.isBusy+")" );
+			if(!robot.isBusy && humanHead != null && robot.headTrackingObjectID < 0) {
+				//Debug.Log( "Update_RESULTS robot.TrackToObject(humanHead, false);" );
+				
+				robot.TrackToObject(humanHead, false);
+			}
+		}
 	}
 
 	protected override void Exit_RESULTS() {
@@ -1007,6 +1087,8 @@ public class VortexController : GameController {
 			resultsDisplayIndex++;
 			fadeTimer = scoreDisplayFillFade;
 		}
+
+		
 	}
 
 	void Exit_SPIN_COMPLETE() {

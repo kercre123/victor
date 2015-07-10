@@ -86,7 +86,7 @@ public class CozmoVision_AutoSelect : CozmoVision
 					
 					if( observedObjects.Count == 1 )
 					{
-						robot.TrackHeadToObject( robot.selectedObjects[0] );
+						robot.TrackToObject( robot.selectedObjects[0] );
 					}
 				}
 				
@@ -102,7 +102,7 @@ public class CozmoVision_AutoSelect : CozmoVision
 					
 					if( observedObjects.Count == 1 )
 					{
-						robot.TrackHeadToObject( robot.selectedObjects[0] );
+						robot.TrackToObject( robot.selectedObjects[0] );
 					}
 				}
 				

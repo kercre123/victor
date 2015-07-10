@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
 
@@ -14,7 +14,7 @@ public class ObservedObjectButton : ObservedObjectBox
 		{
 			robot.selectedObjects.Clear();
 			robot.selectedObjects.Add(observedObject);
-			robot.TrackHeadToObject(observedObject);
+			robot.TrackToObject(observedObject);
 		}
 
 		AudioManager.PlayOneShot( select );

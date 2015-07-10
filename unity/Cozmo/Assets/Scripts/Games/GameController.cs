@@ -28,31 +28,32 @@ public class GameController : MonoBehaviour {
 	[SerializeField] private AudioClip countdownTickSound;
 	//[SerializeField] protected float maxPlayTime = 0f;
 	[SerializeField] protected TimerAudio[] timerSounds;
-	[SerializeField] private AudioClip gameStartingIn;
+	[SerializeField] protected AudioClip gameStartingIn;
 	//[SerializeField] protected int scoreToWin = 0;
 	//[SerializeField] protected int[] starThresholds = new int[STAR_COUNT];
-	[SerializeField] private AudioClip starPop;
+	[SerializeField] protected AudioClip starPop;
 	[SerializeField] protected Text textScore = null;
 	[SerializeField] protected Text textError = null;
 	[SerializeField] protected Text textState = null;
 	[SerializeField] protected Text textTime = null;
 	[SerializeField] protected Text textAddaboy = null;
-	[SerializeField] private bool autoPlay = false;
-	[SerializeField] private Button playButton = null;
-	[SerializeField] private Image resultsPanel = null;
+	[SerializeField] protected bool autoPlay = false;
+	[SerializeField] protected Button playButton = null;
+	[SerializeField] protected Image resultsPanel = null;
 	[SerializeField] protected AudioClip instructionsSound;
-	[SerializeField] private AudioClip gameStartSound;
+	[SerializeField] protected AudioClip gameStartSound;
 	[SerializeField] protected AudioClip playerScoreSound;
-	[SerializeField] private AudioClip playingLoopSound;
+	[SerializeField] protected AudioClip playingLoopSound;
 	[SerializeField] protected GameActions[] stateActions = new GameActions[(int)GameState.Count];
-	[SerializeField] private AudioClip[] winSounds = new AudioClip[STAR_COUNT+1];
-	[SerializeField] private AudioClip[] winLoopSounds = new AudioClip[STAR_COUNT+1];
-	[SerializeField] private AudioClip loseSound;
-	[SerializeField] private AudioClip loseLoopSound;
-	[SerializeField] private Image[] starImages = new Image[STAR_COUNT];
-	[SerializeField] private float starPopInTime = .5f;
-	[SerializeField] private float maxStarPop = 1.5f;
-	[SerializeField] private float minStarPop = 0.3f;
+	[SerializeField] protected AudioClip[] winSounds = new AudioClip[STAR_COUNT+1];
+	[SerializeField] protected AudioClip[] winLoopSounds = new AudioClip[STAR_COUNT+1];
+	[SerializeField] protected AudioClip loseSound;
+	[SerializeField] protected AudioClip loseLoopSound;
+	[SerializeField] protected Image[] starImages = new Image[STAR_COUNT];
+	[SerializeField] protected float starPopInTime = .5f;
+	[SerializeField] protected float maxStarPop = 1.5f;
+	[SerializeField] protected float minStarPop = 0.3f;
+	[SerializeField] protected bool robotBusyDuringResults = true;
 
 
 	private AudioClip gameOverSound { get { if(win) return stars < winSounds.Length ? winSounds[stars] : null; return loseSound; } }
@@ -439,7 +440,7 @@ public class GameController : MonoBehaviour {
 			}
 		}
 
-		if( robot != null ) {
+		if(robotBusyDuringResults && robot != null ) {
 			robot.isBusy = true;
 		}
 	}
@@ -455,7 +456,7 @@ public class GameController : MonoBehaviour {
 		AudioManager.Stop(resultsLoopSound);
 		if(robot != null) {
 			robot.TurnOffAllLights();
-			robot.isBusy = true;
+			if(robotBusyDuringResults) robot.isBusy = false;
 		}
 	}
 
