@@ -3,8 +3,8 @@
 
 // Global variables
 volatile bool radioBusy;
-volatile bool gDataReceived;
-volatile u8 radioPayload[13];
+volatile bool gDataReceived = false;
+volatile u8 xdata radioPayload[13];
 volatile enum eRadioTimerState radioTimerState = radioSleep;
 volatile u8 missedPacketCount = 0;
 volatile u8 cumMissedPacketCount = 0;
@@ -62,7 +62,7 @@ void InitPRX()
   CE_HIGH();
 }
 
-void ReceiveData(u8 msTimeout)
+void ReceiveData(u8 msTimeout, bool syncMode)
 {
   u8 now;
 
@@ -82,8 +82,11 @@ void ReceiveData(u8 msTimeout)
       if((TH0-now+1)>(5*msTimeout)) 
       {
         // we timed out
-        missedPacketCount++;
-        cumMissedPacketCount++; 
+        if(!syncMode)
+        {
+          missedPacketCount++;
+          cumMissedPacketCount++; 
+        }
         radioBusy = false;
       }
     }
@@ -93,8 +96,10 @@ void ReceiveData(u8 msTimeout)
     }
     #endif
   }
+  
   TR0 = 1; // turn timer back on
   PowerDownRadio();
+  
 }
 
 

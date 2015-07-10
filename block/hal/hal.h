@@ -7,7 +7,7 @@
 #include "hal_delay.h"
 #include "portable.h"
 
-#define BLOCK_ID 0xC0
+#define BLOCK_ID 0xC3
 
 //#define DO_SIMPLE_LED_TEST
 //#define DO_LED_TEST
@@ -20,7 +20,7 @@
 //#define DO_TRANSMITTER_BEHAVIOR
 //#define DO_LOSSY_TRANSMITTER
 
-#if defined(STREAM_ACCELEROMETER) || defined(DEBUG_PAYLOAD)
+#if defined(STREAM_ACCELEROMETER) || defined(DO_TAPS_TEST) || defined(DEBUG_PAYLOAD)
 #define USE_UART
 #endif
 
@@ -66,7 +66,7 @@ typedef enum eRadioTimerState
 };
 
 void InitTimer0();
-void ReceiveData(u8 msTimeout);
+void ReceiveData(u8 msTimeout, bool syncMode);
 void TransmitData();
 
 #endif /* HAL_H__ */
