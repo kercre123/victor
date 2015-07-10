@@ -225,6 +225,16 @@
           ],
       },
     },
+    'conditions': [    
+      [
+        "OS=='ios'",
+        {
+          'defines': [
+            'ANKI_IOS_BUILD=1',
+          ],
+        },
+      ],
+    ],
   },
 
   'conditions': [    
@@ -248,11 +258,34 @@
         },
         'targets': [
           {
+            'target_name': 'CSharpBinding',
+            'type': 'static_library',
+            'include_dirs': [
+              '../../unit/CSharpBinding/src',
+              '<@(opencv_includes)',
+            ],
+            'dependencies': [
+              'cozmoGame',
+              '<(cg-ce_gyp_path):cozmoEngine',
+              '<(cg-cti_gyp_path):ctiCommon',
+              '<(cg-cti_gyp_path):ctiMessaging',
+              '<(cg-cti_gyp_path):ctiPlanning',
+              '<(cg-cti_gyp_path):ctiVision',
+              '<(cg-util_gyp_path):util',
+              '<(cg-util_gyp_path):jsoncpp',
+            ],
+            'sources': [ '<!@(cat <(csharp_source))' ],
+            'libraries': [
+            ],
+          }, # end CSharpBinding
+
+          {
             # fake target to see all of the sources...
             'target_name': 'all_lib_targets',
             'type': 'none',
             'dependencies': [
               'cozmoGame',
+              'CSharpBinding',
               '<(cg-ce_gyp_path):cozmoEngine',
               '<(cg-cti_gyp_path):ctiCommon',
               '<(cg-cti_gyp_path):ctiCommonRobot',
@@ -291,29 +324,6 @@
 
 
         'targets': [
-          {
-            'target_name': 'CSharpBinding',
-            'type': 'shared_library',
-            'include_dirs': [
-              '../../unit/CSharpBinding/src',
-              '<@(opencv_includes)',
-            ],
-            'dependencies': [
-              'cozmoGame',
-              '<(cg-ce_gyp_path):cozmoEngine',
-              '<(cg-cti_gyp_path):ctiCommon',
-              '<(cg-cti_gyp_path):ctiCommonRobot',
-              '<(cg-cti_gyp_path):ctiVision',
-              '<(cg-cti_gyp_path):ctiVisionRobot',
-              '<(cg-util_gyp_path):util',
-              '<(cg-util_gyp_path):jsoncpp',
-            ],
-            'sources': [ '<!@(cat <(csharp_source))' ],
-            'libraries': [
-              '<@(opencv_libs)',
-            ],
-          }, # end CSharpBinding
-
           {
             'target_name': 'webotsCtrlGameEngine',
             'type': 'executable',
