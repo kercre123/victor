@@ -130,23 +130,33 @@ CozmoMat {
   ySize 1.5
 }
 LightCube {
-  translation -0.143503 0.11584 0.0219969
+  translation 0 0.075 0.0219969
   rotation 0 1 0 0
 }
 LightCube {
-  translation -0.141054 0.0348738 0.0219969
+  translation 0 0.025 0.0219969
+  rotation 0 1 0 0
+  ID 1
+}
+LightCube {
+  translation 0 -0.025 0.0219969
+  rotation 0 1 0 0
+  ID 2
+}
+LightCube {
+  translation 0 -0.075 0.0219969
   rotation 0 1 0 0
   ID 3
 }
 Face {
-  translation 0.026673 0.0807419 0.1
+  translation 0.2 0 0.1
   rotation 0 0 1 1.5708
   image "face02.png"
 }
 BlockWorldComms {
 }
 DEF Cozmo_1 CozmoBot {
-  translation -0.3 0.07 0
+  translation -0.2 0 0
   name "CozmoBot_1"
   usbChannel 10
 }
