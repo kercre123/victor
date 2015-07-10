@@ -24,6 +24,7 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 
 #include "anki/cozmo/basestation/soundManager.h"
+#include "anki/cozmo/basestation/faceAnimationManager.h"
 
 #include "util/logging/logging.h"
 #include "anki/common/basestation/colorRGBA.h"
@@ -225,6 +226,58 @@ return RESULT_FAIL; \
       return &_streamMsg;
     }
     
+#pragma mark -
+#pragma mark FaceAnimationKeyFrame
+    
+    Result FaceAnimationKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot)
+    {
+      GET_MEMBER_FROM_JSON(jsonRoot, animName);
+      
+      _numFrames = FaceAnimationManager::getInstance()->GetNumFrames(_animName);
+      _curFrame = 0;
+      
+      return RESULT_OK;
+    }
+    
+    RobotMessage* FaceAnimationKeyFrame::GetStreamMessage()
+    {
+      // Populate the message with the next chunk of audio data and send it out
+      if(_curFrame < _numFrames)
+      {
+        const std::vector<u8>* rleFrame = FaceAnimationManager::getInstance()->GetFrame(_animName, _curFrame);
+        
+        if(rleFrame == nullptr) {
+          PRINT_NAMED_ERROR("FaceAnimationKeyFrame.GetStreamMesssage",
+                            "Failed to get frame %d from animation %s.\n",
+                            _curFrame, _animName.c_str());
+          return nullptr;
+        }
+        
+        if(rleFrame->empty()) {
+          // No face in this frame, return nullptr so we don't stream anything to
+          // the robot, but don't complain because this is not an error.
+          // Still increment the frame counter.
+          ++_curFrame;
+          return nullptr;
+        }
+        
+        if(rleFrame->size() >= sizeof(_faceImageMsg.image)) {
+          PRINT_NAMED_ERROR("FaceAnimationKeyFrame.GetStreamMessage",
+                            "RLE frame %d for animation %s too large to fit in message (>=%lu).\n",
+                            _curFrame, _animName.c_str(), sizeof(_faceImageMsg.image));
+          return nullptr;
+        }
+        
+        _faceImageMsg.image.fill(0); // Necessary??
+        std::copy(rleFrame->begin(), rleFrame->end(), _faceImageMsg.image.begin());
+        ++_curFrame;
+        
+        return &_faceImageMsg;
+      } else {
+        _curFrame = 0;
+        return nullptr;
+      }
+    }
     
 #pragma mark - 
 #pragma mark RobotAudioKeyFrame
@@ -238,9 +291,15 @@ return RESULT_FAIL; \
       GET_MEMBER_FROM_JSON(jsonRoot, audioName);
       //GET_MEMBER_FROM_JSON(jsonRoot, audioID);
       
-      _audioID = SoundManager::getInstance()->GetID(_audioName);
+      const u32 duration_ms = SoundManager::getInstance()->GetSoundDurationInMilliseconds(_audioName);
       
-      const u32 duration_ms = SoundManager::getInstance()->GetSoundDurationInMilliseconds(_audioID);
+      if(duration_ms == 0) {
+        PRINT_NAMED_ERROR("RobotAudioKeyFrame.SetMembersFromJson.InvalidAudioName",
+                          "SoundManager could not find the sound associated with name '%s'.\n",
+                          _audioName.c_str());
+        return RESULT_FAIL;
+      }
+      
       _numSamples = duration_ms / SAMPLE_LENGTH_MS;
       
       // TODO: Compute number of samples for this audio ID
@@ -278,7 +337,7 @@ return RESULT_FAIL; \
     
     Result DeviceAudioKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot)
     {
-      GET_MEMBER_FROM_JSON(jsonRoot, audioID);
+      GET_MEMBER_FROM_JSON(jsonRoot, audioName);
       
       return RESULT_OK;
     }
@@ -293,7 +352,7 @@ return RESULT_FAIL; \
     void DeviceAudioKeyFrame::PlayOnDevice()
     {
       // TODO: Replace with real call to wwise or something
-      SoundManager::getInstance()->Play(static_cast<SoundID_t>(_audioID));
+      SoundManager::getInstance()->Play(_audioName);
     }
     
 #pragma mark -

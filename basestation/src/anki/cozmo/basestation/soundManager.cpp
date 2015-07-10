@@ -21,6 +21,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <errno.h>
+#include <dirent.h>
 
 #define DEBUG_SOUND_MANAGER 0
 
@@ -188,151 +190,14 @@ namespace Anki {
       _hasRootDir = true;
       _rootDir = fullPath;
       
+      ReadSoundDir();
+      
       return true;
       
     } // SetRootDir()
     
-    const std::string& SoundManager::GetSoundFile(SoundID_t soundID) const
-    {
-      // Table of sound files relative to root dir
-      static const std::map<SoundID_t, std::string> soundTable[NUM_SOUND_SCHEMES] =
-      {
-        {
-          // Cozmo default sound scheme
-          {SOUND_STARTOVER, "demo/WaitingForDice2.wav"}
-          ,{SOUND_NOTIMPRESSED, "demo/OKGotIt.wav"}
-          
-          ,{SOUND_WAITING4DICE, "demo/WaitingForDice1.wav"}
-          ,{SOUND_WAITING4DICE2DISAPPEAR, "demo/WaitingForDice2.wav"}
-          ,{SOUND_OK_GOT_IT, "demo/OKGotIt.wav"}
-          ,{SOUND_OK_DONE, "demo/OKDone.wav"}
-          
-        }
-        ,{
-          // Movie sound scheme
-          {SOUND_TADA, "misc/tada.mp3"}
-          ,{SOUND_NOPROBLEMO, "misc/nproblem.wav"}
-          ,{SOUND_INPUT, "misc/input.wav"}
-          ,{SOUND_SWEAR, "misc/swear.wav"}
-          ,{SOUND_STARTOVER, "anchorman/startover.wav"}
-          ,{SOUND_NOTIMPRESSED, "anchorman/notimpressed.wav"}
-          ,{SOUND_60PERCENT, "anchorman/60percent.wav"}
-          ,{SOUND_DROID, "droid/droid.wav"}
-          
-          ,{SOUND_DEMO_START, "misc/swear.wav"}
-          ,{SOUND_WAITING4DICE, "misc/input.wav"}
-          ,{SOUND_WAITING4DICE2DISAPPEAR, "misc/input.wav"}
-          ,{SOUND_OK_GOT_IT, "misc/nproblem.wav"}
-          ,{SOUND_OK_DONE, "anchorman/60percent.wav"}
-        }
-        ,{
-          // CREEP Sound Scheme
-          // TODO: Update these mappings for real playtest sounds
-          {SOUND_POWER_ON,     "creep/Robot-PowerOn1Rev2.mp3"}
-          ,{SOUND_POWER_DOWN,  "creep/Robot-PowerDown13B.mp3"}
-          ,{SOUND_PHEW,        "creep/Robot-ReliefPhew1.mp3"}
-          ,{SOUND_SCREAM,      "creep/Robot-Scream7.mp3"}
-          ,{SOUND_OOH,         "creep/Robot-OohScream12.mp3"}
-          ,{SOUND_WHATS_NEXT,  "creep/Robot-WhatsNext1A.mp3"}
-          ,{SOUND_HELP_ME,     "creep/Robot-WahHelpMe2.mp3"}
-          ,{SOUND_SCAN,        "creep/Robot-Scanning2Rev1.mp3"}
-          ,{SOUND_HAPPY_CHASE, "creep/Robot-Happy2.mp3"}
-          ,{SOUND_FLEES,       "creep/Robot-Happy1.mp3"}
-          ,{SOUND_SINGING,     "creep/Robot-Singing1Part1-2.mp3"}
-          ,{SOUND_SHOOT,       "codeMonsterShooter/shoot.wav"}
-          ,{SOUND_SHOT_HIT,    "codeMonsterShooter/hit.wav"}
-          ,{SOUND_SHOT_MISSED, "codeMonsterShooter/miss.wav"}
-          
-        }
-      };
-      
-      static const std::string DEFAULT("");
-      
-      auto result = soundTable[_currScheme].find(soundID);
-      if(result == soundTable[_currScheme].end()) {
-        PRINT_NAMED_WARNING("SoundManager.GetSoundFile.UndefinedID",
-                            "No file defined for sound ID %d in sound scheme %d.\n",
-                            soundID, _currScheme);
-        return DEFAULT;
-      } else {
-        return result->second;
-      }
-      
-    } // GetSoundFile()
-    
-    
-    SoundID_t SoundManager::GetID(const std::string& name)
-    {
-      static const std::map<std::string, SoundID_t> LUT = {
-        {"DROID",         SOUND_DROID},
-        {"FLEES",         SOUND_FLEES},
-        {"NOPROBLEMO",    SOUND_NOPROBLEMO},
-        {"NOTIMPRESSED",  SOUND_NOTIMPRESSED},
-        {"OK_DONE",       SOUND_OK_DONE},
-        {"OK_GOT_IT",     SOUND_OK_GOT_IT},
-        {"OOH",           SOUND_OOH},
-        {"PHEW",          SOUND_PHEW},
-        {"POWER_DOWN",    SOUND_POWER_DOWN},
-        {"POWER_ON",      SOUND_POWER_ON},
-        {"HAPPY_CHASE",   SOUND_HAPPY_CHASE},
-        {"HELP_ME",       SOUND_HELP_ME},
-        {"INPUT",         SOUND_INPUT},
-        {"SCAN",          SOUND_SCAN},
-        {"SCREAM",        SOUND_SCREAM},
-        {"SHOT_HIT",      SOUND_SHOT_HIT},
-        {"SHOT_MISSED",   SOUND_SHOT_MISSED},
-        {"SHOOT",         SOUND_SHOOT},
-        {"SINGING",       SOUND_SINGING},
-        {"STARTOVER",     SOUND_STARTOVER},
-        {"SWEAR",         SOUND_SWEAR},
-        {"TADA",          SOUND_TADA},
-        {"WHATS_NEXT",    SOUND_WHATS_NEXT},
-      };
-
-      auto result = LUT.find(name);
-      if(result == LUT.end()) {
-        PRINT_STREAM_WARNING("SoundManager.GetID.UnknownSound", "No sound named '" << name << "', ignoring.");
-        return NUM_SOUNDS;
-      } else {
-        return result->second;
-      }
-    } // GetID()
-    
-    bool SoundManager::Play(const std::string& name, const u8 numLoops, const u8 volume)
-    {
-      return Play(SoundManager::GetID(name), numLoops, volume);
-    }
-    
-    bool SoundManager::Play(const SoundID_t id, const u8 numLoops, const u8 volume)
-    {
-      if (_hasCmdProcessor && _hasRootDir && id < NUM_SOUNDS) {
-        const std::string& soundFile = GetSoundFile(id);
-        if( !soundFile.empty() )
-        {
-          SetSoundToPlay(_rootDir + "/" + soundFile, numLoops, volume);
-          return true;
-        }
-      }
-      return false;
-    }
-
-    void SoundManager::Stop()
-    {
-      SetSoundToPlay("", 1);
-      _stopCurrSound = true;
-    }
-    
-    void SoundManager::SetScheme(const SoundSchemeID_t scheme)
-    {
-      _currScheme = scheme;
-    }
-    
-    SoundSchemeID_t SoundManager::GetScheme() const
-    {
-      return _currScheme;
-    }
-    
-    std::string GetStdoutFromCommand(std::string cmd)
+    // Helper for getting result back from calling a system command:
+    static std::string GetStdoutFromCommand(std::string cmd)
     {
       std::string data;
       FILE * stream;
@@ -349,35 +214,135 @@ namespace Anki {
       return data;
     }
     
-    const u32 SoundManager::GetSoundDurationInMilliseconds(SoundID_t soundID) const
+    Result SoundManager::ReadSoundDir(std::string subDir)
     {
-      const std::string soundFile = GetSoundFile(soundID);
-      
-      // This is disgusting.
-      // grep the result of afinfo to parse out the sound duration
-      const std::string cmd("afinfo -b -r " + _rootDir + soundFile +
-                            " | grep -o '[0-9]\\{1,\\}\\.[0-9]\\{1,\\}'");
-      
-#     if DEBUG_SOUND_MANAGER
-      printf("GetSoundDurationInMilliseconds command: %s\n", cmd.c_str());
-#     endif
-      
-      std::string output = GetStdoutFromCommand(cmd);
-      
-      u32 duration_ms = 0;
-      
-      if(output.empty()) {
-        PRINT_NAMED_WARNING("SoundManager.GetSoundDurationInMilliseconds",
-                            "Failed to get duration string for soundID=%d, file %s.\n",
-                            soundID, soundFile.c_str());
-      } else {
-        const float duration_sec = std::stof(output);
-        duration_ms = static_cast<u32>(duration_sec * 1000);
+      if(!subDir.empty()) {
+        subDir += "/";
       }
       
-      return duration_ms;
+      DIR* dir = opendir((_rootDir + subDir).c_str());
+      
+      if ( dir != nullptr) {
+        dirent* ent = nullptr;
+        while ( (ent = readdir(dir)) != nullptr) {
+          if (ent->d_type == DT_REG) {
+            const std::string soundName(subDir + ent->d_name);
+            std::string fullSoundFilename = _rootDir + subDir + ent->d_name;
+            struct stat attrib{0};
+            int result = stat(fullSoundFilename.c_str(), &attrib);
+            if (result == -1) {
+              PRINT_NAMED_WARNING("SoundManager.ReadSoundDir",
+                                  "could not get mtime for %s", fullSoundFilename.c_str());
+              continue;
+            }
+            bool loadSoundFile = false;
+            auto mapIt = _availableSounds.find(soundName);
+            if (mapIt == _availableSounds.end()) {
+              _availableSounds[soundName].lastLoadedTime = attrib.st_mtimespec.tv_sec;
+              loadSoundFile = true;
+            } else {
+              if (mapIt->second.lastLoadedTime < attrib.st_mtimespec.tv_sec) {
+                mapIt->second.lastLoadedTime = attrib.st_mtimespec.tv_sec;
+                loadSoundFile = true;
+              } else {
+                //PRINT_NAMED_INFO("Robot.ReadAnimationFile", "old time stamp for %s", fullFileName.c_str());
+              }
+            }
+            if (loadSoundFile) {
+              
+              // Compute the sound's duration:
+              
+              // This is disgusting.
+              // grep the result of afinfo to parse out the sound duration
+              const std::string cmd("afinfo -b -r " + fullSoundFilename +
+                                    " | grep -o '[0-9]\\{1,\\}\\.[0-9]\\{1,\\}'");
+              
+#             if DEBUG_SOUND_MANAGER
+              printf("SoundManager:: Sound duration command: %s\n", cmd.c_str());
+#             endif
+              
+              std::string output = GetStdoutFromCommand(cmd);
+              
+              u32 duration_ms = 0;
+              
+              if(output.empty()) {
+                PRINT_NAMED_WARNING("SoundManager.ReadSoundDir",
+                                    "Failed to get duration string for '%s', file %s.\n",
+                                    soundName.c_str(), fullSoundFilename.c_str());
+              } else {
+                const float duration_sec = std::stof(output);
+                duration_ms = static_cast<u32>(duration_sec * 1000);
+              }
+              
+              AvailableSound& availableSound = _availableSounds[soundName];
+              availableSound.duration_ms = duration_ms;
+              availableSound.fullFilename = fullSoundFilename;
+              
+#             if DEBUG_SOUND_MANAGER
+              PRINT_NAMED_INFO("SoundManager.ReadSoundDir",
+                               "Added %dms sound '%s' in file '%s'\n",
+                               availableSound.duration_ms,
+                               soundName.c_str(),
+                               availableSound.fullFilename.c_str());
+#             endif
+              
+            }
+          } // if (ent->d_type == DT_REG) {
+          else if(ent->d_type == DT_DIR && ent->d_name[0] != '.') {
+            ReadSoundDir(ent->d_name);
+          }
+        }
+        closedir(dir);
+        
+      } else {
+        PRINT_NAMED_ERROR("SoundManager.ReadSoundDir",
+                          "Sound folder not found: %s\n",
+                          _rootDir.c_str());
+        return RESULT_FAIL;
+      }
+
+      if(subDir.empty()) { // Only display this message at the root
+        PRINT_NAMED_INFO("SoundManager.ReadSoundDir",
+                         "SoundManager now contains %lu available sounds.\n",
+                         _availableSounds.size());
+      }
+      
+      return RESULT_OK;
     }
     
+    bool SoundManager::Play(const std::string& name, const u8 numLoops, const u8 volume)
+    {
+      auto soundIter = _availableSounds.find(name);
+      
+      if (_hasCmdProcessor && _hasRootDir && soundIter != _availableSounds.end()) {
+        SetSoundToPlay(soundIter->second.fullFilename, numLoops, volume);
+        return true;
+      }
+      return false;
+    }
+
+    void SoundManager::Stop()
+    {
+      SetSoundToPlay("", 1);
+      _stopCurrSound = true;
+    }
+    
+    
+    bool SoundManager::IsValidSound(const std::string& name) const
+    {
+      return _availableSounds.find(name) != _availableSounds.end();
+    }
+    
+    const u32 SoundManager::GetSoundDurationInMilliseconds(const std::string& name) const
+    {
+      auto soundIter = _availableSounds.find(name);
+      if(soundIter == _availableSounds.end()) {
+        PRINT_NAMED_ERROR("SoundManager.GetSoundDurationInMilliseconds", "No sound named '%s'\n", name.c_str());
+        return 0;
+      }
+      
+      return soundIter->second.duration_ms;
+    }
 
     
   } // namespace Cozmo

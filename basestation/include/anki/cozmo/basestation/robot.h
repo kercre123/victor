@@ -382,7 +382,7 @@ namespace Anki {
       s32 GetNumAnimationBytesFree() const;
       
       // Ask the UI to play a sound for us
-      Result PlaySound(SoundID_t soundID, u8 numLoops, u8 volume);
+      Result PlaySound(const std::string& soundName, u8 numLoops, u8 volume);
       void   StopSound();
       
       Result StopAnimation();

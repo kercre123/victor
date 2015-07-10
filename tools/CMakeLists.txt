@@ -53,7 +53,6 @@ set_target_properties(kazmath PROPERTIES SUFFIX ".a")
 set_source_files_properties(${obj}.${TOOLSET}/project/gyp/libkazmath.a PROPERTIES GENERATED "TRUE")
 set_target_properties(kazmath PROPERTIES EXCLUDE_FROM_ALL "FALSE")
 list(APPEND kazmath__include_dirs
-  "${CMAKE_SOURCE_DIR}/anki-util/tools/message-buffers/support/cpp/include"
   "${CMAKE_SOURCE_DIR}/anki-util/source/anki"
   "${CMAKE_SOURCE_DIR}/anki-util/libs/packaged/include"
   "${CMAKE_SOURCE_DIR}/anki-util/source/3rd")
@@ -79,9 +78,7 @@ set_target_properties(jsoncpp PROPERTIES ARCHIVE_OUTPUT_NAME "jsoncpp")
 set_target_properties(jsoncpp PROPERTIES SUFFIX ".a")
 set_source_files_properties(${obj}.${TOOLSET}/project/gyp/libjsoncpp.a PROPERTIES GENERATED "TRUE")
 set_target_properties(jsoncpp PROPERTIES EXCLUDE_FROM_ALL "FALSE")
-list(APPEND jsoncpp__include_dirs
-  "${CMAKE_SOURCE_DIR}/anki-util/tools/message-buffers/support/cpp/include"
-  "${CMAKE_SOURCE_DIR}/anki-util/source/3rd/jsoncpp")
+set(jsoncpp__include_dirs "${CMAKE_SOURCE_DIR}/anki-util/source/3rd/jsoncpp")
 set_property(TARGET jsoncpp APPEND PROPERTY INCLUDE_DIRECTORIES ${jsoncpp__include_dirs})
 set_target_properties(jsoncpp PROPERTIES COMPILE_FLAGS "-std=c11 -fdiagnostics-show-category=name -Wall -Woverloaded-virtual -Werror -Wundef -Wheader-guard -fsigned-char -fvisibility-inlines-hidden -fvisibility=default -Wshorten-64-to-32 -Winit-self -Wconditional-uninitialized -Wno-deprecated-register -Wa,--noexecstack -Wformat -Werror=format-security -g -std=c++11 -stdlib=libc++ -fdiagnostics-show-category=name -Wall -Woverloaded-virtual -Werror -Wundef -Wheader-guard -fsigned-char -fvisibility-inlines-hidden -fvisibility=default -Wshorten-64-to-32 -Winit-self -Wconditional-uninitialized -Wno-deprecated-register -Wa,--noexecstack -Wformat -Werror=format-security -g ")
 set_target_properties(jsoncpp PROPERTIES LINK_FLAGS "-g ")
@@ -295,10 +292,10 @@ set_target_properties(util PROPERTIES SUFFIX ".a")
 set_source_files_properties(${obj}.${TOOLSET}/project/gyp/libutil.a PROPERTIES GENERATED "TRUE")
 set_target_properties(util PROPERTIES EXCLUDE_FROM_ALL "FALSE")
 list(APPEND util__include_dirs
-  "${CMAKE_SOURCE_DIR}/anki-util/tools/message-buffers/support/cpp/include"
   "${CMAKE_SOURCE_DIR}/anki-util/source/anki"
   "${CMAKE_SOURCE_DIR}/anki-util/libs/packaged/include"
   "${CMAKE_SOURCE_DIR}/anki-util/source/3rd"
+  "${CMAKE_SOURCE_DIR}/anki-util/tools/message-buffers/support/cpp/include"
   "${CMAKE_SOURCE_DIR}/anki-util/source/3rd/jsoncpp"
   "${CMAKE_SOURCE_DIR}/anki-util/source/3rd")
 set_property(TARGET util APPEND PROPERTY INCLUDE_DIRECTORIES ${util__include_dirs})
@@ -409,9 +406,7 @@ set_target_properties(utilEmbedded PROPERTIES ARCHIVE_OUTPUT_NAME "utilEmbedded"
 set_target_properties(utilEmbedded PROPERTIES SUFFIX ".a")
 set_source_files_properties(${obj}.${TOOLSET}/project/gyp/libutilEmbedded.a PROPERTIES GENERATED "TRUE")
 set_target_properties(utilEmbedded PROPERTIES EXCLUDE_FROM_ALL "FALSE")
-list(APPEND utilEmbedded__include_dirs
-  "${CMAKE_SOURCE_DIR}/anki-util/tools/message-buffers/support/cpp/include"
-  "${CMAKE_SOURCE_DIR}/anki-util/source/anki")
+set(utilEmbedded__include_dirs "${CMAKE_SOURCE_DIR}/anki-util/source/anki")
 set_property(TARGET utilEmbedded APPEND PROPERTY INCLUDE_DIRECTORIES ${utilEmbedded__include_dirs})
 set_target_properties(utilEmbedded PROPERTIES COMPILE_DEFINITIONS "COZMO_ROBOT;")
 set_source_files_properties(

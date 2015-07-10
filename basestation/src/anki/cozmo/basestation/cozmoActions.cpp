@@ -74,8 +74,10 @@ namespace Anki {
     
 #pragma mark ---- DriveToPoseAction ----
     
-    DriveToPoseAction::DriveToPoseAction(const bool useManualSpeed) //, const Pose3d& pose)
+    DriveToPoseAction::DriveToPoseAction(const bool forceHeadDown,
+                                         const bool useManualSpeed) //, const Pose3d& pose)
     : _isGoalSet(false)
+    , _driveWithHeadDown(forceHeadDown)
     , _goalDistanceThreshold(DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM)
     , _goalAngleThreshold(DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD)
     , _useManualSpeed(useManualSpeed)
@@ -90,14 +92,18 @@ namespace Anki {
       _startedTraversingPath = false;
     }
     
-    DriveToPoseAction::DriveToPoseAction(const Pose3d& pose, const bool useManualSpeed)
-    : DriveToPoseAction(useManualSpeed)
+    DriveToPoseAction::DriveToPoseAction(const Pose3d& pose,
+                                         const bool forceHeadDown,
+                                         const bool useManualSpeed)
+    : DriveToPoseAction(forceHeadDown, useManualSpeed)
     {
       SetGoal(pose);
     }
     
-    DriveToPoseAction::DriveToPoseAction(const std::vector<Pose3d>& poses, const bool useManualSpeed)
-    : DriveToPoseAction(useManualSpeed)
+    DriveToPoseAction::DriveToPoseAction(const std::vector<Pose3d>& poses,
+                                         const bool forceHeadDown,
+                                         const bool useManualSpeed)
+    : DriveToPoseAction(forceHeadDown, useManualSpeed)
     {
       SetGoals(poses);
     }
@@ -203,11 +209,15 @@ namespace Anki {
         }
         
         if(result == ActionResult::SUCCESS) {
-          // So far so good. Now put the head at the right angle for following paths
-          // TODO: Make it possible to set the speed/accel somewhere?
-          if(robot.MoveHeadToAngle(HEAD_ANGLE_WHILE_FOLLOWING_PATH, 2.f, 5.f) != RESULT_OK) {
-            PRINT_NAMED_ERROR("DriveToPoseAction.Init", "Failed to move head to path-following angle.\n");
-            result = ActionResult::FAILURE_ABORT;
+          // So far so good.
+          
+          if(_driveWithHeadDown) {
+            // Now put the head at the right angle for following paths
+            // TODO: Make it possible to set the speed/accel somewhere?
+            if(robot.MoveHeadToAngle(HEAD_ANGLE_WHILE_FOLLOWING_PATH, 2.f, 5.f) != RESULT_OK) {
+              PRINT_NAMED_ERROR("DriveToPoseAction.Init", "Failed to move head to path-following angle.\n");
+              result = ActionResult::FAILURE_ABORT;
+            }
           }
           
           // Create a callback to respond to a robot world origin change that resets
@@ -521,7 +531,7 @@ namespace Anki {
       
       if(result == ActionResult::SUCCESS) {
         if(!alreadyInPosition) {
-          _compoundAction.AddAction(new DriveToPoseAction(possiblePoses, _useManualSpeed));
+          _compoundAction.AddAction(new DriveToPoseAction(possiblePoses, true, _useManualSpeed));
         }
       }
       
@@ -686,7 +696,7 @@ namespace Anki {
 #pragma mark ---- TurnInPlaceAction ----
     
     TurnInPlaceAction::TurnInPlaceAction(const Radians& angle)
-    : DriveToPoseAction(false)
+    : DriveToPoseAction(false, false)
     , _turnAngle(angle)
     , _startedTraversingPath(false)
     {
@@ -1512,9 +1522,11 @@ namespace Anki {
             const u8 numObjects = 1 + (carryObjectOnTop >=0 ? 1 : 0);
             
             // TODO: Be able to fill in add'l objects carried in signal
-            CozmoEngineSignals::RobotCompletedActionSignal().emit(robot.GetID(), GetType(), result,
-                                                                  {{carryObject, carryObjectOnTop, -1, -1, -1}},
-                                                                  numObjects);
+            ActionCompletedStruct completionInfo;
+            completionInfo.numObjects = numObjects;
+            completionInfo.objectIDs = {{carryObject, carryObjectOnTop, -1, -1, -1}};
+            CozmoEngineSignals::RobotCompletedActionSignal().emit(robot.GetID(), GetType(), result, completionInfo);
+            
             return;
           }
           break;
@@ -1529,19 +1541,22 @@ namespace Anki {
                               "Docking object %d not found in world after placing.\n",
                               _dockObjectID.GetValue());
           } else {
-            std::array<s32,5> objectStack;
-            auto objectStackIter = objectStack.begin();
-            objectStack.fill(-1);
-            uint8_t numObjects = 0;
-            while(object != nullptr && numObjects < objectStack.size()) {
+            
+            ActionCompletedStruct completionInfo;
+            
+            auto objectStackIter = completionInfo.objectIDs.begin();
+            completionInfo.objectIDs.fill(-1);
+            completionInfo.numObjects = 0;
+            while(object != nullptr &&
+                  completionInfo.numObjects < completionInfo.objectIDs.size())
+            {
               *objectStackIter = object->GetID().GetValue();
               ++objectStackIter;
-              ++numObjects;
+              ++completionInfo.numObjects;
               object = robot.GetBlockWorld().FindObjectOnTopOf(*object, 15.f);
             }
-            CozmoEngineSignals::RobotCompletedActionSignal().emit(robot.GetID(), GetType(), result,
-                                                                  objectStack,
-                                                                  numObjects);
+            
+            CozmoEngineSignals::RobotCompletedActionSignal().emit(robot.GetID(), GetType(), result, completionInfo);
             return;
           }
           break;
@@ -1819,13 +1834,14 @@ namespace Anki {
             PRINT_NAMED_ERROR("RollObjectAction.EmitCompletionSignal",
                               "Expecting robot to think it's not carrying object for roll action.\n");
           } else {
-            const s32 rolledObject = _dockObjectID;
-            const u8 numObjects = 1;
+            ActionCompletedStruct completionInfo;
+            completionInfo.numObjects = 1;
+            completionInfo.objectIDs.fill(-1);
+            completionInfo.objectIDs[0] = _dockObjectID;
             
             // TODO: Be able to fill in add'l objects carried in signal
-            CozmoEngineSignals::RobotCompletedActionSignal().emit(robot.GetID(), GetType(), result,
-                                                                  {{rolledObject, -1, -1, -1, -1}},
-                                                                  numObjects);
+            CozmoEngineSignals::RobotCompletedActionSignal().emit(robot.GetID(), GetType(), result, completionInfo);
+            
             return;
           }
           break;
@@ -2260,16 +2276,18 @@ namespace Anki {
     
 #pragma mark ---- PlayAnimationAction ----
     
-    PlayAnimationAction::PlayAnimationAction(const std::string& animName)
+    PlayAnimationAction::PlayAnimationAction(const std::string& animName,
+                                             const u32 numLoops)
     : _animName(animName)
     , _name("PlayAnimation" + animName + "Action")
+    , _numLoops(numLoops)
     {
       
     }
     
     ActionResult PlayAnimationAction::Init(Robot& robot)
     {
-      if(robot.PlayAnimation(_animName) == RESULT_OK) {
+      if(robot.PlayAnimation(_animName, _numLoops) == RESULT_OK) {
         return ActionResult::SUCCESS;
       } else {
         return ActionResult::FAILURE_ABORT;
@@ -2291,6 +2309,15 @@ namespace Anki {
       if(robot.IsAnimating()) {
         robot.AbortAnimation();
       }
+    }
+    
+    void PlayAnimationAction::EmitCompletionSignal(Robot& robot, ActionResult result) const
+    {
+      ActionCompletedStruct completionInfo;
+      completionInfo.animName = _animName;
+      
+      CozmoEngineSignals::RobotCompletedActionSignal().emit(robot.GetID(), GetType(), result,
+                                                            completionInfo);
     }
     
 #pragma mark ---- PlaySoundAction ----

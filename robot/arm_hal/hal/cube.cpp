@@ -93,9 +93,10 @@ namespace Anki
        
         uint8_t *light  = g_LedStatus[blockID].ledStatus;
         uint32_t sum = 0;
+        int order[] = {0,3,2,1};
         
-        for (int c = 0; c < NUM_BLOCK_LEDS * 4; c++) {
-          uint32_t color = *(onColor++);
+        for (int c = 0; c < NUM_BLOCK_LEDS; c++) {
+          uint32_t color = onColor[order[c]];
           
           for (int ch = 24; ch > 0; ch -= 8) {
             uint8_t status = (color >> ch) & 0xFF;
