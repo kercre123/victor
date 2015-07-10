@@ -8,7 +8,7 @@
 // Global variables
 extern volatile bool radioBusy;
 extern volatile bool gDataReceived;
-extern volatile u8 radioPayload[13];
+extern volatile u8 xdata radioPayload[13];
 extern volatile enum eRadioTimerState radioTimerState;
 extern volatile u8 missedPacketCount;
 extern volatile u8 cumMissedPacketCount;
@@ -23,20 +23,32 @@ void main(void)
   u8 state = 0;
   u8 led;
   u8 numRepeat;
+  #ifndef DO_TRANSMITTER_BEHAVIOR
   u8 packetCount = 0;
   volatile bool sync;
-  
   volatile s8 accData[3];
   volatile u8 tapCount = 0;
+  #endif
   
   while(hal_clk_get_16m_source() != HAL_CLK_XOSC16M)
   {
     // Wait until 16 MHz crystal oscillator is running
   }
-
+  
+  // Set up low frequency clock for watchdog
+  hal_clklf_set_source(HAL_CLK_RCOSC16M); 
+  while(hal_clklf_ready() == false)
+  {
+    // Wait until 32.768 kHz RC oscillator is running
+  }
+  
   // Run tests
   RunTests();
-    
+
+  // Initialize watchdog watchdog
+  WDSV = 0; // 2 seconds to get through startup
+  WDSV = 1;  
+  
 #ifdef DO_TRANSMITTER_BEHAVIOR
   // Initalize Timer  
   InitTimer0();
@@ -46,6 +58,9 @@ void main(void)
     {
       for(numRepeat=0; numRepeat<1; numRepeat++)
       {
+        // Pet watchdog
+        WDSV = 128; // 1 second
+        WDSV = 0;  
         LightOn(0);       // Transmitting indication light  
         while(radioTimerState == radioSleep);
         {
@@ -68,13 +83,17 @@ void main(void)
         {
           TransmitData();
         }
-        #elif
-        //TransmitData();
+        else
+        {
+          radioTimerState = radioSleep;
+        }
+        #else
+        TransmitData();
         #endif
       }
     }
   }
-#endif 
+#else
   
   // Initialize accelerometer
   InitAcc();
@@ -89,38 +108,38 @@ void main(void)
   // Initialize LED timer
   InitTimer2();
   StopTimer2();
-  
+ 
   // Initialize radio timer
   InitTimer0();
 
   // Synchronize with transmitter
   sync = false;
-  SetLedValue(3, 0xFF); // No sync light
   gDataReceived = false;
-  
-  // Initalize Radio Sync Timer // XXX  
+ 
+  // Initalize Radio Sync Timer 
   InitTimer0();
-  TR0 = 0; // Stop timer 
-  
+
   while(sync == false)
   {
     // Process lights
-    StartTimer2();
+    LightOn(3); // No sync light
     delay_ms(1);
-    StopTimer2();
+    LightsOff();
     
-    ReceiveData(5U); // 5 ms wait (max)
-
+    ReceiveData(9, true); // 5 ms wait (max)
+    
     if(gDataReceived)
     {
       sync = true;
+      StartTimer2(); // Start LED timer
     }
     
+    // Pet watchdog
+    WDSV = 128; // 1 second
+    WDSV = 0;
+    
   }
-  SetLedValue(4, 0xFF); 
-  StartTimer2();
-  delay_ms(1);
-  LightsOff();
+
   
   #ifdef USE_UART
   StopTimer2();
@@ -129,7 +148,11 @@ void main(void)
   
   // Begin main loop. Time = 0
   while(1) 
-  {    
+  { 
+    // Pet watchdog
+    WDSV = 128; // 1 second
+    WDSV = 0;
+    
     // Spin during dead time until ready to receive
     // Turn on lights
     #ifndef USE_UART
@@ -148,7 +171,7 @@ void main(void)
     #endif
     
     // Receive data
-    ReceiveData(RADIO_TIMEOUT_MS);
+    ReceiveData(RADIO_TIMEOUT_MS, false);
     #ifdef USE_UART
     for(i=0; i<13; i++)
     {
@@ -183,6 +206,7 @@ void main(void)
     TransmitData();
     // Reset Payload
     memset(radioPayload, 0, sizeof(radioPayload));
-  }  
+  }
+#endif // transmitter behavior
 }
 
