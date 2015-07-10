@@ -44,6 +44,7 @@ namespace AnimationController {
     bool _haveReceivedTerminationFrame;
     bool _isPlaying;
     
+    AnimTrackFlag _tracksToPlay;
     
 #   if DEBUG_ANIMATION_CONTROLLER
     TimeStamp_t _currentTime_ms;
@@ -267,6 +268,8 @@ namespace AnimationController {
 #   if DEBUG_ANIMATION_CONTROLLER
     PRINT("Initializing AnimationController\n");
 #   endif
+    
+    _tracksToPlay = ENABLE_ALL_TRACKS;
     
     Clear();
     
@@ -524,7 +527,11 @@ namespace AnimationController {
           {
             Messages::AnimKeyFrame_AudioSample msg;
             GetFromBuffer((u8*)&msg, sizeof(msg));
-            HAL::AudioPlayFrame(msg.sample);
+            if(_tracksToPlay & AUDIO_TRACK) {
+              HAL::AudioPlayFrame(msg.sample);
+            } else {
+              HAL::AudioPlayFrame(NULL);
+            }
             break;
           }
           default:
@@ -581,14 +588,16 @@ namespace AnimationController {
               Messages::AnimKeyFrame_HeadAngle msg;
               GetFromBuffer((u8*)&msg, sizeof(msg));
               
-#             if DEBUG_ANIMATION_CONTROLLER
-              PRINT("AnimationController[t=%dms(%d)] requesting head angle of %ddeg over %.2fsec\n",
-                    _currentTime_ms, HAL::GetTimeStamp(),
-                    msg.angle_deg, static_cast<f32>(msg.time_ms)*.001f);
-#             endif
-              
-              HeadController::SetDesiredAngle(DEG_TO_RAD(static_cast<f32>(msg.angle_deg)), 0.1f, 0.1f,
-                                              static_cast<f32>(msg.time_ms)*.001f);
+              if(_tracksToPlay & HEAD_TRACK) {
+#               if DEBUG_ANIMATION_CONTROLLER
+                PRINT("AnimationController[t=%dms(%d)] requesting head angle of %ddeg over %.2fsec\n",
+                      _currentTime_ms, HAL::GetTimeStamp(),
+                      msg.angle_deg, static_cast<f32>(msg.time_ms)*.001f);
+#               endif
+                
+                HeadController::SetDesiredAngle(DEG_TO_RAD(static_cast<f32>(msg.angle_deg)), 0.1f, 0.1f,
+                                                static_cast<f32>(msg.time_ms)*.001f);
+              }
               break;
             }
               
@@ -597,14 +606,16 @@ namespace AnimationController {
               Messages::AnimKeyFrame_LiftHeight msg;
               GetFromBuffer((u8*)&msg, sizeof(msg));
               
-#             if DEBUG_ANIMATION_CONTROLLER
-              PRINT("AnimationController[t=%dms(%d)] requesting lift height of %dmm over %.2fsec\n",
-                    _currentTime_ms, HAL::GetTimeStamp(),
-                    msg.height_mm, static_cast<f32>(msg.time_ms)*.001f);
-#             endif
-              
-              LiftController::SetDesiredHeight(static_cast<f32>(msg.height_mm), 0.1f, 0.1f,
-                                               static_cast<f32>(msg.time_ms)*.001f);
+              if(_tracksToPlay & LIFT_TRACK) {
+#               if DEBUG_ANIMATION_CONTROLLER
+                PRINT("AnimationController[t=%dms(%d)] requesting lift height of %dmm over %.2fsec\n",
+                      _currentTime_ms, HAL::GetTimeStamp(),
+                      msg.height_mm, static_cast<f32>(msg.time_ms)*.001f);
+#               endif
+                
+                LiftController::SetDesiredHeight(static_cast<f32>(msg.height_mm), 0.1f, 0.1f,
+                                                 static_cast<f32>(msg.time_ms)*.001f);
+              }
               break;
             }
               
@@ -613,13 +624,15 @@ namespace AnimationController {
               Messages::AnimKeyFrame_BackpackLights msg;
               GetFromBuffer((u8*)&msg, sizeof(msg));
               
-#             if DEBUG_ANIMATION_CONTROLLER
-              PRINT("AnimationController[t=%dms(%d)] setting backpack LEDs.\n",
-                    _currentTime_ms, HAL::GetTimeStamp());
-#             endif
-              
-              for(s32 iLED=0; iLED<NUM_BACKPACK_LEDS; ++iLED) {
-                HAL::SetLED(static_cast<LEDId>(iLED), msg.colors[iLED]);
+              if(_tracksToPlay & BACKPACK_LIGHTS_TRACK) {
+#               if DEBUG_ANIMATION_CONTROLLER
+                PRINT("AnimationController[t=%dms(%d)] setting backpack LEDs.\n",
+                      _currentTime_ms, HAL::GetTimeStamp());
+#               endif
+                
+                for(s32 iLED=0; iLED<NUM_BACKPACK_LEDS; ++iLED) {
+                  HAL::SetLED(static_cast<LEDId>(iLED), msg.colors[iLED]);
+                }
               }
               break;
             }
@@ -629,12 +642,14 @@ namespace AnimationController {
               Messages::AnimKeyFrame_FaceImage msg;
               GetFromBuffer((u8*)&msg, sizeof(msg));
               
-#             if DEBUG_ANIMATION_CONTROLLER
-              PRINT("AnimationController[t=%dms(%d)] setting face frame.\n",
-                    _currentTime_ms, HAL::GetTimeStamp());
-#             endif
-              
-              HAL::FaceAnimate(msg.image);
+              if(_tracksToPlay & FACE_IMAGE_TRACK) {
+#               if DEBUG_ANIMATION_CONTROLLER
+                PRINT("AnimationController[t=%dms(%d)] setting face frame.\n",
+                      _currentTime_ms, HAL::GetTimeStamp());
+#               endif
+                
+                HAL::FaceAnimate(msg.image);
+              }
               break;
             }
               
@@ -643,12 +658,14 @@ namespace AnimationController {
               Messages::AnimKeyFrame_FacePosition msg;
               GetFromBuffer((u8*)&msg, sizeof(msg));
               
-#             if DEBUG_ANIMATION_CONTROLLER
-              PRINT("AnimationController[t=%dms(%d)] setting face position to (%d,%d).\n",
-                    _currentTime_ms, HAL::GetTimeStamp(), msg.xCen, msg.yCen);
-#             endif
-              
-              HAL::FaceMove(msg.xCen, msg.yCen);
+              if(_tracksToPlay & FACE_POS_TRACK) {
+#               if DEBUG_ANIMATION_CONTROLLER
+                PRINT("AnimationController[t=%dms(%d)] setting face position to (%d,%d).\n",
+                      _currentTime_ms, HAL::GetTimeStamp(), msg.xCen, msg.yCen);
+#               endif
+                
+                HAL::FaceMove(msg.xCen, msg.yCen);
+              }
               break;
             }
               
@@ -657,12 +674,14 @@ namespace AnimationController {
               Messages::AnimKeyFrame_BodyMotion msg;
               GetFromBuffer((u8*)&msg, sizeof(msg));
               
-#             if DEBUG_ANIMATION_CONTROLLER
-              PRINT("AnimationController[t=%dms(%d)] setting wheel speeds L=%dmmps, R=%dmmps.\n",
-                    _currentTime_ms, HAL::GetTimeStamp(), msg.wheelSpeedL_mmps, msg.wheelSpeedR_mmps);
-#             endif
-              
-              WheelController::SetDesiredWheelSpeeds(msg.wheelSpeedL_mmps, msg.wheelSpeedR_mmps);
+              if(_tracksToPlay & BODY_TRACK) {
+#               if DEBUG_ANIMATION_CONTROLLER
+                PRINT("AnimationController[t=%dms(%d)] setting wheel speeds L=%dmmps, R=%dmmps.\n",
+                      _currentTime_ms, HAL::GetTimeStamp(), msg.wheelSpeedL_mmps, msg.wheelSpeedR_mmps);
+#               endif
+                
+                WheelController::SetDesiredWheelSpeeds(msg.wheelSpeedL_mmps, msg.wheelSpeedR_mmps);
+              }
               break;
             }
               
@@ -693,6 +712,10 @@ namespace AnimationController {
     return RESULT_OK;
   } // Update()
 
+  void SetTracksToPlay(AnimTrackFlag tracksToPlay)
+  {
+    _tracksToPlay = tracksToPlay;
+  }
   
 } // namespace AnimationController
 } // namespace Cozmo

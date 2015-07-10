@@ -67,6 +67,9 @@ namespace Anki {
       
       s32 GetApproximateNumBytesFree();
       
+      // Enable/disable tracks from playing. If the bit for corresponding track is
+      // zero, any keyframes buffered for that track will be ignored.
+      void SetTracksToPlay(AnimTrackFlag tracksToPlay);
       
     } // namespace AnimationController
   } // namespcae Cozmo
