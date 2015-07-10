@@ -246,9 +246,29 @@
           #'CODE_SIGN_IDENTITY': 'iPhone Developer',
           #'IPHONEOS_DEPLOYMENT_TARGET': '5.1',
         },
+        'targets': [
+          {
+            # fake target to see all of the sources...
+            'target_name': 'all_lib_targets',
+            'type': 'none',
+            'dependencies': [
+              'cozmoGame',
+              '<(cg-ce_gyp_path):cozmoEngine',
+              '<(cg-cti_gyp_path):ctiCommon',
+              '<(cg-cti_gyp_path):ctiCommonRobot',
+              '<(cg-cti_gyp_path):ctiMessaging',
+              '<(cg-cti_gyp_path):ctiMessagingRobot',
+              '<(cg-cti_gyp_path):ctiPlanning',
+              '<(cg-cti_gyp_path):ctiPlanningRobot',
+              '<(cg-cti_gyp_path):ctiVision',
+              '<(cg-cti_gyp_path):ctiVisionRobot',
+              '<(cg-util_gyp_path):util',
+              '<(cg-util_gyp_path):jsoncpp',
+            ]
+          },
+        ],
       },
     ],
-
 
     # UNITTEST CRAP HERE
     # UNITTEST CRAP HERE
