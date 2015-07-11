@@ -340,8 +340,8 @@ class EnginePlatformConfiguration(object):
         self.platform_build_dir = os.path.join(options.build_dir, self.platform)
         self.platform_output_dir = os.path.join(options.output_dir, self.platform)
         
-        self.project_path = os.path.join(self.platform_output_dir, 'cozmoEngine.xcodeproj')
-        self.workspace_path = os.path.join(self.project_path, 'project.xcworkspace')
+        self.project_name = 'cozmoEngine.xcodeproj'
+        self.project_path = os.path.join(self.platform_output_dir, self.project_name)
         self.derived_data_dir = os.path.join(self.platform_build_dir, 'derived-data')
     
     def process(self):
@@ -360,14 +360,14 @@ class EnginePlatformConfiguration(object):
         ankibuild.util.File.mkdir_p(self.platform_output_dir)
         
         generate_gyp(self.gyp_dir, self.platform, self.options)
-        ankibuild.xcode.XcodeWorkspace.generate_workspace_settings(self.workspace_path, self.derived_data_dir)
+        ankibuild.xcode.XcodeWorkspace.generate_self(self.project_path, self.derived_data_dir)
 
     def build(self):
         if self.options.verbose:
             print_status('Building workspace for platform {0}...'.format(self.platform))
         
-        if not os.path.exists(self.workspace_path):
-            sys.exit('Workspace {0} does not exist. (Note: clean does not generate projects.)'.format(self.workspace_path))
+        if not os.path.exists(self.project_path):
+            sys.exit('Project {0} does not exist. (Note: clean does not generate projects.)'.format(self.workspace_path))
         else:
             if self.options.command == 'clean':
                 buildaction = 'clean'
@@ -407,18 +407,21 @@ def configure(options, root_path, platform_configuration_type, shared_generated_
     
     if options.command in ('generate', 'build', 'install', 'run'):
         install_dependencies(options)
+        # TODO: Generate CLAD
     
     for platform in options.platforms:
         print_header('PLATFORM {0}:'.format(platform.upper()))
         config = platform_configuration_type(platform, options)
         config.process()
     
-    if shared_generated_folders:
-        if options.command in ('delete', 'wipeall!'):
+    if options.command in ('delete', 'wipeall!'):
+        if shared_generated_folders:
             if options.verbose:
                 print_status('Deleting generated folders (if empty)...')
             for folder in shared_generated_folders:
                 ankibuild.util.File.rmdir(folder)
+        
+        # TODO: Delete generated CLAD
     
     if options.command == 'wipeall!':
         wipe_all(options, root_path)
