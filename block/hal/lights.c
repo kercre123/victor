@@ -32,7 +32,7 @@ const u8 ledPins[4] = {1<<2, 1<<3, 1<<4, 1<<5};
 const u8 ledAnode[13] = {0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 0};
 const u8 ledCathode[13] = {1, 2, 3, 0, 2, 3, 0, 1, 3, 0, 1, 2, 0};
 
-volatile u8 ledValues[13];
+volatile u8 xdata ledValues[13];
 
 volatile u8 gCurrentLed = 0;
 
