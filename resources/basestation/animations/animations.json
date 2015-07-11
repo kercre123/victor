@@ -125,6 +125,12 @@
       "Name" : "RobotAudioKeyFrame", 
       "triggerTime_ms"  : 500,
       "audioName"       : "creep/Robot-PowerOn1Rev2.mp3"
+    }, 
+    {
+      "Name" : "BlinkKeyFrame", 
+      "triggerTime_ms" : 1000, 
+      "blinkNow"       : true,
+      "duration_ms"    : 0
     }
   ]
 } 

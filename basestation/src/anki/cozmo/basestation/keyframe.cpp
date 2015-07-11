@@ -381,6 +381,59 @@ return RESULT_FAIL; \
     }
     
 #pragma mark -
+#pragma mark BlinkKeyFrame
+    
+    bool BlinkKeyFrame::IsDone()
+    {
+      if(_streamMsg.blinkNow) {
+        return true;
+      } else if(_curTime_ms >= _duration_ms) {
+        return true;
+      } else {
+        return false;
+      }
+    }
+    
+    RobotMessage* BlinkKeyFrame::GetStreamMessage()
+    {
+      RobotMessage* returnMessage = nullptr;
+      if(_streamMsg.blinkNow) {
+        _streamMsg.enable = true;
+        returnMessage = &_streamMsg;
+      } else {
+        // If not a blink now message, then must be a "disable blink for
+        // some duration" keyframe.
+        if(_curTime_ms == 0) {
+          // Start of the keyframe period: disable blinking
+          _streamMsg.enable = false;
+          returnMessage = &_streamMsg;
+        } else if(_curTime_ms >= _duration_ms) {
+          // Done with disable period: re-enable.
+          _streamMsg.enable = true;
+          returnMessage = &_streamMsg;
+        } else {
+          // Don't do anything in the middle (and return nullptr)
+          // Note that we will not advance to next keyframe during this period
+          // because IsDone() will be false.
+        }
+        _curTime_ms += SAMPLE_LENGTH_MS;
+      }
+      
+      return returnMessage;
+    }
+    
+    Result BlinkKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot)
+    {
+      GET_MEMBER_FROM_JSON(jsonRoot, duration_ms);
+      GET_MEMBER_FROM_JSON_AND_STORE_IN(jsonRoot, enable,   streamMsg.enable);
+      GET_MEMBER_FROM_JSON_AND_STORE_IN(jsonRoot, blinkNow, streamMsg.blinkNow);
+      
+      _curTime_ms = 0;
+      
+      return RESULT_OK;
+    }
+    
+#pragma mark -
 #pragma mark BackpackLightsKeyFrame
     
     static u32 GetColorAsU32(Json::Value& json)

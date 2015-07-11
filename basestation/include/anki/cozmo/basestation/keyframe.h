@@ -37,6 +37,8 @@ namespace Anki {
     class IKeyFrame
     {
     public:
+      static const u32 SAMPLE_LENGTH_MS = 33;
+      
       IKeyFrame();
       //IKeyFrame(const Json::Value& root);
       ~IKeyFrame();
@@ -164,8 +166,6 @@ namespace Anki {
     class RobotAudioKeyFrame : public IKeyFrame
     {
     public:
-      static const u32 SAMPLE_LENGTH_MS = 33;
-      
       RobotAudioKeyFrame() { }
       
       virtual RobotMessage* GetStreamMessage() override;
@@ -274,6 +274,32 @@ namespace Anki {
       MessageAnimKeyFrame_FacePosition _streamMsg;
       
     }; // class FacePositionKeyFrame
+    
+    class BlinkKeyFrame : public IKeyFrame
+    {
+    public:
+      BlinkKeyFrame() { }
+      
+      virtual RobotMessage* GetStreamMessage() override;
+      
+      static const std::string& GetClassName() {
+        static const std::string ClassName("BlinkKeyFrame");
+        return ClassName;
+      }
+      
+      virtual bool IsDone() override;
+      
+    protected:
+      virtual Result SetMembersFromJson(const Json::Value &jsonRoot) override;
+      
+    private:
+      
+      s32 _duration_ms;
+      s32 _curTime_ms;
+      
+      MessageAnimKeyFrame_Blink _streamMsg;
+
+    }; // class BlinkKeyFrame
     
     
     // A BackpackLightsKeyFrame sets the colors of the robot's five backpack lights

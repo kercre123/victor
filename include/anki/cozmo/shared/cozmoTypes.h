@@ -140,6 +140,7 @@ namespace Anki {
       FACE_POS_TRACK   = 0x10,
       BACKPACK_LIGHTS_TRACK = 0x20,
       AUDIO_TRACK = 0x40,
+      BLINK_TRACK = 0x80,
       ENABLE_ALL_TRACKS = 0xFF
     } AnimTrackFlag;
 

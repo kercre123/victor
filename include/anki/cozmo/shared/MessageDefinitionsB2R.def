@@ -390,6 +390,12 @@ ADD_MESSAGE_MEMBER(s8, xCen)
 ADD_MESSAGE_MEMBER(s8, yCen)
 END_MESSAGE_DEFINITION(AnimKeyFrame_FacePosition)
 
+// AnimKeyFrame_Blink
+START_MESSAGE_DEFINITION(AnimKeyFrame_Blink, 1)
+ADD_MESSAGE_MEMBER(u8, enable)
+ADD_MESSAGE_MEMBER(u8, blinkNow)
+END_MESSAGE_DEFINITION(AnimKeyFrame_Blink)
+
 // AnimKeyFrame_FaceImage
 // TODO: Need variable-length arrays!
 START_MESSAGE_DEFINITION(AnimKeyFrame_FaceImage, 1)

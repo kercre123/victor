@@ -160,11 +160,9 @@ namespace Anki {
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
                                            "Robot::Init()", "PathFollower System init failed.\n");
 
-        /* Deprecated: needs to be updated for OLED screen
         lastResult = EyeController::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
                                            "Robot::Init()", "EyeController init failed.\n");
-         */
 
         lastResult = BackpackLightController::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
@@ -305,7 +303,7 @@ namespace Anki {
           PRINT("Failed updating AnimationController. Clearing.\n");
           AnimationController::Clear();
         }
-        //EyeController::Update(); // Deprecated! Needs updating for OLED screen
+        EyeController::Update(); 
         HeadController::Update();
         LiftController::Update();
 

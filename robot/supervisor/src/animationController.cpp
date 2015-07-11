@@ -5,9 +5,10 @@
 #include "anki/common/shared/radians.h"
 #include "anki/common/shared/velocityProfileGenerator.h"
 
-#include "localization.h"
+#include "eyeController.h"
 #include "headController.h"
 #include "liftController.h"
+#include "localization.h"
 #include "wheelController.h"
 #include "steeringController.h"
 #include "speedController.h"
@@ -467,6 +468,16 @@ namespace AnimationController {
     return RESULT_OK;
   }
   
+  Result BufferKeyFrame(const Messages::AnimKeyFrame_Blink& msg)
+  {
+    DEFINE_BUFFER_KEY_FRAME(AnimKeyFrame_Blink)
+#   if DEBUG_ANIMATION_CONTROLLER
+    PRINT("Buffering Blink KeyFrame\n");
+#   endif
+    return RESULT_OK;
+  }
+  
+  
   bool IsBufferFull()
   {
     return GetNumBytesAvailable() > 0;
@@ -665,6 +676,30 @@ namespace AnimationController {
 #               endif
                 
                 HAL::FaceMove(msg.xCen, msg.yCen);
+              }
+              break;
+            }
+              
+            case Messages::AnimKeyFrame_Blink_ID:
+            {
+              Messages::AnimKeyFrame_Blink msg;
+              GetFromBuffer((u8*)&msg, sizeof(msg));
+              
+              if(_tracksToPlay & BLINK_TRACK) {
+#               if DEBUG_ANIMATION_CONTROLLER
+                PRINT("AnimationController[t=%dms(%d)] Blinking.\n",
+                      _currentTime_ms, HAL::GetTimeStamp());
+#               endif
+                
+                if(msg.blinkNow) {
+                  HAL::FaceBlink();
+                } else {
+                  if(msg.enable) {
+                    EyeController::Enable();
+                  } else {
+                    EyeController::Disable();
+                  }
+                }
               }
               break;
             }

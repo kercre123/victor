@@ -152,6 +152,8 @@ namespace Cozmo {
         addResult = _facePosTrack.AddKeyFrame(jsonFrame);
       } else if(frameName == DeviceAudioKeyFrame::GetClassName()) {
         addResult = _deviceAudioTrack.AddKeyFrame(jsonFrame);
+      } else if(frameName == BlinkKeyFrame::GetClassName()) {
+        addResult = _blinkTrack.AddKeyFrame(jsonFrame);
       } else if(frameName == RobotAudioKeyFrame::GetClassName()) {
         addResult = _robotAudioTrack.AddKeyFrame(jsonFrame);
       } else if(frameName == BackpackLightsKeyFrame::GetClassName()) {
@@ -195,7 +197,8 @@ _facePosTrack.__METHOD__() __COMBINE_WITH__ \
 _deviceAudioTrack.__METHOD__() __COMBINE_WITH__ \
 _robotAudioTrack.__METHOD__() __COMBINE_WITH__ \
 _backpackLightsTrack.__METHOD__() __COMBINE_WITH__ \
-_bodyPosTrack.__METHOD__()
+_bodyPosTrack.__METHOD__() __COMBINE_WITH__ \
+_blinkTrack.__METHOD__()
   
   Result Animation::Init()
   {
@@ -360,6 +363,17 @@ _bodyPosTrack.__METHOD__()
                          _streamingTime_ms - _startTime_ms);
 #       endif
         sendResult = robot.SendMessage(*msg, true, SEND_LARGE_KEYFRAMES_HOT);
+        numBytesToSend -= msg->GetSize() + sizeof(RobotMessage::ID);
+        if(sendResult != RESULT_OK) { return sendResult; }
+      }
+      
+      msg = _blinkTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms);
+      if(msg != nullptr) {
+#       if DEBUG_ANIMATIONS
+        PRINT_NAMED_INFO("Animation.Update", "Streaming BlinkKeyFrame at t=%dms.\n",
+                         _streamingTime_ms - _startTime_ms);
+#       endif
+        sendResult = robot.SendMessage(*msg, true);
         numBytesToSend -= msg->GetSize() + sizeof(RobotMessage::ID);
         if(sendResult != RESULT_OK) { return sendResult; }
       }

@@ -572,6 +572,7 @@ void Process##__MSG_TYPE__##Message(const __MSG_TYPE__& msg) { ProcessAnimKeyFra
       DEFINE_PROCESS_KEYFRAME_METHOD(AnimKeyFrame_BackpackLights)
       DEFINE_PROCESS_KEYFRAME_METHOD(AnimKeyFrame_BodyMotion)
       DEFINE_PROCESS_KEYFRAME_METHOD(AnimKeyFrame_EndOfAnimation)
+      DEFINE_PROCESS_KEYFRAME_METHOD(AnimKeyFrame_Blink)
 
       void ProcessPanAndTiltHeadMessage(const PanAndTiltHead& msg)
       {

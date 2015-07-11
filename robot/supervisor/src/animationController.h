@@ -38,6 +38,7 @@ namespace Anki {
       Result BufferKeyFrame(const Messages::AnimKeyFrame_AudioSilence&   msg);
       Result BufferKeyFrame(const Messages::AnimKeyFrame_FaceImage&      msg);
       Result BufferKeyFrame(const Messages::AnimKeyFrame_FacePosition&   msg);
+      Result BufferKeyFrame(const Messages::AnimKeyFrame_Blink&          msg);
       Result BufferKeyFrame(const Messages::AnimKeyFrame_BackpackLights& msg);
       Result BufferKeyFrame(const Messages::AnimKeyFrame_BodyMotion&     msg);
       Result BufferKeyFrame(const Messages::AnimKeyFrame_EndOfAnimation& msg);
