@@ -563,8 +563,10 @@ namespace Anki {
         if(isNodding_ && inPosition_)
         {
           if (GetLastCommandedHeightMM() == nodHighHeight_) {
+            angleErrorSum_ = 0;
             SetDesiredHeight_internal(nodLowHeight_, nodEaseOutFraction_, nodEaseInFraction_, nodHalfPeriod_sec_);
           } else if (GetLastCommandedHeightMM() == nodLowHeight_) {
+            angleErrorSum_ = 0;
             SetDesiredHeight_internal(nodHighHeight_, nodEaseOutFraction_, nodEaseInFraction_, nodHalfPeriod_sec_);
             ++numNodsComplete_;
             if(numNodsDesired_ > 0 && numNodsComplete_ >= numNodsDesired_) {
@@ -609,6 +611,7 @@ namespace Anki {
         nodEaseOutFraction_ = easeOutFraction;
         nodHalfPeriod_sec_ = static_cast<f32>(period_ms) * 0.5f * 0.001f;
         
+        SetMaxSpeedAndAccel(10, 20);
         SetDesiredHeight_internal(nodLowHeight_, nodEaseOutFraction_, nodEaseInFraction_, nodHalfPeriod_sec_);
         
       } // StartNodding()
@@ -644,9 +647,13 @@ namespace Anki {
             ++numTaps;
           }
           
-          StartNodding(LIFT_HEIGHT_LOWDOCK, LIFT_HEIGHT_LOWDOCK + 20,
-                       300, numTaps,
-                       0, 0);
+#ifdef SIMULATOR
+          StartNodding(LIFT_HEIGHT_LOWDOCK, LIFT_HEIGHT_LOWDOCK + 30,
+                       300, numTaps, 0, 0.5);
+#else
+          StartNodding(LIFT_HEIGHT_LOWDOCK+10, LIFT_HEIGHT_LOWDOCK + 30,
+                       300, numTaps, 0, 0.5);
+#endif
         }
       }
       
