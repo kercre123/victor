@@ -14,7 +14,7 @@
 
 #include "anki/cozmo/messageBuffers/game/UiMessagesG2UTag.def"
 
-#include "anki/cozmo/messageBuffers/shared/actionTypes.def"
+#include "anki/cozmo/messageBuffers/shared/actionTypes.h"
 
 namespace Anki {
 
