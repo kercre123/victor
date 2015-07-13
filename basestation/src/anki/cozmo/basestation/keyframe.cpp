@@ -524,13 +524,13 @@ _streamMsg.colors[__LED_NAME__] = u32(color) >> 8; } while(0) // Note we shift t
     
     BodyMotionKeyFrame::BodyMotionKeyFrame()
     {
-      _stopMsg.speed_mmPerSec = 0;
+      _stopMsg.speed = 0;
     }
     
     Result BodyMotionKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot)
     {
       GET_MEMBER_FROM_JSON(jsonRoot, duration_ms);
-      GET_MEMBER_FROM_JSON_AND_STORE_IN(jsonRoot, speed_mmps, streamMsg.speed_mmPerSec);
+      GET_MEMBER_FROM_JSON_AND_STORE_IN(jsonRoot, speed, streamMsg.speed);
       
       if(!jsonRoot.isMember("radius_mm")) {
         PRINT_NAMED_ERROR("BodyMotionKeyFrame.SetMembersFromJson.MissingRadius",
@@ -538,10 +538,10 @@ _streamMsg.colors[__LED_NAME__] = u32(color) >> 8; } while(0) // Note we shift t
         return RESULT_FAIL;
       } else if(jsonRoot["radius_mm"].isString()) {
         const std::string& radiusStr = jsonRoot["radius_mm"].asString();
-        if(radiusStr == "MAX" || radiusStr == "TURN_IN_PLACE" || radiusStr == "POINT_TURN") {
-          _streamMsg.curvatureRadius_mm = s16_MAX;
-        } else if(radiusStr == "STRAIGHT") {
+        if(radiusStr == "TURN_IN_PLACE" || radiusStr == "POINT_TURN") {
           _streamMsg.curvatureRadius_mm = 0;
+        } else if(radiusStr == "STRAIGHT") {
+          _streamMsg.curvatureRadius_mm = s16_MAX;
         } else {
           PRINT_NAMED_ERROR("BodyMotionKeyFrame.BadRadiusString",
                             "Unrecognized string for 'radius_mm' field: %s.\n",
@@ -560,8 +560,8 @@ _streamMsg.colors[__LED_NAME__] = u32(color) >> 8; } while(0) // Note we shift t
     
     RobotMessage* BodyMotionKeyFrame::GetStreamMessage()
     {
-      PRINT_NAMED_INFO("BodyMotionKeyFrame.GetStreamMessage",
-                       "currentTime=%d, duration=%d\n", _currentTime_ms, _duration_ms);
+      //PRINT_NAMED_INFO("BodyMotionKeyFrame.GetStreamMessage",
+      //                 "currentTime=%d, duration=%d\n", _currentTime_ms, _duration_ms);
       
       if(_currentTime_ms == 0) {
         // Send the motion command at the beginning

@@ -716,29 +716,34 @@ namespace AnimationController {
 #               endif
                 
                 f32 leftSpeed, rightSpeed;
-                if(msg.speed_mmPerSec == 0) {
+                if(msg.speed == 0) {
                   // Stop
                   leftSpeed = 0.f;
                   rightSpeed = 0.f;
-                  WheelController::SetDesiredWheelSpeeds(0, 0);
                 } else if(msg.curvatureRadius_mm == s16_MAX || msg.curvatureRadius_mm == s16_MIN) {
                   // Drive straight
-                  leftSpeed  = static_cast<f32>(msg.speed_mmPerSec);
-                  rightSpeed = static_cast<f32>(msg.speed_mmPerSec);
+                  leftSpeed  = static_cast<f32>(msg.speed);
+                  rightSpeed = static_cast<f32>(msg.speed);
                 } else if(msg.curvatureRadius_mm == 0) {
                   // Turn in place: positive speed means turn left
-                  leftSpeed  = static_cast<f32>(-msg.speed_mmPerSec);
-                  rightSpeed = static_cast<f32>( msg.speed_mmPerSec);
+                  // Interpret speed as degrees/sec
+                  leftSpeed  = static_cast<f32>(-msg.speed);
+                  rightSpeed = static_cast<f32>( msg.speed);
+                  
+                  const f32 speed_mmps = WHEEL_DIST_HALF_MM*tan(DEG_TO_RAD(static_cast<f32>(msg.speed)));
+                  leftSpeed  = -speed_mmps;
+                  rightSpeed =  speed_mmps;
+                  
                 } else {
                   // Drive an arc
                   
                   //if speed is positive, the left wheel should turn slower, so
                   // it becomes the INNER wheel
-                  leftSpeed = static_cast<f32>(msg.speed_mmPerSec) * (1.0f - WHEEL_DIST_HALF_MM / static_cast<f32>(msg.curvatureRadius_mm));
+                  leftSpeed = static_cast<f32>(msg.speed) * (1.0f - WHEEL_DIST_HALF_MM / static_cast<f32>(msg.curvatureRadius_mm));
                   
                   //if speed is positive, the right wheel should turn faster, so
                   // it becomes the OUTER wheel
-                  rightSpeed = static_cast<f32>(msg.speed_mmPerSec) * (1.0f + WHEEL_DIST_HALF_MM / static_cast<f32>(msg.curvatureRadius_mm));
+                  rightSpeed = static_cast<f32>(msg.speed) * (1.0f + WHEEL_DIST_HALF_MM / static_cast<f32>(msg.curvatureRadius_mm));
                 }
                 
                 SteeringController::ExecuteDirectDrive(leftSpeed, rightSpeed);
