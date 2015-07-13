@@ -44,9 +44,9 @@ namespace HeadController {
 
       const f32 BASE_POWER  = 0.f;
 #else
-      f32 Kp_ = 6.f;  // proportional control constant
-      f32 Kd_ = 100.f;  // derivative control constant
-      f32 Ki_ = 0.05f; // integral control constant
+      f32 Kp_ = 5.f;  // proportional control constant
+      f32 Kd_ = 0.f;  // derivative control constant
+      f32 Ki_ = 0.1f; // integral control constant
       f32 MAX_ERROR_SUM = 2.f;
       
       const f32 BASE_POWER  = 0.2f;
