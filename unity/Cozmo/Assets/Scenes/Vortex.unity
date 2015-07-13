@@ -275,6 +275,86 @@ Material:
         first:
           name: _SpecColor
         second: {r: 1, g: 1, b: 1, a: 1}
+--- !u!21 &77192532
+Material:
+  serializedVersion: 5
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_Name: ActionSheen
+  m_Shader: {fileID: 4800000, guid: 7fec91e4d79544a6a84bd2ce891a7dba, type: 3}
+  m_ShaderKeywords: 
+  m_LightmapFlags: 5
+  m_CustomRenderQueue: -1
+  m_SavedProperties:
+    serializedVersion: 2
+    m_TexEnvs:
+      data:
+        first:
+          name: _MainTex
+        second:
+          m_Texture: {fileID: 2800000, guid: dc73b079e1b6b4801b60adfaa4187a5c, type: 3}
+          m_Scale: {x: 1, y: 1}
+          m_Offset: {x: 0, y: .400000006}
+      data:
+        first:
+          name: _Illum
+        second:
+          m_Texture: {fileID: 2800000, guid: dc59a930cb18e435bb1f7e8578b61ef7, type: 3}
+          m_Scale: {x: 1, y: 1}
+          m_Offset: {x: 0, y: 0}
+      data:
+        first:
+          name: _Mask
+        second:
+          m_Texture: {fileID: 2800000, guid: 06caa99e8301249d3b06581fb126730d, type: 3}
+          m_Scale: {x: 1, y: 1}
+          m_Offset: {x: 0, y: -.100000001}
+      data:
+        first:
+          name: _FlashMaskTex
+        second:
+          m_Texture: {fileID: 2800000, guid: 437c9b2fa20ee494ba988e750062be0c, type: 3}
+          m_Scale: {x: 1, y: .25}
+          m_Offset: {x: 0, y: 0}
+    m_Floats:
+      data:
+        first:
+          name: _Cutoff
+        second: .242857143
+      data:
+        first:
+          name: _Shininess
+        second: .699999988
+      data:
+        first:
+          name: PixelSnap
+        second: 0
+      data:
+        first:
+          name: _EmissionLM
+        second: 1
+      data:
+        first:
+          name: _FlashAmount
+        second: .607142866
+      data:
+        first:
+          name: MaskWithAlpha
+        second: 0
+    m_Colors:
+      data:
+        first:
+          name: _Color
+        second: {r: 1, g: 1, b: 1, a: 1}
+      data:
+        first:
+          name: _SpecColor
+        second: {r: 1, g: 1, b: 1, a: 1}
+      data:
+        first:
+          name: _FlashColor
+        second: {r: 1, g: 1, b: 1, a: .427450985}
 --- !u!1001 &84618385
 Prefab:
   m_ObjectHideFlags: 0
@@ -2162,6 +2242,86 @@ Canvas:
   m_OverridePixelPerfect: 0
   m_SortingLayerID: 0
   m_SortingOrder: 15
+--- !u!21 &414591970
+Material:
+  serializedVersion: 5
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_Name: ActionSheen
+  m_Shader: {fileID: 4800000, guid: 7fec91e4d79544a6a84bd2ce891a7dba, type: 3}
+  m_ShaderKeywords: 
+  m_LightmapFlags: 5
+  m_CustomRenderQueue: -1
+  m_SavedProperties:
+    serializedVersion: 2
+    m_TexEnvs:
+      data:
+        first:
+          name: _MainTex
+        second:
+          m_Texture: {fileID: 2800000, guid: dc73b079e1b6b4801b60adfaa4187a5c, type: 3}
+          m_Scale: {x: 1, y: 1}
+          m_Offset: {x: 0, y: .400000006}
+      data:
+        first:
+          name: _Illum
+        second:
+          m_Texture: {fileID: 2800000, guid: dc59a930cb18e435bb1f7e8578b61ef7, type: 3}
+          m_Scale: {x: 1, y: 1}
+          m_Offset: {x: 0, y: 0}
+      data:
+        first:
+          name: _Mask
+        second:
+          m_Texture: {fileID: 2800000, guid: 06caa99e8301249d3b06581fb126730d, type: 3}
+          m_Scale: {x: 1, y: 1}
+          m_Offset: {x: 0, y: -.100000001}
+      data:
+        first:
+          name: _FlashMaskTex
+        second:
+          m_Texture: {fileID: 2800000, guid: 437c9b2fa20ee494ba988e750062be0c, type: 3}
+          m_Scale: {x: 1, y: .25}
+          m_Offset: {x: 0, y: 0}
+    m_Floats:
+      data:
+        first:
+          name: _Cutoff
+        second: .242857143
+      data:
+        first:
+          name: _Shininess
+        second: .699999988
+      data:
+        first:
+          name: PixelSnap
+        second: 0
+      data:
+        first:
+          name: _EmissionLM
+        second: 1
+      data:
+        first:
+          name: _FlashAmount
+        second: .607142866
+      data:
+        first:
+          name: MaskWithAlpha
+        second: 0
+    m_Colors:
+      data:
+        first:
+          name: _Color
+        second: {r: 1, g: 1, b: 1, a: 1}
+      data:
+        first:
+          name: _SpecColor
+        second: {r: 1, g: 1, b: 1, a: 1}
+      data:
+        first:
+          name: _FlashColor
+        second: {r: 1, g: 1, b: 1, a: .427450985}
 --- !u!21 &492312659
 Material:
   serializedVersion: 5
@@ -2304,38 +2464,38 @@ Prefab:
       propertyPath: m_RootOrder
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 11471114, guid: ca1b5f0d2529d4cf2b14006fcd54e62b, type: 2}
-      propertyPath: m_Material
-      value: 
-      objectReference: {fileID: 1284457499}
-    - target: {fileID: 11459556, guid: ca1b5f0d2529d4cf2b14006fcd54e62b, type: 2}
-      propertyPath: m_Material
-      value: 
-      objectReference: {fileID: 1207361570}
-    - target: {fileID: 11458500, guid: ca1b5f0d2529d4cf2b14006fcd54e62b, type: 2}
-      propertyPath: m_Material
-      value: 
-      objectReference: {fileID: 1966015208}
-    - target: {fileID: 11446876, guid: ca1b5f0d2529d4cf2b14006fcd54e62b, type: 2}
-      propertyPath: m_Material
-      value: 
-      objectReference: {fileID: 1909794764}
-    - target: {fileID: 11437560, guid: ca1b5f0d2529d4cf2b14006fcd54e62b, type: 2}
-      propertyPath: supplentalEffects
-      value: 
-      objectReference: {fileID: 614658108}
     - target: {fileID: 11436292, guid: ca1b5f0d2529d4cf2b14006fcd54e62b, type: 2}
       propertyPath: supplentalEffects
       value: 
       objectReference: {fileID: 1576210312}
-    - target: {fileID: 11421874, guid: ca1b5f0d2529d4cf2b14006fcd54e62b, type: 2}
-      propertyPath: supplentalEffects
-      value: 
-      objectReference: {fileID: 1631961819}
     - target: {fileID: 11407834, guid: ca1b5f0d2529d4cf2b14006fcd54e62b, type: 2}
       propertyPath: lightingBall
       value: 
       objectReference: {fileID: 218952732}
+    - target: {fileID: 11471114, guid: ca1b5f0d2529d4cf2b14006fcd54e62b, type: 2}
+      propertyPath: m_Material
+      value: 
+      objectReference: {fileID: 414591970}
+    - target: {fileID: 11421874, guid: ca1b5f0d2529d4cf2b14006fcd54e62b, type: 2}
+      propertyPath: supplentalEffects
+      value: 
+      objectReference: {fileID: 1631961819}
+    - target: {fileID: 11459556, guid: ca1b5f0d2529d4cf2b14006fcd54e62b, type: 2}
+      propertyPath: m_Material
+      value: 
+      objectReference: {fileID: 2134521922}
+    - target: {fileID: 11446876, guid: ca1b5f0d2529d4cf2b14006fcd54e62b, type: 2}
+      propertyPath: m_Material
+      value: 
+      objectReference: {fileID: 1271188638}
+    - target: {fileID: 11458500, guid: ca1b5f0d2529d4cf2b14006fcd54e62b, type: 2}
+      propertyPath: m_Material
+      value: 
+      objectReference: {fileID: 77192532}
+    - target: {fileID: 11437560, guid: ca1b5f0d2529d4cf2b14006fcd54e62b, type: 2}
+      propertyPath: supplentalEffects
+      value: 
+      objectReference: {fileID: 614658108}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: ca1b5f0d2529d4cf2b14006fcd54e62b, type: 2}
   m_IsPrefabParent: 0
@@ -6597,86 +6757,6 @@ Material:
         first:
           name: _SpecColor
         second: {r: 1, g: 1, b: 1, a: 1}
---- !u!21 &1207361570
-Material:
-  serializedVersion: 5
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_Name: ActionSheen
-  m_Shader: {fileID: 4800000, guid: 7fec91e4d79544a6a84bd2ce891a7dba, type: 3}
-  m_ShaderKeywords: 
-  m_LightmapFlags: 5
-  m_CustomRenderQueue: -1
-  m_SavedProperties:
-    serializedVersion: 2
-    m_TexEnvs:
-      data:
-        first:
-          name: _MainTex
-        second:
-          m_Texture: {fileID: 2800000, guid: dc73b079e1b6b4801b60adfaa4187a5c, type: 3}
-          m_Scale: {x: 1, y: 1}
-          m_Offset: {x: 0, y: .400000006}
-      data:
-        first:
-          name: _Illum
-        second:
-          m_Texture: {fileID: 2800000, guid: dc59a930cb18e435bb1f7e8578b61ef7, type: 3}
-          m_Scale: {x: 1, y: 1}
-          m_Offset: {x: 0, y: 0}
-      data:
-        first:
-          name: _Mask
-        second:
-          m_Texture: {fileID: 2800000, guid: 06caa99e8301249d3b06581fb126730d, type: 3}
-          m_Scale: {x: 1, y: 1}
-          m_Offset: {x: 0, y: -.100000001}
-      data:
-        first:
-          name: _FlashMaskTex
-        second:
-          m_Texture: {fileID: 2800000, guid: 437c9b2fa20ee494ba988e750062be0c, type: 3}
-          m_Scale: {x: 1, y: .25}
-          m_Offset: {x: 0, y: 0}
-    m_Floats:
-      data:
-        first:
-          name: _Cutoff
-        second: .242857143
-      data:
-        first:
-          name: _Shininess
-        second: .699999988
-      data:
-        first:
-          name: PixelSnap
-        second: 0
-      data:
-        first:
-          name: _EmissionLM
-        second: 1
-      data:
-        first:
-          name: _FlashAmount
-        second: 1
-      data:
-        first:
-          name: MaskWithAlpha
-        second: 0
-    m_Colors:
-      data:
-        first:
-          name: _Color
-        second: {r: 1, g: 1, b: 1, a: 1}
-      data:
-        first:
-          name: _SpecColor
-        second: {r: 1, g: 1, b: 1, a: 1}
-      data:
-        first:
-          name: _FlashColor
-        second: {r: 1, g: 1, b: 1, a: 1}
 --- !u!21 &1229867521
 Material:
   serializedVersion: 5
@@ -6788,6 +6868,86 @@ CanvasRenderer:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 1239588786}
+--- !u!21 &1271188638
+Material:
+  serializedVersion: 5
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_Name: ActionSheen
+  m_Shader: {fileID: 4800000, guid: 7fec91e4d79544a6a84bd2ce891a7dba, type: 3}
+  m_ShaderKeywords: 
+  m_LightmapFlags: 5
+  m_CustomRenderQueue: -1
+  m_SavedProperties:
+    serializedVersion: 2
+    m_TexEnvs:
+      data:
+        first:
+          name: _MainTex
+        second:
+          m_Texture: {fileID: 2800000, guid: dc73b079e1b6b4801b60adfaa4187a5c, type: 3}
+          m_Scale: {x: 1, y: 1}
+          m_Offset: {x: 0, y: .400000006}
+      data:
+        first:
+          name: _Illum
+        second:
+          m_Texture: {fileID: 2800000, guid: dc59a930cb18e435bb1f7e8578b61ef7, type: 3}
+          m_Scale: {x: 1, y: 1}
+          m_Offset: {x: 0, y: 0}
+      data:
+        first:
+          name: _Mask
+        second:
+          m_Texture: {fileID: 2800000, guid: 06caa99e8301249d3b06581fb126730d, type: 3}
+          m_Scale: {x: 1, y: 1}
+          m_Offset: {x: 0, y: -.100000001}
+      data:
+        first:
+          name: _FlashMaskTex
+        second:
+          m_Texture: {fileID: 2800000, guid: 437c9b2fa20ee494ba988e750062be0c, type: 3}
+          m_Scale: {x: 1, y: .25}
+          m_Offset: {x: 0, y: 0}
+    m_Floats:
+      data:
+        first:
+          name: _Cutoff
+        second: .242857143
+      data:
+        first:
+          name: _Shininess
+        second: .699999988
+      data:
+        first:
+          name: PixelSnap
+        second: 0
+      data:
+        first:
+          name: _EmissionLM
+        second: 1
+      data:
+        first:
+          name: _FlashAmount
+        second: .607142866
+      data:
+        first:
+          name: MaskWithAlpha
+        second: 0
+    m_Colors:
+      data:
+        first:
+          name: _Color
+        second: {r: 1, g: 1, b: 1, a: 1}
+      data:
+        first:
+          name: _SpecColor
+        second: {r: 1, g: 1, b: 1, a: 1}
+      data:
+        first:
+          name: _FlashColor
+        second: {r: 1, g: 1, b: 1, a: .427450985}
 --- !u!1 &1280022450
 GameObject:
   m_ObjectHideFlags: 0
@@ -6930,86 +7090,6 @@ CanvasRenderer:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 1280022450}
---- !u!21 &1284457499
-Material:
-  serializedVersion: 5
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_Name: ActionSheen
-  m_Shader: {fileID: 4800000, guid: 7fec91e4d79544a6a84bd2ce891a7dba, type: 3}
-  m_ShaderKeywords: 
-  m_LightmapFlags: 5
-  m_CustomRenderQueue: -1
-  m_SavedProperties:
-    serializedVersion: 2
-    m_TexEnvs:
-      data:
-        first:
-          name: _MainTex
-        second:
-          m_Texture: {fileID: 2800000, guid: dc73b079e1b6b4801b60adfaa4187a5c, type: 3}
-          m_Scale: {x: 1, y: 1}
-          m_Offset: {x: 0, y: .400000006}
-      data:
-        first:
-          name: _Illum
-        second:
-          m_Texture: {fileID: 2800000, guid: dc59a930cb18e435bb1f7e8578b61ef7, type: 3}
-          m_Scale: {x: 1, y: 1}
-          m_Offset: {x: 0, y: 0}
-      data:
-        first:
-          name: _Mask
-        second:
-          m_Texture: {fileID: 2800000, guid: 06caa99e8301249d3b06581fb126730d, type: 3}
-          m_Scale: {x: 1, y: 1}
-          m_Offset: {x: 0, y: -.100000001}
-      data:
-        first:
-          name: _FlashMaskTex
-        second:
-          m_Texture: {fileID: 2800000, guid: 437c9b2fa20ee494ba988e750062be0c, type: 3}
-          m_Scale: {x: 1, y: .25}
-          m_Offset: {x: 0, y: 0}
-    m_Floats:
-      data:
-        first:
-          name: _Cutoff
-        second: .242857143
-      data:
-        first:
-          name: _Shininess
-        second: .699999988
-      data:
-        first:
-          name: PixelSnap
-        second: 0
-      data:
-        first:
-          name: _EmissionLM
-        second: 1
-      data:
-        first:
-          name: _FlashAmount
-        second: 1
-      data:
-        first:
-          name: MaskWithAlpha
-        second: 0
-    m_Colors:
-      data:
-        first:
-          name: _Color
-        second: {r: 1, g: 1, b: 1, a: 1}
-      data:
-        first:
-          name: _SpecColor
-        second: {r: 1, g: 1, b: 1, a: 1}
-      data:
-        first:
-          name: _FlashColor
-        second: {r: 1, g: 1, b: 1, a: 1}
 --- !u!1 &1324867162
 GameObject:
   m_ObjectHideFlags: 0
@@ -10585,86 +10665,6 @@ Prefab:
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 2af1243c9425a4873a9aa3ed3f678aff, type: 2}
   m_IsPrefabParent: 0
---- !u!21 &1909794764
-Material:
-  serializedVersion: 5
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_Name: ActionSheen
-  m_Shader: {fileID: 4800000, guid: 7fec91e4d79544a6a84bd2ce891a7dba, type: 3}
-  m_ShaderKeywords: 
-  m_LightmapFlags: 5
-  m_CustomRenderQueue: -1
-  m_SavedProperties:
-    serializedVersion: 2
-    m_TexEnvs:
-      data:
-        first:
-          name: _MainTex
-        second:
-          m_Texture: {fileID: 2800000, guid: dc73b079e1b6b4801b60adfaa4187a5c, type: 3}
-          m_Scale: {x: 1, y: 1}
-          m_Offset: {x: 0, y: .400000006}
-      data:
-        first:
-          name: _Illum
-        second:
-          m_Texture: {fileID: 2800000, guid: dc59a930cb18e435bb1f7e8578b61ef7, type: 3}
-          m_Scale: {x: 1, y: 1}
-          m_Offset: {x: 0, y: 0}
-      data:
-        first:
-          name: _Mask
-        second:
-          m_Texture: {fileID: 2800000, guid: 06caa99e8301249d3b06581fb126730d, type: 3}
-          m_Scale: {x: 1, y: 1}
-          m_Offset: {x: 0, y: -.100000001}
-      data:
-        first:
-          name: _FlashMaskTex
-        second:
-          m_Texture: {fileID: 2800000, guid: 437c9b2fa20ee494ba988e750062be0c, type: 3}
-          m_Scale: {x: 1, y: .25}
-          m_Offset: {x: 0, y: 0}
-    m_Floats:
-      data:
-        first:
-          name: _Cutoff
-        second: .242857143
-      data:
-        first:
-          name: _Shininess
-        second: .699999988
-      data:
-        first:
-          name: PixelSnap
-        second: 0
-      data:
-        first:
-          name: _EmissionLM
-        second: 1
-      data:
-        first:
-          name: _FlashAmount
-        second: 1
-      data:
-        first:
-          name: MaskWithAlpha
-        second: 0
-    m_Colors:
-      data:
-        first:
-          name: _Color
-        second: {r: 1, g: 1, b: 1, a: 1}
-      data:
-        first:
-          name: _SpecColor
-        second: {r: 1, g: 1, b: 1, a: 1}
-      data:
-        first:
-          name: _FlashColor
-        second: {r: 1, g: 1, b: 1, a: 1}
 --- !u!1001 &1957310039
 Prefab:
   m_ObjectHideFlags: 0
@@ -10707,86 +10707,6 @@ Prefab:
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: dee8fee2144d34cc0aa90dbd9000852a, type: 2}
   m_IsPrefabParent: 0
---- !u!21 &1966015208
-Material:
-  serializedVersion: 5
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_Name: ActionSheen
-  m_Shader: {fileID: 4800000, guid: 7fec91e4d79544a6a84bd2ce891a7dba, type: 3}
-  m_ShaderKeywords: 
-  m_LightmapFlags: 5
-  m_CustomRenderQueue: -1
-  m_SavedProperties:
-    serializedVersion: 2
-    m_TexEnvs:
-      data:
-        first:
-          name: _MainTex
-        second:
-          m_Texture: {fileID: 2800000, guid: dc73b079e1b6b4801b60adfaa4187a5c, type: 3}
-          m_Scale: {x: 1, y: 1}
-          m_Offset: {x: 0, y: .400000006}
-      data:
-        first:
-          name: _Illum
-        second:
-          m_Texture: {fileID: 2800000, guid: dc59a930cb18e435bb1f7e8578b61ef7, type: 3}
-          m_Scale: {x: 1, y: 1}
-          m_Offset: {x: 0, y: 0}
-      data:
-        first:
-          name: _Mask
-        second:
-          m_Texture: {fileID: 2800000, guid: 06caa99e8301249d3b06581fb126730d, type: 3}
-          m_Scale: {x: 1, y: 1}
-          m_Offset: {x: 0, y: -.100000001}
-      data:
-        first:
-          name: _FlashMaskTex
-        second:
-          m_Texture: {fileID: 2800000, guid: 437c9b2fa20ee494ba988e750062be0c, type: 3}
-          m_Scale: {x: 1, y: .25}
-          m_Offset: {x: 0, y: 0}
-    m_Floats:
-      data:
-        first:
-          name: _Cutoff
-        second: .242857143
-      data:
-        first:
-          name: _Shininess
-        second: .699999988
-      data:
-        first:
-          name: PixelSnap
-        second: 0
-      data:
-        first:
-          name: _EmissionLM
-        second: 1
-      data:
-        first:
-          name: _FlashAmount
-        second: 1
-      data:
-        first:
-          name: MaskWithAlpha
-        second: 0
-    m_Colors:
-      data:
-        first:
-          name: _Color
-        second: {r: 1, g: 1, b: 1, a: 1}
-      data:
-        first:
-          name: _SpecColor
-        second: {r: 1, g: 1, b: 1, a: 1}
-      data:
-        first:
-          name: _FlashColor
-        second: {r: 1, g: 1, b: 1, a: 1}
 --- !u!1001 &2030218165
 Prefab:
   m_ObjectHideFlags: 0
@@ -10879,3 +10799,83 @@ Material:
         first:
           name: _SpecColor
         second: {r: 1, g: 1, b: 1, a: 1}
+--- !u!21 &2134521922
+Material:
+  serializedVersion: 5
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_Name: ActionSheen
+  m_Shader: {fileID: 4800000, guid: 7fec91e4d79544a6a84bd2ce891a7dba, type: 3}
+  m_ShaderKeywords: 
+  m_LightmapFlags: 5
+  m_CustomRenderQueue: -1
+  m_SavedProperties:
+    serializedVersion: 2
+    m_TexEnvs:
+      data:
+        first:
+          name: _MainTex
+        second:
+          m_Texture: {fileID: 2800000, guid: dc73b079e1b6b4801b60adfaa4187a5c, type: 3}
+          m_Scale: {x: 1, y: 1}
+          m_Offset: {x: 0, y: .400000006}
+      data:
+        first:
+          name: _Illum
+        second:
+          m_Texture: {fileID: 2800000, guid: dc59a930cb18e435bb1f7e8578b61ef7, type: 3}
+          m_Scale: {x: 1, y: 1}
+          m_Offset: {x: 0, y: 0}
+      data:
+        first:
+          name: _Mask
+        second:
+          m_Texture: {fileID: 2800000, guid: 06caa99e8301249d3b06581fb126730d, type: 3}
+          m_Scale: {x: 1, y: 1}
+          m_Offset: {x: 0, y: -.100000001}
+      data:
+        first:
+          name: _FlashMaskTex
+        second:
+          m_Texture: {fileID: 2800000, guid: 437c9b2fa20ee494ba988e750062be0c, type: 3}
+          m_Scale: {x: 1, y: .25}
+          m_Offset: {x: 0, y: 0}
+    m_Floats:
+      data:
+        first:
+          name: _Cutoff
+        second: .242857143
+      data:
+        first:
+          name: _Shininess
+        second: .699999988
+      data:
+        first:
+          name: PixelSnap
+        second: 0
+      data:
+        first:
+          name: _EmissionLM
+        second: 1
+      data:
+        first:
+          name: _FlashAmount
+        second: .607142866
+      data:
+        first:
+          name: MaskWithAlpha
+        second: 0
+    m_Colors:
+      data:
+        first:
+          name: _Color
+        second: {r: 1, g: 1, b: 1, a: 1}
+      data:
+        first:
+          name: _SpecColor
+        second: {r: 1, g: 1, b: 1, a: 1}
+      data:
+        first:
+          name: _FlashColor
+        second: {r: 1, g: 1, b: 1, a: .427450985}

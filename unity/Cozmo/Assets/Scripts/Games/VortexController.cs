@@ -120,6 +120,9 @@ public class VortexController : GameController {
 	[SerializeField] float[] wheelLightningRadii  = { 3.5f, 2f, 1f };
 	[SerializeField] int lightningMinCountAtSpeedMax = 8;
 	[SerializeField] int lightningMaxCountAtSpeedMax = 16;
+	[SerializeField] Image imageGear;
+	[SerializeField] Color gearDefaultColor = Color.white;
+	[SerializeField] Color[] playerColors = { Color.blue, Color.green, Color.yellow, Color.red };
 
 	[SerializeField] float maxPlayerInputTime = 3f;
 
@@ -247,6 +250,8 @@ public class VortexController : GameController {
 
 		foreach(Text text in textPlayerScoreDeltas) text.gameObject.SetActive(false);
 		
+		imageGear.color = gearDefaultColor;
+
 	}
 
 	protected override void OnDisable () {
@@ -283,7 +288,7 @@ public class VortexController : GameController {
 			for(int i=0;i < numPlayers;i++) {
 				playerMockBlocks[i].Validate(false);
 				playerMockBlocks[i].Initialize(CubeType.LIGHT_CUBE);
-				Color col = CozmoPalette.instance.GetColorForActiveBlockMode(GetPlayerColorMode(i));
+				Color col = CozmoPalette.instance.GetColorForActiveBlockMode(GetPlayerActiveCubeColorMode(i));
 				playerMockBlocks[i].SetLights(col);
 			}
 		}
@@ -315,7 +320,7 @@ public class VortexController : GameController {
 				ActiveBlock block = robot.knownObjects[i] as ActiveBlock;
 				//Debug.Log("adding playerInputBlocks["+i+"] with PlayerInputTap("+i+")");
 
-				block.SetMode(GetPlayerColorMode(playerInputBlocks.Count));
+				block.SetMode(GetPlayerActiveCubeColorMode(playerInputBlocks.Count));
 
 				playerInputBlocks.Add(block);
 			}
@@ -334,6 +339,8 @@ public class VortexController : GameController {
 		}
 
 		headTimer = 0.1f;
+
+		imageGear.color = gearDefaultColor;
 	}
 
 	float frequency = 0.1f;
@@ -488,7 +495,7 @@ public class VortexController : GameController {
 			ScoreBoardData scoreData = new ScoreBoardData();
 			scoreData.score = score;
 			scoreData.playerIndex = i;
-			scoreData.color = CozmoPalette.instance.GetColorForActiveBlockMode(GetPlayerColorMode(i));
+			scoreData.color = CozmoPalette.instance.GetColorForActiveBlockMode(GetPlayerActiveCubeColorMode(i));
 
 			if(insertIndex < sortedScoreData.Count) {
 				sortedScoreData.Insert(insertIndex, scoreData);
@@ -792,6 +799,8 @@ public class VortexController : GameController {
 		for(int i=0;i<textPlayerSpinNow.Length;i++) {
 			textPlayerSpinNow[i].gameObject.SetActive(currentPlayerIndex == i);
 		}
+
+		imageGear.color = GetPlayerUIColor(currentPlayerIndex);
 	}
 
 	void Update_REQUEST_SPIN() {
@@ -932,6 +941,8 @@ public class VortexController : GameController {
 			playerPanelFills[i].color = col;
 		}
 
+		imageGear.color = Color.Lerp (GetPlayerUIColor(currentPlayerIndex), gearDefaultColor, playStateTimer);
+
 	}
 
 	void Exit_SPINNING() {
@@ -954,7 +965,7 @@ public class VortexController : GameController {
 		}
 
 		for(int i=0;i<playerInputBlocks.Count && i<numPlayers;i++) {
-			playerInputBlocks[i].SetMode(GetPlayerColorMode(i));
+			playerInputBlocks[i].SetMode(GetPlayerActiveCubeColorMode(i));
 		}
 
 	}
@@ -1013,7 +1024,7 @@ public class VortexController : GameController {
 
 			if(playerInputBlocks.Count <= i) continue;
 
-			Color playerColor = CozmoPalette.instance.GetColorForActiveBlockMode(GetPlayerColorMode(i));
+			Color playerColor = CozmoPalette.instance.GetColorForActiveBlockMode(GetPlayerActiveCubeColorMode(i));
 
 			Color c1 = Color.clear;
 			Color c2 = Color.clear;
@@ -1110,17 +1121,11 @@ public class VortexController : GameController {
 			float factor = fadeTimer / scoreDisplayFillFade;
 			col.a = Mathf.Lerp(scoreDisplayFillAlpha, 0f, factor);
 			textPlayerScores[playerIndex].rectTransform.localScale = Vector3.Lerp(Vector3.one*scoreScaleMax, Vector3.one*scoreScaleBase, factor);
-//			col = textPlayerScoreDeltas[playerIndex].color;
-//			col.a = Mathf.Lerp(1f, 0f, factor); 
-//			textPlayerScoreDeltas[playerIndex].color = col;
 		}
 		else {
 			float factor = Mathf.Abs(fadeTimer) / scoreDisplayFillFade;
 			col.a = Mathf.Lerp(scoreDisplayFillAlpha, scoreDisplayEmptyAlpha, factor);
 			textPlayerScores[playerIndex].rectTransform.localScale = Vector3.Lerp(Vector3.one*scoreScaleMax, Vector3.one*scoreScaleBase, factor);
-//			col = textPlayerScoreDeltas[playerIndex].color;
-//			col.a = 1f;//Mathf.Lerp(1f, 0f, factor); 
-//			textPlayerScoreDeltas[playerIndex].color = col;
 
 			if(wasPositive) {
 
@@ -1160,7 +1165,7 @@ public class VortexController : GameController {
 		}
 		
 		for(int i=0;i<playerInputBlocks.Count && i<numPlayers;i++) {
-			playerInputBlocks[i].SetMode(GetPlayerColorMode(i));
+			playerInputBlocks[i].SetMode(GetPlayerActiveCubeColorMode(i));
 		}
 
 		for(int i=0;i<textPlayerScores.Length && i<numPlayers;i++) {
@@ -1234,7 +1239,7 @@ public class VortexController : GameController {
 		//Debug.Log("PlaceCozmoTouch screenPos("+screenPos+") anchor("+anchor+")");
 	}
 
-	ActiveBlock.Mode GetPlayerColorMode(int index) {
+	ActiveBlock.Mode GetPlayerActiveCubeColorMode(int index) {
 
 		switch(index) {
 			case 0: return ActiveBlock.Mode.Blue;
@@ -1246,7 +1251,12 @@ public class VortexController : GameController {
 		return ActiveBlock.Mode.Off;
 	}
 
+	Color GetPlayerUIColor(int index) {
+		return playerColors[index];
+	}
 
+
+	
 ///
 	public void PlayerInputTap(int index) {
 		if(state == GameState.PRE_GAME) {
@@ -1275,7 +1285,7 @@ public class VortexController : GameController {
 //		}
 
 		if(index < playerInputBlocks.Count) {
-			Color playerColor = CozmoPalette.instance.GetColorForActiveBlockMode(GetPlayerColorMode(index));
+			Color playerColor = CozmoPalette.instance.GetColorForActiveBlockMode(GetPlayerActiveCubeColorMode(index));
 	
 			uint c1 = CozmoPalette.ColorToUInt(playerInputs[index].stamps.Count > 0 ? playerColor : Color.black);
 			uint c2 = CozmoPalette.ColorToUInt(playerInputs[index].stamps.Count > 1 ? playerColor : Color.black);
