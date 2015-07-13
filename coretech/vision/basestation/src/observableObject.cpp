@@ -190,6 +190,12 @@ namespace Anki {
     }
      */
     
+    std::vector<RotationMatrix3d> const& ObservableObject::GetRotationAmbiguities() const
+    {
+      static const std::vector<RotationMatrix3d> RotationAmbiguities; // default is empty
+      return RotationAmbiguities;
+    }
+    
     void ObservableObject::GetCorners(std::vector<Point3f>& corners) const
     {
       GetCorners(_pose, corners);

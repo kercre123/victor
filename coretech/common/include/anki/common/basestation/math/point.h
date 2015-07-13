@@ -163,39 +163,12 @@ namespace Anki {
   using Vec2f = Point2f;
   using Vec3f = Point3f;
   
-  /*
-  const Vec2f X_AXIS_2D(1.f, 0.f);
-  const Vec2f Y_AXIS_2D(0.f, 1.f);
+  const Vec2f& X_AXIS_2D();
+  const Vec2f& Y_AXIS_2D();
   
-  const Vec3f X_AXIS_3D()(1.f, 0.f, 0.f);
-  const Vec3f Y_AXIS_3D()(0.f, 1.f, 0.f);
-  const Vec3f Z_AXIS_3D()(0.f, 0.f, 1.f);
-  */
-  
-  inline const Vec2f& X_AXIS_2D() {
-    static const Vec2f xAxis(1.f, 0.f);
-    return xAxis;
-  }
-  
-  inline const Vec2f& Y_AXIS_2D() {
-    static const Vec2f yAxis(0.f, 1.f);
-    return yAxis;
-  }
-  
-  inline const Vec3f& X_AXIS_3D() {
-    static const Vec3f xAxis(1.f, 0.f, 0.f);
-    return xAxis;
-  }
-  
-  inline const Vec3f& Y_AXIS_3D() {
-    static const Vec3f yAxis(0.f, 1.f, 0.f);
-    return yAxis;
-  }
-  
-  inline const Vec3f& Z_AXIS_3D() {
-    static const Vec3f zAxis(0.f, 0.f, 01.f);
-    return zAxis;
-  }
+  const Vec3f& X_AXIS_3D();
+  const Vec3f& Y_AXIS_3D();
+  const Vec3f& Z_AXIS_3D();
   
   /*
   template<PointDimType N, typename T>
