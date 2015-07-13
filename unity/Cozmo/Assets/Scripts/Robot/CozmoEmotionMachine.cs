@@ -7,8 +7,6 @@ using System.Collections.Generic;
 public struct CozmoAnimation
 {
 	public string animName;
-	public CozmoEmotionManager.EmotionType emotionType;
-	public CozmoEmotionManager.EmotionIntensity emotionIntensity;
 	public int numLoops;
 	
 }
@@ -41,6 +39,7 @@ public class CozmoEmotionMachine : MonoBehaviour {
 	public void CloseMachine()
 	{
 		CozmoEmotionManager.instance.UnregisterMachine();
+		CleanUp();
 	}
 
 	public virtual void CleanUp(){}
