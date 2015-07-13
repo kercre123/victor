@@ -280,7 +280,7 @@ namespace Anki {
     class BlinkKeyFrame : public IKeyFrame
     {
     public:
-      BlinkKeyFrame() { }
+      BlinkKeyFrame();
       
       virtual RobotMessage* GetStreamMessage() override;
       
