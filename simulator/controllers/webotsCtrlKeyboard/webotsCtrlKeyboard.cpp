@@ -1386,7 +1386,7 @@ namespace Anki {
               case (s32)'@':
               {
                 //SendAnimation("ANIM_BACK_AND_FORTH_EXCITED", 3);
-                SendAnimation("ANIM_TEST2", 1);
+                SendAnimation("ANIM_TEST", 1);
                 break;
               }
               case (s32)'#':
