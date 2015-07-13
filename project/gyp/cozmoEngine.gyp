@@ -432,14 +432,14 @@
         '../../basestation/src',
         '../../basestation/include',
         '../../include',
-        '../../generated/clad/engine/src',
+        '../../generated/clad/engine',
         '<@(opencv_includes)',
       ],
       'direct_dependent_settings': {
         'include_dirs': [
           '../../basestation/include',
           '../../include',
-          '../../generated/clad/engine/src',
+          '../../generated/clad/engine',
         ],
         'defines': [
           'COZMO_BASESTATION'
