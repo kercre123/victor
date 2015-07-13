@@ -508,11 +508,13 @@
       'include_dirs': [
         '../../game/src',
         '../../game/include',
+        '../../generated/clad/game',
         '<@(opencv_includes)',
       ],
       'direct_dependent_settings': {
         'include_dirs': [
           '../../game/include',
+          '../../generated/clad/game',
         ],
       },
       'dependencies': [

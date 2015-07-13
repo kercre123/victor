@@ -159,9 +159,14 @@ def main(scriptArgs):
     shutil.rmtree(os.path.join(projectRoot, 'generated', folder), True)
     return True
 
+  #run clad's make
+  if (subprocess.call(['make', '--silent'], cwd=os.path.join(projectRoot, 'clad')) != 0):
+    UtilLog.error("error compiling clad files")
+    return False
+
   # update file lists
   generator = updateFileLists.FileListGenerator(options)
-  generator.processFolder(['game/src/anki/cozmo', 'game/include'], ['project/gyp/cozmoGame.lst'])
+  generator.processFolder(['game/src/anki/cozmo', 'game/include', 'generated/clad/game'], ['project/gyp/cozmoGame.lst'])
   generator.processFolder(['simulator/controllers/webotsCtrlKeyboard'], ['project/gyp/ctrlKeyboard.lst'])
   generator.processFolder(['simulator/controllers/webotsCtrlGameEngine'], ['project/gyp/ctrlGameEngine.lst'])
   generator.processFolder(['unity/CSharpBinding/src'], ['project/gyp/csharp.lst'])
