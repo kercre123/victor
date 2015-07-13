@@ -286,8 +286,8 @@ namespace Anki {
         {
           if (ReliableTransport_Update(&connection) == false) // Connection has timed out
           {
-            PRINT("WARN: Reliable transport has timed out\n");
             Receiver_OnDisconnect(&connection);
+            PRINT("WARN: Reliable transport has timed out\n");  // Do not print until _OnDisconnect complete!
           }
         }
       }
@@ -903,6 +903,7 @@ void Receiver_OnConnected(ReliableConnection* connection)
 
 void Receiver_OnDisconnect(ReliableConnection* connection)
 {
+  Anki::Cozmo::HAL::RadioUpdateState(0, 0);   // Must mark connection disconnected BEFORE trying to print
   Anki::Cozmo::PRINT("ReliableTransport disconnected\n");
   ReliableConnection_Init(connection, NULL); // Reset the connection
   Anki::Cozmo::HAL::RadioUpdateState(0, 0);
