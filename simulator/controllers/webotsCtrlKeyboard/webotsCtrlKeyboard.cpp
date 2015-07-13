@@ -6,9 +6,6 @@
  * Modifications: 
  */
 
-// TODO: Have CMake define this
-#define CORETECH_BASESTATION
-
 #include <opencv2/imgproc/imgproc.hpp>
 
 #include "anki/cozmo/shared/cozmoConfig.h"
@@ -2407,6 +2404,7 @@ namespace Anki {
         {
           U2G::PlayAnimation m;
           //m.animationID = animId;
+          m.robotID = 1;
           m.animationName = animName;
           m.numLoops = numLoops;
           U2G::Message message;
@@ -2423,6 +2421,7 @@ namespace Anki {
       {
         U2G::ReplayLastAnimation m;
         m.numLoops = 1;
+        m.robotID = 1;
         U2G::Message message;
         message.Set_ReplayLastAnimation(m);
         SendMessage(message);
