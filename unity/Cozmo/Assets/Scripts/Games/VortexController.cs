@@ -112,6 +112,7 @@ public class VortexController : GameController {
 	[SerializeField] RectTransform preGameAlert;
 	[SerializeField] Animation[] playerBidFlashAnimations;
 	[SerializeField] Text[] textPlayerScores;
+	[SerializeField] Text[] textPlayerScoreDeltas;
 
 	[SerializeField] VortexSettings[] settingsPerLevel;
 
@@ -241,6 +242,9 @@ public class VortexController : GameController {
 		if(preGameAlert != null) preGameAlert.gameObject.SetActive(false);
 
 		ActiveBlock.TappedAction += BlockTapped;
+
+		foreach(Text text in textPlayerScoreDeltas) text.gameObject.SetActive(false);
+		
 	}
 
 	protected override void OnDisable () {
@@ -953,7 +957,8 @@ public class VortexController : GameController {
 
 	}
 
-	[SerializeField] float scoreScaleUp = 1.5f;
+	[SerializeField] float scoreScaleBase = 0.75f;
+	[SerializeField] float scoreScaleMax = 1f;
 
 	void Enter_SPIN_COMPLETE() {
 		
@@ -1088,15 +1093,18 @@ public class VortexController : GameController {
 
 		Color col = playerPanelFills[playerIndex].color;
 		
+		textPlayerScoreDeltas[playerIndex].gameObject.SetActive(true);
+		//textPlayerScoreDeltas[playerIndex].text = "
+
 		if(fadeTimer > 0f) {
 			float factor = fadeTimer / scoreDisplayFillFade;
 			col.a = Mathf.Lerp(scoreDisplayFillAlpha, 0f, factor);
-			textPlayerScores[playerIndex].rectTransform.localScale = Vector3.Lerp(Vector3.one*scoreScaleUp, Vector3.one, factor);
+			textPlayerScores[playerIndex].rectTransform.localScale = Vector3.Lerp(Vector3.one*scoreScaleMax, Vector3.one*scoreScaleBase, factor);
 		}
 		else {
 			float factor = Mathf.Abs(fadeTimer) / scoreDisplayFillFade;
 			col.a = Mathf.Lerp(scoreDisplayFillAlpha, scoreDisplayEmptyAlpha, factor);
-			textPlayerScores[playerIndex].rectTransform.localScale = Vector3.Lerp(Vector3.one*scoreScaleUp, Vector3.one, factor);
+			textPlayerScores[playerIndex].rectTransform.localScale = Vector3.Lerp(Vector3.one*scoreScaleMax, Vector3.one*scoreScaleBase, factor);
 
 			if(wasPositive) {
 				textPlayerScores[playerIndex].text = "SCORE: " + scores[playerIndex].ToString();
