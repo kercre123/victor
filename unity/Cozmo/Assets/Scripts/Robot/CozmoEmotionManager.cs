@@ -110,22 +110,27 @@ public class CozmoEmotionManager : MonoBehaviour {
 			currentEmotions |= emo;
 		}
 
-		if( currentEmotions != lastEmotions || clear_current )
+		if( currentEmotionMachine != null )
 		{
 			// send approriate animation
-			if (HasEmotion( EmotionType.IDLE) )
+			if (currentEmotionMachine.HasAnimForType(emo) )
 			{
-				SendAnimation(testAnim, 1);
+				CozmoAnimation anim = currentEmotionMachine.GetAnimForType(emo);
+				SendAnimation(anim);
+			}
+			else
+			{
+				Debug.LogError("tring to send animation for emotion type " + emo + ", and the current machine has no anim mapped");
 			}
 		}
 
 		lastEmotions = currentEmotions;
 	}
 
-	public void SendAnimation(string anim_name, uint num_loops)
+	public void SendAnimation(CozmoAnimation anim)
 	{
-		PlayAnimationMessage.animationName = anim_name;
-		PlayAnimationMessage.numLoops = num_loops;
+		PlayAnimationMessage.animationName = anim.animName;
+		PlayAnimationMessage.numLoops = anim.numLoops;
 		RobotEngineManager.instance.Message.PlayAnimation = PlayAnimationMessage;
 		RobotEngineManager.instance.SendMessage();
 	}

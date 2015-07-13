@@ -7,7 +7,7 @@ using System.Collections.Generic;
 public struct CozmoAnimation
 {
 	public string animName;
-	public int numLoops;
+	public uint numLoops;
 	
 }
 
@@ -43,10 +43,24 @@ public class CozmoEmotionMachine : MonoBehaviour {
 
 	}
 
+	public void OnEnable()
+	{
+		StartMachine();
+	}
+	
+	
+	public void OnDisable()
+	{
+		CloseMachine();
+	}
+
 	// initailization
 	public void StartMachine()
 	{
-		CozmoEmotionManager.instance.RegisterMachine(this);
+		if( CozmoEmotionManager.instance != null )
+		{
+			CozmoEmotionManager.instance.RegisterMachine(this);
+		}
 		InitializeMachine();
 	}
 
@@ -57,24 +71,27 @@ public class CozmoEmotionMachine : MonoBehaviour {
 	// clean-up
 	public void CloseMachine()
 	{
-		CozmoEmotionManager.instance.UnregisterMachine();
+		if( CozmoEmotionManager.instance != null )
+		{
+			CozmoEmotionManager.instance.UnregisterMachine();
+		}
 		CleanUp();
 	}
 
 	public virtual void CleanUp(){}
 
-	public CozmoAnimation GetAnimForType(CozmoEmotionManager.EmotionType emotionType)
+	public bool HasAnimForType(CozmoEmotionManager.EmotionType emotionType)
 	{
 		if( typeAnims.ContainsKey(emotionType) && typeAnims[emotionType].Count > 0 )
-		{
-			int rand_index = UnityEngine.Random.Range(0, typeAnims[emotionType].Count - 1);
-			return typeAnims[emotionType][rand_index];
-		}
-		else
-		{
-			Debug.LogError("No anims found for " + emotionType);
-			return null;
-		}
+			return true;
+		return false;
+	}
+
+	public CozmoAnimation GetAnimForType(CozmoEmotionManager.EmotionType emotionType)
+	{
+		// note: do not call with out first calling too HasAnimForType
+		int rand_index = UnityEngine.Random.Range(0, typeAnims[emotionType].Count - 1);
+		return typeAnims[emotionType][rand_index];
 	}
 	
 }
