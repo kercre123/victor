@@ -411,8 +411,8 @@ END_MESSAGE_DEFINITION(AnimKeyFrame_BackpackLights)
 START_MESSAGE_DEFINITION(AnimKeyFrame_BodyMotion, 1)
 ADD_MESSAGE_MEMBER(s16, speed_mmPerSec)      // Commanded speed in mm/sec
 ADD_MESSAGE_MEMBER(s16, curvatureRadius_mm)  // +ve: curves left, -ve: curves right, ...
-                                             // ...u16_MAX: point turn left, 16_MIN: point ...
-                                             // ...turn right, 0: straight
+                                             // ...u16_MAX/MIN: drive straight...
+                                             // ...0: turn in place (+ve speed: left, -ve speed: right)
 END_MESSAGE_DEFINITION(AnimKeyFrame_BodyMotion)
 
 // AnimKeyFrame_EndOfAnimation

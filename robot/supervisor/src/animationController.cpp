@@ -721,19 +721,17 @@ namespace AnimationController {
                   leftSpeed = 0.f;
                   rightSpeed = 0.f;
                   WheelController::SetDesiredWheelSpeeds(0, 0);
-                } else if(msg.curvatureRadius_mm == 0) {
+                } else if(msg.curvatureRadius_mm == s16_MAX || msg.curvatureRadius_mm == s16_MIN) {
                   // Drive straight
                   leftSpeed  = static_cast<f32>(msg.speed_mmPerSec);
                   rightSpeed = static_cast<f32>(msg.speed_mmPerSec);
-                } else if(msg.curvatureRadius_mm == s16_MAX) {
-                  // Turn in place left
+                } else if(msg.curvatureRadius_mm == 0) {
+                  // Turn in place: positive speed means turn left
                   leftSpeed  = static_cast<f32>(-msg.speed_mmPerSec);
                   rightSpeed = static_cast<f32>( msg.speed_mmPerSec);
-                } else if(msg.curvatureRadius_mm == s16_MIN) {
-                  // Turn in place right
-                  leftSpeed  = static_cast<f32>( msg.speed_mmPerSec);
-                  rightSpeed = static_cast<f32>(-msg.speed_mmPerSec);
                 } else {
+                  // Drive an arc
+                  
                   //if speed is positive, the left wheel should turn slower, so
                   // it becomes the INNER wheel
                   leftSpeed = static_cast<f32>(msg.speed_mmPerSec) * (1.0f - WHEEL_DIST_HALF_MM / static_cast<f32>(msg.curvatureRadius_mm));
