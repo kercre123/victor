@@ -12,6 +12,13 @@ simulator/plugins/physics/cozmo_physics
 simulator/controllers/cozmo_viz_controller
 simulator/controllers/cozmo_c_controller
 
+simulator/controllers/webotsCtrlRobot
+simulator/controllers/webotsCtrlViz
+simulator/controllers/webotsCtrlLightCube
+simulator/controllers/webotsCtrlGameEngine/webotsCtrlGameEngine
+simulator/controllers/webotsCtrlKeyboard/webotsCtrlKeyboard
+
+
 # Mac OS
 *.DS_Store
 # Xcode
@@ -41,7 +48,6 @@ simulator/controllers/cozmo_c_controller
 *.xccheckout
 xcuserdata
 *.moved-aside
-DerivedData
 
 # MSVC
 *.res
@@ -166,6 +172,11 @@ build_xcode/*.xcworkspace
 build_xcode/game_osx
 build_xcode/game_ios
 build_xcode/game_sim
-generated
 unity/ios/UnityBuild
 unity/ios/build
+generated/ios
+generated/mac
+generated/android
+unity/ios/generated
+unity/ios/opencv
+generated/clad

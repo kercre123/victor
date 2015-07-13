@@ -1,5 +1,5 @@
 /*
- * File:          webots_keyboard_controller.cpp
+ * File:          webotsCtrlKeyboard.cpp
  * Date:
  * Description:   
  * Author:        
@@ -23,15 +23,15 @@
 
 #include "anki/vision/basestation/image.h"
 
-#include "anki/cozmo/messageBuffers/game/UiMessagesG2U.def"
-#include "anki/cozmo/messageBuffers/game/UiMessagesU2G.def"
+#include "anki/cozmo/messageBuffers/game/UiMessagesG2U.h"
+#include "anki/cozmo/messageBuffers/game/UiMessagesU2G.h"
 #include "anki/messaging/shared/TcpClient.h"
 #include "anki/cozmo/game/comms/gameMessageHandler.h"
 #include "anki/cozmo/game/comms/gameComms.h"
 
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/block.h"
-#include "anki/cozmo/messageBuffers/shared/actionTypes.def"
+#include "anki/cozmo/messageBuffers/shared/actionTypes.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -46,7 +46,7 @@
 
 // SDL for gamepad control (specifically Logitech Rumblepad F510)
 // Gamepad should be in Direct mode (switch on back)
-#define ENABLE_GAMEPAD_SUPPORT 1
+#define ENABLE_GAMEPAD_SUPPORT 0
 #if(ENABLE_GAMEPAD_SUPPORT)
 #include <SDL.h>
 #define DEBUG_GAMEPAD 0
@@ -1250,12 +1250,12 @@ namespace Anki {
                   static int jsonMsgCtr = 0;
                   Json::Value jsonMsg;
                   Json::Reader reader;
-                  std::string jsonFilename("../blockworld_controller/SetBlockLights_" + std::to_string(jsonMsgCtr++) + ".json");
+                  std::string jsonFilename("../webotsCtrlGameEngine/SetBlockLights_" + std::to_string(jsonMsgCtr++) + ".json");
                   std::ifstream jsonFile(jsonFilename);
                   
                   if(jsonFile.fail()) {
                     jsonMsgCtr = 0;
-                    jsonFilename = "../blockworld_controller/SetBlockLights_" + std::to_string(jsonMsgCtr++) + ".json";
+                    jsonFilename = "../webotsCtrlGameEngine/SetBlockLights_" + std::to_string(jsonMsgCtr++) + ".json";
                     jsonFile.open(jsonFilename);
                   }
                   

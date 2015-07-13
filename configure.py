@@ -1,6 +1,6 @@
 #!/usr/bin/env python -u
 
-"""Issues commands to cmake and generated files."""
+"""Issues commands to gyp and generated files."""
 
 import inspect
 import os
@@ -13,10 +13,9 @@ GAME_ROOT = os.path.normpath(os.path.abspath(os.path.realpath(os.path.dirname(in
 ENGINE_ROOT = os.path.join(GAME_ROOT, 'lib', 'anki', 'cozmo-engine')
 sys.path.insert(0, ENGINE_ROOT)
 from configure import BUILD_TOOLS_ROOT, initialize_colors
-from configure import ArgumentParser, wipe_all, configure_anki_util, configure_platforms, print_status
+from configure import print_status, ArgumentParser, generate_gyp, configure
 
 sys.path.insert(0, BUILD_TOOLS_ROOT)
-import ankibuild.cmake
 import ankibuild.ios_deploy
 import ankibuild.util
 import ankibuild.xcode
@@ -79,7 +78,7 @@ def parse_game_arguments():
         ArgumentParser.Command('uninstall', 'uninstall the app from device'),
         ArgumentParser.Command('clean', 'issue the clean command to projects'),
         ArgumentParser.Command('delete', 'delete all generated projects'),
-        ArgumentParser.Command('wipeall!', 'wipe all ignored files in the entire repo (including generated projects)')]
+        ArgumentParser.Command('wipeall!', 'delete, then wipe all ignored files in the entire repo (including generated projects)')]
     parser.add_command_arguments(commands)
     
     platforms = ['mac', 'ios']
@@ -100,10 +99,6 @@ def parse_game_arguments():
 # PLATFORM-DEPENDENT COMMANDS #
 ###############################
 
-def add_xcode_ios_scheme(workspace, scheme_name, project_path, mode='auto'):
-    scheme = dict(template=ankibuild.xcode.SCHEME_TEMPLATE_IOS, name=scheme_name, mode=mode, project_path=project_path)
-    workspace.schemes.append(scheme)
-    	
 class GamePlatformConfiguration(object):
     
     def __init__(self, platform, options):
@@ -113,27 +108,35 @@ class GamePlatformConfiguration(object):
         self.platform = platform
         self.options = options
         
-        self.scheme = 'BUILD_WORKSPACE'
-        self.derived_data_dir = os.path.join(self.options.output_dir, 'derived-data-{0}'.format(self.platform))
-        self.config_path = os.path.join(self.options.output_dir, '{0}.xcconfig'.format(self.platform))
+        self.gyp_dir = os.path.join(GAME_ROOT, 'project', 'gyp')
+        
+        self.platform_build_dir = os.path.join(options.build_dir, self.platform)
+        self.platform_output_dir = os.path.join(options.output_dir, self.platform)
         
         self.workspace_name = 'CozmoWorkspace_{0}'.format(self.platform.upper())
-        self.workspace_path = os.path.join(self.options.output_dir, '{0}.xcworkspace'.format(self.workspace_name))
+        self.workspace_path = os.path.join(self.platform_output_dir, '{0}.xcworkspace'.format(self.workspace_name))
         
-        self.cmake_project_dir = os.path.join(self.options.output_dir, 'cmake-{0}'.format(self.platform))
-        self.cmake_project_path = os.path.join(self.cmake_project_dir, 'CozmoGame_{0}.xcodeproj'.format(self.platform.upper()))
+        self.scheme = 'BUILD_WORKSPACE'
+        self.derived_data_dir = os.path.join(self.platform_build_dir, 'derived-data')
+        self.config_path = os.path.join(self.platform_output_dir, '{0}.xcconfig'.format(self.platform))        
+        
+        self.gyp_project_path = os.path.join(self.platform_output_dir, 'cozmoGame.xcodeproj')
         
         if platform == 'ios':
             self.unity_xcode_project_dir = os.path.join(GAME_ROOT, 'unity', self.platform)
             self.unity_xcode_project_path = os.path.join(self.unity_xcode_project_dir, 'CozmoUnity_{0}.xcodeproj'.format(self.platform.upper()))
-            self.unity_output_dir = os.path.join(self.options.output_dir, 'unity-{0}'.format(self.platform))
-            self.unity_opencv_symlink = os.path.join(self.unity_output_dir, 'opencv')
+            
+            self.unity_build_dir = os.path.join(self.platform_build_dir, 'unity-{0}'.format(self.platform))
+            
+            self.unity_output_symlink = os.path.join(self.unity_xcode_project_dir, 'generated')
+            
+            self.unity_opencv_symlink = os.path.join(self.unity_xcode_project_dir, 'opencv')
             if not os.environ.get("CORETECH_EXTERNAL_DIR"):
                 sys.exit('ERROR: Environment variable "CORETECH_EXTERNAL_DIR" must be defined.')
             self.unity_opencv_symlink_target = os.path.join(os.environ.get("CORETECH_EXTERNAL_DIR"), 'build', 'opencv-ios', 'multiArchLibs')
             
-            self.unity_output_symlink = os.path.join(self.unity_xcode_project_dir, 'UnityBuild')
-            self.artifact_dir = os.path.join(self.options.output_dir, 'app-{0}'.format(self.platform))
+            self.unity_build_symlink = os.path.join(self.unity_xcode_project_dir, 'UnityBuild')
+            self.artifact_dir = os.path.join(self.platform_build_dir, 'app-{0}'.format(self.platform))
             self.artifact_path = os.path.join(self.artifact_dir, 'cozmo.app')
     
     def process(self):
@@ -147,45 +150,47 @@ class GamePlatformConfiguration(object):
             self.run()
         if self.options.command == 'uninstall':
             self.uninstall()
-        if self.options.command == 'delete':
+        if self.options.command in ('delete', 'wipeall!'):
             self.delete()
     
     def generate(self):
         if self.options.verbose:
             print_status('Generating files for platform {0}...'.format(self.platform))
         
-        ankibuild.cmake.generate(self.cmake_project_dir, GAME_ROOT, self.platform)
-        # to get rid of annoying warning
-        ankibuild.util.File.mkdir_p(os.path.join(self.cmake_project_dir, 'Xcode', 'lib', self.options.configuration))
+        ankibuild.util.File.mkdir_p(self.platform_build_dir)
+        ankibuild.util.File.mkdir_p(self.platform_output_dir)
         
-        rel_cmake_project = os.path.relpath(self.cmake_project_path, self.options.output_dir)
+        generate_gyp(self.gyp_dir, self.platform, self.options)
+        
+        relative_gyp_project = os.path.relpath(self.gyp_project_path, self.platform_output_dir)
         workspace = ankibuild.xcode.XcodeWorkspace(self.workspace_name)
-        workspace.add_project(rel_cmake_project)
+        workspace.add_project(relative_gyp_project)
         
         if self.platform == 'mac':
-            workspace.add_scheme_cmake(self.scheme, rel_cmake_project)
+            workspace.add_scheme_gyp(self.scheme, relative_gyp_project)
         
         elif self.platform == 'ios':
-            rel_unity_xcode_project = os.path.relpath(self.unity_xcode_project_path, self.options.output_dir)
-            workspace.add_project(rel_unity_xcode_project)
+            relative_unity_xcode_project = os.path.relpath(self.unity_xcode_project_path, self.platform_output_dir)
+            workspace.add_project(relative_unity_xcode_project)
             
-            add_xcode_ios_scheme(workspace, self.scheme, rel_unity_xcode_project)
-        
+            workspace.add_scheme_ios(self.scheme, relative_unity_xcode_project)
+            
             if not os.path.exists(self.unity_opencv_symlink_target):
                 sys.exit('ERROR: opencv does not appear to have been built for ios. Please build opencv for ios.')
             
             xcconfig = [
                 'ANKI_BUILD_REPO_ROOT={0}'.format(GAME_ROOT),
-                'ANKI_BUILD_GENERATED_XCODE_PROJECT_DIR={0}'.format(self.cmake_project_dir),
                 'ANKI_BUILD_UNITY_PROJECT_PATH=${ANKI_BUILD_REPO_ROOT}/unity/Cozmo',
-                'ANKI_BUILD_UNITY_OUTPUT_DIR={0}'.format(self.unity_output_dir),
-                'ANKI_BUILD_UNITY_XCODE_BUILD_DIR=${ANKI_BUILD_UNITY_OUTPUT_DIR}/${CONFIGURATION}-${PLATFORM_NAME}',
-                'ANKI_BUILD_UNITY_BINARY_PATH={0}'.format(self.options.unity_binary_path),
-                #'ANKI_BUILD_PREBUILT_URL={0}'.format(self.options.prebuilt_url),
+                'ANKI_BUILD_UNITY_BUILD_DIR={0}'.format(self.unity_build_dir),
+                'ANKI_BUILD_UNITY_XCODE_BUILD_DIR=${ANKI_BUILD_UNITY_BUILD_DIR}/${CONFIGURATION}-${PLATFORM_NAME}',
+                'ANKI_BUILD_UNITY_EXE={0}'.format(self.options.unity_binary_path),
+                '// ANKI_BUILD_USE_PREBUILT_UNITY=1',
+                
                 'ANKI_BUILD_APP_PATH={0}'.format(self.artifact_path),
                 '']
             
-            ankibuild.util.File.mkdir_p(self.unity_output_dir)
+            ankibuild.util.File.mkdir_p(self.unity_build_dir)
+            ankibuild.util.File.ln_s(self.platform_output_dir, self.unity_output_symlink)
             ankibuild.util.File.ln_s(self.unity_opencv_symlink_target, self.unity_opencv_symlink)
             ankibuild.util.File.write(self.config_path, '\n'.join(xcconfig))
             ankibuild.util.File.mkdir_p(self.artifact_dir)
@@ -245,14 +250,12 @@ class GamePlatformConfiguration(object):
             print_status('Deleting generated files for platform {0}...'.format(self.platform))
         
         # reverse generation
-        ankibuild.util.File.rm_rf(self.workspace_path)
-        ankibuild.util.File.rm_rf(self.derived_data_dir)
-        ankibuild.util.File.rm_rf(self.cmake_project_path)
         if self.platform == 'ios':
-            ankibuild.util.File.rm_rf(self.artifact_dir)
-            ankibuild.util.File.rm(self.unity_opencv_symlink)
-            ankibuild.util.File.rm_rf(self.unity_output_dir)
+            ankibuild.util.File.rm(self.unity_build_symlink)
             ankibuild.util.File.rm(self.unity_output_symlink)
+            ankibuild.util.File.rm(self.unity_opencv_symlink)
+        ankibuild.util.File.rm_rf(self.platform_build_dir)
+        ankibuild.util.File.rm_rf(self.platform_output_dir)
 
 
 ###############
@@ -260,16 +263,8 @@ class GamePlatformConfiguration(object):
 ###############
 
 def main():
-    initialize_colors()
     options = parse_game_arguments()
-    
-    if options.command == 'wipeall!':
-        return wipe_all(options, GAME_ROOT, kill_unity=True)
-    
-    if options.command in ('generate', 'build', 'install', 'run'):
-        configure_anki_util(options)
-    
-    configure_platforms(options, GamePlatformConfiguration, [options.output_dir])
+    configure(options, GAME_ROOT, GamePlatformConfiguration, [options.build_dir, options.output_dir])
 
 if __name__ == '__main__':
     main()
