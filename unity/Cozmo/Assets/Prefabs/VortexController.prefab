@@ -4501,6 +4501,13 @@ MonoBehaviour:
   - 1.04999995
   lightningMinCountAtSpeedMax: 8
   lightningMaxCountAtSpeedMax: 16
+  imageGear: {fileID: 11466948}
+  gearDefaultColor: {r: .68194747, g: .176470578, b: 1, a: 1}
+  playerColors:
+  - {r: .196078449, g: .701960802, b: .890196145, a: 1}
+  - {r: .105882362, g: .968627512, b: .290196091, a: 1}
+  - {r: .956862807, g: .764705956, b: .0156862754, a: 1}
+  - {r: .90196085, g: .0352941193, b: .0352941193, a: 1}
   maxPlayerInputTime: 3
   scoreDisplayFillFade: .75
   scoreDisplayFillAlpha: .800000012
@@ -7656,7 +7663,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: .392156869, b: 1, a: 1}
+  m_Color: {r: .644726276, g: .16911763, b: 1, a: 1}
   m_Sprite: {fileID: 21300000, guid: 4d18592def5ca495b9e7db5e3faed598, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
