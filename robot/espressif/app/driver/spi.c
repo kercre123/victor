@@ -55,10 +55,10 @@ uint32 ICACHE_FLASH_ATTR spi_master_init(const SPIBus spi_no, uint32 frequency)
 	else if (spi_no == HSPI)
 	{
 		WRITE_PERI_REG(PERIPHS_IO_MUX, 0x105|(clock_div_flag<<9)); // Set bit 9 if sysclock required
-		//PIN_FUNC_SELECT(PERIPHS_IO_MUX_MTDI_U, 2); //GPIO12 is HSPI MISO pin (Master Data In), not used for SIO
-		PIN_FUNC_SELECT(PERIPHS_IO_MUX_MTCK_U, 2); //GPIO13 is HSPI MOSI pin (Master Data Out)
-		PIN_FUNC_SELECT(PERIPHS_IO_MUX_MTMS_U, 2); //GPIO14 is HSPI CLK pin (Clock)
-		PIN_FUNC_SELECT(PERIPHS_IO_MUX_MTDO_U, 2); //GPIO15 is HSPI CS pin (Chip Select / Slave Select)
+		//PIN_FUNC_SELECT(PERIPHS_IO_MUX_MTDI_U, FUNC_HSPI); //GPIO12 is HSPI MISO pin (Master Data In), not used for SIO
+		PIN_FUNC_SELECT(PERIPHS_IO_MUX_MTCK_U, FUNC_HSPI); //GPIO13 is HSPI MOSI pin (Master Data Out)
+		PIN_FUNC_SELECT(PERIPHS_IO_MUX_MTMS_U, FUNC_HSPI); //GPIO14 is HSPI CLK pin (Clock)
+		PIN_FUNC_SELECT(PERIPHS_IO_MUX_MTDO_U, FUNC_HSPI); //GPIO15 is HSPI CS pin (Chip Select / Slave Select)
 		// TODO What is this doing?
 		SET_PERI_REG_MASK(SPI_USER(spi_no), SPI_CS_SETUP|SPI_CS_HOLD|SPI_USR_COMMAND|SPI_USR_MISO);
 		CLEAR_PERI_REG_MASK(SPI_USER(spi_no), SPI_FLASH_MODE);

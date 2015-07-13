@@ -18,14 +18,6 @@
  */
 LOCAL bool ICACHE_FLASH_ATTR userTask(uint32_t param)
 {
-
-  spi_mast_write(HSPI, 0x7EAA997E);
-  spi_mast_write(HSPI, 0x00FF0F32);
-  spi_mast_start_transaction(HSPI, 0, 0, 0, 0, 64, 64, 0);
-  os_printf("SPI transaction started\r\n");
-  while (spi_mast_busy(HSPI));
-  os_printf("SPI readback: %08x %08x\r\n", spi_mast_read(HSPI), spi_mast_read(HSPI));
-
   return false;
 }
 
@@ -163,9 +155,6 @@ static void ICACHE_FLASH_ATTR system_init_done(void)
 
   // Initalize the FPGA interface
   fpgaInit();
-
-  // Setup the SPI bus to talk to the FPGA
-  spi_master_init(HSPI, 2000000);
 
   // Set up shared background tasks
   task0Init();

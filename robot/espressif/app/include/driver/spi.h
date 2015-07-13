@@ -17,6 +17,8 @@
 #define IODATA_START_ADDR                 BIT0
 #define SPI_BUFF_BYTE_NUM                    32
 
+#define FUNC_HSPI 2
+
 /// Number of 32 bit words that can be put into the fifo in single direction mode
 #define SPI_FIFO_DEPTH 16
 /// Number of 32 bit words that can be put into the fifo in bidirectional mode
