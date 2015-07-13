@@ -86,47 +86,55 @@ namespace Cozmo {
             if(animDir != nullptr) {
               dirent* frameEntry = nullptr;
               while ( (frameEntry = readdir(animDir)) != nullptr) {
-                if(frameEntry->d_type == DT_REG) {
+                if(frameEntry->d_type == DT_REG && frameEntry->d_name[0] != '.') {
                   
                   // Get the frame number in this filename
                   const std::string filename(frameEntry->d_name);
+                  size_t underscorePos = filename.find_last_of("_");
                   size_t dotPos = filename.find_last_of(".");
                   if(dotPos == std::string::npos) {
                     PRINT_NAMED_ERROR("FaceAnimationManager.ReadFaceAnimationDir",
                                       "Could not find '.' in frame filename %s\n",
                                       filename.c_str());
                     return RESULT_FAIL;
-                  } else if(dotPos < FRAME_NUM_DIGITS) {
+                  } else if(underscorePos == std::string::npos) {
                     PRINT_NAMED_ERROR("FaceAnimationManager.ReadFaceAnimationDir",
-                                      "Unexpected position (%lu) for '.' in frame filename %s\n",
-                                      dotPos, filename.c_str());
+                                      "Could not find '_' in frame filename %s\n",
+                                      filename.c_str());
+                    return RESULT_FAIL;
+                  } else if(dotPos <= underscorePos+1) {
+                    PRINT_NAMED_ERROR("FaceAnimationManager.ReadFaceAnimationDir",
+                                      "Unexpected relative positions for '.' and '_' in frame filename %s\n",
+                                      filename.c_str());
                     return RESULT_FAIL;
                   }
                   
-                  const std::string digitStr(filename.substr(dotPos-FRAME_NUM_DIGITS, FRAME_NUM_DIGITS));
+                  const std::string digitStr(filename.substr(underscorePos+1,
+                                                             (dotPos-underscorePos-1)));
                   
                   s32 frameNum = 0;
                   try {
                     frameNum = std::stoi(digitStr);
                   } catch (std::invalid_argument&) {
                     PRINT_NAMED_ERROR("FaceAnimationManager.ReadFaceAnimationDir",
-                                      "Could not get %d-digit frame number from substring '%s' "
+                                      "Could not get frame number from substring '%s' "
                                       "of filename '%s'.\n",
-                                      FRAME_NUM_DIGITS, digitStr.c_str(), filename.c_str());
+                                      digitStr.c_str(), filename.c_str());
+                    return RESULT_FAIL;
+                  }
+                  
+                  if(frameNum < 0) {
+                    PRINT_NAMED_ERROR("FaceAnimationManager.ReadFaceAnimationDir",
+                                      "Found negative frame number (%d) for filename '%s'.\n",
+                                      frameNum, filename.c_str());
                     return RESULT_FAIL;
                   }
                   
                   AvailableAnim& anim = _availableAnimations[animName];
                   
-                  if(frameNum > 0) {
+                  // Add empty frames if there's a gap
+                  if(frameNum > 1) {
                     
-                    if(anim.rleFrames.empty()) {
-                      PRINT_NAMED_ERROR("FaceAnimationManager.ReadFaceAnimationDir",
-                                        "No frame zero found in '%s'.\n", filename.c_str());
-                      return RESULT_FAIL;
-                    }
-                    
-                    // Add empty frames if there's a gap
                     s32 emptyFramesAdded = 0;
                     while(anim.rleFrames.size() < frameNum-1) {
                       anim.rleFrames.push_back({});
@@ -183,7 +191,7 @@ namespace Cozmo {
   } // ReadFaceAnimationDir()
   
   
-  bool FaceAnimationManager::SetRootDir(const char* dir)
+  bool FaceAnimationManager::SetRootDir(const std::string dir)
   {
     _hasRootDir = false;
     

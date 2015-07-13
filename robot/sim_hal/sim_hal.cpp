@@ -146,7 +146,7 @@ namespace Anki {
       s32 facePosX_ = 0;
       s32 facePosY_ = 0;
       TimeStamp_t faceBlinkStartTime_ = 0;
-      const u32 FACE_BLINK_DURATION_MS = 200;
+      const u32 FACE_BLINK_DURATION_MS = 100;
       
       // Audio
       // (Can't actually play sound in simulator, but proper handling of audio frames is still

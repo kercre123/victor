@@ -129,6 +129,20 @@ namespace Anki {
       IS_LOCALIZED            = 0x00000001
     } GameStatusFlag;
 
+    
+    // Bit flags for enabling/disabling animation tracks on the robot
+    typedef enum {
+      DISABLE_ALL_TRACKS = 0,
+      HEAD_TRACK = 0x01,
+      LIFT_TRACK = 0x02,
+      BODY_TRACK = 0x04,
+      FACE_IMAGE_TRACK = 0x08,
+      FACE_POS_TRACK   = 0x10,
+      BACKPACK_LIGHTS_TRACK = 0x20,
+      AUDIO_TRACK = 0x40,
+      BLINK_TRACK = 0x80,
+      ENABLE_ALL_TRACKS = 0xFF
+    } AnimTrackFlag;
 
     // A key associated with each computed pose retrieved from history
     // to be used to check its validity at a later time.

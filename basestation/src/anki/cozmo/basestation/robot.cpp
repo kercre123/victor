@@ -31,6 +31,10 @@
 #include "anki/cozmo/basestation/ramp.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
 #include "opencv2/highgui/highgui.hpp" // For imwrite() in ProcessImage
+
+#include "anki/cozmo/basestation/soundManager.h"
+#include "anki/cozmo/basestation/faceAnimationManager.h"
+
 #include <fstream>
 #include <dirent.h>
 #include <sys/stat.h>
@@ -1243,6 +1247,9 @@ namespace Anki {
     // Read the animations in a dir
     void Robot::ReadAnimationDir(bool playLoadedAnimation)
     {
+      SoundManager::getInstance()->SetRootDir();
+      FaceAnimationManager::getInstance()->SetRootDir();
+      
       const std::string animationFolder = PREPEND_SCOPED_PATH(Animation, "");
       std::string animationId;
       s32 loadedFileCount = 0;
@@ -1250,7 +1257,7 @@ namespace Anki {
       if ( dir != nullptr) {
         dirent* ent = nullptr;
         while ( (ent = readdir(dir)) != nullptr) {
-          if (ent->d_type == DT_REG) {
+          if (ent->d_type == DT_REG && ent->d_name[0] != '.') {
             std::string fullFileName = animationFolder + ent->d_name;
             struct stat attrib{0};
             int result = stat(fullFileName.c_str(), &attrib);
