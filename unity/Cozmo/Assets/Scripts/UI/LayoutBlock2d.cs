@@ -15,7 +15,7 @@ public class LayoutBlock2d : MonoBehaviour {
 
 	ObservedObject currentObject = null;
 
-	private bool validated = false;
+	public bool Validated { get; private set; }
 
 	//we can use this class to display a layout block
 	public void Initialize(BuildInstructionsCube block, int dupe) {
@@ -31,7 +31,7 @@ public class LayoutBlock2d : MonoBehaviour {
 		}
 
 		image_check.gameObject.SetActive(false);
-		validated = false;
+		Validated = false;
 		currentObject = null;
 	}
 
@@ -55,7 +55,7 @@ public class LayoutBlock2d : MonoBehaviour {
 		}
 		
 		image_check.gameObject.SetActive(false);
-		validated = false;
+		Validated = false;
 		Block = null;
 		currentObject = observedObject;
 	}
@@ -81,9 +81,13 @@ public class LayoutBlock2d : MonoBehaviour {
 		}
 		
 		image_check.gameObject.SetActive(false);
-		validated = false;
+		Validated = false;
 		Block = null;
 		currentObject = null;
+	}
+
+	public void SetLights(Color color) {
+		SetLights(color, color, color, color);
 	}
 
 	public void SetLights(Color color1, Color color2, Color color3, Color color4) {
@@ -94,11 +98,11 @@ public class LayoutBlock2d : MonoBehaviour {
 	}
 
 	public void Validate(bool valid=true) {
-		if(valid && !validated) {
+		if(valid && !Validated) {
 			if(validatedSound != null) AudioManager.PlayOneShot(validatedSound);
 		}
 		image_check.gameObject.SetActive(valid);
-		validated = valid;
+		Validated = valid;
 	}
 
 }
