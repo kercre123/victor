@@ -19,7 +19,7 @@ public class CozmoEmotionManager : MonoBehaviour {
 		YOUR_TURN,
 		SPIN_WHEEL,
 		WATCH_SPIN,
-		TAP_WHEEL,
+		TAP_CUBE,
 		WATCH_RESULT,
 		EXPECT_REWARD,
 		KNOWS_WRONG,
