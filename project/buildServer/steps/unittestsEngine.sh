@@ -1,0 +1,65 @@
+set -e
+TESTNAME=cozmoEngine
+PROJECTNAME=cozmoEngine
+PROJECTROOT=
+# change dir to the project dir, no matter where script is executed from
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+echo "Entering directory \`${DIR}'"
+cd $DIR
+
+GIT=`which git`
+if [ -z $GIT ];then
+  echo git not found
+  exit 1
+fi
+TOPLEVEL=`$GIT rev-parse --show-toplevel`
+BUILDTOOLS=$TOPLEVEL/tools/anki-util/tools/build-tools
+
+# prepare
+PROJECT=$TOPLEVEL/$PROJECTROOT/generated/mac
+BUILD_TYPE="Debug"
+DERIVED_DATA=$PROJECT/DerivedData
+
+#$TOPLEVEL/tools/build/preBuild.sh "$DERIVED_DATA/$BUILD_TYPE" UNIT_TEST
+
+#echo "Entering directory \`${PROJECT}'"
+#cd $PROJECT
+#mkdir -p $DERIVED_DATA/$BUILD_TYPE/testdata
+
+# build
+xcodebuild \
+-project $PROJECT/$PROJECTNAME.xcodeproj \
+-target ${TESTNAME}UnitTest \
+-sdk macosx \
+-configuration $BUILD_TYPE  \
+SYMROOT="$DERIVED_DATA" \
+OBJROOT="$DERIVED_DATA" \
+build 
+
+
+# execute
+set -o pipefail
+#ANKIWORKROOT="$DERIVED_DATA/$BUILD_TYPE/testdata" \
+#ANKICONFIGROOT="$DERIVED_DATA/$BUILD_TYPE/" \
+#echo \
+DYLD_FRAMEWORK_PATH="$DERIVED_DATA/$BUILD_TYPE/" \
+DYLD_LIBRARY_PATH="$DERIVED_DATA/$BUILD_TYPE/" \
+GTEST_OUTPUT=xml:$DERIVED_DATA/$BUILD_TYPE/${TESTNAME}GoogleTest_.xml \
+$BUILDTOOLS/tools/ankibuild/multiTest.py \
+--silent \
+--path $DERIVED_DATA/$BUILD_TYPE \
+--executable ${TESTNAME}UnitTest \
+--stdout_file \
+--xml_dir "$DERIVED_DATA/$BUILD_TYPE" \
+--xml_basename ${TESTNAME}GoogleTest_
+
+EXIT_STATUS=$?
+set -e
+
+#tarball files together
+echo "Entering directory \`${DERIVED_DATA}/${BUILD_TYPE}'"
+cd $DERIVED_DATA/$BUILD_TYPE
+tar czf ${TESTNAME}GoogleTest.tar.gz ${TESTNAME}GoogleTest_*
+
+# exit
+exit $EXIT_STATUS

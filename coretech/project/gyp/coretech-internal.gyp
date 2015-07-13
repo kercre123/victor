@@ -47,6 +47,16 @@
       '<(coretech_external_path)/opencv-2.4.8/modules/features2d/include',
       '<(coretech_external_path)/opencv-2.4.8/modules/flann/include',
     ],
+    'opencv_libs': [
+      '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_core.dylib',
+      '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_imgproc.dylib',
+      '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_highgui.dylib',
+      '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_calib3d.dylib',
+      '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_contrib.dylib',
+      '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_objdetect.dylib',
+      '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_video.dylib',
+      '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_features2d.dylib',
+    ],
 
     'compiler_flags': [
       '-Wno-unused-function',
@@ -230,6 +240,16 @@
           ],
       },
     },
+    'conditions': [    
+      [
+        "OS=='ios'",
+        {
+          'defines': [
+            'ANKI_IOS_BUILD=1',
+          ],
+        },
+      ],
+    ],
   },
 
   'conditions': [    
@@ -250,24 +270,7 @@
         },
       },
     ],
-    # [
-    #   "OS=='ios' or OS=='mac'",
-    #   {
-    #       'targets': [
-    #       {
-    #         # fake target to see all of the sources...
-    #         'target_name': 'cti_all_lib_targets',
-    #         'type': 'none',
-    #         'sources': [
-    #           '<!@(cat <(messaging_source))',
-    #           '<!@(cat <(messaging_robot_source))',
-    #         ],
-    #         'dependencies': [
-    #         ]
-    #       },
-    #     ],
-    #   },
-    # ],
+
 
 
     # UNITTEST CRAP HERE
@@ -288,7 +291,7 @@
             'MACOSX_DEPLOYMENT_TARGET': '10.9',
             'LD_RUNPATH_SEARCH_PATHS': '@loader_path',
             'LD_DYLIB_INSTALL_NAME': '@loader_path/$(EXECUTABLE_PATH)',
-            'FRAMEWORK_SEARCH_PATHS':'<(cti_gtest_path)',
+            'FRAMEWORK_SEARCH_PATHS':'<(cti-gtest_path)',
             }
         },
 
@@ -312,8 +315,8 @@
               'ctiCommon',
               'ctiVision',
               'ctiPlanning',
-              '<(cti_util_gyp_path):util',
-              '<(cti_util_gyp_path):jsoncpp',
+              '<(cti-util_gyp_path):util',
+              '<(cti-util_gyp_path):jsoncpp',
             ],
             'sources': [ 
               '<!@(cat <(common_test_source))',
@@ -327,30 +330,16 @@
               ['exclude', 'run_coreTechPlanningStandalone.cpp'],
             ],
             'libraries': [
-              '<(cti_gtest_path)/gtest.framework',
-              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_core.dylib',
-              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_imgproc.dylib',
-              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_highgui.dylib',
-              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_calib3d.dylib',
-              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_contrib.dylib',
-              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_objdetect.dylib',
-              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_video.dylib',
-              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_features2d.dylib',
+              '<(cti-gtest_path)/gtest.framework',
+              '<@(opencv_libs)',
             ],
             'copies': [
               {
                 'files': [
-                  '<(cti_gtest_path)/gtest.framework',
+                  '<(cti-gtest_path)/gtest.framework',
                 ],
                 'destination': '<(PRODUCT_DIR)',
               },
-              # {
-              #   # this replaces copyUnitTestData.sh
-              #   'files': [
-              #     '../../resources/config',
-              #   ],
-              #   'destination': '<(PRODUCT_DIR)/BaseStation',
-              # },
             ],
           }, # end unittest target
 
@@ -389,11 +378,11 @@
         ],
       },
       'defines': [
-        'SYSTEM_ROOT_PATH=<(cozmo_engine_path)'
+        'SYSTEM_ROOT_PATH=<(cti-cozmo_engine_path)'
       ],
       'dependencies': [
-        '<(cti_util_gyp_path):util',
-        '<(cti_util_gyp_path):jsoncpp',
+        '<(cti-util_gyp_path):util',
+        '<(cti-util_gyp_path):jsoncpp',
       ],
       'type': '<(common_library_type)',
       'conditions': [
@@ -435,7 +424,7 @@
       },
       'dependencies': [
         'ctiCommon',
-        '<(cti_util_gyp_path):util',
+        '<(cti-util_gyp_path):util',
       ],
       'type': '<(messaging_library_type)',
     },
@@ -473,7 +462,7 @@
       },
       'dependencies': [
         'ctiCommon',
-        '<(cti_util_gyp_path):jsoncpp',
+        '<(cti-util_gyp_path):jsoncpp',
       ],
       'defines': [
         'CORETECH_BASESTATION'
@@ -520,8 +509,8 @@
       },
       'dependencies': [
         'ctiCommon',
-        '<(cti_util_gyp_path):jsoncpp',
-        '<(cti_util_gyp_path):util',
+        '<(cti-util_gyp_path):jsoncpp',
+        '<(cti-util_gyp_path):util',
       ],
       'type': '<(vision_library_type)',
     },

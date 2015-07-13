@@ -33,7 +33,7 @@ Supervisor {
   }%
 
   %{ if fields.active.value then }%
-    controller "block_controller"
+    controller "webotsCtrlLightCube"
   %{ end }%
 
   name IS name

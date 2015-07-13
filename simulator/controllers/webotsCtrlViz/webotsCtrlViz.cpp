@@ -1,5 +1,5 @@
 /*
- * File:          cozmo_viz_controller.cpp
+ * File:          webotsCtrlViz.cpp
  * Date:          03-19-2014
  * Description:   Interface for basestation to all visualization functions in Webots including 
  *                cozmo_physics draw functions, display window text printing, and other custom display

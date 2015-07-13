@@ -6,6 +6,7 @@
     'energy_library_type': 'static_library',
     'ctrlLightCube_source': 'ctrlLightCube.lst',
     'ctrlRobot_source': 'ctrlRobot.lst',
+    'ctrlViz_source': 'ctrlViz.lst',
     
     # TODO: should this be passed in, or shared?
     'coretech_defines': [
@@ -30,6 +31,17 @@
       '<(coretech_external_path)/opencv-2.4.8/modules/features2d/include',
       '<(coretech_external_path)/opencv-2.4.8/modules/flann/include',
     ],
+    'opencv_libs': [
+      '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_core.dylib',
+      '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_imgproc.dylib',
+      '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_highgui.dylib',
+      '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_calib3d.dylib',
+      '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_contrib.dylib',
+      '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_objdetect.dylib',
+      '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_video.dylib',
+      '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_features2d.dylib',
+    ],
+
     'webots_includes': [
       '<(webots_path)/include/controller/cpp'
     ],
@@ -161,9 +173,6 @@
     'cflags_cc': ['<@(compiler_cpp_flags)'],
     'ldflags': ['<@(linker_flags)'],
     'defines': ['<@(coretech_defines)'],
-    'include_dirs': [
-      '../../tools/message-buffers/support/cpp/include',
-    ],
     'xcode_settings': {
       'OTHER_CFLAGS': ['<@(compiler_c_flags)'],
       'OTHER_CPLUSPLUSFLAGS': ['<@(compiler_cpp_flags)'],
@@ -216,6 +225,16 @@
           ],
       },
     },
+    'conditions': [    
+      [
+        "OS=='ios'",
+        {
+          'defines': [
+            'ANKI_IOS_BUILD=1',
+          ],
+        },
+      ],
+    ],
   },
 
   'conditions': [    
@@ -239,24 +258,7 @@
         },
       },
     ],
-    # [
-    #   "OS=='ios' or OS=='mac'",
-    #   {
-    #       'targets': [
-    #       {
-    #         # fake target to see all of the sources...
-    #         'target_name': 'all_lib_targets',
-    #         'type': 'none',
-    #         'sources': [
-    #           '<!@(cat <(engine_source))',
-    #         ],
-    #         'dependencies': [
-    #           'cozmoEngine',
-    #         ]
-    #       },
-    #     ],
-    #   },
-    # ],
+
 
 
     # UNITTEST CRAP HERE
@@ -290,7 +292,7 @@
               '<@(webots_includes)',
             ],
             'dependencies': [
-              '<(cti_gyp_path):ctiCommonRobot',
+              '<(ce-cti_gyp_path):ctiCommonRobot',
             ],
             'sources': [ '<!@(cat <(ctrlLightCube_source))' ],
             'defines': [
@@ -303,6 +305,33 @@
           }, # end controller Block
 
           {
+            'target_name': 'webotsCtrlViz',
+            'type': 'executable',
+            'include_dirs': [
+              # '../../robot/include',
+              '../../include',
+              # '../../simulator/include',
+              '<@(webots_includes)',
+              '<@(opencv_includes)',
+            ],
+            'dependencies': [
+              '<(ce-cti_gyp_path):ctiCommon',
+              '<(ce-cti_gyp_path):ctiVision',
+              '<(ce-cti_gyp_path):ctiMessaging',
+              '<(ce-util_gyp_path):util',
+            ],
+            'sources': [ '<!@(cat <(ctrlViz_source))' ],
+            'defines': [
+              # 'COZMO_ROBOT',
+              # 'SIMULATOR'
+            ],
+            'libraries': [
+              '<(webots_path)/lib/libCppController.dylib',
+              '<@(opencv_libs)',
+            ],
+          }, # end controller viz
+
+          {
             'target_name': 'webotsCtrlRobot',
             'type': 'executable',
             'include_dirs': [
@@ -313,11 +342,11 @@
               '<@(opencv_includes)',
             ],
             'dependencies': [
-              '<(cti_gyp_path):ctiCommonRobot',
-              '<(cti_gyp_path):ctiVisionRobot',
-              '<(cti_gyp_path):ctiMessagingRobot',
-              '<(cti_gyp_path):ctiPlanningRobot',
-              '<(util_gyp_path):utilEmbedded',
+              '<(ce-cti_gyp_path):ctiCommonRobot',
+              '<(ce-cti_gyp_path):ctiVisionRobot',
+              '<(ce-cti_gyp_path):ctiMessagingRobot',
+              '<(ce-cti_gyp_path):ctiPlanningRobot',
+              '<(ce-util_gyp_path):utilEmbedded',
             ],
             'sources': [ '<!@(cat <(ctrlRobot_source))' ],
             'defines': [
@@ -326,14 +355,7 @@
             ],
             'libraries': [
               '<(webots_path)/lib/libCppController.dylib',
-              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_core.dylib',
-              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_imgproc.dylib',
-              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_highgui.dylib',
-              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_calib3d.dylib',
-              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_contrib.dylib',
-              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_objdetect.dylib',
-              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_video.dylib',
-              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_features2d.dylib',
+              '<@(opencv_libs)',
             ],
           }, # end controller Robot
 
@@ -346,14 +368,14 @@
             ],
             'dependencies': [
               'cozmoEngine',
-              '<(cti_gyp_path):ctiCommon',
-              '<(cti_gyp_path):ctiCommonRobot',
-              '<(cti_gyp_path):ctiMessaging',
-              '<(cti_gyp_path):ctiPlanning',
-              '<(cti_gyp_path):ctiVision',
-              '<(cti_gyp_path):ctiVisionRobot',
-              '<(util_gyp_path):jsoncpp',
-              '<(util_gyp_path):util',
+              '<(ce-cti_gyp_path):ctiCommon',
+              '<(ce-cti_gyp_path):ctiCommonRobot',
+              '<(ce-cti_gyp_path):ctiMessaging',
+              '<(ce-cti_gyp_path):ctiPlanning',
+              '<(ce-cti_gyp_path):ctiVision',
+              '<(ce-cti_gyp_path):ctiVisionRobot',
+              '<(ce-util_gyp_path):jsoncpp',
+              '<(ce-util_gyp_path):util',
             ],
             'sources': [ '<!@(cat <(engine_test_source))' ],
             'sources/': [
@@ -362,30 +384,16 @@
               ['exclude', 'resaveBlockImages.m'],
             ],
             'libraries': [
-              '<(gtest_path)/gtest.framework',
-              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_core.dylib',
-              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_imgproc.dylib',
-              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_highgui.dylib',
-              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_calib3d.dylib',
-              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_contrib.dylib',
-              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_objdetect.dylib',
-              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_video.dylib',
-              '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_features2d.dylib',
+              '<(ce-gtest_path)/gtest.framework',
+              '<@(opencv_libs)',
             ],
             'copies': [
               {
                 'files': [
-                  '<(gtest_path)/gtest.framework',
+                  '<(ce-gtest_path)/gtest.framework',
                 ],
                 'destination': '<(PRODUCT_DIR)',
               },
-              # {
-              #   # this replaces copyUnitTestData.sh
-              #   'files': [
-              #     '../../resources/config',
-              #   ],
-              #   'destination': '<(PRODUCT_DIR)/BaseStation',
-              # },
             ],
           }, # end unittest target
 
@@ -424,12 +432,14 @@
         '../../basestation/src',
         '../../basestation/include',
         '../../include',
+        '../../generated/clad/engine',
         '<@(opencv_includes)',
       ],
       'direct_dependent_settings': {
         'include_dirs': [
           '../../basestation/include',
           '../../include',
+          '../../generated/clad/engine',
         ],
         'defines': [
           'COZMO_BASESTATION'
@@ -439,89 +449,15 @@
         'COZMO_BASESTATION'
       ],
       'dependencies': [
-        '<(util_gyp_path):util',
-        '<(cti_gyp_path):ctiCommon',
-        '<(cti_gyp_path):ctiMessaging',
-        '<(cti_gyp_path):ctiPlanning',
-        '<(cti_gyp_path):ctiVision',
+        '<(ce-util_gyp_path):util',
+        '<(ce-cti_gyp_path):ctiCommon',
+        '<(ce-cti_gyp_path):ctiMessaging',
+        '<(ce-cti_gyp_path):ctiPlanning',
+        '<(ce-cti_gyp_path):ctiVision',
       ],
       'type': '<(energy_library_type)',
     },
     
-
-    # # Post-build target to strip Android libs
-    # {
-    #   'target_name': 'strip_android_libs',
-    #   'type': 'none',
-    #   'dependencies': [
-    #     '<(driveengine_target_name)',
-    #     '<(basestation_target_name)',
-    #   ],
-    #   'target_conditions': [
-    #     [
-    #       "OS=='android' and use_das==1",
-    #       {
-    #         'actions': [
-    #           {
-    #             'action_name': 'strip_debug_symbols',
-    #             'inputs': [
-    #               '<(SHARED_LIB_DIR)/lib<(driveengine_target_name).so',
-    #               '<(SHARED_LIB_DIR)/libDriveAudioEngine.so',
-    #               '<(SHARED_LIB_DIR)/libDAS.so',
-    #               '<(SHARED_LIB_DIR)/libc++_shared.so',
-    #             ],
-    #             'outputs': [
-    #               '<(SHARED_LIB_DIR)/../libs-debug/lib<(driveengine_target_name).so',
-    #               '<(SHARED_LIB_DIR)/../libs-debug/libDriveAudioEngine.so',
-    #               '<(SHARED_LIB_DIR)/../libs-debug/libDAS.so',
-    #               '<(SHARED_LIB_DIR)/../libs-debug/libc++_shared.so',
-    #             ],
-    #             'action': [
-    #               'python',
-    #               'android-strip-libs.py',
-    #               '--ndk-toolchain',
-    #               '<(ndk_root)/toolchains/arm-linux-androideabi-4.8/prebuilt/darwin-x86_64',
-    #               '--symbolicated-libs-dir',
-    #               '<(SHARED_LIB_DIR)/../lib-debug',
-    #               '<@(_inputs)',
-    #             ],
-    #           },
-    #         ],
-    #       },
-    #     ], #end android
-    #     [
-    #       "OS=='android' and use_das==0",
-    #       {
-    #         'actions': [
-    #           {
-    #             'action_name': 'strip_debug_symbols',
-    #             'inputs': [
-    #               '<(SHARED_LIB_DIR)/lib<(driveengine_target_name).so',
-    #               '<(SHARED_LIB_DIR)/libDriveAudioEngine.so',
-    #               '<(SHARED_LIB_DIR)/libc++_shared.so',
-    #             ],
-    #             'outputs': [
-    #               '<(SHARED_LIB_DIR)/../libs-debug/lib<(driveengine_target_name).so',
-    #               '<(SHARED_LIB_DIR)/../libs-debug/libDriveAudioEngine.so',
-    #               '<(SHARED_LIB_DIR)/../libs-debug/libc++_shared.so',
-    #             ],
-    #             'action': [
-    #               'python',
-    #               'android-strip-libs.py',
-    #               '--ndk-toolchain',
-    #               '<(ndk_root)/toolchains/arm-linux-androideabi-4.8/prebuilt/darwin-x86_64',
-    #               '--symbolicated-libs-dir',
-    #               '<(SHARED_LIB_DIR)/../lib-debug',
-    #               '<@(_inputs)',
-    #             ],
-    #           },
-    #         ],
-    #       },
-    #     ], #end android
-    #   ],
-
-
-    # },
 
 
   ] # end targets

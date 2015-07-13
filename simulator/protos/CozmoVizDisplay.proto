@@ -107,7 +107,7 @@ Supervisor {
     }
   ]
 
-  controller "cozmo_viz_controller"
+  controller "webotsCtrlViz"
 } # Supervisor
 
 } # PROTO
