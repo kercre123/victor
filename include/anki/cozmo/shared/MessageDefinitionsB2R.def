@@ -390,6 +390,12 @@ ADD_MESSAGE_MEMBER(s8, xCen)
 ADD_MESSAGE_MEMBER(s8, yCen)
 END_MESSAGE_DEFINITION(AnimKeyFrame_FacePosition)
 
+// AnimKeyFrame_Blink
+START_MESSAGE_DEFINITION(AnimKeyFrame_Blink, 1)
+ADD_MESSAGE_MEMBER(u8, enable)
+ADD_MESSAGE_MEMBER(u8, blinkNow)
+END_MESSAGE_DEFINITION(AnimKeyFrame_Blink)
+
 // AnimKeyFrame_FaceImage
 // TODO: Need variable-length arrays!
 START_MESSAGE_DEFINITION(AnimKeyFrame_FaceImage, 1)
@@ -402,10 +408,11 @@ ADD_MESSAGE_MEMBER_ARRAY(u32, colors, 5) // TODO: Use NUM_BACKPACK_LEDS instead 
 END_MESSAGE_DEFINITION(AnimKeyFrame_BackpackLights)
 
 // AnimKeyFrame_BodyMotion
-// TODO: Decide what this really contains. For now, just wheel speeds.
 START_MESSAGE_DEFINITION(AnimKeyFrame_BodyMotion, 1)
-ADD_MESSAGE_MEMBER(s16, wheelSpeedL_mmps)
-ADD_MESSAGE_MEMBER(s16, wheelSpeedR_mmps)
+ADD_MESSAGE_MEMBER(s16, speed)               // Commanded speed in mm/sec or deg/sec
+ADD_MESSAGE_MEMBER(s16, curvatureRadius_mm)  // +ve: curves left, -ve: curves right, ...
+                                             // ...u16_MAX/MIN: drive straight...
+                                             // ...0: turn in place (+ve speed: left, -ve speed: right)
 END_MESSAGE_DEFINITION(AnimKeyFrame_BodyMotion)
 
 // AnimKeyFrame_EndOfAnimation

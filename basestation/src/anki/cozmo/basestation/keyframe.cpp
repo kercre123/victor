@@ -233,6 +233,15 @@ return RESULT_FAIL; \
     {
       GET_MEMBER_FROM_JSON(jsonRoot, animName);
       
+      // TODO: Take this out once root path is part of AnimationTool!
+      size_t lastSlash = _animName.find_last_of("/");
+      if(lastSlash != std::string::npos) {
+        PRINT_NAMED_WARNING("FaceAnimationKeyFrame.SetMembersFromJson",
+                            "Removing path from animation name: %s\n",
+                            _animName.c_str());
+        _animName = _animName.substr(lastSlash+1, std::string::npos);
+      }
+      
       _numFrames = FaceAnimationManager::getInstance()->GetNumFrames(_animName);
       _curFrame = 0;
       
@@ -381,6 +390,81 @@ return RESULT_FAIL; \
     }
     
 #pragma mark -
+#pragma mark BlinkKeyFrame
+    
+    bool BlinkKeyFrame::IsDone()
+    {
+      if(_streamMsg.blinkNow) {
+        return true;
+      } else if(_curTime_ms >= _duration_ms) {
+        _curTime_ms = 0; // Reset for next time
+        return true;
+      } else {
+        _curTime_ms += SAMPLE_LENGTH_MS;
+        return false;
+      }
+    }
+    
+    RobotMessage* BlinkKeyFrame::GetStreamMessage()
+    {
+      RobotMessage* returnMessage = nullptr;
+      if(_streamMsg.blinkNow) {
+        _streamMsg.enable = true;
+        returnMessage = &_streamMsg;
+      } else {
+        // If not a blink now message, then must be a "disable blink for
+        // some duration" keyframe.
+        if(_curTime_ms == 0) {
+          // Start of the keyframe period: disable blinking
+          _streamMsg.enable = false;
+          returnMessage = &_streamMsg;
+        } else if(_curTime_ms >= _duration_ms) {
+          // Done with disable period: re-enable.
+          _streamMsg.enable = true;
+          returnMessage = &_streamMsg;
+        } else {
+          // Don't do anything in the middle (and return nullptr)
+          // Note that we will not advance to next keyframe during this period
+          // because IsDone() will be false.
+        }
+      }
+      
+      return returnMessage;
+    }
+    
+    Result BlinkKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot)
+    {
+      if(!jsonRoot.isMember("command")) {
+        PRINT_NAMED_ERROR("BlinkKeyFrame.SetMembersFromJson.MissingCommand",
+                          "Missing 'command' field.\n");
+        return RESULT_FAIL;
+      } else if(!jsonRoot["command"].isString()) {
+        PRINT_NAMED_ERROR("BlinkKeyFrame.SetMembersFromJson.BadCommand",
+                          "Expecting 'command' field to be a string.\n");
+        return RESULT_FAIL;
+      }
+      
+      const std::string& commandStr = jsonRoot["command"].asString();
+      if(commandStr == "BLINK") {
+        // Blink now, duration and "enable" don't matter
+        _streamMsg.blinkNow = true;
+      } else if(commandStr == "DISABLE") {
+        // Disable blinking for the given duration
+        _streamMsg.blinkNow = false;
+        GET_MEMBER_FROM_JSON(jsonRoot, duration_ms);
+      } else {
+        PRINT_NAMED_ERROR("BlinkKeyFrame.SetMembersFromJson.BadCommandString",
+                          "Unrecognized string for 'command' field: %s.\n",
+                          commandStr.c_str());
+        return RESULT_FAIL;
+      }
+      
+      _curTime_ms = 0;
+      
+      return RESULT_OK;
+    }
+    
+#pragma mark -
 #pragma mark BackpackLightsKeyFrame
     
     static u32 GetColorAsU32(Json::Value& json)
@@ -436,23 +520,72 @@ _streamMsg.colors[__LED_NAME__] = u32(color) >> 8; } while(0) // Note we shift t
   
     
 #pragma mark -
-#pragma mark BodyPositionKeyFrame
+#pragma mark BodyMotionKeyFrame
     
-    Result BodyPositionKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot)
+    BodyMotionKeyFrame::BodyMotionKeyFrame()
     {
-      // For now just store the wheel speeds directly in the message.
-      // Once we decide what the Json will actually contain, we may need
-      // to read into some private members and fill the streaming message
-      // dynamically in GetStreamMessage()
-      GET_MEMBER_FROM_JSON_AND_STORE_IN(jsonRoot, wheelSpeedL, streamMsg.wheelSpeedL_mmps);
-      GET_MEMBER_FROM_JSON_AND_STORE_IN(jsonRoot, wheelSpeedR, streamMsg.wheelSpeedR_mmps);
+      _stopMsg.speed = 0;
+    }
+    
+    Result BodyMotionKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot)
+    {
+      GET_MEMBER_FROM_JSON(jsonRoot, duration_ms);
+      GET_MEMBER_FROM_JSON_AND_STORE_IN(jsonRoot, speed, streamMsg.speed);
+      
+      if(!jsonRoot.isMember("radius_mm")) {
+        PRINT_NAMED_ERROR("BodyMotionKeyFrame.SetMembersFromJson.MissingRadius",
+                          "Missing 'radius_mm' field.\n");
+        return RESULT_FAIL;
+      } else if(jsonRoot["radius_mm"].isString()) {
+        const std::string& radiusStr = jsonRoot["radius_mm"].asString();
+        if(radiusStr == "TURN_IN_PLACE" || radiusStr == "POINT_TURN") {
+          _streamMsg.curvatureRadius_mm = 0;
+        } else if(radiusStr == "STRAIGHT") {
+          _streamMsg.curvatureRadius_mm = s16_MAX;
+        } else {
+          PRINT_NAMED_ERROR("BodyMotionKeyFrame.BadRadiusString",
+                            "Unrecognized string for 'radius_mm' field: %s.\n",
+                            radiusStr.c_str());
+          return RESULT_FAIL;
+        }
+      } else {
+        _streamMsg.curvatureRadius_mm = jsonRoot["radius_mm"].asInt();
+      }
+
+      _currentTime_ms = 0;
       
       return RESULT_OK;
     }
     
-    RobotMessage* BodyPositionKeyFrame::GetStreamMessage()
+    
+    RobotMessage* BodyMotionKeyFrame::GetStreamMessage()
     {
-      return &_streamMsg;
+      //PRINT_NAMED_INFO("BodyMotionKeyFrame.GetStreamMessage",
+      //                 "currentTime=%d, duration=%d\n", _currentTime_ms, _duration_ms);
+      
+      if(_currentTime_ms == 0) {
+        // Send the motion command at the beginning
+        return &_streamMsg;
+      } else if(_currentTime_ms >= _duration_ms) {
+        // Send a stop command when the duration has passed
+        return &_stopMsg;
+      } else {
+        // Do nothing in the middle. (Note that IsDone() will return false during
+        // this period so the animation track won't advance.)
+        return nullptr;
+      }
+    }
+    
+    bool BodyMotionKeyFrame::IsDone()
+    {
+      // Done once enough time has ticked by
+      if(_currentTime_ms >= _duration_ms) {
+        _currentTime_ms = 0; // Reset for next time
+        return true;
+      } else {
+        _currentTime_ms += SAMPLE_LENGTH_MS;
+        return false;
+      }
     }
     
   } // namespace Cozmo

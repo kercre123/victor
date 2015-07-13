@@ -125,6 +125,45 @@
       "Name" : "RobotAudioKeyFrame", 
       "triggerTime_ms"  : 500,
       "audioName"       : "creep/Robot-PowerOn1Rev2.mp3"
+    }, 
+    {
+      "Name" : "BlinkKeyFrame", 
+      "triggerTime_ms" : 1000, 
+      "command"        : "BLINK"
+    },
+    { 
+      "Name" : "BlinkKeyFrame", 
+      "triggerTime_ms" : 1500,
+      "command"        : "DISABLE", 
+      "duration_ms"    : 1000
+    },      
+    {
+      "Name" : "BodyMotionKeyFrame", 
+      "triggerTime_ms" : 0, 
+      "radius_mm"      : "STRAIGHT", 
+      "speed"          : 30,
+      "duration_ms"    : 500
+    }, 
+    {
+      "Name" : "BodyMotionKeyFrame", 
+      "triggerTime_ms" : 500, 
+      "radius_mm"      : "TURN_IN_PLACE", 
+      "speed"          : 30,
+      "duration_ms"    : 500
+    }, 
+    {
+      "Name" : "BodyMotionKeyFrame", 
+      "triggerTime_ms" : 1000, 
+      "radius_mm"      : "TURN_IN_PLACE", 
+      "speed"          : -30,
+      "duration_ms"    : 500
+    }, 
+    {
+      "Name" : "BodyMotionKeyFrame", 
+      "triggerTime_ms" : 1500, 
+      "radius_mm"      : 50, 
+      "speed"          : 30,
+      "duration_ms"    : 500
     }
   ]
 } 

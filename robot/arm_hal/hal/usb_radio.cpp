@@ -29,7 +29,6 @@ namespace Anki {
       s32 recvBufSize_ = 0;
 
       u8 somWifiState = 0;
-      u8 somBlueState = 0;
     }
 
     Result InitSimRadio(s32 robotID)
@@ -46,26 +45,17 @@ namespace Anki {
       else
       {
         somWifiState = wifi;
-        somBlueState = blue;
       }
     }
 
     bool HAL::RadioIsConnected(void)
     {
-      // Always assumes radio is connected
-      //return true;
-
-      // 2.0 version
-      //return HAL::WifiHasClient();
-
-      if (somBlueState != 0) return true;
       if (somWifiState != 0) return true;
       return false;
     }
 
     void HAL::DisconnectRadio(void)
     {
-      somBlueState = 0;
       somWifiState = 0;
       recvBufSize_ = 0;
     }
@@ -156,7 +146,6 @@ namespace Anki {
             }
             
             if (recvBufSize_ >= headerSize + 4 + dataLen) {
-
               // Copy message contents to buffer
               std::memcpy((void*)buffer, recvBuf_ + headerSize + 4, dataLen);
               retVal = dataLen;
