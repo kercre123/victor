@@ -19,7 +19,7 @@
 
 // TODO: Remove dependency on this
 //#include "anki/cozmo/messageBuffers/robot/robotMessages.h"
-#include "anki/cozmo/messageBuffers/game/UiMessagesG2U.def"
+#include "anki/cozmo/messageBuffers/game/UiMessagesG2U.h"
 
 namespace Anki {
   

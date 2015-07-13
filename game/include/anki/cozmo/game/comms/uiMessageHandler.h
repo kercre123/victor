@@ -17,8 +17,8 @@
 #include <anki/messaging/basestation/IComms.h>
 
 #include "anki/cozmo/basestation/cozmoEngine.h"
-#include "anki/cozmo/messageBuffers/game/UiMessagesG2U.def"
-#include "anki/cozmo/messageBuffers/game/UiMessagesU2G.def"
+#include "anki/cozmo/messageBuffers/game/UiMessagesG2U.h"
+#include "anki/cozmo/messageBuffers/game/UiMessagesU2G.h"
 
 // Enable this if you want to receive/send messages via socket connection.
 // Eventually, this should be disabled by default once the UI layer starts

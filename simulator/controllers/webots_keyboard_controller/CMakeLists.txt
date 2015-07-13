@@ -19,30 +19,30 @@ set(SOURCE_FILES
   webots_keyboard_controller.cpp
 )
 
-add_executable(webots_keyboard_controller 
-  ${SOURCE_FILES} 
-)
+#add_executable(webots_keyboard_controller 
+#  ${SOURCE_FILES} 
+#)
 
-target_link_libraries(webots_keyboard_controller 
-  Cozmo_Basestation
-  Cozmo_Game
-  CoreTech_Common_Basestation
-  CoreTech_Messaging_Basestation
-  CppController # Webots C++ Controller
-  jsoncpp
-  SDL2-2.0
-  ${OPENCV_LIBS}
-  ${ALL_EMBEDDED_LIBRARIES}
-)
+#target_link_libraries(webots_keyboard_controller 
+#  Cozmo_Basestation
+#  Cozmo_Game
+#  CoreTech_Common_Basestation
+#  CoreTech_Messaging_Basestation
+#  CppController # Webots C++ Controller
+#  jsoncpp
+#  SDL2-2.0
+#  ${OPENCV_LIBS}
+#  ${ALL_EMBEDDED_LIBRARIES}
+#)
   
-set_target_properties(webots_keyboard_controller PROPERTIES
-    FOLDER "Webots Controllers"
-)
+#set_target_properties(webots_keyboard_controller PROPERTIES
+#    FOLDER "Webots Controllers"
+#)
 
 # Make sure a copy of the target exists  in input_controller/
 # no matter where the target is actually built.
-add_custom_command(
-  TARGET webots_keyboard_controller
-  POST_BUILD
-  COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:webots_keyboard_controller> ${CMAKE_CURRENT_SOURCE_DIR}/
-)
+#add_custom_command(
+#  TARGET webots_keyboard_controller
+#  POST_BUILD
+#  COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:webots_keyboard_controller> ${CMAKE_CURRENT_SOURCE_DIR}/
+#)
