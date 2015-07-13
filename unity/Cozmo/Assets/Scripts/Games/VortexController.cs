@@ -254,6 +254,7 @@ public class VortexController : GameController {
 		
 		imageGear.color = gearDefaultColor;
 
+		while(playerInputs.Count < numPlayers) playerInputs.Add (new VortexInput());
 	}
 
 	protected override void OnDisable () {
@@ -883,7 +884,7 @@ public class VortexController : GameController {
 		predictedNum = -1;
 		predictedDuration = -1f;
 		predictedTimeAfterLastPeg = -1f;
-		cozmoTapsSubmitted = 0;
+		cozmoTapsSubmitted = -1;
 
 		foreach(ActiveBlock block in playerInputBlocks) block.SetMode(ActiveBlock.Mode.Off);
 	}
@@ -911,7 +912,7 @@ public class VortexController : GameController {
 			}
 		}
 
-		if(cozmoTapsSubmitted == 0 && predictedNum > 0) {
+		if(cozmoTapsSubmitted < 0 && predictedNum > 0) {
 			float time = Time.time - wheel.SpinStartTime;
 			float timeToBid = predictedDuration - predictedTimeAfterLastPeg - (1f + predictedNum * cozmoTimePerTap);
 			if(time > timeToBid) {
@@ -921,10 +922,9 @@ public class VortexController : GameController {
 					cozmoTapsSubmitted = predictedNum;
 				}
 				else {
-					PlayerInputTap(1);
-					cozmoTapsSubmitted = 1;
+				//if(fakeCozmoTaps) {
+					cozmoTapsSubmitted = 0;
 				}
-
 				//Debug.Log("cozmo predictedNum("+predictedNum+") time("+time+") timeToBid("+timeToBid+") predictedDuration("+predictedDuration+")");
 			}
 		}
