@@ -408,10 +408,11 @@ ADD_MESSAGE_MEMBER_ARRAY(u32, colors, 5) // TODO: Use NUM_BACKPACK_LEDS instead 
 END_MESSAGE_DEFINITION(AnimKeyFrame_BackpackLights)
 
 // AnimKeyFrame_BodyMotion
-// TODO: Decide what this really contains. For now, just wheel speeds.
 START_MESSAGE_DEFINITION(AnimKeyFrame_BodyMotion, 1)
-ADD_MESSAGE_MEMBER(s16, wheelSpeedL_mmps)
-ADD_MESSAGE_MEMBER(s16, wheelSpeedR_mmps)
+ADD_MESSAGE_MEMBER(s16, speed_mmPerSec)      // Commanded speed in mm/sec
+ADD_MESSAGE_MEMBER(s16, curvatureRadius_mm)  // +ve: curves left, -ve: curves right, ...
+                                             // ...u16_MAX: point turn left, 16_MIN: point ...
+                                             // ...turn right, 0: straight
 END_MESSAGE_DEFINITION(AnimKeyFrame_BodyMotion)
 
 // AnimKeyFrame_EndOfAnimation

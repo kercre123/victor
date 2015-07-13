@@ -489,23 +489,46 @@ _streamMsg.colors[__LED_NAME__] = u32(color) >> 8; } while(0) // Note we shift t
   
     
 #pragma mark -
-#pragma mark BodyPositionKeyFrame
+#pragma mark BodyMotionKeyFrame
     
-    Result BodyPositionKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot)
+    Result BodyMotionKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot)
     {
-      // For now just store the wheel speeds directly in the message.
-      // Once we decide what the Json will actually contain, we may need
-      // to read into some private members and fill the streaming message
-      // dynamically in GetStreamMessage()
-      GET_MEMBER_FROM_JSON_AND_STORE_IN(jsonRoot, wheelSpeedL, streamMsg.wheelSpeedL_mmps);
-      GET_MEMBER_FROM_JSON_AND_STORE_IN(jsonRoot, wheelSpeedR, streamMsg.wheelSpeedR_mmps);
+      GET_MEMBER_FROM_JSON(jsonRoot, duration_ms);
+      GET_MEMBER_FROM_JSON_AND_STORE_IN(jsonRoot, radius_mm,  streamMsg.curvatureRadius_mm);
+      GET_MEMBER_FROM_JSON_AND_STORE_IN(jsonRoot, speed_mmps, streamMsg.speed_mmPerSec);
+
+      _currentTime_ms = 0;
       
       return RESULT_OK;
     }
     
-    RobotMessage* BodyPositionKeyFrame::GetStreamMessage()
+    
+    RobotMessage* BodyMotionKeyFrame::GetStreamMessage()
     {
-      return &_streamMsg;
+      if(_currentTime_ms == 0) {
+        // Send the motion command at the beginning
+        _currentTime_ms += SAMPLE_LENGTH_MS;
+        return &_streamMsg;
+      } else if(_currentTime_ms >= _duration_ms) {
+        // Send a stop command when the duration has passed
+        _streamMsg.speed_mmPerSec = 0;
+        return &_streamMsg;
+      } else {
+        // Do nothing in the middle. (Note that IsDone() will return false during
+        // this period so the animation track won't advance.)
+        _currentTime_ms += SAMPLE_LENGTH_MS;
+        return nullptr;
+      }
+    }
+    
+    bool BodyMotionKeyFrame::IsDone()
+    {
+      // Done once enough time has ticked by
+      if(_currentTime_ms >= _duration_ms) {
+        return true;
+      } else {
+        return false;
+      }
     }
     
   } // namespace Cozmo

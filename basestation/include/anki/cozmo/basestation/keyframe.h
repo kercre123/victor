@@ -275,6 +275,8 @@ namespace Anki {
       
     }; // class FacePositionKeyFrame
     
+    // BlinkKeyFrame either disables automatic blinking for a period fo time or
+    // commands a single blink to happen "now".
     class BlinkKeyFrame : public IKeyFrame
     {
     public:
@@ -325,27 +327,32 @@ namespace Anki {
     }; // class BackpackLightsKeyFrame
     
     
-    // A BodyPositionKeyFrame
-    // TODO: Decide what this actually stores (direct wheel speeds or something more abstracted?)
-    class BodyPositionKeyFrame : public IKeyFrame
+    // A BodyMotionKeyFrame
+    class BodyMotionKeyFrame : public IKeyFrame
     {
     public:
-      BodyPositionKeyFrame() { }
+      BodyMotionKeyFrame() { }
       
       virtual RobotMessage* GetStreamMessage() override;
       
       static const std::string& GetClassName() {
-        static const std::string ClassName("BodyPositionKeyFrame");
+        static const std::string ClassName("BodyMotionKeyFrame");
         return ClassName;
       }
+      
+      virtual bool IsDone() override;
       
     protected:
       virtual Result SetMembersFromJson(const Json::Value &jsonRoot) override;
       
     private:
+      
+      s32 _duration_ms;
+      s32 _currentTime_ms;
+      
       MessageAnimKeyFrame_BodyMotion _streamMsg;
       
-    }; // class BodyPositionKeyFrame
+    }; // class BodyMotionKeyFrame
     
   } // namespace Cozmo
 } // namespace Anki

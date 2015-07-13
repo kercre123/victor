@@ -711,11 +711,39 @@ namespace AnimationController {
               
               if(_tracksToPlay & BODY_TRACK) {
 #               if DEBUG_ANIMATION_CONTROLLER
-                PRINT("AnimationController[t=%dms(%d)] setting wheel speeds L=%dmmps, R=%dmmps.\n",
-                      _currentTime_ms, HAL::GetTimeStamp(), msg.wheelSpeedL_mmps, msg.wheelSpeedR_mmps);
+                PRINT("AnimationController[t=%dms(%d)] setting body motion to radius=%d, speed=%d\n",
+                      _currentTime_ms, HAL::GetTimeStamp(), msg.curvatureRadius_mm, msg.speed_mmPerSec);
 #               endif
                 
-                WheelController::SetDesiredWheelSpeeds(msg.wheelSpeedL_mmps, msg.wheelSpeedR_mmps);
+                f32 leftSpeed, rightSpeed;
+                if(msg.speed_mmPerSec == 0) {
+                  // Stop
+                  leftSpeed = 0.f;
+                  rightSpeed = 0.f;
+                  WheelController::SetDesiredWheelSpeeds(0, 0);
+                } else if(msg.curvatureRadius_mm == 0) {
+                  // Drive straight
+                  leftSpeed  = static_cast<f32>(msg.speed_mmPerSec);
+                  rightSpeed = static_cast<f32>(msg.speed_mmPerSec);
+                } else if(msg.curvatureRadius_mm == s16_MAX) {
+                  // Turn in place left
+                  leftSpeed  = static_cast<f32>(-msg.speed_mmPerSec);
+                  rightSpeed = static_cast<f32>( msg.speed_mmPerSec);
+                } else if(msg.curvatureRadius_mm == s16_MIN) {
+                  // Turn in place right
+                  leftSpeed  = static_cast<f32>( msg.speed_mmPerSec);
+                  rightSpeed = static_cast<f32>(-msg.speed_mmPerSec);
+                } else {
+                  //if speed is positive, the left wheel should turn slower, so
+                  // it becomes the INNER wheel
+                  leftSpeed = static_cast<f32>(msg.speed_mmPerSec) * (1.0f - WHEEL_DIST_HALF_MM / static_cast<f32>(msg.curvatureRadius_mm));
+                  
+                  //if speed is positive, the right wheel should turn faster, so
+                  // it becomes the OUTER wheel
+                  rightSpeed = static_cast<f32>(msg.speed_mmPerSec) * (1.0f + WHEEL_DIST_HALF_MM / static_cast<f32>(msg.curvatureRadius_mm));
+                }
+                
+                WheelController::SetDesiredWheelSpeeds(leftSpeed, rightSpeed);
               }
               break;
             }

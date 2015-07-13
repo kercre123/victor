@@ -158,7 +158,7 @@ namespace Cozmo {
         addResult = _robotAudioTrack.AddKeyFrame(jsonFrame);
       } else if(frameName == BackpackLightsKeyFrame::GetClassName()) {
         addResult = _backpackLightsTrack.AddKeyFrame(jsonFrame);
-      } else if(frameName == BodyPositionKeyFrame::GetClassName()) {
+      } else if(frameName == BodyMotionKeyFrame::GetClassName()) {
         addResult = _bodyPosTrack.AddKeyFrame(jsonFrame);
       } else {
         PRINT_NAMED_ERROR("Animation.DefineFromJson.UnrecognizedFrameName",
@@ -392,7 +392,7 @@ _blinkTrack.__METHOD__()
       msg = _bodyPosTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms);
       if(msg != nullptr) {
 #       if DEBUG_ANIMATIONS
-        PRINT_NAMED_INFO("Animation.Update", "Streaming BodyPositionKeyFrame at t=%dms.\n",
+        PRINT_NAMED_INFO("Animation.Update", "Streaming BodyMotionKeyFrame at t=%dms.\n",
                          _streamingTime_ms - _startTime_ms);
 #       endif
         sendResult = robot.SendMessage(*msg);
