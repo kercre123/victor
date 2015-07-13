@@ -129,8 +129,41 @@
     {
       "Name" : "BlinkKeyFrame", 
       "triggerTime_ms" : 1000, 
-      "blinkNow"       : true,
-      "duration_ms"    : 0
+      "command"        : "BLINK"
+    },
+    { 
+      "Name" : "BlinkKeyFrame", 
+      "triggerTime_ms" : 1500,
+      "command"        : "DISABLE", 
+      "duration_ms"    : 1000
+    },      
+    {
+      "Name" : "BodyMotionKeyFrame", 
+      "triggerTime_ms" : 0, 
+      "radius_mm"      : "STRAIGHT", 
+      "speed_mmps"     : 30,
+      "duration_ms"    : 500
+    }, 
+    {
+      "Name" : "BodyMotionKeyFrame", 
+      "triggerTime_ms" : 500, 
+      "radius_mm"      : "TURN_IN_PLACE", 
+      "speed_mmps"     : 30,
+      "duration_ms"    : 500
+    }, 
+    {
+      "Name" : "BodyMotionKeyFrame", 
+      "triggerTime_ms" : 1000, 
+      "radius_mm"      : "TURN_IN_PLACE", 
+      "speed_mmps"     : -30,
+      "duration_ms"    : 500
+    }, 
+    {
+      "Name" : "BodyMotionKeyFrame", 
+      "triggerTime_ms" : 1500, 
+      "radius_mm"      : 50, 
+      "speed_mmps"     : 30,
+      "duration_ms"    : 500
     }
   ]
 } 

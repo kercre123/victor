@@ -331,7 +331,7 @@ namespace Anki {
     class BodyMotionKeyFrame : public IKeyFrame
     {
     public:
-      BodyMotionKeyFrame() { }
+      BodyMotionKeyFrame();
       
       virtual RobotMessage* GetStreamMessage() override;
       
@@ -351,6 +351,7 @@ namespace Anki {
       s32 _currentTime_ms;
       
       MessageAnimKeyFrame_BodyMotion _streamMsg;
+      MessageAnimKeyFrame_BodyMotion _stopMsg;
       
     }; // class BodyMotionKeyFrame
     

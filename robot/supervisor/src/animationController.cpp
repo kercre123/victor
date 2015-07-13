@@ -741,7 +741,7 @@ namespace AnimationController {
                   rightSpeed = static_cast<f32>(msg.speed_mmPerSec) * (1.0f + WHEEL_DIST_HALF_MM / static_cast<f32>(msg.curvatureRadius_mm));
                 }
                 
-                WheelController::SetDesiredWheelSpeeds(leftSpeed, rightSpeed);
+                SteeringController::ExecuteDirectDrive(leftSpeed, rightSpeed);
               }
               break;
             }
