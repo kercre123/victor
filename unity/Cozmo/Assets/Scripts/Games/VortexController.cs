@@ -56,6 +56,7 @@ public class VortexController : GameController {
 		public int pointsSecondPlace = 20;
 		public int pointsThirdPlace = 10;
 		public int pointsFourthPlace = 5;
+		public int pointsIncorrectPenalty = -5;
 	}
 
 	int currentWheelIndex {
@@ -156,6 +157,7 @@ public class VortexController : GameController {
 	float predictedTimeAfterLastPeg = -1f;
 	float cozmoTimePerTap = 1.25f;
 	List<int> playersThatAreCorrect = new List<int>();
+	List<int> playersThatAreWrong = new List<int>();
 	
 	[SerializeField] float scoreDisplayFillFade = 0.5f;
 	[SerializeField] float scoreDisplayFillAlpha = 0.5f;
@@ -978,6 +980,7 @@ public class VortexController : GameController {
 	void Enter_SPIN_COMPLETE() {
 		
 		playersThatAreCorrect.Clear();
+		playersThatAreWrong.Clear();
 		int fastestPlayer = -1;
 
 		scoreDeltas.Clear();
@@ -1002,6 +1005,12 @@ public class VortexController : GameController {
 
 		if(playersThatAreCorrect.Count > 0) {
 			fastestPlayer = playersThatAreCorrect[0];
+		}
+
+		for(int i=0;i<numPlayers;i++) {
+			if(playersEliminated[i]) continue;
+			if(playersThatAreCorrect.Contains (i)) continue;
+			playersThatAreWrong.Add (i);
 		}
 
 		for(int i=0;i<playersEliminated.Length;i++) {
@@ -1098,6 +1107,11 @@ public class VortexController : GameController {
 				scores[playerIndex] += delta;
 			}
 		}
+
+		for(int i=0;i<playersThatAreWrong.Count;i++) {
+			scoreDeltas[playersThatAreWrong[i]] = settings.pointsIncorrectPenalty;
+			scores[playersThatAreWrong[i]] += settings.pointsIncorrectPenalty;
+		}
 		
 		if(playersThatAreCorrect.Count == 0) {
 			if(roundCompleteNoWinner != null) AudioManager.PlayOneShot(roundCompleteNoWinner);
@@ -1109,15 +1123,55 @@ public class VortexController : GameController {
 	
 	void Update_SPIN_COMPLETE() {
 		if(playersThatAreCorrect.Count == 0) return;
-		if(resultsDisplayIndex >= playersThatAreCorrect.Count) return;
+		if(resultsDisplayIndex > playersThatAreCorrect.Count) return;
 
 		bool wasPositive = fadeTimer > 0f;
-
 		fadeTimer -= Time.deltaTime;
+		Color col = Color.black;
+
+		//if done with correct players, let's display all the losers at once
+		if(resultsDisplayIndex == playersThatAreCorrect.Count) {
+
+			for(int i=0;i<playersThatAreWrong.Count;i++) {
+
+				int loserIndex = playersThatAreWrong[i];
+				
+				col = playerPanelFills[loserIndex].color;
+				
+				if(fadeTimer > 0f) {
+					float factor = fadeTimer / scoreDisplayFillFade;
+					col.a = Mathf.Lerp(scoreDisplayFillAlpha, 0f, factor);
+					textPlayerScores[loserIndex].rectTransform.localScale = Vector3.Lerp(Vector3.one*scoreScaleMax, Vector3.one*scoreScaleBase, factor);
+				}
+				else {
+					float factor = Mathf.Abs(fadeTimer) / scoreDisplayFillFade;
+					col.a = Mathf.Lerp(scoreDisplayFillAlpha, scoreDisplayEmptyAlpha, factor);
+					textPlayerScores[loserIndex].rectTransform.localScale = Vector3.Lerp(Vector3.one*scoreScaleMax, Vector3.one*scoreScaleBase, factor);
+					
+					if(wasPositive) {
+						
+						textPlayerScoreDeltas[loserIndex].text = scoreDeltas[loserIndex] +"!";
+						textPlayerScoreDeltas[loserIndex].gameObject.SetActive(true);
+						
+						textPlayerScores[loserIndex].text = "SCORE: " + scores[loserIndex].ToString();
+						
+						if(roundCompleteWinner != null) AudioManager.PlayOneShot(roundCompleteWinner);
+					}
+				}
+			
+				playerPanelFills[loserIndex].color = col;
+			}
+			
+			if(fadeTimer <= -scoreDisplayFillFade) {
+				resultsDisplayIndex++;
+			}
+
+			return;
+		}
 
 		int playerIndex = playersThatAreCorrect[resultsDisplayIndex];
 
-		Color col = playerPanelFills[playerIndex].color;
+		col = playerPanelFills[playerIndex].color;
 		
 		if(fadeTimer > 0f) {
 			float factor = fadeTimer / scoreDisplayFillFade;
