@@ -1,5 +1,5 @@
 /*
- * File:          block_controller.cpp
+ * File:          webotsCtrlLightCube.cpp
  * Date:
  * Description:   Webots controller for active block
  * Author:        
@@ -20,7 +20,7 @@ int main(int argc, char **argv)
   using namespace Anki::Cozmo;
   
   if (ActiveBlock::Init() == Anki::RESULT_FAIL) {
-    printf("ERROR (block_controller): Failed to init block");
+    printf("ERROR (webotsCtrlLightCube): Failed to init block");
     return -1;
   }
   

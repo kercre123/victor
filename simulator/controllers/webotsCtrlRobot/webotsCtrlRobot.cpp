@@ -1,5 +1,5 @@
 /*
- * File:          cozmo_c_controller.cpp
+ * File:          webotsCtrlRobot.cpp
  * Date:
  * Description:   
  * Author:        

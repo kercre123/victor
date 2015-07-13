@@ -35,7 +35,7 @@ PROTO CozmoBot [
 
   field SFInt32 usbChannel 88
   
-  field SFString controller "cozmo_c_controller"
+  field SFString controller "webotsCtrlRobot"
   field SFString controllerArgs ""
 
   field SFColor bodyColor 0.92 0.92 0.8
