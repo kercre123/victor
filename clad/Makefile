@@ -6,6 +6,7 @@ CLAD_CPP_DECL=../lib/anki/cozmo-engine/clad/emitters/cozmo_CPP_declarations_emit
 CLAD_CPP_SWITCH=../lib/anki/cozmo-engine/clad/emitters/cozmo_CPP_switch_emitter.py
 INPUT_DIR=./src/
 OUTPUT_DIR:=../generated/clad/
+OUTPUT_DIR_CSHARP=../generated/clad/unity/
 INPUT_FILES=$(shell cd $(INPUT_DIR); find . -type f -iname '*.clad')
 OUTPUT_CPP=$(patsubst %.clad, %.cpp, $(INPUT_FILES))
 OUTPUT_C=$(patsubst %.clad, %.c, $(INPUT_FILES))
@@ -15,14 +16,15 @@ OUTPUT_H_AND_C=$(OUTPUT_H) $(OUTPUT_C)
 OUTPUT_CSHARP=$(patsubst %.clad, %.cs, $(INPUT_FILES))
 OUTPUT_FILES=$(OUTPUT_H_AND_CPP)
 
-REAL_OUTPUT_FILES=$(addprefix $(OUTPUT_DIR)/,$(OUTPUT_FILES))
-
 vpath %.clad $(INPUT_DIR)
-vpath %.h $(OUTPUT_DIR)
-vpath %.cpp $(OUTPUT_DIR)
-vpath %.cs $(OUTPUT_DIR)
+vpath %.h $(OUTPUT_DIR)/robot/
+vpath %.c $(OUTPUT_DIR)/robot/
+vpath %.h $(OUTPUT_DIR)/engine/
+vpath %.cpp $(OUTPUT_DIR)/engine/
+vpath %.cs $(OUTPUT_DIR_CSHARP)
 
-.PHONY: show clean always
+
+.PHONY: show clean
 
 all: cpp
 
@@ -32,17 +34,17 @@ cpp: $(OUTPUT_H_AND_CPP)
 
 c: $(OUTPUT_H_AND_C)
 
-%.h %.cpp : %.clad always
+%.h %.cpp : %.clad
 	#mkdir -p $(OUTPUT_DIR)/engine/$(dir $<)
 	$(CLAD_CPP) -C $(INPUT_DIR) -o $(OUTPUT_DIR)/engine/ $*.clad
 
-%.h %.c : %.clad always
+%.h %.c : %.clad
 	#mkdir -p $(OUTPUT_DIR)/robot/$(dir $<)
 	$(CLAD_C) -C $(INPUT_DIR) -o $(OUTPUT_DIR)/robot/ $*.clad
 
-%.cs : %.clad always
+%.cs : %.clad
 	#mkdir -p $(OUTPUT_DIR)/$(dir $<)
-	$(CLAD_CSHARP) -C $(INPUT_DIR) -o $(OUTPUT_DIR)/unity/ $*.clad
+	$(CLAD_CSHARP) -C $(INPUT_DIR) -o $(OUTPUT_DIR_CSHARP)/ $*.clad
 
 show:
 	echo "*** input_files ***"
@@ -51,4 +53,4 @@ show:
 	echo $(OUTPUT_FILES)
 
 clean:
-	rm $(REAL_OUTPUT_FILES)
+	rm -rf $(OUTPUT_DIR) $(OUTPUT_DIR_CSHARP)
