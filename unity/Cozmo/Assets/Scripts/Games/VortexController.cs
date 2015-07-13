@@ -161,6 +161,8 @@ public class VortexController : GameController {
 	float fadeTimer = 1f;
 	int resultsDisplayIndex = 0;
 
+	List<int> scoreDeltas = new List<int>();
+
 	protected override void Awake () {
 		base.Awake();
 
@@ -965,6 +967,8 @@ public class VortexController : GameController {
 		playersThatAreCorrect.Clear();
 		int fastestPlayer = -1;
 
+		scoreDeltas.Clear();
+		while(scoreDeltas.Count < scores.Count) scoreDeltas.Add(0);
 
 		int number = wheel.GetDisplayedNumber();
 		for(int i=0;i<playerInputs.Count;i++) {
@@ -1050,12 +1054,17 @@ public class VortexController : GameController {
 				int eliminated = 0;
 				for(int i=0;i<playersEliminated.Length;i++) if(playersEliminated[i]) eliminated++;
 
+				int delta = 0;
 				switch(eliminated) {
-					case 1: scores[fastestPlayer] += settings.pointsFirstPlace; break;
-					case 2: scores[fastestPlayer] += settings.pointsSecondPlace; break;
-					case 3: scores[fastestPlayer] += settings.pointsThirdPlace; break;
-					case 4: scores[fastestPlayer] += settings.pointsFourthPlace; break;
+					case 1: delta = settings.pointsFirstPlace; break;
+					case 2: delta = settings.pointsSecondPlace; break;
+					case 3: delta = settings.pointsThirdPlace; break;
+					case 4: delta = settings.pointsFourthPlace; break;
 				}
+
+
+				scoreDeltas[fastestPlayer] = delta;
+				scores[fastestPlayer] += delta;
 			}
 
 		}
@@ -1063,13 +1072,17 @@ public class VortexController : GameController {
 			for(int i=0;i<playersThatAreCorrect.Count;i++) {
 				int playerIndex = playersThatAreCorrect[i];
 				if(playersEliminated[playerIndex]) continue;
+				int delta = 0;
 				
 				switch(i) {
-					case 0: scores[playerIndex] += settings.pointsFirstPlace; break;
-					case 1: scores[playerIndex] += settings.pointsSecondPlace; break;
-					case 2: scores[playerIndex] += settings.pointsThirdPlace; break;
-					case 3: scores[playerIndex] += settings.pointsFourthPlace; break;
+					case 0: delta = settings.pointsFirstPlace; break;
+					case 1: delta = settings.pointsSecondPlace; break;
+					case 2: delta = settings.pointsThirdPlace; break;
+					case 3: delta = settings.pointsFourthPlace; break;
 				}
+
+				scoreDeltas[playerIndex] = delta;
+				scores[playerIndex] += delta;
 			}
 		}
 		
@@ -1093,20 +1106,27 @@ public class VortexController : GameController {
 
 		Color col = playerPanelFills[playerIndex].color;
 		
-		textPlayerScoreDeltas[playerIndex].gameObject.SetActive(true);
-		//textPlayerScoreDeltas[playerIndex].text = "
-
 		if(fadeTimer > 0f) {
 			float factor = fadeTimer / scoreDisplayFillFade;
 			col.a = Mathf.Lerp(scoreDisplayFillAlpha, 0f, factor);
 			textPlayerScores[playerIndex].rectTransform.localScale = Vector3.Lerp(Vector3.one*scoreScaleMax, Vector3.one*scoreScaleBase, factor);
+//			col = textPlayerScoreDeltas[playerIndex].color;
+//			col.a = Mathf.Lerp(1f, 0f, factor); 
+//			textPlayerScoreDeltas[playerIndex].color = col;
 		}
 		else {
 			float factor = Mathf.Abs(fadeTimer) / scoreDisplayFillFade;
 			col.a = Mathf.Lerp(scoreDisplayFillAlpha, scoreDisplayEmptyAlpha, factor);
 			textPlayerScores[playerIndex].rectTransform.localScale = Vector3.Lerp(Vector3.one*scoreScaleMax, Vector3.one*scoreScaleBase, factor);
+//			col = textPlayerScoreDeltas[playerIndex].color;
+//			col.a = 1f;//Mathf.Lerp(1f, 0f, factor); 
+//			textPlayerScoreDeltas[playerIndex].color = col;
 
 			if(wasPositive) {
+
+				textPlayerScoreDeltas[playerIndex].text = "+" + scoreDeltas[playerIndex] +"!";
+				textPlayerScoreDeltas[playerIndex].gameObject.SetActive(true);
+
 				textPlayerScores[playerIndex].text = "SCORE: " + scores[playerIndex].ToString();
 				
 				if(roundCompleteWinner != null) AudioManager.PlayOneShot(roundCompleteWinner);
@@ -1118,6 +1138,7 @@ public class VortexController : GameController {
 		if(fadeTimer <= -scoreDisplayFillFade) {
 			resultsDisplayIndex++;
 			fadeTimer = scoreDisplayFillFade;
+			//textPlayerScoreDeltas[playerIndex].gameObject.SetActive(false);
 		}
 
 		
@@ -1143,7 +1164,11 @@ public class VortexController : GameController {
 		}
 
 		for(int i=0;i<textPlayerScores.Length && i<numPlayers;i++) {
-			textPlayerScores[i].rectTransform.localScale = Vector3.one;
+			textPlayerScores[i].rectTransform.localScale = Vector3.one*scoreScaleBase;
+		}
+
+		for(int i=0;i<textPlayerScoreDeltas.Length && i<numPlayers;i++) {
+			textPlayerScoreDeltas[i].gameObject.SetActive(false);
 		}
 	}
 
