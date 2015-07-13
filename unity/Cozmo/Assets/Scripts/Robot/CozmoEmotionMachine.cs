@@ -9,6 +9,7 @@ public struct CozmoAnimation
 	public string animName;
 	public CozmoEmotionManager.EmotionType emotionType;
 	public CozmoEmotionManager.EmotionIntensity emotionIntensity;
+	public int numLoops;
 	
 }
 
@@ -16,13 +17,14 @@ public struct CozmoAnimation
 public struct CozmoEmotionState
 {
 	public string stateName;
-	public List<CozmoAnimation> emotionAnims;
 	public CozmoEmotionManager.EmotionType emotionType;
+	public List<CozmoAnimation> emotionAnims;
 	
 }
 
 public class CozmoEmotionMachine : MonoBehaviour {
-		
+
+	public string defaultEmotionStateName;
 	public List<CozmoEmotionState> emotionStates;
 	// initailization
 	public void StartMachine()
