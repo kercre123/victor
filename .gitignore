@@ -180,3 +180,5 @@ generated/android
 unity/ios/generated
 unity/ios/opencv
 generated/clad
+unity/Cozmo/Assets/Scripts/Generated
+unity/Cozmo/Assets/Scripts/Generated.meta

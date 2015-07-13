@@ -107,6 +107,7 @@ def main(scriptArgs):
   sys.path.insert(0, os.path.join(options.buildToolsPath, 'tools/ankibuild'))
   import installBuildDeps
   import updateFileLists
+  import generateUnityMeta
 
   if not options.ankiUtilPath:
     options.ankiUtilPath = os.path.join(options.projectRoot, 'lib/anki/cozmo-engine/tools/anki-util')
@@ -162,6 +163,18 @@ def main(scriptArgs):
   #run clad's make
   if (subprocess.call(['make', '--silent'], cwd=os.path.join(projectRoot, 'clad')) != 0):
     UtilLog.error("error compiling clad files")
+    return False
+
+  #run clad's make
+  unityGeneratedPath=os.path.join(projectRoot, 'unity/Cozmo/Assets/Scripts/Generated')
+  if (subprocess.call(['make', '--silent', 'OUTPUT_DIR_CSHARP=' + unityGeneratedPath, 'csharp'],
+    cwd=os.path.join(options.cozmoEnginePath, 'clad')) != 0):
+    UtilLog.error("error compiling clad files")
+    return False
+
+  #generate unity's metafiles
+  if (generateUnityMeta.generateMetaFiles(unityGeneratedPath, options.verbose)):
+    UtilLog.error("error generating unity meta files")
     return False
 
   # update file lists
