@@ -3,8 +3,8 @@
 #include "anki/cozmo/robot/cozmoBot.h"
 #include "portable.h"
 
+// Baudrate communicating to Espressif
 #define BAUDRATE 5000000
-//#define BAUDRATE 3000000
 
 #define RCC_GPIO        RCC_AHB1Periph_GPIOB
 #define RCC_DMA         RCC_AHB1Periph_DMA2
@@ -18,6 +18,11 @@
 #define DMA_STREAM_TX   DMA2_Stream7
 #define DMA_CHANNEL_TX  DMA_Channel_4
 #define DMA_IRQ_TX      DMA2_Stream7_IRQn
+
+// This enables a blocking UART for HAL/board bring-up use only - when all else is broken
+// Because it is very slow and blocking, it is not suitable for general use and tends to screw up timing
+// It uses TP13 (PC10) on headboard 4.0
+//#define ENABLE_BOARD_UART
 
 namespace Anki
 {
@@ -35,18 +40,11 @@ namespace Anki
       volatile bool m_isTransferring = false;
 
       static void UARTStartTransfer();
-
-      extern s32 WifiGetCharacter(u32 timeout);
-      extern bool WifiInit();
-
-      // Function pointers depending on whether wifi or UART is used
-      void (*StartTransfer)() =  UARTStartTransfer;
-
-      // TODO: Refactor this mess. PUNT!
-      int BUFFER_WRITE_SIZE = 1024 * 8;
-      int BUFFER_READ_SIZE = 1024 * 16;
+ 
+      // ONCHIP because both buffers are accessed by DMA
       ONCHIP u8 m_bufferWrite[1024 * 8];
       ONCHIP u8 m_bufferRead[1024 * 16];
+      
       static void UARTStartTransfer()
       {
         int tail = m_writeTail;
@@ -80,7 +78,7 @@ namespace Anki
         return sizeof(m_bufferWrite);
       }
 
-      void UARTConfigure()
+      void UARTInit()
       {
         // Supporting 4.0
         GPIO_PIN_SOURCE(TX, GPIOB, 6);
@@ -183,13 +181,34 @@ namespace Anki
         NVIC_Init(&NVIC_InitStructure);
 
         m_writeHead = m_writeTail = m_readTail = 0;
-      }
-
-      void UARTInit()
-      {
-        // Configure the UART - and light up purple to indicate UART
-        //SetLED(LED_LEFT_EYE_LEFT, LED_PURPLE);
-        UARTConfigure();
+        
+#ifdef ENABLE_BOARD_UART
+        #define BUART USART3        
+        #define BBAUDRATE 1000000
+        
+        GPIO_PIN_SOURCE(BTX, GPIOC, 10);
+        
+        // Clock configuration
+        RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC, ENABLE);
+        RCC_APB1PeriphClockCmd(RCC_APB1Periph_USART3, ENABLE);
+        
+        // Configure the pins for UART in AF mode
+        GPIO_InitStructure.GPIO_Pin = PIN_BTX;
+        GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
+        GPIO_InitStructure.GPIO_Speed = GPIO_Speed_2MHz;
+        GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;  // XXX - why not OD to interface with 3V3 PropPlug?
+        GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
+        GPIO_Init(GPIO_BTX, &GPIO_InitStructure);
+        GPIO_PinAFConfig(GPIO_BTX, SOURCE_BTX, GPIO_AF_USART3);
+        
+        // Configure the UART for the appropriate baudrate
+        USART_Cmd(BUART, DISABLE);
+        USART_InitStructure.USART_BaudRate = BBAUDRATE;
+        USART_Init(BUART, &USART_InitStructure);
+        USART_Cmd(BUART, ENABLE);
+        
+        BoardPrintf("Board debug enabled\n");
+#endif
       }
 
       // Add one char to the buffer, wrapping around
@@ -220,7 +239,7 @@ namespace Anki
         // Enable DMA if it's not already running
         if (!m_isTransferring)
         {
-          StartTransfer();
+          UARTStartTransfer();
         }
 
         __enable_irq();
@@ -271,7 +290,7 @@ namespace Anki
           // Enable DMA if it's not already running
           if (!m_isTransferring)
           {
-            StartTransfer();
+            UARTStartTransfer();
           }
         }
         __enable_irq();
@@ -316,7 +335,52 @@ namespace Anki
         }
       }
 
+      void BoardPrintf(const char *format, ...)
+      {
+#ifdef ENABLE_BOARD_UART     
+        // Build the printf into a local buffer and zero-terminate it
+        char buffer[256];
+        va_list argptr;
+        va_start(argptr, format);
+        vsnprintf(buffer, sizeof(buffer)-1, format, argptr);
+        va_end(argptr);
+        buffer[sizeof(buffer)-1] = '\0';
+        
+        // Send it out the UART, blocking as needed
+        char* p = buffer;
+        while (*p)
+        {
+          BUART->DR = *p++;
+          while (!(BUART->SR & USART_FLAG_TXE))
+            ;
+        }
+#endif   
+      }        
     }
+  }
+}
+
+extern "C" {
+  void board_printf(const char *format, ...)
+  {
+#ifdef ENABLE_BOARD_UART     
+    // Build the printf into a local buffer and zero-terminate it
+    char buffer[256];
+    va_list argptr;
+    va_start(argptr, format);
+    vsnprintf(buffer, sizeof(buffer)-1, format, argptr);
+    va_end(argptr);
+    buffer[sizeof(buffer)-1] = '\0';
+    
+    // Send it out the UART, blocking as needed
+    char* p = buffer;
+    while (*p)
+    {
+      BUART->DR = *p++;
+      while (!(BUART->SR & USART_FLAG_TXE))
+        ;
+    }
+#endif
   }
 }
 
@@ -348,7 +412,7 @@ extern "C"
     // Check if there's more data to be transferred
     if (m_writeHead != m_writeTail)
     {
-      StartTransfer();
+      UARTStartTransfer();
     } else {
       m_isTransferring = false;
     }
