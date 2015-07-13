@@ -116,7 +116,6 @@ robot/robot_embedded-tests.dep
 *.MikeAnderson
 *.dep
 *.map
-*.lst
 *.ini
 robot/syscon/JLinkLog.txt
 robot/chipSimulator/robot_chipSimulator.uvguix.anki
@@ -182,3 +181,8 @@ unity/ios/opencv
 generated/clad
 unity/Cozmo/Assets/Scripts/Generated
 unity/Cozmo/Assets/Scripts/Generated.meta
+project/gyp/clad.lst
+project/gyp/cozmoGame.lst
+project/gyp/csharp.lst
+project/gyp/ctrlGameEngine.lst
+project/gyp/ctrlKeyboard.lst
