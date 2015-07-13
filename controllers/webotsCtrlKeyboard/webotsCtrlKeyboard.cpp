@@ -23,15 +23,15 @@
 
 #include "anki/vision/basestation/image.h"
 
-#include "anki/cozmo/messageBuffers/game/UiMessagesG2U.def"
-#include "anki/cozmo/messageBuffers/game/UiMessagesU2G.def"
+#include "anki/cozmo/messageBuffers/game/UiMessagesG2U.h"
+#include "anki/cozmo/messageBuffers/game/UiMessagesU2G.h"
 #include "anki/messaging/shared/TcpClient.h"
 #include "anki/cozmo/game/comms/gameMessageHandler.h"
 #include "anki/cozmo/game/comms/gameComms.h"
 
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/block.h"
-#include "anki/cozmo/messageBuffers/shared/actionTypes.def"
+#include "anki/cozmo/messageBuffers/shared/actionTypes.h"
 
 #include <stdio.h>
 #include <string.h>
