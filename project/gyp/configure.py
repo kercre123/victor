@@ -160,6 +160,7 @@ def main(scriptArgs):
   generator.processFolder(['basestation/test', 'robot/test'], ['project/gyp/cozmoEngine-test.lst'])
   generator.processFolder(['robot/sim_hal', 'robot/supervisor/src', 'simulator/src', 'simulator/controllers/webotsCtrlRobot'], ['project/gyp/ctrlRobot.lst'])
   generator.processFolder(['simulator/controllers/webotsCtrlViz'], ['project/gyp/ctrlViz.lst'])
+  generator.processFolder(['clad/src'], ['project/gyp/clad.lst'])
   # this is too big of a scope, we need to manualy maintain ctrlLightCube.lst for now
   # generator.processFolder(['simulator/controllers/block_controller', 'robot/sim_hal/', 'robot/supervisor/src/'], ['project/gyp/ctrlLightCube.lst'])
   

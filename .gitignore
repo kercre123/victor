@@ -230,6 +230,7 @@ project/gyp/cozmoEngine-test.lst
 project/gyp/cozmoEngine.lst
 project/gyp/ctrlRobot.lst
 project/gyp/ctrlViz.lst
+project/gyp/clad.lst
 coretech/generated/ios
 coretech/generated/mac
 coretech/generated/android
