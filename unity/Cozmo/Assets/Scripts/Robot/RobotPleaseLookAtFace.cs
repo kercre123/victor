@@ -4,10 +4,7 @@ using System.Collections;
 public class RobotPleaseLookAtFace : MonoBehaviour {
 
 	protected Robot robot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.current : null; } }
-
-//	void Update () {
-//		FaceFace();
-//	}
+	ObservedObject humanHead;
 
 	public void FaceFace () {
 		if(robot != null) {
@@ -15,12 +12,20 @@ public class RobotPleaseLookAtFace : MonoBehaviour {
 			for(int i=0;i<robot.knownObjects.Count;i++) {
 				if(!robot.knownObjects[i].isFace) continue;
 				
-				Debug.Log("frame("+Time.frameCount+") Update_PLAYING TrackHeadToObject("+robot.knownObjects[i]+") headTrackingObject("+robot.headTrackingObject+")");
-				
-				robot.TrackHeadToObject(robot.knownObjects[i], true);
+				humanHead = robot.knownObjects[i];
+
 				break;
 			}
 			
+			if(!robot.isBusy && humanHead != null) {
+				
+				if(!humanHead.MarkersVisible) {
+					robot.FaceObject(humanHead, false);
+				}
+				else if(robot.headTrackingObject == null) {
+					robot.TrackToObject(humanHead, false);
+				}
+			}
 		}
 	}
 }
