@@ -166,6 +166,8 @@ public class VortexController : GameController {
 
 	List<int> scoreDeltas = new List<int>();
 
+	bool fakeCozmoTaps = true;
+
 	protected override void Awake () {
 		base.Awake();
 
