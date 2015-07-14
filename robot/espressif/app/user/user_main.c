@@ -7,8 +7,7 @@
 #include "user_interface.h"
 #include "client.h"
 #include "driver/uart.h"
-#include "driver/spi.h"
-#include "fpga.h"
+#include "driver/i2s.h"
 #include "task0.h"
 #include "upgrade_controller.h"
 #include "user_config.h"
@@ -153,8 +152,8 @@ static void ICACHE_FLASH_ATTR system_init_done(void)
   // Only after clientInit
   uart_rx_intr_enable(UART0);
 
-  // Initalize the FPGA interface
-  fpgaInit();
+  // Initalize the I2S
+  i2sInit();
 
   // Set up shared background tasks
   task0Init();

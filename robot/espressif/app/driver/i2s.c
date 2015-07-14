@@ -49,7 +49,7 @@ speed.
 #endif
 
 //Pointer to the I2S DMA buffer data
-static unsigned int *i2sBuf[I2SDMABUFCNT];
+static unsigned int i2sBuf[I2SDMABUFCNT][I2SDMABUFLEN];
 //I2S DMA buffer descriptors
 static struct sdio_queue i2sBufDesc[I2SDMABUFCNT];
 // Index of the buffer the I2S peripherial is reading from
@@ -89,16 +89,9 @@ LOCAL void slc_isr(void) {
 
 //Initialize I2S subsystem for DMA circular buffer use
 void ICACHE_FLASH_ATTR i2sInit() {
-	int x;
+	int i, j;
 
 	underrunCnt=0;
-
-	//First, take care of the DMA buffers.
-	for (x=0; x<I2SDMABUFCNT; x++) {
-		//Allocate memory for this DMA sample buffer.
-		i2sBuf[x]=(unsigned int *)os_malloc(I2SDMABUFLEN*4);
-		os_memset(i2sBuf[x], 0, I2SDMABUFLEN);
-	}
 
 	//Reset DMA
 	SET_PERI_REG_MASK(SLC_CONF0, SLC_RXLINK_RST|SLC_TXLINK_RST);
@@ -117,15 +110,18 @@ void ICACHE_FLASH_ATTR i2sInit() {
 
 	//Initialize DMA buffer descriptors in such a way that they will form a circular
 	//buffer.
-	for (x=0; x<I2SDMABUFCNT; x++) {
-		i2sBufDesc[x].owner=1;
-		i2sBufDesc[x].eof=1;
-		i2sBufDesc[x].sub_sof=0;
-		i2sBufDesc[x].datalen=I2SDMABUFLEN*4;
-		i2sBufDesc[x].blocksize=I2SDMABUFLEN*4;
-		i2sBufDesc[x].buf_ptr=(uint32_t)&i2sBuf[x][0];
-		i2sBufDesc[x].unused=0;
-		i2sBufDesc[x].next_link_ptr=(int)((x<(I2SDMABUFCNT-1))?(&i2sBufDesc[x+1]):(&i2sBufDesc[0]));
+	for (i=0; i<I2SDMABUFCNT; i++) {
+		i2sBufDesc[i].owner=1;
+		i2sBufDesc[i].eof=1;
+		i2sBufDesc[i].sub_sof=0;
+		i2sBufDesc[i].datalen=I2SDMABUFLEN*4;
+		i2sBufDesc[i].blocksize=I2SDMABUFLEN*4;
+		i2sBufDesc[i].buf_ptr=(uint32_t)&i2sBuf[i][0];
+		i2sBufDesc[i].unused=0;
+		i2sBufDesc[i].next_link_ptr=(int)((i<(I2SDMABUFCNT-1))?(&i2sBufDesc[i+1]):(&i2sBufDesc[0]));
+    for (j=0; j<I2SDMABUFLEN; j++) {
+      i2sBuf[i][j] = i * j;
+    }
 	}
 
 	//Feed dma the 1st buffer desc addr
@@ -138,13 +134,13 @@ void ICACHE_FLASH_ATTR i2sInit() {
 	SET_PERI_REG_MASK(SLC_RX_LINK, ((uint32)&i2sBufDesc[0]) & SLC_RXLINK_DESCADDR_MASK);
 
 	//Attach the DMA interrupt
-	_xt_isr_attach(ETS_SLC_INUM, slc_isr);
+	ets_isr_attach(ETS_SLC_INUM, slc_isr);
 	//Enable DMA operation intr
 	WRITE_PERI_REG(SLC_INT_ENA,  SLC_RX_EOF_INT_ENA);
 	//clear any interrupt flags that are set
 	WRITE_PERI_REG(SLC_INT_CLR, 0xffffffff);
 	///enable DMA intr in cpu
-	_xt_isr_unmask(1<<ETS_SLC_INUM);
+	ets_isr_unmask(1<<ETS_SLC_INUM);
 
   // Keep track of read / write queues
   i2sRdInd = 0;
@@ -158,7 +154,7 @@ void ICACHE_FLASH_ATTR i2sInit() {
 
 	//Init pins to i2s functions
 	PIN_FUNC_SELECT(PERIPHS_IO_MUX_U0RXD_U, FUNC_I2SO_DATA);
-	PIN_FUNC_SELECT(PERIPHS_IO_MUX_GPIO2_U, FUNC_I2SO_WS);
+	//PIN_FUNC_SELECT(PERIPHS_IO_MUX_GPIO2_U, FUNC_I2SO_WS); // No more word selects
 	PIN_FUNC_SELECT(PERIPHS_IO_MUX_MTDO_U, FUNC_I2SO_BCK);
 
 	//Enable clock to i2s subsystem
