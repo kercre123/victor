@@ -7,7 +7,6 @@
 
 
 void ICACHE_FLASH_ATTR i2sInit();
-void i2sSetRate(int rate);
 void i2sPushSample(unsigned int sample);
 long ICACHE_FLASH_ATTR i2sGetUnderrunCnt();
 

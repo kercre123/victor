@@ -48,16 +48,22 @@ speed.
 #define ETS_SLC_INUM       1
 #endif
 
-//Pointer to the I2S DMA buffer data
-static unsigned int i2sBuf[I2SDMABUFCNT][I2SDMABUFLEN];
-//I2S DMA buffer descriptors
-static struct sdio_queue i2sBufDesc[I2SDMABUFCNT];
+// I2S Incoming DMA buffer
+static unsigned int i2sIBuf[I2SDMABUFCNT][I2SDMABUFLEN];
+//I2S Incoming DMA buffer descriptors
+static struct sdio_queue i2sIBufDesc[I2SDMABUFCNT];
+// I2S Outgoing DMA buffers
+static unsigned int i2sOBuf[I2SDMABUFCNT][I2SDMABUFLEN];
+// I2S Outgoging DMA buffer descriptors
+static struct sdio_queue i2sOBufDesc[I2SDMABUFCNT];
 // Index of the buffer the I2S peripherial is reading from
 static unsigned int i2sRdInd = 0;
 // Index of the buffer we are writing samples into
 static unsigned int i2sWrInd = 0;
 //DMA underrun counter
 static long underrunCnt;
+// Index of the buffer being received into
+static unsigned int i2sRxInd = 0;
 
 //This routine is called as soon as the DMA routine has something to tell us. All we
 //handle here is the RX_EOF_INT status, which indicate the DMA has sent a buffer whose
@@ -84,6 +90,10 @@ LOCAL void slc_isr(void) {
 		//Dump the buffer on the queue so the rest of the software can fill it.
     i2sRdInd = (i2sRdInd + 1) % I2SDMABUFCNT;
 	}
+  else if (slc_intr_status & SLC_TX_EOF_INT_ST) {
+    os_printf("slc tx eof %d", i2sRxInd);
+    i2sRxInd += 1;
+  }
 }
 
 
@@ -111,16 +121,28 @@ void ICACHE_FLASH_ATTR i2sInit() {
 	//Initialize DMA buffer descriptors in such a way that they will form a circular
 	//buffer.
 	for (i=0; i<I2SDMABUFCNT; i++) {
-		i2sBufDesc[i].owner=1;
-		i2sBufDesc[i].eof=1;
-		i2sBufDesc[i].sub_sof=0;
-		i2sBufDesc[i].datalen=I2SDMABUFLEN*4;
-		i2sBufDesc[i].blocksize=I2SDMABUFLEN*4;
-		i2sBufDesc[i].buf_ptr=(uint32_t)&i2sBuf[i][0];
-		i2sBufDesc[i].unused=0;
-		i2sBufDesc[i].next_link_ptr=(int)((i<(I2SDMABUFCNT-1))?(&i2sBufDesc[i+1]):(&i2sBufDesc[0]));
+		i2sOBufDesc[i].owner=1;
+		i2sOBufDesc[i].eof=1;
+		i2sOBufDesc[i].sub_sof=0;
+		i2sOBufDesc[i].datalen=I2SDMABUFLEN*4;
+		i2sOBufDesc[i].blocksize=I2SDMABUFLEN*4;
+		i2sOBufDesc[i].buf_ptr=(uint32_t)&i2sOBuf[i][0];
+		i2sOBufDesc[i].unused=0;
+		i2sOBufDesc[i].next_link_ptr=(int)((i<(I2SDMABUFCNT-1))?(&i2sOBufDesc[i+1]):(&i2sOBufDesc[0]));
     for (j=0; j<I2SDMABUFLEN; j++) {
-      i2sBuf[i][j] = i * j;
+      i2sOBuf[i][j] = i * j;
+    }
+    ///////////////////////////////////////////////
+    i2sIBufDesc[i].owner=1;
+    i2sIBufDesc[i].eof=1;
+    i2sIBufDesc[i].sub_sof=0;
+    i2sIBufDesc[i].datalen=I2SDMABUFLEN*4;
+    i2sIBufDesc[i].blocksize=I2SDMABUFLEN*4;
+    i2sIBufDesc[i].buf_ptr=(uint32_t)&i2sIBuf[i][0];
+    i2sIBufDesc[i].unused=0;
+    i2sIBufDesc[i].next_link_ptr=(int)((i<(I2SDMABUFCNT-1))?(&i2sIBufDesc[i+1]):(&i2sIBufDesc[0]));
+    for (j=0; j<I2SDMABUFLEN; j++) {
+      i2sIBuf[i][j] = i * j;
     }
 	}
 
@@ -129,9 +151,9 @@ void ICACHE_FLASH_ATTR i2sInit() {
 	//expect. The TXLINK part still needs a valid DMA descriptor, even if it's unused: the DMA engine will throw
 	//an error at us otherwise. Just feed it any random descriptor.
 	CLEAR_PERI_REG_MASK(SLC_TX_LINK,SLC_TXLINK_DESCADDR_MASK);
-	SET_PERI_REG_MASK(SLC_TX_LINK, ((uint32)&i2sBufDesc[1]) & SLC_TXLINK_DESCADDR_MASK); //any random desc is OK, we don't use TX but it needs something valid
+	SET_PERI_REG_MASK(SLC_TX_LINK, ((uint32)&i2sIBufDesc[0]) & SLC_TXLINK_DESCADDR_MASK); //any random desc is OK, we don't use TX but it needs something valid
 	CLEAR_PERI_REG_MASK(SLC_RX_LINK,SLC_RXLINK_DESCADDR_MASK);
-	SET_PERI_REG_MASK(SLC_RX_LINK, ((uint32)&i2sBufDesc[0]) & SLC_RXLINK_DESCADDR_MASK);
+	SET_PERI_REG_MASK(SLC_RX_LINK, ((uint32)&i2sOBufDesc[0]) & SLC_RXLINK_DESCADDR_MASK);
 
 	//Attach the DMA interrupt
 	ets_isr_attach(ETS_SLC_INUM, slc_isr);
@@ -156,6 +178,9 @@ void ICACHE_FLASH_ATTR i2sInit() {
 	PIN_FUNC_SELECT(PERIPHS_IO_MUX_U0RXD_U, FUNC_I2SO_DATA);
 	//PIN_FUNC_SELECT(PERIPHS_IO_MUX_GPIO2_U, FUNC_I2SO_WS); // No more word selects
 	PIN_FUNC_SELECT(PERIPHS_IO_MUX_MTDO_U, FUNC_I2SO_BCK);
+  PIN_FUNC_SELECT(PERIPHS_IO_MUX_MTDI_U, FUNC_I2SI_DATA);
+  PIN_FUNC_SELECT(PERIPHS_IO_MUX_MTCK_U, FUNC_I2SI_BCK);
+  PIN_FUNC_SELECT(PERIPHS_IO_MUX_MTMS_U, FUNC_I2SI_WS);
 
 	//Enable clock to i2s subsystem
 	i2c_writeReg_Mask_def(i2c_bbpll, i2c_bbpll_en_audio_clock_out, 1);
@@ -200,43 +225,19 @@ void ICACHE_FLASH_ATTR i2sInit() {
 	SET_PERI_REG_MASK(I2SINT_ENA,   I2S_I2S_TX_REMPTY_INT_ENA|I2S_I2S_TX_WFULL_INT_ENA|
 	I2S_I2S_RX_REMPTY_INT_ENA|I2S_I2S_TX_PUT_DATA_INT_ENA|I2S_I2S_RX_TAKE_DATA_INT_ENA);
 
-	//Start transmission
-	SET_PERI_REG_MASK(I2SCONF,I2S_I2S_TX_START);
-}
-
-
-#define BASEFREQ (12000000L)
-#define ABS(x) (((x)>0)?(x):(-(x)))
-
-//Set the I2S sample rate, in HZ
-void i2sSetRate(int rate) {
-	//Find closest divider
-	int bestbck=0, bestfreq=0;
-	int tstfreq;
-	int i;
-	//Calculate the base divider for 16 bits of data
-	int div=(BASEFREQ/(rate*32));
-	//The base divider can be off by as much as <1 Compensate by trying to make the amount of bytes in the
-	//i2s cycle more than 16. Do this by trying the amounts from 16 to 32 and keeping the one that fits best.
-	for (i=16; i<32; i++) {
-		tstfreq=BASEFREQ/(div*i*2);
-//		printf("Best (%d,%d) cur (%d,%d) div %d\n", bestbck, bestfreq, i, tstfreq, ABS(rate-tstfreq));
-		if (ABS(rate-tstfreq)<ABS(rate-bestfreq)) {
-			bestbck=i;
-			bestfreq=tstfreq;
-		}
-	}
-
-//	printf("ReqRate %d Div %d Bck %d Frq %d\n", rate, div, bestbck, BASEFREQ/(div*bestbck*2));
-
-	CLEAR_PERI_REG_MASK(I2SCONF, I2S_TRANS_SLAVE_MOD|
+  CLEAR_PERI_REG_MASK(I2SCONF, I2S_TRANS_SLAVE_MOD|
 						(I2S_BITS_MOD<<I2S_BITS_MOD_S)|
 						(I2S_BCK_DIV_NUM <<I2S_BCK_DIV_NUM_S)|
 						(I2S_CLKM_DIV_NUM<<I2S_CLKM_DIV_NUM_S));
 	SET_PERI_REG_MASK(I2SCONF, I2S_RIGHT_FIRST|I2S_MSB_RIGHT|I2S_RECE_SLAVE_MOD|
 						I2S_RECE_MSB_SHIFT|I2S_TRANS_MSB_SHIFT|
-						(((bestbck-1)&I2S_BCK_DIV_NUM )<<I2S_BCK_DIV_NUM_S)|
-						(((div-1)&I2S_CLKM_DIV_NUM)<<I2S_CLKM_DIV_NUM_S));
+						(((1)&I2S_BCK_DIV_NUM )<<I2S_BCK_DIV_NUM_S)|
+						(((1)&I2S_CLKM_DIV_NUM)<<I2S_CLKM_DIV_NUM_S));
+
+	//Start transmission
+	SET_PERI_REG_MASK(I2SCONF,I2S_I2S_TX_START);
+  // Start receive
+  //SET_PERI_REG_MASK(I2SCONF,I2S_I2S_RX_START);
 }
 
 //Current DMA buffer we're writing to
@@ -252,7 +253,7 @@ void i2sPushSample(unsigned int sample) {
 	//Check if current DMA buffer is full.
 	if (currDMABuffPos==I2SDMABUFLEN || currDMABuff==NULL) {
 		//We need a new buffer. Pop one from the queue.
-    currDMABuff = i2sBuf[i2sWrInd];
+    currDMABuff = i2sOBuf[i2sWrInd];
     i2sWrInd = (i2sWrInd + 1) % I2SDMABUFCNT;
 		currDMABuffPos=0;
 	}
