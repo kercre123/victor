@@ -273,7 +273,7 @@ namespace Anki
       }
 
       // Plot a blue pixel on the SSD1306 framebuffer with vertical addressing mode
-      #define PLOT(x, y)  m_frame[x] |= 0x800000000000000L >> y;
+      #define PLOT(x, y)  m_frame[x] |= 0x800000000000000L >> (y ^ 63);
 
       void TestFrame()
       {
