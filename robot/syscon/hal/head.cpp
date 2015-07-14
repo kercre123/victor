@@ -13,8 +13,7 @@
 
 static const uint8_t HEAD_PREAMBLE[] = {SPI_SOURCE_HEAD, 0xFA, 0xF3, 0x20};
 
-const int TxRxBufferSize = MAX(sizeof(GlobalDataToBody),sizeof(GlobalDataToHead));
-uint8_t TxRxBuffer[TxRxBufferSize];
+uint8_t TxRxBuffer[sizeof(GlobalDataToBody)];
 bool Head::spokenTo;
 volatile bool Head::uartIdle;
 int TxRxIdx;
