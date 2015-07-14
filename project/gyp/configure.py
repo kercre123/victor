@@ -107,6 +107,7 @@ def main(scriptArgs):
   sys.path.insert(0, os.path.join(options.buildToolsPath, 'tools/ankibuild'))
   import installBuildDeps
   import updateFileLists
+  import generateUnityMeta
 
   if not options.ankiUtilPath:
     options.ankiUtilPath = os.path.join(options.projectRoot, 'lib/anki/cozmo-engine/tools/anki-util')
@@ -164,12 +165,25 @@ def main(scriptArgs):
     UtilLog.error("error compiling clad files")
     return False
 
+  #run clad's make
+  unityGeneratedPath=os.path.join(projectRoot, 'unity/Cozmo/Assets/Scripts/Generated')
+  if (subprocess.call(['make', '--silent', 'OUTPUT_DIR_CSHARP=' + unityGeneratedPath, 'csharp'],
+    cwd=os.path.join(options.cozmoEnginePath, 'clad')) != 0):
+    UtilLog.error("error compiling clad files")
+    return False
+
+  #generate unity's metafiles
+  if (generateUnityMeta.generateMetaFiles(unityGeneratedPath, options.verbose)):
+    UtilLog.error("error generating unity meta files")
+    return False
+
   # update file lists
   generator = updateFileLists.FileListGenerator(options)
   generator.processFolder(['game/src/anki/cozmo', 'game/include', 'generated/clad/game'], ['project/gyp/cozmoGame.lst'])
   generator.processFolder(['simulator/controllers/webotsCtrlKeyboard'], ['project/gyp/ctrlKeyboard.lst'])
   generator.processFolder(['simulator/controllers/webotsCtrlGameEngine'], ['project/gyp/ctrlGameEngine.lst'])
   generator.processFolder(['unity/CSharpBinding/src'], ['project/gyp/csharp.lst'])
+  generator.processFolder(['clad/src'], ['project/gyp/clad.lst'])
 
   if options.updateListsOnly:
     # TODO: remove dependency on abspath. 
