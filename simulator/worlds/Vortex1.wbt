@@ -139,12 +139,12 @@ LightCube {
   ID 1
 }
 LightCube {
-  translation 0 -0.025 0.0219969
+  translation -0.131233 0.168711 0.0219969
   rotation 0 1 0 0
   ID 2
 }
 LightCube {
-  translation 0 -0.075 0.0219969
+  translation -0.18532 0.168776 0.0219969
   rotation 0 1 0 0
   ID 3
 }
