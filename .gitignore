@@ -5,6 +5,7 @@
 *.d
 *.cache
 *.swp
+*.TMP
 matlab.mat
 
 # Webots
