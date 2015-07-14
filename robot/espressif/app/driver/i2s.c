@@ -92,7 +92,7 @@ LOCAL void slc_isr(void) {
 	}
   else if (slc_intr_status & SLC_TX_EOF_INT_ST) {
     finishedDesc=(struct sdio_queue*)READ_PERI_REG(SLC_TX_EOF_DES_ADDR);
-    os_printf("%08x\r\n", i2sRxInd);
+    //os_printf("%08x\r\n", i2sRxInd);
     i2sRxInd += 1;
     finishedDesc->owner  = 1;
     finishedDesc->eof    = 1;
@@ -183,7 +183,7 @@ void ICACHE_FLASH_ATTR i2sInit() {
 
 	//Init pins to i2s functions
 	PIN_FUNC_SELECT(PERIPHS_IO_MUX_U0RXD_U, FUNC_I2SO_DATA);
-	//PIN_FUNC_SELECT(PERIPHS_IO_MUX_GPIO2_U, FUNC_I2SO_WS); // No more word selects
+	PIN_FUNC_SELECT(PERIPHS_IO_MUX_GPIO2_U, FUNC_I2SO_WS); // No more word selects
 	PIN_FUNC_SELECT(PERIPHS_IO_MUX_MTDO_U, FUNC_I2SO_BCK);
   PIN_FUNC_SELECT(PERIPHS_IO_MUX_MTDI_U, FUNC_I2SI_DATA);
   PIN_FUNC_SELECT(PERIPHS_IO_MUX_MTCK_U, FUNC_I2SI_BCK);
@@ -220,8 +220,8 @@ void ICACHE_FLASH_ATTR i2sInit() {
 						(I2S_CLKM_DIV_NUM<<I2S_CLKM_DIV_NUM_S));
 	SET_PERI_REG_MASK(I2SCONF, I2S_RIGHT_FIRST|I2S_MSB_RIGHT|//I2S_RECE_SLAVE_MOD|
 						I2S_RECE_MSB_SHIFT|I2S_TRANS_MSB_SHIFT|
-						(((32)&I2S_BCK_DIV_NUM )<<I2S_BCK_DIV_NUM_S)|
-						(((32)&I2S_CLKM_DIV_NUM)<<I2S_CLKM_DIV_NUM_S));
+						(((1)&I2S_BCK_DIV_NUM )<<I2S_BCK_DIV_NUM_S)|
+						(((1)&I2S_CLKM_DIV_NUM)<<I2S_CLKM_DIV_NUM_S));
 
 	//Start transmission
 	SET_PERI_REG_MASK(I2SCONF,I2S_I2S_TX_START);
