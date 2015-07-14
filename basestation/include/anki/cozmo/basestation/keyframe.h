@@ -327,7 +327,8 @@ namespace Anki {
     }; // class BackpackLightsKeyFrame
     
     
-    // A BodyMotionKeyFrame
+    // A BodyMotionKeyFrame controls the wheels to drive straight, turn in place, or
+    // drive arcs. They specify the speed and duration of the motion.
     class BodyMotionKeyFrame : public IKeyFrame
     {
     public:

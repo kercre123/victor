@@ -4,7 +4,7 @@
 
 #include "util/logging/logging.h"
 
-#define DEBUG_ANIMATION_STREAMING 1
+#define DEBUG_ANIMATION_STREAMING 0
 
 namespace Anki {
 namespace Cozmo {
