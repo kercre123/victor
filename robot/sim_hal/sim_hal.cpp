@@ -986,6 +986,8 @@ namespace Anki {
       // TODO: ...
     }
 
+    void HAL::AudioFill(void) {}
+    
     // @return true if the audio clock says it is time for the next frame
     bool HAL::AudioReady()
     {
@@ -994,7 +996,7 @@ namespace Anki {
     
     // Play one frame of audio or silence
     // @param frame - a pointer to an audio frame or NULL to play one frame of silence
-    void HAL::AudioPlayFrame(u8* frame)
+    void HAL::AudioPlayFrame(s16 predictor, u8* frame)
     {
       if (audioEndTime_ == 0) {
         audioEndTime_ = HAL::GetTimeStamp();
