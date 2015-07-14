@@ -1,14 +1,10 @@
-/******************************************************************************
- * Copyright 2013-2015 Espressif Systems
+/**
+ * @file I2S driver for Espressif chip.
+ * @author Daniel Casner <daniel@anki.com>
  *
- * FileName: i2s_freertos.c
- *
- * Description: I2S output routines for a FreeRTOS system. Uses DMA and a queue
- * to abstract away the nitty-gritty details.
- *
- * Modification history:
- *     2015/06/01, v1.0 File created.
-*******************************************************************************/
+ * Original code taken from Espressif MP3 decoder project. Heavily reworked to liberate it from FreeRTOS and enable
+ * bidirectional communication.
+ */
 
 /*
 How does this work? Basically, to get sound, you need to:
@@ -25,18 +21,13 @@ generate and push data as fast as you can and I2sPushSample will regulate the
 speed.
 */
 
-
-#include "esp_common.h"
-
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "freertos/semphr.h"
-#include "freertos/queue.h"
-
-#include "i2s_reg.h"
-#include "slc_register.h"
-#include "sdio_slv.h"
-#include "i2s_freertos.h"
+#include "ets_sys.h"
+#include "osapi.h"
+#include "os_type.h"
+#include "driver/i2s_reg.h"
+#include "driver/slc_register.h"
+#include "driver/sdio_slv.h"
+#include "driver/i2s.h"
 
 //We need some defines that aren't in some RTOS SDK versions. Define them here if we can't find them.
 #ifndef i2c_bbpll
@@ -57,13 +48,14 @@ speed.
 #define ETS_SLC_INUM       1
 #endif
 
-
 //Pointer to the I2S DMA buffer data
 static unsigned int *i2sBuf[I2SDMABUFCNT];
 //I2S DMA buffer descriptors
 static struct sdio_queue i2sBufDesc[I2SDMABUFCNT];
-//Queue which contains empty DMA buffers
-static xQueueHandle dmaQueue;
+// Index of the buffer the I2S peripherial is reading from
+static unsigned int i2sRdInd = 0;
+// Index of the buffer we are writing samples into
+static unsigned int i2sWrInd = 0;
 //DMA underrun counter
 static long underrunCnt;
 
@@ -71,7 +63,6 @@ static long underrunCnt;
 //handle here is the RX_EOF_INT status, which indicate the DMA has sent a buffer whose
 //descriptor has the 'EOF' field set to 1.
 LOCAL void slc_isr(void) {
-	portBASE_TYPE HPTaskAwoken=0;
 	struct sdio_queue *finishedDesc;
 	uint32 slc_intr_status;
 	int dummy;
@@ -83,34 +74,30 @@ LOCAL void slc_isr(void) {
 	if (slc_intr_status & SLC_RX_EOF_INT_ST) {
 		//The DMA subsystem is done with this block: Push it on the queue so it can be re-used.
 		finishedDesc=(struct sdio_queue*)READ_PERI_REG(SLC_RX_EOF_DES_ADDR);
-		if (xQueueIsQueueFullFromISR(dmaQueue)) {
+    if (i2sRdInd == i2sWrInd) {
 			//All buffers are empty. This means we have an underflow on our hands.
 			underrunCnt++;
 			//Pop the top off the queue; it's invalid now anyway.
-			xQueueReceiveFromISR(dmaQueue, &dummy, &HPTaskAwoken);
+			i2sWrInd = (i2sWrInd + 1) % I2SDMABUFCNT;
 		}
+
 		//Dump the buffer on the queue so the rest of the software can fill it.
-		xQueueSendFromISR(dmaQueue, (void*)(&finishedDesc->buf_ptr), &HPTaskAwoken);
+    i2sRdInd = (i2sRdInd + 1) % I2SDMABUFCNT;
 	}
-	//We're done.
-	portEND_SWITCHING_ISR(HPTaskAwoken);
 }
 
 
 //Initialize I2S subsystem for DMA circular buffer use
 void ICACHE_FLASH_ATTR i2sInit() {
-	int x, y;
-	
+	int x;
+
 	underrunCnt=0;
-	
+
 	//First, take care of the DMA buffers.
-	for (y=0; y<I2SDMABUFCNT; y++) {
+	for (x=0; x<I2SDMABUFCNT; x++) {
 		//Allocate memory for this DMA sample buffer.
-		i2sBuf[y]=malloc(I2SDMABUFLEN*4);
-		//Clear sample buffer. We don't want noise.
-		for (x=0; x<I2SDMABUFLEN; x++) {
-			i2sBuf[y][x]=0;
-		}
+		i2sBuf[x]=(unsigned int *)os_malloc(I2SDMABUFLEN*4);
+		os_memset(i2sBuf[x], 0, I2SDMABUFLEN);
 	}
 
 	//Reset DMA
@@ -140,7 +127,7 @@ void ICACHE_FLASH_ATTR i2sInit() {
 		i2sBufDesc[x].unused=0;
 		i2sBufDesc[x].next_link_ptr=(int)((x<(I2SDMABUFCNT-1))?(&i2sBufDesc[x+1]):(&i2sBufDesc[0]));
 	}
-	
+
 	//Feed dma the 1st buffer desc addr
 	//To send data to the I2S subsystem, counter-intuitively we use the RXLINK part, not the TXLINK as you might
 	//expect. The TXLINK part still needs a valid DMA descriptor, even if it's unused: the DMA engine will throw
@@ -159,12 +146,9 @@ void ICACHE_FLASH_ATTR i2sInit() {
 	///enable DMA intr in cpu
 	_xt_isr_unmask(1<<ETS_SLC_INUM);
 
-	//We use a queue to keep track of the DMA buffers that are empty. The ISR will push buffers to the back of the queue,
-	//the mp3 decode will pull them from the front and fill them. For ease, the queue will contain *pointers* to the DMA
-	//buffers, not the data itself. The queue depth is one smaller than the amount of buffers we have, because there's
-	//always a buffer that is being used by the DMA subsystem *right now* and we don't want to be able to write to that
-	//simultaneously.
-	dmaQueue=xQueueCreate(I2SDMABUFCNT-1, sizeof(int*));
+  // Keep track of read / write queues
+  i2sRdInd = 0;
+  i2sWrInd = 0;
 
 	//Start transmission
 	SET_PERI_REG_MASK(SLC_TX_LINK, SLC_TXLINK_START);
@@ -230,7 +214,7 @@ void ICACHE_FLASH_ATTR i2sInit() {
 
 //Set the I2S sample rate, in HZ
 void i2sSetRate(int rate) {
-	//Find closest divider 
+	//Find closest divider
 	int bestbck=0, bestfreq=0;
 	int tstfreq;
 	int i;
@@ -265,14 +249,15 @@ static unsigned int *currDMABuff=NULL;
 static int currDMABuffPos=0;
 
 
-//This routine pushes a single, 32-bit sample to the I2S buffers. Call this at (on average) 
+//This routine pushes a single, 32-bit sample to the I2S buffers. Call this at (on average)
 //at least the current sample rate. You can also call it quicker: it will suspend the calling
 //thread if the buffer is full and resume when there's room again.
 void i2sPushSample(unsigned int sample) {
 	//Check if current DMA buffer is full.
 	if (currDMABuffPos==I2SDMABUFLEN || currDMABuff==NULL) {
 		//We need a new buffer. Pop one from the queue.
-		xQueueReceive(dmaQueue, &currDMABuff, portMAX_DELAY);
+    currDMABuff = i2sBuf[i2sWrInd];
+    i2sWrInd = (i2sWrInd + 1) % I2SDMABUFCNT;
 		currDMABuffPos=0;
 	}
 	currDMABuff[currDMABuffPos++]=sample;

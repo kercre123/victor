@@ -108,10 +108,9 @@
 #define I2S_TX_CHAN_MOD_S 0
 
 
-
-
-
-
-
- 
-
+#define FUNC_I2SI_DATA                      1
+#define FUNC_I2SI_BCK                        1
+#define FUNC_I2SI_WS                        1
+#define FUNC_I2SO_BCK                       1
+#define FUNC_I2SO_DATA                      1
+#define FUNC_I2SO_WS                        1

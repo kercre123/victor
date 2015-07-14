@@ -1,5 +1,5 @@
-#ifndef _I2S_FREERTOS_H_
-#define _I2S_FREERTOS_H_
+#ifndef _I2S_H_
+#define _I2S_H_
 
 //Parameters for the I2S DMA behaviour
 #define I2SDMABUFCNT (14)			//Number of buffers in the I2S circular buffer
