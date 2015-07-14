@@ -44,6 +44,7 @@ namespace AnimationController {
     
     bool _haveReceivedTerminationFrame;
     bool _isPlaying;
+    bool _bufferFullMessagePrintedThisTick;
     
     AnimTrackFlag _tracksToPlay;
     
@@ -293,6 +294,7 @@ namespace AnimationController {
 
     _haveReceivedTerminationFrame = false;
     _isPlaying = false;
+    _bufferFullMessagePrintedThisTick = false;
     
 #   if DEBUG_ANIMATION_CONTROLLER
     _currentTime_ms = 0;
@@ -382,20 +384,34 @@ namespace AnimationController {
     return msgID;
   }
   
-//  PRINT("Buffering anim keyframe %s, ID=%d\n", QUOTE(__MSG_TYPE__), Messages::GET_MESSAGE_ID(__MSG_TYPE__));
-#define DEFINE_BUFFER_KEY_FRAME(__MSG_TYPE__) \
-    const s32 numBytesAvailable = GetNumBytesAvailable(); \
-    const s32 numBytesNeeded = sizeof(msg) + sizeof(Messages::ID); \
-    AnkiConditionalErrorAndReturnValue(numBytesAvailable >= numBytesNeeded, RESULT_OK , \
-                                       "BufferKeyFrame", \
-                                       "Not enough buffer available for keyframe (%d bytes available, %d needed).\n", \
-                                       numBytesAvailable, numBytesNeeded); \
-    SetTypeIndicator(Messages::GET_MESSAGE_ID(__MSG_TYPE__)); \
+  template<typename MSG_TYPE>
+  static inline Result BufferKeyFrameHelper(const MSG_TYPE& msg, Messages::ID msgID)
+  {
+    const s32 numBytesAvailable = GetNumBytesAvailable();
+    const s32 numBytesNeeded = sizeof(msg) + sizeof(Messages::ID);
+    if(numBytesAvailable < numBytesNeeded) {
+      // Only print the error message if we haven't already done so this tick,
+      // to prevent spamming that could clog reliable UDP
+      if(!_bufferFullMessagePrintedThisTick) {
+        AnkiError("AnimationController.BufferKeyFrame.BufferFull",
+                  "%d bytes available, %d needed.\n",
+                  numBytesAvailable, numBytesNeeded);
+        _bufferFullMessagePrintedThisTick = true;
+      }
+      return RESULT_FAIL;
+    }
+    SetTypeIndicator(msgID);
     CopyIntoBuffer((u8*)&msg, sizeof(msg));
+    return RESULT_OK;
+  }
   
   Result BufferKeyFrame(const Messages::AnimKeyFrame_EndOfAnimation& msg)
   {
-    DEFINE_BUFFER_KEY_FRAME(AnimKeyFrame_EndOfAnimation)
+    Result lastResult = BufferKeyFrameHelper(msg, GET_MESSAGE_ID(Messages::AnimKeyFrame_EndOfAnimation));
+    if(RESULT_OK != lastResult) {
+      return lastResult;
+    }
+    
 #   if DEBUG_ANIMATION_CONTROLLER
     PRINT("Buffering EndOfAnimation KeyFrame\n");
 #   endif
@@ -406,7 +422,11 @@ namespace AnimationController {
   
   Result BufferKeyFrame(const Messages::AnimKeyFrame_AudioSample& msg)
   {
-    DEFINE_BUFFER_KEY_FRAME(AnimKeyFrame_AudioSample)
+    Result lastResult = BufferKeyFrameHelper(msg, GET_MESSAGE_ID(Messages::AnimKeyFrame_AudioSample));
+    if(RESULT_OK != lastResult) {
+      return lastResult;
+    }
+    
     //PRINT("Buffering AudioSample KeyFrame\n");
     ++_numFramesBuffered;
     return RESULT_OK;
@@ -414,14 +434,21 @@ namespace AnimationController {
   
   Result BufferKeyFrame(const Messages::AnimKeyFrame_AudioSilence& msg)
   {
-    DEFINE_BUFFER_KEY_FRAME(AnimKeyFrame_AudioSilence)
+    Result lastResult = BufferKeyFrameHelper(msg, GET_MESSAGE_ID(Messages::AnimKeyFrame_AudioSilence));
+    if(RESULT_OK != lastResult) {
+      return lastResult;
+    }
+    
     //PRINT("Buffering AudioSilence KeyFrame\n");
     ++_numFramesBuffered;
     return RESULT_OK;
   }
 
   Result BufferKeyFrame(const Messages::AnimKeyFrame_HeadAngle& msg) {
-    DEFINE_BUFFER_KEY_FRAME(AnimKeyFrame_HeadAngle)
+    Result lastResult = BufferKeyFrameHelper(msg, GET_MESSAGE_ID(Messages::AnimKeyFrame_HeadAngle));
+    if(RESULT_OK != lastResult) {
+      return lastResult;
+    }
 #   if DEBUG_ANIMATION_CONTROLLER
     PRINT("Buffering HeadAngle KeyFrame\n");
 #   endif
@@ -429,7 +456,10 @@ namespace AnimationController {
   }
   
   Result BufferKeyFrame(const Messages::AnimKeyFrame_LiftHeight& msg) {
-    DEFINE_BUFFER_KEY_FRAME(AnimKeyFrame_LiftHeight)
+    Result lastResult = BufferKeyFrameHelper(msg, GET_MESSAGE_ID(Messages::AnimKeyFrame_LiftHeight));
+    if(RESULT_OK != lastResult) {
+      return lastResult;
+    }
 #   if DEBUG_ANIMATION_CONTROLLER
     PRINT("Buffering LiftHeight KeyFrame\n");
 #   endif
@@ -437,7 +467,10 @@ namespace AnimationController {
   }
   
   Result BufferKeyFrame(const Messages::AnimKeyFrame_FaceImage& msg) {
-    DEFINE_BUFFER_KEY_FRAME(AnimKeyFrame_FaceImage)
+    Result lastResult = BufferKeyFrameHelper(msg, GET_MESSAGE_ID(Messages::AnimKeyFrame_FaceImage));
+    if(RESULT_OK != lastResult) {
+      return lastResult;
+    }
 #   if DEBUG_ANIMATION_CONTROLLER
     PRINT("Buffering FaceImage KeyFrame\n");
 #   endif
@@ -445,7 +478,10 @@ namespace AnimationController {
   }
   
   Result BufferKeyFrame(const Messages::AnimKeyFrame_FacePosition& msg) {
-    DEFINE_BUFFER_KEY_FRAME(AnimKeyFrame_FacePosition)
+    Result lastResult = BufferKeyFrameHelper(msg, GET_MESSAGE_ID(Messages::AnimKeyFrame_FacePosition));
+    if(RESULT_OK != lastResult) {
+      return lastResult;
+    }
 #   if DEBUG_ANIMATION_CONTROLLER
     PRINT("Buffering FacePosition KeyFrame\n");
 #   endif
@@ -453,7 +489,10 @@ namespace AnimationController {
   }
   
   Result BufferKeyFrame(const Messages::AnimKeyFrame_BackpackLights& msg) {
-    DEFINE_BUFFER_KEY_FRAME(AnimKeyFrame_BackpackLights)
+    Result lastResult = BufferKeyFrameHelper(msg, GET_MESSAGE_ID(Messages::AnimKeyFrame_BackpackLights));
+    if(RESULT_OK != lastResult) {
+      return lastResult;
+    }
 #   if DEBUG_ANIMATION_CONTROLLER
     PRINT("Buffering BackpackLights KeyFrame\n");
 #   endif
@@ -461,7 +500,10 @@ namespace AnimationController {
   }
   
   Result BufferKeyFrame(const Messages::AnimKeyFrame_BodyMotion& msg) {
-    DEFINE_BUFFER_KEY_FRAME(AnimKeyFrame_BodyMotion)
+    Result lastResult = BufferKeyFrameHelper(msg, GET_MESSAGE_ID(Messages::AnimKeyFrame_BodyMotion));
+    if(RESULT_OK != lastResult) {
+      return lastResult;
+    }
 #   if DEBUG_ANIMATION_CONTROLLER
     PRINT("Buffering BodyMotion KeyFrame\n");
 #   endif
@@ -470,7 +512,10 @@ namespace AnimationController {
   
   Result BufferKeyFrame(const Messages::AnimKeyFrame_Blink& msg)
   {
-    DEFINE_BUFFER_KEY_FRAME(AnimKeyFrame_Blink)
+    Result lastResult = BufferKeyFrameHelper(msg, GET_MESSAGE_ID(Messages::AnimKeyFrame_Blink));
+    if(RESULT_OK != lastResult) {
+      return lastResult;
+    }
 #   if DEBUG_ANIMATION_CONTROLLER
     PRINT("Buffering Blink KeyFrame\n");
 #   endif
