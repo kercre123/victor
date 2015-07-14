@@ -7,6 +7,7 @@
     'ctrlLightCube_source': 'ctrlLightCube.lst',
     'ctrlRobot_source': 'ctrlRobot.lst',
     'ctrlViz_source': 'ctrlViz.lst',
+    'clad_source': 'clad.lst',
     
     # TODO: should this be passed in, or shared?
     'coretech_defines': [
@@ -423,7 +424,10 @@
 
     {
       'target_name': 'cozmoEngine',
-      'sources': [ "<!@(cat <(engine_source))" ],
+      'sources': [ 
+        '<!@(cat <(engine_source))',
+        '<!@(cat <(clad_source))',
+      ],
       'sources/': [
         ['exclude', 'bleRobotManager.mm'],
         ['exclude', 'bleComms.mm'],

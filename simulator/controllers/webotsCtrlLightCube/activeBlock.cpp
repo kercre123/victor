@@ -379,11 +379,11 @@ namespace Anki {
           newIdx += accelBufferSize_;
           ++accelBufferSize_;
         } else {
-          if (++accelBufferStartIdx_ >= MAX_ACCEL_BUFFER_SIZE) {
-            accelBufferStartIdx_ = 0;
-          }
+          accelBufferStartIdx_ = (accelBufferStartIdx_+1) % MAX_ACCEL_BUFFER_SIZE;
           accelBufferSize_ = MAX_ACCEL_BUFFER_SIZE;
         }
+        newIdx = newIdx % MAX_ACCEL_BUFFER_SIZE;
+        
         accelBuffer_[0][newIdx] = accelX;
         accelBuffer_[1][newIdx] = accelY;
         accelBuffer_[2][newIdx] = accelZ;

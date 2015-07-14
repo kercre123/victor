@@ -483,6 +483,11 @@
               <FileType>8</FileType>
               <FilePath>.\arm_hal\hal\cube.cpp</FilePath>
             </File>
+            <File>
+              <FileName>audio.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\arm_hal\hal\audio.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -747,6 +752,11 @@
               <FileName>ledController.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\ledController.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>eyeController.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\eyeController.cpp</FilePath>
             </File>
           </Files>
         </Group>
@@ -1304,6 +1314,11 @@
               <FileType>8</FileType>
               <FilePath>.\arm_hal\hal\cube.cpp</FilePath>
             </File>
+            <File>
+              <FileName>audio.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\arm_hal\hal\audio.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -1625,6 +1640,11 @@
               <FileName>ledController.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\ledController.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>eyeController.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\eyeController.cpp</FilePath>
             </File>
           </Files>
         </Group>

@@ -493,7 +493,6 @@ namespace Anki {
     
     return areAligned;
   }
-
   
 } // namespace Anki
 

@@ -392,6 +392,12 @@ return RESULT_FAIL; \
 #pragma mark -
 #pragma mark BlinkKeyFrame
     
+    BlinkKeyFrame::BlinkKeyFrame()
+    : _curTime_ms(0)
+    {
+      
+    }
+    
     bool BlinkKeyFrame::IsDone()
     {
       if(_streamMsg.blinkNow) {
@@ -459,8 +465,6 @@ return RESULT_FAIL; \
         return RESULT_FAIL;
       }
       
-      _curTime_ms = 0;
-      
       return RESULT_OK;
     }
     
@@ -523,6 +527,7 @@ _streamMsg.colors[__LED_NAME__] = u32(color) >> 8; } while(0) // Note we shift t
 #pragma mark BodyMotionKeyFrame
     
     BodyMotionKeyFrame::BodyMotionKeyFrame()
+    : _currentTime_ms(0)
     {
       _stopMsg.speed = 0;
     }
@@ -551,8 +556,6 @@ _streamMsg.colors[__LED_NAME__] = u32(color) >> 8; } while(0) // Note we shift t
       } else {
         _streamMsg.curvatureRadius_mm = jsonRoot["radius_mm"].asInt();
       }
-
-      _currentTime_ms = 0;
       
       return RESULT_OK;
     }
