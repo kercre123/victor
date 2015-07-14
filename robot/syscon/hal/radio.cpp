@@ -9,7 +9,7 @@ extern "C" {
 }
   
 #include "hardware.h"
-#include "uart.h"
+#include "debug.h"
 #include "radio.h"
 #include "timer.h"
 #include "head.h"
@@ -100,8 +100,7 @@ static int lastC = GetCounter();
 void BenchMark() {
     static int lastC = GetCounter();
     int currentC = GetCounter();
-    UART::dec((currentC - lastC) / 256.0f / 32768.0f * 1000);
-    UART::put("\n\r");
+    UART::print("%i\n\r", (int)((currentC - lastC) / 256.0f / 32768.0f * 1000));
     lastC = currentC;
 }
 

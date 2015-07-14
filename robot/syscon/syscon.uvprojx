@@ -418,11 +418,6 @@
               <FilePath>.\hal\main.cpp</FilePath>
             </File>
             <File>
-              <FileName>uart.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\hal\uart.cpp</FilePath>
-            </File>
-            <File>
               <FileName>motors.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\hal\motors.cpp</FilePath>
@@ -451,6 +446,11 @@
               <FileName>radio.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\hal\radio.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>debug.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\hal\debug.cpp</FilePath>
             </File>
           </Files>
         </Group>
