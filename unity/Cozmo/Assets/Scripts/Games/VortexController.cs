@@ -1110,7 +1110,7 @@ public class VortexController : GameController {
 
 		for(int i=0;i<playersThatAreWrong.Count;i++) {
 			scoreDeltas[playersThatAreWrong[i]] = settings.pointsIncorrectPenalty;
-			scores[playersThatAreWrong[i]] += settings.pointsIncorrectPenalty;
+			scores[playersThatAreWrong[i]] = Mathf.Max (0, scores[playersThatAreWrong[i]] + settings.pointsIncorrectPenalty);
 		}
 		
 		if(playersThatAreCorrect.Count == 0) {
