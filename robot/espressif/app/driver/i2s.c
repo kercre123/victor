@@ -91,8 +91,14 @@ LOCAL void slc_isr(void) {
     i2sRdInd = (i2sRdInd + 1) % I2SDMABUFCNT;
 	}
   else if (slc_intr_status & SLC_TX_EOF_INT_ST) {
-    os_printf("slc tx eof %d", i2sRxInd);
+    finishedDesc=(struct sdio_queue*)READ_PERI_REG(SLC_TX_EOF_DES_ADDR);
+    os_printf("%08x\r\n", i2sRxInd);
     i2sRxInd += 1;
+    finishedDesc->owner  = 1;
+    finishedDesc->eof    = 1;
+    finishedDesc->unused = 0;
+    finishedDesc->blocksize = I2SDMABUFLEN*4;
+    finishedDesc->datalen   = I2SDMABUFLEN*4;
   }
 }
 
@@ -116,6 +122,7 @@ void ICACHE_FLASH_ATTR i2sInit() {
 	SET_PERI_REG_MASK(SLC_CONF0,(1<<SLC_MODE_S));
 	SET_PERI_REG_MASK(SLC_RX_DSCR_CONF,SLC_INFOR_NO_REPLACE|SLC_TOKEN_NO_REPLACE);
 	CLEAR_PERI_REG_MASK(SLC_RX_DSCR_CONF, SLC_RX_FILL_EN|SLC_RX_EOF_MODE | SLC_RX_FILL_MODE);
+
 
 
 	//Initialize DMA buffer descriptors in such a way that they will form a circular
@@ -151,14 +158,14 @@ void ICACHE_FLASH_ATTR i2sInit() {
 	//expect. The TXLINK part still needs a valid DMA descriptor, even if it's unused: the DMA engine will throw
 	//an error at us otherwise. Just feed it any random descriptor.
 	CLEAR_PERI_REG_MASK(SLC_TX_LINK,SLC_TXLINK_DESCADDR_MASK);
-	SET_PERI_REG_MASK(SLC_TX_LINK, ((uint32)&i2sIBufDesc[0]) & SLC_TXLINK_DESCADDR_MASK); //any random desc is OK, we don't use TX but it needs something valid
+	SET_PERI_REG_MASK(SLC_TX_LINK, ((uint32)&i2sIBufDesc[0]) & SLC_TXLINK_DESCADDR_MASK);
 	CLEAR_PERI_REG_MASK(SLC_RX_LINK,SLC_RXLINK_DESCADDR_MASK);
 	SET_PERI_REG_MASK(SLC_RX_LINK, ((uint32)&i2sOBufDesc[0]) & SLC_RXLINK_DESCADDR_MASK);
 
 	//Attach the DMA interrupt
 	ets_isr_attach(ETS_SLC_INUM, slc_isr);
 	//Enable DMA operation intr
-	WRITE_PERI_REG(SLC_INT_ENA,  SLC_RX_EOF_INT_ENA);
+	WRITE_PERI_REG(SLC_INT_ENA,  SLC_RX_EOF_INT_ENA | SLC_TX_EOF_INT_ENA);
 	//clear any interrupt flags that are set
 	WRITE_PERI_REG(SLC_INT_CLR, 0xffffffff);
 	///enable DMA intr in cpu
@@ -213,13 +220,13 @@ void ICACHE_FLASH_ATTR i2sInit() {
 						(I2S_CLKM_DIV_NUM<<I2S_CLKM_DIV_NUM_S));
 	SET_PERI_REG_MASK(I2SCONF, I2S_RIGHT_FIRST|I2S_MSB_RIGHT|//I2S_RECE_SLAVE_MOD|
 						I2S_RECE_MSB_SHIFT|I2S_TRANS_MSB_SHIFT|
-						(((1)&I2S_BCK_DIV_NUM )<<I2S_BCK_DIV_NUM_S)|
-						(((1)&I2S_CLKM_DIV_NUM)<<I2S_CLKM_DIV_NUM_S));
+						(((32)&I2S_BCK_DIV_NUM )<<I2S_BCK_DIV_NUM_S)|
+						(((32)&I2S_CLKM_DIV_NUM)<<I2S_CLKM_DIV_NUM_S));
 
 	//Start transmission
 	SET_PERI_REG_MASK(I2SCONF,I2S_I2S_TX_START);
   // Start receive
-  //SET_PERI_REG_MASK(I2SCONF,I2S_I2S_RX_START);
+  SET_PERI_REG_MASK(I2SCONF,I2S_I2S_RX_START);
 }
 
 //Current DMA buffer we're writing to
