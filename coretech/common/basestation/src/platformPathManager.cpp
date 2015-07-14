@@ -73,6 +73,16 @@ namespace Anki {
 #   endif
   } // PlatformPathManager() Constructor
   
+  PlatformPathManager* PlatformPathManager::_singletonInstance = nullptr;
+  
+  void PlatformPathManager::removeInstance()
+  {
+    if(nullptr != _singletonInstance) {
+      delete _singletonInstance;
+      _singletonInstance = nullptr;
+    }
+  }
+  
   std::string PlatformPathManager::PrependPath(const Scope scope,
                                               const std::string& name) const
   {

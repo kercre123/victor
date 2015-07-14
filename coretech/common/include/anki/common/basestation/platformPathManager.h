@@ -19,34 +19,11 @@
 
 namespace Anki {
   
-  // TODO: Move this to coretech/common/singleton.h/cpp
-  template<class Derived>
-  class SingletonBase
-  {
-  public:
-    static Derived* GetInstance() {
-      if(_singletonInstance == nullptr) {
-        _singletonInstance = new Derived();
-      }
-      return _singletonInstance;
-    }
-    
-    // TODO: Add singleton-appropriate destructor
-    
-  protected:
-    SingletonBase() { }
-    static Derived* _singletonInstance;
-    
-  }; // class SingletonBase<Derived>
-
-  template<class Derived>
-  Derived* SingletonBase<Derived>::_singletonInstance = nullptr;
-  
   // Macro for convenience
 #define PREPEND_SCOPED_PATH(__SCOPE__, __NAME__) \
-  ::Anki::PlatformPathManager::GetInstance()->PrependPath(::Anki::PlatformPathManager::__SCOPE__, __NAME__)
+  ::Anki::PlatformPathManager::getInstance()->PrependPath(::Anki::PlatformPathManager::__SCOPE__, __NAME__)
   
-  class PlatformPathManager : public SingletonBase<PlatformPathManager>
+  class PlatformPathManager
   {
   public:
     enum Scope {
@@ -59,65 +36,40 @@ namespace Anki {
       //Temp
     };
     
+    // Get a pointer to the singleton instance
+    inline static PlatformPathManager* getInstance();
+    static void removeInstance();
+
     std::string PrependPath(const Scope scope, const std::string& name) const;
     
     // e.g. for special unit tests or situations
     void OverridePath(const Scope scope, const std::string& newPath);
     
   protected:
-    friend SingletonBase<PlatformPathManager>;
     
     PlatformPathManager();
+    
+    static PlatformPathManager* _singletonInstance;
     //virtual const std::string& GetLibraryPath() const = 0;
     
   private:
     // TODO: Could also be a std::array<std::string,NumScopes>
     std::map<Scope, std::string> _scopePrefixes;
     
-  }; // class SystemPathManager
+  }; // class PlatformPathManager
   
-  /*
-  class CommonPathManager : public PlatformPathManager, public SingletonBase<CommonPathManager>
-  {
-    virtual const std::string& GetLibraryPath() const {
-      static const std::string LibraryPath("Common");
-      return LibraryPath;
-    }
-  };
   
-  class VisionPathManager : public PlatformPathManager, public SingletonBase<VisionPathManager>
+  inline PlatformPathManager* PlatformPathManager::getInstance()
   {
-  protected:
-    virtual const std::string& GetLibraryPath() const {
-      static const std::string LibraryPath("Vision");
-      return LibraryPath;
+    // If we haven't already instantiated the singleton, do so now.
+    if(nullptr == _singletonInstance) {
+      _singletonInstance = new PlatformPathManager();
     }
     
-    VisionPathManager() {
-      OverridePath(Test, "visionTestPath");
-    }
-  };
-  */
+    return _singletonInstance;
+  }
   
-  /*
-#define CREATE_LIBRARY_PATH_MANAGER(__NAME__, __LIB_PATH__, __VA_ARGS__) \
-class __NAME__ : public PlatformPathManager, public SingletonBase<__NAME__> \
-{ \
-protected: \
-  virtual const std::string& GetLibraryPath() const { \
-    static const std::string LibraryPath(__LIB_PATH__); \
-    return LibraryPath; \
-  } \
-  __NAME__() { \
-    FOR_EACH(__VA_ARGS__); \
-  } \
-};
-
-#define FOR_EACH
-#define FOR_EACH_2(__SCOPE__, __PATH__) OverridePath(__SCOPE__, __PATH__);
-#define FOR_EACH_4(__SCOPE__, __PATH__,...) OverridePath(__SCOPE__, __PATH__); FOR_EACH_2(__VA_ARGS__)
-#define FOR_EACH_6(__SCOPE__, __PATH__,...) OverridePath(__SCOPE__, __PATH__); FOR_EACH_4(__VA_ARGS__)
-   */
+ 
   
 } // namespace Anki
 

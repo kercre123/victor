@@ -1202,6 +1202,11 @@ namespace Anki {
       return lastResult;
     }
     
+    Result Robot::SetIdleAnimation(const std::string &animName)
+    {
+      return _animationStreamer.SetIdleAnimation(animName);
+    }
+    
     Result Robot::PlaySound(const std::string& soundName, u8 numLoops, u8 volume)
     {
       CozmoEngineSignals::PlaySoundForRobotSignal().emit(GetID(), soundName, numLoops, volume);

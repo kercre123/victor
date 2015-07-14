@@ -377,6 +377,10 @@ namespace Anki {
       // If numLoops == 0, animation repeats forever.
       Result PlayAnimation(const std::string& animName, const u32 numLoops = 1);
       
+      // Set the animation to be played when no other animation has been specified.
+      // Use the empty string to disable idle animation.
+      Result SetIdleAnimation(const std::string& animName);
+      
       // Return the approximate number of available bytes in the robot's
       // keyframe buffer, to let us know if we can stream any more
       s32 GetNumAnimationBytesFree() const;
