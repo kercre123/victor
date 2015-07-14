@@ -4,6 +4,8 @@
 #include "anki/cozmo/robot/hal.h"
 #include "hal/portable.h"
 
+#include <math.h>
+
 // Definitions for SSD1306 controller
 #define COLS                  128
 #define ROWS                  64
@@ -53,6 +55,13 @@
 #define VERTICAL_AND_RIGHT_HORIZONTAL_SCROLL 0x29
 #define VERTICAL_AND_LEFT_HORIZONTAL_SCROLL 0x2A
 
+#define DISPLAY_SPI             SPI3
+#define DISPLAY_DMA_CHANNEL     DMA_Channel_0
+#define DISPLAY_DMA_STREAM      DMA1_Stream7
+#define DISPLAY_DMA_IRQ         DMA1_Stream7_IRQn
+#define DISPLAY_DMA_IRQ_HANDLER DMA1_Stream7_IRQHandler
+
+
 namespace Anki
 {
   namespace Cozmo
@@ -65,7 +74,49 @@ namespace Anki
       GPIO_PIN_SOURCE(CS, GPIOC, 12);   
       GPIO_PIN_SOURCE(CMD, GPIOD, 6);
       GPIO_PIN_SOURCE(RES, GPIOD, 7);
-      
+
+      enum DataCommand {
+        DATA,
+        COMMAND
+      };
+
+      struct DisplayCommand {
+        DataCommand direction;
+        int length;
+        const void* data;
+      };
+
+      static ONCHIP uint64_t m_frame[COLS];
+
+      static ONCHIP const u8 InitDisplay[] = {
+        DISPLAYOFF, 
+        SETDISPLAYCLOCKDIV, 0xF0, 
+        SETMULTIPLEX, 0x3F, 
+        SETDISPLAYOFFSET, 0x0, 
+        SETSTARTLINE | 0x0, 
+        CHARGEPUMP, 0x14, 
+        MEMORYMODE, 0x01, 
+        SEGREMAP | 0x1, 
+        COMSCANDEC, 
+        SETCOMPINS, 0x12, 
+        SETCONTRAST, 0xCF, 
+        SETPRECHARGE, 0xF1, 
+        SETVCOMDETECT, 0x40, 
+        DISPLAYALLON_RESUME, 
+        NORMALDISPLAY, 
+        DISPLAYON
+      };
+      static ONCHIP const u8 ResetCursor[] = {
+        COLUMNADDR, 0, COLS-1, 
+        PAGEADDR, 0, 7
+      };
+ 
+      const static int FIFO_SIZE = 4;
+      static DisplayCommand fifo[FIFO_SIZE];
+      static volatile int fifo_entry;
+      static volatile int fifo_exit;
+      static volatile int fifo_count;
+
       static void HWInit(void)
       {
         // Clock configuration
@@ -74,6 +125,7 @@ namespace Anki
         RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOD, ENABLE);
         
         RCC_APB1PeriphClockCmd(RCC_APB1Periph_SPI3, ENABLE);
+        RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_DMA1, ENABLE);
         
         GPIO_InitTypeDef GPIO_InitStructure;
         GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
@@ -116,93 +168,142 @@ namespace Anki
         SPI_InitStructure.SPI_FirstBit = SPI_FirstBit_MSB;
         SPI_InitStructure.SPI_CRCPolynomial = 7;
         SPI_Init(SPI3, &SPI_InitStructure);
-        SPI_Cmd(SPI3, ENABLE);      
+        SPI_Cmd(SPI3, ENABLE);
         
+        // Initalize the dma
+        DMA_InitTypeDef DMA_InitStructure;       
+        DMA_InitStructure.DMA_Channel = DISPLAY_DMA_CHANNEL;
+        DMA_InitStructure.DMA_PeripheralBaseAddr = (uint32_t)&DISPLAY_SPI->DR;
+        DMA_InitStructure.DMA_DIR = DMA_DIR_MemoryToPeripheral;
+        DMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Disable;
+        DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Enable;
+        DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_Byte;
+        DMA_InitStructure.DMA_MemoryDataSize = DMA_PeripheralDataSize_Byte;
+        DMA_InitStructure.DMA_Mode = DMA_Mode_Normal;
+        DMA_InitStructure.DMA_Priority = DMA_Priority_High;
+        DMA_InitStructure.DMA_FIFOMode = DMA_FIFOMode_Disable;
+        DMA_InitStructure.DMA_FIFOThreshold = DMA_FIFOThreshold_1QuarterFull;
+        DMA_InitStructure.DMA_MemoryBurst = DMA_MemoryBurst_Single;
+        DMA_InitStructure.DMA_PeripheralBurst = DMA_PeripheralBurst_Single;
+        DMA_Init(DISPLAY_DMA_STREAM, &DMA_InitStructure);
+
+        // Configure interrupts
+        NVIC_InitTypeDef NVIC_InitStructure;
+        NVIC_InitStructure.NVIC_IRQChannel = DISPLAY_DMA_IRQ;
+        NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;
+        NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
+        NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+        NVIC_Init(&NVIC_InitStructure);
+
+        // Enable transfer complete
+        DMA_ITConfig(DISPLAY_DMA_STREAM, DMA_IT_TC, ENABLE);
+        NVIC_EnableIRQ(DISPLAY_DMA_IRQ);
+
+        SPI_I2S_DMACmd(DISPLAY_SPI, SPI_I2S_DMAReq_Tx, ENABLE);
+
         // Exit reset after 10ms
         MicroWait(10000);
         GPIO_SET(GPIO_RES, PIN_RES);
-      }
-      
-      // Slow write - to improve performance, switch to DMA!      
-      static void SPIWrites(int len, u8* data)
-      {
-        MicroWait(1);
-        GPIO_RESET(GPIO_CS, PIN_CS);
-        MicroWait(1);
         
-        while (len--)
-        {
-          while (!(SPI3->SR & SPI_FLAG_TXE))
-              ;
-          SPI3->DR = *data++;
+        fifo_entry = 0;
+        fifo_exit = 0;
+        fifo_count = 0;
+
+        SPI3->SR = 0;
+      }
+
+      static void DequeueDMA()
+      {
+        if (!fifo_count) {
+
+          GPIO_SET(GPIO_CS, PIN_CS);
+          return ;
+        }
+
+        DisplayCommand *in = &fifo[fifo_entry];
+        fifo_entry = (fifo_entry + 1) % FIFO_SIZE;
+        fifo_count--;
+
+        switch(in->direction) {
+          case DATA:
+            GPIO_SET(GPIO_CMD, PIN_CMD);
+            break ;
+          case COMMAND:
+            GPIO_RESET(GPIO_CMD, PIN_CMD);
+            break ;
         }
         
-        while (!(SPI3->SR & SPI_FLAG_TXE))
-            ;
-        while (SPI3->SR & SPI_FLAG_BSY)
-          ;
-        GPIO_SET(GPIO_CS, PIN_CS); 
-      }
-        
-      static void SPIWrite(u8 data)
-      {
-        SPIWrites(1, &data);
-      }
-      
-      static void SendCommand(u8 cmd)
-      {
-        GPIO_RESET(GPIO_CMD, PIN_CMD);
-        SPIWrite(cmd);    
+        // Select chip
+        GPIO_RESET(GPIO_CS, PIN_CS);
+        MicroWait(1);
+
+        DISPLAY_DMA_STREAM->NDTR = in->length;    // Buffer size
+        DISPLAY_DMA_STREAM->M0AR = (u32)in->data; // Buffer address
+        DISPLAY_DMA_STREAM->CR |= DMA_SxCR_EN;    // Enable DMA
       }
 
-      static u8 m_frame[ROWS/8][COLS];
+      static bool EnqueueWrite(DataCommand mode, const void* data, int length) {
+        // Fifo is full
+        if (fifo_count >= FIFO_SIZE) {
+          return false;
+        }
+
+        // Enqueue data in SPI buffer
+        __disable_irq();
+        DisplayCommand *out = &fifo[fifo_exit];
+        fifo_exit = (fifo_exit + 1) % FIFO_SIZE;
+        fifo_count++;
+        
+        out->direction = mode;
+        out->length = length;
+        out->data = data;
+        __enable_irq();
+
+        if (DMA_GetCmdStatus(DISPLAY_DMA_STREAM) == DISABLE) {
+          DequeueDMA();
+        }
+
+        return true;
+      }
+
       static void SendFrame(void)
       {
-        SendCommand(COLUMNADDR);
-        SendCommand(0);   // Column start address (0 = reset)
-        SendCommand(COLS-1); // Column end address (127 = reset)
-
-        SendCommand(PAGEADDR);
-        SendCommand(0); // Page start address (0 = reset)
-        SendCommand(7); // Page end address
-
-        GPIO_SET(GPIO_CMD, PIN_CMD);
-        SPIWrites(sizeof(m_frame), m_frame[0]);
+        EnqueueWrite(COMMAND, ResetCursor, sizeof(ResetCursor));
+        EnqueueWrite(DATA, m_frame, sizeof(m_frame));
       }
-      
+
+      // Plot a blue pixel on the SSD1306 framebuffer with vertical addressing mode
+      #define PLOT(x, y)  m_frame[x] |= 0x800000000000000L >> y;
+
+      void TestFrame()
+      {
+        static float r = 0.20f;
+
+        memset(m_frame, 0, sizeof(m_frame));
+
+        float k = r;
+        for (int y = 0; y < ROWS; y++) {
+          int o = (int)(sin(k) * 48 + 64);
+          k += PI * 2 / ROWS;
+          
+          for (int x = o; x < COLS; x++) {
+            PLOT(x, y);
+          }
+        }
+
+        r += PI / 180.0f;
+
+        SendFrame();
+      }
+
       void OLEDInit(void)
       {
         HWInit();
   
         // Init sequence for 128x64 OLED module
-        SendCommand(DISPLAYOFF);                    // 0xAE
-        SendCommand(SETDISPLAYCLOCKDIV);            // 0xD5
-        SendCommand(0xF0);                                  // set max clock rate for most stable image (suggested is 0x80)
-        SendCommand(SETMULTIPLEX);                  // 0xA8
-        SendCommand(0x3F);
-        SendCommand(SETDISPLAYOFFSET);              // 0xD3
-        SendCommand(0x0);                                   // no offset
-        SendCommand(SETSTARTLINE | 0x0);            // line #0
-        SendCommand(CHARGEPUMP);                    // 0x8D
-        SendCommand(0x14);                  // No external VCC - charge pump ON
-        SendCommand(MEMORYMODE);                    // 0x20
-        SendCommand(0x00);                                  // 0x0 act like ks0108
-        SendCommand(SEGREMAP | 0x1);
-        SendCommand(COMSCANDEC);
-        SendCommand(SETCOMPINS);                    // 0xDA
-        SendCommand(0x12);
-        SendCommand(SETCONTRAST);                   // 0x81
-        SendCommand(0xCF);                  // No external VCC
-        SendCommand(SETPRECHARGE);                  // 0xd9
-        SendCommand(0xF1);                  // No external VCC
-        SendCommand(SETVCOMDETECT);                 // 0xDB
-        SendCommand(0x40);
-        SendCommand(DISPLAYALLON_RESUME);           // 0xA4
-        SendCommand(NORMALDISPLAY);                 // 0xA6
-        
-        // Now light it up
-        SendCommand(DISPLAYON);
-        
+        GPIO_RESET(GPIO_CMD, PIN_CMD);
+        EnqueueWrite(COMMAND, InitDisplay, sizeof(InitDisplay));
+
         // Draw "programmer art" face until we get real assets
         u8 face[] = { 24, 64+24,           // Start 24 lines down and 24 pixels right
           64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
@@ -216,9 +317,6 @@ namespace Anki
           0 };
         FaceAnimate(face);
       }
-      
-      // Plot a blue pixel on the SSD1306 framebuffer with row/column swizzling
-      #define PLOT(x, y)  m_frame[((y)>>3)][(x)] |= 1 << ((y) & 7)
       
       // Update the face to the next frame of an animation
       // @param frame - a pointer to a variable length frame of face animation data
@@ -251,8 +349,21 @@ namespace Anki
           if (run >= 64)
             draw = !draw;
         }
-        SendFrame();        
+        SendFrame();
       }
     }
+  }
+}
+
+extern "C"
+void DISPLAY_DMA_IRQ_HANDLER(void)
+{
+  using namespace Anki::Cozmo::HAL;
+ 
+  if (DMA_GetFlagStatus(DISPLAY_DMA_STREAM, DMA_FLAG_TCIF7)) {
+    while (!(SPI3->SR & SPI_FLAG_TXE)) ;
+    while (SPI3->SR & SPI_FLAG_BSY) ;
+    DMA_ClearFlag(DISPLAY_DMA_STREAM, DMA_FLAG_TCIF7);
+    DequeueDMA();
   }
 }

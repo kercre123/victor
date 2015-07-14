@@ -234,12 +234,14 @@ namespace Anki
       // AUDIO
       //
 
+      void AudioFill(void);
+
       // @return true if the audio clock says it is time for the next frame
       bool AudioReady();
 
       // Play one frame of audio or silence
       // @param frame - a pointer to an audio frame or NULL to play one frame of silence
-      void AudioPlayFrame(u8* frame);
+      void AudioPlayFrame(s16 predictor, u8* frame);
 
 // #pragma mark --- Flash Memory ---
       /////////////////////////////////////////////////////////////////////

@@ -531,7 +531,7 @@ namespace AnimationController {
           {
             Messages::AnimKeyFrame_AudioSilence msg;
             GetFromBuffer((u8*)&msg, sizeof(msg));
-            HAL::AudioPlayFrame(NULL);
+            HAL::AudioPlayFrame(0, NULL);
             break;
           }
           case Messages::AnimKeyFrame_AudioSample_ID:
@@ -539,9 +539,9 @@ namespace AnimationController {
             Messages::AnimKeyFrame_AudioSample msg;
             GetFromBuffer((u8*)&msg, sizeof(msg));
             if(_tracksToPlay & AUDIO_TRACK) {
-              HAL::AudioPlayFrame(msg.sample);
+              HAL::AudioPlayFrame(msg.predictor, msg.sample);
             } else {
-              HAL::AudioPlayFrame(NULL);
+              HAL::AudioPlayFrame(0, NULL);
             }
             break;
           }
