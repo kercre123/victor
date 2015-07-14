@@ -11,23 +11,18 @@ USERBIN2 = os.path.join("bin", "upgrade", "user2.512.new.0.bin")
 USERBIN1_ADDR = 0x01000
 USERBIN2_ADDR = 0x41000
 
-FPGA_BIN = os.path.join("..", "fpga", "fpgaisp_Implmnt", "sbt", "outputs", "bitmap", "top_bitmap.bin")
-
-FPGA_FW_ADDR = 0x80000
-
 USAGE = """
 %s <mode> <robot IP address>
 
 Where mode is one of:
 e   Upgrade espressif firmware
-f   Write FPGA firmware
 """ % (sys.argv[0])
 
 class UpgradeCommandFlags:
     NONE       = 0x00 # No special actions
     WIFI_FW    = 0x01 # Upgrade the wifi (Espressif firmware)
     CTRL_FW    = 0x02 # Upgrade the robot supervisor firmware
-    FPGA_FW    = 0x04 # Upgrade the FPGA image
+    RTIP_FW    = 0x04 # Upgrade the real time image processor
     BODY_FW    = 0x08 # Upgrade the body board firmware
     ASK_WHICH  = 0x80 # Ask the espressif which firmware it wants
 
@@ -90,15 +85,6 @@ def doWifiUpgrade(roboCon):
     roboCon.close()
     sys.stdout.write("\r\nFinished sending WiFi firmware\r\n")
 
-def doFPGAUpgrade(roboCon):
-    "Send new FPGA firmware to the robot"
-    fw = open(FPGA_BIN, 'rb').read() + bytes(range(64))
-    sys.stdout.write("Sending FPGA FW\r\n")
-    roboCon.send(UpgradeCommand(FPGA_FW_ADDR, len(fw), UpgradeCommandFlags.FPGA_FW).pack())
-    sendFW(roboCon, fw)
-    roboCon.close()
-    sys.stdout.write("\r\nFinished sending FPGA firmware\r\n")
-
 def doUpgrade(robotIp, kind):
     "Communicate with the espressif for the upgrade"
     conn = socket.socket()
@@ -118,8 +104,6 @@ if __name__ == '__main__':
     robotHostname = sys.argv[2]
     if mode == "e":
         doUpgrade(robotHostname, UpgradeCommandFlags.WIFI_FW)
-    elif mode == "f":
-        doUpgrade(robotHostname, UpgradeCommandFlags.FPGA_FW)
     else:
         sys,stderr.write(USAGE)
         sys.exit(-2)
