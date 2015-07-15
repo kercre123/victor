@@ -805,7 +805,7 @@ public class Robot
 	{
 		TapBlockMessage.numTaps = System.Convert.ToByte( taps );
 		
-		Debug.Log( "TapBlockOnGround numTaps(" + TapBlockMessage.numTaps + ")" );
+		//Debug.Log( "TapBlockOnGround numTaps(" + TapBlockMessage.numTaps + ")" );
 		
 		RobotEngineManager.instance.Message.TapBlockOnGround = TapBlockMessage;
 		RobotEngineManager.instance.SendMessage();

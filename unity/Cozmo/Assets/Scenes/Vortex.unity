@@ -9772,7 +9772,7 @@ Prefab:
     - target: {fileID: 11421874, guid: ca1b5f0d2529d4cf2b14006fcd54e62b, type: 2}
       propertyPath: supplentalEffects
       value: 
-      objectReference: {fileID: 1631961819}
+      objectReference: {fileID: 0}
     - target: {fileID: 11437560, guid: ca1b5f0d2529d4cf2b14006fcd54e62b, type: 2}
       propertyPath: supplentalEffects
       value: 
