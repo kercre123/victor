@@ -169,8 +169,6 @@ namespace Anki
         // We are not ready to render another audio frame yet
         if (m_AudioRendered) { return ; }
 
-        static int blocks = 100;
-        
         // Silence frame
         if (!frame) {
           memset(m_audioWorking, 0, sizeof(m_audioWorking));
