@@ -1147,9 +1147,9 @@ public class VortexController : GameController {
 			scores[playersThatAreWrong[i]] = Mathf.Max (0, scores[playersThatAreWrong[i]] + settings.pointsIncorrectPenalty);
 		}
 		
-		if(playersThatAreCorrect.Count == 0) {
-			if(roundCompleteNoWinner != null) AudioManager.PlayOneShot(roundCompleteNoWinner);
-		}
+//		if(playersThatAreCorrect.Count == 0) {
+//			if(roundCompleteNoWinner != null) AudioManager.PlayOneShot(roundCompleteNoWinner);
+//		}
 
 		resultsDisplayIndex = 0;
 		fadeTimer = scoreDisplayFillFade;
@@ -1189,11 +1189,14 @@ public class VortexController : GameController {
 						
 						textPlayerScores[loserIndex].text = "SCORE: " + scores[loserIndex].ToString();
 						
-						if(roundCompleteWinner != null) AudioManager.PlayOneShot(roundCompleteWinner);
 					}
 				}
 			
 				playerPanelFills[loserIndex].color = col;
+			}
+
+			if(wasPositive && fadeTimer <= 0f) {
+				if(roundCompleteNoWinner != null) AudioManager.PlayOneShot(roundCompleteNoWinner);
 			}
 			
 			if(fadeTimer <= -scoreDisplayFillFade) {
