@@ -80,7 +80,6 @@ namespace Vision {
     int padRight = 0 ;
     int padTop = 0 ;
     int padBottom = 0 ;
-    int numFilterGroups = 1 ;
   };
 
 
@@ -134,16 +133,16 @@ namespace Vision {
 
   ICNNLayer* ICNNLayer::Factory(const std::string& layerType)
   {
-    if(layerType == "NormLayer") {
+    if(layerType == "norm") {
       return new NormLayer();
     }
-    else if(layerType == "ConvLayer") {
+    else if(layerType == "conv") {
       return new ConvLayer();
     }
-    else if(layerType == "PoolLayer") {
+    else if(layerType == "pool") {
       return new PoolLayer();
     }
-    else if(layerType == "ReLULayer") {
+    else if(layerType == "relu") {
       return new ReLULayer();
     }
     else {
@@ -193,14 +192,22 @@ namespace Vision {
     }
     jsonFile.close();
     
-    if(!jsonRoot.isArray()) {
+    if(!jsonRoot.isMember("CNN")) {
       PRINT_NAMED_ERROR("ConvolutionalNeuralNet.Load",
-                        "Root Json node should be an array of layers.\n");
+                        "Root Json node should be named 'CNN'.\n");
       return RESULT_FAIL;
     }
     
-    for(s32 i=0; i<jsonRoot.size(); ++i) {
-      Json::Value& jsonLayer = jsonRoot[i];
+    Json::Value& jsonCNN = jsonRoot["CNN"];
+    
+    if(!jsonCNN.isArray()) {
+      PRINT_NAMED_ERROR("ConvolutionalNeuralNet.Load",
+                        "Json 'CNN' node should be an array of layers.\n");
+      return RESULT_FAIL;
+    }
+    
+    for(s32 i=0; i<jsonCNN.size(); ++i) {
+      Json::Value& jsonLayer = jsonCNN[i];
       
       if(!jsonLayer.isMember("Type")) {
         PRINT_NAMED_ERROR("ConvolutionalNeuralNet.Load",
@@ -221,7 +228,7 @@ namespace Vision {
         return RESULT_FAIL;
       }
       
-      Result loadResult = newLayer->Load(jsonRoot["DataFilename"].asString());
+      Result loadResult = newLayer->Load(jsonLayer["DataFilename"].asString());
       
       if(loadResult != RESULT_OK) {
         return RESULT_FAIL;
@@ -229,6 +236,8 @@ namespace Vision {
       
       _layers.push_back(newLayer);
     }
+    
+    jsonFile.close();
     
     PRINT_NAMED_INFO("ConvolutionalNeuralNet.Load", "Loaded %lu CNN layers.\n", _layers.size());
     
@@ -340,7 +349,6 @@ if(file.bad()) { PRINT_NAMED_ERROR("FileREAD.Failure", "%s.\n", QUOTE(__NAME__))
     READ(padRight);
     READ(padTop);
     READ(padBottom);
-    READ(numFilterGroups);
     
     /* basic argument checks */
     if (strideX < 1 || strideY < 1) {
@@ -388,7 +396,7 @@ if(file.bad()) { PRINT_NAMED_ERROR("FileREAD.Failure", "%s.\n", QUOTE(__NAME__))
     
     /* Get the filter geometry */
     vl::TensorGeometry filtersGeom(_filters) ;
-    int equivalentNumFilters ;
+    int equivalentNumFilters = 0, numFilterGroups = 0;
     if (hasFilters) {
       if (filtersGeom.getHeight() == 0 || filtersGeom.getWidth() == 0 || filtersGeom.getDepth() == 0) {
         PRINT_NAMED_ERROR("vl_cnn_wrapper", "A dimension of FILTERS is void.") ;
@@ -416,6 +424,9 @@ if(file.bad()) { PRINT_NAMED_ERROR("FileREAD.Failure", "%s.\n", QUOTE(__NAME__))
       numFilterGroups = 1 ;
       equivalentNumFilters = inputData.getDepth() ;
     }
+    
+    assert(numFilterGroups != 0);
+    assert(equivalentNumFilters != 0);
     
     /* Get the output geometry */
     const vl::index_t height_out = (inputData.getHeight() + (padTop+padBottom) - filtersGeom.getHeight())/strideY + 1;
