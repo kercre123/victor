@@ -20,8 +20,8 @@ typdef enum
 /// Source flags to indicate which side has sent this buffer
 typedef enum
 {
-  wifi = 0x0A; ///< From the WiFi chip to the RTIP
-  rtip = 0xFA; ///< From the RTIP to the WiFi
+  fromWiFi = 0x0A; ///< From the WiFi chip to the RTIP
+  fromRTIP = 0xFA; ///< From the RTIP to the WiFi
 } I2SPIFrom;
 
 /// Maximum bytes of image data payload
@@ -46,7 +46,7 @@ typedef union
 {
   ImgPayload   image;
   AudioPayload audio;
-  uint8_t      raw[I2SPI_MAX_PAYLOAD];
+  uint32_t     raw[I2SPI_MAX_PAYLOAD/4]; ///< Interface on both sides works on int32s
 } I2SPIPayload;
 
 ct_assert(sizeof(I2SPIPayload) == I2SPI_MAX_PAYLOAD);
