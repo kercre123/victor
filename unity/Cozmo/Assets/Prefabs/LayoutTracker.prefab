@@ -8,7 +8,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 466550}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorners
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -24,7 +24,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 489684}
   - 212: {fileID: 21222964}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -39,7 +39,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 495936}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Left
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -57,7 +57,7 @@ GameObject:
   - 222: {fileID: 22204142}
   - 114: {fileID: 11404142}
   - 225: {fileID: 22504142}
-  m_Layer: 5
+  m_Layer: 8
   m_Name: frontText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -77,7 +77,7 @@ GameObject:
   - 23: {fileID: 2330412}
   - 114: {fileID: 11483952}
   - 114: {fileID: 11444684}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: BuildInstructionsCube_ActiveCyan
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -94,7 +94,7 @@ GameObject:
   - 224: {fileID: 22406966}
   - 222: {fileID: 22206966}
   - 114: {fileID: 11406962}
-  m_Layer: 5
+  m_Layer: 8
   m_Name: Image
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -113,7 +113,7 @@ GameObject:
   - 114: {fileID: 11406964}
   - 114: {fileID: 11406966}
   - 114: {fileID: 11406968}
-  m_Layer: 5
+  m_Layer: 8
   m_Name: Button_OptionsSmallScreen
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -129,7 +129,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 476804}
   - 212: {fileID: 21289908}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -145,7 +145,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 472046}
   - 212: {fileID: 21273278}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -160,7 +160,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 480348}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Left
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -177,7 +177,7 @@ GameObject:
   - 224: {fileID: 22409728}
   - 222: {fileID: 22209734}
   - 114: {fileID: 11409670}
-  m_Layer: 5
+  m_Layer: 8
   m_Name: layoutDisplayRect
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -194,7 +194,7 @@ GameObject:
   - 4: {fileID: 409210}
   - 33: {fileID: 3309582}
   - 23: {fileID: 2309582}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -211,7 +211,7 @@ GameObject:
   - 4: {fileID: 409212}
   - 33: {fileID: 3309584}
   - 23: {fileID: 2309584}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -231,7 +231,7 @@ GameObject:
   - 23: {fileID: 2309586}
   - 114: {fileID: 11409672}
   - 114: {fileID: 11409674}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: BuildInstructionsCube_ActiveCyan
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -247,7 +247,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 409216}
   - 212: {fileID: 21209538}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -264,7 +264,7 @@ GameObject:
   - 4: {fileID: 409218}
   - 33: {fileID: 3309588}
   - 23: {fileID: 2309588}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -280,7 +280,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 409226}
   - 212: {fileID: 21209540}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -298,7 +298,7 @@ GameObject:
   - 222: {fileID: 22209736}
   - 114: {fileID: 11409682}
   - 225: {fileID: 22534356}
-  m_Layer: 5
+  m_Layer: 8
   m_Name: TextError
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -313,7 +313,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 409238}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Left
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -331,7 +331,7 @@ GameObject:
   - 222: {fileID: 22209738}
   - 114: {fileID: 11409684}
   - 114: {fileID: 11409686}
-  m_Layer: 5
+  m_Layer: 8
   m_Name: BannerFade
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -348,7 +348,7 @@ GameObject:
   - 4: {fileID: 409240}
   - 33: {fileID: 3309596}
   - 23: {fileID: 2309596}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -363,7 +363,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 409246}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Front
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -380,7 +380,7 @@ GameObject:
   - 4: {fileID: 409248}
   - 33: {fileID: 3309600}
   - 23: {fileID: 2309600}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -396,7 +396,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 409250}
   - 212: {fileID: 21209544}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -413,7 +413,7 @@ GameObject:
   - 4: {fileID: 409252}
   - 33: {fileID: 3309602}
   - 23: {fileID: 2309602}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -429,7 +429,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 409254}
   - 212: {fileID: 21209546}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -446,7 +446,7 @@ GameObject:
   - 4: {fileID: 409256}
   - 33: {fileID: 3309604}
   - 23: {fileID: 2309604}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -462,7 +462,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 409258}
   - 212: {fileID: 21209548}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -477,7 +477,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 409262}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorners
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -494,7 +494,7 @@ GameObject:
   - 4: {fileID: 409264}
   - 33: {fileID: 3309606}
   - 23: {fileID: 2309606}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -511,7 +511,7 @@ GameObject:
   - 4: {fileID: 409266}
   - 33: {fileID: 3309608}
   - 23: {fileID: 2309608}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -528,7 +528,7 @@ GameObject:
   - 4: {fileID: 409270}
   - 33: {fileID: 3309610}
   - 23: {fileID: 2309610}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -543,7 +543,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 409274}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Left
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -560,7 +560,7 @@ GameObject:
   - 4: {fileID: 409284}
   - 33: {fileID: 3309616}
   - 23: {fileID: 2309616}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -580,7 +580,7 @@ GameObject:
   - 23: {fileID: 2309618}
   - 114: {fileID: 11409688}
   - 114: {fileID: 11409690}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: BuildInstructionsCube_Flag
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -597,7 +597,7 @@ GameObject:
   - 4: {fileID: 409292}
   - 33: {fileID: 3309620}
   - 23: {fileID: 2309620}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -613,7 +613,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 409298}
   - 212: {fileID: 21209558}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -629,7 +629,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 409300}
   - 212: {fileID: 21209560}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -645,7 +645,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 409304}
   - 212: {fileID: 21209564}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -661,7 +661,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 409306}
   - 212: {fileID: 21209566}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -678,7 +678,7 @@ GameObject:
   - 4: {fileID: 409308}
   - 33: {fileID: 3309622}
   - 23: {fileID: 2309622}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -694,7 +694,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 409314}
   - 212: {fileID: 21209572}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -711,7 +711,7 @@ GameObject:
   - 4: {fileID: 409318}
   - 33: {fileID: 3309626}
   - 23: {fileID: 2309626}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -727,7 +727,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 409324}
   - 212: {fileID: 21209574}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -746,7 +746,7 @@ GameObject:
   - 114: {fileID: 11409692}
   - 114: {fileID: 11409694}
   - 225: {fileID: 22534370}
-  m_Layer: 5
+  m_Layer: 8
   m_Name: TextScreenMessage
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -761,7 +761,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 409326}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Left
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -777,7 +777,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 409328}
   - 114: {fileID: 11409696}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: GameLayout_EnergyHunt01
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -797,7 +797,7 @@ GameObject:
   - 23: {fileID: 2309630}
   - 114: {fileID: 11409698}
   - 114: {fileID: 11409700}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: BuildInstructionsCube_BullsEye
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -812,7 +812,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 409332}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorners
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -828,7 +828,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 409334}
   - 212: {fileID: 21209576}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -843,7 +843,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 409338}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Bottom
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -859,7 +859,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 409340}
   - 212: {fileID: 21209580}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -874,7 +874,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 409342}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Right
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -889,7 +889,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 409344}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorners
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -906,7 +906,7 @@ GameObject:
   - 4: {fileID: 409348}
   - 33: {fileID: 3309634}
   - 23: {fileID: 2309634}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -921,7 +921,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 409350}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Back
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -939,7 +939,7 @@ GameObject:
   - 222: {fileID: 22209742}
   - 114: {fileID: 11409702}
   - 114: {fileID: 11409704}
-  m_Layer: 5
+  m_Layer: 8
   m_Name: BottomBanner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -955,7 +955,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 409354}
   - 212: {fileID: 21209582}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -972,7 +972,7 @@ GameObject:
   - 4: {fileID: 409356}
   - 33: {fileID: 3309638}
   - 23: {fileID: 2309638}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -988,7 +988,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 409360}
   - 212: {fileID: 21209586}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1003,7 +1003,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 409362}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Back
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1019,7 +1019,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 409366}
   - 212: {fileID: 21209588}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1034,7 +1034,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 409368}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Front
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1050,7 +1050,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 409376}
   - 212: {fileID: 21209592}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1067,7 +1067,7 @@ GameObject:
   - 4: {fileID: 409378}
   - 33: {fileID: 3309644}
   - 23: {fileID: 2309644}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1082,7 +1082,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 409380}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Back
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1098,7 +1098,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 409382}
   - 212: {fileID: 21209594}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1113,7 +1113,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 409388}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Back
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1129,7 +1129,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 409392}
   - 212: {fileID: 21209600}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1146,7 +1146,7 @@ GameObject:
   - 4: {fileID: 409410}
   - 33: {fileID: 3309654}
   - 23: {fileID: 2309654}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1162,7 +1162,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 409412}
   - 212: {fileID: 21209606}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1178,7 +1178,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 409414}
   - 212: {fileID: 21209608}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1194,7 +1194,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 409416}
   - 212: {fileID: 21209610}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1209,7 +1209,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 409418}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Bottom
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1226,7 +1226,7 @@ GameObject:
   - 4: {fileID: 409420}
   - 33: {fileID: 3309656}
   - 23: {fileID: 2309656}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1241,7 +1241,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 409422}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Front
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1258,7 +1258,7 @@ GameObject:
   - 4: {fileID: 409424}
   - 33: {fileID: 3309658}
   - 23: {fileID: 2309658}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1273,7 +1273,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 409434}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbols
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1289,7 +1289,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 409436}
   - 212: {fileID: 21209614}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1305,7 +1305,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 409438}
   - 212: {fileID: 21209616}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1320,7 +1320,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 409440}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Bottom
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1335,7 +1335,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 409446}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Left
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1352,7 +1352,7 @@ GameObject:
   - 4: {fileID: 409448}
   - 33: {fileID: 3309666}
   - 23: {fileID: 2309666}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1368,7 +1368,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 409450}
   - 212: {fileID: 21209618}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1384,7 +1384,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 409462}
   - 212: {fileID: 21209622}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1400,7 +1400,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 409464}
   - 212: {fileID: 21209624}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1416,7 +1416,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 409466}
   - 212: {fileID: 21209626}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1433,7 +1433,7 @@ GameObject:
   - 4: {fileID: 409468}
   - 33: {fileID: 3309672}
   - 23: {fileID: 2309672}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1450,7 +1450,7 @@ GameObject:
   - 4: {fileID: 409470}
   - 33: {fileID: 3309674}
   - 23: {fileID: 2309674}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1465,7 +1465,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 409472}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Top
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1481,7 +1481,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 409474}
   - 212: {fileID: 21209628}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1497,7 +1497,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 409478}
   - 212: {fileID: 21209630}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1514,7 +1514,7 @@ GameObject:
   - 4: {fileID: 409480}
   - 33: {fileID: 3309678}
   - 23: {fileID: 2309678}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1530,7 +1530,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 409482}
   - 212: {fileID: 21209632}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1548,7 +1548,7 @@ GameObject:
   - 222: {fileID: 22209744}
   - 114: {fileID: 11409714}
   - 114: {fileID: 11409716}
-  m_Layer: 5
+  m_Layer: 8
   m_Name: BannerFade
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1565,7 +1565,7 @@ GameObject:
   - 4: {fileID: 409488}
   - 33: {fileID: 3309684}
   - 23: {fileID: 2309684}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1582,7 +1582,7 @@ GameObject:
   - 224: {fileID: 22409740}
   - 222: {fileID: 22209746}
   - 114: {fileID: 11409718}
-  m_Layer: 5
+  m_Layer: 8
   m_Name: imageFrame
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1599,7 +1599,7 @@ GameObject:
   - 4: {fileID: 409494}
   - 33: {fileID: 3309688}
   - 23: {fileID: 2309688}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1615,7 +1615,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 409498}
   - 212: {fileID: 21209636}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1632,7 +1632,7 @@ GameObject:
   - 4: {fileID: 409500}
   - 33: {fileID: 3309690}
   - 23: {fileID: 2309690}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1648,7 +1648,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 409504}
   - 212: {fileID: 21209640}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1663,7 +1663,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 409506}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Front
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1679,7 +1679,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 409510}
   - 212: {fileID: 21209644}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1695,7 +1695,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 409512}
   - 212: {fileID: 21209646}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1712,7 +1712,7 @@ GameObject:
   - 4: {fileID: 409514}
   - 33: {fileID: 3309692}
   - 23: {fileID: 2309692}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1729,7 +1729,7 @@ GameObject:
   - 4: {fileID: 409516}
   - 33: {fileID: 3309694}
   - 23: {fileID: 2309694}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1745,7 +1745,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 409518}
   - 212: {fileID: 21209648}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1761,7 +1761,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 409520}
   - 212: {fileID: 21209650}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1776,7 +1776,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 409524}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Right
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1793,7 +1793,7 @@ GameObject:
   - 4: {fileID: 409526}
   - 33: {fileID: 3309696}
   - 23: {fileID: 2309696}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1809,7 +1809,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 409530}
   - 212: {fileID: 21209656}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1824,7 +1824,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 409534}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Top
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1839,7 +1839,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 409538}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Bottom
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1854,7 +1854,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 409540}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Left
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1870,7 +1870,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 409546}
   - 212: {fileID: 21209662}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1886,7 +1886,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 409548}
   - 212: {fileID: 21209664}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1902,7 +1902,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 409552}
   - 212: {fileID: 21209668}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1919,7 +1919,7 @@ GameObject:
   - 4: {fileID: 409560}
   - 33: {fileID: 3309702}
   - 23: {fileID: 2309702}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1936,7 +1936,7 @@ GameObject:
   - 4: {fileID: 409562}
   - 33: {fileID: 3309704}
   - 23: {fileID: 2309704}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1952,7 +1952,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 409572}
   - 212: {fileID: 21209676}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1971,7 +1971,7 @@ GameObject:
   - 114: {fileID: 11409722}
   - 114: {fileID: 11409724}
   - 114: {fileID: 11472020}
-  m_Layer: 5
+  m_Layer: 8
   m_Name: OverlayCanvas_Inventory
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1989,7 +1989,7 @@ GameObject:
   - 222: {fileID: 22209750}
   - 114: {fileID: 11409726}
   - 114: {fileID: 11409728}
-  m_Layer: 5
+  m_Layer: 8
   m_Name: ButtonSkipInventory
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2005,7 +2005,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 409576}
   - 212: {fileID: 21209678}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2022,7 +2022,7 @@ GameObject:
   - 4: {fileID: 409580}
   - 33: {fileID: 3309708}
   - 23: {fileID: 2309708}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2038,7 +2038,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 409582}
   - 212: {fileID: 21209682}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2054,7 +2054,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 409588}
   - 212: {fileID: 21209686}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2071,7 +2071,7 @@ GameObject:
   - 4: {fileID: 409590}
   - 33: {fileID: 3309712}
   - 23: {fileID: 2309712}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2088,7 +2088,7 @@ GameObject:
   - 4: {fileID: 409592}
   - 33: {fileID: 3309714}
   - 23: {fileID: 2309714}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2105,7 +2105,7 @@ GameObject:
   - 4: {fileID: 409600}
   - 33: {fileID: 3309720}
   - 23: {fileID: 2309720}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2122,7 +2122,7 @@ GameObject:
   - 4: {fileID: 409602}
   - 33: {fileID: 3309722}
   - 23: {fileID: 2309722}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2137,7 +2137,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 409604}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Right
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2155,7 +2155,7 @@ GameObject:
   - 222: {fileID: 22209752}
   - 114: {fileID: 11409734}
   - 225: {fileID: 22534374}
-  m_Layer: 5
+  m_Layer: 8
   m_Name: Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2170,7 +2170,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 409610}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Right
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2185,7 +2185,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 409612}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Front
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2201,7 +2201,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 409618}
   - 212: {fileID: 21209694}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2216,7 +2216,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 409620}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: GameLayouts
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2232,7 +2232,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 409622}
   - 212: {fileID: 21209696}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2252,7 +2252,7 @@ GameObject:
   - 23: {fileID: 2309724}
   - 114: {fileID: 11409736}
   - 114: {fileID: 11409738}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: BuildInstructionsCube_ActiveCyan04
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2268,7 +2268,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 409630}
   - 212: {fileID: 21209702}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2283,7 +2283,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 409632}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorners
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2299,7 +2299,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 409638}
   - 212: {fileID: 21209706}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2315,7 +2315,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 409644}
   - 212: {fileID: 21209710}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2332,7 +2332,7 @@ GameObject:
   - 4: {fileID: 409650}
   - 33: {fileID: 3309730}
   - 23: {fileID: 2309730}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2348,7 +2348,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 409652}
   - 212: {fileID: 21209716}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2363,7 +2363,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 409662}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbols
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2379,7 +2379,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 409668}
   - 114: {fileID: 11409742}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: GameLayout_Vortex01
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2395,7 +2395,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 409672}
   - 212: {fileID: 21209724}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2411,7 +2411,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 409686}
   - 212: {fileID: 21209728}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2428,7 +2428,7 @@ GameObject:
   - 4: {fileID: 409688}
   - 33: {fileID: 3309744}
   - 23: {fileID: 2309744}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2443,7 +2443,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 409696}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Bottom
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2459,7 +2459,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 409698}
   - 212: {fileID: 21209734}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2475,7 +2475,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 409702}
   - 212: {fileID: 21209738}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2490,7 +2490,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 409706}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbols
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2507,7 +2507,7 @@ GameObject:
   - 4: {fileID: 409708}
   - 33: {fileID: 3309748}
   - 23: {fileID: 2309748}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2522,7 +2522,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 409710}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Top
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2541,7 +2541,7 @@ GameObject:
   - 114: {fileID: 11409744}
   - 114: {fileID: 11409746}
   - 114: {fileID: 11472018}
-  m_Layer: 5
+  m_Layer: 8
   m_Name: OverlayCanvas_Building
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2557,7 +2557,7 @@ GameObject:
   m_Component:
   - 224: {fileID: 22409754}
   - 114: {fileID: 11404646}
-  m_Layer: 5
+  m_Layer: 8
   m_Name: Panel_Build
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2572,7 +2572,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 409714}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Back
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2589,7 +2589,7 @@ GameObject:
   - 4: {fileID: 409716}
   - 33: {fileID: 3309750}
   - 23: {fileID: 2309750}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2609,7 +2609,7 @@ GameObject:
   - 23: {fileID: 2309752}
   - 114: {fileID: 11409748}
   - 114: {fileID: 11409750}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: BuildInstructionsCube_Flag
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2624,7 +2624,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 409722}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorners
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2640,7 +2640,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 409724}
   - 212: {fileID: 21209744}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2656,7 +2656,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 409730}
   - 212: {fileID: 21209746}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2673,7 +2673,7 @@ GameObject:
   - 4: {fileID: 409736}
   - 33: {fileID: 3309758}
   - 23: {fileID: 2309758}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2691,7 +2691,7 @@ GameObject:
   - 222: {fileID: 22209756}
   - 114: {fileID: 11409752}
   - 114: {fileID: 11409754}
-  m_Layer: 5
+  m_Layer: 8
   m_Name: TopBanner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2707,7 +2707,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 409742}
   - 212: {fileID: 21209752}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2723,7 +2723,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 409746}
   - 212: {fileID: 21209754}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2738,7 +2738,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 409750}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Front
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2754,7 +2754,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 409752}
   - 212: {fileID: 21209756}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2772,7 +2772,7 @@ GameObject:
   - 222: {fileID: 22209758}
   - 114: {fileID: 11409756}
   - 114: {fileID: 11409758}
-  m_Layer: 5
+  m_Layer: 8
   m_Name: BannerFade
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2789,7 +2789,7 @@ GameObject:
   - 4: {fileID: 449248}
   - 33: {fileID: 3367072}
   - 23: {fileID: 2359580}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2805,7 +2805,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 471186}
   - 212: {fileID: 21273372}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2820,7 +2820,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 470698}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Top
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2837,7 +2837,7 @@ GameObject:
   - 4: {fileID: 494610}
   - 33: {fileID: 3358570}
   - 23: {fileID: 2378674}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2853,7 +2853,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 417744}
   - 212: {fileID: 21267500}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2868,7 +2868,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 456018}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Back
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2885,7 +2885,7 @@ GameObject:
   - 224: {fileID: 22413412}
   - 222: {fileID: 22213412}
   - 114: {fileID: 11413412}
-  m_Layer: 5
+  m_Layer: 8
   m_Name: ImageLocalizedCheck
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2903,7 +2903,7 @@ GameObject:
   - 33: {fileID: 3313614}
   - 64: {fileID: 6469494}
   - 23: {fileID: 2313614}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: CozmoMat
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2920,7 +2920,7 @@ GameObject:
   - 4: {fileID: 413612}
   - 33: {fileID: 3313616}
   - 23: {fileID: 2313616}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: fiducial1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2937,7 +2937,7 @@ GameObject:
   - 4: {fileID: 413614}
   - 33: {fileID: 3313618}
   - 23: {fileID: 2313618}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: fiducial2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2954,7 +2954,7 @@ GameObject:
   - 4: {fileID: 413616}
   - 33: {fileID: 3313620}
   - 23: {fileID: 2313620}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: fiducial3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2971,7 +2971,7 @@ GameObject:
   - 4: {fileID: 413618}
   - 33: {fileID: 3313622}
   - 23: {fileID: 2313622}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: fiducial4
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2988,7 +2988,7 @@ GameObject:
   - 4: {fileID: 413620}
   - 33: {fileID: 3313624}
   - 23: {fileID: 2313624}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: fiducial8
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3005,7 +3005,7 @@ GameObject:
   - 4: {fileID: 413622}
   - 33: {fileID: 3313626}
   - 23: {fileID: 2313626}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: fiducial7
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3022,7 +3022,7 @@ GameObject:
   - 4: {fileID: 413624}
   - 33: {fileID: 3313628}
   - 23: {fileID: 2313628}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: fiducial6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3039,7 +3039,7 @@ GameObject:
   - 4: {fileID: 413626}
   - 33: {fileID: 3313630}
   - 23: {fileID: 2313630}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: fiducial5
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3056,7 +3056,7 @@ GameObject:
   - 4: {fileID: 413628}
   - 33: {fileID: 3313632}
   - 23: {fileID: 2313632}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: fiducial9
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3073,7 +3073,7 @@ GameObject:
   - 4: {fileID: 413630}
   - 33: {fileID: 3313634}
   - 23: {fileID: 2313634}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: fiducial10
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3090,7 +3090,7 @@ GameObject:
   - 4: {fileID: 413632}
   - 33: {fileID: 3313636}
   - 23: {fileID: 2313636}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: fiducial11
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3107,7 +3107,7 @@ GameObject:
   - 4: {fileID: 413634}
   - 33: {fileID: 3313638}
   - 23: {fileID: 2313638}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: fiducial12
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3124,7 +3124,7 @@ GameObject:
   - 4: {fileID: 413636}
   - 33: {fileID: 3313640}
   - 23: {fileID: 2313640}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: fiducial16
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3141,7 +3141,7 @@ GameObject:
   - 4: {fileID: 413638}
   - 33: {fileID: 3313642}
   - 23: {fileID: 2313642}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: fiducial15
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3158,7 +3158,7 @@ GameObject:
   - 4: {fileID: 413640}
   - 33: {fileID: 3313644}
   - 23: {fileID: 2313644}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: fiducial14
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3173,7 +3173,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 413744}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Anchor
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3188,7 +3188,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 413746}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Anchor
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3203,7 +3203,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 415420}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: startingPositionMarker
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3219,7 +3219,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 446684}
   - 212: {fileID: 21217178}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3236,7 +3236,7 @@ GameObject:
   - 4: {fileID: 405076}
   - 33: {fileID: 3332520}
   - 23: {fileID: 2337880}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3253,7 +3253,7 @@ GameObject:
   - 4: {fileID: 468526}
   - 33: {fileID: 3393374}
   - 23: {fileID: 2318420}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3269,7 +3269,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 426498}
   - 212: {fileID: 21204838}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3286,7 +3286,7 @@ GameObject:
   - 4: {fileID: 405540}
   - 33: {fileID: 3367384}
   - 23: {fileID: 2387306}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3302,7 +3302,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 429194}
   - 212: {fileID: 21222172}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3319,7 +3319,7 @@ GameObject:
   - 4: {fileID: 498922}
   - 33: {fileID: 3391354}
   - 23: {fileID: 2337320}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3336,7 +3336,7 @@ GameObject:
   - 224: {fileID: 22419344}
   - 222: {fileID: 22219344}
   - 114: {fileID: 11419344}
-  m_Layer: 5
+  m_Layer: 8
   m_Name: TextProgressLabel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3353,7 +3353,7 @@ GameObject:
   - 224: {fileID: 22419346}
   - 222: {fileID: 22219346}
   - 114: {fileID: 11419346}
-  m_Layer: 5
+  m_Layer: 8
   m_Name: TextProgress
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3369,7 +3369,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 499912}
   - 212: {fileID: 21293144}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3384,7 +3384,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 457644}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Left
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3399,7 +3399,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 485044}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Right
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3415,7 +3415,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 432456}
   - 212: {fileID: 21266924}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3431,7 +3431,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 430740}
   - 212: {fileID: 21261808}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3447,7 +3447,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 495126}
   - 212: {fileID: 21208128}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3463,7 +3463,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 436320}
   - 212: {fileID: 21204890}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3478,7 +3478,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 499608}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorners
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3496,7 +3496,7 @@ GameObject:
   - 222: {fileID: 22224542}
   - 114: {fileID: 11424542}
   - 225: {fileID: 22534362}
-  m_Layer: 5
+  m_Layer: 8
   m_Name: Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3514,7 +3514,7 @@ GameObject:
   - 222: {fileID: 22224544}
   - 114: {fileID: 11424546}
   - 114: {fileID: 11424544}
-  m_Layer: 5
+  m_Layer: 8
   m_Name: ButtonAnalyze
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3530,7 +3530,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 498080}
   - 212: {fileID: 21212522}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3545,7 +3545,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 488406}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Back
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3561,7 +3561,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 456314}
   - 212: {fileID: 21226084}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3578,7 +3578,7 @@ GameObject:
   - 4: {fileID: 402840}
   - 33: {fileID: 3360058}
   - 23: {fileID: 2375344}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3594,7 +3594,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 456894}
   - 212: {fileID: 21212354}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3611,7 +3611,7 @@ GameObject:
   - 4: {fileID: 406576}
   - 33: {fileID: 3372120}
   - 23: {fileID: 2392796}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3627,7 +3627,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 409224}
   - 212: {fileID: 21212180}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3644,7 +3644,7 @@ GameObject:
   - 4: {fileID: 475574}
   - 33: {fileID: 3363570}
   - 23: {fileID: 2338476}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3659,7 +3659,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 454364}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Back
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3674,7 +3674,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 408038}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Left
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3689,7 +3689,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 423860}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Anchor
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3705,7 +3705,7 @@ GameObject:
   m_Component:
   - 224: {fileID: 22430128}
   - 114: {fileID: 11424838}
-  m_Layer: 5
+  m_Layer: 8
   m_Name: BlocksNeededAnchor
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3722,7 +3722,7 @@ GameObject:
   - 224: {fileID: 22430130}
   - 222: {fileID: 22230128}
   - 114: {fileID: 11430128}
-  m_Layer: 5
+  m_Layer: 8
   m_Name: ImageBG
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3737,7 +3737,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 482022}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Top
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3752,7 +3752,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 445184}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Right
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3768,7 +3768,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 420368}
   - 212: {fileID: 21247788}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3785,7 +3785,7 @@ GameObject:
   - 4: {fileID: 432634}
   - 33: {fileID: 3332694}
   - 23: {fileID: 2313308}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3802,7 +3802,7 @@ GameObject:
   - 4: {fileID: 410548}
   - 33: {fileID: 3350590}
   - 23: {fileID: 2332544}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3817,7 +3817,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 495346}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorners
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3834,7 +3834,7 @@ GameObject:
   - 4: {fileID: 416972}
   - 33: {fileID: 3351794}
   - 23: {fileID: 2337238}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3849,7 +3849,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 469278}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Bottom
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3864,7 +3864,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 463348}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Left
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3880,7 +3880,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 482108}
   - 212: {fileID: 21200396}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3897,7 +3897,7 @@ GameObject:
   - 4: {fileID: 437420}
   - 33: {fileID: 3337422}
   - 23: {fileID: 2337422}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Sphere
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3914,7 +3914,7 @@ GameObject:
   - 4: {fileID: 437422}
   - 33: {fileID: 3337424}
   - 23: {fileID: 2337424}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Cylinder
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3930,7 +3930,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 437424}
   - 114: {fileID: 11437424}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: CozmoMarker
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3947,7 +3947,7 @@ GameObject:
   - 4: {fileID: 484074}
   - 33: {fileID: 3391292}
   - 23: {fileID: 2337046}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3964,7 +3964,7 @@ GameObject:
   - 4: {fileID: 479012}
   - 33: {fileID: 3368284}
   - 23: {fileID: 2357130}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3979,7 +3979,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 409290}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Top
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3994,7 +3994,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 497246}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorners
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4011,7 +4011,7 @@ GameObject:
   - 4: {fileID: 493858}
   - 33: {fileID: 3382536}
   - 23: {fileID: 2361096}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4026,7 +4026,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 422134}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorners
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4042,7 +4042,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 418538}
   - 212: {fileID: 21271388}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4059,7 +4059,7 @@ GameObject:
   - 4: {fileID: 418974}
   - 33: {fileID: 3330400}
   - 23: {fileID: 2364424}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4076,7 +4076,7 @@ GameObject:
   - 4: {fileID: 454402}
   - 33: {fileID: 3301158}
   - 23: {fileID: 2388472}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4091,7 +4091,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 481170}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Front
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4109,7 +4109,7 @@ GameObject:
   - 222: {fileID: 22243712}
   - 114: {fileID: 11443712}
   - 225: {fileID: 22543712}
-  m_Layer: 5
+  m_Layer: 8
   m_Name: frontText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4127,7 +4127,7 @@ GameObject:
   - 222: {fileID: 22243714}
   - 114: {fileID: 11443714}
   - 225: {fileID: 22543714}
-  m_Layer: 5
+  m_Layer: 8
   m_Name: TextShadow_BlocksPlease
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4143,7 +4143,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 464740}
   - 212: {fileID: 21247518}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4159,7 +4159,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 462224}
   - 212: {fileID: 21275020}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4174,7 +4174,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 479196}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbols
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4191,7 +4191,7 @@ GameObject:
   - 4: {fileID: 400820}
   - 33: {fileID: 3335478}
   - 23: {fileID: 2380394}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4208,7 +4208,7 @@ GameObject:
   - 4: {fileID: 406750}
   - 33: {fileID: 3333048}
   - 23: {fileID: 2302408}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4223,7 +4223,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 442240}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Bottom
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4240,7 +4240,7 @@ GameObject:
   - 4: {fileID: 431242}
   - 33: {fileID: 3361250}
   - 23: {fileID: 2314122}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4256,7 +4256,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 454180}
   - 212: {fileID: 21252636}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4274,7 +4274,7 @@ GameObject:
   - 222: {fileID: 22250638}
   - 114: {fileID: 11450638}
   - 225: {fileID: 22550638}
-  m_Layer: 5
+  m_Layer: 8
   m_Name: frontText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4292,7 +4292,7 @@ GameObject:
   - 222: {fileID: 22250640}
   - 114: {fileID: 11450640}
   - 225: {fileID: 22550640}
-  m_Layer: 5
+  m_Layer: 8
   m_Name: frontText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4308,7 +4308,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 488586}
   - 212: {fileID: 21288930}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4324,7 +4324,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 491356}
   - 212: {fileID: 21206930}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4341,7 +4341,7 @@ GameObject:
   - 4: {fileID: 460192}
   - 33: {fileID: 3302806}
   - 23: {fileID: 2333758}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4357,7 +4357,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 419134}
   - 212: {fileID: 21223532}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4372,7 +4372,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 224: {fileID: 22452704}
-  m_Layer: 5
+  m_Layer: 8
   m_Name: InventoryHints
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4388,7 +4388,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 455544}
   - 212: {fileID: 21263478}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4405,7 +4405,7 @@ GameObject:
   - 4: {fileID: 418038}
   - 33: {fileID: 3394568}
   - 23: {fileID: 2370596}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4422,7 +4422,7 @@ GameObject:
   - 4: {fileID: 408394}
   - 33: {fileID: 3380230}
   - 23: {fileID: 2323632}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4438,7 +4438,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 465038}
   - 212: {fileID: 21288014}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4455,7 +4455,7 @@ GameObject:
   - 224: {fileID: 22454916}
   - 222: {fileID: 22254916}
   - 114: {fileID: 11454916}
-  m_Layer: 5
+  m_Layer: 8
   m_Name: CozmoTopDown
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4471,7 +4471,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 492998}
   - 212: {fileID: 21260790}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4488,7 +4488,7 @@ GameObject:
   - 4: {fileID: 442210}
   - 33: {fileID: 3390884}
   - 23: {fileID: 2386534}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4505,7 +4505,7 @@ GameObject:
   - 4: {fileID: 495180}
   - 33: {fileID: 3357280}
   - 23: {fileID: 2317246}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4520,7 +4520,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 458102}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbols
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4537,7 +4537,7 @@ GameObject:
   - 4: {fileID: 412668}
   - 33: {fileID: 3367704}
   - 23: {fileID: 2355144}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4553,7 +4553,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 463438}
   - 212: {fileID: 21296714}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4573,7 +4573,7 @@ GameObject:
   - 23: {fileID: 2322192}
   - 114: {fileID: 11460726}
   - 114: {fileID: 11448982}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: BuildInstructionsCube_ActiveCyan03
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4588,7 +4588,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 471836}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbols
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4604,7 +4604,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 436002}
   - 212: {fileID: 21287314}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4620,7 +4620,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 438422}
   - 212: {fileID: 21268120}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4636,7 +4636,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 451922}
   - 212: {fileID: 21208626}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4652,7 +4652,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 433756}
   - 212: {fileID: 21244794}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4667,7 +4667,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 453954}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbols
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4683,7 +4683,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 428898}
   - 212: {fileID: 21258178}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4698,7 +4698,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 462418}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Bottom
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4718,7 +4718,7 @@ GameObject:
   - 23: {fileID: 2328642}
   - 114: {fileID: 11449982}
   - 114: {fileID: 11466486}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: BuildInstructionsCube_ActiveCyan02
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4734,7 +4734,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 426036}
   - 212: {fileID: 21215816}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4749,7 +4749,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 488600}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Front
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4765,7 +4765,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 486518}
   - 212: {fileID: 21216262}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4780,7 +4780,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 418750}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbols
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4797,7 +4797,7 @@ GameObject:
   - 4: {fileID: 461906}
   - 33: {fileID: 3357480}
   - 23: {fileID: 2366738}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4813,7 +4813,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 421566}
   - 212: {fileID: 21297866}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4830,7 +4830,7 @@ GameObject:
   - 4: {fileID: 467556}
   - 33: {fileID: 3328070}
   - 23: {fileID: 2302048}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4846,7 +4846,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 471620}
   - 212: {fileID: 21215256}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4861,7 +4861,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 424764}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Bottom
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4878,7 +4878,7 @@ GameObject:
   - 224: {fileID: 22464910}
   - 222: {fileID: 22264910}
   - 114: {fileID: 11464906}
-  m_Layer: 5
+  m_Layer: 8
   m_Name: Image
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4897,7 +4897,7 @@ GameObject:
   - 114: {fileID: 11464912}
   - 114: {fileID: 11464910}
   - 114: {fileID: 11464908}
-  m_Layer: 5
+  m_Layer: 8
   m_Name: BackButtonSmallScreen
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4914,7 +4914,7 @@ GameObject:
   - 224: {fileID: 22464914}
   - 222: {fileID: 22264914}
   - 114: {fileID: 11464914}
-  m_Layer: 5
+  m_Layer: 8
   m_Name: Image
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4931,7 +4931,7 @@ GameObject:
   - 224: {fileID: 22464916}
   - 222: {fileID: 22264916}
   - 114: {fileID: 11464916}
-  m_Layer: 5
+  m_Layer: 8
   m_Name: Image
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4946,7 +4946,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 405828}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Back
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4962,7 +4962,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 498366}
   - 212: {fileID: 21280302}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4978,7 +4978,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 467686}
   - 212: {fileID: 21220280}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4995,7 +4995,7 @@ GameObject:
   - 4: {fileID: 441342}
   - 33: {fileID: 3350414}
   - 23: {fileID: 2329888}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5010,7 +5010,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 441384}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Right
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5028,7 +5028,7 @@ GameObject:
   - 222: {fileID: 22267466}
   - 114: {fileID: 11467464}
   - 225: {fileID: 22567468}
-  m_Layer: 5
+  m_Layer: 8
   m_Name: Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5046,7 +5046,7 @@ GameObject:
   - 222: {fileID: 22267468}
   - 114: {fileID: 11467466}
   - 114: {fileID: 11467468}
-  m_Layer: 5
+  m_Layer: 8
   m_Name: ButtonSkip
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5062,7 +5062,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 411828}
   - 212: {fileID: 21294748}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5078,7 +5078,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 470292}
   - 212: {fileID: 21224452}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5094,7 +5094,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 421226}
   - 212: {fileID: 21283812}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5111,7 +5111,7 @@ GameObject:
   - 4: {fileID: 469494}
   - 33: {fileID: 3369494}
   - 23: {fileID: 2369494}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: fiducial13
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5126,7 +5126,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 433132}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Bottom
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5143,7 +5143,7 @@ GameObject:
   - 4: {fileID: 484628}
   - 33: {fileID: 3372412}
   - 23: {fileID: 2358192}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5160,7 +5160,7 @@ GameObject:
   - 4: {fileID: 478594}
   - 33: {fileID: 3367718}
   - 23: {fileID: 2380396}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5177,7 +5177,7 @@ GameObject:
   - 4: {fileID: 419612}
   - 33: {fileID: 3352038}
   - 23: {fileID: 2384542}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5193,7 +5193,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 424286}
   - 212: {fileID: 21285888}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5210,7 +5210,7 @@ GameObject:
   - 4: {fileID: 409616}
   - 33: {fileID: 3339824}
   - 23: {fileID: 2344210}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5225,7 +5225,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 427226}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Front
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5242,7 +5242,7 @@ GameObject:
   - 4: {fileID: 476852}
   - 33: {fileID: 3393452}
   - 23: {fileID: 2369076}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5258,7 +5258,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 446006}
   - 212: {fileID: 21230844}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5278,7 +5278,7 @@ GameObject:
   - 23: {fileID: 2360548}
   - 114: {fileID: 11445320}
   - 114: {fileID: 11472356}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: BuildInstructionsCube_BullsEye
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5294,7 +5294,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 414676}
   - 212: {fileID: 21211038}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5309,7 +5309,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 478282}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Right
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5324,7 +5324,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 410926}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Top
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5340,7 +5340,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 437210}
   - 212: {fileID: 21216330}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5357,7 +5357,7 @@ GameObject:
   - 4: {fileID: 405516}
   - 33: {fileID: 3393610}
   - 23: {fileID: 2355154}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5373,7 +5373,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 417168}
   - 212: {fileID: 21297846}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5389,7 +5389,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 433490}
   - 114: {fileID: 11494800}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: GameLayout_EnergyHunt02
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5404,7 +5404,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 483712}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Top
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5420,7 +5420,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 408334}
   - 212: {fileID: 21268194}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5435,7 +5435,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 224: {fileID: 22483376}
-  m_Layer: 5
+  m_Layer: 8
   m_Name: InventoryScreen
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5455,7 +5455,7 @@ GameObject:
   - 23: {fileID: 2383314}
   - 114: {fileID: 11483344}
   - 114: {fileID: 11483346}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: BuildInstructionsCube_ActiveCyan
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5470,7 +5470,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 483114}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorners
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5486,7 +5486,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 483120}
   - 212: {fileID: 21283296}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5502,7 +5502,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 483122}
   - 212: {fileID: 21283298}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5517,7 +5517,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 483124}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Bottom
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5533,7 +5533,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 483126}
   - 114: {fileID: 11483348}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: GameLayout_Slalom02
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5551,7 +5551,7 @@ GameObject:
   - 222: {fileID: 22283378}
   - 114: {fileID: 11483350}
   - 225: {fileID: 22534368}
-  m_Layer: 5
+  m_Layer: 8
   m_Name: Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5569,7 +5569,7 @@ GameObject:
   - 222: {fileID: 22283380}
   - 114: {fileID: 11483352}
   - 225: {fileID: 22534364}
-  m_Layer: 5
+  m_Layer: 8
   m_Name: TextShadow_Hint
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5585,7 +5585,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 483136}
   - 212: {fileID: 21283304}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5601,7 +5601,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 483138}
   - 212: {fileID: 21283306}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5617,7 +5617,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 483140}
   - 212: {fileID: 21283308}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5633,7 +5633,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 483142}
   - 212: {fileID: 21283310}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5649,7 +5649,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 483154}
   - 212: {fileID: 21283316}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5666,7 +5666,7 @@ GameObject:
   - 4: {fileID: 483162}
   - 33: {fileID: 3383324}
   - 23: {fileID: 2383324}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: QuadBackDrop
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5682,7 +5682,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 483168}
   - 212: {fileID: 21283318}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5700,7 +5700,7 @@ GameObject:
   - 222: {fileID: 22283382}
   - 114: {fileID: 11483358}
   - 114: {fileID: 11483360}
-  m_Layer: 5
+  m_Layer: 8
   m_Name: ButtonValidateBuild
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5716,7 +5716,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 483174}
   - 108: {fileID: 10883402}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Directional light
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5732,7 +5732,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 483176}
   - 212: {fileID: 21283322}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5748,7 +5748,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 483178}
   - 212: {fileID: 21283324}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5763,7 +5763,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 483184}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Right
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5779,7 +5779,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 483190}
   - 212: {fileID: 21283328}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5794,7 +5794,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 483196}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Left
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5812,7 +5812,7 @@ GameObject:
   - 222: {fileID: 22283384}
   - 114: {fileID: 11483364}
   - 225: {fileID: 22534354}
-  m_Layer: 5
+  m_Layer: 8
   m_Name: CozmoShadow
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5827,7 +5827,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 483198}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Top
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5844,7 +5844,7 @@ GameObject:
   - 4: {fileID: 483202}
   - 33: {fileID: 3383330}
   - 23: {fileID: 2383330}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5859,7 +5859,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 483204}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbols
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5874,7 +5874,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 483214}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Front
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5889,7 +5889,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 483220}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Top
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5904,7 +5904,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 483222}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Bottom
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5919,7 +5919,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 483228}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Top
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5937,7 +5937,7 @@ GameObject:
   - 222: {fileID: 22283390}
   - 114: {fileID: 11483374}
   - 225: {fileID: 22534366}
-  m_Layer: 5
+  m_Layer: 8
   m_Name: TextTitle
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5952,7 +5952,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 483240}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbols
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5968,7 +5968,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 483246}
   - 212: {fileID: 21283344}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5983,7 +5983,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 483248}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbols
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6000,7 +6000,7 @@ GameObject:
   - 4: {fileID: 483254}
   - 114: {fileID: 11483380}
   - 82: {fileID: 8280104}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: LayoutTracker
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6017,7 +6017,7 @@ GameObject:
   - 4: {fileID: 483256}
   - 33: {fileID: 3383340}
   - 23: {fileID: 2383340}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6034,7 +6034,7 @@ GameObject:
   - 4: {fileID: 483260}
   - 33: {fileID: 3383342}
   - 23: {fileID: 2383342}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6052,7 +6052,7 @@ GameObject:
   - 222: {fileID: 22283392}
   - 114: {fileID: 11483382}
   - 114: {fileID: 11483384}
-  m_Layer: 5
+  m_Layer: 8
   m_Name: BannerFade
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6069,7 +6069,7 @@ GameObject:
   - 4: {fileID: 483264}
   - 33: {fileID: 3383346}
   - 23: {fileID: 2383346}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6086,7 +6086,7 @@ GameObject:
   - 4: {fileID: 483268}
   - 33: {fileID: 3383350}
   - 23: {fileID: 2383350}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6102,7 +6102,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 483270}
   - 212: {fileID: 21283350}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6117,7 +6117,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 483276}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Right
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6133,7 +6133,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 483282}
   - 212: {fileID: 21283352}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6149,7 +6149,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 483286}
   - 212: {fileID: 21283356}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6166,7 +6166,7 @@ GameObject:
   - 4: {fileID: 483288}
   - 33: {fileID: 3383360}
   - 23: {fileID: 2383360}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6184,7 +6184,7 @@ GameObject:
   - 20: {fileID: 2083402}
   - 114: {fileID: 11483386}
   - 114: {fileID: 11483388}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Layout Instructions Camera
   m_TagString: MainCamera
   m_Icon: {fileID: 0}
@@ -6200,7 +6200,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 483296}
   - 212: {fileID: 21283358}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6220,7 +6220,7 @@ GameObject:
   - 23: {fileID: 2383368}
   - 114: {fileID: 11483390}
   - 114: {fileID: 11483392}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: BuildInstructionsCube_ActiveCyan
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6236,7 +6236,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 483310}
   - 212: {fileID: 21283362}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6251,7 +6251,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 483314}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Back
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6267,7 +6267,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 483320}
   - 212: {fileID: 21283366}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6282,7 +6282,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 483324}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Right
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6300,7 +6300,7 @@ GameObject:
   - 222: {fileID: 22283394}
   - 114: {fileID: 11483394}
   - 225: {fileID: 22534352}
-  m_Layer: 5
+  m_Layer: 8
   m_Name: GameTitleShadow
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6317,7 +6317,7 @@ GameObject:
   - 4: {fileID: 483330}
   - 33: {fileID: 3383378}
   - 23: {fileID: 2383378}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6334,7 +6334,7 @@ GameObject:
   - 4: {fileID: 483332}
   - 33: {fileID: 3383380}
   - 23: {fileID: 2383380}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6349,7 +6349,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 483336}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Left
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6365,7 +6365,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 483338}
   - 212: {fileID: 21283372}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6382,7 +6382,7 @@ GameObject:
   - 4: {fileID: 483340}
   - 33: {fileID: 3383382}
   - 23: {fileID: 2383382}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6398,7 +6398,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 483346}
   - 212: {fileID: 21283374}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6413,7 +6413,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 483348}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Top
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6430,7 +6430,7 @@ GameObject:
   - 4: {fileID: 483352}
   - 33: {fileID: 3383386}
   - 23: {fileID: 2383386}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6446,7 +6446,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 483358}
   - 212: {fileID: 21283380}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6461,7 +6461,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 483364}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorners
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6478,7 +6478,7 @@ GameObject:
   - 4: {fileID: 483366}
   - 33: {fileID: 3383392}
   - 23: {fileID: 2383392}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6493,7 +6493,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 483376}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Back
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6509,7 +6509,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 483378}
   - 212: {fileID: 21283388}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6526,7 +6526,7 @@ GameObject:
   - 4: {fileID: 483380}
   - 33: {fileID: 3383396}
   - 23: {fileID: 2383396}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6543,7 +6543,7 @@ GameObject:
   - 4: {fileID: 483382}
   - 33: {fileID: 3383398}
   - 23: {fileID: 2383398}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6559,7 +6559,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 483386}
   - 212: {fileID: 21283392}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6574,7 +6574,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 483388}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbols
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6591,7 +6591,7 @@ GameObject:
   - 4: {fileID: 483396}
   - 33: {fileID: 3383402}
   - 23: {fileID: 2383402}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6607,7 +6607,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 483400}
   - 212: {fileID: 21283400}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6624,7 +6624,7 @@ GameObject:
   - 4: {fileID: 484834}
   - 33: {fileID: 3385078}
   - 23: {fileID: 2385078}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6641,7 +6641,7 @@ GameObject:
   - 4: {fileID: 484836}
   - 33: {fileID: 3385080}
   - 23: {fileID: 2385080}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6657,7 +6657,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 484838}
   - 212: {fileID: 21285046}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6672,7 +6672,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 484840}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Left
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6689,7 +6689,7 @@ GameObject:
   - 4: {fileID: 484842}
   - 33: {fileID: 3385082}
   - 23: {fileID: 2385082}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6704,7 +6704,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 484844}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Front
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6721,7 +6721,7 @@ GameObject:
   - 4: {fileID: 484846}
   - 33: {fileID: 3385084}
   - 23: {fileID: 2385084}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6737,7 +6737,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 484848}
   - 212: {fileID: 21285048}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6754,7 +6754,7 @@ GameObject:
   - 4: {fileID: 484850}
   - 33: {fileID: 3385086}
   - 23: {fileID: 2385086}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6769,7 +6769,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 484852}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorners
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6786,7 +6786,7 @@ GameObject:
   - 4: {fileID: 484854}
   - 33: {fileID: 3385088}
   - 23: {fileID: 2385088}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6803,7 +6803,7 @@ GameObject:
   - 4: {fileID: 484856}
   - 33: {fileID: 3385090}
   - 23: {fileID: 2385090}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6818,7 +6818,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 484858}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Left
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6835,7 +6835,7 @@ GameObject:
   - 4: {fileID: 484860}
   - 33: {fileID: 3385092}
   - 23: {fileID: 2385092}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6855,7 +6855,7 @@ GameObject:
   - 23: {fileID: 2385094}
   - 114: {fileID: 11485164}
   - 114: {fileID: 11485166}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: BuildInstructionsCube_Flag
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6872,7 +6872,7 @@ GameObject:
   - 4: {fileID: 484864}
   - 33: {fileID: 3385096}
   - 23: {fileID: 2385096}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6888,7 +6888,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 484866}
   - 212: {fileID: 21285050}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6904,7 +6904,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 484868}
   - 212: {fileID: 21285052}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6920,7 +6920,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 484870}
   - 212: {fileID: 21285054}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6937,7 +6937,7 @@ GameObject:
   - 4: {fileID: 484872}
   - 33: {fileID: 3385098}
   - 23: {fileID: 2385098}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6952,7 +6952,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 484874}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorners
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6968,7 +6968,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 484876}
   - 212: {fileID: 21285056}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6984,7 +6984,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 484878}
   - 212: {fileID: 21285058}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6999,7 +6999,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 484880}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Right
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7014,7 +7014,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 484882}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorners
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7031,7 +7031,7 @@ GameObject:
   - 4: {fileID: 484884}
   - 33: {fileID: 3385100}
   - 23: {fileID: 2385100}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7047,7 +7047,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 484886}
   - 212: {fileID: 21285060}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7062,7 +7062,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 484888}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Back
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7078,7 +7078,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 484890}
   - 212: {fileID: 21285062}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7094,7 +7094,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 484892}
   - 212: {fileID: 21285064}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7111,7 +7111,7 @@ GameObject:
   - 4: {fileID: 484894}
   - 33: {fileID: 3385102}
   - 23: {fileID: 2385102}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7126,7 +7126,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 484896}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Back
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7142,7 +7142,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 484898}
   - 212: {fileID: 21285066}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7158,7 +7158,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 484900}
   - 212: {fileID: 21285068}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7174,7 +7174,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 484902}
   - 212: {fileID: 21285070}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7189,7 +7189,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 484904}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Bottom
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7206,7 +7206,7 @@ GameObject:
   - 4: {fileID: 484906}
   - 33: {fileID: 3385104}
   - 23: {fileID: 2385104}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7223,7 +7223,7 @@ GameObject:
   - 4: {fileID: 484908}
   - 33: {fileID: 3385106}
   - 23: {fileID: 2385106}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7238,7 +7238,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 484910}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbols
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7253,7 +7253,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 484912}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Bottom
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7270,7 +7270,7 @@ GameObject:
   - 4: {fileID: 484914}
   - 33: {fileID: 3385108}
   - 23: {fileID: 2385108}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7286,7 +7286,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 484916}
   - 212: {fileID: 21285072}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7302,7 +7302,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 484918}
   - 212: {fileID: 21285074}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7318,7 +7318,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 484920}
   - 212: {fileID: 21285076}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7335,7 +7335,7 @@ GameObject:
   - 4: {fileID: 484922}
   - 33: {fileID: 3385110}
   - 23: {fileID: 2385110}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7350,7 +7350,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 484924}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Top
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7366,7 +7366,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 484926}
   - 212: {fileID: 21285078}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7382,7 +7382,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 484928}
   - 212: {fileID: 21285080}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7399,7 +7399,7 @@ GameObject:
   - 4: {fileID: 484930}
   - 33: {fileID: 3385112}
   - 23: {fileID: 2385112}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7415,7 +7415,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 484932}
   - 212: {fileID: 21285082}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7430,7 +7430,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 484934}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Front
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7446,7 +7446,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 484936}
   - 212: {fileID: 21285084}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7463,7 +7463,7 @@ GameObject:
   - 4: {fileID: 484938}
   - 33: {fileID: 3385114}
   - 23: {fileID: 2385114}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7479,7 +7479,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 484940}
   - 212: {fileID: 21285086}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7495,7 +7495,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 484942}
   - 212: {fileID: 21285088}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7510,7 +7510,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 484944}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Right
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7527,7 +7527,7 @@ GameObject:
   - 4: {fileID: 484946}
   - 33: {fileID: 3385116}
   - 23: {fileID: 2385116}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7542,7 +7542,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 484948}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Top
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7557,7 +7557,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 484950}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Bottom
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7572,7 +7572,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 484952}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Left
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7588,7 +7588,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 484954}
   - 212: {fileID: 21285090}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7603,7 +7603,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 484956}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: startingPositionMarker
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7619,7 +7619,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 484958}
   - 212: {fileID: 21285092}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7636,7 +7636,7 @@ GameObject:
   - 4: {fileID: 484960}
   - 33: {fileID: 3385118}
   - 23: {fileID: 2385118}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7653,7 +7653,7 @@ GameObject:
   - 4: {fileID: 484962}
   - 33: {fileID: 3385120}
   - 23: {fileID: 2385120}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7670,7 +7670,7 @@ GameObject:
   - 4: {fileID: 484964}
   - 33: {fileID: 3385122}
   - 23: {fileID: 2385122}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7685,7 +7685,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 484966}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Right
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7700,7 +7700,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 484968}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Front
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7716,7 +7716,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 484970}
   - 212: {fileID: 21285094}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7732,7 +7732,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 484972}
   - 212: {fileID: 21285096}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7747,7 +7747,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 484974}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorners
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7764,7 +7764,7 @@ GameObject:
   - 4: {fileID: 484976}
   - 33: {fileID: 3385124}
   - 23: {fileID: 2385124}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7780,7 +7780,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 484978}
   - 212: {fileID: 21285098}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7796,7 +7796,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 484980}
   - 212: {fileID: 21285100}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7812,7 +7812,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 484982}
   - 212: {fileID: 21285102}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7828,7 +7828,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 484984}
   - 212: {fileID: 21285104}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7843,7 +7843,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 484986}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbols
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7860,7 +7860,7 @@ GameObject:
   - 4: {fileID: 484988}
   - 33: {fileID: 3385126}
   - 23: {fileID: 2385126}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7875,7 +7875,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 484990}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Top
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7890,7 +7890,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 484992}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Back
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7907,7 +7907,7 @@ GameObject:
   - 4: {fileID: 484994}
   - 33: {fileID: 3385128}
   - 23: {fileID: 2385128}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7927,7 +7927,7 @@ GameObject:
   - 23: {fileID: 2385130}
   - 114: {fileID: 11485168}
   - 114: {fileID: 11485170}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: BuildInstructionsCube_Flag
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7943,7 +7943,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 484998}
   - 212: {fileID: 21285106}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7959,7 +7959,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 485000}
   - 212: {fileID: 21285108}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7979,7 +7979,7 @@ GameObject:
   - 23: {fileID: 2385132}
   - 114: {fileID: 11485172}
   - 114: {fileID: 11485174}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: BuildInstructionsCube_ActiveCyan
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7995,7 +7995,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 485004}
   - 212: {fileID: 21285110}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8011,7 +8011,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 485006}
   - 212: {fileID: 21285112}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8026,7 +8026,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 485008}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Bottom
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8042,7 +8042,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 485010}
   - 114: {fileID: 11485176}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: GameLayout_Slalom01
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8058,7 +8058,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 485012}
   - 212: {fileID: 21285114}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8074,7 +8074,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 485014}
   - 212: {fileID: 21285116}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8090,7 +8090,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 444450}
   - 212: {fileID: 21292782}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8106,7 +8106,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 485018}
   - 212: {fileID: 21285118}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8122,7 +8122,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 485020}
   - 212: {fileID: 21285120}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8138,7 +8138,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 485022}
   - 212: {fileID: 21285122}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8153,7 +8153,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 485024}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Left
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8168,7 +8168,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 485026}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Front
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8183,7 +8183,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 485028}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Top
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8198,7 +8198,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 485030}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbols
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8214,7 +8214,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 485032}
   - 212: {fileID: 21285124}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8231,7 +8231,7 @@ GameObject:
   - 4: {fileID: 485034}
   - 33: {fileID: 3385136}
   - 23: {fileID: 2385136}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8248,7 +8248,7 @@ GameObject:
   - 4: {fileID: 485036}
   - 33: {fileID: 3385138}
   - 23: {fileID: 2385138}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8264,7 +8264,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 485038}
   - 212: {fileID: 21285126}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8279,7 +8279,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 485040}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Right
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8296,7 +8296,7 @@ GameObject:
   - 4: {fileID: 485042}
   - 33: {fileID: 3385140}
   - 23: {fileID: 2385140}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8312,7 +8312,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 485046}
   - 212: {fileID: 21285128}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8332,7 +8332,7 @@ GameObject:
   - 23: {fileID: 2385144}
   - 114: {fileID: 11485178}
   - 114: {fileID: 11485180}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: BuildInstructionsCube_ActiveCyan
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8347,7 +8347,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 485050}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Back
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8363,7 +8363,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 485052}
   - 212: {fileID: 21285130}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8380,7 +8380,7 @@ GameObject:
   - 4: {fileID: 485054}
   - 33: {fileID: 3385146}
   - 23: {fileID: 2385146}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8396,7 +8396,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 485056}
   - 212: {fileID: 21285132}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8413,7 +8413,7 @@ GameObject:
   - 4: {fileID: 485058}
   - 33: {fileID: 3385148}
   - 23: {fileID: 2385148}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8429,7 +8429,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 485060}
   - 212: {fileID: 21285134}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8446,7 +8446,7 @@ GameObject:
   - 4: {fileID: 485062}
   - 33: {fileID: 3385150}
   - 23: {fileID: 2385150}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8462,7 +8462,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 485064}
   - 212: {fileID: 21285136}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8478,7 +8478,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 485066}
   - 212: {fileID: 21285138}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8493,7 +8493,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 485068}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbols
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8510,7 +8510,7 @@ GameObject:
   - 4: {fileID: 485070}
   - 33: {fileID: 3385152}
   - 23: {fileID: 2385152}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8526,7 +8526,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 485072}
   - 212: {fileID: 21285140}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8541,7 +8541,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 485074}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbols
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8557,7 +8557,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 485076}
   - 212: {fileID: 21285142}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8574,7 +8574,7 @@ GameObject:
   - 4: {fileID: 485078}
   - 33: {fileID: 3385154}
   - 23: {fileID: 2385154}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8589,7 +8589,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 485080}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Back
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8609,7 +8609,7 @@ GameObject:
   - 23: {fileID: 2385156}
   - 114: {fileID: 11485184}
   - 114: {fileID: 11485182}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: BuildInstructionsCube_ActiveCyan
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8624,7 +8624,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 485084}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Right
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8640,7 +8640,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 485086}
   - 212: {fileID: 21285144}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8657,7 +8657,7 @@ GameObject:
   - 4: {fileID: 485088}
   - 33: {fileID: 3385158}
   - 23: {fileID: 2385158}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8672,7 +8672,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 485090}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Top
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8687,7 +8687,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 485092}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Front
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8703,7 +8703,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 485094}
   - 212: {fileID: 21285146}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8719,7 +8719,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 485096}
   - 212: {fileID: 21285148}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8735,7 +8735,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 485098}
   - 212: {fileID: 21285150}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8751,7 +8751,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 485100}
   - 212: {fileID: 21285152}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8766,7 +8766,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 485102}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Bottom
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8782,7 +8782,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 485104}
   - 212: {fileID: 21285154}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8798,7 +8798,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 485106}
   - 212: {fileID: 21285156}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8815,7 +8815,7 @@ GameObject:
   - 4: {fileID: 485108}
   - 33: {fileID: 3385160}
   - 23: {fileID: 2385160}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8830,7 +8830,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 485110}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbols
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8846,7 +8846,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 485112}
   - 212: {fileID: 21285158}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8862,7 +8862,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 485114}
   - 212: {fileID: 21285160}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8878,7 +8878,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 485116}
   - 212: {fileID: 21285162}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8893,7 +8893,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 485118}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorners
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8910,7 +8910,7 @@ GameObject:
   - 4: {fileID: 485120}
   - 33: {fileID: 3385162}
   - 23: {fileID: 2385162}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8926,7 +8926,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 485122}
   - 212: {fileID: 21285164}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8943,7 +8943,7 @@ GameObject:
   - 4: {fileID: 485124}
   - 33: {fileID: 3385164}
   - 23: {fileID: 2385164}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8959,7 +8959,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 485126}
   - 212: {fileID: 21285166}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8976,7 +8976,7 @@ GameObject:
   - 4: {fileID: 485128}
   - 33: {fileID: 3385166}
   - 23: {fileID: 2385166}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8992,7 +8992,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 485130}
   - 212: {fileID: 21285168}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9008,7 +9008,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 485132}
   - 212: {fileID: 21285170}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9023,7 +9023,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 485134}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Top
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9040,7 +9040,7 @@ GameObject:
   - 4: {fileID: 485136}
   - 33: {fileID: 3385168}
   - 23: {fileID: 2385168}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9055,7 +9055,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 485138}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Bottom
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9071,7 +9071,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 485140}
   - 212: {fileID: 21285172}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9087,7 +9087,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 485142}
   - 212: {fileID: 21285174}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9102,7 +9102,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 485144}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Back
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9118,7 +9118,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 485146}
   - 212: {fileID: 21285176}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9135,7 +9135,7 @@ GameObject:
   - 4: {fileID: 485148}
   - 33: {fileID: 3385170}
   - 23: {fileID: 2385170}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9150,7 +9150,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 485150}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Right
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9166,7 +9166,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 485152}
   - 212: {fileID: 21285178}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9183,7 +9183,7 @@ GameObject:
   - 4: {fileID: 485154}
   - 33: {fileID: 3385172}
   - 23: {fileID: 2385172}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9199,7 +9199,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 485156}
   - 212: {fileID: 21285180}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9215,7 +9215,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 485158}
   - 212: {fileID: 21285182}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9231,7 +9231,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 485160}
   - 212: {fileID: 21285184}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9248,7 +9248,7 @@ GameObject:
   - 4: {fileID: 485162}
   - 33: {fileID: 3385174}
   - 23: {fileID: 2385174}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9268,7 +9268,7 @@ GameObject:
   - 23: {fileID: 2385176}
   - 114: {fileID: 11485188}
   - 114: {fileID: 11485186}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: BuildInstructionsCube_Flag
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9285,7 +9285,7 @@ GameObject:
   - 4: {fileID: 485166}
   - 33: {fileID: 3385178}
   - 23: {fileID: 2385178}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9300,7 +9300,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 485168}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Left
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9317,7 +9317,7 @@ GameObject:
   - 4: {fileID: 485170}
   - 33: {fileID: 3385180}
   - 23: {fileID: 2385180}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9332,7 +9332,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 485172}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorners
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9349,7 +9349,7 @@ GameObject:
   - 4: {fileID: 485174}
   - 33: {fileID: 3385182}
   - 23: {fileID: 2385182}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9365,7 +9365,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 485176}
   - 212: {fileID: 21285186}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9382,7 +9382,7 @@ GameObject:
   - 4: {fileID: 485178}
   - 33: {fileID: 3385184}
   - 23: {fileID: 2385184}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9397,7 +9397,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 485180}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Front
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9412,7 +9412,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 485182}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Left
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9428,7 +9428,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 485184}
   - 212: {fileID: 21285188}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9445,7 +9445,7 @@ GameObject:
   - 4: {fileID: 485186}
   - 33: {fileID: 3385186}
   - 23: {fileID: 2385186}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9462,7 +9462,7 @@ GameObject:
   - 4: {fileID: 485188}
   - 33: {fileID: 3385188}
   - 23: {fileID: 2385188}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9478,7 +9478,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 426358}
   - 212: {fileID: 21224824}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9494,7 +9494,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 463874}
   - 212: {fileID: 21252160}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9510,7 +9510,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 423040}
   - 212: {fileID: 21252482}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9527,7 +9527,7 @@ GameObject:
   - 4: {fileID: 474988}
   - 33: {fileID: 3309160}
   - 23: {fileID: 2393636}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9542,7 +9542,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 466592}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Right
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9560,7 +9560,7 @@ GameObject:
   - 222: {fileID: 22290380}
   - 114: {fileID: 11490382}
   - 225: {fileID: 22534350}
-  m_Layer: 5
+  m_Layer: 8
   m_Name: Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9578,7 +9578,7 @@ GameObject:
   - 222: {fileID: 22290382}
   - 114: {fileID: 11490386}
   - 114: {fileID: 11490384}
-  m_Layer: 5
+  m_Layer: 8
   m_Name: ButtonAutoBuild
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9594,7 +9594,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 469730}
   - 212: {fileID: 21282800}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9609,7 +9609,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 436892}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Front
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9625,7 +9625,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 404644}
   - 212: {fileID: 21240822}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9641,7 +9641,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 439212}
   - 212: {fileID: 21298208}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9658,7 +9658,7 @@ GameObject:
   - 4: {fileID: 401390}
   - 33: {fileID: 3379754}
   - 23: {fileID: 2338258}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9673,7 +9673,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 498410}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Back
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9690,7 +9690,7 @@ GameObject:
   - 4: {fileID: 477836}
   - 33: {fileID: 3323526}
   - 23: {fileID: 2390622}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9708,7 +9708,7 @@ GameObject:
   - 222: {fileID: 22295020}
   - 114: {fileID: 11495020}
   - 225: {fileID: 22595020}
-  m_Layer: 5
+  m_Layer: 8
   m_Name: Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9726,7 +9726,7 @@ GameObject:
   - 222: {fileID: 22295022}
   - 114: {fileID: 11495024}
   - 114: {fileID: 11495022}
-  m_Layer: 5
+  m_Layer: 8
   m_Name: ButtonLetsBuild
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9742,7 +9742,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 466840}
   - 212: {fileID: 21259386}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolBGSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9762,7 +9762,7 @@ GameObject:
   - 23: {fileID: 2314774}
   - 114: {fileID: 11419834}
   - 114: {fileID: 11431478}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: BuildInstructionsCube_ActiveCyan01
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9778,7 +9778,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 439162}
   - 212: {fileID: 21226056}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9793,7 +9793,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 481760}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbol_Front
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9810,7 +9810,7 @@ GameObject:
   - 4: {fileID: 459100}
   - 33: {fileID: 3380992}
   - 23: {fileID: 2370550}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9826,7 +9826,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 455038}
   - 212: {fileID: 21261014}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: symbolSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9843,7 +9843,7 @@ GameObject:
   - 4: {fileID: 454286}
   - 33: {fileID: 3376296}
   - 23: {fileID: 2387352}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: ActiveCorner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -17116,7 +17116,7 @@ Camera:
   m_Depth: 20
   m_CullingMask:
     serializedVersion: 2
-    m_Bits: 3
+    m_Bits: 256
   m_RenderingPath: -1
   m_TargetTexture: {fileID: 0}
   m_TargetDisplay: 0
@@ -23089,7 +23089,7 @@ Light:
   m_RenderMode: 2
   m_CullingMask:
     serializedVersion: 2
-    m_Bits: 1
+    m_Bits: 256
   m_Lightmapping: 4
   m_BounceIntensity: 1
   m_ShadowRadius: 0
