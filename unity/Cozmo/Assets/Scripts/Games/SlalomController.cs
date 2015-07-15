@@ -661,10 +661,10 @@ public class SlalomController : GameController {
 			random = Random.Range(1, max);
 
 			for(int i = 0; i < obstacle.lights.Length; ++i) {
-				obstacle.lights[i].onColor = CozmoPalette.CycleColors(i);
+				obstacle.lights[i].onColor = CycleColors(i);
 				obstacle.lights[i].onPeriod_ms = 125;
 				obstacle.lights[i].offPeriod_ms = 125;
-				obstacle.lights[i].offColor = CozmoPalette.CycleColors(i + random);
+				obstacle.lights[i].offColor = CycleColors(i + random);
 				obstacle.lights[i].transitionOnPeriod_ms = 0;
 				obstacle.lights[i].transitionOffPeriod_ms = 0;
 			}
@@ -673,12 +673,19 @@ public class SlalomController : GameController {
 		random = Random.Range(1, max);
 
 		for(int i = 0; i < robot.lights.Length; ++i) {
-			robot.lights[i].onColor = CozmoPalette.CycleColors(i);
+			robot.lights[i].onColor = CycleColors(i);
 			robot.lights[i].onPeriod_ms = 125;
 			robot.lights[i].offPeriod_ms = 125;
-			robot.lights[i].offColor = CozmoPalette.CycleColors(i + random);
+			robot.lights[i].offColor = CycleColors(i + random);
 			robot.lights[i].transitionOnPeriod_ms = 0;
 			robot.lights[i].transitionOffPeriod_ms = 0;
 		}
+	}
+
+	private uint CycleColors(int i) // cycle through all colors, but don't use black or white
+	{
+		int index = (i % (int)ActiveBlock.Mode.Count) + 2;
+
+		return CozmoPalette.instance.GetUIntColorForActiveBlockType(index < (int)ActiveBlock.Mode.Count ? (ActiveBlock.Mode)index : (ActiveBlock.Mode)2);
 	}
 }

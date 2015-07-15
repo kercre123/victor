@@ -109,6 +109,7 @@ public class VortexController : GameController {
 	[SerializeField] Image[] imageInputLocked;
 	[SerializeField] Text[] textPlayerBids;
 	[SerializeField] Text[] textPlayerSpinNow;
+	[SerializeField] RectTransform[] preGameNotices;
 	[SerializeField] RectTransform preGameAlert;
 	[SerializeField] Animation[] playerBidFlashAnimations;
 	[SerializeField] Text[] textPlayerScores;
@@ -230,8 +231,6 @@ public class VortexController : GameController {
 
 		foreach(Image image in imageInputLocked) image.gameObject.SetActive(false);
 
-		foreach(LayoutBlock2d block in playerMockBlocks) block.Validate(false);
-
 		for(int i=0;i<textPlayerSpinNow.Length;i++) {
 			textPlayerSpinNow[i].gameObject.SetActive(false);
 		}
@@ -243,6 +242,10 @@ public class VortexController : GameController {
 
 		if(imageHub != null) {
 			imageHub.gameObject.SetActive(false);
+		}
+		
+		if(preGameNotices != null) {
+			foreach(RectTransform rTrans in preGameNotices) rTrans.gameObject.SetActive(false);
 		}
 
 		if(preGameAlert != null) preGameAlert.gameObject.SetActive(false);
@@ -279,13 +282,19 @@ public class VortexController : GameController {
 
 	ObservedObject humanHead;
 	protected override void Enter_PRE_GAME () {
+		
+		if(preGameNotices != null) {
+			for(int i=0;i<preGameNotices.Length;i++) {
+				preGameNotices[i].gameObject.SetActive(i < numPlayers);
+			}
+		}
 
 		if(playerMockBlocks != null) {
 			for(int i=0;i < numPlayers;i++) {
 				playerMockBlocks[i].Validate(false);
 				playerMockBlocks[i].Initialize(CubeType.LIGHT_CUBE);
-				//Color col = CozmoPalette.instance.GetColorForActiveBlockMode(GetPlayerActiveCubeColorMode(i));
-				playerMockBlocks[i].SetLights(GetPlayerUIColor(i));
+				Color col = CozmoPalette.instance.GetColorForActiveBlockMode(GetPlayerActiveCubeColorMode(i));
+				playerMockBlocks[i].SetLights(col);
 			}
 		}
 
@@ -396,6 +405,12 @@ public class VortexController : GameController {
 
 	protected override void Exit_PRE_GAME () {
 		base.Exit_PRE_GAME();
+
+		if(preGameNotices != null) {
+			for(int i=0;i<preGameNotices.Length;i++) {
+				preGameNotices[i].gameObject.SetActive(false);
+			}
+		}
 
 		if(preGameAlert != null) preGameAlert.gameObject.SetActive(false);
 
@@ -556,6 +571,15 @@ public class VortexController : GameController {
 			if(humanHead != null) {
 				robot.FaceObject(humanHead, false);
 			}
+		}
+
+		if( sortedScoreData[0].playerIndex == 1 ) {
+			// cozmo won
+			CozmoEmotionManager.SetEmotion("WIN_MATCH");
+		}
+		else {
+			// cozmo lost
+			CozmoEmotionManager.SetEmotion("LOSE_MATCH");
 		}
 
 	}
@@ -756,6 +780,7 @@ public class VortexController : GameController {
 
 		if(currentPlayerIndex == 1) {
 			wheel.AutomatedMode();
+			CozmoEmotionManager.SetEmotion("SPIN_WHEEL");
 
 			startDragPos = new Vector2(cozmoStartDragPos.x * Screen.width, cozmoStartDragPos.y * Screen.height);
 			startDragPos += UnityEngine.Random.insideUnitCircle * Screen.height * 0.1f;
@@ -786,7 +811,6 @@ public class VortexController : GameController {
 		lastNumber = wheel.GetDisplayedNumber();
 
 		foreach(Image image in imageInputLocked) image.gameObject.SetActive(false);
-		foreach(LayoutBlock2d block in playerMockBlocks) block.Validate(false);
 
 		for(int i=0;i<textPlayerBids.Length;i++) {
 			textPlayerBids[i].text = "";
@@ -867,6 +891,7 @@ public class VortexController : GameController {
 	}
 
 	void Enter_SPINNING() {
+		//CozmoEmotionManager.SetEmotion("WATCH_SPIN");
 		lightingBall.Radius = wheelLightningRadii[currentWheelIndex];
 
 		for(int i=0;i<playerButtonCanvasGroups.Length;i++) {
@@ -880,8 +905,6 @@ public class VortexController : GameController {
 		cozmoTapsSubmitted = -1;
 
 		foreach(ActiveBlock block in playerInputBlocks) block.SetMode(ActiveBlock.Mode.Off);
-		foreach(LayoutBlock2d block in playerMockBlocks) block.SetLights(Color.black);
-		
 	}
 
 	void Update_SPINNING() {
@@ -967,10 +990,7 @@ public class VortexController : GameController {
 		for(int i=0;i<playerInputBlocks.Count && i<numPlayers;i++) {
 			playerInputBlocks[i].SetMode(GetPlayerActiveCubeColorMode(i));
 		}
-		for(int i=0;i<playerMockBlocks.Length && i<numPlayers;i++) {
-			playerMockBlocks[i].SetLights(GetPlayerUIColor(i));
-		}
-		
+
 	}
 
 	[SerializeField] float scoreScaleBase = 0.75f;
@@ -1028,8 +1048,59 @@ public class VortexController : GameController {
 			//Debug.Log("playersEliminated["+i+"] = " + playersEliminated[i]);
 		}
 
+		// cozmo reaction
+		if( playersThatAreCorrect.Contains(1) ) {
+			if( playersThatAreCorrect[0] == 1 ) {
+				// major win
+				CozmoEmotionManager.SetEmotion("MAJOR_WIN");
+			}
+			else {
+				// minor win
+				CozmoEmotionManager.SetEmotion("MINOR_WIN");
+			}
+		} else {
+			// minor loss TODO: need clarification from Rob on major loss conditions
+			CozmoEmotionManager.SetEmotion("MINOR_FAIL");
+		}
 
-		PlayRoundCompleteLights();
+		for(int i=0;i<playerInputs.Count;i++) {
+
+			textPlayerBids[i].text = playerInputs[i].stamps.Count.ToString();
+
+			if(playerInputBlocks.Count <= i) continue;
+
+			Color playerColor = CozmoPalette.instance.GetColorForActiveBlockMode(GetPlayerActiveCubeColorMode(i));
+
+			Color c1 = Color.clear;
+			Color c2 = Color.clear;
+			Color c3 = Color.clear;
+			Color c4 = Color.clear;
+
+			if(playersThatAreCorrect.Contains(i)) {
+				int orderIndex = playersThatAreCorrect.IndexOf(i);
+				if(orderIndex > 2) {
+					c4 = playerColor;
+				}
+				if(orderIndex > 1) {
+					c3 = playerColor;
+				}
+				if(orderIndex > 0) {
+					c2 = playerColor;
+				}
+
+				c1 = playerColor;
+			}
+			
+			uint uColor1 = CozmoPalette.ColorToUInt(c1);
+			uint uColor2 = CozmoPalette.ColorToUInt(c2);
+			uint uColor3 = CozmoPalette.ColorToUInt(c3);
+			uint uColor4 = CozmoPalette.ColorToUInt(c4);
+
+			playerInputBlocks[i].SetLEDs(uColor1, 0, (byte)ActiveBlock.Light.IndexToPosition(0), 250, 250, 0, 0, 0 );
+			playerInputBlocks[i].SetLEDs(uColor2, 0, (byte)ActiveBlock.Light.IndexToPosition(1), 250, 250, 0, 0, 0 );
+			playerInputBlocks[i].SetLEDs(uColor3, 0, (byte)ActiveBlock.Light.IndexToPosition(2), 250, 250, 0, 0, 0 );
+			playerInputBlocks[i].SetLEDs(uColor4, 0, (byte)ActiveBlock.Light.IndexToPosition(3), 250, 250, 0, 0, 0 );
+		}
 
 
 		//only winner is given points per round in winnerElimination
@@ -1082,64 +1153,6 @@ public class VortexController : GameController {
 
 		resultsDisplayIndex = 0;
 		fadeTimer = scoreDisplayFillFade;
-	}
-
-	void PlayRoundCompleteLights()
-	{
-		
-		int random;
-		int max = (int)ActiveBlock.Mode.Count-3;
-		
-		for(int playerIndex=0;playerIndex<playerInputs.Count;playerIndex++) {
-			
-			textPlayerBids[playerIndex].text = playerInputs[playerIndex].stamps.Count.ToString();
-			
-			bool correct = playersThatAreCorrect.Contains(playerIndex);
-			bool winner = correct && playersThatAreCorrect[0] == playerIndex;
-			uint playerColor = CozmoPalette.ColorToUInt(CozmoPalette.instance.GetColorForActiveBlockMode(GetPlayerActiveCubeColorMode(playerIndex)));
-
-			if(playerInputBlocks.Count > playerIndex) {
-
-				ActiveBlock block = playerInputBlocks[playerIndex];
-	
-				if(!correct) {
-					block.SetMode(ActiveBlock.Mode.Off);
-					if(robot != null && playerIndex == 1) {	
-						robot.SetBackpackLEDs();
-					}
-					continue;
-				}
-
-				block.relativeMode = 0;
-				random = UnityEngine.Random.Range(1, max);
-				
-				for(int i = 0; i < block.lights.Length; ++i) {
-					block.lights[i].onColor = winner ? CozmoPalette.CycleColors(i) : playerColor;
-					block.lights[i].onPeriod_ms = 125;
-					block.lights[i].offPeriod_ms = 125;
-					block.lights[i].offColor = winner ? CozmoPalette.CycleColors(i + random) : 0;
-					block.lights[i].transitionOnPeriod_ms = 0;
-					block.lights[i].transitionOffPeriod_ms = 0;
-				}
-			}
-
-			//playerMockBlocks[playerIndex]
-
-			if(robot != null && playerIndex == 1) {			
-
-				random = UnityEngine.Random.Range(1, max);
-				
-				for(int i = 0; i < robot.lights.Length; ++i) {
-					robot.lights[i].onColor = winner ? CozmoPalette.CycleColors(i) : playerColor;
-					robot.lights[i].onPeriod_ms = 125;
-					robot.lights[i].offPeriod_ms = 125;
-					robot.lights[i].offColor = winner ? CozmoPalette.CycleColors(i + random) : 0;
-					robot.lights[i].transitionOnPeriod_ms = 0;
-					robot.lights[i].transitionOffPeriod_ms = 0;
-				}
-			}
-		}
-
 	}
 	
 	void Update_SPIN_COMPLETE() {
@@ -1248,20 +1261,12 @@ public class VortexController : GameController {
 			playerInputBlocks[i].SetMode(GetPlayerActiveCubeColorMode(i));
 		}
 
-		for(int i=0;i<playerMockBlocks.Length && i<numPlayers;i++) {
-			playerMockBlocks[i].SetLights(GetPlayerUIColor(i));
-		}
-
 		for(int i=0;i<textPlayerScores.Length && i<numPlayers;i++) {
 			textPlayerScores[i].rectTransform.localScale = Vector3.one*scoreScaleBase;
 		}
 
 		for(int i=0;i<textPlayerScoreDeltas.Length && i<numPlayers;i++) {
 			textPlayerScoreDeltas[i].gameObject.SetActive(false);
-		}
-
-		if(robot != null) {	
-			robot.SetBackpackLEDs();
 		}
 	}
 
@@ -1352,6 +1357,9 @@ public class VortexController : GameController {
 ///
 	public void PlayerInputTap(int index) {
 		if(state == GameState.PRE_GAME) {
+			if( index == 1 ) { // cozmo
+				CozmoEmotionManager.SetEmotion("LETS_PLAY");
+			}
 			playerMockBlocks[index].Validate(true);
 			return;
 		}
@@ -1389,15 +1397,6 @@ public class VortexController : GameController {
 			playerInputBlocks[index].SetLEDs(c3, 0, (byte)ActiveBlock.Light.IndexToPosition(2), Robot.Light.FOREVER, 0, 0, 0, 0 );
 			playerInputBlocks[index].SetLEDs(c4, 0, (byte)ActiveBlock.Light.IndexToPosition(3), Robot.Light.FOREVER, 0, 0, 0, 0 );
 		}
-
-		Color uiCol = GetPlayerUIColor(index);
-
-		Color uiCol1 = playerInputs[index].stamps.Count > 0 ? uiCol : Color.black;
-		Color uiCol2 = playerInputs[index].stamps.Count > 1 ? uiCol : Color.black;
-		Color uiCol3 = playerInputs[index].stamps.Count > 2 ? uiCol : Color.black;
-		Color uiCol4 = playerInputs[index].stamps.Count > 3 ? uiCol : Color.black;
-
-		playerMockBlocks[index].SetLights (uiCol1, uiCol2, uiCol3, uiCol4);
 
 		textPlayerBids[index].text = playerInputs[index].stamps.Count.ToString();
 

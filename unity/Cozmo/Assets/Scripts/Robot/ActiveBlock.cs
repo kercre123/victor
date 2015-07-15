@@ -190,7 +190,7 @@ public class ActiveBlock : ObservedObject
 		SetAllActiveObjectLEDsMessage.relativeToX = relativeToX;
 		SetAllActiveObjectLEDsMessage.relativeToY = relativeToY;
 
-		//Debug.Log( "SetAllActiveObjectLEDs for Object with ID: " + ID );
+		Debug.Log( "SetAllActiveObjectLEDs for Object with ID: " + ID );
 
 		RobotEngineManager.instance.Message.SetAllActiveObjectLEDs = SetAllActiveObjectLEDsMessage;
 		RobotEngineManager.instance.SendMessage();

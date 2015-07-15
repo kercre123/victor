@@ -38,13 +38,6 @@ public class CozmoPalette : MonoBehaviour {
 		return value;
 	}
 
-	public static uint CycleColors(int i) // cycle through all colors, but don't use black or white
-	{
-		int index = (i % (int)ActiveBlock.Mode.Count) + 2;
-		
-		return CozmoPalette.instance.GetUIntColorForActiveBlockType(index < (int)ActiveBlock.Mode.Count ? (ActiveBlock.Mode)index : (ActiveBlock.Mode)2);
-	}
-
 	public uint GetUIntColorForActiveBlockType(ActiveBlock.Mode activeType) {
 		return ColorToUInt(activeBlockColors[(int)activeType]);
 	}

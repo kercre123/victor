@@ -71,12 +71,12 @@ public class CozmoEmotionManager : MonoBehaviour {
 #if UNITY_EDITOR
 		if( Input.GetKeyDown(KeyCode.T) )
 		{
-			SetEmotion(EmotionType.IDLE);
+			SetEmotion("IDLE");
 		}
 
 		if( Input.GetKeyDown(KeyCode.Y) )
 		{
-			SetEmotion(EmotionType.IDLE, true);
+			SetEmotion("IDLE", true);
 		}
 #endif
 
@@ -99,8 +99,10 @@ public class CozmoEmotionManager : MonoBehaviour {
 		currentEmotionMachine = GetComponent<CozmoEmotionMachine>();
 	}
 
-	public void SetEmotion(EmotionType emo, bool clear_current = false)
+	public static void SetEmotion(string emotion_state, bool clear_current = false)
 	{
+		if( instance == null ) return;
+		/*
 		if( clear_current )
 		{
 			currentEmotions = emo;
@@ -109,28 +111,31 @@ public class CozmoEmotionManager : MonoBehaviour {
 		{
 			currentEmotions |= emo;
 		}
+		*/
 
-		if( currentEmotionMachine != null )
+		if( instance.currentEmotionMachine != null )
 		{
 			// send approriate animation
-			if (currentEmotionMachine.HasAnimForType(emo) )
+			if (instance.currentEmotionMachine.HasAnimForState(emotion_state) )
 			{
-				CozmoAnimation anim = currentEmotionMachine.GetAnimForType(emo);
-				SendAnimation(anim);
+				Debug.Log("sending emotion type: " + emotion_state);
+				CozmoAnimation anim = instance.currentEmotionMachine.GetAnimForType(emotion_state);
+				instance.SendAnimation(anim);
 			}
 			else
 			{
-				Debug.LogError("tring to send animation for emotion type " + emo + ", and the current machine has no anim mapped");
+				Debug.LogError("tring to send animation for emotion type " + emotion_state + ", and the current machine has no anim mapped");
 			}
 		}
 
-		lastEmotions = currentEmotions;
+		//lastEmotions = currentEmotions;
 	}
 
 	public void SendAnimation(CozmoAnimation anim)
 	{
 		PlayAnimationMessage.animationName = anim.animName;
 		PlayAnimationMessage.numLoops = anim.numLoops;
+		PlayAnimationMessage.robotID = RobotEngineManager.instance.current.ID;
 		RobotEngineManager.instance.Message.PlayAnimation = PlayAnimationMessage;
 		RobotEngineManager.instance.SendMessage();
 	}
