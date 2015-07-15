@@ -208,7 +208,7 @@ int main(void)
   printf("UART..");
   GetId();
 
-  FrontCameraInit();
+  //FrontCameraInit();
   printf("camera..");
 
   IMUInit();  // The IMU must be configured before spineport
@@ -258,7 +258,7 @@ int main(void)
 
   // Give time for sync before video starts
   MicroWait(500000);
-  StreamJPEG();
+  //StreamJPEG();
 #endif
 
   // Never return from this function

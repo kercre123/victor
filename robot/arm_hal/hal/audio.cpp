@@ -45,8 +45,8 @@ namespace Anki
       typedef int32_t AudioSample;
 
       const int ADPCMFreq     = 24000;
-      const int SampleRate    = 24000;
-      const int BufferLength  = 800;  // 33.3ms
+      const int SampleRate    = 44100;
+      const int BufferLength  = 800;  // 33.3ms at 24khz
       const int BufferMidpoint = BufferLength / 2;
 
       static ONCHIP AudioSample m_audioBuffer[2][BufferLength];
@@ -144,64 +144,69 @@ namespace Anki
         I2S_Cmd(AUDIO_SPI, ENABLE);
       }
 
-      static inline int16_t GaussSubSample(uint8_t sub, bool advance, int16_t d)
-      {
-        static int16_t a = 0,
-                       b = 0,
-                       c = 0;
-       
-        if (advance) {
-          a = b;
-          b = c;
-          c = d;
-          return -1;
-        }
-        
-        int out = (gauss_table[0][~sub] * a) +
-                  (gauss_table[1][~sub] * b) +
-                  (gauss_table[1][ sub] * c) +
-                  (gauss_table[0][ sub] * d);
-        
-        return out >> 15;
-      }
-
-      void AudioPlayFrame(s16 predictor, u8* frame) {
+      void AudioPlaySilence() {
         // We are not ready to render another audio frame yet
         if (m_AudioRendered) { return ; }
 
-        // Silence frame
-        if (!frame) {
-          memset(m_audioWorking, 0, sizeof(m_audioWorking));
-          m_AudioRendered = true;
-          return ;
-        }
+        // Clear audio buffer
+        memset(m_audioWorking, 0, sizeof(m_audioWorking));
+        m_AudioRendered = true;
+      }
+
+      void AudioPlayFrame(Messages::AnimKeyFrame_AudioSample *msg) {
+        // We are not ready to render another audio frame yet
+        if (m_AudioRendered) { return ; }
 
         int32_t *output = m_audioWorking;
-        u8 *input = frame;
+        const u8 *input = msg->sample;
         bool toggle = false;
-        int step_index = 0;
-        //int error = 0;
+        int error = 0;
+
+        // Previous samples for gaussian filtering
+        static int a = 0, b = 0, c = 0;
+        int valred = msg->predictor;
+        int index = msg->index;
 
         for (int rem = sizeof(m_audioWorking); rem > 0; rem--) {
-          //error += ADPCMFreq;
+          error += ADPCMFreq;
 
-          //if (error >= SampleRate) {
-            int nibble = toggle ? (*(input++) >> 4) : (*input & 0xF);
+          if (error >= SampleRate) {
+            int delta = toggle ? (*(input++) >> 4) : (*input & 0xF);
             toggle = !toggle;
-            
-            //error -= SampleRate;
-            
-            step_index = step_index + ima_index_table[nibble];
-            if (step_index < 0) { step_index = 0; }
-            if (step_index >= sizeof(ima_index_table)) { step_index = sizeof(ima_index_table) - 1; }
 
-            //GaussSubSample(-1, true, predictor);
-            predictor = predictor + (2 * nibble + 1) * ima_step_table[step_index] / 8;
-          //}
+            // ADPCM gauss pipeline
+            a = b; b = c; c = valpred;
+                    
+            error -= SampleRate;
 
-          //uint8_t sub = error * 0x100 / SampleRate;
+            int step = ima_step_table[index];
+            index += ima_index_table[delta];
 
-          *(output++) = predictor;//GaussSubSample(sub, false, predictor);
+            if (index < 0) index = 0;
+            else if (index > 88) index = 88;
+
+            bool sign = ((delta & 8) == 8);
+            delta = delta & 7;
+
+            int vpdiff = step >> 3;
+            if ((delta & 4) == 4) vpdiff += step;
+            if ((delta & 2) == 2) vpdiff += step >> 1;
+            if ((delta & 1) == 1) vpdiff += step >> 2;
+
+            if (sign) valpred -= vpdiff;
+            else valpred += vpdiff;
+
+            if (valpred > 32767) valpred = 32767;
+            else if (valpred < -32768) valpred = -32768;
+          }
+
+          uint8_t sub = error * 0x100 / SampleRate;
+          int gauss = ((gauss_table[0][~sub] * a) >> 15) +
+                      ((gauss_table[1][~sub] * b) >> 15) +
+                      ((gauss_table[1][ sub] * c) >> 15) +
+                      ((gauss_table[0][ sub] * valpred) >> 15);
+
+          *(output++) = 0.25 * gauss;
         }
 
         m_AudioRendered = true;
