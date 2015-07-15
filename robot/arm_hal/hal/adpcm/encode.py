@@ -102,31 +102,20 @@ _, bytes, = struct.unpack("<4sI", data[tag:tag+8])
 data = data[tag+8:tag+8+bytes]
 
 # load samples, pad out to 33.3ms sections
-#print "Loading..."
+print "Loading..."
 samples = [struct.unpack("<h", x)[0] for x in chunk(data)]
 align = len(samples) % BLOCK_SIZE
 
 if align:
 	samples += [0] * (BLOCK_SIZE - align)
 
-#encode one block for testing
+with file("adventure.adp", "wb") as fo:
+	for i, block in enumerate(chunk(samples, BLOCK_SIZE)):
+		print "Encoding block %i of %i" % (i+1, len(samples) / BLOCK_SIZE)
 
-#pred = 0
-#with file("adventure.adp", "wb") as fo:
-#	for i, block in enumerate(chunk(samples, BLOCK_SIZE)):
-#		print "Encoding block %i of %i" % (i+1, len(samples) / BLOCK_SIZE)
-		
-#		fo.write(struct.pack("<h", pred))
-#		fo.write(struct.pack("<400B", *pack(encodeADPCM(block))))
-#
-#		pred = block[-1]
+		adpcm = [s for s in encodeADPCM(block)]
+		index, pred, _ = adpcm[0]
+		adpcm = [s for s in pack([s for i, p, s in adpcm])]
 
-for i, block in enumerate(chunk(samples, BLOCK_SIZE)):
-	if i > 2000:
-		break
-
-	adpcm = [s for s in encodeADPCM(block)]
-	index, pred, _ = adpcm[0]
-	adpcm = pack([s for i, p, s in adpcm])
-
-	print "{ %i, %i, {%s} }," % (index, pred, ', '.join([("0x%X" % s) for s in adpcm]))
+		fo.write(struct.pack("<400B", *adpcm))
+		fo.write(struct.pack("<hB", pred, index))
