@@ -180,29 +180,28 @@ namespace Anki
         u8 *input = frame;
         bool toggle = false;
         int step_index = 0;
-
-        int error = 0;
+        //int error = 0;
 
         for (int rem = sizeof(m_audioWorking); rem > 0; rem--) {
-          error += ADPCMFreq;
+          //error += ADPCMFreq;
 
-          if (error >= SampleRate) {
+          //if (error >= SampleRate) {
             int nibble = toggle ? (*(input++) >> 4) : (*input & 0xF);
             toggle = !toggle;
             
-            error -= SampleRate;
+            //error -= SampleRate;
             
             step_index = step_index + ima_index_table[nibble];
             if (step_index < 0) { step_index = 0; }
             if (step_index >= sizeof(ima_index_table)) { step_index = sizeof(ima_index_table) - 1; }
 
-            GaussSubSample(-1, true, predictor);
+            //GaussSubSample(-1, true, predictor);
             predictor = predictor + (2 * nibble + 1) * ima_step_table[step_index] / 8;
-          }
+          //}
 
-          uint8_t sub = error * 0x100 / SampleRate;
+          //uint8_t sub = error * 0x100 / SampleRate;
 
-          *(output++) = GaussSubSample(sub, false, predictor);
+          *(output++) = predictor;//GaussSubSample(sub, false, predictor);
         }
 
         m_AudioRendered = true;
