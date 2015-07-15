@@ -6,15 +6,15 @@
 /** Initalize the I2S peripheral, IO pins and DMA for bi-directional transfer
  * @return 0 on success or non-0 on an error
  */
-int8_t i2sInit();
+int8_t i2sInit(void);
 
 /** Start I2S data transfer
  */
-void i2sStart();
+void i2sStart(void);
 
 /** Stop I2S data transfer
  */
-void i2sStop();
+void i2sStop(void);
 
 /** Queues a buffer to transmit over I2S
  * @param payload The data to be sent
@@ -30,5 +30,10 @@ bool i2sQueueTx(I2SPIPayload* payload, I2SPIPayloadTag tag);
  * @param tag The type dag for the payload
  */
 void i2sRecvCallback(I2SPIPayload* payload, I2SPIPayloadTag tag);
+
+/// Retrieve the count of missed transmits (where we didn't send anything in a transfer)
+uint32_t getMissedTransmits(void);
+/// Retrieve the number of times we've received a message with the wrong sequence number
+uint32_t getOutOfSequence(void);
 
 #endif

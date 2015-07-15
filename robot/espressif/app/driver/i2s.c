@@ -30,68 +30,99 @@ speed.
 #include "driver/i2s.h"
 #include "driver/i2s_ets.h"
 
-#define DMA_BUF_COUNT
+#define DMA_BUF_COUNT (8) // 512bytes per buffer * 8 buffers = 4k. Must be a power of two for masking to work
+#define DMA_BUF_COUNT_MASK (DMA_BUF_COUNT-1)
 
-// I2S Incoming DMA buffer
-static unsigned int i2sIBuf[I2SDMABUFCNT][I2SDMABUFLEN];
-//I2S Incoming DMA buffer descriptors
-static struct sdio_queue i2sIBufDesc[I2SDMABUFCNT];
-// I2S Outgoing DMA buffers
-static unsigned int i2sOBuf[I2SDMABUFCNT][I2SDMABUFLEN];
-// I2S Outgoging DMA buffer descriptors
-static struct sdio_queue i2sOBufDesc[I2SDMABUFCNT];
-// Index of the buffer the I2S peripherial is reading from
-static unsigned int i2sRdInd = 0;
-// Index of the buffer we are writing samples into
-static unsigned int i2sWrInd = 0;
-//DMA underrun counter
-static long underrunCnt;
-// Index of the buffer being received into
-static unsigned int i2sRxInd = 0;
+/** DMA I2SPI transfer buffers
+ * The buffers are used for transfers in both directions with the last transmitted buffer being used for the next
+ * incoming transfer.
+ */
+static I2SPITransfer xferBufs[DMA_BUF_COUNT];
+/// DMA queue control structure
+static struct sdio_queue xferQueue[DMA_BUF_COUNT];
+/// Index of the next buffer to transmit (i.e. where we should write data, not what's currently being transmitted)
+static uint8 xmitInd;
+/// The sequence number for the next transmission
+static uint16_t transmitSeqNo;
+/// Last received sequence number from other side
+static uint16_t lastSeqNo;
+/// Error count for missed transmits
+static uint32_t missedTransmits;
+/// Out of sequence count
+static uint32_t outOfSequence;
 
-//This routine is called as soon as the DMA routine has something to tell us. All we
-//handle here is the RX_EOF_INT status, which indicate the DMA has sent a buffer whose
-//descriptor has the 'EOF' field set to 1.
-LOCAL void slc_isr(void) {
-	struct sdio_queue *finishedDesc;
+/// Prep an sdio_queue structure (DMA descriptor) for (re)use
+static void inline prepSdioQueue(struct sdio_queue* desc)
+{
+  desc->owner     = 1;
+  desc->eof       = 1;
+  desc->sub_sof   = 0;
+  desc->datalen   = I2SPI_TRANSFER_SIZE;
+  desc->blocksize = I2SPI_TRANSFER_SIZE;
+  desc->unused    = 0;
+}
+
+/** General DMA ISR
+ * Primarily handles RX_EOF_INT (DMA sent buffer out) and TX_EOF_INT (DMA receiverd buffer in). In addition to clearing
+ * the interrupt flags, the sdio_queue returned must be reset so it can be reused. Finally when data is received from
+ * DMA (TX) the i2sRecvCallback is called.
+ */
+LOCAL void slcIsr(void) {
 	uint32 slc_intr_status;
-	int dummy;
 
 	//Grab int status
 	slc_intr_status = READ_PERI_REG(SLC_INT_STATUS);
 	//clear all intr flags
-	WRITE_PERI_REG(SLC_INT_CLR, 0xffffffff);//slc_intr_status);
-	if (slc_intr_status & SLC_RX_EOF_INT_ST) {
-		//The DMA subsystem is done with this block: Push it on the queue so it can be re-used.
-		finishedDesc=(struct sdio_queue*)READ_PERI_REG(SLC_RX_EOF_DES_ADDR);
-    if (i2sRdInd == i2sWrInd) {
-			//All buffers are empty. This means we have an underflow on our hands.
-			underrunCnt++;
-			//Pop the top off the queue; it's invalid now anyway.
-			i2sWrInd = (i2sWrInd + 1) % I2SDMABUFCNT;
-		}
+	WRITE_PERI_REG(SLC_INT_CLR, 0xffffffff);
 
-		//Dump the buffer on the queue so the rest of the software can fill it.
-    i2sRdInd = (i2sRdInd + 1) % I2SDMABUFCNT;
+	if (slc_intr_status & SLC_RX_EOF_INT_ST) {
+    // DMA has finished transmitting one block and started the next, advance the next to be transmitted counter
+    xmitInd = (xmitInd + 1) & DMA_BUF_COUNT_MASK;
 	}
   else if (slc_intr_status & SLC_TX_EOF_INT_ST) {
-    finishedDesc=(struct sdio_queue*)READ_PERI_REG(SLC_TX_EOF_DES_ADDR);
-    //os_printf("%08x\r\n", i2sRxInd);
-    i2sRxInd += 1;
-    finishedDesc->owner  = 1;
-    finishedDesc->eof    = 1;
-    finishedDesc->unused = 0;
-    finishedDesc->blocksize = I2SDMABUFLEN*4;
-    finishedDesc->datalen   = I2SDMABUFLEN*4;
+    struct sdio_queue* desc = (struct sdio_queue*)READ_PERI_REG(SLC_TX_EOF_DES_ADDR);
+    I2SPITransfer* xfer     = (I2SPITransfer*)(desc->buf_ptr);
+    if (xfer->from == fromRTIP) // Is received data
+    {
+      if (i2spiSequential(xfer->seqNo, lastSeqNo)) // Is sequential
+      {
+        i2sRecvCallback(xfer->payload, xfer->tag);
+        lastSeqNo = xfer->seqNo;
+      }
+      else // Not in sequence
+      {
+        outOfSequence++;
+      }
+    }
+    else // Not received data
+    {
+      missedTransmits++;
+    }
+
+    prepSdioQueue(desc); // Reset the DMA descriptor for reuse
   }
 }
 
 
 //Initialize I2S subsystem for DMA circular buffer use
 void ICACHE_FLASH_ATTR i2sInit() {
-	int i, j;
+	int i;
 
-	underrunCnt=0;
+  xmitInd         = 0;
+  transmitSeqNo   = 0;
+  lastSeqNo       = 0;
+  missedTransmits = 0;
+  outOfSequence   = 0;
+
+  // Setup the buffers and descriptors
+  for (i=0; i<DMA_BUF_COUNT; ++i)
+  {
+    os_memset(&xferBufs[i], 0, I2SPI_TRANSFER_SIZE);
+    prepSdioQueue(&xferQueue[i]);
+    xferQueue[i].buf_ptr = (uint32_t)&xferBufs[i];
+    xferQueue[i].next_link_ptr = (int)((i<(DMA_BUF_COUNT-1))?(&xferQueue[i+1]):(&xferQueue[0]));
+  }
+  xferQueue[i].next_link_ptr = (int)&xferQueue[0]
 
 	//Reset DMA
 	SET_PERI_REG_MASK(SLC_CONF0, SLC_RXLINK_RST|SLC_TXLINK_RST);
@@ -106,8 +137,6 @@ void ICACHE_FLASH_ATTR i2sInit() {
 	SET_PERI_REG_MASK(SLC_CONF0,(1<<SLC_MODE_S));
 	SET_PERI_REG_MASK(SLC_RX_DSCR_CONF,SLC_INFOR_NO_REPLACE|SLC_TOKEN_NO_REPLACE);
 	CLEAR_PERI_REG_MASK(SLC_RX_DSCR_CONF, SLC_RX_FILL_EN|SLC_RX_EOF_MODE | SLC_RX_FILL_MODE);
-
-
 
 	//Initialize DMA buffer descriptors in such a way that they will form a circular
 	//buffer.

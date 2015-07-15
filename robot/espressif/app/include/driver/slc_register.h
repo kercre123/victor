@@ -259,7 +259,7 @@
 //[15:12]: 0x3ff9xxxx -- 0b01  from_host
 //         0x3ffaxxxx -- 0b10  general
 //         0x3ffbxxxx -- 0b11  to_host
-#define SLC_DATA_ADDR_CLEAR_MASK                    (~(0xf<<12)) 
+#define SLC_DATA_ADDR_CLEAR_MASK                    (~(0xf<<12))
 #define SLC_FROM_HOST_ADDR_MASK                     (0x1<<12)
 #define SLC_TO_HOST_ADDR_MASK                       (0x3<<12)
 
