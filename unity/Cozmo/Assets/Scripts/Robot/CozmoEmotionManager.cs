@@ -99,8 +99,10 @@ public class CozmoEmotionManager : MonoBehaviour {
 		currentEmotionMachine = GetComponent<CozmoEmotionMachine>();
 	}
 
-	public void SetEmotion(EmotionType emo, bool clear_current = false)
+	public static void SetEmotion(EmotionType emo, bool clear_current = false)
 	{
+		if( instance == null ) return;
+		/*
 		if( clear_current )
 		{
 			currentEmotions = emo;
@@ -109,14 +111,16 @@ public class CozmoEmotionManager : MonoBehaviour {
 		{
 			currentEmotions |= emo;
 		}
+		*/
 
-		if( currentEmotionMachine != null )
+		if( instance.currentEmotionMachine != null )
 		{
 			// send approriate animation
-			if (currentEmotionMachine.HasAnimForType(emo) )
+			if (instance.currentEmotionMachine.HasAnimForType(emo) )
 			{
-				CozmoAnimation anim = currentEmotionMachine.GetAnimForType(emo);
-				SendAnimation(anim);
+				Debug.Log("sending emotion type: " + emo);
+				CozmoAnimation anim = instance.currentEmotionMachine.GetAnimForType(emo);
+				instance.SendAnimation(anim);
 			}
 			else
 			{
@@ -124,13 +128,14 @@ public class CozmoEmotionManager : MonoBehaviour {
 			}
 		}
 
-		lastEmotions = currentEmotions;
+		//lastEmotions = currentEmotions;
 	}
 
 	public void SendAnimation(CozmoAnimation anim)
 	{
 		PlayAnimationMessage.animationName = anim.animName;
 		PlayAnimationMessage.numLoops = anim.numLoops;
+		PlayAnimationMessage.robotID = RobotEngineManager.instance.current.ID;
 		RobotEngineManager.instance.Message.PlayAnimation = PlayAnimationMessage;
 		RobotEngineManager.instance.SendMessage();
 	}

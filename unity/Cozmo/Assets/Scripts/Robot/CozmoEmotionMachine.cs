@@ -22,7 +22,7 @@ public struct CozmoEmotionState
 
 public class CozmoEmotionMachine : MonoBehaviour {
 
-	public string defaultEmotionStateName;
+	public CozmoEmotionState defaultEmotionState;
 	public List<CozmoEmotionState> emotionStates;
 	private Dictionary<CozmoEmotionManager.EmotionType, List<CozmoAnimation>> typeAnims = new Dictionary<CozmoEmotionManager.EmotionType, List<CozmoAnimation>>();
 
@@ -60,6 +60,7 @@ public class CozmoEmotionMachine : MonoBehaviour {
 		if( CozmoEmotionManager.instance != null )
 		{
 			CozmoEmotionManager.instance.RegisterMachine(this);
+			CozmoEmotionManager.SetEmotion(defaultEmotionState.emotionType);
 		}
 		InitializeMachine();
 	}

@@ -568,6 +568,15 @@ public class VortexController : GameController {
 			}
 		}
 
+		if( sortedScoreData[0].playerIndex == 1 ) {
+			// cozmo won
+			CozmoEmotionManager.SetEmotion(CozmoEmotionManager.EmotionType.WIN_MATCH);
+		}
+		else {
+			// cozmo lost
+			CozmoEmotionManager.SetEmotion(CozmoEmotionManager.EmotionType.LOSE_MATCH);
+		}
+
 	}
 
 	protected override void Update_RESULTS() {
@@ -766,6 +775,7 @@ public class VortexController : GameController {
 
 		if(currentPlayerIndex == 1) {
 			wheel.AutomatedMode();
+			CozmoEmotionManager.SetEmotion(CozmoEmotionManager.EmotionType.SPIN_WHEEL);
 
 			startDragPos = new Vector2(cozmoStartDragPos.x * Screen.width, cozmoStartDragPos.y * Screen.height);
 			startDragPos += UnityEngine.Random.insideUnitCircle * Screen.height * 0.1f;
@@ -876,6 +886,7 @@ public class VortexController : GameController {
 	}
 
 	void Enter_SPINNING() {
+		//CozmoEmotionManager.SetEmotion(CozmoEmotionManager.EmotionType.WATCH_SPIN);
 		lightingBall.Radius = wheelLightningRadii[currentWheelIndex];
 
 		for(int i=0;i<playerButtonCanvasGroups.Length;i++) {
@@ -1027,6 +1038,21 @@ public class VortexController : GameController {
 			}
 
 			//Debug.Log("playersEliminated["+i+"] = " + playersEliminated[i]);
+		}
+
+		// cozmo reaction
+		if( playersThatAreCorrect.Contains(1) ) {
+			if( playersThatAreCorrect[0] == 1 ) {
+				// major win
+				CozmoEmotionManager.SetEmotion(CozmoEmotionManager.EmotionType.MAJOR_WIN);
+			}
+			else {
+				// minor win
+				CozmoEmotionManager.SetEmotion(CozmoEmotionManager.EmotionType.MINOR_WIN);
+			}
+		} else {
+			// minor loss TODO: need clarification from Rob on major loss conditions
+			CozmoEmotionManager.SetEmotion(CozmoEmotionManager.EmotionType.MINOR_FAIL);
 		}
 
 		for(int i=0;i<playerInputs.Count;i++) {
@@ -1316,6 +1342,9 @@ public class VortexController : GameController {
 ///
 	public void PlayerInputTap(int index) {
 		if(state == GameState.PRE_GAME) {
+			if( index == 1 ) { // cozmo
+				CozmoEmotionManager.SetEmotion(CozmoEmotionManager.EmotionType.LETS_PLAY);
+			}
 			playerMockBlocks[index].Validate(true);
 			return;
 		}
