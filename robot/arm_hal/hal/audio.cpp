@@ -164,7 +164,7 @@ namespace Anki
 
         // Previous samples for gaussian filtering
         static int a = 0, b = 0, c = 0;
-        int valred = msg->predictor;
+        int valpred = msg->predictor;
         int index = msg->index;
 
         for (int rem = sizeof(m_audioWorking); rem > 0; rem--) {
