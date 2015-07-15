@@ -378,9 +378,9 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 			slices[i].SetColors(imageColor, textColor, outlineColor);
 		}
 
-		float realTotal = Time.time - SpinStartTime;
+		//float realTotal = Time.time - SpinStartTime;
 
-		Debug.Log("SpinEnd totalTime("+displayData.totalTime+") realTotal("+realTotal+")");
+		//Debug.Log("SpinEnd totalTime("+displayData.totalTime+") realTotal("+realTotal+")");
 
 		
 		state = SpinWheelState.FINISHED;
