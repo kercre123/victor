@@ -348,6 +348,8 @@ public class VortexController : GameController {
 		imageGear.color = gearDefaultColor;
 	}
 
+	
+
 	float frequency = 0.1f;
 	float headTimer = 0f;
 	float turnStartAngle = 0f;
@@ -365,6 +367,9 @@ public class VortexController : GameController {
 			}
 			else if(!robot.isBusy && !playerMockBlocks[1].Validated) {
 				robot.TapBlockOnGround(1);
+				if(fakeCozmoTaps) {
+					StartCoroutine(TapAfterDelay(1, cozmoTimePerTap));
+				}
 			}
 			else if(humanHead == null) {
 				
@@ -930,17 +935,20 @@ public class VortexController : GameController {
 			float timeToBid = predictedDuration - predictedTimeAfterLastPeg - (1f + predictedNum * cozmoTimePerTap);
 			if(time > timeToBid) {
 
+				cozmoTapsSubmitted = 0;
+
 				if(robot != null) {
 					robot.TapBlockOnGround(predictedNum);
-					cozmoTapsSubmitted = predictedNum;
+
+					//if we aren't faking cozmo's taps, then let's skip our local tapping for him
+					if(!fakeCozmoTaps) cozmoTapsSubmitted = predictedNum;
 				}
-				else {
-				//if(fakeCozmoTaps) {
-					cozmoTapsSubmitted = 0;
-				}
+
+
 				//Debug.Log("cozmo predictedNum("+predictedNum+") time("+time+") timeToBid("+timeToBid+") predictedDuration("+predictedDuration+")");
 			}
 		}
+		//this part happens if we are faking taps for coz or are playing without a robot connected
 		else if(predictedNum > 0 && cozmoTapsSubmitted < predictedNum) {
 			if(Time.time - playerInputs[1].FinalTime >= cozmoTimePerTap) {
 				PlayerInputTap(1);
@@ -1304,6 +1312,10 @@ public class VortexController : GameController {
 	void BlockTapped(ActiveBlock block) {
 		for(int i=0;i<playerInputBlocks.Count;i++) {
 			if(playerInputBlocks[i] != block) continue;
+
+			//if we are faking cozmo's taps, let's ignore any real incoming messages for his block
+			if(fakeCozmoTaps && i == 1) return;
+
 			PlayerInputTap(i);
 			break;
 		}
@@ -1407,6 +1419,13 @@ public class VortexController : GameController {
 		yield return new WaitForSeconds(maxPlayerInputTime);
 
 		imageInputLocked[index].gameObject.SetActive(true);
+	}
+
+	IEnumerator TapAfterDelay(int index, float delay) {
+		
+		yield return new WaitForSeconds(delay);
+		
+		PlayerInputTap(index);
 	}
 
 }

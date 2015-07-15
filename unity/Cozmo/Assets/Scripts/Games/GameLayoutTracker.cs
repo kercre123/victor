@@ -303,7 +303,7 @@ public class GameLayoutTracker : MonoBehaviour {
 	}
 
 	void EnterPhase() {
-		Debug.Log("EnterPhase("+Phase+")");
+		//Debug.Log("EnterPhase("+Phase+")");
 		
 		if(textPhase != null) textPhase.text = GetPhaseName(Phase);
 
@@ -349,7 +349,7 @@ public class GameLayoutTracker : MonoBehaviour {
 	}
 
 	void ExitPhase() {
-		Debug.Log("ExitPhase("+Phase+")");
+		//Debug.Log("ExitPhase("+Phase+")");
 
 		switch(Phase) {
 			case LayoutTrackerPhase.INVENTORY:
