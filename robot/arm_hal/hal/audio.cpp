@@ -151,9 +151,9 @@ namespace Anki
                        c = 0;
        
         if (advance) {
-          c = d;
-          b = c;
           a = b;
+          b = c;
+          c = d;
           return -1;
         }
         
