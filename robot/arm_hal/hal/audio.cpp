@@ -215,8 +215,6 @@ namespace Anki
       }
       
       void AudioFill(void) {
-        AudioPlayFrame(0, (u8*) -1);
-        
         // Audio buffers are not empty yet
         if (!m_AudioClear || !m_AudioRendered) { 
           return ;
