@@ -1029,6 +1029,7 @@ public class VortexController : GameController {
 		for(int i=0;i<numPlayers;i++) {
 			if(playersEliminated[i]) continue;
 			if(playersThatAreCorrect.Contains (i)) continue;
+			if(playerInputs[i].stamps.Count == 0) continue;
 			playersThatAreWrong.Add (i);
 		}
 
@@ -1058,9 +1059,16 @@ public class VortexController : GameController {
 				// minor win
 				CozmoEmotionManager.SetEmotion("MINOR_WIN");
 			}
-		} else {
-			// minor loss TODO: need clarification from Rob on major loss conditions
-			CozmoEmotionManager.SetEmotion("MINOR_FAIL");
+		} else if (playersThatAreWrong.Contains(1)) {
+			if( scores[1] < Math.Abs(settings.pointsIncorrectPenalty) )
+			{
+				// minor loss
+				CozmoEmotionManager.SetEmotion("MINOR_FAIL");
+			}
+			else {
+				CozmoEmotionManager.SetEmotion("MAJOR_FAIL");
+			}
+
 		}
 
 		for(int i=0;i<playerInputs.Count;i++) {
