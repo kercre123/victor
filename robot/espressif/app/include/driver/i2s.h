@@ -1,14 +1,34 @@
 #ifndef _I2S_H_
 #define _I2S_H_
 
-//Parameters for the I2S DMA behaviour
-#define I2SDMABUFCNT (14)			//Number of buffers in the I2S circular buffer
-#define I2SDMABUFLEN (32*2)		//Length of one buffer, in 32-bit words.
+#include "anki/cozmo/robot/i2spiData.h" ///< I2SPI transaction parameters
 
+/** Initalize the I2S peripheral, IO pins and DMA for bi-directional transfer
+ * @return 0 on success or non-0 on an error
+ */
+int8_t i2sInit();
 
-void ICACHE_FLASH_ATTR i2sInit();
-void i2sPushSample(unsigned int sample);
-long ICACHE_FLASH_ATTR i2sGetUnderrunCnt();
+/** Start I2S data transfer
+ */
+void i2sStart();
 
+/** Stop I2S data transfer
+ */
+void i2sStop();
+
+/** Queues a buffer to transmit over I2S
+ * @param payload The data to be sent
+ * @param tag The type dag for the payload
+ * @return true if the data was successfully queued or false if it could not be queued.
+ */
+bool i2sQueueTx(I2SPIPayload* payload, I2SPIPayloadTag tag);
+
+/** Callback for new received data from RTIP
+ * @WARNING This function is called from an ISR so it must handle data quickly and return. Any long running data
+ * processing should be scheduled into a task.
+ * @param payload The received data
+ * @param tag The type dag for the payload
+ */
+void i2sRecvCallback(I2SPIPayload* payload, I2SPIPayloadTag tag);
 
 #endif
