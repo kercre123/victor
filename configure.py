@@ -205,7 +205,8 @@ class GamePlatformConfiguration(object):
             print_status('Building project for platform {0}...'.format(self.platform))
         
         if not os.path.exists(self.workspace_path):
-            sys.exit('Workspace {0} does not exist. (clean does not generate workspaces.)'.format(self.workspace_path))
+            print_status('Workspace {0} does not exist. (clean does not generate workspaces.)'.format(self.workspace_path))
+            sys.exit(0)
         else:
             if self.options.command == 'clean':
                 buildaction = 'clean'
