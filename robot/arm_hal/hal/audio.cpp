@@ -40,12 +40,12 @@ namespace Anki
       GPIO_PIN_SOURCE(AUDIO_CK, GPIOB, 13);
       GPIO_PIN_SOURCE(AUDIO_SD, GPIOB, 15);
 
-      const int SampleFreq    = 32000;  // 32khz
+      const int SampleFreq    = 24000;
       const int AudioFrameMS  = 33;
       const int AudioSampleSize = 800;
       const int BufferLength  = SampleFreq * AudioFrameMS / 1000;
       const int BufferMidpoint = BufferLength / 2;
-      typedef int16_t AudioSample;
+      typedef int32_t AudioSample;
 
       static ONCHIP AudioSample m_audioBuffer[2][BufferLength];
       static ONCHIP AudioSample m_audioWorking[BufferLength];
@@ -86,6 +86,7 @@ namespace Anki
         I2S_InitStructure.I2S_CPOL = I2S_CPOL_Low;
         I2S_Init(AUDIO_SPI, &I2S_InitStructure);
         
+        RCC_PLLI2SCmd(DISABLE);
         RCC_I2SCLKConfig(RCC_I2S2CLKSource_PLLI2S);
         RCC_PLLI2SCmd(ENABLE);
         RCC_GetFlagStatus(RCC_FLAG_PLLI2SRDY);
@@ -99,7 +100,7 @@ namespace Anki
         DMA_InitStructure.DMA_PeripheralBaseAddr = (uint32_t)&AUDIO_SPI->DR;
         DMA_InitStructure.DMA_Memory0BaseAddr = (u32)m_audioBuffer;
         DMA_InitStructure.DMA_DIR = DMA_DIR_MemoryToPeripheral;
-        DMA_InitStructure.DMA_BufferSize = BufferLength;
+        DMA_InitStructure.DMA_BufferSize = sizeof(m_audioBuffer) / 2;
         DMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Disable;
         DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Enable;
         DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_HalfWord;
@@ -145,6 +146,8 @@ namespace Anki
         // We are not ready to render another audio frame yet
         if (m_AudioRendered) { return ; }
 
+        static int blocks = 100;
+        
         // Silence frame
         if (!frame) {
           memset(m_audioWorking, 0, sizeof(m_audioWorking));
@@ -152,29 +155,34 @@ namespace Anki
           return ;
         }
 
+        static float osc = 0;
+        
+        for (int idx = 0; idx < sizeof(m_audioWorking) / sizeof(AudioSample); idx++) {
+          m_audioWorking[idx] = sinf(osc) * 0x80;
+          osc += 2 * PI * 440.0f / SampleFreq;
+          while (osc > 2 * PI) osc -= 2 * PI;
+        }
+
+        /*
         memset(m_audioWorking, 0, sizeof(m_audioWorking));
 
         int16_t *output = m_audioWorking;
         int step_index = 0;
         
-        /*
         *(output++) = predictor;
-        */
         
-        /*
         step_index = step_index + ima_index_table[nibble];
         if (step_index < 0) { step_index = 0; }
         if (step_index >= sizeof(ima_index_table)) { step_index = sizeof(ima_index_table) - 1; }
 
         predictor = predictor + (2 * nibble + 1) * ima_step_table[step_index] / 8;
-        */
 
-        /*
         // Sloppily play audio out the head
         for (int i = 0; i < AudioSampleSize; i++) {
           m_audioWorking[i*BufferLength/AudioSampleSize] = *(frame++);
         }
         */
+
         m_AudioRendered = true;
       }
       
@@ -183,6 +191,8 @@ namespace Anki
       }
       
       void AudioFill(void) {
+        AudioPlayFrame(0, (u8*) -1);
+        
         // Audio buffers are not empty yet
         if (!m_AudioClear || !m_AudioRendered) { 
           return ;

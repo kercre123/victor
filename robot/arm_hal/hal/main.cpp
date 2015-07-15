@@ -258,7 +258,7 @@ int main(void)
 
   // Give time for sync before video starts
   MicroWait(500000);
-  StreamJPEG();
+  //StreamJPEG();
 #endif
 
   // Never return from this function
