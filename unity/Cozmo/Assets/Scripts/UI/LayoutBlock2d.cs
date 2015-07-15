@@ -2,6 +2,13 @@ using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
 
+/// <summary>
+/// this component manages a two dimensional UI representation of a cozmo game cube
+///		can be initialized in several ways:
+///			- from a BuildInstructionsCube within a game's layout instructions
+///			- from an ObservedObject that cozmo knows about
+///			- from an explicit CubeType
+/// </summary>
 public class LayoutBlock2d : MonoBehaviour {
 
 	[SerializeField] AudioClip validatedSound;

@@ -20,6 +20,10 @@ public enum CozmoCanvasDepth {
 	Overlay_Options,
 }
 
+/// <summary>
+/// slap this component on any canvas to simplify maintaining its depth relative to all the other canvases in the game
+///		simple drop down that when mutated causes the canvas's pertinent values to refresh
+/// </summary>
 [ExecuteInEditMode]
 public class CozmoDepthSorter : MonoBehaviour {
 

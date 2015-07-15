@@ -17,6 +17,12 @@ public class RectTransformSettings {
 	public Vector3 localScale = new Vector3( 1f, 1f, 1f );
 }
 
+/// <summary>
+/// this component can be added to any gameobject with a RectTransform to allow it to switch between distinct settings for
+///		distinct screen resolutions or aspect ratios.
+///	relies on ScreenMultiSettingsDetector to detect screen changes and propagate setting swaps via subscription to a
+///	 	static Action delegate.
+/// </summary>
 [ExecuteInEditMode]
 public class RectTransformMultiSettings : MonoBehaviour {
 	[SerializeField] bool debug = false;
@@ -108,6 +114,7 @@ public class RectTransformMultiSettings : MonoBehaviour {
 		return false;
 	}
 
+	//this is called from the custom inspector RectTransformMultiSettingsEditor whenever settings are changed
 	public void SaveCurrentSettings() {
 		if(debug) Debug.Log(gameObject.name + " SaveCurrentSettings for screenMode("+ScreenMultiSettingsDetector.CurrentIndex+")");
 
