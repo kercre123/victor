@@ -71,12 +71,12 @@ public class CozmoEmotionManager : MonoBehaviour {
 #if UNITY_EDITOR
 		if( Input.GetKeyDown(KeyCode.T) )
 		{
-			SetEmotion(EmotionType.IDLE);
+			SetEmotion("IDLE");
 		}
 
 		if( Input.GetKeyDown(KeyCode.Y) )
 		{
-			SetEmotion(EmotionType.IDLE, true);
+			SetEmotion("IDLE", true);
 		}
 #endif
 
@@ -99,7 +99,7 @@ public class CozmoEmotionManager : MonoBehaviour {
 		currentEmotionMachine = GetComponent<CozmoEmotionMachine>();
 	}
 
-	public static void SetEmotion(EmotionType emo, bool clear_current = false)
+	public static void SetEmotion(string emotion_state, bool clear_current = false)
 	{
 		if( instance == null ) return;
 		/*
@@ -116,15 +116,15 @@ public class CozmoEmotionManager : MonoBehaviour {
 		if( instance.currentEmotionMachine != null )
 		{
 			// send approriate animation
-			if (instance.currentEmotionMachine.HasAnimForType(emo) )
+			if (instance.currentEmotionMachine.HasAnimForState(emotion_state) )
 			{
-				Debug.Log("sending emotion type: " + emo);
-				CozmoAnimation anim = instance.currentEmotionMachine.GetAnimForType(emo);
+				Debug.Log("sending emotion type: " + emotion_state);
+				CozmoAnimation anim = instance.currentEmotionMachine.GetAnimForType(emotion_state);
 				instance.SendAnimation(anim);
 			}
 			else
 			{
-				Debug.LogError("tring to send animation for emotion type " + emo + ", and the current machine has no anim mapped");
+				Debug.LogError("tring to send animation for emotion type " + emotion_state + ", and the current machine has no anim mapped");
 			}
 		}
 
