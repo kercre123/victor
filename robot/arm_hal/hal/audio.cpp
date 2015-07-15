@@ -9,6 +9,8 @@
 #include "anki/cozmo/robot/spineData.h"
 #include "hal/portable.h"
 
+#include "gauss.h"
+
 #define AUDIO_SPI         SPI2
 #define AUDIO_DMA_CHANNEL DMA_Channel_0
 #define AUDIO_DMA_STREAM  DMA1_Stream4
@@ -40,12 +42,12 @@ namespace Anki
       GPIO_PIN_SOURCE(AUDIO_CK, GPIOB, 13);
       GPIO_PIN_SOURCE(AUDIO_SD, GPIOB, 15);
 
-      const int SampleFreq    = 24000;
-      const int AudioFrameMS  = 33;
-      const int AudioSampleSize = 800;
-      const int BufferLength  = SampleFreq * AudioFrameMS / 1000;
-      const int BufferMidpoint = BufferLength / 2;
       typedef int32_t AudioSample;
+
+      const int ADPCMFreq     = 24000;
+      const int SampleRate    = 24000;
+      const int BufferLength  = 800;  // 33.3ms
+      const int BufferMidpoint = BufferLength / 2;
 
       static ONCHIP AudioSample m_audioBuffer[2][BufferLength];
       static ONCHIP AudioSample m_audioWorking[BufferLength];
@@ -82,7 +84,7 @@ namespace Anki
         I2S_InitStructure.I2S_Standard = I2S_Standard_Phillips;
         I2S_InitStructure.I2S_DataFormat = I2S_DataFormat_32b;
         I2S_InitStructure.I2S_MCLKOutput = I2S_MCLKOutput_Disable;
-        I2S_InitStructure.I2S_AudioFreq = ((uint32_t)SampleFreq);
+        I2S_InitStructure.I2S_AudioFreq = ((uint32_t)SampleRate);
         I2S_InitStructure.I2S_CPOL = I2S_CPOL_Low;
         I2S_Init(AUDIO_SPI, &I2S_InitStructure);
         
@@ -141,7 +143,28 @@ namespace Anki
         // Enable the SPI
         I2S_Cmd(AUDIO_SPI, ENABLE);
       }
-      
+
+      static inline int16_t GaussSubSample(uint8_t sub, bool advance, int16_t d)
+      {
+        static int16_t a = 0,
+                       b = 0,
+                       c = 0;
+       
+        if (advance) {
+          c = d;
+          b = c;
+          a = b;
+          return -1;
+        }
+        
+        int out = (gauss_table[0][~sub] * a) +
+                  (gauss_table[1][~sub] * b) +
+                  (gauss_table[1][ sub] * c) +
+                  (gauss_table[0][ sub] * d);
+        
+        return out >> 15;
+      }
+
       void AudioPlayFrame(s16 predictor, u8* frame) {
         // We are not ready to render another audio frame yet
         if (m_AudioRendered) { return ; }
@@ -155,33 +178,34 @@ namespace Anki
           return ;
         }
 
-        static float osc = 0;
-        
-        for (int idx = 0; idx < sizeof(m_audioWorking) / sizeof(AudioSample); idx++) {
-          m_audioWorking[idx] = sinf(osc) * 0x80;
-          osc += 2 * PI * 440.0f / SampleFreq;
-          while (osc > 2 * PI) osc -= 2 * PI;
-        }
-
-        /*
-        memset(m_audioWorking, 0, sizeof(m_audioWorking));
-
-        int16_t *output = m_audioWorking;
+        int32_t *output = m_audioWorking;
+        u8 *input = frame;
+        bool toggle = false;
         int step_index = 0;
-        
-        *(output++) = predictor;
-        
-        step_index = step_index + ima_index_table[nibble];
-        if (step_index < 0) { step_index = 0; }
-        if (step_index >= sizeof(ima_index_table)) { step_index = sizeof(ima_index_table) - 1; }
 
-        predictor = predictor + (2 * nibble + 1) * ima_step_table[step_index] / 8;
+        int error = 0;
 
-        // Sloppily play audio out the head
-        for (int i = 0; i < AudioSampleSize; i++) {
-          m_audioWorking[i*BufferLength/AudioSampleSize] = *(frame++);
+        for (int rem = sizeof(m_audioWorking); rem > 0; rem--) {
+          error += ADPCMFreq;
+
+          if (error >= SampleRate) {
+            int nibble = toggle ? (*(input++) >> 4) : (*input & 0xF);
+            toggle = !toggle;
+            
+            error -= SampleRate;
+            
+            step_index = step_index + ima_index_table[nibble];
+            if (step_index < 0) { step_index = 0; }
+            if (step_index >= sizeof(ima_index_table)) { step_index = sizeof(ima_index_table) - 1; }
+
+            GaussSubSample(-1, true, predictor);
+            predictor = predictor + (2 * nibble + 1) * ima_step_table[step_index] / 8;
+          }
+
+          uint8_t sub = error * 0x100 / SampleRate;
+
+          *(output++) = GaussSubSample(sub, false, predictor);
         }
-        */
 
         m_AudioRendered = true;
       }
