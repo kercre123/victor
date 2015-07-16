@@ -9,7 +9,7 @@
 #include "anki/cozmo/robot/spineData.h"
 #include "hal/portable.h"
 
-#include "gauss.h"
+//#include "gauss.h"
 
 #define AUDIO_SPI         SPI2
 #define AUDIO_DMA_CHANNEL DMA_Channel_0
@@ -32,6 +32,12 @@ static const uint16_t ima_step_table[] = {
   15289, 16818, 18500, 20350, 22385, 24623, 27086, 29794, 32767
 };
 
+typedef struct {
+  uint8_t index;
+  int16_t predictor;
+  uint8_t samples[400];
+} AudioChunk;
+
 namespace Anki
 {
   namespace Cozmo
@@ -46,8 +52,8 @@ namespace Anki
 
       const int ADPCMFreq       = 24000;
       const int SampleRate      = 48000;
-      const int BufferLength    = 1600;  // 33.3ms at 24khz
-      const float PLL_Dilate    = 1.568f * 0.992f;
+      const int BufferLength    = 1600;       // 33.3ms at 24khz
+      const float PLL_Dilate    = 1.555456f;  // No clue why this is nessessary
 
       static ONCHIP int32_t m_audioBuffer[2][BufferLength*2];
       static ONCHIP AudioSample m_audioWorking[BufferLength];
@@ -163,7 +169,6 @@ namespace Anki
         int error = 0;
 
         // Previous samples for gaussian filtering
-        static int a = 0, b = 0, c = 0;
         int valpred = msg->predictor;
         int index = msg->index;
 
@@ -174,9 +179,6 @@ namespace Anki
             int delta = toggle ? (*(input++) >> 4) : (*input & 0xF);
             toggle = !toggle;
 
-            // ADPCM gauss pipeline
-            a = b; b = c; c = valpred;
-                    
             error -= SampleRate;
 
             int step = ima_step_table[index];
@@ -199,12 +201,6 @@ namespace Anki
             if (valpred > 32767) valpred = 32767;
             else if (valpred < -32768) valpred = -32768;
           }
-
-          uint8_t sub = error * 0x100 / SampleRate;
-          int gauss = ((gauss_table[0][~sub] * a) >> 15) +
-                      ((gauss_table[1][~sub] * b) >> 15) +
-                      ((gauss_table[1][ sub] * c) >> 15) +
-                      ((gauss_table[0][ sub] * valpred) >> 15);
 
           *(output++) = 0.10 * valpred;
         }
