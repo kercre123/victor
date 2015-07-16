@@ -327,7 +327,10 @@ return RESULT_FAIL; \
       {
         // TODO: Get next chunk of audio from wwise or something?
         //wwise::GetNextSample(_audioSampleMsg.sample, 800);
-        _audioSampleMsg.sample.fill(0);
+        
+        if (!SoundManager::getInstance()->GetSoundSample(GetSoundName(), _sampleIndex, _audioSampleMsg)) {
+          PRINT_NAMED_WARNING("RobotAudioKeyFrame.GetStreamMessage.MissingSample", "Index %d", _sampleIndex);
+        }
         
         ++_sampleIndex;
         

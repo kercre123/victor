@@ -10,14 +10,16 @@
  **/
 
 #include "anki/cozmo/basestation/soundManager.h"
-
+#include "anki/cozmo/basestation/keyframe.h"
 #include "util/logging/logging.h"
 #include "anki/common/basestation/exceptions.h"
 #include "anki/common/basestation/platformPathManager.h"
 
+
 #include <thread>
 #include <map>
 
+#include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -150,6 +152,10 @@ namespace Anki {
       _running = true;
       _isLocked = false;
       
+      _currOpenSoundFileName = "";
+      _currOpenSoundFilePtr = nullptr;
+      _currOpenSoundNumSamples = 0;
+      
       std::thread soundFeederThread(CmdLinePlayFeeder);
       soundFeederThread.detach();
       usleep(100000);
@@ -251,29 +257,51 @@ namespace Anki {
             if (loadSoundFile) {
               
               // Compute the sound's duration:
-              
-              // This is disgusting.
-              // grep the result of afinfo to parse out the sound duration
-              const std::string cmd("afinfo -b -r " + fullSoundFilename +
-                                    " | grep -o '[0-9]\\{1,\\}\\.[0-9]\\{1,\\}'");
-              
-#             if DEBUG_SOUND_MANAGER
-              printf("SoundManager:: Sound duration command: %s\n", cmd.c_str());
-#             endif
-              
-              std::string output = GetStdoutFromCommand(cmd);
-              
               u32 duration_ms = 0;
               
-              if(output.empty()) {
-                PRINT_NAMED_WARNING("SoundManager.ReadSoundDir",
-                                    "Failed to get duration string for '%s', file %s.\n",
-                                    soundName.c_str(), fullSoundFilename.c_str());
+              if (soundName.find(".adp") != std::string::npos) {
+                // If file is already ADPCM-encoded, compute duration based on the fact that
+                // each 403 byte segment represents 33ms.
+                
+                FILE * pFile;
+                long fileSize = 0;
+                
+                pFile = fopen (fullSoundFilename.c_str(),"rb");
+                if (pFile==NULL) perror ("Error opening file");
+                else
+                {
+                  fseek (pFile, 0, SEEK_END);   // non-portable
+                  fileSize=ftell (pFile);
+                  fclose (pFile);
+                }
+                duration_ms = (fileSize / 403) * RobotAudioKeyFrame::SAMPLE_LENGTH_MS;
+                PRINT_NAMED_INFO("SoundManager.ReadDir.ADPCMFileFound", "%s: Duration %d ms", soundName.c_str(), duration_ms);
+                
               } else {
-                const float duration_sec = std::stof(output);
-                duration_ms = static_cast<u32>(duration_sec * 1000);
-              }
               
+                // This is disgusting.
+                // grep the result of afinfo to parse out the sound duration
+                const std::string cmd("afinfo -b -r " + fullSoundFilename +
+                                      " | grep -o '[0-9]\\{1,\\}\\.[0-9]\\{1,\\}'");
+                
+  #             if DEBUG_SOUND_MANAGER
+                printf("SoundManager:: Sound duration command: %s\n", cmd.c_str());
+  #             endif
+                
+                std::string output = GetStdoutFromCommand(cmd);
+                
+
+                
+                if(output.empty()) {
+                  PRINT_NAMED_WARNING("SoundManager.ReadSoundDir",
+                                      "Failed to get duration string for '%s', file %s.\n",
+                                      soundName.c_str(), fullSoundFilename.c_str());
+                } else {
+                  const float duration_sec = std::stof(output);
+                  duration_ms = static_cast<u32>(duration_sec * 1000);
+                }
+              }
+            
               AvailableSound& availableSound = _availableSounds[soundName];
               availableSound.duration_ms = duration_ms;
               availableSound.fullFilename = fullSoundFilename;
@@ -312,6 +340,11 @@ namespace Anki {
     
     bool SoundManager::Play(const std::string& name, const u8 numLoops, const u8 volume)
     {
+      if (name.find(".adp") != std::string::npos) {
+        // This is a ADPCM-encoded file. Don't play on device!
+        return false;
+      }
+      
       auto soundIter = _availableSounds.find(name);
       
       if (_hasCmdProcessor && _hasRootDir && soundIter != _availableSounds.end()) {
@@ -344,6 +377,71 @@ namespace Anki {
       return soundIter->second.duration_ms;
     }
 
+    bool SoundManager::GetSoundSample(const std::string& name, const u32 sampleIdx, MessageAnimKeyFrame_AudioSample &msg)
+    {
+      
+      bool isADP = (name.find(".adp") != std::string::npos);
+      
+      if (_currOpenSoundFileName != name) {
+        // Dump file contents to buffer if this is not the same file
+        // from which a sound sample was last requested.
+        
+        auto soundIt = _availableSounds.find(name);
+        if (soundIt == _availableSounds.end()) {
+          PRINT_NAMED_WARNING("SoundManager.GetSoundSample.SoundNotAvailable", "Name: %s", name.c_str());
+          return nullptr;
+        }
+        
+        // Close file if one was already open
+        if (_currOpenSoundFilePtr != nullptr) {
+          fclose(_currOpenSoundFilePtr);
+          _currOpenSoundFilePtr = nullptr;
+        }
+        
+        if (isADP) {
+          // Open sound file
+          _currOpenSoundFilePtr = fopen(soundIt->second.fullFilename.c_str(), "rb");
+          if (_currOpenSoundFilePtr==nullptr) {
+            PRINT_NAMED_WARNING("SoundManager.GetSoundSample.FileOpenFail", "%s", soundIt->second.fullFilename.c_str());
+            return nullptr;
+          }
+          
+          // obtain file size:
+          fseek (_currOpenSoundFilePtr , 0 , SEEK_END);
+          long int fileSize = ftell (_currOpenSoundFilePtr);
+          rewind (_currOpenSoundFilePtr);
+          
+          // Read file contents to buffer
+          fread(_soundBuf, 1, MIN(fileSize, MAX_SOUND_BUFFER_SIZE), _currOpenSoundFilePtr);
+          
+          _currOpenSoundNumSamples = fileSize / 403;
+          
+          PRINT_NAMED_INFO("SoundManager.GetSoundSample.Info","Opening %s - duration %f s\n", name.c_str(), _currOpenSoundNumSamples * RobotAudioKeyFrame::SAMPLE_LENGTH_MS * 0.001);
+        } else {
+          // For all non-ADP files, just send zeros for now until we have an encoder.
+          _currOpenSoundNumSamples = soundIt->second.duration_ms / RobotAudioKeyFrame::SAMPLE_LENGTH_MS;
+          memset(_soundBuf, 0, MAX_SOUND_BUFFER_SIZE);
+        }
+
+        // Check that the number of samples doesn't exceed the buffer
+        if (_currOpenSoundNumSamples > MAX_SOUND_BUFFER_SIZE / 403) {
+          _currOpenSoundNumSamples = MAX_SOUND_BUFFER_SIZE / 403;
+        }
+        
+        _currOpenSoundFileName = name;
+      }
+      
+      if (sampleIdx >= _currOpenSoundNumSamples) {
+        return false;
+      }
+      
+      u8* frame = &(_soundBuf[sampleIdx * 400]);
+      msg.predictor = *(s16*)(&(frame[400]));
+      msg.index = frame[402];
+      memcpy(msg.sample.data(), frame, 400);
+      
+      return true;
+    }
     
   } // namespace Cozmo
 } // namespace Anki
