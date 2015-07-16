@@ -121,12 +121,13 @@ namespace Anki
 
       enum ValidityCode {
         VALID = 0,
-        LOW_CONTRAST = 1,
-        UNVERIFIED = 2,
-        UNKNOWN = 3,
-        WEIRD_SHAPE = 4,
-        NUMERICAL_FAILURE = 5,
-        REFINEMENT_FAILURE = 6
+        VALID_BUT_NOT_DECODED,
+        LOW_CONTRAST,
+        UNVERIFIED,
+        UNKNOWN,
+        WEIRD_SHAPE,
+        NUMERICAL_FAILURE,
+        REFINEMENT_FAILURE
       };
 
       //Quadrilateral<s16> corners; // SQ 15.0 (Though may be changed later)

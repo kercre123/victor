@@ -388,7 +388,7 @@ namespace Anki
             if(currentMarker.validity == VisionMarker::LOW_CONTRAST) {
               // ... but there wasn't enough contrast to use the marker
               currentMarker.markerType = Anki::Vision::MARKER_UNKNOWN;
-            } else {
+            } else if(params.doCodeExtraction) {
               // ... and there was enough contrast, so proceed with with decoding
               // the marker
               lastResult = currentMarker.Extract(image,
@@ -405,6 +405,9 @@ namespace Anki
                                   "Marker extraction for quad %d of %d failed.\n",
                                   iMarker, markers.get_size());
               
+            } else {
+              currentMarker.markerType = Vision::MARKER_UNKNOWN;
+              currentMarker.validity = VisionMarker::VALID_BUT_NOT_DECODED;
             }
           } else {
             currentMarker.validity = VisionMarker::REFINEMENT_FAILURE;
@@ -419,9 +422,12 @@ namespace Anki
       } // for(s32 iMarker=0; iMarker<markers.get_size(); iMarker++)
 
       // Remove invalid markers from the list
-        for(s32 iMarker=0; iMarker<markers.get_size(); iMarker++) {
-          if(markers[iMarker].validity != VisionMarker::VALID) {
       if(!params.returnInvalidMarkers) {
+        for(s32 iMarker=0; iMarker<markers.get_size(); iMarker++)
+        {
+          if(markers[iMarker].validity != VisionMarker::VALID &&
+             markers[iMarker].validity != VisionMarker::VALID_BUT_NOT_DECODED)
+          {
             for(s32 jQuad=iMarker; jQuad<markers.get_size(); jQuad++) {
               markers[jQuad] = markers[jQuad+1];
               homographies[jQuad].Set(homographies[jQuad+1]);
