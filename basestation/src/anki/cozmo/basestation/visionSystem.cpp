@@ -400,25 +400,35 @@ namespace Cozmo {
 #else
     const CornerMethod cornerMethod = CORNER_METHOD_LAPLACIAN_PEAKS; // {CORNER_METHOD_LAPLACIAN_PEAKS, CORNER_METHOD_LINE_FITS};
     
-    const Result result = DetectFiducialMarkers(
-                                                grayscaleImage,
+    // TODO: Merge the fiducial detectio parameters structs
+    Embedded::FiducialDetectionParameters embeddedParams;
+    embeddedParams.scaleImage_numPyramidLevels = parameters.scaleImage_numPyramidLevels;
+    embeddedParams.scaleImage_thresholdMultiplier = parameters.scaleImage_thresholdMultiplier;
+    embeddedParams.component1d_minComponentWidth = parameters.component1d_minComponentWidth;
+    embeddedParams.component1d_maxSkipDistance =  parameters.component1d_maxSkipDistance;
+    embeddedParams.component_minimumNumPixels = parameters.component_minimumNumPixels;
+    embeddedParams.component_maximumNumPixels = parameters.component_maximumNumPixels;
+    embeddedParams.component_sparseMultiplyThreshold = parameters.component_sparseMultiplyThreshold;
+    embeddedParams.component_solidMultiplyThreshold = parameters.component_solidMultiplyThreshold;
+    embeddedParams.component_minHollowRatio = parameters.component_minHollowRatio;
+    embeddedParams.cornerMethod = cornerMethod;
+    embeddedParams.minLaplacianPeakRatio = parameters.minLaplacianPeakRatio;
+    embeddedParams.quads_minQuadArea = parameters.quads_minQuadArea;
+    embeddedParams.quads_quadSymmetryThreshold = parameters.quads_quadSymmetryThreshold;
+    embeddedParams.quads_minDistanceFromImageEdge = parameters.quads_minDistanceFromImageEdge;
+    embeddedParams.decode_minContrastRatio = parameters.decode_minContrastRatio;
+    embeddedParams.maxConnectedComponentSegments = parameters.maxConnectedComponentSegments;
+    embeddedParams.maxExtractedQuads = parameters.maxExtractedQuads;
+    embeddedParams.refine_quadRefinementIterations = parameters.quadRefinementIterations;
+    embeddedParams.refine_numRefinementSamples = parameters.numRefinementSamples;
+    embeddedParams.refine_quadRefinementMaxCornerChange = parameters.quadRefinementMaxCornerChange;
+    embeddedParams.refine_quadRefinementMinCornerChange = parameters.quadRefinementMinCornerChange;
+    embeddedParams.returnInvalidMarkers = parameters.keepUnverifiedMarkers;
+    
+    const Result result = DetectFiducialMarkers(grayscaleImage,
                                                 markers,
                                                 homographies,
-                                                parameters.scaleImage_numPyramidLevels, parameters.scaleImage_thresholdMultiplier,
-                                                parameters.component1d_minComponentWidth, parameters.component1d_maxSkipDistance,
-                                                parameters.component_minimumNumPixels, parameters.component_maximumNumPixels,
-                                                parameters.component_sparseMultiplyThreshold, parameters.component_solidMultiplyThreshold,
-                                                parameters.component_minHollowRatio,
-                                                cornerMethod, parameters.minLaplacianPeakRatio,
-                                                parameters.quads_minQuadArea, parameters.quads_quadSymmetryThreshold, parameters.quads_minDistanceFromImageEdge,
-                                                parameters.decode_minContrastRatio,
-                                                parameters.maxConnectedComponentSegments,
-                                                parameters.maxExtractedQuads,
-                                                parameters.quadRefinementIterations,
-                                                parameters.numRefinementSamples,
-                                                parameters.quadRefinementMaxCornerChange,
-                                                parameters.quadRefinementMinCornerChange,
-                                                parameters.keepUnverifiedMarkers,
+                                                embeddedParams,
                                                 ccmScratch, onchipScratch, offchipScratch);
 #endif
     

@@ -28,33 +28,6 @@ namespace Anki
 {
   namespace Embedded
   {
-    Result DetectFiducialMarkers(
-      const Array<u8> &image,
-      FixedLengthList<VisionMarker> &markers,
-      FixedLengthList<Array<f32> > &homographies,
-      const s32 scaleImage_numPyramidLevels, const s32 scaleImage_thresholdMultiplier,
-      const s16 component1d_minComponentWidth, const s16 component1d_maxSkipDistance,
-      const s32 component_minimumNumPixels, const s32 component_maximumNumPixels,
-      const s32 component_sparseMultiplyThreshold, const s32 component_solidMultiplyThreshold,
-      const f32 component_minHollowRatio,
-      const CornerMethod cornerMethod, const s32 minLaplacianPeakRatio,
-      const s32 quads_minQuadArea, const s32 quads_quadSymmetryThreshold, const s32 quads_minDistanceFromImageEdge,
-      const f32 decode_minContrastRatio,
-      const s32 maxConnectedComponentSegments, //< If this number is above 2^16-1, then it will use 25% more memory per component
-      const s32 maxExtractedQuads,
-      const s32 refine_quadRefinementIterations,
-      const s32 refine_numRefinementSamples,
-      const f32 refine_quadRefinementMaxCornerChange,
-      const f32 refine_quadRefinementMinCornerChange,
-      const bool returnInvalidMarkers,
-      MemoryStack scratchCcm,
-      MemoryStack scratchOnchip,
-      MemoryStack scratchOffChip)
-    {
-      const bool useIntegralImageFiltering = true;
-      return DetectFiducialMarkers(image, markers, homographies, useIntegralImageFiltering, scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_minHollowRatio, cornerMethod, minLaplacianPeakRatio, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio, maxConnectedComponentSegments, maxExtractedQuads, refine_quadRefinementIterations, refine_numRefinementSamples, refine_quadRefinementMaxCornerChange, refine_quadRefinementMinCornerChange, returnInvalidMarkers, scratchCcm, scratchOnchip, scratchOffChip);
-    }
-
     
     static Result IlluminationNormalization(const Quadrilateral<f32>& corners,
                                             cv::Mat_<u8>& cvImage, // filters this in place
@@ -126,30 +99,15 @@ namespace Anki
       return RESULT_OK;
     } // IlluminationNormalization()
     
+
     
-    Result DetectFiducialMarkers(
-      const Array<u8> &image,
-      FixedLengthList<VisionMarker> &markers,
-      FixedLengthList<Array<f32> > &homographies,
-      const bool useIntegralImageFiltering,
-      const s32 scaleImage_numPyramidLevels, const s32 scaleImage_thresholdMultiplier,
-      const s16 component1d_minComponentWidth, const s16 component1d_maxSkipDistance,
-      const s32 component_minimumNumPixels, const s32 component_maximumNumPixels,
-      const s32 component_sparseMultiplyThreshold, const s32 component_solidMultiplyThreshold,
-      const f32 component_minHollowRatio,
-      const CornerMethod cornerMethod, const s32 minLaplacianPeakRatio,
-      const s32 quads_minQuadArea, const s32 quads_quadSymmetryThreshold, const s32 quads_minDistanceFromImageEdge,
-      const f32 decode_minContrastRatio,
-      const s32 maxConnectedComponentSegments,
-      const s32 maxExtractedQuads,
-      const s32 refine_quadRefinementIterations,
-      const s32 refine_numRefinementSamples,
-      const f32 refine_quadRefinementMaxCornerChange,
-      const f32 refine_quadRefinementMinCornerChange,
-      const bool returnInvalidMarkers,
-      MemoryStack scratchCcm,
-      MemoryStack scratchOnchip,
-      MemoryStack scratchOffChip)
+    Result DetectFiducialMarkers(const Array<u8> &image,
+                                 FixedLengthList<VisionMarker> &markers,
+                                 FixedLengthList<Array<f32> > &homographies,
+                                 const FiducialDetectionParameters &params,
+                                 MemoryStack scratchCcm,
+                                 MemoryStack scratchOnchip,
+                                 MemoryStack scratchOffChip)
     {
       const f32 maxProjectiveTermValue = 8.0f;
 
@@ -168,29 +126,29 @@ namespace Anki
         AnkiConditionalErrorAndReturnValue(imageHeight <= 240 && imageWidth <= 320,
           RESULT_FAIL_INVALID_SIZE, "DetectFiducialMarkers", "The image is too large to test");
 
-        AnkiConditionalErrorAndReturnValue(scaleImage_numPyramidLevels <= 3,
+        AnkiConditionalErrorAndReturnValue(params.scaleImage_numPyramidLevels <= 3,
           RESULT_FAIL_INVALID_SIZE, "DetectFiducialMarkers", "Only 3 pyramid levels are supported");
       }
 
       BeginBenchmark("ExtractComponentsViaCharacteristicScale");
 
       ConnectedComponents extractedComponents;
-      if(maxConnectedComponentSegments <= u16_MAX) {
-        extractedComponents = ConnectedComponents(maxConnectedComponentSegments, imageWidth, true, scratchOffChip);
+      if(params.maxConnectedComponentSegments <= u16_MAX) {
+        extractedComponents = ConnectedComponents(params.maxConnectedComponentSegments, imageWidth, true, scratchOffChip);
       } else {
-        extractedComponents = ConnectedComponents(maxConnectedComponentSegments, imageWidth, false, scratchOffChip);
+        extractedComponents = ConnectedComponents(params.maxConnectedComponentSegments, imageWidth, false, scratchOffChip);
       }
 
       AnkiConditionalErrorAndReturnValue(extractedComponents.IsValid(),
         RESULT_FAIL_OUT_OF_MEMORY, "DetectFiducialMarkers", "extractedComponents could not be allocated");
 
-      if(useIntegralImageFiltering) {
-        FixedLengthList<s32> filterHalfWidths(scaleImage_numPyramidLevels+2, scratchOnchip, Flags::Buffer(false, false, true));
+      if(params.useIntegralImageFiltering) {
+        FixedLengthList<s32> filterHalfWidths(params.scaleImage_numPyramidLevels+2, scratchOnchip, Flags::Buffer(false, false, true));
 
         AnkiConditionalErrorAndReturnValue(filterHalfWidths.IsValid(),
           RESULT_FAIL_OUT_OF_MEMORY, "DetectFiducialMarkers", "filterHalfWidths could not be allocated");
 
-        for(s32 i=0; i<(scaleImage_numPyramidLevels+2); i++) {
+        for(s32 i=0; i<(params.scaleImage_numPyramidLevels+2); i++) {
           filterHalfWidths[i] = 1 << (i);
         }
 
@@ -204,8 +162,8 @@ namespace Anki
         // 3. Compute connected components from the binary image
         if((lastResult = ExtractComponentsViaCharacteristicScale(
           image,
-          filterHalfWidths, scaleImage_thresholdMultiplier,
-          component1d_minComponentWidth, component1d_maxSkipDistance,
+          filterHalfWidths, params.scaleImage_thresholdMultiplier,
+          params.component1d_minComponentWidth, params.component1d_maxSkipDistance,
           extractedComponents,
           scratchCcm, scratchOnchip, scratchOffChip)) != RESULT_OK)
         {
@@ -222,8 +180,8 @@ namespace Anki
       } else { // if(useIntegralImageFiltering)
         if((lastResult = ExtractComponentsViaCharacteristicScale_binomial(
           image,
-          scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier,
-          component1d_minComponentWidth, component1d_maxSkipDistance,
+          params.scaleImage_numPyramidLevels, params.scaleImage_thresholdMultiplier,
+          params.component1d_minComponentWidth, params.component1d_maxSkipDistance,
           extractedComponents,
           scratchCcm, scratchOnchip, scratchOffChip)) != RESULT_OK)
         {
@@ -259,7 +217,7 @@ namespace Anki
         EndBenchmark("CompressConnectedComponentSegmentIds1");
 
         BeginBenchmark("InvalidateSmallOrLargeComponents");
-        if((lastResult = extractedComponents.InvalidateSmallOrLargeComponents(component_minimumNumPixels, component_maximumNumPixels, scratchOnchip)) != RESULT_OK)
+        if((lastResult = extractedComponents.InvalidateSmallOrLargeComponents(params.component_minimumNumPixels, params.component_maximumNumPixels, scratchOnchip)) != RESULT_OK)
           return lastResult;
         EndBenchmark("InvalidateSmallOrLargeComponents");
 
@@ -268,7 +226,7 @@ namespace Anki
         EndBenchmark("CompressConnectedComponentSegmentIds2");
 
         BeginBenchmark("InvalidateSolidOrSparseComponents");
-        if((lastResult = extractedComponents.InvalidateSolidOrSparseComponents(component_sparseMultiplyThreshold, component_solidMultiplyThreshold, scratchOnchip)) != RESULT_OK)
+        if((lastResult = extractedComponents.InvalidateSolidOrSparseComponents(params.component_sparseMultiplyThreshold, params.component_solidMultiplyThreshold, scratchOnchip)) != RESULT_OK)
           return lastResult;
         EndBenchmark("InvalidateSolidOrSparseComponents");
 
@@ -277,7 +235,7 @@ namespace Anki
         EndBenchmark("CompressConnectedComponentSegmentIds3");
 
         BeginBenchmark("InvalidateFilledCenterComponents_hollowRows");
-        if((lastResult = extractedComponents.InvalidateFilledCenterComponents_hollowRows(component_minHollowRatio, scratchOnchip)) != RESULT_OK)
+        if((lastResult = extractedComponents.InvalidateFilledCenterComponents_hollowRows(params.component_minHollowRatio, scratchOnchip)) != RESULT_OK)
           return lastResult;
         EndBenchmark("InvalidateFilledCenterComponents_hollowRows");
 
@@ -343,9 +301,9 @@ namespace Anki
       // 4. Compute candidate quadrilaterals from the connected components
       {
         BeginBenchmark("ComputeQuadrilateralsFromConnectedComponents");
-        FixedLengthList<Quadrilateral<s16> > extractedQuads(maxExtractedQuads, scratchOnchip);
+        FixedLengthList<Quadrilateral<s16> > extractedQuads(params.maxExtractedQuads, scratchOnchip);
 
-        if((lastResult = ComputeQuadrilateralsFromConnectedComponents(extractedComponents, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, minLaplacianPeakRatio, imageHeight, imageWidth, cornerMethod, extractedQuads, scratchOnchip)) != RESULT_OK)
+        if((lastResult = ComputeQuadrilateralsFromConnectedComponents(extractedComponents, params.quads_minQuadArea, params.quads_quadSymmetryThreshold, params.quads_minDistanceFromImageEdge, params.minLaplacianPeakRatio, imageHeight, imageWidth, params.cornerMethod, extractedQuads, scratchOnchip)) != RESULT_OK)
           return lastResult;
 
         markers.set_size(extractedQuads.get_size());
@@ -410,14 +368,14 @@ namespace Anki
           // If refine_quadRefinementIterations > 0, then make this marker's corners more accurate
           lastResult = currentMarker.RefineCorners(image,
                                                    currentHomography,
-                                                   decode_minContrastRatio,
-                                                   refine_quadRefinementIterations,
-                                                   refine_numRefinementSamples,
-                                                   refine_quadRefinementMaxCornerChange,
-                                                   refine_quadRefinementMinCornerChange,
-                                                   quads_minQuadArea,
-                                                   quads_quadSymmetryThreshold,
-                                                   quads_minDistanceFromImageEdge,
+                                                   params.decode_minContrastRatio,
+                                                   params.refine_quadRefinementIterations,
+                                                   params.refine_numRefinementSamples,
+                                                   params.refine_quadRefinementMaxCornerChange,
+                                                   params.refine_quadRefinementMinCornerChange,
+                                                   params.quads_minQuadArea,
+                                                   params.quads_quadSymmetryThreshold,
+                                                   params.quads_minDistanceFromImageEdge,
                                                    refinedHomography,
                                                    meanGrayvalueThreshold,
                                                    scratchOnchip);
@@ -440,7 +398,7 @@ namespace Anki
 #                                                else
                                                  meanGrayvalueThreshold,
 #                                                endif
-                                                 decode_minContrastRatio,
+                                                 params.decode_minContrastRatio,
                                                  scratchOnchip);
               
               AnkiConditionalWarn(lastResult == RESULT_OK, "DetectFiducialMarkers",
@@ -461,9 +419,9 @@ namespace Anki
       } // for(s32 iMarker=0; iMarker<markers.get_size(); iMarker++)
 
       // Remove invalid markers from the list
-      if(!returnInvalidMarkers) {
         for(s32 iMarker=0; iMarker<markers.get_size(); iMarker++) {
           if(markers[iMarker].validity != VisionMarker::VALID) {
+      if(!params.returnInvalidMarkers) {
             for(s32 jQuad=iMarker; jQuad<markers.get_size(); jQuad++) {
               markers[jQuad] = markers[jQuad+1];
               homographies[jQuad].Set(homographies[jQuad+1]);
