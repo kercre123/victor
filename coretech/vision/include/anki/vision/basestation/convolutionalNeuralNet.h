@@ -6,13 +6,16 @@
 #include <string>
 #include <vector>
 
+// Forward declaration
+namespace cv {
+  class Mat;
+}
+
 namespace Anki {
 namespace Vision {
   
   // Forward declarations:
   class ICNNLayer;
-  class Image;
-  class ImageRGBA;
   
   class ConvolutionalNeuralNet
   {
@@ -24,9 +27,7 @@ namespace Vision {
     
     Result Load(std::string filename);
     
-    Result Run(const Image& img, std::vector<float>& output);
-    
-    Result Run(const ImageRGBA& img, std::vector<float>& output);
+    Result Run(const cv::Mat& img, std::vector<float>& output);
     
   protected:
     

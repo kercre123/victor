@@ -6,6 +6,8 @@
 #include "util/logging/logging.h"
 #include "json/json.h"
 
+#include <opencv2/core/core.hpp>
+
 // Includes for vl CNN stuff
 // TODO: Add matconvnet/matlab/src/ to include path
 //#include "/Users/andrew/Code/matconvnet/matlab/src/bits/mexutils.h"
@@ -16,7 +18,6 @@
 #include "/Users/andrew/Code/matconvnet/matlab/src/bits/nnpooling.hpp"
 #include "/Users/andrew/Code/matconvnet/matlab/src/bits/nnnormalize.hpp"
 
-#include <memory>
 #include <assert.h>
 #include <fstream>
 
@@ -121,7 +122,7 @@ namespace Vision {
   class ReLULayer : public ICNNLayer
   {
   public:
-    ~ReLULayer();
+    ~ReLULayer() { }
     virtual Result Load(std::string filename) override;
     virtual Result Run(const vl::Tensor& inputData) override;
     
@@ -246,22 +247,27 @@ namespace Vision {
     return RESULT_OK;
   } // Load()
 
-  Result ConvolutionalNeuralNet::Run(const Image &img, std::vector<float> &output)
+  Result ConvolutionalNeuralNet::Run(const cv::Mat &img, std::vector<float> &output)
   {
-    vl::TensorGeometry inputGeom(img.GetNumRows(), img.GetNumCols(), 1, 1);
+    if(img.channels() > 1) {
+      PRINT_NAMED_ERROR("ConvolutionalNeuralNet.Run", "Color image data not yet supported.\n");
+      return RESULT_FAIL;
+    }
+    
+    vl::TensorGeometry inputGeom(img.rows, img.cols, 1, 1);
     
     std::vector<float> inputData;
-    inputData.reserve(img.GetNumElements());
+    inputData.reserve(img.rows*img.cols);
 
-    s32 nrows = img.GetNumRows();
-    s32 ncols = img.GetNumCols();
-    if(img.IsContinuous()) {
+    s32 nrows = img.rows;
+    s32 ncols = img.cols;
+    if(img.isContinuous()) {
       ncols *= nrows;
       nrows = 1;
     }
     
     for(s32 i=0; i<nrows; ++i) {
-      const u8* img_i = img.GetRow(i);
+      const u8* img_i = img.ptr<u8>(i);
       for(s32 j=0; j<ncols; ++j) {
         inputData.push_back(static_cast<float>(img_i[j]));
       }
@@ -295,12 +301,7 @@ namespace Vision {
   } // ConvolutionalNeuralNet::Run(grayscale)
   
   
-  Result ConvolutionalNeuralNet::Run(const Anki::Vision::ImageRGBA &img, std::vector<float> &output)
-  {
-    PRINT_NAMED_ERROR("ConvolutionalNeuralNet.Run.ColorNotSupportedYet", "Only grayscale images supported.\n");
-    return RESULT_FAIL;
-  } // ConvolutionalNeuralNet::Run(color)
-  
+
 #pragma mark -
 #pragma mark ConvLayer Implementation
 

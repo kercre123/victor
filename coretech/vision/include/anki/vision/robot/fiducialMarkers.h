@@ -27,14 +27,21 @@ For internal use only. No part of this code may be used without a signed non-dis
 // Set to 0 to use (older) one-vs-all verifiers for each class
 #define USE_RED_BLACK_VERIFICATION_TREES 1
 
-// Set to 0 to use decision trees
-#define USE_NEAREST_NEIGHBOR_RECOGNITION 1
+#define RECOGNITION_METHOD_DECISION_TREES   0
+#define RECOGNITION_METHOD_NEAREST_NEIGHBOR 1
+#define RECOGNITION_METHOD_CNN              2
 
-#if USE_NEAREST_NEIGHBOR_RECOGNITION
+#define RECOGNITION_METHOD RECOGNITION_METHOD_CNN
+
+#if RECOGNITION_METHOD == RECOGNITION_METHOD_NEAREST_NEIGHBOR
 #  include "anki/vision/robot/nearestNeighborLibrary.h"
-#else
+#elif RECOGNITION_METHOD == RECOGNITION_METHOD_DECISION_TREES
 #  include "anki/vision/robot/decisionTree_vision.h"
 #  include "anki/vision/robot/visionMarkerDecisionTrees.h"
+#elif RECOGNITION_METHOD == RECOGNITION_METHOD_CNN
+#  include "anki/vision/basestation/convolutionalNeuralNet.h"
+#else
+#  error Invalid RECOGNITION_METHOD set!
 #endif
 
 #define NUM_BYTES_probeLocationsBuffer (sizeof(Point<s16>)*MAX_FIDUCIAL_MARKER_BIT_PROBE_LOCATIONS + MEMORY_ALIGNMENT + 32)
@@ -162,6 +169,27 @@ namespace Anki
 
       static Vision::MarkerType RemoveOrientation(Vision::MarkerType orientedMarker);
       
+      // Output probevalues should already have NUM_PROBES elements in it
+      static Result GetProbeValues(const Array<u8> &image,
+                                   const Array<f32> &homography,
+                                   cv::Mat_<u8> &probeValues);
+
+      static const s32 NUM_FRACTIONAL_BITS;
+      
+      static const u32 NUM_PROBE_POINTS;
+      static const s16 ProbePoints_X[];
+      static const s16 ProbePoints_Y[];
+      
+      static const u32 NUM_THRESHOLD_PROBES;
+      static const s16 ThresholdDarkProbe_X[];
+      static const s16 ThresholdDarkProbe_Y[];
+      static const s16 ThresholdBrightProbe_X[];
+      static const s16 ThresholdBrightProbe_Y[];
+      
+      static const u32 NUM_PROBES;
+      static const s16 ProbeCenters_X[];
+      static const s16 ProbeCenters_Y[];
+      
     protected:
       // The constructor isn't always called, so initialize has to be checked in multiple places
       // TODO: make less hacky
@@ -175,11 +203,14 @@ namespace Anki
         f32& brightValue, f32& darkValue,
         bool& enoughContrast);
 
-#     if USE_NEAREST_NEIGHBOR_RECOGNITION
+#     if RECOGNITION_METHOD == RECOGNITION_METHOD_NEAREST_NEIBHBOR
       static NearestNeighborLibrary& GetNearestNeighborLibrary();
-#     else
+#     elif RECOGNITION_METHOD == RECOGNITION_METHOD_DECISION_TREES
       static bool areTreesInitialized;
       static FiducialMarkerDecisionTree multiClassTrees[VisionMarkerDecisionTree::NUM_TREES];
+#     elif RECOGNITION_METHOD == RECOGNITION_METHOD_CNN
+      static Vision::ConvolutionalNeuralNet& GetCNN();
+      cv::Mat_<u8> _probeValues;
 #     endif
       
     }; // class VisionMarker

@@ -49,10 +49,7 @@ namespace Embedded {
     s32 GetNumFractionalBits() const { return _numFractionalBits; }
     
   protected:
-    
-    Result GetProbeValues(const Array<u8> &image,
-                        const Array<f32> &homography);
-    
+        
     Result GetProbeHoG();
     
     const cv::Mat_<u8> _data;    // numDataPoints rows x dataDimension cols

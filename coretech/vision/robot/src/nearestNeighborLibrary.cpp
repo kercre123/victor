@@ -1,8 +1,12 @@
 
+
 #include "anki/vision/robot/nearestNeighborLibrary.h"
+#include "anki/vision/robot/fiducialMarkers.h"
+
 #include "anki/common/robot/array2d.h"
 #include "anki/common/robot/fixedLengthList.h"
 #include "anki/common/robot/errorHandling.h"
+
 
 #include <array>
 
@@ -96,7 +100,7 @@ namespace Embedded {
     
     label = -1;
     
-    Result lastResult = GetProbeValues(image, homography);
+    Result lastResult = VisionMarker::GetProbeValues(image, homography, _probeValues);
     
     AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
                                        "NearestNeighborLibrary.GetNearestNeighbor",
@@ -264,119 +268,6 @@ namespace Embedded {
     
     return RESULT_OK;
   } // GetNearestNeighbor()
-  
-  Result NearestNeighborLibrary::GetProbeValues(const Array<u8> &image,
-                                                const Array<f32> &homography)
-  {
-    const s32 imageHeight = image.get_size(0);
-    const s32 imageWidth = image.get_size(1);
-    
-    AnkiConditionalErrorAndReturnValue(AreValid(image, homography),
-                                       RESULT_FAIL_INVALID_OBJECT, "VisionMarker::GetProbeValues", "Invalid objects");
-    
-    // This function is optimized for 9 or fewer probes, but this is not a big issue
-    AnkiAssert(_numProbeOffsets <= 9);
-    
-    const s32 numProbeOffsets = _numProbeOffsets;
-    const s32 numProbes = _dataDimension;
-    
-    const f32 h00 = homography[0][0];
-    const f32 h10 = homography[1][0];
-    const f32 h20 = homography[2][0];
-    const f32 h01 = homography[0][1];
-    const f32 h11 = homography[1][1];
-    const f32 h21 = homography[2][1];
-    const f32 h02 = homography[0][2];
-    const f32 h12 = homography[1][2];
-    const f32 h22 = homography[2][2];
-    
-    const f32 fixedPointDivider = 1.0f / static_cast<f32>(1 << _numFractionalBits);
-    
-    u8* restrict pProbeData = _probeValues[0];
-    
-    f32 probeXOffsetsF32[9];
-    f32 probeYOffsetsF32[9];
-    
-    for(s32 iOffset=0; iOffset<numProbeOffsets; iOffset++) {
-      probeXOffsetsF32[iOffset] = static_cast<f32>(_probeXOffsets[iOffset]) * fixedPointDivider;
-      probeYOffsetsF32[iOffset] = static_cast<f32>(_probeYOffsets[iOffset]) * fixedPointDivider;
-    }
-    
-    //u8 minValue = u8_MAX;
-    //u8 maxValue = 0;
-    
-    for(s32 iProbe=0; iProbe<numProbes; ++iProbe)
-    {
-      const f32 xCenter = static_cast<f32>(_probeXCenters[iProbe]) * fixedPointDivider;
-      const f32 yCenter = static_cast<f32>(_probeYCenters[iProbe]) * fixedPointDivider;
-      
-      u32 accumulator = 0;
-      for(s32 iOffset=0; iOffset<numProbeOffsets; iOffset++) {
-        // 1. Map each probe to its warped locations
-        const f32 x = xCenter + probeXOffsetsF32[iOffset];
-        const f32 y = yCenter + probeYOffsetsF32[iOffset];
-        
-        const f32 homogenousDivisor = 1.0f / (h20*x + h21*y + h22);
-        
-        const f32 warpedXf = (h00 * x + h01 *y + h02) * homogenousDivisor;
-        const f32 warpedYf = (h10 * x + h11 *y + h12) * homogenousDivisor;
-        
-        const s32 warpedX = Round<s32>(warpedXf);
-        const s32 warpedY = Round<s32>(warpedYf);
-        
-        // 2. Sample the image
-        
-        // This should only fail if there's a bug in the quad extraction
-        AnkiAssert(warpedY >= 0  && warpedX >= 0 && warpedY < imageHeight && warpedX < imageWidth);
-        
-        const u8 imageValue = *image.Pointer(warpedY, warpedX);
-        
-        accumulator += imageValue;
-      } // for each probe offset
-      
-      pProbeData[iProbe] = static_cast<u8>(accumulator / numProbeOffsets);
-      
-      /*
-      // Keep track of min/max for normalization below
-      if(pProbeData[iProbe] < minValue) {
-        minValue = pProbeData[iProbe];
-      } else if(pProbeData[iProbe] > maxValue) {
-        maxValue = pProbeData[iProbe];
-      }
-      */
-    } // for each probe
-    
-    /*
-    // Normalization to scale between 0 and 255:
-    AnkiConditionalErrorAndReturnValue(maxValue > minValue, RESULT_FAIL,
-                                       "NearestNeighborLibrary.GetProbeValues",
-                                       "Probe max (%d) <= min (%d).\n", maxValue, minValue);
-    const s32 divisor = static_cast<s32>(maxValue - minValue);
-    AnkiAssert(divisor > 0);
-    for(s32 iProbe=0; iProbe<numProbes; ++iProbe) {
-      pProbeData[iProbe] = (255*static_cast<s32>(pProbeData[iProbe] - minValue)) / divisor;
-    }
-     */
-    
-    // Illumination normalization code (assuming we are not using the same filtering used
-    // by the fiducial detector to improve quad refinment precision)
-    
-    cv::Mat_<u8> temp(32,32,_probeValues.data);
-    //cv::imshow("Original ProbeValues", temp);
-    
-    // TODO: Would it be faster to box filter and subtract it from the original?
-    static cv::Mat_<s16> kernel;
-    if(kernel.empty()) {
-      kernel = cv::Mat_<s16>(16,16);
-      kernel = -1;
-      kernel(7,7) = 255;
-    }
-    cv::filter2D(temp, _probeFiltering, _probeFiltering.depth(), kernel, cv::Point(-1,-1), 0, cv::BORDER_REPLICATE);
-    //cv::imshow("ProbeFiltering", _probeFiltering);
-    cv::normalize(_probeFiltering, temp, 255.f, 0.f, CV_MINMAX);
-    
-    return RESULT_OK;
-  } // NearestNeighborLibrary::GetProbeValues()
   
   
   Result NearestNeighborLibrary::GetProbeHoG()
