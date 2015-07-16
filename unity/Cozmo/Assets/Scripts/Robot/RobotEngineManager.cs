@@ -34,6 +34,7 @@ public class RobotEngineManager : MonoBehaviour {
 	public event Action<int> RobotConnected;
 	public event Action<Sprite> RobotImage;
 	public event Action<bool,RobotActionType> SuccessOrFailure;
+	public event Action<bool,string> RobotCompletedAnimation;
 
 	private ChannelBase channel = null;
 	private float lastRobotStateMessage = 0;
@@ -459,6 +460,12 @@ public class RobotEngineManager : MonoBehaviour {
 		
 		if(SuccessOrFailure != null) {
 			SuccessOrFailure(success, action_type);
+		}
+
+		if(action_type == RobotActionType.PLAY_ANIMATION) {
+			if(RobotCompletedAnimation != null) {
+				RobotCompletedAnimation(success, message.completionInfo.animName);
+			}
 		}
 
 		if(!success) {

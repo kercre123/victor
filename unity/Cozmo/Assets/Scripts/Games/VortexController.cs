@@ -575,11 +575,11 @@ public class VortexController : GameController {
 
 		if( sortedScoreData[0].playerIndex == 1 ) {
 			// cozmo won
-			CozmoEmotionManager.SetEmotion("WIN_MATCH");
+			SetRobotEmotion("WIN_MATCH");
 		}
 		else {
 			// cozmo lost
-			CozmoEmotionManager.SetEmotion("LOSE_MATCH");
+			SetRobotEmotion("LOSE_MATCH");
 		}
 
 	}
@@ -664,10 +664,11 @@ public class VortexController : GameController {
 	}
 
 	VortexState GetNextPlayState() {
+
 		switch(playState) {
 			case VortexState.INTRO:
+				if(waitingForEmoteToFinish) return playState;
 				return VortexState.REQUEST_SPIN;
-				//break;
 			case VortexState.REQUEST_SPIN:
 				if(wheel.Spinning) {
 					//Debug.Log("cozmo SpinUnderway");
@@ -682,6 +683,7 @@ public class VortexController : GameController {
 				}
 				break;
 			case VortexState.SPIN_COMPLETE:
+				if(waitingForEmoteToFinish) return playState;
 				if(!IsGameOver() && playStateTimer > 2f + (playersThatAreCorrect.Count * scoreDisplayFillFade * 2f)) return VortexState.REQUEST_SPIN;
 				break;
 		}
@@ -780,7 +782,7 @@ public class VortexController : GameController {
 
 		if(currentPlayerIndex == 1) {
 			wheel.AutomatedMode();
-			CozmoEmotionManager.SetEmotion("SPIN_WHEEL");
+			SetRobotEmotion("SPIN_WHEEL", false);
 
 			startDragPos = new Vector2(cozmoStartDragPos.x * Screen.width, cozmoStartDragPos.y * Screen.height);
 			startDragPos += UnityEngine.Random.insideUnitCircle * Screen.height * 0.1f;
@@ -891,7 +893,8 @@ public class VortexController : GameController {
 	}
 
 	void Enter_SPINNING() {
-		//CozmoEmotionManager.SetEmotion("WATCH_SPIN");
+
+		SetRobotEmotion("WATCH_SPIN", false);
 		lightingBall.Radius = wheelLightningRadii[currentWheelIndex];
 
 		for(int i=0;i<playerButtonCanvasGroups.Length;i++) {
@@ -1053,20 +1056,20 @@ public class VortexController : GameController {
 		if( playersThatAreCorrect.Contains(1) ) {
 			if( playersThatAreCorrect[0] == 1 ) {
 				// major win
-				CozmoEmotionManager.SetEmotion("MAJOR_WIN");
+				SetRobotEmotion("MAJOR_WIN");
 			}
 			else {
 				// minor win
-				CozmoEmotionManager.SetEmotion("MINOR_WIN");
+				SetRobotEmotion("MINOR_WIN");
 			}
 		} else if (playersThatAreWrong.Contains(1)) {
 			if( scores[1] < Math.Abs(settings.pointsIncorrectPenalty) )
 			{
 				// minor loss
-				CozmoEmotionManager.SetEmotion("MINOR_FAIL");
+				SetRobotEmotion("MINOR_FAIL");
 			}
 			else {
-				CozmoEmotionManager.SetEmotion("MAJOR_FAIL");
+				SetRobotEmotion("MAJOR_FAIL");
 			}
 
 		}
@@ -1366,7 +1369,7 @@ public class VortexController : GameController {
 	public void PlayerInputTap(int index) {
 		if(state == GameState.PRE_GAME) {
 			if( index == 1 ) { // cozmo
-				CozmoEmotionManager.SetEmotion("LETS_PLAY");
+				SetRobotEmotion("LETS_PLAY");
 			}
 			playerMockBlocks[index].Validate(true);
 			return;

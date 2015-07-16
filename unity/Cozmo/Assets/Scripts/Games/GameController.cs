@@ -3,6 +3,8 @@ using UnityEngine.UI;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Anki;
+using Anki.Cozmo;
 
 /// <summary>
 /// this component acts as a simple state machine using a GameState enumeration to represent the common features of all cozmo minigames
@@ -61,6 +63,7 @@ public class GameController : MonoBehaviour {
 	[SerializeField] protected float maxStarPop = 1.5f;
 	[SerializeField] protected float minStarPop = 0.3f;
 	[SerializeField] protected bool robotBusyDuringResults = true;
+	[SerializeField] protected float maxEmotionWaitTime = 20f;
 
 	#endregion
 
@@ -121,6 +124,10 @@ public class GameController : MonoBehaviour {
 	protected static float _MessageDelay = 0.5f;
 	protected GameData.LevelData levelData { get; private set; }
 
+	protected bool waitingForEmoteToFinish = false;
+
+	protected Coroutine emotionWaitLimiterRoutine = null;
+
 	#endregion
 
 	#region MONOBEHAVIOR CALLBACKS
@@ -167,6 +174,8 @@ public class GameController : MonoBehaviour {
 		if(countdownText != null) countdownText.gameObject.SetActive(false);
 		if(textScore != null) textScore.gameObject.SetActive(false);
 		if(robot != null) robot.ClearData();
+
+		if(RobotEngineManager.instance != null) RobotEngineManager.instance.RobotCompletedAnimation += RobotCompletedAnimation;
 	}
 
 	void Update () {
@@ -205,6 +214,12 @@ public class GameController : MonoBehaviour {
 		if(resultsPanel != null) resultsPanel.gameObject.SetActive(false);
 		AudioManager.Stop(); // stop all sounds
 		if(robot != null) robot.ClearData();
+
+		if(RobotEngineManager.instance != null) RobotEngineManager.instance.RobotCompletedAnimation -= RobotCompletedAnimation;
+
+		if(emotionWaitLimiterRoutine != null) StopCoroutine(emotionWaitLimiterRoutine);
+		emotionWaitLimiterRoutine = null;
+		waitingForEmoteToFinish = false;
 	}
 
 	#endregion
@@ -274,7 +289,6 @@ public class GameController : MonoBehaviour {
 		if(currentActions != null) currentActions.gameObject.SetActive(true);
 	}
 
-	
 	IEnumerator PopInStars()
 	{
 		int num_pops = 0;
@@ -327,6 +341,20 @@ public class GameController : MonoBehaviour {
 		}
 		
 		yield return 0;
+	}
+
+	IEnumerator StopWaitingForEmotion(float delay) {
+		yield return new WaitForSeconds(delay);
+		
+		waitingForEmoteToFinish = false;
+	}
+
+	void RobotCompletedAnimation(bool success, string animName) {
+		Debug.Log("RobotCompletedAnimation("+success+", "+animName+")");
+		if(emotionWaitLimiterRoutine != null) StopCoroutine(emotionWaitLimiterRoutine);
+		emotionWaitLimiterRoutine = null;
+
+		waitingForEmoteToFinish = false;
 	}
 
 	#endregion
@@ -591,7 +619,22 @@ public class GameController : MonoBehaviour {
 		
 		lastTimerSeconds = secondsLeft;
 	}
-	
+
+	protected void SetRobotEmotion(string animName, bool wait=true, bool stopPriorAnim=true) {
+		if(robot == null) return;
+
+		Debug.Log("SetRobotEmotion("+animName+")");
+		CozmoEmotionManager.SetEmotion(animName, stopPriorAnim);
+
+		if(emotionWaitLimiterRoutine != null) StopCoroutine(emotionWaitLimiterRoutine);
+		waitingForEmoteToFinish = wait;
+
+		if(!wait) return;
+
+		emotionWaitLimiterRoutine = StartCoroutine(StopWaitingForEmotion(maxEmotionWaitTime));
+	}
+
+
 	#endregion
 
 	#region PUBLIC METHODS

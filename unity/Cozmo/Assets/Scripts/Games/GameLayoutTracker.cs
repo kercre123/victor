@@ -449,6 +449,11 @@ public class GameLayoutTracker : MonoBehaviour {
 			}
 			else {
 
+				//let's stop any prior animating
+				if(robot.isBusy && robot.Status (Robot.StatusFlag.IS_ANIMATING)) {
+					robot.CancelAction(RobotActionType.PLAY_ANIMATION);
+				}
+
 				if(inventory.Count > lastInventoryCount && inventory.Count != currentLayout.Blocks.Count) { //look at last seen object if any seen
 					//Debug.Log( "look at last seen object if any seen: TrackHeadToObject " + inventory[inventory.Count-1] );
 					float arc = 180f / currentLayout.Blocks.Count;
@@ -459,7 +464,7 @@ public class GameLayoutTracker : MonoBehaviour {
 					Vector3 facePosition = robot.WorldPosition + idealFacing * CozmoUtil.BLOCK_LENGTH_MM * 10f;
 
 					angle *= Mathf.Deg2Rad;
-	
+
 					robot.TurnInPlace(angle);
 			
 					RobotEngineManager.instance.VisualizeQuad(33, CozmoPalette.ColorToUInt(Color.blue), robot.WorldPosition, robot.WorldPosition, latestPos, latestPos);

@@ -45,6 +45,8 @@ public class CozmoEmotionManager : MonoBehaviour {
 	EmotionType currentEmotions = EmotionType.NONE;
 	EmotionType lastEmotions = EmotionType.NONE;
 
+	protected Robot robot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.current : null; } }
+
 	public bool HasEmotion( EmotionType emo )
 	{
 		return (currentEmotions | emo) == emo;
@@ -99,9 +101,9 @@ public class CozmoEmotionManager : MonoBehaviour {
 		currentEmotionMachine = GetComponent<CozmoEmotionMachine>();
 	}
 
-	public static void SetEmotion(string emotion_state, bool clear_current = false)
+	public static string SetEmotion(string emotion_state, bool clear_current = false)
 	{
-		if( instance == null ) return;
+		if( instance == null ) return null;
 		/*
 		if( clear_current )
 		{
@@ -120,7 +122,8 @@ public class CozmoEmotionManager : MonoBehaviour {
 			{
 				Debug.Log("sending emotion type: " + emotion_state);
 				CozmoAnimation anim = instance.currentEmotionMachine.GetAnimForType(emotion_state);
-				instance.SendAnimation(anim);
+				instance.SendAnimation(anim, clear_current);
+				return anim.animName;
 			}
 			else
 			{
@@ -129,10 +132,15 @@ public class CozmoEmotionManager : MonoBehaviour {
 		}
 
 		//lastEmotions = currentEmotions;
+		return null;
 	}
 
-	public void SendAnimation(CozmoAnimation anim)
+	public void SendAnimation(CozmoAnimation anim, bool stopPreviousAnim=false)
 	{
+		if(stopPreviousAnim && robot != null && robot.isBusy && robot.Status (Robot.StatusFlag.IS_ANIMATING)) {
+			robot.CancelAction(Anki.Cozmo.RobotActionType.PLAY_ANIMATION);
+		}
+
 		PlayAnimationMessage.animationName = anim.animName;
 		PlayAnimationMessage.numLoops = anim.numLoops;
 		PlayAnimationMessage.robotID = RobotEngineManager.instance.current.ID;
