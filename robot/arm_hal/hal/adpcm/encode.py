@@ -57,11 +57,11 @@ def encodeADPCM(data):
 
 		diffq = step >> 3
 		
-		if ((code & 4) == 4):
+		if code & 4:
 			diffq += step
-		if ((code & 2) == 2):
+		if code & 2:
 			diffq += step >> 1
-		if ((code & 1) == 1):
+		if code & 1:
 			diffq += step >> 2
 
 		sign = (code & 8) == 8
@@ -102,7 +102,7 @@ _, bytes, = struct.unpack("<4sI", data[tag:tag+8])
 data = data[tag+8:tag+8+bytes]
 
 # load samples, pad out to 33.3ms sections
-print "Loading..."
+#print "Loading..."
 samples = [struct.unpack("<h", x)[0] for x in chunk(data)]
 align = len(samples) % BLOCK_SIZE
 
@@ -111,11 +111,16 @@ if align:
 
 with file("adventure.adp", "wb") as fo:
 	for i, block in enumerate(chunk(samples, BLOCK_SIZE)):
-		print "Encoding block %i of %i" % (i+1, len(samples) / BLOCK_SIZE)
+		#print "Encoding block %i of %i" % (i+1, len(samples) / BLOCK_SIZE)
+
+		if i > 2000:
+			break
 
 		adpcm = [s for s in encodeADPCM(block)]
 		index, pred, _ = adpcm[0]
 		adpcm = [s for s in pack([s for i, p, s in adpcm])]
 
-		fo.write(struct.pack("<400B", *adpcm))
-		fo.write(struct.pack("<hB", pred, index))
+		#fo.write(struct.pack("<400B", *adpcm))
+		#fo.write(struct.pack("<hB", pred, index))
+
+		print "{%i, %i, {%s}}," % (index, pred, ','.join(["0x%x" % a for a in adpcm]))
