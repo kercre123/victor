@@ -165,7 +165,9 @@ build_xcode/game_sim
 generated
 unity/ios/UnityBuild
 unity/ios/build
+unity/ios/opencv
 unity/Cozmo/Assets/WellFired/shared.meta
 unity/Cozmo/Assets/WellFired/shared/compiled.meta
 unity/Cozmo/Assets/WellFired/shared/compiled/runtime.meta
 unity/Cozmo/Assets/WellFired/shared/compiled/runtime/ProcessRunner.meta
+unity/Cozmo/Assets/Scripts/Generated.meta
