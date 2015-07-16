@@ -9,14 +9,11 @@
 #include <opencv2/core/core.hpp>
 
 // Includes for vl CNN stuff
-// TODO: Add matconvnet/matlab/src/ to include path
-//#include "/Users/andrew/Code/matconvnet/matlab/src/bits/mexutils.h"
-//#include "/Users/andrew/Code/matconvnet/matlab/src/bits/datamex.hpp"
-#include "/Users/andrew/Code/matconvnet/matlab/src/bits/nnconv.hpp"
-#include "/Users/andrew/Code/matconvnet/matlab/src/bits/nnfullyconnected.hpp"
-#include "/Users/andrew/Code/matconvnet/matlab/src/bits/nnsubsample.hpp"
-#include "/Users/andrew/Code/matconvnet/matlab/src/bits/nnpooling.hpp"
-#include "/Users/andrew/Code/matconvnet/matlab/src/bits/nnnormalize.hpp"
+#include <nnconv.hpp>
+#include <nnfullyconnected.hpp>
+#include <nnsubsample.hpp>
+#include <nnpooling.hpp>
+#include <nnnormalize.hpp>
 
 #include <assert.h>
 #include <fstream>
