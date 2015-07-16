@@ -408,6 +408,12 @@ public class GameLayoutTracker : MonoBehaviour {
 
 		ShowAllBlocks();
 
+		
+		//let's stop any prior animating
+		if(robot.isBusy && robot.Status (Robot.StatusFlag.IS_ANIMATING)) {
+			robot.CancelAction(RobotActionType.PLAY_ANIMATION);
+		}
+		
 	}
 	
 	void Update_INVENTORY() {
@@ -449,10 +455,6 @@ public class GameLayoutTracker : MonoBehaviour {
 			}
 			else {
 
-				//let's stop any prior animating
-				if(robot.isBusy && robot.Status (Robot.StatusFlag.IS_ANIMATING)) {
-					robot.CancelAction(RobotActionType.PLAY_ANIMATION);
-				}
 
 				if(inventory.Count > lastInventoryCount && inventory.Count != currentLayout.Blocks.Count) { //look at last seen object if any seen
 					//Debug.Log( "look at last seen object if any seen: TrackHeadToObject " + inventory[inventory.Count-1] );
