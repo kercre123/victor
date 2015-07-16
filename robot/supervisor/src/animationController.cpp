@@ -798,7 +798,7 @@ namespace AnimationController {
               
             default:
             {
-              PRINT("Unexpected message type %d in animation buffer!\n");
+              PRINT("Unexpected message type %d in animation buffer!\n", msgID);
               return RESULT_FAIL;
             }
               
