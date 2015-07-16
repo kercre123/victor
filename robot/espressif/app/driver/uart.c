@@ -1,21 +1,7 @@
-/*
- * File	: uart.c
- * This file is part of Espressif's AT+ command set program.
- * Copyright (C) 2013 - 2016, Espressif Systems
- *
- * Modified for Anki use by Daniel Casner May 2015
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of version 3 of the GNU General Public License as
- * published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with this program.  If not, see <http://www.gnu.org/licenses/>.
+/**
+ * @file Espressif UART driver
+ * Originally based on file from Espressif IoT SDK
+ * @author Daniel Casner <daniel@anki.com>
  */
 #include "ets_sys.h"
 #include "osapi.h"
@@ -25,16 +11,22 @@
 #include "mem.h"
 #include "os_type.h"
 #include "user_interface.h"
-#include "client.h"
+
+#define UART_DEBUG_ONLY
+
+#define OS_UART UART0
+//#define OS_UART_LOSSLESS
 
 // UartDev is defined and initialized in rom code.
 extern UartDevice    UartDev;
 
 #define min(a, b) (a < b ? a : b)
 
+#ifndef UART_DEBUG_ONLY
 // System task
 #define    uartTaskQueueLen    10
 os_event_t uartTaskQueue[uartTaskQueueLen];
+#endif
 
 typedef enum
 {
@@ -89,8 +81,9 @@ uart_config(uint8 uart_no)
     }
     else
     {
-        /* rcv_buff size if 0x100 */
+#ifndef UART_DEBUG_ONLY
         ETS_UART_INTR_ATTACH(uart_rx_intr_handler,  &(UartDev.rcv_buff));
+#endif
         PIN_PULLUP_DIS(PERIPHS_IO_MUX_U0TXD_U);
         PIN_FUNC_SELECT(PERIPHS_IO_MUX_U0TXD_U, FUNC_U0TXD);
     }
@@ -110,15 +103,21 @@ uart_config(uint8 uart_no)
         WRITE_PERI_REG(UART_CONF1(uart_no),
         ((64   & UART_RXFIFO_FULL_THRHD) << UART_RXFIFO_FULL_THRHD_S) |
         ((0x10 & UART_TXFIFO_EMPTY_THRHD)<<UART_TXFIFO_EMPTY_THRHD_S));
-        //SET_PERI_REG_MASK( UART_CONF0(uart_no),UART_TX_FLOW_EN);  //add this sentense to add a tx flow control via MTCK( CTS )
+#ifndef UART_DEBUG_ONLY
         SET_PERI_REG_MASK(UART_INT_ENA(uart_no), UART_RXFIFO_TOUT_INT_ENA |UART_FRM_ERR_INT_ENA);
+#endif
     }else{
         WRITE_PERI_REG(UART_CONF1(uart_no),((UartDev.rcv_buff.TrigLvl & UART_RXFIFO_FULL_THRHD) << UART_RXFIFO_FULL_THRHD_S));//TrigLvl default val == 1
     }
     //clear all interrupt
     WRITE_PERI_REG(UART_INT_CLR(uart_no), 0xffff);
-    //enable rx_interrupt
-    SET_PERI_REG_MASK(UART_INT_ENA(uart_no), UART_RXFIFO_FULL_INT_ENA|UART_RXFIFO_OVF_INT_ENA);
+#ifndef UART_DEBUG_ONLY
+    if (uart_no == UART0)
+    {
+      //enable rx_interrupt
+      SET_PERI_REG_MASK(UART_INT_ENA(uart_no), UART_RXFIFO_FULL_INT_ENA|UART_RXFIFO_OVF_INT_ENA);
+    }
+#endif
 }
 
 /******************************************************************************
@@ -188,10 +187,14 @@ uart_tx_buffer(uint8 uart, uint8 *buf, uint16 len)
 *******************************************************************************/
 void os_put_char(uint8 c)
 {
-  //uart_tx_one_char_no_wait(UART1, c);
-  uart_tx_one_char(UART1, c);
+#ifdef OS_UART_LOSSLESS
+  uart_tx_one_char(OS_UART, c);
+#else
+  uart_tx_one_char_no_wait(OS_UART, c);
+#endif
 }
 
+#ifndef UART_DEBUG_ONLY
 /** Handles raw UART RX
  * Does packet header synchronization and passes data to handleUartPacketRx
  * @param flags Any (error) flags that would affect packet processing
@@ -459,6 +462,8 @@ uart_rx_intr_handler(void *para)
   }
 }
 
+#endif // ifndef UART_DEBUG_ONLY
+
 /******************************************************************************
 * FunctionName : uart_init
 * Description  : user interface for init uart
@@ -469,15 +474,18 @@ uart_rx_intr_handler(void *para)
 void ICACHE_FLASH_ATTR
 uart_init(UartBautRate uart0_br, UartBautRate uart1_br)
 {
-
+#ifndef UART_DEBUG_ONLY
   system_os_task(uartTask, uartTaskPrio, uartTaskQueue, uartTaskQueueLen); // Setup task queue for handling UART
+#endif
 
   UartDev.baut_rate = uart0_br;
   uart_config(UART0);
   UartDev.baut_rate = uart1_br;
   uart_config(UART1);
   uart_rx_intr_disable(UART0); // Don't receive RX interrupts at first
+#ifndef UART_DEBUG_ONLY
   ETS_UART_INTR_ENABLE(); // What does this do? If we don't call it, it nothing works
+#endif
 
   os_install_putc1(os_put_char);
 }

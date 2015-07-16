@@ -1,21 +1,7 @@
-/*
- * File	: uart.h
- * This file is part of Espressif's UART driver.
- * Copyright (C) 2013 - 2016, Espressif Systems
- *
- * Modified for Anki use by Daniel Casner May 2015
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of version 3 of the GNU General Public License as
- * published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with this program.  If not, see <http://www.gnu.org/licenses/>.
+/**
+ * @file Espressif UART driver interface
+ * Originally based on file from Espressif IoT SDK
+ * @author Daniel Casner <daniel@anki.com>
  */
 #ifndef UART_APP_H
 #define UART_APP_H
