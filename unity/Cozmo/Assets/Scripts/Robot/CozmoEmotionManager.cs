@@ -137,13 +137,15 @@ public class CozmoEmotionManager : MonoBehaviour {
 
 	public void SendAnimation(CozmoAnimation anim, bool stopPreviousAnim=false)
 	{
-		if(stopPreviousAnim && robot != null && robot.isBusy && robot.Status (Robot.StatusFlag.IS_ANIMATING)) {
+		if(robot == null) return;
+
+		if(stopPreviousAnim && robot.isBusy && robot.Status (Robot.StatusFlag.IS_ANIMATING)) {
 			robot.CancelAction(Anki.Cozmo.RobotActionType.PLAY_ANIMATION);
 		}
 
 		PlayAnimationMessage.animationName = anim.animName;
 		PlayAnimationMessage.numLoops = anim.numLoops;
-		PlayAnimationMessage.robotID = RobotEngineManager.instance.current.ID;
+		PlayAnimationMessage.robotID = robot.ID;
 		RobotEngineManager.instance.Message.PlayAnimation = PlayAnimationMessage;
 		RobotEngineManager.instance.SendMessage();
 	}

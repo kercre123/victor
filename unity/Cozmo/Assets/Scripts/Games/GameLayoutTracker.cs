@@ -1058,7 +1058,7 @@ public class GameLayoutTracker : MonoBehaviour {
 		yield return new WaitForSeconds(cycleDelayTime);
 		
 		int startingIndex = (int)mode - cycleCount;
-		if(startingIndex < 0) startingIndex += ActiveBlock.Mode.Count;
+		if(startingIndex < 0) startingIndex += (int)ActiveBlock.Mode.Count;
 		
 		activeBlock.SetMode((ActiveBlock.Mode)startingIndex);
 		
