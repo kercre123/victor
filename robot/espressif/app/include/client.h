@@ -50,4 +50,14 @@ void clientQueuePacket(UDPPacket* pkt);
  */
 void clientFreePacket(UDPPacket* pkt);
 
+/** Callback for new received data from WiFi client
+ * This function is called by but not defined in the client module and must be defined by the user application.
+ * @WARNING This function is called from radio service callback so it should be handled quickly and any long running
+ * processing should be scheduled into a task.
+ * @param payload The received data
+ * @param tag The type dag for the payload
+ */
+void clientRecvCallback(char* data, unsigned short len);
+
+
 #endif

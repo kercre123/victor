@@ -25,6 +25,7 @@ void i2sStop(void);
 bool i2sQueueTx(I2SPIPayload* payload, I2SPIPayloadTag tag);
 
 /** Callback for new received data from RTIP
+ * This function is called by but not defined in the i2s driver and must be defined by the user application.
  * @WARNING This function is called from an ISR so it must handle data quickly and return. Any long running data
  * processing should be scheduled into a task.
  * @param payload The received data

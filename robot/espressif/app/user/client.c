@@ -39,7 +39,7 @@ static void udpServerSentCB(void * arg)
 
 }
 
-static void ICACHE_FLASH_ATTR udpServerRecvCB(void *arg, char *usrdata, unsigned short len)
+static void udpServerRecvCB(void *arg, char *usrdata, unsigned short len)
 {
   if (arg != (void*)udpServer)
   {

@@ -30,7 +30,7 @@ speed.
 #include "driver/i2s.h"
 #include "driver/i2s_ets.h"
 
-#define DMA_BUF_COUNT (8) // 512bytes per buffer * 8 buffers = 4k.
+#define DMA_BUF_COUNT (4) // 512bytes per buffer * 8 buffers = 2k.
 ct_assert(DMA_BUF_COUNT % 2 == 0) // Must be a power of two for masking to work
 #define DMA_BUF_COUNT_MASK (DMA_BUF_COUNT-1)
 
@@ -108,7 +108,7 @@ LOCAL void slcIsr(void) {
 
 
 //Initialize I2S subsystem for DMA circular buffer use
-void ICACHE_FLASH_ATTR i2sInit() {
+int8_t ICACHE_FLASH_ATTR i2sInit() {
 	int i;
 
   transmitInd     = 0;
@@ -204,6 +204,8 @@ void ICACHE_FLASH_ATTR i2sInit() {
 						I2S_RECE_MSB_SHIFT|I2S_TRANS_MSB_SHIFT|
 						(((1)&I2S_BCK_DIV_NUM )<<I2S_BCK_DIV_NUM_S)|
 						(((1)&I2S_CLKM_DIV_NUM)<<I2S_CLKM_DIV_NUM_S));
+
+  return 0;
 }
 
 void ICACHE_FLASH_ATTR i2sStart(void)

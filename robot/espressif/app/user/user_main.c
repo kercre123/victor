@@ -2,7 +2,6 @@
 #include "c_types.h"
 #include "ets_sys.h"
 #include "osapi.h"
-#include "gpio.h"
 #include "os_type.h"
 #include "user_interface.h"
 #include "client.h"
@@ -148,11 +147,7 @@ static void ICACHE_FLASH_ATTR system_init_done(void)
   // Setup Basestation client
   clientInit();
 
-  // Enable UART0 RX interrupt
-  // Only after clientInit
-  uart_rx_intr_enable(UART0);
-
-  // Initalize the I2S
+  // Initalize i2SPI interface
   i2sInit();
 
   // Set up shared background tasks
@@ -182,10 +177,7 @@ user_init(void)
     REG_SET_BIT(0x3ff00014, BIT(0)); //< Set CPU frequency to 160MHz
     err = system_update_cpu_freq(160);
 
-    gpio_init();
-
-    uart_init(BIT_RATE_5000000, BIT_RATE_115200);
-    uart_rx_intr_disable(UART0);
+    uart_init(BIT_RATE_115200, BIT_RATE_115200);
 
     os_printf("Espressif booting up...\r\nCPU set freq rslt = %d\r\n", err);
 
