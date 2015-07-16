@@ -167,7 +167,7 @@ namespace Anki
         int valpred = msg->predictor;
         int index = msg->index;
 
-        for (int rem = sizeof(m_audioWorking); rem > 0; rem--) {
+        for (int rem = BufferLength; rem > 0; rem--) {
           error += ADPCMFreq;
 
           if (error >= SampleRate) {
