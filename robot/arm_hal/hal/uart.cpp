@@ -22,7 +22,7 @@
 // This enables "boardPrintf" - a blocking UART for HAL/board bring-up use only - when all else is broken
 // Because it is very slow and blocking, it is not suitable for general use and tends to screw up timing
 // It uses TP13 (PC10) on headboard 4.0
-#define ENABLE_BOARD_UART
+//#define ENABLE_BOARD_UART
 
 namespace Anki
 {
