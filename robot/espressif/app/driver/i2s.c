@@ -30,7 +30,8 @@ speed.
 #include "driver/i2s.h"
 #include "driver/i2s_ets.h"
 
-#define DMA_BUF_COUNT (8) // 512bytes per buffer * 8 buffers = 4k. Must be a power of two for masking to work
+#define DMA_BUF_COUNT (8) // 512bytes per buffer * 8 buffers = 4k.
+ct_assert(DMA_BUF_COUNT % 2 == 0) // Must be a power of two for masking to work
 #define DMA_BUF_COUNT_MASK (DMA_BUF_COUNT-1)
 
 /** DMA I2SPI transfer buffers
