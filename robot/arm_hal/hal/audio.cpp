@@ -206,7 +206,7 @@ namespace Anki
                       ((gauss_table[1][ sub] * c) >> 15) +
                       ((gauss_table[0][ sub] * valpred) >> 15);
 
-          *(output++) = 0.10 * gauss;
+          *(output++) = 0.10 * valpred;
         }
 
         m_AudioRendered = true;
