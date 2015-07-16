@@ -42,20 +42,21 @@ namespace Anki
       GPIO_PIN_SOURCE(AUDIO_CK, GPIOB, 13);
       GPIO_PIN_SOURCE(AUDIO_SD, GPIOB, 15);
 
-      typedef int32_t AudioSample;
+      typedef int16_t AudioSample;
 
-      const int ADPCMFreq     = 24000;
-      const int SampleRate    = 44100;
-      const int BufferLength  = 800;  // 33.3ms at 24khz
-      const int BufferMidpoint = BufferLength / 2;
+      const int ADPCMFreq       = 24000;
+      const int SampleRate      = 48000;
+      const int BufferLength    = 1600;  // 33.3ms at 24khz
+      const float PLL_Dilate    = 1.568f * 0.992f;
 
-      static ONCHIP AudioSample m_audioBuffer[2][BufferLength];
+      static ONCHIP int32_t m_audioBuffer[2][BufferLength*2];
       static ONCHIP AudioSample m_audioWorking[BufferLength];
+
       bool m_AudioRendered;              // Have we pre-rendered an audio sample for copy
       volatile bool m_AudioClear;        // Current AudioBuffer is clear
       volatile bool m_AudioSilent;       // DMA has move to silence
-      volatile int m_AudioBackBuffer;    // Currently inactive buffer
-
+      volatile int m_AudioBackBuffer;    // Currently available buffer
+      
       void AudioInit(void) {
         // Enable peripheral clock
         RCC_APB1PeriphClockCmd(RCC_APB1Periph_SPI2, ENABLE);
@@ -84,7 +85,7 @@ namespace Anki
         I2S_InitStructure.I2S_Standard = I2S_Standard_Phillips;
         I2S_InitStructure.I2S_DataFormat = I2S_DataFormat_32b;
         I2S_InitStructure.I2S_MCLKOutput = I2S_MCLKOutput_Disable;
-        I2S_InitStructure.I2S_AudioFreq = ((uint32_t)SampleRate);
+        I2S_InitStructure.I2S_AudioFreq = (uint32_t)(SampleRate*PLL_Dilate);
         I2S_InitStructure.I2S_CPOL = I2S_CPOL_Low;
         I2S_Init(AUDIO_SPI, &I2S_InitStructure);
         
@@ -102,15 +103,14 @@ namespace Anki
         DMA_InitStructure.DMA_PeripheralBaseAddr = (uint32_t)&AUDIO_SPI->DR;
         DMA_InitStructure.DMA_Memory0BaseAddr = (u32)m_audioBuffer;
         DMA_InitStructure.DMA_DIR = DMA_DIR_MemoryToPeripheral;
-        DMA_InitStructure.DMA_BufferSize = sizeof(m_audioBuffer) / 2;
+        DMA_InitStructure.DMA_BufferSize = BufferLength * 4;
         DMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Disable;
         DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Enable;
         DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_HalfWord;
         DMA_InitStructure.DMA_MemoryDataSize = DMA_PeripheralDataSize_HalfWord;
         DMA_InitStructure.DMA_Mode = DMA_Mode_Circular;
-        DMA_InitStructure.DMA_Priority = DMA_Priority_High; // Who knows if this is useful
+        DMA_InitStructure.DMA_Priority = DMA_Priority_Medium;
         DMA_InitStructure.DMA_FIFOMode = DMA_FIFOMode_Disable;
-        DMA_InitStructure.DMA_FIFOThreshold = DMA_FIFOThreshold_1QuarterFull;
         DMA_InitStructure.DMA_MemoryBurst = DMA_MemoryBurst_Single;
         DMA_InitStructure.DMA_PeripheralBurst = DMA_PeripheralBurst_Single;
         DMA_Init(AUDIO_DMA_STREAM, &DMA_InitStructure);
@@ -135,10 +135,10 @@ namespace Anki
 
         // Clear our buffers to zero, and flag the system as empty and silent
         memset(m_audioBuffer, 0, sizeof(m_audioBuffer));
-        m_AudioBackBuffer = 1;
         m_AudioClear = true;
         m_AudioSilent = true;
         m_AudioRendered = false;
+        m_AudioBackBuffer = 1;
 
         // Enable the SPI
         I2S_Cmd(AUDIO_SPI, ENABLE);
@@ -157,7 +157,7 @@ namespace Anki
         // We are not ready to render another audio frame yet
         if (m_AudioRendered) { return ; }
 
-        int32_t *output = m_audioWorking;
+        AudioSample *output = m_audioWorking;
         const u8 *input = msg->sample;
         bool toggle = false;
         int error = 0;
@@ -206,7 +206,7 @@ namespace Anki
                       ((gauss_table[1][ sub] * c) >> 15) +
                       ((gauss_table[0][ sub] * valpred) >> 15);
 
-          *(output++) = 0.25 * gauss;
+          *(output++) = 0.10 * gauss;
         }
 
         m_AudioRendered = true;
@@ -221,9 +221,11 @@ namespace Anki
         if (!m_AudioClear || !m_AudioRendered) { 
           return ;
         }
-       
+
         // Audio system was not streaming audio, so we should ramp up volume
         if (m_AudioSilent) {
+          const int BufferMidpoint  = BufferLength / 2;
+          
           for (int i = 0; i < BufferMidpoint; i++) {
             m_audioWorking[i] = m_audioWorking[i] * i / BufferMidpoint;
           }
@@ -231,7 +233,13 @@ namespace Anki
 
         // We triple buffer to reduce the total time spent in IRQ disable
         __disable_irq();
-        memcpy(m_audioBuffer[m_AudioBackBuffer], m_audioWorking, sizeof(m_audioWorking));
+        int32_t *out = &m_audioBuffer[m_AudioBackBuffer][0];
+        int16_t *in  = &m_audioWorking[0];
+        
+        for (int i = 0; i < BufferLength; i++, out+=2, in++) {
+          *out = *in;
+        }
+
         m_AudioClear = false;
         m_AudioSilent = false;
         m_AudioRendered = false;
@@ -245,17 +253,19 @@ extern "C"
 void DMA1_Stream4_IRQHandler(void)
 {
   using namespace Anki::Cozmo::HAL;
- 
+  int audioBuffer = DMA_GetCurrentMemoryTarget(AUDIO_DMA_STREAM);
+  
   if (DMA_GetFlagStatus(AUDIO_DMA_STREAM, DMA_FLAG_TCIF4)) {
     // Buffer completed, zero out buffer and mark system as potentially underflowing
-    m_AudioBackBuffer = 1-DMA_GetCurrentMemoryTarget(AUDIO_DMA_STREAM);
-    memset(&m_audioBuffer[m_AudioBackBuffer], 0, BufferLength * sizeof(AudioSample));
-
+    m_AudioBackBuffer = 1 - m_AudioBackBuffer;
+    memset(&m_audioBuffer[m_AudioBackBuffer], 0, sizeof(m_audioBuffer[0]));   
     m_AudioClear = true;
   } else if (DMA_GetFlagStatus(AUDIO_DMA_STREAM, DMA_FLAG_HTIF4)) {
     // Are we going to underflow?  Ramp down to silence
     if (m_AudioClear) {
-      AudioSample* buffer = &m_audioBuffer[m_AudioBackBuffer][BufferMidpoint];
+      const int BufferMidpoint  = BufferLength;
+      
+      int32_t* buffer = &m_audioBuffer[1-m_AudioBackBuffer][BufferMidpoint];
       for (int i = BufferMidpoint; i > 0; i--, buffer++) {
         *buffer = *buffer * i / BufferMidpoint;
       }
