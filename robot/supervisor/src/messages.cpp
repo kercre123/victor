@@ -555,7 +555,7 @@ namespace Anki {
       static inline void ProcessAnimKeyFrameHelper(const KF_TYPE& msg)
       { 
         if(AnimationController::BufferKeyFrame(msg) != RESULT_OK) {
-          PRINT("Failed to buffer a keyframe! Clearing Animation buffer!\n");
+          //PRINT("Failed to buffer a keyframe! Clearing Animation buffer!\n");
           AnimationController::Clear();
         }
       }
