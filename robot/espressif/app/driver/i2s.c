@@ -42,7 +42,9 @@ static I2SPITransfer xferBufs[DMA_BUF_COUNT];
 /// DMA queue control structure
 static struct sdio_queue xferQueue[DMA_BUF_COUNT];
 /// Index of the next buffer to transmit (i.e. where we should write data, not what's currently being transmitted)
-static uint8 xmitInd;
+static uint8 transmitInd;
+/// Index of the buffer which is currently receiving DMA_BUF_COUNT_MASK
+static uint8 receiveInd;
 /// The sequence number for the next transmission
 static uint16_t transmitSeqNo;
 /// Last received sequence number from other side
@@ -77,12 +79,12 @@ LOCAL void slcIsr(void) {
 	WRITE_PERI_REG(SLC_INT_CLR, 0xffffffff);
 
 	if (slc_intr_status & SLC_RX_EOF_INT_ST) {
-    // DMA has finished transmitting one block and started the next, advance the next to be transmitted counter
-    xmitInd = (xmitInd + 1) & DMA_BUF_COUNT_MASK;
+    // Nothing to do here, pointers will be advanced by TX_EOF interrupt
 	}
-  else if (slc_intr_status & SLC_TX_EOF_INT_ST) {
+  if (slc_intr_status & SLC_TX_EOF_INT_ST) {
     struct sdio_queue* desc = (struct sdio_queue*)READ_PERI_REG(SLC_TX_EOF_DES_ADDR);
     I2SPITransfer* xfer     = (I2SPITransfer*)(desc->buf_ptr);
+    receiveInd = (receiveInd + 1) & DMA_BUF_COUNT_MASK;
     if (xfer->from == fromRTIP) // Is received data
     {
       if (i2spiSequential(xfer->seqNo, lastSeqNo)) // Is sequential
@@ -109,7 +111,8 @@ LOCAL void slcIsr(void) {
 void ICACHE_FLASH_ATTR i2sInit() {
 	int i;
 
-  xmitInd         = 0;
+  transmitInd     = 0;
+  receiveInd      = DMA_BUF_COUNT-1;
   transmitSeqNo   = 0;
   lastSeqNo       = 0;
   missedTransmits = 0;
@@ -123,7 +126,6 @@ void ICACHE_FLASH_ATTR i2sInit() {
     xferQueue[i].buf_ptr = (uint32_t)&xferBufs[i];
     xferQueue[i].next_link_ptr = (int)((i<(DMA_BUF_COUNT-1))?(&xferQueue[i+1]):(&xferQueue[0]));
   }
-  xferQueue[i].next_link_ptr = (int)&xferQueue[0]
 
 	//Reset DMA
 	SET_PERI_REG_MASK(SLC_CONF0, SLC_RXLINK_RST|SLC_TXLINK_RST);
@@ -139,65 +141,31 @@ void ICACHE_FLASH_ATTR i2sInit() {
 	SET_PERI_REG_MASK(SLC_RX_DSCR_CONF,SLC_INFOR_NO_REPLACE|SLC_TOKEN_NO_REPLACE);
 	CLEAR_PERI_REG_MASK(SLC_RX_DSCR_CONF, SLC_RX_FILL_EN|SLC_RX_EOF_MODE | SLC_RX_FILL_MODE);
 
-	//Initialize DMA buffer descriptors in such a way that they will form a circular
-	//buffer.
-	for (i=0; i<I2SDMABUFCNT; i++) {
-		i2sOBufDesc[i].owner=1;
-		i2sOBufDesc[i].eof=1;
-		i2sOBufDesc[i].sub_sof=0;
-		i2sOBufDesc[i].datalen=I2SDMABUFLEN*4;
-		i2sOBufDesc[i].blocksize=I2SDMABUFLEN*4;
-		i2sOBufDesc[i].buf_ptr=(uint32_t)&i2sOBuf[i][0];
-		i2sOBufDesc[i].unused=0;
-		i2sOBufDesc[i].next_link_ptr=(int)((i<(I2SDMABUFCNT-1))?(&i2sOBufDesc[i+1]):(&i2sOBufDesc[0]));
-    for (j=0; j<I2SDMABUFLEN; j++) {
-      i2sOBuf[i][j] = i * j;
-    }
-    ///////////////////////////////////////////////
-    i2sIBufDesc[i].owner=1;
-    i2sIBufDesc[i].eof=1;
-    i2sIBufDesc[i].sub_sof=0;
-    i2sIBufDesc[i].datalen=I2SDMABUFLEN*4;
-    i2sIBufDesc[i].blocksize=I2SDMABUFLEN*4;
-    i2sIBufDesc[i].buf_ptr=(uint32_t)&i2sIBuf[i][0];
-    i2sIBufDesc[i].unused=0;
-    i2sIBufDesc[i].next_link_ptr=(int)((i<(I2SDMABUFCNT-1))?(&i2sIBufDesc[i+1]):(&i2sIBufDesc[0]));
-    for (j=0; j<I2SDMABUFLEN; j++) {
-      i2sIBuf[i][j] = i * j;
-    }
-	}
-
-	//Feed dma the 1st buffer desc addr
-	//To send data to the I2S subsystem, counter-intuitively we use the RXLINK part, not the TXLINK as you might
-	//expect. The TXLINK part still needs a valid DMA descriptor, even if it's unused: the DMA engine will throw
-	//an error at us otherwise. Just feed it any random descriptor.
+	/* Feed DMA the buffer descriptors
+    TX and RX are from the DMA's perspective so we use the TX LINK part to receive data from the I2S DMA and the RX LINK
+    part to send data out the DMA to I2S.
+    Both RX and TX are using the same circular buffer TX (I2S receive) running just behind RX (I2S transmit). As long
+    as we process the incoming data before the buffer loops around there is no competition.
+  */
 	CLEAR_PERI_REG_MASK(SLC_TX_LINK,SLC_TXLINK_DESCADDR_MASK);
-	SET_PERI_REG_MASK(SLC_TX_LINK, ((uint32)&i2sIBufDesc[0]) & SLC_TXLINK_DESCADDR_MASK);
+	SET_PERI_REG_MASK(SLC_TX_LINK, ((uint32)&xferQueue[receiveInd])  & SLC_TXLINK_DESCADDR_MASK);
 	CLEAR_PERI_REG_MASK(SLC_RX_LINK,SLC_RXLINK_DESCADDR_MASK);
-	SET_PERI_REG_MASK(SLC_RX_LINK, ((uint32)&i2sOBufDesc[0]) & SLC_RXLINK_DESCADDR_MASK);
+	SET_PERI_REG_MASK(SLC_RX_LINK, ((uint32)&xferQueue[transmitInd]) & SLC_RXLINK_DESCADDR_MASK);
 
 	//Attach the DMA interrupt
 	ets_isr_attach(ETS_SLC_INUM, slc_isr);
-	//Enable DMA operation intr
-	WRITE_PERI_REG(SLC_INT_ENA,  SLC_RX_EOF_INT_ENA | SLC_TX_EOF_INT_ENA);
+	//Enable DMA operation intr Want to get interrupts for both end of transmits
+	WRITE_PERI_REG(SLC_INT_ENA,  SLC_TX_EOF_INT_ENA); // SLC_RX_EOF_INT_ENA // only interrupting on TX (receive)
 	//clear any interrupt flags that are set
 	WRITE_PERI_REG(SLC_INT_CLR, 0xffffffff);
 	///enable DMA intr in cpu
 	ets_isr_unmask(1<<ETS_SLC_INUM);
 
-  // Keep track of read / write queues
-  i2sRdInd = 0;
-  i2sWrInd = 0;
-
-	//Start transmission
-	SET_PERI_REG_MASK(SLC_TX_LINK, SLC_TXLINK_START);
-	SET_PERI_REG_MASK(SLC_RX_LINK, SLC_RXLINK_START);
-
 //----
 
 	//Init pins to i2s functions
 	PIN_FUNC_SELECT(PERIPHS_IO_MUX_U0RXD_U, FUNC_I2SO_DATA);
-	PIN_FUNC_SELECT(PERIPHS_IO_MUX_GPIO2_U, FUNC_I2SO_WS); // No more word selects
+	PIN_FUNC_SELECT(PERIPHS_IO_MUX_GPIO2_U, FUNC_I2SO_WS);
 	PIN_FUNC_SELECT(PERIPHS_IO_MUX_MTDO_U, FUNC_I2SO_BCK);
   PIN_FUNC_SELECT(PERIPHS_IO_MUX_MTDI_U, FUNC_I2SI_DATA);
   PIN_FUNC_SELECT(PERIPHS_IO_MUX_MTCK_U, FUNC_I2SI_BCK);
@@ -236,34 +204,48 @@ void ICACHE_FLASH_ATTR i2sInit() {
 						I2S_RECE_MSB_SHIFT|I2S_TRANS_MSB_SHIFT|
 						(((1)&I2S_BCK_DIV_NUM )<<I2S_BCK_DIV_NUM_S)|
 						(((1)&I2S_CLKM_DIV_NUM)<<I2S_CLKM_DIV_NUM_S));
+}
 
-	//Start transmission
-	SET_PERI_REG_MASK(I2SCONF,I2S_I2S_TX_START);
+void ICACHE_FLASH_ATTR i2sStart(void)
+{
+  // Start DMA transmitting
+  SET_PERI_REG_MASK(SLC_TX_LINK, SLC_TXLINK_START);
+  // Start DMA receiving
+  SET_PERI_REG_MASK(SLC_RX_LINK, SLC_RXLINK_START);
+  //Start transmission
+  SET_PERI_REG_MASK(I2SCONF,I2S_I2S_TX_START);
   // Start receive
   SET_PERI_REG_MASK(I2SCONF,I2S_I2S_RX_START);
 }
 
-//Current DMA buffer we're writing to
-static unsigned int *currDMABuff=NULL;
-//Current position in that DMA buffer
-static int currDMABuffPos=0;
-
-
-//This routine pushes a single, 32-bit sample to the I2S buffers. Call this at (on average)
-//at least the current sample rate. You can also call it quicker: it will suspend the calling
-//thread if the buffer is full and resume when there's room again.
-void i2sPushSample(unsigned int sample) {
-	//Check if current DMA buffer is full.
-	if (currDMABuffPos==I2SDMABUFLEN || currDMABuff==NULL) {
-		//We need a new buffer. Pop one from the queue.
-    currDMABuff = i2sOBuf[i2sWrInd];
-    i2sWrInd = (i2sWrInd + 1) % I2SDMABUFCNT;
-		currDMABuffPos=0;
-	}
-	currDMABuff[currDMABuffPos++]=sample;
+void ICACHE_FLASH_ATTR i2sStart(void)
+{
+  // Stop DMA transmitting
+  SET_PERI_REG_MASK(SLC_TX_LINK, SLC_TXLINK_START);
+  // Stop DMA receiving
+  SET_PERI_REG_MASK(SLC_RX_LINK, SLC_RXLINK_START);
+  // @TODO How do we stop the I2S peripheral? Does halting DMA do the trick?
 }
 
-
-long ICACHE_FLASH_ATTR i2sGetUnderrunCnt() {
-	return underrunCnt;
+bool i2sQueueTx(I2SPIPayload* payload, I2SPIPayloadTag tag)
+{
+  if (transmitInd == receiveInd) // Head has reached tail
+  {
+    // No room to queue this
+    return false;
+  }
+  else
+  {
+    // Buffer the data to transmit
+    os_memcpy(&xferBufs[transmitInd].payload, payload, sizeof(I2SPI_MAX_PAYLOAD));
+    xferBufs[transmitInt].seqNo = transmitSeqNo;
+    xferBufs[transmitInt].tag   = tag;
+    xferBufs[transmitInd].from  = fromWiFi;
+    // Update indecies
+    transmitInd = (transmitInd + 1) & DMA_BUF_COUNT_MASK;
+    transmitSeqNo += 1;
+  }
 }
+
+uint32_t ICACHE_FLASH_ATTR i2sGetMissedTransmits(void) { return missedTransmits; }
+uint32_t ICACHE_FLASH_ATTR i2sGetOutOfSequence(void)   { return outOfSequence;   }
