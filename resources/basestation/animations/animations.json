@@ -182,6 +182,11 @@
       "triggerTime_ms": 500,
       "durationTime_ms": 500,
       "Name": "HeadAngleKeyFrame"
+    },
+    {
+      "Name" : "RobotAudioKeyFrame", 
+      "triggerTime_ms"  : 500,
+      "audioName"       : "creep/Robot-PowerOn1Rev2.mp3"
     }
   ]
 } 
