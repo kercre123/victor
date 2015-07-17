@@ -411,14 +411,8 @@ namespace Anki {
         // Print time profile stats
         END_TIME_PROFILE(CozmoBot);
         END_TIME_PROFILE(CozmoBotMain);
-        static u32 cnt = 0;
-        if (++cnt > 400) {
-          PRINT_TIME_PROFILE_STATS(CozmoBot);
-          RESET_TIME_PROFILE(CozmoBot);
-          PRINT_TIME_PROFILE_STATS(CozmoBotMain);
-          RESET_TIME_PROFILE(CozmoBotMain);
-          cnt = 0;
-        }
+        PERIODIC_PRINT_AND_RESET_TIME_PROFILE(CozmoBot, 400);
+        PERIODIC_PRINT_AND_RESET_TIME_PROFILE(CozmoBotMain, 400);
 
         // Check if main took too long
         u32 cycleEndTime = HAL::GetMicroCounter();

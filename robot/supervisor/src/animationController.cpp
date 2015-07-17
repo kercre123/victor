@@ -822,12 +822,8 @@ namespace AnimationController {
 
         // Print time profile stats
         END_TIME_PROFILE(Anim);
-        static u32 cnt =0;
-        if (++cnt > 120) {
-          PRINT_TIME_PROFILE_STATS(Anim);
-          RESET_TIME_PROFILE(Anim);
-          cnt = 0;
-        }
+        PERIODIC_PRINT_AND_RESET_TIME_PROFILE(Anim, 120);
+        
 
       } // if(AudioReady())
     } // if(IsReadyToPlay())

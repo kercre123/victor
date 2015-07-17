@@ -47,6 +47,13 @@ namespace Cozmo {
 #define END_TIME_PROFILE(profilerName)                      timeProfiler##profilerName.EndProfiling();
 #define PRINT_TIME_PROFILE_STATS(profilerName)              timeProfiler##profilerName.PrintStats();
 #define RESET_TIME_PROFILE(profilerName)                    timeProfiler##profilerName.Reset();
+#define PERIODIC_PRINT_AND_RESET_TIME_PROFILE(profilerName, numCycles) static u32 cnt##profilerName = 0; \
+                                                                       if (++cnt##profilerName >= numCycles) { \
+                                                                         timeProfiler##profilerName.PrintStats(); \
+                                                                         timeProfiler##profilerName.Reset(); \
+                                                                         cnt##profilerName = 0; \
+                                                                       }
+  
   
 #else
 // if !defined(ENABLE_TIME_PROFILING)
@@ -55,7 +62,7 @@ namespace Cozmo {
 #define END_TIME_PROFILE(profilerName)
 #define PRINT_TIME_PROFILE_STATS(profilerName)
 #define RESET_TIME_PROFILE(profilerName)
-  
+#define PERIODIC_PRINT_AND_RESET_TIME_PROFILE(profilerName, numCycles)  
 #endif
   
   class TimeProfiler {
