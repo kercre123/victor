@@ -241,20 +241,6 @@ _blinkTrack.__METHOD__()
       _deviceAudioTrack.MoveToNextKeyFrame();
     }
     
-#   if PLAY_ROBOT_AUDIO_ON_DEVICE
-    if(_robotAudioTrack.HasFramesLeft())
-    {
-      const RobotAudioKeyFrame& audioKF = _robotAudioTrack.GetCurrentKeyFrame();
-      if(_playedRobotAudio_ms < audioKF.GetTriggerTime() &&
-         audioKF.IsTimeToPlay(_startTime_ms,  currTime_ms))
-      {
-        // TODO: Insert some kind of small delay to simulate latency?
-        SoundManager::getInstance()->Play(audioKF.GetSoundName());
-        _playedRobotAudio_ms = currTime_ms;
-      }
-    }
-#   endif
-    
     // FlowControl: Don't send frames if robot has no space for them, and be
     // careful not to overwhel reliable transport either, in terms of bytes or
     // sheer number of messages
@@ -401,6 +387,23 @@ _blinkTrack.__METHOD__()
       }
       
     } // while(numFramesToSend > 0)
+    
+#   if PLAY_ROBOT_AUDIO_ON_DEVICE
+    // NOTE: This should be done _after_ GetStreamMessage() gets called above
+    // because that's what selects from the available audio options in the
+    // keyframe, which needs to happen before GetSoundName() is called below.
+    if(_robotAudioTrack.HasFramesLeft())
+    {
+      RobotAudioKeyFrame& audioKF = _robotAudioTrack.GetCurrentKeyFrame();
+      if(_playedRobotAudio_ms < audioKF.GetTriggerTime() &&
+         audioKF.IsTimeToPlay(_startTime_ms,  currTime_ms))
+      {
+        // TODO: Insert some kind of small delay to simulate latency?
+        SoundManager::getInstance()->Play(audioKF.GetSoundName());
+        _playedRobotAudio_ms = currTime_ms;
+      }
+    }
+#   endif
     
     if(IsFinished()) {
       // Send an end-of-animation keyframe
