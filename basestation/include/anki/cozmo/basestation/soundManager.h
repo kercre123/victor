@@ -13,6 +13,7 @@
 #define SOUND_MANAGER_H
 
 #include "anki/cozmo/shared/cozmoTypes.h"
+#include "anki/cozmo/basestation/comms/robot/robotMessages.h"
 
 #include <string>
 #include <unordered_map>
@@ -49,6 +50,9 @@ namespace Anki {
 
       // Get the duration of the sound in milliseconds. Returns 0 for invalid names.
       const u32 GetSoundDurationInMilliseconds(const std::string& name) const;
+
+      // Returns pointer to a buffer of the sound data
+      bool GetSoundSample(const std::string& name, const u32 sampleIdx, MessageAnimKeyFrame_AudioSample &msg);
       
     protected:
       
@@ -72,6 +76,13 @@ namespace Anki {
       };
       
       std::unordered_map<std::string, AvailableSound> _availableSounds;
+
+      // Buffer of data from file last referenced by GetSoundBuffer()
+      static const u32 MAX_SOUND_BUFFER_SIZE = 5000000;
+      std::string _currOpenSoundFileName;
+      FILE* _currOpenSoundFilePtr;
+      u32 _currOpenSoundNumSamples;
+      u8 _soundBuf[MAX_SOUND_BUFFER_SIZE];
       
     }; // class SoundManager
     

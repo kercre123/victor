@@ -9,6 +9,8 @@
 #include "anki/cozmo/robot/spineData.h"
 #include "hal/portable.h"
 
+//#include "gauss.h"
+
 #define AUDIO_SPI         SPI2
 #define AUDIO_DMA_CHANNEL DMA_Channel_0
 #define AUDIO_DMA_STREAM  DMA1_Stream4
@@ -30,6 +32,12 @@ static const uint16_t ima_step_table[] = {
   15289, 16818, 18500, 20350, 22385, 24623, 27086, 29794, 32767
 };
 
+typedef struct {
+  uint8_t index;
+  int16_t predictor;
+  uint8_t samples[400];
+} AudioChunk;
+
 namespace Anki
 {
   namespace Cozmo
@@ -40,20 +48,21 @@ namespace Anki
       GPIO_PIN_SOURCE(AUDIO_CK, GPIOB, 13);
       GPIO_PIN_SOURCE(AUDIO_SD, GPIOB, 15);
 
-      const int SampleFreq    = 32000;  // 32khz
-      const int AudioFrameMS  = 33;
-      const int AudioSampleSize = 800;
-      const int BufferLength  = SampleFreq * AudioFrameMS / 1000;
-      const int BufferMidpoint = BufferLength / 2;
       typedef int16_t AudioSample;
 
-      static ONCHIP AudioSample m_audioBuffer[2][BufferLength];
+      const int ADPCMFreq       = 24000;
+      const int SampleRate      = 48000;
+      const int BufferLength    = 1600;       // 33.3ms at 24khz
+      const float PLL_Dilate    = 1.555456f;  // No clue why this is nessessary
+
+      static ONCHIP int32_t m_audioBuffer[2][BufferLength*2];
       static ONCHIP AudioSample m_audioWorking[BufferLength];
+
       bool m_AudioRendered;              // Have we pre-rendered an audio sample for copy
       volatile bool m_AudioClear;        // Current AudioBuffer is clear
       volatile bool m_AudioSilent;       // DMA has move to silence
-      volatile int m_AudioBackBuffer;    // Currently inactive buffer
-
+      volatile int m_AudioBackBuffer;    // Currently available buffer
+      
       void AudioInit(void) {
         // Enable peripheral clock
         RCC_APB1PeriphClockCmd(RCC_APB1Periph_SPI2, ENABLE);
@@ -82,10 +91,11 @@ namespace Anki
         I2S_InitStructure.I2S_Standard = I2S_Standard_Phillips;
         I2S_InitStructure.I2S_DataFormat = I2S_DataFormat_32b;
         I2S_InitStructure.I2S_MCLKOutput = I2S_MCLKOutput_Disable;
-        I2S_InitStructure.I2S_AudioFreq = ((uint32_t)SampleFreq);
+        I2S_InitStructure.I2S_AudioFreq = (uint32_t)(SampleRate*PLL_Dilate);
         I2S_InitStructure.I2S_CPOL = I2S_CPOL_Low;
         I2S_Init(AUDIO_SPI, &I2S_InitStructure);
         
+        RCC_PLLI2SCmd(DISABLE);
         RCC_I2SCLKConfig(RCC_I2S2CLKSource_PLLI2S);
         RCC_PLLI2SCmd(ENABLE);
         RCC_GetFlagStatus(RCC_FLAG_PLLI2SRDY);
@@ -99,15 +109,14 @@ namespace Anki
         DMA_InitStructure.DMA_PeripheralBaseAddr = (uint32_t)&AUDIO_SPI->DR;
         DMA_InitStructure.DMA_Memory0BaseAddr = (u32)m_audioBuffer;
         DMA_InitStructure.DMA_DIR = DMA_DIR_MemoryToPeripheral;
-        DMA_InitStructure.DMA_BufferSize = BufferLength;
+        DMA_InitStructure.DMA_BufferSize = BufferLength * 4;
         DMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Disable;
         DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Enable;
         DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_HalfWord;
         DMA_InitStructure.DMA_MemoryDataSize = DMA_PeripheralDataSize_HalfWord;
         DMA_InitStructure.DMA_Mode = DMA_Mode_Circular;
-        DMA_InitStructure.DMA_Priority = DMA_Priority_High; // Who knows if this is useful
+        DMA_InitStructure.DMA_Priority = DMA_Priority_Medium;
         DMA_InitStructure.DMA_FIFOMode = DMA_FIFOMode_Disable;
-        DMA_InitStructure.DMA_FIFOThreshold = DMA_FIFOThreshold_1QuarterFull;
         DMA_InitStructure.DMA_MemoryBurst = DMA_MemoryBurst_Single;
         DMA_InitStructure.DMA_PeripheralBurst = DMA_PeripheralBurst_Single;
         DMA_Init(AUDIO_DMA_STREAM, &DMA_InitStructure);
@@ -132,49 +141,70 @@ namespace Anki
 
         // Clear our buffers to zero, and flag the system as empty and silent
         memset(m_audioBuffer, 0, sizeof(m_audioBuffer));
-        m_AudioBackBuffer = 1;
         m_AudioClear = true;
         m_AudioSilent = true;
         m_AudioRendered = false;
+        m_AudioBackBuffer = 1;
 
         // Enable the SPI
         I2S_Cmd(AUDIO_SPI, ENABLE);
       }
-      
-      void AudioPlayFrame(s16 predictor, u8* frame) {
+
+      void AudioPlaySilence() {
         // We are not ready to render another audio frame yet
         if (m_AudioRendered) { return ; }
 
-        // Silence frame
-        if (!frame) {
-          memset(m_audioWorking, 0, sizeof(m_audioWorking));
-          m_AudioRendered = true;
-          return ;
-        }
-
+        // Clear audio buffer
         memset(m_audioWorking, 0, sizeof(m_audioWorking));
+        m_AudioRendered = true;
+      }
 
-        int16_t *output = m_audioWorking;
-        int step_index = 0;
-        
-        /*
-        *(output++) = predictor;
-        */
-        
-        /*
-        step_index = step_index + ima_index_table[nibble];
-        if (step_index < 0) { step_index = 0; }
-        if (step_index >= sizeof(ima_index_table)) { step_index = sizeof(ima_index_table) - 1; }
+      void AudioPlayFrame(Messages::AnimKeyFrame_AudioSample *msg) {
+        // We are not ready to render another audio frame yet
+        if (m_AudioRendered) { return ; }
 
-        predictor = predictor + (2 * nibble + 1) * ima_step_table[step_index] / 8;
-        */
+        AudioSample *output = m_audioWorking;
+        const u8 *input = msg->sample;
+        bool toggle = false;
+        int error = 0;
 
-        /*
-        // Sloppily play audio out the head
-        for (int i = 0; i < AudioSampleSize; i++) {
-          m_audioWorking[i*BufferLength/AudioSampleSize] = *(frame++);
+        // Previous samples for gaussian filtering
+        int valpred = msg->predictor;
+        int index = msg->index;
+
+        for (int rem = BufferLength; rem > 0; rem--) {
+          error += ADPCMFreq;
+
+          if (error >= SampleRate) {
+            int delta = toggle ? (*(input++) >> 4) : (*input & 0xF);
+            toggle = !toggle;
+
+            error -= SampleRate;
+
+            int step = ima_step_table[index];
+            index += ima_index_table[delta];
+
+            if (index < 0) index = 0;
+            else if (index > 88) index = 88;
+
+            bool sign = ((delta & 8) == 8);
+            delta = delta & 7;
+
+            int vpdiff = step >> 3;
+            if (delta & 4) vpdiff += step;
+            if (delta & 2) vpdiff += step >> 1;
+            if (delta & 1) vpdiff += step >> 2;
+
+            if (sign) valpred -= vpdiff;
+            else valpred += vpdiff;
+
+            if (valpred > 32767) valpred = 32767;
+            else if (valpred < -32768) valpred = -32768;
+          }
+
+          *(output++) = valpred >> 3;
         }
-        */
+
         m_AudioRendered = true;
       }
       
@@ -187,9 +217,11 @@ namespace Anki
         if (!m_AudioClear || !m_AudioRendered) { 
           return ;
         }
-       
+
         // Audio system was not streaming audio, so we should ramp up volume
         if (m_AudioSilent) {
+          const int BufferMidpoint  = BufferLength / 2;
+          
           for (int i = 0; i < BufferMidpoint; i++) {
             m_audioWorking[i] = m_audioWorking[i] * i / BufferMidpoint;
           }
@@ -197,7 +229,13 @@ namespace Anki
 
         // We triple buffer to reduce the total time spent in IRQ disable
         __disable_irq();
-        memcpy(m_audioBuffer[m_AudioBackBuffer], m_audioWorking, sizeof(m_audioWorking));
+        int32_t *out = &m_audioBuffer[m_AudioBackBuffer][0];
+        int16_t *in  = &m_audioWorking[0];
+        
+        for (int i = 0; i < BufferLength; i++, out+=2, in++) {
+          *out = *in;
+        }
+
         m_AudioClear = false;
         m_AudioSilent = false;
         m_AudioRendered = false;
@@ -211,17 +249,19 @@ extern "C"
 void DMA1_Stream4_IRQHandler(void)
 {
   using namespace Anki::Cozmo::HAL;
- 
+  int audioBuffer = DMA_GetCurrentMemoryTarget(AUDIO_DMA_STREAM);
+  
   if (DMA_GetFlagStatus(AUDIO_DMA_STREAM, DMA_FLAG_TCIF4)) {
     // Buffer completed, zero out buffer and mark system as potentially underflowing
-    m_AudioBackBuffer = 1-DMA_GetCurrentMemoryTarget(AUDIO_DMA_STREAM);
-    memset(&m_audioBuffer[m_AudioBackBuffer], 0, BufferLength * sizeof(AudioSample));
-
+    m_AudioBackBuffer = 1 - m_AudioBackBuffer;
+    memset(&m_audioBuffer[m_AudioBackBuffer], 0, sizeof(m_audioBuffer[0]));   
     m_AudioClear = true;
   } else if (DMA_GetFlagStatus(AUDIO_DMA_STREAM, DMA_FLAG_HTIF4)) {
     // Are we going to underflow?  Ramp down to silence
     if (m_AudioClear) {
-      AudioSample* buffer = &m_audioBuffer[m_AudioBackBuffer][BufferMidpoint];
+      const int BufferMidpoint  = BufferLength;
+      
+      int32_t* buffer = &m_audioBuffer[1-m_AudioBackBuffer][BufferMidpoint];
       for (int i = BufferMidpoint; i > 0; i--, buffer++) {
         *buffer = *buffer * i / BufferMidpoint;
       }

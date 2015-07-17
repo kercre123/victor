@@ -576,7 +576,7 @@ namespace AnimationController {
           {
             Messages::AnimKeyFrame_AudioSilence msg;
             GetFromBuffer((u8*)&msg, sizeof(msg));
-            HAL::AudioPlayFrame(0, NULL);
+            HAL::AudioPlaySilence();
             break;
           }
           case Messages::AnimKeyFrame_AudioSample_ID:
@@ -584,9 +584,9 @@ namespace AnimationController {
             Messages::AnimKeyFrame_AudioSample msg;
             GetFromBuffer((u8*)&msg, sizeof(msg));
             if(_tracksToPlay & AUDIO_TRACK) {
-              HAL::AudioPlayFrame(msg.predictor, msg.sample);
+              HAL::AudioPlayFrame(&msg);
             } else {
-              HAL::AudioPlayFrame(0, NULL);
+              HAL::AudioPlaySilence();
             }
             break;
           }
@@ -798,7 +798,7 @@ namespace AnimationController {
               
             default:
             {
-              PRINT("Unexpected message type %d in animation buffer!\n");
+              PRINT("Unexpected message type %d in animation buffer!\n", msgID);
               return RESULT_FAIL;
             }
               

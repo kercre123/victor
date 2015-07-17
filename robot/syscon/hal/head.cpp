@@ -105,7 +105,7 @@ void UART0_IRQHandler()
     
     TxRxIdx++;
     
-    if (TxRxIdx >= sizeof(TxRxBuffer[TxRxIdx])) {
+    if (TxRxIdx >= sizeof(g_dataToBody)) {
       memcpy(&g_dataToBody, TxRxBuffer, sizeof(g_dataToBody));
       Head::spokenTo = true;
       Head::uartIdle = true;

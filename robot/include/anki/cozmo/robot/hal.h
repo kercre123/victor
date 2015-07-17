@@ -241,7 +241,8 @@ namespace Anki
 
       // Play one frame of audio or silence
       // @param frame - a pointer to an audio frame or NULL to play one frame of silence
-      void AudioPlayFrame(s16 predictor, u8* frame);
+      void AudioPlayFrame(Messages::AnimKeyFrame_AudioSample *msg);
+      void AudioPlaySilence();
 
 // #pragma mark --- Flash Memory ---
       /////////////////////////////////////////////////////////////////////
