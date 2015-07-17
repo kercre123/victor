@@ -229,11 +229,11 @@ LOCAL bool upgradeTask(uint32_t param)
         // TODO check new firmware integrity
         // TODO restart with new firmware
       }
-      if (flags & UPCMD_FPGA_FW)
+      if (flags & UPCMD_RTIP_FW)
       {
         // TODO check new firmware integrity
-        // TODO Reboot the FPGA with new firmware
-        os_printf("UP: FPGA upgrade complete\r\n\t");
+        // TODO Reboot the RTIP with new firmware
+        os_printf("UP: RTIP upgrade complete\r\n\t");
         printUpgradeState();
         resetUpgradeState();
       }

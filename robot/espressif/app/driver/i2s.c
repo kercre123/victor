@@ -31,7 +31,7 @@ speed.
 #include "driver/i2s_ets.h"
 
 #define DMA_BUF_COUNT (4) // 512bytes per buffer * 8 buffers = 2k.
-ct_assert(DMA_BUF_COUNT % 2 == 0) // Must be a power of two for masking to work
+ct_assert(DMA_BUF_COUNT % 2 == 0); // Must be a power of two for masking to work
 #define DMA_BUF_COUNT_MASK (DMA_BUF_COUNT-1)
 
 /** DMA I2SPI transfer buffers
@@ -70,7 +70,7 @@ static void inline prepSdioQueue(struct sdio_queue* desc)
  * the interrupt flags, the sdio_queue returned must be reset so it can be reused. Finally when data is received from
  * DMA (TX) the i2sRecvCallback is called.
  */
-LOCAL void slcIsr(void) {
+LOCAL void dmaisr(void) {
 	uint32 slc_intr_status;
 
 	//Grab int status
@@ -89,7 +89,7 @@ LOCAL void slcIsr(void) {
     {
       if (i2spiSequential(xfer->seqNo, lastSeqNo)) // Is sequential
       {
-        i2sRecvCallback(xfer->payload, xfer->tag);
+        i2sRecvCallback(&(xfer->payload), xfer->tag);
         lastSeqNo = xfer->seqNo;
       }
       else // Not in sequence
@@ -153,7 +153,7 @@ int8_t ICACHE_FLASH_ATTR i2sInit() {
 	SET_PERI_REG_MASK(SLC_RX_LINK, ((uint32)&xferQueue[transmitInd]) & SLC_RXLINK_DESCADDR_MASK);
 
 	//Attach the DMA interrupt
-	ets_isr_attach(ETS_SLC_INUM, slc_isr);
+	ets_isr_attach(ETS_SLC_INUM, dmaisr);
 	//Enable DMA operation intr Want to get interrupts for both end of transmits
 	WRITE_PERI_REG(SLC_INT_ENA,  SLC_TX_EOF_INT_ENA); // SLC_RX_EOF_INT_ENA // only interrupting on TX (receive)
 	//clear any interrupt flags that are set
@@ -220,7 +220,7 @@ void ICACHE_FLASH_ATTR i2sStart(void)
   SET_PERI_REG_MASK(I2SCONF,I2S_I2S_RX_START);
 }
 
-void ICACHE_FLASH_ATTR i2sStart(void)
+void ICACHE_FLASH_ATTR i2sStop(void)
 {
   // Stop DMA transmitting
   SET_PERI_REG_MASK(SLC_TX_LINK, SLC_TXLINK_START);
@@ -240,8 +240,8 @@ bool i2sQueueTx(I2SPIPayload* payload, I2SPIPayloadTag tag)
   {
     // Buffer the data to transmit
     os_memcpy(&xferBufs[transmitInd].payload, payload, sizeof(I2SPI_MAX_PAYLOAD));
-    xferBufs[transmitInt].seqNo = transmitSeqNo;
-    xferBufs[transmitInt].tag   = tag;
+    xferBufs[transmitInd].seqNo = transmitSeqNo;
+    xferBufs[transmitInd].tag   = tag;
     xferBufs[transmitInd].from  = fromWiFi;
     // Update indecies
     transmitInd = (transmitInd + 1) & DMA_BUF_COUNT_MASK;

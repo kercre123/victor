@@ -6,7 +6,6 @@
 #include "mem.h"
 #include "ets_sys.h"
 #include "osapi.h"
-#include "driver/uart.h"
 
 //#define DEBUG_CLIENT
 
@@ -56,7 +55,7 @@ static void udpServerRecvCB(void *arg, char *usrdata, unsigned short len)
 
   haveClient = true;
 
-  uartQueuePacket(usrdata, len); // Pass to M4
+  clientRecvCallback(usrdata, len);
 }
 
 

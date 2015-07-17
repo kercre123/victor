@@ -150,13 +150,16 @@ static void ICACHE_FLASH_ATTR system_init_done(void)
   // Initalize i2SPI interface
   i2sInit();
 
-  // Set up shared background tasks
-  task0Init();
-  //task0Post(userTask, 0);
-
   // Set CPU frequency again here just in case
   REG_SET_BIT(0x3ff00014, BIT(0)); //< Set CPU frequency to 160MHz
   err = system_update_cpu_freq(160);
+
+  // Setup high priority task
+  task2Init();
+
+  // Set up shared background tasks
+  task0Init();
+  //task0Post(userTask, 0);
 
   os_printf("user initalization complete\r\n");
 }

@@ -1,7 +1,10 @@
 #ifndef _I2SPI_DATA_H_
 #define _I2SPI_DATA_H_
 
-#include "anki/common/robot/utilities_c.h"
+// ct_assert is a compile time assertion, useful for checking sizeof() and other compile time knowledge
+#define ASSERT_CONCAT_(a, b) a##b
+#define ASSERT_CONCAT(a, b) ASSERT_CONCAT_(a, b)
+#define ct_assert(e) enum { ASSERT_CONCAT(assert_line_, __LINE__) = 1/(!!(e)) }
 
 /// Number of bytes in each DMAed transaction
 #define I2SPI_TRANSFER_SIZE (512)
@@ -9,7 +12,7 @@
 #define I2SPI_MAX_PAYLOAD (I2SPI_TRANSFER_SIZE-4)
 
 /// Tags to identify different transaction payload types
-typdef enum
+typedef enum
 {
   TagImgData,   ///< Payload contains images data from the RTIP to the WIFI chip
   TagAudioData, ///< Payload contains Audio data from the WiFi chip to the RTIP
@@ -20,8 +23,8 @@ typdef enum
 /// Source flags to indicate which side has sent this buffer
 typedef enum
 {
-  fromWiFi = 0x0A; ///< From the WiFi chip to the RTIP
-  fromRTIP = 0xFA; ///< From the RTIP to the WiFi
+  fromWiFi = 0x0A, ///< From the WiFi chip to the RTIP
+  fromRTIP = 0xFA, ///< From the RTIP to the WiFi
 } I2SPIFrom;
 
 /// Maximum bytes of image data payload
