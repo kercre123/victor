@@ -348,7 +348,7 @@ namespace Anki {
       
     private:
       
-      s32 _duration_ms;
+      s32 _durationTime_ms;
       s32 _currentTime_ms;
       
       MessageAnimKeyFrame_BodyMotion _streamMsg;
