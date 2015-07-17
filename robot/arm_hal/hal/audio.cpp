@@ -191,9 +191,9 @@ namespace Anki
             delta = delta & 7;
 
             int vpdiff = step >> 3;
-            if ((delta & 4) == 4) vpdiff += step;
-            if ((delta & 2) == 2) vpdiff += step >> 1;
-            if ((delta & 1) == 1) vpdiff += step >> 2;
+            if (delta & 4) vpdiff += step;
+            if (delta & 2) vpdiff += step >> 1;
+            if (delta & 1) vpdiff += step >> 2;
 
             if (sign) valpred -= vpdiff;
             else valpred += vpdiff;
@@ -202,7 +202,7 @@ namespace Anki
             else if (valpred < -32768) valpred = -32768;
           }
 
-          *(output++) = 0.10 * valpred;
+          *(output++) = valpred >> 3;
         }
 
         m_AudioRendered = true;
