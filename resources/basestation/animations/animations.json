@@ -199,6 +199,29 @@
       "xcen"            : 0, 
       "ycen"            : 0
     }
+  ],
+  "ANIM_TEST_SPINNER": [
+    {
+      "$type": "BehaviorDesigner.HeadAnglePointData, BehaviorDesigner",
+      "angle_deg": -25,
+      "angleVariability_deg": 0,
+      "triggerTime_ms": 0,
+      "durationTime_ms": 500,
+      "Name": "HeadAngleKeyFrame"
+    },
+    {
+      "$type": "BehaviorDesigner.HeadAnglePointData, BehaviorDesigner",
+      "angle_deg": 4,
+      "angleVariability_deg": 0,
+      "triggerTime_ms": 500,
+      "durationTime_ms": 500,
+      "Name": "HeadAngleKeyFrame"
+    },
+    {
+      "Name" : "RobotAudioKeyFrame", 
+      "triggerTime_ms"  : 500,
+      "audioName"       : "creep/Robot-PowerOn1Rev2.mp3"
+    }
   ]
 } 
 

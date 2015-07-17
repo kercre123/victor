@@ -6,7 +6,7 @@
 #include "nrf_gpiote.h"
 #include <limits.h>
 
-#include "uart.h"
+#include "debug.h"
 
 extern GlobalDataToHead g_dataToHead;
 extern GlobalDataToBody g_dataToBody;
@@ -453,30 +453,23 @@ void Motors::update()
 
 void Motors::printEncodersRaw()
 {
-  UART::put('L');
-  UART::put('0' + nrf_gpio_pin_read(ENCODER_LEFT_PIN));
-  UART::put('R');
-  UART::put('0' + nrf_gpio_pin_read(ENCODER_RIGHT_PIN));
-  UART::put('A'); // Arms
-  UART::put('0' + nrf_gpio_pin_read(ENCODER_LIFTA_PIN));
-  UART::put('0' + nrf_gpio_pin_read(ENCODER_LIFTB_PIN));
-  UART::put('H');
-  UART::put('0' + nrf_gpio_pin_read(ENCODER_HEADA_PIN));
-  UART::put('0' + nrf_gpio_pin_read(ENCODER_HEADB_PIN));
-  UART::put(' ');  
-  UART::put('L');
-  Fixed64 tmp;
-  tmp = METERS_PER_TICK;
-  tmp *= m_motors[0].position;
-  UART::dec((Fixed)TO_FIXED_8_24_TO_16_16(tmp));
-  UART::put('R');
-  tmp = METERS_PER_TICK;
-  tmp *= m_motors[1].position;
-  UART::dec((Fixed)TO_FIXED_8_24_TO_16_16(tmp));
-  UART::put('A');
-  UART::dec(m_motors[2].position);
-  UART::put('H');
-  UART::dec(m_motors[3].position);
+  Fixed64 tmp1, tmp2;
+  tmp1 = METERS_PER_TICK;
+  tmp1 *= m_motors[0].position;
+
+  tmp2 = METERS_PER_TICK;
+  tmp2 *= m_motors[1].position;
+
+  UART::print("L%cR%cA%c%cH%c%c L%iR%iA%iH%i",
+      '0' + nrf_gpio_pin_read(ENCODER_LEFT_PIN),
+      '0' + nrf_gpio_pin_read(ENCODER_RIGHT_PIN),
+      '0' + nrf_gpio_pin_read(ENCODER_LIFTA_PIN),
+      '0' + nrf_gpio_pin_read(ENCODER_LIFTB_PIN),
+      '0' + nrf_gpio_pin_read(ENCODER_HEADA_PIN),
+      '0' + nrf_gpio_pin_read(ENCODER_HEADB_PIN),
+      (Fixed)TO_FIXED_8_24_TO_16_16(tmp1),
+      (Fixed)TO_FIXED_8_24_TO_16_16(tmp2),
+      m_motors[2].position, m_motors[3].position);
 }
 
 
@@ -540,10 +533,7 @@ static void HandlePinTransition(MotorInfo* motorInfo, u32 pinState, u32 count)
 void Motors::printEncoder(u8 motorID) // XXX: wheels are in encoder ticks, not meters
 {
   int i = m_motors[motorID].position;
-  UART::put(i);
-  UART::put(i >> 8);
-  UART::put(i >> 16);
-  UART::put(i >> 24);
+  UART::print("%c%c%c%c", i, i >> 8, i >> 16, i >> 24);
 }
 
 // Apologies for the straight-line code - it's required for performance
@@ -648,11 +638,8 @@ void encoderAnalyzer(void)
   u16 last = start;
   for (int i = 0; 0 && i < logLen; i++)
   {
-    UART::hex((uint8_t)(m_log[i] & 0x11));
-    UART::put(' ');
-    UART::dec((u16)((m_log[i] & 0xffe0) - last));
+    UART::print("%2x %i\n", (uint8_t)(m_log[i] & 0x11), (u16)((m_log[i] & 0xffe0) - last));
     last = m_log[i] & 0xffe0;
-    UART::put("\n");
   }
   // Scan the log to compute how many ticks (up + down)
   // 00, 01, 11, 10, 00
@@ -674,18 +661,7 @@ void encoderAnalyzer(void)
   }
   
   s_pos += (down - up);
-  UART::put("\nUp: ");
-  UART::dec(up);
-  UART::put(" Down: ");
-  UART::dec(down);
-  UART::put(" Error: ");
-  UART::dec(error);
-  UART::put(" Entries:  ");
-  UART::dec(logLen);
-  UART::put(" Pos:  ");
-  UART::dec(s_pos);
-  UART::put(" IRQ Pos:  ");
-  UART::dec(m_motors[3].position);
-  UART::put("\n\n");  
+  UART::print("\nUp: %i  Down: %i Error: %i Entries: %i Pos: %i IRQ Pos: %i\n\n", 
+    up, down, error, logLen, s_pos, m_motors[3].position);
 }
 #endif

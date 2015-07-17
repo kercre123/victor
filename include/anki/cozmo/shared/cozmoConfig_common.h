@@ -65,7 +65,7 @@ const f32 ONE_OVER_CONTROL_DT = 1.0f/CONTROL_DT;
 
 const s32 MAX_FACE_FRAME_SIZE = 1024;
 
-const u32 AUDIO_SAMPLE_SIZE = 800;
+const u32 AUDIO_SAMPLE_SIZE = 400;
 
 
 /***************************************************************************

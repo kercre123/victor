@@ -12,7 +12,7 @@
 #include "wheelController.h"
 #include "steeringController.h"
 #include "speedController.h"
-
+#include "timeProfiler.h"
 
 #define DEBUG_ANIMATION_CONTROLLER 0
 
@@ -568,6 +568,7 @@ namespace AnimationController {
       // If AudioReady() returns true, we are ready to move to the next keyframe
       if(HAL::AudioReady())
       {
+        START_TIME_PROFILE(Anim, AUDIOPLAY);
         
         // Next thing in the buffer should be audio or silence:
         switch(GetTypeIndicator())
@@ -576,7 +577,7 @@ namespace AnimationController {
           {
             Messages::AnimKeyFrame_AudioSilence msg;
             GetFromBuffer((u8*)&msg, sizeof(msg));
-            HAL::AudioPlayFrame(0, NULL);
+            HAL::AudioPlaySilence();
             break;
           }
           case Messages::AnimKeyFrame_AudioSample_ID:
@@ -584,9 +585,9 @@ namespace AnimationController {
             Messages::AnimKeyFrame_AudioSample msg;
             GetFromBuffer((u8*)&msg, sizeof(msg));
             if(_tracksToPlay & AUDIO_TRACK) {
-              HAL::AudioPlayFrame(msg.predictor, msg.sample);
+              HAL::AudioPlayFrame(&msg);
             } else {
-              HAL::AudioPlayFrame(0, NULL);
+              HAL::AudioPlaySilence();
             }
             break;
           }
@@ -598,6 +599,8 @@ namespace AnimationController {
 #       if DEBUG_ANIMATION_CONTROLLER
         _currentTime_ms += 33;
 #       endif
+        
+        MARK_NEXT_TIME_PROFILE(Anim, WHILE);
         
         // Keep reading until we hit another audio type, then rewind one
         // (The rewind is a little icky, but I'm leaving it for now)
@@ -798,7 +801,7 @@ namespace AnimationController {
               
             default:
             {
-              PRINT("Unexpected message type %d in animation buffer!\n");
+              PRINT("Unexpected message type %d in animation buffer!\n", msgID);
               return RESULT_FAIL;
             }
               
@@ -816,7 +819,12 @@ namespace AnimationController {
                 _numFramesBuffered, _currentBufferPos, _lastBufferPos);
 #         endif
         }
+
+        // Print time profile stats
+        END_TIME_PROFILE(Anim);
+        PERIODIC_PRINT_AND_RESET_TIME_PROFILE(Anim, 120);
         
+
       } // if(AudioReady())
     } // if(IsReadyToPlay())
     

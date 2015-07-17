@@ -85,8 +85,8 @@ namespace Cozmo {
     
     if(lastResult == RESULT_OK) {
       if(_frames.size() > 1) {
-        auto nextToLastFrame = _frames.rend();
-        --nextToLastFrame;
+        auto nextToLastFrame = _frames.rbegin();
+        ++nextToLastFrame;
         
         if(_frames.back().GetTriggerTime() <= nextToLastFrame->GetTriggerTime()) {
           PRINT_NAMED_ERROR("Animation.Track.AddKeyFrame.BadTriggerTime",
