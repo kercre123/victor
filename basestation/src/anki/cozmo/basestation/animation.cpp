@@ -240,22 +240,6 @@ _blinkTrack.__METHOD__()
       _deviceAudioTrack.GetCurrentKeyFrame().PlayOnDevice();
       _deviceAudioTrack.MoveToNextKeyFrame();
     }
-
-#   ifndef ANKI_IOS_BUILD
-#   if PLAY_ROBOT_AUDIO_ON_DEVICE
-    if(_robotAudioTrack.HasFramesLeft())
-    {
-      const RobotAudioKeyFrame& audioKF = _robotAudioTrack.GetCurrentKeyFrame();
-      if((_playedRobotAudio_ms < _startTime_ms + audioKF.GetTriggerTime()) &&
-         audioKF.IsTimeToPlay(_startTime_ms,  currTime_ms))
-      {
-        // TODO: Insert some kind of small delay to simulate latency?
-        SoundManager::getInstance()->Play(audioKF.GetSoundName());
-        _playedRobotAudio_ms = currTime_ms;
-      }
-    }
-#   endif
-#   endif
     
     // FlowControl: Don't send frames if robot has no space for them, and be
     // careful not to overwhel reliable transport either, in terms of bytes or
@@ -403,6 +387,22 @@ _blinkTrack.__METHOD__()
       }
       
     } // while(numFramesToSend > 0)
+    
+#   ifndef ANKI_IOS_BUILD
+#   if PLAY_ROBOT_AUDIO_ON_DEVICE
+    if(_robotAudioTrack.HasFramesLeft())
+    {
+      const RobotAudioKeyFrame& audioKF = _robotAudioTrack.GetCurrentKeyFrame();
+      if((_playedRobotAudio_ms < _startTime_ms + audioKF.GetTriggerTime()) &&
+         audioKF.IsTimeToPlay(_startTime_ms,  currTime_ms))
+      {
+        // TODO: Insert some kind of small delay to simulate latency?
+        SoundManager::getInstance()->Play(audioKF.GetSoundName());
+        _playedRobotAudio_ms = currTime_ms;
+      }
+    }
+#   endif
+#   endif
     
     if(IsFinished()) {
       // Send an end-of-animation keyframe
