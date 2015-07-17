@@ -87,7 +87,17 @@ int main(void)
     {
       Head::spokenTo = false;
     }
+    
+    Motors::update();
+    BatteryUpdate();
+    #ifndef BACKPACK_DEMO
+    Lights::manage(g_dataToBody.backpackColors);
+    #endif
 
+    // Update at 200Hz (5ms delay)
+    while ((GetCounter() - timerStart) < CYCLES_MS(35.0f / 7.0f))
+      ;
+ 
     // Verify the source
     if (g_dataToBody.common.source != SPI_SOURCE_HEAD)
     {
@@ -108,15 +118,5 @@ int main(void)
         Motors::setPower(i, g_dataToBody.motorPWM[i]);
       }
     }
-    
-    Motors::update();
-    BatteryUpdate();
-    #ifndef BACKPACK_DEMO
-    Lights::manage(g_dataToBody.backpackColors);
-    #endif
-
-    // Update at 200Hz (5ms delay)
-    while ((GetCounter() - timerStart) < CYCLES_MS(35.0f / 7.0f))
-      ;
   }
 }
