@@ -12,7 +12,7 @@
 #include "wheelController.h"
 #include "steeringController.h"
 #include "speedController.h"
-
+#include "timeProfiler.h"
 
 #define DEBUG_ANIMATION_CONTROLLER 0
 
@@ -568,6 +568,7 @@ namespace AnimationController {
       // If AudioReady() returns true, we are ready to move to the next keyframe
       if(HAL::AudioReady())
       {
+        START_TIME_PROFILE(Anim, AUDIOPLAY);
         
         // Next thing in the buffer should be audio or silence:
         switch(GetTypeIndicator())
@@ -598,6 +599,8 @@ namespace AnimationController {
 #       if DEBUG_ANIMATION_CONTROLLER
         _currentTime_ms += 33;
 #       endif
+        
+        MARK_NEXT_TIME_PROFILE(Anim, WHILE);
         
         // Keep reading until we hit another audio type, then rewind one
         // (The rewind is a little icky, but I'm leaving it for now)
@@ -816,7 +819,16 @@ namespace AnimationController {
                 _numFramesBuffered, _currentBufferPos, _lastBufferPos);
 #         endif
         }
-        
+
+        // Print time profile stats
+        END_TIME_PROFILE(Anim);
+        static u32 cnt =0;
+        if (++cnt > 120) {
+          PRINT_TIME_PROFILE_STATS(Anim);
+          RESET_TIME_PROFILE(Anim);
+          cnt = 0;
+        }
+
       } // if(AudioReady())
     } // if(IsReadyToPlay())
     
