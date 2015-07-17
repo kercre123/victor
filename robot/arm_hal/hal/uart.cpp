@@ -19,7 +19,7 @@
 #define DMA_CHANNEL_TX  DMA_Channel_4
 #define DMA_IRQ_TX      DMA2_Stream7_IRQn
 
-// This enables a blocking UART for HAL/board bring-up use only - when all else is broken
+// This enables "boardPrintf" - a blocking UART for HAL/board bring-up use only - when all else is broken
 // Because it is very slow and blocking, it is not suitable for general use and tends to screw up timing
 // It uses TP13 (PC10) on headboard 4.0
 //#define ENABLE_BOARD_UART
@@ -184,7 +184,7 @@ namespace Anki
         
 #ifdef ENABLE_BOARD_UART
         #define BUART USART3        
-        #define BBAUDRATE 1000000
+        #define BBAUDRATE 3000000
         
         GPIO_PIN_SOURCE(BTX, GPIOC, 10);
         
@@ -203,6 +203,7 @@ namespace Anki
         
         // Configure the UART for the appropriate baudrate
         USART_Cmd(BUART, DISABLE);
+        USART_OverSampling8Cmd(BUART, ENABLE);
         USART_InitStructure.USART_BaudRate = BBAUDRATE;
         USART_Init(BUART, &USART_InitStructure);
         USART_Cmd(BUART, ENABLE);
@@ -363,7 +364,17 @@ namespace Anki
 extern "C" {
   void board_printf(const char *format, ...)
   {
-#ifdef ENABLE_BOARD_UART     
+#ifdef ENABLE_BOARD_UART  
+    using namespace Anki::Cozmo::HAL;    
+    static int stamping = 0;
+    
+    if (!stamping)
+    {
+      stamping = 1;
+      board_printf(" %3dms: ", (GetMicroCounter() / 1000) % 1000);
+      stamping = 0;
+    }
+    
     // Build the printf into a local buffer and zero-terminate it
     char buffer[256];
     va_list argptr;

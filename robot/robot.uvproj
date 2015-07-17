@@ -758,6 +758,11 @@
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\eyeController.cpp</FilePath>
             </File>
+            <File>
+              <FileName>timeProfiler.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\timeProfiler.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -1645,6 +1650,11 @@
               <FileName>eyeController.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\eyeController.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>timeProfiler.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\timeProfiler.cpp</FilePath>
             </File>
           </Files>
         </Group>

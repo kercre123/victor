@@ -994,9 +994,13 @@ namespace Anki {
       return audioReadyForFrame_;
     }
     
+    void HAL::AudioPlaySilence() {
+      AudioPlayFrame(nullptr);
+    }
+    
     // Play one frame of audio or silence
     // @param frame - a pointer to an audio frame or NULL to play one frame of silence
-    void HAL::AudioPlayFrame(s16 predictor, u8* frame)
+    void HAL::AudioPlayFrame(Messages::AnimKeyFrame_AudioSample *msg)
     {
       if (audioEndTime_ == 0) {
         audioEndTime_ = HAL::GetTimeStamp();

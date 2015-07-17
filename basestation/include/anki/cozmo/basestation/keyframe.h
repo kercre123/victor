@@ -166,7 +166,7 @@ namespace Anki {
     class RobotAudioKeyFrame : public IKeyFrame
     {
     public:
-      RobotAudioKeyFrame() { }
+      RobotAudioKeyFrame() : _selectedAudioIndex(0), _sampleIndex(0) { }
       
       virtual RobotMessage* GetStreamMessage() override;
       
@@ -175,15 +175,22 @@ namespace Anki {
         return ClassName;
       }
       
-      const std::string& GetSoundName() const { return _audioName; }
+      const std::string& GetSoundName() const;
       
     protected:
       virtual Result SetMembersFromJson(const Json::Value &jsonRoot) override;
       
     private:
-      std::string _audioName;
       
-      s32 _numSamples;
+      Result AddAudioRef(const std::string& name);
+      
+      struct AudioRef {
+        std::string name;
+        s32 numSamples;
+      };
+      std::vector<AudioRef> _audioReferences;
+      s32 _selectedAudioIndex;
+      
       s32 _sampleIndex;
       
       MessageAnimKeyFrame_AudioSample  _audioSampleMsg;
@@ -348,7 +355,7 @@ namespace Anki {
       
     private:
       
-      s32 _duration_ms;
+      s32 _durationTime_ms;
       s32 _currentTime_ms;
       
       MessageAnimKeyFrame_BodyMotion _streamMsg;
