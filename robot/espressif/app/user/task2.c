@@ -13,6 +13,8 @@
 #define task2QueueLen 8 ///< Maximum number of task 2 subtasks which can be in the queue
 os_event_t task2Queue[task2QueueLen]; ///< Memory for the task 2 queue
 
+static bool i2sStarted;
+
 /// Callback to process incoming radio data
 void clientRecvCallback(char* data, unsigned short len)
 {
@@ -25,6 +27,11 @@ void clientRecvCallback(char* data, unsigned short len)
     if (i2sQueueTx((I2SPIPayload*)data, TagAudioData) == false)
     {
       os_printf("Couldn't queue I2SPI tx\r\n");
+    }
+    if (i2sStarted == false)
+    {
+      i2sStarted = true;
+      i2sStart();
     }
   }
 }
@@ -70,6 +77,7 @@ int8_t ICACHE_FLASH_ATTR task2Init(void)
   }
   else
   {
+    i2sStarted = false;
     return 0;
   }
 }
