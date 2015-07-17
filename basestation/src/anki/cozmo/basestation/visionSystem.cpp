@@ -424,6 +424,7 @@ namespace Cozmo {
     embeddedParams.refine_quadRefinementMaxCornerChange = parameters.quadRefinementMaxCornerChange;
     embeddedParams.refine_quadRefinementMinCornerChange = parameters.quadRefinementMinCornerChange;
     embeddedParams.returnInvalidMarkers = parameters.keepUnverifiedMarkers;
+    embeddedParams.doCodeExtraction = true;
     
     const Result result = DetectFiducialMarkers(grayscaleImage,
                                                 markers,

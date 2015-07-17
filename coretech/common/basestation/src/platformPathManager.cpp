@@ -64,7 +64,7 @@ namespace Anki {
     _scopePrefixes[Config]    = std::string(QUOTE(SYSTEM_ROOT_PATH)) + "/resources/basestation/config/";
     _scopePrefixes[Animation] = std::string(QUOTE(SYSTEM_ROOT_PATH)) + "/resources/basestation/animations/";
     _scopePrefixes[Sound]     = std::string(QUOTE(SYSTEM_ROOT_PATH)) + "/../products-cozmo-assets/sounds/";
-    _scopePrefixes[Resource]  = std::string(QUOTE(SYSTEM_ROOT_PATH)) + "/";
+    _scopePrefixes[Resource]  = std::string(QUOTE(SYSTEM_ROOT_PATH)) + "/resources/";
     
     _scopePrefixes[FaceAnimation] = std::string(QUOTE(SYSTEM_ROOT_PATH)) + "/../products-cozmo-assets/faceAnimations/";
     

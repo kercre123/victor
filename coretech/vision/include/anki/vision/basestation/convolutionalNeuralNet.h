@@ -29,11 +29,14 @@ namespace Vision {
     
     Result Run(const cv::Mat& img, std::vector<float>& output);
     
+    Result Run(const cv::Mat& img, size_t& classLabel, std::string& className);
+    
   protected:
     
     bool _isLoaded;
     
-    std::vector<ICNNLayer*> _layers;
+    std::vector<ICNNLayer*>  _layers;
+    std::vector<std::string> _classNames;
     
   }; // class ConvolutionalNeuralNet
   

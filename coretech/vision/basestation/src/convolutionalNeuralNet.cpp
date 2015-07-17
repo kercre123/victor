@@ -7,6 +7,7 @@
 #include "json/json.h"
 
 #include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
 
 // Includes for vl CNN stuff
 #include <nnconv.hpp>
@@ -31,8 +32,9 @@ namespace Vision {
   class ICNNLayer
   {
   public:
+    ICNNLayer() : verbosity(0) { }
     virtual ~ICNNLayer() { }
-    virtual Result Load(std::string filename) = 0;
+    virtual Result Load(const std::string& dirname, const Json::Value& jsonNode) = 0;
     virtual Result Run(const vl::Tensor& inputData) = 0;
     
     vl::Tensor const& GetOutput() const { return _output; }
@@ -43,7 +45,7 @@ namespace Vision {
     
     vl::Tensor _output;
     
-    int verbosity = 0 ;
+    int verbosity;
     
     Result InitOutput(vl::TensorGeometry& outputGeom);
     
@@ -60,7 +62,7 @@ namespace Vision {
   {
   public:
     virtual ~ConvLayer() { }
-    virtual Result Load(std::string filename) override;
+    virtual Result Load(const std::string& dirname, const Json::Value& jsonNode) override;
     virtual Result Run(const vl::Tensor& inputData) override;
     
   private:
@@ -72,12 +74,12 @@ namespace Vision {
     std::vector<float> _filterData;
     std::vector<float> _biasData;
 
-    int strideX = 1 ;
-    int strideY = 1 ;
-    int padLeft = 0 ;
-    int padRight = 0 ;
-    int padTop = 0 ;
-    int padBottom = 0 ;
+    int strideX ;
+    int strideY ;
+    int padLeft ;
+    int padRight;
+    int padTop  ;
+    int padBottom;
   };
 
 
@@ -85,15 +87,14 @@ namespace Vision {
   {
   public:
     virtual ~NormLayer() { }
-    virtual Result Load(std::string filename) override;
+    virtual Result Load(const std::string& dirname, const Json::Value& jsonNode) override;
     virtual Result Run(const vl::Tensor& inputData) override;
     
   private:
-    size_t _normDepth ;
-    double _normAlpha ;
-    double _normKappa ;
-    double _normBeta ;
-    
+    size_t normDepth ;
+    double normAlpha ;
+    double normKappa ;
+    double normBeta ;
     
   };
 
@@ -101,26 +102,26 @@ namespace Vision {
   {
   public:
     virtual ~PoolLayer() { }
-    virtual Result Load(std::string filename) override;
+    virtual Result Load(const std::string& dirname, const Json::Value& jsonNode) override;
     virtual Result Run(const vl::Tensor& inputData) override;
     
   private:
-    int poolWidth ;
-    int poolHeight ;
-    int strideX = 1 ;
-    int strideY = 1 ;
-    int padLeft = 0 ;
-    int padRight = 0 ;
-    int padTop = 0 ;
-    int padBottom = 0 ;
-    vl::PoolingMethod method = vl::vlPoolingMax ;
+    int poolWidth;
+    int poolHeight;
+    int strideX;
+    int strideY;
+    int padLeft;
+    int padRight;
+    int padTop;
+    int padBottom;
+    vl::PoolingMethod poolMethod;
   };
 
   class ReLULayer : public ICNNLayer
   {
   public:
     ~ReLULayer() { }
-    virtual Result Load(std::string filename) override;
+    virtual Result Load(const std::string& dirname, const Json::Value& jsonNode) override;
     virtual Result Run(const vl::Tensor& inputData) override;
     
   };
@@ -170,13 +171,16 @@ namespace Vision {
       assert(layer != nullptr);
       delete layer;
     }
+    
+    context.clear();
   }
 
-  Result ConvolutionalNeuralNet::Load(std::string jsonFilename)
+  Result ConvolutionalNeuralNet::Load(std::string dirname)
   {
     Json::Reader reader;
     Json::Value  jsonRoot;
     
+    const std::string jsonFilename(dirname + "/definition.json");
     std::ifstream jsonFile(jsonFilename);
     if(false == reader.parse(jsonFile, jsonRoot)) {
       PRINT_NAMED_ERROR("ConvolutionalNeuralNet.Load",
@@ -198,23 +202,20 @@ namespace Vision {
     
     Json::Value& jsonCNN = jsonRoot["CNN"];
     
-    if(!jsonCNN.isArray()) {
+    if(!jsonCNN.isMember("Layers") || !jsonCNN["Layers"].isArray()) {
       PRINT_NAMED_ERROR("ConvolutionalNeuralNet.Load",
-                        "Json 'CNN' node should be an array of layers.\n");
+                        "Json 'CNN' node should have a 'Layers' array node.\n");
       return RESULT_FAIL;
     }
     
-    for(s32 i=0; i<jsonCNN.size(); ++i) {
-      Json::Value& jsonLayer = jsonCNN[i];
+    Json::Value& jsonLayers = jsonCNN["Layers"];
+    
+    for(s32 i=0; i<jsonLayers.size(); ++i) {
+      Json::Value& jsonLayer = jsonLayers[i];
       
       if(!jsonLayer.isMember("Type")) {
         PRINT_NAMED_ERROR("ConvolutionalNeuralNet.Load",
                           "Layer %d is missing a type string.\n", i);
-        return RESULT_FAIL;
-      }
-      if(!jsonLayer.isMember("DataFilename")) {
-        PRINT_NAMED_ERROR("ConvolutionalNeuralNet.Load",
-                          "Layer %d is missing a data filename string.\n", i);
         return RESULT_FAIL;
       }
       
@@ -226,7 +227,7 @@ namespace Vision {
         return RESULT_FAIL;
       }
       
-      Result loadResult = newLayer->Load(jsonLayer["DataFilename"].asString());
+      Result loadResult = newLayer->Load(dirname, jsonLayer);
       
       if(loadResult != RESULT_OK) {
         return RESULT_FAIL;
@@ -235,17 +236,72 @@ namespace Vision {
       _layers.push_back(newLayer);
     }
     
-    jsonFile.close();
+    if(jsonCNN.isMember("Classes"))
+    {
+      Json::Value& jsonClasses = jsonCNN["Classes"];
+      if(!jsonClasses.isArray()) {
+        PRINT_NAMED_ERROR("ConvolutionalNeuralNet.Load",
+                          "Found 'Classes' node, but it is not an array.\n");
+      }
+      
+      for(s32 i=0; i<jsonClasses.size(); ++i) {
+        _classNames.push_back(jsonClasses[i].asString());
+      }
+    }
+
     
-    PRINT_NAMED_INFO("ConvolutionalNeuralNet.Load", "Loaded %lu CNN layers.\n", _layers.size());
+    PRINT_NAMED_INFO("ConvolutionalNeuralNet.Load",
+                     "Loaded %lu CNN layers & %lu class names.\n",
+                     _layers.size(), _classNames.size());
     
     _isLoaded = true;
     
     return RESULT_OK;
   } // Load()
 
+  Result ConvolutionalNeuralNet::Run(const cv::Mat& img, size_t& classLabel, std::string& className)
+  {
+    classLabel = 0;
+    className = "UNKNOWN";
+    
+    std::vector<float> output;
+    Result runResult = Run(img, output);
+    if(runResult != RESULT_OK) {
+      // No error message? Just rely on the other Run() to print its own...
+      return runResult;
+    }
+    
+    // Find max output and return its index
+    float maxVal = std::numeric_limits<float>::min();
+    for(s32 i=0; i<output.size(); ++i) {
+      if(output[i] > maxVal) {
+        classLabel = i;
+        maxVal = output[i];
+      }
+    }
+    
+    // If we also have classnames, return the corresponding classname as well
+    if(!_classNames.empty())
+    {
+      if(classLabel >= _classNames.size()) {
+        PRINT_NAMED_ERROR("ConvolutionalNeuralNet.Run.BadLabel",
+                          "Max classLabel out of range for given class names.\n");
+        return RESULT_FAIL;
+      }
+      className = _classNames[classLabel];
+    }
+    
+    return RESULT_OK;
+  }
+  
+  
   Result ConvolutionalNeuralNet::Run(const cv::Mat &img, std::vector<float> &output)
   {
+    if(!_isLoaded) {
+      PRINT_NAMED_ERROR("ConvolutionalNeuralNet.Run.NotLoaded", "CNN not yet loaded!\n");
+      return RESULT_FAIL;
+    }
+    
     if(img.channels() > 1) {
       PRINT_NAMED_ERROR("ConvolutionalNeuralNet.Run", "Color image data not yet supported.\n");
       return RESULT_FAIL;
@@ -281,6 +337,7 @@ namespace Vision {
       Result layerResult = layer->Run(*lastOutput);
       
       if(layerResult != RESULT_OK) {
+        PRINT_NAMED_ERROR("ConvolutionalNeuralNet.Run.LayerFail", "Layer returned failure.\n");
         return layerResult;
       }
       
@@ -306,15 +363,15 @@ namespace Vision {
 # define READ(__NAME__) do { file.read((char*)&__NAME__, sizeof(__NAME__)); \
 if(file.bad()) { PRINT_NAMED_ERROR("FileREAD.Failure", "%s.\n", QUOTE(__NAME__)); return RESULT_FAIL; } } while(0)
   
-  Result ReadTensor(std::ifstream& file, vl::Tensor& tensor, std::vector<float>& memory)
+  Result ReadTensor(std::ifstream& file, vl::Tensor& tensor, std::vector<float>& memory,
+                    vl::index_t height, vl::index_t width, vl::index_t depth, vl::index_t size)
   {
-    vl::index_t height, width, depth, size;
-    
+/*
     READ(height);
     READ(width);
     READ(depth);
     READ(size);
-    
+  */
     vl::TensorGeometry geom(height, width, depth, size);
     
     memory.resize(geom.getNumElements());
@@ -330,23 +387,20 @@ if(file.bad()) { PRINT_NAMED_ERROR("FileREAD.Failure", "%s.\n", QUOTE(__NAME__))
     return RESULT_OK;
   }
   
+#define GET_FROM_JSON(__NAME__) do { \
+if(!JsonTools::GetValueOptional(jsonNode, QUOTE(__NAME__), __NAME__)) { \
+  PRINT_NAMED_ERROR("ICNNLayer.Load.MissingField", "Field '%s' not found.\n", QUOTE(__NAME__)); \
+  return RESULT_FAIL; \
+} } while(0);
   
-  Result ConvLayer::Load(std::string filename)
+  Result ConvLayer::Load(const std::string& dirname, const Json::Value& jsonNode)
   {
-    std::ifstream file(filename, std::ios::binary);
-    
-    if(!file.is_open()) {
-      PRINT_NAMED_ERROR("ConvLayer.Load.FileOpenFailure",
-                        "Could not open file %s.\n", filename.c_str());
-      return RESULT_FAIL;
-    }
-    
-    READ(strideX);
-    READ(strideY);
-    READ(padLeft);
-    READ(padRight);
-    READ(padTop);
-    READ(padBottom);
+    GET_FROM_JSON(strideX);
+    GET_FROM_JSON(strideY);
+    GET_FROM_JSON(padLeft);
+    GET_FROM_JSON(padRight);
+    GET_FROM_JSON(padTop);
+    GET_FROM_JSON(padBottom);
     
     /* basic argument checks */
     if (strideX < 1 || strideY < 1) {
@@ -361,18 +415,42 @@ if(file.bad()) { PRINT_NAMED_ERROR("FileREAD.Failure", "%s.\n", QUOTE(__NAME__))
       return RESULT_FAIL;
     }
     
+    vl::index_t weightHeight, weightWidth, weightDepth, weightSize;
+    
+    GET_FROM_JSON(weightHeight);
+    GET_FROM_JSON(weightWidth);
+    GET_FROM_JSON(weightDepth);
+    GET_FROM_JSON(weightSize);
+    
     Result lastResult = RESULT_OK;
     
-    lastResult = ReadTensor(file, _filters, _filterData);
+    std::string DataFilename;
+    GET_FROM_JSON(DataFilename);
+    std::ifstream file(dirname + "/" + DataFilename, std::ios::binary);
+    
+    if(!file.is_open()) {
+      PRINT_NAMED_ERROR("ConvLayer.Load.FileOpenFailure",
+                        "Could not open file %s.\n", DataFilename.c_str());
+      return RESULT_FAIL;
+    }
+    
+    lastResult = ReadTensor(file, _filters, _filterData, weightHeight, weightWidth, weightDepth, weightSize);
     if(lastResult != RESULT_OK) {
       return lastResult;
     }
     
-    lastResult = ReadTensor(file, _biases, _biasData);
+    vl::index_t biasHeight, biasWidth;
+    
+    GET_FROM_JSON(biasHeight);
+    GET_FROM_JSON(biasWidth);
+    
+    lastResult = ReadTensor(file, _biases, _biasData, biasHeight, biasWidth, 1, 1);
     if(lastResult != RESULT_OK) {
       return lastResult;
     }
    
+    file.close();
+    
     return RESULT_OK;
   }
   
@@ -534,25 +612,27 @@ if(file.bad()) { PRINT_NAMED_ERROR("FileREAD.Failure", "%s.\n", QUOTE(__NAME__))
 #pragma mark -
 #pragma mark PoolLayer Implementation
   
-  Result PoolLayer::Load(std::string filename)
+  Result PoolLayer::Load(const std::string& dirname, const Json::Value& jsonNode)
   {
-    std::ifstream file(filename, std::ios::binary);
+    GET_FROM_JSON(poolWidth);
+    GET_FROM_JSON(poolHeight);
+    GET_FROM_JSON(strideX);
+    GET_FROM_JSON(strideY);
+    GET_FROM_JSON(padLeft);
+    GET_FROM_JSON(padRight);
+    GET_FROM_JSON(padTop);
+    GET_FROM_JSON(padBottom);
     
-    if(!file.is_open()) {
-      PRINT_NAMED_ERROR("PoolLayer.Load.FileOpenFailure",
-                        "Could not open file %s.\n", filename.c_str());
+    std::string method;
+    GET_FROM_JSON(method);
+    if(method == "max") {
+      poolMethod = vl::vlPoolingMax;
+    } else if(method == "avg" || method == "mean") {
+      poolMethod = vl::vlPoolingAverage;
+    } else {
+      PRINT_NAMED_ERROR("PoolLayer.Load.BadMethod", "Unrecognized pooling method '%s'.\n", method.c_str());
       return RESULT_FAIL;
     }
-    
-    READ(poolWidth);
-    READ(poolHeight);
-    READ(strideX);
-    READ(strideY);
-    READ(padLeft);
-    READ(padRight);
-    READ(padTop);
-    READ(padBottom);
-    READ(method);
     
     if (strideX < 1 || strideY < 1) {
       PRINT_NAMED_ERROR("PoolLayer.Load.BadStride", "At least one element of STRIDE is smaller than one.") ;
@@ -622,7 +702,7 @@ if(file.bad()) { PRINT_NAMED_ERROR("FileREAD.Failure", "%s.\n", QUOTE(__NAME__))
     
     error = vl::nnpooling_forward(context,
                                   _output, inputData,
-                                  method,
+                                  poolMethod,
                                   poolHeight, poolWidth,
                                   strideY, strideX,
                                   padTop, padBottom, padLeft, padRight) ;
@@ -641,22 +721,14 @@ if(file.bad()) { PRINT_NAMED_ERROR("FileREAD.Failure", "%s.\n", QUOTE(__NAME__))
 #pragma mark NormLayer Implementation
 
   
-  Result NormLayer::Load(std::string filename)
+  Result NormLayer::Load(const std::string& dirname, const Json::Value& jsonNode)
   {
-    std::ifstream file(filename, std::ios::binary);
+    GET_FROM_JSON(normDepth);
+    GET_FROM_JSON(normAlpha);
+    GET_FROM_JSON(normKappa);
+    GET_FROM_JSON(normBeta);
     
-    if(!file.is_open()) {
-      PRINT_NAMED_ERROR("NormLayer.Load.FileOpenFailure",
-                        "Could not open file %s.\n", filename.c_str());
-      return RESULT_FAIL;
-    }
-    
-    READ(_normDepth);
-    READ(_normAlpha);
-    READ(_normKappa);
-    READ(_normBeta);
-    
-    if (_normDepth < 1) {
+    if (normDepth < 1) {
       PRINT_NAMED_ERROR("NormLayer.Load.BadDepth", "The normalization depth is smaller than 1.") ;
       return RESULT_FAIL;
     }
@@ -676,7 +748,7 @@ if(file.bad()) { PRINT_NAMED_ERROR("FileREAD.Failure", "%s.\n", QUOTE(__NAME__))
     if (verbosity > 0) {
       PRINT_NAMED_INFO("vl_nnnormalize:", "mode %s; %s\n",  (inputData.getMemoryType()==vl::GPU)?"gpu":"cpu", "forward") ;
       PRINT_NAMED_INFO("vl_nnnormalize:", "(depth,kappa,alpha,beta): (%lu,%g,%g,%g)\n",
-                _normDepth, _normKappa, _normAlpha, _normBeta) ;
+                normDepth, normKappa, normAlpha, normBeta) ;
 //      vl::print("vl_nnnormalize: data: ", data) ;
 //      if (backMode) {
 //        vl::print("vl_nnnormalize: derOutput: ", derOutput) ;
@@ -688,7 +760,7 @@ if(file.bad()) { PRINT_NAMED_ERROR("FileREAD.Failure", "%s.\n", QUOTE(__NAME__))
     
     vl::Error error = vl::nnnormalize_forward(context,
                                               _output, inputData,
-                                              _normDepth, _normKappa, _normAlpha, _normBeta) ;
+                                              normDepth, normKappa, normAlpha, normBeta) ;
     
     
     /* -------------------------------------------------------------- */
@@ -707,7 +779,7 @@ if(file.bad()) { PRINT_NAMED_ERROR("FileREAD.Failure", "%s.\n", QUOTE(__NAME__))
 #pragma mark -
 #pragma mark Rectified Linear Unit (ReLU) Layer Implementation
   
-  Result ReLULayer::Load(std::string filename)
+  Result ReLULayer::Load(const std::string& dirname, const Json::Value& jsonNode)
   {
     return RESULT_OK;
   }

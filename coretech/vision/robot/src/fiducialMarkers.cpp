@@ -22,10 +22,13 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include <assert.h>
 
-// For now, piggyback the probe locations for CNN off Nearest Neighbor
 #if RECOGNITION_METHOD == RECOGNITION_METHOD_NEAREST_NEIGHBOR || RECOGNITION_METHOD == RECOGNITION_METHOD_CNN
 #  include "anki/cozmo/robot/nearestNeighborLibraryData.h"
 #endif 
+
+#if RECOGNITION_METHOD == RECOGNITION_METHOD_CNN
+#  include "anki/common/basestation/platformPathManager.h"
+#endif
 
 #define INITIALIZE_WITH_DEFINITION_TYPE 0
 //#define NUM_BITS 25 // TODO: make general
@@ -517,32 +520,30 @@ namespace Anki
     }
 
     VisionMarker::VisionMarker()
+    : corners(Point<f32>(-1.0f,-1.0f), Point<f32>(-1.0f,-1.0f), Point<f32>(-1.0f,-1.0f), Point<f32>(-1.0f,-1.0f))
+    , validity(UNKNOWN)
+    , markerType(Anki::Vision::MARKER_UNKNOWN)
+    , observedOrientation(0)
     {
-      this->corners = Quadrilateral<f32>(Point<f32>(-1.0f,-1.0f), Point<f32>(-1.0f,-1.0f), Point<f32>(-1.0f,-1.0f), Point<f32>(-1.0f,-1.0f));
-      this->validity = UNKNOWN;
-      this->markerType = Anki::Vision::MARKER_UNKNOWN;
-      this->observedOrientation = 0;
-
       Initialize();
     }
 
     VisionMarker::VisionMarker(const Quadrilateral<s16> &corners, const ValidityCode validity)
+    : validity(validity)
+    , markerType(Anki::Vision::MARKER_UNKNOWN)
+    , observedOrientation(0)
     {
       this->corners.SetCast<s16>(corners);
-      this->validity = validity;
-      this->markerType = Anki::Vision::MARKER_UNKNOWN;
-      this->observedOrientation = 0;
-
+      
       Initialize();
     } // VisionMarker::VisionMarker()
 
     VisionMarker::VisionMarker(const Quadrilateral<f32> &corners, const ValidityCode validity)
+    : corners(corners)
+    , validity(UNKNOWN)
+    , markerType(Anki::Vision::MARKER_UNKNOWN)
+    , observedOrientation(0)
     {
-      this->corners = corners;
-      this->validity = validity;
-      this->markerType = Anki::Vision::MARKER_UNKNOWN;
-      this->observedOrientation = 0;
-
       Initialize();
     }
 
@@ -613,7 +614,7 @@ namespace Anki
                                                            ProbeCenters_X, ProbeCenters_Y,
                                                            ProbePoints_X,  ProbePoints_Y,
                                                            NUM_PROBE_POINTS,
-                                                           NN_NUM_FRACTIONAL_BITS);
+                                                           NUM_FRACTIONAL_BITS);
       
       /*
       // HoG version:
@@ -636,8 +637,13 @@ namespace Anki
     Vision::ConvolutionalNeuralNet& VisionMarker::GetCNN()
     {
       static Vision::ConvolutionalNeuralNet cnn;
-      if(!cnn.IsLoaded()) {
-        cnn.Load("path/to/cnn");
+      if(!cnn.IsLoaded()) { 
+        const std::string cnnDir = PREPEND_SCOPED_PATH(Resource, "basestation/visionMarkerCNN");
+        Result loadResult = cnn.Load(cnnDir);
+
+        AnkiConditionalError(loadResult == RESULT_OK,
+                             "VisionMarker.GetCNN.LoadFailed",
+                             "Failed to load CNN from '%s'.\n", cnnDir.c_str());
       }
       return cnn;
     }
@@ -647,7 +653,7 @@ namespace Anki
     
     void VisionMarker::Initialize()
     {     
-#     if RECOGNITION_METHOD == RECOGNITION_METHOD_NEAREST_NEIGHBOR
+#     if RECOGNITION_METHOD == RECOGNITION_METHOD_DECISION_TREES
       
       if(VisionMarker::areTreesInitialized == false) {
         using namespace VisionMarkerDecisionTree;
@@ -663,20 +669,18 @@ namespace Anki
                                                                             NUM_PROBE_POINTS, NULL, 0);
         }
         
-        _numFracBits = GetNearestNeighborLibrary().GetNumFractionalBits();
-        
         VisionMarker::areTreesInitialized = true;
       } // IF trees initialized
 
-#     elif RECOGNITION_METHOD == RECOGNITION_METHOD_DECISION_TREES
+#     elif RECOGNITION_METHOD == RECOGNITION_METHOD_NEAREST_NEIGHBOR
 
-      _numFracBits = VisionMarker::multiClassTrees[0].get_numFractionalBits();
-
+      // Nothing to do here?
+      
 #     elif RECOGNITION_METHOD == RECOGNITION_METHOD_CNN
     
-      _probeValues = cv::Mat_<u8>(1, VisionMarker::NUM_PROBES);
+      // Nothing to do here?
       
-#     endif // #if RECOGNITION_METHOD == RECOGNITION_METHOD_NEAREST_NEIGHBOR
+#     endif // #if RECOGNITION_METHOD == ?
       
     }
     
@@ -787,15 +791,15 @@ namespace Anki
       // TODO: Make this a member of the class and pre-allocate it?
       cv::Mat_<s32> _probeFiltering;
       
-      cv::Mat_<u8> temp(32,32, probeValues.data);
+      cv::Mat_<u8> temp(VisionMarker::GRIDSIZE, VisionMarker::GRIDSIZE, probeValues.data);
       //cv::imshow("Original ProbeValues", temp);
       
       // TODO: Would it be faster to box filter and subtract it from the original?
       static cv::Mat_<s16> kernel;
       if(kernel.empty()) {
-        kernel = cv::Mat_<s16>(16,16);
+        kernel = cv::Mat_<s16>(VisionMarker::GRIDSIZE/2,VisionMarker::GRIDSIZE/2);
         kernel = -1;
-        kernel(7,7) = 255;
+        kernel(VisionMarker::GRIDSIZE/4-1,VisionMarker::GRIDSIZE/4-1) = VisionMarker::NUM_PROBES/4 - 1;
       }
       cv::filter2D(temp, _probeFiltering, _probeFiltering.depth(), kernel, cv::Point(-1,-1), 0, cv::BORDER_REPLICATE);
       //cv::imshow("ProbeFiltering", _probeFiltering);
@@ -1231,13 +1235,18 @@ namespace Anki
       
       Vision::ConvolutionalNeuralNet& cnn = VisionMarker::GetCNN();
       
-      std::vector<f32> cnnOutput;
+      std::string className;
+      size_t classLabel;
+      static cv::Mat_<u8> _probeValues(VisionMarker::GRIDSIZE, VisionMarker::GRIDSIZE);
       VisionMarker::GetProbeValues(image, homography, _probeValues);
-      Result cnnResult = cnn.Run(_probeValues, cnnOutput);
+      lastResult = cnn.Run(_probeValues, classLabel, className);
       
-      AnkiConditionalErrorAndReturnValue(cnnResult == RESULT_OK, cnnResult,
+      AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
                                          "VisionMarker.Extract.CNNFail",
                                          "ConvolutionalNeuralNet.Run failed.\n");
+      
+      verified = true;
+      selectedLabel = static_cast<OrientedMarkerLabel>(classLabel);
       
 #     endif // USE_NEAREST_NEIGHBOR_RECOGNITION
       

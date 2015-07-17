@@ -27,12 +27,14 @@ For internal use only. No part of this code may be used without a signed non-dis
 // Set to 0 to use (older) one-vs-all verifiers for each class
 #define USE_RED_BLACK_VERIFICATION_TREES 1
 
+// Available marker recognition methods
 #define RECOGNITION_METHOD_DECISION_TREES   0
 #define RECOGNITION_METHOD_NEAREST_NEIGHBOR 1
 #define RECOGNITION_METHOD_CNN              2
 
+// Choose the recognition method here to be one from the above list
 #define RECOGNITION_METHOD RECOGNITION_METHOD_CNN
-
+// Includes required by the various methods
 #if RECOGNITION_METHOD == RECOGNITION_METHOD_NEAREST_NEIGHBOR
 #  include "anki/vision/robot/nearestNeighborLibrary.h"
 #elif RECOGNITION_METHOD == RECOGNITION_METHOD_DECISION_TREES
@@ -187,6 +189,7 @@ namespace Anki
       static const s16 ThresholdBrightProbe_X[];
       static const s16 ThresholdBrightProbe_Y[];
       
+      static const u32 GRIDSIZE;
       static const u32 NUM_PROBES;
       static const s16 ProbeCenters_X[];
       static const s16 ProbeCenters_Y[];
@@ -204,14 +207,14 @@ namespace Anki
         f32& brightValue, f32& darkValue,
         bool& enoughContrast);
 
-#     if RECOGNITION_METHOD == RECOGNITION_METHOD_NEAREST_NEIBHBOR
+#     if RECOGNITION_METHOD == RECOGNITION_METHOD_NEAREST_NEIGHBOR
       static NearestNeighborLibrary& GetNearestNeighborLibrary();
 #     elif RECOGNITION_METHOD == RECOGNITION_METHOD_DECISION_TREES
       static bool areTreesInitialized;
       static FiducialMarkerDecisionTree multiClassTrees[VisionMarkerDecisionTree::NUM_TREES];
 #     elif RECOGNITION_METHOD == RECOGNITION_METHOD_CNN
       static Vision::ConvolutionalNeuralNet& GetCNN();
-      cv::Mat_<u8> _probeValues;
+      //cv::Mat_<u8> _probeValues;
 #     endif
       
     }; // class VisionMarker
