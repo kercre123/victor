@@ -3,9 +3,18 @@ using UnityEngine.UI;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Anki;
+using Anki.Cozmo;
 
+/// <summary>
+/// this component acts as a simple state machine using a GameState enumeration to represent the common features of all cozmo minigames
+///		specific games inherit from this class to enact their own unique features
+/// </summary>
 public class GameController : MonoBehaviour {
 
+	#region NESTED DEFINITIONS
+
+	//add states here only if they belong to ALL games
 	public enum GameState {
 		BUILDING,
 		PRE_GAME,
@@ -14,23 +23,23 @@ public class GameController : MonoBehaviour {
 		Count
 	}
 
+	//associate a time value in seconds with the voice-over audio clip describing it
 	[Serializable]
 	public struct TimerAudio {
 		public int time;
 		public AudioClip sound;
 	}
 
-	public const int STAR_COUNT = 3;
+	#endregion
 
-	[SerializeField] private int currentLevelOverride = -1;
-	[SerializeField] private Text countdownText = null;
-	[SerializeField] private float countdownToStart = 0f;
-	[SerializeField] private AudioClip countdownTickSound;
-	//[SerializeField] protected float maxPlayTime = 0f;
+	#region INSPECTOR FIELDS
+
+	[SerializeField] protected int currentLevelOverride = -1;
+	[SerializeField] protected Text countdownText = null;
+	[SerializeField] protected float countdownToStart = 0f;
+	[SerializeField] protected AudioClip countdownTickSound;
 	[SerializeField] protected TimerAudio[] timerSounds;
 	[SerializeField] protected AudioClip gameStartingIn;
-	//[SerializeField] protected int scoreToWin = 0;
-	//[SerializeField] protected int[] starThresholds = new int[STAR_COUNT];
 	[SerializeField] protected AudioClip starPop;
 	[SerializeField] protected Text textScore = null;
 	[SerializeField] protected Text textError = null;
@@ -54,22 +63,38 @@ public class GameController : MonoBehaviour {
 	[SerializeField] protected float maxStarPop = 1.5f;
 	[SerializeField] protected float minStarPop = 0.3f;
 	[SerializeField] protected bool robotBusyDuringResults = true;
+	[SerializeField] protected float maxEmotionWaitTime = 20f;
 
+	#endregion
 
-	private AudioClip gameOverSound { get { if(win) return stars < winSounds.Length ? winSounds[stars] : null; return loseSound; } }
-	private AudioClip resultsLoopSound { get { if(win) return stars < winLoopSounds.Length ? winLoopSounds[stars] : null; return loseLoopSound; } }
+	#region PUBLIC MEMBERS
+	
+	public const int MAX_PLAYERS = 4; //four plus cozmo?
+	public const int STAR_COUNT = 3;
+	public static float MessageDelay { get { return _MessageDelay; } protected set { _MessageDelay = value; } }
+	public GameState state { get; private set; }
+	
+	public const string STARS_END =  "_stars";
+	public string SAVED_STARS { get { return currentGameName + currentLevelNumber + STARS_END; } }
+	public int savedStars { get { return PlayerPrefs.GetInt(SAVED_STARS, 0); } set { PlayerPrefs.SetInt(SAVED_STARS, value); } }
+
+	#endregion
+
+	#region PROTECTED MEMBERS
+
+	protected AudioClip gameOverSound { get { if(win) return stars < winSounds.Length ? winSounds[stars] : null; return loseSound; } }
+	protected AudioClip resultsLoopSound { get { if(win) return stars < winLoopSounds.Length ? winLoopSounds[stars] : null; return loseLoopSound; } }
 
 	protected bool playRequested = false;
 	protected bool buildRequested = false;
 
-	[System.NonSerialized] public GameState state = GameState.BUILDING;
+	protected GameState _state = GameState.BUILDING;
+
 	protected float stateTimer = 0f;
 	protected bool countdownAnnounced = false;
 	protected float lastPlayTime = 0;
 	protected int timerEventIndex = 0;
 	protected float bonusTime = 0; // bonus time is awarded each time the player numDropsForBonusTime drop offs 
-
-	public const int MAX_PLAYERS = 4; //four plus cozmo?
 
 	//supporting four human players plus cozmo for now
 	protected List<int> scores = new List<int>();
@@ -84,31 +109,30 @@ public class GameController : MonoBehaviour {
 	protected string currentGameName { get; private set; }
 	protected int currentLevelNumber { get; private set; }
 
-	public const string STARS_END =  "_stars";
-	public string SAVED_STARS { get { return currentGameName + currentLevelNumber + STARS_END; } }
-	public int savedStars { get { return PlayerPrefs.GetInt(SAVED_STARS, 0); } set { PlayerPrefs.SetInt(SAVED_STARS, value); } }
-
 	protected bool firstFrame = true;
 
 	protected float errorMsgTimer = 0f;
 
 	protected Robot robot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.current : null; } }
 
-	//public float gameStartingInDelay = 1.3f;
-
-	private float gameStartingInDelay { get { return gameStartingIn != null ? gameStartingIn.length + 0.1f : 0f; } }
-	private float instructionsDelay { get { return instructionsSound != null ? instructionsSound.length + 0.5f : 0f; } }
+	protected float gameStartingInDelay { get { return gameStartingIn != null ? gameStartingIn.length + 0.1f : 0f; } }
+	protected float instructionsDelay { get { return instructionsSound != null ? instructionsSound.length + 0.5f : 0f; } }
 
 	protected int lastTimerSeconds = 0;
 	protected float coundownTimer = 0f;
 
 	protected static float _MessageDelay = 0.5f;
-	public static float MessageDelay { get { return _MessageDelay; } protected set { _MessageDelay = value; } }
-
 	protected GameData.LevelData levelData { get; private set; }
 
-	protected virtual void Awake()
-	{
+	protected bool waitingForEmoteToFinish = false;
+
+	protected Coroutine emotionWaitLimiterRoutine = null;
+
+	#endregion
+
+	#region MONOBEHAVIOR CALLBACKS
+
+	protected virtual void Awake() {
 		for(int i=0; i<stateActions.Length; i++) {
 			if(stateActions[i] == null) continue;
 			stateActions[i].gameObject.SetActive(false);
@@ -130,8 +154,7 @@ public class GameController : MonoBehaviour {
 
 		if(currentLevelOverride > 0) currentLevelNumber = currentLevelOverride;
 
-		if(GameData.instance != null)
-		{
+		if(GameData.instance != null) {
 			if(GameData.instance.levelData.ContainsKey(currentGameName + currentLevelNumber))
 			{
 				levelData = GameData.instance.levelData[currentGameName + currentLevelNumber];
@@ -141,8 +164,7 @@ public class GameController : MonoBehaviour {
 				Debug.LogError("GameData does not contain level: " + currentGameName + currentLevelNumber);
 			}
 		}
-		else
-		{
+		else {
 			Debug.LogError("GameData is not in scene");
 		}
 
@@ -152,6 +174,8 @@ public class GameController : MonoBehaviour {
 		if(countdownText != null) countdownText.gameObject.SetActive(false);
 		if(textScore != null) textScore.gameObject.SetActive(false);
 		if(robot != null) robot.ClearData();
+
+		if(RobotEngineManager.instance != null) RobotEngineManager.instance.RobotCompletedAnimation += RobotCompletedAnimation;
 	}
 
 	void Update () {
@@ -190,7 +214,17 @@ public class GameController : MonoBehaviour {
 		if(resultsPanel != null) resultsPanel.gameObject.SetActive(false);
 		AudioManager.Stop(); // stop all sounds
 		if(robot != null) robot.ClearData();
+
+		if(RobotEngineManager.instance != null) RobotEngineManager.instance.RobotCompletedAnimation -= RobotCompletedAnimation;
+
+		if(emotionWaitLimiterRoutine != null) StopCoroutine(emotionWaitLimiterRoutine);
+		emotionWaitLimiterRoutine = null;
+		waitingForEmoteToFinish = false;
 	}
+
+	#endregion
+
+	#region PRIVATE METHODS
 
 	GameState GetNextState() {
 
@@ -254,6 +288,78 @@ public class GameController : MonoBehaviour {
 		
 		if(currentActions != null) currentActions.gameObject.SetActive(true);
 	}
+
+	IEnumerator PopInStars()
+	{
+		int num_pops = 0;
+		float lastPopTime = -1;
+		
+		for(int i = 0; i < starImages.Length; ++i) 
+		{
+			if(starImages[i] != null) starImages[i].gameObject.SetActive(false);
+		}
+		
+		
+		while(num_pops < stars + 1)
+		{
+			if( lastPopTime + starPopInTime < Time.realtimeSinceStartup )
+			{
+				// time to pop in a star
+				if( num_pops < starImages.Length )
+				{
+					starImages[num_pops].gameObject.SetActive(win && num_pops < stars);
+					starImages[num_pops].transform.localScale = new Vector3(minStarPop, minStarPop, 0);
+					if( win && num_pops < stars )
+					{
+						AudioManager.PlayOneShot(starPop);
+					}
+				}
+				lastPopTime = Time.realtimeSinceStartup;
+				num_pops++;
+			}
+			else
+			{
+				// lerp it in three phases:
+				/// 1) from minStarPop to maxStarPop
+				/// 2) from maxStarPop back to 1
+				float pop_time = Time.realtimeSinceStartup - lastPopTime;
+				float scale = 1;
+				if( pop_time < starPopInTime/2 )
+				{
+					// first half
+					scale = Mathf.Lerp(minStarPop, maxStarPop, pop_time/(starPopInTime/2));
+				}
+				else
+				{
+					// second half
+					scale = Mathf.Lerp(maxStarPop, 1, (pop_time-(starPopInTime/2))/(starPopInTime/2));
+				}
+				starImages[num_pops-1].transform.localScale = new Vector3(scale,scale,0);
+				
+			}
+			yield return 0;
+		}
+		
+		yield return 0;
+	}
+
+	IEnumerator StopWaitingForEmotion(float delay) {
+		yield return new WaitForSeconds(delay);
+		
+		waitingForEmoteToFinish = false;
+	}
+
+	void RobotCompletedAnimation(bool success, string animName) {
+		Debug.Log("RobotCompletedAnimation("+success+", "+animName+")");
+		if(emotionWaitLimiterRoutine != null) StopCoroutine(emotionWaitLimiterRoutine);
+		emotionWaitLimiterRoutine = null;
+
+		waitingForEmoteToFinish = false;
+	}
+
+	#endregion
+
+	#region PROTECTED METHODS
 
 	protected const string suffix_seconds = "s";
 
@@ -498,6 +604,40 @@ public class GameController : MonoBehaviour {
 		
 		return false;
 	}
+	
+	protected void PlayCountdownAudio(int secondsLeft) {
+		bool played = false;
+		for(int i=0; i<timerSounds.Length; i++) {
+			if(secondsLeft == timerSounds[i].time && lastTimerSeconds != timerSounds[i].time) {
+				AudioManager.PlayAudioClipDeferred(timerSounds[i].sound, 0, AudioManager.Source.Notification);
+				played = true;
+				break;
+			}
+		}
+		
+		if(!played && lastTimerSeconds != secondsLeft && countdownTickSound != null) AudioManager.PlayOneShot(countdownTickSound);
+		
+		lastTimerSeconds = secondsLeft;
+	}
+
+	protected void SetRobotEmotion(string animName, bool wait=true, bool stopPriorAnim=true) {
+		if(robot == null) return;
+
+		Debug.Log("SetRobotEmotion("+animName+")");
+		CozmoEmotionManager.SetEmotion(animName, stopPriorAnim);
+
+		if(emotionWaitLimiterRoutine != null) StopCoroutine(emotionWaitLimiterRoutine);
+		waitingForEmoteToFinish = wait;
+
+		if(!wait) return;
+
+		emotionWaitLimiterRoutine = StartCoroutine(StopWaitingForEmotion(maxEmotionWaitTime));
+	}
+
+
+	#endregion
+
+	#region PUBLIC METHODS
 
 	public void PlayRequested() {
 		//Debug.Log ("PlayRequested");
@@ -512,74 +652,6 @@ public class GameController : MonoBehaviour {
 		}
 	}
 
-	protected void PlayCountdownAudio(int secondsLeft) {
-		bool played = false;
-		for(int i=0; i<timerSounds.Length; i++) {
-			if(secondsLeft == timerSounds[i].time && lastTimerSeconds != timerSounds[i].time) {
-				AudioManager.PlayAudioClipDeferred(timerSounds[i].sound, 0, AudioManager.Source.Notification);
-				played = true;
-				break;
-			}
-		}
-
-		if(!played && lastTimerSeconds != secondsLeft && countdownTickSound != null) AudioManager.PlayOneShot(countdownTickSound);
-		
-		lastTimerSeconds = secondsLeft;
-	}
-
-	IEnumerator PopInStars()
-	{
-		int num_pops = 0;
-		float lastPopTime = -1;
-
-		for(int i = 0; i < starImages.Length; ++i) 
-		{
-			if(starImages[i] != null) starImages[i].gameObject.SetActive(false);
-		}
-
-		
-		while(num_pops < stars + 1)
-		{
-			if( lastPopTime + starPopInTime < Time.realtimeSinceStartup )
-			{
-				// time to pop in a star
-				if( num_pops < starImages.Length )
-				{
-					starImages[num_pops].gameObject.SetActive(win && num_pops < stars);
-					starImages[num_pops].transform.localScale = new Vector3(minStarPop, minStarPop, 0);
-					if( win && num_pops < stars )
-					{
-						AudioManager.PlayOneShot(starPop);
-					}
-				}
-				lastPopTime = Time.realtimeSinceStartup;
-				num_pops++;
-			}
-			else
-			{
-				// lerp it in three phases:
-				/// 1) from minStarPop to maxStarPop
-				/// 2) from maxStarPop back to 1
-				float pop_time = Time.realtimeSinceStartup - lastPopTime;
-				float scale = 1;
-				if( pop_time < starPopInTime/2 )
-				{
-					// first half
-					scale = Mathf.Lerp(minStarPop, maxStarPop, pop_time/(starPopInTime/2));
-				}
-				else
-				{
-					// second half
-					scale = Mathf.Lerp(maxStarPop, 1, (pop_time-(starPopInTime/2))/(starPopInTime/2));
-				}
-				starImages[num_pops-1].transform.localScale = new Vector3(scale,scale,0);
-
-			}
-			yield return 0;
-		}
-		
-		yield return 0;
-	}
-
+	#endregion
 
 }

@@ -316,7 +316,7 @@ public class GoldRushController : GameController {
 		RefreshGameProps();
 
 		//hintMessage.ShowMessage("Pick up the energy scanner to begin", Color.black);
-		if( robot.carryingObject == null || robot.carryingObject != goldExtractingObject )
+		if( robot.carryingObject == null || (int)robot.carryingObject != goldExtractingObject )
 		{
 			//PlayNotificationAudio (pickupEnergyScanner);
 
@@ -444,7 +444,7 @@ public class GoldRushController : GameController {
 		if(goldExtractingObject == null) return false;
 		if(goldCollectingObject == null) return false;
 		if(robot.carryingObject == null) return false;
-		if(robot.carryingObject != goldExtractingObject) return false;
+		if((int)robot.carryingObject != goldExtractingObject) return false;
 		
 		return true;
 	}

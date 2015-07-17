@@ -378,9 +378,9 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 			slices[i].SetColors(imageColor, textColor, outlineColor);
 		}
 
-		float realTotal = Time.time - SpinStartTime;
+		//float realTotal = Time.time - SpinStartTime;
 
-		Debug.Log("SpinEnd totalTime("+displayData.totalTime+") realTotal("+realTotal+")");
+		//Debug.Log("SpinEnd totalTime("+displayData.totalTime+") realTotal("+realTotal+")");
 
 		
 		state = SpinWheelState.FINISHED;
@@ -814,7 +814,7 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 	}
 	
 	public void DragEnd() {
-		Debug.Log ("SpinWheel EndDrag");
+		//Debug.Log ("SpinWheel EndDrag");
 
 		displayData.angularVel = 0f;
 		if(samples.Count < 2) return;
@@ -836,14 +836,14 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 			displayData.angularVel = minStartingVelocity * Mathf.Sign(displayData.angularVel);
 		}
 		
-		string debugString = "SpinWheel DragEnd angularVelocity("+displayData.angularVel+") samples["+samples.Count+"] { ";
-		for(int i=0;i<samples.Count;i++) {
-			debugString += (samples[i].deltaAngle / samples[i].deltaTime);
-			if(i<samples.Count-1) debugString += ", ";
-		}
-		debugString += "}";
-		
-		Debug.Log(debugString);
+//		string debugString = "SpinWheel DragEnd angularVelocity("+displayData.angularVel+") samples["+samples.Count+"] { ";
+//		for(int i=0;i<samples.Count;i++) {
+//			debugString += (samples[i].deltaAngle / samples[i].deltaTime);
+//			if(i<samples.Count-1) debugString += ", ";
+//		}
+//		debugString += "}";
+//		
+//		Debug.Log(debugString);
 
 		SpinStart();
 	}

@@ -9,8 +9,12 @@ matlab.mat
 *.wbproj
 simulator/protos/CozmoEngineProtos-DO_NOT_MODIFY
 simulator/plugins/physics/cozmo_physics
-simulator/controllers/cozmo_viz_controller
-simulator/controllers/cozmo_c_controller
+webotsCtrlViz
+webotsCtrlRobot
+webotsCtrlLightCube
+webotsCtrlGameEngine
+webotsCtrlKeyboard
+libcozmo_physics.dylib
 
 # Mac OS
 *.DS_Store
@@ -74,13 +78,7 @@ build/xcode*
 project/xcode4/Cozmo/Cozmo.xcodeproj/xcuserdata
 project/xcode4/Cozmo/Cozmo.xcodeproj/project.xcworkspace/xcuserdata
 /build
-simulator/controllers/overlay_display_supervisor/overlay_display_supervisor
-simulator/plugins/physics/cozmo_physics/libcozmo_physics.dylib
-simulator/controllers/cozmo_c_controller/cozmo_c_controller
-simulator/controllers/block_controller/block_controller
-world_comms_controller
 screenshot.png
-blockworld_controller
 *.mvlib
 *.shv*lib
 movidiusTests/shaveTests2/output
@@ -114,13 +112,11 @@ robot/robot_embedded-tests.dep
 *.ini
 robot/syscon/JLinkLog.txt
 robot/chipSimulator/robot_chipSimulator.uvguix.anki
-cozmo_viz_controller
 matlab/basicsResults.mat
 matlab/basicsResults_input.mat
 matlab/perTestStatsResults.mat
 systemTests/tests/intermediate/
 matlab/basicsResults_input*.mat
-webots_keyboard_controller
 systemTests/tests/*.mat
 matlab/recompileBasicsAllInput.mat
 matlab/runParallelProcesses_input*.mat
@@ -169,7 +165,9 @@ build_xcode/game_sim
 generated
 unity/ios/UnityBuild
 unity/ios/build
+unity/ios/opencv
 unity/Cozmo/Assets/WellFired/shared.meta
 unity/Cozmo/Assets/WellFired/shared/compiled.meta
 unity/Cozmo/Assets/WellFired/shared/compiled/runtime.meta
 unity/Cozmo/Assets/WellFired/shared/compiled/runtime/ProcessRunner.meta
+unity/Cozmo/Assets/Scripts/Generated.meta

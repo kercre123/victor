@@ -15,29 +15,36 @@ public struct CozmoAnimation
 public struct CozmoEmotionState
 {
 	//public string stateName;
-	public CozmoEmotionManager.EmotionType emotionType;
+	public string stateName;
 	public List<CozmoAnimation> emotionAnims;
 	
 }
 
 public class CozmoEmotionMachine : MonoBehaviour {
 
-	public string defaultEmotionStateName;
+	public string defaultEmotionState;
 	public List<CozmoEmotionState> emotionStates;
-	private Dictionary<CozmoEmotionManager.EmotionType, List<CozmoAnimation>> typeAnims = new Dictionary<CozmoEmotionManager.EmotionType, List<CozmoAnimation>>();
+	private Dictionary<string, List<CozmoAnimation>> typeAnims = new Dictionary<string, List<CozmoAnimation>>();
 
 	public void Awake()
 	{
 		// populate our helper look up
 		for(int i = 0; i < emotionStates.Count; i++)
 		{
-			if( !typeAnims.ContainsKey(emotionStates[i].emotionType) )
+			if( string.IsNullOrEmpty(emotionStates[i].stateName) )
 			{
-				typeAnims.Add(emotionStates[i].emotionType, emotionStates[i].emotionAnims);
+				Debug.LogError("trying to add state with no name");
 			}
 			else
 			{
-				Debug.LogError("trying to add " + emotionStates[i].emotionType + " more than once");
+				if( !typeAnims.ContainsKey(emotionStates[i].stateName) )
+				{
+					typeAnims.Add(emotionStates[i].stateName, emotionStates[i].emotionAnims);
+				}
+				else
+				{
+					Debug.LogError("trying to add " + emotionStates[i].stateName + " more than once");
+				}
 			}
 		}
 
@@ -60,6 +67,7 @@ public class CozmoEmotionMachine : MonoBehaviour {
 		if( CozmoEmotionManager.instance != null )
 		{
 			CozmoEmotionManager.instance.RegisterMachine(this);
+			CozmoEmotionManager.SetEmotion(defaultEmotionState);
 		}
 		InitializeMachine();
 	}
@@ -80,18 +88,18 @@ public class CozmoEmotionMachine : MonoBehaviour {
 
 	public virtual void CleanUp(){}
 
-	public bool HasAnimForType(CozmoEmotionManager.EmotionType emotionType)
+	public bool HasAnimForState(string state_name)
 	{
-		if( typeAnims.ContainsKey(emotionType) && typeAnims[emotionType].Count > 0 )
+		if( typeAnims.ContainsKey(state_name) && typeAnims[state_name].Count > 0 )
 			return true;
 		return false;
 	}
 
-	public CozmoAnimation GetAnimForType(CozmoEmotionManager.EmotionType emotionType)
+	public CozmoAnimation GetAnimForType(string state_name)
 	{
 		// note: do not call with out first calling too HasAnimForType
-		int rand_index = UnityEngine.Random.Range(0, typeAnims[emotionType].Count - 1);
-		return typeAnims[emotionType][rand_index];
+		int rand_index = UnityEngine.Random.Range(0, typeAnims[state_name].Count - 1);
+		return typeAnims[state_name][rand_index];
 	}
 	
 }

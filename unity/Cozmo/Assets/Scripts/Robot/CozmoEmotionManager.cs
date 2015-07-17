@@ -45,6 +45,8 @@ public class CozmoEmotionManager : MonoBehaviour {
 	EmotionType currentEmotions = EmotionType.NONE;
 	EmotionType lastEmotions = EmotionType.NONE;
 
+	protected Robot robot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.current : null; } }
+
 	public bool HasEmotion( EmotionType emo )
 	{
 		return (currentEmotions | emo) == emo;
@@ -71,12 +73,12 @@ public class CozmoEmotionManager : MonoBehaviour {
 #if UNITY_EDITOR
 		if( Input.GetKeyDown(KeyCode.T) )
 		{
-			SetEmotion(EmotionType.IDLE);
+			SetEmotion("IDLE");
 		}
 
 		if( Input.GetKeyDown(KeyCode.Y) )
 		{
-			SetEmotion(EmotionType.IDLE, true);
+			SetEmotion("IDLE", true);
 		}
 #endif
 
@@ -99,8 +101,10 @@ public class CozmoEmotionManager : MonoBehaviour {
 		currentEmotionMachine = GetComponent<CozmoEmotionMachine>();
 	}
 
-	public void SetEmotion(EmotionType emo, bool clear_current = false)
+	public static string SetEmotion(string emotion_state, bool clear_current = false)
 	{
+		if( instance == null ) return null;
+		/*
 		if( clear_current )
 		{
 			currentEmotions = emo;
@@ -109,28 +113,39 @@ public class CozmoEmotionManager : MonoBehaviour {
 		{
 			currentEmotions |= emo;
 		}
+		*/
 
-		if( currentEmotionMachine != null )
+		if( instance.currentEmotionMachine != null )
 		{
 			// send approriate animation
-			if (currentEmotionMachine.HasAnimForType(emo) )
+			if (instance.currentEmotionMachine.HasAnimForState(emotion_state) )
 			{
-				CozmoAnimation anim = currentEmotionMachine.GetAnimForType(emo);
-				SendAnimation(anim);
+				Debug.Log("sending emotion type: " + emotion_state);
+				CozmoAnimation anim = instance.currentEmotionMachine.GetAnimForType(emotion_state);
+				instance.SendAnimation(anim, clear_current);
+				return anim.animName;
 			}
 			else
 			{
-				Debug.LogError("tring to send animation for emotion type " + emo + ", and the current machine has no anim mapped");
+				Debug.LogError("tring to send animation for emotion type " + emotion_state + ", and the current machine has no anim mapped");
 			}
 		}
 
-		lastEmotions = currentEmotions;
+		//lastEmotions = currentEmotions;
+		return null;
 	}
 
-	public void SendAnimation(CozmoAnimation anim)
+	public void SendAnimation(CozmoAnimation anim, bool stopPreviousAnim=false)
 	{
+		if(robot == null) return;
+
+		if(stopPreviousAnim && robot.isBusy && robot.Status (Robot.StatusFlag.IS_ANIMATING)) {
+			robot.CancelAction(Anki.Cozmo.RobotActionType.PLAY_ANIMATION);
+		}
+
 		PlayAnimationMessage.animationName = anim.animName;
 		PlayAnimationMessage.numLoops = anim.numLoops;
+		PlayAnimationMessage.robotID = robot.ID;
 		RobotEngineManager.instance.Message.PlayAnimation = PlayAnimationMessage;
 		RobotEngineManager.instance.SendMessage();
 	}

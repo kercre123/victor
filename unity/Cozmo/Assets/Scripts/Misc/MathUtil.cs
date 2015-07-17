@@ -2,6 +2,9 @@ using UnityEngine;
 using System.Collections;
 using System;
 
+/// <summary>
+/// a number of convenience methods for commonly faced math problems
+/// </summary>
 public class MathUtil {
 	
 	private static Transform tempChild = null;
