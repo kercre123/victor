@@ -14,24 +14,25 @@
 namespace Anki {
 namespace Cozmo {
 
-  CozmoEngineClientImpl::CozmoEngineClientImpl()
-  {
-    
-  }
-  
-  Result CozmoEngineClientImpl::InitInternal()
-  {
-    // TODO: Do client-specific init here
-    
-    return RESULT_OK;
-  }
-  
-  Result CozmoEngineClientImpl::UpdateInternal(const BaseStationTime_t currTime_ns)
-  {
-    // TODO: Do client-specific update stuff here
-    
-    return RESULT_OK;
-  } // UpdateInternal()
+CozmoEngineClientImpl::CozmoEngineClientImpl(IExternalInterface* externalInterface)
+: CozmoEngineImpl(externalInterface)
+{
+
+}
+
+Result CozmoEngineClientImpl::InitInternal()
+{
+  // TODO: Do client-specific init here
+
+  return RESULT_OK;
+}
+
+Result CozmoEngineClientImpl::UpdateInternal(const BaseStationTime_t currTime_ns)
+{
+  // TODO: Do client-specific update stuff here
+
+  return RESULT_OK;
+} // UpdateInternal()
   
 
 } // namespace Cozmo

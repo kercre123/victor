@@ -16,7 +16,8 @@ namespace Anki {
 namespace Cozmo {
   
 
-CozmoEngineHost::CozmoEngineHost()
+CozmoEngineHost::CozmoEngineHost(IExternalInterface* externalInterface)
+: CozmoEngine(externalInterface)
 {
   _hostImpl = new CozmoEngineHostImpl();
   assert(_hostImpl != nullptr);

@@ -15,8 +15,9 @@ namespace Anki {
 namespace Cozmo {
   
 
-CozmoEngineHostImpl::CozmoEngineHostImpl()
-: _isListeningForRobots(false)
+CozmoEngineHostImpl::CozmoEngineHostImpl(IExternalInterface* externalInterface)
+: CozmoEngineImpl(externalInterface)
+, _isListeningForRobots(false)
 , _robotAdvertisementService("RobotAdvertisementService")
 , _lastAnimationFolderScan(0)
 , _animationReloadActive(false)

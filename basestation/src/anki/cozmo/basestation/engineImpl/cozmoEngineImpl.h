@@ -41,7 +41,7 @@ class CozmoEngineImpl
 {
 public:
 
-  CozmoEngineImpl();
+  CozmoEngineImpl(IExternalInterface* externalInterface);
   virtual ~CozmoEngineImpl();
 
   virtual Result Init(const Json::Value& config);
@@ -81,6 +81,7 @@ protected:
 
   MultiClientChannel        _robotChannel;
 
+  IExternalInterface* _externalInterface;
   /*
   // TODO: Merge this into RobotManager
   // Each engine can potetnailly talk to multiple physical robots.

@@ -7,7 +7,7 @@
 
 namespace Anki {
 namespace Cozmo {
-namespace G2U {
+namespace ExternalInterface {
 
 ///////////////////////////////////////////////////////////////////////////////
 ////////////////////////  ADVERTISING & CONNECTING  ///////////////////////////
@@ -212,7 +212,7 @@ message ActiveObjectTapped {
 
 // keep empty to generate an auto-union that includes all messages in this file
 // if you do not want to include messages in this union, use the keyword "structure" instead of "message"
-union Message { }
+union MessageEngineToGame { }
 
 } // namespace G2U
 } // namespace Cozmo

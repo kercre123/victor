@@ -20,7 +20,7 @@ namespace Cozmo {
 class CozmoEngineClientImpl : public CozmoEngineImpl
 {
 public:
-  CozmoEngineClientImpl();
+  CozmoEngineClientImpl(IExternalInterface* externalInterface);
 
 protected:
 

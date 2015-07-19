@@ -21,7 +21,7 @@ namespace Cozmo {
 class CozmoEngineHostImpl : public CozmoEngineImpl
 {
 public:
-  CozmoEngineHostImpl();
+  CozmoEngineHostImpl(IExternalInterface* externalInterface);
 
   Result StartBasestation();
 

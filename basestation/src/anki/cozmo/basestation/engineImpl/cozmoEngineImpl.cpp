@@ -18,8 +18,9 @@ namespace Cozmo {
   
 
   
-CozmoEngineImpl::CozmoEngineImpl()
+CozmoEngineImpl::CozmoEngineImpl(IExternalInterface* externalInterface)
 : _isInitialized(false)
+, _externalInterface(externalInterface)
 {
   if (Anki::Util::gTickTimeProvider == nullptr) {
     Anki::Util::gTickTimeProvider = BaseStationTimer::getInstance();
@@ -31,6 +32,7 @@ CozmoEngineImpl::CozmoEngineImpl()
     this->DisconnectFromRobot(robotID);
   };
   _signalHandles.emplace_back( CozmoEngineSignals::RobotDisconnectedSignal().ScopedSubscribe(cbRobotDisconnected));
+  ASSERT_NAMED(externalInterface != nullptr, "Cozmo.EngineImpl.ExternalInterface.nullptr");
 }
 
 CozmoEngineImpl::~CozmoEngineImpl()

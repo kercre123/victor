@@ -53,7 +53,7 @@ class CozmoEngine
 {
 public:
 
-  CozmoEngine();
+  CozmoEngine(IExternalInterface* externalInterface);
   virtual ~CozmoEngine();
 
   virtual bool IsHost() const = 0;
@@ -96,6 +96,7 @@ protected:
   // This will just point at either the host or client impl pointer in a
   // derived class
   CozmoEngineImpl* _impl;
+  IExternalInterface* _externalInterface;
 
   Anki::Util::PrintfLoggerProvider _loggerProvider;
 }; // class CozmoEngine
