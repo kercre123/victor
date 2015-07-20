@@ -11,17 +11,23 @@
 
 #include "anki/cozmo/basestation/cozmoEngineClient.h"
 #include "anki/cozmo/basestation/engineImpl/cozmoEngineClientImpl.h"
+#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 
 namespace Anki {
 namespace Cozmo {
   
 
-CozmoEngineClient::CozmoEngineClient(IExternalInterface* externalInterface)
-: CozmoEngine(externalInterface)
+CozmoEngineClient::CozmoEngineClient()
+: CozmoEngine(new SimpleExternalInterface())
 {
-  _clientImpl = new CozmoEngineClientImpl();
+  _clientImpl = new CozmoEngineClientImpl(_externalInterface);
   assert(_clientImpl != nullptr);
   _impl = _clientImpl;
+}
+
+CozmoEngineClient::~CozmoEngineClient()
+{
+
 }
 
 bool CozmoEngineClient::GetCurrentRobotImage(RobotID_t robotId, Vision::Image& img, TimeStamp_t newerThanTime)

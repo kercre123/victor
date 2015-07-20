@@ -11,17 +11,23 @@
 
 #include "anki/cozmo/basestation/cozmoEngineHost.h"
 #include "anki/cozmo/basestation/engineImpl/cozmoEngineHostImpl.h"
+#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 
 namespace Anki {
 namespace Cozmo {
   
 
-CozmoEngineHost::CozmoEngineHost(IExternalInterface* externalInterface)
-: CozmoEngine(externalInterface)
+CozmoEngineHost::CozmoEngineHost()
+: CozmoEngine(new SimpleExternalInterface())
 {
-  _hostImpl = new CozmoEngineHostImpl();
+  _hostImpl = new CozmoEngineHostImpl(_externalInterface);
   assert(_hostImpl != nullptr);
   _impl = _hostImpl;
+}
+
+CozmoEngineHost::~CozmoEngineHost()
+{
+  delete _externalInterface;
 }
 
 void CozmoEngineHost::ForceAddRobot(AdvertisingRobot robotID,

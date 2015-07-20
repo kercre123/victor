@@ -22,12 +22,13 @@ namespace Anki {
     // Forward declarations:
     class Robot;
     class IRobotMessageHandler;
+    class IExternalInterface;
     
     class RobotManager
     {
     public:
     
-      RobotManager();
+      RobotManager(IExternalInterface* externalInterface);
       
       // Get the list of known robot ID's
       std::vector<RobotID_t> const& GetRobotIDList() const;
@@ -53,7 +54,7 @@ namespace Anki {
       size_t GetNumRobots() const;
       
     protected:
-      
+      IExternalInterface* _externalInterface;
       std::map<RobotID_t,Robot*> _robots;
       std::vector<RobotID_t>     _IDs;
       

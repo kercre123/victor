@@ -70,12 +70,13 @@ namespace Anki {
     class PathDolerOuter;
     class RobotPoseHistory;
     class RobotPoseStamp;
+    class IExternalInterface;
     
     class Robot
     {
     public:
       
-      Robot(const RobotID_t robotID, IRobotMessageHandler* msgHandler);
+      Robot(const RobotID_t robotID, IRobotMessageHandler* msgHandler, IExternalInterface* externalInterface);
       ~Robot();
       
       Result Update();
@@ -532,7 +533,7 @@ namespace Anki {
                          bool reliable = true, bool hot = false) const;
       
     protected:
-      
+      IExternalInterface* _externalInterface;
       // The robot's identifier
       RobotID_t         _ID;
       bool              _isPhysical;

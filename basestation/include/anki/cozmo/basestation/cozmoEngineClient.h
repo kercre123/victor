@@ -42,8 +42,8 @@ class CozmoEngineClient : public CozmoEngine
 {
 public:
 
-  CozmoEngineClient(IExternalInterface* externalInterface);
-
+  CozmoEngineClient();
+  ~CozmoEngineClient();
   virtual bool IsHost() const override { return false; }
 
   // Currently just a stub: can't get a robot's image on a client because all

@@ -20,22 +20,25 @@ namespace Cozmo {
 
 
 //forward declarations
+namespace ExternalInterface {
 class MessageEngineToGame;
 class MessageGameToEngine;
+} // end namespace ExternalInterface
 
 
 class IExternalInterface {
 public:
-  virtual void DeliverToGame(const MessageEngineToGame&& message);
+  virtual ~IExternalInterface() {};
+  virtual void DeliverToGame(const ExternalInterface::MessageEngineToGame&& message) = 0;
   //virtual bool HasMoreMessagesForEngine() const;
   //virtual const MessageGameToEngine GetNextUndeliveredMessage();
   //virtual void GetNextUndeliveredMessages();
 };
 
 
-class ExternalInterface : public IExternalInterface {
+class SimpleExternalInterface : public IExternalInterface {
 public:
-  void DeliverToGame(const MessageEngineToGame&& message) override;
+  void DeliverToGame(const ExternalInterface::MessageEngineToGame&& message) override;
 
 };
 

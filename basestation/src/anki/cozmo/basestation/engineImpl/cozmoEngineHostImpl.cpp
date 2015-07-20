@@ -19,6 +19,7 @@ CozmoEngineHostImpl::CozmoEngineHostImpl(IExternalInterface* externalInterface)
 : CozmoEngineImpl(externalInterface)
 , _isListeningForRobots(false)
 , _robotAdvertisementService("RobotAdvertisementService")
+, _robotMgr(externalInterface)
 , _lastAnimationFolderScan(0)
 , _animationReloadActive(false)
 {
