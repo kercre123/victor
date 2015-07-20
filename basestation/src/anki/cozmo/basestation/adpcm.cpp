@@ -1,7 +1,5 @@
 #include "adpcm.h"
 
-
-
 const static int8_t ima_index_table[] = {
 	-1, -1, -1, -1, 2, 4, 6, 8,
 	-1, -1, -1, -1, 2, 4, 6, 8
@@ -19,71 +17,39 @@ const static uint16_t stepsize_table[] = {
 	15289, 16818, 18500, 20350, 22385, 24623, 27086, 29794, 32767
 };
 
+static inline int clamp(int min, int v, int max) {
+	if (v > max) { return max; }
+	if (v < min) { return min; }
+	return v;
+}
+
 static uint8_t next_nibble(int &index, int &valpred, int16_t delta) {
 	int step = stepsize_table[index];
 	int diff = (int)delta - valpred;
-	int code;
+	bool sign = diff < 0;
+	uint8_t code;
 
-	if (diff >= 0) {
-		code = 0;
-	} else {
-		code = 8;
+	if (sign) {
 		diff = -diff;
-	}
-
-	int tempstep = step;
-
-	if (diff >= tempstep) {
-		code = (code | 4);
-		diff = diff - tempstep;
-	}
-
-	tempstep = tempstep >> 1;
-
-	if (diff >= tempstep) {
-		code = (code | 2);
-		diff = diff - tempstep;
-	}
-
-	tempstep = tempstep >> 1;
-
-	if (diff >= tempstep) {
-		code = (code | 1);
+		code = 8;
+	} else {
+		code = 0;
 	}
 
 	int diffq = step >> 3;
-	
-	if (code & 4) {
-		diffq += step;
-	} else if (code & 2) {
-		diffq += step >> 1;
-	} else if (code & 1) {
-		diffq += step >> 2;
+
+	for (int i = 0; i < 3; i++) {
+		if (diff >= step) {
+			code |= 4 >> i;
+			diffq += step >> i;
+			diff -= step >> i;
+		}
 	}
 
-	bool sign = code & 8;
-
-	if (sign) {
-		valpred -= diffq;
-	} else {
-		valpred += diffq;
-	}
-
-	if (valpred > 32767) {
-		valpred = 32767;
-	} else if (valpred < -32768) {
-		valpred = -32768;
-	}
-	
-	index += ima_index_table[code];
-	
-	if (index < 0) {
-		index = 0;
-	} else if (index > 88) {
-		index = 88;
-	}
+	valpred = clamp(-32768, valpred + (sign ? -diffq : diffq), 32767);
+	index = clamp(0, index + ima_index_table[code], 88);
   
-  return code;
+	return code;
 }
 
 // First block should starts with index + predictor = 0
@@ -92,8 +58,8 @@ static uint8_t next_nibble(int &index, int &valpred, int16_t delta) {
 
 void encodeADPCM(int &index, int &predictor, int16_t *in, uint8_t *out, int length) {
 	for(;length > 0; length -= 2) {
-		uint8_t lo = next_nibble(index, predictor, *(in++)) & 0xF;
-		uint8_t hi = next_nibble(index, predictor, *(in++)) & 0xF;
+		uint8_t lo = next_nibble(index, predictor, *(in++));
+		uint8_t hi = next_nibble(index, predictor, *(in++));
 		*(out++) = (hi << 4) | (lo);
 	}
 }
