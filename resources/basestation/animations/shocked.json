@@ -1,0 +1,92 @@
+{
+  "shocked": [
+    {
+      "$type": "BehaviorDesigner.HeadAnglePointData, BehaviorDesigner",
+      "angle_deg": -15,
+      "angleVariability_deg": 0,
+      "triggerTime_ms": 0,
+      "durationTime_ms": 100,
+      "Name": "HeadAngleKeyFrame"
+    },
+    {
+      "$type": "BehaviorDesigner.HeadAnglePointData, BehaviorDesigner",
+      "angle_deg": -15,
+      "angleVariability_deg": 0,
+      "triggerTime_ms": 100,
+      "durationTime_ms": 199,
+      "Name": "HeadAngleKeyFrame"
+    },
+    {
+      "$type": "BehaviorDesigner.HeadAnglePointData, BehaviorDesigner",
+      "angle_deg": 5,
+      "angleVariability_deg": 0,
+      "triggerTime_ms": 300,
+      "durationTime_ms": 100,
+      "Name": "HeadAngleKeyFrame"
+    },
+    {
+      "$type": "BehaviorDesigner.HeadAnglePointData, BehaviorDesigner",
+      "angle_deg": 4,
+      "angleVariability_deg": 0,
+      "triggerTime_ms": 400,
+      "durationTime_ms": 2000,
+      "Name": "HeadAngleKeyFrame"
+    },
+    {
+      "$type": "BehaviorDesigner.LiftHeightPointData, BehaviorDesigner",
+      "height_mm": 31,
+      "heightVariability_mm": 0,
+      "triggerTime_ms": 0,
+      "durationTime_ms": 100,
+      "Name": "LiftHeightKeyFrame"
+    },
+    {
+      "$type": "BehaviorDesigner.LiftHeightPointData, BehaviorDesigner",
+      "height_mm": 31,
+      "heightVariability_mm": 0,
+      "triggerTime_ms": 100,
+      "durationTime_ms": 1500,
+      "Name": "LiftHeightKeyFrame"
+    },
+    {
+      "$type": "BehaviorDesigner.LiftHeightPointData, BehaviorDesigner",
+      "height_mm": 31,
+      "heightVariability_mm": 0,
+      "triggerTime_ms": 1600,
+      "durationTime_ms": 799,
+      "Name": "LiftHeightKeyFrame"
+    },
+    {
+      "$type": "BehaviorDesigner.BodyMotionPointData, BehaviorDesigner",
+      "radius_mm": "STRAIGHT",
+      "speed": -50.0,
+      "triggerTime_ms": 200,
+      "durationTime_ms": 200,
+      "Name": "BodyMotionKeyFrame"
+    },
+    {
+      "$type": "BehaviorDesigner.BodyMotionPointData, BehaviorDesigner",
+      "radius_mm": "STRAIGHT",
+      "speed": 20.0,
+      "triggerTime_ms": 1700,
+      "durationTime_ms": 500,
+      "Name": "BodyMotionKeyFrame"
+    },
+    {
+      "$type": "BehaviorDesigner.FaceAnimationPointData, BehaviorDesigner",
+      "animName": "shocked",
+      "fullPath": "Z:\\products-cozmo-assets\\faceAnimations\\shocked",
+      "triggerTime_ms": 0,
+      "durationTime_ms": 2000,
+      "Name": "FaceAnimationKeyFrame"
+    },
+    {
+      "$type": "BehaviorDesigner.AudioRobotPointData, BehaviorDesigner",
+      "audioName": "vortexPrototype\\VO_CozmoBrian_Shocked_01.wav",
+      "fullPath": "Z:\\products-cozmo-assets\\sounds\\vortexPrototype\\VO_CozmoBrian_Shocked_01.wav",
+      "triggerTime_ms": 400,
+      "durationTime_ms": 1100,
+      "Name": "RobotAudioKeyFrame"
+    }
+  ]
+}
