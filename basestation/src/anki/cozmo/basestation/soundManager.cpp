@@ -317,8 +317,17 @@ namespace Anki {
               // Add to availble robot sound if it has proper encoding
               if (isRobotAudio) {
                 if (IsValidRobotAudio(fullSoundFilename)) {
-                  printf("FOUND ROBOT AUDIO %s\n", soundName.c_str());
-                  _availableRobotSounds[soundName] = _availableSounds[soundName];
+                  PRINT_NAMED_INFO("SoundManager.ReadSoundDir.FoundRobotSound", "%s\n", soundName.c_str());
+                  
+                  // Cap duration if it exceeds buffer size
+                  if (availableSound.duration_ms > MAX_SOUND_BUFFER_DURATION_MS) {
+                    availableSound.duration_ms = MAX_SOUND_BUFFER_DURATION_MS;
+                    PRINT_NAMED_INFO("SoundManager.ReadSoundDir.SoundExceedsBufferSize","Truncating %s to %d ms",
+                                     soundName.c_str(), MAX_SOUND_BUFFER_DURATION_MS);
+                  }
+                  
+                  _availableRobotSounds[soundName] = availableSound;
+                  
                 } else {
                   PRINT_NAMED_WARNING("SoundManager.ReadSoundDir.InvalidRobotAudio",
                                       "Sound %s is invalid for robot audio.\n",

@@ -80,6 +80,7 @@ namespace Anki {
 
       // Buffer of data from file last referenced by GetSoundBuffer()
       static const u32 MAX_SOUND_BUFFER_SIZE = 500000; // 500000 ~= 10s audio
+      static const u32 MAX_SOUND_BUFFER_DURATION_MS = MAX_SOUND_BUFFER_SIZE * 33 / 1600;
       std::string _currOpenSoundFileName;
       FILE* _currOpenSoundFilePtr;
       u32 _currOpenSoundNumSamples;
