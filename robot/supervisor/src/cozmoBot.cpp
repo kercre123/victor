@@ -20,6 +20,7 @@
 #include "animationController.h"
 #include "proxSensors.h"
 #include "backpackLightController.h"
+#include "timeProfiler.h"
 
 #include "anki/messaging/shared/utilMessaging.h"
 
@@ -231,6 +232,9 @@ namespace Anki {
 
       Result step_MainExecution()
       {
+        START_TIME_PROFILE(CozmoBotMain, TOTAL);
+        START_TIME_PROFILE(CozmoBot, HAL);
+        
         // HACK: Manually setting timestamp here in mainExecution until
         // until Nathan implements this the correct way.
         HAL::SetTimeStamp(HAL::GetTimeStamp()+TIME_STEP);
@@ -251,23 +255,25 @@ namespace Anki {
             avgMainTooLateTime_ = (u32)((f32)(avgMainTooLateTime_ * (mainTooLateCnt_ - 1) + timeBetweenCycles)) / mainTooLateCnt_;
           }
         }
-
+        
         //////////////////////////////////////////////////////////////
         // Test Mode
         //////////////////////////////////////////////////////////////
+        MARK_NEXT_TIME_PROFILE(CozmoBot, TEST);
         TestModeController::Update();
 
 
         //////////////////////////////////////////////////////////////
         // Localization
         //////////////////////////////////////////////////////////////
+        MARK_NEXT_TIME_PROFILE(CozmoBot, LOC);
         Localization::Update();
 
 
         //////////////////////////////////////////////////////////////
         // Communications
         //////////////////////////////////////////////////////////////
-
+        
         // Check if there is a new or dropped connection to a basestation
         if (HAL::RadioIsConnected() && !wasConnected_) {
           PRINT("Robot radio is connected.\n");
@@ -288,25 +294,29 @@ namespace Anki {
         }
 
         // Process any messages from the basestation
+        MARK_NEXT_TIME_PROFILE(CozmoBot, MSG);
         Messages::ProcessBTLEMessages();
 
         //////////////////////////////////////////////////////////////
         // Sensor updates
         //////////////////////////////////////////////////////////////
+        MARK_NEXT_TIME_PROFILE(CozmoBot, IMU);
         IMUFilter::Update();
 
         //////////////////////////////////////////////////////////////
         // Head & Lift Position Updates
         //////////////////////////////////////////////////////////////
-
+        MARK_NEXT_TIME_PROFILE(CozmoBot, ANIM);
         if(AnimationController::Update() != RESULT_OK) {
           PRINT("Failed updating AnimationController. Clearing.\n");
           AnimationController::Clear();
         }
+        MARK_NEXT_TIME_PROFILE(CozmoBot, EYEHEADLIFT);
         EyeController::Update(); 
         HeadController::Update();
         LiftController::Update();
 
+        MARK_NEXT_TIME_PROFILE(CozmoBot, PATHDOCK);
         PathFollower::Update();
         PickAndPlaceController::Update();
         DockingController::Update();
@@ -315,13 +325,13 @@ namespace Anki {
         //////////////////////////////////////////////////////////////
         // Audio Subsystem
         //////////////////////////////////////////////////////////////
-
+        MARK_NEXT_TIME_PROFILE(CozmoBot, AUDIO);
         Anki::Cozmo::HAL::AudioFill();
         
         //////////////////////////////////////////////////////////////
         // State Machine
         //////////////////////////////////////////////////////////////
-
+        MARK_NEXT_TIME_PROFILE(CozmoBot, WHEELS);
         switch(mode_)
         {
           case INIT_MOTOR_CALIBRATION:
@@ -363,6 +373,8 @@ namespace Anki {
         SpeedController::Manage();
         SteeringController::Manage();
         WheelController::Manage();
+        
+        MARK_NEXT_TIME_PROFILE(CozmoBot, CUBES);
         Anki::Cozmo::HAL::ManageCubes();
         
 
@@ -395,7 +407,12 @@ namespace Anki {
 #ifndef ROBOT_HARDWARE
         HAL::UpdateDisplay();
 #endif
-
+        
+        // Print time profile stats
+        END_TIME_PROFILE(CozmoBot);
+        END_TIME_PROFILE(CozmoBotMain);
+        PERIODIC_PRINT_AND_RESET_TIME_PROFILE(CozmoBot, 400);
+        PERIODIC_PRINT_AND_RESET_TIME_PROFILE(CozmoBotMain, 400);
 
         // Check if main took too long
         u32 cycleEndTime = HAL::GetMicroCounter();

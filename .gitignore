@@ -1,6 +1,6 @@
 # Misc
 *.bak
-*.orig
+# *.orig ## Going to try NOT ignoring these for awhile: if you don't need them, just delete them instead of hiding them
 *~
 *.d
 *.cache

@@ -142,28 +142,62 @@
       "triggerTime_ms" : 0, 
       "radius_mm"      : "STRAIGHT", 
       "speed"          : 30,
-      "duration_ms"    : 500
+      "durationTime_ms"    : 500
     }, 
     {
       "Name" : "BodyMotionKeyFrame", 
       "triggerTime_ms" : 500, 
       "radius_mm"      : "TURN_IN_PLACE", 
       "speed"          : 30,
-      "duration_ms"    : 500
+      "durationTime_ms"    : 500
     }, 
     {
       "Name" : "BodyMotionKeyFrame", 
       "triggerTime_ms" : 1000, 
       "radius_mm"      : "TURN_IN_PLACE", 
       "speed"          : -30,
-      "duration_ms"    : 500
+      "durationTime_ms"    : 500
     }, 
     {
       "Name" : "BodyMotionKeyFrame", 
       "triggerTime_ms" : 1500, 
       "radius_mm"      : 50, 
       "speed"          : 30,
-      "duration_ms"    : 500
+      "durationTime_ms"    : 500
+    }
+  ], 
+  "ANIM_IDLE" : [
+    { 
+      "Name" : "HeadAngleKeyFrame",
+      "triggerTime_ms"  : 0, 
+      "durationTime_ms" : 1000,
+      "angle_deg"       : 5,
+      "angleVariability_deg" : 5
+    },
+    { 
+      "Name" : "HeadAngleKeyFrame",
+      "triggerTime_ms"  : 3000, 
+      "durationTime_ms" : 750,
+      "angle_deg"       : -5,
+      "angleVariability_deg" : 5
+    },
+    {
+      "Name" : "FacePositionKeyFrame", 
+      "triggerTime_ms"  : 800, 
+      "xcen"            : -10, 
+      "ycen"            : 0
+    },
+    {
+      "Name" : "FacePositionKeyFrame", 
+      "triggerTime_ms"  : 2000, 
+      "xcen"            : 10, 
+      "ycen"            : 0
+    }, 
+    {
+      "Name" : "FacePositionKeyFrame", 
+      "triggerTime_ms"  : 3500, 
+      "xcen"            : 0, 
+      "ycen"            : 0
     }
   ],
   "ANIM_TEST_SPINNER": [

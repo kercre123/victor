@@ -537,7 +537,7 @@ _streamMsg.colors[__LED_NAME__] = u32(color) >> 8; } while(0) // Note we shift t
     
     Result BodyMotionKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot)
     {
-      GET_MEMBER_FROM_JSON(jsonRoot, duration_ms);
+      GET_MEMBER_FROM_JSON(jsonRoot, durationTime_ms);
       GET_MEMBER_FROM_JSON_AND_STORE_IN(jsonRoot, speed, streamMsg.speed);
       
       if(!jsonRoot.isMember("radius_mm")) {
@@ -572,7 +572,7 @@ _streamMsg.colors[__LED_NAME__] = u32(color) >> 8; } while(0) // Note we shift t
       if(_currentTime_ms == 0) {
         // Send the motion command at the beginning
         return &_streamMsg;
-      } else if(_currentTime_ms >= _duration_ms) {
+      } else if(_currentTime_ms >= _durationTime_ms) {
         // Send a stop command when the duration has passed
         return &_stopMsg;
       } else {
@@ -585,7 +585,7 @@ _streamMsg.colors[__LED_NAME__] = u32(color) >> 8; } while(0) // Note we shift t
     bool BodyMotionKeyFrame::IsDone()
     {
       // Done once enough time has ticked by
-      if(_currentTime_ms >= _duration_ms) {
+      if(_currentTime_ms >= _durationTime_ms) {
         _currentTime_ms = 0; // Reset for next time
         return true;
       } else {
