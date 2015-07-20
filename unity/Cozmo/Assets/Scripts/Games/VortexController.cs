@@ -997,6 +997,7 @@ public class VortexController : GameController {
 
 	}
 
+	float spinLightTimer = 0f;
 	void Enter_SPINNING() {
 
 		SetRobotEmotion("WATCH_SPIN", false);
@@ -1011,10 +1012,53 @@ public class VortexController : GameController {
 		predictedDuration = -1f;
 		predictedTimeAfterLastPeg = -1f;
 		cozmoTapsSubmitted = -1;
+		spinLightTimer = 0f;
+		lightIndex = 0;
 
-		foreach(ActiveBlock block in playerInputBlocks) block.SetMode(ActiveBlock.Mode.Off);
-		foreach(LayoutBlock2d block in playerMockBlocks) block.SetLights(Color.black);
+		RefreshSpinningLights();
+	}
+
+	int lightIndex = 0;
+	void RefreshSpinningLights() {
 		
+		for(int i=0;i<numPlayers;i++) {
+			if(i >= playerInputs.Count) break;
+
+			//only do spinning lights until bidding starts
+			if(playerInputs[i].stamps.Count > 0) continue;
+
+			
+			Color actualBlockColor = CozmoPalette.instance.GetColorForActiveBlockMode(GetPlayerActiveCubeColorMode(i));
+			Color uiColor = GetPlayerUIColor(i);
+			
+			//int lightIndex = Mathf.FloorToInt( (spinLightTimer % 1f) / 0.25f );
+
+			
+			if(playerInputBlocks.Count > i) {
+
+				
+				uint c1 = CozmoPalette.ColorToUInt(lightIndex == 0 ? actualBlockColor : Color.clear);
+				uint c2 = CozmoPalette.ColorToUInt(lightIndex == 1 ? actualBlockColor : Color.clear);
+				uint c3 = CozmoPalette.ColorToUInt(lightIndex == 2 ? actualBlockColor : Color.clear);
+				uint c4 = CozmoPalette.ColorToUInt(lightIndex == 3 ? actualBlockColor : Color.clear);
+
+				playerInputBlocks[i].SetLEDs(c1, 0, (byte)ActiveBlock.Light.IndexToPosition(0), Robot.Light.FOREVER, 0, 0, 0, 0 );
+				playerInputBlocks[i].SetLEDs(c2, 0, (byte)ActiveBlock.Light.IndexToPosition(1), Robot.Light.FOREVER, 0, 0, 0, 0 );
+				playerInputBlocks[i].SetLEDs(c3, 0, (byte)ActiveBlock.Light.IndexToPosition(2), Robot.Light.FOREVER, 0, 0, 0, 0 );
+				playerInputBlocks[i].SetLEDs(c4, 0, (byte)ActiveBlock.Light.IndexToPosition(3), Robot.Light.FOREVER, 0, 0, 0, 0 );
+			}
+
+			if(playerMockBlocks.Length > i) {
+
+				Color col1 = lightIndex == 0 ? uiColor : Color.black;
+				Color col2 = lightIndex == 1 ? uiColor : Color.black;
+				Color col3 = lightIndex == 2 ? uiColor : Color.black;
+				Color col4 = lightIndex == 3 ? uiColor : Color.black;
+
+				playerMockBlocks[i].SetLights(col1, col2, col3, col4);
+			}
+		}
+
 	}
 
 	void Update_SPINNING() {
@@ -1024,9 +1068,17 @@ public class VortexController : GameController {
 		
 		int newNumber = wheel.GetDisplayedNumber();
 		//Debug.Log("Update_SPINNING lightingMax("+lightingMax+") wheel.Speed("+wheel.Speed+") newNumber("+newNumber+") lastNumber("+lastNumber+")");
-		if(lightingMax == 0 && newNumber != lastNumber) {
-			lightingBall.SingleLightningBolt();
+		if(newNumber != lastNumber) {
+
+			if(lightingMax == 0) {
+				lightingBall.SingleLightningBolt();
+			}
+
+			lightIndex++;
+			if(lightIndex >= 4) lightIndex = 0;
 		}
+
+
 		lastNumber = newNumber;
 
 		if(cozmoIndex >= 0) {
@@ -1078,6 +1130,9 @@ public class VortexController : GameController {
 		}
 
 		imageGear.color = Color.Lerp (GetPlayerUIColor(currentPlayerIndex), gearDefaultColor, playStateTimer);
+
+		spinLightTimer += Time.deltaTime * wheel.Speed;
+		RefreshSpinningLights();
 
 	}
 
@@ -1599,7 +1654,7 @@ public class VortexController : GameController {
 		fillCol.a = 0.5f;
 		playerPanelFills[index].color = fillCol;
 
-		if(buttonPressSound != null) AudioManager.PlayOneShot(buttonPressSound);
+		if(buttonPressSound != null) AudioManager.PlayOneShot(buttonPressSound, 0f, 1f, 1f);
 
 		//Debug.Log("PlayerInputTap index: "+index);
 
