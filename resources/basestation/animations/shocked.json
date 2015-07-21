@@ -82,8 +82,8 @@
     },
     {
       "$type": "BehaviorDesigner.AudioRobotPointData, BehaviorDesigner",
-      "audioName": "vortexPrototype\\VO_CozmoBrian_Shocked_01.wav",
-      "fullPath": "Z:\\products-cozmo-assets\\sounds\\vortexPrototype\\VO_CozmoBrian_Shocked_01.wav",
+      "audioName": "robot/vortexPrototype/VO_CozmoBrian_Shocked_01.wav",
+      "fullPath": "Z:\\products-cozmo-assets\\sounds\\robot\\vortexPrototype\\VO_CozmoBrian_Shocked_01.wav",
       "triggerTime_ms": 400,
       "durationTime_ms": 1100,
       "Name": "RobotAudioKeyFrame"

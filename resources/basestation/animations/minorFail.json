@@ -50,8 +50,8 @@
     },
     {
       "$type": "BehaviorDesigner.AudioRobotPointData, BehaviorDesigner",
-      "audioName": "vortexPrototype/VO_CozmoBrian_MinorFail_02.wav",
-      "fullPath": "Z:\\products-cozmo-assets\\sounds\\vortexPrototype\\VO_CozmoBrian_MinorFail_02.wav",
+      "audioName": "robot/vortexPrototype/VO_CozmoBrian_MinorFail_02.wav",
+      "fullPath": "Z:\\products-cozmo-assets\\sounds\\robot\\vortexPrototype\\VO_CozmoBrian_MinorFail_02.wav",
       "triggerTime_ms": 1,
       "durationTime_ms": 1200,
       "Name": "RobotAudioKeyFrame"
