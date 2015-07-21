@@ -941,7 +941,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   currentLevelOverride: -1
-  countdownText: {fileID: 0}
+  countdownText: {fileID: 11497250}
   countdownToStart: 5
   countdownTickSound: {fileID: 0}
   timerSounds:
@@ -984,7 +984,7 @@ MonoBehaviour:
   textScore: {fileID: 11459736}
   textError: {fileID: 0}
   textState: {fileID: 11459704}
-  textTime: {fileID: 0}
+  textTime: {fileID: 11465966}
   textAddaboy: {fileID: 0}
   autoPlay: 1
   playButton: {fileID: 0}
@@ -1018,6 +1018,7 @@ MonoBehaviour:
   maxStarPop: 1.5
   minStarPop: .300000012
   robotBusyDuringResults: 1
+  maxEmotionWaitTime: 20
   locatorBeep: {fileID: 8300000, guid: 3a92989e3fa2e409796d5978fe2e138f, type: 3}
   foundBeep: {fileID: 8300000, guid: bad1754a058044af8add36bdd4c9181b, type: 3}
   collectedSound: {fileID: 8300000, guid: 56c69feea6a654597bb3cb73eeb184fa, type: 3}
@@ -1255,8 +1256,7 @@ MonoBehaviour:
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine, Version=0.0.0.0,
-            Culture=neutral, PublicKeyToken=null
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
           m_IntArgument: 0
           m_FloatArgument: 0
           m_StringArgument: 
@@ -1407,8 +1407,7 @@ MonoBehaviour:
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine, Version=0.0.0.0,
-            Culture=neutral, PublicKeyToken=null
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
           m_IntArgument: 0
           m_FloatArgument: 0
           m_StringArgument: 
