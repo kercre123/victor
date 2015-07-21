@@ -1,11 +1,14 @@
 ﻿using UnityEngine;
 using System.Collections;
 
+/// <summary>
+/// these are cozmo's action overrides for the building phases of gameplay
+/// </summary>
 public class BuildActions : GameActions {
 
+	#region INSPECTOR FIELDS
 
 	[SerializeField] AudioClip actionDeniedSound;
-
 	[SerializeField] AudioClip tooCloseVO;
 	[SerializeField] AudioClip tooFarVO;
 	[SerializeField] AudioClip tooHighVO;
@@ -13,6 +16,8 @@ public class BuildActions : GameActions {
 	[SerializeField] AudioClip wrongBlockVO;
 	[SerializeField] AudioClip wrongStackVO;
 	[SerializeField] AudioClip wrongColorVO;
+
+	#endregion
 
 	public override string STACK { get { return "Stack"; } }
 	public override string ALIGN { get { return "Play!"; } }
@@ -67,7 +72,6 @@ public class BuildActions : GameActions {
 			}
 		}
 	}
-
 	
 	public override void PickUp( bool onRelease, ObservedObject selectedObject )
 	{
@@ -171,7 +175,7 @@ public class BuildActions : GameActions {
 		base.Cancel (onRelease, selectedObject);
 	}
 
-	void PlaySoundsForErrorType(LayoutErrorType errorType) {
+	protected void PlaySoundsForErrorType(LayoutErrorType errorType) {
 	
 		//play denied sound
 		if(actionDeniedSound != null) AudioManager.PlayAudioClip(actionDeniedSound);

@@ -1,4 +1,3 @@
-
 using UnityEngine;
 using System;
 using System.Collections;
@@ -9,6 +8,10 @@ using Anki.Cozmo;
 using G2U = Anki.Cozmo.G2U;
 using U2G = Anki.Cozmo.U2G;
 
+/// <summary>
+/// Robot engine manager lives on a GameObject(named MasterObject) in our Intro scene,
+///		and handles launching, ticking, and messaging with the Cozmo Engine
+/// </summary>
 public class RobotEngineManager : MonoBehaviour {
 	
 	public static RobotEngineManager instance = null;

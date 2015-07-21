@@ -7,7 +7,13 @@ using Anki.Cozmo;
 using System;
 using DigitalRuby.ThunderAndLightning;
 
+/// <summary>
+/// game controller for manageing cozmo's vortex minigame
+///		wraps and manages a list of SpinWheels
+/// </summary>
 public class VortexController : GameController {
+
+	#region NESTED DEFINITIONS
 
 	public enum VortexState {
 		INTRO,
@@ -33,7 +39,6 @@ public class VortexController : GameController {
 			}
 		}
 	}
-
 	
 	struct ScoreBoardData {
 		public int playerIndex;
@@ -59,28 +64,9 @@ public class VortexController : GameController {
 		public int pointsIncorrectPenalty = -5;
 	}
 
-	int currentWheelIndex {
-		get {
-			if(rings == 1) return 0;
-			
-			int index = 0;
-			if(settings.inward) {
-				index = Mathf.CeilToInt(round / roundsPerRing) - 1;
-			}
-			else {
-				index = rings - Mathf.CeilToInt(round / roundsPerRing);
-			}
-			
-			index = Mathf.Clamp(index, 0, wheels.Count-1);
-			return index;
-		}
-	}
+	#endregion
 
-	SpinWheel wheel { 
-		get {
-			return wheels[currentWheelIndex];
-		}
-	}
+	#region INSPECTOR FIELDS
 
 	[SerializeField] List<SpinWheel> wheels;
 	[SerializeField] Text textPlayState;
@@ -109,7 +95,7 @@ public class VortexController : GameController {
 	[SerializeField] Image[] imageInputLocked;
 	[SerializeField] Image[] imagePlayerBidBGs;
 	[SerializeField] Text[] textPlayerBids;
-	[SerializeField] Text[] textPlayerSpinNow;
+	[SerializeField] RectTransform[] textPlayerSpinNow;
 	[SerializeField] RectTransform preGameAlert;
 	[SerializeField] Animation[] playerBidFlashAnimations;
 	[SerializeField] Text[] textPlayerScores;
@@ -129,6 +115,55 @@ public class VortexController : GameController {
 	[SerializeField] float maxPlayerInputTime = 3f;
 
 	[SerializeField] Button playAgainButton;
+
+	[SerializeField] float scoreDisplayFillFade = 0.5f;
+	[SerializeField] float scoreDisplayFillAlpha = 0.5f;
+	[SerializeField] float scoreDisplayEmptyAlpha = 0.1f;
+
+	[SerializeField] Image imageCozmoDragHand;
+	[SerializeField] Vector2 cozmoStartDragPos = Vector2.zero;
+	[SerializeField] Vector2 cozmoEndDragPos = Vector2.zero;
+	[SerializeField] float cozmoDragDelay = 2f;
+	[SerializeField] float cozmoDragTime = 2f;
+	[SerializeField] float cozmoFinalDragTime = 0.2f;
+	
+	[SerializeField] float scoreScaleBase = 0.75f;
+	[SerializeField] float scoreScaleMax = 1f;
+	
+	#endregion
+
+	#region PRIVATE METHODS	
+
+	int currentWheelIndex {
+		get {
+			if(rings == 1) return 0;
+			
+			int index = 0;
+			if(settings.inward) {
+				index = Mathf.CeilToInt(round / roundsPerRing) - 1;
+			}
+			else {
+				index = rings - Mathf.CeilToInt(round / roundsPerRing);
+			}
+			
+			index = Mathf.Clamp(index, 0, wheels.Count-1);
+			return index;
+		}
+	}
+	
+	SpinWheel wheel { 
+		get {
+			return wheels[currentWheelIndex];
+		}
+	}
+
+	RectTransform cozmoDragHandRectTransform;
+	Vector2 startDragPos;
+	Vector2 endDragPos;
+	float dragTimer = 0f;
+	int dragCount = 0;
+	int dragCountMax = 2;
+	int lightIndex = 0;
 
 	List<VortexInput> playerInputs = new List<VortexInput>();
 
@@ -161,11 +196,13 @@ public class VortexController : GameController {
 	float cozmoTimePerTap = 1.25f;
 	List<int> playersThatAreCorrect = new List<int>();
 	List<int> playersThatAreWrong = new List<int>();
-	
-	[SerializeField] float scoreDisplayFillFade = 0.5f;
-	[SerializeField] float scoreDisplayFillAlpha = 0.5f;
-	[SerializeField] float scoreDisplayEmptyAlpha = 0.1f;
-	
+
+	ObservedObject humanHead;
+
+	float frequency = 0.1f;
+	float headTimer = 0f;
+	float turnStartAngle = 0f;
+
 	float fadeTimer = 1f;
 	int resultsDisplayIndex = 0;
 
@@ -173,6 +210,10 @@ public class VortexController : GameController {
 
 	bool fakeCozmoTaps = true;
 	int cozmoIndex = 1;
+
+	#endregion
+
+	#region PROTECTED METHODS
 
 	protected override void Awake () {
 		base.Awake();
@@ -291,7 +332,6 @@ public class VortexController : GameController {
 		base.Update_BUILDING();
 	}
 
-	ObservedObject humanHead;
 	protected override void Enter_PRE_GAME () {
 
 		if(playerMockBlocks != null) {
@@ -352,11 +392,6 @@ public class VortexController : GameController {
 		imageGear.color = gearDefaultColor;
 	}
 
-	
-
-	float frequency = 0.1f;
-	float headTimer = 0f;
-	float turnStartAngle = 0f;
 	protected override void Update_PRE_GAME () {
 		base.Update_PRE_GAME();
 
@@ -741,6 +776,10 @@ public class VortexController : GameController {
 		textPlayState.text = state == GameState.PLAYING ? playState.ToString() : "";
 	}
 
+	#endregion
+
+	#region PRIVATE METHODS
+
 	VortexState GetNextPlayState() {
 
 		switch(playState) {
@@ -811,24 +850,12 @@ public class VortexController : GameController {
 
 		//enable intro text
 	}
+
 	void Update_INTRO() {}
+
 	void Exit_INTRO() {
 		//disable intro text
 	}
-
-	[SerializeField] Image imageCozmoDragHand;
-	[SerializeField] Vector2 cozmoStartDragPos = Vector2.zero;
-	[SerializeField] Vector2 cozmoEndDragPos = Vector2.zero;
-	[SerializeField] float cozmoDragDelay = 2f;
-	[SerializeField] float cozmoDragTime = 2f;
-	[SerializeField] float cozmoFinalDragTime = 0.2f;
-
-	RectTransform cozmoDragHandRectTransform;
-	Vector2 startDragPos;
-	Vector2 endDragPos;
-	float dragTimer = 0f;
-	int dragCount = 0;
-	int dragCountMax = 2;
 
 	void Enter_REQUEST_SPIN() {
 
@@ -997,7 +1024,6 @@ public class VortexController : GameController {
 
 	}
 
-	float spinLightTimer = 0f;
 	void Enter_SPINNING() {
 
 		SetRobotEmotion("WATCH_SPIN", false);
@@ -1012,13 +1038,11 @@ public class VortexController : GameController {
 		predictedDuration = -1f;
 		predictedTimeAfterLastPeg = -1f;
 		cozmoTapsSubmitted = -1;
-		spinLightTimer = 0f;
 		lightIndex = 0;
 
 		RefreshSpinningLights();
 	}
 
-	int lightIndex = 0;
 	void RefreshSpinningLights() {
 		
 		for(int i=0;i<numPlayers;i++) {
@@ -1131,7 +1155,6 @@ public class VortexController : GameController {
 
 		imageGear.color = Color.Lerp (GetPlayerUIColor(currentPlayerIndex), gearDefaultColor, playStateTimer);
 
-		spinLightTimer += Time.deltaTime * wheel.Speed;
 		RefreshSpinningLights();
 
 	}
@@ -1163,9 +1186,6 @@ public class VortexController : GameController {
 		}
 		
 	}
-
-	[SerializeField] float scoreScaleBase = 0.75f;
-	[SerializeField] float scoreScaleMax = 1f;
 
 	void Enter_SPIN_COMPLETE() {
 		
@@ -1308,7 +1328,6 @@ public class VortexController : GameController {
 		fadeTimer = scoreDisplayFillFade;
 	}
 	
-	
 	void PlayRoundCompleteLights()
 	{
 		
@@ -1367,7 +1386,6 @@ public class VortexController : GameController {
 		}
 		
 	}
-	
 
 	void Update_SPIN_COMPLETE() {
 		if(playersThatAreCorrect.Count == 0) return;
@@ -1589,79 +1607,6 @@ public class VortexController : GameController {
 	Color GetPlayerUIColor(int index) {
 		return playerColors[index];
 	}
-	
-///
-	public void PlayerInputTap(int index) {
-		if(state == GameState.PRE_GAME) {
-			if( index == cozmoIndex ) { // cozmo
-				SetRobotEmotion("LETS_PLAY");
-			}
-			playerMockBlocks[index].Validate(true);
-			return;
-		}
-
-
-		if(state != GameState.PLAYING) return;
-		if(playState != VortexState.SPINNING) return;
-		if(playersEliminated[index]) return;
-
-		while(index >= playerInputs.Count) playerInputs.Add (new VortexInput());
-		if(playerInputs[index].stamps.Count >= 4) return;
-
-		float time = Time.time;
-
-		if(index != cozmoIndex && time - playerInputs[index].FirstTime > maxPlayerInputTime) return;
-
-		playerInputs[index].stamps.Add(time);
-
-//		//if this is fifth stamp, then remove the prior 4 such that we go back to 1, 
-//		//	but still have our relevant 'last' time stamp at the end of the list
-//		if(playerInputs[index].stamps.Count > 4) {
-//			playerInputs[index].stamps.RemoveRange(0, 4);
-//		}
-
-		if(index < playerInputBlocks.Count) {
-			Color playerColor = CozmoPalette.instance.GetColorForActiveBlockMode(GetPlayerActiveCubeColorMode(index));
-	
-			uint c1 = CozmoPalette.ColorToUInt(playerInputs[index].stamps.Count > 0 ? playerColor : Color.black);
-			uint c2 = CozmoPalette.ColorToUInt(playerInputs[index].stamps.Count > 1 ? playerColor : Color.black);
-	        uint c3 = CozmoPalette.ColorToUInt(playerInputs[index].stamps.Count > 2 ? playerColor : Color.black);
-	        uint c4 = CozmoPalette.ColorToUInt(playerInputs[index].stamps.Count > 3 ? playerColor : Color.black);
-	
-			playerInputBlocks[index].SetLEDs(c1, 0, (byte)ActiveBlock.Light.IndexToPosition(0), Robot.Light.FOREVER, 0, 0, 0, 0 );
-			playerInputBlocks[index].SetLEDs(c2, 0, (byte)ActiveBlock.Light.IndexToPosition(1), Robot.Light.FOREVER, 0, 0, 0, 0 );
-			playerInputBlocks[index].SetLEDs(c3, 0, (byte)ActiveBlock.Light.IndexToPosition(2), Robot.Light.FOREVER, 0, 0, 0, 0 );
-			playerInputBlocks[index].SetLEDs(c4, 0, (byte)ActiveBlock.Light.IndexToPosition(3), Robot.Light.FOREVER, 0, 0, 0, 0 );
-		}
-
-		Color uiCol = GetPlayerUIColor(index);
-		
-		Color uiCol1 = playerInputs[index].stamps.Count > 0 ? uiCol : Color.black;
-		Color uiCol2 = playerInputs[index].stamps.Count > 1 ? uiCol : Color.black;
-		Color uiCol3 = playerInputs[index].stamps.Count > 2 ? uiCol : Color.black;
-		Color uiCol4 = playerInputs[index].stamps.Count > 3 ? uiCol : Color.black;
-		
-		playerMockBlocks[index].SetLights (uiCol1, uiCol2, uiCol3, uiCol4);
-		
-
-		textPlayerBids[index].text = playerInputs[index].stamps.Count.ToString();
-		imagePlayerBidBGs[index].gameObject.SetActive(true);
-
-		playerBidFlashAnimations[index].Rewind();
-		playerBidFlashAnimations[index].Play();
-
-		Color fillCol = playerPanelFills[index].color;
-		fillCol.a = 0.5f;
-		playerPanelFills[index].color = fillCol;
-
-		if(buttonPressSound != null) AudioManager.PlayOneShot(buttonPressSound, 0f, 1f, 1f);
-
-		//Debug.Log("PlayerInputTap index: "+index);
-
-		if(playerInputs[index].stamps.Count == 1) {
-			StartCoroutine(DelayBidLockedEffect(index));
-		}
-	}
 
 
 	IEnumerator DelayBidLockedEffect(int index) {
@@ -1677,5 +1622,83 @@ public class VortexController : GameController {
 		
 		PlayerInputTap(index);
 	}
+
+	#endregion
+	
+	#region PUBLIC METHODS
+
+	public void PlayerInputTap(int index) {
+		if(state == GameState.PRE_GAME) {
+			if( index == cozmoIndex ) { // cozmo
+				SetRobotEmotion("LETS_PLAY");
+			}
+			playerMockBlocks[index].Validate(true);
+			return;
+		}
+		
+		
+		if(state != GameState.PLAYING) return;
+		if(playState != VortexState.SPINNING) return;
+		if(playersEliminated[index]) return;
+		
+		while(index >= playerInputs.Count) playerInputs.Add (new VortexInput());
+		if(playerInputs[index].stamps.Count >= 4) return;
+		
+		float time = Time.time;
+		
+		if(index != cozmoIndex && time - playerInputs[index].FirstTime > maxPlayerInputTime) return;
+		
+		playerInputs[index].stamps.Add(time);
+		
+		//		//if this is fifth stamp, then remove the prior 4 such that we go back to 1, 
+		//		//	but still have our relevant 'last' time stamp at the end of the list
+		//		if(playerInputs[index].stamps.Count > 4) {
+		//			playerInputs[index].stamps.RemoveRange(0, 4);
+		//		}
+		
+		if(index < playerInputBlocks.Count) {
+			Color playerColor = CozmoPalette.instance.GetColorForActiveBlockMode(GetPlayerActiveCubeColorMode(index));
+			
+			uint c1 = CozmoPalette.ColorToUInt(playerInputs[index].stamps.Count > 0 ? playerColor : Color.black);
+			uint c2 = CozmoPalette.ColorToUInt(playerInputs[index].stamps.Count > 1 ? playerColor : Color.black);
+			uint c3 = CozmoPalette.ColorToUInt(playerInputs[index].stamps.Count > 2 ? playerColor : Color.black);
+			uint c4 = CozmoPalette.ColorToUInt(playerInputs[index].stamps.Count > 3 ? playerColor : Color.black);
+			
+			playerInputBlocks[index].SetLEDs(c1, 0, (byte)ActiveBlock.Light.IndexToPosition(0), Robot.Light.FOREVER, 0, 0, 0, 0 );
+			playerInputBlocks[index].SetLEDs(c2, 0, (byte)ActiveBlock.Light.IndexToPosition(1), Robot.Light.FOREVER, 0, 0, 0, 0 );
+			playerInputBlocks[index].SetLEDs(c3, 0, (byte)ActiveBlock.Light.IndexToPosition(2), Robot.Light.FOREVER, 0, 0, 0, 0 );
+			playerInputBlocks[index].SetLEDs(c4, 0, (byte)ActiveBlock.Light.IndexToPosition(3), Robot.Light.FOREVER, 0, 0, 0, 0 );
+		}
+		
+		Color uiCol = GetPlayerUIColor(index);
+		
+		Color uiCol1 = playerInputs[index].stamps.Count > 0 ? uiCol : Color.black;
+		Color uiCol2 = playerInputs[index].stamps.Count > 1 ? uiCol : Color.black;
+		Color uiCol3 = playerInputs[index].stamps.Count > 2 ? uiCol : Color.black;
+		Color uiCol4 = playerInputs[index].stamps.Count > 3 ? uiCol : Color.black;
+		
+		playerMockBlocks[index].SetLights (uiCol1, uiCol2, uiCol3, uiCol4);
+		
+		
+		textPlayerBids[index].text = playerInputs[index].stamps.Count.ToString();
+		imagePlayerBidBGs[index].gameObject.SetActive(true);
+		
+		playerBidFlashAnimations[index].Rewind();
+		playerBidFlashAnimations[index].Play();
+		
+		Color fillCol = playerPanelFills[index].color;
+		fillCol.a = 0.5f;
+		playerPanelFills[index].color = fillCol;
+		
+		if(buttonPressSound != null) AudioManager.PlayOneShot(buttonPressSound, 0f, 1f, 1f);
+		
+		//Debug.Log("PlayerInputTap index: "+index);
+		
+		if(playerInputs[index].stamps.Count == 1) {
+			StartCoroutine(DelayBidLockedEffect(index));
+		}
+	}
+
+	#endregion
 
 }
