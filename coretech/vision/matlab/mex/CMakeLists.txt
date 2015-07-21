@@ -1,11 +1,15 @@
 # coretech/vision/matlab/mex/CMakeLists.txt
 
+message(STATUS "Now in ${CMAKE_CURRENT_SOURCE_DIR}")
+
 set(MEX_LINK_LIBRARIES 
-  CoreTech_Vision_Basestation
-  CoreTech_Common_Basestation
-  CoreTech_Vision_Robot
-  CoreTech_Common_Robot
+  ctiVision
+  ctiCommon
+  ctiVisionRobot
+  ctiCommonRobot
   ${OPENCV_LIBS}
+  matconvnet
+  mwblas
 )
 
 file(GLOB MEX_FILES "*.cpp")
