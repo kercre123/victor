@@ -34,6 +34,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 // Choose the recognition method here to be one from the above list
 #define RECOGNITION_METHOD RECOGNITION_METHOD_CNN
+
 // Includes required by the various methods
 #if RECOGNITION_METHOD == RECOGNITION_METHOD_NEAREST_NEIGHBOR
 #  include "anki/vision/robot/nearestNeighborLibrary.h"
