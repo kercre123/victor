@@ -14,7 +14,6 @@
 #include "anki/common/basestation/math/poseBase_impl.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/robot.h"
-#include "anki/cozmo/basestation/signals/cozmoEngineSignals.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "messageEngineToGame.h"
 

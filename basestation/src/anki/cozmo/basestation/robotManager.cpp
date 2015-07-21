@@ -8,7 +8,6 @@
 
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotManager.h"
-#include "anki/cozmo/basestation/signals/cozmoEngineSignals.h"
 #include "anki/cozmo/basestation/robotMessageHandler.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "clad/externalInterface/messageEngineToGame.h"

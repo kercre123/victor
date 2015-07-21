@@ -13,7 +13,6 @@
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/comms/robot/robotMessages.h"
 #include "anki/cozmo/basestation/robot.h"
-#include "anki/cozmo/basestation/signals/cozmoEngineSignals.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/common/basestation/math/point.h"

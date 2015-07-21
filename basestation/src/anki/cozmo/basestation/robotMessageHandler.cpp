@@ -19,7 +19,6 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotManager.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
-#include "anki/cozmo/basestation/signals/cozmoEngineSignals.h"
 #include "anki/cozmo/basestation/robotMessageHandler.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"

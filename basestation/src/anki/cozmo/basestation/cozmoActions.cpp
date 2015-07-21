@@ -19,7 +19,6 @@
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/robot.h"
-#include "anki/cozmo/basestation/signals/cozmoEngineSignals.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"

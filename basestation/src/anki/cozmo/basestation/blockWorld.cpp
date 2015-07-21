@@ -13,7 +13,6 @@
 #include "anki/cozmo/basestation/markerlessObject.h"
 #include "anki/cozmo/basestation/comms/robot/robotMessages.h"
 #include "anki/cozmo/basestation/robot.h"
-#include "anki/cozmo/basestation/signals/cozmoEngineSignals.h"
 #include "bridge.h"
 #include "flatMat.h"
 #include "platform.h"
