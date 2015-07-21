@@ -26,4 +26,22 @@
 
 #endif
 
+/** WiFi fix rate configuration
+ * This is a custom API added by Espressif for Anki 2015-07-21
+ */
+enum FIXED_RATE {
+          PHY_RATE_48    =    0x8,
+          PHY_RATE_24    =    0x9,
+          PHY_RATE_12    =    0xA,
+          PHY_RATE_6      =    0xB,
+          PHY_RATE_54    =    0xC,
+          PHY_RATE_36    =    0xD,
+          PHY_RATE_18    =    0xE,
+          PHY_RATE_9      =    0xF,
+};
+/** Set the WiFi to operate at a fixed rate rather than negotiating
+ * @param A value from FIXED_RATE enum.
+ */
+void wifi_set_user_fixed_rate(u8 rate);
+
 #endif
