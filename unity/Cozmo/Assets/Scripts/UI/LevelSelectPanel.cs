@@ -5,6 +5,9 @@ using System.Text.RegularExpressions;
 using System.Collections;
 using System.Collections.Generic;
 
+/// <summary>
+/// this component manages a scrollable list of LevelSelectButtons that are associated with a specific minigame
+/// </summary>
 public class LevelSelectPanel : MonoBehaviour {
 
 	[SerializeField] Text textTitle;

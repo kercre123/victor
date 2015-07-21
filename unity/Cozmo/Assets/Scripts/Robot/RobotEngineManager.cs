@@ -25,10 +25,6 @@ public class RobotEngineManager : MonoBehaviour {
 	[SerializeField] private TextAsset configuration;
 	[SerializeField] private TextAsset alternateConfiguration;
 
-	[SerializeField] private GameObject robotBusyPanelPrefab;
-
-	private CozmoBusyPanel busyPanel = null;
-
 	[SerializeField]
 	[HideInInspector]
 	private DisconnectionReason lastDisconnectionReason = DisconnectionReason.None;
@@ -38,6 +34,7 @@ public class RobotEngineManager : MonoBehaviour {
 	public event Action<int> RobotConnected;
 	public event Action<Sprite> RobotImage;
 	public event Action<bool,RobotActionType> SuccessOrFailure;
+	public event Action<bool,string> RobotCompletedAnimation;
 
 	private ChannelBase channel = null;
 	private float lastRobotStateMessage = 0;
@@ -97,6 +94,12 @@ public class RobotEngineManager : MonoBehaviour {
 
 	public void AddRobot( byte robotID )
 	{
+		if(robots.ContainsKey(robotID)) {
+			robotList.RemoveAll( x => x.ID == robotID);
+			robots.Remove(robotID);
+		}
+
+
 		Robot robot = new Robot( robotID );
 		robots.Add( robotID, robot );
 		robotList.Add( robot );
@@ -125,11 +128,6 @@ public class RobotEngineManager : MonoBehaviour {
 		} else {
 			instance = this;
 			DontDestroyOnLoad (gameObject);
-		}
-
-		if(busyPanel == null && robotBusyPanelPrefab != null) {
-			GameObject busyPanelObject = (GameObject)GameObject.Instantiate(robotBusyPanelPrefab);
-			busyPanel = busyPanelObject.GetComponent<CozmoBusyPanel>();
 		}
 
 		Application.runInBackground = true;
@@ -450,7 +448,7 @@ public class RobotEngineManager : MonoBehaviour {
 
 		bool success = (message.result == ActionResult.SUCCESS);
 		RobotActionType action_type = (RobotActionType)message.actionType;
-		Debug.Log("Action completed " + success);
+		//Debug.Log("Action completed " + success);
 		
 		current.selectedObjects.Clear();
 		current.targetLockedObject = null;
@@ -462,6 +460,12 @@ public class RobotEngineManager : MonoBehaviour {
 		
 		if(SuccessOrFailure != null) {
 			SuccessOrFailure(success, action_type);
+		}
+
+		if(action_type == RobotActionType.PLAY_ANIMATION) {
+			if(RobotCompletedAnimation != null) {
+				RobotCompletedAnimation(success, message.completionInfo.animName);
+			}
 		}
 
 		if(!success) {
@@ -601,9 +605,14 @@ public class RobotEngineManager : MonoBehaviour {
 			}
 			
 			texture = new Texture2D( width, height, format, false );
+			// HACK: Grayscale is broken from about 5.0 until 5.1.1p2
+			// note p2 means patch release, after 5.1.1 proper;
+			// 5.1.2 and 5.2.0 should be OK; we won't upgrade until one of those come out
+#if UNITY_5_0
 			if (USE_HACK_TO_FIX_GRAYSCALE_ISSUE) {
 				width /= 3;
 			}
+#endif
 			sprite = Sprite.Create (texture, new Rect(0, 0, width, height), spritePivot);
 		}
 	}

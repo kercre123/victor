@@ -1,6 +1,6 @@
 #include "anki/cozmo/game/comms/gameMessageHandler.h"
 
-#include "anki/util/logging/logging.h"
+#include "util/logging/logging.h"
 
 
 namespace Anki {

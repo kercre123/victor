@@ -203,7 +203,6 @@ public class GoldRushController : GameController {
 		SetEnergyBars (0, 0);
 		setHighScore = false;
 		oldHighScore = PlayerPrefs.GetInt("EnergyHunt_HighScore", 0);
-		//Debug.Log("oldHighScore: " + oldHighScore);
 
 		SuccessOrFailureText text = FindObjectOfType<SuccessOrFailureText>();
 		if( text != null )
@@ -245,7 +244,7 @@ public class GoldRushController : GameController {
 		//ActionButton.DROP = null;
 		//RobotEngineManager.instance.SuccessOrFailure -= CheckForGoldDropOff;
 		playState = PlayState.IDLE;
-		UpdateDetectorLights (0);
+		SetAllDetectorLights (0);
 		AudioManager.Stop( AudioManager.Source.UI );
 		SetEnergyBars (0, 0);
 		if( successOrFailureGameObject != null )
@@ -301,6 +300,7 @@ public class GoldRushController : GameController {
 		}
 	}
 
+	Vector2 cozmoForwardWhenPickUp = Vector2.right;
 	protected override void Enter_PRE_GAME ()
 	{
 		Debug.Log("Enter_PRE_GAME");
@@ -315,9 +315,10 @@ public class GoldRushController : GameController {
 		RefreshGameProps();
 
 		//hintMessage.ShowMessage("Pick up the energy scanner to begin", Color.black);
-		if( robot.carryingObject == null || robot.carryingObject != goldExtractingObject )
+		if( robot.carryingObject == null || (int)robot.carryingObject != goldExtractingObject )
 		{
 			//PlayNotificationAudio (pickupEnergyScanner);
+
 			robot.PickAndPlaceObject(goldExtractingObject);
 			if(CozmoBusyPanel.instance != null)	{
 				string desc = "Cozmo is attempting to pick-up\n the extractor.";
@@ -442,7 +443,7 @@ public class GoldRushController : GameController {
 		if(goldExtractingObject == null) return false;
 		if(goldCollectingObject == null) return false;
 		if(robot.carryingObject == null) return false;
-		if(robot.carryingObject != goldExtractingObject) return false;
+		if((int)robot.carryingObject != goldExtractingObject) return false;
 		
 		return true;
 	}
@@ -590,6 +591,7 @@ public class GoldRushController : GameController {
 			// turn on  the block's lights
 			goldExtractingObject = robot.carryingObject as ActiveBlock;
 			goldExtractingObject.SetLEDs(EXTRACTOR_COLOR);
+			cozmoForwardWhenPickUp = robot.Forward;
 		}
 	}
 
@@ -643,7 +645,7 @@ public class GoldRushController : GameController {
 				else if(distance <= findRadius)
 				{
 					EnterPlayState(PlayState.CAN_EXTRACT);
-					UpdateDetectorLights (1);
+					SetAllDetectorLights (1);
 				}
 				else if( foundItems.Contains(robot.carryingObject) && distance > findRadius )
 				{
@@ -790,68 +792,31 @@ public class GoldRushController : GameController {
 
 	void SendRobotToCollector()
 	{
-		/*
-		Vector3 to_collector = goldCollectingObject.WorldPosition - robot.WorldPosition;
-		float angle = Vector3.Angle(Vector3.right, to_collector.normalized);
-		float sign = Mathf.Sign(Vector3.Dot(Vector3.forward,Vector3.Cross(Vector3.right,to_collector.normalized)));
-		float signed_angle = angle * sign;
-		Debug.Log("angle: " + angle +", signed_angle: " + signed_angle);
-		
-		Vector3 depositSpot = robot.WorldPosition + to_collector - (to_collector.normalized*32); // adjust for width of cube so our path doesn't intersect
-		
-		signed_angle = Mathf.Deg2Rad*signed_angle;
-		
-		robot.GotoPose(depositSpot.x, depositSpot.y, signed_angle);
-
-		Vector3 spotZ = (Vector3)depositSpot + Vector3.forward * CozmoUtil.BLOCK_LENGTH_MM * 10f;
-		Vector3 spotY1 = (Vector3)depositSpot - Vector3.up * CozmoUtil.BLOCK_LENGTH_MM;
-		Vector3 spotY2 = (Vector3)depositSpot + Vector3.up * CozmoUtil.BLOCK_LENGTH_MM;
-		Vector3 spotX1 = (Vector3)depositSpot - Vector3.right * CozmoUtil.BLOCK_LENGTH_MM;
-		Vector3 spotX2 = (Vector3)depositSpot + Vector3.right * CozmoUtil.BLOCK_LENGTH_MM;
-		RobotEngineManager.instance.VisualizeQuad(21, CozmoPalette.ColorToUInt(Color.blue), depositSpot, depositSpot, spotZ, spotZ);
-		RobotEngineManager.instance.VisualizeQuad(22, CozmoPalette.ColorToUInt(Color.blue), spotY1, spotY1, spotY2, spotY2);
-		RobotEngineManager.instance.VisualizeQuad(23, CozmoPalette.ColorToUInt(Color.blue), spotX1, spotX1, spotX2, spotX2);
-		*/
 		robot.GotoObject(goldCollectingObject, 50);
 	}
 #endregion
 
 #region IEnumerator
-
-	/*IEnumerator CountdownToPlay()
-	{
-		PlayNotificationAudio (gameStartingIn);
-		yield return new WaitForSeconds (gameStartingIn.length + .5f);
-		int timer_index = timerSounds.Length - 3;
-		while( timer_index < timerSounds.Length )
-		{
-			PlayNotificationAudio(timerSounds [timer_index].sound);
-			timer_index++;
-			yield return new WaitForSeconds (1);
-		}
-		PlayRequested();
-	}*/
+	
 
 	[SerializeField]
 	protected float extractTrimTime = 0.1f;
 	[SerializeField]
 	protected float accelStabilizationTime = 0.1f;
+
 	IEnumerator StartExtracting()
 	{
-		uint color = EXTRACTOR_COLOR;
 
 		robot.isBusy = true;
-		if( goldExtractingObject != null ) goldExtractingObject.SetLEDs (0);
-		yield return new WaitForSeconds(accelStabilizationTime); // short delay to allow accelerometer data to calm down
+
+		if( goldExtractingObject != null ) goldExtractingObject.SetLEDs( CozmoPalette.ColorToUInt(Color.clear), CozmoPalette.ColorToUInt(detectorColor), 0xff, 0, Robot.Light.FOREVER, 0, (uint)(extractingEnergy.length * 1000), 0);
 		AudioManager.PlayAudioClip(extractingEnergy, 0f, AudioManager.Source.Notification);
-		if( goldExtractingObject != null ) goldExtractingObject.SetLEDs (color, 0, 0xCC);
-		yield return new WaitForSeconds(extractingEnergy.length -extractTrimTime);
-		if( goldExtractingObject != null ) goldExtractingObject.SetLEDs (color, 0, 0xFF);
+		yield return new WaitForSeconds(extractingEnergy.length - extractTrimTime);
 		robot.isBusy = false;
 		yield return new WaitForSeconds(extractTrimTime);
-
+		
 		EnterPlayState (PlayState.RETURNING);
-
+		
 	}
 
 	[SerializeField]
@@ -862,11 +827,8 @@ public class GoldRushController : GameController {
 		robot.isBusy = true;
 		uint color = EXTRACTOR_COLOR;
 		AudioManager.PlayAudioClip(depositingEnergy, 0f, AudioManager.Source.Notification);
-		if( goldExtractingObject != null ) goldExtractingObject.SetLEDs (color, 0, 0xFF);
-		yield return new WaitForSeconds(depositingEnergy.length/2);
-
-		if( goldExtractingObject != null ) goldExtractingObject.SetLEDs (color, 0, 0xCC);
-		yield return new WaitForSeconds(depositingEnergy.length/2 - depositTrimTime);
+		if( goldExtractingObject != null ) goldExtractingObject.SetLEDs (CozmoPalette.ColorToUInt(detectorColor), CozmoPalette.ColorToUInt(Color.clear), 0xff, 0, Robot.Light.FOREVER, 0, (uint)(depositingEnergy.length * 1000), 0);
+		yield return new WaitForSeconds(depositingEnergy.length - depositTrimTime);
 
 		if( goldExtractingObject != null ) goldExtractingObject.SetLEDs (0);
 		// PlayNotificationAudio (collectedSound);
@@ -957,55 +919,44 @@ public class GoldRushController : GameController {
 #endregion
 
 	#region Active Block IFC
-	void UpdateDetectorLights(float light_intensity)
+	void SetAllDetectorLights(float light_intensity)
 	{
-		float time_now = Time.realtimeSinceStartup;
-
-		if (time_now - last_light_message_time > light_messaging_delay) 
-		{
-			Debug.Log("light_intensity: "+ light_intensity);
-			last_light_message_time = time_now;
-			float r = 255 * light_intensity;
-			float g = 255 * light_intensity;
-			
-			uint color = ((uint)r << 24 | (uint)g << 16 ) | 0x00FF;
-			if( goldExtractingObject != null ) goldExtractingObject.SetLEDs(color, 0, 0x33);
+		for(int i=0;i<4;i++) {
+			byte which_leds = (byte)ActiveBlock.Light.IndexToPosition(i);
+			Color col = Color.Lerp(Color.clear, detectorColor, light_intensity);
+			goldExtractingObject.SetLEDs(CozmoPalette.ColorToUInt(col), 0, which_leds, Robot.Light.FOREVER, 0, 0, 0, 0 );
 		}
 	}
 
+	Color detectorColor = Color.cyan;
+	float[] lightWeights = new float[4];
 	void UpdateDirectionLights(Vector2 target_position)
 	{
+		if(goldExtractingObject == null) return;
 
-		Vector3 heading3 = robot.Forward;
-		Vector2 heading = new Vector2(heading3.x, heading3.y);
-		heading = heading.normalized;
-		Vector2 to_target = target_position - new Vector2 (robot.WorldPosition.x, robot.WorldPosition.y);
+		Vector2 collector_pos = (Vector2)robot.WorldPosition + (Vector2)robot.Forward*CozmoUtil.CARRIED_OBJECT_HORIZONTAL_OFFSET;;
+
+		Vector2 to_target = target_position - (Vector2)collector_pos;
 		to_target = to_target.normalized;
-		//float dot_product = Vector2.Dot(heading, to_target);
-		float angle_between = MathUtil.DotProductAngle(heading, to_target);
-		
-		//Debug.Log ("dot_product: " + dot_product.ToString () + ", " + "angle_between: " + angle_between.ToString ());
-		
 
-		byte which_leds = 1; // front face, right side
-		byte relative_mode = 1;
-		// need to check angle variance in each of four directions
-		// our allowed delta is ~5 degrees
+		float angleDelta = MathUtil.SignedVectorAngle(cozmoForwardWhenPickUp, robot.Forward, Vector3.forward);
 
-		float allowed_delta = .18f;
-		if( (angle_between <= allowed_delta && angle_between >= -allowed_delta) // facing
-		   || (angle_between <= (Math.PI) + allowed_delta && angle_between >= (Math.PI) - allowed_delta) // behind
-		   || (angle_between <= (Math.PI/2) + allowed_delta && angle_between >= (Math.PI/2) - allowed_delta) // behind
-		   || (angle_between <= (Math.PI/3) + allowed_delta && angle_between >= (Math.PI/3) - allowed_delta)) // behind
-		{
-			which_leds = 0x11; // front face, both sides
-			relative_mode = 2;
+		Vector3 TopNorth = Quaternion.AngleAxis(angleDelta, Vector3.forward) * goldExtractingObject.TopNorth;
+		Vector3 TopEast = Quaternion.AngleAxis(angleDelta, Vector3.forward) * goldExtractingObject.TopEast;
+
+		lightWeights[0] = Mathf.Clamp01(Vector2.Dot(to_target, TopEast));
+		lightWeights[1] = Mathf.Clamp01(Vector2.Dot(to_target, TopNorth));
+		lightWeights[2] = Mathf.Clamp01(Vector2.Dot(to_target, -TopEast));
+		lightWeights[3] = Mathf.Clamp01(Vector2.Dot(to_target, -TopNorth));
+		
+		for(int i=0;i<lightWeights.Length;i++) {
+			byte which_leds = (byte)ActiveBlock.Light.IndexToPosition(i);
+			Color col = Color.Lerp(Color.clear, detectorColor, lightWeights[i]);
+			goldExtractingObject.SetLEDs(CozmoPalette.ColorToUInt(col), 0, which_leds, Robot.Light.FOREVER, 0, 0, 0, 0 );
 		}
-
 		
-		uint color = EXTRACTOR_COLOR;
-		if( /*last_leds != which_leds &&*/ goldExtractingObject != null ) goldExtractingObject.SetLEDsRelative(target_position, color, 0, which_leds, relative_mode);
-		last_leds = which_leds;
+		//Debug.Log("lightWeights[0]("+lightWeights[0]+") [1]("+lightWeights[1]+") [2]("+lightWeights[2]+") [3]("+lightWeights[3]+") TopNorth("+TopNorth+") Forward("+robot.Forward+")");
+
 	}
 
 	void SetEnergyBars(int num_bars, uint color = 0)

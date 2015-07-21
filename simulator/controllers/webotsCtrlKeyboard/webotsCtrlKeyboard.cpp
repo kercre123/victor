@@ -1,13 +1,10 @@
 /*
- * File:          webots_keyboard_controller.cpp
+ * File:          webotsCtrlKeyboard.cpp
  * Date:
  * Description:   
  * Author:        
  * Modifications: 
  */
-
-// TODO: Have CMake define this
-#define CORETECH_BASESTATION
 
 #include <opencv2/imgproc/imgproc.hpp>
 
@@ -23,15 +20,15 @@
 
 #include "anki/vision/basestation/image.h"
 
-#include "anki/cozmo/messageBuffers/game/UiMessagesG2U.def"
-#include "anki/cozmo/messageBuffers/game/UiMessagesU2G.def"
+#include "anki/cozmo/messageBuffers/game/UiMessagesG2U.h"
+#include "anki/cozmo/messageBuffers/game/UiMessagesU2G.h"
 #include "anki/messaging/shared/TcpClient.h"
 #include "anki/cozmo/game/comms/gameMessageHandler.h"
 #include "anki/cozmo/game/comms/gameComms.h"
 
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/block.h"
-#include "anki/cozmo/messageBuffers/shared/actionTypes.def"
+#include "anki/cozmo/messageBuffers/shared/actionTypes.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -46,7 +43,7 @@
 
 // SDL for gamepad control (specifically Logitech Rumblepad F510)
 // Gamepad should be in Direct mode (switch on back)
-#define ENABLE_GAMEPAD_SUPPORT 1
+#define ENABLE_GAMEPAD_SUPPORT 0
 #if(ENABLE_GAMEPAD_SUPPORT)
 #include <SDL.h>
 #define DEBUG_GAMEPAD 0
@@ -234,7 +231,6 @@ namespace Anki {
       void SendHeadControllerGains(const f32 kp, const f32 ki, const f32 kd, const f32 maxErrorSum);
       void SendLiftControllerGains(const f32 kp, const f32 ki, const f32 kd, const f32 maxErrorSum);
       void SendSteeringControllerGains(const f32 k1, const f32 k2);
-      void SendSelectNextSoundScheme();
       void SendStartTestMode(TestMode mode, s32 p1 = 0, s32 p2 = 0, s32 p3 = 0);
       void SendIMURequest(u32 length_ms);
       void SendAnimation(const char* animName, u32 numLoops);
@@ -339,9 +335,10 @@ namespace Anki {
           case RobotActionType::PICKUP_OBJECT_HIGH:
           case RobotActionType::PICKUP_OBJECT_LOW:
             printf("Robot %d %s picking up stack of %d objects with IDs: ",
-                   msg.robotID, (success ? "SUCCEEDED" : "FAILED"), msg.numObjects);
-            for(int i=0; i<msg.numObjects; ++i) {
-              printf("%d ", msg.objectIDs[i]);
+                   msg.robotID, (success ? "SUCCEEDED" : "FAILED"),
+                   msg.completionInfo.numObjects);
+            for(int i=0; i<msg.completionInfo.numObjects; ++i) {
+              printf("%d ", msg.completionInfo.objectIDs[i]);
             }
             printf("\n");
             break;
@@ -349,13 +346,19 @@ namespace Anki {
           case RobotActionType::PLACE_OBJECT_HIGH:
           case RobotActionType::PLACE_OBJECT_LOW:
             printf("Robot %d %s placing stack of %d objects with IDs: ",
-                   msg.robotID, (success ? "SUCCEEDED" : "FAILED"), msg.numObjects);
-            for(int i=0; i<msg.numObjects; ++i) {
-              printf("%d ", msg.objectIDs[i]);
+                   msg.robotID, (success ? "SUCCEEDED" : "FAILED"),
+                   msg.completionInfo.numObjects);
+            for(int i=0; i<msg.completionInfo.numObjects; ++i) {
+              printf("%d ", msg.completionInfo.objectIDs[i]);
             }
             printf("\n");
             break;
 
+          case RobotActionType::PLAY_ANIMATION:
+            printf("Robot %d finished playing animation %s.\n",
+                   msg.robotID, msg.completionInfo.animName.c_str());
+            break;
+            
           default:
             printf("Robot %d completed action with type=%d: %s.\n",
                    msg.robotID, msg.actionType, ActionResultToString((ActionResult)msg.result));
@@ -1244,12 +1247,12 @@ namespace Anki {
                   static int jsonMsgCtr = 0;
                   Json::Value jsonMsg;
                   Json::Reader reader;
-                  std::string jsonFilename("../blockworld_controller/SetBlockLights_" + std::to_string(jsonMsgCtr++) + ".json");
+                  std::string jsonFilename("../webotsCtrlGameEngine/SetBlockLights_" + std::to_string(jsonMsgCtr++) + ".json");
                   std::ifstream jsonFile(jsonFilename);
                   
                   if(jsonFile.fail()) {
                     jsonMsgCtr = 0;
-                    jsonFilename = "../blockworld_controller/SetBlockLights_" + std::to_string(jsonMsgCtr++) + ".json";
+                    jsonFilename = "../webotsCtrlGameEngine/SetBlockLights_" + std::to_string(jsonMsgCtr++) + ".json";
                     jsonFile.open(jsonFilename);
                   }
                   
@@ -1294,41 +1297,31 @@ namespace Anki {
                   msg.transitionOffPeriod_ms = 100;
                   msg.turnOffUnspecifiedLEDs = 1;
                   if(modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
-                    printf("Updating active block corner\n");
+                    printf("Updating active block edge\n");
                     msg.onColor = NamedColors::RED;
                     msg.offColor = NamedColors::BLACK;
-                    
-                    /*
-                    static WhichBlockLEDs cornerList[NUM_COLORS] = {
-                      WhichBlockLEDs::TOP_BTM_UPPER_LEFT,
-                      WhichBlockLEDs::TOP_BTM_UPPER_RIGHT,
-                      WhichBlockLEDs::TOP_BTM_LOWER_RIGHT,
-                      WhichBlockLEDs::TOP_BTM_LOWER_LEFT
-                    };
-                    msg.whichLEDs = static_cast<u8>(cornerList[colorIndex++]);
-                    */
-                    msg.whichLEDs = static_cast<u8>(WhichBlockLEDs::TOP_BTM_UPPER_LEFT);
-                    msg.makeRelative = 1;
+                    msg.whichLEDs = static_cast<u8>(WhichBlockLEDs::FRONT);
+                    msg.makeRelative = 2;
                     msg.relativeToX = robotPosition_.x();
                     msg.relativeToY = robotPosition_.y();
                     
                   } else if( modifier_key & webots::Supervisor::KEYBOARD_ALT) {
-                    static s32 cornerIndex = 0;
+                    static s32 edgeIndex = 0;
                     
-                    printf("Turning corner %d new color %d (%x)\n",
-                           cornerIndex, colorIndex, u32(colorList[colorIndex]));
+                    printf("Turning edge %d new color %d (%x)\n",
+                           edgeIndex, colorIndex, u32(colorList[colorIndex]));
                     
-                    msg.whichLEDs = (1 << cornerIndex);
+                    msg.whichLEDs = (1 << edgeIndex);
                     msg.onColor = colorList[colorIndex];
                     msg.offColor = 0;
                     msg.turnOffUnspecifiedLEDs = 0;
-                    msg.makeRelative = 1;
+                    msg.makeRelative = 2;
                     msg.relativeToX = robotPosition_.x();
                     msg.relativeToY = robotPosition_.y();
                     
-                    ++cornerIndex;
-                    if(cornerIndex == NUM_BLOCK_LEDS) {
-                      cornerIndex = 0;
+                    ++edgeIndex;
+                    if(edgeIndex == NUM_BLOCK_LEDS) {
+                      edgeIndex = 0;
                       ++colorIndex;
                     }
                     
@@ -1343,7 +1336,7 @@ namespace Anki {
                            colorList[colorIndex].b());
                     msg.onColor = colorList[colorIndex++];
                     msg.offColor = NamedColors::BLACK;
-                    msg.whichLEDs = static_cast<u8>(WhichBlockLEDs::TOP_FACE) | static_cast<u8>(WhichBlockLEDs::FRONT_FACE);
+                    msg.whichLEDs = static_cast<u8>(WhichBlockLEDs::FRONT);
                     msg.makeRelative = 0;
                     msg.turnOffUnspecifiedLEDs = 1;
                   }
@@ -1356,12 +1349,6 @@ namespace Anki {
                   msgWrapper.Set_SetActiveObjectLEDs(msg);
                   SendMessage(msgWrapper);
                 }
-                break;
-              }
-                
-              case (s32)'M':
-              {
-                SendSelectNextSoundScheme();
                 break;
               }
                 
@@ -1396,7 +1383,18 @@ namespace Anki {
               case (s32)'@':
               {
                 //SendAnimation("ANIM_BACK_AND_FORTH_EXCITED", 3);
-                SendAnimation("ANIM_TEST2", 1);
+                SendAnimation("ANIM_TEST", 1);
+                
+                {
+                  U2G::SetIdleAnimation msg;
+                  msg.robotID = 1;
+                  msg.animationName = "ANIM_IDLE";
+                  
+                  U2G::Message msgWrapper;
+                  msgWrapper.Set_SetIdleAnimation(msg);
+                  SendMessage(msgWrapper);
+                }
+                
                 break;
               }
               case (s32)'#':
@@ -1412,6 +1410,29 @@ namespace Anki {
               case (s32)'%':
               {
                 SendAnimation("ANIM_ALERT", 1);
+                break;
+              }
+              case (s32)'^':
+              {
+                // Send whatever animation is specified in the animationToSendName field
+                webots::Field* animToSendNameField = root_->getField("animationToSendName");
+                if (animToSendNameField == nullptr) {
+                  printf("ERROR: No animationToSendName field found in WebotsKeyboardController.proto\n");
+                  break;
+                }
+                std::string animToSendName = animToSendNameField->getSFString();
+                if (animToSendName.empty()) {
+                  printf("ERROR: animationToSendName field is empty\n");
+                  break;
+                }
+                
+                webots::Field* animNumLoopsField = root_->getField("animationNumLoops");
+                u32 animNumLoops = 1;
+                if (animNumLoopsField && (animNumLoopsField->getSFInt32() > 0)) {
+                  animNumLoops = animNumLoopsField->getSFInt32();
+                }
+
+                SendAnimation(animToSendName.c_str(), animNumLoops);
                 break;
               }
               case (s32)'~':
@@ -1809,14 +1830,10 @@ namespace Anki {
           NamedColors::CYAN, NamedColors::ORANGE, NamedColors::YELLOW
         }};
         static std::vector<WhichBlockLEDs> leds = {{
-          WhichBlockLEDs::TOP_UPPER_LEFT,
-          WhichBlockLEDs::TOP_UPPER_RIGHT,
-          WhichBlockLEDs::TOP_LOWER_LEFT,
-          WhichBlockLEDs::TOP_LOWER_RIGHT,
-          WhichBlockLEDs::BTM_UPPER_LEFT,
-          WhichBlockLEDs::BTM_UPPER_RIGHT,
-          WhichBlockLEDs::BTM_LOWER_LEFT, 
-          WhichBlockLEDs::BTM_LOWER_RIGHT
+          WhichBlockLEDs::BACK,
+          WhichBlockLEDs::LEFT,
+          WhichBlockLEDs::FRONT,
+          WhichBlockLEDs::RIGHT
         }};
         
         static auto colorIter = colors.begin();
@@ -2368,15 +2385,6 @@ namespace Anki {
         SendMessage(message);
       }
       
-      
-      void SendSelectNextSoundScheme()
-      {
-        U2G::SelectNextSoundScheme m;
-        U2G::Message message;
-        message.Set_SelectNextSoundScheme(m);
-        SendMessage(message);
-      }
-      
       void SendStartTestMode(TestMode mode, s32 p1, s32 p2, s32 p3)
       {
         U2G::StartTestMode m;
@@ -2407,6 +2415,7 @@ namespace Anki {
         {
           U2G::PlayAnimation m;
           //m.animationID = animId;
+          m.robotID = 1;
           m.animationName = animName;
           m.numLoops = numLoops;
           U2G::Message message;
@@ -2423,6 +2432,7 @@ namespace Anki {
       {
         U2G::ReplayLastAnimation m;
         m.numLoops = 1;
+        m.robotID = 1;
         U2G::Message message;
         message.Set_ReplayLastAnimation(m);
         SendMessage(message);

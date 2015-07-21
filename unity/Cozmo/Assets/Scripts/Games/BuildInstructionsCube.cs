@@ -24,7 +24,7 @@ public class BuildInstructionsCube : MonoBehaviour {
 
 	[SerializeField] SpriteRenderer[] symbols;
 	[SerializeField] SpriteRenderer[] symbolFrames;
-	[SerializeField] MeshRenderer[] activeCorners;
+	[SerializeField] MeshRenderer[] activeLights;
 
 	[SerializeField] public float invalidAlpha = 0.25f;
 	[SerializeField] Material originalBlockMaterial = null;
@@ -129,7 +129,7 @@ public class BuildInstructionsCube : MonoBehaviour {
 		lastBaseColor = baseColor;
 
 		meshCube.material = clonedBlockMaterial;
-		foreach(MeshRenderer rend in activeCorners) rend.material = clonedCornerMaterial;
+		foreach(MeshRenderer rend in activeLights) rend.material = clonedCornerMaterial;
 
 		if(Application.isPlaying) vCube.CreateWireFrame();
 		initialized = true;
@@ -186,9 +186,9 @@ public class BuildInstructionsCube : MonoBehaviour {
 				}
 			}
 			
-			if(activeCorners != null) {
-				for(int i=0;i<activeCorners.Length;i++) {
-					activeCorners[i].gameObject.SetActive(false);
+			if(activeLights != null) {
+				for(int i=0;i<activeLights.Length;i++) {
+					activeLights[i].gameObject.SetActive(false);
 				}
 			}
 		}
@@ -222,19 +222,19 @@ public class BuildInstructionsCube : MonoBehaviour {
 				}
 			}
 
-			if(activeCorners != null) {
+			if(activeLights != null) {
 				if(isActive) {
 					Color activeColor = Color.black;
 					if(CozmoPalette.instance != null) activeColor = CozmoPalette.instance.GetColorForActiveBlockMode(activeBlockMode);
-					for(int i=0;i<activeCorners.Length;i++) {
+					for(int i=0;i<activeLights.Length;i++) {
 						activeColor.a = alpha;
 						clonedCornerMaterial.color = activeColor;
-						activeCorners[i].gameObject.SetActive(true);
+						activeLights[i].gameObject.SetActive(true);
 					}
 				}
 				else {
-					for(int i=0;i<activeCorners.Length;i++) {
-						activeCorners[i].gameObject.SetActive(false);
+					for(int i=0;i<activeLights.Length;i++) {
+						activeLights[i].gameObject.SetActive(false);
 					}
 				}
 			}
