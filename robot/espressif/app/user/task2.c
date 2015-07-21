@@ -30,11 +30,13 @@ void clientRecvCallback(char* data, unsigned short len)
     }
     if (i2sStarted == false)
     {
+      os_printf("Starting I2S transfer\r\n");
       i2sStarted = true;
       i2sStart();
     }
   }
 }
+
 /// Callback to process incoming I2SPI data
 void i2sRecvCallback(I2SPIPayload* payload, I2SPIPayloadTag tag)
 {

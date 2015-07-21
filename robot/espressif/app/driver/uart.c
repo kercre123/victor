@@ -15,7 +15,7 @@
 #define UART_DEBUG_ONLY
 
 #define OS_UART UART0
-//#define OS_UART_LOSSLESS
+#define OS_UART_LOSSLESS
 
 // UartDev is defined and initialized in rom code.
 extern UartDevice    UartDev;

@@ -30,8 +30,10 @@ speed.
 #include "driver/i2s.h"
 #include "driver/i2s_ets.h"
 
-#define DMA_BUF_COUNT (4) // 512bytes per buffer * 8 buffers = 2k.
-ct_assert(DMA_BUF_COUNT % 2 == 0); // Must be a power of two for masking to work
+#define I2S_LOOP_TEST
+
+#define DMA_BUF_COUNT (14) // 512bytes per buffer * 8 buffers = 2k.
+ct_assert(DMA_BUF_COUNT && !(DMA_BUF_COUNT & (DMA_BUF_COUNT - 1))== 0); // Must be a power of two for masking to work
 #define DMA_BUF_COUNT_MASK (DMA_BUF_COUNT-1)
 
 /** DMA I2SPI transfer buffers
@@ -78,6 +80,10 @@ LOCAL void dmaisr(void) {
 	//clear all intr flags
 	WRITE_PERI_REG(SLC_INT_CLR, 0xffffffff);
 
+#ifdef I2S_LOOP_TEST
+  os_printf("LT: %08x\r\n", slc_intr_status);
+#endif
+
 	if (slc_intr_status & SLC_RX_EOF_INT_ST) {
     // Nothing to do here, pointers will be advanced by TX_EOF interrupt
 	}
@@ -85,6 +91,9 @@ LOCAL void dmaisr(void) {
     struct sdio_queue* desc = (struct sdio_queue*)READ_PERI_REG(SLC_TX_EOF_DES_ADDR);
     I2SPITransfer* xfer     = (I2SPITransfer*)(desc->buf_ptr);
     receiveInd = (receiveInd + 1) & DMA_BUF_COUNT_MASK;
+#ifdef I2S_LOOP_TEST
+    i2sRecvCallback(&(xfer->payload), xfer->tag);
+#else
     if (xfer->from == fromRTIP) // Is received data
     {
       if (i2spiSequential(xfer->seqNo, lastSeqNo)) // Is sequential
@@ -101,6 +110,7 @@ LOCAL void dmaisr(void) {
     {
       missedTransmits++;
     }
+#endif
 
     prepSdioQueue(desc); // Reset the DMA descriptor for reuse
   }
@@ -138,8 +148,8 @@ int8_t ICACHE_FLASH_ATTR i2sInit() {
 	//Enable and configure DMA
 	CLEAR_PERI_REG_MASK(SLC_CONF0, (SLC_MODE<<SLC_MODE_S));
 	SET_PERI_REG_MASK(SLC_CONF0,(1<<SLC_MODE_S));
-	SET_PERI_REG_MASK(SLC_RX_DSCR_CONF,SLC_INFOR_NO_REPLACE|SLC_TOKEN_NO_REPLACE);
-	CLEAR_PERI_REG_MASK(SLC_RX_DSCR_CONF, SLC_RX_FILL_EN|SLC_RX_EOF_MODE | SLC_RX_FILL_MODE);
+	SET_PERI_REG_MASK(  SLC_RX_DSCR_CONF, SLC_INFOR_NO_REPLACE | SLC_TOKEN_NO_REPLACE);
+	CLEAR_PERI_REG_MASK(SLC_RX_DSCR_CONF, SLC_RX_FILL_EN       | SLC_RX_EOF_MODE     | SLC_RX_FILL_MODE);
 
 	/* Feed DMA the buffer descriptors
     TX and RX are from the DMA's perspective so we use the TX LINK part to receive data from the I2S DMA and the RX LINK
@@ -155,7 +165,7 @@ int8_t ICACHE_FLASH_ATTR i2sInit() {
 	//Attach the DMA interrupt
 	ets_isr_attach(ETS_SLC_INUM, dmaisr);
 	//Enable DMA operation intr Want to get interrupts for both end of transmits
-	WRITE_PERI_REG(SLC_INT_ENA,  SLC_TX_EOF_INT_ENA); // SLC_RX_EOF_INT_ENA // only interrupting on TX (receive)
+	WRITE_PERI_REG(SLC_INT_ENA,  SLC_TX_EOF_INT_ENA | SLC_RX_EOF_INT_ENA);
 	//clear any interrupt flags that are set
 	WRITE_PERI_REG(SLC_INT_CLR, 0xffffffff);
 	///enable DMA intr in cpu
@@ -202,8 +212,8 @@ int8_t ICACHE_FLASH_ATTR i2sInit() {
 						(I2S_CLKM_DIV_NUM<<I2S_CLKM_DIV_NUM_S));
 	SET_PERI_REG_MASK(I2SCONF, I2S_RIGHT_FIRST|I2S_MSB_RIGHT|I2S_RECE_SLAVE_MOD| // Using receive in slave mode
 						I2S_RECE_MSB_SHIFT|I2S_TRANS_MSB_SHIFT|
-						(((1)&I2S_BCK_DIV_NUM )<<I2S_BCK_DIV_NUM_S)|
-						(((1)&I2S_CLKM_DIV_NUM)<<I2S_CLKM_DIV_NUM_S));
+						(((16)&I2S_BCK_DIV_NUM )<<I2S_BCK_DIV_NUM_S)|
+						(((16)&I2S_CLKM_DIV_NUM)<<I2S_CLKM_DIV_NUM_S));
 
   return 0;
 }

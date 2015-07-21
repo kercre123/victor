@@ -11,6 +11,7 @@
 #include "upgrade.h"
 #include "task0.h"
 #include "upgrade_controller.h"
+#include "driver/i2s.h"
 
 /// Flash sector size for erasing, 4KB
 #define FLASH_SECTOR_SIZE 4096
@@ -319,6 +320,10 @@ LOCAL void ICACHE_FLASH_ATTR upccReceiveCallback(void *arg, char *usrdata, unsig
             os_printf("ERROR: Couldn't queue upgrade task\r\n");
             resetUpgradeState();
             return;
+          }
+          else
+          {
+            i2sStop();
           }
         }
       }
