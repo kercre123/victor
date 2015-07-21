@@ -32,7 +32,7 @@
 #define INT_STATUS_1    0x0A
 #define INT_STATUS_2    0x0B
 #define INT_STATUS_3    0x0C
-//#define FIFO_STATUS     0x0E
+#define ACC_FIFO_STATUS     0x0E
 #define PMU_RANGE       0x0F
 #define PMU_BW          0x10
 #define PMU_LPW         0x11
@@ -82,8 +82,23 @@
 #define RANGE_4G            0x05
 #define RANGE_8G            0x08
 #define RANGE_16G           0x0B
+
+#define BW_7_81             0x08
+#define BW_15_63            0x09
+#define BW_31_25            0x0A
 #define BW_62_5             0x0B
+#define BW_125              0x0C
 #define BW_250              0x0D
+#define BW_500              0x0E
+#define BW_1000             0x0F
+
+#define FIFO_BYPASS         0 << 6
+#define FIFO_FIFO           1 << 6
+#define FIFO_STREAM         2 << 6
+#define FIFO_XYZ            0
+#define FIFO_X              1
+#define FIFO_Y              2
+#define FIFO_Z              3
 
 
 #define ACC_INT_OPEN_DRAIN  0x0F  // Active high, open drain
@@ -94,6 +109,12 @@ const u8 I2C_READ_BIT = 1;
 const u8 I2C_WRITE_BIT = 0;
 
 const u8 I2C_WAIT = 1;    
+
+static s8 newAcc[3];
+//static s8 oldAcc[3];
+static diffBufferX[5];
+static diffBufferY[5];
+static diffBufferZ[5];
 
 
 static void DriveSCL(u8 b)
@@ -141,6 +162,7 @@ static u8 Read(u8 ack)
 {
   u8 b = 0, i;
   PIN_IN(P0DIR, PIN_SDA);
+  delay_us(I2C_WAIT);
   for (i = 0; i < 8; i++)
   {
     b <<= 1;
@@ -149,6 +171,7 @@ static u8 Read(u8 ack)
     DriveSCL(0);
   }
   PIN_OUT(P0DIR, PIN_SDA);
+  delay_us(I2C_WAIT);
   // send Ack or Nak
   DriveSDA(ack);
   DriveSCL(1);
@@ -171,9 +194,11 @@ static u8 Write(u8 b)
   
   DriveSDA(0);
   PIN_IN(P0DIR, PIN_SDA);
+  delay_us(I2C_WAIT);
   DriveSCL(1); 
   b = ReadSDA();
   PIN_OUT(P0DIR, PIN_SDA);
+  delay_us(I2C_WAIT);
   DriveSCL(0);
   
   return b;
@@ -185,12 +210,19 @@ static void VerifyAck(ack)
 {
   if (ack == I2C_NACK)
   {
+    // last ditch try
+    if(ReadSDA() == I2C_ACK)
+    {
+      return;
+    }
     while(1)
     {
       LightOn(0); // ERROR (RED)
       delay_ms(100);
       LightsOff();
+      LightOn(1);
       delay_ms(100);
+      LightsOff();
     }
   }
   return;
@@ -209,7 +241,22 @@ static u8 DataRead(u8 addr)
   Stop();
   
   return readData;
- } //End of DataRead function
+} //End of DataRead function
+
+static u8 DataReadPrime(u8 addr)
+{
+  u8 readData = 0x00;
+  Start(); //start condition
+  Write(I2C_ADDR << 1 | I2C_WRITE_BIT); //slave address send
+  Write(addr); //word address send
+  Stop();
+  Start();
+  Write(I2C_ADDR << 1 | I2C_READ_BIT); //slave address send
+  readData = Read(I2C_NACK); //nack for last read
+  Stop();
+  
+  return readData;
+} //End of DataRead function
 
  
 static void DataReadMultiple(u8 addr, u8 numBytes, u8* buffer)
@@ -236,7 +283,114 @@ static void DataReadMultiple(u8 addr, u8 numBytes, u8* buffer)
   Stop();
 
 } //End of DataRead function
+
+
+// Read multiple, but only keep MSB bytes
+static void DataReadMultipleMsb(u8 addr, u8 numBytes, u8* buffer) 
+{
+  u8 i=0;
+  Start(); //start condition
+  VerifyAck(Write(I2C_ADDR << 1 | I2C_WRITE_BIT)); //slave address send
+  VerifyAck(Write(addr)); //word address send
+  Stop();
+  Start();
+  VerifyAck(Write(I2C_ADDR << 1 | I2C_READ_BIT)); //slave address send
+  while(i < numBytes)
+  {
+    if (i == (numBytes-1))
+    {
+      Read(I2C_ACK); 
+      buffer[i] = Read(I2C_NACK); //nack for last read
+    }
+    else
+    {
+      Read(I2C_ACK); 
+      buffer[i] = Read(I2C_ACK); 
+    }
+    i++;
+  }
+  Stop();
+
+} //End of DataReadMSB function
  
+// FIFO diff read
+u8 DataReadFifoTaps(u8 addr, u8 numBytes) 
+{
+  u8 i=0, taps = 0;
+  s8 current;
+  static s8 last = 0;
+  static u8 debounce = 0;
+  static bool posFirst;
+  
+  Start(); //start condition
+  VerifyAck(Write(I2C_ADDR << 1 | I2C_WRITE_BIT)); //slave address send
+  VerifyAck(Write(addr)); //word address send
+  Stop();
+  Start();
+  VerifyAck(Write(I2C_ADDR << 1 | I2C_READ_BIT)); //slave address send
+  while(i < numBytes)
+  {
+    if (i == (numBytes-1))
+    {
+      Read(I2C_ACK); 
+      current = Read(I2C_NACK); //nack for last read
+    }
+    else
+    {
+      Read(I2C_ACK); 
+      current = Read(I2C_ACK); 
+    }
+    //putchar(',');
+//    puthex(current);
+//    putchar(',');
+    current >>= 2;
+    i++;
+    if(debounce == 0)
+    {
+      if( current-last > 10) // XXX
+      {
+        debounce = 45;
+        posFirst = true;
+      }
+      else if ( current-last < -10)
+      {
+        debounce = 45;
+        posFirst = false;
+      }
+//      puthex(0);
+    }
+    else if(debounce > 40)
+    {
+      if( current-last > 10 && posFirst == false) // XXX
+      {
+        taps++;
+ //       puthex(1);
+        debounce = 40;
+      }
+      else if ( current-last < -10 && posFirst == true)
+      {
+        taps++;
+//        puthex(1);
+        debounce = 40;
+      }
+      else
+      {
+ //       puthex(0);
+        debounce--;
+      }
+    }
+    else
+    {
+ //     puthex(0);
+      debounce--;
+    }
+    last = current;
+//    putstring("\r\n");
+  }
+  Stop();
+  return taps;
+} //End of DataRead function
+
 
 static void DataWrite(u8 ctrlByte, u8 dataByte)
 {
@@ -286,10 +440,17 @@ static void WriteVerify(u8 ctrlByte, u8 dataByte)
 // Initialize accelerometer
 void InitAcc()
 {
+  memset(newAcc, 0, sizeof(newAcc));
+//  memset(oldAcc, 0, sizeof(oldAcc));
+  memset(diffBufferX, 0, sizeof(diffBufferX));
+  memset(diffBufferY, 0, sizeof(diffBufferY));
+  memset(diffBufferZ, 0, sizeof(diffBufferZ));
+  
   delay_ms(5);
   InitI2C();
   delay_ms(5);
 
+  DataReadPrime(BGW_CHIPID);
   if(DataRead(BGW_CHIPID) != CHIPID)
   {
     LightOn(0); // ERROR (RED)
@@ -297,12 +458,17 @@ void InitAcc()
   delay_ms(1);
 
   // 2G range
-  WriteVerify(PMU_RANGE, RANGE_4G);
+  WriteVerify(PMU_RANGE, RANGE_2G);
   delay_ms(1);
   
-  // 62.5 Hz bandwidth
-  WriteVerify(PMU_BW, BW_62_5);
+  // 250 Hz bandwidth
+  WriteVerify(PMU_BW, BW_250);
   delay_ms(1);
+  
+  // Configure and enable FIFO
+  WriteVerify(FIFO_CONFIG_1, FIFO_STREAM | FIFO_Z);
+  
+  
   /*
   // Enable tap detection
   // status in 0x09 s_tap_int
@@ -313,11 +479,14 @@ void InitAcc()
   WriteVerify(INT_9, 0x01); // low tap threshold
   WriteVerify(INT_RST_LATCH, 0x0F); // latched //25 ms latch
   */
+  /*
   WriteVerify(INT_EN_1, 1<<2 | 1<<1 | 1<<0); //high-g interrupt enable all axes
   //WriteVerify(INT_SRC, 1<<1); // unfiltered data for high interrupt
-  WriteVerify(INT_3, 0x01); // 2ms duration
+  WriteVerify(INT_3, 0x0F); // 2ms/unit duration
   WriteVerify(INT_4, 112); // lower threshold 1.75g
   WriteVerify(INT_RST_LATCH, 0x0F); // latched 
+  */
+  
 }
 
 void ReadAcc(s8 *accData)
@@ -329,10 +498,110 @@ void ReadAcc(s8 *accData)
   accData[2] = (s8)buffer[5];
 }
 
+u8 ReadFifoTaps()
+{
+  /*u8 i;
+  u8 dat = DataRead(ACC_FIFO_STATUS);
+  u8 xdata acc[32];
+  puthex(dat & 0x7F);
+  putchar(':');
+  delay_us(100);
+  if(!!(dat & 1<<7) > 10) // overrun
+  {
+    // Reset FIFO
+    DataWrite(FIFO_CONFIG_1, FIFO_STREAM | FIFO_Z);
+  }
+  else
+  {
+    DataReadMultipleMsb(FIFO_DATA, (dat & 0x7F), acc);
+    for(i = 0; i< (dat & 0x7F); i++)
+    {
+      puthex(acc[i]);
+      putchar(',');
+    }
+  }
+  putstring("\r\n");
+                
+  /*
+  static u8 buffer[6];
+  DataReadMultiple(ACCD_X_LSB, 6, buffer);
+  accData[0] = (s8)buffer[1];
+  accData[1] = (s8)buffer[3];
+  accData[2] = (s8)buffer[5];
+  */
+  
+}
+
 u8 GetTaps()
 {
-  //u8 taps = !!(DataRead(INT_STATUS_0) & (1 << 5));
-  u8 taps = !!(DataRead(INT_STATUS_0) & (1 << 1)); // high int
-  DataWrite(INT_RST_LATCH, 1<<7 | 0x0F);// clear intterupt
-  return taps;
+  u8 dat = DataRead(ACC_FIFO_STATUS);
+  //puthex(dat);
+  //putstring(",,\r\n");
+  if(!!(dat & 1<<7)) // overrun
+  {
+    // Reset FIFO
+    DataWrite(FIFO_CONFIG_1, FIFO_STREAM | FIFO_Z);
+  }
+  else
+  {
+    return DataReadFifoTaps(FIFO_DATA, (dat & 0x7F));
+  }
+  return 0;
+  
+  //static u8 buffPtr = 0;
+  /*static u8 debounceCounter = 0;
+  u8 i;
+  
+  ReadAcc(newAcc);
+  diffBufferX[4] = newAcc[0] >> 2;
+  diffBufferY[4] = newAcc[1] >> 2;
+  diffBufferZ[4] = newAcc[2] >> 2;
+  
+  if(debounceCounter == 0)
+  {
+    s8 sum;
+    s8 maxX = 0;
+    s8 maxY = 0;
+    s8 maxZ = 0;
+    for(i=0; i<3; i++)
+    {
+      sum = diffBufferX[i+2] - diffBufferX[i+1] - diffBufferX[i+1] + diffBufferX[i];
+      if ( sum > maxX )
+      {
+        maxX = sum;
+      }
+      sum = diffBufferY[i+2] - diffBufferY[i+1] - diffBufferY[i+1] + diffBufferY[i];
+      if ( sum > maxY )
+      {
+        maxY = sum;
+      }
+      sum = diffBufferZ[i+2] - diffBufferZ[i+1] - diffBufferZ[i+1] + diffBufferZ[i];
+      if ( sum > maxZ )
+      {
+        maxZ = sum;
+      }
+    }
+    sum = maxX + maxY + maxZ;
+    if (sum > 37)// XXX tap condition
+    {
+      debounceCounter = 10;
+    }
+  }
+  else
+  {
+    debounceCounter--;
+  }
+  
+  for(i=0; i<4; i++)
+  {
+    diffBufferX[i] = diffBufferX[i+1];
+    diffBufferY[i] = diffBufferY[i+1];
+    diffBufferZ[i] = diffBufferZ[i+1];
+  }
+  
+  if(debounceCounter == 10)
+  {
+    return 1;
+  }
+  return 0;*/
 }

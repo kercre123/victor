@@ -1,10 +1,11 @@
 #include "nrf.h"
 #include "nrf_gpio.h"
 
+#include "hardware.h"
 #include "battery.h"
 #include "motors.h"
 #include "head.h"
-#include "uart.h"
+#include "debug.h"
 #include "timer.h"
 #include "lights.h"
 #include "tests.h"
@@ -22,25 +23,23 @@ void EncoderIRQTest(void) {
   static int counter = 0;
   int now = GetCounter();
   
-  return ;
-    UART::put("\r\nForward: ");
-    Motors::setPower(2, 0x6800);
-    Motors::update();
-    MicroWait(50000);
-    Motors::update();
+  UART::print("\r\nForward: ");
+  Motors::setPower(2, 0x6800);
+  Motors::update();
+  MicroWait(50000);
+  Motors::update();
 
-    MicroWait(500000);
-    Motors::printEncodersRaw();
+  MicroWait(500000);
+  Motors::printEncodersRaw();
 
-    UART::put("  Backward: ");
-    Motors::setPower(2, -0x6800);
-    Motors::update();
-    MicroWait(50000);
-    Motors::update();
+  UART::print("  Backward: ");
+  Motors::setPower(2, -0x6800);
+  Motors::update();
+  MicroWait(50000);
+  Motors::update();
 
-    MicroWait(500000);
-    Motors::printEncodersRaw();
-
+  MicroWait(500000);
+  Motors::printEncodersRaw();
 }
 
 int main(void)
@@ -54,11 +53,11 @@ int main(void)
   Motors::init();   // Must init before power goes on
   Head::init();
 
-  UART::put("\r\nUnbrick me now...");
+  UART::print("\r\nUnbrick me now...");
   u32 t = GetCounter();
   while ((GetCounter() - t) < 500 * COUNT_PER_MS)  // 0.5 second unbrick time
     ;
-  UART::put("too late!\r\n");
+  UART::print("too late!\r\n");
 
   // Finish booting up
   Radio::init();
@@ -76,19 +75,29 @@ int main(void)
     u32 timerStart = GetCounter();
     g_dataToBody.common.source = SPI_SOURCE_CLEAR;
 
+    // Only call every loop through - not all the time
+    Radio::manage();
+
     // If we're not on the charge contacts, exchange data with the head board
     if (!IsOnContacts())
     {
-      Head::TxRx(
-        sizeof(GlobalDataToBody),
-        (const u8*)&g_dataToHead,
-        (u8*)&g_dataToBody);
+      Head::TxRx();
     }
     else // If not, reset the spine system
     {
       Head::spokenTo = false;
     }
+    
+    Motors::update();
+    BatteryUpdate();
+    #ifndef BACKPACK_DEMO
+    Lights::manage(g_dataToBody.backpackColors);
+    #endif
 
+    // Update at 200Hz (5ms delay)
+    while ((GetCounter() - timerStart) < CYCLES_MS(35.0f / 7.0f))
+      ;
+ 
     // Verify the source
     if (g_dataToBody.common.source != SPI_SOURCE_HEAD)
     {
@@ -109,16 +118,5 @@ int main(void)
         Motors::setPower(i, g_dataToBody.motorPWM[i]);
       }
     }
-    
-    // Only call every loop through - not all the time
-    Motors::update();
-    BatteryUpdate();
-    Radio::manage();
-    Lights::manage(g_dataToBody.backpackColors);
-    
-    // Update at 200Hz
-    // 41666 ticks * 120 ns is roughly 5ms
-    while ((GetCounter() - timerStart) < 41666)
-      ;
   }
 }

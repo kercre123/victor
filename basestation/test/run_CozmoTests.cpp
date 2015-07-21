@@ -17,6 +17,8 @@
 
 #include "anki/cozmo/basestation/ramp.h"
 
+#include "anki/cozmo/shared/cozmoConfig.h"
+
 #include "robotMessageHandler.h"
 #include "pathPlanner.h"
 
@@ -24,6 +26,91 @@ TEST(Cozmo, SimpleCozmoTest)
 {
   ASSERT_TRUE(true);
 }
+
+TEST(BlockWorld, AddAndRemoveObject)
+{
+  using namespace Anki;
+  using namespace Cozmo;
+  
+  Result lastResult;
+  
+  MessageHandlerStub  msgHandler;
+  Robot robot(1, &msgHandler);
+  
+  BlockWorld& blockWorld = robot.GetBlockWorld();
+  
+  // There should be nothing in BlockWorld yet
+  ASSERT_TRUE(blockWorld.GetAllExistingObjects().empty());
+
+  // Fake a state message update for robot
+  robot.SetSyncTimeAcknowledged(true);
+  MessageRobotState stateMsg;
+  lastResult = robot.UpdateFullRobotState(stateMsg);
+  ASSERT_EQ(lastResult, RESULT_OK);
+
+  // Fake an observation of a block:
+  const Block::Type testType = Block::Type::BULLSEYE2;
+  Block_Cube1x1 testCube(testType);
+  Vision::Marker::Code testCode = testCube.GetMarker(Block::FaceName::FRONT_FACE).GetCode();
+  
+  const Vision::Camera& camera = robot.GetCamera();
+  const Vision::CameraCalibration camCalib(HEAD_CAM_CALIB_HEIGHT, HEAD_CAM_CALIB_WIDTH,
+                                           HEAD_CAM_CALIB_FOCAL_LENGTH_X, HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
+                                           HEAD_CAM_CALIB_CENTER_X, HEAD_CAM_CALIB_CENTER_Y);
+  
+  robot.SetCameraCalibration(camCalib);
+  const f32 halfHeight = 0.25f*static_cast<f32>(camCalib.GetNrows());
+  const f32 halfWidth = 0.25f*static_cast<f32>(camCalib.GetNcols());
+  const f32 xcen = camCalib.GetCenter_x();
+  const f32 ycen = camCalib.GetCenter_y();
+  
+  MessageVisionMarker markerMsg;
+  markerMsg.timestamp = 0;
+  markerMsg.x_imgUpperLeft  = xcen - halfWidth;
+  markerMsg.y_imgUpperLeft  = ycen - halfHeight;
+  markerMsg.x_imgLowerLeft  = xcen - halfWidth;
+  markerMsg.y_imgLowerLeft  = ycen + halfHeight;
+  markerMsg.x_imgUpperRight = xcen + halfWidth;
+  markerMsg.y_imgUpperRight = ycen - halfHeight;
+  markerMsg.x_imgLowerRight = xcen + halfWidth;
+  markerMsg.y_imgLowerRight = ycen + halfHeight;
+  markerMsg.markerType = testCode;
+  
+  // Enable "vision while moving" so that we don't have to deal with trying to compute
+  // angular velocities, since we don't have real state history to do so.
+  robot.EnableVisionWhileMoving(true);
+  
+  lastResult = robot.QueueObservedMarker(markerMsg);
+  ASSERT_EQ(lastResult, RESULT_OK);
+  
+  // Tick the robot, which will tick the BlockWorld, which will use the queued marker
+  lastResult = robot.Update();
+  ASSERT_EQ(lastResult, RESULT_OK);
+  
+  // There should now be an object of the right type, with the right ID in BlockWorld
+  const BlockWorld::ObjectsMapByID_t& objByID = blockWorld.GetExistingObjectsByType(testType);
+  ASSERT_EQ(objByID.size(), 1);
+  auto objByIdIter = objByID.begin();
+  ASSERT_NE(objByIdIter, objByID.end());
+  ASSERT_NE(objByIdIter->second, nullptr);
+  
+  ObjectID objID = objByIdIter->second->GetID();
+  Vision::ObservableObject* object = blockWorld.GetObjectByID(objID);
+  ASSERT_NE(object, nullptr);
+  ASSERT_EQ(object->GetID(), objID);
+  ASSERT_EQ(object->GetType(), testType);
+  
+  // Returned object should be dynamically-castable to its base class:
+  Block_Cube1x1* block = dynamic_cast<Block_Cube1x1*>(object);
+  ASSERT_NE(block, nullptr);
+  
+  // Now try deleting the object, and make sure we can't still get it using the old ID
+  blockWorld.ClearObject(objID);
+  object = blockWorld.GetObjectByID(objID);
+  ASSERT_EQ(object, nullptr);
+  
+} // BlockWorld.AddAndRemoveObject
+
 
 // This test object allows us to reuse the TEST_P below with different
 // Json filenames as a parameter
@@ -407,11 +494,11 @@ const char *visionTestJsonFiles[] = {
   "visionTest_OffTheMat.json"
 };
 
-
+/*
 // This actually creates the set of tests, one for each filename above.
 INSTANTIATE_TEST_CASE_P(JsonFileBased, BlockWorldTest,
                         ::testing::ValuesIn(visionTestJsonFiles));
-
+*/
 
 int main(int argc, char ** argv)
 {

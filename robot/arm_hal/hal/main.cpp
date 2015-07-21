@@ -12,8 +12,9 @@ namespace Anki
   {
     namespace HAL
     {
-      extern volatile u8 g_halInitComplete, g_deferMainExec, g_mainExecDeferred;
-
+      // True when main exec should run, false when it is ready to run
+      extern volatile u8 g_runMainExec;
+     
       // Forward declarations
       void Startup();
       void SPIInit();
@@ -23,9 +24,9 @@ namespace Anki
       void IMUInit();
       void LightsInit();
       void OLEDInit(); 
-
+      void AudioInit();
       void PrintCrap();
-      
+            
       //TimeStamp_t GetTimeStamp(void){ return (TimeStamp_t)0; }
       TimeStamp_t t_;
       TimeStamp_t GetTimeStamp(void){ return t_; }
@@ -36,32 +37,6 @@ namespace Anki
       void FaceMove(s32 x, s32 y) {};
       void FaceBlink() {};
       
-      // Faking audio functions so that animations play correctly
-      TimeStamp_t audioEndTime_ = 0;
-      u32 AUDIO_FRAME_TIME_MS = 33;
-      bool audioReadyForFrame_ = true;
-      bool AudioUpdate() {
-        if (audioEndTime_ != 0) {
-          if (HAL::GetTimeStamp() > audioEndTime_) {
-            audioEndTime_ = 0;
-            audioReadyForFrame_ = true;
-          } else if (HAL::GetTimeStamp() > audioEndTime_ - (0.5*AUDIO_FRAME_TIME_MS)) {
-            // Audio ready flag is raised ~16ms before the end of the current frame.
-            // This means audio lags other tracks but the amount should be imperceptible.
-            audioReadyForFrame_ = true;
-          }
-        }
-      }
-      void AudioPlayFrame(u8* frame) {
-        if (audioEndTime_ == 0) {
-          audioEndTime_ = HAL::GetTimeStamp();
-        }
-        audioEndTime_ += AUDIO_FRAME_TIME_MS;
-        audioReadyForFrame_ = false;
-      }
-      bool AudioReady() {
-        return audioReadyForFrame_;
-      }
       // ======== End of Stubs ==========
 
       
@@ -118,11 +93,10 @@ static void Wait()
 void Yield()
 {
   using namespace Anki::Cozmo::HAL;
-  if (g_mainExecDeferred)
+  if (g_runMainExec)
   {
-    g_mainExecDeferred = 0;
     Anki::Cozmo::Robot::step_MainExecution();
-    AudioUpdate();
+    g_runMainExec = 0;
   }
 }
 
@@ -243,6 +217,8 @@ int main(void)
   printf("spine..");
   OLEDInit();
   printf("oled..");
+  AudioInit();
+  printf("audio..");
 
 #if 0
   // Motor testing...
@@ -278,7 +254,6 @@ int main(void)
 #else
 
   Anki::Cozmo::Robot::Init();
-  g_halInitComplete = true;
   //printf("init complete!\r\n");
 
   // Give time for sync before video starts
@@ -287,8 +262,9 @@ int main(void)
 #endif
 
   // Never return from this function
-  while(1)
-  {}
+  while(1) {
+    Yield(); 
+  }
 }
 
 extern "C"

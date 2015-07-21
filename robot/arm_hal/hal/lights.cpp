@@ -18,8 +18,6 @@ namespace Anki
       // Initialize LED head/face light hardware
       void LightsInit()
       {
-        int i;
-
         RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOE, ENABLE);
 
         // IR LED is controlled by N-FET so positive polarity unlike everything else

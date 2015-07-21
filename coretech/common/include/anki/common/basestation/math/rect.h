@@ -46,7 +46,11 @@ namespace Anki {
     template<size_t NumPoints>
     Rectangle(const std::array<Point<2,T>,NumPoints>& points);
     
+#if ANKICORETECH_USE_OPENCV
     using cv::Rect_<T>::area;
+#else
+    const float area() const { return 0.0f; }
+#endif
     
     // (x,y) is the top left
     inline T GetX()      const;
@@ -79,10 +83,12 @@ namespace Anki {
     template<class PointContainer>
     void InitFromPointContainer(const PointContainer& points);
     
+#if ANKICORETECH_USE_OPENCV
     using cv::Rect_<T>::x;
     using cv::Rect_<T>::y;
     using cv::Rect_<T>::width;
     using cv::Rect_<T>::height;
+#endif
     
   }; // class Rectangle
   

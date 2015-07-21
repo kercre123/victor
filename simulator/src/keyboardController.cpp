@@ -5,7 +5,6 @@
 #include "pathFollower.h"
 #include "steeringController.h"
 
-#include "gripController.h"
 #include "headController.h"
 #include "anki/cozmo/simulator/keyboardController.h"
 #include "liftController.h"

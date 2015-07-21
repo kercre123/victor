@@ -36,6 +36,10 @@ namespace Cozmo {
     // Actual streaming occurs on calls to Update().
     Result SetStreamingAnimation(const std::string& name, u32 numLoops = 1);
     
+    // Sets the "idle" animation that will be streamed (in a loop) when no other
+    // animation is streaming. Use empty string ("") to disable.
+    Result SetIdleAnimation(const std::string& name);
+    
     // If any animation is set for streaming and isn't done yet, stream it.
     Result Update(Robot& robot);
     
@@ -43,7 +47,10 @@ namespace Cozmo {
     
     CannedAnimationContainer& _animationContainer;
     
+    Animation* _idleAnimation;
     Animation* _streamingAnimation;
+    
+    bool _isIdling;
     
     u32 _numLoops;
     u32 _loopCtr;

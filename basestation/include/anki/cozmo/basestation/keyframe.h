@@ -37,6 +37,8 @@ namespace Anki {
     class IKeyFrame
     {
     public:
+      static const u32 SAMPLE_LENGTH_MS = 33;
+      
       IKeyFrame();
       //IKeyFrame(const Json::Value& root);
       ~IKeyFrame();
@@ -55,6 +57,11 @@ namespace Anki {
       // Fill some kind of message for streaming and return it. Return nullptr
       // if not available.
       virtual RobotMessage* GetStreamMessage() = 0;
+      
+      // Whether or not this KeyFrame is "done" after calling GetStreamMessage().
+      // Override for special keyframes that need to keep parceling out data into
+      // multiple returned messages.
+      virtual bool IsDone() { return true; }
       
     protected:
       
@@ -149,7 +156,7 @@ namespace Anki {
       virtual Result SetMembersFromJson(const Json::Value &jsonRoot) override;
       
     private:
-      u32 _audioID;
+      std::string _audioName;
       
     }; // class DeviceAudioKeyFrame
     
@@ -159,8 +166,6 @@ namespace Anki {
     class RobotAudioKeyFrame : public IKeyFrame
     {
     public:
-      static const u32 SAMPLE_LENGTH_MS = 33;
-      
       RobotAudioKeyFrame() { }
       
       virtual RobotMessage* GetStreamMessage() override;
@@ -170,14 +175,13 @@ namespace Anki {
         return ClassName;
       }
       
-      SoundID_t GetAudioID() const { return _audioID; }
+      const std::string& GetSoundName() const { return _audioName; }
       
     protected:
       virtual Result SetMembersFromJson(const Json::Value &jsonRoot) override;
       
     private:
       std::string _audioName;
-      SoundID_t   _audioID;
       
       s32 _numSamples;
       s32 _sampleIndex;
@@ -214,6 +218,40 @@ namespace Anki {
     }; // class FaceImageKeyFrame
     
     
+    // A FaceAnimationKeyFrame is for streaming a set of images to display on the
+    // robot's face. It is a cross between an AudioKeyFrame and an ImageKeyFrame.
+    // Like an ImageKeyFrame, it populates single messages with RLE-compressed
+    // data for display on the face display. Like an AudioKeyFrame, it will
+    // return a non-NULL message each time GetStreamMessage() is called until there
+    // are no more frames left in the animation.
+    class FaceAnimationKeyFrame : public IKeyFrame
+    {
+    public:
+      FaceAnimationKeyFrame() { }
+      
+      virtual RobotMessage* GetStreamMessage() override;
+      
+      static const std::string& GetClassName() {
+        static const std::string ClassName("FaceAnimationKeyFrame");
+        return ClassName;
+      }
+
+      virtual bool IsDone() override { return _curFrame >= _numFrames; }
+      
+    protected:
+      virtual Result SetMembersFromJson(const Json::Value &jsonRoot) override;
+      
+    private:
+      std::string  _animName;
+      
+      s32 _numFrames;
+      s32 _curFrame;
+      
+      MessageAnimKeyFrame_FaceImage _faceImageMsg;
+      
+    }; // class FaceAnimationKeyFrame
+    
+    
     // A FacePositionKeyFrame sets the center of the currently displayed face
     // image/sprite, in LED screen coordinates.
     class FacePositionKeyFrame : public IKeyFrame
@@ -236,6 +274,34 @@ namespace Anki {
       MessageAnimKeyFrame_FacePosition _streamMsg;
       
     }; // class FacePositionKeyFrame
+    
+    // BlinkKeyFrame either disables automatic blinking for a period fo time or
+    // commands a single blink to happen "now".
+    class BlinkKeyFrame : public IKeyFrame
+    {
+    public:
+      BlinkKeyFrame();
+      
+      virtual RobotMessage* GetStreamMessage() override;
+      
+      static const std::string& GetClassName() {
+        static const std::string ClassName("BlinkKeyFrame");
+        return ClassName;
+      }
+      
+      virtual bool IsDone() override;
+      
+    protected:
+      virtual Result SetMembersFromJson(const Json::Value &jsonRoot) override;
+      
+    private:
+      
+      s32 _duration_ms;
+      s32 _curTime_ms;
+      
+      MessageAnimKeyFrame_Blink _streamMsg;
+
+    }; // class BlinkKeyFrame
     
     
     // A BackpackLightsKeyFrame sets the colors of the robot's five backpack lights
@@ -261,27 +327,34 @@ namespace Anki {
     }; // class BackpackLightsKeyFrame
     
     
-    // A BodyPositionKeyFrame
-    // TODO: Decide what this actually stores (direct wheel speeds or something more abstracted?)
-    class BodyPositionKeyFrame : public IKeyFrame
+    // A BodyMotionKeyFrame controls the wheels to drive straight, turn in place, or
+    // drive arcs. They specify the speed and duration of the motion.
+    class BodyMotionKeyFrame : public IKeyFrame
     {
     public:
-      BodyPositionKeyFrame() { }
+      BodyMotionKeyFrame();
       
       virtual RobotMessage* GetStreamMessage() override;
       
       static const std::string& GetClassName() {
-        static const std::string ClassName("BodyPositionKeyFrame");
+        static const std::string ClassName("BodyMotionKeyFrame");
         return ClassName;
       }
+      
+      virtual bool IsDone() override;
       
     protected:
       virtual Result SetMembersFromJson(const Json::Value &jsonRoot) override;
       
     private:
-      MessageAnimKeyFrame_BodyMotion _streamMsg;
       
-    }; // class BodyPositionKeyFrame
+      s32 _durationTime_ms;
+      s32 _currentTime_ms;
+      
+      MessageAnimKeyFrame_BodyMotion _streamMsg;
+      MessageAnimKeyFrame_BodyMotion _stopMsg;
+      
+    }; // class BodyMotionKeyFrame
     
   } // namespace Cozmo
 } // namespace Anki

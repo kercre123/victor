@@ -1,17 +1,25 @@
+#include "string.h"
+
 #include "head.h"
 #include "timer.h"
 #include "nrf.h"
 #include "nrf_gpio.h"
-#include "spi_master.h"
-#include "uart.h"
 
 #include "hardware.h"
 
 #include "anki/cozmo/robot/spineData.h"
 
+#define MAX(a, b) ((a > b) ? a : b)
 
-// Don't speak until spoken to (part of handshaking)
+static const uint8_t HEAD_PREAMBLE[] = {SPI_SOURCE_HEAD, 0xFA, 0xF3, 0x20};
+
+uint8_t TxRxBuffer[sizeof(GlobalDataToBody)];
 bool Head::spokenTo;
+volatile bool Head::uartIdle;
+int TxRxIdx;
+
+extern GlobalDataToHead g_dataToHead;
+extern GlobalDataToBody g_dataToBody;
 
 void Head::init()
 {
@@ -31,83 +39,76 @@ void Head::init()
   NRF_UART0->ENABLE = UART_ENABLE_ENABLE_Enabled << UART_ENABLE_ENABLE_Pos;
   NRF_UART0->TASKS_STARTTX = 1;
   NRF_UART0->TASKS_STARTRX = 1;
-  NRF_UART0->EVENTS_RXDRDY = 0;
 
-  UART::initialized = true;
-  UART::configure();
+  // Extremely low priorty IRQ
+  NRF_UART0->INTENSET = UART_INTENSET_TXDRDY_Msk | UART_INTENSET_RXDRDY_Msk;
+  NVIC_SetPriority(UART0_IRQn, 0);
+  NVIC_EnableIRQ(UART0_IRQn);
+  
+  Head::uartIdle = true;
+  Head::spokenTo = false;
 }
 
-void Head::TxPacket(u16 length, const u8* dataTX)
+// Transmit first, then wait for a reply
+void Head::TxRx()
 {
-  // If spoken to, switch to transmit mode and send the data
-  if (!Head::spokenTo)
-  {
-    return ;
-  }
+  NRF_UART0->EVENTS_RXDRDY = 0;
+  NRF_UART0->EVENTS_TXDRDY = 0;
+  ENABLE_UART_IRQ;
   
-  MicroWait(80);    // Other side waits 40uS
-  NRF_UART0->PSELRXD = 0xFFFFffff;  // Disconnect RX
+  NRF_UART0->PSELRXD = 0xFFFFFFFF;
   NRF_UART0->PSELTXD = PIN_TX_HEAD;
   nrf_gpio_cfg_output(PIN_TX_HEAD);
 
-  for (int i = 0; i < length; i++)
-  {
-    NRF_UART0->TXD = dataTX[i];
-    while (NRF_UART0->EVENTS_TXDRDY != 1) ;
-    NRF_UART0->EVENTS_TXDRDY = 0;
-  }
+  // Setup Buffers
+  memcpy(TxRxBuffer, &g_dataToHead, sizeof(g_dataToHead));
+  TxRxIdx = 0;
+  Head::uartIdle = false;
+  
+  // Transmit first byte
+  MicroWait(40);
+  NRF_UART0->TXD = TxRxBuffer[TxRxIdx++];
 }
 
-void Head::RxPacket(u16 length, u8* dataRX)
- {
-  // Switch to receive mode and wait for a reply
-  nrf_gpio_cfg_input(PIN_TX_HEAD, NRF_GPIO_PIN_NOPULL);
-  NRF_UART0->PSELTXD = 0xFFFFFFFF;  // Disconne ct TX
-
-  // Wait 10uS for turnaround - 80uS on the other side
-  MicroWait(10);
-  NRF_UART0->PSELRXD = PIN_TX_HEAD;
-
-  u32 startTime = GetCounter();
-
-  NRF_UART0->EVENTS_RXDRDY = 0;
- 
-  int i = 0;
-  while (i < length)
-  {
-    // Timeout after 5ms of no communication
-    while (NRF_UART0->EVENTS_RXDRDY != 1) {
-      if (0&&GetCounter() - startTime > 41666*2) { // 5ms
-        dataRX[0] = 0;
-        return;
-      }
-    }
-
-    NRF_UART0->EVENTS_RXDRDY = 0; // XXX: Needed?
-    dataRX[i] = NRF_UART0->RXD;
-
-    // Header transmission header test
-    const uint8_t preamble[] = {SPI_SOURCE_HEAD, 0xFA, 0xF3, 0x20};
-    if (i < sizeof(preamble) && preamble[i] != dataRX[i]) {
-      i = 0;
-    } else {
-      i++;
-    }
-  }
-
-  // Wait before first reply
-  if (!Head::spokenTo) {
-    MicroWait(5000);
-    Head::spokenTo = true;
-  }
-}
-
-
-// Transmit first, then wait for a reply
-void Head::TxRx(u16 length, const u8* dataTX, u8* dataRX)
+extern "C"
+void UART0_IRQHandler()
 {
-  Head::TxPacket(length, dataTX);
-  Head::RxPacket(length, dataRX);
- 
-  UART::configure();
+  // We transmitted a byte
+  if (NRF_UART0->EVENTS_TXDRDY) {
+    NRF_UART0->EVENTS_TXDRDY = 0;
+
+    
+    if (TxRxIdx < sizeof(g_dataToHead)) {
+      NRF_UART0->TXD = TxRxBuffer[TxRxIdx++];
+    } else {
+      TxRxIdx = 0;
+
+      nrf_gpio_cfg_input(PIN_TX_HEAD, NRF_GPIO_PIN_NOPULL);
+      NRF_UART0->PSELTXD = 0xFFFFFFFF;  // Disconnect TX
+
+      // Wait 10uS for turnaround - 80uS on the other side
+      MicroWait(10);
+      NRF_UART0->PSELRXD = PIN_TX_HEAD;
+    }
+  }
+
+  // We received a byte
+  if (NRF_UART0->EVENTS_RXDRDY) {
+    NRF_UART0->EVENTS_RXDRDY = 0;
+
+    TxRxBuffer[TxRxIdx] = NRF_UART0->RXD;
+    
+    if (TxRxIdx < sizeof(HEAD_PREAMBLE) && HEAD_PREAMBLE[TxRxIdx] != TxRxBuffer[TxRxIdx]) {
+      TxRxIdx = 0;
+      return ;
+    }
+    
+    TxRxIdx++;
+    
+    if (TxRxIdx >= sizeof(g_dataToBody)) {
+      memcpy(&g_dataToBody, TxRxBuffer, sizeof(g_dataToBody));
+      Head::spokenTo = true;
+      Head::uartIdle = true;
+    }
+  }
 }

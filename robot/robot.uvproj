@@ -483,6 +483,11 @@
               <FileType>8</FileType>
               <FilePath>.\arm_hal\hal\cube.cpp</FilePath>
             </File>
+            <File>
+              <FileName>audio.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\arm_hal\hal\audio.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -679,11 +684,6 @@
               <FilePath>.\supervisor\src\dockingController.cpp</FilePath>
             </File>
             <File>
-              <FileName>gripController.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\gripController.cpp</FilePath>
-            </File>
-            <File>
               <FileName>headController.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\headController.cpp</FilePath>
@@ -753,6 +753,16 @@
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\ledController.cpp</FilePath>
             </File>
+            <File>
+              <FileName>eyeController.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\eyeController.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>timeProfiler.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\timeProfiler.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -816,12 +826,12 @@
             <File>
               <FileName>reliableSequenceId.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\tools\anki-util\source\anki\embedded\transport\reliableSequenceId.c</FilePath>
+              <FilePath>..\tools\anki-util\source\anki\utilEmbedded\transport\reliableSequenceId.c</FilePath>
             </File>
             <File>
               <FileName>reliableTransport.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\tools\anki-util\source\anki\embedded\transport\reliableTransport.c</FilePath>
+              <FilePath>..\tools\anki-util\source\anki\utilEmbedded\transport\reliableTransport.c</FilePath>
             </File>
             <File>
               <FileName>reliableMessageTypes.cpp</FileName>
@@ -1309,6 +1319,11 @@
               <FileType>8</FileType>
               <FilePath>.\arm_hal\hal\cube.cpp</FilePath>
             </File>
+            <File>
+              <FileName>audio.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\arm_hal\hal\audio.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -1562,11 +1577,6 @@
               <FilePath>.\supervisor\src\dockingController.cpp</FilePath>
             </File>
             <File>
-              <FileName>gripController.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\gripController.cpp</FilePath>
-            </File>
-            <File>
               <FileName>headController.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\headController.cpp</FilePath>
@@ -1635,6 +1645,16 @@
               <FileName>ledController.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\ledController.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>eyeController.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\eyeController.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>timeProfiler.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\timeProfiler.cpp</FilePath>
             </File>
           </Files>
         </Group>
@@ -1756,12 +1776,12 @@
             <File>
               <FileName>reliableSequenceId.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\tools\anki-util\source\anki\embedded\transport\reliableSequenceId.c</FilePath>
+              <FilePath>..\tools\anki-util\source\anki\utilEmbedded\transport\reliableSequenceId.c</FilePath>
             </File>
             <File>
               <FileName>reliableTransport.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\tools\anki-util\source\anki\embedded\transport\reliableTransport.c</FilePath>
+              <FilePath>..\tools\anki-util\source\anki\utilEmbedded\transport\reliableTransport.c</FilePath>
             </File>
             <File>
               <FileName>reliableMessageTypes.cpp</FileName>

@@ -38,6 +38,7 @@ namespace Anki {
       Result BufferKeyFrame(const Messages::AnimKeyFrame_AudioSilence&   msg);
       Result BufferKeyFrame(const Messages::AnimKeyFrame_FaceImage&      msg);
       Result BufferKeyFrame(const Messages::AnimKeyFrame_FacePosition&   msg);
+      Result BufferKeyFrame(const Messages::AnimKeyFrame_Blink&          msg);
       Result BufferKeyFrame(const Messages::AnimKeyFrame_BackpackLights& msg);
       Result BufferKeyFrame(const Messages::AnimKeyFrame_BodyMotion&     msg);
       Result BufferKeyFrame(const Messages::AnimKeyFrame_EndOfAnimation& msg);
@@ -67,6 +68,9 @@ namespace Anki {
       
       s32 GetApproximateNumBytesFree();
       
+      // Enable/disable tracks from playing. If the bit for corresponding track is
+      // zero, any keyframes buffered for that track will be ignored.
+      void SetTracksToPlay(AnimTrackFlag tracksToPlay);
       
     } // namespace AnimationController
   } // namespcae Cozmo

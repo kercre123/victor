@@ -9,7 +9,7 @@
 #include "anki/messaging/basestation/ReliableUDPChannel.h"
 #include "util/transport/reliableConnection.h"
 
-#include "anki/util/logging/logging.h"
+#include "util/logging/logging.h"
 
 using namespace Anki::Comms;
 
@@ -169,7 +169,7 @@ void ReliableUDPChannel::AddConnection(ConnectionId connectionId, const Transpor
                        "Already connected to connectionId " << connectionId);
     return;
   }
-  
+
   // AddConnection should remove any old uses of connectionId and address
   // and send disconnects
   UnreliableUDPChannel::AddConnection(connectionId, address);
@@ -331,16 +331,19 @@ void ReliableUDPChannel::ReceiveData(const uint8_t *buffer, unsigned int bufferS
 void ReliableUDPChannel::ConfigureReliableTransport()
 {
     // Set parameters for all reliable transport instances
-    reliableTransport.SetSendAckOnReceipt(false);
-    reliableTransport.SetSendUnreliableMessagesImmediately(false);
-    reliableTransport.SetSendPacketsImmediately(false);
+    Util::ReliableTransport::SetSendAckOnReceipt(false);
+    Util::ReliableTransport::SetSendUnreliableMessagesImmediately(false);
+    Util::ReliableTransport::SetSendPacketsImmediately(false);
+    Util::ReliableTransport::SetSendLatestPacketOnSendMessage(true);
+    Util::ReliableTransport::SetMaxPacketsToReSendOnAck(1);
+    Util::ReliableTransport::SetMaxPacketsToSendOnSendMessage(1);
     // Set parameters for all reliable connections
-    Util::ReliableConnection::SetTimeBetweenPingsInMS(100.0);
-    Util::ReliableConnection::SetTimeBetweenResendsInMS(33.3);
+    Util::ReliableConnection::SetTimeBetweenPingsInMS(33.3); // Heartbeat interval
+    Util::ReliableConnection::SetTimeBetweenResendsInMS(133.3); // 4x heartbeat interval
     Util::ReliableConnection::SetConnectionTimeoutInMS(5000.0);
     Util::ReliableConnection::SetMaxPingRoundTripsToTrack(10);
     Util::ReliableConnection::SetSendSeparatePingMessages(false);
-    Util::ReliableTransport::SetMaxPacketsToReSendOnAck(1);
+    Util::ReliableConnection::SetMaxPacketsToReSendOnUpdate(1);
 }
 
 bool ReliableUDPChannel::SendDirect(const OutgoingPacket& packet)
@@ -354,7 +357,7 @@ bool ReliableUDPChannel::SendDirect(const OutgoingPacket& packet)
     return false;
   }
 
-  reliableTransport.SendData(packet.reliable, destAddress, packet.buffer, packet.bufferSize);
+  reliableTransport.SendData(packet.reliable, destAddress, packet.buffer, packet.bufferSize, packet.hot);
   return true;
 }
 

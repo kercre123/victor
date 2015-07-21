@@ -23,7 +23,7 @@
 #include "anki/common/basestation/objectTypesAndIDs.h"
 #include "anki/common/basestation/math/pose.h"
 
-#include "anki/cozmo/messageBuffers/shared/actionTypes.def"
+#include "anki/cozmo/messageBuffers/shared/actionTypes.h"
 
 namespace Anki {
   
@@ -40,9 +40,15 @@ namespace Anki {
     class DriveToPoseAction : public IAction
     {
     public:
-      DriveToPoseAction(const Pose3d& pose, const bool useManualSpeed = false);
-      DriveToPoseAction(const bool useManualSpeed = false); // Note that SetGoal() must be called befure Update()!
-      DriveToPoseAction(const std::vector<Pose3d>& poses, const bool useManualSpeed = false);
+      DriveToPoseAction(const Pose3d& pose,
+                        const bool forceHeadDown  = true,
+                        const bool useManualSpeed = false);
+      
+      DriveToPoseAction(const bool forceHeadDown  = true,
+                        const bool useManualSpeed = false); // Note that SetGoal() must be called befure Update()!
+      DriveToPoseAction(const std::vector<Pose3d>& poses,
+                        const bool forceHeadDown  = true,
+                        const bool useManualSpeed = false);
       
       // TODO: Add methods to adjust the goal thresholds from defaults
       
@@ -70,6 +76,7 @@ namespace Anki {
       
     private:
       bool     _isGoalSet;
+      bool     _driveWithHeadDown;
       
       std::vector<Pose3d> _goalPoses;
       size_t              _selectedGoalIndex;
@@ -639,10 +646,13 @@ namespace Anki {
     class PlayAnimationAction : public IAction
     {
     public:
-      PlayAnimationAction(const std::string& animName);
+      PlayAnimationAction(const std::string& animName,
+                          const u32 numLoops = 1);
       
       virtual const std::string& GetName() const override { return _name; }
       virtual RobotActionType GetType() const override { return RobotActionType::PLAY_ANIMATION; }
+      
+      virtual void EmitCompletionSignal(Robot& robot, ActionResult result) const override;
       
     protected:
       
@@ -653,6 +663,7 @@ namespace Anki {
       //AnimationID_t _animID;
       std::string   _animName;
       std::string   _name;
+      u32           _numLoops;
       
     }; // class PlayAnimationAction
     

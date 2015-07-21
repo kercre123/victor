@@ -254,12 +254,6 @@ namespace Anki {
     inline void ObservableObject::SetPoseParent(const Pose3d* newParent) {
       _pose.SetParent(newParent);
     }
-        
-    inline std::vector<RotationMatrix3d> const& ObservableObject::GetRotationAmbiguities() const
-    {
-      static const std::vector<RotationMatrix3d> RotationAmbiguities; // default is empty
-      return RotationAmbiguities;
-    }
     
     inline bool ObservableObject::IsSameAs(const ObservableObject& otherObject) const {
       return IsSameAs(otherObject, this->GetSameDistanceTolerance(), this->GetSameAngleTolerance());

@@ -341,12 +341,12 @@ END_MESSAGE_DEFINITION(TapBlockOnGround)
 
 // SetBlockLights
 START_MESSAGE_DEFINITION(SetBlockLights, 1)
-ADD_MESSAGE_MEMBER_ARRAY(u32, onColor, 8)
-ADD_MESSAGE_MEMBER_ARRAY(u32, offColor, 8)
-ADD_MESSAGE_MEMBER_ARRAY(u32, onPeriod_ms, 8)
-ADD_MESSAGE_MEMBER_ARRAY(u32, offPeriod_ms, 8)
-ADD_MESSAGE_MEMBER_ARRAY(u32, transitionOnPeriod_ms, 8)
-ADD_MESSAGE_MEMBER_ARRAY(u32, transitionOffPeriod_ms, 8)
+ADD_MESSAGE_MEMBER_ARRAY(u32, onColor, 4)
+ADD_MESSAGE_MEMBER_ARRAY(u32, offColor, 4)
+ADD_MESSAGE_MEMBER_ARRAY(u32, onPeriod_ms, 4)
+ADD_MESSAGE_MEMBER_ARRAY(u32, offPeriod_ms, 4)
+ADD_MESSAGE_MEMBER_ARRAY(u32, transitionOnPeriod_ms, 4)
+ADD_MESSAGE_MEMBER_ARRAY(u32, transitionOffPeriod_ms, 4)
 ADD_MESSAGE_MEMBER(u8, blockID)
 END_MESSAGE_DEFINITION(SetBlockLights)
 
@@ -365,7 +365,9 @@ END_MESSAGE_DEFINITION(SetBlockBeingCarried)
 
 // AnimKeyFrame_AudioSample
 START_MESSAGE_DEFINITION(AnimKeyFrame_AudioSample, 1)
-ADD_MESSAGE_MEMBER_ARRAY(u8, sample, 800) // TODO: Somehow make this use AUDIO_SAMPLE_SIZE
+ADD_MESSAGE_MEMBER_ARRAY(u8, sample, 400) // TODO: Somehow make this use AUDIO_SAMPLE_SIZE
+ADD_MESSAGE_MEMBER(s16, predictor)
+ADD_MESSAGE_MEMBER(u8, index)
 END_MESSAGE_DEFINITION(AnimKeyFrame_AudioSample)
 
 // AnimKeyFrame_AudioSilence
@@ -390,6 +392,12 @@ ADD_MESSAGE_MEMBER(s8, xCen)
 ADD_MESSAGE_MEMBER(s8, yCen)
 END_MESSAGE_DEFINITION(AnimKeyFrame_FacePosition)
 
+// AnimKeyFrame_Blink
+START_MESSAGE_DEFINITION(AnimKeyFrame_Blink, 1)
+ADD_MESSAGE_MEMBER(u8, enable)
+ADD_MESSAGE_MEMBER(u8, blinkNow)
+END_MESSAGE_DEFINITION(AnimKeyFrame_Blink)
+
 // AnimKeyFrame_FaceImage
 // TODO: Need variable-length arrays!
 START_MESSAGE_DEFINITION(AnimKeyFrame_FaceImage, 1)
@@ -402,10 +410,11 @@ ADD_MESSAGE_MEMBER_ARRAY(u32, colors, 5) // TODO: Use NUM_BACKPACK_LEDS instead 
 END_MESSAGE_DEFINITION(AnimKeyFrame_BackpackLights)
 
 // AnimKeyFrame_BodyMotion
-// TODO: Decide what this really contains. For now, just wheel speeds.
 START_MESSAGE_DEFINITION(AnimKeyFrame_BodyMotion, 1)
-ADD_MESSAGE_MEMBER(s16, wheelSpeedL_mmps)
-ADD_MESSAGE_MEMBER(s16, wheelSpeedR_mmps)
+ADD_MESSAGE_MEMBER(s16, speed)               // Commanded speed in mm/sec or deg/sec
+ADD_MESSAGE_MEMBER(s16, curvatureRadius_mm)  // +ve: curves left, -ve: curves right, ...
+                                             // ...u16_MAX/MIN: drive straight...
+                                             // ...0: turn in place (+ve speed: left, -ve speed: right)
 END_MESSAGE_DEFINITION(AnimKeyFrame_BodyMotion)
 
 // AnimKeyFrame_EndOfAnimation

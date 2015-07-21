@@ -53,13 +53,6 @@ namespace Anki {
       // Const paramters / settings
       // TODO: some of these should be defined elsewhere (e.g. comms)
       
-      // Represents the number of cycles it takes to engage or disengage an active gripper
-#if defined(HAVE_ACTIVE_GRIPPER) && HAVE_ACTIVE_GRIPPER
-      const s32 UNLOCK_HYSTERESIS = 50;
-#else
-      //const s32 UNLOCK_HYSTERESIS = 0;
-#endif
-      
       const f64 WEBOTS_INFINITY = std::numeric_limits<f64>::infinity();
       
       const f32 MIN_WHEEL_POWER_FOR_MOTION = 0.15;
@@ -153,7 +146,7 @@ namespace Anki {
       s32 facePosX_ = 0;
       s32 facePosY_ = 0;
       TimeStamp_t faceBlinkStartTime_ = 0;
-      const u32 FACE_BLINK_DURATION_MS = 200;
+      const u32 FACE_BLINK_DURATION_MS = 100;
       
       // Audio
       // (Can't actually play sound in simulator, but proper handling of audio frames is still
@@ -600,15 +593,6 @@ namespace Anki {
         case MOTOR_LIFT:
           liftMotor_->setVelocity(LiftPowerToAngSpeed(power));
           break;
-#if defined(HAVE_ACTIVE_GRIPPER) && HAVE_ACTIVE_GRIPPER
-        case MOTOR_GRIP:
-          if (power > 0) {
-            EngageGripper();
-          } else {
-            DisengageGripper();
-          }
-          break;
-#endif
         case MOTOR_HEAD:
           // TODO: Assuming linear relationship, but it's not!
           SetHeadAngularVelocity(power * MAX_HEAD_SPEED);
@@ -1002,15 +986,21 @@ namespace Anki {
       // TODO: ...
     }
 
+    void HAL::AudioFill(void) {}
+    
     // @return true if the audio clock says it is time for the next frame
     bool HAL::AudioReady()
     {
       return audioReadyForFrame_;
     }
     
+    void HAL::AudioPlaySilence() {
+      AudioPlayFrame(nullptr);
+    }
+    
     // Play one frame of audio or silence
     // @param frame - a pointer to an audio frame or NULL to play one frame of silence
-    void HAL::AudioPlayFrame(u8* frame)
+    void HAL::AudioPlayFrame(Messages::AnimKeyFrame_AudioSample *msg)
     {
       if (audioEndTime_ == 0) {
         audioEndTime_ = HAL::GetTimeStamp();
@@ -1032,9 +1022,6 @@ namespace Anki {
       // Clear the last face frame buffer
       memset(lastFaceFrameDecoded_, 0, NUM_DISPLAY_PIXELS);
       
-      // Reset face position
-      facePosX_ = facePosY_ = 0;
-      
       // Draw pixels
       while (*frame != 0) {
         u8 run = *frame++;
@@ -1045,14 +1032,13 @@ namespace Anki {
           numPixels = NUM_DISPLAY_PIXELS - pixelCounter;
         }
         
-        // Draw pixels
+        // Set pixels
         if (draw) {
           for (u32 i=0; i<numPixels; ++i) {
             u32 y = pixelCounter / DISPLAY_WIDTH;
             u32 x = pixelCounter - (y * DISPLAY_WIDTH);
             ++pixelCounter;
             
-            face_->drawPixel(x,y);
             lastFaceFrameDecoded_[x + (y * DISPLAY_WIDTH)] = 1;
           }
         } else {
@@ -1067,6 +1053,8 @@ namespace Anki {
 
       }
       
+      // Draw face
+      FaceMove(facePosX_, facePosY_);
     }
     
     
@@ -1209,6 +1197,10 @@ namespace Anki {
       return SendBlockMessage(blockID, BlockMessages::SetBlockLights_ID, (u8*)&m);
     }
     
+    void HAL::ManageCubes(void)
+    {
+      // Stub
+    }
     
   } // namespace Cozmo
 } // namespace Anki

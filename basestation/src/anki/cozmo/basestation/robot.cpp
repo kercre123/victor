@@ -7,9 +7,8 @@
 //
 
 // TODO:(bn) should these be a full path?
-#include "pathPlanner.h"
-#include "pathDolerOuter.h"
-
+#include "anki/cozmo/basestation/pathPlanner.h"
+#include "anki/cozmo/basestation/pathDolerOuter.h"
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/comms/robot/robotMessages.h"
@@ -24,21 +23,17 @@
 #include "anki/common/basestation/platformPathManager.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/common/basestation/utils/fileManagement.h"
-
-
 #include "anki/vision/CameraSettings.h"
-
 // TODO: This is shared between basestation and robot and should be moved up
 #include "anki/cozmo/shared/cozmoConfig.h"
-
-#include "robotMessageHandler.h"
-#include "robotPoseHistory.h"
+#include "anki/cozmo/basestation/robotMessageHandler.h"
+#include "anki/cozmo/basestation/robotPoseHistory.h"
 #include "anki/cozmo/basestation/ramp.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
+#include "opencv2/highgui/highgui.hpp" // For imwrite() in ProcessImage
 
-// For imwrite() in ProcessImage
-#include "opencv2/highgui/highgui.hpp"
-
+#include "anki/cozmo/basestation/soundManager.h"
+#include "anki/cozmo/basestation/faceAnimationManager.h"
 
 #include <fstream>
 #include <dirent.h>
@@ -70,6 +65,8 @@ namespace Anki {
     , _usingManualPathSpeed(false)
     , _camera(robotID)
     , _visionWhileMovingEnabled(false)
+    , _proxVals{{0}}
+    , _proxBlocked{{false}}
     , _poseOrigins(1)
     , _worldOrigin(&_poseOrigins.front())
     , _pose(-M_PI_2, Z_AXIS_3D(), {{0.f, 0.f, 0.f}}, _worldOrigin, "Robot_" + std::to_string(_ID))
@@ -502,8 +499,13 @@ namespace Anki {
       // and this should be true
       assert(msg.timestamp == t);
       
-      if(!_visionWhileMovingEnabled && !IsPickingOrPlacing()) {
-        
+      // If this is not a face marker and "Vision while moving" is disabled and
+      // we aren't picking/placing, check to see if the robot's body or head are
+      // moving too fast to queue this marker
+      if(msg.markerType != Vision::Marker::FACE_CODE &&
+         !_visionWhileMovingEnabled &&
+         !IsPickingOrPlacing())
+      {
         TimeStamp_t t_prev, t_next;
         RobotPoseStamp p_prev, p_next;
         
@@ -1200,9 +1202,14 @@ namespace Anki {
       return lastResult;
     }
     
-    Result Robot::PlaySound(SoundID_t soundID, u8 numLoops, u8 volume)
+    Result Robot::SetIdleAnimation(const std::string &animName)
     {
-      CozmoEngineSignals::PlaySoundForRobotSignal().emit(GetID(),soundID, numLoops, volume);
+      return _animationStreamer.SetIdleAnimation(animName);
+    }
+    
+    Result Robot::PlaySound(const std::string& soundName, u8 numLoops, u8 volume)
+    {
+      CozmoEngineSignals::PlaySoundForRobotSignal().emit(GetID(), soundName, numLoops, volume);
       return RESULT_OK;
     } // PlaySound()
       
@@ -1245,6 +1252,9 @@ namespace Anki {
     // Read the animations in a dir
     void Robot::ReadAnimationDir(bool playLoadedAnimation)
     {
+      SoundManager::getInstance()->SetRootDir();
+      FaceAnimationManager::getInstance()->SetRootDir();
+      
       const std::string animationFolder = PREPEND_SCOPED_PATH(Animation, "");
       std::string animationId;
       s32 loadedFileCount = 0;
@@ -1252,7 +1262,7 @@ namespace Anki {
       if ( dir != nullptr) {
         dirent* ent = nullptr;
         while ( (ent = readdir(dir)) != nullptr) {
-          if (ent->d_type == DT_REG) {
+          if (ent->d_type == DT_REG && ent->d_name[0] != '.') {
             std::string fullFileName = animationFolder + ent->d_name;
             struct stat attrib{0};
             int result = stat(fullFileName.c_str(), &attrib);

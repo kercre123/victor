@@ -10,13 +10,10 @@
 #define ANKI_CORETECH_VISION_BASESTATION_CAMERA_CALIBRATION_H_
 
 #include "json/json.h"
-
 #include "anki/common/types.h"
-
 #include "anki/common/basestation/math/point.h"
 #include "anki/common/shared/radians.h"
-
-//#include <array>
+#include <cmath>
 
 namespace Anki {
   

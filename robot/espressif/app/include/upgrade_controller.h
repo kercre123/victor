@@ -19,6 +19,10 @@ int8_t upgradeControllerInit(void);
 /// An impossible flash address to invalidate the state
 #define INVALID_FLASH_ADDRESS (0xFFFFffff)
 
+/// Lowest address we will allow writing to in order to protect the bootloader.
+#define FW_START_ADDRESS (0x01000)
+
+
 /** Upgrade command controll flags
  * One hot encoding is used, might mask in the future
  * Assume limited to 8 bits regardless of storage.

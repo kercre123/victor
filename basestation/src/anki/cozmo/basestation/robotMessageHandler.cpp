@@ -10,24 +10,19 @@
  * Copyright: Anki, Inc. 2014
  **/
 
-#include "anki/util/logging/logging.h"
+#include "util/logging/logging.h"
 #include "anki/common/basestation/utils/fileManagement.h"
 #include "anki/common/basestation/array2d_impl.h"
-
 #include "anki/vision/CameraSettings.h"
 #include "anki/vision/basestation/image.h"
-
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotManager.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
 #include "anki/cozmo/basestation/signals/cozmoEngineSignals.h"
-
-#include "robotMessageHandler.h"
+#include "anki/cozmo/basestation/robotMessageHandler.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
-
 #include <fstream>
-
 #include "opencv2/imgproc/imgproc.hpp"
 
 // Uncomment to allow interprocess access to the camera stream (e.g. Matlab)
@@ -237,29 +232,6 @@ namespace Anki {
                                       msg.center_x,
                                       msg.center_y,
                                       msg.skew);
-      
-#     if 0 // DEV HACK!
-      if(msg.isPhysicalRobot)
-      {
-        if(msg.ncols == 640) {
-          // Wide-angle VGA Calibration:
-          const Vision::CameraCalibration calib_hardCoded(480, 640,
-                                                          367.55184f,   369.05860f,
-                                                          312.22557f,   240.41850f,
-                                                          0);
-          calib = calib_hardCoded;
-        }
-        else if(msg.ncols == 320) {
-          // Cropped QVGA Calibration:
-          const Vision::CameraCalibration calib_hardCoded(240, 320,
-                                                          374.98139f, 371.84817f,
-                                                          155.83712f, 117.87848f,
-                                                          0);
-          calib = calib_hardCoded;
-        }
-        PRINT_NAMED_WARNING("RobotMessageHandler.ProcessMessage", "Using hard-coded %dx%d camera calibration data on basestation.\n", msg.ncols, msg.nrows);
-      }
-#     endif
       
       robot->SetCameraCalibration(calib);
       robot->SetPhysicalRobot(msg.isPhysicalRobot);
@@ -574,8 +546,9 @@ namespace Anki {
     
     Result RobotMessageHandler::ProcessMessage(Robot* robot, MessagePlaySoundOnBaseStation const& msg)
     {
-      robot->PlaySound(static_cast<SoundID_t>(msg.soundID), msg.numLoops, msg.volume);
-      return RESULT_OK;
+      PRINT_NAMED_ERROR("RobotMessageHandler.ProcessMessage",
+                        "MessagePlaySoundOnBaseStation is deprecated!\n");
+      return RESULT_FAIL;
     }
     
     Result RobotMessageHandler::ProcessMessage(Robot* robot, MessageStopSoundOnBaseStation const& msg)

@@ -25,6 +25,15 @@ namespace Cozmo {
 namespace EyeController {
   namespace {
     
+    const s32 NUM_BLINKS = 15;
+    const s32 _blinkSpacings_ms[NUM_BLINKS] = {
+      5000, 6000, 2000, 5000, 4000, 3000, 4000, 4000, 8000, 7000, 3000, 7000,
+      5000, 4000, 5000
+    };
+    
+    s32 _blinkIndex;
+    TimeStamp_t _blinkStart_ms;
+    
     enum EyeAnimMode {
       NONE,
       BLINK_TO_MIDDLE,
@@ -106,9 +115,9 @@ namespace EyeController {
   
   Result Init()
   {
+    /*
     _eyeAnimMode = NONE;
     
-    /*
     _leftEye.segments[EYE_SEGMENT_TOP]    = LED_LEFT_EYE_TOP;
     _leftEye.segments[EYE_SEGMENT_LEFT]   = LED_LEFT_EYE_LEFT;
     _leftEye.segments[EYE_SEGMENT_RIGHT]  = LED_LEFT_EYE_RIGHT;
@@ -118,15 +127,20 @@ namespace EyeController {
     _rightEye.segments[EYE_SEGMENT_LEFT]   = LED_RIGHT_EYE_LEFT;
     _rightEye.segments[EYE_SEGMENT_RIGHT]  = LED_RIGHT_EYE_RIGHT;
     _rightEye.segments[EYE_SEGMENT_BOTTOM] = LED_RIGHT_EYE_BOTTOM;
-    */
+    
     
     SetEyeColor(LED_OFF);
     
     _blinkVariation_ms = 200;
+    */
+    
+    _blinkIndex = 0;
+    _blinkStart_ms = HAL::GetTimeStamp();
     
     _enable = true;
     
-    return RESULT_FAIL; // Deprecated, so fail if called for now (needs updating for OLED display)
+    return RESULT_OK;
+    
   } // Init()
 
   
@@ -253,63 +267,21 @@ namespace EyeController {
     if(!_enable) {
       return RESULT_OK;
     }
-    
+
     TimeStamp_t currentTime = HAL::GetTimeStamp();
     
-    switch(_eyeAnimMode)
-    {
-      case NONE:
-      {
-        // Just leave eyes as they are
-        break;
+    if(currentTime - _blinkStart_ms >= _blinkSpacings_ms[_blinkIndex]) {
+      
+      HAL::FaceBlink();
+      
+      _blinkStart_ms = currentTime;
+      
+      ++_blinkIndex;
+      if(_blinkIndex == NUM_BLINKS) {
+        _blinkIndex = 0;
       }
-      case BLINK_TO_MIDDLE:
-      {
-        BlinkHelper(_leftEye,  currentTime, true);
-        BlinkHelper(_rightEye, currentTime, true);
-        
-        // At a bit of random variation to how long eyes are open:
-        // (Need to add some variation to both eyes to keep them in sync.)
-        if(_blinkVariation_ms>0 && _leftEye.animIndex==0 && _rightEye.animIndex==0) {
-          const s32 onVariation = Embedded::RandS32(-_blinkVariation_ms, _blinkVariation_ms);
-          _leftEye.nextSwitchTime  += onVariation;
-          _rightEye.nextSwitchTime += onVariation;
-        }
-        
-        break;
-      }
-      case BLINK_TO_BOTTOM:
-      {
-        BlinkHelper(_leftEye,  currentTime, false);
-        BlinkHelper(_rightEye, currentTime, false);
-        
-        // At a bit of random variation to how long eyes are open:
-        // (Need to add some variation to both eyes to keep them in sync.)
-        if(_blinkVariation_ms>0 && _leftEye.animIndex==0 && _rightEye.animIndex==0) {
-          const s32 onVariation = Embedded::RandS32(-_blinkVariation_ms, _blinkVariation_ms);
-          _leftEye.nextSwitchTime  += onVariation;
-          _rightEye.nextSwitchTime += onVariation;
-        }
-        
-        break;
-      }
-      case FLASH:
-      {
-        FlashHelper(_leftEye, currentTime);
-        FlashHelper(_rightEye, currentTime);
-        break;
-      }
-      case SPIN:
-      {
-        SpinHelper(_leftEye, currentTime);
-        SpinHelper(_rightEye, currentTime);
-        break;
-      }
-        
-      // TODO: Implement other modes
-        
-    } // switch(_eyeAnimMode)
-
+    }
+    
     return RESULT_OK;
     
   } // Update()

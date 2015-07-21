@@ -5,13 +5,14 @@
 #include "anki/common/shared/radians.h"
 #include "anki/common/shared/velocityProfileGenerator.h"
 
-#include "localization.h"
+#include "eyeController.h"
 #include "headController.h"
 #include "liftController.h"
+#include "localization.h"
 #include "wheelController.h"
 #include "steeringController.h"
 #include "speedController.h"
-
+#include "timeProfiler.h"
 
 #define DEBUG_ANIMATION_CONTROLLER 0
 
@@ -43,7 +44,9 @@ namespace AnimationController {
     
     bool _haveReceivedTerminationFrame;
     bool _isPlaying;
+    bool _bufferFullMessagePrintedThisTick;
     
+    AnimTrackFlag _tracksToPlay;
     
 #   if DEBUG_ANIMATION_CONTROLLER
     TimeStamp_t _currentTime_ms;
@@ -268,6 +271,8 @@ namespace AnimationController {
     PRINT("Initializing AnimationController\n");
 #   endif
     
+    _tracksToPlay = ENABLE_ALL_TRACKS;
+    
     Clear();
     
     DefineHardCodedAnimations();
@@ -289,6 +294,7 @@ namespace AnimationController {
 
     _haveReceivedTerminationFrame = false;
     _isPlaying = false;
+    _bufferFullMessagePrintedThisTick = false;
     
 #   if DEBUG_ANIMATION_CONTROLLER
     _currentTime_ms = 0;
@@ -378,20 +384,34 @@ namespace AnimationController {
     return msgID;
   }
   
-//  PRINT("Buffering anim keyframe %s, ID=%d\n", QUOTE(__MSG_TYPE__), Messages::GET_MESSAGE_ID(__MSG_TYPE__));
-#define DEFINE_BUFFER_KEY_FRAME(__MSG_TYPE__) \
-    const s32 numBytesAvailable = GetNumBytesAvailable(); \
-    const s32 numBytesNeeded = sizeof(msg) + sizeof(Messages::ID); \
-    AnkiConditionalErrorAndReturnValue(numBytesAvailable >= numBytesNeeded, RESULT_OK , \
-                                       "BufferKeyFrame", \
-                                       "Not enough buffer available for keyframe (%d bytes available, %d needed).\n", \
-                                       numBytesAvailable, numBytesNeeded); \
-    SetTypeIndicator(Messages::GET_MESSAGE_ID(__MSG_TYPE__)); \
+  template<typename MSG_TYPE>
+  static inline Result BufferKeyFrameHelper(const MSG_TYPE& msg, Messages::ID msgID)
+  {
+    const s32 numBytesAvailable = GetNumBytesAvailable();
+    const s32 numBytesNeeded = sizeof(msg) + sizeof(Messages::ID);
+    if(numBytesAvailable < numBytesNeeded) {
+      // Only print the error message if we haven't already done so this tick,
+      // to prevent spamming that could clog reliable UDP
+      if(!_bufferFullMessagePrintedThisTick) {
+        AnkiError("AnimationController.BufferKeyFrame.BufferFull",
+                  "%d bytes available, %d needed.\n",
+                  numBytesAvailable, numBytesNeeded);
+        _bufferFullMessagePrintedThisTick = true;
+      }
+      return RESULT_FAIL;
+    }
+    SetTypeIndicator(msgID);
     CopyIntoBuffer((u8*)&msg, sizeof(msg));
+    return RESULT_OK;
+  }
   
   Result BufferKeyFrame(const Messages::AnimKeyFrame_EndOfAnimation& msg)
   {
-    DEFINE_BUFFER_KEY_FRAME(AnimKeyFrame_EndOfAnimation)
+    Result lastResult = BufferKeyFrameHelper(msg, GET_MESSAGE_ID(Messages::AnimKeyFrame_EndOfAnimation));
+    if(RESULT_OK != lastResult) {
+      return lastResult;
+    }
+    
 #   if DEBUG_ANIMATION_CONTROLLER
     PRINT("Buffering EndOfAnimation KeyFrame\n");
 #   endif
@@ -402,7 +422,11 @@ namespace AnimationController {
   
   Result BufferKeyFrame(const Messages::AnimKeyFrame_AudioSample& msg)
   {
-    DEFINE_BUFFER_KEY_FRAME(AnimKeyFrame_AudioSample)
+    Result lastResult = BufferKeyFrameHelper(msg, GET_MESSAGE_ID(Messages::AnimKeyFrame_AudioSample));
+    if(RESULT_OK != lastResult) {
+      return lastResult;
+    }
+    
     //PRINT("Buffering AudioSample KeyFrame\n");
     ++_numFramesBuffered;
     return RESULT_OK;
@@ -410,14 +434,21 @@ namespace AnimationController {
   
   Result BufferKeyFrame(const Messages::AnimKeyFrame_AudioSilence& msg)
   {
-    DEFINE_BUFFER_KEY_FRAME(AnimKeyFrame_AudioSilence)
+    Result lastResult = BufferKeyFrameHelper(msg, GET_MESSAGE_ID(Messages::AnimKeyFrame_AudioSilence));
+    if(RESULT_OK != lastResult) {
+      return lastResult;
+    }
+    
     //PRINT("Buffering AudioSilence KeyFrame\n");
     ++_numFramesBuffered;
     return RESULT_OK;
   }
 
   Result BufferKeyFrame(const Messages::AnimKeyFrame_HeadAngle& msg) {
-    DEFINE_BUFFER_KEY_FRAME(AnimKeyFrame_HeadAngle)
+    Result lastResult = BufferKeyFrameHelper(msg, GET_MESSAGE_ID(Messages::AnimKeyFrame_HeadAngle));
+    if(RESULT_OK != lastResult) {
+      return lastResult;
+    }
 #   if DEBUG_ANIMATION_CONTROLLER
     PRINT("Buffering HeadAngle KeyFrame\n");
 #   endif
@@ -425,7 +456,10 @@ namespace AnimationController {
   }
   
   Result BufferKeyFrame(const Messages::AnimKeyFrame_LiftHeight& msg) {
-    DEFINE_BUFFER_KEY_FRAME(AnimKeyFrame_LiftHeight)
+    Result lastResult = BufferKeyFrameHelper(msg, GET_MESSAGE_ID(Messages::AnimKeyFrame_LiftHeight));
+    if(RESULT_OK != lastResult) {
+      return lastResult;
+    }
 #   if DEBUG_ANIMATION_CONTROLLER
     PRINT("Buffering LiftHeight KeyFrame\n");
 #   endif
@@ -433,7 +467,10 @@ namespace AnimationController {
   }
   
   Result BufferKeyFrame(const Messages::AnimKeyFrame_FaceImage& msg) {
-    DEFINE_BUFFER_KEY_FRAME(AnimKeyFrame_FaceImage)
+    Result lastResult = BufferKeyFrameHelper(msg, GET_MESSAGE_ID(Messages::AnimKeyFrame_FaceImage));
+    if(RESULT_OK != lastResult) {
+      return lastResult;
+    }
 #   if DEBUG_ANIMATION_CONTROLLER
     PRINT("Buffering FaceImage KeyFrame\n");
 #   endif
@@ -441,7 +478,10 @@ namespace AnimationController {
   }
   
   Result BufferKeyFrame(const Messages::AnimKeyFrame_FacePosition& msg) {
-    DEFINE_BUFFER_KEY_FRAME(AnimKeyFrame_FacePosition)
+    Result lastResult = BufferKeyFrameHelper(msg, GET_MESSAGE_ID(Messages::AnimKeyFrame_FacePosition));
+    if(RESULT_OK != lastResult) {
+      return lastResult;
+    }
 #   if DEBUG_ANIMATION_CONTROLLER
     PRINT("Buffering FacePosition KeyFrame\n");
 #   endif
@@ -449,7 +489,10 @@ namespace AnimationController {
   }
   
   Result BufferKeyFrame(const Messages::AnimKeyFrame_BackpackLights& msg) {
-    DEFINE_BUFFER_KEY_FRAME(AnimKeyFrame_BackpackLights)
+    Result lastResult = BufferKeyFrameHelper(msg, GET_MESSAGE_ID(Messages::AnimKeyFrame_BackpackLights));
+    if(RESULT_OK != lastResult) {
+      return lastResult;
+    }
 #   if DEBUG_ANIMATION_CONTROLLER
     PRINT("Buffering BackpackLights KeyFrame\n");
 #   endif
@@ -457,12 +500,28 @@ namespace AnimationController {
   }
   
   Result BufferKeyFrame(const Messages::AnimKeyFrame_BodyMotion& msg) {
-    DEFINE_BUFFER_KEY_FRAME(AnimKeyFrame_BodyMotion)
+    Result lastResult = BufferKeyFrameHelper(msg, GET_MESSAGE_ID(Messages::AnimKeyFrame_BodyMotion));
+    if(RESULT_OK != lastResult) {
+      return lastResult;
+    }
 #   if DEBUG_ANIMATION_CONTROLLER
     PRINT("Buffering BodyMotion KeyFrame\n");
 #   endif
     return RESULT_OK;
   }
+  
+  Result BufferKeyFrame(const Messages::AnimKeyFrame_Blink& msg)
+  {
+    Result lastResult = BufferKeyFrameHelper(msg, GET_MESSAGE_ID(Messages::AnimKeyFrame_Blink));
+    if(RESULT_OK != lastResult) {
+      return lastResult;
+    }
+#   if DEBUG_ANIMATION_CONTROLLER
+    PRINT("Buffering Blink KeyFrame\n");
+#   endif
+    return RESULT_OK;
+  }
+  
   
   bool IsBufferFull()
   {
@@ -509,6 +568,7 @@ namespace AnimationController {
       // If AudioReady() returns true, we are ready to move to the next keyframe
       if(HAL::AudioReady())
       {
+        START_TIME_PROFILE(Anim, AUDIOPLAY);
         
         // Next thing in the buffer should be audio or silence:
         switch(GetTypeIndicator())
@@ -517,14 +577,18 @@ namespace AnimationController {
           {
             Messages::AnimKeyFrame_AudioSilence msg;
             GetFromBuffer((u8*)&msg, sizeof(msg));
-            HAL::AudioPlayFrame(NULL);
+            HAL::AudioPlaySilence();
             break;
           }
           case Messages::AnimKeyFrame_AudioSample_ID:
           {
             Messages::AnimKeyFrame_AudioSample msg;
             GetFromBuffer((u8*)&msg, sizeof(msg));
-            HAL::AudioPlayFrame(msg.sample);
+            if(_tracksToPlay & AUDIO_TRACK) {
+              HAL::AudioPlayFrame(&msg);
+            } else {
+              HAL::AudioPlaySilence();
+            }
             break;
           }
           default:
@@ -535,6 +599,8 @@ namespace AnimationController {
 #       if DEBUG_ANIMATION_CONTROLLER
         _currentTime_ms += 33;
 #       endif
+        
+        MARK_NEXT_TIME_PROFILE(Anim, WHILE);
         
         // Keep reading until we hit another audio type, then rewind one
         // (The rewind is a little icky, but I'm leaving it for now)
@@ -581,14 +647,16 @@ namespace AnimationController {
               Messages::AnimKeyFrame_HeadAngle msg;
               GetFromBuffer((u8*)&msg, sizeof(msg));
               
-#             if DEBUG_ANIMATION_CONTROLLER
-              PRINT("AnimationController[t=%dms(%d)] requesting head angle of %ddeg over %.2fsec\n",
-                    _currentTime_ms, HAL::GetTimeStamp(),
-                    msg.angle_deg, static_cast<f32>(msg.time_ms)*.001f);
-#             endif
-              
-              HeadController::SetDesiredAngle(DEG_TO_RAD(static_cast<f32>(msg.angle_deg)), 0.1f, 0.1f,
-                                              static_cast<f32>(msg.time_ms)*.001f);
+              if(_tracksToPlay & HEAD_TRACK) {
+#               if DEBUG_ANIMATION_CONTROLLER
+                PRINT("AnimationController[t=%dms(%d)] requesting head angle of %ddeg over %.2fsec\n",
+                      _currentTime_ms, HAL::GetTimeStamp(),
+                      msg.angle_deg, static_cast<f32>(msg.time_ms)*.001f);
+#               endif
+                
+                HeadController::SetDesiredAngle(DEG_TO_RAD(static_cast<f32>(msg.angle_deg)), 0.1f, 0.1f,
+                                                static_cast<f32>(msg.time_ms)*.001f);
+              }
               break;
             }
               
@@ -597,14 +665,16 @@ namespace AnimationController {
               Messages::AnimKeyFrame_LiftHeight msg;
               GetFromBuffer((u8*)&msg, sizeof(msg));
               
-#             if DEBUG_ANIMATION_CONTROLLER
-              PRINT("AnimationController[t=%dms(%d)] requesting lift height of %dmm over %.2fsec\n",
-                    _currentTime_ms, HAL::GetTimeStamp(),
-                    msg.height_mm, static_cast<f32>(msg.time_ms)*.001f);
-#             endif
-              
-              LiftController::SetDesiredHeight(static_cast<f32>(msg.height_mm), 0.1f, 0.1f,
-                                               static_cast<f32>(msg.time_ms)*.001f);
+              if(_tracksToPlay & LIFT_TRACK) {
+#               if DEBUG_ANIMATION_CONTROLLER
+                PRINT("AnimationController[t=%dms(%d)] requesting lift height of %dmm over %.2fsec\n",
+                      _currentTime_ms, HAL::GetTimeStamp(),
+                      msg.height_mm, static_cast<f32>(msg.time_ms)*.001f);
+#               endif
+                
+                LiftController::SetDesiredHeight(static_cast<f32>(msg.height_mm), 0.1f, 0.1f,
+                                                 static_cast<f32>(msg.time_ms)*.001f);
+              }
               break;
             }
               
@@ -613,13 +683,15 @@ namespace AnimationController {
               Messages::AnimKeyFrame_BackpackLights msg;
               GetFromBuffer((u8*)&msg, sizeof(msg));
               
-#             if DEBUG_ANIMATION_CONTROLLER
-              PRINT("AnimationController[t=%dms(%d)] setting backpack LEDs.\n",
-                    _currentTime_ms, HAL::GetTimeStamp());
-#             endif
-              
-              for(s32 iLED=0; iLED<NUM_BACKPACK_LEDS; ++iLED) {
-                HAL::SetLED(static_cast<LEDId>(iLED), msg.colors[iLED]);
+              if(_tracksToPlay & BACKPACK_LIGHTS_TRACK) {
+#               if DEBUG_ANIMATION_CONTROLLER
+                PRINT("AnimationController[t=%dms(%d)] setting backpack LEDs.\n",
+                      _currentTime_ms, HAL::GetTimeStamp());
+#               endif
+                
+                for(s32 iLED=0; iLED<NUM_BACKPACK_LEDS; ++iLED) {
+                  HAL::SetLED(static_cast<LEDId>(iLED), msg.colors[iLED]);
+                }
               }
               break;
             }
@@ -629,12 +701,14 @@ namespace AnimationController {
               Messages::AnimKeyFrame_FaceImage msg;
               GetFromBuffer((u8*)&msg, sizeof(msg));
               
-#             if DEBUG_ANIMATION_CONTROLLER
-              PRINT("AnimationController[t=%dms(%d)] setting face frame.\n",
-                    _currentTime_ms, HAL::GetTimeStamp());
-#             endif
-              
-              HAL::FaceAnimate(msg.image);
+              if(_tracksToPlay & FACE_IMAGE_TRACK) {
+#               if DEBUG_ANIMATION_CONTROLLER
+                PRINT("AnimationController[t=%dms(%d)] setting face frame.\n",
+                      _currentTime_ms, HAL::GetTimeStamp());
+#               endif
+                
+                HAL::FaceAnimate(msg.image);
+              }
               break;
             }
               
@@ -643,12 +717,38 @@ namespace AnimationController {
               Messages::AnimKeyFrame_FacePosition msg;
               GetFromBuffer((u8*)&msg, sizeof(msg));
               
-#             if DEBUG_ANIMATION_CONTROLLER
-              PRINT("AnimationController[t=%dms(%d)] setting face position to (%d,%d).\n",
-                    _currentTime_ms, HAL::GetTimeStamp(), msg.xCen, msg.yCen);
-#             endif
+              if(_tracksToPlay & FACE_POS_TRACK) {
+#               if DEBUG_ANIMATION_CONTROLLER
+                PRINT("AnimationController[t=%dms(%d)] setting face position to (%d,%d).\n",
+                      _currentTime_ms, HAL::GetTimeStamp(), msg.xCen, msg.yCen);
+#               endif
+                
+                HAL::FaceMove(msg.xCen, msg.yCen);
+              }
+              break;
+            }
               
-              HAL::FaceMove(msg.xCen, msg.yCen);
+            case Messages::AnimKeyFrame_Blink_ID:
+            {
+              Messages::AnimKeyFrame_Blink msg;
+              GetFromBuffer((u8*)&msg, sizeof(msg));
+              
+              if(_tracksToPlay & BLINK_TRACK) {
+#               if DEBUG_ANIMATION_CONTROLLER
+                PRINT("AnimationController[t=%dms(%d)] Blinking.\n",
+                      _currentTime_ms, HAL::GetTimeStamp());
+#               endif
+                
+                if(msg.blinkNow) {
+                  HAL::FaceBlink();
+                } else {
+                  if(msg.enable) {
+                    EyeController::Enable();
+                  } else {
+                    EyeController::Disable();
+                  }
+                }
+              }
               break;
             }
               
@@ -657,18 +757,51 @@ namespace AnimationController {
               Messages::AnimKeyFrame_BodyMotion msg;
               GetFromBuffer((u8*)&msg, sizeof(msg));
               
-#             if DEBUG_ANIMATION_CONTROLLER
-              PRINT("AnimationController[t=%dms(%d)] setting wheel speeds L=%dmmps, R=%dmmps.\n",
-                    _currentTime_ms, HAL::GetTimeStamp(), msg.wheelSpeedL_mmps, msg.wheelSpeedR_mmps);
-#             endif
-              
-              WheelController::SetDesiredWheelSpeeds(msg.wheelSpeedL_mmps, msg.wheelSpeedR_mmps);
+              if(_tracksToPlay & BODY_TRACK) {
+#               if DEBUG_ANIMATION_CONTROLLER
+                PRINT("AnimationController[t=%dms(%d)] setting body motion to radius=%d, speed=%d\n",
+                      _currentTime_ms, HAL::GetTimeStamp(), msg.curvatureRadius_mm, msg.speed_mmPerSec);
+#               endif
+                
+                f32 leftSpeed, rightSpeed;
+                if(msg.speed == 0) {
+                  // Stop
+                  leftSpeed = 0.f;
+                  rightSpeed = 0.f;
+                } else if(msg.curvatureRadius_mm == s16_MAX || msg.curvatureRadius_mm == s16_MIN) {
+                  // Drive straight
+                  leftSpeed  = static_cast<f32>(msg.speed);
+                  rightSpeed = static_cast<f32>(msg.speed);
+                } else if(msg.curvatureRadius_mm == 0) {
+                  // Turn in place: positive speed means turn left
+                  // Interpret speed as degrees/sec
+                  leftSpeed  = static_cast<f32>(-msg.speed);
+                  rightSpeed = static_cast<f32>( msg.speed);
+                  
+                  const f32 speed_mmps = WHEEL_DIST_HALF_MM*tan(DEG_TO_RAD(static_cast<f32>(msg.speed)));
+                  leftSpeed  = -speed_mmps;
+                  rightSpeed =  speed_mmps;
+                  
+                } else {
+                  // Drive an arc
+                  
+                  //if speed is positive, the left wheel should turn slower, so
+                  // it becomes the INNER wheel
+                  leftSpeed = static_cast<f32>(msg.speed) * (1.0f - WHEEL_DIST_HALF_MM / static_cast<f32>(msg.curvatureRadius_mm));
+                  
+                  //if speed is positive, the right wheel should turn faster, so
+                  // it becomes the OUTER wheel
+                  rightSpeed = static_cast<f32>(msg.speed) * (1.0f + WHEEL_DIST_HALF_MM / static_cast<f32>(msg.curvatureRadius_mm));
+                }
+                
+                SteeringController::ExecuteDirectDrive(leftSpeed, rightSpeed);
+              }
               break;
             }
               
             default:
             {
-              PRINT("Unexpected message type %d in animation buffer!\n");
+              PRINT("Unexpected message type %d in animation buffer!\n", msgID);
               return RESULT_FAIL;
             }
               
@@ -686,13 +819,22 @@ namespace AnimationController {
                 _numFramesBuffered, _currentBufferPos, _lastBufferPos);
 #         endif
         }
+
+        // Print time profile stats
+        END_TIME_PROFILE(Anim);
+        PERIODIC_PRINT_AND_RESET_TIME_PROFILE(Anim, 120);
         
+
       } // if(AudioReady())
     } // if(IsReadyToPlay())
     
     return RESULT_OK;
   } // Update()
 
+  void SetTracksToPlay(AnimTrackFlag tracksToPlay)
+  {
+    _tracksToPlay = tracksToPlay;
+  }
   
 } // namespace AnimationController
 } // namespace Cozmo

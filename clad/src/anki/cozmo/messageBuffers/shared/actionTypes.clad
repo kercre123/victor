@@ -45,5 +45,14 @@ enum int_32 ActionResult {
     CANCELLED
 }
 
+// This is present in every action completion message, but different fields will
+// be used depending on the type of action that completed.
+// TODO: Use a union instead?
+structure ActionCompletedStruct {
+    int_32     objectIDs[5],
+    uint_8     numObjects,
+    string     animName
+}
+
 } // namespace Cozmo
 } // namespace Anki

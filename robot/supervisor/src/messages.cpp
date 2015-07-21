@@ -4,9 +4,9 @@
 
 #include "anki/common/robot/array2d.h"
 
-#include "embedded/transport/IUnreliableTransport.h"
-#include "embedded/transport/IReceiver.h"
-#include "embedded/transport/reliableTransport.h"
+#include "utilEmbedded/transport/IUnreliableTransport.h"
+#include "utilEmbedded/transport/IReceiver.h"
+#include "utilEmbedded/transport/reliableTransport.h"
 
 #include "messages.h"
 #include "localization.h"
@@ -286,8 +286,8 @@ namespace Anki {
         {
           if (ReliableTransport_Update(&connection) == false) // Connection has timed out
           {
-            PRINT("WARN: Reliable transport has timed out\n");
             Receiver_OnDisconnect(&connection);
+            PRINT("WARN: Reliable transport has timed out\n");  // Do not print until _OnDisconnect complete!
           }
         }
       }
@@ -555,7 +555,7 @@ namespace Anki {
       static inline void ProcessAnimKeyFrameHelper(const KF_TYPE& msg)
       { 
         if(AnimationController::BufferKeyFrame(msg) != RESULT_OK) {
-          PRINT("Failed to buffer a keyframe! Clearing Animation buffer!\n");
+          //PRINT("Failed to buffer a keyframe! Clearing Animation buffer!\n");
           AnimationController::Clear();
         }
       }
@@ -572,17 +572,16 @@ void Process##__MSG_TYPE__##Message(const __MSG_TYPE__& msg) { ProcessAnimKeyFra
       DEFINE_PROCESS_KEYFRAME_METHOD(AnimKeyFrame_BackpackLights)
       DEFINE_PROCESS_KEYFRAME_METHOD(AnimKeyFrame_BodyMotion)
       DEFINE_PROCESS_KEYFRAME_METHOD(AnimKeyFrame_EndOfAnimation)
+      DEFINE_PROCESS_KEYFRAME_METHOD(AnimKeyFrame_Blink)
 
       void ProcessPanAndTiltHeadMessage(const PanAndTiltHead& msg)
       {
         // TODO: Move this to some kind of VisualInterestTrackingController or something
-
+        
         HeadController::SetDesiredAngle(msg.headTiltAngle_rad, 0.1f, 0.1f, 0.1f);
-
-        const f32 turnVelocity = (msg.bodyPanAngle_rad < 0 ? -100.f : 100.f);
-        SteeringController::ExecutePointTurn(msg.bodyPanAngle_rad, 50.f, 10.f, 10.f, true);
-
-
+        if(msg.bodyPanAngle_rad != 0.f) {
+          SteeringController::ExecutePointTurn(msg.bodyPanAngle_rad, 50.f, 10.f, 10.f, true);
+        }
       }
 
       void ProcessSetCarryStateMessage(const SetCarryState& msg)
@@ -829,7 +828,7 @@ void Process##__MSG_TYPE__##Message(const __MSG_TYPE__& msg) { ProcessAnimKeyFra
             if (ReliableTransport_SendMessage((const uint8_t*)buffer, size, &connection, eRMT_SingleReliableMessage, hot, msgID) == false) // failed to queue reliable message!
             {
               // Have to drop the connection
-              PRINT("Dropping connection because can't queue reliable messages\r\n");
+              //PRINT("Dropping connection because can't queue reliable messages\r\n");
               ReliableTransport_Disconnect(&connection);
               Receiver_OnDisconnect(&connection);
               return false;
@@ -905,6 +904,7 @@ void Receiver_OnConnected(ReliableConnection* connection)
 
 void Receiver_OnDisconnect(ReliableConnection* connection)
 {
+  Anki::Cozmo::HAL::RadioUpdateState(0, 0);   // Must mark connection disconnected BEFORE trying to print
   Anki::Cozmo::PRINT("ReliableTransport disconnected\n");
   ReliableConnection_Init(connection, NULL); // Reset the connection
   Anki::Cozmo::HAL::RadioUpdateState(0, 0);

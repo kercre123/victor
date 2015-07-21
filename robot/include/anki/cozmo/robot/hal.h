@@ -42,8 +42,6 @@
 #include "anki/cozmo/shared/cozmoTypes.h"
 #include "anki/cozmo/shared/ledTypes.h"
 
-#define HAVE_ACTIVE_GRIPPER 0
-
 // Set to 0 if you want to read printf output in a terminal and you're not
 // using UART as radio. The radio is effectively disabled in this case.
 // Set to 1 if using UART as radio. This disables PRINT calls only from
@@ -236,12 +234,15 @@ namespace Anki
       // AUDIO
       //
 
+      void AudioFill(void);
+
       // @return true if the audio clock says it is time for the next frame
       bool AudioReady();
 
       // Play one frame of audio or silence
       // @param frame - a pointer to an audio frame or NULL to play one frame of silence
-      void AudioPlayFrame(u8* frame);
+      void AudioPlayFrame(Messages::AnimKeyFrame_AudioSample *msg);
+      void AudioPlaySilence();
 
 // #pragma mark --- Flash Memory ---
       /////////////////////////////////////////////////////////////////////
@@ -486,7 +487,7 @@ namespace Anki
                            const u32* onPeriod_ms, const u32* offPeriod_ms,
                            const u32* transitionOnPeriod_ms, const u32* transitionOffPeriod_ms);
 
-
+      void ManageCubes(void);
 
       /////////////////////////////////////////////////////////////////////
       // POWER MANAGEMENT
@@ -519,6 +520,9 @@ namespace Anki
       };
 
       IDCard* GetIDCard();
+      
+      // For board-level debugging only - read the comments in uart.cpp or find a better printf
+      void BoardPrintf(const char *format, ...);
     } // namespace HAL
   } // namespace Cozmo
 } // namespace Anki

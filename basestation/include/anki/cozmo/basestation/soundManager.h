@@ -13,52 +13,13 @@
 #define SOUND_MANAGER_H
 
 #include "anki/cozmo/shared/cozmoTypes.h"
+#include "anki/cozmo/basestation/comms/robot/robotMessages.h"
 
 #include <string>
+#include <unordered_map>
 
 namespace Anki {
   namespace Cozmo {
-    
-    
-    // List of sound schemes
-    typedef enum {
-      SOUND_SCHEME_COZMO
-      ,SOUND_SCHEME_MOVIE
-      ,SOUND_SCHEME_CREEP // Cozmo Robotic Emotional Engagement Playtest
-      ,NUM_SOUND_SCHEMES
-    } SoundSchemeID_t;
-    
-    // List of sound IDs
-    typedef enum {
-      SOUND_TADA
-      ,SOUND_NOPROBLEMO
-      ,SOUND_INPUT
-      ,SOUND_SWEAR
-      ,SOUND_STARTOVER
-      ,SOUND_NOTIMPRESSED
-      ,SOUND_60PERCENT
-      ,SOUND_DROID
-      ,SOUND_DEMO_START
-      ,SOUND_WAITING4DICE
-      ,SOUND_WAITING4DICE2DISAPPEAR
-      ,SOUND_OK_GOT_IT
-      ,SOUND_OK_DONE
-      ,SOUND_POWER_ON
-      ,SOUND_POWER_DOWN
-      ,SOUND_PHEW
-      ,SOUND_OOH
-      ,SOUND_SCREAM
-      ,SOUND_WHATS_NEXT
-      ,SOUND_HELP_ME
-      ,SOUND_SCAN
-      ,SOUND_HAPPY_CHASE
-      ,SOUND_FLEES
-      ,SOUND_SINGING
-      ,SOUND_SHOOT
-      ,SOUND_SHOT_HIT
-      ,SOUND_SHOT_MISSED
-      ,NUM_SOUNDS
-    } SoundID_t;
     
     // NOTE: this is a singleton class
     class SoundManager
@@ -69,27 +30,29 @@ namespace Anki {
       inline static SoundManager* getInstance();
       static void removeInstance();
       
-      // Set the root directory of sound files
-      bool SetRootDir(const char* dir);
+      // Clears all available sounds
+      void Clear();
+      
+      // Get the total number of sounds currently available in SoundManager
+      size_t GetNumAvailableSounds() const;
+      
+      // Set the root directory of sound files and causes a (re-)read of available
+      // sound files there.
+      bool SetRootDir(const std::string dir = "");
       
       // Volume for Play() methods is expressed a percentage of saved volume
-      bool Play(const SoundID_t    id,   const u8 numLoops=1, const u8 volume = 100);
       bool Play(const std::string& name, const u8 numLoops=1, const u8 volume = 100);
       
 	    void Stop();
+      
+      // Return true if the given name is an available sound
+      bool IsValidSound(const std::string& name) const;
 
-      void SetScheme(const SoundSchemeID_t scheme);
-      SoundSchemeID_t GetScheme() const;
-      
-      // Lookup a sound by name
-      static SoundID_t GetID(const std::string& name);
-      
-      // Lookup a relative filename by ID
-      const std::string& GetSoundFile(SoundID_t soundID) const;
-      
-      // Get the duration of the sound in milliseconds
-      const u32 GetSoundDurationInMilliseconds(SoundID_t soundID) const;
+      // Get the duration of the sound in milliseconds. Returns 0 for invalid names.
       const u32 GetSoundDurationInMilliseconds(const std::string& name) const;
+
+      // Returns pointer to a buffer of the sound data
+      bool GetSoundSample(const std::string& name, const u32 sampleIdx, MessageAnimKeyFrame_AudioSample &msg);
       
     protected:
       
@@ -104,7 +67,30 @@ namespace Anki {
       
       std::string _rootDir;
       
-      SoundSchemeID_t _currScheme = SOUND_SCHEME_CREEP;
+      Result ReadSoundDir(std::string subDir, bool isRobotAudio);
+      
+      struct AvailableSound {
+        time_t lastLoadedTime;
+        u32    duration_ms;
+        std::string fullFilename;
+      };
+      
+      std::unordered_map<std::string, AvailableSound> _availableSounds;
+      std::unordered_map<std::string, AvailableSound> _availableRobotSounds;
+
+      // Buffer of data from file last referenced by GetSoundBuffer()
+      static const u32 MAX_SOUND_BUFFER_SIZE = 500000; // 500000 ~= 10s audio
+      static const u32 MAX_SOUND_BUFFER_DURATION_MS = MAX_SOUND_BUFFER_SIZE * 33 / 1600;
+      std::string _currOpenSoundFileName;
+      FILE* _currOpenSoundFilePtr;
+      u32 _currOpenSoundNumSamples;
+      s16 _soundBuf[MAX_SOUND_BUFFER_SIZE];
+      static const u32 SOUND_SAMPLE_SIZE = 400;
+      static const u32 UNENCODED_SOUND_SAMPLE_SIZE = SOUND_SAMPLE_SIZE * 4;
+      
+      // ADPCM encoding vars
+      s32 _adpcm_index;
+      s32 _adpcm_predictor;
       
     }; // class SoundManager
     
@@ -118,9 +104,13 @@ namespace Anki {
       
       return singletonInstance_;
     }
+
+    inline void SoundManager::Clear() {
+      _availableSounds.clear();
+    }
     
-    inline const u32 SoundManager::GetSoundDurationInMilliseconds(const std::string& name) const {
-      return GetSoundDurationInMilliseconds(GetID(name));
+    inline size_t SoundManager::GetNumAvailableSounds() const {
+      return _availableSounds.size();
     }
     
   } // namespace Cozmo

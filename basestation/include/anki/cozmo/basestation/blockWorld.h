@@ -86,7 +86,7 @@ namespace Anki
       
       // Update the BlockWorld's state by processing all queued ObservedMarkers
       // and updating robots' poses and blocks' poses from them.
-      void Update(uint32_t& numBlocksObserved);
+      Result Update(uint32_t& numBlocksObserved);
       
       // Empties the queue of all observed markers
       void ClearAllObservedMarkers();
@@ -106,7 +106,7 @@ namespace Anki
       
       // Clear an object when you have a direct iterator pointing to it. Returns
       // the iterator to the next object in the container.
-      ObjectsMapByID_t::iterator ClearObject(ObjectsMapByID_t::iterator objIter,
+      ObjectsMapByID_t::iterator ClearObject(const ObjectsMapByID_t::iterator objIter,
                                              const ObjectType&    withType,
                                              const ObjectFamily&  fromFamily);
       

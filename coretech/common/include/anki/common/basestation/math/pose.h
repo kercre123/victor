@@ -31,7 +31,7 @@
 #ifndef _ANKICORETECH_MATH_POSE_H_
 #define _ANKICORETECH_MATH_POSE_H_
 
-#include "anki/util/logging/logging.h"
+#include "util/logging/logging.h"
 
 #include "anki/common/basestation/math/matrix.h"
 #include "anki/common/basestation/math/point.h"

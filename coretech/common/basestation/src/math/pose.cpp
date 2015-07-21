@@ -23,7 +23,7 @@ namespace Anki {
   */
   
   Pose2d::Pose2d()
-  : Pose2d(0, {{0.f, 0.f}})
+  : Pose2d(0, {0.f, 0.f})
   {
     
   }
@@ -108,7 +108,7 @@ namespace Anki {
   */
   
   Pose3d::Pose3d()
-  : Pose3d(0, Z_AXIS_3D(), {{0.f, 0.f, 0.f}})
+  : Pose3d(0, Z_AXIS_3D(), {0.f, 0.f, 0.f})
   {
     
   } // Constructor: Pose3d()  
@@ -158,8 +158,8 @@ namespace Anki {
   }
   
   Pose3d::Pose3d(const Pose2d &pose2d)
-  : Pose3d(pose2d.GetAngle(), {{0.f, 0.f, 0.f}},
-           {{pose2d.GetX(), pose2d.GetY(), 0.f}})
+  : Pose3d(pose2d.GetAngle(), {0.f, 0.f, 0.f},
+           {pose2d.GetX(), pose2d.GetY(), 0.f})
   {
     // At this point, we have initialized a 3D pose corresponding
     // just to the 2D pose (i.e. w.r.t. the (0,0,0) origin and

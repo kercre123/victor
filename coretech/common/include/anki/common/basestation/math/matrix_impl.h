@@ -153,6 +153,7 @@ namespace Anki {
     Matrix<T> result( this->get_CvMat_() * other.get_CvMat_() );
 #else
     CORETECH_ASSERT(false);
+    Matrix<T> result;
     // TODO: Implement our own matrix multiplication.
 #endif
     
@@ -339,17 +340,17 @@ namespace Anki {
   }
   
   
+#if ANKICORETECH_USE_OPENCV
   template<MatDimType NROWS, MatDimType NCOLS, typename T>
   SmallMatrix<NROWS,NCOLS,T>::SmallMatrix(const cv::Matx<T,NROWS,NCOLS> &cvMatrix)
-#if ANKICORETECH_USE_OPENCV
   : cv::Matx<T,NROWS,NCOLS>(cvMatrix)
-#endif
   {
-#if !defined(ANKICORETECH_USE_OPENCV)
-    CORETECH_ASSERT(false);
-    // TODO: Define our own opencv-free constructor?
-#endif
+//#if !defined(ANKICORETECH_USE_OPENCV)
+//    CORETECH_ASSERT(false);
+//    // TODO: Define our own opencv-free constructor?
+//#endif
   }
+#endif
 
   // Matrix element access:
   template<MatDimType NROWS, MatDimType NCOLS, typename T>
@@ -361,7 +362,8 @@ namespace Anki {
 #else
     CORETECH_ASSERT(false);
     // TODO: Define our own opencv-free (i,j) accessor?
-    return T(0);
+    static T t(0);
+    return t;
 #endif
   }
   
@@ -374,7 +376,8 @@ namespace Anki {
 #else
     CORETECH_ASSERT(false);
     // TODO: Define our own opencv-free const (i,j) accessor?
-    return T(0);
+    static T t(0);
+    return t;
 #endif
   }
 

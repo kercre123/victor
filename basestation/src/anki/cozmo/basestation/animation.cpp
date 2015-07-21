@@ -21,7 +21,7 @@
 
 #include "anki/cozmo/basestation/soundManager.h"
 
-#include "anki/util/logging/logging.h"
+#include "util/logging/logging.h"
 
 #include "anki/common/basestation/utils/timer.h"
 
@@ -42,8 +42,9 @@ namespace Cozmo {
   void Animation::Track<FRAME_TYPE>::Init()
   {
 #   if DEBUG_ANIMATIONS
-    PRINT_NAMED_INFO("Animation.Track.Init", "Initializing %s Track.\n",
-                     FRAME_TYPE::GetClassName().c_str());
+    PRINT_NAMED_INFO("Animation.Track.Init", "Initializing %s Track with %lu frames.\n",
+                     FRAME_TYPE::GetClassName().c_str(),
+                     _frames.size());
 #   endif
     
     _frameIter = _frames.begin();
@@ -55,10 +56,15 @@ namespace Cozmo {
   {
     RobotMessage* msg = nullptr;
     
-    if(HasFramesLeft() && GetCurrentKeyFrame().IsTimeToPlay(startTime_ms, currTime_ms))
-    {
-      msg = GetCurrentKeyFrame().GetStreamMessage();
-      MoveToNextKeyFrame();
+    if(HasFramesLeft()) {
+      FRAME_TYPE& currentKeyFrame = GetCurrentKeyFrame();
+      if(currentKeyFrame.IsTimeToPlay(startTime_ms, currTime_ms))
+      {
+        msg = currentKeyFrame.GetStreamMessage();
+        if(currentKeyFrame.IsDone()) {
+          MoveToNextKeyFrame();
+        }
+      }
     }
     
     return msg;
@@ -79,8 +85,8 @@ namespace Cozmo {
     
     if(lastResult == RESULT_OK) {
       if(_frames.size() > 1) {
-        auto nextToLastFrame = _frames.rend();
-        --nextToLastFrame;
+        auto nextToLastFrame = _frames.rbegin();
+        ++nextToLastFrame;
         
         if(_frames.back().GetTriggerTime() <= nextToLastFrame->GetTriggerTime()) {
           PRINT_NAMED_ERROR("Animation.Track.AddKeyFrame.BadTriggerTime",
@@ -140,17 +146,19 @@ namespace Cozmo {
         addResult = _headTrack.AddKeyFrame(jsonFrame);
       } else if(frameName == LiftHeightKeyFrame::GetClassName()) {
         addResult = _liftTrack.AddKeyFrame(jsonFrame);
-      } else if(frameName == FaceImageKeyFrame::GetClassName()) {
-        addResult = _faceImageTrack.AddKeyFrame(jsonFrame);
+      } else if(frameName == FaceAnimationKeyFrame::GetClassName()) {
+        addResult = _faceAnimTrack.AddKeyFrame(jsonFrame);
       } else if(frameName == FacePositionKeyFrame::GetClassName()) {
         addResult = _facePosTrack.AddKeyFrame(jsonFrame);
       } else if(frameName == DeviceAudioKeyFrame::GetClassName()) {
         addResult = _deviceAudioTrack.AddKeyFrame(jsonFrame);
+      } else if(frameName == BlinkKeyFrame::GetClassName()) {
+        addResult = _blinkTrack.AddKeyFrame(jsonFrame);
       } else if(frameName == RobotAudioKeyFrame::GetClassName()) {
         addResult = _robotAudioTrack.AddKeyFrame(jsonFrame);
       } else if(frameName == BackpackLightsKeyFrame::GetClassName()) {
         addResult = _backpackLightsTrack.AddKeyFrame(jsonFrame);
-      } else if(frameName == BodyPositionKeyFrame::GetClassName()) {
+      } else if(frameName == BodyMotionKeyFrame::GetClassName()) {
         addResult = _bodyPosTrack.AddKeyFrame(jsonFrame);
       } else {
         PRINT_NAMED_ERROR("Animation.DefineFromJson.UnrecognizedFrameName",
@@ -184,12 +192,13 @@ namespace Cozmo {
 # define ALL_TRACKS(__METHOD__, __COMBINE_WITH__) \
 _headTrack.__METHOD__() __COMBINE_WITH__ \
 _liftTrack.__METHOD__() __COMBINE_WITH__ \
-_faceImageTrack.__METHOD__() __COMBINE_WITH__ \
+_faceAnimTrack.__METHOD__() __COMBINE_WITH__ \
 _facePosTrack.__METHOD__() __COMBINE_WITH__ \
 _deviceAudioTrack.__METHOD__() __COMBINE_WITH__ \
 _robotAudioTrack.__METHOD__() __COMBINE_WITH__ \
 _backpackLightsTrack.__METHOD__() __COMBINE_WITH__ \
-_bodyPosTrack.__METHOD__()
+_bodyPosTrack.__METHOD__() __COMBINE_WITH__ \
+_blinkTrack.__METHOD__()
   
   Result Animation::Init()
   {
@@ -240,8 +249,7 @@ _bodyPosTrack.__METHOD__()
          audioKF.IsTimeToPlay(_startTime_ms,  currTime_ms))
       {
         // TODO: Insert some kind of small delay to simulate latency?
-        SoundID_t soundID = static_cast<SoundID_t>(audioKF.GetAudioID());
-        SoundManager::getInstance()->Play(soundID);
+        SoundManager::getInstance()->Play(audioKF.GetSoundName());
         _playedRobotAudio_ms = currTime_ms;
       }
     }
@@ -348,13 +356,24 @@ _bodyPosTrack.__METHOD__()
         if(sendResult != RESULT_OK) { return sendResult; }
       }
       
-      msg = _faceImageTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms);
+      msg = _faceAnimTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms);
       if(msg != nullptr) {
 #       if DEBUG_ANIMATIONS
-        PRINT_NAMED_INFO("Animation.Update", "Streaming FaceImageKeyFrame at t=%dms.\n",
+        PRINT_NAMED_INFO("Animation.Update", "Streaming FaceAnimationKeyFrame at t=%dms.\n",
                          _streamingTime_ms - _startTime_ms);
 #       endif
         sendResult = robot.SendMessage(*msg, true, SEND_LARGE_KEYFRAMES_HOT);
+        numBytesToSend -= msg->GetSize() + sizeof(RobotMessage::ID);
+        if(sendResult != RESULT_OK) { return sendResult; }
+      }
+      
+      msg = _blinkTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms);
+      if(msg != nullptr) {
+#       if DEBUG_ANIMATIONS
+        PRINT_NAMED_INFO("Animation.Update", "Streaming BlinkKeyFrame at t=%dms.\n",
+                         _streamingTime_ms - _startTime_ms);
+#       endif
+        sendResult = robot.SendMessage(*msg, true);
         numBytesToSend -= msg->GetSize() + sizeof(RobotMessage::ID);
         if(sendResult != RESULT_OK) { return sendResult; }
       }
@@ -373,7 +392,7 @@ _bodyPosTrack.__METHOD__()
       msg = _bodyPosTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms);
       if(msg != nullptr) {
 #       if DEBUG_ANIMATIONS
-        PRINT_NAMED_INFO("Animation.Update", "Streaming BodyPositionKeyFrame at t=%dms.\n",
+        PRINT_NAMED_INFO("Animation.Update", "Streaming BodyMotionKeyFrame at t=%dms.\n",
                          _streamingTime_ms - _startTime_ms);
 #       endif
         sendResult = robot.SendMessage(*msg);

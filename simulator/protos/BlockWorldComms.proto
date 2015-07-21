@@ -6,6 +6,10 @@ PROTO BlockWorldComms [
 {
 Supervisor {
   name IS name
-  controller "blockworld_controller"
+  controller "webotsCtrlGameEngine"
+
+  # Referencing a field that is used in code but not in the proto model
+  # to suppress a Webots error message.
+  %{if fields.numUIDevicesToWaitFor.value then end }%
 } # Supervisor definition
 } # PROTO definition

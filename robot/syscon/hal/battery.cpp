@@ -1,7 +1,7 @@
 #include "battery.h"
 #include "nrf.h"
 #include "nrf_gpio.h"
-#include "uart.h"
+#include "debug.h"
 #include "timer.h"
 #include "anki/cozmo/robot/spineData.h"
 

@@ -20,7 +20,7 @@
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/quad_impl.h"
 
-#include "anki/util/logging/logging.h"
+#include "util/logging/logging.h"
 #include "anki/common/basestation/utils/helpers/boundedWhile.h"
 
 #include "anki/cozmo/basestation/viz/vizManager.h"
