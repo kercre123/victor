@@ -2,6 +2,9 @@
 using System.Collections;
 using Vectrosity;
 
+/// <summary>
+/// uses vectrosity to draw wireframe cube
+/// </summary>
 public class VectrosityCube : MonoBehaviour {
 
 	[SerializeField] Material lineMaterial;
