@@ -528,7 +528,8 @@ namespace Anki {
       // Events
       using RobotWorldOriginChangedSignal = Signal::Signal<void (RobotID_t)>;
       RobotWorldOriginChangedSignal& OnRobotWorldOriginChanged() { return _robotWorldOriginChangedSignal; }
-      IExternalInterface* GetExternalInterface() { return _externalInterface; }
+      inline IExternalInterface* GetExternalInterface() {
+        ASSERT_NAMED(_externalInterface != nullptr, "Robot.ExternalInterface.nullptr"); return _externalInterface; }
 
     protected:
       IExternalInterface* _externalInterface;

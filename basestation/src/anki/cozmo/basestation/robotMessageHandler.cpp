@@ -22,8 +22,10 @@
 #include "anki/cozmo/basestation/signals/cozmoEngineSignals.h"
 #include "anki/cozmo/basestation/robotMessageHandler.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
-#include <fstream>
+#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "opencv2/imgproc/imgproc.hpp"
+#include "messageEngineToGame.h"
+#include <fstream>
 
 // Uncomment to allow interprocess access to the camera stream (e.g. Matlab)
 //#define STREAM_IMAGES_VIA_FILESYSTEM 1
@@ -607,7 +609,9 @@ namespace Anki {
             ActionableObject* actionObject = dynamic_cast<ActionableObject*>(object);
             assert(actionObject != nullptr);
             if(actionObject->IsBeingCarried() == false) {
-              CozmoEngineSignals::ActiveObjectMovedSignal().emit(robot->GetID(), objectWithID.first, msg.xAccel, msg.yAccel, msg.zAccel, msg.upAxis);
+              robot->GetExternalInterface()->DeliverToGame(ExternalInterface::MessageEngineToGame(ExternalInterface::ActiveObjectMoved(
+                robot->GetID(), objectWithID.first, msg.xAccel, msg.yAccel, msg.zAccel, msg.upAxis
+              )));
             }
             
             return RESULT_OK;
@@ -633,8 +637,9 @@ namespace Anki {
                               "MessageActiveObjectStoppedMoving",
                               "Received message that Object " << objectWithID.first.GetValue() << " (Active ID " << msg.objectID << ") stopped moving.");
             
-            CozmoEngineSignals::ActiveObjectStoppedMovingSignal().emit(robot->GetID(), objectWithID.first, msg.upAxis, msg.rolled);
-            
+            robot->GetExternalInterface()->DeliverToGame(ExternalInterface::MessageEngineToGame(ExternalInterface::ActiveObjectStoppedMoving(
+              robot->GetID(), objectWithID.first, msg.upAxis, msg.rolled
+            )));
             return RESULT_OK;
           }
         }
@@ -659,8 +664,10 @@ namespace Anki {
                               "MessageActiveObjectTapped",
                               "Received message that object " << objectWithID.first.GetValue() << " (Active ID " << msg.objectID << ") was tapped " << (uint32_t)msg.numTaps << " times.");
             
-            CozmoEngineSignals::ActiveObjectTappedSignal().emit(robot->GetID(), objectWithID.first, msg.numTaps);
-            
+            robot->GetExternalInterface()->DeliverToGame(ExternalInterface::MessageEngineToGame(ExternalInterface::ActiveObjectTapped(
+              robot->GetID(), objectWithID.first, msg.numTaps
+            )));
+
             return RESULT_OK;
           }
         }

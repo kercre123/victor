@@ -10,6 +10,8 @@
  */
 
 #include "anki/cozmo/basestation/engineImpl/cozmoEngineImpl.h"
+#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "clad/externalInterface/messageEngineToGame.h"
 
 #define ASYNCHRONOUS_DEVICE_VISION 0
 
@@ -143,7 +145,6 @@ bool CozmoEngineImpl::ConnectToRobot(AdvertisingRobot whichRobot)
     //_connectedRobots[whichRobot].visionThread.Start();
     //_connectedRobots[whichRobot].visionMsgHandler.Init(<#Comms::IComms *comms#>, <#Anki::Cozmo::RobotManager *robotMgr#>)
   }
-  CozmoEngineSignals::RobotConnectedSignal().emit(whichRobot, success);
 
   return success;
 }
@@ -186,7 +187,7 @@ Result CozmoEngineImpl::Update(const BaseStationTime_t currTime_ns)
   std::vector<Comms::ConnectionId> advertisingRobots;
   _robotChannel.GetAdvertisingConnections(advertisingRobots);
   for(auto robot : advertisingRobots) {
-    CozmoEngineSignals::RobotAvailableSignal().emit(robot);
+    _externalInterface->DeliverToGame(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotAvailable(robot)));
   }
 
   // TODO: Handle images coming from connected robots
@@ -214,11 +215,13 @@ void CozmoEngineImpl::ProcessDeviceImage(const Vision::Image &image)
   MessageVisionMarker msg;
   while(_deviceVisionThread.CheckMailbox(msg)) {
     // Pass marker detections along to UI/game for use
-    CozmoEngineSignals::DeviceDetectedVisionMarkerSignal().emit(_engineID, msg.markerType,
-                                                                   msg.x_imgUpperLeft,  msg.y_imgUpperLeft,
-                                                                   msg.x_imgLowerLeft,  msg.y_imgLowerLeft,
-                                                                   msg.x_imgUpperRight, msg.y_imgUpperRight,
-                                                                   msg.x_imgLowerRight, msg.y_imgLowerRight);
+    _externalInterface->DeliverToGame(ExternalInterface::MessageEngineToGame(ExternalInterface::DeviceDetectedVisionMarker(
+      msg.markerType,
+      msg.x_imgUpperLeft,  msg.y_imgUpperLeft,
+      msg.x_imgLowerLeft,  msg.y_imgLowerLeft,
+      msg.x_imgUpperRight, msg.y_imgUpperRight,
+      msg.x_imgLowerRight, msg.y_imgLowerRight
+    )));
   }
 
 #   endif
