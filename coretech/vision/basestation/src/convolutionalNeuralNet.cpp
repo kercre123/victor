@@ -249,6 +249,7 @@ namespace Vision {
       }
     }
 
+    _name = dirname.substr(dirname.find_last_of("/")+1, std::string::npos);
     
     PRINT_NAMED_INFO("ConvolutionalNeuralNet.Load",
                      "Loaded %lu CNN layers & %lu class names.\n",

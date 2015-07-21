@@ -25,6 +25,8 @@ namespace Vision {
    
     bool IsLoaded() const { return _isLoaded; }
     
+    const std::string& GetName() const { return _name; }
+    
     Result Load(std::string filename);
     
     Result Run(const cv::Mat& img, std::vector<float>& output);
@@ -34,6 +36,7 @@ namespace Vision {
   protected:
     
     bool _isLoaded;
+    std::string _name;
     
     std::vector<ICNNLayer*>  _layers;
     std::vector<std::string> _classNames;
