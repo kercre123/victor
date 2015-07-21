@@ -37,6 +37,7 @@
 #include "anki/vision/basestation/image.h"
 #include "anki/vision/basestation/cameraCalibration.h"
 #include "json/json.h"
+#include "anki/cozmo/shared/cozmoTypes.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -90,6 +91,8 @@ public:
   // bool IsRobotConnected(AdvertisingRobot whichRobot) const;
 
   virtual bool GetCurrentRobotImage(RobotID_t robotId, Vision::Image& img, TimeStamp_t newerThanTime) = 0;
+
+  virtual void SetImageSendMode(RobotID_t robotID, Cozmo::ImageSendMode_t newMode) {}
 
 protected:
 

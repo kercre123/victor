@@ -292,6 +292,13 @@ bool CozmoEngineHostImpl::GetCurrentRobotImage(RobotID_t robotID, Vision::Image&
   }
 }
 
+void CozmoEngineHostImpl::SetImageSendMode(RobotID_t robotID, Cozmo::ImageSendMode_t newMode)
+{
+  Robot* robot = _robotMgr.GetRobotByID(robotID);
+  if(robot != nullptr) {
+    return robot->SetImageSendMode(newMode);
+  }
+}
 
 } // namespace Cozmo
 } // namespace Anki

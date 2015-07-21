@@ -42,9 +42,14 @@ void CozmoEngineHost::ListenForRobotConnections(bool listen)
   _hostImpl->ListenForRobotConnections(listen);
 }
 
-bool CozmoEngineHost::GetCurrentRobotImage(RobotID_t robotId, Vision::Image& img, TimeStamp_t newerThanTime)
+bool CozmoEngineHost::GetCurrentRobotImage(RobotID_t robotID, Vision::Image& img, TimeStamp_t newerThanTime)
 {
-  return _hostImpl->GetCurrentRobotImage(robotId, img, newerThanTime);
+  return _hostImpl->GetCurrentRobotImage(robotID, img, newerThanTime);
+}
+
+void CozmoEngineHost::SetImageSendMode(RobotID_t robotID, Cozmo::ImageSendMode_t newMode)
+{
+  _hostImpl->SetImageSendMode(robotID, newMode);
 }
 
 bool CozmoEngineHost::ConnectToRobot(AdvertisingRobot whichRobot)

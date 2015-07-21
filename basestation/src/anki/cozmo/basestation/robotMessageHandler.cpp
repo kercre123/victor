@@ -322,7 +322,33 @@ namespace Anki {
                                                             msg.imageChunkCount,
                                                             msg.chunkId, msg.data, msg.chunkSize );
 
-      CozmoEngineSignals::RobotImageChunkAvailableSignal().emit(robot->GetID(), &msg);
+      IExternalInterface* externalInterface = robot->GetExternalInterface();
+      if (externalInterface != nullptr && robot->GetImageSendMode() != ISM_OFF) {
+        ExternalInterface::ImageChunk uiImgChunk;
+        uiImgChunk.imageId = msg.imageId;
+        uiImgChunk.frameTimeStamp = msg.frameTimeStamp;
+        uiImgChunk.nrows = Vision::CameraResInfo[msg.resolution].height;
+        uiImgChunk.ncols = Vision::CameraResInfo[msg.resolution].width;
+        assert(uiImgChunk.data.size() == msg.data.size());
+        uiImgChunk.chunkSize = msg.chunkSize;
+        uiImgChunk.imageEncoding = msg.imageEncoding;
+        uiImgChunk.imageChunkCount = msg.imageChunkCount;
+        uiImgChunk.chunkId = msg.chunkId;
+        std::copy(msg.data.begin(), msg.data.end(),
+          uiImgChunk.data.begin());
+
+        ExternalInterface::MessageEngineToGame msgWrapper;
+        msgWrapper.Set_ImageChunk(uiImgChunk);
+        robot->GetExternalInterface()->DeliverToGame(std::move(msgWrapper));
+
+        const bool wasLastChunk = uiImgChunk.chunkId == uiImgChunk.imageChunkCount-1;
+
+        if(wasLastChunk && robot->GetImageSendMode() == ISM_SINGLE_SHOT) {
+          // We were just in single-image send mode, and the image got sent, so
+          // go back to "off". (If in stream mode, stay in stream mode.)
+          robot->SetImageSendMode(ISM_OFF);
+        }
+      }
       VizManager::getInstance()->SendImageChunk(robot->GetID(), msg);
       
       if(isImageReady)

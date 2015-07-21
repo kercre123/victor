@@ -530,7 +530,8 @@ namespace Anki {
       RobotWorldOriginChangedSignal& OnRobotWorldOriginChanged() { return _robotWorldOriginChangedSignal; }
       inline IExternalInterface* GetExternalInterface() {
         ASSERT_NAMED(_externalInterface != nullptr, "Robot.ExternalInterface.nullptr"); return _externalInterface; }
-
+      inline void SetImageSendMode(ImageSendMode_t newMode) { _imageSendMode = newMode; }
+      inline const ImageSendMode_t GetImageSendMode() const { return _imageSendMode; }
     protected:
       IExternalInterface* _externalInterface;
       RobotWorldOriginChangedSignal _robotWorldOriginChangedSignal;
@@ -630,7 +631,7 @@ namespace Anki {
       bool             _isLiftMoving;
       bool             _isAnimating;
       f32              _battVoltage;
-      
+      ImageSendMode_t _imageSendMode;
       // Pose history
       Result ComputeAndInsertPoseIntoHistory(const TimeStamp_t t_request,
                                              TimeStamp_t& t, RobotPoseStamp** p,

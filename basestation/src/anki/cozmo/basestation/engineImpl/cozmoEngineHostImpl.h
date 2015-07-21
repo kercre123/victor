@@ -42,6 +42,8 @@ public:
   // TODO: Remove these in favor of it being handled via messages instead of direct API polling
   bool GetCurrentRobotImage(RobotID_t robotId, Vision::Image& img, TimeStamp_t newerThanTime);
 
+  void SetImageSendMode(RobotID_t robotID, Cozmo::ImageSendMode_t newMode);
+
   void StartAnimationTool() override { _animationReloadActive = true; };
 protected:
 
