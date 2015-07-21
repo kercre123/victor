@@ -26,7 +26,7 @@ GTEST_TEST(TestConfigTreeJsonCpp, JsonCppWorks)
   Json::Reader reader;
 
   using namespace Anki;
-  ifstream configFileStream(PlatformPathManager::GetInstance()->PrependPath(PlatformPathManager::Test, "coretech/common/basestation/config/test.json"));
+  ifstream configFileStream(PlatformPathManager::getInstance()->PrependPath(PlatformPathManager::Test, "coretech/common/basestation/config/test.json"));
 
   ASSERT_TRUE(reader.parse(configFileStream, root))
     << "Failed to parse configuration\n"
@@ -60,7 +60,7 @@ GTEST_TEST(TestConfigTreeJsonCpp, OptionalValues)
   Json::Reader reader;
 
   using namespace Anki;
-  ifstream configFileStream(PlatformPathManager::GetInstance()->PrependPath(PlatformPathManager::Test, "coretech/common/basestation/config/test.json"));
+  ifstream configFileStream(PlatformPathManager::getInstance()->PrependPath(PlatformPathManager::Test, "coretech/common/basestation/config/test.json"));
 
   ASSERT_TRUE(reader.parse(configFileStream, root))
     << "Failed to parse configuration\n"
