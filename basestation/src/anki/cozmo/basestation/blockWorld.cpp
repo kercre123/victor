@@ -1652,6 +1652,12 @@ namespace Anki
         // pose updating processes above
         numUnusedMarkers += currentObsMarkers.size();
         
+        for(auto & unusedMarker : currentObsMarkers) {
+          PRINT_NAMED_INFO("BlockWorld.Update.UnusedMarker",
+                           "An observed %s marker went unused.\n",
+                           unusedMarker.second.GetCodeName());
+        }
+        
         // Delete any objects that should have been observed but weren't,
         // visualize objects that were observed:
         numObjectsObserved += CheckForUnobservedObjects(atTimestamp);
