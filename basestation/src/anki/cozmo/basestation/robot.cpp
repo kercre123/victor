@@ -1221,7 +1221,9 @@ namespace Anki {
       
     void Robot::StopSound()
     {
-      CozmoEngineSignals::StopSoundForRobotSignal().emit(GetID());
+      if (_externalInterface != nullptr) {
+        _externalInterface->DeliverToGame(ExternalInterface::MessageEngineToGame(ExternalInterface::StopSound()));
+      }
     } // StopSound()
       
       
@@ -2523,8 +2525,8 @@ namespace Anki {
       // Now make the robot's origin point to the new origin
       // TODO: avoid the icky const_cast here...
       _worldOrigin = const_cast<Pose3d*>(newPoseWrtNewOrigin.GetParent());
-      
-      CozmoEngineSignals::RobotWorldOriginChangedSignal().emit(GetID());
+
+      _robotWorldOriginChangedSignal.emit(GetID());
       
       return RESULT_OK;
       

@@ -27,34 +27,27 @@
 #ifndef ANKI_COZMO_BASESTATION_ROBOT_H
 #define ANKI_COZMO_BASESTATION_ROBOT_H
 
-#include <queue>
-
 #include "anki/common/types.h"
 #include "anki/common/basestation/math/pose.h"
-
 #include "anki/vision/basestation/camera.h"
 #include "anki/vision/basestation/image.h"
-//#include "anki/vision/basestation/panTiltTracker.h"
 #include "anki/vision/basestation/visionMarker.h"
-
 #include "anki/planning/shared/path.h"
-
 #include "anki/cozmo/shared/cozmoTypes.h"
 #include "anki/cozmo/shared/activeBlockTypes.h"
 #include "anki/cozmo/shared/ledTypes.h"
-
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/comms/robot/robotMessages.h"
 #include "anki/cozmo/basestation/visionProcessingThread.h"
-
 #include "anki/cozmo/basestation/actionContainers.h"
 #include "anki/cozmo/basestation/animationStreamer.h"
 #include "anki/cozmo/basestation/cannedAnimationContainer.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/ramp.h"
 #include "anki/cozmo/basestation/soundManager.h"
-
+#include "util/signals/simpleSignal.hpp"
+#include <queue>
 #include <unordered_map>
 #include <time.h>
 
@@ -531,9 +524,14 @@ namespace Anki {
       // Send a message to the physical robot
       Result SendMessage(const RobotMessage& message,
                          bool reliable = true, bool hot = false) const;
-      
+
+      // Events
+      using RobotWorldOriginChangedSignal = Signal::Signal<void (RobotID_t)>;
+      RobotWorldOriginChangedSignal& OnRobotWorldOriginChanged() { return _robotWorldOriginChangedSignal; }
+
     protected:
       IExternalInterface* _externalInterface;
+      RobotWorldOriginChangedSignal _robotWorldOriginChangedSignal;
       // The robot's identifier
       RobotID_t         _ID;
       bool              _isPhysical;

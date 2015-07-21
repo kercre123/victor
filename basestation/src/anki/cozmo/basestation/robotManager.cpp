@@ -9,8 +9,9 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotManager.h"
 #include "anki/cozmo/basestation/signals/cozmoEngineSignals.h"
-
-#include "robotMessageHandler.h"
+#include "anki/cozmo/basestation/robotMessageHandler.h"
+#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "clad/externalInterface/messageEngineToGame.h"
 
 
 namespace Anki {
@@ -114,7 +115,9 @@ namespace Anki {
             }
 
             PRINT_NAMED_WARNING("RobotManager.UpdateAllRobots.FailIOTimeout", "Signaling robot disconnect\n");
-            CozmoEngineSignals::RobotDisconnectedSignal().emit(r->first);
+            //CozmoEngineSignals::RobotDisconnectedSignal().emit(r->first);
+            _robotDisconnectedSignal.emit(r->first);
+            _externalInterface->DeliverToGame(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotDisconnected(r->first, 0.0f)));
             
             delete r->second;
             r = _robots.erase(r);

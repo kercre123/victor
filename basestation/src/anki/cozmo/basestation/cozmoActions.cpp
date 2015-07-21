@@ -236,7 +236,7 @@ namespace Anki {
               robotPtr->ClearPath();
             }
           };
-          _signalHandle = CozmoEngineSignals::RobotWorldOriginChangedSignal().ScopedSubscribe(cbRobotOriginChanged);
+          _signalHandle = robot.OnRobotWorldOriginChanged().ScopedSubscribe(cbRobotOriginChanged);
         }
         
       } // if/else isGoalSet

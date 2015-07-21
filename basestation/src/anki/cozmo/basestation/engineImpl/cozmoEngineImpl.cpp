@@ -26,12 +26,6 @@ CozmoEngineImpl::CozmoEngineImpl(IExternalInterface* externalInterface)
     Anki::Util::gTickTimeProvider = BaseStationTimer::getInstance();
   }
 
-  // Handle robot disconnection:
-  auto cbRobotDisconnected = [this](RobotID_t robotID) {
-    PRINT_NAMED_INFO("CozmoEngineImpl.Constructor.cbRobotDisconnected", "Disconnecting from robot %d, haven't received message in too long.", robotID);
-    this->DisconnectFromRobot(robotID);
-  };
-  _signalHandles.emplace_back( CozmoEngineSignals::RobotDisconnectedSignal().ScopedSubscribe(cbRobotDisconnected));
   ASSERT_NAMED(externalInterface != nullptr, "Cozmo.EngineImpl.ExternalInterface.nullptr");
 }
 

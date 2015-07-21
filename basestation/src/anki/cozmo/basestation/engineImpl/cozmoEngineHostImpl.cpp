@@ -31,6 +31,10 @@ CozmoEngineHostImpl::CozmoEngineHostImpl(IExternalInterface* externalInterface)
   _robotAdvertisementService.StartService(ROBOT_ADVERTISEMENT_REGISTRATION_PORT,
                                           ROBOT_ADVERTISING_PORT);
 
+  // Handle robot disconnection:
+  _signalHandles.emplace_back( _robotMgr.OnRobotDisconnected().ScopedSubscribe(
+    std::bind(&CozmoEngineHostImpl::DisconnectFromRobot, this, std::placeholders::_1)
+  ));
 }
 
 Result CozmoEngineHostImpl::InitInternal()
