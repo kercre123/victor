@@ -36,6 +36,8 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #define OUTPUT_FAILED_MARKER_STEPS
 
+#define DO_RECOGNITION_TIMING 0
+
 #if defined(THIS_IS_PETES_BOARD)
 #undef OUTPUT_FAILED_MARKER_STEPS
 #endif
@@ -47,6 +49,9 @@ For internal use only. No part of this code may be used without a signed non-dis
 #endif
 
 #define DEBUG_BRIGHT_DARK_PAIRS 0
+
+
+#include <chrono>
 
 namespace Anki
 {
@@ -1166,16 +1171,29 @@ namespace Anki
       bool verified = false;
       OrientedMarkerLabel selectedLabel = MARKER_UNKNOWN;
       
+      
 #     if RECOGNITION_METHOD == RECOGNITION_METHOD_NEAREST_NEIGHBOR
 
       BeginBenchmark("vme_classify_nn");
       
+#       if DO_RECOGNITION_TIMING
+        const std::chrono::steady_clock::time_point startTime = std::chrono::steady_clock::now();
+#       endif
+      
       s32 label=-1;
       s32 distance = grayvalueThreshold;
+      
       lastResult = VisionMarker::GetNearestNeighborLibrary().GetNearestNeighbor(image, homography, grayvalueThreshold, label, distance);
+      
       AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
                                          "VisionMarker.Extract",
                                          "Failed finding nearest neighbor.\n");
+      
+#       if DO_RECOGNITION_TIMING
+        const std::chrono::steady_clock::time_point endTime = std::chrono::steady_clock::now();
+        const std::chrono::milliseconds nnTime = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
+        CoreTechPrint("GetNearestNeighbor() Time: %dms\n", nnTime);
+#       endif
       
       if(label != -1) {
         AnkiConditionalWarn(distance < grayvalueThreshold, "VisionMarker.Extract",
@@ -1235,11 +1253,21 @@ namespace Anki
       
       Vision::ConvolutionalNeuralNet& cnn = VisionMarker::GetCNN();
       
+#       if DO_RECOGNITION_TIMING
+        const std::chrono::steady_clock::time_point startTime = std::chrono::steady_clock::now();
+#       endif
+      
       std::string className;
       size_t classLabel;
       static cv::Mat_<u8> _probeValues(VisionMarker::GRIDSIZE, VisionMarker::GRIDSIZE);
       VisionMarker::GetProbeValues(image, homography, _probeValues);
       lastResult = cnn.Run(_probeValues, classLabel, className);
+      
+#       if DO_RECOGNITION_TIMING
+        const std::chrono::steady_clock::time_point endTime = std::chrono::steady_clock::now();
+        const std::chrono::milliseconds nnTime = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
+        CoreTechPrint("CNN.Run() Time: %dms\n", nnTime);
+#       endif
       
       AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
                                          "VisionMarker.Extract.CNNFail",
