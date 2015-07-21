@@ -19,7 +19,6 @@
 		462D5BC21B0576230027DC17 /* libopencv_imgproc.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 468C75DD1A96C17D001011B7 /* libopencv_imgproc.a */; };
 		462D5BC51B0576230027DC17 /* libopencv_video.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 462D5BC31B0576230027DC17 /* libopencv_video.a */; };
 		462D5BC61B0576230027DC17 /* libopencv_features2d.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 462D5BC41B0576230027DC17 /* libopencv_features2d.a */; };
-		4670C9F41B4F942B005A1A90 /* ios.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = 4670C9F31B4F942B005A1A90 /* ios.xcconfig */; };
 		468C75E91A96C18D001011B7 /* libc++.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 468C75E81A96C18D001011B7 /* libc++.dylib */; };
 		46D2C2401B4F9D6B00FC7553 /* libcozmoEngine.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 46D2C2371B4F9D6B00FC7553 /* libcozmoEngine.a */; };
 		46D2C2411B4F9D6B00FC7553 /* libcozmoGame.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 46D2C2381B4F9D6B00FC7553 /* libcozmoGame.a */; };
@@ -59,7 +58,6 @@
 		46D2C2C51B4F9E3E00FC7553 /* MetalHelper.mm in Sources */ = {isa = PBXBuildFile; fileRef = 46D2C2801B4F9E3E00FC7553 /* MetalHelper.mm */; };
 		46D2C2C61B4F9E3E00FC7553 /* MPVideoPlayer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 46D2C2811B4F9E3E00FC7553 /* MPVideoPlayer.mm */; };
 		46D2C2C71B4F9E3E00FC7553 /* ObjCRuntime.mm in Sources */ = {isa = PBXBuildFile; fileRef = 46D2C2831B4F9E3E00FC7553 /* ObjCRuntime.mm */; };
-		46D2C2C81B4F9E3E00FC7553 /* UnityProInterface.mm in Sources */ = {isa = PBXBuildFile; fileRef = 46D2C2881B4F9E3E00FC7553 /* UnityProInterface.mm */; };
 		46D2C2C91B4F9E3E00FC7553 /* VideoPlayer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 46D2C28B1B4F9E3E00FC7553 /* VideoPlayer.mm */; };
 		46D2C2CA1B4F9E3E00FC7553 /* WWWConnection.mm in Sources */ = {isa = PBXBuildFile; fileRef = 46D2C28D1B4F9E3E00FC7553 /* WWWConnection.mm */; };
 		46D2C2CB1B4F9E3E00FC7553 /* UnityAppController+Rendering.mm in Sources */ = {isa = PBXBuildFile; fileRef = 46D2C28F1B4F9E3E00FC7553 /* UnityAppController+Rendering.mm */; };
@@ -104,6 +102,10 @@
 		83B2570B0E62FF8A00468741 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 83B2570A0E62FF8A00468741 /* QuartzCore.framework */; };
 		83B2574C0E63022200468741 /* OpenAL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 83B2574B0E63022200468741 /* OpenAL.framework */; };
 		83B2574F0E63025400468741 /* libiconv.2.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 83B2574E0E63025400468741 /* libiconv.2.dylib */; };
+		F8BD0CE01B5EAF0400F71EA3 /* ios.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = F8BD0CDF1B5EAF0400F71EA3 /* ios.xcconfig */; };
+		F8BD0CFA1B5EB38D00F71EA3 /* CoreText.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F8BD0CF91B5EB38D00F71EA3 /* CoreText.framework */; };
+		F8BD0CFD1B5ED7DF00F71EA3 /* UnityEngine.Analytics.dll.s in Sources */ = {isa = PBXBuildFile; fileRef = F8BD0CFB1B5ED7DF00F71EA3 /* UnityEngine.Analytics.dll.s */; };
+		F8BD0CFE1B5ED7DF00F71EA3 /* UnityEngine.Networking.dll.s in Sources */ = {isa = PBXBuildFile; fileRef = F8BD0CFC1B5ED7DF00F71EA3 /* UnityEngine.Networking.dll.s */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -122,7 +124,6 @@
 		1D6058910D05DD3D006BFB54 /* cozmo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = cozmo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		462D5BC31B0576230027DC17 /* libopencv_video.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libopencv_video.a; path = opencv/libopencv_video.a; sourceTree = SOURCE_ROOT; };
 		462D5BC41B0576230027DC17 /* libopencv_features2d.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libopencv_features2d.a; path = opencv/libopencv_features2d.a; sourceTree = SOURCE_ROOT; };
-		4670C9F31B4F942B005A1A90 /* ios.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = ios.xcconfig; path = generated/ios.xcconfig; sourceTree = "<group>"; };
 		468C75D81A96C17D001011B7 /* liblibjpeg.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = liblibjpeg.a; path = opencv/liblibjpeg.a; sourceTree = SOURCE_ROOT; };
 		468C75D91A96C17D001011B7 /* liblibpng.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = liblibpng.a; path = opencv/liblibpng.a; sourceTree = SOURCE_ROOT; };
 		468C75DA1A96C17D001011B7 /* libopencv_calib3d.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libopencv_calib3d.a; path = opencv/libopencv_calib3d.a; sourceTree = SOURCE_ROOT; };
@@ -199,8 +200,6 @@
 		46D2C2841B4F9E3E00FC7553 /* UnityForwardDecls.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = UnityForwardDecls.h; sourceTree = "<group>"; };
 		46D2C2851B4F9E3E00FC7553 /* UnityInterface.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = UnityInterface.h; sourceTree = "<group>"; };
 		46D2C2861B4F9E3E00FC7553 /* UnityMetalSupport.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = UnityMetalSupport.h; sourceTree = "<group>"; };
-		46D2C2871B4F9E3E00FC7553 /* UnityProInterface.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = UnityProInterface.h; sourceTree = "<group>"; };
-		46D2C2881B4F9E3E00FC7553 /* UnityProInterface.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = UnityProInterface.mm; sourceTree = "<group>"; };
 		46D2C2891B4F9E3E00FC7553 /* UnityRendering.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = UnityRendering.h; sourceTree = "<group>"; };
 		46D2C28A1B4F9E3E00FC7553 /* VideoPlayer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VideoPlayer.h; sourceTree = "<group>"; };
 		46D2C28B1B4F9E3E00FC7553 /* VideoPlayer.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = VideoPlayer.mm; sourceTree = "<group>"; };
@@ -256,6 +255,10 @@
 		83B2574B0E63022200468741 /* OpenAL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenAL.framework; path = System/Library/Frameworks/OpenAL.framework; sourceTree = SDKROOT; };
 		83B2574E0E63025400468741 /* libiconv.2.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libiconv.2.dylib; path = usr/lib/libiconv.2.dylib; sourceTree = SDKROOT; };
 		8D1107310486CEB800E47090 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		F8BD0CDF1B5EAF0400F71EA3 /* ios.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = ios.xcconfig; path = ../../generated/ios/ios.xcconfig; sourceTree = "<group>"; };
+		F8BD0CF91B5EB38D00F71EA3 /* CoreText.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreText.framework; path = System/Library/Frameworks/CoreText.framework; sourceTree = SDKROOT; };
+		F8BD0CFB1B5ED7DF00F71EA3 /* UnityEngine.Analytics.dll.s */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.asm; name = UnityEngine.Analytics.dll.s; path = "../../../../build/ios/unity-ios/Debug-iphoneos/Libraries/UnityEngine.Analytics.dll.s"; sourceTree = "<group>"; };
+		F8BD0CFC1B5ED7DF00F71EA3 /* UnityEngine.Networking.dll.s */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.asm; name = UnityEngine.Networking.dll.s; path = "../../../../build/ios/unity-ios/Debug-iphoneos/Libraries/UnityEngine.Networking.dll.s"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -263,6 +266,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F8BD0CFA1B5EB38D00F71EA3 /* CoreText.framework in Frameworks */,
 				46D2C2FE1B4FAA0800FC7553 /* libctiVisionRobot.a in Frameworks */,
 				46D2C2F91B4FA6AC00FC7553 /* libctiCommonRobot.a in Frameworks */,
 				46D2C2EF1B4FA4E900FC7553 /* libCSharpBinding.a in Frameworks */,
@@ -343,6 +347,7 @@
 		29B97323FDCFA39411CA2CEA /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				F8BD0CF91B5EB38D00F71EA3 /* CoreText.framework */,
 				46D2C2FD1B4FAA0800FC7553 /* libctiVisionRobot.a */,
 				46D2C2F81B4FA6AC00FC7553 /* libctiCommonRobot.a */,
 				46D2C2F61B4FA57000FC7553 /* libutilEmbedded.a */,
@@ -406,7 +411,7 @@
 		465B5F2C1A9817AB00AB809E /* Config */ = {
 			isa = PBXGroup;
 			children = (
-				4670C9F31B4F942B005A1A90 /* ios.xcconfig */,
+				F8BD0CDF1B5EAF0400F71EA3 /* ios.xcconfig */,
 				8D1107310486CEB800E47090 /* Info.plist */,
 			);
 			name = Config;
@@ -505,8 +510,6 @@
 				46D2C2841B4F9E3E00FC7553 /* UnityForwardDecls.h */,
 				46D2C2851B4F9E3E00FC7553 /* UnityInterface.h */,
 				46D2C2861B4F9E3E00FC7553 /* UnityMetalSupport.h */,
-				46D2C2871B4F9E3E00FC7553 /* UnityProInterface.h */,
-				46D2C2881B4F9E3E00FC7553 /* UnityProInterface.mm */,
 				46D2C2891B4F9E3E00FC7553 /* UnityRendering.h */,
 				46D2C28A1B4F9E3E00FC7553 /* VideoPlayer.h */,
 				46D2C28B1B4F9E3E00FC7553 /* VideoPlayer.mm */,
@@ -519,6 +522,8 @@
 		46D2C2951B4F9E3E00FC7553 /* Libraries */ = {
 			isa = PBXGroup;
 			children = (
+				F8BD0CFB1B5ED7DF00F71EA3 /* UnityEngine.Analytics.dll.s */,
+				F8BD0CFC1B5ED7DF00F71EA3 /* UnityEngine.Networking.dll.s */,
 				46D2C2961B4F9E3E00FC7553 /* Assembly-CSharp-firstpass.dll.s */,
 				46D2C2971B4F9E3E00FC7553 /* Assembly-CSharp.dll.s */,
 				46D2C2981B4F9E3E00FC7553 /* libiPhone-lib.a */,
@@ -612,7 +617,7 @@
 					};
 				};
 			};
-			buildConfigurationList = C01FCF4E08A954540054247B /* Build configuration list for PBXProject "CozmoUnity_iOS" */;
+			buildConfigurationList = C01FCF4E08A954540054247B /* Build configuration list for PBXProject "CozmoUnity_IOS" */;
 			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = English;
 			hasScannedForEncodings = 1;
@@ -638,8 +643,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				4670C9F41B4F942B005A1A90 /* ios.xcconfig in Resources */,
 				46D2C2DA1B4F9E3E00FC7553 /* InfoPlist.strings in Resources */,
+				F8BD0CE01B5EAF0400F71EA3 /* ios.xcconfig in Resources */,
 				46D2C2D91B4F9E3E00FC7553 /* Images.xcassets in Resources */,
 				46D2C2E21B4F9E5100FC7553 /* LaunchScreen.xib in Resources */,
 				46D2C2DB1B4F9E3E00FC7553 /* Unity-iPhone Tests-Info.plist in Resources */,
@@ -727,6 +732,7 @@
 			files = (
 				46D2C2C01B4F9E3E00FC7553 /* DisplayManager.mm in Sources */,
 				46D2C2B11B4F9E3E00FC7553 /* UnityViewControllerListener.mm in Sources */,
+				F8BD0CFE1B5ED7DF00F71EA3 /* UnityEngine.Networking.dll.s in Sources */,
 				46D2C2B71B4F9E3E00FC7553 /* SplashScreen.mm in Sources */,
 				46D2C2AE1B4F9E3E00FC7553 /* AppDelegateListener.mm in Sources */,
 				46D2C2DC1B4F9E3E00FC7553 /* Unity_iPhone_Tests.m in Sources */,
@@ -750,6 +756,7 @@
 				46D2C2C51B4F9E3E00FC7553 /* MetalHelper.mm in Sources */,
 				46D2C2BD1B4F9E3E00FC7553 /* CMVideoSampling.mm in Sources */,
 				46D2C2CD1B4F9E3E00FC7553 /* UnityAppController.mm in Sources */,
+				F8BD0CFD1B5ED7DF00F71EA3 /* UnityEngine.Analytics.dll.s in Sources */,
 				46D2C2C71B4F9E3E00FC7553 /* ObjCRuntime.mm in Sources */,
 				46D2C2AD1B4F9E3E00FC7553 /* main.mm in Sources */,
 				46D2C2AC1B4F9E3E00FC7553 /* iPhone_Sensors.mm in Sources */,
@@ -766,7 +773,6 @@
 				46D2C2D31B4F9E3E00FC7553 /* RegisterFeatures.cpp in Sources */,
 				46D2C2D81B4F9E3E00FC7553 /* UnityEngine.UI.dll.s in Sources */,
 				46D2C2CB1B4F9E3E00FC7553 /* UnityAppController+Rendering.mm in Sources */,
-				46D2C2C81B4F9E3E00FC7553 /* UnityProInterface.mm in Sources */,
 				46D2C2C91B4F9E3E00FC7553 /* VideoPlayer.mm in Sources */,
 				46D2C2D11B4F9E3E00FC7553 /* Mono.Security.dll.s in Sources */,
 				46D2C2B81B4F9E3E00FC7553 /* UnityAppController+ViewHandling.mm in Sources */,
@@ -805,7 +811,7 @@
 /* Begin XCBuildConfiguration section */
 		1D6058940D05DD3E006BFB54 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 4670C9F31B4F942B005A1A90 /* ios.xcconfig */;
+			baseConfigurationReference = F8BD0CDF1B5EAF0400F71EA3 /* ios.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = armv7;
@@ -852,7 +858,7 @@
 		};
 		1D6058950D05DD3E006BFB54 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 4670C9F31B4F942B005A1A90 /* ios.xcconfig */;
+			baseConfigurationReference = F8BD0CDF1B5EAF0400F71EA3 /* ios.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = armv7;
@@ -896,7 +902,7 @@
 		};
 		5623C58317FDCB0900090B9E /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 4670C9F31B4F942B005A1A90 /* ios.xcconfig */;
+			baseConfigurationReference = F8BD0CDF1B5EAF0400F71EA3 /* ios.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = armv7;
@@ -943,7 +949,7 @@
 		};
 		5623C58417FDCB0900090B9E /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 4670C9F31B4F942B005A1A90 /* ios.xcconfig */;
+			baseConfigurationReference = F8BD0CDF1B5EAF0400F71EA3 /* ios.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = armv7;
@@ -996,7 +1002,7 @@
 		};
 		C01FCF4F08A954540054247B /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 4670C9F31B4F942B005A1A90 /* ios.xcconfig */;
+			baseConfigurationReference = F8BD0CDF1B5EAF0400F71EA3 /* ios.xcconfig */;
 			buildSettings = {
 				ARCHS = armv7;
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
@@ -1018,7 +1024,7 @@
 		};
 		C01FCF5008A954540054247B /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 4670C9F31B4F942B005A1A90 /* ios.xcconfig */;
+			baseConfigurationReference = F8BD0CDF1B5EAF0400F71EA3 /* ios.xcconfig */;
 			buildSettings = {
 				ARCHS = armv7;
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
@@ -1056,7 +1062,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		C01FCF4E08A954540054247B /* Build configuration list for PBXProject "CozmoUnity_iOS" */ = {
+		C01FCF4E08A954540054247B /* Build configuration list for PBXProject "CozmoUnity_IOS" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				C01FCF5008A954540054247B /* Release */,
