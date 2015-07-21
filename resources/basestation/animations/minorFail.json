@@ -1,0 +1,60 @@
+{
+  "minorFail": [
+    {
+      "$type": "BehaviorDesigner.HeadAnglePointData, BehaviorDesigner",
+      "angle_deg": 5,
+      "angleVariability_deg": 0,
+      "triggerTime_ms": 0,
+      "durationTime_ms": 200,
+      "Name": "HeadAngleKeyFrame"
+    },
+    {
+      "$type": "BehaviorDesigner.HeadAnglePointData, BehaviorDesigner",
+      "angle_deg": -19,
+      "angleVariability_deg": 0,
+      "triggerTime_ms": 200,
+      "durationTime_ms": 300,
+      "Name": "HeadAngleKeyFrame"
+    },
+    {
+      "$type": "BehaviorDesigner.HeadAnglePointData, BehaviorDesigner",
+      "angle_deg": -16,
+      "angleVariability_deg": 0,
+      "triggerTime_ms": 500,
+      "durationTime_ms": 800,
+      "Name": "HeadAngleKeyFrame"
+    },
+    {
+      "$type": "BehaviorDesigner.LiftHeightPointData, BehaviorDesigner",
+      "height_mm": 31,
+      "heightVariability_mm": 0,
+      "triggerTime_ms": 0,
+      "durationTime_ms": 100,
+      "Name": "LiftHeightKeyFrame"
+    },
+    {
+      "$type": "BehaviorDesigner.LiftHeightPointData, BehaviorDesigner",
+      "height_mm": 31,
+      "heightVariability_mm": 0,
+      "triggerTime_ms": 100,
+      "durationTime_ms": 1200,
+      "Name": "LiftHeightKeyFrame"
+    },
+    {
+      "$type": "BehaviorDesigner.FaceAnimationPointData, BehaviorDesigner",
+      "animName": "minorFail",
+      "fullPath": "Z:\\products-cozmo-assets\\faceAnimations\\minorFail",
+      "triggerTime_ms": 0,
+      "durationTime_ms": 1300,
+      "Name": "FaceAnimationKeyFrame"
+    },
+    {
+      "$type": "BehaviorDesigner.AudioRobotPointData, BehaviorDesigner",
+      "audioName": "robot/vortexPrototype/VO_CozmoBrian_MinorFail_02.wav",
+      "fullPath": "Z:\\products-cozmo-assets\\sounds\\robot\\vortexPrototype\\VO_CozmoBrian_MinorFail_02.wav",
+      "triggerTime_ms": 1,
+      "durationTime_ms": 1200,
+      "Name": "RobotAudioKeyFrame"
+    }
+  ]
+}

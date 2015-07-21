@@ -67,7 +67,7 @@ namespace Anki {
       
       std::string _rootDir;
       
-      Result ReadSoundDir(std::string subDir = "");
+      Result ReadSoundDir(std::string subDir, bool isRobotAudio);
       
       struct AvailableSound {
         time_t lastLoadedTime;
@@ -76,13 +76,21 @@ namespace Anki {
       };
       
       std::unordered_map<std::string, AvailableSound> _availableSounds;
+      std::unordered_map<std::string, AvailableSound> _availableRobotSounds;
 
       // Buffer of data from file last referenced by GetSoundBuffer()
-      static const u32 MAX_SOUND_BUFFER_SIZE = 5000000;
+      static const u32 MAX_SOUND_BUFFER_SIZE = 500000; // 500000 ~= 10s audio
+      static const u32 MAX_SOUND_BUFFER_DURATION_MS = MAX_SOUND_BUFFER_SIZE * 33 / 1600;
       std::string _currOpenSoundFileName;
       FILE* _currOpenSoundFilePtr;
       u32 _currOpenSoundNumSamples;
-      u8 _soundBuf[MAX_SOUND_BUFFER_SIZE];
+      s16 _soundBuf[MAX_SOUND_BUFFER_SIZE];
+      static const u32 SOUND_SAMPLE_SIZE = 400;
+      static const u32 UNENCODED_SOUND_SAMPLE_SIZE = SOUND_SAMPLE_SIZE * 4;
+      
+      // ADPCM encoding vars
+      s32 _adpcm_index;
+      s32 _adpcm_predictor;
       
     }; // class SoundManager
     

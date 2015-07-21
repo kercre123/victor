@@ -14,7 +14,7 @@
 #include "util/logging/logging.h"
 #include "anki/common/basestation/exceptions.h"
 #include "anki/common/basestation/platformPathManager.h"
-
+#include "adpcm.h"
 
 #include <thread>
 #include <map>
@@ -196,7 +196,8 @@ namespace Anki {
       _hasRootDir = true;
       _rootDir = fullPath;
       
-      ReadSoundDir();
+      ReadSoundDir("robot", true);
+      ReadSoundDir("device", false);
       
       return true;
       
@@ -220,7 +221,87 @@ namespace Anki {
       return data;
     }
     
-    Result SoundManager::ReadSoundDir(std::string subDir)
+    
+    // Return false if not valid wav file
+    static bool GetWavInfo(std::string fileName,
+                           u16 &format,
+                           u16 &numChannels,
+                           u32 &sampleRateHz,
+                           u32 &byteRate,
+                           u16 &bitsPerSample,
+                           u32 &dataSize) {
+      
+      const u32 headerSize = 44;
+      
+      FILE* fp = fopen(fileName.c_str(), "r");
+      u8 header[headerSize];
+      fread(header, 1, sizeof(header), fp);
+      fseek(fp, 0, SEEK_END);
+      u32 fileSize = ftell(fp);
+      fclose(fp);
+      
+      bool riffCheck = memcmp(header, "RIFF", 4) == 0;
+      bool waveCheck = memcmp(header + 8, "WAVEfmt", 7) == 0;
+      
+      if (!riffCheck || !waveCheck) {
+        return false;
+      }
+      
+      format = *(u16*)(header + 20);
+      numChannels = *(u16*)(header + 22);
+      sampleRateHz = *(u32*)(header + 24);
+      byteRate = *(u32*)(header + 28);
+      bitsPerSample = *(u16*)(header + 34);
+
+      dataSize = fileSize - headerSize;
+      
+      return true;
+    }
+    
+    static s32 GetAudioDurationInMilliseconds(std::string fileName) {
+      
+      u16 format;
+      u16 numChannels;
+      u32 sampleRateHz;
+      u32 byteRate;
+      u16 bitsPerSample;
+      u32 dataSize;
+      if (!GetWavInfo(fileName, format, numChannels, sampleRateHz, byteRate, bitsPerSample, dataSize)) {
+        PRINT_NAMED_INFO("SoundManager.GetAudioDuration.InvalidWav","");
+        return 0;
+      }
+
+      s32 duration_ms = (s32)(dataSize * (1000.f / byteRate));
+      return duration_ms;
+    }
+
+    static bool IsValidRobotAudio(std::string fileName) {
+      
+      u16 format;
+      u16 numChannels;
+      u32 sampleRateHz;
+      u32 byteRate;
+      u16 bitsPerSample;
+      u32 dataSize;
+      if (!GetWavInfo(fileName, format, numChannels, sampleRateHz, byteRate, bitsPerSample, dataSize)) {
+        PRINT_NAMED_INFO("SoundManager.IsValidRobotAudio.InvalidWav", "%s", fileName.c_str());
+        return false;
+      }
+      
+      bool isValid = (numChannels == 1) // mono
+                      && (format == 1) // PCM
+                      && (sampleRateHz == 24000)
+                      && (bitsPerSample == 16);
+      
+      //PRINT_NAMED_INFO("SoundManager.IsValidRobotAudio.WavProperties",
+      //                 "%s: format %d, numChannels %d, sampleRateHz %d, byteRate %d, bitsPerSample %d, dataSize %d\n",
+      //                 fileName.c_str(), format, numChannels, sampleRateHz, byteRate, bitsPerSample, dataSize);
+      
+      return isValid;
+    }
+    
+    
+    Result SoundManager::ReadSoundDir(std::string subDir, bool isRobotAudio)
     {
       if(!subDir.empty()) {
         subDir += "/";
@@ -257,54 +338,39 @@ namespace Anki {
             if (loadSoundFile) {
               
               // Compute the sound's duration:
-              u32 duration_ms = 0;
+              s32 duration_ms = GetAudioDurationInMilliseconds(fullSoundFilename);
               
-              if (soundName.find(".adp") != std::string::npos) {
-                // If file is already ADPCM-encoded, compute duration based on the fact that
-                // each 403 byte segment represents 33ms.
-                
-                FILE * pFile;
-                long fileSize = 0;
-                
-                pFile = fopen (fullSoundFilename.c_str(),"rb");
-                if (pFile==NULL) perror ("Error opening file");
-                else
-                {
-                  fseek (pFile, 0, SEEK_END);   // non-portable
-                  fileSize=ftell (pFile);
-                  fclose (pFile);
-                }
-                duration_ms = (fileSize / 403) * RobotAudioKeyFrame::SAMPLE_LENGTH_MS;
-                PRINT_NAMED_INFO("SoundManager.ReadDir.ADPCMFileFound", "%s: Duration %d ms", soundName.c_str(), duration_ms);
-                
-              } else {
-              
-                // This is disgusting.
-                // grep the result of afinfo to parse out the sound duration
-                const std::string cmd("afinfo -b -r " + fullSoundFilename +
-                                      " | grep -o '[0-9]\\{1,\\}\\.[0-9]\\{1,\\}'");
-                
-  #             if DEBUG_SOUND_MANAGER
-                printf("SoundManager:: Sound duration command: %s\n", cmd.c_str());
-  #             endif
-                
-                std::string output = GetStdoutFromCommand(cmd);
-                
-
-                
-                if(output.empty()) {
-                  PRINT_NAMED_WARNING("SoundManager.ReadSoundDir",
-                                      "Failed to get duration string for '%s', file %s.\n",
-                                      soundName.c_str(), fullSoundFilename.c_str());
-                } else {
-                  const float duration_sec = std::stof(output);
-                  duration_ms = static_cast<u32>(duration_sec * 1000);
-                }
+              if (duration_ms < 0) {
+                PRINT_NAMED_WARNING("SoundManager.ReadSoundDir",
+                                    "Failed to get duration string for '%s', file %s.\n",
+                                    soundName.c_str(), fullSoundFilename.c_str());
               }
             
               AvailableSound& availableSound = _availableSounds[soundName];
               availableSound.duration_ms = duration_ms;
               availableSound.fullFilename = fullSoundFilename;
+              
+              // Add to availble robot sound if it has proper encoding
+              if (isRobotAudio) {
+                if (IsValidRobotAudio(fullSoundFilename)) {
+                  PRINT_NAMED_INFO("SoundManager.ReadSoundDir.FoundRobotSound", "%s\n", soundName.c_str());
+                  
+                  // Cap duration if it exceeds buffer size
+                  if (availableSound.duration_ms > MAX_SOUND_BUFFER_DURATION_MS) {
+                    availableSound.duration_ms = MAX_SOUND_BUFFER_DURATION_MS;
+                    PRINT_NAMED_INFO("SoundManager.ReadSoundDir.SoundExceedsBufferSize","Truncating %s to %d ms",
+                                     soundName.c_str(), MAX_SOUND_BUFFER_DURATION_MS);
+                  }
+                  
+                  _availableRobotSounds[soundName] = availableSound;
+                  
+                } else {
+                  PRINT_NAMED_WARNING("SoundManager.ReadSoundDir.InvalidRobotAudio",
+                                      "Sound %s is invalid for robot audio.\n",
+                                      soundName.c_str());
+                }
+              }
+              
               
 #             if DEBUG_SOUND_MANAGER
               PRINT_NAMED_INFO("SoundManager.ReadSoundDir",
@@ -317,7 +383,7 @@ namespace Anki {
             }
           } // if (ent->d_type == DT_REG) {
           else if(ent->d_type == DT_DIR && ent->d_name[0] != '.') {
-            ReadSoundDir(ent->d_name);
+            ReadSoundDir(subDir + ent->d_name, isRobotAudio);
           }
         }
         closedir(dir);
@@ -340,11 +406,6 @@ namespace Anki {
     
     bool SoundManager::Play(const std::string& name, const u8 numLoops, const u8 volume)
     {
-      if (name.find(".adp") != std::string::npos) {
-        // This is a ADPCM-encoded file. Don't play on device!
-        return false;
-      }
-      
       auto soundIter = _availableSounds.find(name);
       
       if (_hasCmdProcessor && _hasRootDir && soundIter != _availableSounds.end()) {
@@ -379,15 +440,12 @@ namespace Anki {
 
     bool SoundManager::GetSoundSample(const std::string& name, const u32 sampleIdx, MessageAnimKeyFrame_AudioSample &msg)
     {
-      
-      bool isADP = (name.find(".adp") != std::string::npos);
-      
       if (_currOpenSoundFileName != name) {
         // Dump file contents to buffer if this is not the same file
         // from which a sound sample was last requested.
         
-        auto soundIt = _availableSounds.find(name);
-        if (soundIt == _availableSounds.end()) {
+        auto soundIt = _availableRobotSounds.find(name);
+        if (soundIt == _availableRobotSounds.end()) {
           PRINT_NAMED_WARNING("SoundManager.GetSoundSample.SoundNotAvailable", "Name: %s", name.c_str());
           return nullptr;
         }
@@ -398,47 +456,60 @@ namespace Anki {
           _currOpenSoundFilePtr = nullptr;
         }
         
-        if (isADP) {
-          // Open sound file
-          _currOpenSoundFilePtr = fopen(soundIt->second.fullFilename.c_str(), "rb");
-          if (_currOpenSoundFilePtr==nullptr) {
-            PRINT_NAMED_WARNING("SoundManager.GetSoundSample.FileOpenFail", "%s", soundIt->second.fullFilename.c_str());
-            return nullptr;
-          }
-          
-          // obtain file size:
-          fseek (_currOpenSoundFilePtr , 0 , SEEK_END);
-          long int fileSize = ftell (_currOpenSoundFilePtr);
-          rewind (_currOpenSoundFilePtr);
-          
-          // Read file contents to buffer
-          fread(_soundBuf, 1, MIN(fileSize, MAX_SOUND_BUFFER_SIZE), _currOpenSoundFilePtr);
-          
-          _currOpenSoundNumSamples = fileSize / 403;
-          
-          PRINT_NAMED_INFO("SoundManager.GetSoundSample.Info","Opening %s - duration %f s\n", name.c_str(), _currOpenSoundNumSamples * RobotAudioKeyFrame::SAMPLE_LENGTH_MS * 0.001);
-        } else {
-          // For all non-ADP files, just send zeros for now until we have an encoder.
-          _currOpenSoundNumSamples = soundIt->second.duration_ms / RobotAudioKeyFrame::SAMPLE_LENGTH_MS;
-          memset(_soundBuf, 0, MAX_SOUND_BUFFER_SIZE);
+        // Open sound file
+        _currOpenSoundFilePtr = fopen(soundIt->second.fullFilename.c_str(), "rb");
+        if (_currOpenSoundFilePtr==nullptr) {
+          PRINT_NAMED_WARNING("SoundManager.GetSoundSample.FileOpenFail", "%s", soundIt->second.fullFilename.c_str());
+          return nullptr;
         }
+        
+        // obtain file size:
+        fseek (_currOpenSoundFilePtr , 0 , SEEK_END);
+        long int fileSize = ftell (_currOpenSoundFilePtr);
+        rewind (_currOpenSoundFilePtr);
+        
+        // TODO: Strip off wav file header
+        fseek(_currOpenSoundFilePtr, 44, SEEK_SET);
+        fileSize -= 44;
+        
+        // Read file contents to buffer
+        fileSize = MIN(fileSize, MAX_SOUND_BUFFER_SIZE);
+        fread(_soundBuf, 1, fileSize, _currOpenSoundFilePtr);
+        
+        _currOpenSoundNumSamples = fileSize / UNENCODED_SOUND_SAMPLE_SIZE;
+        
+        PRINT_NAMED_INFO("SoundManager.GetSoundSample.Info","Opening %s - duration %f s\n", name.c_str(), _currOpenSoundNumSamples * RobotAudioKeyFrame::SAMPLE_LENGTH_MS * 0.001);
 
         // Check that the number of samples doesn't exceed the buffer
-        if (_currOpenSoundNumSamples > MAX_SOUND_BUFFER_SIZE / 403) {
-          _currOpenSoundNumSamples = MAX_SOUND_BUFFER_SIZE / 403;
+        if (_currOpenSoundNumSamples > MAX_SOUND_BUFFER_SIZE / UNENCODED_SOUND_SAMPLE_SIZE) {
+          _currOpenSoundNumSamples = MAX_SOUND_BUFFER_SIZE / UNENCODED_SOUND_SAMPLE_SIZE;
         }
         
         _currOpenSoundFileName = name;
+        _adpcm_index = 0;
+        _adpcm_predictor = 0;
       }
       
       if (sampleIdx >= _currOpenSoundNumSamples) {
         return false;
       }
+
+      msg.predictor = _adpcm_predictor;
+      msg.index = _adpcm_index;
       
-      u8* frame = &(_soundBuf[sampleIdx * 400]);
-      msg.predictor = *(s16*)(&(frame[400]));
-      msg.index = frame[402];
-      memcpy(msg.sample.data(), frame, 400);
+      s16* frame = &(_soundBuf[sampleIdx * SOUND_SAMPLE_SIZE * 2]);
+      encodeADPCM(_adpcm_index, _adpcm_predictor, frame, msg.sample.data(), SOUND_SAMPLE_SIZE * 2);
+      
+      /*
+       // Debug dump first 20 samples
+      if (sampleIdx < 20) {
+        FILE* f = fopen("encoded.adp", "a");
+        fwrite(msg.sample.data(), 1, 400, f);
+        fwrite(&msg.predictor, 1, 2, f);
+        fwrite(&msg.index, 1, 1, f);
+        fclose(f);
+      }
+       */
       
       return true;
     }
