@@ -8,8 +8,8 @@ set(MEX_LINK_LIBRARIES
   ctiCommonRobot
   ctiVision
   ctiCommon
-  matconvnet
-  mwblas
+#  matconvnet
+#  mwblas
 )
 
 file(GLOB MEX_FILES "*.cpp")

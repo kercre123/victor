@@ -8,8 +8,8 @@ set(MEX_LINK_LIBRARIES
   ctiVisionRobot
   ctiCommonRobot
   ${OPENCV_LIBS}
-  matconvnet
-  mwblas
+#  matconvnet
+#  mwblas
 )
 
 file(GLOB MEX_FILES "*.cpp")
