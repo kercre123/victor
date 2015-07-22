@@ -102,14 +102,11 @@ namespace EyeController {
   
   // Forward declaration for helper functions
   static void SetEyeShapeHelper(Eye& eye, EyeShape shape);
-  static void BlinkHelper(Eye& eye, TimeStamp_t currentTime, bool toMiddle);
   static void StartBlinkingHelper(Eye& eye, TimeStamp_t currentTime,
                                   u16 onPeriod_ms, u16 offPeriod_ms,
                                   bool toMiddle);
   static void StartFlashingHelper(Eye& eye, TimeStamp_t currentTime,
                                   EyeShape shape, u16 onPeriod_ms, u16 offPeriod_ms);
-  static void FlashHelper(Eye& eye, TimeStamp_t currentTime);
-  static void SpinHelper(Eye& eye, TimeStamp_t currentTime);
   static void StartSpinningHelper(Eye& eye, TimeStamp_t currentTime,
                                   u16 period_ms, bool clockwise);
   
@@ -470,102 +467,6 @@ namespace EyeController {
     }
     
   } // SetEyeShape()
-  
-  
-  void BlinkHelper(Eye& eye, TimeStamp_t currentTime, bool toMiddle)
-  {
-    if(currentTime > eye.nextSwitchTime) {
-      ++eye.animIndex;
-      if(eye.animIndex == (toMiddle ? BLINK_TO_MIDDLE_ANIM_LENGTH : BLINK_TO_BOTTOM_ANIM_LENGTH)) {
-        eye.animIndex = 0;
-      }
-      
-      SetEyeShapeHelper(eye, (toMiddle ?
-                              BlinkAnimation[eye.animIndex] :
-                              BlinkAnimation_ToBtm[eye.animIndex]));
-      
-      eye.nextSwitchTime = currentTime + (toMiddle ?
-                                          eye.blinkToMiddleTimings[eye.animIndex] :
-                                          eye.blinkToBottomTimings[eye.animIndex]);
-
-    }
-  } // BlinkHelper()
-  
-  
-  void FlashHelper(Eye& eye, TimeStamp_t currentTime)
-  {
-    if(currentTime > eye.nextSwitchTime) {
-      ++eye.animIndex;
-      if(eye.animIndex == 2) {
-        eye.animIndex = 0;
-      }
-      
-      if(eye.animIndex == 0) {
-        // Off state
-        SetEyeShapeHelper(eye, EYE_CLOSED);
-      } else if(eye.animIndex == 1) {
-        // On state
-        SetEyeShapeHelper(eye, eye.flashSettings.shape);
-      }
-      
-      eye.nextSwitchTime = currentTime + eye.flashSettings.timings[eye.animIndex];
-    }
-  }
-  
-  void SpinHelper(Eye& eye, TimeStamp_t currentTime)
-  {
-    if(currentTime > eye.nextSwitchTime) {
-      if(eye.spinSettings.clockwise) {
-        if(++eye.animIndex == NUM_EYE_SEGMENTS) {
-          eye.animIndex = 0;
-        }
-        if(++eye.spinSettings.fadeIndex1 == NUM_EYE_SEGMENTS) {
-          eye.spinSettings.fadeIndex1 = 0;
-        }
-        if(++eye.spinSettings.fadeIndex2 == NUM_EYE_SEGMENTS) {
-          eye.spinSettings.fadeIndex2 = 0;
-        }
-        if(++eye.spinSettings.offIndex == NUM_EYE_SEGMENTS) {
-          eye.spinSettings.offIndex = 0;
-        }
-      } else {
-        if(eye.animIndex-- == 0) {
-          eye.animIndex = NUM_EYE_SEGMENTS-1;
-        }
-        if(eye.spinSettings.fadeIndex1-- == 0) {
-          eye.spinSettings.fadeIndex1 = NUM_EYE_SEGMENTS-1;
-        }
-        if(eye.spinSettings.fadeIndex2-- == 0) {
-          eye.spinSettings.fadeIndex2 = NUM_EYE_SEGMENTS-1;
-        }
-        if(eye.spinSettings.offIndex-- == 0) {
-          eye.spinSettings.offIndex = NUM_EYE_SEGMENTS-1;
-        }
-      }
-      
-      u8 rgb[3] = {
-        static_cast<u8>((eye.color & 0xff0000) >> 16),
-        static_cast<u8>((eye.color & 0x00ff00) >> 8),
-        static_cast<u8>(eye.color & 0x0000ff)
-      };
-      
-      HAL::SetLED(eye.segments[SpinAnimation[eye.animIndex]], eye.color);
-      
-      HAL::SetLED(eye.segments[SpinAnimation[eye.spinSettings.fadeIndex1]],
-                  static_cast<u32>((rgb[0]/2) << 16) +
-                  static_cast<u32>((rgb[1]/2) << 8 ) +
-                  static_cast<u32>((rgb[2]/2)));
-      
-      HAL::SetLED(eye.segments[SpinAnimation[eye.spinSettings.fadeIndex2]],
-                  static_cast<u32>((rgb[0]/4) << 16) +
-                  static_cast<u32>((rgb[1]/4) << 8 ) +
-                  static_cast<u32>((rgb[2]/4)));
-      
-      HAL::SetLED(eye.segments[SpinAnimation[eye.spinSettings.offIndex]], LED_OFF);
-     
-      eye.nextSwitchTime = currentTime + eye.spinSettings.period_ms/NUM_EYE_SEGMENTS;
-    }
-  }
   
 } // namespace EyeController
 } // namespace Cozmo

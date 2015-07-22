@@ -59,10 +59,11 @@
     ],
 
     'compiler_flags': [
-      '-Wno-unused-function',
+      #'-Wno-unused-function',
       '-Wno-overloaded-virtual',
       '-Wno-deprecated-declarations',
       '-Wno-unused-variable',
+      '-Wunused-function',
       # '-fdiagnostics-show-category=name',
       # '-Wall',
       # '-Woverloaded-virtual',
