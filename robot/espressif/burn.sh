@@ -9,12 +9,12 @@ fi
 
 if which python3; then
   PYTHON=python2
-else
+else.o
   PYTHON=python
 fi
 
 $PYTHON $ESPTOOL --port $1 --baud 230400 write_flash 0x00000 bin/boot_v1.2.bin \
-                                                     0x01000 bin/upgrade/user1.1024.new.0.bin \
-                                                     0x41000 bin/upgrade/user2.1024.new.0.bin \
+                                                     0x01000 bin/upgrade/user1.1024.new.2.bin \
+                                                     0x41000 bin/upgrade/user2.1024.new.2.bin \
                                                      0x7c000 bin/esp_init_data_default.bin \
                                                      0x7e000 bin/blank.bin
