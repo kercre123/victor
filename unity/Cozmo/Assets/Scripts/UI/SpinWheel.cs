@@ -6,7 +6,7 @@ using System.Collections;
 using System.Collections.Generic;
 
 
-public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
+public class SpinWheel : MonoBehaviour, /*IPointerDownHandler, IPointerUpHandler,*/ IBeginDragHandler, IDragHandler, IEndDragHandler {
 
 	#region NESTED DEFINITIONS
 
@@ -852,13 +852,33 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 
 	#region INTERFACE METHODS	
 
-	public void OnPointerDown(PointerEventData eventData) {
+//	public void OnPointerDown(PointerEventData eventData) {
+//		Debug.Log ("OnPointerDown");
+//		if(state != SpinWheelState.UNLOCKED) return;
+//		state = SpinWheelState.DRAGGING;
+//		DragStart(eventData.position, Time.time);
+//	}
+
+//	public void OnPointerUp(PointerEventData eventData) {
+//		Debug.Log ("OnPointerUp");
+//		if(state != SpinWheelState.DRAGGING) return;
+//		
+//		DragEnd();
+//	}
+
+	public void OnBeginDrag(PointerEventData eventData) {
+		//Debug.Log ("OnBeginDrag");
 		if(state != SpinWheelState.UNLOCKED) return;
 		state = SpinWheelState.DRAGGING;
 		DragStart(eventData.position, Time.time);
 	}
 	
-	public void OnPointerUp(PointerEventData eventData) {
+	public void OnDrag(PointerEventData eventData) {
+		//Debug.Log ("OnDrag");
+	}
+
+	public void OnEndDrag(PointerEventData eventData) {
+		//Debug.Log ("OnEndDrag");
 		if(state != SpinWheelState.DRAGGING) return;
 		
 		DragEnd();

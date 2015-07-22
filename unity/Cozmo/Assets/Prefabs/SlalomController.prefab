@@ -915,8 +915,7 @@ MonoBehaviour:
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine, Version=0.0.0.0,
-            Culture=neutral, PublicKeyToken=null
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
           m_IntArgument: 0
           m_FloatArgument: 0
           m_StringArgument: 
@@ -1010,7 +1009,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   currentLevelOverride: -1
-  countdownText: {fileID: 11400168}
+  countdownText: {fileID: 11411208}
   countdownToStart: 3
   countdownTickSound: {fileID: 0}
   timerSounds:
@@ -1053,7 +1052,7 @@ MonoBehaviour:
   textScore: {fileID: 11462024}
   textError: {fileID: 0}
   textState: {fileID: 11479812}
-  textTime: {fileID: 11403892}
+  textTime: {fileID: 11464654}
   textAddaboy: {fileID: 11473464}
   autoPlay: 1
   playButton: {fileID: 0}
@@ -1087,6 +1086,7 @@ MonoBehaviour:
   maxStarPop: 1.5
   minStarPop: .300000012
   robotBusyDuringResults: 1
+  maxEmotionWaitTime: 20
   text_finalTime: {fileID: 11453272}
   text_resultsTitle: {fileID: 11403486}
   button_PlayAgain: {fileID: 11402838}
@@ -1837,8 +1837,7 @@ MonoBehaviour:
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine, Version=0.0.0.0,
-            Culture=neutral, PublicKeyToken=null
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
           m_IntArgument: 0
           m_FloatArgument: 0
           m_StringArgument: 
