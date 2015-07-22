@@ -48,14 +48,11 @@
     ],
 
     'compiler_flags': [
-      '-Wno-unused-function',
-      '-Wno-overloaded-virtual',
-      '-Wno-deprecated-declarations',
-      '-Wno-unused-variable',
+      '-Wdeprecated-declarations',
       # '-fdiagnostics-show-category=name',
-      # '-Wall',
-      # '-Woverloaded-virtual',
-      # '-Werror',
+      '-Wall',
+      '-Woverloaded-virtual',
+      '-Werror',
       # '-Wundef',
       # '-Wheader-guard',
       # '-fsigned-char',
