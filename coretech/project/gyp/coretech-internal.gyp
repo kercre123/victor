@@ -60,10 +60,8 @@
 
     'compiler_flags': [
       '-Wdeprecated-declarations',
-      '-Wunused-variable',
-      '-Wunused-function',
-      # '-fdiagnostics-show-category=name',
-      # '-Wall',
+      '-fdiagnostics-show-category=name',
+      '-Wall',
       '-Woverloaded-virtual',
       '-Werror',
       # '-Wundef',
