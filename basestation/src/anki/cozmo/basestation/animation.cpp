@@ -388,14 +388,12 @@ _blinkTrack.__METHOD__()
       
     } // while(numFramesToSend > 0)
     
+#   ifndef ANKI_IOS_BUILD
 #   if PLAY_ROBOT_AUDIO_ON_DEVICE
-    // NOTE: This should be done _after_ GetStreamMessage() gets called above
-    // because that's what selects from the available audio options in the
-    // keyframe, which needs to happen before GetSoundName() is called below.
     if(_robotAudioTrack.HasFramesLeft())
     {
-      RobotAudioKeyFrame& audioKF = _robotAudioTrack.GetCurrentKeyFrame();
-      if(_playedRobotAudio_ms < audioKF.GetTriggerTime() &&
+      const RobotAudioKeyFrame& audioKF = _robotAudioTrack.GetCurrentKeyFrame();
+      if((_playedRobotAudio_ms < _startTime_ms + audioKF.GetTriggerTime()) &&
          audioKF.IsTimeToPlay(_startTime_ms,  currTime_ms))
       {
         // TODO: Insert some kind of small delay to simulate latency?
@@ -403,6 +401,7 @@ _blinkTrack.__METHOD__()
         _playedRobotAudio_ms = currTime_ms;
       }
     }
+#   endif
 #   endif
     
     if(IsFinished()) {
