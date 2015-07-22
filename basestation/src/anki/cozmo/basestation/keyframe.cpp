@@ -85,6 +85,8 @@ namespace Anki {
     
     static s32 RandHelper(const s32 minLimit, const s32 maxLimit)
     {
+      assert(maxLimit > minLimit);
+      
       const s32 num = (std::rand() % (maxLimit - minLimit + 1)) + minLimit;
       
       assert(num >= minLimit && num <= maxLimit);
