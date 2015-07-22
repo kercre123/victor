@@ -42,7 +42,7 @@ class CozmoEngineClient : public CozmoEngine
 {
 public:
 
-  CozmoEngineClient();
+  CozmoEngineClient(IExternalInterface* externalInterface);
   ~CozmoEngineClient();
   virtual bool IsHost() const override { return false; }
 

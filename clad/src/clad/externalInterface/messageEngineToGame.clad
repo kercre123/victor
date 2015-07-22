@@ -4,6 +4,7 @@
 // Copyright: Anki Inc (c) 2015
 
 #include "clad/types/actionTypes.clad"
+#include "clad/externalInterface/messageShared.clad"
 
 namespace Anki {
 namespace Cozmo {
@@ -13,9 +14,6 @@ namespace ExternalInterface {
 ////////////////////////  ADVERTISING & CONNECTING  ///////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-message Ping {
-    uint_32 counter        // should count sequentially if no drops
-}
 
 // Let the UI know that a robot is advertising as available
 message RobotAvailable {

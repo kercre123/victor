@@ -7,7 +7,7 @@
 * Description: 
 *
 * Copyright: Anki, inc. 2015
-*
+* COZMO_PUBLIC_HEADER
 */
 
 #ifndef __Anki_Cozmo_Basestation_ExternalInterface_ExternalInterface_H__

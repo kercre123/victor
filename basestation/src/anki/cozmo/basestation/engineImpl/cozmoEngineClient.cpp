@@ -11,14 +11,13 @@
 
 #include "anki/cozmo/basestation/cozmoEngineClient.h"
 #include "anki/cozmo/basestation/engineImpl/cozmoEngineClientImpl.h"
-#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 
 namespace Anki {
 namespace Cozmo {
   
 
-CozmoEngineClient::CozmoEngineClient()
-: CozmoEngine(new SimpleExternalInterface())
+CozmoEngineClient::CozmoEngineClient(IExternalInterface* externalInterface)
+: CozmoEngine(externalInterface)
 {
   _clientImpl = new CozmoEngineClientImpl(_externalInterface);
   assert(_clientImpl != nullptr);
