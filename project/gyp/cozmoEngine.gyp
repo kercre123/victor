@@ -46,6 +46,15 @@
     'webots_includes': [
       '<(webots_path)/include/controller/cpp'
     ],
+    
+    'faciometric_path' : [
+      '<(coretech_external_path)/IntraFace/Files',
+    ],
+    
+    'faciometric_includes': [
+      '<(faciometric_path)/CommonFiles/Headers',
+      '<(faciometric_path)/Anki/Headers',
+    ],
 
     'compiler_flags': [
       '-Wno-unused-function',
@@ -76,10 +85,12 @@
     'compiler_cpp_flags' : [
       '-std=c++11',
       '-stdlib=libc++',
-      '<@(compiler_flags)'
+      '<@(compiler_flags)',
+      '-mfpu=neon',         # FacioMetric
+      '-mfloat-abi=softfp', # FacioMetric
     ],
     'linker_flags' : [
-        '-g'
+        '-g',
     ],
 
     # Set default ARCHS based on platform
@@ -438,7 +449,9 @@
         '../../include',
         '../../generated/clad/engine',
         '<@(opencv_includes)',
+        '<@(faciometric_includes)',
       ],
+
       'direct_dependent_settings': {
         'include_dirs': [
           '../../basestation/include',
