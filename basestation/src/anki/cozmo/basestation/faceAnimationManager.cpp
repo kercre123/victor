@@ -231,7 +231,7 @@ namespace Cozmo {
                           animName.c_str());
       return 0;
     } else {
-      return animIter->second.GetNumFrames();
+      return static_cast<u32>(animIter->second.GetNumFrames());
     }
   } // GetNumFrames()
   
