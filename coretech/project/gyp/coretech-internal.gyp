@@ -60,13 +60,13 @@
 
     'compiler_flags': [
       #'-Wno-unused-function',
-      '-Wno-overloaded-virtual',
+      #'-Wno-overloaded-virtual',
       '-Wno-deprecated-declarations',
       '-Wno-unused-variable',
       '-Wunused-function',
       # '-fdiagnostics-show-category=name',
       # '-Wall',
-      # '-Woverloaded-virtual',
+      '-Woverloaded-virtual',
       # '-Werror',
       # '-Wundef',
       # '-Wheader-guard',
