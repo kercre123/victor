@@ -261,6 +261,42 @@ def main(scriptArgs):
     gyp.main(gypArgs)
 
 
+  # mex
+  if 'mex' in options.platforms:
+      gypFile = 'cozmoEngineMex.gyp'
+      os.environ['GYP_DEFINES'] = """ 
+                                  OS=mac
+                                  ndk_root=INVALID
+                                  kazmath_library_type=static_library
+                                  jsoncpp_library_type=static_library
+                                  util_library_type=static_library
+                                  worldviz_library_type=static_library
+                                  arch_group={0}
+                                  output_location={1}
+                                  coretech_external_path={2}
+                                  webots_path={3}
+                                  cti-gtest_path={4}
+                                  cti-util_gyp_path={5}
+                                  cti-cozmo_engine_path={6}
+                                  ce-gtest_path={7}
+                                  ce-util_gyp_path={8}
+                                  ce-cti_gyp_path={9}
+                                  """.format(
+                                    options.arch, 
+                                    os.path.join(options.projectRoot, 'generated/mex'),
+                                    coretechExternalPath, 
+                                    webotsPath,
+                                    ctiGtestPath, 
+                                    ctiAnkiUtilProjectPath,
+                                    projectRoot,
+                                    gtestPath, 
+                                    ankiUtilProjectPath, 
+                                    coretechInternalProjectPath
+                                  )
+      gypArgs = ['--check', '--depth', '.', '-f', 'xcode', '--toplevel-dir', '../..', '--generator-output', '../../generated/mex', gypFile]
+      gyp.main(gypArgs)
+      
+      
 
   if 'android' in options.platforms:
     ### Install android build deps if necessary
