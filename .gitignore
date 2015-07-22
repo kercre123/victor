@@ -207,7 +207,7 @@ robot/fpga/synlog.tcl
 
 **.output
 **.bin
-**.S
+# **.S - Find a better way to keep your build artifacts out of the tree - .S is used by embedded team for ASM
 **.dump
 *.htm
 block/build/
