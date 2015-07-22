@@ -36,8 +36,10 @@
 namespace Anki {
   namespace Cozmo {
 
-    UiMessageHandler::UiMessageHandler()
-    : comms_(NULL), isInitialized_(false)
+    UiMessageHandler::UiMessageHandler(u32 hostUiDeviceID)
+    : comms_(NULL)
+    , isInitialized_(false)
+    , _hostUiDeviceID(hostUiDeviceID)
     {
       
     }
@@ -56,14 +58,14 @@ namespace Anki {
     }
     
 
-    Result UiMessageHandler::SendMessage(const UserDeviceID_t devID, const G2U::Message& msg)
+    Result UiMessageHandler::SendMessage(const ExternalInterface::MessageEngineToGame& msg)
     {
       #if(RUN_UI_MESSAGE_TCP_SERVER)
       
       Comms::MsgPacket p;
       msg.Pack(p.data, Comms::MsgPacket::MAX_SIZE);
       p.dataLen = msg.Size();
-      p.destId = devID;
+      p.destId = _hostUiDeviceID;
       
       return comms_->Send(p) > 0 ? RESULT_OK : RESULT_FAIL;
       
@@ -76,6 +78,19 @@ namespace Anki {
       return RESULT_OK;
     }
 
+    void UiMessageHandler::DeliverToGame(const ExternalInterface::MessageEngineToGame&& message)
+    {
+#if(RUN_UI_MESSAGE_TCP_SERVER)
+
+      Comms::MsgPacket p;
+      message.Pack(p.data, Comms::MsgPacket::MAX_SIZE);
+      p.dataLen = message.Size();
+      p.destId = _hostUiDeviceID;
+      comms_->Send(p) > 0 ? RESULT_OK : RESULT_FAIL;
+#else
+      //MessageQueue::getInstance()->AddMessageForUi(msg);
+#endif
+    }
   
     Result UiMessageHandler::ProcessPacket(const Comms::MsgPacket& packet)
     {
