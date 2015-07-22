@@ -240,12 +240,13 @@ _blinkTrack.__METHOD__()
       _deviceAudioTrack.GetCurrentKeyFrame().PlayOnDevice();
       _deviceAudioTrack.MoveToNextKeyFrame();
     }
-    
+
+#   ifndef ANKI_IOS_BUILD
 #   if PLAY_ROBOT_AUDIO_ON_DEVICE
     if(_robotAudioTrack.HasFramesLeft())
     {
       const RobotAudioKeyFrame& audioKF = _robotAudioTrack.GetCurrentKeyFrame();
-      if(_playedRobotAudio_ms < audioKF.GetTriggerTime() &&
+      if((_playedRobotAudio_ms < _startTime_ms + audioKF.GetTriggerTime()) &&
          audioKF.IsTimeToPlay(_startTime_ms,  currTime_ms))
       {
         // TODO: Insert some kind of small delay to simulate latency?
@@ -253,6 +254,7 @@ _blinkTrack.__METHOD__()
         _playedRobotAudio_ms = currTime_ms;
       }
     }
+#   endif
 #   endif
     
     // FlowControl: Don't send frames if robot has no space for them, and be

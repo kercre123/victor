@@ -391,7 +391,7 @@ namespace Anki {
       } else {
         PRINT_NAMED_ERROR("SoundManager.ReadSoundDir",
                           "Sound folder not found: %s\n",
-                          _rootDir.c_str());
+                          (_rootDir + subDir).c_str());
         return RESULT_FAIL;
       }
 
