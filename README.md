@@ -8,7 +8,7 @@ Building cozmo-game
 
 At this point, only Mac and iOS are supported. The engine itself supports more platforms. See [products-cozmo](https://github.com/anki/products-cozmo).
 
-# Prerequisites
+## Prerequisites
 
 1. The Cozmo project uses CMAKE, so you will need to install that first (e.g. "brew install cmake").
   Get brew here: http://brew.sh/
@@ -25,15 +25,15 @@ At this point, only Mac and iOS are supported. The engine itself supports more p
   * mkdir opencv_unused
   * mv libopencv* opencv_unused
 
-# External / 3rd Party Project
+## External / 3rd Party Project
 
-## Either grab the prebuilt coretech-external tarball (preferred):
+### Either grab the prebuilt coretech-external tarball (preferred):
 
 1. http://192.168.2.3:8111/viewType.html?buildTypeId=Cozmo_CoretechExternal_Build lists the CI coretech-external builds. Grab the latest.
 
 2. Expand the tarball in the directory where you will also put the cozmo-game project
 
-## Or grab the code and build it:
+### Or grab the code and build it:
 
 1. Clone "coretech-external" from GitHub.
 
@@ -49,14 +49,14 @@ At this point, only Mac and iOS are supported. The engine itself supports more p
 
 4. python ../opencv-2.4.8/platforms/ios/build_framework.py opencv-ios
 
-## Common steps:
+### Common steps:
 
 1. Create environment variable CORETECH_EXTERNAL_DIR that points to location of coretech-external root directory.You can do this by adding the following line to your .bashrc
 export CORETECH_EXTERNAL_DIR="<path to coretech-external>" 
 
 2. Call 'source ~/.bashrc' or start a new terminal.
 
-# Cozmo-Game Project
+## Cozmo-Game Project
 
 1. Clone "cozmo-game" from GitHub (into the same parent directory where you put coretech-external above) 
 with the --recursive flag so that the cozmo-engine submodule is cloned as well.
@@ -78,7 +78,7 @@ If you use SourceTree you can add these as custom actions by going to Preference
 
 Note that the submodules (cozmo-engine and products-cozmo-assets) track their master branches. This means you don't have to commit submodule pointer updates in cozmo-game.
 
-# iOS Project
+## iOS Project
 
 For working with iOS within cozmo-game, first do the above and then:
 
