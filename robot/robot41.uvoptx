@@ -117,7 +117,7 @@
         <SetRegEntry>
           <Number>0</Number>
           <Key>UL2CM3</Key>
-          <Name>UL2CM3(-S0 -C0 -P0 ) -FN1 -FC1000 -FD20000000 -FF0MK_P128 -FL020000 -FS00 -FP0($$Device:MK02FN128xxx10$Flash\MK_P128.FLM)</Name>
+          <Name>UL2CM3(-S0 -C0 -P0 )  -FN1 -FC1000 -FD20000000 -FF0MK_P128 -FL020000 -FS00 -FP0($$Device:MK02FN128xxx10$Flash\MK_P128.FLM)</Name>
         </SetRegEntry>
         <SetRegEntry>
           <Number>0</Number>
@@ -137,7 +137,7 @@
         <SetRegEntry>
           <Number>0</Number>
           <Key>CMSIS_AGDI</Key>
-          <Name>-X"MBED CMSIS-DAP" -U02310221C3743E6D3EAAC3A4 -O206 -S0 -C0 -P00 -N00("ARM CoreSight SW-DP") -D00(2BA01477) -L00(0) -FO7 -FD20000000 -FC800 -FN1 -FF0MK_P128 -FS00 -FL020000 -FP0($$Device:MK02FN128xxx10$Flash\MK_P128.FLM)</Name>
+          <Name>-X"MBED CMSIS-DAP" -U02310203C3724E1C3E8EB3D5 -O206 -S0 -C0 -P00 -N00("ARM CoreSight SW-DP") -D00(2BA01477) -L00(0) -FO7 -FD20000000 -FC800 -FN1 -FF0MK_P128.FLM -FS00 -FL020000 -FP0($$Device:MK02FN128xxx10$Flash\MK_P128.FLM)</Name>
         </SetRegEntry>
       </TargetDriverDllRegistry>
       <Breakpoint/>
@@ -178,7 +178,7 @@
 
   <Group>
     <GroupName>hal</GroupName>
-    <tvExp>1</tvExp>
+    <tvExp>0</tvExp>
     <tvExpOptDlg>0</tvExpOptDlg>
     <cbSel>0</cbSel>
     <RteFlg>0</RteFlg>

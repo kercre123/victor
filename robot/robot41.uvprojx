@@ -177,7 +177,7 @@
           </Flash1>
           <bUseTDR>1</bUseTDR>
           <Flash2>BIN\UL2CM3.DLL</Flash2>
-          <Flash3>"" ()</Flash3>
+          <Flash3></Flash3>
           <Flash4></Flash4>
           <pFcarmOut></pFcarmOut>
           <pFcarmGrp></pFcarmGrp>
@@ -232,7 +232,7 @@
             <RoSelD>3</RoSelD>
             <RwSelD>3</RwSelD>
             <CodeSel>0</CodeSel>
-            <OptFeed>0</OptFeed>
+            <OptFeed>1</OptFeed>
             <NoZi1>0</NoZi1>
             <NoZi2>0</NoZi2>
             <NoZi3>0</NoZi3>
@@ -350,7 +350,7 @@
           <Cads>
             <interw>0</interw>
             <Optim>3</Optim>
-            <oTime>0</oTime>
+            <oTime>1</oTime>
             <SplitLS>0</SplitLS>
             <OneElfS>1</OneElfS>
             <Strict>0</Strict>
@@ -366,9 +366,9 @@
             <v6Lang>0</v6Lang>
             <v6LangP>0</v6LangP>
             <VariousControls>
-              <MiscControls>  --library_type=standardlib --c99 --diag_suppress=1296,186 
+              <MiscControls>--library_type=standardlib --diag_suppress=1296,186 
  --library_interface=armcc  
-</MiscControls>
+--c99</MiscControls>
               <Define>DEBUG, CPU_MK02FN128VLH10, KEIL, FRDM_K22F120M, FREEDOM</Define>
               <Undefine></Undefine>
               <IncludePath>k02_hal/lib;k02_hal/hal;k02_hal/startup;k02_hal/lib/device;k02_hal/lib/drivers;k02_hal/lib/hal</IncludePath>
@@ -404,10 +404,7 @@
             <ScatterFile>.\k02_hal\scatter.scf</ScatterFile>
             <IncludeLibs></IncludeLibs>
             <IncludeLibsPath></IncludeLibsPath>
-            <Misc>--remove 
---predefine="-D__stack_size__=0x400" 
---predefine="-D__heap_size__=0x400" 
-</Misc>
+            <Misc></Misc>
             <LinkerInputFile></LinkerInputFile>
             <DisabledWarnings>6314</DisabledWarnings>
           </LDads>

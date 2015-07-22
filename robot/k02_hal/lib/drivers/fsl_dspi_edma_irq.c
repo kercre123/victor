@@ -31,6 +31,7 @@
 #include <assert.h>
 #include <stdbool.h>
 #include "fsl_device_registers.h"
+#include "fsl_dspi_edma_shared_function.h"
 
 /*!
  * @addtogroup dspi_irq
