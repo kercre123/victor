@@ -92,6 +92,7 @@ namespace Anki {
       
       
       // Cameras / Vision Processing
+      bool enableVideo_;
       webots::Camera* headCam_;
       HAL::CameraInfo headCamInfo_;
       u32 cameraStartTime_ms_;
@@ -318,7 +319,6 @@ namespace Anki {
       con_ = webotRobot_.getConnector("gripperConnector");
       //con_->enablePresence(TIME_STEP);
       
-      //matCam_ = webotRobot_.getCamera("cam_down");
       headCam_ = webotRobot_.getCamera("HeadCamera");
       
       if(VISION_TIME_STEP % static_cast<u32>(webotRobot_.getBasicTimeStep()) != 0) {
@@ -326,7 +326,6 @@ namespace Anki {
               VISION_TIME_STEP, webotRobot_.getBasicTimeStep());
         return RESULT_FAIL;
       }
-      //matCam_->enable(VISION_TIME_STEP);
       headCam_->enable(VISION_TIME_STEP);
       
       // HACK: Figure out when first camera image will actually be taken (next
@@ -335,6 +334,11 @@ namespace Anki {
       // TODO: Not sure from Cyberbotics support message whether this should include "+ TIME_STEP" or not...
       cameraStartTime_ms_ = HAL::GetTimeStamp(); // + TIME_STEP;
       printf("Setting camera start time as %d.\n", cameraStartTime_ms_);
+      
+      enableVideo_ = robotNode->getField("enableVideo")->getSFBool();
+      if (!enableVideo_) {
+        printf("WARN: ******** Video disabled *********\n");
+      }
       
       // Set ID
       // Expected format of name is <SomeName>_<robotID>
@@ -515,7 +519,6 @@ namespace Anki {
     void HAL::Destroy()
     {
       // Turn off components: (strictly necessary?)
-      //matCam_->disable();
       headCam_->disable();
       
       gps_->disable();
@@ -909,6 +912,11 @@ namespace Anki {
     u32 HAL::GetCameraStartTime()
     {
       return cameraStartTime_ms_;
+    }
+    
+    bool HAL::IsVideoEnabled()
+    {
+      return enableVideo_;
     }
     
     // Starts camera frame synchronization
