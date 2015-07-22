@@ -151,8 +151,8 @@ coretech/vision/matlab/@VisionMarkerTrained/trainingState_*.*
 *.saved_uv4
 tools/modulate_led/Project/LCD/MDK-ARM/Demo/
 *.uvgui.*
-*.uvoptx*
-*.uvprojx*
+*.uvoptx.*
+*.uvprojx.*
 uImage
 robot/som/ov2686/ov2686_code_timestamp.h
 robot/som/*.jpg
