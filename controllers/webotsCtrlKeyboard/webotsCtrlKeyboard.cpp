@@ -1384,6 +1384,17 @@ namespace Anki {
               {
                 //SendAnimation("ANIM_BACK_AND_FORTH_EXCITED", 3);
                 SendAnimation("ANIM_TEST", 1);
+                
+                {
+                  U2G::SetIdleAnimation msg;
+                  msg.robotID = 1;
+                  msg.animationName = "ANIM_IDLE";
+                  
+                  U2G::Message msgWrapper;
+                  msgWrapper.Set_SetIdleAnimation(msg);
+                  SendMessage(msgWrapper);
+                }
+                
                 break;
               }
               case (s32)'#':
