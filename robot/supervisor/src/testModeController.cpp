@@ -226,9 +226,6 @@ namespace Anki {
         //const Vision::MarkerType BLOCK_TO_PLACE_ON = Vision::MARKER_ANGRYFACE;
         const Vision::MarkerType BLOCK_TO_PLACE_ON = Vision::MARKER_SQUAREPLUSCORNERS;
         
-        // The width of the marker
-        const f32 BLOCK_MARKER_WIDTH = DEFAULT_BLOCK_MARKER_WIDTH_MM;
-        
         // This pick up action depends on whether the block is expected to be on
         // the ground or on top of another block.
         // If DA_PICKUP_HIGH, the place part of this test will just the block on the ground.
@@ -238,9 +235,6 @@ namespace Anki {
         const f32 PLACE_ON_GROUND_DIST_X = 100;
         const f32 PLACE_ON_GROUND_DIST_Y = -10;
         const f32 PLACE_ON_GROUND_DIST_ANG = 0;
-        
-        // Set to true if you want to manually specify the speed at which to dock to block
-        bool useManualSpeed_ = false;
         ////// End of PickAndPlaceTest ////
         
         
@@ -260,10 +254,6 @@ namespace Anki {
         const f32 IT_MAX_ROT_VEL = 1.5f;
         const f32 IT_ROT_ACCEL = 10.f;
         ///// End of IMUTest /////
-        
-        ///////// AnimationTest ////////
-        //AnimationID_t AT_currAnim;
-        const u32 AT_periodTics = 2000;
         
         
         /////// LightTest ////////

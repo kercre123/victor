@@ -2764,7 +2764,7 @@ GTEST_TEST(CoreTech_Vision, DownsampleByPowerOfTwo)
   /*const f64 t3 =*/ GetTimeF64();
 
   const f64 t1c = GetTimeF64();
-  FixedLengthList<Array<u8> > pyramid1 = ImageProcessing::BuildPyramid<u8,u32,u8>(in640, 5, scratchOffchip);
+  ImageProcessing::BuildPyramid<u8,u32,u8>(in640, 5, scratchOffchip);
   const f64 t2c = GetTimeF64();
   CoreTechPrint("Pyramid 5 took %f\n", t2c-t1c);
 

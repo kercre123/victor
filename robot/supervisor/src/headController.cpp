@@ -52,13 +52,6 @@ namespace HeadController {
       const f32 BASE_POWER  = 0.2f;
 #endif
       
-      // Open loop gain
-      // power_open_loop = SPEED_TO_POWER_OL_GAIN * desiredSpeed + BASE_POWER
-      // TODO: Measure this when the head is working! These numbers are completely made up.
-      const f32 SPEED_TO_POWER_OL_GAIN = 0.045;
-      const f32 BASE_POWER_UP = 0.2028;
-      const f32 BASE_POWER_DOWN = -0.1793;
-      
       // Current speed
       f32 radSpeed_ = 0.f;
       

@@ -53,16 +53,8 @@ namespace EyeController {
     };
 
     const s32 BLINK_TO_MIDDLE_ANIM_LENGTH = 4;
-    const EyeShape BlinkAnimation[BLINK_TO_MIDDLE_ANIM_LENGTH] = {
-      EYE_OPEN, EYE_HALF, EYE_CLOSED, EYE_HALF};
     
     const s32 BLINK_TO_BOTTOM_ANIM_LENGTH = 6;
-    const EyeShape BlinkAnimation_ToBtm[BLINK_TO_BOTTOM_ANIM_LENGTH] = {
-      EYE_OPEN, EYE_OFF_PUPIL_UP, EYE_ON_PUPIL_DOWN, EYE_CLOSED, EYE_ON_PUPIL_DOWN, EYE_OFF_PUPIL_UP
-    };
-    
-    // Spin in canonical clockwise order:
-    const EyeSegments SpinAnimation[NUM_EYE_SEGMENTS] = {EYE_SEGMENT_TOP, EYE_SEGMENT_LEFT, EYE_SEGMENT_BOTTOM, EYE_SEGMENT_RIGHT};
     
     struct Eye {
       u32           color;
