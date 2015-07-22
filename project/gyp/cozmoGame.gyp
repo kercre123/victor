@@ -46,6 +46,23 @@
     'webots_includes': [
       '<(webots_path)/include/controller/cpp'
     ],
+    
+    'faciometric_path' : [
+      '<(coretech_external_path)/IntraFace/Files',
+    ],
+    
+    'faciometric_includes': [
+      '<(faciometric_path)/CommonFiles/Headers',
+      '<(faciometric_path)/Anki/Headers',
+    ],
+    
+    'faciometric_libs': [
+      '<(faciometric_path)/CommonFiles/Library/libcryptopp.a',
+      '<(faciometric_path)/CommonFiles/Library/libcurl.a',
+      '<(faciometric_path)/Anki/Library/liblibintraface_core122.a',
+      '<(faciometric_path)/Anki/Library/liblibintraface_emo122.a',
+      '<(faciometric_path)/Anki/Library/liblibintraface_license_anki.a',
+    ],
 
     'compiler_flags': [
       '-Wno-unused-function',
@@ -79,7 +96,16 @@
       '<@(compiler_flags)'
     ],
     'linker_flags' : [
-        '-g'
+        '-g',
+        '-finalize',   # FacioMetric
+        '-prefinalized-library',   # FacioMetric
+        '<(faciometric_path)/Anki/Library/liblibintraface_core122.a',  # FacioMetric
+        '-prefinalized-library',  # FacioMetric
+        '<(faciometric_path)/Anki/Library/liblibintraface_license_anki.a',  # FacioMetric
+        '-prefinalized-library',  # FacioMetric
+        '<(faciometric_path)/Anki/Library/liblibintraface_emo122.a',  # FacioMetric
+        '-finalized-product',  # FacioMetric
+        '<(PRODUCT_DIR)', # "${BUILT_PRODUCTS_DIR}/${EXECUTABLE_PATH}""  # FacioMetric
     ],
 
     # Set default ARCHS based on platform
@@ -514,6 +540,9 @@
         '../../game/include',
         '../../generated/clad/game',
         '<@(opencv_includes)',
+      ],
+      'libraries': [
+        '<@(faciometric_libs)'
       ],
       'direct_dependent_settings': {
         'include_dirs': [
