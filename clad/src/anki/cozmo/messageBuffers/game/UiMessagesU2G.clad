@@ -468,26 +468,27 @@ structure RobotActionUnion {
    GotoObject         goToObject,
    TurnInPlace        turnInPlace,
    SetLiftHeight      setLiftHeight,
-   SetHeadAngle       setHeadAngle
+   SetHeadAngle       setHeadAngle,
+   PlayAnimation      playAnimation
 }
 
 // QueueSingleAction
 message QueueSingleAction {
   uint_8  robotID,
   uint_32 inSlot,
-  bool    next,  // if false, queue's at end of current slot
-  RobotActionType  actionType,
-  RobotActionUnion action
+  QueueActionPosition    position,
+  RobotActionType        actionType,
+  RobotActionUnion       action
 }
 
 // QueueCompoundAction
 message QueueCompoundAction {
   uint_8  robotID,
   uint_32 inSlot,
-  bool    next,
-  bool    parallel,
-  RobotActionType   actionTypes[uint_8],
-  RobotActionUnion  actions[uint_8]
+  bool  parallel,  // false means sequential
+  QueueActionPosition    position,
+  RobotActionType        actionTypes[uint_8],
+  RobotActionUnion       actions[uint_8]
 }
 
 // keep empty to generate an auto-union that includes all messages in this file

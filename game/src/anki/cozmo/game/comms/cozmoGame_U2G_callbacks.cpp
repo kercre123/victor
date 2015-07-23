@@ -982,32 +982,62 @@ namespace Cozmo {
     VizManager::getInstance()->EraseQuad(VIZ_QUAD_GENERIC_3D, msg.quadID);
   }
   
+  
+  void QueueActionHelper(const QueueActionPosition position, const u32 inSlot,
+                         ActionList& actionList, IActionRunner* action)
+  {
+    switch(position)
+    {
+      case QueueActionPosition::NOW:
+        actionList.QueueActionNow(inSlot, action);
+        break;
+        
+      case QueueActionPosition::NEXT:
+        actionList.QueueActionNext(inSlot, action);
+        break;
+        
+      case QueueActionPosition::AT_END:
+        actionList.QueueActionAtEnd(inSlot, action);
+        break;
+        
+      default:
+        PRINT_NAMED_ERROR("CozmoGameImpl.QueueActionHelper.InvalidPosition",
+                          "Unrecognized 'position' for queuing action.\n");
+        return;
+    }
+  }
+  
+  IActionRunner* CreateNewActionByType(const RobotActionType actionType,
+                                       const U2G::RobotActionUnion& actionUnion)
+  {
+    switch(actionType)
+    {
+      case RobotActionType::TURN_IN_PLACE:
+        return new TurnInPlaceAction(actionUnion.turnInPlace.angle_rad);
+        break;
+        
+      case RobotActionType::PLAY_ANIMATION:
+        return new PlayAnimationAction(actionUnion.playAnimation.animationName);
+        break;
+        
+        // TODO: Add cases for other actions
+        
+      default:
+        PRINT_NAMED_ERROR("CozmoGameImpl.CreateNewActionByType.InvalidActionType",
+                          "Failed to create an action for the given actionType.\n");
+        return nullptr;
+    }
+  }
+  
   void CozmoGameImpl::Process_QueueSingleAction(const U2G::QueueSingleAction &msg)
   {
     Robot* robot = GetRobotByID(msg.robotID);
     
     if(robot != nullptr) {
-      IActionRunner* action = nullptr;
-      switch(msg.actionType)
-      {
-        case RobotActionType::TURN_IN_PLACE:
-          action = new TurnInPlaceAction(msg.action.turnInPlace.angle_rad);
-          break;
-          
-          // TODO: Add cases for other actions
-      }
+      IActionRunner* action = CreateNewActionByType(msg.actionType, msg.action);
       
-      if(action == nullptr) {
-        PRINT_NAMED_ERROR("CozmoGameImpl.Process_QueueSingleAction.InvalidActionType",
-                          "Failed to create an action for the given actionType.\n");
-        return;
-      }
-      
-      if(msg.next) {
-        robot->GetActionList().QueueActionNext(msg.inSlot, action);
-      } else {
-        robot->GetActionList().QueueActionAtEnd(msg.inSlot, action);
-      }
+      // Put the action in the given position of the specified queue:
+      QueueActionHelper(msg.position, msg.inSlot, robot->GetActionList(), action);
       
     }
     
@@ -1018,7 +1048,7 @@ namespace Cozmo {
     Robot* robot = GetRobotByID(msg.robotID);
     if(robot != nullptr) {
       
-      // Create either a parallel or sequential compound action:
+      // Create an empty parallel or sequential compound action:
       ICompoundAction* compoundAction = nullptr;
       if(msg.parallel) {
         compoundAction = new CompoundActionParallel();
@@ -1037,22 +1067,16 @@ namespace Cozmo {
       // Add all the actions in the message to the compound action, according
       // to their type
       for(size_t iAction=0; iAction < msg.actions.size(); ++iAction) {
-        switch(msg.actionTypes[iAction])
-        {
-          case RobotActionType::TURN_IN_PLACE:
-            compoundAction->AddAction(new TurnInPlaceAction(msg.actions[iAction].turnInPlace.angle_rad));
-            break;
-            
-            // TODO: Add cases for other actions
-        }
+        
+        IActionRunner* action = CreateNewActionByType(msg.actionTypes[iAction], msg.actions[iAction]);
+        
+        compoundAction->AddAction(action);
+        
       } // for each action/actionType
       
       // Put the action in the given position of the specified queue:
-      if(msg.next) {
-        robot->GetActionList().QueueActionNext(msg.inSlot, compoundAction);
-      } else {
-        robot->GetActionList().QueueActionAtEnd(msg.inSlot, compoundAction);
-      }
+      QueueActionHelper(msg.position, msg.inSlot, robot->GetActionList(), compoundAction);
+      
     }
   }
   
