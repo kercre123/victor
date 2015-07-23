@@ -18,8 +18,8 @@
 #include "anki/common/types.h"
 
 #include <anki/messaging/basestation/IComms.h>
-#include "anki/cozmo/messageBuffers/game/UiMessagesG2U.def"
-#include "anki/cozmo/messageBuffers/game/UiMessagesU2G.def"
+#include "anki/cozmo/messageBuffers/game/UiMessagesG2U.h"
+#include "anki/cozmo/messageBuffers/game/UiMessagesU2G.h"
 
 namespace Anki {
   
