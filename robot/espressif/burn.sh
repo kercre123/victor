@@ -9,7 +9,7 @@ fi
 
 if which python3; then
   PYTHON=python2
-else.o
+else
   PYTHON=python
 fi
 
