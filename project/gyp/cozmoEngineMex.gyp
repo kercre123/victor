@@ -18,6 +18,9 @@
       '../../common/robot/src/matlabInterface.cpp'
     ],
 
+    # TODO: Get this programmatically (via configure.py?) using a call to /Applications/MATLAB_R2015.a/bin/mexext
+    'mexext' : ['mexmaci64'],  
+    
     # TODO: should this be passed in, or shared?
     'opencv_includes': [
       # '<(coretech_external_path)/opencv-2.4.8/include',
@@ -31,6 +34,7 @@
       '<(coretech_external_path)/opencv-2.4.8/modules/features2d/include',
       '<(coretech_external_path)/opencv-2.4.8/modules/flann/include',
     ],
+    
     'opencv_libs': [
       '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_core.dylib',
       '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_imgproc.dylib',
@@ -48,15 +52,18 @@
       '-Wno-deprecated-declarations',
       '-Wno-unused-variable',
     ],
+    
     'compiler_c_flags' : [
       '-std=c11',
       '<@(compiler_flags)',
     ],
+    
     'compiler_cpp_flags' : [
       '-std=c++11',
       '-stdlib=libc++',
       '<@(compiler_flags)'
     ],
+    
     'linker_flags' : [
         '-g'
     ],
@@ -70,14 +77,14 @@
     },
 
     
-  },
+  }, # end variables
 
   'target_defaults': {
     'cflags': ['<@(compiler_c_flags)'],
     'cflags_cc': ['<@(compiler_cpp_flags)'],
     'ldflags': ['<@(linker_flags)'],
     'defines': ['<@(coretech_defines)'],
-    'type': 'shared_library',
+    'type': 'shared_library', # Mex files are really just shared libraries!
     'variables': {
       'mac_target_archs': [ '$(ARCHS_STANDARD)' ]
     },
@@ -105,8 +112,8 @@
       #'GCC_PRECOMPILE_PREFIX_HEADER': 'YES',
       'GCC_ENABLE_SYMBOL_SEPARATION': 'YES',
       # 'GENERATE_MASTER_OBJECT_FILE': 'YES',
-      'EXECUTABLE_PREFIX': '',
-      'EXECUTABLE_EXTENSION': 'mexmaci64',
+      'EXECUTABLE_PREFIX': '',              # Note that mex files should not have "lib" prefix
+      'EXECUTABLE_EXTENSION': '<(mexext)',  # Note that mex files use special extension, not .dylib
     },
     'configurations': {
       'Debug': {
@@ -146,45 +153,44 @@
           ],
       },
     },
-  },
+  }, # end target_defaults
 
 
 
   'targets': [
+    {
+      'target_name': 'mexDetectFiducialMarkers',        
+      'sources': [
+        '../../vision/robot/mex/mexDetectFiducialMarkers.cpp',
+        '<@(common_mex_sources)',
+      ],
+      'dependencies': [
+        '<(ce-cti_gyp_path):ctiCommon',
+        '<(ce-cti_gyp_path):ctiCommonRobot',
+        '<(ce-cti_gyp_path):ctiVision',
+        '<(ce-cti_gyp_path):ctiVisionRobot',
+        '<(ce-util_gyp_path):jsoncpp',
+        '<(ce-util_gyp_path):util',
+        '<(ce-util_gyp_path):utilEmbedded',
+      ],
+    }, # end mexDetectFiducialMarkers
 
-      {
-        'target_name': 'mexDetectFiducialMarkers',        
-        'sources': [
-          '../../vision/robot/mex/mexDetectFiducialMarkers.cpp',
-          '<@(common_mex_sources)',
-        ],
-        'dependencies': [
-          'ctiCommon',
-          'ctiCommonRobot',
-          'ctiVision',
-          'ctiVisionRobot',
-          '<(cti-util_gyp_path):jsoncpp',
-          '<(cti-util_gyp_path):util',
-          '<(cti-util_gyp_path):utilEmbedded',
-        ],
-      }, # end mexDetectFiducialMarkers
+    {
+      'target_name': 'mexUnique',        
+      'sources': [
+        '../../common/robot/mex/mexUnique.cpp',
+        '<@(common_mex_sources)',
+      ],
+      'dependencies': [
+        '<(ce-cti_gyp_path):ctiCommon',
+        '<(ce-cti_gyp_path):ctiCommonRobot',
+        '<(ce-util_gyp_path):jsoncpp',
+        '<(ce-util_gyp_path):util',
+        '<(ce-util_gyp_path):utilEmbedded',
+      ],
+    }, # end mexUnique
 
-      {
-        'target_name': 'mexDetectFiducialMarkers',        
-        'sources': [
-          '../../vision/robot/mex/mexDetectFiducialMarkers.cpp',
-          '<@(common_mex_sources)',
-        ],
-        'dependencies': [
-          'ctiCommon',
-          'ctiCommonRobot',
-          'ctiVision',
-          'ctiVisionRobot',
-          '<(cti-util_gyp_path):jsoncpp',
-          '<(cti-util_gyp_path):util',
-          '<(cti-util_gyp_path):utilEmbedded',
-        ],
-      }, # end mexDetectFiducialMarkers
-    ] # end targets
-  }
+  ] # end targets
+
+} # Final closing brace
 
