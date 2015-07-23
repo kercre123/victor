@@ -1094,7 +1094,7 @@ namespace Anki {
       if(_inPosition) {
         result = ActionResult::SUCCESS;
       } else {
-        PRINT_NAMED_INFO("MoveLiftToHeightAction.CheckIfDone",
+        PRINT_NAMED_INFO("MoveHeadToAngleAction.CheckIfDone",
                          "Waiting for head to get in position: %.1fdeg vs. %.1fdeg\n",
                          RAD_TO_DEG(robot.GetHeadAngle()), _headAngle.getDegrees());
       }
