@@ -291,9 +291,7 @@
             'target_name': 'cozmo_physics',
             'type': 'shared_library',
             'include_dirs': [
-              # '../../robot/include',
               '../../include',
-              # '../../simulator/include',
               '<@(webots_includes)',
               '<@(opencv_includes)',
             ],
@@ -302,31 +300,18 @@
               '<(ce-cti_gyp_path):ctiMessaging',
               '<(ce-util_gyp_path):util',
             ],
-            'copies': [
-              {
-                # this replaces copyUnitTestData.sh
-                'files': [
-                  '<(webots_path)/resources/projects/plugins/physics/physics.c',
-                ],
-                'destination': '../../generated/webots/src/plugins/physics',
-              },
-            ],
             'sources': [ 
               '<!@(cat <(pluginPhysics_source))',
-              '../../generated/webots/src/plugins/physics/physics.c',
-
             ],
             'defines': [
               'MACOS'
-              # 'COZMO_ROBOT',
-              # 'SIMULATOR'
             ],
             'libraries': [
               '<(webots_path)/lib/libCppController.dylib',
               '<@(opencv_libs)',
               '$(SDKROOT)/System/Library/Frameworks/OpenGL.framework',
             ],
-          },
+          }, # end cozmo_physics
 
           {
             'target_name': 'webotsCtrlLightCube',
