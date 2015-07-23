@@ -416,7 +416,8 @@ public class VortexController : GameController
 					CozmoBusyPanel.instance.SetDescription(desc);
 				}
 			} else if(!robot.isBusy && !playerMockBlocks[cozmoIndex].Validated) {
-				robot.TapBlockOnGround(1);
+				//robot.TapBlockOnGround(1);
+				CozmoEmotionManager.SetEmotion("TAP_ONE", true);
 				if(fakeCozmoTaps) {
 					StartCoroutine(TapAfterDelay(1, cozmoTimePerTap));
 				}
@@ -1195,7 +1196,20 @@ public class VortexController : GameController
 					cozmoTapsSubmitted = 0;
 	
 					if(robot != null) {
-						robot.TapBlockOnGround(predictedNum);
+						//robot.TapBlockOnGround(predictedNum);
+						switch (predictedNum) {
+							case 2:
+								CozmoEmotionManager.SetEmotion("TAP_TWO", true);
+								break;
+							case 3:
+								CozmoEmotionManager.SetEmotion("TAP_THREE", true);
+								break;
+							case 4:
+								CozmoEmotionManager.SetEmotion("TAP_FOUR", true);
+								break;
+							default:
+								break;
+						}
 	
 						//if we aren't faking cozmo's taps, then let's skip our local tapping for him
 						if(!fakeCozmoTaps) cozmoTapsSubmitted = predictedNum;

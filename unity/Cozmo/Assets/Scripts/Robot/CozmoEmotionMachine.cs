@@ -8,7 +8,6 @@ public struct CozmoAnimation
 {
 	public string animName;
 	public uint numLoops;
-	
 }
 
 [Serializable]
@@ -67,7 +66,7 @@ public class CozmoEmotionMachine : MonoBehaviour {
 		if( CozmoEmotionManager.instance != null )
 		{
 			CozmoEmotionManager.instance.RegisterMachine(this);
-			CozmoEmotionManager.SetEmotion(defaultEmotionState);
+			//CozmoEmotionManager.SetEmotion(defaultEmotionState);
 		}
 		InitializeMachine();
 	}
@@ -95,11 +94,9 @@ public class CozmoEmotionMachine : MonoBehaviour {
 		return false;
 	}
 
-	public CozmoAnimation GetAnimForType(string state_name)
+	public List<CozmoAnimation> GetAnimsForType(string state_name)
 	{
-		// note: do not call with out first calling too HasAnimForType
-		int rand_index = UnityEngine.Random.Range(0, typeAnims[state_name].Count - 1);
-		return typeAnims[state_name][rand_index];
+		return typeAnims [state_name];
 	}
 	
 }
