@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using Anki.Cozmo;
-using G2U = Anki.Cozmo.G2U;
+using G2U = Anki.Cozmo.ExternalInterface;
 using U2G = Anki.Cozmo.U2G;
 
 /// <summary>
@@ -255,60 +255,60 @@ public class RobotEngineManager : MonoBehaviour {
 		channel.Send( Message );
 	}
 
-	private void ReceivedMessage(G2U.Message message)
+	private void ReceivedMessage(G2U.MessageEngineToGame message)
 	{
 		switch (message.GetTag ()) {
-		case G2U.Message.Tag.Ping:
+		case G2U.MessageEngineToGame.Tag.Ping:
 			break;
-		case G2U.Message.Tag.RobotAvailable:
+		case G2U.MessageEngineToGame.Tag.RobotAvailable:
 			ReceivedSpecificMessage(message.RobotAvailable);
 			break;
-		case G2U.Message.Tag.UiDeviceAvailable:
+		case G2U.MessageEngineToGame.Tag.UiDeviceAvailable:
 			ReceivedSpecificMessage(message.UiDeviceAvailable);
 			break;
-		case G2U.Message.Tag.RobotConnected:
+		case G2U.MessageEngineToGame.Tag.RobotConnected:
 			ReceivedSpecificMessage(message.RobotConnected);
 			break;
-		case G2U.Message.Tag.UiDeviceConnected:
+		case G2U.MessageEngineToGame.Tag.UiDeviceConnected:
 			ReceivedSpecificMessage(message.UiDeviceConnected);
 			break;
-		case G2U.Message.Tag.RobotDisconnected:
+		case G2U.MessageEngineToGame.Tag.RobotDisconnected:
 			ReceivedSpecificMessage(message.RobotDisconnected);
 			break;
-		case G2U.Message.Tag.RobotObservedObject:
+		case G2U.MessageEngineToGame.Tag.RobotObservedObject:
 			ReceivedSpecificMessage(message.RobotObservedObject);
 			break;
-		case G2U.Message.Tag.RobotObservedNothing:
+		case G2U.MessageEngineToGame.Tag.RobotObservedNothing:
 			ReceivedSpecificMessage(message.RobotObservedNothing);
 			break;
-		case G2U.Message.Tag.DeviceDetectedVisionMarker:
+		case G2U.MessageEngineToGame.Tag.DeviceDetectedVisionMarker:
 			ReceivedSpecificMessage(message.DeviceDetectedVisionMarker);
 			break;
-		case G2U.Message.Tag.PlaySound:
+		case G2U.MessageEngineToGame.Tag.PlaySound:
 			ReceivedSpecificMessage(message.PlaySound);
 			break;
-		case G2U.Message.Tag.StopSound:
+		case G2U.MessageEngineToGame.Tag.StopSound:
 			ReceivedSpecificMessage(message.StopSound);
 			break;
-		case G2U.Message.Tag.ImageChunk:
+		case G2U.MessageEngineToGame.Tag.ImageChunk:
 			ReceivedSpecificMessage(message.ImageChunk);
 			break;
-		case G2U.Message.Tag.RobotState:
+		case G2U.MessageEngineToGame.Tag.RobotState:
 			ReceivedSpecificMessage(message.RobotState);
 			break;
-		case G2U.Message.Tag.RobotCompletedAction:
+		case G2U.MessageEngineToGame.Tag.RobotCompletedAction:
 			ReceivedSpecificMessage(message.RobotCompletedAction);
 			break;
-		case G2U.Message.Tag.RobotDeletedObject:
+		case G2U.MessageEngineToGame.Tag.RobotDeletedObject:
 			ReceivedSpecificMessage(message.RobotDeletedObject);
 			break;
-		case G2U.Message.Tag.ActiveObjectMoved:
+		case G2U.MessageEngineToGame.Tag.ActiveObjectMoved:
 			ReceivedSpecificMessage(message.ActiveObjectMoved);
 			break;
-		case G2U.Message.Tag.ActiveObjectStoppedMoving:
+		case G2U.MessageEngineToGame.Tag.ActiveObjectStoppedMoving:
 			ReceivedSpecificMessage(message.ActiveObjectStoppedMoving);
 			break;
-		case G2U.Message.Tag.ActiveObjectTapped:
+		case G2U.MessageEngineToGame.Tag.ActiveObjectTapped:
 			ReceivedSpecificMessage(message.ActiveObjectTapped);
 			break;
 		default:

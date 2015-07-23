@@ -3,7 +3,7 @@
 // Author: Greg Nagel
 // Copyright: Anki Inc (c) 2015
 
-#include "anki/cozmo/messageBuffers/shared/actionTypes.clad"
+#include "clad/types/actionTypes.clad"
 
 namespace Anki {
 namespace Cozmo {
@@ -459,6 +459,39 @@ message VisualizeQuad {
 //  Erase the visualized quad with the specified ID
 message EraseQuad {
   uint_32 quadID
+}
+
+structure RobotActionUnion {
+  FaceObject         faceObject,
+  GotoPose           goToPose,
+  GotoObject         goToObject,
+  PlayAnimation      playAnimation,
+  PickAndPlaceObject pickAndPlaceObject,
+  RollObject         rollObject,
+  SetLiftHeight      setLiftHeight,
+  SetHeadAngle       setHeadAngle,
+  TurnInPlace        turnInPlace
+}
+
+// QueueSingleAction
+message QueueSingleAction {
+  uint_8  robotID,
+  uint_32 inSlot,
+  uint_8  numRetries,
+  QueueActionPosition    position,
+  RobotActionType        actionType,
+  RobotActionUnion       action
+}
+
+// QueueCompoundAction
+message QueueCompoundAction {
+  uint_8  robotID,
+  uint_32 inSlot,
+  uint_8  numRetries,
+  bool  parallel,  // false means sequential
+  QueueActionPosition    position,
+  RobotActionType        actionTypes[uint_8],
+  RobotActionUnion       actions[uint_8]
 }
 
 // keep empty to generate an auto-union that includes all messages in this file

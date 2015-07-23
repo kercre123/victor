@@ -3,7 +3,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using Anki.Cozmo;
-using G2U = Anki.Cozmo.G2U;
+using G2U = Anki.Cozmo.ExternalInterface;
 using U2G = Anki.Cozmo.U2G;
 
 public class Robot
