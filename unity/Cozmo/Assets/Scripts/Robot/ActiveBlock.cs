@@ -168,6 +168,7 @@ public class ActiveBlock : ObservedObject
 
 	public void Tapped( G2U.ActiveObjectTapped message )
 	{
+		Debug.Log ("Tapped Message Received for ActiveBlock("+ID+")");
 		if( TappedAction != null ) TappedAction(this);
 	}
 
