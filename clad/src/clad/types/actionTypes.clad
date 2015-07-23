@@ -15,7 +15,8 @@ enum int_32 RobotActionType {
     DRIVE_TO_PLACE_CARRIED_OBJECT,
     TURN_IN_PLACE,
     MOVE_HEAD_TO_ANGLE,
-    PICKUP_OBJECT_LOW,         // Possible type of PickAndPlaceAction
+    PICK_AND_PLACE_OBJECT,
+    PICKUP_OBJECT_LOW,         // Possible sub-type of PickAndPlaceAction
     PICKUP_OBJECT_HIGH,        //   "
     PLACE_OBJECT_LOW,          //   "
     PLACE_OBJECT_HIGH,         //   "
@@ -33,6 +34,7 @@ enum int_32 RobotActionType {
     WAIT,
     MOVE_LIFT_TO_HEIGHT
 }
+
 
 // TODO: Convert to uint_8
 enum int_32 ActionResult {
@@ -52,6 +54,12 @@ structure ActionCompletedStruct {
     int_32     objectIDs[5],
     uint_8     numObjects,
     string     animName
+}
+
+enum uint_8 QueueActionPosition {
+    NOW = 0,
+    NEXT,
+    AT_END
 }
 
 } // namespace Cozmo
