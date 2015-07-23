@@ -8,13 +8,12 @@ matlab.mat
 # Webots
 *.wbproj
 simulator/protos/CozmoEngineProtos-DO_NOT_MODIFY
-simulator/plugins/physics/cozmo_physics
 webotsCtrlViz
 webotsCtrlRobot
 webotsCtrlLightCube
 webotsCtrlGameEngine
 webotsCtrlKeyboard
-libcozmo_physics.dylib
+simulator/plugins/physics/pluginPhysics/libpluginPhysics.dylib
 
 # Mac OS
 *.DS_Store

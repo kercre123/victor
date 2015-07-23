@@ -8,7 +8,7 @@ WorldInfo {
     ""
   ]
   gravity 0 0 -9.81
-  physics "cozmo_physics"
+  physics "pluginPhysics"
   basicTimeStep 5
   contactProperties [
     DEF FLOOR_FRONTWHEEL ContactProperties {
