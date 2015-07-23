@@ -34,6 +34,7 @@ enum int_32 RobotActionType {
     MOVE_LIFT_TO_HEIGHT
 }
 
+
 // TODO: Convert to uint_8
 enum int_32 ActionResult {
     SUCCESS = 0,
@@ -52,6 +53,12 @@ structure ActionCompletedStruct {
     int_32     objectIDs[5],
     uint_8     numObjects,
     string     animName
+}
+
+enum uint_8 QueueActionPosition {
+    NOW = 0,
+    NEXT,
+    AT_END
 }
 
 } // namespace Cozmo
