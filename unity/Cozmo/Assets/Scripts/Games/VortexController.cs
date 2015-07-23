@@ -1654,11 +1654,13 @@ public class VortexController : GameController
 
 	void BlockTapped(ActiveBlock block)
 	{
+
+		Debug.Log ("BlockTapped block("+block+")");
 		for(int i = 0; i < playerInputBlocks.Count; i++) {
 			if(playerInputBlocks[i] != block) continue;
 
 			//if we are faking cozmo's taps, let's ignore any real incoming messages for his block
-			if(fakeCozmoTaps && i == cozmoIndex) return;
+			if(fakeCozmoTaps && i == cozmoIndex) continue;
 
 			PlayerInputTap(i);
 			break;
@@ -1724,8 +1726,10 @@ public class VortexController : GameController
 	public void PlayerInputTap(int index)
 	{
 		if(state == GameState.PRE_GAME) {
-			if(index == cozmoIndex) { // cozmo
-				SetRobotEmotion("LETS_PLAY");
+			if (index == cozmoIndex) { // cozmo
+				SetRobotEmotion ("LETS_PLAY");
+			} else {
+				Debug.Log ("PlayerInputTap validating playerIndex("+index+")");
 			}
 			playerMockBlocks[index].Validate(true);
 			return;
