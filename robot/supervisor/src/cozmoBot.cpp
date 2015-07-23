@@ -454,8 +454,12 @@ namespace Anki {
       Result step_LongExecution()
       {
         Result retVal = RESULT_OK;
-
+        
 #       ifdef SIMULATOR
+        
+        if (!HAL::IsVideoEnabled()) {
+          return retVal;
+        }
 
         if (HAL::imageSendMode_ != ISM_OFF) {
         
