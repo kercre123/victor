@@ -80,7 +80,7 @@ LOCAL void dmaisr(void) {
 	//clear all intr flags
 	WRITE_PERI_REG(SLC_INT_CLR, 0xffffffff);
 
-#ifdef I2S_LOOP_TEST
+#ifdef I2S_LOOP_TEST_PRINT
   os_printf("LT: %08x\r\n", slc_intr_status);
 #endif
 
