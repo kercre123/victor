@@ -3,7 +3,7 @@
 // Author: Greg Nagel
 // Copyright: Anki Inc (c) 2015
 
-#include "anki/cozmo/messageBuffers/shared/actionTypes.clad"
+#include "clad/types/actionTypes.clad"
 
 namespace Anki {
 namespace Cozmo {
