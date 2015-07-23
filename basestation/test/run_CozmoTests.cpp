@@ -35,7 +35,7 @@ TEST(BlockWorld, AddAndRemoveObject)
   Result lastResult;
   
   MessageHandlerStub  msgHandler;
-  Robot robot(1, &msgHandler);
+  Robot robot(1, &msgHandler, nullptr);
   
   BlockWorld& blockWorld = robot.GetBlockWorld();
   
@@ -156,7 +156,7 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
   ASSERT_TRUE(jsonParseResult);
 
   // Create the modules we need (and stubs of those we don't)
-  RobotManager        robotMgr;
+  RobotManager        robotMgr(nullptr);
   MessageHandlerStub  msgHandler;
  
   robotMgr.AddRobot(0, &msgHandler);

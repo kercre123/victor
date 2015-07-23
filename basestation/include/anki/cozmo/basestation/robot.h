@@ -27,34 +27,27 @@
 #ifndef ANKI_COZMO_BASESTATION_ROBOT_H
 #define ANKI_COZMO_BASESTATION_ROBOT_H
 
-#include <queue>
-
 #include "anki/common/types.h"
 #include "anki/common/basestation/math/pose.h"
-
 #include "anki/vision/basestation/camera.h"
 #include "anki/vision/basestation/image.h"
-//#include "anki/vision/basestation/panTiltTracker.h"
 #include "anki/vision/basestation/visionMarker.h"
-
 #include "anki/planning/shared/path.h"
-
 #include "anki/cozmo/shared/cozmoTypes.h"
 #include "anki/cozmo/shared/activeBlockTypes.h"
 #include "anki/cozmo/shared/ledTypes.h"
-
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/comms/robot/robotMessages.h"
 #include "anki/cozmo/basestation/visionProcessingThread.h"
-
 #include "anki/cozmo/basestation/actionContainers.h"
 #include "anki/cozmo/basestation/animationStreamer.h"
 #include "anki/cozmo/basestation/cannedAnimationContainer.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/ramp.h"
 #include "anki/cozmo/basestation/soundManager.h"
-
+#include "util/signals/simpleSignal.hpp"
+#include <queue>
 #include <unordered_map>
 #include <time.h>
 
@@ -70,12 +63,13 @@ namespace Anki {
     class PathDolerOuter;
     class RobotPoseHistory;
     class RobotPoseStamp;
+    class IExternalInterface;
     
     class Robot
     {
     public:
       
-      Robot(const RobotID_t robotID, IRobotMessageHandler* msgHandler);
+      Robot(const RobotID_t robotID, IRobotMessageHandler* msgHandler, IExternalInterface* externalInterface);
       ~Robot();
       
       Result Update();
@@ -530,9 +524,17 @@ namespace Anki {
       // Send a message to the physical robot
       Result SendMessage(const RobotMessage& message,
                          bool reliable = true, bool hot = false) const;
-      
+
+      // Events
+      using RobotWorldOriginChangedSignal = Signal::Signal<void (RobotID_t)>;
+      RobotWorldOriginChangedSignal& OnRobotWorldOriginChanged() { return _robotWorldOriginChangedSignal; }
+      inline IExternalInterface* GetExternalInterface() {
+        ASSERT_NAMED(_externalInterface != nullptr, "Robot.ExternalInterface.nullptr"); return _externalInterface; }
+      inline void SetImageSendMode(ImageSendMode_t newMode) { _imageSendMode = newMode; }
+      inline const ImageSendMode_t GetImageSendMode() const { return _imageSendMode; }
     protected:
-      
+      IExternalInterface* _externalInterface;
+      RobotWorldOriginChangedSignal _robotWorldOriginChangedSignal;
       // The robot's identifier
       RobotID_t         _ID;
       bool              _isPhysical;
@@ -629,7 +631,7 @@ namespace Anki {
       bool             _isLiftMoving;
       bool             _isAnimating;
       f32              _battVoltage;
-      
+      ImageSendMode_t _imageSendMode;
       // Pose history
       Result ComputeAndInsertPoseIntoHistory(const TimeStamp_t t_request,
                                              TimeStamp_t& t, RobotPoseStamp** p,

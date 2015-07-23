@@ -1,0 +1,19 @@
+// UiMessageDefinitions message definition file
+//  for the C-Like Abstract Data language
+// Author: Greg Nagel
+// Copyright: Anki Inc (c) 2015
+
+#include "clad/types/actionTypes.clad"
+
+namespace Anki {
+namespace Cozmo {
+namespace ExternalInterface {
+
+message Ping {
+    uint_32 counter        // should count sequentially if no drops
+}
+
+
+} // namespace ExternalInterface
+} // namespace Cozmo
+} // namespace Anki

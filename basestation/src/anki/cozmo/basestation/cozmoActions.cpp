@@ -11,22 +11,18 @@
  **/
 
 #include "anki/cozmo/basestation/cozmoActions.h"
-
 #include "bridge.h"
 #include "pathPlanner.h"
 #include "anki/cozmo/basestation/ramp.h"
 #include "anki/cozmo/basestation/charger.h"
-
 #include "anki/common/basestation/math/poseBase_impl.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/utils/timer.h"
-
 #include "anki/cozmo/basestation/robot.h"
-#include "anki/cozmo/basestation/signals/cozmoEngineSignals.h"
-
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
-
+#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "messageEngineToGame.h"
 #include <iomanip>
 
 namespace Anki {
@@ -236,7 +232,7 @@ namespace Anki {
               robotPtr->ClearPath();
             }
           };
-          _signalHandle = CozmoEngineSignals::RobotWorldOriginChangedSignal().ScopedSubscribe(cbRobotOriginChanged);
+          _signalHandle = robot.OnRobotWorldOriginChanged().ScopedSubscribe(cbRobotOriginChanged);
         }
         
       } // if/else isGoalSet
@@ -1525,7 +1521,9 @@ namespace Anki {
             ActionCompletedStruct completionInfo;
             completionInfo.numObjects = numObjects;
             completionInfo.objectIDs = {{carryObject, carryObjectOnTop, -1, -1, -1}};
-            CozmoEngineSignals::RobotCompletedActionSignal().emit(robot.GetID(), GetType(), result, completionInfo);
+            robot.GetExternalInterface()->DeliverToGame(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotCompletedAction(
+              robot.GetID(), GetType(), result, completionInfo
+            )));
             
             return;
           }
@@ -1555,8 +1553,10 @@ namespace Anki {
               ++completionInfo.numObjects;
               object = robot.GetBlockWorld().FindObjectOnTopOf(*object, 15.f);
             }
-            
-            CozmoEngineSignals::RobotCompletedActionSignal().emit(robot.GetID(), GetType(), result, completionInfo);
+
+            robot.GetExternalInterface()->DeliverToGame(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotCompletedAction(
+              robot.GetID(), GetType(), result, completionInfo
+            )));
             return;
           }
           break;
@@ -1840,7 +1840,9 @@ namespace Anki {
             completionInfo.objectIDs[0] = _dockObjectID;
             
             // TODO: Be able to fill in add'l objects carried in signal
-            CozmoEngineSignals::RobotCompletedActionSignal().emit(robot.GetID(), GetType(), result, completionInfo);
+            robot.GetExternalInterface()->DeliverToGame(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotCompletedAction(
+              robot.GetID(), GetType(), result, completionInfo
+            )));
             
             return;
           }
@@ -2315,9 +2317,9 @@ namespace Anki {
     {
       ActionCompletedStruct completionInfo;
       completionInfo.animName = _animName;
-      
-      CozmoEngineSignals::RobotCompletedActionSignal().emit(robot.GetID(), GetType(), result,
-                                                            completionInfo);
+      robot.GetExternalInterface()->DeliverToGame(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotCompletedAction(
+        robot.GetID(), GetType(), result, completionInfo
+      )));
     }
     
 #pragma mark ---- PlaySoundAction ----

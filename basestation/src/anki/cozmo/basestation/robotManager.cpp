@@ -8,15 +8,16 @@
 
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotManager.h"
-#include "anki/cozmo/basestation/signals/cozmoEngineSignals.h"
-
-#include "robotMessageHandler.h"
+#include "anki/cozmo/basestation/robotMessageHandler.h"
+#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "clad/externalInterface/messageEngineToGame.h"
 
 
 namespace Anki {
   namespace Cozmo {
     
-    RobotManager::RobotManager()
+    RobotManager::RobotManager(IExternalInterface* externalInterface)
+    : _externalInterface(externalInterface)
     {
       
     }
@@ -30,7 +31,7 @@ namespace Anki {
       
       if (_robots.find(withID) == _robots.end()) {
         PRINT_STREAM_INFO("RobotManager.AddRobot", "Adding robot with ID=" << withID);
-        _robots[withID] = new Robot(withID, msgHandler);
+        _robots[withID] = new Robot(withID, msgHandler, _externalInterface);
         _IDs.push_back(withID);
       } else {
         PRINT_STREAM_WARNING("RobotManager.AddRobot.AlreadyAdded", "Robot with ID " << withID << " already exists. Ignoring.");
@@ -113,7 +114,9 @@ namespace Anki {
             }
 
             PRINT_NAMED_WARNING("RobotManager.UpdateAllRobots.FailIOTimeout", "Signaling robot disconnect\n");
-            CozmoEngineSignals::RobotDisconnectedSignal().emit(r->first);
+            //CozmoEngineSignals::RobotDisconnectedSignal().emit(r->first);
+            _robotDisconnectedSignal.emit(r->first);
+            _externalInterface->DeliverToGame(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotDisconnected(r->first, 0.0f)));
             
             delete r->second;
             r = _robots.erase(r);
