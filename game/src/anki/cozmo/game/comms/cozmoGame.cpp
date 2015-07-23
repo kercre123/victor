@@ -10,20 +10,19 @@
  */
 
 #include "cozmoGame_impl.h"
-
 #include "anki/cozmo/basestation/cozmoEngine.h"
+#include "anki/cozmo/basestation/cozmoEngineHost.h"
+#include "anki/cozmo/basestation/cozmoEngineClient.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/soundManager.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
-
 #include "util/logging/logging.h"
 #include "anki/common/basestation/math/rect_impl.h"
 #include "anki/common/basestation/math/quad_impl.h"
-
 #include "anki/cozmo/game/comms/uiMessageHandler.h"
 #include "anki/cozmo/basestation/multiClientComms.h"
-#include "anki/cozmo/basestation/signals/cozmoEngineSignals.h"
 #include "anki/cozmo/game/signals/cozmoGameSignals.h"
+#include "clad/externalInterface/messageEngineToGame.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -40,7 +39,7 @@ namespace Cozmo {
   , _desiredNumUiDevices(1)
   , _desiredNumRobots(1)
   , _uiAdvertisementService("UIAdvertisementService")
-  , _hostUiDeviceID(1)
+  , _uiMsgHandler(1)
   {
     _pingToUI.counter = 0;
     
@@ -155,12 +154,12 @@ namespace Cozmo {
       
       if(_isHost) {
         PRINT_NAMED_INFO("CozmoGameImpl.StartEngine", "Creating HOST engine.\n");
-        CozmoEngineHost* engineHost = new CozmoEngineHost();
+        CozmoEngineHost* engineHost = new CozmoEngineHost(&_uiMsgHandler);
         engineHost->ListenForRobotConnections(true);
         _cozmoEngine = engineHost;
       } else {
         PRINT_NAMED_INFO("CozmoGameImpl.StartEngine", "Creating CLIENT engine.\n");
-        _cozmoEngine = new CozmoEngineClient();
+        _cozmoEngine = new CozmoEngineClient(&_uiMsgHandler);
       }
       
       // Init the engine with the given configuration info:
@@ -186,7 +185,7 @@ namespace Cozmo {
   
   void CozmoGameImpl::SetImageSendMode(RobotID_t forRobotID, Cozmo::ImageSendMode_t newMode)
   {
-    _imageSendMode[forRobotID] = newMode;
+    _cozmoEngine->SetImageSendMode(forRobotID, newMode);
   }
   
   bool CozmoGameImpl::GetCurrentRobotImage(RobotID_t robotId, Vision::Image& img, TimeStamp_t newerThanTime)
@@ -201,7 +200,7 @@ namespace Cozmo {
     _cozmoEngine->ProcessDeviceImage(image);
   }
 
-  const std::vector<Cozmo::G2U::DeviceDetectedVisionMarker>& CozmoGameImpl::GetVisionMarkersDetectedByDevice() const
+  const std::vector<ExternalInterface::DeviceDetectedVisionMarker>& CozmoGameImpl::GetVisionMarkersDetectedByDevice() const
   {
     return _visionMarkersDetectedByDevice;
   }
@@ -278,9 +277,9 @@ namespace Cozmo {
       
       if(_uiComms.GetNumConnectedDevices() > 0) {
         // Ping the UI to let them know we're still here
-        G2U::Message message;
+        ExternalInterface::MessageEngineToGame message;
         message.Set_Ping(_pingToUI);
-        _uiMsgHandler.SendMessage(_hostUiDeviceID, message);
+        _uiMsgHandler.SendMessage(message);
         ++_pingToUI.counter;
       }
     }
@@ -301,7 +300,7 @@ namespace Cozmo {
       std::vector<int> advertisingUiDevices;
       _uiComms.GetAdvertisingDeviceIDs(advertisingUiDevices);
       for(auto & device : advertisingUiDevices) {
-        if(device == _hostUiDeviceID) {
+        if(device == _uiMsgHandler.GetHostUiDeviceID()) {
           // Force connection to first (local) UI device
           if(true == ConnectToUiDevice(device)) {
             PRINT_NAMED_INFO("CozmoGameImpl.Update",
@@ -414,7 +413,7 @@ namespace Cozmo {
               lastResult = RESULT_FAIL;
             } else {
               if(robot->HasReceivedRobotState()) {
-                G2U::RobotState msg;
+                ExternalInterface::RobotState msg;
                 
                 msg.robotID = robotID;
                 
@@ -460,9 +459,9 @@ namespace Cozmo {
                 
                 msg.batteryVoltage = robot->GetBatteryVoltage();
                 
-                G2U::Message message;
+                ExternalInterface::MessageEngineToGame message;
                 message.Set_RobotState(msg);
-                _uiMsgHandler.SendMessage(_hostUiDeviceID, message);
+                _uiMsgHandler.SendMessage(message);
               } else {
                 PRINT_NAMED_WARNING("CozmoGameImpl.UpdateAsHost",
                                     "Not sending robot %d state (none available).\n",
@@ -520,7 +519,7 @@ namespace Cozmo {
       
       const u32 numTotalBytes = nrows*ncols;
 
-      G2U::ImageChunk m;
+      ExternalInterface::ImageChunk m;
       
       // TODO: pass this in so it corresponds to actual frame capture time instead of send time
       m.frameTimeStamp = img.GetTimestamp();
@@ -537,7 +536,7 @@ namespace Cozmo {
       
       //PRINT("Downsample: from %d x %d  to  %d x %d\n", img.get_size(1), img.get_size(0), xRes, yRes);
       
-      G2U::Message message;
+      ExternalInterface::MessageEngineToGame message;
       
       for(s32 i=0; i<nrows; ++i) {
         
@@ -551,14 +550,14 @@ namespace Cozmo {
           if(chunkByteCnt == m.data.size()) {
             // Filled this chunk
             message.Set_ImageChunk(m);
-            _uiMsgHandler.SendMessage(_hostUiDeviceID, message);
+            _uiMsgHandler.SendMessage(message);
             ++m.chunkId;
             chunkByteCnt = 0;
           } else if(totalByteCnt == numTotalBytes) {
             // This is the last chunk!
             m.chunkSize = chunkByteCnt;
             message.Set_ImageChunk(m);
-            _uiMsgHandler.SendMessage(_hostUiDeviceID, message);
+            _uiMsgHandler.SendMessage(message);
           }
         } // for each col
       } // for each row
@@ -620,7 +619,7 @@ namespace Cozmo {
     return _impl->GetRunState();
   }
   
-  const std::vector<Cozmo::G2U::DeviceDetectedVisionMarker>& CozmoGame::GetVisionMarkersDetectedByDevice() const
+  const std::vector<Cozmo::ExternalInterface::DeviceDetectedVisionMarker>& CozmoGame::GetVisionMarkersDetectedByDevice() const
   {
     return _impl->GetVisionMarkersDetectedByDevice();
   }
