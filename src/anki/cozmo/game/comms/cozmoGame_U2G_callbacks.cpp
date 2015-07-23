@@ -983,21 +983,21 @@ namespace Cozmo {
   }
   
   
-  void QueueActionHelper(const QueueActionPosition position, const u32 inSlot,
+  void QueueActionHelper(const QueueActionPosition position, const u32 inSlot, const u8 numRetries,
                          ActionList& actionList, IActionRunner* action)
   {
     switch(position)
     {
       case QueueActionPosition::NOW:
-        actionList.QueueActionNow(inSlot, action);
+        actionList.QueueActionNow(inSlot, action, numRetries);
         break;
         
       case QueueActionPosition::NEXT:
-        actionList.QueueActionNext(inSlot, action);
+        actionList.QueueActionNext(inSlot, action, numRetries);
         break;
         
       case QueueActionPosition::AT_END:
-        actionList.QueueActionAtEnd(inSlot, action);
+        actionList.QueueActionAtEnd(inSlot, action, numRetries);
         break;
         
       default:
@@ -1007,18 +1007,63 @@ namespace Cozmo {
     }
   }
   
-  IActionRunner* CreateNewActionByType(const RobotActionType actionType,
+  IActionRunner* CreateNewActionByType(Robot* robot,
+                                       const RobotActionType actionType,
                                        const U2G::RobotActionUnion& actionUnion)
   {
     switch(actionType)
     {
       case RobotActionType::TURN_IN_PLACE:
         return new TurnInPlaceAction(actionUnion.turnInPlace.angle_rad);
-        break;
         
       case RobotActionType::PLAY_ANIMATION:
         return new PlayAnimationAction(actionUnion.playAnimation.animationName);
-        break;
+        
+      case RobotActionType::PICK_AND_PLACE_OBJECT:
+      case RobotActionType::PICKUP_OBJECT_HIGH:
+      case RobotActionType::PICKUP_OBJECT_LOW:
+      case RobotActionType::PLACE_OBJECT_HIGH:
+      case RobotActionType::PLACE_OBJECT_LOW:
+      {
+        ObjectID selectedObjectID;
+        if(actionUnion.pickAndPlaceObject.objectID < 0) {
+          selectedObjectID = robot->GetBlockWorld().GetSelectedObject();
+        } else {
+          selectedObjectID = actionUnion.pickAndPlaceObject.objectID;
+        }
+        
+        if(static_cast<bool>(actionUnion.pickAndPlaceObject.usePreDockPose)) {
+          return new DriveToPickAndPlaceObjectAction(selectedObjectID, actionUnion.pickAndPlaceObject.useManualSpeed);
+        } else {
+          PickAndPlaceObjectAction* action = new PickAndPlaceObjectAction(selectedObjectID, actionUnion.pickAndPlaceObject.useManualSpeed);
+          action->SetPreActionPoseAngleTolerance(-1.f); // disable pre-action pose distance check
+          return action;
+        }
+      }
+       
+      case RobotActionType::MOVE_HEAD_TO_ANGLE:
+        // TODO: Provide a means to pass in the speed/acceleration values to the action
+        return new MoveHeadToAngleAction(actionUnion.setHeadAngle.angle_rad);
+        
+      case RobotActionType::MOVE_LIFT_TO_HEIGHT:
+        // TODO: Provide a means to pass in the speed/acceleration values to the action
+        return new MoveLiftToHeightAction(actionUnion.setLiftHeight.height_mm);
+        
+      case RobotActionType::FACE_OBJECT:
+      {
+        
+        ObjectID objectID;
+        if(actionUnion.faceObject.objectID == u32_MAX) {
+          objectID = robot->GetBlockWorld().GetSelectedObject();
+        } else {
+          objectID = actionUnion.faceObject.objectID;
+        }
+        
+        return new FaceObjectAction(objectID,
+                                    Radians(actionUnion.faceObject.turnAngleTol),
+                                    Radians(actionUnion.faceObject.maxTurnAngle),
+                                    actionUnion.faceObject.headTrackWhenDone);
+      }
         
         // TODO: Add cases for other actions
         
@@ -1034,10 +1079,10 @@ namespace Cozmo {
     Robot* robot = GetRobotByID(msg.robotID);
     
     if(robot != nullptr) {
-      IActionRunner* action = CreateNewActionByType(msg.actionType, msg.action);
+      IActionRunner* action = CreateNewActionByType(robot, msg.actionType, msg.action);
       
       // Put the action in the given position of the specified queue:
-      QueueActionHelper(msg.position, msg.inSlot, robot->GetActionList(), action);
+      QueueActionHelper(msg.position, msg.inSlot, msg.numRetries, robot->GetActionList(), action);
       
     }
     
@@ -1068,14 +1113,14 @@ namespace Cozmo {
       // to their type
       for(size_t iAction=0; iAction < msg.actions.size(); ++iAction) {
         
-        IActionRunner* action = CreateNewActionByType(msg.actionTypes[iAction], msg.actions[iAction]);
+        IActionRunner* action = CreateNewActionByType(robot, msg.actionTypes[iAction], msg.actions[iAction]);
         
         compoundAction->AddAction(action);
         
       } // for each action/actionType
       
       // Put the action in the given position of the specified queue:
-      QueueActionHelper(msg.position, msg.inSlot, robot->GetActionList(), compoundAction);
+      QueueActionHelper(msg.position, msg.inSlot, msg.numRetries, robot->GetActionList(), compoundAction);
       
     }
   }
