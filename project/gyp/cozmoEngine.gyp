@@ -53,18 +53,18 @@
       '-Wall',
       '-Woverloaded-virtual',
       '-Werror',
-      # '-Wundef',
+      # '-Wundef', # Disabled until define usage is refactored to code standards
       '-Wheader-guard',
       '-fsigned-char',
       '-fvisibility-inlines-hidden',
       '-fvisibility=default',
-      # '-Wshorten-64-to-32',
-      # '-Winit-self',
-      # '-Wconditional-uninitialized',
-      # '-Wno-deprecated-register',
-      # '-Wformat',
-      # '-Werror=format-security',
-      # '-g',
+      # '-Wshorten-64-to-32', # Disabled until refactoring occurs to prevent precision loss
+      '-Winit-self',
+      # '-Wconditional-uninitialized', # Disabled until uninitialized code refactor
+      # '-Wno-deprecated-register', # Disabled until this warning actually needs to be supressed
+      '-Wformat',
+      '-Werror=format-security',
+      '-g',
     ],
     'compiler_c_flags' : [
       '-std=c11',
