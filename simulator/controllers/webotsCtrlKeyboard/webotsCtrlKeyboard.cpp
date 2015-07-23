@@ -440,6 +440,10 @@ namespace Anki {
                          msg.objectID, msg.numTaps);
       }
 
+      void HandleAnimationAvailable(ExternalInterface::AnimationAvailable const& msg)
+      {
+        printf("Animation available: %s\n", msg.animName.c_str());
+      }
       
       // ===== End of message handler callbacks ====
       
@@ -510,6 +514,9 @@ namespace Anki {
               break;
             case ExternalInterface::MessageEngineToGame::Tag::ActiveObjectTapped:
               HandleActiveObjectTapped(message.Get_ActiveObjectTapped());
+              break;
+          case ExternalInterface::MessageEngineToGame::Tag::AnimationAvailable:
+              HandleAnimationAvailable(message.Get_AnimationAvailable());
               break;
             default:
               // ignore
