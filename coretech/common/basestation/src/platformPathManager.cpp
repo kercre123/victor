@@ -49,6 +49,10 @@ namespace Anki {
     if(true == PlatformPathManager_iOS_GetPath(PlatformPathManager_iOS_Scope_Sound, buffer, MAX_PATH_LENGTH)) {
       _scopePrefixes[Sound] = buffer;
     }
+    
+    if(true == PlatformPathManager_iOS_GetPath(PlatformPathManager_iOS_Scope_FaceAnimation, buffer, MAX_PATH_LENGTH)) {
+      _scopePrefixes[FaceAnimation] = buffer;
+    }
 
     if(true == PlatformPathManager_iOS_GetPath(PlatformPathManager_iOS_Scope_Resource, buffer, MAX_PATH_LENGTH)) {
       _scopePrefixes[Resource] = buffer;
