@@ -33,6 +33,8 @@ def main(scriptArgs):
                       help='prepends to the environment PATH')
   parser.add_argument('--clean', '-c', dest='clean', action='store_true',
                       help='cleans all output folders')
+  parser.add_argument('--mex', '-m', dest='mex', action='store_true',
+                      help='builds mathlab\'s mex project')
   parser.add_argument('--withGyp', metavar='GYP_PATH', dest='gypPath', action='store', default=None,
                       help='Use gyp installation located at GYP_PATH')
   parser.add_argument('--buildTools', metavar='BUILD_TOOLS_PATH', dest='buildToolsPath', action='store', default=None,
@@ -223,6 +225,10 @@ def main(scriptArgs):
                                   )
       gypArgs = ['--check', '--depth', '.', '-f', 'xcode', '--toplevel-dir', '../..', '--generator-output', '../../generated/mac', gypFile]
       gyp.main(gypArgs)
+      # mac
+      if options.mex:
+        gypArgs = ['--check', '--depth', '.', '-f', 'xcode', '--toplevel-dir', '../..', '--generator-output', '../../generated/mac', 'cozmoEngineMex.gyp']
+        gyp.main(gypArgs)
       
 
 
