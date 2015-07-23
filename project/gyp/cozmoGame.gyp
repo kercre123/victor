@@ -381,7 +381,7 @@
               '<(cg-ce_gyp_path):webotsCtrlRobot',
               '<(cg-ce_gyp_path):webotsCtrlViz',
               '<(cg-ce_gyp_path):webotsCtrlLightCube',
-              '<(cg-ce_gyp_path):pluginPhysics',
+              '<(cg-ce_gyp_path):cozmo_physics',
             ],
             'copies': [
             
@@ -481,10 +481,10 @@
               {
                 'action_name': 'create_symlink_webotsPluginPhysics',
                 'inputs': [
-                  '<(PRODUCT_DIR)/libpluginPhysics.dylib',
+                  '<(PRODUCT_DIR)/libcozmo_physics.dylib',
                 ],
                 'outputs': [
-                  '../../simulator/plugins/physics/pluginPhysics/libpluginPhysics.dylib',
+                  '../../simulator/plugins/physics/cozmo_physics/libcozmo_physics.dylib',
                 ],
                 'action': [
                   'ln',

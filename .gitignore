@@ -14,6 +14,7 @@ webotsCtrlLightCube
 webotsCtrlGameEngine
 webotsCtrlKeyboard
 simulator/plugins/physics/pluginPhysics/libpluginPhysics.dylib
+simulator/plugins/physics/cozmo_physics/libcozmo_physics.dylib
 
 # Mac OS
 *.DS_Store
