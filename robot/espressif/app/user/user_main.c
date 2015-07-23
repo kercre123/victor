@@ -220,6 +220,9 @@ user_init(void)
     // Disable radio sleep
     wifi_set_sleep_type(NONE_SLEEP_T);
 
+    // Fix the wifi rate rather than allowing negotiation
+    wifi_set_user_fixed_rate(PHY_RATE_18);
+
     // Disable DHCP server before setting static IP info
     wifi_softap_dhcps_stop();
 
