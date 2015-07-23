@@ -10,7 +10,7 @@ public class CozmoEmotionManager : MonoBehaviour {
 	private U2G.PlayAnimation PlayAnimationMessage;
 	CozmoEmotionMachine currentEmotionMachine;
 	
-	public new enum EmotionType
+	public enum EmotionType
 	{
 		NONE,
 		IDLE,

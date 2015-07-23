@@ -5,8 +5,13 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
-
-public class SpinWheel : MonoBehaviour, /*IPointerDownHandler, IPointerUpHandler,*/ IBeginDragHandler, IDragHandler, IEndDragHandler {
+/// <summary>
+/// this component emulates a Wheel of Fortune style spinner.
+///		handles all the ui set up for the pie slices and pegs
+///		pre-calculates whole spin duration creating a list of keyframes
+///		display interpolates along keyframe list and plays sfx
+/// </summary>
+public class SpinWheel : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler {
 
 	#region NESTED DEFINITIONS
 
@@ -209,6 +214,8 @@ public class SpinWheel : MonoBehaviour, /*IPointerDownHandler, IPointerUpHandler
 
 	SpinWheelState state = SpinWheelState.LOCKED;
 
+	AudioSource audioSource;
+
 	#endregion
 	
 	#region MONOBEHAVIOR CALLBACKS
@@ -221,6 +228,7 @@ public class SpinWheel : MonoBehaviour, /*IPointerDownHandler, IPointerUpHandler
 		Time.fixedDeltaTime =  1f / 60f;
 
 		InitData();
+		audioSource = GetComponent<AudioSource>();
 	}
 
 	void OnEnable() {
@@ -649,7 +657,10 @@ public class SpinWheel : MonoBehaviour, /*IPointerDownHandler, IPointerUpHandler
 				float p = Mathf.Lerp(0.75f, 1.5f, pitchFactor);
 				float v = Mathf.Lerp(0f, 1f, volumeFactor);
 				
-				AudioManager.PlayOneShot(pegSound, 0f, p, v);
+				audioSource.pitch = p;
+				audioSource.volume = v;
+				audioSource.loop = false;
+				audioSource.PlayOneShot(pegSound, v);
 			}
 		}
 
@@ -851,20 +862,6 @@ public class SpinWheel : MonoBehaviour, /*IPointerDownHandler, IPointerUpHandler
 	#endregion
 
 	#region INTERFACE METHODS	
-
-//	public void OnPointerDown(PointerEventData eventData) {
-//		Debug.Log ("OnPointerDown");
-//		if(state != SpinWheelState.UNLOCKED) return;
-//		state = SpinWheelState.DRAGGING;
-//		DragStart(eventData.position, Time.time);
-//	}
-
-//	public void OnPointerUp(PointerEventData eventData) {
-//		Debug.Log ("OnPointerUp");
-//		if(state != SpinWheelState.DRAGGING) return;
-//		
-//		DragEnd();
-//	}
 
 	public void OnBeginDrag(PointerEventData eventData) {
 		//Debug.Log ("OnBeginDrag");

@@ -3,7 +3,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using Anki.Cozmo;
-using G2U = Anki.Cozmo.G2U;
+using G2U = Anki.Cozmo.ExternalInterface;
 using U2G = Anki.Cozmo.U2G;
 
 /// <summary>
@@ -60,7 +60,7 @@ public abstract class ChannelBase {
 	/// <summary>
 	/// Occurs when a valid message is received from the client.
 	/// </summary>
-	public event Action<G2U.Message> MessageReceived;
+	public event Action<G2U.MessageEngineToGame> MessageReceived;
 
 	/// <summary>
 	/// True when there is any network traffic (eg disconnection messages, asynchronous sends cleaning up).
@@ -81,7 +81,7 @@ public abstract class ChannelBase {
 		}
 	}
 
-	protected void RaiseMessageReceived(G2U.Message message)
+	protected void RaiseMessageReceived(G2U.MessageEngineToGame message)
 	{
 		if (MessageReceived != null) {
 			MessageReceived(message);

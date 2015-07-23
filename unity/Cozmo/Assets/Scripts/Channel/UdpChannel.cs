@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using Anki.Cozmo;
-using G2U = Anki.Cozmo.G2U;
+using G2U = Anki.Cozmo.ExternalInterface;
 using U2G = Anki.Cozmo.U2G;
 
 // LostPolygon replacement doesn't seem to work on device
@@ -110,7 +110,7 @@ public class UdpChannel : ChannelBase {
 
 	// various queues
 	private readonly Queue<SocketBufferState> sentBuffers = new Queue<SocketBufferState>(MaxQueuedSends);
-	private readonly Queue<G2U.Message> receivedMessages = new Queue<G2U.Message> (MaxQueuedReceives);
+	private readonly Queue<G2U.MessageEngineToGame> receivedMessages = new Queue<G2U.MessageEngineToGame> (MaxQueuedReceives);
 
 	// lists of pooled objects
 	private readonly List<SocketBufferState> bufferStatePool = new List<SocketBufferState>(BufferStatePoolLength);
@@ -350,7 +350,7 @@ public class UdpChannel : ChannelBase {
 	private void ProcessMessages()
 	{
 		while (receivedMessages.Count > 0) {
-			G2U.Message message = receivedMessages.Dequeue();
+			G2U.MessageEngineToGame message = receivedMessages.Dequeue();
 			try {
 				// can trigger Disconnect, InternalUpdate
 				RaiseMessageReceived(message);
@@ -637,9 +637,9 @@ public class UdpChannel : ChannelBase {
 
 						lastReceiveTime = lastUpdateTime;
 
-						G2U.Message message;
+						G2U.MessageEngineToGame message;
 						try {
-							message = new G2U.Message();
+							message = new G2U.MessageEngineToGame();
 							try {
 								message.Unpack(state.stream);
 							}

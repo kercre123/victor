@@ -4,33 +4,37 @@ using System.Collections;
 using System.Collections.Generic;
 using Vectrosity;
 
+/// <summary>
+/// this component wraps the graphic assets used to display 3d unity representations for cozmo's Cubes
+/// </summary>
 [ExecuteInEditMode]
 public class BuildInstructionsCube : MonoBehaviour {
 
-	[SerializeField] bool debug = false;
+	#region INSPECTOR FIELDS
 
+	[SerializeField] bool debug = false;
 	[SerializeField] VectrosityCube vCube;
 	[SerializeField] MeshRenderer meshCube;
-	
 	[SerializeField] public CubeType cubeType = 0;
 	[SerializeField] public ActiveBlock.Mode activeBlockMode = ActiveBlock.Mode.Off;
 	[SerializeField] public Color baseColor = Color.blue;
 	[SerializeField] public bool isHeld = false;
 	[SerializeField] public bool ignorePosition = false;
+	[SerializeField] SpriteRenderer[] symbols;
+	[SerializeField] SpriteRenderer[] symbolFrames;
+	[SerializeField] MeshRenderer[] activeLights;
+	[SerializeField] public float invalidAlpha = 0.25f;
+	[SerializeField] Material originalBlockMaterial = null;
+	[SerializeField] Material originalCornerMaterial = null;
+	[SerializeField] GameObject checkMarkPrefab = null;
+	
+	#endregion
+	
+	#region PUBLIC MEMBERS
 
 	//if this cube is stacked on another, we store a reference to simplify build validation
 	public BuildInstructionsCube cubeBelow = null;
 	public BuildInstructionsCube cubeAbove = null;
-
-	[SerializeField] SpriteRenderer[] symbols;
-	[SerializeField] SpriteRenderer[] symbolFrames;
-	[SerializeField] MeshRenderer[] activeLights;
-
-	[SerializeField] public float invalidAlpha = 0.25f;
-	[SerializeField] Material originalBlockMaterial = null;
-	[SerializeField] Material originalCornerMaterial = null;
-
-	[SerializeField] GameObject checkMarkPrefab = null;
 
 	public bool isActive { get { return cubeType == CubeType.LIGHT_CUBE; } }
 
@@ -40,20 +44,26 @@ public class BuildInstructionsCube : MonoBehaviour {
 		set { transform.position = (CozmoUtil.Vector3CozmoToUnitySpace(value) / CozmoUtil.BLOCK_LENGTH_MM) * Size; }
 	}
 
-	GameObject checkMark = null;
-
-	CubeType lastCubeType = CubeType.BULLS_EYE;
-	bool lastValidated = false;
-	bool lastHighlighted = false;
-	bool lastHidden = false;
-	ActiveBlock.Mode lastActiveBlockMode = ActiveBlock.Mode.Off;
-	Color lastBaseColor = Color.blue;
-
 	public bool Validated = false;
 	public bool Highlighted = false;
 	public bool Hidden = false;
 	public ObservedObject AssignedObject = null;
 	public float Size = 1f;
+
+	public static List<uint> IDsInUse = new List<uint>(); 
+
+	#endregion
+
+	#region PRIVATE MEMBERS
+
+	GameObject checkMark = null;
+
+	CubeType lastCubeType = CubeType.BULLS_EYE;
+	ActiveBlock.Mode lastActiveBlockMode = ActiveBlock.Mode.Off;
+	bool lastValidated = false;
+	bool lastHighlighted = false;
+	bool lastHidden = false;
+	Color lastBaseColor = Color.blue;
 
 	Material clonedBlockMaterial = null;
 	Material clonedCornerMaterial = null;
@@ -65,7 +75,9 @@ public class BuildInstructionsCube : MonoBehaviour {
 	uint visualizationID_03 = 102;
 	uint visualizationID_04 = 103;
 
-	public static List<uint> IDsInUse = new List<uint>(); 
+	#endregion
+
+	#region MONOBEHAVIOUR CALLBACKS
 
 	void Awake() {
 		if(Application.isPlaying) {
@@ -77,7 +89,17 @@ public class BuildInstructionsCube : MonoBehaviour {
 	}
 
 	void OnEnable() {
-		if(!Application.isPlaying) Initialize();
+		if(!Application.isPlaying) Initialize(); //this is just for previewing in the editor
+	}
+
+	
+	void Update () {
+		if(!initialized) return;
+		if(Dirty()) Refresh();
+		
+		if(checkMark != null) {
+			checkMark.SetActive(Validated);
+		}
 	}
 
 	void OnDestroy() {
@@ -85,67 +107,10 @@ public class BuildInstructionsCube : MonoBehaviour {
 			//ReleaseUIDsForVisualization();
 		//}
 	}
+	
+	#endregion
 
-	void ClaimUIDsForVisualization() {
-		while(IDsInUse.Contains(visualizationID_01)) visualizationID_01 = (uint)Random.Range(0, uint.MaxValue);
-		IDsInUse.Add(visualizationID_01);
-		
-		while(IDsInUse.Contains(visualizationID_02)) visualizationID_02 = (uint)Random.Range(0, uint.MaxValue);
-		IDsInUse.Add(visualizationID_02);
-		
-		while(IDsInUse.Contains(visualizationID_03)) visualizationID_03 = (uint)Random.Range(0, uint.MaxValue);
-		IDsInUse.Add(visualizationID_03);
-		
-		while(IDsInUse.Contains(visualizationID_04)) visualizationID_04 = (uint)Random.Range(0, uint.MaxValue);
-		IDsInUse.Add(visualizationID_04);
-	}
-
-	void ReleaseUIDsForVisualization() {
-		IDsInUse.Remove(visualizationID_01);
-		IDsInUse.Remove(visualizationID_02);
-		IDsInUse.Remove(visualizationID_03);
-		IDsInUse.Remove(visualizationID_04);
-	}
-
-	public void Initialize() {
-		if(initialized) return;
-
-		BoxCollider box = GetComponent<BoxCollider>();
-		Size = box.size.x * transform.lossyScale.x;
-		
-		if(clonedBlockMaterial == null || clonedBlockMaterial.name != originalBlockMaterial.name) {
-			clonedBlockMaterial = new Material(originalBlockMaterial);
-		}
-		
-		if(clonedCornerMaterial == null || clonedBlockMaterial.name != originalCornerMaterial.name) {
-			clonedCornerMaterial = new Material(originalCornerMaterial);
-		}
-
-		lastCubeType = CubeType.BULLS_EYE;
-		lastValidated = false;
-		lastHighlighted = false;
-		lastHidden = false;
-		lastActiveBlockMode = activeBlockMode;
-		lastBaseColor = baseColor;
-
-		meshCube.material = clonedBlockMaterial;
-		foreach(MeshRenderer rend in activeLights) rend.material = clonedCornerMaterial;
-
-		if(Application.isPlaying) vCube.CreateWireFrame();
-		initialized = true;
-		Refresh();
-
-		//Debug.Log(gameObject.name + " BuildInstructionsCube.Initialize");
-	}
-
-	void Update () {
-		if(!initialized) return;
-		if(Dirty()) Refresh();
-
-		if(checkMark != null) {
-			checkMark.SetActive(Validated);
-		}
-	}
+	#region PRIVATE METHODS
 
 	bool Dirty() {
 		if(lastCubeType != cubeType) return true;
@@ -247,6 +212,110 @@ public class BuildInstructionsCube : MonoBehaviour {
 		lastActiveBlockMode = activeBlockMode;
 		lastBaseColor = baseColor;
 	}
+	
+	//these visualization methods were just for debugging in webots, and as such are not currently in use
+	
+	void ClaimUIDsForVisualization() {
+		while(IDsInUse.Contains(visualizationID_01)) visualizationID_01 = (uint)Random.Range(0, uint.MaxValue);
+		IDsInUse.Add(visualizationID_01);
+		
+		while(IDsInUse.Contains(visualizationID_02)) visualizationID_02 = (uint)Random.Range(0, uint.MaxValue);
+		IDsInUse.Add(visualizationID_02);
+		
+		while(IDsInUse.Contains(visualizationID_03)) visualizationID_03 = (uint)Random.Range(0, uint.MaxValue);
+		IDsInUse.Add(visualizationID_03);
+		
+		while(IDsInUse.Contains(visualizationID_04)) visualizationID_04 = (uint)Random.Range(0, uint.MaxValue);
+		IDsInUse.Add(visualizationID_04);
+	}
+	
+	void ReleaseUIDsForVisualization() {
+		IDsInUse.Remove(visualizationID_01);
+		IDsInUse.Remove(visualizationID_02);
+		IDsInUse.Remove(visualizationID_03);
+		IDsInUse.Remove(visualizationID_04);
+	}
+
+	void VisualizeLayoutCube(Vector3 idealPos, Color color) {
+		
+		Vector3 xHalf = CozmoUtil.Vector3UnityToCozmoSpace(transform.right) * CozmoUtil.BLOCK_LENGTH_MM * 0.5f;
+		Vector3 yHalf = CozmoUtil.Vector3UnityToCozmoSpace(transform.forward) * CozmoUtil.BLOCK_LENGTH_MM * 0.5f;
+		Vector3 zHalf = CozmoUtil.Vector3UnityToCozmoSpace(transform.up) * CozmoUtil.BLOCK_LENGTH_MM * 0.5f;
+		
+		Vector3[] topCorners = new Vector3[] {
+			idealPos + xHalf + yHalf + zHalf,
+			idealPos - xHalf + yHalf + zHalf,
+			idealPos - xHalf - yHalf + zHalf,
+			idealPos + xHalf - yHalf + zHalf };
+		
+		Vector3[] bottomCorners = new Vector3[] {
+			idealPos + xHalf + yHalf - zHalf,
+			idealPos - xHalf + yHalf - zHalf,
+			idealPos - xHalf - yHalf - zHalf,
+			idealPos + xHalf - yHalf - zHalf };
+		
+		RobotEngineManager.instance.VisualizeQuad(visualizationID_01, CozmoPalette.ColorToUInt(color), topCorners[0], topCorners[1], topCorners[2], topCorners[3]);
+		RobotEngineManager.instance.VisualizeQuad(visualizationID_02, CozmoPalette.ColorToUInt(color), bottomCorners[0], bottomCorners[1], bottomCorners[2], bottomCorners[3]);
+	}
+	
+	void VisualizeActualCube(ObservedObject obj, Color color) {
+		
+		Vector3 pos = obj.WorldPosition;
+		
+		Vector3 xHalf = obj.Right * CozmoUtil.BLOCK_LENGTH_MM * 0.5f;
+		Vector3 yHalf = obj.Forward * CozmoUtil.BLOCK_LENGTH_MM * 0.5f;
+		Vector3 zHalf = obj.Up * CozmoUtil.BLOCK_LENGTH_MM * 0.5f;
+		
+		Vector3[] topCorners = new Vector3[] {
+			pos + xHalf + yHalf + zHalf,
+			pos - xHalf + yHalf + zHalf,
+			pos - xHalf - yHalf + zHalf,
+			pos + xHalf - yHalf + zHalf };
+		
+		Vector3[] bottomCorners = new Vector3[] {
+			pos + xHalf + yHalf - zHalf,
+			pos - xHalf + yHalf - zHalf,
+			pos - xHalf - yHalf - zHalf,
+			pos + xHalf - yHalf - zHalf };
+		
+		RobotEngineManager.instance.VisualizeQuad(visualizationID_03, CozmoPalette.ColorToUInt(color), topCorners[0], topCorners[1], topCorners[2], topCorners[3]);
+		RobotEngineManager.instance.VisualizeQuad(visualizationID_04, CozmoPalette.ColorToUInt(color), bottomCorners[0], bottomCorners[1], bottomCorners[2], bottomCorners[3]);
+	}
+	
+	#endregion
+	
+	#region PUBLIC METHODS
+
+	public void Initialize() {
+		if(initialized) return;
+		
+		BoxCollider box = GetComponent<BoxCollider>();
+		Size = box.size.x * transform.lossyScale.x;
+		
+		if(clonedBlockMaterial == null || clonedBlockMaterial.name != originalBlockMaterial.name) {
+			clonedBlockMaterial = new Material(originalBlockMaterial);
+		}
+		
+		if(clonedCornerMaterial == null || clonedBlockMaterial.name != originalCornerMaterial.name) {
+			clonedCornerMaterial = new Material(originalCornerMaterial);
+		}
+		
+		lastCubeType = CubeType.BULLS_EYE;
+		lastValidated = false;
+		lastHighlighted = false;
+		lastHidden = false;
+		lastActiveBlockMode = activeBlockMode;
+		lastBaseColor = baseColor;
+		
+		meshCube.material = clonedBlockMaterial;
+		foreach(MeshRenderer rend in activeLights) rend.material = clonedCornerMaterial;
+		
+		if(Application.isPlaying) vCube.CreateWireFrame();
+		initialized = true;
+		Refresh();
+		
+		//Debug.Log(gameObject.name + " BuildInstructionsCube.Initialize");
+	}
 
 	public bool SatisfiedByObject(ObservedObject obj, float flatFudge, float verticalFudge, float angleFudge, bool allowCardinalAngleOffsets=true, bool debug=false) {
 
@@ -343,50 +412,6 @@ public class BuildInstructionsCube : MonoBehaviour {
 		return idealPos;
 	}
 
-	void VisualizeLayoutCube(Vector3 idealPos, Color color) {
-		
-		Vector3 xHalf = CozmoUtil.Vector3UnityToCozmoSpace(transform.right) * CozmoUtil.BLOCK_LENGTH_MM * 0.5f;
-		Vector3 yHalf = CozmoUtil.Vector3UnityToCozmoSpace(transform.forward) * CozmoUtil.BLOCK_LENGTH_MM * 0.5f;
-		Vector3 zHalf = CozmoUtil.Vector3UnityToCozmoSpace(transform.up) * CozmoUtil.BLOCK_LENGTH_MM * 0.5f;
-		
-		Vector3[] topCorners = new Vector3[] {
-			idealPos + xHalf + yHalf + zHalf,
-			idealPos - xHalf + yHalf + zHalf,
-			idealPos - xHalf - yHalf + zHalf,
-			idealPos + xHalf - yHalf + zHalf };
-		
-		Vector3[] bottomCorners = new Vector3[] {
-			idealPos + xHalf + yHalf - zHalf,
-			idealPos - xHalf + yHalf - zHalf,
-			idealPos - xHalf - yHalf - zHalf,
-			idealPos + xHalf - yHalf - zHalf };
-		
-		RobotEngineManager.instance.VisualizeQuad(visualizationID_01, CozmoPalette.ColorToUInt(color), topCorners[0], topCorners[1], topCorners[2], topCorners[3]);
-		RobotEngineManager.instance.VisualizeQuad(visualizationID_02, CozmoPalette.ColorToUInt(color), bottomCorners[0], bottomCorners[1], bottomCorners[2], bottomCorners[3]);
-	}
-
-	void VisualizeActualCube(ObservedObject obj, Color color) {
-		
-		Vector3 pos = obj.WorldPosition;
-
-		Vector3 xHalf = obj.Right * CozmoUtil.BLOCK_LENGTH_MM * 0.5f;
-		Vector3 yHalf = obj.Forward * CozmoUtil.BLOCK_LENGTH_MM * 0.5f;
-		Vector3 zHalf = obj.Up * CozmoUtil.BLOCK_LENGTH_MM * 0.5f;
-		
-		Vector3[] topCorners = new Vector3[] {
-			pos + xHalf + yHalf + zHalf,
-			pos - xHalf + yHalf + zHalf,
-			pos - xHalf - yHalf + zHalf,
-			pos + xHalf - yHalf + zHalf };
-		
-		Vector3[] bottomCorners = new Vector3[] {
-			pos + xHalf + yHalf - zHalf,
-			pos - xHalf + yHalf - zHalf,
-			pos - xHalf - yHalf - zHalf,
-			pos + xHalf - yHalf - zHalf };
-		
-		RobotEngineManager.instance.VisualizeQuad(visualizationID_03, CozmoPalette.ColorToUInt(color), topCorners[0], topCorners[1], topCorners[2], topCorners[3]);
-		RobotEngineManager.instance.VisualizeQuad(visualizationID_04, CozmoPalette.ColorToUInt(color), bottomCorners[0], bottomCorners[1], bottomCorners[2], bottomCorners[3]);
-	}
+	#endregion
 
 }

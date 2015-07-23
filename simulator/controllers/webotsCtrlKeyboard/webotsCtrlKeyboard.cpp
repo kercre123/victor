@@ -20,7 +20,7 @@
 
 #include "anki/vision/basestation/image.h"
 
-#include "anki/cozmo/messageBuffers/game/UiMessagesG2U.h"
+#include "clad/externalInterface/messageEngineToGame.h"
 #include "anki/cozmo/messageBuffers/game/UiMessagesU2G.h"
 #include "anki/messaging/shared/TcpClient.h"
 #include "anki/cozmo/game/comms/gameMessageHandler.h"
@@ -28,7 +28,7 @@
 
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/block.h"
-#include "anki/cozmo/messageBuffers/shared/actionTypes.h"
+#include "clad/types/actionTypes.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -247,12 +247,12 @@ namespace Anki {
       
       // TODO: Update these not to need robotID
       
-      void HandleRobotStateUpdate(G2U::RobotState const& msg)
+      void HandleRobotStateUpdate(ExternalInterface::RobotState const& msg)
       {
         robotPosition_ = {msg.pose_x, msg.pose_y};
       }
       
-      void HandleRobotObservedObject(G2U::RobotObservedObject const& msg)
+      void HandleRobotObservedObject(ExternalInterface::RobotObservedObject const& msg)
       {
         if(cozmoCam_ == nullptr) {
           printf("RECEIVED OBJECT OBSERVED: objectID %d\n", msg.objectID);
@@ -287,17 +287,17 @@ namespace Anki {
         }
       }
       
-      void HandleRobotObservedNothing(G2U::RobotObservedNothing const& msg)
+      void HandleRobotObservedNothing(ExternalInterface::RobotObservedNothing const& msg)
       {
         currentlyObservedObject.Reset();
       }
       
-      void HandleRobotDeletedObject(G2U::RobotDeletedObject const& msg)
+      void HandleRobotDeletedObject(ExternalInterface::RobotDeletedObject const& msg)
       {
         printf("Robot %d reported deleting object %d\n", msg.robotID, msg.objectID);
       }
 
-      void HandleRobotConnection(const G2U::RobotAvailable& msgIn)
+      void HandleRobotConnection(const ExternalInterface::RobotAvailable& msgIn)
       {
         // Just send a message back to the game to connect to any robot that's
         // advertising (since we don't have a selection mechanism here)
@@ -309,7 +309,7 @@ namespace Anki {
         SendMessage(message);
       }
       
-      void HandleUiDeviceConnection(const G2U::UiDeviceAvailable& msgIn)
+      void HandleUiDeviceConnection(const ExternalInterface::UiDeviceAvailable& msgIn)
       {
         // Just send a message back to the game to connect to any UI device that's
         // advertising (since we don't have a selection mechanism here)
@@ -321,13 +321,13 @@ namespace Anki {
         SendMessage(message);
       }
       
-      void HandleRobotConnected(G2U::RobotConnected const &msg)
+      void HandleRobotConnected(ExternalInterface::RobotConnected const &msg)
       {
         // Once robot connects, set resolution
         SendSetRobotImageSendMode(ISM_STREAM);
       }
       
-      void HandleRobotCompletedAction(const G2U::RobotCompletedAction& msg)
+      void HandleRobotCompletedAction(const ExternalInterface::RobotCompletedAction& msg)
       {
         const bool success = (ActionResult)msg.result == ActionResult::SUCCESS;
         switch((RobotActionType)msg.actionType)
@@ -368,7 +368,7 @@ namespace Anki {
       
       // For processing image chunks arriving from robot.
       // Sends complete images to VizManager for visualization (and possible saving).
-      void HandleImageChunk(G2U::ImageChunk const& msg)
+      void HandleImageChunk(ExternalInterface::ImageChunk const& msg)
       {
         const bool isImageReady = _imageDeChunker.AppendChunk(msg.imageId, msg.frameTimeStamp, msg.nrows, msg.ncols, (Vision::ImageEncoding_t)msg.imageEncoding, msg.imageChunkCount, msg.chunkId, msg.data, msg.chunkSize);
         
@@ -422,19 +422,19 @@ namespace Anki {
       } // HandleImageChunk()
       
       
-      void HandleActiveObjectMoved(G2U::ActiveObjectMoved const& msg)
+      void HandleActiveObjectMoved(ExternalInterface::ActiveObjectMoved const& msg)
       {
        PRINT_NAMED_INFO("HandleActiveObjectMoved", "Received message that object %d moved. Accel=(%f,%f,%f). UpAxis=%d\n",
                         msg.objectID, msg.xAccel, msg.yAccel, msg.zAccel, msg.upAxis);
       }
       
-      void HandleActiveObjectStoppedMoving(G2U::ActiveObjectStoppedMoving const& msg)
+      void HandleActiveObjectStoppedMoving(ExternalInterface::ActiveObjectStoppedMoving const& msg)
       {
         PRINT_NAMED_INFO("HandleActiveObjectStoppedMoving", "Received message that object %d stopped moving%s. UpAxis=%d\n",
                          msg.objectID, (msg.rolled ? " and rolled" : ""), msg.upAxis);
       }
       
-      void HandleActiveObjectTapped(G2U::ActiveObjectTapped const& msg)
+      void HandleActiveObjectTapped(ExternalInterface::ActiveObjectTapped const& msg)
       {
         PRINT_NAMED_INFO("HandleActiveObjectTapped", "Received message that object %d was tapped %d times.\n",
                          msg.objectID, msg.numTaps);
@@ -476,39 +476,39 @@ namespace Anki {
         
         // Register callbacks for incoming messages from game
         // TODO: Have CLAD generate this?
-        msgHandler_.RegisterCallbackForMessage([](const G2U::Message& message) {
+        msgHandler_.RegisterCallbackForMessage([](const ExternalInterface::MessageEngineToGame& message) {
           switch (message.GetTag()) {
-            case G2U::Message::Tag::RobotConnected:
+            case ExternalInterface::MessageEngineToGame::Tag::RobotConnected:
               HandleRobotConnected(message.Get_RobotConnected());
               break;
-            case G2U::Message::Tag::RobotState:
+            case ExternalInterface::MessageEngineToGame::Tag::RobotState:
               HandleRobotStateUpdate(message.Get_RobotState());
               break;
-            case G2U::Message::Tag::RobotObservedObject:
+            case ExternalInterface::MessageEngineToGame::Tag::RobotObservedObject:
               HandleRobotObservedObject(message.Get_RobotObservedObject());
               break;
-            case G2U::Message::Tag::UiDeviceAvailable:
+            case ExternalInterface::MessageEngineToGame::Tag::UiDeviceAvailable:
               HandleUiDeviceConnection(message.Get_UiDeviceAvailable());
               break;
-            case G2U::Message::Tag::RobotAvailable:
+            case ExternalInterface::MessageEngineToGame::Tag::RobotAvailable:
               HandleRobotConnection(message.Get_RobotAvailable());
               break;
-            case G2U::Message::Tag::ImageChunk:
+            case ExternalInterface::MessageEngineToGame::Tag::ImageChunk:
               HandleImageChunk(message.Get_ImageChunk());
               break;
-            case G2U::Message::Tag::RobotDeletedObject:
+            case ExternalInterface::MessageEngineToGame::Tag::RobotDeletedObject:
               HandleRobotDeletedObject(message.Get_RobotDeletedObject());
               break;
-            case G2U::Message::Tag::RobotCompletedAction:
+            case ExternalInterface::MessageEngineToGame::Tag::RobotCompletedAction:
               HandleRobotCompletedAction(message.Get_RobotCompletedAction());
               break;
-            case G2U::Message::Tag::ActiveObjectMoved:
+            case ExternalInterface::MessageEngineToGame::Tag::ActiveObjectMoved:
               HandleActiveObjectMoved(message.Get_ActiveObjectMoved());
               break;
-            case G2U::Message::Tag::ActiveObjectStoppedMoving:
+            case ExternalInterface::MessageEngineToGame::Tag::ActiveObjectStoppedMoving:
               HandleActiveObjectStoppedMoving(message.Get_ActiveObjectStoppedMoving());
               break;
-            case G2U::Message::Tag::ActiveObjectTapped:
+            case ExternalInterface::MessageEngineToGame::Tag::ActiveObjectTapped:
               HandleActiveObjectTapped(message.Get_ActiveObjectTapped());
               break;
             default:
@@ -1399,7 +1399,30 @@ namespace Anki {
               }
               case (s32)'#':
               {
-                SendAnimation("ANIM_BLINK", 0);
+                U2G::QueueSingleAction msg1;
+                msg1.robotID = 1;
+                msg1.inSlot = 1;
+                msg1.position = QueueActionPosition::NEXT;
+                msg1.actionType = RobotActionType::PLAY_ANIMATION;
+                msg1.action.playAnimation.animationName = "ANIM_TEST";
+                msg1.action.playAnimation.numLoops = 1;
+                
+                U2G::QueueSingleAction msg2;
+                msg2.robotID = 1;
+                msg2.inSlot = 1;
+                msg2.position = QueueActionPosition::NEXT;
+                msg2.actionType = RobotActionType::PLAY_ANIMATION;
+                msg2.action.playAnimation.animationName = "ANIM_TEST";
+                msg2.action.playAnimation.numLoops = 1;
+                
+                U2G::Message msgWrapper;
+                msgWrapper.Set_QueueSingleAction(msg1);
+                SendMessage(msgWrapper);
+                
+                msgWrapper.Set_QueueSingleAction(msg2);
+                SendMessage(msgWrapper);
+                
+                //SendAnimation("ANIM_BLINK", 0);
                 break;
               }
               case (s32)'$':
