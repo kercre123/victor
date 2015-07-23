@@ -11,7 +11,6 @@
 #include "anki/cozmo/robot/hal.h"
 #include "speedController.h"
 #include "steeringController.h"
-#include "visionSystem.h"
 
 
 #define DEBUG_PAP_CONTROLLER 0
@@ -37,16 +36,13 @@ namespace Anki {
         // The distance from the last-observed position of the target that we'd
         // like to be after backing out
         const f32 BACKOUT_DISTANCE_MM = 75.f;
-        const f32 BACKOUT_SPEED_MMPS = 40;
+        const f32 BACKOUT_SPEED_MMPS = 60;
         
         const f32 RAMP_TRAVERSE_SPEED_MMPS = 40;
         const f32 ON_RAMP_ANGLE_THRESH = 0.15;
         const f32 OFF_RAMP_ANGLE_THRESH = 0.05;
         
         const f32 BRIDGE_TRAVERSE_SPEED_MMPS = 40;
-        
-        const f32 LOW_DOCKING_HEAD_ANGLE  = DEG_TO_RAD_F32(-18);
-        const f32 HIGH_DOCKING_HEAD_ANGLE = DEG_TO_RAD_F32(17);
         
         // Distance at which robot should start driving blind
         // along last generated docking path during DA_PICKUP_HIGH.
@@ -56,6 +52,9 @@ namespace Anki {
         // along last generated docking path during PICKUP_LOW and PLACE_HIGH.
         const u32 LOW_DOCK_POINT_OF_NO_RETURN_DIST_MM = ORIGIN_TO_LOW_LIFT_DIST_MM + 20;
 
+        const f32 DEFAULT_LIFT_SPEED_RAD_PER_SEC = 1.5;
+        const f32 DEFAULT_LIFT_ACCEL_RAD_PER_SEC2 = 10;
+        
         Mode mode_ = IDLE;
         
         DockAction_t action_ = DA_PICKUP_LOW;
@@ -63,20 +62,12 @@ namespace Anki {
         Embedded::Point2f ptStamp_;
         Radians angleStamp_;
         
-        Vision::MarkerType dockToMarker_;
-        Vision::MarkerType dockToMarker2_;  // 2nd marker used for bridge crossing only
-        f32 markerWidth_ = 0;
         f32 dockOffsetDistX_ = 0;
         f32 dockOffsetDistY_ = 0;
         f32 dockOffsetAng_ = 0;
         
         // Last seen marker pose used for bridge crossing
         f32 relMarkerX_, relMarkerY_, relMarkerAng_;
-        
-        // Expected location of the desired dock marker in the image.
-        // If not specified, marker may be located anywhere in the image.
-        Embedded::Point2f markerCenter_;
-        f32 pixelSearchRadius_;
         
         CarryState_t carryState_ = CARRY_NONE;
         bool lastActionSucceeded_ = false;
@@ -150,7 +141,7 @@ namespace Anki {
         PRINT("PAP: Last marker dist = %.1fmm. Starting %.1fmm backout (%.2fsec duration)\n",
               relMarkerX_, backoutDist_mm, backoutTime_sec);
         
-        transitionTime_ = HAL::GetMicroCounter() + (backoutTime_sec*1e6);
+        transitionTime_ = HAL::GetTimeStamp() + (backoutTime_sec*1e3);
         
         SteeringController::ExecuteDirectDrive(-BACKOUT_SPEED_MMPS, -BACKOUT_SPEED_MMPS);
         
@@ -175,40 +166,41 @@ namespace Anki {
             PRINT("PAP: SETTING LIFT PREDOCK (action %d)\n", action_);
 #endif
             mode_ = MOVING_LIFT_PREDOCK;
+            LiftController::SetMaxSpeedAndAccel(DEFAULT_LIFT_SPEED_RAD_PER_SEC, DEFAULT_LIFT_ACCEL_RAD_PER_SEC2);
             switch(action_) {
               case DA_PICKUP_LOW:
                 LiftController::SetDesiredHeight(LIFT_HEIGHT_LOWDOCK);
-                HeadController::SetDesiredAngle(LOW_DOCKING_HEAD_ANGLE);
                 dockOffsetDistX_ = ORIGIN_TO_LOW_LIFT_DIST_MM;
                 break;
               case DA_PICKUP_HIGH:
                 // This action starts by lowering the lift and tracking the high block
                 LiftController::SetDesiredHeight(LIFT_HEIGHT_LOWDOCK);
-                HeadController::SetDesiredAngle(HIGH_DOCKING_HEAD_ANGLE);
                 dockOffsetDistX_ = ORIGIN_TO_HIGH_LIFT_DIST_MM;
                 break;
               case DA_PLACE_LOW:
                 LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY);
-                HeadController::SetDesiredAngle(LOW_DOCKING_HEAD_ANGLE);
                 break;
               case DA_PLACE_HIGH:
                 LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY);
-                HeadController::SetDesiredAngle(LOW_DOCKING_HEAD_ANGLE);
                 dockOffsetDistX_ = ORIGIN_TO_HIGH_PLACEMENT_DIST_MM;
+                break;
+              case DA_ROLL_LOW:
+                LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY);
+                dockOffsetDistX_ = ORIGIN_TO_LOW_ROLL_DIST_MM;
                 break;
               case DA_RAMP_ASCEND:
                 LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY);
-                HeadController::SetDesiredAngle(LOW_DOCKING_HEAD_ANGLE);
                 dockOffsetDistX_ = 0;
                 break;
               case DA_RAMP_DESCEND:
                 LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY);
-                HeadController::SetDesiredAngle(MIN_HEAD_ANGLE);
                 dockOffsetDistX_ = 30; // can't wait until we are actually on top of the marker to say we're done!
                 break;
               case DA_CROSS_BRIDGE:
-                HeadController::SetDesiredAngle(MIN_HEAD_ANGLE);
                 dockOffsetDistX_ = BRIDGE_ALIGNED_MARKER_DISTANCE;
+                break;
+              case DA_MOUNT_CHARGER:
+                dockOffsetDistX_ = CHARGER_ALIGNED_MARKER_DISTANCE;
                 break;
               default:
                 PRINT("ERROR: Unknown PickAndPlaceAction %d\n", action_);
@@ -233,7 +225,10 @@ namespace Anki {
                 // When we are "docking" with a ramp or crossing a bridge, we
                 // don't want to worry about the X angle being large (since we
                 // _expect_ it to be large, since the markers are facing upward).
-                const bool checkAngleX = !(action_ == DA_RAMP_ASCEND || action_ == DA_RAMP_DESCEND || action_ == DA_CROSS_BRIDGE);
+                const bool checkAngleX = !(action_ == DA_RAMP_ASCEND ||
+                                           action_ == DA_RAMP_DESCEND ||
+                                           action_ == DA_CROSS_BRIDGE ||
+                                           action_ == DA_MOUNT_CHARGER);
                 
                 // Set the distance to the marker beyond which
                 // we should ignore docking error signals since the lift occludes our view anyway.
@@ -249,27 +244,11 @@ namespace Anki {
                     break;
                 }
 
-                if (pixelSearchRadius_ < 0) {
-                  DockingController::StartDocking(dockToMarker_,
-                                                  markerWidth_,
-                                                  dockOffsetDistX_,
-                                                  dockOffsetDistY_,
-                                                  dockOffsetAng_,
-                                                  checkAngleX,
-                                                  useManualSpeed_,
-                                                  pointOfNoReturnDist);
-                } else {
-                  DockingController::StartDocking(dockToMarker_,
-                                                  markerWidth_,
-                                                  markerCenter_,
-                                                  pixelSearchRadius_,
-                                                  dockOffsetDistX_,
-                                                  dockOffsetDistY_,
-                                                  dockOffsetAng_,
-                                                  checkAngleX,
-                                                  useManualSpeed_,
-                                                  pointOfNoReturnDist);
-                }
+                DockingController::StartDocking(dockOffsetDistX_,
+                                                dockOffsetDistY_,
+                                                dockOffsetAng_,
+                                                useManualSpeed_,
+                                                pointOfNoReturnDist);
               }
               mode_ = DOCKING;
 #if(DEBUG_PAP_CONTROLLER)
@@ -310,6 +289,13 @@ namespace Anki {
                   // Start driving forward (blindly) -- wheel guides!
                   SteeringController::ExecuteDirectDrive(BRIDGE_TRAVERSE_SPEED_MMPS, BRIDGE_TRAVERSE_SPEED_MMPS);
                   mode_ = ENTER_BRIDGE;
+                } else if (action_ == DA_MOUNT_CHARGER) {
+                  #if(DEBUG_PAP_CONTROLLER)
+                  PRINT("PAP: MOUNT_CHARGER\n");
+                  #endif
+                  f32 targetAngle = (Localization::GetCurrentMatOrientation() + PI_F).ToFloat();
+                  SteeringController::ExecutePointTurn(targetAngle, 2, 10, 10, true);
+                  mode_ = ROTATE_FOR_CHARGER_APPROACH;
                 } else {
                   #if(DEBUG_PAP_CONTROLLER)
                   PRINT("PAP: SET_LIFT_POSTDOCK\n");
@@ -326,7 +312,6 @@ namespace Anki {
                 // TODO: Send BTLE message notifying failure
                 
                 PRINT("PAP: Docking failed while picking/placing high or low. Backing out.\n");
-                VisionSystem::StopTracking();
                 
                 // Send failed pickup or place message
                 switch(action_)
@@ -340,6 +325,7 @@ namespace Anki {
                     
                   case DA_PLACE_LOW:
                   case DA_PLACE_HIGH:
+                  case DA_ROLL_LOW:
                   {
                     SendBlockPlacedMessage(false);
                     break;
@@ -369,25 +355,29 @@ namespace Anki {
 #if(DEBUG_PAP_CONTROLLER)
             PRINT("PAP: SETTING LIFT POSTDOCK\n");
 #endif
+            mode_ = MOVING_LIFT_POSTDOCK;
             switch(action_) {
               case DA_PLACE_LOW:
               {
                 LiftController::SetDesiredHeight(LIFT_HEIGHT_LOWDOCK);
-                mode_ = MOVING_LIFT_POSTDOCK;
                 break;
               }
               case DA_PICKUP_LOW:
               case DA_PICKUP_HIGH:
               {
                 LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY);
-                mode_ = MOVING_LIFT_POSTDOCK;
                 break;
               }
-                
               case DA_PLACE_HIGH:
               {
-                LiftController::SetDesiredHeight(LIFT_HEIGHT_HIGHDOCK - LIFT_PLACE_HIGH_SLOP);
-                mode_ = MOVING_LIFT_POSTDOCK;
+                LiftController::SetDesiredHeight(LIFT_HEIGHT_HIGHDOCK);
+                break;
+              }
+              case DA_ROLL_LOW:
+              {
+                LiftController::SetMaxSpeedAndAccel(0.75, 100);
+                LiftController::SetDesiredHeight(LIFT_HEIGHT_LOWDOCK);
+                mode_ = MOVING_LIFT_FOR_ROLL;
                 break;
               }
               default:
@@ -397,9 +387,18 @@ namespace Anki {
             }
             break;
           }
-            
+          case MOVING_LIFT_FOR_ROLL:
+          {
+            if (LiftController::GetHeightMM() <= LIFT_HEIGHT_LOW_ROLL) {
+              SteeringController::ExecuteDirectDrive(-60, -60);
+              mode_ = MOVING_LIFT_POSTDOCK;
+            }
+            break;
+          }
           case MOVING_LIFT_POSTDOCK:
             if (LiftController::IsInPosition()) {
+              LiftController::SetMaxSpeedAndAccel(DEFAULT_LIFT_SPEED_RAD_PER_SEC, DEFAULT_LIFT_ACCEL_RAD_PER_SEC2);
+              
               // Backup after picking or placing,
               // and move the head to a position to admire our work
               
@@ -414,8 +413,9 @@ namespace Anki {
                 } // HIGH
                 case DA_PICKUP_LOW:
                 case DA_PLACE_LOW:
+                case DA_ROLL_LOW:
                 {
-                  HeadController::SetDesiredAngle(DEG_TO_RAD(-20));
+                  HeadController::SetDesiredAngle(DEG_TO_RAD(-15));
                   break;
                 } // LOW
                 default:
@@ -436,6 +436,7 @@ namespace Anki {
 
                 case DA_PLACE_LOW:
                 case DA_PLACE_HIGH:
+                case DA_ROLL_LOW:
                 {
                   SendBlockPlacedMessage(true);
                   carryState_ = CARRY_NONE;
@@ -453,36 +454,13 @@ namespace Anki {
             break;
             
           case BACKOUT:
-            if (HAL::GetMicroCounter() > transitionTime_)
+            if (HAL::GetTimeStamp() > transitionTime_)
             {
               SteeringController::ExecuteDirectDrive(0,0);
               
               if (HeadController::IsInPosition()) {
-                switch(action_) {
-                  case DA_PLACE_LOW:
-                  case DA_PICKUP_LOW:
-                  case DA_PICKUP_HIGH:
-                    mode_ = IDLE;
-                    lastActionSucceeded_ = true;
-                    //isCarryingBlock_ = true;
-                    break;
-                  case DA_PLACE_HIGH:
-                    if(lastActionSucceeded_) {
-                      LiftController::SetDesiredHeight(LIFT_HEIGHT_LOWDOCK);
-                      mode_ = LOWER_LIFT;
-                    } else {
-                      mode_ = IDLE;
-                      lastActionSucceeded_ = true;
-                    }
-                    #if(DEBUG_PAP_CONTROLLER)
-                    PRINT("PAP: LOWERING LIFT\n");
-                    #endif
-                    break;
-                  default:
-                    PRINT("ERROR: Reached BACKUP unexpectedly (action = %d)\n", action_);
-                    mode_ = IDLE;
-                    break;
-                }
+                mode_ = IDLE;
+                lastActionSucceeded_ = true;
               }
             }
             break;
@@ -523,7 +501,7 @@ namespace Anki {
             // Keep driving until the marker on the other side of the bridge is seen.
             if ( Localization::GetDistTo(ptStamp_.x, ptStamp_.y) > BRIDGE_ALIGNED_MARKER_DISTANCE) {
               // Set vision marker to look for marker
-              DockingController::StartTrackingOnly(dockToMarker2_, markerWidth_);
+              //DockingController::StartTrackingOnly(dockToMarker2_, markerWidth_);
               UpdatePoseSnapshot();
               mode_ = TRAVERSE_BRIDGE;
               #if(DEBUG_PAP_CONTROLLER)
@@ -545,7 +523,7 @@ namespace Anki {
               }
             } else {
               // Marker tracking timedout. Start it again.
-              DockingController::StartTrackingOnly(dockToMarker2_, markerWidth_);
+              //DockingController::StartTrackingOnly(dockToMarker2_, markerWidth_);
               #if(DEBUG_PAP_CONTROLLER)
               PRINT("TRAVERSE_BRIDGE: Restarting tracking\n");
               #endif
@@ -562,7 +540,31 @@ namespace Anki {
               Localization::SetOnBridge(false);
             }
             break;
-            
+          case ROTATE_FOR_CHARGER_APPROACH:
+            if (SteeringController::GetMode() != SteeringController::SM_POINT_TURN) {
+              // Move lift up, otherwise it drags on the ground when the robot gets on the ramp
+              LiftController::SetDesiredHeight(LIFT_HEIGHT_LOWDOCK + 15);
+              
+              // Start backing into charger
+              SteeringController::ExecuteDirectDrive(-30, -30);
+              transitionTime_ = HAL::GetTimeStamp() + 8000;
+              
+              mode_ = BACKUP_ON_CHARGER;
+            }
+            break;
+          case BACKUP_ON_CHARGER:
+            if (HAL::GetTimeStamp() > transitionTime_) {
+              PRINT("BACKUP_ON_CHARGER timeout\n");
+              SteeringController::ExecuteDirectDrive(0, 0);
+              mode_ = IDLE;
+              
+              // TODO: Some kind of recovery?
+              // ...
+            } else if (HAL::BatteryIsOnCharger()) {
+              SteeringController::ExecuteDirectDrive(0, 0);
+              lastActionSucceeded_ = true;
+            }
+            break;
           default:
             mode_ = IDLE;
             PRINT("Reached default case in DockingController "
@@ -598,14 +600,11 @@ namespace Anki {
         return carryState_;
       }
       
-      void DockToBlock(const Vision::MarkerType markerType,
-                       const Vision::MarkerType markerType2,
-                       const f32 markerWidth_mm,
-                       const bool useManualSpeed,
+      void DockToBlock(const bool useManualSpeed,
                        const DockAction_t action)
       {
 #if(DEBUG_PAP_CONTROLLER)
-        PRINT("PAP: DOCK TO BLOCK %d (action %d)\n", markerType, action);
+        PRINT("PAP: DOCK TO BLOCK (action %d)\n", action);
 #endif
 
         if (action == DA_PLACE_LOW) {
@@ -614,13 +613,6 @@ namespace Anki {
         }
         
         action_ = action;
-        dockToMarker_ = markerType;
-        dockToMarker2_ = markerType2;
-        markerWidth_  = markerWidth_mm;
-        
-        markerCenter_.x = -1.f;
-        markerCenter_.y = -1.f;
-        pixelSearchRadius_ = -1.f;
         
         dockOffsetDistX_ = 0;
         dockOffsetDistY_ = 0;
@@ -633,20 +625,7 @@ namespace Anki {
         mode_ = SET_LIFT_PREDOCK;
         lastActionSucceeded_ = false;
       }
-      
-      void DockToBlock(const Vision::MarkerType markerType,
-                       const Vision::MarkerType markerType2,
-                       const f32 markerWidth_mm,
-                       const Embedded::Point2f& markerCenter,
-                       const f32 pixelSearchRadius,
-                       const bool useManualSpeed,
-                       const DockAction_t action)
-      {
-        DockToBlock(markerType, markerType2, markerWidth_mm, useManualSpeed, action);
-        
-        markerCenter_ = markerCenter;
-        pixelSearchRadius_ = pixelSearchRadius;
-      }
+
       
       void PlaceOnGround(const f32 rel_x, const f32 rel_y, const f32 rel_angle, const bool useManualSpeed)
       {

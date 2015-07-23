@@ -18,7 +18,6 @@
 
 #include "anki/vision/MarkerCodeDefinitions.h"
 
-#include "visionSystem.h"
 
 namespace Anki {
   using namespace Embedded;
@@ -35,20 +34,20 @@ namespace Anki {
       
       Result SendTrackInit(const Array<u8> &image,
                            const Quadrilateral<f32>& quad);
-      
+      /*
       Result SendTrackInit(const Array<u8> &image,
                            const VisionSystem::Tracker& tracker,
                            MemoryStack scratch);
-      
+      */
       Result SendTrack(const Array<u8>& image,
                        const Quadrilateral<f32>& quad,
                        const bool converged);
-      
+      /*
       Result SendTrack(const Array<u8>& image,
                        const VisionSystem::Tracker& tracker,
                        const bool converged,
                        MemoryStack scratch);
-      
+      */
       Result SendTrackerPrediction_Before(const Array<u8>& image,
                                           const Quadrilateral<f32>& quad);
       

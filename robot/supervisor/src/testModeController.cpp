@@ -4,8 +4,6 @@
 #include "anki/cozmo/robot/debug.h"
 #include "pickAndPlaceController.h"
 #include "dockingController.h"
-#include "faceTrackingController.h"
-#include "gripController.h"
 #include "headController.h"
 #include "liftController.h"
 #include "imuFilter.h"
@@ -16,8 +14,8 @@
 #include "speedController.h"
 #include "steeringController.h"
 #include "wheelController.h"
-#include "visionSystem.h"
 #include "animationController.h"
+#include "backpackLightController.h"
 
 #include "anki/common/robot/trig_fast.h"
 
@@ -85,15 +83,15 @@ namespace Anki {
         // Power   LSpeed  RSpeed (approx,In-air speeds)
         // 0.2      0      0
         // 0.25     0      0
-        // 0.3     11      7
-        // 0.35    26     25
-        // 0.4     41     39
-        // 0.5     70     70
-        // 0.6     95     95
-        // 0.7    122    121
-        // 0.8    148    145
-        // 0.9    172    170
-        // 1.0    193    192
+        // 0.3      4      0
+        // 0.35    13     13
+        // 0.4     27     27
+        // 0.5     49     49
+        // 0.6     67     67
+        // 0.7     91     91
+        // 0.8    109    109
+        // 0.9    128    128
+        // 1.0    150    147
         
         // Percent power to step up when
         // DTF_ENABLE_CYCLE_SPEEDS_TEST is enabled
@@ -104,7 +102,7 @@ namespace Anki {
         
         // Percent by which to approach command wheelTargetPower.
         // Make low to prevent motor slamming
-        const u32 WHEEL_POWER_PERCENT_ACCEL = 1;
+        const u32 WHEEL_POWER_PERCENT_ACCEL = 1000;
         
         s32 wheelPower_;
         u32 wheelPowerStep_;
@@ -135,23 +133,32 @@ namespace Anki {
         // 1.0     3.7              3.9
         //
         //
-        // *** Cozmo 2 ***
+        // *** Cozmo 3.2 (stronger lift motor, lower gear reduction) ***
         // Power   UpSpeed (rad/s)  DownSpeed (rad/s)
-        // 0.2     0.3              0.5
-        // 0.3     0.7              0.9
-        // 0.4     1.1              1.3
-        // 0.5     1.5              1.7
-        // 0.6     2.0              2.2
-        // 0.7     2.4              2.6
-        // 0.8     2.8              3.0
-        // 0.9     3.2              3.4
-        // 1.0     3.6              3.8
+        // 0.2     1.0              1.0 (only moved a few degrees)
+        // 0.25    1.5              1.5 (only moved a few degrees)
+        // 0.3     2.0              3.0
+        // 0.35    2.5              3.5
+        // 0.4     3.0              5.0
+        // 0.45    4.0              6.0
+        // 0.5     5.0              7.0
+        // 0.55    6.0              8.0
+        // 0.6     7.0              9.2
+        // 0.65    8.0              10.0
+        // 0.7     9.0              11.0
+        // 0.75    10               12
+        // 0.8     11               13
+        // 0.85    12               14
+        // 0.9     13               14.5
+        // 0.95    14               15
+        // 1.0     15               16
         
         f32 liftPower_ = 1;
         const f32 LIFT_POWER_CMD = 0.2f;
         const f32 LIFT_DES_HIGH_HEIGHT = LIFT_HEIGHT_CARRY - 10;
         const f32 LIFT_DES_LOW_HEIGHT = LIFT_HEIGHT_LOWDOCK + 10;
-        bool liftDoHeightTest_ = false;
+        LiftTestFlags liftTestMode_ = LiftTF_TEST_POWER;
+        s32 liftNodCycleTime_ms_ = 2000;
         //// End of LiftTest  //////
         
         
@@ -164,7 +171,8 @@ namespace Anki {
         const f32 HEAD_POWER_CMD = 0.2;
         const f32 HEAD_DES_HIGH_ANGLE = MAX_HEAD_ANGLE;
         const f32 HEAD_DES_LOW_ANGLE = MIN_HEAD_ANGLE;
-        bool headDoAngleTest_ = false;
+        HeadTestFlags headTestMode_ = HTF_TEST_POWER;
+        s32 headNodCycleTime_ms_ = 2000;
         //// End of HeadTest //////
         
         
@@ -254,18 +262,25 @@ namespace Anki {
         ///// End of IMUTest /////
         
         ///////// AnimationTest ////////
-        AnimationID_t AT_currAnim;
+        //AnimationID_t AT_currAnim;
         const u32 AT_periodTics = 2000;
         
         
         /////// LightTest ////////
         LEDId ledID_ = (LEDId)0;
         u8 ledColorIdx_ = 0;
-        const u8 LED_COLOR_LIST_SIZE = 3;
-        const LEDColor LEDColorList_[LED_COLOR_LIST_SIZE] = {LED_RED, LED_GREEN, LED_BLUE};
+        const u8 LED_COLOR_LIST_SIZE = 4;
+        const LEDColor LEDColorList_[LED_COLOR_LIST_SIZE] = {LED_RED, LED_GREEN, LED_BLUE, LED_OFF};
         
         bool ledCycleTest_ = true;
         ///// End of LightTest ///
+        
+        
+        /////// FaceDisplayTest ////////
+        s32 facePosX_ = 0;
+        s32 facePosY_ = 0;
+        ///// End of FaceDisplayTest ///
+        
         
         // The number of cycles in between printouts
         // in those tests that print something out.
@@ -291,7 +306,7 @@ namespace Anki {
         PRINT("TestMode reset\n");
         
         // Stop animations that might be playing
-        AnimationController::Stop();
+        AnimationController::Clear();
         
         // Stop wheels and vision system
         WheelController::Enable();
@@ -303,15 +318,24 @@ namespace Anki {
         HeadController::Enable();
         HeadController::SetAngularVelocity(0);
         
+        // Backpack lights
+        BackpackLightController::Enable();
+        
         return RESULT_OK;
       }
       
       
       Result PickAndPlaceTestInit()
       {
+        /*
         PRINT("\n==== Starting PickAndPlaceTest =====\n");
         ticCnt_ = 0;
         pickAndPlaceState_ = PAP_WAITING_FOR_PICKUP_BLOCK;
+        return RESULT_OK;
+         */
+        
+        PRINT("\n==== PickAndPlaceTest DISABLED =====\n");
+        Reset();
         return RESULT_OK;
       }
       
@@ -322,7 +346,7 @@ namespace Anki {
           case PAP_WAITING_FOR_PICKUP_BLOCK:
           {
             PRINT("PAPT: Docking to block %d\n", BLOCK_TO_PICK_UP);
-            PickAndPlaceController::DockToBlock(BLOCK_TO_PICK_UP, Vision::MARKER_UNKNOWN, BLOCK_MARKER_WIDTH, useManualSpeed_, PICKUP_ACTION);
+            //PickAndPlaceController::DockToBlock(BLOCK_TO_PICK_UP, Vision::MARKER_UNKNOWN, BLOCK_MARKER_WIDTH, useManualSpeed_, PICKUP_ACTION);
             pickAndPlaceState_ = PAP_DOCKING;
             break;
           }
@@ -331,7 +355,7 @@ namespace Anki {
               if (PickAndPlaceController::DidLastActionSucceed()) {
                 if (PICKUP_ACTION == DA_PICKUP_LOW) {
                   PRINT("PAPT: Placing on other block %d\n", BLOCK_TO_PLACE_ON);
-                  PickAndPlaceController::DockToBlock(BLOCK_TO_PLACE_ON, Vision::MARKER_UNKNOWN, BLOCK_MARKER_WIDTH, useManualSpeed_, DA_PLACE_HIGH);
+                  //PickAndPlaceController::DockToBlock(BLOCK_TO_PLACE_ON, Vision::MARKER_UNKNOWN, BLOCK_MARKER_WIDTH, useManualSpeed_, DA_PLACE_HIGH);
                 } else {
                   PRINT("PAPT: Placing on ground\n");
                   PickAndPlaceController::PlaceOnGround(PLACE_ON_GROUND_DIST_X, PLACE_ON_GROUND_DIST_Y, PLACE_ON_GROUND_DIST_ANG, false);
@@ -349,7 +373,7 @@ namespace Anki {
                 pickAndPlaceState_ = PAP_WAITING_FOR_PICKUP_BLOCK;
               } else {
                 if (PICKUP_ACTION == DA_PICKUP_LOW) {
-                  PickAndPlaceController::DockToBlock(BLOCK_TO_PLACE_ON, Vision::MARKER_UNKNOWN, BLOCK_MARKER_WIDTH, useManualSpeed_, DA_PLACE_HIGH);
+                  //PickAndPlaceController::DockToBlock(BLOCK_TO_PLACE_ON, Vision::MARKER_UNKNOWN, BLOCK_MARKER_WIDTH, useManualSpeed_, DA_PLACE_HIGH);
                   //pickAndPlaceState_ = PAP_PLACING;
                 } else {
                   PickAndPlaceController::PlaceOnGround(PLACE_ON_GROUND_DIST_X, PLACE_ON_GROUND_DIST_Y, PLACE_ON_GROUND_DIST_ANG, false);
@@ -430,6 +454,20 @@ namespace Anki {
       {
         const u32 startDriveTime_us = 500000;
         if (!pathStarted_ && HAL::GetMicroCounter() > startDriveTime_us) {
+
+          /*
+          // Small circle drive test
+          PathFollower::ClearPath();
+          Localization::SetDriveCenterPose(0, 0, PIDIV2_F);
+          f32 speed = 20;
+          f32 radius = WHEEL_DIST_HALF_MM;
+          PathFollower::AppendPathSegment_Arc(0, -radius, 0, radius, 0,    PI_F, speed, PF_ACCEL_MMPS2, PF_DECEL_MMPS2);
+          PathFollower::AppendPathSegment_Arc(0, -radius, 0, radius, PI_F, PI_F, speed, PF_ACCEL_MMPS2, PF_DECEL_MMPS2);
+
+          PathFollower::StartPathTraversal();
+          pathStarted_ = true;
+          return RESULT_OK;
+          */
           
           // Create a path and follow it
           PathFollower::ClearPath();
@@ -644,16 +682,17 @@ namespace Anki {
       }
       
       
-      Result LiftTestInit(s32 flags, s32 printPeriod_ms)
+      Result LiftTestInit(s32 mode, s32 noddingCycleTime_ms, s32 printPeriod_ms)
       {
-        PRINT("\n==== Starting LiftTest (flags = %d, printPeriod_ms = %d)=====\n", flags, printPeriod_ms);
+        PRINT("\n==== Starting LiftTest (flags = %d, printPeriod_ms = %d)=====\n", mode, printPeriod_ms);
         PRINT("!!! REMOVE JTAG CABLE !!!\n");
         ticCnt_ = 0;
         ticCnt2_ = 0;
-        printCyclePeriod_ = printPeriod_ms < TIME_STEP ? 40 : printPeriod_ms / TIME_STEP;
+        printCyclePeriod_ = printPeriod_ms < TIME_STEP ? 10 : printPeriod_ms / TIME_STEP;
         liftPower_ = LIFT_POWER_CMD;
-        liftDoHeightTest_ = flags & LiftTF_TEST_HEIGHTS;
-        if (!liftDoHeightTest_) {
+        liftTestMode_ = (LiftTestFlags)mode;
+        liftNodCycleTime_ms_ = noddingCycleTime_ms == 0 ? 2000 : noddingCycleTime_ms;
+        if (liftTestMode_ == LiftTF_TEST_POWER || liftTestMode_ == LiftTF_DISABLE_MOTOR) {
           LiftController::Disable();
         }
         return RESULT_OK;
@@ -662,44 +701,79 @@ namespace Anki {
       
       Result LiftTestUpdate()
       {
-        static bool up = false;
         
-        // Change direction
-        if (ticCnt_++ >= 3000 / TIME_STEP) {
-          
-
-          if (liftDoHeightTest_) {
-            up = !up;
-            if (up) {
-              PRINT("Lift HIGH %f mm\n", LIFT_DES_HIGH_HEIGHT);
-              LiftController::SetDesiredHeight(LIFT_DES_HIGH_HEIGHT);
-            } else {
-              PRINT("Lift LOW %f mm\n", LIFT_DES_LOW_HEIGHT);
-              LiftController::SetDesiredHeight(LIFT_DES_LOW_HEIGHT);
-            }
-          
-          } else {
-            up = !up;
-            if (up) {
-              PRINT("Lift UP %f power\n", liftPower_);
-              HAL::MotorSetPower(HAL::MOTOR_LIFT, liftPower_);
-            } else {
-              PRINT("Lift DOWN %f power\n", -liftPower_);
-              HAL::MotorSetPower(HAL::MOTOR_LIFT, -liftPower_);
+        switch (liftTestMode_) {
+          case LiftTF_NODDING: {
+            static Radians theta = 0;
+            const f32 lowHeight = LIFT_HEIGHT_LOWDOCK;
+            const f32 highHeight = LIFT_HEIGHT_CARRY;
+            const f32 midHeight = 0.5f * (highHeight + lowHeight);
+            const f32 amplitude = highHeight - midHeight;
+            
+            const f32 thetaStep = 2*PI_F / liftNodCycleTime_ms_ * TIME_STEP;
+            
+            f32 newHeight = amplitude * sinf(theta.ToFloat()) + midHeight;
+            LiftController::SetDesiredHeight(newHeight);
+            theta += thetaStep;
+            
+            break;
+          }
+          case LiftTF_TEST_POWER:
+          case LiftTF_TEST_HEIGHTS:
+          {
+            static bool up = false;
+            
+            // As long as the lift is moving reset the counter
+            if (ABS(LiftController::GetAngularVelocity()) > 0.1f) {
+              ticCnt_ = 0;
             }
             
-
-            // Cycle through different power levels
-            if (!up) {
-              liftPower_ += 0.1;
-              if (liftPower_ >=1.01f) {
-                liftPower_ = LIFT_POWER_CMD;
+            // Change direction
+            if (ticCnt_++ >= 1000 / TIME_STEP) {
+              
+              if (liftTestMode_ == LiftTF_TEST_HEIGHTS) {
+                up = !up;
+                if (up) {
+                  PRINT("Lift HIGH %f mm\n", LIFT_DES_HIGH_HEIGHT);
+                  LiftController::SetDesiredHeight(LIFT_DES_HIGH_HEIGHT);
+                } else {
+                  PRINT("Lift LOW %f mm\n", LIFT_DES_LOW_HEIGHT);
+                  LiftController::SetDesiredHeight(LIFT_DES_LOW_HEIGHT);
+                }
+                
+              } else {
+                up = !up;
+                if (up) {
+                  PRINT("Lift UP %f power\n", liftPower_);
+                  HAL::MotorSetPower(HAL::MOTOR_LIFT, liftPower_);
+                } else {
+                  PRINT("Lift DOWN %f power\n", -liftPower_);
+                  HAL::MotorSetPower(HAL::MOTOR_LIFT, -liftPower_);
+                }
+                
+                
+                // Cycle through different power levels
+                if (!up) {
+                  liftPower_ += 0.05;
+                  if (liftPower_ >=1.01f) {
+                    liftPower_ = LIFT_POWER_CMD;
+                  }
+                }
               }
+              
+              ticCnt_ = 0;
             }
+            break;
           }
-          
-          ticCnt_ = 0;
+          case LiftTF_DISABLE_MOTOR:
+            break;
+          default:
+          {
+            PRINT("WARN: Unknown lift test mode %d\n", liftTestMode_);
+            Reset();
+          }
         }
+        
         
 
         // Print speed
@@ -708,7 +782,9 @@ namespace Anki {
           f32 lSpeed_filt = LiftController::GetAngularVelocity();
           f32 lPos = LiftController::GetAngleRad(); // HAL::MotorGetPosition(HAL::MOTOR_LIFT);
           f32 lHeight = LiftController::GetHeightMM();
-          PRINT("Lift speed %f rad/s, filt_speed %f rad/s, position %f rad, %f mm\n", lSpeed, lSpeed_filt, lPos, lHeight);
+          if (ABS(lSpeed) > 0.001 || ABS(lSpeed_filt) > 0.001) {
+            PRINT("Lift speed %f rad/s, filt_speed %f rad/s, position %f rad, %f mm\n", lSpeed, lSpeed_filt, lPos, lHeight);
+          }
           ticCnt2_ = 0;
         }
 
@@ -764,15 +840,16 @@ namespace Anki {
       }
       
       
-      Result HeadTestInit(s32 flags, s32 printPeriod_ms)
+      Result HeadTestInit(s32 mode, s32 noddingCycleTime_ms, s32 printPeriod_ms)
       {
-        PRINT("\n==== Starting HeadTest (flags = %d, printPeriod_ms = %d)=====\n", flags, printPeriod_ms);
+        PRINT("\n==== Starting HeadTest (flags = %d, printPeriod_ms = %d)=====\n", mode, printPeriod_ms);
         ticCnt_ = 0;
         ticCnt2_ = 0;
         headPower_ = HEAD_POWER_CMD;
         printCyclePeriod_ = printPeriod_ms < TIME_STEP ? 5 : printPeriod_ms / TIME_STEP;
-        headDoAngleTest_ = flags & HTF_TEST_ANGLES;
-        if (!headDoAngleTest_) {
+        headTestMode_ = (HeadTestFlags)mode;
+        headNodCycleTime_ms_ = noddingCycleTime_ms == 0 ? 2000 : noddingCycleTime_ms;
+        if (headTestMode_ == HTF_TEST_POWER) {
           HeadController::Disable();
         }
         return RESULT_OK;
@@ -781,48 +858,80 @@ namespace Anki {
       
       Result HeadTestUpdate()
       {
-        static bool up = false;
         
-        // Change direction
-        if (ticCnt_++ >= 3000 / TIME_STEP) {
-          
-          if (headDoAngleTest_) {
-            up = !up;
-            if (up) {
-              PRINT("Head HIGH %f rad\n", HEAD_DES_HIGH_ANGLE);
-              HeadController::SetDesiredAngle(HEAD_DES_HIGH_ANGLE);
-            } else {
-              PRINT("Head LOW %f rad\n", HEAD_DES_LOW_ANGLE);
-              HeadController::SetDesiredAngle(HEAD_DES_LOW_ANGLE);
-            }
-          } else {
-            up = !up;
-            if (up) {
-              PRINT("Head UP %f power\n", headPower_);
-              HAL::MotorSetPower(HAL::MOTOR_HEAD, headPower_);
-            } else {
-              PRINT("Head DOWN %f power\n", -headPower_);
-              HAL::MotorSetPower(HAL::MOTOR_HEAD, -headPower_);
-            }
+        switch(headTestMode_) {
+          case HTF_TEST_POWER:
+          case HTF_TEST_ANGLES:
+          {
+            static bool up = false;
             
-            // Cycle through different power levels
-            if (!up) {
-              headPower_ += 0.1;
-              if (headPower_ >=1.01f) {
-                headPower_ = HEAD_POWER_CMD;
+            // Change direction
+            if (ticCnt_++ >= 3000 / TIME_STEP) {
+              
+              if (headTestMode_ == HTF_TEST_ANGLES) {
+                up = !up;
+                if (up) {
+                  PRINT("Head HIGH %f rad\n", HEAD_DES_HIGH_ANGLE);
+                  HeadController::SetDesiredAngle(HEAD_DES_HIGH_ANGLE);
+                } else {
+                  PRINT("Head LOW %f rad\n", HEAD_DES_LOW_ANGLE);
+                  HeadController::SetDesiredAngle(HEAD_DES_LOW_ANGLE);
+                }
+              } else {
+                up = !up;
+                if (up) {
+                  PRINT("Head UP %f power\n", headPower_);
+                  HAL::MotorSetPower(HAL::MOTOR_HEAD, headPower_);
+                } else {
+                  PRINT("Head DOWN %f power\n", -headPower_);
+                  HAL::MotorSetPower(HAL::MOTOR_HEAD, -headPower_);
+                }
+                
+                // Cycle through different power levels
+                if (!up) {
+                  headPower_ += 0.1;
+                  if (headPower_ >=1.01f) {
+                    headPower_ = HEAD_POWER_CMD;
+                  }
+                }
               }
+              
+              ticCnt_ = 0;
             }
+
+            break;
           }
-          
-          ticCnt_ = 0;
+          case HTF_NODDING:
+          {
+            static Radians theta = 0;
+            const f32 lowAngle = MAX_HEAD_ANGLE;
+            const f32 highAngle = MIN_HEAD_ANGLE;
+            const f32 midAngle = 0.5f * (highAngle + lowAngle);
+            const f32 amplitude = highAngle - midAngle;
+            
+            const f32 thetaStep = 2*PI_F / headNodCycleTime_ms_ * TIME_STEP;
+            
+            f32 newAngle = amplitude * sinf(theta.ToFloat()) + midAngle;
+            HeadController::SetDesiredAngle(newAngle);
+            theta += thetaStep;
+            
+            break;
+          }
+          default:
+            PRINT("WARN: Unknown head test mode %d\n", headTestMode_);
+            break;
         }
+        
         
         // Print speed
         if (ticCnt2_++ >= printCyclePeriod_) {
           f32 hSpeed = HAL::MotorGetSpeed(HAL::MOTOR_HEAD);
+          f32 hSpeed_filt = HeadController::GetAngularVelocity();
           f32 hPos = HeadController::GetAngleRad();
           
-          PRINT("Head speed %f rad/s, angle %f rad\n", hSpeed, hPos);
+          if (ABS(hSpeed) > 0 || ABS(hSpeed_filt) > 0) {
+            PRINT("Head speed %f rad/s (filt %f rad/s), angle %f rad\n", hSpeed, hSpeed_filt, hPos);
+          }
           ticCnt2_ = 0;
         }
         
@@ -860,8 +969,7 @@ namespace Anki {
         if (++ticCnt_ >= 200 / TIME_STEP) {
           
           // Raw HAL readings
-          HAL::IMU_DataStructure data;
-          HAL::IMUReadData(data);
+          HAL::IMU_DataStructure data = IMUFilter::GetLatestRawData();
           
           PRINT("Gyro (%f,%f,%f) rad/s, (%f,%f,%f) mm/s^2\n",
                 data.rate_x, data.rate_y, data.rate_z,
@@ -880,70 +988,40 @@ namespace Anki {
         return RESULT_OK;
       }
       
-      Result AnimTestInit()
-      {
-        PRINT("\n==== Starting AnimationTest =====\n");
-        AT_currAnim = 0;
-        AnimationController::Play(AT_currAnim, 0);
-        ticCnt_ = 0;
-        return RESULT_OK;
-      }
+//      Result AnimTestInit()
+//      {
+//        PRINT("\n==== Starting AnimationTest =====\n");
+//        AT_currAnim = 0;
+//        AnimationController::Play(AT_currAnim, 0);
+//        ticCnt_ = 0;
+//        return RESULT_OK;
+//      }
       
-      Result AnimTestUpdate()
-      {
-        if (ticCnt_++ > AT_periodTics) {
-          ticCnt_ = 0;
-          
-          AT_currAnim = (AnimationID_t)(AT_currAnim + 1);
-          
-          // Skip undefined animIDs
-          while(!AnimationController::IsDefined(AT_currAnim)) {
-            if (AT_currAnim == AnimationController::MAX_CANNED_ANIMATIONS) {
-              // Go back to start
-              AT_currAnim = 0;
-            } else {
-              // otherwise just incrememnt
-              AT_currAnim = (AnimationID_t)(AT_currAnim + 1);
-            }
-          }
-          
-          PRINT("Playing animation %d\n", AT_currAnim);
-          AnimationController::Play(AT_currAnim, 0);
-        }
-        
-        return RESULT_OK;
-      }
+//      Result AnimTestUpdate()
+//      {
+//        if (ticCnt_++ > AT_periodTics) {
+//          ticCnt_ = 0;
+//          
+//          AT_currAnim = (AnimationID_t)(AT_currAnim + 1);
+//          
+//          // Skip undefined animIDs
+//          while(!AnimationController::IsDefined(AT_currAnim)) {
+//            if (AT_currAnim == AnimationController::MAX_CANNED_ANIMATIONS) {
+//              // Go back to start
+//              AT_currAnim = 0;
+//            } else {
+//              // otherwise just incrememnt
+//              AT_currAnim = (AnimationID_t)(AT_currAnim + 1);
+//            }
+//          }
+//          
+//          PRINT("Playing animation %d\n", AT_currAnim);
+//          AnimationController::Play(AT_currAnim, 0);
+//        }
+//        
+//        return RESULT_OK;
+//      }
       
-      Result GripperTestInit()
-      {
-        PRINT("\n==== Starting GripperTest =====\n");
-        ticCnt_ = 0;
-        return RESULT_OK;
-      }
-      
-      
-      Result GripperTestUpdate()
-      {
-#if defined(HAVE_ACTIVE_GRIPPER) && HAVE_ACTIVE_GRIPPER
-        static bool up = false;
-        
-        // Change direction
-        if (ticCnt_++ >= 4000 / TIME_STEP) {
-          
-          up = !up;
-          if (up) {
-            PRINT("Gripper ENGAGED\n");
-            GripController::EngageGripper();
-          } else {
-            PRINT("Gripper DISENGAGED\n");
-            GripController::DisengageGripper();
-          }
-          
-          ticCnt_ = 0;
-        }
-#endif
-        return RESULT_OK;
-      }
       
       // flags: See LightTestFlags
       // ledID: The LED channel to activate (applies if LTF_CYCLE_ALL not enabled)
@@ -951,6 +1029,7 @@ namespace Anki {
       Result LightTestInit(s32 flags, s32 ledID, s32 color)
       {
         PRINT("\n==== Starting LightTest  (flags = %x, ledID = %d, color = %x) =====\n", flags, ledID, color);
+        BackpackLightController::Disable();
         
         ledCycleTest_ = flags & LTF_CYCLE_ALL;
 
@@ -981,7 +1060,7 @@ namespace Anki {
           
           // Increment led
           ledID_ = (LEDId)((u8)ledID_+1);
-          if (ledID_ == NUM_LEDS) {
+          if (ledID_ == NUM_BACKPACK_LEDS) {
             ledID_ = (LEDId)0;
             
             // Increment color
@@ -996,6 +1075,56 @@ namespace Anki {
         return RESULT_OK;
       }
 
+      
+      Result FaceDisplayTestInit()
+      {
+        PRINT("\n==== Starting FaceDisplayTest =====\n");
+        ticCnt_ = 0;
+        
+        // Draw "programmer art" face until we get real assets
+        u8 faceFrame[] = { 24, 64+24,      // Start 24 lines down and 24 pixels right
+          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
+          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
+          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
+          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
+          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
+          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
+          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
+          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
+          0 };
+
+        // Draw face
+        HAL::FaceAnimate(faceFrame);
+        
+        return RESULT_OK;
+      }
+      
+      Result FaceDisplayTestUpdate()
+      {
+        if (ticCnt_++ == 200) {
+          
+          if (facePosX_ == 0) {
+            facePosX_ = 10;
+            facePosY_ = -10;
+          } else if (facePosX_ == 10) {
+            facePosX_ = -10;
+            facePosY_ = -10;
+          } else {
+            facePosX_ = 0;
+            facePosY_ = 0;
+          }
+          HAL::FaceMove(facePosX_, facePosY_);
+          PRINT("Face move to %d %d\n", facePosX_, facePosY_);
+          
+        } else if (ticCnt_ > 400) {
+          PRINT("Face blink\n");
+          HAL::FaceBlink();
+          ticCnt_ = 0;
+        }
+        
+        return RESULT_OK;
+      }
+      
       
       Result StopTestInit()
       {
@@ -1077,19 +1206,6 @@ namespace Anki {
         return RESULT_OK;
       }
       
-      
-      Result FaceTrackTestInit()
-      {
-        HeadController::SetDesiredAngle(0.1f);
-        return FaceTrackingController::StartTracking(FaceTrackingController::CENTERED, 500);
-      }
-      
-      Result FaceTrackTestUpdate()
-      {
-        return RESULT_OK;
-      }
-      
-      
       Result Start(const TestMode mode, s32 p1, s32 p2, s32 p3)
       {
         Result ret = RESULT_OK;
@@ -1122,7 +1238,7 @@ namespace Anki {
             updateFunc = DriveTestUpdate;
             break;
           case TM_LIFT:
-            ret = LiftTestInit(p1,p2);
+            ret = LiftTestInit(p1,p2,p3);
             updateFunc = LiftTestUpdate;
             break;
           case TM_LIFT_TOGGLE:
@@ -1130,7 +1246,7 @@ namespace Anki {
             updateFunc = LiftToggleTestUpdate;
             break;
           case TM_HEAD:
-            ret = HeadTestInit(p1,p2);
+            ret = HeadTestInit(p1,p2,p3);
             updateFunc = HeadTestUpdate;
             break;
           case TM_IMU:
@@ -1138,18 +1254,17 @@ namespace Anki {
             updateFunc = IMUTestUpdate;
             break;
           case TM_ANIMATION:
-            ret = AnimTestInit();
-            updateFunc = AnimTestUpdate;
+            PRINT("Animation test mode needs updating!\n");
+            ret = RESULT_FAIL; // AnimTestInit();
+            updateFunc = NULL; // AnimTestUpdate;
             break;
-#if defined(HAVE_ACTIVE_GRIPPER) && HAVE_ACTIVE_GRIPPER
-          case TM_GRIPPER:
-            ret = GripperTestInit();
-            updateFunc = GripperTestUpdate;
-            break;
-#endif
           case TM_LIGHTS:
             ret = LightTestInit(p1,p2,p3);
             updateFunc = LightTestUpdate;
+            break;
+          case TM_FACE_DISPLAY:
+            ret = FaceDisplayTestInit();
+            updateFunc = FaceDisplayTestUpdate;
             break;
           case TM_STOP_TEST:
             ret = StopTestInit();
@@ -1158,10 +1273,6 @@ namespace Anki {
           case TM_MAX_POWER_TEST:
             ret = MaxPowerTestInit();
             updateFunc = MaxPowerTestUpdate;
-            break;
-          case TM_FACE_TRACKING:
-            ret = FaceTrackTestInit();
-            updateFunc = FaceTrackTestUpdate;
             break;
           default:
             PRINT("ERROR (TestModeController): Undefined mode %d\n", testMode_);

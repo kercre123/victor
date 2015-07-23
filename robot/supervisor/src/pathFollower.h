@@ -2,6 +2,7 @@
 #define PATH_FOLLOWER_H_
 
 #include "anki/common/types.h"
+#include "anki/planning/shared/path.h"
 
 namespace Anki
 {
@@ -59,6 +60,9 @@ namespace Anki
       bool IsTraversingPath(void);
       u16 GetLastPathID();
 
+      // Returns const ref to the current path
+      const Planning::Path& GetPath();
+      
       // Whether or not the speed at which to traverse path is determined by the speeds
       // set by SetManualPathSpeed()
       bool IsInManualSpeedMode();

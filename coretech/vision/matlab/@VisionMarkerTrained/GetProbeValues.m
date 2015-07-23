@@ -27,7 +27,7 @@ Y = pattern.y(ones(N^2,1),:) + ygrid(:)*ones(1,length(pattern.y));
 %T = maketform('projective', this.H');
 [X, Y] = tformfwd(tform, X, Y);
 
-probeValues = mean(interp2(img, X, Y, 'linear', 1), 2);
+probeValues = mean(interp2(img, X, Y, 'nearest', 1), 2); % C implementation uses 'nearest'
 probeValues = reshape(probeValues, N, N);
 
 end

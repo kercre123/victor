@@ -6,12 +6,12 @@
 //  Copyright (c) 2013 Mark Pauley. All rights reserved.
 //
 
-#import "BLECentralMultiplexer.h"
-#import "BLECentralServiceDescription.h"
-#import "BLEAdvertisement.h"
-#import "BLEPeripheralConnectionAttempt.h"
-#import "BLELog.h"
-#import "BLEManager.h"
+#import "BLEManager/Central/BLECentralMultiplexer.h"
+#import "BLEManager/Central/BLECentralServiceDescription.h"
+#import "BLEManager/Central/BLEAdvertisement.h"
+#import "BLEManager/Central/BLEPeripheralConnectionAttempt.h"
+#import "BLEManager/Logging/BLELog.h"
+#import "BLEManager/BLEManager.h"
 #import <Availability.h>
 
 NSString* const BLEManagerNotificationName = @"BLEManagerNotificationName";

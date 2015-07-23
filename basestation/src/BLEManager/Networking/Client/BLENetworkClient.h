@@ -8,7 +8,7 @@
 
 #import <Foundation/Foundation.h>
 
-#import "BLENetworkInterface.h"
+#import "BLEManager/Networking/BLENetworkInterface.h"
 
 #define BLENetworkClientErrorDomain @"BLENetworkClientErrorDomain"
 

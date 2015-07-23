@@ -98,10 +98,10 @@ namespace Anki
           const f32 curX = pXCoordinates[x];
           const f32 curY = pYCoordinates[x];
 
-          const f32 x0 = FLT_FLOOR(curX);
+          const f32 x0 = floorf(curX);
           const f32 x1 = ceilf(curX); // x0 + 1.0f;
 
-          const f32 y0 = FLT_FLOOR(curY);
+          const f32 y0 = floorf(curY);
           const f32 y1 = ceilf(curY); // y0 + 1.0f;
 
           // If out of bounds, set as invalid and continue
@@ -220,10 +220,10 @@ namespace Anki
         f32 yTransformed = h10*xOriginal + h11*yOriginal + h12 + centerOffset.y;
 
         for(s32 x=0; x<xIterationMax; x++) {
-          const f32 x0 = FLT_FLOOR(xTransformed);
+          const f32 x0 = floorf(xTransformed);
           const f32 x1 = ceilf(xTransformed); // x0 + 1.0f;
 
-          const f32 y0 = FLT_FLOOR(yTransformed);
+          const f32 y0 = floorf(yTransformed);
           const f32 y1 = ceilf(yTransformed); // y0 + 1.0f;
 
           // If out of bounds, set as invalid and continue
@@ -360,10 +360,10 @@ namespace Anki
 
           xOriginal += xGridDelta;
 
-          const f32 x0 = FLT_FLOOR(xTransformed);
+          const f32 x0 = floorf(xTransformed);
           const f32 x1 = ceilf(xTransformed); // x0 + 1.0f;
 
-          const f32 y0 = FLT_FLOOR(yTransformed);
+          const f32 y0 = floorf(yTransformed);
           const f32 y1 = ceilf(yTransformed); // y0 + 1.0f;
 
           // If out of bounds, set as invalid and continue

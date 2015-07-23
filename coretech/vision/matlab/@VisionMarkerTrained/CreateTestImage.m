@@ -4,7 +4,7 @@ function CreateTestImage(varargin)
 markerImageDir = VisionMarkerTrained.TrainingImageDir;
 imageSize = [320 240];
 resolutionScaling = 3;
-headerFilename = '~/Code/products-cozmo/robot/test/data/newFiducials_320x240';
+headerFilename = '~/Code/cozmo-game/lib/anki/cozmo-engine/robot/test/data/newFiducials_320x240';
 maxImages = 24;
 parseVarargin(varargin{:});
 

@@ -16,7 +16,7 @@ minQuadArea = 100; % about 10 pixels per side
 computeTransformFromBoundary = true;
 %quadRefinementMethod = 'none'; % 'ICP' or 'fminsearch' or 'none'
 quadRefinementIterations = 25;
-cornerMethod = 'laplacianPeaks'; % 'laplacianPeaks', 'harrisScore', or 'radiusPeaks'
+cornerMethod = 'laplacianPeaks'; % 'laplacianPeaks', 'harrisScore', 'radiusPeaks', or 'lineFits'
 decodeDownsampleFactor = 1; % use lower resolution image for decoding
 minDistanceFromImageEdge = 2; % if a quad has an corner that is too close to the edge, reject it
 DEBUG_DISPLAY = nargout==0;
@@ -27,6 +27,8 @@ maxSmoothingFraction = 0.025; % fraction of max dim
 decodeMarkers = true;
 showComponents = false;
 returnInvalid = false;
+NearestNeighborLibrary = [];
+CNN = [];
 
 parseVarargin(varargin{:});
 
@@ -179,7 +181,7 @@ else % if strcmp(embeddedConversions.completeCImplementationType, 'c_DetectFiduc
     % Decode to find BlockMarker2D objects
     [markers, validQuads] = simpleDetector_step5_decodeMarkers(img_decode, ...
         quads_decode, quadTforms, minQuadArea, quadRefinementIterations, ...
-        embeddedConversions, showTiming, DEBUG_DISPLAY);
+        embeddedConversions, showTiming, NearestNeighborLibrary, CNN, DEBUG_DISPLAY);
 
     if returnInvalid
         validQuads = 1:length(quads);

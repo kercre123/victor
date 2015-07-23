@@ -13,7 +13,7 @@ PROTO Face [
 {
 Solid {
 
-  %{ imageURL = "textures/faces/" .. fields.image }% 
+  %{ imageURL = "textures/faces/" .. fields.image.value }% 
 
   name IS name
 
@@ -29,7 +29,7 @@ Solid {
         }
       }
       geometry Cylinder {
-        radius %{=fields.height/2}%
+        radius %{=fields.height.value/2}%
         side FALSE
         height .001
         top FALSE

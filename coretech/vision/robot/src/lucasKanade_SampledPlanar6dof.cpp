@@ -441,9 +441,9 @@ namespace Anki
             // by the homography
             const f32 halfWidth = scaleTemplateRegionPercent*templateHalfWidth;
             Meshgrid<f32> templateCoordinates = Meshgrid<f32>(Linspace(-halfWidth, halfWidth,
-              static_cast<s32>(FLT_FLOOR(this->templateRegionWidth/scale))),
+              static_cast<s32>(floorf(this->templateRegionWidth/scale))),
               Linspace(-halfWidth, halfWidth,
-              static_cast<s32>(FLT_FLOOR(this->templateRegionHeight/scale))));
+              static_cast<s32>(floorf(this->templateRegionHeight/scale))));
 
             // Halve the sample at each subsequent level (not a quarter)
             const s32 maxPossibleLocations = templateCoordinates.get_numElements();
@@ -471,7 +471,7 @@ namespace Anki
               Array<u8> templateImageAtScale(numPointsY, numPointsX, offchipScratch);
               AnkiConditionalErrorAndReturn(templateImageAtScale.IsValid(),
                                             "LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof",
-                                            "Out of memory allocating templateImageAtScale.\n");
+                                            "Out of memory allocating templateImageAtScale. Could not allocate %dx%d points.\n", numPointsX, numPointsY);
 
 #             if USE_BLURRING
               Array<u8> templateImageBoxFiltered(templateImage.get_size(0), templateImage.get_size(1), offchipScratch);
@@ -596,14 +596,14 @@ namespace Anki
                   Array<f32> magnitudeImage(numPointsY, numPointsX, offchipScratch);
                   AnkiConditionalErrorAndReturn(magnitudeImage.IsValid(),
                     "LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof",
-                    "Out of memory allocating magnitudeImage.\n");
+                    "Out of memory allocating magnitudeImage. Could not allocate %dx%d points.\n", numPointsX, numPointsY);
                   {
                     PUSH_MEMORY_STACK(offchipScratch);
 
                     Array<f32> tmpMagnitude(numPointsY, numPointsX, offchipScratch);
                     AnkiConditionalErrorAndReturn(tmpMagnitude.IsValid(),
                       "LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof",
-                      "Out of memory allocating tmpMagnitude.\n");
+                      "Out of memory allocating tmpMagnitude. Could not allocate %dx%d points.\n", numPointsX, numPointsY);
 
                     Matrix::DotMultiply<f32,f32,f32>(templateImageXGradient, templateImageXGradient, tmpMagnitude);
                     Matrix::DotMultiply<f32,f32,f32>(templateImageYGradient, templateImageYGradient, magnitudeImage);
@@ -620,7 +620,7 @@ namespace Anki
                     Array<bool> magnitudeImageNLMS(numPointsY, numPointsX, offchipScratch);
                     AnkiConditionalErrorAndReturn(magnitudeImageNLMS.IsValid(),
                       "LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof",
-                      "Out of memory allocating magnitudeImageNLMS.\n");
+                      "Out of memory allocating magnitudeImageNLMS. Could not allocate %dx%d points.\n", numPointsX, numPointsY);
                     magnitudeImageNLMS.SetZero();
                     s32 nonZeroCount = 0;
 #if SAMPLE_TOP_HALF_ONLY
@@ -1575,10 +1575,10 @@ namespace Anki
             const f32 xTransformed = (xTransformedRaw / normalization) + centerOffsetScaled.x;
             const f32 yTransformed = (yTransformedRaw / normalization) + centerOffsetScaled.y;
 
-            const f32 x0 = FLT_FLOOR(xTransformed);
+            const f32 x0 = floorf(xTransformed);
             const f32 x1 = ceilf(xTransformed); // x0 + 1.0f;
 
-            const f32 y0 = FLT_FLOOR(yTransformed);
+            const f32 y0 = floorf(yTransformed);
             const f32 y1 = ceilf(yTransformed); // y0 + 1.0f;
 
             // NOTE: The three columns of A we need for translation-only
@@ -1819,10 +1819,10 @@ namespace Anki
             //xTransformedArray[0][iSample] = xTransformed;
             //yTransformedArray[0][iSample] = yTransformed;
 
-            const f32 x0 = FLT_FLOOR(xTransformed);
+            const f32 x0 = floorf(xTransformed);
             const f32 x1 = ceilf(xTransformed); // x0 + 1.0f;
 
-            const f32 y0 = FLT_FLOOR(yTransformed);
+            const f32 y0 = floorf(yTransformed);
             const f32 y1 = ceilf(yTransformed); // y0 + 1.0f;
 
             const f32* Arow = curSample.A;
@@ -2090,10 +2090,10 @@ namespace Anki
           const f32 yTransformed = (yTransformedRaw * normalization) + centerOffsetScaled.y;
 
 #if USE_LINEAR_INTERPOLATION_FOR_VERIFICATION
-          const f32 x0 = FLT_FLOOR(xTransformed);
+          const f32 x0 = floorf(xTransformed);
           const f32 x1 = ceilf(xTransformed); // x0 + 1.0f;
 
-          const f32 y0 = FLT_FLOOR(yTransformed);
+          const f32 y0 = floorf(yTransformed);
           const f32 y1 = ceilf(yTransformed); // y0 + 1.0f;
 
           // If out of bounds, continue

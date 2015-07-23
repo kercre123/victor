@@ -21,6 +21,10 @@ namespace Anki
   {
     // TODO: make this into a parameter stored elsewhere?
     const f32 FIDUCIAL_SQUARE_WIDTH_FRACTION = 0.1f;
+    
+    enum CornerMethod {
+      CORNER_METHOD_LAPLACIAN_PEAKS = 0,
+      CORNER_METHOD_LINE_FITS = 1};
 
     // The primary wrapper function for detecting fiducial markers in an image
     Result DetectFiducialMarkers(
@@ -32,6 +36,7 @@ namespace Anki
       const s32 component_minimumNumPixels, const s32 component_maximumNumPixels,
       const s32 component_sparseMultiplyThreshold, const s32 component_solidMultiplyThreshold,
       const f32 component_minHollowRatio,
+      const CornerMethod cornerMethod, const s32 minLaplacianPeakRatio,
       const s32 quads_minQuadArea, const s32 quads_quadSymmetryThreshold, const s32 quads_minDistanceFromImageEdge,
       const f32 decode_minContrastRatio,
       const s32 maxConnectedComponentSegments, //< If this number is above 2^16-1, then it will use 25% more memory per component
@@ -55,6 +60,7 @@ namespace Anki
       const s32 component_minimumNumPixels, const s32 component_maximumNumPixels,
       const s32 component_sparseMultiplyThreshold, const s32 component_solidMultiplyThreshold,
       const f32 component_minHollowRatio,
+      const CornerMethod cornerMethod, const s32 minLaplacianPeakRatio,
       const s32 quads_minQuadArea, const s32 quads_quadSymmetryThreshold, const s32 quads_minDistanceFromImageEdge,
       const f32 decode_minContrastRatio,
       const s32 maxConnectedComponentSegments, //< If this number is above 2^16-1, then it will use 25% more memory per component
@@ -97,7 +103,7 @@ namespace Anki
     // Used by DetectFiducialMarkers
     //
     // Extracts quadrilaterals from a list of connected component segments
-    Result ComputeQuadrilateralsFromConnectedComponents(const ConnectedComponents &components, const s32 minQuadArea, const s32 quadSymmetryThreshold, const s32 minDistanceFromImageEdge, const s32 imageHeight, const s32 imageWidth, FixedLengthList<Quadrilateral<s16> > &extractedQuads, MemoryStack scratch);
+    Result ComputeQuadrilateralsFromConnectedComponents(const ConnectedComponents &components, const s32 minQuadArea, const s32 quadSymmetryThreshold, const s32 minDistanceFromImageEdge, const s32 minLaplacianPeakRatio, const s32 imageHeight, const s32 imageWidth, const CornerMethod cornerMethod, FixedLengthList<Quadrilateral<s16> > &extractedQuads, MemoryStack scratch);
 
     // Does the input quad (with corners in canonical order) have a reasonable shape?
     //
@@ -126,9 +132,13 @@ namespace Anki
     // Extract the best Laplacian peaks from boundary, up to peaks.get_size() The top
     // peaks.get_size() peaks are returned in the order of their original index, which preserves
     // their original clockwise or counter-clockwise ordering.
+    // The ratio of the 4th peak to the 5th peak must exceed minPeakRatio or peaks will be empty.
     //
     // Requires ??? bytes of scratch
-    Result ExtractLaplacianPeaks(const FixedLengthList<Point<s16> > &boundary, FixedLengthList<Point<s16> > &peaks, MemoryStack scratch);
+    Result ExtractLaplacianPeaks(const FixedLengthList<Point<s16> > &boundary, const s32 minPeakRatio, FixedLengthList<Point<s16> > &peaks, MemoryStack scratch);
+
+    // Extract the best peaks, using the line fits method. Works with curved corner fiducials
+    Result ExtractLineFitsPeaks(const FixedLengthList<Point<s16> > &boundary, FixedLengthList<Point<s16> > &peaks, const s32 imageHeight, const s32 imageWidth, MemoryStack scratch);
 
     // Used by DetectFiducialMarkers
     //

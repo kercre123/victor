@@ -67,12 +67,7 @@ namespace Anki {
       
       VelocityProfileGenerator vpg_;
       
-#ifdef COZMO_ROBOT_V31
-      // Treaded cozmo has sticky left wheel so we need to command a faster terminal speed
-      const f32 POINT_TURN_TERMINAL_VEL_RAD_PER_S = 0.8f;
-#else
       const f32 POINT_TURN_TERMINAL_VEL_RAD_PER_S = 0.4f;
-#endif
       
     } // Private namespace
     
@@ -92,6 +87,7 @@ namespace Anki {
     //sets the steering controller constants
     void SetGains(float k1, float k2)
     {
+      PRINT("New Steering gains: k1 %f, k2 %f\n", k1, k2);
       K1_ = k1;
       K2_ = k2;
     }
@@ -524,6 +520,14 @@ namespace Anki {
       // Compute the velocity along the arc length equivalent of currAngularVel.
       // currAngularVel_ / PI = arcVel / (PI * R)
       s16 arcVel = (s16)(currAngularVel_ * WHEEL_DIST_HALF_MM); // mm/s
+
+
+      // PID control for maintaining heading
+      f32 angularDistToCurrDesiredAngle = (Radians(currDesiredAngle) - currAngle).ToFloat();
+      const f32 pointTurnKp_ = 100;
+      //PRINT("PT comp: arcVel %d, comp %f\n", arcVel, angularDistToCurrDesiredAngle * pointTurnKp_);
+      arcVel += (s16)(angularDistToCurrDesiredAngle * pointTurnKp_);
+
       
       // Compute the wheel velocities
       s16 wleft = -arcVel;

@@ -32,6 +32,7 @@ namespace Anki {
     
     ObservableObject::ObservableObject()
     : _lastObservedTime(0)
+    , _numTimesObserved(0)
     , _isLocalized(false)
     {
       
@@ -131,6 +132,7 @@ namespace Anki {
 #         if IGNORE_ROTATION_FOR_IS_SAME_AS
           Point3f Tdiff(_pose.GetTranslation());
           Tdiff -= otherPose.GetTranslation();
+          Tdiff = _pose.GetRotation() * Tdiff;
           Tdiff.Abs();
           isSame = Tdiff < distThreshold;
 #         else
@@ -188,6 +190,12 @@ namespace Anki {
       return cubeSize;
     }
      */
+    
+    std::vector<RotationMatrix3d> const& ObservableObject::GetRotationAmbiguities() const
+    {
+      static const std::vector<RotationMatrix3d> RotationAmbiguities; // default is empty
+      return RotationAmbiguities;
+    }
     
     void ObservableObject::GetCorners(std::vector<Point3f>& corners) const
     {
@@ -253,11 +261,65 @@ namespace Anki {
         }
       }
       else {
-        // TODO: Issue warning?
+        PRINT_NAMED_WARNING("ObservableObject.SetMarkersAsObserved",
+                            "No markers found with code %d.\n",
+                            withCode);
       }
       
     } // SetMarkersAsObserved()
     
+    
+    void ObservableObject::SetMarkerAsObserved(const ObservedMarker* nearestTo,
+                                               const TimeStamp_t     atTime,
+                                               const f32             centroidDistThreshold,
+                                               const f32             areaRatioThreshold)
+    {
+      // Find the marker that projects nearest to the observed one and update
+      // its observed time. Only consider those with a matching code.
+      Pose3d markerPoseWrtCamera;
+      const Camera& camera = nearestTo->GetSeenBy();
+      
+      const Point2f obsCentroid = nearestTo->GetImageCorners().ComputeCentroid();
+      const f32     invObsArea  = 1.f / nearestTo->GetImageCorners().ComputeArea();
+      
+      auto markers = _markersWithCode.find(nearestTo->GetCode());
+      if(markers != _markersWithCode.end()) {
+        
+        f32 minCentroidDistSq = centroidDistThreshold*centroidDistThreshold;
+        Vision::KnownMarker* whichMarker = nullptr;
+        for(auto marker : markers->second)
+        {
+          if(true == marker->GetPose().GetWithRespectTo(camera.GetPose(), markerPoseWrtCamera))
+          {
+            Quad2f projPoints;
+            camera.Project3dPoints(marker->Get3dCorners(markerPoseWrtCamera), projPoints);
+            
+            const Point2f knownCentroid = projPoints.ComputeCentroid();
+            
+            const f32 centroidDistSq = (knownCentroid - obsCentroid).LengthSq();
+            if(centroidDistSq < minCentroidDistSq) {
+              const f32 knownArea = projPoints.ComputeArea();
+              if(NEAR(knownArea * invObsArea, 1.f, areaRatioThreshold)) {
+                minCentroidDistSq = centroidDistSq;
+                whichMarker = marker;
+              }
+            }
+          }
+        } // for each marker on this object
+        
+        if(whichMarker != nullptr) {
+          whichMarker->SetLastObservedTime(atTime);
+        } else {
+          PRINT_NAMED_WARNING("ObservableObject.SetMarkerAsObserved",
+                              "No markers found within specfied projected distance threshold (%f).\n",
+                              centroidDistThreshold);
+        }
+      } else {
+        PRINT_NAMED_WARNING("ObservableObject.SetMarkerAsObserved",
+                            "No markers found with code (%d) of given 'nearestTo' observed marker.\n",
+                            nearestTo->GetCode());
+      }
+    } // SetMarkerAsObserved()
     
     
     Quad2f ObservableObject::GetBoundingQuadXY(const Pose3d& atPose, const f32 padding_mm) const

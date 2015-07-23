@@ -4,7 +4,7 @@ PROTO CozmoVizDisplay
 [ 
   # Resolution of incoming camera images.
   # Set this to match IMG_STREAM_RES in cozmoConfig.h
-  field SFString streamResolution "QVGA"
+  field SFString streamResolution "CVGA"
 ]
 {
 Supervisor {
@@ -82,28 +82,32 @@ Supervisor {
       name "cozmo_cam_viz_display"
 
 
-      %{ if fields.streamResolution == "VGA" then }%
+      %{ if fields.streamResolution.value == "VGA" then }%
       width 640
       height 480
       pixelSize 0.5
-      %{ elseif fields.streamResolution == "QVGA" then }%
+      %{ elseif fields.streamResolution.value == "QVGA" then }%
       width 320
       height 240
       pixelSize 1
-      %{ elseif fields.streamResolution == "QQVGA" then }%
+      %{ elseif fields.streamResolution.value == "QQVGA" then }%
       width 160
       height 120
       pixelSize 2
-      %{ elseif fields.streamResolution == "QQQVGA" then }%
+      %{ elseif fields.streamResolution.value == "QQQVGA" then }%
       width 80
       height 60
       pixelSize 4
+      %{ elseif fields.streamResolution.value == "CVGA" then }%
+      width 400
+      height 296
+      pixelSize 1
       %{ end }%
       windowPosition 0 1
     }
   ]
 
-  controller "cozmo_viz_controller"
+  controller "webotsCtrlViz"
 } # Supervisor
 
 } # PROTO

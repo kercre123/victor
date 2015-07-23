@@ -16,7 +16,7 @@ TEST(RobotPoseHistory, AddGetPose)
   using namespace Anki;
   using namespace Cozmo;
 
-  Robot robot(1, nullptr);
+  Robot robot(1, nullptr, nullptr);
   
   RobotPoseHistory hist;
   RobotPoseStamp p;
@@ -82,8 +82,8 @@ TEST(RobotPoseHistory, AddGetPose)
 
   ASSERT_TRUE(hist.ComputePoseAt(6, t, p) == RESULT_OK);
   ASSERT_TRUE(t2 == t);
-  ASSERT_TRUE(p2 == p.GetPose());
-  
+  ASSERT_TRUE(p2.IsSameAs(p.GetPose(), 1e-5f, DEG_TO_RAD(0.1f)));
+
   // Request in range pose with interpolation
   ASSERT_TRUE(hist.ComputePoseAt(5, t, p, true) == RESULT_OK);
   ASSERT_TRUE(p1p2avg.IsSameAs(p.GetPose(), 0.0001, 0.0001));
@@ -105,8 +105,7 @@ TEST(RobotPoseHistory, AddGetPose)
   // This should return p2
   ASSERT_TRUE(hist.ComputePoseAt(11, t, p) == RESULT_OK);
   ASSERT_TRUE(t2 == t);
-  ASSERT_TRUE(p2 == p.GetPose());
-  
+  ASSERT_TRUE(p2.IsSameAs(p.GetPose(), 1e-5f, DEG_TO_RAD(0.1f)));  
   
   // Add old pose that is out of time window
   hist.AddRawOdomPose(t1,
@@ -133,7 +132,7 @@ TEST(RobotPoseHistory, GroundTruthPose)
   using namespace Anki;
   using namespace Cozmo;
   
-  Robot robot(1, nullptr);
+  Robot robot(1, nullptr, nullptr);
   
   RobotPoseHistory hist;
   RobotPoseStamp p;

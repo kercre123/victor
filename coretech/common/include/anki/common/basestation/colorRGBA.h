@@ -16,7 +16,7 @@
 
 #include "anki/common/types.h"
 
-#include "anki/common/basestation/utils/logging/logging.h"
+#include "util/logging/logging.h"
 
 #include <array>
 
@@ -77,6 +77,7 @@ namespace Anki {
     extern const ColorRGBA YELLOW;
     extern const ColorRGBA CYAN;
     extern const ColorRGBA ORANGE;
+    extern const ColorRGBA MAGENTA;
     extern const ColorRGBA WHITE;
     extern const ColorRGBA BLACK;
     extern const ColorRGBA DARKGRAY;

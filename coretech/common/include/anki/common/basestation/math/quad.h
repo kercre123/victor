@@ -18,6 +18,7 @@
 #include "anki/common/basestation/math/point.h"
 
 #include <array>
+#include <vector>
 
 namespace Anki {
 
@@ -87,6 +88,9 @@ namespace Anki {
     
     // Compute the centroid of the four points
     Point<N,T> ComputeCentroid(void) const;
+    
+    // Compute the area of a 2D quadrilateral
+    T ComputeArea(void) const;
     
     // Get min/max coordinates (e.g. for bounding box)
     T GetMinX(void) const;

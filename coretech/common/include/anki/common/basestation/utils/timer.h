@@ -26,6 +26,7 @@
 #include <sys/time.h>
 
 #include "anki/common/types.h"
+#include "util/logging/iTickTimeProvider.h"
 
 
 namespace Anki {
@@ -43,7 +44,7 @@ const std::string GetCurrentDateTime();
 /*
  * Keep track of system time. Provides easy way to get time since the start of program.
  */
-class BaseStationTimer
+class BaseStationTimer : public Anki::Util::ITickTimeProvider
 {
   public:
 
@@ -54,7 +55,7 @@ class BaseStationTimer
   static void removeInstance();
 
   // Destructor
-  virtual ~BaseStationTimer();
+  virtual ~BaseStationTimer() override;
 
   // Gets time in seconds since the start of the program
   // WARNING: This value updates only once every tick! So measuring time differneces with in one update loop
@@ -78,6 +79,9 @@ class BaseStationTimer
   // Gets current time in TimeStamp units
   TimeStamp_t GetCurrentTimeStamp() const;
   
+  virtual const size_t GetTickCount() const override;
+  virtual const float GetRunTime() const override;
+  
 private:
   // Constructor
   BaseStationTimer();
@@ -91,7 +95,8 @@ private:
 
   double elapsedTimeInSeconds_;
   BaseStationTime_t elapsedTimeInNanoSeconds_;
-
+  
+  size_t tickCount_;
 };
 
   /* Not used by Cozmo

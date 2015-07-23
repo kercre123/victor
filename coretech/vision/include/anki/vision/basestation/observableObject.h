@@ -72,6 +72,9 @@ namespace Anki {
       // desired.
       void GetObservedMarkers(std::vector<const KnownMarker*>& observedMarkers,
                               const TimeStamp_t sinceTime) const;
+      
+      // Same as above, but uses GetLastObservedTime() as "sinceTime"
+      void GetObservedMarkers(std::vector<const KnownMarker*>& observedMarkers) const;
 
       // Updates the observation times of this object's markers with the newer
       // of the current times and the times of the corresponding markers on the
@@ -107,6 +110,14 @@ namespace Anki {
       void SetMarkersAsObserved(const Marker::Code& withCode,
                                 const TimeStamp_t atTime);
       
+      // Set the marker whose centroid projects closest to the observed marker's
+      // centroid (within threshold distance and within areaRatio threshold)
+      // to have the given observed time.
+      void SetMarkerAsObserved(const ObservedMarker* nearestTo,
+                               const TimeStamp_t     atTime,
+                               const f32             centroidDistThreshold = 5.f, // in pixels
+                               const f32             areaRatioThreshold = 0.1f);  // i.e., 1 - abs(obsArea/knownArea) < threshold
+      
       // Return true if any of the object's markers is visible from the given
       // camera. See also KnownMarker::IsVisibleFrom().
       bool IsVisibleFrom(const Camera& camera,
@@ -130,8 +141,9 @@ namespace Anki {
       void SetPose(const Pose3d& newPose);
       void SetPoseParent(const Pose3d* newParent);
       
-      void SetLastObservedTime(TimeStamp_t t) {_lastObservedTime = t;}
-      const TimeStamp_t GetLastObservedTime() const {return _lastObservedTime;}
+      void SetLastObservedTime(TimeStamp_t t);
+      const TimeStamp_t GetLastObservedTime() const;
+      u32 GetNumTimesObserved() const;
       
       // Return true if this object is the same as the other. Sub-classes can
       // overload this function to provide for rotational ambiguity when
@@ -166,7 +178,7 @@ namespace Anki {
       // Return the same-distance tolerance to use in the X/Y/Z dimensions.
       // The default implementation simply uses the canonical bounding cube,
       // rotated to the object's current pose.
-      constexpr static f32 DEFAULT_SAME_DIST_TOL_FRACTION = 1.f; // fraction of GetSize() to use
+      constexpr static f32 DEFAULT_SAME_DIST_TOL_FRACTION = 0.8f; // fraction of GetSize() to use
       virtual Point3f GetSameDistanceTolerance() const;
       
       // Return the same angle tolerance for matching. Default is 45 degrees.
@@ -192,6 +204,7 @@ namespace Anki {
       
       ObjectID     _ID;
       TimeStamp_t  _lastObservedTime;
+      u32          _numTimesObserved;
       ColorRGBA    _color;
       
       // Using a list here so that adding new markers does not affect references
@@ -254,12 +267,6 @@ namespace Anki {
     inline void ObservableObject::SetPoseParent(const Pose3d* newParent) {
       _pose.SetParent(newParent);
     }
-        
-    inline std::vector<RotationMatrix3d> const& ObservableObject::GetRotationAmbiguities() const
-    {
-      static const std::vector<RotationMatrix3d> RotationAmbiguities; // default is empty
-      return RotationAmbiguities;
-    }
     
     inline bool ObservableObject::IsSameAs(const ObservableObject& otherObject) const {
       return IsSameAs(otherObject, this->GetSameDistanceTolerance(), this->GetSameAngleTolerance());
@@ -279,8 +286,11 @@ namespace Anki {
     }
     
     inline Point3f ObservableObject::GetSameDistanceTolerance() const {
-      Point3f distTol(GetPose().GetRotation() * (GetSize() * DEFAULT_SAME_DIST_TOL_FRACTION));
-      return distTol.GetAbs();
+      // TODO: This is only ok because we're only using totally symmetric 1x1x1 blocks at the moment.
+      //       The proper way to do the IsSameAs check is to have objects return a scaled down bounding box of themselves
+      //       and see if the the origin of the candidate object is within it.
+      Point3f distTol(GetSize() * DEFAULT_SAME_DIST_TOL_FRACTION);
+      return distTol;
     }
     
     inline bool ObservableObject::IsSameAs(const ObservableObject& otherObject,
@@ -291,6 +301,23 @@ namespace Anki {
       Radians angleDiff;
       return IsSameAs(otherObject, distThreshold, angleThreshold,
                       Tdiff, angleDiff);
+    }
+    
+    inline const TimeStamp_t ObservableObject::GetLastObservedTime() const {
+      return _lastObservedTime;
+    }
+    
+    inline u32 ObservableObject::GetNumTimesObserved() const {
+      return _numTimesObserved;
+    }
+
+    inline void ObservableObject::SetLastObservedTime(TimeStamp_t t) {
+      _lastObservedTime = t;
+      ++_numTimesObserved;
+    }
+    
+    inline void ObservableObject::GetObservedMarkers(std::vector<const KnownMarker*>& observedMarkers) const {
+      GetObservedMarkers(observedMarkers, GetLastObservedTime());
     }
     
     /*

@@ -7,10 +7,10 @@
 //
 
 #import <Foundation/Foundation.h>
-#import "BLENetworkClient.h"
+#import "BLEManager/Networking/Client/BLENetworkClient.h"
 #import <IOBluetooth/IOBluetooth.h>
-#import "BLELog.h"
-#import "BLENetworkingInterfacePrivate.h"
+#import "BLEManager/Logging/BLELog.h"
+#import "BLEManager/Networking/BLENetworkingInterfacePrivate.h"
 
 @interface BLENetworkClient () <CBPeripheralManagerDelegate>
 

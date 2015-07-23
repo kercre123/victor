@@ -117,6 +117,81 @@ GTEST_TEST(TestRotation, PointRotation2d)
   
 } // TestRotation:PointRotation2d
 
+GTEST_TEST(TestRotation, PointRotation3d)
+{
+  
+  Point3f p(1.f, 0.f, 0.f);
+  Rotation3d R_30(M_PI/6.f, Z_AXIS_3D());
+  Rotation3d R_45(M_PI/4.f, Z_AXIS_3D());
+  Rotation3d R_60(M_PI/3.f, Z_AXIS_3D());
+  Rotation3d R_90(M_PI/2.f, Z_AXIS_3D());
+  Rotation3d R_135(3.f*M_PI/4.f, Z_AXIS_3D());
+  Rotation3d R_180(M_PI, Z_AXIS_3D());
+  Rotation3d R_330(11.f*M_PI/6.f, Z_AXIS_3D());
+  
+  Point3f q = R_45 * Point3f(0.f, 0.f, 0.f);
+  EXPECT_EQ(q.x(), 0.f);
+  EXPECT_EQ(q.y(), 0.f);
+  EXPECT_EQ(q.z(), 0.f);
+  
+  const float eps = 10.f*std::numeric_limits<float>::epsilon();
+  const float epsBig = 100*eps;
+  
+  q = R_30 * p;
+  EXPECT_TRUE( NEAR(q.x(), std::sqrt(3.f)/2.f, eps) );
+  EXPECT_TRUE( NEAR(q.y(), 0.5f, eps) );
+  EXPECT_TRUE( NEAR(q.z(), 0.f, eps) );
+  EXPECT_NEAR(q.Length(), p.Length(), epsBig);
+  
+  q = R_45 * p;
+  EXPECT_TRUE( NEAR(q.x(), std::sqrt(2.f)/2.f, eps) );
+  EXPECT_TRUE( NEAR(q.y(), std::sqrt(2.f)/2.f, eps) );
+  EXPECT_TRUE( NEAR(q.z(), 0.f, eps) );
+  EXPECT_NEAR(q.Length(), p.Length(), epsBig);
+  
+  q = R_60 * p;
+  EXPECT_TRUE( NEAR(q.x(), 0.5f, eps) );
+  EXPECT_TRUE( NEAR(q.y(), std::sqrt(3.f)/2.f, eps) );
+  EXPECT_TRUE( NEAR(q.z(), 0.f, eps) );
+  EXPECT_NEAR(q.Length(), p.Length(), epsBig);
+  
+  q = R_90 * p;
+  EXPECT_TRUE( NEAR(q.x(), 0.f, eps) );
+  EXPECT_TRUE( NEAR(q.y(), 1.f, eps) );
+  EXPECT_TRUE( NEAR(q.z(), 0.f, eps) );
+  EXPECT_NEAR(q.Length(), p.Length(), epsBig);
+  
+  q = R_135 * p;
+  EXPECT_TRUE( NEAR(q.x(), -std::sqrt(2.f)/2.f, eps) );
+  EXPECT_TRUE( NEAR(q.y(),  std::sqrt(2.f)/2.f, eps) );
+  EXPECT_TRUE( NEAR(q.z(), 0.f, eps) );
+  EXPECT_NEAR(q.Length(), p.Length(), epsBig);
+  
+  q = R_180 * p;
+  EXPECT_TRUE( NEAR(q.x(), -1.f, eps) );
+  EXPECT_TRUE( NEAR(q.y(),  0.f, eps) );
+  EXPECT_TRUE( NEAR(q.z(), 0.f, eps) );
+  EXPECT_NEAR(q.Length(), p.Length(), epsBig);
+  
+  q = R_330 * p;
+  EXPECT_TRUE( NEAR(q.x(), std::sqrt(3.f)/2.f, eps) );
+  EXPECT_TRUE( NEAR(q.y(), -0.5f, eps) );
+  EXPECT_TRUE( NEAR(q.z(), 0.f, eps) );
+  EXPECT_NEAR(q.Length(), p.Length(), epsBig);
+  
+  p = {{44.f, 44.f, 44.f}};
+  Rotation3d R(1.076822398155559f, {{0.573788055924467f,   0.808395453061550f,   0.131392763681385f}});
+  q = R * p;
+  EXPECT_NEAR( q.x(), 67.183776745385970f, epsBig);
+  EXPECT_NEAR( q.y(), 32.034582545499632f, epsBig);
+  EXPECT_NEAR( q.z(), 16.374543149709780f, epsBig);
+  
+  EXPECT_NEAR(q.Length(), p.Length(), epsBig);
+  
+  
+} // TestRotation:PointRotation3d
+
+
 GTEST_TEST(TestRotation, ExtractAnglesFromMatrix)
 {
   std::vector<f32> testAngles = {
@@ -232,7 +307,7 @@ GTEST_TEST(TestRotation, EulerAngles)
 } // TestRotation:EuelerAngles
 */
 
-GTEST_TEST(TestRotation, AxisRotation3d)
+GTEST_TEST(TestRotation, AxisRotationMatrix3d)
 {
   
   Radians angle = M_PI/2.f;
@@ -266,6 +341,52 @@ GTEST_TEST(TestRotation, AxisRotation3d)
   RotationMatrix3d R_neg90x(-angle, Xaxis);
   RotationMatrix3d R_neg90y(-angle, Yaxis);
   RotationMatrix3d R_neg90z(-angle, Zaxis);
+  
+  q = R_neg90x * Xaxis;
+  EXPECT_TRUE( IsNearlyEqual(q, Xaxis) );
+  
+  q = R_neg90y * Xaxis;
+  EXPECT_TRUE( IsNearlyEqual(q, Zaxis) );
+  
+  q = R_neg90z * Xaxis;
+  EXPECT_TRUE( IsNearlyEqual(q, negYaxis) );
+  
+} // TestRotation:AxisRotation3d
+
+GTEST_TEST(TestRotation, AxisRotation3d)
+{
+  
+  Radians angle = M_PI/2.f;
+  Vec3f   Xaxis(1.f, 0.f, 0.f);
+  Vec3f   Yaxis(0.f, 1.f, 0.f);
+  Vec3f   Zaxis(0.f, 0.f, 1.f);
+  
+  Vec3f negXaxis(-1.f,  0.f,  0.f);
+  Vec3f negYaxis( 0.f, -1.f,  0.f);
+  Vec3f negZaxis( 0.f,  0.f, -1.f);
+  
+  Rotation3d R_90x(angle, Xaxis);
+  Rotation3d R_90y(angle, Yaxis);
+  Rotation3d R_90z(angle, Zaxis);
+  
+  Point3f q = R_90x * Xaxis;
+  EXPECT_TRUE( IsNearlyEqual(q, Xaxis) );
+  
+  q = R_90y * Xaxis;
+  EXPECT_TRUE( IsNearlyEqual(q, negZaxis) );
+  
+  q = R_90z * Xaxis;
+  EXPECT_TRUE( IsNearlyEqual(q, Yaxis) );
+  
+  q = R_90x * Yaxis;
+  EXPECT_TRUE( IsNearlyEqual(q, Zaxis) );
+  
+  q = R_90z * Yaxis;
+  EXPECT_TRUE( IsNearlyEqual(q, negXaxis) );
+  
+  Rotation3d R_neg90x(-angle, Xaxis);
+  Rotation3d R_neg90y(-angle, Yaxis);
+  Rotation3d R_neg90z(-angle, Zaxis);
   
   q = R_neg90x * Xaxis;
   EXPECT_TRUE( IsNearlyEqual(q, Xaxis) );

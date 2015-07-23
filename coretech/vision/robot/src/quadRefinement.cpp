@@ -583,10 +583,10 @@ namespace Anki {
           //xTransformedArray[0][iSample] = xTransformed;
           //yTransformedArray[0][iSample] = yTransformed;
 
-          const f32 x0 = FLT_FLOOR(xTransformed);
+          const f32 x0 = floorf(xTransformed);
           const f32 x1 = ceilf(xTransformed); // x0 + 1.0f;
 
-          const f32 y0 = FLT_FLOOR(yTransformed);
+          const f32 y0 = floorf(yTransformed);
           const f32 y1 = ceilf(yTransformed); // y0 + 1.0f;
 
           // If out of bounds, continue
@@ -791,20 +791,31 @@ namespace Anki {
       }
 #     endif
 
+      // DEBUG: Visualize initial and final quad:
+      /*
+      cv::Mat temp;
+      ArrayToCvMat(image, &temp);
+      cv::cvtColor(temp, temp, CV_GRAY2BGR);
+      cv::vector<cv::Point> initPoly = {
+        initialQuad[Quadrilateral<f32>::TopLeft].get_CvPoint_(),
+        initialQuad[Quadrilateral<f32>::BottomLeft].get_CvPoint_(),
+        initialQuad[Quadrilateral<f32>::BottomRight].get_CvPoint_(),
+        initialQuad[Quadrilateral<f32>::TopRight].get_CvPoint_(),
+      };
+      cv::vector<cv::Point> finalPoly = {
+        refinedQuad[Quadrilateral<f32>::TopLeft].get_CvPoint_(),
+        refinedQuad[Quadrilateral<f32>::BottomLeft].get_CvPoint_(),
+        refinedQuad[Quadrilateral<f32>::BottomRight].get_CvPoint_(),
+        refinedQuad[Quadrilateral<f32>::TopRight].get_CvPoint_(),
+      };
+      cv::polylines(temp, initPoly, true, cv::Scalar(0,0,255));
+      cv::polylines(temp, finalPoly, true, cv::Scalar(0,255,0));
+      cv::imshow("Initial & Final Quad", temp);
+      cv::waitKey(5);
+      */
+      
       Quadrilateral<f32> initialQuadF32;
       initialQuadF32.SetCast(initialQuad);
-
-      // Check to make sure the refined quad isn't too different from the intitial one.
-      // If it is, restore the original.
-      if(!restoreOriginal) {
-        const f32 finalCornerChange = MaxCornerChange(refinedHomography, initialQuadF32);
-        if(finalCornerChange > maxCornerChange) {
-#         if DEBUG_QUAD_REFINEMENT
-          AnkiWarn("RefineQuadrilateral", "Quad changed too much.\n");
-#         endif
-          restoreOriginal = true;
-        }
-      }
 
       // If corner change check or numerical failure triggered a restoreOriginal
       // do so now.
@@ -814,11 +825,21 @@ namespace Anki {
 #       endif
         refinedQuad = initialQuadF32;
         refinedHomography.Set(initialHomography);
+      } else {
+        // Check to make sure the refined quad isn't too different from the intitial one.
+        // If it is, restore the original.
+        const f32 finalCornerChange = MaxCornerChange(refinedHomography, initialQuadF32);
+        if(finalCornerChange > maxCornerChange) {
+#         if DEBUG_QUAD_REFINEMENT
+          AnkiWarn("RefineQuadrilateral", "Quad changed too much.\n");
+#         endif
+          lastResult = RESULT_FAIL;
+        }
       }
 
       EndBenchmark("vme_quadrefine_finalize");
 
-      return RESULT_OK;
+      return lastResult;
     } // RefineQuadrilateral
   }
 }

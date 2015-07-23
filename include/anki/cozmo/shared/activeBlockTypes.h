@@ -4,78 +4,82 @@
 #include "anki/common/types.h"
 
 namespace Anki {
-  namespace Cozmo {
+namespace Cozmo {
 
-    // Specify LEDs, relative to block's top face (as determined by accelerometer)
-    // Looking down at top face (and through to bottom face), LEDs are
-    // numbered as follows, with each value corresponding to a bit in a u8:
-    // Note that the face labels are done such that they match the way Blocks'
-    // faces are defined (imagine the robot is looking along the x axis, facing
-    // the "Front" of the block, then it makes sense...)
-    //
-    //         (Left)                             Y
-    //        0 ----- 4         2 ----- 6        ^
-    //        |       |         |       |        |
-    // (Front)|  TOP  |(Back)   |  BTM  |        |
-    //        |       |         |       |        +----> X
-    //        1 ----- 5         3 ----- 7
-    //         (Right)
-    //
-    const s32 NUM_BLOCK_LEDS = 8;
-    enum class WhichLEDs : u8 {
-      NONE        = 0x00,
-      ALL         = 0xFF,
-      
-      // Individual LEDs (indicated by a single bit set):
-      TOP_UPPER_LEFT  = 0x01,
-      TOP_UPPER_RIGHT = 0x10,
-      TOP_LOWER_LEFT  = 0x02,
-      TOP_LOWER_RIGHT = 0x20,
-      BTM_UPPER_LEFT  = 0x04,
-      BTM_UPPER_RIGHT = 0x40,
-      BTM_LOWER_LEFT  = 0x08,
-      BTM_LOWER_RIGHT = 0x80,
-      
-      // Top/Bottom Pairs:
-      TOP_BTM_UPPER_LEFT  = TOP_UPPER_LEFT  | BTM_UPPER_LEFT,
-      TOP_BTM_UPPER_RIGHT = TOP_UPPER_RIGHT | BTM_UPPER_RIGHT,
-      TOP_BTM_LOWER_LEFT  = TOP_LOWER_LEFT  | BTM_LOWER_LEFT,
-      TOP_BTM_LOWER_RIGHT = TOP_LOWER_RIGHT | BTM_LOWER_RIGHT,
-      
-      // Faces of 4 LEDs:
-      TOP_FACE   = TOP_UPPER_LEFT  | TOP_UPPER_RIGHT | TOP_LOWER_LEFT  | TOP_LOWER_RIGHT,
-      BTM_FACE   = BTM_UPPER_LEFT  | BTM_UPPER_RIGHT | BTM_LOWER_LEFT  | BTM_LOWER_RIGHT,
-      LEFT_FACE  = TOP_UPPER_LEFT  | TOP_LOWER_LEFT  | BTM_UPPER_LEFT  | BTM_LOWER_LEFT,
-      RIGHT_FACE = TOP_UPPER_RIGHT | TOP_LOWER_RIGHT | BTM_UPPER_RIGHT | BTM_LOWER_RIGHT,
-      FRONT_FACE = TOP_LOWER_LEFT  | TOP_LOWER_RIGHT | BTM_LOWER_LEFT  | BTM_LOWER_RIGHT,
-      BACK_FACE  = TOP_UPPER_LEFT  | TOP_UPPER_RIGHT | BTM_UPPER_LEFT  | BTM_UPPER_RIGHT
-    };
+  // Specify LEDs, relative to block's top face (as determined by accelerometer)
+  // Looking down at top face (and through to bottom face), LEDs are
+  // numbered as follows, with each value corresponding to a bit in a u8:
+  // Note that the face labels are done such that they match the way Blocks'
+  // faces are defined (imagine the robot is looking along the x axis, facing
+  // the "Front" of the block, then it makes sense...)
+  // NOTE: In the orientation displayed below, the Top marker is rightside up on screen
+  //
+  //
+  //                 (Left)             Y
+  //                 ---1---            ^
+  //                |   ^   |           |
+  //        (Front) 2  TOP  0 (Back)    |
+  //                |       |           +----> X
+  //                 ---3---
+  //                 (Right)
+  //
+  //  When the block is on its side, FRONT is synonymous with the upper LED.
+  const s32 NUM_BLOCK_LEDS = 4;
+  
+# if __cplusplus >= 201103L
+  enum class WhichBlockLEDs : u8 {
+# else
+  typedef enum {
+# endif
+    NONE        = 0x00,
+    ALL         = 0xFF,
     
-    enum class LEDState : u8 {
-      LED_OFF = 0,
-      LED_ON,
-      LED_TURNING_ON,
-      LED_TURNING_OFF
-    };
-    
-    // TODO: This will expand as we want the lights to do fancier things
-    typedef struct {
-      u32 color; // Stored as RGBA, where A(lpha) is ignored
-      u32 onPeriod_ms;            // time spent in "on" state
-      u32 offPeriod_ms;           // time spent in "off" state
-      u32 transitionOnPeriod_ms;  // time spent linearly transitioning from "off" to "on"
-      u32 transitionOffPeriod_ms; // time spent linearly transitioning from "on" to "off"
-      TimeStamp_t nextSwitchTime; // for changing state when flashing
-      LEDState state;
-    } LEDParams;
+    // Individual LEDs (indicated by a single bit set):
+    BACK   = 0x01,
+    LEFT   = 0x02,
+    FRONT  = 0x04,
+    RIGHT  = 0x08,
 
+    FRONT_LEFT  = FRONT | LEFT,
+    FRONT_RIGHT = FRONT | RIGHT,
+    BACK_LEFT   = BACK | LEFT,
+    BACK_RIGHT  = BACK | RIGHT
+  }
+# if __cplusplus < 201103L
+  WhichBlockLEDs
+#endif
+  ;
+  
+  // Use OFF to specify a pattern of LEDs in an absolute sense.
+  // Use BY_CORNER so that the specified pattern is rotated such that whatever is
+  //   specified for LED_0 ends up closest to the given relative position.
+  // Use BY_SIDE so that the specified pattern is rotated such that whatever is
+  //   specified for the LED_0 - LED_4 side ends up closest to the given relative
+  //   position.
+  enum MakeRelativeMode {
+    RELATIVE_LED_MODE_OFF = 0,
+    RELATIVE_LED_MODE_BY_CORNER,
+    RELATIVE_LED_MODE_BY_SIDE
+  };
+  
+  // The amount of time between sending the flash ID message
+  // to one block and the next block.
+  // This must be larger than the flash pattern duration on the block!
+  const u32 FLASH_BLOCK_TIME_INTERVAL_MS = 200;
+  
     
-    // The amount of time between sending the flash ID message
-    // to one block and the next block.
-    // This must be larger than the flash pattern duration on the block!
-    const u32 FLASH_BLOCK_TIME_INTERVAL_MS = 200;
+  typedef enum {
+    UP_AXIS_Xneg = 0,
+    UP_AXIS_Xpos,
+    UP_AXIS_Yneg,
+    UP_AXIS_Ypos,
+    UP_AXIS_Zneg,
+    UP_AXIS_Zpos,
+    NUM_UP_AXES,
+    UP_AXIS_UNKNOWN = NUM_UP_AXES + 1,
+  } UpAxis;
     
-  } // namespace Cozmo
+} // namespace Cozmo
 } // namespace Anki
 
 

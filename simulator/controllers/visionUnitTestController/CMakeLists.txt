@@ -33,7 +33,7 @@ link_directories( ${WEBOTS_LIB_DIR} )
 set(SOURCE_FILES
   visionUnitTestController.cpp
   
-  ${PROJECT_SOURCE_DIR}/basestation/src/comms/robot/robotMessages.cpp
+  ${PROJECT_SOURCE_DIR}/basestation/src/anki/cozmo/basestation/comms/robot/robotMessages.cpp
 
   # this is where the Supervisor object lives, it must be early in the compile list?!?
   #${SIMULATOR_HAL_DIR}/sim_hal.cpp
@@ -63,6 +63,7 @@ target_link_libraries(visionUnitTestController
   CoreTech_Common_Basestation
   #CoreTech_Common_Robot # for matlab interface?
   CoreTech_Vision_Basestation
+  CoreTech_Vision_Robot  # needed for marker detection, until that moves to basestation
   #CoreTech_Messaging_Shared
   # mx 
   # eng
@@ -81,7 +82,7 @@ endif()
 set_target_properties(
   visionUnitTestController PROPERTIES
   COMPILE_DEFINITIONS USE_TCP_MESSAGING_INTERFACE
-  LINK_FLAGS "-Wl,-rpath,${MATLAB_ROOT_DIR}/bin/maci64/"
+  LINK_FLAGS "-Wl,-rpath,${MATLAB_ROOT}/bin/maci64/"
   FOLDER "Unit Tests"
   #XCODE_ATTRIBUTE_CLANG_CXX_LANGUAGE_STANDARD "c++98"
   #XCODE_ATTRIBUTE_CLANG_CXX_LIBRARY "libstdc++"

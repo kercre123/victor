@@ -19,9 +19,11 @@ namespace Anki {
       DA_PICKUP_HIGH,     // Docking to block at level 1
       DA_PLACE_HIGH,      // Placing block atop another block at level 0
       DA_PLACE_LOW,       // Placing block on level 0
+      DA_ROLL_LOW,        // Rolling a block at level 0 by pulling it towards you
       DA_RAMP_ASCEND,     // Going up a ramp
       DA_RAMP_DESCEND,    // Going down a ramp
-      DA_CROSS_BRIDGE
+      DA_CROSS_BRIDGE,    // Crossing a bridge
+      DA_MOUNT_CHARGER    // Reversing onto charger
     } DockAction_t;
 
 
@@ -58,14 +60,12 @@ namespace Anki {
       // Cycles through all known animations
       TM_ANIMATION,
 
-#if defined(HAVE_ACTIVE_GRIPPER) && HAVE_ACTIVE_GRIPPER
-      // Engages and disengages gripper
-      TM_GRIPPER,
-#endif
-
       // Cycle through all LEDs with different colors
       TM_LIGHTS,
 
+      // Draw and blink a test face
+      TM_FACE_DISPLAY,
+      
       // Drives slow and then stops.
       // Drives fast and then stops.
       // Reports stopping distance and time (in tics).
@@ -87,11 +87,16 @@ namespace Anki {
     } DriveTestFlags;
     
     typedef enum {
-      LiftTF_TEST_HEIGHTS = 0x01
+      LiftTF_TEST_POWER = 0,
+      LiftTF_TEST_HEIGHTS,
+      LiftTF_NODDING,
+      LiftTF_DISABLE_MOTOR
     } LiftTestFlags;
 
     typedef enum {
-      HTF_TEST_ANGLES = 0x01
+      HTF_TEST_POWER = 0,
+      HTF_TEST_ANGLES,
+      HTF_NODDING
     } HeadTestFlags;
     
     typedef enum {
@@ -105,33 +110,43 @@ namespace Anki {
 
     // Bit flags for RobotState message
     typedef enum {
-      IS_MOVING               = 0x01,  // Head, lift, or wheels
-      IS_CARRYING_BLOCK       = 0x02,
-      IS_PICKING_OR_PLACING   = 0x04,
-      IS_PICKED_UP            = 0x08,
-      IS_PROX_FORWARD_BLOCKED = 0x10,
-      IS_PROX_SIDE_BLOCKED    = 0x20,
-      IS_ANIMATING            = 0x40,
-      IS_PERFORMING_ACTION    = 0x80
+      IS_MOVING               = 0x00000001,  // Head, lift, or wheels
+      IS_CARRYING_BLOCK       = 0x00000002,
+      IS_PICKING_OR_PLACING   = 0x00000004,
+      IS_PICKED_UP            = 0x00000008,
+      IS_PROX_FORWARD_BLOCKED = 0x00000010,
+      IS_PROX_SIDE_BLOCKED    = 0x00000020,
+      IS_ANIMATING            = 0x00000040,
+      IS_PERFORMING_ACTION    = 0x00000080,
+      LIFT_IN_POS             = 0x00000100,
+      HEAD_IN_POS             = 0x00000200,
+      IS_ANIM_BUFFER_FULL     = 0x00000400
     } RobotStatusFlag;
+    
+    // Status bit flags for game state
+    // TODO: This belongs in cozmo-game rather than cozmo-engine
+    typedef enum {
+      IS_LOCALIZED            = 0x00000001
+    } GameStatusFlag;
 
+    
+    // Bit flags for enabling/disabling animation tracks on the robot
+    typedef enum {
+      DISABLE_ALL_TRACKS = 0,
+      HEAD_TRACK = 0x01,
+      LIFT_TRACK = 0x02,
+      BODY_TRACK = 0x04,
+      FACE_IMAGE_TRACK = 0x08,
+      FACE_POS_TRACK   = 0x10,
+      BACKPACK_LIGHTS_TRACK = 0x20,
+      AUDIO_TRACK = 0x40,
+      BLINK_TRACK = 0x80,
+      ENABLE_ALL_TRACKS = 0xFF
+    } AnimTrackFlag;
 
     // A key associated with each computed pose retrieved from history
     // to be used to check its validity at a later time.
     typedef u32 HistPoseKey;
-
-
-    // Animation ID
-    // TODO: Eventually, we might want a way of sending animation definitions down from basestation
-    //       but for now they're hard-coded on the robot
-    /*typedef enum {
-      ANIM_IDLE
-      ,ANIM_HEAD_NOD
-      ,ANIM_BACK_AND_FORTH_EXCITED
-      ,ANIM_WIGGLE
-      ,ANIM_NUM_ANIMATIONS
-    } AnimationID_t;*/
-    typedef s32 AnimationID_t;
 
     // Prox sensors
     typedef enum {
@@ -140,34 +155,6 @@ namespace Anki {
       ,PROX_RIGHT
       ,NUM_PROX
     } ProxSensor_t;
-
-    // LED identifiers and colors
-    // Updated for "neutral" (non-hardware specific) order in 2.1
-    enum LEDId {
-      LED_RIGHT_EYE_TOP = 0,
-      LED_RIGHT_EYE_RIGHT,
-      LED_RIGHT_EYE_BOTTOM,
-      LED_RIGHT_EYE_LEFT,
-      LED_LEFT_EYE_TOP,
-      LED_LEFT_EYE_RIGHT,
-      LED_LEFT_EYE_BOTTOM,
-      LED_LEFT_EYE_LEFT,
-      NUM_LEDS
-    };
-
-    // The color format is identical to HTML Hex Triplets (RGB)
-    enum LEDColor {
-      LED_CURRENT_COLOR = 0xffffffff, // Don't change color: leave as is
-
-      LED_OFF =   0x000000,
-      LED_RED =   0xff0000,
-      LED_GREEN = 0x00ff00,
-      LED_YELLOW= 0xffff00,
-      LED_BLUE =  0x0000ff,
-      LED_PURPLE= 0xff00ff,
-      LED_CYAN =  0x00ffff,
-      LED_WHITE = 0xffffff
-    };
 
     enum WhichEye {
       EYE_LEFT,

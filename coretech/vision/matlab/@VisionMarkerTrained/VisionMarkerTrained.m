@@ -5,22 +5,26 @@ classdef VisionMarkerTrained
         %TrainingImageDir = '~/Box Sync/Cozmo SE/VisionMarkers/lettersWithFiducials/rotated';
         %TrainingImageDir = '~/Box Sync/Cozmo SE/VisionMarkers/symbolsWithFiducials/unpadded/rotated';
         
+        RootImageDir = fullfile(fileparts(mfilename('fullpath')), '../../../../../products-cozmo-large-files/VisionMarkers');
+        
         TrainingImageDir = { ...
-            '~/Box Sync/Cozmo SE/VisionMarkers/letters/withFiducials/rotated', ... '~/Box Sync/Cozmo SE/VisionMarkers/matWithFiducials/unpadded/rotated', ...
-            '~/Box Sync/Cozmo SE/VisionMarkers/symbols/withFiducials/rotated', ...
-            '~/Box Sync/Cozmo SE/VisionMarkers/dice/withFiducials/rotated', ...}; % '~/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/rotated', ...
-            '~/Box Sync/Cozmo SE/VisionMarkers/creepTest/withFiducials/rotated'};
+            fullfile(VisionMarkerTrained.RootImageDir, 'letters/withFiducials/rotated'), ... '~/Box Sync/Cozmo SE/VisionMarkers/matWithFiducials/unpadded/rotated', ...
+            fullfile(VisionMarkerTrained.RootImageDir, 'symbols/withFiducials/rotated'), ...
+            fullfile(VisionMarkerTrained.RootImageDir, 'lightCubeH/withFiducials/rotated'), ... 
+            fullfile(VisionMarkerTrained.RootImageDir, 'matGears/withFiducials/rotated'), ... 
+            fullfile(VisionMarkerTrained.RootImageDir, 'dice/withFiducials/rotated'), ...}; % '~/Box Sync/Cozmo SE/VisionMarkers/ankiLogoMat/unpadded/rotated', ...
+            fullfile(VisionMarkerTrained.RootImageDir, 'creepTest/withFiducials/rotated')};
                 
         ProbeParameters = struct( ...
             'GridSize', 32, ...            %'Radius', 0.02, ...  % As a fraction of a canonical unit square 
             'NumAngles', 4, ...       % How many samples around ring to sample
             'Method', 'mean');        % How to combine points in a probe
                 
-        MinContrastRatio = 0; %1.25;  % bright/dark has to be at least this
+        MinContrastRatio = 1.05; %1.25;  % bright/dark has to be at least this
         
         SquareWidthFraction = 0.1;     % as a fraction of the fiducial width
         FiducialPaddingFraction = 0.1; % as a fraction of the fiducial width
-        CornerRadiusFraction = 0.25;    % as a fraction of the fiducial width
+        CornerRadiusFraction = 0;    % as a fraction of the fiducial width
         
         ProbeRegion = [VisionMarkerTrained.SquareWidthFraction+VisionMarkerTrained.FiducialPaddingFraction ...
             1-(VisionMarkerTrained.SquareWidthFraction+VisionMarkerTrained.FiducialPaddingFraction)];
@@ -57,6 +61,8 @@ classdef VisionMarkerTrained
         corners = GetFiducialCorners(imageSize, isPadded);
         [threshold, bright, dark] = ComputeThreshold(img, tform, method);
         outputString = GenerateHeaderFiles(varargin);
+        [nearestNeighborString, markerDefString] = GenerateNearestNeighborHeaderFiles(varargin)
+        
         [numMulticlassNodes, numVerificationNodes] = GetNumTreeNodes(tree);
 
         CreateTestImage(varargin);
@@ -93,6 +99,8 @@ classdef VisionMarkerTrained
         
         matchDistance;
         
+        nearestNeighborLibrary;
+        
     end % Properties
                 
     methods 
@@ -103,12 +111,14 @@ classdef VisionMarkerTrained
             Pose = [];
             Size = 1;
             UseSingleProbe = false;
-            CornerRefinementIterations = 25;
-            UseMexCornerRefinment = false;
+            CornerRefinementIterations = 100;
+            UseMexCornerRefinment = true;
             VerifyLabel = true;
             Initialize = true;
             ThresholdMethod = 'FiducialProbes'; % 'Otsu' or 'FiducialProbes'
-                        
+            NearestNeighborLibrary = [];
+            CNN = [];
+            
             parseVarargin(varargin{:});
             
             if ~Initialize
@@ -152,9 +162,14 @@ classdef VisionMarkerTrained
             else
                 if CornerRefinementIterations > 0
                     if UseMexCornerRefinment
+                      try
                         [this.corners, this.H] = mexRefineQuadrilateral(im2uint8(img), int16(this.corners-1), single(this.H), ...
-                            CornerRefinementIterations, VisionMarkerTrained.SquareWidthFraction, dark*255, bright*255, 100, 5);
+                            CornerRefinementIterations, VisionMarkerTrained.SquareWidthFraction, dark*255, bright*255, 100, 5, .005);
                         this.corners = this.corners + 1;
+                      catch E
+                        warning('mexRefineQuadrilateral failed: %s', E.message);
+                        this.isValid = false;
+                      end
                     else
                         [this.corners, this.H] = this.RefineCorners(img, 'NumSamples', 100, ... 'DebugDisplay', true,  ...
                             'MaxIterations', CornerRefinementIterations, ...
@@ -162,7 +177,82 @@ classdef VisionMarkerTrained
                     end
                 end
                 
-                if iscell(VisionMarkerTrained.ProbeTree)
+                if ~isempty(CNN)
+                  assert(all(isfield(CNN, {'labels', 'labelNames'})), ...
+                    'Expecting CNN to have "labels" and "labelNames" fields.');
+                  
+                  probeValues = VisionMarkerTrained.GetProbeValues(img, tform);
+                  res = vl_simplenn(CNN, single(probeValues));
+                  %[maxResponse,index] = max(squeeze(sum(sum(res(end).x,1),2)));
+                  [sortedResponses, index] = sort(squeeze(sum(sum(res(end).x,1),2)), 'descend');
+                  
+                  % Max response has to be significantly better than
+                  % second-best response for this to be a valid marker
+                  responseRatio = sortedResponses(1)/sortedResponses(2);
+                  %fprintf('responseRatio = %f\n', responseRatio);
+                  
+                  if responseRatio > 1.2
+                    this.codeID = CNN.labels(index(1));
+                    this.codeName = CNN.labelNames(this.codeID);
+                    this.isValid  = true;
+                  else
+                    this.codeID = 0;
+                    this.codeName = 'UNKNOWN';
+                    this.isValid = false;
+                  end
+                  
+                elseif ~isempty(NearestNeighborLibrary)
+                  VerifyLabel = false;
+                  assert(size(NearestNeighborLibrary.probeValues,1) == VisionMarkerTrained.ProbeParameters.GridSize^2, ...
+                    'NearestNeighborLibrary should be from a %dx%d probe pattern.', ...
+                    VisionMarkerTrained.ProbeParameters.GridSize, ...
+                    VisionMarkerTrained.ProbeParameters.GridSize);
+                  
+                  % Compute distance of the observed probes to all known
+                  % probes.
+                  
+                 probeValues = VisionMarkerTrained.GetProbeValues(img, tform);
+                 %probeValues = (probeValues - dark)/(bright-dark);
+                 
+                 %probeValues = 255*imfilter(probeValues, [0 1 0; 1 -4 1; 0 1 0], 'replicate');
+                 
+                 %probeValues = probeValues - imfilter(probeValues, ones(16)/256, 'replicate');
+                 kernel = -ones(16);
+                 kernel(8,8) = 255;
+                 probeValues = imfilter(probeValues, kernel, 'replicate');
+                 minVal = min(probeValues(:));
+                 maxVal = max(probeValues(:));
+                 probeValues = (probeValues - minVal)/(maxVal-minVal);
+                 
+                 probeValues = im2uint8(probeValues(:));
+                 
+%                  if isfield(NearestNeighborLibrary, 'gradMagWeights')
+%                    d = imabsdiff(probeValues(:,ones(1,size(NearestNeighborLibrary.probeValues,2))), NearestNeighborLibrary.probeValues);
+%                    d = sum(NearestNeighborLibrary.gradMagWeights.*single(d),1) ./ sum(NearestNeighborLibrary.gradMagWeights,1);
+%                  elseif isfield(NearestNeighborLibrary, 'gradMagValues')
+%                    %Ix = abs(image_right(probeValues) - image_left(probeValues));
+%                    %Iy = abs(image_down(probeValues) - image_up(probeValues));
+%                    %probeWeights = max(0,min(1,single(column(1 - max(Ix,Iy)))));
+%                    
+%                    libraryWeights = im2single(NearestNeighborLibrary.gradMagValues);
+%                    minVal = min(libraryWeights(:));
+%                    maxVal = max(libraryWeights(:));
+%                    w = 1 - (libraryWeights-minVal)/(maxVal-minVal);
+%                    
+%                    d = imabsdiff(probeValues(:,ones(1,size(NearestNeighborLibrary.probeValues,2))), NearestNeighborLibrary.probeValues);
+%                    %w = min(probeWeights(:,ones(1,size(NearestNeighborLibrary.probeValues,2))), libraryWeights);
+%                    d = sum(w.*single(d),1) ./ sum(w,1);
+%                  else
+                   d = mean(imabsdiff(probeValues(:,ones(1,size(NearestNeighborLibrary.probeValues,2))), NearestNeighborLibrary.probeValues),1);
+%                  end
+                 [minDist, index] = min(d);
+                 %fprintf('Min NN dist = %f\n', minDist);
+                 
+                 this.codeID = NearestNeighborLibrary.labels(index);
+                 this.codeName = NearestNeighborLibrary.labelNames{this.codeID};
+                 this.isValid = minDist < 30;
+                 
+                elseif iscell(VisionMarkerTrained.ProbeTree)
                   VerifyLabel = false;
                   numTrees = length(VisionMarkerTrained.ProbeTree);
                   codeNames = cell(1, numTrees);
@@ -288,9 +378,11 @@ classdef VisionMarkerTrained
                 end
 
                 if ~isempty(underscoreIndex)
-                    assert(length(underscoreIndex) == 1, ...
-                        'There should be no more than 1 underscore in the code name: "%s".', this.codeName{iName});
-
+                    if length(underscoreIndex) > 1
+                      % If more than one underscore, use last
+                      underscoreIndex = underscoreIndex(end);
+                    end
+                    
                     angleStr = this.codeName{iName}((underscoreIndex+1):end);
                     this.codeName{iName} = this.codeName{iName}(1:(underscoreIndex-1));
 

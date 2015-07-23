@@ -9,6 +9,11 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include "anki/vision/robot/fiducialDetection.h"
 
+//#define SEND_BOUNDARIES_TO_MATLAB
+#ifdef SEND_BOUNDARIES_TO_MATLAB
+#include "anki/common/robot/matlabInterface.h"
+#endif
+
 namespace Anki
 {
   namespace Embedded
@@ -79,7 +84,7 @@ namespace Anki
         quadSwapped[0].x-quadSwapped[1].x, quadSwapped[0].y-quadSwapped[1].y,
         quadSwapped[3].x-quadSwapped[1].x, quadSwapped[3].y-quadSwapped[1].y);
 
-      if( !(SIGN(detA) == SIGN(detB) && SIGN(detC) == SIGN(detD)) )
+      if( !(signbit(detA) == signbit(detB) && signbit(detC) == signbit(detD)) )
         return false;
 
       detA = abs(detA);
@@ -119,7 +124,7 @@ namespace Anki
     // A reasonable value for minQuadArea is 100
     //
     // Required ??? bytes of scratch
-    Result ComputeQuadrilateralsFromConnectedComponents(const ConnectedComponents &components, const s32 minQuadArea, const s32 quadSymmetryThreshold, const s32 minDistanceFromImageEdge, const s32 imageHeight, const s32 imageWidth, FixedLengthList<Quadrilateral<s16> > &extractedQuads, MemoryStack scratch)
+    Result ComputeQuadrilateralsFromConnectedComponents(const ConnectedComponents &components, const s32 minQuadArea, const s32 quadSymmetryThreshold, const s32 minDistanceFromImageEdge, const s32 minLaplacianPeakRatio, const s32 imageHeight, const s32 imageWidth, const CornerMethod cornerMethod, FixedLengthList<Quadrilateral<s16> > &extractedQuads, MemoryStack scratch)
     {
       const s32 MAX_BOUNDARY_LENTH = 10000; // Probably significantly longer than would ever be needed
 
@@ -136,6 +141,13 @@ namespace Anki
 
       s32 startComponentIndex = 0;
 
+      //printf("components.get_maximumId() = %d\n", components.get_maximumId());
+
+#ifdef SEND_BOUNDARIES_TO_MATLAB
+      Anki::Embedded::Matlab matlab(false);     
+      matlab.EvalStringEcho("boundaries = {};");
+#endif // #ifdef SEND_BOUNDARIES_TO_MATLAB
+
       // Go throught the list of components, and for each id, extract a quadrilateral. If the
       // quadrilateral looks reasonable, add it to the list extractedQuads.
       for(s32 iComponent=0; iComponent<components.get_maximumId(); iComponent++) {
@@ -148,22 +160,53 @@ namespace Anki
           return lastResult;
         //EndBenchmark("TraceNextExteriorBoundary");
 
-        if(extractedBoundary.get_size() == 0)
-          continue;
+        //printf("extractedBoundary.size = %d\n", extractedBoundary.get_size());
+#ifdef SEND_BOUNDARIES_TO_MATLAB
+        {
+          std::shared_ptr<s16> xs(new s16[extractedBoundary.get_size()]);
+          std::shared_ptr<s16> ys(new s16[extractedBoundary.get_size()]);
+
+          for(s32 i=0; i<extractedBoundary.get_size(); i++) {
+            xs.get()[i] = extractedBoundary[i].x;
+            ys.get()[i] = extractedBoundary[i].y;
+          }
+
+          matlab.Put(xs.get(), extractedBoundary.get_size(), "xs");
+          matlab.Put(ys.get(), extractedBoundary.get_size(), "ys");
+          matlab.EvalStringEcho("boundaries{end+1} = [xs, ys]; clear('xs'); clear('ys');");
+        }
+#endif // #ifdef SEND_BOUNDARIES_TO_MATLAB
 
         startComponentIndex = endComponentIndex + 1;
 
-        //BeginBenchmark("ExtractLaplacianPeaks");
+        if(extractedBoundary.get_size() == 0)
+          continue;
+
         // 2. Compute the Laplacian peaks
-        if((lastResult = ExtractLaplacianPeaks(extractedBoundary, peaks, scratch)) != RESULT_OK)
-          return lastResult;
-        //EndBenchmark("ExtractLaplacianPeaks");
+        //BeginBenchmark("ExtractPeaks");
+        if(cornerMethod == CORNER_METHOD_LAPLACIAN_PEAKS) {
+          if((lastResult = ExtractLaplacianPeaks(extractedBoundary, minLaplacianPeakRatio, peaks, scratch)) != RESULT_OK)
+            return lastResult;
+        } else if(cornerMethod == CORNER_METHOD_LINE_FITS) {
+          if((lastResult = ExtractLineFitsPeaks(extractedBoundary, peaks, imageHeight, imageWidth, scratch)) != RESULT_OK)
+            return lastResult;
+        } else {
+          AnkiAssert(false);
+        }
+        
+        //EndBenchmark("ExtractPeaks");
 
         if(peaks.get_size() != 4)
           continue;
 
         Quadrilateral<s16> quad(peaks[0], peaks[1], peaks[2], peaks[3]);
         Quadrilateral<s16> quadSwapped;
+
+        /*printf("curQuad = (%d,%d), (%d,%d), (%d,%d), (%d,%d)\n", 
+          quad[0].x, quad[0].y,
+          quad[1].x, quad[1].y,
+          quad[2].x, quad[2].y,
+          quad[3].x, quad[3].y);*/
 
         // 3. If the quadraleteral is reasonable, add the quad to the list of extractedQuads
         // IsQuadrilateralValidAndUpdateOrdering also changes the order of the points, into the non-rotated and corner-opposite format

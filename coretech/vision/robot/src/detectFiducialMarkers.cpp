@@ -17,7 +17,12 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include "anki/common/robot/matlabInterface.h"
 
+#if USE_NEAREST_NEIGHBOR_RECOGNITION
+#  define NEAREST_NEIGHBOR_DISTANCE_THRESHOLD 40 // TODO: Make this a VisionParameter and pass it in dynamically
+#endif
+
 //#define SHOW_DRAWN_COMPONENTS
+//#define SEND_COMPONENTS_TO_MATLAB
 
 namespace Anki
 {
@@ -32,6 +37,7 @@ namespace Anki
       const s32 component_minimumNumPixels, const s32 component_maximumNumPixels,
       const s32 component_sparseMultiplyThreshold, const s32 component_solidMultiplyThreshold,
       const f32 component_minHollowRatio,
+      const CornerMethod cornerMethod, const s32 minLaplacianPeakRatio,
       const s32 quads_minQuadArea, const s32 quads_quadSymmetryThreshold, const s32 quads_minDistanceFromImageEdge,
       const f32 decode_minContrastRatio,
       const s32 maxConnectedComponentSegments, //< If this number is above 2^16-1, then it will use 25% more memory per component
@@ -46,9 +52,81 @@ namespace Anki
       MemoryStack scratchOffChip)
     {
       const bool useIntegralImageFiltering = true;
-      return DetectFiducialMarkers(image, markers, homographies, useIntegralImageFiltering, scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_minHollowRatio, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio, maxConnectedComponentSegments, maxExtractedQuads, refine_quadRefinementIterations, refine_numRefinementSamples, refine_quadRefinementMaxCornerChange, refine_quadRefinementMinCornerChange, returnInvalidMarkers, scratchCcm, scratchOnchip, scratchOffChip);
+      return DetectFiducialMarkers(image, markers, homographies, useIntegralImageFiltering, scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_minHollowRatio, cornerMethod, minLaplacianPeakRatio, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio, maxConnectedComponentSegments, maxExtractedQuads, refine_quadRefinementIterations, refine_numRefinementSamples, refine_quadRefinementMaxCornerChange, refine_quadRefinementMinCornerChange, returnInvalidMarkers, scratchCcm, scratchOnchip, scratchOffChip);
     }
 
+    
+    static Result IlluminationNormalization(const Quadrilateral<f32>& corners,
+                                            cv::Mat_<u8>& cvImage, // filters this in place
+                                            cv::Mat_<u8>& cvImageROI, // returns the ROI for the corners
+                                            cv::Mat_<u8>& cvImageROI_orig)  // stores a copy of the original data inside the ROI
+    {
+      // Get a slightly-dilated bounding box of the current marker's corners,
+      // and store as an OpenCV rectangle
+      Rectangle<s32> roi = corners.ComputeBoundingRectangle<s32>();
+      cv::Rect cvRoi;
+      
+      roi.left   = MAX(0, roi.left-5);
+      roi.top    = MAX(0, roi.top-5);
+      roi.bottom = MIN(cvImage.rows-1, roi.bottom+5);
+      roi.right  = MIN(cvImage.cols-1, roi.right+5);
+      
+      cvRoi.x = roi.left;
+      cvRoi.y = roi.top;
+      cvRoi.width = roi.get_width();
+      cvRoi.height = roi.get_height();
+      
+      // Extract the ROI for processing
+      cvImageROI = cvImage(cvRoi);
+      AnkiConditionalErrorAndReturnValue(cvImageROI.empty() == false, RESULT_FAIL_INVALID_SIZE,
+                                         "IlluminationNormalization", "Got empty ROI for given corners.\n");
+      
+      // Hang on to a copy of the original pixel values so we can restore them
+      // after filtering, to avoid screwing up the supposedly-const input image
+      // for later processing
+      cvImageROI.copyTo(cvImageROI_orig);
+      
+      // Filter with a kernel sized for this ROI:
+      // (The kernel is a bunch of -1's surrounding a single positive value
+      //  at the center equal to the sum of all the -1's)
+      cv::Mat_<s16> cvImageROI_filtered;
+      
+      /*
+      // Kernel size should be half the size of the image inside the fiducial
+      // since this filtering should also match the illumination normalization
+      // done to the nearest neighbor library.
+      //  So we take the average diagonal of the quad (0.5 times the sum of the
+      //  two diagonals), divide that by sqrt(2), and then
+      //  use 0.6 of that because that's the size of the marker image, and then we
+      //  use half of that. I.e., 0.5*sqrt(2)*0.6*0.5 = .1061
+      const s32 kernelSize = 0.1061f*((corners[Quadrilateral<f32>::TopLeft] - corners[Quadrilateral<f32>::BottomRight]).Length() +
+                                      (corners[Quadrilateral<f32>::TopRight] - corners[Quadrilateral<f32>::BottomLeft]).Length());
+      */
+
+      // Kernel size should be twice the thickness of the fiducial. We use the average
+      // diagonal/sqrt(2) to estimate the fiducial width, and since the thickness is
+      // 10% of the width, we use 0.2/sqrt(2)=0.14 as the multiplier.
+      // This kernel size assumes we RE-filter the extracted probe values inside the nearest
+      // neighbor code.
+      const f32 kernelSize = std::round(1.4142f*FIDUCIAL_SQUARE_WIDTH_FRACTION *
+                                        ((corners[Quadrilateral<f32>::TopLeft] - corners[Quadrilateral<f32>::BottomRight]).Length() +
+                                         (corners[Quadrilateral<f32>::TopRight] - corners[Quadrilateral<f32>::BottomLeft]).Length()));
+
+      cv::Mat_<s16> kernel(kernelSize, kernelSize);
+      kernel = -1;
+      kernel(kernelSize/2, kernelSize/2) = kernelSize*kernelSize - 1;
+      
+      cv::filter2D(cvImageROI, cvImageROI_filtered, cvImageROI_filtered.depth(), kernel);
+      //cv::imshow("Filtered ROI", cvImageROI_filtered);
+      
+      // Normalize to be between 0 and 255
+      cv::normalize(cvImageROI_filtered, cvImageROI, 255, 0, CV_MINMAX);
+      //cv::imshow("Normalized Filtered ROI", cvImageROI);
+      
+      return RESULT_OK;
+    } // IlluminationNormalization()
+    
+    
     Result DetectFiducialMarkers(
       const Array<u8> &image,
       FixedLengthList<VisionMarker> &markers,
@@ -59,6 +137,7 @@ namespace Anki
       const s32 component_minimumNumPixels, const s32 component_maximumNumPixels,
       const s32 component_sparseMultiplyThreshold, const s32 component_solidMultiplyThreshold,
       const f32 component_minHollowRatio,
+      const CornerMethod cornerMethod, const s32 minLaplacianPeakRatio,
       const s32 quads_minQuadArea, const s32 quads_quadSymmetryThreshold, const s32 quads_minDistanceFromImageEdge,
       const f32 decode_minContrastRatio,
       const s32 maxConnectedComponentSegments,
@@ -223,15 +302,55 @@ namespace Anki
       }
 #endif
 
+#ifdef SEND_COMPONENTS_TO_MATLAB
+      {
+        Anki::Embedded::Matlab matlab(false);
+
+        const s32 numComponents = extractedComponents.get_size();
+
+        std::shared_ptr<s16> xStart(new s16[numComponents]);
+        std::shared_ptr<s16> xEnd(new s16[numComponents]);
+        std::shared_ptr<s16> y(new s16[numComponents]);
+
+        s16 * restrict pXStart = xStart.get();
+        s16 * restrict pXEnd = xEnd.get();
+        s16 * restrict pY = y.get();
+
+        if(maxConnectedComponentSegments <= u16_MAX) {
+          const ConnectedComponentSegment<u16> * restrict pComponents = extractedComponents.get_componentsU16()->Pointer(0);
+
+          std::shared_ptr<u16> id(new u16[numComponents]);
+          
+          u16 * restrict pId = id.get();
+
+          for(s32 i=0; i<numComponents; i++) {
+            pXStart[i] = pComponents[i].xStart;
+            pXEnd[i] = pComponents[i].xEnd;
+            pY[i] = pComponents[i].y;
+            pId[i] = pComponents[i].id;
+          }
+
+          matlab.Put<s16>(pXStart, numComponents, "xStart");
+          matlab.Put<s16>(pXEnd, numComponents, "xEnd");
+          matlab.Put<s16>(pY, numComponents, "y");
+          matlab.Put<u16>(pId, numComponents, "id");
+        } else {
+          //TODO: implement
+        }      
+      }
+#endif
+
       // 4. Compute candidate quadrilaterals from the connected components
       {
         BeginBenchmark("ComputeQuadrilateralsFromConnectedComponents");
         FixedLengthList<Quadrilateral<s16> > extractedQuads(maxExtractedQuads, scratchOnchip);
 
-        if((lastResult = ComputeQuadrilateralsFromConnectedComponents(extractedComponents, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, imageHeight, imageWidth, extractedQuads, scratchOnchip)) != RESULT_OK)
+        if((lastResult = ComputeQuadrilateralsFromConnectedComponents(extractedComponents, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, minLaplacianPeakRatio, imageHeight, imageWidth, cornerMethod, extractedQuads, scratchOnchip)) != RESULT_OK)
           return lastResult;
 
         markers.set_size(extractedQuads.get_size());
+
+        //printf("quads %d\n", extractedQuads.get_size());
 
         EndBenchmark("ComputeQuadrilateralsFromConnectedComponents");
 
@@ -270,37 +389,75 @@ namespace Anki
       Array<f32> refinedHomography(3, 3, scratchOnchip);
       u8 meanGrayvalueThreshold;
 
+      // Wrap a cv::Mat around the image data
+      // NOTE: This will permit us to modify the image, despite the input
+      //  Array2d obect being a const reference!!!
+      cv::Mat_<u8> cvImage;
+      ArrayToCvMat(image, &cvImage);
+      
       for(s32 iMarker=0; iMarker<markers.get_size(); iMarker++) {
         const Array<f32> &currentHomography = homographies[iMarker];
         VisionMarker &currentMarker = markers[iMarker];
-
+        
+        cv::Mat_<u8> cvImageROI, cvImageROI_orig;
+        lastResult = IlluminationNormalization(currentMarker.corners, cvImage, cvImageROI, cvImageROI_orig);
+        if(lastResult != RESULT_OK) {
+          AnkiWarn("DetectFiducialMarkers", "Illumination normalization failed, skipping marker %d.\n", iMarker);
+          continue;
+        }
+        
         if(currentMarker.validity == VisionMarker::UNKNOWN) {
           // If refine_quadRefinementIterations > 0, then make this marker's corners more accurate
-          if((lastResult = currentMarker.RefineCorners(
-            image,
-            currentHomography,
-            decode_minContrastRatio,
-            refine_quadRefinementIterations, refine_numRefinementSamples, refine_quadRefinementMaxCornerChange, refine_quadRefinementMinCornerChange,
-            quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge,
-            refinedHomography, meanGrayvalueThreshold,
-            scratchOnchip)) != RESULT_OK)
-          {
-            return lastResult;
-          }
+          lastResult = currentMarker.RefineCorners(image,
+                                                   currentHomography,
+                                                   decode_minContrastRatio,
+                                                   refine_quadRefinementIterations,
+                                                   refine_numRefinementSamples,
+                                                   refine_quadRefinementMaxCornerChange,
+                                                   refine_quadRefinementMinCornerChange,
+                                                   quads_minQuadArea,
+                                                   quads_quadSymmetryThreshold,
+                                                   quads_minDistanceFromImageEdge,
+                                                   refinedHomography,
+                                                   meanGrayvalueThreshold,
+                                                   scratchOnchip);
 
-          if(currentMarker.validity == VisionMarker::LOW_CONTRAST) {
-            currentMarker.markerType = Anki::Vision::MARKER_UNKNOWN;
-          } else {
-            if((lastResult = currentMarker.Extract(
-              image,
-              refinedHomography, meanGrayvalueThreshold,
-              decode_minContrastRatio,
-              scratchOnchip)) != RESULT_OK)
-            {
-              return lastResult;
+          // Put back the original (non-illumination-normalized) pixel values within the ROI
+          cvImageROI_orig.copyTo(cvImageROI);
+          
+          if(lastResult == RESULT_OK) {
+            // Refinement succeeded...
+            if(currentMarker.validity == VisionMarker::LOW_CONTRAST) {
+              // ... but there wasn't enough contrast to use the marker
+              currentMarker.markerType = Anki::Vision::MARKER_UNKNOWN;
+            } else {
+              // ... and there was enough contrast, so proceed with with decoding
+              // the marker
+              lastResult = currentMarker.Extract(image,
+                                                 refinedHomography,
+#                                                if USE_NEAREST_NEIGHBOR_RECOGNITION
+                                                 NEAREST_NEIGHBOR_DISTANCE_THRESHOLD,
+#                                                else
+                                                 meanGrayvalueThreshold,
+#                                                endif
+                                                 decode_minContrastRatio,
+                                                 scratchOnchip);
+              
+              AnkiConditionalWarn(lastResult == RESULT_OK, "DetectFiducialMarkers",
+                                  "Marker extraction for quad %d of %d failed.\n",
+                                  iMarker, markers.get_size());
+              
             }
+          } else {
+            currentMarker.validity = VisionMarker::REFINEMENT_FAILURE;
+            currentMarker.markerType = Anki::Vision::MARKER_UNKNOWN;
           }
-        } // if(currentMarker.validity == VisionMarker::UNKNOWN)
+        } else { // if(currentMarker.validity == VisionMarker::UNKNOWN)
+          // Put back the original (non-illumination-normalized) pixel values within the ROI
+          cvImageROI_orig.copyTo(cvImageROI);
+        }
+
+        
       } // for(s32 iMarker=0; iMarker<markers.get_size(); iMarker++)
 
       // Remove invalid markers from the list
@@ -318,7 +475,7 @@ namespace Anki
           }
         }
       } // if(!returnInvalidMarkers)
-
+      
       EndBenchmark("ExtractVisionMarker");
 
       EndBenchmark("DetectFiducialMarkers");

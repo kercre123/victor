@@ -7,7 +7,7 @@
 //
 
 #import <stdio.h>
-#import "BLENetworkingInterfacePrivate.h"
+#import "BLEManager/Networking/BLENetworkingInterfacePrivate.h"
 
 #define BLENetworkDisconnectMessageLength 1
 const char BLENetworkDisconnectMessageBytes[BLENetworkDisconnectMessageLength] = {0xff};

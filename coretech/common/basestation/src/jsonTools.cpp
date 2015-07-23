@@ -10,11 +10,13 @@
  *
  **/
 
+#include "anki/common/basestation/colorRGBA.h"
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/basestation/math/point_impl.h"
 
 #include "json/json.h"
+#include <iostream>
 #include <vector>
 
 
@@ -110,6 +112,48 @@ namespace JsonTools
     return retVal;
   } // GetPoseOptional()
   
+  
+  bool GetColorOptional(const Json::Value& jsonRoot, const std::string& key, Anki::ColorRGBA& color)
+  {
+    bool retVal = false;
+    if(jsonRoot.isMember(key)) {
+      const Json::Value& node = jsonRoot[key];
+      if(node.isString()) {
+        color = NamedColors::GetByString(node.asString());
+        retVal = true;
+        
+      } else if(node.isArray() && (node.size() == 3 || node.size() == 4)) {
+        const f32 r = node[0].asFloat();
+        const f32 g = node[1].asFloat();
+        const f32 b = node[2].asFloat();
+        
+        const f32 a = node.size() == 4 ? node[3].asFloat() : -1.f;
+        
+        if(r <= 1.f && g <= 1.f && b <= 1.f) {
+          color.SetR(r);
+          color.SetG(g);
+          color.SetB(b);
+          if(a >= 0.f) {
+            color.SetAlpha(a);
+          }
+        } else {
+          color.r() = static_cast<u8>(r);
+          color.g() = static_cast<u8>(g);
+          color.b() = static_cast<u8>(b);
+          if(a >= 0.f) {
+            color.alpha() = static_cast<u8>(a);
+          }
+        }
+        
+        retVal = true;
+        
+      } else {
+        PRINT_NAMED_WARNING("GetColor", "Expecting color in Json to be a string or 3 or 4 element array.\n");
+      }
+    } // if node.isMember(key)
+    
+    return retVal;
+  }
   
 __attribute__((used)) void PrintJson(const Json::Value& config, int maxDepth)
 {

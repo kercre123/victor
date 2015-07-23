@@ -13,13 +13,14 @@ redBlackSampleFraction = 0.75;
 maxDepth = inf;
 addInversions = true;
 saveTree = true;
-baggingSampleFraction = [];
+baggingSampleFraction = []; % set to 0 to automatically sample sqrt(N) points
 probeSampleMethod = 'gradMag'; % 'gradMag', 'alternative', 'none'
 probeSampleFraction = 1;
 maxInfoGainFraction = [];
 leafNodeFraction = 0.9; % fraction of remaining examples that must have same label to consider node a leaf
 testTree = true;
 weights = [];
+ignoreLabelNamePattern = {};
 
 % Now using unpadded images to train
 %imageCoords = [-VisionMarkerTrained.FiducialPaddingFraction ...
@@ -30,13 +31,33 @@ DrawTrees = false;
 
 parseVarargin(varargin{:});
 
+if ~iscell(ignoreLabelNamePattern)
+  ignoreLabelNamePattern = {ignoreLabelNamePattern};
+end
 
 if baggingIterations > 1
   probeTree = cell(1, baggingIterations);
+  
+  pBar = ProgressBar('VisionMarkerTrained ProbeTree Ensemble', 'CancelButton', true);
+
+  pBarCleanup = onCleanup(@()delete(pBar));
+  
+  pBar.set_message('Building bagged probe tree ensemble');
+  pBar.set(0);
+  pBar.set_increment(1/baggingIterations);
+  pBar.showTimingInfo = true;
+
   for iBag = 1:baggingIterations
     fprintf('\n\n\n=== Training Bag %d of %d ===\n\n', iBag, baggingIterations);
     probeTree{iBag} = VisionMarkerTrained.TrainProbeTree(varargin{:}, 'baggingIterations', 1, 'saveTree', false, 'testTree', false);
+    pBar.increment();
+    if pBar.cancelled
+      fprintf('User cancelled bagging.\n');
+      saveTree = false;
+      break;
+    end
   end
+  
   if saveTree
     SaveTreeHelper();
   end
@@ -76,20 +97,46 @@ assert(isa(probeValues, 'uint8'), 'Assuming probeValues are UINT8 now.');
 
 probePattern = VisionMarkerTrained.ProbePattern;
 
+if ~isempty(ignoreLabelNamePattern)
+  
+  toKeep = true(1,size(probeValues,2));
+  for iPattern = 1:length(ignoreLabelNamePattern)
+    index = find(~cellfun(@isempty, regexp(trainingState.labelNames, ignoreLabelNamePattern{iPattern})));
+    
+    for i = 1:length(index)
+      toKeep = toKeep & labels ~= index(i);
+    end
+  end
+
+  probeValues = probeValues(:,toKeep);
+  if exist('gradMagValues', 'var')
+    gradMagValues = gradMagValues(:,toKeep);
+  end
+  labels = labels(toKeep);
+  
+end
 
 if isempty(weights)
     weights = ones(1,size(probeValues,2)) / size(probeValues,2);
 end
 
 if ~isempty(baggingSampleFraction)
+  
+  N = size(probeValues,2);
+  
+    if baggingSampleFraction == 0 %#ok<BDSCI>
+      baggingSampleFraction = sqrt(N)/N;
+    end
+    
     t_bagSample = tic;
     fprintf('Sampling %.1f%% of training examples with replacement...', baggingSampleFraction*100);
-    N = size(probeValues,2);
     
     sampleIndex = randi(N, 1, ceil(baggingSampleFraction*N));
     
     probeValues = probeValues(:,sampleIndex);
-    gradMagValues = gradMagValues(:,sampleIndex);
+    if exist('gradMagValues', 'var')
+      gradMagValues = gradMagValues(:,sampleIndex);
+    end
     labels = labels(sampleIndex);
     weights = weights(sampleIndex);
     numImages = length(sampleIndex);
@@ -99,10 +146,17 @@ end
 
 if probeSampleFraction < 1
     t_probeSample = tic;
+    numProbes = size(probeValues,1);
+    if probeSampleFraction == 0
+      probeSampleFraction = sqrt(numProbes)/numProbes;
+    end
+    
     fprintf('Sampling %.1f%% of probes...', probeSampleFraction*100);
-    sampleMask = rand(size(probeValues,1),1) < probeSampleFraction;
+    sampleMask = rand(numProbes,1) < probeSampleFraction;
     probeValues   = probeValues(sampleMask,:);
-    gradMagValues = gradMagValues(sampleMask,:);
+    if exist('gradMagValues', 'var')
+      gradMagValues = gradMagValues(sampleMask,:);
+    end
     xgrid = xgrid(sampleMask,:);
     ygrid = ygrid(sampleMask,:);
     %resolution = resolution(sampleMask,:);
@@ -620,7 +674,8 @@ SaveTreeHelper();
             if ~isempty(maxInfoGainFraction)
                 [~,sortIndex] = sort(infoGain(:), 'descend');
                 
-                whichUnusedProbe = randi(ceil(maxInfoGainFraction*length(sortIndex)), 1);
+                whichUnusedProbe = sortIndex(randi(ceil(maxInfoGainFraction*length(sortIndex)), 1));
+                
             else
             
                 % Find all probes with the max information gain and if there

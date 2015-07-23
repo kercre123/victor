@@ -61,6 +61,7 @@ namespace Anki {
     const ColorRGBA YELLOW    (1.f, 1.f, 0.f);
     const ColorRGBA CYAN      (0.f, 1.f, 1.f);
     const ColorRGBA ORANGE    (1.f, .5f, 0.f);
+    const ColorRGBA MAGENTA   (1.f, 0.f, 1.f);
     const ColorRGBA WHITE     (1.f, 1.f, 1.f);
     const ColorRGBA BLACK     (0.f, 0.f, 0.f);
     const ColorRGBA DEFAULT   (1.f, .8f, 0.f);
@@ -77,6 +78,7 @@ namespace Anki {
         {"YELLOW",     YELLOW},
         {"CYAN",       CYAN},
         {"ORANGE",     ORANGE},
+        {"MAGENTA",    MAGENTA},
         {"WHITE",      WHITE},
         {"BLACK",      BLACK},
         {"DEFAULT",    DEFAULT},

@@ -2,6 +2,7 @@ function [imgNew, AlphaChannel] = AddFiducial(img, varargin)
 
 CropImage = true;
 InvertImage = false;
+RotateImage = 0;
 OutputSize = 512;
 PadOutside = false;
 FiducialColor = [0 0 0];
@@ -29,8 +30,17 @@ if size(img,3)==1
 end
 %img = mean(im2double(img),3);
 
+if RotateImage ~= 0
+  bbox = 'loose';
+  if ~CropImage
+    bbox = 'crop';
+  end
+  img = imrotate(img, RotateImage, 'bilinear', bbox);
+  AlphaChannel = imrotate(AlphaChannel, RotateImage, 'bilinear', bbox);
+end
+
 if CropImage
-    black = any(img<0.5,3) & AlphaChannel > 0;   
+    black = any(img<0.5,3) & AlphaChannel > 0.5;   
     
     row = any(black,1); 
     xmin = find(row, 1, 'first');
@@ -148,7 +158,7 @@ else
   end
   
 end % IF cornerRadius_pix==0
-;
+
 imgNew = imresize(imgNew, OutputSize*[1 1], 'nearest');
 AlphaChannel = imresize(AlphaChannel, OutputSize*[1 1], 'nearest');
 
@@ -164,12 +174,17 @@ AlphaChannel = max(0, min(1, AlphaChannel));
 
 if InvertImage
     [squareWidth_pix, padding_pix] = VisionMarkerTrained.GetFiducialPixelSize(OutputSize, 'WithUnpaddedFiducial');
-    interiorRegion = round(padding_pix*.75 + squareWidth_pix):round(OutputSize - (padding_pix*.75 + squareWidth_pix));
+    interiorRegion = round(padding_pix + squareWidth_pix):round(OutputSize - (padding_pix + squareWidth_pix));
+    
     imgNew(interiorRegion,interiorRegion,:) = 1 - imgNew(interiorRegion,interiorRegion,:);
     AlphaChannel(interiorRegion,interiorRegion) = 1 - AlphaChannel(interiorRegion,interiorRegion);
 end
 
 if ~isempty(OutputFile)
+    outPath = fileparts(OutputFile);
+    if ~isdir(outPath)
+      mkdir(outPath);
+    end
     imwrite(imgNew, OutputFile, 'Alpha', AlphaChannel);
 end
 

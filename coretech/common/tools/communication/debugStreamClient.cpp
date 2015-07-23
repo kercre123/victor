@@ -310,7 +310,7 @@ namespace Anki
 
       rawBuffer.rawDataPointer = reinterpret_cast<u8*>(malloc(bufferRawSize));
       rawBuffer.data = reinterpret_cast<u8*>( RoundUp(reinterpret_cast<size_t>(rawBuffer.rawDataPointer), MEMORY_ALIGNMENT) + MEMORY_ALIGNMENT - MemoryStack::HEADER_LENGTH );
-      rawBuffer.maxDataLength = bufferRawSize - (reinterpret_cast<size_t>(rawBuffer.data) - reinterpret_cast<size_t>(rawBuffer.rawDataPointer));
+      rawBuffer.maxDataLength = bufferRawSize - static_cast<s32>(reinterpret_cast<size_t>(rawBuffer.data) - reinterpret_cast<size_t>(rawBuffer.rawDataPointer));
       rawBuffer.curDataLength = 0;
       rawBuffer.timeReceived = 0;
 

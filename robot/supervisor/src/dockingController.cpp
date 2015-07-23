@@ -1,7 +1,6 @@
 #include "anki/common/robot/config.h"
 #include "anki/common/robot/trig_fast.h"
 #include "dockingController.h"
-#include "gripController.h"
 #include "headController.h"
 #include "liftController.h"
 
@@ -9,11 +8,9 @@
 #include "anki/common/robot/geometry.h"
 #include "anki/cozmo/robot/hal.h"
 #include "localization.h"
-#include "visionSystem.h"
 #include "speedController.h"
 #include "steeringController.h"
 #include "pathFollower.h"
-#include "messages.h"
 
 
 #define DEBUG_DOCK_CONTROLLER 0
@@ -39,30 +36,33 @@ namespace Anki {
         };
 
         // Turning radius of docking path
-        const f32 DOCK_PATH_START_RADIUS_MM = 50;
-        const f32 DOCK_PATH_END_RADIUS_MM = 100;
+        f32 DOCK_PATH_START_RADIUS_MM = WHEEL_DIST_HALF_MM;
+        
+        // Set of radii to try when generating Dubins path to marker
+        const u8 NUM_END_RADII = 3;
+        f32 DOCK_PATH_END_RADII_MM[NUM_END_RADII] = {100, 40, WHEEL_DIST_HALF_MM};
         
         // The length of the straight tail end of the dock path.
         // Should be roughly the length of the forks on the lift.
-        const f32 FINAL_APPROACH_STRAIGHT_SEGMENT_LENGTH_MM = 35;
+        const f32 FINAL_APPROACH_STRAIGHT_SEGMENT_LENGTH_MM = 40;
 
         //const f32 FAR_DIST_TO_BLOCK_THRESH_MM = 100;
         
         // Distance from block face at which robot should "dock"
         f32 dockOffsetDistX_ = 0.f;
         
-        u32 lastDockingErrorSignalRecvdTime_ = 0;
+        TimeStamp_t lastDockingErrorSignalRecvdTime_ = 0;
         
         // If error signal not received in this amount of time, tracking is considered to have failed.
-        const u32 STOPPED_TRACKING_TIMEOUT_US = 500000;
+        const u32 STOPPED_TRACKING_TIMEOUT_MS = 500;
         
         // If an initial track cannot start for this amount of time, block is considered to be out of
         // view and docking is aborted.
-        const u32 GIVEUP_DOCKING_TIMEOUT_US = 1000000;
+        const u32 GIVEUP_DOCKING_TIMEOUT_MS = 1000;
         
-        const u16 DOCK_APPROACH_SPEED_MMPS = 30;
+        const u16 DOCK_APPROACH_SPEED_MMPS = 60;
         //const u16 DOCK_FAR_APPROACH_SPEED_MMPS = 30;
-        const u16 DOCK_APPROACH_ACCEL_MMPS2 = 60;
+        const u16 DOCK_APPROACH_ACCEL_MMPS2 = 200;
         const u16 DOCK_APPROACH_DECEL_MMPS2 = 200;
         
         // Lateral tolerance at dock pose
@@ -75,9 +75,6 @@ namespace Anki {
         
         // Whether or not the robot is currently past point of no return
         bool pastPointOfNoReturn_ = false;
-        
-        // Code of the VisionMarker we are trying to dock to
-        Vision::MarkerType dockMarker_;
 
         Mode mode_ = IDLE;
         
@@ -120,23 +117,41 @@ namespace Anki {
         f32 approachPath_dist, approachPath_dtheta, approachPath_dOrientation;
 #endif
         
-        // Whether or not the lift should track the angle of the camera so that the
-        // lift crossbar is just out of the field of view of the camera.
-        bool trackCamWithLift_ = false;
-        
-        // If trackCamWithLift_ == true, start actually doing the tracking only when
+        // Start raising lift for high dock only when
         // the block is at least START_LIFT_TRACKING_DIST_MM close and START_LIFT_TRACKING_HEIGHT_MM high
-        const f32 START_LIFT_TRACKING_DIST_MM = 70.f;
+        const f32 START_LIFT_TRACKING_DIST_MM = 80.f;
         const f32 START_LIFT_TRACKING_HEIGHT_MM = 44.f;
         
         // First commanded lift height when START_LIFT_TRACKING_DIST_MM is reached
-        const f32 START_LIFT_HEIGHT_MM = LIFT_HEIGHT_HIGHDOCK - 17.f;
+        const f32 START_LIFT_HEIGHT_MM = LIFT_HEIGHT_HIGHDOCK - 15.f;
+
+        // Whether or not to raise lift in prep for high docking
+        bool doHighDockLiftTracking_ = false;
         
-        // Indicates when we're only tracking a marker but not trying to dock to it
-        bool trackingOnly_ = false;
+        // Last received docking error
         f32 lastMarkerDistX_ = 0.f;
         f32 lastMarkerDistY_ = 0.f;
         f32 lastMarkerAng_ = 0.f;
+
+        // Remember the last marker pose that was fully within the
+        // field of view of the camera.
+        bool lastMarkerPoseObservedIsSet_ = false;
+        Anki::Embedded::Pose2d lastMarkerPoseObservedInValidFOV_;
+        
+        // If the marker is out of field of view, we will continue
+        // to traverse the path that was generated from that last good error signal.
+        bool markerOutOfFOV_ = false;
+        const f32 MARKER_WIDTH = 25.f;
+        
+        Embedded::Array<f32> RcamWrtRobot_;
+        f32 headCamFOV_ver_;
+        f32 headCamFOV_hor_;
+        const int BUFFER_SIZE = 256;
+        u8 buffer[BUFFER_SIZE];
+        Embedded::MemoryStack scratch_(buffer, BUFFER_SIZE);
+        
+        Messages::DockingErrorSignal dockingErrSignalMsg_;
+        bool dockingErrSignalMsgReady_ = false;
         
       } // "private" namespace
       
@@ -150,23 +165,148 @@ namespace Anki {
         return success_;
       }
       
+      f32 GetVerticalFOV() {
+        return headCamFOV_ver_;
+      }
+      
+      f32 GetHorizontalFOV() {
+        return headCamFOV_hor_;
+      }
+      
+      template<typename PRECISION>
+      static Result GetCamPoseWrtRobot(Embedded::Array<PRECISION>& RcamWrtRobot,
+                                       Embedded::Point3<PRECISION>& TcamWrtRobot)
+      {
+        AnkiConditionalErrorAndReturnValue(RcamWrtRobot.get_size(0)==3 &&
+                                           RcamWrtRobot.get_size(1)==3,
+                                           RESULT_FAIL_INVALID_SIZE,
+                                           "VisionSystem::GetCamPoseWrtRobot",
+                                           "Rotation matrix must already be 3x3.");
+        
+        const f32 headAngle = HeadController::GetAngleRad();
+        const f32 cosH = cosf(headAngle);
+        const f32 sinH = sinf(headAngle);
+        
+        RcamWrtRobot[0][0] = 0;  RcamWrtRobot[0][1] = sinH;  RcamWrtRobot[0][2] = cosH;
+        RcamWrtRobot[1][0] = -1; RcamWrtRobot[1][1] = 0;     RcamWrtRobot[1][2] = 0;
+        RcamWrtRobot[2][0] = 0;  RcamWrtRobot[2][1] = -cosH; RcamWrtRobot[2][2] = sinH;
+        
+        TcamWrtRobot.x = HEAD_CAM_POSITION[0]*cosH - HEAD_CAM_POSITION[2]*sinH + NECK_JOINT_POSITION[0];
+        TcamWrtRobot.y = 0;
+        TcamWrtRobot.z = HEAD_CAM_POSITION[2]*cosH + HEAD_CAM_POSITION[0]*sinH + NECK_JOINT_POSITION[2];
+        
+        return RESULT_OK;
+      }
+      
+      static Result GetWithRespectToRobot(const Embedded::Point3<f32>& pointWrtCamera,
+                                   Embedded::Point3<f32>&       pointWrtRobot)
+      {
+        Embedded::Point3<f32> TcamWrtRobot;
+        
+        Result lastResult;
+        if((lastResult = GetCamPoseWrtRobot(RcamWrtRobot_, TcamWrtRobot)) != RESULT_OK) {
+          return lastResult;
+        }
+        
+        pointWrtRobot = RcamWrtRobot_*pointWrtCamera + TcamWrtRobot;
+        
+        return RESULT_OK;
+      }
+      
+      static Result GetWithRespectToRobot(const Embedded::Array<f32>&  rotationWrtCamera,
+                                   const Embedded::Point3<f32>& translationWrtCamera,
+                                   Embedded::Array<f32>&        rotationWrtRobot,
+                                   Embedded::Point3<f32>&       translationWrtRobot)
+      {
+        Embedded::Point3<f32> TcamWrtRobot;
+        
+        Result lastResult;
+        if((lastResult = GetCamPoseWrtRobot(RcamWrtRobot_, TcamWrtRobot)) != RESULT_OK) {
+          return lastResult;
+        }
+        
+        if((lastResult = Embedded::Matrix::Multiply(RcamWrtRobot_, rotationWrtCamera, rotationWrtRobot)) != RESULT_OK) {
+          return lastResult;
+        }
+        
+        translationWrtRobot = RcamWrtRobot_*translationWrtCamera + TcamWrtRobot;
+        
+        return RESULT_OK;
+      }
+
+      
+      // Returns true if the last known pose of the marker is fully within
+      // the horizontal field of view of the camera.
+      bool IsMarkerInFOV(const Anki::Embedded::Pose2d &markerPose, const f32 markerWidth)
+      {
+        // Half fov of camera at center horizontal.
+        // 0.36 radians is roughly the half-FOV of the camera bounded by the lift posts.
+        const f32 HALF_FOV = MIN(0.5*GetHorizontalFOV(), 0.36);
+        
+        const f32 markerCenterX = markerPose.GetX();
+        const f32 markerCenterY = markerPose.GetY();
+        
+        // Get current robot pose
+        f32 x,y;
+        Radians angle;
+        Localization::GetCurrentMatPose(x, y, angle);
+        
+        // Get angle field of view edges
+        Radians leftEdge = angle + HALF_FOV;
+        Radians rightEdge = angle - HALF_FOV;
+        
+        // Compute angle to marker from robot
+        Radians angleToMarkerCenter = atan2_fast(markerCenterY - y, markerCenterX - x);
+        
+        // Compute coordinates of marker edges
+        // (For now, assuming marker faces the robot.)
+        // TODO: Use marker
+        Radians angleToMarkerEdgeFromCenter = angleToMarkerCenter + PIDIV2_F;
+        
+        f32 markerLeftEdgeX = markerCenterX + 0.5f * markerWidth * cosf(angleToMarkerEdgeFromCenter.ToFloat());
+        f32 markerLeftEdgeY = markerCenterY + 0.5f * markerWidth * sinf(angleToMarkerEdgeFromCenter.ToFloat());
+        f32 markerRightEdgeX = markerCenterX - 0.5f * markerWidth * cosf(angleToMarkerEdgeFromCenter.ToFloat());
+        f32 markerRightEdgeY = markerCenterY - 0.5f * markerWidth * sinf(angleToMarkerEdgeFromCenter.ToFloat());
+        
+        // Compute angle to marker edges from the robot
+        Radians angleToMarkerLeftEdge = atan2_fast(markerLeftEdgeY - y, markerLeftEdgeX - x);
+        Radians angleToMarkerRightEdge = atan2_fast(markerRightEdgeY - y, markerRightEdgeX - x);
+        
+        // Check if either of the edges is outside of the fov
+        f32 leftDiff = (leftEdge - angleToMarkerLeftEdge).ToFloat();
+        f32 rightDiff = (rightEdge - angleToMarkerLeftEdge).ToFloat();
+
+        // If leftDiff and rightDiff have same sign,
+        // then marker left edge is outside field of view
+        if (leftDiff * rightDiff > 0) {
+          return false;
+        }
+
+        leftDiff = (leftEdge - angleToMarkerRightEdge).ToFloat();
+        rightDiff = (rightEdge - angleToMarkerRightEdge).ToFloat();
+        
+        // If leftDiff and rightDiff have same sign,
+        // then marker right edge is outside field of view
+        if (leftDiff * rightDiff > 0) {
+          return false;
+        }
+        
+        return true;
+      }
+      
+      
       Result SendGoalPoseMessage(const Anki::Embedded::Pose2d &p)
       {
         Messages::GoalPose msg;
         msg.pose_x = p.GetX();
         msg.pose_y = p.GetY();
-        msg.pose_z = 10;
+        msg.pose_z = 0;
         msg.pose_angle = p.GetAngle().ToFloat();
+        msg.followingMarkerNormal = followingBlockNormalPath_;
         if(HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::GoalPose), &msg)) {
           return RESULT_OK;
         }
         return RESULT_FAIL;
-      }
-
-      
-      void TrackCamWithLift(bool on)
-      {
-        trackCamWithLift_ = on;
       }
       
       // Returns the height that the lift should be moved to such that the
@@ -179,7 +319,7 @@ namespace Anki {
  
         // Compute the angle of the line extending from the camera that represents
         // the lower bound of its field of view
-        f32 lowerCamFOVangle = angle - 0.45f * VisionSystem::GetVerticalFOV();
+        f32 lowerCamFOVangle = angle - 0.45f * GetVerticalFOV();
         
         // Compute the lift height required to raise the cross bar to be at
         // the height of that line.
@@ -193,17 +333,90 @@ namespace Anki {
         
         return CLIP(liftH, LIFT_HEIGHT_LOWDOCK, LIFT_HEIGHT_CARRY);
       }
+
+      
+      // If docking to a high block, assumes we're trying to pick it up!
+      // Gradually lift block from a height of START_LIFT_HEIGHT_MM to LIFT_HEIGHT_HIGH_DOCK
+      // over the marker distance ranging from START_LIFT_TRACKING_DIST_MM to dockOffsetDistX_.
+      void HighDockLiftUpdate() {
+        if (doHighDockLiftTracking_) {
+          
+          f32 lastCommandedHeight = LiftController::GetDesiredHeight();
+          if (lastCommandedHeight == LIFT_HEIGHT_HIGHDOCK) {
+            // We're already at the high lift position.
+            // No need to repeatedly command it.
+            return;
+          }
+          
+          // Compute desired slope of lift height during approach.
+          const f32 liftApproachSlope = (LIFT_HEIGHT_HIGHDOCK - START_LIFT_HEIGHT_MM) / (START_LIFT_TRACKING_DIST_MM - dockOffsetDistX_);
+          
+          // Compute current estimated distance to marker
+          f32 robotX, robotY;
+          Radians robotAngle;
+          Localization::GetCurrentMatPose(robotX, robotY, robotAngle);
+          
+          f32 diffX = (blockPose_.GetX() - robotX);
+          f32 diffY = (blockPose_.GetY() - robotY);
+          f32 estDistToMarker = sqrtf(diffX * diffX + diffY * diffY);
+
+          
+          if (estDistToMarker < START_LIFT_TRACKING_DIST_MM) {
+            
+            // Compute current desired lift height based on current distance to block.
+            f32 liftHeight = START_LIFT_HEIGHT_MM + liftApproachSlope * (START_LIFT_TRACKING_DIST_MM - estDistToMarker);
+            
+            // Keep between current desired height and high dock height
+            liftHeight = CLIP(liftHeight, lastCommandedHeight, LIFT_HEIGHT_HIGHDOCK);
+            
+            // Apply height
+            LiftController::SetDesiredHeight(liftHeight);
+          }
+        }
+
+      }
+      
+      
+      Result Init()
+      {
+        scratch_ = Embedded::MemoryStack(buffer, BUFFER_SIZE);
+        
+        AnkiConditionalErrorAndReturnValue(scratch_.IsValid(), RESULT_FAIL_MEMORY,
+                                           "DockingController::Init()",
+                                           "Failed to create %d-sized memory stack.\n", BUFFER_SIZE);
+        
+        const HAL::CameraInfo* headCamInfo = HAL::GetHeadCamInfo();
+
+        AnkiConditionalErrorAndReturnValue(headCamInfo != NULL, RESULT_FAIL_INVALID_OBJECT,
+                                           "DockingController::Init()",
+                                           "NULL head cam info!\n");
+        
+        RcamWrtRobot_ = Embedded::Array<f32>(3,3, scratch_);
+
+        AnkiConditionalErrorAndReturnValue(RcamWrtRobot_.IsValid(), RESULT_FAIL_MEMORY,
+                                           "DockingController::Init()",
+                                           "Failed to allocate 3x3 rotation matrix.\n");
+        
+        // Compute FOV from focal length (currently used for tracker prediciton)
+        headCamFOV_ver_ = 2.f * atanf(static_cast<f32>(headCamInfo->nrows) /
+                                      (2.f * headCamInfo->focalLength_y));
+        headCamFOV_hor_ = 2.f * atanf(static_cast<f32>(headCamInfo->ncols) /
+                                      (2.f * headCamInfo->focalLength_x));
+
+        return RESULT_OK;
+      }
+      
       
       Result Update()
       {
         
         // Get any docking error signal available from the vision system
         // and update our path accordingly.
-        Messages::DockingErrorSignal dockMsg;
-        while( Messages::CheckMailbox(dockMsg) )
+        while( dockingErrSignalMsgReady_ )
         {
+          dockingErrSignalMsgReady_ = false;
           
-          // If we're not actually docking, just toss the dockMsg.
+          // If we're not actually docking, just toss the dockingErrSignalMsg_.
           if (mode_ == IDLE) {
             break;
           }
@@ -220,47 +433,36 @@ namespace Anki {
 #endif
           
           
-          if(dockMsg.didTrackingSucceed) {
+          if(dockingErrSignalMsg_.didTrackingSucceed) {
             
-            //PRINT("ErrSignal %d (msgTime %d)\n", HAL::GetMicroCounter(), dockMsg.timestamp);
+            //PRINT("ErrSignal %d (msgTime %d)\n", HAL::GetMicroCounter(), dockingErrSignalMsg_.timestamp);
             
             // Convert from camera coordinates to robot coordinates
-            if(dockMsg.isApproximate) 
+            if(dockingErrSignalMsg_.isApproximate)
             {
-              dockMsg.x_distErr += HEAD_CAM_POSITION[0]*cosf(HeadController::GetAngleRad()) + NECK_JOINT_POSITION[0];
+              dockingErrSignalMsg_.x_distErr += HEAD_CAM_POSITION[0]*cosf(HeadController::GetAngleRad()) + NECK_JOINT_POSITION[0];
             }
             else {
               Embedded::Point3<f32> tempPoint;
-              VisionSystem::GetWithRespectToRobot(Embedded::Point3<f32>(dockMsg.x_distErr, dockMsg.y_horErr, dockMsg.z_height),
+              GetWithRespectToRobot(Embedded::Point3<f32>(dockingErrSignalMsg_.x_distErr, dockingErrSignalMsg_.y_horErr, dockingErrSignalMsg_.z_height),
                                                   tempPoint);
               
-              dockMsg.x_distErr = tempPoint.x;
-              dockMsg.y_horErr  = tempPoint.y + ( (HAL::GetIDCard()->esn == 2) ? COZMO2_CAM_LATERAL_POSITION_HACK : 0 );
-              dockMsg.z_height  = tempPoint.z;
+              dockingErrSignalMsg_.x_distErr = tempPoint.x;
+              dockingErrSignalMsg_.y_horErr  = tempPoint.y;
+              dockingErrSignalMsg_.z_height  = tempPoint.z;
             }
             
             // Update last observed marker pose
-            lastMarkerDistX_ = dockMsg.x_distErr;
-            lastMarkerDistY_ = dockMsg.y_horErr;
-            lastMarkerAng_ = dockMsg.angleErr;
+            lastMarkerDistX_ = dockingErrSignalMsg_.x_distErr;
+            lastMarkerDistY_ = dockingErrSignalMsg_.y_horErr;
+            lastMarkerAng_ = dockingErrSignalMsg_.angleErr;
             
             
             // Check if we are beyond point of no return distance
-            if (pastPointOfNoReturn_ ||
-                ((pointOfNoReturnDistMM_ != 0) &&
-                (dockMsg.x_distErr < pointOfNoReturnDistMM_) &&
-                (mode_ == APPROACH_FOR_DOCK))) {
-              PRINT("DockingController: Point of no return (%f < %d)\n", dockMsg.x_distErr, pointOfNoReturnDistMM_);
-              pastPointOfNoReturn_ = true;
-              
-              // Since we're ignoring docking error signals from hereon, just set the lift to final height.
-              // TODO: This is assuming that we only ever do pointOfNoReturn mode during DA_PICKUP_HIGH.
-              //       Generalize?
-              if ((dockMsg.z_height > START_LIFT_TRACKING_HEIGHT_MM) && (LiftController::GetDesiredHeight() != LIFT_HEIGHT_HIGHDOCK)) {
-                PRINT("PointOfNoReturn: Lift to high dock\n");
-                LiftController::SetDesiredHeight(LIFT_HEIGHT_HIGHDOCK);
-              }
-              
+            if (pastPointOfNoReturn_) {
+#if(DEBUG_DOCK_CONTROLLER)
+              PRINT("DockingController: Ignoring error msg because past point of no return (%f < %d)\n", dockingErrSignalMsg_.x_distErr, pointOfNoReturnDistMM_);
+#endif
               break; // out of while
             }
             
@@ -269,31 +471,26 @@ namespace Anki {
             PRINT("Received%sdocking error signal: x_distErr=%f, y_horErr=%f, "
                   "z_height=%f, angleErr=%fdeg\n",
                   (dockMsg.isApproximate ? " approximate " : " "),
-                  dockMsg.x_distErr, dockMsg.y_horErr,
-                  dockMsg.z_height, RAD_TO_DEG_F32(dockMsg.angleErr));
+                  dockingErrSignalMsg_.x_distErr, dockingErrSignalMsg_.y_horErr,
+                  dockingErrSignalMsg_.z_height, RAD_TO_DEG_F32(dockingErrSignalMsg_.angleErr));
 #endif
             
             // Check that error signal is plausible
             // If not, treat as if tracking failed.
             // TODO: Get tracker to detect these situations and not even send the error message here.
-            if (dockMsg.x_distErr > 0.f && ABS(dockMsg.angleErr) < 0.75f*PIDIV2_F) {
+            if (dockingErrSignalMsg_.x_distErr > 0.f && ABS(dockingErrSignalMsg_.angleErr) < 0.75f*PIDIV2_F) {
              
               // Update time that last good error signal was received
-              lastDockingErrorSignalRecvdTime_ = HAL::GetMicroCounter();
-              
-              // No more to do if we're just tracking a marker, but not docking to it.
-              if (trackingOnly_) {
-                continue;
-              }
+              lastDockingErrorSignalRecvdTime_ = HAL::GetTimeStamp();
               
               // Set relative block pose to start/continue docking
-              SetRelDockPose(dockMsg.x_distErr, dockMsg.y_horErr, dockMsg.angleErr, dockMsg.timestamp);
+              SetRelDockPose(dockingErrSignalMsg_.x_distErr, dockingErrSignalMsg_.y_horErr, dockingErrSignalMsg_.angleErr, dockingErrSignalMsg_.timestamp);
 
-              if(!dockMsg.isApproximate) // will be -1 if not computed
+              if(!dockingErrSignalMsg_.isApproximate) // will be -1 if not computed
               {
                 // If we have the height of the marker for docking, we can also
                 // compute the head angle to keep it centered
-                HeadController::SetSpeedAndAccel(2.5, 10);
+                HeadController::SetMaxSpeedAndAccel(2.5, 10);
                 //f32 desiredHeadAngle = atan_fast( (dockMsg.z_height - NECK_JOINT_POSITION[2])/dockMsg.x_distErr);
                 
                 // Make sure bottom of camera FOV doesn't tilt below the bottom of the block
@@ -302,55 +499,25 @@ namespace Anki {
                 
                 // Compute angle the head needs to face such that the bottom of the marker
                 // is at the bottom of the image.
-                f32 minDesiredHeadAngle1 = atan_fast( (dockMsg.z_height - NECK_JOINT_POSITION[2] - 20.f)/dockMsg.x_distErr) + 0.5f*VisionSystem::GetVerticalFOV(); // TODO: Marker size should come from VisionSystem?
+                //f32 minDesiredHeadAngle1 = atan_fast( (dockMsg.z_height - NECK_JOINT_POSITION[2] - 20.f)/dockMsg.x_distErr) + 0.5f*GetVerticalFOV(); // TODO: Marker size should come from VisionSystem?
                 
                 // Compute the angle the head needs to face such that it is looking
                 // directly at the center of the marker
-                f32 minDesiredHeadAngle2 = atan_fast( (dockMsg.z_height - NECK_JOINT_POSITION[2])/dockMsg.x_distErr);
+                //f32 minDesiredHeadAngle2 = atan_fast( (dockMsg.z_height - NECK_JOINT_POSITION[2])/dockMsg.x_distErr);
                 
                 // Use the min of both angles
-                f32 desiredHeadAngle = MIN(minDesiredHeadAngle1, minDesiredHeadAngle2);
+                //f32 desiredHeadAngle = MIN(minDesiredHeadAngle1, minDesiredHeadAngle2);
                 
                 // KEVIN: Lens is wide enough now that we don't really need to do head tracking.
                 //        Docking is smoother without it!
                 //HeadController::SetDesiredAngle(desiredHeadAngle);
                 //PRINT("desHeadAngle %f (min1: %f, min2: %f)\n", desiredHeadAngle, minDesiredHeadAngle1, minDesiredHeadAngle2);
-                
-                // Track camera with lift.
-                // Do it only when it's a high block and we're within a certain distance of it.
-                // Don't lift higher than HIGHDOCK height.
-                if (trackCamWithLift_ &&
-                    dockMsg.z_height > START_LIFT_TRACKING_HEIGHT_MM &&
-                    dockMsg.x_distErr < START_LIFT_TRACKING_DIST_MM) {
-                  f32 liftHeight = GetCamFOVLowerHeight();
-                  if (liftHeight > LIFT_HEIGHT_HIGHDOCK) {
-                    liftHeight = LIFT_HEIGHT_HIGHDOCK;
-                  }
-                  //PRINT("TrackLiftHeight: %f\n", liftHeight);
-                  LiftController::SetDesiredHeight(liftHeight);
-                }
 
                 // If docking to a high block, assumes we're trying to pick it up!
-                // Gradually lift block from a height of START_LIFT_HEIGHT_MM to LIFT_HEIGHT_HIGH_DOCK
-                // over the marker distance ranging from START_LIFT_TRACKING_DIST_MM to dockOffsetDistX_.
-                if (dockMsg.z_height > START_LIFT_TRACKING_HEIGHT_MM &&
-                    dockMsg.x_distErr < START_LIFT_TRACKING_DIST_MM) {
-                  
-                  // Compute desired slope of lift height during approach.
-                  const f32 liftApproachSlope = (LIFT_HEIGHT_HIGHDOCK - START_LIFT_HEIGHT_MM) / (START_LIFT_TRACKING_DIST_MM - dockOffsetDistX_);
-                  
-                  // Compute current desired lift height based on current distance to block.
-                  f32 liftHeight = START_LIFT_HEIGHT_MM + liftApproachSlope * (START_LIFT_TRACKING_DIST_MM - dockMsg.x_distErr);
-                  
-                  // Capping to highdock lift height
-                  liftHeight = MIN(liftHeight, LIFT_HEIGHT_HIGHDOCK);
-                  
-                  // Adding a little extra height to gain more "hookage" since we're coming in at an angle.
-                  liftHeight += 2;
-                  
-                  LiftController::SetDesiredHeight(liftHeight);
+                if (dockingErrSignalMsg_.z_height > START_LIFT_TRACKING_HEIGHT_MM) {
+                  doHighDockLiftTracking_ = true;
                 }
-                
+
               }
               /* Now done on basestation directly
               // Send to basestation for visualization
@@ -361,7 +528,7 @@ namespace Anki {
 
           }  // IF tracking succeeded
           
-          if ((!trackingOnly_) && (!pastPointOfNoReturn_)) {
+          if ((!pastPointOfNoReturn_) && (!markerOutOfFOV_)) {
             SpeedController::SetUserCommandedDesiredVehicleSpeed(0);
             //PathFollower::ClearPath();
             SteeringController::ExecuteDirectDrive(0,0);
@@ -373,6 +540,49 @@ namespace Anki {
         } // while dockErrSignalMailbox has mail
 
         
+        
+        // Check if the pose of the marker that was in field of view should
+        // again be in field of view.
+        f32 distToMarker = 1000000;
+        if (markerOutOfFOV_) {
+          // Marker has been outside field of view.
+          // Check if it should be visible again.
+          if (IsMarkerInFOV(lastMarkerPoseObservedInValidFOV_, MARKER_WIDTH)) {
+            PRINT("Marker should be INSIDE FOV\n");
+            // Fake the error signal received timestamp to reset the timeout
+            lastDockingErrorSignalRecvdTime_ = HAL::GetTimeStamp();
+            markerOutOfFOV_ = false;
+          }
+        } else {
+          // Marker has been in field of view.
+          // Check if we expect it to no longer be in view.
+          if (lastMarkerPoseObservedIsSet_) {
+            
+            // Get distance between marker and current robot pose
+            Embedded::Pose2d currPose = Localization::GetCurrPose();
+            distToMarker = lastMarkerPoseObservedInValidFOV_.get_xy().Dist(currPose.get_xy());
+            
+            if (PathFollower::IsTraversingPath() &&
+                !IsMarkerInFOV(lastMarkerPoseObservedInValidFOV_, MARKER_WIDTH - 5.f) &&
+                distToMarker > FINAL_APPROACH_STRAIGHT_SEGMENT_LENGTH_MM) {
+              PRINT("Marker should be OUTSIDE FOV\n");
+              markerOutOfFOV_ = true;
+            }
+          }
+        }
+
+        
+        // Check if we are beyond point of no return distance
+        if (!pastPointOfNoReturn_ && (pointOfNoReturnDistMM_ != 0) && (distToMarker < pointOfNoReturnDistMM_)) {
+#if(DEBUG_DOCK_CONTROLLER)
+          PRINT("DockingController: Point of no return (%f < %d)\n", distToMarker, pointOfNoReturnDistMM_);
+#endif
+          pastPointOfNoReturn_ = true;
+          mode_ = APPROACH_FOR_DOCK;
+        }
+
+        
+        
         Result retVal = RESULT_OK;
         
         switch(mode_)
@@ -382,24 +592,28 @@ namespace Anki {
           case LOOKING_FOR_BLOCK:
             
             if ((!pastPointOfNoReturn_)
-              && (HAL::GetMicroCounter() - lastDockingErrorSignalRecvdTime_ > GIVEUP_DOCKING_TIMEOUT_US)) {
+                && !markerOutOfFOV_
+              && (HAL::GetTimeStamp() - lastDockingErrorSignalRecvdTime_ > GIVEUP_DOCKING_TIMEOUT_MS)) {
               ResetDocker();
 #if(DEBUG_DOCK_CONTROLLER)
-              PRINT("Too long without block pose (currTime %d, lastErrSignal %d). Giving up.\n", HAL::GetMicroCounter(), lastDockingErrorSignalRecvdTime_);
+              PRINT("Too long without block pose (currTime %d, lastErrSignal %d). Giving up.\n", HAL::GetTimeStamp(), lastDockingErrorSignalRecvdTime_);
 #endif
             }
             break;
           case APPROACH_FOR_DOCK:
           {
+            HighDockLiftUpdate();
+            
             // Stop if we haven't received error signal for a while
             if (!markerlessDocking_
                 && (!pastPointOfNoReturn_)
-                && (HAL::GetMicroCounter() - lastDockingErrorSignalRecvdTime_ > STOPPED_TRACKING_TIMEOUT_US) ) {
+                && !markerOutOfFOV_
+                && (HAL::GetTimeStamp() - lastDockingErrorSignalRecvdTime_ > STOPPED_TRACKING_TIMEOUT_MS) ) {
               PathFollower::ClearPath();
               SpeedController::SetUserCommandedDesiredVehicleSpeed(0);
               mode_ = LOOKING_FOR_BLOCK;
 #if(DEBUG_DOCK_CONTROLLER)
-              PRINT("Too long without block pose (currTime %d, lastErrSignal %d). Looking for block...\n", HAL::GetMicroCounter(), lastDockingErrorSignalRecvdTime_);
+              PRINT("Too long without block pose (currTime %d, lastErrSignal %d). Looking for block...\n", HAL::GetTimeStamp(), lastDockingErrorSignalRecvdTime_);
 #endif
               break;
             }
@@ -411,6 +625,11 @@ namespace Anki {
 #endif
               ResetDocker();
               success_ = true;
+              
+              // If we successfully reached end of path, set lastMarkerDistX to reflect that.
+              lastMarkerDistX_ = ORIGIN_TO_LOW_LIFT_DIST_MM; // This depends on what action we were doing, but it's good enough for all of them.
+              lastMarkerDistY_ = 0;
+              
               break;
             }
             
@@ -477,9 +696,6 @@ namespace Anki {
           followingBlockNormalPath_ = false;
         }
         
-        // Clear current path
-        PathFollower::ClearPath();
-        
         // Create new path that is aligned with the normal of the block we want to dock to.
         // End point: Where the robot origin should be by the time the robot has docked.
         // Start point: Projected from end point at specified rad.
@@ -534,6 +750,22 @@ namespace Anki {
         blockPose_.angle = histPose.angle + rel_rad;
 
         
+        // Field of view check
+        if (markerOutOfFOV_) {
+          // Marker has been outside field of view,
+          // but the latest error signal may indicate that it is back in.
+          if (IsMarkerInFOV(blockPose_, MARKER_WIDTH)) {
+            PRINT("Marker signal is INSIDE FOV\n");
+            markerOutOfFOV_ = false;
+          } else {
+            //PRINT("Marker is expected to be out of FOV. Ignoring error signal\n");
+            return;
+          }
+        }
+        lastMarkerPoseObservedIsSet_ = true;
+        lastMarkerPoseObservedInValidFOV_ = blockPose_;
+
+        
 #if(RESET_LOC_ON_BLOCK_UPDATE)
         // Rotate block so that it is parallel with approach start pose
         f32 rel_blockAngle = rel_rad - approachPath_dOrientation;
@@ -561,34 +793,65 @@ namespace Anki {
         // Send goal pose up to engine for viz
         SendGoalPoseMessage(dockPose_);
 
-        // Convert poses to drive center pose for pathFollower
+        // Convert goal pose to drive center pose for pathFollower
         Localization::ConvertToDriveCenterPose(dockPose_, dockPose_);
-        Localization::ConvertToDriveCenterPose(approachStartPose_, approachStartPose_);
         
         
+
+        s8 endRadiiIdx = -1;
         f32 path_length;
-        u8 numPathSegments = PathFollower::GenerateDubinsPath(approachStartPose_.x(),
-                                                              approachStartPose_.y(),
-                                                              approachStartPose_.angle.ToFloat(),
-                                                              dockPose_.x(),
-                                                              dockPose_.y(),
-                                                              dockPose_.angle.ToFloat(),
-                                                              DOCK_PATH_START_RADIUS_MM,
-                                                              DOCK_PATH_END_RADIUS_MM,
-                                                              DOCK_APPROACH_SPEED_MMPS,
-                                                              DOCK_APPROACH_ACCEL_MMPS2,
-                                                              DOCK_APPROACH_DECEL_MMPS2,
-                                                              FINAL_APPROACH_STRAIGHT_SEGMENT_LENGTH_MM,
-                                                              &path_length);
+        u8 numPathSegments;
+        f32 maxSegmentSweepRad = 0;
+        do {
+          // Clear current path
+          PathFollower::ClearPath();
+         
+          if (++endRadiiIdx == NUM_END_RADII) {
+            //PRINT("Could not generate Dubins path\n");
+            followingBlockNormalPath_ = true;
+            break;
+          }
+          
+          numPathSegments = PathFollower::GenerateDubinsPath(approachStartPose_.x(),
+                                                             approachStartPose_.y(),
+                                                             approachStartPose_.angle.ToFloat(),
+                                                             dockPose_.x(),
+                                                             dockPose_.y(),
+                                                             dockPose_.angle.ToFloat(),
+                                                             DOCK_PATH_START_RADIUS_MM,
+                                                             DOCK_PATH_END_RADII_MM[endRadiiIdx],
+                                                             DOCK_APPROACH_SPEED_MMPS,
+                                                             DOCK_APPROACH_ACCEL_MMPS2,
+                                                             DOCK_APPROACH_DECEL_MMPS2,
+                                                             FINAL_APPROACH_STRAIGHT_SEGMENT_LENGTH_MM,
+                                                             &path_length);
+          
+          // Check if any of the arcs sweep an angle larger than PIDIV2
+          maxSegmentSweepRad = 0;
+          const Planning::Path& path = PathFollower::GetPath();
+          for (u8 s=0; s< numPathSegments; ++s) {
+            if (path.GetSegmentConstRef(s).GetType() == Planning::PST_ARC) {
+              f32 segSweepRad = ABS(path.GetSegmentConstRef(s).GetDef().arc.sweepRad);
+              if (segSweepRad > maxSegmentSweepRad) {
+                maxSegmentSweepRad = segSweepRad;
+              }
+            }
+          }
+          
+        } while (numPathSegments == 0 || maxSegmentSweepRad + 0.01f >= PIDIV2_F);
 
         //PRINT("numPathSegments: %d, path_length: %f, distToBlock: %f, followBlockNormalPath: %d\n",
         //      numPathSegments, path_length, distToBlock, followingBlockNormalPath_);
 
         
+        // Skipping Dubins path since the straight line path seems to work fine as long as the steeringController gains
+        // are set appropriately according to docking speed.
+        followingBlockNormalPath_ = true;
+        
         // No reasonable Dubins path exists.
         // Either try again with smaller radii or just let the controller
         // attempt to get on to a straight line normal path.
-        if (numPathSegments == 0 || path_length > 2 * distToBlock || followingBlockNormalPath_) {
+        if (followingBlockNormalPath_) {
           
           // Compute new starting point for path
           // HACK: Feeling lazy, just multiplying path by some scalar so that it's likely to be behind the current robot pose.
@@ -598,8 +861,7 @@ namespace Anki {
           PathFollower::ClearPath();
           PathFollower::AppendPathSegment_Line(0, x_start_mm, y_start_mm, dockPose_.x(), dockPose_.y(),
                                                DOCK_APPROACH_SPEED_MMPS, DOCK_APPROACH_ACCEL_MMPS2, DOCK_APPROACH_DECEL_MMPS2);
-          
-          followingBlockNormalPath_ = true;
+
           //PRINT("Computing straight line path (%f, %f) to (%f, %f)\n", x_start_m, y_start_m, dockPose_.x(), dockPose_.y());
         }
 
@@ -626,39 +888,17 @@ namespace Anki {
       }
       
       
-      void StartDocking(const Vision::MarkerType& dockingMarker,
-                        const f32 markerWidth_mm,
-                        const f32 dockOffsetDistX, const f32 dockOffsetDistY, const f32 dockOffsetAngle,
-                        const bool checkAngleX,
+      void StartDocking(const f32 dockOffsetDistX, const f32 dockOffsetDistY, const f32 dockOffsetAngle,
                         const bool useManualSpeed,
                         const u32 pointOfNoReturnDistMM)
       {
-        StartDocking(dockingMarker, markerWidth_mm, Embedded::Point2f(-1,-1), u8_MAX, dockOffsetDistX, dockOffsetDistY, dockOffsetAngle, checkAngleX, useManualSpeed, pointOfNoReturnDistMM);
-      }
-
-      void StartDocking(const Vision::MarkerType& dockingMarker,
-                        const f32 markerWidth_mm,
-                        const Embedded::Point2f &markerCenter, const u8 pixel_radius,
-                        const f32 dockOffsetDistX, const f32 dockOffsetDistY, const f32 dockOffsetAngle,
-                        const bool checkAngleX,
-                        const bool useManualSpeed,
-                        const u32 pointOfNoReturnDistMM)
-      {
-        AnkiAssert(markerWidth_mm > 0.f);
-        
-        dockMarker_      = dockingMarker;
         dockOffsetDistX_ = dockOffsetDistX;
-        
-        if (pixel_radius == u8_MAX) {
-          VisionSystem::SetMarkerToTrack(dockMarker_, markerWidth_mm, checkAngleX);
-        } else {
-          VisionSystem::SetMarkerToTrack(dockMarker_, markerWidth_mm, markerCenter, static_cast<f32>(pixel_radius), checkAngleX);
-        }
         
         useManualSpeed_ = useManualSpeed;
         pointOfNoReturnDistMM_ = pointOfNoReturnDistMM;
         pastPointOfNoReturn_ = false;
-        lastDockingErrorSignalRecvdTime_ = HAL::GetMicroCounter();
+        lastDockingErrorSignalRecvdTime_ = HAL::GetTimeStamp();
+        doHighDockLiftTracking_ = false;
         mode_ = LOOKING_FOR_BLOCK;
         
         success_ = false;
@@ -667,7 +907,7 @@ namespace Anki {
       void StartDockingToRelPose(const f32 rel_x, const f32 rel_y, const f32 rel_angle, const bool useManualSpeed)
       {
         useManualSpeed_ = useManualSpeed;
-        lastDockingErrorSignalRecvdTime_ = HAL::GetMicroCounter();
+        lastDockingErrorSignalRecvdTime_ = HAL::GetTimeStamp();
         mode_ = LOOKING_FOR_BLOCK;
         markerlessDocking_ = true;
         success_ = false;
@@ -679,43 +919,26 @@ namespace Anki {
 
       void ResetDocker() {
         
-        if (!trackingOnly_) {
-          SpeedController::SetUserCommandedDesiredVehicleSpeed(0);
-          PathFollower::ClearPath();
-          SteeringController::ExecuteDirectDrive(0,0);
-        }
+
+        SpeedController::SetUserCommandedDesiredVehicleSpeed(0);
+        PathFollower::ClearPath();
+        SteeringController::ExecuteDirectDrive(0,0);
         mode_ = IDLE;
         
-        // Reset trackingOnly vars
-        trackingOnly_ = false;
-        /* Don't reset these so we can query them after docking fails 
+        /* Don't reset these so we can query them after docking fails
          (e.g. to compute backout distance)
         lastMarkerDistX_ = 0.f;
         lastMarkerDistY_ = 0.f;
         lastMarkerAng_ = 0.f;
         */
-        // Command VisionSystem to stop processing images
-        VisionSystem::StopTracking();
 
         pointOfNoReturnDistMM_ = 0;
         pastPointOfNoReturn_ = false;
         markerlessDocking_ = false;
+        markerOutOfFOV_ = false;
+        lastMarkerPoseObservedIsSet_ = false;
+        doHighDockLiftTracking_ = false;
         success_ = false;
-      }
-      
-      
-      void StartTrackingOnly(const Vision::MarkerType& trackingMarker,
-                             const f32 markerWidth_mm)
-      {
-        dockMarker_ = trackingMarker;
-        VisionSystem::SetMarkerToTrack(dockMarker_, markerWidth_mm, false);
-        trackingOnly_ = true;
-        lastMarkerDistX_ = 0.f;
-        lastMarkerDistY_ = 0.f;
-        lastMarkerAng_ = 0.f;
-        
-        lastDockingErrorSignalRecvdTime_ = HAL::GetMicroCounter();
-        mode_ = LOOKING_FOR_BLOCK;
       }
       
       bool GetLastMarkerPose(f32 &x, f32 &y, f32 &angle)
@@ -728,6 +951,13 @@ namespace Anki {
         }
         return false;
       }
+      
+      void SetDockingErrorSignalMessage(const Messages::DockingErrorSignal& msg)
+      {
+        dockingErrSignalMsg_ = msg;
+        dockingErrSignalMsgReady_ = true;
+      }
+      
       
       } // namespace DockingController
     } // namespace Cozmo

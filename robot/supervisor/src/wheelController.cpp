@@ -38,11 +38,7 @@ namespace Anki {
       f32 Ki_ = DEFAULT_WHEEL_KI;
       
       
-#ifdef COZMO_ROBOT_V31
-      f32 Kp_l_ = 0.004f;
-#else
       f32 Kp_l_ = DEFAULT_WHEEL_KP;
-#endif
       f32 Ki_l_ = DEFAULT_WHEEL_KI;
       
       f32 Kp_r_ = DEFAULT_WHEEL_KP;
@@ -111,29 +107,19 @@ namespace Anki {
     
     f32 ComputeLeftWheelPower(f32 desired_speed_mmps, f32 error, f32 error_sum)
     {
-      // 3rd order polynomial
-      // For x = speed in mm/s,
-      // power = 5E-7x^3 - 0.0001x^2 + 0.0082x + 0.0149
       f32 x = ABS(desired_speed_mmps);
-      f32 x2 = x*x;
-      f32 x3 = x*x2;
       
 #     ifdef SIMULATOR
-      f32 out_ol = 5E-7 * x3 - 0.0001 * x2 + 0.0082 * x;
+      f32 out_ol = x * 0.004;
 #     else
-#ifdef COZMO_ROBOT_V31
-        f32 out_ol = 8.4E-7 * x3 - 0.000166336 * x2 + 0.01343098 * x;    // Treaded robot with wonky left wheel
-#elif defined(COZMO_ROBOT_V32)
       // Piecewise linear
       f32 out_ol = 0;
-      if (x > 11) {
-        out_ol = 0.003810469 * x + 0.244934245;
+      if (x > 10) {
+        out_ol = 0.003450556 * x + 0.116538794;
       } else {
-        out_ol = 0.3 * x / 11;
+        // power = speed  * 0.2 power /  10 mm/s
+        out_ol = 0.02 * x;
       }
-#else
-#error WheelController: Robot platform not defined!
-#endif
 #     endif
       
       if (desired_speed_mmps < 0) {
@@ -146,29 +132,19 @@ namespace Anki {
 
     f32 ComputeRightWheelPower(f32 desired_speed_mmps, f32 error, f32 error_sum)
     {
-      // 3rd order polynomial
-      // For x = speed in mm/s,
-      // power = 4E-7x^3 - 0.00008x^2 + 0.0072x + 0.0203
       f32 x = ABS(desired_speed_mmps);
-      f32 x2 = x*x;
-      f32 x3 = x*x2;
       
 #     ifdef SIMULATOR
-      f32 out_ol = 5E-7 * x3 - 0.0001 * x2 + 0.0082 * x;
+      f32 out_ol = x * 0.004;
 #     else
-#ifdef COZMO_ROBOT_V31
-        f32 out_ol = 4.824E-7 * x3 - 8.98123E-5 * x2 + 0.007008705 * x;   // Treaded robot with wonky left wheel
-#elif defined(COZMO_ROBOT_V32)
       // Piecewise linear
       f32 out_ol = 0;
-      if (x > 7) {
-        out_ol = 0.00379558458 * x + 0.25229054692;
+      if (x > 10) {
+        out_ol = 0.00341819896 * x + 0.11461574729;
       } else {
-        out_ol = 0.3 * x / 7;
+        // power = speed  * 0.2 power /  10 mm/s
+        out_ol = 0.02 * x;
       }
-#else
-#error WheelController: Robot platform not defined!
-#endif
 #     endif
       
       if (desired_speed_mmps < 0) {
@@ -177,7 +153,6 @@ namespace Anki {
       f32 out_corr = ( (Kp_r_ * error) + (error_sum * Ki_r_) );
       f32 out_total = out_ol + out_corr;
       return out_total;
-      
     }
     
     

@@ -565,13 +565,13 @@ function labelingTypePanel_SelectionChangeFcn(~, eventdata, ~)
     
     if eventdata.NewValue == allHandles.templatePoints
         pointsType = 'template';
-        poseChanged(false);
+        poseChanged(true);
     elseif eventdata.NewValue == allHandles.fiducialMarkerPoints
         pointsType = 'fiducialMarker';
-        poseChanged(false);
+        poseChanged(true);
     elseif eventdata.NewValue == allHandles.noPoints
         pointsType = 'none';
-        poseChanged(false);
+        poseChanged(true);
     else
         assert(false);
     end
@@ -682,7 +682,7 @@ function [cornersX, cornersY, whichCorners] = getFiducialCorners(poseIndex, mark
                 whichCorners(:, end+1) = newWhichCorners; %#ok<AGROW>
             end
         end % for iMarker = 1:length(jsonTestData.Poses{poseIndex}.VisionMarkers)
-    else % if isempty(poseIndex)
+    else % if isempty(markerIndex)
         cornersX = [];
         cornersY = [];
         whichCorners = zeros(4,1);
@@ -1002,6 +1002,13 @@ function poseChanged(resetZoom)
         imageResized = processedImage;
     end
     
+    if strcmp(pointsType, 'template')
+        padAmount = floor(size(imageResized)/2);
+        imageResized = padarray(imageResized, padAmount);        
+    else
+        padAmount = [0,0];
+    end
+    
     imageHandle = imshow(imageResized, 'Border', 'tight');
     
     % One time, move the image figure
@@ -1021,9 +1028,8 @@ function poseChanged(resetZoom)
     xScaleInv = resolutionHorizontal / size(image,2);
     yScaleInv = resolutionVertical / size(image,1);
     
-    if strcmp(pointsType, 'template')
-        % TODO: template
-    elseif strcmp(pointsType, 'fiducialMarker')
+    if strcmp(pointsType, 'template') || strcmp(pointsType, 'fiducialMarker')
+        
         for iMarker = 1:length(jsonTestData.Poses{curPoseIndex}.VisionMarkers)
             if iMarker == curMarkerIndex
                 linePlotType = 'g';
@@ -1032,6 +1038,9 @@ function poseChanged(resetZoom)
             end
             
             [cornersX, cornersY] = getFiducialCorners(curPoseIndex, iMarker);
+            
+            cornersY = cornersY + padAmount(1);
+            cornersX = cornersX + padAmount(2);
             
             % Plot the corners (and if 4 corners exist, the quad as well)
             if length(cornersX) == 4
@@ -1121,18 +1130,22 @@ function ButtonClicked(~, ~, ~)
     
     [cornersX, cornersY, whichCorners] = getFiducialCorners(curPoseIndex, curMarkerIndex);
     
+    xScale = size(image,2) / resolutionHorizontal;
+    yScale = size(image,1) / resolutionVertical;
+
+    if strcmp(pointsType, 'template')
+        padAmount = floor(size(image) / 2);
+    elseif strcmp(pointsType, 'fiducialMarker')
+        padAmount = [0,0];
+    end
+
+    newPoint.x = (imPosition(1) - padAmount(2)) * xScale;
+    newPoint.y = (imPosition(2) - padAmount(1)) * yScale;
+    
     buttonType = get(imageFigureHandle, 'selectionType');
-    if strcmp(buttonType, 'normal') % left click
-        xScale = size(image,2) / resolutionHorizontal;
-        yScale = size(image,1) / resolutionVertical;
-        
-        newPoint.x = imPosition(1) * xScale;
-        newPoint.y = imPosition(2) * yScale;
-        
-        if strcmp(pointsType, 'template')
-            % TODO: implement
-            assert(false);
-        elseif strcmp(pointsType, 'fiducialMarker')
+    if strcmp(buttonType, 'normal') % left click       
+%         disp(newPoint)
+        if strcmp(pointsType, 'template') || strcmp(pointsType, 'fiducialMarker')
             if sum(whichCorners) < 4
                 if ~whichCorners(1)
                     jsonTestData.Poses{curPoseIndex}.VisionMarkers{curMarkerIndex}.x_imgUpperLeft = newPoint.x;
@@ -1155,17 +1168,11 @@ function ButtonClicked(~, ~, ~)
                 disp('Cannot add point, because only 4 fiduciual marker corners are allowed');
             end
         end
-    elseif strcmp(buttonType, 'alt') % right click
-        xScaleInv = resolutionHorizontal / size(image,2);
-        yScaleInv = resolutionVertical / size(image,1);
-        
+    elseif strcmp(buttonType, 'alt') % right click       
         minDist = Inf;
         minInd = -1;
         
-        if strcmp(pointsType, 'template')
-            % TODO: implement
-            assert(false);
-        elseif strcmp(pointsType, 'fiducialMarker')
+        if strcmp(pointsType, 'template') || strcmp(pointsType, 'fiducialMarker')
             ci = 0;
             for i = 1:length(whichCorners)
                 if ~whichCorners(i)
@@ -1174,7 +1181,7 @@ function ButtonClicked(~, ~, ~)
                 
                 ci = ci + 1;
                 
-                dist = sqrt((cornersX(ci)*xScaleInv - imPosition(1))^2 + (cornersY(ci)*yScaleInv - imPosition(2))^2);
+                dist = sqrt((cornersX(ci) - newPoint.x)^2 + (cornersY(ci) - newPoint.y)^2);
                 if dist < minDist
                     minDist = dist;
                     minInd = i;
@@ -1207,16 +1214,10 @@ function ButtonClicked(~, ~, ~)
     elseif strcmp(buttonType, 'extend') % shift + left click
         [cornersX, cornersY, ~] = getFiducialCorners(curPoseIndex, []);
         
-        xScaleInv = resolutionHorizontal / size(image,2);
-        yScaleInv = resolutionVertical / size(image,1);
-        
         minDist = Inf;
         minInd = -1;
         
-        if strcmp(pointsType, 'template')
-            % TODO: implement
-            assert(false);
-        elseif strcmp(pointsType, 'fiducialMarker')
+        if strcmp(pointsType, 'template') || strcmp(pointsType, 'fiducialMarker')
             ci = 0;
             
             for iMarker = 1:size(cornersX,2)
@@ -1225,7 +1226,7 @@ function ButtonClicked(~, ~, ~)
                 meanCornersX = mean(cornersX(:,iMarker));
                 meanCornersY = mean(cornersY(:,iMarker));
                 
-                dist = sqrt((meanCornersX*xScaleInv - imPosition(1))^2 + (meanCornersY*yScaleInv - imPosition(2))^2);
+                dist = sqrt((meanCornersX - newPoint.x)^2 + (meanCornersY - newPoint.y)^2);
                 if dist < minDist
                     minDist = dist;
                     minInd = iMarker;

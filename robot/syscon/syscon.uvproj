@@ -357,7 +357,7 @@
               <MiscControls></MiscControls>
               <Define>NRF51,COZMO_ROBOT</Define>
               <Undefine></Undefine>
-              <IncludePath>.\lib\Include;.\lib\Include\app_common;.\lib\Include\ble;.\lib\Include\ble\ble_services;.\lib\Include\ble\rpc;.\lib\Include\gcc;..\..\include;..\..\coretech\common\include;..\supervisor\src;..\include;..\syscon</IncludePath>
+              <IncludePath>.\lib\Include;.\lib\Include\app_common;.\lib\Include\ble;.\lib\Include\ble\ble_services;.\lib\Include\ble\rpc;.\lib\Include\gcc;..\..\include;..\..\coretech\common\include;..\supervisor\src;..\include;..\syscon;..\syscon\common</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -404,11 +404,6 @@
               <FilePath>.\hal\main.cpp</FilePath>
             </File>
             <File>
-              <FileName>spi.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\hal\spi.cpp</FilePath>
-            </File>
-            <File>
               <FileName>uart.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\hal\uart.cpp</FilePath>
@@ -428,10 +423,42 @@
               <FileType>8</FileType>
               <FilePath>.\hal\battery.cpp</FilePath>
             </File>
+            <File>
+              <FileName>lights.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\hal\lights.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>head.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\hal\head.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>radio.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\hal\radio.cpp</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>common</GroupName>
+          <Files>
+            <File>
+              <FileName>micro_esb.c</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\common\micro_esb.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
           <GroupName>lib</GroupName>
+          <Files>
+            <File>
+              <FileName>system_nrf51.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\lib\system_nrf51.c</FilePath>
+            </File>
+          </Files>
         </Group>
         <Group>
           <GroupName>startup</GroupName>

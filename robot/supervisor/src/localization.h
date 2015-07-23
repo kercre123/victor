@@ -11,7 +11,7 @@ namespace Anki {
 
       Result Init();
       
-      //Embedded::Pose2d GetCurrMatPose();
+      Embedded::Pose2d GetCurrPose();
       
       void GetCurrentMatPose(f32& x, f32& y, Radians& angle);
       void SetCurrentMatPose(const f32 &x, const f32 &y, const Radians &angle);
@@ -45,6 +45,7 @@ namespace Anki {
       // update the current pose by transforming the given keyframe pose
       // by the pose-diff between the historical pose at time t and the current pose.
       // Also updates the current pose frame ID.
+      // If t==0, updates the current pose. i.e. Pretty much calls SetCurrentMatPose()
       Result UpdatePoseWithKeyframe(PoseFrameID_t frameID, TimeStamp_t t, const f32 x, const f32 y, const f32 angle);
 
       // Retrieves the closest historical pose at time t.

@@ -1,0 +1,56 @@
+==================
+How to get cython and qt and everything working
+2015-04-29
+Peter Barnum
+==================
+
+
+-------------
+On OSX
+-------------
+
+1. If you don't already have it, install Xcode 5
+
+2. If you don't already have it, download and install Python 2.7.x . The Anaconda version is a good choice.
+
+3. Download and install QT Open Source 4.8.6 (5.x is not supported as of April 2015). Choose your OS at
+  http://download.qt.io/archive/qt/4.8/4.8.6/
+  such as qt-opensource-mac-4.8.6-1.dmg
+
+4. Install python setup tools
+  https://pypi.python.org/pypi/setuptools
+  
+5. Install python packages (Warning: pyside was broken for OSX 10.10 as of early June 2015, though it will probably be fixed eventually)
+  sudo easy_install ipython cython pyside numpy
+  
+6. In python/cython, run "sudo make.sh" to build and install the anki cython packages
+
+7. In python, type "import ankic"
+  
+
+-------------
+On Windows
+-------------
+1. If you don't already have it, install Microsoft Visual Studio Express 2010 (Not 2012 or 2013)
+
+2. Use Windows update to update MSVC. It will probably take 3+ repetition to get all the service packs installed.
+
+3. In Windows System Properties, copy the environment variable "VS100COMNTOOLS" to "VS90COMNTOOLS". Probably the value is something like "C:\Program Files\Microsoft Visual Studio 10.0\Common7\Tools\"
+
+4. Download and install Anaconda python 2.7, 32-bit version (version 2.2 works, and probably others do)
+  http://continuum.io/downloads
+  
+5. Download and install QT Open Source 4.8.6 (5.x is not supported as of April 2015). Choose your OS at
+  http://download.qt.io/archive/qt/4.8/4.8.6/  
+  such as qt-opensource-windows-x86-vs2010-4.8.6.exe
+  
+6. Build the coretech-external libraries using 
+  cmake .. -G"Visual Studio 10" -DBUILD_PERF_TESTS=OFF -DBUILD_TESTS=OFF
+
+7. In python/cython, run "make.bat" to build and install the anki cython packages
+
+8. In python, type "import ankic"
+
+
+
+

@@ -58,7 +58,7 @@ namespace Anki {
     {
       // TODO: Warn/error if we are overwriting an existing object with this type?
       _knownObjects[object->GetType()] = object;
-      for(auto marker : object->GetMarkers()) {
+      for(auto & marker : object->GetMarkers()) {
         _objectsWithCode[marker.GetCode()].insert(object);
       }
     }
@@ -166,9 +166,15 @@ namespace Anki {
           // Set the markers in the object corresponding to those from the pose
           // cluster from which it was computed as "observed"
           for(auto & match : poseCluster.GetMatches()) {
-            const KnownMarker& marker = match.second;
-            objectsSeen.back()->SetMarkersAsObserved(marker.GetCode(),
-                                                     observedTime);
+            // Set the observed markers based on their position in the image,
+            // not based on their code, since an object can have multiple markers
+            // with the same code.
+            //const KnownMarker& marker = match.second;
+            //objectsSeen.back()->SetMarkersAsObserved(marker.GetCode(),
+            //                                         observedTime);
+            
+            objectsSeen.back()->SetMarkerAsObserved(match.first, observedTime, 5.f);
+            
           }
           
           objectsSeen.back()->SetLastObservedTime(observedTime);
@@ -272,8 +278,7 @@ namespace Anki {
     void ObservableObjectLibrary::PoseCluster::RecomputePose()
     {
       if(GetSize() > 1) {
-        fprintf(stdout, "Re-computing pose from all %zu members of cluster.\n",
-                GetSize());
+        //fprintf(stdout, "Re-computing pose from all %zu members of cluster.\n", GetSize());
         
         std::vector<Point2f> imgPoints;
         std::vector<Point3f> objPoints;

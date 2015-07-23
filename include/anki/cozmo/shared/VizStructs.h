@@ -24,7 +24,9 @@ namespace Anki {
       VIZ_OBJECT_ROBOT = 0,
       VIZ_OBJECT_CUBOID,
       VIZ_OBJECT_RAMP,
+      VIZ_OBJECT_CHARGER,      
       VIZ_OBJECT_PREDOCKPOSE,
+      VIZ_OBJECT_HUMAN_HEAD,
       
       NUM_VIZ_OBJECT_TYPES
     };
@@ -34,8 +36,9 @@ namespace Anki {
       0,    // VIZ_OJECT_ROBOT
       1000, // VIZ_OBJECT_CUBOID
       2000, // VIZ_OBJECT_RAMP
-      3000, // VIZ_OJECT_PREDOCKPOSE
-      
+      3000, // VIZ_OBJECT_CHARGER
+      4000, // VIZ_OJECT_PREDOCKPOSE
+      5000, // VIZ_OBJECT_HUMAN_HEAD
       u32_MAX - 100 // Last valid object ID allowed
     };
     

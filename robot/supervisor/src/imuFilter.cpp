@@ -33,6 +33,8 @@ namespace Anki {
     namespace IMUFilter {
       
       namespace {
+        // Last read IMU data
+        HAL::IMU_DataStructure imu_data_;
         
         // Orientation and speed in XY-plane (i.e. horizontal plane) of robot
         f32 rot_ = 0;   // radians
@@ -81,7 +83,7 @@ namespace Anki {
 
         
         u32 lastMotionDetectedTime_us = 0;
-        const u32 MOTION_DETECT_TIMEOUT_US = 750000;
+        const u32 MOTION_DETECT_TIMEOUT_US = 500000;
         const f32 ACCEL_MOTION_THRESHOLD = 60.f;
         const f32 GYRO_MOTION_THRESHOLD = 0.24f;
         
@@ -131,8 +133,8 @@ namespace Anki {
         const f32 NSIDE_DOWN_THRESH_MMPS2 = 8000;
 
         // LED assignments
-        const LEDId INDICATOR_LED_ID = LED_LEFT_EYE_TOP;
-        const LEDId HEADLIGHT_LED_ID = LED_RIGHT_EYE_TOP;
+        const LEDId INDICATOR_LED_ID = LED_BACKPACK_LEFT;
+        const LEDId HEADLIGHT_LED_ID = LED_BACKPACK_RIGHT;
         
       } // "private" namespace
       
@@ -182,7 +184,7 @@ namespace Anki {
       {
         // TEST WITH LIGHT
         if (pickupDetected) {
-          HAL::SetLED(INDICATOR_LED_ID, LED_RED);
+          HAL::SetLED(INDICATOR_LED_ID, LED_BLUE);
         } else {
           HAL::SetLED(INDICATOR_LED_ID, LED_OFF);
         }
@@ -277,14 +279,16 @@ namespace Anki {
           // Do simple check first.
           // If wheels aren't moving, any motion is because a person was messing with it!
           if (!WheelController::AreWheelsPowered() && !HeadController::IsMoving() && !LiftController::IsMoving()) {
-            if (ABS(pdFiltAccX_aligned_) > 1000 ||
-                ABS(pdFiltAccY_aligned_) > 1000 ||
+            if (ABS(pdFiltAccX_aligned_) > 5000 ||
+                ABS(pdFiltAccY_aligned_) > 3000 ||
                 ABS(pdFiltAccZ_aligned_) > 11000 ||
-                ABS(gyro_robot_frame_filt[0]) > 1.f ||
-                ABS(gyro_robot_frame_filt[1]) > 1.f ||
-                ABS(gyro_robot_frame_filt[2]) > 1.f) {
+                ABS(gyro_robot_frame_filt[0]) > 5.f ||
+                ABS(gyro_robot_frame_filt[1]) > 5.f ||
+                ABS(gyro_robot_frame_filt[2]) > 5.f) {
               if (++pdUnexpectedMotionCnt_ > 40) {
-                PRINT("PDWhileStationary: UnexpectedMontionCnt %d\n", pdUnexpectedMotionCnt_);
+                PRINT("PDWhileStationary: acc (%f, %f, %f), gyro (%f, %f, %f)\n",
+                      pdFiltAccX_aligned_, pdFiltAccY_aligned_, pdFiltAccZ_aligned_,
+                      gyro_robot_frame_filt[0], gyro_robot_frame_filt[1], gyro_robot_frame_filt[2]);
                 SetPickupDetect(true);
               }
             }
@@ -293,6 +297,24 @@ namespace Anki {
           }
 
           
+          // Do conservative check for pickup.
+          // Only when we're really sure it's moving!
+          // TODO: Make this smarter!
+          if (!IsPickedUp() &&
+              (ABS(pdFiltAccX_aligned_) > 5000 ||
+               ABS(pdFiltAccY_aligned_) > 3000 ||
+               ABS(pdFiltAccZ_aligned_) > 11000)) {
+            ++pdRiseCnt_;
+            if (pdRiseCnt_ > 40) {
+              SetPickupDetect(true);
+              PRINT("PickupDetect: accX = %f, accY = %f, accZ = %f\n",
+                    pdFiltAccX_aligned_, pdFiltAccY_aligned_, pdFiltAccZ_aligned_);
+            }
+          } else {
+            pdRiseCnt_ = 0;
+          }
+          
+          /*
           // If rise detected this tic...
           if (pdFiltAccZ_aligned_ > pdFiltPrevVal + PD_ACCEL_MIN_DELTA) {
             if (pdFallCnt_ > 0) {
@@ -364,6 +386,7 @@ namespace Anki {
             }
             
           }
+           */
         }
       }
       
@@ -466,17 +489,16 @@ namespace Anki {
         
         
         // Get IMU data
-        HAL::IMU_DataStructure imu_data;
-        HAL::IMUReadData(imu_data);
+        HAL::IMUReadData(imu_data_);
         
         
         ////// Gyro Update //////
         
         // Filter rotation speeds
         // TODO: Do this in hardware?
-        gyro_filt[0] = imu_data.rate_x * RATE_FILT_COEFF + gyro_filt[0] * (1.f-RATE_FILT_COEFF);
-        gyro_filt[1] = imu_data.rate_y * RATE_FILT_COEFF + gyro_filt[1] * (1.f-RATE_FILT_COEFF);
-        gyro_filt[2] = imu_data.rate_z * RATE_FILT_COEFF + gyro_filt[2] * (1.f-RATE_FILT_COEFF);
+        gyro_filt[0] = imu_data_.rate_x * RATE_FILT_COEFF + gyro_filt[0] * (1.f-RATE_FILT_COEFF);
+        gyro_filt[1] = imu_data_.rate_y * RATE_FILT_COEFF + gyro_filt[1] * (1.f-RATE_FILT_COEFF);
+        gyro_filt[2] = imu_data_.rate_z * RATE_FILT_COEFF + gyro_filt[2] * (1.f-RATE_FILT_COEFF);
       
         
         // Compute head angle wrt to world horizontal plane
@@ -510,9 +532,9 @@ namespace Anki {
         
         
         ///// Accelerometer update /////
-        accel_filt[0] = imu_data.acc_x * ACCEL_FILT_COEFF + accel_filt[0] * (1.f-ACCEL_FILT_COEFF);
-        accel_filt[1] = imu_data.acc_y * ACCEL_FILT_COEFF + accel_filt[1] * (1.f-ACCEL_FILT_COEFF);
-        accel_filt[2] = imu_data.acc_z * ACCEL_FILT_COEFF + accel_filt[2] * (1.f-ACCEL_FILT_COEFF);
+        accel_filt[0] = imu_data_.acc_x * ACCEL_FILT_COEFF + accel_filt[0] * (1.f-ACCEL_FILT_COEFF);
+        accel_filt[1] = imu_data_.acc_y * ACCEL_FILT_COEFF + accel_filt[1] * (1.f-ACCEL_FILT_COEFF);
+        accel_filt[2] = imu_data_.acc_z * ACCEL_FILT_COEFF + accel_filt[2] * (1.f-ACCEL_FILT_COEFF);
         //printf("accel: %f %f %f\n", accel_filt[0], accel_filt[1], accel_filt[2]);
         pitch_ = atan2(accel_filt[0], accel_filt[2]) - headAngle;
         
@@ -591,14 +613,14 @@ namespace Anki {
         //UpdateEventDetection();
         
         // Pickup detection
-        pdFiltAccX_ = imu_data.acc_x * ACCEL_PICKUP_FILT_COEFF + pdFiltAccX_ * (1.f - ACCEL_PICKUP_FILT_COEFF);
-        pdFiltAccY_ = imu_data.acc_y * ACCEL_PICKUP_FILT_COEFF + pdFiltAccY_ * (1.f - ACCEL_PICKUP_FILT_COEFF);
-        pdFiltAccZ_ = imu_data.acc_z * ACCEL_PICKUP_FILT_COEFF + pdFiltAccZ_ * (1.f - ACCEL_PICKUP_FILT_COEFF);
+        pdFiltAccX_ = imu_data_.acc_x * ACCEL_PICKUP_FILT_COEFF + pdFiltAccX_ * (1.f - ACCEL_PICKUP_FILT_COEFF);
+        pdFiltAccY_ = imu_data_.acc_y * ACCEL_PICKUP_FILT_COEFF + pdFiltAccY_ * (1.f - ACCEL_PICKUP_FILT_COEFF);
+        pdFiltAccZ_ = imu_data_.acc_z * ACCEL_PICKUP_FILT_COEFF + pdFiltAccZ_ * (1.f - ACCEL_PICKUP_FILT_COEFF);
         
         // XXX: Commenting this out because pickup detection seems to be firing
         //      when the robot drives up ramp (or the side of a platform) and
         //      clearing pose history.
-        //DetectPickup();
+        DetectPickup();
         
         //UpdateEventDetection();
         
@@ -641,6 +663,10 @@ namespace Anki {
         
       } // Update()
       
+      HAL::IMU_DataStructure GetLatestRawData()
+      {
+        return imu_data_;
+      }
       
       f32 GetRotation()
       {

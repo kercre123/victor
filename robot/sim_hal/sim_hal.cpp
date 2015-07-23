@@ -13,12 +13,25 @@
 #include "messages.h"
 #include "wheelController.h"
 
-#include "sim_overlayDisplay.h"
+#include "anki/cozmo/simulator/sim_overlayDisplay.h"
 #include "BlockMessages.h"
 
 // Webots Includes
 #include <webots/Robot.hpp>
 #include <webots/Supervisor.hpp>
+#include <webots/PositionSensor.hpp>
+#include <webots/Emitter.hpp>
+#include <webots/Motor.hpp>
+#include <webots/GPS.hpp>
+#include <webots/Compass.hpp>
+#include <webots/Camera.hpp>
+#include <webots/Display.hpp>
+#include <webots/Gyro.hpp>
+#include <webots/DistanceSensor.hpp>
+#include <webots/Accelerometer.hpp>
+#include <webots/Receiver.hpp>
+#include <webots/Connector.hpp>
+#include <webots/LED.hpp>
 
 #define BLUR_CAPTURED_IMAGES 1
 
@@ -40,13 +53,6 @@ namespace Anki {
       // Const paramters / settings
       // TODO: some of these should be defined elsewhere (e.g. comms)
       
-      // Represents the number of cycles it takes to engage or disengage an active gripper
-#if defined(HAVE_ACTIVE_GRIPPER) && HAVE_ACTIVE_GRIPPER
-      const s32 UNLOCK_HYSTERESIS = 50;
-#else
-      //const s32 UNLOCK_HYSTERESIS = 0;
-#endif
-      
       const f64 WEBOTS_INFINITY = std::numeric_limits<f64>::infinity();
       
       const f32 MIN_WHEEL_POWER_FOR_MOTION = 0.15;
@@ -64,6 +70,7 @@ namespace Anki {
       // Motors
       webots::Motor* leftWheelMotor_;
       webots::Motor* rightWheelMotor_;
+      bool usingTreads_ = false;
       
       webots::Motor* headMotor_;
       webots::Motor* liftMotor_;
@@ -77,7 +84,6 @@ namespace Anki {
       webots::PositionSensor* liftPosSensor_;
       webots::PositionSensor* motorPosSensors_[HAL::MOTOR_COUNT];
       
-      
       // Gripper
       webots::Connector* con_;
       //bool gripperEngaged_ = false;
@@ -86,6 +92,7 @@ namespace Anki {
       
       
       // Cameras / Vision Processing
+      bool enableVideo_;
       webots::Camera* headCam_;
       HAL::CameraInfo headCamInfo_;
       u32 cameraStartTime_ms_;
@@ -104,6 +111,10 @@ namespace Anki {
       webots::DistanceSensor *proxLeft_;
       webots::DistanceSensor *proxCenter_;
       webots::DistanceSensor *proxRight_;
+      
+      // Charge contact
+      webots::Connector* chargeContact_;
+      bool wasOnCharger_ = false;
       
       // Emitter / receiver for block communication
       webots::Emitter *blockCommsEmitter_;
@@ -125,7 +136,25 @@ namespace Anki {
       HAL::IDCard idCard_;
       
       // Lights
-      webots::LED* leds_[NUM_LEDS] = {0};
+      webots::LED* leds_[NUM_BACKPACK_LEDS] = {0};
+      
+      // Face display
+      webots::Display* face_;
+      const u32 DISPLAY_WIDTH = 128;
+      const u32 DISPLAY_HEIGHT = 64;
+      const u32 NUM_DISPLAY_PIXELS = DISPLAY_WIDTH * DISPLAY_HEIGHT;
+      u8 lastFaceFrameDecoded_[NUM_DISPLAY_PIXELS];  // Each byte represents one pixel
+      s32 facePosX_ = 0;
+      s32 facePosY_ = 0;
+      TimeStamp_t faceBlinkStartTime_ = 0;
+      const u32 FACE_BLINK_DURATION_MS = 100;
+      
+      // Audio
+      // (Can't actually play sound in simulator, but proper handling of audio frames is still
+      // necessary for proper animation timing)
+      TimeStamp_t audioEndTime_ = 0;    // Expected end of audio
+      u32 AUDIO_FRAME_TIME_MS = 33;     // Duration of single audio frame
+      bool audioReadyForFrame_ = true;  // Whether or not ready to receive another audio frame
       
 #pragma mark --- Simulated Hardware Interface "Private Methods" ---
       // Localization
@@ -135,25 +164,26 @@ namespace Anki {
       // Approximate open-loop conversion of wheel power to angular wheel speed
       float WheelPowerToAngSpeed(float power)
       {
-        float speed_mm_per_s = 0;
-
-        // Approximate inverse of the open-loop wheel formula used in wheelController
-        power = CLIP(power, -1.0, 1.0);
-        f32 x = ABS(power);
-        f32 x2 = x*x;
-        f32 x3 = x*x2;
-        if (x >= 0.15) {
-          speed_mm_per_s = 272.13 * x3 - 732.11 * x2 + 710.7 * x - 75.268;
-          if (power < 0) {
-            speed_mm_per_s *= -1;
-          }
-        } else {
-          speed_mm_per_s = 0;
+        // Inverse of speed-power formula in WheelController
+        float speed_mm_per_s = power / 0.004f;
+       
+        if (usingTreads_) {
+          // Return linear speed m/s when usingTreads
+          return -speed_mm_per_s / 1000.f;
         }
         
         // Convert mm/s to rad/s
         return speed_mm_per_s / WHEEL_RAD_TO_MM;
       }
+
+      // Approximate open-loop conversion of lift power to angular lift speed
+      float LiftPowerToAngSpeed(float power)
+      {
+        // Inverse of speed-power formula in LiftController
+        float rad_per_s = power / 0.05f;
+        return rad_per_s;
+      }
+
       
       void MotorUpdate()
       {
@@ -163,6 +193,12 @@ namespace Anki {
         {
           if (motors_[i]) {
             f32 pos = motorPosSensors_[i]->getValue();
+            if (usingTreads_) {
+              if (i == HAL::MOTOR_LEFT_WHEEL || i == HAL::MOTOR_RIGHT_WHEEL) {
+                pos = motorPosSensors_[i]->getValue() * -1000.f;
+              }
+            }
+            
             posDelta = pos - motorPrevPositions_[i];
             
             // Update position
@@ -176,17 +212,44 @@ namespace Anki {
         }
       }
       
+      void ClearFace()
+      {
+        face_->setColor(0);
+        face_->fillRectangle(0,0, DISPLAY_WIDTH, DISPLAY_HEIGHT);
+        face_->setColor(0x0000f0ff);
+      }
+
+      void FaceUpdate()
+      {
+        // Check if blinking
+        if (faceBlinkStartTime_ != 0) {
+          if (HAL::GetTimeStamp() - faceBlinkStartTime_ > FACE_BLINK_DURATION_MS) {
+            HAL::FaceMove(facePosX_, facePosY_);
+            faceBlinkStartTime_ = 0;
+          }
+        }
+      }
+      
+      void AudioUpdate()
+      {
+        if (audioEndTime_ != 0) {
+          if (HAL::GetTimeStamp() > audioEndTime_) {
+            audioEndTime_ = 0;
+            audioReadyForFrame_ = true;
+          } else if (HAL::GetTimeStamp() > audioEndTime_ - (0.5*AUDIO_FRAME_TIME_MS)) {
+            // Audio ready flag is raised ~16ms before the end of the current frame.
+            // This means audio lags other tracks but the amount should be imperceptible.
+            audioReadyForFrame_ = true;
+          }
+        }
+      }
+      
       
       void SetHeadAngularVelocity(const f32 rad_per_sec)
       {
         headMotor_->setVelocity(rad_per_sec);
       }
-      
-      
-      void SetLiftAngularVelocity(const f32 rad_per_sec)
-      {
-        liftMotor_->setVelocity(rad_per_sec);
-      }
+
       
       Result SendBlockMessage(const u8 blockID, BlockMessages::ID msgID, u8* buffer)
       {
@@ -237,6 +300,9 @@ namespace Anki {
     {
       assert(TIME_STEP >= webotRobot_.getBasicTimeStep());
       
+      webots::Node* robotNode = webotRobot_.getSelf();
+      usingTreads_ = robotNode->getField("useTreads")->getSFBool();
+      
       leftWheelMotor_  = webotRobot_.getMotor("LeftWheelMotor");
       rightWheelMotor_ = webotRobot_.getMotor("RightWheelMotor");
       
@@ -245,6 +311,7 @@ namespace Anki {
       
       leftWheelPosSensor_ = webotRobot_.getPositionSensor("LeftWheelMotorPosSensor");
       rightWheelPosSensor_ = webotRobot_.getPositionSensor("RightWheelMotorPosSensor");
+      
       headPosSensor_ = webotRobot_.getPositionSensor("HeadMotorPosSensor");
       liftPosSensor_ = webotRobot_.getPositionSensor("LiftMotorPosSensor");
       
@@ -252,7 +319,6 @@ namespace Anki {
       con_ = webotRobot_.getConnector("gripperConnector");
       //con_->enablePresence(TIME_STEP);
       
-      //matCam_ = webotRobot_.getCamera("cam_down");
       headCam_ = webotRobot_.getCamera("HeadCamera");
       
       if(VISION_TIME_STEP % static_cast<u32>(webotRobot_.getBasicTimeStep()) != 0) {
@@ -260,7 +326,6 @@ namespace Anki {
               VISION_TIME_STEP, webotRobot_.getBasicTimeStep());
         return RESULT_FAIL;
       }
-      //matCam_->enable(VISION_TIME_STEP);
       headCam_->enable(VISION_TIME_STEP);
       
       // HACK: Figure out when first camera image will actually be taken (next
@@ -269,6 +334,11 @@ namespace Anki {
       // TODO: Not sure from Cyberbotics support message whether this should include "+ TIME_STEP" or not...
       cameraStartTime_ms_ = HAL::GetTimeStamp(); // + TIME_STEP;
       printf("Setting camera start time as %d.\n", cameraStartTime_ms_);
+      
+      enableVideo_ = robotNode->getField("enableVideo")->getSFBool();
+      if (!enableVideo_) {
+        printf("WARN: ******** Video disabled *********\n");
+      }
       
       // Set ID
       // Expected format of name is <SomeName>_<robotID>
@@ -325,6 +395,7 @@ namespace Anki {
       // Enable position measurements on head, lift, and wheel motors
       leftWheelPosSensor_->enable(TIME_STEP);
       rightWheelPosSensor_->enable(TIME_STEP);
+
       headPosSensor_->enable(TIME_STEP);
       liftPosSensor_->enable(TIME_STEP);
       
@@ -357,6 +428,12 @@ namespace Anki {
       proxCenter_->enable(TIME_STEP);
       proxRight_->enable(TIME_STEP);
       
+      // Charge contact
+      chargeContact_ = webotRobot_.getConnector("ChargeContact");
+      chargeContact_->enablePresence(TIME_STEP);
+      wasOnCharger_ = false;
+      
+      
       // Block radio
       blockCommsEmitter_ = webotRobot_.getEmitter("blockCommsEmitter");
       blockCommsReceiver_ = webotRobot_.getReceiver("blockCommsReceiver");
@@ -377,12 +454,11 @@ namespace Anki {
 
         // Check for nodes that have a 'blockColor' and 'active' field
         webots::Node* nd = rootChildren->getMFNode(n);
-        webots::Field* blockColorField = nd->getField("blockColor");
-        webots::Field* activeField = nd->getField("active");
-        webots::Field* activeIdField = nd->getField("activeID");
-        if (blockColorField && activeField && activeIdField) {
-          if (activeField->getSFBool()) {
-            const s32 activeID = activeIdField->getSFInt32();
+        webots::Field* nameField = nd->getField("name");
+        webots::Field* IdField = nd->getField("ID");
+        if (nameField && IdField) {
+          if (nameField->getSFString() == "LightCube") {
+            const s32 activeID = IdField->getSFInt32();
             
             if(blockIDs_.count(activeID) > 0) {
               printf("ERROR: ignoring active block with duplicate ID of %d\n", activeID);
@@ -411,6 +487,7 @@ namespace Anki {
       }
       
       // Lights
+      /* Old eye LED segments
       leds_[LED_LEFT_EYE_TOP] = webotRobot_.getLED("LeftEyeLED_top");
       leds_[LED_LEFT_EYE_LEFT] = webotRobot_.getLED("LeftEyeLED_left");
       leds_[LED_LEFT_EYE_RIGHT] = webotRobot_.getLED("LeftEyeLED_right");
@@ -420,7 +497,19 @@ namespace Anki {
       leds_[LED_RIGHT_EYE_LEFT] = webotRobot_.getLED("RightEyeLED_left");
       leds_[LED_RIGHT_EYE_RIGHT] = webotRobot_.getLED("RightEyeLED_right");
       leds_[LED_RIGHT_EYE_BOTTOM] = webotRobot_.getLED("RightEyeLED_bottom");
+      */
       
+      leds_[LED_BACKPACK_BACK]   = webotRobot_.getLED("ledHealth0");
+      leds_[LED_BACKPACK_MIDDLE] = webotRobot_.getLED("ledHealth1");
+      leds_[LED_BACKPACK_FRONT]  = webotRobot_.getLED("ledHealth2");
+      leds_[LED_BACKPACK_LEFT]   = webotRobot_.getLED("ledDirLeft");
+      leds_[LED_BACKPACK_RIGHT]  = webotRobot_.getLED("ledDirRight");
+      
+      // Face display
+      face_ = webotRobot_.getDisplay("face_display");
+      assert(face_->getWidth() == DISPLAY_WIDTH);
+      assert(face_->getHeight() == DISPLAY_HEIGHT);
+      ClearFace();
       
       isInitialized = true;
       return RESULT_OK;
@@ -430,7 +519,6 @@ namespace Anki {
     void HAL::Destroy()
     {
       // Turn off components: (strictly necessary?)
-      //matCam_->disable();
       headCam_->disable();
       
       gps_->disable();
@@ -506,18 +594,8 @@ namespace Anki {
           rightWheelMotor_->setVelocity(WheelPowerToAngSpeed(power));
           break;
         case MOTOR_LIFT:
-          // TODO: Assuming linear relationship, but it's not!
-          SetLiftAngularVelocity(power * MAX_LIFT_SPEED);
+          liftMotor_->setVelocity(LiftPowerToAngSpeed(power));
           break;
-#if defined(HAVE_ACTIVE_GRIPPER) && HAVE_ACTIVE_GRIPPER
-        case MOTOR_GRIP:
-          if (power > 0) {
-            EngageGripper();
-          } else {
-            DisengageGripper();
-          }
-          break;
-#endif
         case MOTOR_HEAD:
           // TODO: Assuming linear relationship, but it's not!
           SetHeadAngularVelocity(power * MAX_HEAD_SPEED);
@@ -547,23 +625,15 @@ namespace Anki {
       switch(motor) {
         case MOTOR_LEFT_WHEEL:
         case MOTOR_RIGHT_WHEEL:
-        {
-          return motorSpeeds_[motor] * WHEEL_RAD_TO_MM;
-        }
-
+          if (!usingTreads_) {
+            return motorSpeeds_[motor] * WHEEL_RAD_TO_MM;
+          }
+          // else if usingTreads, fall through to just returning motorSpeeds_ since
+          // it is already stored in mm/s
+          
         case MOTOR_LIFT:
-        {
-          return motorSpeeds_[MOTOR_LIFT];
-        }
-          
-        //case MOTOR_GRIP:
-        //  // TODO
-        //  break;
-          
         case MOTOR_HEAD:
-        {
-          return motorSpeeds_[MOTOR_HEAD];
-        }
+          return motorSpeeds_[motor];
           
         default:
           PRINT("ERROR (HAL::MotorGetSpeed) - Undefined motor type %d\n", motor);
@@ -579,17 +649,22 @@ namespace Anki {
       switch(motor) {
         case MOTOR_RIGHT_WHEEL:
         case MOTOR_LEFT_WHEEL:
-          return motorPositions_[motor] * WHEEL_RAD_TO_MM;
+          if (!usingTreads_) {
+            return motorPositions_[motor] * WHEEL_RAD_TO_MM;
+          }
+          // else if usingTreads, fall through to just returning motorSpeeds_ since
+          // it is already stored in mm
+          
         case MOTOR_LIFT:
         case MOTOR_HEAD:
           return motorPositions_[motor];
-          break;
+          
         default:
           PRINT("ERROR (HAL::MotorGetPosition) - Undefined motor type %d\n", motor);
           return 0;
       }
       
-      return motorPositions_[motor];
+      return 0;
     }
     
     
@@ -651,6 +726,8 @@ namespace Anki {
       } else {
         MotorUpdate();
         RadioUpdate();
+        FaceUpdate();
+        AudioUpdate();
         
         /*
         // Always display ground truth pose:
@@ -689,22 +766,51 @@ namespace Anki {
           }
         }
         
+        // Pass along block-moved messages to basestation
         // TODO: Make block comms receiver checking into a HAL function at some point
         //   and call it from the main execution loop
         while(blockCommsReceiver_->getQueueLength() > 0) {
           int dataSize = blockCommsReceiver_->getDataSize();
-          
+          u8* data = (u8*)blockCommsReceiver_->getData();
+
+          // TODO: Use a message ID to switch here instead of depending on size to differentiate message type
+
           if(dataSize == BlockMessages::GetSize(BlockMessages::BlockMoved_ID)) {
-            // Pass along block-moved messages to basestation
-            u8* data = (u8*)blockCommsReceiver_->getData();
             BlockMessages::BlockMoved* msgIn = reinterpret_cast<BlockMessages::BlockMoved*>(data);
             Messages::ActiveObjectMoved msgOut;
             msgOut.objectID = msgIn->blockID;
+            msgOut.xAccel   = msgIn->xAccel;
+            msgOut.yAccel   = msgIn->yAccel;
+            msgOut.zAccel   = msgIn->zAccel;
+            msgOut.upAxis   = msgIn->upAxis;
             HAL::RadioSendMessage(Messages::ActiveObjectMoved_ID, &msgOut);
+          } else if(dataSize == BlockMessages::GetSize(BlockMessages::BlockStoppedMoving_ID)) {
+            BlockMessages::BlockStoppedMoving* msgIn = reinterpret_cast<BlockMessages::BlockStoppedMoving*>(data);
+            Messages::ActiveObjectStoppedMoving msgOut;
+            msgOut.objectID = msgIn->blockID;
+            msgOut.upAxis   = msgIn->upAxis;
+            msgOut.rolled   = msgIn->rolled;
+            HAL::RadioSendMessage(Messages::ActiveObjectStoppedMoving_ID, &msgOut);
+          } else if(dataSize == BlockMessages::GetSize(BlockMessages::BlockTapped_ID)) {
+            BlockMessages::BlockTapped* msgIn = reinterpret_cast<BlockMessages::BlockTapped*>(data);
+            Messages::ActiveObjectTapped msgOut;
+            msgOut.objectID = msgIn->blockID;
+            msgOut.numTaps  = msgIn->numTaps;
+            HAL::RadioSendMessage(Messages::ActiveObjectTapped_ID, &msgOut);
           } else {
             printf("Received unknown-sized message (%d bytes) over block comms.\n", dataSize);
           }
           blockCommsReceiver_->nextPacket();
+        }
+        
+        
+        // Check charging status (Debug)
+        if (BatteryIsOnCharger() && !wasOnCharger_) {
+          PRINT("ON CHARGER\n");
+          wasOnCharger_ = true;
+        } else if (!BatteryIsOnCharger() && wasOnCharger_) {
+          PRINT("OFF CHARGER\n");
+          wasOnCharger_ = false;
         }
         
         return RESULT_OK;
@@ -808,6 +914,11 @@ namespace Anki {
       return cameraStartTime_ms_;
     }
     
+    bool HAL::IsVideoEnabled()
+    {
+      return enableVideo_;
+    }
+    
     // Starts camera frame synchronization
     void HAL::CameraGetFrame(u8* frame, Vision::CameraResolution res, bool enableLight)
     {
@@ -828,11 +939,12 @@ namespace Anki {
                                     "NULL image pointer returned from simulated camera's getFrame() method.\n");
 
       s32 pixel = 0;
+      s32 imgWidth = headCam_->getWidth();
       for (s32 y=0; y < headCamInfo_.nrows; y++) {
         for (s32 x=0; x < headCamInfo_.ncols; x++) {
-          frame[pixel++] = webots::Camera::imageGetRed(image,   headCam_->getWidth(), x, y);
-          frame[pixel++] = webots::Camera::imageGetGreen(image, headCam_->getWidth(), x, y);
-          frame[pixel++] = webots::Camera::imageGetBlue(image,  headCam_->getWidth(), x, y);
+          frame[pixel++] = webots::Camera::imageGetRed(image, imgWidth, x, y);
+          frame[pixel++] = webots::Camera::imageGetGreen(image, imgWidth, x, y);
+          frame[pixel++] = webots::Camera::imageGetBlue(image,  imgWidth, x, y);
         }
       }
       
@@ -881,6 +993,124 @@ namespace Anki {
     {
       // TODO: ...
     }
+
+    void HAL::AudioFill(void) {}
+    
+    // @return true if the audio clock says it is time for the next frame
+    bool HAL::AudioReady()
+    {
+      return audioReadyForFrame_;
+    }
+    
+    void HAL::AudioPlaySilence() {
+      AudioPlayFrame(nullptr);
+    }
+    
+    // Play one frame of audio or silence
+    // @param frame - a pointer to an audio frame or NULL to play one frame of silence
+    void HAL::AudioPlayFrame(Messages::AnimKeyFrame_AudioSample *msg)
+    {
+      if (audioEndTime_ == 0) {
+        audioEndTime_ = HAL::GetTimeStamp();
+      }
+      audioEndTime_ += AUDIO_FRAME_TIME_MS;
+      audioReadyForFrame_ = false;
+    }
+    
+    // Update the face to the next frame of an animation
+    // @param frame - a pointer to a variable length frame of face animation data
+    void HAL::FaceAnimate(u8* frame)
+    {
+      u32 pixelCounter = 0;
+      bool draw = false;
+      
+      // Clear the display
+      ClearFace();
+      
+      // Clear the last face frame buffer
+      memset(lastFaceFrameDecoded_, 0, NUM_DISPLAY_PIXELS);
+      
+      // Draw pixels
+      while (*frame != 0) {
+        u8 run = *frame++;
+        u32 numPixels = run < 64 ? run * DISPLAY_WIDTH : run - 64;
+        
+        // Adjust number of pixels this byte if it exceeds screen total
+        if (pixelCounter + numPixels > NUM_DISPLAY_PIXELS) {
+          numPixels = NUM_DISPLAY_PIXELS - pixelCounter;
+        }
+        
+        // Set pixels
+        if (draw) {
+          for (u32 i=0; i<numPixels; ++i) {
+            u32 y = pixelCounter / DISPLAY_WIDTH;
+            u32 x = pixelCounter - (y * DISPLAY_WIDTH);
+            ++pixelCounter;
+            
+            lastFaceFrameDecoded_[x + (y * DISPLAY_WIDTH)] = 1;
+          }
+        } else {
+          // Update total pixels drawn thus far
+          pixelCounter += numPixels;
+        }
+        
+        // Toggle whether we're drawing 0s or 1s
+        if (run >= 64) {
+          draw = !draw;
+        }
+
+      }
+      
+      // Draw face
+      FaceMove(facePosX_, facePosY_);
+    }
+    
+    
+    // Move the face to an X, Y offset - where 0, 0 is centered, negative is left/up
+    void HAL::FaceMove(s32 x, s32 y)
+    {
+      // Compute starting pixel of source image (i.e. lastFaceFrameDecoded) and dest image (i.e. face_ display)
+      u8 srcX = 0, srcY = 0;
+      u8 destX = 0, destY = 0;
+      
+      if (x > 0) {
+        destX += x;
+      } else {
+        srcX -= x;
+      }
+
+      if (y > 0) {
+        destY += y;
+      } else {
+        srcY -= y;
+      }
+      
+      // Compute dimensions of overlapping region
+      u8 w = DISPLAY_WIDTH - ABS(x);
+      u8 h = DISPLAY_HEIGHT - ABS(y);
+      
+      ClearFace();
+      
+      for (u8 i = 0; i < w; ++i) {
+        for (u8 j = 0; j < h; ++j) {
+          if (lastFaceFrameDecoded_[(srcX+i) + (DISPLAY_WIDTH * (srcY+j))]) {
+            face_->drawPixel(destX + i, destY + j);
+          }
+        }
+      }
+      
+      facePosX_ = x;
+      facePosY_ = y;
+      
+    }
+  
+    // Blink the eyes
+    void HAL::FaceBlink()
+    {
+      faceBlinkStartTime_ = GetTimeStamp();
+      ClearFace();
+    }
+    
     
     HAL::IDCard* HAL::GetIDCard()
     {
@@ -938,12 +1168,19 @@ namespace Anki {
     
     bool HAL::BatteryIsCharging()
     {
-      return false; // XXX On Cozmo 3, head is off if robot is charging
+      //return false; // XXX On Cozmo 3, head is off if robot is charging
+      return (chargeContact_->getPresence() == 1);
     }
     
     bool HAL::BatteryIsOnCharger()
     {
-      return false; // XXX On Cozmo 3, head is off if robot is charging
+      //return false; // XXX On Cozmo 3, head is off if robot is charging
+      return (chargeContact_->getPresence() == 1);
+    }
+
+    extern "C" {
+    void EnableIRQ() {}
+    void DisableIRQ() {}
     }
     
     void HAL::FlashBlockIDs() {
@@ -951,13 +1188,14 @@ namespace Anki {
       flashStartTime_ = HAL::GetTimeStamp();
     }
     
-    Result HAL::SetBlockLight(const u8 blockID, const u32* color,
+    Result HAL::SetBlockLight(const u8 blockID, const u32* onColor, const u32* offColor,
                               const u32* onPeriod_ms, const u32* offPeriod_ms,
                               const u32* transitionOnPeriod_ms, const u32* transitionOffPeriod_ms)
     {
       Anki::Cozmo::BlockMessages::SetBlockLights m;
       for (int i=0; i<NUM_BLOCK_LEDS; ++i) {
-        m.color[i] = color[i];
+        m.onColor[i] = onColor[i];
+        m.offColor[i] = offColor[i];
         m.onPeriod_ms[i] = onPeriod_ms[i];
         m.offPeriod_ms[i] = offPeriod_ms[i];
         m.transitionOnPeriod_ms[i] = (transitionOnPeriod_ms == nullptr ? 0 : transitionOnPeriod_ms[i]);
@@ -967,6 +1205,10 @@ namespace Anki {
       return SendBlockMessage(blockID, BlockMessages::SetBlockLights_ID, (u8*)&m);
     }
     
+    void HAL::ManageCubes(void)
+    {
+      // Stub
+    }
     
   } // namespace Cozmo
 } // namespace Anki

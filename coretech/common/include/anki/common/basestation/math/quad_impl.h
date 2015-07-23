@@ -372,11 +372,35 @@ namespace Anki {
     
 #else
     CORETECH_THROW("GetBoundingQuad() currently requires OpenCV.");
+    Quad2f boundingQuad;
 #endif
     
     return boundingQuad;
   }
  
+  template<QuadDimType N, typename T>
+  T Quadrilateral<N,T>::ComputeArea() const
+  {
+    using namespace Quad;
+    
+    static_assert(N==2, "ComputeArea() method only available for 2D quads.");
+    
+    // Area of the quad is the sum of the area of the two triangles formed
+    // by cutting the quad in half with an edge from TopLeft to BottomRight.
+    // Note this assumes the quads corners are sorted!
+    
+    const Triangle<T> triangle1(this->operator[](TopLeft),
+                                this->operator[](BottomLeft),
+                                this->operator[](BottomRight));
+    
+    const Triangle<T> triangle2(this->operator[](TopLeft),
+                                this->operator[](TopRight),
+                                this->operator[](BottomRight));
+    
+    const T area = triangle1.GetArea() + triangle2.GetArea();
+    
+    return area;
+  } // ComputeArea()
   
   template<QuadDimType N, typename T>
   bool Quadrilateral<N,T>::Contains(const Point<2,T>& point) const

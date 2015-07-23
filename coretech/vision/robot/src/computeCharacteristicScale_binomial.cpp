@@ -159,10 +159,10 @@ namespace Anki
         AnkiAssert(numPyramidLevels < 6);
 
         for(s32 iLevel=0; iLevel<numPyramidLevels; iLevel++) {
-          const s32 xyOutputStep = 1 << iLevel;
+          /*const s32 xyOutputStep = 1 << iLevel;*/
 
-          const s32 scaledHeight = imageHeight >> iLevel;
-          const s32 scaledWidth = imageWidth >> iLevel;
+          /*const s32 scaledHeight = imageHeight >> iLevel;*/
+          /*const s32 scaledWidth = imageWidth >> iLevel;*/
 
           Array<u8> upsampledImage;
           Array<u8> upsampledDog;
@@ -237,7 +237,7 @@ namespace Anki
         for(s32 iLevel=0; iLevel<numPyramidLevels; iLevel++) {
           const s32 xyOutputStep = 1 << iLevel;
 
-          const s32 scaledHeight = imageHeight >> iLevel;
+          //const s32 scaledHeight = imageHeight >> iLevel;
           const s32 scaledWidth = imageWidth >> iLevel;
 
           BeginBenchmark("ecvcsB_scale_select");

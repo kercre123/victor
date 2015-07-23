@@ -6,7 +6,7 @@
  **/
 
 #include "anki/common/basestation/utils/fileManagement.h"
-#include "anki/common/basestation/utils/logging/logging.h"
+#include "util/logging/logging.h"
 
 #include <sys/stat.h>
 #include <unistd.h>

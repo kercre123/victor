@@ -31,6 +31,9 @@
 
 namespace Anki {
   
+  // Forward declaration
+  class Radians;
+  
   using PointDimType = size_t;
   
   // Generic N-dimensional Point class
@@ -160,39 +163,12 @@ namespace Anki {
   using Vec2f = Point2f;
   using Vec3f = Point3f;
   
-  /*
-  const Vec2f X_AXIS_2D(1.f, 0.f);
-  const Vec2f Y_AXIS_2D(0.f, 1.f);
+  const Vec2f& X_AXIS_2D();
+  const Vec2f& Y_AXIS_2D();
   
-  const Vec3f X_AXIS_3D()(1.f, 0.f, 0.f);
-  const Vec3f Y_AXIS_3D()(0.f, 1.f, 0.f);
-  const Vec3f Z_AXIS_3D()(0.f, 0.f, 1.f);
-  */
-  
-  inline const Vec2f& X_AXIS_2D() {
-    static const Vec2f xAxis(1.f, 0.f);
-    return xAxis;
-  }
-  
-  inline const Vec2f& Y_AXIS_2D() {
-    static const Vec2f yAxis(0.f, 1.f);
-    return yAxis;
-  }
-  
-  inline const Vec3f& X_AXIS_3D() {
-    static const Vec3f xAxis(1.f, 0.f, 0.f);
-    return xAxis;
-  }
-  
-  inline const Vec3f& Y_AXIS_3D() {
-    static const Vec3f yAxis(0.f, 1.f, 0.f);
-    return yAxis;
-  }
-  
-  inline const Vec3f& Z_AXIS_3D() {
-    static const Vec3f zAxis(0.f, 0.f, 01.f);
-    return zAxis;
-  }
+  const Vec3f& X_AXIS_3D();
+  const Vec3f& Y_AXIS_3D();
+  const Vec3f& Z_AXIS_3D();
   
   /*
   template<PointDimType N, typename T>
@@ -256,6 +232,14 @@ namespace Anki {
   template<PointDimType N, typename T>
   T ComputeDistanceBetween(const Point<N,T>& point1, const Point<N,T>& point2);
   
+  // Return true if the two points (vectors) are aligned within the given angle threshold
+  template<PointDimType N, typename T>
+  bool AreVectorsAligned(const Point<N,T>& point1, const Point<N,T>& point2, const Radians& angleThreshold);
+  
+  // Return true if the two unit vectors are aligned within the given angle threshold
+  // NOTE: In DEBUG, the unit vectors' lengths are confirmed (i.e. asserted) to be 1.0, but not in RELEASE.
+  template<PointDimType N>
+  bool AreUnitVectorsAligned(const Point<N,f32>& unitVec1, const Point<N,f32>& unitVec2, const Radians& angleThreshold);
   
 } // namespace Anki
 

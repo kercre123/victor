@@ -1,0 +1,113 @@
+/**
+ * File: faceAnimationManager.h
+ *
+ * Author: Andrew Stein
+ * Date:   7/7/2015
+ *
+ * Description: Defines container for managing available animations for the robot's face display.
+ *
+ * Copyright: Anki, Inc. 2015
+ **/
+
+#ifndef ANKI_COZMO_FACE_ANIMATION_MANAGER_H
+#define ANKI_COZMO_FACE_ANIMATION_MANAGER_H
+
+#include "anki/cozmo/shared/cozmoTypes.h"
+
+#include <string>
+#include <vector>
+#include <unordered_map>
+
+// Forward declaration
+namespace cv {
+  class Mat;
+}
+
+namespace Anki {
+namespace Cozmo {
+  
+  // NOTE: this is a singleton class
+  class FaceAnimationManager
+  {
+  public:
+    static const s32 IMAGE_WIDTH = 128;
+    static const s32 IMAGE_HEIGHT = 64;
+    
+    // Get a pointer to the singleton instance
+    inline static FaceAnimationManager* getInstance();
+    static void removeInstance();
+    
+    // Set the root directory of animations, and trigger a read of available
+    // animations in it.
+    bool SetRootDir(const std::string dir="");
+
+    // Get a pointer to an RLE-compressed frame for the given animation.
+    // Returns nullptr if animation or frame do not exist.
+    const std::vector<u8>* GetFrame(const std::string& animName, u32 frameNum) const;
+    
+    // Return the total number of frames in the given animation. Returns 0 if the
+    // animation doesn't exist.
+    u32  GetNumFrames(const std::string& animName) const;
+    
+    // Clear all FaceAnimations
+    void Clear();
+    
+    // Get the total number of available animations
+    size_t GetNumAvailableAnimations() const;
+    
+    static Result CompressRLE(const cv::Mat& image, std::vector<u8>& rleData);
+    
+  protected:
+    
+    // Protected default constructor for singleton.
+    FaceAnimationManager();
+    
+    static FaceAnimationManager* _singletonInstance;
+    
+    bool         _hasRootDir;
+    std::string  _rootDir;
+    
+    struct AvailableAnim {
+      time_t lastLoadedTime;
+      //std::vector<std::string> filenames;
+      std::vector<std::vector<u8> > rleFrames;
+      size_t GetNumFrames() const { return rleFrames.size(); }
+    };
+    
+    std::unordered_map<std::string, AvailableAnim> _availableAnimations;
+    
+     Result ReadFaceAnimationDir();
+    
+  }; // class FaceAnimationManager
+  
+  
+  //
+  // Inlined Implementations
+  //
+  
+  inline FaceAnimationManager* FaceAnimationManager::getInstance()
+  {
+    // If we haven't already instantiated the singleton, do so now.
+    if(0 == _singletonInstance) {
+      _singletonInstance = new FaceAnimationManager();
+    }
+    
+    return _singletonInstance;
+  }
+  
+  inline void FaceAnimationManager::Clear() {
+    _availableAnimations.clear();
+  }
+  
+  // Get the total number of available animations
+  inline size_t FaceAnimationManager::GetNumAvailableAnimations() const {
+    return _availableAnimations.size();
+  }
+  
+  
+} // namespace Cozmo
+} // namespace Anki
+
+
+#endif // ANKI_COZMO_FACE_ANIMATION_MANAGER_H
+

@@ -23,7 +23,7 @@ namespace Anki {
   */
   
   Pose2d::Pose2d()
-  : Pose2d(0, {{0.f, 0.f}})
+  : Pose2d(0, {0.f, 0.f})
   {
     
   }
@@ -108,7 +108,7 @@ namespace Anki {
   */
   
   Pose3d::Pose3d()
-  : Pose3d(0, Z_AXIS_3D(), {{0.f, 0.f, 0.f}})
+  : Pose3d(0, Z_AXIS_3D(), {0.f, 0.f, 0.f})
   {
     
   } // Constructor: Pose3d()  
@@ -158,8 +158,8 @@ namespace Anki {
   }
   
   Pose3d::Pose3d(const Pose2d &pose2d)
-  : Pose3d(pose2d.GetAngle(), {{0.f, 0.f, 0.f}},
-           {{pose2d.GetX(), pose2d.GetY(), 0.f}})
+  : Pose3d(pose2d.GetAngle(), {0.f, 0.f, 0.f},
+           {pose2d.GetX(), pose2d.GetY(), 0.f})
   {
     // At this point, we have initialized a 3D pose corresponding
     // just to the 2D pose (i.e. w.r.t. the (0,0,0) origin and
@@ -342,8 +342,8 @@ namespace Anki {
     if(T_diff.GetAbs() < distThreshold) {
       angleDiff = this->GetRotation().GetAngleDiffFrom(P_other.GetRotation());
       
-      PRINT_INFO("Angle diff = %.3frad / %.1fdeg\n", // around (%.1f,%.1f,%.1f)\n",
-                 angleDiff.ToFloat(), angleDiff.getDegrees()); //,
+//      PRINT_INFO("Angle diff = %.3frad / %.1fdeg\n", // around (%.1f,%.1f,%.1f)\n",
+//                 angleDiff.ToFloat(), angleDiff.getDegrees()); //,
 //                 Rdiff.GetAxis().x(), Rdiff.GetAxis().y(), Rdiff.GetAxis().z());
       if(angleDiff < angleThreshold) {
         isSame = true;

@@ -12,6 +12,7 @@ PROTO Block1x1 [
   field SFBool active FALSE  # Whether or not this block has active lights
   field SFInt32 activeID 1   # Must be unique in the world among all active blocks
   field SFFloat width 0.044    # Length of one edge in meters
+  field SFFloat markerWidth 0.025
   
   field SFString markerImg_front ""
   field SFString markerImg_back  ""
@@ -25,13 +26,14 @@ Supervisor {
 
   %{
     # Set some dimensions
-    hWidth = fields.width/2
+    hWidth = fields.width.value/2
     ledWidth = 0.007
     ledHWidth = ledWidth/2
+    ledLength = 0.019
   }%
 
-  %{ if fields.active then }%
-    controller "block_controller"
+  %{ if fields.active.value then }%
+    controller "webotsCtrlLightCube"
   %{ end }%
 
   name IS name
@@ -45,78 +47,84 @@ Supervisor {
 		VisionMarker {
 			rotation 0 0 1 -1.5708
 			translation %{=-hWidth}% 0 0
-			%{ if fields.markerImg_front ~= "" then }%
+			%{ if fields.markerImg_front.value ~= "" then }%
 			  image IS markerImg_front
 			%{ else }%
 			  image IS markerImg
 			%{ end }%
 			connectorName "connectorFront"
 			connectorRotation 0 1 0 -1.57079
+			markerWidth IS markerWidth
 		}
 		
 		# Back Face
 		VisionMarker {
 			rotation 0 0 1 1.5708
 			translation %{=hWidth}% 0 0
-			%{ if fields.markerImg_back ~= "" then }%
+			%{ if fields.markerImg_back.value ~= "" then }%
 			  image IS markerImg_back
 			%{ else }%
 			  image IS markerImg
 			%{ end }%
 			connectorName "connectorBack"
 			connectorRotation 0 1 0 1.57079
+			markerWidth IS markerWidth
 		}
 		
 		# Bottom Face
-		VisionMarker {
-			rotation 1 0 0 1.5708
-			translation 0 0 %{=-hWidth}%
-			%{ if fields.markerImg_bottom ~= "" then }%
-			  image IS markerImg_bottom
-			%{ else }%
-			  image IS markerImg
-			%{ end }%
-			connectorName "connectorBottom"
-			connectorRotation 0 1 0 3.14159
-		}
+    VisionMarker {
+      rotation 1 0 0 -1.5708
+      translation 0 0 %{=-hWidth}%
+      %{ if fields.markerImg_bottom.value ~= "" then }%
+        image IS markerImg_bottom
+      %{ else }%
+        image IS markerImg
+      %{ end }%
+      connectorName "connectorBottom"
+      connectorRotation 0 1 0 3.14159
+      markerWidth IS markerWidth
+    }
 		
 		# Top Face
 		VisionMarker {
 			rotation 1 0 0 1.5708
 			translation 0 0 %{=hWidth}%
-			%{ if fields.markerImg_top ~= "" then }%
+			%{ if fields.markerImg_top.value ~= "" then }%
 			  image IS markerImg_top
 			%{ else }%
 			  image IS markerImg
 			%{ end }%
 			connectorName "connectorTop"
 			connectorRotation 0 1 0 0
+			markerWidth IS markerWidth
 		}
 						
 		# Left Face
 		VisionMarker {
 			rotation 0 0 1 3.1415
 			translation 0 %{=hWidth}% 0
-			%{ if fields.markerImg_left ~= "" then }%
+			%{ if fields.markerImg_left.value ~= "" then }%
 			  image IS markerImg_left
 			%{ else }%
 			  image IS markerImg
 			%{ end }%
 			connectorName "connectorLeft"
 			connectorRotation 1 0 0 -1.57079
+			markerWidth IS markerWidth
 		}
 		
 		# Right Face
 		VisionMarker {
 			rotation 0 0 1 0
 			translation 0 %{=-hWidth}% 0
-			%{ if fields.markerImg_right ~= "" then }%
+			%{ if fields.markerImg_right.value ~= "" then }%
 			  image IS markerImg_right
 			%{ else }%
 			  image IS markerImg
 			%{ end }%
 			connectorName "connectorRight"
 			connectorRotation 1 0 0 1.57079
+			markerWidth IS markerWidth
 		}
 
     DEF Block1x1Shape Shape {
@@ -126,31 +134,21 @@ Supervisor {
         }
       }
       geometry Box {
-        size %{=fields.width}% %{=fields.width}% %{=fields.width}%
+        size %{=fields.width.value}% %{=fields.width.value}% %{=fields.width.value}%
       }
     }
     
     %{ 
-    if fields.active then
+    if fields.active.value then
       # Index array of LED positions
       idx = {}
-      idx[1] = {-1, 1, 1}
-      idx[2] = {-1,-1, 1}
-      idx[3] = {-1, 1,-1}
-      idx[4] = {-1,-1,-1}
+      idx[1] = { 1, 0, 1}
+      idx[2] = { 0, 1, 1}
+      idx[3] = {-1, 0, 1}
+      idx[4] = { 0,-1, 1}
 
-      idx[5] = { 1, 1, 1}
-      idx[6] = { 1,-1, 1}
-      idx[7] = { 1, 1,-1}
-      idx[8] = { 1,-1,-1}
-
-      for i=1,8 do
+      for i=1,4 do
         led_name = string.format("led%d", i-1)
-
-        # Position of PointLight wrt LED center
-        px = idx[i][1] * (ledHWidth + 0.0001)
-        py = idx[i][2] * (ledHWidth + 0.0001)
-        pz = idx[i][3] * (ledHWidth + 0.0001)
 
         # Position of LED center wrt block origin
         lx = idx[i][1] * (hWidth - ledWidth/2 + 0.0001)
@@ -162,19 +160,18 @@ Supervisor {
       children [
         DEF LED_SHAPE Group {
           children [
-            # NOTE: PointLight slows down simulation significantly!
-            #PointLight {
-            # attenuation 0 0 5000
-            # location    %{=px}% %{=py}% %{=pz}%
-            # color       1 1 1
-            #}
             Shape {
       	      appearance Appearance {
                 material Material {
+                  diffuseColor 0.3 0.3 0.3
                 }
               }
               geometry Box {
-                size %{=ledWidth}% %{=ledWidth}% %{=ledWidth}%
+                %{if i%2==0 then }%
+                size %{=ledLength}% %{=ledWidth}% %{=ledWidth}%
+                %{ else }%                
+                size %{=ledWidth}% %{=ledLength}% %{=ledWidth}%
+                %{ end }%                
               }
             }
           ]

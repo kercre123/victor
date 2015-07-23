@@ -42,8 +42,8 @@ namespace Anki {
       void SetAngularVelocity(const f32 rad_per_sec);
 
       // Specifies max velocity and acceleration that SetDesiredAngle() uses.
-      void SetSpeedAndAccel(const f32 max_speed_rad_per_sec, const f32 accel_rad_per_sec2);
-      void GetSpeedAndAccel(f32 &max_speed_rad_per_sec, f32 &accel_rad_per_sec2);
+      void SetMaxSpeedAndAccel(const f32 max_speed_rad_per_sec, const f32 accel_rad_per_sec2);
+      void GetMaxSpeedAndAccel(f32 &max_speed_rad_per_sec, f32 &accel_rad_per_sec2);
       
       // Set the desired angle of head
       void SetDesiredAngle(f32 angle);
@@ -53,6 +53,8 @@ namespace Anki {
       // acc_start_frac:    The fraction of duration that it should be accelerating at the start
       // acc_end_frac:      The fraction of duration that it should be slowing down to a stop at the end
       void SetDesiredAngle(f32 angle, f32 acc_start_frac, f32 acc_end_frac, f32 duration_seconds);
+      
+      f32 GetAngularVelocity();
       
       bool IsInPosition();
       bool IsMoving();
@@ -80,7 +82,7 @@ namespace Anki {
       
       Result Update();
       
-      void SetGains(const f32 kp, const f32 ki, const f32 maxIntegralError);
+      void SetGains(const f32 kp, const f32 ki, const f32 kd, const f32 maxIntegralError);
       
       // Stop nodding or any movement immediately
       void Stop();

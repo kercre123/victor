@@ -2,6 +2,8 @@
 if(APPLE)
   # Defines
   add_definitions(-DSIMULATOR)
+  
+  include_directories(include)
 
   # TODO: Get this from an environment variable?
   set(WEBOTS_APP_DIR /Applications/Webots)
@@ -12,9 +14,9 @@ if(APPLE)
   if (IS_DIRECTORY ${WEBOTS_APP_DIR})
     add_subdirectory(plugins/physics/cozmo_physics)
     #add_subdirectory(controllers/overlay_display_supervisor)
-    add_subdirectory(controllers/cozmo_c_controller)
-    add_subdirectory(controllers/block_controller)
-    add_subdirectory(controllers/cozmo_viz_controller)
+    #add_subdirectory(controllers/cozmo_c_controller)
+    #add_subdirectory(controllers/block_controller)
+    #add_subdirectory(controllers/cozmo_viz_controller)
 
      if (ANKICORETECH_USE_MATLAB)
        add_subdirectory(controllers/visionUnitTestController)

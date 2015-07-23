@@ -1,0 +1,369 @@
+/**
+ * File: keyframe.h
+ *
+ * Authors: Andrew Stein
+ * Created: 2015-06-25
+ *
+ * Description: 
+ *   Defines the various KeyFrames used to store an animation on the
+ *   the robot, all of which inherit from a common interface, 
+ *   IKeyFrame.
+ *
+ * Copyright: Anki, Inc. 2015
+ *
+ **/
+
+
+#ifndef ANKI_COZMO_CANNED_KEYFRAME_H
+#define ANKI_COZMO_CANNED_KEYFRAME_H
+
+#include "anki/common/basestation/colorRGBA.h"
+
+#include "anki/cozmo/basestation/comms/robot/robotMessages.h"
+
+#include "anki/cozmo/shared/cozmoTypes.h"
+#include "anki/cozmo/shared/ledTypes.h"
+
+#include "anki/cozmo/basestation/soundManager.h"
+
+namespace Anki {
+  namespace Cozmo {
+    
+    // Forward declaration
+    class Robot;
+    class IRobotMessageHandler;
+    
+    // IKeyFrame defines an abstract interface for all KeyFrames below.
+    class IKeyFrame
+    {
+    public:
+      static const u32 SAMPLE_LENGTH_MS = 33;
+      
+      IKeyFrame();
+      //IKeyFrame(const Json::Value& root);
+      ~IKeyFrame();
+      
+      bool IsValid() const { return _isValid; }
+      
+      bool IsTimeToPlay(TimeStamp_t startTime_ms, TimeStamp_t currTime_ms) const;
+      
+      // Returns the time to trigger whatever change is implied by the KeyFrame
+      TimeStamp_t GetTriggerTime() const { return _triggerTime_ms; }
+      
+      // Set all members from Json. Calls virtual SetMembersFromJson() method so
+      // subclasses can specify how to populate their members.
+      Result DefineFromJson(const Json::Value &json);
+      
+      // Fill some kind of message for streaming and return it. Return nullptr
+      // if not available.
+      virtual RobotMessage* GetStreamMessage() = 0;
+      
+      // Whether or not this KeyFrame is "done" after calling GetStreamMessage().
+      // Override for special keyframes that need to keep parceling out data into
+      // multiple returned messages.
+      virtual bool IsDone() { return true; }
+      
+    protected:
+      
+      // Populate members from Json
+      virtual Result SetMembersFromJson(const Json::Value &jsonRoot) = 0;
+      
+      //void SetIsValid(bool isValid) { _isValid = isValid; }
+      
+    private:
+      
+      TimeStamp_t   _triggerTime_ms;
+      bool          _isValid;
+      
+    }; // class IKeyFrame
+    
+    
+    // A HeadAngleKeyFrame specifies the time to _start_ moving the head towards
+    // a given angle (with optional variation), and how long to take to get there.
+    class HeadAngleKeyFrame : public IKeyFrame
+    {
+    public:
+      HeadAngleKeyFrame() { }
+      
+      //HeadAngleKeyFrame(s8 angle_deg, u8 angle_variability_deg, TimeStamp_t duration);
+      
+      virtual RobotMessage* GetStreamMessage() override;
+      
+      static const std::string& GetClassName() {
+        static const std::string ClassName("HeadAngleKeyFrame");
+        return ClassName;
+      }
+      
+    protected:
+      virtual Result SetMembersFromJson(const Json::Value &jsonRoot) override;
+      
+    private:
+      TimeStamp_t _durationTime_ms;
+      s8          _angle_deg;
+      u8          _angleVariability_deg;
+      
+      MessageAnimKeyFrame_HeadAngle _streamHeadMsg;
+      
+    }; // class HeadAngleKeyFrame
+    
+    
+    // A LiftHeightKeyFrame specifies the time to _start_ moving the lift towards
+    // a given height (with optional variation), and how long to take to get there.
+    class LiftHeightKeyFrame : public IKeyFrame
+    {
+    public:
+      LiftHeightKeyFrame() { }
+      
+      virtual RobotMessage* GetStreamMessage() override;
+      
+      static const std::string& GetClassName() {
+        static const std::string ClassName("LiftHeightKeyFrame");
+        return ClassName;
+      }
+      
+    protected:
+      virtual Result SetMembersFromJson(const Json::Value &jsonRoot) override;
+      
+    private:
+      TimeStamp_t _durationTime_ms;
+      u8          _height_mm;
+      u8          _heightVariability_mm;
+      
+      MessageAnimKeyFrame_LiftHeight _streamLiftMsg;
+      
+    }; // class LiftHeightKeyFrame
+    
+    
+    // A DeviceAudioKeyFrame references a single "sound" to be played on the
+    // device directly. It is not streamed at all, and thus its GetStreamMessage()
+    // method always returns nullptr.
+    class DeviceAudioKeyFrame : public IKeyFrame
+    {
+    public:
+      DeviceAudioKeyFrame() { }
+      
+      // Play sound on device
+      void PlayOnDevice();
+      
+      virtual RobotMessage* GetStreamMessage() override;
+      
+      static const std::string& GetClassName() {
+        static const std::string ClassName("DeviceAudioKeyFrame");
+        return ClassName;
+      }
+      
+    protected:
+      virtual Result SetMembersFromJson(const Json::Value &jsonRoot) override;
+      
+    private:
+      std::string _audioName;
+      
+    }; // class DeviceAudioKeyFrame
+    
+    
+    // A RobotAudioKeyFrame references a single "sound" which is made of lots
+    // of "samples" to be individually streamed to the robot.
+    class RobotAudioKeyFrame : public IKeyFrame
+    {
+    public:
+      RobotAudioKeyFrame() : _selectedAudioIndex(0), _sampleIndex(0) { }
+      
+      virtual RobotMessage* GetStreamMessage() override;
+      
+      static const std::string& GetClassName() {
+        static const std::string ClassName("RobotAudioKeyFrame");
+        return ClassName;
+      }
+      
+      const std::string& GetSoundName() const;
+      
+    protected:
+      virtual Result SetMembersFromJson(const Json::Value &jsonRoot) override;
+      
+    private:
+      
+      Result AddAudioRef(const std::string& name);
+      
+      struct AudioRef {
+        std::string name;
+        s32 numSamples;
+      };
+      std::vector<AudioRef> _audioReferences;
+      s32 _selectedAudioIndex;
+      
+      s32 _sampleIndex;
+      
+      MessageAnimKeyFrame_AudioSample  _audioSampleMsg;
+      
+    }; // class RobotAudioKeyFrame
+    
+    
+    // A FaceImageKeyFrame stores a reference to a particular image / sprite to
+    // be displayed on the robot's LED face display. When its GetStreamMessage()
+    // is requested, it looks up the actual RLE-compressed image matching the
+    // reference in the KeyFrame and fills the streamed message with it.
+    class FaceImageKeyFrame : public IKeyFrame
+    {
+    public:
+      FaceImageKeyFrame() { }
+      
+      virtual RobotMessage* GetStreamMessage() override;
+      
+      static const std::string& GetClassName() {
+        static const std::string ClassName("FaceImageKeyFrame");
+        return ClassName;
+      }
+      
+    protected:
+      virtual Result SetMembersFromJson(const Json::Value &jsonRoot) override;
+      
+    private:
+      u32 _imageID;
+      
+      MessageAnimKeyFrame_FaceImage _streamMsg;
+      
+    }; // class FaceImageKeyFrame
+    
+    
+    // A FaceAnimationKeyFrame is for streaming a set of images to display on the
+    // robot's face. It is a cross between an AudioKeyFrame and an ImageKeyFrame.
+    // Like an ImageKeyFrame, it populates single messages with RLE-compressed
+    // data for display on the face display. Like an AudioKeyFrame, it will
+    // return a non-NULL message each time GetStreamMessage() is called until there
+    // are no more frames left in the animation.
+    class FaceAnimationKeyFrame : public IKeyFrame
+    {
+    public:
+      FaceAnimationKeyFrame() { }
+      
+      virtual RobotMessage* GetStreamMessage() override;
+      
+      static const std::string& GetClassName() {
+        static const std::string ClassName("FaceAnimationKeyFrame");
+        return ClassName;
+      }
+
+      virtual bool IsDone() override { return _curFrame >= _numFrames; }
+      
+    protected:
+      virtual Result SetMembersFromJson(const Json::Value &jsonRoot) override;
+      
+    private:
+      std::string  _animName;
+      
+      s32 _numFrames;
+      s32 _curFrame;
+      
+      MessageAnimKeyFrame_FaceImage _faceImageMsg;
+      
+    }; // class FaceAnimationKeyFrame
+    
+    
+    // A FacePositionKeyFrame sets the center of the currently displayed face
+    // image/sprite, in LED screen coordinates.
+    class FacePositionKeyFrame : public IKeyFrame
+    {
+    public:
+      FacePositionKeyFrame() { }
+      
+      virtual RobotMessage* GetStreamMessage() override;
+      
+      static const std::string& GetClassName() {
+        static const std::string ClassName("FacePositionKeyFrame");
+        return ClassName;
+      }
+      
+    protected:
+      virtual Result SetMembersFromJson(const Json::Value &jsonRoot) override;
+      
+    private:
+      
+      MessageAnimKeyFrame_FacePosition _streamMsg;
+      
+    }; // class FacePositionKeyFrame
+    
+    // BlinkKeyFrame either disables automatic blinking for a period fo time or
+    // commands a single blink to happen "now".
+    class BlinkKeyFrame : public IKeyFrame
+    {
+    public:
+      BlinkKeyFrame();
+      
+      virtual RobotMessage* GetStreamMessage() override;
+      
+      static const std::string& GetClassName() {
+        static const std::string ClassName("BlinkKeyFrame");
+        return ClassName;
+      }
+      
+      virtual bool IsDone() override;
+      
+    protected:
+      virtual Result SetMembersFromJson(const Json::Value &jsonRoot) override;
+      
+    private:
+      
+      s32 _duration_ms;
+      s32 _curTime_ms;
+      
+      MessageAnimKeyFrame_Blink _streamMsg;
+
+    }; // class BlinkKeyFrame
+    
+    
+    // A BackpackLightsKeyFrame sets the colors of the robot's five backpack lights
+    class BackpackLightsKeyFrame : public IKeyFrame
+    {
+    public:
+      BackpackLightsKeyFrame() { }
+      
+      virtual RobotMessage* GetStreamMessage() override;
+      
+      static const std::string& GetClassName() {
+        static const std::string ClassName("BackpackLightsKeyFrame");
+        return ClassName;
+      }
+      
+    protected:
+      virtual Result SetMembersFromJson(const Json::Value &jsonRoot) override;
+      
+    private:
+      
+      MessageAnimKeyFrame_BackpackLights _streamMsg;
+      
+    }; // class BackpackLightsKeyFrame
+    
+    
+    // A BodyMotionKeyFrame controls the wheels to drive straight, turn in place, or
+    // drive arcs. They specify the speed and duration of the motion.
+    class BodyMotionKeyFrame : public IKeyFrame
+    {
+    public:
+      BodyMotionKeyFrame();
+      
+      virtual RobotMessage* GetStreamMessage() override;
+      
+      static const std::string& GetClassName() {
+        static const std::string ClassName("BodyMotionKeyFrame");
+        return ClassName;
+      }
+      
+      virtual bool IsDone() override;
+      
+    protected:
+      virtual Result SetMembersFromJson(const Json::Value &jsonRoot) override;
+      
+    private:
+      
+      s32 _durationTime_ms;
+      s32 _currentTime_ms;
+      
+      MessageAnimKeyFrame_BodyMotion _streamMsg;
+      MessageAnimKeyFrame_BodyMotion _stopMsg;
+      
+    }; // class BodyMotionKeyFrame
+    
+  } // namespace Cozmo
+} // namespace Anki
+
+#endif // ANKI_COZMO_CANNED_KEYFRAME_H

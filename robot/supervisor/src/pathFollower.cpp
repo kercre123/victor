@@ -1,6 +1,5 @@
 #include "anki/cozmo/robot/debug.h"
 #include "dockingController.h"
-#include "anki/planning/shared/path.h"
 #include "pathFollower.h"
 #include "localization.h"
 #include "steeringController.h"
@@ -20,7 +19,7 @@
 #ifndef SIMULATOR
 #define ENABLE_PATH_VIZ 0  // This must always be 0!
 #else
-#include "sim_viz.h"
+#include "anki/cozmo/simulator/sim_viz.h"
 using namespace Anki::Cozmo::Sim;
 #define ENABLE_PATH_VIZ 0  // To enable visualization of paths from robot
                            // (Default is 0. Normally this is done from basestation.)
@@ -89,6 +88,7 @@ namespace Anki
       {
         path_.Clear();
         currPathSegment_ = -1;
+        manualPathSpeed_ = false;
         pointTurnStarted_ = false;
         realPathSegment_ = -1;
 #if(ENABLE_PATH_VIZ)
@@ -236,6 +236,7 @@ namespace Anki
           realPathSegment_ = currPathSegment_;
           
 
+          /*
           // If the first part of the path is some tiny arc,
           // skip it because it tends to report gross errors that
           // make the steeringController jerky.
@@ -243,14 +244,18 @@ namespace Anki
           // TODO: Do this check for EVERY path segment?
           if ((currPathSegment_ == 0) &&
               (path_[0].GetType() == Planning::PST_ARC) &&
-              (ABS(path_[0].GetDef().arc.sweepRad) < 0.05) &&
+              (ABS(path_[0].GetLength() < 10))
               path_[0].GetDef().arc.radius <= 50) {
-            PRINT("Skipping short arc: sweep %f deg, radius %f mm\n",
+
+            PRINT("Skipping short arc: sweep %f deg, radius %f mm, length %fmm\n",
                   RAD_TO_DEG_F32( path_[0].GetDef().arc.sweepRad ),
-                  path_[0].GetDef().arc.radius);
+                  path_[0].GetDef().arc.radius,
+                  path_[0].GetLength());
+
             currPathSegment_++;
             realPathSegment_ = currPathSegment_;
           }
+           */
 
           
 
@@ -493,7 +498,7 @@ namespace Anki
         }
         
 #if(DEBUG_PATH_FOLLOWER)
-        PRINT("PATH ERROR: %f mm, %f deg, segRes %d, segType %d\n", distToPath_mm_, RAD_TO_DEG(radToPath_), segRes, path_[currPathSegment_].GetType());
+        PRINT("PATH ERROR: %f mm, %f deg, segRes %d, segType %d, currSeg %d\n", distToPath_mm_, RAD_TO_DEG(radToPath_), segRes, path_[currPathSegment_].GetType(), currPathSegment_);
 #endif
         
         // Go to next path segment if no longer in range of the current one
@@ -560,7 +565,11 @@ namespace Anki
       u16 GetLastPathID() {
         return lastPathID_;
       }
-
+      
+      const Planning::Path& GetPath()
+      {
+        return path_;
+      }
       
       
       bool DriveStraight(f32 dist_mm, f32 acc_start_frac, f32 acc_end_frac, f32 duration_sec)
@@ -603,7 +612,7 @@ namespace Anki
         f32 startAccelDist = vpg.GetStartAccelDist();
         f32 endAccelDist = vpg.GetEndAccelDist();
         if (fabsf(endAccelDist) > LOOK_AHEAD_DIST_MM) {
-          endAccelDist -= LOOK_AHEAD_DIST_MM * SIGN(endAccelDist);
+          endAccelDist += LOOK_AHEAD_DIST_MM * signbit(endAccelDist);
         }
         PRINT("DRIVE STRAIGHT: total dist %f, startDist %f, endDist %f\n", dist_mm, startAccelDist, endAccelDist);
         
@@ -687,7 +696,7 @@ namespace Anki
         f32 endAngAccel = fabsf(vpg.GetEndAccel());
         
         
-        u8 drivingFwd = SIGN(sweep_rad) != SIGN(radius_mm) ? 1 : -1;
+        u8 drivingFwd = (signbit(sweep_rad) != signbit(radius_mm)) ? 1 : -1;
         f32 targetSpeed = drivingFwd * targetAngSpeed * absRadius;
         f32 startAccel = startAngAccel * absRadius;
         f32 endAccel = endAngAccel * absRadius;

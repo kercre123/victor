@@ -1,7 +1,3 @@
-[submodule "tools/build-tools"]
-	path = tools/build-tools
-	url = git@github.com:anki/build-tools.git
-[submodule "tools/message-buffers"]
-	path = tools/message-buffers
-	url = git@github.com:anki/message-buffers.git
-	branch = master
+[submodule "tools/anki-util"]
+	path = tools/anki-util
+	url = git@github.com:anki/anki-util.git

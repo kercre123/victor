@@ -20,7 +20,7 @@
 #define _ANKICORETECH_MATH_POSEBASE_IMPL_H_
 
 #include "anki/common/basestation/utils/helpers/boundedWhile.h"
-#include "anki/common/basestation/utils/logging/logging.h"
+#include "util/logging/logging.h"
 #include "anki/common/basestation/math/poseBase.h"
 
 namespace Anki {

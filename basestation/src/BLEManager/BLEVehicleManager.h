@@ -21,8 +21,8 @@
 #import <Foundation/Foundation.h>
 #import <IOBluetooth/IOBluetooth.h> 
 
-#import "BLEVehicleConnection.h"
-#import "BLEVehicleMessage.h"
+#import "BLEManager/Vehicle/BLEVehicleConnection.h"
+#import "BLEManager/Vehicle/BLEVehicleMessage.h"
 
 
 #ifdef __cplusplus

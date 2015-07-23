@@ -48,7 +48,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #define LOG_ERROR(name, format, ...) AnkiError(name, format, ##__VA_ARGS__)
 #define LOG_WARNING(name, format, ...) AnkiWarn(name, format, ##__VA_ARGS__)
 #elif defined(CORETECH_BASESTATION)
-#include "anki/common/basestation/utils/logging/logging.h"
+#include "util/logging/logging.h"
 #define LOG_ERROR(name, format, ...) PRINT_NAMED_ERROR(name, format, ##__VA_ARGS__)
 #define LOG_WARNING(name, format, ...) PRINT_NAMED_WARNING(name, format, ##__VA_ARGS__)
 //#define LOG_INFO(name, format, ...) PRINT_NAMED_INFO(name, format, ...)

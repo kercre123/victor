@@ -58,7 +58,6 @@ namespace Anki {
   {
     return *this;
   }
-#endif
   
   template<typename T>
   T Rectangle<T>::GetX()      const
@@ -83,6 +82,14 @@ namespace Anki {
   template<typename T>
   T Rectangle<T>::GetYmax()   const
   { return y + height; }
+  
+  template<typename T>
+  T Rectangle<T>::GetXmid()   const
+  { return x + width/2; }
+  
+  template<typename T>
+  T Rectangle<T>::GetYmid()   const
+  { return y + height/2; }
 
   template<typename T>
   void Rectangle<T>::GetQuad(Quadrilateral<2,T>& quad) const
@@ -99,6 +106,7 @@ namespace Anki {
     quad[Quad::BottomRight].x() = x + width;
     quad[Quad::BottomRight].y() = y + height;
   }
+#endif
   
   
   template<typename T>
@@ -112,27 +120,35 @@ namespace Anki {
       
       T xmax(pointIter->x()), ymax(pointIter->y());
       
+#if ANKICORETECH_USE_OPENCV
       this->x = pointIter->x();
       this->y = pointIter->y();
+#endif
       
       ++pointIter;
       while(pointIter != points.end()) {
+#if ANKICORETECH_USE_OPENCV
         this->x = std::min(this->x, pointIter->x());
         this->y = std::min(this->y, pointIter->y());
+#endif
         xmax = std::max(xmax, pointIter->x());
         ymax = std::max(ymax, pointIter->y());
         
         ++pointIter;
       }
       
+#if ANKICORETECH_USE_OPENCV
       this->width  = xmax - this->x;
       this->height = ymax - this->y;
+#endif
       
     } else {
+#if ANKICORETECH_USE_OPENCV
       this->x = 0;
       this->y = 0;
       this->width = 0;
       this->height = 0;
+#endif
     }
   } // Rectangle<T>::initFromPointContainer
   

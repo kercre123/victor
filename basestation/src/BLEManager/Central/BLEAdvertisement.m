@@ -6,8 +6,8 @@
 //  Copyright (c) 2013 Mark Pauley. All rights reserved.
 //
 
-#import "BLEAdvertisement.h"
-#import "BLELog.h"
+#import "BLEManager/Central/BLEAdvertisement.h"
+#import "BLEManager/Logging/BLELog.h"
 
 #import <IOBluetooth/IOBluetooth.h>
 

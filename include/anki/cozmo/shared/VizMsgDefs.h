@@ -233,12 +233,13 @@ ADD_MESSAGE_MEMBER(f32, lwheel_speed_mmps)
 ADD_MESSAGE_MEMBER(f32, rwheel_speed_mmps)
 ADD_MESSAGE_MEMBER(f32, headAngle)
 ADD_MESSAGE_MEMBER(f32, liftHeight)
+ADD_MESSAGE_MEMBER(u32, status)  // See RobotStatusFlag
+ADD_MESSAGE_MEMBER(s32, numAnimBytesFree)
 ADD_MESSAGE_MEMBER(u16, lastPathID)
 ADD_MESSAGE_MEMBER(u8, proxLeft)
 ADD_MESSAGE_MEMBER(u8, proxForward)
 ADD_MESSAGE_MEMBER(u8, proxRight)
 ADD_MESSAGE_MEMBER(u8, battVolt10x)
-ADD_MESSAGE_MEMBER(u8, status)  // See RobotStatusFlag
 ADD_MESSAGE_MEMBER(u8, videoFramerateHZ)
 END_MESSAGE_DEFINITION(VizRobotState)
 

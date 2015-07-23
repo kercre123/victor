@@ -17,6 +17,7 @@
 #include "anki/common/basestation/utils/helpers/boundedWhile.h"
 
 #include <cmath>
+#include <cfloat>
 
 namespace Anki {
 
@@ -92,7 +93,7 @@ bool FastPolygon::Contains(float x, float y) const
   size_t numPts = _poly.size();
   assert(_perpendicularEdgeVectors.size() == numPts);
 
-  unsigned int numChecked = 0;
+  //unsigned int numChecked = 0;
 
   for(size_t i = 0; i < numPts; ++i) {
     // if the dot product is positive, the test point is inside of the

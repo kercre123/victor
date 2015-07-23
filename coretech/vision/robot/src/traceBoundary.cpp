@@ -71,7 +71,7 @@ namespace Anki
       //coordinate_right = max(component(:,3), [], 1);
       Rectangle<s16> boundingBox(s16_MAX, s16_MIN, s16_MAX, s16_MIN);
       endComponentIndex = numComponents - 1;
-
+      
       if(useU16) {
         for(s32 i=startComponentIndex; i<numComponents; i++) {
           if((*componentsU16)[i].id != componentIdU16) {
@@ -87,7 +87,7 @@ namespace Anki
           boundingBox.right = MAX(boundingBox.right, xEnd+1); // +1, because the coorindate we want is the crack after the right pixel
           boundingBox.top = MIN(boundingBox.top, y);
           boundingBox.bottom = MAX(boundingBox.bottom, y+1); // +1, because the coorindate we want is the crack after the bottom pixel
-        }
+        }        
       } else { // if(useU16)
         for(s32 i=startComponentIndex; i<numComponents; i++) {
           if((*componentsS32)[i].id != componentIdS32) {
@@ -219,6 +219,7 @@ namespace Anki
       }
 
       if(isNonContiguous) {
+        //printf("non contiguous\n");
         return RESULT_OK;
       }
 

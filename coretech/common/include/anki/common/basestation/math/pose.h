@@ -31,7 +31,7 @@
 #ifndef _ANKICORETECH_MATH_POSE_H_
 #define _ANKICORETECH_MATH_POSE_H_
 
-#include "anki/common/basestation/utils/logging/logging.h"
+#include "util/logging/logging.h"
 
 #include "anki/common/basestation/math/matrix.h"
 #include "anki/common/basestation/math/point.h"
@@ -404,37 +404,37 @@ namespace Anki {
   template<>
   inline Radians Pose3d::GetRotationAngle<'X'>() const
   {
-    return GetRotationMatrix().GetAngleAroundXaxis();
+    return GetRotation().GetAngleAroundXaxis();
   }
   
   template<>
   inline Radians Pose3d::GetRotationAngle<'Y'>() const
   {
-    return GetRotationMatrix().GetAngleAroundYaxis();
+    return GetRotation().GetAngleAroundYaxis();
   }
   
   template<>
   inline Radians Pose3d::GetRotationAngle<'Z'>() const
   {
-    return GetRotationMatrix().GetAngleAroundZaxis();
+    return GetRotation().GetAngleAroundZaxis();
   }
   
   template<>
   inline Radians Pose3d::GetRotationAngle<'x'>() const
   {
-    return GetRotationMatrix().GetAngleAroundXaxis();
+    return GetRotation().GetAngleAroundXaxis();
   }
   
   template<>
   inline Radians Pose3d::GetRotationAngle<'y'>() const
   {
-    return GetRotationMatrix().GetAngleAroundYaxis();
+    return GetRotation().GetAngleAroundYaxis();
   }
   
   template<>
   inline Radians Pose3d::GetRotationAngle<'z'>() const
   {
-    return GetRotationMatrix().GetAngleAroundZaxis();
+    return GetRotation().GetAngleAroundZaxis();
   }
   
   inline void Pose3d::SetRotation(const Rotation3d& R)

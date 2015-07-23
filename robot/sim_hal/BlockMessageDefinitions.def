@@ -30,17 +30,39 @@ END_MESSAGE_DEFINITION(FlashID)
 
 // SetBlockLights
 START_MESSAGE_DEFINITION(SetBlockLights, 1)
-ADD_MESSAGE_MEMBER_ARRAY(u32, color,        8)
-ADD_MESSAGE_MEMBER_ARRAY(u32, onPeriod_ms,  8)
-ADD_MESSAGE_MEMBER_ARRAY(u32, offPeriod_ms, 8)
-ADD_MESSAGE_MEMBER_ARRAY(u32, transitionOnPeriod_ms,  8)
-ADD_MESSAGE_MEMBER_ARRAY(u32, transitionOffPeriod_ms, 8)
+ADD_MESSAGE_MEMBER_ARRAY(u32, onColor,      4)
+ADD_MESSAGE_MEMBER_ARRAY(u32, offColor,     4)
+ADD_MESSAGE_MEMBER_ARRAY(u32, onPeriod_ms,  4)
+ADD_MESSAGE_MEMBER_ARRAY(u32, offPeriod_ms, 4)
+ADD_MESSAGE_MEMBER_ARRAY(u32, transitionOnPeriod_ms,  4)
+ADD_MESSAGE_MEMBER_ARRAY(u32, transitionOffPeriod_ms, 4)
+ADD_MESSAGE_MEMBER(u32, blockID)
 END_MESSAGE_DEFINITION(SetBlockLights)
 
 // BlockMoved
 START_MESSAGE_DEFINITION(BlockMoved, 1)
-ADD_MESSAGE_MEMBER(s32, blockID)
+ADD_MESSAGE_MEMBER(u32, blockID)
 ADD_MESSAGE_MEMBER(f32, xAccel)
 ADD_MESSAGE_MEMBER(f32, yAccel)
 ADD_MESSAGE_MEMBER(f32, zAccel)
+ADD_MESSAGE_MEMBER(u8,  upAxis) // See UpAxis type in ActiveBlockTypes.h
 END_MESSAGE_DEFINITION(BlockMoved)
+
+// BlockStoppedMoving
+START_MESSAGE_DEFINITION(BlockStoppedMoving, 1)
+ADD_MESSAGE_MEMBER(u32, blockID)
+ADD_MESSAGE_MEMBER(u8,  upAxis)
+ADD_MESSAGE_MEMBER(u8,  rolled) // Whether up orientation changed between start and end of this movement
+END_MESSAGE_DEFINITION(BlockStoppedMoving)
+
+// SetBlockBeingCarried
+START_MESSAGE_DEFINITION(SetBlockBeingCarried, 1)
+ADD_MESSAGE_MEMBER(u32, blockID)
+ADD_MESSAGE_MEMBER(u8,  isBeingCarried)
+END_MESSAGE_DEFINITION(SetBlockBeingCarried)
+
+// BlockTapped
+START_MESSAGE_DEFINITION(BlockTapped, 1)
+ADD_MESSAGE_MEMBER(u32, blockID)
+ADD_MESSAGE_MEMBER(u8,  numTaps)
+END_MESSAGE_DEFINITION(BlockTapped)

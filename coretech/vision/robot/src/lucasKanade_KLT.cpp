@@ -389,7 +389,7 @@ namespace Anki
 
         status.Set(true);
 
-        const f32 epsilonSquared = termination_epsilon * termination_epsilon;
+        //const f32 epsilonSquared = termination_epsilon * termination_epsilon;
 
         if(!usePreviousFlowAsInit) {
           for(s32 i=0; i<numPrevPoints; i++) {
@@ -401,7 +401,7 @@ namespace Anki
           PUSH_MEMORY_STACK(scratch);
 
           const Array<u8> &prevImage = prevPyramid[curPyramidLevel];
-          const Array<u8> &nextImage = nextPyramid[curPyramidLevel];
+          //const Array<u8> &nextImage = nextPyramid[curPyramidLevel];
 
           const s32 imageHeight = prevImage.get_size(0);
           const s32 imageWidth = prevImage.get_size(1);

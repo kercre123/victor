@@ -7,7 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
-#import "BLEVehicleMessage.h"
+#import "BLEManager/Vehicle/BLEVehicleMessage.h"
 
 #ifdef __cplusplus
 extern "C" {

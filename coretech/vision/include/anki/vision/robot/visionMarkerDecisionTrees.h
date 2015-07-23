@@ -6,6 +6,8 @@
 // decision, and N smaller one-vs-all tree for "independently" verifying the
 // decision reached by the multi-class tree.
 
+#if !USE_NEAREST_NEIGHBOR_RECOGNITION
+
 #ifndef _ANKICORETECHEMBEDDED_VISION_FIDUCIAL_MARKER_DECISION_TREE_H_
 #define _ANKICORETECHEMBEDDED_VISION_FIDUCIAL_MARKER_DECISION_TREE_H_
 
@@ -38800,3 +38802,5 @@ const f32 ObservedOrientationLUT[NUM_MARKER_LABELS_ORIENTED] = {
 } // namespace Anki
 
 #endif // _ANKICORETECHEMBEDDED_VISION_FIDUCIAL_MARKER_DECISION_TREE_H_
+
+#endif // #if !USE_NEAREST_NEIGHBOR_RECOGNITION

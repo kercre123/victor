@@ -44,8 +44,6 @@
 #include "anki/common/robot/errorHandling.h"
 #include "anki/common/robot/matrix.h"
 
-#include "anki/vision/robot/imageProcessing.h"
-
 namespace Anki
 {
   namespace Embedded

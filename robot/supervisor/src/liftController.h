@@ -34,12 +34,12 @@ namespace Anki {
       bool IsCalibrated();
 
       // Specifies max velocity and acceleration that SetDesiredHeight() uses.
-      void SetSpeedAndAccel(const f32 max_speed_rad_per_sec, const f32 accel_rad_per_sec2);
-      void GetSpeedAndAccel(f32 &max_speed_rad_per_sec, f32 &accel_rad_per_sec2);
+      void SetMaxSpeedAndAccel(const f32 max_speed_rad_per_sec, const f32 accel_rad_per_sec2);
+      void GetMaxSpeedAndAccel(f32 &max_speed_rad_per_sec, f32 &accel_rad_per_sec2);
       
       // Specify max velocity/acceleration in terms of linear movement instead
       // of angular adjustment
-      void SetLinearSpeedAndAccel(const f32 max_speed_mm_per_sec, const f32 accel_mm_per_sec2);
+      void SetMaxLinearSpeedAndAccel(const f32 max_speed_mm_per_sec, const f32 accel_mm_per_sec2);
       
       f32 GetAngularVelocity();
       
@@ -70,17 +70,13 @@ namespace Anki {
       void StopNodding();
       bool IsNodding();
 
+      // Tap carried block on ground.
+      // Successive calls to TapBlockOnGround() will accumulate the number of times to tap.
+      void TapBlockOnGround(u8 numTaps);
+      
       // Whether or not the lift is moving.
       // False if speed is 0 for more than LIFT_STOP_TIME.
       bool IsMoving();
-      
-      // Whether or not the lift motor is limiting at the low or high
-      // end of its range. If limitAngle is non-null, it will be made to
-      // point to the angle at which it is limiting.
-      bool IsLimiting(f32* limitAngle = 0);
-      
-      // True if the lift has not had power applied to it for more than LIFT_RELAX_TIME
-      bool IsRelaxed();
       
       // Returns the last height that was commanded via SetDesiredHeight()
       f32 GetLastCommandedHeightMM();
@@ -93,7 +89,7 @@ namespace Anki {
       
       Result Update();
 
-      void SetGains(const f32 kp, const f32 ki, const f32 maxIntegralError);
+      void SetGains(const f32 kp, const f32 ki, const f32 kd, const f32 maxIntegralError);
       
       // Stops any nodding or movement at all.
       void Stop();

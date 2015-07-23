@@ -9,7 +9,6 @@
  * Copyright: Anki, Inc. 2014
  **/
 
-#include "visionSystem.h"
 
 #if USE_MATLAB_TRACKER || USE_MATLAB_DETECTOR
 

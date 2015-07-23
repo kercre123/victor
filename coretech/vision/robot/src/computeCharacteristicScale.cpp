@@ -34,6 +34,19 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include <arm_neon.h>
 #endif
 
+#define STORE_BINARY_IMAGE 0
+#if STORE_BINARY_IMAGE
+#warning Storing binary image
+bool g_saveBinaryImage = true;
+bool g_saveBinaryInitialized = false;
+Anki::Embedded::Array<u8> g_binaryImage;
+const static s32 binaryImageBufferLength = 1920*1080 + 1024;
+static char binaryImageBuffer[binaryImageBufferLength];
+#else
+bool g_saveBinaryImage = false;
+Anki::Embedded::Array<u8> g_binaryImage;
+#endif
+
 static const s32 MAX_FILTER_HALF_WIDTH = 64;
 
 // To normalize a sum of 1 / ((2*n+1)^2), we approximate a division as a mulitiply and shift.
@@ -148,7 +161,7 @@ namespace Anki
       AnkiAssert(filteredRows.get_size() == 5);
       AnkiAssert(scaleImage_thresholdMultiplier == 65536);
 
-      const s32 thresholdMultiplier_numFractionalBits = 16;
+      //const s32 thresholdMultiplier_numFractionalBits = 16;
 
       const u8 * restrict pImage = image[imageY];
 
@@ -364,6 +377,15 @@ namespace Anki
 
       EndBenchmark("ecvcs_init");
 
+#if STORE_BINARY_IMAGE
+      // TODO: change resolution if the input resolution changes
+      if(!g_saveBinaryInitialized) {
+        MemoryStack tmpMemory(&binaryImageBuffer[0], binaryImageBufferLength);
+        g_binaryImage = Anki::Embedded::Array<u8>(image.get_size(0), image.get_size(1), tmpMemory);
+        g_saveBinaryInitialized = true;
+      }
+#endif
+
       BeginBenchmark("ecvcs_mainLoop");
       while(imageY < imageHeight) {
         BeginBenchmark("ecvcs_filterRows");
@@ -381,6 +403,10 @@ namespace Anki
             ecvcs_computeBinaryImage_numFilters5(image, filteredRows, scaleImage_thresholdMultiplier, imageY, pBinaryImageRow);
           }
         }
+        
+#if STORE_BINARY_IMAGE
+        memcpy(g_binaryImage.Pointer(imageY, 0), pBinaryImageRow, imageWidth);
+#endif
 
         EndBenchmark("ecvcs_computeBinaryImage");
 

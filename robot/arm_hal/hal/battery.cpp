@@ -1,5 +1,5 @@
 #include "anki/cozmo/robot/hal.h"
-#include "spiData.h"
+#include "anki/cozmo/robot/spineData.h"
 #include <limits.h>
 
 namespace Anki

@@ -11,11 +11,15 @@
 
 #include "anki/common/basestation/math/quad_impl.h"
 #include "anki/common/basestation/math/poseBase_impl.h"
-#include "anki/common/basestation/utils/logging/logging.h"
+#include "util/logging/logging.h"
+
+#include "anki/vision/MarkerCodeDefinitions.h"
 
 namespace Anki {
   namespace Vision{
   
+    const Marker::Code Marker::ANY_CODE = s16_MAX;
+    const Marker::Code Marker::FACE_CODE = s16_MIN;
     
     Marker::Marker(const Code& withCode)
     : _code(withCode)
@@ -23,6 +27,19 @@ namespace Anki {
       
     }
     
+    const char* Marker::GetCodeName() const
+    {
+      if(_code >= 0 && _code < NUM_MARKER_TYPES) {
+        return MarkerTypeStrings[_code];
+      }
+      else if(_code == FACE_CODE) {
+        return "HUMAN_FACE_MARKER";
+      }
+      else {
+        PRINT_NAMED_ERROR("Marker.GetCodeName", "Could not look up name for code=%d.\n", _code);
+        return MarkerTypeStrings[MARKER_UNKNOWN];
+      }
+    }
     
     ObservedMarker::ObservedMarker(const TimeStamp_t t, const Code& withCode, const Quad2f& corners, const Camera& seenBy)
     : Marker(withCode)
@@ -131,27 +148,32 @@ namespace Anki {
     {
       return ComputeNormalHelper(Get3dCorners(atPose));
     } // ComputeNormal(atPose)
-    
-    
+                                    
+                                
     bool KnownMarker::IsVisibleFrom(const Camera& camera,
                                     const f32     maxAngleRad,
                                     const f32     minImageSize,
                                     const bool    requireSomethingBehind,
                                     const u16     xBorderPad,
-                                    const u16     yBorderPad) const
+                                    const u16     yBorderPad,
+                                    NotVisibleReason& reason) const
     {
       using namespace Quad;
+      
+      reason = NotVisibleReason::IS_VISIBLE;
       
       // Get the marker's pose relative to the camera
       Pose3d markerPoseWrtCamera;
       if(_pose.GetWithRespectTo(camera.GetPose(), markerPoseWrtCamera) == false) {
         PRINT_NAMED_WARNING("KnownMarker.IsVisibleFrom.NotInCameraPoseTree",
                             "Marker must be in the same pose tree as the camera to check its visibility.\n");
+        reason = NotVisibleReason::POSE_PROBLEM;
         return false;
       }
       
       // Make sure the marker is at least in front of the camera!
       if(markerPoseWrtCamera.GetTranslation().z() <= 0.f) {
+        reason = NotVisibleReason::BEHIND_CAMERA;
         return false;
       }
       
@@ -172,6 +194,7 @@ namespace Anki {
       const Point3f faceNormal( CrossProduct(sideLine, topLine) );
       const f32 dotProd = DotProduct(faceNormal, Z_AXIS_3D()); // TODO: Optimize to just: faceNormal.z()?
       if(dotProd > 0.f || acos(-dotProd) > maxAngleRad) { // TODO: Optimize to simple dotProd comparison
+        reason = NotVisibleReason::NORMAL_NOT_ALIGNED;
         return false;
       }
       
@@ -183,16 +206,17 @@ namespace Anki {
       if((imgCorners[BottomRight] - imgCorners[TopLeft]).Length() < minImageSize ||
          (imgCorners[BottomLeft]  - imgCorners[TopRight]).Length() < minImageSize)
       {
+        reason = NotVisibleReason::TOO_SMALL;
         return false;
       }
       
       // Make sure the projected corners are within the camera's field of view
-      // TODO: add some border padding?
       if(not camera.IsWithinFieldOfView(imgCorners[TopLeft], xBorderPad, yBorderPad)    ||
          not camera.IsWithinFieldOfView(imgCorners[TopRight], xBorderPad, yBorderPad)   ||
          not camera.IsWithinFieldOfView(imgCorners[BottomLeft], xBorderPad, yBorderPad) ||
          not camera.IsWithinFieldOfView(imgCorners[BottomRight], xBorderPad, yBorderPad))
       {
+        reason = NotVisibleReason::OUTSIDE_FOV;
         return false;
       }
       
@@ -202,6 +226,7 @@ namespace Anki {
          camera.IsOccluded(imgCorners[BottomLeft] , markerCornersWrtCamera[BottomLeft].z()) ||
          camera.IsOccluded(imgCorners[BottomRight], markerCornersWrtCamera[BottomRight].z()))
       {
+        reason = NotVisibleReason::OCCLUDED;
         return false;
       }
       
@@ -216,6 +241,7 @@ namespace Anki {
         
         if(not camera.IsAnythingBehind(imgCorners, atDistance))
         {
+          reason = NotVisibleReason::NOTHING_BEHIND;
           return false;
         }
       }

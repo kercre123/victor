@@ -1,9 +1,15 @@
 PROTO BlockWorldComms [
   field SFString name "BlockWorldComms"
+  
+  field SFInt32 numUIDevicesToWaitFor 1
 ]
 {
 Supervisor {
   name IS name
-  controller "blockworld_controller"
+  controller "webotsCtrlGameEngine"
+
+  # Referencing a field that is used in code but not in the proto model
+  # to suppress a Webots error message.
+  %{if fields.numUIDevicesToWaitFor.value then end }%
 } # Supervisor definition
 } # PROTO definition

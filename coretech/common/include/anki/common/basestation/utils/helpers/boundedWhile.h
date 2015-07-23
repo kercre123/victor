@@ -25,7 +25,8 @@ namespace AnkiUtil
 // a while loop that executes a limited number of execution (throws exception)
 #define MAKE_NAME MACRO_CONCAT(_bvar_, __LINE__)
 //#define BOUNDED_WHILE(n, exp) unsigned int MAKE_NAME=0; while(MAKE_NAME++ > (n) ? throw ::BaseStation::ET_INFINITE_LOOP : (exp))
-#define BOUNDED_WHILE(n, exp) unsigned int MAKE_NAME=0; while(MAKE_NAME++ < (n) && (exp))
+#define BOUNDED_WHILE(n, exp) unsigned int MAKE_NAME=0; while(MAKE_NAME++ > (n) ? throw std::runtime_error("Bounded while exceeded!") : (exp))
+
 
 
 } // end namespace AnkiUtil

@@ -16,7 +16,7 @@ DebugDisplay = false;
 NumSamples = 500; % divided evenly amongst the 8 square sides
 DarkValue = 0;
 BrightValue = 1;
-MaxCornerChange = 2; % in pixels
+MaxCornerChange = 5; % in pixels
 
 parseVarargin(varargin{:});
 
@@ -58,12 +58,15 @@ A = [ xsquare.*Tx  ysquare.*Tx  Tx  ...
     (-xsquare.*ysquare.*Tx-ysquare.^2.*Ty)];
 
 if DebugDisplay
-    hold off, imagesc(img), axis image, hold on, colormap(gray)
-    plot(this.corners(:,1), this.corners(:,2), 'bx', 'MarkerSize', 10);
+    %hold off, imagesc(img), axis image, hold on, colormap(gray)
+    delete(findobj(gca, 'Tag', 'CornerRefinement'))
     
-    h_out = plot(nan, nan, 'r', 'LineWidth', 2);
-    h_in  = plot(nan, nan, 'r', 'LineWidth', 2);
-    h_pr  = plot(nan, nan, 'r.', 'MarkerSize', 10);
+    hold on
+    plot(this.corners(:,1), this.corners(:,2), 'bx', 'MarkerSize', 10, 'Tag', 'CornerRefinement');
+    
+    h_out = plot(nan, nan, 'r', 'LineWidth', 2, 'Tag', 'CornerRefinement');
+    h_in  = plot(nan, nan, 'r', 'LineWidth', 2, 'Tag', 'CornerRefinement');
+    h_pr  = plot(nan, nan, 'r.', 'MarkerSize', 10, 'Tag', 'CornerRefinement');
 end
 
 newH = this.H;
@@ -115,7 +118,7 @@ while iteration < MaxIterations
     It = imgi(:) - template;
     
     AtA = A(inBounds,:)'*A(inBounds,:);
-    if rank(AtA) < 8
+    if any(isnan(AtA(:))) || rank(AtA) < 8
       break;
     end
     

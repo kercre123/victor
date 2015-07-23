@@ -8,7 +8,8 @@
 #include "json/json-forwards.h"
 #include "xythetaPlanner_definitions.h"
 #include <assert.h>
-#include <math.h>
+#include <cmath>
+#include <cfloat>
 #include <string>
 #include <vector>
 
@@ -111,8 +112,8 @@ struct IntermediatePosition
 {
   IntermediatePosition(State_c s, StateTheta nearestTheta, float d)
     : position(s)
-    , oneOverDistanceFromLastPosition(d)
     , nearestTheta(nearestTheta)
+    , oneOverDistanceFromLastPosition(d)
     {
     }
 

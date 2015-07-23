@@ -13,7 +13,8 @@ function [allQuads, quadValidity, markers, allQuads_pixelValues, markers_pixelVa
             'returnInvalid', true,...
             'quadRefinementIterations', 25,...
             'thresholdFraction', algorithmParameters.scaleImage_thresholdMultiplier,...
-            'embeddedConversions', algorithmParameters.matlab_embeddedConversions);
+            'embeddedConversions', algorithmParameters.matlab_embeddedConversions,...
+            'cornerMethod', algorithmParameters.cornerMethod);
         
         quadValidity = zeros([length(allQuadsRaw), 1], 'int32');
         
@@ -24,7 +25,7 @@ function [allQuads, quadValidity, markers, allQuads_pixelValues, markers_pixelVa
         
         for iQuad = 1:length(allQuadsRaw)
             allQuads{iQuad} = allQuadsRaw{iQuad}.corners;
-            [allQuads_pixelValues{iQuad}, ~, ~] = allQuadsRaw{iQuad}.GetProbeValues(image);
+            [allQuads_pixelValues{iQuad}, ~, ~] = allQuadsRaw{iQuad}.GetProbeValues(image, maketform('projective', allQuadsRaw{iQuad}.H'));
             
             if allQuadsRaw{iQuad}.isValid
                 quadValidity(iQuad) = 0;
@@ -41,7 +42,8 @@ function [allQuads, quadValidity, markers, allQuads_pixelValues, markers_pixelVa
             'returnInvalid', true,...
             'quadRefinementIterations', algorithmParameters.refine_quadRefinementIterations,...
             'thresholdFraction', algorithmParameters.scaleImage_thresholdMultiplier,...
-            'embeddedConversions', algorithmParameters.matlab_embeddedConversions);
+            'embeddedConversions', algorithmParameters.matlab_embeddedConversions,...
+            'cornerMethod', algorithmParameters.cornerMethod);
         
         if isempty(allQuadsMatlabRaw)
             allQuads = {};
@@ -70,11 +72,20 @@ function [allQuads, quadValidity, markers, allQuads_pixelValues, markers_pixelVa
     else 
         convertFromCToMatlab = true;
         
+        if strcmp(algorithmParameters.cornerMethod, 'laplacianPeaks')
+            cornerMethodIndex = 0;
+        elseif strcmp(algorithmParameters.cornerMethod, 'lineFits')
+            cornerMethodIndex = 1;
+        else
+            keyboard
+            assert(false);
+        end
+        
         returnInvalidMarkers = 1;
-        [allQuads, ~, ~, quadValidity] = mexDetectFiducialMarkers(image, algorithmParameters.useIntegralImageFiltering, algorithmParameters.scaleImage_numPyramidLevels, algorithmParameters.scaleImage_thresholdMultiplier, algorithmParameters.component1d_minComponentWidth, algorithmParameters.component1d_maxSkipDistance, algorithmParameters.component_minimumNumPixels, algorithmParameters.component_maximumNumPixels, algorithmParameters.component_sparseMultiplyThreshold, algorithmParameters.component_solidMultiplyThreshold, algorithmParameters.component_minHollowRatio, algorithmParameters.quads_minQuadArea, algorithmParameters.quads_quadSymmetryThreshold, algorithmParameters.quads_minDistanceFromImageEdge, algorithmParameters.decode_minContrastRatio, algorithmParameters.refine_quadRefinementIterations, algorithmParameters.refine_numRefinementSamples, algorithmParameters.refine_quadRefinementMaxCornerChange, algorithmParameters.refine_quadRefinementMinCornerChange, returnInvalidMarkers);
+        [allQuads, ~, ~, quadValidity] = mexDetectFiducialMarkers(image, algorithmParameters.useIntegralImageFiltering, algorithmParameters.scaleImage_numPyramidLevels, algorithmParameters.scaleImage_thresholdMultiplier, algorithmParameters.component1d_minComponentWidth, algorithmParameters.component1d_maxSkipDistance, algorithmParameters.component_minimumNumPixels, algorithmParameters.component_maximumNumPixels, algorithmParameters.component_sparseMultiplyThreshold, algorithmParameters.component_solidMultiplyThreshold, algorithmParameters.component_minHollowRatio, algorithmParameters.quads_minLaplacianPeakRatio, algorithmParameters.quads_minQuadArea, algorithmParameters.quads_quadSymmetryThreshold, algorithmParameters.quads_minDistanceFromImageEdge, algorithmParameters.decode_minContrastRatio, algorithmParameters.refine_quadRefinementIterations, algorithmParameters.refine_numRefinementSamples, algorithmParameters.refine_quadRefinementMaxCornerChange, algorithmParameters.refine_quadRefinementMinCornerChange, returnInvalidMarkers, cornerMethodIndex);
         
         returnInvalidMarkers = 0;
-        [goodQuads, ~, markerNames] = mexDetectFiducialMarkers(image, algorithmParameters.useIntegralImageFiltering, algorithmParameters.scaleImage_numPyramidLevels, algorithmParameters.scaleImage_thresholdMultiplier, algorithmParameters.component1d_minComponentWidth, algorithmParameters.component1d_maxSkipDistance, algorithmParameters.component_minimumNumPixels, algorithmParameters.component_maximumNumPixels, algorithmParameters.component_sparseMultiplyThreshold, algorithmParameters.component_solidMultiplyThreshold, algorithmParameters.component_minHollowRatio, algorithmParameters.quads_minQuadArea, algorithmParameters.quads_quadSymmetryThreshold, algorithmParameters.quads_minDistanceFromImageEdge, algorithmParameters.decode_minContrastRatio, algorithmParameters.refine_quadRefinementIterations, algorithmParameters.refine_numRefinementSamples, algorithmParameters.refine_quadRefinementMaxCornerChange, algorithmParameters.refine_quadRefinementMinCornerChange, returnInvalidMarkers);
+        [goodQuads, ~, markerNames] = mexDetectFiducialMarkers(image, algorithmParameters.useIntegralImageFiltering, algorithmParameters.scaleImage_numPyramidLevels, algorithmParameters.scaleImage_thresholdMultiplier, algorithmParameters.component1d_minComponentWidth, algorithmParameters.component1d_maxSkipDistance, algorithmParameters.component_minimumNumPixels, algorithmParameters.component_maximumNumPixels, algorithmParameters.component_sparseMultiplyThreshold, algorithmParameters.component_solidMultiplyThreshold, algorithmParameters.component_minHollowRatio, algorithmParameters.quads_minLaplacianPeakRatio, algorithmParameters.quads_minQuadArea, algorithmParameters.quads_quadSymmetryThreshold, algorithmParameters.quads_minDistanceFromImageEdge, algorithmParameters.decode_minContrastRatio, algorithmParameters.refine_quadRefinementIterations, algorithmParameters.refine_numRefinementSamples, algorithmParameters.refine_quadRefinementMaxCornerChange, algorithmParameters.refine_quadRefinementMinCornerChange, returnInvalidMarkers, cornerMethodIndex);
     end
     
     if convertFromCToMatlab

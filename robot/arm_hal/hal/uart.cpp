@@ -1,15 +1,10 @@
 #include "lib/stm32f4xx.h"
 #include "anki/cozmo/robot/hal.h"
+#include "anki/cozmo/robot/cozmoBot.h"
 #include "portable.h"
 
-// Comment this out to use the Torpedo UART (currently broken on 3.0)
-#define DEBUG_UART
-
-//#define UART_NON_ISR_PUT_CHAR
-
-#ifdef DEBUG_UART
-// Use the head debug cable UART
-#define BAUDRATE 2900000 // Ask for this to actually get 3e6
+// Baudrate communicating to Espressif
+#define BAUDRATE 5000000
 
 #define RCC_GPIO        RCC_AHB1Periph_GPIOB
 #define RCC_DMA         RCC_AHB1Periph_DMA2
@@ -17,33 +12,17 @@
 #define GPIO_AF         GPIO_AF_USART1
 #define UART            USART1
 
-#define DMA_STREAM_RX   DMA2_Stream5
+#define DMA_STREAM_RX   DMA2_Stream2
 #define DMA_CHANNEL_RX  DMA_Channel_4
 
 #define DMA_STREAM_TX   DMA2_Stream7
 #define DMA_CHANNEL_TX  DMA_Channel_4
 #define DMA_IRQ_TX      DMA2_Stream7_IRQn
-#define DMA_FLAG_TX     DMA_FLAG_TCIF7    // Stream 7
-#define DMA_HANDLER_TX  DMA2_Stream7_IRQHandler
-#else
-// Use the Torpedo UART
-#define BAUDRATE 1000000
 
-#define RCC_GPIO        RCC_AHB1Periph_GPIOA
-#define RCC_DMA         RCC_AHB1Periph_DMA1
-#define RCC_UART        RCC_APB2Periph_USART2
-#define GPIO_AF         GPIO_AF_USART2
-#define UART            USART2
-
-#define DMA_STREAM_RX   DMA1_Stream5
-#define DMA_CHANNEL_RX  DMA_Channel_4
-
-#define DMA_STREAM_TX   DMA1_Stream6
-#define DMA_CHANNEL_TX  DMA_Channel_4
-#define DMA_IRQ_TX      DMA1_Stream6_IRQn
-#define DMA_FLAG_TX     DMA_FLAG_TCIF6    // Stream 6
-#define DMA_HANDLER_TX  DMA1_Stream6_IRQHandler
-#endif
+// This enables "boardPrintf" - a blocking UART for HAL/board bring-up use only - when all else is broken
+// Because it is very slow and blocking, it is not suitable for general use and tends to screw up timing
+// It uses TP13 (PC10) on headboard 4.0
+//#define ENABLE_BOARD_UART
 
 namespace Anki
 {
@@ -54,53 +33,36 @@ namespace Anki
       volatile s32 m_writeTail = 0;
       volatile s32 m_writeHead = 0;
       volatile s32 m_writeLength = 0;
-      
+
       volatile s32 m_readTail = 0;
       volatile s32 m_readHead = 0;
-      
+
       volatile bool m_isTransferring = false;
-      
+
       static void UARTStartTransfer();
-      static s32 UARTGetCharacter(u32 timeout);
-      
-      extern s32 WifiGetCharacter(u32 timeout);
-      extern bool WifiInit();
-      
-      // Function pointers depending on whether wifi or UART is used
-      void (*StartTransfer)() =  UARTStartTransfer;
-      s32 (*GetChar)(u32 timeout) = UARTGetCharacter;
-      
-      // TODO: Refactor this mess. PUNT!
-      int BUFFER_WRITE_SIZE = 1024 * 4;
-      int BUFFER_READ_SIZE = 1024;
-      OFFCHIP u8 m_bufferWrite[1024 * 4];
-      OFFCHIP u8 m_bufferRead[1024];
+ 
+      // ONCHIP because both buffers are accessed by DMA
+      ONCHIP u8 m_bufferWrite[1024 * 8];
+      ONCHIP u8 m_bufferRead[1024 * 16];
       
       static void UARTStartTransfer()
       {
-#if defined(UART_NON_ISR_PUT_CHAR)
-        return;
-#else
         int tail = m_writeTail;
         int length = m_writeHead - tail;
         if (length < 0)
-        {
           length = sizeof(m_bufferWrite) - tail;
-        }
-        if (length > 25) {
-          length = 25;
-        }
-        
+        if (length > 65535)
+          length = 65535;
+
         DMA_STREAM_TX->NDTR = length;                     // Buffer size
         DMA_STREAM_TX->M0AR = (u32)&m_bufferWrite[tail];  // Buffer address
-        
+
         m_writeLength = length;
         m_isTransferring = true;
-        
+
         DMA_STREAM_TX->CR |= DMA_SxCR_EN; // Enable DMA
-#endif
       }
-      
+
       int UARTGetFreeSpace()
       {
         int tail = m_writeTail;
@@ -110,28 +72,23 @@ namespace Anki
         else
           return sizeof(m_bufferWrite) - (head - tail);
       }
-      
+
       int UARTGetWriteBufferSize()
       {
         return sizeof(m_bufferWrite);
       }
 
-      void UARTConfigure()
+      void UARTInit()
       {
-        // Supporting 3.0
-      #ifdef DEBUG_UART
+        // Supporting 4.0
         GPIO_PIN_SOURCE(TX, GPIOB, 6);
         GPIO_PIN_SOURCE(RX, GPIOB, 7);
-      #else
-        GPIO_PIN_SOURCE(TX, GPIOA, 2);
-        GPIO_PIN_SOURCE(RX, GPIOA, 3);
-      #endif
-        
+
         // Clock configuration
         RCC_AHB1PeriphClockCmd(RCC_GPIO, ENABLE);
         RCC_AHB1PeriphClockCmd(RCC_DMA, ENABLE);
         RCC_APB2PeriphClockCmd(RCC_UART, ENABLE);
-        
+
         // Configure the pins for UART in AF mode
         GPIO_InitTypeDef GPIO_InitStructure;
         GPIO_InitStructure.GPIO_Pin = PIN_TX;
@@ -140,29 +97,30 @@ namespace Anki
         GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
         GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
         GPIO_Init(GPIO_TX, &GPIO_InitStructure);
-        
+
         GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
         GPIO_InitStructure.GPIO_Pin = PIN_RX;
         GPIO_Init(GPIO_RX, &GPIO_InitStructure);
-        
+
         GPIO_PinAFConfig(GPIO_TX, SOURCE_TX, GPIO_AF);
         GPIO_PinAFConfig(GPIO_RX, SOURCE_RX, GPIO_AF);
-        
+
         // Configure the UART for the appropriate baudrate
         USART_InitTypeDef USART_InitStructure;
         USART_Cmd(UART, DISABLE);
+        USART_OverSampling8Cmd(UART, ENABLE);
         USART_InitStructure.USART_BaudRate = BAUDRATE;
         USART_InitStructure.USART_WordLength = USART_WordLength_8b;
-        USART_InitStructure.USART_StopBits = USART_StopBits_1;
+        USART_InitStructure.USART_StopBits = USART_StopBits_2;
         USART_InitStructure.USART_Parity = USART_Parity_No;
         USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
         USART_InitStructure.USART_Mode = USART_Mode_Rx | USART_Mode_Tx;
         USART_Init(UART, &USART_InitStructure);
         USART_Cmd(UART, ENABLE);
-        
+
         // Configure DMA for receiving
         DMA_DeInit(DMA_STREAM_RX);
-        
+
         DMA_InitTypeDef DMA_InitStructure;
         DMA_InitStructure.DMA_Channel = DMA_CHANNEL_RX;
         DMA_InitStructure.DMA_PeripheralBaseAddr = (uint32_t)&UART->DR;
@@ -180,14 +138,14 @@ namespace Anki
         DMA_InitStructure.DMA_MemoryBurst = DMA_MemoryBurst_Single;
         DMA_InitStructure.DMA_PeripheralBurst = DMA_PeripheralBurst_Single;
         DMA_Init(DMA_STREAM_RX, &DMA_InitStructure);
-        
+
         // Enable DMA
         USART_DMACmd(UART, USART_DMAReq_Rx, ENABLE);
         DMA_Cmd(DMA_STREAM_RX, ENABLE);
-        
+
         // Configure DMA For transmitting
         DMA_DeInit(DMA_STREAM_TX);
-        
+
         DMA_InitStructure.DMA_Channel = DMA_CHANNEL_TX;
         DMA_InitStructure.DMA_Memory0BaseAddr = (u32)m_bufferWrite;
         DMA_InitStructure.DMA_DIR = DMA_DIR_MemoryToPeripheral;
@@ -203,110 +161,118 @@ namespace Anki
         DMA_InitStructure.DMA_MemoryBurst = DMA_MemoryBurst_Single;
         DMA_InitStructure.DMA_PeripheralBurst = DMA_PeripheralBurst_Single;
         DMA_Init(DMA_STREAM_TX, &DMA_InitStructure);
-        
+
         // Enable UART DMA, but don't start the actual DMA engine
         USART_DMACmd(UART, USART_DMAReq_Tx, ENABLE);
-        
+
         // Note: DMA is not enabled for TX here, because the buffer is empty.
         // After main/long execution, DMA will be enabled for a specified
         // length.
-        
+
         // Enable interrupt on DMA transfer complete for TX.
         // This is mainly for LongExecution.
         DMA_ITConfig(DMA_STREAM_TX, DMA_IT_TC, ENABLE);
-        
+
         NVIC_InitTypeDef NVIC_InitStructure;
         NVIC_InitStructure.NVIC_IRQChannel = DMA_IRQ_TX;
         NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 3;  // Don't want this to be a very high priority
         NVIC_InitStructure.NVIC_IRQChannelSubPriority = 3;
         NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
         NVIC_Init(&NVIC_InitStructure);
-        
+
         m_writeHead = m_writeTail = m_readTail = 0;
-      }
-      
-      void UARTInit()
-      {
-        // Configure the UART - and light up purple to indicate UART
-        SetLED(LED_LEFT_EYE_LEFT, LED_PURPLE);
-        UARTConfigure();
+        
+#ifdef ENABLE_BOARD_UART
+        #define BUART USART3        
+        #define BBAUDRATE 3000000
+        
+        GPIO_PIN_SOURCE(BTX, GPIOC, 10);
+        
+        // Clock configuration
+        RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC, ENABLE);
+        RCC_APB1PeriphClockCmd(RCC_APB1Periph_USART3, ENABLE);
+        
+        // Configure the pins for UART in AF mode
+        GPIO_InitStructure.GPIO_Pin = PIN_BTX;
+        GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
+        GPIO_InitStructure.GPIO_Speed = GPIO_Speed_2MHz;
+        GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;  // XXX - why not OD to interface with 3V3 PropPlug?
+        GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
+        GPIO_Init(GPIO_BTX, &GPIO_InitStructure);
+        GPIO_PinAFConfig(GPIO_BTX, SOURCE_BTX, GPIO_AF_USART3);
+        
+        // Configure the UART for the appropriate baudrate
+        USART_Cmd(BUART, DISABLE);
+        USART_OverSampling8Cmd(BUART, ENABLE);
+        USART_InitStructure.USART_BaudRate = BBAUDRATE;
+        USART_Init(BUART, &USART_InitStructure);
+        USART_Cmd(BUART, ENABLE);
+        
+        BoardPrintf("Board debug enabled\n");
+#endif
       }
 
       // Add one char to the buffer, wrapping around
       static void BufPutChar(u8 c)
       {
-#if defined(UART_NON_ISR_PUT_CHAR)
-        UART->DR = c;
-        while (!(UART->SR & USART_FLAG_TXE))
-          ;
-        return;
-#else
         m_bufferWrite[m_writeHead] = c;
         m_writeHead++;
         if (m_writeHead >= sizeof(m_bufferWrite))
         {
           m_writeHead = 0;
         }
-#endif
       }
-      
+
       int UARTPutChar(int c)
       {
-       
+        //UART->DR = c;
+        //while (!(UART->SR & USART_FLAG_TXE))
+        //  ;
+        //return c;
+
         // Leave one guard byte in the buffer
         while (UARTGetFreeSpace() <= 2)
           ;
-        
+
         __disable_irq();
         BufPutChar(c);
-        
+
         // Enable DMA if it's not already running
         if (!m_isTransferring)
         {
-          StartTransfer();
+          UARTStartTransfer();
         }
-        
+
         __enable_irq();
-        
+
         return c;
       }
 
-      bool UARTPutMessage(u8 msgID, u8* buffer, u32 length)
+      bool UARTPutPacket(const u8* buffer, const u32 length, const u8 socket)
       {
         bool result = false;
-        
         __disable_irq();
         int bytesLeft = UARTGetFreeSpace();
-        
+
         // Leave one guard byte + header
-        if (bytesLeft > (length + 1 + 7))
+        if (bytesLeft > (length + 1 + 8))
         {
           result = true;
-          
+
           // Write header first
           BufPutChar(0xBE);
           BufPutChar(0xEF);
-					
-          u32 lengthWithMsgID = length + 1;
-          BufPutChar(lengthWithMsgID);
-          BufPutChar(lengthWithMsgID >> 8);
-          BufPutChar(lengthWithMsgID >> 16);
-          BufPutChar(lengthWithMsgID >> 24);
-					
-          BufPutChar(msgID);
-          
-#if defined(UART_NON_ISR_PUT_CHAR)
-          for (int i=0; i<length; ++i)
-          {
-            BufPutChar(buffer[i]);
-          }
-#else          
+          BufPutChar(length >>  0);
+          BufPutChar(length >>  8);
+          BufPutChar(0);
+          BufPutChar(socket);
+
           bytesLeft = sizeof(m_bufferWrite) - m_writeHead;
           if (length <= bytesLeft)
           {
             memcpy(&m_bufferWrite[m_writeHead], buffer, length);
             m_writeHead += length;
-            
+
             if (m_writeHead == sizeof(m_bufferWrite))
             {
               m_writeHead = 0;
@@ -315,20 +281,18 @@ namespace Anki
             // Copy to the end of the buffer, then wrap around for the rest
             int lengthFirst = bytesLeft;
             memcpy(&m_bufferWrite[m_writeHead], buffer, lengthFirst);
-            
+
             bytesLeft = length - lengthFirst;
             memcpy(m_bufferWrite, &buffer[lengthFirst], bytesLeft);
-            
+
             m_writeHead = bytesLeft;
           }
-          
+
           // Enable DMA if it's not already running
           if (!m_isTransferring)
           {
-            StartTransfer();
+            UARTStartTransfer();
           }
-#endif
-
         }
         __enable_irq();
         return result;
@@ -339,14 +303,14 @@ namespace Anki
         while (*s)
           UARTPutChar(*s++);
       }
-      
+
       void UARTPutHex(u8 c)
       {
         static u8 hex[] = "0123456789ABCDEF";
         UARTPutChar(hex[c >> 4]);
         UARTPutChar(hex[c & 0xF]);
       }
-      
+
       void UARTPutHex32(u32 value)
       {
         UARTPutHex(value >> 24);
@@ -354,33 +318,80 @@ namespace Anki
         UARTPutHex(value >> 8);
         UARTPutHex(value);
       }
-      
-      static s32 UARTGetCharacter(u32 timeout)
+
+      s32 UARTGetChar()
       {
-        u32 startTime = GetMicroCounter();
-
-        do
+        // Make sure there's data in the FIFO
+        // NDTR counts down...
+        if (DMA_STREAM_RX->NDTR != sizeof(m_bufferRead) - m_readTail)
         {
-          // Make sure there's data in the FIFO
-          // NDTR counts down...
-          if (DMA_STREAM_RX->NDTR != sizeof(m_bufferRead) - m_readTail)
-          {
-            u8 value = m_bufferRead[m_readTail];
-            m_readTail = (m_readTail + 1) % sizeof(m_bufferRead);  
-            return value;
-          }
+          u8 value = m_bufferRead[m_readTail];
+          m_readTail = (m_readTail + 1) % sizeof(m_bufferRead);
+          return value;
         }
-        while ((GetMicroCounter() - startTime) < timeout);
-
-        // No data, so return with an error
-        return -1;
+        else
+        {
+          // No data, so return with an error
+          return -1;
+        }
       }
 
-      s32 UARTGetChar(u32 timeout)
+      void BoardPrintf(const char *format, ...)
       {
-        return GetChar(timeout);
-      }      
+#ifdef ENABLE_BOARD_UART     
+        // Build the printf into a local buffer and zero-terminate it
+        char buffer[256];
+        va_list argptr;
+        va_start(argptr, format);
+        vsnprintf(buffer, sizeof(buffer)-1, format, argptr);
+        va_end(argptr);
+        buffer[sizeof(buffer)-1] = '\0';
+        
+        // Send it out the UART, blocking as needed
+        char* p = buffer;
+        while (*p)
+        {
+          BUART->DR = *p++;
+          while (!(BUART->SR & USART_FLAG_TXE))
+            ;
+        }
+#endif   
+      }        
     }
+  }
+}
+
+extern "C" {
+  void board_printf(const char *format, ...)
+  {
+#ifdef ENABLE_BOARD_UART  
+    using namespace Anki::Cozmo::HAL;    
+    static int stamping = 0;
+    
+    if (!stamping)
+    {
+      stamping = 1;
+      board_printf(" %3dms: ", (GetMicroCounter() / 1000) % 1000);
+      stamping = 0;
+    }
+    
+    // Build the printf into a local buffer and zero-terminate it
+    char buffer[256];
+    va_list argptr;
+    va_start(argptr, format);
+    vsnprintf(buffer, sizeof(buffer)-1, format, argptr);
+    va_end(argptr);
+    buffer[sizeof(buffer)-1] = '\0';
+    
+    // Send it out the UART, blocking as needed
+    char* p = buffer;
+    while (*p)
+    {
+      BUART->DR = *p++;
+      while (!(BUART->SR & USART_FLAG_TXE))
+        ;
+    }
+#endif
   }
 }
 
@@ -398,22 +409,21 @@ int std::fgetc(FILE* f)
 extern "C"
 {
   // Used for UART transfer-complete
-  void DMA_HANDLER_TX()
+  void DMA2_Stream7_IRQHandler()
   {
     using namespace Anki::Cozmo::HAL;
-    
+
     // Clear DMA Transfer Complete flag
-    DMA_ClearFlag(DMA_STREAM_TX, DMA_FLAG_TCIF7); // Stream 7
-    
+    DMA_ClearFlag(DMA2_Stream7, DMA_FLAG_TCIF7);
+
     m_writeTail += m_writeLength;
     if (m_writeTail >= sizeof(m_bufferWrite))
       m_writeTail = 0;
-    
+
     // Check if there's more data to be transferred
     if (m_writeHead != m_writeTail)
     {
-      MicroWait(1);
-      StartTransfer();
+      UARTStartTransfer();
     } else {
       m_isTransferring = false;
     }

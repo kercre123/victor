@@ -59,6 +59,8 @@ ADD_MESSAGE_MEMBER(f32, liftAngle)
 ADD_MESSAGE_MEMBER(f32, liftHeight) // TODO: Need this?
 ADD_MESSAGE_MEMBER(f32, rawGyroZ)
 ADD_MESSAGE_MEMBER(f32, rawAccelY)
+ADD_MESSAGE_MEMBER(u32, status)  // See RobotStatusFlag
+ADD_MESSAGE_MEMBER(s32, numAnimBytesFree)
 ADD_MESSAGE_MEMBER(u16, lastPathID)
 ADD_MESSAGE_MEMBER(u8, proxLeft)
 ADD_MESSAGE_MEMBER(u8, proxForward)
@@ -66,7 +68,6 @@ ADD_MESSAGE_MEMBER(u8, proxRight)
 ADD_MESSAGE_MEMBER(s8, currPathSegment) // -1 if not traversing a path
 ADD_MESSAGE_MEMBER(u8, numFreeSegmentSlots)
 ADD_MESSAGE_MEMBER(u8, battVolt10x)
-ADD_MESSAGE_MEMBER(u8, status)  // See RobotStatusFlag
 END_MESSAGE_DEFINITION(RobotState)
 
 
@@ -82,7 +83,7 @@ ADD_MESSAGE_MEMBER(f32, x_imgUpperRight)
 ADD_MESSAGE_MEMBER(f32, y_imgUpperRight)
 ADD_MESSAGE_MEMBER(f32, x_imgLowerRight)
 ADD_MESSAGE_MEMBER(f32, y_imgLowerRight)
-ADD_MESSAGE_MEMBER(u16, markerType)
+ADD_MESSAGE_MEMBER(s16, markerType)
 //ADD_MESSAGE_MEMBER_ARRAY(u8, code, VISION_MARKER_CODE_LENGTH)
 END_MESSAGE_DEFINITION(VisionMarker)
 
@@ -220,7 +221,12 @@ ADD_MESSAGE_MEMBER(f32, pose_x)
 ADD_MESSAGE_MEMBER(f32, pose_y)
 ADD_MESSAGE_MEMBER(f32, pose_z)
 ADD_MESSAGE_MEMBER(f32, pose_angle)
+ADD_MESSAGE_MEMBER(u8, followingMarkerNormal)
 END_MESSAGE_DEFINITION(GoalPose)
+
+// SyncTimeAck
+START_MESSAGE_DEFINITION(SyncTimeAck, 1)
+END_MESSAGE_DEFINITION(SyncTimeAck)
 
 
 // ----- Active object messages ------
@@ -231,9 +237,20 @@ END_MESSAGE_DEFINITION(BlockIDFlashStarted)
 
 // ActiveObjectMoved
 START_MESSAGE_DEFINITION(ActiveObjectMoved, 1)
-ADD_MESSAGE_MEMBER(s32, objectID)
-//ADD_MESSAGE_MEMBER(f32, xAccel)
-//ADD_MESSAGE_MEMBER(f32, yAccel)
-//ADD_MESSAGE_MEMBER(f32, zAccel)
+ADD_MESSAGE_MEMBER(u32, objectID)
+ADD_MESSAGE_MEMBER(f32, xAccel)
+ADD_MESSAGE_MEMBER(f32, yAccel)
+ADD_MESSAGE_MEMBER(f32, zAccel)
+ADD_MESSAGE_MEMBER(u8,  upAxis)  // See UpAxis type in ActiveBlockTypes.h
 END_MESSAGE_DEFINITION(ActiveObjectMoved)
 
+START_MESSAGE_DEFINITION(ActiveObjectStoppedMoving, 1)
+ADD_MESSAGE_MEMBER(u32, objectID)
+ADD_MESSAGE_MEMBER(u8,  upAxis)  // See UpAxis type in ActiveBlockTypes.h
+ADD_MESSAGE_MEMBER(u8,  rolled)  // Whether the up orientation changed during movement
+END_MESSAGE_DEFINITION(ActiveObjectStoppedMoving)
+
+START_MESSAGE_DEFINITION(ActiveObjectTapped, 1)
+ADD_MESSAGE_MEMBER(u32, objectID)
+ADD_MESSAGE_MEMBER(u8,  numTaps)
+END_MESSAGE_DEFINITION(ActiveObjectTapped)

@@ -23,6 +23,8 @@
 
 #include "anki/common/basestation/math/point.h"
 
+#include "anki/common/shared/radians.h"
+
 #include "anki/common/basestation/exceptions.h"
 
 #include <cmath>
@@ -465,7 +467,32 @@ namespace Anki {
   {
     return lhs[2] < rhs[2];
   }
-
+  
+  template<PointDimType N, typename T>
+  bool AreVectorsAligned(const Point<N,T>& point1, const Point<N,T>& point2, const Radians& angleThreshold)
+  {
+    Point<N,f32> unitVec1(point1);
+    unitVec1.MakeUnitLength();
+    
+    Point<N,f32> unitVec2(point2);
+    unitVec2.MakeUnitLength();
+    
+    return AreUnitVectorsAligned(unitVec1, unitVec2, angleThreshold);
+  }
+  
+  template<PointDimType N>
+  bool AreUnitVectorsAligned(const Point<N,f32>& unitVec1, const Point<N,f32>& unitVec2, const Radians& angleThreshold)
+  {
+    assert(NEAR(unitVec1.Length(), 1.f, 10.f*std::numeric_limits<f32>::epsilon()));
+    assert(NEAR(unitVec2.Length(), 1.f, 10.f*std::numeric_limits<f32>::epsilon()));
+    
+    const f32 dotProduct = DotProduct(unitVec1, unitVec2);
+    const f32 dotProductThreshold = 1.f - std::cos(angleThreshold.ToFloat());
+    
+    const bool areAligned = NEAR(std::abs(dotProduct), 1.f, dotProductThreshold);
+    
+    return areAligned;
+  }
   
 } // namespace Anki
 

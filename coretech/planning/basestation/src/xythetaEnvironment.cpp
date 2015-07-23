@@ -36,7 +36,7 @@ namespace Planning {
 
 #define REPLAN_PENALTY_BUFFER 0.5
 
-#define HACK_USE_FIXED_SPEED 40.0
+#define HACK_USE_FIXED_SPEED 60.0
 
 State::State(StateID sid)
   :
@@ -466,7 +466,7 @@ xythetaEnvironment::xythetaEnvironment()
   oneOverRadiansPerAngle_ = (float)(1.0 / ((double)radiansPerAngle_));
   // TODO:(bn) params!
   halfWheelBase_mm_ = 25.0;
-  maxVelocity_mmps_ = 50.0;
+  maxVelocity_mmps_ = 60.0;
   oneOverMaxVelocity_ = 1.0 / maxVelocity_mmps_;
   maxReverseVelocity_mmps_ = 25.0;
 }
@@ -475,7 +475,7 @@ xythetaEnvironment::xythetaEnvironment(const char* mprimFilename, const char* ma
 {
   Init(mprimFilename, mapFile);
   halfWheelBase_mm_ = 25.0;
-  maxVelocity_mmps_ = 50.0;
+  maxVelocity_mmps_ = 60.0;
   oneOverMaxVelocity_ = 1.0 / maxVelocity_mmps_;
   maxReverseVelocity_mmps_ = 25.0;
 }
@@ -649,7 +649,7 @@ FastPolygon xythetaEnvironment::ExpandCSpace(const Poly2f& obstacle,
   float startingAngle = obstacle.GetEdgeAngle(0);
 
   // compute the starting point for each polygon
-  size_t obstacleStart = 0;
+  //size_t obstacleStart = 0;
   size_t robotStart = 0;
 
   size_t robotSize = robot.size();
@@ -1047,7 +1047,7 @@ float xythetaEnvironment::GetDistanceBetween(const State_c& start, const State_c
 
 bool xythetaEnvironment::ReadEnvironment(FILE* fEnv)
 {
-  float x0,y0,x1,y1,len;
+  //float x0,y0,x1,y1,len;
 
   assert(false);
 
@@ -1088,7 +1088,7 @@ void xythetaEnvironment::AppendToPath(xythetaPlan& plan, Path& path) const
     // printf("(%d) %s\n", curr.theta, actionTypes_[actionID].GetName().c_str());
 
     const MotionPrimitive* prim = &allMotionPrimitives_[curr.theta][actionID];
-    u8 pathSegmentOffset = prim->AddSegmentsToPath(State2State_c(curr), path);
+    /*u8 pathSegmentOffset =*/ prim->AddSegmentsToPath(State2State_c(curr), path);
 
     curr.x += prim->endStateOffset.x;
     curr.y += prim->endStateOffset.y;

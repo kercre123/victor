@@ -1,0 +1,61 @@
+How to create and run the testing scripts
+2015-06-30
+Peter Barnum
+
+There are tests for fiducial detection, and tests for tracking. The ground-truthing code and testing code is somewhat awful. However, the tests themselves are stored in json files, with corresponding png images, so should be somewhat portable.
+
+The fiducial detection tests involve about a thousand ground-truthed images. They are mostly QVGA images, and mostly from the robot circa Late-2014. There are enough images to answer some simple questions, like how much compression is acceptable. However, there is not much variation in background, and there aren't enough examples to determine which fiducial markers are most tricky. It is not even enough to test all control paths, though will catch many egregious errors.
+
+The tracking tests are 12 short sequences. The testing process takes each sequence, and applies different amounts of shake and global brightness change. These tests use some of the same code as the detection tests.
+
+The ground truth labelling code, and the testing code is in
+cozmo-game/lib/anki/cozmo-engine/systemTests/
+
+The test images and ground truth labels are in
+products-cozmo-large-files/systemTestsData
+
+
+Ground truth labelling
+-----
+Ground truth labelling lets a human user manually or semi-automatically label fiducials in images. The tests are stored as json scripts, and the images are png files. Alternately, if you enjoy hard work, feel free to use your text editor of choice to edit the json files manually.
+
+Matlab:
+The main file is "editGroundTruth.m". in Matlab, type "editGroundTruth". When the gui pops up, change the directory in the top left field from "/Users/pbarnum/Documents/Anki/products-cozmo-large-files/systemTestsData/trackingScripts/" to your directory, then hit enter. Everything should load up nicely.
+
+Python:
+Running the python script requires a bunch of libraries (ipython, cython, pyside, numpy, and qt), outlined in 
+cozmo-game/lib/anki/cozmo-engine/python/cython/howToCompile.txt 
+
+The main file is "editGroundTruth.py". Change g_startJsonDirectory to your scripts directory, then run 
+python editGroundTruth.py
+
+
+Running the detection tests
+-----
+Running the tests requires Matlab. In Matlab, the main file is "runTests_detectFiducialMarkers.m". Check out the example usage at the top of the file, such as:
+allCompiledResults = runTests_detectFiducialMarkers('~/Documents/Anki/products-cozmo-large-files/systemTestsData/detectionScripts/fiducialDetection_*.json', '~/Documents/Anki/products-cozmo-large-files/systemTestsData/results/', '~/Documents/Anki/products-cozmo-large-files/VisionMarkers/');
+
+NOTE: The visionMarkersDirectory directory is used solely to as a hack to determine which markers have 1, 2, or 4 orientations. It uses the files in "markerDirectoryList", and uses getListOfSymmetricMarkers.m to figure out the possible rotations by reading filenames. If something gets goofed up in a refactor, look at the file "2015-06-24_rotationList.mat", to see what rotationList should look like.
+
+Basically the code does three things for each test:
+1. Run the detector or tracker on each image, and save the detected fiducial locations
+2. Compare the detected locations to the ground truth, and output pretty pictures of the results
+3. Compile all the results from #2 into a simple format.
+
+Steps 1 and 2 can be run faster by spawning multiple Matlab processes, though it's easier to debug errors if you set 
+numComputeThreads.basics = 1;
+numComputeThreads.perPose = 1;
+
+The results images are outputted in the results directory that you passed as a parameter. Also, once the script is finished running, it will give a summary of the accuracy, in a format like:
+Results for c_with_refinement percentQuadsExtracted:0.630466 percentMarkersCorrect:0.497584 numMarkerErrors:833 fileSizePercent:0.378302
+
+For all labeled markers, percentQuadsExtracted is the percent that had a quad extracted in the correct location, whether or not it was correct. percentMarkersCorrect is the percent of markers that were not only in the right location, but also parsed correctly. numMarkerErrors is the number of false-positives, either marker hallucinated where there were none, or else markers parsed as the wrong type. fileSizePercent is mainly for compression tests (lossless is about 40%).
+
+Set which type of test you want to test by modifying the "runWhichAlgorithms" variable. The most important test is "c_with_refinement", which is using the actual embedded extraction algorithm. Another fun one is "c_with_refinement_jpg", which tests accuracy with different levels of jpg compression.
+
+Running the tracking tests
+-----
+The tracking tests use a lot of the detection testing code. In Matlab, the main file is "runTests_tracking.m". Check out the example usage at the top of the file, such as:
+allCompiledResults = runTests_tracking('~/Documents/Anki/products-cozmo-large-files/systemTestsData/trackingScripts/tracking_*.json', '~/Documents/Anki/products-cozmo-large-files/systemTestsData/results/', '~/Documents/Anki/products-cozmo-large-files/VisionMarkers/');
+
+The output is a series of graphs, for each of the "runWhichAlgorithms" options.

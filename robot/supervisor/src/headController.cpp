@@ -13,15 +13,15 @@ namespace HeadController {
 
     namespace {
       
+      // TODO: Ideally, this value should be calibrated
+      const Radians HEAD_CAL_OFFSET = DEG_TO_RAD(3);
+      
       const Radians ANGLE_TOLERANCE = DEG_TO_RAD(2.f);
-
+      
       // Used when calling SetDesiredAngle with just an angle:
-      const f32 DEFAULT_START_ACCEL_FRAC = 0.25f;
-      const f32 DEFAULT_END_ACCEL_FRAC   = 0.25f;
+      const f32 DEFAULT_START_ACCEL_FRAC = 0.1f;
+      const f32 DEFAULT_END_ACCEL_FRAC   = 0.1f;
       const f32 DEFAULT_DURATION_SEC     = 0.5f;
-
-      // Head angle on startup
-      //const f32 HEAD_START_ANGLE = 0;   // Convenient for docking to set head angle at -15 degrees.
       
       // Currently applied power
       f32 power_ = 0;
@@ -31,18 +31,30 @@ namespace HeadController {
       Radians currentAngle_ = 0.f;
       Radians desiredAngle_ = 0.f;
       f32 currDesiredAngle_ = 0.f;
-      f32 currDesiredRadVel_ = 0.f;
       f32 angleError_ = 0.f;
       f32 angleErrorSum_ = 0.f;
+      f32 prevAngleError_ = 0.f;
       f32 prevHalPos_ = 0.f;
       bool inPosition_  = true;
       
       const f32 SPEED_FILTERING_COEFF = 0.5f;
 
-      f32 Kp_ = 2.f; // proportional control constant
-      f32 Ki_ = 0.05f; // integral control constant
-      f32 MAX_ERROR_SUM = 4.f; // 2.f;
-     
+#ifdef SIMULATOR
+      f32 Kp_ = 20.f; // proportional control constant
+      f32 Kd_ = 0.f;  // derivative control constant
+      f32 Ki_ = 0.1f; // integral control constant
+      f32 MAX_ERROR_SUM = 2.f;
+
+      const f32 BASE_POWER  = 0.f;
+#else
+      f32 Kp_ = 3.f;  // proportional control constant
+      f32 Kd_ = 0.f;  // derivative control constant
+      f32 Ki_ = 0.f; // integral control constant
+      f32 MAX_ERROR_SUM = 2.f;
+      
+      const f32 BASE_POWER  = 0.2f;
+#endif
+      
       // Open loop gain
       // power_open_loop = SPEED_TO_POWER_OL_GAIN * desiredSpeed + BASE_POWER
       // TODO: Measure this when the head is working! These numbers are completely made up.
@@ -56,16 +68,10 @@ namespace HeadController {
       // Speed and acceleration params
       f32 maxSpeedRad_ = 1.0f;
       f32 accelRad_ = 2.0f;
-      f32 approachSpeedRad_ = 0.1f;
       
       // For generating position and speed profile
       VelocityProfileGenerator vpg_;
       
-      // Whether or not to recalibrate the motors when they hard limit
-      //const bool RECALIBRATE_AT_LIMIT = false;
-      
-      // If head comes within this distance to limit angle, trigger recalibration.
-      //const f32 RECALIBRATE_LIMIT_ANGLE_THRESH = 0.1f;
       
       // Nodding
       bool isNodding_ = false;
@@ -88,12 +94,14 @@ namespace HeadController {
       
       HeadCalibState calState_ = HCS_IDLE;
       bool isCalibrated_ = false;
-      //bool limitingDetected_ = false;
-      u32 lastHeadMovedTime_us = 0;
+      u32 lastHeadMovedTime_ms = 0;
+      
+      u32 lastInPositionTime_ms_;
+      const u32 IN_POSITION_TIME_MS = 200;
       
       const f32 MAX_HEAD_CONSIDERED_STOPPED_RAD_PER_SEC = 0.001;
       
-      const u32 HEAD_STOP_TIME = 500000;  // usec
+      const u32 HEAD_STOP_TIME = 500;  // ms
       
       bool enable_ = true;
       
@@ -134,7 +142,7 @@ namespace HeadController {
     
     void ResetLowAnglePosition()
     {
-      currentAngle_ = MIN_HEAD_ANGLE;
+      currentAngle_ = MIN_HEAD_ANGLE + HEAD_CAL_OFFSET;
       HAL::MotorResetPosition(HAL::MOTOR_HEAD);
       prevHalPos_ = HAL::MotorGetPosition(HAL::MOTOR_HEAD);
       isCalibrated_ = true;
@@ -163,7 +171,7 @@ namespace HeadController {
           case HCS_LOWER_HEAD:
             power_ = -0.7;
             HAL::MotorSetPower(HAL::MOTOR_HEAD, power_);
-            lastHeadMovedTime_us = HAL::GetMicroCounter();
+            lastHeadMovedTime_ms = HAL::GetTimeStamp();
             calState_ = HCS_WAIT_FOR_STOP;
             break;
             
@@ -171,28 +179,27 @@ namespace HeadController {
             // Check for when head stops moving for 0.2 seconds
             if (!IsMoving()) {
               
-              if (HAL::GetMicroCounter() - lastHeadMovedTime_us > HEAD_STOP_TIME) {
+              if (HAL::GetTimeStamp() - lastHeadMovedTime_ms > HEAD_STOP_TIME) {
                 // Turn off motor
                 power_ = 0.0;
                 HAL::MotorSetPower(HAL::MOTOR_HEAD, power_);
                 
                 // Set timestamp to be used in next state to wait for motor to "relax"
-                lastHeadMovedTime_us = HAL::GetMicroCounter();
+                lastHeadMovedTime_ms = HAL::GetTimeStamp();
                 
                 // Go to next state
                 calState_ = HCS_SET_CURR_ANGLE;
               }
             } else {
-              lastHeadMovedTime_us = HAL::GetMicroCounter();
+              lastHeadMovedTime_ms = HAL::GetTimeStamp();
             }
             break;
             
           case HCS_SET_CURR_ANGLE:
             // Wait for motor to relax and then set angle
-            if (HAL::GetMicroCounter() - lastHeadMovedTime_us > HEAD_STOP_TIME) {
+            if (HAL::GetTimeStamp() - lastHeadMovedTime_ms > HEAD_STOP_TIME) {
               PRINT("HEAD Calibrated\n");
               ResetLowAnglePosition();
-              //SetDesiredAngle(HEAD_START_ANGLE);
               calState_ = HCS_IDLE;
             }
             break;
@@ -245,7 +252,11 @@ namespace HeadController {
 #endif
       prevHalPos_ = HAL::MotorGetPosition(HAL::MOTOR_HEAD);
     }
-
+  
+    f32 GetAngularVelocity()
+    {
+      return radSpeed_;
+    }
     
     void SetAngularVelocity(const f32 rad_per_sec)
     {
@@ -253,15 +264,35 @@ namespace HeadController {
       f32 power = CLIP(rad_per_sec / HAL::MAX_HEAD_SPEED, -1.0, 1.0);
       HAL::MotorSetPower(HAL::MOTOR_HEAD, power);
       inPosition_ = true;
+      
+      /*
+      // Command a target angle based on the sign of the desired speed
+      f32 targetAngle = 0;
+      if (rad_per_sec > 0) {
+        targetAngle = MAX_HEAD_ANGLE;
+        maxSpeedRad_ = rad_per_sec;
+      } else if (rad_per_sec < 0) {
+        targetAngle = MIN_HEAD_ANGLE;
+        maxSpeedRad_ = rad_per_sec;
+      } else {
+        // Compute the expected height if we were to start slowing down now
+        f32 radToStop = 0.5f*(radSpeed_*radSpeed_) / accelRad_;
+        if (radSpeed_ < 0) {
+          radToStop *= -1;
+        }
+        targetAngle = currentAngle_.ToFloat() + radToStop;
+      }
+      SetDesiredAngle(targetAngle);
+      */
     }
-    
-    void SetSpeedAndAccel(const f32 max_speed_rad_per_sec, const f32 accel_rad_per_sec2)
+  
+    void SetMaxSpeedAndAccel(const f32 max_speed_rad_per_sec, const f32 accel_rad_per_sec2)
     {
-      maxSpeedRad_ = MAX(ABS(max_speed_rad_per_sec), approachSpeedRad_);
+      maxSpeedRad_ = ABS(max_speed_rad_per_sec);
       accelRad_ = accel_rad_per_sec2;
     }
     
-    void GetSpeedAndAccel(f32 &max_speed_rad_per_sec, f32 &accel_rad_per_sec2)
+    void GetMaxSpeedAndAccel(f32 &max_speed_rad_per_sec, f32 &accel_rad_per_sec2)
     {
       max_speed_rad_per_sec = maxSpeedRad_;
       accel_rad_per_sec2 = accelRad_;
@@ -279,6 +310,8 @@ namespace HeadController {
       
       desiredAngle_ = angle;
       angleError_ = desiredAngle_.ToFloat() - currentAngle_.ToFloat();
+      prevAngleError_ = 0;
+      
       
 #if(DEBUG_HEAD_CONTROLLER)
       PRINT("HEAD (fixedDuration): SetDesiredAngle %f rads (duration %f)\n", desiredAngle_.ToFloat(), duration_seconds);
@@ -287,13 +320,13 @@ namespace HeadController {
       f32 startRadSpeed = radSpeed_;
       f32 startRad = currentAngle_.ToFloat();
       if (!inPosition_) {
-        startRadSpeed = currDesiredRadVel_;
-        startRad = currDesiredAngle_;
+        vpg_.Step(startRadSpeed, startRad);
       } else {
         startRadSpeed = 0;
         angleErrorSum_ = 0.f;
       }
       
+      lastInPositionTime_ms_ = 0;
       inPosition_ = false;
       
       if (FLT_NEAR(angleError_,0.f)) {
@@ -320,7 +353,7 @@ namespace HeadController {
         // Start profile of head trajectory
         vpg_.StartProfile(startRadSpeed, startRad,
                           maxSpeedRad_, accelRad_,
-                          approachSpeedRad_, desiredAngle_.ToFloat(),
+                          0, desiredAngle_.ToFloat(),
                           CONTROL_DT);
 
       }
@@ -363,61 +396,48 @@ namespace HeadController {
       if(not inPosition_) {
 
         // Get the current desired head angle
-        vpg_.Step(currDesiredRadVel_, currDesiredAngle_);
+        f32 currDesiredRadVel;
+        vpg_.Step(currDesiredRadVel, currDesiredAngle_);
         
         // Compute current angle error
         angleError_ = currDesiredAngle_ - currentAngle_.ToFloat();
         
-        
-        // Open loop value to drive at desired speed
-        //power_ = currDesiredRadVel_ * SPEED_TO_POWER_OL_GAIN;
-        
-        // Compute corrective value
-        f32 power_corr = (Kp_ * angleError_) + (Ki_ * angleErrorSum_);
+        // Compute power value
+        power_ = (Kp_ * angleError_) + (Kd_ * (angleError_ - prevAngleError_) * CONTROL_DT) + (Ki_ * angleErrorSum_);
         
         // Add base power in the direction of the desired general direction
-        //power_ += power_corr + ((power_corr > 0) ? BASE_POWER_UP : BASE_POWER_DOWN);
-        //power_ += power_corr + ((power_ > 0) ? BASE_POWER_UP : BASE_POWER_DOWN);
-        power_ = power_corr + ((desiredAngle_.ToFloat() - currentAngle_.ToFloat() > 0) ? BASE_POWER_UP : BASE_POWER_DOWN);
+        if (power_ > 0) {
+          power_ += BASE_POWER;
+        } else if (power_ < 0) {
+          power_ -= BASE_POWER;
+        }
         
         // Update angle error sum
+        prevAngleError_ = angleError_;
         angleErrorSum_ += angleError_;
         angleErrorSum_ = CLIP(angleErrorSum_, -MAX_ERROR_SUM, MAX_ERROR_SUM);
         
+
         // If accurately tracking current desired angle...
-        if((ABS(angleError_) < ANGLE_TOLERANCE && desiredAngle_ == currDesiredAngle_)
-           || ABS(currentAngle_ - desiredAngle_) < ANGLE_TOLERANCE) {
-          power_ = 0.f;
-          inPosition_ = true;
-#         if(DEBUG_HEAD_CONTROLLER)
-          PRINT(" HEAD ANGLE REACHED (%f rad)\n", GetAngleRad() );
-#         endif
-        }
-        
-        
-        /*
-        // Convert angleError_ to power
-        if(ABS(angleError_) < ANGLE_TOLERANCE) {
-          angleErrorSum_ = 0.f;
+        if(((ABS(angleError_) < ANGLE_TOLERANCE) && (desiredAngle_ == currDesiredAngle_))) {
           
-          // If desired angle is low position, let it fall through to recalibration
-          if (!(RECALIBRATE_AT_LIMIT && desiredAngle_.ToFloat() == MIN_HEAD_ANGLE)) {
-            power_ = 0.f;
+          if (lastInPositionTime_ms_ == 0) {
+            lastInPositionTime_ms_ = HAL::GetTimeStamp();
+          } else if (HAL::GetTimeStamp() - lastInPositionTime_ms_ > IN_POSITION_TIME_MS) {
             
-            if (desiredAngle_ == currDesiredAngle_) {
-              inPosition_ = true;
-#             if(DEBUG_HEAD_CONTROLLER)
-              PRINT(" HEAD ANGLE REACHED (%f rad)\n", currentAngle_.ToFloat());
-#             endif
-            }
+            power_ = 0;
+            inPosition_ = true;
+            
+#         if(DEBUG_HEAD_CONTROLLER)
+            PRINT(" HEAD ANGLE REACHED (%f rad)\n", GetAngleRad() );
+#         endif
           }
         } else {
-          power_ = minPower_ + (Kp_ * angleError_) + (Ki_ * angleErrorSum_);
-          angleErrorSum_ += angleError_;
-          angleErrorSum_ = CLIP(angleErrorSum_, -MAX_ERROR_SUM, MAX_ERROR_SUM);
-          inPosition_ = false;
+          lastInPositionTime_ms_ = 0;
         }
-         */
+
+        
+        
         
 #       if(DEBUG_HEAD_CONTROLLER)
         PERIODIC_PRINT(100, "HEAD: currA %f, curDesA %f, desA %f, err %f, errSum %f, pwr %f, spd %f\n",
@@ -433,33 +453,6 @@ namespace HeadController {
         
         power_ = CLIP(power_, -1.0, 1.0);
         
-/*
-        // If within 5 degrees of MIN_HEAD_ANGLE and the head isn't moving while downward power is applied,
-        // assume we've hit the limit and recalibrate.
-        if (limitingDetected_ ||
-              ((power_ < 0)
-               && (desiredAngle_.ToFloat() == MIN_HEAD_ANGLE)
-               && (desiredAngle_.ToFloat() == currDesiredAngle_)
-               && (ABS(angleError_) < RECALIBRATE_LIMIT_ANGLE_THRESH)
-               && NEAR_ZERO(HAL::MotorGetSpeed(HAL::MOTOR_HEAD)))) {
-                
-          if (!limitingDetected_) {
-#           if(DEBUG_LIFT_CONTROLLER)
-            PRINT("START RECAL HEAD\n");
-#           endif
-            lastHeadMovedTime_us = HAL::GetMicroCounter();
-            limitingDetected_ = true;
-          } else if (HAL::GetMicroCounter() - lastHeadMovedTime_us > HEAD_STOP_TIME) {
-#           if(DEBUG_LIFT_CONTROLLER)
-            PRINT("END RECAL HEAD\n");
-#           endif
-            ResetLowAnglePosition();
-            inPosition_ = true;
-          }
-          power_ = 0.f;
-            
-        }
-*/
         
         HAL::MotorSetPower(HAL::MOTOR_HEAD, power_);
       } // if not in position
@@ -479,13 +472,16 @@ namespace HeadController {
       return RESULT_OK;
     }
     
-    void SetGains(const f32 kp, const f32 ki, const f32 maxIntegralError)
+    void SetGains(const f32 kp, const f32 ki, const f32 kd, const f32 maxIntegralError)
     {
       Kp_ = kp;
       Ki_ = ki;
+      Kd_ = kd;
       MAX_ERROR_SUM = maxIntegralError;
+      PRINT("New head gains: kp = %f, ki = %f, kd = %f, maxSum = %f\n",
+            Kp_, Ki_, Kd_, MAX_ERROR_SUM);
     }
-    
+  
     void StartNodding(const f32 lowAngle, const f32 highAngle,
                       const u16 period_ms, const s32 numLoops,
                       const f32 easeInFraction, const f32 easeOutFraction)

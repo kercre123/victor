@@ -6,8 +6,8 @@
 //  Copyright (c) 2013 Anki, Inc. All rights reserved.
 //
 
-#import "BLEManager.h"
-#import "BLECentralMultiplexer.h"
+#import "BLEManager/BLEManager.h"
+#import "BLEManager/Central/BLECentralMultiplexer.h"
 
 void BLEManagerInitialize() {
   [BLECentralMultiplexer sharedInstance];

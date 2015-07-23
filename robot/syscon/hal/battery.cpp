@@ -1,9 +1,11 @@
 #include "battery.h"
 #include "nrf.h"
 #include "nrf_gpio.h"
-#include "uart.h"
+#include "debug.h"
 #include "timer.h"
-#include "spiData.h"
+#include "anki/cozmo/robot/spineData.h"
+
+#include "hardware.h"
 
 namespace
 {
@@ -20,20 +22,11 @@ namespace
   const Fixed VBAT_EMPTY_THRESHOLD   = TO_FIXED(2.90); // V
   const Fixed VUSB_DETECT_THRESHOLD  = TO_FIXED(4.40); // V
   
-  const u8 PIN_I_SENSE     = 6;
-  const u8 PIN_V_BAT_SENSE = 26;
-  const u8 PIN_V_USB_SENSE = 27;
   const u8 ANALOG_I_SENSE     = ADC_CONFIG_PSEL_AnalogInput7;
   const u8 ANALOG_V_BAT_SENSE = ADC_CONFIG_PSEL_AnalogInput0;
   const u8 ANALOG_V_USB_SENSE = ADC_CONFIG_PSEL_AnalogInput1;
   
-  const u8 PIN_VUSBs_EN = 5; // equivalent to old CHARGE_EN
-  
-  const u8 PIN_VDD_EN = 3;             // 3.0
-  const u8 PIN_VBATs_EN = 12;
-  const u8 PIN_VDDs_EN = 8;
-
-  // Read battery dead state N times before we believe it is dead
+  // Read battery dead state N times before w e believe it is dead
   const u8 BATTERY_DEAD_CYCLES = 60;
   // Read charger contact state N times before we believe it changed
   const u8 CONTACT_DEBOUNCE_CYCLES = 30;
@@ -72,7 +65,7 @@ void BatteryInit()
   nrf_gpio_cfg_output(PIN_VBATs_EN);
   
   // Encoder and headboard power
-  nrf_gpio_pin_set(PIN_VDDs_EN);      // Off
+  nrf_gpio_pin_set(PIN_VDDs_EN);       // Off
   nrf_gpio_cfg_output(PIN_VDDs_EN);
   
   // Initially set charge en to disable charging by default

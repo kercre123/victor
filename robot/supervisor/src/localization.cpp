@@ -120,33 +120,70 @@ namespace Anki {
         lastKeyframeUpdate_ = 0;
       }
       
+      // Interpolates the pose at time targetTime which should be between historical pose1 time and historical pose2 time.
+      // Puts result in history at index poseResult_idx.
+      Result InterpolatePose(int pose1_idx, int pose2_idx, f32 targetTime, int poseResult_idx)
+      {
+        PoseStamp *p1 = &(hist_[pose1_idx]);
+        PoseStamp *p2 = &(hist_[pose2_idx]);
+
+        if (p1->t > p2->t) {
+          PRINT("ERROR (InterpolatePose): pose2 is older than pose1\n");
+          return RESULT_FAIL;
+        }
+
+        if (targetTime < p1->t || targetTime > p2->t) {
+          PRINT("ERROR (InterpolatePose): targetTime is outside of expected time range\n");
+          return RESULT_FAIL;
+        }
+        
+        f32 scale = (targetTime - p1->t) / (p2->t - p1->t);
+        
+        f32 x = p1->x + scale * (p2->x - p1->x);
+        f32 y = p1->y + scale * (p2->y - p1->y);
+        Radians angDiff = Radians(p2->angle) - Radians(p1->angle);
+        f32 angle = (Radians(p1->angle) + scale * angDiff).ToFloat();
+        
+        PoseStamp *pRes = &(hist_[poseResult_idx]);
+        pRes->x = x;
+        pRes->y = y;
+        pRes->angle = angle;
+        pRes->t = targetTime;
+        
+        return RESULT_OK;
+      }
+      
       
       Result GetHistIdx(TimeStamp_t t, u16& idx)
       {
         // TODO: Binary search for timestamp
         //       For now just doing a straight up linear search.
         
-        
-        if (hEnd_ < hStart_) {
-          for (idx = hStart_; idx < POSE_HISTORY_SIZE; ++idx) {
-            if (hist_[idx].t == t) {
-              return RESULT_OK;
-            }
-          }
-          
-          for (idx = 0; idx <= hEnd_; ++idx) {
-            if (hist_[idx].t == t) {
-              return RESULT_OK;
-            }
-          }
-          
-        } else {
-          for (idx = hStart_; idx <= hEnd_; ++idx) {
-            if (hist_[idx].t == t) {
-              return RESULT_OK;
-            }
-          }
+        // Check if t is older than oldest pose in history
+        // or newer than newest pose in history.
+        if (hSize_ < 1 || t < hist_[hStart_].t || t > hist_[hEnd_].t) {
+          return RESULT_FAIL;
         }
+        
+        u16 prevIdx = 0;
+        for (idx = hStart_; idx != hEnd_; ++idx) {
+          
+          // Check if we hit the end of the history array
+          if (idx >= POSE_HISTORY_SIZE) {
+            idx = 0;
+          }
+          
+          if (hist_[idx].t == t) {
+            return RESULT_OK;
+          } else if (hist_[idx].t > t) {
+            // TODO: Does this interpolation really help that much?
+            //       Poses in history are already really close together (5ms).
+            //       Maybe just pick the closest pose?
+            return InterpolatePose(prevIdx, idx, t, idx);
+          }
+          prevIdx = idx;
+        }
+
         return RESULT_FAIL;
       }
       
@@ -156,7 +193,12 @@ namespace Anki {
         frameId_ = frameID;
         
         u16 i;
-        if (GetHistIdx(t, i) == RESULT_FAIL) {
+        if (t == 0) {
+          // If t==0, this is considered to be a command to just update the current pose
+          PRINT("Setting pose to %f %f %f\n", x, y, angle);
+          SetCurrentMatPose(x, y, angle);
+          return RESULT_OK;
+        } else if (GetHistIdx(t, i) == RESULT_FAIL) {
           PRINT("ERROR: Couldn't find timestamp %d in history (oldest(%d) %d, newest(%d) %d)\n", t, hStart_, hist_[hStart_].t, hEnd_, hist_[hEnd_].t);
           return RESULT_FAIL;
         }
@@ -167,10 +209,12 @@ namespace Anki {
         // The frame distance between the historical pose and current pose depends on the comms latency!
         // ... as well as how often the mat markers are sent, obviously.
         if (lastKeyframeUpdate_ >= hist_[i].t) {
+          // We last updated our pose at lastKeyFrameUpdate. Ignore any new information
+          // timestamped older than lastKeyFrameUpdate.
           #if(DEBUG_POSE_HISTORY)
           PRINT("Ignoring keyframe %d at time %d\n", frameID, t);
           #endif
-          return RESULT_FAIL;
+          return RESULT_OK;
         }
         
         
@@ -589,6 +633,7 @@ namespace Anki {
             // TODO: This is definitely not totally correct, but seems to be more
             //       right than not doing it, at least from what I can see from
             //       controlling it via the webots_keyboard_controller.
+            /*
             if (rDist * lDist >= 0) {
               // rDist and lDist are the same sign or at least one of them is zero
               f32 maxVal = MAX(ABS(lDist), ABS(rDist));
@@ -597,6 +642,7 @@ namespace Anki {
               }
               cDist = cDist * (1.f-SLIP_FACTOR) + (maxVal * SLIP_FACTOR);
             }
+             */
             
             // Get ICR offset from robot origin depending on carry state
             f32 driveCenterOffset = GetDriveCenterOffset();
@@ -611,13 +657,17 @@ namespace Anki {
               cTheta_meas = CLIP(cTheta_meas, cTheta, 0);
             }
             
+
+            /*
             // Assuming that the actual distance travelled is the expected distance
             // travelled (based on encoders) scaled by the
             // measured rotation (cTheta_meas) / the expected rotation based on encoders (cTheta)
             // We only bother doing this if rotation is not too small.
-            if (ABS(cTheta_meas) > 0.001f) {
+            if (ABS(cTheta) > 0.003f) {
               cDist *= cTheta_meas / cTheta;
             }
+             */
+
             
             driveCenter_x_ = x_ + driveCenterOffset * cosf(orientation_.ToFloat());
             driveCenter_y_ = y_ + driveCenterOffset * sinf(orientation_.ToFloat());
@@ -761,6 +811,12 @@ namespace Anki {
         angle = orientation_;
       } // GetCurrentMatPose()
 
+      Embedded::Pose2d GetCurrPose()
+      {
+        Embedded::Pose2d p(x_, y_, orientation_);
+        return p;
+      }
+      
       void GetDriveCenterPose(f32& x, f32& y, Radians& angle)
       {
         x = driveCenter_x_;

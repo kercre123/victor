@@ -8,6 +8,18 @@ function jsonData = sanitizeJsonTest(jsonData)
         jsonData.Poses = {jsonData.Poses};
     end
     
+    if isfield(jsonData, 'Blocks')
+        if isstruct(jsonData.Blocks)
+            jsonData.Blocks = {jsonData.Blocks};
+        end
+    
+        for i = 1:length(jsonData.Blocks)
+            if ~isfield(jsonData.Blocks{i}, 'templateWidth_mm')
+                jsonData.Blocks{i}.templateWidth_mm = 0;
+            end
+        end
+    end
+    
     if ~isfield(jsonData, 'NumMarkersWithContext')
         jsonData.NumMarkersWithContext = 0;
     end

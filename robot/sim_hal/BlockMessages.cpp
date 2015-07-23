@@ -8,7 +8,7 @@ namespace Anki {
       
       
       // Auto-gen the ProcessBufferAs_MessageX() method prototypes using macros:
-#define MESSAGE_DEFINITION_MODE MESSAGE_PROCESS_METHODS_MODE
+#     define MESSAGE_DEFINITION_MODE MESSAGE_PROCESS_METHODS_MODE
 #     include "BlockMessageDefinitions.def"
       
       
@@ -22,7 +22,7 @@ namespace Anki {
       } lookupTable_[NUM_BLOCK_MSG_IDS+1] = {
         {0, 0, 0}, // Empty entry for NO_MESSAGE_ID
         
-#define MESSAGE_DEFINITION_MODE MESSAGE_TABLE_DEFINITION_MODE
+#     define MESSAGE_DEFINITION_MODE MESSAGE_TABLE_DEFINITION_MODE
 #     include "BlockMessageDefinitions.def"
         
         {0, 0, 0} // Final dummy entry without comma at end

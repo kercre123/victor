@@ -22,6 +22,10 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include <assert.h>
 
+#if USE_NEAREST_NEIGHBOR_RECOGNITION
+#  include "anki/cozmo/robot/nearestNeighborLibraryData.h"
+#endif 
+
 #define INITIALIZE_WITH_DEFINITION_TYPE 0
 //#define NUM_BITS 25 // TODO: make general
 #define NUM_BITS MAX_FIDUCIAL_MARKER_BITS // TODO: Why do we need a separate NUM_BITS?
@@ -38,14 +42,18 @@ For internal use only. No part of this code may be used without a signed non-dis
 #undef SHOW_EXHAUSTIVE_STEPS
 #endif
 
+#define DEBUG_BRIGHT_DARK_PAIRS 0
+
 namespace Anki
 {
   namespace Embedded
   {
+#   if !USE_NEAREST_NEIGHBOR_RECOGNITION
     FiducialMarkerDecisionTree VisionMarker::multiClassTrees[VisionMarkerDecisionTree::NUM_TREES];
 
     bool VisionMarker::areTreesInitialized = false;
-
+#   endif
+    
     BlockMarker::BlockMarker()
     {
     } // BlockMarker::BlockMarker()
@@ -592,8 +600,43 @@ namespace Anki
       return RESULT_OK;
     }
 
+#   if USE_NEAREST_NEIGHBOR_RECOGNITION
+    NearestNeighborLibrary& VisionMarker::GetNearestNeighborLibrary()
+    {
+      
+      static NearestNeighborLibrary nearestNeighborLibrary(NearestNeighborData,
+                                                           NearestNeighborWeights,
+                                                           NearestNeighborLabels,
+                                                           NUM_MARKERS_IN_LIBRARY,
+                                                           NUM_PROBES,
+                                                           ProbeCenters_X, ProbeCenters_Y,
+                                                           ProbePoints_X,  ProbePoints_Y,
+                                                           NUM_PROBE_POINTS,
+                                                           NN_NUM_FRACTIONAL_BITS);
+      
+      /*
+      // HoG version:
+      static NearestNeighborLibrary nearestNeighborLibrary(NearestNeighborData,
+                                                           NearestNeighborLabels,
+                                                           NUM_MARKERS_IN_LIBRARY,
+                                                           NUM_PROBES,
+                                                           ProbeCenters_X, ProbeCenters_Y,
+                                                           ProbePoints_X,  ProbePoints_Y,
+                                                           NUM_PROBE_POINTS,
+                                                           NN_NUM_FRACTIONAL_BITS,
+                                                           4, 8);
+      */
+      
+      return nearestNeighborLibrary;
+    }
+#   endif
+
+    
     void VisionMarker::Initialize()
     {
+      
+#     if !USE_NEAREST_NEIGHBOR_RECOGNITION
+      
       if(VisionMarker::areTreesInitialized == false) {
         using namespace VisionMarkerDecisionTree;
 
@@ -610,13 +653,93 @@ namespace Anki
         
         VisionMarker::areTreesInitialized = true;
       } // IF trees initialized
+      
+#     endif // USE_NEAREST_NEIGHBOR_RECOGNITION
+      
     }
+    
+    Vision::MarkerType VisionMarker::RemoveOrientation(Vision::MarkerType orientedMarker)
+    {
+#     if USE_NEAREST_NEIGHBOR_RECOGNITION
+      return RemoveOrientationLUT[orientedMarker];
+#     else
+      return VisionMarkerDecisionTree::RemoveOrientationLUT[orientedMarker];
+#     endif
+    }
+
+#if 0
+    Result VisionMarker::ComputeBrightDarkValues(const Array <u8> &image,
+                                                 const Array<f32> &homography, const f32 minContrastRatio,
+                                                 f32& brightValue, f32& darkValue, bool& enoughContrast)
+    {
+      const s32 imageHeight = image.get_size(0);
+      const s32 imageWidth = image.get_size(1);
+      
+      const f32 h00 = homography[0][0];
+      const f32 h10 = homography[1][0];
+      const f32 h20 = homography[2][0];
+      const f32 h01 = homography[0][1];
+      const f32 h11 = homography[1][1];
+      const f32 h21 = homography[2][1];
+      const f32 h02 = homography[0][2];
+      const f32 h12 = homography[1][2];
+      const f32 h22 = homography[2][2];
+      
+      static const Quadrilateral<f32> outsideQuad(Point<f32>(0,0), Point<f32>(0,1), Point<f32>(1,1), Point<f32>(1,0));
+      static const Quadrilateral<f32> insideQuad(Point<f32>(0.2,0.2), Point<f32>(0.2,.8), Point<f32>(.8,.8), Point<f32>(0.8,0.2));
+      
+      static const Quadrilateral<f32>* quads[2] = {&outsideQuad, &insideQuad};
+      static const u8 fillValues[2] = {1,0};
+      
+      cv::Mat_<u8> mask = cv::Mat_<u8>::zeros(imageHeight, imageWidth);
+      
+      for(s32 iQuad=0; iQuad<2; ++iQuad) {
+        const Quadrilateral<f32>& quad = *(quads[iQuad]);
+        cv::vector<cv::Point> cvQuad(4);
+        
+        for(s32 i=0; i<4; ++i) {
+          
+          const f32 x = quad[i].x;
+          const f32 y = quad[i].y;
+          
+          const f32 homogenousDivisor = 1.0f / (h20*x + h21*y + h22);
+          
+          const f32 warpedXf = (h00 * x + h01 * y + h02) * homogenousDivisor;
+          const f32 warpedYf = (h10 * x + h11 * y + h12) * homogenousDivisor;
+          
+          cvQuad[i].x = Round<s32>(warpedXf);
+          cvQuad[i].y = Round<s32>(warpedYf);
+          
+        }
+        cv::fillConvexPoly(mask, cvQuad, fillValues[iQuad]);
+      }
+      
+      // DEBUG: Show mask
+      //cv::imshow("Min/Max Mask", mask*255);
+      //cv::waitKey(5);
+      
+      cv::Mat cvImage;
+      ArrayToCvMat(image, &cvImage);
+      double darkValueF64, brightValueF64;
+      cv::minMaxLoc(cvImage, &darkValueF64, &brightValueF64, 0, 0, mask);
+      
+      darkValue   = static_cast<f32>(darkValueF64);
+      brightValue = static_cast<f32>(brightValueF64);
+      
+      enoughContrast = (brightValue > minContrastRatio * darkValue);
+      
+      return RESULT_OK;
+    }
+#endif
+    
 
     Result VisionMarker::ComputeBrightDarkValues(const Array <u8> &image,
       const Array<f32> &homography, const f32 minContrastRatio,
       f32& brightValue, f32& darkValue, bool& enoughContrast)
     {
+#     if !USE_NEAREST_NEIGHBOR_RECOGNITION
       using namespace VisionMarkerDecisionTree;
+#     endif
 
       Result lastResult = RESULT_OK;
 
@@ -637,7 +760,11 @@ namespace Anki
 
       f32 fixedPointDivider;
 
+#     if USE_NEAREST_NEIGHBOR_RECOGNITION
+      const s32 numFracBits = GetNearestNeighborLibrary().GetNumFractionalBits();
+#     else
       const s32 numFracBits = VisionMarker::multiClassTrees[0].get_numFractionalBits();
+#     endif
 
       AnkiAssert(numFracBits >= 0);
 
@@ -651,6 +778,41 @@ namespace Anki
         probePointsY_F32[i_pt] = static_cast<f32>(ProbePoints_Y[i_pt]) * fixedPointDivider;
       }
 
+#     if DEBUG_BRIGHT_DARK_PAIRS
+      cv::Mat brightDarkPairsImage;
+      ArrayToCvMat(image, &brightDarkPairsImage);
+      cv::cvtColor(brightDarkPairsImage, brightDarkPairsImage, CV_GRAY2BGR);
+      {
+        static const Quadrilateral<f32> outsideQuad(Point<f32>(0,0), Point<f32>(0,1), Point<f32>(1,1), Point<f32>(1,0));
+        static const Quadrilateral<f32> insideQuad(Point<f32>(0.2,0.2), Point<f32>(0.2,.8), Point<f32>(.8,.8), Point<f32>(0.8,0.2));
+        static const Quadrilateral<f32> middleQuad(Point<f32>(0.1,0.1), Point<f32>(0.1,.9), Point<f32>(.9,.9), Point<f32>(0.9,0.1));
+        static const Quadrilateral<f32>* quads[3] = {&outsideQuad, &insideQuad, &middleQuad};
+        
+        cv::Mat_<u8> mask = cv::Mat_<u8>::zeros(imageHeight, imageWidth);
+        
+        for(s32 iQuad=0; iQuad<3; ++iQuad) {
+          const Quadrilateral<f32>& quad = *(quads[iQuad]);
+          cv::vector<cv::Point> cvQuad(4);
+          
+          for(s32 i=0; i<4; ++i) {
+            
+            const f32 x = quad[i].x;
+            const f32 y = quad[i].y;
+            
+            const f32 homogenousDivisor = 1.0f / (h20*x + h21*y + h22);
+            
+            const f32 warpedXf = (h00 * x + h01 * y + h02) * homogenousDivisor;
+            const f32 warpedYf = (h10 * x + h11 * y + h12) * homogenousDivisor;
+            
+            cvQuad[i].x = Round<s32>(warpedXf);
+            cvQuad[i].y = Round<s32>(warpedYf);
+            
+          }
+          cv::polylines(brightDarkPairsImage, cvQuad, true, cv::Scalar(0,0,255));
+        }
+      }
+#     endif
+      
       enoughContrast = true;
 
       const f32 divisor = 1.f / static_cast<f32>(NUM_PROBE_POINTS);
@@ -688,6 +850,12 @@ namespace Anki
             const u8 imageValue = *image.Pointer(warpedY, warpedX);
 
             darkAccumulator += imageValue;
+            
+#           if DEBUG_BRIGHT_DARK_PAIRS
+            if(probePointsX_F32[i_pt]==0.f && probePointsY_F32[i_pt]==0.f) {
+              cv::circle(brightDarkPairsImage, cv::Point(warpedX,warpedY), 2, cv::Scalar(0,255,255), -1);
+            }
+#           endif
           }
 
           { // Bright points
@@ -711,10 +879,20 @@ namespace Anki
             const u8 imageValue = *image.Pointer(warpedY, warpedX);
 
             brightAccumulator += imageValue;
+            
+#           if DEBUG_BRIGHT_DARK_PAIRS
+            if(probePointsX_F32[i_pt]==0.f && probePointsY_F32[i_pt]==0.f) {
+              cv::circle(brightDarkPairsImage, cv::Point(warpedX,warpedY), 2, cv::Scalar(255,0,0), -1);
+            }
+#           endif
           }
         } // FOR each probe point
 
-        /*
+#       if DEBUG_BRIGHT_DARK_PAIRS
+        cv::imshow("Bright/Dark Probes", brightDarkPairsImage);
+        cv::waitKey(5);
+#       endif
+        
         brightValue = static_cast<f32>(brightAccumulator) * divisor;
         darkValue   = static_cast<f32>(darkAccumulator)   * divisor;
         if(brightValue < minContrastRatio * darkValue) {
@@ -722,7 +900,6 @@ namespace Anki
           enoughContrast = false;
           return RESULT_OK;
         }
-         */
 
         totalBrightAccumulator += brightAccumulator;
         totalDarkAccumulator   += darkAccumulator;
@@ -732,6 +909,8 @@ namespace Anki
       brightValue = static_cast<f32>(totalBrightAccumulator) * totalDivisor;
       darkValue   = static_cast<f32>(totalDarkAccumulator)   * totalDivisor;
 
+      enoughContrast = brightValue > minContrastRatio * darkValue;
+      
       return lastResult;
     }
 
@@ -816,13 +995,17 @@ namespace Anki
       return lastResult;
     } // RefineCorners()
 
-    Result VisionMarker::Extract(
-      const Array<u8> &image,
-      const Array<f32> &homography, const u8 meanGrayvalueThreshold,
-      const f32 minContrastRatio,
-      MemoryStack scratch)
+    
+    
+    Result VisionMarker::Extract(const Array<u8> &image,
+                                 const Array<f32> &homography,
+                                 const u8 grayvalueThreshold, // Trees: for thresholding probes, NN: max distance threshold
+                                 const f32 minContrastRatio,
+                                 MemoryStack scratch)
     {
+#     if !USE_NEAREST_NEIGHBOR_RECOGNITION
       using namespace VisionMarkerDecisionTree;
+#     endif
 
       Result lastResult = RESULT_FAIL;
 
@@ -833,10 +1016,37 @@ namespace Anki
 
       Initialize();
 
-      BeginBenchmark("vme_classify");
-
       //s16 multiClassLabel = static_cast<s16>(MARKER_UNKNOWN);
 
+      bool verified = false;
+      OrientedMarkerLabel selectedLabel = MARKER_UNKNOWN;
+      
+#     if USE_NEAREST_NEIGHBOR_RECOGNITION
+
+      BeginBenchmark("vme_classify_nn");
+      
+      s32 label=-1;
+      s32 distance = grayvalueThreshold;
+      lastResult = VisionMarker::GetNearestNeighborLibrary().GetNearestNeighbor(image, homography, grayvalueThreshold, label, distance);
+      AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
+                                         "VisionMarker.Extract",
+                                         "Failed finding nearest neighbor.\n");
+      
+      if(label != -1) {
+        AnkiConditionalWarn(distance < grayvalueThreshold, "VisionMarker.Extract",
+                            "Valid label returned as nearest neighbor, but distance (%d) above threshold (%d).\n",
+                            distance, grayvalueThreshold);
+        verified = true;
+        selectedLabel = static_cast<OrientedMarkerLabel>(label);
+      }
+      
+      EndBenchmark("vme_classify_nn");
+      
+      BeginBenchmark("vme_verify");
+      
+#     else
+      BeginBenchmark("vme_classify_tree");
+      
       AnkiAssert(NUM_TREES <= u8_MAX);
       u8 predictedLabelsHist[NUM_MARKER_LABELS_ORIENTED];
       for(s32 iLabel=0; iLabel<NUM_MARKER_LABELS_ORIENTED; ++iLabel) {
@@ -845,7 +1055,7 @@ namespace Anki
       
       for(s32 iTree=0; iTree < NUM_TREES; ++iTree) {
         s32 tempLabel;
-        if((lastResult = VisionMarker::multiClassTrees[iTree].Classify(image, homography, meanGrayvalueThreshold, tempLabel)) != RESULT_OK) {
+        if((lastResult = VisionMarker::multiClassTrees[iTree].Classify(image, homography, grayvalueThreshold, tempLabel)) != RESULT_OK) {
           return lastResult;
         }
         AnkiAssert(tempLabel < NUM_MARKER_LABELS_ORIENTED);
@@ -853,43 +1063,48 @@ namespace Anki
         ++predictedLabelsHist[tempLabel];
       }
       
-      EndBenchmark("vme_classify");
-
+      
+      EndBenchmark("vme_classify_tree");
+      
       BeginBenchmark("vme_verify");
       // See if a majority of the trees voted for the same label
       // TODO: use plurality of trees instead?
-      OrientedMarkerLabel labelWithMaxVotes = MARKER_UNKNOWN;
+      
       u8 maxVotes = 0;
       for(s32 iLabel=0; iLabel<NUM_MARKER_LABELS_ORIENTED; ++iLabel) {
         if(predictedLabelsHist[iLabel] > maxVotes) {
           maxVotes = predictedLabelsHist[iLabel];
-          labelWithMaxVotes = static_cast<OrientedMarkerLabel>(iLabel);
+          selectedLabel = static_cast<OrientedMarkerLabel>(iLabel);
         }
       }
       
       AnkiConditionalErrorAndReturnValue(maxVotes>0, RESULT_FAIL, "VisionMarker.Extract.NoVotes", "No votes given to any marker label.\n")
-      AnkiConditionalErrorAndReturnValue(labelWithMaxVotes>=0, RESULT_FAIL, "VisionMarker.Extract.NoBestLabel", "No label with max votes selected.\n");
+      AnkiConditionalErrorAndReturnValue(selectedLabel>=0, RESULT_FAIL, "VisionMarker.Extract.NoBestLabel", "No label with max votes selected.\n");
       
       const f32 numVotesForMajority = static_cast<f32>(NUM_TREES)*0.5f;
-      if(static_cast<f32>(maxVotes) > numVotesForMajority &&
-         labelWithMaxVotes != MARKER_INVALID_000 &&
-         labelWithMaxVotes != MARKER_UNKNOWN)
+      verified = (static_cast<f32>(maxVotes) > numVotesForMajority &&
+                  selectedLabel != MARKER_INVALID_000 &&
+                  selectedLabel != MARKER_UNKNOWN);
+      
+#     endif // USE_NEAREST_NEIGHBOR_RECOGNITION
+      
+      if(verified)
       {
         // We have a valid, verified classification.
         
         // 1. Get the unoriented type
-        this->markerType = RemoveOrientationLUT[labelWithMaxVotes];
+        this->markerType = RemoveOrientationLUT[selectedLabel];
         
         // 2. Reorder the original detected corners to the canonical ordering for
         // this type
         const Quadrilateral<f32> initQuad = this->corners;
         for(s32 i_corner=0; i_corner<4; ++i_corner)
         {
-          this->corners[i_corner] = initQuad[CornerReorderLUT[labelWithMaxVotes][i_corner]];
+          this->corners[i_corner] = initQuad[CornerReorderLUT[selectedLabel][i_corner]];
         }
         
         // 3. Keep track of what the original orientation was
-        this->observedOrientation = ObservedOrientationLUT[labelWithMaxVotes];
+        this->observedOrientation = ObservedOrientationLUT[selectedLabel];
         
         // Mark this as a valid marker (note that reaching this point should
         // be the only way isValid is true.
@@ -935,7 +1150,7 @@ namespace Anki
     {
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
       const s32 MAX_NAME_LENGTH = 1024;
-      s32 nameLength = strlen(name);
+      std::size_t nameLength = strlen(name);
 
       // Remove the start "marker_" if it is present
       if(nameLength >= 7) {

@@ -6,11 +6,11 @@
 //  Copyright (c) 2013 Mark Pauley. All rights reserved.
 //
 
-#import "BLENetworkServer.h"
-#import "BLECentralMultiplexer.h"
-#import "BLECentralServiceDescription.h"
-#import "BLELog.h"
-#import "BLENetworkingInterfacePrivate.h"
+#import "BLEManager/Networking/Server/BLENetworkServer.h"
+#import "BLEManager/Central/BLECentralMultiplexer.h"
+#import "BLEManager/Central/BLECentralServiceDescription.h"
+#import "BLEManager/Logging/BLELog.h"
+#import "BLEManager/Networking/BLENetworkingInterfacePrivate.h"
 #import <limits.h>
 
 static CBUUID* NetworkServiceID;

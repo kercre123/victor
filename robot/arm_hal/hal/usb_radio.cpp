@@ -23,13 +23,12 @@ namespace Anki {
   namespace Cozmo {
 
     namespace { // "Private members"
-      const u16 RECV_BUFFER_SIZE = 1024;
+      const u16 RECV_BUFFER_SIZE = 1024 * 4;
 
       u8 recvBuf_[RECV_BUFFER_SIZE];
       s32 recvBufSize_ = 0;
 
       u8 somWifiState = 0;
-      u8 somBlueState = 0;
     }
 
     Result InitSimRadio(s32 robotID)
@@ -46,47 +45,31 @@ namespace Anki {
       else
       {
         somWifiState = wifi;
-        somBlueState = blue;
       }
     }
 
     bool HAL::RadioIsConnected(void)
     {
-      // Always assumes radio is connected
-      //return true;
-
-      // 2.0 version
-      //return HAL::WifiHasClient();
-
-      if (somBlueState != 0) return true;
       if (somWifiState != 0) return true;
       return false;
     }
 
     void HAL::DisconnectRadio(void)
     {
-      somBlueState = 0;
       somWifiState = 0;
       recvBufSize_ = 0;
     }
 
 #ifndef RUN_EMBEDDED_TESTS
-    bool HAL::RadioSendMessage(const Messages::ID msgID, const void *buffer)
+    bool HAL::RadioSendPacket(const void *buffer, const u32 length, const u8 socket)
     {
 #if(USING_UART_RADIO)
-
-        // Send the message header (0xBEEF + timestamp + robotID + msgID)
-        // For TCP comms, send timestamp immediately after the header.
-        // This is needed on the basestation side to properly order messages.
-
-        // Send header and message content - return false if message was discarded (full buffer)
-        const u32 size = Messages::GetSize(msgID);
-        return UARTPutMessage(msgID, (u8*)buffer, size);
+        return UARTPutPacket((u8*)buffer, length, socket);
 #else
         return true;
 #endif
 
-    } // RadioSendMessage()
+    } // RadioSendPacket()
 #endif // #ifndef RUN_EMBEDDED_TESTS
 
     u32 RadioGetNumBytesAvailable(void)
@@ -95,9 +78,11 @@ namespace Anki {
       // Pull as many inbound chars as we can into our local buffer
       while (recvBufSize_ < RECV_BUFFER_SIZE)
       {
-        int c = HAL::UARTGetChar(0);
+        int c = HAL::UARTGetChar();
         if (c < 0)    // Nothing more to grab
+        {
           return recvBufSize_;
+        }
         recvBuf_[recvBufSize_++] = c;
       }
 #endif
@@ -110,9 +95,9 @@ namespace Anki {
     // TODO: would be nice to implement this in a way that is not specific to
     //       hardware vs. simulated radio receivers, and just calls lower-level
     //       radio functions.
-    Messages::ID HAL::RadioGetNextMessage(u8 *buffer)
+    u32 HAL::RadioGetNextPacket(u8 *buffer)
     {
-      Messages::ID retVal = Messages::NO_MESSAGE_ID;
+      u32 retVal = 0;
 
 #if(USING_UART_RADIO)
 //      if (server.HasClient()) {
@@ -147,33 +132,23 @@ namespace Anki {
             memcpy(recvBuf_, hPtr, recvBufSize_);
           }
 
-          // Check if expected number of bytes are in the msg
+          // Check if expected number of bytes are in the packet
           if (recvBufSize_ > headerSize) {
             u32 dataLen = recvBuf_[headerSize] +
                           (recvBuf_[headerSize+1] << 8) +
                           (recvBuf_[headerSize+2] << 16) +
                           (recvBuf_[headerSize+3] << 24);
 
-            if (dataLen > 255) {
-              // We shouldn't be sending huge messages to the robot
-              PRINT("WARNING(RecvdMsgTooBig): %d bytes\n", dataLen);
-              dataLen = 255;
+            // Sanity check
+            if (dataLen > 1600) {
+              recvBufSize_ = 0;
+              return retVal;
             }
-
+            
             if (recvBufSize_ >= headerSize + 4 + dataLen) {
-
-              // Check that message size is correct
-              Messages::ID msgID = static_cast<Messages::ID>(recvBuf_[headerSize+4]);
-              const u8 size = Messages::GetSize(msgID);
-              u32 msgLen = dataLen - 1;  // Doesn't include msgID
-
-              if (msgLen != size) {
-                PRINT("WARNING: Message size mismatch: ID %d, expected %d bytes, but got %d bytes\n", msgID, size, msgLen);
-              }
-
               // Copy message contents to buffer
-              std::memcpy((void*)buffer, recvBuf_ + headerSize + 4 + 1, msgLen);
-              retVal = msgID;
+              std::memcpy((void*)buffer, recvBuf_ + headerSize + 4, dataLen);
+              retVal = dataLen;
 
               // Shift recvBuf contents down
               const u32 entireMsgSize = headerSize + 4 + dataLen;

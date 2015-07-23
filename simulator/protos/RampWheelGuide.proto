@@ -11,13 +11,13 @@ PROTO RampWheelGuide [
 {
 
 %{ 
-  width1 = fields.outerWidth/2
-  width2 = fields.innerWidth/2
-  offset = -fields.guideWidth
-  if fields.side=="Right" then
-    width1 = -fields.outerWidth/2 + fields.guideWidth
-    width2 = -fields.innerWidth/2 + fields.guideWidth
-    offset = -fields.guideWidth
+  width1 = fields.outerWidth.value/2
+  width2 = fields.innerWidth.value/2
+  offset = -fields.guideWidth.value
+  if fields.side.value=="Right" then
+    width1 = -fields.outerWidth.value/2 + fields.guideWidth.value
+    width2 = -fields.innerWidth.value/2 + fields.guideWidth.value
+    offset = -fields.guideWidth.value
   end
 }%
 
@@ -39,13 +39,13 @@ Shape {
         .209    %{=width1}%   .044    # 5
         .228    %{=width1}%   .044    # 6
         
-        0       %{=width1}%   %{=0    + fields.height}%    # 7
-        .032    %{=width2}%   %{=.011 + fields.height}%    # 8  (Correct Z here??)
-        .103    %{=width2}%   %{=.035 + fields.height}%    # 9
-        .137    %{=width2}%   %{=.040 + fields.height}%    # 10
-        .173    %{=width2}%   %{=.044 + fields.height}%    # 11
-        .209    %{=width1}%   %{=.044 + fields.height}%    # 12
-        .228    %{=width1}%   %{=.044 + fields.height}%    # 13
+        0       %{=width1}%   %{=0    + fields.height.value}%    # 7
+        .032    %{=width2}%   %{=.011 + fields.height.value}%    # 8  (Correct Z here??)
+        .103    %{=width2}%   %{=.035 + fields.height.value}%    # 9
+        .137    %{=width2}%   %{=.040 + fields.height.value}%    # 10
+        .173    %{=width2}%   %{=.044 + fields.height.value}%    # 11
+        .209    %{=width1}%   %{=.044 + fields.height.value}%    # 12
+        .228    %{=width1}%   %{=.044 + fields.height.value}%    # 13
         
         0       %{=width1+offset}%   0       # 0
         .032    %{=width2+offset}%   .011    # 1  (Correct Z here??)
@@ -55,13 +55,13 @@ Shape {
         .209    %{=width1+offset}%   .044    # 5
         .228    %{=width1+offset}%   .044    # 6
         
-        0       %{=width1+offset}%   %{=0    + fields.height}%    # 7
-        .032    %{=width2+offset}%   %{=.011 + fields.height}%    # 8  (Correct Z here??)
-        .103    %{=width2+offset}%   %{=.035 + fields.height}%    # 9
-        .137    %{=width2+offset}%   %{=.040 + fields.height}%    # 10
-        .173    %{=width2+offset}%   %{=.044 + fields.height}%    # 11
-        .209    %{=width1+offset}%   %{=.044 + fields.height}%    # 12
-        .228    %{=width1+offset}%   %{=.044 + fields.height}%    # 13
+        0       %{=width1+offset}%   %{=0    + fields.height.value}%    # 7
+        .032    %{=width2+offset}%   %{=.011 + fields.height.value}%    # 8  (Correct Z here??)
+        .103    %{=width2+offset}%   %{=.035 + fields.height.value}%    # 9
+        .137    %{=width2+offset}%   %{=.040 + fields.height.value}%    # 10
+        .173    %{=width2+offset}%   %{=.044 + fields.height.value}%    # 11
+        .209    %{=width1+offset}%   %{=.044 + fields.height.value}%    # 12
+        .228    %{=width1+offset}%   %{=.044 + fields.height.value}%    # 13
       ]
     }
     coordIndex [

@@ -7,10 +7,15 @@ PROTO CozmoBot [
   field SFRotation rotation 0 0 1 0
   field SFString name "Cozmo"
 
+  # CVGA Crop:
+  field SFInt32  cameraWidth  400
+  field SFInt32  cameraHeight 296
+  field SFFloat  fieldOfView  1.2
+
   # QVGA Crop:
-  field SFInt32  cameraWidth  320
-  field SFInt32  cameraHeight 240
-  field SFFloat  fieldOfView  0.72
+#  field SFInt32  cameraWidth  320
+#  field SFInt32  cameraHeight 240
+#  field SFFloat  fieldOfView  0.72
   
   # VGA Wide:
 #    field SFInt32  cameraWidth  640
@@ -21,7 +26,7 @@ PROTO CozmoBot [
 
   field SFFloat headAngle          0
   field SFFloat headAngle_lowLimit -0.4363 # 25 degrees down
-  field SFFloat headAngle_highLimit 0.6981 # 40 degrees up
+  field SFFloat headAngle_highLimit 0.6108 # 35 degrees up
   
   field SFFloat liftAngle 0
   field SFFloat liftAngle_lowLimit  -0.01  # Should be 0, but Webots needs it to be less than liftAngle
@@ -30,13 +35,19 @@ PROTO CozmoBot [
 
   field SFInt32 usbChannel 88
   
-  field SFString controller "cozmo_c_controller"
+  field SFString controller "webotsCtrlRobot"
   field SFString controllerArgs ""
 
   field SFColor bodyColor 0.92 0.92 0.8
 
   # Set to TRUE if you just want to use the model for visualization.
   field SFBool vizMode FALSE
+  
+  # Set to TRUE to use treads
+  field SFBool useTreads TRUE
+
+  # Whether or not to enable video
+  field SFBool enableVideo TRUE
 ]
 {
 
@@ -45,7 +56,7 @@ Supervisor {
   rotation IS rotation
   name IS name
 
-  %{ if not fields.vizMode then }%
+  %{ if not fields.vizMode.value then }%
   controller IS controller
   controllerArgs IS controllerArgs
   %{ else }%
@@ -53,7 +64,7 @@ Supervisor {
   controllerArgs ""
   %{ end }%
   
-  %{ if not fields.vizMode then }%
+  %{ if not fields.vizMode.value then }%
   physics Physics {
     density 0.1
     #mass 0.17 # about 6 ounces
@@ -93,7 +104,7 @@ Supervisor {
 							translation 0.015 0 0
 							children [
 							Shape {
-								appearance Appearance {
+								appearance DEF MAIN_BODY_APPEARANCE Appearance {
 								material Material {
 									diffuseColor IS bodyColor
 									shininess 0
@@ -111,11 +122,7 @@ Supervisor {
 							translation -0.015 0 0
 							children [
 								Shape {
-									appearance Appearance {
-										material Material {
-											diffuseColor IS bodyColor
-										}
-									}  
+									appearance USE MAIN_BODY_APPEARANCE 
 									geometry Cylinder {
 										height 0.0322
 										radius 0.013
@@ -125,19 +132,36 @@ Supervisor {
 							]
 						}
 						Shape {
-							appearance Appearance {
-								material Material {
-									diffuseColor IS bodyColor
-								}
-							}  
+							appearance USE MAIN_BODY_APPEARANCE  
 							geometry Box {
 								size 0.03 0.0322 0.026
 							}
 						}
+
 					] # BODY_SHAPE Group children
 				} # BODY_SHAPE Group
+
+				Transform {
+				  translation 0 0 -0.013
+				  rotation 0 1 0 3.14159
+				  children [
+					Connector {
+					  name			"ChargeContact"
+					  model         "ChargeContact"
+					  type 			"symmetric"
+					  isLocked		FALSE
+					  autoLock		FALSE
+					  distanceTolerance	0.01
+					  axisTolerance		0.2
+					  rotationTolerance 	1.5708
+					  numberOfRotations 	4
+					  snap			FALSE
+					}
+				  ]
+				}
+
 		  ] # BODY Solid children
-		  %{ if not fields.vizMode then }%
+		  %{ if not fields.vizMode.value then }%
 		  boundingObject USE BODY_SHAPE
 		  physics Physics {
 			 density 3000
@@ -156,7 +180,7 @@ Supervisor {
 					minStop IS headAngle_lowLimit
 					axis 0 -1 0
 			  }
-			  %{ if not fields.vizMode then }%
+			  %{ if not fields.vizMode.value then }%
 			  device [
 			    RotationalMotor {
 					name "HeadMotor"
@@ -190,175 +214,7 @@ Supervisor {
 								subdivision 12
 							}
 						}
-						DEF EYES Transform {
-							translation 0.02 0 0.002
-							children [
 
-							# Create master eye segment since changing the color of the LED of the segment
-							# that the other segments are copied from changes all of them which is not the
-							# behavior we want.
-							DEF MASTER_EYE_SEGMENT Transform {
-								# Hide segment behind face plate
-								translation -0.001 0.006 0.003
-								children [
-
-								  DEF EYE_SHAPE Shape {
-									appearance Appearance {
-										material Material {
-											ambientIntensity 0.6
-											diffuseColor 0.5 0.5 0.5
-										}
-									}
-									geometry IndexedFaceSet {
-										coord Coordinate {
-										  point [ 0 0.004 0.0005, 0 0.0037  0.0015,  0 0.0028 0.0028, 0 0.0015  0.0037,  0 0.0005 0.004,  # Outside arc
-										          0 0.002 0.0005, 0 0.00185 0.00075, 0 0.0014 0.0014, 0 0.00075 0.00185, 0 0.0005 0.002   # Inside arc
-										  ]
-										}
-										coordIndex [ 
-										  0 1 5 -1
-										  5 1 6 -1
-										  6 1 2 -1     
-										  6 2 7 -1
-    										  7 2 8 -1
-										  8 2 3 -1
-										  8 3 4 -1 
-										  9 8 4 -1
-										]
-									}
-
-
-
-								  }
-
-								]
-							}
-
-
-							DEF LEFT_EYE_TOP Transform {
-								translation 0.001 0.006 0
-								rotation 1 0 0 0.7854
-								children [
-								  LED {
-								    name "LeftEyeLED_top"
-                                                                    color []
-								    gradual TRUE
-								    children [
-								      USE EYE_SHAPE
-								    ]
-								  }
-								]
-							}
-
-							
-							DEF LEFT_EYE_LEFT Transform {
-								translation 0.001 0.006 0
-								rotation 1 0 0 -0.7854
-								children [
-								  LED {
-								    name "LeftEyeLED_left"
-								    color []
-								    gradual TRUE
-								    children [
-								      USE EYE_SHAPE
-								    ]
-								  }
-								]
-							}
-
-							DEF LEFT_EYE_BOTTOM Transform {
-								translation 0.001 0.006 0
-								rotation 1 0 0 -2.3562
-								children [
-								  LED {
-								    name "LeftEyeLED_bottom"
-								    color []
-								    gradual TRUE
-								    children [
-								      USE EYE_SHAPE
-								    ]
-								  }
-								]
-							}
-
-							DEF LEFT_EYE_RIGHT Transform {
-								translation 0.001 0.006 0
-								rotation 1 0 0 2.3562
-								children [
-								  LED {
-								    name "LeftEyeLED_right"
-								    color []
-								    gradual TRUE
-								    children [
-								      USE EYE_SHAPE
-								    ]
-								  }
-								]
-							}
-
-							DEF RIGHT_EYE_TOP Transform {
-								translation 0.001 -0.006 0
-								rotation 1 0 0 0.7854
-								children [
-								  LED {
-								    name "RightEyeLED_top"
-								    color []
-								    gradual TRUE
-								    children [
-								      USE EYE_SHAPE
-								    ]
-								  }
-								]
-							}
-						
-							DEF RIGHT_EYE_LEFT Transform {
-								translation 0.001 -0.006 0
-								rotation 1 0 0 -0.7854
-								children [
-								  LED {
-								    name "RightEyeLED_left"
-								    color []
-								    gradual TRUE
-								    children [
-								      USE EYE_SHAPE
-								    ]
-								  }
-								]
-							}
-
-							DEF RIGHT_EYE_BOTTOM Transform {
-								translation 0.001 -0.006 0
-								rotation 1 0 0 -2.3562
-								children [
-								  LED {
-								    name "RightEyeLED_bottom"
-								    color []
-								    gradual TRUE
-								    children [
-								      USE EYE_SHAPE
-								    ]
-								  }
-								]
-							}
-
-							DEF RIGHT_EYE_RIGHT Transform {
-								translation 0.001 -0.006 0
-								rotation 1 0 0 2.3562
-								children [
-								  LED {
-								    name "RightEyeLED_right"
-								    color []
-								    gradual TRUE
-								    children [
-								      USE EYE_SHAPE
-								    ]
-								  }
-								]
-							}
-
-
-							]
-				  		}
 				  Camera {
 						name "HeadCamera"
 						# Note: 8.8mm to lens face, 5.8mm to PCB mount, optical center = ?
@@ -370,16 +226,18 @@ Supervisor {
 						near 0.018
 						antiAliasing TRUE
 						
-						%{ if fields.vizMode or fields.hideCameraDisplay then }%
+						%{ if fields.vizMode.value or fields.hideCameraDisplay.value then }%
               pixelSize 0
 						%{ else }%
-              %{ if fields.cameraWidth == 640 then }%
+              %{ if fields.cameraWidth.value == 640 then }%
                 pixelSize 0.5
-              %{ elseif fields.cameraWidth == 320 then }%
+              %{ elseif fields.cameraWidth.value == 400 then }%
                 pixelSize 1
-              %{ elseif fields.cameraWidth == 160 then }%
+              %{ elseif fields.cameraWidth.value == 320 then }%
+                pixelSize 1
+              %{ elseif fields.cameraWidth.value == 160 then }%
                 pixelSize 2
-              %{ elseif fields.cameraWidth == 80 then }%
+              %{ elseif fields.cameraWidth.value == 80 then }%
                 pixelSize 4
               %{ end }%      
 						%{ end }%
@@ -452,7 +310,6 @@ Supervisor {
 				  }
 				  DEF FACE Transform {
 						translation 0.016 0 0
-						rotation 0 0 1 1.5708
 						children [
 							Shape {
 								appearance Appearance {
@@ -460,30 +317,195 @@ Supervisor {
 										diffuseColor 0.5 0.5 0.5
 									}
 								}
-								geometry DEF FACE Cylinder {
-									height 0.008
-									radius 0.015
-									subdivision 18
+								geometry DEF FACE_PLATE Box {
+									size  0.01 0.032 0.025 
 								}
+							}
+							
+							Transform {
+							  translation 0.00451 0 0
+							  rotation 1 0 0 1.5708
+							  children[
+								Display {
+								  name           "face_display"
+								  width          128
+								  height         64
+								  windowPosition 0 0
+								  pixelSize      1.0
+								  children [
+								    Shape {
+								      appearance Appearance {
+								        texture ImageTexture {
+								        }
+								      }
+								      geometry Box {
+								        size 0.001 0.013 0.026
+								      }
+								    }
+								  ]
+								}
+							  ]
 							}
 						]
 				  }
-				  DEF HEAD_SPHERE Shape {
-						geometry Sphere {
-							radius 0.020
-							subdivision 2
-						}
-						appearance Appearance {
-							material Material {
-								diffuseColor IS bodyColor
+				  
+				  DEF HEAD_SHAPE Group {
+				    children [
+					  Transform {
+						translation 0.016 0 0.012 
+						children [
+							DEF HEAD_CAPSULE_WIDTH Shape {
+							  geometry Capsule {
+							    height 0.03
+							    radius 0.005
+							  }
+							  appearance USE MAIN_BODY_APPEARANCE 
 							}
-						}
-				  }
+					    ]				          
+				      }
+				      
+				      Transform {
+				        translation 0.016 0 -0.012 
+				        children [
+				          USE HEAD_CAPSULE_WIDTH
+				        ]
+				      }
+				      
+				      Transform {
+				        translation -0.01 0 0.007
+				        children [
+				          USE HEAD_CAPSULE_WIDTH
+				        ]
+				      }
+				      
+				      Transform {
+				        translation -0.01 0 -0.007
+				        children [
+				          USE HEAD_CAPSULE_WIDTH
+				        ]
+				      }
+				      
+				      # Front height capsules
+					  Transform {
+						translation 0.016 0.015 0
+						rotation 1 0 0 1.5708
+						children [
+							DEF HEAD_CAPSULE_HEIGHT_FRONT Shape {
+							  geometry Capsule {
+							    height 0.024
+							    radius 0.005
+							  }
+							  appearance USE MAIN_BODY_APPEARANCE
+							}
+					    ]				          
+				      }			
+
+				      Transform {
+				        translation 0.016 -0.015 0
+						rotation 1 0 0 1.5708				        
+				        children [
+				          USE HEAD_CAPSULE_HEIGHT_FRONT
+				        ]
+				      }
+				      
+				      # Rear height capsules
+				      Transform {
+						translation -0.01 0.015 0
+						rotation 1 0 0 1.5708
+						children [
+							DEF HEAD_CAPSULE_HEIGHT_REAR Shape {
+							  geometry Capsule {
+							    height 0.014
+							    radius 0.005
+							  }
+							  appearance USE MAIN_BODY_APPEARANCE
+							}
+					    ]				          
+				      }			
+
+				      Transform {
+				        translation -0.01 -0.015 0
+						rotation 1 0 0 1.5708				        
+				        children [
+				          USE HEAD_CAPSULE_HEIGHT_REAR
+				        ]
+				      }
+				      
+				      # Length-wise capsules
+				      Transform {
+						translation 0.003 0.015 0.0095
+						rotation -0.0944316 -0.0944316 0.991043 1.57979
+						children [
+							DEF HEAD_CAPSULE_LENGTH Shape {
+							  geometry Capsule {
+							    height 0.02648
+							    radius 0.005
+							  }
+							  appearance USE MAIN_BODY_APPEARANCE 
+							}
+					    ]				          
+				      }
+				      
+				      Transform {
+						translation 0.003 0.015 -0.0095
+						rotation 0.0944316 0.0944316 0.991043 1.57979
+				        children [
+				          USE HEAD_CAPSULE_LENGTH
+				        ]
+				      }
+
+				      Transform {
+						translation 0.003 -0.015 0.0095
+						rotation -0.0944316 -0.0944316 0.991043 1.57979
+				        children [
+				          USE HEAD_CAPSULE_LENGTH
+				        ]
+				      }
+
+				      Transform {
+						translation 0.003 -0.015 -0.0095
+						rotation 0.0944316 0.0944316 0.991043 1.57979
+				        children [
+				          USE HEAD_CAPSULE_LENGTH
+				        ]
+				      }
+
+					  # Head cap (top)
+					  Transform {
+					    translation 0.003 0 0.014
+						rotation 0 -1 0 0.189997				    
+					    children [
+					      Shape {
+					        geometry Box {
+					          size 0.027 0.03 0.001
+					        }
+ 							appearance USE MAIN_BODY_APPEARANCE 
+					      }
+					    ]
+					  }
+					  
+					  # Head cap (back)
+					  Transform {
+					    translation -0.0145 0 0
+					    children [
+					      Shape {
+					        geometry Box {
+					          size 0.001 0.03 0.014
+					        }
+ 							appearance USE MAIN_BODY_APPEARANCE 
+					      }
+					    ]
+					  }
+				      
+				      
+				    ]
+				  } # End of HEAD_SHAPE
+				  
 				]
 				name "head"
 
-				%{ if not fields.vizMode then }%
-				boundingObject USE HEAD_SPHERE
+				%{ if not fields.vizMode.value then }%
+				boundingObject USE HEAD_SHAPE
 				physics Physics {
 					density 100
 				}
@@ -501,11 +523,7 @@ Supervisor {
 						Transform {
 							children [
 							Shape {
-								appearance Appearance {
-								material Material {
-									diffuseColor IS bodyColor
-								}
-								}  
+								appearance USE MAIN_BODY_APPEARANCE 
 								geometry Box {
 								size 0.03 0.03905 0.0206
 								}
@@ -516,11 +534,7 @@ Supervisor {
 							translation 0 0 0.0113
 							children [
 							Shape {
-								appearance Appearance {
-								material Material {
-									diffuseColor IS bodyColor
-								}
-								}  
+								appearance USE MAIN_BODY_APPEARANCE 
 								geometry Cylinder {
 								height 0.039
 								radius 0.015
@@ -533,11 +547,7 @@ Supervisor {
 							translation 0 0 -0.0113
 							children [
 								Shape {
-									appearance Appearance {
-										material Material {
-											diffuseColor IS bodyColor
-										}
-									}  
+									appearance USE MAIN_BODY_APPEARANCE
 									geometry Cylinder {
 										height 0.039
 										radius 0.015
@@ -547,10 +557,80 @@ Supervisor {
 							]
 						}
 		      ]
-		    }                      
+		    }     
+		    
+
+			#Backpack lights (directional)
+			Transform {
+				translation -0.009 0 0.025
+				children [
+					%{
+					  for i=0,2 do
+					    led_name = string.format("ledHealth%d", i)
+					    xpos = (i)*0.006
+					}%
+					LED {
+					  name "%{=led_name}%"
+					  children [
+						DEF BACKPACK_HEALTH_LED_SHAPE Group {
+						  children [
+							Shape {
+							  appearance Appearance {
+								material Material {
+                 				diffuseColor 0.3 0.3 0.3
+								}
+							  }
+							  geometry Box {
+								size 0.005 0.005 0.005
+							  }
+							}
+						  ]
+						}
+					  ]
+					  translation %{=xpos}% 0 0
+					  color []
+					  gradual TRUE
+					}
+					%{ end }%   # End light for loop
+					%{
+					  for i=0,1 do
+					    if (i == 0) then
+					      led_name = "ledDirLeft"
+					      ypos = 0.006
+					    else 
+					      led_name = "ledDirRight"
+					      ypos = -0.006
+					    end
+					}%
+					LED {
+					  name "%{=led_name}%"
+					  children [
+						DEF BACKPACK_DIR_LED_SHAPE Group {
+						  children [
+							Shape {
+							  appearance Appearance {
+								material Material {
+                 				diffuseColor 0.3 0.3 0.3
+								}
+							  }
+							  geometry Box {
+								size 0.003 0.005 0.005
+							  }
+							}
+						  ]
+						}
+					  ]
+					  translation 0.003 %{=ypos}% 0
+					  color []
+					  gradual TRUE
+					}
+					%{ end }%							
+				]
+			} # Backpack lights
+		                     
 		  ] # BACKPACK Solid children
 
-		  %{ if not fields.vizMode then }%
+		  %{ if not fields.vizMode.value then }%
 	          boundingObject USE BACKPACK_GROUP
 		  physics Physics {
 			density 300
@@ -558,6 +638,162 @@ Supervisor {
 		  %{ end }%
 		} # BACKPACK Solid
 
+
+					
+		%{ if fields.useTreads.value then }%
+
+		Track {
+		  translation 0 0.023 0
+		  rotation 1 0 0 -1.5707963
+		  children [
+
+                DEF FRONT_TRACK_WHEEL TrackWheel {
+                  position 0 0
+                  radius 0.0145
+                  children [
+                    DEF TRACK_WHEEL_BIG Transform {
+                    rotation 1 0 0 1.5707963  
+                    children [
+					    Shape {
+							appearance DEF WHEEL_MATERIAL Appearance {
+							  material Material {
+							    diffuseColor 0.7 0.7 0.7
+							  }
+							}
+							geometry Cylinder {
+							  height 0.01
+							  radius 0.0145
+							  subdivision 14
+							}
+					    }
+					  ]
+                    }
+                  ]
+                }
+                
+                DEF REAR_TRACK_WHEEL TrackWheel {
+                  position -0.048 0.00375
+                  radius 0.01075
+                  children [
+                    DEF TRACK_WHEEL_SMALL Transform {
+                    rotation 1 0 0 1.5707963  
+                    children [
+					    Shape {
+							appearance USE WHEEL_MATERIAL
+							geometry Cylinder {
+							  height 0.01
+							  radius 0.01075
+							  subdivision 14
+							}
+					    }
+                      ]					    
+                    }
+                  ]
+                }
+                		
+		  ]
+		  name "left track"
+		  contactMaterial "highfriction"
+		  
+		  # The boundingObject is the thing that actually determines the physical shape 
+		  # of the track
+		  %{ if not fields.vizMode.value then }%
+		  boundingObject DEF TRACK_BO Group {
+			children [
+			  Transform {
+				translation -0.024 0.00375 0
+				rotation 1 0 0 -1.5707963     
+				children [
+				  Box {
+					size 0.048 0.01 0.0215
+				  }
+				]
+			  }
+			  Transform {
+				translation 0 0 0
+				rotation 1 0 0 -1.5707963
+				children [
+				  DEF FRONT_WHEEL_BO Cylinder {
+					height 0.01
+					radius 0.0145
+					subdivision 14
+				  }
+				]
+			  }
+			  Transform {
+				translation -0.048 0.00375 0
+				rotation 1 0 0 -1.5707963
+				children [
+				  DEF FRONT_WHEEL_BO Cylinder {
+					height 0.01
+					radius 0.01075
+					subdivision 14
+				  }
+				]
+			  }
+			]
+		  }
+		  physics Physics {
+		  }
+		  %{ end }%
+		  device [
+		    LinearMotor {
+			  name "LeftWheelMotor"
+		    }
+  		    PositionSensor {
+		      name "LeftWheelMotorPosSensor"
+		    }
+		  ]
+		  
+		  # Shape of tread studs
+		  animatedGeometry DEF ANIMATED_SHAPE Shape {
+			appearance Appearance {
+			  material Material {
+				diffuseColor 0.141176 0.141176 0.141176
+			  }
+			}
+			geometry Box {
+			  size 0.002 0.001 0.01
+			}
+		  }
+		  geometriesCount 40
+		}
+
+		Track {
+		  translation 0 -0.023 0
+		  rotation 1 0 0 -1.5707963       
+		  children [
+		  
+			USE FRONT_TRACK_WHEEL
+			USE REAR_TRACK_WHEEL
+			
+		  ]
+		  name "right track"
+		  contactMaterial "highfriction"
+
+		  %{ if not fields.vizMode.value then }%      
+		  boundingObject USE TRACK_BO
+		  physics Physics {
+		  }
+		  %{ end }%
+		  device [
+		    LinearMotor {
+			  name "RightWheelMotor"
+		    }
+		    PositionSensor {
+		      name "RightWheelMotorPosSensor"
+		    }		    
+		  ]
+		  animatedGeometry USE ANIMATED_SHAPE
+		  geometriesCount 40
+		}
+
+
+
+        # else if not useTreads
+		%{ else }%
+	
+	
 		DEF CASTER Solid {
 		  translation -0.03 0 -0.009575
 		  children [
@@ -576,7 +812,7 @@ Supervisor {
 		  ]
 		  contactMaterial "nofriction"
 
-		  %{ if not fields.vizMode then }%
+		  %{ if not fields.vizMode.value then }%
 		  boundingObject USE CASTER_SHAPE
 		  physics Physics {
 			 density 5000
@@ -650,7 +886,7 @@ Supervisor {
 			]
 			contactMaterial "highfriction"
 
-			%{ if not fields.vizMode then }%
+			%{ if not fields.vizMode.value then }%
 			boundingObject USE DRIVE_TIRE
 			physics DEF FRONT_WHEEL_PHYSICS Physics {
 			  density 5000 # Make heavier than rear wheels to simulate weights in front
@@ -685,7 +921,7 @@ Supervisor {
 				]
 				contactMaterial "highfriction"
 
-				%{ if not fields.vizMode then }%
+				%{ if not fields.vizMode.value then }%
 				boundingObject USE DRIVE_TIRE
 				physics USE FRONT_WHEEL_PHYSICS
 				%{ end }%
@@ -731,7 +967,7 @@ Supervisor {
 						]
 						contactMaterial "nofriction"
 
-						%{ if not fields.vizMode then }%
+						%{ if not fields.vizMode.value then }%
 						boundingObject USE REAR_TIRE
 						physics DEF REAR_WHEEL_PHYSICS Physics {
 						  density 10
@@ -756,7 +992,7 @@ Supervisor {
 						]
 						contactMaterial "nofriction"
 
-						%{ if not fields.vizMode then }%
+						%{ if not fields.vizMode.value then }%
 						boundingObject USE REAR_TIRE
 						physics USE REAR_WHEEL_PHYSICS
 						%{ end }%
@@ -764,6 +1000,11 @@ Supervisor {
 				}
 		  ] # Transform children
 		} # REAR_AXLE Transform
+
+	
+        # end if useTreads
+		%{ end }%
+	
 	
 		DEF LIFT Transform {
 		  translation -0.04 0 0.0295
@@ -775,11 +1016,7 @@ Supervisor {
 					radius 0.0035
 					subdivision 10
 					}
-					appearance Appearance {
-					  material Material { 
-					    diffuseColor IS bodyColor
-					  }
-					}
+					appearance USE MAIN_BODY_APPEARANCE
 				}
 			
 				DEF SHOULDER HingeJoint {
@@ -790,10 +1027,11 @@ Supervisor {
 						minStop IS liftAngle_lowLimit
 						maxStop IS liftAngle_highLimit
 					}
-					%{ if not fields.vizMode then }%
+					%{ if not fields.vizMode.value then }%
 					device [
 					  RotationalMotor {
 						name "LiftMotor"
+						maxVelocity 30
 					  }
 					  PositionSensor {
 					    name "LiftMotorPosSensor"
@@ -821,11 +1059,7 @@ Supervisor {
 										DEF GRIPPER_FINGER Group {
 											children [
 												Shape {
-													appearance Appearance {
-														material Material { 
-															diffuseColor IS bodyColor
-														}
-													}
+													appearance USE MAIN_BODY_APPEARANCE
 													geometry IndexedFaceSet {
 														coord Coordinate {
 															point [
@@ -878,11 +1112,7 @@ Supervisor {
 											geometry Box {
 											size 0.007 0.004 0.0289
 											}
-											appearance Appearance {
-												material Material {
-													diffuseColor IS bodyColor
-												}
-											}
+											appearance USE MAIN_BODY_APPEARANCE
 										}
 										]
 									}
@@ -899,11 +1129,7 @@ Supervisor {
 											geometry Box {
 											size 0.005 0.029 0.005
 											}
-											appearance Appearance {
-												material Material {
-													diffuseColor IS bodyColor
-												}
-											}
+											appearance USE MAIN_BODY_APPEARANCE
 										}
 										]
 									}
@@ -1051,7 +1277,7 @@ Supervisor {
 
 								] # SmallFingerGripper Children
 
-								%{ if not fields.vizMode then }%
+								%{ if not fields.vizMode.value then }%
 								boundingObject USE LIFTER_SHAPE
 								physics Physics {
 									density 100
@@ -1095,11 +1321,7 @@ Supervisor {
 								]
 								creaseAngle 12
 							}
-							appearance Appearance {
-								material Material {
-									diffuseColor IS bodyColor
-									}
-								}
+							appearance USE MAIN_BODY_APPEARANCE
 							} # DEF LIFT_ARM_SHIFT
 						
 							Transform {
@@ -1110,11 +1332,7 @@ Supervisor {
 										height 0.006
 										radius 0.0025
 									}
-									appearance Appearance {
-										material Material {
-											diffuseColor IS bodyColor
-										}
-										}
+									appearance USE MAIN_BODY_APPEARANCE
 									}
 								]
 							}
@@ -1133,11 +1351,7 @@ Supervisor {
 											height 0.006
 											radius 0.0025
 										}
-										appearance Appearance {
-											material Material {
-												diffuseColor IS bodyColor
-											}
-											}
+										appearance USE MAIN_BODY_APPEARANCE
 										}
 									]
 								}
@@ -1146,7 +1360,7 @@ Supervisor {
 					
 					] # endPoint Solid children
 
-					%{ if not fields.vizMode then }%
+					%{ if not fields.vizMode.value then }%
 					boundingObject Group {
 						children [
 							# Right arm
@@ -1185,11 +1399,7 @@ Supervisor {
 							radius 0.0045
 							 subdivision 10
 							}
-							appearance Appearance {
-							  material Material { 
-							    diffuseColor IS bodyColor
-							  }
-							}
+							appearance USE MAIN_BODY_APPEARANCE
 						}
 					
 						# Lower set of arms
@@ -1231,11 +1441,7 @@ Supervisor {
 															height 0.006
 															radius 0.0025
 														}
-														appearance Appearance {
-															material Material {
-																diffuseColor IS bodyColor
-															}
-														}
+														appearance USE MAIN_BODY_APPEARANCE
 													}
 												]
 											}
@@ -1254,11 +1460,7 @@ Supervisor {
 															height 0.006
 															radius 0.0025
 														}
-														appearance Appearance {
-															material Material {
-															diffuseColor IS bodyColor
-															}
-														}
+														appearance USE MAIN_BODY_APPEARANCE
 													}
 												]
 											}
@@ -1267,7 +1469,7 @@ Supervisor {
 								] # endPoint Solid Children (lower)
 
 
-								%{ if not fields.vizMode then }%
+								%{ if not fields.vizMode.value then }%
 								boundingObject Group {
 									children [
 										# Right arm

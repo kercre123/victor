@@ -109,7 +109,7 @@ function runParallelProcesses(numComputeThreads, workQueue, temporaryDirectory, 
             
             system(commandString);
             
-            pause(.1);
+            pause(.01);
         end
         
         % Wait for the thread to complete

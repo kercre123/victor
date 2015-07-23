@@ -20,8 +20,9 @@ numPerturbations = 100;
 perturbationType = 'normal'; % 'normal' or 'uniform'
 perturbSigma = 1; % 'sigma' in 'normal' mode, half-width in 'uniform' mode
 computeGradMag = false;
+computeGradMagWeights = false;
 saveTree = true;
-
+boxFilterWidth = round(workingResolution/2); % for illumination normalizatio for NearestNeighbor
 probeRegion = VisionMarkerTrained.ProbeRegion;
 
 % Now using unpadded images to train
@@ -31,6 +32,10 @@ probeRegion = VisionMarkerTrained.ProbeRegion;
 DEBUG_DISPLAY = false;
 
 parseVarargin(varargin{:});
+
+if computeGradMagWeights 
+  computeGradMag = true;
+end
 
 t_start = tic;
 
@@ -70,7 +75,17 @@ pBarCleanup = onCleanup(@()delete(pBar));
 numDirs = length(markerImageDir);
 fnames = cell(numDirs,1);
 for i_dir = 1:numDirs
+  if isdir(markerImageDir{i_dir})
     fnames{i_dir} = getfnames(markerImageDir{i_dir}, 'images', 'useFullPath', true);
+  else 
+    % Assume it's a file list
+    assert(exist(markerImageDir{i_dir}, 'file')>0, ...
+      '%s is not a directory, so assuming it is a file list.', markerImageDir{i_dir});
+    fid = fopen(markerImageDir{i_dir}, 'r');
+    temp = textscan(fid, '%s', 'CommentStyle', '#', 'Delimiter', '\n');
+    fclose(fid)
+    fnames{i_dir} = temp{1};
+  end
 end
 fnames = vertcat(fnames{:});
 
@@ -218,7 +233,10 @@ for iImg = 1:numImages
     end % FOR inversion
         
     pBar.increment();
-    
+    if pBar.cancelled
+      disp('User cancelled.');
+      return;
+    end
 end % FOR each image
     
 % Stack all perturbations horizontally
@@ -241,7 +259,6 @@ if averagePerturbations
     
     assert(size(probeValues,2) == numImages);
     
-    % Debug:
     numCols = ceil(sqrt(numImages));
     numRows = ceil(numImages/numCols);
     for iImg = 1:numImages
@@ -338,6 +355,10 @@ for iImg = 1:numNeg
     end % FOR inversion
     
     pBar.increment();
+    if pBar.cancelled
+      disp('User cancelled.');
+      return;
+    end
 end % for each negative example
 
 allWhite = all(probeValuesNeg==1,1);
@@ -374,6 +395,21 @@ assert(size(probeValues,2) == length(labels));
 %numLabels = numImages;
 numImages = length(labels);
 
+% Normalize by removing local variation
+if boxFilterWidth > 0
+  kernel = -ones(boxFilterWidth);
+  mid = floor(boxFilterWidth/2);
+  kernel(mid,mid) = boxFilterWidth^2 - 1;
+  
+  probeValues = imfilter(im2double(reshape(single(probeValues),workingResolution,workingResolution,[])), kernel, 'replicate');
+  probeValues = reshape(probeValues,workingResolution^2,[]);
+
+  mins = min(probeValues,[],1);
+  maxes = max(probeValues,[],1);
+  probeValues = im2uint8((probeValues - mins(ones(workingResolution^2,1),:))./(ones(workingResolution^2,1)*(maxes-mins)));
+end
+
+
 if false && DEBUG_DISPLAY
     namedFigure('Average Perturbed Images'); clf
     for j = 1:numImages
@@ -400,6 +436,12 @@ end
 trainingState.probeValues   = probeValues;
 if computeGradMag
   trainingState.gradMagValues = gradMagValues;
+  if computeGradMagWeights 
+    gradMagWeights = im2single(gradMagValues);
+    minVal = min(gradMagWeights(:));
+    maxVal = max(gradMagWeights(:));
+    trainingState.gradMagWeights = 1 - (gradMagWeights-minVal)/(maxVal-minVal);
+  end
 end
 trainingState.fnames        = fnames;
 trainingState.labels        = labels;
