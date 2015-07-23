@@ -8,6 +8,8 @@ public class GameLayout : MonoBehaviour {
 	[SerializeField] public int levelNumber = 1;
 	[SerializeField] List<BuildInstructionsCube> blocks = new List<BuildInstructionsCube>();
 
+	[SerializeField] public bool needsLocalization = true;
+
 	[SerializeField] public Transform startPositionMarker;
 	[SerializeField] public float scale = 0.044f;
 	[SerializeField] public List<int> gateBlocksAtPlayerCount = new List<int>();

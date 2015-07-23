@@ -28,7 +28,6 @@ public class GoldRushController : GameController {
 	public float detectRangeDelayFar = 2.0f;
 	public float detectRangeDelayClose = .2f;
 	public float light_messaging_delay = .05f;
-	private float last_light_message_time = -1;
 
 	private int numDrops = 0;
 
@@ -52,11 +51,8 @@ public class GoldRushController : GameController {
 	int lastCarriedObjectId = -1;
 	[System.NonSerialized] public ActiveBlock goldExtractingObject = null;
 	[System.NonSerialized] public ObservedObject goldCollectingObject = null;
-	int baseObjectId = -1;
 	//ScreenMessage //hintMessage;
 	private bool audioLocatorEnabled = true;
-	byte last_leds = 0xFF;
-	bool sent = false;
 	private bool setHighScore = false;
 	private int oldHighScore = 0;
 	GameObject successOrFailureGameObject = null;
@@ -203,7 +199,6 @@ public class GoldRushController : GameController {
 		SetEnergyBars (0, 0);
 		setHighScore = false;
 		oldHighScore = PlayerPrefs.GetInt("EnergyHunt_HighScore", 0);
-		//Debug.Log("oldHighScore: " + oldHighScore);
 
 		SuccessOrFailureText text = FindObjectOfType<SuccessOrFailureText>();
 		if( text != null )
@@ -316,7 +311,7 @@ public class GoldRushController : GameController {
 		RefreshGameProps();
 
 		//hintMessage.ShowMessage("Pick up the energy scanner to begin", Color.black);
-		if( robot.carryingObject == null || robot.carryingObject != goldExtractingObject )
+		if( robot.carryingObject == null || (int)robot.carryingObject != goldExtractingObject )
 		{
 			//PlayNotificationAudio (pickupEnergyScanner);
 
@@ -444,7 +439,7 @@ public class GoldRushController : GameController {
 		if(goldExtractingObject == null) return false;
 		if(goldCollectingObject == null) return false;
 		if(robot.carryingObject == null) return false;
-		if(robot.carryingObject != goldExtractingObject) return false;
+		if((int)robot.carryingObject != goldExtractingObject) return false;
 		
 		return true;
 	}
@@ -793,69 +788,17 @@ public class GoldRushController : GameController {
 
 	void SendRobotToCollector()
 	{
-		/*
-		Vector3 to_collector = goldCollectingObject.WorldPosition - robot.WorldPosition;
-		float angle = Vector3.Angle(Vector3.right, to_collector.normalized);
-		float sign = Mathf.Sign(Vector3.Dot(Vector3.forward,Vector3.Cross(Vector3.right,to_collector.normalized)));
-		float signed_angle = angle * sign;
-		Debug.Log("angle: " + angle +", signed_angle: " + signed_angle);
-		
-		Vector3 depositSpot = robot.WorldPosition + to_collector - (to_collector.normalized*32); // adjust for width of cube so our path doesn't intersect
-		
-		signed_angle = Mathf.Deg2Rad*signed_angle;
-		
-		robot.GotoPose(depositSpot.x, depositSpot.y, signed_angle);
-
-		Vector3 spotZ = (Vector3)depositSpot + Vector3.forward * CozmoUtil.BLOCK_LENGTH_MM * 10f;
-		Vector3 spotY1 = (Vector3)depositSpot - Vector3.up * CozmoUtil.BLOCK_LENGTH_MM;
-		Vector3 spotY2 = (Vector3)depositSpot + Vector3.up * CozmoUtil.BLOCK_LENGTH_MM;
-		Vector3 spotX1 = (Vector3)depositSpot - Vector3.right * CozmoUtil.BLOCK_LENGTH_MM;
-		Vector3 spotX2 = (Vector3)depositSpot + Vector3.right * CozmoUtil.BLOCK_LENGTH_MM;
-		RobotEngineManager.instance.VisualizeQuad(21, CozmoPalette.ColorToUInt(Color.blue), depositSpot, depositSpot, spotZ, spotZ);
-		RobotEngineManager.instance.VisualizeQuad(22, CozmoPalette.ColorToUInt(Color.blue), spotY1, spotY1, spotY2, spotY2);
-		RobotEngineManager.instance.VisualizeQuad(23, CozmoPalette.ColorToUInt(Color.blue), spotX1, spotX1, spotX2, spotX2);
-		*/
 		robot.GotoObject(goldCollectingObject, 50);
 	}
 #endregion
 
 #region IEnumerator
-
-	/*IEnumerator CountdownToPlay()
-	{
-		PlayNotificationAudio (gameStartingIn);
-		yield return new WaitForSeconds (gameStartingIn.length + .5f);
-		int timer_index = timerSounds.Length - 3;
-		while( timer_index < timerSounds.Length )
-		{
-			PlayNotificationAudio(timerSounds [timer_index].sound);
-			timer_index++;
-			yield return new WaitForSeconds (1);
-		}
-		PlayRequested();
-	}*/
+	
 
 	[SerializeField]
 	protected float extractTrimTime = 0.1f;
 	[SerializeField]
 	protected float accelStabilizationTime = 0.1f;
-//	IEnumerator StartExtracting()
-//	{
-//		uint color = EXTRACTOR_COLOR;
-//
-//		robot.isBusy = true;
-//		if( goldExtractingObject != null ) goldExtractingObject.SetLEDs (0);
-//		yield return new WaitForSeconds(accelStabilizationTime); // short delay to allow accelerometer data to calm down
-//		AudioManager.PlayAudioClip(extractingEnergy, 0f, AudioManager.Source.Notification);
-//		if( goldExtractingObject != null ) goldExtractingObject.SetLEDs (color, 0, 0xCC);
-//		yield return new WaitForSeconds(extractingEnergy.length -extractTrimTime);
-//		if( goldExtractingObject != null ) goldExtractingObject.SetLEDs (color, 0, 0xFF);
-//		robot.isBusy = false;
-//		yield return new WaitForSeconds(extractTrimTime);
-//
-//		EnterPlayState (PlayState.RETURNING);
-//
-//	}
 
 	IEnumerator StartExtracting()
 	{
@@ -1007,8 +950,6 @@ public class GoldRushController : GameController {
 			Color col = Color.Lerp(Color.clear, detectorColor, lightWeights[i]);
 			goldExtractingObject.SetLEDs(CozmoPalette.ColorToUInt(col), 0, which_leds, Robot.Light.FOREVER, 0, 0, 0, 0 );
 		}
-		
-		//Debug.Log("lightWeights[0]("+lightWeights[0]+") [1]("+lightWeights[1]+") [2]("+lightWeights[2]+") [3]("+lightWeights[3]+") TopNorth("+TopNorth+") Forward("+robot.Forward+")");
 
 	}
 

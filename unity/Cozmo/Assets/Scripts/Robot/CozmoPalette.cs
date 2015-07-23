@@ -57,4 +57,12 @@ public class CozmoPalette : MonoBehaviour {
 		if(index < 0 || index > objectSymbolInfos.Length - 1) return "Unknown Object";
 		return objectSymbolInfos[index].Name;
 	}
+
+	public static uint CycleColors(int i) // cycle through all colors, but don't use black or white
+	{
+		int index = (i % (int)ActiveBlock.Mode.Count) + 2;
+		
+		return CozmoPalette.instance.GetUIntColorForActiveBlockType(index < (int)ActiveBlock.Mode.Count ? (ActiveBlock.Mode)index : (ActiveBlock.Mode)2);
+	}
+	
 }

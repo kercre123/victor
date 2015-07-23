@@ -4,6 +4,10 @@ using UnityEngine.UI;
 using System;
 using System.Collections;
 
+
+/// <summary>
+/// this component manages a button within the GameMenu that can load a specific game scene
+/// </summary>
 public class LevelSelectButton : MonoBehaviour {
 
 	[SerializeField] Text text_ID;

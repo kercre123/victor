@@ -1,13 +1,10 @@
 /*
- * File:          webots_keyboard_controller.cpp
+ * File:          webotsCtrlKeyboard.cpp
  * Date:
  * Description:   
  * Author:        
  * Modifications: 
  */
-
-// TODO: Have CMake define this
-#define CORETECH_BASESTATION
 
 #include <opencv2/imgproc/imgproc.hpp>
 
@@ -23,15 +20,15 @@
 
 #include "anki/vision/basestation/image.h"
 
-#include "anki/cozmo/messageBuffers/game/UiMessagesG2U.def"
-#include "anki/cozmo/messageBuffers/game/UiMessagesU2G.def"
+#include "anki/cozmo/messageBuffers/game/UiMessagesG2U.h"
+#include "anki/cozmo/messageBuffers/game/UiMessagesU2G.h"
 #include "anki/messaging/shared/TcpClient.h"
 #include "anki/cozmo/game/comms/gameMessageHandler.h"
 #include "anki/cozmo/game/comms/gameComms.h"
 
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/block.h"
-#include "anki/cozmo/messageBuffers/shared/actionTypes.def"
+#include "anki/cozmo/messageBuffers/shared/actionTypes.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -46,7 +43,7 @@
 
 // SDL for gamepad control (specifically Logitech Rumblepad F510)
 // Gamepad should be in Direct mode (switch on back)
-#define ENABLE_GAMEPAD_SUPPORT 1
+#define ENABLE_GAMEPAD_SUPPORT 0
 #if(ENABLE_GAMEPAD_SUPPORT)
 #include <SDL.h>
 #define DEBUG_GAMEPAD 0
@@ -1250,12 +1247,12 @@ namespace Anki {
                   static int jsonMsgCtr = 0;
                   Json::Value jsonMsg;
                   Json::Reader reader;
-                  std::string jsonFilename("../blockworld_controller/SetBlockLights_" + std::to_string(jsonMsgCtr++) + ".json");
+                  std::string jsonFilename("../webotsCtrlGameEngine/SetBlockLights_" + std::to_string(jsonMsgCtr++) + ".json");
                   std::ifstream jsonFile(jsonFilename);
                   
                   if(jsonFile.fail()) {
                     jsonMsgCtr = 0;
-                    jsonFilename = "../blockworld_controller/SetBlockLights_" + std::to_string(jsonMsgCtr++) + ".json";
+                    jsonFilename = "../webotsCtrlGameEngine/SetBlockLights_" + std::to_string(jsonMsgCtr++) + ".json";
                     jsonFile.open(jsonFilename);
                   }
                   
@@ -1386,7 +1383,18 @@ namespace Anki {
               case (s32)'@':
               {
                 //SendAnimation("ANIM_BACK_AND_FORTH_EXCITED", 3);
-                SendAnimation("ANIM_TEST2", 1);
+                SendAnimation("ANIM_TEST", 1);
+                
+                {
+                  U2G::SetIdleAnimation msg;
+                  msg.robotID = 1;
+                  msg.animationName = "ANIM_IDLE";
+                  
+                  U2G::Message msgWrapper;
+                  msgWrapper.Set_SetIdleAnimation(msg);
+                  SendMessage(msgWrapper);
+                }
+                
                 break;
               }
               case (s32)'#':
@@ -2407,6 +2415,7 @@ namespace Anki {
         {
           U2G::PlayAnimation m;
           //m.animationID = animId;
+          m.robotID = 1;
           m.animationName = animName;
           m.numLoops = numLoops;
           U2G::Message message;
@@ -2423,6 +2432,7 @@ namespace Anki {
       {
         U2G::ReplayLastAnimation m;
         m.numLoops = 1;
+        m.robotID = 1;
         U2G::Message message;
         message.Set_ReplayLastAnimation(m);
         SendMessage(message);

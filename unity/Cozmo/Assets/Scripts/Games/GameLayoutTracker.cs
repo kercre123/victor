@@ -303,7 +303,7 @@ public class GameLayoutTracker : MonoBehaviour {
 	}
 
 	void EnterPhase() {
-		Debug.Log("EnterPhase("+Phase+")");
+		//Debug.Log("EnterPhase("+Phase+")");
 		
 		if(textPhase != null) textPhase.text = GetPhaseName(Phase);
 
@@ -349,7 +349,7 @@ public class GameLayoutTracker : MonoBehaviour {
 	}
 
 	void ExitPhase() {
-		Debug.Log("ExitPhase("+Phase+")");
+		//Debug.Log("ExitPhase("+Phase+")");
 
 		switch(Phase) {
 			case LayoutTrackerPhase.INVENTORY:
@@ -408,6 +408,12 @@ public class GameLayoutTracker : MonoBehaviour {
 
 		ShowAllBlocks();
 
+		
+		//let's stop any prior animating
+		if(robot.isBusy && robot.Status (Robot.StatusFlag.IS_ANIMATING)) {
+			robot.CancelAction(RobotActionType.PLAY_ANIMATION);
+		}
+		
 	}
 	
 	void Update_INVENTORY() {
@@ -442,12 +448,13 @@ public class GameLayoutTracker : MonoBehaviour {
 		
 		//look down if not localized
 		if(!inventoryComplete && robot != null) {
-			if(/*!skipBuildForThisLayout && */!robot.IsLocalized()) {
+			if(/*!skipBuildForThisLayout && */ currentLayout.needsLocalization && !robot.IsLocalized()) {
 				//Debug.Log( "look down because not localized" );
 				
 				robot.SetHeadAngle();
 			}
 			else {
+
 
 				if(inventory.Count > lastInventoryCount && inventory.Count != currentLayout.Blocks.Count) { //look at last seen object if any seen
 					//Debug.Log( "look at last seen object if any seen: TrackHeadToObject " + inventory[inventory.Count-1] );
@@ -459,7 +466,7 @@ public class GameLayoutTracker : MonoBehaviour {
 					Vector3 facePosition = robot.WorldPosition + idealFacing * CozmoUtil.BLOCK_LENGTH_MM * 10f;
 
 					angle *= Mathf.Deg2Rad;
-	
+
 					robot.TurnInPlace(angle);
 			
 					RobotEngineManager.instance.VisualizeQuad(33, CozmoPalette.ColorToUInt(Color.blue), robot.WorldPosition, robot.WorldPosition, latestPos, latestPos);
@@ -468,7 +475,7 @@ public class GameLayoutTracker : MonoBehaviour {
 				}
 
 				//Debug.Log( "look straight ahead to see objects" );
-				
+				robot.SetLiftHeight(1f);
 				robot.SetHeadAngle(0f);
 			}
 		}
@@ -1051,7 +1058,7 @@ public class GameLayoutTracker : MonoBehaviour {
 		yield return new WaitForSeconds(cycleDelayTime);
 		
 		int startingIndex = (int)mode - cycleCount;
-		if(startingIndex < 0) startingIndex += ActiveBlock.Mode.Count;
+		if(startingIndex < 0) startingIndex += (int)ActiveBlock.Mode.Count;
 		
 		activeBlock.SetMode((ActiveBlock.Mode)startingIndex);
 		

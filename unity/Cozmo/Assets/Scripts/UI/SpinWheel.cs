@@ -5,8 +5,13 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
-
-public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
+/// <summary>
+/// this component emulates a Wheel of Fortune style spinner.
+///		handles all the ui set up for the pie slices and pegs
+///		pre-calculates whole spin duration creating a list of keyframes
+///		display interpolates along keyframe list and plays sfx
+/// </summary>
+public class SpinWheel : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler {
 
 	#region NESTED DEFINITIONS
 
@@ -209,6 +214,8 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 
 	SpinWheelState state = SpinWheelState.LOCKED;
 
+	AudioSource audioSource;
+
 	#endregion
 	
 	#region MONOBEHAVIOR CALLBACKS
@@ -221,6 +228,7 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 		Time.fixedDeltaTime =  1f / 60f;
 
 		InitData();
+		audioSource = GetComponent<AudioSource>();
 	}
 
 	void OnEnable() {
@@ -378,9 +386,9 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 			slices[i].SetColors(imageColor, textColor, outlineColor);
 		}
 
-		float realTotal = Time.time - SpinStartTime;
+		//float realTotal = Time.time - SpinStartTime;
 
-		Debug.Log("SpinEnd totalTime("+displayData.totalTime+") realTotal("+realTotal+")");
+		//Debug.Log("SpinEnd totalTime("+displayData.totalTime+") realTotal("+realTotal+")");
 
 		
 		state = SpinWheelState.FINISHED;
@@ -649,7 +657,10 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 				float p = Mathf.Lerp(0.75f, 1.5f, pitchFactor);
 				float v = Mathf.Lerp(0f, 1f, volumeFactor);
 				
-				AudioManager.PlayOneShot(pegSound, 0f, p, v);
+				audioSource.pitch = p;
+				audioSource.volume = v;
+				audioSource.loop = false;
+				audioSource.PlayOneShot(pegSound, v);
 			}
 		}
 
@@ -814,7 +825,7 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 	}
 	
 	public void DragEnd() {
-		Debug.Log ("SpinWheel EndDrag");
+		//Debug.Log ("SpinWheel EndDrag");
 
 		displayData.angularVel = 0f;
 		if(samples.Count < 2) return;
@@ -836,14 +847,14 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 			displayData.angularVel = minStartingVelocity * Mathf.Sign(displayData.angularVel);
 		}
 		
-		string debugString = "SpinWheel DragEnd angularVelocity("+displayData.angularVel+") samples["+samples.Count+"] { ";
-		for(int i=0;i<samples.Count;i++) {
-			debugString += (samples[i].deltaAngle / samples[i].deltaTime);
-			if(i<samples.Count-1) debugString += ", ";
-		}
-		debugString += "}";
-		
-		Debug.Log(debugString);
+//		string debugString = "SpinWheel DragEnd angularVelocity("+displayData.angularVel+") samples["+samples.Count+"] { ";
+//		for(int i=0;i<samples.Count;i++) {
+//			debugString += (samples[i].deltaAngle / samples[i].deltaTime);
+//			if(i<samples.Count-1) debugString += ", ";
+//		}
+//		debugString += "}";
+//		
+//		Debug.Log(debugString);
 
 		SpinStart();
 	}
@@ -852,13 +863,19 @@ public class SpinWheel : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
 
 	#region INTERFACE METHODS	
 
-	public void OnPointerDown(PointerEventData eventData) {
+	public void OnBeginDrag(PointerEventData eventData) {
+		//Debug.Log ("OnBeginDrag");
 		if(state != SpinWheelState.UNLOCKED) return;
 		state = SpinWheelState.DRAGGING;
 		DragStart(eventData.position, Time.time);
 	}
 	
-	public void OnPointerUp(PointerEventData eventData) {
+	public void OnDrag(PointerEventData eventData) {
+		//Debug.Log ("OnDrag");
+	}
+
+	public void OnEndDrag(PointerEventData eventData) {
+		//Debug.Log ("OnEndDrag");
 		if(state != SpinWheelState.DRAGGING) return;
 		
 		DragEnd();

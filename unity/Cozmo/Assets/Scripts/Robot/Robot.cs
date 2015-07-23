@@ -168,7 +168,7 @@ public class Robot
 	public bool searching;
 
 	private int carryingObjectID;
-	private int headTrackingObjectID;
+	public int headTrackingObjectID { get; private set; }
 	private int lastHeadTrackingObjectID;
 
 	private float headAngleRequested;
@@ -728,7 +728,7 @@ public class Robot
 		RobotEngineManager.instance.SendMessage();
 	}
 	
-	public void TrackHeadToObject( ObservedObject observedObject, bool faceObject = false )
+	public void TrackToObject( ObservedObject observedObject, bool headOnly = true )
 	{
 		if( headTrackingObjectID == observedObject )
 		{
@@ -742,30 +742,30 @@ public class Robot
 
 		lastHeadTrackingObjectID = observedObject;
 
-		if( faceObject )
-		{
-			FaceObject( observedObject );
-		}
-		else
-		{
+		if(observedObject != null) {
 			TrackToObjectMessage.objectID = (uint)observedObject;
-			TrackToObjectMessage.robotID = ID;
-			TrackToObjectMessage.headOnly = true;
-
-			Debug.Log( "Track Head To Object " + TrackToObjectMessage.objectID );
-
-			RobotEngineManager.instance.Message.TrackToObject = TrackToObjectMessage;
-			RobotEngineManager.instance.SendMessage();
 		}
+		else {
+			TrackToObjectMessage.objectID = uint.MaxValue; //cancels tracking
+		}
+
+		TrackToObjectMessage.robotID = ID;
+		TrackToObjectMessage.headOnly = headOnly;
+
+		Debug.Log( "Track Head To Object " + TrackToObjectMessage.objectID );
+
+		RobotEngineManager.instance.Message.TrackToObject = TrackToObjectMessage;
+		RobotEngineManager.instance.SendMessage();
+
 	}
 
-	private void FaceObject( ObservedObject observedObject )
+	public void FaceObject( ObservedObject observedObject, bool headTrackWhenDone=true )
 	{
 		FaceObjectMessage.objectID = observedObject;
 		FaceObjectMessage.robotID = ID;
 		FaceObjectMessage.maxTurnAngle = float.MaxValue;
 		FaceObjectMessage.turnAngleTol = Mathf.Deg2Rad; //one degree seems to work?
-		FaceObjectMessage.headTrackWhenDone = System.Convert.ToByte( true );
+		FaceObjectMessage.headTrackWhenDone = System.Convert.ToByte( headTrackWhenDone );
 		
 		Debug.Log( "Face Object " + FaceObjectMessage.objectID );
 
@@ -805,7 +805,7 @@ public class Robot
 	{
 		TapBlockMessage.numTaps = System.Convert.ToByte( taps );
 		
-		Debug.Log( "TapBlockOnGround numTaps(" + TapBlockMessage.numTaps + ")" );
+		//Debug.Log( "TapBlockOnGround numTaps(" + TapBlockMessage.numTaps + ")" );
 		
 		RobotEngineManager.instance.Message.TapBlockOnGround = TapBlockMessage;
 		RobotEngineManager.instance.SendMessage();

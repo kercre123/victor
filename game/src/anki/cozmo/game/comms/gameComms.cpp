@@ -12,7 +12,7 @@
 #include "anki/cozmo/game/comms/gameComms.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 
-#include "anki/util/logging/logging.h"
+#include "util/logging/logging.h"
 #include "anki/common/basestation/utils/helpers/printByteArray.h"
 
 // For strcpy

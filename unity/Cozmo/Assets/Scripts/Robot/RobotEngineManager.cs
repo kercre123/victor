@@ -1,4 +1,3 @@
-
 using UnityEngine;
 using System;
 using System.Collections;
@@ -9,6 +8,10 @@ using Anki.Cozmo;
 using G2U = Anki.Cozmo.G2U;
 using U2G = Anki.Cozmo.U2G;
 
+/// <summary>
+/// Robot engine manager lives on a GameObject(named MasterObject) in our Intro scene,
+///		and handles launching, ticking, and messaging with the Cozmo Engine
+/// </summary>
 public class RobotEngineManager : MonoBehaviour {
 	
 	public static RobotEngineManager instance = null;
@@ -34,6 +37,7 @@ public class RobotEngineManager : MonoBehaviour {
 	public event Action<int> RobotConnected;
 	public event Action<Sprite> RobotImage;
 	public event Action<bool,RobotActionType> SuccessOrFailure;
+	public event Action<bool,string> RobotCompletedAnimation;
 
 	private ChannelBase channel = null;
 	private float lastRobotStateMessage = 0;
@@ -93,6 +97,12 @@ public class RobotEngineManager : MonoBehaviour {
 
 	public void AddRobot( byte robotID )
 	{
+		if(robots.ContainsKey(robotID)) {
+			robotList.RemoveAll( x => x.ID == robotID);
+			robots.Remove(robotID);
+		}
+
+
 		Robot robot = new Robot( robotID );
 		robots.Add( robotID, robot );
 		robotList.Add( robot );
@@ -441,7 +451,7 @@ public class RobotEngineManager : MonoBehaviour {
 
 		bool success = (message.result == ActionResult.SUCCESS);
 		RobotActionType action_type = (RobotActionType)message.actionType;
-		Debug.Log("Action completed " + success);
+		//Debug.Log("Action completed " + success);
 		
 		current.selectedObjects.Clear();
 		current.targetLockedObject = null;
@@ -453,6 +463,12 @@ public class RobotEngineManager : MonoBehaviour {
 		
 		if(SuccessOrFailure != null) {
 			SuccessOrFailure(success, action_type);
+		}
+
+		if(action_type == RobotActionType.PLAY_ANIMATION) {
+			if(RobotCompletedAnimation != null) {
+				RobotCompletedAnimation(success, message.completionInfo.animName);
+			}
 		}
 
 		if(!success) {

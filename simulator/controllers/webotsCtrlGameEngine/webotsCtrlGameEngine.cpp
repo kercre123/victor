@@ -1,5 +1,5 @@
 /*
- * File:          blockworld_controller.cpp
+ * File:          webotsCtrlGameEngine.cpp
  * Date:
  * Description:   
  * Author:        
@@ -9,7 +9,7 @@
 #include "anki/cozmo/game/cozmoGame.h"
 
 #include "anki/common/basestation/platformPathManager.h"
-#include "anki/util/logging/logging.h"
+#include "util/logging/logging.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "json/json.h"
@@ -20,7 +20,7 @@
 #include <fstream>
 
 
-#ifdef USE_WEBOTS
+#ifndef NO_WEBOTS
 #include <webots/Supervisor.hpp>
 webots::Supervisor basestationController;
 #else
@@ -107,12 +107,12 @@ int main(int argc, char **argv)
   } 
 
   int numUIDevicesToWaitFor = 1;
-#ifdef USE_WEBOTS
+#ifndef NO_WEBOTS
   webots::Field* numUIsField = basestationController.getSelf()->getField("numUIDevicesToWaitFor");
   if (numUIsField) {
     numUIDevicesToWaitFor = numUIsField->getSFInt32();
   } else {
-    printf("blockworldController.main.MissingField: numUIDevicesToWaitFor not found in BlockworldComms\n");
+    printf("webotsCtrlGameEngine.main.MissingField: numUIDevicesToWaitFor not found in BlockworldComms\n");
   }
 #endif
   
@@ -133,7 +133,7 @@ int main(int argc, char **argv)
   CozmoGame cozmoGame;
   cozmoGame.Init(config);
   
-  PRINT_STREAM_INFO("blockworld_controller.main", "CozmoGame created and initialized.");
+  PRINT_STREAM_INFO("webotsCtrlGameEngine.main", "CozmoGame created and initialized.");
   
   /*
   // TODO: Wait to receive this from UI (webots keyboard controller)
@@ -152,13 +152,13 @@ int main(int argc, char **argv)
   //
   while (basestationController.step(BS_TIME_STEP) != -1)
   {
-#ifndef USE_WEBOTS
+#ifdef NO_WEBOTS
     auto tick_start = std::chrono::system_clock::now();
 #endif
     
     cozmoGame.Update(basestationController.getTime());
     
-#ifndef USE_WEBOTS
+#ifdef NO_WEBOTS
     auto ms_left = std::chrono::milliseconds(BS_TIME_STEP) - (std::chrono::system_clock::now() - tick_start);
     if (ms_left < std::chrono::milliseconds(0)) {
       PRINT_STREAM_WARNING("EngineHeartbeat.overtime", "over by " << std::chrono::duration_cast<std::chrono::seconds>(-ms_left).count() << "ms");
