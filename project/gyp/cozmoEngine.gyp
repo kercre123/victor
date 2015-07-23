@@ -288,7 +288,7 @@
         'targets': [
 
           {
-            'target_name': 'pluginPhysics',
+            'target_name': 'cozmo_physics',
             'type': 'shared_library',
             'include_dirs': [
               # '../../robot/include',
@@ -302,7 +302,20 @@
               '<(ce-cti_gyp_path):ctiMessaging',
               '<(ce-util_gyp_path):util',
             ],
-            'sources': [ '<!@(cat <(pluginPhysics_source))' ],
+            'copies': [
+              {
+                # this replaces copyUnitTestData.sh
+                'files': [
+                  '<(webots_path)/resources/projects/plugins/physics/physics.c',
+                ],
+                'destination': '../../generated/webots/src/plugins/physics',
+              },
+            ],
+            'sources': [ 
+              '<!@(cat <(pluginPhysics_source))',
+              '../../generated/webots/src/plugins/physics/physics.c',
+
+            ],
             'defines': [
               'MACOS'
               # 'COZMO_ROBOT',
