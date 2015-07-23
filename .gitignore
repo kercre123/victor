@@ -170,40 +170,6 @@ build.old
 buildMakefile.old
 include/anki/cozmo/shared/msgIDs.txt
 
-# Lattice
-robot/fpga/fpgaisp_Implmnt/AutoConstraint_top.sdc
-robot/fpga/fpgaisp_Implmnt/dm/
-robot/fpga/fpgaisp_Implmnt/fpgaisp.edf
-robot/fpga/fpgaisp_Implmnt/fpgaisp.fse
-robot/fpga/fpgaisp_Implmnt/fpgaisp.sap
-robot/fpga/fpgaisp_Implmnt/fpgaisp.scf
-robot/fpga/fpgaisp_Implmnt/fpgaisp.srd
-robot/fpga/fpgaisp_Implmnt/fpgaisp.srm
-robot/fpga/fpgaisp_Implmnt/fpgaisp.srr
-robot/fpga/fpgaisp_Implmnt/fpgaisp.srs
-robot/fpga/fpgaisp_Implmnt/fpgaisp_scck.rpt
-robot/fpga/fpgaisp_Implmnt/fpgaisp_synplify.fdc
-robot/fpga/fpgaisp_Implmnt/rpt_top.areasrr
-robot/fpga/fpgaisp_Implmnt/run_options.txt
-robot/fpga/fpgaisp_Implmnt/sbt/Temp/
-robot/fpga/fpgaisp_Implmnt/sbt/netlist/
-robot/fpga/fpgaisp_Implmnt/sbt/outputs/bitmap/
-robot/fpga/fpgaisp_Implmnt/sbt/outputs/packer/
-robot/fpga/fpgaisp_Implmnt/sbt/outputs/placer/
-robot/fpga/fpgaisp_Implmnt/sbt/outputs/router/
-robot/fpga/fpgaisp_Implmnt/sbt/outputs/simulation_netlist/
-robot/fpga/fpgaisp_Implmnt/sbt/outputs/timer/
-robot/fpga/fpgaisp_Implmnt/sbt/outputs/top_sbt.rpt
-robot/fpga/fpgaisp_Implmnt/scratchproject.prs
-robot/fpga/fpgaisp_Implmnt/synlog/
-robot/fpga/fpgaisp_Implmnt/syntmp/
-robot/fpga/fpgaisp_Implmnt/synwork/
-robot/fpga/fpgaisp_Implmnt/fpgaisp_XXXXXOLD.edf
-robot/fpga/fpgaisp_Implmnt/fpgaisp_XXXXXOLD.scf
-robot/fpga/fpgaisp_Implmnt/sbt/outputs/gui/fpgaisp_top_timingviewer.cfg
-robot/fpga/fpgaisp_Implmnt/sbt/outputs/netlister/
-
-robot/fpga/synlog.tcl
 
 **.output
 **.bin
