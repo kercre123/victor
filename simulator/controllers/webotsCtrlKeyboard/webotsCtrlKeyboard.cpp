@@ -440,6 +440,10 @@ namespace Anki {
                          msg.objectID, msg.numTaps);
       }
 
+      void HandleAnimationAvailable(ExternalInterface::AnimationAvailable const& msg)
+      {
+        printf("Animation available: %s\n", msg.animName.c_str());
+      }
       
       // ===== End of message handler callbacks ====
       
@@ -510,6 +514,9 @@ namespace Anki {
               break;
             case ExternalInterface::MessageEngineToGame::Tag::ActiveObjectTapped:
               HandleActiveObjectTapped(message.Get_ActiveObjectTapped());
+              break;
+          case ExternalInterface::MessageEngineToGame::Tag::AnimationAvailable:
+              HandleAnimationAvailable(message.Get_AnimationAvailable());
               break;
             default:
               // ignore
@@ -1399,7 +1406,30 @@ namespace Anki {
               }
               case (s32)'#':
               {
-                SendAnimation("ANIM_BLINK", 0);
+                U2G::QueueSingleAction msg1;
+                msg1.robotID = 1;
+                msg1.inSlot = 1;
+                msg1.position = QueueActionPosition::NEXT;
+                msg1.actionType = RobotActionType::PLAY_ANIMATION;
+                msg1.action.playAnimation.animationName = "ANIM_TEST";
+                msg1.action.playAnimation.numLoops = 1;
+                
+                U2G::QueueSingleAction msg2;
+                msg2.robotID = 1;
+                msg2.inSlot = 1;
+                msg2.position = QueueActionPosition::NEXT;
+                msg2.actionType = RobotActionType::PLAY_ANIMATION;
+                msg2.action.playAnimation.animationName = "ANIM_TEST";
+                msg2.action.playAnimation.numLoops = 1;
+                
+                U2G::Message msgWrapper;
+                msgWrapper.Set_QueueSingleAction(msg1);
+                SendMessage(msgWrapper);
+                
+                msgWrapper.Set_QueueSingleAction(msg2);
+                SendMessage(msgWrapper);
+                
+                //SendAnimation("ANIM_BLINK", 0);
                 break;
               }
               case (s32)'$':
