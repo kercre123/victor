@@ -17,8 +17,9 @@
 #include <anki/messaging/basestation/IComms.h>
 
 #include "anki/cozmo/basestation/cozmoEngine.h"
-#include "anki/cozmo/messageBuffers/game/UiMessagesG2U.h"
+#include "clad/externalInterface/messageEngineToGame.h"
 #include "anki/cozmo/messageBuffers/game/UiMessagesU2G.h"
+#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 
 // Enable this if you want to receive/send messages via socket connection.
 // Eventually, this should be disabled by default once the UI layer starts
@@ -32,9 +33,7 @@
 namespace Anki {
   namespace Cozmo {
     
-//#define MESSAGE_BASECLASS_NAME UiMessage
-//#include "anki/cozmo/game/comms/messaging/UiMessageDefinitions.h"
-    
+
     class Robot;
     class RobotManager;
     
@@ -47,16 +46,16 @@ namespace Anki {
       
       virtual Result ProcessMessages() = 0;
       
-      virtual Result SendMessage(const UserDeviceID_t devID, const G2U::Message& msg) = 0;
+      virtual Result SendMessage(const ExternalInterface::MessageEngineToGame& msg) = 0;
       
     }; // IMessageHandler
     
     
-    class UiMessageHandler : public IUiMessageHandler
+    class UiMessageHandler : public IUiMessageHandler, public IExternalInterface
     {
     public:
       
-      UiMessageHandler(); // Force construction with stuff in Init()?
+      UiMessageHandler(u32 hostUiDeviceID); // Force construction with stuff in Init()?
       
       // Set the message handler's communications manager
       virtual Result Init(Comms::IComms* comms) override;
@@ -66,18 +65,20 @@ namespace Anki {
       virtual Result ProcessMessages();
       
       // Send a message to a specified ID
-      Result SendMessage(const UserDeviceID_t devID, const G2U::Message& msg);
+      Result SendMessage(const ExternalInterface::MessageEngineToGame& msg);
+      void DeliverToGame(const ExternalInterface::MessageEngineToGame&& message) override;
       
       inline void RegisterCallbackForMessage(const std::function<void(const U2G::Message&)>& messageCallback)
       {
         this->messageCallback = messageCallback;
       }
-      
+      inline u32 GetHostUiDeviceID() const { return _hostUiDeviceID; }
     protected:
       
       Comms::IComms* comms_;
       
       bool isInitialized_;
+      u32 _hostUiDeviceID;
       
       std::function<void(const U2G::Message&)> messageCallback;
       
@@ -106,7 +107,7 @@ namespace Anki {
       }
       
       // Send a message to a specified ID
-      Result SendMessage(const UserDeviceID_t devID, const G2U::Message& msg) {
+      Result SendMessage(const UserDeviceID_t devID, const ExternalInterface::MessageEngineToGame& msg) {
         return RESULT_OK;
       }
       

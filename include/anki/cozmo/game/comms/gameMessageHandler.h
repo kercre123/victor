@@ -18,7 +18,7 @@
 #include "anki/common/types.h"
 
 #include <anki/messaging/basestation/IComms.h>
-#include "anki/cozmo/messageBuffers/game/UiMessagesG2U.h"
+#include "clad/externalInterface/messageEngineToGame.h"
 #include "anki/cozmo/messageBuffers/game/UiMessagesU2G.h"
 
 namespace Anki {
@@ -66,19 +66,19 @@ namespace Cozmo {
     // Send a message to a specified ID
     Result SendMessage(const UserDeviceID_t devID, const U2G::Message& msg);
     
-    inline void RegisterCallbackForMessage(const std::function<void(const G2U::Message&)>& messageCallback)
+    inline void RegisterCallbackForMessage(const std::function<void(const ExternalInterface::MessageEngineToGame&)>& messageCallback)
     {
       this->messageCallback = messageCallback;
     }
-    
+
   protected:
     
     Comms::IComms* comms_;
     
     bool isInitialized_;
     
-    std::function<void(const G2U::Message&)> messageCallback;
-    
+    std::function<void(const ExternalInterface::MessageEngineToGame&)> messageCallback;
+
     // Process a raw byte buffer as a message and send it to the specified
     // robot.
     // Returns RESULT_FAIL if no handler callback was registered for this message.
