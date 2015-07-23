@@ -226,6 +226,7 @@ coretech/project/gyp/planning.lst
 coretech/project/gyp/vision-robot.lst
 coretech/project/gyp/vision-test.lst
 coretech/project/gyp/vision.lst
+project/gyp/pluginPhysics.lst
 project/gyp/cozmoEngine-test.lst
 project/gyp/cozmoEngine.lst
 project/gyp/ctrlRobot.lst
