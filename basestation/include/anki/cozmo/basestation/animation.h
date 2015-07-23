@@ -23,6 +23,8 @@
 
 #include "anki/cozmo/basestation/keyframe.h"
 
+#include <list>
+
 namespace Anki {
   namespace Cozmo {
 
@@ -112,14 +114,19 @@ namespace Anki {
       Track<FacePositionKeyFrame>   _facePosTrack;
       Track<BlinkKeyFrame>          _blinkTrack;
       Track<BackpackLightsKeyFrame> _backpackLightsTrack;
-      Track<BodyMotionKeyFrame>   _bodyPosTrack;
-
-      Track<DeviceAudioKeyFrame>  _deviceAudioTrack;
-      Track<RobotAudioKeyFrame>   _robotAudioTrack;
+      Track<BodyMotionKeyFrame>     _bodyPosTrack;
+      Track<DeviceAudioKeyFrame>    _deviceAudioTrack;
+      Track<RobotAudioKeyFrame>     _robotAudioTrack;
 
       // TODO: Remove this once we aren't playing robot audio on the device
       TimeStamp_t _playedRobotAudio_ms;
 
+      bool _endOfAnimationSent;
+      
+      bool BufferMessageToSend(RobotMessage* msg);
+      bool AllTracksBuffered() const;
+      std::list<RobotMessage*> _sendBuffer;
+      
       // Send larger keyframes "hot" for reliable transport (this includes
       // audio samples and face images)
       static const bool SEND_LARGE_KEYFRAMES_HOT = false;
