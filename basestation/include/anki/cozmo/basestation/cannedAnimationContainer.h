@@ -37,6 +37,8 @@ namespace Cozmo {
     
     Animation* GetAnimation(const std::string& name);
     
+    std::vector<std::string> GetAnimationNames();
+    
     void Clear();
     
   private:
