@@ -271,22 +271,26 @@ namespace Cozmo {
     }
   }
   
+  IActionRunner* GetFaceObjectActionHelper(Robot* robot, U2G::FaceObject const& msg)
+  {
+    ObjectID objectID;
+    if(msg.objectID == u32_MAX) {
+      objectID = robot->GetBlockWorld().GetSelectedObject();
+    } else {
+      objectID = msg.objectID;
+    }
+    return new FaceObjectAction(objectID,
+                                Radians(msg.turnAngleTol),
+                                Radians(msg.maxTurnAngle),
+                                msg.headTrackWhenDone);
+  }
   
   void CozmoGameImpl::Process_FaceObject(U2G::FaceObject const& msg)
   {
     Robot* robot = GetRobotByID(msg.robotID);
     
     if(robot != nullptr) {
-      ObjectID objectID;
-      if(msg.objectID == u32_MAX) {
-        objectID = robot->GetBlockWorld().GetSelectedObject();
-      } else {
-        objectID = msg.objectID;
-      }
-      robot->GetActionList().QueueActionAtEnd(DriveAndManipulateSlot, new FaceObjectAction(objectID,
-                                                                                           Radians(msg.turnAngleTol),
-                                                                                           Radians(msg.maxTurnAngle),
-                                                                                           msg.headTrackWhenDone));
+      robot->GetActionList().QueueActionAtEnd(DriveAndManipulateSlot, GetFaceObjectActionHelper(robot, msg));
     }
   }
   
@@ -407,6 +411,19 @@ namespace Cozmo {
     }
   }
   
+  IActionRunner* GetDriveToPoseActionHelper(Robot* robot, U2G::GotoPose const& msg)
+  {
+    // TODO: Add ability to indicate z too!
+    // TODO: Better way to specify the target pose's parent
+    Pose3d targetPose(msg.rad, Z_AXIS_3D(), Vec3f(msg.x_mm, msg.y_mm, 0), robot->GetWorldOrigin());
+    targetPose.SetName("GotoPoseTarget");
+    
+    // TODO: expose whether or not to drive with head down in message?
+    // (For now it is hard-coded to true)
+    const bool driveWithHeadDown = true;
+    return new DriveToPoseAction(targetPose, driveWithHeadDown, msg.useManualSpeed);
+  }
+  
   void CozmoGameImpl::Process_GotoPose(U2G::GotoPose const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
@@ -414,15 +431,7 @@ namespace Cozmo {
     Robot* robot = GetRobotByID(robotID);
     
     if(robot != nullptr) {
-      // TODO: Add ability to indicate z too!
-      // TODO: Better way to specify the target pose's parent
-      Pose3d targetPose(msg.rad, Z_AXIS_3D(), Vec3f(msg.x_mm, msg.y_mm, 0), robot->GetWorldOrigin());
-      targetPose.SetName("GotoPoseTarget");
-      
-      // TODO: expose whether or not to drive with head down in message?
-      // (For now it is hard-coded to true)
-      const bool driveWithHeadDown = true;
-      robot->GetActionList().QueueActionAtEnd(DriveAndManipulateSlot, new DriveToPoseAction(targetPose, driveWithHeadDown, msg.useManualSpeed));
+      robot->GetActionList().QueueActionAtEnd(DriveAndManipulateSlot, GetDriveToPoseActionHelper(robot, msg));
     }
   }
   
@@ -520,6 +529,24 @@ namespace Cozmo {
       robot->GetBlockWorld().CycleSelectedObject();
     }
   }
+ 
+  IActionRunner* GetPickAndPlaceActionHelper(Robot* robot, U2G::PickAndPlaceObject const& msg)
+  {
+    ObjectID selectedObjectID;
+    if(msg.objectID < 0) {
+      selectedObjectID = robot->GetBlockWorld().GetSelectedObject();
+    } else {
+      selectedObjectID = msg.objectID;
+    }
+    
+    if(static_cast<bool>(msg.usePreDockPose)) {
+      return new DriveToPickAndPlaceObjectAction(selectedObjectID, msg.useManualSpeed);
+    } else {
+      PickAndPlaceObjectAction* action = new PickAndPlaceObjectAction(selectedObjectID, msg.useManualSpeed);
+      action->SetPreActionPoseAngleTolerance(-1.f); // disable pre-action pose distance check
+      return action;
+    }
+  }
   
   void CozmoGameImpl::Process_PickAndPlaceObject(U2G::PickAndPlaceObject const& msg)
   {
@@ -530,21 +557,22 @@ namespace Cozmo {
     if(robot != nullptr) {
       const u8 numRetries = 1;
       
-      ObjectID selectedObjectID;
-      if(msg.objectID < 0) {
-        selectedObjectID = robot->GetBlockWorld().GetSelectedObject();
-      } else {
-        selectedObjectID = msg.objectID;
-      }
+      IActionRunner* action = GetPickAndPlaceActionHelper(robot, msg);
       
-      if(static_cast<bool>(msg.usePreDockPose)) {
-        robot->GetActionList().QueueActionAtEnd(DriveAndManipulateSlot, new DriveToPickAndPlaceObjectAction(selectedObjectID, msg.useManualSpeed), numRetries);
-      } else {
-        PickAndPlaceObjectAction* action = new PickAndPlaceObjectAction(selectedObjectID, msg.useManualSpeed);
-        action->SetPreActionPoseAngleTolerance(-1.f); // disable pre-action pose distance check
-        robot->GetActionList().QueueActionAtEnd(DriveAndManipulateSlot, action, numRetries);
-      }
+      robot->GetActionList().QueueActionAtEnd(DriveAndManipulateSlot, action, numRetries);
     }
+  }
+  
+  IActionRunner* GetDriveToObjectActionHelper(Robot* robot, U2G::GotoObject const& msg)
+  {
+    ObjectID selectedObjectID;
+    if(msg.objectID < 0) {
+      selectedObjectID = robot->GetBlockWorld().GetSelectedObject();
+    } else {
+      selectedObjectID = msg.objectID;
+    }
+    
+    return new DriveToObjectAction(selectedObjectID, msg.distance_mm, msg.useManualSpeed);
   }
   
   void CozmoGameImpl::Process_GotoObject(U2G::GotoObject const& msg)
@@ -556,19 +584,31 @@ namespace Cozmo {
     if(robot != nullptr) {
       const u8 numRetries = 0;
       
-      ObjectID selectedObjectID;
-      if(msg.objectID < 0) {
-        selectedObjectID = robot->GetBlockWorld().GetSelectedObject();
-      } else {
-        selectedObjectID = msg.objectID;
-      }
-      
-      DriveToObjectAction* action = new DriveToObjectAction(selectedObjectID, msg.distance_mm, msg.useManualSpeed);
-      robot->GetActionList().QueueActionAtEnd(DriveAndManipulateSlot, action, numRetries);
-      
+      robot->GetActionList().QueueActionAtEnd(DriveAndManipulateSlot, GetDriveToObjectActionHelper(robot, msg), numRetries);
     }
   }
 
+  IActionRunner* GetRollObjectActionHelper(Robot* robot, U2G::RollObject const& msg)
+  {
+    assert(robot != nullptr); // should've already been checked!
+    
+    ObjectID selectedObjectID;
+    if(msg.objectID < 0) {
+      selectedObjectID = robot->GetBlockWorld().GetSelectedObject();
+    } else {
+      selectedObjectID = msg.objectID;
+    }
+    
+    if(static_cast<bool>(msg.usePreDockPose)) {
+      return new DriveToRollObjectAction(selectedObjectID, msg.useManualSpeed);
+    } else {
+      RollObjectAction* action = new RollObjectAction(selectedObjectID, msg.useManualSpeed);
+      action->SetPreActionPoseAngleTolerance(-1.f); // disable pre-action pose distance check
+      return action;
+    }
+  }
+  
+  
   void CozmoGameImpl::Process_RollObject(U2G::RollObject const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
@@ -578,20 +618,8 @@ namespace Cozmo {
     if(robot != nullptr) {
       const u8 numRetries = 1;
       
-      ObjectID selectedObjectID;
-      if(msg.objectID < 0) {
-        selectedObjectID = robot->GetBlockWorld().GetSelectedObject();
-      } else {
-        selectedObjectID = msg.objectID;
-      }
-      
-      if(static_cast<bool>(msg.usePreDockPose)) {
-        robot->GetActionList().QueueActionAtEnd(DriveAndManipulateSlot, new DriveToRollObjectAction(selectedObjectID, msg.useManualSpeed), numRetries);
-      } else {
-        RollObjectAction* action = new RollObjectAction(selectedObjectID, msg.useManualSpeed);
-        action->SetPreActionPoseAngleTolerance(-1.f); // disable pre-action pose distance check
-        robot->GetActionList().QueueActionAtEnd(DriveAndManipulateSlot, action, numRetries);
-      }
+      IActionRunner* action = GetRollObjectActionHelper(robot, msg);
+      robot->GetActionList().QueueActionAtEnd(DriveAndManipulateSlot, action, numRetries);
     }
   }
   
@@ -1024,22 +1052,7 @@ namespace Cozmo {
       case RobotActionType::PICKUP_OBJECT_LOW:
       case RobotActionType::PLACE_OBJECT_HIGH:
       case RobotActionType::PLACE_OBJECT_LOW:
-      {
-        ObjectID selectedObjectID;
-        if(actionUnion.pickAndPlaceObject.objectID < 0) {
-          selectedObjectID = robot->GetBlockWorld().GetSelectedObject();
-        } else {
-          selectedObjectID = actionUnion.pickAndPlaceObject.objectID;
-        }
-        
-        if(static_cast<bool>(actionUnion.pickAndPlaceObject.usePreDockPose)) {
-          return new DriveToPickAndPlaceObjectAction(selectedObjectID, actionUnion.pickAndPlaceObject.useManualSpeed);
-        } else {
-          PickAndPlaceObjectAction* action = new PickAndPlaceObjectAction(selectedObjectID, actionUnion.pickAndPlaceObject.useManualSpeed);
-          action->SetPreActionPoseAngleTolerance(-1.f); // disable pre-action pose distance check
-          return action;
-        }
-      }
+        return GetPickAndPlaceActionHelper(robot, actionUnion.pickAndPlaceObject);
        
       case RobotActionType::MOVE_HEAD_TO_ANGLE:
         // TODO: Provide a means to pass in the speed/acceleration values to the action
@@ -1050,20 +1063,16 @@ namespace Cozmo {
         return new MoveLiftToHeightAction(actionUnion.setLiftHeight.height_mm);
         
       case RobotActionType::FACE_OBJECT:
-      {
+        return GetFaceObjectActionHelper(robot, actionUnion.faceObject);
         
-        ObjectID objectID;
-        if(actionUnion.faceObject.objectID == u32_MAX) {
-          objectID = robot->GetBlockWorld().GetSelectedObject();
-        } else {
-          objectID = actionUnion.faceObject.objectID;
-        }
+      case RobotActionType::ROLL_OBJECT_LOW:
+        return GetRollObjectActionHelper(robot, actionUnion.rollObject);
+      
+      case RobotActionType::DRIVE_TO_OBJECT:
+        return GetDriveToObjectActionHelper(robot, actionUnion.goToObject);
         
-        return new FaceObjectAction(objectID,
-                                    Radians(actionUnion.faceObject.turnAngleTol),
-                                    Radians(actionUnion.faceObject.maxTurnAngle),
-                                    actionUnion.faceObject.headTrackWhenDone);
-      }
+      case RobotActionType::DRIVE_TO_POSE:
+        return GetDriveToPoseActionHelper(robot, actionUnion.goToPose);
         
         // TODO: Add cases for other actions
         
