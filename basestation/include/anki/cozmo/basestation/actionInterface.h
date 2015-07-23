@@ -49,7 +49,7 @@ namespace Anki {
       
       ActionResult Update(Robot& robot);
       
-      void Cancel(Robot& robot) { _isCancelled = true; }
+      void Cancel() { _isCancelled = true; }
       
       // Derived classes can implement any required cleanup by overriding this
       // method. It is called when Update() is about return anything other than

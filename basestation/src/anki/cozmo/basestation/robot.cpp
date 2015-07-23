@@ -2800,6 +2800,7 @@ namespace Anki {
       
     Result Robot::AbortAnimation()
     {
+      _animationStreamer.SetStreamingAnimation("");
       return SendAbortAnimation();
     }
     
