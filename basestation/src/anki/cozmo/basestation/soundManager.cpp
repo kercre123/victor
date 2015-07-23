@@ -219,7 +219,7 @@ namespace Anki {
       u8 header[headerSize];
       fread(header, 1, sizeof(header), fp);
       fseek(fp, 0, SEEK_END);
-      u32 fileSize = ftell(fp);
+      u32 fileSize = (u32)ftell(fp);
       fclose(fp);
       
       bool riffCheck = memcmp(header, "RIFF", 4) == 0;
@@ -373,7 +373,7 @@ namespace Anki {
       } else {
         PRINT_NAMED_ERROR("SoundManager.ReadSoundDir",
                           "Sound folder not found: %s\n",
-                          _rootDir.c_str());
+                          (_rootDir + subDir).c_str());
         return RESULT_FAIL;
       }
 

@@ -16,7 +16,7 @@
 
 #include "anki/common/types.h"
 
-#include "anki/cozmo/messageBuffers/shared/actionTypes.h"
+#include "clad/types/actionTypes.h"
 
 #include <list>
 #include <map>

@@ -16,14 +16,11 @@
 #include "anki/cozmo/basestation/actionableObject.h"
 #include "anki/cozmo/basestation/actionInterface.h"
 #include "anki/cozmo/basestation/compoundActions.h"
-#include "anki/cozmo/basestation/signals/cozmoEngineSignals.h"
-
 #include "anki/common/types.h"
-
 #include "anki/common/basestation/objectTypesAndIDs.h"
 #include "anki/common/basestation/math/pose.h"
-
-#include "anki/cozmo/messageBuffers/shared/actionTypes.h"
+#include "util/signals/simpleSignal_fwd.h"
+#include "clad/types/actionTypes.h"
 
 namespace Anki {
   

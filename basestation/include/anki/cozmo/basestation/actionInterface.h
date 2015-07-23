@@ -20,7 +20,7 @@
 #include "anki/cozmo/shared/cozmoTypes.h"
 
 #include "anki/cozmo/basestation/actionableObject.h"
-#include "anki/cozmo/messageBuffers/shared/actionTypes.h"
+#include "clad/types/actionTypes.h"
 
 #include <list>
 

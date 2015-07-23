@@ -13,7 +13,6 @@
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/comms/robot/robotMessages.h"
 #include "anki/cozmo/basestation/robot.h"
-#include "anki/cozmo/basestation/signals/cozmoEngineSignals.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/common/basestation/math/point.h"
@@ -31,9 +30,10 @@
 #include "anki/cozmo/basestation/ramp.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
 #include "opencv2/highgui/highgui.hpp" // For imwrite() in ProcessImage
-
 #include "anki/cozmo/basestation/soundManager.h"
 #include "anki/cozmo/basestation/faceAnimationManager.h"
+#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "clad/externalInterface/messageEngineToGame.h"
 
 #include <fstream>
 #include <dirent.h>
@@ -45,8 +45,9 @@
 namespace Anki {
   namespace Cozmo {
     
-    Robot::Robot(const RobotID_t robotID, IRobotMessageHandler* msgHandler)
-    : _ID(robotID)
+    Robot::Robot(const RobotID_t robotID, IRobotMessageHandler* msgHandler, IExternalInterface* externalInterface)
+    : _externalInterface(externalInterface)
+    , _ID(robotID)
     , _isPhysical(false)
     , _newStateMsgAvailable(false)
     , _syncTimeAcknowledged(false)
@@ -85,6 +86,7 @@ namespace Anki {
     , _isMoving(false)
     , _isAnimating(false)
     , _battVoltage(5)
+    , _imageSendMode(ISM_OFF)
     , _carryingMarker(nullptr)
     , _lastPickOrPlaceSucceeded(false)
     , _stateSaveMode(SAVE_OFF)
@@ -1209,14 +1211,19 @@ namespace Anki {
     
     Result Robot::PlaySound(const std::string& soundName, u8 numLoops, u8 volume)
     {
-      CozmoEngineSignals::PlaySoundForRobotSignal().emit(GetID(), soundName, numLoops, volume);
+      if (_externalInterface != nullptr) {
+        _externalInterface->DeliverToGame(ExternalInterface::MessageEngineToGame(ExternalInterface::PlaySound(soundName, numLoops, volume)));
+      }
+      //CozmoEngineSignals::PlaySoundForRobotSignal().emit(GetID(), soundName, numLoops, volume);
       return RESULT_OK;
     } // PlaySound()
       
       
     void Robot::StopSound()
     {
-      CozmoEngineSignals::StopSoundForRobotSignal().emit(GetID());
+      if (_externalInterface != nullptr) {
+        _externalInterface->DeliverToGame(ExternalInterface::MessageEngineToGame(ExternalInterface::StopSound()));
+      }
     } // StopSound()
       
       
@@ -2518,8 +2525,8 @@ namespace Anki {
       // Now make the robot's origin point to the new origin
       // TODO: avoid the icky const_cast here...
       _worldOrigin = const_cast<Pose3d*>(newPoseWrtNewOrigin.GetParent());
-      
-      CozmoEngineSignals::RobotWorldOriginChangedSignal().emit(GetID());
+
+      _robotWorldOriginChangedSignal.emit(GetID());
       
       return RESULT_OK;
       

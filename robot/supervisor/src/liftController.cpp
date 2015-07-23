@@ -651,7 +651,7 @@ namespace Anki {
           StartNodding(LIFT_HEIGHT_LOWDOCK, LIFT_HEIGHT_LOWDOCK + 30,
                        300, numTaps, 0, 0.5);
 #else
-          StartNodding(LIFT_HEIGHT_LOWDOCK+10, LIFT_HEIGHT_LOWDOCK + 30,
+          StartNodding(LIFT_HEIGHT_LOWDOCK+13, LIFT_HEIGHT_LOWDOCK + 25,
                        300, numTaps, 0, 0.5);
 #endif
         }

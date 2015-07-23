@@ -85,6 +85,8 @@ namespace Anki {
     
     static s32 RandHelper(const s32 minLimit, const s32 maxLimit)
     {
+      assert(maxLimit > minLimit);
+      
       const s32 num = (std::rand() % (maxLimit - minLimit + 1)) + minLimit;
       
       assert(num >= minLimit && num <= maxLimit);
@@ -295,25 +297,62 @@ return RESULT_FAIL; \
     // RobotAudioKeyFrame
     //
     
-    Result RobotAudioKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot)
+    const std::string& RobotAudioKeyFrame::GetSoundName() const
     {
-      GET_MEMBER_FROM_JSON(jsonRoot, audioName);
-      //GET_MEMBER_FROM_JSON(jsonRoot, audioID);
-      
-      const u32 duration_ms = SoundManager::getInstance()->GetSoundDurationInMilliseconds(_audioName);
-      
-      if(duration_ms == 0) {
-        PRINT_NAMED_ERROR("RobotAudioKeyFrame.SetMembersFromJson.InvalidAudioName",
-                          "SoundManager could not find the sound associated with name '%s'.\n",
-                          _audioName.c_str());
-        return RESULT_FAIL;
+      static const std::string unknownName("UNKNOWN");
+      if(_selectedAudioIndex<0 || _audioReferences.empty()) {
+        PRINT_NAMED_ERROR("RobotAudioKeyFrame.GetSoundName.InvalidState",
+                          "KeyFrame not initialzed with selected sound name yet.\n");
+        return unknownName;
       }
       
-      _numSamples = duration_ms / SAMPLE_LENGTH_MS;
-      
+      return _audioReferences[_selectedAudioIndex].name;
+    }
+    
+    Result RobotAudioKeyFrame::AddAudioRef(const std::string& name)
+    {
       // TODO: Compute number of samples for this audio ID
       // TODO: Catch failure if ID is invalid
       // _numSamples = wwise::GetNumSamples(_idMsg.audioID, SAMPLE_SIZE);
+      
+      AudioRef audioRef;
+      const u32 duration_ms = SoundManager::getInstance()->GetSoundDurationInMilliseconds(name);
+      if(duration_ms == 0) {
+        PRINT_NAMED_ERROR("RobotAudioKeyFrame.AddAudioRef.InvalidName",
+                          "SoundManager could not find the sound associated with name '%s'.\n",
+                          name.c_str());
+        return RESULT_FAIL;
+      }
+      
+      audioRef.name = name;
+      audioRef.numSamples = duration_ms / SAMPLE_LENGTH_MS;
+      _audioReferences.push_back(audioRef);
+      
+      return RESULT_OK;
+    }
+    
+    Result RobotAudioKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot)
+    {
+      if(!jsonRoot.isMember("audioName")) {
+        PRINT_NAMED_ERROR("RobotAudioKeyFrame.SetMembersFromJson.MissingAudioName",
+                          "No 'audioName' field in Json frame.\n");
+        return RESULT_FAIL;
+      }
+      
+      const Json::Value& jsonAudioNames = jsonRoot["audioName"];
+      if(jsonAudioNames.isArray()) {
+        for(s32 i=0; i<jsonAudioNames.size(); ++i) {
+          Result addResult = AddAudioRef(jsonAudioNames[i].asString());
+          if(addResult != RESULT_OK) {
+            return addResult;
+          }
+        }
+      } else {
+        Result addResult = AddAudioRef(jsonAudioNames.asString());
+        if(addResult != RESULT_OK) {
+          return addResult;
+        }
+      }
       
       _sampleIndex = 0;
       
@@ -322,13 +361,23 @@ return RESULT_FAIL; \
     
     RobotMessage* RobotAudioKeyFrame::GetStreamMessage()
     {
+      if(_sampleIndex == 0) {
+        // Select one of the audio names to play
+        if(_audioReferences.size()==1) {
+          // Special case: there's only one audio option 
+          _selectedAudioIndex = 0;
+        } else {
+          _selectedAudioIndex = RandHelper(0, _audioReferences.size()-1);
+        }
+      }
+      
       // Populate the message with the next chunk of audio data and send it out
-      if(_sampleIndex < _numSamples)
+      if(_sampleIndex < _audioReferences[_selectedAudioIndex].numSamples)
       {
         // TODO: Get next chunk of audio from wwise or something?
         //wwise::GetNextSample(_audioSampleMsg.sample, 800);
         
-        if (!SoundManager::getInstance()->GetSoundSample(GetSoundName(), _sampleIndex, _audioSampleMsg)) {
+        if (!SoundManager::getInstance()->GetSoundSample(_audioReferences[_selectedAudioIndex].name, _sampleIndex, _audioSampleMsg)) {
           PRINT_NAMED_WARNING("RobotAudioKeyFrame.GetStreamMessage.MissingSample", "Index %d", _sampleIndex);
         }
         
