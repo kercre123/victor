@@ -1,14 +1,24 @@
 ﻿using UnityEngine;
 using System.Collections;
 
+/// <summary>
+/// this component defines all of cozmo's default AI assisted action requests from the user
+/// </summary>
 public class GameActions : MonoBehaviour
 {
+
+	#region INSPECTOR FIELDS
+
 	[SerializeField] protected AudioClip actionButtonSound;
 	[SerializeField] protected AudioClip cancelButtonSound;
 	[SerializeField] protected AudioClip[] actionEnabledSounds = new AudioClip[(int)ActionButton.Mode.Count];
 	[SerializeField] protected AudioClip[] activeBlockModeSounds = new AudioClip[(int)ActiveBlock.Mode.Count];
 	[SerializeField] protected Sprite[] actionSprites = new Sprite[(int)ActionButton.Mode.Count];
 	
+	#endregion
+	
+	#region PUBLIC MEMBERS
+
 	public virtual string TARGET { get { if( robot != null && robot.targetLockedObject != null && robot.searching ) return "Object " + robot.targetLockedObject; return "Search"; } }
 	public virtual string PICK_UP { get { return "Pick Up"; } }
 	public virtual string DROP { get { return "Drop"; } }
@@ -18,17 +28,25 @@ public class GameActions : MonoBehaviour
 	public virtual string CHANGE { get { return "Change"; } }
 	public virtual string CANCEL { get { return "Cancel Action"; } }
 
+	public float actionButtonnDelay { get { return actionButtonSound != null ? actionButtonSound.length: 0f; } }
+	public float activeBlockModeDelay { get; private set; } // longest block mode sfx
+
+	public static GameActions instance = null;
+
+	#endregion
+
+	#region PROTECTED MEMBERS
+
 	protected const string TOP = " Top";
 	protected const string BOTTOM = " Bottom";
 
 	protected Robot robot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.current : null; } }
 	protected ActionButton[] buttons { get { return ActionPanel.instance != null ? ActionPanel.instance.actionButtons : new ActionButton[0]; } }
 
-	public float actionButtonnDelay { get { return actionButtonSound != null ? actionButtonSound.length: 0f; } }
-	public float activeBlockModeDelay { get; private set; } // longest block mode sfx
-
-	public static GameActions instance = null;
-
+	#endregion
+	
+	#region MONOBEHAVIOUR CALLBACKS
+	
 	protected virtual void Awake()
 	{
 
@@ -54,6 +72,79 @@ public class GameActions : MonoBehaviour
 		}
 	}
 
+	#endregion
+
+	#region PROTECTED METHODS
+	
+	
+	protected void CheckChangedButtons()
+	{
+		for( int i = 0; i < buttons.Length; ++i )
+		{
+			if( buttons[i].changed ) OnModeEnabled( buttons[i] );
+		}
+	}
+	
+	protected virtual void _SetActionButtons( bool isSlider ) // 0 is bottom button, 1 is top button, 2 is center button
+	{
+		if( robot.isBusy ) {
+			buttons[2].SetMode( ActionButton.Mode.CANCEL, null, null, true );
+			return;
+		}
+		
+		if( robot.Status( Robot.StatusFlag.IS_CARRYING_BLOCK ) )
+		{
+			//			if( buttons.Length > 1 )
+			//			{
+			//				if( robot.carryingObject != null && robot.carryingObject.isActive )
+			//				{
+			//					buttons[1].SetMode( ActionButton.Mode.CHANGE, robot.carryingObject );
+			//				}
+			//			}
+			
+			if( buttons.Length > 1 && robot.selectedObjects.Count > 0 && robot.selectedObjects[0].canBeStackedOn )
+			{
+				buttons[1].SetMode( ActionButton.Mode.STACK, robot.selectedObjects[0] );
+			}
+			
+			if( buttons.Length > 0 ) buttons[0].SetMode( ActionButton.Mode.DROP, null );
+			
+		}
+		else
+		{
+			if( buttons.Length > 2 && robot.selectedObjects.Count == 1 )
+			{
+				buttons[1].SetMode( ActionButton.Mode.PICK_UP, robot.selectedObjects[0] );
+				#if ALLOW_ROLL
+				buttons[0].SetMode( ActionButton.Mode.ROLL, robot.selectedObjects[0] );
+				#endif
+			}
+			else
+			{
+				for( int i = 0; i < robot.selectedObjects.Count && i < 2 && i < buttons.Length; ++i )
+				{
+					buttons[i].SetMode( ActionButton.Mode.PICK_UP, robot.selectedObjects[i], i == 0 ? BOTTOM : TOP );
+				}
+			}
+		}
+		
+		if( buttons.Length > 2 )
+		{
+			if( isSlider )
+			{
+				buttons[2].SetMode( ActionButton.Mode.TARGET, null, null, true );
+			}
+			else if( robot.selectedObjects.Count > 0 )
+			{
+				buttons[2].SetMode( ActionButton.Mode.CANCEL, null );
+			}
+		}
+	}
+
+	#endregion
+
+	#region PUBLIC METHODS
+
 	public Sprite GetActionSprite( ActionButton.Mode mode )
 	{
 		return actionSprites[(int)mode];
@@ -68,14 +159,7 @@ public class GameActions : MonoBehaviour
 	{
 		return activeBlockModeSounds[(int)mode];
 	}
-	
-	private void CheckChangedButtons()
-	{
-		for( int i = 0; i < buttons.Length; ++i )
-		{
-			if( buttons[i].changed ) OnModeEnabled( buttons[i] );
-		}
-	}
+
 
 	public void SetActionButtons( bool isSlider = false )
 	{
@@ -93,61 +177,6 @@ public class GameActions : MonoBehaviour
 		CheckChangedButtons();
 	}
 
-	protected virtual void _SetActionButtons( bool isSlider ) // 0 is bottom button, 1 is top button, 2 is center button
-	{
-		if( robot.isBusy ) {
-			buttons[2].SetMode( ActionButton.Mode.CANCEL, null, null, true );
-			return;
-		}
-		
-		if( robot.Status( Robot.StatusFlag.IS_CARRYING_BLOCK ) )
-		{
-//			if( buttons.Length > 1 )
-//			{
-//				if( robot.carryingObject != null && robot.carryingObject.isActive )
-//				{
-//					buttons[1].SetMode( ActionButton.Mode.CHANGE, robot.carryingObject );
-//				}
-//			}
-
-			if( buttons.Length > 1 && robot.selectedObjects.Count > 0 && robot.selectedObjects[0].canBeStackedOn )
-			{
-				buttons[1].SetMode( ActionButton.Mode.STACK, robot.selectedObjects[0] );
-			}
-
-			if( buttons.Length > 0 ) buttons[0].SetMode( ActionButton.Mode.DROP, null );
-
-		}
-		else
-		{
-			if( buttons.Length > 2 && robot.selectedObjects.Count == 1 )
-			{
-				buttons[1].SetMode( ActionButton.Mode.PICK_UP, robot.selectedObjects[0] );
-#if ALLOW_ROLL
-				buttons[0].SetMode( ActionButton.Mode.ROLL, robot.selectedObjects[0] );
-#endif
-			}
-			else
-			{
-				for( int i = 0; i < robot.selectedObjects.Count && i < 2 && i < buttons.Length; ++i )
-				{
-					buttons[i].SetMode( ActionButton.Mode.PICK_UP, robot.selectedObjects[i], i == 0 ? BOTTOM : TOP );
-				}
-			}
-		}
-
-		if( buttons.Length > 2 )
-		{
-			if( isSlider )
-			{
-				buttons[2].SetMode( ActionButton.Mode.TARGET, null, null, true );
-			}
-			else if( robot.selectedObjects.Count > 0 )
-			{
-				buttons[2].SetMode( ActionButton.Mode.CANCEL, null );
-			}
-		}
-	}
 
 	public virtual void OnModeEnabled( ActionButton button )
 	{
@@ -275,4 +304,6 @@ public class GameActions : MonoBehaviour
 		robot.searching = true;
 		//Debug.Log( "On Press" );
 	}
+
+	#endregion
 }

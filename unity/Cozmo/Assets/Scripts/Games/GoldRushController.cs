@@ -28,7 +28,6 @@ public class GoldRushController : GameController {
 	public float detectRangeDelayFar = 2.0f;
 	public float detectRangeDelayClose = .2f;
 	public float light_messaging_delay = .05f;
-	private float last_light_message_time = -1;
 
 	private int numDrops = 0;
 
@@ -52,11 +51,8 @@ public class GoldRushController : GameController {
 	int lastCarriedObjectId = -1;
 	[System.NonSerialized] public ActiveBlock goldExtractingObject = null;
 	[System.NonSerialized] public ObservedObject goldCollectingObject = null;
-	int baseObjectId = -1;
 	//ScreenMessage //hintMessage;
 	private bool audioLocatorEnabled = true;
-	byte last_leds = 0xFF;
-	bool sent = false;
 	private bool setHighScore = false;
 	private int oldHighScore = 0;
 	GameObject successOrFailureGameObject = null;
@@ -954,8 +950,6 @@ public class GoldRushController : GameController {
 			Color col = Color.Lerp(Color.clear, detectorColor, lightWeights[i]);
 			goldExtractingObject.SetLEDs(CozmoPalette.ColorToUInt(col), 0, which_leds, Robot.Light.FOREVER, 0, 0, 0, 0 );
 		}
-		
-		//Debug.Log("lightWeights[0]("+lightWeights[0]+") [1]("+lightWeights[1]+") [2]("+lightWeights[2]+") [3]("+lightWeights[3]+") TopNorth("+TopNorth+") Forward("+robot.Forward+")");
 
 	}
 

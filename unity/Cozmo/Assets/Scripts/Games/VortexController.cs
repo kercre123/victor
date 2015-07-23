@@ -7,43 +7,52 @@ using Anki.Cozmo;
 using System;
 using DigitalRuby.ThunderAndLightning;
 
-public class VortexController : GameController {
+/// <summary>
+/// game controller for manageing cozmo's vortex minigame
+///		wraps and manages a list of SpinWheels
+/// </summary>
+public class VortexController : GameController
+{
 
-	public enum VortexState {
+	#region NESTED DEFINITIONS
+
+	public enum VortexState
+	{
 		INTRO,
 		REQUEST_SPIN,
 		SPINNING,
-		SPIN_COMPLETE		
+		SPIN_COMPLETE
 	}
 
-	class VortexInput {
+	class VortexInput
+	{
 		public List<float> stamps = new List<float>();
 
 		public float FinalTime {
 			get {
-				if(stamps.Count == 0) return -1f;
-				return stamps[stamps.Count-1];
+				return stamps.Count == 0 ? -1f : stamps[stamps.Count - 1];
 			}
 		}
 
 		public float FirstTime {
 			get {
-				if(stamps.Count == 0) return Time.time;
-				return stamps[0];
+				return stamps.Count == 0 ? Time.time : stamps[0];
 			}
 		}
 	}
 
-	
-	struct ScoreBoardData {
+	struct ScoreBoardData
+	{
 		public int playerIndex;
 		public Color color;
 		public int score;
-		public int place; //distinct from ordering to handle ties
+		public int place;
+		//distinct from ordering to handle ties
 	}
 
 	[Serializable]
-	public class VortexSettings {
+	public class VortexSettings
+	{
 		public int rings = 1;
 		public int[] slicesPerRing = { 16 };
 		public int[] maxSurvivePerRound = { 4 };
@@ -59,35 +68,17 @@ public class VortexController : GameController {
 		public int pointsIncorrectPenalty = -5;
 	}
 
-	int currentWheelIndex {
-		get {
-			if(rings == 1) return 0;
-			
-			int index = 0;
-			if(settings.inward) {
-				index = Mathf.CeilToInt(round / roundsPerRing) - 1;
-			}
-			else {
-				index = rings - Mathf.CeilToInt(round / roundsPerRing);
-			}
-			
-			index = Mathf.Clamp(index, 0, wheels.Count-1);
-			return index;
-		}
-	}
+	#endregion
 
-	SpinWheel wheel { 
-		get {
-			return wheels[currentWheelIndex];
-		}
-	}
+	#region INSPECTOR FIELDS
 
 	[SerializeField] List<SpinWheel> wheels;
 	[SerializeField] Text textPlayState;
 	[SerializeField] Image imageHub;
 	[SerializeField] Text textCurrentNumber;
 	[SerializeField] Text textRoundNumber;
-	[SerializeField] Text[] textPlayerCurrentNumbers; // only use for single ring matches
+	[SerializeField] Text[] textPlayerCurrentNumbers;
+	// only use for single ring matches
 
 	[SerializeField] Text[] textfinalPlayerScores;
 	[SerializeField] Image[] imageFinalPlayerScoreBGs;
@@ -109,7 +100,7 @@ public class VortexController : GameController {
 	[SerializeField] Image[] imageInputLocked;
 	[SerializeField] Image[] imagePlayerBidBGs;
 	[SerializeField] Text[] textPlayerBids;
-	[SerializeField] Text[] textPlayerSpinNow;
+	[SerializeField] RectTransform[] textPlayerSpinNow;
 	[SerializeField] RectTransform preGameAlert;
 	[SerializeField] Animation[] playerBidFlashAnimations;
 	[SerializeField] Text[] textPlayerScores;
@@ -118,7 +109,7 @@ public class VortexController : GameController {
 	[SerializeField] VortexSettings[] settingsPerLevel;
 
 	[SerializeField] LightningBoltShapeSphereScript lightingBall;
-	[SerializeField] float[] wheelLightningRadii  = { 3.5f, 2f, 1f };
+	[SerializeField] float[] wheelLightningRadii = { 3.5f, 2f, 1f };
 	[SerializeField] int lightningMinCountAtSpeedMax = 8;
 	[SerializeField] int lightningMaxCountAtSpeedMax = 16;
 	[SerializeField] Image imageGear;
@@ -129,6 +120,54 @@ public class VortexController : GameController {
 	[SerializeField] float maxPlayerInputTime = 3f;
 
 	[SerializeField] Button playAgainButton;
+
+	[SerializeField] float scoreDisplayFillFade = 0.5f;
+	[SerializeField] float scoreDisplayFillAlpha = 0.5f;
+	[SerializeField] float scoreDisplayEmptyAlpha = 0.1f;
+
+	[SerializeField] Image imageCozmoDragHand;
+	[SerializeField] Vector2 cozmoStartDragPos = Vector2.zero;
+	[SerializeField] Vector2 cozmoEndDragPos = Vector2.zero;
+	[SerializeField] float cozmoDragDelay = 2f;
+	[SerializeField] float cozmoDragTime = 2f;
+	[SerializeField] float cozmoFinalDragTime = 0.2f;
+	
+	[SerializeField] float scoreScaleBase = 0.75f;
+	[SerializeField] float scoreScaleMax = 1f;
+
+	#endregion
+
+	#region PRIVATE METHODS
+
+	int currentWheelIndex {
+		get {
+			if(rings == 1) return 0;
+			
+			int index = 0;
+			if(settings.inward) {
+				index = Mathf.CeilToInt(round / roundsPerRing) - 1;
+			} else {
+				index = rings - Mathf.CeilToInt(round / roundsPerRing);
+			}
+			
+			index = Mathf.Clamp(index, 0, wheels.Count - 1);
+			return index;
+		}
+	}
+
+	SpinWheel wheel { 
+		get {
+			return wheels[currentWheelIndex];
+		}
+	}
+
+	RectTransform cozmoDragHandRectTransform;
+	Vector2 startDragPos;
+	Vector2 endDragPos;
+	float dragTimer = 0f;
+	int dragCount = 0;
+	int dragCountMax = 2;
+	int lightIndex = 0;
 
 	List<VortexInput> playerInputs = new List<VortexInput>();
 
@@ -161,11 +200,13 @@ public class VortexController : GameController {
 	float cozmoTimePerTap = 1.25f;
 	List<int> playersThatAreCorrect = new List<int>();
 	List<int> playersThatAreWrong = new List<int>();
-	
-	[SerializeField] float scoreDisplayFillFade = 0.5f;
-	[SerializeField] float scoreDisplayFillAlpha = 0.5f;
-	[SerializeField] float scoreDisplayEmptyAlpha = 0.1f;
-	
+
+	ObservedObject humanHead;
+
+	float frequency = 0.1f;
+	float headTimer = 0f;
+	float turnStartAngle = 0f;
+
 	float fadeTimer = 1f;
 	int resultsDisplayIndex = 0;
 
@@ -174,36 +215,42 @@ public class VortexController : GameController {
 	bool fakeCozmoTaps = true;
 	int cozmoIndex = 1;
 
-	protected override void Awake () {
+	#endregion
+
+	#region PROTECTED METHODS
+
+	protected override void Awake()
+	{
 		base.Awake();
 
 		playerButtonCanvasGroups = new CanvasGroup[playerButtons.Length];
-		for(int i=0;i<playerButtons.Length;i++) {
+		for(int i = 0; i < playerButtons.Length; i++) {
 			playerButtonCanvasGroups[i] = playerButtons[i].gameObject.GetComponent<CanvasGroup>();
 		}
 	}
 
-	protected override void OnEnable () {
+	protected override void OnEnable()
+	{
 		base.OnEnable();
 		
 		cozmoIndex = (PlayerPrefs.GetInt("VortexWithoutCozmo", 0) == 1) ? -1 : 1;
 
 		numPlayers = PlayerPrefs.GetInt("NumberOfPlayers", 1);
-		settings = settingsPerLevel[currentLevelNumber-1];
+		settings = settingsPerLevel[currentLevelNumber - 1];
 
 		rings = settings.rings;
 		roundsPerRing = settings.roundsPerRing;
 		slicesPerRing = settings.slicesPerRing;
 
-		for(int i=0;i<playerPanels.Length;i++) {
+		for(int i = 0; i < playerPanels.Length; i++) {
 			playerPanels[i].gameObject.SetActive(i < numPlayers);
 		}
 
-		for(int i=0;i<slicesPerRing.Length && i<wheels.Count;i++) {
+		for(int i = 0; i < slicesPerRing.Length && i < wheels.Count; i++) {
 			wheels[i].SetNumSlices(slicesPerRing[i]);
 		}
 
-		for(int i=0;i<wheels.Count;i++) {
+		for(int i = 0; i < wheels.Count; i++) {
 			wheels[i].ResetWheel();
 			wheels[i].Lock();
 			wheels[i].Unfocus();
@@ -216,33 +263,33 @@ public class VortexController : GameController {
 
 		MessageDelay = .1f;
 
-		for(int i=0;i<playerButtonCanvasGroups.Length;i++) {
+		for(int i = 0; i < playerButtonCanvasGroups.Length; i++) {
 			playerButtonCanvasGroups[i].interactable = false;
 			playerButtonCanvasGroups[i].blocksRaycasts = false;
 		}
 
-		for(int i=0;i<textPlayerScores.Length;i++) {
+		for(int i = 0; i < textPlayerScores.Length; i++) {
 			textPlayerScores[i].text = "SCORE: 0";
 		}
 		
-		for(int i=0;i<playerPanelFills.Length;i++) {
+		for(int i = 0; i < playerPanelFills.Length; i++) {
 			Color col = playerPanelFills[i].color;
 			col.a = 0f;
 			playerPanelFills[i].color = col;
 		}
 
-		for(int i=0;i<textPlayerBids.Length;i++) {
+		for(int i = 0; i < textPlayerBids.Length; i++) {
 			textPlayerBids[i].text = "";
 		}
 
-		for(int i=0;i<imagePlayerBidBGs.Length;i++) {
+		for(int i = 0; i < imagePlayerBidBGs.Length; i++) {
 			imagePlayerBidBGs[i].gameObject.SetActive(false);
 		}
 		
 
 		foreach(Image image in imageInputLocked) image.gameObject.SetActive(false);
 
-		for(int i=0;i<textPlayerSpinNow.Length;i++) {
+		for(int i = 0; i < textPlayerSpinNow.Length; i++) {
 			textPlayerSpinNow[i].gameObject.SetActive(false);
 		}
 
@@ -263,12 +310,13 @@ public class VortexController : GameController {
 		
 		imageGear.color = gearDefaultColor;
 
-		while(playerInputs.Count < numPlayers) playerInputs.Add (new VortexInput());
+		while(playerInputs.Count < numPlayers) playerInputs.Add(new VortexInput());
 
 		playAgainButton.gameObject.SetActive(false);
 	}
 
-	protected override void OnDisable () {
+	protected override void OnDisable()
+	{
 		base.OnDisable();
 
 		ActiveBlock.TappedAction -= BlockTapped;
@@ -279,30 +327,33 @@ public class VortexController : GameController {
 		
 	}
 
-	protected override void Enter_BUILDING () {
+	protected override void Enter_BUILDING()
+	{
 		base.Enter_BUILDING();
 	}
 
-	protected override void Exit_BUILDING () {
+	protected override void Exit_BUILDING()
+	{
 		base.Exit_BUILDING();
 	}
 
-	protected override void Update_BUILDING () {
+	protected override void Update_BUILDING()
+	{
 		base.Update_BUILDING();
 	}
 
-	ObservedObject humanHead;
-	protected override void Enter_PRE_GAME () {
+	protected override void Enter_PRE_GAME()
+	{
 
 		if(playerMockBlocks != null) {
-			for(int i=0;i < numPlayers;i++) {
+			for(int i = 0; i < numPlayers; i++) {
 				playerMockBlocks[i].Validate(false);
 				playerMockBlocks[i].Initialize(CubeType.LIGHT_CUBE);
 				playerMockBlocks[i].SetLights(GetPlayerUIColor(i));
 			}
 		}
 
-		for(int i=0;i<playerButtonCanvasGroups.Length;i++) {
+		for(int i = 0; i < playerButtonCanvasGroups.Length; i++) {
 			if(i == cozmoIndex) continue; // player 2 is cozmo, no button
 			playerButtonCanvasGroups[i].interactable = i < numPlayers;
 			playerButtonCanvasGroups[i].blocksRaycasts = i < numPlayers;
@@ -318,12 +369,12 @@ public class VortexController : GameController {
 		
 		humanHead = null;
 		
-		if( robot != null && PlayerPrefs.GetInt("DebugSkipLayoutTracker",0) == 0) {
+		if(robot != null && PlayerPrefs.GetInt("DebugSkipLayoutTracker", 0) == 0) {
 			
 
 			//robot.DriveWheels(-CozmoUtil.MAX_WHEEL_SPEED_MM, CozmoUtil.MAX_WHEEL_SPEED_MM);
 
-			for(int i=0;i<robot.knownObjects.Count;i++) {
+			for(int i = 0; i < robot.knownObjects.Count; i++) {
 				if(!robot.knownObjects[i].isActive) continue;
 
 				ActiveBlock block = robot.knownObjects[i] as ActiveBlock;
@@ -334,7 +385,7 @@ public class VortexController : GameController {
 				playerInputBlocks.Add(block);
 			}
 
-			for(int i=0;i<robot.knownObjects.Count;i++) {
+			for(int i = 0; i < robot.knownObjects.Count; i++) {
 				if(!robot.knownObjects[i].isFace) continue;
 				humanHead = robot.knownObjects[i];
 				break;
@@ -352,32 +403,26 @@ public class VortexController : GameController {
 		imageGear.color = gearDefaultColor;
 	}
 
-	
-
-	float frequency = 0.1f;
-	float headTimer = 0f;
-	float turnStartAngle = 0f;
-	protected override void Update_PRE_GAME () {
+	protected override void Update_PRE_GAME()
+	{
 		base.Update_PRE_GAME();
 
 		if(cozmoIndex >= 0 && robot != null) {
 
 			if(robot.carryingObject == null && !robot.isBusy) {
 				robot.PickAndPlaceObject(playerInputBlocks[cozmoIndex]);
-				if(CozmoBusyPanel.instance != null)	{
+				if(CozmoBusyPanel.instance != null) {
 					string desc = "Cozmo is attempting to pick-up\n a game cube.";
 					CozmoBusyPanel.instance.SetDescription(desc);
 				}
-			}
-			else if(!robot.isBusy && !playerMockBlocks[cozmoIndex].Validated) {
+			} else if(!robot.isBusy && !playerMockBlocks[cozmoIndex].Validated) {
 				robot.TapBlockOnGround(1);
 				if(fakeCozmoTaps) {
 					StartCoroutine(TapAfterDelay(1, cozmoTimePerTap));
 				}
-			}
-			else if(humanHead == null) {
+			} else if(humanHead == null) {
 				
-				for(int i=0;i<robot.knownObjects.Count;i++) {
+				for(int i = 0; i < robot.knownObjects.Count; i++) {
 					if(!robot.knownObjects[i].isFace) continue;
 					humanHead = robot.knownObjects[i];
 					break;
@@ -407,19 +452,21 @@ public class VortexController : GameController {
 		}
 	}
 
-	protected override void Exit_PRE_GAME () {
+	protected override void Exit_PRE_GAME()
+	{
 		base.Exit_PRE_GAME();
 
 		if(preGameAlert != null) preGameAlert.gameObject.SetActive(false);
 
-		for(int i=0;i<playerButtonCanvasGroups.Length;i++) {
+		for(int i = 0; i < playerButtonCanvasGroups.Length; i++) {
 			playerButtonCanvasGroups[i].interactable = false;
 			playerButtonCanvasGroups[i].blocksRaycasts = false;
 		}
 	}
 
-	protected override void Enter_PLAYING () {
-		for(int i=0;i<textPlayerScores.Length;i++) {
+	protected override void Enter_PLAYING()
+	{
+		for(int i = 0; i < textPlayerScores.Length; i++) {
 			textPlayerScores[i].text = "SCORE: 0";
 		}
 
@@ -439,8 +486,9 @@ public class VortexController : GameController {
 
 		base.Enter_PLAYING();
 	}
-	
-	protected override void Update_PLAYING () {
+
+	protected override void Update_PLAYING()
+	{
 		base.Update_PLAYING();
 
 		VortexState nextPlayState = GetNextPlayState();
@@ -450,15 +498,14 @@ public class VortexController : GameController {
 			ExitPlayState();
 			playState = nextPlayState;
 			EnterPlayState();
-		}
-		else {
+		} else {
 			UpdatePlayState();
 		}
 
 		if(robot != null) {
 			if(humanHead == null) {
 				
-				for(int i=0;i<robot.knownObjects.Count;i++) {
+				for(int i = 0; i < robot.knownObjects.Count; i++) {
 					if(!robot.knownObjects[i].isFace) continue;
 					humanHead = robot.knownObjects[i];
 					break;
@@ -473,8 +520,9 @@ public class VortexController : GameController {
 
 
 	}
-	
-	protected override void Exit_PLAYING (bool overrideStars = false) {
+
+	protected override void Exit_PLAYING(bool overrideStars = false)
+	{
 		base.Exit_PLAYING();
 
 		ExitPlayState();
@@ -484,7 +532,8 @@ public class VortexController : GameController {
 		}
 	}
 
-	protected override void Enter_RESULTS() {
+	protected override void Enter_RESULTS()
+	{
 		base.Enter_RESULTS();
 
 		//wheel.gameObject.SetActive(false);
@@ -493,12 +542,12 @@ public class VortexController : GameController {
 
 		sortedScoreData.Clear();
 
-		for(int i=0;i<scores.Count && i<numPlayers;i++) {
+		for(int i = 0; i < scores.Count && i < numPlayers; i++) {
 			int score = scores[i];
 
 			int insertIndex = sortedScoreData.Count;
 
-			for(int j=0;j<sortedScoreData.Count;j++) {
+			for(int j = 0; j < sortedScoreData.Count; j++) {
 				if(score < sortedScoreData[j].score) continue;
 				insertIndex = j;
 				break;
@@ -511,8 +560,7 @@ public class VortexController : GameController {
 
 			if(insertIndex < sortedScoreData.Count) {
 				sortedScoreData.Insert(insertIndex, scoreData);
-			}
-			else {
+			} else {
 				sortedScoreData.Add(scoreData);
 			}
 			
@@ -522,11 +570,11 @@ public class VortexController : GameController {
 
 		int placeCounter = 0;
 		int lastScore = sortedScoreData[0].score;
-		for(int i=0;i<sortedScoreData.Count;i++) {
+		for(int i = 0; i < sortedScoreData.Count; i++) {
 			if(sortedScoreData[i].score != lastScore) placeCounter++;
 
 			if(placeCounter == 0) {
-				gearColors.Add (sortedScoreData[i].color);
+				gearColors.Add(sortedScoreData[i].color);
 			} 
 
 			ScoreBoardData data = sortedScoreData[i];
@@ -542,7 +590,7 @@ public class VortexController : GameController {
 			float b = 0f;
 			float a = 0f;
 	
-			for(int i=0;i<gearColors.Count;i++) {
+			for(int i = 0; i < gearColors.Count; i++) {
 				r += gearColors[i].r;
 				g += gearColors[i].g;
 				b += gearColors[i].b;
@@ -558,7 +606,7 @@ public class VortexController : GameController {
 			imageResultsGear.color = new Color(r, g, b, a);
 		}
 
-		for(int i=0;i<textfinalPlayerScores.Length && i<imageFinalPlayerScoreBGs.Length;i++) {
+		for(int i = 0; i < textfinalPlayerScores.Length && i < imageFinalPlayerScoreBGs.Length; i++) {
 
 			if(i >= sortedScoreData.Count) {
 				textfinalPlayerScores[i].gameObject.SetActive(false);
@@ -569,10 +617,18 @@ public class VortexController : GameController {
 			string scoreText = "";
 
 			switch(sortedScoreData[i].place) {
-				case 0: scoreText += "1st place: "; break;
-				case 1: scoreText += "2nd place: "; break;
-				case 2: scoreText += "3rd place: "; break;
-				case 3: scoreText += "4th place: "; break;
+				case 0:
+					scoreText += "1st place: ";
+					break;
+				case 1:
+					scoreText += "2nd place: ";
+					break;
+				case 2:
+					scoreText += "3rd place: ";
+					break;
+				case 3:
+					scoreText += "4th place: ";
+					break;
 			}
 
 			scoreText += sortedScoreData[i].score;
@@ -590,7 +646,7 @@ public class VortexController : GameController {
 		if(robot != null) {
 			if(humanHead == null) {
 				
-				for(int i=0;i<robot.knownObjects.Count;i++) {
+				for(int i = 0; i < robot.knownObjects.Count; i++) {
 					if(!robot.knownObjects[i].isFace) continue;
 					humanHead = robot.knownObjects[i];
 					break;
@@ -604,32 +660,31 @@ public class VortexController : GameController {
 			}
 		}
 
-		if( sortedScoreData[0].playerIndex == cozmoIndex ) {
+		if(sortedScoreData[0].playerIndex == cozmoIndex) {
 			// cozmo won
 			SetRobotEmotion("WIN_MATCH");
-		}
-		else {
+		} else {
 			// cozmo lost
 			SetRobotEmotion("LOSE_MATCH");
 		}
 
-		for(int i=0;i<playerMockBlocks.Length;i++) {
+		for(int i = 0; i < playerMockBlocks.Length; i++) {
 			playerMockBlocks[i].gameObject.SetActive(false);
 		}
 
-		for(int i=0;i<textPlayerScores.Length;i++) {
+		for(int i = 0; i < textPlayerScores.Length; i++) {
 			textPlayerScores[i].gameObject.SetActive(false);
 		}
 
-		for(int i=0;i<imagePlayerBidBGs.Length;i++) {
+		for(int i = 0; i < imagePlayerBidBGs.Length; i++) {
 			imagePlayerBidBGs[i].gameObject.SetActive(false);
 		}
 
-		for(int i=0;i<textPlayerBids.Length;i++) {
+		for(int i = 0; i < textPlayerBids.Length; i++) {
 			textPlayerBids[i].gameObject.SetActive(false);
 		}
 
-		for(int i=0;i<playerPanelFills.Length;i++) {
+		for(int i = 0; i < playerPanelFills.Length; i++) {
 			Color col = playerPanelFills[i].color;
 			col.a = 0.25f;
 			playerPanelFills[i].color = col;
@@ -638,14 +693,15 @@ public class VortexController : GameController {
 
 	}
 
-	protected override void Update_RESULTS() {
+	protected override void Update_RESULTS()
+	{
 		base.Update_RESULTS();
 
 		
 		if(robot != null) {
 			if(humanHead == null) {
 				
-				for(int i=0;i<robot.knownObjects.Count;i++) {
+				for(int i = 0; i < robot.knownObjects.Count; i++) {
 					if(!robot.knownObjects[i].isFace) continue;
 					humanHead = robot.knownObjects[i];
 					break;
@@ -661,32 +717,33 @@ public class VortexController : GameController {
 		}
 	}
 
-	protected override void Exit_RESULTS() {
+	protected override void Exit_RESULTS()
+	{
 		base.Exit_RESULTS();
 		
-		for(int i=0;i<textPlayerScores.Length;i++) {
+		for(int i = 0; i < textPlayerScores.Length; i++) {
 			textPlayerScores[i].text = "SCORE: 0";
 		}
 		
-		for(int i=0;i<playerMockBlocks.Length;i++) {
+		for(int i = 0; i < playerMockBlocks.Length; i++) {
 			playerMockBlocks[i].gameObject.SetActive(true);
 		}
 		
-		for(int i=0;i<textPlayerScores.Length;i++) {
+		for(int i = 0; i < textPlayerScores.Length; i++) {
 			textPlayerScores[i].gameObject.SetActive(true);
 		}
 		
-		for(int i=0;i<playerPanelFills.Length;i++) {
+		for(int i = 0; i < playerPanelFills.Length; i++) {
 			Color col = playerPanelFills[i].color;
 			col.a = 0f;
 			playerPanelFills[i].color = col;
 		}
 		
-		for(int i=0;i<imagePlayerBidBGs.Length;i++) {
+		for(int i = 0; i < imagePlayerBidBGs.Length; i++) {
 			imagePlayerBidBGs[i].gameObject.SetActive(true);
 		}
 		
-		for(int i=0;i<textPlayerBids.Length;i++) {
+		for(int i = 0; i < textPlayerBids.Length; i++) {
 			textPlayerBids[i].gameObject.SetActive(true);
 		}
 
@@ -694,12 +751,13 @@ public class VortexController : GameController {
 
 	}
 
-	protected override bool IsPreGameCompleted() {
-		if( robot != null && PlayerPrefs.GetInt("DebugSkipLayoutTracker",0) == 0 ) {
+	protected override bool IsPreGameCompleted()
+	{
+		if(robot != null && PlayerPrefs.GetInt("DebugSkipLayoutTracker", 0) == 0) {
 
 			if(robot.carryingObject == null || !robot.carryingObject.isActive || robot.isBusy) return false;
 			
-			for(int i=0;i<numPlayers;i++) {
+			for(int i = 0; i < numPlayers; i++) {
 				if(!playerMockBlocks[i].Validated) return false;
 			}
 
@@ -708,8 +766,9 @@ public class VortexController : GameController {
 		return true;
 	}
 
-	protected override bool IsGameReady () {
-		if( robot != null && PlayerPrefs.GetInt("DebugSkipLayoutTracker",0) == 0 ) {
+	protected override bool IsGameReady()
+	{
+		if(robot != null && PlayerPrefs.GetInt("DebugSkipLayoutTracker", 0) == 0) {
 
 			if(robot.activeBlocks.Count < numPlayers) return false;
 
@@ -719,19 +778,21 @@ public class VortexController : GameController {
 		return true;
 	}
 
-	protected override bool IsGameOver() {
+	protected override bool IsGameOver()
+	{
 		//if(base.IsGameOver()) return true;
 
 		if(round > (roundsPerRing * rings)) return true;
 
-		for(int i=0;i<playersEliminated.Length;i++) {
+		for(int i = 0; i < playersEliminated.Length; i++) {
 			if(!playersEliminated[i]) return false;
 		}
 
 		return true;
 	}
 
-	protected override void RefreshHUD() {
+	protected override void RefreshHUD()
+	{
 		base.RefreshHUD();
 
 		textRoundNumber.text = "ROUND " + Mathf.Max(1, round).ToString();
@@ -741,7 +802,12 @@ public class VortexController : GameController {
 		textPlayState.text = state == GameState.PLAYING ? playState.ToString() : "";
 	}
 
-	VortexState GetNextPlayState() {
+	#endregion
+
+	#region PRIVATE METHODS
+
+	VortexState GetNextPlayState()
+	{
 
 		switch(playState) {
 			case VortexState.INTRO:
@@ -769,40 +835,68 @@ public class VortexController : GameController {
 		return playState;
 	}
 
-	void EnterPlayState() {
+	void EnterPlayState()
+	{
 		playStateTimer = 0f;
 		switch(playState) {
-			case VortexState.INTRO: 		Enter_INTRO(); break;
-			case VortexState.REQUEST_SPIN: 	Enter_REQUEST_SPIN(); break;
-			case VortexState.SPINNING: 		Enter_SPINNING(); break;
-			case VortexState.SPIN_COMPLETE: Enter_SPIN_COMPLETE(); break;
+			case VortexState.INTRO:
+				Enter_INTRO();
+				break;
+			case VortexState.REQUEST_SPIN:
+				Enter_REQUEST_SPIN();
+				break;
+			case VortexState.SPINNING:
+				Enter_SPINNING();
+				break;
+			case VortexState.SPIN_COMPLETE:
+				Enter_SPIN_COMPLETE();
+				break;
 		}
 	}
-	
-	void UpdatePlayState() {
+
+	void UpdatePlayState()
+	{
 		playStateTimer += Time.deltaTime;
 		switch(playState) {
-			case VortexState.INTRO: 		Update_INTRO(); break;
-			case VortexState.REQUEST_SPIN: 	Update_REQUEST_SPIN(); break;
-			case VortexState.SPINNING: 		Update_SPINNING(); break;
-			case VortexState.SPIN_COMPLETE: Update_SPIN_COMPLETE(); break;
+			case VortexState.INTRO:
+				Update_INTRO();
+				break;
+			case VortexState.REQUEST_SPIN:
+				Update_REQUEST_SPIN();
+				break;
+			case VortexState.SPINNING:
+				Update_SPINNING();
+				break;
+			case VortexState.SPIN_COMPLETE:
+				Update_SPIN_COMPLETE();
+				break;
 		}
 	}
 
-	void ExitPlayState() {
+	void ExitPlayState()
+	{
 		switch(playState) {
-			case VortexState.INTRO: 		Exit_INTRO(); break;
-			case VortexState.REQUEST_SPIN: 	Exit_REQUEST_SPIN(); break;
-			case VortexState.SPINNING: 		Exit_SPINNING(); break;
-			case VortexState.SPIN_COMPLETE: Exit_SPIN_COMPLETE(); break;
+			case VortexState.INTRO:
+				Exit_INTRO();
+				break;
+			case VortexState.REQUEST_SPIN:
+				Exit_REQUEST_SPIN();
+				break;
+			case VortexState.SPINNING:
+				Exit_SPINNING();
+				break;
+			case VortexState.SPIN_COMPLETE:
+				Exit_SPIN_COMPLETE();
+				break;
 		}
 	}
 
-	void Enter_INTRO() {
+	void Enter_INTRO()
+	{
 		currentPlayerIndex = UnityEngine.Random.Range(0, numPlayers);
 		round = 0;
 
-		for(int i=0;i<playersEliminated.Length;i++) {
+		for(int i = 0; i < playersEliminated.Length; i++) {
 			playersEliminated[i] = false;
 		}
 
@@ -811,31 +905,23 @@ public class VortexController : GameController {
 
 		//enable intro text
 	}
-	void Update_INTRO() {}
-	void Exit_INTRO() {
+
+	void Update_INTRO()
+	{
+	}
+
+	void Exit_INTRO()
+	{
 		//disable intro text
 	}
 
-	[SerializeField] Image imageCozmoDragHand;
-	[SerializeField] Vector2 cozmoStartDragPos = Vector2.zero;
-	[SerializeField] Vector2 cozmoEndDragPos = Vector2.zero;
-	[SerializeField] float cozmoDragDelay = 2f;
-	[SerializeField] float cozmoDragTime = 2f;
-	[SerializeField] float cozmoFinalDragTime = 0.2f;
-
-	RectTransform cozmoDragHandRectTransform;
-	Vector2 startDragPos;
-	Vector2 endDragPos;
-	float dragTimer = 0f;
-	int dragCount = 0;
-	int dragCountMax = 2;
-
-	void Enter_REQUEST_SPIN() {
+	void Enter_REQUEST_SPIN()
+	{
 
 		currentPlayerIndex = IncrementPlayerTurn(currentPlayerIndex);
 
 		round++;
-		for(int i=0;i<wheels.Count;i++) {
+		for(int i = 0; i < wheels.Count; i++) {
 
 			if(wheel == wheels[i]) continue;
 
@@ -846,10 +932,9 @@ public class VortexController : GameController {
 			bool show = rings > i;
 
 			if(settings.inward) {
-				show &= round <= (i+1)*roundsPerRing;
-			}
-			else {
-				show &= round <= (wheels.Count-i)*roundsPerRing;
+				show &= round <= (i + 1) * roundsPerRing;
+			} else {
+				show &= round <= (wheels.Count - i) * roundsPerRing;
 			}
 
 			wheels[i].gameObject.SetActive(show);
@@ -868,7 +953,7 @@ public class VortexController : GameController {
 			endDragPos += UnityEngine.Random.insideUnitCircle * Screen.height * 0.1f;
 			dragTimer = cozmoDragTime;
 			dragCount = 0;
-			dragCountMax = UnityEngine.Random.Range(2,4);
+			dragCountMax = UnityEngine.Random.Range(2, 4);
 			wheel.DragStart(startDragPos, Time.time);
 
 //			Vector3 startWorld = Camera.main.ScreenToWorldPoint(startDragPos);
@@ -876,8 +961,7 @@ public class VortexController : GameController {
 //			startWorld.z = 1f;
 //			endWorld.z = 1f;
 //			Debug.DrawLine(startWorld, endWorld, (dragCount % 2 == 0) ? Color.green : Color.blue, 30f);
-		}
-		else  {
+		} else {
 			wheel.Unlock();
 		}
 
@@ -892,36 +976,46 @@ public class VortexController : GameController {
 		foreach(Image image in imageInputLocked) image.gameObject.SetActive(false);
 		foreach(LayoutBlock2d block in playerMockBlocks) block.Validate(false);
 		
-		for(int i=0;i<textPlayerBids.Length;i++) {
+		for(int i = 0; i < textPlayerBids.Length; i++) {
 			textPlayerBids[i].text = "";
 		}
 
-		for(int i=0;i<imagePlayerBidBGs.Length;i++) {
+		for(int i = 0; i < imagePlayerBidBGs.Length; i++) {
 			imagePlayerBidBGs[i].gameObject.SetActive(false);
 		}
 
-		for(int i=0;i<textPlayerSpinNow.Length;i++) {
+		for(int i = 0; i < textPlayerSpinNow.Length; i++) {
 			textPlayerSpinNow[i].gameObject.SetActive(currentPlayerIndex == i);
 		}
 
 		imageGear.color = GetPlayerUIColor(currentPlayerIndex);
 	}
 
-	int IncrementPlayerTurn(int index) {
+	int IncrementPlayerTurn(int index)
+	{
 		
 		switch(index) {
-			case 0: index = 2; break;
-			case 1: index = 3; break;
-			case 2: index = 1; break;
-			case 3: index = 0; break;
+			case 0:
+				index = 2;
+				break;
+			case 1:
+				index = 3;
+				break;
+			case 2:
+				index = 1;
+				break;
+			case 3:
+				index = 0;
+				break;
 		}
 	
 		if(index >= numPlayers) return IncrementPlayerTurn(index);
 
 		return index;
 	}
-	
-	void Update_REQUEST_SPIN() {
+
+	void Update_REQUEST_SPIN()
+	{
 		
 		//cozmo's automated spinWheel dragging
 		if(currentPlayerIndex == cozmoIndex && playStateTimer > cozmoDragDelay) {
@@ -951,8 +1045,7 @@ public class VortexController : GameController {
 				Vector2 currentPos = Vector2.Lerp(startDragPos, endDragPos, factor);
 				wheel.DragUpdate(currentPos, Time.time);
 				PlaceCozmoTouch(currentPos);
-			}
-			else {
+			} else {
 				float factor = 1f - Mathf.Clamp01(dragTimer / cozmoFinalDragTime);
 				Vector2 currentPos = Vector2.Lerp(startDragPos, endDragPos, factor);
 				wheel.DragUpdate(currentPos, Time.time);
@@ -963,8 +1056,7 @@ public class VortexController : GameController {
 					if(imageCozmoDragHand != null) {
 						imageCozmoDragHand.gameObject.SetActive(false);
 					}
-				}
-				else {	
+				} else {	
 					PlaceCozmoTouch(currentPos);
 				}
 			}
@@ -978,32 +1070,33 @@ public class VortexController : GameController {
 		lastNumber = newNumber;
 	}
 
-	void Exit_REQUEST_SPIN() {
+	void Exit_REQUEST_SPIN()
+	{
 		ClearInputs();
-		for(int i=0;i<textPlayerSpinNow.Length;i++) {
+		for(int i = 0; i < textPlayerSpinNow.Length; i++) {
 			textPlayerSpinNow[i].gameObject.SetActive(false);
 		}
 		if(imageCozmoDragHand != null) {
 			imageCozmoDragHand.gameObject.SetActive(false);
 		}
 
-		for(int i=0;i<textPlayerBids.Length;i++) {
+		for(int i = 0; i < textPlayerBids.Length; i++) {
 			textPlayerBids[i].text = "?";
 		}
 		
-		for(int i=0;i<imagePlayerBidBGs.Length;i++) {
+		for(int i = 0; i < imagePlayerBidBGs.Length; i++) {
 			imagePlayerBidBGs[i].gameObject.SetActive(true);
 		}
 
 	}
 
-	float spinLightTimer = 0f;
-	void Enter_SPINNING() {
+	void Enter_SPINNING()
+	{
 
 		SetRobotEmotion("WATCH_SPIN", false);
 		lightingBall.Radius = wheelLightningRadii[currentWheelIndex];
 
-		for(int i=0;i<playerButtonCanvasGroups.Length;i++) {
+		for(int i = 0; i < playerButtonCanvasGroups.Length; i++) {
 			if(i == cozmoIndex) continue; // player 2 is cozmo, no button
 			playerButtonCanvasGroups[i].interactable = i < numPlayers;
 			playerButtonCanvasGroups[i].blocksRaycasts = i < numPlayers;
@@ -1012,16 +1105,15 @@ public class VortexController : GameController {
 		predictedDuration = -1f;
 		predictedTimeAfterLastPeg = -1f;
 		cozmoTapsSubmitted = -1;
-		spinLightTimer = 0f;
 		lightIndex = 0;
 
 		RefreshSpinningLights();
 	}
 
-	int lightIndex = 0;
-	void RefreshSpinningLights() {
+	void RefreshSpinningLights()
+	{
 		
-		for(int i=0;i<numPlayers;i++) {
+		for(int i = 0; i < numPlayers; i++) {
 			if(i >= playerInputs.Count) break;
 
 			//only do spinning lights until bidding starts
@@ -1042,10 +1134,10 @@ public class VortexController : GameController {
 				uint c3 = CozmoPalette.ColorToUInt(lightIndex == 2 ? actualBlockColor : Color.clear);
 				uint c4 = CozmoPalette.ColorToUInt(lightIndex == 3 ? actualBlockColor : Color.clear);
 
-				playerInputBlocks[i].SetLEDs(c1, 0, (byte)ActiveBlock.Light.IndexToPosition(0), Robot.Light.FOREVER, 0, 0, 0, 0 );
-				playerInputBlocks[i].SetLEDs(c2, 0, (byte)ActiveBlock.Light.IndexToPosition(1), Robot.Light.FOREVER, 0, 0, 0, 0 );
-				playerInputBlocks[i].SetLEDs(c3, 0, (byte)ActiveBlock.Light.IndexToPosition(2), Robot.Light.FOREVER, 0, 0, 0, 0 );
-				playerInputBlocks[i].SetLEDs(c4, 0, (byte)ActiveBlock.Light.IndexToPosition(3), Robot.Light.FOREVER, 0, 0, 0, 0 );
+				playerInputBlocks[i].SetLEDs(c1, 0, (byte)ActiveBlock.Light.IndexToPosition(0), Robot.Light.FOREVER, 0, 0, 0, 0);
+				playerInputBlocks[i].SetLEDs(c2, 0, (byte)ActiveBlock.Light.IndexToPosition(1), Robot.Light.FOREVER, 0, 0, 0, 0);
+				playerInputBlocks[i].SetLEDs(c3, 0, (byte)ActiveBlock.Light.IndexToPosition(2), Robot.Light.FOREVER, 0, 0, 0, 0);
+				playerInputBlocks[i].SetLEDs(c4, 0, (byte)ActiveBlock.Light.IndexToPosition(3), Robot.Light.FOREVER, 0, 0, 0, 0);
 			}
 
 			if(playerMockBlocks.Length > i) {
@@ -1061,7 +1153,8 @@ public class VortexController : GameController {
 
 	}
 
-	void Update_SPINNING() {
+	void Update_SPINNING()
+	{
 		int lightingMin = Mathf.FloorToInt(Mathf.Lerp(0, lightningMinCountAtSpeedMax, (wheel.Speed - 1f) * 0.1f));
 		int lightingMax = Mathf.FloorToInt(Mathf.Lerp(0, lightningMaxCountAtSpeedMax, (wheel.Speed - 1f) * 0.1f));
 		lightingBall.CountRange = new RangeOfIntegers { Minimum = lightingMin, Maximum = lightingMax };
@@ -1122,52 +1215,50 @@ public class VortexController : GameController {
 			}
 		}
 
-		for(int i=0;i<playerPanelFills.Length;i++) {
+		for(int i = 0; i < playerPanelFills.Length; i++) {
 			if(i >= numPlayers || playerPanelFills[i].color.a == 0f) continue;
 			Color col = playerPanelFills[i].color;
 			col.a = Mathf.Max(0f, col.a - Time.deltaTime * 4f);
 			playerPanelFills[i].color = col;
 		}
 
-		imageGear.color = Color.Lerp (GetPlayerUIColor(currentPlayerIndex), gearDefaultColor, playStateTimer);
+		imageGear.color = Color.Lerp(GetPlayerUIColor(currentPlayerIndex), gearDefaultColor, playStateTimer);
 
-		spinLightTimer += Time.deltaTime * wheel.Speed;
 		RefreshSpinningLights();
 
 	}
 
-	void Exit_SPINNING() {
+	void Exit_SPINNING()
+	{
 		//stop looping spin audio
 		//play spin finished audio
 		wheel.Lock();
 		lightingBall.CountRange = new RangeOfIntegers { Minimum = 0, Maximum = 0 };
 
-		for(int i=0;i<playerButtonCanvasGroups.Length;i++) {
+		for(int i = 0; i < playerButtonCanvasGroups.Length; i++) {
 			playerButtonCanvasGroups[i].interactable = false;
 			playerButtonCanvasGroups[i].blocksRaycasts = false;
 		}
 
 
-		for(int i=0;i<playerPanelFills.Length;i++) {
+		for(int i = 0; i < playerPanelFills.Length; i++) {
 			if(i >= numPlayers || playerPanelFills[i].color.a == 0f) continue;
 			Color col = playerPanelFills[i].color;
 			col.a = 0f;
 			playerPanelFills[i].color = col;
 		}
 
-		for(int i=0;i<playerInputBlocks.Count && i<numPlayers;i++) {
+		for(int i = 0; i < playerInputBlocks.Count && i < numPlayers; i++) {
 			playerInputBlocks[i].SetMode(GetPlayerActiveCubeColorMode(i));
 		}
-		for(int i=0;i<playerMockBlocks.Length && i<numPlayers;i++) {
+		for(int i = 0; i < playerMockBlocks.Length && i < numPlayers; i++) {
 			playerMockBlocks[i].SetLights(GetPlayerUIColor(i));
 		}
 		
 	}
 
-	[SerializeField] float scoreScaleBase = 0.75f;
-	[SerializeField] float scoreScaleMax = 1f;
-
-	void Enter_SPIN_COMPLETE() {
+	void Enter_SPIN_COMPLETE()
+	{
 		
 		playersThatAreCorrect.Clear();
 		playersThatAreWrong.Clear();
@@ -1177,41 +1268,40 @@ public class VortexController : GameController {
 		while(scoreDeltas.Count < scores.Count) scoreDeltas.Add(0);
 
 		int number = wheel.GetDisplayedNumber();
-		for(int i=0;i<playerInputs.Count;i++) {
+		for(int i = 0; i < playerInputs.Count; i++) {
 			if(playerInputs[i].stamps.Count != number) continue;
 			if(playerInputs[i].stamps.Count == 0) continue;
 
 			playersThatAreCorrect.Add(i);
 		}
 
-		playersThatAreCorrect.Sort( ( obj1, obj2 ) =>  {
-			float finalStamp1 = playerInputs[obj1].FinalTime;
-			float finalStamp2 = playerInputs[obj2].FinalTime;
+		playersThatAreCorrect.Sort(( obj1, obj2) => {
+				float finalStamp1 = playerInputs[obj1].FinalTime;
+				float finalStamp2 = playerInputs[obj2].FinalTime;
 
-			if(finalStamp1 == finalStamp2) return 0;
-			if(finalStamp1 > finalStamp2) return 1;
-			return -1;   
-		} );
+				if(finalStamp1 == finalStamp2) return 0;
+				if(finalStamp1 > finalStamp2) return 1;
+				return -1;   
+			});
 
 		if(playersThatAreCorrect.Count > 0) {
 			fastestPlayer = playersThatAreCorrect[0];
 		}
 
-		for(int i=0;i<numPlayers;i++) {
+		for(int i = 0; i < numPlayers; i++) {
 			if(playersEliminated[i]) continue;
-			if(playersThatAreCorrect.Contains (i)) continue;
+			if(playersThatAreCorrect.Contains(i)) continue;
 			if(playerInputs[i].stamps.Count == 0) continue;
-			playersThatAreWrong.Add (i);
+			playersThatAreWrong.Add(i);
 		}
 
-		for(int i=0;i<playersEliminated.Length;i++) {
+		for(int i = 0; i < playersEliminated.Length; i++) {
 			if(playersEliminated[i]) continue;
 			
 			if(settings.winnerEliminated) {
 				playersEliminated[i] = fastestPlayer == i;
-			}
-			else if(settings.elimination) {
-				playersEliminated[i] = !playersThatAreCorrect.Contains(i) || playersThatAreCorrect.IndexOf(i) >= settings.maxSurvivePerRound[round-1];
+			} else if(settings.elimination) {
+				playersEliminated[i] = !playersThatAreCorrect.Contains(i) || playersThatAreCorrect.IndexOf(i) >= settings.maxSurvivePerRound[round - 1];
 //				if(playersEliminated[i]) {
 //					Debug.Log("playersEliminated["+i+"] is true! playersThatAreCorrect.IndexOf(i)("+playersThatAreCorrect.IndexOf(i)+") maxSurvivePerRound["+(round-1)+"]("+settings.maxSurvivePerRound[round-1]+")");
 //				}
@@ -1223,33 +1313,30 @@ public class VortexController : GameController {
 		if(cozmoIndex >= 0) {
 	
 			// cozmo reaction
-			if( playersThatAreCorrect.Contains(1) ) {
-				if( playersThatAreCorrect[0] == cozmoIndex ) {
+			if(playersThatAreCorrect.Contains(1)) {
+				if(playersThatAreCorrect[0] == cozmoIndex) {
 					// major win
 					SetRobotEmotion("MAJOR_WIN");
-				}
-				else {
+				} else {
 					// minor win
 					SetRobotEmotion("MINOR_WIN");
 				}
-			} else if (playersThatAreWrong.Contains(1)) {
-				if( scores[cozmoIndex] < Math.Abs(settings.pointsIncorrectPenalty) )
-				{
+			} else if(playersThatAreWrong.Contains(1)) {
+				if(scores[cozmoIndex] < Math.Abs(settings.pointsIncorrectPenalty)) {
 					// minor loss
 					SetRobotEmotion("MINOR_FAIL");
-				}
-				else {
+				} else {
 					SetRobotEmotion("MAJOR_FAIL");
 				}
 	
 			}
 		}
 
-		for(int i=0;i<playerInputs.Count;i++) {
+		for(int i = 0; i < playerInputs.Count; i++) {
 			textPlayerBids[i].text = playerInputs[i].stamps.Count.ToString();
 		}
 
-		for(int i=0;i<imagePlayerBidBGs.Length;i++) {
+		for(int i = 0; i < imagePlayerBidBGs.Length; i++) {
 			imagePlayerBidBGs[i].gameObject.SetActive(true);
 		}
 
@@ -1261,14 +1348,22 @@ public class VortexController : GameController {
 			if(fastestPlayer >= 0) {
 
 				int eliminated = 0;
-				for(int i=0;i<playersEliminated.Length;i++) if(playersEliminated[i]) eliminated++;
+				for(int i = 0; i < playersEliminated.Length; i++) if(playersEliminated[i]) eliminated++;
 
 				int delta = 0;
 				switch(eliminated) {
-					case 1: delta = settings.pointsFirstPlace; break;
-					case 2: delta = settings.pointsSecondPlace; break;
-					case 3: delta = settings.pointsThirdPlace; break;
-					case 4: delta = settings.pointsFourthPlace; break;
+					case 1:
+						delta = settings.pointsFirstPlace;
+						break;
+					case 2:
+						delta = settings.pointsSecondPlace;
+						break;
+					case 3:
+						delta = settings.pointsThirdPlace;
+						break;
+					case 4:
+						delta = settings.pointsFourthPlace;
+						break;
 				}
 
 
@@ -1276,18 +1371,25 @@ public class VortexController : GameController {
 				scores[fastestPlayer] += delta;
 			}
 
-		}
-		else {
-			for(int i=0;i<playersThatAreCorrect.Count;i++) {
+		} else {
+			for(int i = 0; i < playersThatAreCorrect.Count; i++) {
 				int playerIndex = playersThatAreCorrect[i];
 				if(playersEliminated[playerIndex]) continue;
 				int delta = 0;
 				
 				switch(i) {
-					case 0: delta = settings.pointsFirstPlace; break;
-					case 1: delta = settings.pointsSecondPlace; break;
-					case 2: delta = settings.pointsThirdPlace; break;
-					case 3: delta = settings.pointsFourthPlace; break;
+					case 0:
+						delta = settings.pointsFirstPlace;
+						break;
+					case 1:
+						delta = settings.pointsSecondPlace;
+						break;
+					case 2:
+						delta = settings.pointsThirdPlace;
+						break;
+					case 3:
+						delta = settings.pointsFourthPlace;
+						break;
 				}
 
 				scoreDeltas[playerIndex] = delta;
@@ -1295,9 +1397,9 @@ public class VortexController : GameController {
 			}
 		}
 
-		for(int i=0;i<playersThatAreWrong.Count;i++) {
+		for(int i = 0; i < playersThatAreWrong.Count; i++) {
 			scoreDeltas[playersThatAreWrong[i]] = settings.pointsIncorrectPenalty;
-			scores[playersThatAreWrong[i]] = Mathf.Max (0, scores[playersThatAreWrong[i]] + settings.pointsIncorrectPenalty);
+			scores[playersThatAreWrong[i]] = Mathf.Max(0, scores[playersThatAreWrong[i]] + settings.pointsIncorrectPenalty);
 		}
 		
 //		if(playersThatAreCorrect.Count == 0) {
@@ -1307,15 +1409,14 @@ public class VortexController : GameController {
 		resultsDisplayIndex = 0;
 		fadeTimer = scoreDisplayFillFade;
 	}
-	
-	
+
 	void PlayRoundCompleteLights()
 	{
 		
 		int random;
-		int max = (int)ActiveBlock.Mode.Count-3;
+		int max = (int)ActiveBlock.Mode.Count - 3;
 		
-		for(int playerIndex=0;playerIndex<playerInputs.Count;playerIndex++) {
+		for(int playerIndex = 0; playerIndex < playerInputs.Count; playerIndex++) {
 			
 			textPlayerBids[playerIndex].text = playerInputs[playerIndex].stamps.Count.ToString();
 			imagePlayerBidBGs[playerIndex].gameObject.SetActive(true);
@@ -1367,9 +1468,9 @@ public class VortexController : GameController {
 		}
 		
 	}
-	
 
-	void Update_SPIN_COMPLETE() {
+	void Update_SPIN_COMPLETE()
+	{
 		if(playersThatAreCorrect.Count == 0) return;
 		if(resultsDisplayIndex > playersThatAreCorrect.Count) return;
 
@@ -1380,7 +1481,7 @@ public class VortexController : GameController {
 		//if done with correct players, let's display all the losers at once
 		if(resultsDisplayIndex == playersThatAreCorrect.Count) {
 
-			for(int i=0;i<playersThatAreWrong.Count;i++) {
+			for(int i = 0; i < playersThatAreWrong.Count; i++) {
 
 				int loserIndex = playersThatAreWrong[i];
 				
@@ -1389,16 +1490,15 @@ public class VortexController : GameController {
 				if(fadeTimer > 0f) {
 					float factor = fadeTimer / scoreDisplayFillFade;
 					col.a = Mathf.Lerp(scoreDisplayFillAlpha, 0f, factor);
-					textPlayerScores[loserIndex].rectTransform.localScale = Vector3.Lerp(Vector3.one*scoreScaleMax, Vector3.one*scoreScaleBase, factor);
-				}
-				else {
+					textPlayerScores[loserIndex].rectTransform.localScale = Vector3.Lerp(Vector3.one * scoreScaleMax, Vector3.one * scoreScaleBase, factor);
+				} else {
 					float factor = Mathf.Abs(fadeTimer) / scoreDisplayFillFade;
 					col.a = Mathf.Lerp(scoreDisplayFillAlpha, scoreDisplayEmptyAlpha, factor);
-					textPlayerScores[loserIndex].rectTransform.localScale = Vector3.Lerp(Vector3.one*scoreScaleMax, Vector3.one*scoreScaleBase, factor);
+					textPlayerScores[loserIndex].rectTransform.localScale = Vector3.Lerp(Vector3.one * scoreScaleMax, Vector3.one * scoreScaleBase, factor);
 					
 					if(wasPositive) {
 						
-						textPlayerScoreDeltas[loserIndex].text = scoreDeltas[loserIndex] +"!";
+						textPlayerScoreDeltas[loserIndex].text = scoreDeltas[loserIndex] + "!";
 						textPlayerScoreDeltas[loserIndex].gameObject.SetActive(true);
 						
 						textPlayerScores[loserIndex].text = "SCORE: " + scores[loserIndex].ToString();
@@ -1427,16 +1527,15 @@ public class VortexController : GameController {
 		if(fadeTimer > 0f) {
 			float factor = fadeTimer / scoreDisplayFillFade;
 			col.a = Mathf.Lerp(scoreDisplayFillAlpha, 0f, factor);
-			textPlayerScores[playerIndex].rectTransform.localScale = Vector3.Lerp(Vector3.one*scoreScaleMax, Vector3.one*scoreScaleBase, factor);
-		}
-		else {
+			textPlayerScores[playerIndex].rectTransform.localScale = Vector3.Lerp(Vector3.one * scoreScaleMax, Vector3.one * scoreScaleBase, factor);
+		} else {
 			float factor = Mathf.Abs(fadeTimer) / scoreDisplayFillFade;
 			col.a = Mathf.Lerp(scoreDisplayFillAlpha, scoreDisplayEmptyAlpha, factor);
-			textPlayerScores[playerIndex].rectTransform.localScale = Vector3.Lerp(Vector3.one*scoreScaleMax, Vector3.one*scoreScaleBase, factor);
+			textPlayerScores[playerIndex].rectTransform.localScale = Vector3.Lerp(Vector3.one * scoreScaleMax, Vector3.one * scoreScaleBase, factor);
 
 			if(wasPositive) {
 
-				textPlayerScoreDeltas[playerIndex].text = "+" + scoreDeltas[playerIndex] +"!";
+				textPlayerScoreDeltas[playerIndex].text = "+" + scoreDeltas[playerIndex] + "!";
 				textPlayerScoreDeltas[playerIndex].gameObject.SetActive(true);
 
 				textPlayerScores[playerIndex].text = "SCORE: " + scores[playerIndex].ToString();
@@ -1456,39 +1555,40 @@ public class VortexController : GameController {
 		
 	}
 
-	void Exit_SPIN_COMPLETE() {
-		for(int i=0;i<playerPanelFills.Length;i++) {
+	void Exit_SPIN_COMPLETE()
+	{
+		for(int i = 0; i < playerPanelFills.Length; i++) {
 			Color col = playerPanelFills[i].color;
 			col.a = 0f;
 			playerPanelFills[i].color = col;
 		}
 
-		for(int i=0;i<textPlayerBids.Length;i++) {
+		for(int i = 0; i < textPlayerBids.Length; i++) {
 			textPlayerBids[i].text = "";
 		}
 
-		for(int i=0;i<imagePlayerBidBGs.Length;i++) {
+		for(int i = 0; i < imagePlayerBidBGs.Length; i++) {
 			imagePlayerBidBGs[i].gameObject.SetActive(false);
 		}
 
-		for(int i=0;i<playerBidFlashAnimations.Length;i++) {
+		for(int i = 0; i < playerBidFlashAnimations.Length; i++) {
 			playerBidFlashAnimations[i].Play();
 		}
 		
-		for(int i=0;i<playerInputBlocks.Count && i<numPlayers;i++) {
+		for(int i = 0; i < playerInputBlocks.Count && i < numPlayers; i++) {
 			playerInputBlocks[i].SetMode(GetPlayerActiveCubeColorMode(i));
 		}
 
-		for(int i=0;i<playerMockBlocks.Length && i<numPlayers;i++) {
+		for(int i = 0; i < playerMockBlocks.Length && i < numPlayers; i++) {
 			playerMockBlocks[i].SetLights(GetPlayerUIColor(i));
 		}
 		
 
-		for(int i=0;i<textPlayerScores.Length && i<numPlayers;i++) {
-			textPlayerScores[i].rectTransform.localScale = Vector3.one*scoreScaleBase;
+		for(int i = 0; i < textPlayerScores.Length && i < numPlayers; i++) {
+			textPlayerScores[i].rectTransform.localScale = Vector3.one * scoreScaleBase;
 		}
 
-		for(int i=0;i<textPlayerScoreDeltas.Length && i<numPlayers;i++) {
+		for(int i = 0; i < textPlayerScoreDeltas.Length && i < numPlayers; i++) {
 			textPlayerScoreDeltas[i].gameObject.SetActive(false);
 		}
 
@@ -1498,15 +1598,16 @@ public class VortexController : GameController {
 		
 	}
 
-	void PlaceTokens() {
+	void PlaceTokens()
+	{
 		if(!settings.showTokens) {
-			for(int i=0;i<playerTokens.Length;i++) {
+			for(int i = 0; i < playerTokens.Length; i++) {
 				playerTokens[i].gameObject.SetActive(false);
 			}
 			return;
 		}
 
-		for(int i=0;i<playerTokens.Length && i<playerButtons.Length;i++) {
+		for(int i = 0; i < playerTokens.Length && i < playerButtons.Length; i++) {
 			playerTokens[i].gameObject.SetActive(i < numPlayers && !playersEliminated[i]);
 			if(!playerTokens[i].gameObject.activeSelf) continue;
 
@@ -1523,35 +1624,37 @@ public class VortexController : GameController {
 		
 	}
 
-	void ClearInputs() {
-		for(int i=0;i<playerInputs.Count;i++) {
+	void ClearInputs()
+	{
+		for(int i = 0; i < playerInputs.Count; i++) {
 			playerInputs[i].stamps.Clear();
 		}
 
-		for(int i=0;i<textPlayerBids.Length;i++) {
+		for(int i = 0; i < textPlayerBids.Length; i++) {
 			textPlayerBids[i].text = "";
 		}
 
-		for(int i=0;i<imagePlayerBidBGs.Length;i++) {
+		for(int i = 0; i < imagePlayerBidBGs.Length; i++) {
 			imagePlayerBidBGs[i].gameObject.SetActive(false);
 		}
 
-		for(int i=0;i<playerMockBlocks.Length;i++) {
+		for(int i = 0; i < playerMockBlocks.Length; i++) {
 			playerMockBlocks[i].Validate(false);
 		}
 
-		for(int i=0;i<imageInputLocked.Length;i++) {
+		for(int i = 0; i < imageInputLocked.Length; i++) {
 			imageInputLocked[i].gameObject.SetActive(false);
 		}
 
-		for(int i=0;i<playerBidFlashAnimations.Length;i++) {
+		for(int i = 0; i < playerBidFlashAnimations.Length; i++) {
 			playerBidFlashAnimations[i].Stop();
 			playerBidFlashAnimations[i].Rewind();
 		}
 	}
 
-	void BlockTapped(ActiveBlock block) {
-		for(int i=0;i<playerInputBlocks.Count;i++) {
+	void BlockTapped(ActiveBlock block)
+	{
+		for(int i = 0; i < playerInputBlocks.Count; i++) {
 			if(playerInputBlocks[i] != block) continue;
 
 			//if we are faking cozmo's taps, let's ignore any real incoming messages for his block
@@ -1562,7 +1665,8 @@ public class VortexController : GameController {
 		}
 	}
 
-	void PlaceCozmoTouch(Vector2 screenPos) {
+	void PlaceCozmoTouch(Vector2 screenPos)
+	{
 		if(imageCozmoDragHand == null) return;
 
 		imageCozmoDragHand.gameObject.SetActive(true);
@@ -1574,66 +1678,93 @@ public class VortexController : GameController {
 		//Debug.Log("PlaceCozmoTouch screenPos("+screenPos+") anchor("+anchor+")");
 	}
 
-	ActiveBlock.Mode GetPlayerActiveCubeColorMode(int index) {
+	ActiveBlock.Mode GetPlayerActiveCubeColorMode(int index)
+	{
 
 		switch(index) {
-			case 0: return ActiveBlock.Mode.Blue;
-			case 1: return ActiveBlock.Mode.Green;
-			case 2: return ActiveBlock.Mode.Yellow;
-			case 3: return ActiveBlock.Mode.Red;
+			case 0:
+				return ActiveBlock.Mode.Blue;
+			case 1:
+				return ActiveBlock.Mode.Green;
+			case 2:
+				return ActiveBlock.Mode.Yellow;
+			case 3:
+				return ActiveBlock.Mode.Red;
 		}
 
 		return ActiveBlock.Mode.Off;
 	}
 
-	Color GetPlayerUIColor(int index) {
+	Color GetPlayerUIColor(int index)
+	{
 		return playerColors[index];
 	}
-	
-///
-	public void PlayerInputTap(int index) {
+
+
+	IEnumerator DelayBidLockedEffect(int index)
+	{
+
+		yield return new WaitForSeconds(maxPlayerInputTime);
+
+		imageInputLocked[index].gameObject.SetActive(true);
+	}
+
+	IEnumerator TapAfterDelay(int index, float delay)
+	{
+		
+		yield return new WaitForSeconds(delay);
+		
+		PlayerInputTap(index);
+	}
+
+	#endregion
+
+	#region PUBLIC METHODS
+
+	public void PlayerInputTap(int index)
+	{
 		if(state == GameState.PRE_GAME) {
-			if( index == cozmoIndex ) { // cozmo
+			if(index == cozmoIndex) { // cozmo
 				SetRobotEmotion("LETS_PLAY");
 			}
 			playerMockBlocks[index].Validate(true);
 			return;
 		}
-
-
+		
+		
 		if(state != GameState.PLAYING) return;
 		if(playState != VortexState.SPINNING) return;
 		if(playersEliminated[index]) return;
-
-		while(index >= playerInputs.Count) playerInputs.Add (new VortexInput());
+		
+		while(index >= playerInputs.Count) playerInputs.Add(new VortexInput());
 		if(playerInputs[index].stamps.Count >= 4) return;
-
+		
 		float time = Time.time;
-
+		
 		if(index != cozmoIndex && time - playerInputs[index].FirstTime > maxPlayerInputTime) return;
-
+		
 		playerInputs[index].stamps.Add(time);
-
-//		//if this is fifth stamp, then remove the prior 4 such that we go back to 1, 
-//		//	but still have our relevant 'last' time stamp at the end of the list
-//		if(playerInputs[index].stamps.Count > 4) {
-//			playerInputs[index].stamps.RemoveRange(0, 4);
-//		}
-
+		
+		//		//if this is fifth stamp, then remove the prior 4 such that we go back to 1, 
+		//		//	but still have our relevant 'last' time stamp at the end of the list
+		//		if(playerInputs[index].stamps.Count > 4) {
+		//			playerInputs[index].stamps.RemoveRange(0, 4);
+		//		}
+		
 		if(index < playerInputBlocks.Count) {
 			Color playerColor = CozmoPalette.instance.GetColorForActiveBlockMode(GetPlayerActiveCubeColorMode(index));
-	
+			
 			uint c1 = CozmoPalette.ColorToUInt(playerInputs[index].stamps.Count > 0 ? playerColor : Color.black);
 			uint c2 = CozmoPalette.ColorToUInt(playerInputs[index].stamps.Count > 1 ? playerColor : Color.black);
-	        uint c3 = CozmoPalette.ColorToUInt(playerInputs[index].stamps.Count > 2 ? playerColor : Color.black);
-	        uint c4 = CozmoPalette.ColorToUInt(playerInputs[index].stamps.Count > 3 ? playerColor : Color.black);
-	
-			playerInputBlocks[index].SetLEDs(c1, 0, (byte)ActiveBlock.Light.IndexToPosition(0), Robot.Light.FOREVER, 0, 0, 0, 0 );
-			playerInputBlocks[index].SetLEDs(c2, 0, (byte)ActiveBlock.Light.IndexToPosition(1), Robot.Light.FOREVER, 0, 0, 0, 0 );
-			playerInputBlocks[index].SetLEDs(c3, 0, (byte)ActiveBlock.Light.IndexToPosition(2), Robot.Light.FOREVER, 0, 0, 0, 0 );
-			playerInputBlocks[index].SetLEDs(c4, 0, (byte)ActiveBlock.Light.IndexToPosition(3), Robot.Light.FOREVER, 0, 0, 0, 0 );
+			uint c3 = CozmoPalette.ColorToUInt(playerInputs[index].stamps.Count > 2 ? playerColor : Color.black);
+			uint c4 = CozmoPalette.ColorToUInt(playerInputs[index].stamps.Count > 3 ? playerColor : Color.black);
+			
+			playerInputBlocks[index].SetLEDs(c1, 0, (byte)ActiveBlock.Light.IndexToPosition(0), Robot.Light.FOREVER, 0, 0, 0, 0);
+			playerInputBlocks[index].SetLEDs(c2, 0, (byte)ActiveBlock.Light.IndexToPosition(1), Robot.Light.FOREVER, 0, 0, 0, 0);
+			playerInputBlocks[index].SetLEDs(c3, 0, (byte)ActiveBlock.Light.IndexToPosition(2), Robot.Light.FOREVER, 0, 0, 0, 0);
+			playerInputBlocks[index].SetLEDs(c4, 0, (byte)ActiveBlock.Light.IndexToPosition(3), Robot.Light.FOREVER, 0, 0, 0, 0);
 		}
-
+		
 		Color uiCol = GetPlayerUIColor(index);
 		
 		Color uiCol1 = playerInputs[index].stamps.Count > 0 ? uiCol : Color.black;
@@ -1641,41 +1772,28 @@ public class VortexController : GameController {
 		Color uiCol3 = playerInputs[index].stamps.Count > 2 ? uiCol : Color.black;
 		Color uiCol4 = playerInputs[index].stamps.Count > 3 ? uiCol : Color.black;
 		
-		playerMockBlocks[index].SetLights (uiCol1, uiCol2, uiCol3, uiCol4);
+		playerMockBlocks[index].SetLights(uiCol1, uiCol2, uiCol3, uiCol4);
 		
-
+		
 		textPlayerBids[index].text = playerInputs[index].stamps.Count.ToString();
 		imagePlayerBidBGs[index].gameObject.SetActive(true);
-
+		
 		playerBidFlashAnimations[index].Rewind();
 		playerBidFlashAnimations[index].Play();
-
+		
 		Color fillCol = playerPanelFills[index].color;
 		fillCol.a = 0.5f;
 		playerPanelFills[index].color = fillCol;
-
+		
 		if(buttonPressSound != null) AudioManager.PlayOneShot(buttonPressSound, 0f, 1f, 1f);
-
+		
 		//Debug.Log("PlayerInputTap index: "+index);
-
+		
 		if(playerInputs[index].stamps.Count == 1) {
 			StartCoroutine(DelayBidLockedEffect(index));
 		}
 	}
 
-
-	IEnumerator DelayBidLockedEffect(int index) {
-
-		yield return new WaitForSeconds(maxPlayerInputTime);
-
-		imageInputLocked[index].gameObject.SetActive(true);
-	}
-
-	IEnumerator TapAfterDelay(int index, float delay) {
-		
-		yield return new WaitForSeconds(delay);
-		
-		PlayerInputTap(index);
-	}
+	#endregion
 
 }
