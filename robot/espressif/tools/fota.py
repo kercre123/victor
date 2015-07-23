@@ -6,10 +6,10 @@ import sys, os, socket, struct, threading, time
 
 COMMAND_PORT = 8580
 
-USERBIN1 = os.path.join("bin", "upgrade", "user1.512.new.0.bin")
-USERBIN2 = os.path.join("bin", "upgrade", "user2.512.new.0.bin")
+USERBIN1 = os.path.join("bin", "upgrade", "user1.1024.new.2.bin")
+USERBIN2 = os.path.join("bin", "upgrade", "user2.1024.new.2.bin")
 USERBIN1_ADDR = 0x01000
-USERBIN2_ADDR = 0x41000
+USERBIN2_ADDR = 0x81000
 
 FPGA_BIN = os.path.join("..", "fpga", "fpgaisp_Implmnt", "sbt", "outputs", "bitmap", "top_bitmap.bin")
 
