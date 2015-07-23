@@ -56,18 +56,6 @@ const f32 LIFT_XBAR_HEIGHT_WRT_WRIST_JOINT = -20.f;
 // The distance along the x axis from the wrist joint to the front of the lifter plate
 const f32 LIFT_FRONT_WRT_WRIST_JOINT = 4.f;
 
-// TODO: convert to using these in degree form?
-const f32 MIN_HEAD_ANGLE = DEG_TO_RAD(-26.f);
-const f32 MAX_HEAD_ANGLE = DEG_TO_RAD( 34.f);
-
-// Head angle may exceed limits by this amount before
-// it is considered to be out of calibration.
-const f32 HEAD_ANGLE_LIMIT_MARGIN = DEG_TO_RAD(2.0f);
-
-// Safe head angle for the proximity sensors to be usable with the lift
-// either up or down
-const f32 HEAD_ANGLE_WHILE_FOLLOWING_PATH = -0.32f;
-
   // Neck joint relative to robot origin
 const f32 NECK_JOINT_POSITION[3] = {-13.f, 0.f, 34.5f + WHEEL_RAD_TO_MM};
 

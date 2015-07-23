@@ -13,11 +13,14 @@ namespace HeadController {
 
     namespace {
       
-      const Radians ANGLE_TOLERANCE = DEG_TO_RAD(1.f);
+      // TODO: Ideally, this value should be calibrated
+      const Radians HEAD_CAL_OFFSET = DEG_TO_RAD(3);
+      
+      const Radians ANGLE_TOLERANCE = DEG_TO_RAD(2.f);
       
       // Used when calling SetDesiredAngle with just an angle:
-      const f32 DEFAULT_START_ACCEL_FRAC = 0.25f;
-      const f32 DEFAULT_END_ACCEL_FRAC   = 0.25f;
+      const f32 DEFAULT_START_ACCEL_FRAC = 0.1f;
+      const f32 DEFAULT_END_ACCEL_FRAC   = 0.1f;
       const f32 DEFAULT_DURATION_SEC     = 0.5f;
       
       // Currently applied power
@@ -30,7 +33,7 @@ namespace HeadController {
       f32 currDesiredAngle_ = 0.f;
       f32 angleError_ = 0.f;
       f32 angleErrorSum_ = 0.f;
-      f32 prevAngleError_ = 0.f;      
+      f32 prevAngleError_ = 0.f;
       f32 prevHalPos_ = 0.f;
       bool inPosition_  = true;
       
@@ -44,9 +47,9 @@ namespace HeadController {
 
       const f32 BASE_POWER  = 0.f;
 #else
-      f32 Kp_ = 5.f;  // proportional control constant
+      f32 Kp_ = 3.f;  // proportional control constant
       f32 Kd_ = 0.f;  // derivative control constant
-      f32 Ki_ = 0.1f; // integral control constant
+      f32 Ki_ = 0.f; // integral control constant
       f32 MAX_ERROR_SUM = 2.f;
       
       const f32 BASE_POWER  = 0.2f;
@@ -139,7 +142,7 @@ namespace HeadController {
     
     void ResetLowAnglePosition()
     {
-      currentAngle_ = MIN_HEAD_ANGLE;
+      currentAngle_ = MIN_HEAD_ANGLE + HEAD_CAL_OFFSET;
       HAL::MotorResetPosition(HAL::MOTOR_HEAD);
       prevHalPos_ = HAL::MotorGetPosition(HAL::MOTOR_HEAD);
       isCalibrated_ = true;
