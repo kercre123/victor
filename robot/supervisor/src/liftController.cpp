@@ -373,7 +373,7 @@ namespace Anki {
       void SetDesiredHeight(f32 height_mm)
       {
         //PRINT("LiftHeight: %fmm, speed %f, accel %f\n", height_mm, maxSpeedRad_, accelRad_);
-        SetDesiredHeight(height_mm, DEFAULT_START_ACCEL_FRAC, DEFAULT_END_ACCEL_FRAC, DEFAULT_DURATION_SEC);
+        SetDesiredHeight(height_mm, DEFAULT_START_ACCEL_FRAC, DEFAULT_END_ACCEL_FRAC, 0);
       }
 
       static void SetDesiredHeight_internal(f32 height_mm, f32 acc_start_frac, f32 acc_end_frac, f32 duration_seconds)
@@ -428,25 +428,26 @@ namespace Anki {
         inPosition_ = false;
         
 
-        /*
-        bool res = vpg_.StartProfile_fixedDuration(startRad, startRadSpeed, acc_start_frac*duration_seconds,
+        bool res = false;
+        if (duration_seconds > 0) {
+          res = vpg_.StartProfile_fixedDuration(startRad, startRadSpeed, acc_start_frac*duration_seconds,
                                                    desiredAngle_.ToFloat(), acc_end_frac*duration_seconds,
                                                    MAX_LIFT_SPEED_RAD_PER_S,
                                                    MAX_LIFT_ACCEL_RAD_PER_S2,
                                                    duration_seconds,
                                                    CONTROL_DT);
         
+          if (!res) {
+            PRINT("FAIL: LIFT VPG (fixedDuration): startVel %f, startPos %f, acc_start_frac %f, acc_end_frac %f, endPos %f, duration %f. Trying VPG without fixed duration.\n",
+                  startRadSpeed, startRad, acc_start_frac, acc_end_frac, desiredAngle_.ToFloat(), duration_seconds);
+          }
+        }
         if (!res) {
-          PRINT("FAIL: LIFT VPG (fixedDuration): startVel %f, startPos %f, acc_start_frac %f, acc_end_frac %f, endPos %f, duration %f. Trying VPG without fixed duration.\n",
-                startRadSpeed, startRad, acc_start_frac, acc_end_frac, desiredAngle_.ToFloat(), duration_seconds);
-          */
           vpg_.StartProfile(startRadSpeed, startRad,
                             maxSpeedRad_, accelRad_,
                             0, desiredAngle_.ToFloat(),
                             CONTROL_DT);
-        /*
         }
-         */
         
 #if(DEBUG_HEAD_CONTROLLER)
         PRINT("LIFT VPG (fixedDuration): startVel %f, startPos %f, acc_start_frac %f, acc_end_frac %f, endPos %f, duration %f\n",

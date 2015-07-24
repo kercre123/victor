@@ -299,7 +299,7 @@ namespace HeadController {
     }
     
     void SetDesiredAngle(f32 angle) {
-      SetDesiredAngle(angle, DEFAULT_START_ACCEL_FRAC, DEFAULT_END_ACCEL_FRAC, DEFAULT_DURATION_SEC);
+      SetDesiredAngle(angle, DEFAULT_START_ACCEL_FRAC, DEFAULT_END_ACCEL_FRAC, 0);
     }
 
     // TODO: There is common code with the other SetDesiredAngle() that can be pulled out into a shared function.
@@ -336,28 +336,31 @@ namespace HeadController {
 #endif
         return;
       }
-      
+
+      bool res = false;
       // Start profile of head trajectory
-      bool res = vpg_.StartProfile_fixedDuration(startRad, startRadSpeed, acc_start_frac*duration_seconds,
-                                                 desiredAngle_.ToFloat(), acc_end_frac*duration_seconds,
-                                                 MAX_HEAD_SPEED_RAD_PER_S,
-                                                 MAX_HEAD_ACCEL_RAD_PER_S2,
-                                                 duration_seconds,
-                                                 CONTROL_DT);
+      if (duration_seconds > 0) {
+        res = vpg_.StartProfile_fixedDuration(startRad, startRadSpeed, acc_start_frac*duration_seconds,
+                                              desiredAngle_.ToFloat(), acc_end_frac*duration_seconds,
+                                              MAX_HEAD_SPEED_RAD_PER_S,
+                                              MAX_HEAD_ACCEL_RAD_PER_S2,
+                                              duration_seconds,
+                                              CONTROL_DT);
       
+        if (!res) {
+          PRINT("FAIL: HEAD VPG (fixedDuration): startVel %f, startPos %f, acc_start_frac %f, acc_end_frac %f, endPos %f, duration %f.  Trying VPG without fixed duration.\n",
+                startRadSpeed, startRad, acc_start_frac, acc_end_frac, desiredAngle_.ToFloat(), duration_seconds);
+        }
+      }
       if (!res) {
-        PRINT("FAIL: HEAD VPG (fixedDuration): startVel %f, startPos %f, acc_start_frac %f, acc_end_frac %f, endPos %f, duration %f.  Trying VPG without fixed duration.\n",
-              startRadSpeed, startRad, acc_start_frac, acc_end_frac, desiredAngle_.ToFloat(), duration_seconds);
-        
         //SetDesiredAngle_internal(angle);
         // Start profile of head trajectory
         vpg_.StartProfile(startRadSpeed, startRad,
                           maxSpeedRad_, accelRad_,
                           0, desiredAngle_.ToFloat(),
                           CONTROL_DT);
-
       }
-      
+
 #if(DEBUG_HEAD_CONTROLLER)
       PRINT("HEAD VPG (fixedDuration): startVel %f, startPos %f, acc_start_frac %f, acc_end_frac %f, endPos %f, duration %f\n",
             startRadSpeed, startRad, acc_start_frac, acc_end_frac, desiredAngle_.ToFloat(), duration_seconds);
