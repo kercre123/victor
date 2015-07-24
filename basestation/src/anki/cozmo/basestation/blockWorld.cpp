@@ -470,7 +470,14 @@ namespace Anki
            */
           
         } else {
-          
+
+          // Update lastObserved times of this object
+          // (Do this before possibly attempting to localize to the object below!)
+          matchingObject->SetLastObservedTime(objSeen->GetLastObservedTime());
+          matchingObject->UpdateMarkerObservationTimes(*objSeen);
+
+          // Decide whehter we will be updating the robot's pose relative to this
+          // object or updating the object's pose w.r.t. the robot.
           if(matchingObject->CanBeUsedForLocalization()) {
             Result localizeResult = _robot->LocalizeToObject(objSeen, matchingObject);
             if(localizeResult != RESULT_OK) {
@@ -483,10 +490,6 @@ namespace Anki
           } else {
             matchingObject->SetPose( objSeen->GetPose() );
           }
-          
-          // Update lastObserved times of this object
-          matchingObject->SetLastObservedTime(objSeen->GetLastObservedTime());
-          matchingObject->UpdateMarkerObservationTimes(*objSeen);
           
           observedObject = matchingObject;
           
@@ -1637,24 +1640,27 @@ namespace Anki
         
         // Reset the flag telling us objects changed here, before we update any objects:
         _didObjectsChange = false;
-        
-        //
-        // Find any observed blocks from the remaining markers
-        //
-        // Note that this removes markers from the list that it uses
+
         Result updateResult;
         size_t numUpdated;
-        updateResult = UpdateObjectPoses(currentObsMarkers, ObjectFamily::BLOCKS, atTimestamp, numUpdated);
+
+        //
+        // Find any observed active blocks from the remaining markers.
+        // Do these first because they can update our localization, meaning that
+        // other objects found below will be more accurately localized.
+        //
+        // Note that this removes markers from the list that it uses
+        updateResult = UpdateObjectPoses(currentObsMarkers, ObjectFamily::ACTIVE_BLOCKS, atTimestamp, numUpdated);
         if(updateResult != RESULT_OK) {
           return updateResult;
         }
         numObjectsObserved += numUpdated;
         
         //
-        // Find any observed active blocks from the remaining markers
+        // Find any observed blocks from the remaining markers
         //
         // Note that this removes markers from the list that it uses
-        updateResult = UpdateObjectPoses(currentObsMarkers, ObjectFamily::ACTIVE_BLOCKS, atTimestamp, numUpdated);
+        updateResult = UpdateObjectPoses(currentObsMarkers, ObjectFamily::BLOCKS, atTimestamp, numUpdated);
         if(updateResult != RESULT_OK) {
           return updateResult;
         }
