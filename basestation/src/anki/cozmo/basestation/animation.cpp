@@ -35,6 +35,9 @@
 namespace Anki {
 namespace Cozmo {
   
+  const s32 Animation::MAX_BYTES_FOR_RELIABLE_TRANSPORT = 2000;
+  const s32 Animation::MAX_FRAMES_TO_SEND = 10;
+  
 #pragma mark -
 #pragma mark Animation::Track
   
@@ -400,6 +403,15 @@ _blinkTrack.__METHOD__()
           }
           numBytesToSend -= numBytesRequired;
           --numFramesToSend;
+          
+          // If the message we just sent was an audio keyframe, decrement the
+          // counter tracking how many audio frames are queued in the send buffer
+          if(msg->GetID() == RobotMessage::AnimKeyFrame_AudioSample_ID ||
+             msg->GetID() == RobotMessage::AnimKeyFrame_AudioSilence_ID)
+          {
+            --_numAudioFramesBufferedToSend;
+          }
+          
           _sendBuffer.pop_front();
         } else {
           // Out of bytes to send, continue on next Update()

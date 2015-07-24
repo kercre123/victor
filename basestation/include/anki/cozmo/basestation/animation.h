@@ -134,8 +134,8 @@ namespace Anki {
 
       // "Flow control" for not overrunning reliable transport in a single
       // update tick
-      static const s32 MAX_BYTES_FOR_RELIABLE_TRANSPORT = 2000;
-      static const s32 MAX_FRAMES_TO_SEND = 10;
+      static const s32 MAX_BYTES_FOR_RELIABLE_TRANSPORT;
+      static const s32 MAX_FRAMES_TO_SEND;
       
     }; // class Animation
 
