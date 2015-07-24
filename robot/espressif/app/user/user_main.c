@@ -73,7 +73,6 @@ void ICACHE_FLASH_ATTR wifi_event_callback(System_Event_t *evt)
                 evt->event_info.sta_connected.aid,
                 MAC2STR(evt->event_info.sta_connected.mac));
       // Fix the wifi rate rather than allowing negotiation
-      wifi_set_user_fixed_rate(PHY_RATE_18);
       break;
     }
     case EVENT_SOFTAPMODE_STADISCONNECTED:
@@ -99,9 +98,6 @@ void ICACHE_FLASH_ATTR user_rf_pre_init(void)
 {
   system_phy_set_rfoption(1); // Do all the calibration, don't care how much power we burn
   system_phy_set_max_tpw(82); // Set the maximum  TX power allowed
-
-  // Fix the wifi rate rather than allowing negotiation, Don't know if this needs to be called here.
-  wifi_set_user_fixed_rate(PHY_RATE_18);
 }
 
 /** Callback after all the chip system initalization is done.
@@ -227,8 +223,8 @@ user_init(void)
     // Setup ESP module to AP mode and apply settings
     wifi_set_opmode(SOFTAP_MODE);
     wifi_softap_set_config(&ap_config);
+    wifi_set_user_fixed_rate(PHY_RATE_18);
     wifi_set_phy_mode(PHY_MODE_11G);
-    // Fix the wifi rate rather than allowing negotiation
     wifi_set_user_fixed_rate(PHY_RATE_18);
     // Disable radio sleep
     wifi_set_sleep_type(NONE_SLEEP_T);
