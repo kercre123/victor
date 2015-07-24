@@ -222,45 +222,81 @@ namespace Anki {
     }
     
     
-    static s32 GetAudioDurationInMilliseconds(std::string fileName) {
-      // This is disgusting.
-      // grep the result of afinfo to parse out the sound duration
-      // TODO: Do something that works on iOS!
-      const std::string cmd("afinfo -b -r " + fileName +
-                            " | grep -o '[0-9]\\{1,\\}\\.[0-9]\\{1,\\}'");
+    // Return false if not valid wav file
+    static bool GetWavInfo(std::string fileName,
+                           u16 &format,
+                           u16 &numChannels,
+                           u32 &sampleRateHz,
+                           u32 &byteRate,
+                           u16 &bitsPerSample,
+                           u32 &dataSize) {
       
-      std::string output = GetStdoutFromCommand(cmd);
+      const u32 headerSize = 44;
       
-      #if DEBUG_SOUND_MANAGER
-      printf("SoundManager:: Sound duration command: %s\n", cmd.c_str());
-      #endif
+      FILE* fp = fopen(fileName.c_str(), "r");
+      u8 header[headerSize];
+      fread(header, 1, sizeof(header), fp);
+      fseek(fp, 0, SEEK_END);
+      u32 fileSize = (u32)ftell(fp);
+      fclose(fp);
       
-      if(output.empty()) {
-        return -1;
+      bool riffCheck = memcmp(header, "RIFF", 4) == 0;
+      bool waveCheck = memcmp(header + 8, "WAVEfmt", 7) == 0;
+      
+      if (!riffCheck || !waveCheck) {
+        return false;
       }
       
-      const float duration_sec = std::stof(output);
-      return static_cast<u32>(duration_sec * 1000);
+      format = *(u16*)(header + 20);
+      numChannels = *(u16*)(header + 22);
+      sampleRateHz = *(u32*)(header + 24);
+      byteRate = *(u32*)(header + 28);
+      bitsPerSample = *(u16*)(header + 34);
+
+      dataSize = fileSize - headerSize;
+      
+      return true;
+    }
+    
+    static s32 GetAudioDurationInMilliseconds(std::string fileName) {
+      
+      u16 format;
+      u16 numChannels;
+      u32 sampleRateHz;
+      u32 byteRate;
+      u16 bitsPerSample;
+      u32 dataSize;
+      if (!GetWavInfo(fileName, format, numChannels, sampleRateHz, byteRate, bitsPerSample, dataSize)) {
+        PRINT_NAMED_INFO("SoundManager.GetAudioDuration.InvalidWav","");
+        return 0;
+      }
+
+      s32 duration_ms = (s32)(dataSize * (1000.f / byteRate));
+      return duration_ms;
     }
 
     static bool IsValidRobotAudio(std::string fileName) {
-      const std::string cmd("afinfo -b " + fileName + " | grep 'format:'");
-      std::string output = GetStdoutFromCommand(cmd);
       
-      bool validNumChannels = (output.find(" 1 ch,") != std::string::npos);
-      bool validFreq = (output.find(" 24000 Hz,") != std::string::npos);
-      bool validEncoding = (output.find("\'lpcm\'") != std::string::npos) && (output.find(" 16-bit little-endian signed integer") != std::string::npos);
-      
-      bool isValid = (validNumChannels && validFreq && validEncoding);
-      
-      #if DEBUG_SOUND_MANAGER
-      if (!isValid) {
-        PRINT_NAMED_WARNING("SoundManager.IsValidRobotAudio.IsInvalid",
-                            "Sound %s is invalid for robot audio. (%s)(%d %d %d)\n",
-                            fileName.c_str(), output.c_str(), validNumChannels, validFreq, validEncoding);
+      u16 format;
+      u16 numChannels;
+      u32 sampleRateHz;
+      u32 byteRate;
+      u16 bitsPerSample;
+      u32 dataSize;
+      if (!GetWavInfo(fileName, format, numChannels, sampleRateHz, byteRate, bitsPerSample, dataSize)) {
+        PRINT_NAMED_INFO("SoundManager.IsValidRobotAudio.InvalidWav", "%s", fileName.c_str());
+        return false;
       }
-      #endif
-    
+      
+      bool isValid = (numChannels == 1) // mono
+                      && (format == 1) // PCM
+                      && (sampleRateHz == 24000)
+                      && (bitsPerSample == 16);
+      
+      //PRINT_NAMED_INFO("SoundManager.IsValidRobotAudio.WavProperties",
+      //                 "%s: format %d, numChannels %d, sampleRateHz %d, byteRate %d, bitsPerSample %d, dataSize %d\n",
+      //                 fileName.c_str(), format, numChannels, sampleRateHz, byteRate, bitsPerSample, dataSize);
+      
       return isValid;
     }
     
@@ -355,7 +391,7 @@ namespace Anki {
       } else {
         PRINT_NAMED_ERROR("SoundManager.ReadSoundDir",
                           "Sound folder not found: %s\n",
-                          _rootDir.c_str());
+                          (_rootDir + subDir).c_str());
         return RESULT_FAIL;
       }
 

@@ -51,6 +51,16 @@ namespace Cozmo {
     return animPtr;
   }
 
+  std::vector<std::string> CannedAnimationContainer::GetAnimationNames()
+  {
+    std::vector<std::string> v;
+    v.reserve(_animations.size());
+    for (std::unordered_map<std::string, Animation>::iterator i=_animations.begin(); i != _animations.end(); ++i) {
+      v.push_back(i->first);
+    }
+    return v;
+  }
+  
   Result CannedAnimationContainer::DefineFromJson(Json::Value& jsonRoot, std::string& loadedAnimName)
   {
     
