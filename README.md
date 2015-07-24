@@ -13,11 +13,13 @@ At this point, only Mac and iOS are supported. The engine itself supports more p
 1. You'll need [brew](http://brew.sh/) to install some tools.
 
 2. Install CMAKE.
+
     brew install cmake
 
 2. The simulation/visualization environment we use is [Webots](https://www.cyberbotics.com/overview). 
 
 3. Move the OpenCV libraries inside of Webots out of the way:
+
     cd /Applications/Webots/lib
     mkdir opencv_unused
     mv libopencv* opencv_unused
@@ -44,8 +46,7 @@ For working with iOS within cozmo-game, first do the above and then:
 1. Build the Cozmo iOS fat libs by running this from the cozmo-game root directory:
   * python make_iOS_libs.py
 
-2. Open the CozmoVision Xcode project found in the "cozmo-game/ios" directory.
-  Experiment with the Webots world file: 
+2. Open the CozmoVision Xcode project found in the "cozmo-game/ios" directory. Experiment with the Webots world file: 
   * cozmo-game/robot/simulator/worlds/iOStest.wbt 
 
 configure.py Commands
