@@ -1094,7 +1094,7 @@ namespace Anki {
       if(_inPosition) {
         result = ActionResult::SUCCESS;
       } else {
-        PRINT_NAMED_INFO("MoveLiftToHeightAction.CheckIfDone",
+        PRINT_NAMED_INFO("MoveHeadToAngleAction.CheckIfDone",
                          "Waiting for head to get in position: %.1fdeg vs. %.1fdeg\n",
                          RAD_TO_DEG(robot.GetHeadAngle()), _headAngle.getDegrees());
       }
@@ -2289,6 +2289,11 @@ namespace Anki {
     
     ActionResult PlayAnimationAction::Init(Robot& robot)
     {
+      if(robot.IsAnimating()) {
+        //PRINT_NAMED_INFO("PlanAnimationAction.Init.Waiting",
+        //                 "Waiting for robot to stop animating before playing this animation.\n");
+        return ActionResult::RUNNING;
+      }
       if(robot.PlayAnimation(_animName, _numLoops) == RESULT_OK) {
         return ActionResult::SUCCESS;
       } else {

@@ -333,12 +333,14 @@ namespace Anki {
       // Sends a message to the robot to move the lift to the specified height
       Result MoveLiftToHeight(const f32 height_mm,
                               const f32 max_speed_rad_per_sec,
-                              const f32 accel_rad_per_sec2);
+                              const f32 accel_rad_per_sec2,
+                              const f32 duration_sec = 0.f);
       
       // Sends a message to the robot to move the head to the specified angle
       Result MoveHeadToAngle(const f32 angle_rad,
                              const f32 max_speed_rad_per_sec,
-                             const f32 accel_rad_per_sec2);
+                             const f32 accel_rad_per_sec2,
+                             const f32 duration_sec = 0.f);
       
       
       // Sends a message to robot to tap the carried block on the ground the
@@ -728,12 +730,14 @@ namespace Anki {
       // Sends a message to the robot to move the lift to the specified height
       Result SendSetLiftHeight(const f32 height_mm,
                                const f32 max_speed_rad_per_sec,
-                               const f32 accel_rad_per_sec2) const;
+                               const f32 accel_rad_per_sec2,
+                               const f32 duration_sec) const;
       
       // Sends a message to the robot to move the head to the specified angle
       Result SendSetHeadAngle(const f32 angle_rad,
                               const f32 max_speed_rad_per_sec,
-                              const f32 accel_rad_per_sec2) const;
+                              const f32 accel_rad_per_sec2,
+                              const f32 duration_sec) const;
 
       Result SendTapBlockOnGround(const u8 numTaps) const;
       
