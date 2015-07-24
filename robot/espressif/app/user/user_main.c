@@ -223,9 +223,9 @@ user_init(void)
     // Setup ESP module to AP mode and apply settings
     wifi_set_opmode(SOFTAP_MODE);
     wifi_softap_set_config(&ap_config);
-    wifi_set_user_fixed_rate(PHY_RATE_18);
+    wifi_set_user_fixed_rate(PHY_RATE_24);
     wifi_set_phy_mode(PHY_MODE_11G);
-    wifi_set_user_fixed_rate(PHY_RATE_18);
+    wifi_set_user_fixed_rate(PHY_RATE_24);
     // Disable radio sleep
     wifi_set_sleep_type(NONE_SLEEP_T);
 
