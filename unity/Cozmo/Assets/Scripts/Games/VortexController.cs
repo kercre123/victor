@@ -1094,7 +1094,7 @@ public class VortexController : GameController
 	void Enter_SPINNING()
 	{
 
-		SetRobotEmotion("WATCH_SPIN", false);
+		SetRobotEmotion("WATCH_SPIN", true);
 		lightingBall.Radius = wheelLightningRadii[currentWheelIndex];
 
 		for(int i = 0; i < playerButtonCanvasGroups.Length; i++) {
