@@ -28,15 +28,29 @@ PROTO WebotsKeyboardController [
   field SFFloat rWheelKi 0.00005
   field SFFloat rWheelMaxErrorSum 5000
 
-  field SFFloat headKp 8
-  field SFFloat headKi 0.2
-  field SFFloat headKd 100
-  field SFFloat headMaxErrorSum 2
+  field SFFloat headKp 4
+  field SFFloat headKi 0.02
+  field SFFloat headKd 4000
+  field SFFloat headMaxErrorSum 10
 
   field SFFloat liftKp 3
   field SFFloat liftKi 0.1
-  field SFFloat liftKd 250
-  field SFFloat liftMaxErrorSum 5
+  field SFFloat liftKd 1250
+  field SFFloat liftMaxErrorSum 4
+
+  field SFFloat headSpeedDegPerSec 360
+  field SFFloat headAccelDegPerSec2 2500
+
+  # If non-zero, this is how much time it will take for the head to move
+  # to a commanded angle (via keys '4', '5', and '6')
+  field SFFloat headDurationSec 0
+
+  field SFFloat liftSpeedDegPerSec 120
+  field SFFloat liftAccelDegPerSec2 600
+
+  # If non-zero, this is how much time it will take for the lift to move
+  # to a commanded height (via keys '1', '2', and '3')
+  field SFFloat liftDurationSec 0
 
   field SFFloat steerK1 0.1
   field SFFloat steerK2 12
