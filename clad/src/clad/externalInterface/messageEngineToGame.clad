@@ -195,24 +195,24 @@ string animName
 ///////////////////////////////////////////////////////////////////////////////
 
 message ActiveObjectMoved {
+    uint_8   robotID,
     uint_32  objectID,
     float_32 xAccel,
     float_32 yAccel,
     float_32 zAccel,
-    uint_8   robotID,
     uint_8   upAxis    // See UpAxis type in ActiveBlockTypes.h
 }
 
 message ActiveObjectStoppedMoving {
-    uint_32  objectID,
     uint_8   robotID,
+    uint_32  objectID,
     uint_8   upAxis,
     bool     rolled
 }
 
 message ActiveObjectTapped {
-  uint_32  objectID,
   uint_8   robotID,
+  uint_32  objectID,
   uint_8   numTaps
 }
 
