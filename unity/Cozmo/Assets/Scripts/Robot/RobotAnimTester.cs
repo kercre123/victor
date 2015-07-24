@@ -9,6 +9,7 @@ using U2G = Anki.Cozmo.U2G;
 /// </summary>
 public class RobotAnimTester : MonoBehaviour {
 	
+	[SerializeField] RectTransform anchor = null;
 	[SerializeField] ComboBox combo_selectAnim = null;
 	[SerializeField] Toggle toggle_loop = null;
 
@@ -19,8 +20,11 @@ public class RobotAnimTester : MonoBehaviour {
 	void Awake() {
 		if(RobotEngineManager.instance == null) {
 			gameObject.SetActive(false);
+			anchor.gameObject.SetActive(false);
 			return;
 		}
+
+		anchor.gameObject.SetActive(true);
 
 		animNames = RobotEngineManager.instance.robotAnimationNames.ToArray();
 		combo_selectAnim.AddItems(animNames);
