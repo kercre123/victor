@@ -22,7 +22,7 @@ public class ObservedObject
 	public uint Family { get; private set; }
 	public uint ObjectType { get; private set; }
 
-	protected int ID;
+	public int ID { get; private set; }
 
 	public bool MarkersVisible { get { return Time.time - TimeLastSeen < 0.25f; } }
 
