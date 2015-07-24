@@ -1509,7 +1509,7 @@ namespace Anki {
       // Overly-verbose. Use for debugging localization issues
       
        PRINT_NAMED_INFO("Robot.LocalizeToObject",
-                        "Using %s object %d to localize robot %d at (%.3f,%.3f,%.3f), %.1fdeg@(%.2f,%.2f,%.2f)\n",
+                        "Using %s object %d to localize robot %d at (%.3f,%.3f,%.3f), %.1fdeg@(%.2f,%.2f,%.2f), frameID=%d\n",
                         existingObject->GetType().GetName().c_str(),
                         existingObject->GetID().GetValue(), GetID(),
                         GetPose().GetTranslation().x(),
@@ -1518,7 +1518,8 @@ namespace Anki {
                         GetPose().GetRotationAngle<'Z'>().getDegrees(),
                         GetPose().GetRotationAxis().x(),
                         GetPose().GetRotationAxis().y(),
-                        GetPose().GetRotationAxis().z());
+                        GetPose().GetRotationAxis().z(),
+                        GetPoseFrameID());
       
       
       // Send the ground truth pose that was computed instead of the new current
