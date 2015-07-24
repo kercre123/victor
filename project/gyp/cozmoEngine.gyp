@@ -51,7 +51,7 @@
     ],
 
     'compiler_flags': [
-      '-Wdeprecated-declarations',
+      '-Wno-deprecated-declarations', # Supressed until system() usage is removed
       '-fdiagnostics-show-category=name',
       '-Wall',
       '-Woverloaded-virtual',
@@ -302,7 +302,6 @@
             ],
             'defines': [
               'MACOS',
-              'dDOUBLE',
             ],
             'libraries': [
               '<(webots_path)/lib/libCppController.dylib',

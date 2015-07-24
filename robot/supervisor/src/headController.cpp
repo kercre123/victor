@@ -21,7 +21,6 @@ namespace HeadController {
       // Used when calling SetDesiredAngle with just an angle:
       const f32 DEFAULT_START_ACCEL_FRAC = 0.1f;
       const f32 DEFAULT_END_ACCEL_FRAC   = 0.1f;
-      const f32 DEFAULT_DURATION_SEC     = 0.5f;
       
       // Currently applied power
       f32 power_ = 0;

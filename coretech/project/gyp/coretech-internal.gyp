@@ -59,7 +59,7 @@
     ],
 
     'compiler_flags': [
-      '-Wdeprecated-declarations',
+      '-Wno-deprecated-declarations', # Supressed until system() usage is removed
       '-fdiagnostics-show-category=name',
       '-Wall',
       '-Woverloaded-virtual',

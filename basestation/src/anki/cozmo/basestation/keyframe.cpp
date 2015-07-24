@@ -367,7 +367,7 @@ return RESULT_FAIL; \
           // Special case: there's only one audio option 
           _selectedAudioIndex = 0;
         } else {
-          _selectedAudioIndex = RandHelper(0, _audioReferences.size()-1);
+          _selectedAudioIndex = RandHelper(0, static_cast<s32>(_audioReferences.size()-1));
         }
       }
       

@@ -56,10 +56,9 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(this->numOutputDimensions == 1,
         RESULT_FAIL_INVALID_PARAMETER, "Find.Evaluate", "One-dimensional Evaluate only works with one-dimensional Array input");
 
-      const s32 arrayHeight = array1.get_size(0);
       const s32 arrayWidth = array1.get_size(1);
 
-      AnkiAssert(arrayHeight == 1);
+      AnkiAssert(array1.get_size(0) == 1); // Verify array height
 
       indexes = Array<s32>(1, this->get_numMatches(), memory);
 
