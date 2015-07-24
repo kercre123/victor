@@ -258,6 +258,9 @@ class GamePlatformConfiguration(object):
         ankibuild.util.File.rm_rf(self.platform_build_dir)
         ankibuild.util.File.rm_rf(self.platform_output_dir)
 
+        # Execute configure.py delete on cozmo-engine
+        os.system(ENGINE_ROOT + '/configure.py delete');
+
 
 ###############
 # ENTRY POINT #
