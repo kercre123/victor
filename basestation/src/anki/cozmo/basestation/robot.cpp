@@ -1408,7 +1408,7 @@ namespace Anki {
         robotPoseWrtObject.GetRotationVector().GetAngleAndAxis(rotAngle, rotAxis);
         
         if(std::abs(rotAngle.ToFloat()) > DEG_TO_RAD(5) && !AreUnitVectorsAligned(rotAxis, Z_AXIS_3D(), DEG_TO_RAD(15))) {
-          PRINT_NAMED_WARNING("Robot.LocalizeToMat.OutOfPlaneRotation",
+          PRINT_NAMED_WARNING("Robot.LocalizeToObject.OutOfPlaneRotation",
                               "Refusing to localize to %s because "
                               "Robot %d's Z axis would not be well aligned with the world Z axis. "
                               "(angle=%.1fdeg, axis=(%.3f,%.3f,%.3f)\n",
@@ -1481,7 +1481,7 @@ namespace Anki {
                                                   posePtr->GetHeadAngle(),
                                                   posePtr->GetLiftAngle())) != RESULT_OK)
       {
-        PRINT_NAMED_ERROR("Robot.LocalizeToMat.FailedAddingVisionOnlyPoseToHistory", "\n");
+        PRINT_NAMED_ERROR("Robot.LocalizeToObject.FailedAddingVisionOnlyPoseToHistory", "\n");
         return lastResult;
       }
       
@@ -1495,7 +1495,7 @@ namespace Anki {
       // Compute the new "current" pose from history which uses the
       // past vision-based "ground truth" pose we just computed.
       if(UpdateCurrPoseFromHistory(existingObject->GetPose()) == false) {
-        PRINT_NAMED_ERROR("Robot.LocalizeToMat.FailedUpdateCurrPoseFromHistory", "\n");
+        PRINT_NAMED_ERROR("Robot.LocalizeToObject.FailedUpdateCurrPoseFromHistory", "\n");
         return RESULT_FAIL;
       }
       
@@ -1505,18 +1505,19 @@ namespace Anki {
       SetLocalizedTo(existingObject->GetID());
       
       // Overly-verbose. Use for debugging localization issues
-      /*
-       PRINT_INFO("Using %s object %d to localize robot %d at (%.3f,%.3f,%.3f), %.1fdeg@(%.2f,%.2f,%.2f)\n",
-       existingObject->GetType().GetName().c_str(),
-       existingObject->GetID().GetValue(), GetID(),
-       GetPose().GetTranslation().x(),
-       GetPose().GetTranslation().y(),
-       GetPose().GetTranslation().z(),
-       GetPose().GetRotationAngle<'Z'>().getDegrees(),
-       GetPose().GetRotationAxis().x(),
-       GetPose().GetRotationAxis().y(),
-       GetPose().GetRotationAxis().z());
-       */
+      
+       PRINT_NAMED_INFO("Robot.LocalizeToObject",
+                        "Using %s object %d to localize robot %d at (%.3f,%.3f,%.3f), %.1fdeg@(%.2f,%.2f,%.2f)\n",
+                        existingObject->GetType().GetName().c_str(),
+                        existingObject->GetID().GetValue(), GetID(),
+                        GetPose().GetTranslation().x(),
+                        GetPose().GetTranslation().y(),
+                        GetPose().GetTranslation().z(),
+                        GetPose().GetRotationAngle<'Z'>().getDegrees(),
+                        GetPose().GetRotationAxis().x(),
+                        GetPose().GetRotationAxis().y(),
+                        GetPose().GetRotationAxis().z());
+      
       
       // Send the ground truth pose that was computed instead of the new current
       // pose and let the robot deal with updating its current pose based on the
