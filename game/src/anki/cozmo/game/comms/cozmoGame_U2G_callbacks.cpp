@@ -247,7 +247,7 @@ namespace Cozmo {
                          "Ignoring U2G::SetHeadAngle while head is locked.\n");
       } else {
         robot->DisableTrackToObject();
-        robot->MoveHeadToAngle(msg.angle_rad, msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2);
+        robot->MoveHeadToAngle(msg.angle_rad, msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2, msg.duration_sec);
       }
     }
   }
@@ -327,7 +327,7 @@ namespace Cozmo {
           }
         }
         
-        robot->MoveLiftToHeight(msg.height_mm, msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2);
+        robot->MoveLiftToHeight(msg.height_mm, msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2, msg.duration_sec);
       }
     }
   }
