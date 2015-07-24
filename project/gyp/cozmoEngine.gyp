@@ -304,7 +304,8 @@
               '<!@(cat <(pluginPhysics_source))',
             ],
             'defines': [
-              'MACOS'
+              'MACOS',
+              'dDOUBLE',
             ],
             'libraries': [
               '<(webots_path)/lib/libCppController.dylib',
