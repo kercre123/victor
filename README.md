@@ -44,6 +44,8 @@ Run ./configure
 
 Run ./configure build
 
+The Webots projects can be found in cozmo-game/simulator/worlds
+
 #### iOS Project
 
 For working with iOS within cozmo-game, first do the above and then:
