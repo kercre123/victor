@@ -63,8 +63,8 @@ MonoBehaviour:
       numLoops: 1
   - stateName: WATCH_SPIN
     emotionAnims:
-    - animName: ANIM_TEST_SPINNER
-      numLoops: 1
+    - animName: WatchSpin
+      numLoops: 0
   - stateName: WATCH_RESULT
     emotionAnims:
     - animName: ANIM_TEST_SPINNER

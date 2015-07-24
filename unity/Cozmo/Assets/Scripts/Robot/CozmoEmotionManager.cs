@@ -73,7 +73,7 @@ public class CozmoEmotionManager : MonoBehaviour {
 #if UNITY_EDITOR
 		if( Input.GetKeyDown(KeyCode.T) )
 		{
-			SetEmotion("IDLE");
+			SetEmotion("SHOCKED", true);
 		}
 
 		if( Input.GetKeyDown(KeyCode.Y) )
