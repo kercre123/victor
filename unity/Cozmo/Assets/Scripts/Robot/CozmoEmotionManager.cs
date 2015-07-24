@@ -73,7 +73,7 @@ public class CozmoEmotionManager : MonoBehaviour {
 #if UNITY_EDITOR
 		if( Input.GetKeyDown(KeyCode.T) )
 		{
-			SetEmotion("IDLE");
+			SetEmotion("SHOCKED", true);
 		}
 
 		if( Input.GetKeyDown(KeyCode.Y) )
@@ -121,7 +121,7 @@ public class CozmoEmotionManager : MonoBehaviour {
 			if (instance.currentEmotionMachine.HasAnimForState(emotion_state) )
 			{
 				string last_anim_name = string.Empty;
-				Debug.Log("sending emotion type: " + emotion_state);
+				//Debug.Log("sending emotion type: " + emotion_state);
 				List<CozmoAnimation> anims = instance.currentEmotionMachine.GetAnimsForType(emotion_state);
 				for (int i = 0; i < anims.Count; i++) 
 				{

@@ -24,7 +24,9 @@ public class RobotEngineManager : MonoBehaviour {
 	public Robot current { get { return robots.ContainsKey( currentRobotID ) ? robots[ currentRobotID ] : null; } }
 
 	public bool IsConnected { get { return (channel != null && channel.IsConnected); } }
-	
+
+	public List<string> robotAnimationNames = new List<string>();
+
 	[SerializeField] private TextAsset configuration;
 	[SerializeField] private TextAsset alternateConfiguration;
 
@@ -311,6 +313,9 @@ public class RobotEngineManager : MonoBehaviour {
 		case G2U.MessageEngineToGame.Tag.ActiveObjectTapped:
 			ReceivedSpecificMessage(message.ActiveObjectTapped);
 			break;
+		case G2U.MessageEngineToGame.Tag.AnimationAvailable:
+			ReceivedSpecificMessage(message.AnimationAvailable);
+			break;
 		default:
 			Debug.LogWarning( message.GetTag() + " is not supported", this );
 			break;
@@ -479,6 +484,11 @@ public class RobotEngineManager : MonoBehaviour {
 				current.SetLiftHeight(0f);
 			}
 		}
+	}
+
+	private void ReceivedSpecificMessage(G2U.AnimationAvailable message)
+	{
+		if(!robotAnimationNames.Contains(message.animName)) robotAnimationNames.Add(message.animName);
 	}
 
 	private void ReceivedSpecificMessage(G2U.DeviceDetectedVisionMarker message)
