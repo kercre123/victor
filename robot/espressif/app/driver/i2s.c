@@ -30,10 +30,10 @@ speed.
 #include "driver/i2s.h"
 #include "driver/i2s_ets.h"
 
-#define I2S_LOOP_TEST
+//#define I2S_LOOP_TEST
 
-#define DMA_BUF_COUNT (14) // 512bytes per buffer * 8 buffers = 2k.
-ct_assert(DMA_BUF_COUNT && !(DMA_BUF_COUNT & (DMA_BUF_COUNT - 1))== 0); // Must be a power of two for masking to work
+#define DMA_BUF_COUNT (16) // 512bytes per buffer * 8 buffers = 2k.
+ASSERT_IS_POWER_OF_TWO(DMA_BUF_COUNT); // Must be a power of two for masking to work
 #define DMA_BUF_COUNT_MASK (DMA_BUF_COUNT-1)
 
 /** DMA I2SPI transfer buffers
@@ -80,8 +80,8 @@ LOCAL void dmaisr(void) {
 	//clear all intr flags
 	WRITE_PERI_REG(SLC_INT_CLR, 0xffffffff);
 
-#ifdef I2S_LOOP_TEST_PRINT
-  os_printf("LT: %08x\r\n", slc_intr_status);
+#ifdef I2S_LOOP_TEST
+  os_printf("LT: %08x\t%d\t%d\r\n", slc_intr_status, receiveInd, transmitInd);
 #endif
 
 	if (slc_intr_status & SLC_RX_EOF_INT_ST) {
@@ -91,6 +91,11 @@ LOCAL void dmaisr(void) {
     struct sdio_queue* desc = (struct sdio_queue*)READ_PERI_REG(SLC_TX_EOF_DES_ADDR);
     I2SPITransfer* xfer     = (I2SPITransfer*)(desc->buf_ptr);
     receiveInd = (receiveInd + 1) & DMA_BUF_COUNT_MASK;
+    if (transmitInd == receiveInd) // We didn't have more data queued
+    {
+      missedTransmits++;
+      transmitInd = (transmitInd + 1) & DMA_BUF_COUNT_MASK;
+    }
 #ifdef I2S_LOOP_TEST
     i2sRecvCallback(&(xfer->payload), xfer->tag);
 #else
@@ -105,10 +110,6 @@ LOCAL void dmaisr(void) {
       {
         outOfSequence++;
       }
-    }
-    else // Not received data
-    {
-      missedTransmits++;
     }
 #endif
 

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 """A python script to send over the air upgrades to the Espressif"""
 __author__ = "Daniel Casner <daniel@anki.com>"
 
@@ -103,7 +103,8 @@ if __name__ == '__main__':
     mode = sys.argv[1]
     robotHostname = sys.argv[2]
     if mode == "e":
-        doUpgrade(robotHostname, UpgradeCommandFlags.WIFI_FW)
+        if raw_input("Are you sure? [y/n]: ").lower().startswith('y'):
+            doUpgrade(robotHostname, UpgradeCommandFlags.WIFI_FW)
     else:
         sys,stderr.write(USAGE)
         sys.exit(-2)

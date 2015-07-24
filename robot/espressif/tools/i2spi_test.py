@@ -18,7 +18,7 @@ msg = struct.Struct("II")
 s.sendto(msg.pack(lw,rw), ROBOT)
 while True:
     r, d = s.recvfrom(1500)
-    print(len(r), max(r), r)
+    print(len(r), max(r), r[:20])
     lw += 1
     rw += 1
     s.sendto(msg.pack(lw, rw), d)

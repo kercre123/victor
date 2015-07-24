@@ -5,6 +5,7 @@
 #define ASSERT_CONCAT_(a, b) a##b
 #define ASSERT_CONCAT(a, b) ASSERT_CONCAT_(a, b)
 #define ct_assert(e) enum { ASSERT_CONCAT(assert_line_, __LINE__) = 1/(!!(e)) }
+#define ASSERT_IS_POWER_OF_TWO(e) ct_assert((e & (e-1)) == 0)
 
 /// Number of bytes in each DMAed transaction
 #define I2SPI_TRANSFER_SIZE (512)
