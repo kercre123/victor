@@ -44,6 +44,8 @@ namespace Anki {
       
       virtual ObjectType GetType() const override { return _type; }
       
+      virtual bool IsMoveable() const override { return false; }
+      
     protected:
       
       virtual void GetCanonicalUnsafeRegions(const f32 padding_mm,

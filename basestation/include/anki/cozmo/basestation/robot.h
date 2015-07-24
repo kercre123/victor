@@ -91,8 +91,12 @@ namespace Anki {
       void                   SetLocalizedTo(const ObjectID& toID);
       void                   Delocalize();
       
+      // TODO: Can this be removed in favor of the more general LocalizeToObject() below?
       Result LocalizeToMat(const MatPiece* matSeen, MatPiece* existinMatPiece);
       
+      Result LocalizeToObject(const Vision::ObservableObject* seenObject,
+                              Vision::ObservableObject* existingObject);
+
       // Returns true if robot is not traversing a path and has no actions in its queue.
       bool   IsIdle() const { return !IsTraversingPath() && _actionList.IsEmpty(); }
       
@@ -600,8 +604,8 @@ namespace Anki {
       Pose3d           _pose;
       Pose3d           _driveCenterPose;
       PoseFrameID_t    _frameId;
-      ObjectID         _localizedToID;       // ID of mat object robot is localized to
-      bool             _localizedToFixedMat; // false until robot sees a _fixed_ mat
+      ObjectID         _localizedToID;          // ID of mat object robot is localized to
+      bool             _localizedToFixedObject; // false until robot sees a _fixed_ mat
       
       Result UpdateWorldOrigin(Pose3d& newPoseWrtNewOrigin);
       

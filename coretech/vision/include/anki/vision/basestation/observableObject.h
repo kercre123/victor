@@ -92,6 +92,8 @@ namespace Anki {
       // or active blocks that have not moved since last localization)
       virtual bool CanBeUsedForLocalization() const { return false; }
       
+      virtual bool IsMoveable() const { return true; }
+      
       // Mark this object as delocalized (and thus not usable by a robot for
       // localization).
       bool IsLocalized() const { return _isLocalized; } 

@@ -174,7 +174,7 @@ namespace Anki {
       PRINT_NAMED_INFO("Robot.Delocalize", "Delocalizing robot %d.\n", GetID());
       
       _localizedToID.UnSet();
-      _localizedToFixedMat = false;
+      _localizedToFixedObject = false;
 
       // NOTE: no longer doing this here because Delocalize() can be called by
       //  BlockWorld::ClearAllExistingObjects, resulting in a weird loop...
@@ -1333,6 +1333,203 @@ namespace Anki {
     }
     
     
+    Result Robot::LocalizeToObject(const Vision::ObservableObject* seenObject,
+                                   Vision::ObservableObject* existingObject)
+    {
+      Result lastResult = RESULT_OK;
+      
+      if(seenObject == nullptr) {
+        PRINT_NAMED_ERROR("Robot.LocalizeToObject.SeenObjectNullPointer", "\n");
+        return RESULT_FAIL;
+      } else if(existingObject == nullptr) {
+        PRINT_NAMED_ERROR("Robot.LocalizeToObject.ExistingObjectPieceNullPointer", "\n");
+        return RESULT_FAIL;
+      }
+      
+      if(!existingObject->CanBeUsedForLocalization()) {
+        PRINT_NAMED_ERROR("Robot.LocalizeToObject.UnlocalizedObject",
+                          "Refusing to localize to object %d, which claims not to be localizable.\n",
+                          existingObject->GetID().GetValue());
+        return RESULT_FAIL;
+      }
+      
+      /* Useful for Debug:
+       PRINT_NAMED_INFO("Robot.LocalizeToMat.MatSeenChain",
+       "%s\n", matSeen->GetPose().GetNamedPathToOrigin(true).c_str());
+       
+       PRINT_NAMED_INFO("Robot.LocalizeToMat.ExistingMatChain",
+       "%s\n", existingMatPiece->GetPose().GetNamedPathToOrigin(true).c_str());
+       */
+      
+      // Get computed RobotPoseStamp at the time the object was observed.
+      RobotPoseStamp* posePtr = nullptr;
+      if ((lastResult = GetComputedPoseAt(seenObject->GetLastObservedTime(), &posePtr)) != RESULT_OK) {
+        PRINT_NAMED_ERROR("Robot.LocalizeToObject.CouldNotFindHistoricalPose",
+                          "Time %d\n", seenObject->GetLastObservedTime());
+        return lastResult;
+      }
+      
+      // The computed historical pose is always stored w.r.t. the robot's world
+      // origin and parent chains are lost. Re-connect here so that GetWithRespectTo
+      // will work correctly
+      Pose3d robotPoseAtObsTime = posePtr->GetPose();
+      robotPoseAtObsTime.SetParent(_worldOrigin);
+      
+      /*
+       // Get computed Robot pose at the time the mat was observed (note that this
+       // also makes the pose have the robot's current world origin as its parent
+       Pose3d robotPoseAtObsTime;
+       if(robot->GetComputedPoseAt(matSeen->GetLastObservedTime(), robotPoseAtObsTime) != RESULT_OK) {
+       PRINT_NAMED_ERROR("BlockWorld.UpdateRobotPose.CouldNotComputeHistoricalPose", "Time %d\n", matSeen->GetLastObservedTime());
+       return false;
+       }
+       */
+      
+      // Get the pose of the robot with respect to the observed mat piece
+      Pose3d robotPoseWrtObject;
+      if(robotPoseAtObsTime.GetWithRespectTo(seenObject->GetPose(), robotPoseWrtObject) == false) {
+        PRINT_NAMED_ERROR("Robot.LocalizeToObject.ObjectPoseOriginMisMatch",
+                          "Could not get RobotPoseStamp w.r.t. seen object pose.\n");
+        return RESULT_FAIL;
+      }
+      
+      // Make the computed robot pose use the existing mat piece as its parent
+      robotPoseWrtObject.SetParent(&existingObject->GetPose());
+      //robotPoseWrtMat.SetName(std::string("Robot_") + std::to_string(robot->GetID()));
+      
+      // Don't snap to horizontal or discrete Z levels when we see a mat marker
+      // while on a ramp
+      if(IsOnRamp() == false)
+      {
+        // If there is any significant rotation, make sure that it is roughly
+        // around the Z axis
+        Radians rotAngle;
+        Vec3f rotAxis;
+        robotPoseWrtObject.GetRotationVector().GetAngleAndAxis(rotAngle, rotAxis);
+        
+        if(std::abs(rotAngle.ToFloat()) > DEG_TO_RAD(5) && !AreUnitVectorsAligned(rotAxis, Z_AXIS_3D(), DEG_TO_RAD(15))) {
+          PRINT_NAMED_WARNING("Robot.LocalizeToMat.OutOfPlaneRotation",
+                              "Refusing to localize to %s because "
+                              "Robot %d's Z axis would not be well aligned with the world Z axis. "
+                              "(angle=%.1fdeg, axis=(%.3f,%.3f,%.3f)\n",
+                              existingObject->GetType().GetName().c_str(), GetID(),
+                              rotAngle.getDegrees(), rotAxis.x(), rotAxis.y(), rotAxis.z());
+          return RESULT_FAIL;
+        }
+        
+        // Snap to purely horizontal rotation
+        // TODO: Snap to surface of mat?
+        /*
+        if(existingMatPiece->IsPoseOn(robotPoseWrtObject, 0, 10.f)) {
+          Vec3f robotPoseWrtObject_trans = robotPoseWrtObject.GetTranslation();
+          robotPoseWrtObject_trans.z() = existingObject->GetDrivingSurfaceHeight();
+          robotPoseWrtObject.SetTranslation(robotPoseWrtObject_trans);
+        }
+         */
+        robotPoseWrtObject.SetRotation( robotPoseWrtObject.GetRotationAngle<'Z'>(), Z_AXIS_3D() );
+        
+      } // if robot is on ramp
+      
+      /*
+      if(!_localizedToFixedObject && !existingObject->IsMoveable()) {
+        // If we have not yet seen a fixed mat, and this is a fixed mat, rejigger
+        // the origins so that we use it as the world origin
+        PRINT_NAMED_INFO("Robot.LocalizeToMat.LocalizingToFirstFixedMat",
+                         "Localizing robot %d to fixed %s mat for the first time.\n",
+                         GetID(), existingObject->GetType().GetName().c_str());
+        
+        if((lastResult = UpdateWorldOrigin(robotPoseWrtObject)) != RESULT_OK) {
+          PRINT_NAMED_ERROR("Robot.LocalizeToMat.SetPoseOriginFailure",
+                            "Failed to update robot %d's pose origin when (re-)localizing it.\n", GetID());
+          return lastResult;
+        }
+        
+        _localizedToFixedObject = true;
+      }
+      else if(IsLocalized() == false) {
+        // If the robot is not yet localized, it is about to be, so we need to
+        // update pose origins so that anything it has seen so far becomes rooted
+        // to this mat's origin (whether object is moveable or not)
+        PRINT_NAMED_INFO("Robot.LocalizeToObject.LocalizingRobotFirstTime",
+                         "Localizing robot %d for the first time (to %s mat).\n",
+                         GetID(), existingObject->GetType().GetName().c_str());
+        
+        if((lastResult = UpdateWorldOrigin(robotPoseWrtObject)) != RESULT_OK) {
+          PRINT_NAMED_ERROR("Robot.LocalizeToObject.SetPoseOriginFailure",
+                            "Failed to update robot %d's pose origin when (re-)localizing it.\n", GetID());
+          return lastResult;
+        }
+        
+        if(!existingObject->IsMoveable()) {
+          // If this also happens to be an unmoveable object, then we have now localized
+          // to a fixed object. Yay.
+          _localizedToFixedObject = true;
+        }
+      }
+       */
+      
+      // Add the new vision-based pose to the robot's history. Note that we use
+      // the pose w.r.t. the origin for storing poses in history.
+      //RobotPoseStamp p(robot->GetPoseFrameID(), robotPoseWrtMat.GetWithRespectToOrigin(), posePtr->GetHeadAngle(), posePtr->GetLiftAngle());
+      Pose3d robotPoseWrtOrigin = robotPoseWrtObject.GetWithRespectToOrigin();
+      
+      if((lastResult = AddVisionOnlyPoseToHistory(existingObject->GetLastObservedTime(),
+                                                  robotPoseWrtOrigin.GetTranslation().x(),
+                                                  robotPoseWrtOrigin.GetTranslation().y(),
+                                                  robotPoseWrtOrigin.GetTranslation().z(),
+                                                  robotPoseWrtOrigin.GetRotationAngle<'Z'>().ToFloat(),
+                                                  posePtr->GetHeadAngle(),
+                                                  posePtr->GetLiftAngle())) != RESULT_OK)
+      {
+        PRINT_NAMED_ERROR("Robot.LocalizeToMat.FailedAddingVisionOnlyPoseToHistory", "\n");
+        return lastResult;
+      }
+      
+      
+      // Update the computed historical pose as well so that subsequent block
+      // pose updates use obsMarkers whose camera's parent pose is correct.
+      // Note again that we store the pose w.r.t. the origin in history.
+      // TODO: Should SetPose() do the flattening w.r.t. origin?
+      posePtr->SetPose(GetPoseFrameID(), robotPoseWrtOrigin, posePtr->GetHeadAngle(), posePtr->GetLiftAngle());
+      
+      // Compute the new "current" pose from history which uses the
+      // past vision-based "ground truth" pose we just computed.
+      if(UpdateCurrPoseFromHistory(existingObject->GetPose()) == false) {
+        PRINT_NAMED_ERROR("Robot.LocalizeToMat.FailedUpdateCurrPoseFromHistory", "\n");
+        return RESULT_FAIL;
+      }
+      
+      // Mark the robot as now being localized to this object
+      // NOTE: this should be _after_ calling AddVisionOnlyPoseToHistory, since
+      //    that function checks whether the robot is already localized
+      SetLocalizedTo(existingObject->GetID());
+      
+      // Overly-verbose. Use for debugging localization issues
+      /*
+       PRINT_INFO("Using %s object %d to localize robot %d at (%.3f,%.3f,%.3f), %.1fdeg@(%.2f,%.2f,%.2f)\n",
+       existingObject->GetType().GetName().c_str(),
+       existingObject->GetID().GetValue(), GetID(),
+       GetPose().GetTranslation().x(),
+       GetPose().GetTranslation().y(),
+       GetPose().GetTranslation().z(),
+       GetPose().GetRotationAngle<'Z'>().getDegrees(),
+       GetPose().GetRotationAxis().x(),
+       GetPose().GetRotationAxis().y(),
+       GetPose().GetRotationAxis().z());
+       */
+      
+      // Send the ground truth pose that was computed instead of the new current
+      // pose and let the robot deal with updating its current pose based on the
+      // history that it keeps.
+      SendAbsLocalizationUpdate();
+      
+      // Update VizText
+      VizManager::getInstance()->SetText(VizManager::LOCALIZED_TO, NamedColors::YELLOW,
+                                         "LocalizedTo: %s", existingObject->GetPose().GetName().c_str());
+      
+      return RESULT_OK;
+    } // LocalizeToObject()
+    
     
     Result Robot::LocalizeToMat(const MatPiece* matSeen, MatPiece* existingMatPiece)
     {
@@ -1419,7 +1616,7 @@ namespace Anki {
         
       } // if robot is on ramp
       
-      if(!_localizedToFixedMat && !existingMatPiece->IsMoveable()) {
+      if(!_localizedToFixedObject && !existingMatPiece->IsMoveable()) {
         // If we have not yet seen a fixed mat, and this is a fixed mat, rejigger
         // the origins so that we use it as the world origin
         PRINT_NAMED_INFO("Robot.LocalizeToMat.LocalizingToFirstFixedMat",
@@ -1432,7 +1629,7 @@ namespace Anki {
           return lastResult;
         }
         
-        _localizedToFixedMat = true;
+        _localizedToFixedObject = true;
       }
       else if(IsLocalized() == false) {
         // If the robot is not yet localized, it is about to be, so we need to
@@ -1451,7 +1648,7 @@ namespace Anki {
         if(!existingMatPiece->IsMoveable()) {
           // If this also happens to be a fixed mat, then we have now localized
           // to a fixed mat
-          _localizedToFixedMat = true;
+          _localizedToFixedObject = true;
         }
       }
       

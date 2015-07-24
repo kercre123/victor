@@ -294,7 +294,7 @@ namespace Anki
     } // FindIntersectingObjects()
 
 
-    void BlockWorld::AddAndUpdateObjects(const std::vector<Vision::ObservableObject*>& objectsSeen,
+    Result BlockWorld::AddAndUpdateObjects(const std::vector<Vision::ObservableObject*>& objectsSeen,
                                          const ObjectFamily& inFamily,
                                          const TimeStamp_t atTimestamp)
     {
@@ -471,7 +471,18 @@ namespace Anki
           
         } else {
           
-          matchingObject->SetPose( objSeen->GetPose() );
+          if(matchingObject->CanBeUsedForLocalization()) {
+            Result localizeResult = _robot->LocalizeToObject(objSeen, matchingObject);
+            if(localizeResult != RESULT_OK) {
+              PRINT_NAMED_ERROR("BlockWorld.AddAndUpdateObjects.LocalizeFailure",
+                                "Failed to localize to %s object %d.\n",
+                                matchingObject->GetType().GetName().c_str(),
+                                matchingObject->GetID().GetValue());
+              return localizeResult;
+            }
+          } else {
+            matchingObject->SetPose( objSeen->GetPose() );
+          }
           
           // Update lastObserved times of this object
           matchingObject->SetLastObservedTime(objSeen->GetLastObservedTime());
@@ -536,6 +547,7 @@ namespace Anki
         if(obsID.IsUnknown()) {
           PRINT_NAMED_ERROR("BlockWorld.AddAndUpdateObjects.IDnotSet",
                             "ID of new/re-observed object not set.\n");
+          return RESULT_FAIL;
         }
         
         if(observedObject->GetNumTimesObserved() >= MIN_TIMES_TO_OBSERVE_OBJECT)
@@ -558,6 +570,7 @@ namespace Anki
               PRINT_NAMED_ERROR("BlockWorld.AddAndUpdateObjects",
                                 "ObservedObject %d with IsActive()==true could not be cast to ActiveCube.\n",
                                 obsID.GetValue());
+              return RESULT_FAIL;
             } else {
               topMarkerOrientation = activeCube->GetTopMarkerOrientation();
               
@@ -592,8 +605,10 @@ namespace Anki
         }
 
         _didObjectsChange = true;
+        
       } // for each object seen
       
+      return RESULT_OK;
       
     } // AddAndUpdateObjects()
     
@@ -1390,9 +1405,10 @@ namespace Anki
       
     } // UpdateRobotPose()
     
-    size_t BlockWorld::UpdateObjectPoses(PoseKeyObsMarkerMap_t& obsMarkersAtTimestamp,
+    Result BlockWorld::UpdateObjectPoses(PoseKeyObsMarkerMap_t& obsMarkersAtTimestamp,
                                          const ObjectFamily& inFamily,
-                                         const TimeStamp_t atTimestamp)
+                                         const TimeStamp_t atTimestamp,
+                                         size_t& numObjectsUpdated)
     {
       const Vision::ObservableObjectLibrary& objectLibrary = _objectLibrary[inFamily];
       
@@ -1421,10 +1437,16 @@ namespace Anki
         }
         
         // Use them to add or update existing blocks in our world
-        AddAndUpdateObjects(objectsSeen, inFamily, atTimestamp);
+        Result lastResult = AddAndUpdateObjects(objectsSeen, inFamily, atTimestamp);
+        if(lastResult != RESULT_OK) {
+          PRINT_NAMED_ERROR("BlockWorld.UpdateObjectPoses.AddAndUpdateFailed", "\n");
+          return lastResult;
+        }
       }
       
-      return objectsSeen.size();
+      numObjectsUpdated = objectsSeen.size();
+      
+      return RESULT_OK;
       
     } // UpdateObjectPoses()
 
@@ -1620,31 +1642,53 @@ namespace Anki
         // Find any observed blocks from the remaining markers
         //
         // Note that this removes markers from the list that it uses
-        numObjectsObserved += UpdateObjectPoses(currentObsMarkers, ObjectFamily::BLOCKS, atTimestamp);
+        Result updateResult;
+        size_t numUpdated;
+        updateResult = UpdateObjectPoses(currentObsMarkers, ObjectFamily::BLOCKS, atTimestamp, numUpdated);
+        if(updateResult != RESULT_OK) {
+          return updateResult;
+        }
+        numObjectsObserved += numUpdated;
         
         //
         // Find any observed active blocks from the remaining markers
         //
         // Note that this removes markers from the list that it uses
-        numObjectsObserved += UpdateObjectPoses(currentObsMarkers, ObjectFamily::ACTIVE_BLOCKS, atTimestamp);
+        updateResult = UpdateObjectPoses(currentObsMarkers, ObjectFamily::ACTIVE_BLOCKS, atTimestamp, numUpdated);
+        if(updateResult != RESULT_OK) {
+          return updateResult;
+        }
+        numObjectsObserved += numUpdated;
         
         //
         // Find any observed ramps from the remaining markers
         //
         // Note that this removes markers from the list that it uses
-        numObjectsObserved += UpdateObjectPoses(currentObsMarkers, ObjectFamily::RAMPS, atTimestamp);
-
+        updateResult = UpdateObjectPoses(currentObsMarkers, ObjectFamily::RAMPS, atTimestamp, numUpdated);
+        if(updateResult != RESULT_OK) {
+          return updateResult;
+        }
+        numObjectsObserved += numUpdated;
+        
         //
         // Find any observed chargers from the remaining markers
         //
         // Note that this removes markers from the list that it uses
-        numObjectsObserved += UpdateObjectPoses(currentObsMarkers, ObjectFamily::CHARGERS, atTimestamp);
+        updateResult = UpdateObjectPoses(currentObsMarkers, ObjectFamily::CHARGERS, atTimestamp, numUpdated);
+        if(updateResult != RESULT_OK) {
+          return updateResult;
+        }
+        numObjectsObserved += numUpdated;
         
         //
         // Find any observed human heads from the remaining "markers"
         //
         // Note that this removes markers from the list that it uses
-        numObjectsObserved += UpdateObjectPoses(currentObsMarkers, ObjectFamily::HUMAN_HEADS, atTimestamp);
+        updateResult = UpdateObjectPoses(currentObsMarkers, ObjectFamily::HUMAN_HEADS, atTimestamp, numUpdated);
+        if(updateResult != RESULT_OK) {
+          return updateResult;
+        }
+        numObjectsObserved += numUpdated;
         
         // TODO: Deal with unknown markers?
         
