@@ -16,6 +16,8 @@ public class CozmoBusyPanel : MonoBehaviour {
 	float soundDelay = 0.25f;
 	bool soundPlayed = false;
 
+	bool mute = false;
+
 	void Awake() {
 		//enforce singleton
 //		if(instance != null && instance != this) {
@@ -41,7 +43,7 @@ public class CozmoBusyPanel : MonoBehaviour {
 		if(timer > 0f) {
 			timer -= Time.deltaTime;
 
-			if(timer <= 0f && affirmativeSound != null) {
+			if(!mute && timer <= 0f && affirmativeSound != null) {
 				AudioManager.PlayOneShot(affirmativeSound);
 			}
 		}
@@ -74,6 +76,10 @@ public class CozmoBusyPanel : MonoBehaviour {
 		description += verb + article + noun + period;
 
 		if(period == ".") SetDescription(description);
+	}
+
+	public void SetMute(bool on) {
+		mute = on;
 	}
 
 }
