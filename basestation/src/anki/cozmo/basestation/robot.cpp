@@ -1132,17 +1132,19 @@ namespace Anki {
     // Sends a message to the robot to move the lift to the specified height
     Result Robot::MoveLiftToHeight(const f32 height_mm,
                                    const f32 max_speed_rad_per_sec,
-                                   const f32 accel_rad_per_sec2)
+                                   const f32 accel_rad_per_sec2,
+                                   const f32 duration_sec)
     {
-      return SendSetLiftHeight(height_mm, max_speed_rad_per_sec, accel_rad_per_sec2);
+      return SendSetLiftHeight(height_mm, max_speed_rad_per_sec, accel_rad_per_sec2, duration_sec);
     }
     
     // Sends a message to the robot to move the head to the specified angle
     Result Robot::MoveHeadToAngle(const f32 angle_rad,
                                   const f32 max_speed_rad_per_sec,
-                                  const f32 accel_rad_per_sec2)
+                                  const f32 accel_rad_per_sec2,
+                                  const f32 duration_sec)
     {
-      return SendSetHeadAngle(angle_rad, max_speed_rad_per_sec, accel_rad_per_sec2);
+      return SendSetHeadAngle(angle_rad, max_speed_rad_per_sec, accel_rad_per_sec2, duration_sec);
     }
       
     Result Robot::TapBlockOnGround(const u8 numTaps)
@@ -2285,24 +2287,28 @@ namespace Anki {
 
     Result Robot::SendSetLiftHeight(const f32 height_mm,
                                     const f32 max_speed_rad_per_sec,
-                                    const f32 accel_rad_per_sec2) const
+                                    const f32 accel_rad_per_sec2,
+                                    const f32 duration_sec) const
     {
       MessageSetLiftHeight m;
       m.height_mm = height_mm;
       m.max_speed_rad_per_sec = max_speed_rad_per_sec;
       m.accel_rad_per_sec2 = accel_rad_per_sec2;
+      m.duration_sec = duration_sec;
       
       return _msgHandler->SendMessage(_ID,m);
     }
     
     Result Robot::SendSetHeadAngle(const f32 angle_rad,
                                    const f32 max_speed_rad_per_sec,
-                                   const f32 accel_rad_per_sec2) const
+                                   const f32 accel_rad_per_sec2,
+                                   const f32 duration_sec) const
     {
       MessageSetHeadAngle m;
       m.angle_rad = angle_rad;
       m.max_speed_rad_per_sec = max_speed_rad_per_sec;
       m.accel_rad_per_sec2 = accel_rad_per_sec2;
+      m.duration_sec = duration_sec;
       
       return _msgHandler->SendMessage(_ID,m);
     }
