@@ -33,7 +33,16 @@ public class RobotAnimTester : MonoBehaviour {
 		if(combo_selectAnim == null) return;
 		if(toggle_loop == null) return;
 
-		PlayAnimationMessage.animationName = animNames[combo_selectAnim.SelectedIndex];
+		string anim = animNames[combo_selectAnim.SelectedIndex];
+
+		if(CozmoBusyPanel.instance != null) {
+			CozmoBusyPanel.instance.SetMute(true);
+			CozmoBusyPanel.instance.SetDescription("Cozmo playing animation" + anim + ".");
+		}
+
+		if(RobotEngineManager.instance.current.isBusy) RobotEngineManager.instance.current.CancelAction();
+
+		PlayAnimationMessage.animationName = anim;
 		PlayAnimationMessage.numLoops = (uint)(toggle_loop.isOn ? 0 : 1);
 		PlayAnimationMessage.robotID = RobotEngineManager.instance.current.ID;
 		RobotEngineManager.instance.Message.PlayAnimation = PlayAnimationMessage;

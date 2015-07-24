@@ -273,7 +273,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1.20000005
-  m_Text: Long Animation Name
+  m_Text: 
 --- !u!114 &11414024
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -325,7 +325,7 @@ MonoBehaviour:
   Sprite_UISprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
   Sprite_Background: {fileID: 10907, guid: 0000000000000000f000000000000000, type: 0}
   _interactable: 1
-  _itemsToDisplay: 4
+  _itemsToDisplay: 15
   _hideFirstItem: 0
   _selectedIndex: 0
   _items: []
@@ -613,8 +613,8 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
-        m_MethodName: FaceFace
+      - m_Target: {fileID: 11412280}
+        m_MethodName: PlayAnimation
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
