@@ -8,77 +8,36 @@ Building cozmo-game
 
 At this point, only Mac and iOS are supported. The engine itself supports more platforms. See [products-cozmo](https://github.com/anki/products-cozmo).
 
-## Prerequisites
+#### Prerequisites
 
-1. The Cozmo project uses CMAKE, so you will need to install that first (e.g. "brew install cmake").
-  Get brew here: http://brew.sh/
+1. You'll need [brew](http://brew.sh/) to install some tools.
 
-2. Create a GitHub account with 2-factor authentication if you don't have one already.
-  Ask for invitation to Anki's GitHub organization.
+2. Install CMAKE.
+    brew install cmake
 
-3. Generate ssh key and add to your GitHub account.
-  https://help.github.com/articles/generating-ssh-keys/ 
-4. The simulation/visualization environment we use is Webots. 
+2. The simulation/visualization environment we use is [Webots](https://www.cyberbotics.com/overview). 
 
-5. Move the OpenCV libraries inside of Webots out of the way:
-  * cd /Applications/Webots/lib
-  * mkdir opencv_unused
-  * mv libopencv* opencv_unused
+3. Move the OpenCV libraries inside of Webots out of the way:
+    cd /Applications/Webots/lib
+    mkdir opencv_unused
+    mv libopencv* opencv_unused
 
-## External / 3rd Party Project
+#### Build coretech-external
 
-### Either grab the prebuilt coretech-external tarball (preferred):
+Instructions [here](https://github.com/anki/coretech-external).
+Important: Make sure you have your paths (eg. ~/.bash_profile) setup correctly.
+Important: Once you set your paths you may need to restart your terminal for the settings to take effect.
 
-1. http://192.168.2.3:8111/viewType.html?buildTypeId=Cozmo_CoretechExternal_Build lists the CI coretech-external builds. Grab the latest.
+#### Building cozmo-game
 
-2. Expand the tarball in the directory where you will also put the cozmo-game project
+1. To run the configure python scripts you'll need xcpretty.
+    sudo gem install xcpretty
 
-### Or grab the code and build it:
+2. Run ./configure
 
-1. Clone "coretech-external" from GitHub.
+3. Run ./configure build
 
-2. Use CMake to create an Xcode project (technically, you can try doing this with other CMake generators as well, such as Makefiles, or MSVC). 
-  * In the coretech-external root directory, create an out-of-source build directory: 
-    * mkdir build
-    * cd build
-  * Run the CMake generator:
-    * cmake -GXcode ..
-  * Open the resulting Xcode project ("open Coretech_External.xcodeproj") and build the "BUILD ALL" target.
-
-3. Build the OpenCV iOS fat libs and framework
-
-4. python ../opencv-2.4.8/platforms/ios/build_framework.py opencv-ios
-
-### Common steps:
-
-1. Create environment variable CORETECH_EXTERNAL_DIR that points to location of coretech-external root directory.You can do this by adding the following line to your .bashrc
-export CORETECH_EXTERNAL_DIR="<path to coretech-external>" 
-
-2. Call 'source ~/.bashrc' or start a new terminal.
-
-## Cozmo-Game Project
-
-1. Clone "cozmo-game" from GitHub (into the same parent directory where you put coretech-external above) 
-with the --recursive flag so that the cozmo-engine submodule is cloned as well.
-  * git clone --recursive git@github.com:anki/cozmo-game.git
-2. You will also need to 
-Use CMake to create an Xcode project
-  * In the cozmo-game root directory, create an out-of-source build directory:
-  * mkdir build
-  * cd build
-  * Run the CMake generator
-  * cmake -GXcode ..
-  * Open the resulting Xcode project ("open CozmoGame.xcodeproj") and build the "BUILD ALL" target.
-  This will build all the Webots controllers necessary for running the simulator.
-3. To grab the latest code from this repository, there are two steps. From the cozmo-game root folder, do
-  * git pull --recurse-submodules
-  * git submodule update --recursive --remote
-
-If you use SourceTree you can add these as custom actions by going to Preferences->Custom Actions and pressing Add.
-
-Note that the submodules (cozmo-engine and products-cozmo-assets) track their master branches. This means you don't have to commit submodule pointer updates in cozmo-game.
-
-## iOS Project
+#### iOS Project
 
 For working with iOS within cozmo-game, first do the above and then:
 
