@@ -247,7 +247,7 @@ namespace Cozmo {
                          "Ignoring U2G::SetHeadAngle while head is locked.\n");
       } else {
         robot->DisableTrackToObject();
-        robot->MoveHeadToAngle(msg.angle_rad, msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2);
+        robot->MoveHeadToAngle(msg.angle_rad, msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2, msg.duration_sec);
       }
     }
   }
@@ -271,22 +271,26 @@ namespace Cozmo {
     }
   }
   
+  IActionRunner* GetFaceObjectActionHelper(Robot* robot, U2G::FaceObject const& msg)
+  {
+    ObjectID objectID;
+    if(msg.objectID == u32_MAX) {
+      objectID = robot->GetBlockWorld().GetSelectedObject();
+    } else {
+      objectID = msg.objectID;
+    }
+    return new FaceObjectAction(objectID,
+                                Radians(msg.turnAngleTol),
+                                Radians(msg.maxTurnAngle),
+                                msg.headTrackWhenDone);
+  }
   
   void CozmoGameImpl::Process_FaceObject(U2G::FaceObject const& msg)
   {
     Robot* robot = GetRobotByID(msg.robotID);
     
     if(robot != nullptr) {
-      ObjectID objectID;
-      if(msg.objectID == u32_MAX) {
-        objectID = robot->GetBlockWorld().GetSelectedObject();
-      } else {
-        objectID = msg.objectID;
-      }
-      robot->GetActionList().QueueActionAtEnd(DriveAndManipulateSlot, new FaceObjectAction(objectID,
-                                                                                           Radians(msg.turnAngleTol),
-                                                                                           Radians(msg.maxTurnAngle),
-                                                                                           msg.headTrackWhenDone));
+      robot->GetActionList().QueueActionAtEnd(DriveAndManipulateSlot, GetFaceObjectActionHelper(robot, msg));
     }
   }
   
@@ -323,7 +327,7 @@ namespace Cozmo {
           }
         }
         
-        robot->MoveLiftToHeight(msg.height_mm, msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2);
+        robot->MoveLiftToHeight(msg.height_mm, msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2, msg.duration_sec);
       }
     }
   }
@@ -407,6 +411,19 @@ namespace Cozmo {
     }
   }
   
+  IActionRunner* GetDriveToPoseActionHelper(Robot* robot, U2G::GotoPose const& msg)
+  {
+    // TODO: Add ability to indicate z too!
+    // TODO: Better way to specify the target pose's parent
+    Pose3d targetPose(msg.rad, Z_AXIS_3D(), Vec3f(msg.x_mm, msg.y_mm, 0), robot->GetWorldOrigin());
+    targetPose.SetName("GotoPoseTarget");
+    
+    // TODO: expose whether or not to drive with head down in message?
+    // (For now it is hard-coded to true)
+    const bool driveWithHeadDown = true;
+    return new DriveToPoseAction(targetPose, driveWithHeadDown, msg.useManualSpeed);
+  }
+  
   void CozmoGameImpl::Process_GotoPose(U2G::GotoPose const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
@@ -414,15 +431,7 @@ namespace Cozmo {
     Robot* robot = GetRobotByID(robotID);
     
     if(robot != nullptr) {
-      // TODO: Add ability to indicate z too!
-      // TODO: Better way to specify the target pose's parent
-      Pose3d targetPose(msg.rad, Z_AXIS_3D(), Vec3f(msg.x_mm, msg.y_mm, 0), robot->GetWorldOrigin());
-      targetPose.SetName("GotoPoseTarget");
-      
-      // TODO: expose whether or not to drive with head down in message?
-      // (For now it is hard-coded to true)
-      const bool driveWithHeadDown = true;
-      robot->GetActionList().QueueActionAtEnd(DriveAndManipulateSlot, new DriveToPoseAction(targetPose, driveWithHeadDown, msg.useManualSpeed));
+      robot->GetActionList().QueueActionAtEnd(DriveAndManipulateSlot, GetDriveToPoseActionHelper(robot, msg));
     }
   }
   
@@ -520,6 +529,24 @@ namespace Cozmo {
       robot->GetBlockWorld().CycleSelectedObject();
     }
   }
+ 
+  IActionRunner* GetPickAndPlaceActionHelper(Robot* robot, U2G::PickAndPlaceObject const& msg)
+  {
+    ObjectID selectedObjectID;
+    if(msg.objectID < 0) {
+      selectedObjectID = robot->GetBlockWorld().GetSelectedObject();
+    } else {
+      selectedObjectID = msg.objectID;
+    }
+    
+    if(static_cast<bool>(msg.usePreDockPose)) {
+      return new DriveToPickAndPlaceObjectAction(selectedObjectID, msg.useManualSpeed);
+    } else {
+      PickAndPlaceObjectAction* action = new PickAndPlaceObjectAction(selectedObjectID, msg.useManualSpeed);
+      action->SetPreActionPoseAngleTolerance(-1.f); // disable pre-action pose distance check
+      return action;
+    }
+  }
   
   void CozmoGameImpl::Process_PickAndPlaceObject(U2G::PickAndPlaceObject const& msg)
   {
@@ -530,21 +557,22 @@ namespace Cozmo {
     if(robot != nullptr) {
       const u8 numRetries = 1;
       
-      ObjectID selectedObjectID;
-      if(msg.objectID < 0) {
-        selectedObjectID = robot->GetBlockWorld().GetSelectedObject();
-      } else {
-        selectedObjectID = msg.objectID;
-      }
+      IActionRunner* action = GetPickAndPlaceActionHelper(robot, msg);
       
-      if(static_cast<bool>(msg.usePreDockPose)) {
-        robot->GetActionList().QueueActionAtEnd(DriveAndManipulateSlot, new DriveToPickAndPlaceObjectAction(selectedObjectID, msg.useManualSpeed), numRetries);
-      } else {
-        PickAndPlaceObjectAction* action = new PickAndPlaceObjectAction(selectedObjectID, msg.useManualSpeed);
-        action->SetPreActionPoseAngleTolerance(-1.f); // disable pre-action pose distance check
-        robot->GetActionList().QueueActionAtEnd(DriveAndManipulateSlot, action, numRetries);
-      }
+      robot->GetActionList().QueueActionAtEnd(DriveAndManipulateSlot, action, numRetries);
     }
+  }
+  
+  IActionRunner* GetDriveToObjectActionHelper(Robot* robot, U2G::GotoObject const& msg)
+  {
+    ObjectID selectedObjectID;
+    if(msg.objectID < 0) {
+      selectedObjectID = robot->GetBlockWorld().GetSelectedObject();
+    } else {
+      selectedObjectID = msg.objectID;
+    }
+    
+    return new DriveToObjectAction(selectedObjectID, msg.distance_mm, msg.useManualSpeed);
   }
   
   void CozmoGameImpl::Process_GotoObject(U2G::GotoObject const& msg)
@@ -556,19 +584,31 @@ namespace Cozmo {
     if(robot != nullptr) {
       const u8 numRetries = 0;
       
-      ObjectID selectedObjectID;
-      if(msg.objectID < 0) {
-        selectedObjectID = robot->GetBlockWorld().GetSelectedObject();
-      } else {
-        selectedObjectID = msg.objectID;
-      }
-      
-      DriveToObjectAction* action = new DriveToObjectAction(selectedObjectID, msg.distance_mm, msg.useManualSpeed);
-      robot->GetActionList().QueueActionAtEnd(DriveAndManipulateSlot, action, numRetries);
-      
+      robot->GetActionList().QueueActionAtEnd(DriveAndManipulateSlot, GetDriveToObjectActionHelper(robot, msg), numRetries);
     }
   }
 
+  IActionRunner* GetRollObjectActionHelper(Robot* robot, U2G::RollObject const& msg)
+  {
+    assert(robot != nullptr); // should've already been checked!
+    
+    ObjectID selectedObjectID;
+    if(msg.objectID < 0) {
+      selectedObjectID = robot->GetBlockWorld().GetSelectedObject();
+    } else {
+      selectedObjectID = msg.objectID;
+    }
+    
+    if(static_cast<bool>(msg.usePreDockPose)) {
+      return new DriveToRollObjectAction(selectedObjectID, msg.useManualSpeed);
+    } else {
+      RollObjectAction* action = new RollObjectAction(selectedObjectID, msg.useManualSpeed);
+      action->SetPreActionPoseAngleTolerance(-1.f); // disable pre-action pose distance check
+      return action;
+    }
+  }
+  
+  
   void CozmoGameImpl::Process_RollObject(U2G::RollObject const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
@@ -578,20 +618,8 @@ namespace Cozmo {
     if(robot != nullptr) {
       const u8 numRetries = 1;
       
-      ObjectID selectedObjectID;
-      if(msg.objectID < 0) {
-        selectedObjectID = robot->GetBlockWorld().GetSelectedObject();
-      } else {
-        selectedObjectID = msg.objectID;
-      }
-      
-      if(static_cast<bool>(msg.usePreDockPose)) {
-        robot->GetActionList().QueueActionAtEnd(DriveAndManipulateSlot, new DriveToRollObjectAction(selectedObjectID, msg.useManualSpeed), numRetries);
-      } else {
-        RollObjectAction* action = new RollObjectAction(selectedObjectID, msg.useManualSpeed);
-        action->SetPreActionPoseAngleTolerance(-1.f); // disable pre-action pose distance check
-        robot->GetActionList().QueueActionAtEnd(DriveAndManipulateSlot, action, numRetries);
-      }
+      IActionRunner* action = GetRollObjectActionHelper(robot, msg);
+      robot->GetActionList().QueueActionAtEnd(DriveAndManipulateSlot, action, numRetries);
     }
   }
   
@@ -667,7 +695,7 @@ namespace Cozmo {
     Robot* robot = GetRobotByID(msg.robotID);
     
     if(robot != nullptr) {
-      robot->GetActionList().Cancel(*robot, -1, (RobotActionType)msg.actionType);
+      robot->GetActionList().Cancel(-1, (RobotActionType)msg.actionType);
     }
   }
   
@@ -980,6 +1008,130 @@ namespace Cozmo {
   void CozmoGameImpl::Process_EraseQuad(U2G::EraseQuad const& msg)
   {
     VizManager::getInstance()->EraseQuad(VIZ_QUAD_GENERIC_3D, msg.quadID);
+  }
+  
+  
+  void QueueActionHelper(const QueueActionPosition position, const u32 inSlot, const u8 numRetries,
+                         ActionList& actionList, IActionRunner* action)
+  {
+    switch(position)
+    {
+      case QueueActionPosition::NOW:
+        actionList.QueueActionNow(inSlot, action, numRetries);
+        break;
+        
+      case QueueActionPosition::NEXT:
+        actionList.QueueActionNext(inSlot, action, numRetries);
+        break;
+        
+      case QueueActionPosition::AT_END:
+        actionList.QueueActionAtEnd(inSlot, action, numRetries);
+        break;
+        
+      default:
+        PRINT_NAMED_ERROR("CozmoGameImpl.QueueActionHelper.InvalidPosition",
+                          "Unrecognized 'position' for queuing action.\n");
+        return;
+    }
+  }
+  
+  IActionRunner* CreateNewActionByType(Robot* robot,
+                                       const RobotActionType actionType,
+                                       const U2G::RobotActionUnion& actionUnion)
+  {
+    switch(actionType)
+    {
+      case RobotActionType::TURN_IN_PLACE:
+        return new TurnInPlaceAction(actionUnion.turnInPlace.angle_rad);
+        
+      case RobotActionType::PLAY_ANIMATION:
+        return new PlayAnimationAction(actionUnion.playAnimation.animationName);
+        
+      case RobotActionType::PICK_AND_PLACE_OBJECT:
+      case RobotActionType::PICKUP_OBJECT_HIGH:
+      case RobotActionType::PICKUP_OBJECT_LOW:
+      case RobotActionType::PLACE_OBJECT_HIGH:
+      case RobotActionType::PLACE_OBJECT_LOW:
+        return GetPickAndPlaceActionHelper(robot, actionUnion.pickAndPlaceObject);
+       
+      case RobotActionType::MOVE_HEAD_TO_ANGLE:
+        // TODO: Provide a means to pass in the speed/acceleration values to the action
+        return new MoveHeadToAngleAction(actionUnion.setHeadAngle.angle_rad);
+        
+      case RobotActionType::MOVE_LIFT_TO_HEIGHT:
+        // TODO: Provide a means to pass in the speed/acceleration values to the action
+        return new MoveLiftToHeightAction(actionUnion.setLiftHeight.height_mm);
+        
+      case RobotActionType::FACE_OBJECT:
+        return GetFaceObjectActionHelper(robot, actionUnion.faceObject);
+        
+      case RobotActionType::ROLL_OBJECT_LOW:
+        return GetRollObjectActionHelper(robot, actionUnion.rollObject);
+      
+      case RobotActionType::DRIVE_TO_OBJECT:
+        return GetDriveToObjectActionHelper(robot, actionUnion.goToObject);
+        
+      case RobotActionType::DRIVE_TO_POSE:
+        return GetDriveToPoseActionHelper(robot, actionUnion.goToPose);
+        
+        // TODO: Add cases for other actions
+        
+      default:
+        PRINT_NAMED_ERROR("CozmoGameImpl.CreateNewActionByType.InvalidActionType",
+                          "Failed to create an action for the given actionType.\n");
+        return nullptr;
+    }
+  }
+  
+  void CozmoGameImpl::Process_QueueSingleAction(const U2G::QueueSingleAction &msg)
+  {
+    Robot* robot = GetRobotByID(msg.robotID);
+    
+    if(robot != nullptr) {
+      IActionRunner* action = CreateNewActionByType(robot, msg.actionType, msg.action);
+      
+      // Put the action in the given position of the specified queue:
+      QueueActionHelper(msg.position, msg.inSlot, msg.numRetries, robot->GetActionList(), action);
+      
+    }
+    
+  }
+  
+  void CozmoGameImpl::Process_QueueCompoundAction(const U2G::QueueCompoundAction &msg)
+  {
+    Robot* robot = GetRobotByID(msg.robotID);
+    if(robot != nullptr) {
+      
+      // Create an empty parallel or sequential compound action:
+      ICompoundAction* compoundAction = nullptr;
+      if(msg.parallel) {
+        compoundAction = new CompoundActionParallel();
+      } else {
+        compoundAction = new CompoundActionSequential();
+      }
+      
+      // Make sure sizes match
+      if(msg.actions.size() != msg.actionTypes.size()) {
+        PRINT_NAMED_ERROR("CozmoGameImpl.Process_QueueCompoundAction.MismatchedSizes",
+                          "Number of actions (%lu) and actionTypes (%lu) should match!\n",
+                          msg.actions.size(), msg.actionTypes.size());
+        return;
+      }
+      
+      // Add all the actions in the message to the compound action, according
+      // to their type
+      for(size_t iAction=0; iAction < msg.actions.size(); ++iAction) {
+        
+        IActionRunner* action = CreateNewActionByType(robot, msg.actionTypes[iAction], msg.actions[iAction]);
+        
+        compoundAction->AddAction(action);
+        
+      } // for each action/actionType
+      
+      // Put the action in the given position of the specified queue:
+      QueueActionHelper(msg.position, msg.inSlot, msg.numRetries, robot->GetActionList(), compoundAction);
+      
+    }
   }
   
 }
