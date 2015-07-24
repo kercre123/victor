@@ -10,34 +10,39 @@ At this point, only Mac and iOS are supported. The engine itself supports more p
 
 #### Prerequisites
 
-1. You'll need [brew](http://brew.sh/) to install some tools.
+You'll need [brew](http://brew.sh/) to install some tools.
 
-2. Install CMAKE.
+Install CMAKE.
 
     brew install cmake
 
-2. The simulation/visualization environment we use is [Webots](https://www.cyberbotics.com/overview). 
+The simulation/visualization environment we use is [Webots](https://www.cyberbotics.com/overview). 
 
-3. Move the OpenCV libraries inside of Webots out of the way:
+Move the OpenCV libraries inside of Webots out of the way:
+
 
     cd /Applications/Webots/lib
     mkdir opencv_unused
     mv libopencv* opencv_unused
 
+
 #### Build coretech-external
 
 Instructions [here](https://github.com/anki/coretech-external).
+
 Important: Make sure you have your paths (eg. ~/.bash_profile) setup correctly.
+
 Important: Once you set your paths you may need to restart your terminal for the settings to take effect.
 
 #### Building cozmo-game
 
-1. To run the configure python scripts you'll need xcpretty.
+To run the configure python scripts you'll need xcpretty.
+
     sudo gem install xcpretty
 
-2. Run ./configure
+Run ./configure
 
-3. Run ./configure build
+Run ./configure build
 
 #### iOS Project
 
