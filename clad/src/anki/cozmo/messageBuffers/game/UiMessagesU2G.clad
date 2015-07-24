@@ -85,14 +85,16 @@ message MoveLift {
 message SetLiftHeight {
     float_32 height_mm,
     float_32 max_speed_rad_per_sec,
-    float_32 accel_rad_per_sec2
+    float_32 accel_rad_per_sec2,
+    float_32 duration_sec
 }
 
 // SetHeadAngle
 message SetHeadAngle {
     float_32 angle_rad,
     float_32 max_speed_rad_per_sec,
-    float_32 accel_rad_per_sec2
+    float_32 accel_rad_per_sec2,
+    float_32 duration_sec
 }
 
 // TrackToObject
