@@ -7,7 +7,7 @@
 #include "ets_sys.h"
 #include "osapi.h"
 
-#define DEBUG_CLIENT
+//#define DEBUG_CLIENT
 
 #define NUM_RTX_BUFS 4
 static UDPPacket rtxbs[NUM_RTX_BUFS];

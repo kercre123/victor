@@ -119,7 +119,7 @@ LOCAL void dmaisr(void) {
 
 //Initialize I2S subsystem for DMA circular buffer use
 int8_t ICACHE_FLASH_ATTR i2sInit() {
-	int i;
+  int i;
 
   transmitInd     = 0;
   receiveInd      = DMA_BUF_COUNT-1;
@@ -233,9 +233,9 @@ void ICACHE_FLASH_ATTR i2sStart(void)
 void ICACHE_FLASH_ATTR i2sStop(void)
 {
   // Stop DMA transmitting
-  SET_PERI_REG_MASK(SLC_TX_LINK, SLC_TXLINK_START);
+  SET_PERI_REG_MASK(SLC_TX_LINK, SLC_TXLINK_STOP);
   // Stop DMA receiving
-  SET_PERI_REG_MASK(SLC_RX_LINK, SLC_RXLINK_START);
+  SET_PERI_REG_MASK(SLC_RX_LINK, SLC_RXLINK_STOP);
   // @TODO How do we stop the I2S peripheral? Does halting DMA do the trick?
 }
 
