@@ -1249,7 +1249,7 @@ namespace Anki {
       }
       jsonFile.close();
       if (!animDefs.empty()) {
-        PRINT_NAMED_INFO("Robot.ReadAnimationFile", "reading");
+        PRINT_NAMED_INFO("Robot.ReadAnimationFile", "reading %s\n", filename);
         _cannedAnimations.DefineFromJson(animDefs, animationId);
       }
 
@@ -1301,6 +1301,13 @@ namespace Anki {
       } else {
         PRINT_NAMED_INFO("Robot.ReadAnimationFile", "folder not found %s", animationFolder.c_str());
       }
+
+      // Tell UI about available animations
+      vector<std::string> animNames(_cannedAnimations.GetAnimationNames());
+      for (vector<std::string>::iterator i=animNames.begin(); i != animNames.end(); ++i) {
+        _externalInterface->DeliverToGame(ExternalInterface::MessageEngineToGame(ExternalInterface::AnimationAvailable(*i)));
+      }
+
 
       if (!animationId.empty() && loadedFileCount == 1 && playLoadedAnimation) {
         // send message to play animation
@@ -2807,6 +2814,7 @@ namespace Anki {
       
     Result Robot::AbortAnimation()
     {
+      _animationStreamer.SetStreamingAnimation("");
       return SendAbortAnimation();
     }
     

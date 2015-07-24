@@ -29,7 +29,7 @@ namespace AnimationController {
     
     // If buffer gets within this number of bytes of the buffer length,
     // then it is considered "full" for the purposes of IsBufferFull() below.
-    static const s32 KEYFRAME_BUFFER_PADDING = KEYFRAME_BUFFER_SIZE / 4;
+    static const s32 KEYFRAME_BUFFER_PADDING = KEYFRAME_BUFFER_SIZE / 3;
     
     // Circular byte buffer for keyframe messages
     ONCHIP u8 _keyFrameBuffer[KEYFRAME_BUFFER_SIZE];

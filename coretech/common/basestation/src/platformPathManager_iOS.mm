@@ -57,7 +57,7 @@
     {
       NSString* fullPath = nil;
       if (!fullPath) {
-        fullPath = [[PlatformPathManager_iOS appBundleMetaPath] stringByAppendingString:@"/basestation/animations/"];
+        fullPath = [[PlatformPathManager_iOS appBundleAssetPath] stringByAppendingString:@"/animations/"];
       }
       path = [fullPath copy];
     }
@@ -73,6 +73,16 @@
     }
       break;
 
+    case PlatformPathManager_iOS_Scope_FaceAnimation:
+    {
+      NSString* fullPath = nil;
+      if (!fullPath) {
+        fullPath = [[PlatformPathManager_iOS appBundleAssetPath] stringByAppendingString:@"/faceAnimation/"];
+      }
+      path = [fullPath copy];
+    }
+      break;
+      
     case PlatformPathManager_iOS_Scope_Resource:
     {
       NSString* fullPath = nil;
