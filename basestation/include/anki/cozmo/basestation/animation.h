@@ -126,11 +126,17 @@ namespace Anki {
       bool BufferMessageToSend(RobotMessage* msg);
       bool AllTracksBuffered() const;
       std::list<RobotMessage*> _sendBuffer;
+      s32 _numAudioFramesBufferedToSend;
       
       // Send larger keyframes "hot" for reliable transport (this includes
       // audio samples and face images)
       static const bool SEND_LARGE_KEYFRAMES_HOT = false;
 
+      // "Flow control" for not overrunning reliable transport in a single
+      // update tick
+      static const s32 MAX_BYTES_FOR_RELIABLE_TRANSPORT = 2000;
+      static const s32 MAX_FRAMES_TO_SEND = 10;
+      
     }; // class Animation
 
   } // namespace Cozmo

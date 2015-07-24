@@ -27,10 +27,6 @@ namespace AnimationController {
     // Streaming KeyFrame buffer size, in bytes
     static const s32 KEYFRAME_BUFFER_SIZE = 16384;
     
-    // Amount of "pre-roll" that needs to be buffered before a streamed animation
-    // will start playing, in number of keyframes
-    static const s32 PREROLL_BUFFER_LENGTH = 5;
-    
     // If buffer gets within this number of bytes of the buffer length,
     // then it is considered "full" for the purposes of IsBufferFull() below.
     static const s32 KEYFRAME_BUFFER_PADDING = KEYFRAME_BUFFER_SIZE / 4;
@@ -40,7 +36,7 @@ namespace AnimationController {
     s32 _currentBufferPos;
     s32 _lastBufferPos;
     
-    s32  _numFramesBuffered;
+    s32  _numAudioFramesBuffered; // NOTE: Also counts EndOfAnimationFrames...
     
     bool _haveReceivedTerminationFrame;
     bool _isPlaying;
@@ -290,7 +286,7 @@ namespace AnimationController {
     _currentBufferPos = 0;
     _lastBufferPos = 0;
     
-    _numFramesBuffered = 0;
+    _numAudioFramesBuffered = 0;
 
     _haveReceivedTerminationFrame = false;
     _isPlaying = false;
@@ -416,7 +412,7 @@ namespace AnimationController {
     PRINT("Buffering EndOfAnimation KeyFrame\n");
 #   endif
     _haveReceivedTerminationFrame = true;
-    ++_numFramesBuffered;
+    ++_numAudioFramesBuffered;
     return RESULT_OK;
   }
   
@@ -428,7 +424,7 @@ namespace AnimationController {
     }
     
     //PRINT("Buffering AudioSample KeyFrame\n");
-    ++_numFramesBuffered;
+    ++_numAudioFramesBuffered;
     return RESULT_OK;
   }
   
@@ -440,7 +436,7 @@ namespace AnimationController {
     }
     
     //PRINT("Buffering AudioSilence KeyFrame\n");
-    ++_numFramesBuffered;
+    ++_numAudioFramesBuffered;
     return RESULT_OK;
   }
 
@@ -543,10 +539,10 @@ namespace AnimationController {
       // until we run out of keyframes in the buffer
       // Note that we need at least two "frames" in the buffer so we can always
       // read from the current one to the next one without reaching end of buffer.
-      ready = _numFramesBuffered > 1;
+      ready = _numAudioFramesBuffered > 1;
     } else {
       // Otherwise, wait until we get enough frames to start
-      ready = (_numFramesBuffered > PREROLL_BUFFER_LENGTH || _haveReceivedTerminationFrame);
+      ready = (_numAudioFramesBuffered > ANIMATION_PREROLL_LENGTH || _haveReceivedTerminationFrame);
       if(ready) {
         _isPlaying = true;
         
@@ -808,12 +804,12 @@ namespace AnimationController {
           } // switch(GetTypeIndicator())
         } // while(!nextAudioFrameFound && !terminatorFound)
 
-        --_numFramesBuffered;
+        --_numAudioFramesBuffered;
         
         if(terminatorFound) {
           _isPlaying = false;
           _haveReceivedTerminationFrame = false;
-          --_numFramesBuffered;
+          --_numAudioFramesBuffered;
 #         if DEBUG_ANIMATION_CONTROLLER
           PRINT("Reached animation termination frame (%d frames still buffered, curPos/lastPos = %d/%d).\n",
                 _numFramesBuffered, _currentBufferPos, _lastBufferPos);
