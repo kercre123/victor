@@ -61,10 +61,10 @@ namespace Anki {
         const f32 ANTI_GRAVITY_POWER_BIAS = 0.0f;
 #else
         f32 Kp_ = 3.f;    // proportional control constant
-        f32 Kd_ = 250.f;  // derivative gain
-        f32 Ki_ = 0.1f;   // integral control constant
+        f32 Kd_ = 1250.f;  // derivative gain
+        f32 Ki_ = 0.1f; //0.05f;   // integral control constant
         f32 angleErrorSum_ = 0.f;
-        f32 MAX_ERROR_SUM = 5.f;
+        f32 MAX_ERROR_SUM = 4.f;
         
         // Open loop gain
         // power_open_loop = SPEED_TO_POWER_OL_GAIN * desiredSpeed + BASE_POWER
