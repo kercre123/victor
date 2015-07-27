@@ -242,6 +242,10 @@ namespace Anki
                                   const std::vector<Vision::ObservableObject*>& objectsSeen,
                                   std::vector<Vision::ObservableObject*>& overlappingSeenObjects) const;
       
+      void FindOverlappingObjects(const Vision::ObservableObject* objectExisting,
+                                  const std::multimap<f32, Vision::ObservableObject*>& objectsSeen,
+                                  std::vector<Vision::ObservableObject*>& overlappingSeenObjects) const;
+      
       // Finds existing objects whose XY bounding boxes intersect with objectSeen's
       // XY bounding box, with the exception of those that are of ignoreFamilies or
       // ignoreTypes.
@@ -266,7 +270,7 @@ namespace Anki
       void AddNewObject(ObjectsMapByType_t& existingFamily, Vision::ObservableObject* object);
       
       //template<class ObjectType>
-      Result AddAndUpdateObjects(const std::vector<Vision::ObservableObject*>& objectsSeen,
+      Result AddAndUpdateObjects(const std::multimap<f32, Vision::ObservableObject*>& objectsSeen,
                                  const ObjectFamily& inFamily,
                                  const TimeStamp_t atTimestamp);
       

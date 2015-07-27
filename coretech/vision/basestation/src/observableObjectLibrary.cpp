@@ -65,9 +65,9 @@ namespace Anki {
     
     
     // Input:   list of observed markers
-    // Outputs: the objects seen and the unused markers
+    // Outputs: the objects seen sorted by distance from the observing robot and the unused markers
     void ObservableObjectLibrary::CreateObjectsFromMarkers(const std::list<ObservedMarker*>& markers,
-                                                           std::vector<ObservableObject*>& objectsSeen,
+                                                           std::multimap<f32, ObservableObject*>& objectsSeen,
                                                            const CameraID_t seenOnlyBy) const
     {
       // Group the markers by object type
@@ -159,9 +159,11 @@ namespace Anki {
           // Create a new object of the observed type from the library, and set
           // its pose to the computed pose, in _historical_ world frame (since
           // it is computed w.r.t. a camera from a pose in history).
-          objectsSeen.push_back(libObject->CloneType());
+          //objectsSeen.push_back(libObject->CloneType());
+          ObservableObject* newObject = libObject->CloneType();
+          const f32 observedDistSq = poseCluster.GetPose().GetTranslation().LengthSq();
           Pose3d newPose = poseCluster.GetPose().GetWithRespectToOrigin();
-          objectsSeen.back()->SetPose(newPose);
+          newObject->SetPose(newPose);
           
           // Set the markers in the object corresponding to those from the pose
           // cluster from which it was computed as "observed"
@@ -173,11 +175,15 @@ namespace Anki {
             //objectsSeen.back()->SetMarkersAsObserved(marker.GetCode(),
             //                                         observedTime);
             
-            objectsSeen.back()->SetMarkerAsObserved(match.first, observedTime, 5.f);
-            
+            newObject->SetMarkerAsObserved(match.first, observedTime, 5.f);
           }
           
-          objectsSeen.back()->SetLastObservedTime(observedTime);
+          newObject->SetLastObservedTime(observedTime);
+          
+          // Finally actually insert the object into the objectsSeen container,
+          // using its (squared) distance from the robot (really, the robot's camera)
+          // as a sorting criterion
+          objectsSeen.insert(std::make_pair(observedDistSq, newObject));
           
         } // FOR each pose cluster
         

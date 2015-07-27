@@ -585,9 +585,12 @@ namespace Anki {
       auto poseIter = poses_.rbegin();
       while(poseIter->second.GetFrameId() != frameID) {
         ++poseIter;
-        if(poseIter == poses_.rend()) {
+        if(poseIter == poses_.rend() || poseIter->second.GetFrameId() < frameID) {
           PRINT_NAMED_ERROR("RobotPoseHistory.GetLastPoseWithFrameID.FrameIdNotFound",
-                            "Reached beginning of history without finding frame ID=%d.\n", frameID);
+                            "Reached beginning of history without finding frame ID=%d. "
+                            "(First frameID in history is %d, last is %d)\n", frameID,
+                            poses_.begin()->second.GetFrameId(),
+                            poses_.rbegin()->second.GetFrameId());
           return RESULT_FAIL;
         }
       }

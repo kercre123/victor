@@ -97,7 +97,7 @@ namespace Anki {
       // Mark this object as delocalized (and thus not usable by a robot for
       // localization).
       bool IsLocalized() const { return _isLocalized; } 
-      void Delocalize() { _isLocalized = false; }
+      void Delocalize();
       
       // Add possible poses implied by seeing the observed marker to the list.
       // Each pose will be paired with a pointer to the known marker on this

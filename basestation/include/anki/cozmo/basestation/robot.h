@@ -86,10 +86,19 @@ namespace Anki {
       //
       // Localization
       //
+      
       bool                   IsLocalized()     const {return _localizedToID.IsSet();}
-      const ObjectID&        GetLocalizedTo()  const {return _localizedToID;}
-      void                   SetLocalizedTo(const ObjectID& toID);
       void                   Delocalize();
+      
+      // Get the ID of the object we are localized to
+      const ObjectID&        GetLocalizedTo()  const {return _localizedToID;}
+      
+      // Set the object we are localized to
+      Result                 SetLocalizedTo(const Vision::ObservableObject* object);
+      
+      // Get the squared distance to the closest, most recently observed marker
+      // on the object we are localized to
+      f32                    GetLocalizedToDistanceSq() const;
       
       // TODO: Can this be removed in favor of the more general LocalizeToObject() below?
       Result LocalizeToMat(const MatPiece* matSeen, MatPiece* existinMatPiece);
@@ -155,9 +164,13 @@ namespace Anki {
       void SetHeadAngle(const f32& angle);
       void SetLiftAngle(const f32& angle);
       
+      // Get 3D bounding box of the robot at its current pose or a given pose
+      void GetBoundingBox(std::array<Point3f, 8>& bbox3d, const Point3f& padding_mm) const;
+      void GetBoundingBox(const Pose3d& atPose, std::array<Point3f, 8>& bbox3d, const Point3f& padding_mm) const;
+      
       // Get the bounding quad of the robot at its current or a given pose
       Quad2f GetBoundingQuadXY(const f32 padding_mm = 0.f) const; // at current pose
-      Quad2f GetBoundingQuadXY(const Pose3d& atPose, const f32 paddingScale = 0.f) const; // at specific pose
+      Quad2f GetBoundingQuadXY(const Pose3d& atPose, const f32 padding_mm = 0.f) const; // at specific pose
       
       // Return current height of lift's gripper
       f32 GetLiftHeight() const;
@@ -608,6 +621,7 @@ namespace Anki {
       PoseFrameID_t    _frameId;
       ObjectID         _localizedToID;          // ID of mat object robot is localized to
       bool             _localizedToFixedObject; // false until robot sees a _fixed_ mat
+      f32              _localizedMarkerDistToCameraSq; // Stores (sqaured) distance to the closest observed marker of the object we're localized to
       
       Result UpdateWorldOrigin(Pose3d& newPoseWrtNewOrigin);
       
@@ -828,9 +842,6 @@ namespace Anki {
     inline Vision::Camera& Robot::GetCamera(void)
     { return _camera; }
     
-    inline void Robot::SetLocalizedTo(const ObjectID& toID)
-    { _localizedToID = toID;}
-    
     inline void Robot::SetCameraCalibration(const Vision::CameraCalibration& calib)
     {
       if (_cameraCalibration != calib) {
@@ -881,6 +892,10 @@ namespace Anki {
     
     inline s32 Robot::GetNumAnimationBytesFree() const {
       return _numFreeAnimationBytes;
+    }
+    
+    inline f32 Robot::GetLocalizedToDistanceSq() const {
+      return _localizedMarkerDistToCameraSq;
     }
     
   } // namespace Cozmo

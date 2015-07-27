@@ -37,7 +37,7 @@
 //  0 = turn this off
 //  1 = turn this on just for physical robots
 //  2 = turn this on for physical and simulatd robots
-#define ONLY_ALLOW_ONE_OBJECT_PER_TYPE 2
+#define ONLY_ALLOW_ONE_OBJECT_PER_TYPE 0
 
 #define DEBUG_ROBOT_POSE_UPDATES 0
 #if DEBUG_ROBOT_POSE_UPDATES
@@ -53,11 +53,12 @@ namespace Anki
     const ColorRGBA EXECUTED_PATH              (1.f, 0.0f, 0.0f, 1.0f);
     const ColorRGBA PREDOCKPOSE                (1.f, 0.0f, 0.0f, 0.75f);
     const ColorRGBA PRERAMPPOSE                (0.f, 0.0f, 1.0f, 0.75f);
-    const ColorRGBA SELECTED_OBJECT            (0.f, 1.0f, 0.0f, 0.0f);
+    const ColorRGBA SELECTED_OBJECT            (0.f, 1.0f, 0.0f, 1.0f);
     const ColorRGBA BLOCK_BOUNDING_QUAD        (0.f, 0.0f, 1.0f, 0.75f);
     const ColorRGBA OBSERVED_QUAD              (1.f, 0.0f, 0.0f, 0.75f);
     const ColorRGBA ROBOT_BOUNDING_QUAD        (0.f, 0.8f, 0.0f, 0.75f);
     const ColorRGBA REPLAN_BLOCK_BOUNDING_QUAD (1.f, 0.1f, 1.0f, 0.75f);
+    const ColorRGBA LOCALIZATION_OBJECT        (1.0, 0.0f, 1.0f, 1.0f);
   }
   
   namespace Cozmo
@@ -255,6 +256,15 @@ namespace Anki
       }
     }
     
+    void BlockWorld::FindOverlappingObjects(const Vision::ObservableObject* objectExisting,
+                                            const std::multimap<f32, Vision::ObservableObject*>& objectsSeen,
+                                            std::vector<Vision::ObservableObject*>& overlappingSeenObjects) const
+    {
+      for(auto objectToCheckPair : objectsSeen) {
+        Vision::ObservableObject* objectToCheck = objectToCheckPair.second;
+        CheckForOverlapHelper(objectExisting, objectToCheck, overlappingSeenObjects);
+      }
+    }
     
     void BlockWorld::FindIntersectingObjects(const Vision::ObservableObject* objectSeen,
                                              const std::set<ObjectFamily>& ignoreFamiles,
@@ -294,14 +304,21 @@ namespace Anki
     } // FindIntersectingObjects()
 
 
-    Result BlockWorld::AddAndUpdateObjects(const std::vector<Vision::ObservableObject*>& objectsSeen,
-                                         const ObjectFamily& inFamily,
-                                         const TimeStamp_t atTimestamp)
+    Result BlockWorld::AddAndUpdateObjects(const std::multimap<f32, Vision::ObservableObject*>& objectsSeen,
+                                           const ObjectFamily& inFamily,
+                                           const TimeStamp_t atTimestamp)
     {
       ObjectsMapByType_t& objectsExisting = _existingObjects[inFamily];
       
-      for(auto objSeen : objectsSeen) {
+      // We only want to localize the robot to an object from this group once:
+      // just using the one that's closest (and offers localization info). Note
+      // that the objectsSeen container is already sorted by observation distance.
+      bool haveLocalizedRobotToObject = false;
+      
+      for(auto objSeenPair : objectsSeen) {
 
+        Vision::ObservableObject* objSeen = objSeenPair.second;
+        
         //const float minDimSeen = objSeen->GetMinDim();
         
         // Store pointers to any existing objects that overlap with this one
@@ -477,8 +494,57 @@ namespace Anki
           matchingObject->UpdateMarkerObservationTimes(*objSeen);
 
           // Decide whehter we will be updating the robot's pose relative to this
-          // object or updating the object's pose w.r.t. the robot.
-          if(matchingObject->CanBeUsedForLocalization()) {
+          // object or updating the object's pose w.r.t. the robot. We only do this
+          // if we haven't already done it, if the object can offer localization
+          // info, and if the robot isn't already localized to an object or if
+          // this object has been seen more recently than the one the robot is
+          // localized to.
+          bool useThisObjectToLocalize = !haveLocalizedRobotToObject && matchingObject->CanBeUsedForLocalization();
+          
+          // If we're about to use this object for localization and it's a different
+          // object than the robot is already localize to, then we need to decide
+          // whether it's "better" than the one we're already using
+          if(useThisObjectToLocalize && _robot->GetLocalizedTo() != matchingObject->GetID()) {
+            Vision::ObservableObject* currentLocalizationObject = GetObjectByID(_robot->GetLocalizedTo());
+            
+            if(currentLocalizationObject != nullptr) {
+              if(matchingObject->GetLastObservedTime() < currentLocalizationObject->GetLastObservedTime()) {
+                // Don't use this object to localize if it seen before the object
+                // the robot is currently localized to.
+                useThisObjectToLocalize = false;
+              } else if(matchingObject->GetLastObservedTime() == currentLocalizationObject->GetLastObservedTime()) {
+                // If this object was seen at the same time as the one the robot
+                // is currently localized to, only use it if its closest observed marker
+                // is closer than the one we're localized to
+                useThisObjectToLocalize = false;
+                for(auto marker : matchingObject->GetMarkers()) {
+                  if(marker.GetLastObservedTime() >= matchingObject->GetLastObservedTime()) {
+                    Pose3d markerPoseWrtCamera;
+                    if(false == marker.GetPose().GetWithRespectTo(_robot->GetCamera().GetPose(), markerPoseWrtCamera)) {
+                      PRINT_NAMED_ERROR("Robot.AddAndUpdateObjects.MarkerOriginProblem",
+                                        "Could not get pose of marker w.r.t. robot camera.\n");
+                      return RESULT_FAIL;
+                    }
+                    const f32 distToMarkerSq = markerPoseWrtCamera.GetTranslation().LengthSq();
+                    if(distToMarkerSq < _robot->GetLocalizedToDistanceSq()) {
+                      useThisObjectToLocalize = true;
+                      // Stop looking as soon as we find any marker that's closer
+                      break;
+                    }
+                  }
+                } // for each marker on the matching object
+              } else {
+                // This object was seen more recently than the one currently localized
+                // to, so nothing to do (leave useThisObjectToLocalize set to true)
+              }
+            }
+          }
+          
+          // Now that we've decided whether or not to use this object for localization,
+          // either use it to upate the robot's pose or use the robot's pose to
+          // update the object's pose.
+          if(useThisObjectToLocalize)
+          {
             Result localizeResult = _robot->LocalizeToObject(objSeen, matchingObject);
             if(localizeResult != RESULT_OK) {
               PRINT_NAMED_ERROR("BlockWorld.AddAndUpdateObjects.LocalizeFailure",
@@ -487,7 +553,20 @@ namespace Anki
                                 matchingObject->GetID().GetValue());
               return localizeResult;
             }
+            
+            // So we don't do this again with a more distant object
+            haveLocalizedRobotToObject = true;
+            
           } else {
+            /* Very verbose, but useful for debugging
+            PRINT_NAMED_INFO("BlockWorld.AddAndUpdateObjects.UpdateObjectPose",
+                             "Updating object %d's pose to (%.1f,%.1f,%.1f), %.1fdeg\n",
+                             matchingObject->GetID().GetValue(),
+                             objSeen->GetPose().GetTranslation().x(),
+                             objSeen->GetPose().GetTranslation().y(),
+                             objSeen->GetPose().GetTranslation().z(),
+                             objSeen->GetPose().GetRotationAngle<'Z'>().getDegrees());
+             */
             matchingObject->SetPose( objSeen->GetPose() );
           }
           
@@ -1019,7 +1098,7 @@ namespace Anki
       GetObsMarkerList(obsMarkersAtTimestamp, obsMarkersListAtTimestamp);
       
       // Get all mat objects *seen by this robot's camera*
-      std::vector<Vision::ObservableObject*> matsSeen;
+      std::multimap<f32, Vision::ObservableObject*> matsSeen;
       _objectLibrary[ObjectFamily::MATS].CreateObjectsFromMarkers(obsMarkersListAtTimestamp, matsSeen,
                                                                   (_robot->GetCamera().GetID()));
 
@@ -1037,7 +1116,8 @@ namespace Anki
         // Is the robot "on" any of the mats it sees?
         // TODO: What to do if robot is "on" more than one mat simultaneously?
         MatPiece* onMat = nullptr;
-        for(auto object : matsSeen) {
+        for(auto objectPair : matsSeen) {
+          Vision::ObservableObject* object = objectPair.second;
           
           // ObservedObjects are w.r.t. the arbitrary historical origin of the camera
           // that observed them.  Hook them up to the current robot origin now:
@@ -1141,7 +1221,9 @@ namespace Anki
             // most accurate) and localize to that one.
             f32 minDistSq = -1.f;
             MatPiece* closestMat = nullptr;
-            for(auto mat : matsSeen) {
+            for(auto matPair : matsSeen) {
+              Vision::ObservableObject* mat = matPair.second;
+              
               std::vector<const Vision::KnownMarker*> observedMarkers;
               mat->GetObservedMarkers(observedMarkers, atTimestamp);
               if(observedMarkers.empty()) {
@@ -1268,7 +1350,9 @@ namespace Anki
         // just like they are any "regular" object, unless that mat is the
         // robot's current "world" origin, [TODO:] in which case we will update the pose
         // of the mat we are on w.r.t. that world.
-        for(auto matSeen : matsSeen) {
+        for(auto matSeenPair : matsSeen) {
+          Vision::ObservableObject* matSeen = matSeenPair.second;
+          
           if(matSeen != matToLocalizeTo) {
             
             // TODO: Make this w.r.t. whatever the robot is currently localized to?
@@ -1415,7 +1499,13 @@ namespace Anki
     {
       const Vision::ObservableObjectLibrary& objectLibrary = _objectLibrary[inFamily];
       
-      std::vector<Vision::ObservableObject*> objectsSeen;
+      // Keep the objects sorted by increasing distance from the robot.
+      // This will allow us to only use the closest object that can provide
+      // localization information (if any) to update the robot's pose.
+      // Note that we use a multimap to handle the corner case that there are two
+      // objects that have the exact same distance. (We don't want to only report
+      // seeing one of them and it doesn't matter which we use to localize.)
+      std::multimap<f32, Vision::ObservableObject*> objectsSeen;
       
       // Don't bother with this update at all if we didn't see at least one
       // marker (which is our indication we got an update from the robot's
@@ -1431,7 +1521,9 @@ namespace Anki
         // Remove used markers from map
         RemoveUsedMarkers(obsMarkersAtTimestamp);
       
-        for(auto object : objectsSeen) {
+        for(auto objectPair : objectsSeen) {
+          Vision::ObservableObject* object = objectPair.second;
+          
           // ObservedObjects are w.r.t. the arbitrary historical origin of the camera
           // that observed them.  Hook them up to the current robot origin now:
           CORETECH_ASSERT(object->GetPose().GetParent() != nullptr &&
@@ -2368,6 +2460,12 @@ namespace Anki
           selectedObject->VisualizePreActionPoses(obstacles, &_robot->GetPose());
         }
       } // if selected object is set
+      
+      // (Re)Draw the localization object separately so we can show it in a different color
+      if(_robot->IsLocalized()) {
+        Vision::ObservableObject* locObject = GetObjectByID(_robot->GetLocalizedTo());
+        locObject->Visualize(NamedColors::LOCALIZATION_OBJECT);
+      }
       
     } // DrawAllObjects()
     

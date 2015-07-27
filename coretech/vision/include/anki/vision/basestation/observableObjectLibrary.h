@@ -17,6 +17,7 @@
 
 #include <list>
 #include <set>
+#include <map>
 
 #include "anki/vision/basestation/observableObject.h"
 #include "anki/vision/basestation/visionMarker.h"
@@ -40,13 +41,14 @@ namespace Anki {
       void AddObject(const ObservableObject* object);
       
       // Groups markers referring to the same type, and clusters them into
-      // observed objects, returned in objectsSeen.  Used markers will be
+      // observed objects, returned in objectsSeen (which is keyed and sorted by
+      // distance from the camera to the object).   Used markers will be
       // removed from the input list, so markers referring to objects unknown
       // to this library will remain.  If seenOnlyBy is not ANY_CAMERA, only markers
       // seen by that camera will be considered and objectSeen poses will be returned
       // wrt to that camera. If seenOnlyBy is ANY_CAMERA, the poses are returned wrt the world.
       void CreateObjectsFromMarkers(const std::list<ObservedMarker*>& markers,
-                                    std::vector<ObservableObject*>& objectsSeen,
+                                    std::multimap<f32, ObservableObject*>& objectsSeen,
                                     const CameraID_t seenOnlyBy = ANY_CAMERA) const;
       
       // Only one object in a library can have each type. Return a pointer to

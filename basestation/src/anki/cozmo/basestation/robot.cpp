@@ -175,6 +175,7 @@ namespace Anki {
       
       _localizedToID.UnSet();
       _localizedToFixedObject = false;
+      _localizedMarkerDistToCameraSq = -1.f;
 
       // NOTE: no longer doing this here because Delocalize() can be called by
       //  BlockWorld::ClearAllExistingObjects, resulting in a weird loop...
@@ -201,6 +202,52 @@ namespace Anki {
                                          "LocalizedTo: <nothing>");
     }
 
+    Result Robot::SetLocalizedTo(const Vision::ObservableObject* object)
+    {
+      if(object == nullptr) {
+        PRINT_NAMED_WARNING("Robot.SetLocalizedTo.NullPtr", "SetLocalizedTo called with nullptr object, delocalizing!\n");
+        Delocalize();
+        return;
+      }
+      
+      if(object->GetID().IsUnknown()) {
+        PRINT_NAMED_ERROR("Robot.SetLocalizedTo.IdNotSet",
+                          "Cannot localize to an object with no ID set.\n");
+        return RESULT_FAIL;
+      }
+      
+      // Find the closest, most recently observed marker on the object
+      f32 largestArea = 0.f;
+      TimeStamp_t mostRecentObsTime = 0;
+      for(auto marker : object->GetMarkers()) {
+        if(marker.GetLastObservedTime() >= mostRecentObsTime) {
+          Pose3d markerPoseWrtCamera;
+          if(false == marker.GetPose().GetWithRespectTo(_camera.GetPose(), markerPoseWrtCamera)) {
+            PRINT_NAMED_ERROR("Robot.SetLocalizedTo.MarkerOriginProblem",
+                              "Could not get pose of marker w.r.t. robot camera.\n");
+            return RESULT_FAIL;
+          }
+          const f32 distToMarkerSq = markerPoseWrtCamera.GetTranslation().LengthSq();
+          if(_localizedMarkerDistToCameraSq < 0.f || distToMarkerSq < _localizedMarkerDistToCameraSq) {
+            _localizedMarkerDistToCameraSq = distToMarkerSq;
+            mostRecentObsTime = marker.GetLastObservedTime();
+          }
+        }
+      }
+      assert(_localizedMarkerDistToCameraSq >= 0.f);
+      
+      _localizedToID = object->GetID();
+      
+      // Update VizText
+      VizManager::getInstance()->SetText(VizManager::LOCALIZED_TO, NamedColors::YELLOW,
+                                         "LocalizedTo: %s_%d",
+                                         object->GetType().GetName().c_str(), _localizedToID.GetValue());
+      
+      return RESULT_OK;
+      
+    } // SetLocalizedTo()
+    
+    
     Result Robot::UpdateFullRobotState(const MessageRobotState& msg)
     {
       Result lastResult = RESULT_OK;
@@ -915,17 +962,28 @@ namespace Anki {
       VizManager::getInstance()->DrawRobot(GetID(), robotPoseWrtOrigin, GetHeadAngle(), GetLiftAngle());
       
       // Robot bounding box
+      static const ColorRGBA ROBOT_BOUNDING_QUAD_COLOR(0.0f, 0.8f, 0.0f, 0.75f);
+      
       using namespace Quad;
       Quad2f quadOnGround2d = GetBoundingQuadXY(robotPoseWrtOrigin);
-      const f32 zHeight = robotPoseWrtOrigin.GetTranslation().z() + 0.5f;
+      const f32 zHeight = robotPoseWrtOrigin.GetTranslation().z() + WHEEL_RAD_TO_MM;
       Quad3f quadOnGround3d(Point3f(quadOnGround2d[TopLeft].x(),     quadOnGround2d[TopLeft].y(),     zHeight),
                             Point3f(quadOnGround2d[BottomLeft].x(),  quadOnGround2d[BottomLeft].y(),  zHeight),
                             Point3f(quadOnGround2d[TopRight].x(),    quadOnGround2d[TopRight].y(),    zHeight),
                             Point3f(quadOnGround2d[BottomRight].x(), quadOnGround2d[BottomRight].y(), zHeight));
-      
-      static const ColorRGBA ROBOT_BOUNDING_QUAD_COLOR(0.0f, 0.8f, 0.0f, 0.75f);
+    
       VizManager::getInstance()->DrawRobotBoundingBox(GetID(), quadOnGround3d, ROBOT_BOUNDING_QUAD_COLOR);
-
+      
+      /*
+      // Draw 3d bounding box
+      Vec3f vizTranslation = GetPose().GetTranslation();
+      vizTranslation.z() += 0.5f*ROBOT_BOUNDING_Z;
+      Pose3d vizPose(GetPose().GetRotation(), vizTranslation);
+      
+      VizManager::getInstance()->DrawCuboid(999, {ROBOT_BOUNDING_X, ROBOT_BOUNDING_Y, ROBOT_BOUNDING_Z},
+                                            vizPose, ROBOT_BOUNDING_QUAD_COLOR);
+      */
+      
       return RESULT_OK;
       
     } // Update()
@@ -1399,6 +1457,7 @@ namespace Anki {
       robotPoseWrtObject.SetParent(&existingObject->GetPose());
       //robotPoseWrtMat.SetName(std::string("Robot_") + std::to_string(robot->GetID()));
       
+#     if 0
       // Don't snap to horizontal or discrete Z levels when we see a mat marker
       // while on a ramp
       if(IsOnRamp() == false)
@@ -1431,6 +1490,7 @@ namespace Anki {
         robotPoseWrtObject.SetRotation( robotPoseWrtObject.GetRotationAngle<'Z'>(), Z_AXIS_3D() );
         
       } // if robot is on ramp
+#     endif
       
       /*
       if(!_localizedToFixedObject && !existingObject->IsMoveable()) {
@@ -1504,7 +1564,11 @@ namespace Anki {
       // Mark the robot as now being localized to this object
       // NOTE: this should be _after_ calling AddVisionOnlyPoseToHistory, since
       //    that function checks whether the robot is already localized
-      SetLocalizedTo(existingObject->GetID());
+      lastResult = SetLocalizedTo(existingObject);
+      if(RESULT_OK != lastResult) {
+        PRINT_NAMED_ERROR("Robot.LocalizeToObject.SetLocalizedToFail", "\n");
+        return lastResult;
+      }
       
       // Overly-verbose. Use for debugging localization issues
       
@@ -1526,10 +1590,6 @@ namespace Anki {
       // pose and let the robot deal with updating its current pose based on the
       // history that it keeps.
       SendAbsLocalizationUpdate();
-      
-      // Update VizText
-      VizManager::getInstance()->SetText(VizManager::LOCALIZED_TO, NamedColors::YELLOW,
-                                         "LocalizedTo: %s", existingObject->GetPose().GetName().c_str());
       
       return RESULT_OK;
     } // LocalizeToObject()
@@ -1720,7 +1780,11 @@ namespace Anki {
       // Mark the robot as now being localized to this mat
       // NOTE: this should be _after_ calling AddVisionOnlyPoseToHistory, since
       //    that function checks whether the robot is already localized
-      SetLocalizedTo(existingMatPiece->GetID());
+      lastResult = SetLocalizedTo(existingMatPiece);
+      if(RESULT_OK != lastResult) {
+        PRINT_NAMED_ERROR("Robot.LocalizeToMat.SetLocalizedToFail", "\n");
+        return lastResult;
+      }
       
       // Overly-verbose. Use for debugging localization issues
       /*
@@ -1740,10 +1804,6 @@ namespace Anki {
       // pose and let the robot deal with updating its current pose based on the
       // history that it keeps.
       SendAbsLocalizationUpdate();
-      
-      // Update VizText
-      VizManager::getInstance()->SetText(VizManager::LOCALIZED_TO, NamedColors::YELLOW,
-                                         "LocalizedTo: %s", existingMatPiece->GetPose().GetName().c_str());
       
       return RESULT_OK;
       
@@ -2548,8 +2608,41 @@ namespace Anki {
     const Pose3d Robot::ProxDetectTransform[] = { Pose3d(0, Z_AXIS_3D(), Vec3f(50, 25, 0)),
                                                   Pose3d(0, Z_AXIS_3D(), Vec3f(50, 0, 0)),
                                                   Pose3d(0, Z_AXIS_3D(), Vec3f(50, -25, 0)) };
-    
 
+    
+    void Robot::GetBoundingBox(std::array<Point3f, 8>& bbox3d, const Point3f& padding_mm) const
+    {
+      GetBoundingBox(GetPose(), bbox3d, padding_mm);
+    }
+    
+    void Robot::GetBoundingBox(const Pose3d& atPose, std::array<Point3f,8>& corners,
+                               const Point3f& padding_mm) const
+    {
+      static const std::array<Point3f,8> CanonicalCorners{
+        Point3f(ROBOT_BOUNDING_X_FRONT, -0.5f*ROBOT_BOUNDING_Y,  0.f),
+        Point3f(ROBOT_BOUNDING_X_FRONT,  0.5f*ROBOT_BOUNDING_Y,  0.f),
+        Point3f(ROBOT_BOUNDING_X_FRONT, -0.5f*ROBOT_BOUNDING_Y,  ROBOT_BOUNDING_Z),
+        Point3f(ROBOT_BOUNDING_X_FRONT,  0.5f*ROBOT_BOUNDING_Y,  ROBOT_BOUNDING_Z),
+        Point3f(ROBOT_BOUNDING_X_FRONT-ROBOT_BOUNDING_X, -0.5f*ROBOT_BOUNDING_Y,  0.f),
+        Point3f(ROBOT_BOUNDING_X_FRONT-ROBOT_BOUNDING_X,  0.5f*ROBOT_BOUNDING_Y,  0.f),
+        Point3f(ROBOT_BOUNDING_X_FRONT-ROBOT_BOUNDING_X, -0.5f*ROBOT_BOUNDING_Y,  ROBOT_BOUNDING_Z),
+        Point3f(ROBOT_BOUNDING_X_FRONT-ROBOT_BOUNDING_X,  0.5f*ROBOT_BOUNDING_Y,  ROBOT_BOUNDING_Z)
+      };
+      
+      // Start with canonical corners
+      std::copy(CanonicalCorners.begin(), CanonicalCorners.end(), corners.begin());
+      
+      // Add padding
+      for(auto & corner : corners) {
+        corner.x() += (corner.x() < 0 ? -padding_mm.x() : padding_mm.x());
+        corner.y() += (corner.y() < 0 ? -padding_mm.y() : padding_mm.y());
+        corner.z() += (corner.z() < 0 ? -padding_mm.z() : padding_mm.z());
+      }
+      
+      // Rotate and translate to the given pose
+      atPose.ApplyTo(CanonicalCorners, corners);
+    }
+    
     Quad2f Robot::GetBoundingQuadXY(const f32 padding_mm) const
     {
       return GetBoundingQuadXY(_pose, padding_mm);
@@ -2587,6 +2680,8 @@ namespace Anki {
       return boundingQuad;
       
     } // GetBoundingBoxXY()
+    
+  
     
     
     f32 Robot::GetHeight() const
