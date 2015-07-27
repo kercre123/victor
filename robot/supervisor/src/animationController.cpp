@@ -44,6 +44,8 @@ namespace AnimationController {
     
     AnimTrackFlag _tracksToPlay;
     
+    int _tracksInUse = 0;
+    
 #   if DEBUG_ANIMATION_CONTROLLER
     TimeStamp_t _currentTime_ms;
 #   endif
@@ -269,6 +271,8 @@ namespace AnimationController {
     
     _tracksToPlay = ENABLE_ALL_TRACKS;
     
+    _tracksInUse  = 0;
+    
     Clear();
     
     DefineHardCodedAnimations();
@@ -291,6 +295,24 @@ namespace AnimationController {
     _haveReceivedTerminationFrame = false;
     _isPlaying = false;
     _bufferFullMessagePrintedThisTick = false;
+    
+    if(_tracksInUse) {
+      // In case we are aborting an animation, stop any tracks that were in use
+      // (For now, this just means motor-based tracks.) Note that we don't
+      // stop tracks we weren't using, in case we were, for example, playing
+      // a head animation while driving a path.
+      if(_tracksInUse & HEAD_TRACK) {
+        HeadController::SetAngularVelocity(0);
+      }
+      if(_tracksInUse & LIFT_TRACK) {
+        LiftController::SetAngularVelocity(0);
+      }
+      if(_tracksInUse & BODY_TRACK) {
+        SteeringController::ExecuteDirectDrive(0, 0);
+      }
+    }
+      
+    _tracksInUse = 0;
     
 #   if DEBUG_ANIMATION_CONTROLLER
     _currentTime_ms = 0;
@@ -618,6 +640,8 @@ namespace AnimationController {
           switch(msgID)
           {
             case Messages::AnimKeyFrame_AudioSample_ID:
+              _tracksInUse |= BACKPACK_LIGHTS_TRACK;
+              // Fall through to below...
             case Messages::AnimKeyFrame_AudioSilence_ID:
               
               // Rewind so we re-see this type again on next update (a little icky, yes...)
@@ -635,6 +659,7 @@ namespace AnimationController {
               Messages::AnimKeyFrame_EndOfAnimation msg;
               GetFromBuffer((u8*)&msg, sizeof(msg)); // just pull it out of the buffer
               terminatorFound = true;
+              _tracksInUse = 0;
               break;
             }
               
@@ -652,6 +677,7 @@ namespace AnimationController {
                 
                 HeadController::SetDesiredAngle(DEG_TO_RAD(static_cast<f32>(msg.angle_deg)), 0.1f, 0.1f,
                                                 static_cast<f32>(msg.time_ms)*.001f);
+                _tracksInUse |= HEAD_TRACK;
               }
               break;
             }
@@ -670,6 +696,7 @@ namespace AnimationController {
                 
                 LiftController::SetDesiredHeight(static_cast<f32>(msg.height_mm), 0.1f, 0.1f,
                                                  static_cast<f32>(msg.time_ms)*.001f);
+                _tracksInUse |= LIFT_TRACK;
               }
               break;
             }
@@ -688,6 +715,7 @@ namespace AnimationController {
                 for(s32 iLED=0; iLED<NUM_BACKPACK_LEDS; ++iLED) {
                   HAL::SetLED(static_cast<LEDId>(iLED), msg.colors[iLED]);
                 }
+                _tracksInUse |= BACKPACK_LIGHTS_TRACK;
               }
               break;
             }
@@ -704,6 +732,8 @@ namespace AnimationController {
 #               endif
                 
                 HAL::FaceAnimate(msg.image);
+                
+                _tracksInUse |= FACE_IMAGE_TRACK;
               }
               break;
             }
@@ -720,6 +750,8 @@ namespace AnimationController {
 #               endif
                 
                 HAL::FaceMove(msg.xCen, msg.yCen);
+                
+                _tracksInUse |= FACE_POS_TRACK;
               }
               break;
             }
@@ -744,6 +776,7 @@ namespace AnimationController {
                     EyeController::Disable();
                   }
                 }
+                _tracksInUse |= BLINK_TRACK;
               }
               break;
             }
@@ -791,6 +824,7 @@ namespace AnimationController {
                 }
                 
                 SteeringController::ExecuteDirectDrive(leftSpeed, rightSpeed);
+                _tracksInUse |= BODY_TRACK;
               }
               break;
             }
