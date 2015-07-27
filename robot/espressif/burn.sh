@@ -9,6 +9,7 @@ fi
 
 python2 $ESPTOOL --port $1 --baud 230400 write_flash 0x00000 bin/boot_v1.2.bin \
                                                      0x01000 bin/upgrade/user1.1024.new.2.bin \
+                                                     0x7c000 bin/blank.bin \
                                                      0x81000 bin/upgrade/user2.1024.new.2.bin \
                                                      0xfc000 bin/esp_init_data_default.bin \
                                                      0xfe000 bin/blank.bin

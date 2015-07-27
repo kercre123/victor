@@ -195,10 +195,11 @@ user_init(void)
     {
       os_printf("Couldn't allocate memory for NV parameters\r\n");
     }
-    if (system_param_load(USER_NV_START_SEC, 0, nvpars, sizeof(NVParams)) == false)
+    os_memset(nvpars, 0, sizeof(NVParams));
+    /*if (system_param_load(USER_NV_START_SEC, 0, nvpars, sizeof(NVParams)) == false)
     {
       os_printf("Couldn't read non-volatile parameters from flash. Will use defaults\r\n");
-    }
+    }*/
     if (nvpars->PREFIX != NV_PARAMS_PREFIX)
     {
       os_printf("Non-voltatile parameters prefix incorrect, using defaults\r\n");

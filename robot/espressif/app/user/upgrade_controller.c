@@ -160,12 +160,8 @@ LOCAL bool upgradeTask(uint32_t param)
         if (system_param_save_with_protect(USER_NV_START_SEC, nvpar, sizeof(NVParams)) == false)
         {
           os_printf("UP ERROR: Couldn't save non-volatile parameters\r\n");
-          resetUpgradeState();
         }
-        else
-        {
-          taskState = UPGRADE_TASK_FINISH;
-        }
+        resetUpgradeState();
         return false;
       }
       else
@@ -261,11 +257,6 @@ LOCAL bool upgradeTask(uint32_t param)
         // TODO check new firmware integrity
         // TODO Reboot the body with new firmware
       }
-      if (flags & UPCMD_CONFIG)
-      {
-        os_printf("Rebooting to apply new NV config\r\n");
-        system_upgrade_reboot();
-      }
       return false;
     }
     default:
@@ -346,7 +337,7 @@ LOCAL void ICACHE_FLASH_ATTR upccReceiveCallback(void *arg, char *usrdata, unsig
           }
         }
       }
-      if (cmd->flags & UPCMD_CONFIG)
+      else if (cmd->flags & UPCMD_CONFIG)
       {
         os_printf("Receiving non-volatile configuration\r\n");
         flags = cmd->flags;
