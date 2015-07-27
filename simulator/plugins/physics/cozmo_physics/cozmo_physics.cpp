@@ -460,9 +460,7 @@ void draw_head(float width, float height, float depth)
 {
   const float back_scale = 0.8f;
   const float r_hor_front = width*0.5f;
-  const float r_hor_back  = r_hor_front*0.8f;
   const float r_ver_front = height*0.5f;
-  const float r_ver_back  = r_ver_front*0.8f;
   
   const int N = 20;
 

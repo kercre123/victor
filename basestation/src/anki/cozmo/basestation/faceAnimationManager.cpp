@@ -169,7 +169,7 @@ namespace Cozmo {
                   //cv::waitKey(30);
                   
                   anim.rleFrames.push_back({});
-                  Result compressResult = CompressRLE(img, anim.rleFrames.back());
+                  CompressRLE(img, anim.rleFrames.back());
                 }
               }
             }

@@ -53,7 +53,6 @@ TEST(BlockWorld, AddAndRemoveObject)
   Block_Cube1x1 testCube(testType);
   Vision::Marker::Code testCode = testCube.GetMarker(Block::FaceName::FRONT_FACE).GetCode();
   
-  const Vision::Camera& camera = robot.GetCamera();
   const Vision::CameraCalibration camCalib(HEAD_CAM_CALIB_HEIGHT, HEAD_CAM_CALIB_WIDTH,
                                            HEAD_CAM_CALIB_FOCAL_LENGTH_X, HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
                                            HEAD_CAM_CALIB_CENTER_X, HEAD_CAM_CALIB_CENTER_Y);
