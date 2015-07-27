@@ -21,6 +21,9 @@
 
 #include "anki/common/basestation/objectTypesAndIDs.h"
 
+#include <unordered_map>
+#include <string>
+
 namespace Anki {
   namespace Cozmo {
     
@@ -161,6 +164,101 @@ namespace Anki {
     }; // class BehaviorManager
     
     
+    ///////////////////////////////////////////////////////////////////////////
+    //
+    //                NEW BEHAVIOR ENGINE API EXPLORATION
+    //
+    
+    // Forward declaration
+    class IBehavior;
+    class Reward;
+    
+    class BehaviorEngine
+    {
+    public:
+      
+      // Calls the currently-selected behavior's Update() method until its
+      // IsDone() method returns true or it fails. Once current behavior completes
+      // switches to next behavior, if there is one.
+      Result Update(Robot& robot);
+      
+      // Picks next behavior based on robot's current state. This does not
+      // transition immediately to running that behavior, but will let the
+      // current beheavior know it needs wind down with a call to its
+      // Interrupt() method.
+      Result SelectNextBehavior(Robot& robot);
+      
+      // Forcefully select the next behavior by name (versus by letting the
+      // selection mechanism choose based on current state)
+      Result SelectNextBehavior(const std::string& name);
+      
+      Result AddBehavior(const std::string& name, IBehavior* newBehavior);
+      
+    private:
+      // Map from behavior name to available behaviors
+      std::unordered_map<std::string, IBehavior*> _behaviors;
+      
+      IBehavior* _currentBehavior;
+      IBehavior* _nextBehavior;
+      
+    }; // class BehaviorEngine
+    
+    
+    // Base Behavior Interface specification
+    class IBehavior
+    {
+    public:
+      virtual Result Init(Robot& robot) = 0;
+      virtual Result Update(Robot& robot) = 0;
+      virtual Result Interrupt(Robot& robot) = 0;
+      
+      // Figure out the reward this behavior will offer, given the robot's current
+      // state. Returns true if the Behavior is runnable, false if not. (In the
+      // latter case, the returned reward is not populated.)
+      virtual bool GetReward(Robot& robot, Reward& reward) = 0;
+      
+      
+    }; // class IBehavior
+    
+    // A behavior that
+    class OCD_Behavior : public IBehavior
+    {
+    public:
+      
+      virtual Result Update(Robot& robot) override;
+      
+      virtual bool GetReward(Robot& robot, Reward& reward) override;
+      
+    private:
+      
+      // Internally, this behavior is just a little state machine going back and
+      // forth between picking up and placing blocks
+      
+      enum class State {
+        PICKING_UP_BLOCK,
+        PLACING_BLOCK
+      };
+      
+      State _currentState;
+      
+      // Enumerate possible arrangements Cozmo "likes".
+      enum class Arrangement {
+        STACKS,
+        LINE
+      };
+      
+      Arrangement _currentArrangement;
+      
+    }; // class OCD_Behavior
+    
+    
+    class LookForFaces : public IBehavior
+    {
+    public:
+      
+      virtual Result Update(Robot& robot) override;
+      
+    }; // LookForFaces
     
   } // namespace Cozmo
 } // namespace Anki

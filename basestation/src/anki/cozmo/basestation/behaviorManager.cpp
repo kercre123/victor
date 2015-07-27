@@ -1196,5 +1196,38 @@ namespace Anki {
       
     } // Update_CREEP()
     
+    
+    ///////////////////////////////////////////////////////////////////////////
+    //
+    //                NEW BEHAVIOR ENGINE API EXPLORATION
+    //
+    
+    
+    Result OCD_Behavior::Update(Robot& robot)
+    {
+      switch(_currentState)
+      {
+          
+      }
+    }
+    
+    bool OCD_Behavior::GetReward(Robot& robot, Reward& reward)
+    {
+      const BlockWorld& blockWorld = robot.GetBlockWorld();
+      
+      const BlockWorld::ObjectsMapByType_t& blocks = blockWorld.GetExistingObjectsByFamily(BlockWorld::ObjectFamily::BLOCKS);
+      
+      const BlockWorld::ObjectsMapByType_t& lightCubes = blockWorld.GetExistingObjectsByFamily(BlockWorld::ObjectFamily::ACTIVE_BLOCKS);
+      
+      if(blocks.empty() && lightCubes.empty()) {
+        // If there are no blocks to get OCD about, this isn't a viable behavior
+        return false;
+      }
+     
+      // TODO: Populate a reward object based on how many poorly-arranged blocks there are
+        
+      return true;
+    } // GetReward()
+    
   } // namespace Cozmo
 } // namespace Anki
