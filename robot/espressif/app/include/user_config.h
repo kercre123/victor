@@ -4,9 +4,8 @@
 #ifndef USER_CONFIG_H_
 #define USER_CONFIG_H_
 
-#define COZMO_AS_AP
-
-#ifdef COZMO_AS_AP
+/// Based on 1MB flash map
+#define USER_NV_PARAM_START 0x7d
 
 #define AP_SSID_FMT "AnkiEspressif%02x%02x"
 #define AP_KEY      "2manysecrets"
@@ -16,15 +15,11 @@
 #define DHCP_START  "171.31.1.2"
 #define DHCP_END    "172.31.1.9"
 
-#else
-
 #define STATION_SSID "AnkiRobits"
 #define STATION_KEY  "KlaatuBaradaNikto!"
 #define STATION_IP      "192.168.3.30"
 #define STATION_NETMASK "255.255.248.0"
 #define STATION_GATEWAY "192.168.2.1"
-
-#endif
 
 /** WiFi fix rate configuration
  * This is a custom API added by Espressif for Anki 2015-07-21

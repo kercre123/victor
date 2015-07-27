@@ -11,7 +11,6 @@
 #include "upgrade.h"
 #include "task0.h"
 #include "driver/spi.h"
-#include "fpga.h"
 #include "upgrade_controller.h"
 
 /// Flash sector size for erasing, 4KB
@@ -44,8 +43,6 @@ typedef enum {
   UPGRADE_TASK_ERASE,
   UPGRADE_TASK_WRITE,
   UPGRADE_TASK_FINISH,
-  UPGRADE_TASK_FPGA_RESET,
-  UPGRADE_TASK_FPGA_WRITE,
 } UpgradeTaskState;
 
 static UpgradeTaskState taskState = UPGRADE_TASK_IDLE;
@@ -248,75 +245,6 @@ LOCAL bool upgradeTask(uint32_t param)
       }
       return false;
     }
-    case UPGRADE_TASK_FPGA_RESET:
-    {
-      if (flags & UPCMD_FPGA_FW)
-      {
-        fpgaDisable();
-        os_delay_us(2);
-        fpgaEnable();
-        os_delay_us(300);
-        taskState = UPGRADE_TASK_FPGA_WRITE;
-        requestNext();
-        return false;
-      }
-      else
-      {
-        os_printf("ERR: upgradeTask state RESET FPGA but flags don't say FPGA?\r\n");
-        printUpgradeState();
-        resetUpgradeState();
-        return false;
-      }
-    }
-    case UPGRADE_TASK_FPGA_WRITE:
-    {
-      if (param == 0)
-      {
-        os_printf("UP ERROR: UPGRADE TASK FPGA WRITE but param = 0\r\n");
-        resetUpgradeState();
-        return false;
-      }
-      if (flags & UPCMD_FPGA_FW)
-      {
-        uint32_t spiWritten = 0;
-        FlashWriteData* fwd = (FlashWriteData*)param;
-        uint32_t wordsToWrite = fwd->length / 4;
-        os_printf("UP: FPGA Write 0x%08x 0x%x\r\n", fwWriteAddress + bytesWritten, fwd->length);
-        while (spiWritten < wordsToWrite)
-        {
-          if (!fpgaWriteBitstream((fwd->data + spiWritten)))
-          {
-            os_printf("UP ERR: Couldn't write bytes to FPGA\r\n");
-            resetUpgradeState();
-            return false;
-          }
-          else
-          {
-            spiWritten += SPI_FIFO_DEPTH;
-          }
-        }
-
-        os_free(fwd); // Free the memory used
-        bytesWritten += fwd->length;
-        if (bytesWritten >= bytesExpected)
-        {
-          taskState = UPGRADE_TASK_FINISH;
-          return true;
-        }
-        else
-        {
-          requestNext();
-          return false;
-        }
-      }
-      else
-      {
-        os_printf("ERR: upgradeTask state WRITE FPGA but flags don't say FPGA?\r\n");
-        printUpgradeState();
-        resetUpgradeState();
-        return false;
-      }
-    }
     default:
     {
       os_printf("WARN: upgradeTask unexpected state: %d\r\n\t", taskState);
@@ -393,21 +321,6 @@ LOCAL void ICACHE_FLASH_ATTR upccReceiveCallback(void *arg, char *usrdata, unsig
             resetUpgradeState();
             return;
           }
-        }
-      }
-      else if (cmd->flags & UPCMD_FPGA_FW)
-      {
-        fwWriteAddress   = cmd->flashAddress;
-        bytesExpected    = cmd->size;
-        flags            = cmd->flags;
-        upccConn = conn;
-        taskState = UPGRADE_TASK_FPGA_RESET;
-        os_printf("FPGA write firmware %d bytes, flags = %x \r\n", bytesExpected, flags);
-        if (task0Post(upgradeTask, 0) == false)
-        {
-          os_printf("ERROR: Couldn't queue upgrade task\r\n");
-          resetUpgradeState();
-          return;
         }
       }
       else
