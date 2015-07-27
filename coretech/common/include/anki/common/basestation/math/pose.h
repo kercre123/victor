@@ -230,6 +230,10 @@ namespace Anki {
     void ApplyTo(const std::vector<Point<3,T> > &pointsIn,
                  std::vector<Point<3,T> >       &pointsOut) const;
 
+    template<typename T, size_t N>
+    void ApplyTo(const std::array<Point<3,T>, N> &pointsIn,
+                 std::array<Point<3,T>, N>       &pointsOut) const;
+    
     template<typename T>
     void ApplyTo(const Quadrilateral<3,T> &quadIn,
                  Quadrilateral<3,T>       &quadOut) const;
@@ -560,6 +564,16 @@ namespace Anki {
       {
         pointsOut.emplace_back( (*this) * x );
       }
+    }
+  } // ApplyTo()
+  
+  template<typename T, size_t N>
+  void Pose3d::ApplyTo(const std::array<Point<3,T>, N> &pointsIn,
+                       std::array<Point<3,T>, N>       &pointsOut) const
+  {
+    for(size_t i=0; i<N; ++i)
+    {
+      pointsOut[i] = (*this) * pointsIn[i];
     }
   } // ApplyTo()
   
