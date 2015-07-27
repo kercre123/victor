@@ -5,7 +5,8 @@
 #define USER_CONFIG_H_
 
 /// Based on 1MB flash map
-#define USER_NV_PARAM_START 0x7d
+#define USER_NV_PARAM_START 0x7d000
+#define USER_NV_START_SEC   0x7d
 
 #define AP_SSID_FMT "AnkiEspressif%02x%02x"
 #define AP_KEY      "2manysecrets"

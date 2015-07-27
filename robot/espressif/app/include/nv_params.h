@@ -12,7 +12,7 @@ typedef struct
   uint32_t PREFIX;
   uint8_t  ssid[32];
   uint8_t  pkey[64];
-  uint8_t  stationMode;
+  uint8_t  wifiOpMode;
   uint8_t  wifiChannel;
   uint8_t  PADDING[2];
 } NVParams;

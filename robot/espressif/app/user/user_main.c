@@ -190,22 +190,20 @@ user_init(void)
 
     os_printf("Espressif booting up...\r\nCPU set freq rslt = %d\r\n", err);
 
-    wifi_set_event_handler_cb(wifi_event_callback);
-
     nvpars = (NVParams*)os_zalloc(sizeof(NVParams));
     if (nvpars == NULL)
     {
       os_printf("Couldn't allocate memory for NV parameters\r\n");
     }
-    if (system_param_load(USER_NV_PARAM_START, 0, nvpars, sizeof(NVParams)) == false)
+    if (system_param_load(USER_NV_START_SEC, 0, nvpars, sizeof(NVParams)) == false)
     {
       os_printf("Couldn't read non-volatile parameters from flash. Will use defaults\r\n");
     }
     if (nvpars->PREFIX != NV_PARAMS_PREFIX)
     {
-      os_sprintf("Non-voltatile parameters prefix incorrect, using defaults\r\n");
-      nvpars->stationMode = false;
-      nvpars->wifiChannel = 3;
+      os_printf("Non-voltatile parameters prefix incorrect, using defaults\r\n");
+      nvpars->wifiOpMode  = SOFTAP_MODE;
+      nvpars->wifiChannel = 2;
       // Get the mac address
       uint8 macaddr[6];
       err = wifi_get_macaddr(SOFTAP_IF, macaddr);
@@ -217,9 +215,10 @@ user_init(void)
       os_sprintf(nvpars->pkey, AP_KEY);
     }
 
-    if (nvpars->stationMode == false) // Cozmo as Access poiont
+    if (nvpars->wifiOpMode & SOFTAP_MODE) // Cozmo as Access poiont
     {
       struct softap_config ap_config;
+      os_printf("Configuring as access point\r\n");
       // Create config for Wifi AP
       err = wifi_softap_get_config(&ap_config);
       if (err == false)
@@ -285,6 +284,8 @@ user_init(void)
       nvpars = NULL;
     }
 
-    // Register callback
+    // Register callbacks
     system_init_done_cb(&system_init_done);
+    wifi_set_event_handler_cb(wifi_event_callback);
+
 }
