@@ -302,12 +302,21 @@
             ],
             'defines': [
               'MACOS',
+              'dDOUBLE',
             ],
             'libraries': [
               '<(webots_path)/lib/libCppController.dylib',
               '<@(opencv_libs)',
               '$(SDKROOT)/System/Library/Frameworks/OpenGL.framework',
             ],
+            'xcode_settings': {
+              #// for some reason ode.h does not get pre-processed same way
+              #// locally as it does on the build server. this results in
+              #// missing/extra dDOUBLE definition. i've sided with accepting
+              #// the redifinition of dDOUBLE define, and ignoring it at compile time. (ds)
+              'OTHER_CFLAGS': ['-Wno-macro-redefined'],
+              'OTHER_CPLUSPLUSFLAGS': ['-Wno-macro-redefined'],
+            },
           }, # end cozmo_physics
 
           {
