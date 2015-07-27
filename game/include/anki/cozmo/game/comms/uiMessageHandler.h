@@ -65,7 +65,7 @@ namespace Anki {
       virtual Result ProcessMessages();
       
       // Send a message to a specified ID
-      Result SendMessage(const ExternalInterface::MessageEngineToGame& msg);
+      virtual Result SendMessage(const ExternalInterface::MessageEngineToGame& msg);
       void DeliverToGame(const ExternalInterface::MessageEngineToGame&& message) override;
       
       inline void RegisterCallbackForMessage(const std::function<void(const U2G::Message&)>& messageCallback)
@@ -102,12 +102,12 @@ namespace Anki {
       
       // As long as there are messages available from the comms object,
       // process them and pass them along to robots.
-      Result ProcessMessages() {
+      virtual Result ProcessMessages() {
         return RESULT_OK;
       }
       
       // Send a message to a specified ID
-      Result SendMessage(const UserDeviceID_t devID, const ExternalInterface::MessageEngineToGame& msg) {
+      virtual Result SendMessage(const ExternalInterface::MessageEngineToGame& msg) {
         return RESULT_OK;
       }
       
