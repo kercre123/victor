@@ -44,7 +44,7 @@
     ],
 
     'webots_includes': [
-      '<(webots_path)/include/controller/cpp'
+      '<(webots_path)/include/controller/cpp',
     ],
 
     'compiler_flags': [
@@ -378,6 +378,7 @@
               '<(cg-ce_gyp_path):webotsCtrlRobot',
               '<(cg-ce_gyp_path):webotsCtrlViz',
               '<(cg-ce_gyp_path):webotsCtrlLightCube',
+              '<(cg-ce_gyp_path):cozmo_physics',
             ],
             'copies': [
             
@@ -465,6 +466,22 @@
                 ],
                 'outputs': [
                   '../../simulator/controllers/webotsCtrlLightCube/webotsCtrlLightCube',
+                ],
+                'action': [
+                  'ln',
+                  '-s',
+                  '-f',
+                  '<@(_inputs)',
+                  '<@(_outputs)',
+                ],
+              },
+              {
+                'action_name': 'create_symlink_webotsPluginPhysics',
+                'inputs': [
+                  '<(PRODUCT_DIR)/libcozmo_physics.dylib',
+                ],
+                'outputs': [
+                  '../../simulator/plugins/physics/cozmo_physics/libcozmo_physics.dylib',
                 ],
                 'action': [
                   'ln',

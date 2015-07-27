@@ -416,7 +416,8 @@ public class VortexController : GameController
 					CozmoBusyPanel.instance.SetDescription(desc);
 				}
 			} else if(!robot.isBusy && !playerMockBlocks[cozmoIndex].Validated) {
-				robot.TapBlockOnGround(1);
+				//robot.TapBlockOnGround(1);
+				CozmoEmotionManager.SetEmotion("TAP_ONE", true);
 				if(fakeCozmoTaps) {
 					StartCoroutine(TapAfterDelay(1, cozmoTimePerTap));
 				}
@@ -1093,7 +1094,7 @@ public class VortexController : GameController
 	void Enter_SPINNING()
 	{
 
-		SetRobotEmotion("WATCH_SPIN", false);
+		SetRobotEmotion("WATCH_SPIN", true);
 		lightingBall.Radius = wheelLightningRadii[currentWheelIndex];
 
 		for(int i = 0; i < playerButtonCanvasGroups.Length; i++) {
@@ -1195,7 +1196,20 @@ public class VortexController : GameController
 					cozmoTapsSubmitted = 0;
 	
 					if(robot != null) {
-						robot.TapBlockOnGround(predictedNum);
+						//robot.TapBlockOnGround(predictedNum);
+						switch (predictedNum) {
+							case 2:
+								CozmoEmotionManager.SetEmotion("TAP_TWO", true);
+								break;
+							case 3:
+								CozmoEmotionManager.SetEmotion("TAP_THREE", true);
+								break;
+							case 4:
+								CozmoEmotionManager.SetEmotion("TAP_FOUR", true);
+								break;
+							default:
+								break;
+						}
 	
 						//if we aren't faking cozmo's taps, then let's skip our local tapping for him
 						if(!fakeCozmoTaps) cozmoTapsSubmitted = predictedNum;
@@ -1652,13 +1666,16 @@ public class VortexController : GameController
 		}
 	}
 
-	void BlockTapped(ActiveBlock block)
+	void BlockTapped(int blockID)
 	{
+		Debug.Log ("BlockTapped block("+blockID+")");
 		for(int i = 0; i < playerInputBlocks.Count; i++) {
-			if(playerInputBlocks[i] != block) continue;
+			if(playerInputBlocks[i] == null) continue;
+
+			if(playerInputBlocks[i].ID != blockID) continue;
 
 			//if we are faking cozmo's taps, let's ignore any real incoming messages for his block
-			if(fakeCozmoTaps && i == cozmoIndex) return;
+			if(fakeCozmoTaps && i == cozmoIndex) continue;
 
 			PlayerInputTap(i);
 			break;
@@ -1723,9 +1740,14 @@ public class VortexController : GameController
 
 	public void PlayerInputTap(int index)
 	{
+
+		Debug.Log ("PlayerInputTap index("+index+")");
+
 		if(state == GameState.PRE_GAME) {
-			if(index == cozmoIndex) { // cozmo
-				SetRobotEmotion("LETS_PLAY");
+			if (index == cozmoIndex) { // cozmo
+				SetRobotEmotion ("LETS_PLAY");
+			} else {
+				Debug.Log ("PlayerInputTap validating playerIndex("+index+")");
 			}
 			playerMockBlocks[index].Validate(true);
 			return;

@@ -62,12 +62,6 @@ namespace Anki {
       // Private memers:
       namespace {
         // Constants for Webots:
-        const f32 LIFT_SPEED_RAD_PER_SEC = 2.f;
-        const f32 LIFT_ACCEL_RAD_PER_SEC2 = 10.f;
-        
-        const f32 HEAD_SPEED_RAD_PER_SEC = 5.f;
-        const f32 HEAD_ACCEL_RAD_PER_SEC2 = 40.f;
-        
         U2G::Ping _pingMsg;
         
         std::set<int> lastKeysPressed_;
@@ -200,8 +194,8 @@ namespace Anki {
       void SendTurnInPlace(const f32 angle_rad);
       void SendMoveHead(const f32 speed_rad_per_sec);
       void SendMoveLift(const f32 speed_rad_per_sec);
-      void SendMoveHeadToAngle(const f32 rad, const f32 speed, const f32 accel);
-      void SendMoveLiftToHeight(const f32 mm, const f32 speed, const f32 accel);
+      void SendMoveHeadToAngle(const f32 rad, const f32 speed, const f32 accel, const f32 duration_sec = 0.f);
+      void SendMoveLiftToHeight(const f32 mm, const f32 speed, const f32 accel, const f32 duration_sec = 0.f);
       void SendTapBlockOnGround(const u8 numTaps);
       void SendStopAllMotors();
       void SendImageRequest(u8 mode, u8 robotID);
@@ -440,6 +434,10 @@ namespace Anki {
                          msg.objectID, msg.numTaps);
       }
 
+      void HandleAnimationAvailable(ExternalInterface::AnimationAvailable const& msg)
+      {
+        printf("Animation available: %s\n", msg.animName.c_str());
+      }
       
       // ===== End of message handler callbacks ====
       
@@ -510,6 +508,9 @@ namespace Anki {
               break;
             case ExternalInterface::MessageEngineToGame::Tag::ActiveObjectTapped:
               HandleActiveObjectTapped(message.Get_ActiveObjectTapped());
+              break;
+          case ExternalInterface::MessageEngineToGame::Tag::AnimationAvailable:
+              HandleAnimationAvailable(message.Get_AnimationAvailable());
               break;
             default:
               // ignore
@@ -657,12 +658,16 @@ namespace Anki {
           */
           
           // Use slow motor speeds if SHIFT is pressed
-          f32 liftSpeed = LIFT_SPEED_RAD_PER_SEC;
-          f32 headSpeed = HEAD_SPEED_RAD_PER_SEC;
+          f32 liftSpeed = DEG_TO_RAD_F32(root_->getField("liftSpeedDegPerSec")->getSFFloat());
+          f32 liftAccel = DEG_TO_RAD_F32(root_->getField("liftAccelDegPerSec2")->getSFFloat());
+          f32 liftDurationSec = root_->getField("liftDurationSec")->getSFFloat();
+          f32 headSpeed = DEG_TO_RAD_F32(root_->getField("headSpeedDegPerSec")->getSFFloat());
+          f32 headAccel = DEG_TO_RAD_F32(root_->getField("headAccelDegPerSec2")->getSFFloat());
+          f32 headDurationSec = root_->getField("headDurationSec")->getSFFloat();
           if (modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
             wheelSpeed = root_->getField("driveSpeedSlow")->getSFFloat();
-            liftSpeed *= 0.4;
-            headSpeed *= 0.55;
+            liftSpeed *= 0.5;
+            headSpeed *= 0.5;
           } else if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
             wheelSpeed = root_->getField("driveSpeedTurbo")->getSFFloat();
           }
@@ -810,37 +815,37 @@ namespace Anki {
                 
               case '1': //set lift to low dock height
               {
-                SendMoveLiftToHeight(LIFT_HEIGHT_LOWDOCK, liftSpeed, LIFT_ACCEL_RAD_PER_SEC2);
+                SendMoveLiftToHeight(LIFT_HEIGHT_LOWDOCK, liftSpeed, liftAccel, liftDurationSec);
                 break;
               }
                 
               case '2': //set lift to high dock height
               {
-                SendMoveLiftToHeight(LIFT_HEIGHT_HIGHDOCK, liftSpeed, LIFT_ACCEL_RAD_PER_SEC2);
+                SendMoveLiftToHeight(LIFT_HEIGHT_HIGHDOCK, liftSpeed, liftAccel, liftDurationSec);
                 break;
               }
                 
               case '3': //set lift to carry height
               {
-                SendMoveLiftToHeight(LIFT_HEIGHT_CARRY, liftSpeed, LIFT_ACCEL_RAD_PER_SEC2);
+                SendMoveLiftToHeight(LIFT_HEIGHT_CARRY, liftSpeed, liftAccel, liftDurationSec);
                 break;
               }
                 
               case '4': //set head to look all the way down
               {
-                SendMoveHeadToAngle(MIN_HEAD_ANGLE, headSpeed, HEAD_ACCEL_RAD_PER_SEC2);
+                SendMoveHeadToAngle(MIN_HEAD_ANGLE, headSpeed, headAccel, headDurationSec);
                 break;
               }
                 
               case '5': //set head to straight ahead
               {
-                SendMoveHeadToAngle(0, headSpeed, HEAD_ACCEL_RAD_PER_SEC2);
+                SendMoveHeadToAngle(0, headSpeed, headAccel, headDurationSec);
                 break;
               }
                 
               case '6': //set head to look all the way up
               {
-                SendMoveHeadToAngle(MAX_HEAD_ANGLE, headSpeed, HEAD_ACCEL_RAD_PER_SEC2);
+                SendMoveHeadToAngle(MAX_HEAD_ANGLE, headSpeed, headAccel, headDurationSec);
                 break;
               }
                 
@@ -990,11 +995,11 @@ namespace Anki {
                          poseMarkerPose_.GetRotationAngle<'Z'>().ToFloat(),
                          useManualSpeed);
                   SendExecutePathToPose(poseMarkerPose_, useManualSpeed);
-                  SendMoveHeadToAngle(-0.26, HEAD_SPEED_RAD_PER_SEC, HEAD_ACCEL_RAD_PER_SEC2);
+                  SendMoveHeadToAngle(-0.26, headSpeed, headAccel);
                 } else {
                   SendPlaceObjectOnGroundSequence(poseMarkerPose_, useManualSpeed);
                   // Make sure head is tilted down so that it can localize well
-                  SendMoveHeadToAngle(-0.26, HEAD_SPEED_RAD_PER_SEC, HEAD_ACCEL_RAD_PER_SEC2);
+                  SendMoveHeadToAngle(-0.26, headSpeed, headAccel);
                   
                 }
                 break;
@@ -1715,7 +1720,7 @@ namespace Anki {
                     #endif
                     
                     // Compute head speed
-                    f32 speed_rad_per_s = HEAD_SPEED_RAD_PER_SEC * (-(f32)gc_axisValues_[GC_ANALOG_RIGHT_Y] / s16_MAX);
+                    f32 speed_rad_per_s = headSpeed * (-(f32)gc_axisValues_[GC_ANALOG_RIGHT_Y] / s16_MAX);
                     
                     SendMoveHead(speed_rad_per_s);
                     
@@ -1807,7 +1812,7 @@ namespace Anki {
                   // Move lift up/down. Open-loop velocity commands.
                   f32 speed_rad_per_sec = 0;
                   if (pressed) {
-                    speed_rad_per_sec = (LT_held ? 0.4f : 1) * (buttonID == GC_BUTTON_DIR_UP ? 1 : -1) * LIFT_SPEED_RAD_PER_SEC;
+                    speed_rad_per_sec = (LT_held ? 0.4f : 1) * (buttonID == GC_BUTTON_DIR_UP ? 1 : -1) * liftSpeed;
                   }
                   SendMoveLift(speed_rad_per_sec);
                   break;
@@ -1824,7 +1829,7 @@ namespace Anki {
                       height_mm = LT_held ? LIFT_HEIGHT_HIGHDOCK : LIFT_HEIGHT_CARRY;
                     }
                     
-                    SendMoveLiftToHeight(height_mm, LIFT_SPEED_RAD_PER_SEC, LIFT_ACCEL_RAD_PER_SEC2);
+                    SendMoveLiftToHeight(height_mm, liftSpeed, headAccel);
                   }
                   break;
                 }
@@ -2089,23 +2094,25 @@ namespace Anki {
         SendMessage(message);
       }
       
-      void SendMoveHeadToAngle(const f32 rad, const f32 speed, const f32 accel)
+      void SendMoveHeadToAngle(const f32 rad, const f32 speed, const f32 accel, const f32 duration_sec)
       {
         U2G::SetHeadAngle m;
         m.angle_rad = rad;
         m.max_speed_rad_per_sec = speed;
         m.accel_rad_per_sec2 = accel;
+        m.duration_sec = duration_sec;
         U2G::Message message;
         message.Set_SetHeadAngle(m);
         SendMessage(message);
       }
       
-      void SendMoveLiftToHeight(const f32 mm, const f32 speed, const f32 accel)
+      void SendMoveLiftToHeight(const f32 mm, const f32 speed, const f32 accel, const f32 duration_sec)
       {
         U2G::SetLiftHeight m;
         m.height_mm = mm;
         m.max_speed_rad_per_sec = speed;
         m.accel_rad_per_sec2 = accel;
+        m.duration_sec = duration_sec;
         U2G::Message message;
         message.Set_SetLiftHeight(m);
         SendMessage(message);

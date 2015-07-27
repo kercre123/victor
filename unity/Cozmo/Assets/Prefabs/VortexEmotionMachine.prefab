@@ -44,7 +44,7 @@ MonoBehaviour:
   - stateName: IDLE
     emotionAnims:
     - animName: ANIM_TEST_SPINNER
-      numLoops: 1
+      numLoops: 0
   - stateName: LETS_PLAY
     emotionAnims:
     - animName: ANIM_TEST_SPINNER
@@ -63,8 +63,8 @@ MonoBehaviour:
       numLoops: 1
   - stateName: WATCH_SPIN
     emotionAnims:
-    - animName: ANIM_TEST_SPINNER
-      numLoops: 1
+    - animName: WatchSpin
+      numLoops: 0
   - stateName: WATCH_RESULT
     emotionAnims:
     - animName: ANIM_TEST_SPINNER
@@ -79,7 +79,7 @@ MonoBehaviour:
       numLoops: 1
   - stateName: SHOCKED
     emotionAnims:
-    - animName: ANIM_TEST_SPINNER
+    - animName: shocked
       numLoops: 1
   - stateName: MINOR_WIN
     emotionAnims:
@@ -87,7 +87,7 @@ MonoBehaviour:
       numLoops: 1
   - stateName: MAJOR_WIN
     emotionAnims:
-    - animName: shocked
+    - animName: majorWin
       numLoops: 1
   - stateName: MINOR_FAIL
     emotionAnims:
@@ -111,6 +111,28 @@ MonoBehaviour:
       numLoops: 1
   - stateName: NONE
     emotionAnims: []
+  - stateName: TAP_ONE
+    emotionAnims:
+    - animName: firstTap
+      numLoops: 1
+  - stateName: TAP_TWO
+    emotionAnims:
+    - animName: firstTap
+      numLoops: 1
+    - animName: tapAgain
+      numLoops: 1
+  - stateName: TAP_THREE
+    emotionAnims:
+    - animName: firstTap
+      numLoops: 1
+    - animName: tapAgain
+      numLoops: 2
+  - stateName: TAP_FOUR
+    emotionAnims:
+    - animName: firstTap
+      numLoops: 1
+    - animName: tapAgain
+      numLoops: 3
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1

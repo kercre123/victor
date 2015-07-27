@@ -73,12 +73,12 @@ public class CozmoEmotionManager : MonoBehaviour {
 #if UNITY_EDITOR
 		if( Input.GetKeyDown(KeyCode.T) )
 		{
-			SetEmotion("IDLE");
+			SetEmotion("SHOCKED", true);
 		}
 
 		if( Input.GetKeyDown(KeyCode.Y) )
 		{
-			SetEmotion("IDLE", true);
+			SetEmotion("TAP_FOUR", true);
 		}
 #endif
 
@@ -120,10 +120,23 @@ public class CozmoEmotionManager : MonoBehaviour {
 			// send approriate animation
 			if (instance.currentEmotionMachine.HasAnimForState(emotion_state) )
 			{
-				Debug.Log("sending emotion type: " + emotion_state);
-				CozmoAnimation anim = instance.currentEmotionMachine.GetAnimForType(emotion_state);
-				instance.SendAnimation(anim, clear_current);
-				return anim.animName;
+				string last_anim_name = string.Empty;
+				//Debug.Log("sending emotion type: " + emotion_state);
+				List<CozmoAnimation> anims = instance.currentEmotionMachine.GetAnimsForType(emotion_state);
+				for (int i = 0; i < anims.Count; i++) 
+				{
+					CozmoAnimation anim = anims [i];
+					if (i == 0) 
+					{
+						instance.SendAnimation (anim, clear_current);
+					} 
+					else 
+					{
+						instance.SendAnimation (anim, false);
+					}
+					last_anim_name = anim.animName;
+				}
+				return last_anim_name;
 			}
 			else
 			{
@@ -142,12 +155,14 @@ public class CozmoEmotionManager : MonoBehaviour {
 		if(stopPreviousAnim && robot.isBusy && robot.Status (Robot.StatusFlag.IS_ANIMATING)) {
 			robot.CancelAction(Anki.Cozmo.RobotActionType.PLAY_ANIMATION);
 		}
-
+		Debug.Log ("Sending " + anim.animName + " with " + anim.numLoops + " loop" + (anim.numLoops > 1 ? "s":""));
 		PlayAnimationMessage.animationName = anim.animName;
 		PlayAnimationMessage.numLoops = anim.numLoops;
 		PlayAnimationMessage.robotID = robot.ID;
 		RobotEngineManager.instance.Message.PlayAnimation = PlayAnimationMessage;
 		RobotEngineManager.instance.SendMessage();
 	}
+
+
 
 }

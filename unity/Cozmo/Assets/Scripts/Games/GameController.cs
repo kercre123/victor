@@ -623,7 +623,7 @@ public class GameController : MonoBehaviour {
 	protected void SetRobotEmotion(string animName, bool wait=true, bool stopPriorAnim=true) {
 		if(robot == null) return;
 
-		Debug.Log("SetRobotEmotion("+animName+")");
+		//Debug.Log("SetRobotEmotion("+animName+")");
 		CozmoEmotionManager.SetEmotion(animName, stopPriorAnim);
 
 		if(emotionWaitLimiterRoutine != null) StopCoroutine(emotionWaitLimiterRoutine);
