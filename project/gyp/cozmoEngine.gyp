@@ -8,6 +8,7 @@
     'ctrlRobot_source': 'ctrlRobot.lst',
     'ctrlViz_source': 'ctrlViz.lst',
     'clad_source': 'clad.lst',
+    'pluginPhysics_source': 'pluginPhysics.lst',
     
     # TODO: should this be passed in, or shared?
     'coretech_defines': [
@@ -44,7 +45,9 @@
     ],
 
     'webots_includes': [
-      '<(webots_path)/include/controller/cpp'
+      '<(webots_path)/include/controller/cpp',
+      '<(webots_path)/include/ode',
+      '<(webots_path)/include',
     ],
 
     'compiler_flags': [
@@ -283,6 +286,34 @@
 
 
         'targets': [
+
+          {
+            'target_name': 'cozmo_physics',
+            'type': 'shared_library',
+            'include_dirs': [
+              '../../include',
+              '<@(webots_includes)',
+              '<@(opencv_includes)',
+            ],
+            'dependencies': [
+              '<(ce-cti_gyp_path):ctiCommon',
+              '<(ce-cti_gyp_path):ctiMessaging',
+              '<(ce-util_gyp_path):util',
+            ],
+            'sources': [ 
+              '<!@(cat <(pluginPhysics_source))',
+            ],
+            'defines': [
+              'MACOS',
+              'dDOUBLE',
+            ],
+            'libraries': [
+              '<(webots_path)/lib/libCppController.dylib',
+              '<@(opencv_libs)',
+              '$(SDKROOT)/System/Library/Frameworks/OpenGL.framework',
+            ],
+          }, # end cozmo_physics
+
           {
             'target_name': 'webotsCtrlLightCube',
             'type': 'executable',
@@ -309,9 +340,7 @@
             'target_name': 'webotsCtrlViz',
             'type': 'executable',
             'include_dirs': [
-              # '../../robot/include',
               '../../include',
-              # '../../simulator/include',
               '<@(webots_includes)',
               '<@(opencv_includes)',
             ],
