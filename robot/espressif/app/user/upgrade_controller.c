@@ -157,11 +157,14 @@ LOCAL bool upgradeTask(uint32_t param)
       if (flags & UPCMD_CONFIG)
       {
         NVParams* nvpar = (NVParams*)param;
+        os_printf("Wrinting new NVC (%08x \"%s\") to flash\r\n", nvpar->PREFIX, nvpar->ssid);
         if (system_param_save_with_protect(USER_NV_START_SEC, nvpar, sizeof(NVParams)) == false)
         {
           os_printf("UP ERROR: Couldn't save non-volatile parameters\r\n");
         }
         resetUpgradeState();
+        os_printf("...Done\r\n...Restarting\r\n");
+        system_restart();
         return false;
       }
       else
