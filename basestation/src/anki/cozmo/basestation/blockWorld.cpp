@@ -570,7 +570,6 @@ namespace Anki
             inFamily,
             obsType,
             obsID,
-            true, // markers are visible
             boundingBox.GetX(),
             boundingBox.GetY(),
             boundingBox.GetWidth(),
@@ -580,6 +579,7 @@ namespace Anki
             obsObjTrans.z(),
             q.w(), q.x(), q.y(), q.z(),
             topMarkerOrientation.ToFloat(),
+            true, // markers are visible
             observedObject->IsActive()
           )));
         } // if(observedObject->GetNumTimesObserved() > MIN_TIMES_TO_OBSERVE_OBJECT)
@@ -854,7 +854,6 @@ namespace Anki
                     unobserved.family,
                     unobserved.type,
                     unobserved.object->GetID(),
-                    false, // marker not visible
                     boundingBox.GetX(),
                     boundingBox.GetY(),
                     boundingBox.GetWidth(),
@@ -864,6 +863,7 @@ namespace Anki
                     obsObjTrans.z(),
                     q.w(), q.x(), q.y(), q.z(),
                     topMarkerOrientation.ToFloat(),
+                    false, // marker not visible
                     unobserved.object->IsActive()
                   )));
                   ++numVisibleObjects;
