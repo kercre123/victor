@@ -792,7 +792,7 @@ namespace AnimationController {
                       _currentTime_ms, HAL::GetTimeStamp(), msg.curvatureRadius_mm, msg.speed_mmPerSec);
 #               endif
                 
-                f32 leftSpeed, rightSpeed;
+                f32 leftSpeed=0, rightSpeed=0;
                 if(msg.speed == 0) {
                   // Stop
                   leftSpeed = 0.f;
@@ -804,10 +804,7 @@ namespace AnimationController {
                 } else if(msg.curvatureRadius_mm == 0) {
                   // Turn in place: positive speed means turn left
                   // Interpret speed as degrees/sec
-                  leftSpeed  = static_cast<f32>(-msg.speed);
-                  rightSpeed = static_cast<f32>( msg.speed);
-                  
-                  const f32 speed_mmps = WHEEL_DIST_HALF_MM*tan(DEG_TO_RAD(static_cast<f32>(msg.speed)));
+                  const f32 speed_mmps = WHEEL_DIST_HALF_MM*DEG_TO_RAD(static_cast<f32>(msg.speed));
                   leftSpeed  = -speed_mmps;
                   rightSpeed =  speed_mmps;
                   
