@@ -26,9 +26,16 @@ public enum LayoutErrorType {
 	WRONG_COLOR
 }
 
+/// <summary>
+/// manages a list of GameLayout objects that each describe the required positions and rotations of cozmo cubes required for a specific mini-game
+/// 	inventory phase allows the player to show cozmo the correct cubes for the layout
+/// 	building phase allows the player to teach cozmo how to build the layout by picking up and placing cubes(with assistance)
+/// 	autobuilding phase makes cozmo create the layout himself
+/// 
+/// 	much of this logic is skipped for games that do not require a layout as such
+/// 		ie., vortex & energy hunt only require the inventory phase 
+/// </summary>
 public class GameLayoutTracker : MonoBehaviour {
-
-	//dmd todo add vector lines from carried button to layout cubes it could satisfy?
 
 	#region INSPECTOR FIELDS
 
