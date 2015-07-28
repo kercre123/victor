@@ -49,6 +49,10 @@ namespace Anki {
     if(true == PlatformPathManager_iOS_GetPath(PlatformPathManager_iOS_Scope_Sound, buffer, MAX_PATH_LENGTH)) {
       _scopePrefixes[Sound] = buffer;
     }
+    
+    if(true == PlatformPathManager_iOS_GetPath(PlatformPathManager_iOS_Scope_FaceAnimation, buffer, MAX_PATH_LENGTH)) {
+      _scopePrefixes[FaceAnimation] = buffer;
+    }
 
     if(true == PlatformPathManager_iOS_GetPath(PlatformPathManager_iOS_Scope_Resource, buffer, MAX_PATH_LENGTH)) {
       _scopePrefixes[Resource] = buffer;
@@ -62,7 +66,7 @@ namespace Anki {
     // Initialize based on environment variables, set by CMAKE
     _scopePrefixes[Test]      = std::string(QUOTE(SYSTEM_ROOT_PATH)) + "/";
     _scopePrefixes[Config]    = std::string(QUOTE(SYSTEM_ROOT_PATH)) + "/resources/basestation/config/";
-    _scopePrefixes[Animation] = std::string(QUOTE(SYSTEM_ROOT_PATH)) + "/resources/basestation/animations/";
+    _scopePrefixes[Animation] = std::string(QUOTE(SYSTEM_ROOT_PATH)) + "/../products-cozmo-assets/animations/";
     _scopePrefixes[Sound]     = std::string(QUOTE(SYSTEM_ROOT_PATH)) + "/../products-cozmo-assets/sounds/";
     _scopePrefixes[Resource]  = std::string(QUOTE(SYSTEM_ROOT_PATH)) + "/";
     

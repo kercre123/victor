@@ -7,11 +7,11 @@
 #include "hal_delay.h"
 #include "portable.h"
 
-#define BLOCK_ID 0xC3
+#define BLOCK_ID 0xC5
 
 //#define DO_SIMPLE_LED_TEST
 //#define DO_LED_TEST
-//#define DO_TAPS_TEST
+#define DO_TAPS_TEST
 //#define DO_MISSED_PACKET_TEST
 
 //#define STREAM_ACCELEROMETER
@@ -20,7 +20,9 @@
 //#define DO_TRANSMITTER_BEHAVIOR
 //#define DO_LOSSY_TRANSMITTER
 
-#if defined(STREAM_ACCELEROMETER) || defined(DO_TAPS_TEST) || defined(DEBUG_PAYLOAD)
+//#define USE_UART
+
+#if defined(STREAM_ACCELEROMETER) || defined(DO_TAPS_TEST) || defined(DEBUG_PAYLOAD) || defined(DO_MISSED_PACKET_TEST)
 #define USE_UART
 #endif
 
@@ -43,16 +45,17 @@ u8 GetTaps();
 #ifdef USE_UART
 // uart.c
 void InitUart();
-char putchar(char c);
-void putstring(char *s);
-void puthex(char h);
+void PutDec(char i)reentrant;
+char PutChar(char c);
+void PutString(char *s);
+void PutHex(char h);
 #endif
 
 // tests.c
 void RunTests();
 
 // radio.c
-static const u8 RADIO_TIMEOUT_MS = 2;
+static const u8 RADIO_TIMEOUT_MS = 5;
 static const u8 ADDRESS[5] = {BLOCK_ID, 0xC2, 0xC2, 0xC2, 0xC2};
 static const u8 TIMER35MS_H = 0xB6;
 static const u8 TIMER35MS_L = 0x4B;

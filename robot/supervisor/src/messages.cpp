@@ -379,15 +379,15 @@ namespace Anki {
       }
 
       void ProcessSetLiftHeightMessage(const SetLiftHeight& msg) {
-        PRINT("Moving lift to %f\n", msg.height_mm);
+        PRINT("Moving lift to %f (maxSpeed %f, duration %f)\n", msg.height_mm, msg.max_speed_rad_per_sec, msg.duration_sec);
         LiftController::SetMaxSpeedAndAccel(msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2);
-        LiftController::SetDesiredHeight(msg.height_mm);
+        LiftController::SetDesiredHeight(msg.height_mm, 0.1f, 0.1f, msg.duration_sec);
       }
 
       void ProcessSetHeadAngleMessage(const SetHeadAngle& msg) {
-        PRINT("Moving head to %f\n", msg.angle_rad);
+        PRINT("Moving head to %f (maxSpeed %f, duration %f)\n", msg.angle_rad, msg.max_speed_rad_per_sec, msg.duration_sec);
         HeadController::SetMaxSpeedAndAccel(msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2);
-        HeadController::SetDesiredAngle(msg.angle_rad);
+        HeadController::SetDesiredAngle(msg.angle_rad, 0.1f, 0.1f, msg.duration_sec);
       }
 
       void ProcessStopAllMotorsMessage(const StopAllMotors& msg) {

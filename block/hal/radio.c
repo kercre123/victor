@@ -65,7 +65,6 @@ void InitPRX()
 void ReceiveData(u8 msTimeout, bool syncMode)
 {
   u8 now;
-
   // get time
   now = TH0;
 
@@ -74,11 +73,12 @@ void ReceiveData(u8 msTimeout, bool syncMode)
   
   // Wait for a packet, or time out
   radioBusy = true;
-  while(radioBusy)
-  {    
-    #ifndef LISTEN_FOREVER
-    if(missedPacketCount<MAX_MISSED_PACKETS) // do timeout if less than MAX_MISSED_PACKETS, else listen forever
-    {
+ 
+  #ifndef LISTEN_FOREVER
+  if(missedPacketCount<MAX_MISSED_PACKETS) // do timeout if less than MAX_MISSED_PACKETS, else listen forever
+  {
+    while(radioBusy)
+    {   
       if((TH0-now+1)>(5*msTimeout)) 
       {
         // we timed out
@@ -86,18 +86,28 @@ void ReceiveData(u8 msTimeout, bool syncMode)
         {
           missedPacketCount++;
           cumMissedPacketCount++; 
+          #if defined(DO_MISSED_PACKET_TEST)
+          PutChar('\t');
+          PutHex(missedPacketCount);
+          #endif
         }
         radioBusy = false;
       }
     }
-    if(missedPacketCount == MAX_MISSED_PACKETS)
-    {
-      TR0 = 0; // turn off timer
-    }
+  }else if(missedPacketCount == MAX_MISSED_PACKETS)
+  {
+    TR0 = 0; // turn off timer
+    #if defined(DO_MISSED_PACKET_TEST)
+      PutString("\tL\r\n");
     #endif
+    while(radioBusy)
+    {
+    }
+    // timer reset in radio interrupt
+      TR0 = 1; // turn timer back on
   }
-  
-  TR0 = 1; // turn timer back on
+  #endif
+ 
   PowerDownRadio();
   
 }

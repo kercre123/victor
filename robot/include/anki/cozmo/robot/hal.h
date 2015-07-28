@@ -353,6 +353,7 @@ namespace Anki
 
 #     if SIMULATOR
       u32 GetCameraStartTime();
+      bool IsVideoEnabled();
 #     endif
       // Get the number of lines received so far for the specified camera
       //u32 CameraGetReceivedLines(CameraID cameraID);

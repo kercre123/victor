@@ -45,6 +45,9 @@ PROTO CozmoBot [
   
   # Set to TRUE to use treads
   field SFBool useTreads TRUE
+
+  # Whether or not to enable video
+  field SFBool enableVideo TRUE
 ]
 {
 

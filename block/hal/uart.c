@@ -9,24 +9,43 @@
 #define GPIO_TX        P0
 
 
-const char hexLookup[16] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
+static const char hexLookup[16] = {"0123456789ABCDEF"};
 
-void puthex(char h)
+void PutDec(char i) reentrant 
+{
+  if(i == -128) // XXX
+  {
+    i = -127;
+  }
+  if(i<0)
+  {
+    PutChar('-');
+    i=-i;
+  }
+  if(i > 9)
+  {
+    PutDec(i/10);
+  }
+  PutChar((i%10)+'0');
+  
+}
+
+void PutHex(char h)
 {
   hal_uart_putchar(hexLookup[((h&0xF0)>>4)&0x0F]);
   hal_uart_putchar(hexLookup[h&0x0F]);
 }
 
-char putchar(char c)
+char PutChar(char c)
 {
   hal_uart_putchar(c);
   return c;
 }
 
-void putstring(char *s)
+void PutString(char *s)
 {
   while(*s != 0)
-    putchar(*s++);
+    PutChar(*s++);
 }
 
 void InitUart()
@@ -39,6 +58,6 @@ void InitUart()
       // Enable global interrupts
   EA = 1; // XXX is this needed?
   
-  putstring("UART!\r\n");
+  PutString("\r\nUART!\r\n");
 }
 #endif

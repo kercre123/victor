@@ -203,24 +203,6 @@ namespace Anki {
       
     } // SetRootDir()
     
-    // Helper for getting result back from calling a system command:
-    static std::string GetStdoutFromCommand(std::string cmd)
-    {
-      std::string data;
-      FILE * stream;
-      const int max_buffer = 256;
-      char buffer[max_buffer];
-      cmd.append(" 2>&1");
-      
-      stream = popen(cmd.c_str(), "r");
-      if (stream) {
-        while (!feof(stream))
-          if (fgets(buffer, max_buffer, stream) != NULL) data.append(buffer);
-        pclose(stream);
-      }
-      return data;
-    }
-    
     
     // Return false if not valid wav file
     static bool GetWavInfo(std::string fileName,
@@ -237,7 +219,7 @@ namespace Anki {
       u8 header[headerSize];
       fread(header, 1, sizeof(header), fp);
       fseek(fp, 0, SEEK_END);
-      u32 fileSize = ftell(fp);
+      u32 fileSize = (u32)ftell(fp);
       fclose(fp);
       
       bool riffCheck = memcmp(header, "RIFF", 4) == 0;
@@ -476,7 +458,7 @@ namespace Anki {
         fileSize = MIN(fileSize, MAX_SOUND_BUFFER_SIZE);
         fread(_soundBuf, 1, fileSize, _currOpenSoundFilePtr);
         
-        _currOpenSoundNumSamples = fileSize / UNENCODED_SOUND_SAMPLE_SIZE;
+        _currOpenSoundNumSamples = static_cast<u32>(fileSize) / UNENCODED_SOUND_SAMPLE_SIZE;
         
         PRINT_NAMED_INFO("SoundManager.GetSoundSample.Info","Opening %s - duration %f s\n", name.c_str(), _currOpenSoundNumSamples * RobotAudioKeyFrame::SAMPLE_LENGTH_MS * 0.001);
 

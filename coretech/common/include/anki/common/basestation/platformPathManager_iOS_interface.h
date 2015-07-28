@@ -10,6 +10,7 @@ typedef NS_ENUM(int, PlatformPathManager_iOS_Scope) {
   PlatformPathManager_iOS_Scope_Config,
   PlatformPathManager_iOS_Scope_Animation,
   PlatformPathManager_iOS_Scope_Sound,
+  PlatformPathManager_iOS_Scope_FaceAnimation,
   PlatformPathManager_iOS_Scope_Resource,
   //Temp
   PlatformPathManager_iOS_Scope_Count

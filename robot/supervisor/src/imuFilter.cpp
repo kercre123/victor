@@ -57,16 +57,6 @@ namespace Anki {
         
         // Filter coefficient on z-axis accelerometer
         const f32 ACCEL_PICKUP_FILT_COEFF = 0.1f;
-        
-        // Minimum delta in filtered data required to be considering trending up/down
-        const f32 PD_ACCEL_MIN_DELTA = 5.f;
-        
-        // Minimum length of trend (in tics) required for pickup detection.
-        const u32 PD_MIN_TREND_LENGTH = 20;
-        
-        // A trend that spans this difference in accelerometer readings (mm/s2) can be considered
-        // a pickup even if the head was moving.
-        const f32 PD_SUFFICIENT_TREND_DIFF = 4200;
 
         f32 pdFiltAccX_aligned_ = 0;
         f32 pdFiltAccY_aligned_ = 0;
@@ -74,7 +64,6 @@ namespace Anki {
         f32 pdFiltAccX_ = 0.f;
         f32 pdFiltAccY_ = 0.f;
         f32 pdFiltAccZ_ = 9800.f;
-        f32 pdTrendStartVal_ = 0;
         u8 pdRiseCnt_ = 0;
         u8 pdFallCnt_ = 0;
         u8 pdLastHeadMoveCnt_ = 0;
@@ -257,8 +246,6 @@ namespace Anki {
         const f32 xzAccelMagnitude = sqrtf(pdFiltAccX_*pdFiltAccX_ + pdFiltAccZ_*pdFiltAccZ_);
         const f32 accel_angle_imu_frame = atan2_fast(pdFiltAccZ_, pdFiltAccX_);
         const f32 accel_angle_robot_frame = accel_angle_imu_frame + HeadController::GetAngleRad();
-        
-        f32 pdFiltPrevVal = pdFiltAccZ_aligned_;
         
         pdFiltAccX_aligned_ = xzAccelMagnitude * cosf(accel_angle_robot_frame);
         pdFiltAccY_aligned_ = pdFiltAccY_;
