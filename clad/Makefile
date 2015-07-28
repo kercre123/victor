@@ -49,7 +49,7 @@ c: $(OUTPUT_H_AND_C)
 %.cs : %.clad
 	#mkdir -p $(OUTPUT_DIR)/$(dir $<)
 	$(CLAD_CSHARP) -C $(INPUT_DIR) -o $(OUTPUT_DIR_CSHARP)/ $*.clad
-	chmod -f 555 $(OUTPUT_DIR_CSHARP)$*.cs
+	chmod -f 555 $(OUTPUT_DIR_CSHARP)/$*.cs
 
 show:
 	echo "*** input_files ***"
