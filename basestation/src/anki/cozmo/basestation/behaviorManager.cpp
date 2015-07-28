@@ -1202,8 +1202,15 @@ namespace Anki {
     //                NEW BEHAVIOR ENGINE API EXPLORATION
     //
     
+    IBehavior::Status OCD_Behavior::Init(Robot& robot)
+    {
+      
+      // Register to listen for "block" observed signals/messages instead of
+      // polling the robot on every call to GetReward()?
+      
+    }
     
-    Result OCD_Behavior::Update(Robot& robot)
+    IBehavior::Status OCD_Behavior::Update(Robot& robot)
     {
       switch(_currentState)
       {
@@ -1211,7 +1218,7 @@ namespace Anki {
       }
     }
     
-    bool OCD_Behavior::GetReward(Robot& robot, Reward& reward)
+    bool OCD_Behavior::GetRewardBid(Robot& robot, Reward& reward)
     {
       const BlockWorld& blockWorld = robot.GetBlockWorld();
       

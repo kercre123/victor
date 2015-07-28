@@ -177,9 +177,9 @@ namespace Anki {
     {
     public:
       
-      // Calls the currently-selected behavior's Update() method until its
-      // IsDone() method returns true or it fails. Once current behavior completes
-      // switches to next behavior, if there is one.
+      // Calls the currently-selected behavior's Update() method until it
+      // returns COMPLETE or FAILURE. Once current behavior completes
+      // switches to next behavior (including an "idle" behavior).
       Result Update(Robot& robot);
       
       // Picks next behavior based on robot's current state. This does not
@@ -208,26 +208,38 @@ namespace Anki {
     class IBehavior
     {
     public:
-      virtual Result Init(Robot& robot) = 0;
-      virtual Result Update(Robot& robot) = 0;
-      virtual Result Interrupt(Robot& robot) = 0;
+      enum class Status {
+        FAILURE,
+        RUNNING,
+        COMPLETE
+      };
+      
+      virtual Status Init(Robot& robot) = 0;
+      
+      // Step through the behavior and deliver rewards to the robot along the way
+      virtual Status Update(Robot& robot) = 0;
+      
+      virtual Status Interrupt(Robot& robot) = 0;
       
       // Figure out the reward this behavior will offer, given the robot's current
       // state. Returns true if the Behavior is runnable, false if not. (In the
       // latter case, the returned reward is not populated.)
-      virtual bool GetReward(Robot& robot, Reward& reward) = 0;
+      virtual bool GetRewardBid(Robot& robot, Reward& reward) = 0;
       
       
     }; // class IBehavior
     
-    // A behavior that
+    
+    // A behavior that tries to neaten up 
     class OCD_Behavior : public IBehavior
     {
     public:
       
-      virtual Result Update(Robot& robot) override;
+      virtual Status Init(Robot& robot) override;
       
-      virtual bool GetReward(Robot& robot, Reward& reward) override;
+      virtual Status Update(Robot& robot) override;
+      
+      virtual bool GetRewardBid(Robot& robot, Reward& reward) override;
       
     private:
       
@@ -252,13 +264,22 @@ namespace Anki {
     }; // class OCD_Behavior
     
     
-    class LookForFaces : public IBehavior
+    class TrackFaceBehavior : public IBehavior
     {
     public:
       
-      virtual Result Update(Robot& robot) override;
+      virtual Status Update(Robot& robot) override;
       
-    }; // LookForFaces
+    private:
+      
+      enum class State {
+        LOOKING_AROUND,
+        TRACKING_FACE
+      };
+      
+      State _currentState;
+      
+    }; // LookForFacesBehavior
     
   } // namespace Cozmo
 } // namespace Anki
