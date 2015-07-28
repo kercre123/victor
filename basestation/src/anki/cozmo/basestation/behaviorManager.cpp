@@ -28,6 +28,9 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 
+#include "anki/cozmo/shared/RobotMessageDefinitions.h"
+
+
 #include <iomanip>
 
 // The angle wrt the mat at which the user is expected to be.
@@ -1218,9 +1221,23 @@ namespace Anki {
       }
     }
     
+    void OCD_Behavior::HandleObservedObject(RobotObservedObject &msg)
+    {
+      // if the object is a BLOCK or ACTIVE_BLOCK, add its ID to the list we care about
+      _objectsOfInterest.insert(msg.objectID);
+    }
+    
+    void OCD_Behavior::HandleDeletedObject(RobotDeletedObject &msg)
+    {
+      // remove the object if we knew about it
+      _objectsOfInterest.erase(msg.objectID);
+    }
+    
     bool OCD_Behavior::GetRewardBid(Robot& robot, Reward& reward)
     {
       const BlockWorld& blockWorld = robot.GetBlockWorld();
+      
+      //const EmotionMgr emo = robot.GetEmotionMgr();
       
       const BlockWorld::ObjectsMapByType_t& blocks = blockWorld.GetExistingObjectsByFamily(BlockWorld::ObjectFamily::BLOCKS);
       

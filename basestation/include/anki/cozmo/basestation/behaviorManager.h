@@ -230,7 +230,7 @@ namespace Anki {
     }; // class IBehavior
     
     
-    // A behavior that tries to neaten up 
+    // A behavior that tries to neaten up blocks present in the world
     class OCD_Behavior : public IBehavior
     {
     public:
@@ -238,6 +238,8 @@ namespace Anki {
       virtual Status Init(Robot& robot) override;
       
       virtual Status Update(Robot& robot) override;
+      
+      virtual bool IsRunnable(Robot &robot) const;
       
       virtual bool GetRewardBid(Robot& robot, Reward& reward) override;
       
@@ -261,6 +263,8 @@ namespace Anki {
       
       Arrangement _currentArrangement;
       
+      std::set<ObjectID> _objectsOfInterest;
+      
     }; // class OCD_Behavior
     
     
@@ -280,6 +284,15 @@ namespace Anki {
       State _currentState;
       
     }; // LookForFacesBehavior
+    
+    
+    class Reward
+    {
+    public:
+      
+      float value;
+      
+    }; // class Reward
     
   } // namespace Cozmo
 } // namespace Anki
