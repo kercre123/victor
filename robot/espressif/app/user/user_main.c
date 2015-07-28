@@ -219,7 +219,7 @@ user_init(void)
     if (nvpars->wifiOpMode & SOFTAP_MODE) // Cozmo as Access poiont
     {
       struct softap_config ap_config;
-      os_printf("Configuring as access point\r\n");
+      os_printf("Configuring as access point \"%s\"\r\n", nvpars->ssid);
       // Create config for Wifi AP
       err = wifi_softap_get_config(&ap_config);
       if (err == false)
@@ -251,6 +251,7 @@ user_init(void)
     else // Cozmo as station
     {
       struct station_config sta_config;
+      os_printf("Configuring as station to %s\r\n", nvpars->ssid);
       err = wifi_station_get_config_default(&sta_config);
       if (err != 0)
       {
