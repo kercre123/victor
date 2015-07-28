@@ -319,7 +319,7 @@ void ReliableUDPChannel::ReceiveData(const uint8_t *buffer, unsigned int bufferS
     ConnectionData *data = GetConnectionData(sourceAddress);
     if (data == nullptr || data->isDisconnectionQueued) {
       PRINT_STREAM_WARNING("ReliableUDPChannel.ReceiveData",
-                           "Received unexpected normal messages from address " << sourceAddress.ToString() << ".");
+                           "Received unexpected normal messages from address " << sourceAddress.ToString() << ".\n");
       return;
     }
     assert(data->isRealConnectionActive);

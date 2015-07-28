@@ -367,7 +367,7 @@ return RESULT_FAIL; \
           // Special case: there's only one audio option 
           _selectedAudioIndex = 0;
         } else {
-          _selectedAudioIndex = RandHelper(0, _audioReferences.size()-1);
+          _selectedAudioIndex = RandHelper(0, static_cast<s32>(_audioReferences.size()-1));
         }
       }
       
@@ -522,28 +522,6 @@ return RESULT_FAIL; \
     
 #pragma mark -
 #pragma mark BackpackLightsKeyFrame
-    
-    static u32 GetColorAsU32(Json::Value& json)
-    {
-      u32 retVal = 0;
-      
-      if(json.isString()) {
-        Json::Value temp; // can't seem to turn input json into array directly
-        const ColorRGBA color( NamedColors::GetByString(json.asString()));
-        retVal = u32(color);
-        
-      } else if(json.isArray() && json.size() == 3) {
-        const ColorRGBA color(static_cast<u8>(json[0].asUInt()),
-                              static_cast<u8>(json[1].asUInt()),
-                              static_cast<u8>(json[2].asUInt()));
-        retVal = u32(color);
-      } else {
-        PRINT_NAMED_WARNING("GetColor", "Expecting color in Json to be a string or 3-element array, not changing.\n");
-      }
-      
-      return retVal;
-    } // GetColor()
-    
     
     Result BackpackLightsKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot)
     {

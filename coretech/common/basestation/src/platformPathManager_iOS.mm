@@ -77,7 +77,7 @@
     {
       NSString* fullPath = nil;
       if (!fullPath) {
-        fullPath = [[PlatformPathManager_iOS appBundleAssetPath] stringByAppendingString:@"/faceAnimation/"];
+        fullPath = [[PlatformPathManager_iOS appBundleAssetPath] stringByAppendingString:@"/faceAnimations/"];
       }
       path = [fullPath copy];
     }
