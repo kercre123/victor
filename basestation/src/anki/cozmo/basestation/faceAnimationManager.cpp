@@ -269,86 +269,56 @@ namespace Cozmo {
     //  64-255 draw 0-191 pixels (N-64) of black or blue, then invert the color for the next run
     // The decoder starts out drawing black, and inverts the color on every byte >= 64
     
-    // Count how many pixels are in each row
-    cv::Mat rowSums;
-    cv::reduce(img, rowSums, 1, CV_REDUCE_SUM, CV_32S);
-    
-    if(rowSums.rows != IMAGE_HEIGHT) {
+    if(img.rows != IMAGE_HEIGHT || img.cols != IMAGE_WIDTH) {
       PRINT_NAMED_ERROR("FaceAnimationManager.CompressRLE",
-                        "Unexpected number of rows in rowSums: %d instead of %d\n",
-                        rowSums.rows, IMAGE_HEIGHT);
+                        "Expected %dx%d image but got %dx%d image\n",
+                        IMAGE_WIDTH, IMAGE_HEIGHT, img.cols, img.rows);
       return RESULT_FAIL;
     }
     
     bool drawingBlack = true;
     rleData.clear();
-    rleData.push_back(0);
     
-    s32 *rowSumData = rowSums.ptr<s32>(0);
+    const u8* pixel = img.ptr<u8>(0);
+    const u32 totalNumPixels = IMAGE_WIDTH*IMAGE_HEIGHT;
     
-    for(s32 iRow=0; iRow<rowSums.rows; ++iRow)
-    {
-      const s32 sum = rowSumData[iRow];
+    u32 currColorCount = 0;
+    
+    for (int pixCount = 0; pixCount < totalNumPixels; ++pixCount, ++pixel) {
       
-      if(sum == 0) {
-        // All-zero row
-        if(drawingBlack) {
-          rleData.back()++;
-        } else {
-          rleData.push_back(64); // change color
-          rleData.push_back(1);
-          drawingBlack = true;
+      bool colorChange = (*pixel > 0 && drawingBlack) || (*pixel == 0 && !drawingBlack);
+      bool lastPixel = (pixCount == totalNumPixels - 1);
+
+      // If the color changed (or this is the last pixel), then add the bytes for the previous color
+      // and restart the counter for the new color.
+      if (colorChange || lastPixel) {
+        // If the last pixel is the same as the previous pixel, then increment currColorCount,
+        // since we normally only get here if the color changed. If the last group of pixels
+        // is black, however, just exit now.
+        if (!colorChange) {
+          if (drawingBlack) {
+            break;
+          }
+          ++currColorCount;
         }
-      } else if(sum >= 255*IMAGE_WIDTH) {
-        // All-one row       
-        if(drawingBlack) {
-          if(iRow > 0) {
-            rleData.push_back(64);
-          } else {
-            rleData.back() = 64; // change color
-          }
-          rleData.push_back(1);
-          drawingBlack = false;
-        } else {
-          if(rleData.back()==63) {
-            // Special case: we are about to fill the whole screen with "on" lines, but
-            // we can't use "64" because that means "change color without drawing
-            // anything". So leave this as 63 and stick a "1" in the next byte.
-            rleData.push_back(1);
-          } else {
-            rleData.back()++;
-          }
+
+        u32 numRows = currColorCount / 128;
+        u32 numRemainderPixels = currColorCount % 128;
+        if (numRows > 0) {
+          rleData.push_back(numRows);
+        }
+        rleData.push_back(numRemainderPixels + 64);
+
+        drawingBlack = !drawingBlack;
+        currColorCount = 1;
+        
+        // If the last pixel is white and it's a different color from the previous one, add it now.
+        if (lastPixel && colorChange && !drawingBlack) {
+          rleData.push_back(65);
         }
       } else {
-        // Arbitrary number of "on" pixels on this row
-        const u8* row = img.ptr<u8>(iRow);
-        const bool isBlack = row[0] == 0;
-        if(drawingBlack != isBlack) {
-          // Need to change the drawing color
-          rleData.push_back(64);
-          drawingBlack = !drawingBlack;
-        }
-        
-        // Init new RLE counter at next byte
-        rleData.push_back(65);
-        drawingBlack = !drawingBlack;
-        
-        for(s32 jCol=1; jCol<IMAGE_WIDTH; ++jCol) {
-          if(row[jCol] == row[jCol-1]) {
-            // Haven't changed color, keep incrementing current RLE count
-            rleData.back()++;
-          } else {
-            // Color just changed, move to next byte
-            rleData.push_back(65);
-            drawingBlack = !drawingBlack;
-          }
-        }
+        ++currColorCount;
       }
-    }
-    
-    // Special case for all-zero:
-    if(rleData.size() == 1 && rleData[0] == 64) {
-      rleData.clear();
     }
     
     // Terminator
