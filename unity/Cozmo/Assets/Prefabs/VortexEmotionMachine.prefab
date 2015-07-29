@@ -42,92 +42,118 @@ MonoBehaviour:
   defaultEmotionState: IDLE
   emotionStates:
   - stateName: IDLE
+    playAllAnims: 0
     emotionAnims:
     - animName: ANIM_TEST_SPINNER
       numLoops: 0
   - stateName: LETS_PLAY
+    playAllAnims: 0
     emotionAnims:
     - animName: ANIM_TEST_SPINNER
       numLoops: 1
   - stateName: PRE_GAME
+    playAllAnims: 0
     emotionAnims:
     - animName: ANIM_TEST_SPINNER
       numLoops: 1
   - stateName: YOUR_TURN
+    playAllAnims: 0
     emotionAnims:
     - animName: ANIM_TEST_SPINNER
       numLoops: 1
   - stateName: SPIN_WHEEL
+    playAllAnims: 0
     emotionAnims:
-    - animName: ANIM_TEST_SPINNER
+    - animName: Spin
+      numLoops: 1
+    - animName: Spin2
       numLoops: 1
   - stateName: WATCH_SPIN
+    playAllAnims: 0
     emotionAnims:
     - animName: WatchSpin
       numLoops: 0
   - stateName: WATCH_RESULT
+    playAllAnims: 0
     emotionAnims:
     - animName: ANIM_TEST_SPINNER
       numLoops: 1
   - stateName: EXPECT_REWARD
+    playAllAnims: 0
     emotionAnims:
     - animName: ANIM_TEST_SPINNER
       numLoops: 1
   - stateName: KNOWS_WRONG
+    playAllAnims: 0
     emotionAnims:
     - animName: ANIM_TEST_SPINNER
       numLoops: 1
   - stateName: SHOCKED
+    playAllAnims: 0
     emotionAnims:
     - animName: shocked
       numLoops: 1
   - stateName: MINOR_WIN
+    playAllAnims: 0
     emotionAnims:
     - animName: shocked
       numLoops: 1
   - stateName: MAJOR_WIN
+    playAllAnims: 0
     emotionAnims:
     - animName: majorWin
       numLoops: 1
   - stateName: MINOR_FAIL
+    playAllAnims: 0
     emotionAnims:
     - animName: minorFail
       numLoops: 1
   - stateName: MAJOR_FAIL
+    playAllAnims: 0
     emotionAnims:
     - animName: ANIM_TEST_SPINNER
       numLoops: 1
   - stateName: WIN_MATCH
+    playAllAnims: 0
     emotionAnims:
     - animName: ANIM_TEST_SPINNER
       numLoops: 1
   - stateName: LOSE_MATCH
+    playAllAnims: 0
     emotionAnims:
     - animName: ANIM_TEST_SPINNER
       numLoops: 1
   - stateName: TAUNT
+    playAllAnims: 0
     emotionAnims:
-    - animName: ANIM_TEST_SPINNER
+    - animName: Taunt
+      numLoops: 1
+    - animName: Taunt2
       numLoops: 1
   - stateName: NONE
+    playAllAnims: 0
     emotionAnims: []
   - stateName: TAP_ONE
+    playAllAnims: 0
     emotionAnims:
     - animName: firstTap
       numLoops: 1
   - stateName: TAP_TWO
+    playAllAnims: 1
     emotionAnims:
     - animName: firstTap
       numLoops: 1
     - animName: tapAgain
       numLoops: 1
   - stateName: TAP_THREE
+    playAllAnims: 1
     emotionAnims:
     - animName: firstTap
       numLoops: 1
     - animName: tapAgain
       numLoops: 2
   - stateName: TAP_FOUR
+    playAllAnims: 1
     emotionAnims:
     - animName: firstTap
       numLoops: 1
