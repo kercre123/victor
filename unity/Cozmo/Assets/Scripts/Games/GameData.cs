@@ -5,7 +5,7 @@ using System.Collections.Generic;
 public class GameData : MonoBehaviour
 {
 	public static GameData instance = null;
-	
+
 	public Dictionary<string, LevelData> levelData { get; private set; }
 
 	[System.Serializable]
@@ -18,7 +18,8 @@ public class GameData : MonoBehaviour
 	[System.Serializable]
 	public struct LevelData
 	{
-		[HideInInspector] public string name; // for inspector info
+		[HideInInspector] public string name;
+		// for inspector info
 		public int[] stars;
 		public int scoreToWin;
 		public float maxPlayTime;
@@ -28,30 +29,30 @@ public class GameData : MonoBehaviour
 
 	private void Awake()
 	{
-		if( instance != null )
+		if(instance != null)
 		{
-			GameObject.Destroy( gameObject );
+			GameObject.Destroy(gameObject);
 			return;
 		}
 		
 		instance = this;
 		levelData = new Dictionary<string, LevelData>();
 	}
-	
+
 	private void OnDestroy()
 	{
-		if( instance == this ) instance = null;
+		if(instance == this) instance = null;
 	}
 
 	private void OnEnable()
 	{
 		levelData.Clear();
 
-		for( int i = 0; i < games.Length; ++i )
+		for(int i = 0; i < games.Length; ++i)
 		{
-			for( int j = 0; j < games[i].levels.Length; ++j )
+			for(int j = 0; j < games[i].levels.Length; ++j)
 			{
-				levelData.Add( games[i].name + games[i].levels[j].name, games[i].levels[j] );
+				levelData.Add(games[i].name + games[i].levels[j].name, games[i].levels[j]);
 			}
 		}
 	}

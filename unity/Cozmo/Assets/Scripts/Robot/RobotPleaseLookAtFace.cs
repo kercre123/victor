@@ -1,6 +1,9 @@
 ﻿using UnityEngine;
 using System.Collections;
 
+/// <summary>
+/// made for testing cozmo's ability to look at a human head that he has located
+/// </summary>
 public class RobotPleaseLookAtFace : MonoBehaviour {
 
 	protected Robot robot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.current : null; } }

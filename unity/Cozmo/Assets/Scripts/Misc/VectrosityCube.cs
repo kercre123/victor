@@ -5,7 +5,8 @@ using Vectrosity;
 /// <summary>
 /// uses vectrosity to draw wireframe cube
 /// </summary>
-public class VectrosityCube : MonoBehaviour {
+public class VectrosityCube : MonoBehaviour
+{
 
 	[SerializeField] Material lineMaterial;
 	[SerializeField] float width = 2f;
@@ -39,18 +40,10 @@ public class VectrosityCube : MonoBehaviour {
 	};
 
 	VectorLine line = null;
-	//bool initialized = false;
 	Color color = Color.white;
 
-	void OnEnable() {
-//		if(initialized) {
-//			if(line != null) {
-//				VectorLine.Destroy(ref line);
-//			}
-//			Debug.Log(gameObject.name + " OnEnable already initialized, remake line");
-//			CreateWireFrame();
-//		}
-
+	void OnEnable()
+	{
 		if(!debugEditing) return;
 
 		SetMaterial(lineMaterial);
@@ -58,71 +51,59 @@ public class VectrosityCube : MonoBehaviour {
 		Show();
 	}
 
-	void OnDisable() {
+	void OnDisable()
+	{
 		Hide();
 	}
 
-	public void Show() {
+	public void Show()
+	{
 		if(line == null) return;
-		//Debug.Log(gameObject.name + " Show");
-		//SetColor(color);
-		//line.point = cubePoints;
-		//line.Draw3D();
 		line.active = true;
 	}
 
-	public void Hide() {
+	public void Hide()
+	{
 		if(line == null) return;
-		//Debug.Log(gameObject.name + " Hide");
-		//line.points3.Clear();
-		//line.Draw3D();
 		line.active = false;
-		//SetTempColor(Color.clear);
 	}
 
-	public void CreateWireFrame () {
+	public void CreateWireFrame()
+	{
 		if(line != null) return;
 
-		//Debug.Log(gameObject.name + " CreateWireFrame");
-		//VectorManager.useDraw3D = true;
 		// Make a Vector3 array that contains points for a cube that's 1 unit in size
-		//Debug.Log("frame("+Time.frameCount+") VectrosityCube.CreateWireFrame");	
+
 		// Make a line using the above points and material, with a width of 2 pixels
 		line = new VectorLine("Vectrosity_" + gameObject.name, cubePoints, lineMaterial, width);
 		
 		// Make this transform have the vector line object that's defined above
 		// This object is a rigidbody, so the vector object will do exactly what this object does
 		VectorManager.ObjectSetup(gameObject, line, Visibility.Always, Brightness.None, false);
-		//line.Draw3DAuto();
 
 		SetColor(color);
 		SetMaterial(lineMaterial);
 
-		//initialized = true;
 	}
 
-	void SetTempColor(Color color) {
+	void SetTempColor(Color color)
+	{
 		if(line == null) return;
 		line.SetColor(color);
 	}
 
-	public void SetColor(Color color) {
+	public void SetColor(Color color)
+	{
 		if(line == null) return;
 		this.color = color;
 		line.SetColor(color);
 	}
 
-	public void SetMaterial(Material mat) {
+	public void SetMaterial(Material mat)
+	{
 		if(line == null) return;
 		lineMaterial = mat;
 		line.material = mat;
-	}
-
-	void OnDestroy() {
-//		if(line != null) {
-//			Debug.Log("VectrosityCube OnDestroy VectorLine.Destroy(ref line);");
-//			VectorLine.Destroy(ref line);
-//		}
 	}
 
 }

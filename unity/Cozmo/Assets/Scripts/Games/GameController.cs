@@ -10,12 +10,14 @@ using Anki.Cozmo;
 /// this component acts as a simple state machine using a GameState enumeration to represent the common features of all cozmo minigames
 ///		specific games inherit from this class to enact their own unique features
 /// </summary>
-public class GameController : MonoBehaviour {
+public class GameController : MonoBehaviour
+{
 
 	#region NESTED DEFINITIONS
 
 	//add states here only if they belong to ALL games
-	public enum GameState {
+	public enum GameState
+	{
 		BUILDING,
 		PRE_GAME,
 		PLAYING,
@@ -25,7 +27,8 @@ public class GameController : MonoBehaviour {
 
 	//associate a time value in seconds with the voice-over audio clip describing it
 	[Serializable]
-	public struct TimerAudio {
+	public struct TimerAudio
+	{
 		public int time;
 		public AudioClip sound;
 	}
@@ -54,8 +57,8 @@ public class GameController : MonoBehaviour {
 	[SerializeField] protected AudioClip playerScoreSound;
 	[SerializeField] protected AudioClip playingLoopSound;
 	[SerializeField] protected GameActions[] stateActions = new GameActions[(int)GameState.Count];
-	[SerializeField] protected AudioClip[] winSounds = new AudioClip[STAR_COUNT+1];
-	[SerializeField] protected AudioClip[] winLoopSounds = new AudioClip[STAR_COUNT+1];
+	[SerializeField] protected AudioClip[] winSounds = new AudioClip[STAR_COUNT + 1];
+	[SerializeField] protected AudioClip[] winLoopSounds = new AudioClip[STAR_COUNT + 1];
 	[SerializeField] protected AudioClip loseSound;
 	[SerializeField] protected AudioClip loseLoopSound;
 	[SerializeField] protected Image[] starImages = new Image[STAR_COUNT];
@@ -68,22 +71,40 @@ public class GameController : MonoBehaviour {
 	#endregion
 
 	#region PUBLIC MEMBERS
-	
-	public const int MAX_PLAYERS = 4; //four plus cozmo?
+
+	public const int MAX_PLAYERS = 4;
+	//four plus cozmo?
 	public const int STAR_COUNT = 3;
+
 	public static float MessageDelay { get { return _MessageDelay; } protected set { _MessageDelay = value; } }
+
 	public GameState state { get; private set; }
-	
-	public const string STARS_END =  "_stars";
+
+	public const string STARS_END = "_stars";
+
 	public string SAVED_STARS { get { return currentGameName + currentLevelNumber + STARS_END; } }
+
 	public int savedStars { get { return PlayerPrefs.GetInt(SAVED_STARS, 0); } set { PlayerPrefs.SetInt(SAVED_STARS, value); } }
 
 	#endregion
 
 	#region PROTECTED MEMBERS
 
-	protected AudioClip gameOverSound { get { if(win) return stars < winSounds.Length ? winSounds[stars] : null; return loseSound; } }
-	protected AudioClip resultsLoopSound { get { if(win) return stars < winLoopSounds.Length ? winLoopSounds[stars] : null; return loseLoopSound; } }
+	protected AudioClip gameOverSound
+	{
+		get {
+			if(win) return stars < winSounds.Length ? winSounds[stars] : null;
+			return loseSound;
+		}
+	}
+
+	protected AudioClip resultsLoopSound
+	{
+		get {
+			if(win) return stars < winLoopSounds.Length ? winLoopSounds[stars] : null;
+			return loseLoopSound;
+		}
+	}
 
 	protected bool playRequested = false;
 	protected bool buildRequested = false;
@@ -94,11 +115,14 @@ public class GameController : MonoBehaviour {
 	protected bool countdownAnnounced = false;
 	protected float lastPlayTime = 0;
 	protected int timerEventIndex = 0;
-	protected float bonusTime = 0; // bonus time is awarded each time the player numDropsForBonusTime drop offs 
+	protected float bonusTime = 0;
+	// bonus time is awarded each time the player numDropsForBonusTime drop offs
 
 	//supporting four human players plus cozmo for now
 	protected List<int> scores = new List<int>();
-	protected int score {
+
+	protected int score
+	{
 		get { return scores[0]; }
 		set { scores[0] = value; }
 	}
@@ -107,6 +131,7 @@ public class GameController : MonoBehaviour {
 	protected bool win = false;
 
 	protected string currentGameName { get; private set; }
+
 	protected int currentLevelNumber { get; private set; }
 
 	protected bool firstFrame = true;
@@ -116,12 +141,14 @@ public class GameController : MonoBehaviour {
 	protected Robot robot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.current : null; } }
 
 	protected float gameStartingInDelay { get { return gameStartingIn != null ? gameStartingIn.length + 0.1f : 0f; } }
+
 	protected float instructionsDelay { get { return instructionsSound != null ? instructionsSound.length + 0.5f : 0f; } }
 
 	protected int lastTimerSeconds = 0;
 	protected float coundownTimer = 0f;
 
 	protected static float _MessageDelay = 0.5f;
+
 	protected GameData.LevelData levelData { get; private set; }
 
 	protected bool waitingForEmoteToFinish = false;
@@ -132,8 +159,10 @@ public class GameController : MonoBehaviour {
 
 	#region MONOBEHAVIOR CALLBACKS
 
-	protected virtual void Awake() {
-		for(int i=0; i<stateActions.Length; i++) {
+	protected virtual void Awake()
+	{
+		for(int i = 0; i < stateActions.Length; i++)
+		{
 			if(stateActions[i] == null) continue;
 			stateActions[i].gameObject.SetActive(false);
 		}
@@ -141,7 +170,8 @@ public class GameController : MonoBehaviour {
 		while(scores.Count < MAX_PLAYERS) scores.Add(0);
 	}
 
-	protected virtual void OnEnable () {
+	protected virtual void OnEnable()
+	{
 		state = GameState.BUILDING;
 		stateTimer = 0f;
 		errorMsgTimer = 0f;
@@ -154,17 +184,17 @@ public class GameController : MonoBehaviour {
 
 		if(currentLevelOverride > 0) currentLevelNumber = currentLevelOverride;
 
-		if(GameData.instance != null) {
+		if(GameData.instance != null)
+		{
 			if(GameData.instance.levelData.ContainsKey(currentGameName + currentLevelNumber))
 			{
 				levelData = GameData.instance.levelData[currentGameName + currentLevelNumber];
-			}
-			else
+			} else
 			{
 				Debug.LogError("GameData does not contain level: " + currentGameName + currentLevelNumber);
 			}
-		}
-		else {
+		} else
+		{
 			Debug.LogError("GameData is not in scene");
 		}
 
@@ -178,23 +208,26 @@ public class GameController : MonoBehaviour {
 		if(RobotEngineManager.instance != null) RobotEngineManager.instance.RobotCompletedAnimation += RobotCompletedAnimation;
 	}
 
-	void Update () {
+	void Update()
+	{
 		stateTimer += Time.deltaTime;
 
 		//force our initial state to enter in case there is set up code there
-		if(firstFrame) {
+		if(firstFrame)
+		{
 			EnterState();
-		}
-		else {
+		} else
+		{
 
 			GameState nextState = GetNextState();
 
-			if(nextState != state) {
+			if(nextState != state)
+			{
 				ExitState();
 				state = nextState;
 				EnterState();
-			}
-			else {
+			} else
+			{
 				UpdateState();
 			}
 
@@ -208,7 +241,8 @@ public class GameController : MonoBehaviour {
 		buildRequested = false;
 	}
 
-	protected virtual void OnDisable () {
+	protected virtual void OnDisable()
+	{
 		if(textError != null) textError.gameObject.SetActive(false);
 		if(playButton != null) playButton.gameObject.SetActive(false);
 		if(resultsPanel != null) resultsPanel.gameObject.SetActive(false);
@@ -226,10 +260,12 @@ public class GameController : MonoBehaviour {
 
 	#region PRIVATE METHODS
 
-	GameState GetNextState() {
+	GameState GetNextState()
+	{
 
 		//consider switching states
-		switch(state) {
+		switch(state)
+		{
 			case GameState.BUILDING:
 				if((playRequested || autoPlay) && IsGameReady()) return GameState.PRE_GAME; 
 				break;
@@ -250,39 +286,71 @@ public class GameController : MonoBehaviour {
 		return state;
 	}
 
-	void EnterState() {
+	void EnterState()
+	{
 		stateTimer = 0f;
 
-		switch(state) {
-			case GameState.BUILDING: 	Enter_BUILDING(); break;
-			case GameState.PRE_GAME: 	Enter_PRE_GAME(); break;
-			case GameState.PLAYING: 	Enter_PLAYING(); break;
-			case GameState.RESULTS: 	Enter_RESULTS(); break;
+		switch(state)
+		{
+			case GameState.BUILDING:
+				Enter_BUILDING();
+				break;
+			case GameState.PRE_GAME:
+				Enter_PRE_GAME();
+				break;
+			case GameState.PLAYING:
+				Enter_PLAYING();
+				break;
+			case GameState.RESULTS:
+				Enter_RESULTS();
+				break;
 		}
 	}
 
-	void UpdateState() {
-		switch(state) {
-			case GameState.BUILDING: 	Update_BUILDING(); break;
-			case GameState.PRE_GAME: 	Update_PRE_GAME(); break;
-			case GameState.PLAYING: 	Update_PLAYING(); break;
-			case GameState.RESULTS: 	Update_RESULTS(); break;
+	void UpdateState()
+	{
+		switch(state)
+		{
+			case GameState.BUILDING:
+				Update_BUILDING();
+				break;
+			case GameState.PRE_GAME:
+				Update_PRE_GAME();
+				break;
+			case GameState.PLAYING:
+				Update_PLAYING();
+				break;
+			case GameState.RESULTS:
+				Update_RESULTS();
+				break;
 		}
 	}
 
-	void ExitState() {
-		switch(state) {
-			case GameState.BUILDING: 	Exit_BUILDING(); break;
-			case GameState.PRE_GAME: 	Exit_PRE_GAME(); break;
-			case GameState.PLAYING: 	Exit_PLAYING(); break;
-			case GameState.RESULTS: 	Exit_RESULTS(); break;
+	void ExitState()
+	{
+		switch(state)
+		{
+			case GameState.BUILDING:
+				Exit_BUILDING();
+				break;
+			case GameState.PRE_GAME:
+				Exit_PRE_GAME();
+				break;
+			case GameState.PLAYING:
+				Exit_PLAYING();
+				break;
+			case GameState.RESULTS:
+				Exit_RESULTS();
+				break;
 		}
 	}
 
-	void RefreshGameActionsForState() {
+	void RefreshGameActionsForState()
+	{
 		GameActions currentActions = stateActions[(int)state];
 		
-		for(int i=0;i<stateActions.Length;i++) {
+		for(int i = 0; i < stateActions.Length; i++)
+		{
 			if(stateActions[i] != null && currentActions != stateActions[i]) stateActions[i].gameObject.SetActive(false);
 		}
 		
@@ -294,7 +362,7 @@ public class GameController : MonoBehaviour {
 		int num_pops = 0;
 		float lastPopTime = -1;
 		
-		for(int i = 0; i < starImages.Length; ++i) 
+		for(int i = 0; i < starImages.Length; ++i)
 		{
 			if(starImages[i] != null) starImages[i].gameObject.SetActive(false);
 		}
@@ -302,39 +370,37 @@ public class GameController : MonoBehaviour {
 		
 		while(num_pops < stars + 1)
 		{
-			if( lastPopTime + starPopInTime < Time.realtimeSinceStartup )
+			if(lastPopTime + starPopInTime < Time.realtimeSinceStartup)
 			{
 				// time to pop in a star
-				if( num_pops < starImages.Length )
+				if(num_pops < starImages.Length)
 				{
 					starImages[num_pops].gameObject.SetActive(win && num_pops < stars);
 					starImages[num_pops].transform.localScale = new Vector3(minStarPop, minStarPop, 0);
-					if( win && num_pops < stars )
+					if(win && num_pops < stars)
 					{
 						AudioManager.PlayOneShot(starPop);
 					}
 				}
 				lastPopTime = Time.realtimeSinceStartup;
 				num_pops++;
-			}
-			else
+			} else
 			{
 				// lerp it in three phases:
 				/// 1) from minStarPop to maxStarPop
 				/// 2) from maxStarPop back to 1
 				float pop_time = Time.realtimeSinceStartup - lastPopTime;
 				float scale = 1;
-				if( pop_time < starPopInTime/2 )
+				if(pop_time < starPopInTime / 2)
 				{
 					// first half
-					scale = Mathf.Lerp(minStarPop, maxStarPop, pop_time/(starPopInTime/2));
-				}
-				else
+					scale = Mathf.Lerp(minStarPop, maxStarPop, pop_time / (starPopInTime / 2));
+				} else
 				{
 					// second half
-					scale = Mathf.Lerp(maxStarPop, 1, (pop_time-(starPopInTime/2))/(starPopInTime/2));
+					scale = Mathf.Lerp(maxStarPop, 1, (pop_time - (starPopInTime / 2)) / (starPopInTime / 2));
 				}
-				starImages[num_pops-1].transform.localScale = new Vector3(scale,scale,0);
+				starImages[num_pops - 1].transform.localScale = new Vector3(scale, scale, 0);
 				
 			}
 			yield return 0;
@@ -343,14 +409,16 @@ public class GameController : MonoBehaviour {
 		yield return 0;
 	}
 
-	IEnumerator StopWaitingForEmotion(float delay) {
+	IEnumerator StopWaitingForEmotion(float delay)
+	{
 		yield return new WaitForSeconds(delay);
 		
 		waitingForEmoteToFinish = false;
 	}
 
-	void RobotCompletedAnimation(bool success, string animName) {
-		Debug.Log("RobotCompletedAnimation("+success+", "+animName+")");
+	void RobotCompletedAnimation(bool success, string animName)
+	{
+		Debug.Log("RobotCompletedAnimation(" + success + ", " + animName + ")");
 		if(emotionWaitLimiterRoutine != null) StopCoroutine(emotionWaitLimiterRoutine);
 		emotionWaitLimiterRoutine = null;
 
@@ -363,41 +431,53 @@ public class GameController : MonoBehaviour {
 
 	protected const string suffix_seconds = "s";
 
-	protected virtual void RefreshHUD() {
-		if(textScore != null) {
+	protected virtual void RefreshHUD()
+	{
+		if(textScore != null)
+		{
 			textScore.text = score.ToString();
 		}
 
-		if(textState != null) {
+		if(textState != null)
+		{
 			textState.text = state.ToString();
 		}
 
-		if (textTime != null && state == GameState.PLAYING) {
-			if (levelData.maxPlayTime > 0f) {
-				textTime.text = Mathf.CeilToInt (levelData.maxPlayTime - stateTimer).ToString () + suffix_seconds;
-			} else {
-				textTime.text = Mathf.CeilToInt (stateTimer).ToString () + suffix_seconds;
+		if(textTime != null && state == GameState.PLAYING)
+		{
+			if(levelData.maxPlayTime > 0f)
+			{
+				textTime.text = Mathf.CeilToInt(levelData.maxPlayTime - stateTimer).ToString() + suffix_seconds;
+			} else
+			{
+				textTime.text = Mathf.CeilToInt(stateTimer).ToString() + suffix_seconds;
 			}
-		} else if (textTime != null) {
+		} else if(textTime != null)
+		{
 			textTime.text = string.Empty;
 		}
 
-		if(state != GameState.PLAYING && playRequested && !IsGameReady()) {
-			if(textError != null) {
+		if(state != GameState.PLAYING && playRequested && !IsGameReady())
+		{
+			if(textError != null)
+			{
 				//set specific text once we have analyzer
 				textError.gameObject.SetActive(true);
 			}
 			errorMsgTimer = 5f;
 		}
 		
-		if(errorMsgTimer > 0f) {
+		if(errorMsgTimer > 0f)
+		{
 			errorMsgTimer -= Time.deltaTime;
-			if(errorMsgTimer <= 0f) {
-				if(textError != null) {
+			if(errorMsgTimer <= 0f)
+			{
+				if(textError != null)
+				{
 					textError.gameObject.SetActive(false);
 				}
-			}
-			else {
+			} else
+			{
 				Color color = textError.color;
 				color.a = Mathf.Lerp(0f, 1f, errorMsgTimer);
 				textError.color = color;
@@ -405,33 +485,41 @@ public class GameController : MonoBehaviour {
 		}
 	}
 
-	protected virtual void Enter_BUILDING() {
+	protected virtual void Enter_BUILDING()
+	{
 		//Debug.Log(gameObject.name + " Enter_BUILDING");
 
 		if(playButton != null) playButton.gameObject.SetActive(true);
 		if(robot != null) robot.SetObjectAdditionAndDeletion(true, false);
 	}
-	protected virtual void Update_BUILDING() {
+
+	protected virtual void Update_BUILDING()
+	{
 		//Debug.Log(gameObject.name + " Update_BUILDING");
 	}
-	protected virtual void Exit_BUILDING() {
+
+	protected virtual void Exit_BUILDING()
+	{
 		//Debug.Log(gameObject.name + " Exit_BUILDING");
 
 		if(playButton != null) playButton.gameObject.SetActive(false);
 		if(robot != null) robot.SetObjectAdditionAndDeletion(false, false);
 	}
-		
-	protected virtual void Enter_PRE_GAME() {
+
+	protected virtual void Enter_PRE_GAME()
+	{
 		//Debug.Log(gameObject.name + " Enter_PRE_GAME");
 
-		if(countdownText != null) {
+		if(countdownText != null)
+		{
 			countdownText.gameObject.SetActive(false);
 		}
 
 		coundownTimer = 0f;
 		countdownAnnounced = false;
 
-		for(int i=0;i<scores.Count;i++) {
+		for(int i = 0; i < scores.Count; i++)
+		{
 			scores[i] = 0;
 		}
 
@@ -440,14 +528,17 @@ public class GameController : MonoBehaviour {
 		//if(robot != null) robot.SetObjectAdditionAndDeletion(false, false);
 	}
 
-	protected virtual void Update_PRE_GAME() {
+	protected virtual void Update_PRE_GAME()
+	{
 		//Debug.Log(gameObject.name + " Update_PRE_GAME");
 		//add game specific intro messaging in an override of this method
 		// for instance, if this game requires a certain action to start, tell them here: 'pick up X to begin!'
 		//	or if this game has a count-down before start, we display that count down here
-		if(countdownToStart > 0f) {
+		if(countdownToStart > 0f)
+		{
 
-			if(coundownTimer == 0f) {
+			if(coundownTimer == 0f)
+			{
 				if(instructionsSound != null) AudioManager.PlayOneShot(instructionsSound);
 				//Debug.Log("gameStartingIn stateTimer("+stateTimer+")");
 				if(gameStartingIn != null) AudioManager.PlayAudioClip(gameStartingIn, instructionsDelay, AudioManager.Source.Notification);
@@ -457,14 +548,16 @@ public class GameController : MonoBehaviour {
 
 			coundownTimer += Time.deltaTime;
 
-			if(coundownTimer >= gameStartingInDelay + instructionsDelay) {
+			if(coundownTimer >= gameStartingInDelay + instructionsDelay)
+			{
 
-				int remaining = Mathf.CeilToInt( Mathf.Clamp((countdownToStart + gameStartingInDelay + instructionsDelay) - coundownTimer, 0f, countdownToStart) );
+				int remaining = Mathf.CeilToInt(Mathf.Clamp((countdownToStart + gameStartingInDelay + instructionsDelay) - coundownTimer, 0f, countdownToStart));
 
 				//Debug.Log("PlayCountdownAudio stateTimer("+stateTimer+")");
 				PlayCountdownAudio(remaining);
 				
-				if(countdownText != null) {
+				if(countdownText != null)
+				{
 					countdownText.text = remaining.ToString();
 					countdownText.gameObject.SetActive(true);
 				}
@@ -472,14 +565,17 @@ public class GameController : MonoBehaviour {
 		}
 	}
 
-	protected virtual void Exit_PRE_GAME() {
+	protected virtual void Exit_PRE_GAME()
+	{
 		//Debug.Log(gameObject.name + " Exit_PRE_GAME");
-		if(countdownText != null) {
+		if(countdownText != null)
+		{
 			countdownText.gameObject.SetActive(false);
 		}
 	}
 
-	protected virtual void Enter_PLAYING() {
+	protected virtual void Enter_PLAYING()
+	{
 
 		timerEventIndex = 0;
 		bonusTime = 0;
@@ -493,23 +589,29 @@ public class GameController : MonoBehaviour {
 		score = 0;
 	}
 
-	protected virtual void Update_PLAYING() {
+	protected virtual void Update_PLAYING()
+	{
 		//Debug.Log(gameObject.name + " Update_PLAYING");
 	}
-	protected virtual void Exit_PLAYING(bool overrideStars = false) {
+
+	protected virtual void Exit_PLAYING(bool overrideStars = false)
+	{
 		win = false;
 		
-		if(levelData.scoreToWin > 0) {
+		if(levelData.scoreToWin > 0)
+		{
 			win = score >= levelData.scoreToWin;
-		}
-		else {
+		} else
+		{
 			win = true;
 		}
 
-		if(!overrideStars) {
+		if(!overrideStars)
+		{
 			stars = 0;
 			int[] starRequirements = levelData.stars;
-			for(int i = 0; i < starRequirements.Length; ++i) {
+			for(int i = 0; i < starRequirements.Length; ++i)
+			{
 				if(score >= starRequirements[i] && starRequirements[i] > 0) stars = i + 1;
 			}
 
@@ -522,15 +624,18 @@ public class GameController : MonoBehaviour {
 		if(gameOverSound != null) AudioManager.PlayOneShot(gameOverSound);
 	}
 
-	protected virtual void Enter_RESULTS() {
+	protected virtual void Enter_RESULTS()
+	{
 
 		//Debug.Log(gameObject.name + " Enter_RESULTS");
 		StartCoroutine(PopInStars());
 		if(resultsPanel != null) resultsPanel.gameObject.SetActive(true);
 		if(textScore != null) textScore.gameObject.SetActive(true);
 		if(resultsLoopSound != null) AudioManager.PlayAudioClipLooping(resultsLoopSound, gameOverSound != null ? gameOverSound.length + 0.5f : 0.5f, AudioManager.Source.Gameplay);
-		if(textAddaboy != null) {
-			switch(stars) {
+		if(textAddaboy != null)
+		{
+			switch(stars)
+			{
 				case 0: 
 					textAddaboy.text = "Better luck next time!";
 					break;
@@ -546,27 +651,33 @@ public class GameController : MonoBehaviour {
 			}
 		}
 
-		if(robotBusyDuringResults && robot != null ) {
+		if(robotBusyDuringResults && robot != null)
+		{
 			robot.isBusy = true;
 		}
 	}
 
-	protected virtual void Update_RESULTS() {
+	protected virtual void Update_RESULTS()
+	{
 		//Debug.Log(gameObject.name + " Update_RESULTS");
 	}
-	protected virtual void Exit_RESULTS() {
+
+	protected virtual void Exit_RESULTS()
+	{
 		//Debug.Log(gameObject.name + " Exit_RESULTS");
 
 		if(resultsPanel != null) resultsPanel.gameObject.SetActive(false);
 		if(textScore != null) textScore.gameObject.SetActive(false);
 		AudioManager.Stop(resultsLoopSound);
-		if(robot != null) {
+		if(robot != null)
+		{
 			robot.TurnOffAllLights();
 			if(robotBusyDuringResults) robot.isBusy = false;
 		}
 	}
 
-	protected virtual bool IsGameReady() {
+	protected virtual bool IsGameReady()
+	{
 		if(robot == null) return false;
 		if(GameLayoutTracker.instance == null) return false;
 
@@ -574,7 +685,8 @@ public class GameController : MonoBehaviour {
 		return GameLayoutTracker.instance.Phase == LayoutTrackerPhase.DISABLED;
 	}
 
-	protected virtual bool IsPreGameCompleted() {
+	protected virtual bool IsPreGameCompleted()
+	{
 		if(robot == null) return false;
 		if(GameLayoutTracker.instance == null) return false;
 
@@ -587,12 +699,17 @@ public class GameController : MonoBehaviour {
 	}
 
 	protected List<int> winners = new List<int>();
-	protected virtual bool IsGameOver() {
+
+	protected virtual bool IsGameOver()
+	{
 		winners.Clear();
 
-		if(levelData.scoreToWin > 0) {
-			for(int i=0;i<scores.Count;i++) {
-				if(scores[i] >= levelData.scoreToWin) {
+		if(levelData.scoreToWin > 0)
+		{
+			for(int i = 0; i < scores.Count; i++)
+			{
+				if(scores[i] >= levelData.scoreToWin)
+				{
 					winners.Add(i);
 				}
 			}
@@ -604,11 +721,14 @@ public class GameController : MonoBehaviour {
 		
 		return false;
 	}
-	
-	protected void PlayCountdownAudio(int secondsLeft) {
+
+	protected void PlayCountdownAudio(int secondsLeft)
+	{
 		bool played = false;
-		for(int i=0; i<timerSounds.Length; i++) {
-			if(secondsLeft == timerSounds[i].time && lastTimerSeconds != timerSounds[i].time) {
+		for(int i = 0; i < timerSounds.Length; i++)
+		{
+			if(secondsLeft == timerSounds[i].time && lastTimerSeconds != timerSounds[i].time)
+			{
 				AudioManager.PlayAudioClipDeferred(timerSounds[i].sound, 0, AudioManager.Source.Notification);
 				played = true;
 				break;
@@ -620,7 +740,8 @@ public class GameController : MonoBehaviour {
 		lastTimerSeconds = secondsLeft;
 	}
 
-	protected void SetRobotEmotion(string animName, bool wait=true, bool stopPriorAnim=true) {
+	protected void SetRobotEmotion(string animName, bool wait = true, bool stopPriorAnim = true)
+	{
 		if(robot == null) return;
 
 		//Debug.Log("SetRobotEmotion("+animName+")");
@@ -639,15 +760,18 @@ public class GameController : MonoBehaviour {
 
 	#region PUBLIC METHODS
 
-	public void PlayRequested() {
+	public void PlayRequested()
+	{
 		//Debug.Log ("PlayRequested");
 		playRequested = true;
 	}
 
-	public void BuildRequested() {
+	public void BuildRequested()
+	{
 		//Debug.Log ("BuildRequested");
 		buildRequested = true;
-		if (GameLayoutTracker.instance != null) {
+		if(GameLayoutTracker.instance != null)
+		{
 			GameLayoutTracker.instance.StartBuild();
 		}
 	}
