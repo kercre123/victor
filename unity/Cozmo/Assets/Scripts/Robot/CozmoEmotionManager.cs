@@ -121,21 +121,31 @@ public class CozmoEmotionManager : MonoBehaviour {
 			if (instance.currentEmotionMachine.HasAnimForState(emotion_state) )
 			{
 				string last_anim_name = string.Empty;
-				Debug.Log("sending emotion type: " + emotion_state);
+				//Debug.Log("sending emotion type: " + emotion_state);
 				List<CozmoAnimation> anims = instance.currentEmotionMachine.GetAnimsForType(emotion_state);
-				for (int i = 0; i < anims.Count; i++) 
+				CozmoEmotionState emo_state = instance.currentEmotionMachine.GetStateForName (emotion_state);
+				if (emo_state.playAllAnims)
 				{
-					CozmoAnimation anim = anims [i];
-					if (i == 0) 
+					for (int i = 0; i < anims.Count; i++)
 					{
-						instance.SendAnimation (anim, clear_current);
-					} 
-					else 
-					{
-						instance.SendAnimation (anim, false);
+						CozmoAnimation anim = anims [i];
+						if (i == 0)
+						{
+							instance.SendAnimation (anim, clear_current);
+						}
+						else
+						{
+							instance.SendAnimation (anim, false);
+						}
+						last_anim_name = anim.animName;
 					}
-					last_anim_name = anim.animName;
 				}
+				else
+				{
+					int rand_index = UnityEngine.Random.Range(0, anims.Count - 1);
+					instance.SendAnimation (anims[rand_index], clear_current);
+				}
+
 				return last_anim_name;
 			}
 			else

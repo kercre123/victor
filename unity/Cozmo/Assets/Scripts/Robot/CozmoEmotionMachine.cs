@@ -15,6 +15,7 @@ public struct CozmoEmotionState
 {
 	//public string stateName;
 	public string stateName;
+	public bool playAllAnims;
 	public List<CozmoAnimation> emotionAnims;
 	
 }
@@ -24,6 +25,7 @@ public class CozmoEmotionMachine : MonoBehaviour {
 	public string defaultEmotionState;
 	public List<CozmoEmotionState> emotionStates;
 	private Dictionary<string, List<CozmoAnimation>> typeAnims = new Dictionary<string, List<CozmoAnimation>>();
+	private Dictionary<string, CozmoEmotionState> statesByName = new Dictionary<string, CozmoEmotionState>();
 
 	public void Awake()
 	{
@@ -36,9 +38,10 @@ public class CozmoEmotionMachine : MonoBehaviour {
 			}
 			else
 			{
-				if( !typeAnims.ContainsKey(emotionStates[i].stateName) )
+				if( !statesByName.ContainsKey(emotionStates[i].stateName) )
 				{
 					typeAnims.Add(emotionStates[i].stateName, emotionStates[i].emotionAnims);
+					statesByName.Add (emotionStates [i].stateName, emotionStates[i]);
 				}
 				else
 				{
@@ -96,7 +99,12 @@ public class CozmoEmotionMachine : MonoBehaviour {
 
 	public List<CozmoAnimation> GetAnimsForType(string state_name)
 	{
-		return typeAnims [state_name];
+		return typeAnims[state_name];
+	}
+
+	public CozmoEmotionState GetStateForName(string state_name)
+	{
+		return statesByName[state_name];
 	}
 	
 }
