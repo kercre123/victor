@@ -3,7 +3,8 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
-public partial class AdvertisementRegistrationMsg {
+public partial class AdvertisementRegistrationMsg
+{
 	public ushort port;
 	public byte[] ip = new byte[18];
 	public byte id;
@@ -19,12 +20,12 @@ public partial class AdvertisementRegistrationMsg {
 	public System.IO.Stream Pack(System.IO.Stream stream)
 	{
 		System.IO.BinaryWriter writer = new System.IO.BinaryWriter(stream);
-		writer.Write (port);
-		writer.Write (ip);
-		writer.Write (id);
-		writer.Write (protocol);
-		writer.Write (enableAdvertisement);
-		writer.Write (oneShot);
+		writer.Write(port);
+		writer.Write(ip);
+		writer.Write(id);
+		writer.Write(protocol);
+		writer.Write(enableAdvertisement);
+		writer.Write(oneShot);
 		return stream;
 	}
 
@@ -32,16 +33,18 @@ public partial class AdvertisementRegistrationMsg {
 	public System.IO.Stream Unpack(System.IO.Stream stream)
 	{
 		System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
-		port = reader.ReadUInt16 ();
-		for (int i = 0; i < ip.Length; ++i) {
-			ip[i] = reader.ReadByte ();
+		port = reader.ReadUInt16();
+		for(int i = 0; i < ip.Length; ++i)
+		{
+			ip[i] = reader.ReadByte();
 		}
-		id = reader.ReadByte ();
-		protocol = reader.ReadByte ();
-		enableAdvertisement = reader.ReadByte ();
-		oneShot = reader.ReadByte ();
+		id = reader.ReadByte();
+		protocol = reader.ReadByte();
+		enableAdvertisement = reader.ReadByte();
+		oneShot = reader.ReadByte();
 		return stream;
 	}
+
 	public int Size
 	{
 		get {

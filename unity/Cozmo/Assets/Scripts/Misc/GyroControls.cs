@@ -2,7 +2,8 @@ using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
 
-public class GyroControls : MonoBehaviour {
+public class GyroControls : MonoBehaviour
+{
 
 	[SerializeField] float rollAngleMin = 10f;
 	[SerializeField] float rollAngleMax = 45f;
@@ -13,9 +14,11 @@ public class GyroControls : MonoBehaviour {
 	[SerializeField] RectTransform upIndicator = null;
 
 	float x = 0f;
-	public float GetHorizontal(float min=-1f, float max=-1f) {
-		if (min < 0) min = rollAngleMin;
-		if (max < 0) min = rollAngleMax;
+
+	public float GetHorizontal(float min = -1f, float max = -1f)
+	{
+		if(min < 0) min = rollAngleMin;
+		if(max < 0) min = rollAngleMax;
 
 		if(!SystemInfo.supportsGyroscope) return 0f;
 
@@ -25,11 +28,13 @@ public class GyroControls : MonoBehaviour {
 	}
 
 	float y = 0f;
-	public float GetVertical(float min=-1f, float max=-1f) {
+
+	public float GetVertical(float min = -1f, float max = -1f)
+	{
 		if(!SystemInfo.supportsGyroscope) return 0f;
 
-		if (min < 0) min = pitchAngleMin;
-		if (max < 0) min = pitchAngleMax;
+		if(min < 0) min = pitchAngleMin;
+		if(max < 0) min = pitchAngleMax;
 
 		float pitch = MSP_Input.GyroAccel.GetPitch();
 		y = Mathf.Clamp01((Mathf.Abs(pitch) - pitchAngleMin) / (pitchAngleMax - pitchAngleMin)) * -Mathf.Sign(pitch);
@@ -37,11 +42,13 @@ public class GyroControls : MonoBehaviour {
 		return y; 
 	}
 
-	void FixedUpdate() {
+	void FixedUpdate()
+	{
 		if(!SystemInfo.supportsGyroscope) return;
 
 
-		if(upIndicator != null) {
+		if(upIndicator != null)
+		{
 			float roll = MSP_Input.GyroAccel.GetRoll();
 			upIndicator.localRotation = Quaternion.AngleAxis(-roll, Vector3.forward);
 		}

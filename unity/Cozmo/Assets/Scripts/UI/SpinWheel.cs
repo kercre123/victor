@@ -155,6 +155,8 @@ public class SpinWheel : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
 	public float TokenOuterRadius { get { return tokenOuterRadius; } }
 
 	public int PredictedNumber { get; private set; }
+	public int PredictedNextNumber { get; private set; }
+	public int PredictedPreviousNumber { get; private set; }
 	public float TotalDuration { get; private set; }
 	public float TimeAfterLastPeg { get; private set; }
 	public float TotalRotations { get; private set; }
@@ -340,6 +342,8 @@ public class SpinWheel : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
 		SpinStartTime = Time.time;
 		//do effect?
 
+		bool spinClockwise = displayData.angularVel < 0;
+
 		predictedData.Copy(displayData);
 
 		//predictionCoroutine = StartCoroutine(PredictSpinResults());
@@ -347,11 +351,27 @@ public class SpinWheel : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
 		CalculateSpin(ref predictedData);
 
 		PredictedNumber = GetPredictedNumber();
+
+		int finalIndex = frames[frames.Count - 1].sliceIndex;
+		int previousSliceIndex = finalIndex + (spinClockwise ? -1 : 1);
+		int nextSliceIndex = finalIndex + (spinClockwise ? 1 : -1);
+
+		if(previousSliceIndex < 0) previousSliceIndex = numSlices - 1;
+		if(previousSliceIndex >= numSlices) previousSliceIndex = 0;
+
+		if(nextSliceIndex < 0) nextSliceIndex = numSlices - 1;
+		if(nextSliceIndex >= numSlices) nextSliceIndex = 0;
+
+		PredictedPreviousNumber = slices[previousSliceIndex].Number;
+		PredictedNextNumber = slices[nextSliceIndex].Number;
+
 		TotalDuration = predictedData.totalTime;
 		TimeAfterLastPeg = predictedData.timeAfterLastPeg;
 		TotalRotations = Mathf.Abs(predictedData.wheelAngle - predictedData.wheelAngleAtSpinStart) / 360f;
 
 		state = SpinWheelState.SPINNING;
+
+		Debug.Log("SpinStart PredictedNumber("+PredictedNumber+") Previous("+PredictedPreviousNumber+") Next("+PredictedNextNumber+")");
 	}
 
 	void SpinUpdate(float time, ref SpinData data) {

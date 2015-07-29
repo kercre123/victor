@@ -1,7 +1,11 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class SceneLoader : MonoBehaviour {
+/// <summary>
+/// allows ui interactions, such as button presses, to trigger a LevelLoad
+/// </summary>
+public class SceneLoader : MonoBehaviour
+{
 
 	[SerializeField] string scene = null;
 	[SerializeField] bool onEnable = false;
@@ -9,19 +13,22 @@ public class SceneLoader : MonoBehaviour {
 
 	int frames = 0;
 
-	void OnEnable() {
+	void OnEnable()
+	{
 		if(onEnable) LoadScene();
 	}
 
-	void Update() {
+	void Update()
+	{
 		frames++;
 		if(onUpdateFrame == frames) LoadScene();
 	}
 
-	public void LoadScene() {
+	public void LoadScene()
+	{
 		if(string.IsNullOrEmpty(scene)) return;
 
-		Debug.Log("SceneLoader Application.LoadLevel("+scene+")");
+		Debug.Log("SceneLoader Application.LoadLevel(" + scene + ")");
 		Application.LoadLevel(scene);
 	}
 }

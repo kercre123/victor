@@ -3,25 +3,34 @@ using UnityEngine;
 using System;
 using System.Reflection;
 
-public static class CozmoUtil {
+/// <summary>
+/// utility class for convenience methods and constants relevant to cozmo
+/// 	much of these constants should migrate to clas ultimately
+/// </summary>
+public static class CozmoUtil
+{
 
-	public const float SMALL_SCREEN_MAX_HEIGHT          = 3f;
-	public const float MAX_WHEEL_SPEED_MM 	            = 160f;
-	public const float MIN_WHEEL_SPEED_MM 	            = 10f;
-	public const float BLOCK_LENGTH_MM 		            = 44f;
-	public const float LOCAL_BUSY_TIME 		            = 1f;
-	public const float MAX_LIFT_HEIGHT_MM 	            = 92f;
-	public const float MIN_LIFT_HEIGHT_MM 	            = 31f;
-	public const float LIFT_REQUEST_TIME 	            = 3f;
-	public const float MIN_HEAD_ANGLE 		            = -25f;
-	public const float MAX_HEAD_ANGLE 		            = 34f;
-	public const float MAX_SPEED_RAD_PER_SEC            = 5f;
-	public const float HEAD_ANGLE_REQUEST_TIME 	        = 3f;
-	public const float CARRIED_OBJECT_HEIGHT 	        = 75f;
-	public const float CARRIED_OBJECT_VERTICAL_OFFSET   = -15f;  //this is fudged
+	public const float SMALL_SCREEN_MAX_HEIGHT = 3f;
+	public const float MAX_WHEEL_SPEED_MM = 160f;
+	public const float MIN_WHEEL_SPEED_MM = 10f;
+	public const float BLOCK_LENGTH_MM = 44f;
+	public const float LOCAL_BUSY_TIME = 1f;
+	public const float MAX_LIFT_HEIGHT_MM = 92f;
+	public const float MIN_LIFT_HEIGHT_MM = 31f;
+	public const float LIFT_REQUEST_TIME = 3f;
+	public const float MIN_HEAD_ANGLE = -25f;
+	public const float MAX_HEAD_ANGLE = 34f;
+	public const float MAX_SPEED_RAD_PER_SEC = 5f;
+	public const float HEAD_ANGLE_REQUEST_TIME = 3f;
+	public const float CARRIED_OBJECT_HEIGHT = 75f;
+
+	//this is fudged
+	public const float CARRIED_OBJECT_VERTICAL_OFFSET = -15f;
+
 	public const float CARRIED_OBJECT_HORIZONTAL_OFFSET = 30f;
 
-	public static Vector3 Vector3UnityToCozmoSpace(Vector3 vector) {
+	public static Vector3 Vector3UnityToCozmoSpace(Vector3 vector)
+	{
 		float forward = vector.z;
 		float up = vector.y;
 
@@ -31,7 +40,8 @@ public static class CozmoUtil {
 		return vector;
 	}
 
-	public static Vector3 Vector3CozmoToUnitySpace(Vector3 vector) {
+	public static Vector3 Vector3CozmoToUnitySpace(Vector3 vector)
+	{
 		float forward = vector.y;
 		float up = vector.z;
 
@@ -41,7 +51,8 @@ public static class CozmoUtil {
 		return vector;
 	}
 
-	public static void CalcWheelSpeedsForTwoAxisInputs(Vector2 inputs, out float leftWheelSpeed, out float rightWheelSpeed, float maxTurnFactor) {
+	public static void CalcWheelSpeedsForTwoAxisInputs(Vector2 inputs, out float leftWheelSpeed, out float rightWheelSpeed, float maxTurnFactor)
+	{
 		
 		leftWheelSpeed = 0f;
 		rightWheelSpeed = 0f;
@@ -51,34 +62,36 @@ public static class CozmoUtil {
 		float speed = inputs.magnitude;
 		float turn = inputs.x;
 
-		speed = Mathf.Clamp01(speed*speed) * Mathf.Sign(inputs.y);
+		speed = Mathf.Clamp01(speed * speed) * Mathf.Sign(inputs.y);
 
-		if(turn == 0f) { 
+		if(turn == 0f)
+		{ 
 			//forward or backwards, scale speed from min to max
 			speed = Mathf.Lerp(MIN_WHEEL_SPEED_MM, MAX_WHEEL_SPEED_MM, Mathf.Abs(speed)) * Mathf.Sign(speed);
 
 			leftWheelSpeed = speed;
 			rightWheelSpeed = speed;
-		}
-		else if(inputs.y == 0f) {
+		} else if(inputs.y == 0f)
+		{
 			//turn in place left or right, scale speed from min to max including maxTurnFactor
 			speed = Mathf.Lerp(MIN_WHEEL_SPEED_MM, MAX_WHEEL_SPEED_MM, Mathf.Abs(speed) * maxTurnFactor) * Mathf.Sign(speed);
 
 			leftWheelSpeed = turn > 0f ? speed : -speed;
 			rightWheelSpeed = turn > 0f ? -speed : speed;
-		}
-		else {
+		} else
+		{
 			//drive and turn
 			speed = Mathf.Lerp(MIN_WHEEL_SPEED_MM, MAX_WHEEL_SPEED_MM, Mathf.Abs(speed)) * Mathf.Sign(speed);
 
 			float speedA = speed;
-			float speedB = Mathf.Lerp(speed, speed*0.5f*(1f-maxTurnFactor), Mathf.Abs(turn));
+			float speedB = Mathf.Lerp(speed, speed * 0.5f * (1f - maxTurnFactor), Mathf.Abs(turn));
 
-			if(turn > 0f) {
+			if(turn > 0f)
+			{
 				leftWheelSpeed = speedA;
 				rightWheelSpeed = speedB;
-			}
-			else if(turn < 0f) {
+			} else if(turn < 0f)
+			{
 				rightWheelSpeed = speedA;
 				leftWheelSpeed = speedB;
 			}
@@ -87,7 +100,8 @@ public static class CozmoUtil {
 		//Debug.Log("CalcWheelSpeedsFromBotRelativeInputsB speed("+speed+") turn("+turn+")");
 	}
 
-	public static void CalcWheelSpeedsForThumbStickInputs(Vector2 inputs, out float leftWheelSpeed, out float rightWheelSpeed, float maxAngle, float maxTurnFactor, bool reverse=false) {
+	public static void CalcWheelSpeedsForThumbStickInputs(Vector2 inputs, out float leftWheelSpeed, out float rightWheelSpeed, float maxAngle, float maxTurnFactor, bool reverse = false)
+	{
 		
 		leftWheelSpeed = 0f;
 		rightWheelSpeed = 0f;
@@ -99,15 +113,16 @@ public static class CozmoUtil {
 
 		float turn = 0f;
 
-		if(!reverse) {
+		if(!reverse)
+		{
 			if(maxAngle > 0f) turn = Mathf.Clamp01(Vector2.Angle(Vector2.up, inputs) / maxAngle) * Mathf.Sign(inputs.x);
-		}
-		else {
+		} else
+		{
 			if(maxAngle > 0f) turn = Mathf.Clamp01(Vector2.Angle(-Vector2.up, inputs) / maxAngle) * Mathf.Sign(inputs.x);
 			speed = -speed;
 		}
 
-		speed = speed*speed * (speed < 0f ? -1f : 1f);
+		speed = speed * speed * (speed < 0f ? -1f : 1f);
 		//turn = turn*turn * (turn < 0f ? -1f : 1f);
 
 		speed = Mathf.Lerp(MIN_WHEEL_SPEED_MM, MAX_WHEEL_SPEED_MM, Mathf.Abs(speed)) * Mathf.Sign(speed);
@@ -115,9 +130,10 @@ public static class CozmoUtil {
 		float speedA = speed;
 		float speedB = speed;
 
-		if(turn != 0f) {
-			speedA = Mathf.Lerp(speed, speed*maxTurnFactor, Mathf.Abs(turn));
-			speedB = Mathf.Lerp(speed, -speed*maxTurnFactor, Mathf.Abs(turn));
+		if(turn != 0f)
+		{
+			speedA = Mathf.Lerp(speed, speed * maxTurnFactor, Mathf.Abs(turn));
+			speedB = Mathf.Lerp(speed, -speed * maxTurnFactor, Mathf.Abs(turn));
 		}
 
 		leftWheelSpeed = turn >= 0f ? speedA : speedB;
@@ -126,7 +142,8 @@ public static class CozmoUtil {
 		//Debug.Log("CalcDriveWheelSpeedsForInputs speed("+speed+") turn("+turn+")");
 	}
 
-	public static void CalcTurnInPlaceWheelSpeeds(float x, out float leftWheelSpeed, out float rightWheelSpeed, float maxTurnFactor) {
+	public static void CalcTurnInPlaceWheelSpeeds(float x, out float leftWheelSpeed, out float rightWheelSpeed, float maxTurnFactor)
+	{
 		leftWheelSpeed = 0f;
 		rightWheelSpeed = 0f;
 		if(x == 0f) return;
@@ -137,7 +154,8 @@ public static class CozmoUtil {
 		rightWheelSpeed = -speed;
 	}
 
-	public static void CalcWheelSpeedsForOldThumbStickInputs(Vector2 inputs, out float leftWheelSpeed, out float rightWheelSpeed, float maxAngle, float maxTurnFactor) {
+	public static void CalcWheelSpeedsForOldThumbStickInputs(Vector2 inputs, out float leftWheelSpeed, out float rightWheelSpeed, float maxAngle, float maxTurnFactor)
+	{
 		
 		leftWheelSpeed = 0f;
 		rightWheelSpeed = 0f;
@@ -150,15 +168,16 @@ public static class CozmoUtil {
 		float turn = 0f;
 		bool reverse = inputs.y < 0f;
 
-		if(!reverse) {
+		if(!reverse)
+		{
 			if(maxAngle > 0f) turn = Mathf.Clamp01(Vector2.Angle(Vector2.up, inputs) / maxAngle) * Mathf.Sign(inputs.x);
-		}
-		else {
+		} else
+		{
 			if(maxAngle > 0f) turn = Mathf.Clamp01(Vector2.Angle(-Vector2.up, inputs) / maxAngle) * Mathf.Sign(inputs.x);
 			speed = -speed;
 		}
 		
-		speed = speed*speed * (speed < 0f ? -1f : 1f);
+		speed = speed * speed * (speed < 0f ? -1f : 1f);
 		//turn = turn*turn * (turn < 0f ? -1f : 1f);
 		
 		speed = Mathf.Lerp(MIN_WHEEL_SPEED_MM, MAX_WHEEL_SPEED_MM, Mathf.Abs(speed)) * Mathf.Sign(speed);
@@ -166,8 +185,9 @@ public static class CozmoUtil {
 		float speedA = speed;
 		float speedB = speed;
 		
-		if(turn != 0f) {
-			speedB = Mathf.Lerp(speed, speed*0.5f*(1f-maxTurnFactor), Mathf.Abs(turn));
+		if(turn != 0f)
+		{
+			speedB = Mathf.Lerp(speed, speed * 0.5f * (1f - maxTurnFactor), Mathf.Abs(turn));
 		}
 		
 		leftWheelSpeed = turn >= 0f ? speedA : speedB;
@@ -176,7 +196,8 @@ public static class CozmoUtil {
 		//Debug.Log("CalcDriveWheelSpeedsForInputs speed("+speed+") turn("+turn+")");
 	}
 
-	public static void CalcWheelSpeedsForPlayerRelInputs(Vector2 inputs, out float leftWheelSpeed, out float rightWheelSpeed) {
+	public static void CalcWheelSpeedsForPlayerRelInputs(Vector2 inputs, out float leftWheelSpeed, out float rightWheelSpeed)
+	{
 		
 		leftWheelSpeed = 0f;
 		rightWheelSpeed = 0f;
@@ -205,7 +226,8 @@ public static class CozmoUtil {
 		//Debug.Log("CalcDriveWheelSpeedsForInputs speed("+speed+") turn("+turn+")");
 	}
 
-	public static T GetCopyOf<T>(Component comp, T other) where T : Component {
+	public static T GetCopyOf<T>(Component comp, T other) where T : Component
+	{
 		Type type = comp.GetType();
 		//if(type != other.GetType()) {
 		//	Debug.LogError("GetCopyOf type mis-match");
@@ -213,16 +235,21 @@ public static class CozmoUtil {
 		//}
 		BindingFlags flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Default | BindingFlags.DeclaredOnly;
 		PropertyInfo[] pinfos = type.GetProperties(flags);
-		foreach (var pinfo in pinfos) {
-			if (pinfo.CanWrite) {
-				try {
+		foreach(var pinfo in pinfos)
+		{
+			if(pinfo.CanWrite)
+			{
+				try
+				{
 					pinfo.SetValue(comp, pinfo.GetValue(other, null), null);
-				}
-				catch { } // In case of NotImplementedException being thrown. For some reason specifying that exception didn't seem to catch it, so I didn't catch anything specific.
+				} catch
+				{
+				} // In case of NotImplementedException being thrown. For some reason specifying that exception didn't seem to catch it, so I didn't catch anything specific.
 			}
 		}
 		FieldInfo[] finfos = type.GetFields(flags);
-		foreach (var finfo in finfos) {
+		foreach(var finfo in finfos)
+		{
 			finfo.SetValue(comp, finfo.GetValue(other));
 		}
 		return comp as T;

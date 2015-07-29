@@ -7,7 +7,8 @@ using U2G = Anki.Cozmo.U2G;
 /// <summary>
 /// simple component for directly previewing animations on cozmo
 /// </summary>
-public class RobotAnimTester : MonoBehaviour {
+public class RobotAnimTester : MonoBehaviour
+{
 	
 	[SerializeField] RectTransform anchor = null;
 	[SerializeField] ComboBox combo_selectAnim = null;
@@ -17,8 +18,10 @@ public class RobotAnimTester : MonoBehaviour {
 
 	private U2G.PlayAnimation PlayAnimationMessage = new U2G.PlayAnimation();
 
-	void Awake() {
-		if(RobotEngineManager.instance == null) {
+	void Awake()
+	{
+		if(RobotEngineManager.instance == null)
+		{
 			gameObject.SetActive(false);
 			anchor.gameObject.SetActive(false);
 			return;
@@ -30,7 +33,8 @@ public class RobotAnimTester : MonoBehaviour {
 		combo_selectAnim.AddItems(animNames);
 	}
 
-	public void PlayAnimation () {
+	public void PlayAnimation()
+	{
 		if(RobotEngineManager.instance == null) return;
 		if(RobotEngineManager.instance.current == null) return;
 		if(animNames == null) return;
@@ -39,7 +43,8 @@ public class RobotAnimTester : MonoBehaviour {
 
 		string anim = animNames[combo_selectAnim.SelectedIndex];
 
-		if(CozmoBusyPanel.instance != null) {
+		if(CozmoBusyPanel.instance != null)
+		{
 			CozmoBusyPanel.instance.SetMute(true);
 			CozmoBusyPanel.instance.SetDescription("Cozmo playing animation" + anim + ".");
 		}

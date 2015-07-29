@@ -23,6 +23,7 @@ public class LineManager : MonoBehaviour {
 		lines = new List<VectorLine>();
 		transforms = new List<Transform>();
 		lineCount = 0;
+		//Debug.Log("frame("+Time.frameCount+") LineManager.Initialize enabled = false;");
 		enabled = false;
 	}
 
@@ -39,6 +40,7 @@ public class LineManager : MonoBehaviour {
 		transforms.Add (thisTransform);
 		
 		if (++lineCount == 1) {
+			//Debug.Log("frame("+Time.frameCount+") LineManager.AddLine enabled = true;");
 			enabled = true;
 		}
 	}
@@ -102,6 +104,8 @@ public class LineManager : MonoBehaviour {
 	public void DisableIfUnused () {
 		if (!destroyed) { // Prevent possible null reference exceptions
 			if (lineCount <= 0 && VectorManager.arrayCount <= 0 && VectorManager.arrayCount2 <= 0) {
+				//Debug.Log("frame("+Time.frameCount+") LineManager.DisableIfUnused enabled = false;");
+
 				enabled = false;
 			}
 		}
@@ -109,6 +113,7 @@ public class LineManager : MonoBehaviour {
 	
 	public void EnableIfUsed () {
 		if (VectorManager.arrayCount >= 1 || VectorManager.arrayCount2 >= 1) {
+			//Debug.Log("frame("+Time.frameCount+") LineManager.EnableIfUsed enabled = true;");	
 			enabled = true;
 		}
 	}
@@ -126,6 +131,9 @@ public class LineManager : MonoBehaviour {
 	}
 	
 	void OnLevelWasLoaded () {
-		Initialize();
+		if(lineCount <= 0 && VectorManager.arrayCount <= 0 && VectorManager.arrayCount2 <= 0)
+		{	
+			Initialize();
+		}
 	}
 }
