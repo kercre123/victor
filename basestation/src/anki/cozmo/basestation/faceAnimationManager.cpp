@@ -305,6 +305,12 @@ namespace Cozmo {
         u32 numRows = currColorCount / 128;
         u32 numRemainderPixels = currColorCount % 128;
         if (numRows > 0) {
+          // If all image pixels are on, then we need to split up the count since max
+          // rows you can draw at a time is 63.
+          if (numRows == 64) {
+            --numRows;
+            numRemainderPixels = 128;
+          }
           rleData.push_back(numRows);
         }
         rleData.push_back(numRemainderPixels + 64);
