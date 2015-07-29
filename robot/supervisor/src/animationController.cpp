@@ -789,7 +789,7 @@ namespace AnimationController {
               if(_tracksToPlay & BODY_TRACK) {
 #               if DEBUG_ANIMATION_CONTROLLER
                 PRINT("AnimationController[t=%dms(%d)] setting body motion to radius=%d, speed=%d\n",
-                      _currentTime_ms, HAL::GetTimeStamp(), msg.curvatureRadius_mm, msg.speed_mmPerSec);
+                      _currentTime_ms, HAL::GetTimeStamp(), msg.curvatureRadius_mm, msg.speed);
 #               endif
                 
                 f32 leftSpeed=0, rightSpeed=0;
@@ -843,7 +843,7 @@ namespace AnimationController {
           --_numAudioFramesBuffered;
 #         if DEBUG_ANIMATION_CONTROLLER
           PRINT("Reached animation termination frame (%d frames still buffered, curPos/lastPos = %d/%d).\n",
-                _numFramesBuffered, _currentBufferPos, _lastBufferPos);
+                _numAudioFramesBuffered, _currentBufferPos, _lastBufferPos);
 #         endif
         }
 
