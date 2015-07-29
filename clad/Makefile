@@ -37,14 +37,19 @@ c: $(OUTPUT_H_AND_C)
 %.h %.cpp : %.clad
 	#mkdir -p $(OUTPUT_DIR)/engine/$(dir $<)
 	$(CLAD_CPP) -C $(INPUT_DIR) -o $(OUTPUT_DIR)/engine/ $*.clad
+	chmod -f 555 $(OUTPUT_DIR)engine/$*.h
+	chmod -f 555 $(OUTPUT_DIR)engine/$*.cpp
 
 %.h %.c : %.clad
 	#mkdir -p $(OUTPUT_DIR)/robot/$(dir $<)
 	$(CLAD_C) -C $(INPUT_DIR) -o $(OUTPUT_DIR)/robot/ $*.clad
+	chmod -f 555 $(OUTPUT_DIR)engine/$*.h
+	chmod -f 555 $(OUTPUT_DIR)engine/$*.c
 
 %.cs : %.clad
 	#mkdir -p $(OUTPUT_DIR)/$(dir $<)
 	$(CLAD_CSHARP) -C $(INPUT_DIR) -o $(OUTPUT_DIR_CSHARP)/ $*.clad
+	chmod -f 555 $(OUTPUT_DIR_CSHARP)/$*.cs
 
 show:
 	echo "*** input_files ***"
@@ -53,4 +58,6 @@ show:
 	echo $(OUTPUT_FILES)
 
 clean:
+	if test -d $(OUTPUT_DIR); then chmod -Rf 777 $(OUTPUT_DIR); fi
+	if test -d $(OUTPUT_DIR_CSHARP); then chmod -Rf 777 $(OUTPUT_DIR_CSHARP); fi
 	rm -rf $(OUTPUT_DIR) $(OUTPUT_DIR_CSHARP)
