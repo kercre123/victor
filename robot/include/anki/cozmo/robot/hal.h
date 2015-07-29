@@ -435,6 +435,9 @@ namespace Anki
 
       // Blink the eyes
       void FaceBlink();
+      
+      // Print a message to the face - this will permanently replace the face with your message
+      void FacePrintf(const char *format, ...);
 
 // #pragma mark --- Radio ---
       /////////////////////////////////////////////////////////////////////
