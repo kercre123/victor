@@ -417,6 +417,7 @@ public class VortexController : GameController
 				}
 			} else if(!robot.isBusy && !playerMockBlocks[cozmoIndex].Validated) {
 				//robot.TapBlockOnGround(1);
+				robot.isBusy = true;
 				CozmoEmotionManager.SetEmotion("TAP_ONE", true);
 				if(fakeCozmoTaps) {
 					StartCoroutine(TapAfterDelay(1, cozmoTimePerTap));
@@ -1732,6 +1733,7 @@ public class VortexController : GameController
 		yield return new WaitForSeconds(delay);
 		
 		PlayerInputTap(index);
+		robot.isBusy = false;
 	}
 
 	#endregion

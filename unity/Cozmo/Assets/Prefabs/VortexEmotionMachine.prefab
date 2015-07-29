@@ -49,7 +49,7 @@ MonoBehaviour:
   - stateName: LETS_PLAY
     playAllAnims: 0
     emotionAnims:
-    - animName: ANIM_TEST_SPINNER
+    - animName: LetsPlay
       numLoops: 1
   - stateName: PRE_GAME
     playAllAnims: 0
@@ -73,6 +73,8 @@ MonoBehaviour:
     emotionAnims:
     - animName: WatchSpin
       numLoops: 0
+    - animName: AltSpinWatch
+      numLoops: 0
   - stateName: WATCH_RESULT
     playAllAnims: 0
     emotionAnims:
@@ -81,7 +83,7 @@ MonoBehaviour:
   - stateName: EXPECT_REWARD
     playAllAnims: 0
     emotionAnims:
-    - animName: ANIM_TEST_SPINNER
+    - animName: Expectation
       numLoops: 1
   - stateName: KNOWS_WRONG
     playAllAnims: 0
@@ -116,7 +118,7 @@ MonoBehaviour:
   - stateName: WIN_MATCH
     playAllAnims: 0
     emotionAnims:
-    - animName: ANIM_TEST_SPINNER
+    - animName: winMatch
       numLoops: 1
   - stateName: LOSE_MATCH
     playAllAnims: 0
