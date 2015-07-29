@@ -97,6 +97,7 @@ public class VectorLine {
 		set {
 			m_name = value;
 			if (m_vectorObject != null) {
+				m_name += "("+m_vectorObject.GetInstanceID()+")";
 				m_vectorObject.name = value;
 			}
 			if (m_capRenderer != null) {
@@ -556,6 +557,8 @@ public class VectorLine {
 		m_vectorObject = new GameObject(name);
 		m_vectorObject.transform.SetParent (m_canvases[0].transform, false);
 		m_on2DCanvas = true;
+
+
 		m_canvasRenderer = m_vectorObject.AddComponent<CanvasRenderer>();
 		m_canvasRenderer.SetMaterial (m_material, null);
 		m_rectTransform = m_vectorObject.AddComponent<RectTransform>();
@@ -578,6 +581,10 @@ public class VectorLine {
 		if (joins == Joins.Fill) {
 			SetupFillObject();
 		}
+
+		name = lineName;
+
+		//Debug.Log("frame("+Time.frameCount+") m_name("+m_name+") SetupLine m_canvasRenderer = m_vectorObject.AddComponent<CanvasRenderer>();" );
 	}
 	
 	private void SetupFillObject () {		
@@ -1707,10 +1714,18 @@ public class VectorLine {
 		}
 		
 		CheckNormals();
+
 		if (!CheckLine (false)) return;
+
 		if (m_useTextureScale) {
 			SetTextureScale (false);
 		}
+
+		if(m_canvasRenderer == null)
+		{
+			Debug.Log("frame(" + Time.frameCount + ") VectorLine.Draw m_name(" + m_name + ") m_canvasRenderer.SetVertices (m_UIVertices, m_active? GetVertexCount() : 0);");
+		}
+
 		m_canvasRenderer.SetVertices (m_UIVertices, m_active? GetVertexCount() : 0);
 		if (m_collider) {
 			SetCollider (true);
@@ -1974,6 +1989,12 @@ public class VectorLine {
 		if (m_useTextureScale) {
 			SetTextureScale (false);
 		}
+
+		if(m_canvasRenderer == null)
+		{
+			Debug.Log("frame(" + Time.frameCount + ") VectorLine.Draw3D m_name(" + m_name + ") m_canvasRenderer.SetVertices (m_UIVertices, m_active? GetVertexCount() : 0);");
+		}
+
 		m_canvasRenderer.SetVertices (m_UIVertices, m_active? GetVertexCount() : 0);
 		if (m_collider) {
 			SetCollider (false);
@@ -2468,6 +2489,8 @@ public class VectorLine {
 	}
 	
 	private static void DestroyLine (ref VectorLine line) {
+		//Debug.Log("frame("+Time.frameCount+") name("+line.name+") VectorLine.DestroyLine");		
+
 		if (line != null) {
 			Object.Destroy (line.m_vectorObject);
 			if (line.isAutoDrawing) {

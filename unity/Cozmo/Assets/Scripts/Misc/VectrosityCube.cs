@@ -86,7 +86,7 @@ public class VectrosityCube : MonoBehaviour {
 		//Debug.Log(gameObject.name + " CreateWireFrame");
 		//VectorManager.useDraw3D = true;
 		// Make a Vector3 array that contains points for a cube that's 1 unit in size
-
+		//Debug.Log("frame("+Time.frameCount+") VectrosityCube.CreateWireFrame");	
 		// Make a line using the above points and material, with a width of 2 pixels
 		line = new VectorLine("Vectrosity_" + gameObject.name, cubePoints, lineMaterial, width);
 		
@@ -119,10 +119,10 @@ public class VectrosityCube : MonoBehaviour {
 	}
 
 	void OnDestroy() {
-		if(line != null) {
-			Debug.Log("VectrosityCube OnDestroy VectorLine.Destroy(ref line);");
-			VectorLine.Destroy(ref line);
-		}
+//		if(line != null) {
+//			Debug.Log("VectrosityCube OnDestroy VectorLine.Destroy(ref line);");
+//			VectorLine.Destroy(ref line);
+//		}
 	}
 
 }

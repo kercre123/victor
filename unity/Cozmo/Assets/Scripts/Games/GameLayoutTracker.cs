@@ -141,25 +141,24 @@ public class GameLayoutTracker : MonoBehaviour {
 		OptionsScreen.RefreshSettings += RefreshSettings;
 		RefreshSettings();
 
-		if(!blocksInitialized) {
-			int numPlayers = PlayerPrefs.GetInt("NumberOfPlayers", 1);
-			Debug.Log("initializing layout blocks for NumberOfPlayers = " + numPlayers);
-			for(int i=0; i<layouts.Count; i++) {
-				layouts[i].Initialize(numPlayers);
-			}
-			blocksInitialized = true;
-		}
+
+		int numPlayers = PlayerPrefs.GetInt("NumberOfPlayers", 1);
 
 		currentGameName = PlayerPrefs.GetString("CurrentGame", "Unknown");
 		currentLevelNumber = PlayerPrefs.GetInt(currentGameName + "_CurrentLevel", 1);
 
+		//Debug.Log("initializing layout blocks for NumberOfPlayers = " + numPlayers);
+
 		currentLayout = null;
 		for(int i=0; i<layouts.Count; i++) {
-			layouts[i].gameObject.SetActive(layouts[i].gameName == currentGameName && layouts[i].levelNumber == currentLevelNumber);
+			bool current = layouts[i].gameName == currentGameName && layouts[i].levelNumber == currentLevelNumber;
 
-			if(layouts[i].gameObject.activeSelf) {
+			if(current) {
+				layouts[i].Initialize(numPlayers);				
 				currentLayout = layouts[i];
 			}
+
+			layouts[i].gameObject.SetActive(current);
 		}
 
 		//no apt layout found?  then just disable

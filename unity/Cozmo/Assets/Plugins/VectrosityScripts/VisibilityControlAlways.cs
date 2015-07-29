@@ -16,12 +16,16 @@ public class VisibilityControlAlways : MonoBehaviour {
 	}
 	
 	public void Setup (VectorLine line) {
+		//Debug.Log("VisibilityControlAlways Setup gameObject("+gameObject.name+":"+gameObject.GetInstanceID()+")");
+
 		VectorManager.VisibilitySetup (transform, line, out m_objectNumber);
 		VectorManager.DrawArrayLine2 (m_objectNumber.i);
 		m_vectorLine = line;
 	}
 
 	void OnDestroy () {
+		//Debug.Log("VisibilityControlAlways OnDestroy gameObject("+gameObject.name+":"+gameObject.GetInstanceID()+")");
+
 		if (m_destroyed) return;	// Paranoia check
 		m_destroyed = true;
 		VectorManager.VisibilityRemove (m_objectNumber.i);
