@@ -291,7 +291,7 @@ namespace Cozmo {
     u32 currColorCount = 0;
     
     for(s32 i=0; i<nrows; i++) {
-      u8* img_i = img.row(i).data;
+      u8* img_i = (u8*)img.ptr(i);
       for(s32 j=0; j<ncols; j++, ++pixCount) {
         u8 pixel = img_i[j];
     
