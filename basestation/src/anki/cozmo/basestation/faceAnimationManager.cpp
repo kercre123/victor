@@ -279,51 +279,61 @@ namespace Cozmo {
     bool drawingBlack = true;
     rleData.clear();
     
-    const u8* pixel = img.ptr<u8>(0);
-    const u32 totalNumPixels = IMAGE_WIDTH*IMAGE_HEIGHT;
+    s32 nrows = img.rows;
+    s32 ncols = img.cols;
+    if(img.isContinuous()) {
+      ncols *= nrows;
+      nrows = 1;
+    }
     
+    const u32 totalNumPixels = nrows * ncols;
+    u32 pixCount = 0;
     u32 currColorCount = 0;
     
-    for (int pixCount = 0; pixCount < totalNumPixels; ++pixCount, ++pixel) {
-      
-      bool colorChange = (*pixel > 0 && drawingBlack) || (*pixel == 0 && !drawingBlack);
-      bool lastPixel = (pixCount == totalNumPixels - 1);
+    for(s32 i=0; i<nrows; i++) {
+      u8* img_i = img.row(i).data;
+      for(s32 j=0; j<ncols; j++, ++pixCount) {
+        u8 pixel = img_i[j];
+    
+        bool colorChange = (pixel > 0 && drawingBlack) || (pixel == 0 && !drawingBlack);
+        bool lastPixel = (pixCount == totalNumPixels - 1);
 
-      // If the color changed (or this is the last pixel), then add the bytes for the previous color
-      // and restart the counter for the new color.
-      if (colorChange || lastPixel) {
-        // If the last pixel is the same as the previous pixel, then increment currColorCount,
-        // since we normally only get here if the color changed. If the last group of pixels
-        // is black, however, just exit now.
-        if (!colorChange) {
-          if (drawingBlack) {
-            break;
+        // If the color changed (or this is the last pixel), then add the bytes for the previous color
+        // and restart the counter for the new color.
+        if (colorChange || lastPixel) {
+          // If the last pixel is the same as the previous pixel, then increment currColorCount,
+          // since we normally only get here if the color changed. If the last group of pixels
+          // is black, however, just exit now.
+          if (!colorChange) {
+            if (drawingBlack) {
+              break;
+            }
+            ++currColorCount;
           }
+
+          u32 numRows = currColorCount / 128;
+          u32 numRemainderPixels = currColorCount % 128;
+          if (numRows > 0) {
+            // If all image pixels are on, then we need to split up the count since max
+            // rows you can draw at a time is 63.
+            if (numRows == 64) {
+              --numRows;
+              numRemainderPixels = 128;
+            }
+            rleData.push_back(numRows);
+          }
+          rleData.push_back(numRemainderPixels + 64);
+
+          drawingBlack = !drawingBlack;
+          currColorCount = 1;
+          
+          // If the last pixel is white and it's a different color from the previous one, add it now.
+          if (lastPixel && colorChange && !drawingBlack) {
+            rleData.push_back(65);
+          }
+        } else {
           ++currColorCount;
         }
-
-        u32 numRows = currColorCount / 128;
-        u32 numRemainderPixels = currColorCount % 128;
-        if (numRows > 0) {
-          // If all image pixels are on, then we need to split up the count since max
-          // rows you can draw at a time is 63.
-          if (numRows == 64) {
-            --numRows;
-            numRemainderPixels = 128;
-          }
-          rleData.push_back(numRows);
-        }
-        rleData.push_back(numRemainderPixels + 64);
-
-        drawingBlack = !drawingBlack;
-        currColorCount = 1;
-        
-        // If the last pixel is white and it's a different color from the previous one, add it now.
-        if (lastPixel && colorChange && !drawingBlack) {
-          rleData.push_back(65);
-        }
-      } else {
-        ++currColorCount;
       }
     }
     
