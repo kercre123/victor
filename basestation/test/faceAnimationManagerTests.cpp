@@ -151,5 +151,36 @@ TEST(FaceAnimationManager, TestCompressRLE)
   ASSERT_TRUE(img.isContinuous());
   ASSERT_TRUE(testImg.isContinuous());
   EXPECT_TRUE(AreImagesEqual(img, testImg));
+
+  // Test with two simple solid eyes touching top of image
+  cv::Mat_<u8> topEyeROI;
+  img.setTo(0);
+  cv::Rect topEyeRectL(24,0,16,16);
+  cv::Rect topEyeRectR(88,0,16,16);
+  topEyeROI = img(topEyeRectL);
+  for(s32 i=0; i<topEyeROI.rows; ++i) {
+    cv::Mat_<u8> topEyeROI_row = topEyeROI.row(i);
+    topEyeROI_row.setTo(255);
+  }
+  
+  topEyeROI = img(topEyeRectR);
+  for(s32 i=0; i<topEyeROI.rows; ++i) {
+    cv::Mat_<u8> topEyeROI_row = topEyeROI.row(i);
+    topEyeROI_row.setTo(255);
+  }
+  
+  Anki::Cozmo::FaceAnimationManager::CompressRLE(img, rleData);
+  
+  DrawFaceRLE(rleData, testImg);
+  
+# if SHOW_IMAGES
+  cv::imshow("TwoEyesAtTopTestFace", img);
+  cv::imshow("TwoEyesAtTopTestFace_Compare", testImg);
+  cv::waitKey(10);
+# endif
+  
+  ASSERT_TRUE(img.isContinuous());
+  ASSERT_TRUE(testImg.isContinuous());
+  EXPECT_TRUE(AreImagesEqual(img, testImg));
   
 } // FaceAnimationManager.TestCompressRLE
