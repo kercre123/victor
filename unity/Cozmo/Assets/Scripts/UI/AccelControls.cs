@@ -22,7 +22,7 @@ public class AccelControls : MonoBehaviour {
 	}
 
 	float x = 0f;
-	float lastXStamp = 0f;
+	int lastXStamp = 0;
 	public float Horizontal {
 		get {
 			if(!SystemInfo.supportsAccelerometer) return 0f;
@@ -48,7 +48,7 @@ public class AccelControls : MonoBehaviour {
 	}
 
 	float y = 0f;
-	float lastYStamp = 0f;
+	int lastYStamp = 0;
 	public float Vertical {
 		get { 
 			if(!SystemInfo.supportsAccelerometer) return 0f;

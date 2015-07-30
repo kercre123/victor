@@ -1,6 +1,9 @@
 ﻿using UnityEngine;
 using System.Collections;
 
+/// <summary>
+/// some research into adjusting driving controls dynamically to avoid obstacles of which cozmo is aware
+/// </summary>
 public class CozmoAssistedControls : MonoBehaviour
 {
 	public static CozmoAssistedControls instance;

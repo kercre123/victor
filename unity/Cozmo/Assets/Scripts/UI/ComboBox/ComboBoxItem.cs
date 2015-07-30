@@ -2,6 +2,9 @@
 using UnityEngine.UI;
 using System;
 
+/// <summary>
+/// class to manage a particula entry within the comboBox menu
+/// </summary>
 [Serializable]
 public class ComboBoxItem
 {
