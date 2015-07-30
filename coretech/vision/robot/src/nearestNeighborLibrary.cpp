@@ -268,9 +268,6 @@ namespace Embedded {
   Result NearestNeighborLibrary::GetProbeValues(const Array<u8> &image,
                                                 const Array<f32> &homography)
   {
-    const s32 imageHeight = image.get_size(0);
-    const s32 imageWidth = image.get_size(1);
-    
     AnkiConditionalErrorAndReturnValue(AreValid(image, homography),
                                        RESULT_FAIL_INVALID_OBJECT, "VisionMarker::GetProbeValues", "Invalid objects");
     
@@ -327,7 +324,7 @@ namespace Embedded {
         // 2. Sample the image
         
         // This should only fail if there's a bug in the quad extraction
-        AnkiAssert(warpedY >= 0  && warpedX >= 0 && warpedY < imageHeight && warpedX < imageWidth);
+        AnkiAssert(warpedY >= 0  && warpedX >= 0 && warpedY < image.get_size(0) && warpedX < image.get_size(1)); // Verify y against image height and x against width
         
         const u8 imageValue = *image.Pointer(warpedY, warpedX);
         

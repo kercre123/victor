@@ -124,9 +124,13 @@ namespace Anki {
       bool _endOfAnimationSent;
       
       bool BufferMessageToSend(RobotMessage* msg);
+      Result SendBufferedMessages(Robot& robot);
+      
       bool AllTracksBuffered() const;
       std::list<RobotMessage*> _sendBuffer;
       s32 _numAudioFramesBufferedToSend;
+      s32 _numBytesToSend;
+      s32 _numFramesToSend;
       
       // Send larger keyframes "hot" for reliable transport (this includes
       // audio samples and face images)

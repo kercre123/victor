@@ -33,7 +33,6 @@ namespace Anki {
         // Used when calling SetDesiredHeight with just a height:
         const f32 DEFAULT_START_ACCEL_FRAC = 0.25f;
         const f32 DEFAULT_END_ACCEL_FRAC   = 0.25f;
-        const f32 DEFAULT_DURATION_SEC     = 0.5f;
         
         // Only angles greater than this can contribute to error
         // TODO: Find out what this actually is

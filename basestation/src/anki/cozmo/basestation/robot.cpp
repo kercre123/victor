@@ -1236,7 +1236,7 @@ namespace Anki {
 
     void Robot::ReplayLastAnimation(const s32 loopCount)
     {
-      Result lastResult = _animationStreamer.SetStreamingAnimation(_lastPlayedAnimationId, loopCount);
+      _animationStreamer.SetStreamingAnimation(_lastPlayedAnimationId, loopCount);
     }
 
     // Read the animations in a dir

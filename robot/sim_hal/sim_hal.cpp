@@ -55,8 +55,6 @@ namespace Anki {
       
       const f64 WEBOTS_INFINITY = std::numeric_limits<f64>::infinity();
       
-      const f32 MIN_WHEEL_POWER_FOR_MOTION = 0.15;
-      
 #pragma mark --- Simulated HardwareInterface "Member Variables" ---
       
       bool isInitialized = false;
@@ -64,8 +62,6 @@ namespace Anki {
       webots::Supervisor webotRobot_;
       
       s32 robotID_ = -1;
-      
-      TimeStamp_t timeStamp_ = 0;
       
       // Motors
       webots::Motor* leftWheelMotor_;

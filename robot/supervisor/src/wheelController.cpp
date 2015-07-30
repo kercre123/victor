@@ -26,16 +26,8 @@ namespace Anki {
       const float DEFAULT_WHEEL_KP = 0.0005f;
       const float DEFAULT_WHEEL_KI = 0.00005f;
       
-      // Cap error_sum so that integral component of outl does not exceed some percent of MOTOR_MAX_POWER.
-      // e.g. 25% of 1.0 = 0.25  =>   0.25 = wKi * MAX_ERROR_SUM.
-      f32 MAX_ERROR_SUM = 5000.f;
-      
       // Speed filtering rate
       const f32 ENCODER_FILTERING_COEFF = 0.9f;
-      
-      // Gains for wheel controller
-      f32 Kp_ = DEFAULT_WHEEL_KP;
-      f32 Ki_ = DEFAULT_WHEEL_KI;
       
       
       f32 Kp_l_ = DEFAULT_WHEEL_KP;

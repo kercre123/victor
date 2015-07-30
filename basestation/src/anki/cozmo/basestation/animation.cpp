@@ -245,9 +245,68 @@ _blinkTrack.__METHOD__()
     return false;
   }
   
+  Result Animation::SendBufferedMessages(Robot& robot)
+  {
+    // Empty out anything waiting in the send buffer:
+    RobotMessage* msg = nullptr;
+    while(!_sendBuffer.empty()) {
+#     if DEBUG_ANIMATIONS
+      PRINT_NAMED_INFO("Animation.SendBufferedMessages",
+                       "Send buffer length=%lu.\n", _sendBuffer.size());
+#     endif
+      
+      if(_numFramesToSend > 0) {
+        msg = _sendBuffer.front();
+        const s32 numBytesRequired = msg->GetSize() + sizeof(RobotMessage::ID);
+        if(numBytesRequired <= _numBytesToSend) {
+          Result sendResult = robot.SendMessage(*msg);
+          if(sendResult != RESULT_OK) {
+            return sendResult;
+          }
+          
+          _numBytesToSend -= numBytesRequired;
+          --_numFramesToSend;
+          
+          // If the message we just sent was an audio keyframe, decrement the
+          // counter tracking how many audio frames are queued in the send buffer
+          if(msg->GetID() == RobotMessage::AnimKeyFrame_AudioSample_ID ||
+             msg->GetID() == RobotMessage::AnimKeyFrame_AudioSilence_ID)
+          {
+            --_numAudioFramesBufferedToSend;
+          }
+          
+          _sendBuffer.pop_front();
+        } else {
+          // Out of bytes to send, continue on next Update()
+#         if DEBUG_ANIMATIONS
+          PRINT_NAMED_INFO("Animation.SendBufferedMessages",
+                           "Ran out of bytes to send from buffer, will continue next Update().\n");
+#         endif
+          return RESULT_OK;
+        }
+      } else {
+        // Out of frames to send, continue on next Update()
+#       if DEBUG_ANIMATIONS
+        PRINT_NAMED_INFO("Animation.SendBufferedMessages",
+                         "Ran out of frames to send from buffer, will continue next Update().\n");
+#       endif
+        return RESULT_OK;
+      }
+    }
+    
+    // Sanity check
+    // If we got here, we've finished streaming out everything in the send
+    // buffer -- i.e., all the frames associated with the last audio keyframe
+    assert(_numFramesToSend >= 0 && _numBytesToSend >= 0);
+    assert(_sendBuffer.empty());
+    
+    return RESULT_OK;
+  }
   
   Result Animation::Update(Robot& robot)
   {
+    Result lastResult = RESULT_OK;
+    
     if(!_isInitialized) {
       PRINT_NAMED_ERROR("Animation.Update", "Animation must be initialized before it can be played/updated.\n");
       return RESULT_FAIL;
@@ -266,10 +325,29 @@ _blinkTrack.__METHOD__()
       _deviceAudioTrack.MoveToNextKeyFrame();
     }
     
+    // Reset the number of frames/bytes we can send each Update() as a form of
+    // flow control: Don't send frames if robot has no space for them, and be
+    // careful not to overwhel reliable transport either, in terms of bytes or
+    // sheer number of messages. These get decremenged on each call to
+    // SendBufferedMessages() below
+    _numBytesToSend = std::min(Animation::MAX_BYTES_FOR_RELIABLE_TRANSPORT,
+                               robot.GetNumAnimationBytesFree());
+    _numFramesToSend = Animation::MAX_FRAMES_TO_SEND;
+    
+    
+    // Send anything still left in the buffer after last Update()
+    lastResult = SendBufferedMessages(robot);
+    if(RESULT_OK != lastResult) {
+      PRINT_NAMED_ERROR("Animation.Update.SendBufferedMessagesFailed", "\n");
+      return lastResult;
+    }
+    
     // Add more stuff to the send buffer. Note that we are not counting individual
     // keyframes here, but instead _audio_ keyframes (with which we will buffer
-    // any co-timed keyframes from other tracks)
-    while(_numAudioFramesBufferedToSend < (ANIMATION_PREROLL_LENGTH+1) && !AllTracksBuffered())
+    // any co-timed keyframes from other tracks).
+    while(_sendBuffer.empty() &&
+          _numAudioFramesBufferedToSend < (ANIMATION_PREROLL_LENGTH+1) &&
+          !AllTracksBuffered())
     {
 #     if DEBUG_ANIMATIONS
       //PRINT_NAMED_INFO("Animation.Update", "%d bytes left to send this Update.\n",
@@ -362,7 +440,21 @@ _blinkTrack.__METHOD__()
 #       endif
       }
       
-    } // while(numAudioFramesToBuffer > 0)
+      // Send out as much as we can from the send buffer. If we manage to send
+      // the entire buffer out, we will proceed with putting more into the buffer
+      // the next time through this while loop. Otherwise, we will exit the while
+      // loop and continue trying to empty the buffer on the next Update().
+      // Doing this guarantees we don't try to buffer another message pointer from
+      // the same frame before sending the last one (which is important because we
+      // re-use message structs inside the keyframes and don't want pointers
+      // getting reassigned before they get sent out!)
+      lastResult = SendBufferedMessages(robot);
+      if(RESULT_OK != lastResult) {
+        PRINT_NAMED_ERROR("Animation.Update.SendBufferedMessagesFailed", "\n");
+        return lastResult;
+      }
+      
+    } // while(buffering frames)
     
 #   if PLAY_ROBOT_AUDIO_ON_DEVICE && !defined(ANKI_IOS_BUILD)
     if(_robotAudioTrack.HasFramesLeft())
@@ -377,62 +469,7 @@ _blinkTrack.__METHOD__()
       }
     }
 #   endif
-    
-    // FlowControl: Don't send frames if robot has no space for them, and be
-    // careful not to overwhel reliable transport either, in terms of bytes or
-    // sheer number of messages
-    s32 numBytesToSend = std::min(Animation::MAX_BYTES_FOR_RELIABLE_TRANSPORT,
-                                  robot.GetNumAnimationBytesFree());
-    
-    s32 numFramesToSend = Animation::MAX_FRAMES_TO_SEND;
-    
-    // Empty out anything waiting in the send buffer:
-    RobotMessage* msg = nullptr;
-    while(!_sendBuffer.empty()) {
-#     if DEBUG_ANIMATIONS
-      PRINT_NAMED_INFO("Animation.Update", "Send buffer length=%lu.\n", _sendBuffer.size());
-#     endif
-      
-      if(numFramesToSend > 0) {
-        msg = _sendBuffer.front();
-        const s32 numBytesRequired = msg->GetSize() + sizeof(RobotMessage::ID);
-        if(numBytesRequired <= numBytesToSend) {
-          Result sendResult = robot.SendMessage(*msg);
-          if(sendResult != RESULT_OK) {
-            return sendResult;
-          }
-          numBytesToSend -= numBytesRequired;
-          --numFramesToSend;
-          
-          // If the message we just sent was an audio keyframe, decrement the
-          // counter tracking how many audio frames are queued in the send buffer
-          if(msg->GetID() == RobotMessage::AnimKeyFrame_AudioSample_ID ||
-             msg->GetID() == RobotMessage::AnimKeyFrame_AudioSilence_ID)
-          {
-            --_numAudioFramesBufferedToSend;
-          }
-          
-          _sendBuffer.pop_front();
-        } else {
-          // Out of bytes to send, continue on next Update()
-#         if DEBUG_ANIMATIONS
-          PRINT_NAMED_INFO("Animation.Update", "Ran out of bytes to send from buffer, will continue next Update().\n");
-#         endif
-          return RESULT_OK;
-        }
-      } else {
-        // Out of frames to send, continue on next Update()
-#       if DEBUG_ANIMATIONS
-        PRINT_NAMED_INFO("Animation.Update", "Ran out of frames to send from buffer, will continue next Update().\n");
-#       endif
-        return RESULT_OK;
-      }
-    }
-    
-    // If we got here, we've finished streaming out everything in the send
-    // buffer -- i.e., all the frames associated with the last audio keyframe
-    assert(numFramesToSend >= 0 && numBytesToSend >= 0);
-    assert(_sendBuffer.empty());
+
     
     // Send an end-of-animation keyframe when done
     if(AllTracksBuffered() && _sendBuffer.empty() && !_endOfAnimationSent)
@@ -443,8 +480,8 @@ _blinkTrack.__METHOD__()
 #     endif
       
       MessageAnimKeyFrame_EndOfAnimation endMsg;
-      Result sendResult = robot.SendMessage(endMsg);
-      if(sendResult != RESULT_OK) { return sendResult; }
+      lastResult = robot.SendMessage(endMsg);
+      if(lastResult != RESULT_OK) { return lastResult; }
       _endOfAnimationSent = true;
     }
     

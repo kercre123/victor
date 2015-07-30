@@ -128,13 +128,12 @@ namespace Anki
       Result lastResult;
 
       const s32 imageHeight = image.get_size(0);
-      const s32 imageWidth = image.get_size(1);
 
       const s32 integralImageHeight = this->get_size(0);
       const s32 integralImageWidth = this->get_size(1);
 
       //AnkiAssert(imageWidth%ANKI_VISION_IMAGE_WIDTH_SHIFT == 0);
-      AnkiAssert(this->imageWidth == imageWidth);
+      AnkiAssert(this->imageWidth == image.get_size(1));
 
       AnkiConditionalErrorAndReturnValue(numRowsToScroll > 0 && numRowsToScroll <= integralImageHeight,
         RESULT_FAIL_INVALID_PARAMETER, "ScrollingIntegralImage_u8_s32::ScrollDown", "numRowsToScroll is to high or low");
@@ -304,7 +303,6 @@ namespace Anki
 
     Result ScrollingIntegralImage_u8_s32::PadImageRow(const Array<u8> &image, const s32 whichRow, Array<u8> &paddedRow)
     {
-      const s32 imageHeight = image.get_size(0);
       const s32 imageWidth = image.get_size(1);
       const s32 imageWidth4 = imageWidth >> 2;
 
@@ -312,7 +310,7 @@ namespace Anki
       AnkiAssert(paddedRow.IsValid());
       AnkiAssert(AreEqualSize(1, imageWidth+2*numBorderPixels, paddedRow));
       AnkiAssert(whichRow >= 0);
-      AnkiAssert(whichRow < imageHeight);
+      AnkiAssert(whichRow < image.get_size(0)); // check row against image height
 
       const u32 * restrict image_u32rowPointer = reinterpret_cast<const u32*>(image.Pointer(whichRow, 0));
       const u8 * restrict image_u8rowPointer = image.Pointer(whichRow, 0);
