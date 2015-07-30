@@ -24,13 +24,12 @@ namespace Cozmo {
   {
   public:
     enum class Status {
-      INITIALIZED, // (but not yet running?)
       FAILURE,
       RUNNING,
       COMPLETE
     };
     
-    virtual Status Init(Robot& robot) = 0;
+    virtual ~IBehavior() { }
     
     // Step through the behavior and deliver rewards to the robot along the way
     virtual Status Update(Robot& robot) = 0;

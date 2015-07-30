@@ -16,16 +16,8 @@
 namespace Anki {
 namespace Cozmo {
   
-  IBehavior::Status OCD_Behavior::Init(Robot& robot)
-  {
-    
-    // Register to listen for "block" observed signals/messages instead of
-    // polling the robot on every call to GetReward()?
-    
-    return Status::INITIALIZED;
-  }
-  
-  IBehavior::Status OCD_Behavior::Update(Robot& robot)
+
+  IBehavior::Status BehaviorOCD::Update(Robot& robot)
   {
     switch(_currentState)
     {
@@ -41,19 +33,19 @@ namespace Cozmo {
     return Status::RUNNING;
   }
   
-  void OCD_Behavior::HandleObservedObject(RobotObservedObject &msg)
+  void BehaviorOCD::HandleObservedObject(RobotObservedObject &msg)
   {
     // if the object is a BLOCK or ACTIVE_BLOCK, add its ID to the list we care about
     _objectsOfInterest.insert(msg.objectID);
   }
   
-  void OCD_Behavior::HandleDeletedObject(RobotDeletedObject &msg)
+  void BehaviorOCD::HandleDeletedObject(RobotDeletedObject &msg)
   {
     // remove the object if we knew about it
     _objectsOfInterest.erase(msg.objectID);
   }
   
-  bool OCD_Behavior::GetRewardBid(Robot& robot, Reward& reward)
+  bool BehaviorOCD::GetRewardBid(Robot& robot, Reward& reward)
   {
     const BlockWorld& blockWorld = robot.GetBlockWorld();
     

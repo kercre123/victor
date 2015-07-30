@@ -11,7 +11,9 @@
  **/
 
 #include "anki/cozmo/basestation/behaviorManager.h"
+#include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 
+#include "util/logging/logging.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -19,10 +21,127 @@ namespace Cozmo {
   
   BehaviorManager::BehaviorManager(Robot& robot)
   : _robot(robot)
+  , _currentBehavior(_behaviors.end())
+  , _nextBehavior(_behaviors.end())
   {
-    
+
   }
   
+  BehaviorManager::~BehaviorManager()
+  {
+    for(auto behavior : _behaviors) {
+      if(behavior.second == nullptr) {
+        PRINT_NAMED_ERROR("BehaviorManager.Destructor.ExistingNull",
+                          "Existing '%s' behavior is somehow NULL.\n",
+                          behavior.first.c_str());
+      } else {
+        delete behavior.second;
+      }
+    }
+  }
+  
+  Result BehaviorManager::AddBehavior(const std::string &name, IBehavior *newBehavior)
+  {
+    if(newBehavior == nullptr) {
+      PRINT_NAMED_ERROR("BehaviorManager.AddBehavior.NullBehavior", "Refusing to add NULL behavior.\n");
+      return RESULT_FAIL;
+    }
+    
+    // Make sure to delete any existing behavior with the same name before replacing
+    auto existingBehavior = _behaviors.find(name);
+    if(existingBehavior != _behaviors.end()) {
+      PRINT_NAMED_WARNING("BehaviorManager.AddBehavior.ReplaceExisting",
+                          "Replacing existing '%s' behavior.\n", name.c_str());
+      if(existingBehavior->second == nullptr) {
+        PRINT_NAMED_ERROR("BehaviorManager.AddBehavior.ExistingNull",
+                          "Existing '%s' behavior is somehow NULL.\n",
+                          existingBehavior->first.c_str());
+      } else {
+        delete existingBehavior->second;
+      }
+    }
+    
+    _behaviors[name] = newBehavior;
+    
+    return RESULT_OK;
+  }
+  
+  void BehaviorManager::SwitchFromCurrentToNext()
+  {
+    _currentBehavior = _nextBehavior;
+    _nextBehavior = _behaviors.end();
+  }
+  
+  Result BehaviorManager::Update()
+  {
+    if(_currentBehavior != _behaviors.end()) {
+      IBehavior::Status status = _currentBehavior->second->Update(_robot);
+     
+      switch(status)
+      {
+        case IBehavior::Status::RUNNING:
+          // Nothing to do! Just keep on truckin'....
+          break;
+          
+        case IBehavior::Status::COMPLETE:
+          SwitchFromCurrentToNext();
+          break;
+          
+        case IBehavior::Status::FAILURE:
+          PRINT_NAMED_ERROR("BehaviorManager.Update.FailedUpdate",
+                            "Behavior '%s' failed to Update().\n",
+                            _currentBehavior->first.c_str());
+          return RESULT_FAIL;
+          break;
+          
+        default:
+          PRINT_NAMED_ERROR("BehaviorManager.Update.UnknownStatus",
+                            "Behavior '%s' returned unknown status %d\n",
+                            _currentBehavior->first.c_str(), status);
+          return RESULT_FAIL;
+      } // switch(status)
+    }
+    else if(_nextBehavior != _behaviors.end()) {
+      SwitchFromCurrentToNext();
+    }
+    
+    return RESULT_OK;
+  } // Update()
+  
+  
+  Result BehaviorManager::SelectNextBehavior()
+  {
+    
+    if(_behaviors.empty()) {
+      PRINT_NAMED_ERROR("BehaviorManager.SelectNextBehavior.NoBehaviors",
+                        "Empty behavior container.\n");
+      return RESULT_FAIL;
+    }
+    
+    //
+    //
+    // TODO: "Smart" behavior selection based on robot / world / emotional state
+    //
+    //
+
+    // For now: random behavior
+    std::uniform_int_distribution<> dist(0,_behaviors.size());
+    _nextBehavior = std::next(std::begin(_behaviors), dist(_randomGenerator));
+    
+    return RESULT_OK;
+  }
+  
+  Result BehaviorManager::SelectNextBehavior(const std::string& name)
+  {
+    _nextBehavior = _behaviors.find(name);
+    if(_nextBehavior == _behaviors.end()) {
+      PRINT_NAMED_ERROR("BehaviorManager.SelectNextBehavior.UnknownName",
+                        "No behavior named '%s'\n", name.c_str());
+      return RESULT_FAIL;
+    }
+    
+    return RESULT_OK;
+  }
   
   
 } // namespace Cozmo

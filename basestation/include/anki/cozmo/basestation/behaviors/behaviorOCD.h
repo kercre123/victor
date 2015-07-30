@@ -21,11 +21,9 @@ namespace Anki {
 namespace Cozmo {
   
   // A behavior that tries to neaten up blocks present in the world
-  class OCD_Behavior : public IBehavior
+  class BehaviorOCD : public IBehavior
   {
   public:
-    
-    virtual Status Init(Robot& robot) override;
     
     virtual Status Update(Robot& robot) override;
     
@@ -55,7 +53,7 @@ namespace Cozmo {
     
     std::set<ObjectID> _objectsOfInterest;
     
-  }; // class OCD_Behavior
+  }; // class BehaviorOCD
 
 } // namespace Cozmo
 } // namespace Anki

@@ -20,6 +20,7 @@
 
 #include <unordered_map>
 #include <string>
+#include <random>
 
 namespace Anki {
 namespace Cozmo {
@@ -34,10 +35,11 @@ namespace Cozmo {
   public:
     
     BehaviorManager(Robot& robot);
+    ~BehaviorManager();
     
     // Calls the currently-selected behavior's Update() method until it
     // returns COMPLETE or FAILURE. Once current behavior completes
-    // switches to next behavior (including an "idle" behavior).
+    // switches to next behavior (including an "idle" behavior?).
     Result Update();
     
     // Picks next behavior based on robot's current state. This does not
@@ -53,13 +55,20 @@ namespace Cozmo {
     Result AddBehavior(const std::string& name, IBehavior* newBehavior);
     
   private:
+    
+    void SwitchFromCurrentToNext();
+    
     Robot& _robot;
     
     // Map from behavior name to available behaviors
-    std::unordered_map<std::string, IBehavior*> _behaviors;
+    using BehaviorContainer = std::unordered_map<std::string, IBehavior*>;
+    BehaviorContainer _behaviors;
     
-    IBehavior* _currentBehavior;
-    IBehavior* _nextBehavior;
+    BehaviorContainer::iterator _currentBehavior;
+    BehaviorContainer::iterator _nextBehavior;
+    
+    // For random numbers
+    std::mt19937 _randomGenerator;
     
   }; // class BehaviorManager
   
