@@ -428,7 +428,7 @@ namespace Anki
           const s32 numFiducialSamplesAtScale = numFiducialSquareSamples >> iScale;
           const s32 numFiducialSamplesPerEdge = CeilS32(static_cast<f32>(numFiducialSamplesAtScale)/8.f);
           const s32 actualNumFiducialSamplesAtScale = numFiducialSamplesPerEdge * 8;
-          u8 templateBrightValue, templateDarkValue;
+          u8 templateBrightValue = 0, templateDarkValue = 0;
 
           const HomographyStruct currentH(initialHomography, initialImageScaleF32);
 

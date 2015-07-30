@@ -1,4 +1,4 @@
-#include "gtest/gtest.h"
+#include "util/helpers/includeGTest.h" // Used in place of gTest/gTest.h directly to suppress warnings in the header
 #include <iostream>
 
 GTEST_API_ int main(int argc, char * argv[])
