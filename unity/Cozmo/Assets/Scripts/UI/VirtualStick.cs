@@ -3,12 +3,20 @@ using UnityEngine.UI;
 using System.Collections;
 using UnityEngine.EventSystems;
 
+/// <summary>
+/// this component is wildly more complicated than currently necessary, as it was originally used for
+/// 	an assortment of robot control schemes
+/// 
+/// 	at this stage, now that the driving controls are established, the virtual sticks could probably be replaced with DynamicSliderFrames
+/// </summary>
 [ExecuteInEditMode]
 public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IPointerUpHandler {
 
 #region INSPECTOR FIELDS
-	[SerializeField] bool dynamic = true; //recenter the stick from touchdown position
-	[SerializeField] bool hideEvenIfNotDynamic = false; //recenter the stick from touchdown position
+
+	//recenter the stick from touchdown position
+	[SerializeField] bool dynamic = true;
+	[SerializeField] bool hideEvenIfNotDynamic = false;
 	[SerializeField] bool staticOnSmallScreens = true;
 	[SerializeField] bool snapWidthToSideBar = true;
 
