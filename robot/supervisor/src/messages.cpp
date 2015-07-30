@@ -82,6 +82,7 @@ namespace Anki {
       {
         ReliableTransport_Init();
         ReliableConnection_Init(&connection, NULL); // We only have one connection so dest pointer is superfluous
+				HAL::FacePrintf("Reliable Connection initalized.");
         return RESULT_OK;
       }
 
@@ -180,7 +181,7 @@ namespace Anki {
         robotState_.status |=  (LiftController::IsInPosition() ? LIFT_IN_POS : 0);
         robotState_.status |=  (HeadController::IsInPosition() ? HEAD_IN_POS : 0);
         robotState_.status |= (AnimationController::IsBufferFull() ? IS_ANIM_BUFFER_FULL : 0);
-        
+
         //robotState_.numFreeAnimationFrames = AnimationController::GetNumFramesFree();
         robotState_.numAnimBytesFree = AnimationController::GetApproximateNumBytesFree();
       }
@@ -275,10 +276,11 @@ namespace Anki {
 
         while((dataLen = HAL::RadioGetNextPacket(pktBuffer_)) > 0)
         {
+					HAL::FacePrintf("ProcessBLTEMessages\ndataLen = %d\n", dataLen);
           s16 res = ReliableTransport_ReceiveData(&connection, pktBuffer_, dataLen);
           if (res < 0)
           {
-            PRINT("ERROR (%d): ReliableTransport didn't accept message %d[%d]\n", res, pktBuffer_[0], dataLen);
+            HAL::FacePrintf("ERROR (%d): ReliableTransport didn't accept message %d[%d]\n", res, pktBuffer_[0], dataLen);
           }
         }
 
@@ -287,8 +289,8 @@ namespace Anki {
           if (ReliableTransport_Update(&connection) == false) // Connection has timed out
           {
             Receiver_OnDisconnect(&connection);
-            PRINT("WARN: Reliable transport has timed out\n");  // Do not print until _OnDisconnect complete!
-          }
+						// Can't print anything because we have no where to send it
+					}
         }
       }
 
@@ -415,7 +417,7 @@ namespace Anki {
 
         ImageSendMode_t imageSendMode = static_cast<ImageSendMode_t>(msg.imageSendMode);
         Vision::CameraResolution imageSendResolution = static_cast<Vision::CameraResolution>(msg.resolution);
-        
+
         HAL::SetImageSendMode(imageSendMode, imageSendResolution);
 
         // Send back camera calibration for this resolution
@@ -550,16 +552,16 @@ namespace Anki {
       {
         AnimationController::Clear();
       }
-      
+
       template<typename KF_TYPE>
       static inline void ProcessAnimKeyFrameHelper(const KF_TYPE& msg)
-      { 
+      {
         if(AnimationController::BufferKeyFrame(msg) != RESULT_OK) {
           //PRINT("Failed to buffer a keyframe! Clearing Animation buffer!\n");
           AnimationController::Clear();
         }
       }
-      
+
 #     define DEFINE_PROCESS_KEYFRAME_METHOD(__MSG_TYPE__) \
 void Process##__MSG_TYPE__##Message(const __MSG_TYPE__& msg) { ProcessAnimKeyFrameHelper(msg); }
 
@@ -577,7 +579,7 @@ void Process##__MSG_TYPE__##Message(const __MSG_TYPE__& msg) { ProcessAnimKeyFra
       void ProcessPanAndTiltHeadMessage(const PanAndTiltHead& msg)
       {
         // TODO: Move this to some kind of VisualInterestTrackingController or something
-        
+
         HeadController::SetDesiredAngle(msg.headTiltAngle_rad, 0.1f, 0.1f, 0.1f);
         if(msg.bodyPanAngle_rad != 0.f) {
           SteeringController::ExecutePointTurn(msg.bodyPanAngle_rad, 50.f, 10.f, 10.f, true);
@@ -602,8 +604,8 @@ void Process##__MSG_TYPE__##Message(const __MSG_TYPE__& msg) { ProcessAnimKeyFra
       {
         LiftController::TapBlockOnGround(msg.numTaps);
       }
-      
-      
+
+
       // --------- Block control messages ----------
 
       void ProcessFlashBlockIDsMessage(const FlashBlockIDs& msg)
@@ -751,7 +753,7 @@ void Process##__MSG_TYPE__##Message(const __MSG_TYPE__& msg) { ProcessAnimKeyFra
                                                "Unrecognized resolution: %dx%d.\n", img.get_size(1)/3, img.get_size(0));
             m.resolution = Vision::CAMERA_RES_CVGA;
             break;
-            
+
           case 480:
             AnkiConditionalErrorAndReturnValue(img.get_size(1)==640*3, RESULT_FAIL, "CompressAndSendImage",
                                                "Unrecognized resolution: %dx%d.\n", img.get_size(1)/3, img.get_size(0));
@@ -892,6 +894,7 @@ void Receiver_ReceiveData(uint8_t* buffer, uint16_t bufferSize, ReliableConnecti
 void Receiver_OnConnectionRequest(ReliableConnection* connection)
 {
   Anki::Cozmo::PRINT("ReliableTransport new connection\n");
+	Anki::Cozmo::HAL::FacePrintf("ReliableTransport new connection\n");
   ReliableTransport_FinishConnection(connection); // Accept the connection
   Anki::Cozmo::HAL::RadioUpdateState(1, 0);
 }
@@ -899,6 +902,7 @@ void Receiver_OnConnectionRequest(ReliableConnection* connection)
 void Receiver_OnConnected(ReliableConnection* connection)
 {
   Anki::Cozmo::PRINT("ReliableTransport connection completed\n");
+	Anki::Cozmo::HAL::FacePrintf("ReliableTransport connection completed\n");
   Anki::Cozmo::HAL::RadioUpdateState(1, 0);
 }
 
@@ -906,6 +910,7 @@ void Receiver_OnDisconnect(ReliableConnection* connection)
 {
   Anki::Cozmo::HAL::RadioUpdateState(0, 0);   // Must mark connection disconnected BEFORE trying to print
   Anki::Cozmo::PRINT("ReliableTransport disconnected\n");
+	Anki::Cozmo::HAL::FacePrintf("ReliableTransport OnDisconnect\n");
   ReliableConnection_Init(connection, NULL); // Reset the connection
   Anki::Cozmo::HAL::RadioUpdateState(0, 0);
 }
