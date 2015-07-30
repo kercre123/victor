@@ -188,8 +188,8 @@ uart_tx_buffer(uint8 uart, uint8 *buf, uint16 len)
 *******************************************************************************/
 void os_put_char(uint8 c)
 {
-  uart_tx_one_char_no_wait(UART1, c);
-  //uart_tx_one_char(UART1, c);
+  //uart_tx_one_char_no_wait(UART1, c);
+  uart_tx_one_char(UART1, c);
 }
 
 /** Handles raw UART RX
@@ -206,7 +206,7 @@ LOCAL void handleUartRawRx(uint8 flag)
   bool continueTask = true;
   uint8 byte;
 
-  uart_tx_intr_disable(UART0);
+  uart_rx_intr_disable(UART0);
 
   if (flag != UART_SIG_RX_RDY)
   {
@@ -305,14 +305,18 @@ LOCAL void handleUartRawRx(uint8 flag)
     }
   }
 
+#if 1
   if ((phase != 0) || (continueTask == false)) // In the middle of a packet or more in queue but need to yield
   {
     system_os_post(uartTaskPrio, UART_SIG_RX_RDY, 0); // Queue task to keep reading
   }
   else // Otherwise
   {
-    uart_tx_intr_enable(UART0); // Re-enable the interrupt for when we have more data
+    uart_rx_intr_enable(UART0); // Re-enable the interrupt for when we have more data
   }
+#else
+  uart_rx_intr_enable(UART0);
+#endif
 }
 
 /** Length of the TX buffer
