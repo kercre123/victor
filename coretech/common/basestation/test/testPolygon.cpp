@@ -10,7 +10,7 @@
  *
  **/
 
-#include "util/helpers/includeGTest.h"
+#include "util/helpers/includeGTest.h" // Used in place of gTest/gTest.h directly to suppress warnings in the header
 
 #include "anki/common/basestation/math/fastPolygon2d.h"
 #include "anki/common/basestation/math/polygon_impl.h"
