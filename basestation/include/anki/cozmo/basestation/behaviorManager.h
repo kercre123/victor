@@ -24,14 +24,16 @@
 #include <unordered_map>
 #include <string>
 
+#define USE_OLD_BEHAVIOR_MANAGER 0
+
 namespace Anki {
   namespace Cozmo {
     
+#   if USE_OLD_BEHAVIOR_MANAGER
     class BlockWorld;
     class RobotManager;
     class Robot;
     class Block;
-    
     
     class BehaviorManager
     {
@@ -164,6 +166,9 @@ namespace Anki {
     }; // class BehaviorManager
     
     
+#   else // !USE_OLD_BEHAVIOR_MANAGER
+    
+    
     ///////////////////////////////////////////////////////////////////////////
     //
     //                NEW BEHAVIOR ENGINE API EXPLORATION
@@ -172,21 +177,24 @@ namespace Anki {
     // Forward declaration
     class IBehavior;
     class Reward;
+    class Robot;
     
-    class BehaviorEngine
+    class BehaviorManager
     {
     public:
+      
+      BehaviorManager(Robot& robot);
       
       // Calls the currently-selected behavior's Update() method until it
       // returns COMPLETE or FAILURE. Once current behavior completes
       // switches to next behavior (including an "idle" behavior).
-      Result Update(Robot& robot);
+      Result Update();
       
       // Picks next behavior based on robot's current state. This does not
       // transition immediately to running that behavior, but will let the
       // current beheavior know it needs wind down with a call to its
       // Interrupt() method.
-      Result SelectNextBehavior(Robot& robot);
+      Result SelectNextBehavior();
       
       // Forcefully select the next behavior by name (versus by letting the
       // selection mechanism choose based on current state)
@@ -195,95 +203,22 @@ namespace Anki {
       Result AddBehavior(const std::string& name, IBehavior* newBehavior);
       
     private:
+      Robot& _robot;
+      
       // Map from behavior name to available behaviors
       std::unordered_map<std::string, IBehavior*> _behaviors;
       
       IBehavior* _currentBehavior;
       IBehavior* _nextBehavior;
       
-    }; // class BehaviorEngine
+    }; // class BehaviorManager
+    
+
     
     
-    // Base Behavior Interface specification
-    class IBehavior
-    {
-    public:
-      enum class Status {
-        FAILURE,
-        RUNNING,
-        COMPLETE
-      };
-      
-      virtual Status Init(Robot& robot) = 0;
-      
-      // Step through the behavior and deliver rewards to the robot along the way
-      virtual Status Update(Robot& robot) = 0;
-      
-      virtual Status Interrupt(Robot& robot) = 0;
-      
-      // Figure out the reward this behavior will offer, given the robot's current
-      // state. Returns true if the Behavior is runnable, false if not. (In the
-      // latter case, the returned reward is not populated.)
-      virtual bool GetRewardBid(Robot& robot, Reward& reward) = 0;
-      
-      
-    }; // class IBehavior
     
     
-    // A behavior that tries to neaten up blocks present in the world
-    class OCD_Behavior : public IBehavior
-    {
-    public:
-      
-      virtual Status Init(Robot& robot) override;
-      
-      virtual Status Update(Robot& robot) override;
-      
-      virtual bool IsRunnable(Robot &robot) const;
-      
-      virtual bool GetRewardBid(Robot& robot, Reward& reward) override;
-      
-    private:
-      
-      // Internally, this behavior is just a little state machine going back and
-      // forth between picking up and placing blocks
-      
-      enum class State {
-        PICKING_UP_BLOCK,
-        PLACING_BLOCK
-      };
-      
-      State _currentState;
-      
-      // Enumerate possible arrangements Cozmo "likes".
-      enum class Arrangement {
-        STACKS,
-        LINE
-      };
-      
-      Arrangement _currentArrangement;
-      
-      std::set<ObjectID> _objectsOfInterest;
-      
-    }; // class OCD_Behavior
-    
-    
-    class TrackFaceBehavior : public IBehavior
-    {
-    public:
-      
-      virtual Status Update(Robot& robot) override;
-      
-    private:
-      
-      enum class State {
-        LOOKING_AROUND,
-        TRACKING_FACE
-      };
-      
-      State _currentState;
-      
-    }; // LookForFacesBehavior
+
     
     
     class Reward
@@ -293,6 +228,9 @@ namespace Anki {
       float value;
       
     }; // class Reward
+    
+    
+#   endif // endif // USE_OLD_BEHAVIOR_MANAGER
     
   } // namespace Cozmo
 } // namespace Anki

@@ -44,6 +44,7 @@
 namespace Anki {
   namespace Cozmo {
     
+#   if USE_OLD_BEHAVIOR_MANAGER
     static const ActionList::SlotHandle DriveAndManipulateSlot = 0;
     
     // List of sound IDs
@@ -1199,59 +1200,21 @@ namespace Anki {
       
     } // Update_CREEP()
     
+#   else // !USE_OLD_BEHAVIOR_MANAGER
     
     ///////////////////////////////////////////////////////////////////////////
     //
     //                NEW BEHAVIOR ENGINE API EXPLORATION
     //
     
-    IBehavior::Status OCD_Behavior::Init(Robot& robot)
+    BehaviorManager::BehaviorManager(Robot& robot)
+    : _robot(robot)
     {
-      
-      // Register to listen for "block" observed signals/messages instead of
-      // polling the robot on every call to GetReward()?
       
     }
     
-    IBehavior::Status OCD_Behavior::Update(Robot& robot)
-    {
-      switch(_currentState)
-      {
-          
-      }
-    }
     
-    void OCD_Behavior::HandleObservedObject(RobotObservedObject &msg)
-    {
-      // if the object is a BLOCK or ACTIVE_BLOCK, add its ID to the list we care about
-      _objectsOfInterest.insert(msg.objectID);
-    }
-    
-    void OCD_Behavior::HandleDeletedObject(RobotDeletedObject &msg)
-    {
-      // remove the object if we knew about it
-      _objectsOfInterest.erase(msg.objectID);
-    }
-    
-    bool OCD_Behavior::GetRewardBid(Robot& robot, Reward& reward)
-    {
-      const BlockWorld& blockWorld = robot.GetBlockWorld();
-      
-      //const EmotionMgr emo = robot.GetEmotionMgr();
-      
-      const BlockWorld::ObjectsMapByType_t& blocks = blockWorld.GetExistingObjectsByFamily(BlockWorld::ObjectFamily::BLOCKS);
-      
-      const BlockWorld::ObjectsMapByType_t& lightCubes = blockWorld.GetExistingObjectsByFamily(BlockWorld::ObjectFamily::ACTIVE_BLOCKS);
-      
-      if(blocks.empty() && lightCubes.empty()) {
-        // If there are no blocks to get OCD about, this isn't a viable behavior
-        return false;
-      }
-     
-      // TODO: Populate a reward object based on how many poorly-arranged blocks there are
-        
-      return true;
-    } // GetReward()
+#   endif // USE_OLD_BEHAVIOR_MANAGER
     
   } // namespace Cozmo
 } // namespace Anki
