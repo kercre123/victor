@@ -10,7 +10,7 @@
  *
  **/
 
-#include "gtest/gtest.h"
+#include "util/helpers/includeGTest.h"
 
 #include "anki/common/basestation/math/fastPolygon2d.h"
 #include "anki/common/basestation/math/polygon_impl.h"

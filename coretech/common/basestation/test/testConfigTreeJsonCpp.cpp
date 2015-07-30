@@ -11,7 +11,7 @@
  **/
 
 #include <fstream>
-#include "gtest/gtest.h"
+#include "util/helpers/includeGTest.h"
 
 #include "json/json.h"
 

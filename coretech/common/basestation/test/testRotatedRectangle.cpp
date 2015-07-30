@@ -14,7 +14,7 @@
 #include "anki/common/basestation/math/quad_impl.h"
 #include "anki/common/basestation/math/rotatedRect_impl.h"
 #include "anki/common/basestation/math/rotation.h"
-#include "gtest/gtest.h"
+#include "util/helpers/includeGTest.h"
 #include <set>
 #include <vector>
 

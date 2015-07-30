@@ -1,4 +1,4 @@
-#include "gtest/gtest.h"
+#include "util/helpers/includeGTest.h"
 #include <iostream>
 
 GTEST_API_ int main(int argc, char * argv[])

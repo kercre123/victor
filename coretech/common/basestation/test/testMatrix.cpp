@@ -1,4 +1,4 @@
-#include "gtest/gtest.h"
+#include "util/helpers/includeGTest.h"
 
 #include "anki/common/basestation/math/matrix_impl.h"
 #include <iostream>

@@ -1,4 +1,4 @@
-#include "gtest/gtest.h"
+#include "util/helpers/includeGTest.h"
 
 #include "anki/common/basestation/math/rotation.h"
 #include "anki/common/basestation/math/pose.h"

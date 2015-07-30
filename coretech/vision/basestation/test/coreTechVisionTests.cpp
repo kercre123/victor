@@ -1,4 +1,4 @@
-#include "gtest/gtest.h"
+#include "util/helpers/includeGTest.h"
 
 #include "anki/common/shared/radians.h"
 #include "anki/common/constantsAndMacros.h"
