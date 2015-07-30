@@ -538,7 +538,7 @@ namespace Anki
     {
       capacity_ = MAX_NUM_PATH_SEGMENTS;
 
-#if CORETECH_ROBOT
+#ifdef CORETECH_ROBOT
   #if defined CORETECH_BASESTATION
   #error "only one of CORETECH_BASESTATION or CORETECH_ROBOT can be defined"
   #endif
@@ -556,7 +556,7 @@ namespace Anki
     {
       capacity_ = MAX_NUM_PATH_SEGMENTS;
 
-#if CORETECH_ROBOT
+#ifdef CORETECH_ROBOT
   #if defined CORETECH_BASESTATION
   #error "only one of CORETECH_BASESTATION or CORETECH_ROBOT can be defined"
   #endif
@@ -574,7 +574,7 @@ namespace Anki
 
     Path::~Path()
     {
-#if CORETECH_BASESTATION
+#ifdef CORETECH_BASESTATION
       delete [] path_;
       path_ = nullptr;
 #endif

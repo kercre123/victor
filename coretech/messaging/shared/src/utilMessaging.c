@@ -384,17 +384,17 @@ UtilMsgError SafeUtilMsgPack(void *dst, uint32_t dstBytesLen, uint32_t *oNumByte
 static inline UtilMsgError _SafeUtilMsgUnpackInternal(const void *src, uint32_t srcBytesLen, uint32_t *oNumBytesUnpacked, const char *packStr, va_list arglist)
 {
   uint64_t l;    //8 bytes
-  uint64_t *pL;
+  uint64_t *pL = NULL;
   double d;      //8 bytes
-  double *pD;
+  double *pD = NULL;
   uint32_t i;    //4 bytes
-  unsigned int *pI;
+  unsigned int *pI = NULL;
   float f;       //4 bytes
-  float *pF;
+  float *pF = NULL;
   uint16_t h;    //2 bytes
-  uint16_t *pH;
+  uint16_t *pH = NULL;
   uint8_t c;     //1 byte
-  uint8_t *pC;
+  uint8_t *pC = NULL;
   
   if ( oNumBytesUnpacked ) {
     *oNumBytesUnpacked = 0;
@@ -454,6 +454,7 @@ static inline UtilMsgError _SafeUtilMsgUnpackInternal(const void *src, uint32_t 
           if(variableNum == 0) {
             pI = (unsigned int *) va_arg(arglist, void *);
           } else {
+            assert(pI != NULL); // should have been set when variableNum was 0
             pI++;
           }
           *pI = i;
@@ -470,6 +471,7 @@ static inline UtilMsgError _SafeUtilMsgUnpackInternal(const void *src, uint32_t 
           if(variableNum == 0) {
             pF = (float *) va_arg(arglist, void *);
           } else {
+            assert(pF != NULL); // should have been set when variableNum was 0
             pF++;
           }
           *pF = f;
@@ -486,6 +488,7 @@ static inline UtilMsgError _SafeUtilMsgUnpackInternal(const void *src, uint32_t 
           if(variableNum == 0) {
             pD = (double *) va_arg(arglist, void *);
           } else {
+            assert(pD != NULL); // should have been set when variableNum was 0
             pD++;
           }
           *pD = d;
@@ -502,6 +505,7 @@ static inline UtilMsgError _SafeUtilMsgUnpackInternal(const void *src, uint32_t 
           if(variableNum == 0) {
             pH = (unsigned short *) va_arg(arglist, void *);
           } else {
+            assert(pH != NULL); // should have been set when variableNum was 0
             pH++;
           }
           *pH = h;
@@ -518,6 +522,7 @@ static inline UtilMsgError _SafeUtilMsgUnpackInternal(const void *src, uint32_t 
           if(variableNum == 0) {
             pC = (uint8_t *) va_arg(arglist, void *);
           } else {
+            assert(pC != NULL); // should have been set when variableNum was 0
             pC++;
           }
           *pC = c;
@@ -535,6 +540,7 @@ static inline UtilMsgError _SafeUtilMsgUnpackInternal(const void *src, uint32_t 
             pL = (uint64_t *)va_arg(arglist, void *);
           }
           else {
+            assert(pL != NULL); // should have been set when variableNum was 0
             pL++;
           }
           *pL = l;

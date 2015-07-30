@@ -202,7 +202,7 @@ namespace Anki
       void * tmpBuffer = NULL;
 
 #if ANKICORETECH_EMBEDDED_USE_MALLOC
-      void * tmpBufferStart;
+      void * tmpBufferStart = nullptr;
 #endif
 
       if(useMalloc) {
@@ -275,7 +275,7 @@ namespace Anki
 
       if(!nextItem && strcmp(typeName, "Array") != 0) {
 #if ANKICORETECH_EMBEDDED_USE_MALLOC
-        if(useMalloc) {
+        if(useMalloc && tmpBufferStart) {
           free(tmpBufferStart);
         }
 #endif

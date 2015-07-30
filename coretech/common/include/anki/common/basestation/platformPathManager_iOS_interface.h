@@ -22,7 +22,7 @@ bool PlatformPathManager_iOS_GetPath(PlatformPathManager_iOS_Scope scope, char *
 #endif // ANKI_COMMON_PLATFORM_PATH_MANAGER_IOS_H_
 
 
-#if __OBJC__
+#ifdef __OBJC__
 
 @interface PlatformPathManager_iOS : NSObject
 
