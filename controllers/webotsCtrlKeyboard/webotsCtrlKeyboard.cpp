@@ -99,8 +99,6 @@ namespace Anki {
           }
         } currentlyObservedObject;
         
-        BehaviorManager::Mode behaviorMode_ = BehaviorManager::None;
-        
         // Socket connection to basestation
         TcpClient bsClient;
         char sendBuf[128];
@@ -214,8 +212,7 @@ namespace Anki {
       void SendClearAllBlocks();
       void SendClearAllObjects();
       void SendSelectNextObject();
-      void SendExecuteBehavior(BehaviorManager::Mode mode);
-      void SendSetNextBehaviorState(BehaviorManager::BehaviorState nextState);
+      void SendExecuteBehavior(const std::string& behaviorName);
       void SendAbortPath();
       void SendAbortAll();
       void SendDrawPoseMarker(const Pose3d& p);
@@ -574,7 +571,6 @@ namespace Anki {
         printf("          Dock to selected block:  p\n");
         printf("          Dock from current pose:  Shift+p\n");
         printf("    Travel up/down selected ramp:  r\n");
-        printf("       Start June 2014 dice demo:  j\n");
         printf("              Abort current path:  q\n");
         printf("                Abort everything:  Shift+q\n");
         printf("         Update controller gains:  k\n");
@@ -1081,13 +1077,11 @@ namespace Anki {
               case (s32)'C':
               {
                 if(modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
-                  if(BehaviorManager::CREEP == behaviorMode_) {
-                    behaviorMode_ = BehaviorManager::None;
-                  } else {
-                    behaviorMode_ = BehaviorManager::CREEP;
-                  }
+               
+                  // TODO: Provide a means of specifying which behavior
+                  //  (possible string field of the keyboard controller proto?)
                   
-                  SendExecuteBehavior(behaviorMode_);
+                  // SendExecuteBehavior(behaviorMode_);
                 }
                 else if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
                   SendClearAllObjects();
@@ -1126,17 +1120,6 @@ namespace Anki {
                 break;
               }
 
-                
-              case (s32)'J':
-              {
-                if (behaviorMode_ == BehaviorManager::June2014DiceDemo) {
-                  SendExecuteBehavior(BehaviorManager::None);
-                } else {
-                  SendExecuteBehavior(BehaviorManager::June2014DiceDemo);
-                }
-                break;
-              }
-                
               case (s32)'Q':
               {
                 /* Debugging U2G message for drawing quad
@@ -1478,50 +1461,6 @@ namespace Anki {
                 if(iAnimTest == NUM_ANIM_TESTS) {
                   iAnimTest = 0;
                 }
-                break;
-              }
-
-              //
-              // CREEP Behavior States:
-              //
-              case (s32)'0':
-              {
-                SendSetNextBehaviorState(BehaviorManager::DANCE_WITH_BLOCK);
-                break;
-              }
-              case (s32)'7':
-              {
-                SendSetNextBehaviorState(BehaviorManager::EXCITABLE_CHASE);
-                break;
-              }
-              case (s32)'8':
-              {
-                SendSetNextBehaviorState(BehaviorManager::SCARED_FLEE);
-                break;
-              }
-              case (s32)'-':
-              {
-                SendSetNextBehaviorState(BehaviorManager::HELP_ME_STATE);
-                break;
-              }
-              case (s32)'=':
-              {
-                SendSetNextBehaviorState(BehaviorManager::WHAT_NEXT);
-                break;
-              }
-              case (s32)'9':
-              {
-                SendSetNextBehaviorState(BehaviorManager::SCAN);
-                break;
-              }
-              case (s32)'&':
-              {
-                SendSetNextBehaviorState(BehaviorManager::IDLE);
-                break;
-              }
-              case (s32)'!':
-              {
-                SendSetNextBehaviorState(BehaviorManager::ACKNOWLEDGEMENT_NOD);
                 break;
               }
                 
@@ -2311,21 +2250,13 @@ namespace Anki {
         SendMessage(message);
       }
       
-      void SendExecuteBehavior(BehaviorManager::Mode mode)
+      void SendExecuteBehavior(const std::string& behaviorName)
       {
         U2G::ExecuteBehavior m;
-        m.behaviorMode = mode;
+        m.behaviorName = behaviorName;
+        
         U2G::Message message;
         message.Set_ExecuteBehavior(m);
-        SendMessage(message);
-      }
-      
-      void SendSetNextBehaviorState(BehaviorManager::BehaviorState nextState)
-      {
-        U2G::SetBehaviorState m;
-        m.behaviorState = nextState;
-        U2G::Message message;
-        message.Set_SetBehaviorState(m);
         SendMessage(message);
       }
       
