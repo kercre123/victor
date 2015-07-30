@@ -182,11 +182,12 @@ namespace Anki {
       
     private:
       
-      Result AddAudioRef(const std::string& name);
+      Result AddAudioRef(const std::string& name, const f32 volume = 1.f);
       
       struct AudioRef {
         std::string name;
         s32 numSamples;
+        f32 volume;
       };
       std::vector<AudioRef> _audioReferences;
       s32 _selectedAudioIndex;

@@ -420,7 +420,7 @@ namespace Anki {
       return soundIter->second.duration_ms;
     }
 
-    bool SoundManager::GetSoundSample(const std::string& name, const u32 sampleIdx, MessageAnimKeyFrame_AudioSample &msg)
+    bool SoundManager::GetSoundSample(const std::string& name, const u32 sampleIdx, const f32 volume, MessageAnimKeyFrame_AudioSample &msg)
     {
       if (_currOpenSoundFileName != name) {
         // Dump file contents to buffer if this is not the same file
@@ -457,6 +457,14 @@ namespace Anki {
         // Read file contents to buffer
         fileSize = MIN(fileSize, MAX_SOUND_BUFFER_SIZE);
         fread(_soundBuf, 1, fileSize, _currOpenSoundFilePtr);
+        
+        // Adjust volume
+        // Note: Clipping is possible!
+        if (volume != 1.f) {
+          for (int i=0; i<fileSize/2; ++i) {
+            _soundBuf[i] = (s16)CLIP(_soundBuf[i] * volume, s16_MIN, s16_MAX);
+          }
+        }
         
         _currOpenSoundNumSamples = static_cast<u32>(fileSize) / UNENCODED_SOUND_SAMPLE_SIZE;
         
