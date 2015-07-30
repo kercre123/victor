@@ -653,18 +653,7 @@ namespace Cozmo {
     Robot* robot = GetRobotByID(robotID);
     
     if(robot != nullptr) {
-      robot->StartBehaviorMode(static_cast<BehaviorManager::Mode>(msg.behaviorMode));
-    }
-  }
-  
-  void CozmoGameImpl::Process_SetBehaviorState(U2G::SetBehaviorState const& msg)
-  {
-    // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
-    const RobotID_t robotID = 1;
-    Robot* robot = GetRobotByID(robotID);
-    
-    if(robot != nullptr) {
-      robot->SetBehaviorState(static_cast<BehaviorManager::BehaviorState>(msg.behaviorState));
+      robot->StartBehavior(msg.behaviorName);
     }
   }
   
