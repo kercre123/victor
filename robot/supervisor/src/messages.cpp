@@ -82,7 +82,6 @@ namespace Anki {
       {
         ReliableTransport_Init();
         ReliableConnection_Init(&connection, NULL); // We only have one connection so dest pointer is superfluous
-				HAL::FacePrintf("Reliable Connection initalized.");
         return RESULT_OK;
       }
 
@@ -268,11 +267,10 @@ namespace Anki {
 
         while((dataLen = HAL::RadioGetNextPacket(pktBuffer_)) > 0)
         {
-					HAL::FacePrintf("ProcessBLTEMessages\ndataLen = %d\n", dataLen);
           s16 res = ReliableTransport_ReceiveData(&connection, pktBuffer_, dataLen);
           if (res < 0)
           {
-            HAL::FacePrintf("ERROR (%d): ReliableTransport didn't accept message %d[%d]\n", res, pktBuffer_[0], dataLen);
+            HAL::BoardPrintf("ERROR (%d): ReliableTransport didn't accept message %d[%d]\n", res, pktBuffer_[0], dataLen);
           }
         }
 
@@ -886,7 +884,6 @@ void Receiver_ReceiveData(uint8_t* buffer, uint16_t bufferSize, ReliableConnecti
 void Receiver_OnConnectionRequest(ReliableConnection* connection)
 {
   Anki::Cozmo::PRINT("ReliableTransport new connection\n");
-	Anki::Cozmo::HAL::FacePrintf("ReliableTransport new connection\n");
   ReliableTransport_FinishConnection(connection); // Accept the connection
   Anki::Cozmo::HAL::RadioUpdateState(1, 0);
 }
@@ -894,7 +891,6 @@ void Receiver_OnConnectionRequest(ReliableConnection* connection)
 void Receiver_OnConnected(ReliableConnection* connection)
 {
   Anki::Cozmo::PRINT("ReliableTransport connection completed\n");
-	Anki::Cozmo::HAL::FacePrintf("ReliableTransport connection completed\n");
   Anki::Cozmo::HAL::RadioUpdateState(1, 0);
 }
 
@@ -902,7 +898,6 @@ void Receiver_OnDisconnect(ReliableConnection* connection)
 {
   Anki::Cozmo::HAL::RadioUpdateState(0, 0);   // Must mark connection disconnected BEFORE trying to print
   Anki::Cozmo::PRINT("ReliableTransport disconnected\n");
-	Anki::Cozmo::HAL::FacePrintf("ReliableTransport OnDisconnect\n");
   ReliableConnection_Init(connection, NULL); // Reset the connection
   Anki::Cozmo::HAL::RadioUpdateState(0, 0);
 }
