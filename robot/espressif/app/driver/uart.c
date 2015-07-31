@@ -403,7 +403,7 @@ LOCAL void ICACHE_FLASH_ATTR uartTask(os_event_t *event)
     const uint16 pktLen = event->par;
     uint8* pktStart = (uint8*)event->sig;
     const int32 wrapAround = ((pktStart - rxBuf) + pktLen) - RX_BUF_LEN;
-    
+
     if (pktStart < rxBuf || pktStart > (rxBuf + RX_BUF_LEN)) {
       os_printf("FATAL: uart pktStart out of bounds %p %p..%p\r\n", pktStart, rxBuf, rxBuf+RX_BUF_LEN);
       return;

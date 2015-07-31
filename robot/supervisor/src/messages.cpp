@@ -265,6 +265,8 @@ namespace Anki {
       {
         u32 dataLen;
 
+        //ReliableConnection_printState(&connection);
+
         while((dataLen = HAL::RadioGetNextPacket(pktBuffer_)) > 0)
         {
           s16 res = ReliableTransport_ReceiveData(&connection, pktBuffer_, dataLen);
