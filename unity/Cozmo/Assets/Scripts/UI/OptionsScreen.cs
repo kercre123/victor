@@ -3,6 +3,11 @@ using UnityEngine.UI;
 using System;
 using System.Collections;
 
+/// <summary>
+/// leveraging PlayerPref system to store current settings for the cozmo prototype
+/// 	many of these settings were deprecated when we settled on one driving control scheme
+/// 	and one cozmo vision/action request scheme
+/// </summary>
 public class OptionsScreen : MonoBehaviour {
 
 	[SerializeField] GameObject optionsAnchor;

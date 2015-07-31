@@ -757,7 +757,7 @@ public class VortexController : GameController
 	{
 		if(robot != null && PlayerPrefs.GetInt("DebugSkipLayoutTracker", 0) == 0) {
 
-			if(robot.carryingObject == null || !robot.carryingObject.isActive || robot.isBusy) return false;
+			if(cozmoIndex >= 0 && (robot.carryingObject == null || !robot.carryingObject.isActive || robot.isBusy)) return false;
 			
 			for(int i = 0; i < numPlayers; i++) {
 				if(!playerMockBlocks[i].Validated) return false;
@@ -1135,6 +1135,12 @@ public class VortexController : GameController
 				uint c2 = CozmoPalette.ColorToUInt(lightIndex == 1 ? actualBlockColor : Color.clear);
 				uint c3 = CozmoPalette.ColorToUInt(lightIndex == 2 ? actualBlockColor : Color.clear);
 				uint c4 = CozmoPalette.ColorToUInt(lightIndex == 3 ? actualBlockColor : Color.clear);
+
+//				if(i == 2)
+//				{
+//					//testing the fudgey orange-yellow correction we are doing since the LEDs seem to make yellow into pale green
+//					Debug.Log("actualBlockColor("+actualBlockColor+")");
+//				}
 
 				playerInputBlocks[i].SetLEDs(c1, 0, (byte)ActiveBlock.Light.IndexToPosition(0), Robot.Light.FOREVER, 0, 0, 0, 0);
 				playerInputBlocks[i].SetLEDs(c2, 0, (byte)ActiveBlock.Light.IndexToPosition(1), Robot.Light.FOREVER, 0, 0, 0, 0);

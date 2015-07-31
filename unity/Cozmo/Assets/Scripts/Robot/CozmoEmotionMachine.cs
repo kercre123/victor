@@ -20,6 +20,10 @@ public struct CozmoEmotionState
 	
 }
 
+/// <summary>
+/// a specific matrix of emote states (animation/behaviors) that can populated within the inspector
+/// 	and then be triggered by string identifier
+/// </summary>
 public class CozmoEmotionMachine : MonoBehaviour {
 
 	public string defaultEmotionState;

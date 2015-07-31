@@ -4,6 +4,11 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.UI;
 
+/// <summary>
+/// simple pop-up / drop-down menu implementation upon UI system
+/// 	downloaded from forums
+/// 	known issues: seems to cause errors for the comboBoxes children to be activated before its items are added via AddItems
+/// </summary>
 [RequireComponent(typeof(RectTransform))]
 public class ComboBox : MonoBehaviour 
 {

@@ -5,6 +5,13 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
+/// <summary>
+/// wrapper for our action buttons
+/// 	managed by the CozmoVision system
+/// 		which uses the GameActions to control which buttons are visible,
+/// 		how they can be interacted with,
+/// 		and which actions they request
+/// </summary>
 public class ActionPanel : MonoBehaviour
 {
 	public ActionButton[] actionButtons;
