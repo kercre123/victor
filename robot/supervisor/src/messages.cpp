@@ -270,7 +270,11 @@ namespace Anki {
           s16 res = ReliableTransport_ReceiveData(&connection, pktBuffer_, dataLen);
           if (res < 0)
           {
-            HAL::BoardPrintf("ERROR (%d): ReliableTransport didn't accept message %d[%d]\n", res, pktBuffer_[0], dataLen);
+#ifdef SIMULATOR
+            printf("ReliableTransport didn't accept packet: %d\n", res);
+#else
+            HAL::BoardPrintf("ReliableTransport didn't accept packet: %d\n", res);
+#endif
           }
         }
 
