@@ -4,7 +4,7 @@
     # TODO: should this be passed in, or shared?
     'coretech_defines': [
       'ANKICORETECH_USE_MATLAB=1',
-      # 'ANKICORETECH_USE_GTEST=0',
+      'ANKICORETECH_USE_GTEST=0',
       'ANKICORETECH_USE_OPENCV=1',
       'ANKICORETECH_EMBEDDED_USE_MATLAB=1',
       'ANKICORETECH_EMBEDDED_USE_GTEST=0',
@@ -20,7 +20,10 @@
       '<(coretechDir)/common/robot/src/matlabInterface.cpp'
     ],
 
-    # TODO: Get this programmatically (via configure.py?) using a call to /Applications/MATLAB_R2015.a/bin/mexext
+    # TODO: Find this programmatically or pass it in
+    'matlabRootDir' : ['/Applications/MATLAB_R2015a.app'],
+    
+    # TODO: Get this programmatically (via configure.py?) using a call to <(matlabRootDir)/bin/mexext
     'mexext' : ['mexmaci64'],  
     
     # TODO: should this be passed in, or shared?
@@ -91,15 +94,15 @@
       'mac_target_archs': [ '$(ARCHS_STANDARD)' ]
     },
     'include_dirs': [
-      '/Applications/MATLAB_R2015a.app/extern/include',
+      '<(matlabRootDir)/extern/include',
       '../../include',
       '<@(opencv_includes)',
     ],
     'libraries': [
       '<@(opencv_libs)',
-      '/Applications/MATLAB_R2015a.app/bin/maci64/libmx.dylib',
-      '/Applications/MATLAB_R2015a.app/bin/maci64/libmex.dylib',
-      '/Applications/MATLAB_R2015a.app/bin/maci64/libeng.dylib',
+      '<(matlabRootDir)/bin/maci64/libmx.dylib',
+      '<(matlabRootDir)/bin/maci64/libmex.dylib',
+      '<(matlabRootDir)/bin/maci64/libeng.dylib',
     ],
     'xcode_settings': {
       'OTHER_CFLAGS': ['<@(compiler_c_flags)'],
