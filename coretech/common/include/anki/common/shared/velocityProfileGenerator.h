@@ -36,6 +36,14 @@ namespace Anki {
       float endVel, float endPos,
       float timeStep);
     
+    // Starts a trajectory for a target velocity only. No target position.
+    void StartProfile(float startVel,
+                      float startPos,
+                      float endVel,
+                      float accel,
+                      float timeStep);
+    
+    
     /*
     bool StartProfile_fixedDuration(float startPos, float startVel, float startAccel,
                                     float endPos, float endVel, float endAccel,
@@ -94,6 +102,9 @@ namespace Anki {
     float endVel_;
     float endPos_;
     float timeStep_;
+    
+    // If true, then TargetReached() is always false.
+    bool noTargetMode_;
 
     // Change in velocity per time stemp
     float deltaVelPerTimeStepStart_;

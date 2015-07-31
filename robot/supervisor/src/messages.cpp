@@ -382,6 +382,11 @@ namespace Anki {
         HeadController::SetDesiredAngle(msg.angle_rad, 0.1f, 0.1f, msg.duration_sec);
       }
 
+      void ProcessTurnInPlaceAtSpeedMessage(const TurnInPlaceAtSpeed& msg) {
+        PRINT("Turning in place at %f rad/s (%f rad/s2)\n", msg.speed_rad_per_sec, msg.accel_rad_per_sec2);
+        SteeringController::ExecutePointTurn(msg.speed_rad_per_sec, msg.accel_rad_per_sec2);
+      }
+      
       void ProcessStopAllMotorsMessage(const StopAllMotors& msg) {
         SteeringController::ExecuteDirectDrive(0,0);
         LiftController::SetAngularVelocity(0);
