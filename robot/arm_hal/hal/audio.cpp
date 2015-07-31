@@ -16,27 +16,25 @@
 #define AUDIO_DMA_STREAM  DMA1_Stream4
 #define AUDIO_DMA_IRQ     DMA1_Stream4_IRQn
 
-static const int8_t ima_index_table[] = {
-  -1, -1, -1, -1, 2, 4, 6, 8,
-  -1, -1, -1, -1, 2, 4, 6, 8
-}; 
-static const uint16_t ima_step_table[] = {
-  7, 8, 9, 10, 11, 12, 13, 14, 16, 17, 
-  19, 21, 23, 25, 28, 31, 34, 37, 41, 45, 
-  50, 55, 60, 66, 73, 80, 88, 97, 107, 118, 
-  130, 143, 157, 173, 190, 209, 230, 253, 279, 307,
-  337, 371, 408, 449, 494, 544, 598, 658, 724, 796,
-  876, 963, 1060, 1166, 1282, 1411, 1552, 1707, 1878, 2066, 
-  2272, 2499, 2749, 3024, 3327, 3660, 4026, 4428, 4871, 5358,
-  5894, 6484, 7132, 7845, 8630, 9493, 10442, 11487, 12635, 13899, 
-  15289, 16818, 18500, 20350, 22385, 24623, 27086, 29794, 32767
+static short MuLawDecompressTable[256] =
+{
+  32124, 31100, 30076, 29052, 28028, 27004, 25980, 24956,
+  23932, 22908, 21884, 20860, 19836, 18812, 17788, 16764,
+  15996, 15484, 14972, 14460, 13948, 13436, 12924, 12412,
+  11900, 11388, 10876, 10364,  9852,  9340,  8828,  8316,
+   7932,  7676,  7420,  7164,  6908,  6652,  6396,  6140,
+   5884,  5628,  5372,  5116,  4860,  4604,  4348,  4092,
+   3900,  3772,  3644,  3516,  3388,  3260,  3132,  3004,
+   2876,  2748,  2620,  2492,  2364,  2236,  2108,  1980,
+   1884,  1820,  1756,  1692,  1628,  1564,  1500,  1436,
+   1372,  1308,  1244,  1180,  1116,  1052,   988,   924,
+    876,   844,   812,   780,   748,   716,   684,   652,
+    620,   588,   556,   524,   492,   460,   428,   396,
+    372,   356,   340,   324,   308,   292,   276,   260,
+    244,   228,   212,   196,   180,   164,   148,   132,
+    120,   112,   104,    96,    88,    80,    72,    64,
+     56,    48,    40,    32,    24,    16,     8,     0
 };
-
-typedef struct {
-  uint8_t index;
-  int16_t predictor;
-  uint8_t samples[400];
-} AudioChunk;
 
 namespace Anki
 {
@@ -50,7 +48,7 @@ namespace Anki
 
       typedef int16_t AudioSample;
 
-      const int ADPCMFreq       = 24000;
+      const int InputFreq       = 24000;
       const int SampleRate      = 48000;
       const int BufferLength    = 1600;       // 33.3ms at 24khz
       const float PLL_Dilate    = 1.555456f;  // No clue why this is nessessary
@@ -165,44 +163,19 @@ namespace Anki
 
         AudioSample *output = m_audioWorking;
         const u8 *input = msg->sample;
-        bool toggle = false;
         int error = 0;
-
+        int sample = 0;
+        
         // Previous samples for gaussian filtering
-        int valpred = msg->predictor;
-        int index = msg->index;
 
         for (int rem = BufferLength; rem > 0; rem--) {
-          error += ADPCMFreq;
+          error += InputFreq;
 
           if (error >= SampleRate) {
-            int delta = toggle ? (*(input++) >> 4) : (*input & 0xF);
-            toggle = !toggle;
-
-            error -= SampleRate;
-
-            int step = ima_step_table[index];
-            index += ima_index_table[delta];
-
-            if (index < 0) index = 0;
-            else if (index > 88) index = 88;
-
-            bool sign = ((delta & 8) == 8);
-            delta = delta & 7;
-
-            int vpdiff = step >> 3;
-            if (delta & 4) vpdiff += step;
-            if (delta & 2) vpdiff += step >> 1;
-            if (delta & 1) vpdiff += step >> 2;
-
-            if (sign) valpred -= vpdiff;
-            else valpred += vpdiff;
-
-            if (valpred > 32767) valpred = 32767;
-            else if (valpred < -32768) valpred = -32768;
+            sample = MuLawDecompressTable[*(input++)];
           }
 
-          *(output++) = valpred;
+          *(output++) = sample;
         }
 
         m_AudioRendered = true;

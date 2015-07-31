@@ -367,9 +367,7 @@ END_MESSAGE_DEFINITION(SetBlockBeingCarried)
 
 // AnimKeyFrame_AudioSample
 START_MESSAGE_DEFINITION(AnimKeyFrame_AudioSample, 1)
-ADD_MESSAGE_MEMBER_ARRAY(u8, sample, 400) // TODO: Somehow make this use AUDIO_SAMPLE_SIZE
-ADD_MESSAGE_MEMBER(s16, predictor)
-ADD_MESSAGE_MEMBER(u8, index)
+ADD_MESSAGE_MEMBER_ARRAY(u8, sample, 800) // TODO: Somehow make this use AUDIO_SAMPLE_SIZE
 END_MESSAGE_DEFINITION(AnimKeyFrame_AudioSample)
 
 // AnimKeyFrame_AudioSilence

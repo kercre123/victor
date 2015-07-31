@@ -483,12 +483,8 @@ namespace Anki {
       if (sampleIdx >= _currOpenSoundNumSamples) {
         return false;
       }
-
-      msg.predictor = _adpcm_predictor;
-      msg.index = _adpcm_index;
-      
-      s16* frame = &(_soundBuf[sampleIdx * SOUND_SAMPLE_SIZE * 2]);
-      encodeADPCM(_adpcm_index, _adpcm_predictor, frame, msg.sample.data(), SOUND_SAMPLE_SIZE * 2);
+      s16* frame = &(_soundBuf[sampleIdx * SOUND_SAMPLE_SIZE]);
+      encodeADPCM(frame, msg.sample.data(), SOUND_SAMPLE_SIZE);
       
       /*
        // Debug dump first 20 samples

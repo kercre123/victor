@@ -4,4 +4,4 @@
 
 #include <stdint.h>
 
-void encodeADPCM(int &index, int &predictor, int16_t *in, uint8_t *out, int length);
+void encodeMuLaw(int16_t *in, uint8_t *out, int length);

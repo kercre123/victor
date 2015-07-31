@@ -85,13 +85,9 @@ namespace Anki {
       FILE* _currOpenSoundFilePtr;
       u32 _currOpenSoundNumSamples;
       s16 _soundBuf[MAX_SOUND_BUFFER_SIZE];
-      static const u32 SOUND_SAMPLE_SIZE = 400;
-      static const u32 UNENCODED_SOUND_SAMPLE_SIZE = SOUND_SAMPLE_SIZE * 4;
-      
-      // ADPCM encoding vars
-      s32 _adpcm_index;
-      s32 _adpcm_predictor;
-      
+      static const u32 SOUND_SAMPLE_SIZE = 800;
+      static const u32 UNENCODED_SOUND_SAMPLE_SIZE = SOUND_SAMPLE_SIZE * 2;
+            
     }; // class SoundManager
     
     
