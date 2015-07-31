@@ -34,7 +34,7 @@ namespace Cozmo {
   {
   public:
     
-    BehaviorManager(Robot& robot);
+    BehaviorManager();
     ~BehaviorManager();
     
     // Calls the currently-selected behavior's Update() method until it
@@ -49,7 +49,8 @@ namespace Cozmo {
     Result SelectNextBehavior();
     
     // Forcefully select the next behavior by name (versus by letting the
-    // selection mechanism choose based on current state)
+    // selection mechanism choose based on current state). Fails if that
+    // behavior does not exist or the selected behavior is not runnable.
     Result SelectNextBehavior(const std::string& name);
     
     Result AddBehavior(const std::string& name, IBehavior* newBehavior);
@@ -57,8 +58,6 @@ namespace Cozmo {
   private:
     
     void SwitchFromCurrentToNext();
-    
-    Robot& _robot;
     
     // Map from behavior name to available behaviors
     using BehaviorContainer = std::unordered_map<std::string, IBehavior*>;

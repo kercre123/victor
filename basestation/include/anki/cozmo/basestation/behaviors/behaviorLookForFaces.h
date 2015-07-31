@@ -22,6 +22,9 @@ namespace Cozmo {
   {
   public:
     
+    // Always runnable for now?
+    virtual bool IsRunnable(Robot& robot) const override { return true; }
+    
     virtual Status Update(Robot& robot) override;
     
   private:

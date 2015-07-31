@@ -14,6 +14,7 @@
 namespace Anki {
 namespace Cozmo {
   
+  const ActionList::SlotHandle IBehavior::sActionSlot = 0;
 
   
 } // namespace Cozmo

@@ -19,9 +19,8 @@ namespace Anki {
 namespace Cozmo {
   
   
-  BehaviorManager::BehaviorManager(Robot& robot)
-  : _robot(robot)
-  , _currentBehavior(_behaviors.end())
+  BehaviorManager::BehaviorManager()
+  : _currentBehavior(_behaviors.end())
   , _nextBehavior(_behaviors.end())
   {
 
@@ -75,7 +74,7 @@ namespace Cozmo {
   Result BehaviorManager::Update()
   {
     if(_currentBehavior != _behaviors.end()) {
-      IBehavior::Status status = _currentBehavior->second->Update(_robot);
+      IBehavior::Status status = _currentBehavior->second->Update();
      
       switch(status)
       {
@@ -124,9 +123,21 @@ namespace Cozmo {
     //
     //
 
-    // For now: random behavior
+    // For now: random behavior that is runnable
     std::uniform_int_distribution<> dist(0,_behaviors.size());
-    _nextBehavior = std::next(std::begin(_behaviors), dist(_randomGenerator));
+    const size_t maxAttempts = 2*_behaviors.size();
+    size_t attempts = 0;
+    do {
+      _nextBehavior = std::next(std::begin(_behaviors), dist(_randomGenerator));
+    } while(attempts++ < maxAttempts && _nextBehavior->second->IsRunnable() == false);
+    
+    if(attempts == maxAttempts) {
+      _nextBehavior = _behaviors.end();
+      
+      PRINT_NAMED_ERROR("BehaviorManager.SelecteNextBehavior.NoneRunnable",
+                        "Unable to find a runnable next behavior after %lu attempts.\n", attempts);
+      return RESULT_FAIL;
+    }
     
     return RESULT_OK;
   }
@@ -137,6 +148,11 @@ namespace Cozmo {
     if(_nextBehavior == _behaviors.end()) {
       PRINT_NAMED_ERROR("BehaviorManager.SelectNextBehavior.UnknownName",
                         "No behavior named '%s'\n", name.c_str());
+      return RESULT_FAIL;
+    }
+    else if(_nextBehavior->second->IsRunnable() == false) {
+      PRINT_NAMED_ERROR("BehaviorManager.SelecteNextBehavior.NotRunnable",
+                        "Behavior '%s' is not runnable.\n", name.c_str());
       return RESULT_FAIL;
     }
     

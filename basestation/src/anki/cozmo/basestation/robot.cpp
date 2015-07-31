@@ -56,7 +56,6 @@ namespace Anki {
 #   if !ASYNC_VISION_PROCESSING
     , _haveNewImage(false)
 #   endif
-    , _behaviorMgr(*this)
     , _wheelsLocked(false)
     , _headLocked(false)
     , _liftLocked(false)

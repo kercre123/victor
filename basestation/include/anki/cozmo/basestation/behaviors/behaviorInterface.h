@@ -12,6 +12,8 @@
 #ifndef COZMO_BEHAVIOR_INTERFACE_H
 #define COZMO_BEHAVIOR_INTERFACE_H
 
+#include "anki/cozmo/basestation/actionContainers.h"
+
 namespace Anki {
 namespace Cozmo {
   
@@ -29,18 +31,31 @@ namespace Cozmo {
       COMPLETE
     };
     
+    IBehavior(Robot& robot) : _robot(robot) { }
     virtual ~IBehavior() { }
     
-    // Step through the behavior and deliver rewards to the robot along the way
-    virtual Status Update(Robot& robot) = 0;
+    // Returns true iff the state of the world/robot is sufficient for this
+    // behavior to be executed
+    virtual bool IsRunnable() const = 0;
     
-    virtual Status Interrupt(Robot& robot) = 0;
+    // Will be called upon first switching to a behavior before calling update.
+    virtual Result Init() = 0;
+    
+    // Step through the behavior and deliver rewards to the robot along the way
+    virtual Status Update() = 0;
+    
+    virtual Status Interrupt() = 0;
     
     // Figure out the reward this behavior will offer, given the robot's current
     // state. Returns true if the Behavior is runnable, false if not. (In the
     // latter case, the returned reward is not populated.)
-    virtual bool GetRewardBid(Robot& robot, Reward& reward) = 0;
+    virtual bool GetRewardBid(Reward& reward) = 0;
     
+    static const ActionList::SlotHandle sActionSlot;
+    
+  protected:
+    
+    Robot &_robot;
     
   }; // class IBehavior
 
