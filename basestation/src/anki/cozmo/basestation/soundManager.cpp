@@ -476,15 +476,13 @@ namespace Anki {
         }
         
         _currOpenSoundFileName = name;
-        _adpcm_index = 0;
-        _adpcm_predictor = 0;
       }
       
       if (sampleIdx >= _currOpenSoundNumSamples) {
         return false;
       }
       s16* frame = &(_soundBuf[sampleIdx * SOUND_SAMPLE_SIZE]);
-      encodeADPCM(frame, msg.sample.data(), SOUND_SAMPLE_SIZE);
+      encodeMuLaw(frame, msg.sample.data(), SOUND_SAMPLE_SIZE);
       
       /*
        // Debug dump first 20 samples
