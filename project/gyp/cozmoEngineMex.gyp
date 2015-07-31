@@ -10,12 +10,14 @@
       'ANKICORETECH_EMBEDDED_USE_GTEST=0',
       'ANKICORETECH_EMBEDDED_USE_OPENCV=1',
     ],
+    
+    'coretechDir' : ['../../coretech'],
 
     'common_mex_sources': [
-      '../../common/matlab/mex/mexWrappers.cpp',
-      '../../common/shared/src/matlabConverters.cpp',
-      '../../common/shared/src/sharedMatlabInterface.cpp',
-      '../../common/robot/src/matlabInterface.cpp'
+      '<(coretechDir)/common/matlab/mex/mexWrappers.cpp',
+      '<(coretechDir)/common/shared/src/matlabConverters.cpp',
+      '<(coretechDir)/common/shared/src/sharedMatlabInterface.cpp',
+      '<(coretechDir)/common/robot/src/matlabInterface.cpp'
     ],
 
     # TODO: Get this programmatically (via configure.py?) using a call to /Applications/MATLAB_R2015.a/bin/mexext
@@ -161,7 +163,7 @@
     {
       'target_name': 'mexDetectFiducialMarkers',        
       'sources': [
-        '../../vision/robot/mex/mexDetectFiducialMarkers.cpp',
+        '<(coretechDir)/vision/robot/mex/mexDetectFiducialMarkers.cpp',
         '<@(common_mex_sources)',
       ],
       'dependencies': [
@@ -178,7 +180,7 @@
     {
       'target_name': 'mexUnique',        
       'sources': [
-        '../../common/robot/mex/mexUnique.cpp',
+        '<(coretechDir)/common/robot/mex/mexUnique.cpp',
         '<@(common_mex_sources)',
       ],
       'dependencies': [

@@ -2,7 +2,7 @@ function initCozmoPath
 
 cozmoDir = fileparts(fileparts(which(mfilename))); % excludes 'matlab'
 addpath(genpath(fullfile(cozmoDir, 'matlab')));
-addpath(fullfile(cozmoDir, 'build', 'mex'));
+% addpath(fullfile(cozmoDir, 'build', 'mex'));
 addpath(genpath(fullfile(cozmoDir, 'systemTests')));
 
 coretechLibs = dir(fullfile(cozmoDir, 'coretech'));
