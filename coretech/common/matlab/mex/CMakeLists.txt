@@ -1,9 +1,11 @@
 # coretech/common/matlab/mex/CMakeLists.txt
 
+message(STATUS "Now in ${CMAKE_CURRENT_SOURCE_DIR}")
+
 set(MEX_LINK_LIBRARIES 
   ${OPENCV_LIBS} 
-  CoreTech_Common_Robot 
-  CoreTech_Common_Basestation
+  ctiCommonRobot 
+  ctiCommon
 )
 
 #file(GLOB MEX_FILES "*.cpp")
