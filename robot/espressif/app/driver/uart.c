@@ -36,16 +36,6 @@ extern UartDevice    UartDev;
 #define    uartTaskQueueLen    10
 os_event_t uartTaskQueue[uartTaskQueueLen];
 
-typedef enum
-{
-  UART_SIG_TX_RDY,
-  UART_SIG_RX_RDY,
-  UART_SIG_RX_FRM_ERR,
-  UART_SIG_RX_TIMEOUT,
-  UART_SIG_RX_OVERFLOW,
-} UartTaskSignal;
-
-
 LOCAL void uart_rx_intr_handler(void *para);
 
 const uint8 UART_PACKET_HEADER[] = {0xbe, 0xef};
@@ -192,132 +182,6 @@ void os_put_char(uint8 c)
   uart_tx_one_char(UART1, c);
 }
 
-/** Handles raw UART RX
- * Does packet header synchronization and passes data to handleUartPacketRx
- * @param flags Any (error) flags that would affect packet processing
- */
-LOCAL void handleUartRawRx(uint8 flag)
-{
-  static UDPPacket* outPkt = NULL;
-  static int32  ebiup  = 0; // Counter for extrenous bytes in UART pipe
-  static uint8  ebuf[16];   // Buffer for extreneous bytes
-  static uint16 pktLen = 0;
-  static uint8  phase  = 0;
-  bool continueTask = true;
-  uint8 byte;
-
-  uart_rx_intr_disable(UART0);
-
-  if (flag != UART_SIG_RX_RDY)
-  {
-    os_printf("UART RX error: %d\r\n", flag);
-    phase = 0;
-    if (outPkt != NULL)
-    {
-      clientFreePacket(outPkt);
-    }
-  }
-
-  while (continueTask && ((READ_PERI_REG(UART_STATUS(UART0))>>UART_RXFIFO_CNT_S)&UART_RXFIFO_CNT))
-  {
-    byte = (READ_PERI_REG(UART_FIFO(UART0)) & 0xFF);
-    switch (phase)
-    {
-      case 0: // Not synchronized / looking for header byte 1
-      {
-        if (byte == UART_PACKET_HEADER[0]) phase++;
-        else
-        {
-          if (0 <= ebiup && ebiup < 15) ebuf[ebiup] = byte;
-          ebiup++;
-        }
-        break;
-      }
-      case 1: // Header byte 2
-      {
-        if (byte == UART_PACKET_HEADER[1]) phase++;
-        else phase = 0;
-        break;
-      }
-      case 2: // Low length byte
-      {
-        pktLen = byte;
-        phase++;
-        break;
-      }
-      case 3: // High length byte
-      {
-        pktLen |= (byte << 8);
-        phase++;
-        break;
-      }
-      case 4: // Skip unused byte
-      {
-        phase++;
-        break;
-      }
-      case 5:
-      {
-        phase++;
-        break;
-      }
-      case 6: // Start of payload
-      {
-        if (ebiup > 0)
-        {
-          ebuf[15] = 0;
-          os_printf("EBIUP: %d \"%s\"\r\n", ebiup, ebuf);
-          ebiup = 0;
-        }
-
-        outPkt = clientGetBuffer();
-        if (outPkt == NULL)
-        {
-          //os_printf("WARN: no radio buffer for %02x[%d]\r\n", byte, pktLen);
-          phase = 0;
-          ebiup = 1-pktLen; // Expect to receive that many bytes before seeing header again
-          break;
-        }
-        else
-        {
-          outPkt->len = 0;
-        }
-        phase++;
-        // No break, explicit fall through to next case
-      }
-      case 7:
-      {
-        outPkt->data[outPkt->len++] = byte;
-        //os_printf("RX %02x\t%d\t%d\r\n", byte, outPkt->len, pktLen);
-        if (outPkt->len >= pktLen)
-        {
-          phase = 0;
-          clientQueuePacket(outPkt);
-          continueTask = false;
-        }
-        break;
-      }
-      default:
-      {
-        os_printf("ERROR: uart RX phase default\r\n");
-        phase = 0;
-      }
-    }
-  }
-
-#if 1
-  if ((phase != 0) || (continueTask == false)) // In the middle of a packet or more in queue but need to yield
-  {
-    system_os_post(uartTaskPrio, UART_SIG_RX_RDY, 0); // Queue task to keep reading
-  }
-  else // Otherwise
-  {
-    uart_rx_intr_enable(UART0); // Re-enable the interrupt for when we have more data
-  }
-#else
-  uart_rx_intr_enable(UART0);
-#endif
-}
 
 /** Length of the TX buffer
  * @warning Must be a power of 2
@@ -363,53 +227,27 @@ STATUS ICACHE_FLASH_ATTR uartQueuePacket(uint8* data, uint16 len)
   }
   txWind = (txWind + len) & TX_BUF_LENMSK;
 
-  system_os_post(uartTaskPrio, UART_SIG_TX_RDY, 0);
+  system_os_post(uartTaskPrio, 0, 0); // 0, 0 indicates tx task
 
   return OK;
 }
 
-/** OS Task for handling UART communication
- * Most of the actual work is handled uartHandleRawRx and uartHandleRawTx
- * @param event event->sig indicates what the task should process
+/** Length of the TX buffer
+ * @warning Must be a power of 2
  */
-LOCAL void ICACHE_FLASH_ATTR uartTask(os_event_t *event)
-{
-  uint8 fifo_len;
-
-  switch(event->sig)
-  {
-    case UART_SIG_TX_RDY:
-    {
-      while (txRind != txWind) // While have stuff to write
-      {
-        if (uart_tx_one_char_no_wait(UART0, txBuf[txRind]) == OK) // while have room to write it
-        {
-          txRind = (txRind + 1) & TX_BUF_LENMSK;
-        }
-        else // Ran out of FIFO before tx buffer
-        {
-          uart_tx_intr_enable(UART0); // Enable interrupt so we can write more when there's room
-          break;
-        }
-      }
-      break;
-    }
-    case UART_SIG_RX_RDY:
-    case UART_SIG_RX_FRM_ERR:
-    case UART_SIG_RX_TIMEOUT:
-    case UART_SIG_RX_OVERFLOW:
-    {
-      handleUartRawRx(event->sig);
-      uart_rx_intr_enable(UART0);
-      break;
-    }
-    default:
-    {
-      os_printf("ERROR: Unknown uartTask sig=%d, par=%d\r\n", event->sig, event->par);
-    }
-  }
-}
-
+#define RX_BUF_LEN 8192
+/** Mask for TX buffer indexing
+ */
+#define RX_BUF_LENMSK (TX_BUF_LEN - 1)
+/** Current write index for TX buffer
+ */
+static volatile uint16 rxWind = 0;
+/** Current read index for TX buffer
+ */
+static volatile uint16 rxRind = 0;
+/** Buffer for writing out TX data
+ */
+static uint8 rxBuf[RX_BUF_LEN];
 
 /******************************************************************************
 * FunctionName : uart_rx_intr_handler
@@ -426,40 +264,173 @@ uart_rx_intr_handler(void *para)
   * However, since UART1 rx is not enabled, we can assume this is UART0
   */
   //RcvMsgBuff *pRxBuff = (RcvMsgBuff *)para;
+  static uint8* pktStart = 0;
+  static uint16 pktLen   = 0;
+  static uint16 pktByte  = 0;
+  static uint8 phase     = 0;
+
   if(UART_FRM_ERR_INT_ST == (READ_PERI_REG(UART_INT_ST(UART0)) & UART_FRM_ERR_INT_ST)) // Frame error
   {
-    uart_rx_intr_disable(UART0);
     WRITE_PERI_REG(UART_INT_CLR(UART0), UART_FRM_ERR_INT_CLR);
-    system_os_post(uartTaskPrio, UART_SIG_RX_FRM_ERR, 0);
-  }
-  else if(UART_RXFIFO_FULL_INT_ST == (READ_PERI_REG(UART_INT_ST(UART0)) & UART_RXFIFO_FULL_INT_ST)) // FIFO at threshold
-  {
-    #if 1
-    handleUartRawRx(UART_SIG_RX_RDY);
-    WRITE_PERI_REG(UART_INT_CLR(UART0), UART_RXFIFO_FULL_INT_CLR);
-    #else
-    uart_rx_intr_disable(UART0);
-    WRITE_PERI_REG(UART_INT_CLR(UART0), UART_RXFIFO_FULL_INT_CLR);
-    system_os_post(uartTaskPrio, UART_SIG_RX_RDY, 0);
-    #endif
+    phase = 0;
+    os_put_char('!'); os_put_char('F'); os_put_char('E');
   }
   else if(UART_RXFIFO_TOUT_INT_ST == (READ_PERI_REG(UART_INT_ST(UART0)) & UART_RXFIFO_TOUT_INT_ST)) // RX timeout
   {
-    uart_rx_intr_disable(UART0);
     WRITE_PERI_REG(UART_INT_CLR(UART0), UART_RXFIFO_TOUT_INT_CLR);
-    system_os_post(uartTaskPrio, UART_SIG_RX_TIMEOUT, 0);
+    phase = 0;
+    os_put_char('!'); os_put_char('T'); os_put_char('E');
   }
   else if(UART_TXFIFO_EMPTY_INT_ST == (READ_PERI_REG(UART_INT_ST(UART0)) & UART_TXFIFO_EMPTY_INT_ST)) // TX fifo empty
   {
-    uart_tx_intr_disable(UART0);
+    // This shouldn't happen as we aren't planning to enable this interrupt
     WRITE_PERI_REG(UART_INT_CLR(UART0), UART_TXFIFO_EMPTY_INT_CLR);
-    system_os_post(uartTaskPrio, UART_SIG_TX_RDY, 0);
+    os_put_char('!'); os_put_char('T'); os_put_char('X');
   }
   else if(UART_RXFIFO_OVF_INT_ST == (READ_PERI_REG(UART_INT_ST(UART0)) & UART_RXFIFO_OVF_INT_ST)) // RX overflow
   {
-    uart_rx_intr_disable(UART0);
+    SET_PERI_REG_MASK  (UART_CONF0(UART0), UART_RXFIFO_RST);    //RESET FIFO
+    CLEAR_PERI_REG_MASK(UART_CONF0(UART0), UART_RXFIFO_RST);
     WRITE_PERI_REG(UART_INT_CLR(UART0), UART_RXFIFO_OVF_INT_CLR);
-    system_os_post(uartTaskPrio, UART_SIG_RX_OVERFLOW, 0);
+    os_put_char('!'); os_put_char('O'); os_put_char('F');
+  }
+  else if(UART_RXFIFO_FULL_INT_ST == (READ_PERI_REG(UART_INT_ST(UART0)) & UART_RXFIFO_FULL_INT_ST)) // FIFO at threshold
+  {
+    while ((READ_PERI_REG(UART_STATUS(UART0))>>UART_RXFIFO_CNT_S)&UART_RXFIFO_CNT) // While data in the FIFO
+    {
+      const uint8 byte = (READ_PERI_REG(UART_FIFO(UART0)) & 0xFF);
+      switch (phase)
+      {
+        case 0: // Not synchronized / looking for header byte 1
+        {
+          if (byte == UART_PACKET_HEADER[0]) phase++;
+          break;
+        }
+        case 1: // Header byte 2
+        {
+          if (byte == UART_PACKET_HEADER[1]) phase++;
+          else phase = 0;
+          break;
+        }
+        case 2: // Low length byte
+        {
+          pktLen = byte;
+          phase++;
+          break;
+        }
+        case 3: // High length byte
+        {
+          pktLen |= (byte << 8);
+          phase++;
+          break;
+        }
+        case 4: // Skip unused byte
+        {
+          phase++;
+          break;
+        }
+        case 5:
+        {
+          phase++;
+          break;
+        }
+        case 6: // Start of payload
+        {
+          pktStart = rxBuf + rxWind;
+          pktByte = 0;
+          phase++;
+          // Explicit fallthrough to next case
+        }
+        case 7: // Payload
+        {
+          const uint16 available = RX_BUF_LEN - ((rxWind - rxRind) & RX_BUF_LENMSK);
+          if (available == 0)
+          {
+            phase = 0;
+            os_put_char('!'); os_put_char('O'); os_put_char('G');
+          }
+          rxBuf[rxWind] = byte;
+          rxWind = (rxWind + 1) & RX_BUF_LENMSK;
+          pktByte++;
+
+          if (pktByte >= pktLen)
+          {
+            if (system_os_post(uartTaskPrio, (uint32)pktStart, (uint32)pktByte) == false)
+            {
+              os_put_char('!'); os_put_char('O'); os_put_char('S');
+            }
+            phase = 0;
+          }
+          break;
+        }
+        default:
+        {
+          os_printf("ERROR: uart RX phase default\r\n");
+          phase = 0;
+        }
+      }
+    }
+    WRITE_PERI_REG(UART_INT_CLR(UART0), UART_RXFIFO_FULL_INT_CLR);
+  }
+}
+
+
+/** OS Task for handling UART communication
+ * Most of the actual work is handled uartHandleRawRx and uartHandleRawTx
+ * @param event event->sig indicates what the task should process
+ */
+LOCAL void ICACHE_FLASH_ATTR uartTask(os_event_t *event)
+{
+  uint8 fifo_len;
+
+  if (event->sig == 0) // TX event
+  {
+    while (txRind != txWind) // While have stuff to write
+    {
+      if (uart_tx_one_char_no_wait(UART0, txBuf[txRind]) == OK) // while have room to write it
+      {
+        txRind = (txRind + 1) & TX_BUF_LENMSK;
+      }
+      else // Ran out of FIFO before tx buffer
+      {
+        system_os_post(uartTaskPrio, 0, 0); // Repost the task
+        break;
+      }
+    }
+  }
+  else // RX event
+  {
+    const uint16 pktLen = event->par;
+    uint8* pktStart = (uint8*)event->sig;
+    const int32 wrapAround = ((pktStart - rxBuf) + pktLen) - RX_BUF_LEN;
+    
+    if (pktStart < rxBuf || pktStart > (rxBuf + RX_BUF_LEN)) {
+      os_printf("FATAL: uart pktStart out of bounds %p %p..%p\r\n", pktStart, rxBuf, rxBuf+RX_BUF_LEN);
+      return;
+    }
+    else if (wrapAround > 0) // Packet data wraps around buffer and isn't contiguous in memory
+    {
+      uint8* pktBuf = (uint8*)os_malloc(pktLen);
+      if (pktBuf == NULL)
+      {
+        os_printf("Couldn't allocate memory to assemble radio tx packet\r\n");
+        rxRind = (rxRind + pktLen) % RX_BUF_LENMSK;
+        return;
+      }
+      else
+      {
+        const uint16 firstCopy = pktLen - wrapAround;
+        os_memcpy(pktBuf, pktStart, firstCopy);
+        os_memcpy(pktBuf + firstCopy, rxBuf, pktLen - firstCopy);
+        clientQueuePacket(pktBuf, pktLen);
+        os_free(pktBuf);
+      }
+    }
+    else // Packet data is contiguous in memory
+    {
+      clientQueuePacket(pktStart, pktLen);
+    }
+    rxRind = (rxRind + pktLen) % RX_BUF_LENMSK;
   }
 }
 
