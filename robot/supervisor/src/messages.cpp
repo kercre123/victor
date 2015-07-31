@@ -248,14 +248,6 @@ namespace Anki {
               currentMatHeading.getDegrees(),
               Localization::GetPoseFrameId());
          */
-#if(USE_OVERLAY_DISPLAY)
-        {
-          using namespace Sim::OverlayDisplay;
-          SetText(CURR_POSE, "Pose: (x,y)=(%.4f,%.4f) at angle=%.1f\n",
-                  currentMatX, currentMatY,
-                  currentMatHeading.getDegrees());
-        }
-#endif
 
       } // ProcessAbsLocalizationUpdateMessage()
 
@@ -775,7 +767,7 @@ void Process##__MSG_TYPE__##Message(const __MSG_TYPE__& msg) { ProcessAnimKeyFra
         cv::vector<u8> compressedBuffer;
         cv::imencode(".jpg",  cvImg, compressedBuffer, compressionParams);
 
-        const u32 numTotalBytes = compressedBuffer.size();
+        const u32 numTotalBytes = static_cast<u32>(compressedBuffer.size());
 
         //PRINT("Sending frame with capture time = %d at time = %d\n", captureTime, HAL::GetTimeStamp());
 

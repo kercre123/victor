@@ -448,7 +448,7 @@ namespace Anki {
                             CONTROL_DT);
         }
         
-#if(DEBUG_HEAD_CONTROLLER)
+#if DEBUG_LIFT_CONTROLLER
         PRINT("LIFT VPG (fixedDuration): startVel %f, startPos %f, acc_start_frac %f, acc_end_frac %f, endPos %f, duration %f\n",
               startRadSpeed, startRad, acc_start_frac, acc_end_frac, desiredAngle_.ToFloat(), duration_seconds);
 #endif

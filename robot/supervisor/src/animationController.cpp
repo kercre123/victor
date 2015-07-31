@@ -37,7 +37,8 @@ namespace AnimationController {
     s32 _lastBufferPos;
     
     s32  _numAudioFramesBuffered; // NOTE: Also counts EndOfAnimationFrames...
-    
+
+    bool _isBufferStarved;
     bool _haveReceivedTerminationFrame;
     bool _isPlaying;
     bool _bufferFullMessagePrintedThisTick;
@@ -294,6 +295,7 @@ namespace AnimationController {
 
     _haveReceivedTerminationFrame = false;
     _isPlaying = false;
+    _isBufferStarved = false;
     _bufferFullMessagePrintedThisTick = false;
     
     if(_tracksInUse) {
@@ -562,11 +564,23 @@ namespace AnimationController {
       // Note that we need at least two "frames" in the buffer so we can always
       // read from the current one to the next one without reaching end of buffer.
       ready = _numAudioFramesBuffered > 1;
+
+      // Report every time the buffer goes from having a sufficient number of audio frames to not.
+      if (!ready) {
+        if (!_isBufferStarved) {
+          _isBufferStarved = true;
+          PRINT("AnimationController.IsReadyToPlay.BufferStarved\n");
+        }
+      } else {
+        _isBufferStarved = false;
+      }
+      
     } else {
       // Otherwise, wait until we get enough frames to start
       ready = (_numAudioFramesBuffered > ANIMATION_PREROLL_LENGTH || _haveReceivedTerminationFrame);
       if(ready) {
         _isPlaying = true;
+        _isBufferStarved = false;
         
 #       if DEBUG_ANIMATION_CONTROLLER
         _currentTime_ms = 0;
@@ -789,7 +803,7 @@ namespace AnimationController {
               if(_tracksToPlay & BODY_TRACK) {
 #               if DEBUG_ANIMATION_CONTROLLER
                 PRINT("AnimationController[t=%dms(%d)] setting body motion to radius=%d, speed=%d\n",
-                      _currentTime_ms, HAL::GetTimeStamp(), msg.curvatureRadius_mm, msg.speed_mmPerSec);
+                      _currentTime_ms, HAL::GetTimeStamp(), msg.curvatureRadius_mm, msg.speed);
 #               endif
                 
                 f32 leftSpeed=0, rightSpeed=0;
@@ -843,7 +857,7 @@ namespace AnimationController {
           --_numAudioFramesBuffered;
 #         if DEBUG_ANIMATION_CONTROLLER
           PRINT("Reached animation termination frame (%d frames still buffered, curPos/lastPos = %d/%d).\n",
-                _numFramesBuffered, _currentBufferPos, _lastBufferPos);
+                _numAudioFramesBuffered, _currentBufferPos, _lastBufferPos);
 #         endif
         }
 
