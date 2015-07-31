@@ -137,9 +137,6 @@ namespace Anki
     {
       s32 accumulator = 0;
 
-      const s32 imageHeight = image.get_size(0);
-      const s32 imageWidth = image.get_size(1);
-
       const f32 h00 = homography[0][0];
       const f32 h10 = homography[1][0];
       const f32 h20 = homography[2][0];
@@ -184,7 +181,7 @@ namespace Anki
         // 2. Sample the image
 
         // This should only fail if there's a bug in the quad extraction
-        AnkiAssert(warpedY >= 0  && warpedX >= 0 && warpedY < imageHeight && warpedX < imageWidth);
+        AnkiAssert(warpedY >= 0  && warpedX >= 0 && warpedY < image.get_size(0) && warpedX < image.get_size(1)); // Verify y against image height and x against width
 
         const s16 imageValue = static_cast<s16>(*image.Pointer(warpedY, warpedX));
 
@@ -745,8 +742,10 @@ namespace Anki
 
       Initialize();
 
+#if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ERRORS_AND_WARNS_AND_ASSERTS
       const s32 imageHeight = image.get_size(0);
       const s32 imageWidth = image.get_size(1);
+#endif
 
       const f32 h00 = homography[0][0];
       const f32 h10 = homography[1][0];

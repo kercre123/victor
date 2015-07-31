@@ -678,11 +678,11 @@ namespace Anki
 
           s8 * restrict pDy = dy.Pointer(y,0);
 
-#if USE_ARM_ACCELERATION == ACCELERATION_NONE || USE_ARM_ACCELERATION == ACCELERATION_ARM_A7
+#if ACCELERATION_TYPE == ACCELERATION_NONE || ACCELERATION_TYPE == ACCELERATION_ARM_A7
           for(x=1; x<(imageWidth-1); x++) {
             pDy[x] = static_cast<s8>( (static_cast<s32>(pIn_yp1[x]) >> 1) - (static_cast<s32>(pIn_ym1[x]) >> 1) );
           }
-#elif USE_ARM_ACCELERATION == ACCELERATION_ARM_M4
+#elif ACCELERATION_TYPE == ACCELERATION_ARM_M4
           // pIn_ym1 and pIn_yp1 should always be aligned, so this is okay even with auto-load-merging
           for(x = 0; x<(imageWidth-7); x+=8) {
             const u32 inM3210 = *reinterpret_cast<const u32*>(pIn_ym1 + x);
@@ -703,7 +703,7 @@ namespace Anki
             *reinterpret_cast<u32*>(pDy + x) = out3210;
             *reinterpret_cast<u32*>(pDy + x + 4) = out7654;
           }
-#endif // #elif USE_ARM_ACCELERATION == ACCELERATION_ARM_M4
+#endif // #elif ACCELERATION_TYPE == ACCELERATION_ARM_M4
 
           pDy[0] = 0;
           pDy[imageWidth-1] = 0;

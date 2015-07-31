@@ -319,7 +319,7 @@ void ReliableUDPChannel::ReceiveData(const uint8_t *buffer, unsigned int bufferS
     ConnectionData *data = GetConnectionData(sourceAddress);
     if (data == nullptr || data->isDisconnectionQueued) {
       PRINT_STREAM_WARNING("ReliableUDPChannel.ReceiveData",
-                           "Received unexpected normal messages from address " << sourceAddress.ToString() << ".");
+                           "Received unexpected normal messages from address " << sourceAddress.ToString() << ".\n");
       return;
     }
     assert(data->isRealConnectionActive);
@@ -341,6 +341,7 @@ void ReliableUDPChannel::ConfigureReliableTransport()
     Util::ReliableConnection::SetTimeBetweenPingsInMS(33.3); // Heartbeat interval
     Util::ReliableConnection::SetTimeBetweenResendsInMS(133.3); // 4x heartbeat interval
     Util::ReliableConnection::SetConnectionTimeoutInMS(5000.0);
+    Util::ReliableConnection::SetPacketSeparationIntervalInMS(10.0);
     Util::ReliableConnection::SetMaxPingRoundTripsToTrack(10);
     Util::ReliableConnection::SetSendSeparatePingMessages(false);
     Util::ReliableConnection::SetMaxPacketsToReSendOnUpdate(1);

@@ -2,31 +2,27 @@
 // TODO: this include is shared b/w BS and Robot.  Move up a level.
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
-
 #include "anki/common/shared/utilities_shared.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/poseBase_impl.h"
 #include "anki/common/basestation/math/quad_impl.h"
 #include "anki/common/basestation/math/rect_impl.h"
-
-
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/mat.h"
 #include "anki/cozmo/basestation/markerlessObject.h"
 #include "anki/cozmo/basestation/comms/robot/robotMessages.h"
 #include "anki/cozmo/basestation/robot.h"
-#include "anki/cozmo/basestation/signals/cozmoEngineSignals.h"
-
 #include "bridge.h"
 #include "flatMat.h"
 #include "platform.h"
 #include "anki/cozmo/basestation/ramp.h"
 #include "anki/cozmo/basestation/charger.h"
 #include "anki/cozmo/basestation/humanHead.h"
-
-#include "robotMessageHandler.h"
+#include "anki/cozmo/basestation/robotMessageHandler.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
+#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "messageEngineToGame.h"
 
 // The amount of time a proximity obstacle exists beyond the latest detection
 #define PROX_OBSTACLE_LIFETIME_MS  4000
@@ -569,21 +565,23 @@ namespace Anki
               //           topMarkerOrientation.getDegrees());
             }
           }
-          CozmoEngineSignals::RobotObservedObjectSignal().emit(_robot->GetID(),
-                                                               inFamily,
-                                                               obsType,
-                                                               obsID,
-                                                               true, // markers are visible
-                                                               boundingBox.GetX(),
-                                                               boundingBox.GetY(),
-                                                               boundingBox.GetWidth(),
-                                                               boundingBox.GetHeight(),
-                                                               obsObjTrans.x(),
-                                                               obsObjTrans.y(),
-                                                               obsObjTrans.z(),
-                                                               q.w(), q.x(), q.y(), q.z(),
-                                                               topMarkerOrientation.ToFloat(),
-                                                               observedObject->IsActive());
+          _robot->GetExternalInterface()->DeliverToGame(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotObservedObject(
+            _robot->GetID(),
+            inFamily,
+            obsType,
+            obsID,
+            boundingBox.GetX(),
+            boundingBox.GetY(),
+            boundingBox.GetWidth(),
+            boundingBox.GetHeight(),
+            obsObjTrans.x(),
+            obsObjTrans.y(),
+            obsObjTrans.z(),
+            q.w(), q.x(), q.y(), q.z(),
+            topMarkerOrientation.ToFloat(),
+            true, // markers are visible
+            observedObject->IsActive()
+          )));
         } // if(observedObject->GetNumTimesObserved() > MIN_TIMES_TO_OBSERVE_OBJECT)
         
         if(_robot->GetTrackToObject().IsSet() &&
@@ -851,21 +849,23 @@ namespace Anki
 //                                 topMarkerOrientation.getDegrees());
                     }
                   }
-                  CozmoEngineSignals::RobotObservedObjectSignal().emit(_robot->GetID(),
-                                                                       unobserved.family,
-                                                                       unobserved.type,
-                                                                       unobserved.object->GetID(),
-                                                                       false, // marker not visible
-                                                                       boundingBox.GetX(),
-                                                                       boundingBox.GetY(),
-                                                                       boundingBox.GetWidth(),
-                                                                       boundingBox.GetHeight(),
-                                                                       obsObjTrans.x(),
-                                                                       obsObjTrans.y(),
-                                                                       obsObjTrans.z(),
-                                                                       q.w(), q.x(), q.y(), q.z(),
-                                                                       topMarkerOrientation.ToFloat(),
-                                                                       unobserved.object->IsActive());
+                  _robot->GetExternalInterface()->DeliverToGame(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotObservedObject(
+                    _robot->GetID(),
+                    unobserved.family,
+                    unobserved.type,
+                    unobserved.object->GetID(),
+                    boundingBox.GetX(),
+                    boundingBox.GetY(),
+                    boundingBox.GetWidth(),
+                    boundingBox.GetHeight(),
+                    obsObjTrans.x(),
+                    obsObjTrans.y(),
+                    obsObjTrans.z(),
+                    q.w(), q.x(), q.y(), q.z(),
+                    topMarkerOrientation.ToFloat(),
+                    false, // marker not visible
+                    unobserved.object->IsActive()
+                  )));
                   ++numVisibleObjects;
                 } // if(IsWithinFieldOfView)
               } // for(each projectedCorner)
@@ -1673,7 +1673,7 @@ namespace Anki
       
       if(numObjectsObserved == 0) {
         // If we didn't see/update anything, send a signal saying so
-        CozmoEngineSignals::RobotObservedNothingSignal().emit(_robot->GetID());
+        _robot->GetExternalInterface()->DeliverToGame(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotObservedNothing(_robot->GetID())));
       }
       
       //PRINT_NAMED_INFO("BlockWorld.Update.NumBlocksObserved", "Saw %d blocks\n", numBlocksObserved);
@@ -1879,7 +1879,9 @@ namespace Anki
         
         // Notify any listeners that this object is being deleted
         if(object->GetNumTimesObserved() >= MIN_TIMES_TO_OBSERVE_OBJECT) {
-          CozmoEngineSignals::RobotDeletedObjectSignal().emit(_robot->GetID(), object->GetID().GetValue());
+          _robot->GetExternalInterface()->DeliverToGame(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotDeletedObject(
+            _robot->GetID(), object->GetID().GetValue()
+          )));
         }
         
         // NOTE: The object should erase its own visualization upon destruction

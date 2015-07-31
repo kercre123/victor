@@ -13,7 +13,6 @@
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/comms/robot/robotMessages.h"
 #include "anki/cozmo/basestation/robot.h"
-#include "anki/cozmo/basestation/signals/cozmoEngineSignals.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/common/basestation/math/point.h"
@@ -31,9 +30,10 @@
 #include "anki/cozmo/basestation/ramp.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
 #include "opencv2/highgui/highgui.hpp" // For imwrite() in ProcessImage
-
 #include "anki/cozmo/basestation/soundManager.h"
 #include "anki/cozmo/basestation/faceAnimationManager.h"
+#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "clad/externalInterface/messageEngineToGame.h"
 
 #include <fstream>
 #include <dirent.h>
@@ -45,8 +45,9 @@
 namespace Anki {
   namespace Cozmo {
     
-    Robot::Robot(const RobotID_t robotID, IRobotMessageHandler* msgHandler)
-    : _ID(robotID)
+    Robot::Robot(const RobotID_t robotID, IRobotMessageHandler* msgHandler, IExternalInterface* externalInterface)
+    : _externalInterface(externalInterface)
+    , _ID(robotID)
     , _isPhysical(false)
     , _newStateMsgAvailable(false)
     , _syncTimeAcknowledged(false)
@@ -85,6 +86,7 @@ namespace Anki {
     , _isMoving(false)
     , _isAnimating(false)
     , _battVoltage(5)
+    , _imageSendMode(ISM_OFF)
     , _carryingMarker(nullptr)
     , _lastPickOrPlaceSucceeded(false)
     , _stateSaveMode(SAVE_OFF)
@@ -1130,17 +1132,19 @@ namespace Anki {
     // Sends a message to the robot to move the lift to the specified height
     Result Robot::MoveLiftToHeight(const f32 height_mm,
                                    const f32 max_speed_rad_per_sec,
-                                   const f32 accel_rad_per_sec2)
+                                   const f32 accel_rad_per_sec2,
+                                   const f32 duration_sec)
     {
-      return SendSetLiftHeight(height_mm, max_speed_rad_per_sec, accel_rad_per_sec2);
+      return SendSetLiftHeight(height_mm, max_speed_rad_per_sec, accel_rad_per_sec2, duration_sec);
     }
     
     // Sends a message to the robot to move the head to the specified angle
     Result Robot::MoveHeadToAngle(const f32 angle_rad,
                                   const f32 max_speed_rad_per_sec,
-                                  const f32 accel_rad_per_sec2)
+                                  const f32 accel_rad_per_sec2,
+                                  const f32 duration_sec)
     {
-      return SendSetHeadAngle(angle_rad, max_speed_rad_per_sec, accel_rad_per_sec2);
+      return SendSetHeadAngle(angle_rad, max_speed_rad_per_sec, accel_rad_per_sec2, duration_sec);
     }
       
     Result Robot::TapBlockOnGround(const u8 numTaps)
@@ -1209,14 +1213,19 @@ namespace Anki {
     
     Result Robot::PlaySound(const std::string& soundName, u8 numLoops, u8 volume)
     {
-      CozmoEngineSignals::PlaySoundForRobotSignal().emit(GetID(), soundName, numLoops, volume);
+      if (_externalInterface != nullptr) {
+        _externalInterface->DeliverToGame(ExternalInterface::MessageEngineToGame(ExternalInterface::PlaySound(soundName, numLoops, volume)));
+      }
+      //CozmoEngineSignals::PlaySoundForRobotSignal().emit(GetID(), soundName, numLoops, volume);
       return RESULT_OK;
     } // PlaySound()
       
       
     void Robot::StopSound()
     {
-      CozmoEngineSignals::StopSoundForRobotSignal().emit(GetID());
+      if (_externalInterface != nullptr) {
+        _externalInterface->DeliverToGame(ExternalInterface::MessageEngineToGame(ExternalInterface::StopSound()));
+      }
     } // StopSound()
       
       
@@ -1227,7 +1236,7 @@ namespace Anki {
 
     void Robot::ReplayLastAnimation(const s32 loopCount)
     {
-      Result lastResult = _animationStreamer.SetStreamingAnimation(_lastPlayedAnimationId, loopCount);
+      _animationStreamer.SetStreamingAnimation(_lastPlayedAnimationId, loopCount);
     }
 
     // Read the animations in a dir
@@ -1242,7 +1251,7 @@ namespace Anki {
       }
       jsonFile.close();
       if (!animDefs.empty()) {
-        PRINT_NAMED_INFO("Robot.ReadAnimationFile", "reading");
+        PRINT_NAMED_INFO("Robot.ReadAnimationFile", "reading %s\n", filename);
         _cannedAnimations.DefineFromJson(animDefs, animationId);
       }
 
@@ -1294,6 +1303,13 @@ namespace Anki {
       } else {
         PRINT_NAMED_INFO("Robot.ReadAnimationFile", "folder not found %s", animationFolder.c_str());
       }
+
+      // Tell UI about available animations
+      vector<std::string> animNames(_cannedAnimations.GetAnimationNames());
+      for (vector<std::string>::iterator i=animNames.begin(); i != animNames.end(); ++i) {
+        _externalInterface->DeliverToGame(ExternalInterface::MessageEngineToGame(ExternalInterface::AnimationAvailable(*i)));
+      }
+
 
       if (!animationId.empty() && loadedFileCount == 1 && playLoadedAnimation) {
         // send message to play animation
@@ -2073,24 +2089,28 @@ namespace Anki {
 
     Result Robot::SendSetLiftHeight(const f32 height_mm,
                                     const f32 max_speed_rad_per_sec,
-                                    const f32 accel_rad_per_sec2) const
+                                    const f32 accel_rad_per_sec2,
+                                    const f32 duration_sec) const
     {
       MessageSetLiftHeight m;
       m.height_mm = height_mm;
       m.max_speed_rad_per_sec = max_speed_rad_per_sec;
       m.accel_rad_per_sec2 = accel_rad_per_sec2;
+      m.duration_sec = duration_sec;
       
       return _msgHandler->SendMessage(_ID,m);
     }
     
     Result Robot::SendSetHeadAngle(const f32 angle_rad,
                                    const f32 max_speed_rad_per_sec,
-                                   const f32 accel_rad_per_sec2) const
+                                   const f32 accel_rad_per_sec2,
+                                   const f32 duration_sec) const
     {
       MessageSetHeadAngle m;
       m.angle_rad = angle_rad;
       m.max_speed_rad_per_sec = max_speed_rad_per_sec;
       m.accel_rad_per_sec2 = accel_rad_per_sec2;
+      m.duration_sec = duration_sec;
       
       return _msgHandler->SendMessage(_ID,m);
     }
@@ -2518,8 +2538,8 @@ namespace Anki {
       // Now make the robot's origin point to the new origin
       // TODO: avoid the icky const_cast here...
       _worldOrigin = const_cast<Pose3d*>(newPoseWrtNewOrigin.GetParent());
-      
-      CozmoEngineSignals::RobotWorldOriginChangedSignal().emit(GetID());
+
+      _robotWorldOriginChangedSignal.emit(GetID());
       
       return RESULT_OK;
       
@@ -2800,6 +2820,7 @@ namespace Anki {
       
     Result Robot::AbortAnimation()
     {
+      _animationStreamer.SetStreamingAnimation("");
       return SendAbortAnimation();
     }
     

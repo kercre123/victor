@@ -210,8 +210,8 @@ robot/fpga/synlog.tcl
 **.dump
 *.htm
 block/build/
-*.m51
-*.m51
+block/lst/
+robot/**/build/
 rx-packet-log.txt
 coretech/project/gyp/common-robot.lst
 coretech/project/gyp/common-shared-test.lst
@@ -226,6 +226,7 @@ coretech/project/gyp/planning.lst
 coretech/project/gyp/vision-robot.lst
 coretech/project/gyp/vision-test.lst
 coretech/project/gyp/vision.lst
+project/gyp/pluginPhysics.lst
 project/gyp/cozmoEngine-test.lst
 project/gyp/cozmoEngine.lst
 project/gyp/ctrlRobot.lst
@@ -240,3 +241,4 @@ generated/android
 coretech/project/gyp/build
 project/gyp/build
 generated/clad
+generated/webots/src/plugins/physics/physics.c

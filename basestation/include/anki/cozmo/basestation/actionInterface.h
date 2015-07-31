@@ -20,7 +20,7 @@
 #include "anki/cozmo/shared/cozmoTypes.h"
 
 #include "anki/cozmo/basestation/actionableObject.h"
-#include "anki/cozmo/messageBuffers/shared/actionTypes.h"
+#include "clad/types/actionTypes.h"
 
 #include <list>
 
@@ -49,7 +49,7 @@ namespace Anki {
       
       ActionResult Update(Robot& robot);
       
-      void Cancel(Robot& robot) { _isCancelled = true; }
+      void Cancel() { _isCancelled = true; }
       
       // Derived classes can implement any required cleanup by overriding this
       // method. It is called when Update() is about return anything other than

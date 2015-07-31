@@ -19,11 +19,12 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotManager.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
-#include "anki/cozmo/basestation/signals/cozmoEngineSignals.h"
 #include "anki/cozmo/basestation/robotMessageHandler.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
-#include <fstream>
+#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "opencv2/imgproc/imgproc.hpp"
+#include "messageEngineToGame.h"
+#include <fstream>
 
 // Uncomment to allow interprocess access to the camera stream (e.g. Matlab)
 //#define STREAM_IMAGES_VIA_FILESYSTEM 1
@@ -320,7 +321,33 @@ namespace Anki {
                                                             msg.imageChunkCount,
                                                             msg.chunkId, msg.data, msg.chunkSize );
 
-      CozmoEngineSignals::RobotImageChunkAvailableSignal().emit(robot->GetID(), &msg);
+      IExternalInterface* externalInterface = robot->GetExternalInterface();
+      if (externalInterface != nullptr && robot->GetImageSendMode() != ISM_OFF) {
+        ExternalInterface::ImageChunk uiImgChunk;
+        uiImgChunk.imageId = msg.imageId;
+        uiImgChunk.frameTimeStamp = msg.frameTimeStamp;
+        uiImgChunk.nrows = Vision::CameraResInfo[msg.resolution].height;
+        uiImgChunk.ncols = Vision::CameraResInfo[msg.resolution].width;
+        assert(uiImgChunk.data.size() == msg.data.size());
+        uiImgChunk.chunkSize = msg.chunkSize;
+        uiImgChunk.imageEncoding = msg.imageEncoding;
+        uiImgChunk.imageChunkCount = msg.imageChunkCount;
+        uiImgChunk.chunkId = msg.chunkId;
+        std::copy(msg.data.begin(), msg.data.end(),
+          uiImgChunk.data.begin());
+
+        ExternalInterface::MessageEngineToGame msgWrapper;
+        msgWrapper.Set_ImageChunk(uiImgChunk);
+        robot->GetExternalInterface()->DeliverToGame(std::move(msgWrapper));
+
+        const bool wasLastChunk = uiImgChunk.chunkId == uiImgChunk.imageChunkCount-1;
+
+        if(wasLastChunk && robot->GetImageSendMode() == ISM_SINGLE_SHOT) {
+          // We were just in single-image send mode, and the image got sent, so
+          // go back to "off". (If in stream mode, stay in stream mode.)
+          robot->SetImageSendMode(ISM_OFF);
+        }
+      }
       VizManager::getInstance()->SendImageChunk(robot->GetID(), msg);
       
       if(isImageReady)
@@ -607,7 +634,9 @@ namespace Anki {
             ActionableObject* actionObject = dynamic_cast<ActionableObject*>(object);
             assert(actionObject != nullptr);
             if(actionObject->IsBeingCarried() == false) {
-              CozmoEngineSignals::ActiveObjectMovedSignal().emit(robot->GetID(), objectWithID.first, msg.xAccel, msg.yAccel, msg.zAccel, msg.upAxis);
+              robot->GetExternalInterface()->DeliverToGame(ExternalInterface::MessageEngineToGame(ExternalInterface::ActiveObjectMoved(
+                robot->GetID(), objectWithID.first, msg.xAccel, msg.yAccel, msg.zAccel, msg.upAxis
+              )));
             }
             
             return RESULT_OK;
@@ -633,8 +662,9 @@ namespace Anki {
                               "MessageActiveObjectStoppedMoving",
                               "Received message that Object " << objectWithID.first.GetValue() << " (Active ID " << msg.objectID << ") stopped moving.");
             
-            CozmoEngineSignals::ActiveObjectStoppedMovingSignal().emit(robot->GetID(), objectWithID.first, msg.upAxis, msg.rolled);
-            
+            robot->GetExternalInterface()->DeliverToGame(ExternalInterface::MessageEngineToGame(ExternalInterface::ActiveObjectStoppedMoving(
+              robot->GetID(), objectWithID.first, msg.upAxis, msg.rolled
+            )));
             return RESULT_OK;
           }
         }
@@ -659,8 +689,10 @@ namespace Anki {
                               "MessageActiveObjectTapped",
                               "Received message that object " << objectWithID.first.GetValue() << " (Active ID " << msg.objectID << ") was tapped " << (uint32_t)msg.numTaps << " times.");
             
-            CozmoEngineSignals::ActiveObjectTappedSignal().emit(robot->GetID(), objectWithID.first, msg.numTaps);
-            
+            robot->GetExternalInterface()->DeliverToGame(ExternalInterface::MessageEngineToGame(ExternalInterface::ActiveObjectTapped(
+              robot->GetID(), objectWithID.first, msg.numTaps
+            )));
+
             return RESULT_OK;
           }
         }

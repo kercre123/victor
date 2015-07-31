@@ -27,26 +27,24 @@ namespace AnimationController {
     // Streaming KeyFrame buffer size, in bytes
     static const s32 KEYFRAME_BUFFER_SIZE = 16384;
     
-    // Amount of "pre-roll" that needs to be buffered before a streamed animation
-    // will start playing, in number of keyframes
-    static const s32 PREROLL_BUFFER_LENGTH = 5;
-    
     // If buffer gets within this number of bytes of the buffer length,
     // then it is considered "full" for the purposes of IsBufferFull() below.
-    static const s32 KEYFRAME_BUFFER_PADDING = KEYFRAME_BUFFER_SIZE / 4;
+    static const s32 KEYFRAME_BUFFER_PADDING = KEYFRAME_BUFFER_SIZE / 3;
     
     // Circular byte buffer for keyframe messages
     ONCHIP u8 _keyFrameBuffer[KEYFRAME_BUFFER_SIZE];
     s32 _currentBufferPos;
     s32 _lastBufferPos;
     
-    s32  _numFramesBuffered;
+    s32  _numAudioFramesBuffered; // NOTE: Also counts EndOfAnimationFrames...
     
     bool _haveReceivedTerminationFrame;
     bool _isPlaying;
     bool _bufferFullMessagePrintedThisTick;
     
     AnimTrackFlag _tracksToPlay;
+    
+    int _tracksInUse = 0;
     
 #   if DEBUG_ANIMATION_CONTROLLER
     TimeStamp_t _currentTime_ms;
@@ -273,6 +271,8 @@ namespace AnimationController {
     
     _tracksToPlay = ENABLE_ALL_TRACKS;
     
+    _tracksInUse  = 0;
+    
     Clear();
     
     DefineHardCodedAnimations();
@@ -290,11 +290,29 @@ namespace AnimationController {
     _currentBufferPos = 0;
     _lastBufferPos = 0;
     
-    _numFramesBuffered = 0;
+    _numAudioFramesBuffered = 0;
 
     _haveReceivedTerminationFrame = false;
     _isPlaying = false;
     _bufferFullMessagePrintedThisTick = false;
+    
+    if(_tracksInUse) {
+      // In case we are aborting an animation, stop any tracks that were in use
+      // (For now, this just means motor-based tracks.) Note that we don't
+      // stop tracks we weren't using, in case we were, for example, playing
+      // a head animation while driving a path.
+      if(_tracksInUse & HEAD_TRACK) {
+        HeadController::SetAngularVelocity(0);
+      }
+      if(_tracksInUse & LIFT_TRACK) {
+        LiftController::SetAngularVelocity(0);
+      }
+      if(_tracksInUse & BODY_TRACK) {
+        SteeringController::ExecuteDirectDrive(0, 0);
+      }
+    }
+      
+    _tracksInUse = 0;
     
 #   if DEBUG_ANIMATION_CONTROLLER
     _currentTime_ms = 0;
@@ -416,7 +434,7 @@ namespace AnimationController {
     PRINT("Buffering EndOfAnimation KeyFrame\n");
 #   endif
     _haveReceivedTerminationFrame = true;
-    ++_numFramesBuffered;
+    ++_numAudioFramesBuffered;
     return RESULT_OK;
   }
   
@@ -428,7 +446,7 @@ namespace AnimationController {
     }
     
     //PRINT("Buffering AudioSample KeyFrame\n");
-    ++_numFramesBuffered;
+    ++_numAudioFramesBuffered;
     return RESULT_OK;
   }
   
@@ -440,7 +458,7 @@ namespace AnimationController {
     }
     
     //PRINT("Buffering AudioSilence KeyFrame\n");
-    ++_numFramesBuffered;
+    ++_numAudioFramesBuffered;
     return RESULT_OK;
   }
 
@@ -543,10 +561,10 @@ namespace AnimationController {
       // until we run out of keyframes in the buffer
       // Note that we need at least two "frames" in the buffer so we can always
       // read from the current one to the next one without reaching end of buffer.
-      ready = _numFramesBuffered > 1;
+      ready = _numAudioFramesBuffered > 1;
     } else {
       // Otherwise, wait until we get enough frames to start
-      ready = (_numFramesBuffered > PREROLL_BUFFER_LENGTH || _haveReceivedTerminationFrame);
+      ready = (_numAudioFramesBuffered > ANIMATION_PREROLL_LENGTH || _haveReceivedTerminationFrame);
       if(ready) {
         _isPlaying = true;
         
@@ -622,6 +640,8 @@ namespace AnimationController {
           switch(msgID)
           {
             case Messages::AnimKeyFrame_AudioSample_ID:
+              _tracksInUse |= BACKPACK_LIGHTS_TRACK;
+              // Fall through to below...
             case Messages::AnimKeyFrame_AudioSilence_ID:
               
               // Rewind so we re-see this type again on next update (a little icky, yes...)
@@ -639,6 +659,7 @@ namespace AnimationController {
               Messages::AnimKeyFrame_EndOfAnimation msg;
               GetFromBuffer((u8*)&msg, sizeof(msg)); // just pull it out of the buffer
               terminatorFound = true;
+              _tracksInUse = 0;
               break;
             }
               
@@ -656,6 +677,7 @@ namespace AnimationController {
                 
                 HeadController::SetDesiredAngle(DEG_TO_RAD(static_cast<f32>(msg.angle_deg)), 0.1f, 0.1f,
                                                 static_cast<f32>(msg.time_ms)*.001f);
+                _tracksInUse |= HEAD_TRACK;
               }
               break;
             }
@@ -674,6 +696,7 @@ namespace AnimationController {
                 
                 LiftController::SetDesiredHeight(static_cast<f32>(msg.height_mm), 0.1f, 0.1f,
                                                  static_cast<f32>(msg.time_ms)*.001f);
+                _tracksInUse |= LIFT_TRACK;
               }
               break;
             }
@@ -692,6 +715,7 @@ namespace AnimationController {
                 for(s32 iLED=0; iLED<NUM_BACKPACK_LEDS; ++iLED) {
                   HAL::SetLED(static_cast<LEDId>(iLED), msg.colors[iLED]);
                 }
+                _tracksInUse |= BACKPACK_LIGHTS_TRACK;
               }
               break;
             }
@@ -708,6 +732,8 @@ namespace AnimationController {
 #               endif
                 
                 HAL::FaceAnimate(msg.image);
+                
+                _tracksInUse |= FACE_IMAGE_TRACK;
               }
               break;
             }
@@ -724,6 +750,8 @@ namespace AnimationController {
 #               endif
                 
                 HAL::FaceMove(msg.xCen, msg.yCen);
+                
+                _tracksInUse |= FACE_POS_TRACK;
               }
               break;
             }
@@ -748,6 +776,7 @@ namespace AnimationController {
                     EyeController::Disable();
                   }
                 }
+                _tracksInUse |= BLINK_TRACK;
               }
               break;
             }
@@ -760,10 +789,10 @@ namespace AnimationController {
               if(_tracksToPlay & BODY_TRACK) {
 #               if DEBUG_ANIMATION_CONTROLLER
                 PRINT("AnimationController[t=%dms(%d)] setting body motion to radius=%d, speed=%d\n",
-                      _currentTime_ms, HAL::GetTimeStamp(), msg.curvatureRadius_mm, msg.speed_mmPerSec);
+                      _currentTime_ms, HAL::GetTimeStamp(), msg.curvatureRadius_mm, msg.speed);
 #               endif
                 
-                f32 leftSpeed, rightSpeed;
+                f32 leftSpeed=0, rightSpeed=0;
                 if(msg.speed == 0) {
                   // Stop
                   leftSpeed = 0.f;
@@ -775,10 +804,7 @@ namespace AnimationController {
                 } else if(msg.curvatureRadius_mm == 0) {
                   // Turn in place: positive speed means turn left
                   // Interpret speed as degrees/sec
-                  leftSpeed  = static_cast<f32>(-msg.speed);
-                  rightSpeed = static_cast<f32>( msg.speed);
-                  
-                  const f32 speed_mmps = WHEEL_DIST_HALF_MM*tan(DEG_TO_RAD(static_cast<f32>(msg.speed)));
+                  const f32 speed_mmps = WHEEL_DIST_HALF_MM*DEG_TO_RAD(static_cast<f32>(msg.speed));
                   leftSpeed  = -speed_mmps;
                   rightSpeed =  speed_mmps;
                   
@@ -795,6 +821,7 @@ namespace AnimationController {
                 }
                 
                 SteeringController::ExecuteDirectDrive(leftSpeed, rightSpeed);
+                _tracksInUse |= BODY_TRACK;
               }
               break;
             }
@@ -808,15 +835,15 @@ namespace AnimationController {
           } // switch(GetTypeIndicator())
         } // while(!nextAudioFrameFound && !terminatorFound)
 
-        --_numFramesBuffered;
+        --_numAudioFramesBuffered;
         
         if(terminatorFound) {
           _isPlaying = false;
           _haveReceivedTerminationFrame = false;
-          --_numFramesBuffered;
+          --_numAudioFramesBuffered;
 #         if DEBUG_ANIMATION_CONTROLLER
           PRINT("Reached animation termination frame (%d frames still buffered, curPos/lastPos = %d/%d).\n",
-                _numFramesBuffered, _currentBufferPos, _lastBufferPos);
+                _numAudioFramesBuffered, _currentBufferPos, _lastBufferPos);
 #         endif
         }
 

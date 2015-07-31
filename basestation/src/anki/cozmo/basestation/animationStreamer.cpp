@@ -21,6 +21,18 @@ namespace Cozmo {
 
   Result AnimationStreamer::SetStreamingAnimation(const std::string& name, u32 numLoops)
   {
+    // Special case: stop streaming the current animation
+    if(name.empty()) {
+#     if DEBUG_ANIMATION_STREAMING
+      PRINT_NAMED_INFO("AnimationStreamer.SetStreamingAnimation",
+                       "Stopping streaming of animation '%s'.\n",
+                       _streamingAnimation->GetName().c_str());
+#     endif
+      
+      _streamingAnimation = nullptr;
+      return RESULT_OK;
+    }
+    
     _streamingAnimation = _animationContainer.GetAnimation(name);
     if(_streamingAnimation == nullptr) {
       return RESULT_FAIL;
@@ -103,7 +115,7 @@ namespace Cozmo {
         _isIdling = false;
       }
     } else if(_idleAnimation != nullptr) {
-      if(_idleAnimation->IsFinished() || !_isIdling) {
+      if(!robot.IsAnimating() && (_idleAnimation->IsFinished() || !_isIdling)) {
 #       if DEBUG_ANIMATION_STREAMING
         PRINT_NAMED_INFO("AnimationStreamer.Update.IdleAnimInit",
                          "(Re-)Initializing idle animation: '%s'.\n",

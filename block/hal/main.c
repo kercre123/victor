@@ -119,6 +119,7 @@ void main(void)
   // Initalize Radio Sync Timer 
   InitTimer0();
 
+  #ifndef DO_MISSED_PACKET_TEST
   while(sync == false)
   {
     // Process lights
@@ -137,9 +138,8 @@ void main(void)
     // Pet watchdog
     WDSV = 128; // 1 second
     WDSV = 0;
-    
   }
-
+  #endif
   
   #ifdef USE_UART
   StopTimer2();
@@ -165,6 +165,7 @@ void main(void)
     {
       // doing lights stuff
     }
+    radioTimerState = radioSleep;
     // Turn off lights timer (and lights)
     #ifndef USE_UART
     StopTimer2();  
@@ -172,12 +173,17 @@ void main(void)
     
     // Receive data
     ReceiveData(RADIO_TIMEOUT_MS, false);
-    #ifdef USE_UART
+    #if defined(DO_MISSED_PACKET_TEST)
+    PutChar('R');
+    #endif
+    #if defined(USE_UART)
+    #ifndef DO_MISSED_PACKET_TEST
     for(i=0; i<13; i++)
     {
-      puthex(radioPayload[i]);
+      PutHex(radioPayload[i]);
     }
-    putstring("\r\n");
+    PutString("\r\n");
+    #endif
     #endif
     if(missedPacketCount>0)
     {
@@ -195,14 +201,19 @@ void main(void)
     radioPayload[4] = cumMissedPacketCount;
     radioPayload[5] = packetCount++;
     radioPayload[6] = BLOCK_ID;
-    #ifdef USE_UART
+    #if defined(USE_UART) 
+    #ifndef DO_MISSED_PACKET_TEST
     for(i=0; i<7; i++)
     {
-      puthex(radioPayload[i]);
+      PutHex(radioPayload[i]);
     }
-    putstring("\r\n");
+    PutString("\r\n");
+    #endif
     #endif
     // Respond with accelerometer data
+    #if defined(DO_MISSED_PACKET_TEST)
+    PutChar('T');
+    #endif
     TransmitData();
     // Reset Payload
     memset(radioPayload, 0, sizeof(radioPayload));

@@ -15,7 +15,7 @@
 #include "anki/common/basestation/platformPathManager.h"
 
 // TODO: Only use these preprocessors on PC, not iOS
-#if !ANKI_IOS_BUILD
+#if !defined(ANKI_IOS_BUILD)
 #  ifndef SYSTEM_ROOT_PATH
 #    error No SYSTEM_ROOT_PATH defined. You may need to re-run cmake.
 #  endif
@@ -29,7 +29,7 @@ namespace Anki {
   
   PlatformPathManager::PlatformPathManager()
   {
-#   if ANKI_IOS_BUILD
+#   ifdef ANKI_IOS_BUILD
     
     const int MAX_PATH_LENGTH = 1024;
     char buffer[MAX_PATH_LENGTH];
@@ -48,6 +48,10 @@ namespace Anki {
 
     if(true == PlatformPathManager_iOS_GetPath(PlatformPathManager_iOS_Scope_Sound, buffer, MAX_PATH_LENGTH)) {
       _scopePrefixes[Sound] = buffer;
+    }
+    
+    if(true == PlatformPathManager_iOS_GetPath(PlatformPathManager_iOS_Scope_FaceAnimation, buffer, MAX_PATH_LENGTH)) {
+      _scopePrefixes[FaceAnimation] = buffer;
     }
 
     if(true == PlatformPathManager_iOS_GetPath(PlatformPathManager_iOS_Scope_Resource, buffer, MAX_PATH_LENGTH)) {

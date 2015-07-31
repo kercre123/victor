@@ -31,12 +31,12 @@ namespace Anki {
       Clear();
     }
     
-    void ActionList::Cancel(Robot& robot, SlotHandle fromSlot, RobotActionType withType)
+    void ActionList::Cancel(SlotHandle fromSlot, RobotActionType withType)
     {
       // Clear specified slot / type
       for(auto & q : _queues) {
         if(fromSlot == -1 || q.first == fromSlot) {
-          q.second.Cancel(robot, withType);
+          q.second.Cancel(withType);
         }
       }
     }
@@ -137,18 +137,39 @@ namespace Anki {
       }
     }
 
-    void ActionQueue::Cancel(Robot &robot, RobotActionType withType)
+    void ActionQueue::Cancel(RobotActionType withType)
     {
       for(auto action : _queue)
       {
         CORETECH_ASSERT(action != nullptr);
         
         if(withType == RobotActionType::UNKNOWN || action->GetType() == withType) {
-          action->Cancel(robot);
+          action->Cancel();
         }
       }
     }
 
+    Result ActionQueue::QueueNow(IActionRunner *action, u8 numRetries)
+    {
+      if(action == nullptr) {
+        PRINT_NAMED_ERROR("ActionQueue.QueueNow.NullActionPointer",
+                          "Refusing to queue a null action pointer.\n");
+        return RESULT_FAIL;
+      }
+      
+      if(_queue.empty()) {
+        
+        // Nothing in the queue, so this is the same as QueueAtEnd
+        return QueueAtEnd(action, numRetries);
+        
+      } else {
+        
+        // Cancel whatever is running now and then queue this to happen next
+        // (right after any cleanup due to the cancellation completes)
+        _queue.front()->Cancel();
+        return QueueNext(action, numRetries);
+      }
+    }
     
     Result ActionQueue::QueueAtEnd(IActionRunner *action, u8 numRetries)
     {
@@ -174,7 +195,7 @@ namespace Anki {
       action->SetNumRetries(numRetries);
       
       if(_queue.empty()) {
-        return QueueAtEnd(action);
+        return QueueAtEnd(action, numRetries);
       }
       
       std::list<IActionRunner*>::iterator queueIter = _queue.begin();

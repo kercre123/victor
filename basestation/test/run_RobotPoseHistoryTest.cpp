@@ -16,7 +16,7 @@ TEST(RobotPoseHistory, AddGetPose)
   using namespace Anki;
   using namespace Cozmo;
 
-  Robot robot(1, nullptr);
+  Robot robot(1, nullptr, nullptr);
   
   RobotPoseHistory hist;
   RobotPoseStamp p;
@@ -132,7 +132,7 @@ TEST(RobotPoseHistory, GroundTruthPose)
   using namespace Anki;
   using namespace Cozmo;
   
-  Robot robot(1, nullptr);
+  Robot robot(1, nullptr, nullptr);
   
   RobotPoseHistory hist;
   RobotPoseStamp p;

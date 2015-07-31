@@ -203,24 +203,6 @@ namespace Anki {
       
     } // SetRootDir()
     
-    // Helper for getting result back from calling a system command:
-    static std::string GetStdoutFromCommand(std::string cmd)
-    {
-      std::string data;
-      FILE * stream;
-      const int max_buffer = 256;
-      char buffer[max_buffer];
-      cmd.append(" 2>&1");
-      
-      stream = popen(cmd.c_str(), "r");
-      if (stream) {
-        while (!feof(stream))
-          if (fgets(buffer, max_buffer, stream) != NULL) data.append(buffer);
-        pclose(stream);
-      }
-      return data;
-    }
-    
     
     // Return false if not valid wav file
     static bool GetWavInfo(std::string fileName,
@@ -438,7 +420,7 @@ namespace Anki {
       return soundIter->second.duration_ms;
     }
 
-    bool SoundManager::GetSoundSample(const std::string& name, const u32 sampleIdx, MessageAnimKeyFrame_AudioSample &msg)
+    bool SoundManager::GetSoundSample(const std::string& name, const u32 sampleIdx, const f32 volume, MessageAnimKeyFrame_AudioSample &msg)
     {
       if (_currOpenSoundFileName != name) {
         // Dump file contents to buffer if this is not the same file
@@ -476,7 +458,15 @@ namespace Anki {
         fileSize = MIN(fileSize, MAX_SOUND_BUFFER_SIZE);
         fread(_soundBuf, 1, fileSize, _currOpenSoundFilePtr);
         
-        _currOpenSoundNumSamples = fileSize / UNENCODED_SOUND_SAMPLE_SIZE;
+        // Adjust volume
+        // Note: Clipping is possible!
+        if (volume != 1.f) {
+          for (int i=0; i<fileSize/2; ++i) {
+            _soundBuf[i] = (s16)CLIP(_soundBuf[i] * volume, s16_MIN, s16_MAX);
+          }
+        }
+        
+        _currOpenSoundNumSamples = static_cast<u32>(fileSize) / UNENCODED_SOUND_SAMPLE_SIZE;
         
         PRINT_NAMED_INFO("SoundManager.GetSoundSample.Info","Opening %s - duration %f s\n", name.c_str(), _currOpenSoundNumSamples * RobotAudioKeyFrame::SAMPLE_LENGTH_MS * 0.001);
 

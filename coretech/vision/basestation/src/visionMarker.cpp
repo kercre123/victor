@@ -132,8 +132,7 @@ namespace Anki {
       
       Vec3f normal( CrossProduct(edge2, edge1) );
       
-      const f32 normalLength = normal.MakeUnitLength();
-      CORETECH_ASSERT(normalLength > 0.f);
+      CORETECH_ASSERT(normal.MakeUnitLength() > 0.f);
       
       return normal;
     } // ComputeNormalHelper()

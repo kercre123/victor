@@ -11,12 +11,11 @@
  **/
 
 #include "anki/cozmo/basestation/actionInterface.h"
-
 #include "anki/common/basestation/math/poseBase_impl.h"
 #include "anki/common/basestation/utils/timer.h"
-
 #include "anki/cozmo/basestation/robot.h"
-#include "anki/cozmo/basestation/signals/cozmoEngineSignals.h"
+#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "messageEngineToGame.h"
 
 namespace Anki {
   
@@ -87,10 +86,12 @@ namespace Anki {
       completionInfo.objectIDs.fill(-1);
       completionInfo.animName = "";
       
-      CozmoEngineSignals::RobotCompletedActionSignal().emit(robot.GetID(),
-                                                            GetType(),
-                                                            result,
-                                                            completionInfo);
+      robot.GetExternalInterface()->DeliverToGame(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotCompletedAction(
+        robot.GetID(),
+        GetType(),
+        result,
+        completionInfo
+      )));
     }
     
     bool IActionRunner::RetriesRemain()
