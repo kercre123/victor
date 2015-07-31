@@ -56,14 +56,14 @@
       '-Wall',
       '-Woverloaded-virtual',
       '-Werror',
-      # '-Wundef', # Disabled until define usage is refactored to code standards
+      # '-Wundef', # Disabled until define usage is refactored to code standards (ANS: common.h ODE inside Webots fails this)
       '-Wheader-guard',
       '-fsigned-char',
       '-fvisibility-inlines-hidden',
       '-fvisibility=default',
-      # '-Wshorten-64-to-32', # Disabled until refactoring occurs to prevent precision loss
+      '-Wshorten-64-to-32',
       '-Winit-self',
-      # '-Wconditional-uninitialized', # Disabled until uninitialized code refactor
+      '-Wconditional-uninitialized', 
       # '-Wno-deprecated-register', # Disabled until this warning actually needs to be supressed
       '-Wformat',
       '-Werror=format-security',

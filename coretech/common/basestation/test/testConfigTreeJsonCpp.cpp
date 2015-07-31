@@ -11,7 +11,7 @@
  **/
 
 #include <fstream>
-#include "gtest/gtest.h"
+#include "util/helpers/includeGTest.h" // Used in place of gTest/gTest.h directly to suppress warnings in the header
 
 #include "json/json.h"
 
