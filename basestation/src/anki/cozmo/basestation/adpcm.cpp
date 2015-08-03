@@ -3,7 +3,7 @@
 const int cBias = 0x84;
 const int cClip = 32635;
 
-static uint8_t MuLawCompressTable[256] =
+static uint8_t MuLawCompressTable[] =
 {
      0,1,2,2,3,3,3,3,
      4,4,4,4,4,4,4,4,
@@ -28,7 +28,8 @@ static uint8_t MuLawCompressTable[256] =
 
 void encodeMuLaw(int16_t *in, uint8_t *out, int length) {
 	for(;length > 0; length --) {
-		int sign = sample & 0x8000;
+		uint16_t sample = *(in++);
+          int sign = sample & 0x8000;
 		
           if (sign) {
 			sample = (short)-sample;
