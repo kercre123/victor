@@ -18,7 +18,7 @@
 
 #include "anki/cozmo/basestation/cozmoEngine.h"
 #include "clad/externalInterface/messageEngineToGame.h"
-#include "anki/cozmo/messageBuffers/game/UiMessagesU2G.h"
+#include "clad/externalInterface/messageGameToEngine.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 
 // Enable this if you want to receive/send messages via socket connection.
@@ -68,7 +68,7 @@ namespace Anki {
       virtual Result SendMessage(const ExternalInterface::MessageEngineToGame& msg);
       void DeliverToGame(const ExternalInterface::MessageEngineToGame&& message) override;
       
-      inline void RegisterCallbackForMessage(const std::function<void(const U2G::Message&)>& messageCallback)
+      inline void RegisterCallbackForMessage(const std::function<void(const ExternalInterface::MessageGameToEngine&)>& messageCallback)
       {
         this->messageCallback = messageCallback;
       }
@@ -80,7 +80,7 @@ namespace Anki {
       bool isInitialized_;
       u32 _hostUiDeviceID;
       
-      std::function<void(const U2G::Message&)> messageCallback;
+      std::function<void(const ExternalInterface::MessageGameToEngine&)> messageCallback;
       
       // Process a raw byte buffer as a message and send it to the specified
       // robot
