@@ -36,7 +36,7 @@ namespace Cozmo {
   }
   
   
-      Result GameMessageHandler::SendMessage(const UserDeviceID_t devID, const U2G::Message& msg)
+      Result GameMessageHandler::SendMessage(const UserDeviceID_t devID, const ExternalInterface::MessageGameToEngine& msg)
       {
 //#if(RUN_UI_MESSAGE_TCP_SERVER)
         
