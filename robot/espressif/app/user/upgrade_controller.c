@@ -11,7 +11,7 @@
 #include "upgrade.h"
 #include "task0.h"
 #include "driver/spi.h"
-#include "fpga.h"
+#include "nv_params.h"
 #include "upgrade_controller.h"
 
 /// Flash sector size for erasing, 4KB
@@ -44,8 +44,6 @@ typedef enum {
   UPGRADE_TASK_ERASE,
   UPGRADE_TASK_WRITE,
   UPGRADE_TASK_FINISH,
-  UPGRADE_TASK_FPGA_RESET,
-  UPGRADE_TASK_FPGA_WRITE,
 } UpgradeTaskState;
 
 static UpgradeTaskState taskState = UPGRADE_TASK_IDLE;
@@ -156,67 +154,83 @@ LOCAL bool upgradeTask(uint32_t param)
     }
     case UPGRADE_TASK_WRITE:
     {
-      if (fwWriteAddress < FW_START_ADDRESS)
+      if (flags & UPCMD_CONFIG)
       {
-        os_printf("UP ERROR: Won't write to %08x below %08x\r\n", fwWriteAddress, FW_START_ADDRESS);
-        resetUpgradeState();
-        return false;
-      }
-      else if (param == 0)
-      {
-        os_printf("UP ERROR: UPGRADE TASK WRITE but param = 0\r\n");
-        resetUpgradeState();
-        return false;
-      }
-      FlashWriteData* fwd = (FlashWriteData*)param;
-      os_printf("UP: Write 0x%08x 0x%x\r\n", fwWriteAddress + bytesWritten, fwd->length);
-      flashResult = spi_flash_write(fwWriteAddress + bytesWritten, fwd->data, fwd->length);
-      switch (flashResult)
-      {
-        case SPI_FLASH_RESULT_OK:
+        NVParams* nvpar = (NVParams*)param;
+        os_printf("Wrinting new NVC (%08x \"%s\") to flash\r\n", nvpar->PREFIX, nvpar->ssid);
+        if (system_param_save_with_protect(USER_NV_START_SEC, nvpar, sizeof(NVParams)) == false)
         {
-          retryCount = 0;
-          bytesWritten += fwd->length;
-          os_free(fwd); // Free the memory used
-          if (bytesWritten == bytesExpected)
-          {
-            taskState = UPGRADE_TASK_FINISH;
-            return true;
-          }
-          else
-          {
-            requestNext();
-            return false;
-          }
+          os_printf("UP ERROR: Couldn't save non-volatile parameters\r\n");
         }
-        case SPI_FLASH_RESULT_ERR:
+        resetUpgradeState();
+        os_printf("...Done\r\n...Restarting\r\n");
+        system_restart();
+        return false;
+      }
+      else
+      {
+        if (fwWriteAddress < FW_START_ADDRESS)
         {
-          os_printf("\twrite error\r\n");
-          os_free(fwd);
+          os_printf("UP ERROR: Won't write to %08x below %08x\r\n", fwWriteAddress, FW_START_ADDRESS);
           resetUpgradeState();
           return false;
         }
-        case SPI_FLASH_RESULT_TIMEOUT:
+        else if (param == 0)
         {
-          if (retryCount++ < MAX_RETRIES)
+          os_printf("UP ERROR: UPGRADE TASK WRITE but param = 0\r\n");
+          resetUpgradeState();
+          return false;
+        }
+        FlashWriteData* fwd = (FlashWriteData*)param;
+        os_printf("UP: Write 0x%08x 0x%x\r\n", fwWriteAddress + bytesWritten, fwd->length);
+        flashResult = spi_flash_write(fwWriteAddress + bytesWritten, fwd->data, fwd->length);
+        switch (flashResult)
+        {
+          case SPI_FLASH_RESULT_OK:
           {
-            os_printf("\twrite timeout\r\n");
-            return true;
+            retryCount = 0;
+            bytesWritten += fwd->length;
+            os_free(fwd); // Free the memory used
+            if (bytesWritten == bytesExpected)
+            {
+              taskState = UPGRADE_TASK_FINISH;
+              return true;
+            }
+            else
+            {
+              requestNext();
+              return false;
+            }
           }
-          else
+          case SPI_FLASH_RESULT_ERR:
           {
-            os_printf("\twrite timout, aborting\r\n");
+            os_printf("\twrite error\r\n");
             os_free(fwd);
             resetUpgradeState();
             return false;
           }
-        }
-        default:
-        {
-          os_printf("\tUnhandled flash result: %d\r\n", flashResult);
-          os_free(fwd);
-          resetUpgradeState();
-          return false;
+          case SPI_FLASH_RESULT_TIMEOUT:
+          {
+            if (retryCount++ < MAX_RETRIES)
+            {
+              os_printf("\twrite timeout\r\n");
+              return true;
+            }
+            else
+            {
+              os_printf("\twrite timout, aborting\r\n");
+              os_free(fwd);
+              resetUpgradeState();
+              return false;
+            }
+          }
+          default:
+          {
+            os_printf("\tUnhandled flash result: %d\r\n", flashResult);
+            os_free(fwd);
+            resetUpgradeState();
+            return false;
+          }
         }
       }
     }
@@ -247,75 +261,6 @@ LOCAL bool upgradeTask(uint32_t param)
         // TODO Reboot the body with new firmware
       }
       return false;
-    }
-    case UPGRADE_TASK_FPGA_RESET:
-    {
-      if (flags & UPCMD_FPGA_FW)
-      {
-        fpgaDisable();
-        os_delay_us(2);
-        fpgaEnable();
-        os_delay_us(300);
-        taskState = UPGRADE_TASK_FPGA_WRITE;
-        requestNext();
-        return false;
-      }
-      else
-      {
-        os_printf("ERR: upgradeTask state RESET FPGA but flags don't say FPGA?\r\n");
-        printUpgradeState();
-        resetUpgradeState();
-        return false;
-      }
-    }
-    case UPGRADE_TASK_FPGA_WRITE:
-    {
-      if (param == 0)
-      {
-        os_printf("UP ERROR: UPGRADE TASK FPGA WRITE but param = 0\r\n");
-        resetUpgradeState();
-        return false;
-      }
-      if (flags & UPCMD_FPGA_FW)
-      {
-        uint32_t spiWritten = 0;
-        FlashWriteData* fwd = (FlashWriteData*)param;
-        uint32_t wordsToWrite = fwd->length / 4;
-        os_printf("UP: FPGA Write 0x%08x 0x%x\r\n", fwWriteAddress + bytesWritten, fwd->length);
-        while (spiWritten < wordsToWrite)
-        {
-          if (!fpgaWriteBitstream((fwd->data + spiWritten)))
-          {
-            os_printf("UP ERR: Couldn't write bytes to FPGA\r\n");
-            resetUpgradeState();
-            return false;
-          }
-          else
-          {
-            spiWritten += SPI_FIFO_DEPTH;
-          }
-        }
-
-        os_free(fwd); // Free the memory used
-        bytesWritten += fwd->length;
-        if (bytesWritten >= bytesExpected)
-        {
-          taskState = UPGRADE_TASK_FINISH;
-          return true;
-        }
-        else
-        {
-          requestNext();
-          return false;
-        }
-      }
-      else
-      {
-        os_printf("ERR: upgradeTask state WRITE FPGA but flags don't say FPGA?\r\n");
-        printUpgradeState();
-        resetUpgradeState();
-        return false;
-      }
     }
     default:
     {
@@ -395,17 +340,17 @@ LOCAL void ICACHE_FLASH_ATTR upccReceiveCallback(void *arg, char *usrdata, unsig
           }
         }
       }
-      else if (cmd->flags & UPCMD_FPGA_FW)
+      else if (cmd->flags & UPCMD_CONFIG)
       {
-        fwWriteAddress   = cmd->flashAddress;
-        bytesExpected    = cmd->size;
-        flags            = cmd->flags;
-        upccConn = conn;
-        taskState = UPGRADE_TASK_FPGA_RESET;
-        os_printf("FPGA write firmware %d bytes, flags = %x \r\n", bytesExpected, flags);
-        if (task0Post(upgradeTask, 0) == false)
+        os_printf("Receiving non-volatile configuration\r\n");
+        flags = cmd->flags;
+        fwWriteAddress = USER_NV_PARAM_START;
+        bytesExpected  = sizeof(NVParams);
+        taskState      = UPGRADE_TASK_WRITE;
+        err = espconn_sent(conn, "NEXT", 4);
+        if (err != 0)
         {
-          os_printf("ERROR: Couldn't queue upgrade task\r\n");
+          os_printf("ERROR: UPCC couldn't sent request for NV param data\r\n");
           resetUpgradeState();
           return;
         }
@@ -422,7 +367,7 @@ LOCAL void ICACHE_FLASH_ATTR upccReceiveCallback(void *arg, char *usrdata, unsig
       }
     }
   }
-  else
+  else // Continuation of command in progress
   {
     FlashWriteData* fwd;
     if (length > FLASH_WRITE_SIZE)

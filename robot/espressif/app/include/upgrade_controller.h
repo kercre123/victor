@@ -33,6 +33,7 @@ typedef enum {
   UPCMD_CTRL_FW    = 0x02, // Upgrade the robot supervisor firmware
   UPCMD_FPGA_FW    = 0x04, // Upgrade the FPGA image
   UPCMD_BODY_FW    = 0x08, // Upgrade the body board firmware
+  UPCMD_CONFIG     = 0x10, // Configuration information
   UPCMD_ASK_WHICH  = 0x80, // Ask the espressif which firmware it wants
 } UpgradeCommandFlags;
 

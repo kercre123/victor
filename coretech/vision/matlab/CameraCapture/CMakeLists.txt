@@ -1,14 +1,13 @@
 # coretech-vision/matlab/CameraCapture/CMakeLists.txt
 
-# TODO: Should this check ANKICORETECH_USE_MATLAB instead (would require changes to mexCameraCapture.cpp source)
-if(ANKICORETECH_EMBEDDED_USE_MATLAB)
+message(STATUS "Now in ${CMAKE_CURRENT_SOURCE_DIR}")
 
   #
   # mexCameraCapture
   #
   set(MEX_LINK_LIBRARIES 
-    CoreTech_Common_Robot
-    CoreTech_Vision_Robot
+    ctiCommonRobot
+    ctiVisionRobot
     ${OPENCV_LIBS})
 
   build_mex(mexCameraCapture.cpp)
@@ -18,15 +17,13 @@ if(ANKICORETECH_EMBEDDED_USE_MATLAB)
   # mexWifiCameraCapture
   #
 
-  include_directories(../../../common/tools/communication)
-
-  set(MEX_LINK_LIBRARIES
-    CoreTech_Common_Robot
-    CoreTech_Vision_Robot
-    DebugStreamClient
-    ${OPENCV_LIBS})
-
-  build_mex(mexWifiCameraCapture.cpp)
-
-endif()
+#  include_directories(../../../common/tools/communication)
+#
+#  set(MEX_LINK_LIBRARIES
+#    ctiCommonRobot
+#    ctiVisionRobot
+#    DebugStreamClient
+#    ${OPENCV_LIBS})
+#
+#  build_mex(mexWifiCameraCapture.cpp)
    

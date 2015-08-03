@@ -100,7 +100,7 @@ message ImageChunk {
     uint_8 imageEncoding,
     uint_8 imageChunkCount,
     uint_8 chunkId,
-    uint_8 data[1400] // Should match R2B MessageImageChunk size!
+    uint_8 data[1300] // Should match R2B MessageImageChunk size!
 }
 
 
