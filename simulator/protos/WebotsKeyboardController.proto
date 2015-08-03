@@ -13,6 +13,9 @@ PROTO WebotsKeyboardController [
 
   # Turbo speed in mm/s (hold alt)
   field SFFloat driveSpeedTurbo 150
+
+  # Point turn speed (deg/s), no target angle 
+  field SFFloat pointTurnSpeed_degPerSec 45
   
   # Value between 0 and 1 which determines how much the robot turns with 
   # the left/right arrow keys when going forward or backward.
