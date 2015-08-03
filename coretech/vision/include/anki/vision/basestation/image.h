@@ -131,7 +131,7 @@ namespace Vision {
   class ImageDeChunker
   {
   public:
-    static const u32 CHUNK_SIZE = 1400;
+    static const u32 CHUNK_SIZE = 1300;
     
     ImageDeChunker();
     
