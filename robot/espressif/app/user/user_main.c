@@ -10,6 +10,7 @@
 #include "driver/spi.h"
 #include "nv_params.h"
 #include "task0.h"
+#include "telnet.h"
 #include "upgrade_controller.h"
 #include "user_config.h"
 
@@ -144,6 +145,9 @@ static void ICACHE_FLASH_ATTR system_init_done(void)
       os_printf("Couldn't start DHCP server\r\n");
     }
   }
+
+  // Set up the remote debugging port
+  telnetInit();
 
   // Enable upgrade controller
   upgradeControllerInit();
