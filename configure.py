@@ -37,27 +37,33 @@ def initialize_colors():
     if platform.system() == 'Windows' or getattr(sys.stdout, 'isatty', lambda: False)():
         
         def print_header_colored(text):
-            print('\033[1m{0}\033[0m'.format(text))
+            print('\033[1m{0}\033[0m'.format(str(text).upper()))
         def print_status_colored(text):
             print('\033[34m{0}\033[0m'.format(text))
         def raw_dialog_colored(prompt):
             return raw_input('\033[31m{0}\033[0m'.format(prompt))
     
-        global print_header
-        global print_status
-        global raw_dialog
-        print_header = print_header_colored
-        print_status = print_status_colored
-        raw_dialog = raw_dialog_colored
+        global _print_header
+        global _print_status
+        global _raw_dialog
+        _print_header = print_header_colored
+        _print_status = print_status_colored
+        _raw_dialog = raw_dialog_colored
         
-def print_header(text):
-    print('\n{0}'.format(text))
+def _print_header(text):
+    print('\n{0}'.format(text).upper())
 
-def print_status(text):
+def _print_status(text):
     print(text)
 
-def raw_dialog(prompt):
+def _raw_dialog(prompt):
     return raw_input(prompt)
+
+def print_header(text):
+    _print_header(text)
+
+def print_status(text):
+    _print_status(text)
 
 def dialog(prompt):
     result = None
@@ -393,13 +399,13 @@ class EnginePlatformConfiguration(object):
         
         ankibuild.util.File.rm_rf(self.platform_build_dir)
         ankibuild.util.File.rm_rf(self.platform_output_dir)
-
-
+        
+        
 ###############
 # ENTRY POINT #
 ###############
 
-def configure(options, root_path, platform_configuration_type, shared_generated_folders):
+def configure(options, root_path, platform_configuration_type, clad_folders, shared_generated_folders):
     initialize_colors()
     
     if len(options.platforms) != 1:
@@ -420,6 +426,11 @@ def configure(options, root_path, platform_configuration_type, shared_generated_
         config.process()
     
     if options.command in ('delete', 'wipeall!'):
+        if clad_folders:
+            if options.verbose:
+                print_status('Deleting clad files...')
+            for folder in clad_folders:
+                ankibuild.util.File.rm_rf(folder)
         if shared_generated_folders:
             if options.verbose:
                 print_status('Deleting generated folders (if empty)...')
@@ -435,7 +446,9 @@ def configure(options, root_path, platform_configuration_type, shared_generated_
 
 def main():
     options = parse_engine_arguments()
-    configure(options, ENGINE_ROOT, EnginePlatformConfiguration, [options.build_dir, options.output_dir])
+    clad_folders = [os.path.join(options.output_dir, 'clad')]
+    shared_generated_folders = [options.build_dir, options.output_dir]
+    configure(options, ENGINE_ROOT, EnginePlatformConfiguration, clad_folders, shared_generated_folders)
 
 if __name__ == '__main__':
     main()
