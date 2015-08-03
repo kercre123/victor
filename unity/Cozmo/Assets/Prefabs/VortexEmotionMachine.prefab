@@ -98,7 +98,7 @@ MonoBehaviour:
   - stateName: MINOR_WIN
     playAllAnims: 0
     emotionAnims:
-    - animName: shocked
+    - animName: minorWin
       numLoops: 1
   - stateName: MAJOR_WIN
     playAllAnims: 0
@@ -123,7 +123,7 @@ MonoBehaviour:
   - stateName: LOSE_MATCH
     playAllAnims: 0
     emotionAnims:
-    - animName: ANIM_TEST_SPINNER
+    - animName: loseMatch
       numLoops: 1
   - stateName: TAUNT
     playAllAnims: 0
