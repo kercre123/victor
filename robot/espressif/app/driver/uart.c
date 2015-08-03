@@ -182,7 +182,6 @@ void os_put_char(uint8 c)
   uart_tx_one_char(UART1, c);
 }
 
-
 /** Length of the TX buffer
  * @warning Must be a power of 2
  */
@@ -231,6 +230,9 @@ STATUS ICACHE_FLASH_ATTR uartQueuePacket(uint8* data, uint16 len)
 
   return OK;
 }
+
+/// Used to escape rx isr before when things aren't set up yet
+static bool uartStarted;
 
 /** Length of the TX buffer
  * @warning Must be a power of 2
@@ -299,6 +301,7 @@ uart_rx_intr_handler(void *para)
     while ((READ_PERI_REG(UART_STATUS(UART0))>>UART_RXFIFO_CNT_S)&UART_RXFIFO_CNT) // While data in the FIFO
     {
       const uint8 byte = (READ_PERI_REG(UART_FIFO(UART0)) & 0xFF);
+      if (uartStarted == false) continue; // Skip everything else when not started
       switch (phase)
       {
         case 0: // Not synchronized / looking for header byte 1
@@ -444,6 +447,7 @@ LOCAL void ICACHE_FLASH_ATTR uartTask(os_event_t *event)
 void ICACHE_FLASH_ATTR
 uart_init(UartBautRate uart0_br, UartBautRate uart1_br)
 {
+  uartStarted = false;
 
   system_os_task(uartTask, uartTaskPrio, uartTaskQueue, uartTaskQueueLen); // Setup task queue for handling UART
 
@@ -451,10 +455,16 @@ uart_init(UartBautRate uart0_br, UartBautRate uart1_br)
   uart_config(UART0);
   UartDev.baut_rate = uart1_br;
   uart_config(UART1);
-  uart_rx_intr_disable(UART0); // Don't receive RX interrupts at first
   ETS_UART_INTR_ENABLE(); // What does this do? If we don't call it, it nothing works
+  uart_rx_intr_disable(UART0);
 
   os_install_putc1(os_put_char);
+}
+
+void ICACHE_FLASH_ATTR uart_start()
+{
+  uartStarted = true;
+  uart_rx_intr_enable(UART0);
 }
 
 void ICACHE_FLASH_ATTR
