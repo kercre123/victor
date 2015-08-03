@@ -214,6 +214,11 @@
           <WinNumber>1</WinNumber>
           <ItemText>((uint32_t)16000000)</ItemText>
         </Ww>
+        <Ww>
+          <count>7</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>buffer[sizeof(buffer)-1]</ItemText>
+        </Ww>
       </WatchWindow1>
       <MemoryWindow1>
         <Mm>
@@ -1216,7 +1221,7 @@
       <GroupNumber>4</GroupNumber>
       <FileNumber>58</FileNumber>
       <FileType>8</FileType>
-      <tvExp>1</tvExp>
+      <tvExp>0</tvExp>
       <Focus>0</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>

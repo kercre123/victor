@@ -5,22 +5,22 @@ const int cClip = 32635;
 
 static uint8_t MuLawCompressTable[256] =
 {
-     0,0,1,1,2,2,2,2,3,3,3,3,3,3,3,3,
-     4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,
-     5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,
-     5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,
-     6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,
-     6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,
-     6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,
-     6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,
-     7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,
-     7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,
-     7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,
-     7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,
-     7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,
-     7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,
-     7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,
-     7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7
+     0,1,2,2,3,3,3,3,
+     4,4,4,4,4,4,4,4,
+     5,5,5,5,5,5,5,5,
+     5,5,5,5,5,5,5,5,
+     6,6,6,6,6,6,6,6,
+     6,6,6,6,6,6,6,6,
+     6,6,6,6,6,6,6,6,
+     6,6,6,6,6,6,6,6,
+     7,7,7,7,7,7,7,7,
+     7,7,7,7,7,7,7,7,
+     7,7,7,7,7,7,7,7,
+     7,7,7,7,7,7,7,7,
+     7,7,7,7,7,7,7,7,
+     7,7,7,7,7,7,7,7,
+     7,7,7,7,7,7,7,7,
+     7,7,7,7,7,7,7,7
 };
 
 // Resulting values are the state for the next block
@@ -28,8 +28,9 @@ static uint8_t MuLawCompressTable[256] =
 
 void encodeMuLaw(int16_t *in, uint8_t *out, int length) {
 	for(;length > 0; length --) {
-		int sign = (sample >> 8) & 0x80;
-		if (sign) {
+		int sign = sample & 0x8000;
+		
+          if (sign) {
 			sample = (short)-sample;
 		}
 		if (sample > cClip) {
@@ -37,10 +38,9 @@ void encodeMuLaw(int16_t *in, uint8_t *out, int length) {
 		}
 
 		sample = (short)(sample + cBias);
-		int exponent = (int)MuLawCompressTable[(sample>>7) & 0xFF];
+		int exponent = (int)MuLawCompressTable[(sample>>8) & 0x7F];
 		int mantissa = (sample >> (exponent+3)) & 0x0F;
-		int compressedByte = ~(sign | (exponent << 4) | mantissa);
 
-		*(out++) = compressedByte;
+		*(out++) = (sign ? 0x80 : 0) | (exponent << 4) | mantissa;
 	}
 }
