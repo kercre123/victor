@@ -4,10 +4,19 @@ using U2G = Anki.Cozmo.U2G;
 using System.Collections.Generic;
 using System;
 
+/// <summary>
+/// wrapper by which gameplay can trigger basic emote behaviors on the robot
+/// 	default cozmoEmotionMachine is a sibling component
+/// 	emotionMachine can be overwritten for specific modes for minigames or hamster mode, etc
+/// </summary>
 public class CozmoEmotionManager : MonoBehaviour {
 
 	public static CozmoEmotionManager instance = null;
+	private U2G.QueueSingleAction QueueSingleAnimMessage;
+	private U2G.QueueCompoundAction QueueCompoundActionsMessage;
 	private U2G.PlayAnimation PlayAnimationMessage;
+	private U2G.SetIdleAnimation SetIdleAnimationMessage;
+	private U2G.GotoPose GotoPoseMessage; 
 	CozmoEmotionMachine currentEmotionMachine;
 	
 	public enum EmotionType
@@ -56,8 +65,24 @@ public class CozmoEmotionManager : MonoBehaviour {
 	
 	void Awake()
 	{
+		QueueSingleAnimMessage = new U2G.QueueSingleAction();
 		PlayAnimationMessage = new U2G.PlayAnimation();
-		instance = this;
+		SetIdleAnimationMessage = new U2G.SetIdleAnimation ();
+		GotoPoseMessage = new U2G.GotoPose ();
+		QueueCompoundActionsMessage = new U2G.QueueCompoundAction ();
+		QueueCompoundActionsMessage.actions = new U2G.RobotActionUnion[2];
+		QueueCompoundActionsMessage.actions [0] = new U2G.RobotActionUnion ();
+		QueueCompoundActionsMessage.actions [1] = new U2G.RobotActionUnion ();
+
+		QueueCompoundActionsMessage.actionTypes = new Anki.Cozmo.RobotActionType[2];
+		if(instance != null && instance != this)
+		{
+			return;
+		} else
+		{
+			instance = this;
+			DontDestroyOnLoad(gameObject);
+		}
 
 		// default machine resides on the master object
 		currentEmotionMachine = GetComponent<CozmoEmotionMachine>();
@@ -145,7 +170,7 @@ public class CozmoEmotionManager : MonoBehaviour {
 					int rand_index = UnityEngine.Random.Range(0, anims.Count - 1);
 					instance.SendAnimation (anims[rand_index], clear_current);
 				}
-
+				Debug.Log ("setting emotion to " + emotion_state);
 				return last_anim_name;
 			}
 			else
@@ -162,17 +187,105 @@ public class CozmoEmotionManager : MonoBehaviour {
 	{
 		if(robot == null) return;
 
+
 		if(stopPreviousAnim && robot.isBusy && robot.Status (Robot.StatusFlag.IS_ANIMATING)) {
 			robot.CancelAction(Anki.Cozmo.RobotActionType.PLAY_ANIMATION);
 		}
-		Debug.Log ("Sending " + anim.animName + " with " + anim.numLoops + " loop" + (anim.numLoops > 1 ? "s":""));
+		Debug.Log ("Sending " + anim.animName + " with " + anim.numLoops + " loop" + (anim.numLoops != 1 ? "s":""));
 		PlayAnimationMessage.animationName = anim.animName;
 		PlayAnimationMessage.numLoops = anim.numLoops;
 		PlayAnimationMessage.robotID = robot.ID;
-		RobotEngineManager.instance.Message.PlayAnimation = PlayAnimationMessage;
+
+		QueueSingleAnimMessage.action.playAnimation = PlayAnimationMessage;
+		QueueSingleAnimMessage.actionType = Anki.Cozmo.RobotActionType.PLAY_ANIMATION;
+		QueueSingleAnimMessage.numRetries = 0;
+		QueueSingleAnimMessage.inSlot = 0;
+		QueueSingleAnimMessage.robotID = robot.ID;
+
+		if (stopPreviousAnim)
+		{
+			QueueSingleAnimMessage.position = Anki.Cozmo.QueueActionPosition.NOW;
+		}
+		else
+		{
+			QueueSingleAnimMessage.position = Anki.Cozmo.QueueActionPosition.NEXT;
+		}
+
+
+
+
+		RobotEngineManager.instance.Message.QueueSingleAction = QueueSingleAnimMessage;
 		RobotEngineManager.instance.SendMessage();
 	}
 
+	public void SetIdleAnimation(string default_anim)
+	{
+		if (robot == null || string.IsNullOrEmpty(default_anim))
+			return;
 
+		if( instance.currentEmotionMachine != null )
+		{
+			SetIdleAnimationMessage.animationName = default_anim;
+			SetIdleAnimationMessage.robotID = robot.ID;
+			RobotEngineManager.instance.Message.SetIdleAnimation = SetIdleAnimationMessage;
+			RobotEngineManager.instance.SendMessage ();
+		}
+	}
 
+	public void SetEmotionReturnToPose(string emotion_state, float x_mm, float y_mm, float rad, bool stopPreviousAnim=false)
+	{
+		if (robot == null)
+			return;
+
+		if (instance.currentEmotionMachine != null)
+		{
+			// send approriate animation
+			if (instance.currentEmotionMachine.HasAnimForState (emotion_state))
+			{
+				List<CozmoAnimation> anims = instance.currentEmotionMachine.GetAnimsForType (emotion_state);
+				int rand_index = UnityEngine.Random.Range(0, anims.Count - 1);
+				CozmoAnimation anim = anims [rand_index];
+				if (stopPreviousAnim && robot.isBusy && robot.Status (Robot.StatusFlag.IS_ANIMATING))
+				{
+					robot.CancelAction (Anki.Cozmo.RobotActionType.PLAY_ANIMATION);
+				}
+				Debug.Log ("Sending " + anim.animName + " with " + anim.numLoops + " loop" + (anim.numLoops != 1 ? "s" : ""));
+				PlayAnimationMessage.animationName = anim.animName;
+				PlayAnimationMessage.numLoops = anim.numLoops;
+				PlayAnimationMessage.robotID = robot.ID;
+
+				GotoPoseMessage.level = 0;
+				GotoPoseMessage.useManualSpeed = 0;
+				GotoPoseMessage.x_mm = x_mm;
+				GotoPoseMessage.y_mm = y_mm;
+				GotoPoseMessage.rad = rad;
+
+				QueueCompoundActionsMessage.actions [0].playAnimation = PlayAnimationMessage;
+				QueueCompoundActionsMessage.actionTypes [0] = Anki.Cozmo.RobotActionType.PLAY_ANIMATION;
+
+				QueueCompoundActionsMessage.actions [1].goToPose = GotoPoseMessage;
+				QueueCompoundActionsMessage.actionTypes [1] = Anki.Cozmo.RobotActionType.DRIVE_TO_POSE;
+
+				QueueCompoundActionsMessage.numRetries = 0;
+				QueueCompoundActionsMessage.inSlot = 0;
+				QueueCompoundActionsMessage.robotID = robot.ID;
+
+				if (stopPreviousAnim)
+				{
+					QueueSingleAnimMessage.position = Anki.Cozmo.QueueActionPosition.NOW;
+				}
+				else
+				{
+					QueueSingleAnimMessage.position = Anki.Cozmo.QueueActionPosition.NEXT;
+				}
+
+				RobotEngineManager.instance.Message.QueueSingleAction = QueueSingleAnimMessage;
+				RobotEngineManager.instance.SendMessage ();
+			}
+			else
+			{
+				Debug.LogError ("tring to send animation for emotion type " + emotion_state + ", and the current machine has no anim mapped");
+			}
+		}
+	}
 }

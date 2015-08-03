@@ -91,6 +91,9 @@ def parse_game_arguments():
     parser.add_output_directory_arguments(GAME_ROOT)
     parser.add_configuration_arguments()
     parser.add_verbose_arguments()
+    parser.add_argument('--mex', '-m', dest='mex', action='store_true',
+                help='builds mathlab\'s mex project')
+
     
     return parser.parse_args()
 

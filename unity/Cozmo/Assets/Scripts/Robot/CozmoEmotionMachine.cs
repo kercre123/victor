@@ -20,9 +20,13 @@ public struct CozmoEmotionState
 	
 }
 
+/// <summary>
+/// a specific matrix of emote states (animation/behaviors) that can populated within the inspector
+/// 	and then be triggered by string identifier
+/// </summary>
 public class CozmoEmotionMachine : MonoBehaviour {
 
-	public string defaultEmotionState;
+	public string defaultIdleAnimationName;
 	public List<CozmoEmotionState> emotionStates;
 	private Dictionary<string, List<CozmoAnimation>> typeAnims = new Dictionary<string, List<CozmoAnimation>>();
 	private Dictionary<string, CozmoEmotionState> statesByName = new Dictionary<string, CozmoEmotionState>();
@@ -69,7 +73,7 @@ public class CozmoEmotionMachine : MonoBehaviour {
 		if( CozmoEmotionManager.instance != null )
 		{
 			CozmoEmotionManager.instance.RegisterMachine(this);
-			//CozmoEmotionManager.SetEmotion(defaultEmotionState);
+			CozmoEmotionManager.instance.SetIdleAnimation (defaultIdleAnimationName);
 		}
 		InitializeMachine();
 	}

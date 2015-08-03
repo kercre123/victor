@@ -4,6 +4,13 @@ using UnityEngine.Events;
 using System;
 using System.Collections;
 
+/// <summary>
+/// this class wraps the functionality of a particular on-screen input for requesting
+/// 	an AI assisted robot action
+/// 
+/// 	originally designed to be flexible enough to handle a variety of different cozmoVision/action input schemes,
+/// 		but now only really used by the ActionSliderPanel
+/// </summary>
 [System.Serializable]
 public class ActionButton : MonoBehaviour
 {

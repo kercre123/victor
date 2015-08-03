@@ -134,6 +134,7 @@ public class VortexController : GameController
 	
 	[SerializeField] float scoreScaleBase = 0.75f;
 	[SerializeField] float scoreScaleMax = 1f;
+	[SerializeField] float cozmoPredictiveAccuracy = .75f;
 
 	#endregion
 
@@ -757,7 +758,7 @@ public class VortexController : GameController
 	{
 		if(robot != null && PlayerPrefs.GetInt("DebugSkipLayoutTracker", 0) == 0) {
 
-			if(robot.carryingObject == null || !robot.carryingObject.isActive || robot.isBusy) return false;
+			if(cozmoIndex >= 0 && (robot.carryingObject == null || !robot.carryingObject.isActive || robot.isBusy)) return false;
 			
 			for(int i = 0; i < numPlayers; i++) {
 				if(!playerMockBlocks[i].Validated) return false;
@@ -1095,7 +1096,7 @@ public class VortexController : GameController
 	void Enter_SPINNING()
 	{
 
-		SetRobotEmotion("WATCH_SPIN", true);
+		SetRobotEmotion("WATCH_SPIN", false);
 		lightingBall.Radius = wheelLightningRadii[currentWheelIndex];
 
 		for(int i = 0; i < playerButtonCanvasGroups.Length; i++) {
@@ -1122,19 +1123,25 @@ public class VortexController : GameController
 			if(playerInputs[i].stamps.Count > 0) continue;
 
 			
-			Color actualBlockColor = CozmoPalette.instance.GetColorForActiveBlockMode(GetPlayerActiveCubeColorMode(i));
-			Color uiColor = GetPlayerUIColor(i);
+			//Color actualBlockColor = CozmoPalette.instance.GetColorForActiveBlockMode(GetPlayerActiveCubeColorMode(i));
+			//Color uiColor = GetPlayerUIColor(i);
 			
 			//int lightIndex = Mathf.FloorToInt( (spinLightTimer % 1f) / 0.25f );
 
 			
 			if(playerInputBlocks.Count > i) {
 
-				
-				uint c1 = CozmoPalette.ColorToUInt(lightIndex == 0 ? actualBlockColor : Color.clear);
-				uint c2 = CozmoPalette.ColorToUInt(lightIndex == 1 ? actualBlockColor : Color.clear);
-				uint c3 = CozmoPalette.ColorToUInt(lightIndex == 2 ? actualBlockColor : Color.clear);
-				uint c4 = CozmoPalette.ColorToUInt(lightIndex == 3 ? actualBlockColor : Color.clear);
+
+				uint c1 = CozmoPalette.ColorToUInt(lightIndex == 0 ? Color.white : Color.clear);
+				uint c2 = CozmoPalette.ColorToUInt(lightIndex == 1 ? Color.white : Color.clear);
+				uint c3 = CozmoPalette.ColorToUInt(lightIndex == 2 ? Color.white : Color.clear);
+				uint c4 = CozmoPalette.ColorToUInt(lightIndex == 3 ? Color.white : Color.clear);
+
+//				if(i == 2)
+//				{
+//					//testing the fudgey orange-yellow correction we are doing since the LEDs seem to make yellow into pale green
+//					Debug.Log("actualBlockColor("+actualBlockColor+")");
+//				}
 
 				playerInputBlocks[i].SetLEDs(c1, 0, (byte)ActiveBlock.Light.IndexToPosition(0), Robot.Light.FOREVER, 0, 0, 0, 0);
 				playerInputBlocks[i].SetLEDs(c2, 0, (byte)ActiveBlock.Light.IndexToPosition(1), Robot.Light.FOREVER, 0, 0, 0, 0);
@@ -1144,10 +1151,10 @@ public class VortexController : GameController
 
 			if(playerMockBlocks.Length > i) {
 
-				Color col1 = lightIndex == 0 ? uiColor : Color.black;
-				Color col2 = lightIndex == 1 ? uiColor : Color.black;
-				Color col3 = lightIndex == 2 ? uiColor : Color.black;
-				Color col4 = lightIndex == 3 ? uiColor : Color.black;
+				Color col1 = lightIndex == 0 ? Color.white : Color.black;
+				Color col2 = lightIndex == 1 ? Color.white : Color.black;
+				Color col3 = lightIndex == 2 ? Color.white : Color.black;
+				Color col4 = lightIndex == 3 ? Color.white : Color.black;
 
 				playerMockBlocks[i].SetLights(col1, col2, col3, col4);
 			}
@@ -1183,7 +1190,21 @@ public class VortexController : GameController
 				int numCheck = wheel.PredictedNumber;
 		
 				if(numCheck > 0) {
-					predictedNum = numCheck;
+					if (UnityEngine.Random.Range (0.0f, 1.0f) < cozmoPredictiveAccuracy)
+					{
+						predictedNum = numCheck;
+					}
+					else
+					{
+						if (UnityEngine.Random.Range (0.0f, 1.0f) < 0.5f)
+						{
+							predictedNum = wheel.PredictedPreviousNumber;
+						}
+						else
+						{
+							predictedNum = wheel.PredictedNextNumber;
+						}
+					}
 					predictedDuration = wheel.TotalDuration;
 					predictedTimeAfterLastPeg = wheel.TimeAfterLastPeg;
 				}
@@ -1747,7 +1768,8 @@ public class VortexController : GameController
 
 		if(state == GameState.PRE_GAME) {
 			if (index == cozmoIndex) { // cozmo
-				SetRobotEmotion ("LETS_PLAY");
+				//SetRobotEmotion ("LETS_PLAY");
+				CozmoEmotionManager.instance.SetEmotionReturnToPose ("LETS_PLAY", -200, 0, Mathf.PI);
 			} else {
 				Debug.Log ("PlayerInputTap validating playerIndex("+index+")");
 			}

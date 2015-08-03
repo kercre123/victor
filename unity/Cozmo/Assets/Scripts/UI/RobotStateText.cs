@@ -3,6 +3,9 @@ using UnityEngine.UI;
 using System.Collections;
 using System.Collections.Generic;
 
+/// <summary>
+/// used to display all the latest robot state information to screen
+/// </summary>
 public class RobotStateText : MonoBehaviour {
 
 	[SerializeField] Text text_ID;

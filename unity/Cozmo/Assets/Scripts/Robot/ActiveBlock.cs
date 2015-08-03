@@ -6,6 +6,11 @@ using Anki.Cozmo;
 using G2U = Anki.Cozmo.ExternalInterface;
 using U2G = Anki.Cozmo.U2G;
 
+/// <summary>
+/// unity representation of cozmo's LightCubes
+/// 	adds functionality for controlling the four LEDs
+/// 	adds awareness of accelerometer messages to detect LightCube movements
+/// </summary>
 public class ActiveBlock : ObservedObject
 {
 	public class Light : Robot.Light
