@@ -673,6 +673,9 @@ namespace Anki {
             wheelSpeed = root_->getField("driveSpeedTurbo")->getSFFloat();
           }
           
+          // Speed of point turns (when no target angle specified). See SendTurnInPlaceAtSpeed().
+          f32 pointTurnSpeed = abs(root_->getField("pointTurnSpeed_degPerSec")->getSFFloat());
+          
           
           //printf("keypressed: %d, modifier %d, orig_key %d, prev_key %d\n",
           //       key, modifier_key, key | modifier_key, lastKeyPressed_);
@@ -762,7 +765,7 @@ namespace Anki {
               case (s32)'<':
               {
                 if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
-                  SendTurnInPlaceAtSpeed(DEG_TO_RAD(45), DEG_TO_RAD(360));
+                  SendTurnInPlaceAtSpeed(DEG_TO_RAD(pointTurnSpeed), DEG_TO_RAD(1440));
                 } else {
                   SendTurnInPlace(DEG_TO_RAD(45));
                 }
@@ -772,7 +775,7 @@ namespace Anki {
               case (s32)'>':
               {
                 if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
-                  SendTurnInPlaceAtSpeed(DEG_TO_RAD(-45), DEG_TO_RAD(360));
+                  SendTurnInPlaceAtSpeed(DEG_TO_RAD(-pointTurnSpeed), DEG_TO_RAD(1440));
                 } else {
                   SendTurnInPlace(DEG_TO_RAD(-45));
                 }
