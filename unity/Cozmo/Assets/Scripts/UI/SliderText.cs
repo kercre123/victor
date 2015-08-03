@@ -2,6 +2,9 @@
 using UnityEngine.UI;
 using System.Collections;
 
+/// <summary>
+/// on screen text to help debug any issues with the ActionSlider
+/// </summary>
 public class SliderText : MonoBehaviour
 {
 	[SerializeField] private Text text_pressed;

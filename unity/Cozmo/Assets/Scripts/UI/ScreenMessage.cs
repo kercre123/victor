@@ -2,6 +2,9 @@
 using UnityEngine.UI;
 using System.Collections;
 
+/// <summary>
+/// used for displaying information to the user on screen, with optional timer
+/// </summary>
 public class ScreenMessage : MonoBehaviour {
 
 	[SerializeField] protected Text text;

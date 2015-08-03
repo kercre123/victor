@@ -1,7 +1,8 @@
-﻿// Just add this script to your camera. It doesn't need any configuration.
+﻿using UnityEngine;
 
-using UnityEngine;
-
+/// <summary>
+/// very simple touch screen controls for the 3d view of cozmo's game layout instructions camera
+/// </summary>
 public class TouchCamera : MonoBehaviour {
 
 	Camera cam;

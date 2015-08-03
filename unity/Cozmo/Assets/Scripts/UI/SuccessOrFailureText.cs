@@ -3,6 +3,9 @@ using UnityEngine.UI;
 using System.Collections;
 using Anki.Cozmo;
 
+/// <summary>
+/// on screen debug text and sfx for displaying the results of a completed or failed AI assisted action
+/// </summary>
 public class SuccessOrFailureText : ScreenMessage
 {
 	[SerializeField] private AudioClip success;

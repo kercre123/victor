@@ -2,6 +2,11 @@
 using UnityEngine.UI;
 using System.Collections;
 
+/// <summary>
+/// our SpinWheel class can have a variable number of slices
+/// 	to enable this functionality, we instiate a dynamic number of PieSlices and set their image fill amount
+/// 	proportional to 360 degrees divided by the total number of slices
+/// </summary>
 public class PieSlice : MonoBehaviour {
 	[SerializeField] Image image;
 	[SerializeField] Text text;

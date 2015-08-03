@@ -7,6 +7,7 @@
     'ctrlKeyboard_source': 'ctrlKeyboard.lst',
     'csharp_source': 'csharp.lst',
     'clad_source': 'clad.lst',
+    'buildMex': '<(build-mex)',
     
     # TODO: should this be passed in, or shared?
     'coretech_defines': [
@@ -300,6 +301,31 @@
         ],
       },
     ],
+
+
+
+    # MEX CRAP HERE
+    # MEX CRAP HERE
+    # MEX CRAP HERE
+    # MEX CRAP HERE
+    [
+      "buildMex=='yes'",
+      {
+        'targets': [
+          {
+            'target_name': 'allMexTargets',
+            'type': 'none',
+            'dependencies': [
+              '<(cg-mex_gyp_path):mexDetectFiducialMarkers',
+              '<(cg-mex_gyp_path):mexUnique',
+            ],
+          },
+        ],
+      },
+    ],
+
+
+
 
     # UNITTEST CRAP HERE
     # UNITTEST CRAP HERE

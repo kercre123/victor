@@ -2,19 +2,17 @@
 using System;
 using System.Collections;
 
+
+/// <summary>
+/// for the cozmo prototype thus far, we are merely concerned with whether the device is an iPad (4/3) or iPhone(16/9)
+/// 	this logic may need to get more robust as more devices are supported
+/// </summary>
 [ExecuteInEditMode]
 public class CozmoScreenMultiSettingsDetector : ScreenMultiSettingsDetector {
 	protected override void UpdateIndex() {
 
-		float dpi = Screen.dpi;
-		
-		if(dpi == 0f) return;
-		
 		Vector2 screenSize = new Vector2(Screen.width, Screen.height);
-		
-		//		if(Application.isEditor) {
-		//			screenSize = Handles.GetMainGameViewSize();
-		//		}
+
 		
 		float aspect = 1f;
 		if(screenSize.y > 0f) aspect = screenSize.x / screenSize.y;
