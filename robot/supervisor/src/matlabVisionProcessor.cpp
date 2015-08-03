@@ -10,6 +10,8 @@
  **/
 
 
+#include "visionParameters.h" // this is where USE_MATLAB_TRACKER / USE_MATLAB_DETECTOR are defined!
+
 #if USE_MATLAB_TRACKER || USE_MATLAB_DETECTOR
 
 #include "anki/common/types.h"
@@ -19,7 +21,6 @@
 
 #include "matlabVisionProcessor.h"
 #include "matlabVisualization.h"
-#include "visionParameters.h"
 
 #ifndef DOCKING_ALGORITHM
 #error DOCKING_ALGORITHM should be defined to use matlabVisionProcessor.cpp!

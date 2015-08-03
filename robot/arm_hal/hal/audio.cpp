@@ -202,7 +202,7 @@ namespace Anki
             else if (valpred < -32768) valpred = -32768;
           }
 
-          *(output++) = valpred >> 3;
+          *(output++) = valpred;
         }
 
         m_AudioRendered = true;

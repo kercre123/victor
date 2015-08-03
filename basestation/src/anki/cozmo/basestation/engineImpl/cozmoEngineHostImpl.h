@@ -64,7 +64,8 @@ protected:
   std::map<AdvertisingRobot, bool> _forceAddedRobots;
   BaseStationTime_t _lastAnimationFolderScan;
   bool _animationReloadActive;
-#if COZMO_RECORDING_PLAYBACK
+  
+#ifdef COZMO_RECORDING_PLAYBACK
   // TODO: Make use of these for playback/recording
   IRecordingPlaybackModule *recordingPlaybackModule_;
   IRecordingPlaybackModule *uiRecordingPlaybackModule_;

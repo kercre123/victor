@@ -26,6 +26,7 @@ UnreliableUDPChannel::UnreliableUDPChannel()
 
   unreliableTransport.SetHeaderPrefix((uint8_t*)(RELIABLE_PACKET_HEADER_PREFIX), RELIABLE_PACKET_HEADER_PREFIX_LENGTH);
   unreliableTransport.SetDoesHeaderHaveCRC(false);
+  unreliableTransport.SetMaxNetMessageSize(1420);
 }
 
 UnreliableUDPChannel::~UnreliableUDPChannel()

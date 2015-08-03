@@ -180,7 +180,7 @@ namespace Anki {
         robotState_.status |=  (LiftController::IsInPosition() ? LIFT_IN_POS : 0);
         robotState_.status |=  (HeadController::IsInPosition() ? HEAD_IN_POS : 0);
         robotState_.status |= (AnimationController::IsBufferFull() ? IS_ANIM_BUFFER_FULL : 0);
-        
+
         //robotState_.numFreeAnimationFrames = AnimationController::GetNumFramesFree();
         robotState_.numAnimBytesFree = AnimationController::GetApproximateNumBytesFree();
       }
@@ -248,14 +248,6 @@ namespace Anki {
               currentMatHeading.getDegrees(),
               Localization::GetPoseFrameId());
          */
-#if(USE_OVERLAY_DISPLAY)
-        {
-          using namespace Sim::OverlayDisplay;
-          SetText(CURR_POSE, "Pose: (x,y)=(%.4f,%.4f) at angle=%.1f\n",
-                  currentMatX, currentMatY,
-                  currentMatHeading.getDegrees());
-        }
-#endif
 
       } // ProcessAbsLocalizationUpdateMessage()
 
@@ -273,12 +265,18 @@ namespace Anki {
       {
         u32 dataLen;
 
+        //ReliableConnection_printState(&connection);
+
         while((dataLen = HAL::RadioGetNextPacket(pktBuffer_)) > 0)
         {
           s16 res = ReliableTransport_ReceiveData(&connection, pktBuffer_, dataLen);
           if (res < 0)
           {
-            PRINT("ERROR (%d): ReliableTransport didn't accept message %d[%d]\n", res, pktBuffer_[0], dataLen);
+#ifdef SIMULATOR
+            printf("ReliableTransport didn't accept packet: %d\n", res);
+#else
+            HAL::BoardPrintf("ReliableTransport didn't accept packet: %d\n", res);
+#endif
           }
         }
 
@@ -287,8 +285,8 @@ namespace Anki {
           if (ReliableTransport_Update(&connection) == false) // Connection has timed out
           {
             Receiver_OnDisconnect(&connection);
-            PRINT("WARN: Reliable transport has timed out\n");  // Do not print until _OnDisconnect complete!
-          }
+						// Can't print anything because we have no where to send it
+					}
         }
       }
 
@@ -415,7 +413,7 @@ namespace Anki {
 
         ImageSendMode_t imageSendMode = static_cast<ImageSendMode_t>(msg.imageSendMode);
         Vision::CameraResolution imageSendResolution = static_cast<Vision::CameraResolution>(msg.resolution);
-        
+
         HAL::SetImageSendMode(imageSendMode, imageSendResolution);
 
         // Send back camera calibration for this resolution
@@ -550,16 +548,16 @@ namespace Anki {
       {
         AnimationController::Clear();
       }
-      
+
       template<typename KF_TYPE>
       static inline void ProcessAnimKeyFrameHelper(const KF_TYPE& msg)
-      { 
+      {
         if(AnimationController::BufferKeyFrame(msg) != RESULT_OK) {
           //PRINT("Failed to buffer a keyframe! Clearing Animation buffer!\n");
           AnimationController::Clear();
         }
       }
-      
+
 #     define DEFINE_PROCESS_KEYFRAME_METHOD(__MSG_TYPE__) \
 void Process##__MSG_TYPE__##Message(const __MSG_TYPE__& msg) { ProcessAnimKeyFrameHelper(msg); }
 
@@ -577,7 +575,7 @@ void Process##__MSG_TYPE__##Message(const __MSG_TYPE__& msg) { ProcessAnimKeyFra
       void ProcessPanAndTiltHeadMessage(const PanAndTiltHead& msg)
       {
         // TODO: Move this to some kind of VisualInterestTrackingController or something
-        
+
         HeadController::SetDesiredAngle(msg.headTiltAngle_rad, 0.1f, 0.1f, 0.1f);
         if(msg.bodyPanAngle_rad != 0.f) {
           SteeringController::ExecutePointTurn(msg.bodyPanAngle_rad, 50.f, 10.f, 10.f, true);
@@ -602,8 +600,8 @@ void Process##__MSG_TYPE__##Message(const __MSG_TYPE__& msg) { ProcessAnimKeyFra
       {
         LiftController::TapBlockOnGround(msg.numTaps);
       }
-      
-      
+
+
       // --------- Block control messages ----------
 
       void ProcessFlashBlockIDsMessage(const FlashBlockIDs& msg)
@@ -751,7 +749,7 @@ void Process##__MSG_TYPE__##Message(const __MSG_TYPE__& msg) { ProcessAnimKeyFra
                                                "Unrecognized resolution: %dx%d.\n", img.get_size(1)/3, img.get_size(0));
             m.resolution = Vision::CAMERA_RES_CVGA;
             break;
-            
+
           case 480:
             AnkiConditionalErrorAndReturnValue(img.get_size(1)==640*3, RESULT_FAIL, "CompressAndSendImage",
                                                "Unrecognized resolution: %dx%d.\n", img.get_size(1)/3, img.get_size(0));
@@ -775,7 +773,7 @@ void Process##__MSG_TYPE__##Message(const __MSG_TYPE__& msg) { ProcessAnimKeyFra
         cv::vector<u8> compressedBuffer;
         cv::imencode(".jpg",  cvImg, compressedBuffer, compressionParams);
 
-        const u32 numTotalBytes = compressedBuffer.size();
+        const u32 numTotalBytes = static_cast<u32>(compressedBuffer.size());
 
         //PRINT("Sending frame with capture time = %d at time = %d\n", captureTime, HAL::GetTimeStamp());
 

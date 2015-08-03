@@ -37,7 +37,8 @@ namespace AnimationController {
     s32 _lastBufferPos;
     
     s32  _numAudioFramesBuffered; // NOTE: Also counts EndOfAnimationFrames...
-    
+
+    bool _isBufferStarved;
     bool _haveReceivedTerminationFrame;
     bool _isPlaying;
     bool _bufferFullMessagePrintedThisTick;
@@ -294,6 +295,7 @@ namespace AnimationController {
 
     _haveReceivedTerminationFrame = false;
     _isPlaying = false;
+    _isBufferStarved = false;
     _bufferFullMessagePrintedThisTick = false;
     
     if(_tracksInUse) {
@@ -562,11 +564,23 @@ namespace AnimationController {
       // Note that we need at least two "frames" in the buffer so we can always
       // read from the current one to the next one without reaching end of buffer.
       ready = _numAudioFramesBuffered > 1;
+
+      // Report every time the buffer goes from having a sufficient number of audio frames to not.
+      if (!ready) {
+        if (!_isBufferStarved) {
+          _isBufferStarved = true;
+          PRINT("AnimationController.IsReadyToPlay.BufferStarved\n");
+        }
+      } else {
+        _isBufferStarved = false;
+      }
+      
     } else {
       // Otherwise, wait until we get enough frames to start
       ready = (_numAudioFramesBuffered > ANIMATION_PREROLL_LENGTH || _haveReceivedTerminationFrame);
       if(ready) {
         _isPlaying = true;
+        _isBufferStarved = false;
         
 #       if DEBUG_ANIMATION_CONTROLLER
         _currentTime_ms = 0;
