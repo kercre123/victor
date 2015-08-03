@@ -6,7 +6,6 @@
     'ctrlGameEngine_source': 'ctrlGameEngine.lst',
     'ctrlKeyboard_source': 'ctrlKeyboard.lst',
     'csharp_source': 'csharp.lst',
-    'clad_source': 'clad.lst',
     'buildMex': '<(build-mex)',
     
     # TODO: should this be passed in, or shared?
@@ -547,7 +546,6 @@
       'target_name': 'cozmoGame',
       'sources': [ 
         '<!@(cat <(game_source))',
-        '<!@(cat <(clad_source))',
       ],
       'include_dirs': [
         '../../game/src',

@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
-using U2G = Anki.Cozmo.U2G;
+using U2G = Anki.Cozmo.ExternalInterface;
 using System.Collections.Generic;
 using System;
 

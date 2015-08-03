@@ -6,7 +6,7 @@ using System.IO;
 using System.Text;
 using Anki.Cozmo;
 using G2U = Anki.Cozmo.ExternalInterface;
-using U2G = Anki.Cozmo.U2G;
+using U2G = Anki.Cozmo.ExternalInterface;
 
 // LostPolygon replacement doesn't seem to work on device
 // eventually we should replace this file with reliable C++ UDP anyway though
@@ -79,8 +79,8 @@ public class UdpChannel : ChannelBase
 
 	// fixed messages
 	private readonly AdvertisementRegistrationMsg advertisementRegistrationMessage = new AdvertisementRegistrationMsg();
-	private readonly U2G.Message pingMessage = new U2G.Message { Ping = new U2G.Ping() };
-	private readonly U2G.Message disconnectionMessage = new U2G.Message { DisconnectFromUiDevice = new U2G.DisconnectFromUiDevice() };
+	private readonly U2G.MessageGameToEngine pingMessage = new U2G.MessageGameToEngine { Ping = new U2G.Ping() };
+	private readonly U2G.MessageGameToEngine disconnectionMessage = new U2G.MessageGameToEngine { DisconnectFromUiDevice = new U2G.DisconnectFromUiDevice() };
 
 	// sockets
 	private readonly IPEndPoint anyEndPoint = new IPEndPoint(IPAddress.Any, 0);
@@ -260,9 +260,9 @@ public class UdpChannel : ChannelBase
 	}
 
 	// synchronous
-	public override void Send(U2G.Message message)
+	public override void Send(U2G.MessageGameToEngine message)
 	{
-		if(message.GetTag() == U2G.Message.Tag.INVALID)
+		if(message.GetTag() == U2G.MessageGameToEngine.Tag.INVALID)
 		{
 			throw new ArgumentException("Message id is not valid.", "message");
 		}
@@ -516,7 +516,7 @@ public class UdpChannel : ChannelBase
 	}
 
 	// synchronous
-	private void SendInternal(U2G.Message message)
+	private void SendInternal(U2G.MessageGameToEngine message)
 	{
 		bool success = false;
 		SocketBufferState state = AllocateBufferState(mainServer, mainEndPoint);
