@@ -32,11 +32,12 @@ git clone --depth=1 https://github.com/jcmvbkbc/gcc-xtensa.git gcc-4.9.1
 ./prepare.sh lx106
 ./build-elf.sh lx106
 ```
+This is where you will probably have to iterate with installing system dependancies.
+
 Now install the xtensa toolchain:
 ```
 sudo cp -r build-lx106/root/* /usr/local/
 ```
-This is where you will probably have to iterate with installing system dependancies.
 
 ## Build the firmware
 

@@ -172,7 +172,7 @@ if __name__ == '__main__':
             except:
                 sys.exit("Couldn't interprate \"{}\" as a wifi channel".format(sys.argv[6]))
         else:
-            wifiChannel = 2
+            wifiChannel = 11
         doUpgrade(robotHostname, UpgradeCommandFlags.CONFIG, ssid, pkey, wifiOpMode, wifiChannel)
     else:
         sys,stderr.write(USAGE)

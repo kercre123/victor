@@ -13,24 +13,6 @@
 static struct espconn *udpServer;
 static bool haveClient = false;
 
-static volatile uint8 queuedPacketCount; /// Number of packets which have been queued but not sent yet
-
-static void udpServerSentCB(void * arg)
-{
-
-#ifdef DEBUG_CLIENT
-  os_printf("cl scb qpc=%d\n", queuedPacketCount);
-#endif
-  if (queuedPacketCount > 0)
-  {
-    queuedPacketCount -= 1;
-  }
-  else
-  {
-    os_printf("WARN: udp sent callback with no packet queued\n");
-  }
-}
-
 static void ICACHE_FLASH_ATTR udpServerRecvCB(void *arg, char *usrdata, unsigned short len)
 {
   if (arg != (void*)udpServer)
@@ -60,8 +42,6 @@ sint8 ICACHE_FLASH_ATTR clientInit()
 
   haveClient = false;
 
-  queuedPacketCount = 0;
-
   udpServer = (struct espconn *)os_zalloc(sizeof(struct espconn));
   ets_memset( udpServer, 0, sizeof( struct espconn ) );
   udpServer->type = ESPCONN_UDP;
@@ -73,12 +53,6 @@ sint8 ICACHE_FLASH_ATTR clientInit()
   if (err != 0)
   {
     os_printf("\tError registering receive callback %d\r\n", err);
-    return err;
-  }
-  err = espconn_regist_sentcb(udpServer, udpServerSentCB);
-  if (err != 0)
-  {
-    os_printf("\tError registering sent callback %d\r\n", err);
     return err;
   }
 
@@ -99,10 +73,7 @@ inline bool clientQueuePacket(uint8* data, uint16 len)
   os_printf("clientQueuePacket\n");
 #endif
 
-  if (queuedPacketCount >= 16) {
-    os_printf("cl %d too many pkts Qed\r\n", queuedPacketCount);
-  }
-  else if(haveClient)
+  if(haveClient)
   {
     const int8 err = espconn_sent(udpServer, data, len);
     if (err < 0) // XXX I think a negative number is an error. 0 is OK, I don't know what positive numbers are
@@ -112,8 +83,7 @@ inline bool clientQueuePacket(uint8* data, uint16 len)
     }
     else
     {
-      queuedPacketCount += 1;
-      return false;
+      return true;
     }
   }
   else
