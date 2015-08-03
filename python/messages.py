@@ -6,7 +6,7 @@ include/anki/cozmo/shared/MessageDefinitionsR2B.h If the messages used in that f
 will need to be updated as well.
 """
 __author__  = "Daniel Casner"
-__version__ = "83fcd6d31a7fd9c14fbf46d79368a8b6e84c0282" # Hash for the revision these python definitions are based on
+__version__ = "918044192be58a4e128d4b0b6c1254ee726b080e" # Hash for the revision these python definitions are based on
 
 import sys, struct
 
@@ -117,7 +117,7 @@ class ImageChunk(MessageBase):
     "ImageChunk message implementation for Python"
 
     IMAGE_CHUNK_SIZE = 1400
-    ID = 76
+    ID = 63
     FORMAT = ["u32",  # imageId
               "u32",  # frameTimeStamp
               "u16",  # chunkSize
@@ -169,7 +169,7 @@ class ImageChunk(MessageBase):
         return "ImageChunk(imageId=%d, imageEncoding=%d, chunkId=%d, resolution=%d, data[%d]=%s)" % (self.imageId, self.imageEncoding, self.chunkId, self.resolution, len(self.data), dataRepr)
 
 class RobotState(MessageBase):
-    ID = 65
+    ID = 52
     FORMAT = [
         "u32", # Timestamp
         "u32", # pose frame id
@@ -246,7 +246,7 @@ class RobotState(MessageBase):
         return struct.unpack('I', buffer[1:5])(0)
 
 class PrintText(MessageBase):
-    ID = 75
+    ID = 62
     PRINT_TEXT_MSG_LENGTH = 50
     FORMAT = ['%ds' % (PRINT_TEXT_MSG_LENGTH)]
 
@@ -276,20 +276,6 @@ class PrintText(MessageBase):
 
     def __str__(self):
         return self.text
-
-class PingMessage(MessageBase):
-    "Just a ping with no payload"
-    ID = 58
-    FORMAT = []
-
-    def _getMembers(self):
-        return tuple()
-
-    def _setMembers(self, *members):
-        pass
-
-    def __repr__(self):
-        return "PingMessage"
 
 class DriveWheelsMessage(MessageBase):
     ID = 1
@@ -436,32 +422,6 @@ class StopAllMotorsMessage(MessageBase):
         return "StopAllMotorsMessage"
 
 
-class ClientConnectionStatus(MessageBase):
-    """Struct for SoM Radio state information.
-    This message is not intendent to be used beyond the SoM prototype."""
-
-    ID = 59
-    FORMAT = ["u8", # wifi state
-              "u8", # bluetooth state
-              ]
-
-    def __init__(self, wifi=0, bluetooth=0, buffer=None):
-        MessageBase.__init__(self)
-        self.wifiState = wifi
-        self.blueState = bluetooth
-        if buffer:
-            self.deserialize(buffer)
-
-    def _getMembers(self):
-        return self.wifiState, self.blueState
-
-    def _setMembers(self, wifi, blue):
-        self.wifiState = wifi
-        self.blueState = blue
-
-    def __repr__(self):
-        return "SoMRadioState(wifi=%d, bluetooth=%d)" % self._getMembers
-
 class StartTestMode(MessageBase):
     """Start a test with given parameters"""
     ID = 21
@@ -491,7 +451,7 @@ class StartTestMode(MessageBase):
 
 class FlashBlockIDs(MessageBase):
     """Instruct reach block to visually indicate it's ID"""
-    ID = 62
+    ID = 40
     FORMAT = []
 
     def _getMembers(self):

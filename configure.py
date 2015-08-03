@@ -264,6 +264,8 @@ def parse_engine_arguments():
     parser.add_output_directory_arguments(ENGINE_ROOT)
     parser.add_configuration_arguments()
     parser.add_verbose_arguments()
+    parser.add_argument('--mex', '-m', dest='mex', action='store_true',
+                    help='builds mathlab\'s mex project')
     
     return parser.parse_args()
 
@@ -320,6 +322,8 @@ def generate_gyp(path, platform, options):
     arguments += ['--coretechExternal', os.environ.get("CORETECH_EXTERNAL_DIR")]
     if options.verbose:
         arguments += ['--verbose']
+    if options.mex:
+        arguments += ['--mex']
     
     cwd = ankibuild.util.File.pwd()
     ankibuild.util.File.cd(path)
