@@ -4,7 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Anki.Cozmo;
 using G2U = Anki.Cozmo.ExternalInterface;
-using U2G = Anki.Cozmo.U2G;
+using U2G = Anki.Cozmo.ExternalInterface;
 
 /// <summary>
 /// The type of protocol to communicate over.
@@ -115,7 +115,7 @@ public abstract class ChannelBase
 	/// </summary>
 	/// <param name="message">The message to send, which is serialized immediately.</param>
 	/// <remarks>Only call this from the main Unity thread.</remarks>
-	public abstract void Send(U2G.Message message);
+	public abstract void Send(U2G.MessageGameToEngine message);
 
 	/// <summary>
 	/// Updates the connection, allowing it to send events on the main Unity thread.
