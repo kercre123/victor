@@ -57,6 +57,8 @@ namespace Cozmo {
     
   private:
     
+    // TODO: add robot ref
+    
     void SwitchFromCurrentToNext();
     
     // Map from behavior name to available behaviors

@@ -31,7 +31,7 @@ namespace Cozmo {
       COMPLETE
     };
     
-    IBehavior(Robot& robot) : _robot(robot) { }
+    IBehavior(Robot& robot, const Json::Value& config) : _robot(robot) { }
     virtual ~IBehavior() { }
     
     // Returns true iff the state of the world/robot is sufficient for this
@@ -51,6 +51,7 @@ namespace Cozmo {
     // latter case, the returned reward is not populated.)
     virtual bool GetRewardBid(Reward& reward) = 0;
     
+    // All behaviors run in a single "slot" in the AcitonList. (This seems icky.)
     static const ActionList::SlotHandle sActionSlot;
     
   protected:

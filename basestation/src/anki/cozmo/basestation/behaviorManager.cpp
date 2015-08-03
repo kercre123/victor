@@ -73,7 +73,10 @@ namespace Cozmo {
   
   Result BehaviorManager::Update()
   {
+    Result lastResult = RESULT_OK;
+    
     if(_currentBehavior != _behaviors.end()) {
+      // We have a current behavior, update it.
       IBehavior::Status status = _currentBehavior->second->Update();
      
       switch(status)
@@ -83,6 +86,7 @@ namespace Cozmo {
           break;
           
         case IBehavior::Status::COMPLETE:
+          // Behavior complete, switch to next
           SwitchFromCurrentToNext();
           break;
           
@@ -90,21 +94,22 @@ namespace Cozmo {
           PRINT_NAMED_ERROR("BehaviorManager.Update.FailedUpdate",
                             "Behavior '%s' failed to Update().\n",
                             _currentBehavior->first.c_str());
-          return RESULT_FAIL;
+          lastResult = RESULT_FAIL;
           break;
           
         default:
           PRINT_NAMED_ERROR("BehaviorManager.Update.UnknownStatus",
                             "Behavior '%s' returned unknown status %d\n",
                             _currentBehavior->first.c_str(), status);
-          return RESULT_FAIL;
+          lastResult = RESULT_FAIL;
       } // switch(status)
     }
     else if(_nextBehavior != _behaviors.end()) {
+      // No current behavior, but next behavior defined, so switch to it.
       SwitchFromCurrentToNext();
     }
     
-    return RESULT_OK;
+    return lastResult;
   } // Update()
   
   
