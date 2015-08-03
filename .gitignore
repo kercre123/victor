@@ -151,7 +151,7 @@ unity/Cozmo/*.sln
 unity/Cozmo/*.proj
 unity/Cozmo/*.csproj
 unity/Cozmo/*.userprefs
-unity/Cozmo/*.unityproj
+unity/Cozmo/*.obj
 
 build_xcode/*.xcworkspace
 build_xcode/game_osx
