@@ -2,11 +2,15 @@
 using System;
 using System.Collections;
 
+/// <summary>
+/// this singleton component observes changes in the screen settings and then broadcasts
+/// 	to any subscribed components when the settings have changed in a meaningful way
+/// </summary>
 [ExecuteInEditMode]
 public class ScreenMultiSettingsDetector : MonoBehaviour {
 
-	float width;
-	float height;
+	int width;
+	int height;
 	ScreenOrientation orientation;
 
 	public static Action ShareSettings = null;

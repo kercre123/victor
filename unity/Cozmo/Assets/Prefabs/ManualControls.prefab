@@ -780,6 +780,7 @@ GameObject:
   - 224: {fileID: 22488330}
   - 222: {fileID: 22240746}
   - 114: {fileID: 11417360}
+  - 225: {fileID: 22594308}
   m_Layer: 5
   m_Name: HiddenText
   m_TagString: Untagged
@@ -1925,8 +1926,7 @@ MonoBehaviour:
   text_x: {fileID: 0}
   text_y: {fileID: 0}
   swipeTurnAngle: 0
-  doubleTapTurnAround: 1
-  headAngleChangeRate: 7.85398102
+  doubleTapTurnAround: 0
   targetLockMaxTurnAngle: 45
   targetLockMinTurnAngle: 4
   targetLockGyroSwapThreshHold: .300000012
@@ -3395,6 +3395,17 @@ CanvasGroup:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 116448}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 0
+  m_BlocksRaycasts: 0
+  m_IgnoreParentGroups: 0
+--- !u!225 &22594308
+CanvasGroup:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 149650}
   m_Enabled: 1
   m_Alpha: 1
   m_Interactable: 0

@@ -226,7 +226,7 @@ public class SpinWheel : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
 		rTrans = transform as RectTransform;
 		canvas = GetComponentInParent<Canvas>();
 
-		Application.targetFrameRate = 60;
+		Application.targetFrameRate = 30;
 		Time.fixedDeltaTime =  1f / 60f;
 
 		InitData();
@@ -334,9 +334,6 @@ public class SpinWheel : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
 		lastSliceIndex = displayData.sliceIndex;
 		lastTouching = false;
 
-//		if(predictionCoroutine != null) StopCoroutine(predictionCoroutine);
-//		if(spinCoroutine != null) StopCoroutine(spinCoroutine);
-
 		displayData.wheelAngleAtSpinStart = displayData.wheelAngle;
 
 		SpinStartTime = Time.time;
@@ -346,8 +343,6 @@ public class SpinWheel : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
 
 		predictedData.Copy(displayData);
 
-		//predictionCoroutine = StartCoroutine(PredictSpinResults());
-		//spinCoroutine = StartCoroutine(RefreshActualSpin());
 		CalculateSpin(ref predictedData);
 
 		PredictedNumber = GetPredictedNumber();

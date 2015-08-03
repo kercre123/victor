@@ -20,23 +20,55 @@ public class RobotRelativeControls : MonoBehaviour
 
 	#region INSPECTOR FIELDS
 
+	[Tooltip("This virtualStick controls the robot's forward and backward driving impulse.")]
 	[SerializeField] VirtualStick verticalStick = null;
+
+	[Tooltip("This virtualStick controls the robot's left and right turning impulse.")]
 	[SerializeField] VirtualStick horizontalStick = null;
+
+	[Tooltip("This Slider manually overrides robot's head angle.")]
 	[SerializeField] Slider headAngleSlider = null;
+
+	[Tooltip("This Slider manually overrides robot's lift arm height.")]
 	[SerializeField] Slider liftSlider = null;
+
+	[Tooltip("This GyroControls allows rolling the device to control the robot's left and right turning impulse.")]
 	[SerializeField] GyroControls gyroInputs = null;
+
+	[Tooltip("While the verticalStick is not engaged, this defines the minimum degrees of roll at which the GyroControls begin submitting a turning impulse.")]
 	[SerializeField] float turnInPlaceRollMin = 15f;
+
+	[Tooltip("While the verticalStick is not engaged, this defines the degrees of roll at which the GyroControls will submit maximum turning impulse.")]
 	[SerializeField] float turnInPlaceRollMax = 90f;
+
+	[Tooltip("While the verticalStick IS engaged, this defines the minimum degrees of roll at which the GyroControls begin submitting a turning impulse.")]
 	[SerializeField] float turnWhileDrivingRollMin = 5f;
+
+	[Tooltip("While the verticalStick IS engaged, this defines the degrees of roll at which the GyroControls will submit maximum turning impulse.")]
 	[SerializeField] float turnWhileDrivingRollMax = 90f;
+
+	[Tooltip("Assign this Text component to display debug text showing the current amount of turning impulse (from -1 to 1).")]
 	[SerializeField] Text text_x = null;
+
+	[Tooltip("Assign this Text component to display debug text showing the current amount of forward and backward driving impulse (from -1 to 1).")]
 	[SerializeField] Text text_y = null;
+
+	[Tooltip("Deprecated feature allowing horizontal swiped to engage an automatic turn of a set number of degrees.")]
 	[SerializeField] float swipeTurnAngle = 0f;
-	[SerializeField] bool doubleTapTurnAround = true;
-	[SerializeField] float headAngleChangeRate = 1f;
+
+	[Tooltip("Deprecated feature allowing double tapping the verticalStick to engage an automatic 180 degree turn.")]
+	[SerializeField] bool doubleTapTurnAround = false;
+
+	[Tooltip("Magnitude of error angle (from facing directly at target object) above which the robot will auto-turn at max turning impulse to correct.")]
 	[SerializeField] float targetLockMaxTurnAngle = 25f;
+
+	[Tooltip("Magnitude of error angle (from facing directly at target object) below which the robot will not auto-turn to correct.")]
 	[SerializeField] float targetLockMinTurnAngle = 4f;
+
+	[Tooltip("When target locked and additional lockable targets are available, GyroConttrols turn impulses above this magnitude will trigger a target swap in that direction.")]
 	[SerializeField] float targetLockGyroSwapThreshHold = 0.3f;
+
+	[Tooltip("When target locked and additional lockable targets are available, horizontalStick turn impulses above this magnitude will trigger a target swap in that direction.")]
 	[SerializeField] float targetLockStickSwapThreshHold = 0.1f;
 
 	#endregion

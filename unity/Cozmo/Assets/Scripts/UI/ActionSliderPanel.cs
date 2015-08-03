@@ -5,7 +5,11 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
-
+/// <summary>
+/// Slider that allows up to three AI assisted action requests via ActionButtons
+/// 	one central button that by default engages the search and target lock features
+/// 	optional upper and lower buttons that can be dragged to and then released to request two additional actions
+/// </summary>
 [System.Serializable]
 public class ActionSlider {
 
@@ -60,6 +64,9 @@ public class ActionSlider {
 	}
 }
 
+/// <summary>
+/// means by which our CozmoVision script manages the ActionSlider
+/// </summary>
 public class ActionSliderPanel : ActionPanel
 {
 	public ActionSlider actionSlider;

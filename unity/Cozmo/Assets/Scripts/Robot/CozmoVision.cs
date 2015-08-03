@@ -6,7 +6,7 @@ using System.Collections;
 using System.Collections.Generic;
 
 /// <summary>
-/// handles the unity side of cozmo's camera display as well as the actionpanel used to interact with objects he sees
+/// handles the unity side of cozmo's camera display as well as managing the actionpanel used to interact with objects he sees
 /// </summary>
 public class CozmoVision : MonoBehaviour
 {

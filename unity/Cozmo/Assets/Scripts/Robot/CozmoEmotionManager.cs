@@ -4,6 +4,11 @@ using U2G = Anki.Cozmo.U2G;
 using System.Collections.Generic;
 using System;
 
+/// <summary>
+/// wrapper by which gameplay can trigger basic emote behaviors on the robot
+/// 	default cozmoEmotionMachine is a sibling component
+/// 	emotionMachine can be overwritten for specific modes for minigames or hamster mode, etc
+/// </summary>
 public class CozmoEmotionManager : MonoBehaviour {
 
 	public static CozmoEmotionManager instance = null;
