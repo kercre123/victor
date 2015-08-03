@@ -555,7 +555,7 @@ namespace Anki {
 
       // PID control for maintaining heading
       f32 angularDistToCurrDesiredAngle = (Radians(currDesiredAngle) - currAngle).ToFloat();
-      const f32 pointTurnKp_ = 100;
+      const f32 pointTurnKp_ = 500;
       //PRINT("PT comp: arcVel %d, comp %f\n", arcVel, angularDistToCurrDesiredAngle * pointTurnKp_);
       arcVel += (s16)(angularDistToCurrDesiredAngle * pointTurnKp_);
 
