@@ -12,8 +12,8 @@ GAME_ROOT = os.path.normpath(os.path.abspath(os.path.realpath(os.path.dirname(in
 
 ENGINE_ROOT = os.path.join(GAME_ROOT, 'lib', 'anki', 'cozmo-engine')
 sys.path.insert(0, ENGINE_ROOT)
-from configure import BUILD_TOOLS_ROOT, initialize_colors
-from configure import print_status, ArgumentParser, generate_gyp, configure
+from configure import BUILD_TOOLS_ROOT, print_header, print_status
+from configure import ArgumentParser, generate_gyp, configure
 
 sys.path.insert(0, BUILD_TOOLS_ROOT)
 import ankibuild.ios_deploy
@@ -261,17 +261,31 @@ class GamePlatformConfiguration(object):
         ankibuild.util.File.rm_rf(self.platform_build_dir)
         ankibuild.util.File.rm_rf(self.platform_output_dir)
 
-        # Execute configure.py delete on cozmo-engine
-        os.system(ENGINE_ROOT + '/configure.py delete');
-
 
 ###############
 # ENTRY POINT #
 ###############
 
+def recursive_delete(options):
+    "Calls delete on engine."
+    print_header('RECURSING INTO {0}'.format(os.path.relpath(ENGINE_ROOT, GAME_ROOT)))
+    args = [os.path.join(ENGINE_ROOT, 'configure.py'), 'delete']
+    args += ['--platform', '+'.join(options.platforms)]
+    if options.verbose:
+        args += ['--verbose']
+    ankibuild.util.File.execute(args)
+
 def main():
     options = parse_game_arguments()
-    configure(options, GAME_ROOT, GamePlatformConfiguration, [options.build_dir, options.output_dir])
+    
+    clad_csharp = os.path.join(GAME_ROOT, 'unity', 'Cozmo', 'Assets', 'Scripts', 'Generated')
+    clad_folders = [os.path.join(options.output_dir, 'clad'), clad_csharp, clad_csharp + '.meta']
+    shared_generated_folders = [options.build_dir, options.output_dir]
+    configure(options, GAME_ROOT, GamePlatformConfiguration, clad_folders, shared_generated_folders)
+
+    # recurse on delete
+    if options.command == 'delete':
+        recursive_delete(options)
 
 if __name__ == '__main__':
     main()
