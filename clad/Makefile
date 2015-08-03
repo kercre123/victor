@@ -36,7 +36,7 @@ c: $(OUTPUT_H_AND_C)
 
 %.h %.cpp : %.clad
 	#mkdir -p $(OUTPUT_DIR)/game/$(dir $<)
-	$(CLAD_CPP) -C $(INPUT_DIR) -I $(INCLUDE_DIRS) -o $(OUTPUT_DIR)/game/ $*.clad
+	$(CLAD_CPP) --output-union-helper-constructors -C $(INPUT_DIR) -I $(INCLUDE_DIRS) -o $(OUTPUT_DIR)/game/ $*.clad
 	$(CLAD_CPP_DECL) -C $(INPUT_DIR) -I $(INCLUDE_DIRS) -o $(OUTPUT_DIR)/game/ $*.clad
 	$(CLAD_CPP_SWITCH) -C $(INPUT_DIR) -I $(INCLUDE_DIRS) -o $(OUTPUT_DIR)/game/ $*.clad
 
