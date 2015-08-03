@@ -161,19 +161,22 @@ else
     app = 0
 endif
 
-CSRCS ?= $(wildcard *.c)
-ASRCs ?= $(wildcard *.s)
-ASRCS ?= $(wildcard *.S)
+CSRCS   ?= $(wildcard *.c)
+CXXSRCS ?= $(wildcard *.cpp)
+ASRCs   ?= $(wildcard *.s)
+ASRCS   ?= $(wildcard *.S)
 SUBDIRS ?= $(patsubst %/,%,$(dir $(wildcard */Makefile)))
 
 ODIR := .output
 OBJODIR := $(ODIR)/$(TARGET)/$(FLAVOR)/obj
 
 OBJS := $(CSRCS:%.c=$(OBJODIR)/%.o) \
+				$(CXXSRCS:%.cpp=$(OBJODIR)/%.o) \
         $(ASRCs:%.s=$(OBJODIR)/%.o) \
         $(ASRCS:%.S=$(OBJODIR)/%.o)
 
 DEPS := $(CSRCS:%.c=$(OBJODIR)/%.d) \
+				$(CXXSRCS:%.cpp=$(OBJODIR)/%.d) \
         $(ASRCs:%.s=$(OBJODIR)/%.d) \
         $(ASRCS:%.S=$(OBJODIR)/%.d)
 
@@ -188,7 +191,7 @@ OBINS := $(GEN_BINS:%=$(BINODIR)/%)
 
 CCFLAGS += 			\
 	-g			\
-	-O2			\
+	-Os			\
 	-Wpointer-arith		\
 	-Wundef			\
 	-Werror			\
@@ -203,6 +206,7 @@ CCFLAGS += 			\
 
 CFLAGS = $(CCFLAGS) $(DEFINES) $(EXTRA_CCFLAGS) $(INCLUDES)
 DFLAGS = $(CCFLAGS) $(DDEFINES) $(EXTRA_CCFLAGS) $(INCLUDES)
+CXXFLAGS = $(CCFLAGS) -fno-rtti -fno-exception $(DEFINES) $(EXTRA_CCFLAGS) $(INCLUDES)
 
 
 #############################################################
@@ -321,6 +325,10 @@ endif
 $(OBJODIR)/%.o: %.c
 	@mkdir -p $(OBJODIR);
 	$(CC) $(if $(findstring $<,$(DSRCS)),$(DFLAGS),$(CFLAGS)) $(COPTS_$(*F)) -o $@ -c $<
+
+$(OBJODIR)/%.o: %.cpp
+	@mkdir -p $(OBJODIR);
+	$(CPP) $(if $(findstring $<,$(DSRCS)),$(DFLAGS),$(CXXFLAGS)) $(COPTS_$(*F)) -o $@ -c $<
 
 $(OBJODIR)/%.d: %.c
 	@mkdir -p $(OBJODIR);

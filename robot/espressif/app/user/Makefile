@@ -15,7 +15,6 @@ ifndef PDIR
 GEN_LIBS = libuser.a
 endif
 
-
 #############################################################
 # Configuration i.e. compile options etc.
 # Target specific stuff (defines etc.) goes in here!
@@ -23,7 +22,7 @@ endif
 #   makefile at its root level - these are then overridden
 #   for a subtree within the makefile rooted therein
 #
-#DEFINES += 
+#DEFINES +=
 
 #############################################################
 # Recursion Magic - Don't touch this!!
@@ -42,4 +41,3 @@ INCLUDES += -I ./
 INCLUDES += -I ../../include/ets
 PDIR := ../$(PDIR)
 sinclude $(PDIR)Makefile
-
