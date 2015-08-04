@@ -2090,11 +2090,11 @@ namespace Anki {
 
       void SendTurnInPlaceAtSpeed(const f32 speed_rad_per_sec, const f32 accel_rad_per_sec2)
       {
-        U2G::TurnInPlaceAtSpeed m;
+        ExternalInterface::TurnInPlaceAtSpeed m;
         m.robotID = 1;
         m.speed_rad_per_sec = speed_rad_per_sec;
         m.accel_rad_per_sec2 = accel_rad_per_sec2;
-        U2G::Message message;
+        ExternalInterface::MessageGameToEngine message;
         message.Set_TurnInPlaceAtSpeed(m);
         SendMessage(message);
       }
