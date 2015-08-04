@@ -675,7 +675,7 @@ namespace Anki {
           }
           
           // Speed of point turns (when no target angle specified). See SendTurnInPlaceAtSpeed().
-          f32 pointTurnSpeed = abs(root_->getField("pointTurnSpeed_degPerSec")->getSFFloat());
+          f32 pointTurnSpeed = std::fabs(root_->getField("pointTurnSpeed_degPerSec")->getSFFloat());
           
           
           //printf("keypressed: %d, modifier %d, orig_key %d, prev_key %d\n",
