@@ -3548,7 +3548,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   optionsAnchor: {fileID: 165886}
-  slider_turnSpeed: {fileID: 0}
+  slider_turnSpeed: {fileID: 11490302}
+  slider_volume: {fileID: 11454992}
   toggle_reverseLikeACar: {fileID: 11465884}
   combo_controls: {fileID: 11474602}
   combo_vision: {fileID: 11413658}
