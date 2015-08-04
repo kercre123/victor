@@ -98,12 +98,7 @@ public class CozmoEmotionManager : MonoBehaviour {
 #if UNITY_EDITOR
 		if( Input.GetKeyDown(KeyCode.T) )
 		{
-			SetEmotion("SHOCKED", true);
-		}
-
-		if( Input.GetKeyDown(KeyCode.Y) )
-		{
-			SetEmotion("TAP_FOUR", true);
+			SetEmotion(testAnim, true);
 		}
 #endif
 
@@ -167,7 +162,7 @@ public class CozmoEmotionManager : MonoBehaviour {
 				}
 				else
 				{
-					int rand_index = UnityEngine.Random.Range(0, anims.Count - 1);
+					int rand_index = UnityEngine.Random.Range(0, anims.Count);
 					instance.SendAnimation (anims[rand_index], clear_current);
 				}
 				Debug.Log ("setting emotion to " + emotion_state);
@@ -204,7 +199,7 @@ public class CozmoEmotionManager : MonoBehaviour {
 
 		if (stopPreviousAnim)
 		{
-			QueueSingleAnimMessage.position = Anki.Cozmo.QueueActionPosition.NOW;
+			QueueSingleAnimMessage.position = Anki.Cozmo.QueueActionPosition.NOW_AND_CLEAR_REMAINING;
 		}
 		else
 		{
@@ -272,7 +267,7 @@ public class CozmoEmotionManager : MonoBehaviour {
 
 				if (stopPreviousAnim)
 				{
-					QueueSingleAnimMessage.position = Anki.Cozmo.QueueActionPosition.NOW;
+					QueueSingleAnimMessage.position = Anki.Cozmo.QueueActionPosition.NOW_AND_CLEAR_REMAINING;
 				}
 				else
 				{

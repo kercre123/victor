@@ -39,12 +39,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d23b7b1dda9294e769aa0a70e2bceddc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  defaultEmotionState: IDLE
+  defaultIdleAnimationName: Idle
   emotionStates:
   - stateName: IDLE
     playAllAnims: 0
     emotionAnims:
-    - animName: ANIM_TEST_SPINNER
+    - animName: Idle
       numLoops: 0
   - stateName: LETS_PLAY
     playAllAnims: 0
