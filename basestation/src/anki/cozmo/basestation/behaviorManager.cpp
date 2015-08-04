@@ -19,9 +19,11 @@ namespace Anki {
 namespace Cozmo {
   
   
-  BehaviorManager::BehaviorManager()
-  : _currentBehavior(_behaviors.end())
+  BehaviorManager::BehaviorManager(Robot& robot, const Json::Value& config)
+  : _robot(robot)
+  , _currentBehavior(_behaviors.end())
   , _nextBehavior(_behaviors.end())
+  , _minBehaviorTime_sec(5)
   {
 
   }
@@ -65,15 +67,26 @@ namespace Cozmo {
     return RESULT_OK;
   }
   
-  void BehaviorManager::SwitchFromCurrentToNext()
+  void BehaviorManager::SwitchToNextBehavior()
   {
     _currentBehavior = _nextBehavior;
     _nextBehavior = _behaviors.end();
   }
   
-  Result BehaviorManager::Update()
+  Result BehaviorManager::Update(float currentTime_sec)
   {
     Result lastResult = RESULT_OK;
+    
+    if(currentTime_sec - _lastSwitchTime_sec > _minBehaviorTime_sec) {
+      // We've been in the current behavior long enough to consider switching
+      lastResult = SelectNextBehavior();
+      if(lastResult != RESULT_OK) {
+        PRINT_NAMED_WARNING("BehaviorManager.Update.SelectNextFailed",
+                            "Failed trying to select next behavior, continuing with current.\n");
+        lastResult = RESULT_OK;
+      }
+      _lastSwitchTime_sec = currentTime_sec;
+    }
     
     if(_currentBehavior != _behaviors.end()) {
       // We have a current behavior, update it.
@@ -87,7 +100,7 @@ namespace Cozmo {
           
         case IBehavior::Status::COMPLETE:
           // Behavior complete, switch to next
-          SwitchFromCurrentToNext();
+          SwitchToNextBehavior();
           break;
           
         case IBehavior::Status::FAILURE:
@@ -106,7 +119,7 @@ namespace Cozmo {
     }
     else if(_nextBehavior != _behaviors.end()) {
       // No current behavior, but next behavior defined, so switch to it.
-      SwitchFromCurrentToNext();
+      SwitchToNextBehavior();
     }
     
     return lastResult;
@@ -130,21 +143,36 @@ namespace Cozmo {
 
     // For now: random behavior that is runnable
     std::uniform_int_distribution<> dist(0, static_cast<u32>(_behaviors.size()));
-    const size_t maxAttempts = 2*_behaviors.size();
-    size_t attempts = 0;
-    do {
-      _nextBehavior = std::next(std::begin(_behaviors), dist(_randomGenerator));
-    } while(attempts++ < maxAttempts && _nextBehavior->second->IsRunnable() == false);
+    _nextBehavior = std::next(std::begin(_behaviors), dist(_randomGenerator));
     
-    if(attempts == maxAttempts) {
-      _nextBehavior = _behaviors.end();
-      
-      PRINT_NAMED_ERROR("BehaviorManager.SelecteNextBehavior.NoneRunnable",
-                        "Unable to find a runnable next behavior after %lu attempts.\n", attempts);
-      return RESULT_FAIL;
+    // If the randomly-selected behavior isn't runnable, just select the next one that is
+    if(_nextBehavior->second->IsRunnable() == false) {
+      _nextBehavior = _behaviors.begin();
+      while(_nextBehavior->second->IsRunnable() == false) {
+        ++_nextBehavior;
+        if(_nextBehavior == _behaviors.end()) {
+          PRINT_NAMED_ERROR("BehaviorManager.SelecteNextBehavior.NoneRunnable", "\n");
+          return RESULT_FAIL;
+        }
+      }
     }
     
-    return RESULT_OK;
+    // Initialize the selected behavior
+    Result initResult = _nextBehavior->second->Init();
+    if(initResult != RESULT_OK) {
+      PRINT_NAMED_ERROR("BehaviorManager.SelectNextBehavior.InitFailed",
+                        "Failed to initialize %s behavior.\n",
+                        _nextBehavior->second->GetName().c_str());
+      _nextBehavior = _behaviors.end();
+    } else if(_currentBehavior != _behaviors.end()) {
+      // We've successfully initialized the next behavior to run, so interrupt
+      // the current behavior that's running if there is one. It will continue
+      // to run on calls to Update() until it completes and then we will switch
+      // to the selected next behavior
+      _currentBehavior->second->Interrupt();
+    }
+    
+    return initResult;
   }
   
   Result BehaviorManager::SelectNextBehavior(const std::string& name)

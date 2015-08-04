@@ -46,12 +46,17 @@ namespace Cozmo {
     // Step through the behavior and deliver rewards to the robot along the way
     virtual Status Update() = 0;
     
-    virtual Status Interrupt() = 0;
+    // Tell this behavior to finish up ASAP so we can switch to a new one.
+    // This should trigger any cleanup and get Update() to return COMPLETE
+    // as quickly as possible.
+    virtual Result Interrupt() = 0;
     
     // Figure out the reward this behavior will offer, given the robot's current
     // state. Returns true if the Behavior is runnable, false if not. (In the
     // latter case, the returned reward is not populated.)
     virtual bool GetRewardBid(Reward& reward) = 0;
+    
+    virtual const std::string& GetName() const = 0;
     
     // All behaviors run in a single "slot" in the AcitonList. (This seems icky.)
     static const ActionList::SlotHandle sActionSlot;

@@ -25,6 +25,8 @@ namespace Cozmo {
     
   }
   
+#pragma mark -
+#pragma mark Inherited Virtual Implementations
   
   bool BehaviorOCD::IsRunnable() const
   {
@@ -35,6 +37,8 @@ namespace Cozmo {
   Result BehaviorOCD::Init()
   {
     Result lastResult = RESULT_OK;
+    
+    _interrupted = false;
     
     if(_robot.IsCarryingObject()) {
       // Make sure whatever the robot is carrying is some kind of block...
@@ -72,6 +76,47 @@ namespace Cozmo {
     return lastResult;
   } // Init()
 
+  
+  IBehavior::Status BehaviorOCD::Update()
+  {
+    // Completion trigger is when all (?) blocks make it to his "neat" list
+    if(_messyObjects.empty()) {
+      return Status::COMPLETE;
+    }
+    
+    switch(_currentState)
+    {
+      case State::PICKING_UP_BLOCK:
+        if(_interrupted) {
+          // If we are in the middle of picking up a block, we can immediately interrupt.
+          // Otherwise we will wait until placing completes which switches us back to
+          // PICKING_UP_BLOCK, so we can then get here
+          return Status::COMPLETE;
+        }
+        break;
+        
+      case State::PLACING_BLOCK:
+        
+        break;
+        
+      default:
+        PRINT_NAMED_ERROR("OCD_Behavior.Update.UnknownState",
+                          "Reached unknown state %d.\n", _currentState);
+        return Status::FAILURE;
+    }
+    
+    return Status::RUNNING;
+  }
+  
+  Result BehaviorOCD::Interrupt()
+  {
+    _interrupted = true;
+    return RESULT_OK;
+  }
+  
+#pragma mark -
+#pragma mark OCD-Specific Methods
+  
   Result BehaviorOCD::SelectArrangement()
   {
     // TODO: Make this based on something "smarter"
@@ -167,14 +212,14 @@ namespace Cozmo {
     
     return RESULT_OK;
   } // SelectNextObjectToPickUp()
-
+  
   Result BehaviorOCD::SelectNextPlacement()
   {
     IActionRunner* placementAction = nullptr;
     
     ObjectID carriedObjectID;
     carriedObjectID = _robot.GetCarryingObject();
-
+    
     if(carriedObjectID != _objectToPickUp) {
       PRINT_NAMED_WARNING("BehaviorOCD.SelectNextPlacement.UnexpectedID",
                           "Expecting object being carried to match object set to be picked up.\n");
@@ -256,7 +301,7 @@ namespace Cozmo {
         
         break;
       } // case STACKS_OF_TWO
-    
+        
       case Arrangement::LINE:
         
         PRINT_NAMED_ERROR("BehaviorOCD.SelectNextPlacement.LineArrangementUnimplemented", "\n");
@@ -283,34 +328,7 @@ namespace Cozmo {
     return queueResult;
   } // SelectNextPlacement()
   
-  
-  IBehavior::Status BehaviorOCD::Update()
-  {
-    // Completion trigger is when all (?) blocks make it to his "neat" list
-    if(_messyObjects.empty()) {
-      return Status::COMPLETE;
-    }
-    
-    switch(_currentState)
-    {
-      case State::PICKING_UP_BLOCK:
-        
-        break;
-        
-      case State::PLACING_BLOCK:
-        
-        break;
-        
-      default:
-        PRINT_NAMED_ERROR("OCD_Behavior.Update.UnknownState",
-                          "Reached unknown state %d.\n", _currentState);
-        return Status::FAILURE;
-    }
-    
-    return Status::RUNNING;
-  }
-  
-  
+
   void BehaviorOCD::HandleActionCompleted(const ExternalInterface::RobotCompletedAction &msg)
   {
     switch(_currentState)
@@ -416,15 +434,6 @@ namespace Cozmo {
     _messyObjects.erase(objectID);
     _neatObjects.erase(objectID);
   }
-  
-  bool BehaviorOCD::GetRewardBid(Reward& reward)
-  {
-    
-    // TODO: Populate a reward object based on how many poorly-arranged blocks there are
-    
-    return true;
-  } // GetReward()
-
   
   f32 BehaviorOCD::GetNeatnessScore(ObjectID whichObject)
   {

@@ -38,7 +38,15 @@ namespace Cozmo {
     
     virtual Status Update() override;
     
+    // Finish placing current object if there is one, otherwise good to go
+    virtual Result Interrupt() override;
+    
     virtual bool GetRewardBid(Reward& reward) override;
+    
+    virtual const std::string& GetName() const override {
+      static const std::string name("OCD");
+      return name;
+    }
     
   private:
     
@@ -68,6 +76,7 @@ namespace Cozmo {
     };
     
     State _currentState;
+    bool  _interrupted;
     
     // Enumerate possible arrangements Cozmo "likes".
     enum class Arrangement {
