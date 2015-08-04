@@ -41,6 +41,9 @@ namespace Anki {
       bool         _isLocked;
       f32          _volume;
       
+      // Master robot volume
+      f32 _robotVolume;
+      
       std::string GetSoundToPlay(s32& numLoops, f32& volume)
       {
         // Wait for unlock before reading sound file string
@@ -155,6 +158,8 @@ namespace Anki {
       _currOpenSoundFileName = "";
       _currOpenSoundFilePtr = nullptr;
       _currOpenSoundNumSamples = 0;
+      
+      _robotVolume = 1.0f;
       
       std::thread soundFeederThread(CmdLinePlayFeeder);
       soundFeederThread.detach();
@@ -420,7 +425,7 @@ namespace Anki {
       return soundIter->second.duration_ms;
     }
 
-    bool SoundManager::GetSoundSample(const std::string& name, const u32 sampleIdx, const f32 volume, MessageAnimKeyFrame_AudioSample &msg)
+    bool SoundManager::GetSoundSample(const std::string& name, const u32 sampleIdx, f32 volume, MessageAnimKeyFrame_AudioSample &msg)
     {
       if (_currOpenSoundFileName != name) {
         // Dump file contents to buffer if this is not the same file
@@ -457,6 +462,9 @@ namespace Anki {
         // Read file contents to buffer
         fileSize = MIN(fileSize, MAX_SOUND_BUFFER_SIZE);
         fread(_soundBuf, 1, fileSize, _currOpenSoundFilePtr);
+        
+        // Apply master volume
+        volume *= _robotVolume;
         
         // Adjust volume
         // Note: Clipping is possible!
@@ -496,6 +504,12 @@ namespace Anki {
        */
       
       return true;
+    }
+    
+    void SoundManager::SetRobotVolume(f32 volume)
+    {
+      PRINT_NAMED_INFO("SoundManager.SetRobotVolume.NewVolume","%f\n", volume);
+      _robotVolume = volume;
     }
     
   } // namespace Cozmo

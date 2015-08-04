@@ -321,6 +321,12 @@ ADD_MESSAGE_MEMBER(f32, bodyPanAngle_rad)
 ADD_MESSAGE_MEMBER(f32, headTiltAngle_rad)
 END_MESSAGE_DEFINITION(PanAndTiltHead)
 
+// TurnInPlaceAtSpeed
+START_MESSAGE_DEFINITION(TurnInPlaceAtSpeed, 1)
+ADD_MESSAGE_MEMBER(f32, speed_rad_per_sec)
+ADD_MESSAGE_MEMBER(f32, accel_rad_per_sec2)
+END_MESSAGE_DEFINITION(TurnInPlaceAtSpeed)
+
 START_MESSAGE_DEFINITION(SetCarryState, 1)
 ADD_MESSAGE_MEMBER(u8, state)  // See CarryState_t
 END_MESSAGE_DEFINITION(SetCarryState)

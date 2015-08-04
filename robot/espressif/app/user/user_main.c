@@ -153,7 +153,7 @@ static void ICACHE_FLASH_ATTR system_init_done(void)
 
   // Enable UART0 RX interrupt
   // Only after clientInit
-  uart_rx_intr_enable(UART0);
+  uart_start();
 
   // Set up shared background tasks
   task0Init();
@@ -184,7 +184,6 @@ user_init(void)
     gpio_init();
 
     uart_init(BIT_RATE_5000000, BIT_RATE_115200);
-    uart_rx_intr_disable(UART0);
 
     os_printf("Espressif booting up...\r\nCPU set freq rslt = %d\r\n", err);
 
@@ -202,7 +201,7 @@ user_init(void)
     {
       os_printf("Non-voltatile parameters prefix incorrect, using defaults\r\n");
       nvpars->wifiOpMode  = SOFTAP_MODE;
-      nvpars->wifiChannel = 2;
+      nvpars->wifiChannel = 11;
       // Get the mac address
       uint8 macaddr[6];
       err = wifi_get_macaddr(SOFTAP_IF, macaddr);
@@ -235,6 +234,7 @@ user_init(void)
       ap_config.beacon_interval = 33; // Must be 50 or lower for iOS devices to connect
 
       // Setup ESP module to AP mode and apply settings
+      wifi_set_user_fixed_rate(PHY_RATE_24);
       wifi_set_opmode(SOFTAP_MODE);
       wifi_softap_set_config(&ap_config);
       wifi_set_user_fixed_rate(PHY_RATE_24);

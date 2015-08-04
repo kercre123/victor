@@ -52,7 +52,10 @@ namespace Anki {
       const u32 GetSoundDurationInMilliseconds(const std::string& name) const;
 
       // Returns pointer to a buffer of the sound data
-      bool GetSoundSample(const std::string& name, const u32 sampleIdx, const f32 volume, MessageAnimKeyFrame_AudioSample &msg);
+      bool GetSoundSample(const std::string& name, const u32 sampleIdx, f32 volume, MessageAnimKeyFrame_AudioSample &msg);
+      
+      // 1.0 = "normal volume"
+      void SetRobotVolume(f32 volume);
       
     protected:
       

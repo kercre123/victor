@@ -29,12 +29,43 @@ namespace Anki {
   {
     targetReached_ = true;
   }
+
+  void VelocityProfileGenerator::StartProfile(float startVel,
+                                              float startPos,
+                                              float endVel,
+                                              float accel,
+                                              float timeStep)
+  {
+    noTargetMode_ = true;
+    
+    currVel_ = startVel;
+    currPos_ = startPos;
+    endVel_ = endVel;
+    maxReachableVel_ = endVel;
+    accel_ = fabs(accel);
+    timeStep_ = fabs(timeStep);
+    
+    // Compute change in velocity per timestep
+    deltaVelPerTimeStepStart_ = accel_ * timeStep_ * (endVel_ - startVel_ > 0 ? 1.f : -1.f);
+    
+    targetReached_ = false;
+    
+    
+    // Set values that don't really apply in noTargetMode to 0, even though 0 is wrong,
+    // but at least they're not random values from the last time StartProfile was called.
+    totalDistToTarget_ = 0;
+    startAccelDist_ = 0;
+    endAccelDist_ = 0;
+    deltaVelPerTimeStepEnd_ = 0;
+  }
   
   void VelocityProfileGenerator::StartProfile(float startVel, float startPos,
                                               float maxSpeed, float accel,
                                               float endVel, float endPos,
                                               float timeStep)
   {
+    noTargetMode_ = false;
+    
     startVel_ = startVel;
     startPos_ = startPos;
     maxVel_ = fabs(maxSpeed);
@@ -337,6 +368,23 @@ namespace Anki {
   float VelocityProfileGenerator::Step(float &currVel, float &currPos)
   {
     currTime_ += timeStep_;
+    
+    // If in noTargetMode, the logic is much simpler
+    if (noTargetMode_) {
+      currPos_ += currVel_ * timeStep_;
+      
+      if (currVel_ != endVel_) {
+        currVel_ += deltaVelPerTimeStepStart_;
+        if ((maxReachableVel_ > endVel_) != (currVel_ > endVel_)) {
+          currVel_ = endVel_;
+        }
+      }
+      
+      currVel = currVel_;
+      currPos = currPos_;
+      return currTime_;
+    }
+    
     
     // If target already reached, then return final position.
     if (targetReached_) {
