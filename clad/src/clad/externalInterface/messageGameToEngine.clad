@@ -237,12 +237,7 @@ message VisionWhileMoving {
 
 // ExecuteBehavior
 message ExecuteBehavior {
-    uint_8 behaviorMode
-}
-
-// SetBehaviorState
-message SetBehaviorState {
-    uint_8 behaviorState
+    string behaviorName
 }
 
 // AbortPath

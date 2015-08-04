@@ -15,7 +15,11 @@
 namespace Anki {
 namespace Cozmo {
 
-
+  LookForFacesBehavior::LookForFacesBehavior(Robot &robot, const Json::Value& config)
+  : IBehavior(robot, config)
+  {
+    
+  }
   
 } // namespace Cozmo
 } // namespace Anki

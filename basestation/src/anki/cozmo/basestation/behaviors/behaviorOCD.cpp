@@ -18,8 +18,8 @@
 namespace Anki {
 namespace Cozmo {
   
-  BehaviorOCD::BehaviorOCD(Robot& robot, Json)
-  : IBehavior(robot)
+  BehaviorOCD::BehaviorOCD(Robot& robot, const Json::Value& config)
+  : IBehavior(robot, config)
   , _currentArrangement(Arrangement::STACKS)
   {
     

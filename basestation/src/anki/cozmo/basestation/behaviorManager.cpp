@@ -129,7 +129,7 @@ namespace Cozmo {
     //
 
     // For now: random behavior that is runnable
-    std::uniform_int_distribution<> dist(0,_behaviors.size());
+    std::uniform_int_distribution<> dist(0, static_cast<u32>(_behaviors.size()));
     const size_t maxAttempts = 2*_behaviors.size();
     size_t attempts = 0;
     do {

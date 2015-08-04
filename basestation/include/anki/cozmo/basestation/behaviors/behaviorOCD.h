@@ -29,7 +29,7 @@ namespace Cozmo {
   {
   public:
     
-    BehaviorOCD(Robot& robot);
+    BehaviorOCD(Robot& robot, const Json::Value& config);
     virtual ~BehaviorOCD() { }
     
     virtual bool IsRunnable() const override;

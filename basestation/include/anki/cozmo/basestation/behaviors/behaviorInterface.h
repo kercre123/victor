@@ -14,6 +14,8 @@
 
 #include "anki/cozmo/basestation/actionContainers.h"
 
+#include "json/json.h"
+
 namespace Anki {
 namespace Cozmo {
   
