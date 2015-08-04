@@ -805,6 +805,8 @@ namespace AnimationController {
                 PRINT("AnimationController[t=%dms(%d)] setting body motion to radius=%d, speed=%d\n",
                       _currentTime_ms, HAL::GetTimeStamp(), msg.curvatureRadius_mm, msg.speed);
 #               endif
+
+                _tracksInUse |= BODY_TRACK;
                 
                 f32 leftSpeed=0, rightSpeed=0;
                 if(msg.speed == 0) {
@@ -816,11 +818,8 @@ namespace AnimationController {
                   leftSpeed  = static_cast<f32>(msg.speed);
                   rightSpeed = static_cast<f32>(msg.speed);
                 } else if(msg.curvatureRadius_mm == 0) {
-                  // Turn in place: positive speed means turn left
-                  // Interpret speed as degrees/sec
-                  const f32 speed_mmps = WHEEL_DIST_HALF_MM*DEG_TO_RAD(static_cast<f32>(msg.speed));
-                  leftSpeed  = -speed_mmps;
-                  rightSpeed =  speed_mmps;
+                  SteeringController::ExecutePointTurn(msg.speed, 100);
+                  break;
                   
                 } else {
                   // Drive an arc
@@ -835,7 +834,6 @@ namespace AnimationController {
                 }
                 
                 SteeringController::ExecuteDirectDrive(leftSpeed, rightSpeed);
-                _tracksInUse |= BODY_TRACK;
               }
               break;
             }
