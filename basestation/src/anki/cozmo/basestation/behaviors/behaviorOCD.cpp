@@ -77,7 +77,7 @@ namespace Cozmo {
   } // Init()
 
   
-  IBehavior::Status BehaviorOCD::Update()
+  IBehavior::Status BehaviorOCD::Update(float currentTime_sec)
   {
     // Completion trigger is when all (?) blocks make it to his "neat" list
     if(_messyObjects.empty()) {

@@ -36,7 +36,7 @@ namespace Cozmo {
 
     virtual Result Init() override;
     
-    virtual Status Update() override;
+    virtual Status Update(float currentTime_sec) override;
     
     // Finish placing current object if there is one, otherwise good to go
     virtual Result Interrupt() override;

@@ -31,7 +31,7 @@ namespace Cozmo {
     // Always runnable for now?
     virtual bool IsRunnable() const override { return true; }
     
-    virtual Status Update() override;
+    virtual Status Update(float currentTime_sec) override;
     
     virtual const std::string& GetName() const override {
       static const std::string name("LookForFaces");
@@ -43,6 +43,8 @@ namespace Cozmo {
     void HandleRobotObservedObject(const ExternalInterface::RobotObservedObject& msg);
     void HandleRobotCompletedAction(const ExternalInterface::RobotCompletedAction& msg);
     
+    void SetNextMovementTime();
+    
     enum class State {
       LOOKING_AROUND,
       TRACKING_FACE
@@ -50,10 +52,12 @@ namespace Cozmo {
     
     State _currentState;
     
-    ObjectID _trackingID;
+    TimeStamp_t _firstSeen_ms;
+    TimeStamp_t _lastSeen_ms;
     
-    f32 _lastSeen;
     f32 _trackingTimeout_sec;
+    f32 _lastLookAround_sec;
+    f32 _nextMovementTime_sec;
     
   }; // LookForFacesBehavior
   

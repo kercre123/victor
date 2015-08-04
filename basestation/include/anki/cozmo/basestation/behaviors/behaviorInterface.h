@@ -44,7 +44,7 @@ namespace Cozmo {
     virtual Result Init() = 0;
     
     // Step through the behavior and deliver rewards to the robot along the way
-    virtual Status Update() = 0;
+    virtual Status Update(float currentTime_sec) = 0;
     
     // Tell this behavior to finish up ASAP so we can switch to a new one.
     // This should trigger any cleanup and get Update() to return COMPLETE

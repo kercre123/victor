@@ -12,6 +12,7 @@
 
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
+#include "anki/cozmo/basestation/robot.h"
 
 #include "util/logging/logging.h"
 
@@ -19,13 +20,24 @@ namespace Anki {
 namespace Cozmo {
   
   
-  BehaviorManager::BehaviorManager(Robot& robot, const Json::Value& config)
-  : _robot(robot)
+  BehaviorManager::BehaviorManager(Robot& robot)
+  : _isInitialized(false)
+  , _robot(robot)
   , _currentBehavior(_behaviors.end())
   , _nextBehavior(_behaviors.end())
   , _minBehaviorTime_sec(5)
   {
 
+  }
+  
+  Result BehaviorManager::Init(const Json::Value &config)
+  {
+    
+    // TODO: Set configuration data from Json...
+    
+    _isInitialized = true;
+    
+    return RESULT_OK;
   }
   
   BehaviorManager::~BehaviorManager()
@@ -77,6 +89,9 @@ namespace Cozmo {
   {
     Result lastResult = RESULT_OK;
     
+    // HACK: prevent error/warning that _robot is unused for now...
+    _robot.GetID();
+    
     if(currentTime_sec - _lastSwitchTime_sec > _minBehaviorTime_sec) {
       // We've been in the current behavior long enough to consider switching
       lastResult = SelectNextBehavior();
@@ -90,7 +105,7 @@ namespace Cozmo {
     
     if(_currentBehavior != _behaviors.end()) {
       // We have a current behavior, update it.
-      IBehavior::Status status = _currentBehavior->second->Update();
+      IBehavior::Status status = _currentBehavior->second->Update(currentTime_sec);
      
       switch(status)
       {

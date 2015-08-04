@@ -53,6 +53,7 @@ namespace Anki {
     , _syncTimeAcknowledged(false)
     , _msgHandler(msgHandler)
     , _blockWorld(this)
+    , _behaviorMgr(*this)
 #   if !ASYNC_VISION_PROCESSING
     , _haveNewImage(false)
 #   endif
@@ -879,7 +880,7 @@ namespace Anki {
       // module(s) would do.  e.g. Some combination of game state, build planner,
       // personality planner, etc.
       
-      _behaviorMgr.Update();
+      _behaviorMgr.Update(BaseStationTimer::getInstance()->GetCurrentTimeInSeconds());
       
       
       //////// Update Robot's State Machine /////////////

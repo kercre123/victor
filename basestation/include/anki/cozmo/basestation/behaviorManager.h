@@ -36,8 +36,10 @@ namespace Cozmo {
   {
   public:
     
-    BehaviorManager(Robot& robot, const Json::Value& config);
+    BehaviorManager(Robot& robot);
     ~BehaviorManager();
+    
+    Result Init(const Json::Value& config);
     
     // Calls the currently-selected behavior's Update() method until it
     // returns COMPLETE or FAILURE. Once current behavior completes
@@ -65,6 +67,8 @@ namespace Cozmo {
     void SetMinBehaviorTime(float time_sec) { _minBehaviorTime_sec = time_sec; }
     
   private:
+    
+    bool _isInitialized;
     
     Robot& _robot;
     
