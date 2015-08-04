@@ -333,8 +333,10 @@ namespace Cozmo {
         }
       }
 
-      // If next row is a column encoding, we don't need to encode blank patterns
-      if (!pattern && !packed[x]) {
+      // Will next column use column encoding
+      bool column = !packed[x] || (x < IMAGE_WIDTH && packed[x] == packed[x-1]);
+
+      if (!pattern && column) {
         continue ;
       }
       
