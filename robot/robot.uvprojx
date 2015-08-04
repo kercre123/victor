@@ -773,11 +773,6 @@
               <FilePath>.\supervisor\src\eyeController.cpp</FilePath>
             </File>
             <File>
-              <FileName>matlabVisionProcessor.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\matlabVisionProcessor.cpp</FilePath>
-            </File>
-            <File>
               <FileName>matlabVisualization.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\matlabVisualization.cpp</FilePath>
@@ -1688,11 +1683,6 @@
               <FileName>eyeController.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\eyeController.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>matlabVisionProcessor.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\matlabVisionProcessor.cpp</FilePath>
             </File>
             <File>
               <FileName>matlabVisualization.cpp</FileName>
