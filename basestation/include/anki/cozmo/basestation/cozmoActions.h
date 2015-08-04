@@ -358,7 +358,7 @@ namespace Anki {
     class PickAndPlaceObjectAction : public IDockAction
     {
     public:
-      PickAndPlaceObjectAction(ObjectID objectID, const bool useManualSpeed);
+      PickAndPlaceObjectAction(ObjectID objectID, const bool useManualSpeed = false);
       virtual ~PickAndPlaceObjectAction();
       
       virtual const std::string& GetName() const override;
@@ -512,7 +512,7 @@ namespace Anki {
     class PlaceObjectOnGroundAtPoseAction : public CompoundActionSequential
     {
     public:
-      PlaceObjectOnGroundAtPoseAction(const Robot& robot, const Pose3d& placementPose, const bool useManualSpeed)
+      PlaceObjectOnGroundAtPoseAction(const Robot& robot, const Pose3d& placementPose, const bool useManualSpeed = false)
       : CompoundActionSequential({
         new DriveToPlaceCarriedObjectAction(robot, placementPose, useManualSpeed),
         new PlaceObjectOnGroundAction()})
