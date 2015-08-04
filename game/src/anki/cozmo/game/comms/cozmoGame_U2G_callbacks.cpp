@@ -762,6 +762,11 @@ namespace Cozmo {
     }
   }
   
+  void CozmoGameImpl::Process_SetRobotVolume(ExternalInterface::SetRobotVolume const& msg)
+  {
+    SoundManager::getInstance()->SetRobotVolume(msg.volume);
+  }
+  
   void CozmoGameImpl::Process_StartTestMode(ExternalInterface::StartTestMode const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?

@@ -68,6 +68,7 @@ public class RobotEngineManager : MonoBehaviour
 	private U2G.ForceAddRobot ForceAddRobotMessage = new U2G.ForceAddRobot();
 	private U2G.ConnectToRobot ConnectToRobotMessage = new U2G.ConnectToRobot();
 	private U2G.ConnectToUiDevice ConnectToUiDeviceMessage = new U2G.ConnectToUiDevice();
+	private U2G.SetRobotVolume SetRobotVolumeMessage = new G2U.SetRobotVolume();
 
 	static RobotEngineManager()
 	{
@@ -257,6 +258,8 @@ public class RobotEngineManager : MonoBehaviour
 		{
 			ConnectedToClient(connectionIdentifier);
 		}
+
+		SetRobotVolume();
 	}
 
 	private void Disconnected(DisconnectionReason reason)
@@ -274,7 +277,10 @@ public class RobotEngineManager : MonoBehaviour
 
 	public void SendMessage()
 	{
-		if(!IsConnected) return;
+		if (!IsConnected) {
+			Debug.LogWarning("Message not sent because not connected");
+			return;
+		}
 
 		//Debug.Log ("frame("+Time.frameCount+") SendMessage " + Message.GetTag().ToString());
 		channel.Send(Message);
@@ -943,6 +949,13 @@ public class RobotEngineManager : MonoBehaviour
 		StartEngineMessage.vizHostIP[length] = 0;
 
 		Message.StartEngine = StartEngineMessage;
+		SendMessage();
+	}
+
+	public void SetRobotVolume()
+	{
+		SetRobotVolumeMessage.volume = OptionsScreen.GetRobotVolume();
+		Debug.Log("Set Robot Volume " + SetRobotVolumeMessage.volume);
 		SendMessage();
 	}
 

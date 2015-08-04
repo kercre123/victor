@@ -12,6 +12,7 @@ public class OptionsScreen : MonoBehaviour {
 
 	[SerializeField] GameObject optionsAnchor;
 	[SerializeField] Slider slider_turnSpeed;
+	[SerializeField] Slider slider_volume;
 	[SerializeField] Toggle toggle_reverseLikeACar;
 	[SerializeField] ComboBox combo_controls;
 	[SerializeField] ComboBox combo_vision;
@@ -86,6 +87,10 @@ public class OptionsScreen : MonoBehaviour {
 	void Init () {
 		if(slider_turnSpeed != null && slider_turnSpeed.gameObject.activeSelf) {
 			slider_turnSpeed.value = PlayerPrefs.GetFloat("MaxTurnFactor", DEFAULT_MAX_TURN_FACTOR);
+		}
+
+		if(slider_volume != null && slider_volume.gameObject.activeSelf) {
+			slider_volume.value = PlayerPrefs.GetFloat("Volume", 1);
 		}
 
 		if(toggle_reverseLikeACar != null) {
@@ -253,6 +258,10 @@ public class OptionsScreen : MonoBehaviour {
 			slider_turnSpeed.onValueChanged.AddListener(MaxTurnSpeedChanged);
 		}
 
+		if(slider_volume != null) {
+			slider_volume.onValueChanged.AddListener(VolumeChanged);
+		}
+
 		if(toggle_reverseLikeACar != null) {
 			toggle_reverseLikeACar.onValueChanged.AddListener(ToggleReverseLikeACar);
 		}
@@ -303,6 +312,10 @@ public class OptionsScreen : MonoBehaviour {
 	void RemoveListeners() {
 		if(slider_turnSpeed != null) {
 			slider_turnSpeed.onValueChanged.RemoveListener(MaxTurnSpeedChanged);
+		}
+
+		if(slider_volume != null) {
+			slider_volume.onValueChanged.RemoveListener(VolumeChanged);
 		}
 
 		if(toggle_reverseLikeACar != null) {
@@ -380,6 +393,14 @@ public class OptionsScreen : MonoBehaviour {
 	void MaxTurnSpeedChanged(float val) {
 		PlayerPrefs.SetFloat("MaxTurnFactor", Mathf.Clamp01(val));
 	}
+
+	void VolumeChanged(float val) {
+		PlayerPrefs.SetFloat("Volume", Mathf.Clamp01(val));
+
+		if(RobotEngineManager.instance != null) {
+			RobotEngineManager.instance.SetRobotVolume();
+		}
+	}
 	
 	void ToggleReverseLikeACar(bool val) {
 		PlayerPrefs.SetInt("ReverseLikeACar", val ? 1 : 0);
@@ -399,6 +420,10 @@ public class OptionsScreen : MonoBehaviour {
 
 	void ToggleDisableVisionFade(bool val) {
 		PlayerPrefs.SetInt("VisionFadeDisabled" + GetVisionSelected().ToString(), val ? 1 : 0);
+	}
+
+	public static float GetRobotVolume() {
+		return PlayerPrefs.GetFloat("Volume", 1);
 	}
 
 	public static bool GetToggleDisableVision(bool defaultValue = false) {
@@ -467,7 +492,7 @@ public class OptionsScreen : MonoBehaviour {
 		PlayerPrefs.DeleteKey("CozmoAssistedControls");
 		PlayerPrefs.DeleteKey("DebugSkipLayoutTracker");
 		PlayerPrefs.DeleteKey("DebugUseAltConfig");
-		
+		PlayerPrefs.DeleteKey("Volume");
 
 		for(int i = 0; i < 5; ++i) {
 			PlayerPrefs.DeleteKey("ObjectPertinence" + i.ToString());
