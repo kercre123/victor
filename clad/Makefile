@@ -2,8 +2,8 @@
 CLAD_CPP=../tools/anki-util/tools/message-buffers/emitters/CPP_emitter.py
 CLAD_C=../tools/anki-util/tools/message-buffers/emitters/C_emitter.py
 CLAD_CSHARP=../tools/anki-util/tools/message-buffers/emitters/CSharp_emitter.py
-CLAD_CPP_DECL=../lib/anki/cozmo-engine/clad/emitters/cozmo_CPP_declarations_emitter.py
-CLAD_CPP_SWITCH=../lib/anki/cozmo-engine/clad/emitters/cozmo_CPP_switch_emitter.py
+CLAD_CPP_DECL=emitters/cozmo_CPP_declarations_emitter.py
+CLAD_CPP_SWITCH=emitters/cozmo_CPP_switch_emitter.py
 INPUT_DIR=./src/
 OUTPUT_DIR:=../generated/clad/
 OUTPUT_DIR_CSHARP=../generated/clad/unity/
@@ -37,6 +37,8 @@ c: $(OUTPUT_H_AND_C)
 %.h %.cpp : %.clad
 	#mkdir -p $(OUTPUT_DIR)/engine/$(dir $<)
 	$(CLAD_CPP) --output-union-helper-constructors -C $(INPUT_DIR) -o $(OUTPUT_DIR)/engine/ $*.clad
+	$(CLAD_CPP_DECL) -C $(INPUT_DIR) -I $(INCLUDE_DIRS) -o $(OUTPUT_DIR)/engine/ $*.clad
+	$(CLAD_CPP_SWITCH) -C $(INPUT_DIR) -I $(INCLUDE_DIRS) -o $(OUTPUT_DIR)/engine/ $*.clad
 	chmod -f 555 $(OUTPUT_DIR)engine/$*.h
 	chmod -f 555 $(OUTPUT_DIR)engine/$*.cpp
 
