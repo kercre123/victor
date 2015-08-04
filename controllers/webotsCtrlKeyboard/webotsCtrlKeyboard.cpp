@@ -223,6 +223,7 @@ namespace Anki {
       void SendHeadControllerGains(const f32 kp, const f32 ki, const f32 kd, const f32 maxErrorSum);
       void SendLiftControllerGains(const f32 kp, const f32 ki, const f32 kd, const f32 maxErrorSum);
       void SendSteeringControllerGains(const f32 k1, const f32 k2);
+      void SendSetRobotVolume(const f32 volume);
       void SendStartTestMode(TestMode mode, s32 p1 = 0, s32 p2 = 0, s32 p3 = 0);
       void SendIMURequest(u32 length_ms);
       void SendAnimation(const char* animName, u32 numLoops);
@@ -670,7 +671,7 @@ namespace Anki {
           }
           
           // Speed of point turns (when no target angle specified). See SendTurnInPlaceAtSpeed().
-          f32 pointTurnSpeed = abs(root_->getField("pointTurnSpeed_degPerSec")->getSFFloat());
+          f32 pointTurnSpeed = std::fabs(root_->getField("pointTurnSpeed_degPerSec")->getSFFloat());
           
           
           //printf("keypressed: %d, modifier %d, orig_key %d, prev_key %d\n",
@@ -1230,10 +1231,12 @@ namespace Anki {
                   ExternalInterface::MessageGameToEngine msgWrapper;
                   msgWrapper.Set_VisionWhileMoving(msg);
                   SendMessage(msgWrapper);
-                } else {
+                } else if (modifier_key & webots::Supervisor::KEYBOARD_ALT) {
                   SendVisionSystemParams();
-                  
                   SendFaceDetectParams();
+                } else {
+                  f32 robotVolume = root_->getField("robotVolume")->getSFFloat();
+                  SendSetRobotVolume(robotVolume);
                 }
                 break;
               }
@@ -2366,6 +2369,15 @@ namespace Anki {
         m.k2 = k2;
         ExternalInterface::MessageGameToEngine message;
         message.Set_SetSteeringControllerGains(m);
+        SendMessage(message);
+      }
+      
+      void SendSetRobotVolume(const f32 volume)
+      {
+        ExternalInterface::SetRobotVolume m;
+        m.volume = volume;
+        ExternalInterface::MessageGameToEngine message;
+        message.Set_SetRobotVolume(m);
         SendMessage(message);
       }
       
