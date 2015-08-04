@@ -1564,7 +1564,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!1 &165888
 GameObject:
   m_ObjectHideFlags: 1
@@ -4526,6 +4526,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   scene: Shell
+  onEnable: 0
+  onUpdateFrame: -1
 --- !u!114 &11442508
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -11898,8 +11900,8 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 22415302}
   m_RootOrder: 0
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
+  m_AnchorMin: {x: .800000012, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 22, y: 0}
   m_SizeDelta: {x: -23, y: 20}
   m_Pivot: {x: .5, y: .5}
@@ -12431,7 +12433,7 @@ RectTransform:
   m_Father: {fileID: 22490296}
   m_RootOrder: 0
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
+  m_AnchorMax: {x: .200000003, y: 1}
   m_AnchoredPosition: {x: 192, y: 0}
   m_SizeDelta: {x: 10, y: 0}
   m_Pivot: {x: .5, y: .5}
@@ -12465,8 +12467,8 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 22490300}
   m_RootOrder: 0
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
+  m_AnchorMin: {x: .200000003, y: 0}
+  m_AnchorMax: {x: .200000003, y: 1}
   m_AnchoredPosition: {x: 144, y: 0}
   m_SizeDelta: {x: 20, y: 0}
   m_Pivot: {x: .5, y: .5}
