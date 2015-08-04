@@ -163,11 +163,6 @@ def main(scriptArgs):
     return True
 
   #run clad's make
-  if (subprocess.call(['make', '--silent'], cwd=os.path.join(projectRoot, 'clad')) != 0):
-    UtilLog.error("error compiling clad files")
-    return False
-
-  #run clad's make
   unityGeneratedPath=os.path.join(projectRoot, 'unity/Cozmo/Assets/Scripts/Generated')
   if (subprocess.call(['make', '--silent', 'OUTPUT_DIR_CSHARP=' + unityGeneratedPath, 'csharp'],
     cwd=os.path.join(options.cozmoEnginePath, 'clad')) != 0):
@@ -181,11 +176,10 @@ def main(scriptArgs):
 
   # update file lists
   generator = updateFileLists.FileListGenerator(options)
-  generator.processFolder(['game/src/anki/cozmo', 'game/include', 'generated/clad/game'], ['project/gyp/cozmoGame.lst'])
+  generator.processFolder(['game/src/anki/cozmo', 'game/include'], ['project/gyp/cozmoGame.lst'])
   generator.processFolder(['simulator/controllers/webotsCtrlKeyboard'], ['project/gyp/ctrlKeyboard.lst'])
   generator.processFolder(['simulator/controllers/webotsCtrlGameEngine'], ['project/gyp/ctrlGameEngine.lst'])
   generator.processFolder(['unity/CSharpBinding/src'], ['project/gyp/csharp.lst'])
-  generator.processFolder(['clad/src'], ['project/gyp/clad.lst'])
 
   if options.updateListsOnly:
     # TODO: remove dependency on abspath. 

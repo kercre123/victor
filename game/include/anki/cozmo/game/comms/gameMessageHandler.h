@@ -19,7 +19,7 @@
 
 #include <anki/messaging/basestation/IComms.h>
 #include "clad/externalInterface/messageEngineToGame.h"
-#include "anki/cozmo/messageBuffers/game/UiMessagesU2G.h"
+#include "clad/externalInterface/messageGameToEngine.h"
 
 namespace Anki {
   
@@ -42,7 +42,7 @@ namespace Cozmo {
     
     virtual Result ProcessMessages() = 0;
     
-    virtual Result SendMessage(const UserDeviceID_t devID, const U2G::Message& msg) = 0;
+    virtual Result SendMessage(const UserDeviceID_t devID, const ExternalInterface::MessageGameToEngine& msg) = 0;
     
   }; // class IGameMessageHandler
   
@@ -64,7 +64,7 @@ namespace Cozmo {
     virtual Result ProcessMessages();
     
     // Send a message to a specified ID
-    Result SendMessage(const UserDeviceID_t devID, const U2G::Message& msg);
+    Result SendMessage(const UserDeviceID_t devID, const ExternalInterface::MessageGameToEngine& msg);
     
     inline void RegisterCallbackForMessage(const std::function<void(const ExternalInterface::MessageEngineToGame&)>& messageCallback)
     {
@@ -108,7 +108,7 @@ namespace Cozmo {
     }
     
     // Send a message to a specified ID
-    virtual Result SendMessage(const UserDeviceID_t devID, const U2G::Message& msg) override {
+    virtual Result SendMessage(const UserDeviceID_t devID, const ExternalInterface::MessageGameToEngine& msg) override {
       return RESULT_OK;
     }
 

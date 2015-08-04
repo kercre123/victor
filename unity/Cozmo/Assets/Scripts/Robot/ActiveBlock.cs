@@ -4,7 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Anki.Cozmo;
 using G2U = Anki.Cozmo.ExternalInterface;
-using U2G = Anki.Cozmo.U2G;
+using U2G = Anki.Cozmo.ExternalInterface;
 
 /// <summary>
 /// unity representation of cozmo's LightCubes

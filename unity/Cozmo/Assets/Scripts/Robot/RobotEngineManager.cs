@@ -6,7 +6,7 @@ using System.IO;
 using System.Text;
 using Anki.Cozmo;
 using G2U = Anki.Cozmo.ExternalInterface;
-using U2G = Anki.Cozmo.U2G;
+using U2G = Anki.Cozmo.ExternalInterface;
 
 /// <summary>
 /// Robot engine manager lives on a GameObject(named MasterObject) in our Intro scene,
@@ -61,7 +61,7 @@ public class RobotEngineManager : MonoBehaviour
 	private string imageBasePath;
 	private readonly static AsyncCallback EndSave_callback;
 
-	public U2G.Message Message { get; private set; }
+	public U2G.MessageGameToEngine Message { get; private set; }
 
 	private U2G.VisualizeQuad VisualizeQuadMessage = new U2G.VisualizeQuad();
 	private U2G.StartEngine StartEngineMessage = new U2G.StartEngine();
@@ -76,7 +76,7 @@ public class RobotEngineManager : MonoBehaviour
 
 	private void Awake()
 	{
-		Message = new U2G.Message();
+		Message = new U2G.MessageGameToEngine();
 	}
 
 	public void ToggleVisionRecording(bool on)
