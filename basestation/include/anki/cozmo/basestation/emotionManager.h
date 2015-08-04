@@ -71,13 +71,12 @@ namespace Cozmo {
     
     std::array<Value, Emotion::NUM_MOODS>  _emoState;
     
-    // Functinon prototype for how emotion values change over time, given current
+    // Function prototype for how emotion values change over time, given current
     // value and current time in seconds.
     using EmotionEvolutionFunction = std::function<Value(Value,f32)>;
     std::map<Emotion, EmotionEvolutionFunction> _evolutionFunctions;
     
     void SetEvolutionFunction(Emotion emotion, EmotionEvolutionFunction fcn);
-    
   }; // class EmotionManager
   
   

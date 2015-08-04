@@ -20,7 +20,7 @@ namespace Cozmo {
   
   BehaviorOCD::BehaviorOCD(Robot& robot, const Json::Value& config)
   : IBehavior(robot, config)
-  , _currentArrangement(Arrangement::STACKS)
+  , _currentArrangement(Arrangement::STACKS_OF_TWO)
   {
     
   }
@@ -83,9 +83,207 @@ namespace Cozmo {
     }
     _currentArrangement = static_cast<Arrangement>(iArrangement);
     
+    // we'll select the arrangement's anchor once we place our first block
+    _anchorObject.UnSet();
+    
+    _lastObjectPlacedOnGround.UnSet();
+    
     return RESULT_OK;
   }
+  
+  Result BehaviorOCD::SelectNextObjectToPickUp()
+  {
+    if(_messyObjects.empty()) {
+      PRINT_NAMED_ERROR("BehaviorOCD.SelectNextObjectToPickUp.NoMessyObjects", "\n");
+      return RESULT_FAIL;
+    }
+    
+    BlockWorld& blockWorld = _robot.GetBlockWorld();
+    
+    std::vector<std::pair<Quad2f, ObjectID> > obstacles;
+    blockWorld.GetObstacles(obstacles);
+    
+    // Find the closest object with available pre-action poses
+    f32 closestDistSq = std::numeric_limits<f32>::max();
+    for(auto & objectID : _messyObjects)
+    {
+      Vision::ObservableObject* object = blockWorld.GetObjectByID(objectID);
+      if(object == nullptr) {
+        PRINT_NAMED_ERROR("BehaviorOCD.SelectNextObjectToPickUp.InvalidObject",
+                          "Could not get %s object %d from robot %d's world.\n",
+                          object->GetType().GetName().c_str(),
+                          object->GetID().GetValue(),
+                          _robot.GetID());
+        return RESULT_FAIL;
+      }
+      
+      ActionableObject* actionObject = dynamic_cast<ActionableObject*>(object);
+      
+      if(actionObject == nullptr) {
+        PRINT_NAMED_ERROR("BehaviorOCD.SelectNextObjectToPickUp.NonActionObject",
+                          "Could not cast %s object %d from robot %d's world as Actionable.\n",
+                          object->GetType().GetName().c_str(),
+                          object->GetID().GetValue(),
+                          _robot.GetID());
+        return RESULT_FAIL;
+      }
+      
+      std::vector<PreActionPose> preActionPoses;
+      actionObject->GetCurrentPreActionPoses(preActionPoses, {PreActionPose::DOCKING},
+                                             std::set<Vision::Marker::Code>(),
+                                             obstacles);
+      
+      if(!preActionPoses.empty()) {
+        for(auto & preActionPose : preActionPoses)
+        {
+          Pose3d poseWrtRobot;
+          if(false == preActionPose.GetPose().GetWithRespectTo(_robot.GetPose(), poseWrtRobot)) {
+            PRINT_NAMED_ERROR("BehaviorOCD.SelectNextObjectToPickUp.PoseFailure",
+                              "Could not get pre-action pose of %s object %d w.r.t. robot %d.\n",
+                              object->GetType().GetName().c_str(),
+                              object->GetID().GetValue(),
+                              _robot.GetID());
+            return RESULT_FAIL;
+          }
+          
+          const f32 currentDistSq = poseWrtRobot.GetTranslation().LengthSq();
+          if(currentDistSq < closestDistSq) {
+            closestDistSq = currentDistSq;
+            _objectToPickUp = objectID;
+          }
+        } // for each preAction pose
+      } // if(!preActionPoses.empty())
+      
+    } // for each messy object ID
+    
+    if(_anchorObject.IsUnknown()) {
+      _anchorObject = _objectToPickUp;
+    }
+    
+    _robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot,
+                                            new DriveToPickAndPlaceObjectAction(_objectToPickUp));
+    
+    _currentState = State::PICKING_UP_BLOCK;
+    
+    return RESULT_OK;
+  } // SelectNextObjectToPickUp()
 
+  Result BehaviorOCD::SelectNextPlacement()
+  {
+    IActionRunner* placementAction = nullptr;
+    
+    ObjectID carriedObjectID;
+    carriedObjectID = _robot.GetCarryingObject();
+
+    if(carriedObjectID != _objectToPickUp) {
+      PRINT_NAMED_WARNING("BehaviorOCD.SelectNextPlacement.UnexpectedID",
+                          "Expecting object being carried to match object set to be picked up.\n");
+    }
+    
+    Vision::ObservableObject* carriedObject = _robot.GetBlockWorld().GetObjectByID(carriedObjectID);
+    if(carriedObject == nullptr) {
+      PRINT_NAMED_ERROR("BehaviorOCD.SelectNextPlacement.InvalidCarriedObject", "\n");
+      return RESULT_FAIL;
+    }
+    
+    switch(_currentArrangement)
+    {
+      case Arrangement::STACKS_OF_TWO:
+      {
+        BlockWorld& blockWorld = _robot.GetBlockWorld();
+        
+        // Pick the closest neatened block without anything on top yet...
+        ObjectID bottomBlockID;
+        assert(bottomBlockID.IsUnknown());
+        f32 closestDistSq = std::numeric_limits<f32>::max();
+        for(auto & neatObjectID : _neatObjects) {
+          Vision::ObservableObject* neatObject = blockWorld.GetObjectByID(neatObjectID);
+          if(neatObject == nullptr) {
+            // TODO: Error message
+            return RESULT_FAIL;
+          }
+          Vision::ObservableObject* onTop = blockWorld.FindObjectOnTopOf(*neatObject, 15.f);
+          if(onTop == nullptr) {
+            Pose3d poseWrtRobot;
+            if(false == neatObject->GetPose().GetWithRespectTo(_robot.GetPose(), poseWrtRobot)) {
+              // TODO: Error message
+              return RESULT_FAIL;
+            }
+            const f32 currentDistSq = poseWrtRobot.GetTranslation().LengthSq();
+            if(currentDistSq < closestDistSq) {
+              closestDistSq = currentDistSq;
+              bottomBlockID = neatObjectID;
+            }
+          }
+        } // for each neat object
+        
+        if(bottomBlockID.IsSet()) {
+          // Found a neat object with nothing on top. Stack on top of it:
+          placementAction = new PickAndPlaceObjectAction(bottomBlockID);
+        } else {
+          // ... if there isn't one, then place this block on the ground
+          // at the same orientation as the last block placed
+          if(_lastObjectPlacedOnGround.IsSet()) {
+            Pose3d pose;
+            
+            // TODO: Find closest available free space near the last object we placed on the ground
+            Vision::ObservableObject* lastObject = blockWorld.GetObjectByID(_lastObjectPlacedOnGround);
+            pose = lastObject->GetPose();
+            Vec3f T = pose.GetTranslation();
+            T.x() += 3*lastObject->GetSameDistanceTolerance().x();
+            pose.SetTranslation(T);
+            
+            placementAction = new PlaceObjectOnGroundAtPoseAction(_robot, pose);
+            
+          } else {
+            // This is the first object placed, just re-orient it
+            Pose3d pose = carriedObject->GetPose();
+            f32 angle_deg = pose.GetRotationAngle<'Z'>().getDegrees();
+            if(angle_deg < 45 && angle_deg >= -45) {
+              angle_deg = 0;
+            } else if(angle_deg < 135 && angle_deg >= 45) {
+              angle_deg = 90;
+            } else if(angle_deg < -45 && angle_deg >= -135) {
+              angle_deg = -90;
+            } else {
+              angle_deg = 180;
+            }
+            pose.SetRotation(DEG_TO_RAD(angle_deg), Z_AXIS_3D());
+            
+            placementAction = new PlaceObjectOnGroundAtPoseAction(_robot, pose);
+          }
+        } // if/else bottom block set
+        
+        break;
+      } // case STACKS_OF_TWO
+    
+      case Arrangement::LINE:
+        
+        PRINT_NAMED_ERROR("BehaviorOCD.SelectNextPlacement.LineArrangementUnimplemented", "\n");
+        return RESULT_FAIL;
+        
+        break;
+        
+        
+      default:
+        PRINT_NAMED_ERROR("BehaviorOCD.SelectNextPlacement.UnknownArrangment", "\n");
+        return RESULT_FAIL;
+        
+    } // switch(_currentArrangement)
+    
+    if(placementAction == nullptr) {
+      // TODO: Error message (necessary? Queueing command below will also catch it...)
+      return RESULT_FAIL;
+    }
+    
+    _currentState = State::PLACING_BLOCK;
+    
+    Result queueResult = _robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, placementAction);
+    
+    return queueResult;
+  } // SelectNextPlacement()
+  
+  
   IBehavior::Status BehaviorOCD::Update()
   {
     // Completion trigger is when all (?) blocks make it to his "neat" list
@@ -111,6 +309,7 @@ namespace Cozmo {
     
     return Status::RUNNING;
   }
+  
   
   void BehaviorOCD::HandleActionCompleted(const ExternalInterface::RobotCompletedAction &msg)
   {
@@ -144,10 +343,15 @@ namespace Cozmo {
       {
         switch(msg.actionType) {
           case RobotActionType::PLACE_OBJECT_LOW:
+            _lastObjectPlacedOnGround = _objectToPickUp;
+            // NOTE: deliberate fallthrough to next case!
           case RobotActionType::PLACE_OBJECT_HIGH:
             // We're done placing the block, mark it as neat and move to next one
             _messyObjects.erase(_objectToPickUp);
             _neatObjects.insert(_objectToPickUp);
+            
+            // TODO: Get "neat" color and on/off settings from config
+            _robot.SetObjectLights(_objectToPickUp, WhichBlockLEDs::ALL, NamedColors::CYAN, NamedColors::BLACK, 10, 10, 2000, 2000, false, MakeRelativeMode::RELATIVE_LED_MODE_OFF, {});
             
             SelectNextObjectToPickUp();
             _currentState = State::PICKING_UP_BLOCK;
@@ -180,6 +384,9 @@ namespace Cozmo {
     {
       _neatObjects.erase(objectID);
       _messyObjects.insert(objectID);
+      
+      // TODO: Get "messy" color and on/off settings from config
+      _robot.SetObjectLights(objectID, WhichBlockLEDs::ALL, NamedColors::RED, NamedColors::BLACK, 200, 200, 50, 50, false, MakeRelativeMode::RELATIVE_LED_MODE_OFF, {});
       
       // TODO: Should this be "now" or "next"?
       _robot.GetActionList().QueueActionNow(IBehavior::sActionSlot, new PlayAnimationAction("Irritated"));
@@ -218,5 +425,30 @@ namespace Cozmo {
     return true;
   } // GetReward()
 
+  
+  f32 BehaviorOCD::GetNeatnessScore(ObjectID whichObject)
+  {
+    Vision::ObservableObject* object = _robot.GetBlockWorld().GetObjectByID(whichObject);
+    if(object == nullptr) {
+      PRINT_NAMED_ERROR("BehaviorOCD.GetNeatnessScore.InvalidObject",
+                        "Could not get object %d from robot %d's world.\n",
+                        whichObject.GetValue(), _robot.GetID());
+      return 0.f;
+    }
+    
+    // See how far away the object is from being aligned with the coordinate axes
+    Radians angle = object->GetPose().GetRotationAngle<'Z'>();
+    
+    f32 diffFrom90deg;
+    if(angle < 0) {
+      diffFrom90deg = std::fmod(angle.getDegrees(), -90.f);
+    } else {
+      diffFrom90deg = std::fmod(angle.getDegrees(), 90.f);
+    }
+    
+    const f32 score = 1.f - diffFrom90deg/90.f;
+    return score;
+  }
+  
 } // namespace Cozmo
 } // namespace Anki

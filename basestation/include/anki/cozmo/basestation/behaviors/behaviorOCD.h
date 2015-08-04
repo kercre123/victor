@@ -71,7 +71,7 @@ namespace Cozmo {
     
     // Enumerate possible arrangements Cozmo "likes".
     enum class Arrangement {
-      STACKS = 0,
+      STACKS_OF_TWO = 0,
       LINE,
       NUM_ARRANGEMENTS
     };
@@ -79,7 +79,13 @@ namespace Cozmo {
     Arrangement _currentArrangement;
     
     ObjectID _objectToPickUp;
+    ObjectID _lastObjectPlacedOnGround;
+    ObjectID _anchorObject; // the object the arrangement is anchored to
     
+    /* 
+     Not sure this is needed anymore, now that we're using events and
+     the current action should basically hold this state 
+     
     // A placement can be on the ground or on another object:
     struct NextPlacement {
       NextPlacement() {}
@@ -92,7 +98,7 @@ namespace Cozmo {
     };
     
     NextPlacement _nextPlacement;
-    
+    */
   }; // class BehaviorOCD
 
 } // namespace Cozmo
