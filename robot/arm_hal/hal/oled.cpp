@@ -274,30 +274,45 @@ namespace Anki
         EnqueueWrite(DATA, m_frame, sizeof(m_frame));
       }
 
-      // Plot a blue pixel on the SSD1306 framebuffer with vertical addressing mode
-      #define PLOT(x, y)  m_frame[x] |= 0x800000000000000L >> (y ^ 63);
-
-      void TestFrame()
-      {
-        static float r = 0.20f;
-
-        memset(m_frame, 0, sizeof(m_frame));
-
-        float k = r;
-        for (int y = 0; y < ROWS; y++) {
-          int o = (int)(sin(k) * 48 + 64);
-          k += PI * 2 / ROWS;
-
-          for (int x = o; x < COLS; x++) {
-            PLOT(x, y);
-          }
-        }
-
-        r += PI / 180.0f;
-
-        SendFrame();
-      }
-
+      #define CLEAR_ROW(x)      (0x00 | x)
+      #define COPY_ROW(x)       (0x40 | x)
+      #define RLE_PATTERN(c, p) (0x80 | (c << 2) | p)
+      
+      static const uint64_t BIT_EXPAND[] = {
+        0x0000000000000001L,
+        0x0000000000000005L,
+        0x0000000000000015L,
+        0x0000000000000055L,
+        0x0000000000000155L,
+        0x0000000000000555L,
+        0x0000000000001555L,
+        0x0000000000005555L,
+        0x0000000000015555L,
+        0x0000000000055555L,
+        0x0000000000155555L,
+        0x0000000000555555L,
+        0x0000000001555555L,
+        0x0000000005555555L,
+        0x0000000015555555L,
+        0x0000000055555555L,
+        0x0000000155555555L,
+        0x0000000555555555L,
+        0x0000001555555555L,
+        0x0000005555555555L,
+        0x0000015555555555L,
+        0x0000055555555555L,
+        0x0000155555555555L,
+        0x0000555555555555L,
+        0x0001555555555555L,
+        0x0005555555555555L,
+        0x0015555555555555L,
+        0x0055555555555555L,
+        0x0155555555555555L,
+        0x0555555555555555L,
+        0x1555555555555555L,
+        0x5555555555555555L,
+      };
+      
       void OLEDInit(void)
       {
         HWInit();
@@ -307,19 +322,24 @@ namespace Anki
         EnqueueWrite(COMMAND, InitDisplay, sizeof(InitDisplay));
 
         // Draw "programmer art" face until we get real assets
-        u8 face[] = { 24, 64+24,           // Start 24 lines down and 24 pixels right
-          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
-          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
-          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
-          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
-          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
-          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
-          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
-          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
-          0 };
+        u8 face[] = { 
+          CLEAR_ROW(24),
+          RLE_PATTERN(12, 0),
+          RLE_PATTERN(8, 3),
+          COPY_ROW(15),
+          CLEAR_ROW(48),
+          RLE_PATTERN(12, 0),
+          RLE_PATTERN(8, 3),
+          COPY_ROW(15),
+          CLEAR_ROW(24)
+        };
         FaceAnimate(face);
       }
 
+      // 00xxxxxx     CLEAR row (blank)
+      // 01xxxxxx     COPY PREVIOUS ROW (repeat)
+      // 1xxxxxyy     RLE 2-bit block
+      
       // Update the face to the next frame of an animation
       // @param frame - a pointer to a variable length frame of face animation data
       // Frame is in 8-bit RLE format:
@@ -332,28 +352,43 @@ namespace Anki
         if (m_disableAnimate)
           return;
 
-        int draw = 0;
-        int dest = 0;
+        uint64_t *frame = m_frame;
 
-        // Start with all black
-        memset(m_frame, 0, sizeof(m_frame));
-        while (0 != *src)
-        {
-          // Decide whether to draw lines or pixels
-          int run = *src++;
-          int count = run < 64 ? run * COLS : run - 64;
+        for (int x = 0; x < COLS; ) {         
+          // Full row treatment
+          if (~*src & 0x80) {
+            uint8_t op = *(src++);
+            int rle = (op & 0x3F) + 1;
+            uint64_t copy = (op & 0x40) ? *(frame - 1) : 0;
+            
+            x += rle;
 
-          // If we are drawing blue, plot it - otherwise, skip it
-          if (draw && dest+count < ROWS * COLS)
-            for (int i = dest; i < dest+count; i++)
-              PLOT(i & (COLS-1), i / COLS);
+            while (rle-- > 0) {
+              *(frame++) = copy;
+            }
+            
+            continue;
+          }
+          
+          // Individual cell repeat
+          uint64_t col = 0;
 
-          dest += count;
+          for (int y = 0; y < ROWS && *src & 0x80; ) {
+            uint8_t op = *(src++);
+            int rle = (op >> 2) & 0x1F;
+            int pattern = op & 3;
+            
+            if (pattern) {
+              col |= (BIT_EXPAND[rle] * pattern) << y;
+            }
 
-          // Invert draw color after plotting pixels
-          if (run >= 64)
-            draw = !draw;
+            y += (rle + 1) * 2;
+          }
+          
+          *(frame++) = col;
+          x++ ;
         }
+
         SendFrame();
       }
 
