@@ -52,6 +52,13 @@ message TurnInPlace {
     uint_8 robotID
 }
 
+// TurnInPlaceAtSpeed
+message TurnInPlaceAtSpeed {
+    float_32 speed_rad_per_sec,
+    float_32 accel_rad_per_sec2,
+    uint_8 robotID
+}
+
 // FaceObject - Turns and tilts head to look at object in last known position
 //   If facing the object requires less than a turnAngleTol turn, then no
 //   turn is performed. If a turn greater than maxTurnAngle is required,
@@ -299,6 +306,11 @@ message SetLiftControllerGains {
 message SetSteeringControllerGains {
   float_32 k1,
   float_32 k2
+}
+
+// SetRobotVolume
+message SetRobotVolume {
+  float_32 volume
 }
 
 // StartTestMode

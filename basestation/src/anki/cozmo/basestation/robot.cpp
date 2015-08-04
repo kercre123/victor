@@ -1145,7 +1145,15 @@ namespace Anki {
     {
       return SendSetHeadAngle(angle_rad, max_speed_rad_per_sec, accel_rad_per_sec2, duration_sec);
     }
-      
+
+    Result Robot::TurnInPlaceAtSpeed(const f32 speed_rad_per_sec,
+                                     const f32 accel_rad_per_sec2)
+    {
+      return SendTurnInPlaceAtSpeed(speed_rad_per_sec, accel_rad_per_sec2);
+    }
+    
+    
+    
     Result Robot::TapBlockOnGround(const u8 numTaps)
     {
       return SendTapBlockOnGround(numTaps);
@@ -2109,7 +2117,17 @@ namespace Anki {
       
       return _msgHandler->SendMessage(_ID,m);
     }
+
+    Result Robot::SendTurnInPlaceAtSpeed(const f32 speed_rad_per_sec,
+                                         const f32 accel_rad_per_sec2) const
+    {
+      MessageTurnInPlaceAtSpeed m;
+      m.speed_rad_per_sec = speed_rad_per_sec;
+      m.accel_rad_per_sec2 = accel_rad_per_sec2;
       
+      return _msgHandler->SendMessage(_ID,m);
+    }
+    
     Result Robot::SendTapBlockOnGround(const u8 numTaps) const
     {
       MessageTapBlockOnGround m;

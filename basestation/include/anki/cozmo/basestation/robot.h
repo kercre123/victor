@@ -342,6 +342,8 @@ namespace Anki {
                              const f32 accel_rad_per_sec2,
                              const f32 duration_sec = 0.f);
       
+      Result TurnInPlaceAtSpeed(const f32 speed_rad_per_sec,
+                                const f32 accel_rad_per_sec2);
       
       // Sends a message to robot to tap the carried block on the ground the
       // specified number of times
@@ -735,6 +737,9 @@ namespace Anki {
                               const f32 accel_rad_per_sec2,
                               const f32 duration_sec) const;
 
+      Result SendTurnInPlaceAtSpeed(const f32 speed_rad_per_sec,
+                                    const f32 accel_rad_per_sec2) const;
+      
       Result SendTapBlockOnGround(const u8 numTaps) const;
       
       Result SendDriveWheels(const f32 lwheel_speed_mmps,
