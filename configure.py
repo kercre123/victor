@@ -68,7 +68,7 @@ def print_status(text):
 def dialog(prompt):
     result = None
     while not result:
-        result = raw_dialog(prompt).strip().lower()
+        result = _raw_dialog(prompt).strip().lower()
     return result in ('y', 'yes')
 
 
