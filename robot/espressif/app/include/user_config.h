@@ -4,6 +4,11 @@
 #ifndef USER_CONFIG_H_
 #define USER_CONFIG_H_
 
+/// Put format strings in flash rather than needing to load them into program memory
+#define USE_OPTIMIZE_PRINTF
+/// Add missing prototype of os_printf_plus
+extern int os_printf_plus(const char * format, ...) __attribute__ ((format (printf, 1, 2)));
+
 /// Based on 1MB flash map
 #define USER_NV_PARAM_START 0x7d000
 #define USER_NV_START_SEC   0x7d

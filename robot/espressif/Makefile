@@ -198,8 +198,8 @@ CCFLAGS += 			\
 	-mlongcalls	\
 	-mtext-section-literals \
 	-ffunction-sections \
-	-fdata-sections
-#	-Wall			
+	-fdata-sections \
+	-Wall			
 
 CFLAGS = $(CCFLAGS) $(DEFINES) $(EXTRA_CCFLAGS) $(INCLUDES)
 DFLAGS = $(CCFLAGS) $(DDEFINES) $(EXTRA_CCFLAGS) $(INCLUDES)

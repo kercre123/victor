@@ -31,13 +31,13 @@ static void ICACHE_FLASH_ATTR udpServerRecvCB(void *arg, char *usrdata, unsigned
 
   haveClient = true;
 
-  uartQueuePacket(usrdata, len); // Pass to M4
+  uartQueuePacket((uint8*)usrdata, len); // Pass to M4
 }
 
 
 sint8 ICACHE_FLASH_ATTR clientInit()
 {
-  int8 err, i;
+  int8 err;
 
   os_printf("clientInit\r\n");
 

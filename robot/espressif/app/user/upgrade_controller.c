@@ -76,7 +76,7 @@ LOCAL inline void requestNext(void)
 {
   if (upccConn != NULL)
   {
-    int8_t err = espconn_sent(upccConn, "next", 4);
+    int8 err = espconn_sent(upccConn, (uint8*)"next", 4);
     if (err != 0)
     {
       os_printf("\tCouldn't unhold socket: %d\r\n", err);
@@ -92,7 +92,6 @@ LOCAL inline void requestNext(void)
 LOCAL bool upgradeTask(uint32_t param)
 {
   SpiFlashOpResult flashResult;
-  int8 err;
 
   switch (taskState)
   {
@@ -157,7 +156,7 @@ LOCAL bool upgradeTask(uint32_t param)
       if (flags & UPCMD_CONFIG)
       {
         NVParams* nvpar = (NVParams*)param;
-        os_printf("Wrinting new NVC (%08x \"%s\") to flash\r\n", nvpar->PREFIX, nvpar->ssid);
+        os_printf("Wrinting new NVC (%08x \"%s\") to flash\r\n", (unsigned int)nvpar->PREFIX, nvpar->ssid);
         if (system_param_save_with_protect(USER_NV_START_SEC, nvpar, sizeof(NVParams)) == false)
         {
           os_printf("UP ERROR: Couldn't save non-volatile parameters\r\n");
@@ -283,7 +282,7 @@ LOCAL void ICACHE_FLASH_ATTR upccReceiveCallback(void *arg, char *usrdata, unsig
     if (length != sizeof(UpgradeCommandParameters))
     {
       os_printf("ERROR: UPCC received wrong command packet size %d <> %d\r\n", length, sizeof(UpgradeCommandParameters));
-      err = espconn_sent(conn, "BAD", 3);
+      err = espconn_sent(conn, (uint8*)"BAD", 3);
       if (err != 0)
       {
         os_printf("ERROR: UPCC couldn't sent error response on socket: %d\r\n", err);
@@ -291,14 +290,14 @@ LOCAL void ICACHE_FLASH_ATTR upccReceiveCallback(void *arg, char *usrdata, unsig
       return;
     }
     UpgradeCommandParameters* cmd = (UpgradeCommandParameters*)usrdata;
-    if (strncmp(cmd->PREFIX, UPGRADE_COMMAND_PREFIX, UPGRADE_COMMAND_PREFIX_LENGTH) != 0) // Wrong PREFIX
+    if (os_strncmp(cmd->PREFIX, UPGRADE_COMMAND_PREFIX, UPGRADE_COMMAND_PREFIX_LENGTH) != 0) // Wrong PREFIX
     {
       os_printf("ERROR: UPCC received invalid header\r\n");
     }
     else if (cmd->flashAddress < FW_START_ADDRESS)
     {
-      os_printf("ERROR: fwWriteAddress %08x is in protected region\r\n", cmd->flashAddress);
-      err = espconn_sent(conn, "BAD", 3);
+      os_printf("ERROR: fwWriteAddress %08x is in protected region\r\n", (unsigned int)cmd->flashAddress);
+      err = espconn_sent(conn, (uint8*)"BAD", 3);
       if (err != 0)
       {
         os_printf("ERROR: UPCC couldn't sent error response on socket: %d \r\n", err);
@@ -347,7 +346,7 @@ LOCAL void ICACHE_FLASH_ATTR upccReceiveCallback(void *arg, char *usrdata, unsig
         fwWriteAddress = USER_NV_PARAM_START;
         bytesExpected  = sizeof(NVParams);
         taskState      = UPGRADE_TASK_WRITE;
-        err = espconn_sent(conn, "NEXT", 4);
+        err = espconn_sent(conn, (uint8*)"NEXT", 4);
         if (err != 0)
         {
           os_printf("ERROR: UPCC couldn't sent request for NV param data\r\n");
@@ -358,7 +357,7 @@ LOCAL void ICACHE_FLASH_ATTR upccReceiveCallback(void *arg, char *usrdata, unsig
       else
       {
         os_printf("Unsupported upgrade command flag: %d\r\n", flags);
-        err = espconn_sent(conn, "BAD", 3);
+        err = espconn_sent(conn, (uint8*)"BAD", 3);
         if (err != 0)
         {
           os_printf("ERROR: UPCC couldn't sent error response on socket: %d\r\n", err);
@@ -387,7 +386,7 @@ LOCAL void ICACHE_FLASH_ATTR upccReceiveCallback(void *arg, char *usrdata, unsig
       os_printf("ERROR: couldn't allocate memory to queue flash write data\r\n");
       return;
     }
-    os_memcpy((void*)fwd->data, usrdata, length);
+    os_memcpy((void*)fwd->data, (void*)usrdata, length);
     fwd->length = length;
     bytesReceived += length;
     if (task0Post(upgradeTask, (uint32)fwd) == false)
@@ -401,7 +400,7 @@ LOCAL void ICACHE_FLASH_ATTR upccReceiveCallback(void *arg, char *usrdata, unsig
 
 LOCAL void ICACHE_FLASH_ATTR upccSentCallback(void *arg)
 {
-  struct espconn *conn = arg;
+  //struct espconn *conn = arg;
   //os_printf("INFO: UPCC sent cb\r\n");
 }
 

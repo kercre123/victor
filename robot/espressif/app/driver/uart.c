@@ -385,8 +385,6 @@ uart_rx_intr_handler(void *para)
  */
 LOCAL void ICACHE_FLASH_ATTR uartTask(os_event_t *event)
 {
-  uint8 fifo_len;
-
   if (event->sig == 0) // TX event
   {
     while (txRind != txWind) // While have stuff to write

@@ -24,8 +24,7 @@ LOCAL void ICACHE_FLASH_ATTR telnetReceiveCallback(void *arg, char *usrdata, uns
 
 LOCAL void ICACHE_FLASH_ATTR telnetSentCallback(void *arg)
 {
-  struct espconn *conn = arg;
-
+  //struct espconn *conn = arg;
 }
 
 LOCAL void ICACHE_FLASH_ATTR telnetConnectCallback(void *arg)
@@ -125,14 +124,14 @@ int8_t ICACHE_FLASH_ATTR telnetInit(void)
 
 inline bool ICACHE_FLASH_ATTR telnetIsConnected(void)
 {
-  return telnetConnection != NULL;
+  return telnetConnection == NULL ? false : true;
 }
 
 bool ICACHE_FLASH_ATTR telnetPrintf(const char *format, ...)
 {
   va_list argptr;
   uint16 len = 0;
-  uint8  err = 0;
+  int8   err = 0;
   char* buffer = (char*)os_zalloc(TELNET_MAX_PRINT_LENGTH);
   if (buffer == NULL)
   {
@@ -142,10 +141,10 @@ bool ICACHE_FLASH_ATTR telnetPrintf(const char *format, ...)
   va_start(argptr, format);
   len = ets_vsnprintf(buffer, TELNET_MAX_PRINT_LENGTH-1, format, argptr);
   va_end(argptr);
-  os_printf(buffer);
-  if (telnetIsConnected) // If we have a client
+  os_printf_plus(buffer);
+  if (telnetIsConnected()) // If we have a client
   {
-    int8 err = espconn_sent(telnetConnection, buffer, len);
+    err = espconn_sent(telnetConnection, (uint8*)buffer, len);
   }
   os_free(buffer);
   if (err < 0)

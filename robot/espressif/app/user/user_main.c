@@ -1,9 +1,9 @@
-#include "mem.h"
 #include "c_types.h"
 #include "ets_sys.h"
 #include "osapi.h"
 #include "gpio.h"
 #include "os_type.h"
+#include "mem.h"
 #include "user_interface.h"
 #include "client.h"
 #include "driver/uart.h"
@@ -19,10 +19,10 @@
 /** User "idle" task
  * Called by OS with lowest priority.
  */
-LOCAL bool ICACHE_FLASH_ATTR userTask(uint32_t param)
+/*LOCAL bool ICACHE_FLASH_ATTR userTask(uint32_t param)
 {
   return false;
-}
+}*/
 
 static ETSTimer userTimer;
 
@@ -193,9 +193,8 @@ static void ICACHE_FLASH_ATTR system_init_done(void)
 void ICACHE_FLASH_ATTR
 user_init(void)
 {
-    uint32 i;
-    int8 err;
     NVParams* nvpars;
+    int8 err;
 
     wifi_status_led_uninstall();
 
@@ -245,8 +244,8 @@ user_init(void)
         os_printf("Error getting wifi softap config\r\n");
       }
 
-      os_sprintf(ap_config.ssid, nvpars->ssid);
-      os_sprintf(ap_config.password, nvpars->pkey);
+      os_sprintf((char*)ap_config.ssid, nvpars->ssid);
+      os_sprintf((char*)ap_config.password, nvpars->pkey);
       ap_config.ssid_len = 0;
       ap_config.channel = nvpars->wifiChannel;
       ap_config.authmode = AUTH_WPA2_PSK;
@@ -255,14 +254,12 @@ user_init(void)
       ap_config.beacon_interval = 33; // Must be 50 or lower for iOS devices to connect
 
       // Setup ESP module to AP mode and apply settings
-      wifi_set_user_fixed_rate(PHY_RATE_24);
       wifi_set_opmode(SOFTAP_MODE);
       wifi_softap_set_config(&ap_config);
-      wifi_set_user_fixed_rate(PHY_RATE_24);
       wifi_set_phy_mode(PHY_MODE_11G);
-      wifi_set_user_fixed_rate(PHY_RATE_24);
       // Disable radio sleep
       wifi_set_sleep_type(NONE_SLEEP_T);
+      wifi_set_user_fixed_rate(PHY_RATE_24);
 
       // Disable DHCP server before setting static IP info
       wifi_softap_dhcps_stop();
@@ -278,8 +275,8 @@ user_init(void)
       }
 
       // Setup station parameters
-      os_sprintf(sta_config.ssid, STATION_SSID);
-      os_sprintf(sta_config.password, STATION_KEY);
+      os_sprintf((char*)sta_config.ssid, STATION_SSID);
+      os_sprintf((char*)sta_config.password, STATION_KEY);
       #ifdef STATION_BSSID
       os_sprintf(sta_config.bssid, STATION_BSSID)
       sta_config.bssid_set = 1;
