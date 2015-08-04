@@ -34,17 +34,6 @@ namespace Cozmo {
     return RESULT_OK;
   }
   
-  static s32 RandHelper(const s32 minLimit, const s32 maxLimit)
-  {
-    assert(maxLimit > minLimit);
-    
-    const s32 num = (std::rand() % (maxLimit - minLimit + 1)) + minLimit;
-    
-    assert(num >= minLimit && num <= maxLimit);
-    
-    return num;
-  }
-  
   
   IBehavior::Status BehaviorLookForFaces::Update(float currentTime_sec)
   {
@@ -56,8 +45,8 @@ namespace Cozmo {
         {
           // Time to move again: tilt head and move body by a random amount
           // TODO: Get the angle limits from config
-          const f32 headAngle_deg = static_cast<f32>(RandHelper(0, MAX_HEAD_ANGLE));
-          const f32 bodyAngle_deg = static_cast<f32>(RandHelper(-90, 90));
+          const f32 headAngle_deg = _rng.RandIntInRange(0, MAX_HEAD_ANGLE);
+          const f32 bodyAngle_deg = _rng.RandIntInRange(-90, 90);
           
           MoveHeadToAngleAction* moveHeadAction    = new MoveHeadToAngleAction(DEG_TO_RAD(headAngle_deg));
           TurnInPlaceAction*     turnInPlaceAction = new TurnInPlaceAction(DEG_TO_RAD(bodyAngle_deg));
@@ -157,9 +146,9 @@ namespace Cozmo {
   void BehaviorLookForFaces::SetNextMovementTime()
   {
     // TODO: Get the timing variability from config
-    const s32 minTime_ms = 200;
-    const s32 maxTime_ms = 1500;
-    _nextMovementTime_sec = MILIS_TO_SEC(static_cast<f32>(RandHelper(minTime_ms, maxTime_ms)));
+    const f32 minTime_sec = 0.2f;
+    const f32 maxTime_sec = 1.5f;
+    _nextMovementTime_sec = _rng.RandDblInRange(minTime_sec, maxTime_sec);
   }
   
   void BehaviorLookForFaces::HandleRobotCompletedAction(const ExternalInterface::RobotCompletedAction& msg)

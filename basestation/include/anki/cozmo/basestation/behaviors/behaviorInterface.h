@@ -14,6 +14,8 @@
 
 #include "anki/cozmo/basestation/actionContainers.h"
 
+#include "util/random/randomGenerator.h"
+
 #include "json/json.h"
 
 namespace Anki {
@@ -64,6 +66,9 @@ namespace Cozmo {
   protected:
     
     Robot &_robot;
+    
+    // A random number generator for all behaviors to share
+    Util::RandomGenerator _rng;
     
   }; // class IBehavior
 
