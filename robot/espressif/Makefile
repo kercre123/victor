@@ -9,6 +9,7 @@ ifeq ($(COMPILE), gcc)
 	CC = xtensa-lx106-elf-gcc
 	NM = xtensa-lx106-elf-nm
 	CPP = xtensa-lx106-elf-cpp
+	CXX = xtensa-lx106-elf-g++
 	OBJCOPY = xtensa-lx106-elf-objcopy
 	OBJDUMP = xtensa-lx106-elf-objdump
 else
@@ -206,7 +207,7 @@ CCFLAGS += 			\
 
 CFLAGS = $(CCFLAGS) $(DEFINES) $(EXTRA_CCFLAGS) $(INCLUDES)
 DFLAGS = $(CCFLAGS) $(DDEFINES) $(EXTRA_CCFLAGS) $(INCLUDES)
-CXXFLAGS = $(CCFLAGS) -fno-rtti -fno-exception $(DEFINES) $(EXTRA_CCFLAGS) $(INCLUDES)
+CXXFLAGS = $(CCFLAGS) -fno-rtti $(DEFINES) $(EXTRA_CCFLAGS) $(INCLUDES)
 
 
 #############################################################
@@ -328,7 +329,7 @@ $(OBJODIR)/%.o: %.c
 
 $(OBJODIR)/%.o: %.cpp
 	@mkdir -p $(OBJODIR);
-	$(CPP) $(if $(findstring $<,$(DSRCS)),$(DFLAGS),$(CXXFLAGS)) $(COPTS_$(*F)) -o $@ -c $<
+	$(CXX) $(if $(findstring $<,$(DSRCS)),$(DFLAGS),$(CXXFLAGS)) $(COPTS_$(*F)) -o $@ -c $<
 
 $(OBJODIR)/%.d: %.c
 	@mkdir -p $(OBJODIR);

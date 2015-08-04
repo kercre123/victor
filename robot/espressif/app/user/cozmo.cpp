@@ -12,5 +12,5 @@
 
 void doStuff(void)
 {
-  os_printf("Look some C++!");
+  return;
 }
