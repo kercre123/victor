@@ -316,13 +316,13 @@ namespace Cozmo {
 
       // RLE pattern encoding
       uint64_r col = packed[x++];
-      int pattern = -1;
+      int pattern = 0;
       int count = 0;
 
       for (int y = 0; y < IMAGE_HEIGHT; y += 2, col >>= 2) {
         if ((col & 3) != pattern) {
           // Output value if primed
-          if (pattern >= 0) {
+          if (count > 0) {
             rleData.push_back(0x80 | ((count-1) << 2) | pattern);
           }
           
