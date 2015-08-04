@@ -674,7 +674,7 @@ namespace Anki {
           }
           
           // Speed of point turns (when no target angle specified). See SendTurnInPlaceAtSpeed().
-          f32 pointTurnSpeed = abs(root_->getField("pointTurnSpeed_degPerSec")->getSFFloat());
+          f32 pointTurnSpeed = std::abs(root_->getField("pointTurnSpeed_degPerSec")->getSFFloat());
           
           
           //printf("keypressed: %d, modifier %d, orig_key %d, prev_key %d\n",
@@ -1449,7 +1449,17 @@ namespace Anki {
               }
               case (s32)'%':
               {
-                SendAnimation("ANIM_ALERT", 1);
+                // Send whatever idle animation is specified in the idleAnimationName field
+                webots::Field* idleAnimationNameField = root_->getField("idleAnimationName");
+                if(idleAnimationNameField == nullptr) {
+                  printf("ERROR: No idleAnimationName field found in WebotsKeyboardController.proto\n");
+                } else {
+                  std::string idleAnimName = idleAnimationNameField->getSFString();
+
+                  ExternalInterface::MessageGameToEngine msg(ExternalInterface::SetIdleAnimation(1, idleAnimName));
+                  
+                  SendMessage(msg);
+                }
                 break;
               }
               case (s32)'^':
@@ -2466,14 +2476,20 @@ namespace Anki {
         // Don't send repeated animation commands within a half second
         if(inputController.getTime() > lastSendTime_sec + 0.5f)
         {
-          ExternalInterface::PlayAnimation m;
-          //m.animationID = animId;
+          ExternalInterface::QueueSingleAction m;
+          
           m.robotID = 1;
-          m.animationName = animName;
-          m.numLoops = numLoops;
+          m.inSlot = 0;
+          m.position = QueueActionPosition::NOW_AND_CLEAR_REMAINING;
+          m.actionType = RobotActionType::PLAY_ANIMATION;
+          m.action.playAnimation.robotID = 1;
+          m.action.playAnimation.animationName = animName;
+          m.action.playAnimation.numLoops = numLoops;
+          
           ExternalInterface::MessageGameToEngine message;
-          message.Set_PlayAnimation(m);
+          message.Set_QueueSingleAction(m);
           SendMessage(message);
+          
           lastSendTime_sec = inputController.getTime();
         } else {
           printf("Ignoring duplicate SendAnimation keystroke.\n");
