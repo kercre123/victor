@@ -10,6 +10,7 @@
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/activeBlockTypes.h"
+#include "anki/cozmo/shared/faceDisplayDecode.h"
 #include "messages.h"
 #include "wheelController.h"
 
@@ -138,8 +139,8 @@ namespace Anki {
       webots::Display* face_;
       const u32 DISPLAY_WIDTH = 128;
       const u32 DISPLAY_HEIGHT = 64;
-      const u32 NUM_DISPLAY_PIXELS = DISPLAY_WIDTH * DISPLAY_HEIGHT;
-    u8 lastFaceFrameDecoded_[NUM_DISPLAY_PIXELS];  // Each byte represents one pixel
+      uint64_t faceFrame_[DISPLAY_WIDTH];
+      
       s32 facePosX_ = 0;
       s32 facePosY_ = 0;
       TimeStamp_t faceBlinkStartTime_ = 0;
@@ -1012,116 +1013,18 @@ namespace Anki {
       audioEndTime_ += AUDIO_FRAME_TIME_MS;
       audioReadyForFrame_ = false;
     }
-    
-    
-
-    
-    // 00xxxxxx     CLEAR row (blank)
-    // 01xxxxxx     COPY PREVIOUS ROW (repeat)
-    // 1xxxxxyy     RLE 2-bit block
-    
-    // Update the face to the next frame of an animation
-    // @param frame - a pointer to a variable length frame of face animation data
-    // Frame is in 8-bit RLE format:
-    //  0 terminates the image
-    //  1-63 draw N full lines (N*128 pixels) of black or blue
-    //  64-255 draw 0-191 pixels (N-64) of black or blue, then invert the color for the next run
-    // The decoder starts out drawing black, and inverts the color on every byte >= 64
-    #define COLS 128
-    #define ROWS 64
-    
-    uint64_t m_frame[COLS];
-    
-    static const uint64_t BIT_EXPAND[] = {
-      0x0000000000000001L,
-      0x0000000000000005L,
-      0x0000000000000015L,
-      0x0000000000000055L,
-      0x0000000000000155L,
-      0x0000000000000555L,
-      0x0000000000001555L,
-      0x0000000000005555L,
-      0x0000000000015555L,
-      0x0000000000055555L,
-      0x0000000000155555L,
-      0x0000000000555555L,
-      0x0000000001555555L,
-      0x0000000005555555L,
-      0x0000000015555555L,
-      0x0000000055555555L,
-      0x0000000155555555L,
-      0x0000000555555555L,
-      0x0000001555555555L,
-      0x0000005555555555L,
-      0x0000015555555555L,
-      0x0000055555555555L,
-      0x0000155555555555L,
-      0x0000555555555555L,
-      0x0001555555555555L,
-      0x0005555555555555L,
-      0x0015555555555555L,
-      0x0055555555555555L,
-      0x0155555555555555L,
-      0x0555555555555555L,
-      0x1555555555555555L,
-      0x5555555555555555L,
-    };
 
     
     void HAL::FaceAnimate(u8* src)
     {
       // Clear the display
       ClearFace();
-      
-      // Clear the last face frame buffer
-      memset(lastFaceFrameDecoded_, 0, NUM_DISPLAY_PIXELS);
-      
-      uint64_t *frame = m_frame;
-      
-      for (int x = 0; x < COLS; ) {
-        // Full row treatment
-        if (~*src & 0x80) {
-          uint8_t op = *(src++);
-          int rle = (op & 0x3F) + 1;
-          uint64_t copy = (op & 0x40) ? *(frame - 1) : 0;
-          
-          x += rle;
-          
-          while (rle-- > 0) {
-            *(frame++) = copy;
-          }
-          
-          continue;
-        }
-        
-        // Individual cell repeat
-        uint64_t col = 0;
-        
-        for (int y = 0; y < ROWS && *src & 0x80; ) {
-          uint8_t op = *(src++);
-          int rle = (op >> 2) & 0x1F;
-          int pattern = op & 3;
-          
-          if (pattern) {
-            col |= (BIT_EXPAND[rle] * pattern) << y;
-          }
-          
-          y += (rle + 1) * 2;
-        }
-        
-        *(frame++) = col;
-        x++ ;
-      }
+
+      // Decode face
+      FaceDisplayDecode(src, DISPLAY_HEIGHT, DISPLAY_WIDTH, faceFrame_);
       
       // Draw face
-      //FaceMove(facePosX_, facePosY_);
-      for (u8 i = 0; i < COLS; ++i) {
-        for (u8 j = 0; j < ROWS; ++j) {
-          if ((m_frame[i] >> j) & 1) {
-            face_->drawPixel(facePosX_ + i, facePosY_ + j);
-          }
-        }
-      }
+      FaceMove(facePosX_, facePosY_);
     }
     
     // Move the face to an X, Y offset - where 0, 0 is centered, negative is left/up
@@ -1151,7 +1054,7 @@ namespace Anki {
       
       for (u8 i = 0; i < w; ++i) {
         for (u8 j = 0; j < h; ++j) {
-          if (lastFaceFrameDecoded_[(srcX+i) + (DISPLAY_WIDTH * (srcY+j))]) {
+          if ((faceFrame_[i] >> j) & 1) {
             face_->drawPixel(destX + i, destY + j);
           }
         }

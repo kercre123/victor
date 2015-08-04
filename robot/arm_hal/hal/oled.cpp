@@ -1,6 +1,7 @@
 // High speed DMA-driven face animation
 #include "lib/stm32f4xx.h"
 #include "anki/cozmo/robot/hal.h"
+#include "anki/cozmo/shared/faceDisplayDecode.h"
 #include "hal/portable.h"
 
 #include <math.h>
@@ -278,41 +279,6 @@ namespace Anki
       #define COPY_ROW(x)       (0x40 | x)
       #define RLE_PATTERN(c, p) (0x80 | (c << 2) | p)
       
-      static const uint64_t BIT_EXPAND[] = {
-        0x0000000000000001L,
-        0x0000000000000005L,
-        0x0000000000000015L,
-        0x0000000000000055L,
-        0x0000000000000155L,
-        0x0000000000000555L,
-        0x0000000000001555L,
-        0x0000000000005555L,
-        0x0000000000015555L,
-        0x0000000000055555L,
-        0x0000000000155555L,
-        0x0000000000555555L,
-        0x0000000001555555L,
-        0x0000000005555555L,
-        0x0000000015555555L,
-        0x0000000055555555L,
-        0x0000000155555555L,
-        0x0000000555555555L,
-        0x0000001555555555L,
-        0x0000005555555555L,
-        0x0000015555555555L,
-        0x0000055555555555L,
-        0x0000155555555555L,
-        0x0000555555555555L,
-        0x0001555555555555L,
-        0x0005555555555555L,
-        0x0015555555555555L,
-        0x0055555555555555L,
-        0x0155555555555555L,
-        0x0555555555555555L,
-        0x1555555555555555L,
-        0x5555555555555555L,
-      };
-      
       void OLEDInit(void)
       {
         HWInit();
@@ -348,42 +314,7 @@ namespace Anki
         if (m_disableAnimate)
           return;
 
-        uint64_t *frame = m_frame;
-
-        for (int x = 0; x < COLS; ) {         
-          // Full row treatment
-          if (~*src & 0x80) {
-            uint8_t op = *(src++);
-            int rle = (op & 0x3F) + 1;
-            uint64_t copy = (op & 0x40) ? *(frame - 1) : 0;
-            
-            x += rle;
-
-            while (rle-- > 0) {
-              *(frame++) = copy;
-            }
-            
-            continue ;
-          }
-          
-          // Individual cell repeat
-          uint64_t col = 0;
-
-          for (int y = 0; y < ROWS && *src & 0x80; ) {
-            uint8_t op = *(src++);
-            int rle = (op >> 2) & 0x1F;
-            int pattern = op & 3;
-            
-            if (pattern) {
-              col |= (BIT_EXPAND[rle] * pattern) << y;
-            }
-
-            y += (rle + 1) * 2;
-          }
-          
-          *(frame++) = col;
-          x++ ;
-        }
+        FaceDisplayDecode(src, ROWS, COLS, m_frame);
 
         SendFrame();
       }
