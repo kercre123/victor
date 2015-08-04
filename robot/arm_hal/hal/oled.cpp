@@ -1,6 +1,7 @@
 // High speed DMA-driven face animation
 #include "lib/stm32f4xx.h"
 #include "anki/cozmo/robot/hal.h"
+#include "anki/cozmo/shared/faceDisplayDecode.h"
 #include "hal/portable.h"
 
 #include <math.h>
@@ -274,30 +275,10 @@ namespace Anki
         EnqueueWrite(DATA, m_frame, sizeof(m_frame));
       }
 
-      // Plot a blue pixel on the SSD1306 framebuffer with vertical addressing mode
-      #define PLOT(x, y)  m_frame[x] |= 0x800000000000000L >> (y ^ 63);
-
-      void TestFrame()
-      {
-        static float r = 0.20f;
-
-        memset(m_frame, 0, sizeof(m_frame));
-
-        float k = r;
-        for (int y = 0; y < ROWS; y++) {
-          int o = (int)(sin(k) * 48 + 64);
-          k += PI * 2 / ROWS;
-
-          for (int x = o; x < COLS; x++) {
-            PLOT(x, y);
-          }
-        }
-
-        r += PI / 180.0f;
-
-        SendFrame();
-      }
-
+      #define CLEAR_ROW(x)      (0x00 | x)
+      #define COPY_ROW(x)       (0x40 | x)
+      #define RLE_PATTERN(c, p) (0x80 | (c << 2) | p)
+      
       void OLEDInit(void)
       {
         HWInit();
@@ -307,53 +288,34 @@ namespace Anki
         EnqueueWrite(COMMAND, InitDisplay, sizeof(InitDisplay));
 
         // Draw "programmer art" face until we get real assets
-        u8 face[] = { 24, 64+24,           // Start 24 lines down and 24 pixels right
-          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
-          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
-          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
-          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
-          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
-          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
-          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
-          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
-          0 };
+        u8 face[] = { 
+          CLEAR_ROW(24),
+          RLE_PATTERN(12, 0),
+          RLE_PATTERN(8, 3),
+          COPY_ROW(15),
+          CLEAR_ROW(48),
+          RLE_PATTERN(12, 0),
+          RLE_PATTERN(8, 3),
+          COPY_ROW(15),
+          CLEAR_ROW(24)
+        };
         FaceAnimate(face);
       }
 
+      
       // Update the face to the next frame of an animation
       // @param frame - a pointer to a variable length frame of face animation data
       // Frame is in 8-bit RLE format:
-      //  0 terminates the image
-      //  1-63 draw N full lines (N*128 pixels) of black or blue
-      //  64-255 draw 0-191 pixels (N-64) of black or blue, then invert the color for the next run
-      // The decoder starts out drawing black, and inverts the color on every byte >= 64
+      // 00xxxxxx     CLEAR row (blank)
+      // 01xxxxxx     COPY PREVIOUS ROW (repeat)
+      // 1xxxxxyy     RLE 2-bit block
       void FaceAnimate(u8* src)
       {
         if (m_disableAnimate)
           return;
 
-        int draw = 0;
-        int dest = 0;
+        FaceDisplayDecode(src, ROWS, COLS, m_frame);
 
-        // Start with all black
-        memset(m_frame, 0, sizeof(m_frame));
-        while (0 != *src)
-        {
-          // Decide whether to draw lines or pixels
-          int run = *src++;
-          int count = run < 64 ? run * COLS : run - 64;
-
-          // If we are drawing blue, plot it - otherwise, skip it
-          if (draw && dest+count < ROWS * COLS)
-            for (int i = dest; i < dest+count; i++)
-              PLOT(i & (COLS-1), i / COLS);
-
-          dest += count;
-
-          // Invert draw color after plotting pixels
-          if (run >= 64)
-            draw = !draw;
-        }
         SendFrame();
       }
 

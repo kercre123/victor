@@ -313,6 +313,11 @@ message SetSteeringControllerGains {
   float_32 k2
 }
 
+// SetRobotVolume
+message SetRobotVolume {
+  float_32 volume
+}
+
 // StartTestMode
 message StartTestMode {
     int_32 p1,

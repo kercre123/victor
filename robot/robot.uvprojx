@@ -773,9 +773,9 @@
               <FilePath>.\supervisor\src\eyeController.cpp</FilePath>
             </File>
             <File>
-              <FileName>matlabVisualization.cpp</FileName>
+              <FileName>timeProfiler.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>.\supervisor\src\matlabVisualization.cpp</FilePath>
+              <FilePath>.\supervisor\src\timeProfiler.cpp</FilePath>
             </File>
           </Files>
         </Group>
@@ -1685,9 +1685,9 @@
               <FilePath>.\supervisor\src\eyeController.cpp</FilePath>
             </File>
             <File>
-              <FileName>matlabVisualization.cpp</FileName>
+              <FileName>timeProfiler.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>.\supervisor\src\matlabVisualization.cpp</FilePath>
+              <FilePath>.\supervisor\src\timeProfiler.cpp</FilePath>
             </File>
           </Files>
         </Group>
