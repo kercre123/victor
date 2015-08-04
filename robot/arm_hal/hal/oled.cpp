@@ -336,17 +336,13 @@ namespace Anki
         FaceAnimate(face);
       }
 
-      // 00xxxxxx     CLEAR row (blank)
-      // 01xxxxxx     COPY PREVIOUS ROW (repeat)
-      // 1xxxxxyy     RLE 2-bit block
       
       // Update the face to the next frame of an animation
       // @param frame - a pointer to a variable length frame of face animation data
       // Frame is in 8-bit RLE format:
-      //  0 terminates the image
-      //  1-63 draw N full lines (N*128 pixels) of black or blue
-      //  64-255 draw 0-191 pixels (N-64) of black or blue, then invert the color for the next run
-      // The decoder starts out drawing black, and inverts the color on every byte >= 64
+      // 00xxxxxx     CLEAR row (blank)
+      // 01xxxxxx     COPY PREVIOUS ROW (repeat)
+      // 1xxxxxyy     RLE 2-bit block
       void FaceAnimate(u8* src)
       {
         if (m_disableAnimate)
@@ -367,7 +363,7 @@ namespace Anki
               *(frame++) = copy;
             }
             
-            continue;
+            continue ;
           }
           
           // Individual cell repeat

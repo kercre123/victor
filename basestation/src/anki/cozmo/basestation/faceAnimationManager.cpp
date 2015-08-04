@@ -274,7 +274,7 @@ namespace Cozmo {
                         IMAGE_WIDTH, IMAGE_HEIGHT, img.cols, img.rows);
       return RESULT_FAIL;
     }
-       
+
     uint64_t packed[IMAGE_WIDTH];
 
     memset(packed, 0, sizeof(packed));
