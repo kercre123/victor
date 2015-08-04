@@ -315,8 +315,8 @@ namespace Cozmo {
       }
 
       // RLE pattern encoding
-      uint64_r col = packed[x++];
-      int pattern = 0;
+      uint64_t col = packed[x++];
+      int pattern = -1;
       int count = 0;
 
       for (int y = 0; y < IMAGE_HEIGHT; y += 2, col >>= 2) {
@@ -326,7 +326,7 @@ namespace Cozmo {
             rleData.push_back(0x80 | ((count-1) << 2) | pattern);
           }
           
-          pattern = packed[x] & 3;
+          pattern = col & 3;
           count = 1;
         } else {
           count++;
@@ -334,9 +334,11 @@ namespace Cozmo {
       }
 
       // If next row is a column encoding, we don't need to encode blank patterns
-      if (pattern && packed[x] && !(x < IMAGE_WIDTH && packed[x] == packed[x-1])) {
-        rleData.push_back(0x80 | ((count-1) << 2) | pattern);
+      if (!pattern && !packed[x]) {
+        continue ;
       }
+      
+      rleData.push_back(0x80 | ((count-1) << 2) | pattern);
     }
     
     return RESULT_OK;
