@@ -20,14 +20,14 @@
 namespace Anki {
 namespace Cozmo {
 
-  LookForFacesBehavior::LookForFacesBehavior(Robot &robot, const Json::Value& config)
+  BehaviorLookForFaces::BehaviorLookForFaces(Robot &robot, const Json::Value& config)
   : IBehavior(robot, config)
   , _currentState(State::LOOKING_AROUND)
   {
     
   }
   
-  Result LookForFacesBehavior::Init()
+  Result BehaviorLookForFaces::Init()
   {
     _currentState = State::LOOKING_AROUND;
     
@@ -46,7 +46,7 @@ namespace Cozmo {
   }
   
   
-  IBehavior::Status LookForFacesBehavior::Update(float currentTime_sec)
+  IBehavior::Status BehaviorLookForFaces::Update(float currentTime_sec)
   {
     switch(_currentState)
     {
@@ -76,6 +76,9 @@ namespace Cozmo {
         }
         break;
         
+      case State::INTERRUPTED:
+        return Status::COMPLETE;
+        
       default:
         
         return Status::FAILURE;
@@ -84,11 +87,24 @@ namespace Cozmo {
     return Status::RUNNING;
   } // Update()
   
+  Result BehaviorLookForFaces::Interrupt()
+  {
+    _robot.DisableTrackToObject();
+    _currentState = State::INTERRUPTED;
+    
+    return RESULT_OK;
+  }
+  
+  bool BehaviorLookForFaces::GetRewardBid(Reward& reward)
+  {
+    // TODO: Fill reward  in...
+    return true;
+  }
   
 #pragma mark -
 #pragma mark Signal Handlers
   
-  void LookForFacesBehavior::HandleRobotObservedObject(const ExternalInterface::RobotObservedObject &msg)
+  void BehaviorLookForFaces::HandleRobotObservedObject(const ExternalInterface::RobotObservedObject &msg)
   {
     // we only care about observed faces
     if(msg.objectFamily == BlockWorld::ObjectFamily::HUMAN_HEADS)
@@ -102,7 +118,7 @@ namespace Cozmo {
         {
           Vision::ObservableObject* object = _robot.GetBlockWorld().GetObjectByID(objectID);
           if(object == nullptr) {
-            PRINT_NAMED_ERROR("LookForFacesBehavior.HandleRobotObservedObject.InvalidID",
+            PRINT_NAMED_ERROR("BehaviorLookForFaces.HandleRobotObservedObject.InvalidID",
                               "Could not get object %d.\n", msg.objectID);
             return;
           }
@@ -118,7 +134,7 @@ namespace Cozmo {
           if(objectID == _robot.GetTrackToObject()) {
             Vision::ObservableObject* object = _robot.GetBlockWorld().GetObjectByID(objectID);
             if(object == nullptr) {
-              PRINT_NAMED_ERROR("LookForFacesBehavior.HandleRobotObservedObject.InvalidID",
+              PRINT_NAMED_ERROR("BehaviorLookForFaces.HandleRobotObservedObject.InvalidID",
                                 "Could not get object %d.\n", msg.objectID);
               return;
             }
@@ -132,13 +148,13 @@ namespace Cozmo {
           break;
           
         default:
-          PRINT_NAMED_ERROR("LookForFacesBehavior.HandleRobotObservedObject.UnknownState",
+          PRINT_NAMED_ERROR("BehaviorLookForFaces.HandleRobotObservedObject.UnknownState",
                             "Reached state = %d\n", _currentState);
       }
     }
   }
   
-  void LookForFacesBehavior::SetNextMovementTime()
+  void BehaviorLookForFaces::SetNextMovementTime()
   {
     // TODO: Get the timing variability from config
     const s32 minTime_ms = 200;
@@ -146,7 +162,7 @@ namespace Cozmo {
     _nextMovementTime_sec = MILIS_TO_SEC(static_cast<f32>(RandHelper(minTime_ms, maxTime_ms)));
   }
   
-  void LookForFacesBehavior::HandleRobotCompletedAction(const ExternalInterface::RobotCompletedAction& msg)
+  void BehaviorLookForFaces::HandleRobotCompletedAction(const ExternalInterface::RobotCompletedAction& msg)
   {
     if(msg.actionType == RobotActionType::COMPOUND)
     {

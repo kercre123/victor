@@ -58,9 +58,10 @@ namespace Cozmo {
     Result SelectNextBehavior(const std::string& name);
     
     // Add a new behavior to the available ones to be selected from.
+    // The behavior will be stored keyed by the name returned by its GetName() method.
     // NOTE: The BehaviorManager will handle deleting newBehavior when it
     //  destructs.
-    Result AddBehavior(const std::string& name, IBehavior* newBehavior);
+    Result AddBehavior(IBehavior* newBehavior);
     
     // Specify the minimum time we should stay in each behavior before
     // considering switching

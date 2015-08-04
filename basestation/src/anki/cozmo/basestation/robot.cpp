@@ -131,6 +131,29 @@ namespace Anki {
 
       ReadAnimationDir(false);
       
+      // Read in behavior manager Json
+      Json::Value behaviorConfig;
+      {
+        const std::string jsonFilename = PREPEND_SCOPED_PATH(Config, "behavior_config.json");
+        std::ifstream jsonFile(jsonFilename);
+        if(jsonFile.is_open()) {
+          PRINT_NAMED_ERROR("Robot.BehaviorConfigJsonNotFound",
+                            "Behavior Json config file %s not found.\n",
+                            jsonFilename.c_str());
+        } else {
+          if(false == reader.parse(jsonFile, behaviorConfig)) {
+            PRINT_NAMED_ERROR("Robot.BehaviorConfigJsonParseFailure",
+                              "Failed to parse Json behavior config file %s.\n", jsonFilename.c_str());
+          } else {
+            PRINT_NAMED_INFO("Robot.BehaviorConfigLoaded",
+                             "Loaded Json behavior config from file %s.\n",
+                             jsonFilename.c_str());
+          }
+          jsonFile.close();
+        }
+      }
+      _behaviorMgr.Init(behaviorConfig);
+      
       SetHeadAngle(_currentHeadAngle);
       _pdo = new PathDolerOuter(msgHandler, robotID);
       _longPathPlanner  = new LatticePlanner(this, mprims);

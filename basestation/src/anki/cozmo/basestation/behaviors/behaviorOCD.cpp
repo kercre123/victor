@@ -114,6 +114,14 @@ namespace Cozmo {
     return RESULT_OK;
   }
   
+  bool BehaviorOCD::GetRewardBid(Reward& reward)
+  {
+    
+    // TODO: Fill in reward
+    
+    return true;
+  }
+  
 #pragma mark -
 #pragma mark OCD-Specific Methods
   

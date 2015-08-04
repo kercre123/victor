@@ -20,11 +20,11 @@
 namespace Anki {
 namespace Cozmo {
   
-  class LookForFacesBehavior : public IBehavior
+  class BehaviorLookForFaces : public IBehavior
   {
   public:
     
-    LookForFacesBehavior(Robot& robot, const Json::Value& config);
+    BehaviorLookForFaces(Robot& robot, const Json::Value& config);
     
     virtual Result Init() override;
     
@@ -33,10 +33,14 @@ namespace Cozmo {
     
     virtual Status Update(float currentTime_sec) override;
     
+    virtual Result Interrupt() override;
+    
     virtual const std::string& GetName() const override {
       static const std::string name("LookForFaces");
       return name;
     }
+    
+    virtual bool GetRewardBid(Reward& reward);
     
   private:
     
@@ -47,7 +51,8 @@ namespace Cozmo {
     
     enum class State {
       LOOKING_AROUND,
-      TRACKING_FACE
+      TRACKING_FACE,
+      INTERRUPTED
     };
     
     State _currentState;
@@ -59,7 +64,7 @@ namespace Cozmo {
     f32 _lastLookAround_sec;
     f32 _nextMovementTime_sec;
     
-  }; // LookForFacesBehavior
+  }; // BehaviorLookForFaces
   
 } // namespace Cozmo
 } // namespace Anki

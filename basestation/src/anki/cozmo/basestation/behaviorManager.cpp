@@ -12,9 +12,13 @@
 
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
+#include "anki/cozmo/basestation/behaviors/behaviorOCD.h"
+#include "anki/cozmo/basestation/behaviors/behaviorLookForFaces.h"
+
 #include "anki/cozmo/basestation/robot.h"
 
 #include "util/logging/logging.h"
+
 
 namespace Anki {
 namespace Cozmo {
@@ -35,6 +39,11 @@ namespace Cozmo {
     
     // TODO: Set configuration data from Json...
     
+    // TODO: Only load behaviors specified by Json?
+    
+    AddBehavior(new BehaviorOCD(_robot, config));
+    AddBehavior(new BehaviorLookForFaces(_robot, config));
+    
     _isInitialized = true;
     
     return RESULT_OK;
@@ -53,12 +62,14 @@ namespace Cozmo {
     }
   }
   
-  Result BehaviorManager::AddBehavior(const std::string &name, IBehavior *newBehavior)
+  Result BehaviorManager::AddBehavior(IBehavior *newBehavior)
   {
     if(newBehavior == nullptr) {
       PRINT_NAMED_ERROR("BehaviorManager.AddBehavior.NullBehavior", "Refusing to add NULL behavior.\n");
       return RESULT_FAIL;
     }
+    
+    const std::string& name = newBehavior->GetName();
     
     // Make sure to delete any existing behavior with the same name before replacing
     auto existingBehavior = _behaviors.find(name);
