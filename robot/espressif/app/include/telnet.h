@@ -1,4 +1,4 @@
-/** @file A debug interface and possibly future CLI socket for the robot
+/** @file  A debug interface and possibly future CLI socket for the robot
  * @author Daniel Casner <daniel@anki.com>
  */
 #ifndef __telnet_h
@@ -7,7 +7,7 @@
 /// Port the espressif will listen on for upgrade commands
 #define TELNET_PORT 23
 /// The maximum size of a single print call
-#define TELNET_MAX_PRINT_LENGTH 1024
+#define TELNET_MAX_PRINT_LENGTH 256
 
 /// Initalize the telnet socket
 int8_t telnetInit(void);

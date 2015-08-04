@@ -25,6 +25,7 @@
 #include "mem.h"
 #include "os_type.h"
 #include "user_interface.h"
+#include "telnet.h"
 #include "client.h"
 
 // UartDev is defined and initialized in rom code.
@@ -207,7 +208,7 @@ STATUS ICACHE_FLASH_ATTR uartQueuePacket(uint8* data, uint16 len)
 
   if ((len + 6) > available)
   {
-    os_printf("RFRX, no space %d > %d\r\n", len + 6, available);
+    telnetPrintf("RFRX, no space %d > %d\r\n", len + 6, available);
     return BUSY;
   }
 
@@ -408,7 +409,7 @@ LOCAL void ICACHE_FLASH_ATTR uartTask(os_event_t *event)
     const int32 wrapAround = ((pktStart - rxBuf) + pktLen) - RX_BUF_LEN;
 
     if (pktStart < rxBuf || pktStart > (rxBuf + RX_BUF_LEN)) {
-      os_printf("FATAL: uart pktStart out of bounds %p %p..%p\r\n", pktStart, rxBuf, rxBuf+RX_BUF_LEN);
+      telnetPrintf("FATAL: uart pktStart out of bounds %p %p..%p\r\n", pktStart, rxBuf, rxBuf+RX_BUF_LEN);
       return;
     }
     else if (wrapAround > 0) // Packet data wraps around buffer and isn't contiguous in memory
@@ -416,7 +417,7 @@ LOCAL void ICACHE_FLASH_ATTR uartTask(os_event_t *event)
       uint8* pktBuf = (uint8*)os_malloc(pktLen);
       if (pktBuf == NULL)
       {
-        os_printf("Couldn't allocate memory to assemble radio tx packet\r\n");
+        telnetPrintf("Couldn't allocate memory to assemble radio tx packet\r\n");
         rxRind = (rxRind + pktLen) % RX_BUF_LENMSK;
         return;
       }

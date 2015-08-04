@@ -14,6 +14,8 @@
 #include "upgrade_controller.h"
 #include "user_config.h"
 
+#define USER_TASK_INTERVAL_MS 1000
+
 /** User "idle" task
  * Called by OS with lowest priority.
  */
@@ -21,6 +23,17 @@ LOCAL bool ICACHE_FLASH_ATTR userTask(uint32_t param)
 {
   return false;
 }
+
+static ETSTimer userTimer;
+
+LOCAL void ICACHE_FLASH_ATTR userIntervalTask(void *timer_arg)
+{
+  static int32 tick = 0;
+  int32 tock = system_get_time();
+  telnetPrintf("%d\t%dus\r\n", tock, tock-tick-(USER_TASK_INTERVAL_MS*1000));
+  tick = tock;
+}
+
 
 /** Handle wifi events passed by the OS
  */
@@ -162,6 +175,10 @@ static void ICACHE_FLASH_ATTR system_init_done(void)
   // Set up shared background tasks
   task0Init();
   //task0Post(userTask, 0);
+
+  os_timer_disarm(&userTimer);
+  os_timer_setfn(&userTimer, userIntervalTask, NULL);
+  os_timer_arm(&userTimer, USER_TASK_INTERVAL_MS, true);
 
   os_printf("CPU Freq: %d MHz\r\n", system_get_cpu_freq());
 
