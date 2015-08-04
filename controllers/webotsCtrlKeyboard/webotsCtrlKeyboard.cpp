@@ -190,6 +190,7 @@ namespace Anki {
       void SendMessage(const ExternalInterface::MessageGameToEngine& msg);
       void SendDriveWheels(const f32 lwheel_speed_mmps, const f32 rwheel_speed_mmps);
       void SendTurnInPlace(const f32 angle_rad);
+      void SendTurnInPlaceAtSpeed(const f32 speed_rad_per_sec, const f32 accel_rad_per_sec2);
       void SendMoveHead(const f32 speed_rad_per_sec);
       void SendMoveLift(const f32 speed_rad_per_sec);
       void SendMoveHeadToAngle(const f32 rad, const f32 speed, const f32 accel, const f32 duration_sec = 0.f);
@@ -668,6 +669,9 @@ namespace Anki {
             wheelSpeed = root_->getField("driveSpeedTurbo")->getSFFloat();
           }
           
+          // Speed of point turns (when no target angle specified). See SendTurnInPlaceAtSpeed().
+          f32 pointTurnSpeed = abs(root_->getField("pointTurnSpeed_degPerSec")->getSFFloat());
+          
           
           //printf("keypressed: %d, modifier %d, orig_key %d, prev_key %d\n",
           //       key, modifier_key, key | modifier_key, lastKeyPressed_);
@@ -756,13 +760,21 @@ namespace Anki {
                 
               case (s32)'<':
               {
-                SendTurnInPlace(DEG_TO_RAD(45));
+                if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
+                  SendTurnInPlaceAtSpeed(DEG_TO_RAD(pointTurnSpeed), DEG_TO_RAD(1440));
+                } else {
+                  SendTurnInPlace(DEG_TO_RAD(45));
+                }
                 break;
               }
                 
               case (s32)'>':
               {
-                SendTurnInPlace(DEG_TO_RAD(-45));
+                if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
+                  SendTurnInPlaceAtSpeed(DEG_TO_RAD(-pointTurnSpeed), DEG_TO_RAD(1440));
+                } else {
+                  SendTurnInPlace(DEG_TO_RAD(-45));
+                }
                 break;
               }
                 
@@ -2012,6 +2024,17 @@ namespace Anki {
         m.angle_rad = angle_rad;
         ExternalInterface::MessageGameToEngine message;
         message.Set_TurnInPlace(m);
+        SendMessage(message);
+      }
+
+      void SendTurnInPlaceAtSpeed(const f32 speed_rad_per_sec, const f32 accel_rad_per_sec2)
+      {
+        ExternalInterface::TurnInPlaceAtSpeed m;
+        m.robotID = 1;
+        m.speed_rad_per_sec = speed_rad_per_sec;
+        m.accel_rad_per_sec2 = accel_rad_per_sec2;
+        ExternalInterface::MessageGameToEngine message;
+        message.Set_TurnInPlaceAtSpeed(m);
         SendMessage(message);
       }
       
