@@ -10,6 +10,7 @@
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/activeBlockTypes.h"
+#include "anki/cozmo/shared/faceDisplayDecode.h"
 #include "messages.h"
 #include "wheelController.h"
 
@@ -138,8 +139,8 @@ namespace Anki {
       webots::Display* face_;
       const u32 DISPLAY_WIDTH = 128;
       const u32 DISPLAY_HEIGHT = 64;
-      const u32 NUM_DISPLAY_PIXELS = DISPLAY_WIDTH * DISPLAY_HEIGHT;
-      u8 lastFaceFrameDecoded_[NUM_DISPLAY_PIXELS];  // Each byte represents one pixel
+      uint64_t faceFrame_[DISPLAY_WIDTH];
+      
       s32 facePosX_ = 0;
       s32 facePosY_ = 0;
       TimeStamp_t faceBlinkStartTime_ = 0;
@@ -1012,55 +1013,19 @@ namespace Anki {
       audioEndTime_ += AUDIO_FRAME_TIME_MS;
       audioReadyForFrame_ = false;
     }
+
     
-    // Update the face to the next frame of an animation
-    // @param frame - a pointer to a variable length frame of face animation data
-    void HAL::FaceAnimate(u8* frame)
+    void HAL::FaceAnimate(u8* src)
     {
-      u32 pixelCounter = 0;
-      bool draw = false;
-      
       // Clear the display
       ClearFace();
-      
-      // Clear the last face frame buffer
-      memset(lastFaceFrameDecoded_, 0, NUM_DISPLAY_PIXELS);
-      
-      // Draw pixels
-      while (*frame != 0) {
-        u8 run = *frame++;
-        u32 numPixels = run < 64 ? run * DISPLAY_WIDTH : run - 64;
-        
-        // Adjust number of pixels this byte if it exceeds screen total
-        if (pixelCounter + numPixels > NUM_DISPLAY_PIXELS) {
-          numPixels = NUM_DISPLAY_PIXELS - pixelCounter;
-        }
-        
-        // Set pixels
-        if (draw) {
-          for (u32 i=0; i<numPixels; ++i) {
-            u32 y = pixelCounter / DISPLAY_WIDTH;
-            u32 x = pixelCounter - (y * DISPLAY_WIDTH);
-            ++pixelCounter;
-            
-            lastFaceFrameDecoded_[x + (y * DISPLAY_WIDTH)] = 1;
-          }
-        } else {
-          // Update total pixels drawn thus far
-          pixelCounter += numPixels;
-        }
-        
-        // Toggle whether we're drawing 0s or 1s
-        if (run >= 64) {
-          draw = !draw;
-        }
 
-      }
+      // Decode face
+      FaceDisplayDecode(src, DISPLAY_HEIGHT, DISPLAY_WIDTH, faceFrame_);
       
       // Draw face
       FaceMove(facePosX_, facePosY_);
     }
-    
     
     // Move the face to an X, Y offset - where 0, 0 is centered, negative is left/up
     void HAL::FaceMove(s32 x, s32 y)
@@ -1089,7 +1054,7 @@ namespace Anki {
       
       for (u8 i = 0; i < w; ++i) {
         for (u8 j = 0; j < h; ++j) {
-          if (lastFaceFrameDecoded_[(srcX+i) + (DISPLAY_WIDTH * (srcY+j))]) {
+          if ((faceFrame_[i] >> j) & 1) {
             face_->drawPixel(destX + i, destY + j);
           }
         }
