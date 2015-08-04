@@ -92,6 +92,7 @@ def main(scriptArgs):
   sys.path.insert(0, os.path.join(options.buildToolsPath, 'tools/ankibuild'))
   import installBuildDeps
   import updateFileLists
+  import util
 
   if not options.coretechInternalPath:
     options.coretechInternalPath = os.path.join(options.projectRoot, 'coretech')
@@ -165,12 +166,8 @@ def main(scriptArgs):
   generator.processFolder(['clad/src'], ['project/gyp/clad.lst'])
   webotsPhysicsPath = os.path.join(projectRoot, 'generated/webots/src/plugins/physics/')
   # copy the webots' physics.c into the generated folder
-  if (subprocess.call(['mkdir', '-p', webotsPhysicsPath]) != 0):
-    UtilLog.error("error createing folder " + webotsPhysicsPath)
-    return False
-  if (subprocess.call(['cp', os.path.join(webotsPath, 'resources/projects/plugins/physics/physics.c'), webotsPhysicsPath]) != 0):
-    UtilLog.error("error copying physics.c")
-    return False
+  util.File.mkdir_p(webotsPhysicsPath)
+  util.File.cp(os.path.join(webotsPath, 'resources/projects/plugins/physics/physics.c'), webotsPhysicsPath)
   generator.processFolder(['simulator/plugins/physics/cozmo_physics', webotsPhysicsPath], ['project/gyp/pluginPhysics.lst'])
   # this is too big of a scope, we need to manualy maintain ctrlLightCube.lst for now
   # generator.processFolder(['simulator/controllers/block_controller', 'robot/sim_hal/', 'robot/supervisor/src/'], ['project/gyp/ctrlLightCube.lst'])
