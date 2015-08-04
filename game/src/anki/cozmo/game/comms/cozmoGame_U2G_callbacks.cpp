@@ -203,7 +203,7 @@ namespace Cozmo {
     }
   }
 
-  void CozmoGameImpl::Process_TurnInPlaceAtSpeed(U2G::TurnInPlaceAtSpeed const& msg)
+  void CozmoGameImpl::Process_TurnInPlaceAtSpeed(ExternalInterface::TurnInPlaceAtSpeed const& msg)
   {
     Robot* robot = GetRobotByID(msg.robotID);
     
