@@ -202,6 +202,15 @@ namespace Cozmo {
       robot->GetActionList().QueueActionAtEnd(DriveAndManipulateSlot, new TurnInPlaceAction(msg.angle_rad));
     }
   }
+
+  void CozmoGameImpl::Process_TurnInPlaceAtSpeed(ExternalInterface::TurnInPlaceAtSpeed const& msg)
+  {
+    Robot* robot = GetRobotByID(msg.robotID);
+    
+    if(robot != nullptr) {
+        robot->TurnInPlaceAtSpeed(msg.speed_rad_per_sec, msg.accel_rad_per_sec2);
+    }
+  }
   
   void CozmoGameImpl::Process_MoveHead(ExternalInterface::MoveHead const& msg)
   {
