@@ -177,6 +177,10 @@ namespace Cozmo {
   
   Result BehaviorOCD::SelectNextObjectToPickUp()
   {
+#   if DEBUG_OCD_BEHAVIOR
+    PRINT_NAMED_INFO("BehaviorOCD.SelectNextObjectToPickUp", "\n");
+#   endif
+    
     if(_messyObjects.empty()) {
       PRINT_NAMED_ERROR("BehaviorOCD.SelectNextObjectToPickUp.NoMessyObjects", "\n");
       return RESULT_FAIL;
@@ -262,6 +266,10 @@ namespace Cozmo {
   
   Result BehaviorOCD::SelectNextPlacement()
   {
+#   if DEBUG_OCD_BEHAVIOR
+    PRINT_NAMED_INFO("BehaviorOCD.SelectNextPlacement", "\n");
+#   endif
+    
     IActionRunner* placementAction = nullptr;
     
     ObjectID carriedObjectID;
@@ -447,54 +455,76 @@ namespace Cozmo {
     {
       case State::PICKING_UP_BLOCK:
       {
-        switch(msg.actionType) {
-            
-          case RobotActionType::PICKUP_OBJECT_HIGH:
-          case RobotActionType::PICKUP_OBJECT_LOW:
-            // We're done picking up the block, figure out where to put it
-            SelectNextPlacement();
-            _currentState = State::PLACING_BLOCK;
-            break;
-            
-          case RobotActionType::PICK_AND_PLACE_INCOMPLETE:
-            // We failed to pick up or place the last block, try again?
-            SelectNextObjectToPickUp();
-            break;
-            
-          default:
-            // Simply ignore other action completions?
-            break;
-
-        } // switch(actionType)
+        if(msg.result == ActionResult::SUCCESS) {
+          switch(msg.actionType) {
+              
+            case RobotActionType::PICKUP_OBJECT_HIGH:
+            case RobotActionType::PICKUP_OBJECT_LOW:
+#             if DEBUG_OCD_BEHAVIOR
+              PRINT_NAMED_INFO("BehaviorOCD.HandleActionCompleted.PickupSuccessful", "\n");
+#             endif
+              // We're done picking up the block, figure out where to put it
+              SelectNextPlacement();
+              _currentState = State::PLACING_BLOCK;
+              break;
+              
+            case RobotActionType::PICK_AND_PLACE_INCOMPLETE:
+              // We failed to pick up or place the last block, try again?
+              SelectNextObjectToPickUp();
+              break;
+              
+            default:
+              // Simply ignore other action completions?
+              break;
+              
+          } // switch(actionType)
+        } else {
+#         if DEBUG_OCD_BEHAVIOR
+          PRINT_NAMED_INFO("BehaviorOCD.HandleActionCompleted.PickupFailure", "Trying again\n");
+#         endif
+          // We failed to pick up or place the last block, try again?
+          SelectNextObjectToPickUp();
+        }
         break;
       } // case PICKING_UP_BLOCK
         
       case State::PLACING_BLOCK:
       {
-        switch(msg.actionType) {
-          case RobotActionType::PLACE_OBJECT_LOW:
-            _lastObjectPlacedOnGround = _objectToPickUp;
-            // NOTE: deliberate fallthrough to next case!
-          case RobotActionType::PLACE_OBJECT_HIGH:
-            // We're done placing the block, mark it as neat and move to next one
-            _messyObjects.erase(_objectToPickUp);
-            _neatObjects.insert(_objectToPickUp);
-            
-            // TODO: Get "neat" color and on/off settings from config
-            _robot.SetObjectLights(_objectToPickUp, WhichBlockLEDs::ALL, NamedColors::CYAN, NamedColors::BLACK, 10, 10, 2000, 2000, false, MakeRelativeMode::RELATIVE_LED_MODE_OFF, {});
-            
-            SelectNextObjectToPickUp();
-            _currentState = State::PICKING_UP_BLOCK;
-            break;
-            
-          case RobotActionType::PICK_AND_PLACE_INCOMPLETE:
-            // We failed to place the last block, try again?
-            SelectNextPlacement();
-            break;
-            
-          default:
-            // Simply ignore other action completions?
-            break;
+        if(msg.result == ActionResult::SUCCESS) {
+          switch(msg.actionType) {
+            case RobotActionType::PLACE_OBJECT_LOW:
+              _lastObjectPlacedOnGround = _objectToPickUp;
+              // NOTE: deliberate fallthrough to next case!
+            case RobotActionType::PLACE_OBJECT_HIGH:
+#             if DEBUG_OCD_BEHAVIOR
+              PRINT_NAMED_INFO("BehaviorOCD.HandleActionCompleted.PlacementSuccessful", "\n");
+#             endif
+              // We're done placing the block, mark it as neat and move to next one
+              _messyObjects.erase(_objectToPickUp);
+              _neatObjects.insert(_objectToPickUp);
+              
+              // TODO: Get "neat" color and on/off settings from config
+              _robot.SetObjectLights(_objectToPickUp, WhichBlockLEDs::ALL, NamedColors::CYAN, NamedColors::BLACK, 10, 10, 2000, 2000, false, MakeRelativeMode::RELATIVE_LED_MODE_OFF, {});
+              
+              SelectNextObjectToPickUp();
+              _currentState = State::PICKING_UP_BLOCK;
+              break;
+              
+            case RobotActionType::PICK_AND_PLACE_INCOMPLETE:
+              // We failed to place the last block, try again?
+              SelectNextPlacement();
+              break;
+              
+            default:
+              // Simply ignore other action completions?
+              break;
+          }
+        } else {
+#         if DEBUG_OCD_BEHAVIOR
+          PRINT_NAMED_INFO("BehaviorOCD.HandleActionCompleted.PlacementFailure", "Trying again\n");
+#         endif
+          // We failed to place the last block, try again?
+          SelectNextPlacement();
         }
         break;
       } // case PLACING_BLOCK

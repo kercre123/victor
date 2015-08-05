@@ -27,6 +27,8 @@
 #include <iomanip>
 
 
+// TODO: Remove once we have Lee's Events
+#include "tempSignals.h"
 
 namespace Anki {
   
@@ -1548,9 +1550,12 @@ namespace Anki {
             ActionCompletedStruct completionInfo;
             completionInfo.numObjects = numObjects;
             completionInfo.objectIDs = {{carryObject, carryObjectOnTop, -1, -1, -1}};
-            robot.GetExternalInterface()->DeliverToGame(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotCompletedAction(
-              robot.GetID(), GetType(), result, completionInfo
-            )));
+            
+            // TODO: Remove once we have Lee's Events
+            ExternalInterface::MessageEngineToGame msg(ExternalInterface::RobotCompletedAction(robot.GetID(), GetType(), result, completionInfo));
+            
+            robot.GetExternalInterface()->DeliverToGame(ExternalInterface::MessageEngineToGame(msg));
+            CozmoEngineSignals::RobotCompletedActionSignal().emit(msg);
             
             return;
           }
@@ -1581,9 +1586,12 @@ namespace Anki {
               object = robot.GetBlockWorld().FindObjectOnTopOf(*object, 15.f);
             }
 
-            robot.GetExternalInterface()->DeliverToGame(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotCompletedAction(
-              robot.GetID(), GetType(), result, completionInfo
-            )));
+            // TODO: Remove once we have Lee's Events
+            ExternalInterface::MessageEngineToGame msg(ExternalInterface::RobotCompletedAction(robot.GetID(), GetType(), result, completionInfo));
+            
+            robot.GetExternalInterface()->DeliverToGame(ExternalInterface::MessageEngineToGame(msg));
+            CozmoEngineSignals::RobotCompletedActionSignal().emit(msg);
+
             return;
           }
           break;

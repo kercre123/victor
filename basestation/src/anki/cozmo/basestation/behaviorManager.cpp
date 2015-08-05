@@ -123,7 +123,7 @@ namespace Cozmo {
     
     if(currentTime_sec - _lastSwitchTime_sec > _minBehaviorTime_sec) {
       // We've been in the current behavior long enough to consider switching
-      lastResult = SelectNextBehavior();
+      lastResult = SelectNextBehavior("OCD");
       if(lastResult != RESULT_OK) {
         PRINT_NAMED_WARNING("BehaviorManager.Update.SelectNextFailed",
                             "Failed trying to select next behavior, continuing with current.\n");
@@ -170,6 +170,34 @@ namespace Cozmo {
   } // Update()
   
   
+  Result BehaviorManager::InitNextBehaviorHelper()
+  {
+    Result initResult = RESULT_OK;
+    
+    // Initialize the selected behavior, if it's not the one we're already running
+    if(_nextBehavior != _currentBehavior) {
+      initResult = _nextBehavior->second->Init();
+      if(initResult != RESULT_OK) {
+        PRINT_NAMED_ERROR("BehaviorManager.InitNextBehaviorHelper.InitFailed",
+                          "Failed to initialize %s behavior.\n",
+                          _nextBehavior->second->GetName().c_str());
+        _nextBehavior = _behaviors.end();
+      } else if(_currentBehavior != _behaviors.end()) {
+        // We've successfully initialized the next behavior to run, so interrupt
+        // the current behavior that's running if there is one. It will continue
+        // to run on calls to Update() until it completes and then we will switch
+        // to the selected next behavior
+        _currentBehavior->second->Interrupt();
+        
+#       if DEBUG_BEHAVIOR_MGR
+        PRINT_NAMED_INFO("BehaviorManger.InitNextBehaviorHelper.Selected",
+                         "Selected %s to run next.\n", _nextBehavior->first.c_str());
+#       endif
+      }
+    }
+    return initResult;
+  }
+  
   Result BehaviorManager::SelectNextBehavior()
   {
     
@@ -202,26 +230,8 @@ namespace Cozmo {
     }
     
     // Initialize the selected behavior
-    Result initResult = _nextBehavior->second->Init();
-    if(initResult != RESULT_OK) {
-      PRINT_NAMED_ERROR("BehaviorManager.SelectNextBehavior.InitFailed",
-                        "Failed to initialize %s behavior.\n",
-                        _nextBehavior->second->GetName().c_str());
-      _nextBehavior = _behaviors.end();
-    } else if(_currentBehavior != _behaviors.end()) {
-      // We've successfully initialized the next behavior to run, so interrupt
-      // the current behavior that's running if there is one. It will continue
-      // to run on calls to Update() until it completes and then we will switch
-      // to the selected next behavior
-      _currentBehavior->second->Interrupt();
-      
-#     if DEBUG_BEHAVIOR_MGR
-      PRINT_NAMED_INFO("BehaviorManger.SelectNextBehavior.Selected",
-                       "Selected %s to run next.\n", _nextBehavior->first.c_str());
-#     endif
-    }
+    return InitNextBehaviorHelper();
     
-    return initResult;
   } // SelectNextBehavior()
   
   Result BehaviorManager::SelectNextBehavior(const std::string& name)
@@ -238,7 +248,7 @@ namespace Cozmo {
       return RESULT_FAIL;
     }
     
-    return RESULT_OK;
+    return InitNextBehaviorHelper();
   }
   
   

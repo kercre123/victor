@@ -79,6 +79,7 @@ namespace Cozmo {
     Robot& _robot;
     
     void SwitchToNextBehavior();
+    Result InitNextBehaviorHelper();
     
     // Map from behavior name to available behaviors
     using BehaviorContainer = std::unordered_map<std::string, IBehavior*>;
