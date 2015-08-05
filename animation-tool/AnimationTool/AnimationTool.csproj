@@ -1,0 +1,222 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{6F9FDB5A-6987-40A0-887A-BE274F051322}</ProjectGuid>
+    <OutputType>WinExe</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>AnimationTool</RootNamespace>
+    <AssemblyName>AnimationTool</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <UseVSHostingProcess>false</UseVSHostingProcess>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Windows.Forms.DataVisualization" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml" />
+    <Reference Include="Newtonsoft.Json, Version=7.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed">
+      <HintPath>..\packages\Newtonsoft.Json.7.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\..\unity\Cozmo\Assets\Scripts\Generated\clad\**\*.cs">
+      <Link>DoNotEdit\clad\%(RecursiveDir)%(FileName)%(Extension)</Link>
+    </Compile>
+    <Compile Include="..\..\unity\Cozmo\Assets\Scripts\Channel\AdvertisementRegistrationMsg.cs">
+      <Link>DoNotEdit\Channel\AdvertisementRegistrationMsg.cs</Link>
+    </Compile>
+    <Compile Include="..\..\unity\Cozmo\Assets\Scripts\Channel\ChannelBase.cs">
+      <Link>DoNotEdit\Channel\ChannelBase.cs</Link>
+    </Compile>
+    <Compile Include="..\..\unity\Cozmo\Assets\Scripts\Channel\UdpChannel.cs">
+      <Link>DoNotEdit\Channel\UdpChannel.cs</Link>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="ActionManager.cs" />
+    <Compile Include="Actions\Action.cs" />
+    <Compile Include="Actions\AddDataPoint.cs" />
+    <Compile Include="Actions\ChangeAllChartDurations.cs" />
+    <Compile Include="Actions\ChangeChartDuration.cs" />
+    <Compile Include="Actions\Sequencer\AddDataPoint.cs" />
+    <Compile Include="Actions\Sequencer\ChangeChartDuration.cs" />
+    <Compile Include="Actions\Sequencer\EnableChart.cs" />
+    <Compile Include="Actions\Sequencer\FaceAnimation\AddPreviewBar.cs" />
+    <Compile Include="Actions\Sequencer\FaceAnimation\EnableChart.cs" />
+    <Compile Include="Actions\Sequencer\FaceAnimation\MovePreviewBar.cs" />
+    <Compile Include="Actions\Sequencer\FaceAnimation\MoveSelectedPreviewBar.cs" />
+    <Compile Include="Actions\Sequencer\FaceAnimation\SelectDataPoint.cs" />
+    <Compile Include="Actions\Sequencer\MoveDataPoint.cs" />
+    <Compile Include="Actions\Sequencer\MoveSelectedDataPoints.cs" />
+    <Compile Include="Actions\Sequencer\RemoveDataPoint.cs" />
+    <Compile Include="Actions\Sequencer\RemoveSelectedDataPoints.cs" />
+    <Compile Include="Actions\Sequencer\ScaleChartDuration.cs" />
+    <Compile Include="Actions\Sequencer\TruncateChartDuration.cs" />
+    <Compile Include="Actions\RemoveSelectedDataPointsOfSelectedCharts.cs" />
+    <Compile Include="Actions\DisableChart.cs" />
+    <Compile Include="Actions\EnableChart.cs" />
+    <Compile Include="Actions\MoveDataPoint.cs" />
+    <Compile Include="Actions\MoveSelectedDataPoints.cs" />
+    <Compile Include="Actions\MoveSelectedDataPointsOfSelectedCharts.cs" />
+    <Compile Include="Actions\RemoveDataPoint.cs" />
+    <Compile Include="Actions\RemoveSelectedDataPoints.cs" />
+    <Compile Include="Actions\ScaleAllChartDurations.cs" />
+    <Compile Include="Actions\ScaleChartDuration.cs" />
+    <Compile Include="Actions\SelectAllDataPoints.cs" />
+    <Compile Include="Actions\SelectChart.cs" />
+    <Compile Include="Actions\SelectDataPoint.cs" />
+    <Compile Include="Actions\TruncateAllChartDurations.cs" />
+    <Compile Include="Actions\TruncateChartDuration.cs" />
+    <Compile Include="Actions\UnselectAllCharts.cs" />
+    <Compile Include="Actions\UnselectAllDataPoints.cs" />
+    <Compile Include="Actions\UnselectChart.cs" />
+    <Compile Include="Actions\UnselectDataPoint.cs" />
+    <Compile Include="ArcForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="BodyForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ChangeDurationForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="CheckBoxes.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ExtraData.cs" />
+    <Compile Include="IPForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="JsonData.cs" />
+    <Compile Include="MainForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="MainForm.Designer.cs">
+      <DependentUpon>MainForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Mouse.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Program.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Read.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="RobotEngineManager.cs" />
+    <Compile Include="StraightForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="TurnInPlaceForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UnityToWindowsForm.cs" />
+    <Compile Include="VolumeForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Write.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <EmbeddedResource Include="ArcForm.resx">
+      <DependentUpon>ArcForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="BodyForm.resx">
+      <DependentUpon>BodyForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ChangeDurationForm.resx">
+      <DependentUpon>ChangeDurationForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="IPForm.resx">
+      <DependentUpon>IPForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="MainForm.resx">
+      <DependentUpon>MainForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+      <DesignTime>True</DesignTime>
+    </Compile>
+    <EmbeddedResource Include="StraightForm.resx">
+      <DependentUpon>StraightForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="VolumeForm.resx">
+      <DependentUpon>VolumeForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <None Include="packages.config" />
+    <None Include="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+    <Compile Include="Properties\Settings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\arrow-arc-back-right.png" />
+    <EmbeddedResource Include="Resources\arrow-arc-back-left.png" />
+    <EmbeddedResource Include="Resources\arrow-arc-forward-left.png" />
+    <EmbeddedResource Include="Resources\arrow-arc-forward-right.png" />
+    <EmbeddedResource Include="Resources\arrow-back.png" />
+    <EmbeddedResource Include="Resources\arrow-forward.png" />
+    <EmbeddedResource Include="Resources\arrow-left.png" />
+    <EmbeddedResource Include="Resources\arrow-right.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <COMReference Include="NetFwTypeLib">
+      <Guid>{58FBCF7C-E7A9-467C-80B3-FC65E8FCCA08}</Guid>
+      <VersionMajor>1</VersionMajor>
+      <VersionMinor>0</VersionMinor>
+      <Lcid>0</Lcid>
+      <WrapperTool>tlbimp</WrapperTool>
+      <Isolated>False</Isolated>
+      <EmbedInteropTypes>True</EmbedInteropTypes>
+    </COMReference>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>
