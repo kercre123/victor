@@ -84,9 +84,6 @@ const s32 MAX_FACE_FRAME_SIZE = 1024;
 
 const u32 AUDIO_SAMPLE_SIZE = 800;
 
-// Streamed animation will not play until we've got this many _audio_ keyframes
-// buffered.
-const s32 ANIMATION_PREROLL_LENGTH = 5;
 
 /***************************************************************************
  *
