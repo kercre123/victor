@@ -1088,7 +1088,9 @@ namespace Anki {
         if(_variability > 0) {
           _headAngleWithVariation += _rng.RandDblInRange(-_variability.ToDouble(),
                                                           _variability.ToDouble());
+          _headAngleWithVariation = CLIP(_headAngleWithVariation, MIN_HEAD_ANGLE, MAX_HEAD_ANGLE);
         }
+        
         // TODO: Add ability to specify speed/accel
         if(robot.MoveHeadToAngle(_headAngleWithVariation.ToFloat(), 10, 20) != RESULT_OK) {
           result = ActionResult::FAILURE_ABORT;
@@ -1200,6 +1202,7 @@ namespace Anki {
         if(_variability > 0.f) {
           _heightWithVariation += _rng.RandDblInRange(-_variability, _variability);
         }
+        _heightWithVariation = CLIP(_heightWithVariation, LIFT_HEIGHT_LOWDOCK, LIFT_HEIGHT_CARRY);
       }
       
       _inPosition = IsLiftInPosition(robot);
