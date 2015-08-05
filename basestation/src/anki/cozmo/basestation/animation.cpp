@@ -35,7 +35,7 @@
 namespace Anki {
 namespace Cozmo {
   
-  const s32 Animation::MAX_BYTES_FOR_RELIABLE_TRANSPORT = 2000;
+  const s32 Animation::MAX_BYTES_FOR_RELIABLE_TRANSPORT = 3600;
   const s32 Animation::MAX_FRAMES_TO_SEND = 10;
   
 #pragma mark -

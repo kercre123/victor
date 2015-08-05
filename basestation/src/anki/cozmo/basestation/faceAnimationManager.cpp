@@ -264,10 +264,9 @@ namespace Cozmo {
   Result FaceAnimationManager::CompressRLE(const cv::Mat& img, std::vector<u8>& rleData)
   {
     // Frame is in 8-bit RLE format:
-    //  0 terminates the image
-    //  1-63 draw N full lines (N*128 pixels) of black or blue
-    //  64-255 draw 0-191 pixels (N-64) of black or blue, then invert the color for the next run
-    // The decoder starts out drawing black, and inverts the color on every byte >= 64
+    // 00xxxxxx   CLEAR COLUMN (x = count)
+    // 01xxxxxx   REPEAT COLUMN (x = count)
+    // 1xxxxxyy   RLE PATTERN (x = count, y = pattern)
     
     if(img.rows != IMAGE_HEIGHT || img.cols != IMAGE_WIDTH) {
       PRINT_NAMED_ERROR("FaceAnimationManager.CompressRLE",
@@ -275,70 +274,74 @@ namespace Cozmo {
                         IMAGE_WIDTH, IMAGE_HEIGHT, img.cols, img.rows);
       return RESULT_FAIL;
     }
-    
-    bool drawingBlack = true;
+
+    uint64_t packed[IMAGE_WIDTH];
+
+    memset(packed, 0, sizeof(packed));
     rleData.clear();
-    
-    s32 nrows = img.rows;
-    s32 ncols = img.cols;
-    if(img.isContinuous()) {
-      ncols *= nrows;
-      nrows = 1;
-    }
-    
-    const u32 totalNumPixels = nrows * ncols;
-    u32 pixCount = 0;
-    u32 currColorCount = 0;
-    
-    for(s32 i=0; i<nrows; i++) {
-      const u8* img_i = img.ptr(i);
-      for(s32 j=0; j<ncols; j++, ++pixCount) {
-        u8 pixel = img_i[j];
-    
-        bool colorChange = (pixel > 0 && drawingBlack) || (pixel == 0 && !drawingBlack);
-        bool lastPixel = (pixCount == totalNumPixels - 1);
 
-        // If the color changed (or this is the last pixel), then add the bytes for the previous color
-        // and restart the counter for the new color.
-        if (colorChange || lastPixel) {
-          // If the last pixel is the same as the previous pixel, then increment currColorCount,
-          // since we normally only get here if the color changed. If the last group of pixels
-          // is black, however, just exit now.
-          if (!colorChange) {
-            if (drawingBlack) {
-              break;
-            }
-            ++currColorCount;
-          }
+    // Convert image into 1bpp column major format
+    for(s32 i=0; i<IMAGE_HEIGHT; i++) {
+      const u8* pixels = img.ptr(i);
+      
+      for(s32 j=0; j<IMAGE_WIDTH; j++) {
+        if (!*(pixels++)) { continue ; }
 
-          u32 numRows = currColorCount / 128;
-          u32 numRemainderPixels = currColorCount % 128;
-          if (numRows > 0) {
-            // If all image pixels are on, then we need to split up the count since max
-            // rows you can draw at a time is 63.
-            if (numRows == 64) {
-              --numRows;
-              numRemainderPixels = 128;
-            }
-            rleData.push_back(numRows);
-          }
-          rleData.push_back(numRemainderPixels + 64);
-
-          drawingBlack = !drawingBlack;
-          currColorCount = 1;
-          
-          // If the last pixel is white and it's a different color from the previous one, add it now.
-          if (lastPixel && colorChange && !drawingBlack) {
-            rleData.push_back(65);
-          }
-        } else {
-          ++currColorCount;
-        }
+        // If lower half of face disappears, change to 0x8000000000000000L >> (i ^ 63)
+        packed[j] |= 1L << i;
       }
     }
-    
-    // Terminator
-    rleData.push_back(0);
+
+    // Begin RLE encoding
+    for(int x = 0; x < IMAGE_WIDTH; ) {
+      // Clear row encoding
+      if (!packed[x]) {
+        int count = 0;
+
+        for (; !packed[x] && x < IMAGE_WIDTH && count < 0x40; x++, count++) ;
+        rleData.push_back(count-1);
+
+        continue ;
+      }
+
+      // Copy row encoding
+      if (x >= 1 && packed[x] == packed[x-1]) {
+        int count = 0;
+
+        for (; packed[x] == packed[x-1] && x < IMAGE_WIDTH && count < 0x40; x++, count++) ;
+        rleData.push_back((count-1) | 0x40);
+
+        continue ;
+      }
+
+      // RLE pattern encoding
+      uint64_t col = packed[x++];
+      int pattern = -1;
+      int count = 0;
+
+      for (int y = 0; y < IMAGE_HEIGHT; y += 2, col >>= 2) {
+        if ((col & 3) != pattern) {
+          // Output value if primed
+          if (count > 0) {
+            rleData.push_back(0x80 | ((count-1) << 2) | pattern);
+          }
+          
+          pattern = col & 3;
+          count = 1;
+        } else {
+          count++;
+        }
+      }
+
+      // Will next column use column encoding
+      bool column = !packed[x] || (x < IMAGE_WIDTH && packed[x] == packed[x-1]);
+
+      if (!pattern && column) {
+        continue ;
+      }
+      
+      rleData.push_back(0x80 | ((count-1) << 2) | pattern);
+    }
     
     return RESULT_OK;
   }
