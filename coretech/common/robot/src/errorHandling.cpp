@@ -61,8 +61,6 @@ extern "C" {
       //fflush(stdout);
     }
 #endif // #if ANKI_OUTPUT_DEBUG_LEVEL == ANKI_OUTPUT_DEBUG_PRINTF
-
-    Anki::CoreTechPrint(""); // This is here, just so a breakpoint can be set
   }
 
 #ifdef _MSC_VER
