@@ -12,8 +12,10 @@
 
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
+
 #include "anki/cozmo/basestation/behaviors/behaviorOCD.h"
 #include "anki/cozmo/basestation/behaviors/behaviorLookForFaces.h"
+#include "anki/cozmo/basestation/behaviors/behaviorFidget.h"
 
 #include "anki/cozmo/basestation/robot.h"
 
@@ -43,6 +45,7 @@ namespace Cozmo {
     
     AddBehavior(new BehaviorOCD(_robot, config));
     AddBehavior(new BehaviorLookForFaces(_robot, config));
+    AddBehavior(new BehaviorFidget(_robot, config));
     
     _isInitialized = true;
     
