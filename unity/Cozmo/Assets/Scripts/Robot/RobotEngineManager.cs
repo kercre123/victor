@@ -43,6 +43,8 @@ public class RobotEngineManager : MonoBehaviour
 	public event Action<bool,RobotActionType> SuccessOrFailure;
 	public event Action<bool,string> RobotCompletedAnimation;
 
+	private bool cozmoLoggingStarted = false;
+	private bool cozmoBindingStarted = false;
 	private ChannelBase channel = null;
 	private float lastRobotStateMessage = 0;
 	private bool isRobotConnected = false;
@@ -59,9 +61,10 @@ public class RobotEngineManager : MonoBehaviour
 	private int imageFrameCount = 0;
 
 	private string imageBasePath;
-	private readonly static AsyncCallback EndSave_callback;
+	private readonly static AsyncCallback EndSave_callback = EndSave;
 
-	public U2G.MessageGameToEngine Message { get; private set; }
+	private U2G.MessageGameToEngine message = new G2U.MessageGameToEngine ();
+	public U2G.MessageGameToEngine Message { get { return message; } }
 
 	private U2G.VisualizeQuad VisualizeQuadMessage = new U2G.VisualizeQuad();
 	private U2G.StartEngine StartEngineMessage = new U2G.StartEngine();
@@ -69,60 +72,6 @@ public class RobotEngineManager : MonoBehaviour
 	private U2G.ConnectToRobot ConnectToRobotMessage = new U2G.ConnectToRobot();
 	private U2G.ConnectToUiDevice ConnectToUiDeviceMessage = new U2G.ConnectToUiDevice();
 	private U2G.SetRobotVolume SetRobotVolumeMessage = new G2U.SetRobotVolume();
-
-	static RobotEngineManager()
-	{
-		EndSave_callback = EndSave;
-	}
-
-	private void Awake()
-	{
-		Message = new U2G.MessageGameToEngine();
-	}
-
-	public void ToggleVisionRecording(bool on)
-	{
-		AllowImageSaving = on;
-
-		if(on && !imageDirectoryCreated)
-		{
-
-			imageBasePath = Path.Combine(Application.persistentDataPath, DateTime.Now.ToString("robovi\\sion_yyyy-MM-dd_HH-mm-ss"));
-			try
-			{
-
-				Debug.Log("Saving robot screenshots to \"" + imageBasePath + "\"", this);
-				Directory.CreateDirectory(imageBasePath);
-
-				imageDirectoryCreated = true;
-
-			} catch(Exception e)
-			{
-
-				AllowImageSaving = false;
-				Debug.LogException(e, this);
-			}
-		}
-	}
-
-	public void AddRobot(byte robotID)
-	{
-		if(robots.ContainsKey(robotID))
-		{
-			Robot oldRobot = robots[robotID];
-			if (oldRobot != null) {
-				oldRobot.Dispose();
-			}
-			robotList.RemoveAll(x => x.ID == robotID);
-			robots.Remove(robotID);
-		}
-
-
-		Robot robot = new Robot(robotID);
-		robots.Add(robotID, robot);
-		robotList.Add(robot);
-		currentRobotID = robotID;
-	}
 
 	private void OnEnable()
 	{
@@ -137,6 +86,7 @@ public class RobotEngineManager : MonoBehaviour
 		}
 		
 		CozmoLogging.OpenLogFile();
+		cozmoLoggingStarted = true;
 
 		TextAsset config = configuration;
 
@@ -151,6 +101,7 @@ public class RobotEngineManager : MonoBehaviour
 		} else
 		{
 			CozmoBinding.Startup(config.text);
+			cozmoBindingStarted = true;
 		}
 
 		Application.runInBackground = true;
@@ -165,7 +116,9 @@ public class RobotEngineManager : MonoBehaviour
 
 	private void OnDisable()
 	{
-		CozmoLogging.CloseLogFile();
+		if (cozmoLoggingStarted) {
+			CozmoLogging.CloseLogFile ();
+		}
 		
 		if(channel != null)
 		{
@@ -178,7 +131,9 @@ public class RobotEngineManager : MonoBehaviour
 			channel = null;
 		}
 
-		CozmoBinding.Shutdown();
+		if (cozmoBindingStarted) {
+			CozmoBinding.Shutdown ();
+		}
 	}
 
 	private void Update()
@@ -210,7 +165,9 @@ public class RobotEngineManager : MonoBehaviour
 		}
 		Profiler.EndSample();
 
-		CozmoBinding.Update(Time.realtimeSinceStartup);
+		if (cozmoBindingStarted) {
+			CozmoBinding.Update (Time.realtimeSinceStartup);
+		}
 	}
 
 	public void LateUpdate()
@@ -220,6 +177,50 @@ public class RobotEngineManager : MonoBehaviour
 		current.UpdateLightMessages();
 	}
 
+	public void ToggleVisionRecording(bool on)
+	{
+		AllowImageSaving = on;
+		
+		if(on && !imageDirectoryCreated)
+		{
+			
+			imageBasePath = Path.Combine(Application.persistentDataPath, DateTime.Now.ToString("robovi\\sion_yyyy-MM-dd_HH-mm-ss"));
+			try
+			{
+				
+				Debug.Log("Saving robot screenshots to \"" + imageBasePath + "\"", this);
+				Directory.CreateDirectory(imageBasePath);
+				
+				imageDirectoryCreated = true;
+				
+			} catch(Exception e)
+			{
+				
+				AllowImageSaving = false;
+				Debug.LogException(e, this);
+			}
+		}
+	}
+	
+	public void AddRobot(byte robotID)
+	{
+		if(robots.ContainsKey(robotID))
+		{
+			Robot oldRobot = robots[robotID];
+			if (oldRobot != null) {
+				oldRobot.Dispose();
+			}
+			robotList.RemoveAll(x => x.ID == robotID);
+			robots.Remove(robotID);
+		}
+		
+		
+		Robot robot = new Robot(robotID);
+		robots.Add(robotID, robot);
+		robotList.Add(robot);
+		currentRobotID = robotID;
+	}
+	
 	public void Connect(string engineIP)
 	{
 		channel.Connect(UIDeviceID, UILocalPort, engineIP, UIAdvertisingRegistrationPort);
