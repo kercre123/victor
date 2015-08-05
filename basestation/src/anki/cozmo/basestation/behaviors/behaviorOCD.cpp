@@ -15,6 +15,8 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/cozmoActions.h"
 
+#define DEBUG_OCD_BEHAVIOR 1
+
 namespace Anki {
 namespace Cozmo {
   
@@ -136,6 +138,10 @@ namespace Cozmo {
     }
     _currentArrangement = static_cast<Arrangement>(iArrangement);
     
+#   if DEBUG_OCD_BEHAVIOR
+    PRINT_NAMED_INFO("BehaviorOCD.SelectArrangement", "Selected arrangment %d\n", iArrangement);
+#   endif
+    
     // we'll select the arrangement's anchor once we place our first block
     _anchorObject.UnSet();
     
@@ -158,9 +164,10 @@ namespace Cozmo {
     
     // Find the closest object with available pre-action poses
     f32 closestDistSq = std::numeric_limits<f32>::max();
+    Vision::ObservableObject* object = nullptr;
     for(auto & objectID : _messyObjects)
     {
-      Vision::ObservableObject* object = blockWorld.GetObjectByID(objectID);
+      object = blockWorld.GetObjectByID(objectID);
       if(object == nullptr) {
         PRINT_NAMED_ERROR("BehaviorOCD.SelectNextObjectToPickUp.InvalidObject",
                           "Could not get %s object %d from robot %d's world.\n",
@@ -218,6 +225,13 @@ namespace Cozmo {
     
     _currentState = State::PICKING_UP_BLOCK;
     
+#   if DEBUG_OCD_BEHAVIOR
+    assert(object != nullptr);
+    PRINT_NAMED_INFO("BehaviorOCD.SelectNextObjectToPickUp", "Selected %s %d to pick up.\n",
+                     object->GetType().GetName().c_str(),
+                     _objectToPickUp.GetValue());
+#   endif
+    
     return RESULT_OK;
   } // SelectNextObjectToPickUp()
   
@@ -252,14 +266,17 @@ namespace Cozmo {
         for(auto & neatObjectID : _neatObjects) {
           Vision::ObservableObject* neatObject = blockWorld.GetObjectByID(neatObjectID);
           if(neatObject == nullptr) {
-            // TODO: Error message
+            PRINT_NAMED_ERROR("BehaviorOCD.SelectNextPlacement.InvalidObjectID",
+                              "No object ID = %d\n", neatObjectID.GetValue());
             return RESULT_FAIL;
           }
           Vision::ObservableObject* onTop = blockWorld.FindObjectOnTopOf(*neatObject, 15.f);
           if(onTop == nullptr) {
             Pose3d poseWrtRobot;
             if(false == neatObject->GetPose().GetWithRespectTo(_robot.GetPose(), poseWrtRobot)) {
-              // TODO: Error message
+              PRINT_NAMED_ERROR("BehaviorOCD.SelectNextPlacement.PoseFail",
+                                "Could not get object %d's pose w.r.t. robot.\n",
+                                neatObject->GetID().GetValue());
               return RESULT_FAIL;
             }
             const f32 currentDistSq = poseWrtRobot.GetTranslation().LengthSq();
@@ -273,6 +290,10 @@ namespace Cozmo {
         if(bottomBlockID.IsSet()) {
           // Found a neat object with nothing on top. Stack on top of it:
           placementAction = new PickAndPlaceObjectAction(bottomBlockID);
+#         if DEBUG_OCD_BEHAVIOR
+          PRINT_NAMED_INFO("BehaviorOCD.SelectNextPlacement.STACKS_OF_TWO", "Chose to place on top of object %d.\n",
+                           bottomBlockID.GetValue());
+#         endif
         } else {
           // ... if there isn't one, then place this block on the ground
           // at the same orientation as the last block placed
@@ -287,9 +308,14 @@ namespace Cozmo {
             pose.SetTranslation(T);
             
             placementAction = new PlaceObjectOnGroundAtPoseAction(_robot, pose);
-            
+#           if DEBUG_OCD_BEHAVIOR
+            PRINT_NAMED_INFO("BehaviorOCD.SelectNextPlacement.STACKS_OF_TWO",
+                             "Placing object on ground at (%.1f,%.1f,%.1f) @ %.1fdeg (near object %d)\n",
+                             T.x(), T.y(), T.z(), pose.GetRotationAngle<'Z'>().getDegrees(),
+                             _lastObjectPlacedOnGround.GetValue());
+#           endif
           } else {
-            // This is the first object placed, just re-orient it
+            // This is the first object placed, just re-orient it in the same position
             Pose3d pose = carriedObject->GetPose();
             f32 angle_deg = pose.GetRotationAngle<'Z'>().getDegrees();
             if(angle_deg < 45 && angle_deg >= -45) {
@@ -304,18 +330,71 @@ namespace Cozmo {
             pose.SetRotation(DEG_TO_RAD(angle_deg), Z_AXIS_3D());
             
             placementAction = new PlaceObjectOnGroundAtPoseAction(_robot, pose);
+#           if DEBUG_OCD_BEHAVIOR
+            PRINT_NAMED_INFO("BehaviorOCD.SelectNextPlacement.STACKS_OF_TWO",
+                             "Placing first object on ground at (%.1f,%.1f,%.1f) @ %.1fdeg\n",
+                             pose.GetTranslation().x(),
+                             pose.GetTranslation().y(),
+                             pose.GetTranslation().z(),
+                             pose.GetRotationAngle<'Z'>().getDegrees());
+#           endif
           }
+          
+          _lastObjectPlacedOnGround = carriedObjectID;
         } // if/else bottom block set
         
         break;
       } // case STACKS_OF_TWO
         
+        
       case Arrangement::LINE:
+      {
+        if(_lastObjectPlacedOnGround.IsSet()) {
+          Pose3d pose;
+          
+          // TODO: Find closest available free space near the last object we placed on the ground
+          Vision::ObservableObject* lastObject = _robot.GetBlockWorld().GetObjectByID(_lastObjectPlacedOnGround);
+          pose = lastObject->GetPose();
+          Vec3f T = pose.GetTranslation();
+          T.x() += 3*lastObject->GetSameDistanceTolerance().x();
+          pose.SetTranslation(T);
+          
+          placementAction = new PlaceObjectOnGroundAtPoseAction(_robot, pose);
+#         if DEBUG_OCD_BEHAVIOR
+          PRINT_NAMED_INFO("BehaviorOCD.SelectNextPlacement.LINE",
+                           "Placing object on ground at (%.1f,%.1f,%.1f) @ %.1fdeg (near object %d)\n",
+                           T.x(), T.y(), T.z(), pose.GetRotationAngle<'Z'>().getDegrees(),
+                           _lastObjectPlacedOnGround.GetValue());
+#         endif
+        } else {
+          // This is the first object placed, just re-orient it in the same position
+          Pose3d pose = carriedObject->GetPose();
+          f32 angle_deg = pose.GetRotationAngle<'Z'>().getDegrees();
+          if(angle_deg < 45 && angle_deg >= -45) {
+            angle_deg = 0;
+          } else if(angle_deg < 135 && angle_deg >= 45) {
+            angle_deg = 90;
+          } else if(angle_deg < -45 && angle_deg >= -135) {
+            angle_deg = -90;
+          } else {
+            angle_deg = 180;
+          }
+          pose.SetRotation(DEG_TO_RAD(angle_deg), Z_AXIS_3D());
+          
+          placementAction = new PlaceObjectOnGroundAtPoseAction(_robot, pose);
+#         if DEBUG_OCD_BEHAVIOR
+          PRINT_NAMED_INFO("BehaviorOCD.SelectNextPlacement.LINE",
+                           "Placing first object on ground at (%.1f,%.1f,%.1f) @ %.1fdeg\n",
+                           pose.GetTranslation().x(),
+                           pose.GetTranslation().y(),
+                           pose.GetTranslation().z(),
+                           pose.GetRotationAngle<'Z'>().getDegrees());
+#         endif
+        }
         
-        PRINT_NAMED_ERROR("BehaviorOCD.SelectNextPlacement.LineArrangementUnimplemented", "\n");
-        return RESULT_FAIL;
-        
+        _lastObjectPlacedOnGround = carriedObjectID;
         break;
+      } // case LINE
         
         
       default:

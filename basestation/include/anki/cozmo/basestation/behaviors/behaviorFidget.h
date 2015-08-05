@@ -50,6 +50,7 @@ namespace Cozmo {
       TURN_IN_PLACE,
       YAWN,
       SNEEZE,
+      STRETCH,
       
       NUM_FIDGETS
     };
@@ -58,6 +59,8 @@ namespace Cozmo {
     
     f32 _lastFidgetTime_sec;
     f32 _nextFidgetWait_sec;
+    
+    f32 _minWait_sec, _maxWait_sec;
     
   }; // class BehaviorFidget
 

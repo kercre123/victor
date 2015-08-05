@@ -23,6 +23,10 @@ namespace Cozmo {
   {
     
     // TODO: Add fidget behaviors based on config
+    // TODO: Set parameters from config
+    
+    _minWait_sec = 2.f;
+    _maxWait_sec = 5.f;
     
   }
   
@@ -83,6 +87,10 @@ namespace Cozmo {
         case FidgetType::SNEEZE:
           PRINT_NAMED_WARNING("BehaviorFidget.Update.SneezeUnimplemented", "\n");
           break;
+          
+        case FidgetType::STRETCH:
+          PRINT_NAMED_WARNING("BehaviorFidget.Update.StretchUnimplemented", "\n");
+          break;
        
         default:
           PRINT_NAMED_ERROR("BehaviorFidget.Update.InvalidFidgetType",
@@ -94,7 +102,7 @@ namespace Cozmo {
       // Set next time to fidget
       // TODO: Get min/max wait times from Json config
       _lastFidgetTime_sec = currentTime_sec;
-      _nextFidgetWait_sec += _rng.RandDblInRange(2.f, 5.f);
+      _nextFidgetWait_sec += _rng.RandDblInRange(_minWait_sec, _maxWait_sec);
     }
     
     return Status::RUNNING;

@@ -21,6 +21,7 @@
 
 #include "util/logging/logging.h"
 
+#define DEBUG_BEHAVIOR_MGR 1
 
 namespace Anki {
 namespace Cozmo {
@@ -38,6 +39,9 @@ namespace Cozmo {
   
   Result BehaviorManager::Init(const Json::Value &config)
   {
+#   if DEBUG_BEHAVIOR_MGR
+    PRINT_NAMED_INFO("BehaviorManager.Init.Initializing", "\n");
+#   endif
     
     // TODO: Set configuration data from Json...
     
@@ -48,6 +52,8 @@ namespace Cozmo {
     AddBehavior(new BehaviorFidget(_robot, config));
     
     _isInitialized = true;
+    
+    _lastSwitchTime_sec = 0.f;
     
     return RESULT_OK;
   }
@@ -60,6 +66,11 @@ namespace Cozmo {
                           "Existing '%s' behavior is somehow NULL.\n",
                           behavior.first.c_str());
       } else {
+#       if DEBUG_BEHAVIOR_MGR
+        PRINT_NAMED_INFO("BehaviorManager.Destructor", "Deleting behavior %s.\n",
+                         behavior.first.c_str());
+#       endif
+        
         delete behavior.second;
       }
     }
@@ -87,6 +98,10 @@ namespace Cozmo {
         delete existingBehavior->second;
       }
     }
+    
+#   if DEBUG_BEHAVIOR_MGR
+    PRINT_NAMED_INFO("BehaviorManager.AddBehavior.Add", "Adding behavior %s\n", name.c_str());
+#   endif
     
     _behaviors[name] = newBehavior;
     
@@ -199,10 +214,15 @@ namespace Cozmo {
       // to run on calls to Update() until it completes and then we will switch
       // to the selected next behavior
       _currentBehavior->second->Interrupt();
+      
+#     if DEBUG_BEHAVIOR_MGR
+      PRINT_NAMED_INFO("BehaviorManger.SelectNextBehavior.Selected",
+                       "Selected %s to run next.\n", _nextBehavior->first.c_str());
+#     endif
     }
     
     return initResult;
-  }
+  } // SelectNextBehavior()
   
   Result BehaviorManager::SelectNextBehavior(const std::string& name)
   {
