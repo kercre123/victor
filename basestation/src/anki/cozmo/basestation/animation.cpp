@@ -35,7 +35,7 @@
 namespace Anki {
 namespace Cozmo {
   
-  const s32 Animation::MAX_BYTES_FOR_RELIABLE_TRANSPORT = 2000;
+  const s32 Animation::MAX_BYTES_FOR_RELIABLE_TRANSPORT = 3600;
   const s32 Animation::MAX_FRAMES_TO_SEND = 10;
   
 #pragma mark -
@@ -227,8 +227,6 @@ _blinkTrack.__METHOD__()
       _sendBuffer.clear();
     }
     
-    _numAudioFramesBufferedToSend = 0;
-    
     _endOfAnimationSent = false;
     
     _isInitialized = true;
@@ -266,14 +264,6 @@ _blinkTrack.__METHOD__()
           
           _numBytesToSend -= numBytesRequired;
           --_numFramesToSend;
-          
-          // If the message we just sent was an audio keyframe, decrement the
-          // counter tracking how many audio frames are queued in the send buffer
-          if(msg->GetID() == RobotMessage::AnimKeyFrame_AudioSample_ID ||
-             msg->GetID() == RobotMessage::AnimKeyFrame_AudioSilence_ID)
-          {
-            --_numAudioFramesBufferedToSend;
-          }
           
           _sendBuffer.pop_front();
         } else {
@@ -345,9 +335,7 @@ _blinkTrack.__METHOD__()
     // Add more stuff to the send buffer. Note that we are not counting individual
     // keyframes here, but instead _audio_ keyframes (with which we will buffer
     // any co-timed keyframes from other tracks).
-    while(_sendBuffer.empty() &&
-          _numAudioFramesBufferedToSend < (ANIMATION_PREROLL_LENGTH+1) &&
-          !AllTracksBuffered())
+    while(_sendBuffer.empty() && !AllTracksBuffered())
     {
 #     if DEBUG_ANIMATIONS
       //PRINT_NAMED_INFO("Animation.Update", "%d bytes left to send this Update.\n",
@@ -373,8 +361,6 @@ _blinkTrack.__METHOD__()
         //PRINT_NAMED_INFO("Animation.Update", "Streaming AudioSilenceKeyFrame.\n");
         BufferMessageToSend(&_silenceMsg);
       }
-      
-      ++_numAudioFramesBufferedToSend;
       
       // Increment fake "streaming" time, so we can evaluate below whether
       // it's time to stream out any of the other tracks. Note that it is still

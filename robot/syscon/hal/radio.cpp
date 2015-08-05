@@ -37,10 +37,10 @@ AcceleratorPacket cubeRx[MAX_CUBES];
 
 void Radio::init() {
   uesb_config_t uesb_config = {
-    UESB_BITRATE_1MBPS,
+    UESB_BITRATE_250KBPS,
     UESB_CRC_8BIT,
     UESB_TX_POWER_0DBM,
-    2,
+    82,
     PACKET_SIZE,
     5,
     {0xE7,0xE7,0xE7,0xE7},
