@@ -31,7 +31,25 @@ namespace AnimationTool
 
         RobotEngineManager robotEngineManager;
 
-        string jsonFilePath { get { return Properties.Settings.Default.rootDirectory + "\\animations"; } }
+        string jsonFilePath { get { return rootDirectory + "\\animations"; } }
+
+        private static MainForm instance;
+
+        public static string rootDirectory
+        {
+            get
+            {
+                if (instance != null && !IsValidRootDirectory(Properties.Settings.Default.rootDirectory))
+                {
+                    if (MessageBox.Show("Please set the animation assets root directory", "", MessageBoxButtons.OK) != DialogResult.Yes)
+                    {
+                        instance.SetRootDirectory(null, null);
+                    }
+                }
+
+                return Properties.Settings.Default.rootDirectory;
+            }
+        }
 
         string currentFile
         {
@@ -55,6 +73,7 @@ namespace AnimationTool
 
         public MainForm()
         {
+            instance = this;
             Sequencer.ExtraData.Entries = new Dictionary<string, Sequencer.ExtraData>();
             ActionManager singleton = new ActionManager();
             changeDurationForm = new ChangeDurationForm();
@@ -159,14 +178,6 @@ namespace AnimationTool
             ActionManager.Do(new DisableChart(cAudioDevice, cbAudioDevice), true);
             ActionManager.Do(new Sequencer.EnableChart(cAudioDevice, cbAudioDevice), true);
             channelList.Add(cAudioDevice);
-
-            if (!IsValidRootDirectory(Properties.Settings.Default.rootDirectory))
-            {
-                if (MessageBox.Show("Please set the animation assets root directory", "", MessageBoxButtons.OK) != DialogResult.Yes)
-                {
-                    SetRootDirectory(null, null);
-                }
-            }
 
             if (!File.Exists(currentFile))
             {
@@ -295,13 +306,13 @@ namespace AnimationTool
         {
             if (selectFolder == null) return;
 
-            selectFolder.SelectedPath = Properties.Settings.Default.rootDirectory;
+            selectFolder.SelectedPath = rootDirectory;
 
             if (selectFolder.ShowDialog() == DialogResult.OK)
             {
                 if (!IsValidRootDirectory(selectFolder.SelectedPath))
                 {
-                    SetRootDirectory(null, null);
+                    SetRootDirectory(o, e);
                 }
 
                 Properties.Settings.Default["rootDirectory"] = selectFolder.SelectedPath;
@@ -309,7 +320,7 @@ namespace AnimationTool
             }
         }
 
-        private bool IsValidRootDirectory(string path)
+        private static bool IsValidRootDirectory(string path)
         {
             string json = path + "\\animations";
             string face = path + "\\faceAnimations";

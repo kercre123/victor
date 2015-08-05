@@ -23,7 +23,8 @@ namespace AnimationTool
             if (current == null) return;
 
             string path = Sequencer.ExtraAudioData.FullPath + current.pathFromRoot;
-            Sequencer.ExtraAudioData extraData = new Sequencer.ExtraAudioData(path, Math.Round(current.durationTime_ms * 0.001D, 1), Math.Round(current.volume, 1));
+            double volume = Math.Round(current.volume, 1);
+            Sequencer.ExtraAudioData extraData = new Sequencer.ExtraAudioData(path, Math.Round(current.durationTime_ms * 0.001D, 1), volume < MoveSelectedDataPoints.DELTA_X ? 1 : volume);
 
             if (extraData.Length < MoveSelectedDataPoints.DELTA_X)
             {
@@ -38,8 +39,9 @@ namespace AnimationTool
         {
             if (current == null) return;
 
-            string path = Sequencer.ExtraFaceAnimationData.FullPath + current.pathFromRoot;
-            Sequencer.ExtraAudioData extraData = new Sequencer.ExtraAudioData(path, Math.Round(current.durationTime_ms * 0.001D, 1), Math.Round(current.volume, 1));
+            string path = Sequencer.ExtraAudioData.FullPath + current.pathFromRoot;
+            double volume = Math.Round(current.volume, 1);
+            Sequencer.ExtraAudioData extraData = new Sequencer.ExtraAudioData(path, Math.Round(current.durationTime_ms * 0.001D, 1), volume < MoveSelectedDataPoints.DELTA_X ? 1 : volume);
 
             if (extraData.Length < MoveSelectedDataPoints.DELTA_X)
             {

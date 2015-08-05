@@ -56,7 +56,7 @@ namespace AnimationTool.Sequencer
     public class ExtraAudioData : ExtraData
     {
         public List<string> Sounds { get; protected set; }
-        public static string FullPath { get { return Properties.Settings.Default.rootDirectory + "\\sounds"; } }
+        public static string FullPath { get { return MainForm.rootDirectory + "\\sounds"; } }
         public override string FileName { get { return Path.GetFileName(FileNameWithPath) + " (Volume: " + Volume + ")"; } }
         public double Volume { get; set; }
 
@@ -151,7 +151,7 @@ namespace AnimationTool.Sequencer
     public class ExtraFaceAnimationData : ExtraData
     {
         public Dictionary<double, string> Images { get; protected set; }
-        public static string FullPath { get { return Properties.Settings.Default.rootDirectory + "\\faceAnimations"; } }
+        public static string FullPath { get { return MainForm.rootDirectory + "\\faceAnimations"; } }
 
         public ExtraFaceAnimationData(string path, double jsonData = -1)
         {
