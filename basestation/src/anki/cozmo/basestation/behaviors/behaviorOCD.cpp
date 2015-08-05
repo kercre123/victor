@@ -15,6 +15,9 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/cozmoActions.h"
 
+//TODO: Remove once Lee's Events are in
+#include "tempSignals.h"
+
 #define DEBUG_OCD_BEHAVIOR 1
 
 namespace Anki {
@@ -25,7 +28,29 @@ namespace Cozmo {
   , _currentArrangement(Arrangement::STACKS_OF_TWO)
   {
     
+    //TODO: Remove once Lee's Events are in
+    auto cbActionCompleted = [this](ExternalInterface::MessageEngineToGame msg) {
+      this->HandleActionCompleted(msg.Get_RobotCompletedAction());
+    };
+    _signalHandles.emplace_back(CozmoEngineSignals::RobotCompletedActionSignal().ScopedSubscribe(cbActionCompleted));
+    
+    auto cbObservedObject = [this](ExternalInterface::MessageEngineToGame msg) {
+      this->HandleObservedObject(msg.Get_RobotObservedObject());
+    };
+    _signalHandles.emplace_back(CozmoEngineSignals::RobotObservedObjectSignal().ScopedSubscribe(cbObservedObject));
+    
+    auto cbObjectDeleted = [this](ExternalInterface::MessageEngineToGame msg) {
+      this->HandleDeletedObject(msg.Get_RobotDeletedObject());
+    };
+    _signalHandles.emplace_back(CozmoEngineSignals::RobotDeletedObjectSignal().ScopedSubscribe(cbObjectDeleted));
+    
+    auto cbObjectMoved = [this](ExternalInterface::MessageEngineToGame msg) {
+      this->HandleObjectMoved(msg.Get_ActiveObjectMoved());
+    };
+    _signalHandles.emplace_back(CozmoEngineSignals::ObjectMovedSignal().ScopedSubscribe(cbObjectMoved));
+    
   }
+  
   
 #pragma mark -
 #pragma mark Inherited Virtual Implementations

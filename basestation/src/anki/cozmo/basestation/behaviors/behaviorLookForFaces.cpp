@@ -17,6 +17,11 @@
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 
+
+//TODO: Remove once Lee's Events are in
+#include "tempSignals.h"
+
+
 namespace Anki {
 namespace Cozmo {
 
@@ -24,6 +29,16 @@ namespace Cozmo {
   : IBehavior(robot, config)
   , _currentState(State::LOOKING_AROUND)
   {
+    //TODO: Remove once Lee's Events are in
+    auto cbObservedObject = [this](ExternalInterface::MessageEngineToGame msg) {
+      this->HandleRobotObservedObject(msg.Get_RobotObservedObject());
+    };
+    _signalHandles.emplace_back(CozmoEngineSignals::RobotObservedObjectSignal().ScopedSubscribe(cbObservedObject));
+    
+    auto cbActionCompleted = [this](ExternalInterface::MessageEngineToGame msg) {
+      this->HandleRobotCompletedAction(msg.Get_RobotCompletedAction());
+    };
+    _signalHandles.emplace_back(CozmoEngineSignals::RobotCompletedActionSignal().ScopedSubscribe(cbActionCompleted));
     
   }
   

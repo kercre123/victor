@@ -18,6 +18,9 @@
 
 #include "json/json.h"
 
+//TODO: Remove once Lee's Events are in
+#include "util/signals/simpleSignal_fwd.h"
+
 namespace Anki {
 namespace Cozmo {
   
@@ -69,6 +72,9 @@ namespace Cozmo {
     
     // A random number generator for all behaviors to share
     Util::RandomGenerator _rng;
+    
+    //TODO: Remove once Lee's Events are in
+    std::vector<Signal::SmartHandle> _signalHandles;
     
   }; // class IBehavior
 

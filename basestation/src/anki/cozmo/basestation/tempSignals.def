@@ -1,0 +1,19 @@
+// Definition of signals emitted from/within CozmoEngine
+//
+// All definitions should look like
+//
+//   DEF_SIGNAL( <Signal name>, <args of the signals> )
+//
+//   e.g. DEF_SIGNAL(ConnectToRobot, RobotID_t robotID)
+//
+
+#include "anki/cozmo/basestation/signals/SignalDefMacros.h"
+
+
+DEF_SIGNAL(RobotObservedObject, ExternalInterface::MessageEngineToGame msg)
+
+DEF_SIGNAL(RobotCompletedAction, ExternalInterface::MessageEngineToGame msg)
+
+DEF_SIGNAL(RobotDeletedObject, ExternalInterface::MessageEngineToGame msg)
+
+DEF_SIGNAL(ObjectMoved, ExternalInterface::MessageEngineToGame msg)
