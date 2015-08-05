@@ -227,7 +227,12 @@ STATUS ICACHE_FLASH_ATTR uartQueuePacket(uint8* data, uint16 len)
   }
   txWind = (txWind + len) & TX_BUF_LENMSK;
 
-  system_os_post(uartTaskPrio, 0, 0); // 0, 0 indicates tx task
+  ets_intr_lock();
+  if (system_os_post(uartTaskPrio, 0, 0) == false) // 0, 0 indicates tx task
+  {
+    os_printf("uartQueuePacket Couldn't post uart tx task\r\n");
+  }
+  ets_intr_unlock();
 
   return OK;
 }
@@ -395,7 +400,12 @@ LOCAL void ICACHE_FLASH_ATTR uartTask(os_event_t *event)
       }
       else // Ran out of FIFO before tx buffer
       {
-        system_os_post(uartTaskPrio, 0, 0); // Repost the task
+        ets_intr_lock();
+        if (system_os_post(uartTaskPrio, 0, 0) == false) // Repost the task
+        {
+          os_printf("UART couldn't repost tx task\r\n");
+        }
+        ets_intr_unlock();
         break;
       }
     }
