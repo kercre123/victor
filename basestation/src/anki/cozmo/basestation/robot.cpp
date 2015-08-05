@@ -34,6 +34,7 @@
 #include "anki/cozmo/basestation/faceAnimationManager.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "clad/externalInterface/messageEngineToGame.h"
+#include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 
 #include <fstream>
 #include <dirent.h>
@@ -905,6 +906,11 @@ namespace Anki {
       
       _behaviorMgr.Update(BaseStationTimer::getInstance()->GetCurrentTimeInSeconds());
       
+      const IBehavior* behavior = _behaviorMgr.GetCurrentBehavior();
+      if(behavior != nullptr) {
+        VizManager::getInstance()->SetText(VizManager::BEHAVIOR_STATE, NamedColors::MAGENTA,
+                                           "Behavior: %s", behavior->GetName().c_str());
+      }
       
       //////// Update Robot's State Machine /////////////
       Result actionResult = _actionList.Update(*this);

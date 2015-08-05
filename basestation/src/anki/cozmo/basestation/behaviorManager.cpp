@@ -186,8 +186,8 @@ namespace Cozmo {
     //
 
     // For now: random behavior that is runnable
-    std::uniform_int_distribution<> dist(0, static_cast<u32>(_behaviors.size()));
-    _nextBehavior = std::next(std::begin(_behaviors), dist(_randomGenerator));
+    const s32 N = _rng.RandIntInRange(0,static_cast<s32>(_behaviors.size())-1);
+    _nextBehavior = std::next(std::begin(_behaviors), N);
     
     // If the randomly-selected behavior isn't runnable, just select the next one that is
     if(_nextBehavior->second->IsRunnable() == false) {
@@ -241,6 +241,15 @@ namespace Cozmo {
     return RESULT_OK;
   }
   
+  
+  const IBehavior* BehaviorManager::GetCurrentBehavior() const
+  {
+    if(_currentBehavior != _behaviors.end()) {
+      return _currentBehavior->second;
+    } else {
+      return nullptr;
+    }
+  }
   
 } // namespace Cozmo
 } // namespace Anki

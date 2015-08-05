@@ -18,6 +18,8 @@
 
 #include "anki/common/types.h"
 
+#include "util/random/randomGenerator.h"
+
 #include "json/json.h"
 
 #include <unordered_map>
@@ -67,6 +69,9 @@ namespace Cozmo {
     // considering switching
     void SetMinBehaviorTime(float time_sec) { _minBehaviorTime_sec = time_sec; }
     
+    // Returns nullptr if there is no current behavior
+    const IBehavior* GetCurrentBehavior() const;
+    
   private:
     
     bool _isInitialized;
@@ -87,7 +92,7 @@ namespace Cozmo {
     float _lastSwitchTime_sec;
     
     // For random numbers
-    std::mt19937 _randomGenerator;
+    Util::RandomGenerator _rng;
     
   }; // class BehaviorManager
   

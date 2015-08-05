@@ -51,7 +51,8 @@ namespace Cozmo {
     if(currentTime_sec > _lastFidgetTime_sec + _nextFidgetWait_sec) {
     
       // Pick another random fidget action
-      FidgetType nextFidget = static_cast<FidgetType>(_rng.RandIntInRange(0, static_cast<s32>(FidgetType::NUM_FIDGETS)));
+      const s32 N = static_cast<s32>(FidgetType::NUM_FIDGETS)-1;
+      FidgetType nextFidget = static_cast<FidgetType>(_rng.RandIntInRange(0, N));
       
       switch(nextFidget)
       {
