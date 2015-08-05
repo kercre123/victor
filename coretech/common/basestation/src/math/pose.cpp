@@ -250,6 +250,12 @@ namespace Anki {
     return *this;
   }
   
+  void Pose3d::RotateBy(const Rotation3d& R)
+  {
+    _translation = R * _translation;
+    _rotation *= R;
+  }
+  
   void Pose3d::RotateBy(const Radians& angleIn)
   {
     // Keep same rotation axis, but add the incoming angle
