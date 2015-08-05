@@ -946,7 +946,7 @@ public class Robot
 
 	public void SetRobotCarryingObject(int objectID = -1)
 	{
-		Debug.Log("Set Robot Carrying Object");
+		Debug.Log("Set Robot Carrying Object: " + objectID);
 		
 		SetRobotCarryingObjectMessage.robotID = ID;
 		SetRobotCarryingObjectMessage.objectID = objectID;

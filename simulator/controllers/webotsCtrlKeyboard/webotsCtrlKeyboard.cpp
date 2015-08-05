@@ -226,6 +226,7 @@ namespace Anki {
       void SendHeadControllerGains(const f32 kp, const f32 ki, const f32 kd, const f32 maxErrorSum);
       void SendLiftControllerGains(const f32 kp, const f32 ki, const f32 kd, const f32 maxErrorSum);
       void SendSteeringControllerGains(const f32 k1, const f32 k2);
+      void SendSetRobotVolume(const f32 volume);
       void SendStartTestMode(TestMode mode, s32 p1 = 0, s32 p2 = 0, s32 p3 = 0);
       void SendIMURequest(u32 length_ms);
       void SendAnimation(const char* animName, u32 numLoops);
@@ -674,7 +675,7 @@ namespace Anki {
           }
           
           // Speed of point turns (when no target angle specified). See SendTurnInPlaceAtSpeed().
-          f32 pointTurnSpeed = std::abs(root_->getField("pointTurnSpeed_degPerSec")->getSFFloat());
+          f32 pointTurnSpeed = std::fabs(root_->getField("pointTurnSpeed_degPerSec")->getSFFloat());
           
           
           //printf("keypressed: %d, modifier %d, orig_key %d, prev_key %d\n",
@@ -1247,10 +1248,12 @@ namespace Anki {
                   ExternalInterface::MessageGameToEngine msgWrapper;
                   msgWrapper.Set_VisionWhileMoving(msg);
                   SendMessage(msgWrapper);
-                } else {
+                } else if (modifier_key & webots::Supervisor::KEYBOARD_ALT) {
                   SendVisionSystemParams();
-                  
                   SendFaceDetectParams();
+                } else {
+                  f32 robotVolume = root_->getField("robotVolume")->getSFFloat();
+                  SendSetRobotVolume(robotVolume);
                 }
                 break;
               }
@@ -1449,17 +1452,7 @@ namespace Anki {
               }
               case (s32)'%':
               {
-                // Send whatever idle animation is specified in the idleAnimationName field
-                webots::Field* idleAnimationNameField = root_->getField("idleAnimationName");
-                if(idleAnimationNameField == nullptr) {
-                  printf("ERROR: No idleAnimationName field found in WebotsKeyboardController.proto\n");
-                } else {
-                  std::string idleAnimName = idleAnimationNameField->getSFString();
-
-                  ExternalInterface::MessageGameToEngine msg(ExternalInterface::SetIdleAnimation(1, idleAnimName));
-                  
-                  SendMessage(msg);
-                }
+                SendAnimation("ANIM_ALERT", 1);
                 break;
               }
               case (s32)'^':
@@ -2448,6 +2441,15 @@ namespace Anki {
         SendMessage(message);
       }
       
+      void SendSetRobotVolume(const f32 volume)
+      {
+        ExternalInterface::SetRobotVolume m;
+        m.volume = volume;
+        ExternalInterface::MessageGameToEngine message;
+        message.Set_SetRobotVolume(m);
+        SendMessage(message);
+      }
+      
       void SendStartTestMode(TestMode mode, s32 p1, s32 p2, s32 p3)
       {
         ExternalInterface::StartTestMode m;
@@ -2476,20 +2478,14 @@ namespace Anki {
         // Don't send repeated animation commands within a half second
         if(inputController.getTime() > lastSendTime_sec + 0.5f)
         {
-          ExternalInterface::QueueSingleAction m;
-          
+          ExternalInterface::PlayAnimation m;
+          //m.animationID = animId;
           m.robotID = 1;
-          m.inSlot = 0;
-          m.position = QueueActionPosition::NOW_AND_CLEAR_REMAINING;
-          m.actionType = RobotActionType::PLAY_ANIMATION;
-          m.action.playAnimation.robotID = 1;
-          m.action.playAnimation.animationName = animName;
-          m.action.playAnimation.numLoops = numLoops;
-          
+          m.animationName = animName;
+          m.numLoops = numLoops;
           ExternalInterface::MessageGameToEngine message;
-          message.Set_QueueSingleAction(m);
+          message.Set_PlayAnimation(m);
           SendMessage(message);
-          
           lastSendTime_sec = inputController.getTime();
         } else {
           printf("Ignoring duplicate SendAnimation keystroke.\n");

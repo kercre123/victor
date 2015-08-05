@@ -58,6 +58,9 @@ PROTO WebotsKeyboardController [
   field SFFloat steerK1 0.1
   field SFFloat steerK2 12
 
+  # Volume
+  field SFFloat robotVolume 1.0
+
   # Vision system params
   field SFString streamResolution "CVGA"
   field SFInt32 camera_autoexposureOn 1
