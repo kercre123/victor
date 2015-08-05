@@ -221,7 +221,7 @@ user_init(void)
     {
       os_printf("Non-voltatile parameters prefix incorrect, using defaults\r\n");
       nvpars->wifiOpMode  = SOFTAP_MODE;
-      nvpars->wifiChannel = 11;
+      nvpars->wifiChannel = 9;
       // Get the mac address
       uint8 macaddr[6];
       err = wifi_get_macaddr(SOFTAP_IF, macaddr);
@@ -236,7 +236,7 @@ user_init(void)
     if (nvpars->wifiOpMode & SOFTAP_MODE) // Cozmo as Access poiont
     {
       struct softap_config ap_config;
-      os_printf("Configuring as access point \"%s\"\r\n", nvpars->ssid);
+      os_printf("Configuring as access point \"%s\" on channel %d with psk %s\r\n", nvpars->ssid, nvpars->wifiChannel, nvpars->pkey);
       // Create config for Wifi AP
       err = wifi_softap_get_config(&ap_config);
       if (err == false)
