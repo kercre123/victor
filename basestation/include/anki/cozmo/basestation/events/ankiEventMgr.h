@@ -1,5 +1,5 @@
 /**
- * File: eventMgr.h
+ * File: ankiEventMgr.h
  *
  * Author: Lee Crippen
  * Created: 07/30/15
@@ -14,7 +14,7 @@
 #ifndef ANKI_COZMO_EVENTMGR_H
 #define ANKI_COZMO_EVENTMGR_H
 
-#include "event.h"
+#include "ankiEvent.h"
 #include "anki/cozmo/shared/cozmoTypes.h"
 #include "util/signals/simpleSignal.hpp"
 
@@ -27,33 +27,33 @@ namespace Anki {
 namespace Cozmo {
 
 template<typename DataType>
-class EventMgr
+class AnkiEventMgr
 {
 public:
   using EventDataType = AnkiEvent<DataType>;
   using SubscriberFunction = std::function<void(const EventDataType&)>;
   using EventHandlerSignal = Signal::Signal<void(const EventDataType&)>;
   
-  inline static EventMgr* GetInstance();
+  inline static AnkiEventMgr* GetInstance();
   static void RemoveInstance();
   
-  EventMgr(const EventMgr&) = delete;
-  EventMgr& operator=(const EventMgr&) = delete;
+  AnkiEventMgr(const AnkiEventMgr&) = delete;
+  AnkiEventMgr& operator=(const AnkiEventMgr&) = delete;
   
   // Broadcasts a given event to everyone that has subscribed to that event type
   void Broadcast(const EventDataType& event);
   
   // Allows subscribing to events by type with the passed in function
-  Signal::SmartHandle Subcribe(typename EventDataType::EventType type, SubscriberFunction function);
+  Signal::SmartHandle Subcribe(u32 type, SubscriberFunction function);
   
 private:
-  EventMgr() { }
+  AnkiEventMgr() { }
   
-  static EventMgr* sInstance;
+  static AnkiEventMgr* sInstance;
   
-  std::map<typename EventDataType::EventType, EventHandlerSignal>  _eventHandlerMap;
+  std::map<u32, EventHandlerSignal>  _eventHandlerMap;
   
-}; // class EventMgr
+}; // class AnkiEventMgr
   
   
 // Template definitions included here

@@ -1,5 +1,5 @@
 /**
- * File: event.h
+ * File: ankiEvent.h
  *
  * Author: Lee Crippen
  * Created: 07/30/15
@@ -28,17 +28,15 @@ template <typename DataType>
 class AnkiEvent
 {
 public:
-  using EventType = u32;
-  
   template <typename FwdType>
-  AnkiEvent(EventType type, FwdType&& newData);
+  AnkiEvent(u32 type, FwdType&& newData);
   
-  EventType GetType() const { return _myType; }
+  u32 GetType() const { return _myType; }
   const DataType& GetData() const { return _data; }
   
 protected:
   
-  EventType _myType;
+  u32 _myType;
   DataType _data;
   
 }; // class Event
@@ -46,7 +44,7 @@ protected:
 // Template methods
 template <typename DataType>
 template <typename FwdType>
-AnkiEvent<DataType>::AnkiEvent(EventType type, FwdType&& newData)
+AnkiEvent<DataType>::AnkiEvent(u32 type, FwdType&& newData)
   : _myType(type)
   , _data( std::forward<FwdType>(newData) )
 { }
