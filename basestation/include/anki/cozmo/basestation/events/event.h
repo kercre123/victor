@@ -24,128 +24,33 @@
 namespace Anki {
 namespace Cozmo {
 
-class Event
+template <typename DataType>
+class AnkiEvent
 {
 public:
-  enum class EventType : u32
-  {
-    EVENT_UIDEVICE_CONNECTED,
-  };
+  using EventType = u32;
   
-  enum class EventDataType
-  {
-    BOOLEAN,
-    U_8,
-    S_8,
-    U_16,
-    S_16,
-    U_32,
-    S_32,
-    U_64,
-    S_64,
-    F_32,
-    F_64,
-  };
-  
-  Event(EventType type) : _myType(type) { }
+  template <typename FwdType>
+  AnkiEvent(EventType type, FwdType&& newData);
   
   EventType GetType() const { return _myType; }
-  
-  Result AddData(std::string name, EventDataType type, const void * valuePointer);
-  
-  template <typename RetTYPE>
-  RetTYPE GetData(std::string name, EventDataType type) const;
+  const DataType& GetData() const { return _data; }
   
 protected:
   
-  struct EventData
-  {
-    EventDataType type;
-    union {
-      bool boolean;
-      u8  u8;
-      s8  s8;
-      u16 u16;
-      s16 s16;
-      u32 u32;
-      s32 s32;
-      u64 u64;
-      s64 s64;
-      f32 f32;
-      f64 f64;
-    };
-  };
-  
-  std::map<std::string, EventData> _eventData;
   EventType _myType;
+  DataType _data;
   
 }; // class Event
 
-template <typename RetTYPE>
-RetTYPE Event::GetData(std::string name, EventDataType type) const
-{
-  switch (type) {
-    case EventDataType::BOOLEAN:
-    {
-      return static_cast<RetTYPE>(_eventData.at(name).boolean);
-    }
-    case EventDataType::U_8:
-    {
-      return static_cast<RetTYPE>(_eventData.at(name).u8);
-      break;
-    }
-    case EventDataType::S_8:
-    {
-      return static_cast<RetTYPE>(_eventData.at(name).s8);
-      break;
-    }
-    case EventDataType::U_16:
-    {
-      return static_cast<RetTYPE>(_eventData.at(name).u16);
-      break;
-    }
-    case EventDataType::S_16:
-    {
-      return static_cast<RetTYPE>(_eventData.at(name).s16);
-      break;
-    }
-    case EventDataType::U_32:
-    {
-      return static_cast<RetTYPE>(_eventData.at(name).u32);
-      break;
-    }
-    case EventDataType::S_32:
-    {
-      return static_cast<RetTYPE>(_eventData.at(name).s32);
-      break;
-    }
-    case EventDataType::U_64:
-    {
-      return static_cast<RetTYPE>(_eventData.at(name).u64);
-      break;
-    }
-    case EventDataType::S_64:
-    {
-      return static_cast<RetTYPE>(_eventData.at(name).s64);
-      break;
-    }
-    case EventDataType::F_32:
-    {
-      return static_cast<RetTYPE>(_eventData.at(name).f32);
-      break;
-    }
-    case EventDataType::F_64:
-    {
-      return static_cast<RetTYPE>(_eventData.at(name).f64);
-      break;
-    }
-    default:
-    {
-      assert(false);
-      return static_cast<RetTYPE>(0);
-    }
-  }
-}
+// Template methods
+template <typename DataType>
+template <typename FwdType>
+AnkiEvent<DataType>::AnkiEvent(EventType type, FwdType&& newData)
+  : _myType(type)
+  , _data( std::forward<FwdType>(newData) )
+{ }
+
 
 } // namespace Cozmo
 } // namespace Anki

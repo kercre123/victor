@@ -1,0 +1,43 @@
+
+
+template <typename DataType>
+EventMgr<DataType>* EventMgr<DataType>::sInstance = nullptr;
+
+template <typename DataType>
+inline EventMgr<DataType>* EventMgr<DataType>::GetInstance()
+{
+  // Lazy init of singleton
+  if(nullptr == sInstance)
+  {
+    sInstance = new EventMgr();
+  }
+  
+  return sInstance;
+}
+  
+template <typename DataType>
+void EventMgr<DataType>::RemoveInstance()
+{
+  if (nullptr != sInstance)
+  {
+    delete sInstance;
+    sInstance = nullptr;
+  }
+}
+  
+template <typename DataType>
+void EventMgr<DataType>::Broadcast(const EventDataType& event)
+{
+  typename std::map<typename EventDataType::EventType, EventHandlerSignal>::iterator iter = _eventHandlerMap.find(event.GetType());
+  if (iter != _eventHandlerMap.end())
+  {
+    iter->second.emit(event);
+  }
+}
+  
+template <typename DataType>
+Signal::SmartHandle EventMgr<DataType>::Subcribe(typename EventDataType::EventType type, SubscriberFunction function)
+{
+  return _eventHandlerMap[type].ScopedSubscribe(function);
+}
+

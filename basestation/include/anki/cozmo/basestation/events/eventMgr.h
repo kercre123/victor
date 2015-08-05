@@ -26,11 +26,13 @@
 namespace Anki {
 namespace Cozmo {
 
+template<typename DataType>
 class EventMgr
 {
 public:
-  using SubscriberFunction = std::function<void(const Event&)>;
-  using EventHandlerSignal = Signal::Signal<void(const Event&)>;
+  using EventDataType = AnkiEvent<DataType>;
+  using SubscriberFunction = std::function<void(const EventDataType&)>;
+  using EventHandlerSignal = Signal::Signal<void(const EventDataType&)>;
   
   inline static EventMgr* GetInstance();
   static void RemoveInstance();
@@ -39,35 +41,23 @@ public:
   EventMgr& operator=(const EventMgr&) = delete;
   
   // Broadcasts a given event to everyone that has subscribed to that event type
-  void Broadcast(const Event & event);
+  void Broadcast(const EventDataType& event);
   
   // Allows subscribing to events by type with the passed in function
-  Signal::SmartHandle Subcribe(Event::EventType type, SubscriberFunction function);
+  Signal::SmartHandle Subcribe(typename EventDataType::EventType type, SubscriberFunction function);
   
 private:
   EventMgr() { }
   
   static EventMgr* sInstance;
   
-  std::map<Event::EventType, EventHandlerSignal>  _eventHandlerMap;
+  std::map<typename EventDataType::EventType, EventHandlerSignal>  _eventHandlerMap;
   
 }; // class EventMgr
-
-
-//
-// Inlined Implementations
-//
-inline EventMgr* EventMgr::GetInstance()
-{
-  // Lazy init of singleton
-  if(nullptr == sInstance)
-  {
-    sInstance = new EventMgr();
-  }
   
-  return sInstance;
-}
-
+  
+// Template definitions included here
+#include "ankiEventMgr_templates.def"
 
 } // namespace Cozmo
 } // namespace Anki
