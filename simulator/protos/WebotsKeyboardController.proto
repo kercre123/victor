@@ -91,6 +91,7 @@ PROTO WebotsKeyboardController [
   # Animation to send
   field SFString animationToSendName "ANIM_TEST"
   field SFInt32  animationNumLoops 1
+  field SFString idleAnimationName ""
 
   # Force-add robot options
   field SFBool   forceAddRobot FALSE
