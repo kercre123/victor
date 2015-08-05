@@ -52,7 +52,10 @@ namespace Anki {
       const u32 GetSoundDurationInMilliseconds(const std::string& name) const;
 
       // Returns pointer to a buffer of the sound data
-      bool GetSoundSample(const std::string& name, const u32 sampleIdx, const f32 volume, MessageAnimKeyFrame_AudioSample &msg);
+      bool GetSoundSample(const std::string& name, const u32 sampleIdx, f32 volume, MessageAnimKeyFrame_AudioSample &msg);
+      
+      // 1.0 = "normal volume"
+      void SetRobotVolume(f32 volume);
       
     protected:
       
@@ -80,18 +83,14 @@ namespace Anki {
 
       // Buffer of data from file last referenced by GetSoundBuffer()
       static const u32 MAX_SOUND_BUFFER_SIZE = 500000; // 500000 ~= 10s audio
-      static const u32 MAX_SOUND_BUFFER_DURATION_MS = MAX_SOUND_BUFFER_SIZE * 33 / 1600;
       std::string _currOpenSoundFileName;
       FILE* _currOpenSoundFilePtr;
       u32 _currOpenSoundNumSamples;
       s16 _soundBuf[MAX_SOUND_BUFFER_SIZE];
-      static const u32 SOUND_SAMPLE_SIZE = 400;
-      static const u32 UNENCODED_SOUND_SAMPLE_SIZE = SOUND_SAMPLE_SIZE * 4;
-      
-      // ADPCM encoding vars
-      s32 _adpcm_index;
-      s32 _adpcm_predictor;
-      
+      static const u32 SOUND_SAMPLE_SIZE = 800;
+      static const u32 UNENCODED_SOUND_SAMPLE_SIZE = SOUND_SAMPLE_SIZE * 2;
+      static const u32 MAX_SOUND_BUFFER_DURATION_MS = MAX_SOUND_BUFFER_SIZE * 33 / UNENCODED_SOUND_SAMPLE_SIZE;
+            
     }; // class SoundManager
     
     

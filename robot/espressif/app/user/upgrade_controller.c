@@ -10,6 +10,7 @@
 #include "espconn.h"
 #include "upgrade.h"
 #include "task0.h"
+#include "nv_params.h"
 #include "upgrade_controller.h"
 #include "driver/i2s.h"
 
@@ -75,7 +76,7 @@ LOCAL inline void requestNext(void)
 {
   if (upccConn != NULL)
   {
-    int8_t err = espconn_sent(upccConn, "next", 4);
+    int8 err = espconn_sent(upccConn, (uint8*)"next", 4);
     if (err != 0)
     {
       os_printf("\tCouldn't unhold socket: %d\r\n", err);
@@ -91,7 +92,6 @@ LOCAL inline void requestNext(void)
 LOCAL bool upgradeTask(uint32_t param)
 {
   SpiFlashOpResult flashResult;
-  int8 err;
 
   switch (taskState)
   {
@@ -153,67 +153,83 @@ LOCAL bool upgradeTask(uint32_t param)
     }
     case UPGRADE_TASK_WRITE:
     {
-      if (fwWriteAddress < FW_START_ADDRESS)
+      if (flags & UPCMD_CONFIG)
       {
-        os_printf("UP ERROR: Won't write to %08x below %08x\r\n", fwWriteAddress, FW_START_ADDRESS);
-        resetUpgradeState();
-        return false;
-      }
-      else if (param == 0)
-      {
-        os_printf("UP ERROR: UPGRADE TASK WRITE but param = 0\r\n");
-        resetUpgradeState();
-        return false;
-      }
-      FlashWriteData* fwd = (FlashWriteData*)param;
-      os_printf("UP: Write 0x%08x 0x%x\r\n", fwWriteAddress + bytesWritten, fwd->length);
-      flashResult = spi_flash_write(fwWriteAddress + bytesWritten, fwd->data, fwd->length);
-      switch (flashResult)
-      {
-        case SPI_FLASH_RESULT_OK:
+        NVParams* nvpar = (NVParams*)param;
+        os_printf("Wrinting new NVC (%08x \"%s\") to flash\r\n", (unsigned int)nvpar->PREFIX, nvpar->ssid);
+        if (system_param_save_with_protect(USER_NV_START_SEC, nvpar, sizeof(NVParams)) == false)
         {
-          retryCount = 0;
-          bytesWritten += fwd->length;
-          os_free(fwd); // Free the memory used
-          if (bytesWritten == bytesExpected)
-          {
-            taskState = UPGRADE_TASK_FINISH;
-            return true;
-          }
-          else
-          {
-            requestNext();
-            return false;
-          }
+          os_printf("UP ERROR: Couldn't save non-volatile parameters\r\n");
         }
-        case SPI_FLASH_RESULT_ERR:
+        resetUpgradeState();
+        os_printf("...Done\r\n...Restarting\r\n");
+        system_restart();
+        return false;
+      }
+      else
+      {
+        if (fwWriteAddress < FW_START_ADDRESS)
         {
-          os_printf("\twrite error\r\n");
-          os_free(fwd);
+          os_printf("UP ERROR: Won't write to %08x below %08x\r\n", fwWriteAddress, FW_START_ADDRESS);
           resetUpgradeState();
           return false;
         }
-        case SPI_FLASH_RESULT_TIMEOUT:
+        else if (param == 0)
         {
-          if (retryCount++ < MAX_RETRIES)
+          os_printf("UP ERROR: UPGRADE TASK WRITE but param = 0\r\n");
+          resetUpgradeState();
+          return false;
+        }
+        FlashWriteData* fwd = (FlashWriteData*)param;
+        os_printf("UP: Write 0x%08x 0x%x\r\n", fwWriteAddress + bytesWritten, fwd->length);
+        flashResult = spi_flash_write(fwWriteAddress + bytesWritten, fwd->data, fwd->length);
+        switch (flashResult)
+        {
+          case SPI_FLASH_RESULT_OK:
           {
-            os_printf("\twrite timeout\r\n");
-            return true;
+            retryCount = 0;
+            bytesWritten += fwd->length;
+            os_free(fwd); // Free the memory used
+            if (bytesWritten == bytesExpected)
+            {
+              taskState = UPGRADE_TASK_FINISH;
+              return true;
+            }
+            else
+            {
+              requestNext();
+              return false;
+            }
           }
-          else
+          case SPI_FLASH_RESULT_ERR:
           {
-            os_printf("\twrite timout, aborting\r\n");
+            os_printf("\twrite error\r\n");
             os_free(fwd);
             resetUpgradeState();
             return false;
           }
-        }
-        default:
-        {
-          os_printf("\tUnhandled flash result: %d\r\n", flashResult);
-          os_free(fwd);
-          resetUpgradeState();
-          return false;
+          case SPI_FLASH_RESULT_TIMEOUT:
+          {
+            if (retryCount++ < MAX_RETRIES)
+            {
+              os_printf("\twrite timeout\r\n");
+              return true;
+            }
+            else
+            {
+              os_printf("\twrite timout, aborting\r\n");
+              os_free(fwd);
+              resetUpgradeState();
+              return false;
+            }
+          }
+          default:
+          {
+            os_printf("\tUnhandled flash result: %d\r\n", flashResult);
+            os_free(fwd);
+            resetUpgradeState();
+            return false;
+          }
         }
       }
     }
@@ -266,7 +282,7 @@ LOCAL void ICACHE_FLASH_ATTR upccReceiveCallback(void *arg, char *usrdata, unsig
     if (length != sizeof(UpgradeCommandParameters))
     {
       os_printf("ERROR: UPCC received wrong command packet size %d <> %d\r\n", length, sizeof(UpgradeCommandParameters));
-      err = espconn_sent(conn, "BAD", 3);
+      err = espconn_sent(conn, (uint8*)"BAD", 3);
       if (err != 0)
       {
         os_printf("ERROR: UPCC couldn't sent error response on socket: %d\r\n", err);
@@ -274,14 +290,14 @@ LOCAL void ICACHE_FLASH_ATTR upccReceiveCallback(void *arg, char *usrdata, unsig
       return;
     }
     UpgradeCommandParameters* cmd = (UpgradeCommandParameters*)usrdata;
-    if (strncmp(cmd->PREFIX, UPGRADE_COMMAND_PREFIX, UPGRADE_COMMAND_PREFIX_LENGTH) != 0) // Wrong PREFIX
+    if (os_strncmp(cmd->PREFIX, UPGRADE_COMMAND_PREFIX, UPGRADE_COMMAND_PREFIX_LENGTH) != 0) // Wrong PREFIX
     {
       os_printf("ERROR: UPCC received invalid header\r\n");
     }
     else if (cmd->flashAddress < FW_START_ADDRESS)
     {
-      os_printf("ERROR: fwWriteAddress %08x is in protected region\r\n", cmd->flashAddress);
-      err = espconn_sent(conn, "BAD", 3);
+      os_printf("ERROR: fwWriteAddress %08x is in protected region\r\n", (unsigned int)cmd->flashAddress);
+      err = espconn_sent(conn, (uint8*)"BAD", 3);
       if (err != 0)
       {
         os_printf("ERROR: UPCC couldn't sent error response on socket: %d \r\n", err);
@@ -327,10 +343,25 @@ LOCAL void ICACHE_FLASH_ATTR upccReceiveCallback(void *arg, char *usrdata, unsig
           }
         }
       }
+      else if (cmd->flags & UPCMD_CONFIG)
+      {
+        os_printf("Receiving non-volatile configuration\r\n");
+        flags = cmd->flags;
+        fwWriteAddress = USER_NV_PARAM_START;
+        bytesExpected  = sizeof(NVParams);
+        taskState      = UPGRADE_TASK_WRITE;
+        err = espconn_sent(conn, (uint8*)"NEXT", 4);
+        if (err != 0)
+        {
+          os_printf("ERROR: UPCC couldn't sent request for NV param data\r\n");
+          resetUpgradeState();
+          return;
+        }
+      }
       else
       {
         os_printf("Unsupported upgrade command flag: %d\r\n", flags);
-        err = espconn_sent(conn, "BAD", 3);
+        err = espconn_sent(conn, (uint8*)"BAD", 3);
         if (err != 0)
         {
           os_printf("ERROR: UPCC couldn't sent error response on socket: %d\r\n", err);
@@ -339,7 +370,7 @@ LOCAL void ICACHE_FLASH_ATTR upccReceiveCallback(void *arg, char *usrdata, unsig
       }
     }
   }
-  else
+  else // Continuation of command in progress
   {
     FlashWriteData* fwd;
     if (length > FLASH_WRITE_SIZE)
@@ -359,7 +390,7 @@ LOCAL void ICACHE_FLASH_ATTR upccReceiveCallback(void *arg, char *usrdata, unsig
       os_printf("ERROR: couldn't allocate memory to queue flash write data\r\n");
       return;
     }
-    os_memcpy((void*)fwd->data, usrdata, length);
+    os_memcpy((void*)fwd->data, (void*)usrdata, length);
     fwd->length = length;
     bytesReceived += length;
     if (task0Post(upgradeTask, (uint32)fwd) == false)
@@ -373,7 +404,7 @@ LOCAL void ICACHE_FLASH_ATTR upccReceiveCallback(void *arg, char *usrdata, unsig
 
 LOCAL void ICACHE_FLASH_ATTR upccSentCallback(void *arg)
 {
-  struct espconn *conn = arg;
+  //struct espconn *conn = arg;
   //os_printf("INFO: UPCC sent cb\r\n");
 }
 

@@ -202,8 +202,8 @@ CCFLAGS += 			\
 	-mlongcalls	\
 	-mtext-section-literals \
 	-ffunction-sections \
-	-fdata-sections
-#	-Wall
+	-fdata-sections \
+	-Wall			
 
 CFLAGS = $(CCFLAGS) $(DEFINES) $(EXTRA_CCFLAGS) $(INCLUDES)
 DFLAGS = $(CCFLAGS) $(DDEFINES) $(EXTRA_CCFLAGS) $(INCLUDES)
@@ -234,12 +234,12 @@ DEP_LIBS_$(1) = $$(foreach lib,$$(filter %.a,$$(COMPONENTS_$(1))),$$(dir $$(lib)
 DEP_OBJS_$(1) = $$(foreach obj,$$(filter %.o,$$(COMPONENTS_$(1))),$$(dir $$(obj))$$(OBJODIR)/$$(notdir $$(obj)))
 $$(IMAGEODIR)/$(1).out: $$(OBJS) $$(DEP_OBJS_$(1)) $$(DEP_LIBS_$(1)) $$(DEPENDS_$(1))
 	@mkdir -p $$(IMAGEODIR)
-	$$(CC) $$(LDFLAGS) $$(if $$(LINKFLAGS_$(1)),$$(LINKFLAGS_$(1)),$$(LINKFLAGS_DEFAULT) $$(OBJS) $$(DEP_OBJS_$(1)) $$(DEP_LIBS_$(1))) -o $$@
+	$$(CC) $$(LDFLAGS) $$(if $$(LINKFLAGS_$(1)),$$(LINKFLAGS_$(1)),$$(LINKFLAGS_DEFAULT) $$(OBJS) $$(DEP_OBJS_$(1)) $$(DEP_LIBS_$(1))) -o $$@ 
 endef
 
 $(BINODIR)/%.bin: $(IMAGEODIR)/%.out
 	@mkdir -p $(BINODIR)
-
+	
 ifeq ($(APP), 0)
 	@$(RM) -r ../bin/eagle.S ../bin/eagle.dump
 	@$(OBJDUMP) -x -s $< > ../bin/eagle.dump
@@ -257,7 +257,7 @@ endif
 
 	@echo ""
 	@echo "!!!"
-
+	
 ifeq ($(app), 0)
 	@python2 ../tools/gen_appbin.py $< 0 $(mode) $(freqdiv) $(size_map)
 	@mv eagle.app.flash.bin ../bin/eagle.flash.bin

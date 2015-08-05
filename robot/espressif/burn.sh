@@ -7,14 +7,9 @@ else
   exit 1
 fi
 
-if which python3; then
-  PYTHON=python2
-else
-  PYTHON=python
-fi
-
-$PYTHON $ESPTOOL --port $1 --baud 230400 write_flash 0x00000 bin/boot_v1.2.bin \
-                                                     0x01000 bin/upgrade/user1.512.new.0.bin \
-                                                     0x41000 bin/upgrade/user2.512.new.0.bin \
-                                                     0x7c000 bin/esp_init_data_default.bin \
-                                                     0x7e000 bin/blank.bin
+python2 $ESPTOOL --port $1 --baud 230400 write_flash --flash_size 16m --flash_freq 20m \
+        0x000000 bin/boot_v1.2.bin \
+        0x001000 bin/upgrade/user1.2048.new.3.bin \
+        0x07c000 bin/blank.bin \
+        0x1fc000 bin/esp_init_data_default.bin \
+        0x1fe000 bin/blank.bin

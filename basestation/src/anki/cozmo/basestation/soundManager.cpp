@@ -41,6 +41,9 @@ namespace Anki {
       bool         _isLocked;
       f32          _volume;
       
+      // Master robot volume
+      f32 _robotVolume;
+      
       std::string GetSoundToPlay(s32& numLoops, f32& volume)
       {
         // Wait for unlock before reading sound file string
@@ -155,6 +158,8 @@ namespace Anki {
       _currOpenSoundFileName = "";
       _currOpenSoundFilePtr = nullptr;
       _currOpenSoundNumSamples = 0;
+      
+      _robotVolume = 1.0f;
       
       std::thread soundFeederThread(CmdLinePlayFeeder);
       soundFeederThread.detach();
@@ -420,7 +425,7 @@ namespace Anki {
       return soundIter->second.duration_ms;
     }
 
-    bool SoundManager::GetSoundSample(const std::string& name, const u32 sampleIdx, const f32 volume, MessageAnimKeyFrame_AudioSample &msg)
+    bool SoundManager::GetSoundSample(const std::string& name, const u32 sampleIdx, f32 volume, MessageAnimKeyFrame_AudioSample &msg)
     {
       if (_currOpenSoundFileName != name) {
         // Dump file contents to buffer if this is not the same file
@@ -458,6 +463,9 @@ namespace Anki {
         fileSize = MIN(fileSize, MAX_SOUND_BUFFER_SIZE);
         fread(_soundBuf, 1, fileSize, _currOpenSoundFilePtr);
         
+        // Apply master volume
+        volume *= _robotVolume;
+        
         // Adjust volume
         // Note: Clipping is possible!
         if (volume != 1.f) {
@@ -476,19 +484,13 @@ namespace Anki {
         }
         
         _currOpenSoundFileName = name;
-        _adpcm_index = 0;
-        _adpcm_predictor = 0;
       }
       
       if (sampleIdx >= _currOpenSoundNumSamples) {
         return false;
       }
-
-      msg.predictor = _adpcm_predictor;
-      msg.index = _adpcm_index;
-      
-      s16* frame = &(_soundBuf[sampleIdx * SOUND_SAMPLE_SIZE * 2]);
-      encodeADPCM(_adpcm_index, _adpcm_predictor, frame, msg.sample.data(), SOUND_SAMPLE_SIZE * 2);
+      s16* frame = &(_soundBuf[sampleIdx * SOUND_SAMPLE_SIZE]);
+      encodeMuLaw(frame, msg.sample.data(), SOUND_SAMPLE_SIZE);
       
       /*
        // Debug dump first 20 samples
@@ -502,6 +504,12 @@ namespace Anki {
        */
       
       return true;
+    }
+    
+    void SoundManager::SetRobotVolume(f32 volume)
+    {
+      PRINT_NAMED_INFO("SoundManager.SetRobotVolume.NewVolume","%f\n", volume);
+      _robotVolume = volume;
     }
     
   } // namespace Cozmo
