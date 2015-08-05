@@ -14,13 +14,11 @@
 #ifndef ANKI_COZMO_EVENTMGR_H
 #define ANKI_COZMO_EVENTMGR_H
 
-#include "ankiEvent.h"
+#include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/shared/cozmoTypes.h"
 #include "util/signals/simpleSignal.hpp"
 
-#include <string>
 #include <map>
-#include <vector>
 #include <functional>
 
 namespace Anki {

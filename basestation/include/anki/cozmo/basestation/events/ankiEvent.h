@@ -16,10 +16,6 @@
 
 #include "anki/cozmo/shared/cozmoTypes.h"
 
-#include "assert.h"
-#include <string>
-#include <map>
-
 
 namespace Anki {
 namespace Cozmo {
