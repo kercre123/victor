@@ -4,11 +4,11 @@
  * Author: Lee Crippen
  * Created: 07/30/15
  *
- * Description: Events that contain a map of names to anonymous data. Each piece of data has a type
- *              and a unionized value.
+ * Description: Events that contain a simple type and a templatized data parameter.
  *
  * Copyright: Anki, Inc. 2015
  *
+ * COZMO_PUBLIC_HEADER
  **/
 
 #ifndef ANKI_COZMO_EVENT_H
@@ -25,7 +25,10 @@ class AnkiEvent
 {
 public:
   template <typename FwdType>
-  AnkiEvent(u32 type, FwdType&& newData);
+  AnkiEvent(u32 type, FwdType&& newData)
+  : _myType(type)
+  , _data( std::forward<FwdType>(newData) )
+{ }
   
   u32 GetType() const { return _myType; }
   const DataType& GetData() const { return _data; }
@@ -36,14 +39,6 @@ protected:
   DataType _data;
   
 }; // class Event
-
-// Template methods
-template <typename DataType>
-template <typename FwdType>
-AnkiEvent<DataType>::AnkiEvent(u32 type, FwdType&& newData)
-  : _myType(type)
-  , _data( std::forward<FwdType>(newData) )
-{ }
 
 
 } // namespace Cozmo
