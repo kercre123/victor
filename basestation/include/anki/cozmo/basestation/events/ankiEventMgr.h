@@ -55,7 +55,46 @@ private:
   
   
 // Template definitions included here
-#include "ankiEventMgr_templates.def"
+template <typename DataType>
+AnkiEventMgr<DataType>* AnkiEventMgr<DataType>::sInstance = nullptr;
+
+template <typename DataType>
+inline AnkiEventMgr<DataType>* AnkiEventMgr<DataType>::GetInstance()
+{
+  // Lazy init of singleton
+  if(nullptr == sInstance)
+  {
+    sInstance = new AnkiEventMgr();
+  }
+  
+  return sInstance;
+}
+  
+template <typename DataType>
+void AnkiEventMgr<DataType>::RemoveInstance()
+{
+  if (nullptr != sInstance)
+  {
+    delete sInstance;
+    sInstance = nullptr;
+  }
+}
+  
+template <typename DataType>
+void AnkiEventMgr<DataType>::Broadcast(const EventDataType& event)
+{
+  typename std::map<u32, EventHandlerSignal>::iterator iter = _eventHandlerMap.find(event.GetType());
+  if (iter != _eventHandlerMap.end())
+  {
+    iter->second.emit(event);
+  }
+}
+  
+template <typename DataType>
+Signal::SmartHandle AnkiEventMgr<DataType>::Subcribe(u32 type, SubscriberFunction function)
+{
+  return _eventHandlerMap[type].ScopedSubscribe(function);
+}
 
 } // namespace Cozmo
 } // namespace Anki
