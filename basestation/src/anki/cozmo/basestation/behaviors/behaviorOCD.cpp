@@ -26,9 +26,10 @@ namespace Cozmo {
   BehaviorOCD::BehaviorOCD(Robot& robot, const Json::Value& config)
   : IBehavior(robot, config)
   , _currentArrangement(Arrangement::STACKS_OF_TWO)
+  , _name("OCD")
   {
-    
-    //TODO: Remove once Lee's Events are in
+    // Register callbacks:
+    // TODO: Remove once Lee's Events are in
     auto cbActionCompleted = [this](ExternalInterface::MessageEngineToGame msg) {
       this->HandleActionCompleted(msg.Get_RobotCompletedAction());
     };
@@ -48,7 +49,6 @@ namespace Cozmo {
       this->HandleObjectMoved(msg.Get_ActiveObjectMoved());
     };
     _signalHandles.emplace_back(CozmoEngineSignals::ObjectMovedSignal().ScopedSubscribe(cbObjectMoved));
-    
   }
   
   
@@ -57,8 +57,9 @@ namespace Cozmo {
   
   bool BehaviorOCD::IsRunnable() const
   {
-    // We can only run this behavior when there are "messy" blocks present
-    return !_messyObjects.empty();
+    // We can only run this behavior when there are at least two "messy" blocks present,
+    // or when there is at least one messy block while we've got any neat blocks
+    return (_messyObjects.size() >= 2) || (!_neatObjects.empty() && !_messyObjects.empty());
   }
   
   Result BehaviorOCD::Init()
@@ -96,6 +97,7 @@ namespace Cozmo {
       }
     } else {
       lastResult = SelectNextObjectToPickUp();
+      _currentState = State::PICKING_UP_BLOCK;
     }
     
     lastResult = SelectArrangement();
@@ -152,9 +154,44 @@ namespace Cozmo {
 #pragma mark -
 #pragma mark OCD-Specific Methods
   
+  void BehaviorOCD::UpdateName()
+  {
+    _name = "OCD";
+    switch(_currentArrangement)
+    {
+      case Arrangement::LINE:
+        _name += "-LINE";
+        break;
+        
+      case Arrangement::STACKS_OF_TWO:
+        _name += "-STACKS_OF_TWO";
+        break;
+        
+      default:
+        PRINT_NAMED_ERROR("BehaviorOCD.UpdateName.InvalidArrangment", "\n");
+    }
+    
+    switch(_currentState)
+    {
+      case State::PICKING_UP_BLOCK:
+        _name += "-PICKING";
+        break;
+        
+      case State::PLACING_BLOCK:
+        _name += "-PLACING";
+        break;
+        
+      default:
+        PRINT_NAMED_ERROR("BehaviorOCD.UpdateName.InvalidState", "\n");
+    }
+  }
+  
   Result BehaviorOCD::SelectArrangement()
   {
+    Arrangement previousArrangement = _currentArrangement;
+    
     // TODO: Make this based on something "smarter"
+    /*
     // For now, just rotate between available arrangments
     s32 iArrangement = static_cast<s32>(_currentArrangement);
     ++iArrangement;
@@ -162,15 +199,17 @@ namespace Cozmo {
       iArrangement = 0;
     }
     _currentArrangement = static_cast<Arrangement>(iArrangement);
+    */
+    _currentArrangement = Arrangement::STACKS_OF_TWO;
     
 #   if DEBUG_OCD_BEHAVIOR
-    PRINT_NAMED_INFO("BehaviorOCD.SelectArrangement", "Selected arrangment %d\n", iArrangement);
+    PRINT_NAMED_INFO("BehaviorOCD.SelectArrangement", "Selected arrangment %d\n", _currentArrangement);
 #   endif
     
-    // we'll select the arrangement's anchor once we place our first block
-    _anchorObject.UnSet();
-    
-    _lastObjectPlacedOnGround.UnSet();
+    if(_currentArrangement != previousArrangement) {
+      _lastObjectPlacedOnGround.UnSet();
+      UpdateName();
+    }
     
     return RESULT_OK;
   }
@@ -249,8 +288,8 @@ namespace Cozmo {
       _anchorObject = _objectToPickUp;
     }
     
-    _robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot,
-                                            new DriveToPickAndPlaceObjectAction(_objectToPickUp));
+    _robot.GetActionList().QueueActionNow(IBehavior::sActionSlot,
+                                          new DriveToPickAndPlaceObjectAction(_objectToPickUp));
     
     _currentState = State::PICKING_UP_BLOCK;
     
@@ -263,6 +302,48 @@ namespace Cozmo {
     
     return RESULT_OK;
   } // SelectNextObjectToPickUp()
+  
+  // Return a pose "next to" the given object, along the x or y axes.
+  // Simply fails if all of the 4 check locations (+/-x, +/-y) have objects in them.
+  Result BehaviorOCD::FindEmptyPlacementPose(const ObjectID& nearObjectID, Pose3d& pose)
+  {
+    Vision::ObservableObject* nearObject = _robot.GetBlockWorld().GetObjectByID(nearObjectID);
+    if(nearObject == nullptr) {
+      PRINT_NAMED_ERROR("BehaviorOCD.FindEmptyPlacementPose.InvalidNearObjectID", "\n");
+      return RESULT_FAIL;
+    }
+    
+    pose = nearObject->GetPose();
+    
+    Vec3f T(2*nearObject->GetSize().x(), 0, pose.GetTranslation().z());
+    Pose3d poseNextTo(0, Z_AXIS_3D(), T);
+    pose.PreComposeWith(poseNextTo);
+    if(nullptr != _robot.GetBlockWorld().FindObjectClosestTo(pose, nearObject->GetSize())) {
+      // Spot along x axis is full, try -x
+      T.x() *= -1.f;
+      poseNextTo.SetTranslation(T);
+      pose = poseNextTo * nearObject->GetPose();
+      if(nullptr != _robot.GetBlockWorld().FindObjectClosestTo(pose, nearObject->GetSize())) {
+        // Spot along -x axis is full, try y
+        T.x() = 0.f;
+        T.y() = 2*nearObject->GetSize().y();
+        poseNextTo.SetTranslation(T);
+        pose = poseNextTo * nearObject->GetPose();
+        if(nullptr != _robot.GetBlockWorld().FindObjectClosestTo(pose, nearObject->GetSize())) {
+          // Spot along y axis is full, try -1
+          T.y() *= -1.f;
+          poseNextTo.SetTranslation(T);
+          pose = poseNextTo * nearObject->GetPose();
+          if(nullptr != _robot.GetBlockWorld().FindObjectClosestTo(pose, nearObject->GetSize())) {
+            
+            return RESULT_FAIL;
+          }
+        }
+      }
+    }
+    
+    return RESULT_OK;
+  } // FindEmptyPlacementPose()
   
   Result BehaviorOCD::SelectNextPlacement()
   {
@@ -292,7 +373,7 @@ namespace Cozmo {
       {
         BlockWorld& blockWorld = _robot.GetBlockWorld();
         
-        // Pick the closest neatened block without anything on top yet...
+        // Pick the closest neatened object that's on the ground without anything on top yet...
         ObjectID bottomBlockID;
         assert(bottomBlockID.IsUnknown());
         f32 closestDistSq = std::numeric_limits<f32>::max();
@@ -303,26 +384,33 @@ namespace Cozmo {
                               "No object ID = %d\n", neatObjectID.GetValue());
             return RESULT_FAIL;
           }
-          Vision::ObservableObject* onTop = blockWorld.FindObjectOnTopOf(*neatObject, 15.f);
-          if(onTop == nullptr) {
-            Pose3d poseWrtRobot;
-            if(false == neatObject->GetPose().GetWithRespectTo(_robot.GetPose(), poseWrtRobot)) {
-              PRINT_NAMED_ERROR("BehaviorOCD.SelectNextPlacement.PoseFail",
-                                "Could not get object %d's pose w.r.t. robot.\n",
-                                neatObject->GetID().GetValue());
-              return RESULT_FAIL;
-            }
-            const f32 currentDistSq = poseWrtRobot.GetTranslation().LengthSq();
-            if(currentDistSq < closestDistSq) {
-              closestDistSq = currentDistSq;
-              bottomBlockID = neatObjectID;
+          
+          // Get pose of this neat object w.r.t. robot pose
+          Pose3d poseWrtRobot;
+          if(false == neatObject->GetPose().GetWithRespectTo(_robot.GetPose(), poseWrtRobot)) {
+            PRINT_NAMED_ERROR("BehaviorOCD.SelectNextPlacement.PoseFail",
+                              "Could not get object %d's pose w.r.t. robot.\n",
+                              neatObject->GetID().GetValue());
+            return RESULT_FAIL;
+          }
+          
+          // Make sure it's approximately at the same height as the robot
+          if(NEAR(poseWrtRobot.GetTranslation().z(), neatObject->GetSize().z()*0.5f, 10.f)) {
+            // See if there's anything on top of it
+            Vision::ObservableObject* onTop = blockWorld.FindObjectOnTopOf(*neatObject, 15.f);
+            if(onTop == nullptr) {
+              const f32 currentDistSq = poseWrtRobot.GetTranslation().LengthSq();
+              if(currentDistSq < closestDistSq) {
+                closestDistSq = currentDistSq;
+                bottomBlockID = neatObjectID;
+              }
             }
           }
         } // for each neat object
         
         if(bottomBlockID.IsSet()) {
           // Found a neat object with nothing on top. Stack on top of it:
-          placementAction = new PickAndPlaceObjectAction(bottomBlockID);
+          placementAction = new DriveToPickAndPlaceObjectAction(bottomBlockID);
 #         if DEBUG_OCD_BEHAVIOR
           PRINT_NAMED_INFO("BehaviorOCD.SelectNextPlacement.STACKS_OF_TWO", "Chose to place on top of object %d.\n",
                            bottomBlockID.GetValue());
@@ -332,35 +420,25 @@ namespace Cozmo {
           // at the same orientation as the last block placed
           if(_lastObjectPlacedOnGround.IsSet()) {
             Pose3d pose;
-            
-            // TODO: Find closest available free space near the last object we placed on the ground
-            Vision::ObservableObject* lastObject = blockWorld.GetObjectByID(_lastObjectPlacedOnGround);
-            pose = lastObject->GetPose();
-            Vec3f T = pose.GetTranslation();
-            T.x() += 3*lastObject->GetSameDistanceTolerance().x();
-            pose.SetTranslation(T);
+            Result result = FindEmptyPlacementPose(_lastObjectPlacedOnGround, pose);
+            if(RESULT_OK != result) {
+              PRINT_NAMED_ERROR("BehaviorOCD.SelectNextPlacement.NoEmptyPosesFound", "\n");
+              return result;
+            }
             
             placementAction = new PlaceObjectOnGroundAtPoseAction(_robot, pose);
 #           if DEBUG_OCD_BEHAVIOR
             PRINT_NAMED_INFO("BehaviorOCD.SelectNextPlacement.STACKS_OF_TWO",
                              "Placing object on ground at (%.1f,%.1f,%.1f) @ %.1fdeg (near object %d)\n",
-                             T.x(), T.y(), T.z(), pose.GetRotationAngle<'Z'>().getDegrees(),
+                             pose.GetTranslation().x(), pose.GetTranslation().y(), pose.GetTranslation().z(),
+                             pose.GetRotationAngle<'Z'>().getDegrees(),
                              _lastObjectPlacedOnGround.GetValue());
 #           endif
           } else {
-            // This is the first object placed, just re-orient it in the same position
-            Pose3d pose = carriedObject->GetPose();
-            f32 angle_deg = pose.GetRotationAngle<'Z'>().getDegrees();
-            if(angle_deg < 45 && angle_deg >= -45) {
-              angle_deg = 0;
-            } else if(angle_deg < 135 && angle_deg >= 45) {
-              angle_deg = 90;
-            } else if(angle_deg < -45 && angle_deg >= -135) {
-              angle_deg = -90;
-            } else {
-              angle_deg = 180;
-            }
-            pose.SetRotation(DEG_TO_RAD(angle_deg), Z_AXIS_3D());
+            // This is the first object placed, just re-orient it to leave it in
+            // the same position but aligned to the coordinate system (i.e. no rotation)
+            Pose3d pose = carriedObject->GetPose().GetWithRespectToOrigin();
+            pose.RotateBy(pose.GetRotation().GetInverse());
             
             placementAction = new PlaceObjectOnGroundAtPoseAction(_robot, pose);
 #           if DEBUG_OCD_BEHAVIOR
@@ -383,36 +461,29 @@ namespace Cozmo {
       case Arrangement::LINE:
       {
         if(_lastObjectPlacedOnGround.IsSet()) {
-          Pose3d pose;
           
           // TODO: Find closest available free space near the last object we placed on the ground
-          Vision::ObservableObject* lastObject = _robot.GetBlockWorld().GetObjectByID(_lastObjectPlacedOnGround);
-          pose = lastObject->GetPose();
-          Vec3f T = pose.GetTranslation();
-          T.x() += 3*lastObject->GetSameDistanceTolerance().x();
-          pose.SetTranslation(T);
+
+          Pose3d pose;
+          Result result = FindEmptyPlacementPose(_lastObjectPlacedOnGround, pose);
+          if(RESULT_OK != result) {
+            PRINT_NAMED_ERROR("BehaviorOCD.SelectNextPlacement.NoEmptyPosesFound", "\n");
+            return result;
+          }
           
           placementAction = new PlaceObjectOnGroundAtPoseAction(_robot, pose);
 #         if DEBUG_OCD_BEHAVIOR
           PRINT_NAMED_INFO("BehaviorOCD.SelectNextPlacement.LINE",
                            "Placing object on ground at (%.1f,%.1f,%.1f) @ %.1fdeg (near object %d)\n",
-                           T.x(), T.y(), T.z(), pose.GetRotationAngle<'Z'>().getDegrees(),
+                           pose.GetTranslation().x(), pose.GetTranslation().y(), pose.GetTranslation().z(),
+                           pose.GetRotationAngle<'Z'>().getDegrees(),
                            _lastObjectPlacedOnGround.GetValue());
 #         endif
         } else {
-          // This is the first object placed, just re-orient it in the same position
-          Pose3d pose = carriedObject->GetPose();
-          f32 angle_deg = pose.GetRotationAngle<'Z'>().getDegrees();
-          if(angle_deg < 45 && angle_deg >= -45) {
-            angle_deg = 0;
-          } else if(angle_deg < 135 && angle_deg >= 45) {
-            angle_deg = 90;
-          } else if(angle_deg < -45 && angle_deg >= -135) {
-            angle_deg = -90;
-          } else {
-            angle_deg = 180;
-          }
-          pose.SetRotation(DEG_TO_RAD(angle_deg), Z_AXIS_3D());
+          // This is the first object placed, just re-orient it to leave it in
+          // the same position but aligned to the coordinate system (i.e. no rotation)
+          Pose3d pose = carriedObject->GetPose().GetWithRespectToOrigin();
+          pose.RotateBy(pose.GetRotation().GetInverse());
           
           placementAction = new PlaceObjectOnGroundAtPoseAction(_robot, pose);
 #         if DEBUG_OCD_BEHAVIOR
@@ -443,7 +514,7 @@ namespace Cozmo {
     
     _currentState = State::PLACING_BLOCK;
     
-    Result queueResult = _robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, placementAction);
+    Result queueResult = _robot.GetActionList().QueueActionNow(IBehavior::sActionSlot, placementAction);
     
     return queueResult;
   } // SelectNextPlacement()
@@ -451,6 +522,11 @@ namespace Cozmo {
 
   void BehaviorOCD::HandleActionCompleted(const ExternalInterface::RobotCompletedAction &msg)
   {
+    if(!IsRunning()) {
+      // Ignore action completion messages while not runningd
+      return;
+    }
+    
     switch(_currentState)
     {
       case State::PICKING_UP_BLOCK:
@@ -497,8 +573,11 @@ namespace Cozmo {
               // NOTE: deliberate fallthrough to next case!
             case RobotActionType::PLACE_OBJECT_HIGH:
 #             if DEBUG_OCD_BEHAVIOR
-              PRINT_NAMED_INFO("BehaviorOCD.HandleActionCompleted.PlacementSuccessful", "\n");
+              PRINT_NAMED_INFO("BehaviorOCD.HandleActionCompleted.PlacementSuccessful",
+                               "Placed object %d, moving from messy to neat.\n",
+                               _objectToPickUp.GetValue());
 #             endif
+              
               // We're done placing the block, mark it as neat and move to next one
               _messyObjects.erase(_objectToPickUp);
               _neatObjects.insert(_objectToPickUp);
@@ -530,6 +609,8 @@ namespace Cozmo {
       } // case PLACING_BLOCK
     } // switch(_currentState)
     
+    UpdateName();
+    
   } // HandleActionCompleted()
   
   
@@ -542,6 +623,17 @@ namespace Cozmo {
     
     if(_neatObjects.count(objectID)>0)
     {
+#     if DEBUG_OCD_BEHAVIOR
+      PRINT_NAMED_INFO("BehaviorOCD.HandleObjectMoved", "Neat object %d moved, making messy.\n", msg.objectID);
+#     endif
+      
+      if(_lastObjectPlacedOnGround == objectID) {
+#       if DEBUG_OCD_BEHAVIOR
+        PRINT_NAMED_INFO("BehaviorOCD.HandleObjectMoved", "About to make last object on ground messy, clearing.\n");
+#       endif
+        _lastObjectPlacedOnGround.UnSet();
+      }
+      
       _neatObjects.erase(objectID);
       _messyObjects.insert(objectID);
       
@@ -563,7 +655,15 @@ namespace Cozmo {
     objectID = msg.objectID;
 
     if(_neatObjects.count(objectID) == 0) {
-      _messyObjects.insert(objectID);
+      std::pair<std::set<ObjectID>::iterator,bool> insertResult = _messyObjects.insert(objectID);
+      
+      if(insertResult.second) {
+#       if DEBUG_OCD_BEHAVIOR
+        PRINT_NAMED_INFO("BehaviorOCD.HandleObservedObject",
+                         "Adding observed object %d to messy list.\n", msg.objectID);
+#       endif
+      }
+      
     }
   }
   
@@ -573,6 +673,17 @@ namespace Cozmo {
     ObjectID objectID;
     objectID = msg.objectID;
 
+#   if DEBUG_OCD_BEHAVIOR
+    PRINT_NAMED_INFO("BehaviorOCD.HandleDeletedObject", "Deleting object %d from messy & neat lists.\n", msg.objectID);
+#   endif
+    
+    if(_lastObjectPlacedOnGround == objectID) {
+#     if DEBUG_OCD_BEHAVIOR
+      PRINT_NAMED_INFO("BehaviorOCD.HandleDeletedObject", "About to delete last object on ground, clearing.\n");
+#     endif
+      _lastObjectPlacedOnGround.UnSet();
+    }
+    
     _messyObjects.erase(objectID);
     _neatObjects.erase(objectID);
   }

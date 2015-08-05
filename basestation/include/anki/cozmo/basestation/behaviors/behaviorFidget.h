@@ -37,8 +37,7 @@ namespace Cozmo {
     virtual bool GetRewardBid(Reward& reward) override;
     
     virtual const std::string& GetName() const override {
-      static const std::string name("Fidget");
-      return name;
+      return _name;
     }
 
   private:
@@ -61,6 +60,8 @@ namespace Cozmo {
     f32 _nextFidgetWait_sec;
     
     f32 _minWait_sec, _maxWait_sec;
+    
+    std::string _name;
     
   }; // class BehaviorFidget
 

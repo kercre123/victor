@@ -725,7 +725,7 @@ namespace Anki {
         newAngle += _rng.RandDblInRange(-_variability.ToDouble(),
                                          _variability.ToDouble());
       }
-      dcPose.SetRotation(heading + _turnAngle, Z_AXIS_3D());
+      dcPose.SetRotation(newAngle, Z_AXIS_3D());
       robot.ComputeOriginPose(dcPose, rotatedPose);
       
       SetGoal(rotatedPose);

@@ -38,8 +38,18 @@ namespace Cozmo {
       COMPLETE
     };
     
-    IBehavior(Robot& robot, const Json::Value& config) : _robot(robot) { }
+    IBehavior(Robot& robot, const Json::Value& config);
     virtual ~IBehavior() { }
+    
+    // BehaviorManager uses SetIsRunning() when it starts or stops a behavior.
+    // IsRunning() allows querying from inside a subclass to do things differently
+    // (such as handling events) depending on running state.
+    bool IsRunning() const { return _isRunning; }
+    void SetIsRunning(bool tf) { _isRunning = tf; }
+    
+    //
+    // Abstract methods to be overloaded:
+    //
     
     // Returns true iff the state of the world/robot is sufficient for this
     // behavior to be executed
@@ -75,6 +85,10 @@ namespace Cozmo {
     
     //TODO: Remove once Lee's Events are in
     std::vector<Signal::SmartHandle> _signalHandles;
+    
+  private:
+    
+    bool _isRunning;
     
   }; // class IBehavior
 

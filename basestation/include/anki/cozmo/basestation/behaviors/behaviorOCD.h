@@ -44,8 +44,8 @@ namespace Cozmo {
     virtual bool GetRewardBid(Reward& reward) override;
     
     virtual const std::string& GetName() const override {
-      static const std::string name("OCD");
-      return name;
+      //static std::string name("OCD");
+      return _name;
     }
     
   private:
@@ -61,6 +61,7 @@ namespace Cozmo {
     Result SelectArrangement();
     Result SelectNextObjectToPickUp();
     Result SelectNextPlacement();
+    Result FindEmptyPlacementPose(const ObjectID& nearObjectID, Pose3d& pose);
     
     f32 GetNeatnessScore(ObjectID whichObject);
     
@@ -91,7 +92,10 @@ namespace Cozmo {
     ObjectID _lastObjectPlacedOnGround;
     ObjectID _anchorObject; // the object the arrangement is anchored to
     
-    /* 
+    void UpdateName();
+    std::string _name;
+    
+    /*
      Not sure this is needed anymore, now that we're using events and
      the current action should basically hold this state 
      

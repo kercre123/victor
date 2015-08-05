@@ -48,7 +48,7 @@ namespace Cozmo {
     // TODO: Only load behaviors specified by Json?
     
     AddBehavior(new BehaviorOCD(_robot, config));
-    AddBehavior(new BehaviorLookForFaces(_robot, config));
+    //AddBehavior(new BehaviorLookForFaces(_robot, config));
     AddBehavior(new BehaviorFidget(_robot, config));
     
     _isInitialized = true;
@@ -118,18 +118,31 @@ namespace Cozmo {
   {
     Result lastResult = RESULT_OK;
     
+    if(!_isInitialized) {
+      PRINT_NAMED_ERROR("BehaviorManager.Update.NotInitialized", "\n");
+      return RESULT_FAIL;
+    }
+    
     // HACK: prevent error/warning that _robot is unused for now...
     _robot.GetID();
     
-    if(currentTime_sec - _lastSwitchTime_sec > _minBehaviorTime_sec) {
+    if(_currentBehavior == _behaviors.end() ||
+       currentTime_sec - _lastSwitchTime_sec > _minBehaviorTime_sec)
+    {
       // We've been in the current behavior long enough to consider switching
-      lastResult = SelectNextBehavior("OCD");
+      lastResult = SelectNextBehavior();
       if(lastResult != RESULT_OK) {
         PRINT_NAMED_WARNING("BehaviorManager.Update.SelectNextFailed",
                             "Failed trying to select next behavior, continuing with current.\n");
         lastResult = RESULT_OK;
       }
       _lastSwitchTime_sec = currentTime_sec;
+      
+#     if DEBUG_BEHAVIOR_MGR
+      PRINT_NAMED_WARNING("BehaviorManager.Update.SelectedNext",
+                          "Selected next behavior '%s' at t=%.1f, last was t=%.1f\n",
+                          _nextBehavior->first.c_str(), currentTime_sec, _lastSwitchTime_sec);
+#     endif
     }
     
     if(_currentBehavior != _behaviors.end()) {
@@ -140,10 +153,12 @@ namespace Cozmo {
       {
         case IBehavior::Status::RUNNING:
           // Nothing to do! Just keep on truckin'....
+          _currentBehavior->second->SetIsRunning(true);
           break;
           
         case IBehavior::Status::COMPLETE:
           // Behavior complete, switch to next
+          _currentBehavior->second->SetIsRunning(false);
           SwitchToNextBehavior();
           break;
           
@@ -152,6 +167,7 @@ namespace Cozmo {
                             "Behavior '%s' failed to Update().\n",
                             _currentBehavior->first.c_str());
           lastResult = RESULT_FAIL;
+          _currentBehavior->second->SetIsRunning(false);
           break;
           
         default:
@@ -213,9 +229,13 @@ namespace Cozmo {
     //
     //
 
+    /*
     // For now: random behavior that is runnable
     const s32 N = _rng.RandIntInRange(0,static_cast<s32>(_behaviors.size())-1);
     _nextBehavior = std::next(std::begin(_behaviors), N);
+    */
+    // Always select OCD for testing (switches to Fidget if OCD isn't runnable yet)
+    _nextBehavior = _behaviors.find("OCD");
     
     // If the randomly-selected behavior isn't runnable, just select the next one that is
     if(_nextBehavior->second->IsRunnable() == false) {

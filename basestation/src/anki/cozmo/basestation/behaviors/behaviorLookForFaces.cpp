@@ -29,6 +29,16 @@ namespace Cozmo {
   : IBehavior(robot, config)
   , _currentState(State::LOOKING_AROUND)
   {
+    
+    
+  }
+  
+  Result BehaviorLookForFaces::Init()
+  {
+    _currentState = State::LOOKING_AROUND;
+    
+    // Set up signal handlers for while we are running
+    
     //TODO: Remove once Lee's Events are in
     auto cbObservedObject = [this](ExternalInterface::MessageEngineToGame msg) {
       this->HandleRobotObservedObject(msg.Get_RobotObservedObject());
@@ -39,12 +49,6 @@ namespace Cozmo {
       this->HandleRobotCompletedAction(msg.Get_RobotCompletedAction());
     };
     _signalHandles.emplace_back(CozmoEngineSignals::RobotCompletedActionSignal().ScopedSubscribe(cbActionCompleted));
-    
-  }
-  
-  Result BehaviorLookForFaces::Init()
-  {
-    _currentState = State::LOOKING_AROUND;
     
     return RESULT_OK;
   }
@@ -81,6 +85,8 @@ namespace Cozmo {
         break;
         
       case State::INTERRUPTED:
+        // This is the only way we stop this behavior: unsubscribe to all signals.
+        _signalHandles.clear();
         return Status::COMPLETE;
         
       default:

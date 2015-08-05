@@ -16,6 +16,12 @@ namespace Cozmo {
   
   const ActionList::SlotHandle IBehavior::sActionSlot = 0;
 
+  IBehavior::IBehavior(Robot& robot, const Json::Value& config)
+  : _robot(robot)
+  , _isRunning(false)
+  {
+  
+  }
   
 } // namespace Cozmo
 } // namespace Anki

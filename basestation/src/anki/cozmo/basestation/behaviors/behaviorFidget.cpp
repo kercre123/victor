@@ -20,6 +20,7 @@ namespace Cozmo {
 
   BehaviorFidget::BehaviorFidget(Robot& robot, const Json::Value& config)
   : IBehavior(robot, config)
+  , _name("Fidget")
   {
     
     // TODO: Add fidget behaviors based on config
@@ -38,6 +39,9 @@ namespace Cozmo {
   Result BehaviorFidget::Init()
   {
     _interrupted = false;
+    _nextFidgetWait_sec = 0.f;
+    _lastFidgetTime_sec = 0.f;
+    
     return RESULT_OK;
   }
   
@@ -54,15 +58,19 @@ namespace Cozmo {
       const s32 N = static_cast<s32>(FidgetType::NUM_FIDGETS)-1;
       FidgetType nextFidget = static_cast<FidgetType>(_rng.RandIntInRange(0, N));
       
+      _name = "Fidget";
+      
       switch(nextFidget)
       {
         case FidgetType::HEAD_TWITCH:
+          _name += "-HeadTwitch";
           _robot.GetActionList().QueueActionNext(IBehavior::sActionSlot,
                                                  new MoveHeadToAngleAction(0, DEG_TO_RAD(2), 30));
           break;
           
         case FidgetType::LIFT_WIGGLE:
         {
+          _name += "-LiftWiggle";
           CompoundActionSequential* liftWiggle = new CompoundActionSequential({
             new MoveLiftToHeightAction(32, 2, 5),
             new MoveLiftToHeightAction(32, 2, 5),
@@ -74,26 +82,32 @@ namespace Cozmo {
         }
           
         case FidgetType::LIFT_TAP:
+          _name += "-LiftTap";
           _robot.GetActionList().QueueActionNext(IBehavior::sActionSlot, new PlayAnimationAction("firstTap"));
           break;
           
         case FidgetType::TURN_IN_PLACE:
+          _name += "-TurnInPlace";
           _robot.GetActionList().QueueActionNext(IBehavior::sActionSlot, new TurnInPlaceAction(0, DEG_TO_RAD(90)));
           break;
           
         case FidgetType::YAWN:
+          _name += "-Yawn";
           PRINT_NAMED_WARNING("BehaviorFidget.Update.YawnUnimplemented", "\n");
           break;
           
         case FidgetType::SNEEZE:
+          _name += "-Sneeze";
           PRINT_NAMED_WARNING("BehaviorFidget.Update.SneezeUnimplemented", "\n");
           break;
           
         case FidgetType::STRETCH:
+          _name += "-Stretch";
           PRINT_NAMED_WARNING("BehaviorFidget.Update.StretchUnimplemented", "\n");
           break;
        
         default:
+          _name += "-Invalid";
           PRINT_NAMED_ERROR("BehaviorFidget.Update.InvalidFidgetType",
                             "Tried to execute invalid fidget %d.\n", nextFidget);
           return Status::FAILURE;
