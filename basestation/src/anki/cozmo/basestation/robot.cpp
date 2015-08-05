@@ -743,6 +743,9 @@ namespace Anki {
        lastUpdateTime = currentTime_sec;
        */
       
+      
+      if (GetCamera().IsCalibrated()) {
+      
 #     if !ASYNC_VISION_PROCESSING
       if(_haveNewImage)
         
@@ -873,6 +876,7 @@ namespace Anki {
         _blockWorld.Update(numBlocksObserved);
 
       } // if(_visionProcessor.WasLastImageProcessed())
+      } // if (GetCamera().IsCalibrated())
       
       ///////// Update the behavior manager ///////////
       
