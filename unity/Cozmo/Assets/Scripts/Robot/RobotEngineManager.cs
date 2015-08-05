@@ -109,6 +109,10 @@ public class RobotEngineManager : MonoBehaviour
 	{
 		if(robots.ContainsKey(robotID))
 		{
+			Robot oldRobot = robots[robotID];
+			if (oldRobot != null) {
+				oldRobot.Dispose();
+			}
 			robotList.RemoveAll(x => x.ID == robotID);
 			robots.Remove(robotID);
 		}
@@ -122,6 +126,16 @@ public class RobotEngineManager : MonoBehaviour
 
 	private void OnEnable()
 	{
+		if(instance != null && instance != this)
+		{
+			Destroy(gameObject);
+			return;
+		} else
+		{
+			instance = this;
+			DontDestroyOnLoad(gameObject);
+		}
+		
 		CozmoLogging.OpenLogFile();
 
 		TextAsset config = configuration;
@@ -137,16 +151,6 @@ public class RobotEngineManager : MonoBehaviour
 		} else
 		{
 			CozmoBinding.Startup(config.text);
-		}
-
-		if(instance != null && instance != this)
-		{
-			Destroy(gameObject);
-			return;
-		} else
-		{
-			instance = this;
-			DontDestroyOnLoad(gameObject);
 		}
 
 		Application.runInBackground = true;
