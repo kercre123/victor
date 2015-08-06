@@ -22,12 +22,14 @@ namespace AnimationTool
 
         private const int ConnectionRetryCount = 3;
         private int connectionTries = 0;
+        private static readonly TimeSpan MaxStateMessageWaitTime = TimeSpan.FromSeconds(5);
 
         private ChannelBase channel = null;
         private MessageGameToEngine message = new MessageGameToEngine();
         private bool resetRequested = false;
         private string queuedAnimationName = null;
         private bool isReadyToSend = false;
+        private int lastStateMessage = 0;
 
         public RobotEngineMessenger()
         {
@@ -136,6 +138,13 @@ namespace AnimationTool
 
         private bool TrySendAnimation(string animationName)
         {
+            if (IsLagging())
+            {
+                channel.Disconnect();
+                isReadyToSend = false;
+                RaiseConnectionTextUpdate("Disconnected: State Timed Out");
+            }
+
             if (!channel.IsActive)
             {
                 if (connectionTries > ConnectionRetryCount)
@@ -256,9 +265,15 @@ namespace AnimationTool
                     if (channel.IsConnected)
                     {
                         isReadyToSend = true;
+                        lastStateMessage = Environment.TickCount;
                     }
                     break;
             }
+        }
+
+        private bool IsLagging()
+        {
+            return (channel.IsConnected && isReadyToSend && Environment.TickCount - lastStateMessage > MaxStateMessageWaitTime.TotalMilliseconds);
         }
 
         private void RaiseConnectionTextUpdate()
@@ -274,10 +289,18 @@ namespace AnimationTool
             }
 
             string newConnectionText;
-            
-            if (channel.IsConnected && isReadyToSend)
+
+            if (IsLagging())
+            {
+                newConnectionText = "[Lagging]";
+            }
+            else if (channel.IsConnected && isReadyToSend)
             {
                 newConnectionText = "[Connected]";
+            }
+            else if (channel.IsConnected)
+            {
+                newConnectionText = "[Waiting for Robot...]";
             }
             else if (channel.IsActive)
             {
