@@ -501,11 +501,11 @@ namespace Anki {
       Result lastResult = RESULT_OK;
     
       if (msg.numMainTooLongErrors > 0) {
-        PRINT_NAMED_WARNING("* * * MainCycleTooLong * * *", "Num errors: %d, Avg time: %d us", msg.numMainTooLongErrors, msg.avgMainTooLongTime);
+        PRINT_NAMED_WARNING("* * * MainCycleTooLong * * *", "Num errors: %d, Avg time: %d us\n", msg.numMainTooLongErrors, msg.avgMainTooLongTime);
       }
       
       if (msg.numMainTooLateErrors > 0) {
-        PRINT_NAMED_WARNING("* * * MainCycleTooLate * * *", "Num errors: %d, Avg time: %d us", msg.numMainTooLateErrors, msg.avgMainTooLateTime);
+        PRINT_NAMED_WARNING("* * * MainCycleTooLate * * *", "Num errors: %d, Avg time: %d us\n", msg.numMainTooLateErrors, msg.avgMainTooLateTime);
       }
       
       return lastResult;

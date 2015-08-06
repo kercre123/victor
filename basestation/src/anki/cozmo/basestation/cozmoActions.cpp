@@ -1530,7 +1530,7 @@ namespace Anki {
       }
     }
     
-    void PickAndPlaceObjectAction::EmitCompletionSignal(Robot& robot, ActionResult result) const
+    void PickAndPlaceObjectAction::GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const
     {
       switch(_dockAction)
       {
@@ -1547,15 +1547,8 @@ namespace Anki {
             const u8 numObjects = 1 + (carryObjectOnTop >=0 ? 1 : 0);
             
             // TODO: Be able to fill in add'l objects carried in signal
-            ActionCompletedStruct completionInfo;
             completionInfo.numObjects = numObjects;
             completionInfo.objectIDs = {{carryObject, carryObjectOnTop, -1, -1, -1}};
-            
-            // TODO: Remove once we have Lee's Events
-            ExternalInterface::MessageEngineToGame msg(ExternalInterface::RobotCompletedAction(robot.GetID(), GetType(), result, completionInfo));
-            
-            robot.GetExternalInterface()->DeliverToGame(ExternalInterface::MessageEngineToGame(msg));
-            CozmoEngineSignals::RobotCompletedActionSignal().emit(msg);
             
             return;
           }
@@ -1585,13 +1578,6 @@ namespace Anki {
               ++completionInfo.numObjects;
               object = robot.GetBlockWorld().FindObjectOnTopOf(*object, 15.f);
             }
-
-            // TODO: Remove once we have Lee's Events
-            ExternalInterface::MessageEngineToGame msg(ExternalInterface::RobotCompletedAction(robot.GetID(), GetType(), result, completionInfo));
-            
-            robot.GetExternalInterface()->DeliverToGame(ExternalInterface::MessageEngineToGame(msg));
-            CozmoEngineSignals::RobotCompletedActionSignal().emit(msg);
-
             return;
           }
           break;
@@ -1601,7 +1587,7 @@ namespace Anki {
                             "Dock action not set before filling completion signal.\n");
       }
       
-      IDockAction::EmitCompletionSignal(robot, result);
+      IDockAction::GetCompletionStruct(robot, completionInfo);
     }
     
     Result PickAndPlaceObjectAction::SelectDockAction(Robot& robot, ActionableObject* object)
@@ -1859,7 +1845,7 @@ namespace Anki {
       }
     }
     
-    void RollObjectAction::EmitCompletionSignal(Robot& robot, ActionResult result) const
+    void RollObjectAction::GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const
     {
       switch(_dockAction)
       {
@@ -1869,16 +1855,9 @@ namespace Anki {
             PRINT_NAMED_ERROR("RollObjectAction.EmitCompletionSignal",
                               "Expecting robot to think it's not carrying object for roll action.\n");
           } else {
-            ActionCompletedStruct completionInfo;
             completionInfo.numObjects = 1;
             completionInfo.objectIDs.fill(-1);
             completionInfo.objectIDs[0] = _dockObjectID;
-            
-            // TODO: Be able to fill in add'l objects carried in signal
-            robot.GetExternalInterface()->DeliverToGame(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotCompletedAction(
-              robot.GetID(), GetType(), result, completionInfo
-            )));
-            
             return;
           }
           break;
@@ -1888,7 +1867,7 @@ namespace Anki {
                             "Dock action not set before filling completion signal.\n");
       }
       
-      IDockAction::EmitCompletionSignal(robot, result);
+      IDockAction::GetCompletionStruct(robot, completionInfo);
     }
     
     Result RollObjectAction::SelectDockAction(Robot& robot, ActionableObject* object)
@@ -2353,13 +2332,9 @@ namespace Anki {
       }
     }
     
-    void PlayAnimationAction::EmitCompletionSignal(Robot& robot, ActionResult result) const
+    void PlayAnimationAction::GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const
     {
-      ActionCompletedStruct completionInfo;
       completionInfo.animName = _animName;
-      robot.GetExternalInterface()->DeliverToGame(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotCompletedAction(
-        robot.GetID(), GetType(), result, completionInfo
-      )));
     }
     
 #pragma mark ---- PlaySoundAction ----

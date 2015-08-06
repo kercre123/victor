@@ -482,6 +482,7 @@ structure RobotActionUnion {
 // QueueSingleAction
 message QueueSingleAction {
   uint_8  robotID,
+  uint_32 idTag,  // caller-specified identifier that will be returned with the completion message
   uint_32 inSlot,
   uint_8  numRetries,
   QueueActionPosition    position,
@@ -492,6 +493,7 @@ message QueueSingleAction {
 // QueueCompoundAction
 message QueueCompoundAction {
   uint_8  robotID,
+  uint_32 idTag,   // caller-specified identifier that will be returned with the completion message
   uint_32 inSlot,
   uint_8  numRetries,
   bool  parallel,  // false means sequential

@@ -24,13 +24,16 @@ namespace Anki {
   
   namespace Cozmo {
     
+    u32 IActionRunner::sTagCounter = 100000;
+    
     IActionRunner::IActionRunner()
     : _numRetriesRemaining(0)
     , _isPartOfCompoundAction(false)
     , _isRunning(false)
     , _isCancelled(false)
     {
-      
+      // Assign every action a unique tag
+      _idTag = IActionRunner::sTagCounter++;
     }
     
     // NOTE: THere should be no way for Update() to fail independently of its
@@ -59,8 +62,9 @@ namespace Anki {
       
       if(result != ActionResult::RUNNING) {
         PRINT_NAMED_INFO("IActionRunner.Update.ActionCompleted",
-                         "%s completed %s.\n", GetName().c_str(),
-                         (result==ActionResult::SUCCESS ? "successfully" : "but failed"));
+                         "%s %s.\n", GetName().c_str(),
+                         (result==ActionResult::SUCCESS ? "succeeded" :
+                          result==ActionResult::CANCELLED ? "was cancelled" : "failed"));
         
         Cleanup(robot);
         
@@ -82,14 +86,21 @@ namespace Anki {
       return result;
     }
     
-    void IActionRunner::EmitCompletionSignal(Robot& robot, ActionResult result) const
+    void IActionRunner::GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const
     {
-      ActionCompletedStruct completionInfo;
       completionInfo.numObjects = 0;
       completionInfo.objectIDs.fill(-1);
       completionInfo.animName = "";
+    }
+    
+    void IActionRunner::EmitCompletionSignal(Robot& robot, ActionResult result) const
+    {
+      ActionCompletedStruct completionInfo;
+
+      GetCompletionStruct(robot, completionInfo);
       
       ExternalInterface::MessageEngineToGame msg(ExternalInterface::RobotCompletedAction(robot.GetID(),
+                                                                                         _idTag,
                                                                                          GetType(),
                                                                                          result,
                                                                                          completionInfo));
