@@ -30,13 +30,15 @@ class MessageGameToEngine;
 class IExternalInterface {
 public:
   virtual ~IExternalInterface() {};
-  virtual void DeliverToGame(const ExternalInterface::MessageEngineToGame& message) = 0;
   
   virtual void Broadcast(const ExternalInterface::MessageGameToEngine& message) = 0;
   virtual void Broadcast(ExternalInterface::MessageGameToEngine&& message) = 0;
   
   virtual void Broadcast(const ExternalInterface::MessageEngineToGame& message) = 0;
   virtual void Broadcast(ExternalInterface::MessageEngineToGame&& message) = 0;
+  
+protected:
+  virtual void DeliverToGame(const ExternalInterface::MessageEngineToGame& message) = 0;
   
   //virtual bool HasMoreMessagesForEngine() const;
   //virtual const MessageGameToEngine GetNextUndeliveredMessage();
@@ -45,7 +47,7 @@ public:
 
 
 class SimpleExternalInterface : public IExternalInterface {
-public:
+protected:
   void DeliverToGame(const ExternalInterface::MessageEngineToGame& message) override;
 
 };
