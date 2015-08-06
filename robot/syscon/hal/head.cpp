@@ -52,6 +52,8 @@ void Head::init()
 // Transmit first, then wait for a reply
 void Head::TxRx()
 {
+  memset(g_dataToBody.backpackColors, 0xFF, sizeof(g_dataToBody.backpackColors));
+  
   NRF_UART0->EVENTS_RXDRDY = 0;
   NRF_UART0->EVENTS_TXDRDY = 0;
   ENABLE_UART_IRQ;
