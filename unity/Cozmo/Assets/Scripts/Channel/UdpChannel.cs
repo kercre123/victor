@@ -197,7 +197,7 @@ public class UdpChannel : ChannelBase
 				int realPort = ((IPEndPoint)mainServer.LocalEndPoint).Port;
 
 				// set up advertisement message
-				Debug.Log("Local IP: " + localIP);
+				Debug.Log("Advertising IP: " + localIP);
 				int length = Encoding.UTF8.GetByteCount(localIP);
 				if(length + 1 > advertisementRegistrationMessage.ip.Length)
 				{
