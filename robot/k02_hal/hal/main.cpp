@@ -9,7 +9,9 @@
 #include "board.h"
 #include "fsl_debug_console.h"
 
-
+#include "uart.h"
+#include "oled.h"
+  
 // Use PTA4 / FTM0_CH1 / pin 10 on eval board because it is otherwise unused
 void InitPWM(int period)
 {
@@ -73,12 +75,15 @@ int main (void)
     
   // Initialize standard SDK demo application pins
   hardware_init();
-
+  
   // Call this function to initialize the console UART. This function
   // enables the use of STDIO functions (printf, scanf, etc.)
   dbg_uart_init();
-  
+
   PRINTF("\r\nTesting self-contained project file.\n\n\r");
+
+  i2c_init();
+  uart_init();
 
   int x = 0;
   while (true) 
