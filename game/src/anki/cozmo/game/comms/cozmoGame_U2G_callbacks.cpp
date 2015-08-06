@@ -21,8 +21,6 @@
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/quad_impl.h"
 
-#include "anki/cozmo/game/signals/cozmoGameSignals.h"
-
 
 namespace Anki {
 namespace Cozmo {
@@ -46,6 +44,7 @@ namespace Cozmo {
   void CozmoGameImpl::RegisterCallbacksU2G()
   {
     _uiMsgHandler.RegisterCallbackForMessage([this](const ExternalInterface::MessageGameToEngine& msg) {
+      _uiMsgHandler.Broadcast(msg);
 #include "clad/externalInterface/messageGameToEngine_switch.def"
     });
   } // RegisterCallbacksU2G()

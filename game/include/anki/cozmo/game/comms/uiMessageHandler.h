@@ -46,8 +46,6 @@ namespace Anki {
       
       virtual Result ProcessMessages() = 0;
       
-      virtual Result SendMessage(const ExternalInterface::MessageEngineToGame& msg) = 0;
-      
     }; // IMessageHandler
     
     
@@ -64,15 +62,21 @@ namespace Anki {
       // process them and pass them along to robots.
       virtual Result ProcessMessages();
       
-      // Send a message to a specified ID
-      virtual Result SendMessage(const ExternalInterface::MessageEngineToGame& msg);
-      void DeliverToGame(const ExternalInterface::MessageEngineToGame&& message) override;
+      virtual void Broadcast(const ExternalInterface::MessageGameToEngine& message) override;
+      virtual void Broadcast(ExternalInterface::MessageGameToEngine&& message) override;
+      
+      virtual void Broadcast(const ExternalInterface::MessageEngineToGame& message) override;
+      virtual void Broadcast(ExternalInterface::MessageEngineToGame&& message) override;
       
       inline void RegisterCallbackForMessage(const std::function<void(const ExternalInterface::MessageGameToEngine&)>& messageCallback)
       {
         this->messageCallback = messageCallback;
       }
       inline u32 GetHostUiDeviceID() const { return _hostUiDeviceID; }
+      
+      AnkiEventMgr<ExternalInterface::MessageEngineToGame>& GetEventMgrToGame() { return _eventMgrToGame; }
+      AnkiEventMgr<ExternalInterface::MessageGameToEngine>& GetEventMgrToEngine() { return _eventMgrToEngine; }
+      
     protected:
       
       Comms::IComms* comms_;
@@ -85,7 +89,12 @@ namespace Anki {
       // Process a raw byte buffer as a message and send it to the specified
       // robot
       Result ProcessPacket(const Comms::MsgPacket& packet);
-
+      
+      // Send a message to a specified ID
+      virtual void DeliverToGame(const ExternalInterface::MessageEngineToGame& message) override;
+      
+      AnkiEventMgr<ExternalInterface::MessageEngineToGame> _eventMgrToGame;
+      AnkiEventMgr<ExternalInterface::MessageGameToEngine> _eventMgrToEngine;
       
     }; // class MessageHandler
     
