@@ -1091,10 +1091,20 @@ namespace Anki {
               {
                 if(modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
                
-                  // TODO: Provide a means of specifying which behavior
-                  //  (possible string field of the keyboard controller proto?)
+                  // Send whatever animation is specified in the animationToSendName field
+                  webots::Field* behaviorNameField = root_->getField("behaviorName");
+                  if (behaviorNameField == nullptr) {
+                    printf("ERROR: No behaviorName field found in WebotsKeyboardController.proto\n");
+                    break;
+                  }
+                  std::string behaviorName = behaviorNameField->getSFString();
+                  if (behaviorName.empty()) {
+                    printf("ERROR: animationToSendName field is empty\n");
+                    break;
+                  }
                   
-                  // SendExecuteBehavior(behaviorMode_);
+                  SendExecuteBehavior(behaviorName);
+                  
                 }
                 else if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
                   SendClearAllObjects();
