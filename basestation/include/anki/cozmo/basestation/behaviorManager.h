@@ -75,6 +75,7 @@ namespace Cozmo {
   private:
     
     bool _isInitialized;
+    bool _forceReInit;
     
     Robot& _robot;
     

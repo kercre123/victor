@@ -25,28 +25,29 @@ namespace Cozmo {
   
   BehaviorOCD::BehaviorOCD(Robot& robot, const Json::Value& config)
   : IBehavior(robot, config)
+  , _lastHandlerResult(RESULT_OK)
   , _currentArrangement(Arrangement::STACKS_OF_TWO)
   , _name("OCD")
   {
     // Register callbacks:
     // TODO: Remove once Lee's Events are in
     auto cbActionCompleted = [this](ExternalInterface::MessageEngineToGame msg) {
-      this->HandleActionCompleted(msg.Get_RobotCompletedAction());
+      _lastHandlerResult = this->HandleActionCompleted(msg.Get_RobotCompletedAction());
     };
     _signalHandles.emplace_back(CozmoEngineSignals::RobotCompletedActionSignal().ScopedSubscribe(cbActionCompleted));
     
     auto cbObservedObject = [this](ExternalInterface::MessageEngineToGame msg) {
-      this->HandleObservedObject(msg.Get_RobotObservedObject());
+      _lastHandlerResult = this->HandleObservedObject(msg.Get_RobotObservedObject());
     };
     _signalHandles.emplace_back(CozmoEngineSignals::RobotObservedObjectSignal().ScopedSubscribe(cbObservedObject));
     
     auto cbObjectDeleted = [this](ExternalInterface::MessageEngineToGame msg) {
-      this->HandleDeletedObject(msg.Get_RobotDeletedObject());
+      _lastHandlerResult = this->HandleDeletedObject(msg.Get_RobotDeletedObject());
     };
     _signalHandles.emplace_back(CozmoEngineSignals::RobotDeletedObjectSignal().ScopedSubscribe(cbObjectDeleted));
     
     auto cbObjectMoved = [this](ExternalInterface::MessageEngineToGame msg) {
-      this->HandleObjectMoved(msg.Get_ActiveObjectMoved());
+      _lastHandlerResult = this->HandleObjectMoved(msg.Get_ActiveObjectMoved());
     };
     _signalHandles.emplace_back(CozmoEngineSignals::ObjectMovedSignal().ScopedSubscribe(cbObjectMoved));
   }
@@ -108,6 +109,13 @@ namespace Cozmo {
   
   IBehavior::Status BehaviorOCD::Update(float currentTime_sec)
   {
+    // Check to see if we had any problems with any handlers
+    if(_lastHandlerResult != RESULT_OK) {
+      PRINT_NAMED_ERROR("BehaviorOCD.Update.HandlerFailure",
+                        "Event handler failed, returning Status::FAILURE.\n");
+      return Status::FAILURE;
+    }
+    
     // Completion trigger is when all (?) blocks make it to his "neat" list
     if(_messyObjects.empty()) {
       return Status::COMPLETE;
@@ -520,11 +528,13 @@ namespace Cozmo {
   } // SelectNextPlacement()
   
 
-  void BehaviorOCD::HandleActionCompleted(const ExternalInterface::RobotCompletedAction &msg)
+  Result BehaviorOCD::HandleActionCompleted(const ExternalInterface::RobotCompletedAction &msg)
   {
+    Result lastResult = RESULT_OK;
+    
     if(!IsRunning()) {
       // Ignore action completion messages while not runningd
-      return;
+      return lastResult;
     }
     
     switch(_currentState)
@@ -559,7 +569,7 @@ namespace Cozmo {
           PRINT_NAMED_INFO("BehaviorOCD.HandleActionCompleted.PickupFailure", "Trying again\n");
 #         endif
           // We failed to pick up or place the last block, try again?
-          SelectNextObjectToPickUp();
+          lastResult = SelectNextObjectToPickUp();
         }
         break;
       } // case PICKING_UP_BLOCK
@@ -585,13 +595,13 @@ namespace Cozmo {
               // TODO: Get "neat" color and on/off settings from config
               _robot.SetObjectLights(_objectToPickUp, WhichBlockLEDs::ALL, NamedColors::CYAN, NamedColors::BLACK, 10, 10, 2000, 2000, false, MakeRelativeMode::RELATIVE_LED_MODE_OFF, {});
               
-              SelectNextObjectToPickUp();
+              lastResult = SelectNextObjectToPickUp();
               _currentState = State::PICKING_UP_BLOCK;
               break;
               
             case RobotActionType::PICK_AND_PLACE_INCOMPLETE:
               // We failed to place the last block, try again?
-              SelectNextPlacement();
+              lastResult = SelectNextPlacement();
               break;
               
             default:
@@ -603,7 +613,7 @@ namespace Cozmo {
           PRINT_NAMED_INFO("BehaviorOCD.HandleActionCompleted.PlacementFailure", "Trying again\n");
 #         endif
           // We failed to place the last block, try again?
-          SelectNextPlacement();
+          lastResult = SelectNextPlacement();
         }
         break;
       } // case PLACING_BLOCK
@@ -611,11 +621,14 @@ namespace Cozmo {
     
     UpdateName();
     
+    return lastResult;
   } // HandleActionCompleted()
   
   
-  void BehaviorOCD::HandleObjectMoved(const ExternalInterface::ActiveObjectMoved &msg)
+  Result BehaviorOCD::HandleObjectMoved(const ExternalInterface::ActiveObjectMoved &msg)
   {
+    Result lastResult = RESULT_OK;
+    
     // If a previously-neat object is moved, move it to the messy list
     // and play some kind of irritated animation
     ObjectID objectID;
@@ -641,12 +654,14 @@ namespace Cozmo {
       _robot.SetObjectLights(objectID, WhichBlockLEDs::ALL, NamedColors::RED, NamedColors::BLACK, 200, 200, 50, 50, false, MakeRelativeMode::RELATIVE_LED_MODE_OFF, {});
       
       // TODO: Should this be "now" or "next"?
-      _robot.GetActionList().QueueActionNow(IBehavior::sActionSlot, new PlayAnimationAction("Irritated"));
+      lastResult = _robot.GetActionList().QueueActionNow(IBehavior::sActionSlot, new PlayAnimationAction("Irritated"));
     }
+    
+    return lastResult;
   }
   
   
-  void BehaviorOCD::HandleObservedObject(const ExternalInterface::RobotObservedObject &msg)
+  Result BehaviorOCD::HandleObservedObject(const ExternalInterface::RobotObservedObject &msg)
   {
     // if the object is a BLOCK or ACTIVE_BLOCK, add its ID to the list we care about
     // iff we haven't already seen and neatened it (if it's in our neat list,
@@ -665,9 +680,11 @@ namespace Cozmo {
       }
       
     }
+    
+    return RESULT_OK;
   }
   
-  void BehaviorOCD::HandleDeletedObject(const ExternalInterface::RobotDeletedObject &msg)
+  Result BehaviorOCD::HandleDeletedObject(const ExternalInterface::RobotDeletedObject &msg)
   {
     // remove the object if we knew about it
     ObjectID objectID;
@@ -686,6 +703,8 @@ namespace Cozmo {
     
     _messyObjects.erase(objectID);
     _neatObjects.erase(objectID);
+    
+    return RESULT_OK;
   }
   
   f32 BehaviorOCD::GetNeatnessScore(ObjectID whichObject)

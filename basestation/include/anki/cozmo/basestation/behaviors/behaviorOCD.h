@@ -52,11 +52,11 @@ namespace Cozmo {
     
     // Handlers for signals coming from the engine
     // TODO: These need to be some kind of _internal_ signal or event
-    void HandleObjectMoved(const ExternalInterface::ActiveObjectMoved &msg);
-    void HandleObservedObject(const ExternalInterface::RobotObservedObject &msg);
-    void HandleDeletedObject(const ExternalInterface::RobotDeletedObject &msg);
+    Result HandleObjectMoved(const ExternalInterface::ActiveObjectMoved &msg);
+    Result HandleObservedObject(const ExternalInterface::RobotObservedObject &msg);
+    Result HandleDeletedObject(const ExternalInterface::RobotDeletedObject &msg);
     
-    void HandleActionCompleted(const ExternalInterface::RobotCompletedAction &msg);
+    Result HandleActionCompleted(const ExternalInterface::RobotCompletedAction &msg);
     
     Result SelectArrangement();
     Result SelectNextObjectToPickUp();
@@ -78,6 +78,8 @@ namespace Cozmo {
     
     State _currentState;
     bool  _interrupted;
+    
+    Result _lastHandlerResult;
     
     // Enumerate possible arrangements Cozmo "likes".
     enum class Arrangement {

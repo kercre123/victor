@@ -29,6 +29,7 @@ namespace Cozmo {
   
   BehaviorManager::BehaviorManager(Robot& robot)
   : _isInitialized(false)
+  , _forceReInit(false)
   , _robot(robot)
   , _currentBehavior(_behaviors.end())
   , _nextBehavior(_behaviors.end())
@@ -168,6 +169,10 @@ namespace Cozmo {
                             _currentBehavior->first.c_str());
           lastResult = RESULT_FAIL;
           _currentBehavior->second->SetIsRunning(false);
+          
+          // Force a re-init so if we reselect this behavior
+          _forceReInit = true;
+          SelectNextBehavior();
           break;
           
         default:
@@ -191,7 +196,9 @@ namespace Cozmo {
     Result initResult = RESULT_OK;
     
     // Initialize the selected behavior, if it's not the one we're already running
-    if(_nextBehavior != _currentBehavior) {
+    if(_nextBehavior != _currentBehavior || _forceReInit)
+    {
+      _forceReInit = false;
       initResult = _nextBehavior->second->Init();
       if(initResult != RESULT_OK) {
         PRINT_NAMED_ERROR("BehaviorManager.InitNextBehaviorHelper.InitFailed",
@@ -203,7 +210,7 @@ namespace Cozmo {
         // the current behavior that's running if there is one. It will continue
         // to run on calls to Update() until it completes and then we will switch
         // to the selected next behavior
-        _currentBehavior->second->Interrupt();
+        initResult = _currentBehavior->second->Interrupt();
         
 #       if DEBUG_BEHAVIOR_MGR
         PRINT_NAMED_INFO("BehaviorManger.InitNextBehaviorHelper.Selected",
