@@ -29,7 +29,7 @@ namespace AnimationTool
         ChartArea curChartArea { get { return curChart != null && curChart.ChartAreas.Count > 0 ? curChart.ChartAreas[0] : null; } }
         DataPointCollection curPoints { get { return curChart != null && curChart.Series.Count > 0 ? curChart.Series[0].Points : null; } }
 
-        RobotEngineManager robotEngineManager;
+        RobotEngineMessenger robotEngineManager;
 
         string jsonFilePath { get { return rootDirectory + "\\animations"; } }
 
@@ -87,7 +87,7 @@ namespace AnimationTool
             selectFolder = new FolderBrowserDialog();
             saveFileAs = new SaveFileDialog();
             channelList = new List<Component>();
-            robotEngineManager = new RobotEngineManager();
+            robotEngineManager = new RobotEngineMessenger();
 
             Sequencer.AddDataPoint.ChangeDuration += ChangeDuration;
 
