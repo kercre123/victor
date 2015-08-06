@@ -92,6 +92,11 @@ PROTO WebotsKeyboardController [
   field SFString animationToSendName "ANIM_TEST"
   field SFInt32  animationNumLoops 1
   field SFString idleAnimationName ""
+  
+  # Behavior to send
+  #  Use "AUTO" to auto-select next behavior
+  #  Use "NONE" to disable behaviors
+  field SFString behaviorName "AUTO"
 
   # Force-add robot options
   field SFBool   forceAddRobot FALSE
