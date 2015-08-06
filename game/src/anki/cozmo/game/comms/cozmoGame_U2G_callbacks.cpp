@@ -1025,9 +1025,12 @@ namespace Cozmo {
   }
   
   
-  void QueueActionHelper(const QueueActionPosition position, const u32 inSlot, const u8 numRetries,
-                         ActionList& actionList, IActionRunner* action)
+  static void QueueActionHelper(const QueueActionPosition position,
+                                const u32 idTag, const u32 inSlot, const u8 numRetries,
+                                ActionList& actionList, IActionRunner* action)
   {
+    action->SetTag(idTag);
+    
     switch(position)
     {
       case QueueActionPosition::NOW:
@@ -1111,7 +1114,7 @@ namespace Cozmo {
       IActionRunner* action = CreateNewActionByType(robot, msg.actionType, msg.action);
       
       // Put the action in the given position of the specified queue:
-      QueueActionHelper(msg.position, msg.inSlot, msg.numRetries, robot->GetActionList(), action);
+      QueueActionHelper(msg.position, msg.idTag, msg.inSlot, msg.numRetries, robot->GetActionList(), action);
       
     }
     
@@ -1149,7 +1152,8 @@ namespace Cozmo {
       } // for each action/actionType
       
       // Put the action in the given position of the specified queue:
-      QueueActionHelper(msg.position, msg.inSlot, msg.numRetries, robot->GetActionList(), compoundAction);
+      QueueActionHelper(msg.position, msg.idTag, msg.inSlot, msg.numRetries,
+                        robot->GetActionList(), compoundAction);
       
     }
   }

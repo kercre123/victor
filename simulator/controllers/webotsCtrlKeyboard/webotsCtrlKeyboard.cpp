@@ -325,39 +325,38 @@ namespace Anki {
       
       void HandleRobotCompletedAction(const ExternalInterface::RobotCompletedAction& msg)
       {
-        const bool success = (ActionResult)msg.result == ActionResult::SUCCESS;
         switch((RobotActionType)msg.actionType)
         {
           case RobotActionType::PICKUP_OBJECT_HIGH:
           case RobotActionType::PICKUP_OBJECT_LOW:
             printf("Robot %d %s picking up stack of %d objects with IDs: ",
-                   msg.robotID, (success ? "SUCCEEDED" : "FAILED"),
+                   msg.robotID, ActionResultToString(msg.result),
                    msg.completionInfo.numObjects);
             for(int i=0; i<msg.completionInfo.numObjects; ++i) {
               printf("%d ", msg.completionInfo.objectIDs[i]);
             }
-            printf("\n");
+            printf("[Tag=%d]\n", msg.idTag);
             break;
             
           case RobotActionType::PLACE_OBJECT_HIGH:
           case RobotActionType::PLACE_OBJECT_LOW:
             printf("Robot %d %s placing stack of %d objects with IDs: ",
-                   msg.robotID, (success ? "SUCCEEDED" : "FAILED"),
+                   msg.robotID, ActionResultToString(msg.result),
                    msg.completionInfo.numObjects);
             for(int i=0; i<msg.completionInfo.numObjects; ++i) {
               printf("%d ", msg.completionInfo.objectIDs[i]);
             }
-            printf("\n");
+            printf("[Tag=%d]\n", msg.idTag);
             break;
 
           case RobotActionType::PLAY_ANIMATION:
-            printf("Robot %d finished playing animation %s.\n",
-                   msg.robotID, msg.completionInfo.animName.c_str());
+            printf("Robot %d finished playing animation %s. [Tag=%d]\n",
+                   msg.robotID, msg.completionInfo.animName.c_str(), msg.idTag);
             break;
             
           default:
-            printf("Robot %d completed action with type=%d: %s.\n",
-                   msg.robotID, msg.actionType, ActionResultToString((ActionResult)msg.result));
+            printf("Robot %d completed action with type=%d and tag=%d: %s.\n",
+                   msg.robotID, msg.actionType, msg.idTag, ActionResultToString(msg.result));
         }
         
       }
