@@ -306,7 +306,7 @@ namespace AnimationTool
         {
             if (selectFolder == null) return;
 
-            selectFolder.SelectedPath = rootDirectory;
+            selectFolder.SelectedPath = Properties.Settings.Default.rootDirectory;
 
             if (selectFolder.ShowDialog() == DialogResult.OK)
             {
