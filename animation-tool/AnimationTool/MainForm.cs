@@ -1,0 +1,396 @@
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Windows.Forms;
+using System.Windows.Forms.DataVisualization.Charting;
+using System.IO;
+
+namespace AnimationTool
+{
+    public partial class MainForm : Form
+    {
+        //This list contains all channels so we can access them directly
+        List<Component> channelList;
+
+        ChangeDurationForm changeDurationForm;
+        BodyForm bodyForm;
+        VolumeForm volumeForm;
+        StraightForm straightForm;
+        ArcForm arcForm;
+        TurnInPlaceForm turnInPlaceForm;
+        IPForm ipForm;
+
+        OpenFileDialog openFile;
+        FolderBrowserDialog selectFolder;
+        SaveFileDialog saveFileAs;
+
+        //reference to the currently selected Chart
+        Chart curChart;
+        ChartArea curChartArea { get { return curChart != null && curChart.ChartAreas.Count > 0 ? curChart.ChartAreas[0] : null; } }
+        DataPointCollection curPoints { get { return curChart != null && curChart.Series.Count > 0 ? curChart.Series[0].Points : null; } }
+
+        RobotEngineManager robotEngineManager;
+
+        string jsonFilePath { get { return rootDirectory + "\\animations"; } }
+
+        private static MainForm instance;
+
+        public static string rootDirectory
+        {
+            get
+            {
+                if (instance != null && !IsValidRootDirectory(Properties.Settings.Default.rootDirectory))
+                {
+                    if (MessageBox.Show("Please set the animation assets root directory", "", MessageBoxButtons.OK) != DialogResult.Yes)
+                    {
+                        instance.SetRootDirectory(null, null);
+                    }
+                }
+
+                return Properties.Settings.Default.rootDirectory;
+            }
+        }
+
+        string currentFile
+        {
+            get
+            {
+                saveToolStripMenuItem.Enabled = Properties.Settings.Default.currentFile != null;
+                Text = Path.GetFileName(Properties.Settings.Default.currentFile);
+
+                return Properties.Settings.Default.currentFile;
+            }
+            set
+            {
+                Properties.Settings.Default["currentFile"] = value;
+                Properties.Settings.Default.Save();
+                saveToolStripMenuItem.Enabled = value != null;
+                Text = Path.GetFileName(value);
+            }
+        }
+
+        bool movingDataPointsWithMouse;
+
+        public MainForm()
+        {
+            instance = this;
+            Sequencer.ExtraData.Entries = new Dictionary<string, Sequencer.ExtraData>();
+            ActionManager singleton = new ActionManager();
+            changeDurationForm = new ChangeDurationForm();
+            ipForm = new IPForm();
+            bodyForm = new BodyForm();
+            volumeForm = new VolumeForm();
+            straightForm = new StraightForm();
+            arcForm = new ArcForm();
+            turnInPlaceForm = new TurnInPlaceForm();
+            openFile = new OpenFileDialog();
+            selectFolder = new FolderBrowserDialog();
+            saveFileAs = new SaveFileDialog();
+            channelList = new List<Component>();
+            robotEngineManager = new RobotEngineManager();
+
+            Sequencer.AddDataPoint.ChangeDuration += ChangeDuration;
+
+            movingDataPointsWithMouse = false;
+
+            if (!Directory.Exists(Sequencer.ExtraBodyMotionData.TEMP_PATH))
+            {
+                Directory.CreateDirectory(Sequencer.ExtraBodyMotionData.TEMP_PATH);
+            }
+
+            DirectoryInfo directory = new DirectoryInfo(Sequencer.ExtraBodyMotionData.TEMP_PATH);
+
+            foreach (FileInfo file in directory.GetFiles())
+            {
+                if (!file.IsReadOnly)
+                {
+                    file.Delete();
+                }
+            }
+
+            InitializeComponent();
+        }
+
+        private void MainForm_Load(object sender, EventArgs e)
+        {
+            if (Sequencer.ExtraData.Entries == null || channelList == null) return;
+
+            ActionManager.Reset();
+            Sequencer.ExtraData.Reset();
+            channelList.Clear();
+
+            double interval = ChangeChartDuration.Clamp(Math.Round(Properties.Settings.Default.maxTime * 0.1, 1), 0.1, 0.5);
+
+            //Head Chart
+            cHeadAngle.Series[0].Points.Clear();
+            cHeadAngle.ChartAreas[0].AxisX.Minimum = 0;
+            cHeadAngle.ChartAreas[0].AxisX.Maximum = Properties.Settings.Default.maxTime;
+            cHeadAngle.ChartAreas[0].AxisX.LabelStyle.Interval = interval;
+            cHeadAngle.ChartAreas[0].AxisY.Minimum = -25;
+            cHeadAngle.ChartAreas[0].AxisY.Maximum = 34;
+            ActionManager.Do(new DisableChart(cHeadAngle, cbHeadAngle), true);
+            ActionManager.Do(new EnableChart(cHeadAngle, cbHeadAngle), true);
+            channelList.Add(cHeadAngle);
+
+            //Lift Chart
+            cLiftHeight.Series[0].Points.Clear();
+            cLiftHeight.ChartAreas[0].AxisX.Minimum = 0;
+            cLiftHeight.ChartAreas[0].AxisX.Maximum = Properties.Settings.Default.maxTime;
+            cLiftHeight.ChartAreas[0].AxisX.LabelStyle.Interval = interval;
+            cLiftHeight.ChartAreas[0].AxisY.Minimum = 31;
+            cLiftHeight.ChartAreas[0].AxisY.Maximum = 92;
+            ActionManager.Do(new DisableChart(cLiftHeight, cbLift), true);
+            ActionManager.Do(new EnableChart(cLiftHeight, cbLift), true);
+            channelList.Add(cLiftHeight);
+
+            //Body Chart
+            cBodyMotion.Series[0].Points.Clear();
+            cBodyMotion.ChartAreas[0].AxisY.Minimum = 0;
+            cBodyMotion.ChartAreas[0].AxisY.Maximum = Properties.Settings.Default.maxTime;
+            cBodyMotion.ChartAreas[0].AxisY.LabelStyle.Interval = interval;
+            ActionManager.Do(new DisableChart(cBodyMotion, cbBodyMotion), true);
+            ActionManager.Do(new Sequencer.EnableChart(cBodyMotion, cbBodyMotion), true);
+            channelList.Add(cBodyMotion);
+
+            //Face Animation Chart
+            cFaceAnimation.Series[0].Points.Clear();
+            cFaceAnimation.ChartAreas[0].AxisY.Minimum = 0;
+            cFaceAnimation.ChartAreas[0].AxisY.Maximum = Properties.Settings.Default.maxTime;
+            cFaceAnimation.ChartAreas[0].AxisY.LabelStyle.Interval = interval;
+            ActionManager.Do(new DisableChart(cFaceAnimation, cbFaceAnimation), true);
+            ActionManager.Do(new FaceAnimation.EnableChart(cFaceAnimation, cbFaceAnimation), true);
+            channelList.Add(cFaceAnimation);
+
+            //Audio Robot Chart
+            cAudioRobot.Series[0].Points.Clear();
+            cAudioRobot.ChartAreas[0].AxisY.Minimum = 0;
+            cAudioRobot.ChartAreas[0].AxisY.Maximum = Properties.Settings.Default.maxTime;
+            cAudioRobot.ChartAreas[0].AxisY.LabelStyle.Interval = interval;
+            ActionManager.Do(new DisableChart(cAudioRobot, cbAudioRobot), true);
+            ActionManager.Do(new Sequencer.EnableChart(cAudioRobot, cbAudioRobot), true);
+            channelList.Add(cAudioRobot);
+
+            //Audio Robot Device
+            cAudioDevice.Series[0].Points.Clear();
+            cAudioDevice.ChartAreas[0].AxisY.Minimum = 0;
+            cAudioDevice.ChartAreas[0].AxisY.Maximum = Properties.Settings.Default.maxTime;
+            cAudioDevice.ChartAreas[0].AxisY.LabelStyle.Interval = interval;
+            ActionManager.Do(new DisableChart(cAudioDevice, cbAudioDevice), true);
+            ActionManager.Do(new Sequencer.EnableChart(cAudioDevice, cbAudioDevice), true);
+            channelList.Add(cAudioDevice);
+
+            if (!File.Exists(currentFile))
+            {
+                currentFile = null;
+            }
+            else if (!string.IsNullOrEmpty(File.ReadAllText(currentFile)))
+            {
+                ReadChartsFromFile(File.ReadAllText(currentFile));
+            }
+        }
+
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            if (keyData == Keys.Back)
+            {
+                Delete(null, null);
+            }
+
+            if(keyData == Keys.Space)
+            {
+                PlayAnimation(null, null);
+            }
+
+            KeyDownHandler(keyData);
+
+            return base.ProcessCmdKey(ref msg, keyData);
+        }
+
+        private void KeyDownHandler(Keys keyData)
+        {
+            if (movingDataPointsWithMouse) return;
+
+            bool left = ModifierKeys.HasFlag(Keys.Left) || keyData == Keys.Left;
+            bool right = ModifierKeys.HasFlag(Keys.Right) || keyData == Keys.Right;
+            bool up = ModifierKeys.HasFlag(Keys.Up) || keyData == Keys.Up;
+            bool down = ModifierKeys.HasFlag(Keys.Down) || keyData == Keys.Down;
+
+            if (left || right || up || down)
+            {
+                if(curDataPoint != null && curPreviewBar != null && curPreviewBar.MarkerColor == SelectDataPoint.MarkerColor)
+                {
+                    if (ActionManager.Do(new FaceAnimation.MoveSelectedPreviewBar(curPreviewBar, curDataPoint, left, right, pbFaceAnimation)))
+                    {
+                        cFaceAnimation.Refresh();
+                    }
+                }
+                else if (ActionManager.Do(new MoveSelectedDataPointsOfSelectedCharts(channelList, left, right, up, down)))
+                {
+                    foreach (Chart chart in channelList)
+                    {
+                        chart.Refresh();
+                    }
+                }
+            }
+        }
+
+        private void Undo(object o, EventArgs e)
+        {
+            if (channelList == null) return;
+
+            ActionManager.Undo();
+
+            foreach (Chart chart in channelList)
+            {
+                chart.Refresh();
+            }
+        }
+
+        private void Redo(object o, EventArgs e)
+        {
+            if (channelList == null) return;
+
+            ActionManager.Redo();
+
+            foreach (Chart chart in channelList)
+            {
+                chart.Refresh();
+            }
+        }
+
+        private void Delete(object o, EventArgs e)
+        {
+            if (channelList == null) return;
+
+            ActionManager.Do(new RemoveSelectedDataPointsOfSelectedCharts(channelList));
+
+            foreach (Chart chart in channelList)
+            {
+                chart.Refresh();
+            }
+        }
+
+        private void ChangeDuration(object o, EventArgs e)
+        {
+            if (changeDurationForm == null) return;
+
+            double maxTime = Properties.Settings.Default.maxTime;
+            double minTime = MoveSelectedDataPoints.DELTA_X;
+
+            if (o != null)
+            {
+                try
+                {
+                    maxTime = Convert.ToDouble(o);
+                    minTime = maxTime; // don't allow below this number
+                }
+                catch (Exception) { }
+            }
+
+            DialogResult result = changeDurationForm.Open(Location, maxTime, minTime);
+
+            if (changeDurationForm.Duration != Properties.Settings.Default.maxTime)
+            {
+                if (result == DialogResult.OK) // truncate
+                {
+                    ActionManager.Do(new TruncateAllChartDurations(channelList, changeDurationForm.Duration));
+                }
+                else if (result == DialogResult.Yes) // scale
+                {
+                    ActionManager.Do(new ScaleAllChartDurations(channelList, changeDurationForm.Duration));
+                }
+            }
+        }
+
+        private void SetRootDirectory(object o, EventArgs e)
+        {
+            if (selectFolder == null) return;
+
+            selectFolder.SelectedPath = rootDirectory;
+
+            if (selectFolder.ShowDialog() == DialogResult.OK)
+            {
+                if (!IsValidRootDirectory(selectFolder.SelectedPath))
+                {
+                    SetRootDirectory(o, e);
+                }
+
+                Properties.Settings.Default["rootDirectory"] = selectFolder.SelectedPath;
+                Properties.Settings.Default.Save();
+            }
+        }
+
+        private static bool IsValidRootDirectory(string path)
+        {
+            string json = path + "\\animations";
+            string face = path + "\\faceAnimations";
+            string sounds = path + "\\sounds";
+
+            return !string.IsNullOrEmpty(path) && Directory.Exists(path) && Directory.Exists(json) &&
+                Directory.Exists(face) && Directory.Exists(sounds);
+        }
+
+        private void OpenFile(object o, EventArgs e)
+        {
+            openFile.Filter = "json files|*.json";
+            openFile.InitialDirectory = jsonFilePath;
+
+            if (openFile.ShowDialog() == DialogResult.OK)
+            {
+                if (File.Exists(openFile.FileName))
+                {
+                    currentFile = openFile.FileName;
+                    MainForm_Load(null, null);
+                }
+            }
+        }
+
+        private void NewFile(object o, EventArgs e)
+        {
+            currentFile = null;
+            MainForm_Load(o, e);
+        }
+
+        private void SaveFile(object o, EventArgs e)
+        {
+            if (currentFile != null)
+            {
+                string write = WriteToFile();
+
+                if (!string.IsNullOrEmpty(write))
+                {
+                    File.WriteAllText(currentFile, write);
+                }
+            }
+        }
+
+        private void SaveFileAs(object o, EventArgs e)
+        {
+            string directory = jsonFilePath;
+
+            saveFileAs.InitialDirectory = directory;
+            saveFileAs.Filter = "json files|*.json";
+
+            if (saveFileAs.ShowDialog() == DialogResult.OK)
+            {
+                currentFile = saveFileAs.FileName;
+                string write = WriteToFile();
+
+                if (!string.IsNullOrEmpty(write))
+                {
+                    File.WriteAllText(saveFileAs.FileName, write);
+                }
+            }
+        }
+
+        private void PlayAnimation(object sender, EventArgs e)
+        {
+            robotEngineManager.SendAnimation(Path.GetFileNameWithoutExtension(currentFile));
+        }
+
+        private void SetIPAddress(object o, EventArgs e)
+        {
+            DialogResult result = ipForm.Open(Location, robotEngineManager);
+        }
+    }
+}
