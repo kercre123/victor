@@ -49,7 +49,9 @@ public class RobotEngineManager : MonoBehaviour
 
 	private const int UIDeviceID = 1;
 	private const int UIAdvertisingRegistrationPort = 5103;
-	private const int UILocalPort = 5106;
+	// 0 means random unused port
+	// Used to be 5106
+	private const int UILocalPort = 0;
 
 	public bool AllowImageSaving { get; private set; }
 

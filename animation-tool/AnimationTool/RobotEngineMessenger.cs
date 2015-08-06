@@ -2,6 +2,8 @@
 using System.Threading;
 using System.Windows.Forms;
 using Anki.Cozmo.ExternalInterface;
+using NetFwTypeLib;
+using System.IO;
 
 namespace AnimationTool
 {
@@ -60,6 +62,7 @@ namespace AnimationTool
             if (!channel.IsConnected)
             {
                 engineIP = ip;
+                OpenFirewallPort(enginePort);
                 channel.Connect(1, enginePort, engineIP, advertisingRegistrationPort);
                 channel.ConnectedToClient -= ConnectedToClient;
                 channel.ConnectedToClient += ConnectedToClient;
@@ -160,6 +163,40 @@ namespace AnimationTool
                     Message.ConnectToUiDevice.deviceID = (byte)(message.UiDeviceAvailable.deviceID);
                     channel.Send(Message);
                     break;
+            }
+        }
+
+        private void OpenFirewallPort(int portNumber)
+        {
+            Type netFwMgrType = Type.GetTypeFromProgID("HNetCfg.FwMgr", false);
+
+            if (netFwMgrType != null)
+            {
+                INetFwMgr mgr = (INetFwMgr)Activator.CreateInstance(netFwMgrType);
+
+                if (mgr != null)
+                {
+                    INetFwOpenPorts ports = mgr.LocalPolicy.CurrentProfile.GloballyOpenPorts;
+
+                    if (ports != null)
+                    {
+                        Type authPortType = Type.GetTypeFromProgID("HNetCfg.FWOpenPort", false);
+
+                        if (authPortType != null)
+                        {
+                            INetFwOpenPort port = (INetFwOpenPort)Activator.CreateInstance(authPortType);
+
+                            if (port != null)
+                            {
+                                port.Protocol = NET_FW_IP_PROTOCOL_.NET_FW_IP_PROTOCOL_UDP;
+                                port.Port = portNumber;
+                                port.Name = Path.GetFileName(Application.ExecutablePath);
+                                port.Scope = NET_FW_SCOPE_.NET_FW_SCOPE_ALL;
+                                ports.Add(port);
+                            }
+                        }
+                    }
+                }
             }
         }
     }
