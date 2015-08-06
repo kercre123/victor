@@ -822,7 +822,7 @@ namespace AnimationController {
                   leftSpeed  = static_cast<f32>(msg.speed);
                   rightSpeed = static_cast<f32>(msg.speed);
                 } else if(msg.curvatureRadius_mm == 0) {
-                  SteeringController::ExecutePointTurn(msg.speed, 100);
+                  SteeringController::ExecutePointTurn(DEG_TO_RAD_F32(msg.speed), 50);
                   break;
                   
                 } else {

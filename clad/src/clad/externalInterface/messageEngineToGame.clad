@@ -159,9 +159,10 @@ message DeviceDetectedVisionMarker {
 // TODO: Add action type, more informative result codes...
 message RobotCompletedAction {
     uint_32 robotID,
+    uint_32 idTag,                        // The identifier of the specific action that completed
     RobotActionType  actionType,          // see enum in actionTypes.def
     ActionResult  result,                 //  "
-    ActionCompletedStruct completionInfo //  "
+    ActionCompletedStruct completionInfo  //  "
 }
 
 
