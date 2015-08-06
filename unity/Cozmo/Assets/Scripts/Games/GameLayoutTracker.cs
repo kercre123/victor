@@ -524,7 +524,7 @@ public class GameLayoutTracker : MonoBehaviour
 				}
 
 				//Debug.Log( "look straight ahead to see objects" );
-				robot.SetLiftHeight(1f);
+				//robot.SetLiftHeight(1f);
 				robot.SetHeadAngle(0f);
 			}
 		} else if(inventoryComplete && robot != null && robot.isBusy)

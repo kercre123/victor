@@ -1768,10 +1768,10 @@ public class VortexController : GameController
 
 	void CheckForGotoStartCompletion(bool success, RobotActionType action_type)
 	{
-
+		Debug.LogError ("got " + action_type);
 		switch(action_type)
 		{
-		case RobotActionType.DRIVE_TO_POSE:
+		case RobotActionType.COMPOUND:
 			if(success)
 			{
 				atYourMark = true;
