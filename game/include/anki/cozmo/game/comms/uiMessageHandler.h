@@ -62,9 +62,6 @@ namespace Anki {
       // process them and pass them along to robots.
       virtual Result ProcessMessages();
       
-      // Send a message to a specified ID
-      virtual void DeliverToGame(const ExternalInterface::MessageEngineToGame& message) override;
-      
       virtual void Broadcast(const ExternalInterface::MessageGameToEngine& message) override;
       virtual void Broadcast(ExternalInterface::MessageGameToEngine&& message) override;
       
@@ -92,6 +89,9 @@ namespace Anki {
       // Process a raw byte buffer as a message and send it to the specified
       // robot
       Result ProcessPacket(const Comms::MsgPacket& packet);
+      
+      // Send a message to a specified ID
+      virtual void DeliverToGame(const ExternalInterface::MessageEngineToGame& message) override;
       
       AnkiEventMgr<ExternalInterface::MessageEngineToGame> _eventMgrToGame;
       AnkiEventMgr<ExternalInterface::MessageGameToEngine> _eventMgrToEngine;
