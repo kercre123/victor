@@ -1027,10 +1027,6 @@ namespace Anki {
       FaceMove(facePosX_, facePosY_);
     }
 
-    extern "C" void FacePrintf(const char *format, ...) { }
-
-    extern "C" void FaceUnPrintf(void) {}
-
     // Move the face to an X, Y offset - where 0, 0 is centered, negative is left/up
     void HAL::FaceMove(s32 x, s32 y)
     {
