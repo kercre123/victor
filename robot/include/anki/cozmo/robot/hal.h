@@ -438,6 +438,8 @@ namespace Anki
 
       // Print a message to the face - this will permanently replace the face with your message
       extern "C" void FacePrintf(const char *format, ...);
+      // Restore normal operation of the face from a FacePrintf
+      extern "C" void FaceUnPrintf(void);
 
 // #pragma mark --- Radio ---
       /////////////////////////////////////////////////////////////////////
