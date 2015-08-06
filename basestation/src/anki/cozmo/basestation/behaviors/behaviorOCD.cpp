@@ -246,10 +246,8 @@ namespace Cozmo {
       object = blockWorld.GetObjectByID(objectID);
       if(object == nullptr) {
         PRINT_NAMED_ERROR("BehaviorOCD.SelectNextObjectToPickUp.InvalidObject",
-                          "Could not get %s object %d from robot %d's world.\n",
-                          object->GetType().GetName().c_str(),
-                          object->GetID().GetValue(),
-                          _robot.GetID());
+                          "Could not get object %d from robot %d's world.\n",
+                          objectID.GetValue(), _robot.GetID());
         return RESULT_FAIL;
       }
       

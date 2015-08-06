@@ -560,6 +560,7 @@ namespace Anki {
 #     endif
       
       BehaviorManager  _behaviorMgr;
+      bool             _isBehaviorMgrEnabled;
       
       //ActionQueue      _actionQueue;
       ActionList       _actionList;

@@ -55,6 +55,7 @@ namespace Anki {
     , _msgHandler(msgHandler)
     , _blockWorld(this)
     , _behaviorMgr(*this)
+    , _isBehaviorMgrEnabled(false)
 #   if !ASYNC_VISION_PROCESSING
     , _haveNewImage(false)
 #   endif
@@ -908,13 +909,17 @@ namespace Anki {
       // module(s) would do.  e.g. Some combination of game state, build planner,
       // personality planner, etc.
       
-      _behaviorMgr.Update(BaseStationTimer::getInstance()->GetCurrentTimeInSeconds());
-      
-      const IBehavior* behavior = _behaviorMgr.GetCurrentBehavior();
-      if(behavior != nullptr) {
-        VizManager::getInstance()->SetText(VizManager::BEHAVIOR_STATE, NamedColors::MAGENTA,
-                                           "Behavior: %s", behavior->GetName().c_str());
+      std::string behaviorName("<disabled>");
+      if(_isBehaviorMgrEnabled) {
+        _behaviorMgr.Update(BaseStationTimer::getInstance()->GetCurrentTimeInSeconds());
+        
+        const IBehavior* behavior = _behaviorMgr.GetCurrentBehavior();
+        behaviorName = behavior->GetName();
       }
+      
+      VizManager::getInstance()->SetText(VizManager::BEHAVIOR_STATE, NamedColors::MAGENTA,
+                                         "Behavior: %s", behaviorName.c_str());
+
       
       //////// Update Robot's State Machine /////////////
       Result actionResult = _actionList.Update(*this);
@@ -2021,9 +2026,24 @@ namespace Anki {
     
     void Robot::StartBehavior(const std::string& behaviorName)
     {
-      if(RESULT_OK != _behaviorMgr.SelectNextBehavior(behaviorName)) {
-        PRINT_NAMED_ERROR("Robot.StartBehavior.Fail", "\n");
+      if(behaviorName == "NONE") {
+        PRINT_NAMED_INFO("Robot.StartBehavior.DisablingBehaviorManager", "\n");
+        _isBehaviorMgrEnabled = false;
+      } else {
+        _isBehaviorMgrEnabled = true;
+        if(behaviorName == "AUTO") {
+          PRINT_NAMED_INFO("Robot.StartBehavior.EnablingAutoBehaviorSelection", "\n");
+        } else {
+          if(RESULT_OK != _behaviorMgr.SelectNextBehavior(behaviorName)) {
+            PRINT_NAMED_ERROR("Robot.StartBehavior.Fail", "\n");
+          } else {
+            PRINT_NAMED_INFO("Robot.StartBehavior.Success",
+                             "Switching to behavior '%s'\n",
+                             behaviorName.c_str());
+          }
+        }
       }
+      
     }
     
     // ============ Messaging ================
