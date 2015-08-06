@@ -86,7 +86,7 @@ namespace Anki {
       completionInfo.objectIDs.fill(-1);
       completionInfo.animName = "";
       
-      robot.GetExternalInterface()->DeliverToGame(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotCompletedAction(
+      robot.GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotCompletedAction(
         robot.GetID(),
         GetType(),
         result,

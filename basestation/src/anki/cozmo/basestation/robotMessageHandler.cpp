@@ -338,7 +338,7 @@ namespace Anki {
 
         ExternalInterface::MessageEngineToGame msgWrapper;
         msgWrapper.Set_ImageChunk(uiImgChunk);
-        robot->GetExternalInterface()->DeliverToGame(std::move(msgWrapper));
+        robot->GetExternalInterface()->Broadcast(std::move(msgWrapper));
 
         const bool wasLastChunk = uiImgChunk.chunkId == uiImgChunk.imageChunkCount-1;
 
@@ -634,7 +634,7 @@ namespace Anki {
             ActionableObject* actionObject = dynamic_cast<ActionableObject*>(object);
             assert(actionObject != nullptr);
             if(actionObject->IsBeingCarried() == false) {
-              robot->GetExternalInterface()->DeliverToGame(ExternalInterface::MessageEngineToGame(ExternalInterface::ActiveObjectMoved(
+              robot->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::ActiveObjectMoved(
                 robot->GetID(), objectWithID.first, msg.xAccel, msg.yAccel, msg.zAccel, msg.upAxis
               )));
             }
@@ -662,7 +662,7 @@ namespace Anki {
                               "MessageActiveObjectStoppedMoving",
                               "Received message that Object " << objectWithID.first.GetValue() << " (Active ID " << msg.objectID << ") stopped moving.");
             
-            robot->GetExternalInterface()->DeliverToGame(ExternalInterface::MessageEngineToGame(ExternalInterface::ActiveObjectStoppedMoving(
+            robot->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::ActiveObjectStoppedMoving(
               robot->GetID(), objectWithID.first, msg.upAxis, msg.rolled
             )));
             return RESULT_OK;
@@ -689,7 +689,7 @@ namespace Anki {
                               "MessageActiveObjectTapped",
                               "Received message that object " << objectWithID.first.GetValue() << " (Active ID " << msg.objectID << ") was tapped " << (uint32_t)msg.numTaps << " times.");
             
-            robot->GetExternalInterface()->DeliverToGame(ExternalInterface::MessageEngineToGame(ExternalInterface::ActiveObjectTapped(
+            robot->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::ActiveObjectTapped(
               robot->GetID(), objectWithID.first, msg.numTaps
             )));
 

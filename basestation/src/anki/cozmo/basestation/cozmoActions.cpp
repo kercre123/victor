@@ -1521,7 +1521,7 @@ namespace Anki {
             ActionCompletedStruct completionInfo;
             completionInfo.numObjects = numObjects;
             completionInfo.objectIDs = {{carryObject, carryObjectOnTop, -1, -1, -1}};
-            robot.GetExternalInterface()->DeliverToGame(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotCompletedAction(
+            robot.GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotCompletedAction(
               robot.GetID(), GetType(), result, completionInfo
             )));
             
@@ -1554,7 +1554,7 @@ namespace Anki {
               object = robot.GetBlockWorld().FindObjectOnTopOf(*object, 15.f);
             }
 
-            robot.GetExternalInterface()->DeliverToGame(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotCompletedAction(
+            robot.GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotCompletedAction(
               robot.GetID(), GetType(), result, completionInfo
             )));
             return;
@@ -1840,7 +1840,7 @@ namespace Anki {
             completionInfo.objectIDs[0] = _dockObjectID;
             
             // TODO: Be able to fill in add'l objects carried in signal
-            robot.GetExternalInterface()->DeliverToGame(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotCompletedAction(
+            robot.GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotCompletedAction(
               robot.GetID(), GetType(), result, completionInfo
             )));
             
@@ -2322,7 +2322,7 @@ namespace Anki {
     {
       ActionCompletedStruct completionInfo;
       completionInfo.animName = _animName;
-      robot.GetExternalInterface()->DeliverToGame(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotCompletedAction(
+      robot.GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotCompletedAction(
         robot.GetID(), GetType(), result, completionInfo
       )));
     }

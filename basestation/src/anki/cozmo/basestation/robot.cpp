@@ -1226,7 +1226,7 @@ namespace Anki {
     Result Robot::PlaySound(const std::string& soundName, u8 numLoops, u8 volume)
     {
       if (_externalInterface != nullptr) {
-        _externalInterface->DeliverToGame(ExternalInterface::MessageEngineToGame(ExternalInterface::PlaySound(soundName, numLoops, volume)));
+        _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::PlaySound(soundName, numLoops, volume)));
       }
       //CozmoEngineSignals::PlaySoundForRobotSignal().emit(GetID(), soundName, numLoops, volume);
       return RESULT_OK;
@@ -1236,7 +1236,7 @@ namespace Anki {
     void Robot::StopSound()
     {
       if (_externalInterface != nullptr) {
-        _externalInterface->DeliverToGame(ExternalInterface::MessageEngineToGame(ExternalInterface::StopSound()));
+        _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::StopSound()));
       }
     } // StopSound()
       
@@ -1319,7 +1319,7 @@ namespace Anki {
       // Tell UI about available animations
       vector<std::string> animNames(_cannedAnimations.GetAnimationNames());
       for (vector<std::string>::iterator i=animNames.begin(); i != animNames.end(); ++i) {
-        _externalInterface->DeliverToGame(ExternalInterface::MessageEngineToGame(ExternalInterface::AnimationAvailable(*i)));
+        _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::AnimationAvailable(*i)));
       }
 
 
