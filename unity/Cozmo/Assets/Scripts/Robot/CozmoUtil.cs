@@ -15,7 +15,7 @@ public static class CozmoUtil
 	public const float MIN_WHEEL_SPEED_MM = 10f;
 	public const float BLOCK_LENGTH_MM = 44f;
 	public const float LOCAL_BUSY_TIME = 1f;
-	public const float MAX_LIFT_HEIGHT_MM = 92f;
+	public const float MAX_LIFT_HEIGHT_MM = 89f;
 	public const float MIN_LIFT_HEIGHT_MM = 31f;
 	public const float LIFT_REQUEST_TIME = 3f;
 	public const float MIN_HEAD_ANGLE = -25f;
