@@ -10,7 +10,7 @@ using U2G = Anki.Cozmo.ExternalInterface;
 /// our unity side representation of cozmo's current state
 /// 	also wraps most messages related solely to him
 /// </summary>
-public class Robot
+public class Robot : IDisposable
 {
 	public class Light
 	{
@@ -428,6 +428,11 @@ public class Robot
 		RobotEngineManager.instance.DisconnectedFromClient += Reset;
 
 		RefreshObjectPertinence();
+	}
+
+	public void Dispose()
+	{
+		RobotEngineManager.instance.DisconnectedFromClient -= Reset;
 	}
 
 	public void CooldownTimers(float delta)
@@ -1109,6 +1114,8 @@ public class Robot
 
 	public void SetObjectAdditionAndDeletion(bool enableAddition, bool enableDeletion)
 	{
+		if(RobotEngineManager.instance == null || !RobotEngineManager.instance.IsConnected) return;
+		
 		SetObjectAdditionAndDeletionMessage.robotID = ID;
 		SetObjectAdditionAndDeletionMessage.enableAddition = enableAddition;
 		SetObjectAdditionAndDeletionMessage.enableDeletion = enableDeletion;

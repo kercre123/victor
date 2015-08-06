@@ -10,6 +10,7 @@ public class SceneLoader : MonoBehaviour
 	[SerializeField] string scene = null;
 	[SerializeField] bool onEnable = false;
 	[SerializeField] int onUpdateFrame = -1;
+	[SerializeField] bool disconnectFromRobot = false;
 
 	int frames = 0;
 
@@ -27,6 +28,10 @@ public class SceneLoader : MonoBehaviour
 	public void LoadScene()
 	{
 		if(string.IsNullOrEmpty(scene)) return;
+
+		if (disconnectFromRobot) {
+			RobotEngineManager.instance.Disconnect();
+		}
 
 		Debug.Log("SceneLoader Application.LoadLevel(" + scene + ")");
 		Application.LoadLevel(scene);
