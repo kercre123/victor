@@ -27,7 +27,7 @@ namespace AnimationTool
         }
     }
 
-    public class RobotEngineManager
+    public class RobotEngineMessenger
     {
         string engineIP = "127.0.0.1";
         const int enginePort = 5106;
@@ -37,7 +37,9 @@ namespace AnimationTool
         Thread workerThread;
         ChannelUpdater channelUpdater;
 
-        public RobotEngineManager()
+        public bool connected { get { return channel != null && channel.IsConnected; } }
+
+        public RobotEngineMessenger()
         {
             channel.MessageReceived += ReceivedMessage;
             channelUpdater = new ChannelUpdater(channel);
@@ -53,15 +55,11 @@ namespace AnimationTool
             channelUpdater.RequestStop();
         }
 
-        public void SetEngineIP(string ip)
-        {
-            engineIP = ip;
-        }
-
-        public void Connect()
+        public void Connect(string ip)
         {
             if (!channel.IsConnected)
             {
+                engineIP = ip;
                 channel.Connect(1, enginePort, engineIP, advertisingRegistrationPort);
                 channel.ConnectedToClient -= ConnectedToClient;
                 channel.ConnectedToClient += ConnectedToClient;
@@ -99,20 +97,24 @@ namespace AnimationTool
         {
             if (robotID < 0 || robotID > 255)
             {
-                throw new ArgumentException("ID must be between 0 and 255.", "robotID");
+                MessageBox.Show("ID must be between 0 and 255.", "robotID");
+                return;
             }
 
             if (string.IsNullOrEmpty(robotIP))
             {
-                throw new ArgumentNullException("robotIP");
+                MessageBox.Show("robotIP");
+                return;
             }
 
             ForceAddRobot forceAddRobotMessage = new ForceAddRobot();
 
             if (System.Text.Encoding.UTF8.GetByteCount(robotIP) + 1 > forceAddRobotMessage.ipAddress.Length)
             {
-                throw new ArgumentException("IP address too long.", "robotIP");
+                MessageBox.Show("IP address too long.", "robotIP");
+                return;
             }
+
             int length = System.Text.Encoding.UTF8.GetBytes(robotIP, 0, robotIP.Length, forceAddRobotMessage.ipAddress, 0);
             forceAddRobotMessage.ipAddress[length] = 0;
 
@@ -133,7 +135,8 @@ namespace AnimationTool
                 length = System.Text.Encoding.UTF8.GetByteCount(vizHostIP);
                 if (length + 1 > startEngineMessage.vizHostIP.Length)
                 {
-                    throw new ArgumentException("vizHostIP is too long. (" + (length + 1).ToString() + " bytes provided, max " + startEngineMessage.vizHostIP.Length + ".)");
+                    MessageBox.Show("vizHostIP is too long. (" + (length + 1).ToString() + " bytes provided, max " + startEngineMessage.vizHostIP.Length + ".)");
+                    return;
                 }
                 System.Text.Encoding.UTF8.GetBytes(vizHostIP, 0, vizHostIP.Length, startEngineMessage.vizHostIP, 0);
             }
