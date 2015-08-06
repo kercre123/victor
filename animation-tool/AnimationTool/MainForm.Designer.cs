@@ -205,7 +205,8 @@ namespace AnimationTool
             // 
             this.settingsToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.durationToolStripMenuItem,
-            this.rootDirectoryToolStripMenuItem});
+            this.rootDirectoryToolStripMenuItem,
+            this.setIPAddressToolStripMenuItem});
             this.settingsToolStripMenuItem.Name = "settingsToolStripMenuItem";
             this.settingsToolStripMenuItem.Size = new System.Drawing.Size(61, 22);
             this.settingsToolStripMenuItem.Text = "Settings";
@@ -224,27 +225,26 @@ namespace AnimationTool
             this.rootDirectoryToolStripMenuItem.Text = "Root Directory";
             this.rootDirectoryToolStripMenuItem.Click += new System.EventHandler(this.SetRootDirectory);
             // 
+            // setIPAddressToolStripMenuItem
+            // 
+            this.setIPAddressToolStripMenuItem.Name = "setIPAddressToolStripMenuItem";
+            this.setIPAddressToolStripMenuItem.Size = new System.Drawing.Size(193, 22);
+            this.setIPAddressToolStripMenuItem.Text = "Engine IP";
+            this.setIPAddressToolStripMenuItem.Click += new System.EventHandler(this.SetIPAddress);
+            // 
             // animationToolStripMenuItem
             // 
             this.animationToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.setIPAddressToolStripMenuItem,
             this.playAnimationToolStripMenuItem});
             this.animationToolStripMenuItem.Name = "animationToolStripMenuItem";
             this.animationToolStripMenuItem.Size = new System.Drawing.Size(75, 22);
             this.animationToolStripMenuItem.Text = "Animation";
             // 
-            // setIPAddressToolStripMenuItem
-            // 
-            this.setIPAddressToolStripMenuItem.Name = "setIPAddressToolStripMenuItem";
-            this.setIPAddressToolStripMenuItem.Size = new System.Drawing.Size(172, 22);
-            this.setIPAddressToolStripMenuItem.Text = "Connect to Engine";
-            this.setIPAddressToolStripMenuItem.Click += new System.EventHandler(this.SetIPAddress);
-            // 
             // playAnimationToolStripMenuItem
             // 
             this.playAnimationToolStripMenuItem.Name = "playAnimationToolStripMenuItem";
             this.playAnimationToolStripMenuItem.ShortcutKeyDisplayString = System.Windows.Forms.Keys.Space.ToString();
-            this.playAnimationToolStripMenuItem.Size = new System.Drawing.Size(172, 22);
+            this.playAnimationToolStripMenuItem.Size = new System.Drawing.Size(193, 22);
             this.playAnimationToolStripMenuItem.Text = "Play Animation";
             this.playAnimationToolStripMenuItem.Click += new System.EventHandler(this.PlayAnimation);
             // 
@@ -932,6 +932,7 @@ namespace AnimationTool
             this.pAudioDeviceSide.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
+
         }
 
         #endregion

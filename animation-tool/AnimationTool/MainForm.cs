@@ -89,6 +89,11 @@ namespace AnimationTool
             channelList = new List<Component>();
             robotEngineManager = new RobotEngineMessenger();
 
+            robotEngineManager.ConnectionTextUpdate += ChangeConnectionText;
+            robotEngineManager.Start();
+            FormClosing += (unused1, unused2) => robotEngineManager.Stop();
+            Application.ApplicationExit += (unused1, unused2) => robotEngineManager.Stop();
+            
             Sequencer.AddDataPoint.ChangeDuration += ChangeDuration;
 
             movingDataPointsWithMouse = false;
@@ -194,11 +199,15 @@ namespace AnimationTool
             if (keyData == Keys.Back)
             {
                 Delete(null, null);
+
+                return true;
             }
 
-            if(keyData == Keys.Space)
+            if (keyData == Keys.Space)
             {
                 PlayAnimation(null, null);
+
+                return true;
             }
 
             KeyDownHandler(keyData);
@@ -217,7 +226,7 @@ namespace AnimationTool
 
             if (left || right || up || down)
             {
-                if(curDataPoint != null && curPreviewBar != null && curPreviewBar.MarkerColor == SelectDataPoint.MarkerColor)
+                if (curDataPoint != null && curPreviewBar != null && curPreviewBar.MarkerColor == SelectDataPoint.MarkerColor)
                 {
                     if (ActionManager.Do(new FaceAnimation.MoveSelectedPreviewBar(curPreviewBar, curDataPoint, left, right, pbFaceAnimation)))
                     {
@@ -391,6 +400,18 @@ namespace AnimationTool
         private void SetIPAddress(object o, EventArgs e)
         {
             DialogResult result = ipForm.Open(Location, robotEngineManager);
+        }
+
+        private void ChangeConnectionText(string connectionText)
+        {
+            // is sometimes call on another thread
+            if (InvokeRequired)
+            {
+                Invoke((Action<string>)ChangeConnectionText, connectionText);
+                return;
+            }
+
+            //connectionTextComponent.Text = connectionText;
         }
     }
 }
