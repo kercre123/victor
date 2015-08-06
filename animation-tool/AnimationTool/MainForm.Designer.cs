@@ -60,6 +60,7 @@ namespace AnimationTool
             this.animationToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.setIPAddressToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.playAnimationToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.connectionToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.pHeadAngle = new System.Windows.Forms.Panel();
             this.cHeadAngle = new System.Windows.Forms.DataVisualization.Charting.Chart();
             this.pHeadAngleSide = new System.Windows.Forms.Panel();
@@ -113,7 +114,8 @@ namespace AnimationTool
             this.fileToolStripMenuItem,
             this.editToolStripMenuItem,
             this.settingsToolStripMenuItem,
-            this.animationToolStripMenuItem});
+            this.animationToolStripMenuItem,
+            this.connectionToolStripMenuItem});
             this.menuStrip.Location = new System.Drawing.Point(0, 0);
             this.menuStrip.Name = "menuStrip";
             this.menuStrip.Padding = new System.Windows.Forms.Padding(3, 1, 0, 1);
@@ -247,6 +249,12 @@ namespace AnimationTool
             this.playAnimationToolStripMenuItem.Size = new System.Drawing.Size(193, 22);
             this.playAnimationToolStripMenuItem.Text = "Play Animation";
             this.playAnimationToolStripMenuItem.Click += new System.EventHandler(this.PlayAnimation);
+            // 
+            // connectionToolStripMenuItem
+            // 
+            this.connectionToolStripMenuItem.Name = "connectionToolStripMenuItem";
+            this.connectionToolStripMenuItem.Size = new System.Drawing.Size(75, 22);
+            this.connectionToolStripMenuItem.Text = "[Disconnected]";
             // 
             // pHeadAngle
             // 
@@ -978,6 +986,7 @@ namespace AnimationTool
         private PictureBox pbFaceAnimation;
         private ToolStripMenuItem playAnimationToolStripMenuItem;
         private ToolStripMenuItem setIPAddressToolStripMenuItem;
+        private ToolStripMenuItem connectionToolStripMenuItem;
     }
 }
 

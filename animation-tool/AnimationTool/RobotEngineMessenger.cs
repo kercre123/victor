@@ -31,7 +31,7 @@ namespace AnimationTool
 
         public RobotEngineMessenger()
         {
-            this.ConnectionText = "Disconnected";
+            this.ConnectionText = "[Disconnected]";
         }
 
         public void Start()
@@ -265,6 +265,7 @@ namespace AnimationTool
         {
             RaiseConnectionTextUpdate(null);
         }
+
         private void RaiseConnectionTextUpdate(string newDisconnectionText)
         {
             if (channel == null)
@@ -273,13 +274,14 @@ namespace AnimationTool
             }
 
             string newConnectionText;
-            if (channel.IsConnected)
+            
+            if (channel.IsConnected && isReadyToSend)
             {
-                newConnectionText = "Connecting...";
+                newConnectionText = "[Connected]";
             }
             else if (channel.IsActive)
             {
-                newConnectionText = "Connected";
+                newConnectionText = "[Connecting...]";
             }
             else if (!string.IsNullOrEmpty(newDisconnectionText))
             {
@@ -287,7 +289,7 @@ namespace AnimationTool
             }
             else if (!wasShowingDisconnect)
             {
-                newConnectionText = "Disconnected";
+                newConnectionText = "[Disconnected]";
             }
             else
             {

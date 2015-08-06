@@ -29,7 +29,7 @@ namespace AnimationTool
         ChartArea curChartArea { get { return curChart != null && curChart.ChartAreas.Count > 0 ? curChart.ChartAreas[0] : null; } }
         DataPointCollection curPoints { get { return curChart != null && curChart.Series.Count > 0 ? curChart.Series[0].Points : null; } }
 
-        RobotEngineMessenger robotEngineManager;
+        RobotEngineMessenger robotEngineMessenger;
 
         string jsonFilePath { get { return rootDirectory + "\\animations"; } }
 
@@ -87,13 +87,14 @@ namespace AnimationTool
             selectFolder = new FolderBrowserDialog();
             saveFileAs = new SaveFileDialog();
             channelList = new List<Component>();
-            robotEngineManager = new RobotEngineMessenger();
+            robotEngineMessenger = new RobotEngineMessenger();
 
-            robotEngineManager.ConnectionTextUpdate += ChangeConnectionText;
-            robotEngineManager.Start();
-            FormClosing += (unused1, unused2) => robotEngineManager.Stop();
-            Application.ApplicationExit += (unused1, unused2) => robotEngineManager.Stop();
-            
+            robotEngineMessenger.ConnectionTextUpdate += ChangeConnectionText;
+            robotEngineMessenger.Start();
+            FormClosing += (unused1, unused2) => robotEngineMessenger.Stop();
+            Application.ApplicationExit += (unused1, unused2) => robotEngineMessenger.Stop();
+            Application.Idle += UpdateConnectionText;
+
             Sequencer.AddDataPoint.ChangeDuration += ChangeDuration;
 
             movingDataPointsWithMouse = false;
@@ -394,12 +395,17 @@ namespace AnimationTool
 
         private void PlayAnimation(object sender, EventArgs e)
         {
-            robotEngineManager.SendAnimation(Path.GetFileNameWithoutExtension(currentFile));
+            robotEngineMessenger.SendAnimation(Path.GetFileNameWithoutExtension(currentFile));
         }
 
         private void SetIPAddress(object o, EventArgs e)
         {
-            DialogResult result = ipForm.Open(Location, robotEngineManager);
+            DialogResult result = ipForm.Open(Location, robotEngineMessenger);
+        }
+
+        private void UpdateConnectionText(object o, EventArgs e)
+        {
+            connectionToolStripMenuItem.Text = robotEngineMessenger.ConnectionText;
         }
 
         private void ChangeConnectionText(string connectionText)
