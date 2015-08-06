@@ -96,7 +96,7 @@ namespace Anki {
 
       GetCompletionStruct(robot, completionInfo);
       
-      robot.GetExternalInterface()->DeliverToGame(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotCompletedAction(robot.GetID(), _idTag, GetType(), result, completionInfo)));
+      robot.GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotCompletedAction(robot.GetID(), _idTag, GetType(), result, completionInfo)));
     }
     
     bool IActionRunner::RetriesRemain()
