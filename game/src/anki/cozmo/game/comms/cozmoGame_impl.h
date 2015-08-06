@@ -85,17 +85,6 @@ namespace Cozmo {
     Result UpdateAsClient(const float currentTime_sec);
     
     bool SendRobotImage(RobotID_t robotID);
-    
-    //
-    // Signals
-    //
-    //   NOTE: Signal handler implementations are in cozmoGame_signal_handlers.cpp
-    
-    void SetupSignalHandlers();
-    
-    void HandleUiDeviceAvailableSignal(UserDeviceID_t deviceID);
-    void HandleUiDeviceConnectedSignal(UserDeviceID_t deviceID, bool successful);
-    void HandleConnectToUiDeviceSignal(UserDeviceID_t deviceID);
 
     //
     // U2G Message Handling

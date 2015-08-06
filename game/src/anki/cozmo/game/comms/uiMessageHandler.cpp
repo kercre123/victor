@@ -16,7 +16,6 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotManager.h"
 #include "anki/cozmo/game/comms/uiMessageHandler.h"
-#include "anki/cozmo/game/signals/cozmoGameSignals.h"
 #include "anki/cozmo/basestation/soundManager.h"
 
 #include "anki/cozmo/basestation/behaviorManager.h"
@@ -56,29 +55,8 @@ namespace Anki {
       
       return retVal;
     }
-    
 
-    Result UiMessageHandler::SendMessage(const ExternalInterface::MessageEngineToGame& msg)
-    {
-      #if(RUN_UI_MESSAGE_TCP_SERVER)
-      
-      Comms::MsgPacket p;
-      msg.Pack(p.data, Comms::MsgPacket::MAX_SIZE);
-      p.dataLen = msg.Size();
-      p.destId = _hostUiDeviceID;
-      
-      return comms_->Send(p) > 0 ? RESULT_OK : RESULT_FAIL;
-      
-      #else
-      
-      //MessageQueue::getInstance()->AddMessageForUi(msg);
-      
-      #endif
-      
-      return RESULT_OK;
-    }
-
-    void UiMessageHandler::DeliverToGame(const ExternalInterface::MessageEngineToGame&& message)
+    void UiMessageHandler::DeliverToGame(const ExternalInterface::MessageEngineToGame& message)
     {
 #if(RUN_UI_MESSAGE_TCP_SERVER)
 
@@ -108,6 +86,38 @@ namespace Anki {
       
       return retVal;
     } // ProcessBuffer()
+    
+    // Broadcasting MessageGameToEngine messages are only internal
+    void UiMessageHandler::Broadcast(const ExternalInterface::MessageGameToEngine& message)
+    {
+      _eventMgrToEngine.Broadcast(AnkiEvent<ExternalInterface::MessageGameToEngine>(
+        static_cast<u32>(message.GetTag()), message));
+    } // Broadcast(MessageGameToEngine)
+    
+    void UiMessageHandler::Broadcast(ExternalInterface::MessageGameToEngine&& message)
+    {
+      u32 type = static_cast<u32>(message.GetTag());
+      _eventMgrToEngine.Broadcast(AnkiEvent<ExternalInterface::MessageGameToEngine>(
+        type, std::move(message)));
+    } // Broadcast(MessageGameToEngine &&)
+    
+    
+    // Broadcasting MessageEngineToGame messages also delivers them out of the engine
+    void UiMessageHandler::Broadcast(const ExternalInterface::MessageEngineToGame& message)
+    {
+      DeliverToGame(message);
+      _eventMgrToGame.Broadcast(AnkiEvent<ExternalInterface::MessageEngineToGame>(
+        static_cast<u32>(message.GetTag()), message));
+    } // Broadcast(MessageEngineToGame)
+    
+    void UiMessageHandler::Broadcast(ExternalInterface::MessageEngineToGame&& message)
+    {
+      DeliverToGame(message);
+      u32 type = static_cast<u32>(message.GetTag());
+      _eventMgrToGame.Broadcast(AnkiEvent<ExternalInterface::MessageEngineToGame>(
+        type, std::move(message)));
+    } // Broadcast(MessageEngineToGame &&)
+
     
     Result UiMessageHandler::ProcessMessages()
     {
