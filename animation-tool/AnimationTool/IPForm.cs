@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Windows.Forms;
 using System.Drawing;
+using System.Net;
 
 namespace AnimationTool
 {
@@ -11,7 +12,7 @@ namespace AnimationTool
 
         private Button button;
 
-        private RobotEngineManager robotEngineManager;
+        private RobotEngineMessenger robotEngineMessenger;
 
         public IPForm()
         {
@@ -22,11 +23,12 @@ namespace AnimationTool
             InitializeComponent();
         }
 
-        public DialogResult Open(Point location, RobotEngineManager robotEngineManager)
+        public DialogResult Open(Point location, RobotEngineMessenger robotEngineManager)
         {
             StartPosition = FormStartPosition.Manual;
             Location = location;
-            this.robotEngineManager = robotEngineManager;
+            this.robotEngineMessenger = robotEngineManager;
+            button.Enabled = false;
 
             if (Properties.Settings.Default.IPAddress != null)
             {
@@ -86,14 +88,21 @@ namespace AnimationTool
 
         private void textBox_TextChanged(object sender, EventArgs e)
         {
-            robotEngineManager.SetEngineIP(this.textBox.Text);
+            button.Enabled = false;
+
+            try
+            {
+                IPAddress.Parse(this.textBox.Text);
+                button.Enabled = true;
+            }
+            catch (Exception) { }
         }
 
         private void Button_Click(object sender, EventArgs e)
         {
             Properties.Settings.Default["IPAddress"] = this.textBox.Text;
             Properties.Settings.Default.Save();
-            robotEngineManager.Connect();
+            robotEngineMessenger.Connect(this.textBox.Text);
             Close();
         }
     }

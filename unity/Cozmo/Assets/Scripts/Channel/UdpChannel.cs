@@ -83,7 +83,7 @@ public class UdpChannel : ChannelBase
 	private readonly U2G.MessageGameToEngine disconnectionMessage = new U2G.MessageGameToEngine { DisconnectFromUiDevice = new U2G.DisconnectFromUiDevice() };
 
 	// sockets
-	private readonly IPEndPoint anyEndPoint = new IPEndPoint(IPAddress.Any, 0);
+	private IPEndPoint localEndPoint = null;
 	private Socket advertisementClient;
 	private IPEndPoint advertisementEndPoint = null;
 	private Socket mainServer;
@@ -179,7 +179,7 @@ public class UdpChannel : ChannelBase
 				disconnectionMessage.DisconnectFromUiDevice.deviceID = (byte)deviceID;
 
 				// set up main socket
-				IPEndPoint localEndPoint = anyEndPoint;//new IPEndPoint (/*localAddress ?? */ IPAddress.Any, localPort);
+				localEndPoint = new IPEndPoint (IPAddress.Any, localPort);
 				mainServer = new Socket(localEndPoint.AddressFamily, SocketType.Dgram, ProtocolType.Udp);
 				mainServer.Bind(localEndPoint);
 
@@ -197,7 +197,7 @@ public class UdpChannel : ChannelBase
 				int realPort = ((IPEndPoint)mainServer.LocalEndPoint).Port;
 
 				// set up advertisement message
-				Debug.Log("Local IP: " + localIP);
+				Debug.Log("Advertising IP: " + localIP);
 				int length = Encoding.UTF8.GetByteCount(localIP);
 				if(length + 1 > advertisementRegistrationMessage.ip.Length)
 				{
@@ -427,6 +427,7 @@ public class UdpChannel : ChannelBase
 		mainSend = null;
 		mainReceive = null;
 		mainEndPoint = null;
+		localEndPoint = null;
 
 		if(advertisementClient != null)
 		{
@@ -655,7 +656,7 @@ public class UdpChannel : ChannelBase
 	// either
 	private void ServerReceive()
 	{
-		mainReceive = AllocateBufferState(mainServer, anyEndPoint);
+		mainReceive = AllocateBufferState(mainServer, localEndPoint);
 		bool success = false;
 		try
 		{

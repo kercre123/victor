@@ -131,7 +131,7 @@
     <Compile Include="Read.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="RobotEngineManager.cs" />
+    <Compile Include="RobotEngineMessenger.cs" />
     <Compile Include="StraightForm.cs">
       <SubType>Form</SubType>
     </Compile>
