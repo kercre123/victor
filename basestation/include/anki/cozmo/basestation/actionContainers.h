@@ -52,7 +52,8 @@ namespace Anki {
       // Blindly clear the queue
       void     Clear();
       
-      void     Cancel(RobotActionType withType = RobotActionType::UNKNOWN);
+      bool     Cancel(RobotActionType withType = RobotActionType::UNKNOWN);
+      bool     Cancel(u32 idTag);
       
       bool     IsEmpty() const { return _queue.empty(); }
       
@@ -101,9 +102,14 @@ namespace Anki {
 
       // Only cancels actions from the specified slot with the specified type, and
       // does any cleanup specified by the action's Cancel/Cleanup methods.
-      // (Use -1 for each to specify "all".)
-      void       Cancel(SlotHandle fromSlot = -1,
+      // Returns true if any actions were cancelled.
+      bool       Cancel(SlotHandle fromSlot = -1, // -1 == "all slots"
                         RobotActionType withType = RobotActionType::UNKNOWN);
+      
+      // Find and cancel the action with the specified ID Tag. The slot to search in
+      // can optionally be specified, but otherwise, all slots are searched.
+      // Returns true if the action was found and cancelled.
+      bool       Cancel(u32 idTag, SlotHandle fromSlot = -1);
       
       void       Print() const;
       
