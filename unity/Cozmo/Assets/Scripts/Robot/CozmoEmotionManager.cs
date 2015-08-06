@@ -264,17 +264,18 @@ public class CozmoEmotionManager : MonoBehaviour {
 				QueueCompoundActionsMessage.numRetries = 0;
 				QueueCompoundActionsMessage.inSlot = 0;
 				QueueCompoundActionsMessage.robotID = robot.ID;
+				QueueCompoundActionsMessage.parallel = false;
 
 				if (stopPreviousAnim)
 				{
-					QueueSingleAnimMessage.position = Anki.Cozmo.QueueActionPosition.NOW_AND_CLEAR_REMAINING;
+					QueueCompoundActionsMessage.position = Anki.Cozmo.QueueActionPosition.NOW_AND_CLEAR_REMAINING;
 				}
 				else
 				{
-					QueueSingleAnimMessage.position = Anki.Cozmo.QueueActionPosition.NEXT;
+					QueueCompoundActionsMessage.position = Anki.Cozmo.QueueActionPosition.NEXT;
 				}
 
-				RobotEngineManager.instance.Message.QueueSingleAction = QueueSingleAnimMessage;
+				RobotEngineManager.instance.Message.QueueCompoundAction = QueueCompoundActionsMessage;
 				RobotEngineManager.instance.SendMessage ();
 			}
 			else
