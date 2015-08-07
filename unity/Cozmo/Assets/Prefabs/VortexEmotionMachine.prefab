@@ -66,8 +66,6 @@ MonoBehaviour:
     emotionAnims:
     - animName: Spin
       numLoops: 1
-    - animName: Spin2
-      numLoops: 1
   - stateName: WATCH_SPIN
     playAllAnims: 0
     emotionAnims:

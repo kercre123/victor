@@ -153,6 +153,10 @@ unity/Cozmo/*.csproj
 unity/Cozmo/*.userprefs
 unity/Cozmo/*.obj
 
+# Visual studio
+*.userprefs
+.vs
+
 build_xcode/*.xcworkspace
 build_xcode/game_osx
 build_xcode/game_ios

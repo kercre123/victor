@@ -29,7 +29,7 @@ namespace AnimationTool
         ChartArea curChartArea { get { return curChart != null && curChart.ChartAreas.Count > 0 ? curChart.ChartAreas[0] : null; } }
         DataPointCollection curPoints { get { return curChart != null && curChart.Series.Count > 0 ? curChart.Series[0].Points : null; } }
 
-        RobotEngineManager robotEngineManager;
+        RobotEngineMessenger robotEngineMessenger;
 
         string jsonFilePath { get { return rootDirectory + "\\animations"; } }
 
@@ -87,7 +87,13 @@ namespace AnimationTool
             selectFolder = new FolderBrowserDialog();
             saveFileAs = new SaveFileDialog();
             channelList = new List<Component>();
-            robotEngineManager = new RobotEngineManager();
+            robotEngineMessenger = new RobotEngineMessenger();
+
+            robotEngineMessenger.ConnectionTextUpdate += ChangeConnectionText;
+            robotEngineMessenger.Start();
+            FormClosing += (unused1, unused2) => robotEngineMessenger.Stop();
+            Application.ApplicationExit += (unused1, unused2) => robotEngineMessenger.Stop();
+            Application.Idle += UpdateConnectionText;
 
             Sequencer.AddDataPoint.ChangeDuration += ChangeDuration;
 
@@ -194,11 +200,15 @@ namespace AnimationTool
             if (keyData == Keys.Back)
             {
                 Delete(null, null);
+
+                return true;
             }
 
-            if(keyData == Keys.Space)
+            if (keyData == Keys.Space)
             {
                 PlayAnimation(null, null);
+
+                return true;
             }
 
             KeyDownHandler(keyData);
@@ -217,7 +227,7 @@ namespace AnimationTool
 
             if (left || right || up || down)
             {
-                if(curDataPoint != null && curPreviewBar != null && curPreviewBar.MarkerColor == SelectDataPoint.MarkerColor)
+                if (curDataPoint != null && curPreviewBar != null && curPreviewBar.MarkerColor == SelectDataPoint.MarkerColor)
                 {
                     if (ActionManager.Do(new FaceAnimation.MoveSelectedPreviewBar(curPreviewBar, curDataPoint, left, right, pbFaceAnimation)))
                     {
@@ -306,7 +316,7 @@ namespace AnimationTool
         {
             if (selectFolder == null) return;
 
-            selectFolder.SelectedPath = rootDirectory;
+            selectFolder.SelectedPath = Properties.Settings.Default.rootDirectory;
 
             if (selectFolder.ShowDialog() == DialogResult.OK)
             {
@@ -385,12 +395,29 @@ namespace AnimationTool
 
         private void PlayAnimation(object sender, EventArgs e)
         {
-            robotEngineManager.SendAnimation(Path.GetFileNameWithoutExtension(currentFile));
+            robotEngineMessenger.SendAnimation(Path.GetFileNameWithoutExtension(currentFile));
         }
 
         private void SetIPAddress(object o, EventArgs e)
         {
-            DialogResult result = ipForm.Open(Location, robotEngineManager);
+            DialogResult result = ipForm.Open(Location, robotEngineMessenger);
+        }
+
+        private void UpdateConnectionText(object o, EventArgs e)
+        {
+            connectionToolStripMenuItem.Text = robotEngineMessenger.ConnectionText;
+        }
+
+        private void ChangeConnectionText(string connectionText)
+        {
+            // is sometimes call on another thread
+            if (InvokeRequired)
+            {
+                Invoke((Action<string>)ChangeConnectionText, connectionText);
+                return;
+            }
+
+            //connectionTextComponent.Text = connectionText;
         }
     }
 }

@@ -215,6 +215,10 @@ public class VortexController : GameController
 
 	bool fakeCozmoTaps = true;
 	int cozmoIndex = 1;
+	bool atYourMark = false;
+	float markx_mm = 0;
+	float marky_mm = 50;
+	float mark_rad = (3.0f * Mathf.PI) / 2.0f;
 
 	#endregion
 
@@ -402,6 +406,11 @@ public class VortexController : GameController
 		headTimer = 0.1f;
 
 		imageGear.color = gearDefaultColor;
+
+		if (RobotEngineManager.instance != null) {
+			RobotEngineManager.instance.SuccessOrFailure += CheckForGotoStartCompletion;
+			atYourMark = false;
+		}
 	}
 
 	protected override void Update_PRE_GAME()
@@ -758,7 +767,7 @@ public class VortexController : GameController
 	{
 		if(robot != null && PlayerPrefs.GetInt("DebugSkipLayoutTracker", 0) == 0) {
 
-			if(cozmoIndex >= 0 && (robot.carryingObject == null || !robot.carryingObject.isActive || robot.isBusy)) return false;
+			if(cozmoIndex >= 0 && (robot.carryingObject == null || !robot.carryingObject.isActive || robot.isBusy || !atYourMark)) return false;
 			
 			for(int i = 0; i < numPlayers; i++) {
 				if(!playerMockBlocks[i].Validated) return false;
@@ -1757,6 +1766,24 @@ public class VortexController : GameController
 		robot.isBusy = false;
 	}
 
+	void CheckForGotoStartCompletion(bool success, RobotActionType action_type)
+	{
+		Debug.LogError ("got " + action_type);
+		switch(action_type)
+		{
+		case RobotActionType.COMPOUND:
+			if(success)
+			{
+				atYourMark = true;
+				if(RobotEngineManager.instance != null) RobotEngineManager.instance.SuccessOrFailure -= CheckForGotoStartCompletion;
+			} else
+			{ //try again to go to the start spot
+				robot.GotoPose(markx_mm, marky_mm, mark_rad);
+			}
+			break;
+		}
+	}
+
 	#endregion
 
 	#region PUBLIC METHODS
@@ -1769,7 +1796,8 @@ public class VortexController : GameController
 		if(state == GameState.PRE_GAME) {
 			if (index == cozmoIndex) { // cozmo
 				//SetRobotEmotion ("LETS_PLAY");
-				CozmoEmotionManager.instance.SetEmotionReturnToPose ("LETS_PLAY", -200, 0, Mathf.PI);
+				CozmoEmotionManager.instance.SetEmotionReturnToPose ("LETS_PLAY", markx_mm, marky_mm, mark_rad);
+				atYourMark = false;
 			} else {
 				Debug.Log ("PlayerInputTap validating playerIndex("+index+")");
 			}

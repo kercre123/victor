@@ -60,6 +60,7 @@
     <Compile Include="..\..\unity\Cozmo\Assets\Scripts\Channel\UdpChannel.cs">
       <Link>DoNotEdit\Channel\UdpChannel.cs</Link>
     </Compile>
+    <Compile Include="RobotSettings.cs" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ActionManager.cs" />
@@ -131,7 +132,7 @@
     <Compile Include="Read.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="RobotEngineManager.cs" />
+    <Compile Include="RobotEngineMessenger.cs" />
     <Compile Include="StraightForm.cs">
       <SubType>Form</SubType>
     </Compile>

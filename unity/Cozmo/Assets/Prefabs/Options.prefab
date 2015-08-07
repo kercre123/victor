@@ -4597,6 +4597,7 @@ MonoBehaviour:
   scene: Shell
   onEnable: 0
   onUpdateFrame: -1
+  disconnectFromRobot: 1
 --- !u!114 &11442508
 MonoBehaviour:
   m_ObjectHideFlags: 1

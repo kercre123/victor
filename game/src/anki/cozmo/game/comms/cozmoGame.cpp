@@ -21,7 +21,6 @@
 #include "anki/common/basestation/math/quad_impl.h"
 #include "anki/cozmo/game/comms/uiMessageHandler.h"
 #include "anki/cozmo/basestation/multiClientComms.h"
-#include "anki/cozmo/game/signals/cozmoGameSignals.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 
 namespace Anki {
@@ -42,8 +41,6 @@ namespace Cozmo {
   , _uiMsgHandler(1)
   {
     _pingToUI.counter = 0;
-    
-    SetupSignalHandlers();
     
     
     PRINT_NAMED_INFO("CozmoEngineHostImpl.Constructor",
@@ -225,7 +222,7 @@ namespace Cozmo {
     if(success) {
       _connectedUiDevices.push_back(whichDevice);
     }
-    CozmoGameSignals::UiDeviceConnectedSignal().emit(whichDevice, success);
+    _uiMsgHandler.Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::UiDeviceConnected(whichDevice, success)));
     return success;
   }
 
@@ -279,7 +276,7 @@ namespace Cozmo {
         // Ping the UI to let them know we're still here
         ExternalInterface::MessageEngineToGame message;
         message.Set_Ping(_pingToUI);
-        _uiMsgHandler.SendMessage(message);
+        _uiMsgHandler.Broadcast(message);
         ++_pingToUI.counter;
       }
     }
@@ -307,7 +304,7 @@ namespace Cozmo {
                              "Automatically connected to local UI device %d!\n", device);
           }
         } else {
-          CozmoGameSignals::UiDeviceAvailableSignal().emit(device);
+          _uiMsgHandler.Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::UiDeviceAvailable(device)));
         }
       }
       
@@ -461,7 +458,7 @@ namespace Cozmo {
                 
                 ExternalInterface::MessageEngineToGame message;
                 message.Set_RobotState(msg);
-                _uiMsgHandler.SendMessage(message);
+                _uiMsgHandler.Broadcast(message);
               } else {
                 PRINT_NAMED_WARNING("CozmoGameImpl.UpdateAsHost",
                                     "Not sending robot %d state (none available).\n",
@@ -550,14 +547,14 @@ namespace Cozmo {
           if(chunkByteCnt == m.data.size()) {
             // Filled this chunk
             message.Set_ImageChunk(m);
-            _uiMsgHandler.SendMessage(message);
+            _uiMsgHandler.Broadcast(message);
             ++m.chunkId;
             chunkByteCnt = 0;
           } else if(totalByteCnt == numTotalBytes) {
             // This is the last chunk!
             m.chunkSize = chunkByteCnt;
             message.Set_ImageChunk(m);
-            _uiMsgHandler.SendMessage(message);
+            _uiMsgHandler.Broadcast(message);
           }
         } // for each col
       } // for each row
