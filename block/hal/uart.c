@@ -51,7 +51,11 @@ void PutString(char *s)
 void InitUart()
 {
   // Set output pin
+  #ifdef USE_EVAL_BOARD
+  PIN_OUT(P1DIR, (1 << 0));
+  #else
   PIN_OUT(P0DIR, PIN_TX); 
+  #endif
      // Initializes the UART
   hal_uart_init(UART_BAUD_57K6);
   

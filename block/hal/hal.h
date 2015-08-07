@@ -8,16 +8,18 @@
 #include "portable.h"
 
 #define BLOCK_ID 0xC5
+#define COMM_CHANNEL 82
 
 //#define DO_SIMPLE_LED_TEST
 //#define DO_LED_TEST
-#define DO_TAPS_TEST
+//#define DO_TAPS_TEST
 //#define DO_MISSED_PACKET_TEST
+//#define USE_EVAL_BOARD
 
 //#define STREAM_ACCELEROMETER
 //#define DEBUG_PAYLOAD
 //#define LISTEN_FOREVER
-//#define DO_TRANSMITTER_BEHAVIOR
+#define DO_TRANSMITTER_BEHAVIOR
 //#define DO_LOSSY_TRANSMITTER
 
 //#define USE_UART
