@@ -38,6 +38,7 @@
 #include "anki/vision/basestation/cameraCalibration.h"
 #include "json/json.h"
 #include "anki/cozmo/shared/cozmoTypes.h"
+#include "util/signals/simpleSignal_fwd.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -48,6 +49,13 @@ class CozmoEngineImpl;
 class CozmoEngineHostImpl;
 class CozmoEngineClientImpl;
 class IExternalInterface;
+  
+template <typename Type>
+class AnkiEvent;
+  
+namespace ExternalInterface {
+  class MessageGameToEngine;
+}
   
 // Abstract base engine class
 class CozmoEngine
@@ -102,6 +110,10 @@ protected:
   IExternalInterface* _externalInterface;
 
   Anki::Util::PrintfLoggerProvider _loggerProvider;
+  
+  std::vector<::Signal::SmartHandle> _signalHandles;
+  
+  virtual void HandleEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
 }; // class CozmoEngine
   
 

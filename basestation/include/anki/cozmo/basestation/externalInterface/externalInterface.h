@@ -24,6 +24,8 @@ namespace Cozmo {
 namespace ExternalInterface {
 class MessageEngineToGame;
 class MessageGameToEngine;
+enum class MessageEngineToGameTag : uint8_t;
+enum class MessageGameToEngineTag : uint8_t;
 } // end namespace ExternalInterface
 
 
@@ -36,6 +38,10 @@ public:
   
   virtual void Broadcast(const ExternalInterface::MessageEngineToGame& message) = 0;
   virtual void Broadcast(ExternalInterface::MessageEngineToGame&& message) = 0;
+  
+  virtual Signal::SmartHandle Subscribe(const ExternalInterface::MessageEngineToGameTag& tagType, std::function<void(const AnkiEvent<ExternalInterface::MessageEngineToGame>&)> messageHandler) = 0;
+  
+  virtual Signal::SmartHandle Subscribe(const ExternalInterface::MessageGameToEngineTag& tagType, std::function<void(const AnkiEvent<ExternalInterface::MessageGameToEngine>&)> messageHandler) = 0;
   
 protected:
   virtual void DeliverToGame(const ExternalInterface::MessageEngineToGame& message) = 0;

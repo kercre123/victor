@@ -11,6 +11,10 @@
 
 #include "anki/cozmo/basestation/cozmoEngine.h"
 #include "anki/cozmo/basestation/engineImpl/cozmoEngineImpl.h"
+#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "anki/cozmo/basestation/events/ankiEvent.h"
+#include "clad/externalInterface/messageGameToEngine.h"
+#include "util/logging/logging.h"
 
 
 namespace Anki {
@@ -41,6 +45,13 @@ CozmoEngine::~CozmoEngine()
 }
 
 Result CozmoEngine::Init(const Json::Value& config) {
+  
+  // We'll use this callback for all the events we care about
+  auto callback = std::bind(&CozmoEngine::HandleEvents, this, std::placeholders::_1);
+  
+  // Subscribe to the connect message
+  _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::ConnectToRobot, callback));
+  
   return _impl->Init(config);
 }
 
@@ -68,6 +79,29 @@ void CozmoEngine::ProcessDeviceImage(const Vision::Image &image) {
 
 void CozmoEngine::StartAnimationTool() {
   _impl->StartAnimationTool();
+}
+  
+void CozmoEngine::HandleEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+{
+  switch (event.GetData().GetTag())
+  {
+    case ExternalInterface::MessageGameToEngineTag::ConnectToRobot:
+    {
+      const ExternalInterface::ConnectToRobot& msg = event.GetData().Get_ConnectToRobot();
+      const bool success = ConnectToRobot(msg.robotID);
+      if(success) {
+        PRINT_NAMED_INFO("CozmoEngine.HandleEvents", "Connected to robot %d!\n", msg.robotID);
+      } else {
+        PRINT_NAMED_ERROR("CozmoEngine.HandleEvents", "Failed to connect to robot %d!\n", msg.robotID);
+      }
+      break;
+    }
+    default:
+    {
+      PRINT_STREAM_ERROR("CozmoEngine.HandleEvents",
+                         "Subscribed to unhandled event of type " << (u32)event.GetData().GetTag() << "!");
+    }
+  }
 }
   
 
