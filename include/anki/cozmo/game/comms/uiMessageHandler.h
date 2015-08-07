@@ -68,6 +68,10 @@ namespace Anki {
       virtual void Broadcast(const ExternalInterface::MessageEngineToGame& message) override;
       virtual void Broadcast(ExternalInterface::MessageEngineToGame&& message) override;
       
+      virtual Signal::SmartHandle Subscribe(const ExternalInterface::MessageEngineToGameTag& tagType, std::function<void(const AnkiEvent<ExternalInterface::MessageEngineToGame>&)> messageHandler) override;
+      
+      virtual Signal::SmartHandle Subscribe(const ExternalInterface::MessageGameToEngineTag& tagType, std::function<void(const AnkiEvent<ExternalInterface::MessageGameToEngine>&)> messageHandler) override;
+      
       inline void RegisterCallbackForMessage(const std::function<void(const ExternalInterface::MessageGameToEngine&)>& messageCallback)
       {
         this->messageCallback = messageCallback;

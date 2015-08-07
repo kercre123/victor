@@ -109,15 +109,7 @@ namespace Cozmo {
   
   void CozmoGameImpl::Process_ConnectToRobot(ExternalInterface::ConnectToRobot const& msg)
   {
-    // Tell the game to connect to a robot, using a signal
-    // CozmoGameSignals::ConnectToRobotSignal().emit(msg.robotID);
-    
-    const bool success = ConnectToRobot(msg.robotID);
-    if(success) {
-      PRINT_NAMED_INFO("CozmoGameImpl.ProcessMessage", "Connected to robot %d!\n", msg.robotID);
-    } else {
-      PRINT_NAMED_ERROR("CozmoGameImpl.ProcessMessage", "Failed to connect to robot %d!\n", msg.robotID);
-    }
+    // Handled in CozmoEngine::HandleEvents
   }
   
   void CozmoGameImpl::Process_ConnectToUiDevice(ExternalInterface::ConnectToUiDevice const& msg)
