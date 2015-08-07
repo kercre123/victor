@@ -54,6 +54,13 @@ namespace Cozmo {
       NUM_FIDGETS
     };
     
+    using MakeFidgetAction = std::function<IActionRunner*()>;
+    
+    void AddFidget(const std::string& name, MakeFidgetAction fcn, s32 frequency);
+    
+    // Mapping from "probability" to a name paired with an action creator
+    std::map<s32, std::pair<std::string, MakeFidgetAction> > _fidgets;
+    
     bool _interrupted;
     
     f32 _lastFidgetTime_sec;
@@ -62,6 +69,8 @@ namespace Cozmo {
     f32 _minWait_sec, _maxWait_sec;
     
     std::string _name;
+    
+    s32 _totalProb;
     
   }; // class BehaviorFidget
 

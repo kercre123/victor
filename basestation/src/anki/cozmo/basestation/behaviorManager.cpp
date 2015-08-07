@@ -137,13 +137,14 @@ namespace Cozmo {
                             "Failed trying to select next behavior, continuing with current.\n");
         lastResult = RESULT_OK;
       }
-      _lastSwitchTime_sec = currentTime_sec;
       
 #     if DEBUG_BEHAVIOR_MGR
       PRINT_NAMED_WARNING("BehaviorManager.Update.SelectedNext",
                           "Selected next behavior '%s' at t=%.1f, last was t=%.1f\n",
                           _nextBehavior->first.c_str(), currentTime_sec, _lastSwitchTime_sec);
 #     endif
+      
+      _lastSwitchTime_sec = currentTime_sec;
     }
     
     if(_currentBehavior != _behaviors.end()) {
