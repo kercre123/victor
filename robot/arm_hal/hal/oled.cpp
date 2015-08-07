@@ -278,7 +278,7 @@ namespace Anki
       #define CLEAR_ROW(x)      (0x00 | x)
       #define COPY_ROW(x)       (0x40 | x)
       #define RLE_PATTERN(c, p) (0x80 | (c << 2) | p)
-      
+
       void OLEDInit(void)
       {
         HWInit();
@@ -288,7 +288,7 @@ namespace Anki
         EnqueueWrite(COMMAND, InitDisplay, sizeof(InitDisplay));
 
         // Draw "programmer art" face until we get real assets
-        u8 face[] = { 
+        u8 face[] = {
           CLEAR_ROW(24),
           RLE_PATTERN(12, 0),
           RLE_PATTERN(8, 3),
@@ -302,7 +302,7 @@ namespace Anki
         FaceAnimate(face);
       }
 
-      
+
       // Update the face to the next frame of an animation
       // @param frame - a pointer to a variable length frame of face animation data
       // Frame is in 8-bit RLE format:
@@ -395,6 +395,11 @@ namespace Anki
         // Display it, and halt all further face animation
         SendFrame();
         m_disableAnimate = 1;
+      }
+
+      extern "C" void FaceUnPrintf(void)
+      {
+        m_disableAnimate = 0;
       }
     }
   }

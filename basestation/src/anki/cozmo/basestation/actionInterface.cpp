@@ -99,16 +99,12 @@ namespace Anki {
 
       GetCompletionStruct(robot, completionInfo);
       
-      ExternalInterface::MessageEngineToGame msg(ExternalInterface::RobotCompletedAction(robot.GetID(),
-                                                                                         _idTag,
-                                                                                         GetType(),
-                                                                                         result,
-                                                                                         completionInfo));
+      ExternalInterface::MessageEngineToGame event(ExternalInterface::RobotCompletedAction(robot.GetID(), _idTag, GetType(), result, completionInfo));
       
-      robot.GetExternalInterface()->DeliverToGame(ExternalInterface::MessageEngineToGame(msg));
+      robot.GetExternalInterface()->Broadcast(event);
       
-      //TODO: Remove once Lee's Events are in
-      CozmoEngineSignals::RobotCompletedActionSignal().emit(msg);
+      // TODO: Remove once Lee's subscription stuff is in
+      CozmoEngineSignals::RobotCompletedActionSignal().emit(event);
     }
     
     bool IActionRunner::RetriesRemain()

@@ -116,7 +116,7 @@ namespace Anki {
             PRINT_NAMED_WARNING("RobotManager.UpdateAllRobots.FailIOTimeout", "Signaling robot disconnect\n");
             //CozmoEngineSignals::RobotDisconnectedSignal().emit(r->first);
             _robotDisconnectedSignal.emit(r->first);
-            _externalInterface->DeliverToGame(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotDisconnected(r->first, 0.0f)));
+            _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotDisconnected(r->first, 0.0f)));
             
             delete r->second;
             r = _robots.erase(r);

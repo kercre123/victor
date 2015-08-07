@@ -569,28 +569,28 @@ namespace Anki
             }
           }
           
-          ExternalInterface::MessageEngineToGame msg(ExternalInterface::RobotObservedObject(_robot->GetID(),
-                                                                                            inFamily,
-                                                                                            obsType,
-                                                                                            obsID,
-                                                                                            boundingBox.GetX(),
-                                                                                            boundingBox.GetY(),
-                                                                                            boundingBox.GetWidth(),
-                                                                                            boundingBox.GetHeight(),
-                                                                                            obsObjTrans.x(),
-                                                                                            obsObjTrans.y(),
-                                                                                            obsObjTrans.z(),
-                                                                                            q.w(), q.x(), q.y(), q.z(),
-                                                                                            topMarkerOrientation.ToFloat(),
-                                                                                            true, // markers are visible
-                                                                                            observedObject->IsActive()
+          ExternalInterface::MessageEngineToGame msg(ExternalInterface::RobotObservedObject(
+                                                                                        _robot->GetID(),
+                                                                                        inFamily,
+                                                                                        obsType,
+                                                                                        obsID,
+                                                                                        boundingBox.GetX(),
+                                                                                        boundingBox.GetY(),
+                                                                                        boundingBox.GetWidth(),
+                                                                                        boundingBox.GetHeight(),
+                                                                                        obsObjTrans.x(),
+                                                                                        obsObjTrans.y(),
+                                                                                        obsObjTrans.z(),
+                                                                                        q.w(), q.x(), q.y(), q.z(),
+                                                                                        topMarkerOrientation.ToFloat(),
+                                                                                        true, // markers are visible
+                                                                                        observedObject->IsActive()
                                                                                             ));
-          
-          _robot->GetExternalInterface()->DeliverToGame(ExternalInterface::MessageEngineToGame(msg));
+          _robot->GetExternalInterface()->Broadcast(msg);
           
           // TODO: Remove once Lee's Events are in
           CozmoEngineSignals::RobotObservedObjectSignal().emit(msg);
-          
+
         } // if(observedObject->GetNumTimesObserved() > MIN_TIMES_TO_OBSERVE_OBJECT)
         
         if(_robot->GetTrackToObject().IsSet() &&
@@ -858,7 +858,7 @@ namespace Anki
 //                                 topMarkerOrientation.getDegrees());
                     }
                   }
-                  _robot->GetExternalInterface()->DeliverToGame(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotObservedObject(
+                  _robot->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotObservedObject(
                     _robot->GetID(),
                     unobserved.family,
                     unobserved.type,
@@ -1682,7 +1682,7 @@ namespace Anki
       
       if(numObjectsObserved == 0) {
         // If we didn't see/update anything, send a signal saying so
-        _robot->GetExternalInterface()->DeliverToGame(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotObservedNothing(_robot->GetID())));
+        _robot->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotObservedNothing(_robot->GetID())));
       }
       
       //PRINT_NAMED_INFO("BlockWorld.Update.NumBlocksObserved", "Saw %d blocks\n", numBlocksObserved);
@@ -1888,7 +1888,7 @@ namespace Anki
         
         // Notify any listeners that this object is being deleted
         if(object->GetNumTimesObserved() >= MIN_TIMES_TO_OBSERVE_OBJECT) {
-          _robot->GetExternalInterface()->DeliverToGame(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotDeletedObject(
+          _robot->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotDeletedObject(
             _robot->GetID(), object->GetID().GetValue()
           )));
         }
