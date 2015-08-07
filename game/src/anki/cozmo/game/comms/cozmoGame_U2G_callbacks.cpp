@@ -1067,7 +1067,7 @@ namespace Cozmo {
         return new TurnInPlaceAction(actionUnion.turnInPlace.angle_rad);
         
       case RobotActionType::PLAY_ANIMATION:
-        return new PlayAnimationAction(actionUnion.playAnimation.animationName);
+        return new PlayAnimationAction(actionUnion.playAnimation.animationName, actionUnion.playAnimation.numLoops);
         
       case RobotActionType::PICK_AND_PLACE_OBJECT:
       case RobotActionType::PICKUP_OBJECT_HIGH:
