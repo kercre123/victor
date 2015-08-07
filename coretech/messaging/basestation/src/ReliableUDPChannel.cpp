@@ -340,7 +340,7 @@ void ReliableUDPChannel::ConfigureReliableTransport()
     // Set parameters for all reliable connections
     Util::ReliableConnection::SetTimeBetweenPingsInMS(33.3); // Heartbeat interval
     Util::ReliableConnection::SetTimeBetweenResendsInMS(133.3); // 4x heartbeat interval
-    Util::ReliableConnection::SetConnectionTimeoutInMS(15000.0);
+    Util::ReliableConnection::SetConnectionTimeoutInMS(15000.0); // This is extended so we can get through Espressif resets until they are resolved. This shouldn't be longer than we want the robot to keep running without basestation update and it must match the setting in the embedded reliableTransport.c
     Util::ReliableConnection::SetPacketSeparationIntervalInMS(2.0);
     Util::ReliableConnection::SetMaxPingRoundTripsToTrack(10);
     Util::ReliableConnection::SetSendSeparatePingMessages(false);
