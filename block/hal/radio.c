@@ -51,7 +51,9 @@ void InitPRX()
   // Set address
   hal_nrf_set_address(HAL_NRF_PIPE1, ADDRESS);
   // Set datarate
-  hal_nrf_set_datarate(HAL_NRF_1MBPS);
+  hal_nrf_set_datarate(HAL_NRF_250KBPS);
+  // Set channel
+  hal_nrf_set_rf_channel(COMM_CHANNEL);
   // Set radioPayload width to 13 bytes
   hal_nrf_set_rx_payload_width((int)HAL_NRF_PIPE1, 13U);
   // Flush RX FIFO
@@ -128,9 +130,13 @@ void InitPTX()
   EA = 1U;
   hal_nrf_set_operation_mode(HAL_NRF_PTX);
   // Set datarate
-  hal_nrf_set_datarate(HAL_NRF_1MBPS);
+  hal_nrf_set_datarate(HAL_NRF_250KBPS);
   // Turn off auto-retransmit
   hal_nrf_set_auto_retr(0, 0);
+  // Set power
+  hal_nrf_set_output_power(HAL_NRF_0DBM);
+  // Set channel
+  hal_nrf_set_rf_channel(COMM_CHANNEL);
   // Set address (only if acting as transmitter)
   #ifdef DO_TRANSMITTER_BEHAVIOR
   hal_nrf_set_address(HAL_NRF_TX, ADDRESS);
