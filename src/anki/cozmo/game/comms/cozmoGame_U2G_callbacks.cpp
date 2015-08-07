@@ -21,8 +21,6 @@
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/quad_impl.h"
 
-#include "anki/cozmo/game/signals/cozmoGameSignals.h"
-
 
 namespace Anki {
 namespace Cozmo {
@@ -46,6 +44,7 @@ namespace Cozmo {
   void CozmoGameImpl::RegisterCallbacksU2G()
   {
     _uiMsgHandler.RegisterCallbackForMessage([this](const ExternalInterface::MessageGameToEngine& msg) {
+      _uiMsgHandler.Broadcast(msg);
 #include "clad/externalInterface/messageGameToEngine_switch.def"
     });
   } // RegisterCallbacksU2G()
@@ -1015,9 +1014,12 @@ namespace Cozmo {
   }
   
   
-  void QueueActionHelper(const QueueActionPosition position, const u32 inSlot, const u8 numRetries,
-                         ActionList& actionList, IActionRunner* action)
+  static void QueueActionHelper(const QueueActionPosition position,
+                                const u32 idTag, const u32 inSlot, const u8 numRetries,
+                                ActionList& actionList, IActionRunner* action)
   {
+    action->SetTag(idTag);
+    
     switch(position)
     {
       case QueueActionPosition::NOW:
@@ -1055,7 +1057,7 @@ namespace Cozmo {
         return new TurnInPlaceAction(actionUnion.turnInPlace.angle_rad);
         
       case RobotActionType::PLAY_ANIMATION:
-        return new PlayAnimationAction(actionUnion.playAnimation.animationName);
+        return new PlayAnimationAction(actionUnion.playAnimation.animationName, actionUnion.playAnimation.numLoops);
         
       case RobotActionType::PICK_AND_PLACE_OBJECT:
       case RobotActionType::PICKUP_OBJECT_HIGH:
@@ -1101,7 +1103,7 @@ namespace Cozmo {
       IActionRunner* action = CreateNewActionByType(robot, msg.actionType, msg.action);
       
       // Put the action in the given position of the specified queue:
-      QueueActionHelper(msg.position, msg.inSlot, msg.numRetries, robot->GetActionList(), action);
+      QueueActionHelper(msg.position, msg.idTag, msg.inSlot, msg.numRetries, robot->GetActionList(), action);
       
     }
     
@@ -1139,7 +1141,8 @@ namespace Cozmo {
       } // for each action/actionType
       
       // Put the action in the given position of the specified queue:
-      QueueActionHelper(msg.position, msg.inSlot, msg.numRetries, robot->GetActionList(), compoundAction);
+      QueueActionHelper(msg.position, msg.idTag, msg.inSlot, msg.numRetries,
+                        robot->GetActionList(), compoundAction);
       
     }
   }
