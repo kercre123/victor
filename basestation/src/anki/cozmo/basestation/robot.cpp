@@ -914,7 +914,9 @@ namespace Anki {
         _behaviorMgr.Update(BaseStationTimer::getInstance()->GetCurrentTimeInSeconds());
         
         const IBehavior* behavior = _behaviorMgr.GetCurrentBehavior();
-        behaviorName = behavior->GetName();
+        if(behavior != nullptr) {
+          behaviorName = behavior->GetName();
+        }
       }
       
       VizManager::getInstance()->SetText(VizManager::BEHAVIOR_STATE, NamedColors::MAGENTA,

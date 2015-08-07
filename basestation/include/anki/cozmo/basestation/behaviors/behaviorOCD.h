@@ -91,6 +91,7 @@ namespace Cozmo {
     Arrangement _currentArrangement;
     
     ObjectID _objectToPickUp;
+    ObjectID _objectToPlaceOn;
     ObjectID _lastObjectPlacedOnGround;
     ObjectID _anchorObject; // the object the arrangement is anchored to
     

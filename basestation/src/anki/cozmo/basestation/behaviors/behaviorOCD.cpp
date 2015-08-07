@@ -358,6 +358,7 @@ namespace Cozmo {
 #   endif
     
     IActionRunner* placementAction = nullptr;
+    _objectToPlaceOn.UnSet();
     
     ObjectID carriedObjectID;
     carriedObjectID = _robot.GetCarryingObject();
@@ -380,8 +381,6 @@ namespace Cozmo {
         BlockWorld& blockWorld = _robot.GetBlockWorld();
         
         // Pick the closest neatened object that's on the ground without anything on top yet...
-        ObjectID bottomBlockID;
-        assert(bottomBlockID.IsUnknown());
         f32 closestDistSq = std::numeric_limits<f32>::max();
         for(auto & neatObjectID : _neatObjects) {
           Vision::ObservableObject* neatObject = blockWorld.GetObjectByID(neatObjectID);
@@ -408,18 +407,18 @@ namespace Cozmo {
               const f32 currentDistSq = poseWrtRobot.GetTranslation().LengthSq();
               if(currentDistSq < closestDistSq) {
                 closestDistSq = currentDistSq;
-                bottomBlockID = neatObjectID;
+                _objectToPlaceOn = neatObjectID;
               }
             }
           }
         } // for each neat object
         
-        if(bottomBlockID.IsSet()) {
+        if(_objectToPlaceOn.IsSet()) {
           // Found a neat object with nothing on top. Stack on top of it:
-          placementAction = new DriveToPickAndPlaceObjectAction(bottomBlockID);
+          placementAction = new DriveToPickAndPlaceObjectAction(_objectToPlaceOn);
 #         if DEBUG_OCD_BEHAVIOR
           PRINT_NAMED_INFO("BehaviorOCD.SelectNextPlacement.STACKS_OF_TWO", "Chose to place on top of object %d.\n",
-                           bottomBlockID.GetValue());
+                           _objectToPlaceOn.GetValue());
 #         endif
         } else {
           // ... if there isn't one, then place this block on the ground
@@ -627,12 +626,13 @@ namespace Cozmo {
   {
     Result lastResult = RESULT_OK;
     
-    // If a previously-neat object is moved, move it to the messy list
+    // If a previously-neat object is moved (and it's not the one we are stacking we are
+    // stacking _on_, since we might be the one to move it), move it to the messy list
     // and play some kind of irritated animation
     ObjectID objectID;
     objectID = msg.objectID;
     
-    if(_neatObjects.count(objectID)>0)
+    if(_neatObjects.count(objectID)>0 && objectID != _objectToPlaceOn)
     {
 #     if DEBUG_OCD_BEHAVIOR
       PRINT_NAMED_INFO("BehaviorOCD.HandleObjectMoved", "Neat object %d moved, making messy.\n", msg.objectID);
