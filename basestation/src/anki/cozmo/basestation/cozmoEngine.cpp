@@ -90,9 +90,9 @@ void CozmoEngine::HandleEvents(const AnkiEvent<ExternalInterface::MessageGameToE
       const ExternalInterface::ConnectToRobot& msg = event.GetData().Get_ConnectToRobot();
       const bool success = ConnectToRobot(msg.robotID);
       if(success) {
-        PRINT_NAMED_INFO("CozmoEngine.HandleEvents", "Connected to robot %d!\n", msg.robotID);
+        PRINT_NAMED_INFO("CozmoEngine.HandleEvents", "Connected to robot %d!", msg.robotID);
       } else {
-        PRINT_NAMED_ERROR("CozmoEngine.HandleEvents", "Failed to connect to robot %d!\n", msg.robotID);
+        PRINT_NAMED_ERROR("CozmoEngine.HandleEvents", "Failed to connect to robot %d!", msg.robotID);
       }
       break;
     }
