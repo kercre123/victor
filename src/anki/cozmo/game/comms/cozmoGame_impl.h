@@ -51,7 +51,6 @@ namespace Cozmo {
                        bool             robotIsSimulated);
     
     bool ConnectToUiDevice(AdvertisingUiDevice whichDevice);
-    bool ConnectToRobot(AdvertisingRobot whichRobot);
     
     //
     // Running

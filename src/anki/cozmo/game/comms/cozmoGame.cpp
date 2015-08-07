@@ -225,11 +225,6 @@ namespace Cozmo {
     _uiMsgHandler.Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::UiDeviceConnected(whichDevice, success)));
     return success;
   }
-
-  bool CozmoGameImpl::ConnectToRobot(AdvertisingRobot whichRobot)
-  {
-    return _cozmoEngine->ConnectToRobot(whichRobot);
-  }
   
   int CozmoGameImpl::GetNumRobots() const
   {

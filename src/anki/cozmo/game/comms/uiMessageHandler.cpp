@@ -117,6 +117,19 @@ namespace Anki {
       _eventMgrToGame.Broadcast(AnkiEvent<ExternalInterface::MessageEngineToGame>(
         type, std::move(message)));
     } // Broadcast(MessageEngineToGame &&)
+    
+    // Provides a way to subscribe to message types using the AnkiEventMgrs
+    Signal::SmartHandle UiMessageHandler::Subscribe(const ExternalInterface::MessageEngineToGameTag& tagType,
+                                                    std::function<void(const AnkiEvent<ExternalInterface::MessageEngineToGame>&)> messageHandler)
+    {
+      return _eventMgrToGame.Subcribe(static_cast<u32>(tagType), messageHandler);
+    } // Subscribe(MessageEngineToGame)
+    
+    Signal::SmartHandle UiMessageHandler::Subscribe(const ExternalInterface::MessageGameToEngineTag& tagType,
+                                                    std::function<void(const AnkiEvent<ExternalInterface::MessageGameToEngine>&)> messageHandler)
+    {
+      return _eventMgrToEngine.Subcribe(static_cast<u32>(tagType), messageHandler);
+    } // Subscribe(MessageGameToEngine)
 
     
     Result UiMessageHandler::ProcessMessages()
