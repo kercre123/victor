@@ -114,59 +114,22 @@ namespace Cozmo {
   
   void CozmoGameImpl::Process_ConnectToUiDevice(ExternalInterface::ConnectToUiDevice const& msg)
   {
-    // Tell the game to connect to a UI device, using a signal?
-    // CozmoGameSignals::ConnectToUiDeviceSignal().emit(msg.deviceID);
-    
-    const bool success = ConnectToUiDevice(msg.deviceID);
-    if(success) {
-      PRINT_NAMED_INFO("CozmoGameImpl.ProcessMessage", "Connected to UI device %d!\n", msg.deviceID);
-    } else {
-      PRINT_NAMED_ERROR("CozmoGameImpl.ProcessMessage", "Failed to connect to UI device %d!\n", msg.deviceID);
-    }
+    // Handled in CozmoGameImpl::HandleEvents
   }
   
   void CozmoGameImpl::Process_DisconnectFromUiDevice(ExternalInterface::DisconnectFromUiDevice const& msg)
   {
-    // Do this with a signal?
-    _uiComms.DisconnectDeviceByID(msg.deviceID);
-    PRINT_NAMED_INFO("CozmoGameImpl.ProcessMessage", "Disconnected from UI device %d!\n", msg.deviceID);
-    
-    if(_uiComms.GetNumConnectedDevices() == 0) {
-      PRINT_NAMED_INFO("CozmoGameImpl.ProcessMessage",
-                       "Last UI device just disconnected: forcing re-initialization.\n");
-      Init(_config);
-    }
+    // Handled in CozmoGameImpl::HandleEvents
   }
   
   void CozmoGameImpl::Process_ForceAddRobot(ExternalInterface::ForceAddRobot const& msg)
   {
-    char ip[16];
-    assert(msg.ipAddress.size() <= 16);
-    std::copy(msg.ipAddress.begin(), msg.ipAddress.end(), ip);
-    ForceAddRobot(msg.robotID, ip, msg.isSimulated);
+    // Handled in CozmoGameImpl::HandleEvents
   }
   
   void CozmoGameImpl::Process_StartEngine(ExternalInterface::StartEngine const& msg)
   {
-    if (_isEngineStarted) {
-      PRINT_NAMED_INFO("CozmoGameImpl.Process_StartEngine.AlreadyStarted", "");
-      return;
-    }
-    
-    // Populate the Json configuration from the message members:
-    Json::Value config;
-    
-    // Viz Host IP:
-    char ip[16];
-    assert(msg.vizHostIP.size() <= 16);
-    std::copy(msg.vizHostIP.begin(), msg.vizHostIP.end(), ip);
-    config[AnkiUtil::kP_VIZ_HOST_IP] = ip;
-    
-    config[AnkiUtil::kP_AS_HOST] = msg.asHost;
-    
-    // Start the engine with that configuration
-    StartEngine(config);
-    
+    // Handled in CozmoGameImpl::HandleStartEngine
   }
   
   void CozmoGameImpl::Process_DriveWheels(ExternalInterface::DriveWheels const& msg)
@@ -823,8 +786,7 @@ namespace Cozmo {
 
   void CozmoGameImpl::Process_ReadAnimationFile(ExternalInterface::ReadAnimationFile const& msg)
   {
-    PRINT_NAMED_INFO("CozmoGame.ReadAnimationFile", "started animation tool");
-    _cozmoEngine->StartAnimationTool();
+    // Handled in CozmoEngine::HandleEvents
   }
   
   void CozmoGameImpl::Process_StartFaceTracking(ExternalInterface::StartFaceTracking const& msg)
