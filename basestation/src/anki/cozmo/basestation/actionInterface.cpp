@@ -17,9 +17,6 @@
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "messageEngineToGame.h"
 
-//TODO: Remove once Lee's Events are in
-#include "tempSignals.h"
-
 namespace Anki {
   
   namespace Cozmo {
@@ -102,9 +99,6 @@ namespace Anki {
       ExternalInterface::MessageEngineToGame event(ExternalInterface::RobotCompletedAction(robot.GetID(), _idTag, GetType(), result, completionInfo));
       
       robot.GetExternalInterface()->Broadcast(event);
-      
-      // TODO: Remove once Lee's subscription stuff is in
-      CozmoEngineSignals::RobotCompletedActionSignal().emit(event);
     }
     
     bool IActionRunner::RetriesRemain()

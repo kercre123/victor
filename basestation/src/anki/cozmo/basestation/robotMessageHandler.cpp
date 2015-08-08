@@ -26,9 +26,6 @@
 #include "messageEngineToGame.h"
 #include <fstream>
 
-// TODO: Remove once Lee's events are in
-#include "tempSignals.h"
-
 // Uncomment to allow interprocess access to the camera stream (e.g. Matlab)
 //#define STREAM_IMAGES_VIA_FILESYSTEM 1
 #if defined(STREAM_IMAGES_VIA_FILESYSTEM) && STREAM_IMAGES_VIA_FILESYSTEM == 1
@@ -642,9 +639,6 @@ namespace Anki {
                                                                                                 ));
               
               robot->GetExternalInterface()->Broadcast(event);
-
-            // TODO: Remove once Lee's events are in
-              CozmoEngineSignals::ObjectMovedSignal().emit(event);
             }
             
             return RESULT_OK;

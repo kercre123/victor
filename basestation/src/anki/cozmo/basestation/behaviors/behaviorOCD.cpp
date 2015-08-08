@@ -15,8 +15,8 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/cozmoActions.h"
 
-//TODO: Remove once Lee's Events are in
-#include "tempSignals.h"
+#include "anki/cozmo/basestation/events/ankiEventMgr.h"
+#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 
 #define DEBUG_OCD_BEHAVIOR 1
 
@@ -30,28 +30,53 @@ namespace Cozmo {
   , _name("OCD")
   {
     // Register callbacks:
-    // TODO: Remove once Lee's Events are in
-    auto cbActionCompleted = [this](ExternalInterface::MessageEngineToGame msg) {
-      _lastHandlerResult = this->HandleActionCompleted(msg.Get_RobotCompletedAction());
-    };
-    _signalHandles.emplace_back(CozmoEngineSignals::RobotCompletedActionSignal().ScopedSubscribe(cbActionCompleted));
     
-    auto cbObservedObject = [this](ExternalInterface::MessageEngineToGame msg) {
-      _lastHandlerResult = this->HandleObservedObject(msg.Get_RobotObservedObject());
+    // Create a callback for running EventHandler
+    auto eventHandlerCallback = [this](const AnkiEvent<ExternalInterface::MessageEngineToGame>& event) {
+      this->EventHandler(event);
     };
-    _signalHandles.emplace_back(CozmoEngineSignals::RobotObservedObjectSignal().ScopedSubscribe(cbObservedObject));
     
-    auto cbObjectDeleted = [this](ExternalInterface::MessageEngineToGame msg) {
-      _lastHandlerResult = this->HandleDeletedObject(msg.Get_RobotDeletedObject());
+    // Register that callback to be run for any of the events we are interested in
+    static const std::vector<ExternalInterface::MessageEngineToGameTag> EventTagsOfInterest = {
+      ExternalInterface::MessageEngineToGameTag::RobotCompletedAction,
+      ExternalInterface::MessageEngineToGameTag::RobotObservedObject,
+      ExternalInterface::MessageEngineToGameTag::RobotDeletedObject,
+      ExternalInterface::MessageEngineToGameTag::ActiveObjectMoved
     };
-    _signalHandles.emplace_back(CozmoEngineSignals::RobotDeletedObjectSignal().ScopedSubscribe(cbObjectDeleted));
     
-    auto cbObjectMoved = [this](ExternalInterface::MessageEngineToGame msg) {
-      _lastHandlerResult = this->HandleObjectMoved(msg.Get_ActiveObjectMoved());
-    };
-    _signalHandles.emplace_back(CozmoEngineSignals::ObjectMovedSignal().ScopedSubscribe(cbObjectMoved));
+    for(auto tag : EventTagsOfInterest) {
+      _eventHandles.push_back(robot.GetExternalInterface()->Subscribe(tag, eventHandlerCallback));
+    }
+    
   }
   
+  void BehaviorOCD::EventHandler(const AnkiEvent<ExternalInterface::MessageEngineToGame>& event)
+  {
+    switch(event.GetData().GetTag())
+    {
+      case ExternalInterface::MessageEngineToGameTag::RobotCompletedAction:
+        _lastHandlerResult= HandleActionCompleted(event.GetData().Get_RobotCompletedAction());
+        break;
+        
+      case ExternalInterface::MessageEngineToGameTag::RobotObservedObject:
+        _lastHandlerResult= HandleObservedObject(event.GetData().Get_RobotObservedObject());
+        break;
+        
+      case ExternalInterface::MessageEngineToGameTag::RobotDeletedObject:
+        _lastHandlerResult= HandleDeletedObject(event.GetData().Get_RobotDeletedObject());
+        break;
+        
+      case ExternalInterface::MessageEngineToGameTag::ActiveObjectMoved:
+        _lastHandlerResult= HandleObjectMoved(event.GetData().Get_ActiveObjectMoved());
+        break;
+        
+      default:
+        PRINT_NAMED_ERROR("BehaviorOCD.EventHandler.InvalidTag",
+                          "Received unexpected event with tag %hhu.", event.GetData().GetTag());
+        _lastHandlerResult = RESULT_FAIL;
+        break;
+    }
+  }
   
 #pragma mark -
 #pragma mark Inherited Virtual Implementations

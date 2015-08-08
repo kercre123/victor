@@ -24,9 +24,6 @@
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "messageEngineToGame.h"
 
-// TODO: Remove once Lee's events are in
-#include "tempSignals.h"
-
 // The amount of time a proximity obstacle exists beyond the latest detection
 #define PROX_OBSTACLE_LIFETIME_MS  4000
 
@@ -569,7 +566,7 @@ namespace Anki
             }
           }
           
-          ExternalInterface::MessageEngineToGame msg(ExternalInterface::RobotObservedObject(
+          ExternalInterface::MessageEngineToGame event(ExternalInterface::RobotObservedObject(
                                                                                         _robot->GetID(),
                                                                                         inFamily,
                                                                                         obsType,
@@ -586,11 +583,8 @@ namespace Anki
                                                                                         true, // markers are visible
                                                                                         observedObject->IsActive()
                                                                                             ));
-          _robot->GetExternalInterface()->Broadcast(msg);
+          _robot->GetExternalInterface()->Broadcast(event);
           
-          // TODO: Remove once Lee's Events are in
-          CozmoEngineSignals::RobotObservedObjectSignal().emit(msg);
-
         } // if(observedObject->GetNumTimesObserved() > MIN_TIMES_TO_OBSERVE_OBJECT)
         
         if(_robot->GetTrackToObject().IsSet() &&

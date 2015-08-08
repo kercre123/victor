@@ -14,13 +14,10 @@
 
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/cozmoActions.h"
+#include "anki/cozmo/basestation/events/ankiEventMgr.h"
+#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
-
-
-//TODO: Remove once Lee's Events are in
-#include "tempSignals.h"
-
 
 namespace Anki {
 namespace Cozmo {
@@ -40,15 +37,15 @@ namespace Cozmo {
     // Set up signal handlers for while we are running
     
     //TODO: Remove once Lee's Events are in
-    auto cbObservedObject = [this](ExternalInterface::MessageEngineToGame msg) {
-      this->HandleRobotObservedObject(msg.Get_RobotObservedObject());
+    auto cbObservedObject = [this](const AnkiEvent<ExternalInterface::MessageEngineToGame>& event) {
+      this->HandleRobotObservedObject(event.GetData().Get_RobotObservedObject());
     };
-    _signalHandles.emplace_back(CozmoEngineSignals::RobotObservedObjectSignal().ScopedSubscribe(cbObservedObject));
+    _eventHandles.push_back(_robot.GetExternalInterface()->Subscribe(ExternalInterface::MessageEngineToGameTag::RobotObservedObject, cbObservedObject));
     
-    auto cbActionCompleted = [this](ExternalInterface::MessageEngineToGame msg) {
-      this->HandleRobotCompletedAction(msg.Get_RobotCompletedAction());
+    auto cbActionCompleted = [this](const AnkiEvent<ExternalInterface::MessageEngineToGame>& event) {
+      this->HandleRobotCompletedAction(event.GetData().Get_RobotCompletedAction());
     };
-    _signalHandles.emplace_back(CozmoEngineSignals::RobotCompletedActionSignal().ScopedSubscribe(cbActionCompleted));
+    _eventHandles.emplace_back(_robot.GetExternalInterface()->Subscribe(ExternalInterface::MessageEngineToGameTag::RobotCompletedAction, cbActionCompleted));
     
     return RESULT_OK;
   }
@@ -86,7 +83,7 @@ namespace Cozmo {
         
       case State::INTERRUPTED:
         // This is the only way we stop this behavior: unsubscribe to all signals.
-        _signalHandles.clear();
+        _eventHandles.clear();
         return Status::COMPLETE;
         
       default:

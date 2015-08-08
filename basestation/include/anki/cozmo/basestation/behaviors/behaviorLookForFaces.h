@@ -14,7 +14,7 @@
 #define COZMO_BEHAVIOR_LOOK_FOR_FACES_H
 
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
-
+#include "util/signals/simpleSignal_fwd.h"
 #include "messageEngineToGame.h"
 
 namespace Anki {
@@ -63,6 +63,8 @@ namespace Cozmo {
     f32 _trackingTimeout_sec;
     f32 _lastLookAround_sec;
     f32 _nextMovementTime_sec;
+    
+    std::vector<::Signal::SmartHandle> _eventHandles;
     
   }; // BehaviorLookForFaces
   

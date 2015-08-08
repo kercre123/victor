@@ -16,13 +16,17 @@
 #include "anki/common/basestation/objectTypesAndIDs.h"
 #include "anki/common/basestation/math/pose.h"
 
-// TODO: This needs to be switched to some kind of _internal_ signals definition
+#include "util/signals/simpleSignal_fwd.h"
+
 #include "messageEngineToGame.h"
 
 #include <set>
 
 namespace Anki {
 namespace Cozmo {
+  
+  // Forward declaration
+  template<typename TYPE> class AnkiEvent;
   
   // A behavior that tries to neaten up blocks present in the world
   class BehaviorOCD : public IBehavior
@@ -49,6 +53,9 @@ namespace Cozmo {
     }
     
   private:
+    
+    // Dispatch handlers based on tag of passed-in event
+    void EventHandler(const AnkiEvent<ExternalInterface::MessageEngineToGame>& event);
     
     // Handlers for signals coming from the engine
     // TODO: These need to be some kind of _internal_ signal or event
@@ -80,6 +87,7 @@ namespace Cozmo {
     bool  _interrupted;
     
     Result _lastHandlerResult;
+    std::vector<::Signal::SmartHandle> _eventHandles;
     
     // Enumerate possible arrangements Cozmo "likes".
     enum class Arrangement {

@@ -26,10 +26,6 @@
 #include "messageEngineToGame.h"
 #include <iomanip>
 
-
-// TODO: Remove once we have Lee's Events
-#include "tempSignals.h"
-
 namespace Anki {
   
   namespace Cozmo {
