@@ -22,6 +22,14 @@
 
 namespace Anki {
 namespace Cozmo {
+  
+  // Forward Declarations
+  namespace ExternalInterface {
+  class MessageGameToEngine;
+  }
+  
+  template <typename Type>
+  class AnkiEvent;
 
   class CozmoEngine;
   
@@ -93,6 +101,10 @@ namespace Cozmo {
     void RegisterCallbacksU2G();
     void ProcessBadTag_MessageGameToEngine(ExternalInterface::MessageGameToEngine::Tag tag);
 #include "clad/externalInterface/messageGameToEngine_declarations.def"
+    
+    void SetupSubscriptions();
+    void HandleEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
+    void HandleStartEngine(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
     
     //
     // Member Variables

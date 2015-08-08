@@ -103,6 +103,7 @@ namespace Cozmo {
     
     _uiMsgHandler.Init(&_uiComms);
     RegisterCallbacksU2G();
+    SetupSubscriptions();
     
     if(!config.isMember(AnkiUtil::kP_NUM_ROBOTS_TO_WAIT_FOR)) {
       PRINT_NAMED_WARNING("CozmoGameImpl.Init", "No NumRobotsToWaitFor defined in Json config, defaulting to 1.\n");
@@ -123,6 +124,21 @@ namespace Cozmo {
     _runState = CozmoGame::STOPPED;
         
     return lastResult;
+  }
+  
+  void CozmoGameImpl::SetupSubscriptions()
+  {
+    // We'll use this callback for simple events we care about
+    auto commonCallback = std::bind(&CozmoGameImpl::HandleEvents, this, std::placeholders::_1);
+    
+    // Subscribe to desired events
+    _signalHandles.push_back(_uiMsgHandler.Subscribe(ExternalInterface::MessageGameToEngineTag::ConnectToUiDevice, commonCallback));
+    _signalHandles.push_back(_uiMsgHandler.Subscribe(ExternalInterface::MessageGameToEngineTag::DisconnectFromUiDevice, commonCallback));
+    _signalHandles.push_back(_uiMsgHandler.Subscribe(ExternalInterface::MessageGameToEngineTag::ForceAddRobot, commonCallback));
+    
+    // Use a separate callback for StartEngine
+    auto startEngineCallback = std::bind(&CozmoGameImpl::HandleStartEngine, this, std::placeholders::_1);
+    _signalHandles.push_back(_uiMsgHandler.Subscribe(ExternalInterface::MessageGameToEngineTag::StartEngine, startEngineCallback));
   }
   
   Result CozmoGameImpl::StartEngine(Json::Value config)
@@ -560,6 +576,75 @@ namespace Cozmo {
     
   } // SendImage()
   
+  void CozmoGameImpl::HandleEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+  {
+    switch (event.GetData().GetTag())
+    {
+      case ExternalInterface::MessageGameToEngineTag::ConnectToUiDevice:
+      {
+        const ExternalInterface::ConnectToUiDevice& msg = event.GetData().Get_ConnectToUiDevice();
+        const bool success = ConnectToUiDevice(msg.deviceID);
+        if(success) {
+          PRINT_NAMED_INFO("CozmoGameImpl.HandleEvents", "Connected to UI device %d!", msg.deviceID);
+        } else {
+          PRINT_NAMED_ERROR("CozmoGameImpl.HandleEvents", "Failed to connect to UI device %d!", msg.deviceID);
+        }
+        break;
+      }
+      case ExternalInterface::MessageGameToEngineTag::DisconnectFromUiDevice:
+      {
+        const ExternalInterface::DisconnectFromUiDevice& msg = event.GetData().Get_DisconnectFromUiDevice();
+        _uiComms.DisconnectDeviceByID(msg.deviceID);
+        PRINT_NAMED_INFO("CozmoGameImpl.ProcessMessage", "Disconnected from UI device %d!", msg.deviceID);
+        
+        if(_uiComms.GetNumConnectedDevices() == 0) {
+          PRINT_NAMED_INFO("CozmoGameImpl.ProcessMessage",
+                           "Last UI device just disconnected: forcing re-initialization.");
+          Init(_config);
+        }
+        break;
+      }
+      case ExternalInterface::MessageGameToEngineTag::ForceAddRobot:
+      {
+        const ExternalInterface::ForceAddRobot& msg = event.GetData().Get_ForceAddRobot();
+        char ip[16];
+        assert(msg.ipAddress.size() <= 16);
+        std::copy(msg.ipAddress.begin(), msg.ipAddress.end(), ip);
+        ForceAddRobot(msg.robotID, ip, msg.isSimulated);
+        break;
+      }
+      default:
+      {
+        PRINT_STREAM_ERROR("CozmoGameImpl.HandleEvents",
+                           "Subscribed to unhandled event of type "
+                           << ExternalInterface::MessageGameToEngineTagToString(event.GetData().GetTag()) << "!");
+      }
+    }
+  }
+  
+  void CozmoGameImpl::HandleStartEngine(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+  {
+    const ExternalInterface::StartEngine& msg = event.GetData().Get_StartEngine();
+    if (_isEngineStarted) {
+      PRINT_NAMED_INFO("CozmoGameImpl.Process_StartEngine.AlreadyStarted", "");
+      return;
+    }
+    
+    // Populate the Json configuration from the message members:
+    Json::Value config;
+    
+    // Viz Host IP:
+    char ip[16];
+    assert(msg.vizHostIP.size() <= 16);
+    std::copy(msg.vizHostIP.begin(), msg.vizHostIP.end(), ip);
+    config[AnkiUtil::kP_VIZ_HOST_IP] = ip;
+    
+    config[AnkiUtil::kP_AS_HOST] = msg.asHost;
+    
+    // Start the engine with that configuration
+    StartEngine(config);
+  }
+
   
 #pragma mark - CozmoGame Wrappers
   
