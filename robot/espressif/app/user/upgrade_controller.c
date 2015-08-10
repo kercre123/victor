@@ -76,7 +76,7 @@ LOCAL inline void requestNext(void)
 {
   if (upccConn != NULL)
   {
-    int8 err = espconn_sent(upccConn, (uint8*)"next", 4);
+    int8 err = espconn_send(upccConn, (uint8*)"next", 4);
     if (err != 0)
     {
       os_printf("\tCouldn't unhold socket: %d\r\n", err);
@@ -282,7 +282,7 @@ LOCAL void ICACHE_FLASH_ATTR upccReceiveCallback(void *arg, char *usrdata, unsig
     if (length != sizeof(UpgradeCommandParameters))
     {
       os_printf("ERROR: UPCC received wrong command packet size %d <> %d\r\n", length, sizeof(UpgradeCommandParameters));
-      err = espconn_sent(conn, (uint8*)"BAD", 3);
+      err = espconn_send(conn, (uint8*)"BAD", 3);
       if (err != 0)
       {
         os_printf("ERROR: UPCC couldn't sent error response on socket: %d\r\n", err);
@@ -297,7 +297,7 @@ LOCAL void ICACHE_FLASH_ATTR upccReceiveCallback(void *arg, char *usrdata, unsig
     else if (cmd->flashAddress < FW_START_ADDRESS)
     {
       os_printf("ERROR: fwWriteAddress %08x is in protected region\r\n", (unsigned int)cmd->flashAddress);
-      err = espconn_sent(conn, (uint8*)"BAD", 3);
+      err = espconn_send(conn, (uint8*)"BAD", 3);
       if (err != 0)
       {
         os_printf("ERROR: UPCC couldn't sent error response on socket: %d \r\n", err);
@@ -313,7 +313,7 @@ LOCAL void ICACHE_FLASH_ATTR upccReceiveCallback(void *arg, char *usrdata, unsig
         response[1] = 'K';
         response[2] = cmd->flags & 0xff;
         response[3] = system_upgrade_userbin_check();
-        err = espconn_sent(conn, response, 4);
+        err = espconn_send(conn, response, 4);
         if (err != 0)
         {
           os_printf("ERROR: UPCC sending command response: %d\r\n", err);
@@ -346,7 +346,7 @@ LOCAL void ICACHE_FLASH_ATTR upccReceiveCallback(void *arg, char *usrdata, unsig
         fwWriteAddress = USER_NV_PARAM_START;
         bytesExpected  = sizeof(NVParams);
         taskState      = UPGRADE_TASK_WRITE;
-        err = espconn_sent(conn, (uint8*)"NEXT", 4);
+        err = espconn_send(conn, (uint8*)"NEXT", 4);
         if (err != 0)
         {
           os_printf("ERROR: UPCC couldn't sent request for NV param data\r\n");
@@ -357,7 +357,7 @@ LOCAL void ICACHE_FLASH_ATTR upccReceiveCallback(void *arg, char *usrdata, unsig
       else
       {
         os_printf("Unsupported upgrade command flag: %d\r\n", flags);
-        err = espconn_sent(conn, (uint8*)"BAD", 3);
+        err = espconn_send(conn, (uint8*)"BAD", 3);
         if (err != 0)
         {
           os_printf("ERROR: UPCC couldn't sent error response on socket: %d\r\n", err);

@@ -144,7 +144,7 @@ bool ICACHE_FLASH_ATTR telnetPrintf(const char *format, ...)
   os_printf_plus(buffer);
   if (telnetIsConnected()) // If we have a client
   {
-    err = espconn_sent(telnetConnection, (uint8*)buffer, len);
+    err = espconn_send(telnetConnection, (uint8*)buffer, len);
   }
   os_free(buffer);
   if (err < 0)
