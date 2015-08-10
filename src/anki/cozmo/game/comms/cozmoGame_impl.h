@@ -34,7 +34,7 @@ namespace Cozmo {
     using AdvertisingUiDevice = CozmoGame::AdvertisingUiDevice;
     using AdvertisingRobot    = CozmoGame::AdvertisingRobot;
     
-    CozmoGameImpl();
+    CozmoGameImpl(Data::DataPlatform* dataPlatform);
     ~CozmoGameImpl();
     
 
@@ -121,6 +121,7 @@ namespace Cozmo {
     std::vector<Signal::SmartHandle> _signalHandles;
 
     std::vector<AdvertisingUiDevice> _connectedUiDevices;
+    Data::DataPlatform* _dataPlatform;
     
   }; // CozmoGameImpl
 
