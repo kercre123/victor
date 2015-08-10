@@ -89,7 +89,6 @@ void UART0_IRQHandler()
       NRF_UART0->PSELTXD = 0xFFFFFFFF;  // Disconnect TX
 
       // Wait 10uS for turnaround - 80uS on the other side
-      MicroWait(10);
       NRF_UART0->PSELRXD = PIN_TX_HEAD;
     }
   }

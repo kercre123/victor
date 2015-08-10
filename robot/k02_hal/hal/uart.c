@@ -8,9 +8,20 @@
 
 const uint32_t perf_clock = 80000000;
 const uint32_t baud_rate = 312500;
+const int max_fifo_size = 8;
 
 #define BAUD_SBR(baud)  (perf_clock * 2 / baud_rate / 32)
 #define BAUD_BRFA(baud) (perf_clock * 2 / baud_rate % 32)
+
+enum TRANSFER_MODE {
+  TRANSMIT_RECEIVE,
+  TRANSMIT_SEND
+};
+
+static volatile uint8_t dataFrom[64];
+static const uint8_t dataTo[64] = {'H', 0xFA, 0xF3, 0x20};
+static volatile int transferIndex;
+static volatile int transferMode;
 
 void uart_init() {
   // Enable clocking to the UART and PORTD
@@ -22,7 +33,6 @@ void uart_init() {
 
   // Enable UART for this shiz
   PORTD_PCR7 = PORT_PCR_MUX(3) | PORT_PCR_ODE_MASK; // Open drain on the UART pin
-  //PORTD_PCR7 |= PORT_PCR_PE_MASK | PORT_PCR_PS_MASK; // PULLUP WHILE DISCONECTED
   
   int sbr = BAUD_SBR(baud_rate);
   int brfa = BAUD_BRFA(baud_rate);
@@ -32,51 +42,80 @@ void uart_init() {
   
   UART0_C1 = UART_C1_LOOPS_MASK | UART_C1_RSRC_MASK; // 8 bit, 1 bit stop no parity (single wire)
   UART0_C2 = UART_C2_TE_MASK | UART_C2_RE_MASK;      // Enable one wire (requires both units be enabled)
+  UART0_C2 |= UART_C2_TCIE_MASK | UART_C2_RIE_MASK;  // Enable a few interrupts
   UART0_C4 = UART_C4_BRFA(brfa);
 
   // Setup a 64-byte RX/TX fifo (and flush it)
   UART0_PFIFO = UART_PFIFO_TXFE_MASK | UART_PFIFO_TXFIFOSIZE(6) | UART_PFIFO_RXFE_MASK | UART_PFIFO_RXFIFOSIZE(6) ;
   UART0_CFIFO = UART_CFIFO_TXFLUSH_MASK | UART_CFIFO_RXFLUSH_MASK;
 
-  // RECEIVE
-  UART0_C3 = 0; // (no transmit)
+  UART0_C3 = UART_C3_ORIE_MASK | UART_C3_FEIE_MASK;
 
-  // TRANSMIT
-  //UART0_C3 = UART_C3_TXDIR_MASK; // (transmit)
+  transferMode = TRANSMIT_RECEIVE;
+  transferIndex = 0;
 
-  uint8_t receive[64];
-  int idx = 0;
+  NVIC_SetPriority(UART0_ERR_IRQn, 3);
+  NVIC_EnableIRQ(UART0_ERR_IRQn);
+
+  NVIC_SetPriority(UART0_RX_TX_IRQn, 3);
+  NVIC_EnableIRQ(UART0_RX_TX_IRQn);
 
   for (;;) {
-    uint8_t status = UART0_S1;
+    while (transferMode != TRANSMIT_SEND) ;
+    PRINTF("d");
+    while (transferMode == TRANSMIT_SEND) ;
+  }
+}
 
-    if (status & (UART_S1_FE_MASK | UART_S1_OR_MASK)) {
-      PRINTF("err %2x", UART0_D);
-      UART0_CFIFO = UART_CFIFO_TXFLUSH_MASK | UART_CFIFO_RXFLUSH_MASK;
-      PRINTF(" %i", UART0_RCFIFO);
-    }
+void transmit_blob(void) {
+  while (UART0_TCFIFO < max_fifo_size && transferIndex < sizeof(dataTo)) {
+    UART0_D = dataTo[transferIndex++];
+  }
+}
 
-    while (UART0_RCFIFO) { 
-      uint8_t data = UART0_D;
-      
-      if (idx == 0 && data != 'B') { continue ; }
-      
-      receive[idx++] = data;
+void UART0_RX_TX_IRQHandler(void) {
+  uint8_t status = UART0_S1; // This is only useful to clear interrupt
 
-      if (idx >= 64) {
-        PRINTF("\n\rSYNC: ");
-        for (int i = 0; i < 64; i++) PRINTF("%2x", receive[i]);
+  switch (transferMode) {
+    case TRANSMIT_RECEIVE:
+      while (UART0_RCFIFO) {
+        uint8_t data = UART0_D;
+
+        if (transferIndex == 0 && data != 'B') { continue ; }
+
+        dataFrom[transferIndex++] = data;
         
-        idx = 0;
+        if(transferIndex >= sizeof(dataFrom)) {
+          transferMode = TRANSMIT_SEND;
+          transferIndex = 0;
+          UART0_C3 |= UART_C3_TXDIR_MASK; // (transmit)
+
+          transmit_blob();
+        }
       }
-    }
+
+      break ;
+    case TRANSMIT_SEND:
+      if (UART0_TCFIFO > 0 || transferIndex < sizeof(dataTo)) {
+        transmit_blob();
+      } else {
+        transferMode = TRANSMIT_RECEIVE;
+        transferIndex = 0;
+
+        // We might want a delay in here, so the other processor has time to turn around
+        UART0_C3 &= ~UART_C3_TXDIR_MASK; // (receive)
+      }
+      break ;
+  }
+}
+
+void UART0_ERR_IRQHandler(void) {
+  uint8_t status = UART0_S1;
+
+  if (status & (UART_S1_FE_MASK | UART_S1_OR_MASK)) {
+    PRINTF("E%c", UART0_D);
+    UART0_CFIFO = UART_CFIFO_TXFLUSH_MASK | UART_CFIFO_RXFLUSH_MASK;
     
-    /*
-    while (~UART0_SFIFO & UART_SFIFO_RXEMPT_MASK) {
-      PRINTF("%i %i\n\r", UART0_RCFIFO, UART0_SFIFO & UART_SFIFO_RXEMPT_MASK);
-    }
-    */
-    
-    //PRINTF("\n\r");
+    transferIndex = 0;
   }
 }
