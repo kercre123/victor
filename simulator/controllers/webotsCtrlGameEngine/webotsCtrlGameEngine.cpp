@@ -7,15 +7,14 @@
  */
 
 #include "anki/cozmo/game/cozmoGame.h"
-
-#include "anki/common/basestation/platformPathManager.h"
 #include "util/logging/logging.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "json/json.h"
-
+#include "anki/cozmo/basestation/data/dataPlatform.h"
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
+#include "util/logging/printfLoggerProvider.h"
 
 #include <fstream>
 
@@ -38,6 +37,13 @@ private:
 };
 BSTimer basestationController;
 #endif
+
+//#ifndef RESOURCE_PATH
+//#error RESOURCE_PATH not defined.
+//#endif
+//#ifndef TEMP_DATA_PATH
+//#error TEMP_DATA_PATH not defined.
+//#endif
 
 
 // Set to 1 if you want to use BLE to communicate with robot.
@@ -70,18 +76,42 @@ using namespace Anki::Cozmo;
 
 int main(int argc, char **argv)
 {
+  Anki::Util::PrintfLoggerProvider loggerProvider;
+  loggerProvider.SetMinLogLevel(0);
+  Anki::Util::gLoggerProvider = &loggerProvider;
+  PRINT_NAMED_INFO("webotsCtrlGameEngine", "main at %s", argv[0]);
+
+  // Get the last position of '/'
+  std::string aux(argv[0]);
+#if defined(_WIN32) || defined(WIN32)
+  size_t pos = aux.rfind('\\');
+#else
+  size_t pos = aux.rfind('/');
+#endif
+  // Get the path and the name
+  std::string path = aux.substr(0,pos+1);
+  //std::string name = aux.substr(pos+1);
+  std::string resourcePath = path + "resources";
+  std::string filesPath = path + "files";
+  std::string cachePath = path + "temp";
+  std::string externalPath = path + "temp";
+  Data::DataPlatform dataPlatform(filesPath, cachePath, externalPath, resourcePath);
+
   // Start with a step so that we can attach to the process here for debugging
   basestationController.step(BS_TIME_STEP);
   
   // Get configuration JSON
   Json::Value config;
-  const std::string jsonFilename = PREPEND_SCOPED_PATH(Config, std::string(AnkiUtil::kP_CONFIG_JSON_FILE));
+  const std::string jsonFilename = dataPlatform.pathToResource(Data::Scope::Resources,
+    "config/basestation/config/configuration.json");
   
   Json::Reader reader;
   std::ifstream jsonFile(jsonFilename);
-  reader.parse(jsonFile, config);
+  if (!reader.parse(jsonFile, config)) {
+    PRINT_NAMED_ERROR("webotsCtrlGameEngine.main.loadConfig", "Failed to parse Json file %s", jsonFilename.c_str());
+  }
   jsonFile.close();
-  
+
   if(!config.isMember(AnkiUtil::kP_ADVERTISING_HOST_IP)) {
     config[AnkiUtil::kP_ADVERTISING_HOST_IP] = ROBOT_ADVERTISING_HOST_IP;
   }
@@ -112,7 +142,7 @@ int main(int argc, char **argv)
   if (numUIsField) {
     numUIDevicesToWaitFor = numUIsField->getSFInt32();
   } else {
-    printf("webotsCtrlGameEngine.main.MissingField: numUIDevicesToWaitFor not found in BlockworldComms\n");
+    PRINT_NAMED_INFO("webotsCtrlGameEngine.main.MissingField", "numUIDevicesToWaitFor not found in BlockworldComms");
   }
 #endif
   
@@ -130,10 +160,10 @@ int main(int argc, char **argv)
   } // if (bm != BM_PLAYBACK_SESSION)
   
   // Initialize the engine
-  CozmoGame cozmoGame;
+  CozmoGame cozmoGame(&dataPlatform);
   cozmoGame.Init(config);
-  
-  PRINT_STREAM_INFO("webotsCtrlGameEngine.main", "CozmoGame created and initialized.");
+
+  PRINT_NAMED_INFO("webotsCtrlGameEngine.main", "CozmoGame created and initialized.");
   
   /*
   // TODO: Wait to receive this from UI (webots keyboard controller)
@@ -161,13 +191,14 @@ int main(int argc, char **argv)
 #ifdef NO_WEBOTS
     auto ms_left = std::chrono::milliseconds(BS_TIME_STEP) - (std::chrono::system_clock::now() - tick_start);
     if (ms_left < std::chrono::milliseconds(0)) {
-      PRINT_STREAM_WARNING("EngineHeartbeat.overtime", "over by " << std::chrono::duration_cast<std::chrono::seconds>(-ms_left).count() << "ms");
+      PRINT_NAMED_WARNING("EngineHeartbeat.overtime", "over by " << std::chrono::duration_cast<std::chrono::seconds>(-ms_left).count() << "ms");
     }
     std::this_thread::sleep_for(ms_left);
 #endif
     
   } // while still stepping
-  
+
+  Anki::Util::gLoggerProvider = nullptr;
   return 0;
 }
 
