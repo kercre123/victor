@@ -99,7 +99,7 @@ void CozmoEngine::HandleEvents(const AnkiEvent<ExternalInterface::MessageGameToE
     }
     case ExternalInterface::MessageGameToEngineTag::ReadAnimationFile:
     {
-      PRINT_NAMED_INFO("CozmoGame.ReadAnimationFile", "started animation tool");
+      PRINT_NAMED_INFO("CozmoGame.HandleEvents", "started animation tool");
       StartAnimationTool();
       break;
     }
