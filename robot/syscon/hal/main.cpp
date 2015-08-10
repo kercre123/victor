@@ -18,30 +18,6 @@ const u32 MAX_FAILED_TRANSFER_COUNT = 10;
 GlobalDataToHead g_dataToHead;
 GlobalDataToBody g_dataToBody;
 
-void EncoderIRQTest(void) {
-  static bool direction = false;
-  static int counter = 0;
-  int now = GetCounter();
-  
-  UART::print("\r\nForward: ");
-  Motors::setPower(2, 0x6800);
-  Motors::update();
-  MicroWait(50000);
-  Motors::update();
-
-  MicroWait(500000);
-  Motors::printEncodersRaw();
-
-  UART::print("  Backward: ");
-  Motors::setPower(2, -0x6800);
-  Motors::update();
-  MicroWait(50000);
-  Motors::update();
-
-  MicroWait(500000);
-  Motors::printEncodersRaw();
-}
-
 int main(void)
 {
   // 

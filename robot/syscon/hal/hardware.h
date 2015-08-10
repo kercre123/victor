@@ -9,6 +9,7 @@
 //#define BACKPACK_DEMO
 //#define DEBUG_MESSAGES
 
+#ifndef ROBOT41
 enum e_nrf_gpio {
   PIN_LIFT_P        = 0,
   PIN_TX_DEBUG      = 1,
@@ -42,6 +43,62 @@ enum e_nrf_gpio {
   PIN_LED4          = 29,
   PIN_LIFT_N1       = 30  // M4/Lift on schematic
 };
+#else
+enum e_nrf_gpio {
+  // Encoders
+  PIN_ENCODER_LEFT    = 14, // ENC1
+  PIN_ENCODER_RIGHT   = 4,  // ENC2
+  PIN_ENCODER_HEADA   = 27, // ENC3
+  PIN_ENCODER_HEADB   = 24,
+  PIN_ENCODER_LIFTA   = 30,  // ENC4
+  PIN_ENCODER_LIFTB   = 29,
+
+  // Motors + charge OK signal
+  PIN_LEFT_P          = 19,
+  PIN_LEFT_N1         = 18,
+  PIN_LEFT_N2         = 16,
+  PIN_RIGHT_P         = 8,
+  PIN_RIGHT_N1        = 1,
+  PIN_RIGHT_N2        = 0,
+  PIN_HEAD_P          = 9, 
+  PIN_HEAD_N1         = 7,
+  PIN_HEAD_N2         = 13,
+  PIN_LIFT_P          = 28,
+  PIN_LIFT_N1         = 25,
+  PIN_LIFT_N2         = 23,
+
+  // Backpack leds
+  PIN_LED1            = 10,
+  PIN_LED2            = 11,
+  PIN_LED3            = 12,
+  PIN_LED4            = 17,
+
+  // Charging
+  PIN_nCHARGE_EN      = 20,
+  PIN_nCHGOK          = 8,
+
+  // Power
+  PIN_PWR_EN          = 2,
+  PIN_VDD_EN          = 3,
+  PIN_V_BAT_SENSE     = 6,
+  PIN_VEXT_SENSE_TRX  = 5,
+
+  // IR drop sensor
+  PIN_IR_SENSE        = 26,
+  PIN_IR_DROP         = 21,
+  PIN_IR_FORWARD      = 22,
+
+  // Spine
+  PIN_TX_HEAD       = 15,
+
+// PIN_V_USB_SENSE   = 27,
+// PIN_TX_DEBUG      = 1,
+// PIN_VUSBs_EN      = 5, // equivalent to old CHARGE_EN 
+// PIN_I_SENSE       = 6,
+// PIN_VDDs_EN       = 8,
+// PIN_VBATs_EN      = 12,
+};
+#endif
 
 enum e_ppi_channel {
   PPI_MOTOR_CHANNEL_0,

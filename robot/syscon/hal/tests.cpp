@@ -74,9 +74,7 @@ void TestMode(void)
   }
 }
 
-#ifdef TESTS_ENABLED
-
-void TestFixtures::motors() {
+static void TestMotors() {
   // Motor testing, loop forever
   //  nrf_gpio_pin_clear(PIN_LED1);
   //  nrf_gpio_pin_set(PIN_LED2);
@@ -147,7 +145,7 @@ void TestFixtures::motors() {
   }
 }
 
-void TestFixtures::lights() {
+static void TestLights() {
   for(int j = 0; ;j++)
   {
     for(int i = 0; i < 200; i++)
@@ -166,11 +164,11 @@ void TestFixtures::lights() {
 
 void TestFixtures::run() {
 #if defined(DO_MOTOR_TESTING)
-	TestFixtures::motors();
+	TestMotors();
 #elif defined(DO_GEAR_RATIO_TESTING)
 #elif defined(DO_FIXED_DISTANCE_TESTING)
 #elif defined(DO_LIGHTS_TESTING)
-	TestFixtures::lights();
+	TestLights();
 #endif
 }
 
