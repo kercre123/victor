@@ -7,11 +7,8 @@
 #include "fsl_debug_console.h"
 
 const uint32_t perf_clock = 80000000;
-const uint32_t baud_rate = 312500;
+const uint32_t baud_rate = 625000;
 const int max_fifo_size = 8;
-
-#define BAUD_SBR(baud)  (perf_clock * 2 / baud_rate / 32)
-#define BAUD_BRFA(baud) (perf_clock * 2 / baud_rate % 32)
 
 enum TRANSFER_MODE {
   TRANSMIT_RECEIVE,
@@ -59,12 +56,6 @@ void uart_init() {
 
   NVIC_SetPriority(UART0_RX_TX_IRQn, 3);
   NVIC_EnableIRQ(UART0_RX_TX_IRQn);
-
-  for (;;) {
-    while (transferMode != TRANSMIT_SEND) ;
-    PRINTF("d");
-    while (transferMode == TRANSMIT_SEND) ;
-  }
 }
 
 void transmit_blob(void) {
@@ -86,6 +77,7 @@ void UART0_RX_TX_IRQHandler(void) {
         dataFrom[transferIndex++] = data;
         
         if(transferIndex >= sizeof(dataFrom)) {
+          PRINTF("%2x", dataFrom[49]);
           transferMode = TRANSMIT_SEND;
           transferIndex = 0;
           UART0_C3 |= UART_C3_TXDIR_MASK; // (transmit)
