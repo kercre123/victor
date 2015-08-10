@@ -26,14 +26,17 @@
 namespace Anki {  
 namespace Cozmo {
   
-  // Forward declaration
-  class VisionSystem;
-  
-  class VisionProcessingThread
+// Forward declaration
+class VisionSystem;
+namespace Data {
+class DataPlatform;
+}
+
+class VisionProcessingThread
   {
   public:
     
-    VisionProcessingThread();
+    VisionProcessingThread(Data::DataPlatform* dataPlatform);
     ~VisionProcessingThread();
     
     //

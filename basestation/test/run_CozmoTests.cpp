@@ -1,26 +1,22 @@
 #include <array>
 #include <fstream>
-
 #include "gtest/gtest.h"
 #include "json/json.h"
-
 #include "anki/common/types.h"
 #include "anki/common/basestation/jsonTools.h"
-#include "anki/common/basestation/platformPathManager.h"
+#include "anki/cozmo/basestation/data/dataPlatform.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/poseBase_impl.h"
 #include "anki/common/robot/matlabInterface.h"
-
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotManager.h"
-
 #include "anki/cozmo/basestation/ramp.h"
-
 #include "anki/cozmo/shared/cozmoConfig.h"
-
 #include "robotMessageHandler.h"
 #include "pathPlanner.h"
+
+Anki::Cozmo::Data::DataPlatform* dataPlatform = nullptr;
 
 TEST(Cozmo, SimpleCozmoTest)
 {
@@ -35,7 +31,7 @@ TEST(BlockWorld, AddAndRemoveObject)
   Result lastResult;
   
   MessageHandlerStub  msgHandler;
-  Robot robot(1, &msgHandler, nullptr);
+  Robot robot(1, &msgHandler, nullptr, nullptr);
   
   BlockWorld& blockWorld = robot.GetBlockWorld();
   
@@ -120,7 +116,7 @@ class BlockWorldTest : public ::testing::TestWithParam<const char*>
 
 #define DISPLAY_ERRORS 0
 
-// This is the parameterized test, instantied with a list of Json files below
+// This is the parameterized test, instantiated with a list of Json files below
 TEST_P(BlockWorldTest, BlockAndRobotLocalization)
 {
   using namespace Anki;
@@ -145,9 +141,9 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
   Json::Value jsonRoot;
   std::vector<std::string> jsonFileList;
   
-  const std::string subPath("basestation/test/blockWorldTests/");
-  const std::string jsonFilename = PREPEND_SCOPED_PATH(Test, subPath + GetParam());
-  
+  const std::string subPath("test/blockWorldTests/");
+  const std::string jsonFilename = dataPlatform->pathToResource(Anki::Cozmo::Data::Scope::Resources, subPath + GetParam());
+
   fprintf(stdout, "\n\nLoading JSON file '%s'\n", jsonFilename.c_str());
   
   std::ifstream jsonFile(jsonFilename);
@@ -155,7 +151,7 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
   ASSERT_TRUE(jsonParseResult);
 
   // Create the modules we need (and stubs of those we don't)
-  RobotManager        robotMgr(nullptr);
+  RobotManager        robotMgr(nullptr, nullptr);
   MessageHandlerStub  msgHandler;
  
   robotMgr.AddRobot(0, &msgHandler);
@@ -501,6 +497,22 @@ INSTANTIATE_TEST_CASE_P(JsonFileBased, BlockWorldTest,
 
 int main(int argc, char ** argv)
 {
+  // Get the last position of '/'
+  std::string aux(argv[0]);
+#if defined(_WIN32) || defined(WIN32)
+  size_t pos = aux.rfind('\\');
+#else
+  size_t pos = aux.rfind('/');
+#endif
+  // Get the path and the name
+  std::string path = aux.substr(0,pos+1);
+  //std::string name = aux.substr(pos+1);
+  std::string resourcePath = path + "resources";
+  std::string filesPath = path + "files";
+  std::string cachePath = path + "temp";
+  std::string externalPath = path + "temp";
+  dataPlatform = new Anki::Cozmo::Data::DataPlatform(filesPath, cachePath, externalPath, resourcePath);
+
   ::testing::InitGoogleTest(&argc, argv);
 
   return RUN_ALL_TESTS();

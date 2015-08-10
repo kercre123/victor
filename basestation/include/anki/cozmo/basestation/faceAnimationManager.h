@@ -25,7 +25,10 @@ namespace cv {
 
 namespace Anki {
 namespace Cozmo {
-  
+namespace Data {
+class DataPlatform;
+}
+
   // NOTE: this is a singleton class
   class FaceAnimationManager
   {
@@ -37,9 +40,7 @@ namespace Cozmo {
     inline static FaceAnimationManager* getInstance();
     static void removeInstance();
     
-    // Set the root directory of animations, and trigger a read of available
-    // animations in it.
-    bool SetRootDir(const std::string dir="");
+    void ReadFaceAnimationDir(Data::DataPlatform* dataPlatform);
 
     // Get a pointer to an RLE-compressed frame for the given animation.
     // Returns nullptr if animation or frame do not exist.
@@ -63,10 +64,7 @@ namespace Cozmo {
     FaceAnimationManager();
     
     static FaceAnimationManager* _singletonInstance;
-    
-    bool         _hasRootDir;
-    std::string  _rootDir;
-    
+
     struct AvailableAnim {
       time_t lastLoadedTime;
       //std::vector<std::string> filenames;
@@ -76,8 +74,7 @@ namespace Cozmo {
     
     std::unordered_map<std::string, AvailableAnim> _availableAnimations;
     
-     Result ReadFaceAnimationDir();
-    
+
   }; // class FaceAnimationManager
   
   

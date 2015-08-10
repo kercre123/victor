@@ -28,8 +28,8 @@
 namespace Anki {
 namespace Cozmo {
   
-  VisionProcessingThread::VisionProcessingThread()
-  : _visionSystem(nullptr)
+  VisionProcessingThread::VisionProcessingThread(Data::DataPlatform* dataPlatform)
+  : _visionSystem(new VisionSystem(dataPlatform))
   , _isCamCalibSet(false)
   , _running(false)
   {
@@ -214,8 +214,7 @@ namespace Cozmo {
                                       const MessageRobotState& robotState)
   {
     if(_isCamCalibSet) {
-      if(_visionSystem == nullptr) {
-        _visionSystem = new VisionSystem();
+      if(!_visionSystem->IsInitialized()) {
         _visionSystem->Init(_camCalib);
         
         // Wait for initialization to complete (i.e. Matlab to start up, if needed)
@@ -240,10 +239,6 @@ namespace Cozmo {
   void VisionProcessingThread::Processor()
   {
     PRINT_STREAM_INFO("VisionProcessingThread.Processor", "Starting Robot VisionProcessingThread::Processor thread...");
-    
-    if(_visionSystem == nullptr) {
-      _visionSystem = new VisionSystem();
-    }
     
     _visionSystem->Init(_camCalib);
     

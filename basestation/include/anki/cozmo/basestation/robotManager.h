@@ -19,16 +19,19 @@
 namespace Anki {
   namespace Cozmo {
     
-    // Forward declarations:
-    class Robot;
-    class IRobotMessageHandler;
-    class IExternalInterface;
+  // Forward declarations:
+  class Robot;
+  class IRobotMessageHandler;
+  class IExternalInterface;
+  namespace Data {
+  class DataPlatform;
+  }
     
     class RobotManager
     {
     public:
     
-      RobotManager(IExternalInterface* externalInterface);
+      RobotManager(IExternalInterface* externalInterface, Data::DataPlatform* dataPlatform);
       
       // Get the list of known robot ID's
       std::vector<RobotID_t> const& GetRobotIDList() const;
@@ -61,6 +64,7 @@ namespace Anki {
     protected:
       RobotDisconnectedSignal _robotDisconnectedSignal;
       IExternalInterface* _externalInterface;
+      Data::DataPlatform* _dataPlatform;
       std::map<RobotID_t,Robot*> _robots;
       std::vector<RobotID_t>     _IDs;
       

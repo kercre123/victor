@@ -20,24 +20,16 @@
 namespace Anki {
 namespace Cozmo {
 
-CozmoEngine::CozmoEngine(IExternalInterface* externalInterface)
+CozmoEngine::CozmoEngine(IExternalInterface* externalInterface, Data::DataPlatform* dataPlatform)
 : _impl(nullptr)
 , _externalInterface(externalInterface)
-, _loggerProvider()
+, _dataPlatform(dataPlatform)
 {
-  _loggerProvider.SetMinLogLevel(0);
-  if (Anki::Util::gLoggerProvider == nullptr) {
-    Anki::Util::gLoggerProvider = &_loggerProvider;
-  }
   ASSERT_NAMED(externalInterface != nullptr, "Cozmo.Engine.ExternalInterface.nullptr");
 }
 
 CozmoEngine::~CozmoEngine()
 {
-  if (Anki::Util::gLoggerProvider == &_loggerProvider) {
-    Anki::Util::gLoggerProvider = nullptr;
-  }
-
   if(_impl != nullptr) {
     delete _impl;
     _impl = nullptr;
