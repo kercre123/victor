@@ -565,7 +565,7 @@ namespace Anki
               //           topMarkerOrientation.getDegrees());
             }
           }
-          _robot->GetExternalInterface()->DeliverToGame(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotObservedObject(
+          _robot->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotObservedObject(
             _robot->GetID(),
             inFamily,
             obsType,
@@ -849,7 +849,7 @@ namespace Anki
 //                                 topMarkerOrientation.getDegrees());
                     }
                   }
-                  _robot->GetExternalInterface()->DeliverToGame(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotObservedObject(
+                  _robot->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotObservedObject(
                     _robot->GetID(),
                     unobserved.family,
                     unobserved.type,
@@ -1673,7 +1673,7 @@ namespace Anki
       
       if(numObjectsObserved == 0) {
         // If we didn't see/update anything, send a signal saying so
-        _robot->GetExternalInterface()->DeliverToGame(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotObservedNothing(_robot->GetID())));
+        _robot->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotObservedNothing(_robot->GetID())));
       }
       
       //PRINT_NAMED_INFO("BlockWorld.Update.NumBlocksObserved", "Saw %d blocks\n", numBlocksObserved);
@@ -1879,7 +1879,7 @@ namespace Anki
         
         // Notify any listeners that this object is being deleted
         if(object->GetNumTimesObserved() >= MIN_TIMES_TO_OBSERVE_OBJECT) {
-          _robot->GetExternalInterface()->DeliverToGame(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotDeletedObject(
+          _robot->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotDeletedObject(
             _robot->GetID(), object->GetID().GetValue()
           )));
         }

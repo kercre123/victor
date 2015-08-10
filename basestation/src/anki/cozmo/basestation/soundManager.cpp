@@ -510,6 +510,7 @@ namespace Anki {
     {
       PRINT_NAMED_INFO("SoundManager.SetRobotVolume.NewVolume","%f\n", volume);
       _robotVolume = volume;
+      _currOpenSoundFileName = "";
     }
     
   } // namespace Cozmo
