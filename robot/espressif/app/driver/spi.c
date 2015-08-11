@@ -10,11 +10,10 @@ static uint8 rinds[NUM_SPI_BUS]; ///< Which point in the read FIFO are we at for
 
 uint32 ICACHE_FLASH_ATTR spi_master_init(const SPIBus spi_no, uint32 frequency)
 {
-	uint32 regvalue;
 	const uint32 CPU_HZ = 80000000; // Apparently this is 80MHz even if running at 160MHz ((uint32)system_get_cpu_freq()) * 1000000;
 	uint32 clock_div_flag = 0;
 
-	if(spi_no>1) return; //handle invalid input number
+	if(spi_no>1) return 0; //handle invalid input number
 
 	winds[spi_no] = 0;
 	rinds[spi_no] = 0;
@@ -103,7 +102,7 @@ void spi_mast_start_transaction(const SPIBus spi_no, const uint8 cmd_bits, const
 	{
 		uint16 command = cmd_data << (16-cmd_bits); //align command data to high bits
 		command = ((command>>8)&0xff) | ((command<<8)&0xff00); //swap byte order
-		WRITE_PERI_REG(SPI_USER2(spi_no), ((((cmd_bits-1)&SPI_USR_COMMAND_BITLEN)<<SPI_USR_COMMAND_BITLEN_S) | command&SPI_USR_COMMAND_VALUE));
+		WRITE_PERI_REG(SPI_USER2(spi_no), ((((cmd_bits-1)&SPI_USR_COMMAND_BITLEN)<<SPI_USR_COMMAND_BITLEN_S) | (command&SPI_USR_COMMAND_VALUE)));
 	}
 
 	if (addr_bits)

@@ -84,7 +84,6 @@ const s32 MAX_FACE_FRAME_SIZE = 1024;
 
 const u32 AUDIO_SAMPLE_SIZE = 800;
 
-
 /***************************************************************************
  *
  *                          Communications
