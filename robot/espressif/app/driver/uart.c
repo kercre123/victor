@@ -244,12 +244,8 @@ STATUS ICACHE_FLASH_ATTR uartQueuePacket(uint8* data, uint16 len)
 }
 
 /** Length of the RX buffer
- * @warning Must be a power of 2
  */
 #define RX_BUF_LEN 8192
-/** Mask for TX buffer indexing
- */
-#define RX_BUF_LENMSK (RX_BUF_LEN - 1)
 /** Current write index for TX buffer
  * Must be volatile because it's used in both ISR and task
  */
@@ -338,15 +334,21 @@ uart_rx_intr_handler(void *para)
         case 3: // High length byte
         {
           pktLen |= (byte << 8);
-          if ((RX_BUF_LEN - ((localRxWind - rxRind) & RX_BUF_LENMSK)) < pktLen)
+          if ((RX_BUF_LEN - localRxWind) < pktLen) // Not enough space at the end of the buffer
           {
-            phase = 0;
-            os_put_char('!'); os_put_char('O'); os_put_char('G');
+            if (rxRind < pktLen) // Not enough space at the beginning of the packet buffer
+            {
+              // No where to put the packet, dump it
+              phase = 0;
+              os_put_char('!'); os_put_char('O'); os_put_char('G');
+              continue;
+            }
+            else
+            {
+              localRxWind = 0; // Put this packet at the beginning of the buffer
+            }
           }
-          else 
-          {
-            phase++;
-          }
+          phase++;
           break;
         }
         case 4: // Skip unused bytes
@@ -372,8 +374,7 @@ uart_rx_intr_handler(void *para)
         }
         case 7: // Payload
         {
-          rxBuf[localRxWind] = byte;
-          localRxWind = (localRxWind + 1) & RX_BUF_LENMSK;
+          rxBuf[localRxWind++] = byte;
           pktByte++;
 
           if (pktByte >= pktLen)
@@ -432,33 +433,22 @@ LOCAL void ICACHE_FLASH_ATTR uartTask(os_event_t *event)
   {
     const uint16 pktLen = event->par;
     uint8* pktStart = (uint8*)event->sig;
-    const int32 wrapAround = ((pktStart - rxBuf) + pktLen) - RX_BUF_LEN;
-
     if (pktStart < rxBuf || pktStart > (rxBuf + RX_BUF_LEN)) {
       telnetPrintf("FATAL: uart pktStart out of bounds %p %p..%p\r\n", pktStart, rxBuf, rxBuf+RX_BUF_LEN);
       while(true);
-    }
-    else if (wrapAround > 0) // Packet data wraps around buffer and isn't contiguous in memory
-    {
-      uint8* pktBuf = (uint8*)os_malloc(pktLen);
-      if (pktBuf == NULL)
-      {
-        telnetPrintf("Couldn't allocate memory to assemble radio tx packet\r\n");
-      }
-      else
-      {
-        const uint16 firstCopy = pktLen - wrapAround;
-        os_memcpy(pktBuf, pktStart, firstCopy);
-        os_memcpy(pktBuf + firstCopy, rxBuf, pktLen - firstCopy);
-        clientQueuePacket(pktBuf, pktLen);
-        os_free(pktBuf);
-      }
     }
     else // Packet data is contiguous in memory
     {
       clientQueuePacket(pktStart, pktLen);
     }
-    rxRind = (rxRind + pktLen) & RX_BUF_LENMSK;
+    if (pktStart == rxBuf) // This was a packet placed at the beginning rather than wrapping
+    {
+      rxRind = pktLen;
+    }
+    else // Normal case
+    {
+      rxRind += pktLen;
+    }
   }
 }
 
