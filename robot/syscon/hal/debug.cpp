@@ -17,9 +17,9 @@ int UART::get() {
   }
 
   // Configure for read
-  NRF_UART0->PSELRXD = PIN_TX_DEBUG;
+  NRF_UART0->PSELRXD = PIN_TX_VEXT;
   NRF_UART0->PSELTXD = 0xFFFFFFFF;
-  nrf_gpio_cfg_input(PIN_TX_DEBUG, NRF_GPIO_PIN_NOPULL);
+  nrf_gpio_cfg_input(PIN_TX_VEXT, NRF_GPIO_PIN_NOPULL);
   DISABLE_UART_IRQ;
 
   // Wait for reception
@@ -50,8 +50,8 @@ void UART::print( const char* fmt, ...)
 
   // Configure port for transmission
   NRF_UART0->PSELRXD = 0xFFFFFFFF;
-  NRF_UART0->PSELTXD = PIN_TX_DEBUG;
-  nrf_gpio_cfg_output(PIN_TX_DEBUG);  
+  NRF_UART0->PSELTXD = PIN_TX_VEXT;
+  nrf_gpio_cfg_output(PIN_TX_VEXT);  
   DISABLE_UART_IRQ;
 
   while(*fmt) {

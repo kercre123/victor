@@ -172,4 +172,3 @@ void TestFixtures::run() {
 #endif
 }
 
-#endif

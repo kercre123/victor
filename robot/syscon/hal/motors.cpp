@@ -77,7 +77,7 @@ const u32 ENCODER_TIMEOUT_COUNT = 200 * COUNT_PER_MS;
 const u32 ENCODER_NONE = 0xFF;
 
 // Set the debounce to reject all noise above it
-const u8 DEBOUNCE_COUNT = 511;   // About 60uS?
+// const u8 DEBOUNCE_COUNT = 511;   // About 60uS?
 
 // NOTE: Do NOT re-order the MotorID enum, because this depends on it
 MotorInfo m_motors[MOTOR_COUNT] =

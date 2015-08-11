@@ -81,7 +81,7 @@ enum e_nrf_gpio {
   PIN_PWR_EN          = 2,
   PIN_VDD_EN          = 3,
   PIN_V_BAT_SENSE     = 6,
-  PIN_VEXT_SENSE_TRX  = 5,
+  PIN_V_EXT_SENSE     = 5,
 
   // IR drop sensor
   PIN_IR_SENSE        = 26,
@@ -89,7 +89,8 @@ enum e_nrf_gpio {
   PIN_IR_FORWARD      = 22,
 
   // Spine
-  PIN_TX_HEAD       = 15,
+  PIN_TX_HEAD         = 15,
+  PIN_TX_VEXT         = 5,
 
 // PIN_V_USB_SENSE   = 27,
 // PIN_TX_DEBUG      = 1,
