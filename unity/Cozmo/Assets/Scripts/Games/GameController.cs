@@ -205,7 +205,11 @@ public class GameController : MonoBehaviour
 		if(textScore != null) textScore.gameObject.SetActive(false);
 		if(robot != null) robot.ClearData();
 
-		if(RobotEngineManager.instance != null) RobotEngineManager.instance.RobotCompletedAnimation += RobotCompletedAnimation;
+		if (RobotEngineManager.instance != null)
+		{
+			RobotEngineManager.instance.RobotCompletedAnimation += RobotCompletedAnimation;
+			RobotEngineManager.instance.RobotCompletedCompoundAction += RobotCompletedCompoundAction;
+		}
 	}
 
 	void Update()
@@ -249,7 +253,11 @@ public class GameController : MonoBehaviour
 		AudioManager.Stop(); // stop all sounds
 		if(robot != null) robot.ClearData();
 
-		if(RobotEngineManager.instance != null) RobotEngineManager.instance.RobotCompletedAnimation -= RobotCompletedAnimation;
+		if (RobotEngineManager.instance != null)
+		{
+			RobotEngineManager.instance.RobotCompletedAnimation -= RobotCompletedAnimation;
+			RobotEngineManager.instance.RobotCompletedCompoundAction -= RobotCompletedCompoundAction;
+		}
 
 		if(emotionWaitLimiterRoutine != null) StopCoroutine(emotionWaitLimiterRoutine);
 		emotionWaitLimiterRoutine = null;
@@ -419,6 +427,15 @@ public class GameController : MonoBehaviour
 	void RobotCompletedAnimation(bool success, string animName)
 	{
 		Debug.Log("RobotCompletedAnimation(" + success + ", " + animName + ")");
+		if(emotionWaitLimiterRoutine != null) StopCoroutine(emotionWaitLimiterRoutine);
+		emotionWaitLimiterRoutine = null;
+
+		waitingForEmoteToFinish = false;
+	}
+
+	void RobotCompletedCompoundAction(bool success, uint tagId)
+	{
+		Debug.Log("RobotCompletedAnimation(" + success + ", " + tagId + ")");
 		if(emotionWaitLimiterRoutine != null) StopCoroutine(emotionWaitLimiterRoutine);
 		emotionWaitLimiterRoutine = null;
 
