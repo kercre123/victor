@@ -7,6 +7,7 @@
 #include "ets_sys.h"
 #include "osapi.h"
 #include "driver/uart.h"
+#include "telnet.h"
 
 //#define DEBUG_CLIENT
 
@@ -17,26 +18,26 @@ static void ICACHE_FLASH_ATTR udpServerRecvCB(void *arg, char *usrdata, unsigned
 {
   if (arg != (void*)udpServer)
   {
-    os_printf("Client receive unexpected arg %08x\r\n", arg);
+    telnetPrintf("Client receive unexpected arg %08x\r\n", arg);
   }
 
 #ifdef DEBUG_CLIENT
   //os_printf("udpServerRecvCB %02x[%d] bytes\n", usrdata[0], len);
   if (haveClient == false)
   {
-    os_printf("Client from %d.%d.%d.%d:%d\r\n", udpServer->proto.udp->remote_ip[0], udpServer->proto.udp->remote_ip[1], udpServer->proto.udp->remote_ip[2], udpServer->proto.udp->remote_ip[3], udpServer->proto.udp->remote_port);
+    telnetPrintf("Client from %d.%d.%d.%d:%d\r\n", udpServer->proto.udp->remote_ip[0], udpServer->proto.udp->remote_ip[1], udpServer->proto.udp->remote_ip[2], udpServer->proto.udp->remote_ip[3], udpServer->proto.udp->remote_port);
   }
 #endif
 
   haveClient = true;
 
-  uartQueuePacket(usrdata, len); // Pass to M4
+  uartQueuePacket((uint8*)usrdata, len); // Pass to M4
 }
 
 
 sint8 ICACHE_FLASH_ATTR clientInit()
 {
-  int8 err, i;
+  int8 err;
 
   os_printf("clientInit\r\n");
 
@@ -70,15 +71,15 @@ sint8 ICACHE_FLASH_ATTR clientInit()
 inline bool clientQueuePacket(uint8* data, uint16 len)
 {
 #ifdef DEBUG_CLIENT
-  os_printf("clientQueuePacket\n");
+telnetPrintf("clientQueuePacket\n");
 #endif
 
   if(haveClient)
   {
-    const int8 err = espconn_sent(udpServer, data, len);
+    const int8 err = espconn_send(udpServer, data, len);
     if (err < 0) // XXX I think a negative number is an error. 0 is OK, I don't know what positive numbers are
     {
-      os_printf("Failed to queue UDP packet %d\n", err);
+      telnetPrintf("Failed to queue UDP packet %d\n", err);
       return false;
     }
     else
