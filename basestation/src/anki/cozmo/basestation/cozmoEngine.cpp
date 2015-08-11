@@ -49,8 +49,9 @@ Result CozmoEngine::Init(const Json::Value& config) {
   // We'll use this callback for all the events we care about
   auto callback = std::bind(&CozmoEngine::HandleEvents, this, std::placeholders::_1);
   
-  // Subscribe to the connect message
+  // Subscribe to desired messages
   _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::ConnectToRobot, callback));
+  _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::ReadAnimationFile, callback));
   
   return _impl->Init(config);
 }
@@ -94,6 +95,12 @@ void CozmoEngine::HandleEvents(const AnkiEvent<ExternalInterface::MessageGameToE
       } else {
         PRINT_NAMED_ERROR("CozmoEngine.HandleEvents", "Failed to connect to robot %d!", msg.robotID);
       }
+      break;
+    }
+    case ExternalInterface::MessageGameToEngineTag::ReadAnimationFile:
+    {
+      PRINT_NAMED_INFO("CozmoGame.HandleEvents", "started animation tool");
+      StartAnimationTool();
       break;
     }
     default:
