@@ -339,17 +339,29 @@ uart_rx_intr_handler(void *para)
         case 3: // High length byte
         {
           pktLen |= (byte << 8);
-          phase++;
+          if (available < pktLen)
+          {
+            phase = 0;
+            os_put_char('!'); os_put_char('O'); os_put_char('G');
+          }
+          else 
+          {
+            phase++;
+          }
           break;
         }
-        case 4: // Skip unused byte
-        {
-          phase++;
-          break;
-        }
+        case 4: // Skip unused bytes
         case 5:
         {
-          phase++;
+          if (byte == 0)
+          {
+            phase++;
+          }
+          else
+          {
+            os_put_char('!'); os_put_char('I'); os_put_char('B');
+            phase = 0;
+          }
           break;
         }
         case 6: // Start of payload
@@ -361,11 +373,6 @@ uart_rx_intr_handler(void *para)
         }
         case 7: // Payload
         {
-          if (available == 0)
-          {
-            phase = 0;
-            os_put_char('!'); os_put_char('O'); os_put_char('G');
-          }
           rxBuf[localRxWind] = byte;
           localRxWind = (localRxWind + 1) & RX_BUF_LENMSK;
           pktByte++;
@@ -430,7 +437,7 @@ LOCAL void ICACHE_FLASH_ATTR uartTask(os_event_t *event)
 
     if (pktStart < rxBuf || pktStart > (rxBuf + RX_BUF_LEN)) {
       telnetPrintf("FATAL: uart pktStart out of bounds %p %p..%p\r\n", pktStart, rxBuf, rxBuf+RX_BUF_LEN);
-      return;
+      while(true);
     }
     else if (wrapAround > 0) // Packet data wraps around buffer and isn't contiguous in memory
     {
@@ -452,7 +459,7 @@ LOCAL void ICACHE_FLASH_ATTR uartTask(os_event_t *event)
     {
       clientQueuePacket(pktStart, pktLen);
     }
-    rxRind = (rxRind + pktLen) % RX_BUF_LENMSK;
+    rxRind = (rxRind + pktLen) & RX_BUF_LENMSK;
   }
 }
 
