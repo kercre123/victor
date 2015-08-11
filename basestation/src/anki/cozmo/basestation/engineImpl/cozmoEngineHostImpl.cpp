@@ -22,6 +22,7 @@ CozmoEngineHostImpl::CozmoEngineHostImpl(IExternalInterface* externalInterface,D
 , _isListeningForRobots(false)
 , _robotAdvertisementService("RobotAdvertisementService")
 , _robotMgr(externalInterface, dataPlatform)
+, _robotMsgHandler(dataPlatform)
 , _lastAnimationFolderScan(0)
 , _animationReloadActive(false)
 {
@@ -148,8 +149,7 @@ void CozmoEngineHostImpl::InitPlaybackAndRecording()
    // Load configuration json from playback log folder
    Json::Reader reader;
    std::ifstream jsonFile(logFolderName + AnkiUtil::kP_CONFIG_JSON_FILE);
-   reader.parse(jsonFile, config_);
-   jsonFile.close();
+   dataPlatform->readAsJson();
 
 
    // Setup playback modules

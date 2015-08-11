@@ -13,10 +13,29 @@
 #include "anki/cozmo/basestation/robotManager.h"
 #include "anki/cozmo/basestation/ramp.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
+#include "util/logging/logging.h"
+#include "util/logging/printfLoggerProvider.h"
 #include "robotMessageHandler.h"
 #include "pathPlanner.h"
 
 Anki::Cozmo::Data::DataPlatform* dataPlatform = nullptr;
+Anki::Util::PrintfLoggerProvider* loggerProvider = nullptr;
+
+TEST(DataPlatform, ReadWrite)
+{
+  ASSERT_TRUE(dataPlatform != nullptr);
+  Json::Value config;
+  const bool readSuccess = dataPlatform->readAsJson(
+    Anki::Cozmo::Data::Scope::Resources,
+    "config/basestation/config/configuration.json",
+    config);
+  EXPECT_TRUE(readSuccess);
+
+  config["blah"] = 7;
+  const bool writeSuccess = dataPlatform->writeAsJson(Anki::Cozmo::Data::Scope::Cache, "someRandomFolder/A/writeTest.json", config);
+  EXPECT_TRUE(writeSuccess);
+}
+
 
 TEST(Cozmo, SimpleCozmoTest)
 {
@@ -142,12 +161,11 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
   std::vector<std::string> jsonFileList;
   
   const std::string subPath("test/blockWorldTests/");
-  const std::string jsonFilename = dataPlatform->pathToResource(Anki::Cozmo::Data::Scope::Resources, subPath + GetParam());
+  const std::string jsonFilename = subPath + GetParam();
 
   fprintf(stdout, "\n\nLoading JSON file '%s'\n", jsonFilename.c_str());
-  
-  std::ifstream jsonFile(jsonFilename);
-  bool jsonParseResult = reader.parse(jsonFile, jsonRoot);
+
+  const bool jsonParseResult = dataPlatform->readAsJson(Anki::Cozmo::Data::Scope::Resources, jsonFilename, jsonRoot);
   ASSERT_TRUE(jsonParseResult);
 
   // Create the modules we need (and stubs of those we don't)
@@ -497,6 +515,11 @@ INSTANTIATE_TEST_CASE_P(JsonFileBased, BlockWorldTest,
 
 int main(int argc, char ** argv)
 {
+  //LEAKING HERE
+  loggerProvider = new Anki::Util::PrintfLoggerProvider();
+  loggerProvider->SetMinLogLevel(0);
+  Anki::Util::gLoggerProvider = loggerProvider;
+
   // Get the last position of '/'
   std::string aux(argv[0]);
 #if defined(_WIN32) || defined(WIN32)
@@ -511,6 +534,7 @@ int main(int argc, char ** argv)
   std::string filesPath = path + "files";
   std::string cachePath = path + "temp";
   std::string externalPath = path + "temp";
+  //LEAKING HERE
   dataPlatform = new Anki::Cozmo::Data::DataPlatform(filesPath, cachePath, externalPath, resourcePath);
 
   ::testing::InitGoogleTest(&argc, argv);

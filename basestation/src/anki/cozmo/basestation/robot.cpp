@@ -20,7 +20,6 @@
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/poseBase_impl.h"
 #include "anki/common/basestation/utils/timer.h"
-#include "anki/common/basestation/utils/fileManagement.h"
 #include "anki/vision/CameraSettings.h"
 // TODO: This is shared between basestation and robot and should be moved up
 #include "anki/cozmo/shared/cozmoConfig.h"
@@ -33,8 +32,8 @@
 #include "anki/cozmo/basestation/faceAnimationManager.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "clad/externalInterface/messageEngineToGame.h"
-#include "dataPlatform.h"
-
+#include "anki/cozmo/basestation/data/dataPlatform.h"
+#include "util/fileUtils/fileUtils.h"
 #include <fstream>
 #include <dirent.h>
 #include <sys/stat.h>
@@ -114,20 +113,10 @@ namespace Anki {
         // Read planner motion primitives
         // TODO: Use different motions primitives depending on the type/personality of this robot
         // TODO: Stop storing *cozmo* motion primitives in a coretech location
-        const std::string subPath = "cozmo_mprim.json";
-        const std::string jsonFilename = _dataPlatform->pathToResource(Data::Scope::Resources, "config/basestation/config/cozmo_mprim.json");
-        std::ifstream jsonFile(jsonFilename);
-        Json::Reader reader;
-        if(false == reader.parse(jsonFile, mprims)) {
-          PRINT_NAMED_ERROR("Robot.MotionPrimitiveJsonParseFailure",
-            "Failed to parse Json motion primitives file %s. Planner likely won't work.",
-            jsonFilename.c_str());
-        } else {
-          PRINT_NAMED_INFO("Robot.MotionPrimitivesLoaded",
-            "Loaded Json motion primitives from file %s.",
-            jsonFilename.c_str());
+        const bool success = _dataPlatform->readAsJson(Data::Scope::Resources, "config/basestation/config/cozmo_mprim.json", mprims);
+        if(!success) {
+          PRINT_NAMED_ERROR("Robot.MotionPrimitiveJsonParseFailure", "Failed to load motion primitives, Planner likely won't work.");
         }
-        jsonFile.close();
       }
 
 
@@ -222,10 +211,9 @@ namespace Anki {
       if(_stateSaveMode != SAVE_OFF)
       {
         // Make sure image capture folder exists
-        if (!DirExists(AnkiUtil::kP_ROBOT_STATE_CAPTURE_DIR)) {
-          if (!MakeDir(AnkiUtil::kP_ROBOT_STATE_CAPTURE_DIR)) {
-            PRINT_NAMED_WARNING("Robot.UpdateFullRobotState.CreateDirFailed","\n");
-          }
+        std::string robotStateCaptureDir = _dataPlatform->pathToResource(Data::Scope::Cache, AnkiUtil::kP_ROBOT_STATE_CAPTURE_DIR);
+        if (!Util::FileUtils::CreateDirectory(robotStateCaptureDir, false, true)) {
+          PRINT_NAMED_ERROR("Robot.UpdateFullRobotState.CreateDirFailed","%s", robotStateCaptureDir.c_str());
         }
         
 #if(0)
@@ -247,15 +235,12 @@ namespace Anki {
 
         
         // Write state message to JSON file
+        // TODO: (ds/as) use current game log folder instead?
         std::string msgFilename(std::string(AnkiUtil::kP_ROBOT_STATE_CAPTURE_DIR) + "/cozmo" + std::to_string(GetID()) + "_state_" + std::to_string(msg.timestamp) + ".json");
         
         Json::Value json = msg.CreateJson();
-        std::ofstream jsonFile(msgFilename, std::ofstream::out);
-        
-        fprintf(stdout, "Writing RobotState JSON to file %s.\n", msgFilename.c_str());
-        jsonFile << json.toStyledString();
-        jsonFile.close();
-        
+        PRINT_NAMED_INFO("Robot.UpdateFullRobotState", "Writing RobotState JSON to file %s", msgFilename.c_str());
+        _dataPlatform->writeAsJson(Data::Scope::Cache, msgFilename, json);
 #if(0)
         // Compose line for IMU output file.
         // Used for determining delay constant in image timestamp.
@@ -1080,7 +1065,7 @@ namespace Anki {
       _selectedPathPlanner = _longPathPlanner;
       
       // Compute drive center pose for start pose and goal poses
-      vector<Pose3d> targetDriveCenterPoses(poses.size());
+      std::vector<Pose3d> targetDriveCenterPoses(poses.size());
       for (int i=0; i< poses.size(); ++i) {
         ComputeDriveCenterPose(poses[i], targetDriveCenterPoses[i]);
       }
@@ -1256,15 +1241,9 @@ namespace Anki {
     // Read the animations in a dir
     void Robot::ReadAnimationFile(const char* filename, std::string& animationId)
     {
-      Json::Reader reader;
       Json::Value animDefs;
-      std::ifstream jsonFile(filename);
-      if(reader.parse(jsonFile, animDefs) == false) {
-        PRINT_NAMED_ERROR("Robot.ReadAnimationFile.JsonParseFailure",
-          "Failed to parse Json animation file %s.", filename);
-      }
-      jsonFile.close();
-      if (!animDefs.empty()) {
+      const bool success = _dataPlatform->readAsJson(Data::Scope::Resources, filename, animDefs);
+      if (success && !animDefs.empty()) {
         PRINT_NAMED_INFO("Robot.ReadAnimationFile", "reading %s", filename);
         _cannedAnimations.DefineFromJson(animDefs, animationId);
       }
@@ -1321,8 +1300,8 @@ namespace Anki {
 
       // Tell UI about available animations
       if (_externalInterface != nullptr) {
-        vector<std::string> animNames(_cannedAnimations.GetAnimationNames());
-        for (vector<std::string>::iterator i=animNames.begin(); i != animNames.end(); ++i) {
+        std::vector<std::string> animNames(_cannedAnimations.GetAnimationNames());
+        for (std::vector<std::string>::iterator i=animNames.begin(); i != animNames.end(); ++i) {
           _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::AnimationAvailable(*i)));
         }
       }
@@ -2261,10 +2240,9 @@ namespace Anki {
       if (_imageSaveMode != SAVE_OFF) {
         
         // Make sure image capture folder exists
-        if (!DirExists(AnkiUtil::kP_IMG_CAPTURE_DIR)) {
-          if (!MakeDir(AnkiUtil::kP_IMG_CAPTURE_DIR)) {
-            PRINT_NAMED_WARNING("Robot.ProcessImage.CreateDirFailed","\n");
-          }
+        std::string imageCaptureDir = _dataPlatform->pathToResource(Data::Scope::Cache, AnkiUtil::kP_IMG_CAPTURE_DIR);
+        if (!Util::FileUtils::CreateDirectory(imageCaptureDir, false, true)) {
+          PRINT_NAMED_WARNING("Robot.ProcessImage.CreateDirFailed","%s",imageCaptureDir.c_str());
         }
         
         // Write image to file (recompressing as jpeg again!)
@@ -2273,7 +2251,7 @@ namespace Anki {
         std::vector<int> compression_params;
         compression_params.push_back(CV_IMWRITE_JPEG_QUALITY);
         compression_params.push_back(90);
-        sprintf(imgFilename, "%s/cozmo%d_%dms_%d.jpg", AnkiUtil::kP_IMG_CAPTURE_DIR, GetID(), image.GetTimestamp(), imgCounter++);
+        sprintf(imgFilename, "%s/cozmo%d_%dms_%d.jpg", imageCaptureDir.c_str(), GetID(), image.GetTimestamp(), imgCounter++);
         imwrite(imgFilename, image.get_CvMat_(), compression_params);
         
         if (_imageSaveMode == SAVE_ONE_SHOT) {
