@@ -405,9 +405,10 @@ namespace Anki {
               msg.videoFramerateHZ, msg.numAnimBytesFree);
       DrawText(TEXT_LABEL_VID_RATE, Anki::NamedColors::GREEN, txt);
       
-      sprintf(txt, "Status: %5s %5s",
+      sprintf(txt, "Status: %5s %5s %5s",
               msg.status & IS_CARRYING_BLOCK ? "CARRY" : "",
-              msg.status & IS_PICKING_OR_PLACING ? "PAP" : "");
+              msg.status & IS_PICKING_OR_PLACING ? "PAP" : "",
+              msg.status & IS_PICKED_UP ? "PICKDUP" : "");
       DrawText(TEXT_LABEL_STATUS_FLAG, Anki::NamedColors::GREEN, txt);
       
       sprintf(txt, "        %7s %7s",
