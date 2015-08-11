@@ -11,6 +11,9 @@
 
 #include "anki/cozmo/basestation/cozmoEngineHost.h"
 #include "anki/cozmo/basestation/engineImpl/cozmoEngineHostImpl.h"
+#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+
+#include "clad/externalInterface/messageGameToEngine.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -22,6 +25,12 @@ CozmoEngineHost::CozmoEngineHost(IExternalInterface* externalInterface)
   _hostImpl = new CozmoEngineHostImpl(_externalInterface);
   assert(_hostImpl != nullptr);
   _impl = _hostImpl;
+  
+  // We'll use this callback for all the events we care about - note this uses polymorphism to HandleEvents with sublcass first
+  auto callback = std::bind(&CozmoEngineHost::HandleEvents, this, std::placeholders::_1);
+  
+  // Subscribe to desired messages
+  _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::ForceAddRobot, callback));
 }
 
 CozmoEngineHost::~CozmoEngineHost()
@@ -69,6 +78,26 @@ Robot* CozmoEngineHost::GetRobotByID(const RobotID_t robotID) {
 
 std::vector<RobotID_t> const& CozmoEngineHost::GetRobotIDList() const {
   return _hostImpl->GetRobotIDList();
+}
+  
+void CozmoEngineHost::HandleEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+{
+  switch (event.GetData().GetTag())
+  {
+    case ExternalInterface::MessageGameToEngineTag::ForceAddRobot:
+    {
+      const ExternalInterface::ForceAddRobot& msg = event.GetData().Get_ForceAddRobot();
+      char ip[16];
+      assert(msg.ipAddress.size() <= 16);
+      std::copy(msg.ipAddress.begin(), msg.ipAddress.end(), ip);
+      ForceAddRobot(msg.robotID, ip, msg.isSimulated);
+      break;
+    }
+    default:
+    {
+      CozmoEngine::HandleEvents(event);
+    }
+  }
 }
 
 } // namespace Cozmo
