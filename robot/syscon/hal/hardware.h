@@ -43,6 +43,12 @@ enum e_nrf_gpio {
   PIN_LED4          = 29,
   PIN_LIFT_N1       = 30  // M4/Lift on schematic
 };
+
+enum AnalogInput {
+  ANALOG_I_SENSE     = ADC_CONFIG_PSEL_AnalogInput7,
+  ANALOG_V_BAT_SENSE = ADC_CONFIG_PSEL_AnalogInput0,
+  ANALOG_V_USB_SENSE = ADC_CONFIG_PSEL_AnalogInput1
+};
 #else
 enum e_nrf_gpio {
   // Encoders
@@ -50,7 +56,7 @@ enum e_nrf_gpio {
   PIN_ENCODER_RIGHT   = 4,  // ENC2
   PIN_ENCODER_HEADA   = 27, // ENC3
   PIN_ENCODER_HEADB   = 24,
-  PIN_ENCODER_LIFTA   = 30,  // ENC4
+  PIN_ENCODER_LIFTA   = 30, // ENC4
   PIN_ENCODER_LIFTB   = 29,
 
   // Motors + charge OK signal
@@ -74,12 +80,12 @@ enum e_nrf_gpio {
   PIN_LED4            = 17,
 
   // Charging
-  PIN_nCHARGE_EN      = 20,
+  PIN_CHARGE_EN       = 20,
   PIN_nCHGOK          = 8,
 
   // Power
   PIN_PWR_EN          = 2,
-  PIN_VDD_EN          = 3,
+  PIN_nVDDs_EN        = 3,
   PIN_V_BAT_SENSE     = 6,
   PIN_V_EXT_SENSE     = 5,
 
@@ -90,14 +96,12 @@ enum e_nrf_gpio {
 
   // Spine
   PIN_TX_HEAD         = 15,
-  PIN_TX_VEXT         = 5,
+  PIN_TX_VEXT         = 5,    // This is the debug port on the battery charger
+};
 
-// PIN_V_USB_SENSE   = 27,
-// PIN_TX_DEBUG      = 1,
-// PIN_VUSBs_EN      = 5, // equivalent to old CHARGE_EN 
-// PIN_I_SENSE       = 6,
-// PIN_VDDs_EN       = 8,
-// PIN_VBATs_EN      = 12,
+enum AnalogInput {
+  ANALOG_V_BAT_SENSE = ADC_CONFIG_PSEL_AnalogInput3,
+  ANALOG_V_EXT_SENSE = ADC_CONFIG_PSEL_AnalogInput2
 };
 #endif
 

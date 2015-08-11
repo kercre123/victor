@@ -24,7 +24,7 @@ int main(void)
   u32 failedTransferCount = 0;
 
   // Initialize the hardware peripherals
-  BatteryInit();
+  Battery::init();
   TimerInit();
   Motors::init();   // Must init before power goes on
   Head::init();
@@ -37,7 +37,7 @@ int main(void)
 
   // Finish booting up
   Radio::init();
-  PowerOn();
+  Battery::powerOn();
 
   #ifdef TESTS_ENABLED
   TestFixtures::run();
@@ -59,7 +59,7 @@ int main(void)
     Lights::manage(g_dataToBody.backpackColors);
     #endif
     // If we're not on the charge contacts, exchange data with the head board
-    if (!IsOnContacts())
+    if (!Battery::onContacts)
     {
       Head::TxRx();
     }
@@ -69,7 +69,7 @@ int main(void)
     }
     
     Motors::update();
-    BatteryUpdate();
+    Battery::update();
 
     // Update at 200Hz (5ms delay)
     while ((GetCounter() - timerStart) < CYCLES_MS(35.0f / 7.0f))

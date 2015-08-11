@@ -141,7 +141,7 @@ static void TestMotors() {
     Motors::printEncodersRaw();
     MicroWait(5000000);
 
-    BatteryUpdate();
+    Battery::update();
   }
 }
 
