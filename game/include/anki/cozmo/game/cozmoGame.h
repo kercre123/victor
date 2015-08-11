@@ -14,11 +14,7 @@
 
 #include "anki/common/types.h"
 #include "json/json.h"
-
 #include "anki/cozmo/shared/cozmoTypes.h"
-
-// TODO: Remove dependency on this
-//#include "anki/cozmo/messageBuffers/robot/robotMessages.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 
 namespace Anki {
@@ -33,6 +29,10 @@ namespace Cozmo {
   // Forward declarations:
   class CozmoEngineHost;
   class CozmoGameImpl;
+
+namespace Data {
+class DataPlatform;
+}
   
   // Common API whether host or client
   class CozmoGame
@@ -52,7 +52,7 @@ namespace Cozmo {
       ,ENGINE_RUNNING
     };
     
-    CozmoGame();
+    CozmoGame(Data::DataPlatform* dataPlatform);
     ~CozmoGame();
     
     Result Init(const Json::Value& config);
@@ -95,7 +95,7 @@ namespace Cozmo {
   protected:
     
     CozmoGameImpl* _impl;
-    
+
   }; // class CozmoGame
   
   

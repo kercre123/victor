@@ -30,7 +30,7 @@ namespace Cozmo {
   
 #pragma mark - CozmoGame Implementation
     
-  CozmoGameImpl::CozmoGameImpl()
+  CozmoGameImpl::CozmoGameImpl(Data::DataPlatform* dataPlatform)
   : _isHost(true)
   , _isEngineStarted(false)
   , _runState(CozmoGame::STOPPED)
@@ -39,6 +39,7 @@ namespace Cozmo {
   , _desiredNumRobots(1)
   , _uiAdvertisementService("UIAdvertisementService")
   , _uiMsgHandler(1)
+  , _dataPlatform(dataPlatform)
   {
     _pingToUI.counter = 0;
     
@@ -166,12 +167,12 @@ namespace Cozmo {
       
       if(_isHost) {
         PRINT_NAMED_INFO("CozmoGameImpl.StartEngine", "Creating HOST engine.\n");
-        CozmoEngineHost* engineHost = new CozmoEngineHost(&_uiMsgHandler);
+        CozmoEngineHost* engineHost = new CozmoEngineHost(&_uiMsgHandler, _dataPlatform);
         engineHost->ListenForRobotConnections(true);
         _cozmoEngine = engineHost;
       } else {
         PRINT_NAMED_INFO("CozmoGameImpl.StartEngine", "Creating CLIENT engine.\n");
-        _cozmoEngine = new CozmoEngineClient(&_uiMsgHandler);
+        _cozmoEngine = new CozmoEngineClient(&_uiMsgHandler, _dataPlatform);
       }
       
       // Init the engine with the given configuration info:
@@ -624,10 +625,10 @@ namespace Cozmo {
   
 #pragma mark - CozmoGame Wrappers
   
-  CozmoGame::CozmoGame()
+  CozmoGame::CozmoGame(Data::DataPlatform* dataPlatform)
   : _impl(nullptr)
   {
-    _impl = new CozmoGameImpl();
+    _impl = new CozmoGameImpl(dataPlatform);
   }
   
   CozmoGame::~CozmoGame()
