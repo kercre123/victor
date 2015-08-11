@@ -39,8 +39,8 @@ enum e_nrf_gpio {
   PIN_LED4            = 17,
 
   // Charging
-  PIN_CHARGE_EN       = 20,
-  PIN_nCHGOK          = 8,
+  PIN_CHARGE_EN       = 20,  // TODO
+  PIN_nCHGOK          = 8,   // TODO
 
   // Power
   PIN_PWR_EN          = 2,
@@ -49,9 +49,9 @@ enum e_nrf_gpio {
   PIN_V_EXT_SENSE     = 5,
 
   // IR drop sensor
-  PIN_IR_SENSE        = 26,
-  PIN_IR_DROP         = 21,
-  PIN_IR_FORWARD      = 22,
+  PIN_IR_SENSE        = 26,   // TODO
+  PIN_IR_DROP         = 21,   // TODO
+  PIN_IR_FORWARD      = 22,   // TODO
 
   // Spine
   PIN_TX_HEAD         = 15,
@@ -59,8 +59,8 @@ enum e_nrf_gpio {
 };
 
 enum AnalogInput {
-  ANALOG_V_BAT_SENSE = ADC_CONFIG_PSEL_AnalogInput3,
-  ANALOG_V_EXT_SENSE = ADC_CONFIG_PSEL_AnalogInput2
+  ANALOG_V_EXT_SENSE = ADC_CONFIG_PSEL_AnalogInput6,
+  ANALOG_V_BAT_SENSE = ADC_CONFIG_PSEL_AnalogInput7
 };
 
 enum e_ppi_channel {

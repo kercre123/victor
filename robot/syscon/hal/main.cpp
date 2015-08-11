@@ -41,9 +41,7 @@ int main(void)
   Radio::init();
   Battery::powerOn();
 
-  #ifdef TESTS_ENABLED
   TestFixtures::run();
-  #endif
 
   g_dataToHead.common.source = SPI_SOURCE_BODY;
   g_dataToHead.tail = 0x84;
@@ -55,7 +53,7 @@ int main(void)
 
     // Only call every loop through - not all the time
     Radio::manage();
-
+    Battery::update();
 
     #ifndef BACKPACK_DEMO
     Lights::manage(g_dataToBody.backpackColors);
@@ -63,7 +61,7 @@ int main(void)
     // If we're not on the charge contacts, exchange data with the head board
     if (!Battery::onContacts)
     {
-      Head::TxRx();
+      //Head::TxRx();
     }
     else // If not, reset the spine system
     {
@@ -71,7 +69,6 @@ int main(void)
     }
     
     Motors::update();
-    Battery::update();
 
     // Update at 200Hz (5ms delay)
     while ((GetCounter() - timerStart) < CYCLES_MS(35.0f / 7.0f))

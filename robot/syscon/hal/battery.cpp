@@ -11,10 +11,11 @@
 const u32 V_REFERNCE_MV = 1200; // 1.2V Bandgap reference
 const u32 V_PRESCALE    = 3;
 const u32 V_SCALE       = 0x3ff; // 10 bit ADC
-const Fixed IBAT_SCALE  = TO_FIXED(0.91); // Cozmo 3 transducer scaling
-const Fixed VUSB_SCALE  = TO_FIXED(4.0); // Cozmo 3 voltage divider
-const Fixed VBAT_SCALE  = TO_FIXED(4.0); // Cozmo 3 voltage divider
 
+const Fixed VEXT_SCALE  = TO_FIXED(2.0); // Cozmo 4.1 voltage divider
+const Fixed VBAT_SCALE  = TO_FIXED(4.0); // Cozmo 4.1 voltage divider
+
+/*
 const Fixed VBAT_CHGD_HI_THRESHOLD = TO_FIXED(4.05); // V
 const Fixed VBAT_CHGD_LO_THRESHOLD = TO_FIXED(3.70); // V
 const Fixed VBAT_EMPTY_THRESHOLD   = TO_FIXED(2.90); // V
@@ -24,6 +25,7 @@ const Fixed VUSB_DETECT_THRESHOLD  = TO_FIXED(4.40); // V
 const u8 BATTERY_DEAD_CYCLES = 60;
 // Read charger contact state N times before we believe it changed
 const u8 CONTACT_DEBOUNCE_CYCLES = 30;
+*/
 
 // Are we currently on charge contacts?
 bool Battery::onContacts = false;
@@ -43,48 +45,54 @@ static inline void startADCsample(AnalogInput channel)
   NRF_ADC->TASKS_START = 1;
 }
 
+static inline Fixed calcResult(const Fixed scale)
+{
+  return FIXED_MUL(FIXED_DIV(TO_FIXED(NRF_ADC->RESULT * V_REFERNCE_MV * V_PRESCALE / V_SCALE), TO_FIXED(1000)), scale);
+}
+
 static inline Fixed getADCsample(AnalogInput channel, const Fixed scale)
 {
   startADCsample(channel);
   while (!NRF_ADC->EVENTS_END) ; // Wait for the conversion to finish
   NRF_ADC->TASKS_STOP = 1;
-  return FIXED_MUL(FIXED_DIV(TO_FIXED(NRF_ADC->RESULT * V_REFERNCE_MV * V_PRESCALE / V_SCALE), TO_FIXED(1000)), scale);
+  return calcResult(scale);
 }
 
 void Battery::init()
 {
+  // Charge enable
+  nrf_gpio_pin_clear(PIN_CHARGE_EN);
+  nrf_gpio_cfg_output(PIN_CHARGE_EN);
+
   // Syscon power - this should always be on until battery fail
-  nrf_gpio_pin_set(PIN_PWR_EN);        // On
+  nrf_gpio_pin_set(PIN_PWR_EN);
   nrf_gpio_cfg_output(PIN_PWR_EN);
   
   // Encoder and headboard power
-  nrf_gpio_pin_set(PIN_nVDDs_EN);      // Off
+  nrf_gpio_pin_set(PIN_nVDDs_EN);
   nrf_gpio_cfg_output(PIN_nVDDs_EN);
 
-  /*
+  nrf_gpio_cfg_input(PIN_nCHGOK, NRF_GPIO_PIN_PULLUP);
+  
   // Configure the analog sense pins
-  nrf_gpio_cfg_input(PIN_I_SENSE, NRF_GPIO_PIN_NOPULL);
   nrf_gpio_cfg_input(PIN_V_BAT_SENSE, NRF_GPIO_PIN_NOPULL);
-  nrf_gpio_cfg_input(PIN_V_USB_SENSE, NRF_GPIO_PIN_NOPULL);
+  nrf_gpio_cfg_input(PIN_V_EXT_SENSE, NRF_GPIO_PIN_NOPULL);
 
   // Just in case we need to power on the peripheral ourselves
   NRF_ADC->POWER = 1;
-  
+
   NRF_ADC->CONFIG =
     (ADC_CONFIG_RES_10bit << ADC_CONFIG_RES_Pos) | // 10 bit resolution
     (ADC_CONFIG_INPSEL_AnalogInputOneThirdPrescaling << ADC_CONFIG_INPSEL_Pos) | // External inputs with 1/3rd analog prescaling
     (ADC_CONFIG_REFSEL_VBG << ADC_CONFIG_REFSEL_Pos) | // 1.2V Bandgap reference
     (ADC_CONFIG_EXTREFSEL_None << ADC_CONFIG_EXTREFSEL_None); // Disable external analog reference pins
-  
+
   NRF_ADC->ENABLE = ADC_ENABLE_ENABLE_Enabled;
-  
-  // Start initial conversions for the volatge and current
-  g_dataToHead.IBat = getADCsample(ANALOG_I_SENSE, IBAT_SCALE);     // Battery current
+
   g_dataToHead.VBat = getADCsample(ANALOG_V_BAT_SENSE, VBAT_SCALE); // Battery voltage
-  g_dataToHead.Vusb = getADCsample(ANALOG_V_USB_SENSE, VUSB_SCALE); // USB voltage
-  
-  startADCsample(ANALOG_I_SENSE); // Start conversion
-  */
+  g_dataToHead.VExt = getADCsample(ANALOG_V_EXT_SENSE, VEXT_SCALE); // External voltage
+
+  startADCsample(ANALOG_V_BAT_SENSE);
 }
 
 void Battery::powerOn()
@@ -100,6 +108,24 @@ void Battery::update()
   if (!NRF_ADC->EVENTS_END) {
     return ;
   }
+
+  switch (m_pinIndex)
+  {
+    case ANALOG_V_BAT_SENSE:
+      g_dataToHead.VBat = calcResult(VBAT_SCALE);
+      startADCsample(ANALOG_V_EXT_SENSE);
+
+      // todo: LOGIC HERE
+      break ;
+    case ANALOG_V_EXT_SENSE:
+      g_dataToHead.VExt = calcResult(VEXT_SCALE);
+      startADCsample(ANALOG_V_BAT_SENSE);
+    
+      // todo: LOGIC HERE
+      break ;
+  }
+
+  UART::print("VBat: %1.3f VExt: %1.3f nCHGOK: %i\n\r", g_dataToHead.VBat / 65536.0f, g_dataToHead.VExt / 65536.0f, nrf_gpio_pin_read(PIN_nCHGOK));
 
   /*
   // Have a new result

@@ -117,6 +117,7 @@
         <SetRegEntry>
           <Number>0</Number>
           <Key>DLGUARM</Key>
+          <Name></Name>
         </SetRegEntry>
         <SetRegEntry>
           <Number>0</Number>
@@ -195,6 +196,16 @@
           <count>9</count>
           <WinNumber>1</WinNumber>
           <ItemText>TxRxBuffer</ItemText>
+        </Ww>
+        <Ww>
+          <count>10</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>g_dataToHead.VBat</ItemText>
+        </Ww>
+        <Ww>
+          <count>11</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>g_dataToHead.VExt</ItemText>
         </Ww>
       </WatchWindow1>
       <MemoryWindow1>
