@@ -421,6 +421,59 @@
                 'destination': '<(PRODUCT_DIR)',
               },
             ],
+            'actions': [
+              # { # in engine only mode, we do not know where the assets are
+              #   'action_name': 'create_symlink_resources_assets',
+              #   'inputs': [
+              #     '<(cozmo_asset_path)',
+              #   ],
+              #   'outputs': [
+              #     '<(PRODUCT_DIR)/resources/assets',
+              #   ],
+              #   'action': [
+              #     'ln',
+              #     '-s',
+              #     '-f',
+              #     '-h',
+              #     '<@(_inputs)',
+              #     '<@(_outputs)',
+              #   ],
+              # },
+              {
+                'action_name': 'create_symlink_resources_configs',
+                'inputs': [
+                  '<(cozmo_engine_path)/resources/config',
+                ],
+                'outputs': [
+                  '<(PRODUCT_DIR)/resources/config',
+                ],
+                'action': [
+                  'ln',
+                  '-s',
+                  '-f',
+                  '-h',
+                  '<@(_inputs)',
+                  '<@(_outputs)',
+                ],
+              },
+              {
+                'action_name': 'create_symlink_resources_test',
+                'inputs': [
+                  '<(cozmo_engine_path)/resources/test',
+                ],
+                'outputs': [
+                  '<(PRODUCT_DIR)/resources/test',
+                ],
+                'action': [
+                  'ln',
+                  '-s',
+                  '-f',
+                  '-h',
+                  '<@(_inputs)',
+                  '<@(_outputs)',
+                ],
+              },
+            ],
           }, # end unittest target
 
 
@@ -469,6 +522,7 @@
           '../../basestation/include',
           '../../include',
           '../../generated/clad/engine',
+          '../../basestation/src',
         ],
         'defines': [
           'COZMO_BASESTATION'

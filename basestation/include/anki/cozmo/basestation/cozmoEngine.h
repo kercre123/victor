@@ -49,20 +49,21 @@ class CozmoEngineImpl;
 class CozmoEngineHostImpl;
 class CozmoEngineClientImpl;
 class IExternalInterface;
-  
 template <typename Type>
 class AnkiEvent;
-  
 namespace ExternalInterface {
-  class MessageGameToEngine;
+class MessageGameToEngine;
 }
-  
+namespace Data {
+class DataPlatform;
+}
+
 // Abstract base engine class
 class CozmoEngine
 {
 public:
 
-  CozmoEngine(IExternalInterface* externalInterface);
+  CozmoEngine(IExternalInterface* externalInterface, Data::DataPlatform* dataPlatform);
   virtual ~CozmoEngine();
 
   virtual bool IsHost() const = 0;
@@ -104,6 +105,8 @@ public:
 
 protected:
 
+  virtual void HandleEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
+
   // This will just point at either the host or client impl pointer in a
   // derived class
   CozmoEngineImpl* _impl;
@@ -113,7 +116,7 @@ protected:
   
   std::vector<::Signal::SmartHandle> _signalHandles;
   
-  virtual void HandleEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
+  Data::DataPlatform* _dataPlatform;
 }; // class CozmoEngine
   
 

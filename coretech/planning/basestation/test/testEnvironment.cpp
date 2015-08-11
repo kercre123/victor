@@ -1,17 +1,19 @@
-#include "util/helpers/includeGTest.h" // Used in place of gTest/gTest.h directly to suppress warnings in the header
+#include "util/helpers/includeGTest.h"
+#include "anki/common/constantsAndMacros.h"
 #include <set>
 #include <vector>
 
 #define private public
 #define protected public
-
-#include "anki/common/basestation/platformPathManager.h"
 #include "anki/planning/basestation/xythetaEnvironment.h"
 
 using namespace std;
 using namespace Anki::Planning;
 
-#define TEST_PRIM_FILE "coretech/planning/matlab/test_mprim.json"
+#ifndef TEST_DATA_PATH
+#error No TEST_DATA_PATH defined. You may need to re-run cmake.
+#endif
+#define TEST_PRIM_FILE "/planning/matlab/test_mprim.json"
 
 GTEST_TEST(TestEnvironment, StateIDPacking)
 {
@@ -38,8 +40,8 @@ GTEST_TEST(TestEnvironment, State2c)
 {
   xythetaEnvironment env;
 
-  // just read the prims so we havea  valid environment (resolution, etc).
-  EXPECT_TRUE(env.ReadMotionPrimitives(PREPEND_SCOPED_PATH(Test, TEST_PRIM_FILE).c_str()));
+  // just read the prims so we have a valid environment (resolution, etc).
+  EXPECT_TRUE(env.ReadMotionPrimitives((std::string(QUOTE(TEST_DATA_PATH)) + std::string(TEST_PRIM_FILE)).c_str()));
 
   ASSERT_FLOAT_EQ(1.0 / env.resolution_mm_, env.oneOverResolution_);
   ASSERT_FLOAT_EQ(1.0 / env.radiansPerAngle_, env.oneOverRadiansPerAngle_);
@@ -70,7 +72,7 @@ GTEST_TEST(TestEnvironment, LoadPrimFile)
 
   // TODO:(bn) open something saved in the test dir isntead, so we
   // know not to change or remove it
-  EXPECT_TRUE(env.ReadMotionPrimitives(PREPEND_SCOPED_PATH(Test, TEST_PRIM_FILE).c_str()));
+  EXPECT_TRUE(env.ReadMotionPrimitives((std::string(QUOTE(TEST_DATA_PATH)) + std::string(TEST_PRIM_FILE)).c_str()));
 
   EXPECT_FALSE(env.allMotionPrimitives_.empty());
   for(size_t i=0; i<env.allMotionPrimitives_.size(); ++i) {
@@ -84,7 +86,7 @@ GTEST_TEST(TestEnvironment, SuccessorsFromZero)
   // Assuming this is running from root/build......
   xythetaEnvironment env;
 
-  EXPECT_TRUE(env.ReadMotionPrimitives(PREPEND_SCOPED_PATH(Test, TEST_PRIM_FILE).c_str()));
+  EXPECT_TRUE(env.ReadMotionPrimitives((std::string(QUOTE(TEST_DATA_PATH)) + std::string(TEST_PRIM_FILE)).c_str()));
 
   State curr(0,0,0);
 
@@ -150,7 +152,7 @@ GTEST_TEST(TestEnvironment, SuccessorsFromNonzero)
   // Assuming this is running from root/build......
   xythetaEnvironment env;
 
-  EXPECT_TRUE(env.ReadMotionPrimitives(PREPEND_SCOPED_PATH(Test, TEST_PRIM_FILE).c_str()));
+  EXPECT_TRUE(env.ReadMotionPrimitives((std::string(QUOTE(TEST_DATA_PATH)) + std::string(TEST_PRIM_FILE)).c_str()));
 
   State curr(-14,107,15);
 
