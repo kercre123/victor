@@ -121,19 +121,10 @@ public class CozmoEmotionManager : MonoBehaviour {
 		currentEmotionMachine = GetComponent<CozmoEmotionMachine>();
 	}
 
-	public static string SetEmotion(string emotion_state, bool clear_current = false)
+	public static string SetEmotion(string emotion_state, bool clear_current = false, string next_emotion_state = "")
 	{
 		if( instance == null ) return null;
-		/*
-		if( clear_current )
-		{
-			currentEmotions = emo;
-		}
-		else
-		{
-			currentEmotions |= emo;
-		}
-		*/
+
 
 		if( instance.currentEmotionMachine != null )
 		{
@@ -146,6 +137,7 @@ public class CozmoEmotionManager : MonoBehaviour {
 				CozmoEmotionState emo_state = instance.currentEmotionMachine.GetStateForName (emotion_state);
 				if (emo_state.playAllAnims)
 				{
+					/*
 					for (int i = 0; i < anims.Count; i++)
 					{
 						CozmoAnimation anim = anims [i];
@@ -159,11 +151,19 @@ public class CozmoEmotionManager : MonoBehaviour {
 						}
 						last_anim_name = anim.animName;
 					}
+					*/
+					instance.SendAnimations (anims, clear_current);
 				}
 				else
 				{
 					int rand_index = UnityEngine.Random.Range(0, anims.Count);
 					instance.SendAnimation (anims[rand_index], clear_current);
+					if (!string.IsNullOrEmpty (next_emotion_state) && instance.currentEmotionMachine.HasAnimForState(next_emotion_state)) 
+					{
+						List<CozmoAnimation> next_anims = instance.currentEmotionMachine.GetAnimsForType(emotion_state);
+						rand_index = UnityEngine.Random.Range(0, next_anims.Count);
+						instance.SendAnimation (next_anims[rand_index], false);
+					}
 				}
 				Debug.Log ("setting emotion to " + emotion_state);
 				return last_anim_name;
@@ -211,6 +211,43 @@ public class CozmoEmotionManager : MonoBehaviour {
 
 		RobotEngineManager.instance.Message.QueueSingleAction = QueueSingleAnimMessage;
 		RobotEngineManager.instance.SendMessage();
+	}
+
+	//FIXME: SendAnimations limited to 2 anims as QueueCompoundActionsMessage is set to 2
+	public void SendAnimations(List<CozmoAnimation> anims, bool stopPreviousAnim = false)
+	{
+		
+		if (robot == null)
+			return;
+		
+		for (int i = 0; i < anims.Count; i++) 
+		{
+			CozmoAnimation anim = anims [i];
+			Debug.Log ("Sending " + anim.animName + " with " + anim.numLoops + " loop" + (anim.numLoops != 1 ? "s" : ""));
+			PlayAnimationMessage.animationName = anim.animName;
+			PlayAnimationMessage.numLoops = anim.numLoops;
+			PlayAnimationMessage.robotID = robot.ID;
+
+			QueueCompoundActionsMessage.actions [i].playAnimation = PlayAnimationMessage;
+			QueueCompoundActionsMessage.actionTypes [i] = Anki.Cozmo.RobotActionType.PLAY_ANIMATION;
+		}
+
+		QueueCompoundActionsMessage.numRetries = 0;
+		QueueCompoundActionsMessage.inSlot = 0;
+		QueueCompoundActionsMessage.robotID = robot.ID;
+		QueueCompoundActionsMessage.parallel = false;
+
+		if (stopPreviousAnim)
+		{
+			QueueCompoundActionsMessage.position = Anki.Cozmo.QueueActionPosition.NOW_AND_CLEAR_REMAINING;
+		}
+		else
+		{
+			QueueCompoundActionsMessage.position = Anki.Cozmo.QueueActionPosition.NEXT;
+		}
+
+		RobotEngineManager.instance.Message.QueueCompoundAction = QueueCompoundActionsMessage;
+		RobotEngineManager.instance.SendMessage ();
 	}
 
 	public void SetIdleAnimation(string default_anim)

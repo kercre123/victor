@@ -42,6 +42,7 @@ public class RobotEngineManager : MonoBehaviour
 	public event Action<Sprite> RobotImage;
 	public event Action<bool,RobotActionType> SuccessOrFailure;
 	public event Action<bool,string> RobotCompletedAnimation;
+	public event Action<bool,uint> RobotCompletedCompoundAction;
 
 	private bool cozmoLoggingStarted = false;
 	private bool cozmoBindingStarted = false;
@@ -494,7 +495,6 @@ public class RobotEngineManager : MonoBehaviour
 		bool success = (message.result == ActionResult.SUCCESS);
 		RobotActionType action_type = (RobotActionType)message.actionType;
 		//Debug.Log("Action completed " + success);
-		
 		current.selectedObjects.Clear();
 		current.targetLockedObject = null;
 
@@ -514,6 +514,15 @@ public class RobotEngineManager : MonoBehaviour
 			{
 				RobotCompletedAnimation(success, message.completionInfo.animName);
 			}
+		}
+
+		if (action_type == RobotActionType.COMPOUND)
+		{
+			if (RobotCompletedCompoundAction != null)
+			{
+				RobotCompletedCompoundAction (success, message.idTag);
+			}
+			
 		}
 
 		if(!success)
