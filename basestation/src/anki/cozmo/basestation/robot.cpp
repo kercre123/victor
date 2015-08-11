@@ -1265,7 +1265,7 @@ namespace Anki {
       }
       jsonFile.close();
       if (!animDefs.empty()) {
-        PRINT_NAMED_INFO("Robot.ReadAnimationFile", "reading %s\n", filename);
+        PRINT_NAMED_INFO("Robot.ReadAnimationFile", "reading %s", filename);
         _cannedAnimations.DefineFromJson(animDefs, animationId);
       }
 
@@ -1309,7 +1309,6 @@ namespace Anki {
               }
             }
             if (loadFile) {
-              PRINT_NAMED_INFO("Robot.ReadAnimationFile", "importing file %s", fullFileName.c_str());
               ReadAnimationFile(fullFileName.c_str(), animationId);
               ++loadedFileCount;
             }

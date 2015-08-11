@@ -68,7 +68,7 @@ namespace Anki {
       
       bool _hasCmdProcessor;
 
-      Result ReadSoundDir(std::string subDir, bool isRobotAudio);
+      void ReadSoundDir(const std::string& root, const std::string& subDir, const bool isRobotAudio);
       
       struct AvailableSound {
         time_t lastLoadedTime;

@@ -179,11 +179,9 @@ namespace Anki {
     void SoundManager::LoadSounds(Data::DataPlatform* dataPlatform)
     {
       if (dataPlatform == nullptr) { return; }
-      const std::string folderRobot = dataPlatform->pathToResource(Data::Scope::Resources, "assets/sounds/robot/");
-      const std::string folderDevice = dataPlatform->pathToResource(Data::Scope::Resources, "assets/sounds/device/");
-
-      ReadSoundDir(folderRobot, true);
-      ReadSoundDir(folderDevice, false);
+      const std::string folder = dataPlatform->pathToResource(Data::Scope::Resources, "assets/sounds/");
+      ReadSoundDir(folder, "robot/", true);
+      ReadSoundDir(folder, "device/", false);
     }
     
     
@@ -266,27 +264,27 @@ namespace Anki {
     }
     
     
-    Result SoundManager::ReadSoundDir(std::string subDir, bool isRobotAudio)
+    void SoundManager::ReadSoundDir(const std::string& root, const std::string& subDir, const bool isRobotAudio)
     {
 
-      DIR* dir = opendir((subDir).c_str());
+      DIR* dir = opendir((root + subDir).c_str());
       
       if ( dir != nullptr) {
         dirent* ent = nullptr;
         while ( (ent = readdir(dir)) != nullptr) {
           if (ent->d_type == DT_REG && ent->d_name[0] != '.') {
-            std::string fullSoundFilename = subDir + ent->d_name;
+            std::string shortFilename = subDir + ent->d_name;
+            std::string fullSoundFilename = root + subDir + ent->d_name;
             struct stat attrib{0};
             int result = stat(fullSoundFilename.c_str(), &attrib);
             if (result == -1) {
-              PRINT_NAMED_WARNING("SoundManager.ReadSoundDir",
-                "could not get mtime for %s", fullSoundFilename.c_str());
+              PRINT_NAMED_WARNING("SoundManager.ReadSoundDir", "could not get mtime for %s", shortFilename.c_str());
               continue;
             }
             bool loadSoundFile = false;
-            auto mapIt = _availableSounds.find(fullSoundFilename);
+            auto mapIt = _availableSounds.find(shortFilename);
             if (mapIt == _availableSounds.end()) {
-              _availableSounds[fullSoundFilename].lastLoadedTime = attrib.st_mtimespec.tv_sec;
+              _availableSounds[shortFilename].lastLoadedTime = attrib.st_mtimespec.tv_sec;
               loadSoundFile = true;
             } else {
               if (mapIt->second.lastLoadedTime < attrib.st_mtimespec.tv_sec) {
@@ -306,8 +304,7 @@ namespace Anki {
                   "Failed to get duration string for '%s', file %s.",
                   fullSoundFilename.c_str(), fullSoundFilename.c_str());
               }
-            
-              AvailableSound& availableSound = _availableSounds[fullSoundFilename];
+              AvailableSound& availableSound = _availableSounds[shortFilename];
               availableSound.duration_ms = (u32)duration_ms;
               availableSound.fullFilename = fullSoundFilename;
               
@@ -323,7 +320,7 @@ namespace Anki {
                       fullSoundFilename.c_str(), MAX_SOUND_BUFFER_DURATION_MS);
                   }
                   
-                  _availableRobotSounds[fullSoundFilename] = availableSound;
+                  _availableRobotSounds[shortFilename] = availableSound;
                   
                 } else {
                   PRINT_NAMED_WARNING("SoundManager.ReadSoundDir.InvalidRobotAudio",
@@ -344,7 +341,7 @@ namespace Anki {
             }
           } // if (ent->d_type == DT_REG) {
           else if(ent->d_type == DT_DIR && ent->d_name[0] != '.') {
-            ReadSoundDir(subDir + ent->d_name + "/", isRobotAudio);
+            ReadSoundDir(root, subDir + ent->d_name + "/", isRobotAudio);
           }
         }
         closedir(dir);
@@ -352,7 +349,7 @@ namespace Anki {
       } else {
         PRINT_NAMED_ERROR("SoundManager.ReadSoundDir",
           "Sound folder not found: %s", subDir.c_str());
-        return RESULT_FAIL;
+        return;
       }
 
       if(subDir.empty()) { // Only display this message at the root
@@ -361,7 +358,7 @@ namespace Anki {
                          _availableSounds.size());
       }
       
-      return RESULT_OK;
+      return;
     }
     
     bool SoundManager::Play(const std::string& name, const u8 numLoops, const u8 volume)
