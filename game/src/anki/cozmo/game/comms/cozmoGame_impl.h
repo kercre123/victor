@@ -22,6 +22,14 @@
 
 namespace Anki {
 namespace Cozmo {
+  
+  // Forward Declarations
+  namespace ExternalInterface {
+  class MessageGameToEngine;
+  }
+  
+  template <typename Type>
+  class AnkiEvent;
 
   class CozmoEngine;
   
@@ -45,10 +53,6 @@ namespace Cozmo {
     Result StartEngine(Json::Value config);
     
     Result Init(const Json::Value& config);
-    
-    void ForceAddRobot(int              robotID,
-                       const char*      robotIP,
-                       bool             robotIsSimulated);
     
     bool ConnectToUiDevice(AdvertisingUiDevice whichDevice);
     
@@ -93,6 +97,10 @@ namespace Cozmo {
     void RegisterCallbacksU2G();
     void ProcessBadTag_MessageGameToEngine(ExternalInterface::MessageGameToEngine::Tag tag);
 #include "clad/externalInterface/messageGameToEngine_declarations.def"
+    
+    void SetupSubscriptions();
+    void HandleEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
+    void HandleStartEngine(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
     
     //
     // Member Variables
