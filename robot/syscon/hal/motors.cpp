@@ -4,6 +4,7 @@
 #include "nrf.h"
 #include "nrf_gpio.h"
 #include "nrf_gpiote.h"
+#include "hardware.h"
 #include <limits.h>
 
 #include "debug.h"
@@ -53,33 +54,6 @@ const s16 TIMER_TICKS_END = (16000000 / 20000) - 1;
 
 const s16 PWM_DIVISOR = SHRT_MAX / TIMER_TICKS_END;
 
-// Updated for 3.2
-// N1+N2 are 0 when off, 1 when on
-// P is 0 for P2+N1, P 1 is 1 for P1+N2
-const u8 LEFT_P_PIN = 17;
-const u8 LEFT_N1_PIN = 16;   // M1/Left on schematic
-const u8 LEFT_N2_PIN = 15;
-
-const u8 RIGHT_P_PIN = 23;
-const u8 RIGHT_N1_PIN = 22;  // M2/Right on schematic
-const u8 RIGHT_N2_PIN = 21;
-  
-const u8 HEAD_P_PIN = 7; 
-const u8 HEAD_N1_PIN = 13;   // M3/Head on schematic
-const u8 HEAD_N2_PIN = 14;
-
-const u8 LIFT_P_PIN = 0;
-const u8 LIFT_N1_PIN = 30;   // M4/Lift on schematic
-const u8 LIFT_N2_PIN = 25;
-
-const u8 ENCODER_NONE = 0xFF;
-const u8 ENCODER_LEFT_PIN = 20;    // M1/Left on schematic
-const u8 ENCODER_RIGHT_PIN = 24;   // M2/Right on schematic
-const u8 ENCODER_LIFTA_PIN = 4;    // M4/Lift on schematic
-const u8 ENCODER_LIFTB_PIN = 28;
-const u8 ENCODER_HEADA_PIN = 11;   // M3/Head on schematic
-const u8 ENCODER_HEADB_PIN = 10;
-
 // Encoder scaling reworked for Cozmo 4.0
 
 // Given a gear ratio of 161.5:1 and 94mm wheel circumference and 2 ticks * 4 teeth
@@ -100,62 +74,63 @@ const Fixed RADIANS_PER_HEAD_TICK = TO_FIXED((0.125 * 3.14159265359) / 324.0);
 #endif  
 // If no encoder activity for 200ms, we may as well be stopped
 const u32 ENCODER_TIMEOUT_COUNT = 200 * COUNT_PER_MS;
+const u32 ENCODER_NONE = 0xFF;
 
 // Set the debounce to reject all noise above it
-const u32 DEBOUNCE_COUNT = 511;   // About 60uS?
+const u8 DEBOUNCE_COUNT = 511;   // About 60uS?
 
 // NOTE: Do NOT re-order the MotorID enum, because this depends on it
 MotorInfo m_motors[MOTOR_COUNT] =
 {
   {
-    LEFT_N1_PIN,
-    LEFT_N2_PIN,
-    LEFT_P_PIN, 
+    PIN_LEFT_N1,
+    PIN_LEFT_N2,
+    PIN_LEFT_P,
     true,
     0,
-    ENCODER_LEFT_PIN,
+    PIN_ENCODER_LEFT,
     ENCODER_NONE,
     1, // units per tick = 1 tick
     0, 0, 0, 0, 0, 0
   },
   {
-    RIGHT_N1_PIN,
-    RIGHT_N2_PIN,
-    RIGHT_P_PIN,
+    PIN_RIGHT_N1,
+    PIN_RIGHT_N2,
+    PIN_RIGHT_P,
     true,
     0,
-    ENCODER_RIGHT_PIN,
+    PIN_ENCODER_RIGHT,
     ENCODER_NONE,
     1, // units per tick = 1 tick
     0, 0, 0, 0, 0, 0
   },
   {
-    LIFT_N1_PIN,
-    LIFT_N2_PIN,
-    LIFT_P_PIN,
+    PIN_LIFT_N1,
+    PIN_LIFT_N2,
+    PIN_LIFT_P,
 #ifdef ROBOT4
     true,
 #else
     false,
 #endif
     0,
-    ENCODER_LIFTA_PIN,
-    ENCODER_LIFTB_PIN,
+    PIN_ENCODER_LIFTA,
+    PIN_ENCODER_LIFTB,
     RADIANS_PER_LIFT_TICK,
     0, 0, 0, 0, 0, 0
   },
   {
-    HEAD_N1_PIN,
-    HEAD_N2_PIN,
-    HEAD_P_PIN,
+    PIN_HEAD_N1,
+    PIN_HEAD_N2,
+    PIN_HEAD_P,
 #ifdef ROBOT4      
     false,
 #else
     true,
 #endif 
     0,
-    ENCODER_HEADA_PIN,
-    ENCODER_HEADB_PIN,
+    PIN_ENCODER_HEADA,
+    PIN_ENCODER_HEADB,
     RADIANS_PER_HEAD_TICK,
     0, 0, 0, 0, 0, 0
   },
@@ -461,12 +436,12 @@ void Motors::printEncodersRaw()
   tmp2 *= m_motors[1].position;
 
   UART::print("L%cR%cA%c%cH%c%c L%iR%iA%iH%i",
-      '0' + nrf_gpio_pin_read(ENCODER_LEFT_PIN),
-      '0' + nrf_gpio_pin_read(ENCODER_RIGHT_PIN),
-      '0' + nrf_gpio_pin_read(ENCODER_LIFTA_PIN),
-      '0' + nrf_gpio_pin_read(ENCODER_LIFTB_PIN),
-      '0' + nrf_gpio_pin_read(ENCODER_HEADA_PIN),
-      '0' + nrf_gpio_pin_read(ENCODER_HEADB_PIN),
+      '0' + nrf_gpio_pin_read(PIN_ENCODER_LEFT),
+      '0' + nrf_gpio_pin_read(PIN_ENCODER_RIGHT),
+      '0' + nrf_gpio_pin_read(PIN_ENCODER_LIFTA),
+      '0' + nrf_gpio_pin_read(PIN_ENCODER_LIFTB),
+      '0' + nrf_gpio_pin_read(PIN_ENCODER_HEADA),
+      '0' + nrf_gpio_pin_read(PIN_ENCODER_HEADB),
       (Fixed)TO_FIXED_8_24_TO_16_16(tmp1),
       (Fixed)TO_FIXED_8_24_TO_16_16(tmp2),
       (int)m_motors[2].position, (int)m_motors[3].position);
@@ -553,62 +528,62 @@ void GPIOTE_IRQHandler()
     u32 count = GetCounter();
     
     // Head encoder (since it moves fastest)
-    if (whatChanged & (1 << ENCODER_HEADA_PIN))
+    if (whatChanged & (1 << PIN_ENCODER_HEADA))
     {
       m_motors[MOTOR_HEAD].count = count;
-      if (!(state & (1 << ENCODER_HEADA_PIN)))  // High to low transition
+      if (!(state & (1 << PIN_ENCODER_HEADA)))  // High to low transition
       {
-        fast_gpio_cfg_sense_input(ENCODER_HEADA_PIN, NRF_GPIO_PIN_SENSE_HIGH);      
-        if (state & (1 << ENCODER_HEADB_PIN))    // Forward vs backward
+        fast_gpio_cfg_sense_input(PIN_ENCODER_HEADA, NRF_GPIO_PIN_SENSE_HIGH);      
+        if (state & (1 << PIN_ENCODER_HEADB))    // Forward vs backward
           m_motors[MOTOR_HEAD].position += RADIANS_PER_HEAD_TICK;
         else
           m_motors[MOTOR_HEAD].position -= RADIANS_PER_HEAD_TICK;      
       } else {
-        fast_gpio_cfg_sense_input(ENCODER_HEADA_PIN, NRF_GPIO_PIN_SENSE_LOW);
-        if (state & (1 << ENCODER_HEADB_PIN))   // Forward vs backward
+        fast_gpio_cfg_sense_input(PIN_ENCODER_HEADA, NRF_GPIO_PIN_SENSE_LOW);
+        if (state & (1 << PIN_ENCODER_HEADB))   // Forward vs backward
           m_motors[MOTOR_HEAD].position -= RADIANS_PER_HEAD_TICK;
         else
           m_motors[MOTOR_HEAD].position += RADIANS_PER_HEAD_TICK;      
       }    
     }           
     // Lift encoder (next fastest)
-    if (whatChanged & (1 << ENCODER_LIFTA_PIN))
+    if (whatChanged & (1 << PIN_ENCODER_LIFTA))
     {
       m_motors[MOTOR_LIFT].count = count;
-      if (!(state & (1 << ENCODER_LIFTA_PIN)))  // High to low transition
+      if (!(state & (1 << PIN_ENCODER_LIFTA)))  // High to low transition
       {
-        fast_gpio_cfg_sense_input(ENCODER_LIFTA_PIN, NRF_GPIO_PIN_SENSE_HIGH);      
-        if (state & (1 << ENCODER_LIFTB_PIN))   // Forward vs backward
+        fast_gpio_cfg_sense_input(PIN_ENCODER_LIFTA, NRF_GPIO_PIN_SENSE_HIGH);      
+        if (state & (1 << PIN_ENCODER_LIFTB))   // Forward vs backward
           m_motors[MOTOR_LIFT].position += RADIANS_PER_LIFT_TICK;
         else
           m_motors[MOTOR_LIFT].position -= RADIANS_PER_LIFT_TICK;      
       } else {
-        fast_gpio_cfg_sense_input(ENCODER_LIFTA_PIN, NRF_GPIO_PIN_SENSE_LOW);
-        if (state & (1 << ENCODER_LIFTB_PIN))   // Forward vs backward
+        fast_gpio_cfg_sense_input(PIN_ENCODER_LIFTA, NRF_GPIO_PIN_SENSE_LOW);
+        if (state & (1 << PIN_ENCODER_LIFTB))   // Forward vs backward
           m_motors[MOTOR_LIFT].position -= RADIANS_PER_LIFT_TICK;
         else
           m_motors[MOTOR_LIFT].position += RADIANS_PER_LIFT_TICK;  
       }    
     }       
     // Left wheel
-    if (whatChanged & (1 << ENCODER_LEFT_PIN))
+    if (whatChanged & (1 << PIN_ENCODER_LEFT))
     {
       m_motors[MOTOR_LEFT_WHEEL].count = count;
       m_motors[MOTOR_LEFT_WHEEL].position += m_motors[MOTOR_LEFT_WHEEL].unitsPerTick;
-      if (!(state & (1 << ENCODER_LEFT_PIN)))  // High to low transition
-        fast_gpio_cfg_sense_input(ENCODER_LEFT_PIN, NRF_GPIO_PIN_SENSE_HIGH);      
+      if (!(state & (1 << PIN_ENCODER_LEFT)))  // High to low transition
+        fast_gpio_cfg_sense_input(PIN_ENCODER_LEFT, NRF_GPIO_PIN_SENSE_HIGH);      
       else
-        fast_gpio_cfg_sense_input(ENCODER_LEFT_PIN, NRF_GPIO_PIN_SENSE_LOW);
+        fast_gpio_cfg_sense_input(PIN_ENCODER_LEFT, NRF_GPIO_PIN_SENSE_LOW);
     }       
     // Right wheel
-    if (whatChanged & (1 << ENCODER_RIGHT_PIN))
+    if (whatChanged & (1 << PIN_ENCODER_RIGHT))
     {
       m_motors[MOTOR_RIGHT_WHEEL].count = count;
       m_motors[MOTOR_RIGHT_WHEEL].position += m_motors[MOTOR_RIGHT_WHEEL].unitsPerTick;
-      if (!(state & (1 << ENCODER_RIGHT_PIN)))  // High to low transition
-        fast_gpio_cfg_sense_input(ENCODER_RIGHT_PIN, NRF_GPIO_PIN_SENSE_HIGH);      
+      if (!(state & (1 << PIN_ENCODER_RIGHT)))  // High to low transition
+        fast_gpio_cfg_sense_input(PIN_ENCODER_RIGHT, NRF_GPIO_PIN_SENSE_HIGH);      
       else
-        fast_gpio_cfg_sense_input(ENCODER_RIGHT_PIN, NRF_GPIO_PIN_SENSE_LOW);
+        fast_gpio_cfg_sense_input(PIN_ENCODER_RIGHT, NRF_GPIO_PIN_SENSE_LOW);
     }       
   }
 }
