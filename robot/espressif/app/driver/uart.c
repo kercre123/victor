@@ -313,7 +313,6 @@ uart_rx_intr_handler(void *para)
   {
     uint32 count = (READ_PERI_REG(UART_STATUS(UART0))>>UART_RXFIFO_CNT_S)&UART_RXFIFO_CNT;
     uint16 localRxWind = rxWind;
-    const uint16 available = RX_BUF_LEN - ((localRxWind - rxRind) & RX_BUF_LENMSK);
     while (count-- != 0) // While data in the FIFO
     {
       const uint8 byte = (READ_PERI_REG(UART_FIFO(UART0)) & 0xFF);
@@ -339,7 +338,7 @@ uart_rx_intr_handler(void *para)
         case 3: // High length byte
         {
           pktLen |= (byte << 8);
-          if (available < pktLen)
+          if ((RX_BUF_LEN - ((localRxWind - rxRind) & RX_BUF_LENMSK)) < pktLen)
           {
             phase = 0;
             os_put_char('!'); os_put_char('O'); os_put_char('G');
