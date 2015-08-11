@@ -134,7 +134,6 @@ namespace Cozmo {
     // Subscribe to desired events
     _signalHandles.push_back(_uiMsgHandler.Subscribe(ExternalInterface::MessageGameToEngineTag::ConnectToUiDevice, commonCallback));
     _signalHandles.push_back(_uiMsgHandler.Subscribe(ExternalInterface::MessageGameToEngineTag::DisconnectFromUiDevice, commonCallback));
-    _signalHandles.push_back(_uiMsgHandler.Subscribe(ExternalInterface::MessageGameToEngineTag::ForceAddRobot, commonCallback));
     
     // Use a separate callback for StartEngine
     auto startEngineCallback = std::bind(&CozmoGameImpl::HandleStartEngine, this, std::placeholders::_1);
@@ -216,20 +215,6 @@ namespace Cozmo {
   const std::vector<ExternalInterface::DeviceDetectedVisionMarker>& CozmoGameImpl::GetVisionMarkersDetectedByDevice() const
   {
     return _visionMarkersDetectedByDevice;
-  }
-  
-  void CozmoGameImpl::ForceAddRobot(int              robotID,
-                                    const char*      robotIP,
-                                    bool             robotIsSimulated)
-  {
-    if(_isHost) {
-      CozmoEngineHost* cozmoEngineHost = reinterpret_cast<CozmoEngineHost*>(_cozmoEngine);
-      assert(cozmoEngineHost != nullptr);
-      cozmoEngineHost->ForceAddRobot(robotID, robotIP, robotIsSimulated);
-    } else {
-      PRINT_NAMED_ERROR("CozmoGameImpl.ForceAddRobot",
-                        "Cannot force-add a robot to game running as client.\n");
-    }
   }
   
   bool CozmoGameImpl::ConnectToUiDevice(AdvertisingUiDevice whichDevice)
@@ -604,15 +589,6 @@ namespace Cozmo {
         }
         break;
       }
-      case ExternalInterface::MessageGameToEngineTag::ForceAddRobot:
-      {
-        const ExternalInterface::ForceAddRobot& msg = event.GetData().Get_ForceAddRobot();
-        char ip[16];
-        assert(msg.ipAddress.size() <= 16);
-        std::copy(msg.ipAddress.begin(), msg.ipAddress.end(), ip);
-        ForceAddRobot(msg.robotID, ip, msg.isSimulated);
-        break;
-      }
       default:
       {
         PRINT_STREAM_ERROR("CozmoGameImpl.HandleEvents",
@@ -667,11 +643,6 @@ namespace Cozmo {
   Result CozmoGame::StartEngine(Json::Value config)
   {
     return _impl->StartEngine(config);
-  }
-  
-  void CozmoGame::ForceAddRobot(int robotID, const char *robotIP, bool robotIsSimulated)
-  {
-    _impl->ForceAddRobot(robotID, robotIP, robotIsSimulated);
   }
   
   Result CozmoGame::Update(const float currentTime_sec)

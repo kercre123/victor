@@ -68,14 +68,6 @@ namespace Cozmo {
     using AdvertisingRobot    = int;
     using AdvertisingUiDevice = int;
     
-    // For adding a real robot to the list of availale ones advertising, using its
-    // known IP address. This is only necessary until we have real advertising
-    // capability on real robots.
-    // TODO: Remove this once we have sorted out the advertising process for real robots
-    void ForceAddRobot(int              robotID,
-                       const char*      robotIP,
-                       bool             robotIsSimulated);
-    
     // Return number of robots connected
     int GetNumRobots() const;
     

@@ -54,10 +54,6 @@ namespace Cozmo {
     
     Result Init(const Json::Value& config);
     
-    void ForceAddRobot(int              robotID,
-                       const char*      robotIP,
-                       bool             robotIsSimulated);
-    
     bool ConnectToUiDevice(AdvertisingUiDevice whichDevice);
     
     //
