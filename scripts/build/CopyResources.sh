@@ -4,8 +4,8 @@ set -e
 SRCDIR="$1"
 ASSETSRDIR="$2"
 DSTDIR="$3"
-DSTDIR_META=$DSTDIR/cozmo_resources/meta/
-DSTDIR_ASSET=$DSTDIR/cozmo_resources/asset/
+DSTDIR_META=$DSTDIR/cozmo_resources/config/
+DSTDIR_ASSET=$DSTDIR/cozmo_resources/assets/
 
 # verify inputs
 if [ -z "$SRCDIR" ] ; then
@@ -37,3 +37,5 @@ if [ -d "$ASSETSRDIR" ] ; then
   mkdir -p "$DSTDIR_ASSET"
   rsync -r -t --exclude=".*" --delete $ASSETSRDIR/ $DSTDIR_ASSET/
 fi
+echo asset: $DSTDIR_ASSET
+echo meta: $DSTDIR_META

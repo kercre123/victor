@@ -10,13 +10,9 @@
  **/
 
 #include "anki/cozmo/basestation/faceAnimationManager.h"
-
-#include "anki/common/basestation/platformPathManager.h"
-
+#include "anki/cozmo/basestation/data/dataPlatform.h"
 #include "util/logging/logging.h"
-
 #include "opencv2/highgui/highgui.hpp"
-
 #include <sys/stat.h>
 #include <errno.h>
 #include <dirent.h>
@@ -33,9 +29,7 @@ namespace Cozmo {
   FaceAnimationManager* FaceAnimationManager::_singletonInstance = nullptr;
   
   FaceAnimationManager::FaceAnimationManager()
-  : _hasRootDir(false)
   {
-    SetRootDir("");
   }
   
   void FaceAnimationManager::removeInstance()
@@ -49,9 +43,10 @@ namespace Cozmo {
   
   
   // Read the animations in a dir
-  Result FaceAnimationManager::ReadFaceAnimationDir()
+  void FaceAnimationManager::ReadFaceAnimationDir(Data::DataPlatform* dataPlatform)
   {
-    const std::string animationFolder = _rootDir;
+    if (dataPlatform == nullptr) { return; }
+    const std::string animationFolder = dataPlatform->pathToResource(Data::Scope::Resources, "assets/faceAnimations/");
 
     DIR* dir = opendir(animationFolder.c_str());
     if ( dir != nullptr) {
@@ -94,19 +89,19 @@ namespace Cozmo {
                   size_t dotPos = filename.find_last_of(".");
                   if(dotPos == std::string::npos) {
                     PRINT_NAMED_ERROR("FaceAnimationManager.ReadFaceAnimationDir",
-                                      "Could not find '.' in frame filename %s\n",
+                                      "Could not find '.' in frame filename %s",
                                       filename.c_str());
-                    return RESULT_FAIL;
+                    return;
                   } else if(underscorePos == std::string::npos) {
                     PRINT_NAMED_ERROR("FaceAnimationManager.ReadFaceAnimationDir",
-                                      "Could not find '_' in frame filename %s\n",
+                                      "Could not find '_' in frame filename %s",
                                       filename.c_str());
-                    return RESULT_FAIL;
+                    return;
                   } else if(dotPos <= underscorePos+1) {
                     PRINT_NAMED_ERROR("FaceAnimationManager.ReadFaceAnimationDir",
-                                      "Unexpected relative positions for '.' and '_' in frame filename %s\n",
+                                      "Unexpected relative positions for '.' and '_' in frame filename %s",
                                       filename.c_str());
-                    return RESULT_FAIL;
+                    return;
                   }
                   
                   const std::string digitStr(filename.substr(underscorePos+1,
@@ -118,16 +113,16 @@ namespace Cozmo {
                   } catch (std::invalid_argument&) {
                     PRINT_NAMED_ERROR("FaceAnimationManager.ReadFaceAnimationDir",
                                       "Could not get frame number from substring '%s' "
-                                      "of filename '%s'.\n",
+                                      "of filename '%s'.",
                                       digitStr.c_str(), filename.c_str());
-                    return RESULT_FAIL;
+                    return;
                   }
                   
                   if(frameNum < 0) {
                     PRINT_NAMED_ERROR("FaceAnimationManager.ReadFaceAnimationDir",
-                                      "Found negative frame number (%d) for filename '%s'.\n",
+                                      "Found negative frame number (%d) for filename '%s'.",
                                       frameNum, filename.c_str());
-                    return RESULT_FAIL;
+                    return;
                   }
                   
                   AvailableAnim& anim = _availableAnimations[animName];
@@ -143,7 +138,7 @@ namespace Cozmo {
                     
                     if(emptyFramesAdded > 0) {
                       PRINT_NAMED_INFO("FaceAnimationManager.ReadFaceAnimationDir",
-                                       "Inserted %d empty frames before frame %d in animation %s.\n",
+                                       "Inserted %d empty frames before frame %d in animation %s.",
                                        emptyFramesAdded, frameNum, animName.c_str());
                     }
                   }
@@ -154,11 +149,11 @@ namespace Cozmo {
                   
                   if(img.rows != IMAGE_HEIGHT || img.cols != IMAGE_WIDTH) {
                     PRINT_NAMED_ERROR("FaceAnimationManager.ReadFaceAnimationDir",
-                                      "Image in %s is %dx%d instead of %dx%d.\n",
+                                      "Image in %s is %dx%d instead of %dx%d.",
                                       fullFilename.c_str(),
                                       img.cols, img.rows,
                                       IMAGE_WIDTH, IMAGE_HEIGHT);
-                    return RESULT_FAIL;
+                    return;
                   }
                   
                   // Binarize
@@ -186,48 +181,16 @@ namespace Cozmo {
       PRINT_NAMED_INFO("FaceAnimationManager.ReadFaceAnimationDir", "folder not found %s", animationFolder.c_str());
     }
     
-    return RESULT_OK;
-    
   } // ReadFaceAnimationDir()
   
-  
-  bool FaceAnimationManager::SetRootDir(const std::string dir)
-  {
-    _hasRootDir = false;
-    
-    std::string fullPath(PREPEND_SCOPED_PATH(PlatformPathManager::FaceAnimation, dir));
-    
-    // Check if directory exists
-    struct stat info;
-    if( stat( fullPath.c_str(), &info ) != 0 ) {
-      PRINT_NAMED_WARNING("FaceAnimationManager.SetRootDir.NoAccess",
-                          "Could not access path %s (errno %d)\n",
-                          fullPath.c_str(), errno);
-      return false;
-    }
-    if (!S_ISDIR(info.st_mode)) {
-      PRINT_NAMED_WARNING("FaceAnimationManager.SetRootDir.NotADir", "\n");
-      return false;
-    }
-    
-    _hasRootDir = true;
-    _rootDir = fullPath;
-    
-    // Every sub-directory in the root directory is considered an available
-    // animation, with as many frames as there are files
-    ReadFaceAnimationDir();
-    
-    return true;
-    
-  } // SetRootDir()
-  
+
   u32 FaceAnimationManager::GetNumFrames(const std::string &animName) const
   {
 
     auto animIter = _availableAnimations.find(animName);
     if(animIter == _availableAnimations.end()) {
       PRINT_NAMED_WARNING("FaceAnimationManager.GetNumFrames",
-                          "Unknown animation requested: %s.\n",
+                          "Unknown animation requested: %s",
                           animName.c_str());
       return 0;
     } else {
@@ -240,7 +203,7 @@ namespace Cozmo {
     auto animIter = _availableAnimations.find(animName);
     if(animIter == _availableAnimations.end()) {
       PRINT_NAMED_ERROR("FaceAnimationManager.GetFrame",
-                        "Unknown animation requested: %s.\n",
+                        "Unknown animation requested: %s.",
                         animName.c_str());
       return nullptr;
     } else {
@@ -253,7 +216,7 @@ namespace Cozmo {
       } else {
         PRINT_NAMED_ERROR("FaceAnimationManager.GetFrame",
                           "Requested frame number %d is invalid. "
-                          "Only %lu frames available in animatino %s.\n",
+                          "Only %lu frames available in animatino %s.",
                           frameNum, animIter->second.GetNumFrames(),
                           animName.c_str());
         return nullptr;
@@ -270,7 +233,7 @@ namespace Cozmo {
     
     if(img.rows != IMAGE_HEIGHT || img.cols != IMAGE_WIDTH) {
       PRINT_NAMED_ERROR("FaceAnimationManager.CompressRLE",
-                        "Expected %dx%d image but got %dx%d image\n",
+                        "Expected %dx%d image but got %dx%d image",
                         IMAGE_WIDTH, IMAGE_HEIGHT, img.cols, img.rows);
       return RESULT_FAIL;
     }

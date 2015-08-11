@@ -56,20 +56,24 @@
 namespace Anki {
   namespace Cozmo {
     
-    // Forward declarations:
-    class IRobotMessageHandler;
-    class IPathPlanner;
-    class MatPiece;
-    class PathDolerOuter;
-    class RobotPoseHistory;
-    class RobotPoseStamp;
-    class IExternalInterface;
+  // Forward declarations:
+  class IRobotMessageHandler;
+  class IPathPlanner;
+  class MatPiece;
+  class PathDolerOuter;
+  class RobotPoseHistory;
+  class RobotPoseStamp;
+  class IExternalInterface;
+  namespace Data {
+  class DataPlatform;
+  }
     
     class Robot
     {
     public:
       
-      Robot(const RobotID_t robotID, IRobotMessageHandler* msgHandler, IExternalInterface* externalInterface);
+      Robot(const RobotID_t robotID, IRobotMessageHandler* msgHandler,
+        IExternalInterface* externalInterface, Data::DataPlatform* dataPlatform);
       ~Robot();
       
       Result Update();
@@ -532,12 +536,14 @@ namespace Anki {
       // Events
       using RobotWorldOriginChangedSignal = Signal::Signal<void (RobotID_t)>;
       RobotWorldOriginChangedSignal& OnRobotWorldOriginChanged() { return _robotWorldOriginChangedSignal; }
+      inline bool HasExternalInterface() { return _externalInterface != nullptr; }
       inline IExternalInterface* GetExternalInterface() {
         ASSERT_NAMED(_externalInterface != nullptr, "Robot.ExternalInterface.nullptr"); return _externalInterface; }
       inline void SetImageSendMode(ImageSendMode_t newMode) { _imageSendMode = newMode; }
       inline const ImageSendMode_t GetImageSendMode() const { return _imageSendMode; }
     protected:
       IExternalInterface* _externalInterface;
+      Data::DataPlatform* _dataPlatform;
       RobotWorldOriginChangedSignal _robotWorldOriginChangedSignal;
       // The robot's identifier
       RobotID_t         _ID;

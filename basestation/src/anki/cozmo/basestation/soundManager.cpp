@@ -13,7 +13,7 @@
 #include "anki/cozmo/basestation/keyframe.h"
 #include "util/logging/logging.h"
 #include "anki/common/basestation/exceptions.h"
-#include "anki/common/basestation/platformPathManager.h"
+#include "anki/cozmo/basestation/data/dataPlatform.h"
 #include "adpcm.h"
 
 #include <thread>
@@ -148,8 +148,6 @@ namespace Anki {
     SoundManager::SoundManager()
     {
       _hasCmdProcessor = false;
-      _hasRootDir = false;
-      
       _stopCurrSound = false;
       _numLoops = 1;
       _running = true;
@@ -167,9 +165,8 @@ namespace Anki {
       
       if (system(NULL)) {
         _hasCmdProcessor = true;
-        SetRootDir("");
       } else {
-        PRINT_NAMED_WARNING("SoundManager.NoCmdProc","\n");
+        PRINT_NAMED_WARNING("SoundManager.NoCmdProc","");
       }
     }
 
@@ -177,36 +174,17 @@ namespace Anki {
     {
       _running = false;
     }
-    
-    
-    bool SoundManager::SetRootDir(const std::string dir)
+
+
+    void SoundManager::LoadSounds(Data::DataPlatform* dataPlatform)
     {
-      _hasRootDir = false;
-      
-      std::string fullPath(PREPEND_SCOPED_PATH(PlatformPathManager::Sound, dir));
-      
-      // Check if directory exists
-      struct stat info;
-      if( stat( fullPath.c_str(), &info ) != 0 ) {
-        PRINT_NAMED_WARNING("SoundManager.SetRootDir.NoAccess",
-                            "Could not access path %s (errno %d)\n",
-                            fullPath.c_str(), errno);
-        return false;
-      }
-      if (!S_ISDIR(info.st_mode)) {
-        PRINT_NAMED_WARNING("SoundManager.SetRootDir.NotADir", "\n");
-        return false;
-      }
-      
-      _hasRootDir = true;
-      _rootDir = fullPath;
-      
-      ReadSoundDir("robot", true);
-      ReadSoundDir("device", false);
-      
-      return true;
-      
-    } // SetRootDir()
+      if (dataPlatform == nullptr) { return; }
+      const std::string folderRobot = dataPlatform->pathToResource(Data::Scope::Resources, "assets/sounds/robot/");
+      const std::string folderDevice = dataPlatform->pathToResource(Data::Scope::Resources, "assets/sounds/device/");
+
+      ReadSoundDir(folderRobot, true);
+      ReadSoundDir(folderDevice, false);
+    }
     
     
     // Return false if not valid wav file
@@ -281,7 +259,7 @@ namespace Anki {
                       && (bitsPerSample == 16);
       
       //PRINT_NAMED_INFO("SoundManager.IsValidRobotAudio.WavProperties",
-      //                 "%s: format %d, numChannels %d, sampleRateHz %d, byteRate %d, bitsPerSample %d, dataSize %d\n",
+      //                 "%s: format %d, numChannels %d, sampleRateHz %d, byteRate %d, bitsPerSample %d, dataSize %d",
       //                 fileName.c_str(), format, numChannels, sampleRateHz, byteRate, bitsPerSample, dataSize);
       
       return isValid;
@@ -290,29 +268,25 @@ namespace Anki {
     
     Result SoundManager::ReadSoundDir(std::string subDir, bool isRobotAudio)
     {
-      if(!subDir.empty()) {
-        subDir += "/";
-      }
-      
-      DIR* dir = opendir((_rootDir + subDir).c_str());
+
+      DIR* dir = opendir((subDir).c_str());
       
       if ( dir != nullptr) {
         dirent* ent = nullptr;
         while ( (ent = readdir(dir)) != nullptr) {
           if (ent->d_type == DT_REG && ent->d_name[0] != '.') {
-            const std::string soundName(subDir + ent->d_name);
-            std::string fullSoundFilename = _rootDir + subDir + ent->d_name;
+            std::string fullSoundFilename = subDir + ent->d_name;
             struct stat attrib{0};
             int result = stat(fullSoundFilename.c_str(), &attrib);
             if (result == -1) {
               PRINT_NAMED_WARNING("SoundManager.ReadSoundDir",
-                                  "could not get mtime for %s", fullSoundFilename.c_str());
+                "could not get mtime for %s", fullSoundFilename.c_str());
               continue;
             }
             bool loadSoundFile = false;
-            auto mapIt = _availableSounds.find(soundName);
+            auto mapIt = _availableSounds.find(fullSoundFilename);
             if (mapIt == _availableSounds.end()) {
-              _availableSounds[soundName].lastLoadedTime = attrib.st_mtimespec.tv_sec;
+              _availableSounds[fullSoundFilename].lastLoadedTime = attrib.st_mtimespec.tv_sec;
               loadSoundFile = true;
             } else {
               if (mapIt->second.lastLoadedTime < attrib.st_mtimespec.tv_sec) {
@@ -329,39 +303,39 @@ namespace Anki {
               
               if (duration_ms < 0) {
                 PRINT_NAMED_WARNING("SoundManager.ReadSoundDir",
-                                    "Failed to get duration string for '%s', file %s.\n",
-                                    soundName.c_str(), fullSoundFilename.c_str());
+                  "Failed to get duration string for '%s', file %s.",
+                  fullSoundFilename.c_str(), fullSoundFilename.c_str());
               }
             
-              AvailableSound& availableSound = _availableSounds[soundName];
-              availableSound.duration_ms = duration_ms;
+              AvailableSound& availableSound = _availableSounds[fullSoundFilename];
+              availableSound.duration_ms = (u32)duration_ms;
               availableSound.fullFilename = fullSoundFilename;
               
               // Add to availble robot sound if it has proper encoding
               if (isRobotAudio) {
                 if (IsValidRobotAudio(fullSoundFilename)) {
-                  PRINT_NAMED_INFO("SoundManager.ReadSoundDir.FoundRobotSound", "%s\n", soundName.c_str());
+                  PRINT_NAMED_INFO("SoundManager.ReadSoundDir.FoundRobotSound", "%s", fullSoundFilename.c_str());
                   
                   // Cap duration if it exceeds buffer size
                   if (availableSound.duration_ms > MAX_SOUND_BUFFER_DURATION_MS) {
                     availableSound.duration_ms = MAX_SOUND_BUFFER_DURATION_MS;
                     PRINT_NAMED_INFO("SoundManager.ReadSoundDir.SoundExceedsBufferSize","Truncating %s to %d ms",
-                                     soundName.c_str(), MAX_SOUND_BUFFER_DURATION_MS);
+                      fullSoundFilename.c_str(), MAX_SOUND_BUFFER_DURATION_MS);
                   }
                   
-                  _availableRobotSounds[soundName] = availableSound;
+                  _availableRobotSounds[fullSoundFilename] = availableSound;
                   
                 } else {
                   PRINT_NAMED_WARNING("SoundManager.ReadSoundDir.InvalidRobotAudio",
-                                      "Sound %s is invalid for robot audio.\n",
-                                      soundName.c_str());
+                    "Sound %s is invalid for robot audio.",
+                    fullSoundFilename.c_str());
                 }
               }
               
               
 #             if DEBUG_SOUND_MANAGER
               PRINT_NAMED_INFO("SoundManager.ReadSoundDir",
-                               "Added %dms sound '%s' in file '%s'\n",
+                               "Added %dms sound '%s' in file '%s'",
                                availableSound.duration_ms,
                                soundName.c_str(),
                                availableSound.fullFilename.c_str());
@@ -370,21 +344,20 @@ namespace Anki {
             }
           } // if (ent->d_type == DT_REG) {
           else if(ent->d_type == DT_DIR && ent->d_name[0] != '.') {
-            ReadSoundDir(subDir + ent->d_name, isRobotAudio);
+            ReadSoundDir(subDir + ent->d_name + "/", isRobotAudio);
           }
         }
         closedir(dir);
         
       } else {
         PRINT_NAMED_ERROR("SoundManager.ReadSoundDir",
-                          "Sound folder not found: %s\n",
-                          (_rootDir + subDir).c_str());
+          "Sound folder not found: %s", subDir.c_str());
         return RESULT_FAIL;
       }
 
       if(subDir.empty()) { // Only display this message at the root
         PRINT_NAMED_INFO("SoundManager.ReadSoundDir",
-                         "SoundManager now contains %lu available sounds.\n",
+                         "SoundManager now contains %lu available sounds.",
                          _availableSounds.size());
       }
       
@@ -395,7 +368,7 @@ namespace Anki {
     {
       auto soundIter = _availableSounds.find(name);
       
-      if (_hasCmdProcessor && _hasRootDir && soundIter != _availableSounds.end()) {
+      if (_hasCmdProcessor && soundIter != _availableSounds.end()) {
         SetSoundToPlay(soundIter->second.fullFilename, numLoops, volume);
         return true;
       }
@@ -418,7 +391,7 @@ namespace Anki {
     {
       auto soundIter = _availableSounds.find(name);
       if(soundIter == _availableSounds.end()) {
-        PRINT_NAMED_ERROR("SoundManager.GetSoundDurationInMilliseconds", "No sound named '%s'\n", name.c_str());
+        PRINT_NAMED_ERROR("SoundManager.GetSoundDurationInMilliseconds", "No sound named '%s'", name.c_str());
         return 0;
       }
       
@@ -476,7 +449,7 @@ namespace Anki {
         
         _currOpenSoundNumSamples = static_cast<u32>(fileSize) / UNENCODED_SOUND_SAMPLE_SIZE;
         
-        PRINT_NAMED_INFO("SoundManager.GetSoundSample.Info","Opening %s - duration %f s\n", name.c_str(), _currOpenSoundNumSamples * RobotAudioKeyFrame::SAMPLE_LENGTH_MS * 0.001);
+        PRINT_NAMED_INFO("SoundManager.GetSoundSample.Info","Opening %s - duration %f s", name.c_str(), _currOpenSoundNumSamples * RobotAudioKeyFrame::SAMPLE_LENGTH_MS * 0.001);
 
         // Check that the number of samples doesn't exceed the buffer
         if (_currOpenSoundNumSamples > MAX_SOUND_BUFFER_SIZE / UNENCODED_SOUND_SAMPLE_SIZE) {
@@ -508,7 +481,7 @@ namespace Anki {
     
     void SoundManager::SetRobotVolume(f32 volume)
     {
-      PRINT_NAMED_INFO("SoundManager.SetRobotVolume.NewVolume","%f\n", volume);
+      PRINT_NAMED_INFO("SoundManager.SetRobotVolume.NewVolume","%f", volume);
       _robotVolume = volume;
       _currOpenSoundFileName = "";
     }

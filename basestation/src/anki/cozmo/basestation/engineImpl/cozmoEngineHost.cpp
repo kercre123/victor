@@ -19,10 +19,10 @@ namespace Anki {
 namespace Cozmo {
   
 
-CozmoEngineHost::CozmoEngineHost(IExternalInterface* externalInterface)
-: CozmoEngine(externalInterface)
+CozmoEngineHost::CozmoEngineHost(IExternalInterface* externalInterface, Data::DataPlatform* dataPlatform)
+: CozmoEngine(externalInterface, dataPlatform)
 {
-  _hostImpl = new CozmoEngineHostImpl(_externalInterface);
+  _hostImpl = new CozmoEngineHostImpl(_externalInterface, dataPlatform);
   assert(_hostImpl != nullptr);
   _impl = _hostImpl;
   
