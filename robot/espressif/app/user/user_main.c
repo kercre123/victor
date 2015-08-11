@@ -7,8 +7,10 @@
 #include "client.h"
 #include "driver/uart.h"
 #include "driver/i2s.h"
+#include "gpio.h"
 #include "nv_params.h"
 #include "task0.h"
+#include "task2.h"
 #include "telnet.h"
 #include "upgrade_controller.h"
 #include "user_config.h"
@@ -131,7 +133,7 @@ static void ICACHE_FLASH_ATTR system_init_done(void)
 
   // Set CPU frequency again here just in case
   REG_SET_BIT(0x3ff00014, BIT(0)); //< Set CPU frequency to 160MHz
-  err = system_update_cpu_freq(160);
+  system_update_cpu_freq(160);
 
   // Setup high priority task
   task2Init();

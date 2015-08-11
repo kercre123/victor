@@ -40,14 +40,7 @@ void clientRecvCallback(char* data, unsigned short len)
 /// Callback to process incoming I2SPI data
 void i2sRecvCallback(I2SPIPayload* payload, I2SPIPayloadTag tag)
 {
-  UDPPacket* pkt = clientGetBuffer();
-  if (pkt == NULL)
-  {
-    os_printf("Couldn't get client buffer\r\n");
-  }
-  os_memcpy(pkt->data, payload, sizeof(I2SPIPayload));
-  pkt->len = sizeof(I2SPIPayload);
-  clientQueuePacket(pkt);
+  clientQueuePacket((uint8*)payload, sizeof(I2SPIPayload));
 }
 
 /** Execution of task2 code must return in less than 2 miliseconds

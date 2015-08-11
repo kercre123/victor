@@ -32,7 +32,7 @@ static void ICACHE_FLASH_ATTR udpServerRecvCB(void *arg, char *usrdata, unsigned
 
   haveClient = true;
 
-  clientRecvCallback((uint8*)usrdata, len);
+  clientRecvCallback(usrdata, len);
 }
 
 

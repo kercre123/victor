@@ -72,7 +72,7 @@ static void inline prepSdioQueue(struct sdio_queue* desc)
  * the interrupt flags, the sdio_queue returned must be reset so it can be reused. Finally when data is received from
  * DMA (TX) the i2sRecvCallback is called.
  */
-LOCAL void dmaisr(void) {
+LOCAL void dmaisr(void* arg) {
 	uint32 slc_intr_status;
 
 	//Grab int status
@@ -164,7 +164,7 @@ int8_t ICACHE_FLASH_ATTR i2sInit() {
 	SET_PERI_REG_MASK(SLC_RX_LINK, ((uint32)&xferQueue[transmitInd]) & SLC_RXLINK_DESCADDR_MASK);
 
 	//Attach the DMA interrupt
-	ets_isr_attach(ETS_SLC_INUM, dmaisr);
+	ets_isr_attach(ETS_SLC_INUM, dmaisr, NULL);
 	//Enable DMA operation intr Want to get interrupts for both end of transmits
 	WRITE_PERI_REG(SLC_INT_ENA,  SLC_TX_EOF_INT_ENA | SLC_RX_EOF_INT_ENA);
 	//clear any interrupt flags that are set
@@ -257,6 +257,7 @@ bool i2sQueueTx(I2SPIPayload* payload, I2SPIPayloadTag tag)
     // Update indecies
     transmitInd = (transmitInd + 1) & DMA_BUF_COUNT_MASK;
     transmitSeqNo += 1;
+    return true;
   }
 }
 
