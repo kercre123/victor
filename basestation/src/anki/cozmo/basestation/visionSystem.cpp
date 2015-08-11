@@ -15,14 +15,11 @@
  **/
 
 #include "visionSystem.h"
-
 #include "anki/cozmo/basestation/comms/robot/robotMessages.h"
 #include "anki/cozmo/basestation/robot.h"
-
 #include "anki/common/basestation/mailbox_impl.h"
 #include "anki/vision/basestation/image_impl.h"
-
-#include "anki/common/basestation/platformPathManager.h"
+#include "anki/cozmo/basestation/data/dataPlatform.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/quad_impl.h"
 
@@ -71,8 +68,9 @@ namespace Cozmo {
   
   using namespace Embedded;
   
-  VisionSystem::VisionSystem()
+  VisionSystem::VisionSystem(Data::DataPlatform* dataPlatform)
   : _isInitialized(false)
+  , _dataPlatform(dataPlatform)
   , _headCamInfo(nullptr)
   {
     
@@ -2224,10 +2222,12 @@ namespace Cozmo {
     
     if(_mode & DETECTING_FACES) {
       Simulator::SetFaceDetectionReadyTime();
-      
+
+      // TODO: (AS) move _faceCascade to header, and load data at appropriate time (constructor?)
       static cv::CascadeClassifier _faceCascade;
       if(_faceCascade.empty()) {
-        const std::string cascadeFilename = PREPEND_SCOPED_PATH(Config, "haarcascade_frontalface_alt2.xml");
+        const std::string cascadeFilename = _dataPlatform->pathToResource(Data::Scope::Resources,
+          "config/basestation/config/haarcascade_frontalface_alt2.xml");
         const bool loadResult = _faceCascade.load(cascadeFilename);
         AnkiConditionalError(loadResult == true, "VisionSystem.Update.LoadFaceCascade",
                              "Failed to load face cascade from %s\n", cascadeFilename.c_str());

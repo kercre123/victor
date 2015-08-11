@@ -19,7 +19,6 @@
 #include "anki/common/basestation/math/quad_impl.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/poseBase_impl.h"
-#include "anki/common/basestation/platformPathManager.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/common/basestation/utils/fileManagement.h"
 #include "anki/vision/CameraSettings.h"
@@ -34,6 +33,7 @@
 #include "anki/cozmo/basestation/faceAnimationManager.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "clad/externalInterface/messageEngineToGame.h"
+#include "dataPlatform.h"
 
 #include <fstream>
 #include <dirent.h>
@@ -45,14 +45,17 @@
 namespace Anki {
   namespace Cozmo {
     
-    Robot::Robot(const RobotID_t robotID, IRobotMessageHandler* msgHandler, IExternalInterface* externalInterface)
+    Robot::Robot(const RobotID_t robotID, IRobotMessageHandler* msgHandler,
+      IExternalInterface* externalInterface, Data::DataPlatform* dataPlatform)
     : _externalInterface(externalInterface)
+    , _dataPlatform(dataPlatform)
     , _ID(robotID)
     , _isPhysical(false)
     , _newStateMsgAvailable(false)
     , _syncTimeAcknowledged(false)
     , _msgHandler(msgHandler)
     , _blockWorld(this)
+    , _visionProcessor(dataPlatform)
 #   if !ASYNC_VISION_PROCESSING
     , _haveNewImage(false)
 #   endif
@@ -106,28 +109,27 @@ namespace Anki {
       // The call to Delocalize() will increment frameID, but we want it to be
       // initialzied to 0, to match the physical robot's initialization
       _frameId = 0;
-      
-      Json::Reader reader;
-      
-      // Read planner motion primitives
-      // TODO: Use different motions primitives depending on the type/personality of this robot
-      // TODO: Stop storing *cozmo* motion primitives in a coretech location
       Json::Value mprims;
-      {
+      if (_dataPlatform != nullptr){
+        // Read planner motion primitives
+        // TODO: Use different motions primitives depending on the type/personality of this robot
+        // TODO: Stop storing *cozmo* motion primitives in a coretech location
         const std::string subPath = "cozmo_mprim.json";
-        const std::string jsonFilename = PREPEND_SCOPED_PATH(Config, subPath);
+        const std::string jsonFilename = _dataPlatform->pathToResource(Data::Scope::Resources, "config/basestation/config/cozmo_mprim.json");
         std::ifstream jsonFile(jsonFilename);
+        Json::Reader reader;
         if(false == reader.parse(jsonFile, mprims)) {
           PRINT_NAMED_ERROR("Robot.MotionPrimitiveJsonParseFailure",
-                            "Failed to parse Json motion primitives file %s. Planner likely won't work.\n",
-                            jsonFilename.c_str());
+            "Failed to parse Json motion primitives file %s. Planner likely won't work.",
+            jsonFilename.c_str());
         } else {
           PRINT_NAMED_INFO("Robot.MotionPrimitivesLoaded",
-                            "Loaded Json motion primitives from file %s.\n",
-                            jsonFilename.c_str());
+            "Loaded Json motion primitives from file %s.",
+            jsonFilename.c_str());
         }
         jsonFile.close();
       }
+
 
       ReadAnimationDir(false);
       
@@ -743,6 +745,9 @@ namespace Anki {
        lastUpdateTime = currentTime_sec;
        */
       
+      
+      if (GetCamera().IsCalibrated()) {
+      
 #     if !ASYNC_VISION_PROCESSING
       if(_haveNewImage)
         
@@ -873,6 +878,7 @@ namespace Anki {
         _blockWorld.Update(numBlocksObserved);
 
       } // if(_visionProcessor.WasLastImageProcessed())
+      } // if (GetCamera().IsCalibrated())
       
       ///////// Update the behavior manager ///////////
       
@@ -1222,7 +1228,7 @@ namespace Anki {
     Result Robot::PlaySound(const std::string& soundName, u8 numLoops, u8 volume)
     {
       if (_externalInterface != nullptr) {
-        _externalInterface->DeliverToGame(ExternalInterface::MessageEngineToGame(ExternalInterface::PlaySound(soundName, numLoops, volume)));
+        _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::PlaySound(soundName, numLoops, volume)));
       }
       //CozmoEngineSignals::PlaySoundForRobotSignal().emit(GetID(), soundName, numLoops, volume);
       return RESULT_OK;
@@ -1232,7 +1238,7 @@ namespace Anki {
     void Robot::StopSound()
     {
       if (_externalInterface != nullptr) {
-        _externalInterface->DeliverToGame(ExternalInterface::MessageEngineToGame(ExternalInterface::StopSound()));
+        _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::StopSound()));
       }
     } // StopSound()
       
@@ -1259,7 +1265,7 @@ namespace Anki {
       }
       jsonFile.close();
       if (!animDefs.empty()) {
-        PRINT_NAMED_INFO("Robot.ReadAnimationFile", "reading %s\n", filename);
+        PRINT_NAMED_INFO("Robot.ReadAnimationFile", "reading %s", filename);
         _cannedAnimations.DefineFromJson(animDefs, animationId);
       }
 
@@ -1269,10 +1275,12 @@ namespace Anki {
     // Read the animations in a dir
     void Robot::ReadAnimationDir(bool playLoadedAnimation)
     {
-      SoundManager::getInstance()->SetRootDir();
-      FaceAnimationManager::getInstance()->SetRootDir();
+      if (_dataPlatform == nullptr) { return; }
+      SoundManager::getInstance()->LoadSounds(_dataPlatform);
+      FaceAnimationManager::getInstance()->ReadFaceAnimationDir(_dataPlatform);
       
-      const std::string animationFolder = PREPEND_SCOPED_PATH(Animation, "");
+      const std::string animationFolder =
+        _dataPlatform->pathToResource(Data::Scope::Resources, "assets/animations/");
       std::string animationId;
       s32 loadedFileCount = 0;
       DIR* dir = opendir(animationFolder.c_str());
@@ -1301,7 +1309,6 @@ namespace Anki {
               }
             }
             if (loadFile) {
-              PRINT_NAMED_INFO("Robot.ReadAnimationFile", "importing file %s", fullFileName.c_str());
               ReadAnimationFile(fullFileName.c_str(), animationId);
               ++loadedFileCount;
             }
@@ -1313,9 +1320,11 @@ namespace Anki {
       }
 
       // Tell UI about available animations
-      vector<std::string> animNames(_cannedAnimations.GetAnimationNames());
-      for (vector<std::string>::iterator i=animNames.begin(); i != animNames.end(); ++i) {
-        _externalInterface->DeliverToGame(ExternalInterface::MessageEngineToGame(ExternalInterface::AnimationAvailable(*i)));
+      if (_externalInterface != nullptr) {
+        vector<std::string> animNames(_cannedAnimations.GetAnimationNames());
+        for (vector<std::string>::iterator i=animNames.begin(); i != animNames.end(); ++i) {
+          _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::AnimationAvailable(*i)));
+        }
       }
 
 

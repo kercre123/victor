@@ -77,7 +77,7 @@ telnetPrintf("clientQueuePacket\n");
 
   if(haveClient)
   {
-    const int8 err = espconn_sent(udpServer, data, len);
+    const int8 err = espconn_send(udpServer, data, len);
     if (err < 0) // XXX I think a negative number is an error. 0 is OK, I don't know what positive numbers are
     {
       telnetPrintf("Failed to queue UDP packet %d\n", err);

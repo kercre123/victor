@@ -1,7 +1,7 @@
 #include "battery.h"
 #include "motors.h"
 #include "head.h"
-#include "uart.h"
+#include "debug.h"
 #include "timer.h"
 #include "lights.h"
 #include "nrf.h"
@@ -17,7 +17,7 @@ extern GlobalDataToBody g_dataToBody;
 void TestRun(u8 cmd, s16 arg)
 {
   const u8 REPSTART = 0xFC, REPEND = 0xFD;
-  UART::put(REPSTART);
+  UART::print("%c\n\r", REPSTART);
 
   // Execute motor setpower commands (0-3)
   if (cmd <= 4)
@@ -34,7 +34,7 @@ void TestRun(u8 cmd, s16 arg)
   {
   }
 
-  UART::put(REPEND);
+  UART::print("%c\n\r", REPEND);
 }
 
 // Test mode enables direct control of the platform via the rear UART
@@ -115,7 +115,7 @@ void TestFixtures::motors() {
       Motors::update();
     #endif
 
-    UART::put("\r\nForward: ");
+    UART::print("\r\nForward: ");
     #ifndef DO_GEAR_RATIO_TESTING
     for (int i = 0; i < 2; i++)
       Motors::setPower(i, 0x4000);
@@ -129,7 +129,7 @@ void TestFixtures::motors() {
     Motors::printEncodersRaw();
     MicroWait(500000);
 
-    UART::put("  Backward: ");
+    UART::print("  Backward: ");
     #ifndef DO_GEAR_RATIO_TESTING
     for (int i = 0; i < 2; i++)
       Motors::setPower(i, -0x4000);

@@ -9,7 +9,7 @@ COMMAND_PORT = 8580
 USERBIN1 = os.path.join("bin", "upgrade", "user1.2048.new.3.bin")
 USERBIN2 = os.path.join("bin", "upgrade", "user2.2048.new.3.bin")
 USERBIN1_ADDR = 0x01000
-USERBIN2_ADDR = 0x41000
+USERBIN2_ADDR = 0x81000
 
 USAGE = """
 %s <mode> <robot IP address>
@@ -159,7 +159,7 @@ if __name__ == '__main__':
             except:
                 sys.exit("Couldn't interprate \"{}\" as a wifi channel".format(sys.argv[6]))
         else:
-            wifiChannel = 11
+            wifiChannel = 9
         doUpgrade(robotHostname, UpgradeCommandFlags.CONFIG, ssid, pkey, wifiOpMode, wifiChannel)
     else:
         sys,stderr.write(USAGE)
