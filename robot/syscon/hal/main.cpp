@@ -10,6 +10,7 @@
 #include "lights.h"
 #include "tests.h"
 #include "radio.h"
+#include "drop.h"
 
 #include "anki/cozmo/robot/spineData.h"
 
@@ -24,6 +25,7 @@ int main(void)
   u32 failedTransferCount = 0;
 
   // Initialize the hardware peripherals
+  Drop::init();
   Battery::init();
   TimerInit();
   Motors::init();   // Must init before power goes on

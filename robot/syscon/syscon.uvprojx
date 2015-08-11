@@ -457,6 +457,11 @@
               <FileType>8</FileType>
               <FilePath>.\hal\tests.cpp</FilePath>
             </File>
+            <File>
+              <FileName>drop.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\hal\drop.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
