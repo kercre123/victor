@@ -453,6 +453,40 @@
                 ],
               },
               {
+                'action_name': 'create_symlink_resources_assets',
+                'inputs': [
+                  '<(cozmo_asset_path)',
+                ],
+                'outputs': [
+                  '../../simulator/controllers/webotsCtrlGameEngine/resources/assets',
+                ],
+                'action': [
+                  'ln',
+                  '-s',
+                  '-f',
+                  '-h',
+                  '<@(_inputs)',
+                  '<@(_outputs)',
+                ],
+              },
+              {
+                'action_name': 'create_symlink_resources_configs',
+                'inputs': [
+                  '<(cozmo_engine_path)/resources/config',
+                ],
+                'outputs': [
+                  '../../simulator/controllers/webotsCtrlGameEngine/resources/config',
+                ],
+                'action': [
+                  'ln',
+                  '-s',
+                  '-f',
+                  '-h',
+                  '<@(_inputs)',
+                  '<@(_outputs)',
+                ],
+              },
+              {
                 'action_name': 'create_symlink_webotsCtrlRobot',
                 'inputs': [
                   '<(PRODUCT_DIR)/webotsCtrlRobot',

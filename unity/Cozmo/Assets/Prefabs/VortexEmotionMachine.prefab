@@ -71,8 +71,6 @@ MonoBehaviour:
     emotionAnims:
     - animName: WatchSpin
       numLoops: 0
-    - animName: AltSpinWatch
-      numLoops: 0
   - stateName: WATCH_RESULT
     playAllAnims: 0
     emotionAnims:
