@@ -98,7 +98,8 @@ void CozmoEngine::HandleEvents(const AnkiEvent<ExternalInterface::MessageGameToE
     default:
     {
       PRINT_STREAM_ERROR("CozmoEngine.HandleEvents",
-                         "Subscribed to unhandled event of type " << (u32)event.GetData().GetTag() << "!");
+                         "Subscribed to unhandled event of type "
+                         << ExternalInterface::MessageGameToEngineTagToString(event.GetData().GetTag()) << "!");
     }
   }
 }

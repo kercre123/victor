@@ -19,6 +19,7 @@ namespace Anki {
     RobotManager::RobotManager(IExternalInterface* externalInterface, Data::DataPlatform* dataPlatform)
     : _externalInterface(externalInterface)
     , _dataPlatform(dataPlatform)
+    , _robotEventHandler(*this, externalInterface)
     {
       
     }
