@@ -433,6 +433,7 @@ namespace Cozmo {
                 if(robot->IsPickingOrPlacing()) { msg.status |= IS_PICKING_OR_PLACING; }
                 if(robot->IsPickedUp())         { msg.status |= IS_PICKED_UP; }
                 if(robot->IsAnimating())        { msg.status |= IS_ANIMATING; }
+                if(robot->IsIdleAnimating())    { msg.status |= IS_ANIMATING_IDLE; }
                 if(robot->IsCarryingObject())   {
                   msg.status |= IS_CARRYING_BLOCK;
                   msg.carryingObjectID = robot->GetCarryingObject();
