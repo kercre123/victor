@@ -14,6 +14,7 @@
 #define _Anki_Cozmo_Basestation_Data_DataPlatform_H__
 
 #include "dataScope.h"
+#include "json/json-forwards.h"
 #include <string>
 
 namespace Anki {
@@ -28,10 +29,13 @@ public:
     const std::string &externalPath,
     const std::string &resourcesPath);
 
-  std::string pathToResource(Scope resourceScope, const std::string& resourceName) const;
+  std::string pathToResource(const Scope& resourceScope, const std::string& resourceName) const;
 
-  // returns true if the given resource exists, false otherwise
-  bool exists(const std::string& resource) const;
+  // reads resource as json file. returns true if successful.
+  bool readAsJson(const Scope& resourceScope, const std::string& resourceName, Json::Value& data) const;
+
+  // write dat to json file. returns true if successful.
+  bool writeAsJson(const Scope& resourceScope, const std::string& resourceName, const Json::Value& data) const;
 
 private:
   const std::string _filesPath;

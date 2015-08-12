@@ -404,6 +404,8 @@ namespace Anki {
       // Returns true if the robot is currently playing an animation, according
       // to most recent state message.
       bool IsAnimating() const;
+      
+      bool IsIdleAnimating() const;
 
       Result SyncTime();
       void SetSyncTimeAcknowledged(bool ack);
@@ -640,6 +642,7 @@ namespace Anki {
       bool             _isHeadMoving;
       bool             _isLiftMoving;
       bool             _isAnimating;
+      bool             _isIdleAnimating;
       f32              _battVoltage;
       ImageSendMode_t _imageSendMode;
       // Pose history
@@ -879,6 +882,10 @@ namespace Anki {
     
     inline bool Robot::IsAnimating() const {
       return _isAnimating;
+    }
+    
+    inline bool Robot::IsIdleAnimating() const {
+      return _isIdleAnimating;
     }
     
     inline Result Robot::TurnOffObjectLights(const ObjectID& objectID) {

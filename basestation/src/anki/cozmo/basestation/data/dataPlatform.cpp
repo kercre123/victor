@@ -12,8 +12,10 @@
 
 
 #include "dataPlatform.h"
+#include "json/json.h"
 #include "util/logging/logging.h"
-#include <unistd.h>
+#include "util/helpers/includeFstream.h"
+#include "util/fileUtils/fileUtils.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -30,7 +32,7 @@ DataPlatform::DataPlatform(const std::string &filesPath, const std::string &cach
 
 }
 
-std::string DataPlatform::pathToResource(Scope resourceScope, const std::string& resourceName) const
+std::string DataPlatform::pathToResource(const Scope& resourceScope, const std::string& resourceName) const
 {
   std::string s = "";
   if (Scope::Resources == resourceScope) {
@@ -66,14 +68,42 @@ std::string DataPlatform::pathToResource(Scope resourceScope, const std::string&
       s += resourceName;
     }
   }
-  PRINT_NAMED_DEBUG("DataPlatform", "%s", s.c_str());
+  //PRINT_NAMED_DEBUG("DataPlatform", "%s", s.c_str());
   return s;
 }
 
-// returns true if the given resource exists, false otherwise
-bool DataPlatform::exists(const std::string& resource) const
+// reads resource as json file. returns true if successful.
+bool DataPlatform::readAsJson(const Scope& resourceScope, const std::string& resourceName, Json::Value& data) const
 {
-  return access(resource.c_str(), R_OK) == 0;
+  const std::string jsonFilename = pathToResource(resourceScope, resourceName);
+  std::ifstream jsonFile(jsonFilename);
+  Json::Reader reader;
+  bool success = reader.parse(jsonFile, data);
+  if(! success) {
+    PRINT_NAMED_ERROR("DataPlatform.readAsJson", "Failed to parse Json file %s.", resourceName.c_str());
+  }
+  jsonFile.close();
+  return success;
+}
+
+// write dat to json file. returns true if successful.
+bool DataPlatform::writeAsJson(const Scope& resourceScope, const std::string& resourceName, const Json::Value& data) const
+{
+  const std::string jsonFilename = pathToResource(resourceScope, resourceName);
+  PRINT_NAMED_INFO("DataPlatform.writeAsJson", "writing to %s", jsonFilename.c_str());
+  if (!Util::FileUtils::CreateDirectory(jsonFilename, true, true)) {
+    PRINT_NAMED_ERROR("DataPlatform.writeAsJson", "Failed to create folder %s.", jsonFilename.c_str());
+    return false;
+  }
+  Json::StyledStreamWriter writer;
+  std::fstream fs;
+  fs.open(jsonFilename, std::ios::out);
+  if (!fs.is_open()) {
+    return false;
+  }
+  writer.write(fs, data);
+  fs.close();
+  return true;
 }
 
 
