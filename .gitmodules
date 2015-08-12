@@ -6,3 +6,6 @@
 	path = lib/anki/products-cozmo-assets
 	url = git@github.com:anki/products-cozmo-assets.git
 	branch = master
+[submodule "lib/anki/audio"]
+	path = lib/anki/audio
+	url = git@github.com:anki/drive-audio.git

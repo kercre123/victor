@@ -226,7 +226,7 @@ public class SpinWheel : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
 		rTrans = transform as RectTransform;
 		canvas = GetComponentInParent<Canvas>();
 
-		Application.targetFrameRate = 30;
+		Application.targetFrameRate = 15;
 		Time.fixedDeltaTime =  1f / 60f;
 
 		InitData();

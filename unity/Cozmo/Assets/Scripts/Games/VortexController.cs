@@ -24,7 +24,7 @@ public class VortexController : GameController
 		SPIN_COMPLETE
 	}
 
-	class VortexInput
+class VortexInput
 	{
 		public List<float> stamps = new List<float>();
 
@@ -667,9 +667,11 @@ public class VortexController : GameController
 			Debug.Log("Enter_RESULTS robot.SetLiftHeight(0.1f);");
 			//robot.SetLiftHeight(0.1f);
 
+			/*
 			if(humanHead != null) {
 				robot.FaceObject(humanHead, false);
 			}
+			*/
 		}
 
 		if(sortedScoreData[0].playerIndex == cozmoIndex) {
@@ -912,6 +914,11 @@ public class VortexController : GameController
 			playersEliminated[i] = false;
 		}
 
+		markx_mm = robot.WorldPosition.x;
+		marky_mm = robot.WorldPosition.y;
+		mark_rad = robot.poseAngle_rad + (3.0f * Mathf.PI) / 2.0f;
+		mark_rad = mark_rad < 2.0f * Mathf.PI ? mark_rad : mark_rad - 2.0f * Mathf.PI;
+
 
 		PlaceTokens();
 
@@ -956,7 +963,7 @@ public class VortexController : GameController
 
 		if(currentPlayerIndex == cozmoIndex) {
 			wheel.AutomatedMode();
-			SetRobotEmotion("SPIN_WHEEL", false);
+			SetRobotEmotion ("SPIN_WHEEL", false);
 
 			startDragPos = new Vector2(cozmoStartDragPos.x * Screen.width, cozmoStartDragPos.y * Screen.height);
 			startDragPos += UnityEngine.Random.insideUnitCircle * Screen.height * 0.1f;
@@ -967,6 +974,8 @@ public class VortexController : GameController
 			dragCount = 0;
 			dragCountMax = UnityEngine.Random.Range(2, 4);
 			wheel.DragStart(startDragPos, Time.time);
+
+
 
 //			Vector3 startWorld = Camera.main.ScreenToWorldPoint(startDragPos);
 //			Vector3 endWorld = Camera.main.ScreenToWorldPoint(startDragPos);
@@ -1106,6 +1115,7 @@ public class VortexController : GameController
 	{
 
 		SetRobotEmotion("WATCH_SPIN", false);
+
 		lightingBall.Radius = wheelLightningRadii[currentWheelIndex];
 
 		for(int i = 0; i < playerButtonCanvasGroups.Length; i++) {
@@ -1697,7 +1707,7 @@ public class VortexController : GameController
 		}
 	}
 
-	void BlockTapped(int blockID)
+	void BlockTapped(int blockID, int numTaps)
 	{
 		Debug.Log ("BlockTapped block("+blockID+")");
 		for(int i = 0; i < playerInputBlocks.Count; i++) {
@@ -1708,7 +1718,9 @@ public class VortexController : GameController
 			//if we are faking cozmo's taps, let's ignore any real incoming messages for his block
 			if(fakeCozmoTaps && i == cozmoIndex) continue;
 
-			PlayerInputTap(i);
+			for(int j = 0; j < numTaps; j++) {
+				PlayerInputTap(i);
+			}
 			break;
 		}
 	}

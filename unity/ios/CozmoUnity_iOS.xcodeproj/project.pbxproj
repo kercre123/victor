@@ -705,7 +705,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
-			shellScript = "\"${ANKI_BUILD_REPO_ROOT}/lib/anki/cozmo-engine/scripts/build/CopyResources.sh\" \"${ANKI_BUILD_REPO_ROOT}/lib/anki/cozmo-engine/resources\" \"${ANKI_BUILD_REPO_ROOT}/lib/anki/products-cozmo-assets/\" \"${CONFIGURATION_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/\"\n";
+			shellScript = "\"${ANKI_BUILD_REPO_ROOT}/lib/anki/cozmo-engine/scripts/build/CopyResources.sh\" \"${ANKI_BUILD_REPO_ROOT}/lib/anki/cozmo-engine/resources/config\" \"${ANKI_BUILD_REPO_ROOT}/lib/anki/products-cozmo-assets/\" \"${CONFIGURATION_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/\"\n";
 			showEnvVarsInLog = 0;
 		};
 		83D0C1FB0E6C8D5900EBCE5D /* Run Unity Build */ = {

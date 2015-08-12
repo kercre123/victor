@@ -133,7 +133,7 @@ public class ActiveBlock : ObservedObject
 
 	public event Action<ActiveBlock> OnAxisChange;
 
-	public static Action<int> TappedAction;
+	public static Action<int, int> TappedAction;
 
 	public ActiveBlock(int objectID, uint objectFamily, uint objectType)
 	{
@@ -183,8 +183,8 @@ public class ActiveBlock : ObservedObject
 
 	public void Tapped(G2U.ActiveObjectTapped message)
 	{
-		Debug.Log("Tapped Message Received for ActiveBlock(" + ID + ")");
-		if(TappedAction != null) TappedAction(ID);
+		Debug.Log("Tapped Message Received for ActiveBlock(" + ID + "): " + message.numTaps + " taps");
+		if(TappedAction != null) TappedAction(ID, message.numTaps);
 	}
 
 	public void SetAllLEDs() // should only be called from update loop
