@@ -450,7 +450,7 @@ public class GameLayoutTracker : MonoBehaviour
 
 		
 		//let's stop any prior animating
-		if(robot.isBusy && robot.Status(Robot.StatusFlag.IS_ANIMATING))
+		if(robot.isBusy && robot.Status(RobotStatusFlag.IS_ANIMATING))
 		{
 			robot.CancelAction(RobotActionType.PLAY_ANIMATION);
 		}
