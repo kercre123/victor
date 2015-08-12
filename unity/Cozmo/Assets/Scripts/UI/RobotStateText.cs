@@ -47,7 +47,7 @@ public class RobotStateText : MonoBehaviour {
 	const string degree 					= "°";
 	const string empty 						= "";
 
-	List<Robot.StatusFlag> statuses = new List<Robot.StatusFlag>();
+	List<RobotStatusFlag> statuses = new List<RobotStatusFlag>();
 
 	byte 				lastID;
 	float 				lastHeadAngle;
@@ -56,7 +56,7 @@ public class RobotStateText : MonoBehaviour {
 	float 				lastRightWheelSpeed;
 	float 				lastLiftHeight;
 	Vector3 			lastWorldPosition;
-	Robot.StatusFlag 	lastStatus;
+	RobotStatusFlag 	lastStatus;
 	float 				lastBatteryPercent;
 	ObservedObject 		lastCarryingObjectID;
 	ObservedObject 		lastHeadTracking;
@@ -164,20 +164,20 @@ public class RobotStateText : MonoBehaviour {
 		lastWorldPosition = bot.WorldPosition;
 	}
 
-	string GetStringForStatus(Robot.StatusFlag status) {
+	string GetStringForStatus(RobotStatusFlag status) {
 		switch(status) {
-			case Robot.StatusFlag.IS_MOVING: return moving;
-			case Robot.StatusFlag.IS_CARRYING_BLOCK: return carrying;
-			case Robot.StatusFlag.IS_PICKING_OR_PLACING: return manipulating;
-			case Robot.StatusFlag.IS_PICKED_UP: return pickedUP;
-			case Robot.StatusFlag.IS_ANIMATING: return animating;
-			case Robot.StatusFlag.IS_PERFORMING_ACTION: return acting;
+			case RobotStatusFlag.IS_MOVING: return moving;
+			case RobotStatusFlag.IS_CARRYING_BLOCK: return carrying;
+			case RobotStatusFlag.IS_PICKING_OR_PLACING: return manipulating;
+			case RobotStatusFlag.IS_PICKED_UP: return pickedUP;
+			case RobotStatusFlag.IS_ANIMATING: return animating;
+			case RobotStatusFlag.IS_PERFORMING_ACTION: return acting;
 		}
 
 		return empty;
 	}
 	
-	void CheckSpecificStatus(Robot.StatusFlag status) {
+	void CheckSpecificStatus(RobotStatusFlag status) {
 		
 		bool statusActive = bot.Status(status);
 		
@@ -197,12 +197,12 @@ public class RobotStateText : MonoBehaviour {
 	void RefreshStatus() {
 		if(text_status == null) return;
 
-		CheckSpecificStatus(Robot.StatusFlag.IS_MOVING);
-		CheckSpecificStatus(Robot.StatusFlag.IS_CARRYING_BLOCK);
-		CheckSpecificStatus(Robot.StatusFlag.IS_PICKING_OR_PLACING);
-		CheckSpecificStatus(Robot.StatusFlag.IS_PICKED_UP);
-		CheckSpecificStatus(Robot.StatusFlag.IS_ANIMATING);
-		CheckSpecificStatus(Robot.StatusFlag.IS_PERFORMING_ACTION);
+		CheckSpecificStatus(RobotStatusFlag.IS_MOVING);
+		CheckSpecificStatus(RobotStatusFlag.IS_CARRYING_BLOCK);
+		CheckSpecificStatus(RobotStatusFlag.IS_PICKING_OR_PLACING);
+		CheckSpecificStatus(RobotStatusFlag.IS_PICKED_UP);
+		CheckSpecificStatus(RobotStatusFlag.IS_ANIMATING);
+		CheckSpecificStatus(RobotStatusFlag.IS_PERFORMING_ACTION);
 
 		string statusString = prefix_status + eol;
 

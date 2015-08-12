@@ -527,7 +527,7 @@ public class RobotEngineManager : MonoBehaviour
 
 		if(!success)
 		{
-			if(current.Status(Robot.StatusFlag.IS_CARRYING_BLOCK))
+			if(current.Status(RobotStatusFlag.IS_CARRYING_BLOCK))
 			{
 				current.SetLiftHeight(1f);
 			} else

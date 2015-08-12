@@ -37,7 +37,7 @@ public class GoldRushGameActions : GameActions
 	{
 		if(robot.isBusy) return;
 
-		if(robot.Status(Robot.StatusFlag.IS_CARRYING_BLOCK))
+		if(robot.Status(RobotStatusFlag.IS_CARRYING_BLOCK))
 		{
 			if(goldController.state == GameController.GameState.PRE_GAME)
 			{

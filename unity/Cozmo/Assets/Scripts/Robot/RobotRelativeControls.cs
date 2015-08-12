@@ -168,7 +168,7 @@ public class RobotRelativeControls : MonoBehaviour
 		if(DebugOverride()) return;
 
 		//if coz is picked up, let's zero our wheels and abort control logic
-		if(robot.Status(Robot.StatusFlag.IS_PICKED_UP))
+		if(robot.Status(RobotStatusFlag.IS_PICKED_UP))
 		{
 			robot.DriveWheels(0f, 0f);
 			return;
@@ -188,7 +188,7 @@ public class RobotRelativeControls : MonoBehaviour
 		RefreshTargetLock();
 
 		targetLockTimer += Time.deltaTime;
-		if(lastTargetLock == null && targetLock != null && robot.Status(Robot.StatusFlag.IS_CARRYING_BLOCK)) targetLockTimer = 0f;
+		if(lastTargetLock == null && targetLock != null && robot.Status(RobotStatusFlag.IS_CARRYING_BLOCK)) targetLockTimer = 0f;
 
 		//if we are unlocked this frame, let's reset our head angle back to sane value
 		//if(lastTargetLock != null && targetLock == null && !robot.isBusy) robot.SetHeadAngle();

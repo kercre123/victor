@@ -110,7 +110,7 @@ public class GameActions : MonoBehaviour
 			return;
 		}
 		
-		if(robot.Status(Robot.StatusFlag.IS_CARRYING_BLOCK))
+		if(robot.Status(RobotStatusFlag.IS_CARRYING_BLOCK))
 		{
 			//			if( buttons.Length > 1 )
 			//			{
