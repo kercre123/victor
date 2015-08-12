@@ -15,6 +15,7 @@ public class CozmoEmotionManager : MonoBehaviour {
 	private U2G.QueueSingleAction QueueSingleAnimMessage;
 	private U2G.QueueCompoundAction QueueCompoundActionsMessage;
 	private U2G.PlayAnimation PlayAnimationMessage;
+	private U2G.PlayAnimation[] PlayAnimationMessages;
 	private U2G.SetIdleAnimation SetIdleAnimationMessage;
 	private U2G.GotoPose GotoPoseMessage; 
 	CozmoEmotionMachine currentEmotionMachine;
@@ -67,6 +68,10 @@ public class CozmoEmotionManager : MonoBehaviour {
 	{
 		QueueSingleAnimMessage = new U2G.QueueSingleAction();
 		PlayAnimationMessage = new U2G.PlayAnimation();
+		PlayAnimationMessages = new U2G.PlayAnimation[2];
+		PlayAnimationMessages [0] = new U2G.PlayAnimation ();
+		PlayAnimationMessages [1] = new U2G.PlayAnimation ();
+
 		SetIdleAnimationMessage = new U2G.SetIdleAnimation ();
 		GotoPoseMessage = new U2G.GotoPose ();
 		QueueCompoundActionsMessage = new U2G.QueueCompoundAction ();
@@ -224,11 +229,11 @@ public class CozmoEmotionManager : MonoBehaviour {
 		{
 			CozmoAnimation anim = anims [i];
 			Debug.Log ("Sending " + anim.animName + " with " + anim.numLoops + " loop" + (anim.numLoops != 1 ? "s" : ""));
-			PlayAnimationMessage.animationName = anim.animName;
-			PlayAnimationMessage.numLoops = anim.numLoops;
-			PlayAnimationMessage.robotID = robot.ID;
+			PlayAnimationMessages[i].animationName = anim.animName;
+			PlayAnimationMessages[i].numLoops = anim.numLoops;
+			PlayAnimationMessages[i].robotID = robot.ID;
 
-			QueueCompoundActionsMessage.actions [i].playAnimation = PlayAnimationMessage;
+			QueueCompoundActionsMessage.actions [i].playAnimation = PlayAnimationMessages[i];
 			QueueCompoundActionsMessage.actionTypes [i] = Anki.Cozmo.RobotActionType.PLAY_ANIMATION;
 		}
 
