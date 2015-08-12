@@ -159,9 +159,11 @@ def main(scriptArgs):
 
   # update file lists
   generator = updateFileLists.FileListGenerator(options)
-  generator.processFolder(['basestation/src/anki/cozmo', 'basestation/include/anki/cozmo', 'include', 'generated/clad/engine'], ['project/gyp/cozmoEngine.lst'])
+  generator.processFolder(['basestation/src/anki/cozmo', 'basestation/include/anki/cozmo', 'include', 'generated/clad/engine', 'resources'],
+   ['project/gyp/cozmoEngine.lst'])
   generator.processFolder(['basestation/test', 'robot/test'], ['project/gyp/cozmoEngine-test.lst'])
-  generator.processFolder(['robot/sim_hal', 'robot/supervisor/src', 'simulator/src', 'simulator/controllers/webotsCtrlRobot'], ['project/gyp/ctrlRobot.lst'])
+  generator.processFolder(['robot/sim_hal', 'robot/supervisor/src', 'simulator/src', 'simulator/controllers/webotsCtrlRobot'],
+   ['project/gyp/ctrlRobot.lst'])
   generator.processFolder(['simulator/controllers/webotsCtrlViz'], ['project/gyp/ctrlViz.lst'])
   generator.processFolder(['clad/src'], ['project/gyp/clad.lst'])
   webotsPhysicsPath = os.path.join(projectRoot, 'generated/webots/src/plugins/physics/')
@@ -213,6 +215,7 @@ def main(scriptArgs):
                                   webots_path={3}
                                   cti-gtest_path={4}
                                   cti-util_gyp_path={5}
+                                  cozmo_engine_path={6}
                                   cti-cozmo_engine_path={6}
                                   ce-gtest_path={7}
                                   ce-util_gyp_path={8}

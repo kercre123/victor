@@ -1273,6 +1273,8 @@ Supervisor {
 									type "active"
 									isLocked FALSE
 									autoLock TRUE
+									tensileStrength 1
+									shearStrength 1
 								}
 
 								] # SmallFingerGripper Children

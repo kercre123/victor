@@ -308,6 +308,9 @@
               '../../vision/basestation/test',
               '<@(opencv_includes)',
             ],
+            'defines': [
+              'TEST_DATA_PATH=<(cti-cozmo_engine_path)/coretech/'
+            ],
             'dependencies': [
               'ctiCommon',
               'ctiVision',

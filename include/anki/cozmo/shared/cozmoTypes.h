@@ -120,7 +120,8 @@ namespace Anki {
       IS_PERFORMING_ACTION    = 0x00000080,
       LIFT_IN_POS             = 0x00000100,
       HEAD_IN_POS             = 0x00000200,
-      IS_ANIM_BUFFER_FULL     = 0x00000400
+      IS_ANIM_BUFFER_FULL     = 0x00000400,
+      IS_ANIMATING_IDLE       = 0x00000800
     } RobotStatusFlag;
     
     // Status bit flags for game state

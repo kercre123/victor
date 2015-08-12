@@ -16,8 +16,9 @@
 namespace Anki {
   namespace Cozmo {
     
-    RobotManager::RobotManager(IExternalInterface* externalInterface)
+    RobotManager::RobotManager(IExternalInterface* externalInterface, Data::DataPlatform* dataPlatform)
     : _externalInterface(externalInterface)
+    , _dataPlatform(dataPlatform)
     , _robotEventHandler(*this, externalInterface)
     {
       
@@ -32,7 +33,7 @@ namespace Anki {
       
       if (_robots.find(withID) == _robots.end()) {
         PRINT_STREAM_INFO("RobotManager.AddRobot", "Adding robot with ID=" << withID);
-        _robots[withID] = new Robot(withID, msgHandler, _externalInterface);
+        _robots[withID] = new Robot(withID, msgHandler, _externalInterface, _dataPlatform);
         _IDs.push_back(withID);
       } else {
         PRINT_STREAM_WARNING("RobotManager.AddRobot.AlreadyAdded", "Robot with ID " << withID << " already exists. Ignoring.");
