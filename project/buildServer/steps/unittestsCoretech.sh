@@ -1,6 +1,5 @@
 set -e
 TESTNAME=cti
-#PROJECTNAME=cozmoEngine
 PROJECTNAME=coretech-internal
 PROJECTROOT=
 # change dir to the project dir, no matter where script is executed from
@@ -21,12 +20,6 @@ PROJECT=$TOPLEVEL/$PROJECTROOT/generated/mac
 BUILD_TYPE="Debug"
 DERIVED_DATA=$PROJECT/DerivedData
 
-#$TOPLEVEL/tools/build/preBuild.sh "$DERIVED_DATA/$BUILD_TYPE" UNIT_TEST
-
-#echo "Entering directory \`${PROJECT}'"
-#cd $PROJECT
-#mkdir -p $DERIVED_DATA/$BUILD_TYPE/testdata
-
 # build
 xcodebuild \
 -project $PROJECT/coretech/project/gyp/$PROJECTNAME.xcodeproj \
@@ -38,8 +31,13 @@ OBJROOT="$DERIVED_DATA" \
 build 
 
 
-# execute
 set -o pipefail
+set +e
+
+# clean output
+rm -rf $DERIVED_DATA/$BUILD_TYPE/${TESTNAME}GoogleTest*
+
+# execute
 #ANKIWORKROOT="$DERIVED_DATA/$BUILD_TYPE/testdata" \
 #ANKICONFIGROOT="$DERIVED_DATA/$BUILD_TYPE/" \
 #echo \
@@ -58,7 +56,6 @@ EXIT_STATUS=$?
 set -e
 
 #tarball files together
-echo "Entering directory \`${DERIVED_DATA}/${BUILD_TYPE}'"
 cd $DERIVED_DATA/$BUILD_TYPE
 tar czf ${TESTNAME}GoogleTest.tar.gz ${TESTNAME}GoogleTest_*
 
