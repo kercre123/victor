@@ -10,8 +10,8 @@
  *
  **/
 
-#ifndef COZMO_BASESTATION_ROBOTEVENTHANDLER_H
-#define COZMO_BASESTATION_ROBOTEVENTHANDLER_H
+#ifndef __Cozmo_Basestation_RobotEventHandler_H__
+#define __Cozmo_Basestation_RobotEventHandler_H__
 
 #include "anki/cozmo/shared/cozmoTypes.h"
 #include "util/signals/simpleSignal_fwd.h"
@@ -64,4 +64,4 @@ protected:
 } // namespace Cozmo
 } // namespace Anki
 
-#endif // COZMO_BASESTATION_ROBOTEVENTHANDLER_H
+#endif // __Cozmo_Basestation_RobotEventHandler_H__
