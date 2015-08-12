@@ -15,7 +15,6 @@ ifndef PDIR
 GEN_LIBS = libtransport.a
 endif
 
-
 #############################################################
 # Configuration i.e. compile options etc.
 # Target specific stuff (defines etc.) goes in here!
@@ -23,7 +22,7 @@ endif
 #   makefile at its root level - these are then overridden
 #   for a subtree within the makefile rooted therein
 #
-#DEFINES +=
+DEFINES += -DTARGET_ESPRESSIF
 
 #############################################################
 # Recursion Magic - Don't touch this!!
@@ -43,6 +42,5 @@ INCLUDES := $(INCLUDES) -I $(PDIR)include
 INCLUDES += -I ./
 INCLUDES += -I ../../include/ets
 INCLUDES += -I $(ANKI_UTIL)
-CSRCS := $(UTIL_EMBEDDED_TRANSPORT)/reliableTransport.c $(UTIL_EMBEDDED_TRANSPORT)/reliableSequenceId.c
 PDIR := ../$(PDIR)
 sinclude $(PDIR)Makefile
