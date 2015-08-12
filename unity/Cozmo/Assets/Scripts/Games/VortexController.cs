@@ -667,9 +667,11 @@ class VortexInput
 			Debug.Log("Enter_RESULTS robot.SetLiftHeight(0.1f);");
 			//robot.SetLiftHeight(0.1f);
 
+			/*
 			if(humanHead != null) {
 				robot.FaceObject(humanHead, false);
 			}
+			*/
 		}
 
 		if(sortedScoreData[0].playerIndex == cozmoIndex) {
