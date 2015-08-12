@@ -14,7 +14,6 @@
 static struct espconn *udpServer;
 static bool haveClient = false;
 
-
 static void ICACHE_FLASH_ATTR udpServerRecvCB(void *arg, char *usrdata, unsigned short len)
 {
   if (arg != (void*)udpServer)

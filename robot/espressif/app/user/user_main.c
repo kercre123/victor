@@ -131,10 +131,6 @@ static void ICACHE_FLASH_ATTR system_init_done(void)
   // Initalize i2SPI interface
   i2sInit();
 
-  // Set CPU frequency again here just in case
-  REG_SET_BIT(0x3ff00014, BIT(0)); //< Set CPU frequency to 160MHz
-  system_update_cpu_freq(160);
-
   // Setup high priority task
   task2Init();
   // Enable UART0 RX interrupt
@@ -171,8 +167,8 @@ user_init(void)
     err = system_update_cpu_freq(160);
 
     uart_init(BIT_RATE_115200, BIT_RATE_115200);
-    gpio_init();
 
+    gpio_init();
 
     os_printf("Espressif booting up...\r\nCPU set freq rslt = %d\r\n", err);
 
