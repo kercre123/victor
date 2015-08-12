@@ -88,6 +88,7 @@ namespace Anki {
     , _isPickedUp(false)
     , _isMoving(false)
     , _isAnimating(false)
+    , _isIdleAnimating(false)
     , _battVoltage(5)
     , _imageSendMode(ISM_OFF)
     , _carryingMarker(nullptr)
@@ -215,9 +216,6 @@ namespace Anki {
         return RESULT_FAIL;
       }
 
-      // Send state to visualizer for displaying
-      VizManager::getInstance()->SendRobotState(msg, (u8)MIN(1000.f/GetAverageImagePeriodMS(), u8_MAX));
-      
       // Save state to file
       if(_stateSaveMode != SAVE_OFF)
       {
@@ -308,6 +306,8 @@ namespace Anki {
       SetPickedUp( msg.status & IS_PICKED_UP );
       
       _isAnimating = static_cast<bool>(msg.status & IS_ANIMATING);
+      _isIdleAnimating = _animationStreamer.IsIdleAnimating();
+      
       _numFreeAnimationBytes = msg.numAnimBytesFree;
       
       _battVoltage = (f32)msg.battVolt10x * 0.1f;
@@ -434,6 +434,16 @@ namespace Anki {
        msg.timestamp, msg.pose_frame_id,
        msg.pose_x, msg.pose_y, msg.pose_angle*180.f/M_PI);
        */
+      
+      
+      // Engine modifications to state message.
+      // TODO: Should this just be a different message? Or one that includes the state message from the robot?
+      MessageRobotState stateMsg(msg);
+      if (_isIdleAnimating) { stateMsg.status |= IS_ANIMATING_IDLE; }
+      
+      
+      // Send state to visualizer for displaying
+      VizManager::getInstance()->SendRobotState(stateMsg, (u8)MIN(1000.f/GetAverageImagePeriodMS(), u8_MAX));
       
       return lastResult;
       

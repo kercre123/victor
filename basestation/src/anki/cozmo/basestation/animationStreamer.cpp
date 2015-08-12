@@ -134,6 +134,11 @@ namespace Cozmo {
   } // AnimationStreamer::Update()
   
   
+  bool AnimationStreamer::IsIdleAnimating() const
+  {
+    return _isIdling;
+  }
+  
 } // namespace Cozmo
 } // namespace Anki
 
