@@ -18,13 +18,10 @@
 
 #include "anki/cozmo/basestation/viz/vizManager.h"
 #include "util/logging/logging.h"
-#include "anki/common/basestation/utils/fileManagement.h"
 #include "anki/common/basestation/exceptions.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/polygon_impl.h"
-
 #include "anki/vision/basestation/imageIO.h"
-
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
 
 

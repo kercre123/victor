@@ -20,24 +20,16 @@
 namespace Anki {
 namespace Cozmo {
 
-CozmoEngine::CozmoEngine(IExternalInterface* externalInterface)
+CozmoEngine::CozmoEngine(IExternalInterface* externalInterface, Data::DataPlatform* dataPlatform)
 : _impl(nullptr)
 , _externalInterface(externalInterface)
-, _loggerProvider()
+, _dataPlatform(dataPlatform)
 {
-  _loggerProvider.SetMinLogLevel(0);
-  if (Anki::Util::gLoggerProvider == nullptr) {
-    Anki::Util::gLoggerProvider = &_loggerProvider;
-  }
   ASSERT_NAMED(externalInterface != nullptr, "Cozmo.Engine.ExternalInterface.nullptr");
 }
 
 CozmoEngine::~CozmoEngine()
 {
-  if (Anki::Util::gLoggerProvider == &_loggerProvider) {
-    Anki::Util::gLoggerProvider = nullptr;
-  }
-
   if(_impl != nullptr) {
     delete _impl;
     _impl = nullptr;
@@ -49,8 +41,9 @@ Result CozmoEngine::Init(const Json::Value& config) {
   // We'll use this callback for all the events we care about
   auto callback = std::bind(&CozmoEngine::HandleEvents, this, std::placeholders::_1);
   
-  // Subscribe to the connect message
+  // Subscribe to desired messages
   _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::ConnectToRobot, callback));
+  _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::ReadAnimationFile, callback));
   
   return _impl->Init(config);
 }
@@ -96,10 +89,17 @@ void CozmoEngine::HandleEvents(const AnkiEvent<ExternalInterface::MessageGameToE
       }
       break;
     }
+    case ExternalInterface::MessageGameToEngineTag::ReadAnimationFile:
+    {
+      PRINT_NAMED_INFO("CozmoGame.HandleEvents", "started animation tool");
+      StartAnimationTool();
+      break;
+    }
     default:
     {
       PRINT_STREAM_ERROR("CozmoEngine.HandleEvents",
-                         "Subscribed to unhandled event of type " << (u32)event.GetData().GetTag() << "!");
+                         "Subscribed to unhandled event of type "
+                         << ExternalInterface::MessageGameToEngineTagToString(event.GetData().GetTag()) << "!");
     }
   }
 }

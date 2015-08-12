@@ -17,11 +17,12 @@ namespace Anki {
 namespace Cozmo {
   
 
-CozmoEngineHostImpl::CozmoEngineHostImpl(IExternalInterface* externalInterface)
-: CozmoEngineImpl(externalInterface)
+CozmoEngineHostImpl::CozmoEngineHostImpl(IExternalInterface* externalInterface,Data::DataPlatform* dataPlatform)
+: CozmoEngineImpl(externalInterface, dataPlatform)
 , _isListeningForRobots(false)
 , _robotAdvertisementService("RobotAdvertisementService")
-, _robotMgr(externalInterface)
+, _robotMgr(externalInterface, dataPlatform)
+, _robotMsgHandler(dataPlatform)
 , _lastAnimationFolderScan(0)
 , _animationReloadActive(false)
 {
@@ -148,8 +149,7 @@ void CozmoEngineHostImpl::InitPlaybackAndRecording()
    // Load configuration json from playback log folder
    Json::Reader reader;
    std::ifstream jsonFile(logFolderName + AnkiUtil::kP_CONFIG_JSON_FILE);
-   reader.parse(jsonFile, config_);
-   jsonFile.close();
+   dataPlatform->readAsJson();
 
 
    // Setup playback modules

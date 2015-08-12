@@ -1,26 +1,45 @@
 #include <array>
 #include <fstream>
-
 #include "gtest/gtest.h"
 #include "json/json.h"
-
 #include "anki/common/types.h"
 #include "anki/common/basestation/jsonTools.h"
-#include "anki/common/basestation/platformPathManager.h"
+#include "anki/cozmo/basestation/data/dataPlatform.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/poseBase_impl.h"
 #include "anki/common/robot/matlabInterface.h"
-
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotManager.h"
-
 #include "anki/cozmo/basestation/ramp.h"
-
 #include "anki/cozmo/shared/cozmoConfig.h"
+#include "util/logging/logging.h"
+#include "util/logging/printfLoggerProvider.h"
+#include "util/fileUtils/fileUtils.h"
+#include "anki/cozmo/basestation/robotMessageHandler.h"
+#include <unistd.h>
 
-#include "robotMessageHandler.h"
-#include "pathPlanner.h"
+Anki::Cozmo::Data::DataPlatform* dataPlatform = nullptr;
+Anki::Util::PrintfLoggerProvider* loggerProvider = nullptr;
+
+TEST(DataPlatform, ReadWrite)
+{
+  ASSERT_TRUE(dataPlatform != nullptr);
+  Json::Value config;
+  const bool readSuccess = dataPlatform->readAsJson(
+    Anki::Cozmo::Data::Scope::Resources,
+    "config/basestation/config/configuration.json",
+    config);
+  EXPECT_TRUE(readSuccess);
+
+  config["blah"] = 7;
+  const bool writeSuccess = dataPlatform->writeAsJson(Anki::Cozmo::Data::Scope::Cache, "someRandomFolder/A/writeTest.json", config);
+  EXPECT_TRUE(writeSuccess);
+
+  std::string someRandomFolder = dataPlatform->pathToResource(Anki::Cozmo::Data::Scope::Cache, "someRandomFolder");
+  Anki::Util::FileUtils::RemoveDirectory(someRandomFolder);
+}
+
 
 TEST(Cozmo, SimpleCozmoTest)
 {
@@ -35,7 +54,7 @@ TEST(BlockWorld, AddAndRemoveObject)
   Result lastResult;
   
   MessageHandlerStub  msgHandler;
-  Robot robot(1, &msgHandler, nullptr);
+  Robot robot(1, &msgHandler, nullptr, nullptr);
   
   BlockWorld& blockWorld = robot.GetBlockWorld();
   
@@ -120,7 +139,7 @@ class BlockWorldTest : public ::testing::TestWithParam<const char*>
 
 #define DISPLAY_ERRORS 0
 
-// This is the parameterized test, instantied with a list of Json files below
+// This is the parameterized test, instantiated with a list of Json files below
 TEST_P(BlockWorldTest, BlockAndRobotLocalization)
 {
   using namespace Anki;
@@ -145,17 +164,16 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
   Json::Value jsonRoot;
   std::vector<std::string> jsonFileList;
   
-  const std::string subPath("basestation/test/blockWorldTests/");
-  const std::string jsonFilename = PREPEND_SCOPED_PATH(Test, subPath + GetParam());
-  
+  const std::string subPath("test/blockWorldTests/");
+  const std::string jsonFilename = subPath + GetParam();
+
   fprintf(stdout, "\n\nLoading JSON file '%s'\n", jsonFilename.c_str());
-  
-  std::ifstream jsonFile(jsonFilename);
-  bool jsonParseResult = reader.parse(jsonFile, jsonRoot);
+
+  const bool jsonParseResult = dataPlatform->readAsJson(Anki::Cozmo::Data::Scope::Resources, jsonFilename, jsonRoot);
   ASSERT_TRUE(jsonParseResult);
 
   // Create the modules we need (and stubs of those we don't)
-  RobotManager        robotMgr(nullptr);
+  RobotManager        robotMgr(nullptr, nullptr);
   MessageHandlerStub  msgHandler;
  
   robotMgr.AddRobot(0, &msgHandler);
@@ -499,8 +517,71 @@ INSTANTIATE_TEST_CASE_P(JsonFileBased, BlockWorldTest,
                         ::testing::ValuesIn(visionTestJsonFiles));
 */
 
+#define CONFIGROOT "ANKICONFIGROOT"
+#define WORKROOT "ANKIWORKROOT"
+
 int main(int argc, char ** argv)
 {
+  //LEAKING HERE
+  loggerProvider = new Anki::Util::PrintfLoggerProvider();
+  loggerProvider->SetMinLogLevel(0);
+  Anki::Util::gLoggerProvider = loggerProvider;
+
+
+  std::string configRoot;
+  char* configRootChars = getenv(CONFIGROOT);
+  if (configRootChars != NULL) {
+    configRoot = configRootChars;
+  }
+
+  std::string workRoot;
+  char* workRootChars = getenv(WORKROOT);
+  if (workRootChars != NULL)
+    workRoot = workRootChars;
+
+  std::string resourcePath;
+  std::string filesPath;
+  std::string cachePath;
+  std::string externalPath;
+
+  if (configRoot.empty() || workRoot.empty()) {
+    char cwdPath[1256];
+    getcwd(cwdPath, 1255);
+    PRINT_NAMED_INFO("CozmoTests.main","cwdPath %s", cwdPath);
+    PRINT_NAMED_INFO("CozmoTests.main","executable name %s", argv[0]);
+/*  // still troubleshooting different run time environments,
+    // need to find a way to detect where the resources folder is located on disk.
+    // currently this is relative to the executable.
+    // Another option is to pass it in through the environment variables.
+    // Get the last position of '/'
+    std::string aux(argv[0]);
+#if defined(_WIN32) || defined(WIN32)
+    size_t pos = aux.rfind('\\');
+#else
+    size_t pos = aux.rfind('/');
+#endif
+    std::string path = aux.substr(0,pos);
+*/
+    std::string path = cwdPath;
+    resourcePath = path + "/resources";
+    filesPath = path + "/files";
+    cachePath = path + "/temp";
+    externalPath = path + "/temp";
+  } else {
+    resourcePath = configRoot + "/resources";
+    filesPath = workRoot + "/files";
+    cachePath = workRoot + "/temp";
+    externalPath = workRoot + "/temp";
+  }
+  //LEAKING HERE
+  dataPlatform = new Anki::Cozmo::Data::DataPlatform(filesPath, cachePath, externalPath, resourcePath);
+
+  //// should we do this here? clean previously dirty folders?
+  //std::string cache = dataPlatform->pathToResource(Anki::Cozmo::Data::Scope::Cache, "");
+  //Anki::Util::FileUtils::RemoveDirectory(cache);
+  //std::string files = dataPlatform->pathToResource(Anki::Cozmo::Data::Scope::Output, "");
+  //Anki::Util::FileUtils::RemoveDirectory(files);
+
   ::testing::InitGoogleTest(&argc, argv);
 
   return RUN_ALL_TESTS();

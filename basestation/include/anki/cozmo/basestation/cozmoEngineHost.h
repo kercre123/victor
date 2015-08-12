@@ -43,7 +43,7 @@ class CozmoEngineHost : public CozmoEngine
 {
 public:
 
-  CozmoEngineHost(IExternalInterface* externalInterface);
+  CozmoEngineHost(IExternalInterface* externalInterface, Data::DataPlatform* dataPlatform);
   ~CozmoEngineHost();
 
   virtual bool IsHost() const override { return true; }
@@ -75,6 +75,8 @@ public:
   void SetImageSendMode(RobotID_t robotID, Cozmo::ImageSendMode_t newMode) override;
 protected:
   CozmoEngineHostImpl* _hostImpl;
+  
+  virtual void HandleEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event) override;
 }; // class CozmoEngineHost
   
 
