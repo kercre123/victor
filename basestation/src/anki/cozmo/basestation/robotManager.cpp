@@ -18,6 +18,7 @@ namespace Anki {
     
     RobotManager::RobotManager(IExternalInterface* externalInterface)
     : _externalInterface(externalInterface)
+    , _robotEventHandler(*this, externalInterface)
     {
       
     }
