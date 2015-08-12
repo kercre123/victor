@@ -22,6 +22,14 @@
 
 namespace Anki {
 namespace Cozmo {
+  
+  // Forward Declarations
+  namespace ExternalInterface {
+  class MessageGameToEngine;
+  }
+  
+  template <typename Type>
+  class AnkiEvent;
 
   class CozmoEngine;
   
@@ -34,7 +42,7 @@ namespace Cozmo {
     using AdvertisingUiDevice = CozmoGame::AdvertisingUiDevice;
     using AdvertisingRobot    = CozmoGame::AdvertisingRobot;
     
-    CozmoGameImpl();
+    CozmoGameImpl(Data::DataPlatform* dataPlatform);
     ~CozmoGameImpl();
     
 
@@ -45,10 +53,6 @@ namespace Cozmo {
     Result StartEngine(Json::Value config);
     
     Result Init(const Json::Value& config);
-    
-    void ForceAddRobot(int              robotID,
-                       const char*      robotIP,
-                       bool             robotIsSimulated);
     
     bool ConnectToUiDevice(AdvertisingUiDevice whichDevice);
     
@@ -94,6 +98,10 @@ namespace Cozmo {
     void ProcessBadTag_MessageGameToEngine(ExternalInterface::MessageGameToEngine::Tag tag);
 #include "clad/externalInterface/messageGameToEngine_declarations.def"
     
+    void SetupSubscriptions();
+    void HandleEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
+    void HandleStartEngine(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
+    
     //
     // Member Variables
     //
@@ -121,6 +129,7 @@ namespace Cozmo {
     std::vector<Signal::SmartHandle> _signalHandles;
 
     std::vector<AdvertisingUiDevice> _connectedUiDevices;
+    Data::DataPlatform* _dataPlatform;
     
   }; // CozmoGameImpl
 
