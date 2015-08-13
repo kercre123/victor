@@ -69,7 +69,7 @@ def runWebots(options):
     '/Applications/Webots/webots', 
     '--stdout', 
     '--stderr',
-    '--minimize',
+    # '--minimize',
     '--mode=realtime',
     os.path.join(options.projectRoot, 'simulator/worlds/buildServer.wbt'),
     ]
@@ -81,7 +81,7 @@ def runWebots(options):
   logFileName = os.path.join(buildFolder, 'webots_out.txt')
   logFile = open(logFileName, 'w')
   startedTimeS = time.time()
-  result = subprocess.call(runCommand, stdout = logFile, stderr = logFile, cwd=buildFolder)
+  subprocess.call(runCommand, stdout = logFile, stderr = logFile, cwd=buildFolder)
   ranForS = time.time() - startedTimeS
   logFile.close()
 
@@ -89,9 +89,10 @@ def runWebots(options):
 
 
 
-# runs single thread, work the tests queue while there is work to be done
+# sleep for some time, then kill webots if needed
 def stopWebots(options):
   time.sleep(35)
+  # kill webots
   # prepare run command
   runCommand = [
     'pkill', 
@@ -99,6 +100,18 @@ def stopWebots(options):
     ]
   # execute
   subprocess.call(runCommand)
+
+# cleans up webots IPC facilities
+def cleanWebots(options):
+  # kill webots IPC leftovers
+  runCommand = [
+    os.path.join(options.projectRoot, 'lib/anki/cozmo-engine/simulator/kill_ipcs.sh'), 
+    ]
+  # execute
+  result = subprocess.call(runCommand)
+  if result != 0:
+    return False
+  return True
 
 
 # runs all threads groups
@@ -205,12 +218,18 @@ def main(scriptArgs):
   print '##teamcity[buildStatisticValue key=\'WebotsErrorCount\' value=\'%d\']' % (errorCount)
   print '##teamcity[buildStatisticValue key=\'WebotsWarningCount\' value=\'%d\']' % (warningCount)
 
+  returnValue = 0;
+  cleanResult = cleanWebots(options)
+  if not cleanResult:
+    # how do we notify the build system tha there is something wrong, but it is not this build specific?
+    returnValue = returnValue + 1
+
 
   if not testCompleted:
     UtilLog.error("webot test ERROR")
-    return 1
+    returnValue = returnValue + 1
 
-  return 0
+  return returnValue
 
 
 
