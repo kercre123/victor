@@ -87,7 +87,7 @@ static uint8_t ResetCursor[FramePrefixLength+FrameBufferLength] = {
 
 static uint8_t *FrameBuffer = &ResetCursor[FramePrefixLength];
 
-const uint32_t OLED_RST  = GPIO_MAKE_PIN(HW_PORTC, 5);
+const uint32_t OLED_RST  = GPIO_MAKE_PIN(HW_PORTC, 10);
 
 void DMA_TX_Init(const void* source_addr, void* dest_addr, uint32_t num_bytes) {
   // Disable DMA
@@ -202,7 +202,7 @@ void i2c_init()
 {
   #ifdef SOFT_RESET
   // Toggle the reset bit
-  PORT_HAL_SetMuxMode(PORTC_BASE, 5, kPortMuxAsGpio);
+  PORT_HAL_SetMuxMode(PORTC_BASE, 10, kPortMuxAsGpio);
   GPIO_DRV_WritePinOutput(OLED_RST, 0);
   GPIO_DRV_SetPinDir(OLED_RST, kGpioDigitalOutput); 
   BOARD_I2C_DELAY;

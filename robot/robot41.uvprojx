@@ -428,6 +428,11 @@
               <FileName>uart.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\k02_hal\hal\uart.c</FilePath>
+            </File>
+            <File>
+              <FileName>spi.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\k02_hal\hal\spi.c</FilePath>
               <FileOption>
                 <CommonProperty>
                   <UseCPPCompiler>2</UseCPPCompiler>

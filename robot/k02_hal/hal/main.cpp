@@ -11,7 +11,8 @@
 
 #include "uart.h"
 #include "oled.h"
-  
+#include "spi.h"
+
 // Use PTA4 / FTM0_CH1 / pin 10 on eval board because it is otherwise unused
 void InitPWM(int period)
 {
@@ -82,6 +83,7 @@ int main (void)
 
   PRINTF("\r\nTesting self-contained project file.\n\n\r");
 
+  spi_init();
   i2c_init();
   uart_init();
 
