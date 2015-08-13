@@ -15,9 +15,13 @@
 
 #include <string>
 #include <queue>
+#include "json/json.h"
 
 namespace Anki {
 namespace Cozmo {
+namespace Data{
+class DataPlatform;
+}
 namespace WebotsKeyboardController {
 
 enum class TestState {
@@ -30,16 +34,20 @@ enum class TestState {
 
 class TestController {
 public:
-  void AddTest(std::string&& testName);
+  void SetTestFileName(const std::string& testFileName);
+  void SetDataPlatform(Data::DataPlatform* dataPlatform) {_dataPlatform = dataPlatform;}
   void Update();
   void AnimationCompleted(const std::string& animationName);
 private:
-  void ExecuteTestAnimation();
+  void Init();
+  void ExecuteTestAnimation(const std::string& animToPlay);
+  Data::DataPlatform* _dataPlatform = nullptr;
   TestState _testState = TestState::NotStarted;
-  std::queue<std::string> _commands;
-  size_t _totalCommands = 0;
+  std::string _testFileName;
+  std::queue<Json::Value> _commands;
   size_t _tickCounter = 0;
   size_t _waitCounter = 0;
+  std::string _currentAnim;
 };
 
 

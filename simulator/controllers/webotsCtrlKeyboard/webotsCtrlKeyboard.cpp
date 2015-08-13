@@ -22,6 +22,7 @@
 #include "anki/cozmo/game/comms/gameComms.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/block.h"
+#include "anki/cozmo/basestation/data/dataPlatform.h"
 #include "clad/types/actionTypes.h"
 #include "util/logging/logging.h"
 #include "util/logging/printfLoggerProvider.h"
@@ -2559,13 +2560,30 @@ int main(int argc, char **argv)
   loggerProvider.SetMinLogLevel(0);
   Anki::Util::gLoggerProvider = &loggerProvider;
 
-  WebotsKeyboardController::inputController.step(KB_TIME_STEP);
-  
-  WebotsKeyboardController::Init();
 
-  for (int i = 1; i < argc; ++i) {
-    WebotsKeyboardController::_testController.AddTest(argv[i]);
+  // Get the last position of '/'
+  std::string aux(argv[0]);
+#if defined(_WIN32) || defined(WIN32)
+  size_t pos = aux.rfind('\\');
+#else
+  size_t pos = aux.rfind('/');
+#endif
+  // Get the path and the name
+  std::string path = aux.substr(0,pos+1);
+  //std::string name = aux.substr(pos+1);
+  std::string resourcePath = path;
+  std::string filesPath = path + "temp";
+  std::string cachePath = path + "temp";
+  std::string externalPath = path + "temp";
+  Data::DataPlatform dataPlatform(filesPath, cachePath, externalPath, resourcePath);
+
+  WebotsKeyboardController::_testController.SetDataPlatform(&dataPlatform);
+  if (argc > 1) {
+    WebotsKeyboardController::_testController.SetTestFileName(argv[1]);
   }
+
+  WebotsKeyboardController::inputController.step(KB_TIME_STEP);
+  WebotsKeyboardController::Init();
 
   while (WebotsKeyboardController::inputController.step(KB_TIME_STEP) != -1)
   {

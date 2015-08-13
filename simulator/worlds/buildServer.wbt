@@ -205,7 +205,7 @@ DEF Cozmo_1 CozmoBot {
   usbChannel 10
 }
 WebotsKeyboardController {
-  controllerArgs "testAnim"
+  controllerArgs "tests.json"
 }
 CozmoVizDisplay {
 }
