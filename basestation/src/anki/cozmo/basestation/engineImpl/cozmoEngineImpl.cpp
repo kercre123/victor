@@ -20,9 +20,11 @@ namespace Cozmo {
   
 
   
-CozmoEngineImpl::CozmoEngineImpl(IExternalInterface* externalInterface)
+CozmoEngineImpl::CozmoEngineImpl(IExternalInterface* externalInterface, Data::DataPlatform* dataPlatform)
 : _isInitialized(false)
 , _externalInterface(externalInterface)
+, _dataPlatform(dataPlatform)
+, _deviceVisionThread(dataPlatform)
 {
   if (Anki::Util::gTickTimeProvider == nullptr) {
     Anki::Util::gTickTimeProvider = BaseStationTimer::getInstance();
