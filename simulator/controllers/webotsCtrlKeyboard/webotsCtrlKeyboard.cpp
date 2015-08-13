@@ -232,6 +232,9 @@ namespace Anki {
       void SendAnimation(const char* animName, u32 numLoops);
       void SendReplayLastAnimation();
       void SendReadAnimationFile();
+      void SendSetIdleAnimation(const std::string &animName);
+      void SendQueuePlayAnimAction(const std::string &animName, u32 numLoops, QueueActionPosition pos);
+      void SendCancelAction();
       void SendStartFaceTracking(u8 timeout_sec);
       void SendStopFaceTracking();
       void SendVisionSystemParams();
@@ -1178,14 +1181,7 @@ namespace Anki {
                   SendAbortAll();
                 } else if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
                   // ALT + Q: Cancel action
-                  ExternalInterface::CancelAction msg;
-                  msg.actionType = RobotActionType::UNKNOWN;
-                  msg.robotID = 1;
-                  
-                  ExternalInterface::MessageGameToEngine msgWrapper;
-                  msgWrapper.Set_CancelAction(msg);
-                  msgHandler_.SendMessage(1, msgWrapper);
-                  
+                  SendCancelAction();
                 } else {
                   // Just Q: Just cancel path
                   SendAbortPath();
@@ -1403,43 +1399,14 @@ namespace Anki {
               {
                 //SendAnimation("ANIM_BACK_AND_FORTH_EXCITED", 3);
                 SendAnimation("ANIM_TEST", 1);
-                
-                {
-                  ExternalInterface::SetIdleAnimation msg;
-                  msg.robotID = 1;
-                  msg.animationName = "ANIM_IDLE";
-                  
-                  ExternalInterface::MessageGameToEngine msgWrapper;
-                  msgWrapper.Set_SetIdleAnimation(msg);
-                  SendMessage(msgWrapper);
-                }
+                SendSetIdleAnimation("ANIM_IDLE");
                 
                 break;
               }
               case (s32)'#':
               {
-                ExternalInterface::QueueSingleAction msg1;
-                msg1.robotID = 1;
-                msg1.inSlot = 1;
-                msg1.position = QueueActionPosition::NEXT;
-                msg1.actionType = RobotActionType::PLAY_ANIMATION;
-                msg1.action.playAnimation.animationName = "ANIM_TEST";
-                msg1.action.playAnimation.numLoops = 1;
-                
-                ExternalInterface::QueueSingleAction msg2;
-                msg2.robotID = 1;
-                msg2.inSlot = 1;
-                msg2.position = QueueActionPosition::NEXT;
-                msg2.actionType = RobotActionType::PLAY_ANIMATION;
-                msg2.action.playAnimation.animationName = "ANIM_TEST";
-                msg2.action.playAnimation.numLoops = 1;
-                
-                ExternalInterface::MessageGameToEngine msgWrapper;
-                msgWrapper.Set_QueueSingleAction(msg1);
-                SendMessage(msgWrapper);
-                
-                msgWrapper.Set_QueueSingleAction(msg2);
-                SendMessage(msgWrapper);
+                SendQueuePlayAnimAction("ANIM_TEST", 1, QueueActionPosition::NEXT);
+                SendQueuePlayAnimAction("ANIM_TEST", 1, QueueActionPosition::NEXT);
                 
                 //SendAnimation("ANIM_BLINK", 0);
                 break;
@@ -2507,6 +2474,38 @@ namespace Anki {
         ExternalInterface::ReadAnimationFile m;
         ExternalInterface::MessageGameToEngine message;
         message.Set_ReadAnimationFile(m);
+        SendMessage(message);
+      }
+      
+      void SendSetIdleAnimation(const std::string &animName) {
+        ExternalInterface::SetIdleAnimation msg;
+        msg.robotID = 1;
+        msg.animationName = animName;
+        ExternalInterface::MessageGameToEngine message;
+        message.Set_SetIdleAnimation(msg);
+        SendMessage(message);
+      }
+      
+      void SendQueuePlayAnimAction(const std::string &animName, u32 numLoops, QueueActionPosition pos) {
+        ExternalInterface::QueueSingleAction msg;
+        msg.robotID = 1;
+        msg.inSlot = 1;
+        msg.position = pos;
+        msg.actionType = RobotActionType::PLAY_ANIMATION;
+        msg.action.playAnimation.animationName = animName;
+        msg.action.playAnimation.numLoops = numLoops;
+
+        ExternalInterface::MessageGameToEngine message;
+        message.Set_QueueSingleAction(msg);
+        SendMessage(message);
+      }
+      
+      void SendCancelAction() {
+        ExternalInterface::CancelAction msg;
+        msg.actionType = RobotActionType::UNKNOWN;
+        msg.robotID = 1;
+        ExternalInterface::MessageGameToEngine message;
+        message.Set_CancelAction(msg);
         SendMessage(message);
       }
       
