@@ -200,7 +200,7 @@ namespace Anki {
         else if(angle >= -M_PI_4 && angle < M_PI_4) { // RIGHT
           PRINT_STREAM_INFO("BehaviorManager.ArrowCallback", "RIGHT Arrow!");
           //lastResult = robot->QueueAction(new TurnInPlaceAction(-M_PI_2));
-          robot->GetActionList().QueueActionAtEnd(DriveAndManipulateSlot, new TurnInPlaceAction(-M_PI_2));
+          robot->GetActionList().QueueActionAtEnd(DriveAndManipulateSlot, new TurnInPlaceAction(-M_PI_2, false));
         }
         else if(angle >= M_PI_4 && angle < 3*M_PI_4) { // DOWN
           PRINT_STREAM_INFO("BehaviorManager.ArrowCallback", "DOWN Arrow!");
@@ -209,7 +209,7 @@ namespace Anki {
         else if(angle >= 3*M_PI_4 || angle < -3*M_PI_4) { // LEFT
           PRINT_STREAM_INFO("BehaviorManager.ArrowCallback", "LEFT Arrow!");
           //lastResult = robot->QueueAction(new TurnInPlaceAction(M_PI_2));
-          robot->GetActionList().QueueActionAtEnd(DriveAndManipulateSlot, new TurnInPlaceAction(M_PI_2));
+          robot->GetActionList().QueueActionAtEnd(DriveAndManipulateSlot, new TurnInPlaceAction(M_PI_2, false));
         }
         else {
           PRINT_STREAM_ERROR("BehaviorManager.ArrowCallback.UnexpectedAngle",
@@ -230,7 +230,7 @@ namespace Anki {
       if(robot->IsIdle() && IsMarkerCloseEnoughAndCentered(marker, robot->GetCamera().GetCalibration().GetNcols())) {
         PRINT_STREAM_INFO("BehaviorManager.TurnAroundCallback", "TURNAROUND Arrow!");
         //lastResult = robot->QueueAction(new TurnInPlaceAction(M_PI));
-        robot->GetActionList().QueueActionAtEnd(DriveAndManipulateSlot, new TurnInPlaceAction(M_PI));
+        robot->GetActionList().QueueActionAtEnd(DriveAndManipulateSlot, new TurnInPlaceAction(M_PI, false));
       } // IfMarkerIsCloseEnoughAndCentered()
       
       return lastResult;

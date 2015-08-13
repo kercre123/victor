@@ -46,9 +46,11 @@ message DriveWheels {
 }
 
 // TurnInPlace
-//  Turn the specified number of radians, *relative to the robot's current heading*
+// If isAbsolute == 0, turns the specified number of radians, *relative to the robot's current heading*
+// If isAbsolute != 0, turns to the specified absolute orientation.
 message TurnInPlace {
-    float_32 angle_rad, // postive turns left negative turns right
+    float_32 angle_rad, // relative mode: postive turns left negative turns right
+    uint_8 isAbsolute,    // 0: angle_rad is relative to current orientation, 1: angle_rad is absolute angle to turn to
     uint_8 robotID
 }
 

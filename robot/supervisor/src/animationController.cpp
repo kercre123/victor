@@ -597,6 +597,15 @@ namespace AnimationController {
     return ready;
   } // IsReadyToPlay()
   
+  
+#define DUMP_NEXT_MESSAGE_CASE(msgName)  \
+  case Messages::AnimKeyFrame_##msgName##_ID: { \
+    Messages::AnimKeyFrame_##msgName msg; \
+    GetFromBuffer((u8*)&msg, sizeof(msg)); \
+  } \
+  break;
+
+  
   Result Update()
   {
     if(IsReadyToPlay()) {
@@ -607,7 +616,32 @@ namespace AnimationController {
         START_TIME_PROFILE(Anim, AUDIOPLAY);
         
         // Next thing in the buffer should be audio or silence:
-        switch(GetTypeIndicator())
+        Messages::ID msgID = GetTypeIndicator();
+
+        
+        // If the next message is not audio, then delete it until it is.
+        while(msgID != Messages::AnimKeyFrame_AudioSilence_ID && msgID != Messages::AnimKeyFrame_AudioSample_ID) {
+          PRINT("Expecting either audio sample or silence next in animation buffer. (Got %d instead). Dumping message. (FYI AudioSample_ID = %d)\n", msgID, Messages::AnimKeyFrame_AudioSample_ID);
+          switch (msgID) {
+            DUMP_NEXT_MESSAGE_CASE(HeadAngle)
+            DUMP_NEXT_MESSAGE_CASE(LiftHeight)
+            DUMP_NEXT_MESSAGE_CASE(FacePosition)
+            DUMP_NEXT_MESSAGE_CASE(Blink)
+            DUMP_NEXT_MESSAGE_CASE(FaceImage)
+            DUMP_NEXT_MESSAGE_CASE(BackpackLights)
+            DUMP_NEXT_MESSAGE_CASE(BodyMotion)
+            DUMP_NEXT_MESSAGE_CASE(EndOfAnimation)
+ 
+            default:
+              PRINT("Unknown message %d in animation buffer. Probably comms corruption! Clearing buffer.\n", msgID);
+              Clear();
+              return RESULT_FAIL;
+          }
+          msgID = GetTypeIndicator();
+        }
+        
+        
+        switch(msgID)
         {
           case Messages::AnimKeyFrame_AudioSilence_ID:
           {
@@ -628,7 +662,7 @@ namespace AnimationController {
             break;
           }
           default:
-            PRINT("Expecting either audio sample or silence next in animation buffer.\n");
+            PRINT("Expecting either audio sample or silence next in animation buffer. (Got %d instead)\n", msgID);
             return RESULT_FAIL;
         }
       
