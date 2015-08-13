@@ -9,16 +9,20 @@
 * Copyright: Anki, inc. 2015
 *
 */
+#include <iterator>
 #include "testController.h"
+#include "anki/cozmo/basestation/data/dataPlatform.h"
 #include "util/logging/logging.h"
+#include "util/ptree/ptreeTools.h"
 #include "webotsCtrlKeyboard.h"
+
 namespace Anki {
 namespace Cozmo {
 namespace WebotsKeyboardController {
 
-void TestController::AddTest(std::string&& testName)
+void TestController::SetTestFileName(const std::string& testFileName)
 {
-  _commands.emplace(testName);
+  _testFileName = testFileName;
 }
 
 void TestController::Update()
@@ -27,13 +31,7 @@ void TestController::Update()
   switch (_testState) {
 
     case TestState::NotStarted:
-      _totalCommands = (uint32_t)_commands.size();
-      if (_totalCommands > 0) {
-        _testState = TestState::WaitingForInit;
-        _waitCounter = _tickCounter;
-      } else {
-        _testState = TestState::TestDone;
-      }
+      Init();
       break;
 
     case TestState::WaitingForInit:
@@ -49,12 +47,13 @@ void TestController::Update()
         PRINT_NAMED_INFO("TestController.Update", "all tests completed");
         break;
       }
-      const std::string& commandToExecute = _commands.front();
-      PRINT_NAMED_INFO("TestController.Update", "executing command %s", commandToExecute.c_str());
-      if (commandToExecute.compare("testAnim") == 0) {
-        ExecuteTestAnimation();
+      const Json::Value& nextTest = _commands.front();
+      const std::string& testType = nextTest["type"].asString();
+      PRINT_NAMED_INFO("TestController.Update", "executing command %s", testType.c_str());
+      if (testType.compare("testAnim") == 0) {
+        ExecuteTestAnimation(nextTest["params"]["animToPlay"].asString());
       } else {
-        PRINT_NAMED_ERROR("TestController.Update", "unknown command %s", commandToExecute.c_str());
+        PRINT_NAMED_ERROR("TestController.Update", "unknown command %s", testType.c_str());
       }
       _commands.pop();
     }
@@ -68,17 +67,39 @@ void TestController::Update()
   }
 }
 
+void TestController::Init()
+{
+  if (_dataPlatform != nullptr && !_testFileName.empty()) {
+
+    Json::Value config;
+    if (!_dataPlatform->readAsJson(Data::Scope::Resources, _testFileName, config)) {
+      PRINT_NAMED_ERROR("TestController.loadConfig", "Failed to parse Json file %s", _testFileName.c_str());
+    }
+    const Json::Value& tests = config["tests"];
+    for (const auto& jsonObj : tests) {
+      _commands.push(jsonObj);
+    }
+
+    _testState = TestState::WaitingForInit;
+    _waitCounter = _tickCounter;
+
+  } else {
+    _testState = TestState::TestDone;
+  }
+}
+
 void TestController::AnimationCompleted(const std::string& animationName)
 {
-  if (_testState == TestState::ExecutingTestAnimation && animationName.compare("Hello") == 0) {
+  if (_testState == TestState::ExecutingTestAnimation && animationName.compare(_currentAnim) == 0) {
     _testState = TestState::ReadyForNextCommand;
   }
 }
 
-void TestController::ExecuteTestAnimation()
+void TestController::ExecuteTestAnimation(const std::string& animToPlay)
 {
+  _currentAnim = animToPlay;
   _testState = TestState::ExecutingTestAnimation;
-  WebotsKeyboardController::SendAnimation("Hello", 1);
+  WebotsKeyboardController::SendAnimation(_currentAnim.c_str(), 1);
 }
 
 } // end namespace WebotsKeyboardController

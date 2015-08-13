@@ -1,0 +1,16 @@
+{
+  "tests": [
+    {
+      "type": "testAnim",
+      "params" : {
+        "animToPlay" : "Hello"
+      }
+    },
+    {
+      "type": "testAnim",
+      "params" : {
+        "animToPlay" : "Taunt"
+      }
+    }
+  ]
+}
