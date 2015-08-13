@@ -86,6 +86,19 @@ bool DataPlatform::readAsJson(const Scope& resourceScope, const std::string& res
   return success;
 }
 
+// reads resource as json file. returns true if successful.
+bool DataPlatform::readAsJson(const std::string& resourceName, Json::Value& data) const
+{
+  std::ifstream jsonFile(resourceName);
+  Json::Reader reader;
+  bool success = reader.parse(jsonFile, data);
+  if(! success) {
+    PRINT_NAMED_ERROR("DataPlatform.readAsJson", "Failed to parse Json file %s.", resourceName.c_str());
+  }
+  jsonFile.close();
+  return success;
+}
+
 // write dat to json file. returns true if successful.
 bool DataPlatform::writeAsJson(const Scope& resourceScope, const std::string& resourceName, const Json::Value& data) const
 {

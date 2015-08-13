@@ -1220,6 +1220,11 @@ namespace Anki {
       return _animationStreamer.SetIdleAnimation(animName);
     }
     
+    const std::string Robot::GetStreamingAnimationName() const
+    {
+      return _animationStreamer.GetStreamingAnimationName();
+    }
+    
     Result Robot::PlaySound(const std::string& soundName, u8 numLoops, u8 volume)
     {
       if (_externalInterface != nullptr) {
@@ -1252,7 +1257,7 @@ namespace Anki {
     void Robot::ReadAnimationFile(const char* filename, std::string& animationId)
     {
       Json::Value animDefs;
-      const bool success = _dataPlatform->readAsJson(Data::Scope::Resources, filename, animDefs);
+      const bool success = _dataPlatform->readAsJson(filename, animDefs);
       if (success && !animDefs.empty()) {
         PRINT_NAMED_INFO("Robot.ReadAnimationFile", "reading %s", filename);
         _cannedAnimations.DefineFromJson(animDefs, animationId);
@@ -2806,7 +2811,7 @@ namespace Anki {
     {
       bool anyFailures = false;
       
-      _actionList.Clear();
+      _actionList.Cancel();
       
       if(ClearPath() != RESULT_OK) {
         anyFailures = true;

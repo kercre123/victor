@@ -383,6 +383,10 @@ namespace Anki {
       // Use the empty string to disable idle animation.
       Result SetIdleAnimation(const std::string& animName);
       
+      // Returns name of currently streaming animation. Does not include idle animation.
+      // Returns "" if no non-idle animation is streaming.
+      const std::string GetStreamingAnimationName() const;
+      
       // Return the approximate number of available bytes in the robot's
       // keyframe buffer, to let us know if we can stream any more
       s32 GetNumAnimationBytesFree() const;

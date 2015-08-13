@@ -219,8 +219,8 @@ void RobotEventHandler::QueueActionHelper(const QueueActionPosition position, co
     }
     case QueueActionPosition::NOW_AND_CLEAR_REMAINING:
     {
-      // Empty the queue entirely and make this action the next thing in it
-      actionList.Clear();
+      // Cancel all queued actions and make this action the next thing in it
+      actionList.Cancel();
       actionList.QueueActionNext(inSlot, action, numRetries);
       break;
     }
