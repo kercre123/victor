@@ -1252,7 +1252,7 @@ namespace Anki {
     void Robot::ReadAnimationFile(const char* filename, std::string& animationId)
     {
       Json::Value animDefs;
-      const bool success = _dataPlatform->readAsJson(Data::Scope::Resources, filename, animDefs);
+      const bool success = _dataPlatform->readAsJson(filename, animDefs);
       if (success && !animDefs.empty()) {
         PRINT_NAMED_INFO("Robot.ReadAnimationFile", "reading %s", filename);
         _cannedAnimations.DefineFromJson(animDefs, animationId);
