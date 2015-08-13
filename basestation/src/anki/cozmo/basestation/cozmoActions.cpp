@@ -2274,7 +2274,7 @@ namespace Anki {
     
     ActionResult PlayAnimationAction::Init(Robot& robot)
     {
-      if(robot.IsAnimating()) {
+      if(robot.IsAnimating() && !robot.IsIdleAnimating()) {
         //PRINT_NAMED_INFO("PlanAnimationAction.Init.Waiting",
         //                 "Waiting for robot to stop animating before playing this animation.\n");
         return ActionResult::RUNNING;

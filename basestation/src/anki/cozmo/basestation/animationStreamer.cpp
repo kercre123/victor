@@ -115,7 +115,7 @@ namespace Cozmo {
         _isIdling = false;
       }
     } else if(_idleAnimation != nullptr) {
-      if(!robot.IsAnimating() && (_idleAnimation->IsFinished() || !_isIdling)) {
+      if((!robot.IsAnimating() && _idleAnimation->IsFinished()) || !_isIdling) {
 #       if DEBUG_ANIMATION_STREAMING
         PRINT_NAMED_INFO("AnimationStreamer.Update.IdleAnimInit",
                          "(Re-)Initializing idle animation: '%s'.\n",
