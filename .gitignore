@@ -8,11 +8,13 @@ matlab.mat
 # Webots
 *.wbproj
 simulator/protos/CozmoEngineProtos-DO_NOT_MODIFY
-webotsCtrlViz
-webotsCtrlRobot
-webotsCtrlLightCube
-webotsCtrlGameEngine
-webotsCtrlKeyboard
+simulator/controllers/webotsCtrlViz/webotsCtrlViz
+simulator/controllers/webotsCtrlRobot/webotsCtrlRobot
+simulator/controllers/webotsCtrlLightCube/webotsCtrlLightCube
+simulator/controllers/webotsCtrlGameEngine/webotsCtrlGameEngine
+simulator/controllers/webotsCtrlGameEngine/resources
+simulator/controllers/webotsCtrlGameEngine/temp
+simulator/controllers/webotsCtrlKeyboard/webotsCtrlKeyboard
 simulator/plugins/physics/pluginPhysics/libpluginPhysics.dylib
 simulator/plugins/physics/cozmo_physics/libcozmo_physics.dylib
 

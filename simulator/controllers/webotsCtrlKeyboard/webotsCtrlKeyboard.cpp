@@ -7,39 +7,34 @@
  */
 
 #include <opencv2/imgproc/imgproc.hpp>
-
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
-
 #include "anki/cozmo/shared/cozmoTypes.h"
 #include "anki/cozmo/shared/ledTypes.h"
 #include "anki/cozmo/shared/activeBlockTypes.h"
-
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/basestation/math/point_impl.h"
-
 #include "anki/vision/basestation/image.h"
-
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "anki/messaging/shared/TcpClient.h"
 #include "anki/cozmo/game/comms/gameMessageHandler.h"
 #include "anki/cozmo/game/comms/gameComms.h"
-
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/block.h"
 #include "clad/types/actionTypes.h"
-
+#include "util/logging/logging.h"
+#include "util/logging/printfLoggerProvider.h"
 #include <stdio.h>
 #include <string.h>
 #include <fstream>
-
-// Webots includes
 #include <webots/Supervisor.hpp>
 #include <webots/ImageRef.hpp>
 #include <webots/Display.hpp>
 #include <webots/GPS.hpp>
 #include <webots/Compass.hpp>
+#include "webotsCtrlKeyboard.h"
+#include "testController.h"
 
 // SDL for gamepad control (specifically Logitech Rumblepad F510)
 // Gamepad should be in Direct mode (switch on back)
@@ -63,7 +58,7 @@ namespace Anki {
       namespace {
         // Constants for Webots:
         ExternalInterface::Ping _pingMsg;
-        
+        TestController _testController;
         std::set<int> lastKeysPressed_;
         
         bool wasMovingWheels_ = false;
@@ -164,7 +159,7 @@ namespace Anki {
         
         GameMessageHandler msgHandler_;
         GameComms *gameComms_ = nullptr;
-        
+        u32 _animationAvailableCount;
         
         // For displaying cozmo's POV:
         webots::Display* cozmoCam_;
@@ -184,60 +179,6 @@ namespace Anki {
         bool saveRobotImageToFile_ = false;
         
       } // private namespace
-      
-      // Forward declarations
-      void ProcessKeystroke(void);
-      void ProcessJoystick(void);
-      void PrintHelp(void);
-      void SendMessage(const ExternalInterface::MessageGameToEngine& msg);
-      void SendDriveWheels(const f32 lwheel_speed_mmps, const f32 rwheel_speed_mmps);
-      void SendTurnInPlace(const f32 angle_rad);
-      void SendTurnInPlaceAtSpeed(const f32 speed_rad_per_sec, const f32 accel_rad_per_sec2);
-      void SendMoveHead(const f32 speed_rad_per_sec);
-      void SendMoveLift(const f32 speed_rad_per_sec);
-      void SendMoveHeadToAngle(const f32 rad, const f32 speed, const f32 accel, const f32 duration_sec = 0.f);
-      void SendMoveLiftToHeight(const f32 mm, const f32 speed, const f32 accel, const f32 duration_sec = 0.f);
-      void SendTapBlockOnGround(const u8 numTaps);
-      void SendStopAllMotors();
-      void SendImageRequest(u8 mode, u8 robotID);
-      void SendSetRobotImageSendMode(u8 mode);
-      void SendSaveImages(SaveMode_t mode, bool alsoSaveState=false);
-      void SendEnableDisplay(bool on);
-      void SendSetHeadlights(u8 intensity);
-      void SendExecutePathToPose(const Pose3d& p, const bool useManualSpeed);
-      void SendPlaceObjectOnGroundSequence(const Pose3d& p, const bool useManualSpeed);
-      void SendPickAndPlaceObject(const s32 objectID, const bool usePreDockPose, const bool useManualSpeed);
-      void SendPickAndPlaceSelectedObject(const bool usePreDockPose, const bool useManualSpeed);
-      void SendRollObject(const s32 objectID, const bool usePreDockPose, const bool useManualSpeed);
-      void SendRollSelectedObject(const bool usePreDockPose, const bool useManualSpeed);
-      void SendTraverseSelectedObject(const bool usePreDockPose, const bool useManualSpeed);
-      void SendExecuteTestPlan();
-      void SendClearAllBlocks();
-      void SendClearAllObjects();
-      void SendSelectNextObject();
-      void SendExecuteBehavior(BehaviorManager::Mode mode);
-      void SendSetNextBehaviorState(BehaviorManager::BehaviorState nextState);
-      void SendAbortPath();
-      void SendAbortAll();
-      void SendDrawPoseMarker(const Pose3d& p);
-      void SendErasePoseMarker();
-      void SendWheelControllerGains(const f32 kpLeft, const f32 kiLeft, const f32 maxErrorSumLeft,
-                                    const f32 kpRight, const f32 kiRight, const f32 maxErrorSumRight);
-      void SendHeadControllerGains(const f32 kp, const f32 ki, const f32 kd, const f32 maxErrorSum);
-      void SendLiftControllerGains(const f32 kp, const f32 ki, const f32 kd, const f32 maxErrorSum);
-      void SendSteeringControllerGains(const f32 k1, const f32 k2);
-      void SendSetRobotVolume(const f32 volume);
-      void SendStartTestMode(TestMode mode, s32 p1 = 0, s32 p2 = 0, s32 p3 = 0);
-      void SendIMURequest(u32 length_ms);
-      void SendAnimation(const char* animName, u32 numLoops);
-      void SendReplayLastAnimation();
-      void SendReadAnimationFile();
-      void SendStartFaceTracking(u8 timeout_sec);
-      void SendStopFaceTracking();
-      void SendVisionSystemParams();
-      void SendFaceDetectParams();
-      void SendForceAddRobot();
-      
       
       // ======== Message handler callbacks =======
       
@@ -352,6 +293,7 @@ namespace Anki {
           case RobotActionType::PLAY_ANIMATION:
             printf("Robot %d finished playing animation %s. [Tag=%d]\n",
                    msg.robotID, msg.completionInfo.animName.c_str(), msg.idTag);
+            _testController.AnimationCompleted(msg.completionInfo.animName);
             break;
             
           default:
@@ -437,7 +379,8 @@ namespace Anki {
 
       void HandleAnimationAvailable(ExternalInterface::AnimationAvailable const& msg)
       {
-        printf("Animation available: %s\n", msg.animName.c_str());
+        _animationAvailableCount++;
+        PRINT_NAMED_INFO("HandleAnimationAvailable", "Animation available: %s", msg.animName.c_str());
       }
       
       // ===== End of message handler callbacks ====
@@ -2052,6 +1995,9 @@ namespace Anki {
         
             
             //TestLightCube();
+            if (_animationAvailableCount > 0) {
+              _testController.Update();
+            }
             
             prevPoseMarkerPose_ = poseMarkerPose_;
             break;
@@ -2063,7 +2009,7 @@ namespace Anki {
         } // switch(uiState_)
         
       }
-      
+
       void SendMessage(const ExternalInterface::MessageGameToEngine& msg)
       {
         UserDeviceID_t devID = 1; // TODO: Should this be a RobotID_t?
@@ -2472,11 +2418,12 @@ namespace Anki {
       
       void SendAnimation(const char* animName, u32 numLoops)
       {
-        static bool lastSendTime_sec = -1e6;
+        static double lastSendTime_sec = -1e6;
         
         // Don't send repeated animation commands within a half second
         if(inputController.getTime() > lastSendTime_sec + 0.5f)
         {
+          PRINT_NAMED_INFO("SendAnimation", "sending %s", animName);
           ExternalInterface::PlayAnimation m;
           //m.animationID = animId;
           m.robotID = 1;
@@ -2487,7 +2434,7 @@ namespace Anki {
           SendMessage(message);
           lastSendTime_sec = inputController.getTime();
         } else {
-          printf("Ignoring duplicate SendAnimation keystroke.\n");
+          PRINT_NAMED_INFO("SendAnimation", "Ignoring duplicate SendAnimation keystroke.");
         }
         
       }
@@ -2612,16 +2559,25 @@ using namespace Anki::Cozmo;
 
 int main(int argc, char **argv)
 {
+  Anki::Util::PrintfLoggerProvider loggerProvider;
+  loggerProvider.SetMinLogLevel(0);
+  Anki::Util::gLoggerProvider = &loggerProvider;
+
   WebotsKeyboardController::inputController.step(KB_TIME_STEP);
   
   WebotsKeyboardController::Init();
+
+  for (int i = 1; i < argc; ++i) {
+    WebotsKeyboardController::_testController.AddTest(argv[i]);
+  }
 
   while (WebotsKeyboardController::inputController.step(KB_TIME_STEP) != -1)
   {
     // Process keyboard input
     WebotsKeyboardController::Update();
   }
-  
+
+  Anki::Util::gLoggerProvider = nullptr;
   return 0;
 }
 
