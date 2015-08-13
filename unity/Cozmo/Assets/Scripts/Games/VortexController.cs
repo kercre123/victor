@@ -119,8 +119,6 @@ class VortexInput
 
 	[SerializeField] float maxPlayerInputTime = 3f;
 
-	[SerializeField] Button playAgainButton;
-
 	[SerializeField] float scoreDisplayFillFade = 0.5f;
 	[SerializeField] float scoreDisplayFillAlpha = 0.5f;
 	[SerializeField] float scoreDisplayEmptyAlpha = 0.1f;
@@ -335,7 +333,7 @@ class VortexInput
 	protected override void Enter_BUILDING()
 	{
 		base.Enter_BUILDING();
-		if( GameLayoutTracker.instance != null) GameLayoutTracker.instance.CubeSpotted += CubeSpotted;
+		if(GameLayoutTracker.instance != null) GameLayoutTracker.instance.CubeSpotted += CubeSpotted;
 	}
 
 	void CubeSpotted ()
@@ -344,7 +342,7 @@ class VortexInput
 		SetRobotStartingPosition();
 		if( GameLayoutTracker.instance != null) GameLayoutTracker.instance.CubeSpotted -= CubeSpotted;
 	}
-		
+
 	protected override void Exit_BUILDING()
 	{
 		base.Exit_BUILDING();
@@ -711,8 +709,6 @@ class VortexInput
 			col.a = 0.25f;
 			playerPanelFills[i].color = col;
 		}
-
-
 	}
 
 	protected override void Update_RESULTS()
@@ -776,7 +772,7 @@ class VortexInput
 	protected override bool IsPreGameCompleted()
 	{
 		if(robot != null && PlayerPrefs.GetInt("DebugSkipLayoutTracker", 0) == 0) {
-
+			
 			if(cozmoIndex >= 0 && (robot.carryingObject == null || !robot.carryingObject.isActive || robot.isBusy || !atYourMark)) return false;
 			
 			for(int i = 0; i < numPlayers; i++) {
@@ -1608,8 +1604,6 @@ class VortexInput
 			fadeTimer = scoreDisplayFillFade;
 			//textPlayerScoreDeltas[playerIndex].gameObject.SetActive(false);
 		}
-
-		
 	}
 
 	void Exit_SPIN_COMPLETE()
