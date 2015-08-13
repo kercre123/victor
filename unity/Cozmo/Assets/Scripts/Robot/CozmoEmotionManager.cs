@@ -351,6 +351,7 @@ public class CozmoEmotionManager : MonoBehaviour {
 				PlayAnimationMessage.numLoops = anim.numLoops;
 				PlayAnimationMessage.robotID = robot.ID;
 
+				TurnInPlaceMessage.isAbsolute = 1;
 				TurnInPlaceMessage.angle_rad = rad;
 				TurnInPlaceMessage.robotID = robot.ID;
 
