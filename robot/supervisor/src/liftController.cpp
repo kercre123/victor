@@ -405,6 +405,15 @@ namespace Anki {
           }
         }
 #endif
+        // Check if already at desired height
+        if (inPosition_ &&
+            (Height2Rad(newDesiredHeight) == desiredAngle_) &&
+            (ABS((desiredAngle_ - currentAngle_).ToFloat()) < ANGLE_TOLERANCE) ) {
+          #if(DEBUG_LIFT_CONTROLLER)
+          PRINT("LIFT: Already at desired height %f\n", newDesiredHeight);
+          #endif
+          return;
+        }
         
         desiredHeight_ = newDesiredHeight;
         
