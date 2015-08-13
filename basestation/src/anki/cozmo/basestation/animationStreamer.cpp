@@ -138,6 +138,11 @@ namespace Cozmo {
   {
     return _isIdling;
   }
+
+  const std::string AnimationStreamer::GetStreamingAnimationName() const
+  {
+    return _streamingAnimation ? _streamingAnimation->GetName() : "";
+  }
   
 } // namespace Cozmo
 } // namespace Anki

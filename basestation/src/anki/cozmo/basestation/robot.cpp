@@ -1235,6 +1235,11 @@ namespace Anki {
       return _animationStreamer.SetIdleAnimation(animName);
     }
     
+    const std::string Robot::GetStreamingAnimationName() const
+    {
+      return _animationStreamer.GetStreamingAnimationName();
+    }
+    
     Result Robot::PlaySound(const std::string& soundName, u8 numLoops, u8 volume)
     {
       if (_externalInterface != nullptr) {
@@ -2828,7 +2833,7 @@ namespace Anki {
     {
       bool anyFailures = false;
       
-      _actionList.Clear();
+      _actionList.Cancel();
       
       if(ClearPath() != RESULT_OK) {
         anyFailures = true;

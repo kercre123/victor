@@ -2288,7 +2288,10 @@ namespace Anki {
     
     ActionResult PlayAnimationAction::CheckIfDone(Robot& robot)
     {
-      if(robot.IsAnimating()) {
+      // Check if StreamingAnimation is not yet null and the name still matches to avoid
+      // prematurely deleting looping animations.
+      if(robot.IsAnimating() ||
+         (robot.GetStreamingAnimationName() == _animName)) {
         return ActionResult::RUNNING;
       } else {
         return ActionResult::SUCCESS;
