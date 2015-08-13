@@ -137,26 +137,20 @@ MonoBehaviour:
     - animName: firstTap
       numLoops: 1
   - stateName: TAP_TWO
-    playAllAnims: 1
+    playAllAnims: 0
     emotionAnims:
-    - animName: firstTap
-      numLoops: 1
-    - animName: tapAgain
+    - animName: tapTwoTimes
       numLoops: 1
   - stateName: TAP_THREE
-    playAllAnims: 1
+    playAllAnims: 0
     emotionAnims:
-    - animName: firstTap
+    - animName: tapThreeTimes
       numLoops: 1
-    - animName: tapAgain
-      numLoops: 2
   - stateName: TAP_FOUR
-    playAllAnims: 1
+    playAllAnims: 0
     emotionAnims:
-    - animName: firstTap
+    - animName: tapFourTimes
       numLoops: 1
-    - animName: tapAgain
-      numLoops: 3
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1
