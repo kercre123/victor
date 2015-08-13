@@ -16,6 +16,8 @@
 
 #include "anki/cozmo/shared/cozmoTypes.h"
 
+#include <utility>
+
 
 namespace Anki {
 namespace Cozmo {
@@ -24,6 +26,9 @@ template <typename DataType>
 class AnkiEvent
 {
 public:
+  // In addition to the class being templated, this constructor is templated.
+  // This allows for 'perfect forwarding' where the constructor either uses
+  // a standard lvalue version or the c++11 rvalue reference version. Magic!
   template <typename FwdType>
   AnkiEvent(u32 type, FwdType&& newData)
   : _myType(type)

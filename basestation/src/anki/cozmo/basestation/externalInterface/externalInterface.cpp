@@ -15,7 +15,7 @@
 namespace Anki {
 namespace Cozmo {
 
-void SimpleExternalInterface::DeliverToGame(const ExternalInterface::MessageEngineToGame&& message)
+void SimpleExternalInterface::DeliverToGame(const ExternalInterface::MessageEngineToGame& message)
 {
 
 }

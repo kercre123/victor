@@ -1,4 +1,5 @@
 #include "util/helpers/includeGTest.h" // Used in place of gTest/gTest.h directly to suppress warnings in the header
+#include "anki/common/constantsAndMacros.h"
 #include <set>
 #include <vector>
 
@@ -6,7 +7,6 @@
 #define protected public
 
 #include "anki/common/basestation/math/rotatedRect.h"
-#include "anki/common/basestation/platformPathManager.h"
 #include "anki/planning/basestation/xythetaEnvironment.h"
 #include "anki/planning/basestation/xythetaPlanner.h"
 
@@ -17,6 +17,11 @@
 using namespace std;
 using namespace Anki::Planning;
 
+#ifndef TEST_DATA_PATH
+#error No TEST_DATA_PATH defined. You may need to re-run cmake.
+#endif
+#define TEST_PRIM_FILE "/planning/matlab/test_mprim.json"
+
 
 GTEST_TEST(TestPlanner, PlanOnceEmptyEnv)
 {
@@ -25,8 +30,7 @@ GTEST_TEST(TestPlanner, PlanOnceEmptyEnv)
 
   // TODO:(bn) open something saved in the test dir isntead, so we
   // know not to change or remove it
-  EXPECT_TRUE(env.ReadMotionPrimitives(
-                PREPEND_SCOPED_PATH(Test, "coretech/planning/matlab/test_mprim.json").c_str()));
+  EXPECT_TRUE(env.ReadMotionPrimitives((std::string(QUOTE(TEST_DATA_PATH)) + std::string(TEST_PRIM_FILE)).c_str()));
 
 
   xythetaPlanner planner(env);
@@ -48,8 +52,7 @@ GTEST_TEST(TestPlanner, PlanAroundBox)
 
   // TODO:(bn) open something saved in the test dir isntead, so we
   // know not to change or remove it
-  EXPECT_TRUE(env.ReadMotionPrimitives(
-                PREPEND_SCOPED_PATH(Test, "coretech/planning/matlab/test_mprim.json").c_str()));
+  EXPECT_TRUE(env.ReadMotionPrimitives((std::string(QUOTE(TEST_DATA_PATH)) + std::string(TEST_PRIM_FILE)).c_str()));
 
 
   env.AddObstacle(Anki::RotatedRectangle(50.0, -10.0, 80.0, -10.0, 20.0));
@@ -73,8 +76,7 @@ GTEST_TEST(TestPlanner, PlanAroundBox_soft)
 
   // TODO:(bn) open something saved in the test dir isntead, so we
   // know not to change or remove it
-  EXPECT_TRUE(env.ReadMotionPrimitives(
-                PREPEND_SCOPED_PATH(Test, "coretech/planning/matlab/test_mprim.json").c_str()));
+  EXPECT_TRUE(env.ReadMotionPrimitives((std::string(QUOTE(TEST_DATA_PATH)) + std::string(TEST_PRIM_FILE)).c_str()));
 
 
   // first add it with a fatal cost (the default)
@@ -166,8 +168,7 @@ GTEST_TEST(TestPlanner, ReplanEasy)
 
   // TODO:(bn) open something saved in the test dir isntead, so we
   // know not to change or remove it
-  EXPECT_TRUE(env.ReadMotionPrimitives(
-                PREPEND_SCOPED_PATH(Test, "coretech/planning/matlab/test_mprim.json").c_str()));
+  EXPECT_TRUE(env.ReadMotionPrimitives((std::string(QUOTE(TEST_DATA_PATH)) + std::string(TEST_PRIM_FILE)).c_str()));
 
   xythetaPlanner planner(env);
 
@@ -197,8 +198,7 @@ GTEST_TEST(TestPlanner, DISABLED_ReplanHard)
 
   // TODO:(bn) open something saved in the test dir isntead, so we
   // know not to change or remove it
-  EXPECT_TRUE(env.ReadMotionPrimitives(
-                PREPEND_SCOPED_PATH(Test, "coretech/planning/matlab/test_mprim.json").c_str()));
+  EXPECT_TRUE(env.ReadMotionPrimitives((std::string(QUOTE(TEST_DATA_PATH)) + std::string(TEST_PRIM_FILE)).c_str()));
 
   xythetaPlanner planner(env);
 
@@ -256,8 +256,7 @@ GTEST_TEST(TestPlanner, ClosestSegmentToPose_straight)
 
   // TODO:(bn) open something saved in the test dir isntead, so we
   // know not to change or remove it
-  EXPECT_TRUE(env.ReadMotionPrimitives(
-                PREPEND_SCOPED_PATH(Test, "coretech/planning/matlab/test_mprim.json").c_str()));
+  EXPECT_TRUE(env.ReadMotionPrimitives((std::string(QUOTE(TEST_DATA_PATH)) + std::string(TEST_PRIM_FILE)).c_str()));
 
   xythetaPlanner planner(env);
 
@@ -315,8 +314,7 @@ GTEST_TEST(TestPlanner, ClosestSegmentToPose_wiggle)
 
   // TODO:(bn) open something saved in the test dir isntead, so we
   // know not to change or remove it
-  EXPECT_TRUE(env.ReadMotionPrimitives(
-                PREPEND_SCOPED_PATH(Test, "coretech/planning/matlab/test_mprim.json").c_str()));
+  EXPECT_TRUE(env.ReadMotionPrimitives((std::string(QUOTE(TEST_DATA_PATH)) + std::string(TEST_PRIM_FILE)).c_str()));
 
   xythetaPlanner planner(env);
 
@@ -383,8 +381,7 @@ GTEST_TEST(TestPlanner, CorrectlyRoundStateNearBox)
 
   // TODO:(bn) open something saved in the test dir isntead, so we
   // know not to change or remove it
-  EXPECT_TRUE(env.ReadMotionPrimitives(
-                PREPEND_SCOPED_PATH(Test, "coretech/planning/matlab/test_mprim.json").c_str()));
+  EXPECT_TRUE(env.ReadMotionPrimitives((std::string(QUOTE(TEST_DATA_PATH)) + std::string(TEST_PRIM_FILE)).c_str()));
 
   xythetaPlanner planner(env);
 

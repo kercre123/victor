@@ -95,8 +95,10 @@ void main(void)
   }
 #else
   
+  #ifndef USE_EVAL_BOARD
   // Initialize accelerometer
   InitAcc();
+  #endif
 
   // Initialize radioPayload and LED values to zeros
   for(led = 0; led<13; led++)
@@ -159,8 +161,10 @@ void main(void)
     StartTimer2();
     #endif
     // Accelerometer read
+    //#ifndef USE_EVAL_BOARD
     ReadAcc(accData);
     tapCount += GetTaps();
+    //#endif
     while(radioTimerState == radioSleep);
     {
       // doing lights stuff
@@ -172,10 +176,14 @@ void main(void)
     #endif
     
     // Receive data
+    #if defined(DO_MISSED_PACKET_TEST)
+    PutChar('r');
+    #endif 
     ReceiveData(RADIO_TIMEOUT_MS, false);
     #if defined(DO_MISSED_PACKET_TEST)
     PutChar('R');
     #endif
+    
     #if defined(USE_UART)
     #ifndef DO_MISSED_PACKET_TEST
     for(i=0; i<13; i++)
@@ -185,6 +193,7 @@ void main(void)
     PutString("\r\n");
     #endif
     #endif
+    
     if(missedPacketCount>0)
     {
       SetLedValuesByDelta();
@@ -215,6 +224,10 @@ void main(void)
     PutChar('T');
     #endif
     TransmitData();
+    #if defined(DO_MISSED_PACKET_TEST)
+    PutChar('t');
+    #endif
+    
     // Reset Payload
     memset(radioPayload, 0, sizeof(radioPayload));
   }

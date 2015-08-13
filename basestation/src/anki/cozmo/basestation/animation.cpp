@@ -15,6 +15,7 @@
 
 #include "anki/cozmo/basestation/animation.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/shared/cozmoEngineConfig.h"
 
 #include "anki/cozmo/shared/cozmoTypes.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
@@ -35,7 +36,7 @@
 namespace Anki {
 namespace Cozmo {
   
-  const s32 Animation::MAX_BYTES_FOR_RELIABLE_TRANSPORT = 3600;
+  const s32 Animation::MAX_BYTES_FOR_RELIABLE_TRANSPORT = (1000/2) * BS_TIME_STEP; // Don't send more than 1000 bytes every 2ms
   const s32 Animation::MAX_FRAMES_TO_SEND = 10;
   
 #pragma mark -

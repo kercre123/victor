@@ -52,12 +52,12 @@ void TapsTest()
   //InitUART();
   while(1)
   {
-    #if 0
+    #if 1
     tapCount += GetTaps();
     delay_ms(30);
     if(++x & 31)
       LightOn(tapCount % 12);
-    #elif 1
+    #elif 0
     tapCount += GetTaps();
     LightOn(tapCount % 12);
     delay_ms(30);

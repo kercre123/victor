@@ -17,11 +17,11 @@ namespace Anki {
 namespace Cozmo {
   
 
-CozmoEngineHostImpl::CozmoEngineHostImpl(IExternalInterface* externalInterface)
-: CozmoEngineImpl(externalInterface)
+CozmoEngineHostImpl::CozmoEngineHostImpl(IExternalInterface* externalInterface,Data::DataPlatform* dataPlatform)
+: CozmoEngineImpl(externalInterface, dataPlatform)
 , _isListeningForRobots(false)
 , _robotAdvertisementService("RobotAdvertisementService")
-, _robotMgr(externalInterface)
+, _robotMgr(externalInterface, dataPlatform)
 , _lastAnimationFolderScan(0)
 , _animationReloadActive(false)
 {
@@ -229,7 +229,7 @@ bool CozmoEngineHostImpl::ConnectToRobot(AdvertisingRobot whichRobot)
 
   // Another exception for hosts: have to tell the basestation to add the robot as well
   AddRobot(whichRobot);
-  _externalInterface->DeliverToGame(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotConnected(
+  _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotConnected(
     whichRobot, result
   )));
   return result;

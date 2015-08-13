@@ -20,8 +20,11 @@
 
 namespace Anki {
   namespace Cozmo {
-    
-    // NOTE: this is a singleton class
+  namespace Data {
+  class DataPlatform;
+  }
+
+  // NOTE: this is a singleton class
     class SoundManager
     {
     public:
@@ -36,9 +39,7 @@ namespace Anki {
       // Get the total number of sounds currently available in SoundManager
       size_t GetNumAvailableSounds() const;
       
-      // Set the root directory of sound files and causes a (re-)read of available
-      // sound files there.
-      bool SetRootDir(const std::string dir = "");
+      void LoadSounds(Data::DataPlatform* dataPlatform);
       
       // Volume for Play() methods is expressed a percentage of saved volume
       bool Play(const std::string& name, const u8 numLoops=1, const u8 volume = 100);
@@ -66,11 +67,8 @@ namespace Anki {
       static SoundManager* singletonInstance_;
       
       bool _hasCmdProcessor;
-      bool _hasRootDir;
-      
-      std::string _rootDir;
-      
-      Result ReadSoundDir(std::string subDir, bool isRobotAudio);
+
+      void ReadSoundDir(const std::string& root, const std::string& subDir, const bool isRobotAudio);
       
       struct AvailableSound {
         time_t lastLoadedTime;

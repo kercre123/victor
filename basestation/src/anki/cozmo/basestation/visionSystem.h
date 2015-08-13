@@ -54,14 +54,17 @@
 namespace Anki {
 namespace Cozmo {
     
-  // Forward declaration:
-  class Robot;
-  
-  class VisionSystem
+// Forward declaration:
+class Robot;
+namespace Data {
+class DataPlatform;
+}
+
+class VisionSystem
   {
   public:
 
-    VisionSystem();
+    VisionSystem(Data::DataPlatform* dataPlatform);
     ~VisionSystem();
     
     enum Mode {
@@ -227,6 +230,7 @@ namespace Cozmo {
     //
     
     bool _isInitialized;
+  Data::DataPlatform* _dataPlatform;
     
     // Just duplicating this from HAL for vision functions to work with less re-writing
     struct CameraInfo {
