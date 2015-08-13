@@ -86,6 +86,9 @@ namespace Cozmo {
       _cozmoEngine = nullptr;
       _isEngineStarted = false;
     }
+    else {
+      SetupSubscriptions();
+    }
     
     if(!config.isMember(AnkiUtil::kP_ADVERTISING_HOST_IP) ||
        !config.isMember(AnkiUtil::kP_UI_ADVERTISING_PORT)) {
@@ -104,7 +107,6 @@ namespace Cozmo {
     
     _uiMsgHandler.Init(&_uiComms);
     RegisterCallbacksU2G();
-    SetupSubscriptions();
     
     if(!config.isMember(AnkiUtil::kP_NUM_ROBOTS_TO_WAIT_FOR)) {
       PRINT_NAMED_WARNING("CozmoGameImpl.Init", "No NumRobotsToWaitFor defined in Json config, defaulting to 1.");

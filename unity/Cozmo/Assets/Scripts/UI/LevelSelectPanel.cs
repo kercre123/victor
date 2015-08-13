@@ -21,6 +21,8 @@ public class LevelSelectPanel : MonoBehaviour {
 
 	List<LevelSelectButton> levelSelectButtons = new List<LevelSelectButton>();
 
+	private Robot robot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.current : null; } }
+
 	void Awake() {
 
 		textTitle.text = gameName.ToUpper();
@@ -56,6 +58,11 @@ public class LevelSelectPanel : MonoBehaviour {
 		Vector2 size = scrollRectT.sizeDelta;
 		size.x = width;
 		scrollRectT.sizeDelta = size;
+
+		if(robot != null) {
+			robot.ClearAllObjects();
+			robot.ClearData();
+		}
 	}
 
 	void LaunchGame(int level) {

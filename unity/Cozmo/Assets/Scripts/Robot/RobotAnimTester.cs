@@ -3,6 +3,7 @@ using UnityEngine.UI;
 using System.Collections;
 using System.Collections.Generic;
 using U2G = Anki.Cozmo.ExternalInterface;
+using System;
 
 /// <summary>
 /// simple component for directly previewing animations on cozmo
@@ -30,6 +31,7 @@ public class RobotAnimTester : MonoBehaviour
 		anchor.gameObject.SetActive(true);
 
 		animNames = RobotEngineManager.instance.robotAnimationNames.ToArray();
+		Array.Sort<string> (animNames);
 		combo_selectAnim.AddItems(animNames);
 	}
 

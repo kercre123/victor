@@ -335,8 +335,16 @@ class VortexInput
 	protected override void Enter_BUILDING()
 	{
 		base.Enter_BUILDING();
+		if( GameLayoutTracker.instance != null) GameLayoutTracker.instance.CubeSpotted += CubeSpotted;
 	}
 
+	void CubeSpotted ()
+	{
+		Debug.Log ("Setting robot position");
+		SetRobotStartingPosition();
+		if( GameLayoutTracker.instance != null) GameLayoutTracker.instance.CubeSpotted -= CubeSpotted;
+	}
+		
 	protected override void Exit_BUILDING()
 	{
 		base.Exit_BUILDING();
@@ -914,12 +922,6 @@ class VortexInput
 			playersEliminated[i] = false;
 		}
 
-		markx_mm = robot.WorldPosition.x;
-		marky_mm = robot.WorldPosition.y;
-		mark_rad = robot.poseAngle_rad + (3.0f * Mathf.PI) / 2.0f;
-		mark_rad = mark_rad < 2.0f * Mathf.PI ? mark_rad : mark_rad - 2.0f * Mathf.PI;
-
-
 		PlaceTokens();
 
 		//enable intro text
@@ -963,7 +965,7 @@ class VortexInput
 
 		if(currentPlayerIndex == cozmoIndex) {
 			wheel.AutomatedMode();
-			SetRobotEmotion ("SPIN_WHEEL", false);
+			CozmoEmotionManager.instance.SetEmotionTurnInPlace ("SPIN_WHEEL", mark_rad, true);
 
 			startDragPos = new Vector2(cozmoStartDragPos.x * Screen.width, cozmoStartDragPos.y * Screen.height);
 			startDragPos += UnityEngine.Random.insideUnitCircle * Screen.height * 0.1f;
@@ -1114,7 +1116,7 @@ class VortexInput
 	void Enter_SPINNING()
 	{
 
-		SetRobotEmotion("WATCH_SPIN", false);
+		SetRobotEmotion("WATCH_SPIN", false, false);
 
 		lightingBall.Radius = wheelLightningRadii[currentWheelIndex];
 
@@ -1818,6 +1820,7 @@ class VortexInput
 		if(state == GameState.PRE_GAME) {
 			if (index == cozmoIndex) { // cozmo
 				//SetRobotEmotion ("LETS_PLAY");
+				Debug.LogError("lets play!");
 				CozmoEmotionManager.instance.SetEmotionReturnToPose ("LETS_PLAY", markx_mm, marky_mm, mark_rad);
 				atYourMark = false;
 			} else {
@@ -1888,6 +1891,16 @@ class VortexInput
 		if(playerInputs[index].stamps.Count == 1) {
 			StartCoroutine(DelayBidLockedEffect(index));
 		}
+	}
+
+	public void SetRobotStartingPosition()
+	{
+		mark_rad = robot.poseAngle_rad + (3.0f * Mathf.PI) / 2.0f;
+		mark_rad = mark_rad < 2.0f * Mathf.PI ? mark_rad : mark_rad - 2.0f * Mathf.PI;
+		Vector2 cozmo_desired_facing = MathUtil.RotateVector2d(Vector3.right, mark_rad);
+		Vector2 offset = new Vector2 (robot.WorldPosition.x, robot.WorldPosition.y) - (50 * cozmo_desired_facing.normalized);
+		markx_mm = offset.x;
+		marky_mm = offset.y;
 	}
 
 	#endregion

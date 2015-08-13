@@ -740,5 +740,12 @@ public class MathUtil
 			return false;
 		}
 	}
+	static Vector2 result = new Vector2();
+	public static Vector2 RotateVector2d(Vector2 pos, float radians)
+	{
+		result.x = pos.x * Mathf.Cos(radians) - pos.y * Mathf.Sin(radians);
+		result.y = pos.x * Mathf.Sin(radians) + pos.y * Mathf.Cos(radians);
+		return result;
+	}
 
 }
