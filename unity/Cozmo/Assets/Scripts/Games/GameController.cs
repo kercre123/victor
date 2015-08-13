@@ -51,6 +51,7 @@ public class GameController : MonoBehaviour
 	[SerializeField] protected Text textAddaboy = null;
 	[SerializeField] protected bool autoPlay = false;
 	[SerializeField] protected Button playButton = null;
+	[SerializeField] protected Button playAgainButton = null;
 	[SerializeField] protected Image resultsPanel = null;
 	[SerializeField] protected AudioClip instructionsSound;
 	[SerializeField] protected AudioClip gameStartSound;
@@ -85,6 +86,8 @@ public class GameController : MonoBehaviour
 	public string SAVED_STARS { get { return currentGameName + currentLevelNumber + STARS_END; } }
 
 	public int savedStars { get { return PlayerPrefs.GetInt(SAVED_STARS, 0); } set { PlayerPrefs.SetInt(SAVED_STARS, value); } }
+
+	protected Animation playAgainSheen = null;
 
 	#endregion
 
@@ -168,6 +171,10 @@ public class GameController : MonoBehaviour
 		}
 
 		while(scores.Count < MAX_PLAYERS) scores.Add(0);
+
+		if (playAgainButton != null) {
+			playAgainSheen = playAgainButton.GetComponent<Animation>();
+		}
 	}
 
 	protected virtual void OnEnable()
@@ -672,11 +679,27 @@ public class GameController : MonoBehaviour
 		{
 			robot.isBusy = true;
 		}
+
+		if(playAgainButton != null) {
+			playAgainButton.interactable = IsGameReady();
+		}
+
+		if (playAgainSheen != null) {
+			playAgainSheen.enabled = IsGameReady();
+		}
 	}
 
 	protected virtual void Update_RESULTS()
 	{
 		//Debug.Log(gameObject.name + " Update_RESULTS");
+
+		if(playAgainButton != null) {
+			playAgainButton.interactable = IsGameReady();
+		}
+
+		if (playAgainSheen != null) {
+			playAgainSheen.enabled = IsGameReady();
+		}
 	}
 
 	protected virtual void Exit_RESULTS()
@@ -695,7 +718,7 @@ public class GameController : MonoBehaviour
 
 	protected virtual bool IsGameReady()
 	{
-		if(robot == null) return false;
+		if(robot == null || robot.isBusy) return false;
 		if(GameLayoutTracker.instance == null) return false;
 
 		//layout tracker dominates unless it is disabled

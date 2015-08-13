@@ -342,6 +342,19 @@ public class Robot : IDisposable
 	public bool isBusy
 	{
 		get {
+			/*if (localBusyOverride
+			   || localBusyTimer > 0f
+			   || Status(RobotStatusFlag.IS_PERFORMING_ACTION)
+			   || (Status(RobotStatusFlag.IS_ANIMATING) && !Status (RobotStatusFlag.IS_ANIMATING_IDLE))
+			   || Status(RobotStatusFlag.IS_PICKED_UP))
+			{
+				Debug.Log (localBusyOverride ? "localBusyOverride" :
+				localBusyTimer > 0f ? " localBusyTimer > 0f" :
+				Status(RobotStatusFlag.IS_PERFORMING_ACTION) ? " IS_PERFORMING_ACTION" :
+				Status(RobotStatusFlag.IS_ANIMATING) && !Status (RobotStatusFlag.IS_ANIMATING_IDLE) ? " IS_ANIMATING" :
+				Status(RobotStatusFlag.IS_PICKED_UP) ? " IS_PICKED_UP" : "");
+			}*/
+
 			return localBusyOverride
 			|| localBusyTimer > 0f
 			|| Status(RobotStatusFlag.IS_PERFORMING_ACTION)

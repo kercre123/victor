@@ -10,7 +10,6 @@ public class SlalomController : GameController
 
 	[SerializeField] Text text_finalTime;
 	[SerializeField] Text text_resultsTitle;
-	[SerializeField] Button button_PlayAgain;
 	[SerializeField] Button button_Rebuild;
 
 	//when reaching the end or beginning of obstacle list, reverse order
@@ -701,14 +700,14 @@ public class SlalomController : GameController
 		{
 			text_resultsTitle.text = "Slalom Completed!";
 			CelebrationLights();
-			button_PlayAgain.gameObject.SetActive(true);
+			playAgainButton.gameObject.SetActive(true);
 			button_Rebuild.gameObject.SetActive(false);
 		} else
 		{
 			text_resultsTitle.text = "Game Over";
 			DisqualifiedLights();
 
-			button_PlayAgain.gameObject.SetActive(false);
+			playAgainButton.gameObject.SetActive(false);
 			button_Rebuild.gameObject.SetActive(true);
 		}
 	}

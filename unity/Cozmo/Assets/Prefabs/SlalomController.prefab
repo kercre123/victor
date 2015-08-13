@@ -1035,6 +1035,7 @@ MonoBehaviour:
   textAddaboy: {fileID: 11473464}
   autoPlay: 1
   playButton: {fileID: 0}
+  playAgainButton: {fileID: 11402838}
   resultsPanel: {fileID: 11445544}
   instructionsSound: {fileID: 8300000, guid: 0f05bb73c69d1444aa4081262b144337, type: 3}
   gameStartSound: {fileID: 8300000, guid: 9587b14d6089a468b880999908b95c92, type: 3}
@@ -1068,7 +1069,6 @@ MonoBehaviour:
   maxEmotionWaitTime: 20
   text_finalTime: {fileID: 11453272}
   text_resultsTitle: {fileID: 11403486}
-  button_PlayAgain: {fileID: 11402838}
   button_Rebuild: {fileID: 11498684}
   thereAndBackAgain: 1
   pointsPerObstacle: 100
