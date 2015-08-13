@@ -1242,6 +1242,9 @@ class VortexInput
 						//robot.TapBlockOnGround(predictedNum);
 						switch (predictedNum) {
 							case 2:
+								CozmoEmotionManager.SetEmotion("TAP_ONE", true);
+							break;
+							case 2:
 								CozmoEmotionManager.SetEmotion("TAP_TWO", true);
 								break;
 							case 3:
