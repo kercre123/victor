@@ -621,7 +621,7 @@ namespace AnimationController {
         
         // If the next message is not audio, then delete it until it is.
         while(msgID != Messages::AnimKeyFrame_AudioSilence_ID && msgID != Messages::AnimKeyFrame_AudioSample_ID) {
-          PRINT("Expecting either audio sample or silence next in animation buffer. (Got %d instead). Dumping message.\n", msgID);
+          PRINT("Expecting either audio sample or silence next in animation buffer. (Got %d instead). Dumping message. (FYI AudioSample_ID = %d)\n", msgID, Messages::AnimKeyFrame_AudioSample_ID);
           switch (msgID) {
             DUMP_NEXT_MESSAGE_CASE(HeadAngle)
             DUMP_NEXT_MESSAGE_CASE(LiftHeight)
