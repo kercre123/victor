@@ -1784,11 +1784,21 @@ class VortexInput
 		switch(action_type)
 		{
 		case RobotActionType.COMPOUND:
+			if (success) {
+				atYourMark = true;
+				if (RobotEngineManager.instance != null)
+					RobotEngineManager.instance.SuccessOrFailure -= CheckForGotoStartCompletion;
+			} else { //try again to go to the start spot
+				robot.GotoPose (markx_mm, marky_mm, mark_rad);
+			}
+			break;
+		case RobotActionType.DRIVE_TO_POSE:
 			if(success)
 			{
 				atYourMark = true;
 				if(RobotEngineManager.instance != null) RobotEngineManager.instance.SuccessOrFailure -= CheckForGotoStartCompletion;
-			} else
+			} 
+			else
 			{ //try again to go to the start spot
 				robot.GotoPose(markx_mm, marky_mm, mark_rad);
 			}
