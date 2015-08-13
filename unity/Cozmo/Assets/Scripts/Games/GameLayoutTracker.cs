@@ -95,6 +95,8 @@ public class GameLayoutTracker : MonoBehaviour
 
 	public LayoutTrackerPhase Phase { get; private set; }
 
+	public event Action CubeSpotted;
+
 	Robot robot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.current : null; } }
 
 	bool blocksInitialized = false;
@@ -483,6 +485,8 @@ public class GameLayoutTracker : MonoBehaviour
 					}
 					
 					inventory.Add(inventoriedObject);
+					if (CubeSpotted != null)
+						CubeSpotted ();
 					Debug.Log("Update_INVENTORY Add(" + inventoriedObject + ") inventory(" + inventory.Count + ")");
 				} else
 				{
