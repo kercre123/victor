@@ -60,10 +60,10 @@ static inline Fixed getADCsample(AnalogInput channel, const Fixed scale)
 
 void Battery::init()
 {
-  // Charge enable
+  // Configure charge pins
   nrf_gpio_pin_clear(PIN_CHARGE_EN);
   nrf_gpio_cfg_output(PIN_CHARGE_EN);
-
+ 
   // Syscon power - this should always be on until battery fail
   nrf_gpio_pin_set(PIN_PWR_EN);
   nrf_gpio_cfg_output(PIN_PWR_EN);
@@ -71,8 +71,6 @@ void Battery::init()
   // Encoder and headboard power
   nrf_gpio_pin_set(PIN_nVDDs_EN);
   nrf_gpio_cfg_output(PIN_nVDDs_EN);
-
-  nrf_gpio_cfg_input(PIN_nCHGOK, NRF_GPIO_PIN_PULLUP);
   
   // Configure the analog sense pins
   nrf_gpio_cfg_input(PIN_V_BAT_SENSE, NRF_GPIO_PIN_NOPULL);
@@ -125,6 +123,7 @@ void Battery::update()
       break ;
   }
 
+  nrf_gpio_cfg_input(PIN_V_BAT_SENSE, NRF_GPIO_PIN_PULLUP);
   UART::print("VBat: %1.3f VExt: %1.3f nCHGOK: %i\n\r", g_dataToHead.VBat / 65536.0f, g_dataToHead.VExt / 65536.0f, nrf_gpio_pin_read(PIN_nCHGOK));
 
   /*
