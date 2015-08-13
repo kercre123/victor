@@ -991,8 +991,8 @@ namespace Cozmo {
         break;
      
       case QueueActionPosition::NOW_AND_CLEAR_REMAINING:
-        // Empty the queue entirely and make this action the next thing in it
-        actionList.Clear();
+        // Cancel all actions in list and make this the next thing in it
+        actionList.Cancel();
         actionList.QueueActionNext(inSlot, action, numRetries);
         break;
 
