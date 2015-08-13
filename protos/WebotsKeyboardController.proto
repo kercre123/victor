@@ -1,5 +1,6 @@
 PROTO WebotsKeyboardController [
   field SFString name "WebotsKeyboardController"
+  field SFString controllerArgs ""
   field SFVec3f translation 0 0 0.08
   field SFRotation rotation 0 0 1 0
 
@@ -185,5 +186,6 @@ Supervisor {
   ]
   name IS name
   controller "webotsCtrlKeyboard"
+  controllerArgs IS controllerArgs
 } # Supervisor definition
 } # PROTO definition

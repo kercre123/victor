@@ -79,7 +79,6 @@ int main(int argc, char **argv)
   Anki::Util::PrintfLoggerProvider loggerProvider;
   loggerProvider.SetMinLogLevel(0);
   Anki::Util::gLoggerProvider = &loggerProvider;
-  PRINT_NAMED_INFO("webotsCtrlGameEngine", "main at %s", argv[0]);
 
   // Get the last position of '/'
   std::string aux(argv[0]);
