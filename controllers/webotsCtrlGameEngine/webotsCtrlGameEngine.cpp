@@ -105,12 +105,9 @@ int main(int argc, char **argv)
   const std::string jsonFilename = dataPlatform.pathToResource(Data::Scope::Resources,
     "config/basestation/config/configuration.json");
   
-  Json::Reader reader;
-  std::ifstream jsonFile(jsonFilename);
-  if (!reader.parse(jsonFile, config)) {
+  if (!dataPlatform.readAsJson(Data::Scope::Resources, "config/basestation/config/configuration.json", config)) {
     PRINT_NAMED_ERROR("webotsCtrlGameEngine.main.loadConfig", "Failed to parse Json file %s", jsonFilename.c_str());
   }
-  jsonFile.close();
 
   if(!config.isMember(AnkiUtil::kP_ADVERTISING_HOST_IP)) {
     config[AnkiUtil::kP_ADVERTISING_HOST_IP] = ROBOT_ADVERTISING_HOST_IP;
