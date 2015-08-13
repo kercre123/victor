@@ -24,7 +24,7 @@ public class VortexController : GameController
 		SPIN_COMPLETE
 	}
 
-	class VortexInput
+class VortexInput
 	{
 		public List<float> stamps = new List<float>();
 
@@ -667,9 +667,11 @@ public class VortexController : GameController
 			Debug.Log("Enter_RESULTS robot.SetLiftHeight(0.1f);");
 			//robot.SetLiftHeight(0.1f);
 
+			/*
 			if(humanHead != null) {
 				robot.FaceObject(humanHead, false);
 			}
+			*/
 		}
 
 		if(sortedScoreData[0].playerIndex == cozmoIndex) {
@@ -1705,7 +1707,7 @@ public class VortexController : GameController
 		}
 	}
 
-	void BlockTapped(int blockID)
+	void BlockTapped(int blockID, int numTaps)
 	{
 		Debug.Log ("BlockTapped block("+blockID+")");
 		for(int i = 0; i < playerInputBlocks.Count; i++) {
@@ -1716,7 +1718,9 @@ public class VortexController : GameController
 			//if we are faking cozmo's taps, let's ignore any real incoming messages for his block
 			if(fakeCozmoTaps && i == cozmoIndex) continue;
 
-			PlayerInputTap(i);
+			for(int j = 0; j < numTaps; j++) {
+				PlayerInputTap(i);
+			}
 			break;
 		}
 	}
@@ -1780,11 +1784,21 @@ public class VortexController : GameController
 		switch(action_type)
 		{
 		case RobotActionType.COMPOUND:
+			if (success) {
+				atYourMark = true;
+				if (RobotEngineManager.instance != null)
+					RobotEngineManager.instance.SuccessOrFailure -= CheckForGotoStartCompletion;
+			} else { //try again to go to the start spot
+				robot.GotoPose (markx_mm, marky_mm, mark_rad);
+			}
+			break;
+		case RobotActionType.DRIVE_TO_POSE:
 			if(success)
 			{
 				atYourMark = true;
 				if(RobotEngineManager.instance != null) RobotEngineManager.instance.SuccessOrFailure -= CheckForGotoStartCompletion;
-			} else
+			} 
+			else
 			{ //try again to go to the start spot
 				robot.GotoPose(markx_mm, marky_mm, mark_rad);
 			}

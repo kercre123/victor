@@ -109,7 +109,7 @@ MonoBehaviour:
   - stateName: MAJOR_FAIL
     playAllAnims: 0
     emotionAnims:
-    - animName: ANIM_TEST_SPINNER
+    - animName: MajorFail
       numLoops: 1
   - stateName: WIN_MATCH
     playAllAnims: 0
