@@ -28,7 +28,7 @@ CozmoEngineHostImpl::CozmoEngineHostImpl(IExternalInterface* externalInterface,D
 {
 
   PRINT_NAMED_INFO("CozmoEngineHostImpl.Constructor",
-                   "Starting RobotAdvertisementService, reg port %d, ad port %d\n",
+                   "Starting RobotAdvertisementService, reg port %d, ad port %d",
                    ROBOT_ADVERTISEMENT_REGISTRATION_PORT, ROBOT_ADVERTISING_PORT);
 
   _robotAdvertisementService.StartService(ROBOT_ADVERTISEMENT_REGISTRATION_PORT,
@@ -52,7 +52,7 @@ void CozmoEngineHostImpl::ForceAddRobot(AdvertisingRobot robotID,
                                         bool             robotIsSimulated)
 {
   if(_isInitialized) {
-    PRINT_NAMED_INFO("CozmoEngineHostImpl.ForceAddRobot", "Force-adding %s robot with ID %d and IP %s\n",
+    PRINT_NAMED_INFO("CozmoEngineHostImpl.ForceAddRobot", "Force-adding %s robot with ID %d and IP %s",
                      (robotIsSimulated ? "simulated" : "real"), robotID, robotIP);
 
     // Force add physical robot since it's not registering by itself yet.
@@ -70,7 +70,7 @@ void CozmoEngineHostImpl::ForceAddRobot(AdvertisingRobot robotID,
     _forceAddedRobots[robotID] = true;
   } else {
     PRINT_NAMED_ERROR("CozmoEngineHostImpl.ForceAddRobot",
-                      "You cannot force-add a robot until the engine is initialized.\n");
+                      "You cannot force-add a robot until the engine is initialized.");
   }
 }
 
@@ -88,7 +88,7 @@ void CozmoEngineHostImpl::InitPlaybackAndRecording()
    mode_ = BM_DEFAULT;
    }
 
-   PRINT_INFO("Starting basestation mode %d\n", mode_);
+   PRINT_INFO("Starting basestation mode %d", mode_);
    switch(mode_)
    {
    case BM_RECORD_SESSION:
@@ -97,7 +97,7 @@ void CozmoEngineHostImpl::InitPlaybackAndRecording()
    std::string rootLogFolderName = AnkiUtil::kP_GAME_LOG_ROOT_DIR;
    if (!DirExists(rootLogFolderName.c_str())) {
    if(!MakeDir(rootLogFolderName.c_str())) {
-   PRINT_NAMED_WARNING("Basestation.Init.RootLogDirCreateFailed", "Failed to create folder %s\n", rootLogFolderName.c_str());
+   PRINT_NAMED_WARNING("Basestation.Init.RootLogDirCreateFailed", "Failed to create folder %s", rootLogFolderName.c_str());
    return BS_END_INIT_ERROR;
    }
 
@@ -106,7 +106,7 @@ void CozmoEngineHostImpl::InitPlaybackAndRecording()
    // Create folder for log
    std::string logFolderName = rootLogFolderName + "/" + GetCurrentDateTime() + "/";
    if(!MakeDir(logFolderName.c_str())) {
-   PRINT_NAMED_WARNING("Basestation.Init.LogDirCreateFailed", "Failed to create folder %s\n", logFolderName.c_str());
+   PRINT_NAMED_WARNING("Basestation.Init.LogDirCreateFailed", "Failed to create folder %s", logFolderName.c_str());
    return BS_END_INIT_ERROR;
    }
 
@@ -134,7 +134,7 @@ void CozmoEngineHostImpl::InitPlaybackAndRecording()
    // Get log folder from config
    std::string logFolderName;
    if (!JsonTools::GetValueOptional(config, AnkiUtil::kP_PLAYBACK_LOG_FOLDER, logFolderName)) {
-   PRINT_NAMED_ERROR("Basestation.Init.PlaybackDirNotSpecified", "\n");
+   PRINT_NAMED_ERROR("Basestation.Init.PlaybackDirNotSpecified", "");
    return BS_END_INIT_ERROR;
    }
    logFolderName = AnkiUtil::kP_GAME_LOG_ROOT_DIR + string("/") + logFolderName + "/";
@@ -142,7 +142,7 @@ void CozmoEngineHostImpl::InitPlaybackAndRecording()
 
    // Check if folder exists
    if (!DirExists(logFolderName.c_str())) {
-   PRINT_NAMED_ERROR("Basestation.Init.PlaybackDirNotFound", "%s\n", logFolderName.c_str());
+   PRINT_NAMED_ERROR("Basestation.Init.PlaybackDirNotFound", "%s", logFolderName.c_str());
    return BS_END_INIT_ERROR;
    }
 
@@ -177,7 +177,7 @@ Result CozmoEngineHostImpl::AddRobot(RobotID_t robotID)
   _robotMgr.AddRobot(robotID, &_robotMsgHandler);
   Robot* robot = _robotMgr.GetRobotByID(robotID);
   if(nullptr == robot) {
-    PRINT_NAMED_ERROR("CozmoEngineHostImpl.AddRobot", "Failed to add robot ID=%d (nullptr returned).\n", robotID);
+    PRINT_NAMED_ERROR("CozmoEngineHostImpl.AddRobot", "Failed to add robot ID=%d (nullptr returned).", robotID);
     lastResult = RESULT_FAIL;
   } else {
     lastResult = robot->SyncTime();
@@ -223,7 +223,7 @@ bool CozmoEngineHostImpl::ConnectToRobot(AdvertisingRobot whichRobot)
   bool result = CozmoEngineImpl::ConnectToRobot(whichRobot);
   if(_forceAddedRobots.count(whichRobot) > 0) {
     PRINT_NAMED_INFO("CozmoEngineHostImpl.ConnectToRobot",
-                     "Manually deregistering force-added robot %d from advertising service.\n", whichRobot);
+                     "Manually deregistering force-added robot %d from advertising service.", whichRobot);
     _robotAdvertisementService.DeregisterAllAdvertisers();
   }
 
@@ -274,6 +274,7 @@ void CozmoEngineHostImpl::ReloadAnimations(const BaseStationTime_t currTime_ns)
     _lastAnimationFolderScan = currTime_ns;
     Robot* robot = _robotMgr.GetFirstRobot();
     if (robot != nullptr) {
+      PRINT_NAMED_INFO("CozmoEngineHostImpl.ReloadAnimations", "ReadAnimationDir");
       robot->ReadAnimationDir(true);
     }
   }
@@ -287,7 +288,7 @@ bool CozmoEngineHostImpl::GetCurrentRobotImage(RobotID_t robotID, Vision::Image&
     return robot->GetCurrentImage(img, newerThanTime);
   } else {
     PRINT_NAMED_ERROR("BasestationMainImpl.GetCurrentRobotImage.InvalidRobotID",
-                      "Image requested for invalid robot ID = %d.\n", robotID);
+                      "Image requested for invalid robot ID = %d.", robotID);
     return false;
   }
 }
