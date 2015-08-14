@@ -37,7 +37,6 @@ namespace Anki {
 namespace Cozmo {
   
   const s32 Animation::MAX_BYTES_FOR_RELIABLE_TRANSPORT = (1000/2) * BS_TIME_STEP; // Don't send more than 1000 bytes every 2ms
-  const s32 Animation::MAX_FRAMES_TO_SEND = 10;
   
 #pragma mark -
 #pragma mark Animation::Track
@@ -255,41 +254,32 @@ _blinkTrack.__METHOD__()
                        "Send buffer length=%lu.\n", _sendBuffer.size());
 #     endif
       
-      if(_numFramesToSend > 0) {
-        msg = _sendBuffer.front();
-        const s32 numBytesRequired = msg->GetSize() + sizeof(RobotMessage::ID);
-        if(numBytesRequired <= _numBytesToSend) {
-          Result sendResult = robot.SendMessage(*msg);
-          if(sendResult != RESULT_OK) {
-            return sendResult;
-          }
-          
-          _numBytesToSend -= numBytesRequired;
-          --_numFramesToSend;
-          
-          // Increment total number of bytes streamed to robot, but this needs to be
-          // in terms of the number of bytes that it translates to on the robot.
-          // The message size on the robot is padded out to 2-byte alignment.
-          // The size of the message ID on the sim robot is 4, but on the physical robot is 1.
-          s32 sizeOfMsgID = robot.IsPhysical() ? 1 : sizeof(RobotMessage::ID);
-          runningTotalBytesSent += msg->GetPaddedSize() + sizeOfMsgID;
-          //printf("NumBytesStreamed %d (Added %d + %u)\n", runningTotalBytesSent, sizeOfMsgID, msg->GetPaddedSize());
-          
-          _sendBuffer.pop_front();
-        } else {
-          // Out of bytes to send, continue on next Update()
-#         if DEBUG_ANIMATIONS
-          PRINT_NAMED_INFO("Animation.SendBufferedMessages",
-                           "Ran out of bytes to send from buffer, will continue next Update().\n");
-#         endif
-          return RESULT_OK;
+
+      msg = _sendBuffer.front();
+      const s32 numBytesRequired = msg->GetSize() + sizeof(RobotMessage::ID);
+      if(numBytesRequired <= _numBytesToSend) {
+        Result sendResult = robot.SendMessage(*msg);
+        if(sendResult != RESULT_OK) {
+          return sendResult;
         }
+        
+        _numBytesToSend -= numBytesRequired;
+        
+        // Increment total number of bytes streamed to robot, but this needs to be
+        // in terms of the number of bytes that it translates to on the robot.
+        // The message size on the robot is padded out to 2-byte alignment.
+        // The size of the message ID on the sim robot is 4, but on the physical robot is 1.
+        s32 sizeOfMsgID = robot.IsPhysical() ? 1 : sizeof(RobotMessage::ID);
+        runningTotalBytesSent += msg->GetPaddedSize() + sizeOfMsgID;
+        //printf("NumBytesStreamed %d (Added %d + %u)\n", runningTotalBytesSent, sizeOfMsgID, msg->GetPaddedSize());
+        
+        _sendBuffer.pop_front();
       } else {
-        // Out of frames to send, continue on next Update()
-#       if DEBUG_ANIMATIONS
+        // Out of bytes to send, continue on next Update()
+#         if DEBUG_ANIMATIONS
         PRINT_NAMED_INFO("Animation.SendBufferedMessages",
-                         "Ran out of frames to send from buffer, will continue next Update().\n");
-#       endif
+                         "Ran out of bytes to send from buffer, will continue next Update().\n");
+#         endif
         return RESULT_OK;
       }
     }
@@ -297,7 +287,7 @@ _blinkTrack.__METHOD__()
     // Sanity check
     // If we got here, we've finished streaming out everything in the send
     // buffer -- i.e., all the frames associated with the last audio keyframe
-    assert(_numFramesToSend >= 0 && _numBytesToSend >= 0);
+    assert(_numBytesToSend >= 0);
     assert(_sendBuffer.empty());
     
     return RESULT_OK;
@@ -334,14 +324,13 @@ _blinkTrack.__METHOD__()
     s32 minBytesFreeInRobotBuffer = KEYFRAME_BUFFER_SIZE - (totalNumBytesStreamed - robot.GetNumAnimationBytesPlayed());
     assert(minBytesFreeInRobotBuffer >= 0);
     
-    // Reset the number of frames/bytes we can send each Update() as a form of
+    // Reset the number of bytes we can send each Update() as a form of
     // flow control: Don't send frames if robot has no space for them, and be
-    // careful not to overwhel reliable transport either, in terms of bytes or
+    // careful not to overwhelm reliable transport either, in terms of bytes or
     // sheer number of messages. These get decremenged on each call to
     // SendBufferedMessages() below
     _numBytesToSend = std::min(Animation::MAX_BYTES_FOR_RELIABLE_TRANSPORT,
                                minBytesFreeInRobotBuffer);
-    _numFramesToSend = Animation::MAX_FRAMES_TO_SEND;
     
     
     // Send anything still left in the buffer after last Update()
