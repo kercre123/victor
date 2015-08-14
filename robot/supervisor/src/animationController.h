@@ -66,6 +66,10 @@ namespace Anki {
 
       //s32  GetNumFramesFree();
       
+      s32 GetTotalNumBytesPlayed();
+      
+      void ClearNumBytesPlayed();
+      
       s32 GetApproximateNumBytesFree();
       
       // Enable/disable tracks from playing. If the bit for corresponding track is

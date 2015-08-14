@@ -24,9 +24,6 @@ namespace AnimationController {
   
   namespace {
     
-    // Streaming KeyFrame buffer size, in bytes
-    static const s32 KEYFRAME_BUFFER_SIZE = 16384;
-    
     // If buffer gets within this number of bytes of the buffer length,
     // then it is considered "full" for the purposes of IsBufferFull() below.
     static const s32 KEYFRAME_BUFFER_PADDING = KEYFRAME_BUFFER_SIZE / 3;
@@ -40,7 +37,8 @@ namespace AnimationController {
     s32 _currentBufferPos;
     s32 _lastBufferPos;
     
-    s32  _numAudioFramesBuffered; // NOTE: Also counts EndOfAnimationFrames...
+    s32 _numAudioFramesBuffered; // NOTE: Also counts EndOfAnimationFrames...
+    s32 _numBytesPlayed = 0;
 
     bool _isBufferStarved;
     bool _haveReceivedTerminationFrame;
@@ -285,12 +283,45 @@ namespace AnimationController {
     return RESULT_OK;
   }
   
+  static s32 GetNumBytesAvailable()
+  {
+    if(_lastBufferPos >= _currentBufferPos) {
+      return sizeof(_keyFrameBuffer) - (_lastBufferPos - _currentBufferPos);
+    } else {
+      return _currentBufferPos - _lastBufferPos;
+    }
+  }
+  
+  static s32 GetNumBytesInBuffer()
+  {
+    if(_lastBufferPos >= _currentBufferPos) {
+      return (_lastBufferPos - _currentBufferPos);
+    } else {
+      return sizeof(_keyFrameBuffer) - (_currentBufferPos - _lastBufferPos);
+    }
+  }
+  
+  s32 GetTotalNumBytesPlayed() {
+    return _numBytesPlayed;
+  }
+  
+  void ClearNumBytesPlayed() {
+    _numBytesPlayed = 0;
+  }
+  
+  s32 GetApproximateNumBytesFree()
+  {
+    return MAX(0, GetNumBytesAvailable() - KEYFRAME_BUFFER_PADDING);
+  }
   
   void Clear()
   {
 #   if DEBUG_ANIMATION_CONTROLLER
     PRINT("Clearing AnimationController\n");
 #   endif
+    
+    _numBytesPlayed += GetNumBytesInBuffer();
+    //PRINT("CLEAR NumBytesPlayed %d (%d)\n", _numBytesPlayed, GetNumBytesInBuffer());
     
     _currentBufferPos = 0;
     _lastBufferPos = 0;
@@ -323,24 +354,9 @@ namespace AnimationController {
 #   if DEBUG_ANIMATION_CONTROLLER
     _currentTime_ms = 0;
 #   endif
-    
-    // Necessary?
-    //memset(_keyFrameBuffer, KEYFRAME_BUFFER_SIZE, sizeof(u8));
   }
  
-  static s32 GetNumBytesAvailable()
-  {
-    if(_lastBufferPos >= _currentBufferPos) {
-      return sizeof(_keyFrameBuffer) - (_lastBufferPos - _currentBufferPos);
-    } else {
-      return _currentBufferPos - _lastBufferPos;
-    }
-  }
-  
-  s32 GetApproximateNumBytesFree()
-  {
-    return MAX(0, GetNumBytesAvailable() - KEYFRAME_BUFFER_PADDING);
-  }
+
   
   static void CopyIntoBuffer(const u8* data, s32 numBytes)
   {
@@ -371,6 +387,10 @@ namespace AnimationController {
     if(_currentBufferPos < 0) {
       _currentBufferPos += sizeof(_keyFrameBuffer);
     }
+    
+    _numBytesPlayed -= sizeof(Messages::ID);
+    //PRINT("MINUS NumBytesPlayed %d (%d)\n", _numBytesPlayed, sizeof(Messages::ID));
+    
   }
   
   static inline void SetTypeIndicator(Messages::ID msgType)
@@ -397,6 +417,10 @@ namespace AnimationController {
       memcpy(data+firstChunk, _keyFrameBuffer, numBytes - firstChunk);
       _currentBufferPos = numBytes-firstChunk;
     }
+    
+    // Increment total number of bytes played since startup
+    _numBytesPlayed += numBytes;
+    //PRINT("NumBytesPlayed %d (%d) (%d)\n", _numBytesPlayed, numBytes, *((u32*)data));
     
     assert(_currentBufferPos >= 0 && _currentBufferPos < sizeof(_keyFrameBuffer));
   }

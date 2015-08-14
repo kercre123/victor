@@ -391,6 +391,13 @@ namespace Anki {
       // keyframe buffer, to let us know if we can stream any more
       s32 GetNumAnimationBytesFree() const;
       
+      // Returns the number of animation bytes played on the robot since
+      // it was initialized with SyncTime.
+      s32 GetNumAnimationBytesPlayed() const;
+      
+      // Returns a reference to a count of the total number of bytes streamed to the robot.
+      s32& GetNumAnimationBytesStreamed();
+      
       // Ask the UI to play a sound for us
       Result PlaySound(const std::string& soundName, u8 numLoops, u8 volume);
       void   StopSound();
@@ -727,6 +734,8 @@ namespace Anki {
       CannedAnimationContainer _cannedAnimations;
       AnimationStreamer        _animationStreamer;
       s32 _numFreeAnimationBytes;
+      s32 _numAnimationBytesPlayed;
+      s32 _numAnimationBytesStreamed;
       
       ///////// Messaging ////////
       // These methods actually do the creation of messages and sending
@@ -899,6 +908,14 @@ namespace Anki {
     
     inline s32 Robot::GetNumAnimationBytesFree() const {
       return _numFreeAnimationBytes;
+    }
+    
+    inline s32 Robot::GetNumAnimationBytesPlayed() const {
+      return _numAnimationBytesPlayed;
+    }
+    
+    inline s32& Robot::GetNumAnimationBytesStreamed() {
+      return _numAnimationBytesStreamed;
     }
     
   } // namespace Cozmo

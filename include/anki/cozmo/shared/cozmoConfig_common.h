@@ -80,6 +80,9 @@ const f32 ONE_OVER_CONTROL_DT = 1.0f/CONTROL_DT;
  *
  **************************************************************************/
 
+// Streaming KeyFrame buffer size, in bytes
+const s32 KEYFRAME_BUFFER_SIZE = 16384;
+
 const s32 MAX_FACE_FRAME_SIZE = 1024;
 
 const u32 AUDIO_SAMPLE_SIZE = 800;

@@ -600,6 +600,7 @@ namespace Anki {
     
 
     void VizManager::SendRobotState(const MessageRobotState &msg,
+                                    const s32 &numAnimBytesFree,
                                     const u8 &videoFramefateHz)
     {
       VizRobotState m;
@@ -619,8 +620,8 @@ namespace Anki {
       m.proxRight = msg.proxRight;
       m.battVolt10x = msg.battVolt10x;
       m.status = msg.status;
-      m.numAnimBytesFree = msg.numAnimBytesFree;
       
+      m.numAnimBytesFree = numAnimBytesFree;
       m.videoFramerateHZ = videoFramefateHz;
       
       SendMessage( GET_MESSAGE_ID(VizRobotState), &m);

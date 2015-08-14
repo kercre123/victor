@@ -61,6 +61,7 @@ ADD_MESSAGE_MEMBER(f32, rawGyroZ)
 ADD_MESSAGE_MEMBER(f32, rawAccelY)
 ADD_MESSAGE_MEMBER(u32, status)  // See RobotStatusFlag
 ADD_MESSAGE_MEMBER(s32, numAnimBytesFree)
+ADD_MESSAGE_MEMBER(s32, numAnimBytesPlayed)
 ADD_MESSAGE_MEMBER(u16, lastPathID)
 ADD_MESSAGE_MEMBER(u8, proxLeft)
 ADD_MESSAGE_MEMBER(u8, proxForward)

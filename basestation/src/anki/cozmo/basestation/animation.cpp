@@ -248,6 +248,7 @@ _blinkTrack.__METHOD__()
   {
     // Empty out anything waiting in the send buffer:
     RobotMessage* msg = nullptr;
+    s32& runningTotalBytesSent = robot.GetNumAnimationBytesStreamed();
     while(!_sendBuffer.empty()) {
 #     if DEBUG_ANIMATIONS
       PRINT_NAMED_INFO("Animation.SendBufferedMessages",
@@ -265,6 +266,14 @@ _blinkTrack.__METHOD__()
           
           _numBytesToSend -= numBytesRequired;
           --_numFramesToSend;
+          
+          // Increment total number of bytes streamed to robot, but this needs to be
+          // in terms of the number of bytes that it translates to on the robot.
+          // The message size on the robot is padded out to 2-byte alignment.
+          // The size of the message ID on the sim robot is 4, but on the physical robot is 1.
+          s32 sizeOfMsgID = robot.IsPhysical() ? 1 : sizeof(RobotMessage::ID);
+          runningTotalBytesSent += msg->GetPaddedSize() + sizeOfMsgID;
+          //printf("NumBytesStreamed %d (Added %d + %u)\n", runningTotalBytesSent, sizeOfMsgID, msg->GetPaddedSize());
           
           _sendBuffer.pop_front();
         } else {
@@ -316,13 +325,22 @@ _blinkTrack.__METHOD__()
       _deviceAudioTrack.MoveToNextKeyFrame();
     }
     
+    // Compute number of bytes free in robot animation buffer.
+    // This is a lower bound since this is computed from a delayed measure
+    // of the number of animation bytes already played on the robot.
+    s32& totalNumBytesStreamed = robot.GetNumAnimationBytesStreamed();
+    assert(totalNumBytesStreamed >= robot.GetNumAnimationBytesPlayed());
+    
+    s32 minBytesFreeInRobotBuffer = KEYFRAME_BUFFER_SIZE - (totalNumBytesStreamed - robot.GetNumAnimationBytesPlayed());
+    assert(minBytesFreeInRobotBuffer >= 0);
+    
     // Reset the number of frames/bytes we can send each Update() as a form of
     // flow control: Don't send frames if robot has no space for them, and be
     // careful not to overwhel reliable transport either, in terms of bytes or
     // sheer number of messages. These get decremenged on each call to
     // SendBufferedMessages() below
     _numBytesToSend = std::min(Animation::MAX_BYTES_FOR_RELIABLE_TRANSPORT,
-                               robot.GetNumAnimationBytesFree());
+                               minBytesFreeInRobotBuffer);
     _numFramesToSend = Animation::MAX_FRAMES_TO_SEND;
     
     
@@ -470,6 +488,11 @@ _blinkTrack.__METHOD__()
       lastResult = robot.SendMessage(endMsg);
       if(lastResult != RESULT_OK) { return lastResult; }
       _endOfAnimationSent = true;
+      
+      // Increment running total of bytes streamed
+      s32 sizeOfMsgID = robot.IsPhysical() ? 1 : sizeof(RobotMessage::ID);
+      totalNumBytesStreamed += endMsg.GetPaddedSize() + sizeOfMsgID;
+      //printf("NumBytesStreamed (endMsg) %d (Added %d + %u)\n", totalNumBytesStreamed, sizeOfMsgID, endMsg.GetPaddedSize());
     }
     
     return RESULT_OK;

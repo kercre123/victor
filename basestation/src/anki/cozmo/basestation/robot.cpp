@@ -97,6 +97,8 @@ namespace Anki {
     , _imgFramePeriod(0)
     , _lastImgTimeStamp(0)
     , _animationStreamer(_cannedAnimations)
+    , _numAnimationBytesPlayed(0)
+    , _numAnimationBytesStreamed(0)
     {
       _poseHistory = new RobotPoseHistory();
       
@@ -294,6 +296,7 @@ namespace Anki {
       _isIdleAnimating = _animationStreamer.IsIdleAnimating();
       
       _numFreeAnimationBytes = msg.numAnimBytesFree;
+      _numAnimationBytesPlayed = msg.numAnimBytesPlayed;
       
       _battVoltage = (f32)msg.battVolt10x * 0.1f;
       
@@ -428,7 +431,9 @@ namespace Anki {
       
       
       // Send state to visualizer for displaying
-      VizManager::getInstance()->SendRobotState(stateMsg, (u8)MIN(1000.f/GetAverageImagePeriodMS(), u8_MAX));
+      VizManager::getInstance()->SendRobotState(stateMsg,
+                                                KEYFRAME_BUFFER_SIZE - (_numAnimationBytesStreamed - _numAnimationBytesPlayed),
+                                                (u8)MIN(1000.f/GetAverageImagePeriodMS(), u8_MAX));
       
       return lastResult;
       
