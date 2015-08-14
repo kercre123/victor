@@ -387,10 +387,6 @@ namespace Anki {
       // Returns "" if no non-idle animation is streaming.
       const std::string GetStreamingAnimationName() const;
       
-      // Return the approximate number of available bytes in the robot's
-      // keyframe buffer, to let us know if we can stream any more
-      s32 GetNumAnimationBytesFree() const;
-      
       // Returns the number of animation bytes played on the robot since
       // it was initialized with SyncTime.
       s32 GetNumAnimationBytesPlayed() const;
@@ -904,10 +900,6 @@ namespace Anki {
     inline Result Robot::TurnOffObjectLights(const ObjectID& objectID) {
       return SetObjectLights(objectID, WhichBlockLEDs::ALL, 0, 0, 10000, 10000, 0, 0,
                              false, MakeRelativeMode::RELATIVE_LED_MODE_OFF, {0.f,0.f});
-    }
-    
-    inline s32 Robot::GetNumAnimationBytesFree() const {
-      return _numFreeAnimationBytes;
     }
     
     inline s32 Robot::GetNumAnimationBytesPlayed() const {

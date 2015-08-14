@@ -295,7 +295,6 @@ namespace Anki {
       _isAnimating = static_cast<bool>(msg.status & IS_ANIMATING);
       _isIdleAnimating = _animationStreamer.IsIdleAnimating();
       
-      _numFreeAnimationBytes = msg.numAnimBytesFree;
       _numAnimationBytesPlayed = msg.numAnimBytesPlayed;
       
       _battVoltage = (f32)msg.battVolt10x * 0.1f;

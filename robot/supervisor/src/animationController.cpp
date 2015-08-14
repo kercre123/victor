@@ -24,10 +24,6 @@ namespace AnimationController {
   
   namespace {
     
-    // If buffer gets within this number of bytes of the buffer length,
-    // then it is considered "full" for the purposes of IsBufferFull() below.
-    static const s32 KEYFRAME_BUFFER_PADDING = KEYFRAME_BUFFER_SIZE / 3;
-    
     // Streamed animation will not play until we've got this many _audio_ keyframes
     // buffered.
     static const s32 ANIMATION_PREROLL_LENGTH = 7;
@@ -307,11 +303,6 @@ namespace AnimationController {
   
   void ClearNumBytesPlayed() {
     _numBytesPlayed = 0;
-  }
-  
-  s32 GetApproximateNumBytesFree()
-  {
-    return MAX(0, GetNumBytesAvailable() - KEYFRAME_BUFFER_PADDING);
   }
   
   void Clear()
