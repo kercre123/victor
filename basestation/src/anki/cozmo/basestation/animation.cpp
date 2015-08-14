@@ -319,9 +319,15 @@ _blinkTrack.__METHOD__()
     // This is a lower bound since this is computed from a delayed measure
     // of the number of animation bytes already played on the robot.
     s32& totalNumBytesStreamed = robot.GetNumAnimationBytesStreamed();
-    assert(totalNumBytesStreamed >= robot.GetNumAnimationBytesPlayed());
+    s32 totalNumBytesPlayed = robot.GetNumAnimationBytesPlayed();
+    bool overflow = (totalNumBytesStreamed < 0) && (totalNumBytesPlayed > 0);
+    assert((totalNumBytesStreamed >= totalNumBytesPlayed) || overflow);
     
-    s32 minBytesFreeInRobotBuffer = KEYFRAME_BUFFER_SIZE - (totalNumBytesStreamed - robot.GetNumAnimationBytesPlayed());
+    s32 minBytesFreeInRobotBuffer = KEYFRAME_BUFFER_SIZE - (totalNumBytesStreamed - totalNumBytesPlayed);
+    if (overflow) {
+      // Computation for minBytesFreeInRobotBuffer still works out in overflow case
+      PRINT_NAMED_INFO("Animation.Update.BytesStreamedOverflow", "free %d (streamed = %d, played %d)", minBytesFreeInRobotBuffer, totalNumBytesStreamed, totalNumBytesPlayed);
+    }
     assert(minBytesFreeInRobotBuffer >= 0);
     
     // Reset the number of bytes we can send each Update() as a form of
