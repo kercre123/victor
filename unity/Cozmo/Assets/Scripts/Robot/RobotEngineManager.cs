@@ -1007,13 +1007,6 @@ public class RobotEngineManager : MonoBehaviour
 		SendMessage();
 	}
 
-	public enum ImageSendMode_t
-	{
-		ISM_OFF,
-		ISM_STREAM,
-		ISM_SINGLE_SHOT}
-
-	;
 
 	public enum CameraResolution
 	{

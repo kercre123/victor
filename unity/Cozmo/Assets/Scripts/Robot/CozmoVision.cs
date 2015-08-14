@@ -173,7 +173,7 @@ public class CozmoVision : MonoBehaviour
 	{
 		if(!imageRequested && robot != null)
 		{
-			robot.RequestImage(RobotEngineManager.CameraResolution.CAMERA_RES_QVGA, RobotEngineManager.ImageSendMode_t.ISM_STREAM);
+			robot.RequestImage(RobotEngineManager.CameraResolution.CAMERA_RES_QVGA, Anki.Cozmo.ImageSendMode.Stream);
 			robot.SetHeadAngle();
 			robot.SetLiftHeight(0f);
 			imageRequested = true;
