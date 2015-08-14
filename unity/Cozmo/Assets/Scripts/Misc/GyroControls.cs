@@ -42,7 +42,7 @@ public class GyroControls : MonoBehaviour
 		return y; 
 	}
 
-	void FixedUpdate()
+	void Update()
 	{
 		if(!SystemInfo.supportsGyroscope) return;
 
