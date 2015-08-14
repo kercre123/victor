@@ -82,7 +82,7 @@ public class Intro : MonoBehaviour {
 			RobotEngineManager.instance.RobotConnected += RobotConnected;
 		}
 
-		Application.targetFrameRate = 15;
+		Application.targetFrameRate = 60;
 		
 		Input.gyro.enabled = true;
 		Input.compass.enabled = true;

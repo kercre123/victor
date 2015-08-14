@@ -64,7 +64,7 @@ namespace MSP_Input {
 
 		//================================================================================
 				
-		void FixedUpdate() {
+		void Update() {
 			forceAccelerometer = _forceAccelerometer;
 			smoothingTime = _smoothingTime;
 			headingOffset = _headingOffset;

@@ -73,7 +73,7 @@ public class AccelControls : MonoBehaviour {
 		}
 	}
 
-	void FixedUpdate() {
+	void Update() {
 		if(xLabel != null) xLabel.text = "xA(" +Input.acceleration.x+ ") \nxB("+x+")";
 		if(yLabel != null) yLabel.text = "yA(" +Input.acceleration.y+ ") \nyB("+y+")";
 	}
