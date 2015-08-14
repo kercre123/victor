@@ -49,11 +49,6 @@ class CozmoEngineImpl;
 class CozmoEngineHostImpl;
 class CozmoEngineClientImpl;
 class IExternalInterface;
-template <typename Type>
-class AnkiEvent;
-namespace ExternalInterface {
-class MessageGameToEngine;
-}
 namespace Data {
 class DataPlatform;
 }
@@ -101,11 +96,7 @@ public:
 
   virtual bool GetCurrentRobotImage(RobotID_t robotId, Vision::Image& img, TimeStamp_t newerThanTime) = 0;
 
-  virtual void SetImageSendMode(RobotID_t robotID, Cozmo::ImageSendMode_t newMode) {}
-
 protected:
-
-  virtual void HandleEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
 
   // This will just point at either the host or client impl pointer in a
   // derived class
