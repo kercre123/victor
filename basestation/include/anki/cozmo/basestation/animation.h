@@ -129,7 +129,6 @@ namespace Anki {
       bool AllTracksBuffered() const;
       std::list<RobotMessage*> _sendBuffer;
       s32 _numBytesToSend;
-      s32 _numFramesToSend;
       
       // Send larger keyframes "hot" for reliable transport (this includes
       // audio samples and face images)
@@ -138,7 +137,6 @@ namespace Anki {
       // "Flow control" for not overrunning reliable transport in a single
       // update tick
       static const s32 MAX_BYTES_FOR_RELIABLE_TRANSPORT;
-      static const s32 MAX_FRAMES_TO_SEND;
       
     }; // class Animation
 
