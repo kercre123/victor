@@ -158,7 +158,7 @@ IActionRunner* CreateNewActionByType(Robot& robot,
   switch(actionType)
   {
     case RobotActionType::TURN_IN_PLACE:
-      return new TurnInPlaceAction(actionUnion.turnInPlace.angle_rad);
+      return new TurnInPlaceAction(actionUnion.turnInPlace.angle_rad, actionUnion.turnInPlace.isAbsolute);
       
     case RobotActionType::PLAY_ANIMATION:
       return new PlayAnimationAction(actionUnion.playAnimation.animationName, actionUnion.playAnimation.numLoops);
@@ -219,8 +219,8 @@ void RobotEventHandler::QueueActionHelper(const QueueActionPosition position, co
     }
     case QueueActionPosition::NOW_AND_CLEAR_REMAINING:
     {
-      // Empty the queue entirely and make this action the next thing in it
-      actionList.Clear();
+      // Cancel all queued actions and make this action the next thing in it
+      actionList.Cancel();
       actionList.QueueActionNext(inSlot, action, numRetries);
       break;
     }
@@ -314,7 +314,8 @@ void RobotEventHandler::HandleActionEvents(const AnkiEvent<ExternalInterface::Me
     }
     case ExternalInterface::MessageGameToEngineTag::TurnInPlace:
     {
-      newAction = new TurnInPlaceAction(event.GetData().Get_TurnInPlace().angle_rad);
+      newAction = new TurnInPlaceAction(event.GetData().Get_TurnInPlace().angle_rad,
+                                        event.GetData().Get_TurnInPlace().isAbsolute);
       break;
     }
     default:

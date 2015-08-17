@@ -24,13 +24,6 @@ namespace AnimationController {
   
   namespace {
     
-    // Streaming KeyFrame buffer size, in bytes
-    static const s32 KEYFRAME_BUFFER_SIZE = 16384;
-    
-    // If buffer gets within this number of bytes of the buffer length,
-    // then it is considered "full" for the purposes of IsBufferFull() below.
-    static const s32 KEYFRAME_BUFFER_PADDING = KEYFRAME_BUFFER_SIZE / 3;
-    
     // Streamed animation will not play until we've got this many _audio_ keyframes
     // buffered.
     static const s32 ANIMATION_PREROLL_LENGTH = 7;
@@ -40,7 +33,8 @@ namespace AnimationController {
     s32 _currentBufferPos;
     s32 _lastBufferPos;
     
-    s32  _numAudioFramesBuffered; // NOTE: Also counts EndOfAnimationFrames...
+    s32 _numAudioFramesBuffered; // NOTE: Also counts EndOfAnimationFrames...
+    s32 _numBytesPlayed = 0;
 
     bool _isBufferStarved;
     bool _haveReceivedTerminationFrame;
@@ -285,12 +279,40 @@ namespace AnimationController {
     return RESULT_OK;
   }
   
+  static s32 GetNumBytesAvailable()
+  {
+    if(_lastBufferPos >= _currentBufferPos) {
+      return sizeof(_keyFrameBuffer) - (_lastBufferPos - _currentBufferPos);
+    } else {
+      return _currentBufferPos - _lastBufferPos;
+    }
+  }
+  
+  static s32 GetNumBytesInBuffer()
+  {
+    if(_lastBufferPos >= _currentBufferPos) {
+      return (_lastBufferPos - _currentBufferPos);
+    } else {
+      return sizeof(_keyFrameBuffer) - (_currentBufferPos - _lastBufferPos);
+    }
+  }
+  
+  s32 GetTotalNumBytesPlayed() {
+    return _numBytesPlayed;
+  }
+  
+  void ClearNumBytesPlayed() {
+    _numBytesPlayed = 0;
+  }
   
   void Clear()
   {
 #   if DEBUG_ANIMATION_CONTROLLER
     PRINT("Clearing AnimationController\n");
 #   endif
+    
+    _numBytesPlayed += GetNumBytesInBuffer();
+    //PRINT("CLEAR NumBytesPlayed %d (%d)\n", _numBytesPlayed, GetNumBytesInBuffer());
     
     _currentBufferPos = 0;
     _lastBufferPos = 0;
@@ -323,24 +345,9 @@ namespace AnimationController {
 #   if DEBUG_ANIMATION_CONTROLLER
     _currentTime_ms = 0;
 #   endif
-    
-    // Necessary?
-    //memset(_keyFrameBuffer, KEYFRAME_BUFFER_SIZE, sizeof(u8));
   }
  
-  static s32 GetNumBytesAvailable()
-  {
-    if(_lastBufferPos >= _currentBufferPos) {
-      return sizeof(_keyFrameBuffer) - (_lastBufferPos - _currentBufferPos);
-    } else {
-      return _currentBufferPos - _lastBufferPos;
-    }
-  }
-  
-  s32 GetApproximateNumBytesFree()
-  {
-    return MAX(0, GetNumBytesAvailable() - KEYFRAME_BUFFER_PADDING);
-  }
+
   
   static void CopyIntoBuffer(const u8* data, s32 numBytes)
   {
@@ -371,6 +378,10 @@ namespace AnimationController {
     if(_currentBufferPos < 0) {
       _currentBufferPos += sizeof(_keyFrameBuffer);
     }
+    
+    _numBytesPlayed -= sizeof(Messages::ID);
+    //PRINT("MINUS NumBytesPlayed %d (%d)\n", _numBytesPlayed, sizeof(Messages::ID));
+    
   }
   
   static inline void SetTypeIndicator(Messages::ID msgType)
@@ -397,6 +408,10 @@ namespace AnimationController {
       memcpy(data+firstChunk, _keyFrameBuffer, numBytes - firstChunk);
       _currentBufferPos = numBytes-firstChunk;
     }
+    
+    // Increment total number of bytes played since startup
+    _numBytesPlayed += numBytes;
+    //PRINT("NumBytesPlayed %d (%d) (%d)\n", _numBytesPlayed, numBytes, *((u32*)data));
     
     assert(_currentBufferPos >= 0 && _currentBufferPos < sizeof(_keyFrameBuffer));
   }
@@ -597,6 +612,15 @@ namespace AnimationController {
     return ready;
   } // IsReadyToPlay()
   
+  
+#define DUMP_NEXT_MESSAGE_CASE(msgName)  \
+  case Messages::AnimKeyFrame_##msgName##_ID: { \
+    Messages::AnimKeyFrame_##msgName msg; \
+    GetFromBuffer((u8*)&msg, sizeof(msg)); \
+  } \
+  break;
+
+  
   Result Update()
   {
     if(IsReadyToPlay()) {
@@ -607,7 +631,32 @@ namespace AnimationController {
         START_TIME_PROFILE(Anim, AUDIOPLAY);
         
         // Next thing in the buffer should be audio or silence:
-        switch(GetTypeIndicator())
+        Messages::ID msgID = GetTypeIndicator();
+
+        
+        // If the next message is not audio, then delete it until it is.
+        while(msgID != Messages::AnimKeyFrame_AudioSilence_ID && msgID != Messages::AnimKeyFrame_AudioSample_ID) {
+          PRINT("Expecting either audio sample or silence next in animation buffer. (Got %d instead). Dumping message. (FYI AudioSample_ID = %d)\n", msgID, Messages::AnimKeyFrame_AudioSample_ID);
+          switch (msgID) {
+            DUMP_NEXT_MESSAGE_CASE(HeadAngle)
+            DUMP_NEXT_MESSAGE_CASE(LiftHeight)
+            DUMP_NEXT_MESSAGE_CASE(FacePosition)
+            DUMP_NEXT_MESSAGE_CASE(Blink)
+            DUMP_NEXT_MESSAGE_CASE(FaceImage)
+            DUMP_NEXT_MESSAGE_CASE(BackpackLights)
+            DUMP_NEXT_MESSAGE_CASE(BodyMotion)
+            DUMP_NEXT_MESSAGE_CASE(EndOfAnimation)
+ 
+            default:
+              PRINT("Unknown message %d in animation buffer. Probably comms corruption! Clearing buffer.\n", msgID);
+              Clear();
+              return RESULT_FAIL;
+          }
+          msgID = GetTypeIndicator();
+        }
+        
+        
+        switch(msgID)
         {
           case Messages::AnimKeyFrame_AudioSilence_ID:
           {
@@ -628,7 +677,7 @@ namespace AnimationController {
             break;
           }
           default:
-            PRINT("Expecting either audio sample or silence next in animation buffer.\n");
+            PRINT("Expecting either audio sample or silence next in animation buffer. (Got %d instead)\n", msgID);
             return RESULT_FAIL;
         }
       

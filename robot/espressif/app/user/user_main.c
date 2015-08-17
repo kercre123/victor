@@ -2,6 +2,7 @@
 #include "ets_sys.h"
 #include "osapi.h"
 #include "gpio.h"
+#include "eagle_soc.h"
 #include "os_type.h"
 #include "mem.h"
 #include "user_interface.h"

@@ -101,9 +101,6 @@ namespace Anki {
       
       size_t     GetQueueLength(SlotHandle atSlot);
 
-      // Blindly clears out the contents of the action list
-      void       Clear();
-
       // Only cancels actions from the specified slot with the specified type, and
       // does any cleanup specified by the action's Cancel/Cleanup methods.
       // Returns true if any actions were cancelled.
@@ -123,6 +120,8 @@ namespace Anki {
 
       
     protected:
+      // Blindly clears out the contents of the action list
+      void       Clear();
       
       std::map<SlotHandle, ActionQueue> _queues;
       

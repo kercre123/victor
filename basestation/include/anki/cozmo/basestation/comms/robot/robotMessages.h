@@ -51,6 +51,9 @@ namespace Anki {
       
       virtual u16 GetSize() const = 0;
       
+      // The size of the message as it is on the robot
+      virtual u16 GetPaddedSize() const = 0;
+      
       virtual Json::Value CreateJson() const = 0;
       
       virtual Result FillFromJson(const Json::Value& root) = 0;

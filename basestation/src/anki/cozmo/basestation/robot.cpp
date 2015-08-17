@@ -100,6 +100,8 @@ namespace Anki {
     , _imgFramePeriod(0)
     , _lastImgTimeStamp(0)
     , _animationStreamer(_cannedAnimations)
+    , _numAnimationBytesPlayed(0)
+    , _numAnimationBytesStreamed(0)
     {
       _poseHistory = new RobotPoseHistory();
       
@@ -311,7 +313,7 @@ namespace Anki {
       _isAnimating = static_cast<bool>(msg.status & IS_ANIMATING);
       _isIdleAnimating = _animationStreamer.IsIdleAnimating();
       
-      _numFreeAnimationBytes = msg.numAnimBytesFree;
+      _numAnimationBytesPlayed = msg.numAnimBytesPlayed;
       
       _battVoltage = (f32)msg.battVolt10x * 0.1f;
       
@@ -446,7 +448,9 @@ namespace Anki {
       
       
       // Send state to visualizer for displaying
-      VizManager::getInstance()->SendRobotState(stateMsg, (u8)MIN(1000.f/GetAverageImagePeriodMS(), u8_MAX));
+      VizManager::getInstance()->SendRobotState(stateMsg,
+                                                KEYFRAME_BUFFER_SIZE - (_numAnimationBytesStreamed - _numAnimationBytesPlayed),
+                                                (u8)MIN(1000.f/GetAverageImagePeriodMS(), u8_MAX));
       
       return lastResult;
       
@@ -1247,6 +1251,11 @@ namespace Anki {
     Result Robot::SetIdleAnimation(const std::string &animName)
     {
       return _animationStreamer.SetIdleAnimation(animName);
+    }
+    
+    const std::string Robot::GetStreamingAnimationName() const
+    {
+      return _animationStreamer.GetStreamingAnimationName();
     }
     
     Result Robot::PlaySound(const std::string& soundName, u8 numLoops, u8 volume)
@@ -2846,7 +2855,7 @@ namespace Anki {
     {
       bool anyFailures = false;
       
-      _actionList.Clear();
+      _actionList.Cancel();
       
       if(ClearPath() != RESULT_OK) {
         anyFailures = true;

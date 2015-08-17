@@ -692,10 +692,11 @@ namespace Anki {
 
 #pragma mark ---- TurnInPlaceAction ----
     
-    TurnInPlaceAction::TurnInPlaceAction(const Radians& angle, const Radians& variability)
+    TurnInPlaceAction::TurnInPlaceAction(const Radians& angle, const bool isAbsolute, const Radians& variability)
     : DriveToPoseAction(false, false)
     , _turnAngle(angle)
     , _variability(variability)
+    , _isAbsoluteAngle(isAbsolute)
     , _startedTraversingPath(false)
     {
       
@@ -711,7 +712,10 @@ namespace Anki {
     {
       // Compute a goal pose rotated by specified angle around robot's
       // _current_ pose, taking into account the current driveCenter offset
-      const Radians heading = robot.GetPose().GetRotationAngle<'Z'>();
+      const Radians heading = 0;
+      if (!_isAbsoluteAngle) {
+        robot.GetPose().GetRotationAngle<'Z'>();
+      }
       Pose3d rotatedPose;
       Pose3d dcPose = robot.GetDriveCenterPose();
       
@@ -861,7 +865,7 @@ namespace Anki {
         
         if(turnAngle.getAbsoluteVal() < _maxTurnAngle) {
           if(turnAngle.getAbsoluteVal() > _turnAngleTol) {
-            _compoundAction.AddAction(new TurnInPlaceAction(turnAngle));
+            _compoundAction.AddAction(new TurnInPlaceAction(turnAngle, false));
           } else {
             PRINT_NAMED_INFO("FaceObjectAction.Init.NoTurnNeeded",
                              "Required turn angle of %.1fdeg is within tolerance of %.1fdeg. Not turning.\n",
@@ -2299,7 +2303,7 @@ namespace Anki {
     
     ActionResult PlayAnimationAction::Init(Robot& robot)
     {
-      if(robot.IsAnimating()) {
+      if(robot.IsAnimating() && !robot.IsIdleAnimating()) {
         //PRINT_NAMED_INFO("PlanAnimationAction.Init.Waiting",
         //                 "Waiting for robot to stop animating before playing this animation.\n");
         return ActionResult::RUNNING;
@@ -2313,7 +2317,10 @@ namespace Anki {
     
     ActionResult PlayAnimationAction::CheckIfDone(Robot& robot)
     {
-      if(robot.IsAnimating()) {
+      // Check if StreamingAnimation is not yet null and the name still matches to avoid
+      // prematurely deleting looping animations.
+      if(robot.IsAnimating() ||
+         (robot.GetStreamingAnimationName() == _animName)) {
         return ActionResult::RUNNING;
       } else {
         return ActionResult::SUCCESS;
