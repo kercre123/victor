@@ -44,7 +44,7 @@ struct MotorInfo
   u32 lastCount;
   
   s16 nextPWM;
-  s16 oldPWM;    
+  s16 oldPWM;
 };
 
 const u32 IRQ_PRIORITY = 1;
@@ -123,7 +123,7 @@ MotorInfo m_motors[MOTOR_COUNT] =
     PIN_HEAD_N1,
     PIN_HEAD_N2,
     PIN_HEAD_P,
-#ifdef ROBOT4      
+#ifdef ROBOT4
     false,
 #else
     true,

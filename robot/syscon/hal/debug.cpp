@@ -34,15 +34,24 @@ static inline void put(unsigned char c) {
   NRF_UART0->EVENTS_TXDRDY = 0; 
 }
 
-// WARNING: THIS ONLT CHECKS TO SEE IF THE HEAD IS IDLE AT THE START
-// THIS IS NOT SAFE TO USE DURING AN IRQ
+bool UART::waitIdle() {
+  int start = GetCounter();
+  
+  while ((GetCounter() - start) < CYCLES_MS(35.0f / 7.0f)) {
+    if (Head::uartIdle) return true;
+  }
+  
+  return false;
+}
+
+// WARNING: THIS IS NOT SAFE TO USE DURING AN IRQ
 void UART::print( const char* fmt, ...)
 {
   va_list vl;
   va_start(vl, fmt);
 
-  // We are currently transmitting to / from the head
-  if (!Head::uartIdle) {
+  // Block until the UART is available to print stuff (simply abort on timeout)
+  if (!waitIdle()) {
     va_end(vl);
     return ;
   }

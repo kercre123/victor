@@ -52,24 +52,24 @@ int main(void)
     g_dataToBody.common.source = SPI_SOURCE_CLEAR;
 
     // Only call every loop through - not all the time
+    Motors::update();
     Radio::manage();
     Battery::update();
 
     #ifndef BACKPACK_DEMO
     Lights::manage(g_dataToBody.backpackColors);
     #endif
+
     // If we're not on the charge contacts, exchange data with the head board
     if (!Battery::onContacts)
     {
-      //Head::TxRx();
+      Head::TxRx();
     }
     else // If not, reset the spine system
     {
       Head::spokenTo = false;
     }
     
-    Motors::update();
-
     // Update at 200Hz (5ms delay)
     while ((GetCounter() - timerStart) < CYCLES_MS(35.0f / 7.0f))
       ;
