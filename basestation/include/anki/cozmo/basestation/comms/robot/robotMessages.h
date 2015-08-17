@@ -36,7 +36,7 @@ namespace Anki {
     {
     public:
       // Create the enumerated message IDs from the MessageDefinitions file:
-      typedef enum {
+      typedef enum : u8 {
         NO_MESSAGE_ID = 0,
 #define MESSAGE_DEFINITION_MODE MESSAGE_ENUM_DEFINITION_MODE
 #include "anki/cozmo/shared/RobotMessageDefinitions.h"
@@ -50,9 +50,6 @@ namespace Anki {
       virtual void GetBytes(u8* buffer) const = 0;
       
       virtual u16 GetSize() const = 0;
-      
-      // The size of the message as it is on the robot
-      virtual u16 GetPaddedSize() const = 0;
       
       virtual Json::Value CreateJson() const = 0;
       

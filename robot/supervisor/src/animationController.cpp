@@ -427,7 +427,7 @@ namespace AnimationController {
   static inline Result BufferKeyFrameHelper(const MSG_TYPE& msg, Messages::ID msgID)
   {
     const s32 numBytesAvailable = GetNumBytesAvailable();
-    const s32 numBytesNeeded = sizeof(msg) + sizeof(Messages::ID);
+    const s32 numBytesNeeded = Messages::GetSize(msgID) + sizeof(Messages::ID);
     if(numBytesAvailable < numBytesNeeded) {
       // Only print the error message if we haven't already done so this tick,
       // to prevent spamming that could clog reliable UDP
@@ -440,7 +440,7 @@ namespace AnimationController {
       return RESULT_FAIL;
     }
     SetTypeIndicator(msgID);
-    CopyIntoBuffer((u8*)&msg, sizeof(msg));
+    CopyIntoBuffer((u8*)&msg, Messages::GetSize(msgID));
     return RESULT_OK;
   }
   
@@ -616,7 +616,7 @@ namespace AnimationController {
 #define DUMP_NEXT_MESSAGE_CASE(msgName)  \
   case Messages::AnimKeyFrame_##msgName##_ID: { \
     Messages::AnimKeyFrame_##msgName msg; \
-    GetFromBuffer((u8*)&msg, sizeof(msg)); \
+    GetFromBuffer((u8*)&msg, Messages::GetSize(Messages::AnimKeyFrame_##msgName##_ID)); \
   } \
   break;
 
@@ -661,14 +661,14 @@ namespace AnimationController {
           case Messages::AnimKeyFrame_AudioSilence_ID:
           {
             Messages::AnimKeyFrame_AudioSilence msg;
-            GetFromBuffer((u8*)&msg, sizeof(msg));
+            GetFromBuffer((u8*)&msg, Messages::GetSize(msgID));
             HAL::AudioPlaySilence();
             break;
           }
           case Messages::AnimKeyFrame_AudioSample_ID:
           {
             Messages::AnimKeyFrame_AudioSample msg;
-            GetFromBuffer((u8*)&msg, sizeof(msg));
+            GetFromBuffer((u8*)&msg, Messages::GetSize(msgID));
             if(_tracksToPlay & AUDIO_TRACK) {
               HAL::AudioPlayFrame(&msg);
             } else {
@@ -724,7 +724,7 @@ namespace AnimationController {
                     _currentTime_ms, HAL::GetTimeStamp());
 #             endif
               Messages::AnimKeyFrame_EndOfAnimation msg;
-              GetFromBuffer((u8*)&msg, sizeof(msg)); // just pull it out of the buffer
+              GetFromBuffer((u8*)&msg, Messages::GetSize(msgID)); // just pull it out of the buffer
               terminatorFound = true;
               _tracksInUse = 0;
               break;
@@ -733,7 +733,7 @@ namespace AnimationController {
             case Messages::AnimKeyFrame_HeadAngle_ID:
             {
               Messages::AnimKeyFrame_HeadAngle msg;
-              GetFromBuffer((u8*)&msg, sizeof(msg));
+              GetFromBuffer((u8*)&msg, Messages::GetSize(msgID));
               
               if(_tracksToPlay & HEAD_TRACK) {
 #               if DEBUG_ANIMATION_CONTROLLER
@@ -752,7 +752,7 @@ namespace AnimationController {
             case Messages::AnimKeyFrame_LiftHeight_ID:
             {
               Messages::AnimKeyFrame_LiftHeight msg;
-              GetFromBuffer((u8*)&msg, sizeof(msg));
+              GetFromBuffer((u8*)&msg, Messages::GetSize(msgID));
               
               if(_tracksToPlay & LIFT_TRACK) {
 #               if DEBUG_ANIMATION_CONTROLLER
@@ -771,7 +771,7 @@ namespace AnimationController {
             case Messages::AnimKeyFrame_BackpackLights_ID:
             {
               Messages::AnimKeyFrame_BackpackLights msg;
-              GetFromBuffer((u8*)&msg, sizeof(msg));
+              GetFromBuffer((u8*)&msg, Messages::GetSize(msgID));
               
               if(_tracksToPlay & BACKPACK_LIGHTS_TRACK) {
 #               if DEBUG_ANIMATION_CONTROLLER
@@ -790,7 +790,7 @@ namespace AnimationController {
             case Messages::AnimKeyFrame_FaceImage_ID:
             {
               Messages::AnimKeyFrame_FaceImage msg;
-              GetFromBuffer((u8*)&msg, sizeof(msg));
+              GetFromBuffer((u8*)&msg, Messages::GetSize(msgID));
               
               if(_tracksToPlay & FACE_IMAGE_TRACK) {
 #               if DEBUG_ANIMATION_CONTROLLER
@@ -808,7 +808,7 @@ namespace AnimationController {
             case Messages::AnimKeyFrame_FacePosition_ID:
             {
               Messages::AnimKeyFrame_FacePosition msg;
-              GetFromBuffer((u8*)&msg, sizeof(msg));
+              GetFromBuffer((u8*)&msg, Messages::GetSize(msgID));
               
               if(_tracksToPlay & FACE_POS_TRACK) {
 #               if DEBUG_ANIMATION_CONTROLLER
@@ -826,7 +826,7 @@ namespace AnimationController {
             case Messages::AnimKeyFrame_Blink_ID:
             {
               Messages::AnimKeyFrame_Blink msg;
-              GetFromBuffer((u8*)&msg, sizeof(msg));
+              GetFromBuffer((u8*)&msg, Messages::GetSize(msgID));
               
               if(_tracksToPlay & BLINK_TRACK) {
 #               if DEBUG_ANIMATION_CONTROLLER
@@ -851,7 +851,7 @@ namespace AnimationController {
             case Messages::AnimKeyFrame_BodyMotion_ID:
             {
               Messages::AnimKeyFrame_BodyMotion msg;
-              GetFromBuffer((u8*)&msg, sizeof(msg));
+              GetFromBuffer((u8*)&msg, Messages::GetSize(msgID));
               
               if(_tracksToPlay & BODY_TRACK) {
 #               if DEBUG_ANIMATION_CONTROLLER

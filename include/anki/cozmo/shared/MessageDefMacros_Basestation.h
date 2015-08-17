@@ -150,7 +150,6 @@ public: \
   GET_MESSAGE_CLASSNAME(__MSG_TYPE__)(const Json::Value& root) { FillFromJson(root); } \
   virtual u8 GetID() const override; \
   virtual u16 GetSize() const override; \
-  virtual u16 GetPaddedSize() const override; \
   virtual void GetBytes(u8* buffer) const override; \
   virtual Json::Value CreateJson() const override; \
   virtual Result FillFromJson(const Json::Value& root) override;
@@ -300,17 +299,8 @@ return
 
 #define ADD_MESSAGE_MEMBER_ARRAY(__TYPE__, __NAME__, __LENGTH__) __LENGTH__*sizeof(__TYPE__) +
 
-#define END_MESSAGE_DEFINITION(__MSG_TYPE__) 0; } \
-u16 GET_MESSAGE_CLASSNAME(__MSG_TYPE__)::GetPaddedSize() const { \
-u16 size = GetSize(); \
-u16 remainder = size % 2; \
-if (size == 0) { \
-  size = 1; \
-} else if (remainder > 0) { \
-  ++size; \
-} \
-return size; \
-}
+#define END_MESSAGE_DEFINITION(__MSG_TYPE__) 0; }
+
 //
 // Define GetBytes() method
 //
