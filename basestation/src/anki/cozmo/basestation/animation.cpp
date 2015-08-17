@@ -247,7 +247,6 @@ _blinkTrack.__METHOD__()
   {
     // Empty out anything waiting in the send buffer:
     RobotMessage* msg = nullptr;
-    s32& runningTotalBytesSent = robot.GetNumAnimationBytesStreamed();
     while(!_sendBuffer.empty()) {
 #     if DEBUG_ANIMATIONS
       PRINT_NAMED_INFO("Animation.SendBufferedMessages",
@@ -270,7 +269,7 @@ _blinkTrack.__METHOD__()
         // The message size on the robot is padded out to 2-byte alignment.
         // The size of the message ID on the sim robot is 4, but on the physical robot is 1.
         s32 sizeOfMsgID = robot.IsPhysical() ? 1 : sizeof(RobotMessage::ID);
-        runningTotalBytesSent += msg->GetPaddedSize() + sizeOfMsgID;
+        robot.IncrementNumAnimationBytesStreamed(msg->GetPaddedSize() + sizeOfMsgID);
         //printf("NumBytesStreamed %d (Added %d + %u)\n", runningTotalBytesSent, sizeOfMsgID, msg->GetPaddedSize());
         
         _sendBuffer.pop_front();
@@ -318,7 +317,7 @@ _blinkTrack.__METHOD__()
     // Compute number of bytes free in robot animation buffer.
     // This is a lower bound since this is computed from a delayed measure
     // of the number of animation bytes already played on the robot.
-    s32& totalNumBytesStreamed = robot.GetNumAnimationBytesStreamed();
+    s32 totalNumBytesStreamed = robot.GetNumAnimationBytesStreamed();
     s32 totalNumBytesPlayed = robot.GetNumAnimationBytesPlayed();
     bool overflow = (totalNumBytesStreamed < 0) && (totalNumBytesPlayed > 0);
     assert((totalNumBytesStreamed >= totalNumBytesPlayed) || overflow);
@@ -486,7 +485,7 @@ _blinkTrack.__METHOD__()
       
       // Increment running total of bytes streamed
       s32 sizeOfMsgID = robot.IsPhysical() ? 1 : sizeof(RobotMessage::ID);
-      totalNumBytesStreamed += endMsg.GetPaddedSize() + sizeOfMsgID;
+      robot.IncrementNumAnimationBytesStreamed(endMsg.GetPaddedSize() + sizeOfMsgID);
       //printf("NumBytesStreamed (endMsg) %d (Added %d + %u)\n", totalNumBytesStreamed, sizeOfMsgID, endMsg.GetPaddedSize());
     }
     

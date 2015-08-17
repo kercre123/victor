@@ -392,7 +392,8 @@ namespace Anki {
       s32 GetNumAnimationBytesPlayed() const;
       
       // Returns a reference to a count of the total number of bytes streamed to the robot.
-      s32& GetNumAnimationBytesStreamed();
+      s32 GetNumAnimationBytesStreamed();
+      void IncrementNumAnimationBytesStreamed(s32 num);
       
       // Ask the UI to play a sound for us
       Result PlaySound(const std::string& soundName, u8 numLoops, u8 volume);
@@ -906,8 +907,12 @@ namespace Anki {
       return _numAnimationBytesPlayed;
     }
     
-    inline s32& Robot::GetNumAnimationBytesStreamed() {
+    inline s32 Robot::GetNumAnimationBytesStreamed() {
       return _numAnimationBytesStreamed;
+    }
+    
+    inline void Robot::IncrementNumAnimationBytesStreamed(s32 num) {
+      _numAnimationBytesStreamed += num;
     }
     
   } // namespace Cozmo
