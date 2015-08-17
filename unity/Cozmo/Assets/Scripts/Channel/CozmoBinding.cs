@@ -8,8 +8,7 @@ using System.Text;
 /// <summary>
 /// Result codes that can be returned from C functions.
 /// </summary>
-public enum AnkiResult
-{
+public enum AnkiResult {
   RESULT_OK = 0,
   RESULT_FAIL = 0x00000001,
   RESULT_FAIL_MEMORY = 0x01000000,
@@ -31,18 +30,15 @@ public enum AnkiResult
 /// http://answers.unity3d.com/questions/191234/unity-ios-function-pointers.html
 /// </remarks>
 [AttributeUsage(AttributeTargets.Method)]
-public class MonoPInvokeCallbackAttribute : System.Attribute
-{
+public class MonoPInvokeCallbackAttribute : System.Attribute {
   private Type type;
 
-  public MonoPInvokeCallbackAttribute(Type t)
-  {
+  public MonoPInvokeCallbackAttribute(Type t) {
     type = t;
   }
 }
 
-public static class CozmoBinding
-{
+public static class CozmoBinding {
 
   //[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
   public delegate void LogCallback(int logLevel,[MarshalAs(UnmanagedType.LPStr)] string message);
@@ -68,10 +64,8 @@ public static class CozmoBinding
   [DllImport("__Internal")]
   private static extern int cozmo_update(float current_time);
 
-  public static void Startup(string configurationData)
-  {
-    if(initialized)
-    {
+  public static void Startup(string configurationData) {
+    if (initialized) {
       Debug.LogWarning("Reinitializing because Startup was called twice...");
       Shutdown();
     }
@@ -83,19 +77,16 @@ public static class CozmoBinding
     Profiler.EndSample ();
 #endif
     
-    if(result != AnkiResult.RESULT_OK)
-    {
+    if (result != AnkiResult.RESULT_OK) {
       Debug.LogError("CozmoBinding.Startup [cozmo_startup]: error code " + result.ToString());
-    } else
-    {
+    }
+    else {
       initialized = true;
     }
   }
 
-  public static void Shutdown()
-  {
-    if(initialized)
-    {
+  public static void Shutdown() {
+    if (initialized) {
       initialized = false;
       
       AnkiResult result = AnkiResult.RESULT_OK;
@@ -105,25 +96,21 @@ public static class CozmoBinding
       Profiler.EndSample();
 #endif
 
-      if(result != AnkiResult.RESULT_OK)
-      {
+      if (result != AnkiResult.RESULT_OK) {
         Debug.LogError("CozmoBinding.Shutdown [cozmo_shutdown]: error code " + result.ToString());
       }
     }
   }
 
-  public static void Update(float frameTime)
-  {
-    if(initialized)
-    {
+  public static void Update(float frameTime) {
+    if (initialized) {
       AnkiResult result = AnkiResult.RESULT_OK;
 #if !UNITY_EDITOR
       Profiler.BeginSample("CozmoBinding.cozmo_update");
       result = (AnkiResult)CozmoBinding.cozmo_update (frameTime);
       Profiler.EndSample();
 #endif
-      if(result != AnkiResult.RESULT_OK)
-      {
+      if (result != AnkiResult.RESULT_OK) {
         Debug.LogError("CozmoBinding.Update [cozmo_update]: error code " + result.ToString());
       }
     }
@@ -137,14 +124,11 @@ public static class CozmoBinding
   /// Do not use anonymous delegates. Do not call C++ code.
   /// </param>
   /// <param name="minLogLevel">The minimum log level to allow.</param>
-  public static void SetLogCallback(LogCallback logCallback, int minLogLevel)
-  {
+  public static void SetLogCallback(LogCallback logCallback, int minLogLevel) {
     // Might be called on different threads.
-    lock(syncLogs)
-    {
+    lock (syncLogs) {
 
-      if(logCallbackHandlesUsed >= logCallbackHandles.Length)
-      {
+      if (logCallbackHandlesUsed >= logCallbackHandles.Length) {
         GCHandle[] newHandles = new GCHandle[logCallbackHandles.Length * 2];
         Array.Copy(logCallbackHandles, newHandles, logCallbackHandlesUsed);
         logCallbackHandles = newHandles;
@@ -152,10 +136,8 @@ public static class CozmoBinding
 
 #pragma warning disable 0219
       int previous_logCallbackHandledUsed = logCallbackHandlesUsed;
-      if(logCallback != null)
-      {
-        if(!Attribute.IsDefined(logCallback.Method, typeof(MonoPInvokeCallbackAttribute)))
-        {
+      if (logCallback != null) {
+        if (!Attribute.IsDefined(logCallback.Method, typeof(MonoPInvokeCallbackAttribute))) {
           throw new ArgumentException("You must mark a log callback with MonoPInvokeCallbackAttribute so that it works under AOT. Do not use anonymous delegates.", "logCallback");
         }
       
@@ -175,18 +157,15 @@ public static class CozmoBinding
     
       // if no error, then we know the only callback being used is the one we just gave it
       // this is the only case in which we can clean up
-      if(result == AnkiResult.RESULT_OK)
-      {
-        for(int i = 0; i < previous_logCallbackHandledUsed; ++i)
-        {
-          if(logCallbackHandles[i].IsAllocated)
-          {
+      if (result == AnkiResult.RESULT_OK) {
+        for (int i = 0; i < previous_logCallbackHandledUsed; ++i) {
+          if (logCallbackHandles[i].IsAllocated) {
             logCallbackHandles[i].Free();
           }
         }
         logCallbackHandlesUsed -= previous_logCallbackHandledUsed;
-      } else
-      {
+      }
+      else {
         Debug.LogError("CozmoBinding.SetLogCallback [cozmo_set_log_callback]: error code " + result.ToString());
       }
     }

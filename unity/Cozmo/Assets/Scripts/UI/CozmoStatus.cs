@@ -17,7 +17,7 @@ public class CozmoStatus : MonoBehaviour {
   bool fadeIn = true;
 
   void OnEnable() {
-    if(instance != null && instance != this) {
+    if (instance != null && instance != this) {
       GameObject.Destroy(gameObject);
       return;
     }
@@ -25,13 +25,15 @@ public class CozmoStatus : MonoBehaviour {
   }
 
   void OnDisable() {
-    if(instance == this) instance = null;
+    if (instance == this)
+      instance = null;
   }
 
-  void Update () {
-    if(robot == null) return;
+  void Update() {
+    if (robot == null)
+      return;
 
-    if(robot.carryingObject == null) {
+    if (robot.carryingObject == null) {
       carriedBlock2d.gameObject.SetActive(false);
       button_change.gameObject.SetActive(false);
     }
@@ -41,10 +43,10 @@ public class CozmoStatus : MonoBehaviour {
       button_change.gameObject.SetActive(false); //robot.carryingObject.isActive);
     }
 
-    if(fadeTimer > 0f) {
-      fadeTimer = Mathf.Max( 0f, fadeTimer - Time.deltaTime);
+    if (fadeTimer > 0f) {
+      fadeTimer = Mathf.Max(0f, fadeTimer - Time.deltaTime);
 
-      if(fadeIn) {
+      if (fadeIn) {
         statusFrameCanvasGroup.alpha = Mathf.Lerp(startingAlpha, 1f, 1f - fadeTimer);
       }
       else {
@@ -55,14 +57,16 @@ public class CozmoStatus : MonoBehaviour {
   }
 
   public void FadeIn() {
-    if(fadeTimer > 0f && fadeIn) return;
+    if (fadeTimer > 0f && fadeIn)
+      return;
     fadeTimer = 1f;
     fadeIn = true;
     startingAlpha = statusFrameCanvasGroup.alpha;
   }
 
   public void FadeOut() {
-    if(fadeTimer > 0f && !fadeIn) return;
+    if (fadeTimer > 0f && !fadeIn)
+      return;
     fadeTimer = 1f;
     fadeIn = false;
     startingAlpha = statusFrameCanvasGroup.alpha;

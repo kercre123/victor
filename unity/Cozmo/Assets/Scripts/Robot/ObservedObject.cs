@@ -6,8 +6,7 @@ using Anki.Cozmo;
 using G2U = Anki.Cozmo.ExternalInterface;
 using U2G = Anki.Cozmo.ExternalInterface;
 
-public enum CubeType
-{
+public enum CubeType {
   UNKNOWN = -1,
   LIGHT_CUBE,
   BULLS_EYE,
@@ -20,8 +19,7 @@ public enum CubeType
 /// all objects that cozmo sees are transmitted across to unity and represented here as ObservedObjects
 ///   so far, we only both handling three types of cubes and the occasional human head
 /// </summary>
-public class ObservedObject
-{
+public class ObservedObject {
   public CubeType cubeType { get; private set; }
 
   public uint RobotID { get; private set; }
@@ -76,19 +74,16 @@ public class ObservedObject
 
   public static Action SignificantChangeDetected = null;
 
-  public float targetingScore
-  {
+  public float targetingScore {
     get {
       float score = -1f;
 
-      if(robot.carryingObject != ID)
-      {
+      if (robot.carryingObject != ID) {
         float distanceFromRobot = Vector2.Distance(robot.WorldPosition + robot.Forward * CozmoUtil.CARRIED_OBJECT_HORIZONTAL_OFFSET, WorldPosition) - (CozmoUtil.BLOCK_LENGTH_MM * 0.5f);
         float angleFromRobot = Vector2.Angle(robot.Forward, WorldPosition - robot.WorldPosition);
         float maxDistanceInMM = maxDistanceInCubeLengths * CozmoUtil.BLOCK_LENGTH_MM;
 
-        if(maxDistanceInMM > distanceFromRobot && maxAngle > angleFromRobot)
-        {
+        if (maxDistanceInMM > distanceFromRobot && maxAngle > angleFromRobot) {
           float distanceScore = (100f - Mathf.Lerp(0f, 100f, distanceFromRobot / maxDistanceInMM)) * distanceScoreMultiplier;
           float angleScore = (100f - Mathf.Lerp(0f, 100f, angleFromRobot / maxAngle)) * angleScoreMultiplier;
 
@@ -105,10 +100,10 @@ public class ObservedObject
   private static float maxAngle = 45f;
   private static float maxDistanceInCubeLengths = 8f;
 
-  public bool canBeStackedOn
-  {
+  public bool canBeStackedOn {
     get {
-      if(robot.selectedObjects.Count > 1) return false; // if blocks stacked on each other
+      if (robot.selectedObjects.Count > 1)
+        return false; // if blocks stacked on each other
 
       //float distance = ( (Vector2)WorldPosition - (Vector2)robot.WorldPosition ).magnitude;
       float height = Mathf.Abs(WorldPosition.z - robot.WorldPosition.z);
@@ -123,17 +118,14 @@ public class ObservedObject
 
   public string SelectInfoString { get; private set; }
 
-  public ObservedObject()
-  {
+  public ObservedObject() {
   }
 
-  public ObservedObject(int objectID, uint objectFamily, uint objectType)
-  {
+  public ObservedObject(int objectID, uint objectFamily, uint objectType) {
     Constructor(objectID, objectFamily, objectType);
   }
 
-  protected void Constructor(int objectID, uint objectFamily, uint objectType)
-  {
+  protected void Constructor(int objectID, uint objectFamily, uint objectType) {
     TimeCreated = Time.time;
     Family = objectFamily;
     ObjectType = objectType;
@@ -142,21 +134,20 @@ public class ObservedObject
     InfoString = "ID: " + ID + " Family: " + Family + " Type: " + ObjectType;
     SelectInfoString = "Select ID: " + ID + " Family: " + Family + " Type: " + ObjectType;
 
-    if(objectFamily == 4)
-    {
+    if (objectFamily == 4) {
       cubeType = CubeType.LIGHT_CUBE;
-    } else if(objectFamily == 6)
-    {
+    }
+    else if (objectFamily == 6) {
       cubeType = CubeType.FACE;
       Debug.LogWarning("FACE " + ID + " !!!"); 
-    } else if(objectType == 4 || objectType == 5)
-    {
+    }
+    else if (objectType == 4 || objectType == 5) {
       cubeType = CubeType.BULLS_EYE;
-    } else if(objectType == 11 || objectType == 12 || objectType == 13)
-    {
+    }
+    else if (objectType == 11 || objectType == 12 || objectType == 13) {
       cubeType = CubeType.FLAG;
-    } else
-    {
+    }
+    else {
       cubeType = CubeType.UNKNOWN;
       Debug.LogWarning("Object " + ID + " with type " + objectType + " is unsupported"); 
     }
@@ -166,10 +157,8 @@ public class ObservedObject
     SetTargetingScoreSettings();
   }
 
-  public static implicit operator uint(ObservedObject observedObject)
-  {
-    if(observedObject == null)
-    {
+  public static implicit operator uint(ObservedObject observedObject) {
+    if (observedObject == null) {
       Debug.LogWarning("converting null ObservedObject into uint: returning uint.MaxValue");
       return uint.MaxValue;
     }
@@ -177,20 +166,18 @@ public class ObservedObject
     return (uint)observedObject.ID;
   }
 
-  public static implicit operator int(ObservedObject observedObject)
-  {
-    if(observedObject == null) return -1;
+  public static implicit operator int(ObservedObject observedObject) {
+    if (observedObject == null)
+      return -1;
 
     return observedObject.ID;
   }
 
-  public static implicit operator string(ObservedObject observedObject)
-  {
+  public static implicit operator string(ObservedObject observedObject) {
     return ((int)observedObject).ToString();
   }
 
-  public void UpdateInfo(G2U.RobotObservedObject message)
-  {
+  public void UpdateInfo(G2U.RobotObservedObject message) {
     RobotID = message.robotID;
     VizRect = new Rect(message.img_topLeft_x, message.img_topLeft_y, message.img_width, message.img_height);
 
@@ -203,28 +190,27 @@ public class ObservedObject
 
     TopFaceNorthAngle = message.topFaceOrientation_rad + Mathf.PI * 0.5f;
 
-    if(message.markersVisible > 0) TimeLastSeen = Time.time;
+    if (message.markersVisible > 0)
+      TimeLastSeen = Time.time;
   }
 
-  public virtual void Delete()
-  {
-    if(OnDelete != null) OnDelete(this);
-    if(SignificantChangeDetected != null) SignificantChangeDetected();
+  public virtual void Delete() {
+    if (OnDelete != null)
+      OnDelete(this);
+    if (SignificantChangeDetected != null)
+      SignificantChangeDetected();
   }
 
-  public Vector2 GetBestFaceVector(Vector3 initialVector)
-  {
+  public Vector2 GetBestFaceVector(Vector3 initialVector) {
     
     Vector2[] faces = { TopNorth, TopEast, -TopNorth, -TopEast };
     Vector2 face = faces[0];
     
     float bestDot = -float.MaxValue;
     
-    for(int i = 0; i < 4; i++)
-    {
+    for (int i = 0; i < 4; i++) {
       float dot = Vector2.Dot(initialVector, faces[i]);
-      if(dot > bestDot)
-      {
+      if (dot > bestDot) {
         bestDot = dot;
         face = faces[i];
       }
@@ -233,28 +219,23 @@ public class ObservedObject
     return face;
   }
 
-  public static void RefreshAngleScoreMultiplier()
-  {
+  public static void RefreshAngleScoreMultiplier() {
     angleScoreMultiplier = OptionsScreen.GetAngleScoreMultiplier();
   }
 
-  public static void RefreshDistanceScoreMultiplier()
-  {
+  public static void RefreshDistanceScoreMultiplier() {
     distanceScoreMultiplier = OptionsScreen.GetDistanceScoreMultiplier();
   }
 
-  public static void RefreshMaxAngle()
-  {
+  public static void RefreshMaxAngle() {
     maxAngle = OptionsScreen.GetMaxAngle();
   }
 
-  public static void RefreshMaxDistanceInCubeLengths()
-  {
+  public static void RefreshMaxDistanceInCubeLengths() {
     maxDistanceInCubeLengths = OptionsScreen.GetMaxDistanceInCubeLengths();
   }
 
-  private void SetTargetingScoreSettings()
-  {
+  private void SetTargetingScoreSettings() {
     RefreshAngleScoreMultiplier();
     RefreshDistanceScoreMultiplier();
     RefreshMaxAngle();

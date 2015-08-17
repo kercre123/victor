@@ -17,11 +17,11 @@ public class PieSlice : MonoBehaviour {
 
   public int Number { get; private set; }
 
-  void Awake() {
+  void Awake() { 
     textOutline = text.gameObject.GetComponent<Outline>();
     matCopy = new Material(image.material);
     image.material = matCopy;
-  }  
+  }
 
   public void Initialize(float fillAmount, float angle, float textAngleOffset, int num, Color imageColor, Color textColor, Color outlineColor) {
     image.fillAmount = fillAmount;
@@ -35,7 +35,8 @@ public class PieSlice : MonoBehaviour {
   public void SetColors(Color imageColor, Color textColor, Color outlineColor) {
     image.material.SetColor("_Color", imageColor);
     text.color = textColor;
-    if(textOutline != null) textOutline.effectColor = outlineColor;
+    if (textOutline != null)
+      textOutline.effectColor = outlineColor;
   }
 
 }

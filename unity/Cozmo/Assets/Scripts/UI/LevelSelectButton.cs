@@ -17,15 +17,15 @@ public class LevelSelectButton : MonoBehaviour {
 
   public void Initialize(string id, Sprite preview, int stars, bool interactable, UnityAction clickListener) {
     text_ID.text = id;
-    imagePreview.sprite = preview;
+    imagePreview.sprite = preview; 
 
-    for(int i=0; i<fullStars.Length; i++) {
-      fullStars[i].gameObject.SetActive(i<stars);
+    for (int i = 0; i < fullStars.Length; i++) {
+      fullStars[i].gameObject.SetActive(i < stars);
     }
 
     button.interactable = interactable;
 
-    if(interactable) {
+    if (interactable) {
       button.onClick.AddListener(clickListener);
     }
 

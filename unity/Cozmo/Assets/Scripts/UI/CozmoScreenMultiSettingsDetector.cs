@@ -15,7 +15,8 @@ public class CozmoScreenMultiSettingsDetector : ScreenMultiSettingsDetector {
 
     
     float aspect = 1f;
-    if(screenSize.y > 0f) aspect = screenSize.x / screenSize.y;
+    if (screenSize.y > 0f)
+      aspect = screenSize.x / screenSize.y;
     
     bool wideScreen = aspect > (16f / 10.5f);
     

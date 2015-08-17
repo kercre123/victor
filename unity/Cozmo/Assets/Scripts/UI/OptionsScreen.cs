@@ -48,26 +48,37 @@ public class OptionsScreen : MonoBehaviour {
   public const int REVERSE_LIKE_A_CAR = 0;
   public const float DEFAULT_MAX_TURN_FACTOR = 0.25f;
 
-  public string[] controlStyles = { "GyroSliderHybrid", "SliderAndTilt", "TwoSliders", "TriThumb", "DriveThumb", "PlayerThumb" };
+  public string[] controlStyles = {
+    "GyroSliderHybrid",
+    "SliderAndTilt",
+    "TwoSliders",
+    "TriThumb",
+    "DriveThumb",
+    "PlayerThumb"
+  };
   public string[] visionStyles = { "CozmoVision2", "CozmoVision3", "CozmoVision4" };
   public string[] pertinentObjectTypes = { 
     Robot.ObservedObjectListType.OBSERVED_RECENTLY.ToString(),
     Robot.ObservedObjectListType.MARKERS_SEEN.ToString(),
-    Robot.ObservedObjectListType.KNOWN.ToString() };
+    Robot.ObservedObjectListType.KNOWN.ToString()
+  };
 
   public static OptionsScreen instance = null;
+
   public static bool IsOpen {
     get {
-      if(instance == null) return false;
-      if(instance.optionsAnchor == null) return false;
+      if (instance == null)
+        return false;
+      if (instance.optionsAnchor == null)
+        return false;
       return instance.optionsAnchor.activeSelf;
     }
   }
 
   Robot robot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.current : null; } }
 
-  void Awake () {
-    if(instance != null) {
+  void Awake() {
+    if (instance != null) {
       //Debug.Log("OptionsScreen destroying old options, because scene specific layouts might differ.");
       GameObject.Destroy(instance.gameObject);
       //return;
@@ -76,74 +87,75 @@ public class OptionsScreen : MonoBehaviour {
     DontDestroyOnLoad(gameObject);
   }
 
-  void OnEnable () {
-    if(instance != this) return;
+  void OnEnable() {
+    if (instance != this)
+      return;
 
     Init();
     AddListeners();
     optionsAnchor.SetActive(false);
   }
 
-  void Init () {
-    if(slider_turnSpeed != null && slider_turnSpeed.gameObject.activeSelf) {
+  void Init() {
+    if (slider_turnSpeed != null && slider_turnSpeed.gameObject.activeSelf) {
       slider_turnSpeed.value = PlayerPrefs.GetFloat("MaxTurnFactor", DEFAULT_MAX_TURN_FACTOR);
     }
 
-    if(slider_volume != null && slider_volume.gameObject.activeSelf) {
+    if (slider_volume != null && slider_volume.gameObject.activeSelf) {
       slider_volume.value = PlayerPrefs.GetFloat("Volume", 1);
     }
 
-    if(toggle_reverseLikeACar != null) {
+    if (toggle_reverseLikeACar != null) {
       toggle_reverseLikeACar.isOn = PlayerPrefs.GetInt("ReverseLikeACar", REVERSE_LIKE_A_CAR) == 1;
       //Debug.Log("Init toggle_reverseLikeACar.isOn("+toggle_reverseLikeACar.isOn+")");
     }
 
-    if(toggle_debug != null) {
+    if (toggle_debug != null) {
       toggle_debug.isOn = PlayerPrefs.GetInt("ShowDebugInfo", 0) == 1;
       //Debug.Log("Init toggle_debug.isOn("+toggle_debug.isOn+")");
     }
 
-    if(toggle_flushLogs != null) {
+    if (toggle_flushLogs != null) {
       toggle_flushLogs.isOn = PlayerPrefs.GetInt("FlushLogs", 1) == 1;
       //Debug.Log("Init toggle_debug.isOn("+toggle_debug.isOn+")");
     }
 
-    if(toggle_vision != null) {
+    if (toggle_vision != null) {
       toggle_vision.isOn = PlayerPrefs.GetInt("VisionDisabled" + GetVisionSelected().ToString(), 0) == 1;
       //Debug.Log("Init toggle_debug.isOn("+toggle_debug.isOn+")");
     }
 
-    if(toggle_visionFade != null) {
+    if (toggle_visionFade != null) {
       toggle_visionFade.isOn = PlayerPrefs.GetInt("VisionFadeDisabled" + GetVisionSelected().ToString(), 0) == 1;
       //Debug.Log("Init toggle_debug.isOn("+toggle_debug.isOn+")");
     }
 
-    if(toggle_userTestMode != null) {
+    if (toggle_userTestMode != null) {
       toggle_userTestMode.isOn = PlayerPrefs.GetInt("UserTestMode", 0) == 1;
       //Debug.Log("Init toggle_debug.isOn("+toggle_debug.isOn+")");
     }
 
-    if(toggle_autoCollect != null) {
+    if (toggle_autoCollect != null) {
       toggle_autoCollect.isOn = PlayerPrefs.GetInt("EnergyHuntAutoCollect", 0) == 1;
     }
 
-    if(toggle_assistedControls != null) {
+    if (toggle_assistedControls != null) {
       toggle_assistedControls.isOn = PlayerPrefs.GetInt("CozmoAssistedControls", 0) == 1;
     }
 
-    if(toggle_skipLayoutTracker != null) {
-      toggle_skipLayoutTracker.isOn = PlayerPrefs.GetInt("DebugSkipLayoutTracker",0) == 1;
+    if (toggle_skipLayoutTracker != null) {
+      toggle_skipLayoutTracker.isOn = PlayerPrefs.GetInt("DebugSkipLayoutTracker", 0) == 1;
     }
 
-    if(toggle_useAltConfig != null) {
-      toggle_useAltConfig.isOn = PlayerPrefs.GetInt("DebugUseAltConfig",0) == 1;
+    if (toggle_useAltConfig != null) {
+      toggle_useAltConfig.isOn = PlayerPrefs.GetInt("DebugUseAltConfig", 0) == 1;
     }
     
-    if(toggle_visionRecording != null) {
+    if (toggle_visionRecording != null) {
       toggle_visionRecording.isOn = RobotEngineManager.instance != null ? RobotEngineManager.instance.AllowImageSaving : false;
     }
 
-    if(combo_controls != null) {
+    if (combo_controls != null) {
       combo_controls.InitControl();
       combo_controls.ClearItems();
       combo_controls.AddItems(controlStyles);
@@ -151,7 +163,7 @@ public class OptionsScreen : MonoBehaviour {
       combo_controls.SelectedIndex = PlayerPrefs.GetInt("ControlSchemeIndex", 0);
     }
 
-    if(combo_vision != null) {
+    if (combo_vision != null) {
       combo_vision.InitControl();
       combo_vision.ClearItems();
       combo_vision.AddItems(visionStyles);
@@ -159,7 +171,7 @@ public class OptionsScreen : MonoBehaviour {
       combo_vision.SelectedIndex = PlayerPrefs.GetInt("VisionSchemeIndex", 0);
     }
 
-    if(pertinent_objects != null) {
+    if (pertinent_objects != null) {
       pertinent_objects.InitControl();
       pertinent_objects.ClearItems();
       pertinent_objects.AddItems(pertinentObjectTypes);
@@ -167,22 +179,22 @@ public class OptionsScreen : MonoBehaviour {
       pertinent_objects.SelectedIndex = GetObjectPertinenceTypeOverride();
     }
 
-    if(angleScoreMultiplier != null) {
+    if (angleScoreMultiplier != null) {
       angleScoreMultiplier.text = GetAngleScoreMultiplier().ToString();
       angleScoreMultiplier.onValueChange.AddListener(AngleScoreMultiplier);
     }
 
-    if(distanceScoreMultiplier != null) {
+    if (distanceScoreMultiplier != null) {
       distanceScoreMultiplier.text = GetDistanceScoreMultiplier().ToString();
       distanceScoreMultiplier.onValueChange.AddListener(DistanceScoreMultiplier);
     }
 
-    if(maxAngle != null) {
+    if (maxAngle != null) {
       maxAngle.text = GetMaxAngle().ToString();
       maxAngle.onValueChange.AddListener(MaxAngle);
     }
 
-    if(maxDistanceInCubeLengths != null) {
+    if (maxDistanceInCubeLengths != null) {
       maxDistanceInCubeLengths.text = GetMaxDistanceInCubeLengths().ToString();
       maxDistanceInCubeLengths.onValueChange.AddListener(MaxDistanceInCubeLengths);
     }
@@ -214,127 +226,142 @@ public class OptionsScreen : MonoBehaviour {
 
   void SetSpinnerSetting_StartMultiplier(string text) {
     float value;
-    if(!float.TryParse(text, out value)) return;
+    if (!float.TryParse(text, out value))
+      return;
     PlayerPrefs.SetFloat("SpinMultiplier", value);
   }
+
   void SetSpinnerSetting_MinStart(string text) {
     float value;
-    if(!float.TryParse(text, out value)) return;
+    if (!float.TryParse(text, out value))
+      return;
     PlayerPrefs.SetFloat("SpinnerMinStartingVelocityDegPS", value);
   }
+
   void SetSpinnerSetting_MaxSpeed(string text) {
     float value;
-    if(!float.TryParse(text, out value)) return;
+    if (!float.TryParse(text, out value))
+      return;
     PlayerPrefs.SetFloat("SpinnerMaxAngularVelocityDegPS", value);
   }
+
   void SetSpinnerSetting_MinSpeed(string text) {
     float value;
-    if(!float.TryParse(text, out value)) return;
+    if (!float.TryParse(text, out value))
+      return;
     PlayerPrefs.SetFloat("SpinnerMinAngularVelocityDegPS", value);
   }
+
   void SetSpinnerSetting_Drag(string text) {
     float value;
-    if(!float.TryParse(text, out value)) return;
+    if (!float.TryParse(text, out value))
+      return;
     PlayerPrefs.SetFloat("DragCoefficient", value);
   }
+
   void SetSpinnerSetting_MaxSamples(string text) {
     int value;
-    if(!int.TryParse(text, out value)) return;
+    if (!int.TryParse(text, out value))
+      return;
     PlayerPrefs.SetInt("MaxDragSamples", value);
   }
+
   void SetSpinnerSetting_PegThreshold(string text) {
     float value;
-    if(!float.TryParse(text, out value)) return;
+    if (!float.TryParse(text, out value))
+      return;
     PlayerPrefs.SetFloat("SpinnerPegsSlowDownThreshold", value);
   }
+
   void SetSpinnerSetting_PegSlowFactor(string text) {
     float value;
-    if(!float.TryParse(text, out value)) return;
+    if (!float.TryParse(text, out value))
+      return;
     PlayerPrefs.SetFloat("SpinnerPegsSlowDownFactor", value);
   }
 
   void AddListeners() {
-    if(slider_turnSpeed != null) {
+    if (slider_turnSpeed != null) {
       slider_turnSpeed.onValueChanged.AddListener(MaxTurnSpeedChanged);
     }
 
-    if(slider_volume != null) {
+    if (slider_volume != null) {
       slider_volume.onValueChanged.AddListener(VolumeChanged);
     }
 
-    if(toggle_reverseLikeACar != null) {
+    if (toggle_reverseLikeACar != null) {
       toggle_reverseLikeACar.onValueChanged.AddListener(ToggleReverseLikeACar);
     }
 
-    if(toggle_debug != null) {
+    if (toggle_debug != null) {
       toggle_debug.onValueChanged.AddListener(ToggleShowDebugInfo);
     }
     
-    if(toggle_flushLogs != null) {
+    if (toggle_flushLogs != null) {
       toggle_flushLogs.onValueChanged.AddListener(ToggleFlushLogs);
     }
 
-    if(toggle_vision != null) {
+    if (toggle_vision != null) {
       toggle_vision.onValueChanged.AddListener(ToggleDisableVision);
     }
 
-    if(toggle_visionFade != null) {
+    if (toggle_visionFade != null) {
       toggle_visionFade.onValueChanged.AddListener(ToggleDisableVisionFade);
     }
 
-    if(toggle_visionRecording != null) {
+    if (toggle_visionRecording != null) {
       toggle_visionRecording.onValueChanged.AddListener(ToggleVisionRecording);
     }
 
-    if(toggle_userTestMode != null) {
+    if (toggle_userTestMode != null) {
       toggle_userTestMode.onValueChanged.AddListener(ToggleUserTestMode);
     }
 
-    if(toggle_autoCollect != null) {
+    if (toggle_autoCollect != null) {
       toggle_autoCollect.onValueChanged.AddListener(ToggleEnergyHuntAutoCollect);
     }
-    if(toggle_assistedControls != null) {
+    if (toggle_assistedControls != null) {
       toggle_assistedControls.onValueChanged.AddListener(ToggleAssitedControls);
     }
-    if(toggle_skipLayoutTracker != null) {
+    if (toggle_skipLayoutTracker != null) {
       toggle_skipLayoutTracker.onValueChanged.AddListener(ToggleSkipLayoutTracker);
     }
-    if(toggle_useAltConfig != null) {
+    if (toggle_useAltConfig != null) {
       toggle_useAltConfig.onValueChanged.AddListener(ToggleUseAltConfig);
     }
     
   }
 
-  void OnDisable () {
+  void OnDisable() {
     RemoveListeners();
   }
 
   void RemoveListeners() {
-    if(slider_turnSpeed != null) {
+    if (slider_turnSpeed != null) {
       slider_turnSpeed.onValueChanged.RemoveListener(MaxTurnSpeedChanged);
     }
 
-    if(slider_volume != null) {
+    if (slider_volume != null) {
       slider_volume.onValueChanged.RemoveListener(VolumeChanged);
     }
 
-    if(toggle_reverseLikeACar != null) {
+    if (toggle_reverseLikeACar != null) {
       toggle_reverseLikeACar.onValueChanged.RemoveListener(ToggleReverseLikeACar);
     }
 
-    if(toggle_debug != null) {
+    if (toggle_debug != null) {
       toggle_debug.onValueChanged.RemoveListener(ToggleShowDebugInfo);
     }
 
-    if(toggle_vision != null) {
+    if (toggle_vision != null) {
       toggle_vision.onValueChanged.RemoveListener(ToggleDisableVision);
     }
 
-    if(toggle_visionFade != null) {
+    if (toggle_visionFade != null) {
       toggle_visionFade.onValueChanged.RemoveListener(ToggleDisableVisionFade);
     }
   }
-  
+
   void ControlsSelected(int index) {
     PlayerPrefs.SetInt("ControlSchemeIndex", index);
   }
@@ -350,12 +377,13 @@ public class OptionsScreen : MonoBehaviour {
 
   void ObjectPertinence(int value) {
     PlayerPrefs.SetInt("ObjectPertinence" + GetVisionSelected().ToString(), value);
-    if(robot != null) robot.RefreshObjectPertinence();
+    if (robot != null)
+      robot.RefreshObjectPertinence();
   }
 
   void AngleScoreMultiplier(string value) {
     float multiplier;
-    if(float.TryParse(value, out multiplier)) {
+    if (float.TryParse(value, out multiplier)) {
       PlayerPrefs.SetFloat("AngleScoreMultiplier" + GetVisionSelected().ToString(), multiplier);
     }
     
@@ -364,7 +392,7 @@ public class OptionsScreen : MonoBehaviour {
 
   void DistanceScoreMultiplier(string value) {
     float multiplier;
-    if(float.TryParse(value, out multiplier)) {
+    if (float.TryParse(value, out multiplier)) {
       PlayerPrefs.SetFloat("DistanceScoreMultiplier" + GetVisionSelected().ToString(), multiplier);
     }
     
@@ -373,7 +401,7 @@ public class OptionsScreen : MonoBehaviour {
 
   void MaxAngle(string value) {
     float ignore;
-    if(float.TryParse(value, out ignore)) {
+    if (float.TryParse(value, out ignore)) {
       PlayerPrefs.SetFloat("MaxAngle" + GetVisionSelected().ToString(), ignore);
     }
     
@@ -382,12 +410,13 @@ public class OptionsScreen : MonoBehaviour {
 
   void MaxDistanceInCubeLengths(string value) {
     float ignore;
-    if(float.TryParse(value, out ignore)) {
+    if (float.TryParse(value, out ignore)) {
       PlayerPrefs.SetFloat("MaxDistanceInCubeLengths" + GetVisionSelected().ToString(), ignore);
     }
     
     ObservedObject.RefreshMaxDistanceInCubeLengths();
-    if(robot != null) robot.RefreshObjectPertinence();
+    if (robot != null)
+      robot.RefreshObjectPertinence();
   }
 
   void MaxTurnSpeedChanged(float val) {
@@ -397,11 +426,11 @@ public class OptionsScreen : MonoBehaviour {
   void VolumeChanged(float val) {
     PlayerPrefs.SetFloat("Volume", Mathf.Clamp01(val));
 
-    if(RobotEngineManager.instance != null) {
+    if (RobotEngineManager.instance != null) {
       RobotEngineManager.instance.SetRobotVolume();
     }
   }
-  
+
   void ToggleReverseLikeACar(bool val) {
     PlayerPrefs.SetInt("ReverseLikeACar", val ? 1 : 0);
   }
@@ -460,9 +489,10 @@ public class OptionsScreen : MonoBehaviour {
   }
 
   void ToggleVisionRecording(bool val) {
-    if(RobotEngineManager.instance != null) RobotEngineManager.instance.ToggleVisionRecording(val);
+    if (RobotEngineManager.instance != null)
+      RobotEngineManager.instance.ToggleVisionRecording(val);
   }
-  
+
   void ToggleEnergyHuntAutoCollect(bool val) {
     PlayerPrefs.SetInt("EnergyHuntAutoCollect", val ? 1 : 0);
     //Debug.Log("ToggleUserTestMode("+val+")");
@@ -494,30 +524,30 @@ public class OptionsScreen : MonoBehaviour {
     PlayerPrefs.DeleteKey("DebugUseAltConfig");
     PlayerPrefs.DeleteKey("Volume");
 
-    for(int i = 0; i < 5; ++i) {
+    for (int i = 0; i < 5; ++i) {
       PlayerPrefs.DeleteKey("ObjectPertinence" + i.ToString());
     }
 
-    for(int i = 0; i < 5; ++i) {
+    for (int i = 0; i < 5; ++i) {
       PlayerPrefs.DeleteKey("VisionDisabled" + i.ToString());
     }
 
-    for(int i = 0; i < 5; ++i) {
+    for (int i = 0; i < 5; ++i) {
       PlayerPrefs.DeleteKey("VisionFadeDisabled" + i.ToString());
     }
 
-    for(int i = 0; i < 5; ++i) {
+    for (int i = 0; i < 5; ++i) {
       PlayerPrefs.DeleteKey("AngleScoreMultiplier" + i.ToString());
     }
 
-    for(int i = 0; i < 5; ++i) {
+    for (int i = 0; i < 5; ++i) {
       PlayerPrefs.DeleteKey("DistanceScoreMultiplier" + i.ToString());
     }
 
-    for(int i = 0; i < 5; ++i) {
+    for (int i = 0; i < 5; ++i) {
       PlayerPrefs.DeleteKey("MaxAngle" + i.ToString());
     }
-    for(int i = 0; i < 5; ++i) {
+    for (int i = 0; i < 5; ++i) {
       PlayerPrefs.DeleteKey("MaxDistanceInCubeLengths" + i.ToString());
     }
 
@@ -538,6 +568,7 @@ public class OptionsScreen : MonoBehaviour {
   public void Toggle(bool toggle) {
     optionsAnchor.SetActive(toggle);
 
-    if(!toggle && RefreshSettings != null) RefreshSettings();
+    if (!toggle && RefreshSettings != null)
+      RefreshSettings();
   }
 }

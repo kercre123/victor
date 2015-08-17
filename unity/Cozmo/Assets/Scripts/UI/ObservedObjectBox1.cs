@@ -13,7 +13,7 @@ public class ObservedObjectBox1 : ObservedObjectButton
     corners = new Vector3[4];
     
     base.Initialize();
-  }
+  } 
 
   public virtual Vector3 position
   {

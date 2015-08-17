@@ -23,19 +23,22 @@ public class AccelControls : MonoBehaviour {
 
   float x = 0f;
   int lastXStamp = 0;
+
   public float Horizontal {
     get {
-      if(!SystemInfo.supportsAccelerometer) return 0f;
+      if (!SystemInfo.supportsAccelerometer)
+        return 0f;
 
-      if(Time.frameCount == lastXStamp) return x;
+      if (Time.frameCount == lastXStamp)
+        return x;
       lastXStamp = Time.frameCount;
 
-      float mag = Mathf.Abs( Input.acceleration.x );
+      float mag = Mathf.Abs(Input.acceleration.x);
 
-      if ( mag < xMin ) {
+      if (mag < xMin) {
         x = 0f;
       }
-      else if(mag >= xMax) {
+      else if (mag >= xMax) {
         x = Input.acceleration.x > 0f ? 1f : -1f;
       }
       else {
@@ -49,19 +52,22 @@ public class AccelControls : MonoBehaviour {
 
   float y = 0f;
   int lastYStamp = 0;
+
   public float Vertical {
     get { 
-      if(!SystemInfo.supportsAccelerometer) return 0f;
+      if (!SystemInfo.supportsAccelerometer)
+        return 0f;
       
-      if(Time.frameCount == lastYStamp) return y;
+      if (Time.frameCount == lastYStamp)
+        return y;
       lastYStamp = Time.frameCount;
       
-      float mag = Mathf.Abs( Input.acceleration.y );
+      float mag = Mathf.Abs(Input.acceleration.y);
       
-      if ( mag < yMin ) {
+      if (mag < yMin) {
         y = 0f;
       }
-      else if(mag >= yMax) {
+      else if (mag >= yMax) {
         y = Input.acceleration.y > 0f ? 1f : -1f;
       }
       else {
@@ -74,8 +80,10 @@ public class AccelControls : MonoBehaviour {
   }
 
   void Update() {
-    if(xLabel != null) xLabel.text = "xA(" +Input.acceleration.x+ ") \nxB("+x+")";
-    if(yLabel != null) yLabel.text = "yA(" +Input.acceleration.y+ ") \nyB("+y+")";
+    if (xLabel != null)
+      xLabel.text = "xA(" + Input.acceleration.x + ") \nxB(" + x + ")";
+    if (yLabel != null)
+      yLabel.text = "yA(" + Input.acceleration.y + ") \nyB(" + y + ")";
   }
 
 }

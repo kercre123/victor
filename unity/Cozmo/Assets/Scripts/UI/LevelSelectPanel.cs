@@ -18,7 +18,7 @@ public class LevelSelectPanel : MonoBehaviour {
   [SerializeField] ScrollRect scrollRect;
   [SerializeField] Sprite[] previews;
   [SerializeField] AudioClip clickSound;
-
+   
   List<LevelSelectButton> levelSelectButtons = new List<LevelSelectButton>();
 
   private Robot robot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.current : null; } }
@@ -29,7 +29,7 @@ public class LevelSelectPanel : MonoBehaviour {
 
     float width = 0f;
 
-    for(int i=0;i<numLevels;i++) {
+    for (int i = 0; i < numLevels; i++) {
       GameObject buttonObj = (GameObject)GameObject.Instantiate(levelSelectionPrefab);
 
       RectTransform rectT = buttonObj.transform as RectTransform;
@@ -40,16 +40,18 @@ public class LevelSelectPanel : MonoBehaviour {
       LevelSelectButton selectButton = buttonObj.GetComponent<LevelSelectButton>();
 
       Sprite preview = null;
-      if(previews != null && previews.Length > 0) {
-        int spriteIndex = Mathf.Clamp(i, 0, previews.Length-1);
+      if (previews != null && previews.Length > 0) {
+        int spriteIndex = Mathf.Clamp(i, 0, previews.Length - 1);
         preview = previews[spriteIndex];
       }
 
-      int level = i+1;
+      int level = i + 1;
 
       bool interactive = level <= unlockedLevels;
 
-      selectButton.Initialize(level.ToString(), preview, interactive ? PlayerPrefs.GetInt(gameName + level + "_stars", 0) : 0, interactive, delegate{LaunchGame(level);});
+      selectButton.Initialize(level.ToString(), preview, interactive ? PlayerPrefs.GetInt(gameName + level + "_stars", 0) : 0, interactive, delegate {
+        LaunchGame(level);
+      });
 
       levelSelectButtons.Add(selectButton);
     }
@@ -59,14 +61,15 @@ public class LevelSelectPanel : MonoBehaviour {
     size.x = width;
     scrollRectT.sizeDelta = size;
 
-    if(robot != null) {
+    if (robot != null) {
       robot.ClearAllObjects();
       robot.ClearData();
     }
   }
 
   void LaunchGame(int level) {
-    if(clickSound != null) AudioManager.PlayOneShot(clickSound);
+    if (clickSound != null)
+      AudioManager.PlayOneShot(clickSound);
     //Debug.Log("LevelSelectPanel LaunchGame gameName("+gameName+") level("+level+")");
     PlayerPrefs.SetString("CurrentGame", gameName);
     PlayerPrefs.SetInt(gameName + "_CurrentLevel", level);

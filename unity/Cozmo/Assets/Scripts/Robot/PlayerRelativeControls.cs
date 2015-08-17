@@ -5,9 +5,8 @@ using System.Collections;
 /// <summary>
 /// deprecated research into more classic gaming thumbstick controls relative to the player's input device instead of the robot
 /// </summary>
-public class PlayerRelativeControls : MonoBehaviour
-{
-  
+public class PlayerRelativeControls : MonoBehaviour {
+   
   #region INSPECTOR FIELDS
 
   [SerializeField] VirtualStick stick = null;
@@ -32,15 +31,13 @@ public class PlayerRelativeControls : MonoBehaviour
 
   #region COMPONENT CALLBACKS
 
-  void OnEnable()
-  {
+  void OnEnable() {
     //reset default state for this control scheme test
     Debug.Log("PlayerRelativeControls OnEnable");
     Input.compass.enabled = true;
 
     moveCommandLastFrame = false;
-    if(robot != null)
-    {
+    if (robot != null) {
       robotStartHeading = MathUtil.ClampAngle180(robot.poseAngle_rad * Mathf.Rad2Deg);
       //Debug.Log("frame("+Time.frameCount+") robotFacing(" + robotFacing + ")");
     }
@@ -51,9 +48,9 @@ public class PlayerRelativeControls : MonoBehaviour
 
   Robot robot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.current : null; } }
 
-  void Update()
-  {
-    if(robot == null) return;
+  void Update() {
+    if (robot == null)
+      return;
 
     robotFacing = MathUtil.ClampAngle180(robot.poseAngle_rad * Mathf.Rad2Deg);
     //robotFacingStale = false;
@@ -62,18 +59,15 @@ public class PlayerRelativeControls : MonoBehaviour
     //take our v-pad control axes and calc translate to robot
     inputs = Vector2.zero;
 
-    if(stick != null)
-    {
+    if (stick != null) {
       inputs.x = stick.Horizontal;
       inputs.y = stick.Vertical;
     }
 
-    if(!moveCommandLastFrame && inputs.sqrMagnitude == 0f)
-    {
+    if (!moveCommandLastFrame && inputs.sqrMagnitude == 0f) {
       return; // command not changed
     }
-    if(inputs.sqrMagnitude == 0f)
-    {
+    if (inputs.sqrMagnitude == 0f) {
       robot.DriveWheels(0f, 0f);
       return; // command zero'd, let's full stop
     }
@@ -97,13 +91,11 @@ public class PlayerRelativeControls : MonoBehaviour
     RefreshDebugText();
   }
 
-  void OnDisable()
-  {
+  void OnDisable() {
     //clean up this controls test if needed
     Debug.Log("RobotRelativeControls OnDisable");
     
-    if(robot != null && RobotEngineManager.instance.IsConnected)
-    {
+    if (robot != null && RobotEngineManager.instance.IsConnected) {
       robot.DriveWheels(0f, 0f);
     }
   }
@@ -112,13 +104,16 @@ public class PlayerRelativeControls : MonoBehaviour
 
   #region PRIVATE METHODS
 
-  void RefreshDebugText()
-  {
-    if(text_x != null) text_x.text = "x(" + inputs.x.ToString("N") + ")";
-    if(text_y != null) text_y.text = "y(" + inputs.y.ToString("N") + ")";
+  void RefreshDebugText() {
+    if (text_x != null)
+      text_x.text = "x(" + inputs.x.ToString("N") + ")";
+    if (text_y != null)
+      text_y.text = "y(" + inputs.y.ToString("N") + ")";
     
-    if(text_leftWheelSpeed != null) text_leftWheelSpeed.text = "L(" + leftWheelSpeed.ToString("N") + ")";
-    if(text_rightWheelSpeed != null) text_rightWheelSpeed.text = "R(" + rightWheelSpeed.ToString("N") + ")";
+    if (text_leftWheelSpeed != null)
+      text_leftWheelSpeed.text = "L(" + leftWheelSpeed.ToString("N") + ")";
+    if (text_rightWheelSpeed != null)
+      text_rightWheelSpeed.text = "R(" + rightWheelSpeed.ToString("N") + ")";
   }
 
   #endregion

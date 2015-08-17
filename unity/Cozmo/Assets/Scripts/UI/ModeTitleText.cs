@@ -12,7 +12,7 @@ public class ModeTitleText : MonoBehaviour {
   void OnEnable() {
     string modeTitle = PlayerPrefs.GetString("CurrentGame", "Unknown").ToUpper();
 
-    if(modeTitle != "FREE PLAY") {
+    if (modeTitle != "FREE PLAY") {
       modeTitle += " #" + PlayerPrefs.GetInt(modeTitle + "_CurrentLevel", 1);
     }
 

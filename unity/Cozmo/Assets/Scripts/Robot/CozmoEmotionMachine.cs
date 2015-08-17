@@ -4,15 +4,13 @@ using System;
 using System.Collections.Generic;
 
 [Serializable]
-public struct CozmoAnimation
-{
+public struct CozmoAnimation {
   public string animName;
   public uint numLoops;
 }
 
 [Serializable]
-public struct CozmoEmotionState
-{
+public struct CozmoEmotionState {
   //public string stateName;
   public string stateName;
   public bool playAllAnims;
@@ -31,24 +29,18 @@ public class CozmoEmotionMachine : MonoBehaviour {
   private Dictionary<string, List<CozmoAnimation>> typeAnims = new Dictionary<string, List<CozmoAnimation>>();
   private Dictionary<string, CozmoEmotionState> statesByName = new Dictionary<string, CozmoEmotionState>();
 
-  public void Awake()
-  {
+  public void Awake() {
     // populate our helper look up
-    for(int i = 0; i < emotionStates.Count; i++)
-    {
-      if( string.IsNullOrEmpty(emotionStates[i].stateName) )
-      {
+    for (int i = 0; i < emotionStates.Count; i++) {
+      if (string.IsNullOrEmpty(emotionStates[i].stateName)) {
         Debug.LogError("trying to add state with no name");
       }
-      else
-      {
-        if( !statesByName.ContainsKey(emotionStates[i].stateName) )
-        {
+      else {
+        if (!statesByName.ContainsKey(emotionStates[i].stateName)) {
           typeAnims.Add(emotionStates[i].stateName, emotionStates[i].emotionAnims);
-          statesByName.Add (emotionStates [i].stateName, emotionStates[i]);
+          statesByName.Add(emotionStates[i].stateName, emotionStates[i]);
         }
-        else
-        {
+        else {
           Debug.LogError("trying to add " + emotionStates[i].stateName + " more than once");
         }
       }
@@ -56,58 +48,52 @@ public class CozmoEmotionMachine : MonoBehaviour {
 
   }
 
-  public void OnEnable()
-  {
+  public void OnEnable() {
     StartMachine();
   }
+
   
-  
-  public void OnDisable()
-  {
+  public void OnDisable() {
     CloseMachine();
   }
 
   // initailization
-  public void StartMachine()
-  {
-    if( CozmoEmotionManager.instance != null )
-    {
+  public void StartMachine() {
+    if (CozmoEmotionManager.instance != null) {
       CozmoEmotionManager.instance.RegisterMachine(this);
-      CozmoEmotionManager.instance.SetIdleAnimation (defaultIdleAnimationName);
+      CozmoEmotionManager.instance.SetIdleAnimation(defaultIdleAnimationName);
     }
     InitializeMachine();
   }
 
-  public virtual void InitializeMachine() {}
+  public virtual void InitializeMachine() {
+  }
 
-  public virtual void UpdateMachine(){}
+  public virtual void UpdateMachine() {
+  }
   
   // clean-up
-  public void CloseMachine()
-  {
-    if( CozmoEmotionManager.instance != null )
-    {
+  public void CloseMachine() {
+    if (CozmoEmotionManager.instance != null) {
       CozmoEmotionManager.instance.UnregisterMachine();
     }
     CleanUp();
   }
 
-  public virtual void CleanUp(){}
+  public virtual void CleanUp() {
+  }
 
-  public bool HasAnimForState(string state_name)
-  {
-    if( typeAnims.ContainsKey(state_name) && typeAnims[state_name].Count > 0 )
+  public bool HasAnimForState(string state_name) {
+    if (typeAnims.ContainsKey(state_name) && typeAnims[state_name].Count > 0)
       return true;
     return false;
   }
 
-  public List<CozmoAnimation> GetAnimsForType(string state_name)
-  {
+  public List<CozmoAnimation> GetAnimsForType(string state_name) {
     return typeAnims[state_name];
   }
 
-  public CozmoEmotionState GetStateForName(string state_name)
-  {
+  public CozmoEmotionState GetStateForName(string state_name) {
     return statesByName[state_name];
   }
   

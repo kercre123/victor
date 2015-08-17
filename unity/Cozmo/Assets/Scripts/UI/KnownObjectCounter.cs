@@ -8,7 +8,7 @@ public class KnownObjectCounter : MonoBehaviour {
   Robot robot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.current : null; } }
 
   void Update() {
-    if(robot != null) {
+    if (robot != null) { 
       text.text = "known: " + robot.knownObjects.Count.ToString();
     }
   }

@@ -8,8 +8,7 @@ using Vectrosity;
 /// this component wraps the graphic assets used to display 3d unity representations for cozmo's Cubes
 /// </summary>
 [ExecuteInEditMode]
-public class BuildInstructionsCube : MonoBehaviour
-{
+public class BuildInstructionsCube : MonoBehaviour {
 
   #region INSPECTOR FIELDS
 
@@ -40,8 +39,7 @@ public class BuildInstructionsCube : MonoBehaviour
   public bool isActive { get { return cubeType == CubeType.LIGHT_CUBE; } }
 
   //translates between cozmo space and unity space for cube
-  public Vector3 WorldPosition
-  {
+  public Vector3 WorldPosition {
     get { return (CozmoUtil.Vector3UnityToCozmoSpace(transform.position) / Size) * CozmoUtil.BLOCK_LENGTH_MM; }
     set { transform.position = (CozmoUtil.Vector3CozmoToUnitySpace(value) / CozmoUtil.BLOCK_LENGTH_MM) * Size; }
   }
@@ -81,10 +79,8 @@ public class BuildInstructionsCube : MonoBehaviour
 
   #region MONOBEHAVIOUR CALLBACKS
 
-  void Awake()
-  {
-    if(Application.isPlaying)
-    {
+  void Awake() {
+    if (Application.isPlaying) {
       checkMark = (GameObject)GameObject.Instantiate(checkMarkPrefab);
       checkMark.transform.SetParent(transform, false);
       
@@ -92,25 +88,24 @@ public class BuildInstructionsCube : MonoBehaviour
     }
   }
 
-  void OnEnable()
-  {
-    if(!Application.isPlaying) Initialize(); //this is just for previewing in the editor
+  void OnEnable() {
+    if (!Application.isPlaying)
+      Initialize(); //this is just for previewing in the editor
   }
 
   
-  void Update()
-  {
-    if(!initialized) return;
-    if(Dirty()) Refresh();
+  void Update() {
+    if (!initialized)
+      return;
+    if (Dirty())
+      Refresh();
     
-    if(checkMark != null)
-    {
+    if (checkMark != null) {
       checkMark.SetActive(Validated);
     }
   }
 
-  void OnDestroy()
-  {
+  void OnDestroy() {
     //if(Application.isPlaying) {
     //ReleaseUIDsForVisualization();
     //}
@@ -120,63 +115,59 @@ public class BuildInstructionsCube : MonoBehaviour
 
   #region PRIVATE METHODS
 
-  bool Dirty()
-  {
-    if(lastCubeType != cubeType) return true;
-    if(lastValidated != Validated) return true;
-    if(lastHighlighted != Highlighted) return true;
-    if(lastHidden != Hidden) return true;
-    if(lastActiveBlockMode != activeBlockMode) return true;
-    if(lastBaseColor != baseColor) return true;
+  bool Dirty() {
+    if (lastCubeType != cubeType)
+      return true;
+    if (lastValidated != Validated)
+      return true;
+    if (lastHighlighted != Highlighted)
+      return true;
+    if (lastHidden != Hidden)
+      return true;
+    if (lastActiveBlockMode != activeBlockMode)
+      return true;
+    if (lastBaseColor != baseColor)
+      return true;
 
     return false;
   }
 
-  void Refresh()
-  {
+  void Refresh() {
 
-    if(Application.isPlaying)
-    {
-      if(debug) Debug.Log("vCube.SetColor(" + baseColor.ToString() + ")");
+    if (Application.isPlaying) {
+      if (debug)
+        Debug.Log("vCube.SetColor(" + baseColor.ToString() + ")");
       vCube.SetColor(baseColor);
 
-      if(Highlighted)
-      {
+      if (Highlighted) {
         vCube.Show();
-      } else
-      {
+      }
+      else {
         vCube.Hide();
       }
     }
 
     meshCube.enabled = !Hidden;
-    if(Hidden)
-    {
-      if(symbols != null)
-      {
-        for(int i = 0; i < symbols.Length; i++)
-        {
+    if (Hidden) {
+      if (symbols != null) {
+        for (int i = 0; i < symbols.Length; i++) {
           symbols[i].gameObject.SetActive(false);
         }
       }
       
-      if(symbolFrames != null)
-      {
-        for(int i = 0; i < symbolFrames.Length; i++)
-        {
+      if (symbolFrames != null) {
+        for (int i = 0; i < symbolFrames.Length; i++) {
           symbolFrames[i].gameObject.SetActive(false);
         }
       }
       
-      if(activeLights != null)
-      {
-        for(int i = 0; i < activeLights.Length; i++)
-        {
+      if (activeLights != null) {
+        for (int i = 0; i < activeLights.Length; i++) {
           activeLights[i].gameObject.SetActive(false);
         }
       }
-    } else
-    {
+    }
+    else {
 
       float alpha = (Validated || !Application.isPlaying) ? 1f : invalidAlpha;
 
@@ -184,13 +175,12 @@ public class BuildInstructionsCube : MonoBehaviour
       color.a = alpha; //Highlighted ? 0f : 1f;
       clonedBlockMaterial.color = color;
     
-      if(symbols != null)
-      {
+      if (symbols != null) {
 
         Sprite sprite = null;
-        if(CozmoPalette.instance != null) sprite = CozmoPalette.instance.GetSpriteForObjectType(cubeType);
-        for(int i = 0; i < symbols.Length; i++)
-        {
+        if (CozmoPalette.instance != null)
+          sprite = CozmoPalette.instance.GetSpriteForObjectType(cubeType);
+        for (int i = 0; i < symbols.Length; i++) {
           symbols[i].sprite = sprite;
           color = symbols[i].color;
           color.a = alpha;
@@ -199,10 +189,8 @@ public class BuildInstructionsCube : MonoBehaviour
         }
       }
 
-      if(symbolFrames != null)
-      {
-        for(int i = 0; i < symbolFrames.Length; i++)
-        {
+      if (symbolFrames != null) {
+        for (int i = 0; i < symbolFrames.Length; i++) {
           color = symbolFrames[i].color;
           color.a = alpha;
           symbolFrames[i].color = color;
@@ -210,22 +198,19 @@ public class BuildInstructionsCube : MonoBehaviour
         }
       }
 
-      if(activeLights != null)
-      {
-        if(isActive)
-        {
+      if (activeLights != null) {
+        if (isActive) {
           Color activeColor = Color.black;
-          if(CozmoPalette.instance != null) activeColor = CozmoPalette.instance.GetColorForActiveBlockMode(activeBlockMode);
-          for(int i = 0; i < activeLights.Length; i++)
-          {
+          if (CozmoPalette.instance != null)
+            activeColor = CozmoPalette.instance.GetColorForActiveBlockMode(activeBlockMode);
+          for (int i = 0; i < activeLights.Length; i++) {
             activeColor.a = alpha;
             clonedCornerMaterial.color = activeColor;
             activeLights[i].gameObject.SetActive(true);
           }
-        } else
-        {
-          for(int i = 0; i < activeLights.Length; i++)
-          {
+        }
+        else {
+          for (int i = 0; i < activeLights.Length; i++) {
             activeLights[i].gameObject.SetActive(false);
           }
         }
@@ -242,31 +227,32 @@ public class BuildInstructionsCube : MonoBehaviour
   
   //these visualization methods were just for debugging in webots, and as such are not currently in use
   
-  void ClaimUIDsForVisualization()
-  {
-    while(IDsInUse.Contains(visualizationID_01)) visualizationID_01 = (uint)Random.Range(0, uint.MaxValue);
+  void ClaimUIDsForVisualization() {
+    while (IDsInUse.Contains(visualizationID_01))
+      visualizationID_01 = (uint)Random.Range(0, uint.MaxValue);
     IDsInUse.Add(visualizationID_01);
     
-    while(IDsInUse.Contains(visualizationID_02)) visualizationID_02 = (uint)Random.Range(0, uint.MaxValue);
+    while (IDsInUse.Contains(visualizationID_02))
+      visualizationID_02 = (uint)Random.Range(0, uint.MaxValue);
     IDsInUse.Add(visualizationID_02);
     
-    while(IDsInUse.Contains(visualizationID_03)) visualizationID_03 = (uint)Random.Range(0, uint.MaxValue);
+    while (IDsInUse.Contains(visualizationID_03))
+      visualizationID_03 = (uint)Random.Range(0, uint.MaxValue);
     IDsInUse.Add(visualizationID_03);
     
-    while(IDsInUse.Contains(visualizationID_04)) visualizationID_04 = (uint)Random.Range(0, uint.MaxValue);
+    while (IDsInUse.Contains(visualizationID_04))
+      visualizationID_04 = (uint)Random.Range(0, uint.MaxValue);
     IDsInUse.Add(visualizationID_04);
   }
 
-  void ReleaseUIDsForVisualization()
-  {
+  void ReleaseUIDsForVisualization() {
     IDsInUse.Remove(visualizationID_01);
     IDsInUse.Remove(visualizationID_02);
     IDsInUse.Remove(visualizationID_03);
     IDsInUse.Remove(visualizationID_04);
   }
 
-  void VisualizeLayoutCube(Vector3 idealPos, Color color)
-  {
+  void VisualizeLayoutCube(Vector3 idealPos, Color color) {
     
     Vector3 xHalf = CozmoUtil.Vector3UnityToCozmoSpace(transform.right) * CozmoUtil.BLOCK_LENGTH_MM * 0.5f;
     Vector3 yHalf = CozmoUtil.Vector3UnityToCozmoSpace(transform.forward) * CozmoUtil.BLOCK_LENGTH_MM * 0.5f;
@@ -290,8 +276,7 @@ public class BuildInstructionsCube : MonoBehaviour
     RobotEngineManager.instance.VisualizeQuad(visualizationID_02, CozmoPalette.ColorToUInt(color), bottomCorners[0], bottomCorners[1], bottomCorners[2], bottomCorners[3]);
   }
 
-  void VisualizeActualCube(ObservedObject obj, Color color)
-  {
+  void VisualizeActualCube(ObservedObject obj, Color color) {
     
     Vector3 pos = obj.WorldPosition;
     
@@ -321,20 +306,18 @@ public class BuildInstructionsCube : MonoBehaviour
 
   #region PUBLIC METHODS
 
-  public void Initialize()
-  {
-    if(initialized) return;
+  public void Initialize() {
+    if (initialized)
+      return;
     
     BoxCollider box = GetComponent<BoxCollider>();
     Size = box.size.x * transform.lossyScale.x;
     
-    if(clonedBlockMaterial == null || clonedBlockMaterial.name != originalBlockMaterial.name)
-    {
+    if (clonedBlockMaterial == null || clonedBlockMaterial.name != originalBlockMaterial.name) {
       clonedBlockMaterial = new Material(originalBlockMaterial);
     }
     
-    if(clonedCornerMaterial == null || clonedBlockMaterial.name != originalCornerMaterial.name)
-    {
+    if (clonedCornerMaterial == null || clonedBlockMaterial.name != originalCornerMaterial.name) {
       clonedCornerMaterial = new Material(originalCornerMaterial);
     }
     
@@ -346,64 +329,64 @@ public class BuildInstructionsCube : MonoBehaviour
     lastBaseColor = baseColor;
     
     meshCube.material = clonedBlockMaterial;
-    foreach(MeshRenderer rend in activeLights) rend.material = clonedCornerMaterial;
+    foreach (MeshRenderer rend in activeLights)
+      rend.material = clonedCornerMaterial;
     
-    if(Application.isPlaying) vCube.CreateWireFrame();
+    if (Application.isPlaying)
+      vCube.CreateWireFrame();
     initialized = true;
     Refresh();
     
     //Debug.Log(gameObject.name + " BuildInstructionsCube.Initialize");
   }
 
-  public bool SatisfiedByObject(ObservedObject obj, float flatFudge, float verticalFudge, float angleFudge, bool allowCardinalAngleOffsets = true, bool debug = false)
-  {
+  public bool SatisfiedByObject(ObservedObject obj, float flatFudge, float verticalFudge, float angleFudge, bool allowCardinalAngleOffsets = true, bool debug = false) {
 
-    if(!MatchesObject(obj, true, debug))
-    {
+    if (!MatchesObject(obj, true, debug)) {
       return false;
     }
-    if(!ignorePosition && !MatchesPosition(obj, obj.WorldPosition, flatFudge, verticalFudge, debug))
-    {
-      if(debug) Debug.Log("SatisfiedByObject failed because obj(" + obj + ").cubeType(" + obj.cubeType + ") MatchesPosition failed against " + gameObject.name);
+    if (!ignorePosition && !MatchesPosition(obj, obj.WorldPosition, flatFudge, verticalFudge, debug)) {
+      if (debug)
+        Debug.Log("SatisfiedByObject failed because obj(" + obj + ").cubeType(" + obj.cubeType + ") MatchesPosition failed against " + gameObject.name);
       return false;
     }
-    if(!MatchesRotation(obj.Rotation, angleFudge, allowCardinalAngleOffsets))
-    {
-      if(debug) Debug.Log("SatisfiedByObject failed to satisfy because obj(" + obj + ")'s rotation doesnt match " + gameObject.name);
+    if (!MatchesRotation(obj.Rotation, angleFudge, allowCardinalAngleOffsets)) {
+      if (debug)
+        Debug.Log("SatisfiedByObject failed to satisfy because obj(" + obj + ")'s rotation doesnt match " + gameObject.name);
       return false;
     }
 
     return true;
   }
 
-  public bool PredictSatisfaction(ObservedObject obj, Vector3 predictedPos, Quaternion predictedRot, float flatFudge, float verticalFudge, float angleFudge, bool allowCardinalAngleOffsets = true)
-  {
+  public bool PredictSatisfaction(ObservedObject obj, Vector3 predictedPos, Quaternion predictedRot, float flatFudge, float verticalFudge, float angleFudge, bool allowCardinalAngleOffsets = true) {
     
-    if(!MatchesObject(obj)) return false;
-    if(!MatchesPosition(predictedPos, flatFudge, verticalFudge)) return false;
-    if(!MatchesRotation(predictedRot, angleFudge, allowCardinalAngleOffsets)) return false;
+    if (!MatchesObject(obj))
+      return false;
+    if (!MatchesPosition(predictedPos, flatFudge, verticalFudge))
+      return false;
+    if (!MatchesRotation(predictedRot, angleFudge, allowCardinalAngleOffsets))
+      return false;
     
     return true;
   }
 
-  public bool MatchesObject(ObservedObject obj, bool ignoreColor = true, bool debug = false)
-  {
-    if(obj == null)
-    {
-      if(debug) Debug.Log("MatchesObject failed because obj is null and therefore cannot possibly match " + gameObject.name);
+  public bool MatchesObject(ObservedObject obj, bool ignoreColor = true, bool debug = false) {
+    if (obj == null) {
+      if (debug)
+        Debug.Log("MatchesObject failed because obj is null and therefore cannot possibly match " + gameObject.name);
       return false;
     }
-    if(obj.cubeType != cubeType)
-    {
-      if(debug) Debug.Log("MatchesObject failed because obj(" + obj + ").cubeType(" + obj.cubeType + ") doesn't match " + gameObject.name);
+    if (obj.cubeType != cubeType) {
+      if (debug)
+        Debug.Log("MatchesObject failed because obj(" + obj + ").cubeType(" + obj.cubeType + ") doesn't match " + gameObject.name);
       return false;
     }
-    if(!ignoreColor && obj.isActive)
-    {
+    if (!ignoreColor && obj.isActive) {
       ActiveBlock activeBlock = obj as ActiveBlock;
-      if(activeBlock.mode != activeBlockMode)
-      {
-        if(debug) Debug.Log("MatchesObject failed because activeBlock(" + obj + ").mode(" + activeBlock.mode + ") doesn't match " + gameObject.name);
+      if (activeBlock.mode != activeBlockMode) {
+        if (debug)
+          Debug.Log("MatchesObject failed because activeBlock(" + obj + ").mode(" + activeBlock.mode + ") doesn't match " + gameObject.name);
         return false;
       }
     }
@@ -411,41 +394,38 @@ public class BuildInstructionsCube : MonoBehaviour
     return true;
   }
 
-  public bool MatchesPosition(Vector3 actualPos, float flatFudge, float verticalFudge, bool debug = false)
-  {
+  public bool MatchesPosition(Vector3 actualPos, float flatFudge, float verticalFudge, bool debug = false) {
     return MatchesPosition(null, actualPos, flatFudge, verticalFudge, debug);
   }
 
   //handing through observedObject solely for debugging
-  public bool MatchesPosition(ObservedObject obj, Vector3 actualPos, float flatFudge, float verticalFudge, bool debug = false)
-  {
+  public bool MatchesPosition(ObservedObject obj, Vector3 actualPos, float flatFudge, float verticalFudge, bool debug = false) {
   
     Vector3 idealPos = WorldPosition;
     
     Vector3 error = actualPos - idealPos;
     
-    if(Mathf.Abs(error.z) > (verticalFudge * CozmoUtil.BLOCK_LENGTH_MM))
-    {
-      if(debug) Debug.Log("MatchesPosition failed because actualPos.z(" + actualPos.z + ") is too far from idealPos.z(" + idealPos.z + ")");
+    if (Mathf.Abs(error.z) > (verticalFudge * CozmoUtil.BLOCK_LENGTH_MM)) {
+      if (debug)
+        Debug.Log("MatchesPosition failed because actualPos.z(" + actualPos.z + ") is too far from idealPos.z(" + idealPos.z + ")");
 //      VisualizeLayoutCube(idealPos, Color.magenta);
 //      VisualizeActualCube(obj, Color.cyan);
       return false;
     }
     float flatRange = ((Vector2)error).magnitude;
     float rangeFudge = flatFudge * CozmoUtil.BLOCK_LENGTH_MM;
-    if(flatRange > rangeFudge)
-    {
+    if (flatRange > rangeFudge) {
 //      VisualizeLayoutCube(idealPos, Color.magenta);
 //      VisualizeActualCube(obj, Color.cyan);
-      if(debug) Debug.Log("MatchesPosition failed because flatRange(" + flatRange + ") is higher than rangeFudge(" + rangeFudge + ")");
+      if (debug)
+        Debug.Log("MatchesPosition failed because flatRange(" + flatRange + ") is higher than rangeFudge(" + rangeFudge + ")");
       return false;
     }
     
     return true;
   }
 
-  public bool MatchesRotation(Quaternion actualRot, float angleFudge, bool allowCardinalAngleOffsets)
-  {
+  public bool MatchesRotation(Quaternion actualRot, float angleFudge, bool allowCardinalAngleOffsets) {
     //dmd todo: try to care about rotation
 
     //Vector3 idealFacing = CozmoUtil.Vector3UnityToCozmoSpace(transform.forward);
@@ -455,8 +435,7 @@ public class BuildInstructionsCube : MonoBehaviour
     return true;
   }
 
-  public Vector3 GetCozmoSpacePose(out float facing_rad)
-  {
+  public Vector3 GetCozmoSpacePose(out float facing_rad) {
     facing_rad = 0f;
 
     Vector3 idealPos = (CozmoUtil.Vector3UnityToCozmoSpace(transform.position) / Size) * CozmoUtil.BLOCK_LENGTH_MM;

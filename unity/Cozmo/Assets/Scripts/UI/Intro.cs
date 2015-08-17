@@ -18,36 +18,31 @@ public class Intro : MonoBehaviour {
 
   private Robot robot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.current : null; } }
 
-  private string lastEngineIp
-  {
+  private string lastEngineIp {
     get { return PlayerPrefs.GetString("LastEngineIP", "127.0.0.1"); }
 
     set { PlayerPrefs.SetString("LastEngineIP", value); }
   }
 
-  private string lastIp
-  {
+  private string lastIp {
     get { return PlayerPrefs.GetString("LastIP", "172.31.1.1"); }
     
     set { PlayerPrefs.SetString("LastIP", value); }
   }
 
-  private string lastSimIp
-  {
+  private string lastSimIp {
     get { return PlayerPrefs.GetString("LastSimIP", "127.0.0.1"); }
     
     set { PlayerPrefs.SetString("LastSimIP", value); }
   }
-  
-  private string lastId
-  {
+
+  private string lastId {
     get { return PlayerPrefs.GetString("LastID", "1"); }
     
     set { PlayerPrefs.SetString("LastID", value); }
   }
 
-  private string lastVisualizerIp
-  {
+  private string lastVisualizerIp {
     get { return PlayerPrefs.GetString("LastVisualizerIp", "127.0.0.1"); }
     
     set { PlayerPrefs.SetString("LastVisualizerIp", value); }
@@ -72,9 +67,9 @@ public class Intro : MonoBehaviour {
 
   }
 
-  private void Start()
-  {
-    if(RobotEngineManager.instance != null && RobotEngineManager.instance.IsConnected) RobotEngineManager.instance.Disconnect();
+  private void Start() {
+    if (RobotEngineManager.instance != null && RobotEngineManager.instance.IsConnected)
+      RobotEngineManager.instance.Disconnect();
 
     if (RobotEngineManager.instance != null) {
       RobotEngineManager.instance.ConnectedToClient += Connected;
@@ -98,38 +93,38 @@ public class Intro : MonoBehaviour {
     }
   }
 
-  private void Update()
-  {
+  private void Update() {
 
     if (RobotEngineManager.instance != null) {
-      DisconnectionReason reason = RobotEngineManager.instance.GetLastDisconnectionReason ();
+      DisconnectionReason reason = RobotEngineManager.instance.GetLastDisconnectionReason();
       if (reason != DisconnectionReason.None) {
-        error.text = "Disconnected: " + reason.ToString ();
+        error.text = "Disconnected: " + reason.ToString();
       }
     }
   }
 
   public void Play(bool sim) {
     simulated = sim;
-    RobotEngineManager.instance.Disconnect ();
+    RobotEngineManager.instance.Disconnect();
 
     string errorText = null;
     string ipText = simulated ? simIP.text : ip.text;
-    if(string.IsNullOrEmpty(engineIP.text)) {
+    if (string.IsNullOrEmpty(engineIP.text)) {
       errorText = "You must enter a device ip address.";
     }
-    if(string.IsNullOrEmpty(errorText) && string.IsNullOrEmpty(ipText)) {
+    if (string.IsNullOrEmpty(errorText) && string.IsNullOrEmpty(ipText)) {
       errorText = "You must enter a robot ip address.";
     }
 
-    if (string.IsNullOrEmpty (errorText)) {
+    if (string.IsNullOrEmpty(errorText)) {
       currentRobotIP = ipText;
       currentVizHostIP = visualizerIP.text;
 
-      SaveData ();
-      RobotEngineManager.instance.Connect (engineIP.text);
+      SaveData();
+      RobotEngineManager.instance.Connect(engineIP.text);
       error.text = "<color=#ffffff>Connecting to engine at " + engineIP.text + "....</color>";
-    } else {
+    }
+    else {
       error.text = errorText;
     }
   }
@@ -146,26 +141,23 @@ public class Intro : MonoBehaviour {
     Application.LoadLevel("ControlSchemeTest");
   }
 
-  private void Connected(string connectionIdentifier)
-  {
+  private void Connected(string connectionIdentifier) {
     error.text = "<color=#ffffff>Connected to " + connectionIdentifier + ". Force-adding robot...</color>";
-    RobotEngineManager.instance.StartEngine (currentVizHostIP);
+    RobotEngineManager.instance.StartEngine(currentVizHostIP);
     RobotEngineManager.instance.ForceAddRobot(ROBOT_ID, currentRobotIP, simulated);
   }
 
-  private void Disconnected(DisconnectionReason reason)
-  {
+  private void Disconnected(DisconnectionReason reason) {
     error.text = "Disconnected: " + reason.ToString();
   }
 
-  private void RobotConnected(int robotID)
-  {
+  private void RobotConnected(int robotID) {
     if (!RobotEngineManager.instance.robots.ContainsKey(robotID)) {
-      Debug.LogError ("Unknown robot connected: " + robotID.ToString());
+      Debug.LogError("Unknown robot connected: " + robotID.ToString());
       return;
     }
 
-    if(simulated && robot != null) {
+    if (simulated && robot != null) {
       robot.VisionWhileMoving(true);    
       robot.StartFaceAwareness();    
     }

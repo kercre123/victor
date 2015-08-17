@@ -17,20 +17,25 @@ public class CameraPortFromRectTransform : MonoBehaviour {
   }
 
   void Update() {
-    if(initialized) return;
-    if(rectTransform == null) return;
+    if (initialized)
+      return;
+    if (rectTransform == null)
+      return;
 
-    if(cam == null) {
+    if (cam == null) {
       cam = gameObject.GetComponent<Camera>();
-      if(cam == null) return;
+      if (cam == null)
+        return;
     }
 
-    if(canvas == null) {
+    if (canvas == null) {
       canvas = rectTransform.gameObject.GetComponentInParent<Canvas>();
-      if(canvas == null) return;
+      if (canvas == null)
+        return;
     }
 
-    if(!rectTransform.gameObject.activeInHierarchy) return;
+    if (!rectTransform.gameObject.activeInHierarchy)
+      return;
 
     initialized = true;
 
@@ -38,7 +43,7 @@ public class CameraPortFromRectTransform : MonoBehaviour {
     rectTransform.GetWorldCorners(corners);
 
     //get corners in viewport space
-    for(int i=0; i<4; i++) {
+    for (int i = 0; i < 4; i++) {
       corners[i] = RectTransformUtility.WorldToScreenPoint(canvas.renderMode != RenderMode.ScreenSpaceOverlay ? canvas.worldCamera : null, corners[i]);
       corners[i].x /= Screen.width;
       corners[i].y /= Screen.height;
@@ -49,7 +54,7 @@ public class CameraPortFromRectTransform : MonoBehaviour {
     float yMin = float.MaxValue;
     float yMax = 0f;
 
-    for(int i=0; i<4; i++) {
+    for (int i = 0; i < 4; i++) {
       xMin = Mathf.Min(corners[i].x, xMin);
       xMax = Mathf.Max(corners[i].x, xMax);
       yMin = Mathf.Min(corners[i].y, yMin);

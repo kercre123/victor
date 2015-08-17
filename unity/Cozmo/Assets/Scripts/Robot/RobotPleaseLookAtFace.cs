@@ -7,25 +7,27 @@ using System.Collections;
 public class RobotPleaseLookAtFace : MonoBehaviour {
 
   protected Robot robot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.current : null; } }
+
   ObservedObject humanHead;
 
-  public void FaceFace () {
-    if(robot != null) {
+  public void FaceFace() {
+    if (robot != null) {
       
-      for(int i=0;i<robot.knownObjects.Count;i++) {
-        if(!robot.knownObjects[i].isFace) continue;
+      for (int i = 0; i < robot.knownObjects.Count; i++) {
+        if (!robot.knownObjects[i].isFace)
+          continue;
         
         humanHead = robot.knownObjects[i];
 
         break;
       }
       
-      if(!robot.isBusy && humanHead != null) {
+      if (!robot.isBusy && humanHead != null) {
         
-        if(!humanHead.MarkersVisible) {
+        if (!humanHead.MarkersVisible) {
           robot.FaceObject(humanHead, false);
         }
-        else if(robot.headTrackingObject == null) {
+        else if (robot.headTrackingObject == null) {
           robot.TrackToObject(humanHead, false);
         }
       }

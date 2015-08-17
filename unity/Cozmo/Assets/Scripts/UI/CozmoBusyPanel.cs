@@ -18,7 +18,7 @@ public class CozmoBusyPanel : MonoBehaviour {
 
   bool mute = false;
 
-  void Awake() {
+  void Awake() { 
     //enforce singleton
 //    if(instance != null && instance != this) {
 //      GameObject.Destroy(instance.gameObject);
@@ -33,17 +33,17 @@ public class CozmoBusyPanel : MonoBehaviour {
   }
 
   // Update is called once per frame
-  void Update () {
-    if(robot == null || !robot.isBusy) {
+  void Update() {
+    if (robot == null || !robot.isBusy) {
       panel.SetActive(false);
       timer = soundDelay;
       return;
     }
 
-    if(timer > 0f) {
+    if (timer > 0f) {
       timer -= Time.deltaTime;
 
-      if(!mute && timer <= 0f && affirmativeSound != null) {
+      if (!mute && timer <= 0f && affirmativeSound != null) {
         AudioManager.PlayOneShot(affirmativeSound);
       }
     }
@@ -52,7 +52,7 @@ public class CozmoBusyPanel : MonoBehaviour {
   }
 
   public void CancelCurrentActions() {
-    if(robot == null || !robot.isBusy) {
+    if (robot == null || !robot.isBusy) {
       panel.SetActive(false);
       return;
     }
@@ -66,16 +66,19 @@ public class CozmoBusyPanel : MonoBehaviour {
   }
 
   public void SetDescription(string verb, ObservedObject selectedObject, ref string description, string period = ".") {
-    if(selectedObject == null || CozmoPalette.instance == null) return;
+    if (selectedObject == null || CozmoPalette.instance == null)
+      return;
     
-    if(description == null || description == string.Empty) description = "Cozmo is attempting to ";
+    if (description == null || description == string.Empty)
+      description = "Cozmo is attempting to ";
     
     string noun = CozmoPalette.instance.GetNameForObjectType(selectedObject.cubeType);
     string article = "AEIOUaeiou".Contains(noun[0].ToString()) ? "an " : "a ";
     
     description += verb + article + noun + period;
 
-    if(period == ".") SetDescription(description);
+    if (period == ".")
+      SetDescription(description);
   }
 
   public void SetMute(bool on) {

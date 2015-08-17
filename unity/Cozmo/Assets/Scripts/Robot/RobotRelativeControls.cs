@@ -15,9 +15,8 @@ using System.Collections.Generic;
 ///     manual head angle slider managed here
 ///     horizontal slider for fine tuned turning also handled here
 /// </summary>
-public class RobotRelativeControls : MonoBehaviour
-{
-
+public class RobotRelativeControls : MonoBehaviour {
+ 
   #region INSPECTOR FIELDS
 
   [Tooltip("This virtualStick controls the robot's forward and backward driving impulse.")]
@@ -112,8 +111,7 @@ public class RobotRelativeControls : MonoBehaviour
 
   #region COMPONENT CALLBACKS
 
-  void OnEnable()
-  {
+  void OnEnable() {
     //reset default state for this control scheme test
     //Debug.Log("RobotRelativeControls OnEnable");
 
@@ -146,35 +144,34 @@ public class RobotRelativeControls : MonoBehaviour
     //hiddenInputField = CozmoAssistedControls.instance.gameObject.GetComponent<InputField>();
   }
 
-  void Update()
-  {
+  void Update() {
 
     timeSinceInput += Time.deltaTime;
 
     bool controlsDisabled = robot == null || robot.isBusy;
     controlsDisabled |= GameLayoutTracker.instance != null && GameLayoutTracker.instance.Phase == LayoutTrackerPhase.INVENTORY;
 
-    if(controlsDisabled)
-    {
+    if (controlsDisabled) {
       ShowSticks(false);
       return;
-    } else
-    {
+    }
+    else {
       ShowSticks();
     }
 
     robotFacing = MathUtil.ClampAngle180(robot.poseAngle_rad * Mathf.Rad2Deg);
 
-    if(DebugOverride()) return;
+    if (DebugOverride())
+      return;
 
     //if coz is picked up, let's zero our wheels and abort control logic
-    if(robot.Status(RobotStatusFlag.IS_PICKED_UP))
-    {
+    if (robot.Status(RobotStatusFlag.IS_PICKED_UP)) {
       robot.DriveWheels(0f, 0f);
       return;
     }
 
-    if(AboutFace()) return;
+    if (AboutFace())
+      return;
 
     //take our v-pad control axes and calc translate to robot
     inputs = Vector2.zero;
@@ -188,7 +185,8 @@ public class RobotRelativeControls : MonoBehaviour
     RefreshTargetLock();
 
     targetLockTimer += Time.deltaTime;
-    if(lastTargetLock == null && targetLock != null && robot.Status(RobotStatusFlag.IS_CARRYING_BLOCK)) targetLockTimer = 0f;
+    if (lastTargetLock == null && targetLock != null && robot.Status(RobotStatusFlag.IS_CARRYING_BLOCK))
+      targetLockTimer = 0f;
 
     //if we are unlocked this frame, let's reset our head angle back to sane value
     //if(lastTargetLock != null && targetLock == null && !robot.isBusy) robot.SetHeadAngle();
@@ -197,8 +195,7 @@ public class RobotRelativeControls : MonoBehaviour
 
     lastTargetLock = targetLock;
 
-    if(newLock)
-    {
+    if (newLock) {
       lastGyroX = 0f;
       lastHorStickX = 0f;
       lastHeadStickY = 0f;
@@ -211,86 +208,82 @@ public class RobotRelativeControls : MonoBehaviour
     //hiddenInputField.ActivateInputField();
     CheckVerticalDebugAxis();
 
-    if(Input.touchCount > 0)
-    {
+    if (Input.touchCount > 0) {
       timeSinceInput = 0f;
       //Debug.Log("Input.touchCount("+Input.touchCount+") timeSinceInput = 0f;");
     }
-    if(Quaternion.Angle(Input.gyro.attitude, lastAttitude) >= 1f)
-    {
+    if (Quaternion.Angle(Input.gyro.attitude, lastAttitude) >= 1f) {
       timeSinceInput = 0f;
       //Debug.Log("attitude changed! timeSinceInput = 0f;");
     }
 
     lastAttitude = Input.gyro.attitude;
 
-    if(!swipeTurning) swipeTurnIndex = 0;
+    if (!swipeTurning)
+      swipeTurnIndex = 0;
 
-    if(!liftSliderEngaged) RefreshLiftSlider();
-    if(!headAngleSliderEngaged) RefreshHeadAngleSlider();
+    if (!liftSliderEngaged)
+      RefreshLiftSlider();
+    if (!headAngleSliderEngaged)
+      RefreshHeadAngleSlider();
 
-    if(targetLock == null || targetLockTimer < 1f)
-    {
+    if (targetLock == null || targetLockTimer < 1f) {
       CheckHorizontalStickTurning();
       CheckGyroTurning();
       CheckDebugHorizontalAxesTurning();
 
-      if(inputs.y != 0 && !headAngleSliderEngaged && !robot.searching && robot.selectedObjects.Count == 0 && robot.headTrackingObject == null)
-      {
+      if (inputs.y != 0 && !headAngleSliderEngaged && !robot.searching && robot.selectedObjects.Count == 0 && robot.headTrackingObject == null) {
         robot.SetHeadAngle();
       }
-    } else
-    {
+    }
+    else {
       targetSwapDirection += CheckHorizontalStickTargetSwap();
       targetSwapDirection += CheckGyroTargetSwap();
       targetSwapDirection += CheckDebugAxesTargetSwap();
 
-      if(!newLock) CheckSwapTargetLock(targetSwapDirection);
+      if (!newLock)
+        CheckSwapTargetLock(targetSwapDirection);
 
       //robot.TrackHeadToObject( targetLock );
     }
 //    Debug.Log("hiddenInputField.text: " +hiddenInputField.text);
 //    hiddenInputField.text = string.Empty;
 
-    if(PlayerPrefs.GetInt("CozmoAssistedControls", 0) == 0)
-    {
+    if (PlayerPrefs.GetInt("CozmoAssistedControls", 0) == 0) {
       bool stopped = inputs.sqrMagnitude == 0f && moveCommandLastFrame;
-      if(!stopped)
-      {
+      if (!stopped) {
         Vector3 delta = inputs - lastInputs;
-        if(delta.sqrMagnitude <= 0f) return; // command not changed
+        if (delta.sqrMagnitude <= 0f)
+          return; // command not changed
       }
     }
 
     lastInputs = inputs;
 
-    if(!reverseLikeACar && !driveForwardOnlyMode && (inputs.y < 0f || driveReverseOnlyMode))
-    {
+    if (!reverseLikeACar && !driveForwardOnlyMode && (inputs.y < 0f || driveReverseOnlyMode)) {
       inputs.x = -inputs.x;
     }
 
-    if(driveForwardOnlyMode)
-    {
+    if (driveForwardOnlyMode) {
       CozmoUtil.CalcWheelSpeedsForThumbStickInputs(inputs, out leftWheelSpeed, out rightWheelSpeed, maxAngle, maxTurnFactor, false);
-    } else if(driveReverseOnlyMode)
-    {
+    }
+    else if (driveReverseOnlyMode) {
       CozmoUtil.CalcWheelSpeedsForThumbStickInputs(inputs, out leftWheelSpeed, out rightWheelSpeed, maxAngle, maxTurnFactor, true);
-    } else if(turnInPlaceOnlyMode || inputs.y == 0f)
-    {
+    }
+    else if (turnInPlaceOnlyMode || inputs.y == 0f) {
       CozmoUtil.CalcTurnInPlaceWheelSpeeds(inputs.x, out leftWheelSpeed, out rightWheelSpeed, maxTurnFactor);
-    } else if(verticalStick == horizontalStick)
-    {
+    }
+    else if (verticalStick == horizontalStick) {
       CozmoUtil.CalcWheelSpeedsForOldThumbStickInputs(inputs, out leftWheelSpeed, out rightWheelSpeed, maxAngle, maxTurnFactor);
-    } else
-    { //continuous input range mode...causes issues at thresholds
+    }
+    else { //continuous input range mode...causes issues at thresholds
       CozmoUtil.CalcWheelSpeedsForTwoAxisInputs(inputs, out leftWheelSpeed, out rightWheelSpeed, maxTurnFactor);
     }
 
-    if(PlayerPrefs.GetInt("CozmoAssistedControls", 0) == 0)
-    {
+    if (PlayerPrefs.GetInt("CozmoAssistedControls", 0) == 0) {
       robot.DriveWheels(leftWheelSpeed, rightWheelSpeed);
-    } else
-    {
+    }
+    else {
       float[] wheelSpeeds = CozmoAssistedControls.instance.AdjustForCollsion(leftWheelSpeed, rightWheelSpeed);
       robot.DriveWheels(wheelSpeeds[0], wheelSpeeds[1]);
     }
@@ -300,13 +293,11 @@ public class RobotRelativeControls : MonoBehaviour
     RefreshDebugText();
   }
 
-  void OnDisable()
-  {
+  void OnDisable() {
     //clean up this controls test if needed
     //Debug.Log("RobotRelativeControls OnDisable");
 
-    if(robot != null && RobotEngineManager.instance.IsConnected)
-    {
+    if (robot != null && RobotEngineManager.instance.IsConnected) {
       robot.DriveWheels(0f, 0f);
     }
 
@@ -322,20 +313,24 @@ public class RobotRelativeControls : MonoBehaviour
   #region PRIVATE METHODS
 
 
-  void ShowSticks(bool show = true)
-  {
-    if(verticalStick != null) verticalStick.gameObject.SetActive(show);
-    if(horizontalStick != null) horizontalStick.gameObject.SetActive(show);
-    if(headAngleSlider != null) headAngleSlider.gameObject.SetActive(show && (GameLayoutTracker.instance == null || GameLayoutTracker.instance.Phase == LayoutTrackerPhase.DISABLED));
-    if(liftSlider != null) liftSlider.gameObject.SetActive(show && (GameLayoutTracker.instance == null || GameLayoutTracker.instance.Phase == LayoutTrackerPhase.DISABLED));
+  void ShowSticks(bool show = true) {
+    if (verticalStick != null)
+      verticalStick.gameObject.SetActive(show);
+    if (horizontalStick != null)
+      horizontalStick.gameObject.SetActive(show);
+    if (headAngleSlider != null)
+      headAngleSlider.gameObject.SetActive(show && (GameLayoutTracker.instance == null || GameLayoutTracker.instance.Phase == LayoutTrackerPhase.DISABLED));
+    if (liftSlider != null)
+      liftSlider.gameObject.SetActive(show && (GameLayoutTracker.instance == null || GameLayoutTracker.instance.Phase == LayoutTrackerPhase.DISABLED));
   }
 
-  bool AboutFace()
-  {
-    if(!aboutFace) return false;
+  bool AboutFace() {
+    if (!aboutFace)
+      return false;
 
     float turnSoFar = MathUtil.AngleDelta(robotStartTurnFacing, robotFacing);
-    if(Mathf.Abs(turnSoFar) < 180f) return true;
+    if (Mathf.Abs(turnSoFar) < 180f)
+      return true;
     //Debug.Log("frame(" + Time.frameCount + ") EndSwipe turnSoFar(" + turnSoFar + ")");
     aboutFace = false;
     robot.DriveWheels(0f, 0f);
@@ -343,20 +338,19 @@ public class RobotRelativeControls : MonoBehaviour
     return false;
   }
 
-  bool DebugOverride()
-  {
-    if(!debugOverride) return false;
+  bool DebugOverride() {
+    if (!debugOverride)
+      return false;
     robot.DriveWheels(leftWheelSpeed, rightWheelSpeed);
     RefreshDebugText();
     return true;
   }
 
-  void CheckVerticalStick()
-  {
-    if(verticalStick == null) return;
+  void CheckVerticalStick() {
+    if (verticalStick == null)
+      return;
     
-    if(doubleTapTurnAround && verticalStick.DoubleTapped)
-    {
+    if (doubleTapTurnAround && verticalStick.DoubleTapped) {
       aboutFace = true;
       robotStartTurnFacing = robotFacing;
       
@@ -365,12 +359,11 @@ public class RobotRelativeControls : MonoBehaviour
       return;
     }
     
-    if(verticalStick.UpModeEngaged)
-    {
+    if (verticalStick.UpModeEngaged) {
       driveForwardOnlyMode = true;
       maxAngle = verticalStick.MaxAngle;
-    } else if(verticalStick.DownModeEngaged)
-    {
+    }
+    else if (verticalStick.DownModeEngaged) {
       driveReverseOnlyMode = true;
       maxAngle = verticalStick.MaxAngle;
     }
@@ -380,14 +373,15 @@ public class RobotRelativeControls : MonoBehaviour
 
   public bool debugTargetLock = false;
 
-  ObservedObject RefreshTargetLock()
-  {
+  ObservedObject RefreshTargetLock() {
     targetLock = null;
     //if(!targetLockSelectedObject) return null;
-    if(robot.selectedObjects.Count == 0) return null;
+    if (robot.selectedObjects.Count == 0)
+      return null;
 
     targetLock = robot.targetLockedObject;
-    if(targetLock == null) return null;
+    if (targetLock == null)
+      return null;
 
     Vector2 robotForward = robot.Forward;
     Vector2 robotRight = robot.Right;
@@ -396,12 +390,12 @@ public class RobotRelativeControls : MonoBehaviour
   
     float turn = Vector2.Angle(robotForward, atTarget);
   
-    if(turn > targetLockMinTurnAngle)
-    {
+    if (turn > targetLockMinTurnAngle) {
       turn = Mathf.Lerp(0f, 1f, turn / targetLockMaxTurnAngle);
       turn = turn * turn;
       inputs.x = turn * Mathf.Sign(Vector2.Dot(atTarget, robotRight));
-      if(debugTargetLock) Debug.Log("frame(" + Time.frameCount + ") time(" + Time.timeSinceLevelLoad + ") snapHeadingToSelectedObject turn(" + turn + ") selected(" + robot.selectedObjects[0] + ") robot.Rotation(" + robot.Rotation + ")");
+      if (debugTargetLock)
+        Debug.Log("frame(" + Time.frameCount + ") time(" + Time.timeSinceLevelLoad + ") snapHeadingToSelectedObject turn(" + turn + ") selected(" + robot.selectedObjects[0] + ") robot.Rotation(" + robot.Rotation + ")");
     }
   
     Debug.DrawRay(Vector3.zero, atTarget.normalized * 5f, Color.cyan);
@@ -411,26 +405,22 @@ public class RobotRelativeControls : MonoBehaviour
     return targetLock;
   }
 
-  void CheckHorizontalStickTurning()
-  {
-    if(horizontalStick == null) return;
+  void CheckHorizontalStickTurning() {
+    if (horizontalStick == null)
+      return;
 
-    if(horizontalStick.SideModeEngaged)
-    {
+    if (horizontalStick.SideModeEngaged) {
       turnInPlaceOnlyMode = true;
     }
     
-    if(swipeTurnAngle > 0f && horizontalStick.SwipeRequest && horizontalStick.SwipeActive)
-    {
+    if (swipeTurnAngle > 0f && horizontalStick.SwipeRequest && horizontalStick.SwipeActive) {
       
       float sideSwipeDot = Vector2.Dot(horizontalStick.SwipedDirection.normalized, Vector2.right);
-      if(Mathf.Abs(sideSwipeDot) > 0.9f)
-      {
-        if(!swipeTurning)
-        {
+      if (Mathf.Abs(sideSwipeDot) > 0.9f) {
+        if (!swipeTurning) {
           robotStartTurnFacing = robotFacing;
-        } else
-        {
+        }
+        else {
           swipeTurnIndex++;
         }
         swipeTurning = true;
@@ -439,66 +429,62 @@ public class RobotRelativeControls : MonoBehaviour
       }
     }
     
-    if(!horizontalStick.SwipeActive)
-    {
+    if (!horizontalStick.SwipeActive) {
       swipeTurning = false;
       swipeTurnIndex = 0;
     }
     
-    if(swipeTurning)
-    {
+    if (swipeTurning) {
       
       float turnSoFar = MathUtil.AngleDelta(robotStartTurnFacing, robotFacing);
       
       float goalAngle = swipeTurnAngle;
       
-      for(int i = 0; i < swipeTurnIndex && i < 3; i++)
-      {
+      for (int i = 0; i < swipeTurnIndex && i < 3; i++) {
         goalAngle *= 2f;
       }
       
-      if(!horizontalStick.SwipeActive || Mathf.Abs(turnSoFar) > goalAngle)
-      {
+      if (!horizontalStick.SwipeActive || Mathf.Abs(turnSoFar) > goalAngle) {
         //Debug.Log("frame("+Time.frameCount+") EndSwipe turnSoFar(" + turnSoFar + ") goalAngle(" + goalAngle + ")");
         horizontalStick.EndSwipe();
         swipeTurning = false;
-      } else if(!horizontalStick.IsPressed)
-      {
+      }
+      else if (!horizontalStick.IsPressed) {
         //Debug.Log("frame("+Time.frameCount+") swipeTurning turnSoFar(" + turnSoFar + ") goalAngle(" + goalAngle + ") input.x("+horizontalStick.Horizontal+")");
         inputs.x = horizontalStick.Horizontal;
       }
     }
     //for now lets ignore stick hor while swipe input is still underway
-    else
-    {
+    else {
       inputs.x = horizontalStick.Horizontal;
       //Debug.Log("frame("+Time.frameCount+") input.x("+horizontalStick.Horizontal+")");
     }
   }
 
-  Vector2 CheckHorizontalStickTargetSwap()
-  {
-    if(horizontalStick == null) return Vector2.zero;
+  Vector2 CheckHorizontalStickTargetSwap() {
+    if (horizontalStick == null)
+      return Vector2.zero;
     
     float x = horizontalStick.Horizontal;
     bool swapTriggered = Mathf.Abs(lastHorStickX) < targetLockStickSwapThreshHold && Mathf.Abs(x) >= targetLockStickSwapThreshHold;
     
     lastHorStickX = x;
     
-    if(swapTriggered) return x > 0f ? Vector2.right : -Vector2.right;
+    if (swapTriggered)
+      return x > 0f ? Vector2.right : -Vector2.right;
     return Vector2.zero;
   }
 
-  void CheckGyroTurning()
-  {
-    if(gyroInputs == null) return;
-    if(timeSinceInput > 5f) return;
+  void CheckGyroTurning() {
+    if (gyroInputs == null)
+      return;
+    if (timeSinceInput > 5f)
+      return;
     
     float minRoll = turnInPlaceRollMin;
     float maxRoll = turnInPlaceRollMax;
 
-    if(verticalStick != null && verticalStick.IsPressed)
-    {
+    if (verticalStick != null && verticalStick.IsPressed) {
       minRoll = turnWhileDrivingRollMin;
       maxRoll = turnWhileDrivingRollMax;
     }
@@ -511,15 +497,14 @@ public class RobotRelativeControls : MonoBehaviour
     //if(gyroInputs.Horizontal != 0f) Debug.Log("gyroInputs.Horizontal("+gyroInputs.Horizontal+")");
   }
 
-  Vector2 CheckGyroTargetSwap()
-  {
-    if(gyroInputs == null) return Vector2.zero;
+  Vector2 CheckGyroTargetSwap() {
+    if (gyroInputs == null)
+      return Vector2.zero;
     
     float minRoll = turnInPlaceRollMin;
     float maxRoll = turnInPlaceRollMax;
     
-    if(verticalStick != null && verticalStick.IsPressed)
-    {
+    if (verticalStick != null && verticalStick.IsPressed) {
       minRoll = turnWhileDrivingRollMin;
       maxRoll = turnWhileDrivingRollMax;
     }
@@ -530,14 +515,13 @@ public class RobotRelativeControls : MonoBehaviour
 
     lastGyroX = h;
 
-    if(swapTriggered) return h > 0f ? Vector2.right : -Vector2.right;
+    if (swapTriggered)
+      return h > 0f ? Vector2.right : -Vector2.right;
     return Vector2.zero;
   }
 
-  void CheckVerticalDebugAxis()
-  {
-    if(inputs.y == 0f)
-    {
+  void CheckVerticalDebugAxis() {
+    if (inputs.y == 0f) {
       inputs.y = Input.GetKey(KeyCode.W) ? 1f : Input.GetKey(KeyCode.S) ? -1f : 0f;
       /*
       if( hiddenInputField != null )
@@ -549,10 +533,8 @@ public class RobotRelativeControls : MonoBehaviour
     }
   }
 
-  void CheckDebugHorizontalAxesTurning()
-  {
-    if(inputs.x == 0f)
-    {
+  void CheckDebugHorizontalAxesTurning() {
+    if (inputs.x == 0f) {
       inputs.x = Input.GetKey(KeyCode.D) ? 1f : Input.GetKey(KeyCode.A) ? -1f : 0f;
       /*
       if( hiddenInputField != null )
@@ -563,8 +545,7 @@ public class RobotRelativeControls : MonoBehaviour
     }
   }
 
-  Vector2 CheckDebugAxesTargetSwap()
-  {
+  Vector2 CheckDebugAxesTargetSwap() {
     float x = Input.GetKey(KeyCode.D) ? 1f : Input.GetKey(KeyCode.A) ? -1f : 0f;
 
     bool horSwapTriggered = Mathf.Abs(lastDebugAxesX) < targetLockStickSwapThreshHold && Mathf.Abs(x) >= targetLockStickSwapThreshHold;
@@ -572,15 +553,17 @@ public class RobotRelativeControls : MonoBehaviour
     lastDebugAxesX = x;
 
     Vector2 ret = Vector2.zero;
-    if(horSwapTriggered) ret += x > 0f ? Vector2.right : -Vector2.right;
+    if (horSwapTriggered)
+      ret += x > 0f ? Vector2.right : -Vector2.right;
 
     return ret;
   }
 
-  void CheckSwapTargetLock(Vector2 direction)
-  {
-    if(direction.sqrMagnitude == 0f) return; 
-    if(robot != null && robot.pertinentObjects.Count <= 1) return;
+  void CheckSwapTargetLock(Vector2 direction) {
+    if (direction.sqrMagnitude == 0f)
+      return; 
+    if (robot != null && robot.pertinentObjects.Count <= 1)
+      return;
 
     List<ObservedObject> pertinentObjects = robot.pertinentObjects;
     ObservedObject oldLock = robot.targetLockedObject;
@@ -592,14 +575,13 @@ public class RobotRelativeControls : MonoBehaviour
     List<ObservedObject> potential;
 
     ///sift and sort
-    if(direction.x != 0)
-    {
+    if (direction.x != 0) {
       potential = pertinentObjects.FindAll(obj => TargetIsInDirectionFromTargetLock(obj, oldLock, direction.x > 0 ? crossAt : -crossAt));
 
-      if(potential == null || potential.Count == 0) return;
+      if (potential == null || potential.Count == 0)
+        return;
 
-      potential.Sort(( obj1, obj2) =>
-      {
+      potential.Sort(( obj1, obj2) => {
 
         Vector3 at1 = (obj1.WorldPosition - robot.WorldPosition).normalized;
         Vector3 at2 = (obj2.WorldPosition - robot.WorldPosition).normalized;
@@ -613,14 +595,14 @@ public class RobotRelativeControls : MonoBehaviour
         return angle1.CompareTo(angle2);   
       });
 
-    } else
-    {
+    }
+    else {
       potential = pertinentObjects.FindAll(obj => TargetIsInDirectionFromTargetLock(obj, oldLock, direction.y > 0 ? Vector3.forward : -Vector3.forward));
 
-      if(potential == null || potential.Count == 0) return;
+      if (potential == null || potential.Count == 0)
+        return;
 
-      potential.Sort(( obj1, obj2) =>
-      {
+      potential.Sort(( obj1, obj2) => {
         
         Vector3 at1 = (obj1.WorldPosition - robot.WorldPosition).normalized;
         Vector3 at2 = (obj2.WorldPosition - robot.WorldPosition).normalized;
@@ -643,9 +625,9 @@ public class RobotRelativeControls : MonoBehaviour
     //Debug.Log("frame("+Time.frameCount+") swapped oldLock("+oldLock+") newLock("+targetLock+", "+targetLock.ObjectType+", "+targetLock.Family+", "+targetLock.WorldPosition+") direction("+direction+") from potential("+potential.Count+")");
   }
 
-  bool TargetIsInDirectionFromTargetLock(ObservedObject obj, ObservedObject locked, Vector3 direction)
-  {
-    if(obj == locked) return false;
+  bool TargetIsInDirectionFromTargetLock(ObservedObject obj, ObservedObject locked, Vector3 direction) {
+    if (obj == locked)
+      return false;
 
     Vector3 atLock = (locked.WorldPosition - robot.WorldPosition).normalized;
     Vector3 atObj = (obj.WorldPosition - robot.WorldPosition).normalized;
@@ -655,45 +637,48 @@ public class RobotRelativeControls : MonoBehaviour
   }
 
   //reset our slider to our current head angle
-  void RefreshHeadAngleSlider()
-  {
-    if(headAngleSlider == null) return;
-    if(robot == null) return;
+  void RefreshHeadAngleSlider() {
+    if (headAngleSlider == null)
+      return;
+    if (robot == null)
+      return;
     
     headAngleSlider.onValueChanged.RemoveListener(HeadAngleSliderChanged);
     headAngleSlider.value = robot.GetHeadAngleFactor();
     headAngleSlider.onValueChanged.AddListener(HeadAngleSliderChanged);
   }
 
-  void HeadAngleSliderChanged(float val)
-  {
-    if(robot == null) return;
+  void HeadAngleSliderChanged(float val) {
+    if (robot == null)
+      return;
     
     robot.SetHeadAngle(val);
   }
 
   //reset our lifter to our current height
-  void RefreshLiftSlider()
-  {
-    if(liftSlider == null) return;
-    if(robot == null) return;
+  void RefreshLiftSlider() {
+    if (liftSlider == null)
+      return;
+    if (robot == null)
+      return;
 
     liftSlider.onValueChanged.RemoveListener(LiftSliderChanged);
     liftSlider.value = robot.GetLiftHeightFactor();
     liftSlider.onValueChanged.AddListener(LiftSliderChanged);
   }
 
-  void LiftSliderChanged(float val)
-  {
-    if(robot == null) return;
+  void LiftSliderChanged(float val) {
+    if (robot == null)
+      return;
     
     robot.SetLiftHeight(val);
   }
 
-  void RefreshDebugText()
-  {
-    if(text_x != null) text_x.text = "x(" + inputs.x.ToString("N") + ")";
-    if(text_y != null) text_y.text = "y(" + inputs.y.ToString("N") + ")";
+  void RefreshDebugText() {
+    if (text_x != null)
+      text_x.text = "x(" + inputs.x.ToString("N") + ")";
+    if (text_y != null)
+      text_y.text = "y(" + inputs.y.ToString("N") + ")";
   }
 
 
@@ -702,10 +687,8 @@ public class RobotRelativeControls : MonoBehaviour
 
   #region PUBLIC METHODS
 
-  public void NudgeForward()
-  {
-    if(!debugOverride)
-    {
+  public void NudgeForward() {
+    if (!debugOverride) {
       leftWheelSpeed = 0f;
       rightWheelSpeed = 0f;
     }
@@ -715,10 +698,8 @@ public class RobotRelativeControls : MonoBehaviour
     Debug.Log(gameObject.name + " NudgeForward");
   }
 
-  public void NudgeBackwards()
-  {
-    if(!debugOverride)
-    {
+  public void NudgeBackwards() {
+    if (!debugOverride) {
       leftWheelSpeed = 0f;
       rightWheelSpeed = 0f;
     }
@@ -728,10 +709,8 @@ public class RobotRelativeControls : MonoBehaviour
     Debug.Log(gameObject.name + " NudgeBackwards");
   }
 
-  public void NudgeRight()
-  {
-    if(!debugOverride)
-    {
+  public void NudgeRight() {
+    if (!debugOverride) {
       leftWheelSpeed = 0f;
       rightWheelSpeed = 0f;
     }
@@ -741,10 +720,8 @@ public class RobotRelativeControls : MonoBehaviour
     Debug.Log(gameObject.name + " NudgeRight");
   }
 
-  public void NudgeLeft()
-  {
-    if(!debugOverride)
-    {
+  public void NudgeLeft() {
+    if (!debugOverride) {
       leftWheelSpeed = 0f;
       rightWheelSpeed = 0f;
     }
@@ -754,20 +731,18 @@ public class RobotRelativeControls : MonoBehaviour
     Debug.Log(gameObject.name + " NudgeRight");
   }
 
-  public void ReverseButtonPressed(bool pressed)
-  {
-    if(verticalStick == null) return;
+  public void ReverseButtonPressed(bool pressed) {
+    if (verticalStick == null)
+      return;
 
     verticalStick.SetForceReverse(pressed);
   }
 
-  public void LiftSliderEnaged(bool engaged)
-  {
+  public void LiftSliderEnaged(bool engaged) {
     liftSliderEngaged = engaged;
   }
 
-  public void HeadAngleSliderEnaged(bool engaged)
-  {
+  public void HeadAngleSliderEnaged(bool engaged) {
     headAngleSliderEngaged = engaged;
   }
 

@@ -5,8 +5,7 @@ using System.Collections;
 /// <summary>
 /// on screen text to help debug any issues with the ActionSlider
 /// </summary>
-public class SliderText : MonoBehaviour
-{
+public class SliderText : MonoBehaviour {
   [SerializeField] private Text text_pressed;
   [SerializeField] private Text text_upLastFrame;
   [SerializeField] private Text text_downLastFrame;
@@ -19,25 +18,19 @@ public class SliderText : MonoBehaviour
 
   private ActionSliderPanel actionSliderPanel;
 
-  private void OnEnable()
-  {
-    if( ActionSliderPanel.instance != null )
-    {
+  private void OnEnable() { 
+    if (ActionSliderPanel.instance != null) {
       actionSliderPanel = ActionSliderPanel.instance as ActionSliderPanel;
     }
   }
 
-  private void Update()
-  {
-    if( actionSliderPanel == null )
-    {
-      if( ActionSliderPanel.instance != null )
-      {
+  private void Update() {
+    if (actionSliderPanel == null) {
+      if (ActionSliderPanel.instance != null) {
         actionSliderPanel = ActionSliderPanel.instance as ActionSliderPanel;
 
-        if( actionSliderPanel == null )
-        {
-          gameObject.SetActive( false );
+        if (actionSliderPanel == null) {
+          gameObject.SetActive(false);
 
           return;
         }

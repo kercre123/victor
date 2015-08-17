@@ -10,8 +10,7 @@ using UnityEngine.UI;
 ///   known issues: seems to cause errors for the comboBoxes children to be activated before its items are added via AddItems
 /// </summary>
 [RequireComponent(typeof(RectTransform))]
-public class ComboBox : MonoBehaviour 
-{
+public class ComboBox : MonoBehaviour {
   public Sprite Sprite_UISprite;
   public Sprite Sprite_Background;
 
@@ -19,14 +18,12 @@ public class ComboBox : MonoBehaviour
 
   [SerializeField]
   private bool _interactable = true;
-  public bool Interactable
-  {
-    get
-    {
+
+  public bool Interactable {
+    get {
       return _interactable;
     }
-    set
-    {
+    set {
       _interactable = value;
       var button = comboButtonRectTransform.GetComponent<Button>();
       button.interactable = _interactable;
@@ -41,14 +38,12 @@ public class ComboBox : MonoBehaviour
 
   [SerializeField]
   private int _itemsToDisplay = 4;
-  public int ItemsToDisplay
-  {
-    get
-    {
+
+  public int ItemsToDisplay {
+    get {
       return _itemsToDisplay;
     }
-    set
-    {
+    set {
       if (_itemsToDisplay == value)
         return;
       _itemsToDisplay = value;
@@ -58,14 +53,12 @@ public class ComboBox : MonoBehaviour
 
   [SerializeField]
   private bool _hideFirstItem;
-  public bool HideFirstItem
-  {
-    get
-    {
+
+  public bool HideFirstItem {
+    get {
       return _hideFirstItem;
     }
-    set
-    {
+    set {
       if (value)
         scrollOffset--;
       else
@@ -77,18 +70,15 @@ public class ComboBox : MonoBehaviour
 
   [SerializeField]
   private int _selectedIndex = 0;
-  public int SelectedIndex
-  {
-    get 
-    {
+
+  public int SelectedIndex {
+    get {
       return _selectedIndex;
     }
-    set
-    {
+    set {
       if (_selectedIndex == value)
         return;
-      if (value > -1 && value < Items.Length)
-      {
+      if (value > -1 && value < Items.Length) {
         _selectedIndex = value;
         RefreshSelected();
       }
@@ -97,16 +87,14 @@ public class ComboBox : MonoBehaviour
 
   [SerializeField]
   private ComboBoxItem[] _items;
-  public ComboBoxItem[] Items
-  {
-    get
-    {
+
+  public ComboBoxItem[] Items {
+    get {
       if (_items == null)
         _items = new ComboBoxItem[0];
       return _items;
     }
-    set
-    {
+    set {
       _items = value;
       Refresh();
     }
@@ -117,177 +105,153 @@ public class ComboBox : MonoBehaviour
   private float _scrollbarWidth = 20.0f;
 
   private RectTransform _rectTransform;
-  private RectTransform rectTransform
-  {
-    get
-    {
+
+  private RectTransform rectTransform {
+    get {
       if (_rectTransform == null)
         _rectTransform = GetComponent<RectTransform>();
       return _rectTransform;
     }
-    set
-    {
+    set {
       _rectTransform = value;
     }
   }
 
   private RectTransform _buttonRectTransform;
-  private RectTransform buttonRectTransform
-  {
-    get
-    {
+
+  private RectTransform buttonRectTransform {
+    get {
       if (_buttonRectTransform == null)
         _buttonRectTransform = rectTransform.Find("Button").GetComponent<RectTransform>();
       return _buttonRectTransform;
     }
-    set
-    {
+    set {
       _buttonRectTransform = value;
     }
   }
 
   private RectTransform _comboButtonRectTransform;
-  private RectTransform comboButtonRectTransform
-  {
-    get
-    {
+
+  private RectTransform comboButtonRectTransform {
+    get {
       if (_comboButtonRectTransform == null)
         _comboButtonRectTransform = buttonRectTransform.Find("ComboButton").GetComponent<RectTransform>();
       return _comboButtonRectTransform;
     }
-    set
-    {
+    set {
       _comboButtonRectTransform = value;
     }
   }
 
   private RectTransform _comboImageRectTransform;
-  private RectTransform comboImageRectTransform
-  {
-    get
-    {
+
+  private RectTransform comboImageRectTransform {
+    get {
       if (_comboImageRectTransform == null)
         _comboImageRectTransform = comboButtonRectTransform.Find("Image").GetComponent<RectTransform>();
       return _comboImageRectTransform;
     }
-    set
-    {
+    set {
       _comboImageRectTransform = value;
     }
   }
 
   private RectTransform _comboTextRectTransform;
-  private RectTransform comboTextRectTransform
-  {
-    get
-    {
+
+  private RectTransform comboTextRectTransform {
+    get {
       if (_comboTextRectTransform == null)
         _comboTextRectTransform = comboButtonRectTransform.Find("Text").GetComponent<RectTransform>();
       return _comboTextRectTransform;
     }
-    set
-    {
+    set {
       _comboTextRectTransform = value;
     }
   }
 
   private RectTransform _comboArrowRectTransform;
-  private RectTransform comboArrowRectTransform
-  {
-    get
-    {
+
+  private RectTransform comboArrowRectTransform {
+    get {
       if (_comboArrowRectTransform == null)
         _comboArrowRectTransform = buttonRectTransform.Find("Arrow").GetComponent<RectTransform>();
       return _comboArrowRectTransform;
     }
-    set
-    {
+    set {
       _comboArrowRectTransform = value;
     }
   }
 
   private RectTransform _scrollPanelRectTransfrom;
-  private RectTransform scrollPanelRectTransfrom
-  {
-    get
-    {
+
+  private RectTransform scrollPanelRectTransfrom {
+    get {
       if (_scrollPanelRectTransfrom == null)
         _scrollPanelRectTransfrom = rectTransform.Find("Overlay/ScrollPanel").GetComponent<RectTransform>();
       return _scrollPanelRectTransfrom;
     }
-    set
-    {
+    set {
       _scrollPanelRectTransfrom = value;
     }
   }
 
   private RectTransform _itemsRectTransfrom;
-  private RectTransform itemsRectTransfrom
-  {
-    get
-    {
+
+  private RectTransform itemsRectTransfrom {
+    get {
       if (_itemsRectTransfrom == null)
         _itemsRectTransfrom = scrollPanelRectTransfrom.Find("Items").GetComponent<RectTransform>();
       return _itemsRectTransfrom;
     }
-    set
-    {
+    set {
       _itemsRectTransfrom = value;
     }
   }
 
   private RectTransform _scrollbarRectTransfrom;
-  private RectTransform scrollbarRectTransfrom
-  {
-    get
-    {
+
+  private RectTransform scrollbarRectTransfrom {
+    get {
       if (_scrollbarRectTransfrom == null)
         _scrollbarRectTransfrom = scrollPanelRectTransfrom.Find("Scrollbar").GetComponent<RectTransform>();
       return _scrollbarRectTransfrom;
     }
-    set
-    {
+    set {
       _scrollbarRectTransfrom = value;
     }
   }
 
   private RectTransform _slidingAreaRectTransform;
-  private RectTransform slidingAreaRectTransform
-  {
-    get
-    {
+
+  private RectTransform slidingAreaRectTransform {
+    get {
       if (_slidingAreaRectTransform == null)
         _slidingAreaRectTransform = scrollbarRectTransfrom.Find("SlidingArea").GetComponent<RectTransform>();
       return _slidingAreaRectTransform;
     }
-    set
-    {
+    set {
       _slidingAreaRectTransform = value;
     }
   }
 
   private RectTransform _handleRectTransfrom;
-  private RectTransform handleRectTransfrom
-  {
-    get
-    {
+
+  private RectTransform handleRectTransfrom {
+    get {
       if (_handleRectTransfrom == null)
         _handleRectTransfrom = slidingAreaRectTransform.Find("Handle").GetComponent<RectTransform>();
       return _handleRectTransfrom;
     }
-    set
-    {
+    set {
       _handleRectTransfrom = value;
     }
   }
 
-  private void Awake()
-  {
+  private void Awake() {
     InitControl();
   }
 
-  public void OnItemClicked(int index)
-  {
+  public void OnItemClicked(int index) {
     var selectionChanged = index != SelectedIndex;
     SelectedIndex = index;
     ToggleComboBox(true);
@@ -295,25 +259,20 @@ public class ComboBox : MonoBehaviour
       OnSelectionChanged(index);
   }
 
-  public void AddItems(object[] list)
-  {
+  public void AddItems(object[] list) {
     var cbItems = new List<ComboBoxItem>();
-    foreach (var obj in list)
-    {
-      if (obj is ComboBoxItem)
-      {
+    foreach (var obj in list) {
+      if (obj is ComboBoxItem) {
         var item = (ComboBoxItem)obj;
         cbItems.Add(item);
         continue;
       }
-      if (obj is string)
-      {
+      if (obj is string) {
         var item = new ComboBoxItem((string)obj, null, false, null);
         cbItems.Add(item);
         continue;
       }
-      if (obj is Sprite)
-      {
+      if (obj is Sprite) {
         var item = new ComboBoxItem(null, (Sprite)obj, false, null);
         cbItems.Add(item);
         continue;
@@ -327,13 +286,11 @@ public class ComboBox : MonoBehaviour
     Items = newItems;
   }
 
-  public void ClearItems()
-  {
+  public void ClearItems() {
     Items = new ComboBoxItem[0];
   }
 
-  public void CreateControl()
-  {
+  public void CreateControl() {
     rectTransform = GetComponent<RectTransform>();
 
     var buttonGO = new GameObject("Button");
@@ -409,24 +366,26 @@ public class ComboBox : MonoBehaviour
   }
 
   bool initialized = false;
-  public void InitControl()
-  {
-    if(initialized) return;
+
+  public void InitControl() {
+    if (initialized)
+      return;
 
     initialized = true;
 
     var cbi = transform.Find("Button/ComboButton/Image");
     var cbt = transform.Find("Button/ComboButton/Text");
     var cba = transform.Find("Button/Arrow");
-    if (cbi == null || cbt == null || cba == null)
-    {
+    if (cbi == null || cbt == null || cba == null) {
       foreach (Transform child in transform)
         Destroy(child);
       CreateControl();
     }
 
-    comboButtonRectTransform.GetComponent<Button>().onClick.AddListener(() => { ToggleComboBox(false); });
-    var dropdownHeight = comboButtonRectTransform.sizeDelta.y *  Mathf.Min(ItemsToDisplay, Items.Length - (HideFirstItem ? 1 : 0));
+    comboButtonRectTransform.GetComponent<Button>().onClick.AddListener(() => {
+      ToggleComboBox(false);
+    });
+    var dropdownHeight = comboButtonRectTransform.sizeDelta.y * Mathf.Min(ItemsToDisplay, Items.Length - (HideFirstItem ? 1 : 0));
 
     overlayGO = new GameObject("Overlay");
     overlayGO.SetActive(false);
@@ -444,7 +403,9 @@ public class ComboBox : MonoBehaviour
     overlayGO.transform.SetParent(transform, false);
     var overlayButton = overlayGO.AddComponent<Button>();
     overlayButton.targetGraphic = overlayImage;
-    overlayButton.onClick.AddListener(() => { ToggleComboBox(false); });
+    overlayButton.onClick.AddListener(() => {
+      ToggleComboBox(false);
+    });
 
     var scrollPanelGO = new GameObject("ScrollPanel");
     var scrollPanelImage = scrollPanelGO.AddComponent<Image>();
@@ -538,11 +499,10 @@ public class ComboBox : MonoBehaviour
     Refresh();
   }
 
-  public void Refresh()
-  {
+  public void Refresh() {
     var itemsGridLayoutGroup = itemsRectTransfrom.GetComponent<GridLayoutGroup>();
     var itemsLength = Items.Length - (HideFirstItem ? 1 : 0);
-    var dropdownHeight = comboButtonRectTransform.sizeDelta.y *  Mathf.Min(_itemsToDisplay, itemsLength);
+    var dropdownHeight = comboButtonRectTransform.sizeDelta.y * Mathf.Min(_itemsToDisplay, itemsLength);
     var scrollbarWidth = itemsLength > ItemsToDisplay ? _scrollbarWidth : 0.0f;
     scrollPanelRectTransfrom.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, dropdownHeight);
     scrollbarRectTransfrom.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, scrollbarWidth);
@@ -552,8 +512,7 @@ public class ComboBox : MonoBehaviour
     itemsGridLayoutGroup.cellSize = new Vector2(comboButtonRectTransform.sizeDelta.x - scrollbarWidth, comboButtonRectTransform.sizeDelta.y);
     for (var i = itemsRectTransfrom.childCount - 1; i > -1; i--)
       DestroyImmediate(itemsRectTransfrom.GetChild(0).gameObject);
-    for (var i = 0; i < Items.Length; i++)
-    {
+    for (var i = 0; i < Items.Length; i++) {
       if (HideFirstItem && i == 0)
         continue;
       var item = Items[i];
@@ -572,8 +531,7 @@ public class ComboBox : MonoBehaviour
       itemButton.interactable = !item.IsDisabled;
       var index = i;
       itemButton.onClick.AddListener(
-        delegate()
-        {
+        delegate() {
           OnItemClicked(index);
           if (item.OnSelect != null)
             item.OnSelect();
@@ -586,8 +544,7 @@ public class ComboBox : MonoBehaviour
     FixScrollOffset();
   }
 
-  public void RefreshSelected()
-  {
+  public void RefreshSelected() {
     var comboButtonImage = comboImageRectTransform.GetComponent<Image>();
     var item = SelectedIndex > -1 && SelectedIndex < Items.Length ? Items[SelectedIndex] : null;
     var includeImage = item != null && item.Image != null;
@@ -599,21 +556,17 @@ public class ComboBox : MonoBehaviour
     if (!Application.isPlaying)
       return;
     var i = 0;
-    foreach (Transform child in itemsRectTransfrom)
-    {
+    foreach (Transform child in itemsRectTransfrom) {
       comboButtonImage = child.GetComponent<Image>();
       comboButtonImage.color = SelectedIndex == i + (HideFirstItem ? 1 : 0) ? comboButtonButton.colors.highlightedColor : comboButtonButton.colors.normalColor;
       i++;
     }
   }
 
-  private void UpdateComboBoxImages()
-  {
+  private void UpdateComboBoxImages() {
     var includeImages = false;
-    foreach (var item in Items)
-    {
-      if (item.Image != null)
-      {
+    foreach (var item in Items) {
+      if (item.Image != null) {
         includeImages = true;
         break;
       }
@@ -622,19 +575,16 @@ public class ComboBox : MonoBehaviour
       UpdateComboBoxImage(child, includeImages);
   }
 
-  private void UpdateComboBoxImage(Transform comboButton, bool includeImage)
-  {
+  private void UpdateComboBoxImage(Transform comboButton, bool includeImage) {
     comboButton.Find("Text").GetComponent<RectTransform>().offsetMin = Vector2.right * (includeImage ? comboImageRectTransform.rect.width + 8.0f : 10.0f);
   }
 
-  private void FixScrollOffset()
-  {
+  private void FixScrollOffset() {
     var selectedIndex = SelectedIndex + (HideFirstItem ? 1 : 0);
     if (selectedIndex < scrollOffset)
       scrollOffset = selectedIndex;
-    else
-      if (selectedIndex > scrollOffset + ItemsToDisplay - 1)
-        scrollOffset = selectedIndex - ItemsToDisplay + 1;
+    else if (selectedIndex > scrollOffset + ItemsToDisplay - 1)
+      scrollOffset = selectedIndex - ItemsToDisplay + 1;
     var itemsCount = Items.Length - (HideFirstItem ? 1 : 0);
     if (scrollOffset > itemsCount - ItemsToDisplay)
       scrollOffset = itemsCount - ItemsToDisplay;
@@ -642,35 +592,27 @@ public class ComboBox : MonoBehaviour
       scrollOffset = 0;
     itemsRectTransfrom.anchoredPosition = new Vector2(0.0f, scrollOffset * rectTransform.sizeDelta.y);
   }
-  
-  private void ToggleComboBox(bool directClick)
-  {
+
+  private void ToggleComboBox(bool directClick) {
     overlayGO.SetActive(!overlayGO.activeSelf);
-    if (overlayGO.activeSelf)
-    {
+    if (overlayGO.activeSelf) {
       var curTransform = transform;
-      do
-      {
+      do {
         curTransform.SetAsLastSibling();
-      }
-      while ((curTransform = curTransform.parent) != null);
+      } while ((curTransform = curTransform.parent) != null);
       FixScrollOffset();
     }
-    else
-      if (directClick)
-        scrollOffset = (int)Mathf.Round(itemsRectTransfrom.anchoredPosition.y / rectTransform.sizeDelta.y);
+    else if (directClick)
+      scrollOffset = (int)Mathf.Round(itemsRectTransfrom.anchoredPosition.y / rectTransform.sizeDelta.y);
   }
 
-  public void UpdateGraphics()
-  {
-    if (overlayGO != null)
-    {
+  public void UpdateGraphics() {
+    if (overlayGO != null) {
       var scrollbarWidth = Items.Length - (HideFirstItem ? 1 : 0) > ItemsToDisplay ? _scrollbarWidth : 0.0f;
       handleRectTransfrom.offsetMin = -scrollbarWidth / 2 * Vector2.one;
       handleRectTransfrom.offsetMax = scrollbarWidth / 2 * Vector2.one;
     }
-    if (rectTransform.sizeDelta != buttonRectTransform.sizeDelta && buttonRectTransform.sizeDelta == comboButtonRectTransform.sizeDelta)
-    {
+    if (rectTransform.sizeDelta != buttonRectTransform.sizeDelta && buttonRectTransform.sizeDelta == comboButtonRectTransform.sizeDelta) {
       buttonRectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, rectTransform.sizeDelta.x);
       buttonRectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, rectTransform.sizeDelta.y);
       comboButtonRectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, rectTransform.sizeDelta.x);
@@ -684,7 +626,8 @@ public class ComboBox : MonoBehaviour
       scrollPanelRectTransfrom.anchoredPosition = new Vector2(0.0f, -comboButtonRectTransform.sizeDelta.y);
       scrollPanelRectTransfrom.SetParent(overlayGO.transform, false);
       scrollPanelRectTransfrom.GetComponent<ScrollRect>().scrollSensitivity = comboButtonRectTransform.sizeDelta.y;
-      if(Items != null && SelectedIndex < Items.Length) UpdateComboBoxImage(comboButtonRectTransform, Items[SelectedIndex].Image != null);
+      if (Items != null && SelectedIndex < Items.Length)
+        UpdateComboBoxImage(comboButtonRectTransform, Items[SelectedIndex].Image != null);
       Refresh();
     }
   }

@@ -8,54 +8,50 @@ using U2G = Anki.Cozmo.ExternalInterface;
 
 
 [System.FlagsAttribute]
-public enum RobotStatusFlag
-{
-  NONE                    = 0x00000000,
-  IS_MOVING               = 0x00000001,  // Head, lift, or wheels
-  IS_CARRYING_BLOCK       = 0x00000002,
-  IS_PICKING_OR_PLACING   = 0x00000004,
-  IS_PICKED_UP            = 0x00000008,
+public enum RobotStatusFlag {
+  NONE = 0x00000000,
+  IS_MOVING = 0x00000001,
+  // Head, lift, or wheels
+  IS_CARRYING_BLOCK = 0x00000002,
+  IS_PICKING_OR_PLACING = 0x00000004,
+  IS_PICKED_UP = 0x00000008,
   IS_PROX_FORWARD_BLOCKED = 0x00000010,
-  IS_PROX_SIDE_BLOCKED    = 0x00000020,
-  IS_ANIMATING            = 0x00000040,
-  IS_PERFORMING_ACTION    = 0x00000080,
-  LIFT_IN_POS             = 0x00000100,
-  HEAD_IN_POS             = 0x00000200,
-  IS_ANIM_BUFFER_FULL     = 0x00000400,
-  IS_ANIMATING_IDLE       = 0x00000800
-};
+  IS_PROX_SIDE_BLOCKED = 0x00000020,
+  IS_ANIMATING = 0x00000040,
+  IS_PERFORMING_ACTION = 0x00000080,
+  LIFT_IN_POS = 0x00000100,
+  HEAD_IN_POS = 0x00000200,
+  IS_ANIM_BUFFER_FULL = 0x00000400,
+  IS_ANIMATING_IDLE = 0x00000800}
+;
 
 /// <summary>
 /// our unity side representation of cozmo's current state
 ///   also wraps most messages related solely to him
 /// </summary>
-public class Robot : IDisposable
-{
-  public class Light
-  {
+public class Robot : IDisposable {
+  public class Light {
     [System.FlagsAttribute]
-    public enum PositionFlag
-    {
-      NONE  = 0x00,
-      ONE   = 0x01,
-      TWO   = 0x02,
+    public enum PositionFlag {
+      NONE = 0x00,
+      ONE = 0x01,
+      TWO = 0x02,
       THREE = 0x04,
-      FOUR  = 0x08,
-      ALL   = 0xff
-    };
+      FOUR = 0x08,
+      ALL = 0xff}
 
-    private PositionFlag IndexToPosition(int i)
-    {
-      switch(i)
-      {
-        case 0:
-          return PositionFlag.ONE;
-        case 1:
-          return PositionFlag.TWO;
-        case 2:
-          return PositionFlag.THREE;
-        case 3:
-          return PositionFlag.FOUR;
+    ;
+
+    private PositionFlag IndexToPosition(int i) {
+      switch (i) {
+      case 0:
+        return PositionFlag.ONE;
+      case 1:
+        return PositionFlag.TWO;
+      case 2:
+        return PositionFlag.THREE;
+      case 3:
+        return PositionFlag.FOUR;
       }
       
       return PositionFlag.NONE;
@@ -63,17 +59,14 @@ public class Robot : IDisposable
 
     private PositionFlag position;
 
-    public Light()
-    {
+    public Light() {
     }
 
-    public Light(int position)
-    {
+    public Light(int position) {
       this.position = IndexToPosition(position);
     }
 
-    public bool Position(PositionFlag s)
-    {
+    public bool Position(PositionFlag s) {
       return (position | s) == s;
     }
 
@@ -90,8 +83,7 @@ public class Robot : IDisposable
     private uint lastTransitionOffPeriod_ms;
     public uint transitionOffPeriod_ms;
 
-    public void SetLastInfo()
-    {
+    public void SetLastInfo() {
       lastOnColor = onColor;
       lastOffColor = offColor;
       lastOnPeriod_ms = onPeriod_ms;
@@ -101,16 +93,14 @@ public class Robot : IDisposable
       initialized = true;
     }
 
-    public bool changed
-    {
+    public bool changed {
       get {
         return !initialized || lastOnColor != onColor || lastOffColor != offColor || lastOnPeriod_ms != onPeriod_ms || lastOffPeriod_ms != offPeriod_ms ||
         lastTransitionOnPeriod_ms != transitionOnPeriod_ms || lastTransitionOffPeriod_ms != transitionOffPeriod_ms;
       }
     }
 
-    public virtual void ClearData()
-    {
+    public virtual void ClearData() {
       onColor = 0;
       offColor = 0;
       onPeriod_ms = 1000;
@@ -184,12 +174,11 @@ public class Robot : IDisposable
 
   public Light[] lights { get; private set; }
 
-  private bool lightsChanged
-  {
+  private bool lightsChanged {
     get {
-      for(int i = 0; i < lights.Length; ++i)
-      {
-        if(lights[i].changed) return true;
+      for (int i = 0; i < lights.Length; ++i) {
+        if (lights[i].changed)
+          return true;
       }
 
       return false;
@@ -198,8 +187,7 @@ public class Robot : IDisposable
 
   private ObservedObject _targetLockedObject = null;
 
-  public ObservedObject targetLockedObject
-  {
+  public ObservedObject targetLockedObject {
     get { return _targetLockedObject; }
     set {
 
@@ -251,10 +239,10 @@ public class Robot : IDisposable
 
   private ObservedObject _carryingObject;
 
-  public ObservedObject carryingObject
-  {
+  public ObservedObject carryingObject {
     get {
-      if(_carryingObject != carryingObjectID) _carryingObject = knownObjects.Find(x => x == carryingObjectID);
+      if (_carryingObject != carryingObjectID)
+        _carryingObject = knownObjects.Find(x => x == carryingObjectID);
 
       return _carryingObject;
     }
@@ -262,17 +250,16 @@ public class Robot : IDisposable
 
   private ObservedObject _headTrackingObject;
 
-  public ObservedObject headTrackingObject
-  {
+  public ObservedObject headTrackingObject {
     get {
-      if(_headTrackingObject != headTrackingObjectID) _headTrackingObject = knownObjects.Find(x => x == headTrackingObjectID);
+      if (_headTrackingObject != headTrackingObjectID)
+        _headTrackingObject = knownObjects.Find(x => x == headTrackingObjectID);
       
       return _headTrackingObject;
     }
   }
 
-  public enum ObservedObjectListType
-  {
+  public enum ObservedObjectListType {
     KNOWN_IN_RANGE,
     MARKERS_SEEN,
     KNOWN,
@@ -295,29 +282,28 @@ public class Robot : IDisposable
   // Note: Instantiating delegates and List<T>.FindAll both allocate memory.
   // May want to change before releasing in production.
   // It's fine for prototyping.
-  public List<ObservedObject> pertinentObjects
-  {
+  public List<ObservedObject> pertinentObjects {
     get {
-      if(pertinenceStamp == Time.frameCount) return _pertinentObjects;
+      if (pertinenceStamp == Time.frameCount)
+        return _pertinentObjects;
       pertinenceStamp = Time.frameCount;
       
       _pertinentObjects.Clear();
       
-      switch(observedObjectListType)
-      {
-        case ObservedObjectListType.MARKERS_SEEN: 
-          _pertinentObjects.AddRange(markersVisibleObjects);
-          break;
-        case ObservedObjectListType.OBSERVED_RECENTLY: 
-          _pertinentObjects.AddRange(observedObjects);
-          break;
-        case ObservedObjectListType.KNOWN: 
-          _pertinentObjects.AddRange(knownObjects);
-          break;
-        case ObservedObjectListType.KNOWN_IN_RANGE: 
-          _pertinentObjects.AddRange(knownObjects);
-          _pertinentObjects.RemoveAll(IsNotInRange_callback);
-          break;
+      switch (observedObjectListType) {
+      case ObservedObjectListType.MARKERS_SEEN: 
+        _pertinentObjects.AddRange(markersVisibleObjects);
+        break;
+      case ObservedObjectListType.OBSERVED_RECENTLY: 
+        _pertinentObjects.AddRange(observedObjects);
+        break;
+      case ObservedObjectListType.KNOWN: 
+        _pertinentObjects.AddRange(knownObjects);
+        break;
+      case ObservedObjectListType.KNOWN_IN_RANGE: 
+        _pertinentObjects.AddRange(knownObjects);
+        _pertinentObjects.RemoveAll(IsNotInRange_callback);
+        break;
       }
 
       _pertinentObjects.RemoveAll(IsNotInZRange_callback);
@@ -330,8 +316,7 @@ public class Robot : IDisposable
   private const float MaxVoltage = 5.0f;
 
   [System.FlagsAttribute]
-  public enum GameStatusFlag
-  {
+  public enum GameStatusFlag {
     NONE = 0,
     IS_LOCALIZED = 0x1
   }
@@ -339,8 +324,7 @@ public class Robot : IDisposable
   [System.NonSerialized] public float localBusyTimer = 0f;
   [System.NonSerialized] public bool localBusyOverride = false;
 
-  public bool isBusy
-  {
+  public bool isBusy {
     get {
       /*if (localBusyOverride
          || localBusyTimer > 0f
@@ -365,8 +349,7 @@ public class Robot : IDisposable
     set {
       localBusyOverride = value;
 
-      if(value)
-      {
+      if (value) {
         DriveWheels(0, 0); 
       }
 
@@ -374,26 +357,22 @@ public class Robot : IDisposable
     }
   }
 
-  public bool Status(RobotStatusFlag s)
-  {
+  public bool Status(RobotStatusFlag s) {
     return (status & s) == s;
   }
 
-  public bool IsLocalized()
-  {
+  public bool IsLocalized() {
     return (gameStatus & GameStatusFlag.IS_LOCALIZED) == GameStatusFlag.IS_LOCALIZED;
   }
 
-  private Robot()
-  {
+  private Robot() {
     IsNotInRange_callback = IsNotInRange;
     IsNotInZRange_callback = IsNotInZRange;
     SortByDistance_callback = SortByDistance;
   }
 
   public Robot(byte robotID)
-    : this()
-  {
+    : this() {
     ID = robotID;
     const int initialSize = 64;
     selectedObjects = new List<ObservedObject>(3);
@@ -433,8 +412,7 @@ public class Robot : IDisposable
 
     lights = new Light[SetBackpackLEDsMessage.onColor.Length];
 
-    for(int i = 0; i < lights.Length; ++i)
-    {
+    for (int i = 0; i < lights.Length; ++i) {
       lights[i] = new Light(i);
     }
 
@@ -445,64 +423,52 @@ public class Robot : IDisposable
     RefreshObjectPertinence();
   }
 
-  public void Dispose()
-  {
+  public void Dispose() {
     RobotEngineManager.instance.DisconnectedFromClient -= Reset;
   }
 
-  public void CooldownTimers(float delta)
-  {
-    if(localBusyTimer > 0f)
-    {
+  public void CooldownTimers(float delta) {
+    if (localBusyTimer > 0f) {
       localBusyTimer -= delta;
     }
   }
 
-  private bool IsNotInRange(ObservedObject obj)
-  {
+  private bool IsNotInRange(ObservedObject obj) {
     return !((obj.WorldPosition - WorldPosition).sqrMagnitude <= objectPertinenceRange * objectPertinenceRange);
   }
 
-  private bool IsNotInZRange(ObservedObject obj)
-  {
+  private bool IsNotInZRange(ObservedObject obj) {
     return !(obj.WorldPosition.z - WorldPosition.z <= Z_RANGE_LIMIT);
   }
 
-  private int SortByDistance(ObservedObject a, ObservedObject b)
-  {
+  private int SortByDistance(ObservedObject a, ObservedObject b) {
     float d1 = ((Vector2)a.WorldPosition - (Vector2)WorldPosition).sqrMagnitude;
     float d2 = ((Vector2)b.WorldPosition - (Vector2)WorldPosition).sqrMagnitude;
     return d1.CompareTo(d2);
   }
 
-  public void RefreshObjectPertinence()
-  {
+  public void RefreshObjectPertinence() {
 
     int objectPertinenceOverride = OptionsScreen.GetObjectPertinenceTypeOverride();
 
-    if(objectPertinenceOverride >= 0)
-    {
+    if (objectPertinenceOverride >= 0) {
       observedObjectListType = (ObservedObjectListType)objectPertinenceOverride;
       //Debug.Log("CozmoVision.OnEnable observedObjectListType("+observedObjectListType+")");
     }
 
     float objectPertinenceRangeOverride = OptionsScreen.GetMaxDistanceInCubeLengths() * CozmoUtil.BLOCK_LENGTH_MM;
-    if(objectPertinenceRangeOverride >= 0)
-    {
+    if (objectPertinenceRangeOverride >= 0) {
       objectPertinenceRange = objectPertinenceRangeOverride;
       //Debug.Log("CozmoVision.OnEnable objectPertinenceRange("+objectPertinenceRangeOverride+")");
     }
   }
 
-  private void Reset(DisconnectionReason reason = DisconnectionReason.None)
-  {
+  private void Reset(DisconnectionReason reason = DisconnectionReason.None) {
     ClearData();
   }
 
-  public void ClearData(bool initializing = false)
-  {
-    if(!initializing)
-    {
+  public void ClearData(bool initializing = false) {
+    if (!initializing) {
       TurnOffAllLights(true);
       SetObjectAdditionAndDeletion(true, true);
       Debug.Log("Robot data cleared");
@@ -542,36 +508,29 @@ public class Robot : IDisposable
     Rotation = Quaternion.identity;
     localBusyTimer = 0f;
 
-    for(int i = 0; i < lights.Length; ++i)
-    {
+    for (int i = 0; i < lights.Length; ++i) {
       lights[i].ClearData();
     }
     //wasLoc = false;
     //Debug.Log( "Robot data cleared IsLocalized("+IsLocalized()+")" );
   }
 
-  public void ClearObservedObjects()
-  {
-    for(int i = 0; i < observedObjects.Count; ++i)
-    {
-      if(observedObjects[i].TimeLastSeen + ObservedObject.RemoveDelay < Time.time)
-      {
+  public void ClearObservedObjects() {
+    for (int i = 0; i < observedObjects.Count; ++i) {
+      if (observedObjects[i].TimeLastSeen + ObservedObject.RemoveDelay < Time.time) {
         observedObjects.RemoveAt(i--);
       }
     }
 
-    for(int i = 0; i < markersVisibleObjects.Count; ++i)
-    {
-      if(markersVisibleObjects[i].TimeLastSeen + ObservedObject.RemoveDelay < Time.time)
-      {
+    for (int i = 0; i < markersVisibleObjects.Count; ++i) {
+      if (markersVisibleObjects[i].TimeLastSeen + ObservedObject.RemoveDelay < Time.time) {
         markersVisibleObjects.RemoveAt(i--);
       }
     }
   }
 
   //bool wasLoc = false;
-  public void UpdateInfo(G2U.RobotState message)
-  {
+  public void UpdateInfo(G2U.RobotState message) {
     headAngle_rad = message.headAngle_rad;
     poseAngle_rad = message.poseAngle_rad;
     leftWheelSpeed_mmps = message.leftWheelSpeed_mmps;
@@ -583,10 +542,11 @@ public class Robot : IDisposable
     carryingObjectID = message.carryingObjectID;
     headTrackingObjectID = message.headTrackingObjectID;
 
-    if(headTrackingObjectID == lastHeadTrackingObjectID) lastHeadTrackingObjectID = -1;
+    if (headTrackingObjectID == lastHeadTrackingObjectID)
+      lastHeadTrackingObjectID = -1;
 
     LastWorldPosition = WorldPosition;
-    WorldPosition = new Vector3(message.pose_x, message.pose_y,  message.pose_z);
+    WorldPosition = new Vector3(message.pose_x, message.pose_y, message.pose_z);
 
     LastRotation = Rotation;
     Rotation = new Quaternion(message.pose_quaternion1, message.pose_quaternion2, message.pose_quaternion3, message.pose_quaternion0);
@@ -596,55 +556,49 @@ public class Robot : IDisposable
     //wasLoc = isLoc;
   }
 
-  public void UpdateLightMessages(bool now = false)
-  {
-    if(RobotEngineManager.instance == null || !RobotEngineManager.instance.IsConnected) return;
+  public void UpdateLightMessages(bool now = false) {
+    if (RobotEngineManager.instance == null || !RobotEngineManager.instance.IsConnected)
+      return;
 
-    if(Time.time > ActiveBlock.Light.messageDelay || now)
-    {
+    if (Time.time > ActiveBlock.Light.messageDelay || now) {
       var enumerator = activeBlocks.GetEnumerator();
 
-      while(enumerator.MoveNext())
-      {
+      while (enumerator.MoveNext()) {
         ActiveBlock activeBlock = enumerator.Current.Value;
 
-        if(activeBlock.lightsChanged) activeBlock.SetAllLEDs();
+        if (activeBlock.lightsChanged)
+          activeBlock.SetAllLEDs();
       }
     }
 
-    if(Time.time > Light.messageDelay || now)
-    {
-      if(lightsChanged) SetAllBackpackLEDs();
+    if (Time.time > Light.messageDelay || now) {
+      if (lightsChanged)
+        SetAllBackpackLEDs();
     }
   }
 
-  public void UpdateObservedObjectInfo(G2U.RobotObservedObject message)
-  {
+  public void UpdateObservedObjectInfo(G2U.RobotObservedObject message) {
     //Debug.Log( "UpdateObservedObjectInfo received message about ObservedObject with objectFamily("+message.objectFamily+") objectID("+message.objectID+")" );
 
-    if(message.objectFamily == 0)
-    {
+    if (message.objectFamily == 0) {
       Debug.LogWarning("UpdateObservedObjectInfo received message about the Mat!");
       return;
     }
 
-    if(message.objectFamily == 4)
-    {
+    if (message.objectFamily == 4) {
       AddActiveBlock(activeBlocks.ContainsKey(message.objectID) ? activeBlocks[message.objectID] : null, message);
-    } else
-    {
+    }
+    else {
       ObservedObject knownObject = knownObjects.Find(x => x == message.objectID);
 
       AddObservedObject(knownObject, message);
     }
   }
 
-  private void AddActiveBlock(ActiveBlock activeBlock, G2U.RobotObservedObject message)
-  {
+  private void AddActiveBlock(ActiveBlock activeBlock, G2U.RobotObservedObject message) {
     //Debug.Log( "AddActiveBlock" );
     bool newBlock = false;
-    if(activeBlock == null)
-    {
+    if (activeBlock == null) {
       activeBlock = new ActiveBlock(message.objectID, message.objectFamily, message.objectType);
 
       activeBlocks.Add(activeBlock, activeBlock);
@@ -655,18 +609,16 @@ public class Robot : IDisposable
 
     AddObservedObject(activeBlock, message);
 
-    if(newBlock)
-    {
-      if(ObservedObject.SignificantChangeDetected != null) ObservedObject.SignificantChangeDetected();
+    if (newBlock) {
+      if (ObservedObject.SignificantChangeDetected != null)
+        ObservedObject.SignificantChangeDetected();
     }
   }
 
-  private void AddObservedObject(ObservedObject knownObject, G2U.RobotObservedObject message)
-  {
+  private void AddObservedObject(ObservedObject knownObject, G2U.RobotObservedObject message) {
 
     bool newBlock = false;
-    if(knownObject == null)
-    {
+    if (knownObject == null) {
       knownObject = new ObservedObject(message.objectID, message.objectFamily, message.objectType);
       
       knownObjects.Add(knownObject);
@@ -680,25 +632,22 @@ public class Robot : IDisposable
 
     knownObject.UpdateInfo(message);
     
-    if(observedObjects.Find(x => x == message.objectID) == null)
-    {
+    if (observedObjects.Find(x => x == message.objectID) == null) {
       observedObjects.Add(knownObject);
     }
     
-    if(knownObject.MarkersVisible && markersVisibleObjects.Find(x => x == message.objectID) == null)
-    {
+    if (knownObject.MarkersVisible && markersVisibleObjects.Find(x => x == message.objectID) == null) {
       markersVisibleObjects.Add(knownObject);
     }
 
     //if block new or moved a lot since last time we saw it
-    if(newBlock || (carryingObject != knownObject && (oldPos - knownObject.WorldPosition).magnitude > CozmoUtil.BLOCK_LENGTH_MM))
-    {
-      if(ObservedObject.SignificantChangeDetected != null) ObservedObject.SignificantChangeDetected();
+    if (newBlock || (carryingObject != knownObject && (oldPos - knownObject.WorldPosition).magnitude > CozmoUtil.BLOCK_LENGTH_MM)) {
+      if (ObservedObject.SignificantChangeDetected != null)
+        ObservedObject.SignificantChangeDetected();
     }
   }
 
-  public void DriveWheels(float leftWheelSpeedMmps, float rightWheelSpeedMmps)
-  {
+  public void DriveWheels(float leftWheelSpeedMmps, float rightWheelSpeedMmps) {
     //Debug.Log("DriveWheels(leftWheelSpeedMmps:"+leftWheelSpeedMmps+", rightWheelSpeedMmps:"+rightWheelSpeedMmps+")");
     DriveWheelsMessage.lwheel_speed_mmps = leftWheelSpeedMmps;
     DriveWheelsMessage.rwheel_speed_mmps = rightWheelSpeedMmps;
@@ -707,8 +656,7 @@ public class Robot : IDisposable
     RobotEngineManager.instance.SendMessage();
   }
 
-  public void PlaceObjectOnGroundHere()
-  {
+  public void PlaceObjectOnGroundHere() {
     Debug.Log("Place Object " + carryingObject + " On Ground Here");
 
     RobotEngineManager.instance.Message.PlaceObjectOnGroundHere = PlaceObjectOnGroundHereMessage;
@@ -717,8 +665,7 @@ public class Robot : IDisposable
     localBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
   }
 
-  public void CancelAction(RobotActionType actionType = RobotActionType.UNKNOWN)
-  {
+  public void CancelAction(RobotActionType actionType = RobotActionType.UNKNOWN) {
     CancelActionMessage.robotID = ID;
     CancelActionMessage.actionType = actionType;
 
@@ -728,16 +675,14 @@ public class Robot : IDisposable
     RobotEngineManager.instance.SendMessage();
   }
 
-  public float GetHeadAngleFactor()
-  {
+  public float GetHeadAngleFactor() {
 
     float angle = IsHeadAngleRequestUnderway() ? headAngleRequested : headAngle_rad;
 
-    if(angle >= 0f)
-    {
+    if (angle >= 0f) {
       angle = Mathf.Lerp(0f, 1f, angle / (CozmoUtil.MAX_HEAD_ANGLE * Mathf.Deg2Rad));
-    } else
-    {
+    }
+    else {
       angle = Mathf.Lerp(0f, -1f, angle / (CozmoUtil.MIN_HEAD_ANGLE * Mathf.Deg2Rad));
     }
 
@@ -745,8 +690,7 @@ public class Robot : IDisposable
   }
 
 
-  public bool IsHeadAngleRequestUnderway()
-  {
+  public bool IsHeadAngleRequestUnderway() {
     return Time.time < lastHeadAngleRequestTime + CozmoUtil.HEAD_ANGLE_REQUEST_TIME;
   }
 
@@ -755,25 +699,24 @@ public class Robot : IDisposable
   /// </summary>
   /// <param name="angleFactor">Angle factor.</param> usually from -1 (MIN_HEAD_ANGLE) to 1 (MAX_HEAD_ANGLE)
   /// <param name="useExactAngle">If set to <c>true</c> angleFactor is treated as an exact angle in radians.</param>
-  public void SetHeadAngle(float angleFactor = -0.8f, bool useExactAngle = false, float accelRadSec = 2f, float maxSpeedFactor = 1f)
-  {
+  public void SetHeadAngle(float angleFactor = -0.8f, bool useExactAngle = false, float accelRadSec = 2f, float maxSpeedFactor = 1f) {
     //Debug.Log("SetHeadAngle("+angleFactor+")");
 
     float radians = angleFactor;
 
-    if(!useExactAngle)
-    {
-      if(angleFactor >= 0f)
-      {
+    if (!useExactAngle) {
+      if (angleFactor >= 0f) {
         radians = Mathf.Lerp(0f, CozmoUtil.MAX_HEAD_ANGLE * Mathf.Deg2Rad, angleFactor);
-      } else
-      {
+      }
+      else {
         radians = Mathf.Lerp(0f, CozmoUtil.MIN_HEAD_ANGLE * Mathf.Deg2Rad, -angleFactor);
       }
     }
 
-    if(IsHeadAngleRequestUnderway() && Mathf.Abs(headAngleRequested - radians) < 0.001f) return;
-    if(headTrackingObject == -1 && Mathf.Abs(radians - headAngle_rad) < 0.001f) return;
+    if (IsHeadAngleRequestUnderway() && Mathf.Abs(headAngleRequested - radians) < 0.001f)
+      return;
+    if (headTrackingObject == -1 && Mathf.Abs(radians - headAngle_rad) < 0.001f)
+      return;
 
     headAngleRequested = radians;
     lastHeadAngleRequestTime = Time.time;
@@ -789,24 +732,21 @@ public class Robot : IDisposable
     RobotEngineManager.instance.SendMessage();
   }
 
-  public void TrackToObject(ObservedObject observedObject, bool headOnly = true)
-  {
-    if(headTrackingObjectID == observedObject)
-    {
+  public void TrackToObject(ObservedObject observedObject, bool headOnly = true) {
+    if (headTrackingObjectID == observedObject) {
       lastHeadTrackingObjectID = -1;
       return;
-    } else if(lastHeadTrackingObjectID == observedObject)
-    {
+    }
+    else if (lastHeadTrackingObjectID == observedObject) {
       return;
     }
 
     lastHeadTrackingObjectID = observedObject;
 
-    if(observedObject != null)
-    {
+    if (observedObject != null) {
       TrackToObjectMessage.objectID = (uint)observedObject;
-    } else
-    {
+    }
+    else {
       TrackToObjectMessage.objectID = uint.MaxValue; //cancels tracking
     }
 
@@ -820,8 +760,7 @@ public class Robot : IDisposable
 
   }
 
-  public void FaceObject(ObservedObject observedObject, bool headTrackWhenDone = true)
-  {
+  public void FaceObject(ObservedObject observedObject, bool headTrackWhenDone = true) {
     FaceObjectMessage.objectID = observedObject;
     FaceObjectMessage.robotID = ID;
     FaceObjectMessage.maxTurnAngle = float.MaxValue;
@@ -834,8 +773,7 @@ public class Robot : IDisposable
     RobotEngineManager.instance.SendMessage();
   }
 
-  public void PickAndPlaceObject(ObservedObject selectedObject, bool usePreDockPose = true, bool useManualSpeed = false)
-  {
+  public void PickAndPlaceObject(ObservedObject selectedObject, bool usePreDockPose = true, bool useManualSpeed = false) {
     PickAndPlaceObjectMessage.objectID = selectedObject;
     PickAndPlaceObjectMessage.usePreDockPose = System.Convert.ToByte(usePreDockPose);
     PickAndPlaceObjectMessage.useManualSpeed = System.Convert.ToByte(useManualSpeed);
@@ -848,8 +786,7 @@ public class Robot : IDisposable
     localBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
   }
 
-  public void RollObject(ObservedObject selectedObject, bool usePreDockPose = true, bool useManualSpeed = false)
-  {
+  public void RollObject(ObservedObject selectedObject, bool usePreDockPose = true, bool useManualSpeed = false) {
     RollObjectMessage.objectID = selectedObject;
     RollObjectMessage.usePreDockPose = System.Convert.ToByte(usePreDockPose);
     RollObjectMessage.useManualSpeed = System.Convert.ToByte(useManualSpeed);
@@ -862,8 +799,7 @@ public class Robot : IDisposable
     localBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
   }
 
-  public void TapBlockOnGround(int taps)
-  {
+  public void TapBlockOnGround(int taps) {
     TapBlockMessage.numTaps = System.Convert.ToByte(taps);
     
     //Debug.Log( "TapBlockOnGround numTaps(" + TapBlockMessage.numTaps + ")" );
@@ -874,8 +810,7 @@ public class Robot : IDisposable
     localBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
   }
 
-  public void DropObjectAtPose(Vector3 position, float facing_rad, bool level = false, bool useManualSpeed = false)
-  {
+  public void DropObjectAtPose(Vector3 position, float facing_rad, bool level = false, bool useManualSpeed = false) {
     PlaceObjectOnGroundMessage.x_mm = position.x;
     PlaceObjectOnGroundMessage.y_mm = position.y;
     PlaceObjectOnGroundMessage.rad = facing_rad;
@@ -890,31 +825,29 @@ public class Robot : IDisposable
     localBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
   }
 
-  public Vector3 NudgePositionOutOfObjects(Vector3 position)
-  {
+  public Vector3 NudgePositionOutOfObjects(Vector3 position) {
 
     int attempts = 0;
 
-    while(attempts++ < 3)
-    {
+    while (attempts++ < 3) {
       Vector3 nudge = Vector3.zero;
       float padding = CozmoUtil.BLOCK_LENGTH_MM * 2f;
-      for(int i = 0; i < knownObjects.Count; i++)
-      {
+      for (int i = 0; i < knownObjects.Count; i++) {
         Vector3 fromObject = position - knownObjects[i].WorldPosition;
-        if(fromObject.magnitude > padding) continue;
+        if (fromObject.magnitude > padding)
+          continue;
         nudge += fromObject.normalized * padding;
       }
 
-      if(nudge.sqrMagnitude == 0f) break;
+      if (nudge.sqrMagnitude == 0f)
+        break;
       position += nudge;
     }
 
     return position;
   }
 
-  public void GotoPose(float x_mm, float y_mm, float rad, bool level = false, bool useManualSpeed = false)
-  {
+  public void GotoPose(float x_mm, float y_mm, float rad, bool level = false, bool useManualSpeed = false) {
     GotoPoseMessage.level = System.Convert.ToByte(level);
     GotoPoseMessage.useManualSpeed = System.Convert.ToByte(useManualSpeed);
     GotoPoseMessage.x_mm = x_mm;
@@ -929,8 +862,7 @@ public class Robot : IDisposable
     localBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
   }
 
-  public void GotoObject(ObservedObject obj, float distance_mm)
-  {
+  public void GotoObject(ObservedObject obj, float distance_mm) {
     GotoObjectMessage.objectID = obj;
     GotoObjectMessage.distance_mm = distance_mm;
     GotoObjectMessage.useManualSpeed = System.Convert.ToByte(false);
@@ -942,14 +874,13 @@ public class Robot : IDisposable
     localBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
   }
 
-  public float GetLiftHeightFactor()
-  {
+  public float GetLiftHeightFactor() {
     return (Time.time < lastLiftHeightRequestTime + CozmoUtil.LIFT_REQUEST_TIME) ? liftHeightRequested : liftHeight_factor;
   }
 
-  public void SetLiftHeight(float height_factor)
-  {
-    if((Time.time < lastLiftHeightRequestTime + CozmoUtil.LIFT_REQUEST_TIME && height_factor == liftHeightRequested) || liftHeight_factor == height_factor) return;
+  public void SetLiftHeight(float height_factor) {
+    if ((Time.time < lastLiftHeightRequestTime + CozmoUtil.LIFT_REQUEST_TIME && height_factor == liftHeightRequested) || liftHeight_factor == height_factor)
+      return;
 
     liftHeightRequested = height_factor;
     lastLiftHeightRequestTime = Time.time;
@@ -964,8 +895,7 @@ public class Robot : IDisposable
     RobotEngineManager.instance.SendMessage();
   }
 
-  public void SetRobotCarryingObject(int objectID = -1)
-  {
+  public void SetRobotCarryingObject(int objectID = -1) {
     Debug.Log("Set Robot Carrying Object: " + objectID);
     
     SetRobotCarryingObjectMessage.robotID = ID;
@@ -980,8 +910,7 @@ public class Robot : IDisposable
     SetHeadAngle();
   }
 
-  public void ClearAllBlocks()
-  {
+  public void ClearAllBlocks() {
     Debug.Log("Clear All Blocks");
     ClearAllBlocksMessage.robotID = ID;
     RobotEngineManager.instance.Message.ClearAllBlocks = ClearAllBlocksMessage;
@@ -992,8 +921,7 @@ public class Robot : IDisposable
     SetHeadAngle();
   }
 
-  public void ClearAllObjects()
-  {
+  public void ClearAllObjects() {
     //Debug.Log( "Clear All Objects" );
     ClearAllObjectsMessage.robotID = ID;
     RobotEngineManager.instance.Message.ClearAllObjects = ClearAllObjectsMessage;
@@ -1005,8 +933,7 @@ public class Robot : IDisposable
   }
 
   
-  public void VisionWhileMoving(bool enable)
-  {
+  public void VisionWhileMoving(bool enable) {
     //Debug.Log( "Vision While Moving " + enable );
 
     VisionWhileMovingMessage.enable = System.Convert.ToByte(enable);
@@ -1015,8 +942,7 @@ public class Robot : IDisposable
     RobotEngineManager.instance.SendMessage();
   }
 
-  public void RequestImage(RobotEngineManager.CameraResolution resolution, RobotEngineManager.ImageSendMode_t mode)
-  {
+  public void RequestImage(RobotEngineManager.CameraResolution resolution, RobotEngineManager.ImageSendMode_t mode) {
     SetRobotImageSendModeMessage.resolution = (byte)resolution;
     SetRobotImageSendModeMessage.mode = (byte)mode;
 
@@ -1032,13 +958,11 @@ public class Robot : IDisposable
     Debug.Log("image request message sent with " + mode + " at " + resolution);
   }
 
-  public void StopAllMotors()
-  {
+  public void StopAllMotors() {
     RobotEngineManager.instance.SendMessage();
   }
 
-  public void TurnInPlace(float angle_rad)
-  {
+  public void TurnInPlace(float angle_rad) {
     TurnInPlaceMessage.robotID = ID;
     TurnInPlaceMessage.angle_rad = angle_rad;
     
@@ -1048,8 +972,7 @@ public class Robot : IDisposable
     RobotEngineManager.instance.SendMessage();
   }
 
-  public void TraverseObject(int objectID, bool usePreDockPose = false, bool useManualSpeed = false)
-  {
+  public void TraverseObject(int objectID, bool usePreDockPose = false, bool useManualSpeed = false) {
     Debug.Log("Traverse Object " + objectID + " useManualSpeed " + useManualSpeed + " usePreDockPose " + usePreDockPose);
 
     TraverseObjectMessage.useManualSpeed = System.Convert.ToByte(useManualSpeed);
@@ -1061,29 +984,24 @@ public class Robot : IDisposable
     localBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
   }
 
-  private void SetLastLEDs()
-  {
-    for(int i = 0; i < lights.Length; ++i)
-    {
+  private void SetLastLEDs() {
+    for (int i = 0; i < lights.Length; ++i) {
       lights[i].SetLastInfo();
     }
   }
 
   public void SetBackpackLEDs(uint onColor = 0, uint offColor = 0, byte whichLEDs = byte.MaxValue, uint onPeriod_ms = Light.FOREVER, uint offPeriod_ms = 0, 
-                               uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0, byte turnOffUnspecifiedLEDs = 1)
-  {
-    for(int i = 0; i < lights.Length; ++i)
-    {
-      if(lights[i].Position((Light.PositionFlag)whichLEDs))
-      {
+                              uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0, byte turnOffUnspecifiedLEDs = 1) {
+    for (int i = 0; i < lights.Length; ++i) {
+      if (lights[i].Position((Light.PositionFlag)whichLEDs)) {
         lights[i].onColor = onColor;
         lights[i].offColor = offColor;
         lights[i].onPeriod_ms = onPeriod_ms;
         lights[i].offPeriod_ms = offPeriod_ms;
         lights[i].transitionOnPeriod_ms = transitionOnPeriod_ms;
         lights[i].transitionOffPeriod_ms = transitionOffPeriod_ms;
-      } else if(turnOffUnspecifiedLEDs > 0)
-      {
+      }
+      else if (turnOffUnspecifiedLEDs > 0) {
         lights[i].onColor = 0;
         lights[i].offColor = 0;
         lights[i].onPeriod_ms = 0;
@@ -1094,14 +1012,12 @@ public class Robot : IDisposable
     }
   }
 
-  private void SetAllBackpackLEDs() // should only be called from update loop
-  {
+  private void SetAllBackpackLEDs() { // should only be called from update loop
     //Debug.Log ("frame("+Time.frameCount+") SetAllBackpackLEDs " + lights[0].onColor);
 
     SetBackpackLEDsMessage.robotID = ID;
 
-    for(int i = 0, j = 0; i < lights.Length && j < lights.Length; ++i, ++j)
-    {
+    for (int i = 0, j = 0; i < lights.Length && j < lights.Length; ++i, ++j) {
       SetBackpackLEDsMessage.onColor[j] = lights[i].onColor;
       SetBackpackLEDsMessage.offColor[j] = lights[i].offColor;
       SetBackpackLEDsMessage.onPeriod_ms[j] = lights[i].onPeriod_ms;
@@ -1109,8 +1025,7 @@ public class Robot : IDisposable
       SetBackpackLEDsMessage.transitionOnPeriod_ms[j] = lights[i].transitionOnPeriod_ms;
       SetBackpackLEDsMessage.transitionOffPeriod_ms[j] = lights[i].transitionOffPeriod_ms;
 
-      if(i == 2 && lights.Length > 3) // HACK: index 2 and 3 are same lights
-      {
+      if (i == 2 && lights.Length > 3) { // HACK: index 2 and 3 are same lights
         SetBackpackLEDsMessage.onColor[++j] = lights[i].onColor;
         SetBackpackLEDsMessage.offColor[j] = lights[i].offColor;
         SetBackpackLEDsMessage.onPeriod_ms[j] = lights[i].onPeriod_ms;
@@ -1127,9 +1042,9 @@ public class Robot : IDisposable
     Light.messageDelay = Time.time + GameController.MessageDelay;
   }
 
-  public void SetObjectAdditionAndDeletion(bool enableAddition, bool enableDeletion)
-  {
-    if(RobotEngineManager.instance == null || !RobotEngineManager.instance.IsConnected) return;
+  public void SetObjectAdditionAndDeletion(bool enableAddition, bool enableDeletion) {
+    if (RobotEngineManager.instance == null || !RobotEngineManager.instance.IsConnected)
+      return;
     
     SetObjectAdditionAndDeletionMessage.robotID = ID;
     SetObjectAdditionAndDeletionMessage.enableAddition = enableAddition;
@@ -1139,19 +1054,16 @@ public class Robot : IDisposable
     RobotEngineManager.instance.SendMessage();
   }
 
-  public void StartFaceAwareness()
-  {
+  public void StartFaceAwareness() {
     //StartFaceTrackingMessage.timeout_sec = ID;
     RobotEngineManager.instance.Message.StartFaceTracking = StartFaceTrackingMessage;
     RobotEngineManager.instance.SendMessage();
   }
 
-  public void TurnOffAllLights(bool now = false)
-  {
+  public void TurnOffAllLights(bool now = false) {
     var enumerator = activeBlocks.GetEnumerator();
     
-    while(enumerator.MoveNext())
-    {
+    while (enumerator.MoveNext()) {
       ActiveBlock activeBlock = enumerator.Current.Value;
       
       activeBlock.SetLEDs();
@@ -1159,6 +1071,7 @@ public class Robot : IDisposable
 
     SetBackpackLEDs();
 
-    if(now) UpdateLightMessages(now);
+    if (now)
+      UpdateLightMessages(now);
   }
 }

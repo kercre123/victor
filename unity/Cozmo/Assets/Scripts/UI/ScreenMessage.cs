@@ -11,31 +11,28 @@ public class ScreenMessage : MonoBehaviour {
 
   float hideTimer = 0f;
 
-  void Awake () {
+  void Awake() {
     text.text = null;
     text.gameObject.SetActive(true);
   }
 
   void Update() {
-    if(hideTimer > 0f) {
+    if (hideTimer > 0f) {
       hideTimer -= Time.deltaTime;
 
-      if(hideTimer <= 0f) {
+      if (hideTimer <= 0f) {
         text.text = string.Empty;
-      }
+      } 
     }
   }
 
-  public void ShowMessageForDuration(string message, float time_in_seconds, Color color)
-  {
-    ShowMessage (message, color);
+  public void ShowMessageForDuration(string message, float time_in_seconds, Color color) {
+    ShowMessage(message, color);
     hideTimer = time_in_seconds;
   }
 
-  public void ShowMessage(string message, Color color)
-  {
-    if (text == null) 
-    {
+  public void ShowMessage(string message, Color color) {
+    if (text == null) {
       Debug.LogError("text is null for some reason");
       return;
     }
@@ -44,10 +41,8 @@ public class ScreenMessage : MonoBehaviour {
     hideTimer = 0f;
   }
 
-  public void KillMessage()
-  {
-    if (text == null) 
-    {
+  public void KillMessage() {
+    if (text == null) {
       Debug.LogError("text is null for some reason");
       return;
     }
@@ -55,8 +50,7 @@ public class ScreenMessage : MonoBehaviour {
     hideTimer = 0f;
   }
 
-  public void TurnOffText(float time_in_seconds)
-  {
+  public void TurnOffText(float time_in_seconds) {
     hideTimer = time_in_seconds;
   }
 }

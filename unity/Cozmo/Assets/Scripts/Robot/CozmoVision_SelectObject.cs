@@ -6,27 +6,26 @@ using System.Collections.Generic;
 /// <summary>
 /// deprecated vision/interaction paradigm in which the player taps cubes within the cozmo vision display to select them
 /// </summary>
-public class CozmoVision_SelectObject : CozmoVision
-{
+public class CozmoVision_SelectObject : CozmoVision {
   [SerializeField] private RectTransform reticle;
 
-  protected virtual void Update()
-  {
-    if(actionPanel == null) return;
+  protected virtual void Update() { 
+    if (actionPanel == null)
+      return;
 
-    if(robot == null || GameActions.instance == null)
-    {
+    if (robot == null || GameActions.instance == null) {
       actionPanel.DisableButtons();
       return;
     }
 
-    if(GameActions.instance == null)
-    {
-      if(actionPanel != null) actionPanel.gameObject.SetActive(false);
+    if (GameActions.instance == null) {
+      if (actionPanel != null)
+        actionPanel.gameObject.SetActive(false);
       return;
     }
     
-    if(actionPanel != null) actionPanel.gameObject.SetActive(true);
+    if (actionPanel != null)
+      actionPanel.gameObject.SetActive(true);
 
     UnselectNonObservedObjects();
     Dings();
@@ -35,11 +34,10 @@ public class CozmoVision_SelectObject : CozmoVision
 
     RefreshFade();
 
-    if(observedObjectBoxes.Find(x => x.gameObject.activeSelf) != null && !robot.isBusy)
-    {
+    if (observedObjectBoxes.Find(x => x.gameObject.activeSelf) != null && !robot.isBusy) {
       FadeIn();
-    } else
-    {
+    }
+    else {
       FadeOut();
     }
   }
@@ -73,17 +71,15 @@ public class CozmoVision_SelectObject : CozmoVision
   //    }
   //  }
 
-  protected override void ShowObservedObjects()
-  {
-    if(robot == null || robot.pertinentObjects == null) return;
+  protected override void ShowObservedObjects() {
+    if (robot == null || robot.pertinentObjects == null)
+      return;
 
-    for(int i = 0; i < observedObjectBoxes.Count; ++i)
-    {
-      if(robot.pertinentObjects.Count > i && !robot.isBusy)
-      {
+    for (int i = 0; i < observedObjectBoxes.Count; ++i) {
+      if (robot.pertinentObjects.Count > i && !robot.isBusy) {
         ObservedObjectSeen(observedObjectBoxes[i], robot.pertinentObjects[i]);
-      } else
-      {
+      }
+      else {
         observedObjectBoxes[i].gameObject.SetActive(false);
       }
     }

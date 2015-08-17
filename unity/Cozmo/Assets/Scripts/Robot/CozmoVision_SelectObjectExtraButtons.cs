@@ -7,54 +7,48 @@ using System.Collections.Generic;
 /// same as selectObject style, but with an additional button per cube that is linked with a line and placed on the right
 ///   for easier reach with right thumb
 /// </summary>
-public class CozmoVision_SelectObjectExtraButtons : CozmoVision_SelectObject
-{
+public class CozmoVision_SelectObjectExtraButtons : CozmoVision_SelectObject {
   protected ObservedObjectButton1[] observedObjectButtons;
   protected List<ObservedObjectBox> unassignedActiveObjectBoxes;
 
-  protected override void Awake()
-  {
+  protected override void Awake() { 
     base.Awake();
     
     unassignedActiveObjectBoxes = new List<ObservedObjectBox>();
     
     observedObjectButtons = observedObjectCanvas.GetComponentsInChildren<ObservedObjectButton1>(true);
     
-    for(int i = 0; i < observedObjectBoxes.Count; ++i)
-    {
+    for (int i = 0; i < observedObjectBoxes.Count; ++i) {
       ObservedObjectButton1 button = observedObjectBoxes[i] as ObservedObjectButton1;
       
-      if(button != null)
-      {
+      if (button != null) {
         observedObjectBoxes.RemoveAt(i--);
       }
     }
   }
 
-  protected override void Update()
-  {
+  protected override void Update() {
     base.Update();
     
-    if(robot == null) return;
+    if (robot == null)
+      return;
     
     ConnectButtonsToBoxes();
   }
 
-  protected void ConnectButtonsToBoxes()
-  {
-    if(IsSmallScreen) return;
+  protected void ConnectButtonsToBoxes() {
+    if (IsSmallScreen)
+      return;
 
     unassignedActiveObjectBoxes.Clear();
     unassignedActiveObjectBoxes.AddRange(observedObjectBoxes.FindAll(x => x.gameObject.activeSelf));
     int count = unassignedActiveObjectBoxes.Count;
     
-    for(int i = 0; i < observedObjectButtons.Length; ++i)
-    {
+    for (int i = 0; i < observedObjectButtons.Length; ++i) {
       ObservedObjectButton1 button = observedObjectButtons[i];
       button.gameObject.SetActive(i < count && robot.selectedObjects.Count == 0 && !robot.isBusy);
       
-      if(!button.gameObject.activeSelf)
-      {
+      if (!button.gameObject.activeSelf) {
         button.line.points2.Clear();
         button.line.Draw();
         continue;
@@ -65,22 +59,19 @@ public class CozmoVision_SelectObjectExtraButtons : CozmoVision_SelectObject
       Vector2 boxPosition = Vector2.zero;
       float closest = float.MaxValue;
       
-      for(int j = 0; j < unassignedActiveObjectBoxes.Count; ++j)
-      {
+      for (int j = 0; j < unassignedActiveObjectBoxes.Count; ++j) {
         ObservedObjectBox1 box1 = unassignedActiveObjectBoxes[j] as ObservedObjectBox1;
         Vector2 box1Position = box1.position;
         float dist = (buttonPosition - box1Position).sqrMagnitude;
         
-        if(dist < closest)
-        {
+        if (dist < closest) {
           closest = dist;
           box = box1;
           boxPosition = box1Position;
         }
       }
       
-      if(box == null)
-      {
+      if (box == null) {
         Debug.LogError("box shouldn't be null here!");
         continue;
       }
@@ -95,8 +86,7 @@ public class CozmoVision_SelectObjectExtraButtons : CozmoVision_SelectObject
       button.SetTextColor(box.text.color);
 
       //dmd hide lines when info panels are open
-      if(GameLayoutTracker.instance == null || GameLayoutTracker.instance.Phase != LayoutTrackerPhase.DISABLED)
-      {
+      if (GameLayoutTracker.instance == null || GameLayoutTracker.instance.Phase != LayoutTrackerPhase.DISABLED) {
         buttonPosition = RectTransformUtility.WorldToScreenPoint(button.canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera, buttonPosition);
         buttonPosition.x += 12f;
 
@@ -108,8 +98,8 @@ public class CozmoVision_SelectObjectExtraButtons : CozmoVision_SelectObject
         button.line.SetColor(box.color);
         button.line.Draw();
         //Debug.Log("drawing line from("+buttonPosition+") to("+boxPosition+")");
-      } else
-      {
+      }
+      else {
         button.line.points2.Clear();
         button.line.Draw();
         box.gameObject.SetActive(false);
@@ -117,23 +107,18 @@ public class CozmoVision_SelectObjectExtraButtons : CozmoVision_SelectObject
     }
   }
 
-  protected override void OnDisable()
-  {
+  protected override void OnDisable() {
     base.OnDisable();
     
     HideButtonsAndLines();
   }
 
-  void HideButtonsAndLines()
-  {
-    for(int i = 0; i < observedObjectButtons.Length; ++i)
-    { 
-      if(observedObjectButtons[i] != null)
-      {
+  void HideButtonsAndLines() {
+    for (int i = 0; i < observedObjectButtons.Length; ++i) { 
+      if (observedObjectButtons[i] != null) {
         observedObjectButtons[i].gameObject.SetActive(false);
         
-        if(observedObjectButtons[i].line != null)
-        {
+        if (observedObjectButtons[i].line != null) {
           observedObjectButtons[i].line.points2.Clear();
           observedObjectButtons[i].line.Draw();
         }

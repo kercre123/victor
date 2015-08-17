@@ -6,10 +6,8 @@ using System.Collections.Generic;
 /// <summary>
 /// deprecated vision/interaction paradigm in which cozmo would simply choose his best target for the user based on proximity and facing
 /// </summary>
-public class CozmoVision_AutoSelect : CozmoVision
-{
-  public struct ActionButtonState
-  {
+public class CozmoVision_AutoSelect : CozmoVision {
+  public struct ActionButtonState {
     public bool activeSelf;
     public string text;
   }
@@ -18,26 +16,24 @@ public class CozmoVision_AutoSelect : CozmoVision
 
   protected List<ObservedObject> observedObjects;
 
-  protected override void Awake()
-  {
+  protected override void Awake() {
     base.Awake();
 
     observedObjects = new List<ObservedObject>();
   }
 
-  protected void Update()
-  {
-    if(actionPanel == null) return;
+  protected void Update() {
+    if (actionPanel == null)
+      return;
 
-    if(robot == null || GameActions.instance == null)
-    {
+    if (robot == null || GameActions.instance == null) {
       actionPanel.DisableButtons();
       return;
     }
 
-    if(GameActions.instance == null)
-    {
-      if(actionPanel != null) actionPanel.gameObject.SetActive(false);
+    if (GameActions.instance == null) {
+      if (actionPanel != null)
+        actionPanel.gameObject.SetActive(false);
       return;
     }
     
@@ -45,8 +41,7 @@ public class CozmoVision_AutoSelect : CozmoVision
 
     ShowObservedObjects();
 
-    if(!robot.isBusy)
-    {
+    if (!robot.isBusy) {
       robot.selectedObjects.Clear();
       observedObjects.Clear();
       observedObjects.AddRange(robot.pertinentObjects);
@@ -56,8 +51,7 @@ public class CozmoVision_AutoSelect : CozmoVision
         return obj1.Distance.CompareTo( obj2.Distance );   
       } );*/
 
-      observedObjects.Sort(( obj1, obj2) => // sort by most center of view
-      {
+      observedObjects.Sort(( obj1, obj2) => { // sort by most center of view
         Vector2 center = NativeResolution * 0.5f;
 
         return Vector2.Distance(obj1.VizRect.center, center).CompareTo(Vector2.Distance(obj2.VizRect.center, center));   
@@ -72,42 +66,33 @@ public class CozmoVision_AutoSelect : CozmoVision
         }
       }*/
 
-      for(int i = 1; i < observedObjects.Count; ++i) // if not on top of selected block, remove
-      {
-        if(Vector2.Distance(observedObjects[0].WorldPosition, observedObjects[i].WorldPosition) > observedObjects[0].Size.x * 0.5f)
-        {
+      for (int i = 1; i < observedObjects.Count; ++i) { // if not on top of selected block, remove
+        if (Vector2.Distance(observedObjects[0].WorldPosition, observedObjects[i].WorldPosition) > observedObjects[0].Size.x * 0.5f) {
           observedObjects.RemoveAt(i--);
         }
       }
 
-      observedObjects.Sort(( obj1, obj2) =>
-      {
+      observedObjects.Sort(( obj1, obj2) => {
         return obj1.WorldPosition.z.CompareTo(obj2.WorldPosition.z);
       });
 
-      if(robot.Status(RobotStatusFlag.IS_CARRYING_BLOCK)) // if holding a block
-      {
-        if(observedObjects.Count > 0 && observedObjects[0] != robot.carryingObject) // if can see at least one block
-        {
+      if (robot.Status(RobotStatusFlag.IS_CARRYING_BLOCK)) { // if holding a block
+        if (observedObjects.Count > 0 && observedObjects[0] != robot.carryingObject) { // if can see at least one block
           robot.selectedObjects.Add(observedObjects[0]);
           
-          if(observedObjects.Count == 1)
-          {
+          if (observedObjects.Count == 1) {
             robot.TrackToObject(robot.selectedObjects[0]);
           }
         }
         
-      } else // if not holding a block
-      {
-        if(observedObjects.Count > 0)
-        {
-          for(int i = 0; i < 2 && i < observedObjects.Count; ++i)
-          {
+      }
+      else { // if not holding a block
+        if (observedObjects.Count > 0) {
+          for (int i = 0; i < 2 && i < observedObjects.Count; ++i) {
             robot.selectedObjects.Add(observedObjects[i]);
           }
           
-          if(observedObjects.Count == 1)
-          {
+          if (observedObjects.Count == 1) {
             robot.TrackToObject(robot.selectedObjects[0]);
           }
         }
@@ -117,11 +102,10 @@ public class CozmoVision_AutoSelect : CozmoVision
 
     RefreshFade();
 
-    if(!actionPanel.allDisabled)
-    {
+    if (!actionPanel.allDisabled) {
       FadeIn();
-    } else
-    {
+    }
+    else {
       FadeOut();
     }
 
@@ -129,12 +113,9 @@ public class CozmoVision_AutoSelect : CozmoVision
     Dings();
   }
 
-  protected override void Dings()
-  {
-    if(robot != null)
-    {
-      if(!robot.isBusy && robot.selectedObjects.Count > 0/*robot.lastSelectedObjects.Count*/)
-      {
+  protected override void Dings() {
+    if (robot != null) {
+      if (!robot.isBusy && robot.selectedObjects.Count > 0/*robot.lastSelectedObjects.Count*/) {
         Ding(true);
       }
       /*else if( robot.selectedObjects.Count < robot.lastSelectedObjects.Count )

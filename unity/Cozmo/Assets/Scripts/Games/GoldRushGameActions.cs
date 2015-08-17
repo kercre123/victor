@@ -1,8 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class GoldRushGameActions : GameActions
-{
+public class GoldRushGameActions : GameActions {
 
   //public override string TARGET { get { return "Search"; } }
   //public override string PICK_UP { get { return "Pick Up"; } }
@@ -15,8 +14,7 @@ public class GoldRushGameActions : GameActions
 
   [SerializeField] GoldRushController goldController;
 
-  protected override void Awake()
-  {
+  protected override void Awake() {
     base.Awake();
   }
 
@@ -33,40 +31,33 @@ public class GoldRushGameActions : GameActions
   }
   */
   
-  protected override void _SetActionButtons(bool isSlider) // 0 is bottom button, 1 is top button, 2 is center button
-  {
-    if(robot.isBusy) return;
+  protected override void _SetActionButtons(bool isSlider) { // 0 is bottom button, 1 is top button, 2 is center button
+    if (robot.isBusy)
+      return;
 
-    if(robot.Status(RobotStatusFlag.IS_CARRYING_BLOCK))
-    {
-      if(goldController.state == GameController.GameState.PRE_GAME)
-      {
-        if(robot.selectedObjects.Count > 0 && buttons.Length > 1) buttons[1].SetMode(ActionButton.Mode.STACK, robot.selectedObjects[0]);
+    if (robot.Status(RobotStatusFlag.IS_CARRYING_BLOCK)) {
+      if (goldController.state == GameController.GameState.PRE_GAME) {
+        if (robot.selectedObjects.Count > 0 && buttons.Length > 1)
+          buttons[1].SetMode(ActionButton.Mode.STACK, robot.selectedObjects[0]);
       }
 
-      if(goldController.inDepositRange || goldController.inExtractRange)
-      {
-        if(buttons.Length > 2 && isSlider)
-        {
+      if (goldController.inDepositRange || goldController.inExtractRange) {
+        if (buttons.Length > 2 && isSlider) {
           buttons[2].SetMode(ActionButton.Mode.DROP, null, null, true);
-        } else if(buttons.Length > 0)
-        {
+        }
+        else if (buttons.Length > 0) {
           buttons[0].SetMode(ActionButton.Mode.DROP, null);
         }
       }
-    } else
-    {
-      if(goldController.state == GameController.GameState.PRE_GAME)
-      {
-        if(robot.selectedObjects.Count == 1 && robot.selectedObjects[0].isActive)
-        {
+    }
+    else {
+      if (goldController.state == GameController.GameState.PRE_GAME) {
+        if (robot.selectedObjects.Count == 1 && robot.selectedObjects[0].isActive) {
           buttons[2].SetMode(ActionButton.Mode.PICK_UP, robot.selectedObjects[0], " Extractor", true);
-        } else
-        {
-          for(int i = 0; i < robot.selectedObjects.Count && i < 2 && i < buttons.Length; ++i)
-          {
-            if(robot.selectedObjects[i].isActive)
-            {
+        }
+        else {
+          for (int i = 0; i < robot.selectedObjects.Count && i < 2 && i < buttons.Length; ++i) {
+            if (robot.selectedObjects[i].isActive) {
               buttons[2].SetMode(ActionButton.Mode.PICK_UP, robot.selectedObjects[i], " Extractor", true);
             }
           }
@@ -74,42 +65,41 @@ public class GoldRushGameActions : GameActions
       }
     }
     
-    if((goldController.state == GameController.GameState.PRE_GAME || goldController.state == GameController.GameState.PLAYING) && buttons.Length > 2)
-    {
-      if(isSlider)
-      {
+    if ((goldController.state == GameController.GameState.PRE_GAME || goldController.state == GameController.GameState.PLAYING) && buttons.Length > 2) {
+      if (isSlider) {
         //buttons[2].SetMode( ActionButton.Mode.TARGET, null );
-        if(goldController.isReturning)
-        {
+        if (goldController.isReturning) {
           buttons[2].SetMode(ActionButton.Mode.DROP, null, null, true);
         }
-      } else if(robot.selectedObjects.Count > 0)
-      {
+      }
+      else if (robot.selectedObjects.Count > 0) {
         buttons[2].SetMode(ActionButton.Mode.CANCEL, null);
       }
     }
   }
 
-  public override void Drop(bool onRelease, ObservedObject selectedObject)
-  {
-    if(!onRelease) return;
+  public override void Drop(bool onRelease, ObservedObject selectedObject) {
+    if (!onRelease)
+      return;
 
     ActionButtonClick();
 
     //extract or deposit
-    if(goldController.inExtractRange)
-    {
-      if(CozmoBusyPanel.instance != null) CozmoBusyPanel.instance.SetDescription("Cozmo is attempting to Extract\n the Energy");
+    if (goldController.inExtractRange) {
+      if (CozmoBusyPanel.instance != null)
+        CozmoBusyPanel.instance.SetDescription("Cozmo is attempting to Extract\n the Energy");
 
       goldController.BeginExtracting();
-    } else if(goldController.inDepositRange)
-    {
-      if(CozmoBusyPanel.instance != null) CozmoBusyPanel.instance.SetDescription("Cozmo is attempting to Deposit\n the Energy");
+    }
+    else if (goldController.inDepositRange) {
+      if (CozmoBusyPanel.instance != null)
+        CozmoBusyPanel.instance.SetDescription("Cozmo is attempting to Deposit\n the Energy");
 
       goldController.BeginDepositing();
-    } else if(goldController.isReturning)
-    {
-      if(CozmoBusyPanel.instance != null) CozmoBusyPanel.instance.SetDescription("Cozmo is attempting to Deposit\n the Energy");
+    }
+    else if (goldController.isReturning) {
+      if (CozmoBusyPanel.instance != null)
+        CozmoBusyPanel.instance.SetDescription("Cozmo is attempting to Deposit\n the Energy");
 
       goldController.BeginAutoDepositing();
     }

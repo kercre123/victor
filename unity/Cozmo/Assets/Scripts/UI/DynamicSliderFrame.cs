@@ -21,28 +21,34 @@ public class DynamicSliderFrame : MonoBehaviour, IPointerDownHandler, IPointerUp
     sliderTrans = slider.transform as RectTransform;
     sliderTrigger = slider.gameObject.GetComponent<EventTrigger>();
 
-    canvas = GetComponentInParent<Canvas>();
+    canvas = GetComponentInParent<Canvas>(); 
   }
-  
+
   void OnEnable() {
     RefreshToScreenSettings();
 
     ScreenMultiSettingsDetector.ShareSettings += RefreshToScreenSettings;
 
-    if(hintsToHide != null) hintsToHide.gameObject.SetActive(dynamic);
-    if(description != null) description.gameObject.SetActive(true);
-    if(sliderTrans != null) sliderTrans.gameObject.SetActive(!dynamic);
+    if (hintsToHide != null)
+      hintsToHide.gameObject.SetActive(dynamic);
+    if (description != null)
+      description.gameObject.SetActive(true);
+    if (sliderTrans != null)
+      sliderTrans.gameObject.SetActive(!dynamic);
   }
 
   void OnDisable() {
-    if(sliderTrans != null) sliderTrans.gameObject.SetActive(false);
-    if(hintsToHide != null) hintsToHide.gameObject.SetActive(false);
-    if(description != null) description.gameObject.SetActive(false);
+    if (sliderTrans != null)
+      sliderTrans.gameObject.SetActive(false);
+    if (hintsToHide != null)
+      hintsToHide.gameObject.SetActive(false);
+    if (description != null)
+      description.gameObject.SetActive(false);
     ScreenMultiSettingsDetector.ShareSettings -= RefreshToScreenSettings;
   }
 
   public void OnPointerDown(PointerEventData eventData) {
-    if(dynamic) {
+    if (dynamic) {
       Vector2 localPointerPos;
       RectTransformUtility.ScreenPointToLocalPointInRectangle(rTrans, eventData.position, canvas.renderMode != RenderMode.ScreenSpaceOverlay ? canvas.worldCamera : null, out localPointerPos);
       sliderTrans.gameObject.SetActive(true);
@@ -51,41 +57,48 @@ public class DynamicSliderFrame : MonoBehaviour, IPointerDownHandler, IPointerUp
       sliderTrans.anchoredPosition = localPointerPos;
 
       //Debug.Log("DynamicSliderFrame sliderTrans.anchoredPosition("+sliderTrans.anchoredPosition+") eventData.position("+eventData.position+") localPointerPos("+localPointerPos+")");
-      if(hintsToHide != null) {
+      if (hintsToHide != null) {
         hintsToHide.gameObject.SetActive(false);
       }
       slider.OnPointerDown(eventData);
-      if(sliderTrigger != null) sliderTrigger.OnPointerDown(eventData);
+      if (sliderTrigger != null)
+        sliderTrigger.OnPointerDown(eventData);
     }
-    else if(RectTransformUtility.RectangleContainsScreenPoint(sliderTrans, eventData.position, canvas.GetComponent<Camera>())) {
+    else if (RectTransformUtility.RectangleContainsScreenPoint(sliderTrans, eventData.position, canvas.GetComponent<Camera>())) {
       slider.OnPointerDown(eventData);
-      if(sliderTrigger != null) sliderTrigger.OnPointerDown(eventData);
+      if (sliderTrigger != null)
+        sliderTrigger.OnPointerDown(eventData);
     }
   }
 
   public void OnPointerUp(PointerEventData eventData) {
 
-    if(dynamic) {
+    if (dynamic) {
       slider.OnPointerUp(eventData);
-      if(sliderTrigger != null) sliderTrigger.OnPointerUp(eventData);
+      if (sliderTrigger != null)
+        sliderTrigger.OnPointerUp(eventData);
       sliderTrans.gameObject.SetActive(false);
 
-      if(hintsToHide != null) hintsToHide.gameObject.SetActive(true);
+      if (hintsToHide != null)
+        hintsToHide.gameObject.SetActive(true);
     }
-    else if(RectTransformUtility.RectangleContainsScreenPoint(sliderTrans, eventData.position, canvas.GetComponent<Camera>())) {
+    else if (RectTransformUtility.RectangleContainsScreenPoint(sliderTrans, eventData.position, canvas.GetComponent<Camera>())) {
       slider.OnPointerUp(eventData);
-      if(sliderTrigger != null) sliderTrigger.OnPointerUp(eventData);
+      if (sliderTrigger != null)
+        sliderTrigger.OnPointerUp(eventData);
     }
   }
 
   public void OnDrag(PointerEventData eventData) {
-    if(dynamic) {
+    if (dynamic) {
       slider.OnDrag(eventData);
-      if(sliderTrigger != null) sliderTrigger.OnDrag(eventData);
+      if (sliderTrigger != null)
+        sliderTrigger.OnDrag(eventData);
     }
-    else if(RectTransformUtility.RectangleContainsScreenPoint(sliderTrans, eventData.position, canvas.GetComponent<Camera>())) {
+    else if (RectTransformUtility.RectangleContainsScreenPoint(sliderTrans, eventData.position, canvas.GetComponent<Camera>())) {
       slider.OnDrag(eventData);
-      if(sliderTrigger != null) sliderTrigger.OnDrag(eventData);
+      if (sliderTrigger != null)
+        sliderTrigger.OnDrag(eventData);
     }
   }
 

@@ -23,21 +23,24 @@ public class TouchCamera : MonoBehaviour {
 
   int touchCount {
     get {
-      if(Input.touchSupported) return Input.touchCount;
+      if (Input.touchSupported)
+        return Input.touchCount;
       return Input.GetMouseButton(1) ? 2 : Input.GetMouseButton(0) ? 1 : 0;
     }
   }
 
   Vector2 touch0 {
     get {
-      if(Input.touchSupported) return Input.GetTouch(0).position;
+      if (Input.touchSupported)
+        return Input.GetTouch(0).position;
       return Input.mousePosition;
     }
   }
 
   Vector2 touch1 {
     get {
-      if(Input.touchSupported) return Input.GetTouch(1).position;
+      if (Input.touchSupported)
+        return Input.GetTouch(1).position;
       return (Vector2)Input.mousePosition + Vector2.one;
     }
   }
@@ -50,7 +53,8 @@ public class TouchCamera : MonoBehaviour {
     }
 
     Vector2 viewPortTouchPos = cam.ScreenToViewportPoint(touch0);
-    if(!rect.Contains(viewPortTouchPos)) return;
+    if (!rect.Contains(viewPortTouchPos))
+      return;
 
     if (touchCount == 1) {
       if (oldTouchPositions[0] == null || oldTouchPositions[1] != null) {
@@ -63,10 +67,10 @@ public class TouchCamera : MonoBehaviour {
         Vector2 delta = (Vector2)newTouchPosition - (Vector2)oldTouchPositions[0];
 
         float panFactor = Mathf.Abs(delta.x) / GetComponent<Camera>().pixelWidth;
-        float panAngle = Mathf.Lerp(0f, 180f, panFactor ) * Mathf.Sign(delta.x);
+        float panAngle = Mathf.Lerp(0f, 180f, panFactor) * Mathf.Sign(delta.x);
 
         float pitchFactor = Mathf.Abs(delta.y) / GetComponent<Camera>().pixelHeight;
-        float pitchAngle = Mathf.Lerp(0f, 90f, pitchFactor ) * -Mathf.Sign(delta.y);
+        float pitchAngle = Mathf.Lerp(0f, 90f, pitchFactor) * -Mathf.Sign(delta.y);
 
         //for now target is origin...this will likely change to a transform
         Vector3 targetToCam = transform.position - Vector3.zero;
@@ -75,11 +79,11 @@ public class TouchCamera : MonoBehaviour {
 
         float angleFromUp = Vector3.Angle(Vector3.up, targetToCam);
 
-        if(angleFromUp > 70f) {
+        if (angleFromUp > 70f) {
           float overPitch = angleFromUp - 70f;
           targetToCam = Quaternion.AngleAxis(overPitch, transform.right) * targetToCam;
         }
-        else if(angleFromUp < 10f) {
+        else if (angleFromUp < 10f) {
           float underPitch = 10f - angleFromUp;
           targetToCam = Quaternion.AngleAxis(-underPitch, transform.right) * targetToCam;
         }

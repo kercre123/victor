@@ -9,8 +9,7 @@ using U2G = Anki.Cozmo.ExternalInterface;
 /// <summary>
 /// The type of protocol to communicate over.
 /// </summary>
-public enum ChannelProtocol
-{
+public enum ChannelProtocol {
   Tcp = 0,
   Udp,
 }
@@ -18,8 +17,7 @@ public enum ChannelProtocol
 /// <summary>
 /// The reason a connection has failed.
 /// </summary>
-public enum DisconnectionReason
-{
+public enum DisconnectionReason {
   FailedToListen,
   FailedToAdvertise,
   ConnectionLost,
@@ -37,8 +35,7 @@ public enum DisconnectionReason
 /// <summary>
 /// Base class for channels between C++ and C#.
 /// </summary>
-public abstract class ChannelBase
-{
+public abstract class ChannelBase {
 
   /// <summary>
   /// True if the connection is actively advertising or is established. Only valid from the main Unity thread.
@@ -70,26 +67,20 @@ public abstract class ChannelBase
   /// </summary>
   public abstract bool HasPendingOperations { get; }
 
-  protected void RaiseConnectedToClient(string connectionInformation)
-  {
-    if(ConnectedToClient != null)
-    {
+  protected void RaiseConnectedToClient(string connectionInformation) {
+    if (ConnectedToClient != null) {
       ConnectedToClient(connectionInformation);
     }
   }
 
-  protected void RaiseDisconnectedFromClient(DisconnectionReason reason)
-  {
-    if(DisconnectedFromClient != null)
-    {
+  protected void RaiseDisconnectedFromClient(DisconnectionReason reason) {
+    if (DisconnectedFromClient != null) {
       DisconnectedFromClient(reason);
     }
   }
 
-  protected void RaiseMessageReceived(G2U.MessageEngineToGame message)
-  {
-    if(MessageReceived != null)
-    {
+  protected void RaiseMessageReceived(G2U.MessageEngineToGame message) {
+    if (MessageReceived != null) {
       MessageReceived(message);
     }
   }

@@ -4,8 +4,7 @@ using System.Collections;
 /// <summary>
 /// some research into adjusting driving controls dynamically to avoid obstacles of which cozmo is aware
 /// </summary>
-public class CozmoAssistedControls : MonoBehaviour
-{
+public class CozmoAssistedControls : MonoBehaviour {
   public static CozmoAssistedControls instance;
   [SerializeField] float lookAheadSeconds = 0.5f;
   [SerializeField] float detectRange = 100;
@@ -25,14 +24,12 @@ public class CozmoAssistedControls : MonoBehaviour
 
   const float max_wheel_speed = 160;
 
-  void Awake()
-  {
+  void Awake() {
     instance = this;
     potentialCollisionTime = float.MinValue;
   }
 
-  void Start()
-  {
+  void Start() {
     robot = RobotEngineManager.instance.current;
     objNormals = new Vector3[4];
     robotVerts = new Vector3[4];
@@ -41,13 +38,11 @@ public class CozmoAssistedControls : MonoBehaviour
     lastWheelSpeeds = new float[2];
   }
 
-  public float[] AdjustForCollsion(float left_speed, float right_speed)
-  {
+  public float[] AdjustForCollsion(float left_speed, float right_speed) {
     wheelSpeeds[0] = left_speed;
     wheelSpeeds[1] = right_speed;
 
-    if(left_speed == 0 && right_speed == 0)
-    {
+    if (left_speed == 0 && right_speed == 0) {
       sawCollsionLastFrame = false;
       return wheelSpeeds;
     }
@@ -120,11 +115,9 @@ public class CozmoAssistedControls : MonoBehaviour
 
 
 
-    for(int i = 0; i < robot.knownObjects.Count; i++)
-    {
+    for (int i = 0; i < robot.knownObjects.Count; i++) {
       ObservedObject obj = robot.knownObjects[i];
-      if(Vector3.Magnitude(robot.WorldPosition - obj.WorldPosition) < detectRange)
-      {
+      if (Vector3.Magnitude(robot.WorldPosition - obj.WorldPosition) < detectRange) {
         bool collided = true;
 
         objNormals[0] = obj.Right; // right
@@ -136,8 +129,7 @@ public class CozmoAssistedControls : MonoBehaviour
         Vector3 min_overlap_axis = new Vector3();
         float min_overlap = float.MaxValue;
 
-        for(int side = 0; side < 4; side++)
-        {
+        for (int side = 0; side < 4; side++) {
           float obj_min = Vector3.Dot(objNormals[side], obj.WorldPosition - 22 * objNormals[side]); 
           float obj_max = Vector3.Dot(objNormals[side], obj.WorldPosition + 22 * objNormals[side]); 
 
@@ -150,19 +142,19 @@ public class CozmoAssistedControls : MonoBehaviour
           float min = float.MaxValue;
           float max = float.MinValue;
 
-          for(int vert = 0; vert < 4; vert++)
-          {
-            if(projectedRobotVerts[vert] < min) min = projectedRobotVerts[vert];
+          for (int vert = 0; vert < 4; vert++) {
+            if (projectedRobotVerts[vert] < min)
+              min = projectedRobotVerts[vert];
 
-            if(projectedRobotVerts[vert] > max) max = projectedRobotVerts[vert];
+            if (projectedRobotVerts[vert] > max)
+              max = projectedRobotVerts[vert];
           }
 
-          if(max < obj_min || min > obj_max)
-          {
+          if (max < obj_min || min > obj_max) {
             collided = false;
             break;
-          } else
-          {
+          }
+          else {
             // get the amount of overlap
             // obj_min       obj_max
             // ^             ^
@@ -171,8 +163,7 @@ public class CozmoAssistedControls : MonoBehaviour
             //           ^            ^
             //           **************
             float overlap = (max - obj_min) - (max - obj_max) - (min - obj_min);
-            if(overlap < min_overlap)
-            {
+            if (overlap < min_overlap) {
               min_overlap = overlap;
               min_overlap_axis = objNormals[side];
             }
@@ -180,13 +171,11 @@ public class CozmoAssistedControls : MonoBehaviour
 
         }
 
-        if(collided && potentialCollisionTime < Time.realtimeSinceStartup)
-        {
+        if (collided && potentialCollisionTime < Time.realtimeSinceStartup) {
           // make our adjustements
           RobotEngineManager.instance.VisualizeQuad(24, CozmoPalette.ColorToUInt(Color.red), robotVerts[0], robotVerts[1], robotVerts[3], robotVerts[2]);
           Debug.LogWarning("min_overlap: " + min_overlap + ", normal: " + min_overlap_axis);
-          if(!sawCollsionLastFrame)
-          {
+          if (!sawCollsionLastFrame) {
             sawCollsionLastFrame = true;
             potentialCollisionTime = Time.realtimeSinceStartup + lookAheadSeconds;
           }
@@ -198,8 +187,7 @@ public class CozmoAssistedControls : MonoBehaviour
           heading = timeToCollsion * (left_speed * robot.Right - right_speed * robot.Right + (left_speed + right_speed) * robot.Forward);
           Vector3 circle_center = new Vector3();
 
-          if(Vector2.Dot(heading_right, min_overlap_axis) > 0)
-          {
+          if (Vector2.Dot(heading_right, min_overlap_axis) > 0) {
             // need to move right, so slow right treads
             newDesiredHeading = heading + min_overlap * heading_right;
 
@@ -211,8 +199,8 @@ public class CozmoAssistedControls : MonoBehaviour
             float new_right_speed = (left_speed / (23.25f + radius)) * (radius - 23.25f);
 
             wheelSpeeds[1] = new_right_speed;
-          } else
-          {
+          }
+          else {
             // need to move left, so slow left treads
             newDesiredHeading = heading - min_overlap * heading_right;
             Vector3 new_desired_pos = newDesiredHeading + robot.WorldPosition;
@@ -230,17 +218,17 @@ public class CozmoAssistedControls : MonoBehaviour
           lastWheelSpeeds = wheelSpeeds;
 
 
-        } else if(potentialCollisionTime >= Time.realtimeSinceStartup)
-        {
+        }
+        else if (potentialCollisionTime >= Time.realtimeSinceStartup) {
           Debug.Log("saw collision, still in tweak window, potentialCollisionTime: " + potentialCollisionTime + ", realtimeSinceStartup:" + Time.realtimeSinceStartup);
           // stay on course
           wheelSpeeds = lastWheelSpeeds;
           RobotEngineManager.instance.VisualizeQuad(24, CozmoPalette.ColorToUInt(Color.blue), robotVerts[0], robotVerts[1], robotVerts[3], robotVerts[2]);
-        } else if(collided)
-        {
+        }
+        else if (collided) {
           Debug.Log("saw collision, outside tweak window, potentialCollisionTime: " + potentialCollisionTime + ", realtimeSinceStartup:" + Time.realtimeSinceStartup);
-        } else
-        {
+        }
+        else {
           sawCollsionLastFrame = false;
         }
         Debug.Log("wheelSpeeds[0]: " + wheelSpeeds[0] + ", wheelSpeeds[1]: " + wheelSpeeds[1]);
@@ -252,8 +240,7 @@ public class CozmoAssistedControls : MonoBehaviour
 
   #region helpers
 
-  void GetCircleOriginForPoints(Vector3 desired_position, out Vector3 circle_center)
-  {
+  void GetCircleOriginForPoints(Vector3 desired_position, out Vector3 circle_center) {
     circle_center = Vector3.zero;
     Vector3 robot_pos = robot.WorldPosition;
     float m = Mathf.Tan(robot.poseAngle_rad + (Mathf.PI / 2));
@@ -270,8 +257,7 @@ public class CozmoAssistedControls : MonoBehaviour
     // and c1 = (2*y_d - 2*y_r)/(2*x_r - 2*x_d)
     float c_denom = 2 * robot_pos.x - 2 * desired_position.x;
 
-    if(c_denom != 0)
-    {
+    if (c_denom != 0) {
       float c0 = (x_r_2 - x_d_2 + y_r_2 - y_d_2) / (c_denom);
       float c1 = (2 * desired_position.y - 2 * robot_pos.y) / (c_denom);
 

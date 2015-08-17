@@ -15,7 +15,7 @@ public class ObservedObjectBox : MonoBehaviour
     private set {
       _images = value;
     }
-  }
+  } 
 
   private Text _text;
   public Text text {

@@ -3,8 +3,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
-public partial class AdvertisementRegistrationMsg
-{
+public partial class AdvertisementRegistrationMsg {
   public ushort port;
   public byte[] ip = new byte[18];
   public byte id;
@@ -12,13 +11,11 @@ public partial class AdvertisementRegistrationMsg
   public byte enableAdvertisement;
   public byte oneShot;
 
-  public AdvertisementRegistrationMsg()
-  {
+  public AdvertisementRegistrationMsg() {
   }
 
   /**** Pack ****/
-  public System.IO.Stream Pack(System.IO.Stream stream)
-  {
+  public System.IO.Stream Pack(System.IO.Stream stream) {
     System.IO.BinaryWriter writer = new System.IO.BinaryWriter(stream);
     writer.Write(port);
     writer.Write(ip);
@@ -30,12 +27,10 @@ public partial class AdvertisementRegistrationMsg
   }
 
   /**** Unpack ****/
-  public System.IO.Stream Unpack(System.IO.Stream stream)
-  {
+  public System.IO.Stream Unpack(System.IO.Stream stream) {
     System.IO.BinaryReader reader = new System.IO.BinaryReader(stream);
     port = reader.ReadUInt16();
-    for(int i = 0; i < ip.Length; ++i)
-    {
+    for (int i = 0; i < ip.Length; ++i) {
       ip[i] = reader.ReadByte();
     }
     id = reader.ReadByte();
@@ -45,8 +40,7 @@ public partial class AdvertisementRegistrationMsg
     return stream;
   }
 
-  public int Size
-  {
+  public int Size {
     get {
       int result = 0;
       result += 2;

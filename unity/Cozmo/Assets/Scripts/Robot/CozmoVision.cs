@@ -8,8 +8,7 @@ using System.Collections.Generic;
 /// <summary>
 /// handles the unity side of cozmo's camera display as well as managing the actionpanel used to interact with objects he sees
 /// </summary>
-public class CozmoVision : MonoBehaviour
-{
+public class CozmoVision : MonoBehaviour {
   [SerializeField] protected Image image;
   [SerializeField] protected Text text;
   [SerializeField] protected AudioClip newObjectObservedSound;
@@ -60,25 +59,21 @@ public class CozmoVision : MonoBehaviour
 
   protected Robot robot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.current : null; } }
 
-  protected virtual void Reset(DisconnectionReason reason = DisconnectionReason.None)
-  {
-    for(int i = 0; i < dingTimes.Length; ++i)
-    {
+  protected virtual void Reset(DisconnectionReason reason = DisconnectionReason.None) {
+    for (int i = 0; i < dingTimes.Length; ++i) {
       dingTimes[i] = 0f;
     }
 
     imageRequested = false;
   }
 
-  protected virtual void Awake()
-  {
+  protected virtual void Awake() {
     rTrans = transform as RectTransform;
     imageRectTrans = image.gameObject.GetComponent<RectTransform>();
     canvas = image.gameObject.GetComponentInParent<Canvas>();
     canvasScaler = canvas.gameObject.GetComponent<CanvasScaler>();
 
-    if(observedObjectCanvasPrefab != null)
-    {
+    if (observedObjectCanvasPrefab != null) {
       observedObjectCanvas = (GameObject)GameObject.Instantiate(observedObjectCanvasPrefab);
 
       Canvas canv = observedObjectCanvas.GetComponent<Canvas>();
@@ -87,18 +82,17 @@ public class CozmoVision : MonoBehaviour
       observedObjectBoxes.Clear();
       observedObjectBoxes.AddRange(observedObjectCanvas.GetComponentsInChildren<ObservedObjectBox>(true));
       
-      foreach(ObservedObjectBox box in observedObjectBoxes) box.gameObject.SetActive(false);
+      foreach (ObservedObjectBox box in observedObjectBoxes)
+        box.gameObject.SetActive(false);
 
     }
 
-    if(actionPanel != null)
-    {
+    if (actionPanel != null) {
       actionPanel.gameObject.SetActive(false);
     }
   }
 
-  protected virtual void ObservedObjectSeen(ObservedObjectBox box, ObservedObject observedObject)
-  {
+  protected virtual void ObservedObjectSeen(ObservedObjectBox box, ObservedObject observedObject) {
     float boxX = (observedObject.VizRect.x / NativeResolution.x) * imageRectTrans.sizeDelta.x;
     float boxY = (observedObject.VizRect.y / NativeResolution.y) * imageRectTrans.sizeDelta.y;
     float boxW = (observedObject.VizRect.width / NativeResolution.x) * imageRectTrans.sizeDelta.x;
@@ -107,12 +101,11 @@ public class CozmoVision : MonoBehaviour
     box.rectTransform.sizeDelta = new Vector2(boxW, boxH);
     box.rectTransform.anchoredPosition = new Vector2(boxX, -boxY);
     
-    if(robot.selectedObjects.Find(x => x == observedObject) != null)
-    {
+    if (robot.selectedObjects.Find(x => x == observedObject) != null) {
       box.SetColor(selected);
       box.text.text = observedObject.InfoString;
-    } else
-    {
+    }
+    else {
       box.SetColor(select);
       box.text.text = observedObject.SelectInfoString;
       box.observedObject = observedObject;
@@ -121,14 +114,12 @@ public class CozmoVision : MonoBehaviour
     box.gameObject.SetActive(true);
   }
 
-  protected void UnselectNonObservedObjects()
-  {
-    if(robot == null || robot.pertinentObjects == null) return;
+  protected void UnselectNonObservedObjects() {
+    if (robot == null || robot.pertinentObjects == null)
+      return;
 
-    for(int i = 0; i < robot.selectedObjects.Count; ++i)
-    {
-      if(robot.pertinentObjects.Find(x => x == robot.selectedObjects[i]) == null)
-      {
+    for (int i = 0; i < robot.selectedObjects.Count; ++i) {
+      if (robot.pertinentObjects.Find(x => x == robot.selectedObjects[i]) == null) {
         robot.selectedObjects.RemoveAt(i--);
       }
     }
@@ -138,41 +129,36 @@ public class CozmoVision : MonoBehaviour
     }*/
   }
 
-  protected virtual void ShowObservedObjects()
-  {
-    if(!image.enabled) return;
+  protected virtual void ShowObservedObjects() {
+    if (!image.enabled)
+      return;
 
-    if(robot == null || robot.pertinentObjects == null) return;
+    if (robot == null || robot.pertinentObjects == null)
+      return;
     
-    for(int i = 0; i < observedObjectBoxes.Count; ++i)
-    {
-      if(robot.pertinentObjects.Count > i)
-      {
+    for (int i = 0; i < observedObjectBoxes.Count; ++i) {
+      if (robot.pertinentObjects.Count > i) {
         ObservedObjectSeen(observedObjectBoxes[i], robot.pertinentObjects[i]);
-      } else
-      {
+      }
+      else {
         observedObjectBoxes[i].gameObject.SetActive(false);
       }
     }
 
   }
 
-  private void RobotImage(Sprite sprite)
-  {
+  private void RobotImage(Sprite sprite) {
     image.sprite = sprite;
     
-    if(text.gameObject.activeSelf)
-    {
+    if (text.gameObject.activeSelf) {
       text.gameObject.SetActive(false);
     }
     
     ShowObservedObjects();
   }
 
-  private void RequestImage()
-  {
-    if(!imageRequested && robot != null)
-    {
+  private void RequestImage() {
+    if (!imageRequested && robot != null) {
       robot.RequestImage(RobotEngineManager.CameraResolution.CAMERA_RES_QVGA, RobotEngineManager.ImageSendMode_t.ISM_STREAM);
       robot.SetHeadAngle();
       robot.SetLiftHeight(0f);
@@ -180,24 +166,23 @@ public class CozmoVision : MonoBehaviour
     }
   }
 
-  protected virtual void OnEnable()
-  {
-    if(RobotEngineManager.instance != null)
-    {
+  protected virtual void OnEnable() {
+    if (RobotEngineManager.instance != null) {
       RobotEngineManager.instance.RobotImage += RobotImage;
       RobotEngineManager.instance.DisconnectedFromClient += Reset;
 
-      if(robot != null) robot.selectedObjects.Clear();
+      if (robot != null)
+        robot.selectedObjects.Clear();
     }
     
     RequestImage();
     VisionEnabled();
 
-    if(actionPanel != null) actionPanel.gameObject.SetActive(true);
+    if (actionPanel != null)
+      actionPanel.gameObject.SetActive(true);
   }
 
-  protected virtual void VisionEnabled()
-  {
+  protected virtual void VisionEnabled() {
     fadingIn = false;
     fadingOut = false;
     image.enabled = !OptionsScreen.GetToggleDisableVision();
@@ -218,15 +203,14 @@ public class CozmoVision : MonoBehaviour
     color.a = alpha;
     selected = color;
 
-    if(GameLayoutTracker.instance != null)
-    {
+    if (GameLayoutTracker.instance != null) {
       GameLayoutTracker.instance.Show();
     }
   }
 
-  protected void RefreshFade()
-  {
-    if(!fadingIn && !fadingOut) return;
+  protected void RefreshFade() {
+    if (!fadingIn && !fadingOut)
+      return;
 
     fadeTimer += Time.deltaTime;
 
@@ -235,16 +219,14 @@ public class CozmoVision : MonoBehaviour
     RefreshLoopingTargetSound(factor);
 
     float alpha = 0f;
-    if(fadingIn)
-    {
+    if (fadingIn) {
       alpha = Mathf.Lerp(fromAlpha, 1f, factor);
-    } else
-    {
+    }
+    else {
       alpha = Mathf.Lerp(fromAlpha, 0f, factor);
     }
 
-    if(fade || fadingIn)
-    {
+    if (fade || fadingIn) {
       Color color = image.color;
       color.a = alpha;
       image.color = color;
@@ -258,18 +240,17 @@ public class CozmoVision : MonoBehaviour
       selected = color;
     }
 
-    if(factor >= 1f)
-    {
+    if (factor >= 1f) {
       fadingIn = false;
       fadingOut = false;
     }
   }
 
-  protected void FadeIn()
-  {
+  protected void FadeIn() {
     PlayVisionActivateSound();
 
-    if(fadingIn || image.color.a >= 1f || !fade) return;
+    if (fadingIn || image.color.a >= 1f || !fade)
+      return;
 
     fadeTimer = 0f;
     fadingIn = true;
@@ -286,22 +267,20 @@ public class CozmoVision : MonoBehaviour
     color.a = fromAlpha;
     selected = color;
 
-    if(GameLayoutTracker.instance != null)
-    {
+    if (GameLayoutTracker.instance != null) {
       GameLayoutTracker.instance.Hide();
     }
 
-    if(CozmoStatus.instance != null)
-    {
+    if (CozmoStatus.instance != null) {
       CozmoStatus.instance.FadeOut();
     }
   }
 
-  protected void FadeOut()
-  {
+  protected void FadeOut() {
     PlayVisionDeactivateSound();
 
-    if(fadingOut || image.color.a < 1f || !fade) return;
+    if (fadingOut || image.color.a < 1f || !fade)
+      return;
 
     fadeTimer = 0f;
     fadingOut = true;
@@ -318,26 +297,24 @@ public class CozmoVision : MonoBehaviour
     color.a = fromAlpha;
     selected = color;
 
-    if(GameLayoutTracker.instance != null)
-    {
+    if (GameLayoutTracker.instance != null) {
       GameLayoutTracker.instance.Show();
     }
 
-    if(CozmoStatus.instance != null)
-    {
+    if (CozmoStatus.instance != null) {
       CozmoStatus.instance.FadeIn();
     }
   }
 
-  protected void StopLoopingTargetSound()
-  {
-    if(AudioManager.CozmoVisionLoop != null) AudioManager.CozmoVisionLoop.Stop();
+  protected void StopLoopingTargetSound() {
+    if (AudioManager.CozmoVisionLoop != null)
+      AudioManager.CozmoVisionLoop.Stop();
   }
 
-  protected void PlayVisionActivateSound()
-  {
-    if(AudioManager.CozmoVisionLoop == null || visionActivateSound == null || AudioManager.CozmoVisionLoop.clip == visionActiveLoop ||
-       actionPanel == null || !actionPanel.nonSearchActionAvailable || robot == null || robot.selectedObjects.Count == 0) return;
+  protected void PlayVisionActivateSound() {
+    if (AudioManager.CozmoVisionLoop == null || visionActivateSound == null || AudioManager.CozmoVisionLoop.clip == visionActiveLoop ||
+       actionPanel == null || !actionPanel.nonSearchActionAvailable || robot == null || robot.selectedObjects.Count == 0)
+      return;
 
     AudioManager.PlayOneShot(visionActivateSound, 0f, 1f, maxVisionStartVol);
 
@@ -347,9 +324,9 @@ public class CozmoVision : MonoBehaviour
     AudioManager.CozmoVisionLoop.Play();
   }
 
-  private void PlayVisionDeactivateSound()
-  {
-    if(visionDeactivateSound == null || AudioManager.CozmoVisionLoop == null || AudioManager.CozmoVisionLoop.clip != visionActiveLoop) return;
+  private void PlayVisionDeactivateSound() {
+    if (visionDeactivateSound == null || AudioManager.CozmoVisionLoop == null || AudioManager.CozmoVisionLoop.clip != visionActiveLoop)
+      return;
 
     AudioManager.PlayOneShot(visionDeactivateSound, 0f, 1f, maxVisionStopVol);
 
@@ -358,31 +335,28 @@ public class CozmoVision : MonoBehaviour
     fromVol = AudioManager.CozmoVisionLoop.volume;
   }
 
-  protected void RefreshLoopingTargetSound(float factor)
-  {
-    if(AudioManager.CozmoVisionLoop == null) return;
+  protected void RefreshLoopingTargetSound(float factor) {
+    if (AudioManager.CozmoVisionLoop == null)
+      return;
 
-    if(fadingIn)
-    {
+    if (fadingIn) {
       AudioManager.CozmoVisionLoop.volume = Mathf.Lerp(fromVol, maxLoopingVol, factor);
-    } else if(fadingOut)
-    {
+    }
+    else if (fadingOut) {
       AudioManager.CozmoVisionLoop.volume = Mathf.Lerp(fromVol, 0f, factor);
     }
 
-    if(factor >= 1f && fadingOut)
-    {
+    if (factor >= 1f && fadingOut) {
       AudioManager.CozmoVisionLoop.Stop();
     }
 
   }
 
-  protected virtual void Dings()
-  {
-    if(robot == null || robot.isBusy || robot.selectedObjects.Count > 0) return;
+  protected virtual void Dings() {
+    if (robot == null || robot.isBusy || robot.selectedObjects.Count > 0)
+      return;
       
-    if(robot.pertinentObjects.Count > 0/*lastObservedObjects.Count*/)
-    {
+    if (robot.pertinentObjects.Count > 0/*lastObservedObjects.Count*/) {
       Ding(true);
     }
     /*else if( robot.observedObjects.Count < lastObservedObjects.Count )
@@ -391,16 +365,13 @@ public class CozmoVision : MonoBehaviour
     }*/
   }
 
-  protected void Ding(bool found)
-  {
-    if(newObjectObservedSound == null) return;
+  protected void Ding(bool found) {
+    if (newObjectObservedSound == null)
+      return;
 
-    if(dingEnabled)
-    {
-      if(found)
-      {
-        if(dingTimes[0] + soundDelay < Time.time)
-        {
+    if (dingEnabled) {
+      if (found) {
+        if (dingTimes[0] + soundDelay < Time.time) {
           AudioManager.PlayOneShot(newObjectObservedSound);
         
           dingTimes[0] = Time.time;
@@ -409,16 +380,13 @@ public class CozmoVision : MonoBehaviour
     }
   }
 
-  protected virtual void LateUpdate()
-  {
-    if(robot != null)
-    {
+  protected virtual void LateUpdate() {
+    if (robot != null) {
       robot.lastObservedObjects.Clear();
       robot.lastSelectedObjects.Clear();
       robot.lastMarkersVisibleObjects.Clear();
       
-      if(!robot.isBusy)
-      {
+      if (!robot.isBusy) {
         robot.lastObservedObjects.AddRange(robot.observedObjects);
         robot.lastSelectedObjects.AddRange(robot.selectedObjects);
         robot.lastMarkersVisibleObjects.AddRange(robot.markersVisibleObjects);
@@ -426,40 +394,33 @@ public class CozmoVision : MonoBehaviour
     }
   }
 
-  protected virtual void OnDisable()
-  {
-    if(RobotEngineManager.instance != null)
-    {
+  protected virtual void OnDisable() {
+    if (RobotEngineManager.instance != null) {
       RobotEngineManager.instance.RobotImage -= RobotImage;
       RobotEngineManager.instance.DisconnectedFromClient -= Reset;
     }
     
-    foreach(ObservedObjectBox box in observedObjectBoxes)
-    {
-      if(box != null)
-      {
+    foreach (ObservedObjectBox box in observedObjectBoxes) {
+      if (box != null) {
         box.gameObject.SetActive(false);
       }
     }
 
     StopLoopingTargetSound();
 
-    if(actionPanel != null) actionPanel.gameObject.SetActive(false);
-    if(GameLayoutTracker.instance != null)
-    {
+    if (actionPanel != null)
+      actionPanel.gameObject.SetActive(false);
+    if (GameLayoutTracker.instance != null) {
       GameLayoutTracker.instance.Show();
     }
 
-    if(CozmoStatus.instance != null)
-    {
+    if (CozmoStatus.instance != null) {
       CozmoStatus.instance.FadeIn();
     }
   }
 
-  public void Selection(ObservedObject obj)
-  {
-    if(robot != null)
-    {
+  public void Selection(ObservedObject obj) {
+    if (robot != null) {
       robot.selectedObjects.Clear();
       robot.selectedObjects.Add(obj);
       robot.TrackToObject(obj);
@@ -468,8 +429,7 @@ public class CozmoVision : MonoBehaviour
     AudioManager.PlayOneShot(selectSound);
   }
 
-  public static void EnableDing(bool on = true)
-  {
+  public static void EnableDing(bool on = true) {
     dingEnabled = on;
   }
 

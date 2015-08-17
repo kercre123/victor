@@ -6,18 +6,15 @@ using System;
 /// class to manage a particula entry within the comboBox menu
 /// </summary>
 [Serializable]
-public class ComboBoxItem
-{
+public class ComboBoxItem {
   [SerializeField]
   private string _caption;
-  public string Caption
-  {
-    get
-    {
+
+  public string Caption {
+    get {
       return _caption;
     }
-    set
-    {
+    set {
       _caption = value;
       if (OnUpdate != null)
         OnUpdate();
@@ -26,14 +23,12 @@ public class ComboBoxItem
 
   [SerializeField]
   private Sprite _image;
-  public Sprite Image
-  {
-    get
-    {
+
+  public Sprite Image {
+    get {
       return _image;
     }
-    set
-    {
+    set {
       _image = value;
       if (OnUpdate != null)
         OnUpdate();
@@ -42,14 +37,12 @@ public class ComboBoxItem
 
   [SerializeField]
   private bool _isDisabled;
-  public bool IsDisabled
-  {
-    get
-    {
+
+  public bool IsDisabled {
+    get {
       return _isDisabled;
     }
-    set
-    {
+    set {
       _isDisabled = value;
       if (OnUpdate != null)
         OnUpdate();
@@ -60,58 +53,49 @@ public class ComboBoxItem
 
   [System.NonSerialized] public Action OnUpdate;
 
-  public ComboBoxItem(string caption)
-  {
+  public ComboBoxItem(string caption) {
     _caption = caption;
   }
 
-  public ComboBoxItem(Sprite image)
-  {
+  public ComboBoxItem(Sprite image) {
     _image = image;
   }
 
-  public ComboBoxItem(string caption, bool disabled)
-  {
+  public ComboBoxItem(string caption, bool disabled) {
     _caption = caption;
     _isDisabled = disabled;
   }
 
-  public ComboBoxItem(Sprite image, bool disabled)
-  {
+  public ComboBoxItem(Sprite image, bool disabled) {
     _image = image;
     _isDisabled = disabled;
   }
 
-  public ComboBoxItem(string caption, Sprite image, bool disabled)
-  {
+  public ComboBoxItem(string caption, Sprite image, bool disabled) {
     _caption = caption;
     _image = image;
     _isDisabled = disabled;
   }
 
-  public ComboBoxItem(string caption, Sprite image, bool disabled, Action onSelect)
-  {
+  public ComboBoxItem(string caption, Sprite image, bool disabled, Action onSelect) {
     _caption = caption;
     _image = image;
     _isDisabled = disabled;
     OnSelect = onSelect;
   }
 
-  public ComboBoxItem(string caption, Sprite image, Action onSelect)
-  {
+  public ComboBoxItem(string caption, Sprite image, Action onSelect) {
     _caption = caption;
     _image = image;
     OnSelect = onSelect;
   }
 
-  public ComboBoxItem(string caption, Action onSelect)
-  {
+  public ComboBoxItem(string caption, Action onSelect) {
     _caption = caption;
     OnSelect = onSelect;
   }
 
-  public ComboBoxItem(Sprite image, Action onSelect)
-  {
+  public ComboBoxItem(Sprite image, Action onSelect) {
     _image = image;
     OnSelect = onSelect;
   }

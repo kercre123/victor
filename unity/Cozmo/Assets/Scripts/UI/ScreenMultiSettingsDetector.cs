@@ -18,9 +18,9 @@ public class ScreenMultiSettingsDetector : MonoBehaviour {
 
   public static ScreenMultiSettingsDetector instance;
 
-  void Awake() {
-    if(instance != null && instance != this) {
-      if(Application.isPlaying) {
+  void Awake() { 
+    if (instance != null && instance != this) {
+      if (Application.isPlaying) {
         GameObject.Destroy(gameObject);
         return;
       }
@@ -34,12 +34,12 @@ public class ScreenMultiSettingsDetector : MonoBehaviour {
     instance = this;
   }
 
-  void OnEnable () {
+  void OnEnable() {
     Refresh();
   }
 
-  void Update () {
-    if(Dirty()) {
+  void Update() {
+    if (Dirty()) {
       //Debug.Log("ScreenChangeDetector ChangeDetected!");
       Refresh();
     }  
@@ -52,16 +52,20 @@ public class ScreenMultiSettingsDetector : MonoBehaviour {
   }
 
   bool Dirty() {
-    if(width != Screen.width) return true;
-    if(height != Screen.height) return true;
-    if(orientation != Screen.orientation) return true;
+    if (width != Screen.width)
+      return true;
+    if (height != Screen.height)
+      return true;
+    if (orientation != Screen.orientation)
+      return true;
     return false;
   }
 
   void Refresh() {
     SaveSettings();
     UpdateIndex();
-    if(ShareSettings != null) ShareSettings();
+    if (ShareSettings != null)
+      ShareSettings();
   }
 
   protected virtual void UpdateIndex() {

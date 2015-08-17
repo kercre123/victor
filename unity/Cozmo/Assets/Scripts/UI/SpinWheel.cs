@@ -30,13 +30,15 @@ public class SpinWheel : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
   class SpinData {
 
     float _wheelAngle = 0f;
+
     public float wheelAngle {
       get {
         return _wheelAngle;
       }    
       set {
         _wheelAngle = value;
-        if(!spinWheel.PegTouch(ref myDataRef)) sliceIndex = spinWheel.GetSliceIndexAtAngle(_wheelAngle);
+        if (!spinWheel.PegTouch(ref myDataRef))
+          sliceIndex = spinWheel.GetSliceIndexAtAngle(_wheelAngle);
       }    
     }
 
@@ -47,7 +49,7 @@ public class SpinWheel : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
     public float lastAngle = 0f;
     public float degToPegEnd = 0f;
 
-    public float sliceCenterAngle { get { return sliceIndex*spinWheel.sliceArc + spinWheel.sliceArc*0.5f; } }
+    public float sliceCenterAngle { get { return sliceIndex * spinWheel.sliceArc + spinWheel.sliceArc * 0.5f; } }
 
     public int sliceIndex = 0;
 
@@ -119,8 +121,8 @@ public class SpinWheel : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
   [SerializeField] float pegMaxAngularAccel = 10f;
   [SerializeField] Color[] imageColors = { Color.white, Color.black };
   [SerializeField] Color[] spokeColors = { Color.black, Color.white };
-  [SerializeField] Color[] textColors = { Color.black , Color.white };
-  [SerializeField] Color[] outlineColors = { Color.black , Color.white };
+  [SerializeField] Color[] textColors = { Color.black, Color.white };
+  [SerializeField] Color[] outlineColors = { Color.black, Color.white };
   [SerializeField] Color finalSliceColor = Color.magenta;
   [SerializeField] Color finalTextColor = Color.cyan;
   [SerializeField] Color finalTextOutlineColor = Color.cyan;
@@ -146,19 +148,28 @@ public class SpinWheel : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
     return predictedData.slice != null ? predictedData.slice.Number : 0;
   }
 
-  public bool Finished { get { return state == SpinWheelState.FINISHED; }  }
-  public bool Spinning { get { return state == SpinWheelState.SPINNING; }  }
+  public bool Finished { get { return state == SpinWheelState.FINISHED; } }
+
+  public bool Spinning { get { return state == SpinWheelState.SPINNING; } }
+
   public float SpinStartTime { get; private set; }
 
   public float Speed { get { return Mathf.Abs(displayData.angularVel / 360f); } }
+
   public float TokenRadius { get { return tokenRadius; } }
+
   public float TokenOuterRadius { get { return tokenOuterRadius; } }
 
   public int PredictedNumber { get; private set; }
+
   public int PredictedNextNumber { get; private set; }
+
   public int PredictedPreviousNumber { get; private set; }
+
   public float TotalDuration { get; private set; }
+
   public float TimeAfterLastPeg { get; private set; }
+
   public float TotalRotations { get; private set; }
 
   #endregion
@@ -201,15 +212,18 @@ public class SpinWheel : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
     angle = MathUtil.ClampAngle0_360(-angle);
     
     int index = Mathf.FloorToInt(angle / sliceArc);
-    if(index < 0 || index >= slices.Count) return 0;
+    if (index < 0 || index >= slices.Count)
+      return 0;
     
     return index;
   }
 
   Image _dragImage;
+
   Image dragImage { 
     get {
-      if(_dragImage == null) _dragImage = GetComponent<Image>();
+      if (_dragImage == null)
+        _dragImage = GetComponent<Image>();
       return _dragImage;
     }
   }
@@ -219,7 +233,7 @@ public class SpinWheel : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
   AudioSource audioSource;
 
   #endregion
-  
+
   #region MONOBEHAVIOR CALLBACKS
 
   void Awake() {
@@ -254,19 +268,19 @@ public class SpinWheel : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
     float vel = displayData.angularVel;
     int sliceIndex = displayData.sliceIndex;
 
-    if(state == SpinWheelState.DRAGGING) {
+    if (state == SpinWheelState.DRAGGING) {
       //doing this in update instead of OnDrag callback so as to sample from a reasonable deltaTime
       DragUpdate(Input.mousePosition, Time.time);
       angle = displayData.wheelAngle;
       vel = displayData.angularVel;
       sliceIndex = displayData.sliceIndex;
     }
-    else if(state == SpinWheelState.SPINNING) {
+    else if (state == SpinWheelState.SPINNING) {
       
       InterpolateSpinValues(ref angle, ref vel, ref sliceIndex);
 
-      if(Mathf.Abs(vel) > 0f && spinLoopSound != null) {
-        if(loopingAudioSource == null) {
+      if (Mathf.Abs(vel) > 0f && spinLoopSound != null) {
+        if (loopingAudioSource == null) {
           loopingAudioSource = AudioManager.PlayAudioClipLooping(spinLoopSound, 0f, AudioManager.Source.Gameplay);
         }
         float pitchFactor = Mathf.Abs(vel) / (pegSlowDownThreshold * 2f);
@@ -275,7 +289,7 @@ public class SpinWheel : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
         loopingAudioSource.volume = Mathf.Lerp(0f, 1f, volumeFactor);
       }
 
-      if(vel == 0f) {
+      if (vel == 0f) {
         SpinEnd();
       }
     }
@@ -292,39 +306,40 @@ public class SpinWheel : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
   #region PRIVATE METHODS
 
   void InterpolateSpinValues(ref float angle, ref float vel, ref int sliceIndex) {
-    if(frames.Count == 0) return;
+    if (frames.Count == 0)
+      return;
 
     float time = Time.time - SpinStartTime;
     
     SpinFrame? left = frames[0];    
     SpinFrame? right = null;  
     
-    for(int i=1;i<frames.Count;i++) {
-      if(frames[i-1].time < time) {
-        left = frames[i-1];
+    for (int i = 1; i < frames.Count; i++) {
+      if (frames[i - 1].time < time) {
+        left = frames[i - 1];
       }
       
-      if(time < frames[i].time) {
+      if (time < frames[i].time) {
         right = frames[i];
         break;
       }
     }
 
-    if(right == null || (right.Value.time - left.Value.time) == 0f) {
-      right = frames[frames.Count-1];
+    if (right == null || (right.Value.time - left.Value.time) == 0f) {
+      right = frames[frames.Count - 1];
       angle = right.Value.angle;
       vel = right.Value.vel;
       sliceIndex = right.Value.sliceIndex;
       return;
     }
 
-    float factor = Mathf.Clamp01( (time-left.Value.time) / (right.Value.time - left.Value.time));
+    float factor = Mathf.Clamp01((time - left.Value.time) / (right.Value.time - left.Value.time));
     
     angle = Mathf.Lerp(left.Value.angle, right.Value.angle, factor);
     vel = Mathf.Lerp(left.Value.vel, right.Value.vel, factor);
     sliceIndex = right.Value.sliceIndex;
   }
-  
+
   void SpinStart() {
     
     pegBendDirection = 0f;
@@ -348,11 +363,15 @@ public class SpinWheel : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
     int previousSliceIndex = finalIndex + (spinClockwise ? -1 : 1);
     int nextSliceIndex = finalIndex + (spinClockwise ? 1 : -1);
 
-    if(previousSliceIndex < 0) previousSliceIndex = numSlices - 1;
-    if(previousSliceIndex >= numSlices) previousSliceIndex = 0;
+    if (previousSliceIndex < 0)
+      previousSliceIndex = numSlices - 1;
+    if (previousSliceIndex >= numSlices)
+      previousSliceIndex = 0;
 
-    if(nextSliceIndex < 0) nextSliceIndex = numSlices - 1;
-    if(nextSliceIndex >= numSlices) nextSliceIndex = 0;
+    if (nextSliceIndex < 0)
+      nextSliceIndex = numSlices - 1;
+    if (nextSliceIndex >= numSlices)
+      nextSliceIndex = 0;
 
     PredictedPreviousNumber = slices[previousSliceIndex].Number;
     PredictedNextNumber = slices[nextSliceIndex].Number;
@@ -363,7 +382,7 @@ public class SpinWheel : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
 
     state = SpinWheelState.SPINNING;
 
-    Debug.Log("SpinStart PredictedNumber("+PredictedNumber+") Previous("+PredictedPreviousNumber+") Next("+PredictedNextNumber+")");
+    Debug.Log("SpinStart PredictedNumber(" + PredictedNumber + ") Previous(" + PredictedPreviousNumber + ") Next(" + PredictedNextNumber + ")");
   }
 
   void SpinUpdate(float time, ref SpinData data) {
@@ -372,7 +391,8 @@ public class SpinWheel : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
     ApplySpin(deltaTime, ref data);
     data.totalTime += deltaTime;
     data.timeAfterLastPeg += deltaTime;
-    if(data.pegTouching) data.timeAfterLastPeg = 0f;
+    if (data.pegTouching)
+      data.timeAfterLastPeg = 0f;
 
     data.lastTime = time;
     data.lastAngle = data.wheelAngle;
@@ -382,13 +402,13 @@ public class SpinWheel : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
     StopLoopingSound();
 
 
-    for(int i=0;i<numSlices;i++) {
+    for (int i = 0; i < numSlices; i++) {
 
       Color imageColor = unfocusedColor;
       Color textColor = unfocusedColor;
       Color outlineColor = unfocusedColor;
 
-      if(i == displayData.sliceIndex) {
+      if (i == displayData.sliceIndex) {
         imageColor = finalSliceColor;
         textColor = finalTextColor;
         outlineColor = finalTextOutlineColor;
@@ -422,7 +442,7 @@ public class SpinWheel : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
     first.sliceIndex = data.sliceIndex;
     frames.Add(first);
 
-    while(data.angularVel != 0f) {
+    while (data.angularVel != 0f) {
       //yield return new WaitForSeconds(Time.fixedDeltaTime);  
       time += Time.fixedDeltaTime;
 
@@ -444,25 +464,28 @@ public class SpinWheel : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
 
     RefreshPegDisplay(angle, vel, sliceIndex);
   }
-  
+
   void StopLoopingSound() {
-    if(spinLoopSound == null) return;
-    if(loopingAudioSource == null) return;
+    if (spinLoopSound == null)
+      return;
+    if (loopingAudioSource == null)
+      return;
     AudioManager.Stop(spinLoopSound);
     loopingAudioSource = null;
   }
-  
+
   void DecayVelocity(float time, ref SpinData data) {
     float deltaTime = time - data.lastTime;
 
-    if(data.angularVel == 0f) return;
+    if (data.angularVel == 0f)
+      return;
 
-    if(Mathf.Abs(data.angularVel) > maxAngularVelocity) {
+    if (Mathf.Abs(data.angularVel) > maxAngularVelocity) {
       data.angularVel = maxAngularVelocity * Mathf.Sign(data.angularVel);
     }
 
     float dragCoefficient = dragCoefficientUnderPegThreshold;
-    if(Mathf.Abs(data.angularVel) > pegSlowDownThreshold) {
+    if (Mathf.Abs(data.angularVel) > pegSlowDownThreshold) {
       dragCoefficient = dragCoefficientOverPegThreshold;
     }
 
@@ -470,29 +493,33 @@ public class SpinWheel : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
 
     data.angularVel -= reduction;
 
-    if(Mathf.Abs (data.angularVel) <= minAngularVelocity) data.angularVel = 0f;
-    if(Mathf.Abs (data.angularVel) <= fadeBelowAngularVelocity) data.angularVel = Mathf.Lerp(Mathf.Abs(data.angularVel), 0f, 0.25f) * Mathf.Sign(data.angularVel);
+    if (Mathf.Abs(data.angularVel) <= minAngularVelocity)
+      data.angularVel = 0f;
+    if (Mathf.Abs(data.angularVel) <= fadeBelowAngularVelocity)
+      data.angularVel = Mathf.Lerp(Mathf.Abs(data.angularVel), 0f, 0.25f) * Mathf.Sign(data.angularVel);
   }
 
   void ApplySpin(float deltaTime, ref SpinData data) {
-    if(data.angularVel == 0f) return;
-    if(deltaTime <= 0f) return;
+    if (data.angularVel == 0f)
+      return;
+    if (deltaTime <= 0f)
+      return;
 
     float deltaAngle = data.angularVel * deltaTime;
 
     data.wheelAngle += deltaAngle;
 
-    if(Mathf.Abs(data.angularVel) > pegSlowDownThreshold) {
+    if (Mathf.Abs(data.angularVel) > pegSlowDownThreshold) {
       data.pegTouching = false;
     }
-    else if(data.pegTouching) {
+    else if (data.pegTouching) {
       float pegRepulsionFactor = Mathf.Clamp01(data.degToPegEnd / pegDegrees) * pegMaxAngularAccel * deltaTime;
       data.angularVel += pegRepulsionFactor;
     }
     else {
-      int crossedPegs = PegsCrossed(data.lastAngle, data.wheelAngle+deltaAngle);
+      int crossedPegs = PegsCrossed(data.lastAngle, data.wheelAngle + deltaAngle);
 
-      for(int i=0;i<crossedPegs;i++) {
+      for (int i = 0; i < crossedPegs; i++) {
         data.angularVel *= pegSlowDownFactor;
       }
     }
@@ -501,25 +528,25 @@ public class SpinWheel : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
 
   void RefreshSliceCount() {
 
-    while(slices.Count < numSlices) {
+    while (slices.Count < numSlices) {
       Transform slice = (Transform)GameObject.Instantiate(slicePrefab);
       slice.SetParent(wheel, false);
       slices.Add(slice.gameObject.GetComponent<PieSlice>());
     }
 
-    while(slices.Count > numSlices) {
+    while (slices.Count > numSlices) {
       GameObject.Destroy(slices[0].gameObject);
       slices.RemoveAt(0);
     }
 
-    if(numSlices > 0) {
+    if (numSlices > 0) {
       float fillAmount = 1f / numSlices;
-      for(int i=0;i<numSlices;i++) {
+      for (int i = 0; i < numSlices; i++) {
         Color imageColor = imageColors[i % imageColors.Length];
         Color textColor = textColors[i % textColors.Length];
         Color outlineColor = outlineColors[i % outlineColors.Length];
 
-        slices[i].Initialize(fillAmount, sliceArc*i, sliceArc * 0.5f, (i % 4) + 1, imageColor, textColor, outlineColor);
+        slices[i].Initialize(fillAmount, sliceArc * i, sliceArc * 0.5f, (i % 4) + 1, imageColor, textColor, outlineColor);
       }
     }
 
@@ -531,20 +558,20 @@ public class SpinWheel : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
     numSlices = Mathf.Max(0, numSlices);
     pegImages.Clear();
 
-    while(pegs.Count < numSlices) {
+    while (pegs.Count < numSlices) {
       Transform peg = (Transform)GameObject.Instantiate(pegPrefab);
       peg.SetParent(wheel, false);
       pegs.Add(peg.transform as RectTransform);
     }
     
-    while(pegs.Count > numSlices) {
+    while (pegs.Count > numSlices) {
       GameObject.Destroy(pegs[0].gameObject);
       pegs.RemoveAt(0);
     }
     
-    if(numSlices > 0) {
-      for(int i=0;i<numSlices;i++) {
-        pegs[i].localRotation = Quaternion.AngleAxis(sliceArc*i, Vector3.forward);
+    if (numSlices > 0) {
+      for (int i = 0; i < numSlices; i++) {
+        pegs[i].localRotation = Quaternion.AngleAxis(sliceArc * i, Vector3.forward);
         
         Image pegImage = pegs[i].gameObject.GetComponentInChildren<Image>();
         pegImage.color = spokeColors[i % spokeColors.Length];
@@ -553,7 +580,7 @@ public class SpinWheel : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
     }
 
   }
-  
+
   bool PegTouch(ref SpinData data) {
 
     bool touching = false;
@@ -564,16 +591,17 @@ public class SpinWheel : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
     //force the wheel peg to an apt angle if it is still within pegDegrees of a slice peg
 
     int pegIndex = Mathf.RoundToInt(angle / sliceArc);
-    if(pegIndex >= numSlices) pegIndex = 0;
+    if (pegIndex >= numSlices)
+      pegIndex = 0;
 
-    float pegAngle = pegIndex*sliceArc;
+    float pegAngle = pegIndex * sliceArc;
     float halfPeg = pegDegrees * 0.5f;
     float endOfPegAngle = pegAngle + halfPeg * -Mathf.Sign(pegBendDirection);
     float degToPeg = MathUtil.AngleDelta(angle, pegAngle);
 
     data.degToPegEnd = MathUtil.AngleDelta(angle, endOfPegAngle);
     //arc from current wheel peg angle to the end of slice peg's range, if still pressed against peg, set apt angle
-    if(Mathf.Abs(degToPeg) < halfPeg) {
+    if (Mathf.Abs(degToPeg) < halfPeg) {
       float factor = Mathf.Clamp01(Mathf.Abs(data.degToPegEnd) / pegDegrees);
       factor *= factor;
       factor = 1f - factor;
@@ -610,7 +638,8 @@ public class SpinWheel : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
     int diff = Mathf.Abs(startSliceIndex - endSliceIndex);
     int diff2 = numSlices - diff;
 
-    if(diff > diff2) return diff2;
+    if (diff > diff2)
+      return diff2;
 
     return diff;
   }
@@ -621,23 +650,24 @@ public class SpinWheel : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
     
     angle = MathUtil.ClampAngle0_360(-angle);
 
-    float sliceCenterAngle = sliceIndex*sliceArc + sliceArc*0.5f;
+    float sliceCenterAngle = sliceIndex * sliceArc + sliceArc * 0.5f;
 
     pegBendDirection = -Mathf.Sign(MathUtil.AngleDelta(sliceCenterAngle, angle));
     //force the wheel peg to an apt angle if it is still within pegDegrees of a slice peg
 
     int pegIndex = Mathf.RoundToInt(angle / sliceArc);
 
-    if(pegIndex >= numSlices) pegIndex = 0;
+    if (pegIndex >= numSlices)
+      pegIndex = 0;
     
-    float pegAngle = pegIndex*sliceArc;
+    float pegAngle = pegIndex * sliceArc;
     float halfPeg = pegDegrees * 0.5f;
     float endOfPegAngle = pegAngle + halfPeg * -Mathf.Sign(pegBendDirection);
     float degToPeg = MathUtil.AngleDelta(angle, pegAngle);
     
     float degToPegEnd = MathUtil.AngleDelta(angle, endOfPegAngle);
     //arc from current wheel peg angle to the end of slice peg's range, if still pressed against peg, set apt angle
-    if(Mathf.Abs(degToPeg) < halfPeg) {
+    if (Mathf.Abs(degToPeg) < halfPeg) {
       float factor = Mathf.Clamp01(Mathf.Abs(degToPegEnd) / pegDegrees);
       factor *= factor;
       factor = 1f - factor;
@@ -647,21 +677,22 @@ public class SpinWheel : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
 
 
     //if we've passed a peg, then just throw it full tilt
-    if(!touching && lastSliceIndex != sliceIndex) {
+    if (!touching && lastSliceIndex != sliceIndex) {
       pegBendFactor = Mathf.Sign(vel);
     }
 
-    if(peg != null) peg.localRotation = Quaternion.AngleAxis(pegBendAngle * pegBendFactor, Vector3.forward);
+    if (peg != null)
+      peg.localRotation = Quaternion.AngleAxis(pegBendAngle * pegBendFactor, Vector3.forward);
     
     //decay by default to immitate elasticity
-    if(!touching) {
+    if (!touching) {
       pegBendFactor = Mathf.Lerp(pegBendFactor, 0f, 0.25f);
     }
 
     lastPegBendFactor = pegBendFactor;
 
-    if(lastSliceIndex != sliceIndex) { //(touching && !lastTouching) || (!touching && 
-      if(pegSound != null && Mathf.Abs(vel) < pegSlowDownThreshold) {
+    if (lastSliceIndex != sliceIndex) { //(touching && !lastTouching) || (!touching && 
+      if (pegSound != null && Mathf.Abs(vel) < pegSlowDownThreshold) {
         //Debug.Log ("frame("+Time.frameCount+") pegSound!");
         float pitchFactor = Mathf.Clamp01(Mathf.Abs(vel) / pegSlowDownThreshold);
         float volumeFactor = 1f - Mathf.Clamp01(Mathf.Abs(vel) / pegSlowDownThreshold);
@@ -679,10 +710,12 @@ public class SpinWheel : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
     lastSliceIndex = sliceIndex;
     lastTouching = touching;
   }
-  
+
   void InitData() {
-    if(displayData == null) displayData = new SpinData(this);
-    if(predictedData == null) predictedData = new SpinData(this);
+    if (displayData == null)
+      displayData = new SpinData(this);
+    if (predictedData == null)
+      predictedData = new SpinData(this);
   }
 
   #endregion
@@ -709,11 +742,12 @@ public class SpinWheel : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
 
   public void Unfocus() {
     pegBase.gameObject.SetActive(false);
-    if(supplentalEffects != null) supplentalEffects.SetActive(false);
+    if (supplentalEffects != null)
+      supplentalEffects.SetActive(false);
 
-    for(int i=0;i<slices.Count;i++) {
+    for (int i = 0; i < slices.Count; i++) {
 
-      if(slices[i] != null) {
+      if (slices[i] != null) {
         Color imageColor = unfocusedColor;
         Color textColor = unfocusedColor;
         Color outlineColor = unfocusedColor;
@@ -722,8 +756,8 @@ public class SpinWheel : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
     }
     
 
-    for(int i=0;i<pegImages.Count;i++) {
-      if(pegImages[i] != null) {
+    for (int i = 0; i < pegImages.Count; i++) {
+      if (pegImages[i] != null) {
         pegImages[i].color = unfocusedColor;
       }
     }
@@ -732,11 +766,12 @@ public class SpinWheel : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
 
   public void Focus() {
     pegBase.gameObject.SetActive(true);
-    if(supplentalEffects != null) supplentalEffects.SetActive(true);
+    if (supplentalEffects != null)
+      supplentalEffects.SetActive(true);
 
-    for(int i=0;i<slices.Count;i++) {
+    for (int i = 0; i < slices.Count; i++) {
 
-      if(slices[i] != null) {
+      if (slices[i] != null) {
         Color imageColor = imageColors[i % imageColors.Length];
         Color textColor = textColors[i % textColors.Length];
         Color outlineColor = outlineColors[i % outlineColors.Length];
@@ -744,8 +779,8 @@ public class SpinWheel : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
       }
     }
     
-    for(int i=0;i<pegImages.Count;i++) {
-      if(pegImages[i] != null) {
+    for (int i = 0; i < pegImages.Count; i++) {
+      if (pegImages[i] != null) {
         pegImages[i].color = spokeColors[i % spokeColors.Length];
       }
     }
@@ -757,16 +792,16 @@ public class SpinWheel : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
 
     dragImage.enabled = true;
 
-    for(int i=0;i<numSlices;i++) {
+    for (int i = 0; i < numSlices; i++) {
       
-      if(slices[i] != null) {
+      if (slices[i] != null) {
         Color imageColor = imageColors[i % imageColors.Length];
         Color textColor = textColors[i % textColors.Length];
         Color outlineColor = outlineColors[i % outlineColors.Length];
         slices[i].SetColors(imageColor, textColor, outlineColor);
       }
       
-      if(pegImages[i] != null) {
+      if (pegImages[i] != null) {
         pegImages[i].color = spokeColors[i % spokeColors.Length];
       }
     }
@@ -794,8 +829,8 @@ public class SpinWheel : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
     //Debug.Log("OnSubmitNumSlices");
     int newSlices;
     
-    if(int.TryParse(inputField_numSlices.text, out newSlices)) {
-      if(newSlices != numSlices) {
+    if (int.TryParse(inputField_numSlices.text, out newSlices)) {
+      if (newSlices != numSlices) {
         //Debug.Log("SetNumSlices");
         SetNumSlices(newSlices);
       }
@@ -811,7 +846,7 @@ public class SpinWheel : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
     displayData.lastTime = time;
     samples.Clear();
   }
-  
+
   public void DragUpdate(Vector2 position, float time) {
     //Debug.Log ("SpinWheel DragUpdate position("+position+") time("+time+")");    
     
@@ -822,12 +857,13 @@ public class SpinWheel : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
     displayData.wheelAngle += deltaAngle;
     
     float deltaTime = time - displayData.lastTime;
-    if(deltaTime > 0f) {
+    if (deltaTime > 0f) {
       DragSample sample = new DragSample();
       sample.deltaTime = deltaTime;
       sample.deltaAngle = deltaAngle;
       samples.Add(sample);
-      while(samples.Count > maxSamples) samples.RemoveAt(0);
+      while (samples.Count > maxSamples)
+        samples.RemoveAt(0);
       
       displayData.angularVel = deltaAngle / deltaTime;
     }
@@ -835,27 +871,29 @@ public class SpinWheel : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
     lastTouchPos = touchPos;
     displayData.lastTime = time;
   }
-  
+
   public void DragEnd() {
     //Debug.Log ("SpinWheel EndDrag");
 
     displayData.angularVel = 0f;
-    if(samples.Count < 2) return;
+    if (samples.Count < 2)
+      return;
     
     float totalTime = 0f;
     float totalAngle = 0f;
     
-    for(int i=1;i<samples.Count;i++) {
+    for (int i = 1; i < samples.Count; i++) {
       totalTime += samples[i].deltaTime;
       totalAngle += samples[i].deltaAngle;
     }
     
-    if(totalTime == 0f) return;
+    if (totalTime == 0f)
+      return;
     
     displayData.angularVel = totalAngle / totalTime;
     displayData.angularVel *= spinMultiplier;
     
-    if(Mathf.Abs(displayData.angularVel) < minStartingVelocity) {
+    if (Mathf.Abs(displayData.angularVel) < minStartingVelocity) {
       displayData.angularVel = minStartingVelocity * Mathf.Sign(displayData.angularVel);
     }
     
@@ -873,22 +911,24 @@ public class SpinWheel : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
 
   #endregion
 
-  #region INTERFACE METHODS  
+  #region INTERFACE METHODS
 
   public void OnBeginDrag(PointerEventData eventData) {
     //Debug.Log ("OnBeginDrag");
-    if(state != SpinWheelState.UNLOCKED) return;
+    if (state != SpinWheelState.UNLOCKED)
+      return;
     state = SpinWheelState.DRAGGING;
     DragStart(eventData.position, Time.time);
   }
-  
+
   public void OnDrag(PointerEventData eventData) {
     //Debug.Log ("OnDrag");
   }
 
   public void OnEndDrag(PointerEventData eventData) {
     //Debug.Log ("OnEndDrag");
-    if(state != SpinWheelState.DRAGGING) return;
+    if (state != SpinWheelState.DRAGGING)
+      return;
     
     DragEnd();
   }
