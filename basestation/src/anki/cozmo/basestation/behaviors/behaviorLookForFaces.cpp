@@ -65,7 +65,7 @@ namespace Cozmo {
           const f32 bodyAngle_deg = _rng.RandIntInRange(-90, 90);
           
           MoveHeadToAngleAction* moveHeadAction    = new MoveHeadToAngleAction(DEG_TO_RAD(headAngle_deg));
-          TurnInPlaceAction*     turnInPlaceAction = new TurnInPlaceAction(DEG_TO_RAD(bodyAngle_deg));
+          TurnInPlaceAction*     turnInPlaceAction = new TurnInPlaceAction(DEG_TO_RAD(bodyAngle_deg), false);
           
           _robot.GetActionList().QueueActionNow(IBehavior::sActionSlot,
                                                 new CompoundActionParallel({moveHeadAction, turnInPlaceAction}));
@@ -94,7 +94,7 @@ namespace Cozmo {
     return Status::RUNNING;
   } // Update()
   
-  Result BehaviorLookForFaces::Interrupt()
+  Result BehaviorLookForFaces::Interrupt(float currentTime_sec)
   {
     _robot.DisableTrackToObject();
     _currentState = State::INTERRUPTED;

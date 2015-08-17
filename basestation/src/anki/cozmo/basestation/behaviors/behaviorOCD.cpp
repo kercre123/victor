@@ -27,8 +27,8 @@ namespace Cozmo {
   : IBehavior(robot, config)
   , _lastHandlerResult(RESULT_OK)
   , _currentArrangement(Arrangement::STACKS_OF_TWO)
-  , _name("OCD")
   {
+    _name = "OCD";
     // Register callbacks:
     
     // Create a callback for running EventHandler
@@ -81,7 +81,7 @@ namespace Cozmo {
 #pragma mark -
 #pragma mark Inherited Virtual Implementations
   
-  bool BehaviorOCD::IsRunnable() const
+  bool BehaviorOCD::IsRunnable(float currentTime_sec) const
   {
     // We can only run this behavior when there are at least two "messy" blocks present,
     // or when there is at least one messy block while we've got any neat blocks
@@ -170,7 +170,7 @@ namespace Cozmo {
     return Status::RUNNING;
   }
   
-  Result BehaviorOCD::Interrupt()
+  Result BehaviorOCD::Interrupt(float currentTime_sec)
   {
     _interrupted = true;
     return RESULT_OK;

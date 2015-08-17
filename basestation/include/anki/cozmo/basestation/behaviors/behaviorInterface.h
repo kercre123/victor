@@ -50,7 +50,7 @@ namespace Cozmo {
     
     // Returns true iff the state of the world/robot is sufficient for this
     // behavior to be executed
-    virtual bool IsRunnable() const = 0;
+    virtual bool IsRunnable(float currentTime_sec) const = 0;
     
     // Will be called upon first switching to a behavior before calling update.
     virtual Result Init() = 0;
@@ -61,14 +61,14 @@ namespace Cozmo {
     // Tell this behavior to finish up ASAP so we can switch to a new one.
     // This should trigger any cleanup and get Update() to return COMPLETE
     // as quickly as possible.
-    virtual Result Interrupt() = 0;
+    virtual Result Interrupt(float currentTime_sec) = 0;
     
     // Figure out the reward this behavior will offer, given the robot's current
     // state. Returns true if the Behavior is runnable, false if not. (In the
     // latter case, the returned reward is not populated.)
     virtual bool GetRewardBid(Reward& reward) = 0;
     
-    virtual const std::string& GetName() const = 0;
+    virtual const std::string& GetName() const { return _name; }
     
     // All behaviors run in a single "slot" in the AcitonList. (This seems icky.)
     static const ActionList::SlotHandle sActionSlot;
@@ -79,6 +79,8 @@ namespace Cozmo {
     
     // A random number generator for all behaviors to share
     Util::RandomGenerator _rng;
+    
+    std::string _name;
     
   private:
     

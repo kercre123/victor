@@ -36,21 +36,16 @@ namespace Cozmo {
     BehaviorOCD(Robot& robot, const Json::Value& config);
     virtual ~BehaviorOCD() { }
     
-    virtual bool IsRunnable() const override;
+    virtual bool IsRunnable(float currentTime_sec) const override;
 
     virtual Result Init() override;
     
     virtual Status Update(float currentTime_sec) override;
     
     // Finish placing current object if there is one, otherwise good to go
-    virtual Result Interrupt() override;
+    virtual Result Interrupt(float currentTime_sec) override;
     
     virtual bool GetRewardBid(Reward& reward) override;
-    
-    virtual const std::string& GetName() const override {
-      //static std::string name("OCD");
-      return _name;
-    }
     
   private:
     
@@ -104,7 +99,6 @@ namespace Cozmo {
     ObjectID _anchorObject; // the object the arrangement is anchored to
     
     void UpdateName();
-    std::string _name;
     
     /*
      Not sure this is needed anymore, now that we're using events and

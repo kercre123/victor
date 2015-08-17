@@ -18,6 +18,7 @@ namespace Cozmo {
 
   IBehavior::IBehavior(Robot& robot, const Json::Value& config)
   : _robot(robot)
+  , _name("none")
   , _isRunning(false)
   {
   
