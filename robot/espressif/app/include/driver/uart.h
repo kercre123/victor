@@ -149,6 +149,12 @@ STATUS uartQueuePacket(uint8* data, uint16 len);
 STATUS uart_tx_one_char(uint8 uart, uint8 TxChar);
 STATUS uart_tx_one_char_no_wait(uint8 uart, uint8 TxChar);
 
+/// Writes one
+void os_put_char(uint8 c);
+
+/// Writes one number in hex out the debug uart without using any OS calls
+void os_put_hex(unsigned int i, unsigned short nibbles);
+
 //==============================================
 #define FUNC_UART0_CTS 4
 #define FUNC_U0CTS     4

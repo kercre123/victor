@@ -183,6 +183,18 @@ void os_put_char(uint8 c)
   uart_tx_one_char(UART0, c);
 }
 
+void os_put_hex(unsigned int i, unsigned short nibbles)
+{
+  static const char HEXTABLE[16] = "0123456789ABCDEF";
+  unsigned short n = 0;
+  while (n < nibbles)
+  {
+    os_put_char(HEXTABLE[(i>>((nibbles-n)*4))&0xf]);
+    n += 1;
+  }
+}
+
+
 /** Length of the TX buffer
  * @warning Must be a power of 2
  */
