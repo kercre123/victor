@@ -44,8 +44,12 @@ namespace Cozmo {
       ExternalInterface::MessageEngineToGameTag::ActiveObjectMoved
     };
     
-    for(auto tag : EventTagsOfInterest) {
-      _eventHandles.push_back(robot.GetExternalInterface()->Subscribe(tag, eventHandlerCallback));
+    // Note we may not have an external interface when running Unit tests
+    if (robot.HasExternalInterface())
+    {
+      for(auto tag : EventTagsOfInterest) {
+        _eventHandles.push_back(robot.GetExternalInterface()->Subscribe(tag, eventHandlerCallback));
+      }
     }
     
   }
