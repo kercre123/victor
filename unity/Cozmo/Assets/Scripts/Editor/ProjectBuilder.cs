@@ -14,7 +14,7 @@ public class ProjectBuilder {
   /// </summary>
   private List<string> getScenes() {
     List<string> scenes = new List<string>();
-		
+    
     for (int sceneIndex = 0; sceneIndex < EditorBuildSettings.scenes.Length; ++sceneIndex) {
       if (EditorBuildSettings.scenes[sceneIndex].enabled) {
         scenes.Add(EditorBuildSettings.scenes[sceneIndex].path);
@@ -123,7 +123,7 @@ public class ProjectBuilder {
 
     // Later on use this to switch between building for different targets
     // EditorUserBuildSettings.SwitchActiveBuildTarget(BuildTarget.Android);
-		
+    
     List<string> scenes = getScenes();
     BuildOptions buildOptions = GetBuildOptions(buildTarget, config, enableDebugging, connectWithProfiler);
 
@@ -134,7 +134,7 @@ public class ProjectBuilder {
 
     // Force-Reimport Assets
     AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
-	
+  
     // run build
     string result = BuildPipeline.BuildPlayer(scenes.ToArray(), buildPath, buildTarget, buildOptions);
 
