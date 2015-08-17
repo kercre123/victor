@@ -10,15 +10,15 @@ ROBOT = ("172.31.1.1", 5551)
 
 s = socket.socket(type=socket.SOCK_DGRAM)
 
-lw = 1
-rw = 2
+msg = struct.Struct("201H")
 
-msg = struct.Struct("II")
+fh = open("i2spi.hex", 'w')
 
-s.sendto(msg.pack(lw,rw), ROBOT)
+s.sendto(msg.pack(*range(201)), ROBOT)
+print(">")
 while True:
-    r, d = s.recvfrom(1500)
-    print(len(r), max(r), r[:20])
-    lw += 1
-    rw += 1
+    d = s.recv(1500)
+    print("<{:d}".format(len(d)))
+    fh.write(" ".join(["{:04x}".format(w) for w in msg.unpack(d)]))
+    fh.write(os.linesep)
     s.sendto(msg.pack(lw, rw), d)

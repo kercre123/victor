@@ -24,6 +24,7 @@ speed.
 #include "ets_sys.h"
 #include "osapi.h"
 #include "os_type.h"
+#include "driver/uart.h"
 #include "driver/i2s_reg.h"
 #include "driver/slc_register.h"
 #include "driver/sdio_slv.h"
@@ -80,6 +81,8 @@ LOCAL void dmaisr(void* arg) {
 	//clear all intr flags
 	WRITE_PERI_REG(SLC_INT_CLR, 0xffffffff);
 
+  os_put_char('I'); os_put_hex(slc_intr_status, 8);
+
 #ifdef I2S_LOOP_TEST
   os_printf("LT: %08x\t%d\t%d\r\n", slc_intr_status, receiveInd, transmitInd);
 #endif
@@ -112,6 +115,8 @@ LOCAL void dmaisr(void* arg) {
       }
     }
 #endif
+
+    os_put_hex(desc->datalen, 8);
 
     prepSdioQueue(desc); // Reset the DMA descriptor for reuse
   }
@@ -208,11 +213,11 @@ int8_t ICACHE_FLASH_ATTR i2sInit() {
 	I2S_I2S_RX_REMPTY_INT_ENA|I2S_I2S_TX_PUT_DATA_INT_ENA|I2S_I2S_RX_TAKE_DATA_INT_ENA);
 
   CLEAR_PERI_REG_MASK(I2SCONF, I2S_TRANS_SLAVE_MOD|I2S_RECE_SLAVE_MOD|
+            I2S_RECE_MSB_SHIFT|I2S_TRANS_MSB_SHIFT|
 						(I2S_BITS_MOD<<I2S_BITS_MOD_S)|
 						(I2S_BCK_DIV_NUM <<I2S_BCK_DIV_NUM_S)|
 						(I2S_CLKM_DIV_NUM<<I2S_CLKM_DIV_NUM_S));
 	SET_PERI_REG_MASK(I2SCONF, I2S_RIGHT_FIRST|I2S_MSB_RIGHT|I2S_TRANS_SLAVE_MOD|I2S_RECE_SLAVE_MOD| // Slave mode all around
-						I2S_RECE_LSB_SHIFT|I2S_TRANS_LSB_SHIFT|
 						(((16)&I2S_BCK_DIV_NUM )<<I2S_BCK_DIV_NUM_S)|
 						(((16)&I2S_CLKM_DIV_NUM)<<I2S_CLKM_DIV_NUM_S));
 
