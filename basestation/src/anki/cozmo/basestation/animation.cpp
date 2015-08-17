@@ -264,13 +264,8 @@ _blinkTrack.__METHOD__()
         
         _numBytesToSend -= numBytesRequired;
         
-        // Increment total number of bytes streamed to robot, but this needs to be
-        // in terms of the number of bytes that it translates to on the robot.
-        // The message size on the robot is padded out to 2-byte alignment.
-        // The size of the message ID on the sim robot is 4, but on the physical robot is 1.
-        s32 sizeOfMsgID = robot.IsPhysical() ? 1 : sizeof(RobotMessage::ID);
-        robot.IncrementNumAnimationBytesStreamed(msg->GetPaddedSize() + sizeOfMsgID);
-        //printf("NumBytesStreamed %d (Added %d + %u)\n", runningTotalBytesSent, sizeOfMsgID, msg->GetPaddedSize());
+        // Increment total number of bytes streamed to robot
+        robot.IncrementNumAnimationBytesStreamed(numBytesRequired);
         
         _sendBuffer.pop_front();
       } else {
@@ -484,9 +479,7 @@ _blinkTrack.__METHOD__()
       _endOfAnimationSent = true;
       
       // Increment running total of bytes streamed
-      s32 sizeOfMsgID = robot.IsPhysical() ? 1 : sizeof(RobotMessage::ID);
-      robot.IncrementNumAnimationBytesStreamed(endMsg.GetPaddedSize() + sizeOfMsgID);
-      //printf("NumBytesStreamed (endMsg) %d (Added %d + %u)\n", totalNumBytesStreamed, sizeOfMsgID, endMsg.GetPaddedSize());
+      robot.IncrementNumAnimationBytesStreamed(endMsg.GetSize() + sizeof(RobotMessage::ID));
     }
     
     return RESULT_OK;
