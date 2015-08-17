@@ -8,35 +8,35 @@ using System.Collections;
 public class PrefSelector : GameObjectSelector
 {
 
-	[SerializeField] string preferrence = null;
+  [SerializeField] string preferrence = null;
 
-	bool optionsMenuWasOpenLastFrame = false;
+  bool optionsMenuWasOpenLastFrame = false;
 
-	protected override void OnEnable()
-	{
-		RefreshFromPref();
-	}
+  protected override void OnEnable()
+  {
+    RefreshFromPref();
+  }
 
-	void Update()
-	{
+  void Update()
+  {
 
-		bool optionsOpenThisFrame = OptionsScreen.IsOpen;
+    bool optionsOpenThisFrame = OptionsScreen.IsOpen;
 
-		if(optionsMenuWasOpenLastFrame && !optionsOpenThisFrame)
-		{
-			RefreshFromPref();
+    if(optionsMenuWasOpenLastFrame && !optionsOpenThisFrame)
+    {
+      RefreshFromPref();
 
 
-		}
+    }
 
-		optionsMenuWasOpenLastFrame = optionsOpenThisFrame;
-	}
+    optionsMenuWasOpenLastFrame = optionsOpenThisFrame;
+  }
 
-	void RefreshFromPref()
-	{
-		if(!string.IsNullOrEmpty(preferrence))
-		{
-			index = PlayerPrefs.GetInt(preferrence, 0);
-		}
-	}
+  void RefreshFromPref()
+  {
+    if(!string.IsNullOrEmpty(preferrence))
+    {
+      index = PlayerPrefs.GetInt(preferrence, 0);
+    }
+  }
 }

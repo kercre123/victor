@@ -8,36 +8,36 @@ using System.Collections.Generic;
 /// </summary>
 public class CozmoVision_Manual : CozmoVision
 {
-	ManualLiftSliderPanel manualLiftSliderPanel = null;
+  ManualLiftSliderPanel manualLiftSliderPanel = null;
 
-	protected override void Awake()
-	{
-		base.Awake();
+  protected override void Awake()
+  {
+    base.Awake();
 
-		if(actionPanel != null)
-		{
-			manualLiftSliderPanel = actionPanel as ManualLiftSliderPanel;
-		}
-	}
+    if(actionPanel != null)
+    {
+      manualLiftSliderPanel = actionPanel as ManualLiftSliderPanel;
+    }
+  }
 
-	protected override void OnEnable()
-	{
-		base.OnEnable();
+  protected override void OnEnable()
+  {
+    base.OnEnable();
 
-		//reset our lifter to our current height
-		if(robot != null && manualLiftSliderPanel != null)
-		{
-			manualLiftSliderPanel.slider.onValueChanged.RemoveListener(LiftSliderChanged);
-			manualLiftSliderPanel.slider.value = Mathf.Lerp(0f, 1f, (robot.liftHeight_mm - CozmoUtil.MIN_LIFT_HEIGHT_MM) / (CozmoUtil.MAX_LIFT_HEIGHT_MM - CozmoUtil.MIN_LIFT_HEIGHT_MM));
-			manualLiftSliderPanel.slider.onValueChanged.AddListener(LiftSliderChanged);
-		}
-	}
+    //reset our lifter to our current height
+    if(robot != null && manualLiftSliderPanel != null)
+    {
+      manualLiftSliderPanel.slider.onValueChanged.RemoveListener(LiftSliderChanged);
+      manualLiftSliderPanel.slider.value = Mathf.Lerp(0f, 1f, (robot.liftHeight_mm - CozmoUtil.MIN_LIFT_HEIGHT_MM) / (CozmoUtil.MAX_LIFT_HEIGHT_MM - CozmoUtil.MIN_LIFT_HEIGHT_MM));
+      manualLiftSliderPanel.slider.onValueChanged.AddListener(LiftSliderChanged);
+    }
+  }
 
-	void LiftSliderChanged(float val)
-	{
-		if(robot == null) return;
+  void LiftSliderChanged(float val)
+  {
+    if(robot == null) return;
 
-		robot.SetLiftHeight(val);
-	}
+    robot.SetLiftHeight(val);
+  }
 
 }

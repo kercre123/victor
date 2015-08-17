@@ -10,11 +10,11 @@ using U2G = Anki.Cozmo.ExternalInterface;
 
 /// <summary>
 /// Robot engine manager lives on a GameObject(named MasterObject) in our Intro scene,
-///		and handles launching, ticking, and messaging with the Cozmo Engine
+///    and handles launching, ticking, and messaging with the Cozmo Engine
 /// </summary>
 public class RobotEngineManager : MonoBehaviour
 {
-	
+  
     public static RobotEngineManager instance = null;
 
     public Dictionary<int, Robot> robots { get; private set; }
@@ -92,7 +92,7 @@ public class RobotEngineManager : MonoBehaviour
             instance = this;
             DontDestroyOnLoad(gameObject);
         }
-		
+    
         CozmoLogging.OpenLogFile();
         cozmoLoggingStarted = true;
 
@@ -129,7 +129,7 @@ public class RobotEngineManager : MonoBehaviour
         {
             CozmoLogging.CloseLogFile();
         }
-		
+    
         if(channel != null)
         {
             if(channel.IsActive)
@@ -183,7 +183,7 @@ public class RobotEngineManager : MonoBehaviour
 
     public void LateUpdate()
     {
-		if(current == null) return;
+    if(current == null) return;
 
         current.UpdateLightMessages();
     }
@@ -191,23 +191,23 @@ public class RobotEngineManager : MonoBehaviour
     public void ToggleVisionRecording(bool on)
     {
         AllowImageSaving = on;
-		
+    
         if(on && !imageDirectoryCreated)
         {
-			
+      
             imageBasePath = Path.Combine(Application.persistentDataPath, DateTime.Now.ToString("robovi\\sion_yyyy-MM-dd_HH-mm-ss"));
             try
             {
-				
+        
                 Debug.Log("Saving robot screenshots to \"" + imageBasePath + "\"", this);
                 Directory.CreateDirectory(imageBasePath);
-				
+        
                 imageDirectoryCreated = true;
-				
+        
             }
             catch(Exception e)
             {
-				
+        
                 AllowImageSaving = false;
                 Debug.LogException(e, this);
             }
@@ -226,8 +226,8 @@ public class RobotEngineManager : MonoBehaviour
             robotList.RemoveAll(x => x.ID == robotID);
             robots.Remove(robotID);
         }
-		
-		
+    
+    
         Robot robot = new Robot(robotID);
         robots.Add(robotID, robot);
         robotList.Add(robot);
@@ -390,9 +390,9 @@ public class RobotEngineManager : MonoBehaviour
     private void ReceivedSpecificMessage(G2U.RobotConnected message)
     {
         // no longer a good indicator
-//		if (RobotConnected != null) {
-//			RobotConnected((int)message.robotID);
-//		}
+//    if (RobotConnected != null) {
+//      RobotConnected((int)message.robotID);
+//    }
     }
 
     private void ReceivedSpecificMessage(G2U.UiDeviceConnected message)
@@ -409,7 +409,7 @@ public class RobotEngineManager : MonoBehaviour
 
     private void ReceivedSpecificMessage(G2U.ActiveObjectMoved message)
     {
-		if(current == null) return;
+    if(current == null) return;
 
         int ID = (int)message.objectID;
 
@@ -423,35 +423,35 @@ public class RobotEngineManager : MonoBehaviour
 
     private void ReceivedSpecificMessage(G2U.ActiveObjectStoppedMoving message)
     {
-		if(current == null) return;
+    if(current == null) return;
 
         int ID = (int)message.objectID;
-		
+    
         if(current.activeBlocks.ContainsKey(ID))
         {
             ActiveBlock activeBlock = current.activeBlocks[ID];
-			
+      
             activeBlock.StoppedMoving(message);
         }
     }
 
     private void ReceivedSpecificMessage(G2U.ActiveObjectTapped message)
     {
-		if(current == null) return;
-		
+    if(current == null) return;
+    
         int ID = (int)message.objectID;
-		
+    
         if(current.activeBlocks.ContainsKey(ID))
         {
             ActiveBlock activeBlock = current.activeBlocks[ID];
-			
+      
             activeBlock.Tapped(message);
         }
     }
 
     private void ReceivedSpecificMessage(G2U.RobotObservedObject message)
     {
-		if(current == null) return;
+    if(current == null) return;
         //Debug.Log( "box found with ID:" + message.objectID + " at " + Time.time );
 
         current.UpdateObservedObjectInfo(message);
@@ -459,7 +459,7 @@ public class RobotEngineManager : MonoBehaviour
 
     private void ReceivedSpecificMessage(G2U.RobotObservedNothing message)
     {
-		if(current == null) return;
+    if(current == null) return;
 
         if(current.selectedObjects.Count == 0 && !current.isBusy)
         {
@@ -472,7 +472,7 @@ public class RobotEngineManager : MonoBehaviour
 
     private void ReceivedSpecificMessage(G2U.RobotDeletedObject message)
     {
-		if(current == null) return;
+    if(current == null) return;
 
         Debug.Log("Deleted object with ID " + message.objectID);
 
@@ -486,22 +486,22 @@ public class RobotEngineManager : MonoBehaviour
 
         deleted = current.selectedObjects.Find(x => x == message.objectID);
 
-		if(deleted != null) current.selectedObjects.Remove(deleted);
+    if(deleted != null) current.selectedObjects.Remove(deleted);
 
         deleted = current.observedObjects.Find(x => x == message.objectID);
-		
-		if(deleted != null) current.observedObjects.Remove(deleted);
+    
+    if(deleted != null) current.observedObjects.Remove(deleted);
 
         deleted = current.markersVisibleObjects.Find(x => x == message.objectID);
-		
-		if(deleted != null) current.markersVisibleObjects.Remove(deleted);
+    
+    if(deleted != null) current.markersVisibleObjects.Remove(deleted);
 
-		if(current.activeBlocks.ContainsKey((int)message.objectID)) current.activeBlocks.Remove((int)message.objectID);
+    if(current.activeBlocks.ContainsKey((int)message.objectID)) current.activeBlocks.Remove((int)message.objectID);
     }
 
     private void ReceivedSpecificMessage(G2U.RobotCompletedAction message)
     {
-		if(current == null) return;
+    if(current == null) return;
 
         bool success = (message.result == ActionResult.SUCCESS);
         RobotActionType action_type = (RobotActionType)message.actionType;
@@ -511,9 +511,9 @@ public class RobotEngineManager : MonoBehaviour
 
         current.localBusyTimer = 0f;
 
-	
+  
         //current.SetHeadAngle();
-		
+    
         if(SuccessOrFailure != null)
         {
             SuccessOrFailure(success, action_type);
@@ -533,7 +533,7 @@ public class RobotEngineManager : MonoBehaviour
             {
                 RobotCompletedCompoundAction(success, message.idTag);
             }
-			
+      
         }
 
         if(!success)
@@ -551,7 +551,7 @@ public class RobotEngineManager : MonoBehaviour
 
     private void ReceivedSpecificMessage(G2U.AnimationAvailable message)
     {
-		if(!robotAnimationNames.Contains(message.animName)) robotAnimationNames.Add(message.animName);
+    if(!robotAnimationNames.Contains(message.animName)) robotAnimationNames.Add(message.animName);
     }
 
     private void ReceivedSpecificMessage(G2U.DeviceDetectedVisionMarker message)
@@ -561,12 +561,12 @@ public class RobotEngineManager : MonoBehaviour
 
     private void ReceivedSpecificMessage(G2U.PlaySound message)
     {
-		
+    
     }
 
     private void ReceivedSpecificMessage(G2U.StopSound message)
     {
-		
+    
     }
 
     private void ReceivedSpecificMessage(G2U.RobotState message)
@@ -589,10 +589,10 @@ public class RobotEngineManager : MonoBehaviour
         if(!robots.ContainsKey(message.robotID))
         {
             Debug.Log("adding robot with ID: " + message.robotID);
-			
+      
             AddRobot(message.robotID);
         }
-		
+    
         robots[message.robotID].UpdateInfo(message);
     }
 
@@ -616,13 +616,13 @@ public class RobotEngineManager : MonoBehaviour
         0x0E, 0x0D, 0x0E, 0x12, 0x11, 0x10, 0x13, 0x18, 0x28, 0x1A, 0x18, 0x16, 0x16, 0x18, 0x31, 0x23,
         0x25, 0x1D, 0x28, 0x3A, 0x33, 0x3D, 0x3C, 0x39, 0x33, 0x38, 0x37, 0x40, 0x48, 0x5C, 0x4E, 0x40,
         0x44, 0x57, 0x45, 0x37, 0x38, 0x50, 0x6D, 0x51, 0x57, 0x5F, 0x62, 0x67, 0x68, 0x67, 0x3E, 0x4D,
-		
+    
         //0x71, 0x79, 0x70, 0x64, 0x78, 0x5C, 0x65, 0x67, 0x63, 0xFF, 0xC0, 0x00, 0x0B, 0x08, 0x00, 0xF0, // 0x5E = Height x Width
         0x71, 0x79, 0x70, 0x64, 0x78, 0x5C, 0x65, 0x67, 0x63, 0xFF, 0xC0, 0x00, 0x0B, 0x08, 0x01, 0x28, // 0x5E = Height x Width
-		
+    
         //0x01, 0x40, 0x01, 0x01, 0x11, 0x00, 0xFF, 0xC4, 0x00, 0xD2, 0x00, 0x00, 0x01, 0x05, 0x01, 0x01,
         0x01, 0x90, 0x01, 0x01, 0x11, 0x00, 0xFF, 0xC4, 0x00, 0xD2, 0x00, 0x00, 0x01, 0x05, 0x01, 0x01,
-		
+    
         0x01, 0x01, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x02, 0x03, 0x04,
         0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x10, 0x00, 0x02, 0x01, 0x03, 0x03, 0x02, 0x04, 0x03,
         0x05, 0x05, 0x04, 0x04, 0x00, 0x00, 0x01, 0x7D, 0x01, 0x02, 0x03, 0x00, 0x04, 0x11, 0x05, 0x12,
@@ -638,7 +638,7 @@ public class RobotEngineManager : MonoBehaviour
         0xF1, 0xF2, 0xF3, 0xF4, 0xF5, 0xF6, 0xF7, 0xF8, 0xF9, 0xFA, 0xFF, 0xDA, 0x00, 0x08, 0x01, 0x01,
         0x00, 0x00, 0x3F, 0x00
     };
-	
+  
     // Pre-baked JPEG header for grayscale, Q80
     private static readonly byte[] minipeg_header80 =
     {
@@ -679,21 +679,21 @@ public class RobotEngineManager : MonoBehaviour
                 Destroy(texture);
                 texture = null;
             }
-			
+      
             if(sprite != null)
             {
                 Destroy(sprite);
                 sprite = null;
             }
-			
+      
             texture = new Texture2D(width, height, format, false);
             // HACK: Grayscale is broken from about 5.0 until 5.1.1p2
             // note p2 means patch release, after 5.1.1 proper;
             // 5.1.2 and 5.2.0 should be OK; we won't upgrade until one of those come out
 #if UNITY_5_0
-			if (USE_HACK_TO_FIX_GRAYSCALE_ISSUE) {
-				width /= 3;
-			}
+      if (USE_HACK_TO_FIX_GRAYSCALE_ISSUE) {
+        width /= 3;
+      }
 #endif
             sprite = Sprite.Create(texture, new Rect(0, 0, width, height), spritePivot);
         }
@@ -701,7 +701,7 @@ public class RobotEngineManager : MonoBehaviour
 
     private void ReceivedSpecificMessage(G2U.ImageChunk message)
     {
-		if(current == null) return;
+    if(current == null) return;
 
         //Debug.Log("ReceivedSpecificMessage ImageChunk message.ncols("+message.ncols+") message.nrows("+message.nrows+")");
 
@@ -728,9 +728,9 @@ public class RobotEngineManager : MonoBehaviour
         {
             currentImageID = message.imageId;
             currentImageFrameTimeStamp = message.frameTimeStamp;
-			
+      
             int length = message.chunkSize * message.imageChunkCount;
-			
+      
             if(minipegArray == null || minipegArray.Length < length)
             {
                 minipegArray = new byte[ length ];
@@ -739,11 +739,11 @@ public class RobotEngineManager : MonoBehaviour
             currentImageIndex = 0;
             currentChunkIndex = 0;
         }
-		
+    
         int chunkLength = Math.Min(minipegArray.Length - currentImageIndex, message.chunkSize);
         Array.Copy(message.data, 0, minipegArray, currentImageIndex, chunkLength);
         currentImageIndex += chunkLength;
-		
+    
         if(++currentChunkIndex == message.imageChunkCount)
         {
             ResetTexture(message.ncols, message.nrows, TextureFormat.RGB24, true);
@@ -754,14 +754,14 @@ public class RobotEngineManager : MonoBehaviour
             }
 
             texture.LoadImage(jpegArray);
-			
+      
             if(RobotImage != null)
             {
                 RobotImage(sprite);
-				
+        
                 current.ClearObservedObjects();
             }
-			
+      
             SaveJpeg(jpegArray, currentImageIndex);
         }
     }
@@ -806,9 +806,9 @@ public class RobotEngineManager : MonoBehaviour
         for(int i = 1; i < length; ++i)
         {
             outArray[offset++] = inArray[i];
-			if(inArray[i] == 0xff) outArray[offset++] = 0;
+      if(inArray[i] == 0xff) outArray[offset++] = 0;
         }
-		
+    
         outArray[offset++] = 0xFF;
         outArray[offset++] = 0xD9;
 
@@ -821,39 +821,39 @@ public class RobotEngineManager : MonoBehaviour
         {
             currentImageID = message.imageId;
             currentImageFrameTimeStamp = message.frameTimeStamp;
-			
+      
             int length = message.ncols * message.nrows;
-			
+      
             if(color32Array == null || color32Array.Length < length)
             {
                 color32Array = new Color32[ length ];
             }
-			
+      
             currentImageIndex = 0;
         }
-		
+    
         for(int messageIndex = 0; currentImageIndex < color32Array.Length && messageIndex < message.chunkSize; ++messageIndex, ++currentImageIndex)
         {
             byte gray = message.data[messageIndex];
-			
+      
             int x = currentImageIndex % message.ncols;
             int y = currentImageIndex / message.ncols;
             int index = message.ncols * (message.nrows - y - 1) + x;
-			
+      
             color32Array[index] = new Color32(gray, gray, gray, 255);
         }
-		
+    
         if(currentImageIndex == color32Array.Length)
         {
             ResetTexture(message.ncols, message.nrows, TextureFormat.ARGB32);
 
             texture.SetPixels32(color32Array);
             texture.Apply(false);
-			
+      
             if(RobotImage != null)
             {
                 RobotImage(sprite);
-				
+        
                 current.ClearObservedObjects();
             }
         }
@@ -867,12 +867,12 @@ public class RobotEngineManager : MonoBehaviour
             currentImageFrameTimeStamp = message.frameTimeStamp;
 
             int length = message.chunkSize * message.imageChunkCount;
-			
+      
             if(jpegArray == null || jpegArray.Length < length)
             {
                 jpegArray = new byte[ length ];
             }
-			
+      
             currentImageIndex = 0;
             currentChunkIndex = 0;
         }
@@ -890,7 +890,7 @@ public class RobotEngineManager : MonoBehaviour
             if(RobotImage != null)
             {
                 RobotImage(sprite);
-				
+        
                 current.ClearObservedObjects();
             }
 
@@ -905,11 +905,11 @@ public class RobotEngineManager : MonoBehaviour
         {
             return;
         }
-//		if (imageFrameSkip != 0) {
-//			if (imageFrameCount % imageFrameSkip != 0) {
-//				return;
-//			}
-//		}
+//    if (imageFrameSkip != 0) {
+//      if (imageFrameCount % imageFrameSkip != 0) {
+//        return;
+//      }
+//    }
         string filename = string.Format("frame-{0}_time-{1}.jpg", imageFrameCount, Time.time);
         string filepath = Path.Combine(imageBasePath, filename);
         SaveAsync(filepath, buffer, 0, length);
@@ -1005,7 +1005,7 @@ public class RobotEngineManager : MonoBehaviour
         {
             throw new ArgumentException("ID must be between 0 and 255.", "robotID");
         }
-		
+    
         if(string.IsNullOrEmpty(robotIP))
         {
             throw new ArgumentNullException("robotIP");
@@ -1017,7 +1017,7 @@ public class RobotEngineManager : MonoBehaviour
         }
         int length = Encoding.UTF8.GetBytes(robotIP, 0, robotIP.Length, ForceAddRobotMessage.ipAddress, 0);
         ForceAddRobotMessage.ipAddress[length] = 0;
-		
+    
         ForceAddRobotMessage.robotID = (byte)robotID;
         ForceAddRobotMessage.isSimulated = robotIsSimulated ? (byte)1 : (byte)0;
 

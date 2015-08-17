@@ -5,62 +5,62 @@ using System.Collections;
 [ExecuteInEditMode]
 public class CameraPortFromRectTransform : MonoBehaviour {
 
-	[SerializeField] RectTransform rectTransform;
+  [SerializeField] RectTransform rectTransform;
 
-	Camera cam;
-	Canvas canvas;
+  Camera cam;
+  Canvas canvas;
 
-	bool initialized = false;
+  bool initialized = false;
 
-	void OnEnable() {
-		initialized = false;
-	}
+  void OnEnable() {
+    initialized = false;
+  }
 
-	void Update() {
-		if(initialized) return;
-		if(rectTransform == null) return;
+  void Update() {
+    if(initialized) return;
+    if(rectTransform == null) return;
 
-		if(cam == null) {
-			cam = gameObject.GetComponent<Camera>();
-			if(cam == null) return;
-		}
+    if(cam == null) {
+      cam = gameObject.GetComponent<Camera>();
+      if(cam == null) return;
+    }
 
-		if(canvas == null) {
-			canvas = rectTransform.gameObject.GetComponentInParent<Canvas>();
-			if(canvas == null) return;
-		}
+    if(canvas == null) {
+      canvas = rectTransform.gameObject.GetComponentInParent<Canvas>();
+      if(canvas == null) return;
+    }
 
-		if(!rectTransform.gameObject.activeInHierarchy) return;
+    if(!rectTransform.gameObject.activeInHierarchy) return;
 
-		initialized = true;
+    initialized = true;
 
-		Vector3[] corners = new Vector3[4];
-		rectTransform.GetWorldCorners(corners);
+    Vector3[] corners = new Vector3[4];
+    rectTransform.GetWorldCorners(corners);
 
-		//get corners in viewport space
-		for(int i=0; i<4; i++) {
-			corners[i] = RectTransformUtility.WorldToScreenPoint(canvas.renderMode != RenderMode.ScreenSpaceOverlay ? canvas.worldCamera : null, corners[i]);
-			corners[i].x /= Screen.width;
-			corners[i].y /= Screen.height;
-		}
+    //get corners in viewport space
+    for(int i=0; i<4; i++) {
+      corners[i] = RectTransformUtility.WorldToScreenPoint(canvas.renderMode != RenderMode.ScreenSpaceOverlay ? canvas.worldCamera : null, corners[i]);
+      corners[i].x /= Screen.width;
+      corners[i].y /= Screen.height;
+    }
 
-		float xMin = float.MaxValue;
-		float xMax = 0f;
-		float yMin = float.MaxValue;
-		float yMax = 0f;
+    float xMin = float.MaxValue;
+    float xMax = 0f;
+    float yMin = float.MaxValue;
+    float yMax = 0f;
 
-		for(int i=0; i<4; i++) {
-			xMin = Mathf.Min(corners[i].x, xMin);
-			xMax = Mathf.Max(corners[i].x, xMax);
-			yMin = Mathf.Min(corners[i].y, yMin);
-			yMax = Mathf.Max(corners[i].y, yMax);
-		}
+    for(int i=0; i<4; i++) {
+      xMin = Mathf.Min(corners[i].x, xMin);
+      xMax = Mathf.Max(corners[i].x, xMax);
+      yMin = Mathf.Min(corners[i].y, yMin);
+      yMax = Mathf.Max(corners[i].y, yMax);
+    }
 
-		Rect rect = new Rect(xMin, yMin, xMax - xMin, yMax - yMin);
+    Rect rect = new Rect(xMin, yMin, xMax - xMin, yMax - yMin);
 
-		cam.rect = rect; 
+    cam.rect = rect; 
 
-		//Debug.Log("CameraPortFromRectTransform cam.rect("+cam.rect+") rect("+rect+") rectTransform.rect("+rectTransform.rect+")");
+    //Debug.Log("CameraPortFromRectTransform cam.rect("+cam.rect+") rect("+rect+") rectTransform.rect("+rectTransform.rect+")");
 
-	}
+  }
 }

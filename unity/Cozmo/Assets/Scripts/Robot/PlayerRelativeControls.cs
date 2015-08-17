@@ -7,124 +7,124 @@ using System.Collections;
 /// </summary>
 public class PlayerRelativeControls : MonoBehaviour
 {
-	
-	#region INSPECTOR FIELDS
+  
+  #region INSPECTOR FIELDS
 
-	[SerializeField] VirtualStick stick = null;
-	[SerializeField] Text text_x = null;
-	[SerializeField] Text text_y = null;
-	[SerializeField] Text text_leftWheelSpeed = null;
-	[SerializeField] Text text_rightWheelSpeed = null;
+  [SerializeField] VirtualStick stick = null;
+  [SerializeField] Text text_x = null;
+  [SerializeField] Text text_y = null;
+  [SerializeField] Text text_leftWheelSpeed = null;
+  [SerializeField] Text text_rightWheelSpeed = null;
 
-	#endregion
+  #endregion
 
-	#region MISC MEMBERS
+  #region MISC MEMBERS
 
-	Vector2 inputs = Vector2.zero;
-	float leftWheelSpeed = 0f;
-	float rightWheelSpeed = 0f;
-	bool moveCommandLastFrame = false;
-	float robotFacing = 0f;
-	float robotStartHeading = 0f;
-	float compassStartHeading = 0f;
+  Vector2 inputs = Vector2.zero;
+  float leftWheelSpeed = 0f;
+  float rightWheelSpeed = 0f;
+  bool moveCommandLastFrame = false;
+  float robotFacing = 0f;
+  float robotStartHeading = 0f;
+  float compassStartHeading = 0f;
 
-	#endregion
+  #endregion
 
-	#region COMPONENT CALLBACKS
+  #region COMPONENT CALLBACKS
 
-	void OnEnable()
-	{
-		//reset default state for this control scheme test
-		Debug.Log("PlayerRelativeControls OnEnable");
-		Input.compass.enabled = true;
+  void OnEnable()
+  {
+    //reset default state for this control scheme test
+    Debug.Log("PlayerRelativeControls OnEnable");
+    Input.compass.enabled = true;
 
-		moveCommandLastFrame = false;
-		if(robot != null)
-		{
-			robotStartHeading = MathUtil.ClampAngle180(robot.poseAngle_rad * Mathf.Rad2Deg);
-			//Debug.Log("frame("+Time.frameCount+") robotFacing(" + robotFacing + ")");
-		}
+    moveCommandLastFrame = false;
+    if(robot != null)
+    {
+      robotStartHeading = MathUtil.ClampAngle180(robot.poseAngle_rad * Mathf.Rad2Deg);
+      //Debug.Log("frame("+Time.frameCount+") robotFacing(" + robotFacing + ")");
+    }
 
-		compassStartHeading = MathUtil.ClampAngle180(-Input.compass.trueHeading);
-		Debug.Log("frame(" + Time.frameCount + ") robotStartHeading(" + robotStartHeading + ") compassStartHeading(" + compassStartHeading + ")");
-	}
+    compassStartHeading = MathUtil.ClampAngle180(-Input.compass.trueHeading);
+    Debug.Log("frame(" + Time.frameCount + ") robotStartHeading(" + robotStartHeading + ") compassStartHeading(" + compassStartHeading + ")");
+  }
 
-	Robot robot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.current : null; } }
+  Robot robot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.current : null; } }
 
-	void Update()
-	{
-		if(robot == null) return;
+  void Update()
+  {
+    if(robot == null) return;
 
-		robotFacing = MathUtil.ClampAngle180(robot.poseAngle_rad * Mathf.Rad2Deg);
-		//robotFacingStale = false;
-		//Debug.Log("frame("+Time.frameCount+") robotFacing(" + robotFacing + ")");
+    robotFacing = MathUtil.ClampAngle180(robot.poseAngle_rad * Mathf.Rad2Deg);
+    //robotFacingStale = false;
+    //Debug.Log("frame("+Time.frameCount+") robotFacing(" + robotFacing + ")");
 
-		//take our v-pad control axes and calc translate to robot
-		inputs = Vector2.zero;
+    //take our v-pad control axes and calc translate to robot
+    inputs = Vector2.zero;
 
-		if(stick != null)
-		{
-			inputs.x = stick.Horizontal;
-			inputs.y = stick.Vertical;
-		}
+    if(stick != null)
+    {
+      inputs.x = stick.Horizontal;
+      inputs.y = stick.Vertical;
+    }
 
-		if(!moveCommandLastFrame && inputs.sqrMagnitude == 0f)
-		{
-			return; // command not changed
-		}
-		if(inputs.sqrMagnitude == 0f)
-		{
-			robot.DriveWheels(0f, 0f);
-			return; // command zero'd, let's full stop
-		}
+    if(!moveCommandLastFrame && inputs.sqrMagnitude == 0f)
+    {
+      return; // command not changed
+    }
+    if(inputs.sqrMagnitude == 0f)
+    {
+      robot.DriveWheels(0f, 0f);
+      return; // command zero'd, let's full stop
+    }
 
-		float relativeScreenFacing = MathUtil.AngleDelta(compassStartHeading, MathUtil.ClampAngle180(-Input.compass.trueHeading));
-		float relativeRobotFacing = MathUtil.AngleDelta(robotStartHeading, robotFacing);
+    float relativeScreenFacing = MathUtil.AngleDelta(compassStartHeading, MathUtil.ClampAngle180(-Input.compass.trueHeading));
+    float relativeRobotFacing = MathUtil.AngleDelta(robotStartHeading, robotFacing);
 
-		float screenToRobot = MathUtil.AngleDelta(relativeScreenFacing, relativeRobotFacing);
-		float throwAngle = Vector2.Angle(Vector2.up, inputs.normalized) * -Mathf.Sign(Vector2.Dot(inputs.normalized, Vector2.right));
-		float relativeAngle = MathUtil.AngleDelta(screenToRobot, throwAngle);
+    float screenToRobot = MathUtil.AngleDelta(relativeScreenFacing, relativeRobotFacing);
+    float throwAngle = Vector2.Angle(Vector2.up, inputs.normalized) * -Mathf.Sign(Vector2.Dot(inputs.normalized, Vector2.right));
+    float relativeAngle = MathUtil.AngleDelta(screenToRobot, throwAngle);
 
-		Debug.Log("RobotRelativeControls relativeScreenFacing(" + relativeScreenFacing + ") relativeRobotFacing(" + relativeRobotFacing + ") screenToRobot(" + screenToRobot + ") throwAngle(" + throwAngle + ") relativeAngle(" + relativeAngle + ")");
-		inputs = Quaternion.AngleAxis(-screenToRobot, Vector3.forward) * inputs;
+    Debug.Log("RobotRelativeControls relativeScreenFacing(" + relativeScreenFacing + ") relativeRobotFacing(" + relativeRobotFacing + ") screenToRobot(" + screenToRobot + ") throwAngle(" + throwAngle + ") relativeAngle(" + relativeAngle + ")");
+    inputs = Quaternion.AngleAxis(-screenToRobot, Vector3.forward) * inputs;
 
-		CozmoUtil.CalcWheelSpeedsForPlayerRelInputs(inputs, out leftWheelSpeed, out rightWheelSpeed);
+    CozmoUtil.CalcWheelSpeedsForPlayerRelInputs(inputs, out leftWheelSpeed, out rightWheelSpeed);
 
-		robot.DriveWheels(leftWheelSpeed, rightWheelSpeed);
+    robot.DriveWheels(leftWheelSpeed, rightWheelSpeed);
 
-		moveCommandLastFrame = inputs.sqrMagnitude > 0f;
-		
-		RefreshDebugText();
-	}
+    moveCommandLastFrame = inputs.sqrMagnitude > 0f;
+    
+    RefreshDebugText();
+  }
 
-	void OnDisable()
-	{
-		//clean up this controls test if needed
-		Debug.Log("RobotRelativeControls OnDisable");
-		
-		if(robot != null && RobotEngineManager.instance.IsConnected)
-		{
-			robot.DriveWheels(0f, 0f);
-		}
-	}
+  void OnDisable()
+  {
+    //clean up this controls test if needed
+    Debug.Log("RobotRelativeControls OnDisable");
+    
+    if(robot != null && RobotEngineManager.instance.IsConnected)
+    {
+      robot.DriveWheels(0f, 0f);
+    }
+  }
 
-	#endregion
+  #endregion
 
-	#region PRIVATE METHODS
+  #region PRIVATE METHODS
 
-	void RefreshDebugText()
-	{
-		if(text_x != null) text_x.text = "x(" + inputs.x.ToString("N") + ")";
-		if(text_y != null) text_y.text = "y(" + inputs.y.ToString("N") + ")";
-		
-		if(text_leftWheelSpeed != null) text_leftWheelSpeed.text = "L(" + leftWheelSpeed.ToString("N") + ")";
-		if(text_rightWheelSpeed != null) text_rightWheelSpeed.text = "R(" + rightWheelSpeed.ToString("N") + ")";
-	}
+  void RefreshDebugText()
+  {
+    if(text_x != null) text_x.text = "x(" + inputs.x.ToString("N") + ")";
+    if(text_y != null) text_y.text = "y(" + inputs.y.ToString("N") + ")";
+    
+    if(text_leftWheelSpeed != null) text_leftWheelSpeed.text = "L(" + leftWheelSpeed.ToString("N") + ")";
+    if(text_rightWheelSpeed != null) text_rightWheelSpeed.text = "R(" + rightWheelSpeed.ToString("N") + ")";
+  }
 
-	#endregion
+  #endregion
 
-	#region PUBLIC METHODS
+  #region PUBLIC METHODS
 
-	#endregion
-	
+  #endregion
+  
 }
