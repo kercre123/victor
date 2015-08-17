@@ -2032,7 +2032,7 @@ namespace Anki {
         if(behaviorName == "AUTO") {
           PRINT_NAMED_INFO("Robot.StartBehavior.EnablingAutoBehaviorSelection", "\n");
         } else {
-          if(RESULT_OK != _behaviorMgr.SelectNextBehavior(behaviorName)) {
+          if(RESULT_OK != _behaviorMgr.SelectNextBehavior(behaviorName, BaseStationTimer::getInstance()->GetCurrentTimeInSeconds())) {
             PRINT_NAMED_ERROR("Robot.StartBehavior.Fail", "\n");
           } else {
             PRINT_NAMED_INFO("Robot.StartBehavior.Success",

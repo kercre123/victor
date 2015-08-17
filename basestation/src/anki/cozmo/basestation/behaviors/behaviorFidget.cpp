@@ -23,9 +23,9 @@ namespace Cozmo {
 
   BehaviorFidget::BehaviorFidget(Robot& robot, const Json::Value& config)
   : IBehavior(robot, config)
-  , _name("Fidget")
   , _totalProb(0)
   {
+    _name = "Fidget";
     
     // TODO: Add fidget behaviors based on config
     // TODO: Set parameters (including selection frequencies) from config
@@ -45,7 +45,7 @@ namespace Cozmo {
     
     AddFidget("LiftTap", [this](){return new PlayAnimationAction("firstTap", this->_rng.RandIntInRange(1, 3));}, 1);
     
-    AddFidget("TurnInPlace", [](){return new TurnInPlaceAction(0, DEG_TO_RAD(90));}, 2);
+    AddFidget("TurnInPlace", [](){return new TurnInPlaceAction(0, false, DEG_TO_RAD(90));}, 2);
     
     // TODO: Make probabilities non-zero once we have these animations available
     AddFidget("Yawn", [](){return new PlayAnimationAction("Yawn");}, 0);
@@ -121,7 +121,7 @@ namespace Cozmo {
     return Status::RUNNING;
   } // Update()
   
-  Result BehaviorFidget::Interrupt()
+  Result BehaviorFidget::Interrupt(float currentTime_sec)
   {
     // Mark the behavior as interrupted so it will return COMPLETE on next update
     _interrupted = true;

@@ -29,11 +29,11 @@ namespace Cozmo {
     virtual Result Init() override;
     
     // Always runnable for now?
-    virtual bool IsRunnable() const override { return true; }
+    virtual bool IsRunnable(float currentTime_sec) const override { return true; }
     
     virtual Status Update(float currentTime_sec) override;
     
-    virtual Result Interrupt() override;
+    virtual Result Interrupt(float currentTime_sec) override;
     
     virtual const std::string& GetName() const override {
       static const std::string name("LookForFaces");

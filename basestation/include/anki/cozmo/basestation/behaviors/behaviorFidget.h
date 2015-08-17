@@ -25,20 +25,16 @@ namespace Cozmo {
     BehaviorFidget(Robot& robot, const Json::Value& config);
     virtual ~BehaviorFidget();
     
-    virtual bool IsRunnable() const override { return true; }
+    virtual bool IsRunnable(float currentTime_sec) const override { return true; }
     
     virtual Result Init() override;
     
     virtual Status Update(float currentTime_sec) override;
     
     // Finish placing current object if there is one, otherwise good to go
-    virtual Result Interrupt() override;
+    virtual Result Interrupt(float currentTime_sec) override;
     
     virtual bool GetRewardBid(Reward& reward) override;
-    
-    virtual const std::string& GetName() const override {
-      return _name;
-    }
 
   private:
     
@@ -67,8 +63,6 @@ namespace Cozmo {
     f32 _nextFidgetWait_sec;
     
     f32 _minWait_sec, _maxWait_sec;
-    
-    std::string _name;
     
     s32 _totalProb;
     

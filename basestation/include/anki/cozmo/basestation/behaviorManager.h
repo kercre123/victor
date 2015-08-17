@@ -52,12 +52,12 @@ namespace Cozmo {
     // transition immediately to running that behavior, but will let the
     // current beheavior know it needs wind down with a call to its
     // Interrupt() method.
-    Result SelectNextBehavior();
+    Result SelectNextBehavior(float currentTime_sec);
     
     // Forcefully select the next behavior by name (versus by letting the
     // selection mechanism choose based on current state). Fails if that
     // behavior does not exist or the selected behavior is not runnable.
-    Result SelectNextBehavior(const std::string& name);
+    Result SelectNextBehavior(const std::string& name, float currentTime_sec);
     
     // Add a new behavior to the available ones to be selected from.
     // The behavior will be stored keyed by the name returned by its GetName() method.
@@ -80,7 +80,7 @@ namespace Cozmo {
     Robot& _robot;
     
     void SwitchToNextBehavior();
-    Result InitNextBehaviorHelper();
+    Result InitNextBehaviorHelper(float currentTime_sec);
     
     // Map from behavior name to available behaviors
     using BehaviorContainer = std::unordered_map<std::string, IBehavior*>;
