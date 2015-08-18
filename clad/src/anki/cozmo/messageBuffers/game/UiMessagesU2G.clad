@@ -3,7 +3,7 @@
 // Author: Greg Nagel
 // Copyright: Anki Inc (c) 2015
 
-#include "anki/cozmo/messageBuffers/shared/actionTypes.clad"
+#include "clad/types/actionTypes.clad"
 
 namespace Anki {
 namespace Cozmo {
@@ -55,6 +55,13 @@ message TurnInPlace {
     uint_8 robotID
 }
 
+// TurnInPlaceAtSpeed
+message TurnInPlaceAtSpeed {
+    float_32 speed_rad_per_sec,
+    float_32 accel_rad_per_sec2,
+    uint_8 robotID
+}
+
 // FaceObject - Turns and tilts head to look at object in last known position
 //   If facing the object requires less than a turnAngleTol turn, then no
 //   turn is performed. If a turn greater than maxTurnAngle is required,
@@ -85,14 +92,16 @@ message MoveLift {
 message SetLiftHeight {
     float_32 height_mm,
     float_32 max_speed_rad_per_sec,
-    float_32 accel_rad_per_sec2
+    float_32 accel_rad_per_sec2,
+    float_32 duration_sec
 }
 
 // SetHeadAngle
 message SetHeadAngle {
     float_32 angle_rad,
     float_32 max_speed_rad_per_sec,
-    float_32 accel_rad_per_sec2
+    float_32 accel_rad_per_sec2,
+    float_32 duration_sec
 }
 
 // TrackToObject
@@ -459,6 +468,39 @@ message VisualizeQuad {
 //  Erase the visualized quad with the specified ID
 message EraseQuad {
   uint_32 quadID
+}
+
+structure RobotActionUnion {
+  FaceObject         faceObject,
+  GotoPose           goToPose,
+  GotoObject         goToObject,
+  PlayAnimation      playAnimation,
+  PickAndPlaceObject pickAndPlaceObject,
+  RollObject         rollObject,
+  SetLiftHeight      setLiftHeight,
+  SetHeadAngle       setHeadAngle,
+  TurnInPlace        turnInPlace
+}
+
+// QueueSingleAction
+message QueueSingleAction {
+  uint_8  robotID,
+  uint_32 inSlot,
+  uint_8  numRetries,
+  QueueActionPosition    position,
+  RobotActionType        actionType,
+  RobotActionUnion       action
+}
+
+// QueueCompoundAction
+message QueueCompoundAction {
+  uint_8  robotID,
+  uint_32 inSlot,
+  uint_8  numRetries,
+  bool  parallel,  // false means sequential
+  QueueActionPosition    position,
+  RobotActionType        actionTypes[uint_8],
+  RobotActionUnion       actions[uint_8]
 }
 
 // keep empty to generate an auto-union that includes all messages in this file

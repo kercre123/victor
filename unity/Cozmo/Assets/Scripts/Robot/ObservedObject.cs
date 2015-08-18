@@ -3,230 +3,242 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using Anki.Cozmo;
-using G2U = Anki.Cozmo.G2U;
-using U2G = Anki.Cozmo.U2G;
+using G2U = Anki.Cozmo.ExternalInterface;
+using U2G = Anki.Cozmo.ExternalInterface;
 
 public enum CubeType {
-	UNKNOWN = -1,
-	LIGHT_CUBE,
-	BULLS_EYE,
-	FLAG,
-	FACE,
-	Count
+  UNKNOWN = -1,
+  LIGHT_CUBE,
+  BULLS_EYE,
+  FLAG,
+  FACE,
+  Count
 }
 
-public class ObservedObject
-{
-	public CubeType cubeType { get; private set; }
-	public uint RobotID { get; private set; }
-	public uint Family { get; private set; }
-	public uint ObjectType { get; private set; }
+/// <summary>
+/// all objects that cozmo sees are transmitted across to unity and represented here as ObservedObjects
+///   so far, we only both handling three types of cubes and the occasional human head
+/// </summary>
+public class ObservedObject {
+  public CubeType cubeType { get; private set; }
 
-	protected int ID;
+  public uint RobotID { get; private set; }
 
-	public bool MarkersVisible { get { return Time.time - TimeLastSeen < 0.25f; } }
+  public uint Family { get; private set; }
 
-	public Rect VizRect { get; private set; }
-	public Vector3 WorldPosition { get; private set; }
-	public Quaternion Rotation { get; private set; }
-	public Vector3 Forward { get { return Rotation * Vector3.right;	} }
-	public Vector3 Right { get { return Rotation * -Vector3.up;	} }
-	public Vector3 Up { get { return Rotation * Vector3.forward; } }
-	public Vector3 TopNorth { get { return Quaternion.AngleAxis( TopFaceNorthAngle * Mathf.Rad2Deg, Vector3.forward ) * Vector2.right; } }
-	public Vector3 TopEast { get { return Quaternion.AngleAxis( TopFaceNorthAngle * Mathf.Rad2Deg, Vector3.forward ) * -Vector2.up; } }
-	public Vector3 TopNorthEast { get { return ( TopNorth + TopEast ).normalized; } }
-	public Vector3 TopSouthEast { get { return ( -TopNorth + TopEast ).normalized; } }
-	public Vector3 TopSouthWest { get { return ( -TopNorth - TopEast ).normalized; } }
-	public Vector3 TopNorthWest { get { return ( TopNorth - TopEast ).normalized; } }
+  public uint ObjectType { get; private set; }
 
-	public float TopFaceNorthAngle { get; private set; }
+  public int ID { get; private set; }
 
-	public Vector3 Size { get; private set; }
-	public float TimeLastSeen { get; private set; }
-	public float TimeCreated { get; private set; }
+  public bool MarkersVisible { get { return Time.time - TimeLastSeen < 0.25f; } }
 
-	protected Robot robot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.current : null; } }
+  public Rect VizRect { get; private set; }
 
-	public bool isActive { get { return cubeType == CubeType.LIGHT_CUBE; } }
-	public bool isFace { get { return cubeType == CubeType.FACE; } }
+  public Vector3 WorldPosition { get; private set; }
 
-	public event Action<ObservedObject> OnDelete;
-	public static Action SignificantChangeDetected = null;
+  public Quaternion Rotation { get; private set; }
 
-	public float targetingScore
-	{
-		get
-		{
-			float score = -1f;
+  public Vector3 Forward { get { return Rotation * Vector3.right; } }
 
-			if( robot.carryingObject != ID )
-			{
-				float distanceFromRobot = Vector2.Distance( robot.WorldPosition + robot.Forward * CozmoUtil.CARRIED_OBJECT_HORIZONTAL_OFFSET, WorldPosition ) - ( CozmoUtil.BLOCK_LENGTH_MM * 0.5f );
-				float angleFromRobot = Vector2.Angle( robot.Forward, WorldPosition - robot.WorldPosition );
-				float maxDistanceInMM = maxDistanceInCubeLengths * CozmoUtil.BLOCK_LENGTH_MM;
+  public Vector3 Right { get { return Rotation * -Vector3.up; } }
 
-				if( maxDistanceInMM > distanceFromRobot && maxAngle > angleFromRobot )
-				{
-					float distanceScore = ( 100f - Mathf.Lerp( 0f, 100f, distanceFromRobot / maxDistanceInMM ) ) * distanceScoreMultiplier;
-					float angleScore = ( 100f - Mathf.Lerp( 0f, 100f, angleFromRobot / maxAngle ) ) * angleScoreMultiplier;
+  public Vector3 Up { get { return Rotation * Vector3.forward; } }
 
-					score = distanceScore + angleScore;
-				}
-			}
+  public Vector3 TopNorth { get { return Quaternion.AngleAxis(TopFaceNorthAngle * Mathf.Rad2Deg, Vector3.forward) * Vector2.right; } }
 
-			return score;
-		}
-	}
+  public Vector3 TopEast { get { return Quaternion.AngleAxis(TopFaceNorthAngle * Mathf.Rad2Deg, Vector3.forward) * -Vector2.up; } }
 
-	private static float angleScoreMultiplier = 1f;
-	private static float distanceScoreMultiplier = 1f;
-	private static float maxAngle = 45f;
-	private static float maxDistanceInCubeLengths = 8f;
+  public Vector3 TopNorthEast { get { return (TopNorth + TopEast).normalized; } }
 
-	public bool canBeStackedOn
-	{
-		get
-		{
-			if( robot.selectedObjects.Count > 1 ) return false; // if blocks stacked on each other
+  public Vector3 TopSouthEast { get { return (-TopNorth + TopEast).normalized; } }
 
-			//float distance = ( (Vector2)WorldPosition - (Vector2)robot.WorldPosition ).magnitude;
-			float height = Mathf.Abs( WorldPosition.z - robot.WorldPosition.z );
-		
-			return /*distance <= CozmoUtil.BLOCK_LENGTH_MM * 4f &&*/ height < CozmoUtil.BLOCK_LENGTH_MM;
-		}
-	}
-	
-	public const float RemoveDelay = 0.15f;
+  public Vector3 TopSouthWest { get { return (-TopNorth - TopEast).normalized; } }
 
-	public string InfoString { get; private set; }
-	public string SelectInfoString { get; private set; }
+  public Vector3 TopNorthWest { get { return (TopNorth - TopEast).normalized; } }
 
-	public ObservedObject() { }
+  public float TopFaceNorthAngle { get; private set; }
 
-	public ObservedObject( int objectID, uint objectFamily, uint objectType )
-	{
-		Constructor( objectID, objectFamily, objectType );
-	}
+  public Vector3 Size { get; private set; }
 
-	protected void Constructor( int objectID, uint objectFamily, uint objectType )
-	{
-		TimeCreated = Time.time;
-		Family = objectFamily;
-		ObjectType = objectType;
-		ID = objectID;
-		
-		InfoString = "ID: " + ID + " Family: " + Family + " Type: " + ObjectType;
-		SelectInfoString = "Select ID: " + ID + " Family: " + Family + " Type: " + ObjectType;
+  public float TimeLastSeen { get; private set; }
 
-		if (objectFamily == 4) {
-			cubeType = CubeType.LIGHT_CUBE;
-		} else if (objectFamily == 6) {
-			cubeType = CubeType.FACE;
-			Debug.LogWarning("FACE " + ID + " !!!"); 
-		} else if (objectType == 4 || objectType == 5) {
-			cubeType = CubeType.BULLS_EYE;
-		}
-		else if (objectType == 11 || objectType == 12 || objectType == 13) {
-			cubeType = CubeType.FLAG;
-		} else {
-			cubeType = CubeType.UNKNOWN;
-			Debug.LogWarning("Object " + ID + " with type " + objectType + " is unsupported"); 
-		}
+  public float TimeCreated { get; private set; }
 
-		Debug.Log ("ObservedObject cubeType("+cubeType+") from objectFamily("+objectFamily+") objectType("+objectType+")" );
+  protected Robot robot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.current : null; } }
 
-		SetTargetingScoreSettings();
-	}
+  public bool isActive { get { return cubeType == CubeType.LIGHT_CUBE; } }
 
-	public static implicit operator uint( ObservedObject observedObject )
-	{
-		if( observedObject == null )
-		{
-			Debug.LogWarning( "converting null ObservedObject into uint: returning uint.MaxValue" );
-			return uint.MaxValue;
-		}
-		
-		return (uint)observedObject.ID;
-	}
+  public bool isFace { get { return cubeType == CubeType.FACE; } }
 
-	public static implicit operator int( ObservedObject observedObject )
-	{
-		if( observedObject == null ) return -1;
+  public event Action<ObservedObject> OnDelete;
 
-		return observedObject.ID;
-	}
+  public static Action SignificantChangeDetected = null;
 
-	public static implicit operator string( ObservedObject observedObject )
-	{
-		return ((int)observedObject).ToString();
-	}
+  public float targetingScore {
+    get {
+      float score = -1f;
 
-	public void UpdateInfo( G2U.RobotObservedObject message )
-	{
-		RobotID = message.robotID;
-		VizRect = new Rect( message.img_topLeft_x, message.img_topLeft_y, message.img_width, message.img_height );
+      if (robot.carryingObject != ID) {
+        float distanceFromRobot = Vector2.Distance(robot.WorldPosition + robot.Forward * CozmoUtil.CARRIED_OBJECT_HORIZONTAL_OFFSET, WorldPosition) - (CozmoUtil.BLOCK_LENGTH_MM * 0.5f);
+        float angleFromRobot = Vector2.Angle(robot.Forward, WorldPosition - robot.WorldPosition);
+        float maxDistanceInMM = maxDistanceInCubeLengths * CozmoUtil.BLOCK_LENGTH_MM;
 
-		Vector3 newPos = new Vector3( message.world_x, message.world_y, message.world_z );
+        if (maxDistanceInMM > distanceFromRobot && maxAngle > angleFromRobot) {
+          float distanceScore = (100f - Mathf.Lerp(0f, 100f, distanceFromRobot / maxDistanceInMM)) * distanceScoreMultiplier;
+          float angleScore = (100f - Mathf.Lerp(0f, 100f, angleFromRobot / maxAngle)) * angleScoreMultiplier;
 
-		//dmdnote cozmo's space is Z up, keep in mind if we need to convert to unity's y up space.
-		WorldPosition = newPos;
-		Rotation = new Quaternion( message.quaternion1, message.quaternion2, message.quaternion3, message.quaternion0 );
-		Size = Vector3.one * CozmoUtil.BLOCK_LENGTH_MM;
+          score = distanceScore + angleScore;
+        }
+      }
 
-		TopFaceNorthAngle = message.topFaceOrientation_rad + Mathf.PI * 0.5f;
+      return score;
+    }
+  }
 
-		if( message.markersVisible > 0 ) TimeLastSeen = Time.time;
-	}
+  private static float angleScoreMultiplier = 1f;
+  private static float distanceScoreMultiplier = 1f;
+  private static float maxAngle = 45f;
+  private static float maxDistanceInCubeLengths = 8f;
 
-	public virtual void Delete()
-	{
-		if( OnDelete != null ) OnDelete( this );
-		if( SignificantChangeDetected != null ) SignificantChangeDetected();
-	}
+  public bool canBeStackedOn {
+    get {
+      if (robot.selectedObjects.Count > 1)
+        return false; // if blocks stacked on each other
 
-	public Vector2 GetBestFaceVector(Vector3 initialVector) {
-		
-		Vector2[] faces = { TopNorth, TopEast, -TopNorth, -TopEast };
-		Vector2 face = faces[0];
-		
-		float bestDot = -float.MaxValue;
-		
-		for(int i=0; i<4; i++) {
-			float dot = Vector2.Dot(initialVector, faces[i]);
-			if(dot > bestDot) {
-				bestDot = dot;
-				face = faces[i];
-			}
-		}
-		
-		return face;
-	}
+      //float distance = ( (Vector2)WorldPosition - (Vector2)robot.WorldPosition ).magnitude;
+      float height = Mathf.Abs(WorldPosition.z - robot.WorldPosition.z);
+    
+      return /*distance <= CozmoUtil.BLOCK_LENGTH_MM * 4f &&*/ height < CozmoUtil.BLOCK_LENGTH_MM;
+    }
+  }
 
-	public static void RefreshAngleScoreMultiplier()
-	{
-		angleScoreMultiplier = OptionsScreen.GetAngleScoreMultiplier();
-	}
+  public const float RemoveDelay = 0.15f;
 
-	public static void RefreshDistanceScoreMultiplier()
-	{
-		distanceScoreMultiplier = OptionsScreen.GetDistanceScoreMultiplier();
-	}
+  public string InfoString { get; private set; }
 
-	public static void RefreshMaxAngle()
-	{
-		maxAngle = OptionsScreen.GetMaxAngle();
-	}
+  public string SelectInfoString { get; private set; }
 
-	public static void RefreshMaxDistanceInCubeLengths()
-	{
-		maxDistanceInCubeLengths = OptionsScreen.GetMaxDistanceInCubeLengths();
-	}
+  public ObservedObject() {
+  }
 
-	private void SetTargetingScoreSettings()
-	{
-		RefreshAngleScoreMultiplier();
-		RefreshDistanceScoreMultiplier();
-		RefreshMaxAngle();
-		RefreshMaxDistanceInCubeLengths();
-	}
+  public ObservedObject(int objectID, uint objectFamily, uint objectType) {
+    Constructor(objectID, objectFamily, objectType);
+  }
+
+  protected void Constructor(int objectID, uint objectFamily, uint objectType) {
+    TimeCreated = Time.time;
+    Family = objectFamily;
+    ObjectType = objectType;
+    ID = objectID;
+    
+    InfoString = "ID: " + ID + " Family: " + Family + " Type: " + ObjectType;
+    SelectInfoString = "Select ID: " + ID + " Family: " + Family + " Type: " + ObjectType;
+
+    if (objectFamily == 4) {
+      cubeType = CubeType.LIGHT_CUBE;
+    }
+    else if (objectFamily == 6) {
+      cubeType = CubeType.FACE;
+      Debug.LogWarning("FACE " + ID + " !!!"); 
+    }
+    else if (objectType == 4 || objectType == 5) {
+      cubeType = CubeType.BULLS_EYE;
+    }
+    else if (objectType == 11 || objectType == 12 || objectType == 13) {
+      cubeType = CubeType.FLAG;
+    }
+    else {
+      cubeType = CubeType.UNKNOWN;
+      Debug.LogWarning("Object " + ID + " with type " + objectType + " is unsupported"); 
+    }
+
+    Debug.Log("ObservedObject cubeType(" + cubeType + ") from objectFamily(" + objectFamily + ") objectType(" + objectType + ")");
+
+    SetTargetingScoreSettings();
+  }
+
+  public static implicit operator uint(ObservedObject observedObject) {
+    if (observedObject == null) {
+      Debug.LogWarning("converting null ObservedObject into uint: returning uint.MaxValue");
+      return uint.MaxValue;
+    }
+    
+    return (uint)observedObject.ID;
+  }
+
+  public static implicit operator int(ObservedObject observedObject) {
+    if (observedObject == null)
+      return -1;
+
+    return observedObject.ID;
+  }
+
+  public static implicit operator string(ObservedObject observedObject) {
+    return ((int)observedObject).ToString();
+  }
+
+  public void UpdateInfo(G2U.RobotObservedObject message) {
+    RobotID = message.robotID;
+    VizRect = new Rect(message.img_topLeft_x, message.img_topLeft_y, message.img_width, message.img_height);
+
+    Vector3 newPos = new Vector3(message.world_x, message.world_y, message.world_z);
+
+    //dmdnote cozmo's space is Z up, keep in mind if we need to convert to unity's y up space.
+    WorldPosition = newPos;
+    Rotation = new Quaternion(message.quaternion1, message.quaternion2, message.quaternion3, message.quaternion0);
+    Size = Vector3.one * CozmoUtil.BLOCK_LENGTH_MM;
+
+    TopFaceNorthAngle = message.topFaceOrientation_rad + Mathf.PI * 0.5f;
+
+    if (message.markersVisible > 0)
+      TimeLastSeen = Time.time;
+  }
+
+  public virtual void Delete() {
+    if (OnDelete != null)
+      OnDelete(this);
+    if (SignificantChangeDetected != null)
+      SignificantChangeDetected();
+  }
+
+  public Vector2 GetBestFaceVector(Vector3 initialVector) {
+    
+    Vector2[] faces = { TopNorth, TopEast, -TopNorth, -TopEast };
+    Vector2 face = faces[0];
+    
+    float bestDot = -float.MaxValue;
+    
+    for (int i = 0; i < 4; i++) {
+      float dot = Vector2.Dot(initialVector, faces[i]);
+      if (dot > bestDot) {
+        bestDot = dot;
+        face = faces[i];
+      }
+    }
+    
+    return face;
+  }
+
+  public static void RefreshAngleScoreMultiplier() {
+    angleScoreMultiplier = OptionsScreen.GetAngleScoreMultiplier();
+  }
+
+  public static void RefreshDistanceScoreMultiplier() {
+    distanceScoreMultiplier = OptionsScreen.GetDistanceScoreMultiplier();
+  }
+
+  public static void RefreshMaxAngle() {
+    maxAngle = OptionsScreen.GetMaxAngle();
+  }
+
+  public static void RefreshMaxDistanceInCubeLengths() {
+    maxDistanceInCubeLengths = OptionsScreen.GetMaxDistanceInCubeLengths();
+  }
+
+  private void SetTargetingScoreSettings() {
+    RefreshAngleScoreMultiplier();
+    RefreshDistanceScoreMultiplier();
+    RefreshMaxAngle();
+    RefreshMaxDistanceInCubeLengths();
+  }
 }

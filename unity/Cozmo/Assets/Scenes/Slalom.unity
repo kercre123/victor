@@ -707,7 +707,7 @@ Prefab:
   m_IsPrefabParent: 0
 --- !u!21 &110261910
 Material:
-  serializedVersion: 5
+  serializedVersion: 6
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
@@ -716,6 +716,7 @@ Material:
   m_ShaderKeywords: 
   m_LightmapFlags: 5
   m_CustomRenderQueue: -1
+  stringTagMap: {}
   m_SavedProperties:
     serializedVersion: 2
     m_TexEnvs:
@@ -842,6 +843,7 @@ Camera:
   m_OcclusionCulling: 1
   m_StereoConvergence: 10
   m_StereoSeparation: .0219999999
+  m_StereoMirrorMode: 0
 --- !u!4 &154288212
 Transform:
   m_ObjectHideFlags: 0
@@ -863,7 +865,7 @@ AudioListener:
   m_Enabled: 1
 --- !u!21 &215535058
 Material:
-  serializedVersion: 5
+  serializedVersion: 6
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
@@ -872,6 +874,7 @@ Material:
   m_ShaderKeywords: 
   m_LightmapFlags: 5
   m_CustomRenderQueue: -1
+  stringTagMap: {}
   m_SavedProperties:
     serializedVersion: 2
     m_TexEnvs:
@@ -1021,7 +1024,7 @@ Prefab:
   m_IsPrefabParent: 0
 --- !u!21 &366170310
 Material:
-  serializedVersion: 5
+  serializedVersion: 6
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
@@ -1030,6 +1033,7 @@ Material:
   m_ShaderKeywords: 
   m_LightmapFlags: 5
   m_CustomRenderQueue: -1
+  stringTagMap: {}
   m_SavedProperties:
     serializedVersion: 2
     m_TexEnvs:
@@ -1067,7 +1071,7 @@ Material:
         second: {r: 1, g: 1, b: 1, a: 1}
 --- !u!21 &399665338
 Material:
-  serializedVersion: 5
+  serializedVersion: 6
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
@@ -1076,6 +1080,7 @@ Material:
   m_ShaderKeywords: 
   m_LightmapFlags: 5
   m_CustomRenderQueue: -1
+  stringTagMap: {}
   m_SavedProperties:
     serializedVersion: 2
     m_TexEnvs:
@@ -1113,7 +1118,7 @@ Material:
         second: {r: 1, g: 1, b: 1, a: 1}
 --- !u!21 &410158587
 Material:
-  serializedVersion: 5
+  serializedVersion: 6
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
@@ -1122,6 +1127,7 @@ Material:
   m_ShaderKeywords: 
   m_LightmapFlags: 5
   m_CustomRenderQueue: -1
+  stringTagMap: {}
   m_SavedProperties:
     serializedVersion: 2
     m_TexEnvs:
@@ -1163,7 +1169,7 @@ Material:
         second: {r: 1, g: 1, b: 1, a: 1}
 --- !u!21 &447068065
 Material:
-  serializedVersion: 5
+  serializedVersion: 6
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
@@ -1172,6 +1178,7 @@ Material:
   m_ShaderKeywords: 
   m_LightmapFlags: 5
   m_CustomRenderQueue: -1
+  stringTagMap: {}
   m_SavedProperties:
     serializedVersion: 2
     m_TexEnvs:
@@ -1207,89 +1214,9 @@ Material:
         first:
           name: _SpecColor
         second: {r: 1, g: 1, b: 1, a: 1}
---- !u!21 &520237681
-Material:
-  serializedVersion: 5
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_Name: MoveHintSheen
-  m_Shader: {fileID: 4800000, guid: 7fec91e4d79544a6a84bd2ce891a7dba, type: 3}
-  m_ShaderKeywords: 
-  m_LightmapFlags: 5
-  m_CustomRenderQueue: -1
-  m_SavedProperties:
-    serializedVersion: 2
-    m_TexEnvs:
-      data:
-        first:
-          name: _MainTex
-        second:
-          m_Texture: {fileID: 2800000, guid: dc73b079e1b6b4801b60adfaa4187a5c, type: 3}
-          m_Scale: {x: 1, y: 1}
-          m_Offset: {x: 0, y: .400000006}
-      data:
-        first:
-          name: _Illum
-        second:
-          m_Texture: {fileID: 2800000, guid: dc59a930cb18e435bb1f7e8578b61ef7, type: 3}
-          m_Scale: {x: 1, y: 1}
-          m_Offset: {x: 0, y: 0}
-      data:
-        first:
-          name: _Mask
-        second:
-          m_Texture: {fileID: 2800000, guid: 06caa99e8301249d3b06581fb126730d, type: 3}
-          m_Scale: {x: 1, y: 1}
-          m_Offset: {x: 0, y: -.100000001}
-      data:
-        first:
-          name: _FlashMaskTex
-        second:
-          m_Texture: {fileID: 2800000, guid: 437c9b2fa20ee494ba988e750062be0c, type: 3}
-          m_Scale: {x: 1, y: 1}
-          m_Offset: {x: 0, y: 0}
-    m_Floats:
-      data:
-        first:
-          name: _Cutoff
-        second: .242857143
-      data:
-        first:
-          name: _Shininess
-        second: .699999988
-      data:
-        first:
-          name: PixelSnap
-        second: 0
-      data:
-        first:
-          name: _EmissionLM
-        second: 1
-      data:
-        first:
-          name: _FlashAmount
-        second: 0
-      data:
-        first:
-          name: MaskWithAlpha
-        second: 0
-    m_Colors:
-      data:
-        first:
-          name: _Color
-        second: {r: 1, g: 1, b: 1, a: 1}
-      data:
-        first:
-          name: _SpecColor
-        second: {r: 1, g: 1, b: 1, a: 1}
-      data:
-        first:
-          name: _FlashColor
-        second: {r: 1, g: 1, b: 1, a: .501960814}
 --- !u!21 &590949093
 Material:
-  serializedVersion: 5
+  serializedVersion: 6
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
@@ -1298,6 +1225,7 @@ Material:
   m_ShaderKeywords: 
   m_LightmapFlags: 5
   m_CustomRenderQueue: -1
+  stringTagMap: {}
   m_SavedProperties:
     serializedVersion: 2
     m_TexEnvs:
@@ -1335,7 +1263,7 @@ Material:
         second: {r: 1, g: 1, b: 1, a: 1}
 --- !u!21 &592023694
 Material:
-  serializedVersion: 5
+  serializedVersion: 6
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
@@ -1344,6 +1272,7 @@ Material:
   m_ShaderKeywords: 
   m_LightmapFlags: 5
   m_CustomRenderQueue: -1
+  stringTagMap: {}
   m_SavedProperties:
     serializedVersion: 2
     m_TexEnvs:
@@ -1427,7 +1356,7 @@ Prefab:
   m_IsPrefabParent: 0
 --- !u!21 &618288358
 Material:
-  serializedVersion: 5
+  serializedVersion: 6
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
@@ -1436,6 +1365,7 @@ Material:
   m_ShaderKeywords: 
   m_LightmapFlags: 5
   m_CustomRenderQueue: -1
+  stringTagMap: {}
   m_SavedProperties:
     serializedVersion: 2
     m_TexEnvs:
@@ -1477,7 +1407,7 @@ Material:
         second: {r: 1, g: 1, b: 1, a: 1}
 --- !u!21 &627517850
 Material:
-  serializedVersion: 5
+  serializedVersion: 6
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
@@ -1486,6 +1416,7 @@ Material:
   m_ShaderKeywords: 
   m_LightmapFlags: 5
   m_CustomRenderQueue: -1
+  stringTagMap: {}
   m_SavedProperties:
     serializedVersion: 2
     m_TexEnvs:
@@ -1523,7 +1454,7 @@ Material:
         second: {r: 1, g: 1, b: 1, a: 1}
 --- !u!21 &655295945
 Material:
-  serializedVersion: 5
+  serializedVersion: 6
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
@@ -1532,6 +1463,7 @@ Material:
   m_ShaderKeywords: 
   m_LightmapFlags: 5
   m_CustomRenderQueue: -1
+  stringTagMap: {}
   m_SavedProperties:
     serializedVersion: 2
     m_TexEnvs:
@@ -1569,7 +1501,7 @@ Material:
         second: {r: 1, g: 1, b: 1, a: 1}
 --- !u!21 &663882122
 Material:
-  serializedVersion: 5
+  serializedVersion: 6
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
@@ -1578,6 +1510,7 @@ Material:
   m_ShaderKeywords: 
   m_LightmapFlags: 5
   m_CustomRenderQueue: -1
+  stringTagMap: {}
   m_SavedProperties:
     serializedVersion: 2
     m_TexEnvs:
@@ -1620,30 +1553,6 @@ Prefab:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 22430494, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
-      propertyPath: m_AnchorMin.y
-      value: .5
-      objectReference: {fileID: 0}
-    - target: {fileID: 22430494, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
-      propertyPath: m_AnchorMax.x
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 22430494, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
-      propertyPath: m_AnchorMax.y
-      value: .5
-      objectReference: {fileID: 0}
-    - target: {fileID: 22430496, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
-      propertyPath: m_AnchorMin.y
-      value: .5
-      objectReference: {fileID: 0}
-    - target: {fileID: 22430496, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
-      propertyPath: m_AnchorMax.x
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 22430496, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
-      propertyPath: m_AnchorMax.y
-      value: .5
-      objectReference: {fileID: 0}
     - target: {fileID: 430502, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -1676,27 +1585,127 @@ Prefab:
       propertyPath: m_RootOrder
       value: 10
       objectReference: {fileID: 0}
-    - target: {fileID: 11430502, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
-      propertyPath: m_Material
-      value: 
-      objectReference: {fileID: 2005912625}
     - target: {fileID: 11430498, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
       propertyPath: m_Material
       value: 
-      objectReference: {fileID: 1148630419}
-    - target: {fileID: 22430500, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
+      objectReference: {fileID: 2027768759}
+    - target: {fileID: 11430502, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
+      propertyPath: m_Material
+      value: 
+      objectReference: {fileID: 855446009}
+    - target: {fileID: 22430494, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 22430494, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 22430494, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 22430496, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 22430496, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 22430496, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 22416444, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
       propertyPath: m_SizeDelta.x
-      value: 276
+      value: -44.4000015
       objectReference: {fileID: 0}
-    - target: {fileID: 22430500, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
+    - target: {fileID: 22416444, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
       propertyPath: m_SizeDelta.y
-      value: 138
+      value: 36.7999992
       objectReference: {fileID: 0}
-    - target: {fileID: 22416448, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
+    - target: {fileID: 22430498, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
+      propertyPath: m_AnchoredPosition.x
+      value: -222
+      objectReference: {fileID: 0}
+    - target: {fileID: 22430498, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
+      propertyPath: m_AnchoredPosition.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 22430498, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
       propertyPath: m_SizeDelta.x
       value: 36.7999992
       objectReference: {fileID: 0}
-    - target: {fileID: 22416448, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
+    - target: {fileID: 22430498, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
+      propertyPath: m_SizeDelta.y
+      value: 36.7999992
+      objectReference: {fileID: 0}
+    - target: {fileID: 22416456, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
+      propertyPath: m_SizeDelta.x
+      value: 36.7999992
+      objectReference: {fileID: 0}
+    - target: {fileID: 22416456, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
+      propertyPath: m_SizeDelta.y
+      value: 13.8000002
+      objectReference: {fileID: 0}
+    - target: {fileID: 22416446, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
+      propertyPath: m_SizeDelta.x
+      value: 36.7999992
+      objectReference: {fileID: 0}
+    - target: {fileID: 22416446, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
+      propertyPath: m_SizeDelta.y
+      value: 36.7999992
+      objectReference: {fileID: 0}
+    - target: {fileID: 22430502, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
+      propertyPath: m_AnchoredPosition.y
+      value: -69
+      objectReference: {fileID: 0}
+    - target: {fileID: 22430502, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
+      propertyPath: m_SizeDelta.x
+      value: 36.7999992
+      objectReference: {fileID: 0}
+    - target: {fileID: 22430502, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
+      propertyPath: m_SizeDelta.y
+      value: 36.7999992
+      objectReference: {fileID: 0}
+    - target: {fileID: 22430488, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
+      propertyPath: m_SizeDelta.x
+      value: 1.83999991
+      objectReference: {fileID: 0}
+    - target: {fileID: 22430488, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
+      propertyPath: m_SizeDelta.y
+      value: 138
+      objectReference: {fileID: 0}
+    - target: {fileID: 22416452, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
+      propertyPath: m_SizeDelta.x
+      value: 36.7999992
+      objectReference: {fileID: 0}
+    - target: {fileID: 22416452, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
+      propertyPath: m_SizeDelta.y
+      value: 36.7999992
+      objectReference: {fileID: 0}
+    - target: {fileID: 22416454, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
+      propertyPath: m_SizeDelta.x
+      value: 36.7999992
+      objectReference: {fileID: 0}
+    - target: {fileID: 22416454, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
+      propertyPath: m_SizeDelta.y
+      value: 36.7999992
+      objectReference: {fileID: 0}
+    - target: {fileID: 22416442, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
+      propertyPath: m_AnchoredPosition.x
+      value: 222
+      objectReference: {fileID: 0}
+    - target: {fileID: 22416442, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 22416442, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
+      propertyPath: m_SizeDelta.x
+      value: 36.7999992
+      objectReference: {fileID: 0}
+    - target: {fileID: 22416442, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
       propertyPath: m_SizeDelta.y
       value: 36.7999992
       objectReference: {fileID: 0}
@@ -1712,89 +1721,21 @@ Prefab:
       propertyPath: m_SizeDelta.y
       value: 36.7999992
       objectReference: {fileID: 0}
-    - target: {fileID: 22416442, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
-      propertyPath: m_AnchoredPosition.x
-      value: -138
-      objectReference: {fileID: 0}
-    - target: {fileID: 22416442, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
+    - target: {fileID: 22416448, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
       propertyPath: m_SizeDelta.x
       value: 36.7999992
       objectReference: {fileID: 0}
-    - target: {fileID: 22416442, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
+    - target: {fileID: 22416448, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
       propertyPath: m_SizeDelta.y
       value: 36.7999992
       objectReference: {fileID: 0}
-    - target: {fileID: 22416454, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
+    - target: {fileID: 22430500, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
       propertyPath: m_SizeDelta.x
-      value: 36.7999992
+      value: -444
       objectReference: {fileID: 0}
-    - target: {fileID: 22416454, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
+    - target: {fileID: 22430500, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
       propertyPath: m_SizeDelta.y
-      value: 36.7999992
-      objectReference: {fileID: 0}
-    - target: {fileID: 22416452, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
-      propertyPath: m_SizeDelta.x
-      value: 36.7999992
-      objectReference: {fileID: 0}
-    - target: {fileID: 22416452, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
-      propertyPath: m_SizeDelta.y
-      value: 36.7999992
-      objectReference: {fileID: 0}
-    - target: {fileID: 22430488, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
-      propertyPath: m_SizeDelta.x
-      value: 1.83999991
-      objectReference: {fileID: 0}
-    - target: {fileID: 22430488, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
-      propertyPath: m_SizeDelta.y
-      value: 138
-      objectReference: {fileID: 0}
-    - target: {fileID: 22430502, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
-      propertyPath: m_AnchoredPosition.y
-      value: -69
-      objectReference: {fileID: 0}
-    - target: {fileID: 22430502, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
-      propertyPath: m_SizeDelta.x
-      value: 36.7999992
-      objectReference: {fileID: 0}
-    - target: {fileID: 22430502, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
-      propertyPath: m_SizeDelta.y
-      value: 36.7999992
-      objectReference: {fileID: 0}
-    - target: {fileID: 22416446, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
-      propertyPath: m_SizeDelta.x
-      value: 36.7999992
-      objectReference: {fileID: 0}
-    - target: {fileID: 22416446, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
-      propertyPath: m_SizeDelta.y
-      value: 36.7999992
-      objectReference: {fileID: 0}
-    - target: {fileID: 22416456, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
-      propertyPath: m_SizeDelta.x
-      value: 36.7999992
-      objectReference: {fileID: 0}
-    - target: {fileID: 22416456, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
-      propertyPath: m_SizeDelta.y
-      value: 13.8000002
-      objectReference: {fileID: 0}
-    - target: {fileID: 22430498, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
-      propertyPath: m_AnchoredPosition.x
-      value: 138
-      objectReference: {fileID: 0}
-    - target: {fileID: 22430498, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
-      propertyPath: m_SizeDelta.x
-      value: 36.7999992
-      objectReference: {fileID: 0}
-    - target: {fileID: 22430498, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
-      propertyPath: m_SizeDelta.y
-      value: 36.7999992
-      objectReference: {fileID: 0}
-    - target: {fileID: 22416444, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
-      propertyPath: m_SizeDelta.x
-      value: 27.6000004
-      objectReference: {fileID: 0}
-    - target: {fileID: 22416444, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
-      propertyPath: m_SizeDelta.y
-      value: 36.7999992
+      value: -588
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
@@ -1845,6 +1786,7 @@ MonoBehaviour:
   m_SubmitButton: Submit
   m_CancelButton: Cancel
   m_InputActionsPerSecond: 10
+  m_RepeatDelay: .5
   m_AllowActivationOnMobileDevice: 0
 --- !u!114 &728711172
 MonoBehaviour:
@@ -1916,7 +1858,7 @@ Prefab:
   m_IsPrefabParent: 0
 --- !u!21 &768357835
 Material:
-  serializedVersion: 5
+  serializedVersion: 6
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
@@ -1925,6 +1867,7 @@ Material:
   m_ShaderKeywords: 
   m_LightmapFlags: 5
   m_CustomRenderQueue: -1
+  stringTagMap: {}
   m_SavedProperties:
     serializedVersion: 2
     m_TexEnvs:
@@ -1962,7 +1905,7 @@ Material:
         second: {r: 1, g: 1, b: 1, a: 1}
 --- !u!21 &790972178
 Material:
-  serializedVersion: 5
+  serializedVersion: 6
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
@@ -1971,6 +1914,7 @@ Material:
   m_ShaderKeywords: 
   m_LightmapFlags: 5
   m_CustomRenderQueue: -1
+  stringTagMap: {}
   m_SavedProperties:
     serializedVersion: 2
     m_TexEnvs:
@@ -2006,9 +1950,90 @@ Material:
         first:
           name: _SpecColor
         second: {r: 1, g: 1, b: 1, a: 1}
+--- !u!21 &855446009
+Material:
+  serializedVersion: 6
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_Name: MoveHintSheen
+  m_Shader: {fileID: 4800000, guid: 7fec91e4d79544a6a84bd2ce891a7dba, type: 3}
+  m_ShaderKeywords: 
+  m_LightmapFlags: 5
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  m_SavedProperties:
+    serializedVersion: 2
+    m_TexEnvs:
+      data:
+        first:
+          name: _MainTex
+        second:
+          m_Texture: {fileID: 2800000, guid: dc73b079e1b6b4801b60adfaa4187a5c, type: 3}
+          m_Scale: {x: 1, y: 1}
+          m_Offset: {x: 0, y: .400000006}
+      data:
+        first:
+          name: _Illum
+        second:
+          m_Texture: {fileID: 2800000, guid: dc59a930cb18e435bb1f7e8578b61ef7, type: 3}
+          m_Scale: {x: 1, y: 1}
+          m_Offset: {x: 0, y: 0}
+      data:
+        first:
+          name: _Mask
+        second:
+          m_Texture: {fileID: 2800000, guid: 06caa99e8301249d3b06581fb126730d, type: 3}
+          m_Scale: {x: 1, y: 1}
+          m_Offset: {x: 0, y: -.100000001}
+      data:
+        first:
+          name: _FlashMaskTex
+        second:
+          m_Texture: {fileID: 2800000, guid: 437c9b2fa20ee494ba988e750062be0c, type: 3}
+          m_Scale: {x: 1, y: 1}
+          m_Offset: {x: 0, y: 0}
+    m_Floats:
+      data:
+        first:
+          name: _Cutoff
+        second: .242857143
+      data:
+        first:
+          name: _Shininess
+        second: .699999988
+      data:
+        first:
+          name: PixelSnap
+        second: 0
+      data:
+        first:
+          name: _EmissionLM
+        second: 1
+      data:
+        first:
+          name: _FlashAmount
+        second: .607142866
+      data:
+        first:
+          name: MaskWithAlpha
+        second: 0
+    m_Colors:
+      data:
+        first:
+          name: _Color
+        second: {r: 1, g: 1, b: 1, a: 1}
+      data:
+        first:
+          name: _SpecColor
+        second: {r: 1, g: 1, b: 1, a: 1}
+      data:
+        first:
+          name: _FlashColor
+        second: {r: 1, g: 1, b: 1, a: .427450985}
 --- !u!21 &926042022
 Material:
-  serializedVersion: 5
+  serializedVersion: 6
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
@@ -2017,6 +2042,7 @@ Material:
   m_ShaderKeywords: 
   m_LightmapFlags: 5
   m_CustomRenderQueue: -1
+  stringTagMap: {}
   m_SavedProperties:
     serializedVersion: 2
     m_TexEnvs:
@@ -2054,7 +2080,7 @@ Material:
         second: {r: 1, g: 1, b: 1, a: 1}
 --- !u!21 &961967195
 Material:
-  serializedVersion: 5
+  serializedVersion: 6
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
@@ -2063,6 +2089,7 @@ Material:
   m_ShaderKeywords: 
   m_LightmapFlags: 5
   m_CustomRenderQueue: -1
+  stringTagMap: {}
   m_SavedProperties:
     serializedVersion: 2
     m_TexEnvs:
@@ -2143,15 +2170,15 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 22473488, guid: 16dbf128a64674341b52383440032021, type: 2}
       propertyPath: m_AnchorMin.y
-      value: .5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 22473488, guid: 16dbf128a64674341b52383440032021, type: 2}
       propertyPath: m_AnchorMax.x
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 22473488, guid: 16dbf128a64674341b52383440032021, type: 2}
       propertyPath: m_AnchorMax.y
-      value: .5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 22473500, guid: 16dbf128a64674341b52383440032021, type: 2}
       propertyPath: m_SizeDelta.x
@@ -2194,7 +2221,7 @@ Prefab:
   m_IsPrefabParent: 0
 --- !u!21 &1102661826
 Material:
-  serializedVersion: 5
+  serializedVersion: 6
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
@@ -2203,6 +2230,7 @@ Material:
   m_ShaderKeywords: 
   m_LightmapFlags: 5
   m_CustomRenderQueue: -1
+  stringTagMap: {}
   m_SavedProperties:
     serializedVersion: 2
     m_TexEnvs:
@@ -2242,89 +2270,9 @@ Material:
         first:
           name: _SpecColor
         second: {r: 1, g: 1, b: 1, a: 1}
---- !u!21 &1148630419
-Material:
-  serializedVersion: 5
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_Name: MoveHintSheen
-  m_Shader: {fileID: 4800000, guid: 7fec91e4d79544a6a84bd2ce891a7dba, type: 3}
-  m_ShaderKeywords: 
-  m_LightmapFlags: 5
-  m_CustomRenderQueue: -1
-  m_SavedProperties:
-    serializedVersion: 2
-    m_TexEnvs:
-      data:
-        first:
-          name: _MainTex
-        second:
-          m_Texture: {fileID: 2800000, guid: dc73b079e1b6b4801b60adfaa4187a5c, type: 3}
-          m_Scale: {x: 1, y: 1}
-          m_Offset: {x: 0, y: .400000006}
-      data:
-        first:
-          name: _Illum
-        second:
-          m_Texture: {fileID: 2800000, guid: dc59a930cb18e435bb1f7e8578b61ef7, type: 3}
-          m_Scale: {x: 1, y: 1}
-          m_Offset: {x: 0, y: 0}
-      data:
-        first:
-          name: _Mask
-        second:
-          m_Texture: {fileID: 2800000, guid: 06caa99e8301249d3b06581fb126730d, type: 3}
-          m_Scale: {x: 1, y: 1}
-          m_Offset: {x: 0, y: -.100000001}
-      data:
-        first:
-          name: _FlashMaskTex
-        second:
-          m_Texture: {fileID: 2800000, guid: 437c9b2fa20ee494ba988e750062be0c, type: 3}
-          m_Scale: {x: 1, y: 1}
-          m_Offset: {x: 0, y: 0}
-    m_Floats:
-      data:
-        first:
-          name: _Cutoff
-        second: .242857143
-      data:
-        first:
-          name: _Shininess
-        second: .699999988
-      data:
-        first:
-          name: PixelSnap
-        second: 0
-      data:
-        first:
-          name: _EmissionLM
-        second: 1
-      data:
-        first:
-          name: _FlashAmount
-        second: 0
-      data:
-        first:
-          name: MaskWithAlpha
-        second: 0
-    m_Colors:
-      data:
-        first:
-          name: _Color
-        second: {r: 1, g: 1, b: 1, a: 1}
-      data:
-        first:
-          name: _SpecColor
-        second: {r: 1, g: 1, b: 1, a: 1}
-      data:
-        first:
-          name: _FlashColor
-        second: {r: 1, g: 1, b: 1, a: .501960814}
 --- !u!21 &1206627801
 Material:
-  serializedVersion: 5
+  serializedVersion: 6
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
@@ -2333,6 +2281,7 @@ Material:
   m_ShaderKeywords: 
   m_LightmapFlags: 5
   m_CustomRenderQueue: -1
+  stringTagMap: {}
   m_SavedProperties:
     serializedVersion: 2
     m_TexEnvs:
@@ -2370,7 +2319,7 @@ Material:
         second: {r: 1, g: 1, b: 1, a: 1}
 --- !u!21 &1211879709
 Material:
-  serializedVersion: 5
+  serializedVersion: 6
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
@@ -2379,6 +2328,7 @@ Material:
   m_ShaderKeywords: 
   m_LightmapFlags: 5
   m_CustomRenderQueue: -1
+  stringTagMap: {}
   m_SavedProperties:
     serializedVersion: 2
     m_TexEnvs:
@@ -2420,7 +2370,7 @@ Material:
         second: {r: 1, g: 1, b: 1, a: 1}
 --- !u!21 &1300983967
 Material:
-  serializedVersion: 5
+  serializedVersion: 6
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
@@ -2429,6 +2379,7 @@ Material:
   m_ShaderKeywords: 
   m_LightmapFlags: 5
   m_CustomRenderQueue: -1
+  stringTagMap: {}
   m_SavedProperties:
     serializedVersion: 2
     m_TexEnvs:
@@ -2470,7 +2421,7 @@ Material:
         second: {r: 1, g: 1, b: 1, a: 1}
 --- !u!21 &1427417313
 Material:
-  serializedVersion: 5
+  serializedVersion: 6
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
@@ -2479,6 +2430,7 @@ Material:
   m_ShaderKeywords: 
   m_LightmapFlags: 5
   m_CustomRenderQueue: -1
+  stringTagMap: {}
   m_SavedProperties:
     serializedVersion: 2
     m_TexEnvs:
@@ -2520,7 +2472,7 @@ Material:
         second: {r: 1, g: 1, b: 1, a: 1}
 --- !u!21 &1488489432
 Material:
-  serializedVersion: 5
+  serializedVersion: 6
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
@@ -2529,6 +2481,7 @@ Material:
   m_ShaderKeywords: 
   m_LightmapFlags: 5
   m_CustomRenderQueue: -1
+  stringTagMap: {}
   m_SavedProperties:
     serializedVersion: 2
     m_TexEnvs:
@@ -2570,7 +2523,7 @@ Material:
         second: {r: 1, g: 1, b: 1, a: 1}
 --- !u!21 &1656868341
 Material:
-  serializedVersion: 5
+  serializedVersion: 6
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
@@ -2579,6 +2532,7 @@ Material:
   m_ShaderKeywords: 
   m_LightmapFlags: 5
   m_CustomRenderQueue: -1
+  stringTagMap: {}
   m_SavedProperties:
     serializedVersion: 2
     m_TexEnvs:
@@ -2620,7 +2574,7 @@ Material:
         second: {r: 1, g: 1, b: 1, a: 1}
 --- !u!21 &1773499959
 Material:
-  serializedVersion: 5
+  serializedVersion: 6
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
@@ -2629,6 +2583,7 @@ Material:
   m_ShaderKeywords: 
   m_LightmapFlags: 5
   m_CustomRenderQueue: -1
+  stringTagMap: {}
   m_SavedProperties:
     serializedVersion: 2
     m_TexEnvs:
@@ -2664,9 +2619,90 @@ Material:
         first:
           name: _SpecColor
         second: {r: 1, g: 1, b: 1, a: 1}
+--- !u!21 &1786557422
+Material:
+  serializedVersion: 6
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_Name: ActionSheen
+  m_Shader: {fileID: 4800000, guid: 7fec91e4d79544a6a84bd2ce891a7dba, type: 3}
+  m_ShaderKeywords: 
+  m_LightmapFlags: 5
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  m_SavedProperties:
+    serializedVersion: 2
+    m_TexEnvs:
+      data:
+        first:
+          name: _MainTex
+        second:
+          m_Texture: {fileID: 2800000, guid: dc73b079e1b6b4801b60adfaa4187a5c, type: 3}
+          m_Scale: {x: 1, y: 1}
+          m_Offset: {x: 0, y: .400000006}
+      data:
+        first:
+          name: _Illum
+        second:
+          m_Texture: {fileID: 2800000, guid: dc59a930cb18e435bb1f7e8578b61ef7, type: 3}
+          m_Scale: {x: 1, y: 1}
+          m_Offset: {x: 0, y: 0}
+      data:
+        first:
+          name: _Mask
+        second:
+          m_Texture: {fileID: 2800000, guid: 06caa99e8301249d3b06581fb126730d, type: 3}
+          m_Scale: {x: 1, y: 1}
+          m_Offset: {x: 0, y: -.100000001}
+      data:
+        first:
+          name: _FlashMaskTex
+        second:
+          m_Texture: {fileID: 2800000, guid: 437c9b2fa20ee494ba988e750062be0c, type: 3}
+          m_Scale: {x: 1, y: .25}
+          m_Offset: {x: 0, y: 0}
+    m_Floats:
+      data:
+        first:
+          name: _Cutoff
+        second: .242857143
+      data:
+        first:
+          name: _Shininess
+        second: .699999988
+      data:
+        first:
+          name: PixelSnap
+        second: 0
+      data:
+        first:
+          name: _EmissionLM
+        second: 1
+      data:
+        first:
+          name: _FlashAmount
+        second: .5
+      data:
+        first:
+          name: MaskWithAlpha
+        second: 0
+    m_Colors:
+      data:
+        first:
+          name: _Color
+        second: {r: 1, g: 1, b: 1, a: 1}
+      data:
+        first:
+          name: _SpecColor
+        second: {r: 1, g: 1, b: 1, a: 1}
+      data:
+        first:
+          name: _FlashColor
+        second: {r: 1, g: 1, b: 1, a: .501960814}
 --- !u!21 &1831080198
 Material:
-  serializedVersion: 5
+  serializedVersion: 6
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
@@ -2675,6 +2711,7 @@ Material:
   m_ShaderKeywords: 
   m_LightmapFlags: 5
   m_CustomRenderQueue: -1
+  stringTagMap: {}
   m_SavedProperties:
     serializedVersion: 2
     m_TexEnvs:
@@ -2716,7 +2753,7 @@ Material:
         second: {r: 1, g: 1, b: 1, a: 1}
 --- !u!21 &1832758694
 Material:
-  serializedVersion: 5
+  serializedVersion: 6
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
@@ -2725,6 +2762,7 @@ Material:
   m_ShaderKeywords: 
   m_LightmapFlags: 5
   m_CustomRenderQueue: -1
+  stringTagMap: {}
   m_SavedProperties:
     serializedVersion: 2
     m_TexEnvs:
@@ -2766,7 +2804,7 @@ Material:
         second: {r: 1, g: 1, b: 1, a: 1}
 --- !u!21 &1836368281
 Material:
-  serializedVersion: 5
+  serializedVersion: 6
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
@@ -2775,6 +2813,7 @@ Material:
   m_ShaderKeywords: 
   m_LightmapFlags: 5
   m_CustomRenderQueue: -1
+  stringTagMap: {}
   m_SavedProperties:
     serializedVersion: 2
     m_TexEnvs:
@@ -2816,7 +2855,7 @@ Material:
         second: {r: 1, g: 1, b: 1, a: 1}
 --- !u!21 &1863786788
 Material:
-  serializedVersion: 5
+  serializedVersion: 6
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
@@ -2825,6 +2864,7 @@ Material:
   m_ShaderKeywords: 
   m_LightmapFlags: 5
   m_CustomRenderQueue: -1
+  stringTagMap: {}
   m_SavedProperties:
     serializedVersion: 2
     m_TexEnvs:
@@ -2862,7 +2902,7 @@ Material:
         second: {r: 1, g: 1, b: 1, a: 1}
 --- !u!21 &1876515555
 Material:
-  serializedVersion: 5
+  serializedVersion: 6
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
@@ -2871,6 +2911,7 @@ Material:
   m_ShaderKeywords: 
   m_LightmapFlags: 5
   m_CustomRenderQueue: -1
+  stringTagMap: {}
   m_SavedProperties:
     serializedVersion: 2
     m_TexEnvs:
@@ -2950,7 +2991,7 @@ Prefab:
   m_IsPrefabParent: 0
 --- !u!21 &1908874765
 Material:
-  serializedVersion: 5
+  serializedVersion: 6
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
@@ -2959,6 +3000,7 @@ Material:
   m_ShaderKeywords: 
   m_LightmapFlags: 5
   m_CustomRenderQueue: -1
+  stringTagMap: {}
   m_SavedProperties:
     serializedVersion: 2
     m_TexEnvs:
@@ -3040,89 +3082,9 @@ Prefab:
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: dee8fee2144d34cc0aa90dbd9000852a, type: 2}
   m_IsPrefabParent: 0
---- !u!21 &2005912625
-Material:
-  serializedVersion: 5
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_Name: MoveHintSheen
-  m_Shader: {fileID: 4800000, guid: 7fec91e4d79544a6a84bd2ce891a7dba, type: 3}
-  m_ShaderKeywords: 
-  m_LightmapFlags: 5
-  m_CustomRenderQueue: -1
-  m_SavedProperties:
-    serializedVersion: 2
-    m_TexEnvs:
-      data:
-        first:
-          name: _MainTex
-        second:
-          m_Texture: {fileID: 2800000, guid: dc73b079e1b6b4801b60adfaa4187a5c, type: 3}
-          m_Scale: {x: 1, y: 1}
-          m_Offset: {x: 0, y: .400000006}
-      data:
-        first:
-          name: _Illum
-        second:
-          m_Texture: {fileID: 2800000, guid: dc59a930cb18e435bb1f7e8578b61ef7, type: 3}
-          m_Scale: {x: 1, y: 1}
-          m_Offset: {x: 0, y: 0}
-      data:
-        first:
-          name: _Mask
-        second:
-          m_Texture: {fileID: 2800000, guid: 06caa99e8301249d3b06581fb126730d, type: 3}
-          m_Scale: {x: 1, y: 1}
-          m_Offset: {x: 0, y: -.100000001}
-      data:
-        first:
-          name: _FlashMaskTex
-        second:
-          m_Texture: {fileID: 2800000, guid: 437c9b2fa20ee494ba988e750062be0c, type: 3}
-          m_Scale: {x: 1, y: 1}
-          m_Offset: {x: 0, y: 0}
-    m_Floats:
-      data:
-        first:
-          name: _Cutoff
-        second: .242857143
-      data:
-        first:
-          name: _Shininess
-        second: .699999988
-      data:
-        first:
-          name: PixelSnap
-        second: 0
-      data:
-        first:
-          name: _EmissionLM
-        second: 1
-      data:
-        first:
-          name: _FlashAmount
-        second: 0
-      data:
-        first:
-          name: MaskWithAlpha
-        second: 0
-    m_Colors:
-      data:
-        first:
-          name: _Color
-        second: {r: 1, g: 1, b: 1, a: 1}
-      data:
-        first:
-          name: _SpecColor
-        second: {r: 1, g: 1, b: 1, a: 1}
-      data:
-        first:
-          name: _FlashColor
-        second: {r: 1, g: 1, b: 1, a: .501960814}
 --- !u!21 &2020628270
 Material:
-  serializedVersion: 5
+  serializedVersion: 6
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
@@ -3131,6 +3093,7 @@ Material:
   m_ShaderKeywords: 
   m_LightmapFlags: 5
   m_CustomRenderQueue: -1
+  stringTagMap: {}
   m_SavedProperties:
     serializedVersion: 2
     m_TexEnvs:
@@ -3170,9 +3133,9 @@ Material:
         first:
           name: _SpecColor
         second: {r: 1, g: 1, b: 1, a: 1}
---- !u!21 &2029118932
+--- !u!21 &2027768759
 Material:
-  serializedVersion: 5
+  serializedVersion: 6
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
@@ -3181,6 +3144,7 @@ Material:
   m_ShaderKeywords: 
   m_LightmapFlags: 5
   m_CustomRenderQueue: -1
+  stringTagMap: {}
   m_SavedProperties:
     serializedVersion: 2
     m_TexEnvs:
@@ -3232,7 +3196,7 @@ Material:
       data:
         first:
           name: _FlashAmount
-        second: 0
+        second: .607142866
       data:
         first:
           name: MaskWithAlpha
@@ -3249,10 +3213,10 @@ Material:
       data:
         first:
           name: _FlashColor
-        second: {r: 1, g: 1, b: 1, a: .501960814}
+        second: {r: 1, g: 1, b: 1, a: .427450985}
 --- !u!21 &2074359574
 Material:
-  serializedVersion: 5
+  serializedVersion: 6
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
@@ -3261,6 +3225,7 @@ Material:
   m_ShaderKeywords: 
   m_LightmapFlags: 5
   m_CustomRenderQueue: -1
+  stringTagMap: {}
   m_SavedProperties:
     serializedVersion: 2
     m_TexEnvs:
@@ -3300,86 +3265,6 @@ Material:
         first:
           name: _SpecColor
         second: {r: 1, g: 1, b: 1, a: 1}
---- !u!21 &2121281211
-Material:
-  serializedVersion: 5
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_Name: ActionSheen
-  m_Shader: {fileID: 4800000, guid: 7fec91e4d79544a6a84bd2ce891a7dba, type: 3}
-  m_ShaderKeywords: 
-  m_LightmapFlags: 5
-  m_CustomRenderQueue: -1
-  m_SavedProperties:
-    serializedVersion: 2
-    m_TexEnvs:
-      data:
-        first:
-          name: _MainTex
-        second:
-          m_Texture: {fileID: 2800000, guid: dc73b079e1b6b4801b60adfaa4187a5c, type: 3}
-          m_Scale: {x: 1, y: 1}
-          m_Offset: {x: 0, y: .400000006}
-      data:
-        first:
-          name: _Illum
-        second:
-          m_Texture: {fileID: 2800000, guid: dc59a930cb18e435bb1f7e8578b61ef7, type: 3}
-          m_Scale: {x: 1, y: 1}
-          m_Offset: {x: 0, y: 0}
-      data:
-        first:
-          name: _Mask
-        second:
-          m_Texture: {fileID: 2800000, guid: 06caa99e8301249d3b06581fb126730d, type: 3}
-          m_Scale: {x: 1, y: 1}
-          m_Offset: {x: 0, y: -.100000001}
-      data:
-        first:
-          name: _FlashMaskTex
-        second:
-          m_Texture: {fileID: 2800000, guid: 437c9b2fa20ee494ba988e750062be0c, type: 3}
-          m_Scale: {x: 1, y: .25}
-          m_Offset: {x: 0, y: 0}
-    m_Floats:
-      data:
-        first:
-          name: _Cutoff
-        second: .242857143
-      data:
-        first:
-          name: _Shininess
-        second: .699999988
-      data:
-        first:
-          name: PixelSnap
-        second: 0
-      data:
-        first:
-          name: _EmissionLM
-        second: 1
-      data:
-        first:
-          name: _FlashAmount
-        second: .5
-      data:
-        first:
-          name: MaskWithAlpha
-        second: 0
-    m_Colors:
-      data:
-        first:
-          name: _Color
-        second: {r: 1, g: 1, b: 1, a: 1}
-      data:
-        first:
-          name: _SpecColor
-        second: {r: 1, g: 1, b: 1, a: 1}
-      data:
-        first:
-          name: _FlashColor
-        second: {r: 1, g: 1, b: 1, a: .501960814}
 --- !u!1001 &2121570543
 Prefab:
   m_ObjectHideFlags: 0

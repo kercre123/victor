@@ -14,12 +14,8 @@
 
 #include "anki/common/types.h"
 #include "json/json.h"
-
 #include "anki/cozmo/shared/cozmoTypes.h"
-
-// TODO: Remove dependency on this
-//#include "anki/cozmo/messageBuffers/robot/robotMessages.h"
-#include "anki/cozmo/messageBuffers/game/UiMessagesG2U.h"
+#include "clad/externalInterface/messageEngineToGame.h"
 
 namespace Anki {
   
@@ -33,6 +29,10 @@ namespace Cozmo {
   // Forward declarations:
   class CozmoEngineHost;
   class CozmoGameImpl;
+
+namespace Data {
+class DataPlatform;
+}
   
   // Common API whether host or client
   class CozmoGame
@@ -52,7 +52,7 @@ namespace Cozmo {
       ,ENGINE_RUNNING
     };
     
-    CozmoGame();
+    CozmoGame(Data::DataPlatform* dataPlatform);
     ~CozmoGame();
     
     Result Init(const Json::Value& config);
@@ -67,14 +67,6 @@ namespace Cozmo {
     // TODO: Package up other stuff (like name?) into Robot/UiDevice identifiers. For now, just alias int.
     using AdvertisingRobot    = int;
     using AdvertisingUiDevice = int;
-    
-    // For adding a real robot to the list of availale ones advertising, using its
-    // known IP address. This is only necessary until we have real advertising
-    // capability on real robots.
-    // TODO: Remove this once we have sorted out the advertising process for real robots
-    void ForceAddRobot(int              robotID,
-                       const char*      robotIP,
-                       bool             robotIsSimulated);
     
     // Return number of robots connected
     int GetNumRobots() const;
@@ -97,14 +89,13 @@ namespace Cozmo {
     // TODO: Remove in favor of sending these messages to the UI
     //  (For now, this doesn't work on a client device because its game can't
     //   talk straight to the UI on the device it is running on)
-    const std::vector<G2U::DeviceDetectedVisionMarker>& GetVisionMarkersDetectedByDevice() const;
+    const std::vector<ExternalInterface::DeviceDetectedVisionMarker>& GetVisionMarkersDetectedByDevice() const;
     
-    void SetImageSendMode(RobotID_t forRobotID, Cozmo::ImageSendMode_t newMode);
-    
+
   protected:
     
     CozmoGameImpl* _impl;
-    
+
   }; // class CozmoGame
   
   

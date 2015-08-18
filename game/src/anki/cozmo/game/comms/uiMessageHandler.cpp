@@ -16,7 +16,6 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotManager.h"
 #include "anki/cozmo/game/comms/uiMessageHandler.h"
-#include "anki/cozmo/game/signals/cozmoGameSignals.h"
 #include "anki/cozmo/basestation/soundManager.h"
 
 #include "anki/cozmo/basestation/behaviorManager.h"
@@ -36,8 +35,10 @@
 namespace Anki {
   namespace Cozmo {
 
-    UiMessageHandler::UiMessageHandler()
-    : comms_(NULL), isInitialized_(false)
+    UiMessageHandler::UiMessageHandler(u32 hostUiDeviceID)
+    : comms_(NULL)
+    , isInitialized_(false)
+    , _hostUiDeviceID(hostUiDeviceID)
     {
       
     }
@@ -54,37 +55,29 @@ namespace Anki {
       
       return retVal;
     }
-    
 
-    Result UiMessageHandler::SendMessage(const UserDeviceID_t devID, const G2U::Message& msg)
+    void UiMessageHandler::DeliverToGame(const ExternalInterface::MessageEngineToGame& message)
     {
-      #if(RUN_UI_MESSAGE_TCP_SERVER)
-      
-      Comms::MsgPacket p;
-      msg.Pack(p.data, Comms::MsgPacket::MAX_SIZE);
-      p.dataLen = msg.Size();
-      p.destId = devID;
-      
-      return comms_->Send(p) > 0 ? RESULT_OK : RESULT_FAIL;
-      
-      #else
-      
-      //MessageQueue::getInstance()->AddMessageForUi(msg);
-      
-      #endif
-      
-      return RESULT_OK;
-    }
+#if(RUN_UI_MESSAGE_TCP_SERVER)
 
+      Comms::MsgPacket p;
+      message.Pack(p.data, Comms::MsgPacket::MAX_SIZE);
+      p.dataLen = message.Size();
+      p.destId = _hostUiDeviceID;
+      comms_->Send(p);
+#else
+      //MessageQueue::getInstance()->AddMessageForUi(msg);
+#endif
+    }
   
     Result UiMessageHandler::ProcessPacket(const Comms::MsgPacket& packet)
     {
       Result retVal = RESULT_FAIL;
       
-      U2G::Message message;
+      ExternalInterface::MessageGameToEngine message;
       if (message.Unpack(packet.data, Comms::MsgPacket::MAX_SIZE) != packet.dataLen) {
         PRINT_STREAM_ERROR("UiMessageHandler.MessageBufferWrongSize",
-                          "Buffer's size does not match expected size for this message ID. (Msg " << U2G::MessageTagToString(message.GetTag()) << ", expected " << message.Size() << ", recvd " << packet.dataLen << ")");
+                          "Buffer's size does not match expected size for this message ID. (Msg " << ExternalInterface::MessageGameToEngineTagToString(message.GetTag()) << ", expected " << message.Size() << ", recvd " << packet.dataLen << ")");
       }
       
       if (messageCallback != nullptr) {
@@ -93,6 +86,51 @@ namespace Anki {
       
       return retVal;
     } // ProcessBuffer()
+    
+    // Broadcasting MessageGameToEngine messages are only internal
+    void UiMessageHandler::Broadcast(const ExternalInterface::MessageGameToEngine& message)
+    {
+      _eventMgrToEngine.Broadcast(AnkiEvent<ExternalInterface::MessageGameToEngine>(
+        static_cast<u32>(message.GetTag()), message));
+    } // Broadcast(MessageGameToEngine)
+    
+    void UiMessageHandler::Broadcast(ExternalInterface::MessageGameToEngine&& message)
+    {
+      u32 type = static_cast<u32>(message.GetTag());
+      _eventMgrToEngine.Broadcast(AnkiEvent<ExternalInterface::MessageGameToEngine>(
+        type, std::move(message)));
+    } // Broadcast(MessageGameToEngine &&)
+    
+    
+    // Broadcasting MessageEngineToGame messages also delivers them out of the engine
+    void UiMessageHandler::Broadcast(const ExternalInterface::MessageEngineToGame& message)
+    {
+      DeliverToGame(message);
+      _eventMgrToGame.Broadcast(AnkiEvent<ExternalInterface::MessageEngineToGame>(
+        static_cast<u32>(message.GetTag()), message));
+    } // Broadcast(MessageEngineToGame)
+    
+    void UiMessageHandler::Broadcast(ExternalInterface::MessageEngineToGame&& message)
+    {
+      DeliverToGame(message);
+      u32 type = static_cast<u32>(message.GetTag());
+      _eventMgrToGame.Broadcast(AnkiEvent<ExternalInterface::MessageEngineToGame>(
+        type, std::move(message)));
+    } // Broadcast(MessageEngineToGame &&)
+    
+    // Provides a way to subscribe to message types using the AnkiEventMgrs
+    Signal::SmartHandle UiMessageHandler::Subscribe(const ExternalInterface::MessageEngineToGameTag& tagType,
+                                                    std::function<void(const AnkiEvent<ExternalInterface::MessageEngineToGame>&)> messageHandler)
+    {
+      return _eventMgrToGame.Subcribe(static_cast<u32>(tagType), messageHandler);
+    } // Subscribe(MessageEngineToGame)
+    
+    Signal::SmartHandle UiMessageHandler::Subscribe(const ExternalInterface::MessageGameToEngineTag& tagType,
+                                                    std::function<void(const AnkiEvent<ExternalInterface::MessageGameToEngine>&)> messageHandler)
+    {
+      return _eventMgrToEngine.Subcribe(static_cast<u32>(tagType), messageHandler);
+    } // Subscribe(MessageGameToEngine)
+
     
     Result UiMessageHandler::ProcessMessages()
     {

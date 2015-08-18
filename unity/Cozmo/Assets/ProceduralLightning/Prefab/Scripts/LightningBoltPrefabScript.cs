@@ -80,35 +80,35 @@ namespace DigitalRuby.ThunderAndLightning
             while (count-- > 0)
             {
 
-				SingleLightningBolt();
+        SingleLightningBolt();
             }
 
             CreateLightningBolts(batchParameters);
             batchParameters.Clear();
         }
 
-		public void SingleLightningBolt() {
-			float duration = ((float)random.NextDouble() * (DurationRange.Maximum - DurationRange.Minimum)) + DurationRange.Maximum;
-			float trunkWidth = ((float)random.NextDouble() * (TrunkWidthRange.Maximum - TrunkWidthRange.Minimum)) + TrunkWidthRange.Maximum;
-			
-			LightningBoltParameters parameters = new LightningBoltParameters
-			{
-				Generations = Generations,
-				LifeTime = duration,
-				ChaosFactor = ChaosFactor,
-				PointLightIntensity = 0.0f,
-				TrunkWidth = trunkWidth,
-				GlowIntensity = GlowIntensity,
-				GlowWidthMultiplier = GlowWidthMultiplier,
-				Forkedness = Forkedness,
-				FadePercent = FadePercent,
-				GrowthMultiplier = GrowthMultiplier,
-				EndWidthMultiplier = EndWidthMultiplier,
-				Random = random
-			};
-			BatchLightningBolt(parameters);
-		}
-	
+    public void SingleLightningBolt() {
+      float duration = ((float)random.NextDouble() * (DurationRange.Maximum - DurationRange.Minimum)) + DurationRange.Maximum;
+      float trunkWidth = ((float)random.NextDouble() * (TrunkWidthRange.Maximum - TrunkWidthRange.Minimum)) + TrunkWidthRange.Maximum;
+      
+      LightningBoltParameters parameters = new LightningBoltParameters
+      {
+        Generations = Generations,
+        LifeTime = duration,
+        ChaosFactor = ChaosFactor,
+        PointLightIntensity = 0.0f,
+        TrunkWidth = trunkWidth,
+        GlowIntensity = GlowIntensity,
+        GlowWidthMultiplier = GlowWidthMultiplier,
+        Forkedness = Forkedness,
+        FadePercent = FadePercent,
+        GrowthMultiplier = GrowthMultiplier,
+        EndWidthMultiplier = EndWidthMultiplier,
+        Random = random
+      };
+      BatchLightningBolt(parameters);
+    }
+  
         protected override void Start()
         {
             base.Start();

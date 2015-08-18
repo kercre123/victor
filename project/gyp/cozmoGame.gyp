@@ -6,7 +6,7 @@
     'ctrlGameEngine_source': 'ctrlGameEngine.lst',
     'ctrlKeyboard_source': 'ctrlKeyboard.lst',
     'csharp_source': 'csharp.lst',
-    'clad_source': 'clad.lst',
+    'buildMex': '<(build-mex)',
     
     # TODO: should this be passed in, or shared?
     'coretech_defines': [
@@ -44,7 +44,7 @@
     ],
 
     'webots_includes': [
-      '<(webots_path)/include/controller/cpp'
+      '<(webots_path)/include/controller/cpp',
     ],
     
     'faciometric_path' : [
@@ -65,26 +65,23 @@
     ],
 
     'compiler_flags': [
-      '-Wno-unused-function',
-      '-Wno-overloaded-virtual',
-      '-Wno-deprecated-declarations',
-      '-Wno-unused-variable',
-      # '-fdiagnostics-show-category=name',
-      # '-Wall',
-      # '-Woverloaded-virtual',
-      # '-Werror',
-      # '-Wundef',
-      # '-Wheader-guard',
-      # '-fsigned-char',
-      # '-fvisibility-inlines-hidden',
-      # '-fvisibility=default',
-      # '-Wshorten-64-to-32',
-      # '-Winit-self',
-      # '-Wconditional-uninitialized',
-      # '-Wno-deprecated-register',
-      # '-Wformat',
-      # '-Werror=format-security',
-      # '-g',
+      '-Wdeprecated-declarations',
+      '-fdiagnostics-show-category=name',
+      '-Wall',
+      '-Woverloaded-virtual',
+      '-Werror',
+      # '-Wundef', # Disabled until define usage is refactored to code standards
+      '-Wheader-guard',
+      '-fsigned-char',
+      '-fvisibility-inlines-hidden',
+      '-fvisibility=default',
+      '-Wshorten-64-to-32',
+      '-Winit-self',
+      '-Wconditional-uninitialized',
+      # '-Wno-deprecated-register', # Disabled until this warning actually needs to be supressed
+      '-Wformat',
+      '-Werror=format-security',
+      '-g',
     ],
     'compiler_c_flags' : [
       '-std=c11',
@@ -330,6 +327,31 @@
       },
     ],
 
+
+
+    # MEX CRAP HERE
+    # MEX CRAP HERE
+    # MEX CRAP HERE
+    # MEX CRAP HERE
+    [
+      "buildMex=='yes'",
+      {
+        'targets': [
+          {
+            'target_name': 'allMexTargets',
+            'type': 'none',
+            'dependencies': [
+              '<(cg-mex_gyp_path):mexDetectFiducialMarkers',
+              '<(cg-mex_gyp_path):mexUnique',
+            ],
+          },
+        ],
+      },
+    ],
+
+
+
+
     # UNITTEST CRAP HERE
     # UNITTEST CRAP HERE
     # UNITTEST CRAP HERE
@@ -407,6 +429,7 @@
               '<(cg-ce_gyp_path):webotsCtrlRobot',
               '<(cg-ce_gyp_path):webotsCtrlViz',
               '<(cg-ce_gyp_path):webotsCtrlLightCube',
+              '<(cg-ce_gyp_path):cozmo_physics',
             ],
             'copies': [
             
@@ -451,6 +474,40 @@
                   'ln',
                   '-s',
                   '-f',
+                  '<@(_inputs)',
+                  '<@(_outputs)',
+                ],
+              },
+              {
+                'action_name': 'create_symlink_resources_assets',
+                'inputs': [
+                  '<(cozmo_asset_path)',
+                ],
+                'outputs': [
+                  '../../simulator/controllers/webotsCtrlGameEngine/resources/assets',
+                ],
+                'action': [
+                  'ln',
+                  '-s',
+                  '-f',
+                  '-h',
+                  '<@(_inputs)',
+                  '<@(_outputs)',
+                ],
+              },
+              {
+                'action_name': 'create_symlink_resources_configs',
+                'inputs': [
+                  '<(cozmo_engine_path)/resources/config',
+                ],
+                'outputs': [
+                  '../../simulator/controllers/webotsCtrlGameEngine/resources/config',
+                ],
+                'action': [
+                  'ln',
+                  '-s',
+                  '-f',
+                  '-h',
                   '<@(_inputs)',
                   '<@(_outputs)',
                 ],
@@ -503,6 +560,22 @@
                   '<@(_outputs)',
                 ],
               },
+              {
+                'action_name': 'create_symlink_webotsPluginPhysics',
+                'inputs': [
+                  '<(PRODUCT_DIR)/libcozmo_physics.dylib',
+                ],
+                'outputs': [
+                  '../../simulator/plugins/physics/cozmo_physics/libcozmo_physics.dylib',
+                ],
+                'action': [
+                  'ln',
+                  '-s',
+                  '-f',
+                  '<@(_inputs)',
+                  '<@(_outputs)',
+                ],
+              },
             ],
             
           }, # end webotsControllers
@@ -533,7 +606,6 @@
       'target_name': 'cozmoGame',
       'sources': [ 
         '<!@(cat <(game_source))',
-        '<!@(cat <(clad_source))',
       ],
       'include_dirs': [
         '../../game/src',

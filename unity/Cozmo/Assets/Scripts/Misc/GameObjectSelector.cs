@@ -2,76 +2,79 @@
 using UnityEngine.UI;
 using System.Collections;
 
-
 public class GameObjectSelector : MonoBehaviour {
 
-	[SerializeField] GameObject[] gameObjects = null;
-	[SerializeField] int defaultIndex = 0;
-	[SerializeField] Text label = null;
+  [SerializeField] GameObject[] gameObjects = null;
+  [SerializeField] int defaultIndex = 0;
+  [SerializeField] Text label = null;
 
-	bool set = false;
+  bool set = false;
 
-	int _index = -1;
-	protected int index {
-		get {
-			return _index;
-		}
+  int _index = -1;
 
-		set {
-			if(value != _index) {
-				//if(_index >= 0 && _index < gameObjects.Length) Debug.Log(gameObject.name + " GameObjectSelector changed from " + gameObjects[_index].name + " to " + gameObjects[value].name );
-				_index = value;
-				Refresh();
-			}
-		}
-	}
+  protected int index {
+    get {
+      return _index;
+    }
 
-	protected virtual void Awake() {
-		InitializeDefault();
-	}
+    set {
+      if (value != _index) {
+        //if(_index >= 0 && _index < gameObjects.Length) Debug.Log(gameObject.name + " GameObjectSelector changed from " + gameObjects[_index].name + " to " + gameObjects[value].name );
+        _index = value;
+        Refresh();
+      }
+    }
+  }
 
-	protected virtual void OnEnable() {
-		InitializeDefault();
-	}
+  protected virtual void Awake() {
+    InitializeDefault();
+  }
 
-	protected void InitializeDefault() {
-		if(gameObjects == null || gameObjects.Length == 0) {
-			enabled = false;
-			return;
-		}
+  protected virtual void OnEnable() {
+    InitializeDefault();
+  }
 
-		if(!set) index = Mathf.Clamp(defaultIndex, 0, gameObjects.Length - 1);
-	}
+  protected void InitializeDefault() {
+    if (gameObjects == null || gameObjects.Length == 0) {
+      enabled = false;
+      return;
+    }
 
-	void Refresh() {
-		if(gameObjects == null || gameObjects.Length == 0) {
-			enabled = false;
-			return;
-		}
+    if (!set)
+      index = Mathf.Clamp(defaultIndex, 0, gameObjects.Length - 1);
+  }
 
-		_index = Mathf.Clamp(_index, 0, gameObjects.Length - 1);
+  void Refresh() {
+    if (gameObjects == null || gameObjects.Length == 0) {
+      enabled = false;
+      return;
+    }
 
-		//first disable the old screen(s)
-		for(int i=0; i<gameObjects.Length; i++) {
-			if(gameObjects[i] == null) continue;
-			if(index == i) continue;
-			gameObjects[i].SetActive(false);
-		}
+    _index = Mathf.Clamp(_index, 0, gameObjects.Length - 1);
 
-		//then enable the new one
-		gameObjects[index].SetActive(true);
-		
-		//then refresh our test title field
-		if(label != null && label.text != gameObjects[index].name) {
-			label.text = gameObjects[index].name;
-		}
+    //first disable the old screen(s)
+    for (int i = 0; i < gameObjects.Length; i++) {
+      if (gameObjects[i] == null)
+        continue;
+      if (index == i)
+        continue;
+      gameObjects[i].SetActive(false);
+    }
 
-	}
+    //then enable the new one
+    gameObjects[index].SetActive(true);
+    
+    //then refresh our test title field
+    if (label != null && label.text != gameObjects[index].name) {
+      label.text = gameObjects[index].name;
+    }
 
-	public void SetScreenIndex(int i) {
-		//Debug.Log(gameObject.name + " SetScreenIndex("+i+")");
-		index = Mathf.Clamp(i, 0, gameObjects.Length - 1);
-		set = true;
-	}
+  }
+
+  public void SetScreenIndex(int i) {
+    //Debug.Log(gameObject.name + " SetScreenIndex("+i+")");
+    index = Mathf.Clamp(i, 0, gameObjects.Length - 1);
+    set = true;
+  }
 
 }

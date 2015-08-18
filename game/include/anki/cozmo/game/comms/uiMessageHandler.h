@@ -17,8 +17,9 @@
 #include <anki/messaging/basestation/IComms.h>
 
 #include "anki/cozmo/basestation/cozmoEngine.h"
-#include "anki/cozmo/messageBuffers/game/UiMessagesG2U.h"
-#include "anki/cozmo/messageBuffers/game/UiMessagesU2G.h"
+#include "clad/externalInterface/messageEngineToGame.h"
+#include "clad/externalInterface/messageGameToEngine.h"
+#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 
 // Enable this if you want to receive/send messages via socket connection.
 // Eventually, this should be disabled by default once the UI layer starts
@@ -32,9 +33,7 @@
 namespace Anki {
   namespace Cozmo {
     
-//#define MESSAGE_BASECLASS_NAME UiMessage
-//#include "anki/cozmo/game/comms/messaging/UiMessageDefinitions.h"
-    
+
     class Robot;
     class RobotManager;
     
@@ -47,16 +46,14 @@ namespace Anki {
       
       virtual Result ProcessMessages() = 0;
       
-      virtual Result SendMessage(const UserDeviceID_t devID, const G2U::Message& msg) = 0;
-      
     }; // IMessageHandler
     
     
-    class UiMessageHandler : public IUiMessageHandler
+    class UiMessageHandler : public IUiMessageHandler, public IExternalInterface
     {
     public:
       
-      UiMessageHandler(); // Force construction with stuff in Init()?
+      UiMessageHandler(u32 hostUiDeviceID); // Force construction with stuff in Init()?
       
       // Set the message handler's communications manager
       virtual Result Init(Comms::IComms* comms) override;
@@ -65,26 +62,43 @@ namespace Anki {
       // process them and pass them along to robots.
       virtual Result ProcessMessages();
       
-      // Send a message to a specified ID
-      Result SendMessage(const UserDeviceID_t devID, const G2U::Message& msg);
+      virtual void Broadcast(const ExternalInterface::MessageGameToEngine& message) override;
+      virtual void Broadcast(ExternalInterface::MessageGameToEngine&& message) override;
       
-      inline void RegisterCallbackForMessage(const std::function<void(const U2G::Message&)>& messageCallback)
+      virtual void Broadcast(const ExternalInterface::MessageEngineToGame& message) override;
+      virtual void Broadcast(ExternalInterface::MessageEngineToGame&& message) override;
+      
+      virtual Signal::SmartHandle Subscribe(const ExternalInterface::MessageEngineToGameTag& tagType, std::function<void(const AnkiEvent<ExternalInterface::MessageEngineToGame>&)> messageHandler) override;
+      
+      virtual Signal::SmartHandle Subscribe(const ExternalInterface::MessageGameToEngineTag& tagType, std::function<void(const AnkiEvent<ExternalInterface::MessageGameToEngine>&)> messageHandler) override;
+      
+      inline void RegisterCallbackForMessage(const std::function<void(const ExternalInterface::MessageGameToEngine&)>& messageCallback)
       {
         this->messageCallback = messageCallback;
       }
+      inline u32 GetHostUiDeviceID() const { return _hostUiDeviceID; }
+      
+      AnkiEventMgr<ExternalInterface::MessageEngineToGame>& GetEventMgrToGame() { return _eventMgrToGame; }
+      AnkiEventMgr<ExternalInterface::MessageGameToEngine>& GetEventMgrToEngine() { return _eventMgrToEngine; }
       
     protected:
       
       Comms::IComms* comms_;
       
       bool isInitialized_;
+      u32 _hostUiDeviceID;
       
-      std::function<void(const U2G::Message&)> messageCallback;
+      std::function<void(const ExternalInterface::MessageGameToEngine&)> messageCallback;
       
       // Process a raw byte buffer as a message and send it to the specified
       // robot
       Result ProcessPacket(const Comms::MsgPacket& packet);
-
+      
+      // Send a message to a specified ID
+      virtual void DeliverToGame(const ExternalInterface::MessageEngineToGame& message) override;
+      
+      AnkiEventMgr<ExternalInterface::MessageEngineToGame> _eventMgrToGame;
+      AnkiEventMgr<ExternalInterface::MessageGameToEngine> _eventMgrToEngine;
       
     }; // class MessageHandler
     
@@ -101,12 +115,12 @@ namespace Anki {
       
       // As long as there are messages available from the comms object,
       // process them and pass them along to robots.
-      Result ProcessMessages() {
+      virtual Result ProcessMessages() {
         return RESULT_OK;
       }
       
       // Send a message to a specified ID
-      Result SendMessage(const UserDeviceID_t devID, const G2U::Message& msg) {
+      virtual Result SendMessage(const ExternalInterface::MessageEngineToGame& msg) {
         return RESULT_OK;
       }
       

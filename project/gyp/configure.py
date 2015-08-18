@@ -33,6 +33,8 @@ def main(scriptArgs):
                       help='prepends to the environment PATH')
   parser.add_argument('--clean', '-c', dest='clean', action='store_true',
                       help='cleans all output folders')
+  parser.add_argument('--mex', '-m', dest='mex', action='store_true',
+                      help='builds mathlab\'s mex project')
   parser.add_argument('--withGyp', metavar='GYP_PATH', dest='gypPath', action='store', default=None,
                       help='Use gyp installation located at GYP_PATH')
   parser.add_argument('--buildTools', metavar='BUILD_TOOLS_PATH', dest='buildToolsPath', action='store', default=None,
@@ -47,6 +49,8 @@ def main(scriptArgs):
                       help='Use coretech-internal repo checked out at CORETECH_INTERNAL_DIR')
   parser.add_argument('--cozmoEngine', metavar='COZMO_ENGINE_PATH', dest='cozmoEnginePath', action='store', default=None,
                       help='Use cozmo-engine repo checked out at COZMO_ENGINE_PATH')
+  parser.add_argument('--cozmoAssets', metavar='COZMO_ASSET_PATH', dest='cozmoAssetPath', action='store', default=None,
+                      help='Use cozmo-asset repo checked out at COZMO_ASSET_PATH')
   parser.add_argument('--projectRoot', dest='projectRoot', action='store', default=None,
                       help='project location, assumed to be same as git repo root')
   parser.add_argument('--updateListsOnly', dest='updateListsOnly', action='store_true', default=False,
@@ -83,6 +87,11 @@ def main(scriptArgs):
   else:
     projectRoot = subprocess.check_output(['git', 'rev-parse', '--show-toplevel']).rstrip("\r\n")
 
+  if not options.cozmoAssetPath:
+    options.cozmoAssetPath = os.path.join(options.projectRoot, 'lib/anki/products-cozmo-assets')
+  if not os.path.exists(options.cozmoAssetPath):
+    UtilLog.error('cozmo-asset not found [%s]' % (options.cozmoAssetPath) )
+    return False
 
   if not options.cozmoEnginePath:
     options.cozmoEnginePath = os.path.join(options.projectRoot, 'lib/anki/cozmo-engine')
@@ -161,11 +170,6 @@ def main(scriptArgs):
     return True
 
   #run clad's make
-  if (subprocess.call(['make', '--silent'], cwd=os.path.join(projectRoot, 'clad')) != 0):
-    UtilLog.error("error compiling clad files")
-    return False
-
-  #run clad's make
   unityGeneratedPath=os.path.join(projectRoot, 'unity/Cozmo/Assets/Scripts/Generated')
   if (subprocess.call(['make', '--silent', 'OUTPUT_DIR_CSHARP=' + unityGeneratedPath, 'csharp'],
     cwd=os.path.join(options.cozmoEnginePath, 'clad')) != 0):
@@ -179,11 +183,12 @@ def main(scriptArgs):
 
   # update file lists
   generator = updateFileLists.FileListGenerator(options)
-  generator.processFolder(['game/src/anki/cozmo', 'game/include', 'generated/clad/game'], ['project/gyp/cozmoGame.lst'])
+  generator.processFolder(['game/src/anki/cozmo', 'game/include', 
+    'lib/anki/products-cozmo-assets/animations', 'lib/anki/products-cozmo-assets/faceAnimations', 
+    'lib/anki/products-cozmo-assets/sounds'], ['project/gyp/cozmoGame.lst'])
   generator.processFolder(['simulator/controllers/webotsCtrlKeyboard'], ['project/gyp/ctrlKeyboard.lst'])
   generator.processFolder(['simulator/controllers/webotsCtrlGameEngine'], ['project/gyp/ctrlGameEngine.lst'])
   generator.processFolder(['unity/CSharpBinding/src'], ['project/gyp/csharp.lst'])
-  generator.processFolder(['clad/src'], ['project/gyp/clad.lst'])
 
   if options.updateListsOnly:
     # TODO: remove dependency on abspath. 
@@ -218,6 +223,11 @@ def main(scriptArgs):
   cgCoretechInternalProjectPath = os.path.relpath(coretechInternalProjectPath, configurePath)
   ceCoretechInternalProjectPath = os.path.relpath(coretechInternalProjectPath, cozmoEngineConfigurePath)
   cgCozmoEngineProjectPath = os.path.relpath(os.path.join(options.cozmoEnginePath, 'project/gyp/cozmoEngine.gyp'), configurePath)
+  cgMexProjectPath = os.path.relpath(os.path.join(options.cozmoEnginePath, 'project/gyp/cozmoEngineMex.gyp'), configurePath)
+  cozmoConfigPath = os.path.join(options.cozmoEnginePath, 'resources')
+  buildMex = 'no'
+  if options.mex:
+    buildMex = 'yes'
 
   # mac
   if 'mac' in options.platforms:
@@ -234,6 +244,7 @@ def main(scriptArgs):
                                   webots_path={3}
                                   cti-gtest_path={4}
                                   cti-util_gyp_path={5}
+                                  cozmo_engine_path={6}
                                   cti-cozmo_engine_path={6}
                                   ce-gtest_path={7}
                                   ce-util_gyp_path={8}
@@ -242,6 +253,9 @@ def main(scriptArgs):
                                   cg-util_gyp_path={11}
                                   cg-cti_gyp_path={12}
                                   cg-ce_gyp_path={13}
+                                  cg-mex_gyp_path={14}
+                                  build-mex={15}
+                                  cozmo_asset_path={16}
                                   """.format(
                                     options.arch, 
                                     os.path.join(options.projectRoot, 'generated/mac'),
@@ -256,7 +270,10 @@ def main(scriptArgs):
                                     cgGtestPath, 
                                     cgAnkiUtilProjectPath, 
                                     cgCoretechInternalProjectPath,
-                                    cgCozmoEngineProjectPath
+                                    cgCozmoEngineProjectPath,
+                                    cgMexProjectPath,
+                                    buildMex,
+                                    options.cozmoAssetPath
                                   )
       gypArgs = ['--check', '--depth', '.', '-f', 'xcode', '--toplevel-dir', '../..', '--generator-output', '../../generated/mac', gypFile]
       gyp.main(gypArgs)
@@ -278,6 +295,10 @@ def main(scriptArgs):
                                 basestation_target_name=Basestation
                                 driveengine_target_name=DriveEngine
                                 OS=ios
+                                cg-mex_gyp_path=blah
+                                cozmo_asset_path=blah
+                                cozmo_config_path=blah
+                                build-mex=no
                                 arch_group={0}
                                 output_location={1}
                                 coretech_external_path={2}
@@ -354,6 +375,10 @@ def main(scriptArgs):
                                 target_arch=arm
                                 clang=1
                                 component=static_library
+                                cg-mex_gyp_path=blah
+                                cozmo_asset_path=blah
+                                cozmo_config_path=blah
+                                build-mex=no
                                 use_system_stlport=0
                                 arch_group={0}
                                 output_location={1}

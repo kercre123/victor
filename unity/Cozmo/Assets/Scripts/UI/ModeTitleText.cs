@@ -3,19 +3,19 @@ using UnityEngine.UI;
 using System.Collections;
 
 public class ModeTitleText : MonoBehaviour {
-	Text text;
+  Text text;
 
-	void Awake() {
-		text = GetComponent<Text>();
-	}
+  void Awake() {
+    text = GetComponent<Text>();
+  }
 
-	void OnEnable() {
-		string modeTitle = PlayerPrefs.GetString("CurrentGame", "Unknown").ToUpper();
+  void OnEnable() {
+    string modeTitle = PlayerPrefs.GetString("CurrentGame", "Unknown").ToUpper();
 
-		if(modeTitle != "FREE PLAY") {
-			modeTitle += " #" + PlayerPrefs.GetInt(modeTitle + "_CurrentLevel", 1);
-		}
+    if (modeTitle != "FREE PLAY") {
+      modeTitle += " #" + PlayerPrefs.GetInt(modeTitle + "_CurrentLevel", 1);
+    }
 
-		text.text = modeTitle;
-	}
+    text.text = modeTitle;
+  }
 }

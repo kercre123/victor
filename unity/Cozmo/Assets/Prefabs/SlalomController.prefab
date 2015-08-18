@@ -152,9 +152,9 @@ GameObject:
   m_Component:
   - 224: {fileID: 22451566}
   - 222: {fileID: 22288694}
-  - 114: {fileID: 11403892}
   - 225: {fileID: 22510180}
   - 114: {fileID: 11464654}
+  - 114: {fileID: 11463412}
   m_Layer: 5
   m_Name: TimeLeftText
   m_TagString: Untagged
@@ -364,9 +364,10 @@ GameObject:
   m_Component:
   - 224: {fileID: 22479722}
   - 222: {fileID: 22217872}
-  - 114: {fileID: 11400168}
   - 225: {fileID: 22553726}
   - 114: {fileID: 11411208}
+  - 114: {fileID: 11442482}
+  - 114: {fileID: 11489620}
   m_Layer: 5
   m_Name: CountdownText
   m_TagString: Untagged
@@ -839,17 +840,6 @@ AudioSource:
       tangentMode: 0
     m_PreInfinity: 2
     m_PostInfinity: 2
---- !u!114 &11400168
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 168268}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 0}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &11400238
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -949,17 +939,6 @@ MonoBehaviour:
     m_VerticalOverflow: 0
     m_LineSpacing: 1
   m_Text: SLALOM COMPLETE!
---- !u!114 &11403892
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 136356}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 0}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &11411208
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -972,7 +951,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: .698039234, g: .741176486, b: .768627524, a: 1}
   m_FontData:
     m_Font: {fileID: 12800000, guid: c0648979e7eeb4fa1890f7413ac3ca43, type: 3}
     m_FontSize: 200
@@ -1056,6 +1035,7 @@ MonoBehaviour:
   textAddaboy: {fileID: 11473464}
   autoPlay: 1
   playButton: {fileID: 0}
+  playAgainButton: {fileID: 11402838}
   resultsPanel: {fileID: 11445544}
   instructionsSound: {fileID: 8300000, guid: 0f05bb73c69d1444aa4081262b144337, type: 3}
   gameStartSound: {fileID: 8300000, guid: 9587b14d6089a468b880999908b95c92, type: 3}
@@ -1089,7 +1069,6 @@ MonoBehaviour:
   maxEmotionWaitTime: 20
   text_finalTime: {fileID: 11453272}
   text_resultsTitle: {fileID: 11403486}
-  button_PlayAgain: {fileID: 11402838}
   button_Rebuild: {fileID: 11498684}
   thereAndBackAgain: 1
   pointsPerObstacle: 100
@@ -1225,6 +1204,20 @@ MonoBehaviour:
   m_FillAmount: 1
   m_FillClockwise: 1
   m_FillOrigin: 0
+--- !u!114 &11442482
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 168268}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -900027084, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_EffectColor: {r: .184313729, g: .231372565, b: .262745112, a: 1}
+  m_EffectDistance: {x: 2, y: -2}
+  m_UseGraphicAlpha: 1
 --- !u!114 &11443900
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1403,6 +1396,20 @@ MonoBehaviour:
     m_VerticalOverflow: 0
     m_LineSpacing: 1
   m_Text: 0
+--- !u!114 &11463412
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 136356}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -900027084, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_EffectColor: {r: .184313729, g: .231372565, b: .262745112, a: .501960814}
+  m_EffectDistance: {x: 2, y: -2}
+  m_UseGraphicAlpha: 1
 --- !u!114 &11464654
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1415,7 +1422,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: .698039234, g: .741176486, b: .768627524, a: 1}
   m_FontData:
     m_Font: {fileID: 12800000, guid: fe45c1b02a46a40ff9591b7d0bd89aee, type: 3}
     m_FontSize: 24
@@ -1761,6 +1768,20 @@ MonoBehaviour:
     m_VerticalOverflow: 0
     m_LineSpacing: 1
   m_Text: index(0) angle(45)
+--- !u!114 &11489620
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 168268}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -900027084, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_EffectColor: {r: 0, g: 0, b: 0, a: .5}
+  m_EffectDistance: {x: 1, y: -1}
+  m_UseGraphicAlpha: 1
 --- !u!114 &11491278
 MonoBehaviour:
   m_ObjectHideFlags: 1

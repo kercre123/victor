@@ -8,14 +8,15 @@
 
 #include "ios-binding.h"
 #include "../csharp-binding.h"
-
+#include "dataPlatformCreator.h"
 #include "anki/cozmo/game/cozmoGame.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
-
+#include "util/helpers/templateHelpers.h"
 #include "anki/common/basestation/jsonTools.h"
 #include "util/logging/logging.h"
-
+#include "util/logging/printfLoggerProvider.h"
+#include "anki/cozmo/basestation/data/dataPlatform.h"
 #include <algorithm>
 #include <string>
 #include <vector>
@@ -25,6 +26,7 @@ using namespace Anki::Cozmo;
 using namespace Anki::Cozmo::CSharpBinding;
 
 CozmoGame* game = nullptr;
+Anki::Cozmo::Data::DataPlatform* dataPlatform = nullptr;
 
 const char* ROBOT_ADVERTISING_HOST_IP = "127.0.0.1";
 const char* VIZ_HOST_IP = "127.0.0.1";
@@ -71,6 +73,13 @@ void configure_game(Json::Value config)
 
 int Anki::Cozmo::CSharpBinding::cozmo_game_create(const char* configuration_data)
 {
+  Anki::Util::PrintfLoggerProvider* loggerProvider = new Anki::Util::PrintfLoggerProvider();
+  loggerProvider->SetMinLogLevel(0);
+  Anki::Util::gLoggerProvider = loggerProvider;
+  PRINT_NAMED_INFO("CSharpBinding.cozmo_game_create", "engine creating engine");
+
+  dataPlatform = CreateDataPlatform();
+  
     using namespace Cozmo;
   
     if (game != nullptr) {
@@ -92,7 +101,7 @@ int Anki::Cozmo::CSharpBinding::cozmo_game_create(const char* configuration_data
   
     configure_game(config);
   
-    CozmoGame* created_game = new CozmoGame();
+    CozmoGame* created_game = new CozmoGame(dataPlatform);
   
     Result result = created_game->Init(config);
     if (result != RESULT_OK) {
@@ -111,6 +120,8 @@ int Anki::Cozmo::CSharpBinding::cozmo_game_destroy()
         delete game;
         game = nullptr;
     }
+  Anki::Util::SafeDelete(Anki::Util::gLoggerProvider);
+  Anki::Util::SafeDelete(dataPlatform);
     return (int)RESULT_OK;
 }
 

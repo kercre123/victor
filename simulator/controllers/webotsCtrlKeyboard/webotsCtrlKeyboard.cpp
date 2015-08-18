@@ -20,15 +20,15 @@
 
 #include "anki/vision/basestation/image.h"
 
-#include "anki/cozmo/messageBuffers/game/UiMessagesG2U.h"
-#include "anki/cozmo/messageBuffers/game/UiMessagesU2G.h"
+#include "clad/externalInterface/messageEngineToGame.h"
+#include "clad/externalInterface/messageGameToEngine.h"
 #include "anki/messaging/shared/TcpClient.h"
 #include "anki/cozmo/game/comms/gameMessageHandler.h"
 #include "anki/cozmo/game/comms/gameComms.h"
 
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/block.h"
-#include "anki/cozmo/messageBuffers/shared/actionTypes.h"
+#include "clad/types/actionTypes.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -62,13 +62,7 @@ namespace Anki {
       // Private memers:
       namespace {
         // Constants for Webots:
-        const f32 LIFT_SPEED_RAD_PER_SEC = 2.f;
-        const f32 LIFT_ACCEL_RAD_PER_SEC2 = 10.f;
-        
-        const f32 HEAD_SPEED_RAD_PER_SEC = 5.f;
-        const f32 HEAD_ACCEL_RAD_PER_SEC2 = 40.f;
-        
-        U2G::Ping _pingMsg;
+        ExternalInterface::Ping _pingMsg;
         
         std::set<int> lastKeysPressed_;
         
@@ -195,13 +189,14 @@ namespace Anki {
       void ProcessKeystroke(void);
       void ProcessJoystick(void);
       void PrintHelp(void);
-      void SendMessage(const U2G::Message& msg);
+      void SendMessage(const ExternalInterface::MessageGameToEngine& msg);
       void SendDriveWheels(const f32 lwheel_speed_mmps, const f32 rwheel_speed_mmps);
       void SendTurnInPlace(const f32 angle_rad);
+      void SendTurnInPlaceAtSpeed(const f32 speed_rad_per_sec, const f32 accel_rad_per_sec2);
       void SendMoveHead(const f32 speed_rad_per_sec);
       void SendMoveLift(const f32 speed_rad_per_sec);
-      void SendMoveHeadToAngle(const f32 rad, const f32 speed, const f32 accel);
-      void SendMoveLiftToHeight(const f32 mm, const f32 speed, const f32 accel);
+      void SendMoveHeadToAngle(const f32 rad, const f32 speed, const f32 accel, const f32 duration_sec = 0.f);
+      void SendMoveLiftToHeight(const f32 mm, const f32 speed, const f32 accel, const f32 duration_sec = 0.f);
       void SendTapBlockOnGround(const u8 numTaps);
       void SendStopAllMotors();
       void SendImageRequest(u8 mode, u8 robotID);
@@ -231,11 +226,15 @@ namespace Anki {
       void SendHeadControllerGains(const f32 kp, const f32 ki, const f32 kd, const f32 maxErrorSum);
       void SendLiftControllerGains(const f32 kp, const f32 ki, const f32 kd, const f32 maxErrorSum);
       void SendSteeringControllerGains(const f32 k1, const f32 k2);
+      void SendSetRobotVolume(const f32 volume);
       void SendStartTestMode(TestMode mode, s32 p1 = 0, s32 p2 = 0, s32 p3 = 0);
       void SendIMURequest(u32 length_ms);
       void SendAnimation(const char* animName, u32 numLoops);
       void SendReplayLastAnimation();
       void SendReadAnimationFile();
+      void SendSetIdleAnimation(const std::string &animName);
+      void SendQueuePlayAnimAction(const std::string &animName, u32 numLoops, QueueActionPosition pos);
+      void SendCancelAction();
       void SendStartFaceTracking(u8 timeout_sec);
       void SendStopFaceTracking();
       void SendVisionSystemParams();
@@ -247,12 +246,12 @@ namespace Anki {
       
       // TODO: Update these not to need robotID
       
-      void HandleRobotStateUpdate(G2U::RobotState const& msg)
+      void HandleRobotStateUpdate(ExternalInterface::RobotState const& msg)
       {
         robotPosition_ = {msg.pose_x, msg.pose_y};
       }
       
-      void HandleRobotObservedObject(G2U::RobotObservedObject const& msg)
+      void HandleRobotObservedObject(ExternalInterface::RobotObservedObject const& msg)
       {
         if(cozmoCam_ == nullptr) {
           printf("RECEIVED OBJECT OBSERVED: objectID %d\n", msg.objectID);
@@ -287,88 +286,87 @@ namespace Anki {
         }
       }
       
-      void HandleRobotObservedNothing(G2U::RobotObservedNothing const& msg)
+      void HandleRobotObservedNothing(ExternalInterface::RobotObservedNothing const& msg)
       {
         currentlyObservedObject.Reset();
       }
       
-      void HandleRobotDeletedObject(G2U::RobotDeletedObject const& msg)
+      void HandleRobotDeletedObject(ExternalInterface::RobotDeletedObject const& msg)
       {
         printf("Robot %d reported deleting object %d\n", msg.robotID, msg.objectID);
       }
 
-      void HandleRobotConnection(const G2U::RobotAvailable& msgIn)
+      void HandleRobotConnection(const ExternalInterface::RobotAvailable& msgIn)
       {
         // Just send a message back to the game to connect to any robot that's
         // advertising (since we don't have a selection mechanism here)
         printf("Sending message to command connection to robot %d.\n", msgIn.robotID);
-        U2G::ConnectToRobot msgOut;
+        ExternalInterface::ConnectToRobot msgOut;
         msgOut.robotID = msgIn.robotID;
-        U2G::Message message;
+        ExternalInterface::MessageGameToEngine message;
         message.Set_ConnectToRobot(msgOut);
         SendMessage(message);
       }
       
-      void HandleUiDeviceConnection(const G2U::UiDeviceAvailable& msgIn)
+      void HandleUiDeviceConnection(const ExternalInterface::UiDeviceAvailable& msgIn)
       {
         // Just send a message back to the game to connect to any UI device that's
         // advertising (since we don't have a selection mechanism here)
         printf("Sending message to command connection to UI device %d.\n", msgIn.deviceID);
-        U2G::ConnectToUiDevice msgOut;
+        ExternalInterface::ConnectToUiDevice msgOut;
         msgOut.deviceID = msgIn.deviceID;
-        U2G::Message message;
+        ExternalInterface::MessageGameToEngine message;
         message.Set_ConnectToUiDevice(msgOut);
         SendMessage(message);
       }
       
-      void HandleRobotConnected(G2U::RobotConnected const &msg)
+      void HandleRobotConnected(ExternalInterface::RobotConnected const &msg)
       {
         // Once robot connects, set resolution
         SendSetRobotImageSendMode(ISM_STREAM);
       }
       
-      void HandleRobotCompletedAction(const G2U::RobotCompletedAction& msg)
+      void HandleRobotCompletedAction(const ExternalInterface::RobotCompletedAction& msg)
       {
-        const bool success = (ActionResult)msg.result == ActionResult::SUCCESS;
         switch((RobotActionType)msg.actionType)
         {
           case RobotActionType::PICKUP_OBJECT_HIGH:
           case RobotActionType::PICKUP_OBJECT_LOW:
             printf("Robot %d %s picking up stack of %d objects with IDs: ",
-                   msg.robotID, (success ? "SUCCEEDED" : "FAILED"),
+                   msg.robotID, ActionResultToString(msg.result),
                    msg.completionInfo.numObjects);
             for(int i=0; i<msg.completionInfo.numObjects; ++i) {
               printf("%d ", msg.completionInfo.objectIDs[i]);
             }
-            printf("\n");
+            printf("[Tag=%d]\n", msg.idTag);
             break;
             
           case RobotActionType::PLACE_OBJECT_HIGH:
           case RobotActionType::PLACE_OBJECT_LOW:
             printf("Robot %d %s placing stack of %d objects with IDs: ",
-                   msg.robotID, (success ? "SUCCEEDED" : "FAILED"),
+                   msg.robotID, ActionResultToString(msg.result),
                    msg.completionInfo.numObjects);
             for(int i=0; i<msg.completionInfo.numObjects; ++i) {
               printf("%d ", msg.completionInfo.objectIDs[i]);
             }
-            printf("\n");
+            printf("[Tag=%d]\n", msg.idTag);
             break;
 
           case RobotActionType::PLAY_ANIMATION:
-            printf("Robot %d finished playing animation %s.\n",
-                   msg.robotID, msg.completionInfo.animName.c_str());
+            printf("Robot %d finished playing animation %s. [Tag=%d]\n",
+                   msg.robotID, msg.completionInfo.animName.c_str(), msg.idTag);
             break;
             
           default:
-            printf("Robot %d completed action with type=%d: %s.\n",
-                   msg.robotID, msg.actionType, ActionResultToString((ActionResult)msg.result));
+            printf("Robot %d completed action with type=%d and tag=%d: %s.\n",
+                   msg.robotID, msg.actionType, msg.idTag, ActionResultToString(msg.result));
         }
         
       }
       
       // For processing image chunks arriving from robot.
       // Sends complete images to VizManager for visualization (and possible saving).
-      void HandleImageChunk(G2U::ImageChunk const& msg)
+      void HandleImageChunk(ExternalInterface::ImageChunk const& msg)
       {
         const bool isImageReady = _imageDeChunker.AppendChunk(msg.imageId, msg.frameTimeStamp, msg.nrows, msg.ncols, (Vision::ImageEncoding_t)msg.imageEncoding, msg.imageChunkCount, msg.chunkId, msg.data, msg.chunkSize);
         
@@ -422,24 +420,28 @@ namespace Anki {
       } // HandleImageChunk()
       
       
-      void HandleActiveObjectMoved(G2U::ActiveObjectMoved const& msg)
+      void HandleActiveObjectMoved(ExternalInterface::ActiveObjectMoved const& msg)
       {
        PRINT_NAMED_INFO("HandleActiveObjectMoved", "Received message that object %d moved. Accel=(%f,%f,%f). UpAxis=%d\n",
                         msg.objectID, msg.xAccel, msg.yAccel, msg.zAccel, msg.upAxis);
       }
       
-      void HandleActiveObjectStoppedMoving(G2U::ActiveObjectStoppedMoving const& msg)
+      void HandleActiveObjectStoppedMoving(ExternalInterface::ActiveObjectStoppedMoving const& msg)
       {
         PRINT_NAMED_INFO("HandleActiveObjectStoppedMoving", "Received message that object %d stopped moving%s. UpAxis=%d\n",
                          msg.objectID, (msg.rolled ? " and rolled" : ""), msg.upAxis);
       }
       
-      void HandleActiveObjectTapped(G2U::ActiveObjectTapped const& msg)
+      void HandleActiveObjectTapped(ExternalInterface::ActiveObjectTapped const& msg)
       {
         PRINT_NAMED_INFO("HandleActiveObjectTapped", "Received message that object %d was tapped %d times.\n",
                          msg.objectID, msg.numTaps);
       }
 
+      void HandleAnimationAvailable(ExternalInterface::AnimationAvailable const& msg)
+      {
+        printf("Animation available: %s\n", msg.animName.c_str());
+      }
       
       // ===== End of message handler callbacks ====
       
@@ -476,40 +478,43 @@ namespace Anki {
         
         // Register callbacks for incoming messages from game
         // TODO: Have CLAD generate this?
-        msgHandler_.RegisterCallbackForMessage([](const G2U::Message& message) {
+        msgHandler_.RegisterCallbackForMessage([](const ExternalInterface::MessageEngineToGame& message) {
           switch (message.GetTag()) {
-            case G2U::Message::Tag::RobotConnected:
+            case ExternalInterface::MessageEngineToGame::Tag::RobotConnected:
               HandleRobotConnected(message.Get_RobotConnected());
               break;
-            case G2U::Message::Tag::RobotState:
+            case ExternalInterface::MessageEngineToGame::Tag::RobotState:
               HandleRobotStateUpdate(message.Get_RobotState());
               break;
-            case G2U::Message::Tag::RobotObservedObject:
+            case ExternalInterface::MessageEngineToGame::Tag::RobotObservedObject:
               HandleRobotObservedObject(message.Get_RobotObservedObject());
               break;
-            case G2U::Message::Tag::UiDeviceAvailable:
+            case ExternalInterface::MessageEngineToGame::Tag::UiDeviceAvailable:
               HandleUiDeviceConnection(message.Get_UiDeviceAvailable());
               break;
-            case G2U::Message::Tag::RobotAvailable:
+            case ExternalInterface::MessageEngineToGame::Tag::RobotAvailable:
               HandleRobotConnection(message.Get_RobotAvailable());
               break;
-            case G2U::Message::Tag::ImageChunk:
+            case ExternalInterface::MessageEngineToGame::Tag::ImageChunk:
               HandleImageChunk(message.Get_ImageChunk());
               break;
-            case G2U::Message::Tag::RobotDeletedObject:
+            case ExternalInterface::MessageEngineToGame::Tag::RobotDeletedObject:
               HandleRobotDeletedObject(message.Get_RobotDeletedObject());
               break;
-            case G2U::Message::Tag::RobotCompletedAction:
+            case ExternalInterface::MessageEngineToGame::Tag::RobotCompletedAction:
               HandleRobotCompletedAction(message.Get_RobotCompletedAction());
               break;
-            case G2U::Message::Tag::ActiveObjectMoved:
+            case ExternalInterface::MessageEngineToGame::Tag::ActiveObjectMoved:
               HandleActiveObjectMoved(message.Get_ActiveObjectMoved());
               break;
-            case G2U::Message::Tag::ActiveObjectStoppedMoving:
+            case ExternalInterface::MessageEngineToGame::Tag::ActiveObjectStoppedMoving:
               HandleActiveObjectStoppedMoving(message.Get_ActiveObjectStoppedMoving());
               break;
-            case G2U::Message::Tag::ActiveObjectTapped:
+            case ExternalInterface::MessageEngineToGame::Tag::ActiveObjectTapped:
               HandleActiveObjectTapped(message.Get_ActiveObjectTapped());
+              break;
+          case ExternalInterface::MessageEngineToGame::Tag::AnimationAvailable:
+              HandleAnimationAvailable(message.Get_AnimationAvailable());
               break;
             default:
               // ignore
@@ -657,15 +662,22 @@ namespace Anki {
           */
           
           // Use slow motor speeds if SHIFT is pressed
-          f32 liftSpeed = LIFT_SPEED_RAD_PER_SEC;
-          f32 headSpeed = HEAD_SPEED_RAD_PER_SEC;
+          f32 liftSpeed = DEG_TO_RAD_F32(root_->getField("liftSpeedDegPerSec")->getSFFloat());
+          f32 liftAccel = DEG_TO_RAD_F32(root_->getField("liftAccelDegPerSec2")->getSFFloat());
+          f32 liftDurationSec = root_->getField("liftDurationSec")->getSFFloat();
+          f32 headSpeed = DEG_TO_RAD_F32(root_->getField("headSpeedDegPerSec")->getSFFloat());
+          f32 headAccel = DEG_TO_RAD_F32(root_->getField("headAccelDegPerSec2")->getSFFloat());
+          f32 headDurationSec = root_->getField("headDurationSec")->getSFFloat();
           if (modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
             wheelSpeed = root_->getField("driveSpeedSlow")->getSFFloat();
-            liftSpeed *= 0.4;
-            headSpeed *= 0.55;
+            liftSpeed *= 0.5;
+            headSpeed *= 0.5;
           } else if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
             wheelSpeed = root_->getField("driveSpeedTurbo")->getSFFloat();
           }
+          
+          // Speed of point turns (when no target angle specified). See SendTurnInPlaceAtSpeed().
+          f32 pointTurnSpeed = std::fabs(root_->getField("pointTurnSpeed_degPerSec")->getSFFloat());
           
           
           //printf("keypressed: %d, modifier %d, orig_key %d, prev_key %d\n",
@@ -755,13 +767,21 @@ namespace Anki {
                 
               case (s32)'<':
               {
-                SendTurnInPlace(DEG_TO_RAD(45));
+                if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
+                  SendTurnInPlaceAtSpeed(DEG_TO_RAD(pointTurnSpeed), DEG_TO_RAD(1440));
+                } else {
+                  SendTurnInPlace(DEG_TO_RAD(45));
+                }
                 break;
               }
                 
               case (s32)'>':
               {
-                SendTurnInPlace(DEG_TO_RAD(-45));
+                if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
+                  SendTurnInPlaceAtSpeed(DEG_TO_RAD(-pointTurnSpeed), DEG_TO_RAD(1440));
+                } else {
+                  SendTurnInPlace(DEG_TO_RAD(-45));
+                }
                 break;
               }
                 
@@ -810,37 +830,37 @@ namespace Anki {
                 
               case '1': //set lift to low dock height
               {
-                SendMoveLiftToHeight(LIFT_HEIGHT_LOWDOCK, liftSpeed, LIFT_ACCEL_RAD_PER_SEC2);
+                SendMoveLiftToHeight(LIFT_HEIGHT_LOWDOCK, liftSpeed, liftAccel, liftDurationSec);
                 break;
               }
                 
               case '2': //set lift to high dock height
               {
-                SendMoveLiftToHeight(LIFT_HEIGHT_HIGHDOCK, liftSpeed, LIFT_ACCEL_RAD_PER_SEC2);
+                SendMoveLiftToHeight(LIFT_HEIGHT_HIGHDOCK, liftSpeed, liftAccel, liftDurationSec);
                 break;
               }
                 
               case '3': //set lift to carry height
               {
-                SendMoveLiftToHeight(LIFT_HEIGHT_CARRY, liftSpeed, LIFT_ACCEL_RAD_PER_SEC2);
+                SendMoveLiftToHeight(LIFT_HEIGHT_CARRY, liftSpeed, liftAccel, liftDurationSec);
                 break;
               }
                 
               case '4': //set head to look all the way down
               {
-                SendMoveHeadToAngle(MIN_HEAD_ANGLE, headSpeed, HEAD_ACCEL_RAD_PER_SEC2);
+                SendMoveHeadToAngle(MIN_HEAD_ANGLE, headSpeed, headAccel, headDurationSec);
                 break;
               }
                 
               case '5': //set head to straight ahead
               {
-                SendMoveHeadToAngle(0, headSpeed, HEAD_ACCEL_RAD_PER_SEC2);
+                SendMoveHeadToAngle(0, headSpeed, headAccel, headDurationSec);
                 break;
               }
                 
               case '6': //set head to look all the way up
               {
-                SendMoveHeadToAngle(MAX_HEAD_ANGLE, headSpeed, HEAD_ACCEL_RAD_PER_SEC2);
+                SendMoveHeadToAngle(MAX_HEAD_ANGLE, headSpeed, headAccel, headDurationSec);
                 break;
               }
                 
@@ -941,11 +961,11 @@ namespace Anki {
                   printf("Setting addition/deletion mode to %s/%s.\n",
                          enableModeIter->first ? "TRUE" : "FALSE",
                          enableModeIter->second ? "TRUE" : "FALSE");
-                  U2G::SetObjectAdditionAndDeletion msg;
+                  ExternalInterface::SetObjectAdditionAndDeletion msg;
                   msg.robotID = 1;
                   msg.enableAddition = enableModeIter->first;
                   msg.enableDeletion = enableModeIter->second;
-                  U2G::Message msgWrapper;
+                  ExternalInterface::MessageGameToEngine msgWrapper;
                   msgWrapper.Set_SetObjectAdditionAndDeletion(msg);
                   SendMessage(msgWrapper);
                   
@@ -990,11 +1010,11 @@ namespace Anki {
                          poseMarkerPose_.GetRotationAngle<'Z'>().ToFloat(),
                          useManualSpeed);
                   SendExecutePathToPose(poseMarkerPose_, useManualSpeed);
-                  SendMoveHeadToAngle(-0.26, HEAD_SPEED_RAD_PER_SEC, HEAD_ACCEL_RAD_PER_SEC2);
+                  SendMoveHeadToAngle(-0.26, headSpeed, headAccel);
                 } else {
                   SendPlaceObjectOnGroundSequence(poseMarkerPose_, useManualSpeed);
                   // Make sure head is tilted down so that it can localize well
-                  SendMoveHeadToAngle(-0.26, HEAD_SPEED_RAD_PER_SEC, HEAD_ACCEL_RAD_PER_SEC2);
+                  SendMoveHeadToAngle(-0.26, headSpeed, headAccel);
                   
                 }
                 break;
@@ -1004,7 +1024,7 @@ namespace Anki {
               {
                 static bool backpackLightsOn = false;
                 
-                U2G::SetBackpackLEDs msg;
+                ExternalInterface::SetBackpackLEDs msg;
                 msg.robotID = 1;
                 for(s32 i=0; i<NUM_BACKPACK_LEDS; ++i)
                 {
@@ -1024,7 +1044,7 @@ namespace Anki {
                   msg.onColor[LED_BACKPACK_FRONT]  = NamedColors::YELLOW;
                 }
                 
-                U2G::Message msgWrapper;
+                ExternalInterface::MessageGameToEngine msgWrapper;
                 msgWrapper.Set_SetBackpackLEDs(msg);
                 msgHandler_.SendMessage(1, msgWrapper);
 
@@ -1040,7 +1060,7 @@ namespace Anki {
                   
                   trackingObject = !trackingObject;
 
-                  U2G::TrackToObject m;
+                  ExternalInterface::TrackToObject m;
                   m.robotID = 1;
 
                   if(trackingObject) {
@@ -1057,7 +1077,7 @@ namespace Anki {
                     m.objectID = u32_MAX;
                   }
                     
-                  U2G::Message message;
+                  ExternalInterface::MessageGameToEngine message;
                   message.Set_TrackToObject(m);
                   SendMessage(message);
 
@@ -1135,7 +1155,7 @@ namespace Anki {
               case (s32)'Q':
               {
                 /* Debugging U2G message for drawing quad
-                U2G::VisualizeQuad msg;
+                ExternalInterface::VisualizeQuad msg;
                 msg.xLowerRight = 250.f;
                 msg.yLowerRight = -0250.f;
                 msg.zLowerRight = 10.f*static_cast<f32>(std::rand())/static_cast<f32>(RAND_MAX) + 10.f;
@@ -1151,7 +1171,7 @@ namespace Anki {
                 msg.quadID = 998;
                 msg.color = NamedColors::ORANGE;
                 
-                U2G::Message msgWrapper;
+                ExternalInterface::MessageGameToEngine msgWrapper;
                 msgWrapper.Set_VisualizeQuad(msg);
                 msgHandler_.SendMessage(1, msgWrapper);
                 */
@@ -1161,14 +1181,7 @@ namespace Anki {
                   SendAbortAll();
                 } else if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
                   // ALT + Q: Cancel action
-                  U2G::CancelAction msg;
-                  msg.actionType = RobotActionType::UNKNOWN;
-                  msg.robotID = 1;
-                  
-                  U2G::Message msgWrapper;
-                  msgWrapper.Set_CancelAction(msg);
-                  msgHandler_.SendMessage(1, msgWrapper);
-                  
+                  SendCancelAction();
                 } else {
                   // Just Q: Just cancel path
                   SendAbortPath();
@@ -1225,15 +1238,17 @@ namespace Anki {
                   static bool visionWhileMovingEnabled = false;
                   visionWhileMovingEnabled = !visionWhileMovingEnabled;
                   printf("%s vision while moving.\n", (visionWhileMovingEnabled ? "Enabling" : "Disabling"));
-                  U2G::VisionWhileMoving msg;
+                  ExternalInterface::VisionWhileMoving msg;
                   msg.enable = visionWhileMovingEnabled;
-                  U2G::Message msgWrapper;
+                  ExternalInterface::MessageGameToEngine msgWrapper;
                   msgWrapper.Set_VisionWhileMoving(msg);
                   SendMessage(msgWrapper);
-                } else {
+                } else if (modifier_key & webots::Supervisor::KEYBOARD_ALT) {
                   SendVisionSystemParams();
-                  
                   SendFaceDetectParams();
+                } else {
+                  f32 robotVolume = root_->getField("robotVolume")->getSFFloat();
+                  SendSetRobotVolume(robotVolume);
                 }
                 break;
               }
@@ -1243,7 +1258,7 @@ namespace Anki {
                 if(modifier_key & webots::Supervisor::KEYBOARD_ALT &&
                    modifier_key & webots::Supervisor::KEYBOARD_SHIFT)
                 {
-                  U2G::SetAllActiveObjectLEDs msg;
+                  ExternalInterface::SetAllActiveObjectLEDs msg;
                   static int jsonMsgCtr = 0;
                   Json::Value jsonMsg;
                   Json::Reader reader;
@@ -1260,7 +1275,7 @@ namespace Anki {
                   
                   reader.parse(jsonFile, jsonMsg);
                   jsonFile.close();
-                  //U2G::SetActiveObjectLEDs msg(jsonMsg);
+                  //ExternalInterface::SetActiveObjectLEDs msg(jsonMsg);
                   msg.robotID = 1;
                   msg.makeRelative = RELATIVE_LED_MODE_OFF;
                   msg.objectID = jsonMsg["objectID"].asUInt();
@@ -1273,7 +1288,7 @@ namespace Anki {
                     msg.transitionOffPeriod_ms[iLED]  = jsonMsg["transitionOffPeriod_ms"][iLED].asUInt();
                   }
                   
-                  U2G::Message msgWrapper;
+                  ExternalInterface::MessageGameToEngine msgWrapper;
                   msgWrapper.Set_SetAllActiveObjectLEDs(msg);
                   SendMessage(msgWrapper);
                 }
@@ -1288,7 +1303,7 @@ namespace Anki {
 
                   static s32 colorIndex = 0;
 
-                  U2G::SetActiveObjectLEDs msg;
+                  ExternalInterface::SetActiveObjectLEDs msg;
                   msg.objectID = currentlyObservedObject.id;
                   msg.robotID = 1;
                   msg.onPeriod_ms = 250;
@@ -1345,7 +1360,7 @@ namespace Anki {
                     colorIndex = 0;
                   }
                   
-                  U2G::Message msgWrapper;
+                  ExternalInterface::MessageGameToEngine msgWrapper;
                   msgWrapper.Set_SetActiveObjectLEDs(msg);
                   SendMessage(msgWrapper);
                 }
@@ -1355,23 +1370,23 @@ namespace Anki {
               case (s32)'O':
               {
                 if(modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
-                  U2G::FaceObject msg;
+                  ExternalInterface::FaceObject msg;
                   msg.robotID = 1;
                   msg.objectID = u32_MAX; // HACK to tell game to use blockworld's "selected" object
                   msg.turnAngleTol = DEG_TO_RAD(5);
                   msg.maxTurnAngle = DEG_TO_RAD(90);
                   msg.headTrackWhenDone = 0;
                   
-                  U2G::Message msgWrapper;
+                  ExternalInterface::MessageGameToEngine msgWrapper;
                   msgWrapper.Set_FaceObject(msg);
                   SendMessage(msgWrapper);
                 } else if (modifier_key & webots::Supervisor::KEYBOARD_ALT) {
-                  U2G::GotoObject msg;
+                  ExternalInterface::GotoObject msg;
                   msg.objectID = -1; // tell game to use blockworld's "selected" object
                   msg.distance_mm = sqrtf(2.f)*44.f;
                   msg.useManualSpeed = 0;
                   
-                  U2G::Message msgWrapper;
+                  ExternalInterface::MessageGameToEngine msgWrapper;
                   msgWrapper.Set_GotoObject(msg);
                   SendMessage(msgWrapper);
                 } else {
@@ -1384,22 +1399,16 @@ namespace Anki {
               {
                 //SendAnimation("ANIM_BACK_AND_FORTH_EXCITED", 3);
                 SendAnimation("ANIM_TEST", 1);
-                
-                {
-                  U2G::SetIdleAnimation msg;
-                  msg.robotID = 1;
-                  msg.animationName = "ANIM_IDLE";
-                  
-                  U2G::Message msgWrapper;
-                  msgWrapper.Set_SetIdleAnimation(msg);
-                  SendMessage(msgWrapper);
-                }
+                SendSetIdleAnimation("ANIM_IDLE");
                 
                 break;
               }
               case (s32)'#':
               {
-                SendAnimation("ANIM_BLINK", 0);
+                SendQueuePlayAnimAction("ANIM_TEST", 1, QueueActionPosition::NEXT);
+                SendQueuePlayAnimAction("ANIM_TEST", 1, QueueActionPosition::NEXT);
+                
+                //SendAnimation("ANIM_BLINK", 0);
                 break;
               }
               case (s32)'$':
@@ -1692,7 +1701,7 @@ namespace Anki {
                     #endif
                     
                     // Compute head speed
-                    f32 speed_rad_per_s = HEAD_SPEED_RAD_PER_SEC * (-(f32)gc_axisValues_[GC_ANALOG_RIGHT_Y] / s16_MAX);
+                    f32 speed_rad_per_s = headSpeed * (-(f32)gc_axisValues_[GC_ANALOG_RIGHT_Y] / s16_MAX);
                     
                     SendMoveHead(speed_rad_per_s);
                     
@@ -1784,7 +1793,7 @@ namespace Anki {
                   // Move lift up/down. Open-loop velocity commands.
                   f32 speed_rad_per_sec = 0;
                   if (pressed) {
-                    speed_rad_per_sec = (LT_held ? 0.4f : 1) * (buttonID == GC_BUTTON_DIR_UP ? 1 : -1) * LIFT_SPEED_RAD_PER_SEC;
+                    speed_rad_per_sec = (LT_held ? 0.4f : 1) * (buttonID == GC_BUTTON_DIR_UP ? 1 : -1) * liftSpeed;
                   }
                   SendMoveLift(speed_rad_per_sec);
                   break;
@@ -1801,7 +1810,7 @@ namespace Anki {
                       height_mm = LT_held ? LIFT_HEIGHT_HIGHDOCK : LIFT_HEIGHT_CARRY;
                     }
                     
-                    SendMoveLiftToHeight(height_mm, LIFT_SPEED_RAD_PER_SEC, LIFT_ACCEL_RAD_PER_SEC2);
+                    SendMoveLiftToHeight(height_mm, liftSpeed, headAccel);
                   }
                   break;
                 }
@@ -1843,7 +1852,7 @@ namespace Anki {
         if(counter++ == 30) {
           counter = 0;
           
-          U2G::SetActiveObjectLEDs msg;
+          ExternalInterface::SetActiveObjectLEDs msg;
           msg.objectID = currentlyObservedObject.id;
           msg.robotID = 1;
           msg.onPeriod_ms = 100;
@@ -1865,7 +1874,7 @@ namespace Anki {
             }
           }
           
-          U2G::Message message;
+          ExternalInterface::MessageGameToEngine message;
           message.Set_SetActiveObjectLEDs(msg);
           SendMessage(message);
         }
@@ -1910,14 +1919,14 @@ namespace Anki {
         }
         
         if(doForceAddRobot) {
-          U2G::ForceAddRobot msg;
+          ExternalInterface::ForceAddRobot msg;
           msg.isSimulated = forcedRobotIsSim;
           msg.robotID = forcedRobotId;
           
           std::fill(msg.ipAddress.begin(), msg.ipAddress.end(), '\0');
           std::copy(forcedRobotIP.begin(), forcedRobotIP.end(), msg.ipAddress.begin());
           
-          U2G::Message message;
+          ExternalInterface::MessageGameToEngine message;
           message.Set_ForceAddRobot(msg);
           msgHandler_.SendMessage(1, message); // TODO: don't hardcode ID here
         }
@@ -1939,12 +1948,12 @@ namespace Anki {
               // robot if necessary, and switch states in the UI
               
               PRINT_NAMED_INFO("KeyboardController.Update", "Sending StartEngine message.\n");
-              U2G::StartEngine msg;
+              ExternalInterface::StartEngine msg;
               msg.asHost = 1; // TODO: Support running as client?
               std::string vizIpStr = "127.0.0.1";
               std::fill(msg.vizHostIP.begin(), msg.vizHostIP.end(), '\0'); // ensure null termination
               std::copy(vizIpStr.begin(), vizIpStr.end(), msg.vizHostIP.begin());
-              U2G::Message message;
+              ExternalInterface::MessageGameToEngine message;
               message.Set_StartEngine(msg);
               msgHandler_.SendMessage(1, message); // TODO: don't hardcode ID here
 
@@ -1965,7 +1974,7 @@ namespace Anki {
           case UI_RUNNING:
           {
             // Send ping to engine
-            U2G::Message message;
+            ExternalInterface::MessageGameToEngine message;
             message.Set_Ping(_pingMsg);
             msgHandler_.SendMessage(1, message); // TODO: don't hardcode ID here
             ++_pingMsg.counter;
@@ -2001,7 +2010,7 @@ namespace Anki {
             
             /*
              // DEBUG!!!!!
-             U2G::SetRobotCarryingObject m;
+             ExternalInterface::SetRobotCarryingObject m;
              m.objectID = 500;
              m.robotID = 1;
              message.Set_SetRobotCarryingObject(m);
@@ -2022,7 +2031,7 @@ namespace Anki {
         
       }
       
-      void SendMessage(const U2G::Message& msg)
+      void SendMessage(const ExternalInterface::MessageGameToEngine& msg)
       {
         UserDeviceID_t devID = 1; // TODO: Should this be a RobotID_t?
         msgHandler_.SendMessage(devID, msg); 
@@ -2030,87 +2039,100 @@ namespace Anki {
       
       void SendDriveWheels(const f32 lwheel_speed_mmps, const f32 rwheel_speed_mmps)
       {
-        U2G::DriveWheels m;
+        ExternalInterface::DriveWheels m;
         m.lwheel_speed_mmps = lwheel_speed_mmps;
         m.rwheel_speed_mmps = rwheel_speed_mmps;
-        U2G::Message message;
+        ExternalInterface::MessageGameToEngine message;
         message.Set_DriveWheels(m);
         SendMessage(message);
       }
       
       void SendTurnInPlace(const f32 angle_rad)
       {
-        U2G::TurnInPlace m;
+        ExternalInterface::TurnInPlace m;
         m.robotID = 1;
         m.angle_rad = angle_rad;
-        U2G::Message message;
+        ExternalInterface::MessageGameToEngine message;
         message.Set_TurnInPlace(m);
+        SendMessage(message);
+      }
+
+      void SendTurnInPlaceAtSpeed(const f32 speed_rad_per_sec, const f32 accel_rad_per_sec2)
+      {
+        ExternalInterface::TurnInPlaceAtSpeed m;
+        m.robotID = 1;
+        m.speed_rad_per_sec = speed_rad_per_sec;
+        m.accel_rad_per_sec2 = accel_rad_per_sec2;
+        ExternalInterface::MessageGameToEngine message;
+        message.Set_TurnInPlaceAtSpeed(m);
         SendMessage(message);
       }
       
       void SendMoveHead(const f32 speed_rad_per_sec)
       {
-        U2G::MoveHead m;
+        ExternalInterface::MoveHead m;
         m.speed_rad_per_sec = speed_rad_per_sec;
-        U2G::Message message;
+        ExternalInterface::MessageGameToEngine message;
         message.Set_MoveHead(m);
         SendMessage(message);
       }
       
       void SendMoveLift(const f32 speed_rad_per_sec)
       {
-        U2G::MoveLift m;
+        ExternalInterface::MoveLift m;
         m.speed_rad_per_sec = speed_rad_per_sec;
-        U2G::Message message;
+        ExternalInterface::MessageGameToEngine message;
         message.Set_MoveLift(m);
         SendMessage(message);
       }
       
-      void SendMoveHeadToAngle(const f32 rad, const f32 speed, const f32 accel)
+      void SendMoveHeadToAngle(const f32 rad, const f32 speed, const f32 accel, const f32 duration_sec)
       {
-        U2G::SetHeadAngle m;
+        ExternalInterface::SetHeadAngle m;
         m.angle_rad = rad;
         m.max_speed_rad_per_sec = speed;
         m.accel_rad_per_sec2 = accel;
-        U2G::Message message;
+        m.duration_sec = duration_sec;
+        ExternalInterface::MessageGameToEngine message;
         message.Set_SetHeadAngle(m);
         SendMessage(message);
       }
       
-      void SendMoveLiftToHeight(const f32 mm, const f32 speed, const f32 accel)
+      void SendMoveLiftToHeight(const f32 mm, const f32 speed, const f32 accel, const f32 duration_sec)
       {
-        U2G::SetLiftHeight m;
+        ExternalInterface::SetLiftHeight m;
         m.height_mm = mm;
         m.max_speed_rad_per_sec = speed;
         m.accel_rad_per_sec2 = accel;
-        U2G::Message message;
+        m.duration_sec = duration_sec;
+        ExternalInterface::MessageGameToEngine message;
         message.Set_SetLiftHeight(m);
         SendMessage(message);
       }
       
       void SendTapBlockOnGround(const u8 numTaps)
       {
-        U2G::TapBlockOnGround m;
+        ExternalInterface::TapBlockOnGround m;
         m.numTaps = numTaps;
-        U2G::Message message;
+        ExternalInterface::MessageGameToEngine message;
         message.Set_TapBlockOnGround(m);
         SendMessage(message);
       }
       
       void SendStopAllMotors()
       {
-        U2G::StopAllMotors m;
-        U2G::Message message;
+        ExternalInterface::StopAllMotors m;
+        ExternalInterface::MessageGameToEngine message;
         message.Set_StopAllMotors(m);
         SendMessage(message);
       }
       
       void SendImageRequest(u8 mode, u8 robotID)
       {
-        U2G::ImageRequest m;
+        ExternalInterface::ImageRequest m;
         m.robotID = robotID;
         m.mode = mode;
-        U2G::Message message;
+        ExternalInterface::MessageGameToEngine message;
         message.Set_ImageRequest(m);
         SendMessage(message);
       }
@@ -2135,26 +2157,26 @@ namespace Anki {
           }
         }
         
-        U2G::SetRobotImageSendMode m;
+        ExternalInterface::SetRobotImageSendMode m;
         m.mode = mode;
         m.resolution = resolution;
-        U2G::Message message;
+        ExternalInterface::MessageGameToEngine message;
         message.Set_SetRobotImageSendMode(m);
         SendMessage(message);
       }
       
       void SendSaveImages(SaveMode_t mode, bool alsoSaveState)
       {
-        U2G::SaveImages m;
+        ExternalInterface::SaveImages m;
         m.mode = mode;
-        U2G::Message message;
+        ExternalInterface::MessageGameToEngine message;
         message.Set_SaveImages(m);
         SendMessage(message);
         
         if(alsoSaveState) {
-          U2G::SaveRobotState msgSaveState;
+          ExternalInterface::SaveRobotState msgSaveState;
           msgSaveState.mode = mode;
-          U2G::Message messageWrapper;
+          ExternalInterface::MessageGameToEngine messageWrapper;
           messageWrapper.Set_SaveRobotState(msgSaveState);
           SendMessage(messageWrapper);
         }
@@ -2162,89 +2184,89 @@ namespace Anki {
       
       void SendEnableDisplay(bool on)
       {
-        U2G::EnableDisplay m;
+        ExternalInterface::EnableDisplay m;
         m.enable = on;
-        U2G::Message message;
+        ExternalInterface::MessageGameToEngine message;
         message.Set_EnableDisplay(m);
         SendMessage(message);
      }
       
       void SendSetHeadlights(u8 intensity)
       {
-        U2G::SetHeadlights m;
+        ExternalInterface::SetHeadlights m;
         m.intensity = intensity;
-        U2G::Message message;
+        ExternalInterface::MessageGameToEngine message;
         message.Set_SetHeadlights(m);
         SendMessage(message);
       }
       
       void SendExecutePathToPose(const Pose3d& p, const bool useManualSpeed)
       {
-        U2G::GotoPose m;
+        ExternalInterface::GotoPose m;
         m.x_mm = p.GetTranslation().x();
         m.y_mm = p.GetTranslation().y();
         m.rad = p.GetRotationAngle<'Z'>().ToFloat();
         m.level = 0;
         m.useManualSpeed = static_cast<u8>(useManualSpeed);
-        U2G::Message message;
+        ExternalInterface::MessageGameToEngine message;
         message.Set_GotoPose(m);
         SendMessage(message);
       }
       
       void SendPlaceObjectOnGroundSequence(const Pose3d& p, const bool useManualSpeed)
       {
-        U2G::PlaceObjectOnGround m;
+        ExternalInterface::PlaceObjectOnGround m;
         m.x_mm = p.GetTranslation().x();
         m.y_mm = p.GetTranslation().y();
         m.rad = p.GetRotationAngle<'Z'>().ToFloat();
         m.level = 0;
         m.useManualSpeed = static_cast<u8>(useManualSpeed);
-        U2G::Message message;
+        ExternalInterface::MessageGameToEngine message;
         message.Set_PlaceObjectOnGround(m);
         SendMessage(message);
       }
       
       void SendExecuteTestPlan()
       {
-        U2G::ExecuteTestPlan m;
-        U2G::Message message;
+        ExternalInterface::ExecuteTestPlan m;
+        ExternalInterface::MessageGameToEngine message;
         message.Set_ExecuteTestPlan(m);
         SendMessage(message);
       }
       
       void SendClearAllBlocks()
       {
-        U2G::ClearAllBlocks m;
+        ExternalInterface::ClearAllBlocks m;
         m.robotID = 1;
-        U2G::Message message;
+        ExternalInterface::MessageGameToEngine message;
         message.Set_ClearAllBlocks(m);
         SendMessage(message);
       }
       
       void SendClearAllObjects()
       {
-        U2G::ClearAllObjects m;
+        ExternalInterface::ClearAllObjects m;
         m.robotID = 1;
-        U2G::Message message;
+        ExternalInterface::MessageGameToEngine message;
         message.Set_ClearAllObjects(m);
         SendMessage(message);
       }
       
       void SendSelectNextObject()
       {
-        U2G::SelectNextObject m;
-        U2G::Message message;
+        ExternalInterface::SelectNextObject m;
+        ExternalInterface::MessageGameToEngine message;
         message.Set_SelectNextObject(m);
         SendMessage(message);
       }
       
       void SendPickAndPlaceObject(const s32 objectID, const bool usePreDockPose, const bool useManualSpeed)
       {
-        U2G::PickAndPlaceObject m;
+        ExternalInterface::PickAndPlaceObject m;
         m.usePreDockPose = static_cast<u8>(usePreDockPose);
         m.useManualSpeed = static_cast<u8>(useManualSpeed);
         m.objectID = -1;
-        U2G::Message message;
+        ExternalInterface::MessageGameToEngine message;
         message.Set_PickAndPlaceObject(m);
         SendMessage(message);
       }
@@ -2256,11 +2278,11 @@ namespace Anki {
 
       void SendRollObject(const s32 objectID, const bool usePreDockPose, const bool useManualSpeed)
       {
-        U2G::RollObject m;
+        ExternalInterface::RollObject m;
         m.usePreDockPose = static_cast<u8>(usePreDockPose);
         m.useManualSpeed = static_cast<u8>(useManualSpeed);
         m.objectID = -1;
-        U2G::Message message;
+        ExternalInterface::MessageGameToEngine message;
         message.Set_RollObject(m);
         SendMessage(message);
       }
@@ -2273,64 +2295,64 @@ namespace Anki {
       
       void SendTraverseSelectedObject(const bool usePreDockPose, const bool useManualSpeed)
       {
-        U2G::TraverseObject m;
+        ExternalInterface::TraverseObject m;
         m.usePreDockPose = static_cast<u8>(usePreDockPose);
         m.useManualSpeed = static_cast<u8>(useManualSpeed);
-        U2G::Message message;
+        ExternalInterface::MessageGameToEngine message;
         message.Set_TraverseObject(m);
         SendMessage(message);
       }
       
       void SendExecuteBehavior(BehaviorManager::Mode mode)
       {
-        U2G::ExecuteBehavior m;
+        ExternalInterface::ExecuteBehavior m;
         m.behaviorMode = mode;
-        U2G::Message message;
+        ExternalInterface::MessageGameToEngine message;
         message.Set_ExecuteBehavior(m);
         SendMessage(message);
       }
       
       void SendSetNextBehaviorState(BehaviorManager::BehaviorState nextState)
       {
-        U2G::SetBehaviorState m;
+        ExternalInterface::SetBehaviorState m;
         m.behaviorState = nextState;
-        U2G::Message message;
+        ExternalInterface::MessageGameToEngine message;
         message.Set_SetBehaviorState(m);
         SendMessage(message);
       }
       
       void SendAbortPath()
       {
-        U2G::AbortPath m;
-        U2G::Message message;
+        ExternalInterface::AbortPath m;
+        ExternalInterface::MessageGameToEngine message;
         message.Set_AbortPath(m);
         SendMessage(message);
       }
       
       void SendAbortAll()
       {
-        U2G::AbortAll m;
-        U2G::Message message;
+        ExternalInterface::AbortAll m;
+        ExternalInterface::MessageGameToEngine message;
         message.Set_AbortAll(m);
         SendMessage(message);
       }
       
       void SendDrawPoseMarker(const Pose3d& p)
       {
-        U2G::DrawPoseMarker m;
+        ExternalInterface::DrawPoseMarker m;
         m.x_mm = p.GetTranslation().x();
         m.y_mm = p.GetTranslation().y();
         m.rad = p.GetRotationAngle<'Z'>().ToFloat();
         m.level = 0;
-        U2G::Message message;
+        ExternalInterface::MessageGameToEngine message;
         message.Set_DrawPoseMarker(m);
         SendMessage(message);
       }
       
       void SendErasePoseMarker()
       {
-        U2G::ErasePoseMarker m;
-        U2G::Message message;
+        ExternalInterface::ErasePoseMarker m;
+        ExternalInterface::MessageGameToEngine message;
         message.Set_ErasePoseMarker(m);
         SendMessage(message);
       }
@@ -2338,14 +2360,14 @@ namespace Anki {
       void SendWheelControllerGains(const f32 kpLeft, const f32 kiLeft, const f32 maxErrorSumLeft,
                                     const f32 kpRight, const f32 kiRight, const f32 maxErrorSumRight)
       {
-        U2G::SetWheelControllerGains m;
+        ExternalInterface::SetWheelControllerGains m;
         m.kpLeft = kpLeft;
         m.kiLeft = kiLeft;
         m.maxIntegralErrorLeft = maxErrorSumLeft;
         m.kpRight = kpRight;
         m.kiRight = kiRight;
         m.maxIntegralErrorRight = maxErrorSumRight;
-        U2G::Message message;
+        ExternalInterface::MessageGameToEngine message;
         message.Set_SetWheelControllerGains(m);
         SendMessage(message);
       }
@@ -2353,55 +2375,64 @@ namespace Anki {
       
       void SendHeadControllerGains(const f32 kp, const f32 ki, const f32 kd, const f32 maxErrorSum)
       {
-        U2G::SetHeadControllerGains m;
+        ExternalInterface::SetHeadControllerGains m;
         m.kp = kp;
         m.ki = ki;
         m.kd = kd;
         m.maxIntegralError = maxErrorSum;
-        U2G::Message message;
+        ExternalInterface::MessageGameToEngine message;
         message.Set_SetHeadControllerGains(m);
         SendMessage(message);
       }
       
       void SendLiftControllerGains(const f32 kp, const f32 ki, const f32 kd, const f32 maxErrorSum)
       {
-        U2G::SetLiftControllerGains m;
+        ExternalInterface::SetLiftControllerGains m;
         m.kp = kp;
         m.ki = ki;
         m.kd = kd;
         m.maxIntegralError = maxErrorSum;
-        U2G::Message message;
+        ExternalInterface::MessageGameToEngine message;
         message.Set_SetLiftControllerGains(m);
         SendMessage(message);
       }
       
       void SendSteeringControllerGains(const f32 k1, const f32 k2)
       {
-        U2G::SetSteeringControllerGains m;
+        ExternalInterface::SetSteeringControllerGains m;
         m.k1 = k1;
         m.k2 = k2;
-        U2G::Message message;
+        ExternalInterface::MessageGameToEngine message;
         message.Set_SetSteeringControllerGains(m);
+        SendMessage(message);
+      }
+      
+      void SendSetRobotVolume(const f32 volume)
+      {
+        ExternalInterface::SetRobotVolume m;
+        m.volume = volume;
+        ExternalInterface::MessageGameToEngine message;
+        message.Set_SetRobotVolume(m);
         SendMessage(message);
       }
       
       void SendStartTestMode(TestMode mode, s32 p1, s32 p2, s32 p3)
       {
-        U2G::StartTestMode m;
+        ExternalInterface::StartTestMode m;
         m.mode = mode;
         m.p1 = p1;
         m.p2 = p2;
         m.p3 = p3;
-        U2G::Message message;
+        ExternalInterface::MessageGameToEngine message;
         message.Set_StartTestMode(m);
         SendMessage(message);
       }
       
       void SendIMURequest(u32 length_ms)
       {
-        U2G::IMURequest m;
+        ExternalInterface::IMURequest m;
         m.length_ms = length_ms;
-        U2G::Message message;
+        ExternalInterface::MessageGameToEngine message;
         message.Set_IMURequest(m);
         SendMessage(message);
       }
@@ -2413,12 +2444,12 @@ namespace Anki {
         // Don't send repeated animation commands within a half second
         if(inputController.getTime() > lastSendTime_sec + 0.5f)
         {
-          U2G::PlayAnimation m;
+          ExternalInterface::PlayAnimation m;
           //m.animationID = animId;
           m.robotID = 1;
           m.animationName = animName;
           m.numLoops = numLoops;
-          U2G::Message message;
+          ExternalInterface::MessageGameToEngine message;
           message.Set_PlayAnimation(m);
           SendMessage(message);
           lastSendTime_sec = inputController.getTime();
@@ -2430,41 +2461,73 @@ namespace Anki {
 
       void SendReplayLastAnimation()
       {
-        U2G::ReplayLastAnimation m;
+        ExternalInterface::ReplayLastAnimation m;
         m.numLoops = 1;
         m.robotID = 1;
-        U2G::Message message;
+        ExternalInterface::MessageGameToEngine message;
         message.Set_ReplayLastAnimation(m);
         SendMessage(message);
       }
 
       void SendReadAnimationFile()
       {
-        U2G::ReadAnimationFile m;
-        U2G::Message message;
+        ExternalInterface::ReadAnimationFile m;
+        ExternalInterface::MessageGameToEngine message;
         message.Set_ReadAnimationFile(m);
+        SendMessage(message);
+      }
+      
+      void SendSetIdleAnimation(const std::string &animName) {
+        ExternalInterface::SetIdleAnimation msg;
+        msg.robotID = 1;
+        msg.animationName = animName;
+        ExternalInterface::MessageGameToEngine message;
+        message.Set_SetIdleAnimation(msg);
+        SendMessage(message);
+      }
+      
+      void SendQueuePlayAnimAction(const std::string &animName, u32 numLoops, QueueActionPosition pos) {
+        ExternalInterface::QueueSingleAction msg;
+        msg.robotID = 1;
+        msg.inSlot = 1;
+        msg.position = pos;
+        msg.actionType = RobotActionType::PLAY_ANIMATION;
+        msg.action.playAnimation.animationName = animName;
+        msg.action.playAnimation.numLoops = numLoops;
+
+        ExternalInterface::MessageGameToEngine message;
+        message.Set_QueueSingleAction(msg);
+        SendMessage(message);
+      }
+      
+      void SendCancelAction() {
+        ExternalInterface::CancelAction msg;
+        msg.actionType = RobotActionType::UNKNOWN;
+        msg.robotID = 1;
+        ExternalInterface::MessageGameToEngine message;
+        message.Set_CancelAction(msg);
         SendMessage(message);
       }
       
       void SendStartFaceTracking(u8 timeout_sec)
       {
-        U2G::StartFaceTracking m;
+        ExternalInterface::StartFaceTracking m;
         m.timeout_sec = timeout_sec;
-        U2G::Message message;
+        ExternalInterface::MessageGameToEngine message;
         message.Set_StartFaceTracking(m);
         SendMessage(message);
       }
       
       void SendStopFaceTracking()
       {
-        U2G::StopFaceTracking m;
-        U2G::Message message;
+        ExternalInterface::StopFaceTracking m;
+        ExternalInterface::MessageGameToEngine message;
         message.Set_StopFaceTracking(m);
         SendMessage(message);
         
         // For now, have to re-enable marker finding b/c turning on face
         // tracking will have stopped it:
-        U2G::StartLookingForMarkers m2;
+        ExternalInterface::StartLookingForMarkers m2;
         message.Set_StartLookingForMarkers(m2);
         SendMessage(message);
       }
@@ -2473,7 +2536,7 @@ namespace Anki {
       {
         if (root_) {
            // Vision system params
-           U2G::SetVisionSystemParams p;
+           ExternalInterface::SetVisionSystemParams p;
            p.autoexposureOn = root_->getField("camera_autoexposureOn")->getSFInt32();
            p.exposureTime = root_->getField("camera_exposureTime")->getSFFloat();
            p.integerCountsIncrement = root_->getField("camera_integerCountsIncrement")->getSFInt32();
@@ -2484,7 +2547,7 @@ namespace Anki {
            p.limitFramerate = root_->getField("camera_limitFramerate")->getSFInt32();
            
            printf("New Camera params\n");
-          U2G::Message message;
+          ExternalInterface::MessageGameToEngine message;
           message.Set_SetVisionSystemParams(p);
           SendMessage(message);
          }
@@ -2494,7 +2557,7 @@ namespace Anki {
       {
         if (root_) {
           // Face Detect params
-          U2G::SetFaceDetectParams p;
+          ExternalInterface::SetFaceDetectParams p;
           p.scaleFactor = root_->getField("fd_scaleFactor")->getSFFloat();
           p.minNeighbors = root_->getField("fd_minNeighbors")->getSFInt32();
           p.minObjectHeight = root_->getField("fd_minObjectHeight")->getSFInt32();
@@ -2503,7 +2566,7 @@ namespace Anki {
           p.maxObjectWidth = root_->getField("fd_maxObjectWidth")->getSFInt32();
           
           printf("New Face detect params\n");
-          U2G::Message message;
+          ExternalInterface::MessageGameToEngine message;
           message.Set_SetFaceDetectParams(p);
           SendMessage(message);
         }
@@ -2512,7 +2575,7 @@ namespace Anki {
       void SendForceAddRobot()
       {
         if (root_) {
-          U2G::ForceAddRobot msg;
+          ExternalInterface::ForceAddRobot msg;
           msg.isSimulated = false;
           msg.ipAddress.fill('\0'); // ensure null-termination after copy below
           
@@ -2526,7 +2589,7 @@ namespace Anki {
             msg.robotID = static_cast<u8>(idField->getSFInt32());
             
             printf("Sending message to force-add robot %d at %s\n", msg.robotID, ipStr.c_str());
-            U2G::Message message;
+            ExternalInterface::MessageGameToEngine message;
             message.Set_ForceAddRobot(msg);
             SendMessage(message);
           } else {
