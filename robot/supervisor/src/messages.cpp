@@ -181,8 +181,7 @@ namespace Anki {
         robotState_.status |=  (HeadController::IsInPosition() ? HEAD_IN_POS : 0);
         robotState_.status |= (AnimationController::IsBufferFull() ? IS_ANIM_BUFFER_FULL : 0);
 
-        //robotState_.numFreeAnimationFrames = AnimationController::GetNumFramesFree();
-        robotState_.numAnimBytesFree = AnimationController::GetApproximateNumBytesFree();
+        robotState_.numAnimBytesPlayed = AnimationController::GetTotalNumBytesPlayed();
       }
 
       RobotState const& GetRobotStateMsg() {
@@ -209,6 +208,9 @@ namespace Anki {
         // Reset pose history and frameID to zero
         Localization::ResetPoseFrame();
 
+        // Reset number of bytes played in animation buffer
+        AnimationController::ClearNumBytesPlayed();
+        
         // Send ACK back to basestation
         Messages::SyncTimeAck stMsg;
         if(!HAL::RadioSendMessage(SyncTimeAck_ID, &stMsg)) {
