@@ -4978,7 +4978,7 @@ MonoBehaviour:
   cozmoFinalDragTime: .200000003
   scoreScaleBase: .75
   scoreScaleMax: 1
-  cozmoPredictiveAccuracy: .75
+  cozmoPredictiveAccuracy: .649999976
 --- !u!114 &11408142
 MonoBehaviour:
   m_ObjectHideFlags: 1
