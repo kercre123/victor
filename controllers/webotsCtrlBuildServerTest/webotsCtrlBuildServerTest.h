@@ -43,6 +43,11 @@ public:
 private:
   virtual void InitInternal() override;
   virtual s32 UpdateInternal() override;
+
+  virtual void HandleRobotCompletedAction(const ExternalInterface::RobotCompletedAction& msg) override;
+  virtual void HandleAnimationAvailable(ExternalInterface::AnimationAvailable const& msg) override;
+    
+    
   void ExecuteTestAnimation(const std::string& animToPlay);
   Data::DataPlatform* _dataPlatform = nullptr;
   TestState _testState = TestState::NotStarted;
@@ -51,8 +56,10 @@ private:
   size_t _tickCounter = 0;
   size_t _waitCounter = 0;
   std::string _currentAnim;
-  
+  u32 _animationAvailableCount;
+    
   int _result;
+
 };
 
 
