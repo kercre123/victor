@@ -186,8 +186,8 @@ void os_put_char(uint8 c)
 void os_put_hex(unsigned int i, unsigned short nibbles)
 {
   static const char HEXTABLE[16] = "0123456789ABCDEF";
-  unsigned short n = 0;
-  while (n < nibbles)
+  unsigned short n = 1;
+  while (n <= nibbles)
   {
     os_put_char(HEXTABLE[(i>>((nibbles-n)*4))&0xf]);
     n += 1;
