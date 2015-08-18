@@ -213,57 +213,9 @@ namespace Anki {
       
     }
 
+    // ============== End of message handlers =================
     
-      /*
-      
-      void HandleRobotCompletedAction(const ExternalInterface::RobotCompletedAction& msg)
-      {
-        switch((RobotActionType)msg.actionType)
-        {
-          case RobotActionType::PICKUP_OBJECT_HIGH:
-          case RobotActionType::PICKUP_OBJECT_LOW:
-            printf("Robot %d %s picking up stack of %d objects with IDs: ",
-                   msg.robotID, ActionResultToString(msg.result),
-                   msg.completionInfo.numObjects);
-            for(int i=0; i<msg.completionInfo.numObjects; ++i) {
-              printf("%d ", msg.completionInfo.objectIDs[i]);
-            }
-            printf("[Tag=%d]\n", msg.idTag);
-            break;
-            
-          case RobotActionType::PLACE_OBJECT_HIGH:
-          case RobotActionType::PLACE_OBJECT_LOW:
-            printf("Robot %d %s placing stack of %d objects with IDs: ",
-                   msg.robotID, ActionResultToString(msg.result),
-                   msg.completionInfo.numObjects);
-            for(int i=0; i<msg.completionInfo.numObjects; ++i) {
-              printf("%d ", msg.completionInfo.objectIDs[i]);
-            }
-            printf("[Tag=%d]\n", msg.idTag);
-            break;
-
-          case RobotActionType::PLAY_ANIMATION:
-            printf("Robot %d finished playing animation %s. [Tag=%d]\n",
-                   msg.robotID, msg.completionInfo.animName.c_str(), msg.idTag);
-            _testController.AnimationCompleted(msg.completionInfo.animName);
-            break;
-            
-          default:
-            printf("Robot %d completed action with type=%d and tag=%d: %s.\n",
-                   msg.robotID, msg.actionType, msg.idTag, ActionResultToString(msg.result));
-        }
-        
-      }
-      
-      void HandleAnimationAvailable(ExternalInterface::AnimationAvailable const& msg)
-      {
-        _animationAvailableCount++;
-        PRINT_NAMED_INFO("HandleAnimationAvailable", "Animation available: %s", msg.animName.c_str());
-      }
-      
-      // ===== End of message handler callbacks ====
-      */
-      
+    
     void WebotsKeyboardController::InitInternal()
       { 
         // Make root point to WebotsKeyBoardController node
@@ -645,7 +597,26 @@ namespace Anki {
                   printf("Requesting single robot image.\n");
                 }
                 
-                SendSetRobotImageSendMode(mode);
+
+                // Determine resolution from "streamResolution" setting in the keyboard controller
+                // node
+                Vision::CameraResolution resolution = IMG_STREAM_RES;
+               
+                if (root_) {
+                  const std::string resString = root_->getField("streamResolution")->getSFString();
+                  printf("Attempting to switch robot to %s resolution.\n", resString.c_str());
+                  if(resString == "VGA") {
+                    resolution = Vision::CAMERA_RES_VGA;
+                  } else if(resString == "QVGA") {
+                    resolution = Vision::CAMERA_RES_QVGA;
+                  } else if(resString == "CVGA") {
+                    resolution = Vision::CAMERA_RES_CVGA;
+                  } else {
+                    printf("Unsupported streamResolution = %s\n", resString.c_str());
+                  }
+                }
+                
+                SendSetRobotImageSendMode(mode, resolution);
 
                 break;
               }
