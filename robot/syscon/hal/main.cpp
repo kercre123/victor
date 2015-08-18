@@ -30,7 +30,7 @@ int main(void)
   TimerInit();
   Motors::init();   // Must init before power goes on
   Head::init();
-  //Lights::init();
+  Lights::init();
 
   UART::print("\r\nUnbrick me now...");
   u32 t = GetCounter();

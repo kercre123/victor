@@ -435,7 +435,7 @@ void Motors::printEncodersRaw()
   tmp2 = METERS_PER_TICK;
   tmp2 *= m_motors[1].position;
 
-  UART::print("L%cR%cA%c%cH%c%c L%iR%iA%iH%i",
+  UART::print("L%cR%cA%c%cH%c%c L%7iR%7iA%7iH%7i",
       '0' + nrf_gpio_pin_read(PIN_ENCODER_LEFT),
       '0' + nrf_gpio_pin_read(PIN_ENCODER_RIGHT),
       '0' + nrf_gpio_pin_read(PIN_ENCODER_LIFTA),

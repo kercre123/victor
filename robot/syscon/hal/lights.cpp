@@ -79,9 +79,7 @@ extern "C" void RTC1_IRQHandler() {
     }
   }
   
-  if(++channel >= numCharlieChannels) {
-    channel = 0;
-  }
+  channel = (channel + 1) % numCharlieChannels;
 }
 
 void Lights::manage(volatile uint32_t *clr)
