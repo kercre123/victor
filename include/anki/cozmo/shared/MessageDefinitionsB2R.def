@@ -77,6 +77,7 @@ START_MESSAGE_DEFINITION(SetLiftHeight, 1)
 ADD_MESSAGE_MEMBER(f32, height_mm)
 ADD_MESSAGE_MEMBER(f32, max_speed_rad_per_sec)
 ADD_MESSAGE_MEMBER(f32, accel_rad_per_sec2)
+ADD_MESSAGE_MEMBER(f32, duration_sec)
 END_MESSAGE_DEFINITION(SetLiftHeight)
 
 // SetHeadAngle
@@ -84,6 +85,7 @@ START_MESSAGE_DEFINITION(SetHeadAngle, 1)
 ADD_MESSAGE_MEMBER(f32, angle_rad)
 ADD_MESSAGE_MEMBER(f32, max_speed_rad_per_sec)
 ADD_MESSAGE_MEMBER(f32, accel_rad_per_sec2)
+ADD_MESSAGE_MEMBER(f32, duration_sec)
 END_MESSAGE_DEFINITION(SetHeadAngle)
 
 // StopAllMotors
@@ -319,6 +321,12 @@ ADD_MESSAGE_MEMBER(f32, bodyPanAngle_rad)
 ADD_MESSAGE_MEMBER(f32, headTiltAngle_rad)
 END_MESSAGE_DEFINITION(PanAndTiltHead)
 
+// TurnInPlaceAtSpeed
+START_MESSAGE_DEFINITION(TurnInPlaceAtSpeed, 1)
+ADD_MESSAGE_MEMBER(f32, speed_rad_per_sec)
+ADD_MESSAGE_MEMBER(f32, accel_rad_per_sec2)
+END_MESSAGE_DEFINITION(TurnInPlaceAtSpeed)
+
 START_MESSAGE_DEFINITION(SetCarryState, 1)
 ADD_MESSAGE_MEMBER(u8, state)  // See CarryState_t
 END_MESSAGE_DEFINITION(SetCarryState)
@@ -365,9 +373,7 @@ END_MESSAGE_DEFINITION(SetBlockBeingCarried)
 
 // AnimKeyFrame_AudioSample
 START_MESSAGE_DEFINITION(AnimKeyFrame_AudioSample, 1)
-ADD_MESSAGE_MEMBER_ARRAY(u8, sample, 400) // TODO: Somehow make this use AUDIO_SAMPLE_SIZE
-ADD_MESSAGE_MEMBER(s16, predictor)
-ADD_MESSAGE_MEMBER(u8, index)
+ADD_MESSAGE_MEMBER_ARRAY(u8, sample, 800) // TODO: Somehow make this use AUDIO_SAMPLE_SIZE
 END_MESSAGE_DEFINITION(AnimKeyFrame_AudioSample)
 
 // AnimKeyFrame_AudioSilence

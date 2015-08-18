@@ -1,0 +1,226 @@
+// UiMessageDefinitions message definition file
+//  for the C-Like Abstract Data language
+// Author: Greg Nagel
+// Copyright: Anki Inc (c) 2015
+
+#include "clad/types/actionTypes.clad"
+#include "clad/externalInterface/messageShared.clad"
+
+namespace Anki {
+namespace Cozmo {
+namespace ExternalInterface {
+
+///////////////////////////////////////////////////////////////////////////////
+////////////////////////  ADVERTISING & CONNECTING  ///////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+
+// Let the UI know that a robot is advertising as available
+message RobotAvailable {
+    uint_32 robotID
+}
+
+message UiDeviceAvailable {
+    uint_32 deviceID
+}
+
+message RobotConnected {
+    uint_32 robotID,
+    uint_8 successful
+}
+
+message RobotDisconnected {
+    uint_32 robotID,
+    float_32 timeSinceLastMsg_sec
+}
+
+
+message UiDeviceConnected {
+    uint_32 deviceID,
+    uint_8 successful
+}
+
+/*
+message Bogus {
+}
+*/
+
+
+///////////////////////////////////////////////////////////////////////////////
+/////////////////////////////  ROBOT STATE  ///////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+message RobotState {
+    float_32 pose_x,
+    float_32 pose_y,
+    float_32 pose_z,
+    float_32 poseAngle_rad,    // heading in X-Y plane
+    float_32 pose_quaternion0, // full 3d rotation as a quaternion
+    float_32 pose_quaternion1, //  "
+    float_32 pose_quaternion2, //  "
+    float_32 pose_quaternion3, //  "
+    float_32 leftWheelSpeed_mmps,
+    float_32 rightWheelSpeed_mmps,
+    float_32 headAngle_rad,
+    float_32 liftHeight_mm,
+    float_32 batteryVoltage,
+    int_32   carryingObjectID,      // will be -1 if not carrying object
+    int_32   carryingObjectOnTopID, // will be -1 if no object on top of object being carried
+    int_32   headTrackingObjectID,  // will be -1 if head is not tracking to any object
+    uint_32  status,                // See RobotStatusFlag in cozmoTypes.h
+    uint_32  gameStatus,            // See GameStatusFlag in cozmoTypes.h
+    uint_8   robotID
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////  VISION  ////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+/*
+// Full QVGA Image from a specifed Robot
+message RobotImage_320x240 {
+    uint_32 robotID
+    uint_8 image[320*240]
+}
+
+// Full VGA Image from a specifed Robot
+message RobotImage_640x480 {
+    uint_32 robotID
+    uint_8 image[640*480]
+}
+*/
+
+// ImageChunk
+message ImageChunk {
+    uint_32 imageId,
+    uint_32 frameTimeStamp,
+    uint_16 nrows,
+    uint_16 ncols,
+    uint_16 chunkSize,
+    uint_8 imageEncoding,
+    uint_8 imageChunkCount,
+    uint_8 chunkId,
+    uint_8 data[1300] // Should match R2B MessageImageChunk size!
+}
+
+
+// ObjectVisionMarker for telling the UI that an object
+//  with specified ID was seen at a particular location in the image
+message RobotObservedObject {
+    uint_32 robotID,
+    uint_32 objectFamily,
+    uint_32 objectType,
+    int_32  objectID,        // signed to match U2G::PickAndPlaceObject which has the option to have objectID<0
+    float_32 img_topLeft_x,  // position in image coords
+    float_32 img_topLeft_y,  //     "
+    float_32 img_width,      //     "
+    float_32 img_height,     //     "
+    float_32 world_x,        // absolute 3D position in world coords
+    float_32 world_y,        //     "
+    float_32 world_z,        //     "
+    float_32 quaternion0,    // quaternion for 3D rotation (4 elements)
+    float_32 quaternion1,    //     "
+    float_32 quaternion2,    //     "
+    float_32 quaternion3,    //     "
+    float_32 topFaceOrientation_rad, // absolute orienation of top face, iff isActive==true
+    uint_8   markersVisible, // Observed via markers vs. "should" be visible based on previous observation
+    uint_8   isActive
+}
+
+// RobotObservedNothing
+message RobotObservedNothing {
+    uint_32 robotID
+}
+
+// RobotDeletedObject
+message RobotDeletedObject {
+    uint_32 robotID,
+    uint_32 objectID
+}
+
+// DeviceDetectedVisionMarker
+message DeviceDetectedVisionMarker {
+    uint_32 markerType,
+    float_32 x_upperLeft,
+    float_32 y_upperLeft,
+    float_32 x_lowerLeft,
+    float_32 y_lowerLeft,
+    float_32 x_upperRight,
+    float_32 y_upperRight,
+    float_32 x_lowerRight,
+    float_32 y_lowerRight
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////  ACTIONS  //////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+// RobotCompletedAction
+// TODO: Add action type, more informative result codes...
+message RobotCompletedAction {
+    uint_32 robotID,
+    uint_32 idTag,                        // The identifier of the specific action that completed
+    RobotActionType  actionType,          // see enum in actionTypes.def
+    ActionResult  result,                 //  "
+    ActionCompletedStruct completionInfo  //  "
+}
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////  SOUND  ////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+// Note: these should go away when the robot can play its own sounds and doesn't
+//       rely on the phone to do it.
+
+message PlaySound {
+    string soundFilename,
+    uint_8 numLoops,
+    uint_8 volume
+}
+
+message StopSound {
+}
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////  ANIMATIONS  //////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+message AnimationAvailable {
+string animName
+}
+
+///////////////////////////////////////////////////////////////////////////////
+/////////////////////////////  ACTIVE OBJECTS /////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+message ActiveObjectMoved {
+    uint_8   robotID,
+    uint_32  objectID,
+    float_32 xAccel,
+    float_32 yAccel,
+    float_32 zAccel,
+    uint_8   upAxis    // See UpAxis type in ActiveBlockTypes.h
+}
+
+message ActiveObjectStoppedMoving {
+    uint_8   robotID,
+    uint_32  objectID,
+    uint_8   upAxis,
+    bool     rolled
+}
+
+message ActiveObjectTapped {
+  uint_8   robotID,
+  uint_32  objectID,
+  uint_8   numTaps
+}
+
+// keep empty to generate an auto-union that includes all messages in this file
+// if you do not want to include messages in this union, use the keyword "structure" instead of "message"
+union MessageEngineToGame { }
+
+} // namespace G2U
+} // namespace Cozmo
+} // namespace Anki

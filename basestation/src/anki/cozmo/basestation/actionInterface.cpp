@@ -11,16 +11,17 @@
  **/
 
 #include "anki/cozmo/basestation/actionInterface.h"
-
 #include "anki/common/basestation/math/poseBase_impl.h"
 #include "anki/common/basestation/utils/timer.h"
-
 #include "anki/cozmo/basestation/robot.h"
-#include "anki/cozmo/basestation/signals/cozmoEngineSignals.h"
+#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "messageEngineToGame.h"
 
 namespace Anki {
   
   namespace Cozmo {
+    
+    u32 IActionRunner::sTagCounter = 100000;
     
     IActionRunner::IActionRunner()
     : _numRetriesRemaining(0)
@@ -28,7 +29,8 @@ namespace Anki {
     , _isRunning(false)
     , _isCancelled(false)
     {
-      
+      // Assign every action a unique tag
+      _idTag = IActionRunner::sTagCounter++;
     }
     
     // NOTE: THere should be no way for Update() to fail independently of its
@@ -57,8 +59,9 @@ namespace Anki {
       
       if(result != ActionResult::RUNNING) {
         PRINT_NAMED_INFO("IActionRunner.Update.ActionCompleted",
-                         "%s completed %s.\n", GetName().c_str(),
-                         (result==ActionResult::SUCCESS ? "successfully" : "but failed"));
+                         "%s %s.\n", GetName().c_str(),
+                         (result==ActionResult::SUCCESS ? "succeeded" :
+                          result==ActionResult::CANCELLED ? "was cancelled" : "failed"));
         
         Cleanup(robot);
         
@@ -80,17 +83,20 @@ namespace Anki {
       return result;
     }
     
-    void IActionRunner::EmitCompletionSignal(Robot& robot, ActionResult result) const
+    void IActionRunner::GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const
     {
-      ActionCompletedStruct completionInfo;
       completionInfo.numObjects = 0;
       completionInfo.objectIDs.fill(-1);
       completionInfo.animName = "";
+    }
+    
+    void IActionRunner::EmitCompletionSignal(Robot& robot, ActionResult result) const
+    {
+      ActionCompletedStruct completionInfo;
+
+      GetCompletionStruct(robot, completionInfo);
       
-      CozmoEngineSignals::RobotCompletedActionSignal().emit(robot.GetID(),
-                                                            GetType(),
-                                                            result,
-                                                            completionInfo);
+      robot.GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotCompletedAction(robot.GetID(), _idTag, GetType(), result, completionInfo)));
     }
     
     bool IActionRunner::RetriesRemain()

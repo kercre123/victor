@@ -1,0 +1,67 @@
+// UiMessageDefinitions message definition file
+//  for the C-Like Abstract Data language
+// Author: Greg Nagel
+// Copyright: Anki Inc (c) 2015
+
+namespace Anki {
+namespace Cozmo {
+
+// TODO: Convert to uint_8 or int_16
+enum int_32 RobotActionType {
+    COMPOUND = -2,
+    UNKNOWN = -1,
+    DRIVE_TO_POSE,
+    DRIVE_TO_OBJECT,
+    DRIVE_TO_PLACE_CARRIED_OBJECT,
+    TURN_IN_PLACE,
+    MOVE_HEAD_TO_ANGLE,
+    PICK_AND_PLACE_OBJECT,
+    PICKUP_OBJECT_LOW,         // Possible sub-type of PickAndPlaceAction
+    PICKUP_OBJECT_HIGH,        //   "
+    PLACE_OBJECT_LOW,          //   "
+    PLACE_OBJECT_HIGH,         //   "
+    ROLL_OBJECT_LOW,           //   "
+    PICK_AND_PLACE_INCOMPLETE, // type for PickAndPlaceAction if fail before SelectDockAction ()
+    CROSS_BRIDGE,
+    ASCEND_OR_DESCEND_RAMP,
+    MOUNT_CHARGER,
+    TRAVERSE_OBJECT,
+    DRIVE_TO_AND_TRAVERSE_OBJECT,
+    FACE_OBJECT,
+    VISUALLY_VERIFY_OBJECT,
+    PLAY_ANIMATION,
+    PLAY_SOUND,
+    WAIT,
+    MOVE_LIFT_TO_HEIGHT
+}
+
+
+// TODO: Convert to uint_8
+enum int_32 ActionResult {
+    SUCCESS = 0,
+    RUNNING,
+    FAILURE_TIMEOUT,
+    FAILURE_PROCEED,
+    FAILURE_RETRY,
+    FAILURE_ABORT,
+    CANCELLED
+}
+
+// This is present in every action completion message, but different fields will
+// be used depending on the type of action that completed.
+// TODO: Use a union instead?
+structure ActionCompletedStruct {
+    int_32     objectIDs[5],
+    uint_8     numObjects,
+    string     animName
+}
+
+enum uint_8 QueueActionPosition {
+    NOW = 0, // Queue now, but leave rest of queue intact
+    NOW_AND_CLEAR_REMAINING, // Queue now and clear rest of queue
+    NEXT,
+    AT_END
+}
+
+} // namespace Cozmo
+} // namespace Anki

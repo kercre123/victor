@@ -45,6 +45,9 @@ PROTO CozmoBot [
   
   # Set to TRUE to use treads
   field SFBool useTreads TRUE
+
+  # Whether or not to enable video
+  field SFBool enableVideo TRUE
 ]
 {
 
@@ -1270,6 +1273,8 @@ Supervisor {
 									type "active"
 									isLocked FALSE
 									autoLock TRUE
+									tensileStrength 1
+									shearStrength 1
 								}
 
 								] # SmallFingerGripper Children

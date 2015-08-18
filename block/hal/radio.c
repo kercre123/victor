@@ -51,7 +51,9 @@ void InitPRX()
   // Set address
   hal_nrf_set_address(HAL_NRF_PIPE1, ADDRESS);
   // Set datarate
-  hal_nrf_set_datarate(HAL_NRF_1MBPS);
+  hal_nrf_set_datarate(HAL_NRF_250KBPS);
+  // Set channel
+  hal_nrf_set_rf_channel(COMM_CHANNEL);
   // Set radioPayload width to 13 bytes
   hal_nrf_set_rx_payload_width((int)HAL_NRF_PIPE1, 13U);
   // Flush RX FIFO
@@ -65,7 +67,6 @@ void InitPRX()
 void ReceiveData(u8 msTimeout, bool syncMode)
 {
   u8 now;
-
   // get time
   now = TH0;
 
@@ -74,11 +75,12 @@ void ReceiveData(u8 msTimeout, bool syncMode)
   
   // Wait for a packet, or time out
   radioBusy = true;
-  while(radioBusy)
-  {    
-    #ifndef LISTEN_FOREVER
-    if(missedPacketCount<MAX_MISSED_PACKETS) // do timeout if less than MAX_MISSED_PACKETS, else listen forever
-    {
+ 
+  #ifndef LISTEN_FOREVER
+  if(missedPacketCount<MAX_MISSED_PACKETS) // do timeout if less than MAX_MISSED_PACKETS, else listen forever
+  {
+    while(radioBusy)
+    {   
       if((TH0-now+1)>(5*msTimeout)) 
       {
         // we timed out
@@ -86,18 +88,28 @@ void ReceiveData(u8 msTimeout, bool syncMode)
         {
           missedPacketCount++;
           cumMissedPacketCount++; 
+          #if defined(DO_MISSED_PACKET_TEST)
+          PutChar('\t');
+          PutHex(missedPacketCount);
+          #endif
         }
         radioBusy = false;
       }
     }
-    if(missedPacketCount == MAX_MISSED_PACKETS)
-    {
-      TR0 = 0; // turn off timer
-    }
+  }else if(missedPacketCount == MAX_MISSED_PACKETS)
+  {
+    TR0 = 0; // turn off timer
+    #if defined(DO_MISSED_PACKET_TEST)
+      PutString("\tL\r\n");
     #endif
+    while(radioBusy)
+    {
+    }
+    // timer reset in radio interrupt
+      TR0 = 1; // turn timer back on
   }
-  
-  TR0 = 1; // turn timer back on
+  #endif
+ 
   PowerDownRadio();
   
 }
@@ -118,9 +130,13 @@ void InitPTX()
   EA = 1U;
   hal_nrf_set_operation_mode(HAL_NRF_PTX);
   // Set datarate
-  hal_nrf_set_datarate(HAL_NRF_1MBPS);
+  hal_nrf_set_datarate(HAL_NRF_250KBPS);
   // Turn off auto-retransmit
   hal_nrf_set_auto_retr(0, 0);
+  // Set power
+  hal_nrf_set_output_power(HAL_NRF_0DBM);
+  // Set channel
+  hal_nrf_set_rf_channel(COMM_CHANNEL);
   // Set address (only if acting as transmitter)
   #ifdef DO_TRANSMITTER_BEHAVIOR
   hal_nrf_set_address(HAL_NRF_TX, ADDRESS);

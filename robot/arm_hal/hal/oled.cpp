@@ -1,7 +1,7 @@
-// Simple (slow) OLED driver to check out the display
-// TODO:  Implement DMA before attempting animation
+// High speed DMA-driven face animation
 #include "lib/stm32f4xx.h"
 #include "anki/cozmo/robot/hal.h"
+#include "anki/cozmo/shared/faceDisplayDecode.h"
 #include "hal/portable.h"
 
 #include <math.h>
@@ -67,11 +67,11 @@ namespace Anki
   namespace Cozmo
   {
     namespace HAL
-    {       
+    {
       GPIO_PIN_SOURCE(SCK, GPIOB, 3);
       GPIO_PIN_SOURCE(MOSI, GPIOB, 5);
-      
-      GPIO_PIN_SOURCE(CS, GPIOC, 12);   
+
+      GPIO_PIN_SOURCE(CS, GPIOC, 12);
       GPIO_PIN_SOURCE(CMD, GPIOD, 6);
       GPIO_PIN_SOURCE(RES, GPIOD, 7);
 
@@ -86,31 +86,34 @@ namespace Anki
         const void* data;
       };
 
+      // Set to disable face animation - in case of FacePrintf
+      static u8 m_disableAnimate = 0;
+
       static ONCHIP uint64_t m_frame[COLS];
 
       static ONCHIP const u8 InitDisplay[] = {
-        DISPLAYOFF, 
-        SETDISPLAYCLOCKDIV, 0xF0, 
-        SETMULTIPLEX, 0x3F, 
-        SETDISPLAYOFFSET, 0x0, 
-        SETSTARTLINE | 0x0, 
-        CHARGEPUMP, 0x14, 
-        MEMORYMODE, 0x01, 
-        SEGREMAP | 0x1, 
-        COMSCANDEC, 
-        SETCOMPINS, 0x12, 
-        SETCONTRAST, 0xCF, 
-        SETPRECHARGE, 0xF1, 
-        SETVCOMDETECT, 0x40, 
-        DISPLAYALLON_RESUME, 
-        NORMALDISPLAY, 
+        DISPLAYOFF,
+        SETDISPLAYCLOCKDIV, 0xF0,
+        SETMULTIPLEX, 0x3F,
+        SETDISPLAYOFFSET, 0x0,
+        SETSTARTLINE | 0x0,
+        CHARGEPUMP, 0x14,
+        MEMORYMODE, 0x01,
+        SEGREMAP | 0x1,
+        COMSCANDEC,
+        SETCOMPINS, 0x12,
+        SETCONTRAST, 0xCF,
+        SETPRECHARGE, 0xF1,
+        SETVCOMDETECT, 0x40,
+        DISPLAYALLON_RESUME,
+        NORMALDISPLAY,
         DISPLAYON
       };
       static ONCHIP const u8 ResetCursor[] = {
-        COLUMNADDR, 0, COLS-1, 
+        COLUMNADDR, 0, COLS-1,
         PAGEADDR, 0, 7
       };
- 
+
       const static int FIFO_SIZE = 4;
       static DisplayCommand fifo[FIFO_SIZE];
       static volatile int fifo_entry;
@@ -123,25 +126,25 @@ namespace Anki
         RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);
         RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC, ENABLE);
         RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOD, ENABLE);
-        
+
         RCC_APB1PeriphClockCmd(RCC_APB1Periph_SPI3, ENABLE);
         RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_DMA1, ENABLE);
-        
+
         GPIO_InitTypeDef GPIO_InitStructure;
         GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
         GPIO_InitStructure.GPIO_Speed = GPIO_Speed_25MHz;
         GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
         GPIO_InitStructure.GPIO_PuPd  = GPIO_PuPd_NOPULL;
-                
+
         // Configure the pins for SPI in AF mode
         GPIO_PinAFConfig(GPIO_SCK, SOURCE_SCK, GPIO_AF_SPI3);
         GPIO_PinAFConfig(GPIO_MOSI, SOURCE_MOSI, GPIO_AF_SPI3);
-        
+
         // Configure the SPI pins
         GPIO_InitStructure.GPIO_Pin = PIN_SCK | PIN_MOSI;
         GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
         GPIO_Init(GPIO_SCK, &GPIO_InitStructure);
-        
+
         GPIO_SET(GPIO_CS, PIN_CS);  // Force CS high
         GPIO_InitStructure.GPIO_Pin = PIN_CS;
         GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
@@ -149,7 +152,7 @@ namespace Anki
 
         GPIO_InitStructure.GPIO_Pin = PIN_CMD;
         GPIO_Init(GPIO_CMD, &GPIO_InitStructure);
-        
+
         GPIO_RESET(GPIO_RES, PIN_RES);  // Force RESET low
         GPIO_InitStructure.GPIO_Pin = PIN_RES;
         GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
@@ -169,9 +172,9 @@ namespace Anki
         SPI_InitStructure.SPI_CRCPolynomial = 7;
         SPI_Init(SPI3, &SPI_InitStructure);
         SPI_Cmd(SPI3, ENABLE);
-        
+
         // Initalize the dma
-        DMA_InitTypeDef DMA_InitStructure;       
+        DMA_InitTypeDef DMA_InitStructure;
         DMA_InitStructure.DMA_Channel = DISPLAY_DMA_CHANNEL;
         DMA_InitStructure.DMA_PeripheralBaseAddr = (uint32_t)&DISPLAY_SPI->DR;
         DMA_InitStructure.DMA_DIR = DMA_DIR_MemoryToPeripheral;
@@ -204,7 +207,7 @@ namespace Anki
         // Exit reset after 10ms
         MicroWait(10000);
         GPIO_SET(GPIO_RES, PIN_RES);
-        
+
         fifo_entry = 0;
         fifo_exit = 0;
         fifo_count = 0;
@@ -232,7 +235,7 @@ namespace Anki
             GPIO_RESET(GPIO_CMD, PIN_CMD);
             break ;
         }
-        
+
         // Select chip
         GPIO_RESET(GPIO_CS, PIN_CS);
         MicroWait(1);
@@ -253,7 +256,7 @@ namespace Anki
         DisplayCommand *out = &fifo[fifo_exit];
         fifo_exit = (fifo_exit + 1) % FIFO_SIZE;
         fifo_count++;
-        
+
         out->direction = mode;
         out->length = length;
         out->data = data;
@@ -272,84 +275,131 @@ namespace Anki
         EnqueueWrite(DATA, m_frame, sizeof(m_frame));
       }
 
-      // Plot a blue pixel on the SSD1306 framebuffer with vertical addressing mode
-      #define PLOT(x, y)  m_frame[x] |= 0x800000000000000L >> (y ^ 63);
-
-      void TestFrame()
-      {
-        static float r = 0.20f;
-
-        memset(m_frame, 0, sizeof(m_frame));
-
-        float k = r;
-        for (int y = 0; y < ROWS; y++) {
-          int o = (int)(sin(k) * 48 + 64);
-          k += PI * 2 / ROWS;
-          
-          for (int x = o; x < COLS; x++) {
-            PLOT(x, y);
-          }
-        }
-
-        r += PI / 180.0f;
-
-        SendFrame();
-      }
+      #define CLEAR_ROW(x)      (0x00 | x)
+      #define COPY_ROW(x)       (0x40 | x)
+      #define RLE_PATTERN(c, p) (0x80 | (c << 2) | p)
 
       void OLEDInit(void)
       {
         HWInit();
-  
+
         // Init sequence for 128x64 OLED module
         GPIO_RESET(GPIO_CMD, PIN_CMD);
         EnqueueWrite(COMMAND, InitDisplay, sizeof(InitDisplay));
 
         // Draw "programmer art" face until we get real assets
-        u8 face[] = { 24, 64+24,           // Start 24 lines down and 24 pixels right
-          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
-          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
-          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
-          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
-          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
-          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
-          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
-          64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
-          0 };
+        u8 face[] = {
+          CLEAR_ROW(24),
+          RLE_PATTERN(12, 0),
+          RLE_PATTERN(8, 3),
+          COPY_ROW(15),
+          CLEAR_ROW(48),
+          RLE_PATTERN(12, 0),
+          RLE_PATTERN(8, 3),
+          COPY_ROW(15),
+          CLEAR_ROW(24)
+        };
         FaceAnimate(face);
       }
-      
+
+
       // Update the face to the next frame of an animation
       // @param frame - a pointer to a variable length frame of face animation data
       // Frame is in 8-bit RLE format:
-      //  0 terminates the image
-      //  1-63 draw N full lines (N*128 pixels) of black or blue
-      //  64-255 draw 0-191 pixels (N-64) of black or blue, then invert the color for the next run
-      // The decoder starts out drawing black, and inverts the color on every byte >= 64
+      // 00xxxxxx     CLEAR row (blank)
+      // 01xxxxxx     COPY PREVIOUS ROW (repeat)
+      // 1xxxxxyy     RLE 2-bit block
       void FaceAnimate(u8* src)
       {
-        int draw = 0;
-        int dest = 0;
-        
-        // Start with all black
-        memset(m_frame, 0, sizeof(m_frame));
-        while (0 != *src)
-        {
-          // Decide whether to draw lines or pixels
-          int run = *src++;
-          int count = run < 64 ? run * COLS : run - 64;
-            
-          // If we are drawing blue, plot it - otherwise, skip it
-          if (draw && dest+count < ROWS * COLS)
-            for (int i = dest; i < dest+count; i++)
-              PLOT(i & (COLS-1), i / COLS);
-            
-          dest += count;
-          
-          // Invert draw color after plotting pixels
-          if (run >= 64)
-            draw = !draw;
-        }
+        if (m_disableAnimate)
+          return;
+
+        FaceDisplayDecode(src, ROWS, COLS, m_frame);
+
         SendFrame();
+      }
+
+      // 96 characters from ASCII 32 to 127, each 5x8 pixels in 5 bytes oriented vertically
+      const int CHAR_WIDTH = 5, CHAR_HEIGHT = 8, CHAR_START = 32, CHAR_END = 127;
+      static const u8 FONT[] = {
+         0x00,0x00,0x00,0x00,0x00, 0x00,0x00,0x5F,0x00,0x00, 0x00,0x07,0x00,0x07,0x00, 0x14,0x7F,0x14,0x7F,0x14,
+         0x24,0x2A,0x7F,0x2A,0x12, 0x23,0x13,0x08,0x64,0x62, 0x36,0x49,0x56,0x20,0x50, 0x00,0x08,0x07,0x03,0x00,
+         0x00,0x1C,0x22,0x41,0x00, 0x00,0x41,0x22,0x1C,0x00, 0x2A,0x1C,0x7F,0x1C,0x2A, 0x08,0x08,0x3E,0x08,0x08,
+         0x00,0x80,0x70,0x30,0x00, 0x08,0x08,0x08,0x08,0x08, 0x00,0x00,0x60,0x60,0x00, 0x20,0x10,0x08,0x04,0x02,
+         0x3E,0x51,0x49,0x45,0x3E, 0x00,0x42,0x7F,0x40,0x00, 0x72,0x49,0x49,0x49,0x46, 0x21,0x41,0x49,0x4D,0x33,
+         0x18,0x14,0x12,0x7F,0x10, 0x27,0x45,0x45,0x45,0x39, 0x3C,0x4A,0x49,0x49,0x31, 0x41,0x21,0x11,0x09,0x07,
+         0x36,0x49,0x49,0x49,0x36, 0x46,0x49,0x49,0x29,0x1E, 0x00,0x00,0x14,0x00,0x00, 0x00,0x40,0x34,0x00,0x00,
+         0x00,0x08,0x14,0x22,0x41, 0x14,0x14,0x14,0x14,0x14, 0x00,0x41,0x22,0x14,0x08, 0x02,0x01,0x59,0x09,0x06,
+         0x3E,0x41,0x5D,0x59,0x4E, 0x7C,0x12,0x11,0x12,0x7C, 0x7F,0x49,0x49,0x49,0x36, 0x3E,0x41,0x41,0x41,0x22,
+         0x7F,0x41,0x41,0x41,0x3E, 0x7F,0x49,0x49,0x49,0x41, 0x7F,0x09,0x09,0x09,0x01, 0x3E,0x41,0x41,0x51,0x73,
+         0x7F,0x08,0x08,0x08,0x7F, 0x00,0x41,0x7F,0x41,0x00, 0x20,0x40,0x41,0x3F,0x01, 0x7F,0x08,0x14,0x22,0x41,
+         0x7F,0x40,0x40,0x40,0x40, 0x7F,0x02,0x1C,0x02,0x7F, 0x7F,0x04,0x08,0x10,0x7F, 0x3E,0x41,0x41,0x41,0x3E,
+         0x7F,0x09,0x09,0x09,0x06, 0x3E,0x41,0x51,0x21,0x5E, 0x7F,0x09,0x19,0x29,0x46, 0x26,0x49,0x49,0x49,0x32,
+         0x03,0x01,0x7F,0x01,0x03, 0x3F,0x40,0x40,0x40,0x3F, 0x1F,0x20,0x40,0x20,0x1F, 0x3F,0x40,0x38,0x40,0x3F,
+         0x63,0x14,0x08,0x14,0x63, 0x03,0x04,0x78,0x04,0x03, 0x61,0x59,0x49,0x4D,0x43, 0x00,0x7F,0x41,0x41,0x41,
+         0x02,0x04,0x08,0x10,0x20, 0x00,0x41,0x41,0x41,0x7F, 0x04,0x02,0x01,0x02,0x04, 0x40,0x40,0x40,0x40,0x40,
+         0x00,0x03,0x07,0x08,0x00, 0x20,0x54,0x54,0x78,0x40, 0x7F,0x28,0x44,0x44,0x38, 0x38,0x44,0x44,0x44,0x28,
+         0x38,0x44,0x44,0x28,0x7F, 0x38,0x54,0x54,0x54,0x18, 0x00,0x08,0x7E,0x09,0x02, 0x18,0xA4,0xA4,0x9C,0x78,
+         0x7F,0x08,0x04,0x04,0x78, 0x00,0x44,0x7D,0x40,0x00, 0x20,0x40,0x40,0x3D,0x00, 0x7F,0x10,0x28,0x44,0x00,
+         0x00,0x41,0x7F,0x40,0x00, 0x7C,0x04,0x78,0x04,0x78, 0x7C,0x08,0x04,0x04,0x78, 0x38,0x44,0x44,0x44,0x38,
+         0xFC,0x18,0x24,0x24,0x18, 0x18,0x24,0x24,0x18,0xFC, 0x7C,0x08,0x04,0x04,0x08, 0x48,0x54,0x54,0x54,0x24,
+         0x04,0x04,0x3F,0x44,0x24, 0x3C,0x40,0x40,0x20,0x7C, 0x1C,0x20,0x40,0x20,0x1C, 0x3C,0x40,0x30,0x40,0x3C,
+         0x44,0x28,0x10,0x28,0x44, 0x4C,0x90,0x90,0x90,0x7C, 0x44,0x64,0x54,0x4C,0x44, 0x00,0x08,0x36,0x41,0x00,
+         0x00,0x00,0x77,0x00,0x00, 0x00,0x41,0x36,0x08,0x00, 0x02,0x01,0x02,0x04,0x02, 0x3C,0x26,0x23,0x26,0x3C
+      };
+
+      // Print a message to the face - this will permanently replace the face
+      extern "C" void FacePrintf(const char *format, ...)
+      {
+        // Build the printf into a local buffer and zero-terminate it
+        char buffer[256];
+        va_list argptr;
+        va_start(argptr, format);
+        vsnprintf(buffer, sizeof(buffer)-1, format, argptr);
+        va_end(argptr);
+        buffer[sizeof(buffer)-1] = '\0';
+
+        // Build the result into the framebuffer
+        int x = 0, y = 0;
+        char* cptr = buffer;
+        memset(m_frame, 0, sizeof(m_frame));
+
+        // Go character by character until we hit the end
+        while (*cptr)
+        {
+          // Wrap to next row, and bail out past bottom row
+          int c = *cptr++;
+          if (c == '\n' || x >= COLS / (CHAR_WIDTH+1))
+          {
+            x = 0;
+            y++;
+          }
+          if (y >= ROWS / CHAR_HEIGHT)
+            break;
+
+          // Skip unrecognized chars
+          if (c < CHAR_START || c > CHAR_END)
+            continue;
+
+          // Copy the character from the font buffer to the display buffer
+          const u8* fptr = FONT + (c - CHAR_START) * CHAR_WIDTH;
+          u8* gptr = (u8*)(m_frame) + y + x * (CHAR_WIDTH + 1) * (ROWS / CHAR_HEIGHT);
+          for (int i = 0; i < CHAR_WIDTH; i++)
+          {
+            *gptr = *fptr++;
+            gptr += ROWS / CHAR_HEIGHT;
+          }
+          x++;
+        }
+
+        // Display it, and halt all further face animation
+        SendFrame();
+        m_disableAnimate = 1;
+      }
+
+      extern "C" void FaceUnPrintf(void)
+      {
+        m_disableAnimate = 0;
       }
     }
   }
@@ -359,7 +409,7 @@ extern "C"
 void DISPLAY_DMA_IRQ_HANDLER(void)
 {
   using namespace Anki::Cozmo::HAL;
- 
+
   if (DMA_GetFlagStatus(DISPLAY_DMA_STREAM, DMA_FLAG_TCIF7)) {
     while (!(SPI3->SR & SPI_FLAG_TXE)) ;
     while (SPI3->SR & SPI_FLAG_BSY) ;

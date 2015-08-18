@@ -26,6 +26,7 @@ import os
 import re
 import binascii
 import struct
+import zlib
 
 
 TEXT_ADDRESS = 0x40100000
@@ -93,8 +94,25 @@ def combine_bin(file_name,dest_file_name,start_offset_addr,need_chk):
         else:
         	print '!!!Open %s fail!!!'%(file_name)
 
+
+def getFileCRC(_path): 
+    try: 
+        blocksize = 1024 * 64 
+        f = open(_path,"rb") 
+        str = f.read(blocksize) 
+        crc = 0 
+        while(len(str) != 0): 
+            crc = binascii.crc32(str, crc) 
+            str = f.read(blocksize) 
+        f.close() 
+    except: 
+        print 'get file crc error!' 
+        return 0 
+    return crc
+
 def gen_appbin():
     global chk_sum
+    global crc_sum
     global blocks
     if len(sys.argv) != 6:
         print 'Usage: gen_appbin.py eagle.app.out boot_mode flash_mode flash_clk_div flash_size_map'
@@ -192,13 +210,13 @@ def gen_appbin():
     #============================
     byte2=int(flash_mode)&0xff
     byte3=(((int(flash_size_map)<<4)| int(flash_clk_div))&0xff)
-
+	
     if boot_mode == '2':
         # write irom bin head
         data_bin = struct.pack('<BBBBI',BIN_MAGIC_IROM,4,byte2,byte3,long(entry_addr,16))
         sum_size = len(data_bin)
         write_file(flash_bin_name,data_bin)
-
+        
         # irom0.text.bin
         combine_bin(irom0text_bin_name,flash_bin_name,0x0,0)
 
@@ -224,7 +242,7 @@ def gen_appbin():
         data_bin = binascii.a2b_hex(''.join(data_str))
         write_file(flash_bin_name,data_bin)
     write_file(flash_bin_name,chr(chk_sum & 0xFF))
-
+    	
     if boot_mode == '1':
         sum_size = os.path.getsize(flash_bin_name)
         data_str = ['FF']*(0x10000-sum_size)
@@ -239,7 +257,15 @@ def gen_appbin():
         else :
             print '!!!Open %s fail!!!'%(flash_bin_name)
             sys.exit(0)
-
+    if boot_mode == '1' or boot_mode == '2':
+        all_bin_crc = getFileCRC(flash_bin_name)
+        print all_bin_crc
+        if all_bin_crc < 0:
+            all_bin_crc = abs(all_bin_crc) - 1
+        else :
+            all_bin_crc = abs(all_bin_crc) + 1
+        print all_bin_crc
+        write_file(flash_bin_name,chr((all_bin_crc & 0x000000FF))+chr((all_bin_crc & 0x0000FF00) >> 8)+chr((all_bin_crc & 0x00FF0000) >> 16)+chr((all_bin_crc & 0xFF000000) >> 24))
     cmd = 'rm eagle.app.sym'
     os.system(cmd)
 

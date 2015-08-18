@@ -14,7 +14,7 @@
 #include "speedController.h"
 #include "steeringController.h"
 #include "wheelController.h"
-
+#include "imuFilter.h"
 #include "anki/cozmo/robot/hal.h"
 
 #include "anki/common/shared/velocityProfileGenerator.h"
@@ -49,7 +49,7 @@ namespace Anki {
       Radians targetRad_;
       f32 maxAngularVel_;
       f32 angularAccel_;
-      f32 angularDecel_;
+      bool isPointTurnWithTarget_;
       
       f32 currAngularVel_;
       bool startedPointTurn_;
@@ -403,7 +403,8 @@ namespace Anki {
       
     }
     
-    void ExecutePointTurn(f32 targetAngle, f32 maxAngularVel, f32 angularAccel, f32 angularDecel, bool useShortestDir)
+    
+    void ExecutePointTurn_Internal(f32 maxAngularVel, f32 angularAccel)
     {
       currSteerMode_ = SM_POINT_TURN;
       
@@ -411,18 +412,51 @@ namespace Anki {
       if (SpeedController::GetUserCommandedDesiredVehicleSpeed() != 0) {
         SpeedController::SetUserCommandedDesiredVehicleSpeed(0);
       }
-      
-      targetRad_ = targetAngle;
+
       maxAngularVel_ = maxAngularVel;
       angularAccel_ = angularAccel;
-      angularDecel_ = angularDecel;
-      startedPointTurn_ = false;
       
-      f32 currAngle = Localization::GetCurrentMatOrientation().ToFloat();
+      // Check that the maxAngularVel is greater than the terminal speed
+      // If not, make it at least that big.
+      if (ABS(maxAngularVel_) < POINT_TURN_TERMINAL_VEL_RAD_PER_S) {
+        maxAngularVel_ = POINT_TURN_TERMINAL_VEL_RAD_PER_S * (maxAngularVel_ > 0 ? 1 : -1);
+        PRINT("WARNING (PointTurn.TooSlow): Speeding up commanded point turn of %f rad/s to %f rad/s\n", maxAngularVel, maxAngularVel_);
+      }
+    
+      
+    }
+    
+    void ExecutePointTurn(f32 angularVel, f32 angularAccel)
+    {
+      isPointTurnWithTarget_ = false;
+      ExecutePointTurn_Internal(angularVel, angularAccel);
+
+      prevAngle_ = Localization::GetCurrentMatOrientation();
+      f32 currAngle = prevAngle_.ToFloat();
+      
+      // Generate velocity profile
+      vpg_.StartProfile(IMUFilter::GetRotationSpeed(),
+                        currAngle,
+                        maxAngularVel_,
+                        angularAccel_,
+                        CONTROL_DT);
+    
+    }
+    
+    
+    
+    void ExecutePointTurn(f32 targetAngle, f32 maxAngularVel, f32 angularAccel, f32 angularDecel, bool useShortestDir)
+    {
+      isPointTurnWithTarget_ = true;
+      ExecutePointTurn_Internal(maxAngularVel, angularAccel);
+      
+      targetRad_ = targetAngle;
+
+      prevAngle_ = Localization::GetCurrentMatOrientation();
+      f32 currAngle = prevAngle_.ToFloat();
       f32 destAngle = targetRad_.ToFloat();
       angularDistExpected_ = (targetAngle - Localization::GetCurrentMatOrientation()).ToFloat();
 
-      prevAngle_ = Localization::GetCurrentMatOrientation();
       angularDistTraversed_ = 0;
       
       if (ABS(angularDistExpected_) < POINT_TURN_TARGET_DIST_STOP_RAD) {
@@ -447,19 +481,8 @@ namespace Anki {
         }
       }
       
-      //PRINT("PT: currAngle = %f, destAngle = %f, maxAngularVel = %f\n", currAngle, destAngle, maxAngularVel_);
-
-      
-      // Check that the maxAngularVel is greater than the terminal speed
-      // If not, make it at least that big.
-      if (ABS(maxAngularVel_) < POINT_TURN_TERMINAL_VEL_RAD_PER_S) {
-        maxAngularVel_ = POINT_TURN_TERMINAL_VEL_RAD_PER_S * (maxAngularVel_ > 0 ? 1 : -1);
-        PRINT("WARNING (PointTurn.TooSlow): Speeding up commanded point turn of %f rad/s to %f rad/s\n", maxAngularVel, maxAngularVel_);
-      }
-      
       // Generate velocity profile
-      // TODO: Use IMUFilter::GetRotationSpeed() for start speed?
-      vpg_.StartProfile(0,
+      vpg_.StartProfile(IMUFilter::GetRotationSpeed(),
                         currAngle,
                         maxAngularVel_,
                         angularAccel_,
@@ -467,9 +490,15 @@ namespace Anki {
                         destAngle,
                         CONTROL_DT);
     }
+
+    void ExitPointTurn()
+    {
+      currSteerMode_ = SM_PATH_FOLLOW;
+      currAngularVel_ = 0;
+      startedPointTurn_ = false;
+    }
     
-    // TODO: Currently, this is just an open-loop method.
-    //       Is it good enough or should we use position or velocity control?
+    // Position-controlled point turn update
     void ManagePointTurn()
     {
       if (!SpeedController::IsVehicleStopped() && !startedPointTurn_) {
@@ -479,42 +508,44 @@ namespace Anki {
       }
 
       startedPointTurn_ = true;
-      
-      
-      // Compute distance to target
-      Radians currAngle = Cozmo::Localization::GetCurrentMatOrientation();
-      float angularDistToTarget = currAngle.angularDistance(targetRad_, maxAngularVel_ < 0);
+
       
       // Update current angular velocity
       f32 currDesiredAngle;
       vpg_.Step(currAngularVel_, currDesiredAngle);
-      
-      //PRINT("currAngle: %f, targetRad: %f, AngularDist: %f, currAngularVel: %f, currDesiredAngle: %f\n",
-      //          currAngle.ToFloat(), targetRad_.ToFloat(), angularDistToTarget, currAngularVel_, currDesiredAngle);
-      
-      
-      // Check for stop condition
-      f32 absAngularDistToTarget = ABS(angularDistToTarget);
-      if (absAngularDistToTarget < POINT_TURN_TARGET_DIST_STOP_RAD) {
-        currSteerMode_ = SM_PATH_FOLLOW;
-        currAngularVel_ = 0;
-#if(DEBUG_STEERING_CONTROLLER)
-        PRINT("POINT TURN: Stopping\n");
-#endif
-      }
-      
-      
-      // Check if the angular dist to target is growing
-      angularDistTraversed_ += (currAngle - prevAngle_).ToFloat();
-      prevAngle_ = currAngle;
-      if (ABS(angularDistTraversed_) - ANGULAR_TRAVERSAL_DISTANCE_MARGIN > ABS(angularDistExpected_) ) {
-        currSteerMode_ = SM_PATH_FOLLOW;
-        currAngularVel_ = 0;
-#if(DEBUG_STEERING_CONTROLLER)
-        PRINT("POINT TURN: Stopping because turned more than expected\n");
-#endif
-      }
 
+      Radians currAngle = Cozmo::Localization::GetCurrentMatOrientation();
+      
+      if (isPointTurnWithTarget_) {
+        
+        // Compute distance to target
+        float angularDistToTarget = currAngle.angularDistance(targetRad_, maxAngularVel_ < 0);
+        
+        
+        //PRINT("currAngle: %f, targetRad: %f, AngularDist: %f, currAngularVel: %f, currDesiredAngle: %f\n",
+        //          currAngle.ToFloat(), targetRad_.ToFloat(), angularDistToTarget, currAngularVel_, currDesiredAngle);
+        
+        
+        // Check for stop condition
+        f32 absAngularDistToTarget = ABS(angularDistToTarget);
+        if (absAngularDistToTarget < POINT_TURN_TARGET_DIST_STOP_RAD) {
+          ExitPointTurn();
+  #if(DEBUG_STEERING_CONTROLLER)
+          PRINT("POINT TURN: Stopping\n");
+  #endif
+        }
+        
+        
+        // Check if the angular dist to target is growing
+        angularDistTraversed_ += (currAngle - prevAngle_).ToFloat();
+        prevAngle_ = currAngle;
+        if (ABS(angularDistTraversed_) - ANGULAR_TRAVERSAL_DISTANCE_MARGIN > ABS(angularDistExpected_) ) {
+          ExitPointTurn();
+  #if(DEBUG_STEERING_CONTROLLER)
+          PRINT("POINT TURN: Stopping because turned more than expected\n");
+  #endif
+        }
+      }
       
       
       // Compute the velocity along the arc length equivalent of currAngularVel.
@@ -524,7 +555,7 @@ namespace Anki {
 
       // PID control for maintaining heading
       f32 angularDistToCurrDesiredAngle = (Radians(currDesiredAngle) - currAngle).ToFloat();
-      const f32 pointTurnKp_ = 100;
+      const f32 pointTurnKp_ = 500;
       //PRINT("PT comp: arcVel %d, comp %f\n", arcVel, angularDistToCurrDesiredAngle * pointTurnKp_);
       arcVel += (s16)(angularDistToCurrDesiredAngle * pointTurnKp_);
 
@@ -537,8 +568,19 @@ namespace Anki {
 #if(DEBUG_STEERING_CONTROLLER)
       PRINT("POINT TURN: angularDistToTarget: %f radians, arcVel: %d mm/s\n", angularDistToTarget, arcVel);
 #endif
-      
+
       WheelController::SetDesiredWheelSpeeds(wleft, wright);
+      
+      // If target velocity is zero then we might need to stop
+      if (!isPointTurnWithTarget_) {
+        if (arcVel == 0 && maxAngularVel_ == 0) {
+          WheelController::SetDesiredWheelSpeeds(0,0);
+          ExitPointTurn();
+#if(DEBUG_STEERING_CONTROLLER)
+          PRINT("POINT TURN: Stopping because 0 vel reached\n");
+#endif
+        }
+      }
     }
     
     

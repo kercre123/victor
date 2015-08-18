@@ -31,14 +31,44 @@ namespace Anki {
       Clear();
     }
     
-    void ActionList::Cancel(Robot& robot, SlotHandle fromSlot, RobotActionType withType)
+    bool ActionList::Cancel(SlotHandle fromSlot, RobotActionType withType)
     {
+      bool found = false;
+      
       // Clear specified slot / type
       for(auto & q : _queues) {
         if(fromSlot == -1 || q.first == fromSlot) {
-          q.second.Cancel(robot, withType);
+          found |= q.second.Cancel(withType);
         }
       }
+      return found;
+    }
+    
+    bool ActionList::Cancel(u32 idTag, SlotHandle fromSlot)
+    {
+      bool found = false;
+      
+      if(fromSlot == -1) {
+        for(auto & q : _queues) {
+          if(q.second.Cancel(idTag) == true) {
+            if(found) {
+              PRINT_NAMED_WARNING("ActionList.Cancel.DuplicateTags",
+                                  "Multiple actions from multiple slots cancelled with idTag=%d.\n", idTag);
+            }
+            found = true;
+          }
+        }
+        return found;
+      } else {
+        auto q = _queues.find(fromSlot);
+        if(q != _queues.end()) {
+          found = q->second.Cancel(idTag);
+        } else {
+          PRINT_NAMED_WARNING("ActionList.Cancel.NoSlot", "No slot with handle %d.\n", fromSlot);
+        }
+      }
+      
+      return found;
     }
     
     void ActionList::Clear()
@@ -137,18 +167,61 @@ namespace Anki {
       }
     }
 
-    void ActionQueue::Cancel(Robot &robot, RobotActionType withType)
+    bool ActionQueue::Cancel(RobotActionType withType)
     {
+      bool found = false;
       for(auto action : _queue)
       {
         CORETECH_ASSERT(action != nullptr);
         
         if(withType == RobotActionType::UNKNOWN || action->GetType() == withType) {
-          action->Cancel(robot);
+          action->Cancel();
+          found = true;
         }
       }
+      return found;
+    }
+    
+    bool ActionQueue::Cancel(u32 idTag)
+    {
+      bool found = false;
+      for(auto action : _queue)
+      {
+        if(action->GetTag() == idTag) {
+          if(found == true) {
+            PRINT_NAMED_WARNING("ActionQueue.Cancel.DuplicateIdTags",
+                                "Multiple actions with tag=%d found in queue.\n",
+                                idTag);
+          }
+          action->Cancel();
+          found = true;
+        }
+      }
+      
+      return found;
     }
 
+    Result ActionQueue::QueueNow(IActionRunner *action, u8 numRetries)
+    {
+      if(action == nullptr) {
+        PRINT_NAMED_ERROR("ActionQueue.QueueNow.NullActionPointer",
+                          "Refusing to queue a null action pointer.\n");
+        return RESULT_FAIL;
+      }
+      
+      if(_queue.empty()) {
+        
+        // Nothing in the queue, so this is the same as QueueAtEnd
+        return QueueAtEnd(action, numRetries);
+        
+      } else {
+        
+        // Cancel whatever is running now and then queue this to happen next
+        // (right after any cleanup due to the cancellation completes)
+        _queue.front()->Cancel();
+        return QueueNext(action, numRetries);
+      }
+    }
     
     Result ActionQueue::QueueAtEnd(IActionRunner *action, u8 numRetries)
     {
@@ -174,7 +247,7 @@ namespace Anki {
       action->SetNumRetries(numRetries);
       
       if(_queue.empty()) {
-        return QueueAtEnd(action);
+        return QueueAtEnd(action, numRetries);
       }
       
       std::list<IActionRunner*>::iterator queueIter = _queue.begin();

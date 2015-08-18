@@ -60,13 +60,10 @@ namespace Anki {
       // on the way)
       bool IsBufferFull();
       
-      // Get approximate number of frames available in the streaming buffer,
-      // subject to some padding to leave space for frames that might be on
-      // their way in the comms channel.det
-
-      //s32  GetNumFramesFree();
+      // Get total number of bytes played since startup or ClearNumBytesPlayed() was last called.
+      s32 GetTotalNumBytesPlayed();
       
-      s32 GetApproximateNumBytesFree();
+      void ClearNumBytesPlayed();
       
       // Enable/disable tracks from playing. If the bit for corresponding track is
       // zero, any keyframes buffered for that track will be ignored.

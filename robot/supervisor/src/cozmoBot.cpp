@@ -74,9 +74,9 @@ namespace Anki {
         u32 avgMainTooLateTime_ = 0;
         u32 lastCycleStartTime_ = 0;
         u32 lastMainCycleTimeErrorReportTime_ = 0;
-        const u32 MAIN_TOO_LATE_TIME_THRESH = TIME_STEP * 1500;  // Normal cycle time plus 50% margin
-        const u32 MAIN_TOO_LONG_TIME_THRESH = 400;
-        const u32 MAIN_CYCLE_ERROR_REPORTING_PERIOD = 1000000;
+        const u32 MAIN_TOO_LATE_TIME_THRESH_USEC = TIME_STEP * 1500;  // Normal cycle time plus 50% margin
+        const u32 MAIN_TOO_LONG_TIME_THRESH_USEC = 700;
+        const u32 MAIN_CYCLE_ERROR_REPORTING_PERIOD_USEC = 1000000;
 
       } // Robot private namespace
 
@@ -250,7 +250,7 @@ namespace Anki {
         u32 cycleStartTime = HAL::GetMicroCounter();
         if (lastCycleStartTime_ != 0) {
           u32 timeBetweenCycles = cycleStartTime - lastCycleStartTime_;
-          if (timeBetweenCycles > MAIN_TOO_LATE_TIME_THRESH) {
+          if (timeBetweenCycles > MAIN_TOO_LATE_TIME_THRESH_USEC) {
             ++mainTooLateCnt_;
             avgMainTooLateTime_ = (u32)((f32)(avgMainTooLateTime_ * (mainTooLateCnt_ - 1) + timeBetweenCycles)) / mainTooLateCnt_;
           }
@@ -417,7 +417,7 @@ namespace Anki {
         // Check if main took too long
         u32 cycleEndTime = HAL::GetMicroCounter();
         u32 cycleTime = cycleEndTime - cycleStartTime;
-        if (cycleTime > MAIN_TOO_LONG_TIME_THRESH) {
+        if (cycleTime > MAIN_TOO_LONG_TIME_THRESH_USEC) {
           ++mainTooLongCnt_;
           avgMainTooLongTime_ = (u32)((f32)(avgMainTooLongTime_ * (mainTooLongCnt_ - 1) + cycleTime)) / mainTooLongCnt_;
         }
@@ -425,7 +425,7 @@ namespace Anki {
         
         // Report main cycle time error
         if ((mainTooLateCnt_ > 0 || mainTooLongCnt_ > 0) &&
-            (cycleEndTime - lastMainCycleTimeErrorReportTime_ > MAIN_CYCLE_ERROR_REPORTING_PERIOD)) {
+            (cycleEndTime - lastMainCycleTimeErrorReportTime_ > MAIN_CYCLE_ERROR_REPORTING_PERIOD_USEC)) {
           Messages::MainCycleTimeError m;
           m.numMainTooLateErrors = mainTooLateCnt_;
           m.avgMainTooLateTime = avgMainTooLateTime_;
@@ -454,8 +454,12 @@ namespace Anki {
       Result step_LongExecution()
       {
         Result retVal = RESULT_OK;
-
+        
 #       ifdef SIMULATOR
+        
+        if (!HAL::IsVideoEnabled()) {
+          return retVal;
+        }
 
         if (HAL::imageSendMode_ != ISM_OFF) {
         

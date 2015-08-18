@@ -33,6 +33,8 @@ def main(scriptArgs):
                       help='prepends to the environment PATH')
   parser.add_argument('--clean', '-c', dest='clean', action='store_true',
                       help='cleans all output folders')
+  parser.add_argument('--mex', '-m', dest='mex', action='store_true',
+                      help='builds mathlab\'s mex project')
   parser.add_argument('--withGyp', metavar='GYP_PATH', dest='gypPath', action='store', default=None,
                       help='Use gyp installation located at GYP_PATH')
   parser.add_argument('--buildTools', metavar='BUILD_TOOLS_PATH', dest='buildToolsPath', action='store', default=None,
@@ -90,6 +92,7 @@ def main(scriptArgs):
   sys.path.insert(0, os.path.join(options.buildToolsPath, 'tools/ankibuild'))
   import installBuildDeps
   import updateFileLists
+  import util
 
   if not options.coretechInternalPath:
     options.coretechInternalPath = os.path.join(options.projectRoot, 'coretech')
@@ -156,11 +159,18 @@ def main(scriptArgs):
 
   # update file lists
   generator = updateFileLists.FileListGenerator(options)
-  generator.processFolder(['basestation/src/anki/cozmo', 'basestation/include/anki/cozmo', 'include', 'generated/clad/engine'], ['project/gyp/cozmoEngine.lst'])
+  generator.processFolder(['basestation/src/anki/cozmo', 'basestation/include/anki/cozmo', 'include', 'generated/clad/engine', 'resources'],
+   ['project/gyp/cozmoEngine.lst'])
   generator.processFolder(['basestation/test', 'robot/test'], ['project/gyp/cozmoEngine-test.lst'])
-  generator.processFolder(['robot/sim_hal', 'robot/supervisor/src', 'simulator/src', 'simulator/controllers/webotsCtrlRobot'], ['project/gyp/ctrlRobot.lst'])
+  generator.processFolder(['robot/sim_hal', 'robot/supervisor/src', 'simulator/src', 'simulator/controllers/webotsCtrlRobot'],
+   ['project/gyp/ctrlRobot.lst'])
   generator.processFolder(['simulator/controllers/webotsCtrlViz'], ['project/gyp/ctrlViz.lst'])
   generator.processFolder(['clad/src'], ['project/gyp/clad.lst'])
+  webotsPhysicsPath = os.path.join(projectRoot, 'generated/webots/src/plugins/physics/')
+  # copy the webots' physics.c into the generated folder
+  util.File.mkdir_p(webotsPhysicsPath)
+  util.File.cp(os.path.join(webotsPath, 'resources/projects/plugins/physics/physics.c'), webotsPhysicsPath)
+  generator.processFolder(['simulator/plugins/physics/cozmo_physics', webotsPhysicsPath], ['project/gyp/pluginPhysics.lst'])
   # this is too big of a scope, we need to manualy maintain ctrlLightCube.lst for now
   # generator.processFolder(['simulator/controllers/block_controller', 'robot/sim_hal/', 'robot/supervisor/src/'], ['project/gyp/ctrlLightCube.lst'])
   
@@ -205,6 +215,7 @@ def main(scriptArgs):
                                   webots_path={3}
                                   cti-gtest_path={4}
                                   cti-util_gyp_path={5}
+                                  cozmo_engine_path={6}
                                   cti-cozmo_engine_path={6}
                                   ce-gtest_path={7}
                                   ce-util_gyp_path={8}
@@ -223,6 +234,10 @@ def main(scriptArgs):
                                   )
       gypArgs = ['--check', '--depth', '.', '-f', 'xcode', '--toplevel-dir', '../..', '--generator-output', '../../generated/mac', gypFile]
       gyp.main(gypArgs)
+      # mac
+      if options.mex:
+        gypArgs = ['--check', '--depth', '.', '-f', 'xcode', '--toplevel-dir', '../..', '--generator-output', '../../generated/mac', 'cozmoEngineMex.gyp']
+        gyp.main(gypArgs)
       
 
 
@@ -261,6 +276,42 @@ def main(scriptArgs):
     gyp.main(gypArgs)
 
 
+  # mex
+  if 'mex' in options.platforms:
+      gypFile = 'cozmoEngineMex.gyp'
+      os.environ['GYP_DEFINES'] = """ 
+                                  OS=mac
+                                  ndk_root=INVALID
+                                  kazmath_library_type=static_library
+                                  jsoncpp_library_type=static_library
+                                  util_library_type=static_library
+                                  worldviz_library_type=static_library
+                                  arch_group={0}
+                                  output_location={1}
+                                  coretech_external_path={2}
+                                  webots_path={3}
+                                  cti-gtest_path={4}
+                                  cti-util_gyp_path={5}
+                                  cti-cozmo_engine_path={6}
+                                  ce-gtest_path={7}
+                                  ce-util_gyp_path={8}
+                                  ce-cti_gyp_path={9}
+                                  """.format(
+                                    options.arch, 
+                                    os.path.join(options.projectRoot, 'generated/mex'),
+                                    coretechExternalPath, 
+                                    webotsPath,
+                                    ctiGtestPath, 
+                                    ctiAnkiUtilProjectPath,
+                                    projectRoot,
+                                    gtestPath, 
+                                    ankiUtilProjectPath, 
+                                    coretechInternalProjectPath
+                                  )
+      gypArgs = ['--check', '--depth', '.', '-f', 'xcode', '--toplevel-dir', '../..', '--generator-output', '../../generated/mex', gypFile]
+      gyp.main(gypArgs)
+      
+      
 
   if 'android' in options.platforms:
     ### Install android build deps if necessary

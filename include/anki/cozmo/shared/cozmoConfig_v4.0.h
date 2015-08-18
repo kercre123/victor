@@ -56,18 +56,6 @@ const f32 LIFT_XBAR_HEIGHT_WRT_WRIST_JOINT = -20.f;
 // The distance along the x axis from the wrist joint to the front of the lifter plate
 const f32 LIFT_FRONT_WRT_WRIST_JOINT = 4.f;
 
-// TODO: convert to using these in degree form?
-const f32 MIN_HEAD_ANGLE = DEG_TO_RAD(-26.f);
-const f32 MAX_HEAD_ANGLE = DEG_TO_RAD( 34.f);
-
-// Head angle may exceed limits by this amount before
-// it is considered to be out of calibration.
-const f32 HEAD_ANGLE_LIMIT_MARGIN = DEG_TO_RAD(2.0f);
-
-// Safe head angle for the proximity sensors to be usable with the lift
-// either up or down
-const f32 HEAD_ANGLE_WHILE_FOLLOWING_PATH = -0.32f;
-
   // Neck joint relative to robot origin
 const f32 NECK_JOINT_POSITION[3] = {-13.f, 0.f, 34.5f + WHEEL_RAD_TO_MM};
 
@@ -90,13 +78,13 @@ const f32 IMU_POSITION[3] = {5.8f, 0.f, -13.5f};
 
 static const u8 NUM_RADIAL_DISTORTION_COEFFS = 4;
 
-// Calibration values from June 11, 2015
+// Calibration values from August 11, 2015 - on headboard with SSID 3a99
 const u16 HEAD_CAM_CALIB_WIDTH  = 400;
 const u16 HEAD_CAM_CALIB_HEIGHT = 296;
-const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_X = 278.75903f;
-const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_Y = 280.55684f;
-const f32 HEAD_CAM_CALIB_CENTER_X       = 197.36525f;
-const f32 HEAD_CAM_CALIB_CENTER_Y       = 151.01879f;
+const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_X = 273.316765624f;
+const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_Y = 274.838250766f;
+const f32 HEAD_CAM_CALIB_CENTER_X       = 199.638842523f;
+const f32 HEAD_CAM_CALIB_CENTER_Y       = 160.682934109f;
 const f32 HEAD_CAM_CALIB_DISTORTION[NUM_RADIAL_DISTORTION_COEFFS] = {
   0.03956f,
   -0.08955f,

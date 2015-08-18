@@ -299,8 +299,7 @@ return
 
 #define ADD_MESSAGE_MEMBER_ARRAY(__TYPE__, __NAME__, __LENGTH__) __LENGTH__*sizeof(__TYPE__) +
 
-#define END_MESSAGE_DEFINITION(__MSG_TYPE__) 0; } 
-
+#define END_MESSAGE_DEFINITION(__MSG_TYPE__) 0; }
 
 //
 // Define GetBytes() method

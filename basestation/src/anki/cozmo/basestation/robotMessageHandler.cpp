@@ -11,7 +11,6 @@
  **/
 
 #include "util/logging/logging.h"
-#include "anki/common/basestation/utils/fileManagement.h"
 #include "anki/common/basestation/array2d_impl.h"
 #include "anki/vision/CameraSettings.h"
 #include "anki/vision/basestation/image.h"
@@ -19,11 +18,14 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotManager.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
-#include "anki/cozmo/basestation/signals/cozmoEngineSignals.h"
 #include "anki/cozmo/basestation/robotMessageHandler.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
-#include <fstream>
+#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "opencv2/imgproc/imgproc.hpp"
+#include "anki/cozmo/basestation/data/dataPlatform.h"
+#include "clad/externalInterface/messageEngineToGame.h"
+#include "util/helpers/includeFstream.h"
+#include "util/fileUtils/fileUtils.h"
 
 // Uncomment to allow interprocess access to the camera stream (e.g. Matlab)
 //#define STREAM_IMAGES_VIA_FILESYSTEM 1
@@ -34,21 +36,24 @@
 namespace Anki {
   namespace Cozmo {
     
-    RobotMessageHandler::RobotMessageHandler()
-    : channel_(NULL), robotMgr_(NULL)
+    RobotMessageHandler::RobotMessageHandler(Data::DataPlatform* dataPlatform)
+    : _channel(NULL)
+    , _robotMgr(NULL)
+    , _dataPlatform(dataPlatform)
     {
       
     }
+
     Result RobotMessageHandler::Init(Comms::IChannel* channel,
                                      RobotManager*  robotMgr)
     {
       Result retVal = RESULT_OK;
       
       //TODO: PRINT_NAMED_DEBUG("RobotMessageHandler", "Initializing comms");
-      channel_ = channel;
-      robotMgr_ = robotMgr;
+      _channel = channel;
+      _robotMgr = robotMgr;
       
-      isInitialized_ = true;
+      _isInitialized = true;
       
       return retVal;
     }
@@ -64,12 +69,12 @@ namespace Anki {
       p.reliable = reliable;
       p.hot = hot;
       
-      return channel_->Send(p) > 0 ? RESULT_OK : RESULT_FAIL;
+      return _channel->Send(p) > 0 ? RESULT_OK : RESULT_FAIL;
     }
 
     Result RobotMessageHandler::ProcessPacket(const Comms::IncomingPacket& packet)
     {
-      if(robotMgr_ == NULL) {
+      if(_robotMgr == NULL) {
         PRINT_STREAM_ERROR("RobotMessageHandler.NullRobotManager",
                           "RobotManager NULL when RobotMessageHandler::ProcessPacket() called.");
         return RESULT_FAIL;
@@ -77,7 +82,7 @@ namespace Anki {
       
       switch (packet.tag) {
         case Comms::IncomingPacket::Tag::Connected:
-          if (!robotMgr_->DoesRobotExist(static_cast<RobotID_t>(packet.sourceId))) {
+          if (!_robotMgr->DoesRobotExist(static_cast<RobotID_t>(packet.sourceId))) {
             PRINT_STREAM_ERROR("RobotMessageHandler.Connected",
                                "Incoming connection not found for robot id " << packet.sourceId << ", address " << packet.sourceAddress << ". Disconnecting.");
             return RESULT_FAIL;
@@ -89,7 +94,7 @@ namespace Anki {
         case Comms::IncomingPacket::Tag::Disconnected:
           PRINT_STREAM_INFO("RobotMessageHandler.Disconnected",
                              "Disconnected from connection id " << packet.sourceId << ", address " << packet.sourceAddress << ".");
-          robotMgr_->RemoveRobot(static_cast<RobotID_t>(packet.sourceId));
+          _robotMgr->RemoveRobot(static_cast<RobotID_t>(packet.sourceId));
           return RESULT_OK;
         
         case Comms::IncomingPacket::Tag::NormalMessage:
@@ -97,7 +102,7 @@ namespace Anki {
         
         // should be handled internally by MultiClientChannel, but in case it's a different IChannel
         case Comms::IncomingPacket::Tag::ConnectionRequest:
-          channel_->RefuseIncomingConnection(packet.sourceAddress);
+          _channel->RefuseIncomingConnection(packet.sourceAddress);
           return RESULT_OK;
         
         default:
@@ -135,7 +140,7 @@ namespace Anki {
       
       const RobotID_t robotID = packet.sourceId;
       //Robot* robot = RobotManager::getInstance()->GetRobotByID(robotID);
-      Robot* robot = robotMgr_->GetRobotByID(robotID);
+      Robot* robot = _robotMgr->GetRobotByID(robotID);
       if(robot == NULL) {
         PRINT_NAMED_ERROR("MessageFromInvalidRobotSource",
                           "Message %d received from invalid robot source ID %d.",
@@ -161,11 +166,11 @@ namespace Anki {
     {
       Result retVal = RESULT_FAIL;
       
-      if(isInitialized_) {
+      if(_isInitialized) {
         retVal = RESULT_OK;
         
         Comms::IncomingPacket packet;
-        while (channel_->PopIncomingPacket(packet)) {
+        while (_channel->PopIncomingPacket(packet)) {
           if(ProcessPacket(packet) != RESULT_OK) {
             retVal = RESULT_FAIL;
           }
@@ -320,7 +325,33 @@ namespace Anki {
                                                             msg.imageChunkCount,
                                                             msg.chunkId, msg.data, msg.chunkSize );
 
-      CozmoEngineSignals::RobotImageChunkAvailableSignal().emit(robot->GetID(), &msg);
+      IExternalInterface* externalInterface = robot->GetExternalInterface();
+      if (externalInterface != nullptr && robot->GetImageSendMode() != ISM_OFF) {
+        ExternalInterface::ImageChunk uiImgChunk;
+        uiImgChunk.imageId = msg.imageId;
+        uiImgChunk.frameTimeStamp = msg.frameTimeStamp;
+        uiImgChunk.nrows = Vision::CameraResInfo[msg.resolution].height;
+        uiImgChunk.ncols = Vision::CameraResInfo[msg.resolution].width;
+        assert(uiImgChunk.data.size() == msg.data.size());
+        uiImgChunk.chunkSize = msg.chunkSize;
+        uiImgChunk.imageEncoding = msg.imageEncoding;
+        uiImgChunk.imageChunkCount = msg.imageChunkCount;
+        uiImgChunk.chunkId = msg.chunkId;
+        std::copy(msg.data.begin(), msg.data.end(),
+          uiImgChunk.data.begin());
+
+        ExternalInterface::MessageEngineToGame msgWrapper;
+        msgWrapper.Set_ImageChunk(uiImgChunk);
+        robot->GetExternalInterface()->Broadcast(std::move(msgWrapper));
+
+        const bool wasLastChunk = uiImgChunk.chunkId == uiImgChunk.imageChunkCount-1;
+
+        if(wasLastChunk && robot->GetImageSendMode() == ISM_SINGLE_SHOT) {
+          // We were just in single-image send mode, and the image got sent, so
+          // go back to "off". (If in stream mode, stay in stream mode.)
+          robot->SetImageSendMode(ISM_OFF);
+        }
+      }
       VizManager::getInstance()->SendImageChunk(robot->GetID(), msg);
       
       if(isImageReady)
@@ -471,11 +502,11 @@ namespace Anki {
       Result lastResult = RESULT_OK;
     
       if (msg.numMainTooLongErrors > 0) {
-        PRINT_NAMED_WARNING("* * * MainCycleTooLong * * *", "Num errors: %d, Avg time: %d us", msg.numMainTooLongErrors, msg.avgMainTooLongTime);
+        PRINT_NAMED_WARNING("* * * MainCycleTooLong * * *", "Num errors: %d, Avg time: %d us\n", msg.numMainTooLongErrors, msg.avgMainTooLongTime);
       }
       
       if (msg.numMainTooLateErrors > 0) {
-        PRINT_NAMED_WARNING("* * * MainCycleTooLate * * *", "Num errors: %d, Avg time: %d us", msg.numMainTooLateErrors, msg.avgMainTooLateTime);
+        PRINT_NAMED_WARNING("* * * MainCycleTooLate * * *", "Num errors: %d, Avg time: %d us\n", msg.numMainTooLateErrors, msg.avgMainTooLateTime);
       }
       
       return lastResult;
@@ -512,15 +543,14 @@ namespace Anki {
       if (msg.chunkId == msg.totalNumChunks - 1) {
         
         // Make sure image capture folder exists
-        if (!Anki::DirExists(AnkiUtil::kP_IMU_LOGS_DIR)) {
-          if (!MakeDir(AnkiUtil::kP_IMU_LOGS_DIR)) {
-            PRINT_NAMED_WARNING("Robot.ProcessIMUDataChunk.CreateDirFailed","");
-          }
+        std::string imuLogsDir = _dataPlatform->pathToResource(Data::Scope::Cache, AnkiUtil::kP_IMU_LOGS_DIR);
+        if (!Util::FileUtils::CreateDirectory(imuLogsDir, false, true)) {
+          PRINT_NAMED_ERROR("Robot.ProcessIMUDataChunk.CreateDirFailed","%s", imuLogsDir.c_str());
         }
         
         // Create image file
-        char logFilename[64];
-        snprintf(logFilename, sizeof(logFilename), "%s/robot%d_imu%d.m", AnkiUtil::kP_IMU_LOGS_DIR, robot->GetID(), imuSeqID);
+        char logFilename[564];
+        snprintf(logFilename, sizeof(logFilename), "%s/robot%d_imu%d.m", imuLogsDir.c_str(), robot->GetID(), imuSeqID);
         PRINT_STREAM_INFO("RobotMessageHandler.ProcessMessage.MessageIMUDataChunk", "Printing imu log to " << logFilename << " (dataSize = " << dataSize << ")");
         
         std::ofstream oFile(logFilename);
@@ -607,7 +637,9 @@ namespace Anki {
             ActionableObject* actionObject = dynamic_cast<ActionableObject*>(object);
             assert(actionObject != nullptr);
             if(actionObject->IsBeingCarried() == false) {
-              CozmoEngineSignals::ActiveObjectMovedSignal().emit(robot->GetID(), objectWithID.first, msg.xAccel, msg.yAccel, msg.zAccel, msg.upAxis);
+              robot->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::ActiveObjectMoved(
+                robot->GetID(), objectWithID.first, msg.xAccel, msg.yAccel, msg.zAccel, msg.upAxis
+              )));
             }
             
             return RESULT_OK;
@@ -633,8 +665,9 @@ namespace Anki {
                               "MessageActiveObjectStoppedMoving",
                               "Received message that Object " << objectWithID.first.GetValue() << " (Active ID " << msg.objectID << ") stopped moving.");
             
-            CozmoEngineSignals::ActiveObjectStoppedMovingSignal().emit(robot->GetID(), objectWithID.first, msg.upAxis, msg.rolled);
-            
+            robot->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::ActiveObjectStoppedMoving(
+              robot->GetID(), objectWithID.first, msg.upAxis, msg.rolled
+            )));
             return RESULT_OK;
           }
         }
@@ -659,8 +692,10 @@ namespace Anki {
                               "MessageActiveObjectTapped",
                               "Received message that object " << objectWithID.first.GetValue() << " (Active ID " << msg.objectID << ") was tapped " << (uint32_t)msg.numTaps << " times.");
             
-            CozmoEngineSignals::ActiveObjectTappedSignal().emit(robot->GetID(), objectWithID.first, msg.numTaps);
-            
+            robot->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::ActiveObjectTapped(
+              robot->GetID(), objectWithID.first, msg.numTaps
+            )));
+
             return RESULT_OK;
           }
         }

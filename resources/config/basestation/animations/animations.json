@@ -1,0 +1,227 @@
+{ 
+  "ANIM_TEST" : [
+    { 
+      "Name" : "HeadAngleKeyFrame",
+      "triggerTime_ms"  : 0, 
+      "durationTime_ms" : 1000,
+      "angle_deg"       : 30,
+      "angleVariability_deg" : 5
+    },
+    { 
+      "Name" : "HeadAngleKeyFrame",
+      "triggerTime_ms"  : 1000, 
+      "durationTime_ms" : 1000,
+      "angle_deg"       : -25,
+      "angleVariability_deg" : 5
+    },
+    { 
+      "Name" : "HeadAngleKeyFrame",
+      "triggerTime_ms"  : 2000, 
+      "durationTime_ms" : 500,
+      "angle_deg"       : 30,
+      "angleVariability_deg" : 5
+    },
+    { 
+      "Name" : "HeadAngleKeyFrame",
+      "triggerTime_ms"  : 2500, 
+      "durationTime_ms" : 500,
+      "angle_deg"       : -25,
+      "angleVariability_deg" : 5
+    },
+    { 
+      "Name" : "LiftHeightKeyFrame",
+      "triggerTime_ms"  : 0, 
+      "durationTime_ms" : 1000,
+      "height_mm"       : 80,
+      "heightVariability_mm" : 5
+    },
+    { 
+      "Name" : "LiftHeightKeyFrame",
+      "triggerTime_ms"  : 1000, 
+      "durationTime_ms" : 500,
+      "height_mm"       : 30,
+      "heightVariability_mm" : 5
+    },
+    { 
+      "Name" : "LiftHeightKeyFrame",
+      "triggerTime_ms"  : 1500, 
+      "durationTime_ms" : 500,
+      "height_mm"       : 50,
+      "heightVariability_mm" : 5
+    },
+    {
+      "Name" : "FacePositionKeyFrame", 
+      "triggerTime_ms"  : 400, 
+      "xcen"            : 0, 
+      "ycen"            : 0
+    },
+    {
+      "Name" : "FaceAnimationKeyFrame", 
+      "triggerTime_ms"  : 0,
+      "animName"        : "happyFace"
+    },
+    {
+      "Name" : "FaceAnimationKeyFrame", 
+      "triggerTime_ms"  : 500,
+      "animName"        : "sadFace"
+    },
+    {
+      "Name" : "FaceAnimationKeyFrame", 
+      "triggerTime_ms"  : 1000,
+      "animName"        : "happyFace"
+    }, 
+    {
+      "Name" : "FacePositionKeyFrame", 
+      "triggerTime_ms"  : 1000, 
+      "xcen"            : 0, 
+      "ycen"            : 0
+    },
+    {
+      "Name" : "FacePositionKeyFrame", 
+      "triggerTime_ms"  : 1100, 
+      "xcen"            : -20, 
+      "ycen"            : -10
+    },
+    {
+      "Name" : "FacePositionKeyFrame", 
+      "triggerTime_ms"  : 1200, 
+      "xcen"            : 20, 
+      "ycen"            : 10
+    },
+    {
+      "Name" : "FacePositionKeyFrame", 
+      "triggerTime_ms"  : 1300, 
+      "xcen"            : 0, 
+      "ycen"            : 0
+    },
+    { 
+      "Name" : "BackpackLightsKeyFrame", 
+      "triggerTime_ms"  : 0, 
+      "Back"            : "RED",
+      "Middle"          : "GREEN", 
+      "Front"           : "BLUE",
+      "Left"            : "BLACK", 
+      "Right"           : "BLACK"
+    },
+    { 
+      "Name" : "BackpackLightsKeyFrame", 
+      "triggerTime_ms"  : 500, 
+      "Back"            : "GREEN",
+      "Middle"          : "BLUE", 
+      "Front"           : "RED",
+      "Left"            : "YELLOW", 
+      "Right"           : "YELLOW"
+    }, 
+    { 
+      "Name" : "BackpackLightsKeyFrame", 
+      "triggerTime_ms"  : 1000, 
+      "Back"            : "BLUE",
+      "Middle"          : "RED", 
+      "Front"           : "GREEN",
+      "Left"            : "MAGENTA", 
+      "Right"           : "MAGENTA"
+    }, 
+    {
+      "Name" : "RobotAudioKeyFrame", 
+      "triggerTime_ms"  : 500,
+      "audioName"       : ["creep/Robot-PowerOn1Rev2.mp3", "creep/Robot-PowerDown13B.mp3"],
+    }, 
+    {
+      "Name" : "BlinkKeyFrame", 
+      "triggerTime_ms" : 1000, 
+      "command"        : "BLINK"
+    },
+    { 
+      "Name" : "BlinkKeyFrame", 
+      "triggerTime_ms" : 1500,
+      "command"        : "DISABLE", 
+      "duration_ms"    : 1000
+    },      
+    {
+      "Name" : "BodyMotionKeyFrame", 
+      "triggerTime_ms" : 0, 
+      "radius_mm"      : "STRAIGHT", 
+      "speed"          : 30,
+      "durationTime_ms"    : 500
+    }, 
+    {
+      "Name" : "BodyMotionKeyFrame", 
+      "triggerTime_ms" : 500, 
+      "radius_mm"      : "TURN_IN_PLACE", 
+      "speed"          : 30,
+      "durationTime_ms"    : 500
+    }, 
+    {
+      "Name" : "BodyMotionKeyFrame", 
+      "triggerTime_ms" : 1000, 
+      "radius_mm"      : "TURN_IN_PLACE", 
+      "speed"          : -30,
+      "durationTime_ms"    : 500
+    }, 
+    {
+      "Name" : "BodyMotionKeyFrame", 
+      "triggerTime_ms" : 1500, 
+      "radius_mm"      : 50, 
+      "speed"          : 30,
+      "durationTime_ms"    : 500
+    }
+  ], 
+  "ANIM_IDLE" : [
+    { 
+      "Name" : "HeadAngleKeyFrame",
+      "triggerTime_ms"  : 0, 
+      "durationTime_ms" : 1000,
+      "angle_deg"       : 5,
+      "angleVariability_deg" : 5
+    },
+    { 
+      "Name" : "HeadAngleKeyFrame",
+      "triggerTime_ms"  : 3000, 
+      "durationTime_ms" : 750,
+      "angle_deg"       : -5,
+      "angleVariability_deg" : 5
+    },
+    {
+      "Name" : "FacePositionKeyFrame", 
+      "triggerTime_ms"  : 800, 
+      "xcen"            : -10, 
+      "ycen"            : 0
+    },
+    {
+      "Name" : "FacePositionKeyFrame", 
+      "triggerTime_ms"  : 2000, 
+      "xcen"            : 10, 
+      "ycen"            : 0
+    }, 
+    {
+      "Name" : "FacePositionKeyFrame", 
+      "triggerTime_ms"  : 3500, 
+      "xcen"            : 0, 
+      "ycen"            : 0
+    }
+  ],
+  "ANIM_TEST_SPINNER": [
+    {
+      "$type": "BehaviorDesigner.HeadAnglePointData, BehaviorDesigner",
+      "angle_deg": -25,
+      "angleVariability_deg": 0,
+      "triggerTime_ms": 0,
+      "durationTime_ms": 500,
+      "Name": "HeadAngleKeyFrame"
+    },
+    {
+      "$type": "BehaviorDesigner.HeadAnglePointData, BehaviorDesigner",
+      "angle_deg": 4,
+      "angleVariability_deg": 0,
+      "triggerTime_ms": 500,
+      "durationTime_ms": 500,
+      "Name": "HeadAngleKeyFrame"
+    },
+    {
+      "Name" : "RobotAudioKeyFrame", 
+      "triggerTime_ms"  : 500,
+      "audioName"       : "robot/creep/Robot-PowerOn1Rev2.wav"
+    }
+  ]
+} 
+

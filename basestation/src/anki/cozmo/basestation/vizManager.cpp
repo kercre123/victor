@@ -18,13 +18,10 @@
 
 #include "anki/cozmo/basestation/viz/vizManager.h"
 #include "util/logging/logging.h"
-#include "anki/common/basestation/utils/fileManagement.h"
 #include "anki/common/basestation/exceptions.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/polygon_impl.h"
-
 #include "anki/vision/basestation/imageIO.h"
-
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
 
 
@@ -603,6 +600,7 @@ namespace Anki {
     
 
     void VizManager::SendRobotState(const MessageRobotState &msg,
+                                    const s32 &numAnimBytesFree,
                                     const u8 &videoFramefateHz)
     {
       VizRobotState m;
@@ -622,8 +620,8 @@ namespace Anki {
       m.proxRight = msg.proxRight;
       m.battVolt10x = msg.battVolt10x;
       m.status = msg.status;
-      m.numAnimBytesFree = msg.numAnimBytesFree;
       
+      m.numAnimBytesFree = numAnimBytesFree;
       m.videoFramerateHZ = videoFramefateHz;
       
       SendMessage( GET_MESSAGE_ID(VizRobotState), &m);

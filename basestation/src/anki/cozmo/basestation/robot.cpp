@@ -13,16 +13,13 @@
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/comms/robot/robotMessages.h"
 #include "anki/cozmo/basestation/robot.h"
-#include "anki/cozmo/basestation/signals/cozmoEngineSignals.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/common/basestation/math/point.h"
 #include "anki/common/basestation/math/quad_impl.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/poseBase_impl.h"
-#include "anki/common/basestation/platformPathManager.h"
 #include "anki/common/basestation/utils/timer.h"
-#include "anki/common/basestation/utils/fileManagement.h"
 #include "anki/vision/CameraSettings.h"
 // TODO: This is shared between basestation and robot and should be moved up
 #include "anki/cozmo/shared/cozmoConfig.h"
@@ -31,10 +28,12 @@
 #include "anki/cozmo/basestation/ramp.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
 #include "opencv2/highgui/highgui.hpp" // For imwrite() in ProcessImage
-
 #include "anki/cozmo/basestation/soundManager.h"
 #include "anki/cozmo/basestation/faceAnimationManager.h"
-
+#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "clad/externalInterface/messageEngineToGame.h"
+#include "anki/cozmo/basestation/data/dataPlatform.h"
+#include "util/fileUtils/fileUtils.h"
 #include <fstream>
 #include <dirent.h>
 #include <sys/stat.h>
@@ -45,13 +44,17 @@
 namespace Anki {
   namespace Cozmo {
     
-    Robot::Robot(const RobotID_t robotID, IRobotMessageHandler* msgHandler)
-    : _ID(robotID)
+    Robot::Robot(const RobotID_t robotID, IRobotMessageHandler* msgHandler,
+      IExternalInterface* externalInterface, Data::DataPlatform* dataPlatform)
+    : _externalInterface(externalInterface)
+    , _dataPlatform(dataPlatform)
+    , _ID(robotID)
     , _isPhysical(false)
     , _newStateMsgAvailable(false)
     , _syncTimeAcknowledged(false)
     , _msgHandler(msgHandler)
     , _blockWorld(this)
+    , _visionProcessor(dataPlatform)
 #   if !ASYNC_VISION_PROCESSING
     , _haveNewImage(false)
 #   endif
@@ -84,7 +87,9 @@ namespace Anki {
     , _isPickedUp(false)
     , _isMoving(false)
     , _isAnimating(false)
+    , _isIdleAnimating(false)
     , _battVoltage(5)
+    , _imageSendMode(ISM_OFF)
     , _carryingMarker(nullptr)
     , _lastPickOrPlaceSucceeded(false)
     , _stateSaveMode(SAVE_OFF)
@@ -92,6 +97,8 @@ namespace Anki {
     , _imgFramePeriod(0)
     , _lastImgTimeStamp(0)
     , _animationStreamer(_cannedAnimations)
+    , _numAnimationBytesPlayed(0)
+    , _numAnimationBytesStreamed(0)
     {
       _poseHistory = new RobotPoseHistory();
       
@@ -104,28 +111,17 @@ namespace Anki {
       // The call to Delocalize() will increment frameID, but we want it to be
       // initialzied to 0, to match the physical robot's initialization
       _frameId = 0;
-      
-      Json::Reader reader;
-      
-      // Read planner motion primitives
-      // TODO: Use different motions primitives depending on the type/personality of this robot
-      // TODO: Stop storing *cozmo* motion primitives in a coretech location
       Json::Value mprims;
-      {
-        const std::string subPath = "cozmo_mprim.json";
-        const std::string jsonFilename = PREPEND_SCOPED_PATH(Config, subPath);
-        std::ifstream jsonFile(jsonFilename);
-        if(false == reader.parse(jsonFile, mprims)) {
-          PRINT_NAMED_ERROR("Robot.MotionPrimitiveJsonParseFailure",
-                            "Failed to parse Json motion primitives file %s. Planner likely won't work.\n",
-                            jsonFilename.c_str());
-        } else {
-          PRINT_NAMED_INFO("Robot.MotionPrimitivesLoaded",
-                            "Loaded Json motion primitives from file %s.\n",
-                            jsonFilename.c_str());
+      if (_dataPlatform != nullptr){
+        // Read planner motion primitives
+        // TODO: Use different motions primitives depending on the type/personality of this robot
+        // TODO: Stop storing *cozmo* motion primitives in a coretech location
+        const bool success = _dataPlatform->readAsJson(Data::Scope::Resources, "config/basestation/config/cozmo_mprim.json", mprims);
+        if(!success) {
+          PRINT_NAMED_ERROR("Robot.MotionPrimitiveJsonParseFailure", "Failed to load motion primitives, Planner likely won't work.");
         }
-        jsonFile.close();
       }
+
 
       ReadAnimationDir(false);
       
@@ -211,17 +207,13 @@ namespace Anki {
         return RESULT_FAIL;
       }
 
-      // Send state to visualizer for displaying
-      VizManager::getInstance()->SendRobotState(msg, (u8)MIN(1000.f/GetAverageImagePeriodMS(), u8_MAX));
-      
       // Save state to file
       if(_stateSaveMode != SAVE_OFF)
       {
         // Make sure image capture folder exists
-        if (!DirExists(AnkiUtil::kP_ROBOT_STATE_CAPTURE_DIR)) {
-          if (!MakeDir(AnkiUtil::kP_ROBOT_STATE_CAPTURE_DIR)) {
-            PRINT_NAMED_WARNING("Robot.UpdateFullRobotState.CreateDirFailed","\n");
-          }
+        std::string robotStateCaptureDir = _dataPlatform->pathToResource(Data::Scope::Cache, AnkiUtil::kP_ROBOT_STATE_CAPTURE_DIR);
+        if (!Util::FileUtils::CreateDirectory(robotStateCaptureDir, false, true)) {
+          PRINT_NAMED_ERROR("Robot.UpdateFullRobotState.CreateDirFailed","%s", robotStateCaptureDir.c_str());
         }
         
 #if(0)
@@ -243,15 +235,12 @@ namespace Anki {
 
         
         // Write state message to JSON file
+        // TODO: (ds/as) use current game log folder instead?
         std::string msgFilename(std::string(AnkiUtil::kP_ROBOT_STATE_CAPTURE_DIR) + "/cozmo" + std::to_string(GetID()) + "_state_" + std::to_string(msg.timestamp) + ".json");
         
         Json::Value json = msg.CreateJson();
-        std::ofstream jsonFile(msgFilename, std::ofstream::out);
-        
-        fprintf(stdout, "Writing RobotState JSON to file %s.\n", msgFilename.c_str());
-        jsonFile << json.toStyledString();
-        jsonFile.close();
-        
+        PRINT_NAMED_INFO("Robot.UpdateFullRobotState", "Writing RobotState JSON to file %s", msgFilename.c_str());
+        _dataPlatform->writeAsJson(Data::Scope::Cache, msgFilename, json);
 #if(0)
         // Compose line for IMU output file.
         // Used for determining delay constant in image timestamp.
@@ -304,7 +293,9 @@ namespace Anki {
       SetPickedUp( msg.status & IS_PICKED_UP );
       
       _isAnimating = static_cast<bool>(msg.status & IS_ANIMATING);
-      _numFreeAnimationBytes = msg.numAnimBytesFree;
+      _isIdleAnimating = _animationStreamer.IsIdleAnimating();
+      
+      _numAnimationBytesPlayed = msg.numAnimBytesPlayed;
       
       _battVoltage = (f32)msg.battVolt10x * 0.1f;
       
@@ -430,6 +421,18 @@ namespace Anki {
        msg.timestamp, msg.pose_frame_id,
        msg.pose_x, msg.pose_y, msg.pose_angle*180.f/M_PI);
        */
+      
+      
+      // Engine modifications to state message.
+      // TODO: Should this just be a different message? Or one that includes the state message from the robot?
+      MessageRobotState stateMsg(msg);
+      if (_isIdleAnimating) { stateMsg.status |= IS_ANIMATING_IDLE; }
+      
+      
+      // Send state to visualizer for displaying
+      VizManager::getInstance()->SendRobotState(stateMsg,
+                                                KEYFRAME_BUFFER_SIZE - (_numAnimationBytesStreamed - _numAnimationBytesPlayed),
+                                                (u8)MIN(1000.f/GetAverageImagePeriodMS(), u8_MAX));
       
       return lastResult;
       
@@ -741,6 +744,9 @@ namespace Anki {
        lastUpdateTime = currentTime_sec;
        */
       
+      
+      if (GetCamera().IsCalibrated()) {
+      
 #     if !ASYNC_VISION_PROCESSING
       if(_haveNewImage)
         
@@ -871,6 +877,7 @@ namespace Anki {
         _blockWorld.Update(numBlocksObserved);
 
       } // if(_visionProcessor.WasLastImageProcessed())
+      } // if (GetCamera().IsCalibrated())
       
       ///////// Update the behavior manager ///////////
       
@@ -1072,7 +1079,7 @@ namespace Anki {
       _selectedPathPlanner = _longPathPlanner;
       
       // Compute drive center pose for start pose and goal poses
-      vector<Pose3d> targetDriveCenterPoses(poses.size());
+      std::vector<Pose3d> targetDriveCenterPoses(poses.size());
       for (int i=0; i< poses.size(); ++i) {
         ComputeDriveCenterPose(poses[i], targetDriveCenterPoses[i]);
       }
@@ -1130,19 +1137,29 @@ namespace Anki {
     // Sends a message to the robot to move the lift to the specified height
     Result Robot::MoveLiftToHeight(const f32 height_mm,
                                    const f32 max_speed_rad_per_sec,
-                                   const f32 accel_rad_per_sec2)
+                                   const f32 accel_rad_per_sec2,
+                                   const f32 duration_sec)
     {
-      return SendSetLiftHeight(height_mm, max_speed_rad_per_sec, accel_rad_per_sec2);
+      return SendSetLiftHeight(height_mm, max_speed_rad_per_sec, accel_rad_per_sec2, duration_sec);
     }
     
     // Sends a message to the robot to move the head to the specified angle
     Result Robot::MoveHeadToAngle(const f32 angle_rad,
                                   const f32 max_speed_rad_per_sec,
-                                  const f32 accel_rad_per_sec2)
+                                  const f32 accel_rad_per_sec2,
+                                  const f32 duration_sec)
     {
-      return SendSetHeadAngle(angle_rad, max_speed_rad_per_sec, accel_rad_per_sec2);
+      return SendSetHeadAngle(angle_rad, max_speed_rad_per_sec, accel_rad_per_sec2, duration_sec);
     }
-      
+
+    Result Robot::TurnInPlaceAtSpeed(const f32 speed_rad_per_sec,
+                                     const f32 accel_rad_per_sec2)
+    {
+      return SendTurnInPlaceAtSpeed(speed_rad_per_sec, accel_rad_per_sec2);
+    }
+    
+    
+    
     Result Robot::TapBlockOnGround(const u8 numTaps)
     {
       return SendTapBlockOnGround(numTaps);
@@ -1207,16 +1224,26 @@ namespace Anki {
       return _animationStreamer.SetIdleAnimation(animName);
     }
     
+    const std::string Robot::GetStreamingAnimationName() const
+    {
+      return _animationStreamer.GetStreamingAnimationName();
+    }
+    
     Result Robot::PlaySound(const std::string& soundName, u8 numLoops, u8 volume)
     {
-      CozmoEngineSignals::PlaySoundForRobotSignal().emit(GetID(), soundName, numLoops, volume);
+      if (_externalInterface != nullptr) {
+        _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::PlaySound(soundName, numLoops, volume)));
+      }
+      //CozmoEngineSignals::PlaySoundForRobotSignal().emit(GetID(), soundName, numLoops, volume);
       return RESULT_OK;
     } // PlaySound()
       
       
     void Robot::StopSound()
     {
-      CozmoEngineSignals::StopSoundForRobotSignal().emit(GetID());
+      if (_externalInterface != nullptr) {
+        _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::StopSound()));
+      }
     } // StopSound()
       
       
@@ -1227,22 +1254,16 @@ namespace Anki {
 
     void Robot::ReplayLastAnimation(const s32 loopCount)
     {
-      Result lastResult = _animationStreamer.SetStreamingAnimation(_lastPlayedAnimationId, loopCount);
+      _animationStreamer.SetStreamingAnimation(_lastPlayedAnimationId, loopCount);
     }
 
     // Read the animations in a dir
     void Robot::ReadAnimationFile(const char* filename, std::string& animationId)
     {
-      Json::Reader reader;
       Json::Value animDefs;
-      std::ifstream jsonFile(filename);
-      if(reader.parse(jsonFile, animDefs) == false) {
-        PRINT_NAMED_ERROR("Robot.ReadAnimationFile.JsonParseFailure",
-          "Failed to parse Json animation file %s.", filename);
-      }
-      jsonFile.close();
-      if (!animDefs.empty()) {
-        PRINT_NAMED_INFO("Robot.ReadAnimationFile", "reading");
+      const bool success = _dataPlatform->readAsJson(filename, animDefs);
+      if (success && !animDefs.empty()) {
+        PRINT_NAMED_INFO("Robot.ReadAnimationFile", "reading %s", filename);
         _cannedAnimations.DefineFromJson(animDefs, animationId);
       }
 
@@ -1252,10 +1273,12 @@ namespace Anki {
     // Read the animations in a dir
     void Robot::ReadAnimationDir(bool playLoadedAnimation)
     {
-      SoundManager::getInstance()->SetRootDir();
-      FaceAnimationManager::getInstance()->SetRootDir();
+      if (_dataPlatform == nullptr) { return; }
+      SoundManager::getInstance()->LoadSounds(_dataPlatform);
+      FaceAnimationManager::getInstance()->ReadFaceAnimationDir(_dataPlatform);
       
-      const std::string animationFolder = PREPEND_SCOPED_PATH(Animation, "");
+      const std::string animationFolder =
+        _dataPlatform->pathToResource(Data::Scope::Resources, "assets/animations/");
       std::string animationId;
       s32 loadedFileCount = 0;
       DIR* dir = opendir(animationFolder.c_str());
@@ -1284,7 +1307,6 @@ namespace Anki {
               }
             }
             if (loadFile) {
-              PRINT_NAMED_INFO("Robot.ReadAnimationFile", "importing file %s", fullFileName.c_str());
               ReadAnimationFile(fullFileName.c_str(), animationId);
               ++loadedFileCount;
             }
@@ -1294,6 +1316,15 @@ namespace Anki {
       } else {
         PRINT_NAMED_INFO("Robot.ReadAnimationFile", "folder not found %s", animationFolder.c_str());
       }
+
+      // Tell UI about available animations
+      if (_externalInterface != nullptr) {
+        std::vector<std::string> animNames(_cannedAnimations.GetAnimationNames());
+        for (std::vector<std::string>::iterator i=animNames.begin(); i != animNames.end(); ++i) {
+          _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::AnimationAvailable(*i)));
+        }
+      }
+
 
       if (!animationId.empty() && loadedFileCount == 1 && playLoadedAnimation) {
         // send message to play animation
@@ -2073,28 +2104,42 @@ namespace Anki {
 
     Result Robot::SendSetLiftHeight(const f32 height_mm,
                                     const f32 max_speed_rad_per_sec,
-                                    const f32 accel_rad_per_sec2) const
+                                    const f32 accel_rad_per_sec2,
+                                    const f32 duration_sec) const
     {
       MessageSetLiftHeight m;
       m.height_mm = height_mm;
       m.max_speed_rad_per_sec = max_speed_rad_per_sec;
       m.accel_rad_per_sec2 = accel_rad_per_sec2;
+      m.duration_sec = duration_sec;
       
       return _msgHandler->SendMessage(_ID,m);
     }
     
     Result Robot::SendSetHeadAngle(const f32 angle_rad,
                                    const f32 max_speed_rad_per_sec,
-                                   const f32 accel_rad_per_sec2) const
+                                   const f32 accel_rad_per_sec2,
+                                   const f32 duration_sec) const
     {
       MessageSetHeadAngle m;
       m.angle_rad = angle_rad;
       m.max_speed_rad_per_sec = max_speed_rad_per_sec;
       m.accel_rad_per_sec2 = accel_rad_per_sec2;
+      m.duration_sec = duration_sec;
       
       return _msgHandler->SendMessage(_ID,m);
     }
+
+    Result Robot::SendTurnInPlaceAtSpeed(const f32 speed_rad_per_sec,
+                                         const f32 accel_rad_per_sec2) const
+    {
+      MessageTurnInPlaceAtSpeed m;
+      m.speed_rad_per_sec = speed_rad_per_sec;
+      m.accel_rad_per_sec2 = accel_rad_per_sec2;
       
+      return _msgHandler->SendMessage(_ID,m);
+    }
+    
     Result Robot::SendTapBlockOnGround(const u8 numTaps) const
     {
       MessageTapBlockOnGround m;
@@ -2214,10 +2259,9 @@ namespace Anki {
       if (_imageSaveMode != SAVE_OFF) {
         
         // Make sure image capture folder exists
-        if (!DirExists(AnkiUtil::kP_IMG_CAPTURE_DIR)) {
-          if (!MakeDir(AnkiUtil::kP_IMG_CAPTURE_DIR)) {
-            PRINT_NAMED_WARNING("Robot.ProcessImage.CreateDirFailed","\n");
-          }
+        std::string imageCaptureDir = _dataPlatform->pathToResource(Data::Scope::Cache, AnkiUtil::kP_IMG_CAPTURE_DIR);
+        if (!Util::FileUtils::CreateDirectory(imageCaptureDir, false, true)) {
+          PRINT_NAMED_WARNING("Robot.ProcessImage.CreateDirFailed","%s",imageCaptureDir.c_str());
         }
         
         // Write image to file (recompressing as jpeg again!)
@@ -2226,7 +2270,7 @@ namespace Anki {
         std::vector<int> compression_params;
         compression_params.push_back(CV_IMWRITE_JPEG_QUALITY);
         compression_params.push_back(90);
-        sprintf(imgFilename, "%s/cozmo%d_%dms_%d.jpg", AnkiUtil::kP_IMG_CAPTURE_DIR, GetID(), image.GetTimestamp(), imgCounter++);
+        sprintf(imgFilename, "%s/cozmo%d_%dms_%d.jpg", imageCaptureDir.c_str(), GetID(), image.GetTimestamp(), imgCounter++);
         imwrite(imgFilename, image.get_CvMat_(), compression_params);
         
         if (_imageSaveMode == SAVE_ONE_SHOT) {
@@ -2518,8 +2562,8 @@ namespace Anki {
       // Now make the robot's origin point to the new origin
       // TODO: avoid the icky const_cast here...
       _worldOrigin = const_cast<Pose3d*>(newPoseWrtNewOrigin.GetParent());
-      
-      CozmoEngineSignals::RobotWorldOriginChangedSignal().emit(GetID());
+
+      _robotWorldOriginChangedSignal.emit(GetID());
       
       return RESULT_OK;
       
@@ -2771,7 +2815,7 @@ namespace Anki {
     {
       bool anyFailures = false;
       
-      _actionList.Clear();
+      _actionList.Cancel();
       
       if(ClearPath() != RESULT_OK) {
         anyFailures = true;
@@ -2800,6 +2844,7 @@ namespace Anki {
       
     Result Robot::AbortAnimation()
     {
+      _animationStreamer.SetStreamingAnimation("");
       return SendAbortAnimation();
     }
     

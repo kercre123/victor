@@ -57,16 +57,6 @@ namespace Anki {
         
         // Filter coefficient on z-axis accelerometer
         const f32 ACCEL_PICKUP_FILT_COEFF = 0.1f;
-        
-        // Minimum delta in filtered data required to be considering trending up/down
-        const f32 PD_ACCEL_MIN_DELTA = 5.f;
-        
-        // Minimum length of trend (in tics) required for pickup detection.
-        const u32 PD_MIN_TREND_LENGTH = 20;
-        
-        // A trend that spans this difference in accelerometer readings (mm/s2) can be considered
-        // a pickup even if the head was moving.
-        const f32 PD_SUFFICIENT_TREND_DIFF = 4200;
 
         f32 pdFiltAccX_aligned_ = 0;
         f32 pdFiltAccY_aligned_ = 0;
@@ -74,7 +64,6 @@ namespace Anki {
         f32 pdFiltAccX_ = 0.f;
         f32 pdFiltAccY_ = 0.f;
         f32 pdFiltAccZ_ = 9800.f;
-        f32 pdTrendStartVal_ = 0;
         u8 pdRiseCnt_ = 0;
         u8 pdFallCnt_ = 0;
         u8 pdLastHeadMoveCnt_ = 0;
@@ -193,6 +182,7 @@ namespace Anki {
         pdFallCnt_ = 0;
         pdRiseCnt_ = 0;
         pdLastHeadMoveCnt_ = 0;
+        pdUnexpectedMotionCnt_ = 0;
       }
       
       void Reset()
@@ -231,6 +221,13 @@ namespace Anki {
         eventStateRaw_[BACKSIDE_DOWN] = accel_robot_frame_filt[0] > NSIDE_DOWN_THRESH_MMPS2;
       }
       
+      // Checks for accelerations 
+      bool CheckUnintendedAcceleration() {
+        return (ABS(pdFiltAccX_aligned_) > 5000) ||
+               (ABS(pdFiltAccY_aligned_) > 3000) ||
+               (ABS(pdFiltAccZ_aligned_) > 11000);
+      }
+      
       
       bool MotionDetected() {
         return (lastMotionDetectedTime_us + MOTION_DETECT_TIMEOUT_US) > HAL::GetMicroCounter();
@@ -258,8 +255,6 @@ namespace Anki {
         const f32 accel_angle_imu_frame = atan2_fast(pdFiltAccZ_, pdFiltAccX_);
         const f32 accel_angle_robot_frame = accel_angle_imu_frame + HeadController::GetAngleRad();
         
-        f32 pdFiltPrevVal = pdFiltAccZ_aligned_;
-        
         pdFiltAccX_aligned_ = xzAccelMagnitude * cosf(accel_angle_robot_frame);
         pdFiltAccY_aligned_ = pdFiltAccY_;
         pdFiltAccZ_aligned_ = xzAccelMagnitude * sinf(accel_angle_robot_frame);
@@ -270,7 +265,9 @@ namespace Anki {
           
           // Picked up flag is reset only when the robot has stopped moving
           // and it has been set upright.
-          if (!MotionDetected() && accel_robot_frame_filt[2] > NSIDE_DOWN_THRESH_MMPS2) {
+          if (!MotionDetected() &&
+              !CheckUnintendedAcceleration() &&
+              (accel_robot_frame_filt[2] > NSIDE_DOWN_THRESH_MMPS2)) {
             SetPickupDetect(false);
           }
             
@@ -279,9 +276,7 @@ namespace Anki {
           // Do simple check first.
           // If wheels aren't moving, any motion is because a person was messing with it!
           if (!WheelController::AreWheelsPowered() && !HeadController::IsMoving() && !LiftController::IsMoving()) {
-            if (ABS(pdFiltAccX_aligned_) > 5000 ||
-                ABS(pdFiltAccY_aligned_) > 3000 ||
-                ABS(pdFiltAccZ_aligned_) > 11000 ||
+            if (CheckUnintendedAcceleration() ||
                 ABS(gyro_robot_frame_filt[0]) > 5.f ||
                 ABS(gyro_robot_frame_filt[1]) > 5.f ||
                 ABS(gyro_robot_frame_filt[2]) > 5.f) {
@@ -300,10 +295,7 @@ namespace Anki {
           // Do conservative check for pickup.
           // Only when we're really sure it's moving!
           // TODO: Make this smarter!
-          if (!IsPickedUp() &&
-              (ABS(pdFiltAccX_aligned_) > 5000 ||
-               ABS(pdFiltAccY_aligned_) > 3000 ||
-               ABS(pdFiltAccZ_aligned_) > 11000)) {
+          if (!IsPickedUp() && CheckUnintendedAcceleration()) {
             ++pdRiseCnt_;
             if (pdRiseCnt_ > 40) {
               SetPickupDetect(true);
@@ -314,79 +306,6 @@ namespace Anki {
             pdRiseCnt_ = 0;
           }
           
-          /*
-          // If rise detected this tic...
-          if (pdFiltAccZ_aligned_ > pdFiltPrevVal + PD_ACCEL_MIN_DELTA) {
-            if (pdFallCnt_ > 0) {
-              // If we've been trending down, check if the trend
-              // meets pickup detection conditions. Otherwise,
-              // reset vars for upwards trend.
-              if ((pdFallCnt_ - pdLastHeadMoveCnt_ > PD_MIN_TREND_LENGTH)
-                  || (pdFallCnt_ > PD_MIN_TREND_LENGTH && (pdTrendStartVal_ - pdFiltAccZ_aligned_) > PD_SUFFICIENT_TREND_DIFF)) {
-                PRINT("PDFall: %d, lastHead: %d, val %f, startVal %f\n", pdFallCnt_, pdLastHeadMoveCnt_, pdFiltAccZ_, pdTrendStartVal_);
-                SetPickupDetect(true);
-              } else {
-                pdFallCnt_ = 0;
-                pdLastHeadMoveCnt_ = 0;
-                pdTrendStartVal_ = pdFiltAccZ_aligned_;
-                ++pdRiseCnt_;
-              }
-            } else {
-              ++pdRiseCnt_;
-
-              if (pdRiseCnt_ == 1) {
-                pdTrendStartVal_ = pdFiltAccZ_aligned_;
-              }
-              
-              if (HeadController::IsMoving()) {
-                pdLastHeadMoveCnt_ = pdRiseCnt_;
-              }
-              
-            }
-            
-          // If fall detected this tic...
-          } else if (pdFiltAccZ_aligned_ < pdFiltPrevVal - PD_ACCEL_MIN_DELTA) {
-            if (pdRiseCnt_ > 0) {
-              // If we've been trending up, check if the trend
-              // meets pickup detection conditions. Otherwise,
-              // reset vars for downwards trend.
-              if ((pdRiseCnt_ - pdLastHeadMoveCnt_> PD_MIN_TREND_LENGTH)
-                  || (pdRiseCnt_ > PD_MIN_TREND_LENGTH && (pdFiltAccZ_aligned_ - pdTrendStartVal_) > PD_SUFFICIENT_TREND_DIFF)) {
-                PRINT("PDRise: %d, lastHead: %d, val %f, startVal %f\n", pdRiseCnt_, pdLastHeadMoveCnt_, pdFiltAccZ_, pdTrendStartVal_);
-                SetPickupDetect(true);
-              } else {
-                pdRiseCnt_ = 0;
-                pdLastHeadMoveCnt_ = 0;
-                ++pdFallCnt_;
-                pdTrendStartVal_ = pdFiltAccZ_aligned_;
-              }
-            } else {
-              ++pdFallCnt_;
-              
-              if (pdFallCnt_ == 1) {
-                pdTrendStartVal_ = pdFiltAccZ_aligned_;
-              }
-              
-              if (HeadController::IsMoving()) {
-                pdLastHeadMoveCnt_ = pdFallCnt_;
-              }
-
-            }
-          } else {
-            
-            // Trend is flat. Decrement counter values.
-            if (pdRiseCnt_ > 0) {
-              --pdRiseCnt_;
-            }
-            if (pdFallCnt_ > 0) {
-              --pdFallCnt_;
-            }
-            if (pdLastHeadMoveCnt_ > 0) {
-              --pdLastHeadMoveCnt_;
-            }
-            
-          }
-           */
         }
       }
       

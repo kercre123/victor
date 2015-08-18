@@ -16,14 +16,11 @@
 #include "anki/cozmo/basestation/actionableObject.h"
 #include "anki/cozmo/basestation/actionInterface.h"
 #include "anki/cozmo/basestation/compoundActions.h"
-#include "anki/cozmo/basestation/signals/cozmoEngineSignals.h"
-
 #include "anki/common/types.h"
-
 #include "anki/common/basestation/objectTypesAndIDs.h"
 #include "anki/common/basestation/math/pose.h"
-
-#include "anki/cozmo/messageBuffers/shared/actionTypes.h"
+#include "util/signals/simpleSignal_fwd.h"
+#include "clad/types/actionTypes.h"
 
 namespace Anki {
   
@@ -153,7 +150,7 @@ namespace Anki {
     class TurnInPlaceAction : public DriveToPoseAction
     {
     public:
-      TurnInPlaceAction(const Radians& angle);
+      TurnInPlaceAction(const Radians& angle, const bool isAbsolute);
       
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::TURN_IN_PLACE; }
@@ -165,6 +162,7 @@ namespace Anki {
       
     private:
       Radians _turnAngle;
+      bool    _isAbsoluteAngle;
       bool    _startedTraversingPath;
       
     }; // class TurnInPlaceAction
@@ -370,11 +368,9 @@ namespace Anki {
       // on what we were doing.
       virtual RobotActionType GetType() const override;
       
-      // Override completion signal to fill in information about objects picked
-      // or placed
-      virtual void EmitCompletionSignal(Robot& robot, ActionResult result) const override;
-      
     protected:
+      
+      virtual void GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const override;
       
       virtual PreActionPose::ActionType GetPreActionType() override { return PreActionPose::DOCKING; }
       
@@ -411,10 +407,10 @@ namespace Anki {
       // Override to determine type (low roll, or potentially other rolls) dynamically depending
       // on what we were doing.
       virtual RobotActionType GetType() const override;
-      
+
       // Override completion signal to fill in information about rolled objects
-      virtual void EmitCompletionSignal(Robot& robot, ActionResult result) const override;
-      
+      virtual void GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const override;
+
     protected:
       
       virtual PreActionPose::ActionType GetPreActionType() override { return PreActionPose::DOCKING; }
@@ -451,9 +447,9 @@ namespace Anki {
       // determined dynamically
       virtual RobotActionType GetType() const override { return _actions.back().second->GetType(); }
       
-      // Use PickAndPlaceObjectAction's completion signal
-      virtual void EmitCompletionSignal(Robot& robot, ActionResult result) const override {
-        return _actions.back().second->EmitCompletionSignal(robot, result);
+      // Use PickAndPlaceObjectAction's completion info
+      virtual void GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const override {
+        _actions.back().second->GetCompletionStruct(robot, completionInfo);
       }
       
     };
@@ -477,8 +473,8 @@ namespace Anki {
       virtual RobotActionType GetType() const override { return _actions.back().second->GetType(); }
       
       // Use RollObjectAction's completion signal
-      virtual void EmitCompletionSignal(Robot& robot, ActionResult result) const override {
-        return _actions.back().second->EmitCompletionSignal(robot, result);
+      virtual void GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const override {
+        _actions.back().second->GetCompletionStruct(robot, completionInfo);
       }
       
     };
@@ -652,7 +648,7 @@ namespace Anki {
       virtual const std::string& GetName() const override { return _name; }
       virtual RobotActionType GetType() const override { return RobotActionType::PLAY_ANIMATION; }
       
-      virtual void EmitCompletionSignal(Robot& robot, ActionResult result) const override;
+      virtual void GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const override;
       
     protected:
       

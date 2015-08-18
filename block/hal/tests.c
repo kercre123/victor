@@ -7,17 +7,17 @@ void StreamAccelerometer()
   //s8 accDataLast[3];
   InitUart();
   InitAcc();
-
+  
   while(1)
   {
     ReadAcc(accData);
-    puthex(accData[0]);
+    PutDec(accData[0]);
     //puthex(accData[0]-accDataLast[0]);
     putchar('\t');
-    puthex(accData[1]);
+    PutDec(accData[1]);
     //puthex(accData[1]-accDataLast[1]);
     putchar('\t');
-    puthex(accData[2]);
+    PutDec(accData[2]);
     //puthex(accData[2]-accDataLast[2]);
     putstring("\r\n");
     //ReadFifo();
@@ -26,7 +26,15 @@ void StreamAccelerometer()
     /*delay_ms(8);
     delay_us(850);*/
    // delay_us(700); //500 hz loop
+    //delay_ms(2);
+    
+    // ~ 1.15-1.3 ms for I2C read
+    // Maybe even 1.5 ms
+    // 250 hz delay = 4ms-1.5ms = 2.5 ms
+    // In practice 2.83 so I2C read is ~1.17ms
     delay_ms(2);
+    delay_us(830);
+    
   }
   #endif
 }
@@ -36,17 +44,37 @@ void StreamAccelerometer()
 void TapsTest()
 {
   #ifdef DO_TAPS_TEST
-  u8 tapCount = 0;
+  u8 tapCount = 0, x = 0;
+  u8 taps;
+  u8 tapCountDelay[4] = {0,0,0,0};
   InitAcc();
+
   //InitUART();
   while(1)
   {
+    #if 1
+    tapCount += GetTaps();
+    delay_ms(30);
+    if(++x & 31)
+      LightOn(tapCount % 12);
+    #elif 0
     tapCount += GetTaps();
     LightOn(tapCount % 12);
-    delay_ms(25);
-      // Initialize watchdog watchdog
-  WDSV = 0; // 2 seconds to get through startup
-  WDSV = 1;  
+    delay_ms(30);
+    #else
+    taps = GetTaps();
+    tapCount += taps;
+    delay_ms(30);
+    LightOn(tapCountDelay[0] % 12);
+    tapCountDelay[0] = tapCountDelay[1];
+    tapCountDelay[1] = tapCountDelay[2];
+    tapCountDelay[2] = tapCountDelay[3];
+    tapCountDelay[3] = tapCount;
+    #endif
+
+    // Initialize watchdog watchdog
+    WDSV = 0; // 2 seconds to get through startup
+    WDSV = 1;
   }
   #endif
 }

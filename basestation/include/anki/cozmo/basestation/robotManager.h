@@ -11,23 +11,28 @@
 #ifndef ANKI_COZMO_BASESTATION_ROBOTMANAGER_H
 #define ANKI_COZMO_BASESTATION_ROBOTMANAGER_H
 
+#include "anki/cozmo/basestation/robotEventHandler.h"
 #include "anki/cozmo/shared/cozmoTypes.h"
-
+#include "util/signals/simpleSignal.hpp"
 #include <map>
 #include <vector>
 
 namespace Anki {
   namespace Cozmo {
     
-    // Forward declarations:
-    class Robot;
-    class IRobotMessageHandler;
+  // Forward declarations:
+  class Robot;
+  class IRobotMessageHandler;
+  class IExternalInterface;
+  namespace Data {
+  class DataPlatform;
+  }
     
     class RobotManager
     {
     public:
     
-      RobotManager();
+      RobotManager(IExternalInterface* externalInterface, Data::DataPlatform* dataPlatform);
       
       // Get the list of known robot ID's
       std::vector<RobotID_t> const& GetRobotIDList() const;
@@ -51,11 +56,19 @@ namespace Anki {
       // Return a
       // Return the number of availale robots
       size_t GetNumRobots() const;
-      
+
+      // Events
+      using RobotDisconnectedSignal = Signal::Signal<void (RobotID_t)>;
+      RobotDisconnectedSignal& OnRobotDisconnected() { return _robotDisconnectedSignal; }
+
+
     protected:
-      
+      RobotDisconnectedSignal _robotDisconnectedSignal;
+      IExternalInterface* _externalInterface;
+      Data::DataPlatform* _dataPlatform;
       std::map<RobotID_t,Robot*> _robots;
       std::vector<RobotID_t>     _IDs;
+      RobotEventHandler _robotEventHandler;
       
     }; // class RobotManager
     

@@ -4,6 +4,7 @@
 
 #include "anki/common/types.h"
 #include "anki/cozmo/basestation/faceAnimationManager.h"
+#include "anki/cozmo/shared/faceDisplayDecode.h"
 
 #define SHOW_IMAGES 0
 
@@ -14,49 +15,23 @@ static void DrawFaceRLE(const std::vector<u8>& rleData,
 {
   using namespace Anki;
   using namespace Cozmo;
-  
-  const s32 NUM_DISPLAY_PIXELS = (FaceAnimationManager::IMAGE_HEIGHT *
-                                  FaceAnimationManager::IMAGE_WIDTH);
-  
-  u32 pixelCounter = 0;
-  bool draw = false;
-  
+    
   // Clear the display
   outImg.setTo(0);
-  
-  // Draw pixels
-  auto rleIter = rleData.begin();
-  while (rleIter != rleData.end() && *rleIter != 0) {
-    u8 run = *rleIter;
-    ++rleIter;
-    
-    u32 numPixels = run < 64 ? run * FaceAnimationManager::IMAGE_WIDTH : run - 64;
-    
-    // Adjust number of pixels this byte if it exceeds screen total
-    if (pixelCounter + numPixels > NUM_DISPLAY_PIXELS) {
-      numPixels = NUM_DISPLAY_PIXELS - pixelCounter;
-    }
-    
-    // Set pixels
-    if (draw) {
-      for (u32 i=0; i<numPixels; ++i) {
-        u32 y = pixelCounter / FaceAnimationManager::IMAGE_WIDTH;
-        u32 x = pixelCounter - (y * FaceAnimationManager::IMAGE_WIDTH);
-        ++pixelCounter;
-        
-        outImg(y,x) = 255;
+
+  uint64_t decodedImg[FaceAnimationManager::IMAGE_WIDTH];
+  FaceDisplayDecode(rleData.data(), FaceAnimationManager::IMAGE_HEIGHT, FaceAnimationManager::IMAGE_WIDTH, decodedImg);
+
+  // Translate from 1-bit/pixel,column-major ordering to 1-byte/pixel, row-major
+  for (u8 i = 0; i < FaceAnimationManager::IMAGE_WIDTH; ++i) {
+    for (u8 j = 0; j < FaceAnimationManager::IMAGE_HEIGHT; ++j) {
+      if ((decodedImg[i] >> j) & 1) {
+        outImg(j,i) = 255;
       }
-    } else {
-      // Update total pixels drawn thus far
-      pixelCounter += numPixels;
     }
-    
-    // Toggle whether we're drawing 0s or 1s
-    if (run >= 64) {
-      draw = !draw;
-    }
-    
   }
+
+  
 } // DrawFaceRLE()
 
 // Helper for testing whether two images are exactly equal, pixelwise
@@ -145,6 +120,37 @@ TEST(FaceAnimationManager, TestCompressRLE)
 # if SHOW_IMAGES
   cv::imshow("TwoEyesTestFace", img);
   cv::imshow("TwoEyesTestFace_Compare", testImg);
+  cv::waitKey(10);
+# endif
+  
+  ASSERT_TRUE(img.isContinuous());
+  ASSERT_TRUE(testImg.isContinuous());
+  EXPECT_TRUE(AreImagesEqual(img, testImg));
+
+  // Test with two simple solid eyes touching top of image
+  cv::Mat_<u8> topEyeROI;
+  img.setTo(0);
+  cv::Rect topEyeRectL(24,0,16,16);
+  cv::Rect topEyeRectR(88,0,16,16);
+  topEyeROI = img(topEyeRectL);
+  for(s32 i=0; i<topEyeROI.rows; ++i) {
+    cv::Mat_<u8> topEyeROI_row = topEyeROI.row(i);
+    topEyeROI_row.setTo(255);
+  }
+  
+  topEyeROI = img(topEyeRectR);
+  for(s32 i=0; i<topEyeROI.rows; ++i) {
+    cv::Mat_<u8> topEyeROI_row = topEyeROI.row(i);
+    topEyeROI_row.setTo(255);
+  }
+  
+  Anki::Cozmo::FaceAnimationManager::CompressRLE(img, rleData);
+  
+  DrawFaceRLE(rleData, testImg);
+  
+# if SHOW_IMAGES
+  cv::imshow("TwoEyesAtTopTestFace", img);
+  cv::imshow("TwoEyesAtTopTestFace_Compare", testImg);
   cv::waitKey(10);
 # endif
   

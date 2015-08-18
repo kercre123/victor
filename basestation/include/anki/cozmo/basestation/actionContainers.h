@@ -16,7 +16,7 @@
 
 #include "anki/common/types.h"
 
-#include "anki/cozmo/messageBuffers/shared/actionTypes.h"
+#include "clad/types/actionTypes.h"
 
 #include <list>
 #include <map>
@@ -45,13 +45,15 @@ namespace Anki {
       
       Result   Update(Robot& robot);
       
-      Result   QueueNext(IActionRunner *,  u8 numRetries = 0);
-      Result   QueueAtEnd(IActionRunner *, u8 numRetires = 0);
-
+      Result   QueueNext(IActionRunner  *action,  u8 numRetries = 0);
+      Result   QueueAtEnd(IActionRunner *action, u8 numRetires = 0);
+      Result   QueueNow(IActionRunner   *action,   u8 numRetries = 0);
+      
       // Blindly clear the queue
       void     Clear();
       
-      void     Cancel(Robot& robot, RobotActionType withType = RobotActionType::UNKNOWN);
+      bool     Cancel(RobotActionType withType = RobotActionType::UNKNOWN);
+      bool     Cancel(u32 idTag);
       
       bool     IsEmpty() const { return _queue.empty(); }
       
@@ -90,16 +92,21 @@ namespace Anki {
       Result     QueueActionNext(SlotHandle  atSlot, IActionRunner* action, u8 numRetries = 0);
       Result     QueueActionAtEnd(SlotHandle atSlot, IActionRunner* action, u8 numRetries = 0);
       
+      // Start doing the given action *now* -- cancels any currently-running action.
+      Result     QueueActionNow(SlotHandle atSlot, IActionRunner* action, u8 numRetries = 0);
+      
       bool       IsEmpty() const;
-
-      // Blindly clears out the contents of the action list
-      void       Clear();
 
       // Only cancels actions from the specified slot with the specified type, and
       // does any cleanup specified by the action's Cancel/Cleanup methods.
-      // (Use -1 for each to specify "all".)
-      void       Cancel(Robot& robot, SlotHandle fromSlot = -1,
+      // Returns true if any actions were cancelled.
+      bool       Cancel(SlotHandle fromSlot = -1, // -1 == "all slots"
                         RobotActionType withType = RobotActionType::UNKNOWN);
+      
+      // Find and cancel the action with the specified ID Tag. The slot to search in
+      // can optionally be specified, but otherwise, all slots are searched.
+      // Returns true if the action was found and cancelled.
+      bool       Cancel(u32 idTag, SlotHandle fromSlot = -1);
       
       void       Print() const;
       
@@ -109,6 +116,8 @@ namespace Anki {
 
       
     protected:
+      // Blindly clears out the contents of the action list
+      void       Clear();
       
       std::map<SlotHandle, ActionQueue> _queues;
       
@@ -123,6 +132,11 @@ namespace Anki {
     inline Result ActionList::QueueActionAtEnd(SlotHandle atSlot, IActionRunner* action, u8 numRetries)
     {
       return _queues[atSlot].QueueAtEnd(action, numRetries);
+    }
+    
+    inline Result ActionList::QueueActionNow(SlotHandle atSlot, IActionRunner* action, u8 numRetries)
+    {
+      return _queues[atSlot].QueueNow(action, numRetries);
     }
     
   } // namespace Cozmo

@@ -8,6 +8,7 @@
     'ctrlRobot_source': 'ctrlRobot.lst',
     'ctrlViz_source': 'ctrlViz.lst',
     'clad_source': 'clad.lst',
+    'pluginPhysics_source': 'pluginPhysics.lst',
     
     # TODO: should this be passed in, or shared?
     'coretech_defines': [
@@ -44,7 +45,9 @@
     ],
 
     'webots_includes': [
-      '<(webots_path)/include/controller/cpp'
+      '<(webots_path)/include/controller/cpp',
+      '<(webots_path)/include/ode',
+      '<(webots_path)/include',
     ],
     
     'faciometric_path' : [
@@ -57,26 +60,23 @@
     ],
 
     'compiler_flags': [
-      '-Wno-unused-function',
-      '-Wno-overloaded-virtual',
-      '-Wno-deprecated-declarations',
-      '-Wno-unused-variable',
-      # '-fdiagnostics-show-category=name',
-      # '-Wall',
-      # '-Woverloaded-virtual',
-      # '-Werror',
-      # '-Wundef',
-      # '-Wheader-guard',
-      # '-fsigned-char',
-      # '-fvisibility-inlines-hidden',
-      # '-fvisibility=default',
-      # '-Wshorten-64-to-32',
-      # '-Winit-self',
-      # '-Wconditional-uninitialized',
-      # '-Wno-deprecated-register',
-      # '-Wformat',
-      # '-Werror=format-security',
-      # '-g',
+      '-Wno-deprecated-declarations', # Supressed until system() usage is removed
+      '-fdiagnostics-show-category=name',
+      '-Wall',
+      '-Woverloaded-virtual',
+      '-Werror',
+      # '-Wundef', # Disabled until define usage is refactored to code standards (ANS: common.h ODE inside Webots fails this)
+      '-Wheader-guard',
+      '-fsigned-char',
+      '-fvisibility-inlines-hidden',
+      '-fvisibility=default',
+      '-Wshorten-64-to-32',
+      '-Winit-self',
+      '-Wconditional-uninitialized', 
+      # '-Wno-deprecated-register', # Disabled until this warning actually needs to be supressed
+      '-Wformat',
+      '-Werror=format-security',
+      '-g',
     ],
     'compiler_c_flags' : [
       '-std=c11',
@@ -294,6 +294,33 @@
 
 
         'targets': [
+
+          {
+            'target_name': 'cozmo_physics',
+            'type': 'shared_library',
+            'include_dirs': [
+              '../../include',
+              '<@(webots_includes)',
+              '<@(opencv_includes)',
+            ],
+            'dependencies': [
+              '<(ce-cti_gyp_path):ctiCommon',
+              '<(ce-cti_gyp_path):ctiMessaging',
+              '<(ce-util_gyp_path):util',
+            ],
+            'sources': [ 
+              '<!@(cat <(pluginPhysics_source))',
+            ],
+            'defines': [
+              'MACOS',
+            ],
+            'libraries': [
+              '<(webots_path)/lib/libCppController.dylib',
+              '<@(opencv_libs)',
+              '$(SDKROOT)/System/Library/Frameworks/OpenGL.framework',
+            ],
+          }, # end cozmo_physics
+
           {
             'target_name': 'webotsCtrlLightCube',
             'type': 'executable',
@@ -320,9 +347,7 @@
             'target_name': 'webotsCtrlViz',
             'type': 'executable',
             'include_dirs': [
-              # '../../robot/include',
               '../../include',
-              # '../../simulator/include',
               '<@(webots_includes)',
               '<@(opencv_includes)',
             ],
@@ -407,6 +432,59 @@
                 'destination': '<(PRODUCT_DIR)',
               },
             ],
+            'actions': [
+              # { # in engine only mode, we do not know where the assets are
+              #   'action_name': 'create_symlink_resources_assets',
+              #   'inputs': [
+              #     '<(cozmo_asset_path)',
+              #   ],
+              #   'outputs': [
+              #     '<(PRODUCT_DIR)/resources/assets',
+              #   ],
+              #   'action': [
+              #     'ln',
+              #     '-s',
+              #     '-f',
+              #     '-h',
+              #     '<@(_inputs)',
+              #     '<@(_outputs)',
+              #   ],
+              # },
+              {
+                'action_name': 'create_symlink_resources_configs',
+                'inputs': [
+                  '<(cozmo_engine_path)/resources/config',
+                ],
+                'outputs': [
+                  '<(PRODUCT_DIR)/resources/config',
+                ],
+                'action': [
+                  'ln',
+                  '-s',
+                  '-f',
+                  '-h',
+                  '<@(_inputs)',
+                  '<@(_outputs)',
+                ],
+              },
+              {
+                'action_name': 'create_symlink_resources_test',
+                'inputs': [
+                  '<(cozmo_engine_path)/resources/test',
+                ],
+                'outputs': [
+                  '<(PRODUCT_DIR)/resources/test',
+                ],
+                'action': [
+                  'ln',
+                  '-s',
+                  '-f',
+                  '-h',
+                  '<@(_inputs)',
+                  '<@(_outputs)',
+                ],
+              },
+            ],
           }, # end unittest target
 
 
@@ -457,6 +535,7 @@
           '../../basestation/include',
           '../../include',
           '../../generated/clad/engine',
+          '../../basestation/src',
         ],
         'defines': [
           'COZMO_BASESTATION'

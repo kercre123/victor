@@ -15,6 +15,8 @@
 
 #include "anki/cozmo/basestation/humanHead.h"
 
+#include "anki/common/basestation/math/point_impl.h"
+
 namespace Anki {
 namespace Cozmo {
 

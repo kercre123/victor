@@ -27,34 +27,27 @@
 #ifndef ANKI_COZMO_BASESTATION_ROBOT_H
 #define ANKI_COZMO_BASESTATION_ROBOT_H
 
-#include <queue>
-
 #include "anki/common/types.h"
 #include "anki/common/basestation/math/pose.h"
-
 #include "anki/vision/basestation/camera.h"
 #include "anki/vision/basestation/image.h"
-//#include "anki/vision/basestation/panTiltTracker.h"
 #include "anki/vision/basestation/visionMarker.h"
-
 #include "anki/planning/shared/path.h"
-
 #include "anki/cozmo/shared/cozmoTypes.h"
 #include "anki/cozmo/shared/activeBlockTypes.h"
 #include "anki/cozmo/shared/ledTypes.h"
-
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/comms/robot/robotMessages.h"
 #include "anki/cozmo/basestation/visionProcessingThread.h"
-
 #include "anki/cozmo/basestation/actionContainers.h"
 #include "anki/cozmo/basestation/animationStreamer.h"
 #include "anki/cozmo/basestation/cannedAnimationContainer.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/ramp.h"
 #include "anki/cozmo/basestation/soundManager.h"
-
+#include "util/signals/simpleSignal.hpp"
+#include <queue>
 #include <unordered_map>
 #include <time.h>
 
@@ -63,19 +56,24 @@
 namespace Anki {
   namespace Cozmo {
     
-    // Forward declarations:
-    class IRobotMessageHandler;
-    class IPathPlanner;
-    class MatPiece;
-    class PathDolerOuter;
-    class RobotPoseHistory;
-    class RobotPoseStamp;
+  // Forward declarations:
+  class IRobotMessageHandler;
+  class IPathPlanner;
+  class MatPiece;
+  class PathDolerOuter;
+  class RobotPoseHistory;
+  class RobotPoseStamp;
+  class IExternalInterface;
+  namespace Data {
+  class DataPlatform;
+  }
     
     class Robot
     {
     public:
       
-      Robot(const RobotID_t robotID, IRobotMessageHandler* msgHandler);
+      Robot(const RobotID_t robotID, IRobotMessageHandler* msgHandler,
+        IExternalInterface* externalInterface, Data::DataPlatform* dataPlatform);
       ~Robot();
       
       Result Update();
@@ -339,13 +337,17 @@ namespace Anki {
       // Sends a message to the robot to move the lift to the specified height
       Result MoveLiftToHeight(const f32 height_mm,
                               const f32 max_speed_rad_per_sec,
-                              const f32 accel_rad_per_sec2);
+                              const f32 accel_rad_per_sec2,
+                              const f32 duration_sec = 0.f);
       
       // Sends a message to the robot to move the head to the specified angle
       Result MoveHeadToAngle(const f32 angle_rad,
                              const f32 max_speed_rad_per_sec,
-                             const f32 accel_rad_per_sec2);
+                             const f32 accel_rad_per_sec2,
+                             const f32 duration_sec = 0.f);
       
+      Result TurnInPlaceAtSpeed(const f32 speed_rad_per_sec,
+                                const f32 accel_rad_per_sec2);
       
       // Sends a message to robot to tap the carried block on the ground the
       // specified number of times
@@ -381,9 +383,17 @@ namespace Anki {
       // Use the empty string to disable idle animation.
       Result SetIdleAnimation(const std::string& animName);
       
-      // Return the approximate number of available bytes in the robot's
-      // keyframe buffer, to let us know if we can stream any more
-      s32 GetNumAnimationBytesFree() const;
+      // Returns name of currently streaming animation. Does not include idle animation.
+      // Returns "" if no non-idle animation is streaming.
+      const std::string GetStreamingAnimationName() const;
+      
+      // Returns the number of animation bytes played on the robot since
+      // it was initialized with SyncTime.
+      s32 GetNumAnimationBytesPlayed() const;
+      
+      // Returns a reference to a count of the total number of bytes streamed to the robot.
+      s32 GetNumAnimationBytesStreamed();
+      void IncrementNumAnimationBytesStreamed(s32 num);
       
       // Ask the UI to play a sound for us
       Result PlaySound(const std::string& soundName, u8 numLoops, u8 volume);
@@ -402,6 +412,8 @@ namespace Anki {
       // Returns true if the robot is currently playing an animation, according
       // to most recent state message.
       bool IsAnimating() const;
+      
+      bool IsIdleAnimating() const;
 
       Result SyncTime();
       void SetSyncTimeAcknowledged(bool ack);
@@ -530,9 +542,19 @@ namespace Anki {
       // Send a message to the physical robot
       Result SendMessage(const RobotMessage& message,
                          bool reliable = true, bool hot = false) const;
-      
+
+      // Events
+      using RobotWorldOriginChangedSignal = Signal::Signal<void (RobotID_t)>;
+      RobotWorldOriginChangedSignal& OnRobotWorldOriginChanged() { return _robotWorldOriginChangedSignal; }
+      inline bool HasExternalInterface() { return _externalInterface != nullptr; }
+      inline IExternalInterface* GetExternalInterface() {
+        ASSERT_NAMED(_externalInterface != nullptr, "Robot.ExternalInterface.nullptr"); return _externalInterface; }
+      inline void SetImageSendMode(ImageSendMode_t newMode) { _imageSendMode = newMode; }
+      inline const ImageSendMode_t GetImageSendMode() const { return _imageSendMode; }
     protected:
-      
+      IExternalInterface* _externalInterface;
+      Data::DataPlatform* _dataPlatform;
+      RobotWorldOriginChangedSignal _robotWorldOriginChangedSignal;
       // The robot's identifier
       RobotID_t         _ID;
       bool              _isPhysical;
@@ -628,8 +650,9 @@ namespace Anki {
       bool             _isHeadMoving;
       bool             _isLiftMoving;
       bool             _isAnimating;
+      bool             _isIdleAnimating;
       f32              _battVoltage;
-      
+      ImageSendMode_t _imageSendMode;
       // Pose history
       Result ComputeAndInsertPoseIntoHistory(const TimeStamp_t t_request,
                                              TimeStamp_t& t, RobotPoseStamp** p,
@@ -708,6 +731,8 @@ namespace Anki {
       CannedAnimationContainer _cannedAnimations;
       AnimationStreamer        _animationStreamer;
       s32 _numFreeAnimationBytes;
+      s32 _numAnimationBytesPlayed;
+      s32 _numAnimationBytesStreamed;
       
       ///////// Messaging ////////
       // These methods actually do the creation of messages and sending
@@ -726,13 +751,18 @@ namespace Anki {
       // Sends a message to the robot to move the lift to the specified height
       Result SendSetLiftHeight(const f32 height_mm,
                                const f32 max_speed_rad_per_sec,
-                               const f32 accel_rad_per_sec2) const;
+                               const f32 accel_rad_per_sec2,
+                               const f32 duration_sec) const;
       
       // Sends a message to the robot to move the head to the specified angle
       Result SendSetHeadAngle(const f32 angle_rad,
                               const f32 max_speed_rad_per_sec,
-                              const f32 accel_rad_per_sec2) const;
+                              const f32 accel_rad_per_sec2,
+                              const f32 duration_sec) const;
 
+      Result SendTurnInPlaceAtSpeed(const f32 speed_rad_per_sec,
+                                    const f32 accel_rad_per_sec2) const;
+      
       Result SendTapBlockOnGround(const u8 numTaps) const;
       
       Result SendDriveWheels(const f32 lwheel_speed_mmps,
@@ -864,13 +894,25 @@ namespace Anki {
       return _isAnimating;
     }
     
+    inline bool Robot::IsIdleAnimating() const {
+      return _isIdleAnimating;
+    }
+    
     inline Result Robot::TurnOffObjectLights(const ObjectID& objectID) {
       return SetObjectLights(objectID, WhichBlockLEDs::ALL, 0, 0, 10000, 10000, 0, 0,
                              false, MakeRelativeMode::RELATIVE_LED_MODE_OFF, {0.f,0.f});
     }
     
-    inline s32 Robot::GetNumAnimationBytesFree() const {
-      return _numFreeAnimationBytes;
+    inline s32 Robot::GetNumAnimationBytesPlayed() const {
+      return _numAnimationBytesPlayed;
+    }
+    
+    inline s32 Robot::GetNumAnimationBytesStreamed() {
+      return _numAnimationBytesStreamed;
+    }
+    
+    inline void Robot::IncrementNumAnimationBytesStreamed(s32 num) {
+      _numAnimationBytesStreamed += num;
     }
     
   } // namespace Cozmo

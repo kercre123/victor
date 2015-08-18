@@ -11,22 +11,18 @@
  **/
 
 #include "anki/cozmo/basestation/cozmoActions.h"
-
 #include "bridge.h"
 #include "pathPlanner.h"
 #include "anki/cozmo/basestation/ramp.h"
 #include "anki/cozmo/basestation/charger.h"
-
 #include "anki/common/basestation/math/poseBase_impl.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/utils/timer.h"
-
 #include "anki/cozmo/basestation/robot.h"
-#include "anki/cozmo/basestation/signals/cozmoEngineSignals.h"
-
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
-
+#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "messageEngineToGame.h"
 #include <iomanip>
 
 namespace Anki {
@@ -236,7 +232,7 @@ namespace Anki {
               robotPtr->ClearPath();
             }
           };
-          _signalHandle = CozmoEngineSignals::RobotWorldOriginChangedSignal().ScopedSubscribe(cbRobotOriginChanged);
+          _signalHandle = robot.OnRobotWorldOriginChanged().ScopedSubscribe(cbRobotOriginChanged);
         }
         
       } // if/else isGoalSet
@@ -695,9 +691,10 @@ namespace Anki {
 
 #pragma mark ---- TurnInPlaceAction ----
     
-    TurnInPlaceAction::TurnInPlaceAction(const Radians& angle)
+    TurnInPlaceAction::TurnInPlaceAction(const Radians& angle, const bool isAbsolute)
     : DriveToPoseAction(false, false)
     , _turnAngle(angle)
+    , _isAbsoluteAngle(isAbsolute)
     , _startedTraversingPath(false)
     {
       
@@ -713,7 +710,10 @@ namespace Anki {
     {
       // Compute a goal pose rotated by specified angle around robot's
       // _current_ pose, taking into account the current driveCenter offset
-      const Radians heading = robot.GetPose().GetRotationAngle<'Z'>();
+      Radians heading = 0;
+      if (!_isAbsoluteAngle) {
+        heading = robot.GetPose().GetRotationAngle<'Z'>();
+      }
       Pose3d rotatedPose;
       Pose3d dcPose = robot.GetDriveCenterPose();
       dcPose.SetRotation(heading + _turnAngle, Z_AXIS_3D());
@@ -856,7 +856,7 @@ namespace Anki {
         
         if(turnAngle.getAbsoluteVal() < _maxTurnAngle) {
           if(turnAngle.getAbsoluteVal() > _turnAngleTol) {
-            _compoundAction.AddAction(new TurnInPlaceAction(turnAngle));
+            _compoundAction.AddAction(new TurnInPlaceAction(turnAngle, false));
           } else {
             PRINT_NAMED_INFO("FaceObjectAction.Init.NoTurnNeeded",
                              "Required turn angle of %.1fdeg is within tolerance of %.1fdeg. Not turning.\n",
@@ -1098,7 +1098,7 @@ namespace Anki {
       if(_inPosition) {
         result = ActionResult::SUCCESS;
       } else {
-        PRINT_NAMED_INFO("MoveLiftToHeightAction.CheckIfDone",
+        PRINT_NAMED_INFO("MoveHeadToAngleAction.CheckIfDone",
                          "Waiting for head to get in position: %.1fdeg vs. %.1fdeg\n",
                          RAD_TO_DEG(robot.GetHeadAngle()), _headAngle.getDegrees());
       }
@@ -1505,7 +1505,7 @@ namespace Anki {
       }
     }
     
-    void PickAndPlaceObjectAction::EmitCompletionSignal(Robot& robot, ActionResult result) const
+    void PickAndPlaceObjectAction::GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const
     {
       switch(_dockAction)
       {
@@ -1522,10 +1522,8 @@ namespace Anki {
             const u8 numObjects = 1 + (carryObjectOnTop >=0 ? 1 : 0);
             
             // TODO: Be able to fill in add'l objects carried in signal
-            ActionCompletedStruct completionInfo;
             completionInfo.numObjects = numObjects;
             completionInfo.objectIDs = {{carryObject, carryObjectOnTop, -1, -1, -1}};
-            CozmoEngineSignals::RobotCompletedActionSignal().emit(robot.GetID(), GetType(), result, completionInfo);
             
             return;
           }
@@ -1555,8 +1553,6 @@ namespace Anki {
               ++completionInfo.numObjects;
               object = robot.GetBlockWorld().FindObjectOnTopOf(*object, 15.f);
             }
-            
-            CozmoEngineSignals::RobotCompletedActionSignal().emit(robot.GetID(), GetType(), result, completionInfo);
             return;
           }
           break;
@@ -1566,7 +1562,7 @@ namespace Anki {
                             "Dock action not set before filling completion signal.\n");
       }
       
-      IDockAction::EmitCompletionSignal(robot, result);
+      IDockAction::GetCompletionStruct(robot, completionInfo);
     }
     
     Result PickAndPlaceObjectAction::SelectDockAction(Robot& robot, ActionableObject* object)
@@ -1824,7 +1820,7 @@ namespace Anki {
       }
     }
     
-    void RollObjectAction::EmitCompletionSignal(Robot& robot, ActionResult result) const
+    void RollObjectAction::GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const
     {
       switch(_dockAction)
       {
@@ -1834,14 +1830,9 @@ namespace Anki {
             PRINT_NAMED_ERROR("RollObjectAction.EmitCompletionSignal",
                               "Expecting robot to think it's not carrying object for roll action.\n");
           } else {
-            ActionCompletedStruct completionInfo;
             completionInfo.numObjects = 1;
             completionInfo.objectIDs.fill(-1);
             completionInfo.objectIDs[0] = _dockObjectID;
-            
-            // TODO: Be able to fill in add'l objects carried in signal
-            CozmoEngineSignals::RobotCompletedActionSignal().emit(robot.GetID(), GetType(), result, completionInfo);
-            
             return;
           }
           break;
@@ -1851,7 +1842,7 @@ namespace Anki {
                             "Dock action not set before filling completion signal.\n");
       }
       
-      IDockAction::EmitCompletionSignal(robot, result);
+      IDockAction::GetCompletionStruct(robot, completionInfo);
     }
     
     Result RollObjectAction::SelectDockAction(Robot& robot, ActionableObject* object)
@@ -2287,6 +2278,11 @@ namespace Anki {
     
     ActionResult PlayAnimationAction::Init(Robot& robot)
     {
+      if(robot.IsAnimating() && !robot.IsIdleAnimating()) {
+        //PRINT_NAMED_INFO("PlanAnimationAction.Init.Waiting",
+        //                 "Waiting for robot to stop animating before playing this animation.\n");
+        return ActionResult::RUNNING;
+      }
       if(robot.PlayAnimation(_animName, _numLoops) == RESULT_OK) {
         return ActionResult::SUCCESS;
       } else {
@@ -2296,7 +2292,10 @@ namespace Anki {
     
     ActionResult PlayAnimationAction::CheckIfDone(Robot& robot)
     {
-      if(robot.IsAnimating()) {
+      // Check if StreamingAnimation is not yet null and the name still matches to avoid
+      // prematurely deleting looping animations.
+      if(robot.IsAnimating() ||
+         (robot.GetStreamingAnimationName() == _animName)) {
         return ActionResult::RUNNING;
       } else {
         return ActionResult::SUCCESS;
@@ -2311,13 +2310,9 @@ namespace Anki {
       }
     }
     
-    void PlayAnimationAction::EmitCompletionSignal(Robot& robot, ActionResult result) const
+    void PlayAnimationAction::GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const
     {
-      ActionCompletedStruct completionInfo;
       completionInfo.animName = _animName;
-      
-      CozmoEngineSignals::RobotCompletedActionSignal().emit(robot.GetID(), GetType(), result,
-                                                            completionInfo);
     }
     
 #pragma mark ---- PlaySoundAction ----

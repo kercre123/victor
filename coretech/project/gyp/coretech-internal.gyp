@@ -59,26 +59,23 @@
     ],
 
     'compiler_flags': [
-      '-Wno-unused-function',
-      '-Wno-overloaded-virtual',
-      '-Wno-deprecated-declarations',
-      '-Wno-unused-variable',
-      # '-fdiagnostics-show-category=name',
-      # '-Wall',
-      # '-Woverloaded-virtual',
-      # '-Werror',
-      # '-Wundef',
-      # '-Wheader-guard',
-      # '-fsigned-char',
-      # '-fvisibility-inlines-hidden',
-      # '-fvisibility=default',
-      # '-Wshorten-64-to-32',
-      # '-Winit-self',
-      # '-Wconditional-uninitialized',
-      # '-Wno-deprecated-register',
-      # '-Wformat',
-      # '-Werror=format-security',
-      # '-g',
+      '-Wno-deprecated-declarations', # Supressed until system() usage is removed
+      '-fdiagnostics-show-category=name',
+      '-Wall',
+      '-Woverloaded-virtual',
+      '-Werror',
+      '-Wundef',
+      '-Wheader-guard',
+      '-fsigned-char',
+      '-fvisibility-inlines-hidden',
+      '-fvisibility=default',
+      '-Wshorten-64-to-32',
+      '-Winit-self',
+      '-Wconditional-uninitialized',
+      # '-Wno-deprecated-register', # Disabled until this warning actually needs to be supressed
+      '-Wformat',
+      '-Werror=format-security',
+      '-g',
     ],
     'compiler_c_flags' : [
       '-std=c11',
@@ -311,6 +308,9 @@
               '../../vision/basestation/test',
               '<@(opencv_includes)',
             ],
+            'defines': [
+              'TEST_DATA_PATH=<(cti-cozmo_engine_path)/coretech/'
+            ],
             'dependencies': [
               'ctiCommon',
               'ctiVision',
@@ -343,7 +343,56 @@
             ],
           }, # end unittest target
 
-
+          {
+            'target_name': 'mexDetectFiducialMarkers',
+            'type': 'shared_library',
+            'variables': {
+              'mac_target_archs': [ '$(ARCHS_STANDARD)' ]
+            },
+            'include_dirs': [
+              '/Applications/MATLAB_R2015a.app/extern/include',
+              '../../include',
+              '<@(opencv_includes)',
+            ],
+            'sources': [
+              '../../vision/robot/mex/mexDetectFiducialMarkers.cpp',
+              '../../common/matlab/mex/mexWrappers.cpp',
+              '../../common/shared/src/matlabConverters.cpp',
+              '../../common/shared/src/sharedMatlabInterface.cpp',
+              '../../common/robot/src/matlabInterface.cpp'
+            ],
+            'dependencies': [
+              'ctiCommon',
+              'ctiCommonRobot',
+              'ctiVision',
+              'ctiVisionRobot',
+              '<(cti-util_gyp_path):jsoncpp',
+              '<(cti-util_gyp_path):util',
+              '<(cti-util_gyp_path):utilEmbedded',
+            ],
+            'libraries': [
+              '<@(opencv_libs)',
+              '/Applications/MATLAB_R2015a.app/bin/maci64/libmx.dylib',
+              '/Applications/MATLAB_R2015a.app/bin/maci64/libmex.dylib',
+              '/Applications/MATLAB_R2015a.app/bin/maci64/libeng.dylib',
+            ],
+            'defines': [
+              'ANKICORETECH_USE_MATLAB=1',
+              'ANKICORETECH_USE_GTEST=0',
+              'ANKICORETECH_USE_OPENCV=1',
+              'ANKICORETECH_EMBEDDED_USE_MATLAB=1',
+              'ANKICORETECH_EMBEDDED_USE_GTEST=0',
+              'ANKICORETECH_EMBEDDED_USE_OPENCV=1',
+            ],
+            'actions': [
+              {
+                'action_name' : 'renameMex',
+                'inputs': ['<(PRODUCT_DIR)/libmexDetectFiducialMarkers.dylib'],
+                'outputs': ['<(PRODUCT_DIR)/mexDetectFiducialMarkers.mexmaci64'],
+                'action': ['cp', '<(_inputs)', '<(_outputs)']
+              },
+            ]
+          }, # end mexDetectFiducialMarkers
 
         ], # end targets
       },

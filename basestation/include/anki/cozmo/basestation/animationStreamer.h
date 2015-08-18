@@ -43,6 +43,11 @@ namespace Cozmo {
     // If any animation is set for streaming and isn't done yet, stream it.
     Result Update(Robot& robot);
     
+    // Returns true if the idle animation is playing
+    bool IsIdleAnimating() const;
+    
+    const std::string GetStreamingAnimationName() const;
+    
   private:
     
     CannedAnimationContainer& _animationContainer;

@@ -11,7 +11,7 @@
  *
  **/
 
-#if COZMO_RECORDING_PLAYBACK
+#ifdef COZMO_RECORDING_PLAYBACK
 
 #include "anki/common/basestation/utils/timer.h"
 #include "recording.h"
@@ -179,4 +179,4 @@ RecordingPlaybackStatus Recording::PostTickMessageProcess()
 } // namespace Cozmo
 } // namespace Anki
 
-#endif
+#endif // #ifdef COZMO_RECORDING_PLAYBACK
