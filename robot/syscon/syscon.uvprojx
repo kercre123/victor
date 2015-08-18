@@ -433,14 +433,14 @@
               <FilePath>.\hal\battery.cpp</FilePath>
             </File>
             <File>
-              <FileName>lights.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\hal\lights.cpp</FilePath>
-            </File>
-            <File>
               <FileName>head.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\hal\head.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>lights.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\hal\lights.cpp</FilePath>
             </File>
             <File>
               <FileName>radio.cpp</FileName>
