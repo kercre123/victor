@@ -204,7 +204,7 @@ DEF Cozmo_1 CozmoBot {
   name "CozmoBot_1"
   usbChannel 10
 }
-WebotsKeyboardController {
+BuildServerTestController {
   controllerArgs "tests.json"
 }
 CozmoVizDisplay {

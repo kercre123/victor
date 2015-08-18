@@ -88,6 +88,7 @@ namespace Cozmo {
 
       case TestState::TestDone:
         PRINT_NAMED_INFO("TestController.Update.TestDone","Result: %d", _result);
+        QuitWebots(_result);
         break;
     }
     
@@ -130,9 +131,49 @@ namespace Cozmo {
   {
     _currentAnim = animToPlay;
     _testState = TestState::ExecutingTestAnimation;
-    //WebotsKeyboardController::SendAnimation(_currentAnim.c_str(), 1);
+    SendAnimation(_currentAnim.c_str(), 1);
   }
 
+  
+  
+  
+  
+  // ================ Message handler callbacks ==================
+  
+  void BuildServerTestController::HandleRobotCompletedAction(const ExternalInterface::RobotCompletedAction& msg)
+  {
+    switch((RobotActionType)msg.actionType)
+    {
+      case RobotActionType::PICKUP_OBJECT_HIGH:
+      case RobotActionType::PICKUP_OBJECT_LOW:
+        break;
+   
+      case RobotActionType::PLACE_OBJECT_HIGH:
+      case RobotActionType::PLACE_OBJECT_LOW:
+        break;
+   
+      case RobotActionType::PLAY_ANIMATION:
+        printf("Robot %d finished playing animation %s. [Tag=%d]\n",
+               msg.robotID, msg.completionInfo.animName.c_str(), msg.idTag);
+        AnimationCompleted(msg.completionInfo.animName);
+        break;
+   
+      default:
+        break;
+    }
+   
+   }
+   
+   void BuildServerTestController::HandleAnimationAvailable(ExternalInterface::AnimationAvailable const& msg)
+   {
+     _animationAvailableCount++;
+     PRINT_NAMED_INFO("HandleAnimationAvailable", "Animation available: %s", msg.animName.c_str());
+   }
+   
+   // ============== End of message handlers =================
+
+  
+  
 
 } // end namespace Cozmo
 } // end namespace Anki
@@ -152,27 +193,27 @@ int main(int argc, char **argv)
   loggerProvider.SetMinLogLevel(0);
   Anki::Util::gLoggerProvider = &loggerProvider;
   
-   // Get the last position of '/'
-   std::string aux(argv[0]);
-   #if defined(_WIN32) || defined(WIN32)
-   size_t pos = aux.rfind('\\');
-   #else
-   size_t pos = aux.rfind('/');
-   #endif
-   // Get the path and the name
-   std::string path = aux.substr(0,pos+1);
-   //std::string name = aux.substr(pos+1);
-   std::string resourcePath = path;
-   std::string filesPath = path + "temp";
-   std::string cachePath = path + "temp";
-   std::string externalPath = path + "temp";
-   Data::DataPlatform dataPlatform(filesPath, cachePath, externalPath, resourcePath);
+  // Get the last position of '/'
+  std::string aux(argv[0]);
+  #if defined(_WIN32) || defined(WIN32)
+  size_t pos = aux.rfind('\\');
+  #else
+  size_t pos = aux.rfind('/');
+  #endif
+  // Get the path and the name
+  std::string path = aux.substr(0,pos+1);
+  //std::string name = aux.substr(pos+1);
+  std::string resourcePath = path;
+  std::string filesPath = path + "temp";
+  std::string cachePath = path + "temp";
+  std::string externalPath = path + "temp";
+  Data::DataPlatform dataPlatform(filesPath, cachePath, externalPath, resourcePath);
    
-   buildServerTestCtrl.SetDataPlatform(&dataPlatform);
-   if (argc > 1) {
-   buildServerTestCtrl.SetTestFileName(argv[1]);
-   }
-  
+  buildServerTestCtrl.SetDataPlatform(&dataPlatform);
+  if (argc > 1) {
+    buildServerTestCtrl.SetTestFileName(argv[1]);
+  }
+
   buildServerTestCtrl.Init();
   
   while (buildServerTestCtrl.Update() == 0)
