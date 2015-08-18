@@ -1,5 +1,5 @@
 /**
-* File: testController
+* File: webotsCtrlBuildServerTest.h
 *
 * Author: damjan stulic
 * Created: 8/12/15
@@ -10,19 +10,20 @@
 *
 */
 
-#ifndef __testController_H_
-#define __testController_H_
+#ifndef __webotsCtrlBuildServerTest_H_
+#define __webotsCtrlBuildServerTest_H_
 
 #include <string>
 #include <queue>
 #include "json/json.h"
+#include "anki/cozmo/simulator/game/uiGameController.h"
 
 namespace Anki {
 namespace Cozmo {
 namespace Data{
 class DataPlatform;
 }
-namespace WebotsKeyboardController {
+
 
 enum class TestState {
   NotStarted,
@@ -32,14 +33,16 @@ enum class TestState {
   TestDone
 };
 
-class TestController {
+  class BuildServerTestController : public UiGameController {
 public:
+  BuildServerTestController(s32 step_time_ms);
+    
   void SetTestFileName(const std::string& testFileName);
   void SetDataPlatform(Data::DataPlatform* dataPlatform) {_dataPlatform = dataPlatform;}
-  void Update();
   void AnimationCompleted(const std::string& animationName);
 private:
-  void Init();
+  virtual void InitInternal() override;
+  virtual s32 UpdateInternal() override;
   void ExecuteTestAnimation(const std::string& animToPlay);
   Data::DataPlatform* _dataPlatform = nullptr;
   TestState _testState = TestState::NotStarted;
@@ -48,19 +51,15 @@ private:
   size_t _tickCounter = 0;
   size_t _waitCounter = 0;
   std::string _currentAnim;
+  
+  int _result;
 };
 
 
-} // end namespace WebotsKeyboardController
+
 } // end namespace Cozmo
 } // end namespace Anki
 
 
 
-
-
-
-
-
-
-#endif //__testController_H_
+#endif //__webotsCtrlBuildServerTest_H_
