@@ -1400,7 +1400,7 @@ public class VortexController : GameController {
           SetRobotEmotion("MINOR_FAIL");
         }
         else {
-          SetRobotEmotion("MAJOR_FAIL");
+          SetRobotEmotion("MINOR_FAIL");
         }
   
       }
@@ -1825,6 +1825,24 @@ public class VortexController : GameController {
     }
   }
 
+  IEnumerator FlashBocks(int player_index) {
+    Color playerColor = CozmoPalette.instance.GetColorForActiveBlockMode(GetPlayerActiveCubeColorMode(player_index));
+
+    uint white = CozmoPalette.ColorToUInt(Color.white);
+    uint black = CozmoPalette.ColorToUInt(Color.black);
+    uint player = CozmoPalette.ColorToUInt(playerColor);
+
+    playerInputBlocks[player_index].SetLEDs(white, 0, 0xFF, Robot.Light.FOREVER, 0, 0, 0, 0);
+    yield return new WaitForSeconds(.5f);
+    playerInputBlocks[player_index].SetLEDs(black, 0, 0xFF, Robot.Light.FOREVER, 0, 0, 0, 0);
+    yield return new WaitForSeconds(.25f);
+    playerInputBlocks[player_index].SetLEDs(player, 0, 0xFF, Robot.Light.FOREVER, 0, 0, 0, 0);
+
+
+
+
+  }
+
   #endregion
 
   #region PUBLIC METHODS
@@ -1843,6 +1861,8 @@ public class VortexController : GameController {
       else {
         Debug.Log("PlayerInputTap validating playerIndex(" + index + ")");
       }
+      // flash blocks to indicate tapping
+      StartCoroutine(FlashBocks(index));
       playerMockBlocks[index].Validate(true);
       return;
     }
