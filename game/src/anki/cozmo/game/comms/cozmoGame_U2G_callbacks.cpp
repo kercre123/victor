@@ -246,29 +246,7 @@ namespace Cozmo {
   
   void CozmoGameImpl::Process_SetLiftHeight(ExternalInterface::SetLiftHeight const& msg)
   {
-    // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
-    const RobotID_t robotID = 1;
-    Robot* robot = GetRobotByID(robotID);
-    
-    if(robot != nullptr) {
-      
-      if(robot->IsLiftLocked()) {
-        PRINT_NAMED_INFO("CozmoGameImpl.Process_SetLiftHeight.LiftLocked",
-                         "Ignoring ExternalInterface::SetLiftHeight while lift is locked.\n");
-      } else {
-        // Special case if commanding low dock height
-        if (msg.height_mm == LIFT_HEIGHT_LOWDOCK) {
-          if(robot->IsCarryingObject()) {
-            // Put the block down right here
-            ExternalInterface::PlaceObjectOnGroundHere m;
-            Process_PlaceObjectOnGroundHere(m);
-            return;
-          }
-        }
-        
-        robot->MoveLiftToHeight(msg.height_mm, msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2, msg.duration_sec);
-      }
-    }
+    // Handled in RobotEventHandler::HandleSetLiftHeight
   }
 
   void CozmoGameImpl::Process_TapBlockOnGround(ExternalInterface::TapBlockOnGround const& msg)
