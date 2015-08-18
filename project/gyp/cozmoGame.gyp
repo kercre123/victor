@@ -48,20 +48,25 @@
     ],
     
     'faciometric_path' : [
-      '<(coretech_external_path)/IntraFace/Files',
+      #'<(coretech_external_path)/IntraFace/Files',
+      '<(coretech_external_path)/IntraFace/osx_demo_126',
     ],
     
     'faciometric_includes': [
-      '<(faciometric_path)/CommonFiles/Headers',
-      '<(faciometric_path)/Anki/Headers',
+    # '<(faciometric_path)/CommonFiles/Headers',
+    #  '<(faciometric_path)/Anki/Headers',
+      '<(faciometric_path)/include',
     ],
     
     'faciometric_libs': [
-      '<(faciometric_path)/CommonFiles/Library/libcryptopp.a',
-      '<(faciometric_path)/CommonFiles/Library/libcurl.a',
-      '<(faciometric_path)/Anki/Library/liblibintraface_core122.a',
-      '<(faciometric_path)/Anki/Library/liblibintraface_emo122.a',
-      '<(faciometric_path)/Anki/Library/liblibintraface_license_anki.a',
+    #'<(faciometric_path)/CommonFiles/Library/libcryptopp.a',
+    #  '<(faciometric_path)/CommonFiles/Library/libcurl.a',
+    #  '<(faciometric_path)/Anki/Library/liblibintraface_core122.a',
+    #  '<(faciometric_path)/Anki/Library/liblibintraface_emo122.a',
+    #  '<(faciometric_path)/Anki/Library/liblibintraface_license_anki.a',
+      '<(faciometric_path)/lib/libintraface_core126.dylib',
+      '<(faciometric_path)/lib/libintraface_emo126.dylib',
+      '<(faciometric_path)/lib/libintraface_gaze126.dylib',
     ],
 
     'compiler_flags': [
@@ -394,6 +399,7 @@
             'libraries': [
               '<(webots_path)/lib/libCppController.dylib',
               '<@(opencv_libs)',
+              '<@(faciometric_libs)', # NOTE: Expected to be in "lib" subdir
             ],
           }, # end controller Game Engine
 
@@ -476,6 +482,22 @@
                   '-f',
                   '<@(_inputs)',
                   '<@(_outputs)',
+                ],
+              },
+              {
+                # The FacioMetric dynamic libs are expected to be in a "lib"
+                # subdirectory of the executable directory, so make a symlink
+                # to their location in the same directory where we put the
+                # game engine controller
+                'action_name': 'create_symlink_webotsCtrlGameEngine_facioMetricLibs',
+                'inputs': [ ],
+                'outputs': [ ],
+                'action': [
+                  'ln',
+                  '-s',
+                  '-f',
+                  '<(faciometric_path)/lib',
+                  '../../simulator/controllers/webotsCtrlGameEngine/lib',
                 ],
               },
               {
@@ -612,9 +634,6 @@
         '../../game/include',
         '../../generated/clad/game',
         '<@(opencv_includes)',
-      ],
-      'libraries': [
-        '<@(faciometric_libs)'
       ],
       'direct_dependent_settings': {
         'include_dirs': [
