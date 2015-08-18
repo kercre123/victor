@@ -30,6 +30,7 @@ int main(void)
   TimerInit();
   Motors::init();   // Must init before power goes on
   Head::init();
+  Lights::init();
 
   UART::print("\r\nUnbrick me now...");
   u32 t = GetCounter();
@@ -73,7 +74,7 @@ int main(void)
     // Update at 200Hz (5ms delay)
     while ((GetCounter() - timerStart) < CYCLES_MS(35.0f / 7.0f))
       ;
- 
+
     // Verify the source
     if (g_dataToBody.common.source != SPI_SOURCE_HEAD)
     {

@@ -6,9 +6,7 @@
 struct charliePlex_s
 {
   uint8_t anode;
-  uint8_t cath_red;
-  uint8_t cath_green;
-  uint8_t cath_blue;
+  uint8_t cathodes[3];
 };
 
 enum charlieChannels_e
@@ -23,7 +21,6 @@ enum charlieChannels_e
 namespace Lights {
   void init();
   void manage(volatile uint32_t *);
-  static void setPins(charliePlex_s pins, uint32_t color);
 }
 
 #endif /* LIGHTS_H */
