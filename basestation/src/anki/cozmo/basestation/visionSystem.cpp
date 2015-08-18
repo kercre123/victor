@@ -56,7 +56,9 @@
 //#include "visionDebugStream.h"
 
 // FacioMetric SDK
-#include "intraface/core/core.h"
+#include <intraface/gaze/gaze.h>
+#include <intraface/core/LocalManager.h>
+#include <intraface/emo/EmoDet.h>
 
 #if USE_MATLAB_TRACKER || USE_MATLAB_DETECTOR
 #include "matlabVisionProcessor.h"
@@ -2235,27 +2237,28 @@ namespace Cozmo {
         AnkiConditionalError(loadResult == true, "VisionSystem.Update.LoadFaceCascade",
                              "Failed to load face cascade from %s\n", cascadeFilename.c_str());
         
+        typedef facio::FaceAlignmentSDM<facio::AlignmentFeature, facio::NO_CONTOUR, facio::LocalManager> SDM;
+        typedef facio::IrisEstimator<facio::IrisFeature, facio::LocalManager> IE;
+        typedef facio::HPEstimatorProcrustes<facio::LocalManager> HPE;
+        typedef facio::DMGazeEstimation<facio::LocalManager> GE;
+        typedef facio::EmoDet<facio::LocalManager> ED;
         
-        //DeclareLandmarkTracker
-        facio::FaceAlignmentSDM<facio::AlignmentFeature,facio::NO_CONTOUR, facio::LicenseManager>* fa;
+        // Declaration of the facio variables
+        facio::LocalManager lm;
         
-        //DeclareHeadPoseEstimator
-        facio::HPEstimatorProcrustes<facio::LicenseManager>* hpe;
+        // Tracker object, we are using a unique pointer(http://en.cppreference.com/w/cpp/memory/unique_ptr)
+        // Please notice that the SDM class does not have an explicit constructor.
+        // To get an instance of the SDM class, please use the function SDM::getInstance
+        unique_ptr<SDM> sdm(SDM::getInstance("../../models/tracker_model49.bin", &lm));
         
-        //DeclareHeadPosestructure
-        facio::HeadPose hp;
-        
-        //DeclareLicenseManager
-        facio::LicenseManager*lm;
-        
-        //InitializerLicenseManager
-        lm = new facio::LicenseManager("/path/to/folder/that/has/the/config/files");
-        
-        //Getinstance(itisasingleton)ofthetrackerwiththeinstanceoftheLicense Manager
-        fa = &facio::FaceAlignmentSDM<facio::AlignmentFeature,facio::NO_CONTOUR, facio::LicenseManager>::getInstance("/path/to/tracker_model_49_122.bin",lm);
-        
-        //InitializetheHeadPoseEstimatorwiththeLicenseManager
-        hpe = new facio::HPEstimatorProcrustes<facio::LicenseManager>("/path/to/hp_model_122.bin",lm);
+        // Create an instance of the class IrisEstimator
+        IE ie("../../models/iris_model.bin", &lm);
+        // Create an instance of the class GazeEstimator
+        GE ge("../../models/gaze_model.bin", &lm);
+        // Create an instance of the class HPEstimatorProcrustes
+        HPE hpe("../../models/hp_model.bin",&lm);
+        // Create an instance of the class EmoDet
+        ED ed("../../models/emo_model.bin", &lm);
       }
       
       std::vector<cv::Rect> faces;

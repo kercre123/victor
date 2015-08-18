@@ -3,7 +3,7 @@
 
     'engine_source': 'cozmoEngine.lst',
     'engine_test_source': 'cozmoEngine-test.lst',
-    'energy_library_type': 'static_library',
+    'engine_library_type': 'static_library',
     'ctrlLightCube_source': 'ctrlLightCube.lst',
     'ctrlRobot_source': 'ctrlRobot.lst',
     'ctrlViz_source': 'ctrlViz.lst',
@@ -51,12 +51,15 @@
     ],
     
     'faciometric_path' : [
-      '<(coretech_external_path)/IntraFace/Files',
+    #'<(coretech_external_path)/IntraFace/Files',
+      '<(coretech_external_path)/IntraFace/osx_demo_126',
     ],
     
     'faciometric_includes': [
-      '<(faciometric_path)/CommonFiles/Headers',
-      '<(faciometric_path)/Anki/Headers',
+    #  '<(faciometric_path)/CommonFiles/Headers',
+    #  '<(faciometric_path)/Anki/Headers',
+      '<(faciometric_path)/include',
+      '<(faciometric_path)/3rdparty/Eigen3/include',
     ],
 
     'compiler_flags': [
@@ -86,8 +89,6 @@
       '-std=c++11',
       '-stdlib=libc++',
       '<@(compiler_flags)',
-      '-mfpu=neon',         # FacioMetric
-      '-mfloat-abi=softfp', # FacioMetric
     ],
     'linker_flags' : [
         '-g',
@@ -168,6 +169,8 @@
       ['OS=="ios"', {
         'compiler_flags': [
         '-fobjc-arc',
+        '-mfpu=neon',         # FacioMetric
+        '-mfloat-abi=softfp', # FacioMetric
         ]
       }],
       ['OS=="ios" or OS=="mac"', {
@@ -529,7 +532,6 @@
         '<@(opencv_includes)',
         '<@(faciometric_includes)',
       ],
-
       'direct_dependent_settings': {
         'include_dirs': [
           '../../basestation/include',
@@ -550,8 +552,10 @@
         '<(ce-cti_gyp_path):ctiMessaging',
         '<(ce-cti_gyp_path):ctiPlanning',
         '<(ce-cti_gyp_path):ctiVision',
+        '<(ce-cti_gyp_path):ctiCommonRobot',
+        '<(ce-cti_gyp_path):ctiVisionRobot',
       ],
-      'type': '<(energy_library_type)',
+      'type': '<(engine_library_type)',
     },
     
 
