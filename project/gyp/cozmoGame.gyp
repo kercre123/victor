@@ -377,6 +377,7 @@
             'include_dirs': [
               '<@(webots_includes)',
               '<@(opencv_includes)',
+              '<(cti-cozmo_engine_path)/simulator/include'
             ],
             'dependencies': [
               'cozmoGame',
