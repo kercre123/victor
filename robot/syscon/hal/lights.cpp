@@ -5,7 +5,7 @@
 #include "hardware.h"
 #include "hal/portable.h"
 
-// 8-bit pseudo log scale.  Gives us full bright (16b*16b does not)
+// 8-bit pseudo log scale.  Gives us full bright
 static const uint8_t AdjustTable[] = {
   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,
   0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02,
@@ -30,7 +30,7 @@ static uint8_t pwm[12];
 static int channel;
 
 // Define charlie wiring here:
-charliePlex_s RGBLightPins[numCharlieChannels] =
+const charliePlex_s RGBLightPins[numCharlieChannels] =
 {
   // anode, cath_red, cath_gree, cath_blue
   {PIN_LED1, {PIN_LED2, PIN_LED3, PIN_LED4}},
@@ -39,9 +39,18 @@ charliePlex_s RGBLightPins[numCharlieChannels] =
   {PIN_LED4, {PIN_LED1, PIN_LED2, PIN_LED3}}
 };
 
-	// Start all pins as input
+static void lights_off() {
+  nrf_gpio_cfg_input(PIN_LED1, NRF_GPIO_PIN_NOPULL);
+  nrf_gpio_cfg_input(PIN_LED2, NRF_GPIO_PIN_NOPULL);
+  nrf_gpio_cfg_input(PIN_LED3, NRF_GPIO_PIN_NOPULL);
+  nrf_gpio_cfg_input(PIN_LED4, NRF_GPIO_PIN_NOPULL);
+}
+
+// Start all pins as input
 void Lights::init()
 {
+  lights_off();
+
   NRF_RTC1->EVTENSET = RTC_EVTENSET_TICK_Msk;
   NRF_RTC1->INTENSET = RTC_INTENSET_TICK_Enabled;
   NVIC_SetPriority(RTC1_IRQn, 3);
@@ -52,11 +61,8 @@ extern "C" void RTC1_IRQHandler() {
   NRF_RTC1->EVENTS_TICK = 0;
 
   // Blacken everything out
-  nrf_gpio_cfg_input(PIN_LED1, NRF_GPIO_PIN_NOPULL);
-  nrf_gpio_cfg_input(PIN_LED2, NRF_GPIO_PIN_NOPULL);
-  nrf_gpio_cfg_input(PIN_LED3, NRF_GPIO_PIN_NOPULL);
-  nrf_gpio_cfg_input(PIN_LED4, NRF_GPIO_PIN_NOPULL);
-  
+  lights_off();
+
   // Setup anode
   nrf_gpio_pin_set(RGBLightPins[channel].anode);
   nrf_gpio_cfg_output(RGBLightPins[channel].anode);
@@ -73,7 +79,7 @@ extern "C" void RTC1_IRQHandler() {
     }
   }
   
-  if(++channel > numCharlieChannels) {
+  if(++channel >= numCharlieChannels) {
     channel = 0;
   }
 }

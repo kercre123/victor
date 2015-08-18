@@ -61,7 +61,7 @@ static inline Fixed getADCsample(AnalogInput channel, const Fixed scale)
 void Battery::init()
 {
   // Configure charge pins
-  nrf_gpio_pin_set(PIN_CHARGE_EN);
+  nrf_gpio_pin_clear(PIN_CHARGE_EN);
   nrf_gpio_cfg_output(PIN_CHARGE_EN);
  
   // Syscon power - this should always be on until battery fail
