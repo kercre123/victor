@@ -6,6 +6,8 @@
  * Modifications:
  */
 
+#ifndef __webotsCtrlKeyboard_H_
+#define __webotsCtrlKeyboard_H_
 
 #include "anki/cozmo/simulator/game/uiGameController.h"
 
@@ -30,4 +32,4 @@ protected:
 } // namespace Cozmo
 } // namespace Anki
 
-
+#endif  // __webotsCtrlKeyboard_H_
