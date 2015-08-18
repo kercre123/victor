@@ -3,6 +3,8 @@ using System.Collections;
 
 public class HypnosisController : GameController {
 
+  bool gameOver = false;
+
   protected override void OnEnable() {
     base.OnEnable();
   }
@@ -41,6 +43,7 @@ public class HypnosisController : GameController {
 
   protected override void Update_PLAYING() {
     base.Update_PLAYING();
+    robot.DriveWheels(10.0f, 0.0f);
   }
 
   protected override void Exit_PLAYING(bool overrideStars = false) {
@@ -60,15 +63,15 @@ public class HypnosisController : GameController {
   }
 
   protected override bool IsPreGameCompleted() {
-    return base.IsPreGameCompleted();
+    return true;
   }
 
   protected override bool IsGameReady() {
-    return base.IsGameReady();
+    return true;
   }
 
   protected override bool IsGameOver() {
-    return base.IsGameOver();
+    return gameOver;
   }
 
   protected override void RefreshHUD() {
