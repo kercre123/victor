@@ -81,7 +81,7 @@ protected:
   void SendTapBlockOnGround(const u8 numTaps);
   void SendStopAllMotors();
   void SendImageRequest(u8 mode, u8 robotID);
-  void SendSetRobotImageSendMode(u8 mode);
+  void SendSetRobotImageSendMode(u8 mode, u8 resolution);
   void SendSaveImages(SaveMode_t mode, bool alsoSaveState=false);
   void SendEnableDisplay(bool on);
   void SendSetHeadlights(u8 intensity);

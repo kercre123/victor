@@ -119,7 +119,7 @@ namespace Anki {
     void UiGameController::HandleRobotConnectedBase(ExternalInterface::RobotConnected const &msg)
     {
       // Once robot connects, set resolution
-      SendSetRobotImageSendMode(ISM_STREAM);
+      //SendSetRobotImageSendMode(ISM_STREAM);
       
       HandleRobotConnected(msg);
     }
@@ -231,10 +231,19 @@ namespace Anki {
       _root = _supervisor.getSelf();
       
       // Set deviceID
-      int deviceID = _root->getField("deviceID")->getSFInt32();
+      // TODO: Get rid of this. The UI should not be assigning it's own ID.
+      int deviceID = 1;
+      webots::Field* deviceIDField = _root->getField("deviceID");
+      if (deviceIDField) {
+        deviceID = deviceIDField->getSFInt32();
+      }
       
       // Get engine IP
-      std::string engineIP = _root->getField("engineIP")->getSFString();
+      std::string engineIP = "127.0.0.1";
+      webots::Field* engineIPField = _root->getField("engineIP");
+      if (engineIPField) {
+        engineIP = engineIPField->getSFString();
+      }
       
       // Startup comms with engine
       if (!_gameComms) {
@@ -591,26 +600,8 @@ namespace Anki {
       SendMessage(message);
     }
     
-    void UiGameController::SendSetRobotImageSendMode(u8 mode)
+    void UiGameController::SendSetRobotImageSendMode(u8 mode, u8 resolution)
     {
-      // Determine resolution from "streamResolution" setting in the keyboard controller
-      // node
-      Vision::CameraResolution resolution = IMG_STREAM_RES;
-      
-      if (_root) {
-        const std::string resString = _root->getField("streamResolution")->getSFString();
-        printf("Attempting to switch robot to %s resolution.\n", resString.c_str());
-        if(resString == "VGA") {
-          resolution = Vision::CAMERA_RES_VGA;
-        } else if(resString == "QVGA") {
-          resolution = Vision::CAMERA_RES_QVGA;
-        } else if(resString == "CVGA") {
-          resolution = Vision::CAMERA_RES_CVGA;
-        } else {
-          printf("Unsupported streamResolution = %s\n", resString.c_str());
-        }
-      }
-      
       ExternalInterface::SetRobotImageSendMode m;
       m.mode = mode;
       m.resolution = resolution;
