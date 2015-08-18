@@ -535,6 +535,22 @@ Prefab:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 22450396, guid: 5ea1fe1891c074bdcacd5e19f21f7586, type: 2}
+      propertyPath: m_AnchorMin.x
+      value: .5
+      objectReference: {fileID: 0}
+    - target: {fileID: 22450396, guid: 5ea1fe1891c074bdcacd5e19f21f7586, type: 2}
+      propertyPath: m_AnchorMax.x
+      value: .5
+      objectReference: {fileID: 0}
+    - target: {fileID: 22450396, guid: 5ea1fe1891c074bdcacd5e19f21f7586, type: 2}
+      propertyPath: m_AnchoredPosition.x
+      value: 310
+      objectReference: {fileID: 0}
+    - target: {fileID: 22450396, guid: 5ea1fe1891c074bdcacd5e19f21f7586, type: 2}
+      propertyPath: m_AnchoredPosition.y
+      value: 3
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 5ea1fe1891c074bdcacd5e19f21f7586, type: 2}
   m_IsPrefabParent: 0
@@ -3233,6 +3249,18 @@ Prefab:
       propertyPath: m_RootOrder
       value: 3
       objectReference: {fileID: 0}
+    - target: {fileID: 22405478, guid: ff2e764eb72194d5a8c0961c1fa668d1, type: 2}
+      propertyPath: m_AnchorMin.x
+      value: .5
+      objectReference: {fileID: 0}
+    - target: {fileID: 22405478, guid: ff2e764eb72194d5a8c0961c1fa668d1, type: 2}
+      propertyPath: m_AnchorMax.x
+      value: .5
+      objectReference: {fileID: 0}
+    - target: {fileID: 22405478, guid: ff2e764eb72194d5a8c0961c1fa668d1, type: 2}
+      propertyPath: m_AnchoredPosition.x
+      value: -280
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: ff2e764eb72194d5a8c0961c1fa668d1, type: 2}
   m_IsPrefabParent: 0
@@ -5751,6 +5779,7 @@ MonoBehaviour:
   minStarPop: .300000012
   robotBusyDuringResults: 1
   maxEmotionWaitTime: 20
+  LayoutTracker: {fileID: 1903641627}
 --- !u!4 &1280741952
 Transform:
   m_ObjectHideFlags: 0
@@ -8977,6 +9006,12 @@ Prefab:
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 2af1243c9425a4873a9aa3ed3f678aff, type: 2}
   m_IsPrefabParent: 0
+--- !u!114 &1903641627 stripped
+MonoBehaviour:
+  m_PrefabParentObject: {fileID: 11483380, guid: 2af1243c9425a4873a9aa3ed3f678aff,
+    type: 2}
+  m_PrefabInternal: {fileID: 1903641626}
+  m_Script: {fileID: 11500000, guid: f5c124d04d6094c858984dd2fde04bf1, type: 3}
 --- !u!1 &1943824072
 GameObject:
   m_ObjectHideFlags: 0
