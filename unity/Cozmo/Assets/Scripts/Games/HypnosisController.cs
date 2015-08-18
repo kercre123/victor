@@ -4,10 +4,7 @@ using System.Collections.Generic;
 
 public class HypnosisController : GameController {
 
-  bool gameOver = false;
-  bool gameReady = false;
-  bool waitForLayoutTracker = true;
-  int buildingCubesSpotted = 0;
+
 
   public enum HypnosisState {
     SLEEP,
@@ -17,9 +14,14 @@ public class HypnosisController : GameController {
     TRANCE
   }
 
+  private bool gameOver = false;
+  private bool gameReady = false;
+  private bool waitForLayoutTracker = true;
+  private int buildingCubesSpotted = 0;
   private HypnosisState currentState = HypnosisState.AWAKE;
   private int mostRecentTappedID = -1;
   private float lastInTranceTime = 0.0f;
+  private float startSleepTime = 0.0f;
   private ObservedObject tranceTarget = null;
 
   protected override void OnEnable() {
@@ -40,6 +42,13 @@ public class HypnosisController : GameController {
   protected override void Update_BUILDING() {
     base.Update_BUILDING();
     robot.DriveWheels(35.0f, 0.0f);
+
+    foreach (KeyValuePair<int, ActiveBlock> activeBlock in robot.activeBlocks) {
+      for (int j = 0; j < activeBlock.Value.lights.Length; ++j) {
+        activeBlock.Value.lights[j].onColor = CozmoPalette.ColorToUInt(new Color(1.0f, 1.0f, 1.0f, 1.0f));
+      }
+    }
+
     if (robot.activeBlocks.Count >= 2) {
       gameReady = true;
       robot.DriveWheels(0.0f, 0.0f);
@@ -71,6 +80,7 @@ public class HypnosisController : GameController {
 
     switch (currentState) {
     case HypnosisState.SLEEP:
+      RobotSleep();
       break;
     case HypnosisState.AWAKE:
       RobotAwake();
@@ -121,18 +131,31 @@ public class HypnosisController : GameController {
     // only care about taps in awake mode.
     if (currentState == HypnosisState.AWAKE) {
       mostRecentTappedID = blockID;
-      // set all to green first.
+
       foreach (KeyValuePair<int, ActiveBlock> activeBlock in robot.activeBlocks) {
         for (int j = 0; j < activeBlock.Value.lights.Length; ++j) {
-          activeBlock.Value.lights[j].onColor = CozmoPalette.ColorToUInt(Color.green);
+          if (activeBlock.Value.ID == blockID) {
+            activeBlock.Value.lights[j].onColor = CozmoPalette.ColorToUInt(new Color(1.0f, 1.0f, 0.0f, 1.0f));
+          }
+          else {
+            activeBlock.Value.lights[j].onColor = CozmoPalette.ColorToUInt(Color.green);
+          }
         }
-      }
-
-      for (int i = 0; i < robot.activeBlocks[blockID].lights.Length; ++i) {
-        robot.activeBlocks[blockID].lights[i].onColor = CozmoPalette.ColorToUInt(Color.blue);
       }
     }
    
+  }
+
+  private void RobotSleep() {
+    if (Time.time - startSleepTime > 3.0f) {
+      currentState = HypnosisState.AWAKE;
+    }
+
+    foreach (KeyValuePair<int, ActiveBlock> activeBlock in robot.activeBlocks) {
+      for (int j = 0; j < activeBlock.Value.lights.Length; ++j) {
+        activeBlock.Value.lights[j].onColor = CozmoPalette.ColorToUInt(Color.white);
+      }
+    }
   }
 
   private void RobotAwake() {
@@ -150,8 +173,7 @@ public class HypnosisController : GameController {
   private void RobotSearch() {
     robot.DriveWheels(35.0f, 0.0f);
     bool tappedBlockFound = false;
-    Debug.Log("robot searching");
-
+ 
     for (int i = 0; i < robot.observedObjects.Count; ++i) {
       if (robot.observedObjects[i].ID == mostRecentTappedID) {
         tappedBlockFound = true;
@@ -174,9 +196,10 @@ public class HypnosisController : GameController {
     if (Time.time - lastInTranceTime > 10.0f) {
       Debug.Log("Canceling Drive to Object action");
       robot.CancelAction(Anki.Cozmo.RobotActionType.DRIVE_TO_OBJECT);
-      currentState = HypnosisState.AWAKE;
+      currentState = HypnosisState.SLEEP;
       mostRecentTappedID = -1;
       tranceTarget = null;
+      startSleepTime = Time.time;
     }
   }
 }
