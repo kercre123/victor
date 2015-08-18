@@ -38,8 +38,9 @@ public:
   
   
   UiGameController(s32 step_time_ms);
-  void Init();
+  ~UiGameController();
   
+  void Init();
   s32 Update();
   
   void QuitWebots(s32 status);
@@ -147,18 +148,6 @@ private:
   void HandleAnimationAvailableBase(ExternalInterface::AnimationAvailable const& msg);
   
   void UpdateActualObjectPoses();
-
-  s32 _stepTimeMS;
-  webots::Supervisor _supervisor;
-
-  const double* _robotTransActual;
-  const double* _robotOrientationActual;
-  
-  Pose3d _robotPose;
-  Pose3d _robotPoseActual;
-  
-  ObservedObject _currentlyObservedObject;
-
   
 }; // class UiGameController
 } // namespace Cozmo

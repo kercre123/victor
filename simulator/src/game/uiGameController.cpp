@@ -9,17 +9,12 @@
 #include "anki/cozmo/simulator/game/uiGameController.h"
 
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
-#include "anki/vision/basestation/image.h"
 #include "anki/cozmo/game/comms/gameMessageHandler.h"
 #include "anki/cozmo/game/comms/gameComms.h"
-
-#include <opencv2/imgproc/imgproc.hpp>
 
 #include <stdio.h>
 #include <string.h>
 
-#include <webots/ImageRef.hpp>
-#include <webots/Display.hpp>
 
 
 namespace Anki {
@@ -27,44 +22,30 @@ namespace Anki {
     
       // Private memers:
       namespace {
-        
-        webots::Node* root_ = nullptr;
-        
-        struct {
-          s32 family;
-          s32 type;
-          s32 id;
-          f32 area;
-          bool isActive;
-          
-          void Reset() {
-            family = -1;
-            type = -1;
-            id = -1;
-            area = 0;
-            isActive = false;
-          }
-        } currentlyObservedObject;
-        
 
+        s32 _stepTimeMS;
+        webots::Supervisor _supervisor;
+        
+        const double* _robotTransActual;
+        const double* _robotOrientationActual;
+        
+        Pose3d _robotPose;
+        Pose3d _robotPoseActual;
+        
+        UiGameController::ObservedObject _currentlyObservedObject;
+        
+        webots::Node* _root = nullptr;
+        
         typedef enum {
           UI_WAITING_FOR_GAME = 0,
           UI_RUNNING
         } UI_State_t;
         
-        UI_State_t uiState_;
+        UI_State_t _uiState;
         
-        GameMessageHandler msgHandler_;
-        GameComms *gameComms_ = nullptr;
-        
-        // For displaying cozmo's POV:
-        webots::Display* cozmoCam_;
-        webots::ImageRef* img_ = nullptr;
-        
-        Vision::ImageDeChunker _imageDeChunker;
-        
-        // Save robot image to file
-        bool saveRobotImageToFile_ = false;
+        GameMessageHandler _msgHandler;
+        GameComms *_gameComms = nullptr;
+
 
       } // private namespace
 
@@ -83,44 +64,19 @@ namespace Anki {
     
     void UiGameController::HandleRobotObservedObjectBase(ExternalInterface::RobotObservedObject const& msg)
     {
-      if(cozmoCam_ == nullptr) {
-        printf("RECEIVED OBJECT OBSERVED: objectID %d\n", msg.objectID);
-      } else {
-        // Draw a rectangle in red with the object ID as text in the center
-        cozmoCam_->setColor(0x000000);
-        
-        //std::string dispStr(ObjectType::GetName(msg.objectType));
-        //dispStr += " ";
-        //dispStr += std::to_string(msg.objectID);
-        std::string dispStr("Type=" + std::to_string(msg.objectType) + "\nID=" + std::to_string(msg.objectID));
-        cozmoCam_->drawText(dispStr,
-                            msg.img_topLeft_x + msg.img_width/4 + 1,
-                            msg.img_topLeft_y + msg.img_height/2 + 1);
-        
-        cozmoCam_->setColor(0xff0000);          
-        cozmoCam_->drawRectangle(msg.img_topLeft_x, msg.img_topLeft_y,
-                                 msg.img_width, msg.img_height);
-        cozmoCam_->drawText(dispStr,
-                            msg.img_topLeft_x + msg.img_width/4,
-                            msg.img_topLeft_y + msg.img_height/2);
-        
-        const f32 area = msg.img_width * msg.img_height;
-        //if(area > currentlyObservedObject.area) {
-          currentlyObservedObject.family = msg.objectFamily;
-          currentlyObservedObject.type   = msg.objectType;
-          currentlyObservedObject.id     = msg.objectID;
-          currentlyObservedObject.isActive = msg.isActive;
-          currentlyObservedObject.area   = area;
-        //}
-        
-      }
+      const f32 area = msg.img_width * msg.img_height;
+      _currentlyObservedObject.family = msg.objectFamily;
+      _currentlyObservedObject.type   = msg.objectType;
+      _currentlyObservedObject.id     = msg.objectID;
+      _currentlyObservedObject.isActive = msg.isActive;
+      _currentlyObservedObject.area   = area;
       
       HandleRobotObservedObject(msg);
     }
     
     void UiGameController::HandleRobotObservedNothingBase(ExternalInterface::RobotObservedNothing const& msg)
     {
-      currentlyObservedObject.Reset();
+      _currentlyObservedObject.Reset();
       
       HandleRobotObservedNothing(msg);
     }
@@ -211,57 +167,7 @@ namespace Anki {
     // Sends complete images to VizManager for visualization (and possible saving).
     void UiGameController::HandleImageChunkBase(ExternalInterface::ImageChunk const& msg)
     {
-      const bool isImageReady = _imageDeChunker.AppendChunk(msg.imageId, msg.frameTimeStamp, msg.nrows, msg.ncols, (Vision::ImageEncoding_t)msg.imageEncoding, msg.imageChunkCount, msg.chunkId, msg.data, msg.chunkSize);
-      
-      
-      if(isImageReady)
-      {
-        cv::Mat img = _imageDeChunker.GetImage();
-        if(img.channels() == 1) {
-          cvtColor(img, img, CV_GRAY2RGB);
-        }
-        
-        for(s32 i=0; i<img.rows; ++i) {
-          
-          if(i % 2 == 0) {
-            cv::Mat img_i = img.row(i);
-            img_i.setTo(0);
-          } else {
-            u8* img_i = img.ptr(i);
-            for(s32 j=0; j<img.cols; ++j) {
-              img_i[3*j] = 0;
-              img_i[3*j+2] /= 3;
-              
-              // [Optional] Add a bit of noise
-              f32 noise = 20.f*static_cast<f32>(std::rand()) / static_cast<f32>(RAND_MAX) - 0.5f;
-              img_i[3*j+1] = static_cast<u8>(std::max(0.f,std::min(255.f,static_cast<f32>(img_i[3*j+1]) + noise)));
-              
-            }
-          }
-        }
-        
-        // Delete existing image if there is one.
-        if (img_ != nullptr) {
-          cozmoCam_->imageDelete(img_);
-        }
-        
-        img_ = cozmoCam_->imageNew(img.cols, img.rows, img.data, webots::Display::RGB);
-        cozmoCam_->imagePaste(img_, 0, 0);
-        
-        // Save image to file
-        if (saveRobotImageToFile_) {
-          static u32 imgCnt = 0;
-          char imgFileName[16];
-          printf("SAVING IMAGE\n");
-          sprintf(imgFileName, "robotImg_%d.jpg", imgCnt++);
-          cozmoCam_->imageSave(img_, imgFileName);
-          saveRobotImageToFile_ = false;
-        }
-        
-      } // if(isImageReady)
-      
       HandleImageChunk(msg);
-
     } // HandleImageChunk()
     
     
@@ -300,48 +206,56 @@ namespace Anki {
     
   
     UiGameController::UiGameController(s32 step_time_ms)
-
-    :
-    _stepTimeMS(step_time_ms)
-    , _robotTransActual(nullptr)
-    , _robotOrientationActual(nullptr)
-    , _robotPose(0, Z_AXIS_3D(), {{0.f, 0.f, 0.f}}, nullptr, "robotPose")
-    , _robotPoseActual(0, Z_AXIS_3D(), {{0.f, 0.f, 0.f}}, nullptr, "robotPoseActual")
     {
+      _stepTimeMS = step_time_ms;
+      _robotTransActual = nullptr;
+      _robotOrientationActual = nullptr;
+      _robotPose.SetTranslation({0.f, 0.f, 0.f});
+      _robotPose.SetRotation(0, Z_AXIS_3D());
+      _robotPoseActual.SetTranslation({0.f, 0.f, 0.f});
+      _robotPoseActual.SetRotation(0, Z_AXIS_3D());
+      
       _currentlyObservedObject.Reset();
+    }
+    
+    UiGameController::~UiGameController()
+    {
+      if (_gameComms) {
+        delete _gameComms;
+      }
     }
     
     void UiGameController::Init()
     {
       // Make root point to WebotsKeyBoardController node
-      root_ = _supervisor.getSelf();
+      _root = _supervisor.getSelf();
       
       // Set deviceID
-      int deviceID = root_->getField("deviceID")->getSFInt32();
+      int deviceID = _root->getField("deviceID")->getSFInt32();
       
       // Get engine IP
-      std::string engineIP = root_->getField("engineIP")->getSFString();
+      std::string engineIP = _root->getField("engineIP")->getSFString();
       
       // Startup comms with engine
-      if (!gameComms_) {
+      if (!_gameComms) {
         printf("Registering with advertising service at %s:%d", engineIP.c_str(), UI_ADVERTISEMENT_REGISTRATION_PORT);
-        gameComms_ = new GameComms(deviceID, UI_MESSAGE_SERVER_LISTEN_PORT,
+        _gameComms = new GameComms(deviceID, UI_MESSAGE_SERVER_LISTEN_PORT,
                                    engineIP.c_str(),
                                    UI_ADVERTISEMENT_REGISTRATION_PORT);
       }
       
       
-      while(!gameComms_->IsInitialized()) {
+      while(!_gameComms->IsInitialized()) {
         PRINT_NAMED_INFO("UiGameController.Init",
                          "Waiting for gameComms to initialize...");
         _supervisor.step(_stepTimeMS);
-        gameComms_->Update();
+        _gameComms->Update();
       }
-      msgHandler_.Init(gameComms_);
+      _msgHandler.Init(_gameComms);
       
       // Register callbacks for incoming messages from game
       // TODO: Have CLAD generate this?
-      msgHandler_.RegisterCallbackForMessage([this](const ExternalInterface::MessageEngineToGame& message) {
+      _msgHandler.RegisterCallbackForMessage([this](const ExternalInterface::MessageEngineToGame& message) {
         switch (message.GetTag()) {
           case ExternalInterface::MessageEngineToGame::Tag::RobotConnected:
             HandleRobotConnectedBase(message.Get_RobotConnected());
@@ -384,10 +298,8 @@ namespace Anki {
             break;
         }
       });
-      
-      cozmoCam_ = _supervisor.getDisplay("uiCamDisplay");
 
-      uiState_ = UI_WAITING_FOR_GAME;
+      _uiState = UI_WAITING_FOR_GAME;
       
       InitInternal();
     }
@@ -400,11 +312,11 @@ namespace Anki {
       std::string forcedRobotIP;
       int  forcedRobotId = 1;
       
-      webots::Field* forceAddRobotField = root_->getField("forceAddRobot");
+      webots::Field* forceAddRobotField = _root->getField("forceAddRobot");
       if(forceAddRobotField != nullptr) {
         doForceAddRobot = forceAddRobotField->getSFBool();
         if(doForceAddRobot) {
-          webots::Field *forcedRobotIsSimField = root_->getField("forcedRobotIsSimulated");
+          webots::Field *forcedRobotIsSimField = _root->getField("forcedRobotIsSimulated");
           if(forcedRobotIsSimField == nullptr) {
             PRINT_NAMED_ERROR("KeyboardController.Update",
                               "Could not find 'forcedRobotIsSimulated' field.\n");
@@ -413,7 +325,7 @@ namespace Anki {
             forcedRobotIsSim = forcedRobotIsSimField->getSFBool();
           }
           
-          webots::Field* forcedRobotIpField = root_->getField("forcedRobotIP");
+          webots::Field* forcedRobotIpField = _root->getField("forcedRobotIP");
           if(forcedRobotIpField == nullptr) {
             PRINT_NAMED_ERROR("KeyboardController.Update",
                               "Could not find 'forcedRobotIP' field.\n");
@@ -422,7 +334,7 @@ namespace Anki {
             forcedRobotIP = forcedRobotIpField->getSFString();
           }
           
-          webots::Field* forcedRobotIdField = root_->getField("forcedRobotID");
+          webots::Field* forcedRobotIdField = _root->getField("forcedRobotID");
           if(forcedRobotIdField == nullptr) {
             
           } else {
@@ -441,7 +353,7 @@ namespace Anki {
         
         ExternalInterface::MessageGameToEngine message;
         message.Set_ForceAddRobot(msg);
-        msgHandler_.SendMessage(1, message); // TODO: don't hardcode ID here
+        _msgHandler.SendMessage(1, message); // TODO: don't hardcode ID here
       }
       
       return doForceAddRobot;
@@ -457,12 +369,12 @@ namespace Anki {
         return -1;
       }
       
-      gameComms_->Update();
+      _gameComms->Update();
       
-      switch(uiState_) {
+      switch(_uiState) {
         case UI_WAITING_FOR_GAME:
         {
-          if (!gameComms_->HasClient()) {
+          if (!_gameComms->HasClient()) {
             return 0;
           } else {
             // Once gameComms has a client, tell the engine to start, force-add
@@ -476,7 +388,7 @@ namespace Anki {
             std::copy(vizIpStr.begin(), vizIpStr.end(), msg.vizHostIP.begin());
             ExternalInterface::MessageGameToEngine message;
             message.Set_StartEngine(msg);
-            msgHandler_.SendMessage(1, message); // TODO: don't hardcode ID here
+            _msgHandler.SendMessage(1, message); // TODO: don't hardcode ID here
             
             bool didForceAdd = ForceAddRobotIfSpecified();
             
@@ -487,7 +399,7 @@ namespace Anki {
             // Turn on image streaming to game/UI by default:
             SendImageRequest(ISM_STREAM, 1);
             
-            uiState_ = UI_RUNNING;
+            _uiState = UI_RUNNING;
           }
           break;
         }
@@ -498,7 +410,7 @@ namespace Anki {
           
           UpdateActualObjectPoses();
           
-          msgHandler_.ProcessMessages();
+          _msgHandler.ProcessMessages();
           
           res = UpdateInternal();
           
@@ -508,7 +420,7 @@ namespace Anki {
         default:
           PRINT_NAMED_ERROR("KeyboardController.Update", "Reached default switch case.\n");
           
-      } // switch(uiState_)
+      } // switch(_uiState)
       
       return res;
     }
@@ -564,7 +476,7 @@ namespace Anki {
     void UiGameController::SendMessage(const ExternalInterface::MessageGameToEngine& msg)
     {
       UserDeviceID_t devID = 1; // TODO: Should this be a RobotID_t?
-      msgHandler_.SendMessage(devID, msg); 
+      _msgHandler.SendMessage(devID, msg); 
     }
     
 
@@ -685,8 +597,8 @@ namespace Anki {
       // node
       Vision::CameraResolution resolution = IMG_STREAM_RES;
       
-      if (root_) {
-        const std::string resString = root_->getField("streamResolution")->getSFString();
+      if (_root) {
+        const std::string resString = _root->getField("streamResolution")->getSFString();
         printf("Attempting to switch robot to %s resolution.\n", resString.c_str());
         if(resString == "VGA") {
           resolution = Vision::CAMERA_RES_VGA;
@@ -1077,17 +989,17 @@ namespace Anki {
 
     void UiGameController::SendVisionSystemParams()
     {
-      if (root_) {
+      if (_root) {
          // Vision system params
          ExternalInterface::SetVisionSystemParams p;
-         p.autoexposureOn = root_->getField("camera_autoexposureOn")->getSFInt32();
-         p.exposureTime = root_->getField("camera_exposureTime")->getSFFloat();
-         p.integerCountsIncrement = root_->getField("camera_integerCountsIncrement")->getSFInt32();
-         p.minExposureTime = root_->getField("camera_minExposureTime")->getSFFloat();
-         p.maxExposureTime = root_->getField("camera_maxExposureTime")->getSFFloat();
-         p.highValue = root_->getField("camera_highValue")->getSFInt32();
-         p.percentileToMakeHigh = root_->getField("camera_percentileToMakeHigh")->getSFFloat();
-         p.limitFramerate = root_->getField("camera_limitFramerate")->getSFInt32();
+         p.autoexposureOn = _root->getField("camera_autoexposureOn")->getSFInt32();
+         p.exposureTime = _root->getField("camera_exposureTime")->getSFFloat();
+         p.integerCountsIncrement = _root->getField("camera_integerCountsIncrement")->getSFInt32();
+         p.minExposureTime = _root->getField("camera_minExposureTime")->getSFFloat();
+         p.maxExposureTime = _root->getField("camera_maxExposureTime")->getSFFloat();
+         p.highValue = _root->getField("camera_highValue")->getSFInt32();
+         p.percentileToMakeHigh = _root->getField("camera_percentileToMakeHigh")->getSFFloat();
+         p.limitFramerate = _root->getField("camera_limitFramerate")->getSFInt32();
          
          printf("New Camera params\n");
         ExternalInterface::MessageGameToEngine message;
@@ -1098,15 +1010,15 @@ namespace Anki {
 
     void UiGameController::SendFaceDetectParams()
     {
-      if (root_) {
+      if (_root) {
         // Face Detect params
         ExternalInterface::SetFaceDetectParams p;
-        p.scaleFactor = root_->getField("fd_scaleFactor")->getSFFloat();
-        p.minNeighbors = root_->getField("fd_minNeighbors")->getSFInt32();
-        p.minObjectHeight = root_->getField("fd_minObjectHeight")->getSFInt32();
-        p.minObjectWidth = root_->getField("fd_minObjectWidth")->getSFInt32();
-        p.maxObjectHeight = root_->getField("fd_maxObjectHeight")->getSFInt32();
-        p.maxObjectWidth = root_->getField("fd_maxObjectWidth")->getSFInt32();
+        p.scaleFactor = _root->getField("fd_scaleFactor")->getSFFloat();
+        p.minNeighbors = _root->getField("fd_minNeighbors")->getSFInt32();
+        p.minObjectHeight = _root->getField("fd_minObjectHeight")->getSFInt32();
+        p.minObjectWidth = _root->getField("fd_minObjectWidth")->getSFInt32();
+        p.maxObjectHeight = _root->getField("fd_maxObjectHeight")->getSFInt32();
+        p.maxObjectWidth = _root->getField("fd_maxObjectWidth")->getSFInt32();
         
         printf("New Face detect params\n");
         ExternalInterface::MessageGameToEngine message;
@@ -1117,13 +1029,13 @@ namespace Anki {
     
     void UiGameController::SendForceAddRobot()
     {
-      if (root_) {
+      if (_root) {
         ExternalInterface::ForceAddRobot msg;
         msg.isSimulated = false;
         msg.ipAddress.fill('\0'); // ensure null-termination after copy below
         
-        webots::Field* ipField = root_->getField("forceAddIP");
-        webots::Field* idField = root_->getField("forceAddID");
+        webots::Field* ipField = _root->getField("forceAddIP");
+        webots::Field* idField = _root->getField("forceAddID");
         
         if(ipField != nullptr && idField != nullptr) {
           const std::string ipStr = ipField->getSFString();
