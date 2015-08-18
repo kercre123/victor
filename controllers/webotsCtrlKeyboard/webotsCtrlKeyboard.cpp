@@ -24,6 +24,7 @@
 #include <string.h>
 #include <fstream>
 #include <webots/ImageRef.hpp>
+#include <webots/Display.hpp>
 #include <webots/GPS.hpp>
 #include <webots/Compass.hpp>
 
@@ -114,11 +115,105 @@ namespace Anki {
         const f32 MAX_ANALOG_RADIUS = 300;
         #endif // ENABLE_GAMEPAD_SUPPORT
         
+        
+        
+        // For displaying cozmo's POV:
+        webots::Display* cozmoCam_;
+        webots::ImageRef* img_ = nullptr;
+        
+        Vision::ImageDeChunker _imageDeChunker;
+        
+        // Save robot image to file
+        bool saveRobotImageToFile_ = false;
+        
       } // private namespace
       
       // ======== Message handler callbacks =======
+    
+    // For processing image chunks arriving from robot.
+    // Sends complete images to VizManager for visualization (and possible saving).
+    void WebotsKeyboardController::HandleImageChunk(ExternalInterface::ImageChunk const& msg)
+    {
+      const bool isImageReady = _imageDeChunker.AppendChunk(msg.imageId, msg.frameTimeStamp, msg.nrows, msg.ncols, (Vision::ImageEncoding_t)msg.imageEncoding, msg.imageChunkCount, msg.chunkId, msg.data, msg.chunkSize);
       
-      // TODO: Update these not to need robotID
+      
+      if(isImageReady)
+      {
+        cv::Mat img = _imageDeChunker.GetImage();
+        if(img.channels() == 1) {
+          cvtColor(img, img, CV_GRAY2RGB);
+        }
+        
+        for(s32 i=0; i<img.rows; ++i) {
+          
+          if(i % 2 == 0) {
+            cv::Mat img_i = img.row(i);
+            img_i.setTo(0);
+          } else {
+            u8* img_i = img.ptr(i);
+            for(s32 j=0; j<img.cols; ++j) {
+              img_i[3*j] = 0;
+              img_i[3*j+2] /= 3;
+              
+              // [Optional] Add a bit of noise
+              f32 noise = 20.f*static_cast<f32>(std::rand()) / static_cast<f32>(RAND_MAX) - 0.5f;
+              img_i[3*j+1] = static_cast<u8>(std::max(0.f,std::min(255.f,static_cast<f32>(img_i[3*j+1]) + noise)));
+              
+            }
+          }
+        }
+        
+        // Delete existing image if there is one.
+        if (img_ != nullptr) {
+          cozmoCam_->imageDelete(img_);
+        }
+        
+        img_ = cozmoCam_->imageNew(img.cols, img.rows, img.data, webots::Display::RGB);
+        cozmoCam_->imagePaste(img_, 0, 0);
+        
+        // Save image to file
+        if (saveRobotImageToFile_) {
+          static u32 imgCnt = 0;
+          char imgFileName[16];
+          printf("SAVING IMAGE\n");
+          sprintf(imgFileName, "robotImg_%d.jpg", imgCnt++);
+          cozmoCam_->imageSave(img_, imgFileName);
+          saveRobotImageToFile_ = false;
+        }
+        
+      } // if(isImageReady)
+      
+    } // HandleImageChunk()
+    
+    
+    void WebotsKeyboardController::HandleRobotObservedObject(ExternalInterface::RobotObservedObject const& msg)
+    {
+      if(cozmoCam_ == nullptr) {
+        printf("RECEIVED OBJECT OBSERVED: objectID %d\n", msg.objectID);
+      } else {
+        // Draw a rectangle in red with the object ID as text in the center
+        cozmoCam_->setColor(0x000000);
+        
+        //std::string dispStr(ObjectType::GetName(msg.objectType));
+        //dispStr += " ";
+        //dispStr += std::to_string(msg.objectID);
+        std::string dispStr("Type=" + std::to_string(msg.objectType) + "\nID=" + std::to_string(msg.objectID));
+        cozmoCam_->drawText(dispStr,
+                            msg.img_topLeft_x + msg.img_width/4 + 1,
+                            msg.img_topLeft_y + msg.img_height/2 + 1);
+        
+        cozmoCam_->setColor(0xff0000);
+        cozmoCam_->drawRectangle(msg.img_topLeft_x, msg.img_topLeft_y,
+                                 msg.img_width, msg.img_height);
+        cozmoCam_->drawText(dispStr,
+                            msg.img_topLeft_x + msg.img_width/4,
+                            msg.img_topLeft_y + msg.img_height/2);
+        
+      }
+      
+    }
+
+    
       /*
       
       void HandleRobotCompletedAction(const ExternalInterface::RobotCompletedAction& msg)
@@ -174,7 +269,6 @@ namespace Anki {
         // Make root point to WebotsKeyBoardController node
         root_ = GetSupervisor()->getSelf();
         
-        
         GetSupervisor()->keyboardEnable(GetStepTimeMS());
         
         gps_ = GetSupervisor()->getGPS("gps");
@@ -184,6 +278,8 @@ namespace Anki {
         compass_->enable(BS_TIME_STEP);
         
         poseMarkerDiffuseColor_ = root_->getField("poseMarkerDiffuseColor");
+        
+        cozmoCam_ = GetSupervisor()->getDisplay("uiCamDisplay");
         
         #if(ENABLE_GAMEPAD_SUPPORT)
         // Look for gamepad

@@ -28,6 +28,9 @@ protected:
   virtual void InitInternal() override;
   virtual s32 UpdateInternal() override;
 
+  virtual void HandleImageChunk(ExternalInterface::ImageChunk const& msg);
+  virtual void HandleRobotObservedObject(ExternalInterface::RobotObservedObject const& msg);
+  
 }; // class WebotsKeyboardController
 } // namespace Cozmo
 } // namespace Anki
