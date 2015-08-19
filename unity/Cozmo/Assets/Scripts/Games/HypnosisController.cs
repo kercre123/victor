@@ -211,7 +211,7 @@ public class HypnosisController : GameController {
         if (robot.observedObjects[i].ID == mostRecentTappedID && angle < 10.0f) {
           // we are reasonably aligned to it
           float distance = Vector3.Distance(robot.WorldPosition, robot.observedObjects[i].WorldPosition);
-          if (distance > 50.0f) {
+          if (distance > 90.0f) {
             robot.DriveWheels(20.0f, 20.0f);
           }
           else {
@@ -236,7 +236,7 @@ public class HypnosisController : GameController {
       ComputeTurnDirection();
     }
 
-    if (Time.time - lastInTranceTime > 10.0f) {
+    if (Time.time - lastInTranceTime > 8.0f) {
       robot.DriveWheels(0.0f, 0.0f);
       currentState = HypnosisState.SLEEP;
       mostRecentTappedID = -1;
