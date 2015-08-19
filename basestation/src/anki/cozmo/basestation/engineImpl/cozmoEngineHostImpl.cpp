@@ -12,6 +12,7 @@
 #include "anki/cozmo/basestation/engineImpl/cozmoEngineHostImpl.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "clad/externalInterface/messageEngineToGame.h"
+#include "clad/externalInterface/messageGameToEngine.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -38,6 +39,14 @@ CozmoEngineHostImpl::CozmoEngineHostImpl(IExternalInterface* externalInterface,D
   _signalHandles.emplace_back( _robotMgr.OnRobotDisconnected().ScopedSubscribe(
     std::bind(&CozmoEngineHostImpl::DisconnectFromRobot, this, std::placeholders::_1)
   ));
+  // We'll use this callback for simple events we care about
+  auto callback = std::bind(&CozmoEngineHostImpl::HandleGameEvents, this, std::placeholders::_1);
+  _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::SetRobotImageSendMode, callback));
+  _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::ImageRequest, callback));
+  _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::ConnectToRobot, callback));
+  _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::ForceAddRobot, callback));
+  _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::ReadAnimationFile, callback));
+
 }
 
 Result CozmoEngineHostImpl::InitInternal()
@@ -292,11 +301,80 @@ bool CozmoEngineHostImpl::GetCurrentRobotImage(RobotID_t robotID, Vision::Image&
   }
 }
 
-void CozmoEngineHostImpl::SetImageSendMode(RobotID_t robotID, Cozmo::ImageSendMode_t newMode)
+void CozmoEngineHostImpl::SetImageSendMode(RobotID_t robotID, ImageSendMode newMode)
 {
   Robot* robot = _robotMgr.GetRobotByID(robotID);
   if(robot != nullptr) {
     return robot->SetImageSendMode(newMode);
+  }
+}
+void CozmoEngineHostImpl::SetRobotImageSendMode(RobotID_t robotID, ImageSendMode newMode, uint8_t resolution)
+{
+  Robot* robot = GetRobotByID(robotID);
+
+  if(robot != nullptr) {
+
+    if (newMode == ImageSendMode::Off) {
+      robot->GetBlockWorld().EnableDraw(false);
+    } else if (newMode == ImageSendMode::Stream) {
+      robot->GetBlockWorld().EnableDraw(true);
+    }
+
+    robot->RequestImage((ImageSendMode_t)newMode,
+      (Vision::CameraResolution)resolution);
+  }
+
+}
+
+void CozmoEngineHostImpl::HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+{
+  switch (event.GetData().GetTag())
+  {
+    case ExternalInterface::MessageGameToEngineTag::ForceAddRobot:
+    {
+      const ExternalInterface::ForceAddRobot& msg = event.GetData().Get_ForceAddRobot();
+      char ip[16];
+      assert(msg.ipAddress.size() <= 16);
+      std::copy(msg.ipAddress.begin(), msg.ipAddress.end(), ip);
+      ForceAddRobot(msg.robotID, ip, msg.isSimulated);
+      break;
+    }
+    case ExternalInterface::MessageGameToEngineTag::ConnectToRobot:
+    {
+      const ExternalInterface::ConnectToRobot& msg = event.GetData().Get_ConnectToRobot();
+      const bool success = ConnectToRobot(msg.robotID);
+      if(success) {
+        PRINT_NAMED_INFO("CozmoEngine.HandleEvents", "Connected to robot %d!", msg.robotID);
+      } else {
+        PRINT_NAMED_ERROR("CozmoEngine.HandleEvents", "Failed to connect to robot %d!", msg.robotID);
+      }
+      break;
+    }
+    case ExternalInterface::MessageGameToEngineTag::ReadAnimationFile:
+    {
+      PRINT_NAMED_INFO("CozmoGame.HandleEvents", "started animation tool");
+      StartAnimationTool();
+      break;
+    }
+    case ExternalInterface::MessageGameToEngineTag::SetRobotImageSendMode:
+    {
+      const ExternalInterface::SetRobotImageSendMode& msg = event.GetData().Get_SetRobotImageSendMode();
+      SetRobotImageSendMode(msg.robotID, msg.mode, msg.resolution);
+      break;
+    }
+    case ExternalInterface::MessageGameToEngineTag::ImageRequest:
+    {
+      const ExternalInterface::ImageRequest& msg = event.GetData().Get_ImageRequest();
+      SetImageSendMode(msg.robotID, msg.mode);
+      break;
+    }
+
+    default:
+    {
+      PRINT_STREAM_ERROR("CozmoEngine.HandleEvents",
+        "Subscribed to unhandled event of type "
+          << ExternalInterface::MessageGameToEngineTagToString(event.GetData().GetTag()) << "!");
+    }
   }
 }
 

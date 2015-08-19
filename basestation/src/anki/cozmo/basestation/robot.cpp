@@ -89,7 +89,7 @@ namespace Anki {
     , _isAnimating(false)
     , _isIdleAnimating(false)
     , _battVoltage(5)
-    , _imageSendMode(ISM_OFF)
+    , _imageSendMode(ImageSendMode::Off)
     , _carryingMarker(nullptr)
     , _lastPickOrPlaceSucceeded(false)
     , _stateSaveMode(SAVE_OFF)
