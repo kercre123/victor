@@ -24,10 +24,10 @@ void clientRecvCallback(char* data, unsigned short len)
   }
   else
   {
-    if (i2sQueueTx((I2SPIPayload*)data, TagAudioData) == false)
+    /*if (i2sQueueTx((I2SPIPayload*)data, TagAudioData) == false)
     {
       os_printf("Couldn't queue I2SPI tx\r\n");
-    }
+    }*/
     if (i2sStarted == false)
     {
       os_printf("Starting I2S transfer\r\n");

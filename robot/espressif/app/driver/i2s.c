@@ -31,19 +31,20 @@ speed.
 #include "driver/i2s.h"
 #include "driver/i2s_ets.h"
 
-//#define I2S_LOOP_TEST
+#define I2S_LOOP_TEST
 
-#define DMA_BUF_COUNT (16) // 512bytes per buffer * 8 buffers = 2k.
+#define DMA_BUF_COUNT (4)
 ASSERT_IS_POWER_OF_TWO(DMA_BUF_COUNT); // Must be a power of two for masking to work
 #define DMA_BUF_COUNT_MASK (DMA_BUF_COUNT-1)
 
-/** DMA I2SPI transfer buffers
- * The buffers are used for transfers in both directions with the last transmitted buffer being used for the next
- * incoming transfer.
- */
-static I2SPITransfer xferBufs[DMA_BUF_COUNT];
-/// DMA queue control structure
-static struct sdio_queue xferQueue[DMA_BUF_COUNT];
+/// DMA I2SPI transmit buffers
+static I2SPITransfer txBufs[DMA_BUF_COUNT];
+/// DMA transmit queue control structure
+static struct sdio_queue txQueue[DMA_BUF_COUNT];
+/// DMA I2SPI transmit buffers
+static I2SPITransfer rxBufs[DMA_BUF_COUNT];
+/// DMA transmit queue control structure
+static struct sdio_queue rxQueue[DMA_BUF_COUNT];
 /// Index of the next buffer to transmit (i.e. where we should write data, not what's currently being transmitted)
 static uint8 transmitInd;
 /// Index of the buffer which is currently receiving DMA_BUF_COUNT_MASK
@@ -52,10 +53,6 @@ static uint8 receiveInd;
 static uint16_t transmitSeqNo;
 /// Last received sequence number from other side
 static uint16_t lastSeqNo;
-/// Error count for missed transmits
-static uint32_t missedTransmits;
-/// Out of sequence count
-static uint32_t outOfSequence;
 
 /// Prep an sdio_queue structure (DMA descriptor) for (re)use
 static void inline prepSdioQueue(struct sdio_queue* desc)
@@ -74,31 +71,22 @@ static void inline prepSdioQueue(struct sdio_queue* desc)
  * DMA (TX) the i2sRecvCallback is called.
  */
 LOCAL void dmaisr(void* arg) {
-	uint32 slc_intr_status;
-
 	//Grab int status
-	slc_intr_status = READ_PERI_REG(SLC_INT_STATUS);
+	const uint32 slc_intr_status = READ_PERI_REG(SLC_INT_STATUS);
 	//clear all intr flags
 	WRITE_PERI_REG(SLC_INT_CLR, 0xffffffff);
 
-  os_put_char('I'); os_put_hex(slc_intr_status, 8);
-
 #ifdef I2S_LOOP_TEST
-  os_printf("LT: %08x\t%d\t%d\r\n", slc_intr_status, receiveInd, transmitInd);
+  os_put_char('I'); os_put_hex(slc_intr_status, 8);
 #endif
 
-	if (slc_intr_status & SLC_RX_EOF_INT_ST) {
-    // Nothing to do here, pointers will be advanced by TX_EOF interrupt
+	if (slc_intr_status & SLC_RX_EOF_INT_ST) { // Transmit complete interrupt
+    // Increment count, queue processing, etc.
 	}
-  if (slc_intr_status & SLC_TX_EOF_INT_ST) {
+  if (slc_intr_status & SLC_TX_EOF_INT_ST) { // Receive complete interrupt
     struct sdio_queue* desc = (struct sdio_queue*)READ_PERI_REG(SLC_TX_EOF_DES_ADDR);
     I2SPITransfer* xfer     = (I2SPITransfer*)(desc->buf_ptr);
     receiveInd = (receiveInd + 1) & DMA_BUF_COUNT_MASK;
-    if (transmitInd == receiveInd) // We didn't have more data queued
-    {
-      missedTransmits++;
-      transmitInd = (transmitInd + 1) & DMA_BUF_COUNT_MASK;
-    }
 #ifdef I2S_LOOP_TEST
     i2sRecvCallback(&(xfer->payload), xfer->tag);
 #else
@@ -116,10 +104,16 @@ LOCAL void dmaisr(void* arg) {
     }
 #endif
 
+#ifdef I2S_LOOP_TEST
     os_put_hex(desc->datalen, 8);
+#endif
 
     prepSdioQueue(desc); // Reset the DMA descriptor for reuse
   }
+
+#ifdef I2S_LOOP_TEST
+  os_put_char('\n');
+#endif
 }
 
 
@@ -128,19 +122,21 @@ int8_t ICACHE_FLASH_ATTR i2sInit() {
   int i;
 
   transmitInd     = 0;
-  receiveInd      = DMA_BUF_COUNT-1;
+  receiveInd      = 0;
   transmitSeqNo   = 0;
   lastSeqNo       = 0;
-  missedTransmits = 0;
-  outOfSequence   = 0;
 
   // Setup the buffers and descriptors
   for (i=0; i<DMA_BUF_COUNT; ++i)
   {
-    os_memset(&xferBufs[i], 0, I2SPI_TRANSFER_SIZE);
-    prepSdioQueue(&xferQueue[i]);
-    xferQueue[i].buf_ptr = (uint32_t)&xferBufs[i];
-    xferQueue[i].next_link_ptr = (int)((i<(DMA_BUF_COUNT-1))?(&xferQueue[i+1]):(&xferQueue[0]));
+    os_memset(&txBufs[i], 0x0f0f0f0f, I2SPI_TRANSFER_SIZE);
+    os_memset(&rxBufs[i], 0x30303030, I2SPI_TRANSFER_SIZE);
+    prepSdioQueue(&txQueue[i]);
+    prepSdioQueue(&rxQueue[i]);
+    txQueue[i].buf_ptr = (uint32_t)&txBufs[i];
+    txQueue[i].next_link_ptr = (int)((i<(DMA_BUF_COUNT-1))?(&txQueue[i+1]):(&txQueue[0]));
+    rxQueue[i].buf_ptr = (uint32_t)&rxBufs[i];
+    rxQueue[i].next_link_ptr = (int)((i<(DMA_BUF_COUNT-1))?(&rxQueue[i+1]):(&rxQueue[0]));
   }
 
 	//Reset DMA
@@ -153,7 +149,7 @@ int8_t ICACHE_FLASH_ATTR i2sInit() {
 
 	//Enable and configure DMA
 	CLEAR_PERI_REG_MASK(SLC_CONF0, (SLC_MODE<<SLC_MODE_S));
-	SET_PERI_REG_MASK(SLC_CONF0,(1<<SLC_MODE_S));
+	SET_PERI_REG_MASK(  SLC_CONF0, (1<<SLC_MODE_S));
 	SET_PERI_REG_MASK(  SLC_RX_DSCR_CONF, SLC_INFOR_NO_REPLACE | SLC_TOKEN_NO_REPLACE);
 	CLEAR_PERI_REG_MASK(SLC_RX_DSCR_CONF, SLC_RX_FILL_EN       | SLC_RX_EOF_MODE     | SLC_RX_FILL_MODE);
 
@@ -164,9 +160,9 @@ int8_t ICACHE_FLASH_ATTR i2sInit() {
     as we process the incoming data before the buffer loops around there is no competition.
   */
 	CLEAR_PERI_REG_MASK(SLC_TX_LINK,SLC_TXLINK_DESCADDR_MASK);
-	SET_PERI_REG_MASK(SLC_TX_LINK, ((uint32)&xferQueue[receiveInd])  & SLC_TXLINK_DESCADDR_MASK);
+	SET_PERI_REG_MASK(SLC_TX_LINK, ((uint32)&rxQueue[receiveInd])  & SLC_TXLINK_DESCADDR_MASK);
 	CLEAR_PERI_REG_MASK(SLC_RX_LINK,SLC_RXLINK_DESCADDR_MASK);
-	SET_PERI_REG_MASK(SLC_RX_LINK, ((uint32)&xferQueue[transmitInd]) & SLC_RXLINK_DESCADDR_MASK);
+	SET_PERI_REG_MASK(SLC_RX_LINK, ((uint32)&txQueue[transmitInd]) & SLC_RXLINK_DESCADDR_MASK);
 
 	//Attach the DMA interrupt
 	ets_isr_attach(ETS_SLC_INUM, dmaisr, NULL);
@@ -182,10 +178,10 @@ int8_t ICACHE_FLASH_ATTR i2sInit() {
 	//Init pins to i2s functions
 	PIN_FUNC_SELECT(PERIPHS_IO_MUX_U0RXD_U, FUNC_I2SO_DATA);
 	PIN_FUNC_SELECT(PERIPHS_IO_MUX_GPIO2_U, FUNC_I2SO_WS);
-	PIN_FUNC_SELECT(PERIPHS_IO_MUX_MTDO_U, FUNC_I2SO_BCK);
-  PIN_FUNC_SELECT(PERIPHS_IO_MUX_MTDI_U, FUNC_I2SI_DATA);
-  PIN_FUNC_SELECT(PERIPHS_IO_MUX_MTCK_U, FUNC_I2SI_BCK);
-  PIN_FUNC_SELECT(PERIPHS_IO_MUX_MTMS_U, FUNC_I2SI_WS);
+	PIN_FUNC_SELECT(PERIPHS_IO_MUX_MTDO_U,  FUNC_I2SO_BCK);
+  PIN_FUNC_SELECT(PERIPHS_IO_MUX_MTDI_U,  FUNC_I2SI_DATA);
+  PIN_FUNC_SELECT(PERIPHS_IO_MUX_MTCK_U,  FUNC_I2SI_BCK);
+  PIN_FUNC_SELECT(PERIPHS_IO_MUX_MTMS_U , FUNC_I2SI_WS);
 
 	//Enable clock to i2s subsystem
 	i2c_writeReg_Mask_def(i2c_bbpll, i2c_bbpll_en_audio_clock_out, 1);
@@ -217,9 +213,9 @@ int8_t ICACHE_FLASH_ATTR i2sInit() {
 						(I2S_BITS_MOD<<I2S_BITS_MOD_S)|
 						(I2S_BCK_DIV_NUM <<I2S_BCK_DIV_NUM_S)|
 						(I2S_CLKM_DIV_NUM<<I2S_CLKM_DIV_NUM_S));
-	SET_PERI_REG_MASK(I2SCONF, I2S_RIGHT_FIRST|I2S_MSB_RIGHT|I2S_TRANS_SLAVE_MOD|I2S_RECE_SLAVE_MOD| // Slave mode all around
-						(((16)&I2S_BCK_DIV_NUM )<<I2S_BCK_DIV_NUM_S)|
-						(((16)&I2S_CLKM_DIV_NUM)<<I2S_CLKM_DIV_NUM_S));
+	SET_PERI_REG_MASK(I2SCONF, I2S_RIGHT_FIRST|I2S_MSB_RIGHT|I2S_TRANS_SLAVE_MOD|//I2S_RECE_SLAVE_MOD| // Slave mode all around
+						(((32)&I2S_BCK_DIV_NUM )<<I2S_BCK_DIV_NUM_S)|
+						(((32)&I2S_CLKM_DIV_NUM)<<I2S_CLKM_DIV_NUM_S));
 
   return 0;
 }
@@ -255,16 +251,13 @@ bool i2sQueueTx(I2SPIPayload* payload, I2SPIPayloadTag tag)
   else
   {
     // Buffer the data to transmit
-    os_memcpy(&xferBufs[transmitInd].payload, payload, sizeof(I2SPI_MAX_PAYLOAD));
-    xferBufs[transmitInd].seqNo = transmitSeqNo;
-    xferBufs[transmitInd].tag   = tag;
-    xferBufs[transmitInd].from  = fromWiFi;
+    os_memcpy(&txBufs[transmitInd].payload, payload, sizeof(I2SPI_MAX_PAYLOAD));
+    txBufs[transmitInd].seqNo = transmitSeqNo;
+    txBufs[transmitInd].tag   = tag;
+    txBufs[transmitInd].from  = fromWiFi;
     // Update indecies
     transmitInd = (transmitInd + 1) & DMA_BUF_COUNT_MASK;
     transmitSeqNo += 1;
     return true;
   }
 }
-
-uint32_t ICACHE_FLASH_ATTR i2sGetMissedTransmits(void) { return missedTransmits; }
-uint32_t ICACHE_FLASH_ATTR i2sGetOutOfSequence(void)   { return outOfSequence;   }

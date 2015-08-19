@@ -8,7 +8,7 @@
 #define ASSERT_IS_POWER_OF_TWO(e) ct_assert((e & (e-1)) == 0)
 
 /// Number of bytes in each DMAed transaction
-#define I2SPI_TRANSFER_SIZE (512)
+#define I2SPI_TRANSFER_SIZE (128)
 /// Maximum transfer payload length
 #define I2SPI_MAX_PAYLOAD (I2SPI_TRANSFER_SIZE-4)
 
@@ -42,7 +42,7 @@ typedef struct
 typedef struct
 {
   int16_t predictor;    ///< Initalization / state
-  uint8_t samples[400]; ///< Audio sample data. @TODO Make length dependent on shared messaging include, clad, etc.
+  uint8_t samples[100]; ///< Audio sample data. @TODO Make length dependent on shared messaging include, clad, etc.
 } AudioPayload;
 
 /// Payload union type

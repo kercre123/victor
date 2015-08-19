@@ -33,9 +33,4 @@ bool i2sQueueTx(I2SPIPayload* payload, I2SPIPayloadTag tag);
  */
 void i2sRecvCallback(I2SPIPayload* payload, I2SPIPayloadTag tag);
 
-/// Retrieve the count of missed transmits (where we didn't send anything in a transfer)
-uint32_t i2sGetMissedTransmits(void);
-/// Retrieve the number of times we've received a message with the wrong sequence number
-uint32_t i2sGetOutOfSequence(void);
-
 #endif
