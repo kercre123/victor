@@ -24,13 +24,6 @@ namespace AnimationController {
   
   namespace {
     
-    // Streaming KeyFrame buffer size, in bytes
-    static const s32 KEYFRAME_BUFFER_SIZE = 16384;
-    
-    // If buffer gets within this number of bytes of the buffer length,
-    // then it is considered "full" for the purposes of IsBufferFull() below.
-    static const s32 KEYFRAME_BUFFER_PADDING = KEYFRAME_BUFFER_SIZE / 3;
-    
     // Streamed animation will not play until we've got this many _audio_ keyframes
     // buffered.
     static const s32 ANIMATION_PREROLL_LENGTH = 7;
@@ -40,7 +33,8 @@ namespace AnimationController {
     s32 _currentBufferPos;
     s32 _lastBufferPos;
     
-    s32  _numAudioFramesBuffered; // NOTE: Also counts EndOfAnimationFrames...
+    s32 _numAudioFramesBuffered; // NOTE: Also counts EndOfAnimationFrames...
+    s32 _numBytesPlayed = 0;
 
     bool _isBufferStarved;
     bool _haveReceivedTerminationFrame;
@@ -285,12 +279,40 @@ namespace AnimationController {
     return RESULT_OK;
   }
   
+  static s32 GetNumBytesAvailable()
+  {
+    if(_lastBufferPos >= _currentBufferPos) {
+      return sizeof(_keyFrameBuffer) - (_lastBufferPos - _currentBufferPos);
+    } else {
+      return _currentBufferPos - _lastBufferPos;
+    }
+  }
+  
+  static s32 GetNumBytesInBuffer()
+  {
+    if(_lastBufferPos >= _currentBufferPos) {
+      return (_lastBufferPos - _currentBufferPos);
+    } else {
+      return sizeof(_keyFrameBuffer) - (_currentBufferPos - _lastBufferPos);
+    }
+  }
+  
+  s32 GetTotalNumBytesPlayed() {
+    return _numBytesPlayed;
+  }
+  
+  void ClearNumBytesPlayed() {
+    _numBytesPlayed = 0;
+  }
   
   void Clear()
   {
 #   if DEBUG_ANIMATION_CONTROLLER
     PRINT("Clearing AnimationController\n");
 #   endif
+    
+    _numBytesPlayed += GetNumBytesInBuffer();
+    //PRINT("CLEAR NumBytesPlayed %d (%d)\n", _numBytesPlayed, GetNumBytesInBuffer());
     
     _currentBufferPos = 0;
     _lastBufferPos = 0;
@@ -323,24 +345,9 @@ namespace AnimationController {
 #   if DEBUG_ANIMATION_CONTROLLER
     _currentTime_ms = 0;
 #   endif
-    
-    // Necessary?
-    //memset(_keyFrameBuffer, KEYFRAME_BUFFER_SIZE, sizeof(u8));
   }
  
-  static s32 GetNumBytesAvailable()
-  {
-    if(_lastBufferPos >= _currentBufferPos) {
-      return sizeof(_keyFrameBuffer) - (_lastBufferPos - _currentBufferPos);
-    } else {
-      return _currentBufferPos - _lastBufferPos;
-    }
-  }
-  
-  s32 GetApproximateNumBytesFree()
-  {
-    return MAX(0, GetNumBytesAvailable() - KEYFRAME_BUFFER_PADDING);
-  }
+
   
   static void CopyIntoBuffer(const u8* data, s32 numBytes)
   {
@@ -371,6 +378,10 @@ namespace AnimationController {
     if(_currentBufferPos < 0) {
       _currentBufferPos += sizeof(_keyFrameBuffer);
     }
+    
+    _numBytesPlayed -= sizeof(Messages::ID);
+    //PRINT("MINUS NumBytesPlayed %d (%d)\n", _numBytesPlayed, sizeof(Messages::ID));
+    
   }
   
   static inline void SetTypeIndicator(Messages::ID msgType)
@@ -398,6 +409,10 @@ namespace AnimationController {
       _currentBufferPos = numBytes-firstChunk;
     }
     
+    // Increment total number of bytes played since startup
+    _numBytesPlayed += numBytes;
+    //PRINT("NumBytesPlayed %d (%d) (%d)\n", _numBytesPlayed, numBytes, *((u32*)data));
+    
     assert(_currentBufferPos >= 0 && _currentBufferPos < sizeof(_keyFrameBuffer));
   }
   
@@ -412,7 +427,7 @@ namespace AnimationController {
   static inline Result BufferKeyFrameHelper(const MSG_TYPE& msg, Messages::ID msgID)
   {
     const s32 numBytesAvailable = GetNumBytesAvailable();
-    const s32 numBytesNeeded = sizeof(msg) + sizeof(Messages::ID);
+    const s32 numBytesNeeded = Messages::GetSize(msgID) + sizeof(Messages::ID);
     if(numBytesAvailable < numBytesNeeded) {
       // Only print the error message if we haven't already done so this tick,
       // to prevent spamming that could clog reliable UDP
@@ -425,7 +440,7 @@ namespace AnimationController {
       return RESULT_FAIL;
     }
     SetTypeIndicator(msgID);
-    CopyIntoBuffer((u8*)&msg, sizeof(msg));
+    CopyIntoBuffer((u8*)&msg, Messages::GetSize(msgID));
     return RESULT_OK;
   }
   
@@ -601,7 +616,7 @@ namespace AnimationController {
 #define DUMP_NEXT_MESSAGE_CASE(msgName)  \
   case Messages::AnimKeyFrame_##msgName##_ID: { \
     Messages::AnimKeyFrame_##msgName msg; \
-    GetFromBuffer((u8*)&msg, sizeof(msg)); \
+    GetFromBuffer((u8*)&msg, Messages::GetSize(Messages::AnimKeyFrame_##msgName##_ID)); \
   } \
   break;
 
@@ -646,14 +661,14 @@ namespace AnimationController {
           case Messages::AnimKeyFrame_AudioSilence_ID:
           {
             Messages::AnimKeyFrame_AudioSilence msg;
-            GetFromBuffer((u8*)&msg, sizeof(msg));
+            GetFromBuffer((u8*)&msg, Messages::GetSize(msgID));
             HAL::AudioPlaySilence();
             break;
           }
           case Messages::AnimKeyFrame_AudioSample_ID:
           {
             Messages::AnimKeyFrame_AudioSample msg;
-            GetFromBuffer((u8*)&msg, sizeof(msg));
+            GetFromBuffer((u8*)&msg, Messages::GetSize(msgID));
             if(_tracksToPlay & AUDIO_TRACK) {
               HAL::AudioPlayFrame(&msg);
             } else {
@@ -709,7 +724,7 @@ namespace AnimationController {
                     _currentTime_ms, HAL::GetTimeStamp());
 #             endif
               Messages::AnimKeyFrame_EndOfAnimation msg;
-              GetFromBuffer((u8*)&msg, sizeof(msg)); // just pull it out of the buffer
+              GetFromBuffer((u8*)&msg, Messages::GetSize(msgID)); // just pull it out of the buffer
               terminatorFound = true;
               _tracksInUse = 0;
               break;
@@ -718,7 +733,7 @@ namespace AnimationController {
             case Messages::AnimKeyFrame_HeadAngle_ID:
             {
               Messages::AnimKeyFrame_HeadAngle msg;
-              GetFromBuffer((u8*)&msg, sizeof(msg));
+              GetFromBuffer((u8*)&msg, Messages::GetSize(msgID));
               
               if(_tracksToPlay & HEAD_TRACK) {
 #               if DEBUG_ANIMATION_CONTROLLER
@@ -737,7 +752,7 @@ namespace AnimationController {
             case Messages::AnimKeyFrame_LiftHeight_ID:
             {
               Messages::AnimKeyFrame_LiftHeight msg;
-              GetFromBuffer((u8*)&msg, sizeof(msg));
+              GetFromBuffer((u8*)&msg, Messages::GetSize(msgID));
               
               if(_tracksToPlay & LIFT_TRACK) {
 #               if DEBUG_ANIMATION_CONTROLLER
@@ -756,7 +771,7 @@ namespace AnimationController {
             case Messages::AnimKeyFrame_BackpackLights_ID:
             {
               Messages::AnimKeyFrame_BackpackLights msg;
-              GetFromBuffer((u8*)&msg, sizeof(msg));
+              GetFromBuffer((u8*)&msg, Messages::GetSize(msgID));
               
               if(_tracksToPlay & BACKPACK_LIGHTS_TRACK) {
 #               if DEBUG_ANIMATION_CONTROLLER
@@ -775,7 +790,7 @@ namespace AnimationController {
             case Messages::AnimKeyFrame_FaceImage_ID:
             {
               Messages::AnimKeyFrame_FaceImage msg;
-              GetFromBuffer((u8*)&msg, sizeof(msg));
+              GetFromBuffer((u8*)&msg, Messages::GetSize(msgID));
               
               if(_tracksToPlay & FACE_IMAGE_TRACK) {
 #               if DEBUG_ANIMATION_CONTROLLER
@@ -793,7 +808,7 @@ namespace AnimationController {
             case Messages::AnimKeyFrame_FacePosition_ID:
             {
               Messages::AnimKeyFrame_FacePosition msg;
-              GetFromBuffer((u8*)&msg, sizeof(msg));
+              GetFromBuffer((u8*)&msg, Messages::GetSize(msgID));
               
               if(_tracksToPlay & FACE_POS_TRACK) {
 #               if DEBUG_ANIMATION_CONTROLLER
@@ -811,7 +826,7 @@ namespace AnimationController {
             case Messages::AnimKeyFrame_Blink_ID:
             {
               Messages::AnimKeyFrame_Blink msg;
-              GetFromBuffer((u8*)&msg, sizeof(msg));
+              GetFromBuffer((u8*)&msg, Messages::GetSize(msgID));
               
               if(_tracksToPlay & BLINK_TRACK) {
 #               if DEBUG_ANIMATION_CONTROLLER
@@ -836,7 +851,7 @@ namespace AnimationController {
             case Messages::AnimKeyFrame_BodyMotion_ID:
             {
               Messages::AnimKeyFrame_BodyMotion msg;
-              GetFromBuffer((u8*)&msg, sizeof(msg));
+              GetFromBuffer((u8*)&msg, Messages::GetSize(msgID));
               
               if(_tracksToPlay & BODY_TRACK) {
 #               if DEBUG_ANIMATION_CONTROLLER

@@ -36,7 +36,7 @@ namespace Anki {
     {
     public:
       // Create the enumerated message IDs from the MessageDefinitions file:
-      typedef enum {
+      typedef enum : u8 {
         NO_MESSAGE_ID = 0,
 #define MESSAGE_DEFINITION_MODE MESSAGE_ENUM_DEFINITION_MODE
 #include "anki/cozmo/shared/RobotMessageDefinitions.h"

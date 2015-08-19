@@ -17,6 +17,7 @@
 #include "anki/cozmo/basestation/actionInterface.h"
 #include "anki/cozmo/basestation/cozmoActions.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "anki/cozmo/shared/cozmoConfig.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "util/logging/logging.h"
 
@@ -34,17 +35,25 @@ RobotEventHandler::RobotEventHandler(RobotManager& manager, IExternalInterface* 
     // We'll use this callback for simple events we care about
     auto actionEventCallback = std::bind(&RobotEventHandler::HandleActionEvents, this, std::placeholders::_1);
     
+    std::vector<ExternalInterface::MessageGameToEngineTag> tagList =
+    {
+      ExternalInterface::MessageGameToEngineTag::PlaceObjectOnGround,
+      ExternalInterface::MessageGameToEngineTag::PlaceObjectOnGroundHere,
+      ExternalInterface::MessageGameToEngineTag::GotoPose,
+      ExternalInterface::MessageGameToEngineTag::GotoObject,
+      ExternalInterface::MessageGameToEngineTag::PickAndPlaceObject,
+      ExternalInterface::MessageGameToEngineTag::RollObject,
+      ExternalInterface::MessageGameToEngineTag::TraverseObject,
+      ExternalInterface::MessageGameToEngineTag::PlayAnimation,
+      ExternalInterface::MessageGameToEngineTag::FaceObject,
+      ExternalInterface::MessageGameToEngineTag::TurnInPlace,
+    };
+    
     // Subscribe to desired events
-    _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::PlaceObjectOnGround, actionEventCallback));
-    _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::PlaceObjectOnGroundHere, actionEventCallback));
-    _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::GotoPose, actionEventCallback));
-    _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::GotoObject, actionEventCallback));
-    _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::PickAndPlaceObject, actionEventCallback));
-    _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::RollObject, actionEventCallback));
-    _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::TraverseObject, actionEventCallback));
-    _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::PlayAnimation, actionEventCallback));
-    _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::FaceObject, actionEventCallback));
-    _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::TurnInPlace, actionEventCallback));
+    for (auto tag : tagList)
+    {
+      _signalHandles.push_back(_externalInterface->Subscribe(tag, actionEventCallback));
+    }
     
     // Custom handler for QueueSingleAction
     auto queueSingleActionCallback = std::bind(&RobotEventHandler::HandleQueueSingleAction, this, std::placeholders::_1);
@@ -53,6 +62,9 @@ RobotEventHandler::RobotEventHandler(RobotManager& manager, IExternalInterface* 
     // Custom handler for QueueCompoundAction
     auto queueCompoundActionCallback = std::bind(&RobotEventHandler::HandleQueueCompoundAction, this, std::placeholders::_1);
     _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::QueueCompoundAction, queueCompoundActionCallback));
+    
+    auto setLiftHeightCallback = std::bind(&RobotEventHandler::HandleSetLiftHeight, this, std::placeholders::_1);
+    _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::SetLiftHeight, setLiftHeightCallback));
   }
 }
   
@@ -390,6 +402,38 @@ void RobotEventHandler::HandleQueueCompoundAction(const AnkiEvent<ExternalInterf
   // Put the action in the given position of the specified queue:
   QueueActionHelper(msg.position, msg.idTag, msg.inSlot, robot->GetActionList(),
                     compoundAction, msg.numRetries);
+}
+  
+void RobotEventHandler::HandleSetLiftHeight(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+{
+  // TODO: get RobotID in a non-hack way
+  RobotID_t robotID = 1;
+  Robot* robot = _robotManager.GetRobotByID(robotID);
+  
+  // We need a robot
+  if (nullptr == robot)
+  {
+    return;
+  }
+  
+  if(robot->IsLiftLocked()) {
+    PRINT_NAMED_INFO("RobotEventHandler.HandleSetLiftHeight.LiftLocked",
+                     "Ignoring ExternalInterface::SetLiftHeight while lift is locked.");
+  } else {
+    const ExternalInterface::SetLiftHeight& msg = event.GetData().Get_SetLiftHeight();
+    
+    // Special case if commanding low dock height
+    if (msg.height_mm == LIFT_HEIGHT_LOWDOCK && robot->IsCarryingObject()) {
+      
+      // Put the block down right here
+      IActionRunner* newAction = new PlaceObjectOnGroundAction();
+      QueueActionHelper(QueueActionPosition::AT_END, DriveAndManipulateSlot, robot->GetActionList(), newAction);
+    }
+    else {
+      // In the normal case directly set the lift height
+      robot->MoveLiftToHeight(msg.height_mm, msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2, msg.duration_sec);
+    }
+  }
 }
 
 } // namespace Cozmo

@@ -58,6 +58,7 @@ protected:
   void HandleActionEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
   void HandleQueueSingleAction(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
   void HandleQueueCompoundAction(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
+  void HandleSetLiftHeight(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
 };
 
   

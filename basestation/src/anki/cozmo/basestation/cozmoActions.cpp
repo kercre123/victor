@@ -710,9 +710,9 @@ namespace Anki {
     {
       // Compute a goal pose rotated by specified angle around robot's
       // _current_ pose, taking into account the current driveCenter offset
-      const Radians heading = 0;
+      Radians heading = 0;
       if (!_isAbsoluteAngle) {
-        robot.GetPose().GetRotationAngle<'Z'>();
+        heading = robot.GetPose().GetRotationAngle<'Z'>();
       }
       Pose3d rotatedPose;
       Pose3d dcPose = robot.GetDriveCenterPose();

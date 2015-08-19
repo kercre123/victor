@@ -37,13 +37,22 @@ namespace Anki {
 #     include "anki/cozmo/shared/RobotMessageDefinitions.h"
 
       // 3. Create the enumerated message IDs:
+#ifdef ROBOT_HARDWARE
+      // Keil doesn't support enum inheritance, but it compiles ID to 1-byte anyway.
+      // Compile-time check is below.
       typedef enum {
+#else
+      typedef enum : u8 {
+#endif
         NO_MESSAGE_ID = 0,
 #       undef MESSAGE_DEFINITION_MODE
 #       define MESSAGE_DEFINITION_MODE MESSAGE_ENUM_DEFINITION_MODE
 #       include "anki/cozmo/shared/RobotMessageDefinitions.h"
         NUM_MSG_IDS // Final entry without comma at end
       } ID;
+        
+      // Compile-time check for size of ID
+      ct_assert(sizeof(ID) == 1);
 
       // Return the size of a message, given its ID
       u16 GetSize(const ID msgID);
