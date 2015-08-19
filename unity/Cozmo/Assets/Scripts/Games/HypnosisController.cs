@@ -163,10 +163,12 @@ public class HypnosisController : GameController {
       currentState = HypnosisState.SEARCH;
       ComputeTurnDirection();
     }
-    // turns all blocks it has seen to green.
-    foreach (KeyValuePair<int, ActiveBlock> activeBlock in robot.activeBlocks) {
-      for (int j = 0; j < activeBlock.Value.lights.Length; ++j) {
-        activeBlock.Value.lights[j].onColor = CozmoPalette.ColorToUInt(Color.green);
+    else {
+      // turns all blocks it has seen to green.
+      foreach (KeyValuePair<int, ActiveBlock> activeBlock in robot.activeBlocks) {
+        for (int j = 0; j < activeBlock.Value.lights.Length; ++j) {
+          activeBlock.Value.lights[j].onColor = CozmoPalette.ColorToUInt(Color.green);
+        }
       }
     }
   }
