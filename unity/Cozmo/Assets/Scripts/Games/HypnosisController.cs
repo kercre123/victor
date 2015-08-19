@@ -200,33 +200,25 @@ public class HypnosisController : GameController {
   }
 
   private void RobotTrance() {
-
-    bool foundTranceTarget = false;
-
-    for (int i = 0; i < robot.observedObjects.Count; ++i) {
-      if (robot.observedObjects[i].ID == mostRecentTappedID) {
-        foundTranceTarget = true;
-        float angle = Vector2.Angle(robot.Forward, robot.observedObjects[i].WorldPosition - robot.WorldPosition);
-        if (robot.observedObjects[i].ID == mostRecentTappedID && angle < 10.0f) {
-          // we are reasonably aligned to it
-          float distance = Vector3.Distance(robot.WorldPosition, robot.observedObjects[i].WorldPosition);
-          if (distance > 100.0f) {
-            robot.DriveWheels(20.0f, 20.0f);
-          }
-          else {
-            robot.DriveWheels(0.0f, 0.0f);
-          }
-        }
-        else {
-          // we need to turn to face it
-          ComputeTurnDirection();
-          if (searchTurnRight) {
-            robot.DriveWheels(15.0f, -10.0f);
-          }
-          else {
-            robot.DriveWheels(-10.0f, 15.0f);
-          }
-        }
+    float angle = Vector2.Angle(robot.Forward, robot.activeBlocks[mostRecentTappedID].WorldPosition - robot.WorldPosition);
+    if (robot.activeBlocks[mostRecentTappedID].ID == mostRecentTappedID && angle < 10.0f) {
+      // we are reasonably aligned to it so move forward
+      float distance = Vector3.Distance(robot.WorldPosition, robot.activeBlocks[mostRecentTappedID].WorldPosition);
+      if (distance > 100.0f) {
+        robot.DriveWheels(20.0f, 20.0f);
+      }
+      else {
+        robot.DriveWheels(0.0f, 0.0f);
+      }
+    }
+    else {
+      // we need to turn to face it
+      ComputeTurnDirection();
+      if (searchTurnRight) {
+        robot.DriveWheels(15.0f, -10.0f);
+      }
+      else {
+        robot.DriveWheels(-10.0f, 15.0f);
       }
     }
 
