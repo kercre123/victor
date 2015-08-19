@@ -128,7 +128,7 @@ static void TestMotors() {
     MicroWait(500000);
 
     UART::print("  Backward: ");
-    #ifndef DO_GEAR_RATIO_TESTING
+    #ifndef DO_GEAR_RATIO_TESTING 
     for (int i = 0; i < 2; i++)
       Motors::setPower(i, -0x4000);
     for (int i = 2; i < 4; i++)

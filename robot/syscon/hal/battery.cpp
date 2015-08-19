@@ -21,7 +21,7 @@ const Fixed VBAT_CHGD_LO_THRESHOLD = TO_FIXED(3.70); // V
 const Fixed VBAT_EMPTY_THRESHOLD   = TO_FIXED(2.90); // V
 const Fixed VUSB_DETECT_THRESHOLD  = TO_FIXED(4.40); // V
 
-// Read battery dead state N times before w e believe it is dead
+// Read battery dead state N times before we believe it is dead
 const u8 BATTERY_DEAD_CYCLES = 60;
 // Read charger contact state N times before we believe it changed
 const u8 CONTACT_DEBOUNCE_CYCLES = 30;
