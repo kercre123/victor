@@ -12,69 +12,61 @@
 
 #include "anki/cozmo/simulator/game/uiGameController.h"
 
-// For build server tests
-#include <string>
-#include <queue>
-#include "json/json.h"
-
-
 namespace Anki {
 namespace Cozmo {
 
+// Base class from which all cozmo simulation tests should be derived
 class CozmoSimTestController : public UiGameController {
 
 public:
-  CozmoSimTestController(s32 step_time_ms);
+  CozmoSimTestController();
   virtual ~CozmoSimTestController();
   
 protected:
   
-  //virtual void InitInternal() {}
   virtual s32 UpdateInternal() = 0;
 
   
 }; // class CozmoSimTestController
-  
-  
-  
-// Macros for tests
-  
-#define COZMO_SIM_TEST_CLASS BuildServerTestController
-
-#define RUN_BUILD_SERVER_TEST \
-using namespace Anki; \
-using namespace Anki::Cozmo; \
-\
-int main(int argc, char **argv) \
-{ \
-  Anki::Cozmo::BuildServerTestController buildServerTestCtrl(BS_TIME_STEP); \
-  \
-  Anki::Util::PrintfLoggerProvider loggerProvider; \
-  loggerProvider.SetMinLogLevel(0); \
-  Anki::Util::gLoggerProvider = &loggerProvider; \
-  \
-  /* Get the last position of '/' */ \
-  std::string aux(argv[0]); \
-  size_t pos = aux.rfind('/'); \
-  \
-  /* Get the path and the name */ \
-  std::string path = aux.substr(0,pos+1); \
-  std::string resourcePath = path; \
-  std::string filesPath = path + "temp"; \
-  std::string cachePath = path + "temp"; \
-  std::string externalPath = path + "temp"; \
-  Data::DataPlatform dataPlatform(filesPath, cachePath, externalPath, resourcePath); \
-  \
-  buildServerTestCtrl.SetDataPlatform(&dataPlatform); \
-  buildServerTestCtrl.Init(); \
-  \
-  while (buildServerTestCtrl.Update() == 0) {}\
-  \
-  Anki::Util::gLoggerProvider = nullptr; \
-  return 0; \
-}
 
   
+  
+// Factory for creating and registering tests derived from CozmoSimTestController
+class CozmoSimTestFactory
+{
+public:
+  
+  static CozmoSimTestFactory * getInstance()
+  {
+    static CozmoSimTestFactory factory;
+    return &factory;
+  }
+  
+  std::shared_ptr<CozmoSimTestController> Create(std::string name);
+  
+  void RegisterFactoryFunction(std::string name,
+                               std::function<CozmoSimTestController*(void)> classFactoryFunction);
+  
+protected:
+  std::map<std::string, std::function<CozmoSimTestController*(void)>> factoryFunctionRegistry;
+};
+
+
+template<class T>
+class CozmoSimTestRegistrar {
+public:
+  CozmoSimTestRegistrar(std::string className)
+  {
+    // register the class factory function
+    CozmoSimTestFactory::getInstance()->RegisterFactoryFunction(className,
+                                                                [](void) -> CozmoSimTestController * { return new T();});
+  }
+
+};
+  
+  
+#define REGISTER_COZMO_SIM_TEST_CLASS(CLASS) static CozmoSimTestRegistrar<CLASS> registrar(#CLASS);
+
   
   
 } // namespace Cozmo

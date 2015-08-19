@@ -1,5 +1,5 @@
 /*
- * File:          cozmoSimTestController.h
+ * File:          cozmoSimTestController.cpp
  * Date:
  * Description:   
  * Author:        
@@ -7,31 +7,52 @@
  */
 
 #include "anki/cozmo/simulator/game/cozmoSimTestController.h"
-
-#include <stdio.h>
-#include <string.h>
-
+#include "anki/cozmo/shared/cozmoEngineConfig.h"
 
 
 namespace Anki {
   namespace Cozmo {
     
-      // Private memers:
-      namespace {
-
-      } // private namespace
-
-    
+    namespace {
+      
+    } // private namespace
   
-    CozmoSimTestController::CozmoSimTestController(s32 step_time_ms)
-    : UiGameController(step_time_ms)
-    {
-
-    }
+    
+    CozmoSimTestController::CozmoSimTestController()
+    : UiGameController(BS_TIME_STEP)
+    { }
     
     CozmoSimTestController::~CozmoSimTestController()
+    { }
+    
+    
+    
+    // =========== CozmoSimTestFactory ============
+    
+    std::shared_ptr<CozmoSimTestController> CozmoSimTestFactory::Create(std::string name)
     {
+      CozmoSimTestController * instance = nullptr;
+      
+      // find name in the registry and call factory method.
+      auto it = factoryFunctionRegistry.find(name);
+      if(it != factoryFunctionRegistry.end())
+      instance = it->second();
+      
+      // wrap instance in a shared ptr and return
+      if(instance != nullptr)
+      return std::shared_ptr<CozmoSimTestController>(instance);
+      else
+      return nullptr;
     }
+    
+    void CozmoSimTestFactory::RegisterFactoryFunction(std::string name,
+                                 std::function<CozmoSimTestController*(void)> classFactoryFunction)
+    {
+      // register the class factory function
+      factoryFunctionRegistry[name] = classFactoryFunction;
+    }
+    
+    
     
   } // namespace Cozmo
 } // namespace Anki
