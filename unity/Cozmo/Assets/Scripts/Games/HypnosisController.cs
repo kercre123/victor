@@ -40,7 +40,7 @@ public class HypnosisController : GameController {
 
   protected override void Update_BUILDING() {
     base.Update_BUILDING();
-    robot.DriveWheels(35.0f, 0.0f);
+    robot.DriveWheels(35.0f, -20.0f);
 
     foreach (KeyValuePair<int, ActiveBlock> activeBlock in robot.activeBlocks) {
       for (int j = 0; j < activeBlock.Value.lights.Length; ++j) {
@@ -134,7 +134,6 @@ public class HypnosisController : GameController {
       foreach (KeyValuePair<int, ActiveBlock> activeBlock in robot.activeBlocks) {
         for (int j = 0; j < activeBlock.Value.lights.Length; ++j) {
           if (activeBlock.Value.ID == blockID) {
-            Debug.Log("SETTING COLOR FOR TAPPED CUBE");
             activeBlock.Value.lights[j].onColor = CozmoPalette.ColorToUInt(new Color(1.0f, 1.0f, 0.0f, 1.0f));
           }
           else {
@@ -175,10 +174,10 @@ public class HypnosisController : GameController {
 
   private void RobotSearch() {
     if (searchTurnRight) {
-      robot.DriveWheels(35.0f, 0.0f);
+      robot.DriveWheels(35.0f, -20.0f);
     }
     else {
-      robot.DriveWheels(0.0f, 35.0f);
+      robot.DriveWheels(-20.0f, 35.0f);
     }
 
     bool tappedBlockFound = false;
@@ -213,7 +212,7 @@ public class HypnosisController : GameController {
         if (robot.observedObjects[i].ID == mostRecentTappedID && angle < 10.0f) {
           // we are reasonably aligned to it
           float distance = Vector3.Distance(robot.WorldPosition, robot.observedObjects[i].WorldPosition);
-          if (distance > 90.0f) {
+          if (distance > 100.0f) {
             robot.DriveWheels(20.0f, 20.0f);
           }
           else {
@@ -224,10 +223,10 @@ public class HypnosisController : GameController {
           // we need to turn to face it
           ComputeTurnDirection();
           if (searchTurnRight) {
-            robot.DriveWheels(35.0f, 0.0f);
+            robot.DriveWheels(35.0f, -20.0f);
           }
           else {
-            robot.DriveWheels(0.0f, 35.0f);
+            robot.DriveWheels(-20.0f, 35.0f);
           }
         }
       }
