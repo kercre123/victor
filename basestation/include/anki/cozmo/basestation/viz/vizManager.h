@@ -25,8 +25,14 @@
 #include "anki/cozmo/shared/VizStructs.h"
 #include "anki/cozmo/shared/cozmoTypes.h"
 #include "anki/cozmo/basestation/comms/robot/robotMessages.h"
-
+ 
 namespace Anki {
+  
+  // Forward declaration
+  namespace Vision {
+    class TrackedFace;
+  }
+  
   namespace Cozmo {
     
     // NOTE: this is a singleton class
@@ -112,7 +118,7 @@ namespace Anki {
       
       // Draw camera landmarks (one polygone per group, closed or not)
       Handle_t DrawCameraFace(const u32 faceID,
-                              const std::vector<std::pair<std::vector<Point2f>,bool> >& landmarks,
+                              const Vision::TrackedFace& face,
                               const ColorRGBA& color);
       
       //void DrawRamp();

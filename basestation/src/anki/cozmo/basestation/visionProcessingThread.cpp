@@ -293,14 +293,15 @@ namespace Cozmo {
                      "Terminated Robot VisionProcessingThread::Processor thread");
   } // Processor()
 
-  
+  /*
   bool VisionProcessingThread::CheckMailbox(MessageFaceDetection& msg)
   {
-    AnkiConditionalErrorAndReturnValue(_visionSystem != nullptr /*&& _visionSystem->IsInitialized()*/, false,
+    AnkiConditionalErrorAndReturnValue(_visionSystem != nullptr, // && _visionSystem->IsInitialized(), false,
                                        "VisionProcessingThread.CheckMailbox.NullVisionSystem",
                                        "CheckMailbox called before vision system instantiated.");// and initialized.");
     return _visionSystem->CheckMailbox(msg);
   }
+  */
   
   bool VisionProcessingThread::CheckMailbox(MessageVisionMarker& msg)
   {
@@ -334,7 +335,7 @@ namespace Cozmo {
     return _visionSystem->CheckMailbox(msg);
   }
   
-  bool VisionProcessingThread::CheckMailbox(Vision::FaceLandmarks& msg)
+  bool VisionProcessingThread::CheckMailbox(Vision::TrackedFace& msg)
   {
     AnkiConditionalErrorAndReturnValue(_visionSystem != nullptr /*& _visionSystem->IsInitialized()*/, false,
                                        "VisionProcessingThread.CheckMailbox.NullVisionSystem",

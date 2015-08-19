@@ -18,6 +18,7 @@
 #include "anki/common/basestation/math/point.h"
 #include "anki/common/basestation/math/quad_impl.h"
 #include "anki/common/basestation/math/point_impl.h"
+#include "anki/common/basestation/math/rect_impl.h"
 #include "anki/common/basestation/math/poseBase_impl.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/vision/CameraSettings.h"
@@ -776,26 +777,21 @@ namespace Anki {
                                                       visionMarker.markerType != Vision::MARKER_UNKNOWN);
         }
         
-        MessageFaceDetection faceDetection;
+        //MessageFaceDetection faceDetection;
         //std::vector<Rectangle<s32> > faceTargets;
+        Vision::TrackedFace faceDetection;
         while(true == _visionProcessor.CheckMailbox(faceDetection)) {
           /*
           PRINT_NAMED_INFO("Robot.Update",
                            "Robot %d reported seeing a face at (x,y,w,h)=(%d,%d,%d,%d).",
                            GetID(), faceDetection.x_upperLeft, faceDetection.y_upperLeft, faceDetection.width, faceDetection.height);
           */
-          const u16 left_x   = faceDetection.x_upperLeft;
-          const u16 right_x  = left_x + faceDetection.width;
-          const u16 top_y    = faceDetection.y_upperLeft;
-          const u16 bottom_y = top_y + faceDetection.height;
-
-          if(faceDetection.visualize > 0) {
-            // Send tracker quad info to viz
-            VizManager::getInstance()->SendTrackerQuad(left_x, top_y,
-                                                       right_x, top_y,
-                                                       right_x, bottom_y,
-                                                       left_x, bottom_y);
-          }
+          
+          const Rectangle<f32> faceRect = faceDetection.GetRect();
+          const u16 left_x   = faceRect.GetX();
+          const u16 right_x  = faceRect.GetXmax();
+          const u16 top_y    = faceRect.GetY();
+          const u16 bottom_y = faceRect.GetYmax();
           
           // Create a "visionMarker" message from the face detection so we will
           // add this face to BlockWorld
@@ -808,7 +804,7 @@ namespace Anki {
           markerMsg.y_imgLowerLeft  = bottom_y;
           markerMsg.x_imgLowerRight = right_x;
           markerMsg.y_imgLowerRight = bottom_y;
-          markerMsg.timestamp = faceDetection.timestamp;
+          markerMsg.timestamp = faceDetection.GetTimeStamp();
           markerMsg.markerType = Vision::Marker::FACE_CODE; // TODO: Use face identity when we have recognition?
           
           Result lastResult = QueueObservedMarker(markerMsg);
@@ -819,29 +815,10 @@ namespace Anki {
             return lastResult;
           }
           
-          /*
-          // Signal the detection of a face
-          CozmoEngineSignals::RobotObservedFaceSignal().emit(GetID(),
-                                                                faceDetection.x_upperLeft,
-                                                                faceDetection.y_upperLeft,
-                                                                faceDetection.width,
-                                                                faceDetection.height);
-           */
-          
-          /*
-          faceTargets.emplace_back(faceDetection.x_upperLeft,
-                                   faceDetection.y_upperLeft,
-                                   faceDetection.width,
-                                   faceDetection.height);
-           */
-        }
-        
-        // Display any face landmarks that were detected
-        Vision::FaceLandmarks landmarks;
-        u32 faceCtr = 0;
-        while(true == _visionProcessor.CheckMailbox(landmarks)) {
-          //PRINT_NAMED_INFO("Robot.Update.DrawingFace", "");
-          VizManager::getInstance()->DrawCameraFace(faceCtr++, landmarks, NamedColors::RED);
+          VizManager::getInstance()->DrawCameraFace(faceDetection.GetID(), faceDetection,
+                                                    faceDetection.IsBeingTracked() ?
+                                                    NamedColors::GREEN : NamedColors::RED);
+
         }
         
         MessageTrackerQuad trackerQuad;

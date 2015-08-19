@@ -211,11 +211,11 @@ namespace Cozmo {
     // that message into the passed-in message struct.
     //bool CheckMailbox(ImageChunk&          msg);
     bool CheckMailbox(MessageDockingErrorSignal&  msg);
-    bool CheckMailbox(MessageFaceDetection&       msg);
+    //bool CheckMailbox(MessageFaceDetection&       msg);
     bool CheckMailbox(MessageVisionMarker&        msg);
     bool CheckMailbox(MessageTrackerQuad&         msg);
     bool CheckMailbox(MessagePanAndTiltHead&      msg);
-    bool CheckMailbox(Vision::FaceLandmarks&      msg);
+    bool CheckMailbox(Vision::TrackedFace&        msg);
     
   protected:
     
@@ -434,9 +434,9 @@ namespace Cozmo {
     Mailbox<MessageTrackerQuad>          _trackerMailbox;
     Mailbox<MessagePanAndTiltHead>       _panTiltMailbox;
     MultiMailbox<MessageVisionMarker,  DetectFiducialMarkersParameters::MAX_MARKERS>   _visionMarkerMailbox;
-    MultiMailbox<MessageFaceDetection, FaceDetectionParameters::MAX_FACE_DETECTIONS>   _faceDetectMailbox;
+    //MultiMailbox<MessageFaceDetection, FaceDetectionParameters::MAX_FACE_DETECTIONS>   _faceDetectMailbox;
     
-    MultiMailbox<Vision::FaceLandmarks, 16> _faceLandmarksMailbox;
+    MultiMailbox<Vision::TrackedFace, FaceDetectionParameters::MAX_FACE_DETECTIONS> _faceMailbox;
     
   }; // class VisionSystem
   

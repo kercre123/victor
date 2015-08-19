@@ -22,6 +22,7 @@
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/polygon_impl.h"
 #include "anki/vision/basestation/imageIO.h"
+#include "anki/vision/basestation/faceTracker.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
 
 
@@ -295,7 +296,7 @@ namespace Anki {
     }
     
     VizManager::Handle_t VizManager::DrawCameraFace(const u32 faceID,
-                                                    const std::vector<std::pair<std::vector<Point2f>,bool> >& landmarks,
+                                                    const Vision::TrackedFace& face,
                                                     const ColorRGBA& color)
     {
       if(faceID >= _VizObjectMaxID[VIZ_OBJECT_CAMERA_FACE]) {
@@ -304,6 +305,8 @@ namespace Anki {
                           faceID, _VizObjectMaxID[VIZ_OBJECT_CAMERA_FACE]);
         return INVALID_HANDLE;
       }
+      
+      Vision::TrackedFace::LandmarkPolygons landmarks = face.GetLandmarkPolygons();
       
       if(landmarks.empty()) {
         PRINT_NAMED_ERROR("VizManager.DrawCameraFace.EmptyLandmarks", "");

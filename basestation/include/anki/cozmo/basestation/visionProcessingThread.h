@@ -76,11 +76,11 @@ class VisionProcessingThread
     // that message into the passed-in message struct.
     //bool CheckMailbox(ImageChunk&          msg);
     bool CheckMailbox(MessageDockingErrorSignal&  msg);
-    bool CheckMailbox(MessageFaceDetection&       msg);
+    //bool CheckMailbox(MessageFaceDetection&       msg);
     bool CheckMailbox(MessageVisionMarker&        msg);
     bool CheckMailbox(MessageTrackerQuad&         msg);
     bool CheckMailbox(MessagePanAndTiltHead&      msg);
-    bool CheckMailbox(Vision::FaceLandmarks&      msg);
+    bool CheckMailbox(Vision::TrackedFace&        msg);
     
     // If the current image is newer than the specified timestamp, copy it into
     // the given img and return true.

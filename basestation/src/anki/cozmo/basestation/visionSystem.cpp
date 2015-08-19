@@ -335,6 +335,7 @@ namespace Cozmo {
     return retVal;
   }
   
+  /*
   bool VisionSystem::CheckMailbox(MessageFaceDetection&       msg)
   {
     bool retVal = false;
@@ -343,6 +344,7 @@ namespace Cozmo {
     }
     return retVal;
   }
+   */
   
   bool VisionSystem::CheckMailbox(MessageVisionMarker&        msg)
   {
@@ -371,11 +373,11 @@ namespace Cozmo {
     return retVal;
   }
   
-  bool VisionSystem::CheckMailbox(Vision::FaceLandmarks&      msg)
+  bool VisionSystem::CheckMailbox(Vision::TrackedFace&      msg)
   {
     bool retVal = false;
     if(IsInitialized()) {
-      retVal = _faceLandmarksMailbox.getMessage(msg);
+      retVal = _faceMailbox.getMessage(msg);
     }
     return retVal;
   }
@@ -2246,15 +2248,20 @@ namespace Cozmo {
     if(_mode & DETECTING_FACES) {
       Simulator::SetFaceDetectionReadyTime();
   
-      _faceTracker->Update(inputImage.get_CvMat_());
+      _faceTracker->Update(inputImage);
   
-      std::vector<cv::Rect> faces;
+      std::vector<Vision::TrackedFace> faces;
       _faceTracker->GetFaces(faces);
       
       for(auto & currentFace : faces)
       {
+        _faceMailbox.putMessage(currentFace);
+        /*
         MessageFaceDetection msg;
         msg.timestamp   = inputImage.GetTimestamp();
+        
+        const Rectangle<f32>& rect = currentFace.GetRect();
+        
         msg.width       = static_cast<u16>(currentFace.width);
         msg.height      = static_cast<u16>(currentFace.height);
         msg.x_upperLeft = static_cast<u16>(currentFace.x);
@@ -2262,15 +2269,8 @@ namespace Cozmo {
         msg.visualize   = static_cast<u8>(true);
         
         _faceDetectMailbox.putMessage(msg);
+         */
       } // for each face detection
-      
-      std::vector<Vision::FaceLandmarks> landmarks;
-      _faceTracker->GetFaceLandmarks(landmarks);
-      
-      for(auto & landmark : landmarks)
-      {
-        _faceLandmarksMailbox.putMessage(landmark);
-      }
       
     } // if(_mode & DETECTING_FACES)
     

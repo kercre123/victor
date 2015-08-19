@@ -15,18 +15,46 @@
 
 #include "anki/common/types.h"
 #include "anki/common/basestation/math/point.h"
+#include "anki/common/basestation/math/rect.h"
 
 #include <opencv2/core/core.hpp>
 
 namespace Anki {  
 namespace Vision {
- 
-  // TODO: This should probably be a full-blown class
-  // FaceLandmarks are a vector of "polygons", where each polygon
-  //  is a vector of points paired with a bool indicating whether
-  //  it is a closed polygon or not.
-  using FaceLandmarks = std::vector<std::pair<std::vector<Point2f>,bool> >;
   
+  class TrackedFaceImpl;
+  
+  class TrackedFace
+  {
+  public:
+    
+    TrackedFace();
+    TrackedFace(TrackedFaceImpl* impl);
+    
+    ~TrackedFace();
+    
+    float GetScore() const;
+    int   GetID()    const;
+    
+    TimeStamp_t GetTimeStamp() const;
+    
+    // Returns true if tracking is happening vs. false if face was just detected
+    bool  IsBeingTracked() const;
+    
+    const Rectangle<f32>& GetRect() const;
+    
+    using LandmarkPolygons = std::vector<std::pair<std::vector<Point2f>,bool> >;
+    LandmarkPolygons GetLandmarkPolygons() const;
+    
+  private:
+    
+    TrackedFaceImpl* _pImpl;
+    bool _ownsImpl;
+
+  }; // class TrackedFace
+  
+  
+  class Image;
   class FaceTrackerImpl;
   
   class FaceTracker
@@ -36,11 +64,9 @@ namespace Vision {
     FaceTracker(const std::string& modelPath);
     ~FaceTracker();
     
-    Result Update(const cv::Mat& frameOrig);
+    Result Update(const Vision::Image& frameOrig);
     
-    void GetFaces(std::vector<cv::Rect>& faceRects) const;
-    
-    void GetFaceLandmarks(std::vector<FaceLandmarks>& landmarks) const;
+    void GetFaces(std::vector<TrackedFace>& faces);
     
     void EnableDisplay(bool enabled);
     
