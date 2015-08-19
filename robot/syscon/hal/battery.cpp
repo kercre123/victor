@@ -110,6 +110,7 @@ void Battery::update()
       static u8 debounceBattery = 0;
       g_dataToHead.VBat = calcResult(VBAT_SCALE);
 
+      /*
       // Is battery dead AND we are not on the contacts
       if (!onContacts && g_dataToHead.VBat < VBAT_EMPTY_THRESHOLD)
       {
@@ -124,6 +125,7 @@ void Battery::update()
       } else {
         debounceBattery = 0;
       }
+      */
 
       startADCsample(ANALOG_V_EXT_SENSE);
       break ;
@@ -132,6 +134,7 @@ void Battery::update()
       static u8 debounceContacts = 0;
       g_dataToHead.VExt = calcResult(VEXT_SCALE);
    
+      /*
       // Are we on external power?
       bool isOnCharger = (g_dataToHead.VExt > VEXT_DETECT_THRESHOLD);
 
@@ -162,6 +165,7 @@ void Battery::update()
           powerOn();
         }
       }
+      */
 
       startADCsample(ANALOG_V_BAT_SENSE);
       break ;
