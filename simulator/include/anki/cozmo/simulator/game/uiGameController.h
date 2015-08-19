@@ -6,12 +6,17 @@
  * Modifications:
  */
 
+#ifndef __UI_GAME_CONTROLLER_H__
+#define __UI_GAME_CONTROLLER_H__
+
 #include "anki/cozmo/shared/cozmoTypes.h"
 #include "anki/common/basestation/math/pose.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
+#include "anki/cozmo/basestation/data/dataPlatform.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include <webots/Supervisor.hpp>
+
 
 namespace Anki {
 namespace Cozmo {
@@ -43,13 +48,16 @@ public:
   void Init();
   s32 Update();
   
+  void SetDataPlatform(Data::DataPlatform* dataPlatform);
+  Data::DataPlatform* GetDataPlatform();
+  
   void QuitWebots(s32 status);
   
   
 protected:
   
   virtual void InitInternal() {}
-  virtual s32 UpdateInternal() {return 1;}
+  virtual s32 UpdateInternal() = 0;
 
   
   // Message handlers
@@ -131,6 +139,7 @@ protected:
   const Pose3d& GetRobotPoseActual();
 
   const ObservedObject& GetCurrentlyObservedObject();
+
   
 private:
   void HandleRobotStateUpdateBase(ExternalInterface::RobotState const& msg);
@@ -150,7 +159,11 @@ private:
   void UpdateActualObjectPoses();
   
 }; // class UiGameController
+  
+  
+  
 } // namespace Cozmo
 } // namespace Anki
 
 
+#endif // __UI_GAME_CONTROLLER_H__

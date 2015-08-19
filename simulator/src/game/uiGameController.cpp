@@ -46,7 +46,7 @@ namespace Anki {
         GameMessageHandler _msgHandler;
         GameComms *_gameComms = nullptr;
 
-
+        Data::DataPlatform* _dataPlatform = nullptr;
       } // private namespace
 
     
@@ -482,6 +482,16 @@ namespace Anki {
       
     }
 
+    
+    void UiGameController::SetDataPlatform(Data::DataPlatform* dataPlatform) {
+      _dataPlatform = dataPlatform;
+    }
+    
+    Data::DataPlatform* UiGameController::GetDataPlatform()
+    {
+      return _dataPlatform;
+    }
+    
     void UiGameController::SendMessage(const ExternalInterface::MessageGameToEngine& msg)
     {
       UserDeviceID_t devID = 1; // TODO: Should this be a RobotID_t?
