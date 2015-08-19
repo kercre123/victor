@@ -535,6 +535,23 @@
                 ],
               },
               {
+                'action_name': 'create_symlink_resources_faciometric',
+                'inputs': [
+                  '<(coretech_external_path)/IntraFace',
+                ],
+                'outputs': [
+                  '../../simulator/controllers/webotsCtrlGameEngine/resources/faciometric',
+                ],
+                'action': [
+                  'ln',
+                  '-s',
+                  '-f',
+                  '-h',
+                  '<@(_inputs)',
+                  '<@(_outputs)',
+                ],
+              },
+              {
                 'action_name': 'create_symlink_webotsCtrlRobot',
                 'inputs': [
                   '<(PRODUCT_DIR)/webotsCtrlRobot',
