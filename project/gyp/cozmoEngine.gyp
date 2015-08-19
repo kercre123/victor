@@ -49,19 +49,7 @@
       '<(webots_path)/include/ode',
       '<(webots_path)/include',
     ],
-    
-    'faciometric_path' : [
-    #'<(coretech_external_path)/IntraFace/Files',
-      '<(coretech_external_path)/IntraFace/osx_demo_126',
-    ],
-    
-    'faciometric_includes': [
-    #  '<(faciometric_path)/CommonFiles/Headers',
-    #  '<(faciometric_path)/Anki/Headers',
-      '<(faciometric_path)/include',
-      '<(faciometric_path)/3rdparty/Eigen3/include',
-    ],
-
+  
     'compiler_flags': [
       '-Wno-deprecated-declarations', # Supressed until system() usage is removed
       '-fdiagnostics-show-category=name',
@@ -169,8 +157,6 @@
       ['OS=="ios"', {
         'compiler_flags': [
         '-fobjc-arc',
-        '-mfpu=neon',         # FacioMetric
-        '-mfloat-abi=softfp', # FacioMetric
         ]
       }],
       ['OS=="ios" or OS=="mac"', {
@@ -530,7 +516,6 @@
         '../../include',
         '../../generated/clad/engine',
         '<@(opencv_includes)',
-        '<@(faciometric_includes)',
       ],
       'direct_dependent_settings': {
         'include_dirs': [

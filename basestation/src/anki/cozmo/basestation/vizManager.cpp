@@ -277,6 +277,60 @@ namespace Anki {
       return vizID;
     }
     
+    
+    void VizManager::DrawCameraLine(const u32 lineID,
+                                    const Point2f& start,
+                                    const Point2f& end,
+                                    const ColorRGBA& color)
+    {
+      VizCameraLine v;
+      v.lineID = lineID;
+      v.color  = u32(color);
+      v.xStart = start.x();
+      v.yStart = start.y();
+      v.xEnd   = end.x();
+      v.yEnd   = end.y();
+      
+      SendMessage( GET_MESSAGE_ID(VizCameraLine), &v );
+    }
+    
+    VizManager::Handle_t VizManager::DrawCameraFace(const u32 faceID,
+                                                    const std::vector<std::pair<std::vector<Point2f>,bool> >& landmarks,
+                                                    const ColorRGBA& color)
+    {
+      if(faceID >= _VizObjectMaxID[VIZ_OBJECT_CAMERA_FACE]) {
+        PRINT_NAMED_ERROR("VizManager.DrawCameraFace.IDtooLarge",
+                          "Specified face ID=%d larger than maxID=%d\n",
+                          faceID, _VizObjectMaxID[VIZ_OBJECT_CAMERA_FACE]);
+        return INVALID_HANDLE;
+      }
+      
+      if(landmarks.empty()) {
+        PRINT_NAMED_ERROR("VizManager.DrawCameraFace.EmptyLandmarks", "");
+        return INVALID_HANDLE;
+      }
+      
+      const u32 vizID = VizObjectBaseID[VIZ_OBJECT_CAMERA_FACE] + faceID;
+      
+      for(auto & poly : landmarks)
+      {
+        if(poly.first.empty()) {
+          PRINT_NAMED_WARNING("VizManager.DrawCameraFace.EmptyPoly",
+                              "Skipping empty polygon in landmarks.");
+        }
+        for(size_t crntPoint=0, nextPoint=1; nextPoint < poly.first.size(); ++crntPoint, ++nextPoint) {
+          DrawCameraLine(vizID, poly.first[crntPoint], poly.first[nextPoint], color);
+        }
+        
+        // Close the polygon if specified
+        if(poly.second) {
+          DrawCameraLine(vizID, poly.first.back(), poly.first.front(), color);
+        }
+      }
+      
+      return vizID;
+    }
+    
     void VizManager::EraseRobot(const u32 robotID)
     {
       CORETECH_ASSERT(robotID < _VizObjectMaxID[VIZ_OBJECT_ROBOT]);

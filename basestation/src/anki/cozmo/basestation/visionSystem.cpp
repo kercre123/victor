@@ -19,6 +19,7 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/common/basestation/mailbox_impl.h"
 #include "anki/vision/basestation/image_impl.h"
+#include "anki/vision/basestation/faceTracker.h"
 #include "anki/cozmo/basestation/data/dataPlatform.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/quad_impl.h"
@@ -55,10 +56,7 @@
 //#include "localization.h"
 //#include "visionDebugStream.h"
 
-// FacioMetric SDK
-#include <intraface/gaze/gaze.h>
-#include <intraface/core/LocalManager.h>
-#include <intraface/emo/EmoDet.h>
+
 
 #if USE_MATLAB_TRACKER || USE_MATLAB_DETECTOR
 #include "matlabVisionProcessor.h"
@@ -78,13 +76,24 @@ namespace Cozmo {
   , _dataPlatform(dataPlatform)
   , _headCamInfo(nullptr)
   {
+    PRINT_NAMED_INFO("VisionSystem.Constructor", "");
     
+    const std::string modelPath = _dataPlatform->pathToResource(Data::Scope::Resources,
+                                                                "faciometric/osx_demo_126/models/");
+    
+    PRINT_NAMED_INFO("VisionSystem.Constructor.InstantiatingFaceTracker",
+                     "With model path %s.", modelPath.c_str());
+    _faceTracker = new Vision::FaceTracker(modelPath);
+    PRINT_NAMED_INFO("VisionSystem.Constructor.DoneInstantiatingFaceTracker", "");
   } // VisionSystem()
   
   VisionSystem::~VisionSystem()
   {
     if(_headCamInfo != nullptr) {
       delete _headCamInfo;
+    }
+    if(_faceTracker != nullptr) {
+      delete _faceTracker;
     }
   }
   
@@ -358,6 +367,15 @@ namespace Cozmo {
     bool retVal = false;
     if(IsInitialized()) {
       retVal = _panTiltMailbox.getMessage(msg);
+    }
+    return retVal;
+  }
+  
+  bool VisionSystem::CheckMailbox(Vision::FaceLandmarks&      msg)
+  {
+    bool retVal = false;
+    if(IsInitialized()) {
+      retVal = _faceLandmarksMailbox.getMessage(msg);
     }
     return retVal;
   }
@@ -2227,47 +2245,11 @@ namespace Cozmo {
     
     if(_mode & DETECTING_FACES) {
       Simulator::SetFaceDetectionReadyTime();
-
-      // TODO: (AS) move _faceCascade to header, and load data at appropriate time (constructor?)
-      static cv::CascadeClassifier _faceCascade;
-      if(_faceCascade.empty()) {
-        const std::string cascadeFilename = _dataPlatform->pathToResource(Data::Scope::Resources,
-          "config/basestation/config/haarcascade_frontalface_alt2.xml");
-        const bool loadResult = _faceCascade.load(cascadeFilename);
-        AnkiConditionalError(loadResult == true, "VisionSystem.Update.LoadFaceCascade",
-                             "Failed to load face cascade from %s\n", cascadeFilename.c_str());
-        
-        typedef facio::FaceAlignmentSDM<facio::AlignmentFeature, facio::NO_CONTOUR, facio::LocalManager> SDM;
-        typedef facio::IrisEstimator<facio::IrisFeature, facio::LocalManager> IE;
-        typedef facio::HPEstimatorProcrustes<facio::LocalManager> HPE;
-        typedef facio::DMGazeEstimation<facio::LocalManager> GE;
-        typedef facio::EmoDet<facio::LocalManager> ED;
-        
-        // Declaration of the facio variables
-        facio::LocalManager lm;
-        
-        // Tracker object, we are using a unique pointer(http://en.cppreference.com/w/cpp/memory/unique_ptr)
-        // Please notice that the SDM class does not have an explicit constructor.
-        // To get an instance of the SDM class, please use the function SDM::getInstance
-        unique_ptr<SDM> sdm(SDM::getInstance("../../models/tracker_model49.bin", &lm));
-        
-        // Create an instance of the class IrisEstimator
-        IE ie("../../models/iris_model.bin", &lm);
-        // Create an instance of the class GazeEstimator
-        GE ge("../../models/gaze_model.bin", &lm);
-        // Create an instance of the class HPEstimatorProcrustes
-        HPE hpe("../../models/hp_model.bin",&lm);
-        // Create an instance of the class EmoDet
-        ED ed("../../models/emo_model.bin", &lm);
-      }
-      
+  
+      _faceTracker->Update(inputImage.get_CvMat_());
+  
       std::vector<cv::Rect> faces;
-      
-      cv::Mat equalizedImage;
-      cv::equalizeHist(inputImage.get_CvMat_(), equalizedImage);
-      
-      _faceCascade.detectMultiScale(equalizedImage, faces,
-                                    1.1, 2, 0|CV_HAAR_SCALE_IMAGE, cv::Size(30, 30));
+      _faceTracker->GetFaces(faces);
       
       for(auto & currentFace : faces)
       {
@@ -2281,6 +2263,14 @@ namespace Cozmo {
         
         _faceDetectMailbox.putMessage(msg);
       } // for each face detection
+      
+      std::vector<Vision::FaceLandmarks> landmarks;
+      _faceTracker->GetFaceLandmarks(landmarks);
+      
+      for(auto & landmark : landmarks)
+      {
+        _faceLandmarksMailbox.putMessage(landmark);
+      }
       
     } // if(_mode & DETECTING_FACES)
     

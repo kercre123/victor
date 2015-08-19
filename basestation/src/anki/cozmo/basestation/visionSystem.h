@@ -47,6 +47,7 @@
 
 #include "anki/vision/basestation/cameraCalibration.h"
 #include "anki/vision/basestation/image.h"
+#include "anki/vision/basestation/faceTracker.h"
 
 #include "visionParameters.h"
 
@@ -54,13 +55,13 @@
 namespace Anki {
 namespace Cozmo {
     
-// Forward declaration:
-class Robot;
-namespace Data {
-class DataPlatform;
-}
+  // Forward declaration:
+  class Robot;
+  namespace Data {
+    class DataPlatform;
+  }
 
-class VisionSystem
+  class VisionSystem
   {
   public:
 
@@ -214,6 +215,7 @@ class VisionSystem
     bool CheckMailbox(MessageVisionMarker&        msg);
     bool CheckMailbox(MessageTrackerQuad&         msg);
     bool CheckMailbox(MessagePanAndTiltHead&      msg);
+    bool CheckMailbox(Vision::FaceLandmarks&      msg);
     
   protected:
     
@@ -344,6 +346,8 @@ class VisionSystem
     s32                             _snapshotSubsample;
     Embedded::Array<u8>*            _snapshot;
 
+    // FaceTracking
+    Vision::FaceTracker*            _faceTracker;
 
     struct VisionMemory {
       /* 10X the memory for debugging on a PC
@@ -355,7 +359,6 @@ class VisionSystem
       static const s32 ONCHIP_BUFFER_SIZE  = 600000;
       static const s32 CCM_BUFFER_SIZE     = 200000; 
 
-      
       static const s32 MAX_MARKERS = 100; // TODO: this should probably be in visionParameters
       
       OFFCHIP char offchipBuffer[OFFCHIP_BUFFER_SIZE];
@@ -432,6 +435,8 @@ class VisionSystem
     Mailbox<MessagePanAndTiltHead>       _panTiltMailbox;
     MultiMailbox<MessageVisionMarker,  DetectFiducialMarkersParameters::MAX_MARKERS>   _visionMarkerMailbox;
     MultiMailbox<MessageFaceDetection, FaceDetectionParameters::MAX_FACE_DETECTIONS>   _faceDetectMailbox;
+    
+    MultiMailbox<Vision::FaceLandmarks, 16> _faceLandmarksMailbox;
     
   }; // class VisionSystem
   

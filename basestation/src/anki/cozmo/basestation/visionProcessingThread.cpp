@@ -45,14 +45,18 @@ namespace Cozmo {
   void VisionProcessingThread::Start()
   {
     if(!_isCamCalibSet) {
-      PRINT_NAMED_ERROR("VisionProcessingThread.Start", "Camera calibration must be set to start VisionProcessingThread.\n");
+      PRINT_NAMED_ERROR("VisionProcessingThread.Start",
+                        "Camera calibration must be set to start VisionProcessingThread.");
       return;
     }
     
     if(_running) {
       PRINT_NAMED_INFO("VisionProcessingThread.Start.Restarting",
-                       "Thread already started, call Stop() and then restarting.\n");
+                       "Thread already started, call Stop() and then restarting.");
       Stop();
+    } else {
+      PRINT_NAMED_INFO("VisionProcessingThread.Start",
+                       "Starting vision processing thread.");
     }
     
     _running = true;
@@ -238,7 +242,8 @@ namespace Cozmo {
 
   void VisionProcessingThread::Processor()
   {
-    PRINT_STREAM_INFO("VisionProcessingThread.Processor", "Starting Robot VisionProcessingThread::Processor thread...");
+    PRINT_NAMED_INFO("VisionProcessingThread.Processor",
+                     "Starting Robot VisionProcessingThread::Processor thread...");
     
     _visionSystem->Init(_camCalib);
     
@@ -284,7 +289,8 @@ namespace Cozmo {
       _visionSystem = nullptr;
     }
     
-    PRINT_STREAM_INFO("VisionProcessingThread.Processor", "Terminated Robot VisionProcessingThread::Processor thread");
+    PRINT_NAMED_INFO("VisionProcessingThread.Processor",
+                     "Terminated Robot VisionProcessingThread::Processor thread");
   } // Processor()
 
   
@@ -321,6 +327,14 @@ namespace Cozmo {
   }
   
   bool VisionProcessingThread::CheckMailbox(MessagePanAndTiltHead& msg)
+  {
+    AnkiConditionalErrorAndReturnValue(_visionSystem != nullptr /*& _visionSystem->IsInitialized()*/, false,
+                                       "VisionProcessingThread.CheckMailbox.NullVisionSystem",
+                                       "CheckMailbox called before vision system instantiated.");// and initialized.");
+    return _visionSystem->CheckMailbox(msg);
+  }
+  
+  bool VisionProcessingThread::CheckMailbox(Vision::FaceLandmarks& msg)
   {
     AnkiConditionalErrorAndReturnValue(_visionSystem != nullptr /*& _visionSystem->IsInitialized()*/, false,
                                        "VisionProcessingThread.CheckMailbox.NullVisionSystem",

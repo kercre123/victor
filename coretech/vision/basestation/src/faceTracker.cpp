@@ -1,0 +1,564 @@
+/**
+ * File: faceTracker.cpp
+ *
+ * Author: Andrew Stein
+ * Date:   8/18/2015
+ *
+ * Description: Wrapper for FacioMetric face detector / tracker and emotion estimator.
+ *
+ * Copyright: Anki, Inc. 2015
+ **/
+
+#include "anki/vision/basestation/faceTracker.h"
+
+#include "util/logging/logging.h"
+
+// FacioMetric SDK
+#include <intraface/gaze/gaze.h>
+#include <intraface/core/LocalManager.h>
+#include <intraface/emo/EmoDet.h>
+
+#include <opencv2/objdetect/objdetect.hpp>
+#include <opencv2/highgui/highgui.hpp>
+
+namespace Anki {
+namespace Vision {
+  
+  static const cv::Scalar BLUE(255, 0, 0); ///< Definition of the blue color
+  static const cv::Scalar GREEN(0, 255, 0); ///< Definition of the green color
+  static const cv::Scalar RED(0, 0, 255); ///< Definition of the red color
+  static const cv::Scalar FACECOLOR(50, 255, 50); ///< Definition of the face color
+  static const cv::Scalar GAZECOLOR(255, 0, 255); ///< Definition of the gaze color
+  
+  class FaceTrackerImpl
+  {
+  public:
+    
+    FaceTrackerImpl(const std::string& modelPath);
+    ~FaceTrackerImpl();
+    
+    Result Update(const cv::Mat& frame);
+    
+    void GetFaces(std::vector<cv::Rect>& faceRects) const;
+    void GetFaceLandmarks(std::vector<FaceLandmarks>& landmarks) const;
+    
+    void GetDisplayImage(cv::Mat& image) const;
+    
+    void EnableDisplay(bool enable) {
+      _displayEnabled = enable;
+    }
+    
+  private:
+    using SDM = facio::FaceAlignmentSDM<facio::AlignmentFeature, facio::NO_CONTOUR, facio::LocalManager>;
+    using IE  = facio::IrisEstimator<facio::IrisFeature, facio::LocalManager>;
+    using HPE = facio::HPEstimatorProcrustes<facio::LocalManager>;
+    using GE  = facio::DMGazeEstimation<facio::LocalManager>;
+    using ED  = facio::EmoDet<facio::LocalManager>;
+    
+    //const std::string _modelPath;
+    
+    // License manager:
+    static facio::LocalManager _lm;
+    
+    cv::CascadeClassifier _faceCascade;
+    
+    static SDM* _sdm;
+    //std::unique_ptr<SDM> _sdm;
+    IE*  _ie;
+    HPE* _hpe;
+    GE*  _ge;
+    ED*  _ed;
+    
+    facio::emoScores _Emo; // Emotions to show
+    
+    static int _faceCtr;
+    
+    struct Face {
+      cv::Rect rect;
+      cv::Mat  landmarks;
+      float    score;
+      
+      // Variables that store, the information related to irises, head pose and eye gaze
+      facio::Irisesf  irises;
+      facio::HeadPose headPose;
+      facio::EyeGazes gazes;
+      
+      Face(cv::Rect& initRect) : rect(initRect) { }
+    };
+    std::map<int, Face> _faces;
+    
+    bool _displayEnabled;
+    
+    static void drawEmotionState(cv::Mat& img, const facio::emoScores& Emo);
+    
+    //! This function draws lines and points using the computed landmarks.
+    /*!
+     \param img  Input image where the line is drawn.
+     \param X  Matrix that contains the facial landmarks (2 x 49) or (2 x 66).
+     */
+    static void drawFace(cv::Mat& img, const cv::Mat& X);
+    
+    
+    //! This function plots the gaze rays in the image. It takes the irises of the eyes and the gaze of each eye.
+    /*!
+     \param img Input image where the gaze is going to be ploted.
+     \param irises It contains the coordinates of the center of the eyes.
+     \param gazes Object that contains the gaze information. The field 'dir' contains the 3D direction of the gaze (x, y, z).
+     */
+    static void drawGaze(cv::Mat& img, const facio::Irisesf& irises, const facio::EyeGazes& gazes);
+    
+    //! This function draws the head pose in the image.
+    //!
+    //!  Each column in the rotation matrix 'rot' rotation contains the coordinates of the rotated
+    //! axes in the canonical coordinate system.
+    //!
+    //! (x->First column, y->Second column, z->Third column).
+    //!
+    //! In order to draw the head pose, this method plots the columns in 'rot'. To plot
+    //! the rotated axes in an clear way, we scale the columns in 'rot' by a scale factor.
+    //!
+    /*!
+     \param img  Input image where the head pose is drawn.
+     \param rot  Rotation matrix that contains the head pose.
+     */
+    static void drawPose(cv::Mat& img, const cv::Mat& rot);
+  }; // class FaceTrackerImpl
+  
+  // Static initializations:
+  int FaceTrackerImpl::_faceCtr = 0;
+  FaceTrackerImpl::SDM* FaceTrackerImpl::_sdm = nullptr;
+  facio::LocalManager FaceTrackerImpl::_lm;
+  
+  
+  FaceTrackerImpl::FaceTrackerImpl(const std::string& modelPath)
+  : _displayEnabled(false)
+  {
+    const std::string cascadeFilename = modelPath + "haarcascade_frontalface_alt2.xml";
+    
+    const bool loadSuccess = _faceCascade.load(cascadeFilename);
+    if(!loadSuccess) {
+      PRINT_NAMED_ERROR("VisionSystem.Update.LoadFaceCascade",
+                        "Failed to load face cascade from %s\n",
+                        cascadeFilename.c_str());
+    }
+
+    // Tracker object, we are using a unique pointer(http://en.cppreference.com/w/cpp/memory/unique_ptr)
+    // Please notice that the SDM class does not have an explicit constructor.
+    // To get an instance of the SDM class, please use the function SDM::getInstance
+    if(_sdm == nullptr) { // Only initialize once to avoid LicenseManager complaining about multiple instances
+      PRINT_NAMED_INFO("FaceTrackerImpl.Constructor.InstantiateSDM", "");
+      _sdm = SDM::getInstance((modelPath + "tracker_model49.bin").c_str(), &_lm);
+    }
+    
+    // Create an instance of the class IrisEstimator
+    PRINT_NAMED_INFO("FaceTrackerImpl.Constructor.InstantiateIE", "");
+    _ie  = new IE((modelPath + "iris_model.bin").c_str(), &_lm);
+    
+    // Create an instance of the class GazeEstimator
+    PRINT_NAMED_INFO("FaceTrackerImpl.Constructor.InstantiateGE", "");
+    _ge  = new GE((modelPath + "gaze_model.bin").c_str(), &_lm);
+    
+    // Create an instance of the class HPEstimatorProcrustes
+    PRINT_NAMED_INFO("FaceTrackerImpl.Constructor.InstantiateHPE", "");
+    _hpe = new HPE((modelPath + "hp_model.bin").c_str(), &_lm);
+    
+    // Create an instance of the class EmoDet
+    PRINT_NAMED_INFO("FaceTrackerImpl.Constructor.InstantiateED", "");
+    _ed  = new ED((modelPath + "emo_model.bin").c_str(), &_lm);
+    
+  }
+  
+
+  
+  FaceTrackerImpl::~FaceTrackerImpl()
+  {
+    //if(_sdm) delete _sdm; // points to a singleton, so don't delete, call ~SDM();
+    //_sdm->~SDM();
+    
+    if(_ie)  delete _ie;
+    if(_hpe) delete _hpe;
+    if(_ge)  delete _ge;
+    if(_ed)  delete _ed;
+  }
+  
+  
+  Result FaceTrackerImpl::Update(const cv::Mat& frameOrig)
+  {
+    const float minScoreThreshold = 0.1f;
+    
+    cv::Mat frame;
+    cv::Mat landmarksNext;
+    frameOrig.copyTo(frame);
+    
+    // Update existing faces
+    for(auto faceIter = _faces.begin(); faceIter != _faces.end(); /* increment in loop */)
+    {
+      // From the landmarks in the previous frame, we predict the landmark in the current iteration
+      auto & face = faceIter->second;
+      _sdm->track(frame, face.landmarks, landmarksNext, face.score);
+      
+      if(face.score < minScoreThreshold) {
+        // Delete this face (and update iterator accordingly)
+        faceIter = _faces.erase(faceIter);
+      } else {
+        // We copy the current estimation ('landmarksNext'), to the previous
+        // frame ('landmarks') for the next iteration
+        landmarksNext.copyTo(face.landmarks);
+        
+        // Black out face, so we don't re-detect them as new faces
+        frame(face.rect).setTo(0);
+        
+        // Move to next known face
+        ++faceIter;
+      }
+    }
+    
+    // Detecting new faces in the image
+    // TODO: Expose these parameters
+    std::vector<cv::Rect> newFaceRects;
+    _faceCascade.detectMultiScale(frame, newFaceRects, 1.1, 2, 0, cv::Size(15,15));
+    
+    // TODO: See if we recognize this face
+    
+    for(auto & newFaceRect : newFaceRects) {
+      // Initializing the tracker, detecting landmarks from the output of the face detector
+      Face newFace(newFaceRect);
+      _sdm->detect(frame, newFace.rect, newFace.landmarks, newFace.score);
+      if(newFace.score > minScoreThreshold) {
+        _faces.emplace(_faceCtr++, newFace);
+      }
+    }
+    
+    for(auto & face : _faces) {
+      // Computing the Emotion information & Predicting the emotion information
+      _ed->predict(frame, face.second.landmarks, &_Emo);
+     
+      // Estimating the headpose, the headpose information is stored in the struct 'hp'
+      _hpe->estimateHP(face.second.landmarks, face.second.headPose);
+     
+      // Estimating the irises, the irises information is stored in the struct 'irises'
+      _ie->detect(frame, face.second.landmarks, face.second.irises);
+      
+      // Estimating the gaze, the gaze information is stored in the struct 'egs'
+      _ge->compute(face.second.landmarks, face.second.irises, face.second.headPose, face.second.gazes);
+    }
+    
+    if(_displayEnabled) {
+      cv::Mat frame2show = frame.clone();
+      GetDisplayImage(frame2show);
+      cv::imshow("FaceTracker", frame2show);
+      cv::waitKey(5);
+    }
+    
+    return RESULT_OK;
+  } // Update()
+  
+  void FaceTrackerImpl::GetDisplayImage(cv::Mat& frame2Show) const
+  {
+    for(auto & face : _faces)
+    {
+      // Show emotional state on the displayed frame
+      //drawEmotionState(frame2Show, _Emo);
+      
+      // Ploting the landmarks in the image
+      drawFace(frame2Show, face.second.landmarks);
+      
+      // Plot the head pose, using the rotation matrix of the head pose
+      drawPose(frame2Show, face.second.headPose.rot);
+      
+      // Ploting the irises and the gaze
+      drawGaze(frame2Show, face.second.irises, face.second.gazes);
+    }
+  }
+  
+  void FaceTrackerImpl::GetFaces(std::vector<cv::Rect>& faceRects) const
+  {
+    for(auto & face : _faces) {
+      faceRects.emplace_back(face.second.rect);
+    }
+  }
+  
+  static inline void AddFeature(const float* x, const float* y,
+                                const int fromIndex, const int toIndex,
+                                std::vector<Point2f>& pointVec)
+  {
+    pointVec.reserve(toIndex-fromIndex+1);
+    for(int i=fromIndex; i<=toIndex; ++i) {
+      pointVec.emplace_back(x[i],y[i]);
+    }
+  }
+  
+  static inline void AddLineFeature(const float* x, const float* y,
+                                const int fromIndex, const int toIndex,
+                                std::vector<Point2f>& pointVec)
+  {
+    pointVec.emplace_back(x[fromIndex],y[fromIndex]);
+    pointVec.emplace_back(x[toIndex],  y[toIndex]);
+  }
+  
+  void FaceTrackerImpl::GetFaceLandmarks(std::vector<FaceLandmarks>& landmarks) const
+  {
+    landmarks.resize(_faces.size());
+    auto landmarkIter = landmarks.begin();
+    
+    for(auto & face : _faces)
+    {
+      assert(landmarkIter != landmarks.end());
+      
+      // X coordinates on the first row of the cv::Mat, Y on the second
+      const float *x = face.second.landmarks.ptr<float>(0);
+      const float *y = face.second.landmarks.ptr<float>(1);
+      
+      const bool drawFaceContour = face.second.landmarks.cols > 49;
+      
+      // Number of features
+      landmarkIter->resize(drawFaceContour ? 14 : 13);
+
+      // 1. left eyebrow
+      AddFeature(x, y, 0, 4, landmarkIter->at(0).first);
+      
+      // 2. right eyebrow
+      AddFeature(x, y, 5, 9, landmarkIter->at(1).first);
+      
+      // 3. nose
+      AddFeature(x, y, 10, 13, landmarkIter->at(2).first);
+
+      // 4. under nose
+      AddFeature(x, y, 14, 18, landmarkIter->at(3).first);
+
+      // 5. left eye
+      AddFeature(x, y, 19, 24, landmarkIter->at(4).first);
+      landmarkIter->at(4).second = true; // close the poly
+      
+      // 6. right eye
+      AddFeature(x, y, 25, 30, landmarkIter->at(5).first);
+      landmarkIter->at(5).second = true; // close the poly
+      
+      // 7. mouth contour
+      AddFeature(x, y, 31, 42, landmarkIter->at(6).first);
+      landmarkIter->at(6).second = true; // close the poly
+      
+      // 8-13. inner mouth
+      AddFeature(x, y, 43, 45, landmarkIter->at(7).first);
+      AddFeature(x, y, 46, 48, landmarkIter->at(8).first);
+      AddLineFeature(x, y, 31, 43, landmarkIter->at(9).first);
+      AddLineFeature(x, y, 31, 48, landmarkIter->at(10).first);
+      AddLineFeature(x, y, 37, 45, landmarkIter->at(11).first);
+      AddLineFeature(x, y, 37, 46, landmarkIter->at(12).first);
+
+      // contour
+      if (drawFaceContour) {
+        AddFeature(x, y, 49, 65, landmarkIter->at(13).first);
+      }
+      
+      ++landmarkIter;
+    }
+  }
+  
+  void FaceTrackerImpl::drawEmotionState(cv::Mat& img, const facio::emoScores& Emo)
+  {
+    cv::Point emoLoc(100, 50);
+    cv::Point emoLocS(101, 51);
+    
+    // Plotting the emotion score for each one of the emotions, the higher score the more confident the prediction
+    // Please, check the function 'getEmoStr'
+    auto putTextHelper = [&emoLoc,&emoLocS](cv::Mat& img, const char* emoName, float value) {
+      char emoStr[50];
+      sprintf(emoStr, emoName, value);
+      cv::putText(img, emoStr, emoLocS, cv::FONT_HERSHEY_PLAIN, 1.5, cv::Scalar(100,100,100,0.3), 1);
+      cv::putText(img, emoStr, emoLoc,  cv::FONT_HERSHEY_PLAIN, 1.5, cv::Scalar(255, 50, 50), 1);
+      emoLoc.y  += 20;
+      emoLocS.y += 20;
+    };
+    
+    putTextHelper(img, "Neutral:   %.3f", Emo.emoNeutral);
+    putTextHelper(img, "Angry:     %.3f", Emo.emoAngry);
+    putTextHelper(img, "Disgusted: %.3f", Emo.emoDisgust);
+    putTextHelper(img, "Happy:     %.3f", Emo.emoHappy);
+    putTextHelper(img, "Sad:       %.3f", Emo.emoSadness);
+    putTextHelper(img, "Surprised: %.3f", Emo.emoSurprise);
+  }
+    
+  //! This function draws  a line using several landmarks.
+  /*!
+   \param img  Input image where the line is drawn.
+   \param X  Matrix that contains the facial landmarks (2 x 49) or (2 x 66).
+   \param start Index of the first landmark.
+   \param end  Index of the last landmark.
+   \param circle  Plot a circle in the first and last landmark.
+   */
+  static void drawFaceHelper(cv::Mat& img, const cv::Mat& X, int start, int end, bool circle = false)
+  {
+    int thickness = 1;
+    int lineType = CV_AA;
+    
+    for (int i = start; i < end; i++)
+      cv::line(img, cv::Point((int)X.at<float>(0, i), (int)X.at<float>(1, i)), cv::Point((int)X.at<float>(0, i + 1), (int)X.at<float>(1, i + 1)), FACECOLOR, thickness, lineType);
+    
+    if (circle)
+      cv::line(img, cv::Point((int)X.at<float>(0, end), (int)X.at<float>(1, end)), cv::Point((int)X.at<float>(0, start), (int)X.at<float>(1, start)), FACECOLOR, thickness, lineType);
+  }
+  
+  //! This function draws a line from the landmark 'ind1' to 'ind2' .
+  /*!
+   \param img  Input image where the line is drawn.
+   \param X  Matrix that contains the facial landmarks (2 x 49) or (2 x 66).
+   \param ind1  Index of the first landmark.
+   \param ind2  Index of the second landmark.
+   */
+  static void drawFaceHelperLine(cv::Mat& img, const cv::Mat& X, int ind1, int ind2)
+  {
+    int thickness = 1;
+    int lineType = CV_AA;
+    cv::line(img, cv::Point((int)X.at<float>(0, ind1), (int)X.at<float>(1, ind1)), cv::Point((int)X.at<float>(0, ind2), (int)X.at<float>(1, ind2)), FACECOLOR, thickness, lineType);
+  }
+  
+  
+  //! This function draws lines and points using the computed landmarks.
+  /*!
+   \param img  Input image where the line is drawn.
+   \param X  Matrix that contains the facial landmarks (2 x 49) or (2 x 66).
+   */
+  void FaceTrackerImpl::drawFace(cv::Mat& img, const cv::Mat& X)
+  {
+    // left eyebrow
+    drawFaceHelper(img, X, 0, 4);
+    // right eyebrow
+    drawFaceHelper(img, X, 5, 9);
+    // nose
+    drawFaceHelper(img, X, 10, 13);
+    // under nose
+    drawFaceHelper(img, X, 14, 18);
+    // left eye
+    drawFaceHelper(img, X, 19, 24, true);
+    // right eye
+    drawFaceHelper(img, X, 25, 30, true);
+    // mouth contour
+    drawFaceHelper(img, X, 31, 42, true);
+    // inner mouth
+    drawFaceHelper(img, X, 43, 45, false);
+    drawFaceHelper(img, X, 46, 48, false);
+    drawFaceHelperLine(img, X, 31, 43);
+    drawFaceHelperLine(img, X, 31, 48);
+    drawFaceHelperLine(img, X, 37, 45);
+    drawFaceHelperLine(img, X, 37, 46);
+    
+    // contour
+    if (X.cols > 49)
+      drawFaceHelper(img, X, 49, 65);
+  }
+  
+  
+  //! This function plots the gaze rays in the image. It takes the irises of the eyes and the gaze of each eye.
+  /*!
+   \param img Input image where the gaze is going to be ploted.
+   \param irises It contains the coordinates of the center of the eyes.
+   \param gazes Object that contains the gaze information. The field 'dir' contains the 3D direction of the gaze (x, y, z).
+   */
+  void FaceTrackerImpl::drawGaze(cv::Mat& img, const facio::Irisesf& irises, const facio::EyeGazes& gazes)
+  {
+    int thickness = 1; // Thickness of the line
+    int lineType = CV_AA;  // Type of line, this is an opencv parameter
+    float lineL = 20.f; // Length of the line
+    
+    // Points that contains the center of the eyes, it is the initial point of the line
+    cv::Point p0_left(irises.left.center.x, irises.left.center.y);
+    cv::Point p0_right(irises.right.center.x, irises.right.center.y);
+    
+    // Final point of the line, Is computed using the direction of the gaze
+    cv::Point p1_left(p0_left.x + gazes.left.dir(0)*lineL, p0_left.y + gazes.left.dir(1)*lineL);
+    cv::Point p1_right(p0_right.x + gazes.right.dir(0)*lineL, p0_right.y + gazes.right.dir(1)*lineL);
+    
+    // Ploting circles in the eyes
+    circle(img, p0_left, 1, GREEN);
+    circle(img, p0_right, 1, GREEN);
+    // Plotting the line that represents the gaze
+    line(img, p0_left, p1_left, GAZECOLOR, thickness, lineType);
+    line(img, p0_right, p1_right, GAZECOLOR, thickness, lineType);
+    
+  }
+  
+  //! This function draws the head pose in the image.
+  //!
+  //!  Each column in the rotation matrix 'rot' rotation contains the coordinates of the rotated
+  //! axes in the canonical coordinate system.
+  //!
+  //! (x->First column, y->Second column, z->Third column).
+  //!
+  //! In order to draw the head pose, this method plots the columns in 'rot'. To plot
+  //! the rotated axes in an clear way, we scale the columns in 'rot' by a scale factor.
+  //!
+  /*!
+   \param img  Input image where the head pose is drawn.
+   \param rot  Rotation matrix that contains the head pose.
+   */
+  void FaceTrackerImpl::drawPose(cv::Mat& img, const cv::Mat& rot)
+  {
+    // Position of the head pose in the image, Pixel (70, 70)
+    cv::Point positionCoord = cv::Point(70, 70);
+    // Thickness of the line
+    int thickness = 2;
+    // Line type
+    int lineType = CV_AA;
+    // Scaling factor
+    float scale = 50.f;
+    // Scaled rotated matrix
+    cv::Mat scaledRot;
+    // Projected rotated matrix
+    cv::Mat scaledRot2D;
+    
+    // Scaling matrix, This matrix is used to scale the columns of the rotation matrix.
+    cv::Mat scalingMatrix = (cv::Mat_<float>(3, 3) << scale, 0, 0, 0, scale, 0, 0, 0, scale);
+    // Projection to the image plane, using orthognal projection from 3D to 2D
+    cv::Mat orthogonalProjMatrix = (cv::Mat_<float>(2, 3) << 1, 0, 0, 0, 1, 0);
+    
+    // Scaling the rotation matrix
+    scaledRot = scalingMatrix*rot;
+    
+    // Projecting the rotation matrix from 3D to 2D
+    scaledRot2D = orthogonalProjMatrix*scaledRot;
+    
+    // Ploting the Head Pose
+    line(img, positionCoord, positionCoord + cv::Point(scaledRot2D.at<float>(0, 0), scaledRot2D.at<float>(1, 0)), BLUE,  thickness, lineType);
+    line(img, positionCoord, positionCoord + cv::Point(scaledRot2D.at<float>(0, 1), scaledRot2D.at<float>(1, 1)), GREEN, thickness, lineType);
+    line(img, positionCoord, positionCoord + cv::Point(scaledRot2D.at<float>(0, 2), scaledRot2D.at<float>(1, 2)), RED,   thickness, lineType);
+    
+  }
+  
+  
+#pragma mark FaceTracker Implementations
+  
+  FaceTracker::FaceTracker(const std::string& modelPath)
+  : _pImpl(new FaceTrackerImpl(modelPath))
+  {
+    
+  }
+  
+  FaceTracker::~FaceTracker()
+  {
+    if(_pImpl != nullptr) {
+      delete _pImpl;
+    }
+  }
+  
+  Result FaceTracker::Update(const cv::Mat &frameOrig)
+  {
+    return _pImpl->Update(frameOrig);
+  }
+ 
+  void FaceTracker::GetFaces(std::vector<cv::Rect>& faceRects) const
+  {
+    _pImpl->GetFaces(faceRects);
+  }
+  
+  void FaceTracker::GetFaceLandmarks(std::vector<FaceLandmarks>& landmarks) const
+  {
+    _pImpl->GetFaceLandmarks(landmarks);
+  }
+  
+  void FaceTracker::EnableDisplay(bool enabled) {
+    _pImpl->EnableDisplay(enabled);
+  }
+  
+} // namespace Vision
+} // namespace Anki

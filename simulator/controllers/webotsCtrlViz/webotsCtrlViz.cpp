@@ -324,6 +324,19 @@ namespace Anki {
       camDisp->drawLine(msg.xUpperRight, msg.yUpperRight, msg.xUpperLeft, msg.yUpperLeft);
     }
     
+    void ProcessVizCameraLineMessage(const VizCameraLine& msg)
+    {
+      PRINT_NAMED_INFO("WebotsCtrlViz.ProcessVizCameraLineMessage", "");
+      const f32 oneOver255 = 1.f / 255.f;
+      
+      camDisp->setColor(msg.color >> 8);
+      u8 alpha = msg.color & 0xff;
+      if(alpha < 0xff) {
+        camDisp->setAlpha(oneOver255 * static_cast<f32>(alpha));
+      }
+      camDisp->drawLine(msg.xStart, msg.yStart, msg.xEnd, msg.yEnd);
+    }
+    
     void ProcessVizImageChunkMessage(const VizImageChunk& msg)
     {
       // TODO: Support timestamps
@@ -481,6 +494,7 @@ int main(int argc, char **argv)
         case VizTrackerQuad_ID:
         case VizVisionMarker_ID:
         case VizCameraQuad_ID:
+        case VizCameraLine_ID:
         case VizRobotState_ID:
           (*Anki::Cozmo::DispatchTable_[msgID])((unsigned char*)(data + 1));
           break;

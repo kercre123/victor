@@ -110,6 +110,11 @@ namespace Anki {
                              const Pose3d& pose,
                              const ColorRGBA& color = NamedColors::DEFAULT);
       
+      // Draw camera landmarks (one polygone per group, closed or not)
+      Handle_t DrawCameraFace(const u32 faceID,
+                              const std::vector<std::pair<std::vector<Point2f>,bool> >& landmarks,
+                              const ColorRGBA& color);
+      
       //void DrawRamp();
       
       
@@ -194,6 +199,12 @@ namespace Anki {
                           const Quadrilateral<2,T>& quad,
                           const ColorRGBA& color);
       
+      // Draw a line segment in the camera display
+      void DrawCameraLine(const u32 lineID,
+                          const Point2f& start,
+                          const Point2f& end,
+                          const ColorRGBA& color);
+      
       template<typename T>
       void DrawMatMarker(const u32 quadID,
                          const Quadrilateral<3,T>& quad,
@@ -219,7 +230,6 @@ namespace Anki {
       void DrawPoseMarker(const u32 quadID,
                           const Quadrilateral<2,T>& quad,
                           const ColorRGBA& color);
-
       
       // Draw quads of a specified type (usually called as a helper by the
       // above methods for specific types)
@@ -428,7 +438,6 @@ namespace Anki {
 
       DrawPath(pathId, polyPath, color);
     }
-
     
     template<typename T>
     void VizManager::DrawGenericQuad(const u32 quadID,

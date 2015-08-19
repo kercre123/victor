@@ -19,11 +19,12 @@
 #include "anki/vision/basestation/cameraCalibration.h"
 #include "anki/vision/basestation/image.h"
 #include "anki/vision/basestation/visionMarker.h"
+#include "anki/vision/basestation/faceTracker.h"
 
 #include <thread>
 #include <mutex>
 
-namespace Anki {  
+namespace Anki {
 namespace Cozmo {
   
 // Forward declaration
@@ -79,6 +80,7 @@ class VisionProcessingThread
     bool CheckMailbox(MessageVisionMarker&        msg);
     bool CheckMailbox(MessageTrackerQuad&         msg);
     bool CheckMailbox(MessagePanAndTiltHead&      msg);
+    bool CheckMailbox(Vision::FaceLandmarks&      msg);
     
     // If the current image is newer than the specified timestamp, copy it into
     // the given img and return true.

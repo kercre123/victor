@@ -836,6 +836,14 @@ namespace Anki {
            */
         }
         
+        // Display any face landmarks that were detected
+        Vision::FaceLandmarks landmarks;
+        u32 faceCtr = 0;
+        while(true == _visionProcessor.CheckMailbox(landmarks)) {
+          //PRINT_NAMED_INFO("Robot.Update.DrawingFace", "");
+          VizManager::getInstance()->DrawCameraFace(faceCtr++, landmarks, NamedColors::RED);
+        }
+        
         MessageTrackerQuad trackerQuad;
         if(true == _visionProcessor.CheckMailbox(trackerQuad)) {
           // Send tracker quad info to viz
