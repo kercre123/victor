@@ -25,12 +25,8 @@ static const uint8_t AdjustTable[] = {
   0xFD, 0xFD, 0xFD, 0xFD, 0xFD, 0xFD, 0xFD, 0xFE, 0xFE, 0xFE, 0xFE, 0xFE, 0xFE, 0xFE, 0xFF, 0xFF
 };
 
-static uint8_t colors[12];
-static uint8_t pwm[12];
-static int channel;
-
 // Define charlie wiring here:
-const charliePlex_s RGBLightPins[numCharlieChannels] =
+static const charliePlex_s RGBLightPins[] =
 {
   // anode, cath_red, cath_gree, cath_blue
   {PIN_LED1, {PIN_LED2, PIN_LED3, PIN_LED4}},
@@ -38,6 +34,14 @@ const charliePlex_s RGBLightPins[numCharlieChannels] =
   {PIN_LED3, {PIN_LED1, PIN_LED2, PIN_LED4}},
   {PIN_LED4, {PIN_LED1, PIN_LED2, PIN_LED3}}
 };
+
+static const int numCharlieChannels = sizeof(RGBLightPins) / sizeof(RGBLightPins[0]);
+static const int numLightsPerChannel = sizeof(RGBLightPins[0].cathodes);
+static const int numLights = numLightsPerChannel * numCharlieChannels;
+
+static uint8_t colors[numLights];
+static uint8_t pwm[numLights];
+static int channel = 0;
 
 static void lights_off() {
   nrf_gpio_cfg_input(PIN_LED1, NRF_GPIO_PIN_NOPULL);
@@ -68,7 +72,7 @@ extern "C" void RTC1_IRQHandler() {
   nrf_gpio_cfg_output(RGBLightPins[channel].anode);
 
   // Set lights for current charlie channel
-  for (int i = 0, index = channel * 3; i < 3; i++, index++)
+  for (int i = 0, index = channel * numLightsPerChannel; i < numLightsPerChannel; i++, index++)
   {
     int overflow = pwm[index] + (int)colors[index];
     pwm[index] = overflow;
@@ -88,7 +92,7 @@ void Lights::manage(volatile uint32_t *clr)
 
   int pos = 0;
   for (int i = 0; i < numCharlieChannels; i++, in_colors++) {
-    for (int b = 0; b < 3; b++)
+    for (int b = 0; b < numLightsPerChannel; b++)
       colors[pos++] = AdjustTable[*(in_colors++)];
   }
 }
