@@ -107,7 +107,7 @@ namespace Cozmo {
   
   void CozmoGameImpl::Process_ConnectToRobot(ExternalInterface::ConnectToRobot const& msg)
   {
-    // Handled in CozmoEngine::HandleEvents
+    // Handled in CozmoEngineHostImpl::HandleEvents
   }
   
   void CozmoGameImpl::Process_ConnectToUiDevice(ExternalInterface::ConnectToUiDevice const& msg)
@@ -122,7 +122,7 @@ namespace Cozmo {
   
   void CozmoGameImpl::Process_ForceAddRobot(ExternalInterface::ForceAddRobot const& msg)
   {
-    // Handled in CozmoEngineHost:HandleEvents
+    // Handled in CozmoEngineHostImpl:HandleEvents
   }
   
   void CozmoGameImpl::Process_StartEngine(ExternalInterface::StartEngine const& msg)
@@ -268,26 +268,12 @@ namespace Cozmo {
   
   void CozmoGameImpl::Process_SetRobotImageSendMode(ExternalInterface::SetRobotImageSendMode const& msg)
   {
-    // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
-    const RobotID_t robotID = 1;
-    Robot* robot = GetRobotByID(robotID);
-    
-    if(robot != nullptr) {
-      
-      if (msg.mode == ISM_OFF) {
-        robot->GetBlockWorld().EnableDraw(false);
-      } else if (msg.mode == ISM_STREAM) {
-        robot->GetBlockWorld().EnableDraw(true);
-      }
-      
-      robot->RequestImage((ImageSendMode_t)msg.mode,
-                          (Vision::CameraResolution)msg.resolution);
-    }
+    // Handled in CozmoEngineHostImpl:HandleEvents
   }
   
   void CozmoGameImpl::Process_ImageRequest(ExternalInterface::ImageRequest const& msg)
   {
-    SetImageSendMode(msg.robotID, static_cast<ImageSendMode_t>(msg.mode));
+    // Handled in CozmoEngineHostImpl:HandleEvents
   }
   
   void CozmoGameImpl::Process_SaveImages(ExternalInterface::SaveImages const& msg)
@@ -600,7 +586,7 @@ namespace Cozmo {
 
   void CozmoGameImpl::Process_ReadAnimationFile(ExternalInterface::ReadAnimationFile const& msg)
   {
-    // Handled in CozmoEngine::HandleEvents
+    // Handled in CozmoEngineHostImpl::HandleEvents
   }
   
   void CozmoGameImpl::Process_StartFaceTracking(ExternalInterface::StartFaceTracking const& msg)
