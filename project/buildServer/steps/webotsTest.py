@@ -70,7 +70,7 @@ def runWebots(options):
     '--stdout', 
     '--stderr',
     # '--minimize',
-    '--mode=realtime',
+    '--mode=fast',
     os.path.join(options.projectRoot, 'simulator/worlds/buildServer.wbt'),
     ]
 
