@@ -22,11 +22,8 @@
 #define COZMO_MESSAGEHANDLER_H
 
 #include "anki/common/types.h"
-
 #include "anki/cozmo/basestation/comms/robot/robotMessages.h"
-
 #include "anki/vision/basestation/image.h"
-
 #include "anki/messaging/basestation/IChannel.h"
 
 namespace Anki {
@@ -35,9 +32,12 @@ namespace Anki {
 #define MESSAGE_BASECLASS_NAME RobotMessage
 #include "anki/cozmo/shared/RobotMessageDefinitions.h"
     
-    class Robot;
-    class RobotManager;
-    class BlockWorld;
+class Robot;
+class RobotManager;
+class BlockWorld;
+namespace Data {
+class DataPlatform;
+}
     
     class IRobotMessageHandler
     {
@@ -58,7 +58,7 @@ namespace Anki {
     {
     public:
       
-      RobotMessageHandler(); // Force construction with stuff in Init()?
+      RobotMessageHandler(Data::DataPlatform* dataPlatform); // Force construction with stuff in Init()?
 
       // Set the message handler's communications manager
       virtual Result Init(Comms::IChannel* comms,
@@ -73,10 +73,10 @@ namespace Anki {
       
     protected:
       
-      Comms::IChannel* channel_;
-      RobotManager* robotMgr_;
-      
-      bool isInitialized_;
+      Comms::IChannel* _channel;
+      RobotManager* _robotMgr;
+      Data::DataPlatform* _dataPlatform;
+      bool _isInitialized;
 
       Vision::ImageDeChunker _imageDeChunker;
       

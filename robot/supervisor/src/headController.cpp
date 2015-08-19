@@ -300,6 +300,17 @@ namespace HeadController {
       // Do range check on angle
       angle = CLIP(angle, MIN_HEAD_ANGLE, MAX_HEAD_ANGLE);
       
+      // Check if already at desired angle
+      if (inPosition_ &&
+          (angle == desiredAngle_) &&
+          (ABS((desiredAngle_ - currentAngle_).ToFloat()) < ANGLE_TOLERANCE) ) {
+        #if(DEBUG_HEAD_CONTROLLER)
+        PRINT("HEAD: Already at desired angle %f degrees\n", RAD_TO_DEG_F32(angle));
+        #endif
+        return;        
+      }
+      
+      
       desiredAngle_ = angle;
       angleError_ = desiredAngle_.ToFloat() - currentAngle_.ToFloat();
       prevAngleError_ = 0;

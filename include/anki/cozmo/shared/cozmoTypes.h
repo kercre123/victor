@@ -130,7 +130,7 @@ namespace Anki {
       IS_LOCALIZED            = 0x00000001
     } GameStatusFlag;
 
-    
+
     // Bit flags for enabling/disabling animation tracks on the robot
     typedef enum {
       DISABLE_ALL_TRACKS = 0,
@@ -157,11 +157,6 @@ namespace Anki {
       ,NUM_PROX
     } ProxSensor_t;
 
-    enum WhichEye {
-      EYE_LEFT,
-      EYE_RIGHT,
-      EYE_BOTH
-    };
 
     enum EyeShape {
       EYE_CURRENT_SHAPE = -1, // Don't change shape: leave as is

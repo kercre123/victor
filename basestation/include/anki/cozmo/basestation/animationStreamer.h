@@ -46,6 +46,8 @@ namespace Cozmo {
     // Returns true if the idle animation is playing
     bool IsIdleAnimating() const;
     
+    const std::string GetStreamingAnimationName() const;
+    
   private:
     
     CannedAnimationContainer& _animationContainer;

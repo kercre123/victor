@@ -99,7 +99,7 @@ uart_config(uint8 uart_no)
     if (uart_no == UART0){
         //set rx fifo trigger
         WRITE_PERI_REG(UART_CONF1(uart_no),
-        ((64   & UART_RXFIFO_FULL_THRHD) << UART_RXFIFO_FULL_THRHD_S) |
+        ((50   & UART_RXFIFO_FULL_THRHD) << UART_RXFIFO_FULL_THRHD_S) |
         ((0x10 & UART_TXFIFO_EMPTY_THRHD)<<UART_TXFIFO_EMPTY_THRHD_S));
         //SET_PERI_REG_MASK( UART_CONF0(uart_no),UART_TX_FLOW_EN);  //add this sentense to add a tx flow control via MTCK( CTS )
         SET_PERI_REG_MASK(UART_INT_ENA(uart_no), UART_RXFIFO_TOUT_INT_ENA |UART_FRM_ERR_INT_ENA);
@@ -274,129 +274,159 @@ uart_rx_intr_handler(void *para)
   */
   //RcvMsgBuff *pRxBuff = (RcvMsgBuff *)para;
   static uint8* pktStart = 0;
+  static uint8* pktEnd   = 0;
   static uint16 pktLen   = 0;
-  static uint16 pktByte  = 0;
   static uint8 phase     = 0;
-
+  static uint8* localRxWptr = rxBuf;
+  
   const uint32 INT_ST = READ_PERI_REG(UART_INT_ST(UART0));
 
-  if (UART_FRM_ERR_INT_ST == (INT_ST & UART_FRM_ERR_INT_ST)) // Frame error
+  if (INT_ST & (UART_FRM_ERR_INT_ST | UART_RXFIFO_TOUT_INT_ST | UART_TXFIFO_EMPTY_INT_ST | UART_RXFIFO_OVF_INT_ST))
   {
-    WRITE_PERI_REG(UART_INT_CLR(UART0), UART_FRM_ERR_INT_CLR);
     phase = 0;
-    os_put_char('!'); os_put_char('F'); os_put_char('E');
-  }
-  else if(UART_RXFIFO_TOUT_INT_ST == (INT_ST & UART_RXFIFO_TOUT_INT_ST)) // RX timeout
-  {
-    WRITE_PERI_REG(UART_INT_CLR(UART0), UART_RXFIFO_TOUT_INT_CLR);
-    phase = 0;
-    os_put_char('!'); os_put_char('T'); os_put_char('E');
-  }
-  else if(UART_TXFIFO_EMPTY_INT_ST == (INT_ST & UART_TXFIFO_EMPTY_INT_ST)) // TX fifo empty
-  {
-    // This shouldn't happen as we aren't planning to enable this interrupt
-    WRITE_PERI_REG(UART_INT_CLR(UART0), UART_TXFIFO_EMPTY_INT_CLR);
-    os_put_char('!'); os_put_char('T'); os_put_char('X');
-  }
-  else if(UART_RXFIFO_OVF_INT_ST == (INT_ST & UART_RXFIFO_OVF_INT_ST)) // RX overflow
-  {
-    SET_PERI_REG_MASK  (UART_CONF0(UART0), UART_RXFIFO_RST);    //RESET FIFO
-    CLEAR_PERI_REG_MASK(UART_CONF0(UART0), UART_RXFIFO_RST);
-    WRITE_PERI_REG(UART_INT_CLR(UART0), UART_RXFIFO_OVF_INT_CLR);
-    os_put_char('!'); os_put_char('O'); os_put_char('F');
-  }
-  else if(UART_RXFIFO_FULL_INT_ST == (INT_ST & UART_RXFIFO_FULL_INT_ST)) // FIFO at threshold
-  {
-    uint32 count = (READ_PERI_REG(UART_STATUS(UART0))>>UART_RXFIFO_CNT_S)&UART_RXFIFO_CNT;
-    uint16 localRxWind = rxWind;
-    while (count-- != 0) // While data in the FIFO
+    os_put_char('!'); 
+    if (INT_ST & UART_FRM_ERR_INT_ST) // Frame error
     {
-      const uint8 byte = (READ_PERI_REG(UART_FIFO(UART0)) & 0xFF);
-      switch (phase)
+      os_put_char('F'); os_put_char('E');
+    }
+    if(INT_ST & UART_RXFIFO_TOUT_INT_ST) // RX timeout
+    {
+      os_put_char('T'); os_put_char('E');
+    }
+    if(INT_ST & UART_TXFIFO_EMPTY_INT_ST) // TX fifo empty
+    {
+      os_put_char('T'); os_put_char('X');
+    }
+    if(INT_ST & UART_RXFIFO_OVF_INT_ST) // RX overflow
+    {
+      SET_PERI_REG_MASK  (UART_CONF0(UART0), UART_RXFIFO_RST);    //RESET FIFO
+      CLEAR_PERI_REG_MASK(UART_CONF0(UART0), UART_RXFIFO_RST);
+      os_put_char('O'); os_put_char('F');
+    }
+  }
+  
+  uint32 count = (READ_PERI_REG(UART_STATUS(UART0))>>UART_RXFIFO_CNT_S)&UART_RXFIFO_CNT;
+
+  while (count-- != 0) // While data in the FIFO
+  {
+    uint8 byte = (READ_PERI_REG(UART_FIFO(UART0)) & 0xFF);
+
+    switch (phase)
+    {
+      case 0: // Not synchronized / looking for header byte 1
       {
-        case 0: // Not synchronized / looking for header byte 1
+        while (true)
         {
-          if (byte == UART_PACKET_HEADER[0]) phase++;
-          break;
-        }
-        case 1: // Header byte 2
-        {
-          if (byte == UART_PACKET_HEADER[1]) phase++;
-          else phase = 0;
-          break;
-        }
-        case 2: // Low length byte
-        {
-          pktLen = byte;
-          phase++;
-          break;
-        }
-        case 3: // High length byte
-        {
-          pktLen |= (byte << 8);
-          if ((RX_BUF_LEN - localRxWind) < pktLen) // Not enough space at the end of the buffer
-          {
-            if (rxRind < pktLen) // Not enough space at the beginning of the packet buffer
-            {
-              // No where to put the packet, dump it
-              phase = 0;
-              os_put_char('!'); os_put_char('O'); os_put_char('G');
-              continue;
-            }
-            else
-            {
-              localRxWind = 0; // Put this packet at the beginning of the buffer
-            }
-          }
-          phase++;
-          break;
-        }
-        case 4: // Skip unused bytes
-        case 5:
-        {
-          if (byte == 0)
+          if (byte == UART_PACKET_HEADER[0])
           {
             phase++;
+            break;
+          }
+          else if (count > 0)
+          {
+            byte = (READ_PERI_REG(UART_FIFO(UART0)) & 0xFF);
+            count--;
           }
           else
           {
-            os_put_char('!'); os_put_char('I'); os_put_char('B');
-            phase = 0;
+            break;
           }
-          break;
         }
-        case 6: // Start of payload
+        break;
+      }
+      case 1: // Header byte 2
+      {
+        if (byte == UART_PACKET_HEADER[1]) phase++;
+        else phase = 0;
+        break;
+      }
+      case 2: // Low length byte
+      {
+        pktLen = byte;
+        phase++;
+        break;
+      }
+      case 3: // High length byte
+      {
+        pktLen |= (byte << 8);
+        if ((RX_BUF_LEN - rxWind) < pktLen) // Not enough space at the end of the buffer
         {
-          pktStart = rxBuf + localRxWind;
-          pktByte = 0;
-          phase++;
-          // Explicit fallthrough to next case
-        }
-        case 7: // Payload
-        {
-          rxBuf[localRxWind++] = byte;
-          pktByte++;
-
-          if (pktByte >= pktLen)
+          if (rxRind < pktLen) // Not enough space at the beginning of the packet buffer
           {
-            if (system_os_post(uartTaskPrio, (uint32)pktStart, (uint32)pktByte) == false)
-            {
-              os_put_char('!'); os_put_char('O'); os_put_char('S');
-            }
+            // No where to put the packet, dump it
             phase = 0;
+            os_put_char('!'); os_put_char('O'); os_put_char('G');
+            continue;
           }
-          break;
+          else
+          {
+            localRxWptr = rxBuf; // Put this packet at the beginning of the buffer
+          }
         }
-        default:
+        phase++;
+        break;
+      }
+      case 4: // Skip unused bytes
+      case 5:
+      {
+        if (byte == 0)
         {
-          os_printf("ERROR: uart RX phase default\r\n");
+          phase++;
+        }
+        else
+        {
+          os_put_char('!'); os_put_char('I'); os_put_char('B');
           phase = 0;
         }
+        break;
+      }
+      case 6: // Start of payload
+      {
+        pktStart = localRxWptr;
+        pktEnd   = localRxWptr + pktLen;
+        phase++;
+        // Explicit fallthrough to next case
+      }
+      case 7: // Payload
+      {
+        while (true)
+        {
+          *(localRxWptr++) = byte;
+
+          if (localRxWptr == pktEnd)
+          {
+            if (system_os_post(uartTaskPrio, (uint32)pktStart, (uint32)pktLen) == false)
+            {
+              os_put_char('!'); os_put_char('O'); os_put_char('S');
+              localRxWptr = &rxBuf[rxWind];
+            }
+            else
+            {
+              rxWind = localRxWptr - rxBuf;
+            }
+            phase = 0;
+            break;
+          }
+          else if (count > 0)
+          {
+            byte = (READ_PERI_REG(UART_FIFO(UART0)) & 0xFF);
+            count--;
+          }
+          else
+          {
+            break;
+          }
+        }
+        break;
+      }
+      default:
+      {
+        os_printf("ERROR: uart RX phase default\r\n");
+        phase = 0;
       }
     }
-    rxWind = localRxWind;
-    WRITE_PERI_REG(UART_INT_CLR(UART0), UART_RXFIFO_FULL_INT_CLR);
   }
+  WRITE_PERI_REG(UART_INT_CLR(UART0), INT_ST);
 }
 
 

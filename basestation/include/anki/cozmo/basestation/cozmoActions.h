@@ -150,7 +150,7 @@ namespace Anki {
     class TurnInPlaceAction : public DriveToPoseAction
     {
     public:
-      TurnInPlaceAction(const Radians& angle);
+      TurnInPlaceAction(const Radians& angle, const bool isAbsolute);
       
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::TURN_IN_PLACE; }
@@ -162,6 +162,7 @@ namespace Anki {
       
     private:
       Radians _turnAngle;
+      bool    _isAbsoluteAngle;
       bool    _startedTraversingPath;
       
     }; // class TurnInPlaceAction

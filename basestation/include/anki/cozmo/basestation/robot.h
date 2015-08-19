@@ -47,6 +47,7 @@
 #include "anki/cozmo/basestation/ramp.h"
 #include "anki/cozmo/basestation/soundManager.h"
 #include "util/signals/simpleSignal.hpp"
+#include "clad/types/imageSendMode.h"
 #include <queue>
 #include <unordered_map>
 #include <time.h>
@@ -383,9 +384,17 @@ namespace Anki {
       // Use the empty string to disable idle animation.
       Result SetIdleAnimation(const std::string& animName);
       
-      // Return the approximate number of available bytes in the robot's
-      // keyframe buffer, to let us know if we can stream any more
-      s32 GetNumAnimationBytesFree() const;
+      // Returns name of currently streaming animation. Does not include idle animation.
+      // Returns "" if no non-idle animation is streaming.
+      const std::string GetStreamingAnimationName() const;
+      
+      // Returns the number of animation bytes played on the robot since
+      // it was initialized with SyncTime.
+      s32 GetNumAnimationBytesPlayed() const;
+      
+      // Returns a reference to a count of the total number of bytes streamed to the robot.
+      s32 GetNumAnimationBytesStreamed();
+      void IncrementNumAnimationBytesStreamed(s32 num);
       
       // Ask the UI to play a sound for us
       Result PlaySound(const std::string& soundName, u8 numLoops, u8 volume);
@@ -541,8 +550,8 @@ namespace Anki {
       inline bool HasExternalInterface() { return _externalInterface != nullptr; }
       inline IExternalInterface* GetExternalInterface() {
         ASSERT_NAMED(_externalInterface != nullptr, "Robot.ExternalInterface.nullptr"); return _externalInterface; }
-      inline void SetImageSendMode(ImageSendMode_t newMode) { _imageSendMode = newMode; }
-      inline const ImageSendMode_t GetImageSendMode() const { return _imageSendMode; }
+      inline void SetImageSendMode(ImageSendMode newMode) { _imageSendMode = newMode; }
+      inline const ImageSendMode GetImageSendMode() const { return _imageSendMode; }
     protected:
       IExternalInterface* _externalInterface;
       Data::DataPlatform* _dataPlatform;
@@ -644,7 +653,7 @@ namespace Anki {
       bool             _isAnimating;
       bool             _isIdleAnimating;
       f32              _battVoltage;
-      ImageSendMode_t _imageSendMode;
+      ImageSendMode _imageSendMode;
       // Pose history
       Result ComputeAndInsertPoseIntoHistory(const TimeStamp_t t_request,
                                              TimeStamp_t& t, RobotPoseStamp** p,
@@ -723,6 +732,8 @@ namespace Anki {
       CannedAnimationContainer _cannedAnimations;
       AnimationStreamer        _animationStreamer;
       s32 _numFreeAnimationBytes;
+      s32 _numAnimationBytesPlayed;
+      s32 _numAnimationBytesStreamed;
       
       ///////// Messaging ////////
       // These methods actually do the creation of messages and sending
@@ -893,8 +904,16 @@ namespace Anki {
                              false, MakeRelativeMode::RELATIVE_LED_MODE_OFF, {0.f,0.f});
     }
     
-    inline s32 Robot::GetNumAnimationBytesFree() const {
-      return _numFreeAnimationBytes;
+    inline s32 Robot::GetNumAnimationBytesPlayed() const {
+      return _numAnimationBytesPlayed;
+    }
+    
+    inline s32 Robot::GetNumAnimationBytesStreamed() {
+      return _numAnimationBytesStreamed;
+    }
+    
+    inline void Robot::IncrementNumAnimationBytesStreamed(s32 num) {
+      _numAnimationBytesStreamed += num;
     }
     
   } // namespace Cozmo

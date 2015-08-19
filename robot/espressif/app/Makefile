@@ -30,8 +30,6 @@ endif # } PDIR
 APPDIR = .
 LDDIR = ../ld
 
-CCFLAGS += -Os
-
 TARGET_LDFLAGS =		\
 	-nostdlib		\
 	-Wl,-EL \
@@ -43,7 +41,7 @@ ifeq ($(FLAVOR),debug)
 endif
 
 ifeq ($(FLAVOR),release)
-    TARGET_LDFLAGS += -g -O0
+    TARGET_LDFLAGS += -g -Os
 endif
 
 COMPONENTS_eagle.app.v6 = \
