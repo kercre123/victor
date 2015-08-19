@@ -206,8 +206,28 @@ public class HypnosisController : GameController {
 
     for (int i = 0; i < robot.observedObjects.Count; ++i) {
       if (robot.observedObjects[i].ID == mostRecentTappedID) {
-        // found it!
         foundTranceTarget = true;
+        float angle = Vector2.Angle(robot.Forward, robot.observedObjects[i].WorldPosition - robot.WorldPosition);
+        if (robot.observedObjects[i].ID == mostRecentTappedID && angle < 10.0f) {
+          // we are reasonably aligned to it
+          float distance = Vector3.Distance(robot.WorldPosition, robot.observedObjects[i].WorldPosition);
+          if (distance > 50.0f) {
+            robot.DriveWheels(20.0f, 20.0f);
+          }
+          else {
+            robot.DriveWheels(0.0f, 0.0f);
+          }
+        }
+        else {
+          // we need to turn to face it
+          ComputeTurnDirection();
+          if (searchTurnRight) {
+            robot.DriveWheels(35.0f, 0.0f);
+          }
+          else {
+            robot.DriveWheels(0.0f, 35.0f);
+          }
+        }
       }
     }
 
@@ -215,9 +235,9 @@ public class HypnosisController : GameController {
       currentState = HypnosisState.SEARCH;
       ComputeTurnDirection();
     }
-   
+
     if (Time.time - lastInTranceTime > 10.0f) {
-      robot.CancelAction(Anki.Cozmo.RobotActionType.DRIVE_TO_OBJECT);
+      robot.DriveWheels(0.0f, 0.0f);
       currentState = HypnosisState.SLEEP;
       mostRecentTappedID = -1;
       tranceTarget = null;
