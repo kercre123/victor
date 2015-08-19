@@ -20,9 +20,11 @@
 namespace Anki {
   namespace Cozmo {
     
-      // Private memers:
+      // Private members:
       namespace {
 
+        const f32 TIME_UNTIL_READY_SEC = 1.5;
+        
         s32 _stepTimeMS;
         webots::Supervisor _supervisor;
         
@@ -421,7 +423,10 @@ namespace Anki {
           
           _msgHandler.ProcessMessages();
           
-          res = UpdateInternal();
+          // TODO: Better way to wait for ready. Ready message to game?
+          if (_supervisor.getTime() > TIME_UNTIL_READY_SEC) {
+            res = UpdateInternal();
+          }
           
           break;
         }
@@ -1059,6 +1064,10 @@ namespace Anki {
       _supervisor.simulationQuit(status);
     }
     
+    void UiGameController::QuitController(s32 status)
+    {
+      exit(status);
+    }
     
     s32 UiGameController::GetStepTimeMS()
     {

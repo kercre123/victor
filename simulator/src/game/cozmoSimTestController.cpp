@@ -20,6 +20,7 @@ namespace Anki {
     
     CozmoSimTestController::CozmoSimTestController()
     : UiGameController(BS_TIME_STEP)
+    , _result(0)
     { }
     
     CozmoSimTestController::~CozmoSimTestController()

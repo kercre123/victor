@@ -52,7 +52,7 @@ public:
   Data::DataPlatform* GetDataPlatform();
   
   void QuitWebots(s32 status);
-  
+  void QuitController(s32 status);
   
 protected:
   
