@@ -128,6 +128,8 @@ public class VortexController : GameController {
   [SerializeField] float scoreScaleBase = 0.75f;
   [SerializeField] float scoreScaleMax = 1f;
   [SerializeField] float cozmoPredictiveAccuracy = .75f;
+  [SerializeField] float cozmoTimeFirstTap = 1.5f;
+  [SerializeField] float cozmoTimePerTap = 1.25f;
 
   #endregion
 
@@ -193,7 +195,7 @@ public class VortexController : GameController {
   int predictedNum = -1;
   float predictedDuration = -1f;
   float predictedTimeAfterLastPeg = -1f;
-  float cozmoTimePerTap = 1.25f;
+
   List<int> playersThatAreCorrect = new List<int>();
   List<int> playersThatAreWrong = new List<int>();
 
@@ -928,6 +930,12 @@ public class VortexController : GameController {
   }
 
   void Update_INTRO() {
+    #if UNITY_EDITOR
+    if (Input.GetKeyDown(KeyCode.L)) {
+      CozmoEmotionManager.SetEmotion("TAP_FOUR", true);
+      StartCoroutine(SetCozmoTaps(4));
+    }
+    #endif
   }
 
   void Exit_INTRO() {
@@ -1219,7 +1227,7 @@ public class VortexController : GameController {
             predictedNum = numCheck;
           }
           else {
-            if (UnityEngine.Random.Range(0.0f, 1.0f) < 0.5f) {
+            if (UnityEngine.Random.Range(0.0f, 1.0f) < wheel.PredictedPreviousNumberWeight) {
               predictedNum = wheel.PredictedPreviousNumber;
             }
             else {
@@ -1261,11 +1269,14 @@ public class VortexController : GameController {
             if (!fakeCozmoTaps)
               cozmoTapsSubmitted = predictedNum;
           }
+
+          StartCoroutine(SetCozmoTaps(predictedNum));
   
   
           //Debug.Log("cozmo predictedNum("+predictedNum+") time("+time+") timeToBid("+timeToBid+") predictedDuration("+predictedDuration+")");
         }
       }
+      /*
       //this part happens if we are faking taps for coz or are playing without a robot connected
       else if (predictedNum > 0 && cozmoTapsSubmitted < predictedNum) {
         if (Time.time - playerInputs[cozmoIndex].FinalTime >= cozmoTimePerTap) {
@@ -1274,6 +1285,7 @@ public class VortexController : GameController {
           //Debug.Log("cozmo predictedNum("+predictedNum+") cozmoTapsSubmitted("+cozmoTapsSubmitted+")");
         }
       }
+      */
     }
 
     for (int i = 0; i < playerPanelFills.Length; i++) {
@@ -1797,6 +1809,19 @@ public class VortexController : GameController {
     
     PlayerInputTap(index);
     robot.isBusy = false;
+  }
+
+  internal IEnumerator SetCozmoTaps(int predicted) {
+    yield return new WaitForSeconds(cozmoTimeFirstTap);
+    
+    PlayerInputTap(1);
+    cozmoTapsSubmitted++;
+
+    for (int i = 0; i < predicted - 1; i++) {
+      yield return new WaitForSeconds(cozmoTimePerTap);
+      PlayerInputTap(1);
+      cozmoTapsSubmitted++;
+    }
   }
 
   void CheckForGotoStartCompletion(bool success, RobotActionType action_type) {
