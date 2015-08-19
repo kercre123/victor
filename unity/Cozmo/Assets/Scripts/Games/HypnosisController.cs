@@ -126,7 +126,6 @@ public class HypnosisController : GameController {
   }
 
   private void BlockTapped(int blockID, int numTapped) {
-
     // only care about taps in awake mode.
     if (currentState == HypnosisState.AWAKE) {
       mostRecentTappedID = blockID;
@@ -142,11 +141,10 @@ public class HypnosisController : GameController {
         }
       }
     }
-   
   }
 
   private void RobotSleep() {
-    if (Time.time - startSleepTime > 3.0f) {
+    if (Time.time - startSleepTime > 1.0f) {
       currentState = HypnosisState.AWAKE;
     }
 
