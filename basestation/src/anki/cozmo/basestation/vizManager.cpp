@@ -317,17 +317,12 @@ namespace Anki {
       
       for(auto & poly : landmarks)
       {
-        if(poly.first.empty()) {
+        if(poly.empty()) {
           PRINT_NAMED_WARNING("VizManager.DrawCameraFace.EmptyPoly",
                               "Skipping empty polygon in landmarks.");
         }
-        for(size_t crntPoint=0, nextPoint=1; nextPoint < poly.first.size(); ++crntPoint, ++nextPoint) {
-          DrawCameraLine(vizID, poly.first[crntPoint], poly.first[nextPoint], color);
-        }
-        
-        // Close the polygon if specified
-        if(poly.second) {
-          DrawCameraLine(vizID, poly.first.back(), poly.first.front(), color);
+        for(size_t crntPoint=0, nextPoint=1; nextPoint < poly.size(); ++crntPoint, ++nextPoint) {
+          DrawCameraLine(vizID, poly[crntPoint], poly[nextPoint], color);
         }
       }
       

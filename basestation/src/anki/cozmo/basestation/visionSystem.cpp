@@ -2249,27 +2249,11 @@ namespace Cozmo {
       Simulator::SetFaceDetectionReadyTime();
   
       _faceTracker->Update(inputImage);
-  
-      std::vector<Vision::TrackedFace> faces;
-      _faceTracker->GetFaces(faces);
       
-      for(auto & currentFace : faces)
+      for(auto & currentFace : _faceTracker->GetFaces())
       {
         _faceMailbox.putMessage(currentFace);
-        /*
-        MessageFaceDetection msg;
-        msg.timestamp   = inputImage.GetTimestamp();
-        
-        const Rectangle<f32>& rect = currentFace.GetRect();
-        
-        msg.width       = static_cast<u16>(currentFace.width);
-        msg.height      = static_cast<u16>(currentFace.height);
-        msg.x_upperLeft = static_cast<u16>(currentFace.x);
-        msg.y_upperLeft = static_cast<u16>(currentFace.y);
-        msg.visualize   = static_cast<u8>(true);
-        
-        _faceDetectMailbox.putMessage(msg);
-         */
+
       } // for each face detection
       
     } // if(_mode & DETECTING_FACES)

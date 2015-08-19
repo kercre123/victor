@@ -22,15 +22,24 @@
 namespace Anki {  
 namespace Vision {
   
-  class TrackedFaceImpl;
-  
   class TrackedFace
   {
   public:
     
-    TrackedFace();
-    TrackedFace(TrackedFaceImpl* impl);
+    class Impl;
     
+    // Constructor:
+    TrackedFace();
+    TrackedFace(const Impl& impl);
+
+    // Copy / move:
+    TrackedFace(const TrackedFace&);
+    TrackedFace(TrackedFace&&);
+
+    // Assignment:
+    TrackedFace& operator=(const TrackedFace&);
+    TrackedFace& operator=(TrackedFace&&);
+
     ~TrackedFace();
     
     float GetScore() const;
@@ -43,19 +52,20 @@ namespace Vision {
     
     const Rectangle<f32>& GetRect() const;
     
-    using LandmarkPolygons = std::vector<std::pair<std::vector<Point2f>,bool> >;
+    // LandmarkPolygons is a vector of polygons, each of which is a vector of
+    // 2D points
+    using LandmarkPolygons = std::vector<std::vector<Point2f> >;
     LandmarkPolygons GetLandmarkPolygons() const;
     
   private:
     
-    TrackedFaceImpl* _pImpl;
-    bool _ownsImpl;
+    std::unique_ptr<Impl> _pImpl;
 
   }; // class TrackedFace
   
   
+  
   class Image;
-  class FaceTrackerImpl;
   
   class FaceTracker
   {
@@ -66,13 +76,16 @@ namespace Vision {
     
     Result Update(const Vision::Image& frameOrig);
     
-    void GetFaces(std::vector<TrackedFace>& faces);
+    std::vector<TrackedFace> GetFaces() const;
     
     void EnableDisplay(bool enabled);
     
   private:
     
-    FaceTrackerImpl* _pImpl;
+    // Forward declaration
+    class Impl;
+    
+    std::unique_ptr<Impl> _pImpl;
     
   }; // class FaceTracker
   

@@ -11,6 +11,7 @@
 
 #include "anki/vision/basestation/faceTracker.h"
 #include "anki/vision/basestation/image.h"
+#include "anki/vision/basestation/trackedFace.h"
 
 #include "anki/common/basestation/math/rect_impl.h"
 
@@ -36,11 +37,11 @@ namespace Vision {
   static const cv::Scalar GAZECOLOR(255, 0, 255); ///< Definition of the gaze color
   
   
-  class TrackedFaceImpl
+  class TrackedFace::Impl
   {
   public:
     
-    TrackedFaceImpl()
+    Impl()
     : _isBeingTracked(false)
     , _id(-1)
     {
@@ -65,25 +66,36 @@ namespace Vision {
   
   
   TrackedFace::TrackedFace()
-  : _pImpl(new TrackedFaceImpl())
-  , _ownsImpl(true)
+  : _pImpl(new Impl())
   {
     
   }
   
-  TrackedFace::TrackedFace(TrackedFaceImpl* impl)
-  : _pImpl(impl)
-  , _ownsImpl(false)
+  TrackedFace::TrackedFace(const Impl& impl)
+  : _pImpl(new Impl(impl))
   {
     
   }
   
-  TrackedFace::~TrackedFace()
+  TrackedFace::TrackedFace(const TrackedFace& other)
+  : _pImpl(new Impl(*other._pImpl))
   {
-    if(_pImpl != nullptr && _ownsImpl) {
-      delete _pImpl;
+    
+  }
+  
+  TrackedFace& TrackedFace::operator=(const TrackedFace& other)
+  {
+    if(&other != this) {
+      _pImpl.reset(new Impl(*other._pImpl));
     }
+    return *this;
   }
+  
+  // Use default destrictor, move constructor, and move assignment operators:
+  TrackedFace::~TrackedFace() = default;
+  TrackedFace::TrackedFace(TrackedFace&&) = default;
+  TrackedFace& TrackedFace::operator=(TrackedFace&&) = default;
+
   
   const Rectangle<f32>& TrackedFace::GetRect() const
   {
@@ -112,11 +124,17 @@ namespace Vision {
   
   static inline void AddFeature(const float* x, const float* y,
                                 const int fromIndex, const int toIndex,
-                                std::vector<Point2f>& pointVec)
+                                std::vector<Point2f>& pointVec,
+                                bool closed = false)
   {
-    pointVec.reserve(toIndex-fromIndex+1);
+    pointVec.reserve(toIndex-fromIndex+1 + (closed ? 1 : 0));
+    
     for(int i=fromIndex; i<=toIndex; ++i) {
       pointVec.emplace_back(x[i],y[i]);
+    }
+    
+    if(closed) {
+      pointVec.emplace_back(x[fromIndex], y[fromIndex]);
     }
   }
   
@@ -142,40 +160,37 @@ namespace Vision {
     landmarksOut.resize(drawFaceContour ? 14 : 13);
     
     // 1. left eyebrow
-    AddFeature(x, y, 0, 4, landmarksOut[0].first);
+    AddFeature(x, y, 0, 4, landmarksOut[0]);
     
     // 2. right eyebrow
-    AddFeature(x, y, 5, 9, landmarksOut[1].first);
+    AddFeature(x, y, 5, 9, landmarksOut[1]);
     
     // 3. nose
-    AddFeature(x, y, 10, 13, landmarksOut[2].first);
+    AddFeature(x, y, 10, 13, landmarksOut[2]);
     
     // 4. under nose
-    AddFeature(x, y, 14, 18, landmarksOut[3].first);
+    AddFeature(x, y, 14, 18, landmarksOut[3]);
     
     // 5. left eye
-    AddFeature(x, y, 19, 24, landmarksOut[4].first);
-    landmarksOut[4].second = true; // close the poly
+    AddFeature(x, y, 19, 24, landmarksOut[4], true);
     
     // 6. right eye
-    AddFeature(x, y, 25, 30, landmarksOut[5].first);
-    landmarksOut[5].second = true; // close the poly
+    AddFeature(x, y, 25, 30, landmarksOut[5], true);
     
     // 7. mouth contour
-    AddFeature(x, y, 31, 42, landmarksOut[6].first);
-    landmarksOut[6].second = true; // close the poly
+    AddFeature(x, y, 31, 42, landmarksOut[6], true);
     
     // 8-13. inner mouth
-    AddFeature(x, y, 43, 45, landmarksOut[7].first);
-    AddFeature(x, y, 46, 48, landmarksOut[8].first);
-    AddLineFeature(x, y, 31, 43, landmarksOut[9].first);
-    AddLineFeature(x, y, 31, 48, landmarksOut[10].first);
-    AddLineFeature(x, y, 37, 45, landmarksOut[11].first);
-    AddLineFeature(x, y, 37, 46, landmarksOut[12].first);
+    AddFeature(x, y, 43, 45, landmarksOut[7]);
+    AddFeature(x, y, 46, 48, landmarksOut[8]);
+    AddLineFeature(x, y, 31, 43, landmarksOut[9]);
+    AddLineFeature(x, y, 31, 48, landmarksOut[10]);
+    AddLineFeature(x, y, 37, 45, landmarksOut[11]);
+    AddLineFeature(x, y, 37, 46, landmarksOut[12]);
     
     // contour
     if (drawFaceContour) {
-      AddFeature(x, y, 49, 65, landmarksOut[13].first);
+      AddFeature(x, y, 49, 65, landmarksOut[13]);
     }
     
     return landmarksOut;
@@ -183,16 +198,17 @@ namespace Vision {
   
   
   
-  class FaceTrackerImpl
+  class FaceTracker::Impl
   {
   public:
     
-    FaceTrackerImpl(const std::string& modelPath);
-    ~FaceTrackerImpl();
+    Impl(const std::string& modelPath);
+    ~Impl();
     
     Result Update(const Vision::Image& frame);
     
-    void GetFaces(std::vector<TrackedFace>& faces);
+    std::vector<TrackedFace> GetFaces() const;
+    
     //void GetFaces(std::vector<cv::Rect>& faceRects) const;
     //void GetFaceLandmarks(std::vector<FaceLandmarks>& landmarks) const;
     
@@ -228,7 +244,7 @@ namespace Vision {
     static int _faceCtr;
     
     //std::map<int, TrackedFaceImpl> _faces;
-    std::list<TrackedFaceImpl> _faces;
+    std::list<TrackedFace::Impl> _faces;
     
     bool _displayEnabled;
     
@@ -268,12 +284,12 @@ namespace Vision {
   }; // class FaceTrackerImpl
   
   // Static initializations:
-  int FaceTrackerImpl::_faceCtr = 0;
-  FaceTrackerImpl::SDM* FaceTrackerImpl::_sdm = nullptr;
-  facio::LocalManager FaceTrackerImpl::_lm;
+  int FaceTracker::Impl::_faceCtr = 0;
+  FaceTracker::Impl::SDM* FaceTracker::Impl::_sdm = nullptr;
+  facio::LocalManager FaceTracker::Impl::_lm;
   
   
-  FaceTrackerImpl::FaceTrackerImpl(const std::string& modelPath)
+  FaceTracker::Impl::Impl(const std::string& modelPath)
   : _displayEnabled(false)
   {
     const std::string cascadeFilename = modelPath + "haarcascade_frontalface_alt2.xml";
@@ -313,7 +329,7 @@ namespace Vision {
   
 
   
-  FaceTrackerImpl::~FaceTrackerImpl()
+  FaceTracker::Impl::~Impl()
   {
     //if(_sdm) delete _sdm; // points to a singleton, so don't delete, call ~SDM();
     //_sdm->~SDM();
@@ -325,7 +341,7 @@ namespace Vision {
   }
   
   
-  Result FaceTrackerImpl::Update(const Vision::Image& frameOrig)
+  Result FaceTracker::Impl::Update(const Vision::Image& frameOrig)
   {
     const float minScoreThreshold = 0.1f;
     
@@ -347,6 +363,13 @@ namespace Vision {
         // frame ('landmarks') for the next iteration
         landmarksNext.copyTo(faceIter->_landmarks);
         
+        // Update the rectangle based on the landmarks, since we aren't using
+        // the opencv detector for faces we're already tracking:
+        double xmin, xmax, ymin, ymax;
+        cv::minMaxLoc(faceIter->_landmarks.row(0), &xmin, &xmax);
+        cv::minMaxLoc(faceIter->_landmarks.row(1), &ymin, &ymax);
+        faceIter->_rect = Rectangle<f32>(xmin, ymin, xmax-xmin, ymax-ymin);
+        
         // Black out face, so we don't re-detect them as new faces
         frame(faceIter->_rect.get_CvRect_()).setTo(0);
         
@@ -366,7 +389,7 @@ namespace Vision {
     
     for(auto & newFaceRect : newFaceRects) {
       // Initializing the tracker, detecting landmarks from the output of the face detector
-      TrackedFaceImpl newFace;
+      TrackedFace::Impl newFace;
       _sdm->detect(frame, newFaceRect, newFace._landmarks, newFace._score);
       if(newFace._score > minScoreThreshold) {
         newFace._rect.get_CvRect_() = newFaceRect;
@@ -403,7 +426,7 @@ namespace Vision {
     return RESULT_OK;
   } // Update()
   
-  void FaceTrackerImpl::GetDisplayImage(cv::Mat& frame2Show) const
+  void FaceTracker::Impl::GetDisplayImage(cv::Mat& frame2Show) const
   {
     for(auto & face : _faces)
     {
@@ -421,17 +444,19 @@ namespace Vision {
     }
   }
   
-  void FaceTrackerImpl::GetFaces(std::vector<TrackedFace>& faces)
+  std::vector<TrackedFace> FaceTracker::Impl::GetFaces() const
   {
-    faces.reserve(_faces.size());
+    std::vector<TrackedFace> retVector;
+    retVector.reserve(_faces.size());
     for(auto & face : _faces) {
-      faces.emplace_back(&face);
+      retVector.emplace_back(face);
     }
+    return retVector;
   }
   
+#pragma mark Drawing Functions
   
-  
-  void FaceTrackerImpl::drawEmotionState(cv::Mat& img, const facio::emoScores& Emo)
+  void FaceTracker::Impl::drawEmotionState(cv::Mat& img, const facio::emoScores& Emo)
   {
     cv::Point emoLoc(100, 50);
     cv::Point emoLocS(101, 51);
@@ -454,7 +479,7 @@ namespace Vision {
     putTextHelper(img, "Sad:       %.3f", Emo.emoSadness);
     putTextHelper(img, "Surprised: %.3f", Emo.emoSurprise);
   }
-    
+  
   //! This function draws  a line using several landmarks.
   /*!
    \param img  Input image where the line is drawn.
@@ -495,7 +520,7 @@ namespace Vision {
    \param img  Input image where the line is drawn.
    \param X  Matrix that contains the facial landmarks (2 x 49) or (2 x 66).
    */
-  void FaceTrackerImpl::drawFace(cv::Mat& img, const cv::Mat& X)
+  void FaceTracker::Impl::drawFace(cv::Mat& img, const cv::Mat& X)
   {
     // left eyebrow
     drawFaceHelper(img, X, 0, 4);
@@ -531,7 +556,7 @@ namespace Vision {
    \param irises It contains the coordinates of the center of the eyes.
    \param gazes Object that contains the gaze information. The field 'dir' contains the 3D direction of the gaze (x, y, z).
    */
-  void FaceTrackerImpl::drawGaze(cv::Mat& img, const facio::Irisesf& irises, const facio::EyeGazes& gazes)
+  void FaceTracker::Impl::drawGaze(cv::Mat& img, const facio::Irisesf& irises, const facio::EyeGazes& gazes)
   {
     int thickness = 1; // Thickness of the line
     int lineType = CV_AA;  // Type of line, this is an opencv parameter
@@ -568,7 +593,7 @@ namespace Vision {
    \param img  Input image where the head pose is drawn.
    \param rot  Rotation matrix that contains the head pose.
    */
-  void FaceTrackerImpl::drawPose(cv::Mat& img, const cv::Mat& rot)
+  void FaceTracker::Impl::drawPose(cv::Mat& img, const cv::Mat& rot)
   {
     // Position of the head pose in the image, Pixel (70, 70)
     cv::Point positionCoord = cv::Point(70, 70);
@@ -600,21 +625,20 @@ namespace Vision {
     line(img, positionCoord, positionCoord + cv::Point(scaledRot2D.at<float>(0, 2), scaledRot2D.at<float>(1, 2)), RED,   thickness, lineType);
     
   }
+
   
   
 #pragma mark FaceTracker Implementations
   
   FaceTracker::FaceTracker(const std::string& modelPath)
-  : _pImpl(new FaceTrackerImpl(modelPath))
+  : _pImpl(new Impl(modelPath))
   {
     
   }
   
   FaceTracker::~FaceTracker()
   {
-    if(_pImpl != nullptr) {
-      delete _pImpl;
-    }
+
   }
   
   Result FaceTracker::Update(const Vision::Image &frameOrig)
@@ -623,9 +647,9 @@ namespace Vision {
   }
  
   //void FaceTracker::GetFaces(std::vector<cv::Rect>& faceRects) const
-  void FaceTracker::GetFaces(std::vector<TrackedFace>& faces)
+  std::vector<TrackedFace> FaceTracker::GetFaces() const
   {
-    _pImpl->GetFaces(faces);
+    return _pImpl->GetFaces();
   }
   
   void FaceTracker::EnableDisplay(bool enabled) {
