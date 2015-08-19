@@ -19,7 +19,7 @@ namespace DigitalRuby.ThunderAndLightning
         [Tooltip("Radius of the sphere")]
         public float Radius = 4.0f;
 
-		public bool flattenToCircle = false;
+    public bool flattenToCircle = false;
 
 #if UNITY_EDITOR
 
@@ -35,18 +35,18 @@ namespace DigitalRuby.ThunderAndLightning
 
         public override void BatchLightningBolt(LightningBoltParameters parameters)
         {
-			//Debug.Log("frame("+Time.frameCount+") BatchLightningBolt!");
+      //Debug.Log("frame("+Time.frameCount+") BatchLightningBolt!");
             Vector3 start = UnityEngine.Random.insideUnitSphere * InnerRadius;
             Vector3 end = UnityEngine.Random.onUnitSphere * Radius;
 
-			if(flattenToCircle) {
-				start = UnityEngine.Random.insideUnitCircle * InnerRadius;
-				end = UnityEngine.Random.insideUnitCircle.normalized * Radius;	
-			}
-			else {
-				start = UnityEngine.Random.insideUnitSphere * InnerRadius;
-				end = UnityEngine.Random.onUnitSphere * Radius;	
-			}
+      if(flattenToCircle) {
+        start = UnityEngine.Random.insideUnitCircle * InnerRadius;
+        end = UnityEngine.Random.insideUnitCircle.normalized * Radius;  
+      }
+      else {
+        start = UnityEngine.Random.insideUnitSphere * InnerRadius;
+        end = UnityEngine.Random.onUnitSphere * Radius;  
+      }
 
             parameters.Start = start;
             parameters.End = end;

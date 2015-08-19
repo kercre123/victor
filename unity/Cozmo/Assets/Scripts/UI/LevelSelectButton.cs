@@ -10,25 +10,25 @@ using System.Collections;
 /// </summary>
 public class LevelSelectButton : MonoBehaviour {
 
-	[SerializeField] Text text_ID;
-	[SerializeField] Button button;
-	[SerializeField] Image imagePreview;
-	[SerializeField] Image[] fullStars;
+  [SerializeField] Text text_ID;
+  [SerializeField] Button button;
+  [SerializeField] Image imagePreview;
+  [SerializeField] Image[] fullStars;
 
-	public void Initialize(string id, Sprite preview, int stars, bool interactable, UnityAction clickListener) {
-		text_ID.text = id;
-		imagePreview.sprite = preview;
+  public void Initialize(string id, Sprite preview, int stars, bool interactable, UnityAction clickListener) {
+    text_ID.text = id;
+    imagePreview.sprite = preview; 
 
-		for(int i=0; i<fullStars.Length; i++) {
-			fullStars[i].gameObject.SetActive(i<stars);
-		}
+    for (int i = 0; i < fullStars.Length; i++) {
+      fullStars[i].gameObject.SetActive(i < stars);
+    }
 
-		button.interactable = interactable;
+    button.interactable = interactable;
 
-		if(interactable) {
-			button.onClick.AddListener(clickListener);
-		}
+    if (interactable) {
+      button.onClick.AddListener(clickListener);
+    }
 
-	}
+  }
 
 }

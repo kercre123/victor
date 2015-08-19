@@ -7,255 +7,265 @@ using System.Collections.Generic;
 
 /// <summary>
 /// Slider that allows up to three AI assisted action requests via ActionButtons
-/// 	one central button that by default engages the search and target lock features
-/// 	optional upper and lower buttons that can be dragged to and then released to request two additional actions
+///   one central button that by default engages the search and target lock features
+///   optional upper and lower buttons that can be dragged to and then released to request two additional actions
 /// </summary>
 [System.Serializable]
 public class ActionSlider {
 
-	[System.Serializable]
-	public class Hint {
-		public Image image;
-		public Text text;
-	}
+  [System.Serializable]
+  public class Hint {
+    public Image image;
+    public Text text;
+  }
 
-	public Slider slider;
+  public Slider slider;
 
-	[SerializeField] private GameObject highlight;
-	[SerializeField] private Text text;
-	[SerializeField] private Image image;
-	
-	public bool Pressed { get; private set; }
-	
-	public ActionButton currentAction { get; private set; }
+  [SerializeField] private GameObject highlight;
+  [SerializeField] private Text text;
+  [SerializeField] private Image image;
 
-	public void SetMode(ActionButton button, bool down) {
-		if(button == null) {
-			Debug.LogError("Slider was given a current action of null");
-			return;
-		}
+  public bool Pressed { get; private set; }
 
-		currentAction = button;
-		Pressed = down;
+  public ActionButton currentAction { get; private set; }
 
-		if(button.mode != ActionButton.Mode.DISABLED) {
-			highlight.SetActive(Pressed);
-			text.gameObject.SetActive(Pressed);
-		}
-		
-		text.text = currentAction.text.text;
-		image.sprite = currentAction.image.sprite;
+  public void SetMode(ActionButton button, bool down) {
+    if (button == null) {
+      Debug.LogError("Slider was given a current action of null");
+      return;
+    }
 
-		if(button.hint.image != null) {
-			button.hint.image.gameObject.SetActive(!Pressed && button.mode != ActionButton.Mode.DISABLED);
-		}
-	}
+    currentAction = button;
+    Pressed = down;
 
-	public void SetHints()
-	{
-		if(ActionSliderPanel.instance != null) {
-			for(int i = 0; i < ActionSliderPanel.instance.actionButtons.Length; ++i) {
-				ActionButton button = ActionSliderPanel.instance.actionButtons[i];
-				if(button.hint.image != null) {
-					button.hint.image.gameObject.SetActive(!Pressed && i==2); //button.mode != ActionButton.Mode.DISABLED);
-				}
-			}
-		}
-	}
+    if (button.mode != ActionButton.Mode.DISABLED) {
+      highlight.SetActive(Pressed);
+      text.gameObject.SetActive(Pressed);
+    }
+    
+    text.text = currentAction.text.text;
+    image.sprite = currentAction.image.sprite;
+
+    if (button.hint.image != null) {
+      button.hint.image.gameObject.SetActive(!Pressed && button.mode != ActionButton.Mode.DISABLED);
+    }
+  }
+
+  public void SetHints() {
+    if (ActionSliderPanel.instance != null) {
+      for (int i = 0; i < ActionSliderPanel.instance.actionButtons.Length; ++i) {
+        ActionButton button = ActionSliderPanel.instance.actionButtons[i];
+        if (button.hint.image != null) {
+          button.hint.image.gameObject.SetActive(!Pressed && i == 2); //button.mode != ActionButton.Mode.DISABLED);
+        }
+      }
+    }
+  }
 }
 
 /// <summary>
 /// means by which our CozmoVision script manages the ActionSlider
 /// </summary>
-public class ActionSliderPanel : ActionPanel
-{
-	public ActionSlider actionSlider;
+public class ActionSliderPanel : ActionPanel {
+  public ActionSlider actionSlider;
 
-	[SerializeField] private DynamicSliderFrame dynamicSliderFrame;
-	[SerializeField] private AudioClip slideInSound;
-	[SerializeField] private AudioClip slideOutSound;
-	[SerializeField] private GameObject background;
-	[SerializeField] private Animation actionAnimation;
-	[SerializeField] private AnimationClip actionIdleAnim;
-	[SerializeField] private AnimationClip actionSheenAnim;
+  [SerializeField] private DynamicSliderFrame dynamicSliderFrame;
+  [SerializeField] private AudioClip slideInSound;
+  [SerializeField] private AudioClip slideOutSound;
+  [SerializeField] private GameObject background;
+  [SerializeField] private Animation actionAnimation;
+  [SerializeField] private AnimationClip actionIdleAnim;
+  [SerializeField] private AnimationClip actionSheenAnim;
 
-	[SerializeField] private AudioClip actionsAvailableSound;
-	[SerializeField] private AudioClip actionsNotAvailableSound;
+  [SerializeField] private AudioClip actionsAvailableSound;
+  [SerializeField] private AudioClip actionsNotAvailableSound;
 
-	private ActionButton bottomAction { get { return actionButtons[0]; } }
-	private ActionButton topAction { get { return actionButtons[1]; } }
-	private ActionButton centerAction { get { return actionButtons[2]; } }
+  private ActionButton bottomAction { get { return actionButtons[0]; } }
 
-	public bool upLastFrame { get; private set; }
-	public bool downLastFrame { get; private set; }
+  private ActionButton topAction { get { return actionButtons[1]; } }
 
-	private ActionButton.Mode lastMode = ActionButton.Mode.DISABLED;
+  private ActionButton centerAction { get { return actionButtons[2]; } }
 
-	private bool secondaryActionsAvailableLastFrame = false;
+  public bool upLastFrame { get; private set; }
 
-	public static new ActionSliderPanel instance = null;
+  public bool downLastFrame { get; private set; }
 
-	protected override void Awake() {
-		base.Awake();
-		
-		SetDefaults();
-	}
+  private ActionButton.Mode lastMode = ActionButton.Mode.DISABLED;
 
-	protected override void OnEnable() {
-		base.OnEnable();
+  private bool secondaryActionsAvailableLastFrame = false;
 
-		instance = this;
+  public static new ActionSliderPanel instance = null;
 
-		secondaryActionsAvailableLastFrame = false;
+  protected override void Awake() {
+    base.Awake();
+    
+    SetDefaults();
+  }
 
-		if(actionAnimation != null) {
-			actionAnimation.Stop();
-			actionAnimation.Play(actionIdleAnim.name);
-		}
+  protected override void OnEnable() {
+    base.OnEnable();
 
-	}
+    instance = this;
 
-	protected override void OnDisable() {
-		base.OnDisable();
+    secondaryActionsAvailableLastFrame = false;
 
-		if(instance == this) instance = null;
+    if (actionAnimation != null) {
+      actionAnimation.Stop();
+      actionAnimation.Play(actionIdleAnim.name);
+    }
 
-		SetDefaults();
+  }
 
-		AudioManager.Stop(actionsAvailableSound);
-	}
+  protected override void OnDisable() {
+    base.OnDisable();
 
-	private void SetDefaults()
-	{
-		if(actionSlider != null) {
-			actionSlider.slider.value = 0f;
-			actionSlider.SetMode(centerAction, false);
-		}
-		
-		upLastFrame = true;
-		downLastFrame = false;
-	}
+    if (instance == this)
+      instance = null;
 
-	protected void Update() {
-		lastMode = actionSlider.currentAction.mode;
+    SetDefaults();
 
-		if(actionSlider != null) actionSlider.SetHints();
-		
-		if(robot == null || allDisabled) {
-			if(dynamicSliderFrame != null) dynamicSliderFrame.enabled = false;
-			upLastFrame = true;
-			downLastFrame = false;
+    AudioManager.Stop(actionsAvailableSound);
+  }
 
-			RefreshSliderMode();
-			return;
-		}
+  private void SetDefaults() {
+    if (actionSlider != null) {
+      actionSlider.slider.value = 0f;
+      actionSlider.SetMode(centerAction, false);
+    }
+    
+    upLastFrame = true;
+    downLastFrame = false;
+  }
 
-		if(dynamicSliderFrame != null) dynamicSliderFrame.enabled = true;
+  protected void Update() {
+    lastMode = actionSlider.currentAction.mode;
 
-		bool actionsAvailable = secondaryActionsAvailable;
+    if (actionSlider != null)
+      actionSlider.SetHints();
+    
+    if (robot == null || allDisabled) {
+      if (dynamicSliderFrame != null)
+        dynamicSliderFrame.enabled = false;
+      upLastFrame = true;
+      downLastFrame = false;
 
-		if(!actionsAvailable) {
-			if(background != null) background.SetActive(false);
-			actionSlider.slider.value = 0f;
-		}
-		else {
-			if(background != null) background.SetActive(true);
-		}
+      RefreshSliderMode();
+      return;
+    }
 
-		if(!actionSlider.Pressed) {
-			if(!upLastFrame) actionSlider.currentAction.OnRelease();
+    if (dynamicSliderFrame != null)
+      dynamicSliderFrame.enabled = true;
 
-			upLastFrame = true;
-			downLastFrame = false;
+    bool actionsAvailable = secondaryActionsAvailable;
 
-			if(actionAnimation != null && secondaryActionsAvailableLastFrame != actionsAvailable) {
-				if(actionsAvailable) {
-					//Debug.Log("actionAnimation.CrossFade(actionSheenAnim.name, 0.5f, PlayMode.StopAll);");
-					actionAnimation.CrossFade(actionSheenAnim.name, 0.5f, PlayMode.StopAll);
-				}
-				else {
-					//Debug.Log("actionAnimation.CrossFade(actionIdleAnim.name, 0.5f, PlayMode.StopAll);");
-					actionAnimation.CrossFade(actionIdleAnim.name, 0.5f, PlayMode.StopAll);
-				}
-			}
-			actionSlider.SetMode(centerAction, actionSlider.Pressed);
-		}
-		else {
+    if (!actionsAvailable) {
+      if (background != null)
+        background.SetActive(false);
+      actionSlider.slider.value = 0f;
+    }
+    else {
+      if (background != null)
+        background.SetActive(true);
+    }
 
-			if(actionAnimation != null) {
-				actionAnimation.Stop();
-				actionAnimation.Play(actionIdleAnim.name);
-			}
+    if (!actionSlider.Pressed) {
+      if (!upLastFrame)
+        actionSlider.currentAction.OnRelease();
 
-			if(!downLastFrame) actionSlider.currentAction.OnPress();
+      upLastFrame = true;
+      downLastFrame = false;
 
-			downLastFrame = true;
-			upLastFrame = false;
+      if (actionAnimation != null && secondaryActionsAvailableLastFrame != actionsAvailable) {
+        if (actionsAvailable) {
+          //Debug.Log("actionAnimation.CrossFade(actionSheenAnim.name, 0.5f, PlayMode.StopAll);");
+          actionAnimation.CrossFade(actionSheenAnim.name, 0.5f, PlayMode.StopAll);
+        }
+        else {
+          //Debug.Log("actionAnimation.CrossFade(actionIdleAnim.name, 0.5f, PlayMode.StopAll);");
+          actionAnimation.CrossFade(actionIdleAnim.name, 0.5f, PlayMode.StopAll);
+        }
+      }
+      actionSlider.SetMode(centerAction, actionSlider.Pressed);
+    }
+    else {
 
-			RefreshSliderMode();
-		}
+      if (actionAnimation != null) {
+        actionAnimation.Stop();
+        actionAnimation.Play(actionIdleAnim.name);
+      }
 
-		if (secondaryActionsAvailableLastFrame && !actionsAvailable) {
-			AudioManager.PlayOneShot(actionsNotAvailableSound, 0f, 1f, 0.25f);
-			AudioManager.Stop(actionsAvailableSound);
-		}
-		else if (!secondaryActionsAvailableLastFrame && actionsAvailable) {
-			AudioManager.PlayAudioClipLooping(actionsAvailableSound, 0f, AudioManager.Source.Robot, 1f, 0.25f);
-		}
-		
-		secondaryActionsAvailableLastFrame = actionsAvailable;
-	}
+      if (!downLastFrame)
+        actionSlider.currentAction.OnPress();
 
-	public void ToggleInteract(bool val) {
-		if(!val) {
-			actionSlider.slider.value = 0f;
-			actionSlider.SetMode(actionSlider.currentAction, val);
-		}
-		else {
-			actionSlider.SetMode(centerAction, val);
-		}
-		//Debug.Log("ToggleInteract("+val+")");
-	}
+      downLastFrame = true;
+      upLastFrame = false;
 
-	private void RefreshSliderMode() {
-		ActionButton currentButton = centerAction;
+      RefreshSliderMode();
+    }
 
-		if(actionSlider.slider.value < -0.5f && bottomAction.mode != ActionButton.Mode.DISABLED) {
-			currentButton = bottomAction;
+    if (secondaryActionsAvailableLastFrame && !actionsAvailable) {
+      AudioManager.PlayOneShot(actionsNotAvailableSound, 0f, 1f, 0.25f);
+      AudioManager.Stop(actionsAvailableSound);
+    }
+    else if (!secondaryActionsAvailableLastFrame && actionsAvailable) {
+      AudioManager.PlayAudioClipLooping(actionsAvailableSound, 0f, AudioManager.Source.Robot, 1f, 0.25f);
+    }
+    
+    secondaryActionsAvailableLastFrame = actionsAvailable;
+  }
 
-			float minZ = float.MaxValue;
-			for(int i=0;i<robot.selectedObjects.Count && i<2;i++) {
-				if(minZ < robot.selectedObjects[i].WorldPosition.z) continue;
-				minZ = robot.selectedObjects[i].WorldPosition.z;
-				robot.targetLockedObject = robot.selectedObjects[i];
-			}
-		}
-		else if(actionSlider.slider.value > 0.5f && topAction.mode != ActionButton.Mode.DISABLED) {
-			currentButton = topAction;
-			
-			float maxZ = float.MinValue;
-			for(int i=0;i<robot.selectedObjects.Count && i<2;i++) {
-				if(maxZ > robot.selectedObjects[i].WorldPosition.z) continue;
-				maxZ = robot.selectedObjects[i].WorldPosition.z;
-				robot.targetLockedObject = robot.selectedObjects[i];
-			}
-		}
-		
-		if(currentButton.mode != lastMode && currentButton != centerAction) {
-			SlideInSound();
-		}
-		else if(currentButton.mode != lastMode) {
-			SlideOutSound();
-		}
-		//Debug.Log("RefreshSliderMode currentMode("+currentMode+","+currentButton+")");
-		actionSlider.SetMode(currentButton, actionSlider.Pressed);
-	}
+  public void ToggleInteract(bool val) {
+    if (!val) {
+      actionSlider.slider.value = 0f;
+      actionSlider.SetMode(actionSlider.currentAction, val);
+    }
+    else {
+      actionSlider.SetMode(centerAction, val);
+    }
+    //Debug.Log("ToggleInteract("+val+")");
+  }
 
-	private void SlideInSound() {
-		AudioManager.PlayOneShot(slideInSound);
-	}
-	
-	private void SlideOutSound() {
-		AudioManager.PlayOneShot(slideOutSound);
-	}
+  private void RefreshSliderMode() {
+    ActionButton currentButton = centerAction;
+
+    if (actionSlider.slider.value < -0.5f && bottomAction.mode != ActionButton.Mode.DISABLED) {
+      currentButton = bottomAction;
+
+      float minZ = float.MaxValue;
+      for (int i = 0; i < robot.selectedObjects.Count && i < 2; i++) {
+        if (minZ < robot.selectedObjects[i].WorldPosition.z)
+          continue;
+        minZ = robot.selectedObjects[i].WorldPosition.z;
+        robot.targetLockedObject = robot.selectedObjects[i];
+      }
+    }
+    else if (actionSlider.slider.value > 0.5f && topAction.mode != ActionButton.Mode.DISABLED) {
+      currentButton = topAction;
+      
+      float maxZ = float.MinValue;
+      for (int i = 0; i < robot.selectedObjects.Count && i < 2; i++) {
+        if (maxZ > robot.selectedObjects[i].WorldPosition.z)
+          continue;
+        maxZ = robot.selectedObjects[i].WorldPosition.z;
+        robot.targetLockedObject = robot.selectedObjects[i];
+      }
+    }
+    
+    if (currentButton.mode != lastMode && currentButton != centerAction) {
+      SlideInSound();
+    }
+    else if (currentButton.mode != lastMode) {
+      SlideOutSound();
+    }
+    //Debug.Log("RefreshSliderMode currentMode("+currentMode+","+currentButton+")");
+    actionSlider.SetMode(currentButton, actionSlider.Pressed);
+  }
+
+  private void SlideInSound() {
+    AudioManager.PlayOneShot(slideInSound);
+  }
+
+  private void SlideOutSound() {
+    AudioManager.PlayOneShot(slideOutSound);
+  }
 }

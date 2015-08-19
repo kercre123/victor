@@ -80,7 +80,7 @@ namespace DigitalRuby.ThunderAndLightning
         /// </summary>
         public float GlowIntensityMultiplier { get; set; }
 
-		public virtual int GetVertsForLightningBolt(LightningBolt bolt) { return 0; }
+    public virtual int GetVertsForLightningBolt(LightningBolt bolt) { return 0; }
     }
 
 #if ENABLE_LINE_RENDERER
@@ -324,22 +324,22 @@ namespace DigitalRuby.ThunderAndLightning
 
         public Material MaterialNoGlow { get; set; }
 
-		public override int GetVertsForLightningBolt(LightningBolt bolt) {
+    public override int GetVertsForLightningBolt(LightningBolt bolt) {
 
-			if(!renderers.ContainsKey(bolt)) {
-				Debug.Log("GetVertsForLightningBolt !renderers.ContainsKey(bolt)");
-				return 0;
-			}
+      if(!renderers.ContainsKey(bolt)) {
+        Debug.Log("GetVertsForLightningBolt !renderers.ContainsKey(bolt)");
+        return 0;
+      }
 
-			List<LineRendererMesh> lineRendererMeshes = renderers[bolt];
+      List<LineRendererMesh> lineRendererMeshes = renderers[bolt];
 
-			int count = 0;
-			for(int i=0;i<lineRendererMeshes.Count;i++) {
-				count += lineRendererMeshes[i].VertCount;
-			}
+      int count = 0;
+      for(int i=0;i<lineRendererMeshes.Count;i++) {
+        count += lineRendererMeshes[i].VertCount;
+      }
 
-			return count;
-		}
+      return count;
+    }
     }
 
     /// <summary>
@@ -620,7 +620,7 @@ namespace DigitalRuby.ThunderAndLightning
                 lightningLight.color = Color.white;
                 lightningLight.range = 5000.0f;
                 lightningLight.bounceIntensity = 1.0f;
-				lightningLight.intensity = 0f;
+        lightningLight.intensity = 0f;
                 lightningLight.enabled = (Delay <= 0.0f);
                 lightningLightObject.transform.parent = Parent.transform;
             }
@@ -699,7 +699,7 @@ namespace DigitalRuby.ThunderAndLightning
                 CurrentDelayAmount += ((float)parameters.Random.NextDouble() * minDelayValue) + delayDiff;
             }
 
-			//Debug.Log("RenderLightningBolt totalVerts("+lightningBoltRenderer.GetVertsForLightningBolt(this)+")");
+      //Debug.Log("RenderLightningBolt totalVerts("+lightningBoltRenderer.GetVertsForLightningBolt(this)+")");
         }
 
         private IEnumerator RenderGroupGlow(LightningBoltSegmentGroup g, ParticleSystem glowParticleSystem, float glowTime, float delayTime, float glowIntensity, float glowWidthMultiplier)
@@ -813,7 +813,7 @@ namespace DigitalRuby.ThunderAndLightning
 
             lightningBoltRenderer.Render(this);
 
-			return true; //lightningLight != null;
+      return true; //lightningLight != null;
         }
 
         private LightningBoltSegmentGroup CreateGroup()

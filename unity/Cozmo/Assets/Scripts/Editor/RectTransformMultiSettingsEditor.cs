@@ -7,22 +7,22 @@ using System.Collections;
 [CustomEditor(typeof(RectTransformMultiSettings))]
 public class RectTransformMultiSettingsEditor : Editor 
 {
-	public override void OnInspectorGUI()
-	{
+  public override void OnInspectorGUI()
+  {
 
-		RectTransformMultiSettings rectTransformBasedOnScreenSize = target as RectTransformMultiSettings;
+    RectTransformMultiSettings rectTransformBasedOnScreenSize = target as RectTransformMultiSettings;
 
-		//EditorGUI.BeginChangeCheck();
+    //EditorGUI.BeginChangeCheck();
 
-		DrawDefaultInspector();
+    DrawDefaultInspector();
 
-		if(GUILayout.Button("Save Current Settings")) {
-			rectTransformBasedOnScreenSize.SaveCurrentSettings();
-		}
+    if(GUILayout.Button("Save Current Settings")) {
+      rectTransformBasedOnScreenSize.SaveCurrentSettings();
+    }
 
-//		if (EditorGUI.EndChangeCheck())
-//		{
-//			Debug.Log(rectTransformBasedOnScreenSize.gameObject.name + " OnInspectorGUI EndChangeCheck true!");
-//		}
-	}
+//    if (EditorGUI.EndChangeCheck())
+//    {
+//      Debug.Log(rectTransformBasedOnScreenSize.gameObject.name + " OnInspectorGUI EndChangeCheck true!");
+//    }
+  }
 }
