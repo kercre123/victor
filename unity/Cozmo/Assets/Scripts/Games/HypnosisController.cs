@@ -40,7 +40,7 @@ public class HypnosisController : GameController {
 
   protected override void Update_BUILDING() {
     base.Update_BUILDING();
-    robot.DriveWheels(35.0f, -20.0f);
+    robot.DriveWheels(15.0f, -10.0f);
 
     foreach (KeyValuePair<int, ActiveBlock> activeBlock in robot.activeBlocks) {
       for (int j = 0; j < activeBlock.Value.lights.Length; ++j) {
@@ -133,7 +133,7 @@ public class HypnosisController : GameController {
       foreach (KeyValuePair<int, ActiveBlock> activeBlock in robot.activeBlocks) {
         for (int j = 0; j < activeBlock.Value.lights.Length; ++j) {
           if (activeBlock.Value.ID == blockID) {
-            activeBlock.Value.lights[j].onColor = CozmoPalette.ColorToUInt(new Color(1.0f, 1.0f, 0.0f, 1.0f));
+            activeBlock.Value.lights[j].onColor = CozmoPalette.ColorToUInt(new Color(1.0f, 0.0f, 1.0f, 1.0f));
           }
           else {
             activeBlock.Value.lights[j].onColor = CozmoPalette.ColorToUInt(Color.green);
@@ -172,10 +172,10 @@ public class HypnosisController : GameController {
 
   private void RobotSearch() {
     if (searchTurnRight) {
-      robot.DriveWheels(35.0f, -20.0f);
+      robot.DriveWheels(15.0f, -10.0f);
     }
     else {
-      robot.DriveWheels(-20.0f, 35.0f);
+      robot.DriveWheels(-10.0f, 15.0f);
     }
 
     bool tappedBlockFound = false;
@@ -221,27 +221,27 @@ public class HypnosisController : GameController {
           // we need to turn to face it
           ComputeTurnDirection();
           if (searchTurnRight) {
-            robot.DriveWheels(35.0f, -20.0f);
+            robot.DriveWheels(15.0f, -10.0f);
           }
           else {
-            robot.DriveWheels(-20.0f, 35.0f);
+            robot.DriveWheels(-10.0f, 15.0f);
           }
         }
       }
     }
 
-    if (foundTranceTarget == false) {
-      currentState = HypnosisState.SEARCH;
-      ComputeTurnDirection();
+    if (Time.time - lastInTranceTime > 15.0f) {
+      DoneTrance();
     }
+  }
 
-    if (Time.time - lastInTranceTime > 8.0f) {
-      robot.DriveWheels(0.0f, 0.0f);
-      currentState = HypnosisState.SLEEP;
-      mostRecentTappedID = -1;
-      tranceTarget = null;
-      startSleepTime = Time.time;
-    }
+  private void DoneTrance() {
+    Debug.Log("Done trance");
+    robot.DriveWheels(0.0f, 0.0f);
+    currentState = HypnosisState.SLEEP;
+    mostRecentTappedID = -1;
+    tranceTarget = null;
+    startSleepTime = Time.time;
   }
 
   private void ComputeTurnDirection() {
