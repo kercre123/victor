@@ -4,8 +4,6 @@ using System.Collections.Generic;
 
 public class HypnosisController : GameController {
 
-
-
   public enum HypnosisState {
     SLEEP,
     AWAKE,
@@ -23,6 +21,7 @@ public class HypnosisController : GameController {
   private float lastInTranceTime = 0.0f;
   private float startSleepTime = 0.0f;
   private ObservedObject tranceTarget = null;
+  private bool searchTurnRight = false;
 
   protected override void OnEnable() {
     base.OnEnable();
@@ -135,6 +134,7 @@ public class HypnosisController : GameController {
       foreach (KeyValuePair<int, ActiveBlock> activeBlock in robot.activeBlocks) {
         for (int j = 0; j < activeBlock.Value.lights.Length; ++j) {
           if (activeBlock.Value.ID == blockID) {
+            Debug.Log("SETTING COLOR FOR TAPPED CUBE");
             activeBlock.Value.lights[j].onColor = CozmoPalette.ColorToUInt(new Color(1.0f, 1.0f, 0.0f, 1.0f));
           }
           else {
@@ -161,6 +161,7 @@ public class HypnosisController : GameController {
   private void RobotAwake() {
     if (mostRecentTappedID != -1) {
       currentState = HypnosisState.SEARCH;
+      ComputeTurnDirection();
     }
     // turns all blocks it has seen to green.
     foreach (KeyValuePair<int, ActiveBlock> activeBlock in robot.activeBlocks) {
@@ -171,11 +172,18 @@ public class HypnosisController : GameController {
   }
 
   private void RobotSearch() {
-    robot.DriveWheels(35.0f, 0.0f);
+    if (searchTurnRight) {
+      robot.DriveWheels(35.0f, 0.0f);
+    }
+    else {
+      robot.DriveWheels(0.0f, 35.0f);
+    }
+
     bool tappedBlockFound = false;
  
     for (int i = 0; i < robot.observedObjects.Count; ++i) {
-      if (robot.observedObjects[i].ID == mostRecentTappedID) {
+      float angle = Vector2.Angle(robot.Forward, robot.activeBlocks[mostRecentTappedID].WorldPosition - robot.WorldPosition);
+      if (robot.observedObjects[i].ID == mostRecentTappedID && angle < 10.0f) {
         tappedBlockFound = true;
         tranceTarget = robot.observedObjects[i];
         for (int j = 0; j < robot.activeBlocks[mostRecentTappedID].lights.Length; ++j) {
@@ -186,20 +194,45 @@ public class HypnosisController : GameController {
     }
 
     if (tappedBlockFound) {
+      robot.DriveWheels(0.0f, 0.0f);
       lastInTranceTime = Time.time;
       currentState = HypnosisState.TRANCE;
-      robot.GotoObject(tranceTarget, 80.0f);
     }
   }
 
   private void RobotTrance() {
+
+    bool foundTranceTarget = false;
+
+    for (int i = 0; i < robot.observedObjects.Count; ++i) {
+      if (robot.observedObjects[i].ID == mostRecentTappedID) {
+        // found it!
+        foundTranceTarget = true;
+      }
+    }
+
+    if (foundTranceTarget == false) {
+      currentState = HypnosisState.SEARCH;
+      ComputeTurnDirection();
+    }
+   
     if (Time.time - lastInTranceTime > 10.0f) {
-      Debug.Log("Canceling Drive to Object action");
       robot.CancelAction(Anki.Cozmo.RobotActionType.DRIVE_TO_OBJECT);
       currentState = HypnosisState.SLEEP;
       mostRecentTappedID = -1;
       tranceTarget = null;
       startSleepTime = Time.time;
     }
+  }
+
+  private void ComputeTurnDirection() {
+    if (mostRecentTappedID == -1)
+      return;
+
+    float turnAngle = Vector3.Cross(robot.Forward, robot.activeBlocks[mostRecentTappedID].WorldPosition - robot.WorldPosition).z;
+    if (turnAngle < 0.0f)
+      searchTurnRight = true;
+    else
+      searchTurnRight = false;
   }
 }
