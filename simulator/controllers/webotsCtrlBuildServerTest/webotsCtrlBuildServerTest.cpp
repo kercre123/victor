@@ -10,32 +10,13 @@
 *
 */
 
-#include <opencv2/imgproc/imgproc.hpp>
-#include "anki/cozmo/shared/cozmoConfig.h"
-#include "anki/cozmo/shared/cozmoEngineConfig.h"
-#include "anki/cozmo/shared/cozmoTypes.h"
-#include "anki/cozmo/shared/ledTypes.h"
-#include "anki/cozmo/shared/activeBlockTypes.h"
-#include "anki/common/basestation/math/pose.h"
-#include "anki/common/basestation/math/point_impl.h"
-#include "anki/vision/basestation/image.h"
-#include "anki/cozmo/basestation/behaviorManager.h"
-#include "anki/cozmo/basestation/block.h"
-#include "clad/types/actionTypes.h"
-#include "util/logging/logging.h"
-#include "util/logging/printfLoggerProvider.h"
-#include "util/ptree/ptreeTools.h"
+#include "anki/cozmo/simulator/game/cozmoSimTestController.h"
 #include <stdio.h>
 #include <string.h>
-#include <fstream>
-#include <iterator>
-
-#include "anki/cozmo/simulator/game/cozmoSimTestController.h"
 
 
 namespace Anki {
 namespace Cozmo {
-  
   
   enum class TestState {
     WaitingForInit,
@@ -44,9 +25,10 @@ namespace Cozmo {
     TestDone
   };
   
-  class COZMO_SIM_TEST_CLASS : public CozmoSimTestController {
+  // ============ Test class declaration ============
+  class CST_Animations : public CozmoSimTestController {
   public:
-    COZMO_SIM_TEST_CLASS(s32 step_time_ms);
+    CST_Animations();
     
   private:
     const u32 MIN_NUM_ANIMS_REQUIRED = 10;
@@ -65,12 +47,14 @@ namespace Cozmo {
     int _result;
   };
   
+  // Register class with factory
+  REGISTER_COZMO_SIM_TEST_CLASS(CST_Animations);
   
   
-  // ==================== Class implementation ====================
+  // =========== Test class implementation ===========
   
-  COZMO_SIM_TEST_CLASS::COZMO_SIM_TEST_CLASS(s32 step_time_ms) :
-  CozmoSimTestController(step_time_ms)
+  CST_Animations::CST_Animations() :
+  CozmoSimTestController()
   {
     _result = 0;
     _testState = TestState::WaitingForInit;
@@ -78,7 +62,7 @@ namespace Cozmo {
   }
   
 
-  s32 COZMO_SIM_TEST_CLASS::UpdateInternal()
+  s32 CST_Animations::UpdateInternal()
   {
     switch (_testState) {
 
@@ -126,7 +110,7 @@ namespace Cozmo {
   
   // ================ Message handler callbacks ==================
   
-  void COZMO_SIM_TEST_CLASS::HandleRobotCompletedAction(const ExternalInterface::RobotCompletedAction& msg)
+  void CST_Animations::HandleRobotCompletedAction(const ExternalInterface::RobotCompletedAction& msg)
   {
     switch((RobotActionType)msg.actionType)
     {
@@ -151,7 +135,7 @@ namespace Cozmo {
    
   }
    
-  void COZMO_SIM_TEST_CLASS::HandleAnimationAvailable(ExternalInterface::AnimationAvailable const& msg)
+  void CST_Animations::HandleAnimationAvailable(ExternalInterface::AnimationAvailable const& msg)
   {
     _availableAnims.push_back(msg.animName);
     PRINT_NAMED_INFO("HandleAnimationAvailable", "Animation available: %s", msg.animName.c_str());
@@ -164,8 +148,3 @@ namespace Cozmo {
 } // end namespace Cozmo
 } // end namespace Anki
 
-
-
-// =======================================================================
-
-RUN_BUILD_SERVER_TEST
