@@ -33,10 +33,10 @@ enum e_nrf_gpio {
   PIN_LIFT_N2         = 23,
 
   // Backpack leds
-  PIN_LED1            = 10,
-  PIN_LED2            = 11,
-  PIN_LED3            = 12,
-  PIN_LED4            = 17,
+  PIN_LED1            = 17,
+  PIN_LED2            = 12,
+  PIN_LED3            = 11,
+  PIN_LED4            = 10,
 
   // Charging
   PIN_CHARGE_EN       = 20,  // TODO

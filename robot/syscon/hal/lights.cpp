@@ -2,8 +2,14 @@
 #include "nrf.h"
 #include "nrf_gpio.h"
 
+#include "debug.h"
+
 #include "hardware.h"
 #include "hal/portable.h"
+
+/*
+NOTE: COMPARE0-3 seemed super twitchy so I decided against using it.
+*/
 
 // 8-bit pseudo log scale.  Gives us full bright
 static const uint8_t AdjustTable[] = {
@@ -35,12 +41,16 @@ static const charliePlex_s RGBLightPins[] =
   {PIN_LED4, {PIN_LED1, PIN_LED2, PIN_LED3}}
 };
 
+// Timing constants
+static const uint8_t colorMask = 0xFF;
+static const int tickDivider = 16;
+
+// Charlieplexing magic constants
 static const int numCharlieChannels = sizeof(RGBLightPins) / sizeof(RGBLightPins[0]);
 static const int numLightsPerChannel = sizeof(RGBLightPins[0].cathodes);
 static const int numLights = numLightsPerChannel * numCharlieChannels;
 
-static uint8_t colors[numLights];
-static uint8_t pwm[numLights];
+static uint8_t colors[numLights]; 
 static int channel = 0;
 
 static void lights_off() {
@@ -55,22 +65,32 @@ void Lights::init()
 {
   lights_off();
 
-  NRF_RTC1->EVTENSET = RTC_EVTENSET_TICK_Msk;
-  NRF_RTC1->INTENSET = RTC_INTENSET_TICK_Enabled;
+  NRF_RTC1->EVTENSET = RTC_EVTENCLR_TICK_Msk;
+  NRF_RTC1->INTENSET = RTC_INTENSET_TICK_Msk;
+
   NVIC_SetPriority(RTC1_IRQn, 3);
   NVIC_EnableIRQ(RTC1_IRQn);
 }
 
 extern "C" void RTC1_IRQHandler() {
+  static uint8_t pwm[numLights];
+  static int divider = 0;
+
+  if (!NRF_RTC1->EVENTS_TICK)
+    return ;
+
   NRF_RTC1->EVENTS_TICK = 0;
 
+  if (++divider < tickDivider)
+    divider = 0;
+  
   // Blacken everything out
   lights_off();
 
   // Setup anode
   nrf_gpio_pin_set(RGBLightPins[channel].anode);
   nrf_gpio_cfg_output(RGBLightPins[channel].anode);
-
+  
   // Set lights for current charlie channel
   for (int i = 0, index = channel * numLightsPerChannel; i < numLightsPerChannel; i++, index++)
   {
@@ -93,6 +113,7 @@ void Lights::manage(volatile uint32_t *clr)
   int pos = 0;
   for (int i = 0; i < numCharlieChannels; i++, in_colors++) {
     for (int b = 0; b < numLightsPerChannel; b++)
-      colors[pos++] = AdjustTable[*(in_colors++)];
+      colors[pos++] = AdjustTable[*(in_colors++)] & colorMask;
+      ;
   }
 }
