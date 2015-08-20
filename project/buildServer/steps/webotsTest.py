@@ -77,10 +77,14 @@ def runWebots(options, resultQueue):
     '/Applications/Webots/webots', 
     '--stdout',
     '--stderr',
-    '--minimize',
+    '--minimize',  # Ability to start without graphics is on the wishlist
     '--mode=fast',
     os.path.join(options.projectRoot, 'simulator/worlds/' +  generatedWorldFileName),
     ]
+
+  if options.showGraphics:
+    runCommand.remove('--minimize')
+    runCommand = ['--mode=run' if x=='--mode=fast' else x for x in runCommand]
 
   UtilLog.debug('run command ' + ' '.join(runCommand))
 
@@ -248,6 +252,8 @@ def main(scriptArgs):
                       help='build types [ Debug, Release ]. (default: Debug)')
   parser.add_argument('--projectRoot', dest='projectRoot', action='store',
                       help='location of the project root')
+  parser.add_argument('--showGraphics', dest='showGraphics', action='store_true',
+                      help='display Webots window')
   (options, args) = parser.parse_known_args(scriptArgs)
 
   if options.debug:
