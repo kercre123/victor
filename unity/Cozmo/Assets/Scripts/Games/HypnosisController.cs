@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using Anki.Cozmo;
 
 public class HypnosisController : GameController {
 
@@ -27,6 +28,7 @@ public class HypnosisController : GameController {
     base.OnEnable();
     ActiveBlock.TappedAction += BlockTapped;
     robot.VisionWhileMoving(true);
+    RobotEngineManager.instance.SuccessOrFailure += RobotEngineMessages;
   }
 
   protected override void OnDisable() {
@@ -125,11 +127,27 @@ public class HypnosisController : GameController {
     base.RefreshHUD();
   }
 
+  bool robotIdle = true;
+
+  private void RobotEngineMessages(bool success, RobotActionType action_type) {
+    if (success && action_type == RobotActionType.PLAY_ANIMATION) {
+      robot.SetHeadAngle(-0.5f);
+    }
+  }
+
+  private void SendAnimation(string animName) {
+    CozmoAnimation newAnimation = new CozmoAnimation();
+    newAnimation.animName = animName;
+    newAnimation.numLoops = 1;
+    CozmoEmotionManager.instance.SendAnimation(newAnimation);
+  }
+
   private void BlockTapped(int blockID, int numTapped) {
     // only care about taps in awake mode.
     if (currentState == HypnosisState.AWAKE) {
       mostRecentTappedID = blockID;
-
+      SendAnimation("Hello");
+      robotIdle = false;
       foreach (KeyValuePair<int, ActiveBlock> activeBlock in robot.activeBlocks) {
         for (int j = 0; j < activeBlock.Value.lights.Length; ++j) {
           if (activeBlock.Value.ID == blockID) {
@@ -205,7 +223,7 @@ public class HypnosisController : GameController {
       // we are reasonably aligned to it so move forward
       float distance = Vector3.Distance(robot.WorldPosition, robot.activeBlocks[mostRecentTappedID].WorldPosition);
       if (distance > 100.0f) {
-        robot.DriveWheels(20.0f, 20.0f);
+        robot.DriveWheels(15.0f, 15.0f);
       }
       else {
         robot.DriveWheels(0.0f, 0.0f);
