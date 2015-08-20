@@ -1,0 +1,16 @@
+PROTO BuildServerTestController [
+  field SFString name "BuildServerTestController"
+  field SFString controllerArgs ""
+]
+{
+Supervisor {
+  
+  children [
+
+  ]
+
+  name IS name
+  controller "webotsCtrlBuildServerTest"
+  controllerArgs IS controllerArgs
+} # Supervisor definition
+} # PROTO definition
