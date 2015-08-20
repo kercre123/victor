@@ -28,8 +28,6 @@ UtilLog.addHandler(stdout_handler)
 
 worldFileTestNamePlaceHolder = '%COZMO_SIM_TEST%'
 generatedWorldFileName = '__generated__.wbt'
-testStatuses = {}
-allTestsPassed = True
 
 
 class WorkContext(object): pass
@@ -129,11 +127,12 @@ def cleanWebots(options):
   return True
 
 
-def SetTestStatus(testName, status):
+def SetTestStatus(testName, status, totalResultFlag, testStatuses):
   testStatuses[testName] = status
   UtilLog.info('Test ' + testName + (' FAILED' if status < 0 else ' PASSED'))
-  if status < 0:
-    testsSucceeded = False
+  if status < 0 or not totalResultFlag:
+    return False
+  return True
 
 
 # runs all threads groups
@@ -145,13 +144,13 @@ def runAll(options):
   webotsTestCfgPath = 'project/buildServer/steps/webotsTests.cfg'
   config.read(webotsTestCfgPath)
   testNames = config.sections()
-
   testStatuses = {}
+  allTestsPassed = True
 
   for test in testNames:
     if not config.has_option(test, 'world_file'):
-      UtilLog.error('ERROR: No world file specified for test ' + test + '. Aborting.')
-      SetTestStatus(test, -10)
+      UtilLog.error('ERROR: No world file specified for test ' + test + '.')
+      allTestsPassed = SetTestStatus(test, -10, allTestsPassed, testStatuses)
       continue
     
     baseWorldFile = config.get(test, 'world_file')
@@ -163,7 +162,7 @@ def runAll(options):
     baseWorldFile.close()
     if worldFileTestNamePlaceHolder not in baseWorldData:
       UtilLog.error('ERROR: ' + worldFile + ' is not a valid test world. (No ' + worldFileTestNamePlaceHolder + ' found.)')
-      SetTestStatus(test, -11)
+      allTestsPassed = SetTestStatus(test, -11, allTestsPassed, testStatuses)
       continue
 
     # Generate world file with appropriate args passed into test controller
@@ -180,27 +179,34 @@ def runAll(options):
     
     # Check if timeout exceeded
     if runWebotsThread.isAlive():
-      UtilLog.error('ERROR: ' + test + ' exceeded timeout. Aborting')
+      UtilLog.error('ERROR: ' + test + ' exceeded timeout.')
       stopWebots(options)
-      SetTestStatus(test, -12)
+      allTestsPassed = SetTestStatus(test, -12, allTestsPassed, testStatuses)
+      print 'allTestsPassed ' + str(allTestsPassed)
       continue
 
-    # Check log for errors and warnings
-    # TODO: This doesn't effect test outcome at the moment. Should it?
+    # Check log for crashes, errors, and warnings
+    # TODO: Crashes affect test result, but errors and warnings do not. Should they?
     buildFolder = os.path.join(options.projectRoot, 'build/mac/', options.buildType)
     logFileName = os.path.join(buildFolder, 'webots_out.txt')
-    (errorCount, warningCount) = parseOutput(options, logFileName)
+    (crashCount, errorCount, warningCount) = parseOutput(options, logFileName)
     # UtilLog.info("webot error count %d warning count %d" % (errorCount, warningCount))
     print '##teamcity[buildStatisticValue key=\'WebotsErrorCount\' value=\'%d\']' % (errorCount)
     print '##teamcity[buildStatisticValue key=\'WebotsWarningCount\' value=\'%d\']' % (warningCount)
 
+    # Check for crashes
+    if crashCount > 0:
+      UtilLog.error('ERROR: ' + test + ' had a crashed controller.');
+      allTestsPassed = SetTestStatus(test, -13, allTestsPassed, testStatuses)
+      continue
 
     # Get return code from test
     if testResultQueue.empty():
       UtilLog.error('ERROR: No result code received from ' + test)
-      SetTestStatus(test, -13)
+      allTestsPassed = SetTestStatus(test, -14, allTestsPassed, testStatuses)
+      continue
     
-    SetTestStatus(test, testResultQueue.get())
+    allTestsPassed = SetTestStatus(test, testResultQueue.get(), allTestsPassed, testStatuses)
       
   return (allTestsPassed, testStatuses)
 
@@ -212,16 +218,19 @@ def parseOutput(options, logFile):
   fileHandle = open(logFile, 'r')
   lines = [line.strip() for line in fileHandle]
   fileHandle.close()
+  crashCount = 0
   errorCount = 0
   warningCount = 0
 
   for line in lines:
+    if 'The process crashed some time after starting successfully.' in line:
+      crashCount = crashCount + 1
     if 'Error' in line or 'ERROR' in line:
       errorCount = errorCount + 1
     if 'Warn' in line:
       warningCount = warningCount + 1
 
-  return (errorCount, warningCount)
+  return (crashCount, errorCount, warningCount)
 
 
 # tarball valgrind output files together
@@ -289,6 +298,10 @@ def main(scriptArgs):
   (testsSucceeded, testResults) = runAll(options)
   tarball(options)
 
+  print 'Test results: '
+  for key,val in testResults.items():
+    print key + ' : ' + str(val)
+
   returnValue = 0;
   cleanResult = cleanWebots(options)
   if not cleanResult:
@@ -303,7 +316,7 @@ def main(scriptArgs):
     returnValue = returnValue + 1
   else:
     UtilLog.info("*************************")
-    UtilLog.info("ALL " + str(len(testStatuses)) + " TESTS PASSED")
+    UtilLog.info("ALL " + str(len(testResults)) + " TESTS PASSED")
     UtilLog.info("*************************")
 
   return returnValue
