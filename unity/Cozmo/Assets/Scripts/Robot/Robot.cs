@@ -942,15 +942,15 @@ public class Robot : IDisposable {
     RobotEngineManager.instance.SendMessage();
   }
 
-  public void RequestImage(RobotEngineManager.CameraResolution resolution, RobotEngineManager.ImageSendMode_t mode) {
+  public void RequestImage(RobotEngineManager.CameraResolution resolution, ImageSendMode mode) {
     SetRobotImageSendModeMessage.resolution = (byte)resolution;
-    SetRobotImageSendModeMessage.mode = (byte)mode;
+    SetRobotImageSendModeMessage.mode = mode;
 
     RobotEngineManager.instance.Message.SetRobotImageSendMode = SetRobotImageSendModeMessage;
     RobotEngineManager.instance.SendMessage();
 
     ImageRequestMessage.robotID = ID;
-    ImageRequestMessage.mode = (byte)mode;
+    ImageRequestMessage.mode = mode;
 
     RobotEngineManager.instance.Message.ImageRequest = ImageRequestMessage;
     RobotEngineManager.instance.SendMessage();
