@@ -1608,6 +1608,30 @@ namespace Anki {
             
       s32 WebotsKeyboardController::UpdateInternal()
       {
+        // Update poseMarker pose
+        const double* trans = gps_->getValues();
+        const double* northVec = compass_->getValues();
+        
+        // Convert to mm
+        Vec3f transVec;
+        transVec.x() = trans[0] * 1000;
+        transVec.y() = trans[1] * 1000;
+        transVec.z() = trans[2] * 1000;
+        
+        // Compute orientation from north vector
+        f32 angle = atan2f(-northVec[1], northVec[0]);
+        
+        poseMarkerPose_.SetTranslation(transVec);
+        poseMarkerPose_.SetRotation(angle, Z_AXIS_3D());
+        
+        // Update pose marker if different from last time
+        if (!(prevPoseMarkerPose_ == poseMarkerPose_)) {
+          if (poseMarkerMode_ != 0) {
+            // Place object mode
+            SendDrawPoseMarker(poseMarkerPose_);
+          }
+        }
+
         
         ProcessKeystroke();
         ProcessJoystick();
