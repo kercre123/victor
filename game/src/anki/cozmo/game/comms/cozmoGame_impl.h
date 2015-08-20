@@ -77,9 +77,7 @@ namespace Cozmo {
     void ProcessDeviceImage(const Vision::Image& image);
     
     const std::vector<ExternalInterface::DeviceDetectedVisionMarker>& GetVisionMarkersDetectedByDevice() const;
-    
-    void SetImageSendMode(RobotID_t forRobotID, Cozmo::ImageSendMode_t newMode);
-    
+
   protected:
     
     Robot* GetRobotByID(const RobotID_t robotID);
