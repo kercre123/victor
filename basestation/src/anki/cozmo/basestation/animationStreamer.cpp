@@ -15,6 +15,7 @@ namespace Cozmo {
   , _streamingAnimation(nullptr)
   , _isIdling(false)
   , _numLoops(1)
+  , _loopCtr(0)
   {
     
   }

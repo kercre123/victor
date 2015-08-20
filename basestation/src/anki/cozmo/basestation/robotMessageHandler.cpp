@@ -326,7 +326,7 @@ namespace Anki {
                                                             msg.chunkId, msg.data, msg.chunkSize );
 
       IExternalInterface* externalInterface = robot->GetExternalInterface();
-      if (externalInterface != nullptr && robot->GetImageSendMode() != ISM_OFF) {
+      if (externalInterface != nullptr && robot->GetImageSendMode() != ImageSendMode::Off) {
         ExternalInterface::ImageChunk uiImgChunk;
         uiImgChunk.imageId = msg.imageId;
         uiImgChunk.frameTimeStamp = msg.frameTimeStamp;
@@ -346,10 +346,10 @@ namespace Anki {
 
         const bool wasLastChunk = uiImgChunk.chunkId == uiImgChunk.imageChunkCount-1;
 
-        if(wasLastChunk && robot->GetImageSendMode() == ISM_SINGLE_SHOT) {
+        if(wasLastChunk && robot->GetImageSendMode() == ImageSendMode::SingleShot) {
           // We were just in single-image send mode, and the image got sent, so
           // go back to "off". (If in stream mode, stay in stream mode.)
-          robot->SetImageSendMode(ISM_OFF);
+          robot->SetImageSendMode(ImageSendMode::Off);
         }
       }
       VizManager::getInstance()->SendImageChunk(robot->GetID(), msg);
