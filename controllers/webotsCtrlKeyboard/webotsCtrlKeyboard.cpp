@@ -580,16 +580,16 @@ namespace Anki {
               {
                 //if(modifier_key & webots::Supervisor::KEYBOARD_CONTROL) {
                 // CTRL/CMD+I - Tell physical robot to send a single image
-                ImageSendMode_t mode = ISM_SINGLE_SHOT;
+                ImageSendMode mode = ImageSendMode::SingleShot;
                 
                 if (modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
                   // CTRL/CMD+SHIFT+I - Toggle physical robot image streaming
                   static bool streamOn = false;
                   if (streamOn) {
-                    mode = ISM_OFF;
+                    mode = ImageSendMode::Off;
                     printf("Turning robot image streaming OFF.\n");
                   } else {
-                    mode = ISM_STREAM;
+                    mode = ImageSendMode::Stream;
                     printf("Turning robot image streaming ON.\n");
                   }
                   streamOn = !streamOn;
@@ -627,16 +627,16 @@ namespace Anki {
                 const RobotID_t robotID = 1;
                 
                 // U - Request a single image from the game for a specified robot
-                ImageSendMode_t mode = ISM_SINGLE_SHOT;
+                ImageSendMode mode = ImageSendMode::SingleShot;
                 
                 if (modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
                   // SHIFT+I - Toggle image streaming from the game
                   static bool streamOn = true;
                   if (streamOn) {
-                    mode = ISM_OFF;
+                    mode = ImageSendMode::Off;
                     printf("Turning game image streaming OFF.\n");
                   } else {
-                    mode = ISM_STREAM;
+                    mode = ImageSendMode::Stream;
                     printf("Turning game image streaming ON.\n");
                   }
                   streamOn = !streamOn;
