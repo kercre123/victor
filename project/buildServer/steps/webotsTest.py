@@ -77,12 +77,15 @@ def runWebots(options, resultQueue):
     '/Applications/Webots/webots', 
     '--stdout',
     '--stderr',
+    '--disable-modules-download',
     '--minimize',  # Ability to start without graphics is on the wishlist
     '--mode=fast',
     os.path.join(options.projectRoot, 'simulator/worlds/' +  generatedWorldFileName),
     ]
 
   if options.showGraphics:
+    runCommand.remove('--stdout')
+    runCommand.remove('--stderr')
     runCommand.remove('--minimize')
     runCommand = ['--mode=run' if x=='--mode=fast' else x for x in runCommand]
 
