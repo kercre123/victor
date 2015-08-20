@@ -29,7 +29,7 @@
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/block.h"
 #include "clad/types/actionTypes.h"
-
+#include "clad/types/imageSendMode.h"
 #include <stdio.h>
 #include <string.h>
 #include <fstream>
@@ -199,8 +199,8 @@ namespace Anki {
       void SendMoveLiftToHeight(const f32 mm, const f32 speed, const f32 accel, const f32 duration_sec = 0.f);
       void SendTapBlockOnGround(const u8 numTaps);
       void SendStopAllMotors();
-      void SendImageRequest(u8 mode, u8 robotID);
-      void SendSetRobotImageSendMode(u8 mode);
+      void SendImageRequest(ImageSendMode mode, u8 robotID);
+      void SendSetRobotImageSendMode(ImageSendMode mode);
       void SendSaveImages(SaveMode_t mode, bool alsoSaveState=false);
       void SendEnableDisplay(bool on);
       void SendSetHeadlights(u8 intensity);
@@ -323,7 +323,7 @@ namespace Anki {
       void HandleRobotConnected(ExternalInterface::RobotConnected const &msg)
       {
         // Once robot connects, set resolution
-        SendSetRobotImageSendMode(ISM_STREAM);
+        SendSetRobotImageSendMode(ImageSendMode::Stream);
       }
       
       void HandleRobotCompletedAction(const ExternalInterface::RobotCompletedAction& msg)
@@ -874,16 +874,16 @@ namespace Anki {
               {
                 //if(modifier_key & webots::Supervisor::KEYBOARD_CONTROL) {
                 // CTRL/CMD+I - Tell physical robot to send a single image
-                ImageSendMode_t mode = ISM_SINGLE_SHOT;
+                ImageSendMode mode = ImageSendMode::SingleShot;
                 
                 if (modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
                   // CTRL/CMD+SHIFT+I - Toggle physical robot image streaming
                   static bool streamOn = false;
                   if (streamOn) {
-                    mode = ISM_OFF;
+                    mode = ImageSendMode::Off;
                     printf("Turning robot image streaming OFF.\n");
                   } else {
-                    mode = ISM_STREAM;
+                    mode = ImageSendMode::Stream;
                     printf("Turning robot image streaming ON.\n");
                   }
                   streamOn = !streamOn;
@@ -902,16 +902,16 @@ namespace Anki {
                 const RobotID_t robotID = 1;
                 
                 // U - Request a single image from the game for a specified robot
-                ImageSendMode_t mode = ISM_SINGLE_SHOT;
+                ImageSendMode mode = ImageSendMode::SingleShot;
                 
                 if (modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
                   // SHIFT+I - Toggle image streaming from the game
                   static bool streamOn = true;
                   if (streamOn) {
-                    mode = ISM_OFF;
+                    mode = ImageSendMode::Off;
                     printf("Turning game image streaming OFF.\n");
                   } else {
-                    mode = ISM_STREAM;
+                    mode = ImageSendMode::Stream;
                     printf("Turning game image streaming ON.\n");
                   }
                   streamOn = !streamOn;
@@ -1964,7 +1964,7 @@ namespace Anki {
               }
               
               // Turn on image streaming to game/UI by default:
-              SendImageRequest(ISM_STREAM, 1);
+              SendImageRequest(ImageSendMode::Stream, 1);
               
               uiState_ = UI_RUNNING;
             }
@@ -2127,7 +2127,7 @@ namespace Anki {
         SendMessage(message);
       }
       
-      void SendImageRequest(u8 mode, u8 robotID)
+      void SendImageRequest(ImageSendMode mode, u8 robotID)
       {
         ExternalInterface::ImageRequest m;
         m.robotID = robotID;
@@ -2137,7 +2137,7 @@ namespace Anki {
         SendMessage(message);
       }
       
-      void SendSetRobotImageSendMode(u8 mode)
+      void SendSetRobotImageSendMode(ImageSendMode mode)
       {
         // Determine resolution from "streamResolution" setting in the keyboard controller
         // node
@@ -2158,6 +2158,7 @@ namespace Anki {
         }
         
         ExternalInterface::SetRobotImageSendMode m;
+        m.robotID = 1;
         m.mode = mode;
         m.resolution = resolution;
         ExternalInterface::MessageGameToEngine message;
