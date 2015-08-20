@@ -8,7 +8,7 @@ public class HypnosisController : GameController {
   public enum HypnosisState {
     SLEEP,
     AWAKE,
-    DECIDE,
+    TURN_TO_ACTIVE_BLOCK,
     SEARCH,
     TRANCE
   }
@@ -135,6 +135,9 @@ public class HypnosisController : GameController {
     case HypnosisState.TRANCE:
       Enter_ROBOT_TRANCE();
       break;
+    case HypnosisState.TURN_TO_ACTIVE_BLOCK:
+      Enter_TURN_TO_ACTIVE_BLOCK();
+      break;
     }
   }
 
@@ -153,6 +156,9 @@ public class HypnosisController : GameController {
     case HypnosisState.TRANCE:
       Update_ROBOT_TRANCE();
       break;
+    case HypnosisState.TURN_TO_ACTIVE_BLOCK:
+      Update_TURN_TO_ACTIVE_BLOCK();
+      break;
     }
   }
 
@@ -169,6 +175,9 @@ public class HypnosisController : GameController {
       break;
     case HypnosisState.TRANCE:
       Exit_ROBOT_TRANCE();
+      break;
+    case HypnosisState.TURN_TO_ACTIVE_BLOCK:
+      Exit_TURN_TO_ACTIVE_BLOCK();
       break;
     }
   }
@@ -200,7 +209,7 @@ public class HypnosisController : GameController {
   }
 
   private void Update_ROBOT_SLEEP() {
-    if (playStateTimer > 1.0f) {
+    if (playStateTimer > 0.5f) {
       nextState = HypnosisState.AWAKE;
     }
 
@@ -221,7 +230,7 @@ public class HypnosisController : GameController {
 
   private void Update_ROBOT_AWAKE() {
     if (mostRecentTappedID != -1) {
-      nextState = HypnosisState.SEARCH;
+      nextState = HypnosisState.TURN_TO_ACTIVE_BLOCK;
       ComputeTurnDirection();
     }
     else {
@@ -235,6 +244,30 @@ public class HypnosisController : GameController {
   }
 
   private void Exit_ROBOT_AWAKE() {
+    
+  }
+
+  private void Enter_TURN_TO_ACTIVE_BLOCK() {
+    
+  }
+
+  private void Update_TURN_TO_ACTIVE_BLOCK() {
+    float angle = Vector2.Angle(robot.Forward, robot.activeBlocks[mostRecentTappedID].WorldPosition - robot.WorldPosition);
+    if (angle > 10.0f) {
+      ComputeTurnDirection();
+      if (searchTurnRight) {
+        robot.DriveWheels(35.0f, -20.0f);
+      }
+      else {
+        robot.DriveWheels(-20.0f, 35.0f);
+      }
+    }
+    else {
+      nextState = HypnosisState.SEARCH;
+    }
+  }
+
+  private void Exit_TURN_TO_ACTIVE_BLOCK() {
     
   }
 
