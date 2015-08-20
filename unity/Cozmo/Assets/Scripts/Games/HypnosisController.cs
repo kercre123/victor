@@ -231,7 +231,6 @@ public class HypnosisController : GameController {
   private void Update_ROBOT_AWAKE() {
     if (mostRecentTappedID != -1) {
       nextState = HypnosisState.TURN_TO_ACTIVE_BLOCK;
-      ComputeTurnDirection();
     }
     else {
       // turns all blocks it has seen to green.
@@ -253,8 +252,8 @@ public class HypnosisController : GameController {
 
   private void Update_TURN_TO_ACTIVE_BLOCK() {
     float angle = Vector2.Angle(robot.Forward, robot.activeBlocks[mostRecentTappedID].WorldPosition - robot.WorldPosition);
-    if (angle > 10.0f) {
-      ComputeTurnDirection();
+    ComputeTurnDirection();
+    if (angle > 40.0f) {
       if (searchTurnRight) {
         robot.DriveWheels(35.0f, -20.0f);
       }
@@ -263,6 +262,7 @@ public class HypnosisController : GameController {
       }
     }
     else {
+      // we are close to the cone search angle, so let's begin the search phase.
       nextState = HypnosisState.SEARCH;
     }
   }
@@ -272,6 +272,7 @@ public class HypnosisController : GameController {
   }
 
   private void Enter_ROBOT_SEARCH() {
+    ComputeTurnDirection();
     foreach (KeyValuePair<int, ActiveBlock> activeBlock in robot.activeBlocks) {
       for (int j = 0; j < activeBlock.Value.lights.Length; ++j) {
         if (activeBlock.Value.ID == mostRecentTappedID) {
