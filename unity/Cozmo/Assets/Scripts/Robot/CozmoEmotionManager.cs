@@ -176,9 +176,9 @@ public class CozmoEmotionManager : MonoBehaviour {
       return;
 
 
-    if (stopPreviousAnim && robot.isBusy && robot.Status(RobotStatusFlag.IS_ANIMATING)) {
-      robot.CancelAction(Anki.Cozmo.RobotActionType.PLAY_ANIMATION);
-    }
+    //if (stopPreviousAnim && robot.isBusy && robot.Status(RobotStatusFlag.IS_ANIMATING)) {
+    //  robot.CancelAction(Anki.Cozmo.RobotActionType.PLAY_ANIMATION);
+    //}
     Debug.Log("Sending " + anim.animName + " with " + anim.numLoops + " loop" + (anim.numLoops != 1 ? "s" : ""));
     PlayAnimationMessage.animationName = anim.animName;
     PlayAnimationMessage.numLoops = anim.numLoops;
