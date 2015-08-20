@@ -31,6 +31,7 @@ namespace Cozmo {
   
   // Forward declaration
   class IBehavior;
+  class IBehaviorChooser;
   class Reward;
   class Robot;
   
@@ -70,7 +71,7 @@ namespace Cozmo {
     void SetMinBehaviorTime(float time_sec) { _minBehaviorTime_sec = time_sec; }
     
     // Returns nullptr if there is no current behavior
-    const IBehavior* GetCurrentBehavior() const;
+    const IBehavior* GetCurrentBehavior() const { return _currentBehavior; }
     
   private:
     
@@ -82,12 +83,11 @@ namespace Cozmo {
     void SwitchToNextBehavior();
     Result InitNextBehaviorHelper(float currentTime_sec);
     
-    // Map from behavior name to available behaviors
-    using BehaviorContainer = std::unordered_map<std::string, IBehavior*>;
-    BehaviorContainer _behaviors;
+    // How we store and choose next behavior
+    IBehaviorChooser* _behaviorChooser;
     
-    BehaviorContainer::iterator _currentBehavior;
-    BehaviorContainer::iterator _nextBehavior;
+    IBehavior* _currentBehavior = nullptr;
+    IBehavior* _nextBehavior = nullptr;
     
     // Minimum amount of time to stay in each behavior
     float _minBehaviorTime_sec;

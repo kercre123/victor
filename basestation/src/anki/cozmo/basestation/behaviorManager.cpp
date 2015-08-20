@@ -11,6 +11,7 @@
  **/
 
 #include "anki/cozmo/basestation/behaviorManager.h"
+#include "anki/cozmo/basestation/behaviorChooser.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 
 #include "anki/cozmo/basestation/behaviors/behaviorOCD.h"
@@ -21,6 +22,7 @@
 #include "anki/cozmo/basestation/robot.h"
 
 #include "util/logging/logging.h"
+#include "util/helpers/templateHelpers.h"
 
 #define DEBUG_BEHAVIOR_MGR 1
 
@@ -32,6 +34,7 @@ namespace Cozmo {
   : _isInitialized(false)
   , _forceReInit(false)
   , _robot(robot)
+  , _behaviorChooser(new SimpleBehaviorChooser)
   , _minBehaviorTime_sec(5)
   {
 
@@ -47,13 +50,11 @@ namespace Cozmo {
     
     // TODO: Only load behaviors specified by Json?
     
-    AddBehavior(new BehaviorOCD(_robot, config));
+    _behaviorChooser->AddBehavior(new BehaviorOCD(_robot, config));
     //AddBehavior(new BehaviorLookForFaces(_robot, config));
-    //AddBehavior(new BehaviorLookAround(_robot, config));
-    AddBehavior(new BehaviorFidget(_robot, config));
+    _behaviorChooser->AddBehavior(new BehaviorLookAround(_robot, config));
+    _behaviorChooser->AddBehavior(new BehaviorFidget(_robot, config));
     
-    // These need to be set AFTER behaviors have been added or else they're invalid
-    _currentBehavior = _nextBehavior = _behaviors.end();
     _isInitialized = true;
     
     _lastSwitchTime_sec = 0.f;
@@ -63,58 +64,13 @@ namespace Cozmo {
   
   BehaviorManager::~BehaviorManager()
   {
-    for(auto behavior : _behaviors) {
-      if(behavior.second == nullptr) {
-        PRINT_NAMED_ERROR("BehaviorManager.Destructor.ExistingNull",
-                          "Existing '%s' behavior is somehow NULL.\n",
-                          behavior.first.c_str());
-      } else {
-#       if DEBUG_BEHAVIOR_MGR
-        PRINT_NAMED_INFO("BehaviorManager.Destructor", "Deleting behavior %s.\n",
-                         behavior.first.c_str());
-#       endif
-        
-        delete behavior.second;
-      }
-    }
-  }
-  
-  Result BehaviorManager::AddBehavior(IBehavior *newBehavior)
-  {
-    if(newBehavior == nullptr) {
-      PRINT_NAMED_ERROR("BehaviorManager.AddBehavior.NullBehavior", "Refusing to add NULL behavior.");
-      return RESULT_FAIL;
-    }
-    
-    const std::string& name = newBehavior->GetName();
-    
-    // Make sure to delete any existing behavior with the same name before replacing
-    auto existingBehavior = _behaviors.find(name);
-    if(existingBehavior != _behaviors.end()) {
-      PRINT_NAMED_WARNING("BehaviorManager.AddBehavior.ReplaceExisting",
-                          "Replacing existing '%s' behavior.", name.c_str());
-      if(existingBehavior->second == nullptr) {
-        PRINT_NAMED_ERROR("BehaviorManager.AddBehavior.ExistingNull",
-                          "Existing '%s' behavior is somehow NULL.",
-                          existingBehavior->first.c_str());
-      } else {
-        delete existingBehavior->second;
-      }
-    }
-    
-#   if DEBUG_BEHAVIOR_MGR
-    PRINT_NAMED_INFO("BehaviorManager.AddBehavior.Add", "Adding behavior %s", name.c_str());
-#   endif
-    
-    _behaviors[name] = newBehavior;
-    
-    return RESULT_OK;
+    Util::SafeDelete(_behaviorChooser);
   }
   
   void BehaviorManager::SwitchToNextBehavior()
   {
     _currentBehavior = _nextBehavior;
-    _nextBehavior = _behaviors.end();
+    _nextBehavior = nullptr;
   }
   
   Result BehaviorManager::Update(float currentTime_sec)
@@ -126,7 +82,7 @@ namespace Cozmo {
       return RESULT_FAIL;
     }
     
-    if(_currentBehavior == _behaviors.end() ||
+    if(nullptr == _currentBehavior ||
        currentTime_sec - _lastSwitchTime_sec > _minBehaviorTime_sec)
     {
       // We've been in the current behavior long enough to consider switching
@@ -137,38 +93,43 @@ namespace Cozmo {
         lastResult = RESULT_OK;
       }
       
+      std::string nextName("none");
+      if (nullptr != _nextBehavior)
+      {
+        nextName = _nextBehavior->GetName();
+      }
 #     if DEBUG_BEHAVIOR_MGR
       PRINT_NAMED_WARNING("BehaviorManager.Update.SelectedNext",
                           "Selected next behavior '%s' at t=%.1f, last was t=%.1f",
-                          _nextBehavior->first.c_str(), currentTime_sec, _lastSwitchTime_sec);
+                          nextName.c_str(), currentTime_sec, _lastSwitchTime_sec);
 #     endif
       
       _lastSwitchTime_sec = currentTime_sec;
     }
     
-    if(_currentBehavior != _behaviors.end()) {
+    if(nullptr != _currentBehavior) {
       // We have a current behavior, update it.
-      IBehavior::Status status = _currentBehavior->second->Update(currentTime_sec);
+      IBehavior::Status status = _currentBehavior->Update(currentTime_sec);
      
       switch(status)
       {
         case IBehavior::Status::RUNNING:
           // Nothing to do! Just keep on truckin'....
-          _currentBehavior->second->SetIsRunning(true);
+          _currentBehavior->SetIsRunning(true);
           break;
           
         case IBehavior::Status::COMPLETE:
           // Behavior complete, switch to next
-          _currentBehavior->second->SetIsRunning(false);
+          _currentBehavior->SetIsRunning(false);
           SwitchToNextBehavior();
           break;
           
         case IBehavior::Status::FAILURE:
           PRINT_NAMED_ERROR("BehaviorManager.Update.FailedUpdate",
                             "Behavior '%s' failed to Update().",
-                            _currentBehavior->first.c_str());
+                            _currentBehavior->GetName().c_str());
           lastResult = RESULT_FAIL;
-          _currentBehavior->second->SetIsRunning(false);
+          _currentBehavior->SetIsRunning(false);
           
           // Force a re-init so if we reselect this behavior
           _forceReInit = true;
@@ -178,11 +139,11 @@ namespace Cozmo {
         default:
           PRINT_NAMED_ERROR("BehaviorManager.Update.UnknownStatus",
                             "Behavior '%s' returned unknown status %d",
-                            _currentBehavior->first.c_str(), status);
+                            _currentBehavior->GetName().c_str(), status);
           lastResult = RESULT_FAIL;
       } // switch(status)
     }
-    else if(_nextBehavior != _behaviors.end()) {
+    else if(nullptr != _nextBehavior) {
       // No current behavior, but next behavior defined, so switch to it.
       SwitchToNextBehavior();
     }
@@ -199,22 +160,25 @@ namespace Cozmo {
     if(_nextBehavior != _currentBehavior || _forceReInit)
     {
       _forceReInit = false;
-      initResult = _nextBehavior->second->Init();
+      initResult = _nextBehavior->Init();
       if(initResult != RESULT_OK) {
         PRINT_NAMED_ERROR("BehaviorManager.InitNextBehaviorHelper.InitFailed",
                           "Failed to initialize %s behavior.",
-                          _nextBehavior->second->GetName().c_str());
-        _nextBehavior = _behaviors.end();
-      } else if(_currentBehavior != _behaviors.end()) {
+                          _nextBehavior->GetName().c_str());
+        _nextBehavior = nullptr;
+      } else if(nullptr != _currentBehavior) {
         // We've successfully initialized the next behavior to run, so interrupt
         // the current behavior that's running if there is one. It will continue
         // to run on calls to Update() until it completes and then we will switch
         // to the selected next behavior
-        initResult = _currentBehavior->second->Interrupt(currentTime_sec);
+        initResult = _currentBehavior->Interrupt(currentTime_sec);
         
 #       if DEBUG_BEHAVIOR_MGR
-        PRINT_NAMED_INFO("BehaviorManger.InitNextBehaviorHelper.Selected",
-                         "Selected %s to run next.", _nextBehavior->first.c_str());
+        if (nullptr != _nextBehavior)
+        {
+          PRINT_NAMED_INFO("BehaviorManger.InitNextBehaviorHelper.Selected",
+                           "Selected %s to run next.", _nextBehavior->GetName().c_str());
+        }
 #       endif
       }
     }
@@ -224,36 +188,10 @@ namespace Cozmo {
   Result BehaviorManager::SelectNextBehavior(float currentTime_sec)
   {
     
-    if(_behaviors.empty()) {
-      PRINT_NAMED_ERROR("BehaviorManager.SelectNextBehavior.NoBehaviors",
-                        "Empty behavior container.");
+    _nextBehavior = _behaviorChooser->ChooseNextBehavior(currentTime_sec);
+    if(nullptr == _nextBehavior) {
+      PRINT_NAMED_ERROR("BehaviorManager.SelectNextBehavior.NoneRunnable", "");
       return RESULT_FAIL;
-    }
-    
-    //
-    //
-    // TODO: "Smart" behavior selection based on robot / world / emotional state
-    //
-    //
-
-    /*
-    // For now: random behavior that is runnable
-    const s32 N = _rng.RandIntInRange(0,static_cast<s32>(_behaviors.size())-1);
-    _nextBehavior = std::next(std::begin(_behaviors), N);
-    */
-    // Always select OCD for testing (switches to Fidget if OCD isn't runnable yet)
-    _nextBehavior = _behaviors.find("OCD");
-    
-    // If the randomly-selected behavior isn't runnable, just select the next one that is
-    if(_nextBehavior->second->IsRunnable(currentTime_sec) == false) {
-      _nextBehavior = _behaviors.begin();
-      while(_nextBehavior->second->IsRunnable(currentTime_sec) == false) {
-        ++_nextBehavior;
-        if(_nextBehavior == _behaviors.end()) {
-          PRINT_NAMED_ERROR("BehaviorManager.SelecteNextBehavior.NoneRunnable", "");
-          return RESULT_FAIL;
-        }
-      }
     }
     
     // Initialize the selected behavior
@@ -263,29 +201,19 @@ namespace Cozmo {
   
   Result BehaviorManager::SelectNextBehavior(const std::string& name, float currentTime_sec)
   {
-    _nextBehavior = _behaviors.find(name);
-    if(_nextBehavior == _behaviors.end()) {
+    _nextBehavior = _behaviorChooser->GetBehaviorByName(name);
+    if(nullptr == _nextBehavior) {
       PRINT_NAMED_ERROR("BehaviorManager.SelectNextBehavior.UnknownName",
                         "No behavior named '%s'", name.c_str());
       return RESULT_FAIL;
     }
-    else if(_nextBehavior->second->IsRunnable(currentTime_sec) == false) {
+    else if(_nextBehavior->IsRunnable(currentTime_sec) == false) {
       PRINT_NAMED_ERROR("BehaviorManager.SelecteNextBehavior.NotRunnable",
                         "Behavior '%s' is not runnable.", name.c_str());
       return RESULT_FAIL;
     }
     
     return InitNextBehaviorHelper(currentTime_sec);
-  }
-  
-  
-  const IBehavior* BehaviorManager::GetCurrentBehavior() const
-  {
-    if(_currentBehavior != _behaviors.end()) {
-      return _currentBehavior->second;
-    } else {
-      return nullptr;
-    }
   }
   
 } // namespace Cozmo
