@@ -408,7 +408,7 @@ namespace Anki {
             }
             
             // Turn on image streaming to game/UI by default:
-            SendImageRequest(ISM_STREAM, 1);
+            SendImageRequest(ImageSendMode::Stream, 1);
             
             _uiState = UI_RUNNING;
           }
@@ -605,7 +605,7 @@ namespace Anki {
       SendMessage(message);
     }
     
-    void UiGameController::SendImageRequest(u8 mode, u8 robotID)
+    void UiGameController::SendImageRequest(ImageSendMode mode, u8 robotID)
     {
       ExternalInterface::ImageRequest m;
       m.robotID = robotID;
@@ -615,7 +615,7 @@ namespace Anki {
       SendMessage(message);
     }
     
-    void UiGameController::SendSetRobotImageSendMode(u8 mode, u8 resolution)
+    void UiGameController::SendSetRobotImageSendMode(ImageSendMode mode, u8 resolution)
     {
       ExternalInterface::SetRobotImageSendMode m;
       m.mode = mode;

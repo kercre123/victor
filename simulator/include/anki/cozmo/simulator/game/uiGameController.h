@@ -15,6 +15,7 @@
 #include "anki/cozmo/basestation/data/dataPlatform.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
+#include "clad/types/imageSendMode.h"
 #include <webots/Supervisor.hpp>
 
 
@@ -88,8 +89,8 @@ protected:
   void SendMoveLiftToHeight(const f32 mm, const f32 speed, const f32 accel, const f32 duration_sec = 0.f);
   void SendTapBlockOnGround(const u8 numTaps);
   void SendStopAllMotors();
-  void SendImageRequest(u8 mode, u8 robotID);
-  void SendSetRobotImageSendMode(u8 mode, u8 resolution);
+  void SendImageRequest(ImageSendMode mode, u8 robotID);
+  void SendSetRobotImageSendMode(ImageSendMode mode, u8 resolution);
   void SendSaveImages(SaveMode_t mode, bool alsoSaveState=false);
   void SendEnableDisplay(bool on);
   void SendSetHeadlights(u8 intensity);
