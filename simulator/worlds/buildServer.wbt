@@ -200,12 +200,12 @@ LightCube {
 #}
 BlockWorldComms {
 }
-DEF Cozmo_1 CozmoBot {
+CozmoBot {
   name "CozmoBot_1"
   usbChannel 10
 }
 BuildServerTestController {
-  controllerArgs "tests.json"
+  controllerArgs "%COZMO_SIM_TEST%"
 }
 CozmoVizDisplay {
 }

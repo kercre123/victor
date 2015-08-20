@@ -15,6 +15,8 @@ from decimal import Decimal
 import threading
 import tarfile
 import logging
+import ConfigParser
+import Queue
 
 #set up default logger
 UtilLog = logging.getLogger('webots.test')
@@ -22,6 +24,12 @@ stdout_handler = logging.StreamHandler()
 formatter = logging.Formatter('%(name)s - %(message)s')
 stdout_handler.setFormatter(formatter)
 UtilLog.addHandler(stdout_handler)
+
+
+worldFileTestNamePlaceHolder = '%COZMO_SIM_TEST%'
+generatedWorldFileName = '__generated__.wbt'
+testStatuses = {}
+allTestsPassed = True
 
 
 class WorkContext(object): pass
@@ -63,15 +71,15 @@ def build(options):
 
 
 # runs webots test
-def runWebots(options):
+def runWebots(options, resultQueue):
   # prepare run command
   runCommand = [
     '/Applications/Webots/webots', 
-    '--stdout', 
+    '--stdout',
     '--stderr',
-    # '--minimize',
+    '--minimize',
     '--mode=fast',
-    os.path.join(options.projectRoot, 'simulator/worlds/buildServer.wbt'),
+    os.path.join(options.projectRoot, 'simulator/worlds/' +  generatedWorldFileName),
     ]
 
   UtilLog.debug('run command ' + ' '.join(runCommand))
@@ -81,7 +89,8 @@ def runWebots(options):
   logFileName = os.path.join(buildFolder, 'webots_out.txt')
   logFile = open(logFileName, 'w')
   startedTimeS = time.time()
-  subprocess.call(runCommand, stdout = logFile, stderr = logFile, cwd=buildFolder)
+  returnCode = subprocess.call(runCommand, stdout = logFile, stderr = logFile, cwd=buildFolder)
+  resultQueue.put(returnCode)
   ranForS = time.time() - startedTimeS
   logFile.close()
 
@@ -91,7 +100,6 @@ def runWebots(options):
 
 # sleep for some time, then kill webots if needed
 def stopWebots(options):
-  time.sleep(35)
   # kill webots
   # prepare run command
   runCommand = [
@@ -114,20 +122,80 @@ def cleanWebots(options):
   return True
 
 
+def SetTestStatus(testName, status):
+  testStatuses[testName] = status
+  UtilLog.info('Test ' + testName + (' FAILED' if status < 0 else ' PASSED'))
+  if status < 0:
+    testsSucceeded = False
+
+
 # runs all threads groups
 # returns true if all tests suceeded correctly
 def runAll(options):
+  
+  # Get list of tests and world files from config
+  config = ConfigParser.ConfigParser()
+  webotsTestCfgPath = 'project/buildServer/steps/webotsTests.cfg'
+  config.read(webotsTestCfgPath)
+  testNames = config.sections()
 
-  runWebotsThread = threading.Thread(target=runWebots, args=[options])
-  stopWebotsThread = threading.Thread(target=stopWebots, args=[options])
-  runWebotsThread.start()
-  stopWebotsThread.start()
-  runWebotsThread.join()
-  stopWebotsThread.join()
+  testStatuses = {}
 
-  buildFolder = os.path.join(options.projectRoot, 'build/mac/', options.buildType)
-  logFileName = os.path.join(buildFolder, 'webots_out.txt')
-  return parseOutput(options, logFileName)
+  for test in testNames:
+    if not config.has_option(test, 'world_file'):
+      UtilLog.error('ERROR: No world file specified for test ' + test + '. Aborting.')
+      SetTestStatus(test, -10)
+      continue
+    
+    baseWorldFile = config.get(test, 'world_file')
+    UtilLog.info('Running test: ' + test + ' in world ' + baseWorldFile)
+    
+    # Check if world file contains valid test name place holder
+    baseWorldFile = open('simulator/worlds/' + baseWorldFile, 'r')
+    baseWorldData = baseWorldFile.read()
+    baseWorldFile.close()
+    if worldFileTestNamePlaceHolder not in baseWorldData:
+      UtilLog.error('ERROR: ' + worldFile + ' is not a valid test world. (No ' + worldFileTestNamePlaceHolder + ' found.)')
+      SetTestStatus(test, -11)
+      continue
+
+    # Generate world file with appropriate args passed into test controller
+    generatedWorldData = baseWorldData.replace(worldFileTestNamePlaceHolder, test)
+    generatedWorldFile = open(os.path.join(options.projectRoot, 'simulator/worlds/' + generatedWorldFileName), 'w+')
+    generatedWorldFile.write(generatedWorldData)
+    generatedWorldFile.close()
+
+    # Run test in thread
+    testResultQueue = Queue.Queue(1)
+    runWebotsThread = threading.Thread(target=runWebots, args=[options, testResultQueue])
+    runWebotsThread.start()
+    runWebotsThread.join(60) # with timeout
+    
+    # Check if timeout exceeded
+    if runWebotsThread.isAlive():
+      UtilLog.error('ERROR: ' + test + ' exceeded timeout. Aborting')
+      stopWebots(options)
+      SetTestStatus(test, -12)
+      continue
+
+    # Check log for errors and warnings
+    # TODO: This doesn't effect test outcome at the moment. Should it?
+    buildFolder = os.path.join(options.projectRoot, 'build/mac/', options.buildType)
+    logFileName = os.path.join(buildFolder, 'webots_out.txt')
+    (errorCount, warningCount) = parseOutput(options, logFileName)
+    # UtilLog.info("webot error count %d warning count %d" % (errorCount, warningCount))
+    print '##teamcity[buildStatisticValue key=\'WebotsErrorCount\' value=\'%d\']' % (errorCount)
+    print '##teamcity[buildStatisticValue key=\'WebotsWarningCount\' value=\'%d\']' % (warningCount)
+
+
+    # Get return code from test
+    if testResultQueue.empty():
+      UtilLog.error('ERROR: No result code received from ' + test)
+      SetTestStatus(test, -13)
+    
+    SetTestStatus(test, testResultQueue.get())
+      
+  return (allTestsPassed, testStatuses)
 
 
 
@@ -137,19 +205,16 @@ def parseOutput(options, logFile):
   fileHandle = open(logFile, 'r')
   lines = [line.strip() for line in fileHandle]
   fileHandle.close()
-  testCompleted = False
   errorCount = 0
   warningCount = 0
 
   for line in lines:
-    if 'TestController.Update : all tests completed' in line:
-      testCompleted = True
     if 'Error' in line or 'ERROR' in line:
       errorCount = errorCount + 1
     if 'Warn' in line:
       warningCount = warningCount + 1
 
-  return (testCompleted, errorCount, warningCount)
+  return (errorCount, warningCount)
 
 
 # tarball valgrind output files together
@@ -212,11 +277,8 @@ def main(scriptArgs):
     return 1
 
   # run the tests
-  (testCompleted, errorCount, warningCount) = runAll(options)
+  (testsSucceeded, testResults) = runAll(options)
   tarball(options)
-  # UtilLog.info("webot error count %d warning count %d" % (errorCount, warningCount))
-  print '##teamcity[buildStatisticValue key=\'WebotsErrorCount\' value=\'%d\']' % (errorCount)
-  print '##teamcity[buildStatisticValue key=\'WebotsWarningCount\' value=\'%d\']' % (warningCount)
 
   returnValue = 0;
   cleanResult = cleanWebots(options)
@@ -225,9 +287,15 @@ def main(scriptArgs):
     returnValue = returnValue + 1
 
 
-  if not testCompleted:
-    UtilLog.error("webot test ERROR")
+  if not testsSucceeded:
+    UtilLog.error("*************************")
+    UtilLog.error("SOME TESTS FAILED")
+    UtilLog.error("*************************")
     returnValue = returnValue + 1
+  else:
+    UtilLog.info("*************************")
+    UtilLog.info("ALL " + str(len(testStatuses)) + " TESTS PASSED")
+    UtilLog.info("*************************")
 
   return returnValue
 
