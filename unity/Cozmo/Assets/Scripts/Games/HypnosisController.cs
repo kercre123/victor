@@ -17,10 +17,10 @@ public class HypnosisController : GameController {
   private bool gameReady = false;
   private bool waitForLayoutTracker = true;
   private int buildingCubesSpotted = 0;
-  private HypnosisState currentState = HypnosisState.AWAKE;
+  private HypnosisState playState = HypnosisState.AWAKE;
+  private HypnosisState nextState = HypnosisState.AWAKE;
+  private float playStateTimer = 0.0f;
   private int mostRecentTappedID = -1;
-  private float lastInTranceTime = 0.0f;
-  private float startSleepTime = 0.0f;
   private ObservedObject tranceTarget = null;
   private bool searchTurnRight = false;
 
@@ -78,20 +78,13 @@ public class HypnosisController : GameController {
 
   protected override void Update_PLAYING() {
     base.Update_PLAYING();
-
-    switch (currentState) {
-    case HypnosisState.SLEEP:
-      RobotSleep();
-      break;
-    case HypnosisState.AWAKE:
-      RobotAwake();
-      break;
-    case HypnosisState.SEARCH:
-      RobotSearch();
-      break;
-    case HypnosisState.TRANCE:
-      RobotTrance();
-      break;
+    if (playState != nextState) {
+      ExitPlayState();
+      playState = nextState;
+      EnterPlayState();
+    }
+    else {
+      UpdatePlayState();
     }
   }
 
@@ -127,7 +120,58 @@ public class HypnosisController : GameController {
     base.RefreshHUD();
   }
 
-  bool robotIdle = true;
+  private void EnterPlayState() {
+    playStateTimer = 0.0f;
+    switch (playState) {
+    case HypnosisState.SLEEP:
+      Enter_ROBOT_SLEEP();
+      break;
+    case HypnosisState.AWAKE:
+      Enter_ROBOT_AWAKE();
+      break;
+    case HypnosisState.SEARCH:
+      Enter_ROBOT_SEARCH();
+      break;
+    case HypnosisState.TRANCE:
+      Enter_ROBOT_TRANCE();
+      break;
+    }
+  }
+
+  private void UpdatePlayState() {
+    playStateTimer += Time.deltaTime;
+    switch (playState) {
+    case HypnosisState.SLEEP:
+      Update_ROBOT_SLEEP();
+      break;
+    case HypnosisState.AWAKE:
+      Update_ROBOT_AWAKE();
+      break;
+    case HypnosisState.SEARCH:
+      Update_ROBOT_SEARCH();
+      break;
+    case HypnosisState.TRANCE:
+      Update_ROBOT_TRANCE();
+      break;
+    }
+  }
+
+  private void ExitPlayState() {
+    switch (playState) {
+    case HypnosisState.SLEEP:
+      Exit_ROBOT_SLEEP();
+      break;
+    case HypnosisState.AWAKE:
+      Exit_ROBOT_AWAKE();
+      break;
+    case HypnosisState.SEARCH:
+      Exit_ROBOT_SEARCH();
+      break;
+    case HypnosisState.TRANCE:
+      Exit_ROBOT_TRANCE();
+      break;
+    }
+  }
 
   private void RobotEngineMessages(bool success, RobotActionType action_type) {
     if (success && action_type == RobotActionType.PLAY_ANIMATION) {
@@ -144,26 +188,20 @@ public class HypnosisController : GameController {
 
   private void BlockTapped(int blockID, int numTapped) {
     // only care about taps in awake mode.
-    if (currentState == HypnosisState.AWAKE) {
+    if (playState == HypnosisState.AWAKE) {
       mostRecentTappedID = blockID;
-      SendAnimation("Hello");
-      robotIdle = false;
-      foreach (KeyValuePair<int, ActiveBlock> activeBlock in robot.activeBlocks) {
-        for (int j = 0; j < activeBlock.Value.lights.Length; ++j) {
-          if (activeBlock.Value.ID == blockID) {
-            activeBlock.Value.lights[j].onColor = CozmoPalette.ColorToUInt(new Color(1.0f, 0.0f, 1.0f, 1.0f));
-          }
-          else {
-            activeBlock.Value.lights[j].onColor = CozmoPalette.ColorToUInt(Color.green);
-          }
-        }
-      }
     }
   }
 
-  private void RobotSleep() {
-    if (Time.time - startSleepTime > 1.0f) {
-      currentState = HypnosisState.AWAKE;
+  private void Enter_ROBOT_SLEEP() {
+    robot.DriveWheels(0.0f, 0.0f);
+    mostRecentTappedID = -1;
+    tranceTarget = null;
+  }
+
+  private void Update_ROBOT_SLEEP() {
+    if (playStateTimer > 1.0f) {
+      nextState = HypnosisState.AWAKE;
     }
 
     foreach (KeyValuePair<int, ActiveBlock> activeBlock in robot.activeBlocks) {
@@ -173,9 +211,17 @@ public class HypnosisController : GameController {
     }
   }
 
-  private void RobotAwake() {
+  private void Exit_ROBOT_SLEEP() {
+    
+  }
+
+  private void Enter_ROBOT_AWAKE() {
+    
+  }
+
+  private void Update_ROBOT_AWAKE() {
     if (mostRecentTappedID != -1) {
-      currentState = HypnosisState.SEARCH;
+      nextState = HypnosisState.SEARCH;
       ComputeTurnDirection();
     }
     else {
@@ -188,7 +234,24 @@ public class HypnosisController : GameController {
     }
   }
 
-  private void RobotSearch() {
+  private void Exit_ROBOT_AWAKE() {
+    
+  }
+
+  private void Enter_ROBOT_SEARCH() {
+    foreach (KeyValuePair<int, ActiveBlock> activeBlock in robot.activeBlocks) {
+      for (int j = 0; j < activeBlock.Value.lights.Length; ++j) {
+        if (activeBlock.Value.ID == mostRecentTappedID) {
+          activeBlock.Value.lights[j].onColor = CozmoPalette.ColorToUInt(new Color(1.0f, 0.0f, 1.0f, 1.0f));
+        }
+        else {
+          activeBlock.Value.lights[j].onColor = CozmoPalette.ColorToUInt(Color.green);
+        }
+      }
+    }
+  }
+
+  private void Update_ROBOT_SEARCH() {
     if (searchTurnRight) {
       robot.DriveWheels(15.0f, -10.0f);
     }
@@ -212,12 +275,30 @@ public class HypnosisController : GameController {
 
     if (tappedBlockFound) {
       robot.DriveWheels(0.0f, 0.0f);
-      lastInTranceTime = Time.time;
-      currentState = HypnosisState.TRANCE;
+      nextState = HypnosisState.TRANCE;
+    }
+
+    if (playStateTimer > 10.0f) {
+      // searching for too long. give up.
+      nextState = HypnosisState.SLEEP;
     }
   }
 
-  private void RobotTrance() {
+  private void Exit_ROBOT_SEARCH() {
+    
+  }
+
+  private void Enter_ROBOT_TRANCE() {
+
+  }
+
+  private void Update_ROBOT_TRANCE() {
+
+    if (Time.time - robot.activeBlocks[mostRecentTappedID].TimeLastSeen > 2.0f) {
+      // we haven't seen the block we're looking for in a while... let's look for it.
+      nextState = HypnosisState.SEARCH;
+    }
+
     float angle = Vector2.Angle(robot.Forward, robot.activeBlocks[mostRecentTappedID].WorldPosition - robot.WorldPosition);
     if (robot.activeBlocks[mostRecentTappedID].ID == mostRecentTappedID && angle < 10.0f) {
       // we are reasonably aligned to it so move forward
@@ -240,18 +321,13 @@ public class HypnosisController : GameController {
       }
     }
 
-    if (Time.time - lastInTranceTime > 15.0f) {
-      DoneTrance();
+    if (playStateTimer > 15.0f) {
+      nextState = HypnosisState.SLEEP;
     }
   }
 
-  private void DoneTrance() {
-    Debug.Log("Done trance");
-    robot.DriveWheels(0.0f, 0.0f);
-    currentState = HypnosisState.SLEEP;
-    mostRecentTappedID = -1;
-    tranceTarget = null;
-    startSleepTime = Time.time;
+  private void Exit_ROBOT_TRANCE() {
+
   }
 
   private void ComputeTurnDirection() {
