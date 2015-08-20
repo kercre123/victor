@@ -8,34 +8,51 @@
 # Make sure you know that you aren't using shared memory for any other active programs.
 
 
-ME=`whoami`
+ME=`/usr/bin/whoami`
 
-IPCS_S=`ipcs -s | egrep "[0-9a-f]+ [0-9]+" | grep $ME | cut -f2 -d" "`
-IPCS_M=`ipcs -m | egrep "[0-9a-f]+ [0-9]+" | grep $ME | cut -f2 -d" "`
-IPCS_Q=`ipcs -q | egrep "[0-9a-f]+ [0-9]+" | grep $ME | cut -f2 -d" "`
+IPCS_S=`/usr/bin/ipcs -s | /usr/bin/grep $ME | /usr/bin/tr -s " " | cut -f2 -d" "`
+IPCS_M=`/usr/bin/ipcs -m | /usr/bin/grep $ME | /usr/bin/tr -s " " | cut -f2 -d" "`
+IPCS_Q=`/usr/bin/ipcs -q | /usr/bin/grep $ME | /usr/bin/tr -s " " | cut -f2 -d" "`
 
-
+#echo memory
 for id in $IPCS_M; do
+  #echo $id
   ipcrm -m $id;
 done
 
+#echo semaphore
 for id in $IPCS_S; do
+  #echo $id
   ipcrm -s $id;
 done
 
+#echo queue
 for id in $IPCS_Q; do
+  #echo $id
   ipcrm -q $id;
 done
 
 # Kill parent processes if there are any
-CPID=`ipcs -p | egrep "[0-9a-f]+ [0-9]+" | grep $ME | awk -F" " '{print $7}'`
-LPID=`ipcs -p | egrep "[0-9a-f]+ [0-9]+" | grep $ME | awk -F" " '{print $8}'`
+CPID=`/usr/bin/ipcs -p | /usr/bin/egrep "[0-9a-f]+ [0-9]+" | /usr/bin/grep $ME | /usr/bin/awk -F" " '{print $7}'`
+LPID=`/usr/bin/ipcs -p | /usr/bin/egrep "[0-9a-f]+ [0-9]+" | /usr/bin/grep $ME | /usr/bin/awk -F" " '{print $8}'`
 
+#echo cpid
 for id in $CPID; do 
+  #echo $id
   kill -9 $id;
 done
 
+#echo lpid
 for id in $LPID; do
+  #echo $is
   kill -9 $id;
 done
+
+
+IPCS_ANY=`/usr/bin/ipcs | /usr/bin/grep $ME | /usr/bin/tr -s " " | cut -f2 -d" "`
+if [ -n "$IPCS_ANY" ]; then
+  echo not all ipc facilities were killed
+  /usr/bin/ipcs -a
+  exit 1
+fi
 
