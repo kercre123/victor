@@ -11,6 +11,7 @@
 #ifndef ANKI_COZMO_BASESTATION_ROBOTMANAGER_H
 #define ANKI_COZMO_BASESTATION_ROBOTMANAGER_H
 
+#include "anki/cozmo/basestation/robotEventHandler.h"
 #include "anki/cozmo/shared/cozmoTypes.h"
 #include "util/signals/simpleSignal.hpp"
 #include <map>
@@ -67,6 +68,7 @@ namespace Anki {
       Data::DataPlatform* _dataPlatform;
       std::map<RobotID_t,Robot*> _robots;
       std::vector<RobotID_t>     _IDs;
+      RobotEventHandler _robotEventHandler;
       
     }; // class RobotManager
     
