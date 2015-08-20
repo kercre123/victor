@@ -6,7 +6,7 @@
 #include "steeringController.h"
 
 #include "headController.h"
-#include "anki/cozmo/simulator/keyboardController.h"
+#include "anki/cozmo/simulator/robot/keyboardController.h"
 #include "liftController.h"
 #include "dockingController.h"
 
