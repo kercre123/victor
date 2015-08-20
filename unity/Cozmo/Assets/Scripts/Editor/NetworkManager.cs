@@ -62,7 +62,7 @@ class NetworkManager {
       IPAddress listenAddress = foundIpAddress;
       _tcpServer = new TcpListener(listenAddress, _listenPort);
       _tcpServer.Start();
-	  isActive = true;
+    isActive = true;
     }
     catch (Exception e) {
       Debug.Log("SocketException: " + e.ToString());
@@ -74,10 +74,10 @@ class NetworkManager {
   /// stops listening
   /// </summary>
   public void StopListening() {
-	isActive = false;
-	if (_tcpServer != null) {
-	  _tcpServer.Stop ();
-	}
+  isActive = false;
+  if (_tcpServer != null) {
+    _tcpServer.Stop ();
+  }
     Debug.Log(String.Format("connection closed {0} : {1}", _listenAddressStr, _listenPort));
   }
     
@@ -88,9 +88,9 @@ class NetworkManager {
   /// This should be called every frame in the game.update
   /// </summary>
   public void CheckForConnection() {
-	if (!isActive) {
+  if (!isActive) {
       return;
-	}
+  }
     try {
       // If a connection request is pending then launch a new
       // thread to handle it

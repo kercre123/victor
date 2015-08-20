@@ -197,12 +197,7 @@ namespace Cozmo {
     
     return lastResult;
   }
-  
-  void CozmoGameImpl::SetImageSendMode(RobotID_t forRobotID, Cozmo::ImageSendMode_t newMode)
-  {
-    _cozmoEngine->SetImageSendMode(forRobotID, newMode);
-  }
-  
+
   bool CozmoGameImpl::GetCurrentRobotImage(RobotID_t robotId, Vision::Image& img, TimeStamp_t newerThanTime)
   {
     return _cozmoEngine->GetCurrentRobotImage(robotId, img, newerThanTime);

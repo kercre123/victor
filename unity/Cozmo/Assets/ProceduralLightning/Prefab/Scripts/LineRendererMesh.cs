@@ -53,10 +53,10 @@ namespace DigitalRuby.ThunderAndLightning
                 mesh.colors = colors.ToArray();
                 mesh.uv = texCoords.ToArray();
                 mesh.uv2 = glowModifiers.ToArray();
-				mesh.normals = ends.ToArray();
+        mesh.normals = ends.ToArray();
                 mesh.triangles = indices.ToArray();
                 needsUpdate = false;
-				//Debug.Log("LightningBoltMeshRenderer Update meshRenderer.enabled("+meshRenderer.enabled+")");
+        //Debug.Log("LightningBoltMeshRenderer Update meshRenderer.enabled("+meshRenderer.enabled+")");
             }
         }
 
@@ -74,7 +74,7 @@ namespace DigitalRuby.ThunderAndLightning
         public void Begin()
         {
             meshRenderer.enabled = true;
-			//Debug.Log("LightningBoltMeshRenderer Begin meshRenderer.enabled("+meshRenderer.enabled+")");
+      //Debug.Log("LightningBoltMeshRenderer Begin meshRenderer.enabled("+meshRenderer.enabled+")");
         }
 
         public bool PrepareForLines(int lineCount)
@@ -100,14 +100,14 @@ namespace DigitalRuby.ThunderAndLightning
             lineDirs.Add(dir);
             colors.Add(c);
             glowModifiers.Add(glowModifier);
-			ends.Add(dir);
+      ends.Add(dir);
 
             vertices.Add(end);
             texCoords.Add(uv2);
             lineDirs.Add(dir);
             colors.Add(c);
             glowModifiers.Add(glowModifier);
-			ends.Add(dir);
+      ends.Add(dir);
 
             dir.w = -radius;
 
@@ -116,14 +116,14 @@ namespace DigitalRuby.ThunderAndLightning
             lineDirs.Add(dir);
             colors.Add(c);
             glowModifiers.Add(glowModifier);
-			ends.Add(dir);
+      ends.Add(dir);
 
             vertices.Add(end);
             texCoords.Add(uv4);
             lineDirs.Add(dir);
             colors.Add(c);
             glowModifiers.Add(glowModifier);
-			ends.Add(dir);
+      ends.Add(dir);
 
             needsUpdate = true;
         }
@@ -142,14 +142,14 @@ namespace DigitalRuby.ThunderAndLightning
             lineDirs.Add(lineDirs[lineDirs.Count - 3]);
             colors.Add(c);
             glowModifiers.Add(glowModifier);
-			ends.Add(dir);
+      ends.Add(dir);
 
             vertices.Add(end);
             texCoords.Add(uv2);
             lineDirs.Add(dir);
             colors.Add(c);
             glowModifiers.Add(glowModifier);
-			ends.Add(dir);
+      ends.Add(dir);
 
             dir.w = -radius;
 
@@ -159,14 +159,14 @@ namespace DigitalRuby.ThunderAndLightning
             lineDirs.Add(lineDirs[lineDirs.Count - 3]);
             colors.Add(c);
             glowModifiers.Add(glowModifier);
-			ends.Add(dir);
+      ends.Add(dir);
 
             vertices.Add(end);
             texCoords.Add(uv4);
             lineDirs.Add(dir);
             colors.Add(c);
             glowModifiers.Add(glowModifier);
-			ends.Add(dir);
+      ends.Add(dir);
         }
 
         public void Reset()
@@ -188,10 +188,10 @@ namespace DigitalRuby.ThunderAndLightning
             set { GetComponent<MeshRenderer>().sharedMaterial = value; }
         }
 
-		public int VertCount
-		{
-			get { return vertices.Count; }
-		}
+    public int VertCount
+    {
+      get { return vertices.Count; }
+    }
     }
 
 }

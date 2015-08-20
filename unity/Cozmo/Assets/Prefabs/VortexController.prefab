@@ -4778,6 +4778,7 @@ MonoBehaviour:
   textAddaboy: {fileID: 0}
   autoPlay: 1
   playButton: {fileID: 0}
+  playAgainButton: {fileID: 11471510}
   resultsPanel: {fileID: 11448272}
   instructionsSound: {fileID: 8300000, guid: 8a00506d8b6b24bf2aaafa4692c7d712, type: 3}
   gameStartSound: {fileID: 0}
@@ -4966,7 +4967,6 @@ MonoBehaviour:
   - {r: .956862807, g: .764705956, b: .0156862754, a: 1}
   - {r: .90196085, g: .0352941193, b: .0352941193, a: 1}
   maxPlayerInputTime: 3
-  playAgainButton: {fileID: 11471510}
   scoreDisplayFillFade: .5
   scoreDisplayFillAlpha: .800000012
   scoreDisplayEmptyAlpha: .5
@@ -4978,6 +4978,9 @@ MonoBehaviour:
   cozmoFinalDragTime: .200000003
   scoreScaleBase: .75
   scoreScaleMax: 1
+  cozmoPredictiveAccuracy: .649999976
+  cozmoTimeFirstTap: 1.79999995
+  cozmoTimePerTap: .75
 --- !u!114 &11408142
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -14658,7 +14661,15 @@ Prefab:
   serializedVersion: 2
   m_Modification:
     m_TransformParent: {fileID: 0}
-    m_Modifications: []
+    m_Modifications:
+    - target: {fileID: 0}
+      propertyPath: settingsPerLevel.Array.data[0].roundsPerRing
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: settingsPerLevel.Array.data[0].showTokens
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 162512}

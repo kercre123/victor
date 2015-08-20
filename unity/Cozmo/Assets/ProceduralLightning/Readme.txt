@@ -5,50 +5,50 @@ http://www.digitalruby.com
 Version 1.3
 
 Changelog:
-1.0		-	Initial release
-1.0.1	-	Added web player link
-1.0.2	-	Fixed a display glitch with multiple bolts and very short duration
-1.1		-	Added an option to render lightning with a mesh that cuts down on the number of draw calls and CPU usage significantly
-1.2		-	Bug fixes
-1.3		-	Added a bunch of prefabs for shape lightning, chain / path lightning and more with demo scenes
-		-	Improved lightning bolt batching. Use CreateLightningBolts (plural) on LightningBoltScript to batch all bolts into one draw call
-		-	Scene view shows gizmos for building lightning paths for better visualization - see DemoScenePath
-		-	Disabled legacy line renderer. It is still there, but #if'd out. I would suggest avoiding using this as I will probably delete
-			it in a future version. The CPU usage and draw calls are terrible for this mode.
+1.0    -  Initial release
+1.0.1  -  Added web player link
+1.0.2  -  Fixed a display glitch with multiple bolts and very short duration
+1.1    -  Added an option to render lightning with a mesh that cuts down on the number of draw calls and CPU usage significantly
+1.2    -  Bug fixes
+1.3    -  Added a bunch of prefabs for shape lightning, chain / path lightning and more with demo scenes
+    -  Improved lightning bolt batching. Use CreateLightningBolts (plural) on LightningBoltScript to batch all bolts into one draw call
+    -  Scene view shows gizmos for building lightning paths for better visualization - see DemoScenePath
+    -  Disabled legacy line renderer. It is still there, but #if'd out. I would suggest avoiding using this as I will probably delete
+      it in a future version. The CPU usage and draw calls are terrible for this mode.
 
 Procedural Lightning for Unity contains code to create 3D procedural lightning for use in your Unity game or app.
 
 Assets provided:
 - Demo Scenes:
-	- Night time (DemoScene)
-	- Day time (DemoScene2)
-	- Script Configuration Scene (DemoSceneConfigureScript)
-	- Prefab Configuration Scene (DemoSceneConfigurePrefab)
-	- Path demo (DemoScenePath)
-	- Shape lightning (sphere, etc.) (DemoSceneShape)
-	- Lightning strike demo (DemoSceneStrike)
-	- Jitter / Lightning Field demo (DemoSceneLightningField)
+  - Night time (DemoScene)
+  - Day time (DemoScene2)
+  - Script Configuration Scene (DemoSceneConfigureScript)
+  - Prefab Configuration Scene (DemoSceneConfigurePrefab)
+  - Path demo (DemoScenePath)
+  - Shape lightning (sphere, etc.) (DemoSceneShape)
+  - Lightning strike demo (DemoSceneStrike)
+  - Jitter / Lightning Field demo (DemoSceneLightningField)
 - Prefab
-	- LightningBoltPathPrafab.prefab is a component to create lightning that follows a path
-	- LightningBoltPrefab.prefab is a component to create lightning that goes from a start point to an end point
-	- LightningBoltShapeConePrefab.prefab is an example of creating lightning in the shape of a cone
-	- LightningBoltShapeSpherePrefab.prefab is an example of creating lightning in the shape of a sphere
-	- ThunderAndLightningPrefab.prefab is a drop in component for random lightning or your own custom lightning. If you don't want the random lightning, simply disable the ThunderAndLightning script or delete it.
-	- Dark cloud particle system
-	- High level thunder and lightning script (ThunderAndLightningScript.cs)
-	- Low level lightning bolt script (LightningBoltScript.cs)
-	- Lightning glow (defaults to a blue tint, but this can be changed in the material using the inspector, or by changing the _TintColor variable in a script).
-		- Texture (LightningGlowTexture.png)
-		- Material (LightningGlowMaterial.mat)
-		- Shader (LightningGlowShader.shader)
-	- Lightning bolt
-		- Texture (LightningBoltTexture.png)
-		- Material (LightningBoltMaterial.mat)
-		- Shader (LightningBoltShader.shader)
-	- Lightning origin (for when it comes from a cloud)
-		- Texture (Default particle)
-		- Material (LightningOriginMaterial.mat)
-	- 17 thunder sounds (thunder*.mp3)
+  - LightningBoltPathPrafab.prefab is a component to create lightning that follows a path
+  - LightningBoltPrefab.prefab is a component to create lightning that goes from a start point to an end point
+  - LightningBoltShapeConePrefab.prefab is an example of creating lightning in the shape of a cone
+  - LightningBoltShapeSpherePrefab.prefab is an example of creating lightning in the shape of a sphere
+  - ThunderAndLightningPrefab.prefab is a drop in component for random lightning or your own custom lightning. If you don't want the random lightning, simply disable the ThunderAndLightning script or delete it.
+  - Dark cloud particle system
+  - High level thunder and lightning script (ThunderAndLightningScript.cs)
+  - Low level lightning bolt script (LightningBoltScript.cs)
+  - Lightning glow (defaults to a blue tint, but this can be changed in the material using the inspector, or by changing the _TintColor variable in a script).
+    - Texture (LightningGlowTexture.png)
+    - Material (LightningGlowMaterial.mat)
+    - Shader (LightningGlowShader.shader)
+  - Lightning bolt
+    - Texture (LightningBoltTexture.png)
+    - Material (LightningBoltMaterial.mat)
+    - Shader (LightningBoltShader.shader)
+  - Lightning origin (for when it comes from a cloud)
+    - Texture (Default particle)
+    - Material (LightningOriginMaterial.mat)
+  - 17 thunder sounds (thunder*.mp3)
 
 - Configuration scene overview (DemoSceneConfigure)
 This scene allows tweaking of many of the parameters for your lightning. Press SPACE BAR to create a lightning bolt, and drag the circle and anchor to change where your bolt goes.

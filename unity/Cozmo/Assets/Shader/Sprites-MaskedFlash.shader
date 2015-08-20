@@ -54,7 +54,7 @@ Shader "Sprites/MaskedFlash"
              fixed4 _Color;
              fixed4 _FlashColor;
              float _FlashAmount;
- 			uniform float4 _FlashMaskTex_ST; // Needed for TRANSFORM_TEX(v.texcoord, _MainTex)
+       uniform float4 _FlashMaskTex_ST; // Needed for TRANSFORM_TEX(v.texcoord, _MainTex)
              v2f vert(appdata_t IN)
              {
                  v2f OUT;
@@ -79,9 +79,9 @@ Shader "Sprites/MaskedFlash"
                  float amount = 0.0;
                  
                  #ifdef MASKWITHALPHA_ON
-				 	amount = tex2D(_FlashMaskTex, uv).a * _FlashAmount;
+           amount = tex2D(_FlashMaskTex, uv).a * _FlashAmount;
                  #else
-                 	amount = tex2D(_FlashMaskTex, uv).r * _FlashAmount;
+                   amount = tex2D(_FlashMaskTex, uv).r * _FlashAmount;
                  #endif
 
                  c.rgb = lerp(c.rgb,_FlashColor.rgb,amount);
