@@ -24,7 +24,6 @@ SPECIAL_MKTARGETS=$(APP_MKTARGETS)
 SUBDIRS=    \
 	user    \
 	driver
-	
 endif # } PDIR
 
 APPDIR = .
@@ -50,7 +49,6 @@ COMPONENTS_eagle.app.v6 = \
 
 LINKFLAGS_eagle.app.v6 = \
 	-L../lib        \
-	-L$(CORETECH_EXTERNAL_DIR)/espressif/lx106/lib \
 	-nostdlib	\
     -T$(LD_FILE)   \
 	-Wl,--no-check-sections	\
