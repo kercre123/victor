@@ -27,8 +27,6 @@ namespace Cozmo {
   
   // ============ Test class declaration ============
   class CST_Animations : public CozmoSimTestController {
-  public:
-    CST_Animations();
     
   private:
     const u32 MIN_NUM_ANIMS_REQUIRED = 10;
@@ -52,12 +50,6 @@ namespace Cozmo {
   
   // =========== Test class implementation ===========
   
-  CST_Animations::CST_Animations() :
-  CozmoSimTestController()
-  {
-  }
-  
-
   s32 CST_Animations::UpdateInternal()
   {
     switch (_testState) {
