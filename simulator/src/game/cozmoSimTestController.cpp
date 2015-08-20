@@ -37,13 +37,13 @@ namespace Anki {
       // find name in the registry and call factory method.
       auto it = factoryFunctionRegistry.find(name);
       if(it != factoryFunctionRegistry.end())
-      instance = it->second();
+        instance = it->second();
       
       // wrap instance in a shared ptr and return
       if(instance != nullptr)
-      return std::shared_ptr<CozmoSimTestController>(instance);
+        return std::shared_ptr<CozmoSimTestController>(instance);
       else
-      return nullptr;
+        return nullptr;
     }
     
     void CozmoSimTestFactory::RegisterFactoryFunction(std::string name,
