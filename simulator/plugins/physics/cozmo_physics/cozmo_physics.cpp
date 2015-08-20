@@ -273,6 +273,7 @@ namespace Anki {
     void ProcessVizVisionMarkerMessage(const VizVisionMarker& msg){};
     void ProcessVizCameraQuadMessage(const VizCameraQuad& msg) {};
     void ProcessVizCameraLineMessage(const VizCameraLine& msg) {};
+    void ProcessVizCameraOvalMessage(const VizCameraOval& msg) {};
     void ProcessVizRobotStateMessage(const VizRobotState& msg) {};
     
   } // namespace Cozmo

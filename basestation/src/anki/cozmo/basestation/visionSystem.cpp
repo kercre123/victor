@@ -1012,7 +1012,7 @@ namespace Cozmo {
     // MatlabVisualization::SendTrackerPrediction_Before(grayscaleImage, currentQuad);
     Anki::Quad2f vizQuad;
     GetVizQuad(currentQuad, vizQuad);
-    VizManager::getInstance()->DrawCameraQuad(9999, vizQuad, NamedColors::BLUE);
+    VizManager::getInstance()->DrawCameraQuad(vizQuad, NamedColors::BLUE);
     
     // Ask VisionState how much we've moved since last call (in robot coordinates)
     Radians theta_robot;
@@ -1175,7 +1175,7 @@ namespace Cozmo {
     // TODO: Re-enable tracker prediction viz on basestation
     //MatlabVisualization::SendTrackerPrediction_After(GetTrackerQuad(scratch));
     GetVizQuad(GetTrackerQuad(scratch), vizQuad);
-    VizManager::getInstance()->DrawCameraQuad(9999, vizQuad, NamedColors::GREEN);
+    VizManager::getInstance()->DrawCameraQuad(vizQuad, NamedColors::GREEN);
     
     return result;
   } // TrackerPredictionUpdate()

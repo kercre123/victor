@@ -18,9 +18,16 @@
 #include "util/logging/logging.h"
 
 // FacioMetric SDK
-#include <intraface/gaze/gaze.h>
-#include <intraface/core/LocalManager.h>
-#include <intraface/emo/EmoDet.h>
+#if FACE_TRACKER_PROVIDER == FACE_TRACKER_FACIOMETRIC
+#  include <intraface/gaze/gaze.h>
+#  include <intraface/core/LocalManager.h>
+#  include <intraface/emo/EmoDet.h>
+
+#elif FACE_TRACKER_PROVIDER == FACE_TRACKER_FACESDK
+#  include <LuxandFaceSDK.h>
+#else 
+#  error Unknown FACE_TRACKER_PROVIDER set!
+#endif
 
 #include <opencv2/objdetect/objdetect.hpp>
 #include <opencv2/highgui/highgui.hpp>
@@ -30,173 +37,13 @@
 namespace Anki {
 namespace Vision {
   
+#if FACE_TRACKER_PROVIDER == FACE_TRACKER_FACIOMETRIC
+  
   static const cv::Scalar BLUE(255, 0, 0); ///< Definition of the blue color
   static const cv::Scalar GREEN(0, 255, 0); ///< Definition of the green color
   static const cv::Scalar RED(0, 0, 255); ///< Definition of the red color
   static const cv::Scalar FACECOLOR(50, 255, 50); ///< Definition of the face color
   static const cv::Scalar GAZECOLOR(255, 0, 255); ///< Definition of the gaze color
-  
-  
-  class TrackedFace::Impl
-  {
-  public:
-    
-    Impl()
-    : _isBeingTracked(false)
-    , _id(-1)
-    {
-      
-    }
-    
-    bool  _isBeingTracked;
-    float _score;
-    TimeStamp_t _timestamp;
-    
-    Rectangle<f32> _rect;
-    cv::Mat  _landmarks;
-    
-    // Variables that store, the information related to irises, head pose and eye gaze
-    facio::Irisesf  _irises;
-    facio::HeadPose _headPose;
-    facio::EyeGazes _gazes;
-    
-    int _id;
-    
-  }; // class TrackedFaceImpl
-  
-  
-  TrackedFace::TrackedFace()
-  : _pImpl(new Impl())
-  {
-    
-  }
-  
-  TrackedFace::TrackedFace(const Impl& impl)
-  : _pImpl(new Impl(impl))
-  {
-    
-  }
-  
-  TrackedFace::TrackedFace(const TrackedFace& other)
-  : _pImpl(new Impl(*other._pImpl))
-  {
-    
-  }
-  
-  TrackedFace& TrackedFace::operator=(const TrackedFace& other)
-  {
-    if(&other != this) {
-      _pImpl.reset(new Impl(*other._pImpl));
-    }
-    return *this;
-  }
-  
-  // Use default destrictor, move constructor, and move assignment operators:
-  TrackedFace::~TrackedFace() = default;
-  TrackedFace::TrackedFace(TrackedFace&&) = default;
-  TrackedFace& TrackedFace::operator=(TrackedFace&&) = default;
-
-  
-  const Rectangle<f32>& TrackedFace::GetRect() const
-  {
-    return _pImpl->_rect;
-  }
-  
-  TimeStamp_t TrackedFace::GetTimeStamp() const
-  {
-    return _pImpl->_timestamp;
-  }
-  
-  bool TrackedFace::IsBeingTracked() const
-  {
-    return _pImpl->_isBeingTracked;
-  }
-  
-  float TrackedFace::GetScore() const
-  {
-    return _pImpl->_score;
-  }
-  
-  int TrackedFace::GetID() const
-  {
-    return _pImpl->_id;
-  }
-  
-  static inline void AddFeature(const float* x, const float* y,
-                                const int fromIndex, const int toIndex,
-                                std::vector<Point2f>& pointVec,
-                                bool closed = false)
-  {
-    pointVec.reserve(toIndex-fromIndex+1 + (closed ? 1 : 0));
-    
-    for(int i=fromIndex; i<=toIndex; ++i) {
-      pointVec.emplace_back(x[i],y[i]);
-    }
-    
-    if(closed) {
-      pointVec.emplace_back(x[fromIndex], y[fromIndex]);
-    }
-  }
-  
-  static inline void AddLineFeature(const float* x, const float* y,
-                                    const int fromIndex, const int toIndex,
-                                    std::vector<Point2f>& pointVec)
-  {
-    pointVec.emplace_back(x[fromIndex],y[fromIndex]);
-    pointVec.emplace_back(x[toIndex],  y[toIndex]);
-  }
-  
-  TrackedFace::LandmarkPolygons TrackedFace::GetLandmarkPolygons() const
-  {
-    LandmarkPolygons landmarksOut;
-    
-    // X coordinates on the first row of the cv::Mat, Y on the second
-    const float *x = _pImpl->_landmarks.ptr<float>(0);
-    const float *y = _pImpl->_landmarks.ptr<float>(1);
-    
-    const bool drawFaceContour = _pImpl->_landmarks.cols > 49;
-    
-    // Number of features
-    landmarksOut.resize(drawFaceContour ? 14 : 13);
-    
-    // 1. left eyebrow
-    AddFeature(x, y, 0, 4, landmarksOut[0]);
-    
-    // 2. right eyebrow
-    AddFeature(x, y, 5, 9, landmarksOut[1]);
-    
-    // 3. nose
-    AddFeature(x, y, 10, 13, landmarksOut[2]);
-    
-    // 4. under nose
-    AddFeature(x, y, 14, 18, landmarksOut[3]);
-    
-    // 5. left eye
-    AddFeature(x, y, 19, 24, landmarksOut[4], true);
-    
-    // 6. right eye
-    AddFeature(x, y, 25, 30, landmarksOut[5], true);
-    
-    // 7. mouth contour
-    AddFeature(x, y, 31, 42, landmarksOut[6], true);
-    
-    // 8-13. inner mouth
-    AddFeature(x, y, 43, 45, landmarksOut[7]);
-    AddFeature(x, y, 46, 48, landmarksOut[8]);
-    AddLineFeature(x, y, 31, 43, landmarksOut[9]);
-    AddLineFeature(x, y, 31, 48, landmarksOut[10]);
-    AddLineFeature(x, y, 37, 45, landmarksOut[11]);
-    AddLineFeature(x, y, 37, 46, landmarksOut[12]);
-    
-    // contour
-    if (drawFaceContour) {
-      AddFeature(x, y, 49, 65, landmarksOut[13]);
-    }
-    
-    return landmarksOut;
-  }
-  
-  
   
   class FaceTracker::Impl
   {
@@ -207,16 +54,18 @@ namespace Vision {
     
     Result Update(const Vision::Image& frame);
     
-    std::vector<TrackedFace> GetFaces() const;
+    std::list<TrackedFace> GetFaces() const;
     
     //void GetFaces(std::vector<cv::Rect>& faceRects) const;
     //void GetFaceLandmarks(std::vector<FaceLandmarks>& landmarks) const;
     
+    /*
     void GetDisplayImage(cv::Mat& image) const;
     
     void EnableDisplay(bool enable) {
       _displayEnabled = enable;
     }
+     */
     
   private:
     using SDM = facio::FaceAlignmentSDM<facio::AlignmentFeature, facio::NO_CONTOUR, facio::LocalManager>;
@@ -243,10 +92,14 @@ namespace Vision {
     
     static int _faceCtr;
     
-    //std::map<int, TrackedFaceImpl> _faces;
-    std::list<TrackedFace::Impl> _faces;
+    // Store TrackedFaces paired with their landmarks in cv::Mat format so that
+    // we can feed the previous landmarks to the FacioMetric tracker. This is
+    // not memory efficient since we are also storing the features inside the
+    // TrackedFace, but it prevents translated back and forth (and instead just
+    // translates _from_ cv::Mat _to_ TrackedFace::Features each udpate.
+    std::list<std::pair<TrackedFace,cv::Mat> > _faces;
     
-    bool _displayEnabled;
+    //bool _displayEnabled;
     
     static void drawEmotionState(cv::Mat& img, const facio::emoScores& Emo);
     
@@ -290,7 +143,7 @@ namespace Vision {
   
   
   FaceTracker::Impl::Impl(const std::string& modelPath)
-  : _displayEnabled(false)
+  //: _displayEnabled(false)
   {
     const std::string cascadeFilename = modelPath + "haarcascade_frontalface_alt2.xml";
     
@@ -340,6 +193,68 @@ namespace Vision {
     if(_ed)  delete _ed;
   }
   
+  // For arbitrary indices
+  static inline TrackedFace::Feature GetFeatureHelper(const float* x, const float* y,
+                                                      std::vector<int>&& indices)
+  {
+    TrackedFace::Feature pointVec;
+    pointVec.reserve(indices.size());
+    
+    for(auto index : indices) {
+      pointVec.emplace_back(x[index],y[index]);
+    }
+    
+    return pointVec;
+  }
+  
+  // For indices in order
+  static inline TrackedFace::Feature GetFeatureHelper(const float* x, const float* y,
+                                                      const int fromIndex, const int toIndex,
+                                                      bool closed = false)
+  {
+    TrackedFace::Feature pointVec;
+    
+    pointVec.reserve(toIndex-fromIndex+1 + (closed ? 1 : 0));
+    
+    for(int i=fromIndex; i<=toIndex; ++i) {
+      pointVec.emplace_back(x[i],y[i]);
+    }
+    
+    if(closed) {
+      pointVec.emplace_back(x[fromIndex], y[fromIndex]);
+    }
+
+    return pointVec;
+  }
+  
+  static inline void UpdateFaceFeatures(const cv::Mat& landmarks,
+                                        TrackedFace& face)
+  {
+    // X coordinates on the first row of the cv::Mat, Y on the second
+    const float *x = landmarks.ptr<float>(0);
+    const float *y = landmarks.ptr<float>(1);
+    
+    const bool drawFaceContour = landmarks.cols > 49;
+    
+    face.SetFeature(TrackedFace::LeftEyebrow,  GetFeatureHelper(x, y, 0,  4));
+    face.SetFeature(TrackedFace::RightEyebrow, GetFeatureHelper(x, y, 5,  9));
+    face.SetFeature(TrackedFace::NoseBridge,   GetFeatureHelper(x, y, 10, 13));
+    face.SetFeature(TrackedFace::Nose,         GetFeatureHelper(x, y, 14, 18));
+    face.SetFeature(TrackedFace::LeftEye,      GetFeatureHelper(x, y, 19, 24, true));
+    face.SetFeature(TrackedFace::RightEye,     GetFeatureHelper(x, y, 25, 30, true));
+    
+    face.SetFeature(TrackedFace::UpperLip, GetFeatureHelper(x, y, {
+      31,32,33,34,35,36,37,45,44,43,31}));
+    
+    face.SetFeature(TrackedFace::LowerLip, GetFeatureHelper(x, y, {
+      31,48,47,46,37,38,39,40,41,42,31}));
+    
+    // contour
+    if (drawFaceContour) {
+      face.SetFeature(TrackedFace::Contour, GetFeatureHelper(x, y, 49, 65));
+    }
+  }
+  
   
   Result FaceTracker::Impl::Update(const Vision::Image& frameOrig)
   {
@@ -347,33 +262,41 @@ namespace Vision {
     
     cv::Mat frame;
     cv::Mat landmarksNext;
+    float score=0.f;
     frameOrig.get_CvMat_().copyTo(frame);
     
     // Update existing faces
     for(auto faceIter = _faces.begin(); faceIter != _faces.end(); /* increment in loop */)
     {
-      // From the landmarks in the previous frame, we predict the landmark in the current iteration
-      _sdm->track(frame, faceIter->_landmarks, landmarksNext, faceIter->_score);
+      TrackedFace& face  = faceIter->first;
+      cv::Mat& landmarks = faceIter->second;
       
-      if(faceIter->_score < minScoreThreshold) {
+      // From the landmarks in the previous frame, we predict the landmark in the current iteration
+      _sdm->track(frame, landmarks, landmarksNext, score);
+      
+      if(score < minScoreThreshold) {
         // Delete this face (and update iterator accordingly)
         faceIter = _faces.erase(faceIter);
       } else {
         // We copy the current estimation ('landmarksNext'), to the previous
         // frame ('landmarks') for the next iteration
-        landmarksNext.copyTo(faceIter->_landmarks);
+        landmarksNext.copyTo(landmarks);
         
         // Update the rectangle based on the landmarks, since we aren't using
         // the opencv detector for faces we're already tracking:
         double xmin, xmax, ymin, ymax;
-        cv::minMaxLoc(faceIter->_landmarks.row(0), &xmin, &xmax);
-        cv::minMaxLoc(faceIter->_landmarks.row(1), &ymin, &ymax);
-        faceIter->_rect = Rectangle<f32>(xmin, ymin, xmax-xmin, ymax-ymin);
+        cv::minMaxLoc(landmarks.row(0), &xmin, &xmax);
+        cv::minMaxLoc(landmarks.row(1), &ymin, &ymax);
+        face.SetRect(Rectangle<f32>(xmin, ymin, xmax-xmin, ymax-ymin));
         
         // Black out face, so we don't re-detect them as new faces
-        frame(faceIter->_rect.get_CvRect_()).setTo(0);
+        // (Make sure the rectangle doesn't extend outside the image)
+        cv::Rect_<float> roi = (face.GetRect().get_CvRect_() &
+                                cv::Rect_<float>(0,0,frame.cols-1, frame.rows-1));
+        frame(roi).setTo(0);
         
-        faceIter->_isBeingTracked = true;
+        face.SetScore(score);
+        face.SetIsBeingTracked(true);
         
         // Move to next known face
         ++faceIter;
@@ -389,43 +312,64 @@ namespace Vision {
     
     for(auto & newFaceRect : newFaceRects) {
       // Initializing the tracker, detecting landmarks from the output of the face detector
-      TrackedFace::Impl newFace;
-      _sdm->detect(frame, newFaceRect, newFace._landmarks, newFace._score);
-      if(newFace._score > minScoreThreshold) {
-        newFace._rect.get_CvRect_() = newFaceRect;
-        newFace._id = _faceCtr++;
-        _faces.emplace_back(newFace);
+      cv::Mat landmarks;
+      float score=0.f;
+      _sdm->detect(frame, newFaceRect, landmarks, score);
+      
+      if(score > minScoreThreshold)
+      {
+        TrackedFace newFace;
+        
+        newFace.SetRect(Rectangle<f32>(newFaceRect));
+        newFace.SetID(_faceCtr++);
+        
+        _faces.emplace_back(newFace, landmarks);
       }
     }
     
-    for(auto & face : _faces)
+    for(auto & facePair : _faces)
     {
+      TrackedFace& face = facePair.first;
+      cv::Mat& landmarks = facePair.second;
+      
       // Update the timestamp for all new/updated faces
-      face._timestamp = frameOrig.GetTimestamp();
+      face.SetTimeStamp(frameOrig.GetTimestamp());
+      
+      // Update the TrackedFace::Features from the FacioMetric landmarks:
+      UpdateFaceFeatures(landmarks, face);
       
       // Computing the Emotion information & Predicting the emotion information
-      _ed->predict(frame, face._landmarks, &_Emo);
+      _ed->predict(frame, landmarks, &_Emo);
      
-      // Estimating the headpose, the headpose information is stored in the struct 'hp'
-      _hpe->estimateHP(face._landmarks, face._headPose);
+      // Estimating the headpose
+      facio::HeadPose headPose;
+      _hpe->estimateHP(landmarks, headPose);
+      face.SetHeadPose(headPose.YAW, headPose.PITCH, headPose.ROLL);
      
-      // Estimating the irises, the irises information is stored in the struct 'irises'
-      _ie->detect(frame, face._landmarks, face._irises);
+      // Estimating the irises
+      facio::Irisesf irises;
+      _ie->detect(frame, landmarks, irises);
+      face.SetLeftEyeCenter(irises.left.center);
+      face.SetRightEyeCenter(irises.right.center);
       
       // Estimating the gaze, the gaze information is stored in the struct 'egs'
-      _ge->compute(face._landmarks, face._irises, face._headPose, face._gazes);
+      //facio::EyeGazes gazes;
+      //_ge->compute(landmarks, irises, headPose, gazes);
     }
     
+    /*
     if(_displayEnabled) {
       cv::Mat frame2show = frame.clone();
       GetDisplayImage(frame2show);
       cv::imshow("FaceTracker", frame2show);
       cv::waitKey(5);
     }
+     */
     
     return RESULT_OK;
   } // Update()
   
+  /*
   void FaceTracker::Impl::GetDisplayImage(cv::Mat& frame2Show) const
   {
     for(auto & face : _faces)
@@ -443,13 +387,14 @@ namespace Vision {
       drawGaze(frame2Show, face._irises, face._gazes);
     }
   }
+   */
   
-  std::vector<TrackedFace> FaceTracker::Impl::GetFaces() const
+  std::list<TrackedFace> FaceTracker::Impl::GetFaces() const
   {
-    std::vector<TrackedFace> retVector;
-    retVector.reserve(_faces.size());
+    std::list<TrackedFace> retVector;
+    //retVector.reserve(_faces.size());
     for(auto & face : _faces) {
-      retVector.emplace_back(face);
+      retVector.emplace_back(face.first);
     }
     return retVector;
   }
@@ -626,6 +571,291 @@ namespace Vision {
     
   }
 
+#elif FACE_TRACKER_PROVIDER == FACE_TRACKER_FACESDK
+  
+  class FaceTracker::Impl
+  {
+  public:
+    Impl(const std::string& modelPath);
+    ~Impl();
+    
+    Result Update(const Vision::Image& frameOrig);
+    
+    std::list<TrackedFace> GetFaces() const;
+    
+    void EnableDisplay(bool enabled);
+    
+  private:
+    
+    bool _isInitialized;
+    
+    HTracker _tracker;
+    
+    std::map<TrackedFace::ID_t, TrackedFace> _faces;
+    
+  }; // class FaceTracker::Impl
+  
+  
+  FaceTracker::Impl::Impl(const std::string& modelPath)
+  : _isInitialized(false)
+  {
+    int result = FSDK_ActivateLibrary("kGo498FByonCaniP29B7pwzGcHBIZJP5D9N0jcF90UhsR8gEBGyGNEmAB7XzcJxFOm9WpqBEgy6hBahqk/Eot0P1zaoWFoEa2vwitt0S7fukLfPixcwBZxnaCBmoR5NGFBbZYHX1I9vXWASt+MjqfCgpwfjZKI/oWLcGZ3AiFpA=");
+    
+    if(result != FSDKE_OK) {
+      PRINT_NAMED_ERROR("FaceTracker.Impl.ActivationFailure", "Failed to activate Luxand FaceSDK Library.");
+      return;
+    }
+    
+    char licenseInfo[1024];
+    FSDK_GetLicenseInfo(licenseInfo);
+    PRINT_NAMED_INFO("FaceTracker.Impl.LicenseInfo", "Luxand FaceSDK license info: %s", licenseInfo);
+    
+    result = FSDK_Initialize((char*)"");
+    if(result != FSDKE_OK) {
+      PRINT_NAMED_ERROR("FaceTracker.Impl.InitializeFailure", "Failed to initialize Luxand FaceSDK Library.");
+      return;
+    }
+    
+    //FSDK_SetFaceDetectionParameters(false, false, 120);
+    //FSDK_SetFaceDetectionThreshold(5);
+    
+    result = FSDK_CreateTracker(&_tracker);
+    if(result != FSDKE_OK) {
+      PRINT_NAMED_ERROR("FaceTracker.Impl.CreateTrackerFailure",
+                        "Failed to create Luxand FaceSDK Tracker.");
+      return;
+    }
+    
+    // FSDK_SetTrackerParameter(_tracker, <#const char *ParameterName#>, <#const char *ParameterValue#>)
+    int errorPosition;
+    result = FSDK_SetTrackerMultipleParameters(_tracker,
+                                               "DetectFacialFeatures=true;"
+                                               "DetectEyes=true;",
+                                               &errorPosition);
+    if(result != FSDKE_OK) {
+      PRINT_NAMED_ERROR("FaceTracker.Impl.SetTrackerParametersFail",
+                        "Failed setting parameter %d.",
+                        errorPosition);
+      return;
+    }
+    
+    _isInitialized = true;
+  }
+  
+  FaceTracker::Impl::~Impl()
+  {
+    FSDK_FreeTracker(_tracker);
+  }
+  
+  static inline TrackedFace::Feature GetFeatureHelper(const FSDK_Features& fsdk_features,
+                                                      std::vector<int>&& indices)
+  {
+    TrackedFace::Feature pointVec;
+    pointVec.reserve(indices.size());
+    
+    for(auto index : indices) {
+      pointVec.emplace_back(fsdk_features[index].x, fsdk_features[index].y);
+    }
+    
+    return pointVec;
+  }
+
+  
+  Result FaceTracker::Impl::Update(const Vision::Image &frameOrig)
+  {
+    if(!_isInitialized) {
+      PRINT_NAMED_ERROR("FaceTracker.Impl.Update.NotInitialized",
+                        "FaceTracker must be initialied before calling Update().");
+      return RESULT_FAIL;
+    }
+    
+    // Load image to FaceSDK
+    HImage fsdk_img;
+    int res = FSDK_LoadImageFromBuffer(&fsdk_img, frameOrig.GetDataPointer(),
+                                       frameOrig.GetNumCols(), frameOrig.GetNumRows(),
+                                       frameOrig.GetNumCols(), FSDK_IMAGE_GRAYSCALE_8BIT);
+    if (res != FSDKE_OK) {
+      PRINT_NAMED_ERROR("FaceTracker.Impl.Update.LoadImageFail",
+                        "Failed to load image to FaceSDK with result=%d", res);
+      return RESULT_FAIL;
+    }
+    
+    const int MAX_FACES = 8;
+    
+    long long detectedCount;
+    long long IDs[MAX_FACES];
+    res = FSDK_FeedFrame(_tracker, 0, fsdk_img, &detectedCount, IDs, sizeof(IDs));
+    if (res != FSDKE_OK) {
+      PRINT_NAMED_WARNING("FaceTracker.Impl.Update.TrackerFailed", "With result=%d",res);
+      return RESULT_FAIL;
+    }
+    
+    /*
+    // Detect multiple faces
+    int detectedCount=0;
+    TFacePosition facePositions[MAX_FACES];
+    //res = FSDK_DetectFace(fsdk_img, &facepos);
+    res = FSDK_DetectMultipleFaces(fsdk_img, &detectedCount, facePositions, sizeof(facePositions));
+    
+    if (res == FSDKE_OK) {
+      assert(detectedCount > 0);
+      PRINT_NAMED_INFO("FaceTracker.Impl.Update.DetectedFaces", "Detected %d faces", detectedCount);
+    }
+    */
+    
+    // Detect features for each face
+    for(int iFace=0; iFace<detectedCount; ++iFace)
+    {
+      auto result = _faces.emplace(IDs[iFace], TrackedFace());
+      
+      TrackedFace& face = result.first->second;
+      
+      face.SetTimeStamp(frameOrig.GetTimestamp());
+      face.SetID(IDs[iFace]);
+
+      if(result.second) {
+        // New face
+        face.SetIsBeingTracked(false);
+      } else {
+        // Existing face
+        face.SetIsBeingTracked(true);
+      }
+      
+      TFacePosition facePos;
+      res = FSDK_GetTrackerFacePosition(_tracker, 0, IDs[iFace], &facePos);
+      if (res != FSDKE_OK) {
+        PRINT_NAMED_WARNING("FaceTracker.Impl.Update.FacePositionFailure",
+                            "Failed finding position for face %d of %lld",
+                            iFace, detectedCount);
+      } else {
+        // Fill in (axis-aligned) rectangle
+        const float cosAngle = std::cos(DEG_TO_RAD(facePos.angle));
+        const float sinAngle = std::sin(DEG_TO_RAD(facePos.angle));
+        const float halfWidth = 0.5f*facePos.w;
+        face.SetRect(Rectangle<f32>(facePos.xc - halfWidth*cosAngle,
+                                       facePos.yc - halfWidth*sinAngle,
+                                       facePos.w*cosAngle,
+                                       facePos.w*sinAngle));
+      }
+      
+      FSDK_Features features;
+      res = FSDK_GetTrackerFacialFeatures(_tracker, 0, IDs[iFace], &features);
+      if(res != FSDKE_OK) {
+        PRINT_NAMED_WARNING("FaceTracker.Impl.Update.FaceFeatureFailure",
+                            "Failed finding features for face %d of %lld",
+                            iFace, detectedCount);
+      } else {
+        face.SetLeftEyeCenter(Point2f(features[FSDKP_LEFT_EYE].x,
+                                         features[FSDKP_LEFT_EYE].y));
+        
+        face.SetRightEyeCenter(Point2f(features[FSDKP_RIGHT_EYE].x,
+                                          features[FSDKP_RIGHT_EYE].y));
+        
+        face.SetFeature(TrackedFace::LeftEyebrow, GetFeatureHelper(features, {
+          FSDKP_LEFT_EYEBROW_OUTER_CORNER,
+          FSDKP_LEFT_EYEBROW_MIDDLE_LEFT,
+          FSDKP_LEFT_EYEBROW_MIDDLE,
+          FSDKP_LEFT_EYEBROW_MIDDLE_RIGHT,
+          FSDKP_LEFT_EYEBROW_INNER_CORNER}));
+
+        face.SetFeature(TrackedFace::RightEyebrow, GetFeatureHelper(features, {
+         FSDKP_RIGHT_EYEBROW_INNER_CORNER,
+         FSDKP_RIGHT_EYEBROW_MIDDLE_LEFT,
+         FSDKP_RIGHT_EYEBROW_MIDDLE,
+         FSDKP_RIGHT_EYEBROW_MIDDLE_RIGHT,
+         FSDKP_RIGHT_EYEBROW_OUTER_CORNER}));
+        
+        face.SetFeature(TrackedFace::LeftEye, GetFeatureHelper(features, {
+          FSDKP_LEFT_EYE_OUTER_CORNER,
+          FSDKP_LEFT_EYE_UPPER_LINE1,
+          FSDKP_LEFT_EYE_UPPER_LINE2,
+          FSDKP_LEFT_EYE_UPPER_LINE3,
+          FSDKP_LEFT_EYE_INNER_CORNER,
+          FSDKP_LEFT_EYE_LOWER_LINE1,
+          FSDKP_LEFT_EYE_LOWER_LINE2,
+          FSDKP_LEFT_EYE_LOWER_LINE3,
+          FSDKP_LEFT_EYE_OUTER_CORNER}));
+        
+        face.SetFeature(TrackedFace::RightEye, GetFeatureHelper(features, {
+          FSDKP_RIGHT_EYE_OUTER_CORNER,
+          FSDKP_RIGHT_EYE_UPPER_LINE1,
+          FSDKP_RIGHT_EYE_UPPER_LINE2,
+          FSDKP_RIGHT_EYE_UPPER_LINE3,
+          FSDKP_RIGHT_EYE_INNER_CORNER,
+          FSDKP_RIGHT_EYE_LOWER_LINE1,
+          FSDKP_RIGHT_EYE_LOWER_LINE2,
+          FSDKP_RIGHT_EYE_LOWER_LINE3,
+          FSDKP_RIGHT_EYE_OUTER_CORNER}));
+        
+        face.SetFeature(TrackedFace::Nose, GetFeatureHelper(features, {
+          FSDKP_NOSE_BRIDGE,
+          FSDKP_NOSE_RIGHT_WING,
+          FSDKP_NOSE_RIGHT_WING_OUTER,
+          FSDKP_NOSE_RIGHT_WING_LOWER,
+          FSDKP_NOSE_BOTTOM,
+          FSDKP_NOSE_LEFT_WING_LOWER,
+          FSDKP_NOSE_LEFT_WING_OUTER,
+          FSDKP_NOSE_LEFT_WING,
+          FSDKP_NOSE_BRIDGE}));
+        
+        face.SetFeature(TrackedFace::UpperLip, GetFeatureHelper(features, {
+          FSDKP_MOUTH_RIGHT_CORNER, // FaceSDK L/R reversed!
+          FSDKP_MOUTH_LEFT_TOP,
+          FSDKP_MOUTH_TOP,
+          FSDKP_MOUTH_RIGHT_TOP,
+          FSDKP_MOUTH_LEFT_CORNER, // FaceSDK L/R reversed!
+          FSDKP_MOUTH_RIGHT_TOP_INNER,
+          FSDKP_MOUTH_TOP_INNER,
+          FSDKP_MOUTH_LEFT_TOP_INNER,
+          FSDKP_MOUTH_RIGHT_CORNER})); // FaceSDK L/R reversed!
+        
+        face.SetFeature(TrackedFace::LowerLip, GetFeatureHelper(features, {
+          FSDKP_MOUTH_RIGHT_CORNER, // FaceSDK L/R reversed!
+          FSDKP_MOUTH_LEFT_BOTTOM,
+          FSDKP_MOUTH_BOTTOM,
+          FSDKP_MOUTH_RIGHT_BOTTOM,
+          FSDKP_MOUTH_LEFT_CORNER, // FaceSDK L/R reversed!
+          FSDKP_MOUTH_RIGHT_BOTTOM_INNER,
+          FSDKP_MOUTH_BOTTOM_INNER,
+          FSDKP_MOUTH_LEFT_BOTTOM_INNER,
+          FSDKP_MOUTH_RIGHT_CORNER})); // FaceSDK L/R reversed!
+        
+        face.SetFeature(TrackedFace::Contour, GetFeatureHelper(features, {
+          FSDKP_FACE_CONTOUR2,
+          FSDKP_FACE_CONTOUR1,
+          FSDKP_CHIN_LEFT,
+          FSDKP_CHIN_BOTTOM,
+          FSDKP_CHIN_RIGHT,
+          FSDKP_FACE_CONTOUR13,
+          FSDKP_FACE_CONTOUR12}));
+      }
+    }
+    
+    // Unload image from FaceSDK
+    FSDK_FreeImage(fsdk_img);
+    
+    return RESULT_OK;
+  }
+  
+  std::list<TrackedFace> FaceTracker::Impl::GetFaces() const
+  {
+    std::list<TrackedFace> retList;
+    for(auto & facePair : _faces) {
+      retList.emplace_back(facePair.second);
+    }
+    return retList;
+  }
+  
+  void FaceTracker::Impl::EnableDisplay(bool enabled)
+  {
+    
+  }
+
+  
+#else
+#  error Unknown FACE_TRACKER_PROVIDER!
+  
+#endif // FACE_TRACKER_PROVIDER type
   
   
 #pragma mark FaceTracker Implementations
@@ -647,14 +877,16 @@ namespace Vision {
   }
  
   //void FaceTracker::GetFaces(std::vector<cv::Rect>& faceRects) const
-  std::vector<TrackedFace> FaceTracker::GetFaces() const
+  std::list<TrackedFace> FaceTracker::GetFaces() const
   {
     return _pImpl->GetFaces();
   }
   
+  /*
   void FaceTracker::EnableDisplay(bool enabled) {
     _pImpl->EnableDisplay(enabled);
   }
+   */
   
 } // namespace Vision
 } // namespace Anki

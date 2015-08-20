@@ -815,7 +815,7 @@ namespace Anki {
             return lastResult;
           }
           
-          VizManager::getInstance()->DrawCameraFace(faceDetection.GetID(), faceDetection,
+          VizManager::getInstance()->DrawCameraFace(faceDetection,
                                                     faceDetection.IsBeingTracked() ?
                                                     NamedColors::GREEN : NamedColors::RED);
 

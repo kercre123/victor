@@ -70,6 +70,10 @@
       '<(faciometric_path)/3rdparty/Eigen3/include',
     ],
     
+    'facesdk_includes': [
+      '<(coretech_external_path)/Luxand_FaceSDK/include/C',
+    ],
+    
     'compiler_flags': [
       '-Wno-deprecated-declarations', # Supressed until system() usage is removed
       '-fdiagnostics-show-category=name',
@@ -565,6 +569,7 @@
         '../../vision/include',
         '<@(opencv_includes)',
         '<@(faciometric_includes)',
+        '<@(facesdk_includes)',
       ],
       'direct_dependent_settings': {
         'include_dirs': [

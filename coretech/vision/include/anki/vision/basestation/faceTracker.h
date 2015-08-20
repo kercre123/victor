@@ -14,56 +14,17 @@
 #define __Anki_Vision_FaceTracker_H__
 
 #include "anki/common/types.h"
-#include "anki/common/basestation/math/point.h"
-#include "anki/common/basestation/math/rect.h"
+#include "anki/vision/basestation/trackedFace.h"
 
-#include <opencv2/core/core.hpp>
+#include <list>
 
-namespace Anki {  
+#define FACE_TRACKER_FACIOMETRIC 0
+#define FACE_TRACKER_FACESDK     1
+
+#define FACE_TRACKER_PROVIDER FACE_TRACKER_FACESDK
+
+namespace Anki {
 namespace Vision {
-  
-  class TrackedFace
-  {
-  public:
-    
-    class Impl;
-    
-    // Constructor:
-    TrackedFace();
-    TrackedFace(const Impl& impl);
-
-    // Copy / move:
-    TrackedFace(const TrackedFace&);
-    TrackedFace(TrackedFace&&);
-
-    // Assignment:
-    TrackedFace& operator=(const TrackedFace&);
-    TrackedFace& operator=(TrackedFace&&);
-
-    ~TrackedFace();
-    
-    float GetScore() const;
-    int   GetID()    const;
-    
-    TimeStamp_t GetTimeStamp() const;
-    
-    // Returns true if tracking is happening vs. false if face was just detected
-    bool  IsBeingTracked() const;
-    
-    const Rectangle<f32>& GetRect() const;
-    
-    // LandmarkPolygons is a vector of polygons, each of which is a vector of
-    // 2D points
-    using LandmarkPolygons = std::vector<std::vector<Point2f> >;
-    LandmarkPolygons GetLandmarkPolygons() const;
-    
-  private:
-    
-    std::unique_ptr<Impl> _pImpl;
-
-  }; // class TrackedFace
-  
-  
   
   class Image;
   
@@ -76,7 +37,7 @@ namespace Vision {
     
     Result Update(const Vision::Image& frameOrig);
     
-    std::vector<TrackedFace> GetFaces() const;
+    std::list<TrackedFace> GetFaces() const;
     
     void EnableDisplay(bool enabled);
     

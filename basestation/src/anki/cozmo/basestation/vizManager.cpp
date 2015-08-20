@@ -278,14 +278,25 @@ namespace Anki {
       return vizID;
     }
     
+    void VizManager::DrawCameraOval(const Point2f &center,
+                                    float xRadius, float yRadius,
+                                    const Anki::ColorRGBA &color)
+    {
+      VizCameraOval v;
+      v.xCen = center.x();
+      v.yCen = center.y();
+      v.xRad = xRadius;
+      v.yRad = yRadius;
+      v.color = u32(color);
+      
+      SendMessage(GET_MESSAGE_ID(VizCameraOval), &v);
+    }
     
-    void VizManager::DrawCameraLine(const u32 lineID,
-                                    const Point2f& start,
+    void VizManager::DrawCameraLine(const Point2f& start,
                                     const Point2f& end,
                                     const ColorRGBA& color)
     {
       VizCameraLine v;
-      v.lineID = lineID;
       v.color  = u32(color);
       v.xStart = start.x();
       v.yStart = start.y();
@@ -295,38 +306,23 @@ namespace Anki {
       SendMessage( GET_MESSAGE_ID(VizCameraLine), &v );
     }
     
-    VizManager::Handle_t VizManager::DrawCameraFace(const u32 faceID,
-                                                    const Vision::TrackedFace& face,
-                                                    const ColorRGBA& color)
+    void VizManager::DrawCameraFace(const Vision::TrackedFace& face,
+                                    const ColorRGBA& color)
     {
-      if(faceID >= _VizObjectMaxID[VIZ_OBJECT_CAMERA_FACE]) {
-        PRINT_NAMED_ERROR("VizManager.DrawCameraFace.IDtooLarge",
-                          "Specified face ID=%d larger than maxID=%d\n",
-                          faceID, _VizObjectMaxID[VIZ_OBJECT_CAMERA_FACE]);
-        return INVALID_HANDLE;
-      }
+      // Draw eyes
+      DrawCameraOval(face.GetLeftEyeCenter(), 1, 1, color);
+      DrawCameraOval(face.GetRightEyeCenter(), 1, 1, color);
       
-      Vision::TrackedFace::LandmarkPolygons landmarks = face.GetLandmarkPolygons();
-      
-      if(landmarks.empty()) {
-        PRINT_NAMED_ERROR("VizManager.DrawCameraFace.EmptyLandmarks", "");
-        return INVALID_HANDLE;
-      }
-      
-      const u32 vizID = VizObjectBaseID[VIZ_OBJECT_CAMERA_FACE] + faceID;
-      
-      for(auto & poly : landmarks)
+      // Draw features
+      for(s32 iFeature=0; iFeature<(s32)Vision::TrackedFace::NumFeatures; ++iFeature)
       {
-        if(poly.empty()) {
-          PRINT_NAMED_WARNING("VizManager.DrawCameraFace.EmptyPoly",
-                              "Skipping empty polygon in landmarks.");
-        }
-        for(size_t crntPoint=0, nextPoint=1; nextPoint < poly.size(); ++crntPoint, ++nextPoint) {
-          DrawCameraLine(vizID, poly[crntPoint], poly[nextPoint], color);
+        Vision::TrackedFace::FeatureName featureName = (Vision::TrackedFace::FeatureName)iFeature;
+        const Vision::TrackedFace::Feature& feature = face.GetFeature(featureName);
+        
+        for(size_t crntPoint=0, nextPoint=1; nextPoint < feature.size(); ++crntPoint, ++nextPoint) {
+          DrawCameraLine(feature[crntPoint], feature[nextPoint], color);
         }
       }
-      
-      return vizID;
     }
     
     void VizManager::EraseRobot(const u32 robotID)

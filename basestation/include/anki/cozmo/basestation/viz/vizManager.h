@@ -116,10 +116,8 @@ namespace Anki {
                              const Pose3d& pose,
                              const ColorRGBA& color = NamedColors::DEFAULT);
       
-      // Draw camera landmarks (one polygone per group, closed or not)
-      Handle_t DrawCameraFace(const u32 faceID,
-                              const Vision::TrackedFace& face,
-                              const ColorRGBA& color);
+      void DrawCameraFace(const Vision::TrackedFace& face,
+                          const ColorRGBA& color);
       
       //void DrawRamp();
       
@@ -201,14 +199,17 @@ namespace Anki {
       
       // Draw a generic 2D quad in the camera display
       template<typename T>
-      void DrawCameraQuad(const u32 quadID,
-                          const Quadrilateral<2,T>& quad,
+      void DrawCameraQuad(const Quadrilateral<2,T>& quad,
                           const ColorRGBA& color);
       
       // Draw a line segment in the camera display
-      void DrawCameraLine(const u32 lineID,
-                          const Point2f& start,
+      void DrawCameraLine(const Point2f& start,
                           const Point2f& end,
+                          const ColorRGBA& color);
+      
+      // Draw an oval in the camera display
+      void DrawCameraOval(const Point2f& center,
+                          float xRadius, float yRadius,
                           const ColorRGBA& color);
       
       template<typename T>
@@ -463,13 +464,11 @@ namespace Anki {
     }
     
     template<typename T>
-    void VizManager::DrawCameraQuad(const u32 quadID,
-                                    const Quadrilateral<2,T>& quad,
+    void VizManager::DrawCameraQuad(const Quadrilateral<2,T>& quad,
                                     const ColorRGBA& color)
     {
       using namespace Quad;
       VizCameraQuad v;
-      v.quadID = quadID;
       
       v.xUpperLeft  = static_cast<f32>(quad[TopLeft].x());
       v.yUpperLeft  = static_cast<f32>(quad[TopLeft].y());
