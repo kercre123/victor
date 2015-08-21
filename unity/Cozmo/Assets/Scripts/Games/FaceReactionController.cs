@@ -216,6 +216,9 @@ public class FaceReactionController : GameController {
   }
 
   private void Update_ALIGN_TO_FACE() {
+    if (playStateTimer > 3.0f) {
+      nextState = FaceReactionState.SEARCH_FOR_FACE;
+    }
     if (!alignToFaceWaiting) {
       nextState = FaceReactionState.MOVE_TOWARD_FACE;
     }
