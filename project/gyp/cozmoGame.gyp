@@ -68,7 +68,7 @@
       '<(faciometric_path)/lib/libintraface_emo126.dylib',
       '<(faciometric_path)/lib/libintraface_gaze126.dylib',
     ],
-
+    
     'compiler_flags': [
       '-Wdeprecated-declarations',
       '-fdiagnostics-show-category=name',
@@ -120,7 +120,28 @@
 
     # Copy overridden vars into this scope
     'arch_group%': '<(arch_group)',
+    
     'conditions': [
+      # Luxand FaceSDK libraries, depending on platform:
+      ['OS=="mac"', {
+        'facesdk_libs': [
+          '<(coretech_external_path)/Luxand_FaceSDK/bin/osx_x86_64/libfsdk.dylib',
+        ],
+      }],
+      ['OS=="ios"', {
+        'facesdk_libs': [
+        # TODO: handle different architectures
+        '<(coretech_external_path)/Luxand_FaceSDK/bin/iOS/libfsdk-static_64.a',
+        ],
+      }],
+      ['OS=="android"', {
+        'facesdk_libs': [
+        # TODO: handle different architectures
+        '<(coretech_external_path)/Luxand_FaceSDK/bin/Android/armeabi-v7a/libfsdk.so',
+        '<(coretech_external_path)/Luxand_FaceSDK/bin/Android/armeabi-v7a/libstlport_shared.so',
+        ],
+      }],
+      
       ['OS=="ios" and arch_group=="universal"', {
         'target_archs%': ['armv7', 'arm64'],
       }],
@@ -400,6 +421,7 @@
               '<(webots_path)/lib/libCppController.dylib',
               '<@(opencv_libs)',
               '<@(faciometric_libs)', # NOTE: Expected to be in "lib" subdir
+              '<@(facesdk_libs)',     # NOTE: Expected to be in the executable dir
             ],
           }, # end controller Game Engine
 
@@ -498,6 +520,22 @@
                   '-f',
                   '<(faciometric_path)/lib',
                   '../../simulator/controllers/webotsCtrlGameEngine/lib',
+                ],
+              },
+              {
+                # The FaceSDK dynamic libs are expected to be in the
+                # subdirectory with the executable, so make a symlink
+                # to their location in the same directory where we put the
+                # game engine controller
+                'action_name': 'create_symlink_webotsCtrlGameEngine_facesdkLibs',
+                'inputs': [ ],
+                'outputs': [ ],
+                'action': [
+                  'ln',
+                  '-s',
+                  '-f',
+                  '<(facesdk_libs)',
+                  '../../simulator/controllers/webotsCtrlGameEngine/',
                 ],
               },
               {
