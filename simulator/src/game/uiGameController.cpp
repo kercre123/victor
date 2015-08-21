@@ -34,6 +34,8 @@ namespace Anki {
         Pose3d _robotPose;
         Pose3d _robotPoseActual;
         
+        ExternalInterface::RobotState _robotStateMsg;
+        
         UiGameController::ObservedObject _currentlyObservedObject;
         
         webots::Node* _root = nullptr;
@@ -60,6 +62,8 @@ namespace Anki {
     {
       _robotPose.SetTranslation({msg.pose_x, msg.pose_y, msg.pose_z});
       _robotPose.SetRotation(msg.headAngle_rad, Z_AXIS_3D());
+      
+      _robotStateMsg = msg;
       
       HandleRobotStateUpdate(msg);
     }
@@ -1069,30 +1073,61 @@ namespace Anki {
       exit(status);
     }
     
-    s32 UiGameController::GetStepTimeMS()
+    s32 UiGameController::GetStepTimeMS() const
     {
       return _stepTimeMS;
     }
     
-    webots::Supervisor* UiGameController::GetSupervisor()
+    webots::Supervisor* UiGameController::GetSupervisor() const
     {
       return &_supervisor;
     }
     
-    const Pose3d& UiGameController::GetRobotPose()
+    const Pose3d& UiGameController::GetRobotPose() const
     {
       return _robotPose;
     }
     
-    const Pose3d& UiGameController::GetRobotPoseActual()
+    const Pose3d& UiGameController::GetRobotPoseActual() const
     {
       return _robotPoseActual;
     }
     
-    const UiGameController::ObservedObject& UiGameController::GetCurrentlyObservedObject()
+    f32 UiGameController::GetRobotHeadAngle_rad() const
+    {
+      return _robotStateMsg.headAngle_rad;
+    }
+    
+    f32 UiGameController::GetLiftHeight_mm() const
+    {
+      return _robotStateMsg.liftHeight_mm;
+    }
+    
+    void UiGameController::GetWheelSpeeds_mmps(f32& left, f32& right) const
+    {
+      left = _robotStateMsg.leftWheelSpeed_mmps;
+      right = _robotStateMsg.rightWheelSpeed_mmps;
+    }
+    
+    u32 UiGameController::GetCarryingObjectID() const
+    {
+      return _robotStateMsg.carryingObjectID;
+    }
+    
+    u32 UiGameController::GetCarryingObjectOnTopID() const
+    {
+      return _robotStateMsg.carryingObjectOnTopID;
+    }
+    
+    const UiGameController::ObservedObject& UiGameController::GetCurrentlyObservedObject() const
     {
       return _currentlyObservedObject;
     }
-
+    
+    bool UiGameController::IsRobotStatus(RobotStatusFlag mask) const
+    {
+      return _robotStateMsg.status & mask;
+    }
+    
   } // namespace Cozmo
 } // namespace Anki

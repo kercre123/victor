@@ -132,16 +132,23 @@ protected:
   void SendCancelAction();
   
 
-  // Accessors
-  s32 GetStepTimeMS();
-  webots::Supervisor* GetSupervisor();
-  
-  const Pose3d& GetRobotPose();
-  const Pose3d& GetRobotPoseActual();
+  // ====== Accessors =====
+  s32 GetStepTimeMS() const;
+  webots::Supervisor* GetSupervisor() const;
 
-  const ObservedObject& GetCurrentlyObservedObject();
-
+  // Robot state message convenience functions
+  const Pose3d& GetRobotPose() const;
+  const Pose3d& GetRobotPoseActual() const;
+  f32           GetRobotHeadAngle_rad() const;
+  f32           GetLiftHeight_mm() const;
+  void          GetWheelSpeeds_mmps(f32& left, f32& right) const;
+  u32           GetCarryingObjectID() const;
+  u32           GetCarryingObjectOnTopID() const;
+  bool          IsRobotStatus(RobotStatusFlag mask) const;
   
+  const ObservedObject& GetCurrentlyObservedObject() const;
+
+
 private:
   void HandleRobotStateUpdateBase(ExternalInterface::RobotState const& msg);
   void HandleRobotObservedObjectBase(ExternalInterface::RobotObservedObject const& msg);
