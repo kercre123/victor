@@ -10,8 +10,8 @@
  *
  **/
 
-#ifndef __Basestation_Behaviors_BehaviorLookAround_H__
-#define __Basestation_Behaviors_BehaviorLookAround_H__
+#ifndef __Cozmo_Basestation_Behaviors_BehaviorLookAround_H__
+#define __Cozmo_Basestation_Behaviors_BehaviorLookAround_H__
 
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include <vector>
@@ -41,10 +41,10 @@ public:
   
 private:
   enum class State {
-    INACTIVE,
-    START_LOOKING,
-    LOOKING_FOR_OBJECT,
-    EXAMINE_FOUND_OBJECT
+    Inactive,
+    StartLooking,
+    LookingForObject,
+    ExamineFoundObject
   };
   
   // Constant that decides how long to wait before we trying to look around again (among other factors)
@@ -62,4 +62,4 @@ private:
 } // namespace Cozmo
 } // namespace Anki
 
-#endif // __Basestation_Behaviors_BehaviorLookAround_H__
+#endif // __Cozmo_Basestation_Behaviors_BehaviorLookAround_H__

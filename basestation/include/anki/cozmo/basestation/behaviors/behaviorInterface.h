@@ -9,14 +9,21 @@
  * Copyright: Anki, Inc. 2015
  **/
 
-#ifndef COZMO_BEHAVIOR_INTERFACE_H
-#define COZMO_BEHAVIOR_INTERFACE_H
+#ifndef __Cozmo_Basestation_Behaviors_BehaviorInterface_H__
+#define __Cozmo_Basestation_Behaviors_BehaviorInterface_H__
 
 #include "anki/cozmo/basestation/actionContainers.h"
 
 #include "util/random/randomGenerator.h"
 
 #include "json/json.h"
+
+// This macro uses PRINT_NAMED_INFO if the supplied define (first arg) evaluates to true, and PRINT_NAMED_DEBUG otherwise
+// All args following the first are passed directly to the chosen print macro
+#define BEHAVIOR_VERBOSE_PRINT(_BEHAVIORDEF, ...) do { \
+  if ((_BEHAVIORDEF)) { PRINT_NAMED_INFO( __VA_ARGS__ ); } \
+  else { PRINT_NAMED_DEBUG( __VA_ARGS__ ); } \
+  } while(0) \
 
 namespace Anki {
 namespace Cozmo {
@@ -30,9 +37,9 @@ namespace Cozmo {
   {
   public:
     enum class Status {
-      FAILURE,
-      RUNNING,
-      COMPLETE
+      Failure,
+      Running,
+      Complete
     };
     
     IBehavior(Robot& robot, const Json::Value& config);
@@ -91,4 +98,4 @@ namespace Cozmo {
 } // namespace Cozmo
 } // namespace Anki
 
-#endif // COZMO_BEHAVIOR_INTERFACE_H
+#endif // __Cozmo_Basestation_Behaviors_BehaviorInterface_H__

@@ -84,14 +84,14 @@ namespace Cozmo {
       case State::INTERRUPTED:
         // This is the only way we stop this behavior: unsubscribe to all signals.
         _eventHandles.clear();
-        return Status::COMPLETE;
+        return Status::Complete;
         
       default:
         
-        return Status::FAILURE;
+        return Status::Failure;
     } // switch(_currentState)
     
-    return Status::RUNNING;
+    return Status::Running;
   } // Update()
   
   Result BehaviorLookForFaces::Interrupt(float currentTime_sec)

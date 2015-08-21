@@ -10,12 +10,12 @@
  * Copyright: Anki, Inc. 2015
  **/
 
-#ifndef COZMO_BEHAVIOR_LOOK_FOR_FACES_H
-#define COZMO_BEHAVIOR_LOOK_FOR_FACES_H
+#ifndef __Cozmo_Basestation_Behaviors_BehaviorLookForFaces_H__
+#define __Cozmo_Basestation_Behaviors_BehaviorLookForFaces_H__
 
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "util/signals/simpleSignal_fwd.h"
-#include "messageEngineToGame.h"
+#include "clad/externalInterface/messageEngineToGame.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -71,4 +71,4 @@ namespace Cozmo {
 } // namespace Cozmo
 } // namespace Anki
 
-#endif // COZMO_BEHAVIOR_LOOK_FOR_FACES_H
+#endif // __Cozmo_Basestation_Behaviors_BehaviorLookForFaces_H__

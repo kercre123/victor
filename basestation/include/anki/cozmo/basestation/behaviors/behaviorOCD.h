@@ -9,8 +9,8 @@
  * Copyright: Anki, Inc. 2015
  **/
 
-#ifndef COZMO_BEHAVIOR_OCD_H
-#define COZMO_BEHAVIOR_OCD_H
+#ifndef __Cozmo_Basestation_Behaviors_BehaviorOCD_H__
+#define __Cozmo_Basestation_Behaviors_BehaviorOCD_H__
 
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/common/basestation/objectTypesAndIDs.h"
@@ -18,7 +18,7 @@
 
 #include "util/signals/simpleSignal_fwd.h"
 
-#include "messageEngineToGame.h"
+#include "clad/externalInterface/messageEngineToGame.h"
 
 #include <set>
 
@@ -74,8 +74,8 @@ namespace Cozmo {
     // Internally, this behavior is just a little state machine going back and
     // forth between picking up and placing blocks
     enum class State {
-      PICKING_UP_BLOCK,
-      PLACING_BLOCK
+      PickingUpBlock,
+      PlacingBlock
     };
     
     State _currentState;
@@ -86,9 +86,9 @@ namespace Cozmo {
     
     // Enumerate possible arrangements Cozmo "likes".
     enum class Arrangement {
-      STACKS_OF_TWO = 0,
-      LINE,
-      NUM_ARRANGEMENTS
+      StacksOfTwo = 0,
+      Line,
+      NumArrangements
     };
     
     Arrangement _currentArrangement;
@@ -100,26 +100,9 @@ namespace Cozmo {
     
     void UpdateName();
     
-    /*
-     Not sure this is needed anymore, now that we're using events and
-     the current action should basically hold this state 
-     
-    // A placement can be on the ground or on another object:
-    struct NextPlacement {
-      NextPlacement() {}
-      ~NextPlacement() {}
-      bool placeOnObject;
-      union {
-        Pose3d   atPose;
-        ObjectID whichObject;
-      };
-    };
-    
-    NextPlacement _nextPlacement;
-    */
   }; // class BehaviorOCD
 
 } // namespace Cozmo
 } // namespace Anki
 
-#endif // COZMO_BEHAVIOR_OCD_H
+#endif // __Cozmo_Basestation_Behaviors_BehaviorOCD_H__

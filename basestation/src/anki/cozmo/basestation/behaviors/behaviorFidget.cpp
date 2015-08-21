@@ -81,7 +81,7 @@ namespace Cozmo {
   {
     if(_interrupted) {
       // TODO: Do we need to cancel the last commanded fidget action?
-      return Status::COMPLETE;
+      return Status::Complete;
     }
     
     if(currentTime_sec > _lastFidgetTime_sec + _nextFidgetWait_sec) {
@@ -118,7 +118,7 @@ namespace Cozmo {
 #     endif
     }
     
-    return Status::RUNNING;
+    return Status::Running;
   } // Update()
   
   Result BehaviorFidget::Interrupt(float currentTime_sec)

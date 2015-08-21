@@ -17,7 +17,7 @@
 #include "json/json.h"
 
 // TODO: This needs to be switched to some kind of _internal_ signals definition
-#include "messageEngineToGame.h"
+#include "clad/externalInterface/messageEngineToGame.h"
 
 #include <array>
 

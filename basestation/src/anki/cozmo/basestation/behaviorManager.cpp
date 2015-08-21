@@ -24,7 +24,7 @@
 #include "util/logging/logging.h"
 #include "util/helpers/templateHelpers.h"
 
-#define DEBUG_BEHAVIOR_MGR 1
+#define DEBUG_BEHAVIOR_MGR 0
 
 namespace Anki {
 namespace Cozmo {
@@ -42,9 +42,7 @@ namespace Cozmo {
   
   Result BehaviorManager::Init(const Json::Value &config)
   {
-#   if DEBUG_BEHAVIOR_MGR
-    PRINT_NAMED_INFO("BehaviorManager.Init.Initializing", "");
-#   endif
+    BEHAVIOR_VERBOSE_PRINT(DEBUG_BEHAVIOR_MGR, "BehaviorManager.Init.Initializing", "");
     
     // TODO: Set configuration data from Json...
     
@@ -98,11 +96,9 @@ namespace Cozmo {
       {
         nextName = _nextBehavior->GetName();
       }
-#     if DEBUG_BEHAVIOR_MGR
-      PRINT_NAMED_WARNING("BehaviorManager.Update.SelectedNext",
+      BEHAVIOR_VERBOSE_PRINT(DEBUG_BEHAVIOR_MGR, "BehaviorManager.Update.SelectedNext",
                           "Selected next behavior '%s' at t=%.1f, last was t=%.1f",
                           nextName.c_str(), currentTime_sec, _lastSwitchTime_sec);
-#     endif
       
       _lastSwitchTime_sec = currentTime_sec;
     }
@@ -113,18 +109,18 @@ namespace Cozmo {
      
       switch(status)
       {
-        case IBehavior::Status::RUNNING:
+        case IBehavior::Status::Running:
           // Nothing to do! Just keep on truckin'....
           _currentBehavior->SetIsRunning(true);
           break;
           
-        case IBehavior::Status::COMPLETE:
+        case IBehavior::Status::Complete:
           // Behavior complete, switch to next
           _currentBehavior->SetIsRunning(false);
           SwitchToNextBehavior();
           break;
           
-        case IBehavior::Status::FAILURE:
+        case IBehavior::Status::Failure:
           PRINT_NAMED_ERROR("BehaviorManager.Update.FailedUpdate",
                             "Behavior '%s' failed to Update().",
                             _currentBehavior->GetName().c_str());
@@ -173,13 +169,11 @@ namespace Cozmo {
         // to the selected next behavior
         initResult = _currentBehavior->Interrupt(currentTime_sec);
         
-#       if DEBUG_BEHAVIOR_MGR
         if (nullptr != _nextBehavior)
         {
-          PRINT_NAMED_INFO("BehaviorManger.InitNextBehaviorHelper.Selected",
+          BEHAVIOR_VERBOSE_PRINT(DEBUG_BEHAVIOR_MGR, "BehaviorManger.InitNextBehaviorHelper.Selected",
                            "Selected %s to run next.", _nextBehavior->GetName().c_str());
         }
-#       endif
       }
     }
     return initResult;

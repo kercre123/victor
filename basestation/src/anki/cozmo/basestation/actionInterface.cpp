@@ -15,7 +15,7 @@
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
-#include "messageEngineToGame.h"
+#include "clad/externalInterface/messageEngineToGame.h"
 
 namespace Anki {
   

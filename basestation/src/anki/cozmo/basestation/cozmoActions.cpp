@@ -23,7 +23,7 @@
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "util/random/randomGenerator.h"
-#include "messageEngineToGame.h"
+#include "clad/externalInterface/messageEngineToGame.h"
 #include <iomanip>
 
 namespace Anki {

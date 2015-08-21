@@ -10,8 +10,8 @@
  * Copyright: Anki, Inc. 2015
  **/
 
-#ifndef COZMO_BEHAVIOR_FIDGET_H
-#define COZMO_BEHAVIOR_FIDGET_H
+#ifndef __Cozmo_Basestation_Behaviors_BehaviorFidget_H__
+#define __Cozmo_Basestation_Behaviors_BehaviorFidget_H__
 
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 
@@ -39,15 +39,15 @@ namespace Cozmo {
   private:
     
     enum class FidgetType {
-      HEAD_TWITCH = 0,
-      LIFT_WIGGLE,
-      LIFT_TAP,
-      TURN_IN_PLACE,
-      YAWN,
-      SNEEZE,
-      STRETCH,
+      HeadTwitch = 0,
+      LiftWiggle,
+      LiftTap,
+      TurnInPlace,
+      Yawn,
+      Sneeze,
+      Stretch,
       
-      NUM_FIDGETS
+      NumFidgets
     };
     
     using MakeFidgetAction = std::function<IActionRunner*()>;
@@ -71,4 +71,4 @@ namespace Cozmo {
 } // namespace Cozmo
 } // namespace Anki
 
-#endif // COZMO_BEHAVIOR_FIDGET_H
+#endif // __Cozmo_Basestation_Behaviors_BehaviorFidget_H__

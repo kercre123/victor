@@ -27,7 +27,7 @@ const float BehaviorLookAround::kDegreesRotatePerSec = 25.0f;
 
 BehaviorLookAround::BehaviorLookAround(Robot& robot, const Json::Value& config)
   : IBehavior(robot, config)
-  , _currentState(State::INACTIVE)
+  , _currentState(State::Inactive)
   , _lastLookAroundTime(0.f)
 {
   _name = "LookAround";
@@ -37,7 +37,7 @@ bool BehaviorLookAround::IsRunnable(float currentTime_sec) const
 {
   switch (_currentState)
   {
-    case State::INACTIVE:
+    case State::Inactive:
     {
       if (_lastLookAroundTime + kLookAroundCooldownDuration < currentTime_sec)
       {
@@ -45,9 +45,9 @@ bool BehaviorLookAround::IsRunnable(float currentTime_sec) const
       }
       break;
     }
-    case State::START_LOOKING:
-    case State::LOOKING_FOR_OBJECT:
-    case State::EXAMINE_FOUND_OBJECT:
+    case State::StartLooking:
+    case State::LookingForObject:
+    case State::ExamineFoundObject:
     {
       return true;
     }
@@ -62,7 +62,7 @@ bool BehaviorLookAround::IsRunnable(float currentTime_sec) const
 
 Result BehaviorLookAround::Init()
 {
-  _currentState = State::START_LOOKING;
+  _currentState = State::StartLooking;
   return Result::RESULT_OK;
 }
 
@@ -72,19 +72,19 @@ IBehavior::Status BehaviorLookAround::Update(float currentTime_sec)
   
   switch (_currentState)
   {
-    case State::INACTIVE:
+    case State::Inactive:
     {
       break;
     }
-    case State::START_LOOKING:
+    case State::StartLooking:
     {
       _totalRotation = 0;
       lastHeading = _robot.GetPose().GetRotationAngle<'Z'>();
       _robot.TurnInPlaceAtSpeed(DEG_TO_RAD(kDegreesRotatePerSec), DEG_TO_RAD(1440));
-      _currentState = State::LOOKING_FOR_OBJECT;
+      _currentState = State::LookingForObject;
     }
     // NOTE INTENTIONAL FALLTHROUGH
-    case State::LOOKING_FOR_OBJECT:
+    case State::LookingForObject:
     {
       Radians newHeading = _robot.GetPose().GetRotationAngle<'Z'>();
       _totalRotation += fabsf((newHeading - lastHeading).getDegrees());
@@ -96,11 +96,11 @@ IBehavior::Status BehaviorLookAround::Update(float currentTime_sec)
         break;
       }
       
-      return Status::RUNNING;
+      return Status::Running;
     }
-    case State::EXAMINE_FOUND_OBJECT:
+    case State::ExamineFoundObject:
     {
-      return Status::RUNNING;
+      return Status::Running;
     }
     default:
     {
@@ -109,7 +109,7 @@ IBehavior::Status BehaviorLookAround::Update(float currentTime_sec)
     }
   }
   
-  return Status::COMPLETE;
+  return Status::Complete;
 }
 
 Result BehaviorLookAround::Interrupt(float currentTime_sec)
@@ -121,7 +121,7 @@ Result BehaviorLookAround::Interrupt(float currentTime_sec)
 void BehaviorLookAround::ResetBehavior(float currentTime_sec)
 {
   _lastLookAroundTime = currentTime_sec;
-  _currentState = State::INACTIVE;
+  _currentState = State::Inactive;
   _robot.StopAllMotors();
 }
 
