@@ -146,6 +146,20 @@ protected:
   u32           GetCarryingObjectOnTopID() const;
   bool          IsRobotStatus(RobotStatusFlag mask) const;
   
+  std::vector<s32> GetAllObjectIDs() const;
+  std::vector<s32> GetAllObjectIDsByFamily(u32 family) const;
+  std::vector<s32> GetAllObjectIDsByFamilyAndType(u32 family, u32 type) const;
+  Result           GetObjectFamily(s32 objectID, u32& family) const;
+  Result           GetObjectType(s32 objectID, u32& type) const;
+  Result           GetObjectPose(s32 objectID, Pose3d& pose) const;
+  
+  u32              GetNumObjectsInFamily(u32 family) const;
+  u32              GetNumObjectsInFamilyAndType(u32 family, u32 type) const;
+  u32              GetNumObjects() const;
+  void             ClearAllKnownObjects();
+  
+  const std::map<s32, Pose3d>& GetObjectPoseMap();
+  
   const ObservedObject& GetCurrentlyObservedObject() const;
 
 
