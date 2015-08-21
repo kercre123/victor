@@ -23,7 +23,7 @@ namespace Cozmo {
   
 // Time to wait before looking around again in seconds
 const float BehaviorLookAround::kLookAroundCooldownDuration = 20.0f;
-const float BehaviorLookAround::kDegreesRotatePerSec = 22.5f;
+const float BehaviorLookAround::kDegreesRotatePerSec = 25.0f;
 
 BehaviorLookAround::BehaviorLookAround(Robot& robot, const Json::Value& config)
   : IBehavior(robot, config)
@@ -68,7 +68,7 @@ Result BehaviorLookAround::Init()
 
 IBehavior::Status BehaviorLookAround::Update(float currentTime_sec)
 {
-  static Radians lastHeading = _robot.GetPose().GetRotationAngle<'Z'>();
+  static Radians lastHeading;
   
   switch (_currentState)
   {
@@ -79,6 +79,7 @@ IBehavior::Status BehaviorLookAround::Update(float currentTime_sec)
     case State::START_LOOKING:
     {
       _totalRotation = 0;
+      lastHeading = _robot.GetPose().GetRotationAngle<'Z'>();
       _robot.TurnInPlaceAtSpeed(DEG_TO_RAD(kDegreesRotatePerSec), DEG_TO_RAD(1440));
       _currentState = State::LOOKING_FOR_OBJECT;
     }
@@ -86,7 +87,7 @@ IBehavior::Status BehaviorLookAround::Update(float currentTime_sec)
     case State::LOOKING_FOR_OBJECT:
     {
       Radians newHeading = _robot.GetPose().GetRotationAngle<'Z'>();
-      _totalRotation += (newHeading - lastHeading).getDegrees();
+      _totalRotation += fabsf((newHeading - lastHeading).getDegrees());
       lastHeading = newHeading;
       
       if (_totalRotation > 360.f)
@@ -121,7 +122,7 @@ void BehaviorLookAround::ResetBehavior(float currentTime_sec)
 {
   _lastLookAroundTime = currentTime_sec;
   _currentState = State::INACTIVE;
-  _robot.TurnInPlaceAtSpeed(DEG_TO_RAD(0), DEG_TO_RAD(1440));
+  _robot.StopAllMotors();
 }
 
 bool BehaviorLookAround::GetRewardBid(Reward& reward)
