@@ -5,6 +5,7 @@
     'game_library_type': 'static_library',
     'ctrlGameEngine_source': 'ctrlGameEngine.lst',
     'ctrlKeyboard_source': 'ctrlKeyboard.lst',
+    'ctrlBuildServerTest_source': 'ctrlBuildServerTest.lst',    
     'csharp_source': 'csharp.lst',
     'buildMex': '<(build-mex)',
     
@@ -431,6 +432,7 @@
             'include_dirs': [
               '<@(webots_includes)',
               '<@(opencv_includes)',
+              '<(cti-cozmo_engine_path)/simulator/include'
             ],
             'dependencies': [
               'cozmoGame',
@@ -449,10 +451,36 @@
           }, # end controller Keyboard
 
           {
+            'target_name': 'webotsCtrlBuildServerTest',
+            'type': 'executable',
+            'include_dirs': [
+              '<@(webots_includes)',
+              '<@(opencv_includes)',
+              '<(cti-cozmo_engine_path)/simulator/include'
+            ],
+            'dependencies': [
+              'cozmoGame',
+              '<(cg-ce_gyp_path):cozmoEngine',
+              '<(cg-util_gyp_path):util',
+              '<(cg-cti_gyp_path):ctiCommon',
+              '<(cg-cti_gyp_path):ctiVision',
+              '<(cg-cti_gyp_path):ctiMessaging',
+              '<(cg-cti_gyp_path):ctiPlanning',
+            ],
+            'sources': [ '<!@(cat <(ctrlBuildServerTest_source))' ],
+            'libraries': [
+              '<(webots_path)/lib/libCppController.dylib',
+              '<@(opencv_libs)',
+            ],
+          }, # end controller Keyboard
+
+
+          {
             'target_name': 'webotsControllers',
             'type': 'none',
             'dependencies': [
               'webotsCtrlKeyboard',
+              'webotsCtrlBuildServerTest',              
               'webotsCtrlGameEngine',
               '<(cg-ce_gyp_path):webotsCtrlRobot',
               '<(cg-ce_gyp_path):webotsCtrlViz',
@@ -490,6 +518,22 @@
                   '<@(_outputs)',
                 ],
               },
+              {
+                'action_name': 'create_symlink_webotsCtrlBuildServerTest',
+                'inputs': [
+                  '<(PRODUCT_DIR)/webotsCtrlBuildServerTest',
+                ],
+                'outputs': [
+                  '../../simulator/controllers/webotsCtrlBuildServerTest/webotsCtrlBuildServerTest',
+                ],
+                'action': [
+                  'ln',
+                  '-s',
+                  '-f',
+                  '<@(_inputs)',
+                  '<@(_outputs)',
+                ],
+              },              
               {
                 'action_name': 'create_symlink_webotsCtrlGameEngine',
                 'inputs': [
@@ -562,6 +606,23 @@
                 ],
                 'outputs': [
                   '../../simulator/controllers/webotsCtrlGameEngine/resources/config',
+                ],
+                'action': [
+                  'ln',
+                  '-s',
+                  '-f',
+                  '-h',
+                  '<@(_inputs)',
+                  '<@(_outputs)',
+                ],
+              },
+              {
+                'action_name': 'create_symlink_resources_test',
+                'inputs': [
+                  '<(cozmo_engine_path)/resources/test',
+                ],
+                'outputs': [
+                  '../../simulator/controllers/webotsCtrlGameEngine/resources/test',
                 ],
                 'action': [
                   'ln',

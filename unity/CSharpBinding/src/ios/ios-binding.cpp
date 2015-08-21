@@ -9,7 +9,7 @@
 #include "ios-binding.h"
 #include "../csharp-binding.h"
 #include "dataPlatformCreator.h"
-#include "anki/cozmo/game/cozmoGame.h"
+#include "anki/cozmo/cozmoAPI.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "util/helpers/templateHelpers.h"
@@ -25,7 +25,7 @@ using namespace Anki;
 using namespace Anki::Cozmo;
 using namespace Anki::Cozmo::CSharpBinding;
 
-CozmoGame* game = nullptr;
+CozmoAPI* gameAPI = nullptr;
 Anki::Cozmo::Data::DataPlatform* dataPlatform = nullptr;
 
 const char* ROBOT_ADVERTISING_HOST_IP = "127.0.0.1";
@@ -82,7 +82,7 @@ int Anki::Cozmo::CSharpBinding::cozmo_game_create(const char* configuration_data
   
     using namespace Cozmo;
   
-    if (game != nullptr) {
+    if (gameAPI != nullptr) {
         PRINT_STREAM_ERROR("Anki.Cozmo.CSharpBinding.cozmo_game_create", "Game already initialized.");
         return (int)RESULT_FAIL;
     }
@@ -101,24 +101,24 @@ int Anki::Cozmo::CSharpBinding::cozmo_game_create(const char* configuration_data
   
     configure_game(config);
   
-    CozmoGame* created_game = new CozmoGame(dataPlatform);
+    CozmoAPI* created_game = new CozmoAPI();
   
-    Result result = created_game->Init(config);
+    Result result = created_game->StartRun(dataPlatform, config);
     if (result != RESULT_OK) {
       delete created_game;
       return (int)result;
     }
     
-    game = created_game;
+    gameAPI = created_game;
   
     return RESULT_OK;
 }
 
 int Anki::Cozmo::CSharpBinding::cozmo_game_destroy()
 {
-    if (game != nullptr) {
-        delete game;
-        game = nullptr;
+    if (gameAPI != nullptr) {
+        delete gameAPI;
+        gameAPI = nullptr;
     }
   Anki::Util::SafeDelete(Anki::Util::gLoggerProvider);
   Anki::Util::SafeDelete(dataPlatform);
@@ -127,10 +127,6 @@ int Anki::Cozmo::CSharpBinding::cozmo_game_destroy()
 
 int Anki::Cozmo::CSharpBinding::cozmo_game_update(float current_time)
 {
-    if (game == nullptr) {
-        PRINT_STREAM_ERROR("Anki.Cozmo.CSharpBinding.cozmo_game_update", "Game not initialized.");
-        return (int)RESULT_FAIL;
-    }
-    game->Update(current_time);
-    return RESULT_OK;
+  // This does not need to happen anymore
+  return RESULT_OK;
 }

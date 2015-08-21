@@ -48,6 +48,7 @@ public class SpinWheel : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
     public float lastTime = 0f;
     public float lastAngle = 0f;
     public float degToPegEnd = 0f;
+    public int lastPegTouched = 0;
 
     public float sliceCenterAngle { get { return sliceIndex * spinWheel.sliceArc + spinWheel.sliceArc * 0.5f; } }
 
@@ -74,6 +75,7 @@ public class SpinWheel : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
       angularVel = data.angularVel;
       lastTime = data.lastTime;
       lastAngle = data.lastAngle;
+      lastPegTouched = data.lastPegTouched;
       degToPegEnd = data.degToPegEnd;
       sliceIndex = data.sliceIndex;
       pegTouching = data.pegTouching;
@@ -165,6 +167,10 @@ public class SpinWheel : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
   public int PredictedNextNumber { get; private set; }
 
   public int PredictedPreviousNumber { get; private set; }
+
+  public float PredictedNextNumberWeight { get; private set; }
+
+  public float PredictedPreviousNumberWeight { get; private set; }
 
   public float TotalDuration { get; private set; }
 
@@ -383,6 +389,28 @@ public class SpinWheel : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
     state = SpinWheelState.SPINNING;
 
     Debug.Log("SpinStart PredictedNumber(" + PredictedNumber + ") Previous(" + PredictedPreviousNumber + ") Next(" + PredictedNextNumber + ")");
+    //Debug.Log("predictedData.timeAfterLastPeg(" + predictedData.timeAfterLastPeg + ") lastAngle/sliceArc (" + MathUtil.ClampAngle0_360(-predictedData.lastAngle) / sliceArc + ") lastPeg(" + predictedData.lastPegTouched + ")");
+
+    float finalAngle = MathUtil.ClampAngle0_360(-predictedData.lastAngle) / sliceArc;
+    float positionFudgeFactor = finalAngle - Mathf.FloorToInt(finalAngle);
+    // calcualte previous and next weights intelligently
+    if (previousSliceIndex == predictedData.lastPegTouched || (spinClockwise && finalIndex == predictedData.lastPegTouched)) {
+      if (spinClockwise)
+        positionFudgeFactor = 1.0f - positionFudgeFactor;
+      
+      PredictedPreviousNumberWeight = .5f + (positionFudgeFactor / 2.0f);
+      PredictedNextNumberWeight = 1.0f - PredictedPreviousNumberWeight;
+      Debug.Log("previous was touched last(" + PredictedPreviousNumberWeight + ") nextSliceIndex(" + nextSliceIndex + ") previousSliceIndex(" + previousSliceIndex + ")");
+ 
+    }
+    else {
+      if (!spinClockwise)
+        positionFudgeFactor = 1.0f - positionFudgeFactor;
+      PredictedNextNumberWeight = .5f + (positionFudgeFactor / 2.0f);
+      PredictedPreviousNumberWeight = 1.0f - PredictedNextNumberWeight;
+      Debug.Log("next was touched last (" + PredictedNextNumberWeight + ") previousSliceIndex(" + previousSliceIndex + ") nextSliceIndex(" + nextSliceIndex + ")");
+    }
+
   }
 
   void SpinUpdate(float time, ref SpinData data) {
@@ -606,6 +634,7 @@ public class SpinWheel : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
       factor *= factor;
       factor = 1f - factor;
       touching = true;
+      data.lastPegTouched = pegIndex;
     }
     
 //    for(int i=0;i<numSlices;i++) {

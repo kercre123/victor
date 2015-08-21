@@ -22,7 +22,7 @@ using System.Net.Sockets;
 using System.IO;
 using System.Net;
 using System.Threading;
-  
+
 /// <summary>
 /// Processes TCP connection and stores data in global queue
 /// </summary>

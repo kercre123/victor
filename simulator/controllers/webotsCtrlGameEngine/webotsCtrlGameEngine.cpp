@@ -6,7 +6,7 @@
  * Modifications: 
  */
 
-#include "anki/cozmo/game/cozmoGame.h"
+#include "anki/cozmo/cozmoAPI.h"
 #include "util/logging/logging.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
@@ -79,7 +79,6 @@ int main(int argc, char **argv)
   Anki::Util::PrintfLoggerProvider loggerProvider;
   loggerProvider.SetMinLogLevel(0);
   Anki::Util::gLoggerProvider = &loggerProvider;
-  PRINT_NAMED_INFO("webotsCtrlGameEngine", "main at %s", argv[0]);
 
   // Get the last position of '/'
   std::string aux(argv[0]);
@@ -102,11 +101,9 @@ int main(int argc, char **argv)
   
   // Get configuration JSON
   Json::Value config;
-  const std::string jsonFilename = dataPlatform.pathToResource(Data::Scope::Resources,
-    "config/basestation/config/configuration.json");
-  
+
   if (!dataPlatform.readAsJson(Data::Scope::Resources, "config/basestation/config/configuration.json", config)) {
-    PRINT_NAMED_ERROR("webotsCtrlGameEngine.main.loadConfig", "Failed to parse Json file %s", jsonFilename.c_str());
+    PRINT_NAMED_ERROR("webotsCtrlGameEngine.main.loadConfig", "Failed to parse Json file config/basestation/config/configuration.json");
   }
 
   if(!config.isMember(AnkiUtil::kP_ADVERTISING_HOST_IP)) {
@@ -156,9 +153,9 @@ int main(int argc, char **argv)
     
   } // if (bm != BM_PLAYBACK_SESSION)
   
-  // Initialize the engine
-  CozmoGame cozmoGame(&dataPlatform);
-  cozmoGame.Init(config);
+  // Initialize the API
+  CozmoAPI myCozmo;
+  myCozmo.Start(&dataPlatform, config);
 
   PRINT_NAMED_INFO("webotsCtrlGameEngine.main", "CozmoGame created and initialized.");
   
@@ -183,7 +180,7 @@ int main(int argc, char **argv)
     auto tick_start = std::chrono::system_clock::now();
 #endif
     
-    cozmoGame.Update(basestationController.getTime());
+    myCozmo.Update(basestationController.getTime());
     
 #ifdef NO_WEBOTS
     auto ms_left = std::chrono::milliseconds(BS_TIME_STEP) - (std::chrono::system_clock::now() - tick_start);

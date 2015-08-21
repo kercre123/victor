@@ -265,6 +265,7 @@ MonoBehaviour:
   scene: Vortex
   onEnable: 0
   onUpdateFrame: -1
+  disconnectFromRobot: 0
 --- !u!114 &27457298
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1459,6 +1460,22 @@ Prefab:
       propertyPath: m_AnchorMax.y
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 22450396, guid: 5ea1fe1891c074bdcacd5e19f21f7586, type: 2}
+      propertyPath: m_AnchorMin.x
+      value: .5
+      objectReference: {fileID: 0}
+    - target: {fileID: 22450396, guid: 5ea1fe1891c074bdcacd5e19f21f7586, type: 2}
+      propertyPath: m_AnchorMax.x
+      value: .5
+      objectReference: {fileID: 0}
+    - target: {fileID: 22450396, guid: 5ea1fe1891c074bdcacd5e19f21f7586, type: 2}
+      propertyPath: m_AnchoredPosition.x
+      value: 310
+      objectReference: {fileID: 0}
+    - target: {fileID: 22450396, guid: 5ea1fe1891c074bdcacd5e19f21f7586, type: 2}
+      propertyPath: m_AnchoredPosition.y
+      value: 3
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 5ea1fe1891c074bdcacd5e19f21f7586, type: 2}
   m_IsPrefabParent: 0
@@ -1779,6 +1796,7 @@ MonoBehaviour:
   scene: Vortex
   onEnable: 0
   onUpdateFrame: -1
+  disconnectFromRobot: 0
 --- !u!114 &979648304
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3147,6 +3165,7 @@ MonoBehaviour:
   scene: Vortex
   onEnable: 0
   onUpdateFrame: -1
+  disconnectFromRobot: 0
 --- !u!114 &1995987586
 MonoBehaviour:
   m_ObjectHideFlags: 0
