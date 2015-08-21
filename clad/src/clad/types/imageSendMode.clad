@@ -1,0 +1,16 @@
+// File: imageSendMode
+// Author: damjan stulic
+// Created: 8/13/15
+// Copyright: Anki, inc. 2015
+
+namespace Anki {
+namespace Cozmo {
+
+enum uint_8 ImageSendMode {
+    Off,
+    Stream,
+    SingleShot
+}
+
+} // namespace Cozmo
+} // namespace Anki

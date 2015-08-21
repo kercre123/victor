@@ -19,7 +19,7 @@
 #ifndef SIMULATOR
 #define ENABLE_PATH_VIZ 0  // This must always be 0!
 #else
-#include "anki/cozmo/simulator/sim_viz.h"
+#include "anki/cozmo/simulator/robot/sim_viz.h"
 using namespace Anki::Cozmo::Sim;
 #define ENABLE_PATH_VIZ 0  // To enable visualization of paths from robot
                            // (Default is 0. Normally this is done from basestation.)

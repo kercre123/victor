@@ -47,6 +47,7 @@
 #include "anki/cozmo/basestation/ramp.h"
 #include "anki/cozmo/basestation/soundManager.h"
 #include "util/signals/simpleSignal.hpp"
+#include "clad/types/imageSendMode.h"
 #include <queue>
 #include <unordered_map>
 #include <time.h>
@@ -549,8 +550,8 @@ namespace Anki {
       inline bool HasExternalInterface() { return _externalInterface != nullptr; }
       inline IExternalInterface* GetExternalInterface() {
         ASSERT_NAMED(_externalInterface != nullptr, "Robot.ExternalInterface.nullptr"); return _externalInterface; }
-      inline void SetImageSendMode(ImageSendMode_t newMode) { _imageSendMode = newMode; }
-      inline const ImageSendMode_t GetImageSendMode() const { return _imageSendMode; }
+      inline void SetImageSendMode(ImageSendMode newMode) { _imageSendMode = newMode; }
+      inline const ImageSendMode GetImageSendMode() const { return _imageSendMode; }
     protected:
       IExternalInterface* _externalInterface;
       Data::DataPlatform* _dataPlatform;
@@ -652,7 +653,7 @@ namespace Anki {
       bool             _isAnimating;
       bool             _isIdleAnimating;
       f32              _battVoltage;
-      ImageSendMode_t _imageSendMode;
+      ImageSendMode _imageSendMode;
       // Pose history
       Result ComputeAndInsertPoseIntoHistory(const TimeStamp_t t_request,
                                              TimeStamp_t& t, RobotPoseStamp** p,
