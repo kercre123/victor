@@ -5,10 +5,8 @@ using UnityEditor;
 using System.Collections;
 
 [CustomEditor(typeof(RectTransformMultiSettings))]
-public class RectTransformMultiSettingsEditor : Editor 
-{
-  public override void OnInspectorGUI()
-  {
+public class RectTransformMultiSettingsEditor : Editor {
+  public override void OnInspectorGUI() {
 
     RectTransformMultiSettings rectTransformBasedOnScreenSize = target as RectTransformMultiSettings;
 
@@ -16,7 +14,7 @@ public class RectTransformMultiSettingsEditor : Editor
 
     DrawDefaultInspector();
 
-    if(GUILayout.Button("Save Current Settings")) {
+    if (GUILayout.Button("Save Current Settings")) {
       rectTransformBasedOnScreenSize.SaveCurrentSettings();
     }
 

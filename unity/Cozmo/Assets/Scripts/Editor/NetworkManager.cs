@@ -29,15 +29,16 @@ class NetworkManager {
     
   // Specify local IP address on which RoadViz listens for basestation connection.
   // If listenAddressStr == "", IP on subnet 192.168.0.* will be auto-detected.
-  private string _listenAddressStr = ""; //"192.168.0.19"; 
+  private string _listenAddressStr = "";
+  //"192.168.0.19";
   private TcpListener _tcpServer = null;
   private List<Thread> _threads;
   private bool isActive = false;
-    
+
   public NetworkManager() {
     _threads = new List<Thread>();
   }
-    
+
     
   /// <summary>
   /// parses address string and starts listening
@@ -62,25 +63,25 @@ class NetworkManager {
       IPAddress listenAddress = foundIpAddress;
       _tcpServer = new TcpListener(listenAddress, _listenPort);
       _tcpServer.Start();
-    isActive = true;
+      isActive = true;
     }
     catch (Exception e) {
       Debug.Log("SocketException: " + e.ToString());
     }
       
   }
-    
+
   /// <summary>
   /// stops listening
   /// </summary>
   public void StopListening() {
-  isActive = false;
-  if (_tcpServer != null) {
-    _tcpServer.Stop ();
-  }
+    isActive = false;
+    if (_tcpServer != null) {
+      _tcpServer.Stop();
+    }
     Debug.Log(String.Format("connection closed {0} : {1}", _listenAddressStr, _listenPort));
   }
-    
+
     
   /// <summary>
   /// Will do a non-blocking check for a connection request, and if
@@ -88,16 +89,16 @@ class NetworkManager {
   /// This should be called every frame in the game.update
   /// </summary>
   public void CheckForConnection() {
-  if (!isActive) {
+    if (!isActive) {
       return;
-  }
+    }
     try {
       // If a connection request is pending then launch a new
       // thread to handle it
       if (_tcpServer.Pending()) {
         TcpClient client = _tcpServer.AcceptTcpClient();
         ConnectionHandler connectionHandler =
-            new ConnectionHandler(client);
+          new ConnectionHandler(client);
         ThreadStart job = new ThreadStart(connectionHandler.ThreadEntry);
         Thread thread = new Thread(job);
         thread.Start();
@@ -110,7 +111,7 @@ class NetworkManager {
     }
       
   }
-            
+
 
   /// <summary>
   /// Cleanup!
