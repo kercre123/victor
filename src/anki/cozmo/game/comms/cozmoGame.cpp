@@ -22,6 +22,7 @@
 #include "anki/cozmo/game/comms/uiMessageHandler.h"
 #include "anki/cozmo/basestation/multiClientComms.h"
 #include "clad/externalInterface/messageEngineToGame.h"
+#include "clad/types/gameStatusFlag.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -443,7 +444,7 @@ namespace Cozmo {
                 }
                 
                 msg.gameStatus = 0;
-                if (robot->IsLocalized() && !robot->IsPickedUp()) { msg.gameStatus |= IS_LOCALIZED; }
+                if (robot->IsLocalized() && !robot->IsPickedUp()) { msg.gameStatus |= (uint8_t)GameStatusFlag::IsLocalized; }
                 
                 msg.headTrackingObjectID = robot->GetTrackToObject();
                 
