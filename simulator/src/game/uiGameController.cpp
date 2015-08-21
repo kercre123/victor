@@ -763,21 +763,12 @@ namespace Anki {
       SendMessage(message);
     }
     
-    void UiGameController::SendExecuteBehavior(BehaviorManager::Mode mode)
+    void UiGameController::SendExecuteBehavior(const std::string& behaviorName)
     {
       ExternalInterface::ExecuteBehavior m;
-      m.behaviorMode = mode;
+      m.behaviorName = behaviorName;
       ExternalInterface::MessageGameToEngine message;
       message.Set_ExecuteBehavior(m);
-      SendMessage(message);
-    }
-  
-    void UiGameController::SendSetNextBehaviorState(BehaviorManager::BehaviorState nextState)
-    {
-      ExternalInterface::SetBehaviorState m;
-      m.behaviorState = nextState;
-      ExternalInterface::MessageGameToEngine message;
-      message.Set_SetBehaviorState(m);
       SendMessage(message);
     }
     

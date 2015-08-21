@@ -105,8 +105,7 @@ protected:
   void SendClearAllBlocks();
   void SendClearAllObjects();
   void SendSelectNextObject();
-  void SendExecuteBehavior(BehaviorManager::Mode mode);
-  void SendSetNextBehaviorState(BehaviorManager::BehaviorState nextState);
+  void SendExecuteBehavior(const std::string& behaviorName);
   void SendAbortPath();
   void SendAbortAll();
   void SendDrawPoseMarker(const Pose3d& p);
