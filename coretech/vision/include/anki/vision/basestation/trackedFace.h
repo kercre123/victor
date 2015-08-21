@@ -37,6 +37,9 @@ namespace Vision {
     void SetID(ID_t newID);
     void SetTimeStamp(TimeStamp_t timestamp);
     
+    const std::string& GetName() const;
+    void SetName(std::string&& newName);
+    
     // Returns true if tracking is happening vs. false if face was just detected
     bool IsBeingTracked() const;
     void SetIsBeingTracked(bool tf);
@@ -80,6 +83,8 @@ namespace Vision {
   private:
     
     ID_t _id;
+    std::string _name;
+    
     float _score;
     bool _isBeingTracked;
     TimeStamp_t _timestamp;
@@ -180,6 +185,13 @@ namespace Vision {
     return _rightEyeCen;
   }
   
+  inline const std::string& TrackedFace::GetName() const {
+    return _name;
+  }
+  
+  inline void TrackedFace::SetName(std::string&& newName) {
+    _name = newName;
+  }
   
 } // namespace Vision
 } // namespace Anki

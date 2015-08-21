@@ -17,6 +17,7 @@ namespace Vision {
   
   TrackedFace::TrackedFace()
   : _id(-1)
+  , _name("")
   , _isBeingTracked(false)
   {
     

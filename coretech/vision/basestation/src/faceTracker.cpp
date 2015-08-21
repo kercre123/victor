@@ -14,17 +14,21 @@
 #include "anki/vision/basestation/trackedFace.h"
 
 #include "anki/common/basestation/math/rect_impl.h"
+#include "anki/common/basestation/math/rotation.h"
 
 #include "util/logging/logging.h"
 
-// FacioMetric SDK
+
 #if FACE_TRACKER_PROVIDER == FACE_TRACKER_FACIOMETRIC
+// FacioMetric
 #  include <intraface/gaze/gaze.h>
 #  include <intraface/core/LocalManager.h>
 #  include <intraface/emo/EmoDet.h>
 
 #elif FACE_TRACKER_PROVIDER == FACE_TRACKER_FACESDK
+// Luxand FaceSDK
 #  include <LuxandFaceSDK.h>
+
 #else 
 #  error Unknown FACE_TRACKER_PROVIDER set!
 #endif
@@ -55,17 +59,6 @@ namespace Vision {
     Result Update(const Vision::Image& frame);
     
     std::list<TrackedFace> GetFaces() const;
-    
-    //void GetFaces(std::vector<cv::Rect>& faceRects) const;
-    //void GetFaceLandmarks(std::vector<FaceLandmarks>& landmarks) const;
-    
-    /*
-    void GetDisplayImage(cv::Mat& image) const;
-    
-    void EnableDisplay(bool enable) {
-      _displayEnabled = enable;
-    }
-     */
     
   private:
     using SDM = facio::FaceAlignmentSDM<facio::AlignmentFeature, facio::NO_CONTOUR, facio::LocalManager>;
@@ -99,41 +92,6 @@ namespace Vision {
     // translates _from_ cv::Mat _to_ TrackedFace::Features each udpate.
     std::list<std::pair<TrackedFace,cv::Mat> > _faces;
     
-    //bool _displayEnabled;
-    
-    static void drawEmotionState(cv::Mat& img, const facio::emoScores& Emo);
-    
-    //! This function draws lines and points using the computed landmarks.
-    /*!
-     \param img  Input image where the line is drawn.
-     \param X  Matrix that contains the facial landmarks (2 x 49) or (2 x 66).
-     */
-    static void drawFace(cv::Mat& img, const cv::Mat& X);
-    
-    
-    //! This function plots the gaze rays in the image. It takes the irises of the eyes and the gaze of each eye.
-    /*!
-     \param img Input image where the gaze is going to be ploted.
-     \param irises It contains the coordinates of the center of the eyes.
-     \param gazes Object that contains the gaze information. The field 'dir' contains the 3D direction of the gaze (x, y, z).
-     */
-    static void drawGaze(cv::Mat& img, const facio::Irisesf& irises, const facio::EyeGazes& gazes);
-    
-    //! This function draws the head pose in the image.
-    //!
-    //!  Each column in the rotation matrix 'rot' rotation contains the coordinates of the rotated
-    //! axes in the canonical coordinate system.
-    //!
-    //! (x->First column, y->Second column, z->Third column).
-    //!
-    //! In order to draw the head pose, this method plots the columns in 'rot'. To plot
-    //! the rotated axes in an clear way, we scale the columns in 'rot' by a scale factor.
-    //!
-    /*!
-     \param img  Input image where the head pose is drawn.
-     \param rot  Rotation matrix that contains the head pose.
-     */
-    static void drawPose(cv::Mat& img, const cv::Mat& rot);
   }; // class FaceTrackerImpl
   
   // Static initializations:
@@ -357,38 +315,9 @@ namespace Vision {
       //_ge->compute(landmarks, irises, headPose, gazes);
     }
     
-    /*
-    if(_displayEnabled) {
-      cv::Mat frame2show = frame.clone();
-      GetDisplayImage(frame2show);
-      cv::imshow("FaceTracker", frame2show);
-      cv::waitKey(5);
-    }
-     */
-    
     return RESULT_OK;
   } // Update()
-  
-  /*
-  void FaceTracker::Impl::GetDisplayImage(cv::Mat& frame2Show) const
-  {
-    for(auto & face : _faces)
-    {
-      // Show emotional state on the displayed frame
-      //drawEmotionState(frame2Show, _Emo);
-      
-      // Ploting the landmarks in the image
-      drawFace(frame2Show, face._landmarks);
-      
-      // Plot the head pose, using the rotation matrix of the head pose
-      drawPose(frame2Show, face._headPose.rot);
-      
-      // Ploting the irises and the gaze
-      drawGaze(frame2Show, face._irises, face._gazes);
-    }
-  }
-   */
-  
+ 
   std::list<TrackedFace> FaceTracker::Impl::GetFaces() const
   {
     std::list<TrackedFace> retVector;
@@ -397,178 +326,6 @@ namespace Vision {
       retVector.emplace_back(face.first);
     }
     return retVector;
-  }
-  
-#pragma mark Drawing Functions
-  
-  void FaceTracker::Impl::drawEmotionState(cv::Mat& img, const facio::emoScores& Emo)
-  {
-    cv::Point emoLoc(100, 50);
-    cv::Point emoLocS(101, 51);
-    
-    // Plotting the emotion score for each one of the emotions, the higher score the more confident the prediction
-    // Please, check the function 'getEmoStr'
-    auto putTextHelper = [&emoLoc,&emoLocS](cv::Mat& img, const char* emoName, float value) {
-      char emoStr[50];
-      sprintf(emoStr, emoName, value);
-      cv::putText(img, emoStr, emoLocS, cv::FONT_HERSHEY_PLAIN, 1.5, cv::Scalar(100,100,100,0.3), 1);
-      cv::putText(img, emoStr, emoLoc,  cv::FONT_HERSHEY_PLAIN, 1.5, cv::Scalar(255, 50, 50), 1);
-      emoLoc.y  += 20;
-      emoLocS.y += 20;
-    };
-    
-    putTextHelper(img, "Neutral:   %.3f", Emo.emoNeutral);
-    putTextHelper(img, "Angry:     %.3f", Emo.emoAngry);
-    putTextHelper(img, "Disgusted: %.3f", Emo.emoDisgust);
-    putTextHelper(img, "Happy:     %.3f", Emo.emoHappy);
-    putTextHelper(img, "Sad:       %.3f", Emo.emoSadness);
-    putTextHelper(img, "Surprised: %.3f", Emo.emoSurprise);
-  }
-  
-  //! This function draws  a line using several landmarks.
-  /*!
-   \param img  Input image where the line is drawn.
-   \param X  Matrix that contains the facial landmarks (2 x 49) or (2 x 66).
-   \param start Index of the first landmark.
-   \param end  Index of the last landmark.
-   \param circle  Plot a circle in the first and last landmark.
-   */
-  static void drawFaceHelper(cv::Mat& img, const cv::Mat& X, int start, int end, bool circle = false)
-  {
-    int thickness = 1;
-    int lineType = CV_AA;
-    
-    for (int i = start; i < end; i++)
-      cv::line(img, cv::Point((int)X.at<float>(0, i), (int)X.at<float>(1, i)), cv::Point((int)X.at<float>(0, i + 1), (int)X.at<float>(1, i + 1)), FACECOLOR, thickness, lineType);
-    
-    if (circle)
-      cv::line(img, cv::Point((int)X.at<float>(0, end), (int)X.at<float>(1, end)), cv::Point((int)X.at<float>(0, start), (int)X.at<float>(1, start)), FACECOLOR, thickness, lineType);
-  }
-  
-  //! This function draws a line from the landmark 'ind1' to 'ind2' .
-  /*!
-   \param img  Input image where the line is drawn.
-   \param X  Matrix that contains the facial landmarks (2 x 49) or (2 x 66).
-   \param ind1  Index of the first landmark.
-   \param ind2  Index of the second landmark.
-   */
-  static void drawFaceHelperLine(cv::Mat& img, const cv::Mat& X, int ind1, int ind2)
-  {
-    int thickness = 1;
-    int lineType = CV_AA;
-    cv::line(img, cv::Point((int)X.at<float>(0, ind1), (int)X.at<float>(1, ind1)), cv::Point((int)X.at<float>(0, ind2), (int)X.at<float>(1, ind2)), FACECOLOR, thickness, lineType);
-  }
-  
-  
-  //! This function draws lines and points using the computed landmarks.
-  /*!
-   \param img  Input image where the line is drawn.
-   \param X  Matrix that contains the facial landmarks (2 x 49) or (2 x 66).
-   */
-  void FaceTracker::Impl::drawFace(cv::Mat& img, const cv::Mat& X)
-  {
-    // left eyebrow
-    drawFaceHelper(img, X, 0, 4);
-    // right eyebrow
-    drawFaceHelper(img, X, 5, 9);
-    // nose
-    drawFaceHelper(img, X, 10, 13);
-    // under nose
-    drawFaceHelper(img, X, 14, 18);
-    // left eye
-    drawFaceHelper(img, X, 19, 24, true);
-    // right eye
-    drawFaceHelper(img, X, 25, 30, true);
-    // mouth contour
-    drawFaceHelper(img, X, 31, 42, true);
-    // inner mouth
-    drawFaceHelper(img, X, 43, 45, false);
-    drawFaceHelper(img, X, 46, 48, false);
-    drawFaceHelperLine(img, X, 31, 43);
-    drawFaceHelperLine(img, X, 31, 48);
-    drawFaceHelperLine(img, X, 37, 45);
-    drawFaceHelperLine(img, X, 37, 46);
-    
-    // contour
-    if (X.cols > 49)
-      drawFaceHelper(img, X, 49, 65);
-  }
-  
-  
-  //! This function plots the gaze rays in the image. It takes the irises of the eyes and the gaze of each eye.
-  /*!
-   \param img Input image where the gaze is going to be ploted.
-   \param irises It contains the coordinates of the center of the eyes.
-   \param gazes Object that contains the gaze information. The field 'dir' contains the 3D direction of the gaze (x, y, z).
-   */
-  void FaceTracker::Impl::drawGaze(cv::Mat& img, const facio::Irisesf& irises, const facio::EyeGazes& gazes)
-  {
-    int thickness = 1; // Thickness of the line
-    int lineType = CV_AA;  // Type of line, this is an opencv parameter
-    float lineL = 20.f; // Length of the line
-    
-    // Points that contains the center of the eyes, it is the initial point of the line
-    cv::Point p0_left(irises.left.center.x, irises.left.center.y);
-    cv::Point p0_right(irises.right.center.x, irises.right.center.y);
-    
-    // Final point of the line, Is computed using the direction of the gaze
-    cv::Point p1_left(p0_left.x + gazes.left.dir(0)*lineL, p0_left.y + gazes.left.dir(1)*lineL);
-    cv::Point p1_right(p0_right.x + gazes.right.dir(0)*lineL, p0_right.y + gazes.right.dir(1)*lineL);
-    
-    // Ploting circles in the eyes
-    circle(img, p0_left, 1, GREEN);
-    circle(img, p0_right, 1, GREEN);
-    // Plotting the line that represents the gaze
-    line(img, p0_left, p1_left, GAZECOLOR, thickness, lineType);
-    line(img, p0_right, p1_right, GAZECOLOR, thickness, lineType);
-    
-  }
-  
-  //! This function draws the head pose in the image.
-  //!
-  //!  Each column in the rotation matrix 'rot' rotation contains the coordinates of the rotated
-  //! axes in the canonical coordinate system.
-  //!
-  //! (x->First column, y->Second column, z->Third column).
-  //!
-  //! In order to draw the head pose, this method plots the columns in 'rot'. To plot
-  //! the rotated axes in an clear way, we scale the columns in 'rot' by a scale factor.
-  //!
-  /*!
-   \param img  Input image where the head pose is drawn.
-   \param rot  Rotation matrix that contains the head pose.
-   */
-  void FaceTracker::Impl::drawPose(cv::Mat& img, const cv::Mat& rot)
-  {
-    // Position of the head pose in the image, Pixel (70, 70)
-    cv::Point positionCoord = cv::Point(70, 70);
-    // Thickness of the line
-    int thickness = 2;
-    // Line type
-    int lineType = CV_AA;
-    // Scaling factor
-    float scale = 50.f;
-    // Scaled rotated matrix
-    cv::Mat scaledRot;
-    // Projected rotated matrix
-    cv::Mat scaledRot2D;
-    
-    // Scaling matrix, This matrix is used to scale the columns of the rotation matrix.
-    cv::Mat scalingMatrix = (cv::Mat_<float>(3, 3) << scale, 0, 0, 0, scale, 0, 0, 0, scale);
-    // Projection to the image plane, using orthognal projection from 3D to 2D
-    cv::Mat orthogonalProjMatrix = (cv::Mat_<float>(2, 3) << 1, 0, 0, 0, 1, 0);
-    
-    // Scaling the rotation matrix
-    scaledRot = scalingMatrix*rot;
-    
-    // Projecting the rotation matrix from 3D to 2D
-    scaledRot2D = orthogonalProjMatrix*scaledRot;
-    
-    // Ploting the Head Pose
-    line(img, positionCoord, positionCoord + cv::Point(scaledRot2D.at<float>(0, 0), scaledRot2D.at<float>(1, 0)), BLUE,  thickness, lineType);
-    line(img, positionCoord, positionCoord + cv::Point(scaledRot2D.at<float>(0, 1), scaledRot2D.at<float>(1, 1)), GREEN, thickness, lineType);
-    line(img, positionCoord, positionCoord + cv::Point(scaledRot2D.at<float>(0, 2), scaledRot2D.at<float>(1, 2)), RED,   thickness, lineType);
-    
   }
 
 #elif FACE_TRACKER_PROVIDER == FACE_TRACKER_FACESDK
@@ -602,7 +359,8 @@ namespace Vision {
     int result = FSDK_ActivateLibrary("kGo498FByonCaniP29B7pwzGcHBIZJP5D9N0jcF90UhsR8gEBGyGNEmAB7XzcJxFOm9WpqBEgy6hBahqk/Eot0P1zaoWFoEa2vwitt0S7fukLfPixcwBZxnaCBmoR5NGFBbZYHX1I9vXWASt+MjqfCgpwfjZKI/oWLcGZ3AiFpA=");
     
     if(result != FSDKE_OK) {
-      PRINT_NAMED_ERROR("FaceTracker.Impl.ActivationFailure", "Failed to activate Luxand FaceSDK Library.");
+      PRINT_NAMED_ERROR("FaceTracker.Impl.ActivationFailure",
+                        "Failed to activate Luxand FaceSDK Library.");
       return;
     }
     
@@ -612,7 +370,8 @@ namespace Vision {
     
     result = FSDK_Initialize((char*)"");
     if(result != FSDKE_OK) {
-      PRINT_NAMED_ERROR("FaceTracker.Impl.InitializeFailure", "Failed to initialize Luxand FaceSDK Library.");
+      PRINT_NAMED_ERROR("FaceTracker.Impl.InitializeFailure",
+                        "Failed to initialize Luxand FaceSDK Library.");
       return;
     }
     
@@ -626,7 +385,6 @@ namespace Vision {
       return;
     }
     
-    // FSDK_SetTrackerParameter(_tracker, <#const char *ParameterName#>, <#const char *ParameterValue#>)
     int errorPosition;
     result = FSDK_SetTrackerMultipleParameters(_tracker,
                                                "DetectFacialFeatures=true;"
@@ -680,7 +438,7 @@ namespace Vision {
       return RESULT_FAIL;
     }
     
-    const int MAX_FACES = 8;
+    const int MAX_FACES = 16;
     
     long long detectedCount;
     long long IDs[MAX_FACES];
@@ -690,36 +448,26 @@ namespace Vision {
       return RESULT_FAIL;
     }
     
-    /*
-    // Detect multiple faces
-    int detectedCount=0;
-    TFacePosition facePositions[MAX_FACES];
-    //res = FSDK_DetectFace(fsdk_img, &facepos);
-    res = FSDK_DetectMultipleFaces(fsdk_img, &detectedCount, facePositions, sizeof(facePositions));
-    
-    if (res == FSDKE_OK) {
-      assert(detectedCount > 0);
-      PRINT_NAMED_INFO("FaceTracker.Impl.Update.DetectedFaces", "Detected %d faces", detectedCount);
-    }
-    */
-    
     // Detect features for each face
     for(int iFace=0; iFace<detectedCount; ++iFace)
     {
+      // Add a new face or find the existing face with matching ID:
       auto result = _faces.emplace(IDs[iFace], TrackedFace());
-      
       TrackedFace& face = result.first->second;
       
-      face.SetTimeStamp(frameOrig.GetTimestamp());
-      face.SetID(IDs[iFace]);
-
       if(result.second) {
         // New face
         face.SetIsBeingTracked(false);
+        face.SetID(IDs[iFace]);
       } else {
         // Existing face
+        assert(face.GetID() == IDs[iFace]);
         face.SetIsBeingTracked(true);
       }
+      
+      // Update the timestamp
+      face.SetTimeStamp(frameOrig.GetTimestamp());
+
       
       TFacePosition facePos;
       res = FSDK_GetTrackerFacePosition(_tracker, 0, IDs[iFace], &facePos);
@@ -729,13 +477,13 @@ namespace Vision {
                             iFace, detectedCount);
       } else {
         // Fill in (axis-aligned) rectangle
-        const float cosAngle = std::cos(DEG_TO_RAD(facePos.angle));
-        const float sinAngle = std::sin(DEG_TO_RAD(facePos.angle));
         const float halfWidth = 0.5f*facePos.w;
-        face.SetRect(Rectangle<f32>(facePos.xc - halfWidth*cosAngle,
-                                       facePos.yc - halfWidth*sinAngle,
-                                       facePos.w*cosAngle,
-                                       facePos.w*sinAngle));
+        Point2f upperLeft(facePos.xc - halfWidth, facePos.yc - halfWidth);
+        Point2f lowerRight(facePos.xc + halfWidth, facePos.yc + halfWidth);
+        RotationMatrix2d R(DEG_TO_RAD(facePos.angle));
+        upperLeft = R*upperLeft;
+        lowerRight = R*lowerRight;
+        face.SetRect(Rectangle<f32>(upperLeft, lowerRight));
       }
       
       FSDK_Features features;
@@ -830,6 +578,44 @@ namespace Vision {
           FSDKP_FACE_CONTOUR12}));
       }
     }
+    
+    // Remove any faces that were not observed
+    for(auto faceIter = _faces.begin(); faceIter != _faces.end(); /* increment in loop */)
+    {
+      if(faceIter->second.GetTimeStamp() < frameOrig.GetTimestamp()) {
+        faceIter = _faces.erase(faceIter);
+      } else {
+        // Didn't erase: increment normally
+        ++faceIter;
+      }
+    }
+    
+#if 0
+    // Remove any faces whose IDs got reassigned
+    for(auto faceIter = _faces.begin(); faceIter != _faces.end(); /* increment in loop */)
+    {
+      TrackedFace& face = faceIter->second;
+      
+      // Only check faces that weren't updated this timestamp
+      if(face.GetTimeStamp() < frameOrig.GetTimestamp()) {
+        TrackedFace::ID_t reassignedID;
+        FSDK_GetIDReassignment(_tracker, face.GetID(), &reassignedID);
+        if(reassignedID != face.GetID()) {
+          // Face's ID got reassigned!
+          assert(_faces.find(reassignedID) != _faces.end()); // Reassigned ID should exist!
+          faceIter = _faces.erase(faceIter);
+
+        } else {
+          // Didn't erase: increment normally
+          ++faceIter;
+        }
+      } else {
+        // Didn't erase: increment normally
+        ++faceIter;
+      }
+    }
+#endif
+
     
     // Unload image from FaceSDK
     FSDK_FreeImage(fsdk_img);

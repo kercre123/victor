@@ -18,6 +18,7 @@
 
 #include <list>
 
+// Available Face Trackers to select from:
 #define FACE_TRACKER_FACIOMETRIC 0
 #define FACE_TRACKER_FACESDK     1
 

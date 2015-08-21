@@ -21,6 +21,7 @@
 #include "anki/common/basestation/exceptions.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/polygon_impl.h"
+#include "anki/common/basestation/math/rect_impl.h"
 #include "anki/vision/basestation/imageIO.h"
 #include "anki/vision/basestation/faceTracker.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
@@ -336,6 +337,22 @@ namespace Anki {
           DrawCameraLine(feature[crntPoint], feature[nextPoint], color);
         }
       }
+      
+      // Draw name
+      std::string name;
+      if(face.GetID() < 0) {
+        name = "Unknown";
+      } else if(face.GetName().empty()) {
+        name = "Face" + std::to_string(face.GetID());
+      } else {
+        name = face.GetName();
+      }
+      DrawCameraText(Point2f(face.GetRect().GetX(), face.GetRect().GetYmax()), name, color);
+      
+      // Draw bounding rectangle (?)
+      Quad2f quad;
+      face.GetRect().GetQuad(quad);
+      DrawCameraQuad(quad, color);
     }
     
     void VizManager::EraseRobot(const u32 robotID)
