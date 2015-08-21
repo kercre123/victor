@@ -26,7 +26,24 @@ namespace Anki {
     CozmoSimTestController::~CozmoSimTestController()
     { }
     
-    
+    bool CozmoSimTestController::IsTrueBeforeTimeout(bool cond,
+                                                     std::string condAsString,
+                                                     double start_time,
+                                                     double timeout,
+                                                     std::string file,
+                                                     std::string func,
+                                                     int line)
+    {
+      if (GetSupervisor()->getTime() - start_time > timeout) {
+        if (!cond) {
+          PRINT_STREAM_WARNING("CONDITION_WITH_TIMEOUT_ASSERT", "(" << condAsString << ") still false after " << timeout << " seconds. (" << file << "." << func << "." << line << ")");
+          _result = -1;
+          CST_EXIT();
+        }
+      }
+      
+      return cond;
+    }
     
     // =========== CozmoSimTestFactory ============
     

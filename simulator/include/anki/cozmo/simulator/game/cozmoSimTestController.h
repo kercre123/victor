@@ -45,7 +45,9 @@ if (!(x)) { \
   CST_EXIT(); \
 }
   
-
+// Returns evaluation of condition until timeout seconds past sinceTime
+// at which point it asserts on the condition.
+#define CONDITION_WITH_TIMEOUT_ASSERT(cond, start_time, timeout) (IsTrueBeforeTimeout(cond, #cond, start_time, timeout, __FILE__, __FUNCTION__, __LINE__))
   
   
 /////////////// CozmoSimTestController /////////////////
@@ -62,6 +64,14 @@ protected:
   virtual s32 UpdateInternal() = 0;
   
   int _result;
+  
+  bool IsTrueBeforeTimeout(bool cond,
+                           std::string condAsString,
+                           double start_time,
+                           double timeout,
+                           std::string file,
+                           std::string func,
+                           int line);
   
 }; // class CozmoSimTestController
 
