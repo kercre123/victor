@@ -61,14 +61,17 @@ namespace Cozmo {
     Result SelectNextBehavior(const std::string& name, float currentTime_sec);
     
     // Add a new behavior to the available ones to be selected from.
-    // The behavior will be stored keyed by the name returned by its GetName() method.
-    // NOTE: The BehaviorManager will handle deleting newBehavior when it
-    //  destructs.
+    // The new behavior will be stored in the current IBehaviorChooser, which will
+    // be responsible for destroying it when the chooser is destroyed
     Result AddBehavior(IBehavior* newBehavior);
     
     // Specify the minimum time we should stay in each behavior before
     // considering switching
     void SetMinBehaviorTime(float time_sec) { _minBehaviorTime_sec = time_sec; }
+    
+    // Set the current IBehaviorChooser. Note this results in the destruction of
+    // the current IBehaviorChooser (if there is one) and the IBehaviors it contains
+    void SetBehaviorChooser(IBehaviorChooser* newChooser);
     
     // Returns nullptr if there is no current behavior
     const IBehavior* GetCurrentBehavior() const { return _currentBehavior; }

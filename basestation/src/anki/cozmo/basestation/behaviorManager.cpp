@@ -216,5 +216,11 @@ namespace Cozmo {
     return InitNextBehaviorHelper(currentTime_sec);
   }
   
+  void BehaviorManager::SetBehaviorChooser(IBehaviorChooser* newChooser)
+  {
+    Util::SafeDelete(_behaviorChooser);
+    _behaviorChooser = newChooser;
+  }
+  
 } // namespace Cozmo
 } // namespace Anki
