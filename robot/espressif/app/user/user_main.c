@@ -134,7 +134,7 @@ static void ICACHE_FLASH_ATTR system_init_done(void)
   i2sInit();
 
   // Setup high priority task
-  task2Init();
+  //task2Init();
   // Enable UART0 RX interrupt
   // Only after clientInit
   uart_start();

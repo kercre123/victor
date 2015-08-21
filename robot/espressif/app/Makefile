@@ -25,7 +25,6 @@ SUBDIRS=    \
 	user    \
 	driver  \
 	transport
-	driver
 endif # } PDIR
 
 APPDIR = .
