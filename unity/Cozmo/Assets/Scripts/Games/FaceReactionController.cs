@@ -20,6 +20,7 @@ public class FaceReactionController : GameController {
   protected override void OnEnable() {
     base.OnEnable();
     robot.VisionWhileMoving(true);
+    robot.SetHeadAngle(0.5f);
   }
 
   protected override void OnDisable() {
@@ -35,7 +36,9 @@ public class FaceReactionController : GameController {
   }
 
   protected override void Exit_BUILDING() {
-    base.Exit_BUILDING();
+    // disables add/remove
+    //base.Exit_BUILDING();
+
   }
 
   protected override void Enter_PRE_GAME() {
@@ -52,10 +55,19 @@ public class FaceReactionController : GameController {
 
   protected override void Enter_PLAYING() {
     base.Enter_PLAYING();
+    robot.SetObjectAdditionAndDeletion(true, true);
   }
 
   protected override void Update_PLAYING() {
     base.Update_PLAYING();
+    if (playState != nextState) {
+      ExitPlayState();
+      playState = nextState;
+      EnterPlayState();
+    }
+    else {
+      UpdatePlayState();
+    }
   }
 
   protected override void Exit_PLAYING(bool overrideStars = false) {
@@ -89,7 +101,6 @@ public class FaceReactionController : GameController {
   protected override void RefreshHUD() {
     base.RefreshHUD();
   }
-
 
   private void EnterPlayState() {
     playStateTimer = 0.0f;
@@ -149,7 +160,8 @@ public class FaceReactionController : GameController {
   }
 
   private void Update_SPIN_RANDOM() {
-    
+    Debug.Log("update spin random");
+    Debug.Log(robot.observedObjects.Count);
   }
 
   private void Exit_SPIN_RANDOM() {
