@@ -398,12 +398,12 @@ namespace Anki {
                 key += 10;
               }
               
-              TestMode m = TestMode(key - '0');
+              TestModeClad m = TestModeClad(key - '0');
 
               // Set parameters for special test cases
               s32 p1 = 0, p2 = 0, p3 = 0;
               switch(m) {
-                case TM_DIRECT_DRIVE:
+                case TestModeClad::DirectDrive:
                   // p1: flags (See DriveTestFlags)
                   // p2: wheelPowerStepPercent (only applies if DTF_ENABLE_DIRECT_HAL_TEST is set)
                   // p3: wheelSpeed_mmps (only applies if DTF_ENABLE_DIRECT_HAL_TEST is not set)
@@ -414,17 +414,17 @@ namespace Anki {
                   p2 = 10;
                   p3 = root_->getField("driveTest_wheel_power")->getSFInt32();
                   break;
-                case TM_LIFT:
+                case TestModeClad::Lift:
                   p1 = root_->getField("liftTest_flags")->getSFInt32();
                   p2 = root_->getField("liftTest_nodCycleTimeMS")->getSFInt32();  // Nodding cycle time in ms (if LiftTF_NODDING flag is set)
                   p3 = 250;
                   break;
-                case TM_HEAD:
+                case TestModeClad::Head:
                   p1 = root_->getField("headTest_flags")->getSFInt32();
                   p2 = root_->getField("headTest_nodCycleTimeMS")->getSFInt32();  // Nodding cycle time in ms (if HTF_NODDING flag is set)
                   p3 = 250;
                   break;
-                case TM_LIGHTS:
+                case TestModeClad::Lights:
                   // p1: flags (See LightTestFlags)
                   // p2: The LED channel to activate (applies if LTF_CYCLE_ALL not enabled)
                   // p3: The color to set it to (applies if LTF_CYCLE_ALL not enabled)
@@ -436,7 +436,7 @@ namespace Anki {
                   break;
               }
               
-              printf("Sending test mode %d\n", m);
+              printf("Sending test mode %s\n", TestModeCladToString(m));
               SendStartTestMode(m,p1,p2,p3);
 
               testMode = true;
