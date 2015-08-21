@@ -46,6 +46,7 @@ CozmoEngineHostImpl::CozmoEngineHostImpl(IExternalInterface* externalInterface,D
   _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::ConnectToRobot, callback));
   _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::ForceAddRobot, callback));
   _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::ReadAnimationFile, callback));
+  _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::StartTestMode, callback));
 
 }
 
@@ -369,7 +370,15 @@ void CozmoEngineHostImpl::HandleGameEvents(const AnkiEvent<ExternalInterface::Me
       SetImageSendMode(msg.robotID, msg.mode);
       break;
     }
-
+    case ExternalInterface::MessageGameToEngineTag::StartTestMode:
+    {
+      const ExternalInterface::StartTestMode& msg = event.GetData().Get_StartTestMode();
+      Robot* robot = GetRobotByID(msg.robotID);
+      if(robot != nullptr) {
+        robot->StartTestMode((TestMode)msg.mode, msg.p1, msg.p2, msg.p3);
+      }
+      break;
+    }
     default:
     {
       PRINT_STREAM_ERROR("CozmoEngine.HandleEvents",

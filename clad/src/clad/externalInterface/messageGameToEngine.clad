@@ -5,6 +5,7 @@
 
 #include "clad/types/actionTypes.clad"
 #include "clad/types/imageSendMode.clad"
+#include "clad/types/testMode.clad"
 #include "clad/externalInterface/messageShared.clad"
 
 namespace Anki {
@@ -324,10 +325,11 @@ message SetRobotVolume {
 
 // StartTestMode
 message StartTestMode {
+    uint_8  robotID,
     int_32 p1,
     int_32 p2,
     int_32 p3,
-    uint_8 mode
+    TestModeClad mode
 }
 
 // IMURequest

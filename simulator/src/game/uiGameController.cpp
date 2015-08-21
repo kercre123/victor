@@ -876,7 +876,7 @@ namespace Anki {
       SendMessage(message);
     }
     
-    void UiGameController::SendStartTestMode(TestMode mode, s32 p1, s32 p2, s32 p3)
+    void UiGameController::SendStartTestMode(TestModeClad mode, s32 p1, s32 p2, s32 p3)
     {
       ExternalInterface::StartTestMode m;
       m.mode = mode;

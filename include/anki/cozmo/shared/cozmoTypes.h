@@ -12,6 +12,7 @@ namespace Anki {
       ISM_OFF,
       ISM_STREAM,
       ISM_SINGLE_SHOT
+      // ISM_UPDATE_CLAD = imageSendMode.clad
     } ImageSendMode_t;
 
     typedef enum {
@@ -76,6 +77,8 @@ namespace Anki {
 
       // Turns on face tracking
       TM_FACE_TRACKING,
+
+      // TM_UPDATE_CLAD = testMode.clad
 
       TM_NUM_TESTS
     } TestMode;

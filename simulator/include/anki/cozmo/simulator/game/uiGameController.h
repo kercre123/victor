@@ -16,6 +16,7 @@
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/types/imageSendMode.h"
+#include "clad/types/testMode.h"
 #include <webots/Supervisor.hpp>
 
 
@@ -117,7 +118,7 @@ protected:
   void SendLiftControllerGains(const f32 kp, const f32 ki, const f32 kd, const f32 maxErrorSum);
   void SendSteeringControllerGains(const f32 k1, const f32 k2);
   void SendSetRobotVolume(const f32 volume);
-  void SendStartTestMode(TestMode mode, s32 p1 = 0, s32 p2 = 0, s32 p3 = 0);
+  void SendStartTestMode(TestModeClad mode, s32 p1 = 0, s32 p2 = 0, s32 p3 = 0);
   void SendIMURequest(u32 length_ms);
   void SendAnimation(const char* animName, u32 numLoops);
   void SendReplayLastAnimation();
