@@ -541,13 +541,7 @@ namespace Cozmo {
   
   void CozmoGameImpl::Process_StartTestMode(ExternalInterface::StartTestMode const& msg)
   {
-    // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
-    const RobotID_t robotID = 1;
-    Robot* robot = GetRobotByID(robotID);
-    
-    if(robot != nullptr) {
-      robot->StartTestMode((TestMode)msg.mode, msg.p1, msg.p2, msg.p3);
-    }
+    // Handled in CozmoEngineHostImpl:HandleEvents
   }
   
   void CozmoGameImpl::Process_IMURequest(ExternalInterface::IMURequest const& msg)
