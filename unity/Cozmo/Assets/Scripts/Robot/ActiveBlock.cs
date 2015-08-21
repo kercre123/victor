@@ -85,7 +85,7 @@ public class ActiveBlock : ObservedObject {
 
   public bool isMoving { get; private set; }
 
-  public byte upAxis { get; private set; }
+  public UpAxisClad upAxis { get; private set; }
 
   public float xAccel { get; private set; }
 
@@ -132,7 +132,7 @@ public class ActiveBlock : ObservedObject {
   public ActiveBlock(int objectID, uint objectFamily, uint objectType) {
     Constructor(objectID, objectFamily, objectType);
 
-    upAxis = byte.MaxValue;
+    upAxis = UpAxisClad.Unknown;
     xAccel = byte.MaxValue;
     yAccel = byte.MaxValue;
     zAccel = byte.MaxValue;
