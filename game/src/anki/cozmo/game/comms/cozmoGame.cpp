@@ -426,20 +426,20 @@ namespace Cozmo {
                 msg.liftHeight_mm = robot->GetLiftHeight();
                 
                 msg.status = 0;
-                if(robot->IsMoving())           { msg.status |= IS_MOVING; }
-                if(robot->IsPickingOrPlacing()) { msg.status |= IS_PICKING_OR_PLACING; }
-                if(robot->IsPickedUp())         { msg.status |= IS_PICKED_UP; }
-                if(robot->IsAnimating())        { msg.status |= IS_ANIMATING; }
-                if(robot->IsIdleAnimating())    { msg.status |= IS_ANIMATING_IDLE; }
+                if(robot->IsMoving())           { msg.status |= (uint32_t)RobotStatusFlagClad::Moving; }
+                if(robot->IsPickingOrPlacing()) { msg.status |= (uint32_t)RobotStatusFlagClad::PickingOrPlacing; }
+                if(robot->IsPickedUp())         { msg.status |= (uint32_t)RobotStatusFlagClad::PickedUp; }
+                if(robot->IsAnimating())        { msg.status |= (uint32_t)RobotStatusFlagClad::Animating; }
+                if(robot->IsIdleAnimating())    { msg.status |= (uint32_t)RobotStatusFlagClad::AnimatingIdle; }
                 if(robot->IsCarryingObject())   {
-                  msg.status |= IS_CARRYING_BLOCK;
+                  msg.status |= (uint32_t)RobotStatusFlagClad::CarryingBlock;
                   msg.carryingObjectID = robot->GetCarryingObject();
                   msg.carryingObjectOnTopID = robot->GetCarryingObjectOnTop();
                 } else {
                   msg.carryingObjectID = -1;
                 }
                 if(!robot->GetActionList().IsEmpty()) {
-                  msg.status |= IS_PERFORMING_ACTION;
+                  msg.status |= (uint32_t)RobotStatusFlagClad::PerformingAction;
                 }
                 
                 msg.gameStatus = 0;

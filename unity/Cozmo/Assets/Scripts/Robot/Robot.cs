@@ -7,24 +7,6 @@ using G2U = Anki.Cozmo.ExternalInterface;
 using U2G = Anki.Cozmo.ExternalInterface;
 
 
-[System.FlagsAttribute]
-public enum RobotStatusFlag {
-  NONE = 0x00000000,
-  IS_MOVING = 0x00000001,
-  // Head, lift, or wheels
-  IS_CARRYING_BLOCK = 0x00000002,
-  IS_PICKING_OR_PLACING = 0x00000004,
-  IS_PICKED_UP = 0x00000008,
-  IS_PROX_FORWARD_BLOCKED = 0x00000010,
-  IS_PROX_SIDE_BLOCKED = 0x00000020,
-  IS_ANIMATING = 0x00000040,
-  IS_PERFORMING_ACTION = 0x00000080,
-  LIFT_IN_POS = 0x00000100,
-  HEAD_IN_POS = 0x00000200,
-  IS_ANIM_BUFFER_FULL = 0x00000400,
-  IS_ANIMATING_IDLE = 0x00000800}
-;
-
 /// <summary>
 /// our unity side representation of cozmo's current state
 ///   also wraps most messages related solely to him
@@ -150,7 +132,7 @@ public class Robot : IDisposable {
 
   public Vector3 Right { get { return Rotation * -Vector3.up; } }
 
-  public RobotStatusFlag status { get; private set; }
+  public RobotStatusFlagClad status { get; private set; }
 
   public GameStatusFlag gameStatus { get; private set; }
 
@@ -328,22 +310,22 @@ public class Robot : IDisposable {
     get {
       /*if (localBusyOverride
          || localBusyTimer > 0f
-         || Status(RobotStatusFlag.IS_PERFORMING_ACTION)
-         || (Status(RobotStatusFlag.IS_ANIMATING) && !Status (RobotStatusFlag.IS_ANIMATING_IDLE))
-         || Status(RobotStatusFlag.IS_PICKED_UP))
+         || Status(RobotStatusFlagClad.IS_PERFORMING_ACTION)
+         || (Status(RobotStatusFlagClad.IS_ANIMATING) && !Status (RobotStatusFlagClad.IS_ANIMATING_IDLE))
+         || Status(RobotStatusFlagClad.IS_PICKED_UP))
       {
         Debug.Log (localBusyOverride ? "localBusyOverride" :
         localBusyTimer > 0f ? " localBusyTimer > 0f" :
-        Status(RobotStatusFlag.IS_PERFORMING_ACTION) ? " IS_PERFORMING_ACTION" :
-        Status(RobotStatusFlag.IS_ANIMATING) && !Status (RobotStatusFlag.IS_ANIMATING_IDLE) ? " IS_ANIMATING" :
-        Status(RobotStatusFlag.IS_PICKED_UP) ? " IS_PICKED_UP" : "");
+        Status(RobotStatusFlagClad.IS_PERFORMING_ACTION) ? " IS_PERFORMING_ACTION" :
+        Status(RobotStatusFlagClad.IS_ANIMATING) && !Status (RobotStatusFlagClad.IS_ANIMATING_IDLE) ? " IS_ANIMATING" :
+        Status(RobotStatusFlagClad.IS_PICKED_UP) ? " IS_PICKED_UP" : "");
       }*/
 
       return localBusyOverride
       || localBusyTimer > 0f
-      || Status(RobotStatusFlag.IS_PERFORMING_ACTION)
-      || (Status(RobotStatusFlag.IS_ANIMATING) && !Status(RobotStatusFlag.IS_ANIMATING_IDLE))
-      || Status(RobotStatusFlag.IS_PICKED_UP);
+      || Status(RobotStatusFlagClad.PerformingAction)
+      || (Status(RobotStatusFlagClad.Animating) && !Status(RobotStatusFlagClad.AnimatingIdle))
+      || Status(RobotStatusFlagClad.PickedUp);
     }
 
     set {
@@ -357,7 +339,7 @@ public class Robot : IDisposable {
     }
   }
 
-  public bool Status(RobotStatusFlag s) {
+  public bool Status(RobotStatusFlagClad s) {
     return (status & s) == s;
   }
 
@@ -482,7 +464,7 @@ public class Robot : IDisposable {
     lastMarkersVisibleObjects.Clear();
     knownObjects.Clear();
     activeBlocks.Clear();
-    status = RobotStatusFlag.NONE;
+    status = RobotStatusFlagClad.Nothing;
     gameStatus = GameStatusFlag.NONE;
     WorldPosition = Vector3.zero;
     Rotation = Quaternion.identity;
@@ -536,7 +518,7 @@ public class Robot : IDisposable {
     leftWheelSpeed_mmps = message.leftWheelSpeed_mmps;
     rightWheelSpeed_mmps = message.rightWheelSpeed_mmps;
     liftHeight_mm = message.liftHeight_mm;
-    status = (RobotStatusFlag)message.status;
+    status = (RobotStatusFlagClad)message.status;
     gameStatus = (GameStatusFlag)message.gameStatus;
     batteryPercent = (message.batteryVoltage / MaxVoltage);
     carryingObjectID = message.carryingObjectID;

@@ -2,6 +2,7 @@
 using UnityEngine.UI;
 using System.Collections;
 using System.Collections.Generic;
+using Anki.Cozmo;
 
 /// <summary>
 /// used to display all the latest robot state information to screen
@@ -47,7 +48,7 @@ public class RobotStateText : MonoBehaviour {
   const string degree = "°";
   const string empty = "";
 
-  List<RobotStatusFlag> statuses = new List<RobotStatusFlag>();
+  List<RobotStatusFlagClad> statuses = new List<RobotStatusFlagClad>();
 
   byte lastID;
   float lastHeadAngle;
@@ -56,7 +57,7 @@ public class RobotStateText : MonoBehaviour {
   float lastRightWheelSpeed;
   float lastLiftHeight;
   Vector3 lastWorldPosition;
-  RobotStatusFlag lastStatus;
+  RobotStatusFlagClad lastStatus;
   float lastBatteryPercent;
   ObservedObject lastCarryingObjectID;
   ObservedObject lastHeadTracking;
@@ -193,26 +194,7 @@ public class RobotStateText : MonoBehaviour {
     lastWorldPosition = bot.WorldPosition;
   }
 
-  string GetStringForStatus(RobotStatusFlag status) {
-    switch (status) {
-    case RobotStatusFlag.IS_MOVING:
-      return moving;
-    case RobotStatusFlag.IS_CARRYING_BLOCK:
-      return carrying;
-    case RobotStatusFlag.IS_PICKING_OR_PLACING:
-      return manipulating;
-    case RobotStatusFlag.IS_PICKED_UP:
-      return pickedUP;
-    case RobotStatusFlag.IS_ANIMATING:
-      return animating;
-    case RobotStatusFlag.IS_PERFORMING_ACTION:
-      return acting;
-    }
-
-    return empty;
-  }
-
-  void CheckSpecificStatus(RobotStatusFlag status) {
+  void CheckSpecificStatus(RobotStatusFlagClad status) {
     
     bool statusActive = bot.Status(status);
     
@@ -234,17 +216,17 @@ public class RobotStateText : MonoBehaviour {
     if (text_status == null)
       return;
 
-    CheckSpecificStatus(RobotStatusFlag.IS_MOVING);
-    CheckSpecificStatus(RobotStatusFlag.IS_CARRYING_BLOCK);
-    CheckSpecificStatus(RobotStatusFlag.IS_PICKING_OR_PLACING);
-    CheckSpecificStatus(RobotStatusFlag.IS_PICKED_UP);
-    CheckSpecificStatus(RobotStatusFlag.IS_ANIMATING);
-    CheckSpecificStatus(RobotStatusFlag.IS_PERFORMING_ACTION);
+    CheckSpecificStatus(RobotStatusFlagClad.Moving);
+    CheckSpecificStatus(RobotStatusFlagClad.CarryingBlock);
+    CheckSpecificStatus(RobotStatusFlagClad.PickingOrPlacing);
+    CheckSpecificStatus(RobotStatusFlagClad.PickedUp);
+    CheckSpecificStatus(RobotStatusFlagClad.Animating);
+    CheckSpecificStatus(RobotStatusFlagClad.PerformingAction);
 
     string statusString = prefix_status + eol;
 
     for (int i = 0; i < statuses.Count; i++) {
-      statusString += GetStringForStatus(statuses[i]) + eol;
+      statusString += statuses[i].ToString() + eol;
     }
 
     text_status.text = statusString;
