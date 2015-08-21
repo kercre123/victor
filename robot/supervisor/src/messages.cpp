@@ -675,7 +675,12 @@ void Process##__MSG_TYPE__##Message(const __MSG_TYPE__& msg) { ProcessAnimKeyFra
       {
         va_list argptr;
         va_start(argptr, format);
+#if 0
+        // print to console - works in webots environment.
+        printf(format, argptr);
+#else
         SendText(format, argptr);
+#endif
         va_end(argptr);
 
         return 0;
