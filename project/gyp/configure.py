@@ -162,7 +162,7 @@ def main(scriptArgs):
   generator.processFolder(['basestation/src/anki/cozmo', 'basestation/include/anki/cozmo', 'include', 'generated/clad/engine', 'resources'],
    ['project/gyp/cozmoEngine.lst'])
   generator.processFolder(['basestation/test', 'robot/test'], ['project/gyp/cozmoEngine-test.lst'])
-  generator.processFolder(['robot/sim_hal', 'robot/supervisor/src', 'simulator/src', 'simulator/controllers/webotsCtrlRobot'],
+  generator.processFolder(['robot/sim_hal', 'robot/supervisor/src', 'simulator/src/robot', 'simulator/controllers/webotsCtrlRobot'],
    ['project/gyp/ctrlRobot.lst'])
   generator.processFolder(['simulator/controllers/webotsCtrlViz'], ['project/gyp/ctrlViz.lst'])
   generator.processFolder(['clad/src'], ['project/gyp/clad.lst'])

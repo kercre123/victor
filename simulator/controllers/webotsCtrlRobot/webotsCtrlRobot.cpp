@@ -15,9 +15,9 @@
 #include "anki/cozmo/robot/cozmoBot.h"
 #include "anki/cozmo/robot/debug.h"
 #include "testModeController.h"
-#include "anki/cozmo/simulator/keyboardController.h"
-#include "anki/cozmo/simulator/sim_overlayDisplay.h"
-#include "anki/cozmo/simulator/sim_viz.h"
+#include "anki/cozmo/simulator/robot/keyboardController.h"
+#include "anki/cozmo/simulator/robot/sim_overlayDisplay.h"
+#include "anki/cozmo/simulator/robot/sim_viz.h"
 #include "anki/cozmo/robot/hal.h"
 
 // If this is enabled here, it should be disabled in the basestation. (See ENABLE_BS_KEYBOARD_CONTROL.)
