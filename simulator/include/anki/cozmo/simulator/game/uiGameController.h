@@ -18,6 +18,7 @@
 #include "clad/types/imageSendMode.h"
 #include <webots/Supervisor.hpp>
 
+#include <unordered_set>
 
 namespace Anki {
 namespace Cozmo {
@@ -162,6 +163,10 @@ protected:
   
   const ObservedObject& GetCurrentlyObservedObject() const;
 
+  
+  const std::unordered_set<std::string>& GetAvailableAnimations() const;
+  u32 GetNumAvailableAnimations() const;
+  bool IsAvailableAnimation(std::string anim) const;
 
 private:
   void HandleRobotStateUpdateBase(ExternalInterface::RobotState const& msg);

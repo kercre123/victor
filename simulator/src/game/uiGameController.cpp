@@ -41,6 +41,8 @@ namespace Anki {
         std::map<u32, std::map<u32, std::vector<s32> > > _objectFamilyToTypeToIDMap;
         std::map<s32, Pose3d> _objectIDToPoseMap;
         
+        std::unordered_set<std::string> _availableAnimations;
+        
         webots::Node* _root = nullptr;
         
         typedef enum {
@@ -233,6 +235,7 @@ namespace Anki {
     void UiGameController::HandleAnimationAvailableBase(ExternalInterface::AnimationAvailable const& msg)
     {
       PRINT_NAMED_INFO("HandleAnimationAvailable", "Animation available: %s", msg.animName.c_str());
+      _availableAnimations.insert(msg.animName);
       
       HandleAnimationAvailable(msg);
     }
@@ -1262,7 +1265,20 @@ namespace Anki {
       return _currentlyObservedObject;
     }
     
-
+    const std::unordered_set<std::string>& UiGameController::GetAvailableAnimations() const
+    {
+      return _availableAnimations;
+    }
+    
+    u32 UiGameController::GetNumAvailableAnimations() const
+    {
+      return (u32)_availableAnimations.size();
+    }
+    
+    bool UiGameController::IsAvailableAnimation(std::string anim) const
+    {
+      return _availableAnimations.find(anim) != _availableAnimations.end();
+    }
     
   } // namespace Cozmo
 } // namespace Anki
