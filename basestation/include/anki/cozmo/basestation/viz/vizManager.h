@@ -212,6 +212,11 @@ namespace Anki {
                           float xRadius, float yRadius,
                           const ColorRGBA& color);
       
+      // Draw text in the camera display
+      void DrawCameraText(const Point2f& position,
+                          const std::string& text,
+                          const ColorRGBA& color);
+      
       template<typename T>
       void DrawMatMarker(const u32 quadID,
                          const Quadrilateral<3,T>& quad,

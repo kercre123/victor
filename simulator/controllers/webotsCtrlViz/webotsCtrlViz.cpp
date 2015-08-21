@@ -347,6 +347,17 @@ namespace Anki {
                         std::round(msg.xRad), std::round(msg.yRad));
     }
     
+    void ProcessVizCameraTextMessage(const VizCameraText& msg)
+    {
+      camDisp->setColor(msg.color>>8);
+      u8 alpha = msg.color & 0xff;
+      if(alpha < 0xff) {
+        const f32 oneOver255 = 1.f / 255.f;
+        camDisp->setAlpha(oneOver255 * static_cast<f32>(alpha));
+      }
+      camDisp->drawText(msg.text, msg.x, msg.y);
+    }
+    
     void ProcessVizImageChunkMessage(const VizImageChunk& msg)
     {
       // TODO: Support timestamps
@@ -506,6 +517,7 @@ int main(int argc, char **argv)
         case VizCameraQuad_ID:
         case VizCameraLine_ID:
         case VizCameraOval_ID:
+        case VizCameraText_ID:
         case VizRobotState_ID:
           (*Anki::Cozmo::DispatchTable_[msgID])((unsigned char*)(data + 1));
           break;

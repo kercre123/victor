@@ -306,6 +306,19 @@ namespace Anki {
       SendMessage( GET_MESSAGE_ID(VizCameraLine), &v );
     }
     
+    void VizManager::DrawCameraText(const Point2f& position,
+                                    const std::string& text,
+                                    const ColorRGBA& color)
+    {
+      VizCameraText v;
+      v.color = u32(color);
+      v.x = std::round(position.x());
+      v.y = std::round(position.y());
+      snprintf(v.text, sizeof(v.text), "%s", text.c_str());
+      
+      SendMessage(GET_MESSAGE_ID(VizCameraText), &v);
+    }
+    
     void VizManager::DrawCameraFace(const Vision::TrackedFace& face,
                                     const ColorRGBA& color)
     {
