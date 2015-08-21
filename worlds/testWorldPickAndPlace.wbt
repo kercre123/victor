@@ -1,0 +1,182 @@
+#VRML_SIM V8.2.1 utf8
+WorldInfo {
+  info [
+    "Cozmo test world. All rights reserved. Copyright (c) Anki, Inc."
+    "Author: Hanns Tappeiner <hanns@anki.com>"
+    "Author: Andrew Stein <andrew@anki.com>"
+    "Date: 02 Aug 2013"
+    ""
+  ]
+  gravity 0 0 -9.81
+  physics "cozmo_physics"
+  basicTimeStep 5
+  contactProperties [
+    DEF FLOOR_FRONTWHEEL ContactProperties {
+      material1 "cmat_floor"
+      material2 "highfriction"
+      coulombFriction [
+        50
+      ]
+      bounce 0.01
+    }
+    DEF RAMP_FRONTWHEEL ContactProperties {
+      material1 "cmat_ramp"
+      material2 "highfriction"
+      coulombFriction [
+        500
+      ]
+      bounce 0.01
+    }
+    DEF BLOCK_FRONTWHEEL ContactProperties {
+      material1 "cmat_block"
+      material2 "highfriction"
+      coulombFriction [
+        50
+      ]
+      bounce 0.01
+    }
+    DEF BLOCK_REARWHEEL ContactProperties {
+      material1 "cmat_block"
+      material2 "nofriction"
+      coulombFriction [
+        0.0001
+      ]
+      bounce 0.001
+    }
+    DEF FLOOR_REARWHEEL ContactProperties {
+      material1 "cmat_floor"
+      material2 "nofriction"
+      coulombFriction [
+        0.0001
+      ]
+      bounce 0.001
+    }
+    DEF RAMP_REARWHEEL ContactProperties {
+      material1 "cmat_ramp"
+      material2 "nofriction"
+      coulombFriction [
+        5
+      ]
+      bounce 0.001
+    }
+    DEF FLOOR_BLOCK ContactProperties {
+      material1 "cmat_floor"
+      material2 "cmat_block"
+      coulombFriction [
+        10
+      ]
+      bounce 0.001
+    }
+    DEF BLOCK_BLOCK ContactProperties {
+      material1 "cmat_block"
+      material2 "cmat_block"
+      coulombFriction [
+        10
+      ]
+      bounce 0.001
+    }
+    DEF RAMP_BLOCK ContactProperties {
+      material1 "cmat_ramp"
+      material2 "cmat_block"
+      coulombFriction [
+        10
+      ]
+      bounce 0.001
+    }
+    DEF RAMP_RAMP ContactProperties {
+      material1 "cmat_ramp"
+      material2 "cmat_ramp"
+      coulombFriction [
+        5000
+      ]
+      bounce 0.001
+    }
+    DEF FLOOR_RAMP ContactProperties {
+      material1 "cmat_ramp"
+      material2 "cmat_floor"
+      coulombFriction [
+        5000
+      ]
+      bounce 0.001
+    }
+  ]
+}
+Viewpoint {
+  orientation -0.485704 0.460615 0.742917 4.47064
+  position -0.787903 -0.0612286 0.446978
+}
+Background {
+  skyColor [
+    0.4 0.7 1
+  ]
+}
+DirectionalLight {
+  ambientIntensity 0.5
+  direction 2 -2 -1
+  intensity 0.5
+}
+DirectionalLight {
+  ambientIntensity 0.5
+  direction -2 -2 -1
+  intensity 0.5
+}
+DirectionalLight {
+  ambientIntensity 0.5
+  direction 0 2 -1
+  intensity 0.5
+}
+CozmoMat {
+  showMarkers FALSE
+}
+Block1x1 {
+  hidden linearVelocity_0 -1.98152e-15 -3.83774e-12 1.95499e-17
+  hidden angularVelocity_0 3.75522e-14 -9.02514e-14 2.30472e-11
+  translation 0.299346 -0.136577 0.0219951
+  rotation -0.484044 0.842795 0.235368 -3.72241e-05
+  blockColor 0.296223 0.860273 0.323583
+  markerImg "symbols/squarePlusCorners.png"
+}
+Block1x1 {
+  translation 0.237555 -0.0734549 0.0219953
+  rotation -1.50543e-06 -1.56606e-06 1 -2.86317
+  blockColor 0.828885 0.858824 0.17882
+  markerImg "symbols/star5.png"
+}
+FlagCube {
+  name "Flag"
+  translation 0.137412 0.0347017 0.021997
+  rotation 0.00090803 -1.83671e-06 1 0.00404548
+}
+TargetCube {
+  hidden linearVelocity_0 -3.10845e-11 -1.77e-11 -3.34302e-15
+  hidden angularVelocity_0 6.63473e-14 -2.13164e-13 6.18414e-11
+  name "Target"
+  translation 0.287719 -0.141894 0.0659931
+  rotation -0.508597 0.694746 0.508584 1.92714
+}
+DEF AngryFaceBlockOnPlatform Block1x1 {
+  name "AngryFace_01"
+  translation 0.182437 -0.0199549 0.0219968
+  rotation 0.104451 0.98903 -0.104447 1.58183
+  blockColor 0.5 0.5 0.85
+  markerImg "symbols/angryFace.png"
+}
+DEF ArrowBlock Block1x1 {
+  translation 0.23662 -0.0733852 0.0659946
+  rotation -0.0914632 0.9916 -0.0914558 -1.57924
+  markerImg "symbols/arrow.png"
+}
+LightCube {
+  translation 0.286208 0.102973 0.0219972
+  rotation 1.59007e-05 -1.83671e-06 1 0.230004
+}
+BlockWorldComms {
+}
+CozmoBot {
+  name "CozmoBot_1"
+}
+BuildServerTestController {
+  controllerArgs "%COZMO_SIM_TEST%"
+}
+CozmoVizDisplay {
+}
