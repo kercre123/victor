@@ -7,11 +7,11 @@
  */
 
 #include "anki/cozmo/simulator/game/uiGameController.h"
-
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/cozmo/game/comms/gameMessageHandler.h"
 #include "anki/cozmo/game/comms/gameComms.h"
-
+#include "clad/externalInterface/messageEngineToGame.h"
+#include "clad/externalInterface/messageGameToEngine.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -85,7 +85,7 @@ namespace Anki {
     
     void UiGameController::HandleRobotDeletedObjectBase(ExternalInterface::RobotDeletedObject const& msg)
     {
-      printf("Robot %d reported deleting object %d\n", msg.robotID, msg.objectID);
+      PRINT_NAMED_INFO("UiGameController.HandleRobotDeletedObjectBase", "Robot %d reported deleting object %d", msg.robotID, msg.objectID);
       
       HandleRobotDeletedObject(msg);
     }
@@ -94,7 +94,7 @@ namespace Anki {
     {
       // Just send a message back to the game to connect to any robot that's
       // advertising (since we don't have a selection mechanism here)
-      printf("Sending message to command connection to robot %d.\n", msgIn.robotID);
+      PRINT_NAMED_INFO("UiGameController.HandleRobotConnectionBase", "Sending message to command connection to robot %d.", msgIn.robotID);
       ExternalInterface::ConnectToRobot msgOut;
       msgOut.robotID = msgIn.robotID;
       ExternalInterface::MessageGameToEngine message;
@@ -108,7 +108,7 @@ namespace Anki {
     {
       // Just send a message back to the game to connect to any UI device that's
       // advertising (since we don't have a selection mechanism here)
-      printf("Sending message to command connection to UI device %d.\n", msgIn.deviceID);
+      PRINT_NAMED_INFO("UiGameController.HandleUiDeviceConnectionBase", "Sending message to command connection to UI device %d.", msgIn.deviceID);
       ExternalInterface::ConnectToUiDevice msgOut;
       msgOut.deviceID = msgIn.deviceID;
       ExternalInterface::MessageGameToEngine message;
@@ -153,12 +153,12 @@ namespace Anki {
           break;
 
         case RobotActionType::PLAY_ANIMATION:
-          printf("Robot %d finished playing animation %s. [Tag=%d]\n",
+          PRINT_NAMED_INFO("UiGameController.HandleRobotCompletedActionBase", "Robot %d finished playing animation %s. [Tag=%d]",
                  msg.robotID, msg.completionInfo.animName.c_str(), msg.idTag);
           break;
           
         default:
-          printf("Robot %d completed action with type=%d and tag=%d: %s.\n",
+          PRINT_NAMED_INFO("UiGameController.HandleRobotCompletedActionBase", "Robot %d completed action with type=%d and tag=%d: %s.",
                  msg.robotID, msg.actionType, msg.idTag, ActionResultToString(msg.result));
       }
       
@@ -175,23 +175,23 @@ namespace Anki {
     
     void UiGameController::HandleActiveObjectMovedBase(ExternalInterface::ActiveObjectMoved const& msg)
     {
-     PRINT_NAMED_INFO("HandleActiveObjectMoved", "Received message that object %d moved. Accel=(%f,%f,%f). UpAxis=%d\n",
-                      msg.objectID, msg.xAccel, msg.yAccel, msg.zAccel, msg.upAxis);
+     PRINT_NAMED_INFO("HandleActiveObjectMoved", "Received message that object %d moved. Accel=(%f,%f,%f). UpAxis=%s",
+                      msg.objectID, msg.xAccel, msg.yAccel, msg.zAccel, UpAxisCladToString(msg.upAxis));
       
       HandleActiveObjectMoved(msg);
     }
     
     void UiGameController::HandleActiveObjectStoppedMovingBase(ExternalInterface::ActiveObjectStoppedMoving const& msg)
     {
-      PRINT_NAMED_INFO("HandleActiveObjectStoppedMoving", "Received message that object %d stopped moving%s. UpAxis=%d\n",
-                       msg.objectID, (msg.rolled ? " and rolled" : ""), msg.upAxis);
+      PRINT_NAMED_INFO("HandleActiveObjectStoppedMoving", "Received message that object %d stopped moving%s. UpAxis=%s",
+                       msg.objectID, (msg.rolled ? " and rolled" : ""), UpAxisCladToString(msg.upAxis));
       
       HandleActiveObjectStoppedMoving(msg);
     }
     
     void UiGameController::HandleActiveObjectTappedBase(ExternalInterface::ActiveObjectTapped const& msg)
     {
-      PRINT_NAMED_INFO("HandleActiveObjectTapped", "Received message that object %d was tapped %d times.\n",
+      PRINT_NAMED_INFO("HandleActiveObjectTapped", "Received message that object %d was tapped %d times.",
                        msg.objectID, msg.numTaps);
       
       HandleActiveObjectTapped(msg);
@@ -330,7 +330,7 @@ namespace Anki {
           webots::Field *forcedRobotIsSimField = _root->getField("forcedRobotIsSimulated");
           if(forcedRobotIsSimField == nullptr) {
             PRINT_NAMED_ERROR("KeyboardController.Update",
-                              "Could not find 'forcedRobotIsSimulated' field.\n");
+                              "Could not find 'forcedRobotIsSimulated' field.");
             doForceAddRobot = false;
           } else {
             forcedRobotIsSim = forcedRobotIsSimField->getSFBool();
@@ -339,7 +339,7 @@ namespace Anki {
           webots::Field* forcedRobotIpField = _root->getField("forcedRobotIP");
           if(forcedRobotIpField == nullptr) {
             PRINT_NAMED_ERROR("KeyboardController.Update",
-                              "Could not find 'forcedRobotIP' field.\n");
+                              "Could not find 'forcedRobotIP' field.");
             doForceAddRobot = false;
           } else {
             forcedRobotIP = forcedRobotIpField->getSFString();
@@ -391,7 +391,7 @@ namespace Anki {
             // Once gameComms has a client, tell the engine to start, force-add
             // robot if necessary, and switch states in the UI
             
-            PRINT_NAMED_INFO("KeyboardController.Update", "Sending StartEngine message.\n");
+            PRINT_NAMED_INFO("KeyboardController.Update", "Sending StartEngine message.");
             ExternalInterface::StartEngine msg;
             msg.asHost = 1; // TODO: Support running as client?
             std::string vizIpStr = "127.0.0.1";
@@ -404,7 +404,7 @@ namespace Anki {
             bool didForceAdd = ForceAddRobotIfSpecified();
             
             if(didForceAdd) {
-              PRINT_NAMED_INFO("KeyboardController.Update", "Sent force-add robot message.\n");
+              PRINT_NAMED_INFO("KeyboardController.Update", "Sent force-add robot message.");
             }
             
             // Turn on image streaming to game/UI by default:
@@ -432,7 +432,7 @@ namespace Anki {
         }
           
         default:
-          PRINT_NAMED_ERROR("KeyboardController.Update", "Reached default switch case.\n");
+          PRINT_NAMED_ERROR("KeyboardController.Update", "Reached default switch case.");
           
       } // switch(_uiState)
       
@@ -455,13 +455,13 @@ namespace Anki {
             nodeName = nameField->getSFString();
           }
           
-          //printf(" Node %d: name \"%s\" typeName \"%s\" controllerName \"%s\"\n",
+          //PRINT_NAMED_INFO("UiGameController.UpdateActualObjectPoses", " Node %d: name \"%s\" typeName \"%s\" controllerName \"%s\"",
           //       n, nodeName.c_str(), nd->getTypeName().c_str(), controllerName.c_str());
           
           if (nd->getTypeName().find("Supervisor") != std::string::npos &&
               nodeName.find("CozmoBot") != std::string::npos) {
-            
-            printf("Found robot with name %s\n", nodeName.c_str());
+
+            PRINT_NAMED_INFO("UiGameController.UpdateActualObjectPoses", "Found robot with name %s", nodeName.c_str());
             
             _robotTransActual = nd->getPosition();
             _robotOrientationActual = nd->getOrientation();
@@ -1006,8 +1006,8 @@ namespace Anki {
          p.highValue = _root->getField("camera_highValue")->getSFInt32();
          p.percentileToMakeHigh = _root->getField("camera_percentileToMakeHigh")->getSFFloat();
          p.limitFramerate = _root->getField("camera_limitFramerate")->getSFInt32();
-         
-         printf("New Camera params\n");
+
+        PRINT_NAMED_INFO("UiGameController.SendVisionSystemParams", "New Camera params");
         ExternalInterface::MessageGameToEngine message;
         message.Set_SetVisionSystemParams(p);
         SendMessage(message);
@@ -1025,8 +1025,8 @@ namespace Anki {
         p.minObjectWidth = _root->getField("fd_minObjectWidth")->getSFInt32();
         p.maxObjectHeight = _root->getField("fd_maxObjectHeight")->getSFInt32();
         p.maxObjectWidth = _root->getField("fd_maxObjectWidth")->getSFInt32();
-        
-        printf("New Face detect params\n");
+
+        PRINT_NAMED_INFO("UiGameController.SendFaceDetectParams", "New Face detect params");
         ExternalInterface::MessageGameToEngine message;
         message.Set_SetFaceDetectParams(p);
         SendMessage(message);
@@ -1048,13 +1048,13 @@ namespace Anki {
           std::copy(ipStr.begin(), ipStr.end(), msg.ipAddress.data());
           
           msg.robotID = static_cast<u8>(idField->getSFInt32());
-          
-          printf("Sending message to force-add robot %d at %s\n", msg.robotID, ipStr.c_str());
+
+          PRINT_NAMED_INFO("UiGameController.SendForceAddRobot", "Sending message to force-add robot %d at %s", msg.robotID, ipStr.c_str());
           ExternalInterface::MessageGameToEngine message;
           message.Set_ForceAddRobot(msg);
           SendMessage(message);
         } else {
-          printf("ERROR: No 'forceAddIP' / 'forceAddID' field(s) found!\n");
+          PRINT_NAMED_INFO("UiGameController.SendForceAddRobot", "ERROR: No 'forceAddIP' / 'forceAddID' field(s) found!");
         }
       }
     }

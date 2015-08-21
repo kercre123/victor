@@ -5,6 +5,7 @@
 
 #include "clad/types/actionTypes.clad"
 #include "clad/types/robotStatusFlag.clad"
+#include "clad/types/upAxis.clad"
 #include "clad/externalInterface/messageShared.clad"
 
 namespace Anki {
@@ -202,13 +203,13 @@ message ActiveObjectMoved {
     float_32 xAccel,
     float_32 yAccel,
     float_32 zAccel,
-    uint_8   upAxis    // See UpAxis type in ActiveBlockTypes.h
+    UpAxisClad upAxis
 }
 
 message ActiveObjectStoppedMoving {
     uint_8   robotID,
     uint_32  objectID,
-    uint_8   upAxis,
+    UpAxisClad upAxis,
     bool     rolled
 }
 

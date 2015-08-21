@@ -638,7 +638,7 @@ namespace Anki {
             assert(actionObject != nullptr);
             if(actionObject->IsBeingCarried() == false) {
               robot->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::ActiveObjectMoved(
-                robot->GetID(), objectWithID.first, msg.xAccel, msg.yAccel, msg.zAccel, msg.upAxis
+                robot->GetID(), objectWithID.first, msg.xAccel, msg.yAccel, msg.zAccel, (UpAxisClad)msg.upAxis
               )));
             }
             
@@ -666,7 +666,7 @@ namespace Anki {
                               "Received message that Object " << objectWithID.first.GetValue() << " (Active ID " << msg.objectID << ") stopped moving.");
             
             robot->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::ActiveObjectStoppedMoving(
-              robot->GetID(), objectWithID.first, msg.upAxis, msg.rolled
+              robot->GetID(), objectWithID.first, (UpAxisClad)msg.upAxis, msg.rolled
             )));
             return RESULT_OK;
           }
