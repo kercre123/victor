@@ -297,12 +297,6 @@ public class Robot : IDisposable {
   // er, should be 5?
   private const float MaxVoltage = 5.0f;
 
-  [System.FlagsAttribute]
-  public enum GameStatusFlag {
-    NONE = 0,
-    IS_LOCALIZED = 0x1
-  }
-
   [System.NonSerialized] public float localBusyTimer = 0f;
   [System.NonSerialized] public bool localBusyOverride = false;
 
@@ -344,7 +338,7 @@ public class Robot : IDisposable {
   }
 
   public bool IsLocalized() {
-    return (gameStatus & GameStatusFlag.IS_LOCALIZED) == GameStatusFlag.IS_LOCALIZED;
+    return (gameStatus & GameStatusFlag.IsLocalized) == GameStatusFlag.IsLocalized;
   }
 
   private Robot() {
@@ -465,7 +459,7 @@ public class Robot : IDisposable {
     knownObjects.Clear();
     activeBlocks.Clear();
     status = RobotStatusFlagClad.Nothing;
-    gameStatus = GameStatusFlag.NONE;
+    gameStatus = GameStatusFlag.Nothing;
     WorldPosition = Vector3.zero;
     Rotation = Quaternion.identity;
     carryingObjectID = -1;
