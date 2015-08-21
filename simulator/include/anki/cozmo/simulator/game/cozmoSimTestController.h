@@ -48,6 +48,12 @@ if (!(x)) { \
 // Returns evaluation of condition until timeout seconds past sinceTime
 // at which point it asserts on the condition.
 #define CONDITION_WITH_TIMEOUT_ASSERT(cond, start_time, timeout) (IsTrueBeforeTimeout(cond, #cond, start_time, timeout, __FILE__, __FUNCTION__, __LINE__))
+
+// Start of if block which is entered if condition evaluates to true
+// until timeout seconds past the first time this line is reached
+// at which point it asserts on the condition.
+#define IF_CONDITION_WITH_TIMEOUT_ASSERT(cond, timeout) static double startTime##__LINE__ = GetSupervisor()->getTime(); if (IsTrueBeforeTimeout(cond, #cond, startTime##__LINE__, timeout, __FILE__, __FUNCTION__, __LINE__))
+  
   
   
 /////////////// CozmoSimTestController /////////////////
