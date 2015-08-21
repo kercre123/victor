@@ -40,7 +40,7 @@ namespace Cozmo {
     bool _observedNewObject = false;
     
     // Message handlers
-    virtual void HandleRobotObservedObject(ExternalInterface::RobotObservedObject const& msg);
+    virtual void HandleRobotObservedObject(ExternalInterface::RobotObservedObject const& msg) override;
     
     // Helper functions
     s32 GetClosestObjectID(const std::vector<s32>& objectIDs);
