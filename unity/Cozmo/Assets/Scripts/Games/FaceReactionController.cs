@@ -29,6 +29,7 @@ public class FaceReactionController : GameController {
     robot.VisionWhileMoving(true);
     robot.SetHeadAngle(0.5f);
     robot.SetLiftHeight(0.0f);
+    robot.StartFaceAwareness();
     RobotEngineManager.instance.SuccessOrFailure += RobotEngineMessages;
   }
 
