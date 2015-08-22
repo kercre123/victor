@@ -16,7 +16,7 @@
 #ifndef ANKI_COZMO_MARKERLESSOBJECT_H
 #define ANKI_COZMO_MARKERLESSOBJECT_H
 
-#include "anki/vision/basestation/observableObject.h"
+#include "anki/cozmo/basestation/cozmoObservableObject.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
 
 #include "clad/types/objectTypes.h"
@@ -26,7 +26,7 @@ namespace Anki {
   
   namespace Cozmo {
     
-    class MarkerlessObject : public Vision::ObservableObject<ObjectFamily, ObjectType>
+    class MarkerlessObject : public ObservableObject // Note: Cozmo:: note Vision::
     {
     public:
       

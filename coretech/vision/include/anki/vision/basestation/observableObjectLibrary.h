@@ -25,13 +25,12 @@
 namespace Anki {
   namespace Vision {
     
-    template<typename FAMILY, typename TYPE>
+    template<class ObsObjectType>
     class ObservableObjectLibrary
     {
     public:
       
-      using ObservableObject = Vision::ObservableObject<FAMILY, TYPE>;
-      using ObjectSet = std::set<const ObservableObject*>;
+      using ObservableObject = ObsObjectType;
       
       ObservableObjectLibrary(){};
       
@@ -55,20 +54,20 @@ namespace Anki {
       
       // Only one object in a library can have each type. Return a pointer to
       // that object, or NULL if none exists.
-      const ObservableObject* GetObjectWithType(const TYPE type) const;
+      //const ObservableObject* GetObjectWithType(const TYPE type) const;
       
       // Return a pointer to a vector of pointers to known objects with at
       // least one of the specified markers or codes on it. If  there is no
       // object with that marker/code, a NULL pointer is returned.
-      ObjectSet const& GetObjectsWithMarker(const Marker& marker) const;
-      ObjectSet const& GetObjectsWithCode(const Marker::Code& code) const;
+      std::set<const ObservableObject*> const& GetObjectsWithMarker(const Marker& marker) const;
+      std::set<const ObservableObject*> const& GetObjectsWithCode(const Marker::Code& code) const;
       
     protected:
       
       static const std::set<const ObservableObject*> sEmptyObjectVector;
       
-      //std::list<const ObservableObject*> knownObjects_;
-      std::map<TYPE, const ObservableObject*> _knownObjects;
+      std::list<const ObservableObject*> _knownObjects;
+      //std::map<TYPE, const ObservableObject*> _knownObjects;
       
       // Store a list of pointers to all objects that have at least one marker
       // with that code.  You can then use the objects' GetMarkersWithCode()
@@ -114,7 +113,6 @@ namespace Anki {
                               std::vector<PoseCluster>& poseClusters) const;
       
     }; // class ObservableObjectLibrary
-    
     
   } // namespace Vision
 } // namespace Anki

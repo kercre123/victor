@@ -29,7 +29,7 @@ namespace Anki {
       using Type = ObjectType;
       
       Platform(Type type);
-      virtual MatPiece* CloneType() const override;
+      virtual Platform* CloneType() const override;
       
       virtual bool IsMoveable() const override { return true; }
       
@@ -41,7 +41,7 @@ namespace Anki {
     }; // class Bridge
     
     
-    inline MatPiece* Platform::CloneType() const
+    inline Platform* Platform::CloneType() const
     {
       // Call the copy constructor
       return new Platform(_type);

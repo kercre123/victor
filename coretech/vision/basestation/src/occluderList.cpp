@@ -11,7 +11,7 @@
 
 #include "anki/vision/basestation/camera.h"
 #include "anki/vision/basestation/occluderList.h"
-#include "anki/vision/basestation/observableObject_impl.h"
+#include "anki/vision/basestation/observableObject.h"
 
 namespace Anki {
   

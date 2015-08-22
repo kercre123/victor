@@ -123,7 +123,7 @@ namespace Cozmo {
       {
         case State::LOOKING_AROUND:
         {
-          BlockWorld::ObservableObject* object = _robot.GetBlockWorld().GetObjectByID(objectID);
+          ObservableObject* object = _robot.GetBlockWorld().GetObjectByID(objectID);
           if(object == nullptr) {
             PRINT_NAMED_ERROR("BehaviorLookForFaces.HandleRobotObservedObject.InvalidID",
                               "Could not get object %d.\n", msg.objectID);
@@ -139,7 +139,7 @@ namespace Cozmo {
           
         case State::TRACKING_FACE:
           if(objectID == _robot.GetTrackToObject()) {
-            BlockWorld::ObservableObject* object = _robot.GetBlockWorld().GetObjectByID(objectID);
+            ObservableObject* object = _robot.GetBlockWorld().GetObjectByID(objectID);
             if(object == nullptr) {
               PRINT_NAMED_ERROR("BehaviorLookForFaces.HandleRobotObservedObject.InvalidID",
                                 "Could not get object %d.\n", msg.objectID);

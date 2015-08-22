@@ -25,7 +25,6 @@ namespace Anki {
   namespace Vision {
     
     // Forward declarations:
-    template<typename FAMILY, typename TYPE>
     class ObservableObject;
     
     class KnownMarker;
@@ -103,14 +102,12 @@ namespace Anki {
       
       // Project an object's corners into the camera and also return the object's
       // distance from the camera's origin
-      template<typename FAMILY, typename TYPE>
-      void ProjectObject(const ObservableObject<FAMILY,TYPE>&  object,
+      void ProjectObject(const ObservableObject&  object,
                          std::vector<Point2f>&    projectedCorners,
                          f32&                     distanceFromCamera) const;
 
       // Register an object as an "occluder" for this camera
-      template<typename FAMILY, typename TYPE>
-      void AddOccluder(const ObservableObject<FAMILY,TYPE>& object);
+      void AddOccluder(const ObservableObject& object);
       
       // Register a KnownMarker as an "occluder" for this camera
       void AddOccluder(const KnownMarker& marker);
@@ -231,41 +228,6 @@ namespace Anki {
     {
       _occluderList.GetAllOccluders(occluders);
     }
-    
-#pragma mark -
-#pragma mark Templated Implementations
-    
-    template<typename FAMILY, typename TYPE>
-    void Camera::ProjectObject(const ObservableObject<FAMILY,TYPE>&  object,
-                               std::vector<Point2f>&    projectedCorners,
-                               f32&                     distanceFromCamera) const
-    {
-      Pose3d objectPoseWrtCamera;
-      if(object.GetPose().GetWithRespectTo(_pose, objectPoseWrtCamera) == false) {
-        PRINT_NAMED_ERROR("Camera.AddOccluder.ObjectDoesNotShareOrigin",
-                          "Object must be in the same pose tree as the camera to add it as an occluder.\n");
-      } else {
-        std::vector<Point3f> cornersAtPose;
-        
-        // Project the objects's corners into the image and create an occluding
-        // bounding rectangle from that
-        object.GetCorners(objectPoseWrtCamera, cornersAtPose);
-        Project3dPoints(cornersAtPose, projectedCorners);
-        distanceFromCamera = objectPoseWrtCamera.GetTranslation().z();
-      }
-    } // ProjectObject()
-    
-    template<typename FAMILY, typename TYPE>
-    void Camera::AddOccluder(const ObservableObject<FAMILY,TYPE>& object)
-    {
-      
-      std::vector<Point2f> projectedCorners;
-      f32 atDistance;
-      ProjectObject(object, projectedCorners, atDistance);
-      AddOccluder(projectedCorners, atDistance);
-      
-    } // AddOccluder(ObservableObject)
-
     
   } // namesapce Vision
 } // namespace Anki

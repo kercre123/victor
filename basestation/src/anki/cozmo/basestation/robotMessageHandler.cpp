@@ -626,7 +626,7 @@ namespace Anki {
       
       for(auto objectsByID : activeBlocksByType) {
         for(auto objectWithID : objectsByID.second) {
-          BlockWorld::ObservableObject* object = objectWithID.second;
+          ObservableObject* object = objectWithID.second;
           assert(object->IsActive());
           if(object->GetActiveID() == msg.objectID) {
             // TODO: Mark object as de-localized
@@ -659,7 +659,7 @@ namespace Anki {
       
       for(auto objectsByID : activeBlocksByType) {
         for(auto objectWithID : objectsByID.second) {
-          BlockWorld::ObservableObject* object = objectWithID.second;
+          ObservableObject* object = objectWithID.second;
           assert(object->IsActive());
           if(object->GetActiveID() == msg.objectID) {
             // TODO: Mark object as de-localized
@@ -686,7 +686,7 @@ namespace Anki {
       
       for(auto objectsByID : activeBlocksByType) {
         for(auto objectWithID : objectsByID.second) {
-          BlockWorld::ObservableObject* object = objectWithID.second;
+          ObservableObject* object = objectWithID.second;
           assert(object->IsActive());
           if(object->GetActiveID() == msg.objectID) {
 

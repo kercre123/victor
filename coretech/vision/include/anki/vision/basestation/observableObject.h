@@ -38,12 +38,11 @@ namespace Anki {
     // Pairing of a pose and the match which implies it
     using PoseMatchPair = std::pair<Pose3d, MarkerMatch>;
     
-    template<typename FAMILY, typename TYPE>
     class ObservableObject
     {
     public:
       // Do we want to be req'd to instantiate with all codes up front?
-      ObservableObject(FAMILY family, TYPE type);
+      ObservableObject();
       
       // For creating a fresh new derived object from a pointer to this base class.
       // NOTE: This just creates a fresh object, and does not copy the original
@@ -121,8 +120,6 @@ namespace Anki {
       
       // Accessors:
       ObjectID           GetID()     const;
-      TYPE               GetType()   const;
-      FAMILY             GetFamily() const;
       const Pose3d&      GetPose()   const;
       const ColorRGBA&   GetColor()  const;
       //virtual float GetMinDim() const = 0;
@@ -196,8 +193,6 @@ namespace Anki {
       virtual const std::vector<Point3f>& GetCanonicalCorners() const = 0;
       
       ObjectID     _ID;
-      TYPE         _type;
-      FAMILY       _family;
       TimeStamp_t  _lastObservedTime;
       u32          _numTimesObserved;
       ColorRGBA    _color;
@@ -221,7 +216,93 @@ namespace Anki {
       // marker pointers and pose parents
       //ObservableObject(const ObservableObject& other);
       
-    }; // class ObservableObject
+    };
+  
+    
+    //
+    // Inline accessors
+    //
+    
+    inline ObjectID ObservableObject::GetID() const {
+      return _ID;
+    }
+    
+    inline const ColorRGBA& ObservableObject::GetColor() const {
+      return _color;
+    }
+    
+    inline const Pose3d& ObservableObject::GetPose() const {
+      return _pose;
+    }
+    
+    inline void ObservableObject::SetID() { //const ObjectID newID) {
+      _ID.Set();
+    }
+  
+    inline void ObservableObject::SetPose(const Pose3d& newPose) {
+      _pose = newPose;
+      
+      std::string poseName("Object");
+      poseName += "_" + std::to_string(GetID().GetValue());
+      _pose.SetName(poseName);
+    }
+    
+    inline void ObservableObject::SetPoseParent(const Pose3d* newParent) {
+      _pose.SetParent(newParent);
+    }
+    
+    inline bool ObservableObject::IsSameAs(const ObservableObject& otherObject) const {
+      return IsSameAs(otherObject, this->GetSameDistanceTolerance(), this->GetSameAngleTolerance());
+    }
+    
+    inline void ObservableObject::SetColor(const Anki::ColorRGBA &color) {
+      _color = color;
+    }
+    
+    inline void ObservableObject::Visualize() {
+      Visualize(_color);
+    }
+    
+    inline Quad2f ObservableObject::GetBoundingQuadXY(const f32 padding_mm) const
+    {
+      return GetBoundingQuadXY(_pose, padding_mm);
+    }
+    
+    inline Point3f ObservableObject::GetSameDistanceTolerance() const {
+      // TODO: This is only ok because we're only using totally symmetric 1x1x1 blocks at the moment.
+      //       The proper way to do the IsSameAs check is to have objects return a scaled down bounding box of themselves
+      //       and see if the the origin of the candidate object is within it.
+      Point3f distTol(GetSize() * DEFAULT_SAME_DIST_TOL_FRACTION);
+      return distTol;
+    }
+    
+    inline bool ObservableObject::IsSameAs(const ObservableObject& otherObject,
+                                           const Point3f& distThreshold,
+                                           const Radians& angleThreshold) const
+    {
+      Point3f Tdiff;
+      Radians angleDiff;
+      return IsSameAs(otherObject, distThreshold, angleThreshold,
+                      Tdiff, angleDiff);
+    }
+    
+    inline const TimeStamp_t ObservableObject::GetLastObservedTime() const {
+      return _lastObservedTime;
+    }
+    
+    inline u32 ObservableObject::GetNumTimesObserved() const {
+      return _numTimesObserved;
+    }
+
+    inline void ObservableObject::SetLastObservedTime(TimeStamp_t t) {
+      _lastObservedTime = t;
+      ++_numTimesObserved;
+    }
+    
+    inline void ObservableObject::GetObservedMarkers(std::vector<const KnownMarker*>& observedMarkers) const {
+      GetObservedMarkers(observedMarkers, GetLastObservedTime());
+    }
+    
     
   } // namespace Vision
 } // namespace Anki

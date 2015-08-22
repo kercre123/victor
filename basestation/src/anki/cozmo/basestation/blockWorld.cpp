@@ -24,9 +24,7 @@
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 
-#include "anki/vision/basestation/observableObject_impl.h"
 #include "anki/vision/basestation/observableObjectLibrary_impl.h"
-
 // The amount of time a proximity obstacle exists beyond the latest detection
 #define PROX_OBSTACLE_LIFETIME_MS  4000
 
@@ -194,9 +192,9 @@ namespace Anki
     } // ~BlockWorld() Destructor
     
     
-    void CheckForOverlapHelper(const BlockWorld::ObservableObject* objectToMatch,
-                               BlockWorld::ObservableObject* objectToCheck,
-                               std::vector<BlockWorld::ObservableObject*>& overlappingObjects)
+    void CheckForOverlapHelper(const ObservableObject* objectToMatch,
+                               ObservableObject* objectToCheck,
+                               std::vector<ObservableObject*>& overlappingObjects)
     {
       
       // TODO: smarter block pose comparison
@@ -1882,7 +1880,7 @@ namespace Anki
       }
     }
     
-    BlockWorld::ObservableObject* BlockWorld::FindObjectOnTopOf(const ObservableObject& objectOnBottom,
+    ObservableObject* BlockWorld::FindObjectOnTopOf(const ObservableObject& objectOnBottom,
                                                             f32 zTolerance) const
     {
       Point3f sameDistTol(objectOnBottom.GetSize());
@@ -1923,7 +1921,7 @@ namespace Anki
       return nullptr;
     }
     
-    BlockWorld::ObservableObject* BlockWorld::FindObjectClosestTo(const Pose3d& pose,
+    ObservableObject* BlockWorld::FindObjectClosestTo(const Pose3d& pose,
                                                               const Vec3f&  distThreshold,
                                                               const std::set<ObjectID>& ignoreIDs,
                                                               const std::set<ObjectType>& ignoreTypes,
@@ -1959,7 +1957,7 @@ namespace Anki
       return matchingObject;
     }
     
-    BlockWorld::ObservableObject* BlockWorld::FindClosestMatchingObject(const ObservableObject& object,
+    ObservableObject* BlockWorld::FindClosestMatchingObject(const ObservableObject& object,
                                                                     const Vec3f& distThreshold,
                                                                     const Radians& angleThreshold)
     {

@@ -21,8 +21,6 @@
 #include "anki/common/basestation/math/poseBase_impl.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/vision/CameraSettings.h"
-#include "anki/vision/basestation/observableObject_impl.h"
-
 // TODO: This is shared between basestation and robot and should be moved up
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/basestation/robotMessageHandler.h"
@@ -659,7 +657,7 @@ namespace Anki {
         
         
         // Block Markers
-        std::set<const BlockWorld::ObservableObject*> const& blocks = _blockWorld.GetObjectLibrary(ObjectFamily::Block).GetObjectsWithMarker(marker);
+        std::set<const ObservableObject*> const& blocks = _blockWorld.GetObjectLibrary(ObjectFamily::Block).GetObjectsWithMarker(marker);
         for(auto block : blocks) {
           std::vector<Vision::KnownMarker*> const& blockMarkers = block->GetMarkersWithCode(marker.GetCode());
           
@@ -685,7 +683,7 @@ namespace Anki {
         
         
         // Mat Markers
-        std::set<const BlockWorld::ObservableObject*> const& mats = _blockWorld.GetObjectLibrary(ObjectFamily::Mat).GetObjectsWithMarker(marker);
+        std::set<const ObservableObject*> const& mats = _blockWorld.GetObjectLibrary(ObjectFamily::Mat).GetObjectsWithMarker(marker);
         for(auto mat : mats) {
           std::vector<Vision::KnownMarker*> const& matMarkers = mat->GetMarkersWithCode(marker.GetCode());
           
@@ -1804,7 +1802,7 @@ namespace Anki {
     
     void Robot::SetCarryingObject(ObjectID carryObjectID)
     {
-      BlockWorld::ObservableObject* object = _blockWorld.GetObjectByID(carryObjectID);
+      ObservableObject* object = _blockWorld.GetObjectByID(carryObjectID);
       if(object == nullptr) {
         PRINT_NAMED_ERROR("Robot.SetCarryingObject",
                           "Object %d no longer exists in the world. Can't set it as robot's carried object.\n",
@@ -1839,7 +1837,7 @@ namespace Anki {
     
     void Robot::UnSetCarryingObject()
     {
-      BlockWorld::ObservableObject* object = _blockWorld.GetObjectByID(_carryingObjectID);
+      ObservableObject* object = _blockWorld.GetObjectByID(_carryingObjectID);
       if(object == nullptr) {
         PRINT_NAMED_ERROR("Robot.UnSetCarryingObject",
                           "Object %d robot %d thought it was carrying no longer exists in the world.\n",
@@ -1917,7 +1915,7 @@ namespace Anki {
       // TODO: Do we need to be able to handle non-actionable objects on top of actionable ones?
 
       const f32 STACKED_HEIGHT_TOL_MM = 15.f; // TODO: make this a parameter somewhere
-      BlockWorld::ObservableObject* objectOnTop = _blockWorld.FindObjectOnTopOf(*object, STACKED_HEIGHT_TOL_MM);
+      ObservableObject* objectOnTop = _blockWorld.FindObjectOnTopOf(*object, STACKED_HEIGHT_TOL_MM);
       if(objectOnTop != nullptr) {
         ActionableObject* actionObjectOnTop = dynamic_cast<ActionableObject*>(objectOnTop);
         if(actionObjectOnTop != nullptr) {
@@ -2739,7 +2737,7 @@ namespace Anki {
       
     ActiveCube* Robot::GetActiveObject(const ObjectID objectID)
     {
-      BlockWorld::ObservableObject* object = GetBlockWorld().GetObjectByIDandFamily(objectID,ObjectFamily::LightCube);
+      ObservableObject* object = GetBlockWorld().GetObjectByIDandFamily(objectID,ObjectFamily::LightCube);
      
       if(object == nullptr) {
         PRINT_NAMED_ERROR("Robot.GetActiveObject",

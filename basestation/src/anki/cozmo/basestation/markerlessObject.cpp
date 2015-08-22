@@ -56,7 +56,7 @@ namespace Anki {
     
     
     MarkerlessObject::MarkerlessObject(Type type)
-    : Vision::ObservableObject<ObjectFamily, ObjectType>(ObjectFamily::MarkerlessObject, ObjectType::ProxObstacle)
+    : ObservableObject(ObjectFamily::MarkerlessObject, ObjectType::ProxObstacle)
     , _size(GetSizeByType(_type))
     {
       _canonicalCorners = {{

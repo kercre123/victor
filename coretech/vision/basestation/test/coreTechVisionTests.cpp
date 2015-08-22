@@ -9,7 +9,7 @@
 #include "anki/common/basestation/math/quad_impl.h"
 
 #include "anki/vision/basestation/camera.h"
-#include "anki/vision/basestation/observableObject_impl.h"
+#include "anki/vision/basestation/observableObject.h"
 #include "anki/vision/basestation/perspectivePoseEstimation.h"
 
 using namespace Anki;

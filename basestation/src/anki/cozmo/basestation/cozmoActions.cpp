@@ -791,7 +791,7 @@ namespace Anki {
     {
       _waitToVerifyTime = -1.f;
       
-      BlockWorld::ObservableObject* object = robot.GetBlockWorld().GetObjectByID(_objectID);
+      ObservableObject* object = robot.GetBlockWorld().GetObjectByID(_objectID);
       if(object == nullptr) {
         PRINT_NAMED_ERROR("FaceObjectAction.Init.ObjectNotFound",
                           "Object with ID=%d no longer exists in the world.\n",
@@ -941,7 +941,7 @@ namespace Anki {
       // can continue with our additional checks:
       
       // Verify that we can see the object we were interested in
-      BlockWorld::ObservableObject* object = robot.GetBlockWorld().GetObjectByID(_objectID);
+      ObservableObject* object = robot.GetBlockWorld().GetObjectByID(_objectID);
       if(object == nullptr) {
         PRINT_NAMED_ERROR("FaceObjectAction.CheckIfDone.ObjectNotFound",
                           "Object with ID=%d no longer exists in the world.\n",
@@ -1558,7 +1558,7 @@ namespace Anki {
         case DA_PLACE_LOW:
         {
           // TODO: Be able to fill in more objects in the stack
-          BlockWorld::ObservableObject* object = robot.GetBlockWorld().GetObjectByID(_dockObjectID);
+          ObservableObject* object = robot.GetBlockWorld().GetObjectByID(_dockObjectID);
           if(object == nullptr) {
             PRINT_NAMED_ERROR("PickAndPlaceObjectAction.EmitCompletionSignal",
                               "Docking object %d not found in world after placing.\n",
@@ -1650,7 +1650,7 @@ namespace Anki {
           // We should _not_ still see a object with the
           // same type as the one we were supposed to pick up in that
           // block's original position because we should now be carrying it.
-          BlockWorld::ObservableObject* carryObject = blockWorld.GetObjectByID(robot.GetCarryingObject());
+          ObservableObject* carryObject = blockWorld.GetObjectByID(robot.GetCarryingObject());
           if(carryObject == nullptr) {
             PRINT_NAMED_ERROR("PickAndPlaceObjectAction.Verify.CarryObjectNoLongerExists",
                               "Object %d we were carrying no longer exists in the world.\n",
@@ -1663,7 +1663,7 @@ namespace Anki {
           
           Vec3f Tdiff;
           Radians angleDiff;
-          BlockWorld::ObservableObject* objectInOriginalPose = nullptr;
+          ObservableObject* objectInOriginalPose = nullptr;
           for(auto object : objectsWithType) {
             // TODO: is it safe to always have useAbsRotation=true here?
             Vec3f Tdiff;

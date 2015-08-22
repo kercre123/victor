@@ -26,12 +26,13 @@
 namespace Anki {
 namespace Vision {
   
-  template<typename FAMILY, typename TYPE>
-  const std::set<const typename ObservableObjectLibrary<FAMILY,TYPE>::ObservableObject*> ObservableObjectLibrary<FAMILY,TYPE>::sEmptyObjectVector;
+  template<class ObsObjectType>
+  const std::set<const typename ObservableObjectLibrary<ObsObjectType>::ObservableObject*> ObservableObjectLibrary<ObsObjectType>::sEmptyObjectVector;
   
-  template<typename FAMILY, typename TYPE>
-  const typename ObservableObjectLibrary<FAMILY,TYPE>::ObservableObject* // Return value
-  ObservableObjectLibrary<FAMILY,TYPE>::GetObjectWithType(const TYPE type) const
+  /*
+  template<class ObsObjectType>
+  const typename ObservableObjectLibrary<ObsObjectType>::ObservableObject* // Return value
+  ObservableObjectLibrary<ObsObjectType>::GetObjectWithType(const TYPE type) const
   {
     auto obj = _knownObjects.find(type);
     if(obj != _knownObjects.end()) {
@@ -41,11 +42,11 @@ namespace Vision {
       return 0;
     }
   }
+  */
   
-  
-  template<typename FAMILY, typename TYPE>
-  typename ObservableObjectLibrary<FAMILY,TYPE>::ObjectSet const& // Return value
-  ObservableObjectLibrary<FAMILY,TYPE>::GetObjectsWithCode(const Marker::Code& code) const
+  template<class ObsObjectType>
+  std::set<const ObsObjectType*> const& // Return value
+  ObservableObjectLibrary<ObsObjectType>::GetObjectsWithCode(const Marker::Code& code) const
   {
     auto temp = _objectsWithCode.find(code);
     if(temp != _objectsWithCode.end()) {
@@ -56,18 +57,18 @@ namespace Vision {
     }
   }
   
-  template<typename FAMILY, typename TYPE>
-  typename ObservableObjectLibrary<FAMILY,TYPE>::ObjectSet const& // Return value
-  ObservableObjectLibrary<FAMILY,TYPE>::GetObjectsWithMarker(const Marker& marker) const
+  template<class ObsObjectType>
+  std::set<const ObsObjectType*> const& // Return value
+  ObservableObjectLibrary<ObsObjectType>::GetObjectsWithMarker(const Marker& marker) const
   {
     return GetObjectsWithCode(marker.GetCode());
   }
   
-  template<typename FAMILY, typename TYPE>
-  void ObservableObjectLibrary<FAMILY,TYPE>::AddObject(const ObservableObject* object)
+  template<class ObsObjectType>
+  void ObservableObjectLibrary<ObsObjectType>::AddObject(const ObservableObject* object)
   {
     // TODO: Warn/error if we are overwriting an existing object with this type?
-    _knownObjects[object->GetType()] = object;
+    _knownObjects.push_back(object);
     for(auto & marker : object->GetMarkers()) {
       _objectsWithCode[marker.GetCode()].insert(object);
     }
@@ -76,13 +77,14 @@ namespace Vision {
   
   // Input:   list of observed markers
   // Outputs: the objects seen and the unused markers
-  template<typename FAMILY, typename TYPE>
-  void ObservableObjectLibrary<FAMILY,TYPE>::CreateObjectsFromMarkers(const std::list<ObservedMarker*>& markers,
+  template<class ObsObjectType>
+  void ObservableObjectLibrary<ObsObjectType>::CreateObjectsFromMarkers(const std::list<ObservedMarker*>& markers,
                                                          std::vector<ObservableObject*>& objectsSeen,
                                                          const CameraID_t seenOnlyBy) const
   {
     // Group the markers by object type
-    std::map<TYPE, std::vector<const ObservedMarker*>> markersWithObjectType;
+    //std::map<TYPE, std::vector<const ObservedMarker*>> markersWithObjectType;
+    std::map<const ObservableObject*, std::vector<const ObservedMarker*>> markersByLibObject;
     
     for(auto marker : markers) {
       
@@ -108,7 +110,9 @@ namespace Vision {
              }
              */
           }
-          markersWithObjectType[(*objectsWithMarker.begin())->GetType()].push_back(marker);
+          //markersWithObjectType[(*objectsWithMarker.begin())->GetType()].push_back(marker);
+          markersByLibObject[*objectsWithMarker.begin()].push_back(marker);
+          
           marker->MarkUsed(true);
         } // IF objectsWithMarker != NULL
       } // IF seenOnlyBy
@@ -119,26 +123,26 @@ namespace Vision {
     // corresponding observed markers to create a list of possible poses
     // for that object. Then cluster the possible poses into one or more
     // object instances of that type, returned in the "objectsSeen" vector.
-    for(auto & objTypeMarkersPair : markersWithObjectType)
+    for(auto & libObjectMarkersPair : markersByLibObject)
     {
       // A place to store the possible poses together with the observed/known
       // markers that implied them
       std::vector<PoseMatchPair> possiblePoses;
       
-      const ObservableObject* libObject = GetObjectWithType(objTypeMarkersPair.first);
+      const ObservableObject* libObject = libObjectMarkersPair.first;
       
       // Get timestamp of the observed markers so that I can set the
       // lastSeenTime of the observable object.
-      auto obsMarker = objTypeMarkersPair.second.begin();
+      auto obsMarker = libObjectMarkersPair.second.begin();
       const TimeStamp_t observedTime = (*obsMarker)->GetTimeStamp();
       
       // Check that all remaining markers also have the same timestamp (which
       // they now should, since we are processing grouped by timestamp)
-      while(++obsMarker != objTypeMarkersPair.second.end()) {
+      while(++obsMarker != libObjectMarkersPair.second.end()) {
         CORETECH_ASSERT(observedTime == (*obsMarker)->GetTimeStamp());
       }
       
-      for(auto obsMarker : objTypeMarkersPair.second)
+      for(auto obsMarker : libObjectMarkersPair.second)
       {
         // For each observed marker, we add to the list of possible poses
         // (each paired with the observed/known marker match from which the
@@ -207,8 +211,8 @@ namespace Vision {
     
   } // CreateObjectsFromMarkers()
   
-  template<typename FAMILY, typename TYPE>
-  ObservableObjectLibrary<FAMILY,TYPE>::PoseCluster::PoseCluster(const PoseMatchPair& match)
+  template<class ObsObjectType>
+  ObservableObjectLibrary<ObsObjectType>::PoseCluster::PoseCluster(const PoseMatchPair& match)
   : _pose(match.first)
   {
     const MarkerMatch& markerMatch = match.second;
@@ -226,8 +230,8 @@ namespace Vision {
     
   }
   
-  template<typename FAMILY, typename TYPE>
-  bool ObservableObjectLibrary<FAMILY,TYPE>::PoseCluster::TryToAddMatch(const PoseMatchPair& match,
+  template<class ObsObjectType>
+  bool ObservableObjectLibrary<ObsObjectType>::PoseCluster::TryToAddMatch(const PoseMatchPair& match,
                                                            const float distThreshold,
                                                            const Radians angleThreshold,
                                                            const std::vector<RotationMatrix3d>& R_ambiguities)
@@ -287,8 +291,8 @@ namespace Vision {
     return wasAdded;
   } // TryToAddMatch()
   
-  template<typename FAMILY, typename TYPE>
-  void ObservableObjectLibrary<FAMILY,TYPE>::PoseCluster::RecomputePose()
+  template<class ObsObjectType>
+  void ObservableObjectLibrary<ObsObjectType>::PoseCluster::RecomputePose()
   {
     if(GetSize() > 1) {
       //fprintf(stdout, "Re-computing pose from all %zu members of cluster.\n", GetSize());
@@ -341,8 +345,8 @@ namespace Vision {
     
   } // RecomputePose()
   
-  template<typename FAMILY, typename TYPE>
-  void ObservableObjectLibrary<FAMILY,TYPE>::ClusterObjectPoses(const std::vector<PoseMatchPair>& possiblePoses,
+  template<class ObsObjectType>
+  void ObservableObjectLibrary<ObsObjectType>::ClusterObjectPoses(const std::vector<PoseMatchPair>& possiblePoses,
                                                    const ObservableObject*         libObject,
                                                    const float distThreshold, const Radians angleThreshold,
                                                    std::vector<PoseCluster>& poseClusters) const

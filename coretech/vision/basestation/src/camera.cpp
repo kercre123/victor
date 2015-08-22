@@ -20,7 +20,7 @@
 #endif
 
 #include "anki/vision/basestation/camera.h"
-#include "anki/vision/basestation/observableObject_impl.h"
+#include "anki/vision/basestation/observableObject.h"
 #include "anki/vision/basestation/perspectivePoseEstimation.h"
 
 
@@ -403,6 +403,37 @@ namespace Anki {
     {
       _occluderList.Clear();
     }
+    
+    void Camera::ProjectObject(const ObservableObject&  object,
+                               std::vector<Point2f>&    projectedCorners,
+                               f32&                     distanceFromCamera) const
+    {
+      Pose3d objectPoseWrtCamera;
+      if(object.GetPose().GetWithRespectTo(_pose, objectPoseWrtCamera) == false) {
+        PRINT_NAMED_ERROR("Camera.AddOccluder.ObjectDoesNotShareOrigin",
+                          "Object must be in the same pose tree as the camera to add it as an occluder.\n");
+      } else {
+        std::vector<Point3f> cornersAtPose;
+        
+        // Project the objects's corners into the image and create an occluding
+        // bounding rectangle from that
+        object.GetCorners(objectPoseWrtCamera, cornersAtPose);
+        Project3dPoints(cornersAtPose, projectedCorners);
+        distanceFromCamera = objectPoseWrtCamera.GetTranslation().z();
+      }
+    } // ProjectObject()
+    
+    
+    void Camera::AddOccluder(const ObservableObject& object)
+    {
+      
+      std::vector<Point2f> projectedCorners;
+      f32 atDistance;
+      ProjectObject(object, projectedCorners, atDistance);
+      AddOccluder(projectedCorners, atDistance);
+      
+    } // AddOccluder(ObservableObject)
+    
     
     void Camera::AddOccluder(const KnownMarker& marker)
     {

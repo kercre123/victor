@@ -17,7 +17,7 @@
 #ifndef ANKI_COZMO_BASESTATION_ACTIONABLE_OBJECT_H
 #define ANKI_COZMO_BASESTATION_ACTIONABLE_OBJECT_H
 
-#include "anki/vision/basestation/observableObject.h"
+#include "anki/cozmo/basestation/cozmoObservableObject.h"
 
 #include "anki/cozmo/basestation/preActionPose.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
@@ -39,7 +39,7 @@ namespace Anki {
       
     };
     
-    class ActionableObject : public Vision::ObservableObject<ObjectFamily, ObjectType>
+    class ActionableObject : public ObservableObject // NOTE: Cozmo::ObservableObject, not Vision::
     {
     public:
       ActionableObject(ObjectFamily family, ObjectType type);

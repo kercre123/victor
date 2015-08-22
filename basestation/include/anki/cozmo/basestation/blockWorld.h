@@ -58,12 +58,11 @@ namespace Anki
     {
     public:
       
-      using ObservableObject = Vision::ObservableObject<ObjectFamily,ObjectType>;
       using ObjectsMapByID_t     = std::map<ObjectID, ObservableObject*>;
       using ObjectsMapByType_t   = std::map<ObjectType, ObjectsMapByID_t >;
       using ObjectsMapByFamily_t = std::map<ObjectFamily, ObjectsMapByType_t>;
       
-      using ObservableObjectLibrary = Vision::ObservableObjectLibrary<ObjectFamily,ObjectType>;
+      using ObservableObjectLibrary = Vision::ObservableObjectLibrary<ObservableObject>;
       
       BlockWorld(Robot* robot);
       ~BlockWorld();
@@ -291,9 +290,9 @@ namespace Anki
       // separated by class of object, not necessarily what we've actually seen
       // yet, but what everything we are aware of)
       std::map<ObjectFamily, ObservableObjectLibrary> _objectLibrary;
-      //Vision::ObservableObjectLibrary blockLibrary_;
-      //Vision::ObservableObjectLibrary matLibrary_;
-      //Vision::ObservableObjectLibrary rampLibrary_;
+      //Vision::Vision::ObservableObjectLibrary blockLibrary_;
+      //Vision::Vision::ObservableObjectLibrary matLibrary_;
+      //Vision::Vision::ObservableObjectLibrary rampLibrary_;
       
       
       // Store all observed objects, indexed first by Type, then by ID
@@ -364,7 +363,7 @@ namespace Anki
       return EmptyObjectMapByID;
     }
     
-    inline BlockWorld::ObservableObject* BlockWorld::GetObjectByID(const ObjectID objectID) const
+    inline ObservableObject* BlockWorld::GetObjectByID(const ObjectID objectID) const
     {
       // TODO: Maintain a separate map indexed directly by ID so we don't have to loop over the outer maps?
       
@@ -381,7 +380,7 @@ namespace Anki
       return nullptr;
     }
     
-    inline BlockWorld::ObservableObject* BlockWorld::GetObjectByIDandFamily(const ObjectID objectID, const ObjectFamily inFamily) const
+    inline ObservableObject* BlockWorld::GetObjectByIDandFamily(const ObjectID objectID, const ObjectFamily inFamily) const
     {
       // TODO: Maintain a separate map indexed directly by ID so we don't have to loop over the outer maps?
       

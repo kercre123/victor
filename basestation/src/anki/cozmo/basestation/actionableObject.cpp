@@ -15,8 +15,6 @@
 
 #include "anki/cozmo/basestation/actionableObject.h"
 
-#include "anki/vision/basestation/observableObject_impl.h"
-
 #include "anki/common/basestation/math/quad_impl.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/poseBase_impl.h"
@@ -27,7 +25,7 @@ namespace Anki {
   namespace Cozmo {
         
     ActionableObject::ActionableObject(ObjectFamily family, ObjectType type)
-    : Vision::ObservableObject<ObjectFamily, ObjectType>(family,type)
+    : ObservableObject(family,type)
     , _isBeingCarried(false)
     , _isSelected(false)
     {

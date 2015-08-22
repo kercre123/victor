@@ -32,18 +32,16 @@
 namespace Anki {
 namespace Vision {
   
-  template<typename FAMILY, typename TYPE>
-  ObservableObject<FAMILY,TYPE>::ObservableObject(FAMILY family, TYPE type)
-  : _type(type)
-  , _family(family)
-  , _lastObservedTime(0)
+  
+  ObservableObject::ObservableObject()
+  : _lastObservedTime(0)
   , _numTimesObserved(0)
   {
     
   }
   
-  template<typename FAMILY, typename TYPE>
-  bool ObservableObject<FAMILY,TYPE>::IsVisibleFrom(const Camera &camera,
+  
+  bool ObservableObject::IsVisibleFrom(const Camera &camera,
                                        const f32 maxFaceNormalAngle,
                                        const f32 minMarkerImageSize,
                                        const bool requireSomethingBehind,
@@ -61,10 +59,10 @@ namespace Vision {
     
     return false;
     
-  } // ObservableObject<FAMILY,TYPE>::IsObservableBy()
+  } // ObservableObject::IsObservableBy()
   
-  template<typename FAMILY, typename TYPE>
-  Vision::KnownMarker const& ObservableObject<FAMILY,TYPE>::AddMarker(const Marker::Code&  withCode,
+  
+  Vision::KnownMarker const& ObservableObject::AddMarker(const Marker::Code&  withCode,
                                                          const Pose3d&        atPose,
                                                          const f32            size_mm)
   {
@@ -77,10 +75,10 @@ namespace Vision {
     _markersWithCode[withCode].push_back(&_markers.back());
     
     return _markers.back();
-  } // ObservableObject<FAMILY,TYPE>::AddMarker()
+  } // ObservableObject::AddMarker()
   
-  template<typename FAMILY, typename TYPE>
-  std::vector<KnownMarker*> const& ObservableObject<FAMILY,TYPE>::GetMarkersWithCode(const Marker::Code& withCode) const
+  
+  std::vector<KnownMarker*> const& ObservableObject::GetMarkersWithCode(const Marker::Code& withCode) const
   {
     auto returnVec = _markersWithCode.find(withCode);
     if(returnVec != _markersWithCode.end()) {
@@ -90,81 +88,78 @@ namespace Vision {
       static const std::vector<KnownMarker*> EmptyMarkerVector(0);
       return EmptyMarkerVector;
     }
-  } // ObservableObject<FAMILY,TYPE>::GetMarkersWithCode()
+  } // ObservableObject::GetMarkersWithCode()
   
-  template<typename FAMILY, typename TYPE>
-  bool ObservableObject<FAMILY,TYPE>::IsSameAs(const ObservableObject& otherObject,
+  
+  bool ObservableObject::IsSameAs(const ObservableObject& otherObject,
                                   const Point3f& distThreshold,
                                   const Radians& angleThreshold,
                                   Point3f& Tdiff,
                                   Radians& angleDiff) const
   {
-    // The two objects can't be the same if they aren't the same type!
-    bool isSame = this->GetType() == otherObject.GetType();
+    bool isSame = true;
     
-    if(isSame) {
-      Pose3d otherPose;
-      
-      // Other object is this object's parent, leave otherPose as default
-      // identity transformation and hook up parent connection.
-      if(&otherObject.GetPose() == _pose.GetParent()) {
-        otherPose.SetParent(&otherObject.GetPose());
-      }
-      
-      else if(_pose.IsOrigin()) {
-        // This object is an origin, GetParent() will be null, so we can't
-        // dereference it below to make them have the same parent.  So try
-        // to get other pose w.r.t. this origin.  If the other object is the
-        // same as an origin pose (which itself is an identity transformation)
-        // then the remaining transformation should be the identity.
-        if(otherObject.GetPose().GetWithRespectTo(_pose, otherPose) == false) {
-          PRINT_NAMED_WARNING("ObservableObject.IsSameAs.ObjectsHaveDifferentOrigins",
-                              "Could not get other object w.r.t. this origin object. Returning isSame == false.\n");
-          isSame = false;
-        }
-      }
-      
-      // Otherwise, attempt to make the two poses have the same parent so they
-      // are comparable
-      else if(otherObject.GetPose().GetWithRespectTo(*_pose.GetParent(), otherPose) == false) {
+    Pose3d otherPose;
+    
+    // Other object is this object's parent, leave otherPose as default
+    // identity transformation and hook up parent connection.
+    if(&otherObject.GetPose() == _pose.GetParent()) {
+      otherPose.SetParent(&otherObject.GetPose());
+    }
+    
+    else if(_pose.IsOrigin()) {
+      // This object is an origin, GetParent() will be null, so we can't
+      // dereference it below to make them have the same parent.  So try
+      // to get other pose w.r.t. this origin.  If the other object is the
+      // same as an origin pose (which itself is an identity transformation)
+      // then the remaining transformation should be the identity.
+      if(otherObject.GetPose().GetWithRespectTo(_pose, otherPose) == false) {
         PRINT_NAMED_WARNING("ObservableObject.IsSameAs.ObjectsHaveDifferentOrigins",
-                            "Could not get other object w.r.t. this object's parent. Returning isSame == false.\n");
+                            "Could not get other object w.r.t. this origin object. Returning isSame == false.\n");
         isSame = false;
       }
+    }
+    
+    // Otherwise, attempt to make the two poses have the same parent so they
+    // are comparable
+    else if(otherObject.GetPose().GetWithRespectTo(*_pose.GetParent(), otherPose) == false) {
+      PRINT_NAMED_WARNING("ObservableObject.IsSameAs.ObjectsHaveDifferentOrigins",
+                          "Could not get other object w.r.t. this object's parent. Returning isSame == false.\n");
+      isSame = false;
+    }
+    
+    if(isSame) {
       
-      if(isSame) {
-        
-        CORETECH_ASSERT(otherPose.GetParent() == _pose.GetParent() ||
-                        (_pose.IsOrigin() && otherPose.GetParent() == &_pose));
-        
-#         if IGNORE_ROTATION_FOR_IS_SAME_AS
-        Point3f Tdiff(_pose.GetTranslation());
-        Tdiff -= otherPose.GetTranslation();
-        Tdiff = _pose.GetRotation() * Tdiff;
-        Tdiff.Abs();
-        isSame = Tdiff < distThreshold;
-#         else
-        if(this->GetRotationAmbiguities().empty()) {
-          isSame = _pose.IsSameAs(otherPose, distThreshold, angleThreshold,
-                                  Tdiff, angleDiff);
-        }
-        else {
-          isSame = _pose.IsSameAs_WithAmbiguity(otherPose,
-                                                this->GetRotationAmbiguities(),
-                                                distThreshold, angleThreshold, true,
-                                                Tdiff, angleDiff);
-        } // if/else there are ambiguities
-#         endif // IGNORE_ROTATION_FOR_IS_SAME_AS
-        
-      } // if(isSame) [inner]
-    } // if(isSame) [outer]
+      CORETECH_ASSERT(otherPose.GetParent() == _pose.GetParent() ||
+                      (_pose.IsOrigin() && otherPose.GetParent() == &_pose));
+      
+#     if IGNORE_ROTATION_FOR_IS_SAME_AS
+      Point3f Tdiff(_pose.GetTranslation());
+      Tdiff -= otherPose.GetTranslation();
+      Tdiff = _pose.GetRotation() * Tdiff;
+      Tdiff.Abs();
+      isSame = Tdiff < distThreshold;
+#     else
+      if(this->GetRotationAmbiguities().empty()) {
+        isSame = _pose.IsSameAs(otherPose, distThreshold, angleThreshold,
+                                Tdiff, angleDiff);
+      }
+      else {
+        isSame = _pose.IsSameAs_WithAmbiguity(otherPose,
+                                              this->GetRotationAmbiguities(),
+                                              distThreshold, angleThreshold, true,
+                                              Tdiff, angleDiff);
+      } // if/else there are ambiguities
+#     endif // IGNORE_ROTATION_FOR_IS_SAME_AS
+      
+    } // if(isSame)
     
     return isSame;
     
-  } // ObservableObject<FAMILY,TYPE>::IsSameAs()
+  } // ObservableObject::IsSameAs()
 
-  template<typename FAMILY, typename TYPE>
-  void ObservableObject<FAMILY,TYPE>::ComputePossiblePoses(const ObservedMarker*     obsMarker,
+  
+  void ObservableObject::ComputePossiblePoses(const ObservedMarker*     obsMarker,
                                               std::vector<PoseMatchPair>& possiblePoses) const
   {
     auto matchingMarkers = _markersWithCode.find(obsMarker->GetCode());
@@ -192,7 +187,7 @@ namespace Vision {
   } // ComputePossiblePoses()
 
   /*
-  Point3f ObservableObject<FAMILY,TYPE>::GetRotatedBoundingCube(const Pose3d &atPose)
+  Point3f ObservableObject::GetRotatedBoundingCube(const Pose3d &atPose)
   {
     // TODO: Rotate using quaternion
     Point3f cubeSize(atPose.GetRotation() * GetCanonicalBoundingCube());
@@ -200,27 +195,27 @@ namespace Vision {
   }
    */
   
-  template<typename FAMILY, typename TYPE>
-  std::vector<RotationMatrix3d> const& ObservableObject<FAMILY,TYPE>::GetRotationAmbiguities() const
+  
+  std::vector<RotationMatrix3d> const& ObservableObject::GetRotationAmbiguities() const
   {
     static const std::vector<RotationMatrix3d> RotationAmbiguities; // default is empty
     return RotationAmbiguities;
   }
   
-  template<typename FAMILY, typename TYPE>
-  void ObservableObject<FAMILY,TYPE>::GetCorners(std::vector<Point3f>& corners) const
+  
+  void ObservableObject::GetCorners(std::vector<Point3f>& corners) const
   {
     GetCorners(_pose, corners);
   }
 
-  template<typename FAMILY, typename TYPE>
-  void ObservableObject<FAMILY,TYPE>::GetCorners(const Pose3d& atPose, std::vector<Point3f>& corners) const
+  
+  void ObservableObject::GetCorners(const Pose3d& atPose, std::vector<Point3f>& corners) const
   {
     atPose.ApplyTo(GetCanonicalCorners(), corners);
   }
   
-  template<typename FAMILY, typename TYPE>
-  void ObservableObject<FAMILY,TYPE>::GetObservedMarkers(std::vector<const KnownMarker*>& observedMarkers,
+  
+  void ObservableObject::GetObservedMarkers(std::vector<const KnownMarker*>& observedMarkers,
                                             const TimeStamp_t sinceTime) const
   {
     if(sinceTime > 0) {
@@ -233,15 +228,9 @@ namespace Vision {
     }
   } // GetObservedMarkers()
   
-  template<typename FAMILY, typename TYPE>
-  Result ObservableObject<FAMILY,TYPE>::UpdateMarkerObservationTimes(const ObservableObject& otherObject)
+  
+  Result ObservableObject::UpdateMarkerObservationTimes(const ObservableObject& otherObject)
   {
-    if(otherObject.GetType() != this->GetType()) {
-      PRINT_NAMED_ERROR("ObservableObject.UpdateMarkerObservationTimes.TypeMismatch",
-                        "Tried to update the marker observations between dissimilar object types.\n");
-      return RESULT_FAIL;
-    }
-
     std::list<KnownMarker> const& otherMarkers = otherObject.GetMarkers();
 
     // If these objects are the same type they have to have the same number of
@@ -261,8 +250,8 @@ namespace Vision {
     return RESULT_OK;
   }
   
-  template<typename FAMILY, typename TYPE>
-  void ObservableObject<FAMILY,TYPE>::SetMarkersAsObserved(const Marker::Code& withCode,
+  
+  void ObservableObject::SetMarkersAsObserved(const Marker::Code& withCode,
                                               const TimeStamp_t   atTime)
   {
     auto markers = _markersWithCode.find(withCode);
@@ -279,8 +268,8 @@ namespace Vision {
     
   } // SetMarkersAsObserved()
   
-  template<typename FAMILY, typename TYPE>
-  void ObservableObject<FAMILY,TYPE>::SetMarkerAsObserved(const ObservedMarker* nearestTo,
+  
+  void ObservableObject::SetMarkerAsObserved(const ObservedMarker* nearestTo,
                                              const TimeStamp_t     atTime,
                                              const f32             centroidDistThreshold,
                                              const f32             areaRatioThreshold)
@@ -332,8 +321,8 @@ namespace Vision {
     }
   } // SetMarkerAsObserved()
   
-  template<typename FAMILY, typename TYPE>
-  Quad2f ObservableObject<FAMILY,TYPE>::GetBoundingQuadXY(const Pose3d& atPose, const f32 padding_mm) const
+  
+  Quad2f ObservableObject::GetBoundingQuadXY(const Pose3d& atPose, const f32 padding_mm) const
   {
     const std::vector<Point3f>& canonicalCorners = GetCanonicalCorners();
     const RotationMatrix3d& R = atPose.GetRotationMatrix();
@@ -362,120 +351,6 @@ namespace Vision {
     
     return boundingQuad;
   } // GetBoundingQuadXY()
-  
-#pragma mark -
-#pragma mark Inlined Accessors
-  
-  template<typename FAMILY, typename TYPE>
-  inline ObjectID ObservableObject<FAMILY,TYPE>::GetID() const {
-    return _ID;
-  }
-  
-  template<typename FAMILY, typename TYPE>
-  inline TYPE ObservableObject<FAMILY,TYPE>::GetType() const {
-    return _type;
-  }
-  
-  template<typename FAMILY, typename TYPE>
-  inline FAMILY ObservableObject<FAMILY,TYPE>::GetFamily() const {
-    return _family;
-  }
-  
-  template<typename FAMILY, typename TYPE>
-  inline const ColorRGBA& ObservableObject<FAMILY,TYPE>::GetColor() const {
-    return _color;
-  }
-  
-  template<typename FAMILY, typename TYPE>
-  inline const Pose3d& ObservableObject<FAMILY,TYPE>::GetPose() const {
-    return _pose;
-  }
-  
-  template<typename FAMILY, typename TYPE>
-  inline void ObservableObject<FAMILY,TYPE>::SetID() { //const ObjectID newID) {
-    _ID.Set();
-  }
-  
-  template<typename FAMILY, typename TYPE>
-  inline void ObservableObject<FAMILY,TYPE>::SetPose(const Pose3d& newPose) {
-    _pose = newPose;
-    
-    std::string poseName(ObjectTypeToString(GetType()));
-    if(poseName.empty()) {
-      poseName = "Object";
-    }
-    poseName += "_" + std::to_string(GetID().GetValue());
-    _pose.SetName(poseName);
-  }
-  
-  template<typename FAMILY, typename TYPE>
-  inline void ObservableObject<FAMILY,TYPE>::SetPoseParent(const Pose3d* newParent) {
-    _pose.SetParent(newParent);
-  }
-  
-  template<typename FAMILY, typename TYPE>
-  inline bool ObservableObject<FAMILY,TYPE>::IsSameAs(const ObservableObject& otherObject) const {
-    return IsSameAs(otherObject, this->GetSameDistanceTolerance(), this->GetSameAngleTolerance());
-  }
-  
-  template<typename FAMILY, typename TYPE>
-  inline void ObservableObject<FAMILY,TYPE>::SetColor(const Anki::ColorRGBA &color) {
-    _color = color;
-  }
-  
-  template<typename FAMILY, typename TYPE>
-  inline void ObservableObject<FAMILY,TYPE>::Visualize() {
-    Visualize(_color);
-  }
-  
-  template<typename FAMILY, typename TYPE>
-  inline Quad2f ObservableObject<FAMILY,TYPE>::GetBoundingQuadXY(const f32 padding_mm) const
-  {
-    return GetBoundingQuadXY(_pose, padding_mm);
-  }
-  
-  template<typename FAMILY, typename TYPE>
-  inline Point3f ObservableObject<FAMILY,TYPE>::GetSameDistanceTolerance() const {
-    // TODO: This is only ok because we're only using totally symmetric 1x1x1 blocks at the moment.
-    //       The proper way to do the IsSameAs check is to have objects return a scaled down bounding box of themselves
-    //       and see if the the origin of the candidate object is within it.
-    Point3f distTol(GetSize() * DEFAULT_SAME_DIST_TOL_FRACTION);
-    return distTol;
-  }
-  
-  template<typename FAMILY, typename TYPE>
-  inline bool ObservableObject<FAMILY,TYPE>::IsSameAs(const ObservableObject& otherObject,
-                                                      const Point3f& distThreshold,
-                                                      const Radians& angleThreshold) const
-  {
-    Point3f Tdiff;
-    Radians angleDiff;
-    return IsSameAs(otherObject, distThreshold, angleThreshold,
-                    Tdiff, angleDiff);
-  }
-  
-  template<typename FAMILY, typename TYPE>
-  inline const TimeStamp_t ObservableObject<FAMILY,TYPE>::GetLastObservedTime() const {
-    return _lastObservedTime;
-  }
-  
-  template<typename FAMILY, typename TYPE>
-  inline u32 ObservableObject<FAMILY,TYPE>::GetNumTimesObserved() const {
-    return _numTimesObserved;
-  }
-  
-  template<typename FAMILY, typename TYPE>
-  inline void ObservableObject<FAMILY,TYPE>::SetLastObservedTime(TimeStamp_t t) {
-    _lastObservedTime = t;
-    ++_numTimesObserved;
-  }
-  
-  template<typename FAMILY, typename TYPE>
-  inline void ObservableObject<FAMILY,TYPE>::GetObservedMarkers(std::vector<const KnownMarker*>& observedMarkers) const {
-    GetObservedMarkers(observedMarkers, GetLastObservedTime());
-  }
-  
-
   
 } // namespace Vision
 } // namespace Anki

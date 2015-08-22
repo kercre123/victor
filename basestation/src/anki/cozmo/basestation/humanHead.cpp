@@ -64,7 +64,7 @@ namespace Cozmo {
   
   
   HumanHead::HumanHead(Type type)
-  : Vision::ObservableObject<ObjectFamily,ObjectType>(ObjectFamily::HumanHead,type)
+  : ObservableObject(ObjectFamily::HumanHead,type)
   , _size(GetSizeByType(_type))
   {
     _canonicalCorners = {{

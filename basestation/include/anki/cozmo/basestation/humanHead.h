@@ -14,7 +14,7 @@
 #ifndef ANKI_COZMO_HUMAN_HEAD_H
 #define ANKI_COZMO_HUMAN_HEAD_H
 
-#include "anki/vision/basestation/observableObject.h"
+#include "anki/cozmo/basestation/cozmoObservableObject.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
 
 #include "clad/types/objectTypes.h"
@@ -23,7 +23,7 @@
 namespace Anki {
 namespace Cozmo {
   
-  class HumanHead : public Vision::ObservableObject<ObjectFamily,ObjectType>
+  class HumanHead : public ObservableObject // Note: Cozmo:: note Vision::
   {
   public:
     

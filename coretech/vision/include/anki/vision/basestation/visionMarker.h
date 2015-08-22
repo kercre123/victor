@@ -21,7 +21,6 @@ namespace Anki {
   namespace Vision{
     
     // Forward declaration:
-    template<typename FAMILY, typename TYPE>
     class ObservableObject;
     
     class Camera;

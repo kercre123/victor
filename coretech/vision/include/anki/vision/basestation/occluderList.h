@@ -19,7 +19,6 @@ namespace Anki {
   namespace Vision {
     
     // Forward declarations:
-    template<typename FAMILY, typename TYPE>
     class ObservableObject;
     
     class OccluderList
