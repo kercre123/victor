@@ -989,9 +989,13 @@ namespace Anki
       
       // Get all mat objects *seen by this robot's camera*
       std::vector<ObservableObject*> matsSeen;
-      _objectLibrary[ObjectFamily::Mat].CreateObjectsFromMarkers(obsMarkersListAtTimestamp, matsSeen,
-                                                                  (_robot->GetCamera().GetID()));
-
+      Result lastResult = _objectLibrary[ObjectFamily::Mat].CreateObjectsFromMarkers(obsMarkersListAtTimestamp,
+                                                                                     matsSeen,
+                                                                                     (_robot->GetCamera().GetID()));
+      if(lastResult != RESULT_OK) {
+        return false;
+      }
+      
       // Remove used markers from map container
       RemoveUsedMarkers(obsMarkersAtTimestamp);
       

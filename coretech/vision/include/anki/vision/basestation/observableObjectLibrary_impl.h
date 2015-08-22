@@ -27,22 +27,7 @@ namespace Anki {
 namespace Vision {
   
   template<class ObsObjectType>
-  const std::set<const typename ObservableObjectLibrary<ObsObjectType>::ObservableObject*> ObservableObjectLibrary<ObsObjectType>::sEmptyObjectVector;
-  
-  /*
-  template<class ObsObjectType>
-  const typename ObservableObjectLibrary<ObsObjectType>::ObservableObject* // Return value
-  ObservableObjectLibrary<ObsObjectType>::GetObjectWithType(const TYPE type) const
-  {
-    auto obj = _knownObjects.find(type);
-    if(obj != _knownObjects.end()) {
-      return obj->second;
-    }
-    else {
-      return 0;
-    }
-  }
-  */
+  const std::set<const ObsObjectType*> ObservableObjectLibrary<ObsObjectType>::sEmptyObjectVector;
   
   template<class ObsObjectType>
   std::set<const ObsObjectType*> const& // Return value
@@ -65,7 +50,7 @@ namespace Vision {
   }
   
   template<class ObsObjectType>
-  void ObservableObjectLibrary<ObsObjectType>::AddObject(const ObservableObject* object)
+  void ObservableObjectLibrary<ObsObjectType>::AddObject(const ObsObjectType* object)
   {
     // TODO: Warn/error if we are overwriting an existing object with this type?
     _knownObjects.push_back(object);
@@ -78,13 +63,12 @@ namespace Vision {
   // Input:   list of observed markers
   // Outputs: the objects seen and the unused markers
   template<class ObsObjectType>
-  void ObservableObjectLibrary<ObsObjectType>::CreateObjectsFromMarkers(const std::list<ObservedMarker*>& markers,
-                                                         std::vector<ObservableObject*>& objectsSeen,
+  Result ObservableObjectLibrary<ObsObjectType>::CreateObjectsFromMarkers(const std::list<ObservedMarker*>& markers,
+                                                         std::vector<ObsObjectType*>& objectsSeen,
                                                          const CameraID_t seenOnlyBy) const
   {
-    // Group the markers by object type
-    //std::map<TYPE, std::vector<const ObservedMarker*>> markersWithObjectType;
-    std::map<const ObservableObject*, std::vector<const ObservedMarker*>> markersByLibObject;
+    // Group the markers by the lib object to which they match
+    std::map<const ObsObjectType*, std::vector<const ObservedMarker*>> markersByLibObject;
     
     for(auto marker : markers) {
       
@@ -95,22 +79,18 @@ namespace Vision {
       if(seenOnlyBy == ANY_CAMERA || marker->GetSeenBy().GetID() == seenOnlyBy)
       {
         // Find all objects which use this marker...
-        std::set<const ObservableObject*> const& objectsWithMarker = GetObjectsWithMarker(*marker);
+        std::set<const ObsObjectType*> const& objectsWithMarker = GetObjectsWithMarker(*marker);
         
         // ...if there are any, add this marker to the list of observed markers
         // that corresponds to this object type.
         if(!objectsWithMarker.empty()) {
           if(objectsWithMarker.size() > 1) {
-            CORETECH_THROW("Having multiple objects in the library with the "
-                           "same marker is not yet supported.");
-            
-            /*
-             for(auto object : *objectsWithMarker) {
-             markersWithObjectID[object->GetID()].push_back(&marker);
-             }
-             */
+            PRINT_NAMED_ERROR("ObservableObjectLibrary.CreateObjectFromMarkers.MultipleLibObjectsWithMarker",
+                              "Having multiple objects in the library with the "
+                              "same marker ('%s') is not supported.",
+                              marker->GetCodeName());
+            return RESULT_FAIL;
           }
-          //markersWithObjectType[(*objectsWithMarker.begin())->GetType()].push_back(marker);
           markersByLibObject[*objectsWithMarker.begin()].push_back(marker);
           
           marker->MarkUsed(true);
@@ -129,7 +109,7 @@ namespace Vision {
       // markers that implied them
       std::vector<PoseMatchPair> possiblePoses;
       
-      const ObservableObject* libObject = libObjectMarkersPair.first;
+      const ObsObjectType* libObject = libObjectMarkersPair.first;
       
       // Get timestamp of the observed markers so that I can set the
       // lastSeenTime of the observable object.
@@ -209,6 +189,7 @@ namespace Vision {
       
     } // FOR each objectType
     
+    return RESULT_OK;
   } // CreateObjectsFromMarkers()
   
   template<class ObsObjectType>
@@ -347,7 +328,7 @@ namespace Vision {
   
   template<class ObsObjectType>
   void ObservableObjectLibrary<ObsObjectType>::ClusterObjectPoses(const std::vector<PoseMatchPair>& possiblePoses,
-                                                   const ObservableObject*         libObject,
+                                                   const ObsObjectType*         libObject,
                                                    const float distThreshold, const Radians angleThreshold,
                                                    std::vector<PoseCluster>& poseClusters) const
   {
