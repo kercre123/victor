@@ -1,0 +1,135 @@
+/**
+ * File: behaviorLookAround.cpp
+ *
+ * Author: Lee
+ * Created: 08/13/15
+ *
+ * Description: Behavior for looking around the environment for stuff to interact with.
+ *
+ * Copyright: Anki, Inc. 2015
+ *
+ **/
+
+#include "anki/cozmo/basestation/behaviors/behaviorLookAround.h"
+#include "anki/cozmo/basestation/cozmoActions.h"
+#include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/events/ankiEvent.h"
+#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "anki/common/shared/radians.h"
+#include "clad/externalInterface/messageEngineToGame.h"
+
+namespace Anki {
+namespace Cozmo {
+  
+// Time to wait before looking around again in seconds
+const float BehaviorLookAround::kLookAroundCooldownDuration = 20.0f;
+const float BehaviorLookAround::kDegreesRotatePerSec = 25.0f;
+
+BehaviorLookAround::BehaviorLookAround(Robot& robot, const Json::Value& config)
+  : IBehavior(robot, config)
+  , _currentState(State::Inactive)
+  , _lastLookAroundTime(0.f)
+{
+  _name = "LookAround";
+}
+
+bool BehaviorLookAround::IsRunnable(float currentTime_sec) const
+{
+  switch (_currentState)
+  {
+    case State::Inactive:
+    {
+      if (_lastLookAroundTime + kLookAroundCooldownDuration < currentTime_sec)
+      {
+        return true;
+      }
+      break;
+    }
+    case State::StartLooking:
+    case State::LookingForObject:
+    case State::ExamineFoundObject:
+    {
+      return true;
+    }
+    default:
+    {
+      PRINT_NAMED_ERROR("LookAround_Behavior.IsRunnable.UnknownState",
+                        "Reached unknown state %d.", _currentState);
+    }
+  }
+  return false;
+}
+
+Result BehaviorLookAround::Init()
+{
+  _currentState = State::StartLooking;
+  return Result::RESULT_OK;
+}
+
+IBehavior::Status BehaviorLookAround::Update(float currentTime_sec)
+{
+  static Radians lastHeading;
+  
+  switch (_currentState)
+  {
+    case State::Inactive:
+    {
+      break;
+    }
+    case State::StartLooking:
+    {
+      _totalRotation = 0;
+      lastHeading = _robot.GetPose().GetRotationAngle<'Z'>();
+      _robot.TurnInPlaceAtSpeed(DEG_TO_RAD(kDegreesRotatePerSec), DEG_TO_RAD(1440));
+      _currentState = State::LookingForObject;
+    }
+    // NOTE INTENTIONAL FALLTHROUGH
+    case State::LookingForObject:
+    {
+      Radians newHeading = _robot.GetPose().GetRotationAngle<'Z'>();
+      _totalRotation += fabsf((newHeading - lastHeading).getDegrees());
+      lastHeading = newHeading;
+      
+      if (_totalRotation > 360.f)
+      {
+        ResetBehavior(currentTime_sec);
+        break;
+      }
+      
+      return Status::Running;
+    }
+    case State::ExamineFoundObject:
+    {
+      return Status::Running;
+    }
+    default:
+    {
+      PRINT_NAMED_ERROR("LookAround_Behavior.Update.UnknownState",
+                        "Reached unknown state %d.", _currentState);
+    }
+  }
+  
+  return Status::Complete;
+}
+
+Result BehaviorLookAround::Interrupt(float currentTime_sec)
+{
+  ResetBehavior(currentTime_sec);
+  return Result::RESULT_OK;
+}
+  
+void BehaviorLookAround::ResetBehavior(float currentTime_sec)
+{
+  _lastLookAroundTime = currentTime_sec;
+  _currentState = State::Inactive;
+  _robot.StopAllMotors();
+}
+
+bool BehaviorLookAround::GetRewardBid(Reward& reward)
+{
+  return true;
+}
+
+
+} // namespace Cozmo
+} // namespace Anki
