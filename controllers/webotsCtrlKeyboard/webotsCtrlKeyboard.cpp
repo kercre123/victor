@@ -63,8 +63,6 @@ namespace Anki {
           ,{0.8, 0.1, 0.1} // Place object color
         };
         
-        BehaviorManager::Mode behaviorMode_ = BehaviorManager::None;
-        
         double lastKeyPressTime_;
         
         #if(ENABLE_GAMEPAD_SUPPORT)
@@ -127,7 +125,7 @@ namespace Anki {
         bool saveRobotImageToFile_ = false;
         
       } // private namespace
-      
+    
       // ======== Message handler callbacks =======
     
     // For processing image chunks arriving from robot.
@@ -283,7 +281,6 @@ namespace Anki {
         printf("          Dock to selected block:  p\n");
         printf("          Dock from current pose:  Shift+p\n");
         printf("    Travel up/down selected ramp:  r\n");
-        printf("       Start June 2014 dice demo:  j\n");
         printf("              Abort current path:  q\n");
         printf("                Abort everything:  Shift+q\n");
         printf("         Update controller gains:  k\n");
@@ -821,13 +818,21 @@ namespace Anki {
               case (s32)'C':
               {
                 if(modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
-                  if(BehaviorManager::CREEP == behaviorMode_) {
-                    behaviorMode_ = BehaviorManager::None;
-                  } else {
-                    behaviorMode_ = BehaviorManager::CREEP;
+               
+                  // Send whatever animation is specified in the animationToSendName field
+                  webots::Field* behaviorNameField = root_->getField("behaviorName");
+                  if (behaviorNameField == nullptr) {
+                    printf("ERROR: No behaviorName field found in WebotsKeyboardController.proto\n");
+                    break;
+                  }
+                  std::string behaviorName = behaviorNameField->getSFString();
+                  if (behaviorName.empty()) {
+                    printf("ERROR: animationToSendName field is empty\n");
+                    break;
                   }
                   
-                  SendExecuteBehavior(behaviorMode_);
+                  SendExecuteBehavior(behaviorName);
+                  
                 }
                 else if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
                   SendClearAllObjects();
@@ -866,17 +871,6 @@ namespace Anki {
                 break;
               }
 
-                
-              case (s32)'J':
-              {
-                if (behaviorMode_ == BehaviorManager::June2014DiceDemo) {
-                  SendExecuteBehavior(BehaviorManager::None);
-                } else {
-                  SendExecuteBehavior(BehaviorManager::June2014DiceDemo);
-                }
-                break;
-              }
-                
               case (s32)'Q':
               {
                 /* Debugging U2G message for drawing quad
@@ -1184,50 +1178,6 @@ namespace Anki {
                 if(iAnimTest == NUM_ANIM_TESTS) {
                   iAnimTest = 0;
                 }
-                break;
-              }
-
-              //
-              // CREEP Behavior States:
-              //
-              case (s32)'0':
-              {
-                SendSetNextBehaviorState(BehaviorManager::DANCE_WITH_BLOCK);
-                break;
-              }
-              case (s32)'7':
-              {
-                SendSetNextBehaviorState(BehaviorManager::EXCITABLE_CHASE);
-                break;
-              }
-              case (s32)'8':
-              {
-                SendSetNextBehaviorState(BehaviorManager::SCARED_FLEE);
-                break;
-              }
-              case (s32)'-':
-              {
-                SendSetNextBehaviorState(BehaviorManager::HELP_ME_STATE);
-                break;
-              }
-              case (s32)'=':
-              {
-                SendSetNextBehaviorState(BehaviorManager::WHAT_NEXT);
-                break;
-              }
-              case (s32)'9':
-              {
-                SendSetNextBehaviorState(BehaviorManager::SCAN);
-                break;
-              }
-              case (s32)'&':
-              {
-                SendSetNextBehaviorState(BehaviorManager::IDLE);
-                break;
-              }
-              case (s32)'!':
-              {
-                SendSetNextBehaviorState(BehaviorManager::ACKNOWLEDGEMENT_NOD);
                 break;
               }
                 
