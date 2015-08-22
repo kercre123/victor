@@ -4,7 +4,8 @@
 * Author: damjan stulic
 * Created: 8/12/15
 *
-* Description: 
+* Description: Checks that there at least a certain number of animations available and
+*              and that a few of them can be played successfully.
 *
 * Copyright: Anki, inc. 2015
 *
@@ -35,13 +36,13 @@ namespace Cozmo {
     virtual s32 UpdateInternal() override;
     
     virtual void HandleRobotCompletedAction(const ExternalInterface::RobotCompletedAction& msg) override;
-    virtual void HandleAnimationAvailable(ExternalInterface::AnimationAvailable const& msg) override;
     
     TestState _testState = TestState::InitCheck;
 
-    std::vector<std::string> _availableAnims;
-    s32 _currentAnimIdx = -1;
-
+    std::unordered_set<std::string>::iterator _currAnimIter;
+    std::string _lastAnimPlayed = "";
+    double _lastAnimPlayedTime = 0;
+    u32 _numAnimsPlayed = 0;
   };
   
   // Register class with factory
@@ -58,26 +59,39 @@ namespace Cozmo {
        
         // Check that there were atleast a few animations defined
         // TODO: Should animFailedToLoad be an EngineToGame message? Or do we test this is EngineTestController (which doesn't exist yet) that can listen to events.
-        CST_ASSERT (_availableAnims.size() >= MIN_NUM_ANIMS_REQUIRED,
-                    _availableAnims.size() << " anims loaded but " << MIN_NUM_ANIMS_REQUIRED << " expected");
+        CST_ASSERT (GetNumAvailableAnimations() >= MIN_NUM_ANIMS_REQUIRED,
+                    GetNumAvailableAnimations() << " anims loaded but " << MIN_NUM_ANIMS_REQUIRED << " expected");
 
+        _currAnimIter = GetAvailableAnimations().begin();
+        
         _testState = TestState::ReadyForNextCommand;
         break;
 
       case TestState::ReadyForNextCommand:
       {
-        if (_currentAnimIdx == NUM_ANIMS_TO_PLAY - 1) {
+        CST_ASSERT(_currAnimIter != GetAvailableAnimations().end(), "Fewer animations available than expected");
+        
+        if (_numAnimsPlayed == NUM_ANIMS_TO_PLAY) {
           _testState = TestState::TestDone;
           PRINT_NAMED_INFO("TestController.Update", "all tests completed (Result = %d)", _result);
           break;
         }
-        ++_currentAnimIdx;
-        SendAnimation(_availableAnims[_currentAnimIdx].c_str(), 1);
+        PRINT_NAMED_INFO("CST_Animations.PlayingAnim", "%d: %s", _numAnimsPlayed, _currAnimIter->c_str());
+        SendAnimation(_currAnimIter->c_str(), 1);
+        _lastAnimPlayed = *_currAnimIter;
+        ++_currAnimIter;
+        ++_numAnimsPlayed;
+        _lastAnimPlayedTime = GetSupervisor()->getTime();
         _testState = TestState::ExecutingTestAnimation;
-      }
+        
         break;
-
+      }
+        
       case TestState::ExecutingTestAnimation:
+        // If no action complete message, this will timeout with assert.
+        if (CONDITION_WITH_TIMEOUT_ASSERT(_lastAnimPlayed.empty(), _lastAnimPlayedTime, 5)) {
+          _testState = TestState::ReadyForNextCommand;
+        }
         break;
 
       case TestState::TestDone:
@@ -100,13 +114,13 @@ namespace Cozmo {
         printf("Robot %d finished playing animation %s. [Tag=%d]\n",
                msg.robotID, msg.completionInfo.animName.c_str(), msg.idTag);
         if ((_testState == TestState::ExecutingTestAnimation) &&
-            (_currentAnimIdx >= 0) &&
-            (msg.completionInfo.animName.compare(_availableAnims[_currentAnimIdx]) == 0)) {
+            (msg.completionInfo.animName.compare(_lastAnimPlayed) == 0)) {
           
           CST_EXPECT(msg.result == ActionResult::SUCCESS,
-                     _availableAnims[_currentAnimIdx] << " failed to play");
+                     _lastAnimPlayed << " failed to play");
           
-          _testState = TestState::ReadyForNextCommand;
+          // Clear this to signal to state machine to play the next animation
+          _lastAnimPlayed.clear();
         }
         break;
    
@@ -114,11 +128,6 @@ namespace Cozmo {
         break;
     }
    
-  }
-   
-  void CST_Animations::HandleAnimationAvailable(ExternalInterface::AnimationAvailable const& msg)
-  {
-    _availableAnims.push_back(msg.animName);
   }
    
   // ============== End of message handlers =================
