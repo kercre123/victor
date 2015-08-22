@@ -17,6 +17,7 @@
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/types/imageSendMode.h"
 #include "clad/types/testMode.h"
+#include "clad/types/cameraSettings.h"
 #include <webots/Supervisor.hpp>
 
 
@@ -91,7 +92,7 @@ protected:
   void SendTapBlockOnGround(const u8 numTaps);
   void SendStopAllMotors();
   void SendImageRequest(ImageSendMode mode, u8 robotID);
-  void SendSetRobotImageSendMode(ImageSendMode mode, u8 resolution);
+  void SendSetRobotImageSendMode(ImageSendMode mode, CameraResolutionClad resolution);
   void SendSaveImages(SaveMode_t mode, bool alsoSaveState=false);
   void SendEnableDisplay(bool on);
   void SendSetHeadlights(u8 intensity);

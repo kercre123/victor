@@ -5,6 +5,7 @@
 
 #include "clad/types/actionTypes.clad"
 #include "clad/types/robotStatusFlag.clad"
+#include "clad/types/cameraSettings.clad"
 #include "clad/types/upAxis.clad"
 #include "clad/externalInterface/messageShared.clad"
 
@@ -99,7 +100,7 @@ message ImageChunk {
     uint_16 nrows,
     uint_16 ncols,
     uint_16 chunkSize,
-    uint_8 imageEncoding,
+    ImageEncodingClad imageEncoding,
     uint_8 imageChunkCount,
     uint_8 chunkId,
     uint_8 data[1300] // Should match R2B MessageImageChunk size!

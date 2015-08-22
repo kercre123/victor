@@ -310,7 +310,7 @@ void CozmoEngineHostImpl::SetImageSendMode(RobotID_t robotID, ImageSendMode newM
     return robot->SetImageSendMode(newMode);
   }
 }
-void CozmoEngineHostImpl::SetRobotImageSendMode(RobotID_t robotID, ImageSendMode newMode, uint8_t resolution)
+void CozmoEngineHostImpl::SetRobotImageSendMode(RobotID_t robotID, ImageSendMode newMode, CameraResolutionClad resolution)
 {
   Robot* robot = GetRobotByID(robotID);
 

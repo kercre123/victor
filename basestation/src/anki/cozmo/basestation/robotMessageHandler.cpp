@@ -334,7 +334,7 @@ namespace Anki {
         uiImgChunk.ncols = Vision::CameraResInfo[msg.resolution].width;
         assert(uiImgChunk.data.size() == msg.data.size());
         uiImgChunk.chunkSize = msg.chunkSize;
-        uiImgChunk.imageEncoding = msg.imageEncoding;
+        uiImgChunk.imageEncoding = (ImageEncodingClad)msg.imageEncoding;
         uiImgChunk.imageChunkCount = msg.imageChunkCount;
         uiImgChunk.chunkId = msg.chunkId;
         std::copy(msg.data.begin(), msg.data.end(),
