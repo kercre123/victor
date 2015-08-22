@@ -122,6 +122,18 @@ namespace Anki {
     {
       printf("Robot %d reported deleting object %d\n", msg.robotID, msg.objectID);
       
+      _objectIDToPoseMap.erase(msg.objectID);
+      _objectIDToFamilyTypeMap.erase(msg.objectID);
+      
+      for (auto famIt = _objectFamilyToTypeToIDMap.begin(); famIt != _objectFamilyToTypeToIDMap.end(); ++famIt) {
+        for (auto typeIt = famIt->second.begin(); typeIt != famIt->second.end(); ++typeIt) {
+          auto objIt = std::find(typeIt->second.begin(), typeIt->second.end(), msg.objectID);
+          if (objIt != typeIt->second.end()) {
+            typeIt->second.erase(objIt);
+          }
+        }
+      }
+      
       HandleRobotDeletedObject(msg);
     }
 
