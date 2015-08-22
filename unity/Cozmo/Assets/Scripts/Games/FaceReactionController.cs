@@ -233,7 +233,7 @@ public class FaceReactionController : GameController {
   }
 
   private void Update_MOVE_TOWARD_FACE() {
-    if (playStateTimer > 1.0f) {
+    if (playStateTimer > 1.5f) {
       nextState = FaceReactionState.REACT_TO_FACE;
     }
   }
