@@ -195,7 +195,7 @@ namespace Anki {
         //std::string dispStr(ObjectType::GetName(msg.objectType));
         //dispStr += " ";
         //dispStr += std::to_string(msg.objectID);
-        std::string dispStr("Type=" + std::to_string(msg.objectType) + "\nID=" + std::to_string(msg.objectID));
+        std::string dispStr("Type=" + std::string(ObjectTypeToString(msg.objectType)) + "\nID=" + std::to_string(msg.objectID));
         cozmoCam_->drawText(dispStr,
                             msg.img_topLeft_x + msg.img_width/4 + 1,
                             msg.img_topLeft_y + msg.img_height/2 + 1);

@@ -580,12 +580,12 @@ public class Robot : IDisposable {
   public void UpdateObservedObjectInfo(G2U.RobotObservedObject message) {
     //Debug.Log( "UpdateObservedObjectInfo received message about ObservedObject with objectFamily("+message.objectFamily+") objectID("+message.objectID+")" );
 
-    if (message.objectFamily == 0) {
+    if (message.objectFamily == Anki.Cozmo.ObjectFamily.Mat) {
       Debug.LogWarning("UpdateObservedObjectInfo received message about the Mat!");
       return;
     }
 
-    if (message.objectFamily == 4) {
+    if (message.objectFamily == Anki.Cozmo.ObjectFamily.LightCube) {
       AddActiveBlock(activeBlocks.ContainsKey(message.objectID) ? activeBlocks[message.objectID] : null, message);
     }
     else {

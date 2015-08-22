@@ -129,7 +129,7 @@ public class ActiveBlock : ObservedObject {
 
   public static Action<int, int> TappedAction;
 
-  public ActiveBlock(int objectID, uint objectFamily, uint objectType) {
+  public ActiveBlock(int objectID, ObjectFamily objectFamily, ObjectType objectType) {
     Constructor(objectID, objectFamily, objectType);
 
     upAxis = byte.MaxValue;
