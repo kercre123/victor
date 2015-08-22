@@ -19,22 +19,18 @@
 #include "anki/vision/basestation/observableObject.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
 
+#include "clad/types/objectTypes.h"
+#include "clad/types/objectFamilies.h"
+
 namespace Anki {
   
   namespace Cozmo {
     
-    class MarkerlessObject : public Vision::ObservableObject
+    class MarkerlessObject : public Vision::ObservableObject<ObjectFamily, ObjectType>
     {
     public:
       
-      class Type : public ObjectType
-      {
-        Type(const std::string& name) : ObjectType(name) { }
-      public:
-        // Define new markerless object types here, as static const Type:
-        // (Note: don't forget to instantiate each in the .cpp file)
-        static const Type PROX_OBSTACLE;
-      };
+      using Type = ObjectType;
       
       // Constructor, based on Type
       MarkerlessObject(Type type);
@@ -44,8 +40,7 @@ namespace Anki {
       //
       // Inherited Virtual Methods
       //
-      
-      virtual ObjectType GetType() const override;
+    
       
       virtual MarkerlessObject* CloneType() const override;
       
@@ -63,8 +58,6 @@ namespace Anki {
       
       virtual const std::vector<Point3f>& GetCanonicalCorners() const override;
       
-      const Type _type;
-      
       Point3f _size;
       
       std::vector<Point3f> _canonicalCorners;
@@ -73,9 +66,6 @@ namespace Anki {
       
     }; // class MarkerlessObject
     
-    inline ObjectType MarkerlessObject::GetType() const {
-      return _type;
-    }
     
     inline MarkerlessObject* MarkerlessObject::CloneType() const
     {

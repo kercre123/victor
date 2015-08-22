@@ -17,33 +17,25 @@
 #include "anki/vision/basestation/observableObject.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
 
+#include "clad/types/objectTypes.h"
+#include "clad/types/objectFamilies.h"
+
 namespace Anki {
 namespace Cozmo {
   
-  class HumanHead : public Vision::ObservableObject
+  class HumanHead : public Vision::ObservableObject<ObjectFamily,ObjectType>
   {
   public:
     
-    class Type : public ObjectType
-    {
-      Type(const std::string& name) : ObjectType(name) { }
-    public:
-      // Define new markerless object types here, as static const Type:
-      // (Note: don't forget to instantiate each in the .cpp file)
-      
-      // TODO: Use "Types" for known vs. unknown, age, gender, or what?
-      static const Type UNKNOWN_FACE;
-    };
+    using Type = ObjectType;
     
-    HumanHead(Type faceType = Type::UNKNOWN_FACE);
+    HumanHead(Type faceType = ObjectType::HumanFace_Unknown);
   
     virtual ~HumanHead();
     
     //
     // Inherited Virtual Methods
     //
-    
-    virtual ObjectType GetType() const override;
     
     virtual HumanHead* CloneType() const override;
     
@@ -55,8 +47,6 @@ namespace Cozmo {
   protected:
     
     virtual const std::vector<Point3f>& GetCanonicalCorners() const override;
-    
-    const Type _type;
     
     Point3f _size;
     
@@ -71,15 +61,12 @@ namespace Cozmo {
   // Inlined implementations
   //
   
-  inline ObjectType HumanHead::GetType() const {
-    return _type;
-  }
-  
   inline HumanHead* HumanHead::CloneType() const
   {
     // Call the copy constructor
     return new HumanHead(this->_type);
   }
+  
   
 } // namespace Cozmo
 } // namespace Anki

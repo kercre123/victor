@@ -24,9 +24,12 @@
 namespace Anki {
   namespace Vision {
     
-    const std::set<const ObservableObject*> ObservableObjectLibrary::sEmptyObjectVector;
+    template<typename FAMILY, typename TYPE>
+    const std::set<const typename ObservableObjectLibrary<FAMILY,TYPE>::ObservableObject*> ObservableObjectLibrary<FAMILY,TYPE>::sEmptyObjectVector;
     
-    const ObservableObject* ObservableObjectLibrary::GetObjectWithType(const ObjectType type) const
+    template<typename FAMILY, typename TYPE>
+    const typename ObservableObjectLibrary<FAMILY,TYPE>::ObservableObject* // Return value
+    ObservableObjectLibrary<FAMILY,TYPE>::GetObjectWithType(const TYPE type) const
     {
       auto obj = _knownObjects.find(type);
       if(obj != _knownObjects.end()) {
@@ -38,7 +41,9 @@ namespace Anki {
     }
     
     
-    std::set<const ObservableObject*> const& ObservableObjectLibrary::GetObjectsWithCode(const Marker::Code& code) const
+    template<typename FAMILY, typename TYPE>
+    typename ObservableObjectLibrary<FAMILY,TYPE>::ObjectSet const& // Return value
+    ObservableObjectLibrary<FAMILY,TYPE>::GetObjectsWithCode(const Marker::Code& code) const
     {
       auto temp = _objectsWithCode.find(code);
       if(temp != _objectsWithCode.end()) {
@@ -49,12 +54,15 @@ namespace Anki {
       }
     }
     
-    std::set<const ObservableObject*> const& ObservableObjectLibrary::GetObjectsWithMarker(const Marker& marker) const
+    template<typename FAMILY, typename TYPE>
+    typename ObservableObjectLibrary<FAMILY,TYPE>::ObjectSet const& // Return value
+    ObservableObjectLibrary<FAMILY,TYPE>::GetObjectsWithMarker(const Marker& marker) const
     {
       return GetObjectsWithCode(marker.GetCode());
     }
     
-    void ObservableObjectLibrary::AddObject(const ObservableObject* object)
+    template<typename FAMILY, typename TYPE>
+    void ObservableObjectLibrary<FAMILY,TYPE>::AddObject(const ObservableObject* object)
     {
       // TODO: Warn/error if we are overwriting an existing object with this type?
       _knownObjects[object->GetType()] = object;
@@ -66,12 +74,13 @@ namespace Anki {
     
     // Input:   list of observed markers
     // Outputs: the objects seen and the unused markers
-    void ObservableObjectLibrary::CreateObjectsFromMarkers(const std::list<ObservedMarker*>& markers,
+    template<typename FAMILY, typename TYPE>
+    void ObservableObjectLibrary<FAMILY,TYPE>::CreateObjectsFromMarkers(const std::list<ObservedMarker*>& markers,
                                                            std::vector<ObservableObject*>& objectsSeen,
                                                            const CameraID_t seenOnlyBy) const
     {
       // Group the markers by object type
-      std::map<ObjectType, std::vector<const ObservedMarker*>> markersWithObjectType;
+      std::map<TYPE, std::vector<const ObservedMarker*>> markersWithObjectType;
       
       for(auto marker : markers) {
         
@@ -114,7 +123,7 @@ namespace Anki {
         // markers that implied them
         std::vector<PoseMatchPair> possiblePoses;
         
-        const Vision::ObservableObject* libObject = GetObjectWithType(objTypeMarkersPair.first);
+        const ObservableObject* libObject = GetObjectWithType(objTypeMarkersPair.first);
         
         // Get timestamp of the observed markers so that I can set the
         // lastSeenTime of the observable object.
@@ -196,8 +205,8 @@ namespace Anki {
       
     } // CreateObjectsFromMarkers()
     
-    
-    ObservableObjectLibrary::PoseCluster::PoseCluster(const PoseMatchPair& match)
+    template<typename FAMILY, typename TYPE>
+    ObservableObjectLibrary<FAMILY,TYPE>::PoseCluster::PoseCluster(const PoseMatchPair& match)
     : _pose(match.first)
     {
       const MarkerMatch& markerMatch = match.second;
@@ -215,7 +224,8 @@ namespace Anki {
       
     }
     
-    bool ObservableObjectLibrary::PoseCluster::TryToAddMatch(const PoseMatchPair& match,
+    template<typename FAMILY, typename TYPE>
+    bool ObservableObjectLibrary<FAMILY,TYPE>::PoseCluster::TryToAddMatch(const PoseMatchPair& match,
                                                              const float distThreshold,
                                                              const Radians angleThreshold,
                                                              const std::vector<RotationMatrix3d>& R_ambiguities)
@@ -275,7 +285,8 @@ namespace Anki {
       return wasAdded;
     } // TryToAddMatch()
     
-    void ObservableObjectLibrary::PoseCluster::RecomputePose()
+    template<typename FAMILY, typename TYPE>
+    void ObservableObjectLibrary<FAMILY,TYPE>::PoseCluster::RecomputePose()
     {
       if(GetSize() > 1) {
         //fprintf(stdout, "Re-computing pose from all %zu members of cluster.\n", GetSize());
@@ -328,7 +339,8 @@ namespace Anki {
       
     } // RecomputePose()
     
-    void ObservableObjectLibrary::ClusterObjectPoses(const std::vector<PoseMatchPair>& possiblePoses,
+    template<typename FAMILY, typename TYPE>
+    void ObservableObjectLibrary<FAMILY,TYPE>::ClusterObjectPoses(const std::vector<PoseMatchPair>& possiblePoses,
                                                      const ObservableObject*         libObject,
                                                      const float distThreshold, const Radians angleThreshold,
                                                      std::vector<PoseCluster>& poseClusters) const

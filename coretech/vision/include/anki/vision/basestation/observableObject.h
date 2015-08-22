@@ -38,11 +38,12 @@ namespace Anki {
     // Pairing of a pose and the match which implies it
     using PoseMatchPair = std::pair<Pose3d, MarkerMatch>;
     
+    template<typename FAMILY, typename TYPE>
     class ObservableObject
     {
     public:
       // Do we want to be req'd to instantiate with all codes up front?
-      ObservableObject();
+      ObservableObject(FAMILY family, TYPE type);
       
       // For creating a fresh new derived object from a pointer to this base class.
       // NOTE: This just creates a fresh object, and does not copy the original
@@ -120,7 +121,8 @@ namespace Anki {
       
       // Accessors:
       ObjectID           GetID()     const;
-      virtual ObjectType GetType()   const = 0;
+      TYPE               GetType()   const;
+      FAMILY             GetFamily() const;
       const Pose3d&      GetPose()   const;
       const ColorRGBA&   GetColor()  const;
       //virtual float GetMinDim() const = 0;
@@ -194,6 +196,8 @@ namespace Anki {
       virtual const std::vector<Point3f>& GetCanonicalCorners() const = 0;
       
       ObjectID     _ID;
+      TYPE         _type;
+      FAMILY       _family;
       TimeStamp_t  _lastObservedTime;
       u32          _numTimesObserved;
       ColorRGBA    _color;
@@ -223,27 +227,41 @@ namespace Anki {
     //
     // Inline accessors
     //
-    
-    inline ObjectID ObservableObject::GetID() const {
+    template<typename FAMILY, typename TYPE>
+    inline ObjectID ObservableObject<FAMILY,TYPE>::GetID() const {
       return _ID;
     }
     
-    inline const ColorRGBA& ObservableObject::GetColor() const {
+    template<typename FAMILY, typename TYPE>
+    inline TYPE ObservableObject<FAMILY,TYPE>::GetType() const {
+      return _type;
+    }
+    
+    template<typename FAMILY, typename TYPE>
+    inline FAMILY ObservableObject<FAMILY,TYPE>::GetFamily() const {
+      return _family;
+    }
+    
+    template<typename FAMILY, typename TYPE>
+    inline const ColorRGBA& ObservableObject<FAMILY,TYPE>::GetColor() const {
       return _color;
     }
     
-    inline const Pose3d& ObservableObject::GetPose() const {
+    template<typename FAMILY, typename TYPE>
+    inline const Pose3d& ObservableObject<FAMILY,TYPE>::GetPose() const {
       return _pose;
     }
     
-    inline void ObservableObject::SetID() { //const ObjectID newID) {
+    template<typename FAMILY, typename TYPE>
+    inline void ObservableObject<FAMILY,TYPE>::SetID() { //const ObjectID newID) {
       _ID.Set();
     }
   
-    inline void ObservableObject::SetPose(const Pose3d& newPose) {
+    template<typename FAMILY, typename TYPE>
+    inline void ObservableObject<FAMILY,TYPE>::SetPose(const Pose3d& newPose) {
       _pose = newPose;
       
-      std::string poseName(GetType().GetName());
+      std::string poseName(ObjectTypeToString(GetType()));
       if(poseName.empty()) {
         poseName = "Object";
       }
@@ -251,28 +269,34 @@ namespace Anki {
       _pose.SetName(poseName);
     }
     
-    inline void ObservableObject::SetPoseParent(const Pose3d* newParent) {
+    template<typename FAMILY, typename TYPE>
+    inline void ObservableObject<FAMILY,TYPE>::SetPoseParent(const Pose3d* newParent) {
       _pose.SetParent(newParent);
     }
     
-    inline bool ObservableObject::IsSameAs(const ObservableObject& otherObject) const {
+    template<typename FAMILY, typename TYPE>
+    inline bool ObservableObject<FAMILY,TYPE>::IsSameAs(const ObservableObject& otherObject) const {
       return IsSameAs(otherObject, this->GetSameDistanceTolerance(), this->GetSameAngleTolerance());
     }
     
-    inline void ObservableObject::SetColor(const Anki::ColorRGBA &color) {
+    template<typename FAMILY, typename TYPE>
+    inline void ObservableObject<FAMILY,TYPE>::SetColor(const Anki::ColorRGBA &color) {
       _color = color;
     }
     
-    inline void ObservableObject::Visualize() {
+    template<typename FAMILY, typename TYPE>
+    inline void ObservableObject<FAMILY,TYPE>::Visualize() {
       Visualize(_color);
     }
     
-    inline Quad2f ObservableObject::GetBoundingQuadXY(const f32 padding_mm) const
+    template<typename FAMILY, typename TYPE>
+    inline Quad2f ObservableObject<FAMILY,TYPE>::GetBoundingQuadXY(const f32 padding_mm) const
     {
       return GetBoundingQuadXY(_pose, padding_mm);
     }
     
-    inline Point3f ObservableObject::GetSameDistanceTolerance() const {
+    template<typename FAMILY, typename TYPE>
+    inline Point3f ObservableObject<FAMILY,TYPE>::GetSameDistanceTolerance() const {
       // TODO: This is only ok because we're only using totally symmetric 1x1x1 blocks at the moment.
       //       The proper way to do the IsSameAs check is to have objects return a scaled down bounding box of themselves
       //       and see if the the origin of the candidate object is within it.
@@ -280,7 +304,8 @@ namespace Anki {
       return distTol;
     }
     
-    inline bool ObservableObject::IsSameAs(const ObservableObject& otherObject,
+    template<typename FAMILY, typename TYPE>
+    inline bool ObservableObject<FAMILY,TYPE>::IsSameAs(const ObservableObject& otherObject,
                                            const Point3f& distThreshold,
                                            const Radians& angleThreshold) const
     {
@@ -290,43 +315,27 @@ namespace Anki {
                       Tdiff, angleDiff);
     }
     
-    inline const TimeStamp_t ObservableObject::GetLastObservedTime() const {
+    template<typename FAMILY, typename TYPE>
+    inline const TimeStamp_t ObservableObject<FAMILY,TYPE>::GetLastObservedTime() const {
       return _lastObservedTime;
     }
     
-    inline u32 ObservableObject::GetNumTimesObserved() const {
+    template<typename FAMILY, typename TYPE>
+    inline u32 ObservableObject<FAMILY,TYPE>::GetNumTimesObserved() const {
       return _numTimesObserved;
     }
 
-    inline void ObservableObject::SetLastObservedTime(TimeStamp_t t) {
+    template<typename FAMILY, typename TYPE>
+    inline void ObservableObject<FAMILY,TYPE>::SetLastObservedTime(TimeStamp_t t) {
       _lastObservedTime = t;
       ++_numTimesObserved;
     }
     
-    inline void ObservableObject::GetObservedMarkers(std::vector<const KnownMarker*>& observedMarkers) const {
+    template<typename FAMILY, typename TYPE>
+    inline void ObservableObject<FAMILY,TYPE>::GetObservedMarkers(std::vector<const KnownMarker*>& observedMarkers) const {
       GetObservedMarkers(observedMarkers, GetLastObservedTime());
     }
     
-    /*
-    // Derive specific observable objects from this class to get a clone method,
-    // without having to specifically write one in each derived class.
-    //
-    // I believe this is know as the Curiously Recurring Template Pattern (CRTP)
-    //
-    // For example:
-    //   class SomeNewObject : public ObservableObjectBase<SomeNewObject> { ... };
-    //
-    template <class Derived>
-    class ObservableObjectBase : public ObservableObject
-    {
-    public:
-      virtual ObservableObject* clone() const
-      {
-        // Call the copy constructor
-        return new Derived(static_cast<const Derived&>(*this));
-      }
-    };
-    */
     
   } // namespace Vision
 } // namespace Anki

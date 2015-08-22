@@ -25,7 +25,9 @@ namespace Anki {
   namespace Vision {
     
     // Forward declarations:
+    template<typename FAMILY, typename TYPE>
     class ObservableObject;
+    
     class KnownMarker;
     
     // For now, this is always assumed to be a calibrated camera.  If we want
@@ -101,12 +103,14 @@ namespace Anki {
       
       // Project an object's corners into the camera and also return the object's
       // distance from the camera's origin
-      void ProjectObject(const ObservableObject&  object,
+      template<typename FAMILY, typename TYPE>
+      void ProjectObject(const ObservableObject<FAMILY,TYPE>&  object,
                          std::vector<Point2f>&    projectedCorners,
                          f32&                     distanceFromCamera) const;
 
       // Register an object as an "occluder" for this camera
-      void AddOccluder(const ObservableObject& object);
+      template<typename FAMILY, typename TYPE>
+      void AddOccluder(const ObservableObject<FAMILY,TYPE>& object);
       
       // Register a KnownMarker as an "occluder" for this camera
       void AddOccluder(const KnownMarker& marker);

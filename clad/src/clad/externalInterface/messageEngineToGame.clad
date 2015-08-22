@@ -4,6 +4,8 @@
 // Copyright: Anki Inc (c) 2015
 
 #include "clad/types/actionTypes.clad"
+#include "clad/types/objectTypes.clad"
+#include "clad/types/objectFamilies.clad"
 #include "clad/externalInterface/messageShared.clad"
 
 namespace Anki {
@@ -108,8 +110,8 @@ message ImageChunk {
 //  with specified ID was seen at a particular location in the image
 message RobotObservedObject {
     uint_32 robotID,
-    uint_32 objectFamily,
-    uint_32 objectType,
+    ObjectFamily objectFamily,
+    ObjectType   objectType,
     int_32  objectID,        // signed to match U2G::PickAndPlaceObject which has the option to have objectID<0
     float_32 img_topLeft_x,  // position in image coords
     float_32 img_topLeft_y,  //     "

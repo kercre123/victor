@@ -23,9 +23,7 @@
 namespace Anki {
   
   namespace Cozmo {
-    
-    const Ramp::Type Ramp::Type::BASIC_RAMP("BASIC_RAMP");
-    
+     
     const std::vector<Point3f>& Ramp::GetCanonicalCorners() const {
     
       static const std::vector<Point3f> CanonicalCorners = {{
@@ -47,7 +45,8 @@ namespace Anki {
     
     
     Ramp::Ramp()
-    : _size(SlopeLength+PlatformLength, Width, Height)
+    : ActionableObject(ObjectFamily::Ramp, ObjectType::Ramp_Basic)
+    , _size(SlopeLength+PlatformLength, Width, Height)
     , _preAscentPose(0, Z_AXIS_3D(),
                      {{-PreAscentDistance, 0.f, 0.f}},
                      &GetPose())

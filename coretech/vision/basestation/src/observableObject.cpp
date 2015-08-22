@@ -30,14 +30,18 @@
 namespace Anki {
   namespace Vision {
     
-    ObservableObject::ObservableObject()
-    : _lastObservedTime(0)
+    template<typename FAMILY, typename TYPE>
+    ObservableObject<FAMILY,TYPE>::ObservableObject(FAMILY family, TYPE type)
+    : _family(family)
+    , _type(type)
+    , _lastObservedTime(0)
     , _numTimesObserved(0)
     {
       
     }
-        
-    bool ObservableObject::IsVisibleFrom(const Camera &camera,
+    
+    template<typename FAMILY, typename TYPE>
+    bool ObservableObject<FAMILY,TYPE>::IsVisibleFrom(const Camera &camera,
                                          const f32 maxFaceNormalAngle,
                                          const f32 minMarkerImageSize,
                                          const bool requireSomethingBehind,
@@ -55,9 +59,10 @@ namespace Anki {
       
       return false;
       
-    } // ObservableObject::IsObservableBy()
+    } // ObservableObject<FAMILY,TYPE>::IsObservableBy()
     
-    Vision::KnownMarker const& ObservableObject::AddMarker(const Marker::Code&  withCode,
+    template<typename FAMILY, typename TYPE>
+    Vision::KnownMarker const& ObservableObject<FAMILY,TYPE>::AddMarker(const Marker::Code&  withCode,
                                                            const Pose3d&        atPose,
                                                            const f32            size_mm)
     {
@@ -70,9 +75,10 @@ namespace Anki {
       _markersWithCode[withCode].push_back(&_markers.back());
       
       return _markers.back();
-    } // ObservableObject::AddMarker()
+    } // ObservableObject<FAMILY,TYPE>::AddMarker()
     
-    std::vector<KnownMarker*> const& ObservableObject::GetMarkersWithCode(const Marker::Code& withCode) const
+    template<typename FAMILY, typename TYPE>
+    std::vector<KnownMarker*> const& ObservableObject<FAMILY,TYPE>::GetMarkersWithCode(const Marker::Code& withCode) const
     {
       auto returnVec = _markersWithCode.find(withCode);
       if(returnVec != _markersWithCode.end()) {
@@ -82,9 +88,10 @@ namespace Anki {
         static const std::vector<KnownMarker*> EmptyMarkerVector(0);
         return EmptyMarkerVector;
       }
-    } // ObservableObject::GetMarkersWithCode()
+    } // ObservableObject<FAMILY,TYPE>::GetMarkersWithCode()
     
-    bool ObservableObject::IsSameAs(const ObservableObject& otherObject,
+    template<typename FAMILY, typename TYPE>
+    bool ObservableObject<FAMILY,TYPE>::IsSameAs(const ObservableObject& otherObject,
                                     const Point3f& distThreshold,
                                     const Radians& angleThreshold,
                                     Point3f& Tdiff,
@@ -152,9 +159,10 @@ namespace Anki {
       
       return isSame;
       
-    } // ObservableObject::IsSameAs()
+    } // ObservableObject<FAMILY,TYPE>::IsSameAs()
 
-    void ObservableObject::ComputePossiblePoses(const ObservedMarker*     obsMarker,
+    template<typename FAMILY, typename TYPE>
+    void ObservableObject<FAMILY,TYPE>::ComputePossiblePoses(const ObservedMarker*     obsMarker,
                                                 std::vector<PoseMatchPair>& possiblePoses) const
     {
       auto matchingMarkers = _markersWithCode.find(obsMarker->GetCode());
@@ -182,7 +190,7 @@ namespace Anki {
     } // ComputePossiblePoses()
 
     /*
-    Point3f ObservableObject::GetRotatedBoundingCube(const Pose3d &atPose)
+    Point3f ObservableObject<FAMILY,TYPE>::GetRotatedBoundingCube(const Pose3d &atPose)
     {
       // TODO: Rotate using quaternion
       Point3f cubeSize(atPose.GetRotation() * GetCanonicalBoundingCube());
@@ -190,25 +198,27 @@ namespace Anki {
     }
      */
     
-    std::vector<RotationMatrix3d> const& ObservableObject::GetRotationAmbiguities() const
+    template<typename FAMILY, typename TYPE>
+    std::vector<RotationMatrix3d> const& ObservableObject<FAMILY,TYPE>::GetRotationAmbiguities() const
     {
       static const std::vector<RotationMatrix3d> RotationAmbiguities; // default is empty
       return RotationAmbiguities;
     }
     
-    void ObservableObject::GetCorners(std::vector<Point3f>& corners) const
+    template<typename FAMILY, typename TYPE>
+    void ObservableObject<FAMILY,TYPE>::GetCorners(std::vector<Point3f>& corners) const
     {
       GetCorners(_pose, corners);
     }
-
   
-    void ObservableObject::GetCorners(const Pose3d& atPose, std::vector<Point3f>& corners) const
+    template<typename FAMILY, typename TYPE>
+    void ObservableObject<FAMILY,TYPE>::GetCorners(const Pose3d& atPose, std::vector<Point3f>& corners) const
     {
       atPose.ApplyTo(GetCanonicalCorners(), corners);
     }
     
-    
-    void ObservableObject::GetObservedMarkers(std::vector<const KnownMarker*>& observedMarkers,
+    template<typename FAMILY, typename TYPE>
+    void ObservableObject<FAMILY,TYPE>::GetObservedMarkers(std::vector<const KnownMarker*>& observedMarkers,
                                               const TimeStamp_t sinceTime) const
     {
       if(sinceTime > 0) {
@@ -221,8 +231,8 @@ namespace Anki {
       }
     } // GetObservedMarkers()
     
-    
-    Result ObservableObject::UpdateMarkerObservationTimes(const ObservableObject& otherObject)
+    template<typename FAMILY, typename TYPE>
+    Result ObservableObject<FAMILY,TYPE>::UpdateMarkerObservationTimes(const ObservableObject& otherObject)
     {
       if(otherObject.GetType() != this->GetType()) {
         PRINT_NAMED_ERROR("ObservableObject.UpdateMarkerObservationTimes.TypeMismatch",
@@ -249,8 +259,8 @@ namespace Anki {
       return RESULT_OK;
     }
     
-    
-    void ObservableObject::SetMarkersAsObserved(const Marker::Code& withCode,
+    template<typename FAMILY, typename TYPE>
+    void ObservableObject<FAMILY,TYPE>::SetMarkersAsObserved(const Marker::Code& withCode,
                                                 const TimeStamp_t   atTime)
     {
       auto markers = _markersWithCode.find(withCode);
@@ -267,8 +277,8 @@ namespace Anki {
       
     } // SetMarkersAsObserved()
     
-    
-    void ObservableObject::SetMarkerAsObserved(const ObservedMarker* nearestTo,
+    template<typename FAMILY, typename TYPE>
+    void ObservableObject<FAMILY,TYPE>::SetMarkerAsObserved(const ObservedMarker* nearestTo,
                                                const TimeStamp_t     atTime,
                                                const f32             centroidDistThreshold,
                                                const f32             areaRatioThreshold)
@@ -320,8 +330,8 @@ namespace Anki {
       }
     } // SetMarkerAsObserved()
     
-    
-    Quad2f ObservableObject::GetBoundingQuadXY(const Pose3d& atPose, const f32 padding_mm) const
+    template<typename FAMILY, typename TYPE>
+    Quad2f ObservableObject<FAMILY,TYPE>::GetBoundingQuadXY(const Pose3d& atPose, const f32 padding_mm) const
     {
       const std::vector<Point3f>& canonicalCorners = GetCanonicalCorners();
       const RotationMatrix3d& R = atPose.GetRotationMatrix();
@@ -352,7 +362,7 @@ namespace Anki {
     } // GetBoundingQuadXY()
     
     /*
-    Quad2f ObservableObject::GetBoundingQuadXY(const Pose3d& atPose, const f32 padding_mm) const
+    Quad2f ObservableObject<FAMILY,TYPE>::GetBoundingQuadXY(const Pose3d& atPose, const f32 padding_mm) const
     {
       const RotationMatrix3d& R = atPose.GetRotationMatrix();
       

@@ -399,7 +399,8 @@ namespace Anki {
       _occluderList.Clear();
     }
     
-    void Camera::ProjectObject(const ObservableObject&  object,
+    template<typename FAMILY, typename TYPE>
+    void Camera::ProjectObject(const ObservableObject<FAMILY,TYPE>&  object,
                                std::vector<Point2f>&    projectedCorners,
                                f32&                     distanceFromCamera) const
     {
@@ -424,7 +425,8 @@ namespace Anki {
       _occluderList.AddOccluder(projectedPoints, atDistance);
     }
     
-    void Camera::AddOccluder(const ObservableObject& object)
+    template<typename FAMILY, typename TYPE>
+    void Camera::AddOccluder(const ObservableObject<FAMILY,TYPE>& object)
     {
       
       std::vector<Point2f> projectedCorners;

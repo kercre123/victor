@@ -22,6 +22,9 @@
 #include "anki/cozmo/basestation/preActionPose.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
 
+#include "clad/types/objectTypes.h"
+#include "clad/types/objectFamilies.h"
+
 namespace Anki {
   namespace Cozmo {
     
@@ -36,10 +39,10 @@ namespace Anki {
       
     };
     
-    class ActionableObject : public Vision::ObservableObject
+    class ActionableObject : public Vision::ObservableObject<ObjectFamily, ObjectType>
     {
     public:
-      ActionableObject();
+      ActionableObject(ObjectFamily family, ObjectType type);
       
       // Return true if actions poses of any type exist for this object
       bool HasPreActionPoses() const;

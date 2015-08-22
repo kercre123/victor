@@ -622,11 +622,11 @@ namespace Anki {
       // to find the object in blockworld (which has its own bookkeeping ID) that
       // has the matching active ID
      
-      const BlockWorld::ObjectsMapByType_t& activeBlocksByType = robot->GetBlockWorld().GetExistingObjectsByFamily(BlockWorld::ObjectFamily::ACTIVE_BLOCKS);
+      const BlockWorld::ObjectsMapByType_t& activeBlocksByType = robot->GetBlockWorld().GetExistingObjectsByFamily(ObjectFamily::LightCube);
       
       for(auto objectsByID : activeBlocksByType) {
         for(auto objectWithID : objectsByID.second) {
-          Vision::ObservableObject* object = objectWithID.second;
+          BlockWorld::ObservableObject* object = objectWithID.second;
           assert(object->IsActive());
           if(object->GetActiveID() == msg.objectID) {
             // TODO: Mark object as de-localized
@@ -655,11 +655,11 @@ namespace Anki {
     
     Result RobotMessageHandler::ProcessMessage(Robot* robot, MessageActiveObjectStoppedMoving const& msg)
     {
-      const BlockWorld::ObjectsMapByType_t& activeBlocksByType = robot->GetBlockWorld().GetExistingObjectsByFamily(BlockWorld::ObjectFamily::ACTIVE_BLOCKS);
+      const BlockWorld::ObjectsMapByType_t& activeBlocksByType = robot->GetBlockWorld().GetExistingObjectsByFamily(ObjectFamily::LightCube);
       
       for(auto objectsByID : activeBlocksByType) {
         for(auto objectWithID : objectsByID.second) {
-          Vision::ObservableObject* object = objectWithID.second;
+          BlockWorld::ObservableObject* object = objectWithID.second;
           assert(object->IsActive());
           if(object->GetActiveID() == msg.objectID) {
             // TODO: Mark object as de-localized
@@ -682,11 +682,11 @@ namespace Anki {
     
     Result RobotMessageHandler::ProcessMessage(Robot* robot, MessageActiveObjectTapped const& msg)
     {
-      const BlockWorld::ObjectsMapByType_t& activeBlocksByType = robot->GetBlockWorld().GetExistingObjectsByFamily(BlockWorld::ObjectFamily::ACTIVE_BLOCKS);
+      const BlockWorld::ObjectsMapByType_t& activeBlocksByType = robot->GetBlockWorld().GetExistingObjectsByFamily(ObjectFamily::LightCube);
       
       for(auto objectsByID : activeBlocksByType) {
         for(auto objectWithID : objectsByID.second) {
-          Vision::ObservableObject* object = objectWithID.second;
+          BlockWorld::ObservableObject* object = objectWithID.second;
           assert(object->IsActive());
           if(object->GetActiveID() == msg.objectID) {
 

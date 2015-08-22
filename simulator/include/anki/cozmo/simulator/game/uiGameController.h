@@ -123,6 +123,7 @@ protected:
   void SendReadAnimationFile();
   void SendStartFaceTracking(u8 timeout_sec);
   void SendStopFaceTracking();
+  void SendAssignNameToObject(const ObjectID objectID, const std::string& name);
   void SendVisionSystemParams();
   void SendFaceDetectParams();
   void SendForceAddRobot();

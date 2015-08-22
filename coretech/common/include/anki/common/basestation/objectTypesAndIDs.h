@@ -31,10 +31,11 @@
 
 namespace Anki {
   
-  template<typename StorageType>
+  template<typename StorageType_>
   class UniqueEnumeratedValue
   {
   public:
+    using StorageType = StorageType_;
     
     UniqueEnumeratedValue() : _value(UNKNOWN_VALUE) { }
     
@@ -43,8 +44,8 @@ namespace Anki {
     bool operator!=(const UniqueEnumeratedValue& other) const { return _value != other._value; }
     bool operator< (const UniqueEnumeratedValue& other) const { return _value <  other._value; }
     
-    bool operator==(const StorageType value) const { return _value == value; }
-    bool operator!=(const StorageType value) const { return _value != value; }
+    bool operator==(const StorageType_ value) const { return _value == value; }
+    bool operator!=(const StorageType_ value) const { return _value != value; }
     bool operator< (const StorageType value) const { return _value <  value; }
 
     //
@@ -94,17 +95,17 @@ namespace Anki {
 
   }; // class UniqueEnumeratedValue
   
+#if 0
   class ObjectType : public UniqueEnumeratedValue<int>
   {
   public:
-    using StorageType = int;
     
     ObjectType();
     ~ObjectType();
     
     const std::string& GetName() const { return _name; }
     
-    static int GetNumTypes();
+    static StorageType GetNumTypes();
     
     static ObjectType GetInvalidType();
     
@@ -129,12 +130,11 @@ namespace Anki {
     // Note: No Set() for ObjectType
     
   }; // class ObjectType
-  
+#endif
   
   class ObjectID : public UniqueEnumeratedValue<int>
   {
   public:
-    using StorageType = int;
     
     static StorageType UniqueIDCounter;
     

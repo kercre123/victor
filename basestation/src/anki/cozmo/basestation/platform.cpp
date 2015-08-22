@@ -25,20 +25,17 @@
 namespace Anki {
   namespace Cozmo {
     
-    const Platform::Type Platform::Type::LARGE_PLATFORM("LARGE_PLATFORM");
-    
-    
     static const Point3f& GetPlatformSize(Platform::Type type)
     {
       static const std::map<Platform::Type, Point3f> Sizes = {
-        {Platform::Type::LARGE_PLATFORM, {252.f, 252.f, 44.f}},
+        {ObjectType::Platform_LARGE, {252.f, 252.f, 44.f}},
       };
       
       auto iter = Sizes.find(type);
       if(iter == Sizes.end()) {
         PRINT_NAMED_ERROR("Platform.GetSize.UnknownPlatformType",
                           "No size defined for platform type %s (%d).\n",
-                          type.GetName().c_str(), type.GetValue());
+                          ObjectTypeToString(type), type);
         
         static const Point3f DefaultSize(0.f, 0.f, 0.f);
         return DefaultSize;
@@ -48,8 +45,7 @@ namespace Anki {
     } // GetSize()
     
     Platform::Platform(Type type)
-    : MatPiece(GetPlatformSize(type))
-    , _type(type)
+    : MatPiece(type, GetPlatformSize(type))
     {
       const f32& length = GetSize().x();
       const f32& width  = GetSize().y();

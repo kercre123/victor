@@ -28,6 +28,7 @@
 
 namespace Anki {
   
+#if 0
   // Initialize static Type counter:
   ObjectType::StorageType ObjectType::UniqueTypeCounter = 0;
   
@@ -46,7 +47,7 @@ namespace Anki {
   ObjectType::ObjectType(const std::string& name)
   : _name(name)
   {
-    const int newType = UniqueTypeCounter++;
+    const StorageType newType = UniqueTypeCounter++;
     SetValue(newType);
     
     if(GetTypeNames().count(name) > 0) {
@@ -68,7 +69,7 @@ namespace Anki {
 
   }
   
-  int ObjectType::GetNumTypes() {
+  ObjectType::StorageType ObjectType::GetNumTypes() {
     return ObjectType::UniqueTypeCounter;
   }  
   
@@ -81,6 +82,7 @@ namespace Anki {
       return *iter->second;
     }
   }
+#endif
   
 #pragma mark ---- ObjectID -----
   

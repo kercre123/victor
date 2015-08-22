@@ -68,22 +68,6 @@ namespace Anki
     // TODO: Move this to some config/parameters file somewhere
     const int MIN_TIMES_TO_OBSERVE_OBJECT = 2;
     
-    int BlockWorld::ObjectFamily::UniqueFamilyCounter = 0;
-    
-    // Instantiate object families here:
-    const BlockWorld::ObjectFamily BlockWorld::ObjectFamily::MATS;
-    const BlockWorld::ObjectFamily BlockWorld::ObjectFamily::RAMPS;
-    const BlockWorld::ObjectFamily BlockWorld::ObjectFamily::CHARGERS;
-    const BlockWorld::ObjectFamily BlockWorld::ObjectFamily::BLOCKS;
-    const BlockWorld::ObjectFamily BlockWorld::ObjectFamily::ACTIVE_BLOCKS;
-    const BlockWorld::ObjectFamily BlockWorld::ObjectFamily::MARKERLESS_OBJECTS;
-    const BlockWorld::ObjectFamily BlockWorld::ObjectFamily::HUMAN_HEADS;
-    
-    // Instantiating an object family increments the unique counter:
-    BlockWorld::ObjectFamily::ObjectFamily() {
-      SetValue(UniqueFamilyCounter++);
-    }
-    
     BlockWorld::BlockWorld(Robot* robot)
     : _robot(robot)
     , _didObjectsChange(false)
@@ -101,57 +85,57 @@ namespace Anki
       
       //blockLibrary_.AddObject(new Block_Cube1x1(Block::FUEL_BLOCK_TYPE));
       
-      _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::ANGRYFACE));
+      _objectLibrary[ObjectFamily::Block].AddObject(new Block_Cube1x1(ObjectType::Block_ANGRYFACE));
 
-      _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::BULLSEYE2));
-      _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::BULLSEYE2_INVERTED));
+      _objectLibrary[ObjectFamily::Block].AddObject(new Block_Cube1x1(ObjectType::Block_BULLSEYE2));
+      _objectLibrary[ObjectFamily::Block].AddObject(new Block_Cube1x1(ObjectType::Block_BULLSEYE2_INVERTED));
       
-      _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::SQTARGET));
+      _objectLibrary[ObjectFamily::Block].AddObject(new Block_Cube1x1(ObjectType::Block_SQTARGET));
       
-      _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::FIRE));
+      _objectLibrary[ObjectFamily::Block].AddObject(new Block_Cube1x1(ObjectType::Block_FIRE));
       
-      _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::ANKILOGO));
+      _objectLibrary[ObjectFamily::Block].AddObject(new Block_Cube1x1(ObjectType::Block_ANKILOGO));
       
-      _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::STAR5));
+      _objectLibrary[ObjectFamily::Block].AddObject(new Block_Cube1x1(ObjectType::Block_STAR5));
       
-      //_objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::DICE));
+      //_objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(ObjectType::Block_DICE));
       
       /*
-      _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::NUMBER1));
-      _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::NUMBER2));
-      _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::NUMBER3));
-      _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::NUMBER4));
-      _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::NUMBER5));
-      _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::NUMBER6));
+      _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(ObjectType::Block_NUMBER1));
+      _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(ObjectType::Block_NUMBER2));
+      _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(ObjectType::Block_NUMBER3));
+      _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(ObjectType::Block_NUMBER4));
+      _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(ObjectType::Block_NUMBER5));
+      _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(ObjectType::Block_NUMBER6));
        */
-      //_objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::BANGBANGBANG));
+      //_objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(ObjectType::Block_BANGBANGBANG));
       
-      _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::ARROW));
+      _objectLibrary[ObjectFamily::Block].AddObject(new Block_Cube1x1(ObjectType::Block_ARROW));
       
-      _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::FLAG));
-      _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::FLAG2));
-      _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::FLAG_INVERTED));
+      _objectLibrary[ObjectFamily::Block].AddObject(new Block_Cube1x1(ObjectType::Block_FLAG));
+      _objectLibrary[ObjectFamily::Block].AddObject(new Block_Cube1x1(ObjectType::Block_FLAG2));
+      _objectLibrary[ObjectFamily::Block].AddObject(new Block_Cube1x1(ObjectType::Block_FLAG_INVERTED));
       
       // For CREEP Test
-      _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::SPIDER));
-      _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::KITTY));
-      _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(Block::Type::BEE));
+      _objectLibrary[ObjectFamily::Block].AddObject(new Block_Cube1x1(ObjectType::Block_SPIDER));
+      _objectLibrary[ObjectFamily::Block].AddObject(new Block_Cube1x1(ObjectType::Block_KITTY));
+      _objectLibrary[ObjectFamily::Block].AddObject(new Block_Cube1x1(ObjectType::Block_BEE));
       
       //////////////////////////////////////////////////////////////////////////
       // 1x1 Light Cubes
       //
 
-      _objectLibrary[ObjectFamily::ACTIVE_BLOCKS].AddObject(new ActiveCube(Block::Type::LIGHTCUBE1));
-      _objectLibrary[ObjectFamily::ACTIVE_BLOCKS].AddObject(new ActiveCube(Block::Type::LIGHTCUBE2));
-      _objectLibrary[ObjectFamily::ACTIVE_BLOCKS].AddObject(new ActiveCube(Block::Type::LIGHTCUBE3));
-      _objectLibrary[ObjectFamily::ACTIVE_BLOCKS].AddObject(new ActiveCube(Block::Type::LIGHTCUBE4));
+      _objectLibrary[ObjectFamily::LightCube].AddObject(new ActiveCube(ObjectType::Block_LIGHTCUBE1));
+      _objectLibrary[ObjectFamily::LightCube].AddObject(new ActiveCube(ObjectType::Block_LIGHTCUBE2));
+      _objectLibrary[ObjectFamily::LightCube].AddObject(new ActiveCube(ObjectType::Block_LIGHTCUBE3));
+      _objectLibrary[ObjectFamily::LightCube].AddObject(new ActiveCube(ObjectType::Block_LIGHTCUBE4));
 
       
       //////////////////////////////////////////////////////////////////////////
       // 2x1 Blocks
       //
       
-      _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_2x1(Block::Type::BANGBANGBANG));
+      _objectLibrary[ObjectFamily::Block].AddObject(new Block_2x1(ObjectType::Block_BANGBANGBANG));
       
       
       //////////////////////////////////////////////////////////////////////////
@@ -159,18 +143,18 @@ namespace Anki
       //
       
       // Flag mats:
-      //_objectLibrary[ObjectFamily::MATS].AddObject(new FlatMat(FlatMat::Type::LETTERS_4x4));
-      _objectLibrary[ObjectFamily::MATS].AddObject(new FlatMat(FlatMat::Type::GEARS_4x4));
+      //_objectLibrary[ObjectFamily::Mat].AddObject(new FlatMat(ObjectType::FlatMat_LETTERS_4x4));
+      _objectLibrary[ObjectFamily::Mat].AddObject(new FlatMat(ObjectType::FlatMat_GEARS_4x4));
       
       // Platform piece:
-      //_objectLibrary[ObjectFamily::MATS].AddObject(new Platform(Platform::Type::LARGE_PLATFORM));
+      //_objectLibrary[ObjectFamily::Mat].AddObject(new Platform(Platform::Type::LARGE_PLATFORM));
       
       // Long Bridge
-      //_objectLibrary[ObjectFamily::MATS].AddObject(new Bridge(Bridge::Type::LONG_BRIDGE));
+      //_objectLibrary[ObjectFamily::Mat].AddObject(new Bridge(Bridge::Type::LONG_BRIDGE));
       
       // Short Bridge
       // TODO: Need to update short bridge markers so they don't look so similar to long bridge at oblique viewing angle
-      // _objectLibrary[ObjectFamily::MATS].AddObject(new MatPiece(MatPiece::Type::SHORT_BRIDGE));
+      // _objectLibrary[ObjectFamily::Mat].AddObject(new MatPiece(MatPiece::Type::SHORT_BRIDGE));
       
       
       //////////////////////////////////////////////////////////////////////////
@@ -182,13 +166,13 @@ namespace Anki
       //////////////////////////////////////////////////////////////////////////
       // Charger
       //
-      _objectLibrary[ObjectFamily::CHARGERS].AddObject(new Charger());
+      _objectLibrary[ObjectFamily::Charger].AddObject(new Charger());
       
       
       //////////////////////////////////////////////////////////////////////////
       // Faces
       //
-      _objectLibrary[ObjectFamily::HUMAN_HEADS].AddObject(new HumanHead());
+      _objectLibrary[ObjectFamily::HumanHead].AddObject(new HumanHead());
 
       
     } // BlockWorld() Constructor
@@ -207,9 +191,9 @@ namespace Anki
     } // ~BlockWorld() Destructor
     
     
-    void CheckForOverlapHelper(const Vision::ObservableObject* objectToMatch,
-                               Vision::ObservableObject* objectToCheck,
-                               std::vector<Vision::ObservableObject*>& overlappingObjects)
+    void CheckForOverlapHelper(const BlockWorld::ObservableObject* objectToMatch,
+                               BlockWorld::ObservableObject* objectToCheck,
+                               std::vector<BlockWorld::ObservableObject*>& overlappingObjects)
     {
       
       // TODO: smarter block pose comparison
@@ -232,9 +216,9 @@ namespace Anki
     } // CheckForOverlapHelper()
   
     
-    void BlockWorld::FindOverlappingObjects(const Vision::ObservableObject* objectSeen,
+    void BlockWorld::FindOverlappingObjects(const ObservableObject* objectSeen,
                                             const ObjectsMapByType_t& objectsExisting,
-                                            std::vector<Vision::ObservableObject*>& overlappingExistingObjects) const
+                                            std::vector<ObservableObject*>& overlappingExistingObjects) const
     {
       auto objectsExistingIter = objectsExisting.find(objectSeen->GetType());
       if(objectsExistingIter != objectsExisting.end()) {
@@ -246,9 +230,9 @@ namespace Anki
     } // FindOverlappingObjects()
     
 
-    void BlockWorld::FindOverlappingObjects(const Vision::ObservableObject* objectExisting,
-                                            const std::vector<Vision::ObservableObject*>& objectsSeen,
-                                            std::vector<Vision::ObservableObject*>& overlappingSeenObjects) const
+    void BlockWorld::FindOverlappingObjects(const ObservableObject* objectExisting,
+                                            const std::vector<ObservableObject*>& objectsSeen,
+                                            std::vector<ObservableObject*>& overlappingSeenObjects) const
     {
       for(auto objectToCheck : objectsSeen) {
         CheckForOverlapHelper(objectExisting, objectToCheck, overlappingSeenObjects);
@@ -256,11 +240,11 @@ namespace Anki
     }
     
     
-    void BlockWorld::FindIntersectingObjects(const Vision::ObservableObject* objectSeen,
+    void BlockWorld::FindIntersectingObjects(const ObservableObject* objectSeen,
                                              const std::set<ObjectFamily>& ignoreFamiles,
                                              const std::set<ObjectType>& ignoreTypes,
                                              const std::set<ObjectID>& ignoreIDs,
-                                             std::vector<Vision::ObservableObject*>& intersectingExistingObjects,
+                                             std::vector<ObservableObject*>& intersectingExistingObjects,
                                              f32 padding_mm) const
     {
       for(auto & objectsByFamily : _existingObjects)
@@ -275,7 +259,7 @@ namespace Anki
               {
                 const bool useID = ignoreIDs.find(objectAndId.first) == ignoreIDs.end();
                 if(useID) {
-                  Vision::ObservableObject* objExist = objectAndId.second;
+                  ObservableObject* objExist = objectAndId.second;
                   
                   // Get quads of both objects and check for intersection
                   Quad2f quadExist = objExist->GetBoundingQuadXY(objExist->GetPose(), padding_mm);
@@ -294,7 +278,7 @@ namespace Anki
     } // FindIntersectingObjects()
 
 
-    void BlockWorld::AddAndUpdateObjects(const std::vector<Vision::ObservableObject*>& objectsSeen,
+    void BlockWorld::AddAndUpdateObjects(const std::vector<ObservableObject*>& objectsSeen,
                                          const ObjectFamily& inFamily,
                                          const TimeStamp_t atTimestamp)
     {
@@ -305,9 +289,9 @@ namespace Anki
         //const float minDimSeen = objSeen->GetMinDim();
         
         // Store pointers to any existing objects that overlap with this one
-        //std::vector<Vision::ObservableObject*> overlappingObjects;
+        //std::vector<ObservableObject*> overlappingObjects;
         //FindOverlappingObjects(objSeen, objectsExisting, overlappingObjects);
-        Vision::ObservableObject* matchingObject = FindClosestMatchingObject(*objSeen,
+        ObservableObject* matchingObject = FindClosestMatchingObject(*objSeen,
                                                                              objSeen->GetSameDistanceTolerance(),
                                                                              objSeen->GetSameAngleTolerance());
         
@@ -321,9 +305,9 @@ namespace Anki
         // As of now the object will be w.r.t. the robot's origin.  If we
         // observed it to be on a mat, however, make it relative to that mat.
         const f32 objectDiagonal = objSeen->GetSameDistanceTolerance().Length();
-        Vision::ObservableObject* parentMat = nullptr;
+        ObservableObject* parentMat = nullptr;
 
-        for(auto objectsByType : _existingObjects[ObjectFamily::MATS]) {
+        for(auto objectsByType : _existingObjects[ObjectFamily::Mat]) {
           for(auto objectsByID : objectsByType.second) {
             MatPiece* mat = dynamic_cast<MatPiece*>(objectsByID.second);
             assert(mat != nullptr);
@@ -343,7 +327,7 @@ namespace Anki
         
         std::vector<Point2f> projectedCorners;
         f32 observationDistance = 0;
-        Vision::ObservableObject* observedObject = nullptr;
+        ObservableObject* observedObject = nullptr;
 
         if(matchingObject == nullptr) {
           
@@ -379,7 +363,7 @@ namespace Anki
                                   "Did not match observed object to existing %s object "
                                   "by pose, but assuming there's only one that must match "
                                   "existing ID = %d. (since ONLY_ALLOW_ONE_OBJECT_PER_TYPE = %d)\n",
-                                  objSeen->GetType().GetName().c_str(),
+                                  ObjectTypeToString(objSeen->GetType()),
                                   observedObject->GetID().GetValue(),
                                   ONLY_ALLOW_ONE_OBJECT_PER_TYPE);
               
@@ -412,7 +396,7 @@ namespace Anki
               PRINT_NAMED_WARNING("BlockWorld.AddAndUpdateObjects.UpdatingByType",
                                   "Ignoring the second simultaneously-seen %s object "
                                   "(since ONLY_ALLOW_ONE_OBJECT_PER_TYPE = %d)\n",
-                                  objSeen->GetType().GetName().c_str(),
+                                  ObjectTypeToString(objSeen->GetType()),
                                   ONLY_ALLOW_ONE_OBJECT_PER_TYPE);
             }
             
@@ -428,7 +412,7 @@ namespace Anki
             PRINT_NAMED_WARNING("BlockWorld.AddAndUpdateObject.AddingDisabled",
                                 "Saw a new %s%s object, but adding objects is disabled.\n",
                                 objSeen->IsActive() ? "active " : "",
-                                objSeen->GetType().GetName().c_str());
+                                ObjectTypeToString(objSeen->GetType()));
             
             // Delete this object since we're not going to add it or merge it
             delete objSeen;
@@ -444,12 +428,12 @@ namespace Anki
           PRINT_NAMED_INFO("BlockWorld.AddAndUpdateObjects.AddNewObject",
                            "Adding new %s%s object and ID=%d at (%.1f, %.1f, %.1f), relative to %s mat.\n",
                            objSeen->IsActive() ? "active " : "",
-                           objSeen->GetType().GetName().c_str(),
+                           ObjectTypeToString(objSeen->GetType()),
                            objSeen->GetID().GetValue(),
                            objSeen->GetPose().GetTranslation().x(),
                            objSeen->GetPose().GetTranslation().y(),
                            objSeen->GetPose().GetTranslation().z(),
-                           parentMat==nullptr ? "NO" : parentMat->GetType().GetName().c_str());
+                           parentMat==nullptr ? "NO" : ObjectTypeToString(parentMat->GetType()));
           
           // Don't add as an occluder the very first time we see the object; wait
           // until we've seen it MIN_TIMES_TO_OBSERVE_OBJECT times.
@@ -599,7 +583,7 @@ namespace Anki
       
     } // AddAndUpdateObjects()
     
-    void BlockWorld::UpdateTrackToObject(const Vision::ObservableObject* observedObject)
+    void BlockWorld::UpdateTrackToObject(const ObservableObject* observedObject)
     {
       assert(observedObject != nullptr);
       
@@ -681,9 +665,9 @@ namespace Anki
       struct UnobservedObjectContainer {
         ObjectFamily family;
         ObjectType   type;
-        Vision::ObservableObject*      object;
+        ObservableObject*      object;
         
-        UnobservedObjectContainer(ObjectFamily family_, ObjectType type_, Vision::ObservableObject* object_)
+        UnobservedObjectContainer(ObjectFamily family_, ObjectType type_, ObservableObject* object_)
         : family(family_), type(type_), object(object_) { }
       };
       std::vector<UnobservedObjectContainer> unobservedObjects;
@@ -697,7 +681,7 @@ namespace Anki
           for(auto objectIter = objectIdMap.begin();
               objectIter != objectIdMap.end(); )
           {
-            Vision::ObservableObject* object = objectIter->second;
+            ObservableObject* object = objectIter->second;
             
             if(object->GetLastObservedTime() < atTimestamp) {
               if(object->GetNumTimesObserved() < MIN_TIMES_TO_OBSERVE_OBJECT) {
@@ -705,7 +689,7 @@ namespace Anki
                 // just delete it
                 PRINT_NAMED_INFO("BlockWorld.CheckForUnobservedObjects",
                                  "Removing %s object %d that was only observed %d time(s).\n",
-                                 object->GetType().GetName().c_str(),
+                                 ObjectTypeToString(object->GetType()),
                                  object->GetID().GetValue(),
                                  object->GetNumTimesObserved());
                 objectIter = ClearObject(objectIter, objectsByType.first, objectFamily.first);
@@ -747,7 +731,7 @@ namespace Anki
                         "but wasn't.\n", unobserved.object->GetID().GetValue());
           
           ClearObject(unobserved.object, unobserved.type, unobserved.family);
-        } else if(unobserved.family != ObjectFamily::MATS && unobserved.object->GetID() != _robot->GetCarryingObject()) {
+        } else if(unobserved.family != ObjectFamily::Mat && unobserved.object->GetID() != _robot->GetCarryingObject()) {
           // If the object should _not_ be visible (i.e. none of its markers project
           // into the camera), but some part of the object is within frame, it is
           // close enough, and was seen fairly recently, then
@@ -916,7 +900,7 @@ namespace Anki
       // and localizes to it because it hasn't seen a marker on the flat mat
       // it is driving on.)
       if(_robot->IsLocalized()) {
-        MatPiece* mat = dynamic_cast<MatPiece*>(GetObjectByIDandFamily(_robot->GetLocalizedTo(), ObjectFamily::MATS));
+        MatPiece* mat = dynamic_cast<MatPiece*>(GetObjectByIDandFamily(_robot->GetLocalizedTo(), ObjectFamily::Mat));
         if(mat != nullptr) {
           if(mat->IsPoseOn(_robot->GetPose(), 0.f, .25*ROBOT_BOUNDING_Z)) {
             // Ignore the ID of the mat we're on
@@ -967,7 +951,7 @@ namespace Anki
                 const bool useID = ignoreIDs.find(objectAndId.first) == ignoreIDs.end();
                 if(useID)
                 {
-                  Vision::ObservableObject* object = objectAndId.second;
+                  ObservableObject* object = objectAndId.second;
                   if(object == nullptr) {
                     PRINT_NAMED_WARNING("BlockWorld.GetObjectBoundingBoxesXY.NullObjectPointer",
                                         "ObjectID %d corresponds to NULL ObservableObject pointer.\n",
@@ -1003,8 +987,8 @@ namespace Anki
       GetObsMarkerList(obsMarkersAtTimestamp, obsMarkersListAtTimestamp);
       
       // Get all mat objects *seen by this robot's camera*
-      std::vector<Vision::ObservableObject*> matsSeen;
-      _objectLibrary[ObjectFamily::MATS].CreateObjectsFromMarkers(obsMarkersListAtTimestamp, matsSeen,
+      std::vector<ObservableObject*> matsSeen;
+      _objectLibrary[ObjectFamily::Mat].CreateObjectsFromMarkers(obsMarkersListAtTimestamp, matsSeen,
                                                                   (_robot->GetCamera().GetID()));
 
       // Remove used markers from map container
@@ -1042,7 +1026,7 @@ namespace Anki
           {
             PRINT_NAMED_INFO("BlockWorld.UpdateRobotPose",
                              "Refusing to localize to %s mat with rotation %.1f degrees around (%.1f,%.1f,%.1f) axis.\n",
-                             mat->GetType().GetName().c_str(),
+                             ObjectTypeToString(mat->GetType()),
                              rotAngle.getDegrees(),
                              rotAxis.x(), rotAxis.y(), rotAxis.z());
           }else if(mat->IsPoseOn(_robot->GetPose(), 0, 15.f)) { // TODO: get heightTol from robot
@@ -1080,7 +1064,7 @@ namespace Anki
             // here, and not by ID, because "seen" objects have not ID assigned
             // yet.
 
-            Vision::ObservableObject* existingMatLocalizedTo = GetObjectByID(_robot->GetLocalizedTo());
+            ObservableObject* existingMatLocalizedTo = GetObjectByID(_robot->GetLocalizedTo());
             if(existingMatLocalizedTo == nullptr) {
               PRINT_NAMED_ERROR("BlockWorld.UpdateRobotPose.ExistingMatLocalizedToNull",
                                 "Robot %d is localized to mat with ID=%d, but that mat does not exist in the world.\n",
@@ -1088,7 +1072,7 @@ namespace Anki
               return false;
             }
             
-            std::vector<Vision::ObservableObject*> overlappingMatsSeen;
+            std::vector<ObservableObject*> overlappingMatsSeen;
             FindOverlappingObjects(existingMatLocalizedTo, matsSeen, overlappingMatsSeen);
             
             if(overlappingMatsSeen.empty()) {
@@ -1162,7 +1146,7 @@ namespace Anki
           } // if/else robot is localized
         } // if/else (onMat != nullptr)
         
-        ObjectsMapByType_t& existingMatPieces = _existingObjects[ObjectFamily::MATS];
+        ObjectsMapByType_t& existingMatPieces = _existingObjects[ObjectFamily::Mat];
         
         // Keep track of markers we saw on existing/instantiated mats, to use
         // for occlusion checking
@@ -1193,9 +1177,9 @@ namespace Anki
             // is just a mat we _saw_, not one we've instantiated.  So look for
             // one in approximately the same position, of those with the same
             // type:
-            //Vision::ObservableObject* existingObject = GetObjectByID(matToLocalizeTo->GetID());
-            std::vector<Vision::ObservableObject*> existingObjects;
-            FindOverlappingObjects(matToLocalizeTo, _existingObjects[ObjectFamily::MATS], existingObjects);
+            //ObservableObject* existingObject = GetObjectByID(matToLocalizeTo->GetID());
+            std::vector<ObservableObject*> existingObjects;
+            FindOverlappingObjects(matToLocalizeTo, _existingObjects[ObjectFamily::Mat], existingObjects);
           
             if(existingObjects.empty())
             {
@@ -1212,7 +1196,7 @@ namespace Anki
               
               PRINT_STREAM_INFO("BlockWorld.UpdateRobotPose.LocalizingToNewMat",
                          "Robot " << _robot->GetID() << " localizing to new "
-                                << existingMatPiece->GetType().GetName() << " mat with ID=" << existingMatPiece->GetID().GetValue() << ".");
+                                << ObjectTypeToString(existingMatPiece->GetType()) << " mat with ID=" << existingMatPiece->GetID().GetValue() << ".");
               
             } else {
               if(existingObjects.size() > 1) {
@@ -1268,20 +1252,20 @@ namespace Anki
             {
               PRINT_NAMED_INFO("BlockWorld.UpdateRobotPose",
                                "Ignoring observation of %s mat with rotation %.1f degrees around (%.1f,%.1f,%.1f) axis.\n",
-                               matSeen->GetType().GetName().c_str(),
+                               ObjectTypeToString(matSeen->GetType()),
                                rotAngle.getDegrees(),
                                rotAxis.x(), rotAxis.y(), rotAxis.z());
               continue;
             }
             
             // Store pointers to any existing objects that overlap with this one
-            std::vector<Vision::ObservableObject*> overlappingObjects;
+            std::vector<ObservableObject*> overlappingObjects;
             FindOverlappingObjects(matSeen, existingMatPieces, overlappingObjects);
             
             if(overlappingObjects.empty()) {
               // no existing mats overlapped with the mat we saw, so add it
               // as a new mat piece, relative to the world origin
-              Vision::ObservableObject* newMatPiece = matSeen->CloneType();
+              ObservableObject* newMatPiece = matSeen->CloneType();
               AddNewObject(existingMatPieces, newMatPiece);
               newMatPiece->SetPose(poseWrtOrigin); // do after AddNewObject, once ID is set
               
@@ -1291,7 +1275,8 @@ namespace Anki
               
               PRINT_NAMED_INFO("BlockWorld.UpdateRobotPose",
                                "Adding new %s mat with ID=%d at (%.1f, %.1f, %.1f)\n",
-                               newMatPiece->GetType().GetName().c_str(), newMatPiece->GetID().GetValue(),
+                               ObjectTypeToString(newMatPiece->GetType()),
+                               newMatPiece->GetID().GetValue(),
                                newMatPiece->GetPose().GetTranslation().x(),
                                newMatPiece->GetPose().GetTranslation().y(),
                                newMatPiece->GetPose().GetTranslation().z());
@@ -1396,9 +1381,9 @@ namespace Anki
                                          const ObjectFamily& inFamily,
                                          const TimeStamp_t atTimestamp)
     {
-      const Vision::ObservableObjectLibrary& objectLibrary = _objectLibrary[inFamily];
+      const ObservableObjectLibrary& objectLibrary = _objectLibrary[inFamily];
       
-      std::vector<Vision::ObservableObject*> objectsSeen;
+      std::vector<ObservableObject*> objectsSeen;
       
       // Don't bother with this update at all if we didn't see at least one
       // marker (which is our indication we got an update from the robot's
@@ -1439,7 +1424,7 @@ namespace Anki
         if (!_robot->IsProxSensorBlocked(sensor) && _robot->GetProxSensorVal(sensor) >= PROX_OBSTACLE_DETECT_THRESH) {
           
           // Create an instance of the detected object
-          MarkerlessObject *m = new MarkerlessObject(MarkerlessObject::Type::PROX_OBSTACLE);
+          MarkerlessObject *m = new MarkerlessObject(ObjectType::ProxObstacle);
           
           // Get pose of detected object relative to robot according to which sensor it was detected by.
           Pose3d proxTransform = Robot::ProxDetectTransform[sensor];
@@ -1458,8 +1443,8 @@ namespace Anki
           m->SetPoseParent(_robot->GetPose().GetParent());
           
           // Check if this prox obstacle already exists
-          std::vector<Vision::ObservableObject*> existingObjects;
-          FindOverlappingObjects(m, _existingObjects[ObjectFamily::MARKERLESS_OBJECTS], existingObjects);
+          std::vector<ObservableObject*> existingObjects;
+          FindOverlappingObjects(m, _existingObjects[ObjectFamily::MarkerlessObject], existingObjects);
           
           // Update the last observed time of existing overlapping obstacles
           for(auto obj : existingObjects) {
@@ -1489,7 +1474,7 @@ namespace Anki
 
           
           m->SetLastObservedTime(lastTimestamp);
-          AddNewObject(ObjectFamily::MARKERLESS_OBJECTS, m);
+          AddNewObject(ObjectFamily::MarkerlessObject, m);
           _didObjectsChange = true;
         }
       } // end for all prox sensors
@@ -1497,10 +1482,10 @@ namespace Anki
       // Delete any existing prox objects that are too old.
       // Note that we use find() here because there may not be any markerless objects
       // yet, and using [] indexing will create things.
-      auto markerlessFamily = _existingObjects.find(ObjectFamily::MARKERLESS_OBJECTS);
+      auto markerlessFamily = _existingObjects.find(ObjectFamily::MarkerlessObject);
       if(markerlessFamily != _existingObjects.end())
       {
-        auto proxTypeMap = markerlessFamily->second.find(MarkerlessObject::Type::PROX_OBSTACLE);
+        auto proxTypeMap = markerlessFamily->second.find(ObjectType::ProxObstacle);
         if(proxTypeMap != markerlessFamily->second.end())
         {
           for (auto proxObsIter = proxTypeMap->second.begin();
@@ -1509,8 +1494,8 @@ namespace Anki
           {
             if (lastTimestamp - proxObsIter->second->GetLastObservedTime() > PROX_OBSTACLE_LIFETIME_MS)
             {
-              proxObsIter = ClearObject(proxObsIter, MarkerlessObject::Type::PROX_OBSTACLE,
-                                        ObjectFamily::MARKERLESS_OBJECTS);
+              proxObsIter = ClearObject(proxObsIter, ObjectType::ProxObstacle,
+                                        ObjectFamily::MarkerlessObject);
               
             } else {
               // Didn't erase anything, increment iterator
@@ -1622,31 +1607,31 @@ namespace Anki
         // Find any observed blocks from the remaining markers
         //
         // Note that this removes markers from the list that it uses
-        numObjectsObserved += UpdateObjectPoses(currentObsMarkers, ObjectFamily::BLOCKS, atTimestamp);
+        numObjectsObserved += UpdateObjectPoses(currentObsMarkers, ObjectFamily::Block, atTimestamp);
         
         //
         // Find any observed active blocks from the remaining markers
         //
         // Note that this removes markers from the list that it uses
-        numObjectsObserved += UpdateObjectPoses(currentObsMarkers, ObjectFamily::ACTIVE_BLOCKS, atTimestamp);
+        numObjectsObserved += UpdateObjectPoses(currentObsMarkers, ObjectFamily::LightCube, atTimestamp);
         
         //
         // Find any observed ramps from the remaining markers
         //
         // Note that this removes markers from the list that it uses
-        numObjectsObserved += UpdateObjectPoses(currentObsMarkers, ObjectFamily::RAMPS, atTimestamp);
+        numObjectsObserved += UpdateObjectPoses(currentObsMarkers, ObjectFamily::Ramp, atTimestamp);
 
         //
         // Find any observed chargers from the remaining markers
         //
         // Note that this removes markers from the list that it uses
-        numObjectsObserved += UpdateObjectPoses(currentObsMarkers, ObjectFamily::CHARGERS, atTimestamp);
+        numObjectsObserved += UpdateObjectPoses(currentObsMarkers, ObjectFamily::Charger, atTimestamp);
         
         //
         // Find any observed human heads from the remaining "markers"
         //
         // Note that this removes markers from the list that it uses
-        numObjectsObserved += UpdateObjectPoses(currentObsMarkers, ObjectFamily::HUMAN_HEADS, atTimestamp);
+        numObjectsObserved += UpdateObjectPoses(currentObsMarkers, ObjectFamily::HumanHead, atTimestamp);
         
         // TODO: Deal with unknown markers?
         
@@ -1687,9 +1672,9 @@ namespace Anki
         // For now, look for collision with anything other than Mat objects
         // NOTE: This assumes all other objects are DockableObjects below!!! (Becuase of IsBeingCarried() check)
         // TODO: How can we delete Mat objects (like platforms) whose positions we drive through
-        if(objectsByFamily.first != ObjectFamily::MATS &&
-           objectsByFamily.first != ObjectFamily::MARKERLESS_OBJECTS &&
-           objectsByFamily.first != ObjectFamily::HUMAN_HEADS)
+        if(objectsByFamily.first != ObjectFamily::Mat &&
+           objectsByFamily.first != ObjectFamily::MarkerlessObject &&
+           objectsByFamily.first != ObjectFamily::HumanHead)
         {
           for(auto & objectsByType : objectsByFamily.second)
           {
@@ -1827,7 +1812,7 @@ namespace Anki
       ObjectID::Reset();
     }
     
-    void BlockWorld::ClearObjectHelper(Vision::ObservableObject* object)
+    void BlockWorld::ClearObjectHelper(ObservableObject* object)
     {
       if(object == nullptr) {
         PRINT_NAMED_WARNING("BlockWorld.ClearObjectHelper.NullObjectPointer", "BlockWorld asked to clear a null object pointer.\n");
@@ -1838,7 +1823,7 @@ namespace Anki
           PRINT_NAMED_INFO("BlockWorld.ClearObjectHelper.DelocalizingRobot",
                            "Delocalizing robot %d, which is currently localized to %s "
                            "object with ID=%d, which is about to be deleted.\n",
-                           _robot->GetID(), object->GetType().GetName().c_str(), object->GetID().GetValue());
+                           _robot->GetID(), ObjectTypeToString(object->GetType()), object->GetID().GetValue());
           _robot->Delocalize();
         }
         
@@ -1849,7 +1834,7 @@ namespace Anki
         if(_robot->GetCarryingObject() == object->GetID()) {
           PRINT_NAMED_INFO("BlockWorld.ClearObjectHelper.ClearingCarriedObject",
                            "Clearing %s object %d which robot %d thinks it is carrying.\n",
-                           object->GetType().GetName().c_str(),
+                           ObjectTypeToString(object->GetType()),
                            object->GetID().GetValue(),
                            _robot->GetID());
           _robot->UnSetCarryingObject();
@@ -1858,7 +1843,7 @@ namespace Anki
         if(_selectedObject == object->GetID()) {
           PRINT_NAMED_INFO("BlockWorld.ClearObjectHelper.ClearingSelectedObject",
                            "Clearing %s object %d which is currently selected.\n",
-                           object->GetType().GetName().c_str(),
+                           ObjectTypeToString(object->GetType()),
                            object->GetID().GetValue());
           _selectedObject.UnSet();
         }
@@ -1866,7 +1851,7 @@ namespace Anki
         if(_robot->GetTrackToObject() == object->GetID()) {
           PRINT_NAMED_INFO("BlockWorld.ClearObjectHelper.ClearingTrackHeadToObject",
                            "Clearing %s object %d which robot %d is currently tracking its head to.\n",
-                           object->GetType().GetName().c_str(),
+                           ObjectTypeToString(object->GetType()),
                            object->GetID().GetValue(),
                            _robot->GetID());
           _robot->DisableTrackToObject();
@@ -1894,7 +1879,7 @@ namespace Anki
       }
     }
     
-    Vision::ObservableObject* BlockWorld::FindObjectOnTopOf(const Vision::ObservableObject& objectOnBottom,
+    BlockWorld::ObservableObject* BlockWorld::FindObjectOnTopOf(const ObservableObject& objectOnBottom,
                                                             f32 zTolerance) const
     {
       Point3f sameDistTol(objectOnBottom.GetSize());
@@ -1910,7 +1895,7 @@ namespace Anki
       for(auto & objectsByFamily : _existingObjects) {
         for(auto & objectsByType : objectsByFamily.second) {
           for(auto & objectsByID : objectsByType.second) {
-            Vision::ObservableObject* candidateObject = objectsByID.second;
+            ObservableObject* candidateObject = objectsByID.second;
             
             if(candidateObject->GetID() != objectOnBottom.GetID()) {
               // Find the point at bottom middle of the object we're checking to be on top
@@ -1935,7 +1920,7 @@ namespace Anki
       return nullptr;
     }
     
-    Vision::ObservableObject* BlockWorld::FindObjectClosestTo(const Pose3d& pose,
+    BlockWorld::ObservableObject* BlockWorld::FindObjectClosestTo(const Pose3d& pose,
                                                               const Vec3f&  distThreshold,
                                                               const std::set<ObjectID>& ignoreIDs,
                                                               const std::set<ObjectType>& ignoreTypes,
@@ -1944,7 +1929,7 @@ namespace Anki
       // TODO: Keep some kind of OctTree data structure to make these queries faster?
       
       Vec3f closestDist(std::numeric_limits<f32>::max());
-      Vision::ObservableObject* matchingObject = nullptr;
+      ObservableObject* matchingObject = nullptr;
       
       for(auto & objectsByFamily : _existingObjects) {
         if(ignoreFamilies.find(objectsByFamily.first) == ignoreFamilies.end() ) {
@@ -1971,18 +1956,18 @@ namespace Anki
       return matchingObject;
     }
     
-    Vision::ObservableObject* BlockWorld::FindClosestMatchingObject(const Vision::ObservableObject& object,
+    BlockWorld::ObservableObject* BlockWorld::FindClosestMatchingObject(const ObservableObject& object,
                                                                     const Vec3f& distThreshold,
                                                                     const Radians& angleThreshold)
     {
-      Vision::ObservableObject* closestObject = nullptr;
+      ObservableObject* closestObject = nullptr;
       Vec3f closestDist(distThreshold);
       Radians closestAngle(angleThreshold);
       
       for(auto & objectsByFamily : _existingObjects) {
         for(auto & objectsByType : objectsByFamily.second) {
           for(auto & objectsByID : objectsByType.second) {
-            Vision::ObservableObject* candidateObject = objectsByID.second;
+            ObservableObject* candidateObject = objectsByID.second;
             
             if(candidateObject->GetID() != object.GetID())
             {
@@ -2021,7 +2006,7 @@ namespace Anki
       } else {
         PRINT_NAMED_WARNING("BlockWorld.ClearObjectsByFamily",
                             "Will not delete family %d objects because object deletion is disabled.\n",
-                            family.GetValue());
+                            family);
       }
     }
     
@@ -2044,7 +2029,7 @@ namespace Anki
       } else {
         PRINT_NAMED_WARNING("BlockWorld.ClearObjectsByType",
                             "Will not delete %s objects because object deletion is disabled.\n",
-                            type.GetName().c_str());
+                            ObjectTypeToString(type));
 
       }
     } // ClearBlocksByType()
@@ -2088,7 +2073,7 @@ namespace Anki
                                                                    const ObjectType&   withType,
                                                                    const ObjectFamily& fromFamily)
     {
-      Vision::ObservableObject* object = objIter->second;
+      ObservableObject* object = objIter->second;
       
       if(_canDeleteObjects || object->GetNumTimesObserved() < MIN_TIMES_TO_OBSERVE_OBJECT) {
         ClearObjectHelper(object);
@@ -2104,7 +2089,7 @@ namespace Anki
       
     }
     
-    void BlockWorld::ClearObject(Vision::ObservableObject* object,
+    void BlockWorld::ClearObject(ObservableObject* object,
                                  const ObjectType&   withType,
                                  const ObjectFamily& fromFamily)
     {
@@ -2170,7 +2155,7 @@ namespace Anki
       for(auto const & objectsByFamily : allObjects)
       {
         // Markerless objects are not Actionable, so ignore them for selection
-        if(objectsByFamily.first != ObjectFamily::MARKERLESS_OBJECTS)
+        if(objectsByFamily.first != ObjectFamily::MarkerlessObject)
         {
           for (auto const & objectsByType : objectsByFamily.second){
             
@@ -2300,7 +2285,7 @@ namespace Anki
       for(auto & objectsByFamily : _existingObjects) {
         for(auto & objectsByType : objectsByFamily.second) {
           for(auto & objectsByID : objectsByType.second) {
-            Vision::ObservableObject* object = objectsByID.second;
+            ObservableObject* object = objectsByID.second;
             object->Visualize();
           }
         }
