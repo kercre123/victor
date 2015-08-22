@@ -918,8 +918,8 @@ public class Robot : IDisposable {
     RobotEngineManager.instance.SendMessage();
   }
 
-  public void RequestImage(RobotEngineManager.CameraResolution resolution, ImageSendMode mode) {
-    SetRobotImageSendModeMessage.resolution = (byte)resolution;
+  public void RequestImage(CameraResolutionClad resolution, ImageSendMode mode) {
+    SetRobotImageSendModeMessage.resolution = resolution;
     SetRobotImageSendModeMessage.mode = mode;
 
     RobotEngineManager.instance.Message.SetRobotImageSendMode = SetRobotImageSendModeMessage;

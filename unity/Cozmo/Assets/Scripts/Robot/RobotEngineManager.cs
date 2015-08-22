@@ -640,18 +640,18 @@ public class RobotEngineManager : MonoBehaviour {
 
     //Debug.Log("ReceivedSpecificMessage ImageChunk message.ncols("+message.ncols+") message.nrows("+message.nrows+")");
 
-    switch ((ImageEncoding_t)message.imageEncoding) {
-    case ImageEncoding_t.IE_JPEG_COLOR:
+    switch (message.imageEncoding) {
+    case ImageEncodingClad.JPEGColor:
       ColorJpeg(message);
       break;
-    case ImageEncoding_t.IE_RAW_GRAY:
+    case ImageEncodingClad.RawGray:
       GrayRaw(message);
       break;
-    case ImageEncoding_t.IE_MINIPEG_GRAY:
+    case ImageEncodingClad.JPEGMinimizedGray:
       MinipegGray(message);
       break;
     default:
-      Debug.LogWarning((ImageEncoding_t)message.imageEncoding + " is not supported", this);
+      Debug.LogWarning(message.imageEncoding + " is not supported", this);
       break;
     }
   }
@@ -919,48 +919,4 @@ public class RobotEngineManager : MonoBehaviour {
     SendMessage();
   }
 
-  public enum CameraResolution {
-    CAMERA_RES_QUXGA = 0,
-    // 3200 x 2400
-    CAMERA_RES_QXGA,
-    // 2048 x 1536
-    CAMERA_RES_UXGA,
-    // 1600 x 1200
-    CAMERA_RES_SXGA,
-    // 1280 x 960, technically SXGA-
-    CAMERA_RES_XGA,
-    // 1024 x 768
-    CAMERA_RES_SVGA,
-    // 800 x 600
-    CAMERA_RES_VGA,
-    // 640 x 480
-    CAMERA_RES_QVGA,
-    // 320 x 240
-    CAMERA_RES_QQVGA,
-    // 160 x 120
-    CAMERA_RES_QQQVGA,
-    // 80 x 60
-    CAMERA_RES_QQQQVGA,
-    // 40 x 30
-    CAMERA_RES_VERIFICATION_SNAPSHOT,
-    // 16 x 16
-    CAMERA_RES_COUNT,
-    CAMERA_RES_NONE = CAMERA_RES_COUNT
-  }
-
-  public enum ImageEncoding_t {
-    IE_NONE,
-    IE_RAW_GRAY,
-    // no compression
-    IE_RAW_RGB,
-    // no compression, just [RGBRGBRG...]
-    IE_YUYV,
-    IE_BAYER,
-    IE_JPEG_GRAY,
-    IE_JPEG_COLOR,
-    IE_JPEG_CHW,
-    // Color half width
-    IE_MINIPEG_GRAY
-    // Minimized grayscale JPEG - no header, no footer, no byte stuffing
-  }
 }

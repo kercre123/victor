@@ -522,7 +522,7 @@ namespace Cozmo {
       m.chunkId = 0;
       m.chunkSize = m.data.size();
       m.imageChunkCount = ceilf((f32)numTotalBytes / m.data.size());
-      m.imageEncoding = Vision::IE_RAW_GRAY;
+      m.imageEncoding = ImageEncodingClad::RawGray;
       
       u32 totalByteCnt = 0;
       u32 chunkByteCnt = 0;
