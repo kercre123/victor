@@ -600,17 +600,17 @@ namespace Anki {
 
                 // Determine resolution from "streamResolution" setting in the keyboard controller
                 // node
-                Vision::CameraResolution resolution = IMG_STREAM_RES;
+                CameraResolutionClad resolution = (CameraResolutionClad)IMG_STREAM_RES;
                
                 if (root_) {
                   const std::string resString = root_->getField("streamResolution")->getSFString();
                   printf("Attempting to switch robot to %s resolution.\n", resString.c_str());
                   if(resString == "VGA") {
-                    resolution = Vision::CAMERA_RES_VGA;
+                    resolution = CameraResolutionClad::VGA;
                   } else if(resString == "QVGA") {
-                    resolution = Vision::CAMERA_RES_QVGA;
+                    resolution = CameraResolutionClad::QVGA;
                   } else if(resString == "CVGA") {
-                    resolution = Vision::CAMERA_RES_CVGA;
+                    resolution = CameraResolutionClad::CVGA;
                   } else {
                     printf("Unsupported streamResolution = %s\n", resString.c_str());
                   }
