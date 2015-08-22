@@ -888,6 +888,8 @@ public class RobotEngineManager : MonoBehaviour {
   public void SetRobotVolume() {
     SetRobotVolumeMessage.volume = OptionsScreen.GetRobotVolume();
     Debug.Log("Set Robot Volume " + SetRobotVolumeMessage.volume);
+
+    Message.SetRobotVolume = SetRobotVolumeMessage;
     SendMessage();
   }
 
