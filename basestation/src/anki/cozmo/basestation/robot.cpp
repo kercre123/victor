@@ -21,6 +21,8 @@
 #include "anki/common/basestation/math/poseBase_impl.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/vision/CameraSettings.h"
+#include "anki/vision/basestation/observableObject_impl.h"
+
 // TODO: This is shared between basestation and robot and should be moved up
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/basestation/robotMessageHandler.h"

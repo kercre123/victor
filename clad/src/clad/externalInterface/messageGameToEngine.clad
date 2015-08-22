@@ -368,12 +368,6 @@ message StartFaceTracking {
 message StopFaceTracking {
 }
 
-// AssignNameToObject
-message AssignNameToObject {
-    uint_32 objectID,
-    string  name
-}
-
 // StartLookingForMarkers
 message StartLookingForMarkers {
 }

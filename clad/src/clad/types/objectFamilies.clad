@@ -8,6 +8,8 @@ namespace Cozmo {
 
   // TODO: change to int_16 or uint_8
   enum int_32 ObjectFamily {
+    Invalid = -1,
+    Unknown = 0,
     Block,
     LightCube,
     HumanHead,

@@ -983,18 +983,6 @@ namespace Anki {
       message.Set_StartLookingForMarkers(m2);
       SendMessage(message);
     }
-    
-    void UiGameController::SendAssignNameToObject(const ObjectID objectID,
-                                                  const std::string& name)
-    {
-      ExternalInterface::AssignNameToObject m;
-      m.name = name;
-      m.objectID = objectID;
-      
-      ExternalInterface::MessageGameToEngine message;
-      message.Set_AssignNameToObject(m);
-      SendMessage(message);
-    }
 
     void UiGameController::SendVisionSystemParams()
     {

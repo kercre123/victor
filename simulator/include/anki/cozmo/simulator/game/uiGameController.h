@@ -11,11 +11,16 @@
 
 #include "anki/cozmo/shared/cozmoTypes.h"
 #include "anki/common/basestation/math/pose.h"
+#include "anki/common/basestation/objectTypesAndIDs.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/data/dataPlatform.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
+
 #include "clad/types/imageSendMode.h"
+#include "clad/types/objectTypes.h"
+#include "clad/types/objectFamilies.h"
+
 #include <webots/Supervisor.hpp>
 
 
@@ -26,15 +31,15 @@ class UiGameController {
 
 public:
   typedef struct {
-    s32 family;
-    s32 type;
+    ObjectFamily family;
+    ObjectType   type;
     s32 id;
     f32 area;
     bool isActive;
     
     void Reset() {
-      family = -1;
-      type = -1;
+      family = ObjectFamily::Unknown;
+      type = ObjectType::Unknown;
       id = -1;
       area = 0;
       isActive = false;
@@ -123,7 +128,6 @@ protected:
   void SendReadAnimationFile();
   void SendStartFaceTracking(u8 timeout_sec);
   void SendStopFaceTracking();
-  void SendAssignNameToObject(const ObjectID objectID, const std::string& name);
   void SendVisionSystemParams();
   void SendFaceDetectParams();
   void SendForceAddRobot();

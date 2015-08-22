@@ -9,6 +9,7 @@
 #include "anki/common/basestation/math/linearAlgebra_impl.h"
 
 #include "anki/vision/basestation/camera.h"
+#include "anki/vision/basestation/observableObject_impl.h"
 
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/robot.h"
