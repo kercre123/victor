@@ -11,7 +11,7 @@
 
 #include "anki/cozmo/shared/cozmoTypes.h"
 #include "anki/common/basestation/math/pose.h"
-#include "anki/common/basestation/objectTypesAndIDs.h"
+#include "anki/common/basestation/objectIDs.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/data/dataPlatform.h"
 #include "clad/externalInterface/messageEngineToGame.h"

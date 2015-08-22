@@ -21,7 +21,7 @@
  * Copyright: Anki, Inc. 2014
  **/
 
-#include "anki/common/basestation/objectTypesAndIDs.h"
+#include "anki/common/basestation/objectIDs.h"
 #include "util/logging/logging.h"
 
 #include <cassert>

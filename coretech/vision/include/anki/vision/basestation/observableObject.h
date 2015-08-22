@@ -22,7 +22,7 @@
 
 #include "anki/vision/basestation/visionMarker.h"
 
-#include "anki/common/basestation/objectTypesAndIDs.h"
+#include "anki/common/basestation/objectIDs.h"
 
 #include "anki/common/basestation/colorRGBA.h"
 
