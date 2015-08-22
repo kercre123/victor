@@ -1,0 +1,74 @@
+/**
+ * File: behaviorLookForFaces.h
+ *
+ * Author: Andrew Stein
+ * Date:   7/30/15
+ *
+ * Description: Defines Cozmo's "LookForFaces" behavior, which searches for people's
+ *              faces and tracks/interacts with them if it finds one.
+ *
+ * Copyright: Anki, Inc. 2015
+ **/
+
+#ifndef __Cozmo_Basestation_Behaviors_BehaviorLookForFaces_H__
+#define __Cozmo_Basestation_Behaviors_BehaviorLookForFaces_H__
+
+#include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
+#include "util/signals/simpleSignal_fwd.h"
+#include "clad/externalInterface/messageEngineToGame.h"
+
+namespace Anki {
+namespace Cozmo {
+  
+  class BehaviorLookForFaces : public IBehavior
+  {
+  public:
+    
+    BehaviorLookForFaces(Robot& robot, const Json::Value& config);
+    
+    virtual Result Init() override;
+    
+    // Always runnable for now?
+    virtual bool IsRunnable(float currentTime_sec) const override { return true; }
+    
+    virtual Status Update(float currentTime_sec) override;
+    
+    virtual Result Interrupt(float currentTime_sec) override;
+    
+    virtual const std::string& GetName() const override {
+      static const std::string name("LookForFaces");
+      return name;
+    }
+    
+    virtual bool GetRewardBid(Reward& reward);
+    
+  private:
+    
+    void HandleRobotObservedObject(const ExternalInterface::RobotObservedObject& msg);
+    void HandleRobotCompletedAction(const ExternalInterface::RobotCompletedAction& msg);
+    
+    void SetNextMovementTime();
+    
+    enum class State {
+      LOOKING_AROUND,
+      TRACKING_FACE,
+      INTERRUPTED
+    };
+    
+    State _currentState;
+    
+    TimeStamp_t _firstSeen_ms;
+    TimeStamp_t _lastSeen_ms;
+    
+    f32 _trackingTimeout_sec;
+    f32 _lastLookAround_sec;
+    f32 _nextMovementTime_sec;
+    
+    std::vector<::Signal::SmartHandle> _eventHandles;
+    
+  }; // BehaviorLookForFaces
+  
+} // namespace Cozmo
+} // namespace Anki
+
+#endif // __Cozmo_Basestation_Behaviors_BehaviorLookForFaces_H__

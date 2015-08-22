@@ -32,8 +32,10 @@
 #include "anki/cozmo/basestation/faceAnimationManager.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "clad/externalInterface/messageEngineToGame.h"
+#include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/cozmo/basestation/data/dataPlatform.h"
 #include "util/fileUtils/fileUtils.h"
+
 #include <fstream>
 #include <dirent.h>
 #include <sys/stat.h>
@@ -55,10 +57,11 @@ namespace Anki {
     , _msgHandler(msgHandler)
     , _blockWorld(this)
     , _visionProcessor(dataPlatform)
+    , _behaviorMgr(*this)
+    , _isBehaviorMgrEnabled(false)
 #   if !ASYNC_VISION_PROCESSING
     , _haveNewImage(false)
 #   endif
-    , _behaviorMgr(this)
     , _wheelsLocked(false)
     , _headLocked(false)
     , _liftLocked(false)
@@ -124,6 +127,21 @@ namespace Anki {
 
 
       ReadAnimationDir(false);
+      
+      // Read in behavior manager Json
+      Json::Value behaviorConfig;
+      if (nullptr != _dataPlatform)
+      {
+        const std::string jsonFilename = "config/basestation/config/behavior_config.json";
+        const bool success = _dataPlatform->readAsJson(Data::Scope::Resources, jsonFilename, behaviorConfig);
+        if (!success)
+        {
+          PRINT_NAMED_ERROR("Robot.BehaviorConfigJsonNotFound",
+                            "Behavior Json config file %s not found.",
+                            jsonFilename.c_str());
+        }
+      }
+      _behaviorMgr.Init(behaviorConfig);
       
       SetHeadAngle(_currentHeadAngle);
       _pdo = new PathDolerOuter(msgHandler, robotID);
@@ -885,8 +903,19 @@ namespace Anki {
       // module(s) would do.  e.g. Some combination of game state, build planner,
       // personality planner, etc.
       
-      _behaviorMgr.Update();
+      std::string behaviorName("<disabled>");
+      if(_isBehaviorMgrEnabled) {
+        _behaviorMgr.Update(BaseStationTimer::getInstance()->GetCurrentTimeInSeconds());
+        
+        const IBehavior* behavior = _behaviorMgr.GetCurrentBehavior();
+        if(behavior != nullptr) {
+          behaviorName = behavior->GetName();
+        }
+      }
       
+      VizManager::getInstance()->SetText(VizManager::BEHAVIOR_STATE, NamedColors::MAGENTA,
+                                         "Behavior: %s", behaviorName.c_str());
+
       
       //////// Update Robot's State Machine /////////////
       Result actionResult = _actionList.Update(*this);
@@ -1993,16 +2022,27 @@ namespace Anki {
     }
     
     
-    void Robot::StartBehaviorMode(BehaviorManager::Mode mode)
+    void Robot::StartBehavior(const std::string& behaviorName)
     {
-      _behaviorMgr.StartMode(mode);
+      if(behaviorName == "NONE") {
+        PRINT_NAMED_INFO("Robot.StartBehavior.DisablingBehaviorManager", "\n");
+        _isBehaviorMgrEnabled = false;
+      } else {
+        _isBehaviorMgrEnabled = true;
+        if(behaviorName == "AUTO") {
+          PRINT_NAMED_INFO("Robot.StartBehavior.EnablingAutoBehaviorSelection", "\n");
+        } else {
+          if(RESULT_OK != _behaviorMgr.SelectNextBehavior(behaviorName, BaseStationTimer::getInstance()->GetCurrentTimeInSeconds())) {
+            PRINT_NAMED_ERROR("Robot.StartBehavior.Fail", "\n");
+          } else {
+            PRINT_NAMED_INFO("Robot.StartBehavior.Success",
+                             "Switching to behavior '%s'\n",
+                             behaviorName.c_str());
+          }
+        }
+      }
+      
     }
-    
-    void Robot::SetBehaviorState(BehaviorManager::BehaviorState state)
-    {
-      _behaviorMgr.SetNextState(state);
-    }
-    
     
     // ============ Messaging ================
     

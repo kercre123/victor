@@ -622,9 +622,11 @@ namespace Anki {
             ActionableObject* actionObject = dynamic_cast<ActionableObject*>(object);
             assert(actionObject != nullptr);
             if(actionObject->IsBeingCarried() == false) {
-              robot->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::ActiveObjectMoved(
-                robot->GetID(), objectWithID.first, msg.xAccel, msg.yAccel, msg.zAccel, msg.upAxis
-              )));
+              ExternalInterface::MessageEngineToGame event(ExternalInterface::ActiveObjectMoved(
+                                                                                                robot->GetID(), objectWithID.first, msg.xAccel, msg.yAccel, msg.zAccel, msg.upAxis
+                                                                                                ));
+              
+              robot->GetExternalInterface()->Broadcast(event);
             }
             
             return RESULT_OK;

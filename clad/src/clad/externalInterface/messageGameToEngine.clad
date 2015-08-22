@@ -247,13 +247,10 @@ message VisionWhileMoving {
 }
 
 // ExecuteBehavior
+// Use "NONE" to disable behaviors.
+// Use "AUTO" to enable automatic behavior selection.
 message ExecuteBehavior {
-    uint_8 behaviorMode
-}
-
-// SetBehaviorState
-message SetBehaviorState {
-    uint_8 behaviorState
+    string behaviorName
 }
 
 // AbortPath

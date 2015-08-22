@@ -221,6 +221,7 @@ namespace Anki {
     void RotateBy(const Radians& angle); // around existing axis
     void RotateBy(const RotationVector3d& Rvec);
     void RotateBy(const RotationMatrix3d& Rmat);
+    void RotateBy(const Rotation3d& R);
     
     // "Apply" Pose to 3D point(s) (i.e. transform that point by this Pose)
     template<typename T>

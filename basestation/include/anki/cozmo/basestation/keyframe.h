@@ -26,6 +26,8 @@
 
 #include "anki/cozmo/basestation/soundManager.h"
 
+#include "util/random/randomGenerator.h"
+
 namespace Anki {
   namespace Cozmo {
     
@@ -69,6 +71,9 @@ namespace Anki {
       virtual Result SetMembersFromJson(const Json::Value &jsonRoot) = 0;
       
       //void SetIsValid(bool isValid) { _isValid = isValid; }
+      
+      // A random number generator for all keyframes to share (for adding variability)
+      Util::RandomGenerator _rng;
       
     private:
       

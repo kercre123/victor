@@ -161,6 +161,7 @@ namespace Anki {
     Rotation3d(const Radians& angle, const Vec3f& axis);
     Rotation3d(const RotationVector3d& Rvec);
     Rotation3d(const RotationMatrix3d& Rmat);
+    Rotation3d(const UnitQuaternion<float>& q);
     
     bool operator==(const Rotation3d& other) const;
     

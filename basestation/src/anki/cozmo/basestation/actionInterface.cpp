@@ -15,7 +15,7 @@
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
-#include "messageEngineToGame.h"
+#include "clad/externalInterface/messageEngineToGame.h"
 
 namespace Anki {
   
@@ -96,7 +96,9 @@ namespace Anki {
 
       GetCompletionStruct(robot, completionInfo);
       
-      robot.GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotCompletedAction(robot.GetID(), _idTag, GetType(), result, completionInfo)));
+      ExternalInterface::MessageEngineToGame event(ExternalInterface::RobotCompletedAction(robot.GetID(), _idTag, GetType(), result, completionInfo));
+      
+      robot.GetExternalInterface()->Broadcast(event);
     }
     
     bool IActionRunner::RetriesRemain()

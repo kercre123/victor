@@ -22,7 +22,7 @@
 #include "anki/cozmo/basestation/robotMessageHandler.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
-#include "messageEngineToGame.h"
+#include "clad/externalInterface/messageEngineToGame.h"
 
 // The amount of time a proximity obstacle exists beyond the latest detection
 #define PROX_OBSTACLE_LIFETIME_MS  4000
@@ -565,23 +565,25 @@ namespace Anki
               //           topMarkerOrientation.getDegrees());
             }
           }
+          
           _robot->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotObservedObject(
-            _robot->GetID(),
-            inFamily,
-            obsType,
-            obsID,
-            boundingBox.GetX(),
-            boundingBox.GetY(),
-            boundingBox.GetWidth(),
-            boundingBox.GetHeight(),
-            obsObjTrans.x(),
-            obsObjTrans.y(),
-            obsObjTrans.z(),
-            q.w(), q.x(), q.y(), q.z(),
-            topMarkerOrientation.ToFloat(),
-            true, // markers are visible
-            observedObject->IsActive()
-          )));
+                                                                                        _robot->GetID(),
+                                                                                        inFamily,
+                                                                                        obsType,
+                                                                                        obsID,
+                                                                                        boundingBox.GetX(),
+                                                                                        boundingBox.GetY(),
+                                                                                        boundingBox.GetWidth(),
+                                                                                        boundingBox.GetHeight(),
+                                                                                        obsObjTrans.x(),
+                                                                                        obsObjTrans.y(),
+                                                                                        obsObjTrans.z(),
+                                                                                        q.w(), q.x(), q.y(), q.z(),
+                                                                                        topMarkerOrientation.ToFloat(),
+                                                                                        true, // markers are visible
+                                                                                        observedObject->IsActive()
+                                                                                                                                  )));
+          
         } // if(observedObject->GetNumTimesObserved() > MIN_TIMES_TO_OBSERVE_OBJECT)
         
         if(_robot->GetTrackToObject().IsSet() &&
