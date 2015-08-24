@@ -189,6 +189,7 @@ Result CozmoEngineHostImpl::AddRobot(RobotID_t robotID)
     PRINT_NAMED_ERROR("CozmoEngineHostImpl.AddRobot", "Failed to add robot ID=%d (nullptr returned).", robotID);
     lastResult = RESULT_FAIL;
   } else {
+    PRINT_NAMED_INFO("CozmoEngineHostImpl.AddRobot", "Sending init to the robot %d.", robotID);
     lastResult = robot->SyncTime();
   }
 

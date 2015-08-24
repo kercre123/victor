@@ -104,7 +104,7 @@ namespace Anki {
     , _numAnimationBytesStreamed(0)
     {
       _poseHistory = new RobotPoseHistory();
-      
+      PRINT_NAMED_INFO("Robot.Robot", "Created");
       _pose.SetName("Robot_" + std::to_string(_ID));
       _driveCenterPose.SetName("RobotDriveCenter_" + std::to_string(_ID));
       
