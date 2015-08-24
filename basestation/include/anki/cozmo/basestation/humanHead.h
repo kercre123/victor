@@ -23,7 +23,7 @@
 namespace Anki {
 namespace Cozmo {
   
-  class HumanHead : public ObservableObject // Note: Cozmo:: note Vision::
+  class HumanHead : public ObservableObject // Note: Cozmo:: not Vision::
   {
   public:
     

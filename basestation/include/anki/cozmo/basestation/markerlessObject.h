@@ -26,7 +26,7 @@ namespace Anki {
   
   namespace Cozmo {
     
-    class MarkerlessObject : public ObservableObject // Note: Cozmo:: note Vision::
+    class MarkerlessObject : public ObservableObject // Note: Cozmo:: not Vision::
     {
     public:
       
