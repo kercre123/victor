@@ -4837,6 +4837,7 @@ MonoBehaviour:
   timeUp: {fileID: 8300000, guid: 588d9e8829ac64e99868d70a6aabe550, type: 3}
   newHighScore: {fileID: 8300000, guid: 603a00990d2934bf387c43566baa582d, type: 3}
   spinRequestSound: {fileID: 8300000, guid: df6b76c87d7954d0396b70dd49c0c444, type: 3}
+  finalRound: {fileID: 8300000, guid: d332e00224def44a99b9be0afae1e0a4, type: 3}
   playerPanels:
   - {fileID: 22427392}
   - {fileID: 22469916}
@@ -14671,6 +14672,10 @@ Prefab:
       propertyPath: settingsPerLevel.Array.data[0].showTokens
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: finalRound
+      value: 
+      objectReference: {fileID: 8300000, guid: d332e00224def44a99b9be0afae1e0a4, type: 3}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 162512}
