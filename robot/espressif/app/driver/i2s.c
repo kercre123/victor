@@ -34,7 +34,7 @@ speed.
 #define I2S_LOOP_TEST
 
 #define DMA_BUF_COUNT (14)
-#define DMA_BUF_SIZE (128)
+#define DMA_BUF_SIZE (256)
 
 os_event_t txTaskQ[DMA_BUF_COUNT];
 
@@ -76,8 +76,14 @@ LOCAL void i2sTxTask(os_event_t *event)
   
   ets_intr_lock();
   
+  /*
+  os_printf("Rx: 0x%08x\t", rxBufs[receiveInd][0]);
+  prepSdioQueue(&rxQueue[receiveInd]);
+  receiveInd = receiveInd + 1 % DMA_BUF_COUNT;
+  */
+  
   bptr = (unsigned int*)event->par;
-  os_printf("TxT: 0x%08x -> 0x%08x\r\n", i, (uint32)bptr);
+  //os_printf("Tx: 0x%08x -> 0x%08x\r\n", i, (uint32)bptr);
   for (j=0; j<DMA_BUF_SIZE/4; ++j)
   {
     *bptr = i;
@@ -101,10 +107,6 @@ LOCAL void dmaisr(void* arg) {
 	//clear all intr flags
 	WRITE_PERI_REG(SLC_INT_CLR, 0xffffffff);
 
-#ifdef I2S_LOOP_TEST
-  //s_put_char('I'); os_put_hex(slc_intr_status, 8);
-#endif
-
   if (slc_intr_status & SLC_TX_EOF_INT_ST) { // Receive complete interrupt
     struct sdio_queue* desc = (struct sdio_queue*)READ_PERI_REG(SLC_TX_EOF_DES_ADDR);
     unsigned int* rbuf = (unsigned int*)(desc->buf_ptr);
@@ -112,7 +114,7 @@ LOCAL void dmaisr(void* arg) {
     os_put_hex(desc->next_link_ptr, 3); os_put_char('\t');
     prepSdioQueue(desc); // Reset the DMA descriptor for reuse
   #ifdef I2S_LOOP_TEST
-    os_put_char('R'); os_put_hex(*rbuf, 8); os_put_char('\n');
+    os_put_char('R'); os_put_hex(*rbuf, 8); os_put_char('\r'); os_put_char('\n');
     //i2sRecvCallback(&(xfer->payload), xfer->tag);
   #else
     if (xfer->from == fromRTIP) // Is received data
@@ -178,11 +180,11 @@ int8_t ICACHE_FLASH_ATTR i2sInit() {
   }
 
 	//Reset DMA
-	SET_PERI_REG_MASK(SLC_CONF0, SLC_RXLINK_RST|SLC_TXLINK_RST);
+	SET_PERI_REG_MASK(  SLC_CONF0, SLC_RXLINK_RST|SLC_TXLINK_RST);
 	CLEAR_PERI_REG_MASK(SLC_CONF0, SLC_RXLINK_RST|SLC_TXLINK_RST);
 
 	//Clear DMA int flags
-	SET_PERI_REG_MASK(SLC_INT_CLR,  0xffffffff);
+	SET_PERI_REG_MASK(  SLC_INT_CLR,  0xffffffff);
 	CLEAR_PERI_REG_MASK(SLC_INT_CLR,  0xffffffff);
 
 	//Enable and configure DMA
@@ -233,7 +235,8 @@ int8_t ICACHE_FLASH_ATTR i2sInit() {
 	CLEAR_PERI_REG_MASK(I2SCONF,I2S_I2S_RESET_MASK);
 
 	//Select 16bits per channel (FIFO_MOD=0), no DMA access (FIFO only)
-	CLEAR_PERI_REG_MASK(I2S_FIFO_CONF, I2S_I2S_DSCR_EN|(I2S_I2S_RX_FIFO_MOD<<I2S_I2S_RX_FIFO_MOD_S)|(I2S_I2S_TX_FIFO_MOD<<I2S_I2S_TX_FIFO_MOD_S));
+	CLEAR_PERI_REG_MASK(I2S_FIFO_CONF, I2S_I2S_DSCR_EN | (I2S_I2S_RX_FIFO_MOD<<I2S_I2S_RX_FIFO_MOD_S) |
+                                     (I2S_I2S_TX_FIFO_MOD<<I2S_I2S_TX_FIFO_MOD_S));
 	//Enable DMA in i2s subsystem
 	SET_PERI_REG_MASK(I2S_FIFO_CONF, I2S_I2S_DSCR_EN);
 
@@ -253,8 +256,8 @@ int8_t ICACHE_FLASH_ATTR i2sInit() {
 						(I2S_CLKM_DIV_NUM<<I2S_CLKM_DIV_NUM_S));
 	SET_PERI_REG_MASK(I2SCONF, I2S_RIGHT_FIRST|I2S_MSB_RIGHT|I2S_RECE_SLAVE_MOD|//I2S_TRANS_SLAVE_MOD|
 						I2S_RECE_MSB_SHIFT|I2S_TRANS_MSB_SHIFT|
-						((32&I2S_BCK_DIV_NUM )<<I2S_BCK_DIV_NUM_S)|
-						((32&I2S_CLKM_DIV_NUM)<<I2S_CLKM_DIV_NUM_S));
+						((16&I2S_BCK_DIV_NUM )<<I2S_BCK_DIV_NUM_S)|
+						((16&I2S_CLKM_DIV_NUM)<<I2S_CLKM_DIV_NUM_S));
 
 
 	//No idea if ints are needed...
