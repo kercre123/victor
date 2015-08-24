@@ -49,25 +49,15 @@
     ],
     
     'faciometric_path' : [
-      #'<(coretech_external_path)/IntraFace/Files',
-      '<(coretech_external_path)/IntraFace/osx_demo_126',
+      '<(coretech_external_path)/IntraFace',
     ],
     
     'faciometric_includes': [
-    # '<(faciometric_path)/CommonFiles/Headers',
-    #  '<(faciometric_path)/Anki/Headers',
-      '<(faciometric_path)/include',
+    # Defined conditionally below, depending on platform
     ],
     
     'faciometric_libs': [
-    #'<(faciometric_path)/CommonFiles/Library/libcryptopp.a',
-    #  '<(faciometric_path)/CommonFiles/Library/libcurl.a',
-    #  '<(faciometric_path)/Anki/Library/liblibintraface_core122.a',
-    #  '<(faciometric_path)/Anki/Library/liblibintraface_emo122.a',
-    #  '<(faciometric_path)/Anki/Library/liblibintraface_license_anki.a',
-      '<(faciometric_path)/lib/libintraface_core126.dylib',
-      '<(faciometric_path)/lib/libintraface_emo126.dylib',
-      '<(faciometric_path)/lib/libintraface_gaze126.dylib',
+    # Defined conditionally below, depending on platform
     ],
     
     'compiler_flags': [
@@ -100,15 +90,6 @@
     ],
     'linker_flags' : [
         '-g',
-        '-finalize',   # FacioMetric
-        '-prefinalized-library',   # FacioMetric
-        '<(faciometric_path)/Anki/Library/liblibintraface_core122.a',  # FacioMetric
-        '-prefinalized-library',  # FacioMetric
-        '<(faciometric_path)/Anki/Library/liblibintraface_license_anki.a',  # FacioMetric
-        '-prefinalized-library',  # FacioMetric
-        '<(faciometric_path)/Anki/Library/liblibintraface_emo122.a',  # FacioMetric
-        '-finalized-product',  # FacioMetric
-        '<(PRODUCT_DIR)', # "${BUILT_PRODUCTS_DIR}/${EXECUTABLE_PATH}""  # FacioMetric
     ],
 
     # Set default ARCHS based on platform
@@ -123,23 +104,34 @@
     'arch_group%': '<(arch_group)',
     
     'conditions': [
-      # Luxand FaceSDK libraries, depending on platform:
+      # Face libraries, depending on platform:
       ['OS=="mac"', {
         'facesdk_libs': [
           '<(coretech_external_path)/Luxand_FaceSDK/bin/osx_x86_64/libfsdk.dylib',
         ],
+        'faciometric_includes': [
+          '<(faciometric_path)/osx_demo_126/include',
+        ],
+        'faciometric_libs': [
+          '<(coretech_external_path)/IntraFace/osx_demo_126/lib/libintraface_core126.dylib',
+          '<(coretech_external_path)/IntraFace/osx_demo_126/lib/libintraface_emo126.dylib',
+          '<(coretech_external_path)/IntraFace/osx_demo_126/lib/libintraface_gaze126.dylib',
+        ],
       }],
       ['OS=="ios"', {
         'facesdk_libs': [
-        # TODO: handle different architectures
-        '<(coretech_external_path)/Luxand_FaceSDK/bin/iOS/libfsdk-static_64.a',
+          # TODO: handle different architectures
+          '<(coretech_external_path)/Luxand_FaceSDK/bin/iOS/libfsdk-static.a',
+        ],
+        'faciometric_libs': [
+          '<(faciometric_path)/IntraFace_126_iOS_Anki/Library/intraface.framework',
         ],
       }],
       ['OS=="android"', {
         'facesdk_libs': [
-        # TODO: handle different architectures
-        '<(coretech_external_path)/Luxand_FaceSDK/bin/Android/armeabi-v7a/libfsdk.so',
-        '<(coretech_external_path)/Luxand_FaceSDK/bin/Android/armeabi-v7a/libstlport_shared.so',
+          # TODO: handle different architectures
+          '<(coretech_external_path)/Luxand_FaceSDK/bin/Android/armeabi-v7a/libfsdk.so',
+          '<(coretech_external_path)/Luxand_FaceSDK/bin/Android/armeabi-v7a/libstlport_shared.so',
         ],
       }],
       
@@ -562,7 +554,7 @@
                   'ln',
                   '-s',
                   '-f',
-                  '<(faciometric_path)/lib',
+                  '<(faciometric_path)/osx_demo_126/lib',
                   '../../simulator/controllers/webotsCtrlGameEngine/lib',
                 ],
               },
@@ -623,23 +615,6 @@
                 ],
                 'outputs': [
                   '../../simulator/controllers/webotsCtrlGameEngine/resources/test',
-                ],
-                'action': [
-                  'ln',
-                  '-s',
-                  '-f',
-                  '-h',
-                  '<@(_inputs)',
-                  '<@(_outputs)',
-                ],
-              },
-              {
-                'action_name': 'create_symlink_resources_faciometric',
-                'inputs': [
-                  '<(coretech_external_path)/IntraFace',
-                ],
-                'outputs': [
-                  '../../simulator/controllers/webotsCtrlGameEngine/resources/faciometric',
                 ],
                 'action': [
                   'ln',
@@ -766,6 +741,26 @@
         '<(cg-cti_gyp_path):ctiVision',
       ],
       'type': '<(game_library_type)',
+      
+      # Copy FacioMetric's models into the resources so they are available at runtime.
+      # This is a little icky since it reaches into cozmo engine...
+      'actions': [
+        {
+          'action_name': 'copy_faciometric_models',
+          'inputs': [
+          '<(faciometric_path)/models',
+          ],
+          'outputs': [
+            '../../lib/anki/cozmo-engine/resources/config/faciometric',
+          ],
+          'action': [
+            'cp',
+            '-R',
+            '<@(_inputs)',
+            '<@(_outputs)',
+          ],
+        },
+      ],
     },
     
 
