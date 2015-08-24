@@ -72,7 +72,11 @@ LOCAL void i2sTxTask(os_event_t *event)
 {
   static unsigned int i=0x00000001;
   int j;
-  unsigned int* bptr = (unsigned int*)event->par;
+  unsigned int* bptr;
+  
+  ets_intr_lock();
+  
+  bptr = (unsigned int*)event->par;
   os_printf("TxT: 0x%08x -> 0x%08x\r\n", i, (uint32)bptr);
   for (j=0; j<DMA_BUF_SIZE/4; ++j)
   {
@@ -81,6 +85,8 @@ LOCAL void i2sTxTask(os_event_t *event)
   }
   if  (i < 0x80000000) i = i << 1;
   else i = 0x00000001;
+  
+  ets_intr_unlock();
 }
 
 
@@ -106,7 +112,7 @@ LOCAL void dmaisr(void* arg) {
     os_put_hex(desc->next_link_ptr, 3); os_put_char('\t');
     prepSdioQueue(desc); // Reset the DMA descriptor for reuse
   #ifdef I2S_LOOP_TEST
-    os_put_char('R'); os_put_hex(*rbuf, 8);
+    os_put_char('R'); os_put_hex(*rbuf, 8); os_put_char('\n');
     //i2sRecvCallback(&(xfer->payload), xfer->tag);
   #else
     if (xfer->from == fromRTIP) // Is received data
@@ -134,7 +140,7 @@ LOCAL void dmaisr(void* arg) {
 #ifdef I2S_LOOP_TEST
     if (desc == NULL)
     {
-      os_put_char('N');
+      os_put_char('N'); os_put_char('\n');
     }
     else
     {
@@ -142,10 +148,6 @@ LOCAL void dmaisr(void* arg) {
     }
 #endif    
 	}
-
-#ifdef I2S_LOOP_TEST
-  os_put_char('\n');
-#endif
 }
 
 
@@ -169,10 +171,10 @@ int8_t ICACHE_FLASH_ATTR i2sInit() {
     prepSdioQueue(&rxQueue[i]);
     txQueue[i].buf_ptr = (uint32_t)&txBufs[i];
     txQueue[i].next_link_ptr = (int)((i<(DMA_BUF_COUNT-1))?(&txQueue[i+1]):(&txQueue[0]));
-    os_printf("TXQ 0x%08x\t",  txQueue[i].buf_ptr);
+    os_printf("TX Q 0x%08x\tB 0x%08x\t",  (unsigned int)&txQueue[i], txQueue[i].buf_ptr);
     rxQueue[i].buf_ptr = (uint32_t)&rxBufs[i];
     rxQueue[i].next_link_ptr = (int)((i<(DMA_BUF_COUNT-1))?(&rxQueue[i+1]):(&rxQueue[0]));
-    os_printf("RXQ 0x%08x\r\n", rxQueue[i].next_link_ptr);
+    os_printf("RX Q 0x%08x\tB 0x%08x\r\n",  (unsigned int)&rxQueue[i], rxQueue[i].buf_ptr);
   }
 
 	//Reset DMA
