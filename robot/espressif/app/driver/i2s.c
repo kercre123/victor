@@ -103,7 +103,7 @@ LOCAL void dmaisr(void* arg) {
     struct sdio_queue* desc = (struct sdio_queue*)READ_PERI_REG(SLC_TX_EOF_DES_ADDR);
     unsigned int* rbuf = (unsigned int*)(desc->buf_ptr);
     
-    os_put_hex(desc->next_link_ptr, 8);
+    os_put_hex(desc->next_link_ptr, 3); os_put_char('\t');
     prepSdioQueue(desc); // Reset the DMA descriptor for reuse
   #ifdef I2S_LOOP_TEST
     os_put_char('R'); os_put_hex(*rbuf, 8);
@@ -144,7 +144,7 @@ LOCAL void dmaisr(void* arg) {
 	}
 
 #ifdef I2S_LOOP_TEST
-  //os_put_char('\n');
+  os_put_char('\n');
 #endif
 }
 
@@ -249,7 +249,7 @@ int8_t ICACHE_FLASH_ATTR i2sInit() {
 						(I2S_BITS_MOD<<I2S_BITS_MOD_S)|
 						(I2S_BCK_DIV_NUM <<I2S_BCK_DIV_NUM_S)|
 						(I2S_CLKM_DIV_NUM<<I2S_CLKM_DIV_NUM_S));
-	SET_PERI_REG_MASK(I2SCONF, I2S_RIGHT_FIRST|I2S_MSB_RIGHT|I2S_RECE_SLAVE_MOD|I2S_TRANS_SLAVE_MOD|
+	SET_PERI_REG_MASK(I2SCONF, I2S_RIGHT_FIRST|I2S_MSB_RIGHT|I2S_RECE_SLAVE_MOD|//I2S_TRANS_SLAVE_MOD|
 						I2S_RECE_MSB_SHIFT|I2S_TRANS_MSB_SHIFT|
 						((32&I2S_BCK_DIV_NUM )<<I2S_BCK_DIV_NUM_S)|
 						((32&I2S_CLKM_DIV_NUM)<<I2S_CLKM_DIV_NUM_S));
