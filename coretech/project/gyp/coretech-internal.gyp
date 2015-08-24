@@ -59,17 +59,17 @@
     ],
 
     'faciometric_path' : [
-      #'<(coretech_external_path)/IntraFace/Files',
-      '<(coretech_external_path)/IntraFace/osx_demo_126',
+      '<(coretech_external_path)/IntraFace',
     ],
 
     'faciometric_includes': [
-      #  '<(faciometric_path)/CommonFiles/Headers',
-      #  '<(faciometric_path)/Anki/Headers',
-      '<(faciometric_path)/include',
-      '<(faciometric_path)/3rdparty/Eigen3/include',
+      # Defined conditionally below, depending on platform
     ],
     
+    'faciometric_libs': [
+      # Defined conditionally below, depending on platform
+    ],
+
     'facesdk_includes': [
       '<(coretech_external_path)/Luxand_FaceSDK/include/C',
     ],
@@ -117,6 +117,25 @@
     # Copy overridden vars into this scope
     'arch_group%': '<(arch_group)',
     'conditions': [
+      # Face libraries, depending on platform:
+      ['OS=="mac"', {
+        'faciometric_includes': [
+          '<(faciometric_path)/osx_demo_126/include',
+          '<(faciometric_path)/osx_demo_126/3rdparty/Eigen3/include',
+        ],
+      }],
+      ['OS=="ios"', {
+        'faciometric_includes': [
+          '<(faciometric_path)/IntraFace_126_iOS_Anki/Library/3rdparty/include',
+        ],
+        'faciometric_libs': [
+          '<(faciometric_path)/IntraFace_126_iOS_Anki/Library/intraface.framework',
+        ],
+      }],
+      ['OS=="android"', {
+
+      }],
+    
       ['OS=="ios" and arch_group=="universal"', {
         'target_archs%': ['armv7', 'arm64'],
       }],
@@ -180,9 +199,7 @@
       ],
       ['OS=="ios"', {
         'compiler_flags': [
-        '-fobjc-arc',
-        '-mfpu=neon',         # FacioMetric
-        '-mfloat-abi=softfp', # FacioMetric
+          '-fobjc-arc',
         ]
       }],
       ['OS=="ios" or OS=="mac"', {
@@ -207,7 +224,7 @@
       'OTHER_CFLAGS': ['<@(compiler_c_flags)'],
       'OTHER_CPLUSPLUSFLAGS': ['<@(compiler_cpp_flags)'],
       'ALWAYS_SEARCH_USER_PATHS': 'NO',
-      # 'FRAMEWORK_SEARCH_PATHS':'../../libs/framework/',
+      'FRAMEWORK_SEARCH_PATHS': '<(faciometric_path)/IntraFace_126_iOS_Anki/Library',
       'CLANG_CXX_LANGUAGE_STANDARD':'c++11',
       'CLANG_CXX_LIBRARY':'libc++',
       'DEBUG_INFORMATION_FORMAT': 'dwarf',
@@ -570,6 +587,9 @@
         '<@(opencv_includes)',
         '<@(faciometric_includes)',
         '<@(facesdk_includes)',
+      ],
+      'libraries': [
+        '<@(faciometric_libs)',
       ],
       'direct_dependent_settings': {
         'include_dirs': [

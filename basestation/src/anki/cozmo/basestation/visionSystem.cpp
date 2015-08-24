@@ -78,8 +78,7 @@ namespace Cozmo {
   {
     PRINT_NAMED_INFO("VisionSystem.Constructor", "");
     
-    const std::string modelPath = _dataPlatform->pathToResource(Data::Scope::Resources,
-                                                                "faciometric/osx_demo_126/models/");
+    const std::string modelPath = _dataPlatform->pathToResource(Data::Scope::Resources, "config/faciometric");
     
     PRINT_NAMED_INFO("VisionSystem.Constructor.InstantiatingFaceTracker",
                      "With model path %s.", modelPath.c_str());

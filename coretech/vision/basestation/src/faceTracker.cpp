@@ -103,7 +103,12 @@ namespace Vision {
   FaceTracker::Impl::Impl(const std::string& modelPath)
   //: _displayEnabled(false)
   {
-    const std::string cascadeFilename = modelPath + "haarcascade_frontalface_alt2.xml";
+    std::string pathSep = "";
+    if(modelPath.back() != '/') {
+      pathSep = "/";
+    }
+    
+    const std::string cascadeFilename = modelPath + pathSep + "haarcascade_frontalface_alt2.xml";
     
     const bool loadSuccess = _faceCascade.load(cascadeFilename);
     if(!loadSuccess) {
@@ -117,24 +122,24 @@ namespace Vision {
     // To get an instance of the SDM class, please use the function SDM::getInstance
     if(_sdm == nullptr) { // Only initialize once to avoid LicenseManager complaining about multiple instances
       PRINT_NAMED_INFO("FaceTrackerImpl.Constructor.InstantiateSDM", "");
-      _sdm = SDM::getInstance((modelPath + "tracker_model49.bin").c_str(), &_lm);
+      _sdm = SDM::getInstance((modelPath + pathSep + "tracker_model49.bin").c_str(), &_lm);
     }
     
     // Create an instance of the class IrisEstimator
     PRINT_NAMED_INFO("FaceTrackerImpl.Constructor.InstantiateIE", "");
-    _ie  = new IE((modelPath + "iris_model.bin").c_str(), &_lm);
+    _ie  = new IE((modelPath + pathSep + "iris_model.bin").c_str(), &_lm);
     
     // Create an instance of the class GazeEstimator
     PRINT_NAMED_INFO("FaceTrackerImpl.Constructor.InstantiateGE", "");
-    _ge  = new GE((modelPath + "gaze_model.bin").c_str(), &_lm);
+    _ge  = new GE((modelPath + pathSep + "gaze_model.bin").c_str(), &_lm);
     
     // Create an instance of the class HPEstimatorProcrustes
     PRINT_NAMED_INFO("FaceTrackerImpl.Constructor.InstantiateHPE", "");
-    _hpe = new HPE((modelPath + "hp_model.bin").c_str(), &_lm);
+    _hpe = new HPE((modelPath + pathSep + "hp_model.bin").c_str(), &_lm);
     
     // Create an instance of the class EmoDet
     PRINT_NAMED_INFO("FaceTrackerImpl.Constructor.InstantiateED", "");
-    _ed  = new ED((modelPath + "emo_model.bin").c_str(), &_lm);
+    _ed  = new ED((modelPath + pathSep + "emo_model.bin").c_str(), &_lm);
     
   }
   
