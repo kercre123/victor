@@ -14,6 +14,10 @@ public class FaceReactionController : GameController {
   private float randomSpinDuration = 0.0f;
   private bool alignToFaceWaiting = true;
   private bool animationPlaying = false;
+  private float lastTurnSearchAngle = 0.0f;
+  private bool turningLeft = false;
+  private bool lookingUpToSearch = false;
+  private float faceSeenTime = 0.0f;
 
   public enum FaceReactionState {
     NONE,
@@ -27,7 +31,6 @@ public class FaceReactionController : GameController {
   protected override void OnEnable() {
     base.OnEnable();
     robot.VisionWhileMoving(true);
-    robot.SetHeadAngle(0.5f);
     robot.SetLiftHeight(0.0f);
     robot.StartFaceAwareness();
     RobotEngineManager.instance.SuccessOrFailure += RobotEngineMessages;
@@ -176,18 +179,15 @@ public class FaceReactionController : GameController {
   }
 
   private void Enter_SPIN_RANDOM() {
-    robot.SetHeadAngle(-0.8f);
+    robot.SetHeadAngle(1f);
     randomSpinDuration = Random.Range(3.0f, 5.5f);
-    DriveLeftOrRight(30.0f);
-    Debug.Log("setting wheels spin");
+    DecideLeftOrRight();
+    RotateCozmo(30.0f);
   }
 
   private void Update_SPIN_RANDOM() {
-    Debug.Log("spinning..." + randomSpinDuration);
-    Debug.Log(playStateTimer);
     if (playStateTimer > randomSpinDuration) {
       nextState = FaceReactionState.SEARCH_FOR_FACE;
-      Debug.Log("setting search for face stage..");
     }
   }
 
@@ -197,15 +197,51 @@ public class FaceReactionController : GameController {
 
   private void Enter_SEARCH_FOR_FACE() {
     robot.SetLiftHeight(0.0f);
-    robot.SetHeadAngle(0.0f);
-    DriveLeftOrRight(10.0f);
+    robot.SetHeadAngle(-1f);
+    DecideLeftOrRight();
+    RotateCozmo(10.0f);
+    lastTurnSearchAngle = robot.Rotation.eulerAngles.y;
+    faceSeenTime = 0.0f;
   }
 
   private void Update_SEARCH_FOR_FACE() {
-    if (robot.markersVisibleObjects.Count > 0) {
-      nextState = FaceReactionState.ALIGN_TO_FACE;
-      robot.FaceObject(robot.markersVisibleObjects[0]);
+    Debug.Log(faceSeenTime);
+    // HACK: shouldn't have to use accumulators when the face detection
+    // is more reliable (not as many false positives)
+    if (robot.markersVisibleObjects.Count > 0 && robot.markersVisibleObjects[0].isFace) {
+      if (faceSeenTime > 1.5f) {
+        Debug.Log("we found a face!");
+        nextState = FaceReactionState.ALIGN_TO_FACE;
+      }
+      faceSeenTime += Time.deltaTime;
     }
+    else {
+      faceSeenTime = Mathf.Max(0.0f, faceSeenTime - Time.deltaTime * 1.5f);
+    }
+
+    if (faceSeenTime > 0.0f)
+      return;
+
+    if (robot.IsHeadAngleRequestUnderway())
+      return;
+
+    // turn, look up and down.
+    // when done looking up and down, continue turning.
+
+    if (Mathf.Abs(robot.Rotation.eulerAngles.z - lastTurnSearchAngle) < 40.0f) {
+      RotateCozmo(10.0f);
+    }
+    else if (lookingUpToSearch == false) {
+      RotateCozmo(0.0f);
+      robot.SetHeadAngle(0.5f);
+      lookingUpToSearch = true;
+    }
+    else {
+      lookingUpToSearch = false;
+      robot.SetHeadAngle(-1f);
+      lastTurnSearchAngle = robot.Rotation.eulerAngles.z;
+    }
+
   }
 
   private void Exit_SEARCH_FOR_FACE() {
@@ -214,11 +250,14 @@ public class FaceReactionController : GameController {
 
   private void Enter_ALIGN_TO_FACE() {
     alignToFaceWaiting = true;
+    robot.FaceObject(robot.markersVisibleObjects[0]);
   }
 
   private void Update_ALIGN_TO_FACE() {
     if (playStateTimer > 3.0f) {
       nextState = FaceReactionState.SEARCH_FOR_FACE;
+      Debug.Log("align to face took too long... going back to search");
+      return;
     }
     if (!alignToFaceWaiting) {
       nextState = FaceReactionState.MOVE_TOWARD_FACE;
@@ -230,11 +269,12 @@ public class FaceReactionController : GameController {
   }
 
   private void Enter_MOVE_TOWARD_FACE() {
-    robot.DriveWheels(15.0f, 15.0f);
+    Debug.Log("moving toward face");
+    robot.DriveWheels(20.0f, 20.0f);
   }
 
   private void Update_MOVE_TOWARD_FACE() {
-    if (playStateTimer > 1.5f) {
+    if (playStateTimer > 2.0f) {
       nextState = FaceReactionState.REACT_TO_FACE;
     }
   }
@@ -245,7 +285,26 @@ public class FaceReactionController : GameController {
 
   private void Enter_REACT_TO_FACE() {
     int index = Random.Range(0, RobotEngineManager.instance.robotAnimationNames.Count);
-    SendAnimation(RobotEngineManager.instance.robotAnimationNames[index]);
+    //SendAnimation(RobotEngineManager.instance.robotAnimationNames[index]);
+    int fixedIndex = Random.Range(0, 5);
+    switch (fixedIndex) {
+    case 0:
+      SendAnimation("majorWinBeatBox");
+      break;
+    case 1:
+      SendAnimation("MinorIrritation");
+      break;
+    case 2:
+      SendAnimation("Satisfaction");
+      break;
+    case 3:
+      SendAnimation("winMatch");
+      break;
+    case 4:
+      SendAnimation("shocked");
+      break;
+    }
+
     animationPlaying = true;
   }
 
@@ -259,19 +318,24 @@ public class FaceReactionController : GameController {
     
   }
 
-  private void DriveLeftOrRight(float speed) {
+  private void DecideLeftOrRight() {
     float leftRightDecision = Random.Range(0.0f, 1.0f);
-    if (leftRightDecision < 0.5f) {
-      robot.DriveWheels(-speed, speed);
+    turningLeft = leftRightDecision < 0.5f;
+  }
+
+  private void RotateCozmo(float speed) {
+    if (turningLeft) {
+      robot.DriveWheels(speed, -speed);
     }
     else {
-      robot.DriveWheels(speed, -speed);
+      robot.DriveWheels(-speed, speed);
     }
   }
 
   private void RobotEngineMessages(bool success, RobotActionType action_type) {
     if (success && action_type == RobotActionType.FACE_OBJECT) {
       alignToFaceWaiting = false;
+      Debug.Log("Align to face successful!");
     }
     if (success && action_type == RobotActionType.PLAY_ANIMATION) {
       animationPlaying = false;
@@ -283,6 +347,10 @@ public class FaceReactionController : GameController {
     newAnimation.animName = animName;
     newAnimation.numLoops = 1;
     CozmoEmotionManager.instance.SendAnimation(newAnimation);
+  }
+
+  private void SetBackpackColors(Color c) {
+    robot.SetBackpackLEDs(CozmoPalette.ColorToUInt(c));
   }
 
 }
