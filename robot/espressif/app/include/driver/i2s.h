@@ -1,7 +1,9 @@
+
+
 #ifndef _I2S_H_
 #define _I2S_H_
 
-#include "anki/cozmo/robot/i2spiData.h" ///< I2SPI transaction parameters
+#include "anki/cozmo/robot/drop.h" ///< I2SPI transaction parameters
 
 /** Initalize the I2S peripheral, IO pins and DMA for bi-directional transfer
  * @return 0 on success or non-0 on an error
@@ -22,7 +24,7 @@ void i2sStop(void);
  * @param tag The type dag for the payload
  * @return true if the data was successfully queued or false if it could not be queued.
  */
-bool i2sQueueTx(I2SPIPayload* payload, I2SPIPayloadTag tag);
+bool i2sQueueMessage(I2SPIPayload* payload, I2SPIPayloadTag tag);
 
 /** Callback for new received data from RTIP
  * This function is called by but not defined in the i2s driver and must be defined by the user application.
