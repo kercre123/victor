@@ -791,7 +791,7 @@ namespace Anki {
     {
       _waitToVerifyTime = -1.f;
       
-      Vision::ObservableObject* object = robot.GetBlockWorld().GetObjectByID(_objectID);
+      ObservableObject* object = robot.GetBlockWorld().GetObjectByID(_objectID);
       if(object == nullptr) {
         PRINT_NAMED_ERROR("FaceObjectAction.Init.ObjectNotFound",
                           "Object with ID=%d no longer exists in the world.\n",
@@ -941,7 +941,7 @@ namespace Anki {
       // can continue with our additional checks:
       
       // Verify that we can see the object we were interested in
-      Vision::ObservableObject* object = robot.GetBlockWorld().GetObjectByID(_objectID);
+      ObservableObject* object = robot.GetBlockWorld().GetObjectByID(_objectID);
       if(object == nullptr) {
         PRINT_NAMED_ERROR("FaceObjectAction.CheckIfDone.ObjectNotFound",
                           "Object with ID=%d no longer exists in the world.\n",
@@ -1558,7 +1558,7 @@ namespace Anki {
         case DA_PLACE_LOW:
         {
           // TODO: Be able to fill in more objects in the stack
-          Vision::ObservableObject* object = robot.GetBlockWorld().GetObjectByID(_dockObjectID);
+          ObservableObject* object = robot.GetBlockWorld().GetObjectByID(_dockObjectID);
           if(object == nullptr) {
             PRINT_NAMED_ERROR("PickAndPlaceObjectAction.EmitCompletionSignal",
                               "Docking object %d not found in world after placing.\n",
@@ -1650,7 +1650,7 @@ namespace Anki {
           // We should _not_ still see a object with the
           // same type as the one we were supposed to pick up in that
           // block's original position because we should now be carrying it.
-          Vision::ObservableObject* carryObject = blockWorld.GetObjectByID(robot.GetCarryingObject());
+          ObservableObject* carryObject = blockWorld.GetObjectByID(robot.GetCarryingObject());
           if(carryObject == nullptr) {
             PRINT_NAMED_ERROR("PickAndPlaceObjectAction.Verify.CarryObjectNoLongerExists",
                               "Object %d we were carrying no longer exists in the world.\n",
@@ -1663,7 +1663,7 @@ namespace Anki {
           
           Vec3f Tdiff;
           Radians angleDiff;
-          Vision::ObservableObject* objectInOriginalPose = nullptr;
+          ObservableObject* objectInOriginalPose = nullptr;
           for(auto object : objectsWithType) {
             // TODO: is it safe to always have useAbsRotation=true here?
             Vec3f Tdiff;
@@ -2262,22 +2262,22 @@ namespace Anki {
           return ActionResult::FAILURE_ABORT;
         }
         
-        if(object->GetType() == Bridge::Type::LONG_BRIDGE ||
-           object->GetType() == Bridge::Type::SHORT_BRIDGE)
+        if(object->GetType() == ObjectType::Bridge_LONG ||
+           object->GetType() == ObjectType::Bridge_SHORT)
         {
           _chosenAction = new CrossBridgeAction(_objectID, _useManualSpeed);
         }
-        else if(object->GetType() == Ramp::Type::BASIC_RAMP) {
+        else if(object->GetType() == ObjectType::Ramp_Basic) {
           _chosenAction = new AscendOrDescendRampAction(_objectID, _useManualSpeed);
         }
-        else if(object->GetType() == Charger::Type::BASIC_CHARGER) {
+        else if(object->GetType() == ObjectType::Charger_Basic) {
           _chosenAction = new MountChargerAction(_objectID, _useManualSpeed);
         }
         else {
           PRINT_NAMED_ERROR("TraverseObjectAction.Init.CannotTraverseObjectType",
                             "Robot %d was asked to traverse object ID=%d of type %s, but "
                             "that traversal is not defined.\n", robot.GetID(),
-                            object->GetID().GetValue(), object->GetType().GetName().c_str());
+                            object->GetID().GetValue(), ObjectTypeToString(object->GetType()));
           
           return ActionResult::FAILURE_ABORT;
         }

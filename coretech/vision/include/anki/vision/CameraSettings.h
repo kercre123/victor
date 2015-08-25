@@ -30,6 +30,7 @@ namespace Anki {
       CAMERA_RES_VERIFICATION_SNAPSHOT, // 16 x 16
       CAMERA_RES_COUNT,
       CAMERA_RES_NONE = CAMERA_RES_COUNT
+      // IE_UPDATE_CLAD = cameraSettings.clad
     } CameraResolution;
 
     typedef struct
@@ -65,6 +66,7 @@ namespace Anki {
       IE_JPEG_COLOR,
       IE_JPEG_CHW, // Color half width
       IE_MINIPEG_GRAY   // Minimized grayscale JPEG - no header, no footer, no byte stuffing
+      // IE_UPDATE_CLAD = cameraSettings.clad
     } ImageEncoding_t;
 
   } // namespace Vision

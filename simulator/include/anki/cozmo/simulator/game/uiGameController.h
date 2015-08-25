@@ -11,13 +11,17 @@
 
 #include "anki/cozmo/shared/cozmoTypes.h"
 #include "anki/common/basestation/math/pose.h"
+#include "anki/common/basestation/objectIDs.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/data/dataPlatform.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/types/imageSendMode.h"
+#include "clad/types/testMode.h"
+#include "clad/types/cameraSettings.h"
+#include "clad/types/objectTypes.h"
+#include "clad/types/objectFamilies.h"
 #include <webots/Supervisor.hpp>
-
 #include <unordered_set>
 
 namespace Anki {
@@ -27,15 +31,15 @@ class UiGameController {
 
 public:
   typedef struct {
-    s32 family;
-    s32 type;
+    ObjectFamily family;
+    ObjectType   type;
     s32 id;
     f32 area;
     bool isActive;
     
     void Reset() {
-      family = -1;
-      type = -1;
+      family = ObjectFamily::Unknown;
+      type = ObjectType::Unknown;
       id = -1;
       area = 0;
       isActive = false;
@@ -91,7 +95,7 @@ protected:
   void SendTapBlockOnGround(const u8 numTaps);
   void SendStopAllMotors();
   void SendImageRequest(ImageSendMode mode, u8 robotID);
-  void SendSetRobotImageSendMode(ImageSendMode mode, u8 resolution);
+  void SendSetRobotImageSendMode(ImageSendMode mode, CameraResolutionClad resolution);
   void SendSaveImages(SaveMode_t mode, bool alsoSaveState=false);
   void SendEnableDisplay(bool on);
   void SendSetHeadlights(u8 intensity);
@@ -117,7 +121,7 @@ protected:
   void SendLiftControllerGains(const f32 kp, const f32 ki, const f32 kd, const f32 maxErrorSum);
   void SendSteeringControllerGains(const f32 k1, const f32 k2);
   void SendSetRobotVolume(const f32 volume);
-  void SendStartTestMode(TestMode mode, s32 p1 = 0, s32 p2 = 0, s32 p3 = 0);
+  void SendStartTestMode(TestModeClad mode, s32 p1 = 0, s32 p2 = 0, s32 p3 = 0);
   void SendIMURequest(u32 length_ms);
   void SendAnimation(const char* animName, u32 numLoops);
   void SendReplayLastAnimation();
@@ -147,14 +151,14 @@ protected:
   bool          IsRobotStatus(RobotStatusFlag mask) const;
   
   std::vector<s32> GetAllObjectIDs() const;
-  std::vector<s32> GetAllObjectIDsByFamily(u32 family) const;
-  std::vector<s32> GetAllObjectIDsByFamilyAndType(u32 family, u32 type) const;
-  Result           GetObjectFamily(s32 objectID, u32& family) const;
-  Result           GetObjectType(s32 objectID, u32& type) const;
+  std::vector<s32> GetAllObjectIDsByFamily(ObjectFamily family) const;
+  std::vector<s32> GetAllObjectIDsByFamilyAndType(ObjectFamily family, ObjectType type) const;
+  Result           GetObjectFamily(s32 objectID, ObjectFamily& family) const;
+  Result           GetObjectType(s32 objectID, ObjectType& type) const;
   Result           GetObjectPose(s32 objectID, Pose3d& pose) const;
   
-  u32              GetNumObjectsInFamily(u32 family) const;
-  u32              GetNumObjectsInFamilyAndType(u32 family, u32 type) const;
+  u32              GetNumObjectsInFamily(ObjectFamily family) const;
+  u32              GetNumObjectsInFamilyAndType(ObjectFamily family, ObjectType type) const;
   u32              GetNumObjects() const;
   void             ClearAllKnownObjects();
   

@@ -24,22 +24,19 @@
 
 namespace Anki {
   namespace Cozmo {
-
-    const Bridge::Type Bridge::Type::LONG_BRIDGE("LONG_BRIDGE");
-    const Bridge::Type Bridge::Type::SHORT_BRIDGE("SHORT_BRIDGE");
     
     static f32 GetLength(Bridge::Type type)
     {
       static const std::map<Bridge::Type, f32> Lengths = {
-        {Bridge::Type::LONG_BRIDGE,  300.f},
-        {Bridge::Type::SHORT_BRIDGE, 200.f}
+        {ObjectType::Bridge_LONG,  300.f},
+        {ObjectType::Bridge_SHORT, 200.f}
       };
       
       auto iter = Lengths.find(type);
       if(iter == Lengths.end()) {
         PRINT_NAMED_ERROR("Bridge.GetLength.UnknownBridgeType",
                           "No length defined for bridge type %s (%d).\n",
-                          type.GetName().c_str(), type.GetValue());
+                          ObjectTypeToString(type), type);
         return 0.f;
       } else {
         return iter->second;
@@ -48,14 +45,13 @@ namespace Anki {
     
     
     Bridge::Bridge(Type type)
-    : MatPiece({GetLength(type), 74.5f, 5.f})
-    , _type(type)
+    : MatPiece(type, {GetLength(type), 74.5f, 5.f})
     {
       Vision::MarkerType leftMarkerType = Vision::MARKER_0, rightMarkerType = Vision::MARKER_0, middleMarkerType = Vision::MARKER_0;
       f32 markerSize = 0.f;
       f32 length = 0.f;
       
-      if(Type::LONG_BRIDGE == type) {
+      if(Type::Bridge_LONG == type) {
         length = 212.f;
         markerSize = 30.f;
         
@@ -63,7 +59,7 @@ namespace Anki {
 //        rightMarkerType  = Vision::MARKER_BRIDGESUNRIGHT;
 //        middleMarkerType = Vision::MARKER_BRIDGESUNMIDDLE;
       }
-      else if(Type::SHORT_BRIDGE == type) {
+      else if(Type::Bridge_SHORT == type) {
         length = 112.f;
         markerSize = 30.f;
         

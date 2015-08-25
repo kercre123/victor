@@ -285,6 +285,11 @@ namespace Anki {
                                                       const Quad3f& worldQuad,
                                                       Pose3d& pose) const;
 
+    void Camera::AddOccluder(const std::vector<Point2f>& projectedPoints,
+                             const f32 atDistance)
+    {
+      _occluderList.AddOccluder(projectedPoints, atDistance);
+    }
     
     bool Camera::IsWithinFieldOfView(const Point2f &projectedPoint,
                                      const u16 xBorderPad,
@@ -418,11 +423,6 @@ namespace Anki {
       }
     } // ProjectObject()
     
-    void Camera::AddOccluder(const std::vector<Point2f>& projectedPoints,
-                             const f32 atDistance)
-    {
-      _occluderList.AddOccluder(projectedPoints, atDistance);
-    }
     
     void Camera::AddOccluder(const ObservableObject& object)
     {

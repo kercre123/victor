@@ -14,7 +14,7 @@
 #define ANKI_COZMO_ACTION_INTERFACE_H
 
 #include "anki/common/types.h"
-#include "anki/common/basestation/objectTypesAndIDs.h"
+#include "anki/common/basestation/objectIDs.h"
 #include "anki/common/basestation/math/pose.h"
 
 #include "anki/cozmo/shared/cozmoTypes.h"

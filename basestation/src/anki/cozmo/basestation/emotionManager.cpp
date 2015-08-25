@@ -63,7 +63,7 @@ namespace Cozmo {
   
   void EmotionManager::HandleRobotObservedFace(const ExternalInterface::RobotObservedObject &msg)
   {
-    if(msg.objectFamily == BlockWorld::ObjectFamily::HUMAN_HEADS)
+    if(msg.objectFamily == ObjectFamily::HumanHead)
     {
       // TODO: Get extra happy if we _recognize_ the face?
       
