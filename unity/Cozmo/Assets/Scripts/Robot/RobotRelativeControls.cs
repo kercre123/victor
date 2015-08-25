@@ -2,6 +2,7 @@
 using UnityEngine.UI;
 using System.Collections;
 using System.Collections.Generic;
+using Anki.Cozmo;
 
 /// <summary>
 /// originally designed to handle a diverse set of vehicle relative driving controls,
@@ -165,7 +166,7 @@ public class RobotRelativeControls : MonoBehaviour {
       return;
 
     //if coz is picked up, let's zero our wheels and abort control logic
-    if (robot.Status(RobotStatusFlag.IS_PICKED_UP)) {
+    if (robot.Status(RobotStatusFlagClad.PickedUp)) {
       robot.DriveWheels(0f, 0f);
       return;
     }
@@ -185,7 +186,7 @@ public class RobotRelativeControls : MonoBehaviour {
     RefreshTargetLock();
 
     targetLockTimer += Time.deltaTime;
-    if (lastTargetLock == null && targetLock != null && robot.Status(RobotStatusFlag.IS_CARRYING_BLOCK))
+    if (lastTargetLock == null && targetLock != null && robot.Status(RobotStatusFlagClad.CarryingBlock))
       targetLockTimer = 0f;
 
     //if we are unlocked this frame, let's reset our head angle back to sane value

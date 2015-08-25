@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using Anki.Cozmo;
 
 /// <summary>
 /// these are cozmo's action overrides for the building phases of gameplay
@@ -34,7 +35,7 @@ public class BuildActions : GameActions {
       return;
     }
 
-    if (robot.Status(RobotStatusFlag.IS_CARRYING_BLOCK)) {
+    if (robot.Status(RobotStatusFlagClad.CarryingBlock)) {
       //stack is overwritten to be our assisted place command
       if (robot.selectedObjects.Count > 0 && robot.selectedObjects[0].canBeStackedOn) {
         buttons[1].SetMode(ActionButton.Mode.STACK, robot.selectedObjects[0]);

@@ -159,7 +159,7 @@ public class CozmoVision : MonoBehaviour {
 
   private void RequestImage() {
     if (!imageRequested && robot != null) {
-      robot.RequestImage(RobotEngineManager.CameraResolution.CAMERA_RES_QVGA, Anki.Cozmo.ImageSendMode.Stream);
+      robot.RequestImage(Anki.Cozmo.CameraResolutionClad.QVGA, Anki.Cozmo.ImageSendMode.Stream);
       robot.SetHeadAngle();
       robot.SetLiftHeight(0f);
       imageRequested = true;
@@ -313,7 +313,7 @@ public class CozmoVision : MonoBehaviour {
 
   protected void PlayVisionActivateSound() {
     if (AudioManager.CozmoVisionLoop == null || visionActivateSound == null || AudioManager.CozmoVisionLoop.clip == visionActiveLoop ||
-        actionPanel == null || !actionPanel.nonSearchActionAvailable || robot == null || robot.selectedObjects.Count == 0)
+      actionPanel == null || !actionPanel.nonSearchActionAvailable || robot == null || robot.selectedObjects.Count == 0)
       return;
 
     AudioManager.PlayOneShot(visionActivateSound, 0f, 1f, maxVisionStartVol);
