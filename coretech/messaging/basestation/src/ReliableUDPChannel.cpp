@@ -114,6 +114,9 @@ bool ReliableUDPChannel::Send(const Anki::Comms::OutgoingPacket& packet)
       if (data->isDisconnectionQueued) {
         return true;
       }
+      if (data->connectionPackets.size() > 0) {
+        PRINT_NAMED_WARNING("ReliableUDPChannel.Send", "sending packets while queue is full");
+      }
       return SendDirect(packet);
     case ConnectionData::State::Disconnected:
       PRINT_STREAM_WARNING("ReliableUDPChannel.Send",
@@ -124,6 +127,7 @@ bool ReliableUDPChannel::Send(const Anki::Comms::OutgoingPacket& packet)
       if (data->isDisconnectionQueued) {
         return true;
       }
+      PRINT_NAMED_WARNING("ReliableUDPChannel.Send", "queueing packets while waiting for connection to complete.");
       data->connectionPackets.push_back(packet);
       return true;
     case ConnectionData::State::MustSendConnectionResponse:
@@ -165,8 +169,7 @@ void ReliableUDPChannel::AddConnection(ConnectionId connectionId, const Transpor
 
   // Check if connection already exists
   if (IsConnectionActive(connectionId)) {
-    PRINT_STREAM_DEBUG("ReliableUDPChannel.AddConnection.AlreadyConnected",
-                       "Already connected to connectionId " << connectionId);
+    PRINT_STREAM_DEBUG("ReliableUDPChannel.AddConnection.AlreadyConnected", "Already connected to connectionId " << connectionId);
     return;
   }
 
@@ -189,20 +192,20 @@ bool ReliableUDPChannel::AcceptIncomingConnection(ConnectionId connectionId, con
   ConnectionData *data = GetConnectionData(address);
   if (data == nullptr) {
     PRINT_STREAM_WARNING("ReliableUDPChannel.AcceptIncomingConnection",
-                         "Cannot accept connection; cannot determine connection state for address " << address.ToString() << ".");
+      "Cannot accept connection; cannot determine connection state for address " << address.ToString() << ".");
 
     return false;
   }
 
   if (data->state != ConnectionData::State::MustSendConnectionResponse) {
     PRINT_STREAM_WARNING("ReliableUDPChannel.AcceptIncomingConnection",
-                         "Cannot accept connection; not in correct state to accept address " << address.ToString() << ".");
+      "Cannot accept connection; not in correct state to accept address " << address.ToString() << ".");
     return false;
   }
 
   // Will disconnect old uses of connectionId and address
   UnreliableUDPChannel::AddConnection(connectionId, address);
-
+  PRINT_NAMED_INFO("ReliableUDPChannel.AcceptIncomingConnection", "connected?!?!?");
   data->state = ConnectionData::State::Connected;
   if (!data->isDisconnectionQueued) {
     assert(data->isRealConnectionActive);
@@ -222,16 +225,16 @@ void ReliableUDPChannel::RefuseIncomingConnection(const TransportAddress& addres
   ConnectionData *data = GetConnectionData(address);
   if (data == nullptr) {
     PRINT_STREAM_WARNING("ReliableUDPChannel.RefuseIncomingConnection",
-                         "Cannot refuse connection; cannot determine connection state "
-                         "for the connection to the specified address " << address.ToString() << ".");
+      "Cannot refuse connection; cannot determine connection state "
+      "for the connection to the specified address " << address.ToString() << ".");
 
     return;
   }
 
   if (data->state != ConnectionData::State::MustSendConnectionResponse) {
     PRINT_STREAM_WARNING("ReliableUDPChannel.RefuseIncomingConnection",
-                         "Cannot refuse connection; not in correct state to refuse the "
-                         "connection to the specified address " << address.ToString() << ".");
+      "Cannot refuse connection; not in correct state to refuse the "
+      "connection to the specified address " << address.ToString() << ".");
     return;
   }
 
@@ -294,10 +297,13 @@ void ReliableUDPChannel::ReceiveData(const uint8_t *buffer, unsigned int bufferS
   std::lock_guard<std::recursive_mutex> guard(mutex);
 
   if (buffer == Anki::Util::INetTransportDataReceiver::OnConnectRequest) {
+    PRINT_STREAM_WARNING("ReliableUDPChannel.ReceiveData", "on connect request - disconnecting from " << sourceAddress.ToString());
     QueueDisconnectionIfActuallyConnected(sourceAddress, true);
     EmplaceIncomingPacket(IncomingPacket(IncomingPacket::Tag::ConnectionRequest, sourceAddress));
   }
   else if (buffer == Anki::Util::INetTransportDataReceiver::OnConnected) {
+    PRINT_STREAM_WARNING("ReliableUDPChannel.ReceiveData", "on connect - disconnecting from " << sourceAddress.ToString());
+    // why even do this??! this should be a no-op:
     QueueDisconnectionIfActuallyConnected(sourceAddress, true);
     EmplaceIncomingPacket(IncomingPacket(IncomingPacket::Tag::Connected, sourceAddress));
 
@@ -312,14 +318,14 @@ void ReliableUDPChannel::ReceiveData(const uint8_t *buffer, unsigned int bufferS
     }
   }
   else if (buffer == Anki::Util::INetTransportDataReceiver::OnDisconnected) {
+    PRINT_STREAM_WARNING("ReliableUDPChannel.ReceiveData", "on disconnected - disconnecting from " << sourceAddress.ToString());
     QueueDisconnectionIfActuallyConnected(sourceAddress, false);
   }
   else {
     // can only process normal messages if we're supposed to be connected
     ConnectionData *data = GetConnectionData(sourceAddress);
     if (data == nullptr || data->isDisconnectionQueued) {
-      PRINT_STREAM_WARNING("ReliableUDPChannel.ReceiveData",
-                           "Received unexpected normal messages from address " << sourceAddress.ToString() << ".\n");
+      PRINT_STREAM_WARNING("ReliableUDPChannel.ReceiveData", "Received unexpected normal messages from address " << sourceAddress.ToString());
       return;
     }
     assert(data->isRealConnectionActive);
@@ -354,7 +360,7 @@ bool ReliableUDPChannel::SendDirect(const OutgoingPacket& packet)
   TransportAddress destAddress;
   if (!UnreliableUDPChannel::GetAddress(destAddress, packet.destId)) {
     PRINT_STREAM_WARNING("ReliableUDPChannel.SendDirect",
-                         "Cannot determine address for connection id " << packet.destId << ".");
+      "Cannot determine address for connection id " << packet.destId << ".");
     return false;
   }
 
@@ -397,8 +403,8 @@ void ReliableUDPChannel::PostProcessIncomingPacket(IncomingPacket& packet)
   // indicates a problem within this class implementation
   if (data == nullptr) {
     PRINT_STREAM_WARNING("ReliableUDPChannel.PostProcessIncomingPacket",
-                         "No connection data available for a queued packet from address " << packet.sourceAddress.ToString() <<
-                         ". Disconnecting. (This shouldn't happen.)");
+      "No connection data available for a queued packet from address " << packet.sourceAddress.ToString() <<
+      ". Disconnecting. (This shouldn't happen.)");
 
     reliableTransport.Disconnect(packet.sourceAddress);
     return;
@@ -413,10 +419,21 @@ void ReliableUDPChannel::PostProcessIncomingPacket(IncomingPacket& packet)
       data->state = ConnectionData::State::MustSendConnectionResponse;
       break;
     case IncomingPacket::Tag::Connected:
-      assert(data->state == ConnectionData::State::Disconnected);
+    {
+      //assert(data->state == ConnectionData::State::WaitingForConnectionResponse);
       assert(!data->isDisconnectionQueued);
 
+      PRINT_NAMED_INFO("PostProcessIncomingPacket", "Connected - completing connection %s - packets queued %zd",
+        packet.sourceAddress.ToString().c_str(), data->connectionPackets.size());
       data->state = ConnectionData::State::Connected;
+      
+      std::vector<OutgoingPacket> packetsToSend;
+      std::swap(packetsToSend, data->connectionPackets);
+      
+      for (const OutgoingPacket& packet : packetsToSend) {
+        SendDirect(packet);
+      }
+    }
       break;
     case IncomingPacket::Tag::Disconnected:
       assert(data->state == ConnectionData::State::Connected ||
@@ -473,6 +490,7 @@ void ReliableUDPChannel::RemoveConnectionData(const TransportAddress& address, b
     }
     else {
       data->isDisconnectionQueued = false;
+      PRINT_NAMED_INFO("ReliableUDPChannel.RemoveConnectionData", "clear q");
       data->connectionPackets.clear();
     }
   }
@@ -501,13 +519,24 @@ void ReliableUDPChannel::QueueDisconnectionIfActuallyConnected(const TransportAd
     ClearPacketsForAddressAfterEarliestDisconnect(sourceAddress);
   }
   else if (data->isRealConnectionActive) {
-    EmplaceIncomingPacket(IncomingPacket(IncomingPacket::Tag::Disconnected, sourceAddress));
-    data->isDisconnectionQueued = true;
+    if (data->state == ConnectionData::State::Connected) {
+      PRINT_STREAM_WARNING("ReliableUDPChannel.QueueDisconnectionIfActuallyConnected", "disconnecting from " << sourceAddress.ToString());
+      EmplaceIncomingPacket(IncomingPacket(IncomingPacket::Tag::Disconnected, sourceAddress));
+      data->isDisconnectionQueued = true;
+    } else {
+      // no op:
+      //data->isRealConnectionActive = makeActive;
+      //PRINT_NAMED_INFO("ReliableUDPChannel.QueueDisconnectionIfActuallyConnected", "connectionPackets %zd", data->connectionPackets.size());
+      // must not clear outgoing packets.. there are few in the queue
+      //data->connectionPackets.clear();
+      return;
+    }
   }
   else {
     // should be true or data should not exist
     assert(data->isDisconnectionQueued || data->isRealConnectionActive);
   }
   data->isRealConnectionActive = makeActive;
+  PRINT_NAMED_INFO("ReliableUDPChannel.QueueDisconnectionIfActuallyConnected", "clear q");
   data->connectionPackets.clear();
 }

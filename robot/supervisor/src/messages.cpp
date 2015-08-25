@@ -25,6 +25,7 @@
 #include "backpackLightController.h"
 #include "anki/cozmo/shared/activeBlockTypes.h"
 
+#define SEND_TEXT_REDIRECT_TO_STDOUT 0
 
 namespace Anki {
   namespace Cozmo {
@@ -675,7 +676,12 @@ void Process##__MSG_TYPE__##Message(const __MSG_TYPE__& msg) { ProcessAnimKeyFra
       {
         va_list argptr;
         va_start(argptr, format);
+#if SEND_TEXT_REDIRECT_TO_STDOUT
+        // print to console - works in webots environment.
+        printf(format, argptr);
+#else
         SendText(format, argptr);
+#endif
         va_end(argptr);
 
         return 0;

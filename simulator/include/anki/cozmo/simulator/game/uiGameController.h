@@ -18,6 +18,7 @@
 #include "clad/types/imageSendMode.h"
 #include <webots/Supervisor.hpp>
 
+#include <unordered_set>
 
 namespace Anki {
 namespace Cozmo {
@@ -105,8 +106,7 @@ protected:
   void SendClearAllBlocks();
   void SendClearAllObjects();
   void SendSelectNextObject();
-  void SendExecuteBehavior(BehaviorManager::Mode mode);
-  void SendSetNextBehaviorState(BehaviorManager::BehaviorState nextState);
+  void SendExecuteBehavior(const std::string& behaviorName);
   void SendAbortPath();
   void SendAbortAll();
   void SendDrawPoseMarker(const Pose3d& p);
@@ -132,16 +132,41 @@ protected:
   void SendCancelAction();
   
 
-  // Accessors
-  s32 GetStepTimeMS();
-  webots::Supervisor* GetSupervisor();
-  
-  const Pose3d& GetRobotPose();
-  const Pose3d& GetRobotPoseActual();
+  // ====== Accessors =====
+  s32 GetStepTimeMS() const;
+  webots::Supervisor* GetSupervisor() const;
 
-  const ObservedObject& GetCurrentlyObservedObject();
+  // Robot state message convenience functions
+  const Pose3d& GetRobotPose() const;
+  const Pose3d& GetRobotPoseActual() const;
+  f32           GetRobotHeadAngle_rad() const;
+  f32           GetLiftHeight_mm() const;
+  void          GetWheelSpeeds_mmps(f32& left, f32& right) const;
+  u32           GetCarryingObjectID() const;
+  u32           GetCarryingObjectOnTopID() const;
+  bool          IsRobotStatus(RobotStatusFlag mask) const;
+  
+  std::vector<s32> GetAllObjectIDs() const;
+  std::vector<s32> GetAllObjectIDsByFamily(u32 family) const;
+  std::vector<s32> GetAllObjectIDsByFamilyAndType(u32 family, u32 type) const;
+  Result           GetObjectFamily(s32 objectID, u32& family) const;
+  Result           GetObjectType(s32 objectID, u32& type) const;
+  Result           GetObjectPose(s32 objectID, Pose3d& pose) const;
+  
+  u32              GetNumObjectsInFamily(u32 family) const;
+  u32              GetNumObjectsInFamilyAndType(u32 family, u32 type) const;
+  u32              GetNumObjects() const;
+  void             ClearAllKnownObjects();
+  
+  const std::map<s32, Pose3d>& GetObjectPoseMap();
+  
+  const ObservedObject& GetCurrentlyObservedObject() const;
 
   
+  const std::unordered_set<std::string>& GetAvailableAnimations() const;
+  u32 GetNumAvailableAnimations() const;
+  bool IsAvailableAnimation(std::string anim) const;
+
 private:
   void HandleRobotStateUpdateBase(ExternalInterface::RobotState const& msg);
   void HandleRobotObservedObjectBase(ExternalInterface::RobotObservedObject const& msg);

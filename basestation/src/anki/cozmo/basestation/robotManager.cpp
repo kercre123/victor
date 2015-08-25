@@ -46,7 +46,7 @@ namespace Anki {
       auto iter = _robots.find(withID);
       if(iter != _robots.end()) {
         PRINT_NAMED_INFO("RobotManager.RemoveRobot", "Removing robot with ID=%d\n", withID);
-        
+        delete(iter->second);
         iter = _robots.erase(iter);
         
         // Find the ID. This is inefficient, but this isn't a long list

@@ -5,7 +5,7 @@ PROTO Block1x1 [
   field SFString type "1" # BlockType
   field SFVec3f translation 0 0 0.022
   field SFRotation rotation 0 0 1 0
-  field SFFloat density 250
+  field SFFloat density 1000
   field SFColor blockColor 1 0 0
   field SFBool  useWhiteMarkerBackgrounds TRUE
   field SFString markerImg ""  # Image path relative to textures/

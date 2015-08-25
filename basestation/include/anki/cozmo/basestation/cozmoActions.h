@@ -150,7 +150,7 @@ namespace Anki {
     class TurnInPlaceAction : public DriveToPoseAction
     {
     public:
-      TurnInPlaceAction(const Radians& angle, const bool isAbsolute);
+      TurnInPlaceAction(const Radians& angle, const bool isAbsolute, const Radians& variability = 0);
       
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::TURN_IN_PLACE; }
@@ -162,6 +162,7 @@ namespace Anki {
       
     private:
       Radians _turnAngle;
+      Radians _variability;
       bool    _isAbsoluteAngle;
       bool    _startedTraversingPath;
       
@@ -171,7 +172,8 @@ namespace Anki {
     class MoveHeadToAngleAction : public IAction
     {
     public:
-      MoveHeadToAngleAction(const Radians& headAngle, const f32 tolerance = DEG_TO_RAD(2.f));
+      MoveHeadToAngleAction(const Radians& headAngle, const f32 tolerance = DEG_TO_RAD(2.f),
+                            const Radians& variability = 0);
       
       virtual const std::string& GetName() const override { return _name; }
       virtual RobotActionType GetType() const override { return RobotActionType::MOVE_HEAD_TO_ANGLE; }
@@ -187,6 +189,9 @@ namespace Anki {
       
       Radians     _headAngle;
       Radians     _angleTolerance;
+      Radians     _variability;
+      Radians     _headAngleWithVariation;
+      
       std::string _name;
       bool        _inPosition;
       
@@ -206,7 +211,7 @@ namespace Anki {
         OUT_OF_FOV // Moves to low or carry, depending on which is closer to current height
       };
       
-      MoveLiftToHeightAction(const f32 height_mm, const f32 tolerance_mm = 5.f);
+      MoveLiftToHeightAction(const f32 height_mm, const f32 tolerance_mm = 5.f, const f32 variability = 0);
       MoveLiftToHeightAction(const Preset preset, const f32 tolerance_mm = 5.f);
       
       virtual const std::string& GetName() const override { return _name; };
@@ -226,6 +231,9 @@ namespace Anki {
       
       f32          _height_mm;
       f32          _heightTolerance;
+      f32          _variability;
+      f32          _heightWithVariation;
+      
       std::string  _name;
       bool         _inPosition;
       
@@ -359,7 +367,7 @@ namespace Anki {
     class PickAndPlaceObjectAction : public IDockAction
     {
     public:
-      PickAndPlaceObjectAction(ObjectID objectID, const bool useManualSpeed);
+      PickAndPlaceObjectAction(ObjectID objectID, const bool useManualSpeed = false);
       virtual ~PickAndPlaceObjectAction();
       
       virtual const std::string& GetName() const override;
@@ -511,7 +519,7 @@ namespace Anki {
     class PlaceObjectOnGroundAtPoseAction : public CompoundActionSequential
     {
     public:
-      PlaceObjectOnGroundAtPoseAction(const Robot& robot, const Pose3d& placementPose, const bool useManualSpeed)
+      PlaceObjectOnGroundAtPoseAction(const Robot& robot, const Pose3d& placementPose, const bool useManualSpeed = false)
       : CompoundActionSequential({
         new DriveToPlaceCarriedObjectAction(robot, placementPose, useManualSpeed),
         new PlaceObjectOnGroundAction()})
