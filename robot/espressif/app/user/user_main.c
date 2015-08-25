@@ -8,7 +8,7 @@
 #include "user_interface.h"
 #include "client.h"
 #include "driver/uart.h"
-#include "driver/i2s.h"
+#include "driver/i2spi.h"
 #include "gpio.h"
 #include "nv_params.h"
 #include "task0.h"
@@ -131,7 +131,7 @@ static void ICACHE_FLASH_ATTR system_init_done(void)
   clientInit();
 
   // Initalize i2SPI interface
-  i2sInit();
+  i2spiInit();
 
   // Setup high priority task
   //task2Init();

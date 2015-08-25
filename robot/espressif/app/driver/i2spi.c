@@ -28,16 +28,26 @@ speed.
 #include "driver/i2s_reg.h"
 #include "driver/slc_register.h"
 #include "driver/sdio_slv.h"
-#include "driver/i2s.h"
+#include "driver/i2spi.h"
 #include "driver/i2s_ets.h"
 
-#define I2S_LOOP_TEST
-
-#define DMA_BUF_COUNT (14)
+/// SLC can only move 256 byte chunks so that's what we use
 #define DMA_BUF_SIZE (256)
+/// How often we will garuntee servicing the DMA buffers
+#defien DMA_SERVICE_INTERVAL_MS (5)
+/// How many buffers are required given the above constraints. + 1 for ceiling function
+#define DMA_BUF_COUNT ((DROP_SIZE * DROPS_PER_SECOND * DMA_SERVICE_INTERVAL_MS / 1000 / DMA_BUF_SIZE) + 1)
 
-os_event_t txTaskQ[DMA_BUF_COUNT];
+/// Signals to the I2SPI task
+enum 
+{
+  TASK_SIG_I2SPI_RX,
+  TASK_SIG_I2SPI_TX
+};
 
+#define I2SPI_TASK_QUEUE_LEN (DMA_BUF_COUNT * 2)
+/// Queue for I2SPI tasks. 2x the buffer count because have tasks for send and receive
+os_event_t i2spiTaskQ[I2SPI_TASK_QUEUE_LEN];
 
 /// DMA I2SPI transmit buffers
 static unsigned int txBufs[DMA_BUF_COUNT][DMA_BUF_SIZE/4];
@@ -47,14 +57,6 @@ static struct sdio_queue txQueue[DMA_BUF_COUNT];
 static unsigned int rxBufs[DMA_BUF_COUNT][DMA_BUF_SIZE/4];
 /// DMA transmit queue control structure
 static struct sdio_queue rxQueue[DMA_BUF_COUNT];
-/// Index of the next buffer to transmit (i.e. where we should write data, not what's currently being transmitted)
-static uint8 transmitInd;
-/// Index of the buffer which is currently receiving DMA_BUF_COUNT_MASK
-static uint8 receiveInd;
-/// The sequence number for the next transmission
-static uint16_t transmitSeqNo;
-/// Last received sequence number from other side
-static uint16_t lastSeqNo;
 
 /// Prep an sdio_queue structure (DMA descriptor) for (re)use
 static void inline prepSdioQueue(struct sdio_queue* desc)
@@ -68,93 +70,64 @@ static void inline prepSdioQueue(struct sdio_queue* desc)
 }
 
 
-LOCAL void i2sTxTask(os_event_t *event)
+LOCAL void i2spiTask(os_event_t *event)
 {
-  static unsigned int i=0x00000001;
-  int j;
-  unsigned int* bptr;
+  struct sdio_queue* desc = (struct sdio_queue*)(event->par);
   
-  ets_intr_lock();
-  
-  /*
-  os_printf("Rx: 0x%08x\t", rxBufs[receiveInd][0]);
-  prepSdioQueue(&rxQueue[receiveInd]);
-  receiveInd = receiveInd + 1 % DMA_BUF_COUNT;
-  */
-  
-  bptr = (unsigned int*)event->par;
-  //os_printf("Tx: 0x%08x -> 0x%08x\r\n", i, (uint32)bptr);
-  for (j=0; j<DMA_BUF_SIZE/4; ++j)
+  if (desc == NULL)
   {
-    *bptr = i;
-    bptr += 1;
+    os_printf("ERROR: I2SPI task got null descriptor with signal %d\r\n", event->sig);
+    return;
   }
-  if  (i < 0x80000000) i = i << 1;
-  else i = 0x00000001;
   
-  ets_intr_unlock();
+  switch (event->sig)
+  {
+    case TASK_SIG_I2SPI_RX:
+    {
+      XXX Handle RXing data
+      break;
+    }
+    case TASK_SIG_I2SPI_TX:
+    {
+      XXX Handle returned TX buffer
+      prepSdioQueue(desc);
+      break;
+    }
+    default:
+    {
+      os_printf("ERROR: Unexpected I2SPI task signal signal: %d, %08x\r\n", event->sig, event->par);
+    }
+  }
 }
 
 
-/** General DMA ISR
- * Primarily handles RX_EOF_INT (DMA sent buffer out) and TX_EOF_INT (DMA receiverd buffer in). In addition to clearing
- * the interrupt flags, the sdio_queue returned must be reset so it can be reused. Finally when data is received from
- * DMA (TX) the i2sRecvCallback is called.
+/** DMA buffer complete ISR
+ * Called for both completed SLC_TX (I2SPI receive) and SLC_RX (I2SPI transmit) events
+ * Everything is passed off to tasks to be handled
+ * @warnings ISRs cannot call printf or any radio related functions and must return in under 10us
  */
 LOCAL void dmaisr(void* arg) {
 	//Grab int status
 	const uint32 slc_intr_status = READ_PERI_REG(SLC_INT_STATUS);
-	//clear all intr flags
-	WRITE_PERI_REG(SLC_INT_CLR, 0xffffffff);
-
   if (slc_intr_status & SLC_TX_EOF_INT_ST) { // Receive complete interrupt
-    struct sdio_queue* desc = (struct sdio_queue*)READ_PERI_REG(SLC_TX_EOF_DES_ADDR);
-    unsigned int* rbuf = (unsigned int*)(desc->buf_ptr);
-    
-    os_put_hex(desc->next_link_ptr, 3); os_put_char('\t');
-    prepSdioQueue(desc); // Reset the DMA descriptor for reuse
-  #ifdef I2S_LOOP_TEST
-    os_put_char('R'); os_put_hex(*rbuf, 8); os_put_char('\r'); os_put_char('\n');
-    //i2sRecvCallback(&(xfer->payload), xfer->tag);
-  #else
-    if (xfer->from == fromRTIP) // Is received data
+    if (system_os_post(I2SPI_PRIO, TASK_SIG_I2SPI_RX, READ_PERI_REG(SLC_TX_EOF_DES_ADDR)) == false)
     {
-      if (i2spiSequential(xfer->seqNo, lastSeqNo)) // Is sequential
-      {
-        i2sRecvCallback(&(xfer->payload), xfer->tag);
-        lastSeqNo = xfer->seqNo;
-      }
-      else // Not in sequence
-      {
-        outOfSequence++;
-      }
+      os_put_char('!'); os_put_char('I'); os_put_char('R');
     }
-  #endif
-
-  #ifdef I2S_LOOP_TEST
-    //os_put_hex(desc->datalen, 8);
-  #endif
   }
-
-
 	if (slc_intr_status & SLC_RX_EOF_INT_ST) { // Transmit complete interrupt
-    struct sdio_queue* desc = (struct sdio_queue*)READ_PERI_REG(SLC_RX_EOF_DES_ADDR);
-#ifdef I2S_LOOP_TEST
-    if (desc == NULL)
+    if (system_os_post(I2SPI_PRIO, TASK_SIG_I2SPI_TX, READ_PERI_REG(SLC_RX_EOF_DES_ADDR)) == false)
     {
-      os_put_char('N'); os_put_char('\n');
+      os_put_char('!'); os_put_char('I'); os_put_char('T');
     }
-    else
-    {
-      system_os_post(USER_TASK_PRIO_2, 0, desc->buf_ptr);
-    }
-#endif    
 	}
+  //clear all intr flags
+  WRITE_PERI_REG(SLC_INT_CLR, 0xffffffff);
 }
 
 
 //Initialize I2S subsystem for DMA circular buffer use
-int8_t ICACHE_FLASH_ATTR i2sInit() {
+int8_t ICACHE_FLASH_ATTR i2spiInit() {
   int i;
 
   transmitInd     = 0;
@@ -162,7 +135,7 @@ int8_t ICACHE_FLASH_ATTR i2sInit() {
   transmitSeqNo   = 0;
   lastSeqNo       = 0;
 
-  system_os_task(i2sTxTask, USER_TASK_PRIO_2, txTaskQ, DMA_BUF_COUNT);
+  system_os_task(i2spiTask, I2SPI_PRIO, i2spiTaskQ, I2SPI_TASK_QUEUE_LEN);
 
   // Setup the buffers and descriptors
   for (i=0; i<DMA_BUF_COUNT; ++i)
@@ -173,10 +146,10 @@ int8_t ICACHE_FLASH_ATTR i2sInit() {
     prepSdioQueue(&rxQueue[i]);
     txQueue[i].buf_ptr = (uint32_t)&txBufs[i];
     txQueue[i].next_link_ptr = (int)((i<(DMA_BUF_COUNT-1))?(&txQueue[i+1]):(&txQueue[0]));
-    os_printf("TX Q 0x%08x\tB 0x%08x\t",  (unsigned int)&txQueue[i], txQueue[i].buf_ptr);
+    //os_printf("TX Q 0x%08x\tB 0x%08x\t",  (unsigned int)&txQueue[i], txQueue[i].buf_ptr);
     rxQueue[i].buf_ptr = (uint32_t)&rxBufs[i];
     rxQueue[i].next_link_ptr = (int)((i<(DMA_BUF_COUNT-1))?(&rxQueue[i+1]):(&rxQueue[0]));
-    os_printf("RX Q 0x%08x\tB 0x%08x\r\n",  (unsigned int)&rxQueue[i], rxQueue[i].buf_ptr);
+    //os_printf("RX Q 0x%08x\tB 0x%08x\r\n",  (unsigned int)&rxQueue[i], rxQueue[i].buf_ptr);
   }
 
 	//Reset DMA
@@ -254,7 +227,7 @@ int8_t ICACHE_FLASH_ATTR i2sInit() {
 						(I2S_BITS_MOD<<I2S_BITS_MOD_S)|
 						(I2S_BCK_DIV_NUM <<I2S_BCK_DIV_NUM_S)|
 						(I2S_CLKM_DIV_NUM<<I2S_CLKM_DIV_NUM_S));
-	SET_PERI_REG_MASK(I2SCONF, I2S_RIGHT_FIRST|I2S_MSB_RIGHT|I2S_RECE_SLAVE_MOD|//I2S_TRANS_SLAVE_MOD|
+	SET_PERI_REG_MASK(I2SCONF, I2S_RIGHT_FIRST|I2S_MSB_RIGHT|I2S_RECE_SLAVE_MOD|I2S_TRANS_SLAVE_MOD|
 						I2S_RECE_MSB_SHIFT|I2S_TRANS_MSB_SHIFT|
 						((16&I2S_BCK_DIV_NUM )<<I2S_BCK_DIV_NUM_S)|
 						((16&I2S_CLKM_DIV_NUM)<<I2S_CLKM_DIV_NUM_S));
@@ -270,19 +243,16 @@ int8_t ICACHE_FLASH_ATTR i2sInit() {
 	SET_PERI_REG_MASK(I2SINT_ENA,   I2S_I2S_TX_REMPTY_INT_ENA|I2S_I2S_TX_WFULL_INT_ENA|
 	I2S_I2S_RX_REMPTY_INT_ENA|I2S_I2S_TX_PUT_DATA_INT_ENA|I2S_I2S_RX_TAKE_DATA_INT_ENA);
 
-	//Start transmission
-	SET_PERI_REG_MASK(I2SCONF,I2S_I2S_TX_START|I2S_I2S_RX_START);
-
 	return 0;
 }
 
-void ICACHE_FLASH_ATTR i2sStart(void)
+void ICACHE_FLASH_ATTR i2spiStart(void)
 {
   //Start i2s start and receive
   SET_PERI_REG_MASK(I2SCONF,I2S_I2S_TX_START | I2S_I2S_RX_START);
 }
 
-void ICACHE_FLASH_ATTR i2sStop(void)
+void ICACHE_FLASH_ATTR i2spiStop(void)
 {
   // Stop DMA transmitting
   SET_PERI_REG_MASK(SLC_TX_LINK, SLC_TXLINK_STOP);
@@ -291,23 +261,7 @@ void ICACHE_FLASH_ATTR i2sStop(void)
   // @TODO How do we stop the I2S peripheral? Does halting DMA do the trick?
 }
 
-bool i2sQueueTx(I2SPIPayload* payload, I2SPIPayloadTag tag)
+bool i2spiQueueMessage(uint8_t* msgData, uint8_t msgLen, ToRTIPPayloadTag tag)
 {
-  if (transmitInd == receiveInd) // Head has reached tail
-  {
-    // No room to queue this
-    return false;
-  }
-  else
-  {
-    // Buffer the data to transmit
-    /*os_memcpy(&txBufs[transmitInd].payload, payload, sizeof(I2SPI_MAX_PAYLOAD));
-    txBufs[transmitInd].seqNo = transmitSeqNo;
-    txBufs[transmitInd].tag   = tag;
-    txBufs[transmitInd].from  = fromWiFi;
-    // Update indecies
-    transmitInd = (transmitInd + 1) & DMA_BUF_COUNT_MASK;
-    transmitSeqNo += 1;*/
-    return true;
-  }
+  XXX Implement queing message data
 }
