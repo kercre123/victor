@@ -360,8 +360,8 @@ namespace Cozmo {
     
     if(robot != nullptr) {
       VizManager::getInstance()->EraseAllVizObjects();
-      robot->GetBlockWorld().ClearObjectsByFamily(BlockWorld::ObjectFamily::BLOCKS);
-      robot->GetBlockWorld().ClearObjectsByFamily(BlockWorld::ObjectFamily::ACTIVE_BLOCKS);
+      robot->GetBlockWorld().ClearObjectsByFamily(ObjectFamily::Block);
+      robot->GetBlockWorld().ClearObjectsByFamily(ObjectFamily::LightCube);
     }
   }
   
@@ -531,13 +531,7 @@ namespace Cozmo {
   
   void CozmoGameImpl::Process_StartTestMode(ExternalInterface::StartTestMode const& msg)
   {
-    // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
-    const RobotID_t robotID = 1;
-    Robot* robot = GetRobotByID(robotID);
-    
-    if(robot != nullptr) {
-      robot->StartTestMode((TestMode)msg.mode, msg.p1, msg.p2, msg.p3);
-    }
+    // Handled in CozmoEngineHostImpl:HandleEvents
   }
   
   void CozmoGameImpl::Process_IMURequest(ExternalInterface::IMURequest const& msg)
