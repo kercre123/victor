@@ -51,7 +51,7 @@ namespace Cozmo {
     
     auto iter = Sizes.find(type);
     if(iter == Sizes.end()) {
-      PRINT_NAMED_ERROR("MarkerlessObject.GetSizeByType.UndefinedType",
+      PRINT_NAMED_ERROR("HumanHead.GetSizeByType.UndefinedType",
                         "No size defined for type %s (%d).\n",
                         type.GetName().c_str(), type.GetValue());
       static const Point3f DefaultSize(0.f,0.f,0.f);
