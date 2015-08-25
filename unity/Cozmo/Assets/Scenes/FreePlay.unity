@@ -87,13 +87,13 @@ NavMeshSettings:
     cellSize: .166666657
     manualCellSize: 0
   m_NavMeshData: {fileID: 0}
---- !u!21 &41882399
+--- !u!21 &22232630
 Material:
   serializedVersion: 6
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
-  m_Name: ActionSheen
+  m_Name: MoveHintSheen
   m_Shader: {fileID: 4800000, guid: 7fec91e4d79544a6a84bd2ce891a7dba, type: 3}
   m_ShaderKeywords: 
   m_LightmapFlags: 5
@@ -111,13 +111,6 @@ Material:
           m_Offset: {x: 0, y: .400000006}
       data:
         first:
-          name: _Illum
-        second:
-          m_Texture: {fileID: 2800000, guid: dc59a930cb18e435bb1f7e8578b61ef7, type: 3}
-          m_Scale: {x: 1, y: 1}
-          m_Offset: {x: 0, y: 0}
-      data:
-        first:
           name: _Mask
         second:
           m_Texture: {fileID: 2800000, guid: 06caa99e8301249d3b06581fb126730d, type: 3}
@@ -128,7 +121,14 @@ Material:
           name: _FlashMaskTex
         second:
           m_Texture: {fileID: 2800000, guid: 437c9b2fa20ee494ba988e750062be0c, type: 3}
-          m_Scale: {x: 1, y: .25}
+          m_Scale: {x: 1, y: 1}
+          m_Offset: {x: 0, y: 0}
+      data:
+        first:
+          name: _Illum
+        second:
+          m_Texture: {fileID: 2800000, guid: dc59a930cb18e435bb1f7e8578b61ef7, type: 3}
+          m_Scale: {x: 1, y: 1}
           m_Offset: {x: 0, y: 0}
     m_Floats:
       data:
@@ -145,16 +145,16 @@ Material:
         second: 0
       data:
         first:
-          name: _EmissionLM
-        second: 1
-      data:
-        first:
           name: _FlashAmount
-        second: .5
+        second: 0
       data:
         first:
           name: MaskWithAlpha
         second: 0
+      data:
+        first:
+          name: _EmissionLM
+        second: 1
     m_Colors:
       data:
         first:
@@ -270,13 +270,6 @@ Material:
           m_Offset: {x: 0, y: .400000006}
       data:
         first:
-          name: _Illum
-        second:
-          m_Texture: {fileID: 2800000, guid: dc59a930cb18e435bb1f7e8578b61ef7, type: 3}
-          m_Scale: {x: 1, y: 1}
-          m_Offset: {x: 0, y: 0}
-      data:
-        first:
           name: _Mask
         second:
           m_Texture: {fileID: 2800000, guid: 06caa99e8301249d3b06581fb126730d, type: 3}
@@ -288,6 +281,13 @@ Material:
         second:
           m_Texture: {fileID: 2800000, guid: 437c9b2fa20ee494ba988e750062be0c, type: 3}
           m_Scale: {x: 1, y: .25}
+          m_Offset: {x: 0, y: 0}
+      data:
+        first:
+          name: _Illum
+        second:
+          m_Texture: {fileID: 2800000, guid: dc59a930cb18e435bb1f7e8578b61ef7, type: 3}
+          m_Scale: {x: 1, y: 1}
           m_Offset: {x: 0, y: 0}
     m_Floats:
       data:
@@ -304,16 +304,16 @@ Material:
         second: 0
       data:
         first:
-          name: _EmissionLM
-        second: 1
-      data:
-        first:
           name: _FlashAmount
         second: .607142866
       data:
         first:
           name: MaskWithAlpha
         second: 0
+      data:
+        first:
+          name: _EmissionLM
+        second: 1
     m_Colors:
       data:
         first:
@@ -441,15 +441,15 @@ Prefab:
       objectReference: {fileID: 111773536}
     - target: {fileID: 22473488, guid: 16dbf128a64674341b52383440032021, type: 2}
       propertyPath: m_AnchorMin.y
-      value: .5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 22473488, guid: 16dbf128a64674341b52383440032021, type: 2}
       propertyPath: m_AnchorMax.x
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 22473488, guid: 16dbf128a64674341b52383440032021, type: 2}
       propertyPath: m_AnchorMax.y
-      value: .5
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 16dbf128a64674341b52383440032021, type: 2}
@@ -494,6 +494,87 @@ Transform:
   - {fileID: 804905606}
   m_Father: {fileID: 0}
   m_RootOrder: 13
+--- !u!21 &359736218
+Material:
+  serializedVersion: 6
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_Name: MoveHintSheen
+  m_Shader: {fileID: 4800000, guid: 7fec91e4d79544a6a84bd2ce891a7dba, type: 3}
+  m_ShaderKeywords: 
+  m_LightmapFlags: 5
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  m_SavedProperties:
+    serializedVersion: 2
+    m_TexEnvs:
+      data:
+        first:
+          name: _MainTex
+        second:
+          m_Texture: {fileID: 2800000, guid: dc73b079e1b6b4801b60adfaa4187a5c, type: 3}
+          m_Scale: {x: 1, y: 1}
+          m_Offset: {x: 0, y: .400000006}
+      data:
+        first:
+          name: _Mask
+        second:
+          m_Texture: {fileID: 2800000, guid: 06caa99e8301249d3b06581fb126730d, type: 3}
+          m_Scale: {x: 1, y: 1}
+          m_Offset: {x: 0, y: -.100000001}
+      data:
+        first:
+          name: _FlashMaskTex
+        second:
+          m_Texture: {fileID: 2800000, guid: 437c9b2fa20ee494ba988e750062be0c, type: 3}
+          m_Scale: {x: 1, y: 1}
+          m_Offset: {x: 0, y: 0}
+      data:
+        first:
+          name: _Illum
+        second:
+          m_Texture: {fileID: 2800000, guid: dc59a930cb18e435bb1f7e8578b61ef7, type: 3}
+          m_Scale: {x: 1, y: 1}
+          m_Offset: {x: 0, y: 0}
+    m_Floats:
+      data:
+        first:
+          name: _Cutoff
+        second: .242857143
+      data:
+        first:
+          name: _Shininess
+        second: .699999988
+      data:
+        first:
+          name: PixelSnap
+        second: 0
+      data:
+        first:
+          name: _FlashAmount
+        second: 0
+      data:
+        first:
+          name: MaskWithAlpha
+        second: 0
+      data:
+        first:
+          name: _EmissionLM
+        second: 1
+    m_Colors:
+      data:
+        first:
+          name: _Color
+        second: {r: 1, g: 1, b: 1, a: 1}
+      data:
+        first:
+          name: _SpecColor
+        second: {r: 1, g: 1, b: 1, a: 1}
+      data:
+        first:
+          name: _FlashColor
+        second: {r: 1, g: 1, b: 1, a: .501960814}
 --- !u!1001 &361142759
 Prefab:
   m_ObjectHideFlags: 0
@@ -590,6 +671,87 @@ Prefab:
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: ff2e764eb72194d5a8c0961c1fa668d1, type: 2}
   m_IsPrefabParent: 0
+--- !u!21 &558291593
+Material:
+  serializedVersion: 6
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_Name: ActionSheen
+  m_Shader: {fileID: 4800000, guid: 7fec91e4d79544a6a84bd2ce891a7dba, type: 3}
+  m_ShaderKeywords: 
+  m_LightmapFlags: 5
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  m_SavedProperties:
+    serializedVersion: 2
+    m_TexEnvs:
+      data:
+        first:
+          name: _MainTex
+        second:
+          m_Texture: {fileID: 2800000, guid: dc73b079e1b6b4801b60adfaa4187a5c, type: 3}
+          m_Scale: {x: 1, y: 1}
+          m_Offset: {x: 0, y: .400000006}
+      data:
+        first:
+          name: _Mask
+        second:
+          m_Texture: {fileID: 2800000, guid: 06caa99e8301249d3b06581fb126730d, type: 3}
+          m_Scale: {x: 1, y: 1}
+          m_Offset: {x: 0, y: -.100000001}
+      data:
+        first:
+          name: _FlashMaskTex
+        second:
+          m_Texture: {fileID: 2800000, guid: 437c9b2fa20ee494ba988e750062be0c, type: 3}
+          m_Scale: {x: 1, y: .25}
+          m_Offset: {x: 0, y: 0}
+      data:
+        first:
+          name: _Illum
+        second:
+          m_Texture: {fileID: 2800000, guid: dc59a930cb18e435bb1f7e8578b61ef7, type: 3}
+          m_Scale: {x: 1, y: 1}
+          m_Offset: {x: 0, y: 0}
+    m_Floats:
+      data:
+        first:
+          name: _Cutoff
+        second: .242857143
+      data:
+        first:
+          name: _Shininess
+        second: .699999988
+      data:
+        first:
+          name: PixelSnap
+        second: 0
+      data:
+        first:
+          name: _FlashAmount
+        second: .5
+      data:
+        first:
+          name: MaskWithAlpha
+        second: 0
+      data:
+        first:
+          name: _EmissionLM
+        second: 1
+    m_Colors:
+      data:
+        first:
+          name: _Color
+        second: {r: 1, g: 1, b: 1, a: 1}
+      data:
+        first:
+          name: _SpecColor
+        second: {r: 1, g: 1, b: 1, a: 1}
+      data:
+        first:
+          name: _FlashColor
+        second: {r: 1, g: 1, b: 1, a: .501960814}
 --- !u!1001 &560224452
 Prefab:
   m_ObjectHideFlags: 0
@@ -1121,6 +1283,62 @@ Prefab:
       propertyPath: m_RootOrder
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 180730, guid: cc548f93811f84f259f907f6a5659a07, type: 2}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 22439066, guid: cc548f93811f84f259f907f6a5659a07, type: 2}
+      propertyPath: m_SizeDelta.y
+      value: 59
+      objectReference: {fileID: 0}
+    - target: {fileID: 22439066, guid: cc548f93811f84f259f907f6a5659a07, type: 2}
+      propertyPath: m_AnchoredPosition.x
+      value: -201
+      objectReference: {fileID: 0}
+    - target: {fileID: 22439066, guid: cc548f93811f84f259f907f6a5659a07, type: 2}
+      propertyPath: m_SizeDelta.x
+      value: 79
+      objectReference: {fileID: 0}
+    - target: {fileID: 22446362, guid: cc548f93811f84f259f907f6a5659a07, type: 2}
+      propertyPath: m_SizeDelta.y
+      value: 59
+      objectReference: {fileID: 0}
+    - target: {fileID: 22484624, guid: cc548f93811f84f259f907f6a5659a07, type: 2}
+      propertyPath: m_SizeDelta.y
+      value: 59
+      objectReference: {fileID: 0}
+    - target: {fileID: 22472336, guid: cc548f93811f84f259f907f6a5659a07, type: 2}
+      propertyPath: m_SizeDelta.x
+      value: 60
+      objectReference: {fileID: 0}
+    - target: {fileID: 22466356, guid: cc548f93811f84f259f907f6a5659a07, type: 2}
+      propertyPath: m_SizeDelta.y
+      value: 59
+      objectReference: {fileID: 0}
+    - target: {fileID: 22408918, guid: cc548f93811f84f259f907f6a5659a07, type: 2}
+      propertyPath: m_SizeDelta.x
+      value: 51
+      objectReference: {fileID: 0}
+    - target: {fileID: 22472336, guid: cc548f93811f84f259f907f6a5659a07, type: 2}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 22472336, guid: cc548f93811f84f259f907f6a5659a07, type: 2}
+      propertyPath: m_SizeDelta.y
+      value: 36
+      objectReference: {fileID: 0}
+    - target: {fileID: 22409260, guid: cc548f93811f84f259f907f6a5659a07, type: 2}
+      propertyPath: m_SizeDelta.y
+      value: 62
+      objectReference: {fileID: 0}
+    - target: {fileID: 22409260, guid: cc548f93811f84f259f907f6a5659a07, type: 2}
+      propertyPath: m_AnchoredPosition.x
+      value: 207
+      objectReference: {fileID: 0}
+    - target: {fileID: 22409260, guid: cc548f93811f84f259f907f6a5659a07, type: 2}
+      propertyPath: m_SizeDelta.x
+      value: 62
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: cc548f93811f84f259f907f6a5659a07, type: 2}
   m_IsPrefabParent: 0
@@ -1173,147 +1391,147 @@ Prefab:
       objectReference: {fileID: 1776348497}
     - target: {fileID: 22430494, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
       propertyPath: m_AnchorMin.y
-      value: 0
+      value: .5
       objectReference: {fileID: 0}
     - target: {fileID: 22430494, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
       propertyPath: m_AnchorMax.x
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 22430494, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: .5
       objectReference: {fileID: 0}
     - target: {fileID: 22430496, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
       propertyPath: m_AnchorMin.y
-      value: 0
+      value: .5
       objectReference: {fileID: 0}
     - target: {fileID: 22430496, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
       propertyPath: m_AnchorMax.x
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 22430496, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: .5
       objectReference: {fileID: 0}
     - target: {fileID: 22430500, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
       propertyPath: m_SizeDelta.x
-      value: -444
+      value: 512.612427
       objectReference: {fileID: 0}
     - target: {fileID: 22430500, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
       propertyPath: m_SizeDelta.y
-      value: -588
+      value: 256.306213
       objectReference: {fileID: 0}
     - target: {fileID: 22416450, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
       propertyPath: m_AnchoredPosition.y
-      value: 69
+      value: 128.153107
       objectReference: {fileID: 0}
     - target: {fileID: 22416450, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
       propertyPath: m_SizeDelta.x
-      value: 36.7999992
+      value: 68.3483276
       objectReference: {fileID: 0}
     - target: {fileID: 22416450, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
       propertyPath: m_SizeDelta.y
-      value: 36.7999992
+      value: 68.3483276
       objectReference: {fileID: 0}
     - target: {fileID: 22416446, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
       propertyPath: m_SizeDelta.x
-      value: 36.7999992
+      value: 68.3483276
       objectReference: {fileID: 0}
     - target: {fileID: 22416446, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
       propertyPath: m_SizeDelta.y
-      value: 36.7999992
+      value: 68.3483276
       objectReference: {fileID: 0}
     - target: {fileID: 22416448, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
       propertyPath: m_SizeDelta.x
-      value: 36.7999992
+      value: 68.3483276
       objectReference: {fileID: 0}
     - target: {fileID: 22416448, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
       propertyPath: m_SizeDelta.y
-      value: 36.7999992
+      value: 68.3483276
       objectReference: {fileID: 0}
     - target: {fileID: 22416442, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
       propertyPath: m_AnchoredPosition.x
-      value: 222
+      value: -256.306213
       objectReference: {fileID: 0}
     - target: {fileID: 22416442, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
-      propertyPath: m_AnchoredPosition.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 22416442, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
-      propertyPath: m_SizeDelta.x
-      value: 36.7999992
-      objectReference: {fileID: 0}
-    - target: {fileID: 22416442, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
-      propertyPath: m_SizeDelta.y
-      value: 36.7999992
-      objectReference: {fileID: 0}
-    - target: {fileID: 22416454, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
-      propertyPath: m_SizeDelta.x
-      value: 36.7999992
-      objectReference: {fileID: 0}
-    - target: {fileID: 22416454, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
-      propertyPath: m_SizeDelta.y
-      value: 36.7999992
-      objectReference: {fileID: 0}
-    - target: {fileID: 22416452, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
-      propertyPath: m_SizeDelta.x
-      value: 36.7999992
-      objectReference: {fileID: 0}
-    - target: {fileID: 22416452, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
-      propertyPath: m_SizeDelta.y
-      value: 36.7999992
-      objectReference: {fileID: 0}
-    - target: {fileID: 22430488, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
-      propertyPath: m_SizeDelta.x
-      value: 1.83999991
-      objectReference: {fileID: 0}
-    - target: {fileID: 22430488, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
-      propertyPath: m_SizeDelta.y
-      value: 138
-      objectReference: {fileID: 0}
-    - target: {fileID: 22430502, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
-      propertyPath: m_AnchoredPosition.y
-      value: -69
-      objectReference: {fileID: 0}
-    - target: {fileID: 22430502, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
-      propertyPath: m_SizeDelta.x
-      value: 36.7999992
-      objectReference: {fileID: 0}
-    - target: {fileID: 22430502, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
-      propertyPath: m_SizeDelta.y
-      value: 36.7999992
-      objectReference: {fileID: 0}
-    - target: {fileID: 22416456, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
-      propertyPath: m_SizeDelta.x
-      value: 36.7999992
-      objectReference: {fileID: 0}
-    - target: {fileID: 22416456, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
-      propertyPath: m_SizeDelta.y
-      value: 13.8000002
-      objectReference: {fileID: 0}
-    - target: {fileID: 22430498, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
-      propertyPath: m_AnchoredPosition.x
-      value: -222
-      objectReference: {fileID: 0}
-    - target: {fileID: 22430498, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
       propertyPath: m_AnchoredPosition.y
       value: -0
       objectReference: {fileID: 0}
+    - target: {fileID: 22416442, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
+      propertyPath: m_SizeDelta.x
+      value: 68.3483276
+      objectReference: {fileID: 0}
+    - target: {fileID: 22416442, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
+      propertyPath: m_SizeDelta.y
+      value: 68.3483276
+      objectReference: {fileID: 0}
+    - target: {fileID: 22416454, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
+      propertyPath: m_SizeDelta.x
+      value: 68.3483276
+      objectReference: {fileID: 0}
+    - target: {fileID: 22416454, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
+      propertyPath: m_SizeDelta.y
+      value: 68.3483276
+      objectReference: {fileID: 0}
+    - target: {fileID: 22416452, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
+      propertyPath: m_SizeDelta.x
+      value: 68.3483276
+      objectReference: {fileID: 0}
+    - target: {fileID: 22416452, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
+      propertyPath: m_SizeDelta.y
+      value: 68.3483276
+      objectReference: {fileID: 0}
+    - target: {fileID: 22430488, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
+      propertyPath: m_SizeDelta.x
+      value: 3.4174161
+      objectReference: {fileID: 0}
+    - target: {fileID: 22430488, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
+      propertyPath: m_SizeDelta.y
+      value: 256.306213
+      objectReference: {fileID: 0}
+    - target: {fileID: 22430502, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
+      propertyPath: m_AnchoredPosition.y
+      value: -128.153107
+      objectReference: {fileID: 0}
+    - target: {fileID: 22430502, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
+      propertyPath: m_SizeDelta.x
+      value: 68.3483276
+      objectReference: {fileID: 0}
+    - target: {fileID: 22430502, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
+      propertyPath: m_SizeDelta.y
+      value: 68.3483276
+      objectReference: {fileID: 0}
+    - target: {fileID: 22416456, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
+      propertyPath: m_SizeDelta.x
+      value: 68.3483276
+      objectReference: {fileID: 0}
+    - target: {fileID: 22416456, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
+      propertyPath: m_SizeDelta.y
+      value: 25.630621
+      objectReference: {fileID: 0}
+    - target: {fileID: 22430498, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
+      propertyPath: m_AnchoredPosition.x
+      value: 256.306213
+      objectReference: {fileID: 0}
+    - target: {fileID: 22430498, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 22430498, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
       propertyPath: m_SizeDelta.x
-      value: 36.7999992
+      value: 68.3483276
       objectReference: {fileID: 0}
     - target: {fileID: 22430498, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
       propertyPath: m_SizeDelta.y
-      value: 36.7999992
+      value: 68.3483276
       objectReference: {fileID: 0}
     - target: {fileID: 22416444, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
       propertyPath: m_SizeDelta.x
-      value: -44.4000015
+      value: 51.2612419
       objectReference: {fileID: 0}
     - target: {fileID: 22416444, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
       propertyPath: m_SizeDelta.y
-      value: 36.7999992
+      value: 68.3483276
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 4e3e6b40e96014feea80015a4217bebe, type: 2}
@@ -1426,13 +1644,6 @@ Material:
           m_Offset: {x: 0, y: .400000006}
       data:
         first:
-          name: _Illum
-        second:
-          m_Texture: {fileID: 2800000, guid: dc59a930cb18e435bb1f7e8578b61ef7, type: 3}
-          m_Scale: {x: 1, y: 1}
-          m_Offset: {x: 0, y: 0}
-      data:
-        first:
           name: _Mask
         second:
           m_Texture: {fileID: 2800000, guid: 06caa99e8301249d3b06581fb126730d, type: 3}
@@ -1443,6 +1654,13 @@ Material:
           name: _FlashMaskTex
         second:
           m_Texture: {fileID: 2800000, guid: 437c9b2fa20ee494ba988e750062be0c, type: 3}
+          m_Scale: {x: 1, y: 1}
+          m_Offset: {x: 0, y: 0}
+      data:
+        first:
+          name: _Illum
+        second:
+          m_Texture: {fileID: 2800000, guid: dc59a930cb18e435bb1f7e8578b61ef7, type: 3}
           m_Scale: {x: 1, y: 1}
           m_Offset: {x: 0, y: 0}
     m_Floats:
@@ -1460,16 +1678,16 @@ Material:
         second: 0
       data:
         first:
-          name: _EmissionLM
-        second: 1
-      data:
-        first:
           name: _FlashAmount
         second: 0
       data:
         first:
           name: MaskWithAlpha
         second: 0
+      data:
+        first:
+          name: _EmissionLM
+        second: 1
     m_Colors:
       data:
         first:
@@ -1507,13 +1725,6 @@ Material:
           m_Offset: {x: 0, y: .400000006}
       data:
         first:
-          name: _Illum
-        second:
-          m_Texture: {fileID: 2800000, guid: dc59a930cb18e435bb1f7e8578b61ef7, type: 3}
-          m_Scale: {x: 1, y: 1}
-          m_Offset: {x: 0, y: 0}
-      data:
-        first:
           name: _Mask
         second:
           m_Texture: {fileID: 2800000, guid: 06caa99e8301249d3b06581fb126730d, type: 3}
@@ -1524,6 +1735,13 @@ Material:
           name: _FlashMaskTex
         second:
           m_Texture: {fileID: 2800000, guid: 437c9b2fa20ee494ba988e750062be0c, type: 3}
+          m_Scale: {x: 1, y: 1}
+          m_Offset: {x: 0, y: 0}
+      data:
+        first:
+          name: _Illum
+        second:
+          m_Texture: {fileID: 2800000, guid: dc59a930cb18e435bb1f7e8578b61ef7, type: 3}
           m_Scale: {x: 1, y: 1}
           m_Offset: {x: 0, y: 0}
     m_Floats:
@@ -1541,16 +1759,16 @@ Material:
         second: 0
       data:
         first:
-          name: _EmissionLM
-        second: 1
-      data:
-        first:
           name: _FlashAmount
         second: 0
       data:
         first:
           name: MaskWithAlpha
         second: 0
+      data:
+        first:
+          name: _EmissionLM
+        second: 1
     m_Colors:
       data:
         first:
