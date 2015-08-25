@@ -282,6 +282,12 @@ namespace Anki {
     
   }
   
+  Rotation3d::Rotation3d(const UnitQuaternion<float>& q)
+  : _q(q)
+  {
+    
+  }
+  
   const Radians Rotation3d::GetAngle() const
   {
     return 2.f*std::acos(_q[0]);

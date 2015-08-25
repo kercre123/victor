@@ -16,35 +16,36 @@ IPCS_Q=`/usr/bin/ipcs -q | /usr/bin/grep $ME | /usr/bin/tr -s " " | cut -f2 -d" 
 
 #echo memory
 for id in $IPCS_M; do
-  #echo $id
+  echo killing shared memory $id
   ipcrm -m $id;
 done
 
 #echo semaphore
 for id in $IPCS_S; do
-  #echo $id
+  echo killing semaphore $id
   ipcrm -s $id;
 done
 
 #echo queue
 for id in $IPCS_Q; do
-  #echo $id
+  echo killing queue $id
   ipcrm -q $id;
 done
 
+/usr/bin/pkill webots
+
 # Kill parent processes if there are any
 CPID=`/usr/bin/ipcs -p | /usr/bin/egrep "[0-9a-f]+ [0-9]+" | /usr/bin/grep $ME | /usr/bin/awk -F" " '{print $7}'`
-LPID=`/usr/bin/ipcs -p | /usr/bin/egrep "[0-9a-f]+ [0-9]+" | /usr/bin/grep $ME | /usr/bin/awk -F" " '{print $8}'`
 
-#echo cpid
-for id in $CPID; do 
-  #echo $id
+for id in $LPID; do
+  echo killing cpid $id
   kill -9 $id;
 done
 
-#echo lpid
+LPID=`/usr/bin/ipcs -p | /usr/bin/egrep "[0-9a-f]+ [0-9]+" | /usr/bin/grep $ME | /usr/bin/awk -F" " '{print $8}'`
+
 for id in $LPID; do
-  #echo $is
+  echo killing lpid $id
   kill -9 $id;
 done
 

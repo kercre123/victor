@@ -22,6 +22,8 @@
 #include "anki/cozmo/basestation/actionableObject.h"
 #include "clad/types/actionTypes.h"
 
+#include "util/random/randomGenerator.h"
+
 #include <list>
 
 // Not sure if we want to support callbacks yet, but this switch enables some
@@ -199,6 +201,9 @@ namespace Anki {
       virtual f32 GetTimeoutInSeconds()          const { return 30.f; }
       
       virtual void Reset() override;
+      
+      // A random number generator all subclasses can share
+      Util::RandomGenerator _rng;
       
     private:
       

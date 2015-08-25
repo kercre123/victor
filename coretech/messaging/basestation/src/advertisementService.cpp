@@ -91,10 +91,10 @@ namespace Anki {
         for (it = connectionInfoMap_.begin(); it != connectionInfoMap_.end(); it++) {
           
           std::cout << serviceName_ << ": "
-                    << "Advertising: Device " << it->second.id
-                    << " on host " << it->second.ip
-                    << " at port " << it->second.port
-                    << "(size=" << sizeof(AdvertisementMsg) << ")\n";
+            << "Sending Connected Advertisment: Device " << it->second.id
+            << " on host " << it->second.ip
+            << " at port " << it->second.port
+            << "(size=" << sizeof(AdvertisementMsg) << ")\n";
            
           advertisingServer_.Send((char*)&(it->second), sizeof(AdvertisementMsg));
         }
@@ -103,10 +103,10 @@ namespace Anki {
         for (it = oneShotAdvertiseConnectionInfoMap_.begin(); it != oneShotAdvertiseConnectionInfoMap_.end(); it++) {
 
           std::cout << serviceName_ << ": "
-          << "Advertising (one-shot): Device " << int(it->second.id)
-          << " on host " << it->second.ip
-          << " at port " << it->second.port
-          << "(size=" << sizeof(AdvertisementMsg) << ")\n";
+            << "Sending One-shot Advertisment: Device " << int(it->second.id)
+            << " on host " << it->second.ip
+            << " at port " << it->second.port
+            << "(size=" << sizeof(AdvertisementMsg) << ")\n";
           
           advertisingServer_.Send((char*)&(it->second), sizeof(AdvertisementMsg));
         }
@@ -124,7 +124,7 @@ namespace Anki {
         
         if (regMsg.oneShot) {
           std::cout << serviceName_ << ": "
-          << "One-shot advertising device " << (int)regMsg.id
+          << "Received One-shot advertisment from device " << (int)regMsg.id
           << " on host " << regMsg.ip
           << " at port " << regMsg.port
           << " with advertisement service\n";
@@ -135,7 +135,7 @@ namespace Anki {
           memcpy(oneShotAdvertiseConnectionInfoMap_[regMsg.id].ip, regMsg.ip, sizeof(AdvertisementMsg::ip));
         } else {
           std::cout << serviceName_ << ": "
-          << "Registering device " << (int)regMsg.id
+          << "Received Registration request from device " << (int)regMsg.id
           << " on host " << regMsg.ip
           << " at port " << regMsg.port
           << " with advertisement service\n";
@@ -148,7 +148,7 @@ namespace Anki {
         
       } else {
         std::cout << serviceName_ << ": "
-                  << "Deregistering device " << (int)regMsg.id << " from advertisement service\n";
+                  << "Received Deregistration from device " << (int)regMsg.id << " from advertisement service\n";
         connectionInfoMap_.erase(regMsg.id);
       }
 
