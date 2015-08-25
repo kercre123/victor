@@ -50,23 +50,35 @@ namespace Anki {
     class ObservedMarker : public Marker
     {
     public:
+      
+      using UserHandle = int;
+      static const UserHandle UnknownHandle = -1;
+      
+      ObservedMarker();
+      
       // Instantiate a Marker from a given code, seen by a given camera with
       // the corners observed at the specified image coordinates.
       ObservedMarker(const TimeStamp_t t,
-                     const Code& type, const Quad2f& corners,
-                     const Camera& seenBy);
+                     const Code& type,
+                     const Quad2f& corners,
+                     const Camera& seenBy,
+                     UserHandle userHandle = UnknownHandle);
       
-      // Accessors:
-      inline const TimeStamp_t GetTimeStamp() const;
-      inline const Quad2f& GetImageCorners() const;
-      inline const Camera& GetSeenBy()       const;
+      // Const Accessors:
+      inline const TimeStamp_t GetTimeStamp()     const;
+      inline const Quad2f&     GetImageCorners()  const;
+      inline const Camera&     GetSeenBy()        const;
+      inline UserHandle        GetUserHandle()    const;
+      
       
       inline void MarkUsed(bool used);
       inline bool IsUsed();
+      
     protected:
       TimeStamp_t    _observationTime;
       Quad2f         _imgCorners;
       Camera         _seenByCam;
+      int            _userHandle;
       
       bool           _used;
     }; // class ObservedMarker
@@ -156,6 +168,10 @@ namespace Anki {
     
     inline Quad2f const& ObservedMarker::GetImageCorners() const {
       return _imgCorners;
+    }
+    
+    inline ObservedMarker::UserHandle ObservedMarker::GetUserHandle() const {
+      return _userHandle;
     }
     
     inline Quad3f const& KnownMarker::Get3dCorners() const {

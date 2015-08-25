@@ -303,7 +303,7 @@ namespace Cozmo {
   }
   */
   
-  bool VisionProcessingThread::CheckMailbox(MessageVisionMarker& msg)
+  bool VisionProcessingThread::CheckMailbox(Vision::ObservedMarker& msg)
   {
     AnkiConditionalErrorAndReturnValue(_visionSystem != nullptr /*&& _visionSystem->IsInitialized()*/, false,
                                        "VisionProcessingThread.CheckMailbox.NullVisionSystem",

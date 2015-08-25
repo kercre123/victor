@@ -45,6 +45,7 @@
 
 #include "anki/cozmo/basestation/comms/robot/robotMessages.h"
 
+#include "anki/vision/basestation/camera.h"
 #include "anki/vision/basestation/cameraCalibration.h"
 #include "anki/vision/basestation/image.h"
 #include "anki/vision/basestation/faceTracker.h"
@@ -212,7 +213,7 @@ namespace Cozmo {
     //bool CheckMailbox(ImageChunk&          msg);
     bool CheckMailbox(MessageDockingErrorSignal&  msg);
     //bool CheckMailbox(MessageFaceDetection&       msg);
-    bool CheckMailbox(MessageVisionMarker&        msg);
+    bool CheckMailbox(Vision::ObservedMarker&     msg);
     bool CheckMailbox(MessageTrackerQuad&         msg);
     bool CheckMailbox(MessagePanAndTiltHead&      msg);
     bool CheckMailbox(Vision::TrackedFace&        msg);
@@ -232,7 +233,7 @@ namespace Cozmo {
     //
     
     bool _isInitialized;
-  Data::DataPlatform* _dataPlatform;
+    Data::DataPlatform* _dataPlatform;
     
     // Just duplicating this from HAL for vision functions to work with less re-writing
     struct CameraInfo {
@@ -244,6 +245,10 @@ namespace Cozmo {
       
       CameraInfo(const Vision::CameraCalibration& camCalib);
     } *_headCamInfo;
+    
+    // Bogus camera object to reference in Vision::ObservedMarkers until we have
+    // fully moved embedded vision code into basestation
+    Vision::Camera _camera;
     
     enum VignettingCorrection
     {
@@ -433,7 +438,7 @@ namespace Cozmo {
     Mailbox<MessageDockingErrorSignal>   _dockingMailbox;
     Mailbox<MessageTrackerQuad>          _trackerMailbox;
     Mailbox<MessagePanAndTiltHead>       _panTiltMailbox;
-    MultiMailbox<MessageVisionMarker,  DetectFiducialMarkersParameters::MAX_MARKERS>   _visionMarkerMailbox;
+    MultiMailbox<Vision::ObservedMarker, DetectFiducialMarkersParameters::MAX_MARKERS>   _visionMarkerMailbox;
     //MultiMailbox<MessageFaceDetection, FaceDetectionParameters::MAX_FACE_DETECTIONS>   _faceDetectMailbox;
     
     MultiMailbox<Vision::TrackedFace, FaceDetectionParameters::MAX_FACE_DETECTIONS> _faceMailbox;

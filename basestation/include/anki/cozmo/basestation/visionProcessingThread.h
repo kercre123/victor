@@ -77,7 +77,7 @@ class VisionProcessingThread
     //bool CheckMailbox(ImageChunk&          msg);
     bool CheckMailbox(MessageDockingErrorSignal&  msg);
     //bool CheckMailbox(MessageFaceDetection&       msg);
-    bool CheckMailbox(MessageVisionMarker&        msg);
+    bool CheckMailbox(Vision::ObservedMarker&     msg);
     bool CheckMailbox(MessageTrackerQuad&         msg);
     bool CheckMailbox(MessagePanAndTiltHead&      msg);
     bool CheckMailbox(Vision::TrackedFace&        msg);

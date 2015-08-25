@@ -41,11 +41,21 @@ namespace Anki {
       }
     }
     
-    ObservedMarker::ObservedMarker(const TimeStamp_t t, const Code& withCode, const Quad2f& corners, const Camera& seenBy)
+    ObservedMarker::ObservedMarker()
+    : Marker(MARKER_UNKNOWN)
+    , _userHandle(UnknownHandle)
+    {
+    
+    }
+    
+    ObservedMarker::ObservedMarker(const TimeStamp_t t, const Code& withCode,
+                                   const Quad2f& corners, const Camera& seenBy,
+                                   UserHandle userHandle)
     : Marker(withCode)
     , _observationTime(t)
     , _imgCorners(corners)
     , _seenByCam(seenBy)
+    , _userHandle(userHandle)
     , _used(false)
     {
 

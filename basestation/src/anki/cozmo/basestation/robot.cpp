@@ -499,7 +499,7 @@ namespace Anki {
     }
 
     
-    Result Robot::QueueObservedMarker(const MessageVisionMarker& msg)
+    Result Robot::QueueObservedMarker(const Vision::ObservedMarker& markerOrig)
     {
       Result lastResult = RESULT_OK;
       
@@ -508,23 +508,24 @@ namespace Anki {
       TimeStamp_t t;
       RobotPoseStamp* p = nullptr;
       HistPoseKey poseKey;
-      lastResult = ComputeAndInsertPoseIntoHistory(msg.timestamp, t, &p, &poseKey, true);
+      lastResult = ComputeAndInsertPoseIntoHistory(markerOrig.GetTimeStamp(), t, &p, &poseKey, true);
       if(lastResult != RESULT_OK) {
         PRINT_NAMED_WARNING("Robot.QueueObservedMarker.HistoricalPoseNotFound",
                             "Time: %d, hist: %d to %d\n",
-                            msg.timestamp, _poseHistory->GetOldestTimeStamp(),
+                            markerOrig.GetTimeStamp(),
+                            _poseHistory->GetOldestTimeStamp(),
                             _poseHistory->GetNewestTimeStamp());
         return lastResult;
       }
       
       // If we get here, ComputeAndInsertPoseIntoHistory() should have succeeded
       // and this should be true
-      assert(msg.timestamp == t);
+      assert(markerOrig.GetTimeStamp() == t);
       
       // If this is not a face marker and "Vision while moving" is disabled and
       // we aren't picking/placing, check to see if the robot's body or head are
       // moving too fast to queue this marker
-      if(msg.markerType != Vision::Marker::FACE_CODE &&
+      if(markerOrig.GetCode() != Vision::Marker::FACE_CODE &&
          !_visionWhileMovingEnabled &&
          !IsPickingOrPlacing())
       {
@@ -583,25 +584,8 @@ namespace Anki {
         return RESULT_FAIL;
       }
       
-      Vision::Camera camera(GetCamera());
-      
-      // Get corners
-      Quad2f corners;
-      
-      corners[Quad::TopLeft].x()     = msg.x_imgUpperLeft;
-      corners[Quad::TopLeft].y()     = msg.y_imgUpperLeft;
-      
-      corners[Quad::BottomLeft].x()  = msg.x_imgLowerLeft;
-      corners[Quad::BottomLeft].y()  = msg.y_imgLowerLeft;
-      
-      corners[Quad::TopRight].x()    = msg.x_imgUpperRight;
-      corners[Quad::TopRight].y()    = msg.y_imgUpperRight;
-      
-      corners[Quad::BottomRight].x() = msg.x_imgLowerRight;
-      corners[Quad::BottomRight].y() = msg.y_imgLowerRight;
-      
-      
-     
+      // Update the marker's camera to use a pose from pose history
+      Vision::Camera camera(GetCamera()); // = marker.GetSeenBy();
       
       // Compute pose from robot body to camera
       // Start with canonical (untilted) headPose
@@ -617,13 +601,14 @@ namespace Anki {
       // Set parent pose to be the historical robot pose
       camPose.SetParent(&(p->GetPose()));
       
-      camPose.SetName("PoseHistoryCamera_" + std::to_string(msg.timestamp));
+      camPose.SetName("PoseHistoryCamera_" + std::to_string(markerOrig.GetTimeStamp()));
       
       // Update the head camera's pose
       camera.SetPose(camPose);
       
-      // Create observed marker
-      Vision::ObservedMarker marker(t, msg.markerType, corners, camera);
+      // Create a new marker with the updated camera
+      Vision::ObservedMarker marker(markerOrig.GetTimeStamp(), markerOrig.GetCode(),
+                                    markerOrig.GetImageCorners(), camera, markerOrig.GetUserHandle());
       
       // Queue the marker for processing by the blockWorld
       _blockWorld.QueueObservedMarker(poseKey, marker);
@@ -779,8 +764,9 @@ namespace Anki {
         
         ////////// Check for any messages from the Vision Thread ////////////
         
-        MessageVisionMarker visionMarker;
+        Vision::ObservedMarker visionMarker;
         while(true == _visionProcessor.CheckMailbox(visionMarker)) {
+          
           Result lastResult = QueueObservedMarker(visionMarker);
           if(lastResult != RESULT_OK) {
             PRINT_NAMED_ERROR("Robot.Update.FailedToQueueVisionMarker",
@@ -788,11 +774,12 @@ namespace Anki {
             return lastResult;
           }
           
-          VizManager::getInstance()->SendVisionMarker(visionMarker.x_imgUpperLeft,  visionMarker.y_imgUpperLeft,
-                                                      visionMarker.x_imgUpperRight, visionMarker.y_imgUpperRight,
-                                                      visionMarker.x_imgLowerRight, visionMarker.y_imgLowerRight,
-                                                      visionMarker.x_imgLowerLeft,  visionMarker.y_imgLowerLeft,
-                                                      visionMarker.markerType != Vision::MARKER_UNKNOWN);
+          const Quad2f& corners = visionMarker.GetImageCorners();
+          VizManager::getInstance()->SendVisionMarker(corners[Quad::TopLeft].x(),  corners[Quad::TopLeft].y(),
+                                                      corners[Quad::TopRight].x(),  corners[Quad::TopRight].y(),
+                                                      corners[Quad::BottomRight].x(),  corners[Quad::BottomRight].y(),
+                                                      corners[Quad::BottomLeft].x(),  corners[Quad::BottomLeft].y(),
+                                                      visionMarker.GetCode() != Vision::MARKER_UNKNOWN);
         }
         
         //MessageFaceDetection faceDetection;
@@ -805,27 +792,11 @@ namespace Anki {
                            GetID(), faceDetection.x_upperLeft, faceDetection.y_upperLeft, faceDetection.width, faceDetection.height);
           */
           
-          const Rectangle<f32> faceRect = faceDetection.GetRect();
-          const u16 left_x   = faceRect.GetX();
-          const u16 right_x  = faceRect.GetXmax();
-          const u16 top_y    = faceRect.GetY();
-          const u16 bottom_y = faceRect.GetYmax();
-          
           // Create a "visionMarker" message from the face detection so we will
           // add this face to BlockWorld
-          MessageVisionMarker markerMsg;
-          markerMsg.x_imgUpperLeft  = left_x;
-          markerMsg.y_imgUpperLeft  = top_y;
-          markerMsg.x_imgUpperRight = right_x;
-          markerMsg.y_imgUpperRight = top_y;
-          markerMsg.x_imgLowerLeft  = left_x;
-          markerMsg.y_imgLowerLeft  = bottom_y;
-          markerMsg.x_imgLowerRight = right_x;
-          markerMsg.y_imgLowerRight = bottom_y;
-          markerMsg.timestamp = faceDetection.GetTimeStamp();
-          markerMsg.markerType = Vision::Marker::FACE_CODE; // TODO: Use face identity when we have recognition?
+          Vision::ObservedMarker marker = faceDetection.GetMarker(GetCamera());
           
-          Result lastResult = QueueObservedMarker(markerMsg);
+          Result lastResult = QueueObservedMarker(marker);
           if(lastResult != RESULT_OK) {
             PRINT_NAMED_ERROR("Robot.Update.FailedToQueueFaceVisionMarker",
                               "Got FaceDetection message from vision processing thread "

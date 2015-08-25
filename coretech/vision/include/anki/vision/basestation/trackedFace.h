@@ -17,8 +17,13 @@
 #include "anki/common/basestation/math/rect.h"
 #include "anki/common/shared/radians.h"
 
+#include "anki/vision/basestation/visionMarker.h"
+
 namespace Anki {
 namespace Vision {
+  
+  // Forward declaration
+  class Camera;
   
   class TrackedFace
   {
@@ -45,6 +50,8 @@ namespace Vision {
     void SetIsBeingTracked(bool tf);
     
     const Rectangle<f32>& GetRect() const;
+    
+    ObservedMarker GetMarker(Camera& camera) const;
     
     // NOTE: Left/right are from viewer's perspective! (i.e. as seen in the image)
     

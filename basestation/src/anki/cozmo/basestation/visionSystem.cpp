@@ -345,7 +345,7 @@ namespace Cozmo {
   }
    */
   
-  bool VisionSystem::CheckMailbox(MessageVisionMarker&        msg)
+  bool VisionSystem::CheckMailbox(Vision::ObservedMarker&        msg)
   {
     bool retVal = false;
     if(IsInitialized()) {
@@ -1501,6 +1501,12 @@ namespace Cozmo {
       _snapshotROI = Embedded::Rectangle<s32>(-1, -1, -1, -1);
       _snapshot = NULL;
       
+      // NOTE: we do NOT want to give our bogus camera its own calibration, b/c the camera
+      // gets copied out in Vision::ObservedMarkers we leave in the mailbox for
+      // the main engine thread. We don't want it referring to any memory allocated
+      // here.
+      _camera.SetSharedCalibration(&camCalib);
+      
       _isInitialized = true;
     }
     
@@ -1975,31 +1981,21 @@ namespace Cozmo {
       {
         const VisionMarker& crntMarker = _memory._markers[i_marker];
         
-        // TODO: Let the robot do the ignoring of VisionMarkers in its mailbox
-        //if (!Localization::IsOnRamp() && !IMUFilter::IsPickedUp()) {
-        // Create a vision marker message and process it (which just queues it
-        // in the mailbox to be picked up and sent out by main execution)
-        {
-          MessageVisionMarker msg;
-          msg.timestamp  = imageTimeStamp;
-          msg.markerType = crntMarker.markerType;
-          
-          msg.x_imgLowerLeft  = crntMarker.corners[Embedded::Quadrilateral<f32>::BottomLeft].x;
-          msg.y_imgLowerLeft  = crntMarker.corners[Embedded::Quadrilateral<f32>::BottomLeft].y;
-          
-          msg.x_imgUpperLeft  = crntMarker.corners[Embedded::Quadrilateral<f32>::TopLeft].x;
-          msg.y_imgUpperLeft  = crntMarker.corners[Embedded::Quadrilateral<f32>::TopLeft].y;
-          
-          msg.x_imgUpperRight = crntMarker.corners[Embedded::Quadrilateral<f32>::TopRight].x;
-          msg.y_imgUpperRight = crntMarker.corners[Embedded::Quadrilateral<f32>::TopRight].y;
-          
-          msg.x_imgLowerRight = crntMarker.corners[Embedded::Quadrilateral<f32>::BottomRight].x;
-          msg.y_imgLowerRight = crntMarker.corners[Embedded::Quadrilateral<f32>::BottomRight].y;
-          
-          //HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::VisionMarker),&msg);
-          _visionMarkerMailbox.putMessage(msg);
-          //}
-        }
+        // Construct a basestation quad from an embedded one:
+        Quad2f quad({crntMarker.corners[Embedded::Quadrilateral<f32>::TopLeft].x,
+          crntMarker.corners[Embedded::Quadrilateral<f32>::TopLeft].y},
+                    {crntMarker.corners[Embedded::Quadrilateral<f32>::BottomLeft].x,
+                      crntMarker.corners[Embedded::Quadrilateral<f32>::BottomLeft].y},
+                    {crntMarker.corners[Embedded::Quadrilateral<f32>::TopRight].x,
+                      crntMarker.corners[Embedded::Quadrilateral<f32>::TopRight].y},
+                    {crntMarker.corners[Embedded::Quadrilateral<f32>::BottomRight].x,
+                      crntMarker.corners[Embedded::Quadrilateral<f32>::BottomRight].y});
+        
+        Vision::ObservedMarker obsMarker(imageTimeStamp, crntMarker.markerType,
+                                         quad, _camera);
+        
+        _visionMarkerMailbox.putMessage(obsMarker);
+        
         
         // Was the desired marker found? If so, start tracking it -- if not already in tracking mode!
         if(!(_mode & TRACKING)          &&

@@ -126,7 +126,10 @@ namespace Anki {
       void                              SetCameraCalibration(const Vision::CameraCalibration& calib);
 	    const Vision::CameraCalibration&  GetCameraCalibration() const;
      
-      Result QueueObservedMarker(const MessageVisionMarker& msg);
+      // Queue an observed vision marker for processing with BlockWorld.
+      // Note that this is a NON-const reference: the marker's camera will be updated
+      // to use a pose from pose history.
+      Result QueueObservedMarker(const Vision::ObservedMarker& marker);
       
       // Get a *copy* of the current image on this robot's vision processing thread
       bool GetCurrentImage(Vision::Image& img, TimeStamp_t newerThan);
