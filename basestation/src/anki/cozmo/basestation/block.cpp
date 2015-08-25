@@ -46,10 +46,8 @@ namespace Anki {
     };
 
     
-    const Block::Type Block::Type::INVALID("INVALID");
-    
-#define BLOCK_DEFINITION_MODE BLOCK_ENUM_VALUE_MODE
-#include "anki/cozmo/basestation/BlockDefinitions.h"
+    //#define BLOCK_DEFINITION_MODE BLOCK_ENUM_VALUE_MODE
+    //#include "anki/cozmo/basestation/BlockDefinitions.h"
     
     // Static helper for looking up block properties by type
     const Block::BlockInfoTableEntry_t& Block::LookupBlockInfo(const ObjectType type)
@@ -165,7 +163,7 @@ namespace Anki {
     } // AddFace()
     
     Block::Block(const ObjectType type)
-    : _type(type)
+    : ActionableObject(ObjectFamily::Block, type)
     , _size(LookupBlockInfo(_type).size)
     , _name(LookupBlockInfo(_type).name)
     , _vizHandle(VizManager::INVALID_HANDLE)

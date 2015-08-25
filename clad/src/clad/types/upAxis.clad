@@ -1,0 +1,21 @@
+// File: upAxis
+// Author: damjan stulic
+// Created: 8/21/15
+// Copyright: Anki, inc. 2015
+
+namespace Anki {
+namespace Cozmo {
+
+enum uint_8 UpAxisClad {
+    XNegative,
+    XPositive,
+    YNegative,
+    YPositive,
+    ZNegative,
+    ZPositive,
+    NumAxes,
+    Unknown
+}
+
+} // namespace Cozmo
+} // namespace Anki

@@ -22,7 +22,7 @@
 
 #include "anki/vision/basestation/visionMarker.h"
 
-#include "anki/common/basestation/objectTypesAndIDs.h"
+#include "anki/common/basestation/objectIDs.h"
 
 #include "anki/common/basestation/colorRGBA.h"
 
@@ -120,7 +120,6 @@ namespace Anki {
       
       // Accessors:
       ObjectID           GetID()     const;
-      virtual ObjectType GetType()   const = 0;
       const Pose3d&      GetPose()   const;
       const ColorRGBA&   GetColor()  const;
       //virtual float GetMinDim() const = 0;
@@ -243,10 +242,7 @@ namespace Anki {
     inline void ObservableObject::SetPose(const Pose3d& newPose) {
       _pose = newPose;
       
-      std::string poseName(GetType().GetName());
-      if(poseName.empty()) {
-        poseName = "Object";
-      }
+      std::string poseName("Object");
       poseName += "_" + std::to_string(GetID().GetValue());
       _pose.SetName(poseName);
     }
@@ -307,26 +303,6 @@ namespace Anki {
       GetObservedMarkers(observedMarkers, GetLastObservedTime());
     }
     
-    /*
-    // Derive specific observable objects from this class to get a clone method,
-    // without having to specifically write one in each derived class.
-    //
-    // I believe this is know as the Curiously Recurring Template Pattern (CRTP)
-    //
-    // For example:
-    //   class SomeNewObject : public ObservableObjectBase<SomeNewObject> { ... };
-    //
-    template <class Derived>
-    class ObservableObjectBase : public ObservableObject
-    {
-    public:
-      virtual ObservableObject* clone() const
-      {
-        // Call the copy constructor
-        return new Derived(static_cast<const Derived&>(*this));
-      }
-    };
-    */
     
   } // namespace Vision
 } // namespace Anki

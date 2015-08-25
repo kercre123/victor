@@ -4,6 +4,11 @@
 // Copyright: Anki Inc (c) 2015
 
 #include "clad/types/actionTypes.clad"
+#include "clad/types/robotStatusFlag.clad"
+#include "clad/types/cameraSettings.clad"
+#include "clad/types/upAxis.clad"
+#include "clad/types/objectTypes.clad"
+#include "clad/types/objectFamilies.clad"
 #include "clad/externalInterface/messageShared.clad"
 
 namespace Anki {
@@ -67,8 +72,8 @@ message RobotState {
     int_32   carryingObjectID,      // will be -1 if not carrying object
     int_32   carryingObjectOnTopID, // will be -1 if no object on top of object being carried
     int_32   headTrackingObjectID,  // will be -1 if head is not tracking to any object
-    uint_32  status,                // See RobotStatusFlag in cozmoTypes.h
-    uint_32  gameStatus,            // See GameStatusFlag in cozmoTypes.h
+    uint_16  status,                // See RobotStatusFlag in cozmoTypes.h
+    uint_8   gameStatus,            // See GameStatusFlag in cozmoTypes.h
     uint_8   robotID
 }
 
@@ -97,7 +102,7 @@ message ImageChunk {
     uint_16 nrows,
     uint_16 ncols,
     uint_16 chunkSize,
-    uint_8 imageEncoding,
+    ImageEncodingClad imageEncoding,
     uint_8 imageChunkCount,
     uint_8 chunkId,
     uint_8 data[1300] // Should match R2B MessageImageChunk size!
@@ -109,8 +114,8 @@ message ImageChunk {
 //  and the world
 message RobotObservedObject {
     uint_32 robotID,
-    uint_32 objectFamily,
-    uint_32 objectType,
+    ObjectFamily objectFamily,
+    ObjectType   objectType,
     int_32  objectID,        // signed to match U2G::PickAndPlaceObject which has the option to have objectID<0
     float_32 img_topLeft_x,  // position in image coords
     float_32 img_topLeft_y,  //     "
@@ -216,13 +221,13 @@ message ActiveObjectMoved {
     float_32 xAccel,
     float_32 yAccel,
     float_32 zAccel,
-    uint_8   upAxis    // See UpAxis type in ActiveBlockTypes.h
+    UpAxisClad upAxis
 }
 
 message ActiveObjectStoppedMoving {
     uint_8   robotID,
     uint_32  objectID,
-    uint_8   upAxis,
+    UpAxisClad upAxis,
     bool     rolled
 }
 

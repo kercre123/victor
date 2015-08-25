@@ -48,6 +48,15 @@ PROTO CozmoBot [
 
   # Whether or not to enable video
   field SFBool enableVideo TRUE
+  
+  # Tread wheel parameters
+  field SFFloat frontWheelRadiusM   0.0145
+  field SFFloat rearWheelRadiusM    0.01075
+  field SFFloat rearWheelDistToFrontWheelM 0.048
+  
+  # The number of intermediate wheels to simulate in each tread between the two end wheels.
+  field SFInt32 numInterTreadWheels 2
+  
 ]
 {
 
@@ -66,7 +75,7 @@ Supervisor {
   
   %{ if not fields.vizMode.value then }%
   physics Physics {
-    density 0.1
+    density 1000
     #mass 0.17 # about 6 ounces
   }
   %{ end }%
@@ -164,7 +173,7 @@ Supervisor {
 		  %{ if not fields.vizMode.value then }%
 		  boundingObject USE BODY_SHAPE
 		  physics Physics {
-			 density 3000
+			 density 1000
 		  }
 		  %{ end }%
 		} # BODY Solid
@@ -507,7 +516,7 @@ Supervisor {
 				%{ if not fields.vizMode.value then }%
 				boundingObject USE HEAD_SHAPE
 				physics Physics {
-					density 100
+					density 1000
 				}
 				%{ end }%
 			  }
@@ -633,7 +642,7 @@ Supervisor {
 		  %{ if not fields.vizMode.value then }%
 	          boundingObject USE BACKPACK_GROUP
 		  physics Physics {
-			density 300
+			density 5000
 		  }
 		  %{ end }%
 		} # BACKPACK Solid
@@ -700,33 +709,51 @@ Supervisor {
 		  %{ if not fields.vizMode.value then }%
 		  boundingObject DEF TRACK_BO Group {
 			children [
-			  Transform {
-				translation -0.024 0.00375 0
-				rotation 1 0 0 -1.5707963     
-				children [
-				  Box {
-					size 0.048 0.01 0.0215
-				  }
-				]
-			  }
+			
+              # Front wheel
 			  Transform {
 				translation 0 0 0
 				rotation 1 0 0 -1.5707963
 				children [
-				  DEF FRONT_WHEEL_BO Cylinder {
+				  Cylinder {
 					height 0.01
-					radius 0.0145
+					radius %{=fields.frontWheelRadiusM.value}%
 					subdivision 14
 				  }
 				]
 			  }
+			  
+			  # Create intermediate wheels
+			  %{ totalRadDistM = (fields.frontWheelRadiusM.value - fields.rearWheelRadiusM.value) 
+			     distStepM = fields.rearWheelDistToFrontWheelM.value / (fields.numInterTreadWheels.value + 1)
+			     radStepM  = totalRadDistM / (fields.numInterTreadWheels.value + 1)
+			     if fields.numInterTreadWheels.value > 0 then 
+			       for iw=1,fields.numInterTreadWheels.value do
+			  }%
+			  
 			  Transform {
-				translation -0.048 0.00375 0
+				translation %{= iw * distStepM - fields.rearWheelDistToFrontWheelM.value}% %{= totalRadDistM - (iw * radStepM) }% 0
 				rotation 1 0 0 -1.5707963
 				children [
-				  DEF FRONT_WHEEL_BO Cylinder {
+				  Cylinder {
 					height 0.01
-					radius 0.01075
+					radius %{= fields.rearWheelRadiusM.value + (iw * radStepM) }%
+					subdivision 14
+				  }
+				]
+			  }
+
+			  %{   end }%
+			  %{ end }%  # intermediate tread wheels
+			  
+			  # Rear wheel
+			  Transform {
+				translation %{=-fields.rearWheelDistToFrontWheelM.value}% 0.00375 0
+				rotation 1 0 0 -1.5707963
+				children [
+				  Cylinder {
+					height 0.01
+					radius %{=fields.rearWheelRadiusM.value}%
 					subdivision 14
 				  }
 				]
@@ -889,7 +916,7 @@ Supervisor {
 			%{ if not fields.vizMode.value then }%
 			boundingObject USE DRIVE_TIRE
 			physics DEF FRONT_WHEEL_PHYSICS Physics {
-			  density 5000 # Make heavier than rear wheels to simulate weights in front
+			  density 1000 # Make heavier than rear wheels to simulate weights in front
 			}
 			%{ end }%
 		  }
@@ -970,7 +997,7 @@ Supervisor {
 						%{ if not fields.vizMode.value then }%
 						boundingObject USE REAR_TIRE
 						physics DEF REAR_WHEEL_PHYSICS Physics {
-						  density 10
+						  density 1000
 						}
 						%{ end }%
 			  	} # endPoint Solit
@@ -1282,7 +1309,7 @@ Supervisor {
 								%{ if not fields.vizMode.value then }%
 								boundingObject USE LIFTER_SHAPE
 								physics Physics {
-									density 100
+									density 1000
 								}
 								%{ end }%
 							}  # SmallFingerGripper Solid
@@ -1383,7 +1410,7 @@ Supervisor {
 						]
 					}
 					physics Physics {
-						density 100
+						density 1000
 					}
 					%{ end }%
 
@@ -1492,7 +1519,7 @@ Supervisor {
 									]
 								}
 								physics Physics {
-									density 100
+									density 1000
 								}
 								%{ end }%
 

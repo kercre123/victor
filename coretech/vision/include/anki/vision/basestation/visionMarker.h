@@ -22,6 +22,7 @@ namespace Anki {
     
     // Forward declaration:
     class ObservableObject;
+    
     class Camera;
     
     //
@@ -82,6 +83,17 @@ namespace Anki {
       
       bool           _used;
     }; // class ObservedMarker
+    
+    class ObservedHumanFace : public ObservedMarker
+    {
+    public:
+      
+      virtual bool GetPose(Pose3d& pose) const override {
+        // Compute pose using roll/pitch/yaw
+        return true;
+      }
+      
+    }; // class ObservedHumanFace
     
     
     class KnownMarker : public Marker

@@ -114,7 +114,7 @@ namespace Cozmo {
   void BehaviorLookForFaces::HandleRobotObservedObject(const ExternalInterface::RobotObservedObject &msg)
   {
     // we only care about observed faces
-    if(msg.objectFamily == BlockWorld::ObjectFamily::HUMAN_HEADS)
+    if(msg.objectFamily == ObjectFamily::HumanHead)
     {
       ObjectID objectID;
       objectID = msg.objectID;
@@ -123,7 +123,7 @@ namespace Cozmo {
       {
         case State::LOOKING_AROUND:
         {
-          Vision::ObservableObject* object = _robot.GetBlockWorld().GetObjectByID(objectID);
+          ObservableObject* object = _robot.GetBlockWorld().GetObjectByID(objectID);
           if(object == nullptr) {
             PRINT_NAMED_ERROR("BehaviorLookForFaces.HandleRobotObservedObject.InvalidID",
                               "Could not get object %d.\n", msg.objectID);
@@ -139,7 +139,7 @@ namespace Cozmo {
           
         case State::TRACKING_FACE:
           if(objectID == _robot.GetTrackToObject()) {
-            Vision::ObservableObject* object = _robot.GetBlockWorld().GetObjectByID(objectID);
+            ObservableObject* object = _robot.GetBlockWorld().GetObjectByID(objectID);
             if(object == nullptr) {
               PRINT_NAMED_ERROR("BehaviorLookForFaces.HandleRobotObservedObject.InvalidID",
                                 "Could not get object %d.\n", msg.objectID);

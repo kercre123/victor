@@ -17,7 +17,7 @@
 #include "anki/cozmo/basestation/actionInterface.h"
 #include "anki/cozmo/basestation/compoundActions.h"
 #include "anki/common/types.h"
-#include "anki/common/basestation/objectTypesAndIDs.h"
+#include "anki/common/basestation/objectIDs.h"
 #include "anki/common/basestation/math/pose.h"
 #include "util/signals/simpleSignal_fwd.h"
 #include "clad/types/actionTypes.h"
