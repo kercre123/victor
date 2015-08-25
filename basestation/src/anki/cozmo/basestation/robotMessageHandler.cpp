@@ -324,7 +324,7 @@ namespace Anki {
         uiImgChunk.ncols = Vision::CameraResInfo[msg.resolution].width;
         assert(uiImgChunk.data.size() == msg.data.size());
         uiImgChunk.chunkSize = msg.chunkSize;
-        uiImgChunk.imageEncoding = msg.imageEncoding;
+        uiImgChunk.imageEncoding = (ImageEncodingClad)msg.imageEncoding;
         uiImgChunk.imageChunkCount = msg.imageChunkCount;
         uiImgChunk.chunkId = msg.chunkId;
         std::copy(msg.data.begin(), msg.data.end(),
@@ -607,11 +607,11 @@ namespace Anki {
       // to find the object in blockworld (which has its own bookkeeping ID) that
       // has the matching active ID
      
-      const BlockWorld::ObjectsMapByType_t& activeBlocksByType = robot->GetBlockWorld().GetExistingObjectsByFamily(BlockWorld::ObjectFamily::ACTIVE_BLOCKS);
+      const BlockWorld::ObjectsMapByType_t& activeBlocksByType = robot->GetBlockWorld().GetExistingObjectsByFamily(ObjectFamily::LightCube);
       
       for(auto objectsByID : activeBlocksByType) {
         for(auto objectWithID : objectsByID.second) {
-          Vision::ObservableObject* object = objectWithID.second;
+          ObservableObject* object = objectWithID.second;
           assert(object->IsActive());
           if(object->GetActiveID() == msg.objectID) {
             // TODO: Mark object as de-localized
@@ -622,11 +622,9 @@ namespace Anki {
             ActionableObject* actionObject = dynamic_cast<ActionableObject*>(object);
             assert(actionObject != nullptr);
             if(actionObject->IsBeingCarried() == false) {
-              ExternalInterface::MessageEngineToGame event(ExternalInterface::ActiveObjectMoved(
-                                                                                                robot->GetID(), objectWithID.first, msg.xAccel, msg.yAccel, msg.zAccel, msg.upAxis
-                                                                                                ));
-              
-              robot->GetExternalInterface()->Broadcast(event);
+              robot->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::ActiveObjectMoved(
+                robot->GetID(), objectWithID.first, msg.xAccel, msg.yAccel, msg.zAccel, (UpAxisClad)msg.upAxis
+              )));
             }
             
             return RESULT_OK;
@@ -640,11 +638,11 @@ namespace Anki {
     
     Result RobotMessageHandler::ProcessMessage(Robot* robot, MessageActiveObjectStoppedMoving const& msg)
     {
-      const BlockWorld::ObjectsMapByType_t& activeBlocksByType = robot->GetBlockWorld().GetExistingObjectsByFamily(BlockWorld::ObjectFamily::ACTIVE_BLOCKS);
+      const BlockWorld::ObjectsMapByType_t& activeBlocksByType = robot->GetBlockWorld().GetExistingObjectsByFamily(ObjectFamily::LightCube);
       
       for(auto objectsByID : activeBlocksByType) {
         for(auto objectWithID : objectsByID.second) {
-          Vision::ObservableObject* object = objectWithID.second;
+          ObservableObject* object = objectWithID.second;
           assert(object->IsActive());
           if(object->GetActiveID() == msg.objectID) {
             // TODO: Mark object as de-localized
@@ -653,7 +651,7 @@ namespace Anki {
                               "Received message that Object " << objectWithID.first.GetValue() << " (Active ID " << msg.objectID << ") stopped moving.");
             
             robot->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::ActiveObjectStoppedMoving(
-              robot->GetID(), objectWithID.first, msg.upAxis, msg.rolled
+              robot->GetID(), objectWithID.first, (UpAxisClad)msg.upAxis, msg.rolled
             )));
             return RESULT_OK;
           }
@@ -667,11 +665,11 @@ namespace Anki {
     
     Result RobotMessageHandler::ProcessMessage(Robot* robot, MessageActiveObjectTapped const& msg)
     {
-      const BlockWorld::ObjectsMapByType_t& activeBlocksByType = robot->GetBlockWorld().GetExistingObjectsByFamily(BlockWorld::ObjectFamily::ACTIVE_BLOCKS);
+      const BlockWorld::ObjectsMapByType_t& activeBlocksByType = robot->GetBlockWorld().GetExistingObjectsByFamily(ObjectFamily::LightCube);
       
       for(auto objectsByID : activeBlocksByType) {
         for(auto objectWithID : objectsByID.second) {
-          Vision::ObservableObject* object = objectWithID.second;
+          ObservableObject* object = objectWithID.second;
           assert(object->IsActive());
           if(object->GetActiveID() == msg.objectID) {
 

@@ -44,16 +44,10 @@ namespace Anki {
     class Charger : public ActionableObject
     {
     public:
-      class Type : public ObjectType
-      {
-        Type(const std::string& name) : ObjectType(name) { }
-      public:
-        static const Type BASIC_CHARGER;
-      };
+      using Type = ObjectType;
       
       Charger();
       
-      virtual ObjectType GetType() const override { return Type::BASIC_CHARGER; }
       virtual const Point3f& GetSize() const override { return _size; }
       
       f32     GetHeight() const { return Height; }

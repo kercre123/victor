@@ -44,16 +44,10 @@ namespace Anki {
     class Ramp : public ActionableObject
     {
     public:
-      class Type : public ObjectType
-      {
-        Type(const std::string& name) : ObjectType(name) { }
-      public:
-        static const Type BASIC_RAMP;
-      };
+      using Type = ObjectType;
       
       Ramp();
       
-      virtual ObjectType GetType() const override { return Type::BASIC_RAMP; }
       virtual const Point3f& GetSize() const override { return _size; }
       
       f32     GetHeight() const { return Height; }

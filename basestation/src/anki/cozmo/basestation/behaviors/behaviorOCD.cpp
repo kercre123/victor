@@ -265,7 +265,7 @@ namespace Cozmo {
     
     // Find the closest object with available pre-action poses
     f32 closestDistSq = std::numeric_limits<f32>::max();
-    Vision::ObservableObject* object = nullptr;
+    ObservableObject* object = nullptr;
     for(auto & objectID : _messyObjects)
     {
       object = blockWorld.GetObjectByID(objectID);
@@ -281,7 +281,7 @@ namespace Cozmo {
       if(actionObject == nullptr) {
         PRINT_NAMED_ERROR("BehaviorOCD.SelectNextObjectToPickUp.NonActionObject",
                           "Could not cast %s object %d from robot %d's world as Actionable.",
-                          object->GetType().GetName().c_str(),
+                          ObjectTypeToString(object->GetType()),
                           object->GetID().GetValue(),
                           _robot.GetID());
         return RESULT_FAIL;
@@ -299,7 +299,7 @@ namespace Cozmo {
           if(false == preActionPose.GetPose().GetWithRespectTo(_robot.GetPose(), poseWrtRobot)) {
             PRINT_NAMED_ERROR("BehaviorOCD.SelectNextObjectToPickUp.PoseFailure",
                               "Could not get pre-action pose of %s object %d w.r.t. robot %d.",
-                              object->GetType().GetName().c_str(),
+                              ObjectTypeToString(object->GetType()),
                               object->GetID().GetValue(),
                               _robot.GetID());
             return RESULT_FAIL;
@@ -329,7 +329,7 @@ namespace Cozmo {
     }
     else {
       BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.SelectNextObjectToPickUp", "Selected %s %d to pick up.",
-                             object->GetType().GetName().c_str(),
+                             ObjectTypeToString(object->GetType()),
                              _objectToPickUp.GetValue());
     }
     
@@ -340,7 +340,7 @@ namespace Cozmo {
   // Simply fails if all of the 4 check locations (+/-x, +/-y) have objects in them.
   Result BehaviorOCD::FindEmptyPlacementPose(const ObjectID& nearObjectID, Pose3d& pose)
   {
-    Vision::ObservableObject* nearObject = _robot.GetBlockWorld().GetObjectByID(nearObjectID);
+    ObservableObject* nearObject = _robot.GetBlockWorld().GetObjectByID(nearObjectID);
     if(nearObject == nullptr) {
       PRINT_NAMED_ERROR("BehaviorOCD.FindEmptyPlacementPose.InvalidNearObjectID", "");
       return RESULT_FAIL;
@@ -393,7 +393,7 @@ namespace Cozmo {
                           "Expecting object being carried to match object set to be picked up.");
     }
     
-    Vision::ObservableObject* carriedObject = _robot.GetBlockWorld().GetObjectByID(carriedObjectID);
+    ObservableObject* carriedObject = _robot.GetBlockWorld().GetObjectByID(carriedObjectID);
     if(carriedObject == nullptr) {
       PRINT_NAMED_ERROR("BehaviorOCD.SelectNextPlacement.InvalidCarriedObject", "");
       return RESULT_FAIL;
@@ -408,7 +408,7 @@ namespace Cozmo {
         // Pick the closest neatened object that's on the ground without anything on top yet...
         f32 closestDistSq = std::numeric_limits<f32>::max();
         for(auto & neatObjectID : _neatObjects) {
-          Vision::ObservableObject* neatObject = blockWorld.GetObjectByID(neatObjectID);
+          ObservableObject* neatObject = blockWorld.GetObjectByID(neatObjectID);
           if(neatObject == nullptr) {
             PRINT_NAMED_ERROR("BehaviorOCD.SelectNextPlacement.InvalidObjectID",
                               "No object ID = %d", neatObjectID.GetValue());
@@ -427,7 +427,7 @@ namespace Cozmo {
           // Make sure it's approximately at the same height as the robot
           if(NEAR(poseWrtRobot.GetTranslation().z(), neatObject->GetSize().z()*0.5f, 10.f)) {
             // See if there's anything on top of it
-            Vision::ObservableObject* onTop = blockWorld.FindObjectOnTopOf(*neatObject, 15.f);
+            ObservableObject* onTop = blockWorld.FindObjectOnTopOf(*neatObject, 15.f);
             if(onTop == nullptr) {
               const f32 currentDistSq = poseWrtRobot.GetTranslation().LengthSq();
               if(currentDistSq < closestDistSq) {
@@ -704,7 +704,7 @@ namespace Cozmo {
   
   f32 BehaviorOCD::GetNeatnessScore(ObjectID whichObject)
   {
-    Vision::ObservableObject* object = _robot.GetBlockWorld().GetObjectByID(whichObject);
+    ObservableObject* object = _robot.GetBlockWorld().GetObjectByID(whichObject);
     if(object == nullptr) {
       PRINT_NAMED_ERROR("BehaviorOCD.GetNeatnessScore.InvalidObject",
                         "Could not get object %d from robot %d's world.",

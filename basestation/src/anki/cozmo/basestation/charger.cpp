@@ -24,8 +24,6 @@ namespace Anki {
   
   namespace Cozmo {
     
-    const Charger::Type Charger::Type::BASIC_CHARGER("BASIC_CHARGER");
-    
     const std::vector<Point3f>& Charger::GetCanonicalCorners() const {
     
       static const std::vector<Point3f> CanonicalCorners = {{
@@ -47,7 +45,8 @@ namespace Anki {
     
     
     Charger::Charger()
-    : _size(SlopeLength+PlatformLength, Width, Height)
+    : ActionableObject(ObjectFamily::Charger, ObjectType::Charger_Basic)
+    , _size(SlopeLength+PlatformLength, Width, Height)
     , _preAscentPose(0, Z_AXIS_3D(),
                      {{-PreAscentDistance, 0.f, 0.f}},
                      &GetPose())

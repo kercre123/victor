@@ -13,7 +13,7 @@
 #define __Cozmo_Basestation_Behaviors_BehaviorOCD_H__
 
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
-#include "anki/common/basestation/objectTypesAndIDs.h"
+#include "anki/common/basestation/objectIDs.h"
 #include "anki/common/basestation/math/pose.h"
 
 #include "util/signals/simpleSignal_fwd.h"

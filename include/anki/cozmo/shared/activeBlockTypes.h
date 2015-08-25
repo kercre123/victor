@@ -77,6 +77,7 @@ namespace Cozmo {
     UP_AXIS_Zpos,
     NUM_UP_AXES,
     UP_AXIS_UNKNOWN = NUM_UP_AXES + 1,
+    // UP_UPDATE_CLAD = liftTestFlag.clad
   } UpAxis;
     
 } // namespace Cozmo
