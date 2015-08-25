@@ -360,8 +360,8 @@ namespace Cozmo {
     
     if(robot != nullptr) {
       VizManager::getInstance()->EraseAllVizObjects();
-      robot->GetBlockWorld().ClearObjectsByFamily(BlockWorld::ObjectFamily::BLOCKS);
-      robot->GetBlockWorld().ClearObjectsByFamily(BlockWorld::ObjectFamily::ACTIVE_BLOCKS);
+      robot->GetBlockWorld().ClearObjectsByFamily(ObjectFamily::Block);
+      robot->GetBlockWorld().ClearObjectsByFamily(ObjectFamily::LightCube);
     }
   }
   

@@ -12,8 +12,8 @@
 3) Use CST_ASSERT() and CST_EXPECT() macros to test conditions of interest. 
    Use CST_EXIT() to properly exit your test.
 
-4) Add the name of the test class to project/buildServer/steps/webotsTests.cfg along with the associated world file.
-   The world file must contain an instance of the following.
+4) Add the name of the test class and world file to project/buildServer/steps/webotsTests.cfg.
+   The world file should be added to simulator/worlds/ and must contain an instance of each of the following.
   
      BlockWorldComms (i.e. Cozmo engine)
      CozmoBot (i.e. Cozmo robot)
@@ -38,3 +38,6 @@ ii) The easiest way to debug a single test is to modify the world file to point 
 
     In this way, you can run the test repeatedly without Webots quitting on you.
     
+iii) There is some time overhead associated with each test (.cpp) file. It's basically restarting
+     Webots and going through the whole connection routine. If it makes sense, it can shave off
+     some seconds by combining tests to run in a single .cpp file.
