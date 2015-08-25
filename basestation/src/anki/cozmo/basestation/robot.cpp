@@ -2997,17 +2997,11 @@ namespace Anki {
     }
       
     f32 Robot::GetDriveCenterOffset() const {
-      if (_isPhysical) {
-        f32 driveCenterOffset = DRIVE_CENTER_OFFSET;
-        if (IsCarryingObject()) {
-          driveCenterOffset = 0;
-        }
-        return driveCenterOffset;
+      f32 driveCenterOffset = DRIVE_CENTER_OFFSET;
+      if (IsCarryingObject()) {
+        driveCenterOffset = 0;
       }
-      
-      // TODO: Simulated robot Webots proto needs to be updated with treads.
-      //       Til then assume no drive center offset.
-      return 0.f;
+      return driveCenterOffset;
     }
     
   } // namespace Cozmo
