@@ -2,6 +2,7 @@
 using UnityEngine.UI;
 using System.Collections;
 using System.Collections.Generic;
+using Anki.Cozmo;
 
 /// <summary>
 /// deprecated vision/interaction paradigm in which cozmo would simply choose his best target for the user based on proximity and facing
@@ -76,7 +77,7 @@ public class CozmoVision_AutoSelect : CozmoVision {
         return obj1.WorldPosition.z.CompareTo(obj2.WorldPosition.z);
       });
 
-      if (robot.Status(RobotStatusFlag.IS_CARRYING_BLOCK)) { // if holding a block
+      if (robot.Status(RobotStatusFlagClad.CarryingBlock)) { // if holding a block
         if (observedObjects.Count > 0 && observedObjects[0] != robot.carryingObject) { // if can see at least one block
           robot.selectedObjects.Add(observedObjects[0]);
           

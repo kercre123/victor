@@ -102,7 +102,7 @@ public class GameActions : MonoBehaviour {
       return;
     }
     
-    if (robot.Status(RobotStatusFlag.IS_CARRYING_BLOCK)) {
+    if (robot.Status(Anki.Cozmo.RobotStatusFlagClad.CarryingBlock)) {
       //      if( buttons.Length > 1 )
       //      {
       //        if( robot.carryingObject != null && robot.carryingObject.isActive )
