@@ -18,6 +18,11 @@
 
 #include "anki/common/types.h"
 
+#include "anki/cozmo/shared/cozmoTypes.h"
+
+#include "clad/types/objectTypes.h"
+#include "clad/types/objectFamilies.h"
+
 #include "util/random/randomGenerator.h"
 
 #include "json/json.h"

@@ -37,8 +37,8 @@ namespace Anki {
         ExternalInterface::RobotState _robotStateMsg;
         
         UiGameController::ObservedObject _currentlyObservedObject;
-        std::map<s32, std::pair<u32, u32> > _objectIDToFamilyTypeMap;
-        std::map<u32, std::map<u32, std::vector<s32> > > _objectFamilyToTypeToIDMap;
+        std::map<s32, std::pair<ObjectFamily, ObjectType> > _objectIDToFamilyTypeMap;
+        std::map<ObjectFamily, std::map<ObjectType, std::vector<s32> > > _objectFamilyToTypeToIDMap;
         std::map<s32, Pose3d> _objectIDToPoseMap;
         
         std::unordered_set<std::string> _availableAnimations;
@@ -77,8 +77,8 @@ namespace Anki {
     {
       // Get object info
       s32 objID = msg.objectID;
-      u32 objFamily = msg.objectFamily;
-      u32 objType = msg.objectType;
+      ObjectFamily objFamily = msg.objectFamily;
+      ObjectType objType = msg.objectType;
       UnitQuaternion<float> q(msg.quaternion0, msg.quaternion1, msg.quaternion2, msg.quaternion3);
       Vec3f trans(msg.world_x, msg.world_y, msg.world_z);
       
@@ -1170,7 +1170,7 @@ namespace Anki {
       return v;
     }
     
-    std::vector<s32> UiGameController::GetAllObjectIDsByFamily(u32 family) const
+    std::vector<s32> UiGameController::GetAllObjectIDsByFamily(ObjectFamily family) const
     {
       std::vector<s32> v;
       auto typeToIDMapIter = _objectFamilyToTypeToIDMap.find(family);
@@ -1182,7 +1182,7 @@ namespace Anki {
       return v;
     }
     
-    std::vector<s32> UiGameController::GetAllObjectIDsByFamilyAndType(u32 family, u32 type) const
+    std::vector<s32> UiGameController::GetAllObjectIDsByFamilyAndType(ObjectFamily family, ObjectType type) const
     {
       std::vector<s32> v;
       auto typeToIDMapIter = _objectFamilyToTypeToIDMap.find(family);
@@ -1195,7 +1195,7 @@ namespace Anki {
       return v;
     }
     
-    Result UiGameController::GetObjectFamily(s32 objectID, u32& family) const
+    Result UiGameController::GetObjectFamily(s32 objectID, ObjectFamily& family) const
     {
       auto it = _objectIDToFamilyTypeMap.find(objectID);
       if (it != _objectIDToFamilyTypeMap.end()) {
@@ -1205,7 +1205,7 @@ namespace Anki {
       return RESULT_FAIL;
     }
     
-    Result UiGameController::GetObjectType(s32 objectID, u32& type) const
+    Result UiGameController::GetObjectType(s32 objectID, ObjectType& type) const
     {
       auto it = _objectIDToFamilyTypeMap.find(objectID);
       if (it != _objectIDToFamilyTypeMap.end()) {
@@ -1225,7 +1225,7 @@ namespace Anki {
       return RESULT_FAIL;
     }
     
-    u32 UiGameController::GetNumObjectsInFamily(u32 family) const
+    u32 UiGameController::GetNumObjectsInFamily(ObjectFamily family) const
     {
       u32 numObjects = 0;
       auto typeToIDMapIter = _objectFamilyToTypeToIDMap.find(family);
@@ -1237,7 +1237,7 @@ namespace Anki {
       return numObjects;
     }
     
-    u32 UiGameController::GetNumObjectsInFamilyAndType(u32 family, u32 type) const
+    u32 UiGameController::GetNumObjectsInFamilyAndType(ObjectFamily family, ObjectType type) const
     {
       auto typeToIDMapIter = _objectFamilyToTypeToIDMap.find(family);
       if (typeToIDMapIter != _objectFamilyToTypeToIDMap.end()) {

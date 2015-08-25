@@ -238,7 +238,7 @@ namespace Cozmo {
 
   void VisionProcessingThread::Processor()
   {
-    PRINT_STREAM_INFO("VisionProcessingThread.Processor", "Starting Robot VisionProcessingThread::Processor thread...");
+    PRINT_NAMED_INFO("VisionProcessingThread.Processor", "Starting Robot VisionProcessingThread::Processor thread...");
     
     _visionSystem->Init(_camCalib);
     

@@ -58,7 +58,7 @@ namespace Anki {
     protected:
       void PushIncomingPacket(const IncomingPacket& packet);
 
-      void EmplaceIncomingPacket(const IncomingPacket&& packet);
+      void EmplaceIncomingPacket(IncomingPacket&& packet);
 
       // You should override this if you need any special handling for say, disconnects.
       virtual void ReceiveData(const uint8_t *buffer, unsigned int bufferSize, const TransportAddress& sourceAddress) override;
