@@ -560,8 +560,8 @@ public class GoldRushController : GameController {
 
   void PickedUpActiveBlock(bool success, RobotActionType action_type) {
     if (success
-       && (action_type == RobotActionType.PICKUP_OBJECT_HIGH || action_type == RobotActionType.PICKUP_OBJECT_LOW)
-       && robot.carryingObject.isActive) {
+        && (action_type == RobotActionType.PICKUP_OBJECT_HIGH || action_type == RobotActionType.PICKUP_OBJECT_LOW)
+        && robot.carryingObject.isActive) {
       // turn on  the block's lights
       goldExtractingObject = robot.carryingObject as ActiveBlock;
       goldExtractingObject.SetLEDs(EXTRACTOR_COLOR);
@@ -578,7 +578,7 @@ public class GoldRushController : GameController {
   }
 
   void UpdateSearching() {
-    if (robot.Status(RobotStatusFlag.IS_CARRYING_BLOCK) && robot.carryingObject != null) {
+    if (robot.Status(RobotStatusFlagClad.CarryingBlock) && robot.carryingObject != null) {
       lastCarriedObjectId = robot.carryingObject;
       Vector2 buriedLocation;
       if (buriedLocations.TryGetValue(robot.carryingObject, out buriedLocation)) {
@@ -624,7 +624,7 @@ public class GoldRushController : GameController {
   }
 
   void UpdateIdle() {
-    if (robot.Status(RobotStatusFlag.IS_CARRYING_BLOCK)) {
+    if (robot.Status(RobotStatusFlagClad.CarryingBlock)) {
       EnterPlayState(PlayState.SEARCHING);
     }
   }
@@ -634,7 +634,7 @@ public class GoldRushController : GameController {
   }
 
   void UpdateReadyToReturn() {
-    if (robot.Status(RobotStatusFlag.IS_CARRYING_BLOCK)) {
+    if (robot.Status(RobotStatusFlagClad.CarryingBlock)) {
       EnterPlayState(PlayState.RETURNING);
     }
   }

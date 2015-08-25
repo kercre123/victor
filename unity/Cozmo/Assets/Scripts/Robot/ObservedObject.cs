@@ -24,9 +24,9 @@ public class ObservedObject {
 
   public uint RobotID { get; private set; }
 
-  public uint Family { get; private set; }
+  public ObjectFamily Family { get; private set; }
 
-  public uint ObjectType { get; private set; }
+  public ObjectType ObjectType { get; private set; }
 
   public int ID { get; private set; }
 
@@ -121,11 +121,11 @@ public class ObservedObject {
   public ObservedObject() {
   }
 
-  public ObservedObject(int objectID, uint objectFamily, uint objectType) {
+  public ObservedObject(int objectID, ObjectFamily objectFamily, ObjectType objectType) {
     Constructor(objectID, objectFamily, objectType);
   }
 
-  protected void Constructor(int objectID, uint objectFamily, uint objectType) {
+  protected void Constructor(int objectID, ObjectFamily objectFamily, ObjectType objectType) {
     TimeCreated = Time.time;
     Family = objectFamily;
     ObjectType = objectType;
@@ -134,17 +134,17 @@ public class ObservedObject {
     InfoString = "ID: " + ID + " Family: " + Family + " Type: " + ObjectType;
     SelectInfoString = "Select ID: " + ID + " Family: " + Family + " Type: " + ObjectType;
 
-    if (objectFamily == 4) {
+    if (objectFamily == ObjectFamily.LightCube) {
       cubeType = CubeType.LIGHT_CUBE;
     }
-    else if (objectFamily == 6) {
+    else if (objectFamily == ObjectFamily.HumanHead) {
       cubeType = CubeType.FACE;
       Debug.LogWarning("FACE " + ID + " !!!"); 
     }
-    else if (objectType == 4 || objectType == 5) {
+    else if (objectType == ObjectType.Block_BULLSEYE2 || objectType == ObjectType.Block_BULLSEYE2_INVERTED) {
       cubeType = CubeType.BULLS_EYE;
     }
-    else if (objectType == 11 || objectType == 12 || objectType == 13) {
+	else if (objectType == ObjectType.Block_FLAG || objectType == ObjectType.Block_FLAG2 || objectType == ObjectType.Block_FLAG_INVERTED) {
       cubeType = CubeType.FLAG;
     }
     else {
