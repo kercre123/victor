@@ -60,6 +60,7 @@ public class SpinWheel : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
 
     public float totalTime = 0f;
     public float timeAfterLastPeg = 0f;
+    public float timeMovingBackwards = 0f;
 
     SpinWheel spinWheel;
     SpinData myDataRef;
@@ -81,6 +82,7 @@ public class SpinWheel : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
       pegTouching = data.pegTouching;
       totalTime = data.totalTime;
       timeAfterLastPeg = data.timeAfterLastPeg;
+      timeMovingBackwards = data.timeMovingBackwards;
     }
 
   }
@@ -117,6 +119,7 @@ public class SpinWheel : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
   [SerializeField] int maxSamples = 5;
   [SerializeField] float pegSlowDownThreshold = 360f;
   [SerializeField] float pegSlowDownFactor = 0.95f;
+  [SerializeField] float backwardsSlowDownFactor = 0.05f;
   [SerializeField] float pegBounceVelFactor = 0.25f;
   [SerializeField] float pegDegrees = 1f;
   [SerializeField] float pegBendAngle = 30f;
@@ -175,6 +178,8 @@ public class SpinWheel : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
   public float TotalDuration { get; private set; }
 
   public float TimeAfterLastPeg { get; private set; }
+
+  public float TimeMovingBackwards { get; private set; }
 
   public float TotalRotations { get; private set; }
 
@@ -384,6 +389,7 @@ public class SpinWheel : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
 
     TotalDuration = predictedData.totalTime;
     TimeAfterLastPeg = predictedData.timeAfterLastPeg;
+    TimeMovingBackwards = predictedData.timeMovingBackwards;
     TotalRotations = Mathf.Abs(predictedData.wheelAngle - predictedData.wheelAngleAtSpinStart) / 360f;
 
     state = SpinWheelState.SPINNING;
@@ -413,14 +419,16 @@ public class SpinWheel : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
 
   }
 
-  void SpinUpdate(float time, ref SpinData data) {
+  void SpinUpdate(float time, bool spin_clockwise, ref SpinData data) {
     float deltaTime = time - data.lastTime;
 
-    ApplySpin(deltaTime, ref data);
+    ApplySpin(deltaTime, spin_clockwise, ref data);
     data.totalTime += deltaTime;
     data.timeAfterLastPeg += deltaTime;
     if (data.pegTouching)
       data.timeAfterLastPeg = 0f;
+    if ((spin_clockwise && data.angularVel > 0) || (!spin_clockwise && data.angularVel < 0))
+      data.timeMovingBackwards += deltaTime;
 
     data.lastTime = time;
     data.lastAngle = data.wheelAngle;
@@ -458,10 +466,13 @@ public class SpinWheel : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
     
     frames.Clear();
 
+    bool spinClockwise = data.angularVel < 0;
+
     float time = 0f;
     data.lastTime = 0f;
     data.totalTime = 0f;
     data.timeAfterLastPeg = 0f;
+    data.timeMovingBackwards = 0f;
     
     SpinFrame first;
     first.time = time;
@@ -475,7 +486,7 @@ public class SpinWheel : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
       time += Time.fixedDeltaTime;
 
       DecayVelocity(time, ref data);
-      SpinUpdate(time, ref data);
+      SpinUpdate(time, spinClockwise, ref data);
 
       SpinFrame frame;
       frame.time = time;
@@ -527,7 +538,7 @@ public class SpinWheel : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
       data.angularVel = Mathf.Lerp(Mathf.Abs(data.angularVel), 0f, 0.25f) * Mathf.Sign(data.angularVel);
   }
 
-  void ApplySpin(float deltaTime, ref SpinData data) {
+  void ApplySpin(float deltaTime, bool spin_clockwise, ref SpinData data) {
     if (data.angularVel == 0f)
       return;
     if (deltaTime <= 0f)
@@ -549,6 +560,10 @@ public class SpinWheel : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
 
       for (int i = 0; i < crossedPegs; i++) {
         data.angularVel *= pegSlowDownFactor;
+      }
+      // apply a slowdown if we are going the opposite way from how we started
+      if ((spin_clockwise && data.angularVel > 0) || (!spin_clockwise && data.angularVel < 0)) {
+        data.angularVel *= (1 - (backwardsSlowDownFactor * deltaTime));
       }
     }
 

@@ -197,6 +197,7 @@ public class VortexController : GameController {
   int predictedNum = -1;
   float predictedDuration = -1f;
   float predictedTimeAfterLastPeg = -1f;
+  float predictedTimeMovingBackwards = 0f;
 
   List<int> playersThatAreCorrect = new List<int>();
   List<int> playersThatAreWrong = new List<int>();
@@ -1149,6 +1150,7 @@ public class VortexController : GameController {
     predictedNum = -1;
     predictedDuration = -1f;
     predictedTimeAfterLastPeg = -1f;
+    predictedTimeMovingBackwards = 0f;
     cozmoTapsSubmitted = -1;
     lightIndex = 0;
 
@@ -1246,12 +1248,13 @@ public class VortexController : GameController {
           }
           predictedDuration = wheel.TotalDuration;
           predictedTimeAfterLastPeg = wheel.TimeAfterLastPeg;
+          predictedTimeMovingBackwards = wheel.TimeMovingBackwards;
         }
       }
   
       if (cozmoTapsSubmitted < 0 && predictedNum > 0) {
         float time = Time.time - wheel.SpinStartTime;
-        float timeToBid = predictedDuration - predictedTimeAfterLastPeg - cozmoPredicitveLeadTime;
+        float timeToBid = predictedDuration - predictedTimeAfterLastPeg - predictedTimeMovingBackwards - cozmoPredicitveLeadTime;
         if (time > timeToBid) {
   
           cozmoTapsSubmitted = 0;
