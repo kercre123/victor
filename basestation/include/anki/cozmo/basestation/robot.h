@@ -38,6 +38,7 @@
 #include "anki/cozmo/shared/ledTypes.h"
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/blockWorld.h"
+#include "anki/cozmo/basestation/faceWorld.h"
 #include "anki/cozmo/basestation/comms/robot/robotMessages.h"
 #include "anki/cozmo/basestation/visionProcessingThread.h"
 #include "anki/cozmo/basestation/actionContainers.h"
@@ -570,6 +571,9 @@ namespace Anki {
             
       // A reference to the BlockWorld the robot lives in
       BlockWorld        _blockWorld;
+      
+      // A container for faces/people the robot knows about
+      FaceWorld         _faceWorld;
       
       VisionProcessingThread _visionProcessor;
       //Vision::PanTiltTracker _faceTracker;

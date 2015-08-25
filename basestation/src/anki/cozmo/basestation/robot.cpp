@@ -782,8 +782,6 @@ namespace Anki {
                                                       visionMarker.GetCode() != Vision::MARKER_UNKNOWN);
         }
         
-        //MessageFaceDetection faceDetection;
-        //std::vector<Rectangle<s32> > faceTargets;
         Vision::TrackedFace faceDetection;
         while(true == _visionProcessor.CheckMailbox(faceDetection)) {
           /*
@@ -792,16 +790,10 @@ namespace Anki {
                            GetID(), faceDetection.x_upperLeft, faceDetection.y_upperLeft, faceDetection.width, faceDetection.height);
           */
           
-          // Create a "visionMarker" message from the face detection so we will
-          // add this face to BlockWorld
-          Vision::ObservedMarker marker = faceDetection.GetMarker(GetCamera());
-          
-          Result lastResult = QueueObservedMarker(marker);
-          if(lastResult != RESULT_OK) {
-            PRINT_NAMED_ERROR("Robot.Update.FailedToQueueFaceVisionMarker",
-                              "Got FaceDetection message from vision processing thread "
-                              "but failed to queue it as a VisionMarker.");
-            return lastResult;
+          Result result = _faceWorld.UpdateFace(faceDetection);
+          if(result != RESULT_OK) {
+            PRINT_NAMED_ERROR("Robot.Update.FailedToUpdateFace",
+                              "Got FaceDetection from vision processing but failed to update it.");
           }
           
           VizManager::getInstance()->DrawCameraFace(faceDetection,
