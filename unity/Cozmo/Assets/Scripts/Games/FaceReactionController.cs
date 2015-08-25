@@ -179,6 +179,7 @@ public class FaceReactionController : GameController {
   }
 
   private void Enter_SPIN_RANDOM() {
+    SetBackpackColors(Color.white);
     robot.SetHeadAngle(1f);
     randomSpinDuration = Random.Range(3.0f, 5.5f);
     DecideLeftOrRight();
@@ -196,6 +197,7 @@ public class FaceReactionController : GameController {
   }
 
   private void Enter_SEARCH_FOR_FACE() {
+    SetBackpackColors(Color.green);
     robot.SetLiftHeight(0.0f);
     robot.SetHeadAngle(-1f);
     DecideLeftOrRight();
@@ -249,6 +251,7 @@ public class FaceReactionController : GameController {
   }
 
   private void Enter_ALIGN_TO_FACE() {
+    SetBackpackColors(new Color(1.0f, 1.0f, 0.0f));
     alignToFaceWaiting = true;
     robot.FaceObject(robot.markersVisibleObjects[0]);
   }
@@ -269,6 +272,7 @@ public class FaceReactionController : GameController {
   }
 
   private void Enter_MOVE_TOWARD_FACE() {
+    SetBackpackColors(new Color(1.0f, 0.0f, 0.0f));
     Debug.Log("moving toward face");
     robot.DriveWheels(20.0f, 20.0f);
   }
