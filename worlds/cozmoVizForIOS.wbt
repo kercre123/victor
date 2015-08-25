@@ -1,17 +1,5 @@
 #VRML_SIM V7.3.0 utf8
-WorldInfo {
-  info [
-    "Cozmo world for use with the big screen Sharp TV in the darkroom." 
-    "All rights reserved. Copyright (c) Anki, Inc."
-    "Author: Hanns Tappeiner <hanns@anki.com>"
-    "Author: Andrew Stein <andrew@anki.com>"
-    "Author: Kevin Yoon <kevin@anki.com>"
-    "Date: 23 Apr 2014"
-    ""
-  ]
-  gravity 0 0 -9.81
-  physics "cozmo_physics"
-  basicTimeStep 5
+CozmoWorldInfo {
 }
 Viewpoint {
   fieldOfView 0.8
