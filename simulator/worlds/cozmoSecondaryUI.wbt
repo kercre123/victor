@@ -1,5 +1,5 @@
 #VRML_SIM V8.0.5 utf8
-WorldInfo {
+CozmoWorldInfo {
   info [
     "Cozmo world for use with an iOS device running Unity app"
     "when a secondary UI for drive control is needed."
@@ -10,9 +10,6 @@ WorldInfo {
     "Date: 23 Apr 2014"
     ""
   ]
-  gravity 0 0 -9.81
-  physics "cozmo_physics"
-  basicTimeStep 5
 }
 Viewpoint {
   fieldOfView 0.8
