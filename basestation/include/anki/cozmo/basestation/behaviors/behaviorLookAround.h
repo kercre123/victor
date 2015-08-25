@@ -14,7 +14,10 @@
 #define __Cozmo_Basestation_Behaviors_BehaviorLookAround_H__
 
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
+#include "anki/common/basestation/objectTypesAndIDs.h"
+#include "util/signals/simpleSignal_fwd.h"
 #include <vector>
+#include <set>
 
 namespace Anki {
 namespace Cozmo {
@@ -43,8 +46,10 @@ private:
   enum class State {
     Inactive,
     StartLooking,
+    ContinueLooking,
     LookingForObject,
-    ExamineFoundObject
+    ExamineFoundObject,
+    WaitToFinishExamining
   };
   
   // Constant that decides how long to wait before we trying to look around again (among other factors)
@@ -55,7 +60,14 @@ private:
   f32 _lastLookAroundTime;
   f32 _totalRotation;
   
+  std::vector<Signal::SmartHandle> _eventHandles;
+  std::set<ObjectID> _recentObjects;
+  std::set<ObjectID> _oldBoringObjects;
+  u32 _numObjectsToLookAt = 0;
+  
   void ResetBehavior(float currentTime_sec);
+  void HandleObjectObserved(const AnkiEvent<ExternalInterface::MessageEngineToGame>& event);
+  void HandleCompletedAction(const AnkiEvent<ExternalInterface::MessageEngineToGame>& event);
 };
   
 

@@ -28,6 +28,7 @@
 #include <map>
 #include <set>
 #include <string>
+#include <utility>
 
 namespace Anki {
   
@@ -65,6 +66,9 @@ namespace Anki {
       _value = value;
       return *this;
     }
+    
+    template<typename FwdType>
+    explicit UniqueEnumeratedValue(FwdType&& value) : _value(std::forward<FwdType>(value)) { }
     
     bool IsUnknown() const { return _value == UNKNOWN_VALUE; }
     
@@ -142,7 +146,10 @@ namespace Anki {
     
     void Set();
     
-    using UniqueEnumeratedValue<int>::operator=;
+    using UniqueEnumeratedValue<StorageType>::operator=;
+    
+    ObjectID() = default;
+    ObjectID(StorageType value) : UniqueEnumeratedValue<StorageType>(value) { }
     
   }; // class ObjectID
   
