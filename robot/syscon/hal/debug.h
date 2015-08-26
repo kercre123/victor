@@ -6,6 +6,7 @@
 namespace UART {
   extern bool initialized;
   
+  bool waitIdle();
   int get();
   void print( const char* fmt, ...);
 }

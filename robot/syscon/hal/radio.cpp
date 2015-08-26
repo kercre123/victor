@@ -95,15 +95,6 @@ extern "C" void uesb_event_handler(void)
 #include "nrf_gpio.h"
 #include "hardware.h"
 
-static int lastC = GetCounter();
-
-void BenchMark() {
-    static int lastC = GetCounter();
-    int currentC = GetCounter();
-    UART::print("%i\n\r", (int)((currentC - lastC) / 256.0f / 32768.0f * 1000));
-    lastC = currentC;
-}
-
 extern "C" void BlinkPack(int toggle) {
   #if defined(BACKPACK_DEMO)
   nrf_gpio_pin_set(PIN_LED2);

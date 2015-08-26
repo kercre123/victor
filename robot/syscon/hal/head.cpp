@@ -28,10 +28,6 @@ void Head::init()
   // Power on the peripheral
   NRF_UART0->POWER = 1;
 
-  // Initialize the UART for the specified baudrate
-  // Mike noticed the baud rate is almost rate*268 - it's actually (2^28 / 1MHz)
-  NRF_UART0->BAUDRATE = UART_BAUDRATE;
-
   // Disable parity and hardware flow-control
   NRF_UART0->CONFIG = 0;
 
@@ -44,16 +40,24 @@ void Head::init()
   NRF_UART0->INTENSET = UART_INTENSET_TXDRDY_Msk | UART_INTENSET_RXDRDY_Msk;
   NVIC_SetPriority(UART0_IRQn, 0);
   NVIC_EnableIRQ(UART0_IRQn);
-  
+
+  // Sync pattern
+  g_dataToHead.common.source = SPI_SOURCE_BODY;
+  g_dataToHead.tail = 0x84;
+
   Head::uartIdle = true;
   Head::spokenTo = false;
 }
 
 // Transmit first, then wait for a reply
 void Head::TxRx()
-{
+{ 
   memset(g_dataToBody.backpackColors, 0xFF, sizeof(g_dataToBody.backpackColors));
   
+  // Initialize the UART for the specified baudrate
+  // Mike noticed the baud rate is almost rate*268 - it's actually (2^28 / 1MHz)
+  NRF_UART0->BAUDRATE = UART_BAUDRATE;
+
   NRF_UART0->EVENTS_RXDRDY = 0;
   NRF_UART0->EVENTS_TXDRDY = 0;
   ENABLE_UART_IRQ;

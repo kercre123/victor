@@ -50,9 +50,9 @@ union GlobalDataToHead
     GlobalCommon common;
     Fixed speeds[4];
     Fixed positions[4];
-    Fixed IBat;
+    Fixed IBat; // This no longer exists here
     Fixed VBat;
-    Fixed Vusb;
+    Fixed VExt;
     u8    chargeStat;
 
     u8                cubeToUpdate;
