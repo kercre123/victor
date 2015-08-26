@@ -1,0 +1,96 @@
+/** Clad message definitions for the messages sent from the RTIP to the engine.
+ */
+ 
+#include "robotStatusFlag.clad"
+#include "activeObjectTypes.clad"
+#include "rtipTraces.clad"
+
+namespace Anki {
+namespace Cozmo {
+
+// Structure definition for convenience
+message RobotPose
+{
+  float_32 x,
+  float_32 y,
+  float_32 z,
+  float_32 angle,
+  float_32 pitch,
+}
+ 
+message RobotState
+{
+  uint_32 timestamp,
+  uint_32 pose_frame_id,
+  RobotPose pose,
+  float_32 lwheel_speed_mmps,
+  float_32 rwheel_speed_mmps,
+  float_32 headAngle,
+  float_32 liftAngle,
+  float_32 rawGyroZ,
+  float_32 rawAccelY,
+  RobotStatusFlag status, // RobotStatusFlag packs as a uint_16
+  uint_16 lastPathID,
+  int_8   currPathSegment, // -1 if not traversing a path
+  uint_8  numFreeSegmentSlots,
+  uint_8  battVolt10x,
+}
+
+message PrintTraceInt
+{
+  RtipTrace name,
+  int32     value
+}
+
+message PrintTraceDouble
+{
+  RtipTrace name,
+  float_64  value
+}
+
+message MainCycleTimeError
+{
+  uint_32 numMainTooLongErrors,
+  uint_32 avgMainTooLateTime,
+  uint_32 numMainTooLateErrors,
+  uint_32 avgMainTooLongTime,
+}
+
+message GoalPose
+{
+  RobotPose pose,
+  bool followingMarkerNormal, 
+}
+
+// ----- Active object messages ------
+
+// Convenience structure definition
+message ActiveAccel
+{
+  float_32 x,
+  float_32 y,
+  float_32 z
+}
+
+message ActiveObjectMoved
+{
+  uint_32     objectID,
+  ActiveAccel accel,
+  UpAxis      upAxis
+}
+
+message ActiveObjectStoppedMoving
+{
+  uint_32 objectID,
+  UpAxis  upAxis,
+  bool    rolled
+}
+
+message ActiveObjectTapped
+{
+  uint_32 objectID,
+  uint_8  numTaps,
+}
+
+} // namespace Cozmo
+} // namespace Anki

@@ -1,0 +1,30 @@
+/** Clad definitions of all messages sent from the Cozmo robot to the Cozmo engine
+ */
+
+#include "messagesRtipToEngine.clad"
+#include "messagesWiFiToEngine.clad"
+
+namespace Anki {
+namespace Cozmo {
+
+
+union RobotToEnginePipe {
+  // From RTIP
+  RobotState                 state               = 0x00,
+  PrintTraceInt              traceInt            = 0x01,
+  PrintTraceDouble           traceDbl            = 0x02
+  MainCycleTimeError         mainCycleTimeError  = 0x03,
+  GoalPose                   goalPose            = 0x04,
+  ActiveObjectMoved          activeObjectMoved   = 0x05,
+  ActiveObjectStoppedMoving  activeObjectStopped = 0x06,
+  ActiveObjectTapped         activeObjectTapped  = 0x07,
+  // From WiFi
+  AnimationState             animState           = 0x10,
+  PrintText                  print               = 0x11,
+  ImageChunk                 image               = 0x12,
+}
+
+
+
+} // namespace Cozmo
+} // namespace Anki
