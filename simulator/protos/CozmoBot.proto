@@ -196,6 +196,7 @@ Supervisor {
 			    }
 			    PositionSensor {
 			      name "HeadMotorPosSensor"
+			      resolution 0.001
 			    }
 			  ]
 			  %{ end }%
@@ -769,6 +770,7 @@ Supervisor {
 		    }
   		    PositionSensor {
 		      name "LeftWheelMotorPosSensor"
+		      resolution 0.001
 		    }
 		  ]
 		  
@@ -809,6 +811,7 @@ Supervisor {
 		    }
 		    PositionSensor {
 		      name "RightWheelMotorPosSensor"
+		      resolution 0.001
 		    }		    
 		  ]
 		  animatedGeometry USE ANIMATED_SHAPE
@@ -859,6 +862,7 @@ Supervisor {
 		    }
 		    PositionSensor {
 		      name "LeftWheelMotorPosSensor"
+		      resolution 0.001
 		    }
 		  ]
 		  endPoint Solid {
@@ -933,6 +937,7 @@ Supervisor {
 		    }
 		    PositionSensor {
 		      name "RightWheelMotorPosSensor"
+		      resolution 0.001
 		    }
 		  ]
 		  endPoint Solid {
@@ -1062,6 +1067,7 @@ Supervisor {
 					  }
 					  PositionSensor {
 					    name "LiftMotorPosSensor"
+					    resolution 0.001
 					  }
 					]
 					%{ end }%
