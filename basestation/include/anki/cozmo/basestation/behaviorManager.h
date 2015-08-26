@@ -4,166 +4,119 @@
  * Author: Kevin Yoon
  * Date:   2/27/2014
  *
- * Description: High-level module that determines what robots should be doing.
- *              Used primarily for test as this could eventually be replaced by
- *              some sort of game-level module.
+ * Overhaul: 7/30/15, Andrew Stein
+ *
+ * Description: High-level module that is a container for available behaviors,
+ *              determines what behavior a robot should be executing at a given
+ *              time and handles ticking the running behavior forward.
  *
  * Copyright: Anki, Inc. 2014
  **/
 
-#ifndef BEHAVIOR_MANAGER_H
-#define BEHAVIOR_MANAGER_H
+#ifndef COZMO_BEHAVIOR_MANAGER_H
+#define COZMO_BEHAVIOR_MANAGER_H
 
 #include "anki/common/types.h"
-#include "anki/common/basestation/math/pose.h"
-#include "anki/vision/basestation/visionMarker.h"
+
 #include "anki/cozmo/shared/cozmoTypes.h"
 
-#include "anki/common/basestation/objectTypesAndIDs.h"
+#include "clad/types/objectTypes.h"
+#include "clad/types/objectFamilies.h"
+
+#include "util/random/randomGenerator.h"
+
+#include "json/json.h"
+
+#include <unordered_map>
+#include <string>
+#include <random>
 
 namespace Anki {
-  namespace Cozmo {
+namespace Cozmo {
+  
+  // Forward declaration
+  class IBehavior;
+  class IBehaviorChooser;
+  class Reward;
+  class Robot;
+  
+  class BehaviorManager
+  {
+  public:
     
-    class BlockWorld;
-    class RobotManager;
-    class Robot;
-    class Block;
+    BehaviorManager(Robot& robot);
+    ~BehaviorManager();
     
+    Result Init(const Json::Value& config);
     
-    class BehaviorManager
-    {
-    public:
-      
-      typedef enum {
-        None,
-        June2014DiceDemo,
-        ReactToMarkers,
-        CREEP, // "Cozmo Robotic Emotional Engagement PlayTests" - Nov 2014
-      } Mode;
-      
-      
-      typedef enum {
-        WAITING_FOR_ROBOT,
-        ACKNOWLEDGEMENT_NOD,
-        
-        // June2014DiceDemo
-        DRIVE_TO_START,
-        WAITING_TO_SEE_DICE,
-        WAITING_FOR_DICE_TO_DISAPPEAR,
-        GOTO_EXPLORATION_POSE,
-        START_EXPLORING_TURN,
-        BACKING_UP,
-        BEGIN_EXPLORING,
-        EXPLORING,
-        EXECUTING_DOCK,
-        CHECK_IT_OUT_UP,
-        CHECK_IT_OUT_DOWN,
-        FACE_USER,
-        HAPPY_NODDING,
-        BACK_AND_FORTH_EXCITED,
-        
-        // CREEP
-        SLEEPING,
-        EXCITABLE_CHASE,
-        SCARED_FLEE,
-        DANCE_WITH_BLOCK,
-        SCAN,
-        HELP_ME_STATE,
-        WHAT_NEXT,
-        IDLE,
-        
-        NUM_STATES
-      } BehaviorState;
-      
-      
-      BehaviorManager(Robot* robot);
-      
-      void StartMode(Mode mode);
-      Mode GetMode() const;
-      
-      void SetNextState(BehaviorState nextState);
-      
-      void Update();
-
-      Robot* GetRobot() const {return _robot;}
-      
-      const ObjectID GetObjectOfInterest() const;
-      
-    protected:
-      
-      BehaviorState _state, _nextState;
-      std::function<void(BehaviorManager*)> _updateFcn;
-
-      Mode _mode;
-      
-      Robot* _robot;
-
-      // mini-state machine for the idle animation for June demo
-      typedef enum {
-        IDLE_NONE,
-        IDLE_LOOKING_UP,
-        IDLE_PLAYING_SOUND,
-
-        // used after some number of idle loops
-        IDLE_FACING_USER,
-        IDLE_LOOKING_DOWN,
-        IDLE_TURNING_BACK
-      } IdleAnimationState;
-      
-      IdleAnimationState _idleState;
-      unsigned int _timesIdle;
-      Pose3d _originalPose;
-            
-      // Object _type_ the robot is currently "interested in"
-      ObjectType _objectTypeOfInterest;
-      
-      void Reset();
-      
-      //bool GetPathToPreDockPose(const Block& b, Path& p);
-      
-      // Behavior state machines
-      void Update_PickAndPlaceBlock();
-      void Update_June2014DiceDemo();
-      void Update_TraverseObject();
-      void Update_CREEP();
-      
-      
-      /////// PickAndPlace vars ///////
+    // Calls the currently-selected behavior's Update() method until it
+    // returns COMPLETE or FAILURE. Once current behavior completes
+    // switches to next behavior (including an "idle" behavior?).
+    Result Update(float currentTime_sec);
     
-      // Block to dock with
-      //Block* dockBlock_;
-      //const Vision::KnownMarker *dockMarker_;
-      
-      // Goal pose for backing up
-      Pose3d _goalPose;
-      
-      // A general time value for gating state transitions
-      double _waitUntilTime;
-
-      f32 _desiredBackupDistance;
-      
-      /////// June2014DiceDemo vars ///////
-      const TimeStamp_t TimeBetweenDice_ms = 1000; // 1 sec
-      ObjectType   _objectToPickUp;
-      ObjectType   _objectToPlaceOn;
-      TimeStamp_t  _diceDeletionTime;
-      bool         _wasCarryingBlockAtDockingStart;
-      Radians      _explorationStartAngle;
-      bool         _isTurning;
-      
-      /////// CREEP vars ///////
-      std::map<BehaviorState, std::string> _stateAnimations;
-      std::map<BehaviorState, std::map<BehaviorState, std::string> > _transitionAnimations;
-      
-      const std::string& GetBehaviorStateName(BehaviorState) const;
-
-      
-    }; // class BehaviorManager
+    // Picks next behavior based on robot's current state. This does not
+    // transition immediately to running that behavior, but will let the
+    // current beheavior know it needs wind down with a call to its
+    // Interrupt() method.
+    Result SelectNextBehavior(float currentTime_sec);
     
+    // Forcefully select the next behavior by name (versus by letting the
+    // selection mechanism choose based on current state). Fails if that
+    // behavior does not exist or the selected behavior is not runnable.
+    Result SelectNextBehavior(const std::string& name, float currentTime_sec);
     
+    // Add a new behavior to the available ones to be selected from.
+    // The new behavior will be stored in the current IBehaviorChooser, which will
+    // be responsible for destroying it when the chooser is destroyed
+    Result AddBehavior(IBehavior* newBehavior);
     
-  } // namespace Cozmo
+    // Specify the minimum time we should stay in each behavior before
+    // considering switching
+    void SetMinBehaviorTime(float time_sec) { _minBehaviorTime_sec = time_sec; }
+    
+    // Set the current IBehaviorChooser. Note this results in the destruction of
+    // the current IBehaviorChooser (if there is one) and the IBehaviors it contains
+    void SetBehaviorChooser(IBehaviorChooser* newChooser);
+    
+    // Returns nullptr if there is no current behavior
+    const IBehavior* GetCurrentBehavior() const { return _currentBehavior; }
+    
+  private:
+    
+    bool _isInitialized;
+    bool _forceReInit;
+    
+    Robot& _robot;
+    
+    void SwitchToNextBehavior();
+    Result InitNextBehaviorHelper(float currentTime_sec);
+    
+    // How we store and choose next behavior
+    IBehaviorChooser* _behaviorChooser;
+    
+    IBehavior* _currentBehavior = nullptr;
+    IBehavior* _nextBehavior = nullptr;
+    
+    // Minimum amount of time to stay in each behavior
+    float _minBehaviorTime_sec;
+    float _lastSwitchTime_sec;
+    
+    // For random numbers
+    Util::RandomGenerator _rng;
+    
+  }; // class BehaviorManager
+  
+  
+  class Reward
+  {
+  public:
+    
+    float value;
+    
+  }; // class Reward
+  
+} // namespace Cozmo
 } // namespace Anki
 
 
-#endif // BEHAVIOR_MANAGER_H
+#endif // COZMO_BEHAVIOR_MANAGER_H

@@ -1,0 +1,90 @@
+// Cozmo known object type definitions file
+//  for the C-Like Abstract Data language
+// Author: Andrew Stein
+// Copyright: Anki Inc (c) 2015
+
+namespace Anki {
+namespace Cozmo {
+
+  // TODO: change to int_16 or uint_8
+  enum int_32 ObjectType {
+    Invalid = -1,
+    Unknown = 0,
+    
+    //////////////////////////////////////////////////////////////////////////
+    // Regular (Passive) Blocks ("1x1 Cubes")
+    //
+    Block_ANGRYFACE,
+    Block_BULLSEYE2,
+    Block_BULLSEYE2_INVERTED,
+    Block_SQTARGET,
+    Block_FIRE,
+    Block_ANKILOGO,
+    Block_STAR5,
+    Block_ARROW,
+    Block_FLAG,
+    Block_FLAG2,
+    Block_FLAG_INVERTED,
+    Block_SPIDER,
+    Block_KITTY,
+    Block_BEE,
+    Block_DICE,
+    
+    // 2x1 Blocks?
+    Block_BANGBANGBANG,
+    
+    //////////////////////////////////////////////////////////////////////////
+    // Light Cubes (a.k.a. Active Blocks)
+    //
+    
+    Block_LIGHTCUBE1,
+    Block_LIGHTCUBE2,
+    Block_LIGHTCUBE3,
+    Block_LIGHTCUBE4,
+    
+    
+    //////////////////////////////////////////////////////////////////////////
+    // Mat Pieces
+    //
+    
+    // Flat mats:
+    //_objectLibrary[ObjectFamily::MATS].AddObject(new FlatMat(FlatMat::Type::LETTERS_4x4));
+    FlatMat_GEARS_4x4,
+    FlatMat_LETTERS_4x4,
+    FlatMat_ANKI_LOGO_8BIT,
+    FlatMat_LAVA_PLAYTEST,
+    
+    // Platform piece:
+    Platform_LARGE,
+    
+    // Bridges
+    Bridge_LONG,
+    Bridge_SHORT,
+    
+    //////////////////////////////////////////////////////////////////////////
+    // Ramps
+    //
+    Ramp_Basic,
+    
+    
+    //////////////////////////////////////////////////////////////////////////
+    // Charger
+    //
+    Charger_Basic,
+    
+    
+    //////////////////////////////////////////////////////////////////////////
+    // Faces
+    //
+    HumanFace_Unknown,
+    HumanFace_Known,
+    
+    //////////////////////////////////////////////////////////////////////////
+    // Markerless Objects (e.g. obstacles)
+    //
+    ProxObstacle,
+    
+  } // enum class ObjectType
+  
+} // namespace Cozmo
+} // namespace Anki

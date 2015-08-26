@@ -57,6 +57,8 @@ namespace Anki {
       
       bool     IsEmpty() const { return _queue.empty(); }
       
+      size_t   Length() const { return _queue.size(); }
+      
       IActionRunner* GetCurrentAction();
       void           PopCurrentAction();
       
@@ -96,6 +98,8 @@ namespace Anki {
       Result     QueueActionNow(SlotHandle atSlot, IActionRunner* action, u8 numRetries = 0);
       
       bool       IsEmpty() const;
+      
+      size_t     GetQueueLength(SlotHandle atSlot);
 
       // Only cancels actions from the specified slot with the specified type, and
       // does any cleanup specified by the action's Cancel/Cleanup methods.
@@ -137,6 +141,11 @@ namespace Anki {
     inline Result ActionList::QueueActionNow(SlotHandle atSlot, IActionRunner* action, u8 numRetries)
     {
       return _queues[atSlot].QueueNow(action, numRetries);
+    }
+    
+    inline size_t ActionList::GetQueueLength(SlotHandle atSlot)
+    {
+      return _queues[atSlot].Length();
     }
     
   } // namespace Cozmo

@@ -26,27 +26,17 @@ namespace Anki {
     class Bridge : public MatPiece
     {
     public:
-      class Type : public ObjectType
-      {
-        Type(const std::string& name) : ObjectType(name) { }
-      public:
-        static const Type LONG_BRIDGE;
-        static const Type SHORT_BRIDGE;
-      };
+      using Type = ObjectType;
       
       Bridge(Type type);
       virtual Bridge* CloneType() const override;
-      
-      virtual ObjectType GetType() const override { return _type; }
       
       virtual bool IsMoveable() const override { return true; }
       
     protected:
       virtual void GetCanonicalUnsafeRegions(const f32 padding_mm,
                                              std::vector<Quad3f>& regions) const override;
-      
-      const Type _type;
-      
+        
     }; // class Bridge
     
     

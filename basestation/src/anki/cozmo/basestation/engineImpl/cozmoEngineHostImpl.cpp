@@ -46,6 +46,7 @@ CozmoEngineHostImpl::CozmoEngineHostImpl(IExternalInterface* externalInterface,D
   _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::ConnectToRobot, callback));
   _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::ForceAddRobot, callback));
   _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::ReadAnimationFile, callback));
+  _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::StartTestMode, callback));
 
 }
 
@@ -189,6 +190,7 @@ Result CozmoEngineHostImpl::AddRobot(RobotID_t robotID)
     PRINT_NAMED_ERROR("CozmoEngineHostImpl.AddRobot", "Failed to add robot ID=%d (nullptr returned).", robotID);
     lastResult = RESULT_FAIL;
   } else {
+    PRINT_NAMED_INFO("CozmoEngineHostImpl.AddRobot", "Sending init to the robot %d.", robotID);
     lastResult = robot->SyncTime();
   }
 
@@ -309,7 +311,7 @@ void CozmoEngineHostImpl::SetImageSendMode(RobotID_t robotID, ImageSendMode newM
     return robot->SetImageSendMode(newMode);
   }
 }
-void CozmoEngineHostImpl::SetRobotImageSendMode(RobotID_t robotID, ImageSendMode newMode, uint8_t resolution)
+void CozmoEngineHostImpl::SetRobotImageSendMode(RobotID_t robotID, ImageSendMode newMode, CameraResolutionClad resolution)
 {
   Robot* robot = GetRobotByID(robotID);
 
@@ -369,7 +371,15 @@ void CozmoEngineHostImpl::HandleGameEvents(const AnkiEvent<ExternalInterface::Me
       SetImageSendMode(msg.robotID, msg.mode);
       break;
     }
-
+    case ExternalInterface::MessageGameToEngineTag::StartTestMode:
+    {
+      const ExternalInterface::StartTestMode& msg = event.GetData().Get_StartTestMode();
+      Robot* robot = GetRobotByID(msg.robotID);
+      if(robot != nullptr) {
+        robot->StartTestMode((TestMode)msg.mode, msg.p1, msg.p2, msg.p3);
+      }
+      break;
+    }
     default:
     {
       PRINT_STREAM_ERROR("CozmoEngine.HandleEvents",

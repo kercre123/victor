@@ -26,6 +26,7 @@ namespace Anki {
     
     // Forward declarations:
     class ObservableObject;
+    
     class KnownMarker;
     
     // For now, this is always assumed to be a calibrated camera.  If we want
@@ -164,6 +165,9 @@ namespace Anki {
 #endif
       
     }; // class Camera
+    
+#pragma mark -
+#pragma mark Inlined Accessors
     
     // Inline accessors:
     inline const CameraID_t Camera::GetID(void) const

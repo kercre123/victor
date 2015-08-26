@@ -1,0 +1,86 @@
+#ifndef __Anki_Cozmo_ObservableObject_H__
+#define __Anki_Cozmo_ObservableObject_H__
+
+#include "anki/vision/basestation/observableObject.h"
+#include "clad/types/objectTypes.h"
+#include "clad/types/objectFamilies.h"
+
+namespace Anki {
+namespace Cozmo {
+  
+  class ObservableObject : public Vision::ObservableObject
+  {
+  public:
+    
+    ObservableObject(ObjectFamily family, ObjectType type)
+    : _family(family)
+    , _type(type)
+    {
+      
+    }
+    
+    virtual ObservableObject* CloneType() const = 0;
+    
+    ObjectFamily  GetFamily()  const { return _family; }
+    ObjectType    GetType()    const { return _type; }
+    
+    // Overload base IsSameAs() to first compare type and family
+    // (Note that we have to overload all if we overload one)
+    bool IsSameAs(const ObservableObject& otherObject,
+                  const Point3f& distThreshold,
+                  const Radians& angleThreshold,
+                  Point3f& Tdiff,
+                  Radians& angleDiff) const;
+    
+    bool IsSameAs(const ObservableObject& otherObject) const;
+
+    bool IsSameAs(const ObservableObject& otherObject,
+                  const Point3f& distThreshold,
+                  const Radians& angleThreshold) const;
+    
+  protected:
+    
+    ObjectFamily _family;
+    ObjectType   _type;
+    
+    
+  }; // class ObservableObject
+  
+#pragma mark -
+#pragma mark Inlined Implementations
+  
+  inline bool ObservableObject::IsSameAs(const ObservableObject& otherObject,
+                                         const Point3f& distThreshold,
+                                         const Radians& angleThreshold,
+                                         Point3f& Tdiff,
+                                         Radians& angleDiff) const
+  {
+    // The two objects can't be the same if they aren't the same type!
+    bool isSame = this->GetType() == otherObject.GetType() && this->GetFamily() == otherObject.GetFamily();
+    
+    if(isSame) {
+      isSame = Vision::ObservableObject::IsSameAs(otherObject, distThreshold, angleThreshold, Tdiff, angleDiff);
+    }
+    
+    return isSame;
+  }
+  
+  inline bool ObservableObject::IsSameAs(const ObservableObject& otherObject) const {
+    return IsSameAs(otherObject, this->GetSameDistanceTolerance(), this->GetSameAngleTolerance());
+  }
+
+  inline bool ObservableObject::IsSameAs(const ObservableObject& otherObject,
+                                         const Point3f& distThreshold,
+                                         const Radians& angleThreshold) const
+  {
+    Point3f Tdiff;
+    Radians angleDiff;
+    return IsSameAs(otherObject, distThreshold, angleThreshold,
+                    Tdiff, angleDiff);
+  }
+  
+  
+} // namespace Cozmo
+} // namespace Anki
+
+#endif // __Anki_Cozmo_ObservableObject_H__

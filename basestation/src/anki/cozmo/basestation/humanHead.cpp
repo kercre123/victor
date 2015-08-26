@@ -20,7 +20,6 @@
 namespace Anki {
 namespace Cozmo {
 
-  const HumanHead::Type HumanHead::Type::UNKNOWN_FACE("UNKNOWN_FACE");
   
   
   const std::vector<Point3f>& HumanHead::GetCanonicalCorners() const
@@ -42,18 +41,20 @@ namespace Cozmo {
   
   static const Point3f& GetSizeByType(HumanHead::Type type)
   {
+    // TODO: Add different head sizes by gender / age?
+    
     // x is head width, y is head depth, z is head height, in mm
     // this is to match Marker coordinates, where the marker is in the X-Z plane,
     // so we want the face to also be in the X-Z plane
     static const std::map<HumanHead::Type, Point3f> Sizes = {
-      {HumanHead::Type::UNKNOWN_FACE, {148.f, 225.f, 195.f}},
+      {HumanHead::Type::HumanFace_Unknown, {148.f, 225.f, 195.f}},
     };
     
     auto iter = Sizes.find(type);
     if(iter == Sizes.end()) {
       PRINT_NAMED_ERROR("MarkerlessObject.GetSizeByType.UndefinedType",
                         "No size defined for type %s (%d).\n",
-                        type.GetName().c_str(), type.GetValue());
+                        ObjectTypeToString(type), type);
       static const Point3f DefaultSize(0.f,0.f,0.f);
       return DefaultSize;
     } else {
@@ -63,7 +64,7 @@ namespace Cozmo {
   
   
   HumanHead::HumanHead(Type type)
-  : _type(type)
+  : ObservableObject(ObjectFamily::HumanHead,type)
   , _size(GetSizeByType(_type))
   {
     _canonicalCorners = {{

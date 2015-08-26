@@ -14,6 +14,7 @@
 
 #include "anki/cozmo/basestation/engineImpl/cozmoEngineImpl.h"
 #include "clad/types/imageSendMode.h"
+#include "clad/types/cameraSettings.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -50,7 +51,7 @@ public:
   bool GetCurrentRobotImage(RobotID_t robotId, Vision::Image& img, TimeStamp_t newerThanTime);
 
   void SetImageSendMode(RobotID_t robotID, ImageSendMode newMode);
-  void SetRobotImageSendMode(RobotID_t robotID, ImageSendMode newMode, uint8_t resolution);
+  void SetRobotImageSendMode(RobotID_t robotID, ImageSendMode newMode, CameraResolutionClad resolution);
 
   void StartAnimationTool() override { _animationReloadActive = true; };
 protected:

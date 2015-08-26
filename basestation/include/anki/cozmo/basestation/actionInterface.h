@@ -14,13 +14,15 @@
 #define ANKI_COZMO_ACTION_INTERFACE_H
 
 #include "anki/common/types.h"
-#include "anki/common/basestation/objectTypesAndIDs.h"
+#include "anki/common/basestation/objectIDs.h"
 #include "anki/common/basestation/math/pose.h"
 
 #include "anki/cozmo/shared/cozmoTypes.h"
 
 #include "anki/cozmo/basestation/actionableObject.h"
 #include "clad/types/actionTypes.h"
+
+#include "util/random/randomGenerator.h"
 
 #include <list>
 
@@ -199,6 +201,9 @@ namespace Anki {
       virtual f32 GetTimeoutInSeconds()          const { return 30.f; }
       
       virtual void Reset() override;
+      
+      // A random number generator all subclasses can share
+      Util::RandomGenerator _rng;
       
     private:
       

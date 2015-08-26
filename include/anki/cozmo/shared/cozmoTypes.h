@@ -12,6 +12,7 @@ namespace Anki {
       ISM_OFF,
       ISM_STREAM,
       ISM_SINGLE_SHOT
+      // ISM_UPDATE_CLAD = imageSendMode.clad
     } ImageSendMode_t;
 
     typedef enum {
@@ -77,6 +78,8 @@ namespace Anki {
       // Turns on face tracking
       TM_FACE_TRACKING,
 
+      // TM_UPDATE_CLAD = testMode.clad
+
       TM_NUM_TESTS
     } TestMode;
 
@@ -84,6 +87,7 @@ namespace Anki {
       DTF_ENABLE_DIRECT_HAL_TEST = 0x01,    // When enabled, speed parameter (p3) is interpretted as a percentage power value
       DTF_ENABLE_CYCLE_SPEEDS_TEST = 0x02,  // When enabled, cycles through different motor power values going up by powerPercentStep (p2)
       DTF_ENABLE_TOGGLE_DIR = 0x04          // When enabled, toggles direction going at the specified speed (p3)
+      // DTF_UPDATE_CLAD = driveTestFlag.clad
     } DriveTestFlags;
     
     typedef enum {
@@ -91,20 +95,24 @@ namespace Anki {
       LiftTF_TEST_HEIGHTS,
       LiftTF_NODDING,
       LiftTF_DISABLE_MOTOR
+      // LiftTF_UPDATE_CLAD = liftTestFlag.clad
     } LiftTestFlags;
 
     typedef enum {
       HTF_TEST_POWER = 0,
       HTF_TEST_ANGLES,
       HTF_NODDING
+      // HTF_UPDATE_CLAD = headTestFlag.clad
     } HeadTestFlags;
     
     typedef enum {
       ITF_DO_TURNS = 0x01
+      // ITF_UPDATE_CLAD = imuTestFlag.clad
     } IMUTestFlags;
     
     typedef enum {
       LTF_CYCLE_ALL = 0x01
+      // LTF_UPDATE_CLAD = lightTestFlag.clad
     } LightTestFlags;
     
 
@@ -122,13 +130,8 @@ namespace Anki {
       HEAD_IN_POS             = 0x00000200,
       IS_ANIM_BUFFER_FULL     = 0x00000400,
       IS_ANIMATING_IDLE       = 0x00000800
+      // UPDATE_CLAD = robotTestFlag.clad
     } RobotStatusFlag;
-    
-    // Status bit flags for game state
-    // TODO: This belongs in cozmo-game rather than cozmo-engine
-    typedef enum {
-      IS_LOCALIZED            = 0x00000001
-    } GameStatusFlag;
 
 
     // Bit flags for enabling/disabling animation tracks on the robot
