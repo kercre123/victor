@@ -68,7 +68,7 @@ TEST(BlockWorld, AddAndRemoveObject)
   ASSERT_EQ(lastResult, RESULT_OK);
 
   // Fake an observation of a block:
-  const Block::Type testType = Block::Type::BULLSEYE2;
+  const ObjectType testType = ObjectType::Block_BULLSEYE2;
   Block_Cube1x1 testCube(testType);
   Vision::Marker::Code testCode = testCube.GetMarker(Block::FaceName::FRONT_FACE).GetCode();
   
@@ -113,7 +113,7 @@ TEST(BlockWorld, AddAndRemoveObject)
   ASSERT_NE(objByIdIter->second, nullptr);
   
   ObjectID objID = objByIdIter->second->GetID();
-  Vision::ObservableObject* object = blockWorld.GetObjectByID(objID);
+  ObservableObject* object = blockWorld.GetObjectByID(objID);
   ASSERT_NE(object, nullptr);
   ASSERT_EQ(object->GetID(), objID);
   ASSERT_EQ(object->GetType(), testType);
@@ -281,7 +281,7 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
       msg.timestamp = currentTimeStamp;
       
       // If we are not checking robot pose, don't queue mat markers
-      const bool isMatMarker = !robot.GetBlockWorld().GetObjectLibrary(BlockWorld::ObjectFamily::MATS).GetObjectsWithCode(msg.markerType).empty();
+      const bool isMatMarker = !robot.GetBlockWorld().GetObjectLibrary(ObjectFamily::Mat).GetObjectsWithCode(msg.markerType).empty();
       if(!checkRobotPose && isMatMarker) {
         fprintf(stdout, "Skipping mat marker with code = %d ('%s'), since we are not checking robot pose.\n",
                 msg.markerType, Vision::MarkerTypeStrings[msg.markerType]);
@@ -334,24 +334,30 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
       // block
       for(int i_object=0; i_object<numObjectsTrue; ++i_object)
       {
-        ObjectType objectType;
+        ObjectType objectType = ObjectType::Invalid;
         std::string objectTypeString;
         ASSERT_TRUE(JsonTools::GetValueOptional(jsonObject[i_object], "Type", objectTypeString));
 
         // Use the "Name" as the object family in blockworld
         std::string objectFamilyString;
         ASSERT_TRUE(JsonTools::GetValueOptional(jsonObject[i_object], "ObjectName", objectFamilyString));
-        BlockWorld::ObjectFamily objectFamily;
+        ObjectFamily objectFamily;
         if(objectFamilyString == "Block") {
-          objectFamily = BlockWorld::ObjectFamily::BLOCKS;
+          objectFamily = ObjectFamily::Block;
         } else if(objectFamilyString == "Ramp") {
-          objectFamily = BlockWorld::ObjectFamily::RAMPS;
+          objectFamily = ObjectFamily::Ramp;
         }
-        objectType = ObjectType::GetTypeByName(objectTypeString);
+        
+        // TODO: Need a (CLAD-generated) way to lookup ObjectType by string
+        //objectType = GetObjectType ObjectType::GetTypeByName(objectTypeString);
 
-        ASSERT_TRUE(objectType.IsSet());
+        ASSERT_TRUE(objectType != ObjectType::Unknown);
+        ASSERT_TRUE(objectType != ObjectType::Invalid);
 
-        const Vision::ObservableObject* libObject = robot.GetBlockWorld().GetObjectLibrary(objectFamily).GetObjectWithType(objectType);
+        const ObservableObject* libObject = NULL;
+        
+        // TODO: Need a way to get object by type
+        //const ObservableObject* libObject = robot.GetBlockWorld().GetObjectLibrary(objectFamily).GetObjectWithType(objectType);
 
         /*
         int blockTypeAsInt;
@@ -361,7 +367,7 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
         
         // The ground truth block type should be known to the block world
         ASSERT_TRUE(libObject != NULL);
-        Vision::ObservableObject* groundTruthObject = libObject->CloneType();
+        ObservableObject* groundTruthObject = libObject->CloneType();
         
         // Set its pose to what is listed in the json file
         Pose3d objectPose;

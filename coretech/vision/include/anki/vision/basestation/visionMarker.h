@@ -22,6 +22,7 @@ namespace Anki {
     
     // Forward declaration:
     class ObservableObject;
+    
     class Camera;
     
     //
@@ -63,6 +64,9 @@ namespace Anki {
       
       inline void MarkUsed(bool used);
       inline bool IsUsed();
+      
+      virtual bool GetPose(Pose3d& pose) const { return false; }
+      
     protected:
       TimeStamp_t    _observationTime;
       Quad2f         _imgCorners;
@@ -70,6 +74,17 @@ namespace Anki {
       
       bool           _used;
     }; // class ObservedMarker
+    
+    class ObservedHumanFace : public ObservedMarker
+    {
+    public:
+      
+      virtual bool GetPose(Pose3d& pose) const override {
+        // Compute pose using roll/pitch/yaw
+        return true;
+      }
+      
+    }; // class ObservedHumanFace
     
     
     class KnownMarker : public Marker

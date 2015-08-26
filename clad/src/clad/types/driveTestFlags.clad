@@ -1,0 +1,16 @@
+// File: driveTestFlags
+// Author: damjan stulic
+// Created: 8/13/15
+// Copyright: Anki, inc. 2015
+
+namespace Anki {
+namespace Cozmo {
+
+enum uint_8 DriveTestFlagsClad {
+    EnableDirectHalTest = 0x01,    // When enabled, speed parameter (p3) is interpretted as a percentage power value
+    EnableCycleSpeedsTest = 0x02,  // When enabled, cycles through different motor power values going up by powerPercentStep (p2)
+    EnableToggleDirection = 0x04   // When enabled, toggles direction going at the specified speed (p3)
+}
+
+} // namespace Cozmo
+} // namespace Anki

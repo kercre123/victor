@@ -25,17 +25,11 @@ namespace Anki {
     class Platform : public MatPiece
     {
     public:
-      class Type : public ObjectType
-      {
-        Type(const std::string& name) : ObjectType(name) { }
-      public:
-        static const Type LARGE_PLATFORM;
-      };
+      
+      using Type = ObjectType;
       
       Platform(Type type);
-      virtual MatPiece* CloneType() const override;
-      
-      virtual ObjectType GetType() const override { return _type; }
+      virtual Platform* CloneType() const override;
       
       virtual bool IsMoveable() const override { return true; }
       
@@ -44,12 +38,10 @@ namespace Anki {
       virtual void GetCanonicalUnsafeRegions(const f32 padding_mm,
                                              std::vector<Quad3f>& regions) const override;
       
-      const Type _type;
-      
     }; // class Bridge
     
     
-    inline MatPiece* Platform::CloneType() const
+    inline Platform* Platform::CloneType() const
     {
       // Call the copy constructor
       return new Platform(_type);

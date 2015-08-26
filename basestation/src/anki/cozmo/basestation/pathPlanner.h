@@ -19,7 +19,9 @@
 #include "json/json-forwards.h"
 
 #include "anki/cozmo/basestation/robot.h"
-#include "anki/cozmo/basestation/blockWorld.h"
+
+#include "clad/types/objectTypes.h"
+#include "clad/types/objectFamilies.h"
 
 #include <set>
 
@@ -82,8 +84,8 @@ namespace Anki {
       // return a test path
       virtual void GetTestPath(const Pose3d& startPose, Planning::Path &path) {}
       
-      void AddIgnoreFamily(const BlockWorld::ObjectFamily objFamily)    { _ignoreFamilies.insert(objFamily); }
-      void RemoveIgnoreFamily(const BlockWorld::ObjectFamily objFamily) { _ignoreFamilies.erase(objFamily); }
+      void AddIgnoreFamily(const ObjectFamily objFamily)    { _ignoreFamilies.insert(objFamily); }
+      void RemoveIgnoreFamily(const ObjectFamily objFamily) { _ignoreFamilies.erase(objFamily); }
       void ClearIgnoreFamilies()                                          { _ignoreFamilies.clear(); }
       
       void AddIgnoreType(const ObjectType objType)    { _ignoreTypes.insert(objType); }
@@ -96,7 +98,7 @@ namespace Anki {
       
     protected:
       
-      std::set<BlockWorld::ObjectFamily> _ignoreFamilies;
+      std::set<ObjectFamily>             _ignoreFamilies;
       std::set<ObjectType>               _ignoreTypes;
       std::set<ObjectID>                 _ignoreIDs;
       

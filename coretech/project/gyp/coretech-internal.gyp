@@ -325,6 +325,7 @@
               '<!@(cat <(planning_test_source))',
             ],
             'sources/': [
+              ['exclude', 'run_coreTechCommonSharedTests.cpp'],
               ['exclude', 'run_coreTechVisionTests.cpp'],
               ['exclude', 'run_coreTechPlanningTests.cpp'],
               ['exclude', 'run_coreTechPlanningStandalone.cpp'],
