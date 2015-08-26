@@ -23,6 +23,12 @@ public static class CozmoUtil {
   public const float HEAD_ANGLE_REQUEST_TIME = 3f;
   public const float CARRIED_OBJECT_HEIGHT = 75f;
 
+  public struct RobotPose {
+    public float x_mm;
+    public float y_mm;
+    public float rad;
+  }
+
   //this is fudged
   public const float CARRIED_OBJECT_VERTICAL_OFFSET = -15f;
 

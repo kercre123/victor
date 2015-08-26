@@ -4982,6 +4982,17 @@ MonoBehaviour:
   cozmoTimeFirstTap: 1.5
   cozmoTimePerTap: .449999988
   cozmoPredicitveLeadTime: 7
+  cozmoExpectationDelay: 1
+  robotPoses:
+  - x_mm: 0
+    y_mm: 50
+    rad: 4.71238899
+  - x_mm: 0
+    y_mm: 50
+    rad: 0
+  - x_mm: 0
+    y_mm: 50
+    rad: 3.14159274
 --- !u!114 &11408142
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -5702,6 +5713,7 @@ MonoBehaviour:
   maxSamples: 5
   pegSlowDownThreshold: 360
   pegSlowDownFactor: .975000024
+  backwardsSlowDownFactor: .0500000007
   pegBounceVelFactor: .5
   pegDegrees: 2.5
   pegBendAngle: 10
@@ -6582,6 +6594,7 @@ MonoBehaviour:
   maxSamples: 5
   pegSlowDownThreshold: 360
   pegSlowDownFactor: .975000024
+  backwardsSlowDownFactor: .0500000007
   pegBounceVelFactor: .5
   pegDegrees: 4
   pegBendAngle: 10
@@ -6761,6 +6774,7 @@ MonoBehaviour:
   maxSamples: 5
   pegSlowDownThreshold: 360
   pegSlowDownFactor: .975000024
+  backwardsSlowDownFactor: .0500000007
   pegBounceVelFactor: .5
   pegDegrees: 8
   pegBendAngle: 12
