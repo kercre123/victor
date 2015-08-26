@@ -80,12 +80,12 @@ MonoBehaviour:
     playAllAnims: 0
     emotionAnims:
     - animName: Expectation
-      numLoops: 1
+      numLoops: 0
   - stateName: KNOWS_WRONG
     playAllAnims: 0
     emotionAnims:
-    - animName: ANIM_TEST_SPINNER
-      numLoops: 1
+    - animName: KnowsWrong
+      numLoops: 0
   - stateName: SHOCKED
     playAllAnims: 0
     emotionAnims:

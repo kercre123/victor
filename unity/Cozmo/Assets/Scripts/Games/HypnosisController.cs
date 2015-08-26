@@ -338,7 +338,7 @@ public class HypnosisController : GameController {
       // we are reasonably aligned to it so move forward
       float distance = Vector3.Distance(robot.WorldPosition, robot.activeBlocks[mostRecentTappedID].WorldPosition);
       if (distance > 100.0f) {
-        robot.DriveWheels(15.0f, 15.0f);
+        robot.DriveWheels(350.0f, 350.0f);
       }
       else {
         robot.DriveWheels(0.0f, 0.0f);
@@ -348,10 +348,10 @@ public class HypnosisController : GameController {
       // we need to turn to face it
       ComputeTurnDirection();
       if (searchTurnRight) {
-        robot.DriveWheels(15.0f, -10.0f);
+        robot.DriveWheels(25.0f, -20.0f);
       }
       else {
-        robot.DriveWheels(-10.0f, 15.0f);
+        robot.DriveWheels(-20.0f, 25.0f);
       }
     }
 
