@@ -130,7 +130,7 @@ def main(scriptArgs):
   generator = updateFileLists.FileListGenerator(options)
   generator.processFolder(['common/basestation/src', 'common/include', 'common/shared/src'], ['project/gyp/common.lst'])
   generator.processFolder(['common/basestation/test'], ['project/gyp/common-test.lst'])
-  generator.processFolder(['common/shared/src'], ['project/gyp/common-shared-test.lst'])
+  generator.processFolder(['common/shared/test'], ['project/gyp/common-shared-test.lst'])
   generator.processFolder(['common/robot/src', 'common/shared/src'], ['project/gyp/common-robot.lst'])
   generator.processFolder(['vision/basestation/src', 'vision/include'], ['project/gyp/vision.lst'])
   generator.processFolder(['vision/basestation/test'], ['project/gyp/vision-test.lst'])
