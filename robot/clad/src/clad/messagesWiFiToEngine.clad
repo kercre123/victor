@@ -1,0 +1,23 @@
+/** Clad message definitions for the messages sent from the WiFi to the engine.
+ */
+
+#include "imageChunk.clad"
+#include "robotStatusFlag.clad"
+  
+namespace Anki {
+namespace Cozmo {
+
+message AnimationState {
+  uint_32 timestamp,
+  int_32  numAnimBytesPlayed,
+  RobotStatusFlag status, // RobotStatusFlag packs as a uint_16
+}
+
+message PrintText
+{
+  int_8  logLevel,
+  uint_8 text[uint_8],
+}
+
+} // namespace Cozmo
+} // namespace Anki
