@@ -74,6 +74,11 @@ namespace Cozmo {
     // We map reactionary behaviors to the tag types they're going to care about
     _behaviorChooser->AddReactionaryBehavior(behavior);
     
+    // If we don't have an external interface (Unit tests), bail early; we can't setup callbacks
+    if (!_robot.HasExternalInterface()) {
+      return;
+    }
+    
     // Callback for EngineToGame event that a reactionary behavior (possibly) cares about
     auto reactionsEngineToGameCallback = [this](const AnkiEvent<ExternalInterface::MessageEngineToGame>& event)
     {
