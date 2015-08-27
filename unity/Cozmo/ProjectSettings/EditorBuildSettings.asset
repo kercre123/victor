@@ -21,3 +21,5 @@ EditorBuildSettings:
     path: Assets/Scenes/Hypnosis.unity
   - enabled: 1
     path: Assets/Scenes/FaceReaction.unity
+  - enabled: 1
+    path: Assets/Scenes/CozmoWalker.unity

@@ -178,14 +178,22 @@ Prefab:
     m_Modifications:
     - target: {fileID: 11409628, guid: 3012e19a46b2f44e1b12297babafc58a, type: 2}
       propertyPath: games.Array.size
-      value: 5
+      value: 6
       objectReference: {fileID: 0}
     - target: {fileID: 11409628, guid: 3012e19a46b2f44e1b12297babafc58a, type: 2}
       propertyPath: games.Array.data[4].levels.Array.size
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 11409628, guid: 3012e19a46b2f44e1b12297babafc58a, type: 2}
+      propertyPath: games.Array.data[5].levels.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 11409628, guid: 3012e19a46b2f44e1b12297babafc58a, type: 2}
       propertyPath: games.Array.data[4].levels.Array.data[0].stars.Array.size
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 11409628, guid: 3012e19a46b2f44e1b12297babafc58a, type: 2}
+      propertyPath: games.Array.data[5].levels.Array.data[0].stars.Array.size
       value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 409628, guid: 3012e19a46b2f44e1b12297babafc58a, type: 2}
@@ -246,6 +254,34 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 11409628, guid: 3012e19a46b2f44e1b12297babafc58a, type: 2}
       propertyPath: games.Array.data[4].levels.Array.data[0].maxPlayTime
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 11409628, guid: 3012e19a46b2f44e1b12297babafc58a, type: 2}
+      propertyPath: games.Array.data[5].name
+      value: CozmoWalker
+      objectReference: {fileID: 0}
+    - target: {fileID: 11409628, guid: 3012e19a46b2f44e1b12297babafc58a, type: 2}
+      propertyPath: games.Array.data[5].levels.Array.data[0].name
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 11409628, guid: 3012e19a46b2f44e1b12297babafc58a, type: 2}
+      propertyPath: games.Array.data[5].levels.Array.data[0].stars.Array.data[0]
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 11409628, guid: 3012e19a46b2f44e1b12297babafc58a, type: 2}
+      propertyPath: games.Array.data[5].levels.Array.data[0].stars.Array.data[1]
+      value: 100
+      objectReference: {fileID: 0}
+    - target: {fileID: 11409628, guid: 3012e19a46b2f44e1b12297babafc58a, type: 2}
+      propertyPath: games.Array.data[5].levels.Array.data[0].stars.Array.data[2]
+      value: 360
+      objectReference: {fileID: 0}
+    - target: {fileID: 11409628, guid: 3012e19a46b2f44e1b12297babafc58a, type: 2}
+      propertyPath: games.Array.data[5].levels.Array.data[0].scoreToWin
+      value: 54
+      objectReference: {fileID: 0}
+    - target: {fileID: 11409628, guid: 3012e19a46b2f44e1b12297babafc58a, type: 2}
+      propertyPath: games.Array.data[5].levels.Array.data[0].maxPlayTime
       value: 10
       objectReference: {fileID: 0}
     m_RemovedComponents: []
@@ -1502,19 +1538,19 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 22450396, guid: 5ea1fe1891c074bdcacd5e19f21f7586, type: 2}
       propertyPath: m_AnchorMin.x
-      value: .5
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 22450396, guid: 5ea1fe1891c074bdcacd5e19f21f7586, type: 2}
       propertyPath: m_AnchorMax.x
-      value: .5
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 22450396, guid: 5ea1fe1891c074bdcacd5e19f21f7586, type: 2}
       propertyPath: m_AnchoredPosition.x
-      value: 310
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 22450396, guid: 5ea1fe1891c074bdcacd5e19f21f7586, type: 2}
       propertyPath: m_AnchoredPosition.y
-      value: 3
+      value: 4
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 5ea1fe1891c074bdcacd5e19f21f7586, type: 2}
