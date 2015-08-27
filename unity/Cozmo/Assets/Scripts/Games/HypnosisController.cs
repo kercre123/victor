@@ -273,10 +273,10 @@ public class HypnosisController : GameController {
     ComputeTurnDirection();
     if (angle > 40.0f) {
       if (searchTurnRight) {
-        robot.DriveWheels(35.0f, -20.0f);
+        robot.DriveWheels(50.0f, -50.0f);
       }
       else {
-        robot.DriveWheels(-20.0f, 35.0f);
+        robot.DriveWheels(-50.0f, 50.0f);
       }
     }
     else {
