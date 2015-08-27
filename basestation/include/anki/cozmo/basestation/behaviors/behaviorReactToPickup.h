@@ -51,6 +51,7 @@ private:
   State _currentState;
   bool _isInAir = false;
   bool _waitingForAnimComplete = false;
+  u32 _animTagToWaitFor = 0;
   
   std::vector<Signal::SmartHandle> _eventHandles;
   

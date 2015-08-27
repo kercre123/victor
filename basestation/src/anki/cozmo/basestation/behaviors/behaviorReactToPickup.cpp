@@ -98,7 +98,9 @@ IBehavior::Status BehaviorReactToPickup::Update(float currentTime_sec)
       // For now we simply rotate through the animations we want to play when picked up
       if (0 != _animReactions.size())
       {
-        _robot.GetActionList().QueueActionNow(0, new PlayAnimationAction(_animReactions[animIndex]));
+        IActionRunner* newAction = new PlayAnimationAction(_animReactions[animIndex]);
+        _animTagToWaitFor = newAction->GetTag();
+        _robot.GetActionList().QueueActionNow(0, newAction);
         animIndex = ++animIndex % _animReactions.size();
       }
       _waitingForAnimComplete = true;
@@ -162,7 +164,11 @@ void BehaviorReactToPickup::HandleMovedEvent(const AnkiEvent<MessageEngineToGame
     }
     case MessageEngineToGameTag::RobotCompletedAction:
     {
-      _waitingForAnimComplete = false;
+      const RobotCompletedAction& msg = event.GetData().Get_RobotCompletedAction();
+      if (_animTagToWaitFor == msg.idTag)
+      {
+        _waitingForAnimComplete = false;
+      }
       break;
     }
     default:
