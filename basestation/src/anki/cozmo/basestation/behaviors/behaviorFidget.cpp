@@ -102,7 +102,7 @@ namespace Cozmo {
       
       // Set the name based on the selected fidget and then queue the action
       // returned by its MakeFidgetAction function
-      _name = "Fidget-" + fidgetIter->second.first;
+      _stateName = "-" + fidgetIter->second.first;
       _robot.GetActionList().QueueActionNext(IBehavior::sActionSlot,
                                              fidgetIter->second.second());
       

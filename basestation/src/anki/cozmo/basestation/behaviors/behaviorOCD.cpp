@@ -193,15 +193,15 @@ namespace Cozmo {
   
   void BehaviorOCD::UpdateName()
   {
-    _name = "OCD";
+    _stateName = "";
     switch(_currentArrangement)
     {
       case Arrangement::Line:
-        _name += "-LINE";
+        _stateName += "-LINE";
         break;
         
       case Arrangement::StacksOfTwo:
-        _name += "-STACKS_OF_TWO";
+        _stateName += "-STACKS_OF_TWO";
         break;
         
       default:
@@ -211,11 +211,11 @@ namespace Cozmo {
     switch(_currentState)
     {
       case State::PickingUpBlock:
-        _name += "-PICKING";
+        _stateName += "-PICKING";
         break;
         
       case State::PlacingBlock:
-        _name += "-PLACING";
+        _stateName += "-PLACING";
         break;
         
       default:

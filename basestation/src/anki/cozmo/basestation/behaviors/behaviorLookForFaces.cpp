@@ -26,7 +26,7 @@ namespace Cozmo {
   : IBehavior(robot, config)
   , _currentState(State::LOOKING_AROUND)
   {
-    
+    _name = "LookForFaces";
     
   }
   
