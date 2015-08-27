@@ -86,6 +86,7 @@ public class VortexController : GameController {
   [SerializeField] AudioClip timeUp;
   [SerializeField] AudioClip newHighScore;
   [SerializeField] AudioClip spinRequestSound;
+  [SerializeField] AudioClip finalRound;
 
   [SerializeField] RectTransform[] playerPanels;
   [SerializeField] RectTransform[] playerTokens;
@@ -985,6 +986,12 @@ public class VortexController : GameController {
     currentPlayerIndex = IncrementPlayerTurn(currentPlayerIndex);
 
     round++;
+
+    if (round == (roundsPerRing * rings)) {
+      AudioManager.PlayAudioClip(finalRound, 0, AudioManager.Source.Gameplay);
+      Debug.Log("final round");
+    }
+
     for (int i = 0; i < wheels.Count; i++) {
 
       if (wheel == wheels[i])
