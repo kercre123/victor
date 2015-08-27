@@ -14,6 +14,7 @@
 #define __Cozmo_Basestation_Behaviors_BehaviorLookForFaces_H__
 
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
+#include "anki/cozmo/basestation/proceduralFace.h"
 #include "util/signals/simpleSignal_fwd.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 
@@ -51,6 +52,7 @@ namespace Cozmo {
     
     enum class State {
       LOOKING_AROUND,
+      MOVING,
       TRACKING_FACE,
       INTERRUPTED
     };
@@ -58,11 +60,23 @@ namespace Cozmo {
     State _currentState;
     
     TimeStamp_t _firstSeen_ms;
-    TimeStamp_t _lastSeen_ms;
+    TimeStamp_t _lastSeen_ms; // in frame (i.e. robot) time
     
+    f32 _currentTime_sec;
+    f32 _lastSeen_sec; // in engine time
     f32 _trackingTimeout_sec;
     f32 _lastLookAround_sec;
     f32 _nextMovementTime_sec;
+    
+    ProceduralFace _lastProceduralFace, _crntProceduralFace;;
+    
+    f32 _baselineEyeHeight;
+    f32 _baselineLeftEyebrowHeight;
+    f32 _baselineRightEyebrowHeight;
+    
+    bool _animationStarted;
+    
+    u32 _movementActionTag;
     
     std::vector<::Signal::SmartHandle> _eventHandles;
     

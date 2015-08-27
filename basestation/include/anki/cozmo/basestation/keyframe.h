@@ -240,7 +240,7 @@ namespace Anki {
     class FaceAnimationKeyFrame : public IKeyFrame
     {
     public:
-      FaceAnimationKeyFrame() { }
+      FaceAnimationKeyFrame(const std::string& faceAnimName = "") : _animName(faceAnimName) { }
       
       virtual RobotMessage* GetStreamMessage() override;
       
@@ -249,7 +249,7 @@ namespace Anki {
         return ClassName;
       }
 
-      virtual bool IsDone() override { return _curFrame >= _numFrames; }
+      virtual bool IsDone() override;
       
     protected:
       virtual Result SetMembersFromJson(const Json::Value &jsonRoot) override;
@@ -257,7 +257,6 @@ namespace Anki {
     private:
       std::string  _animName;
       
-      s32 _numFrames;
       s32 _curFrame;
       
       MessageAnimKeyFrame_FaceImage _faceImageMsg;

@@ -307,7 +307,11 @@ namespace Vision {
       // Estimating the headpose
       facio::HeadPose headPose;
       _hpe->estimateHP(landmarks, headPose);
-      face.SetHeadPose(headPose.YAW, headPose.PITCH, headPose.ROLL);
+      RotationMatrix3d Rmat;
+      Rmat.get_CvMatx_() = headPose.rot;
+      Pose3d pose(Rmat, {});
+      face.SetHeadPose(pose);
+      // TODO: Hook up pose parent to camera?
      
       // Estimating the irises
       facio::Irisesf irises;

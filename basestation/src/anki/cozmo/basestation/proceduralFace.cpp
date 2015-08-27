@@ -1,6 +1,7 @@
 #include "proceduralFace.h"
 
 #include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
 
 namespace Anki {
 namespace Cozmo {
@@ -21,84 +22,104 @@ namespace Cozmo {
     }
   }
   
+  inline static void DrawEye(cv::Mat_<u8>& faceImg, const cv::Rect& eyeRect, const cv::Rect& pupilRect, bool interlace)
+  {
+    static const cv::Rect imgRect(0,0,ProceduralFace::WIDTH, ProceduralFace::HEIGHT);
+    
+    // Fill eye
+    cv::Mat_<u8> roi = faceImg(eyeRect & imgRect);
+    roi.setTo(255);
+    
+    // Remove a few pixels from the four corners
+    const s32 NumCornerPixels = 3; // TODO: Make this a static const parameter?
+    u8* topLine = roi.ptr(0);
+    u8* btmLine = roi.ptr(roi.rows-1);
+    for(s32 j=0; j<NumCornerPixels; ++j) {
+      topLine[j] = 0;
+      btmLine[j] = 0;
+      topLine[roi.cols-1-j] = 0;
+      btmLine[roi.cols-1-j] = 0;
+    }
+    
+    if(interlace) {
+      // Set every other row to 0 to get interlaced appearance
+      for(int i=0; i<roi.rows; i+=2) {
+        roi.row(i).setTo(0);
+      }
+    }
+    
+    // Black out pupil
+    roi = faceImg(pupilRect & imgRect);
+    roi.setTo(0);
+  }
+  
   cv::Mat_<u8> ProceduralFace::GetFace() const
   {
     cv::Mat_<u8> faceImg(HEIGHT, WIDTH);
+    faceImg.setTo(0);
     
     // Draw left eyebrow
     {
       const float cosAngle = std::cos(DEG_TO_RAD(static_cast<float>(_eyeParams[Left][BrowAngle])));
-      const float sinAngle = std::cos(DEG_TO_RAD(static_cast<float>(_eyeParams[Left][BrowAngle])));
-      const Value x = NominalLeftEyeCenX + _eyeParams[Left][BrowShiftX];
+      const float sinAngle = std::sin(DEG_TO_RAD(static_cast<float>(_eyeParams[Left][BrowAngle])));
+      const Value x = NominalLeftEyeCenX   + _eyeParams[Left][BrowShiftX];
       const Value y = NominalEyebrowHeight + _eyeParams[Left][BrowShiftY];
       const cv::Point leftPoint(x-EyebrowHalfLength*cosAngle, y-EyebrowHalfLength*sinAngle);
       const cv::Point rightPoint(x+EyebrowHalfLength*cosAngle, y+EyebrowHalfLength*sinAngle);
-      cv::line(faceImg, leftPoint, rightPoint, 255);
+      cv::line(faceImg, leftPoint, rightPoint, 255, EyebrowThickness, 4);
     }
     
     // Draw right eyebrow
     {
       const float cosAngle = std::cos(DEG_TO_RAD(static_cast<float>(_eyeParams[Right][BrowAngle])));
-      const float sinAngle = std::cos(DEG_TO_RAD(static_cast<float>(_eyeParams[Right][BrowAngle])));
-      const Value x = NominalRightEyeCenX + _eyeParams[Right][BrowShiftX];
+      const float sinAngle = std::sin(DEG_TO_RAD(static_cast<float>(_eyeParams[Right][BrowAngle])));
+      const Value x = NominalRightEyeCenX  + _eyeParams[Right][BrowShiftX];
       const Value y = NominalEyebrowHeight + _eyeParams[Right][BrowShiftY];
       const cv::Point leftPoint(x-EyebrowHalfLength*cosAngle, y-EyebrowHalfLength*sinAngle);
       const cv::Point rightPoint(x+EyebrowHalfLength*cosAngle, y+EyebrowHalfLength*sinAngle);
-      cv::line(faceImg, leftPoint, rightPoint, 255);
+      cv::line(faceImg, leftPoint, rightPoint, 255, EyebrowThickness, 4);
     }
     
     // Draw left eye
     {
-      const Value x = NominalLeftEyeCenX-EyeWidth/2;
-      const Value y = NominalEyeCenY - _eyeParams[Left][EyeHeight]/2;
-      const cv::Rect eyeRect(x, y, EyeWidth, _eyeParams[Left][EyeHeight]);
-      cv::rectangle(faceImg, eyeRect, 255);
+      const Value xEye = NominalLeftEyeCenX-EyeWidth/2;
+      const Value yEye = NominalEyeCenY - _eyeParams[Left][EyeHeight]/2;
+      const cv::Rect eyeRect(xEye, yEye, EyeWidth, _eyeParams[Left][EyeHeight]);
 
-      // Set every other row to 0 to get interlaced appearance
-      cv::Mat roi = faceImg(eyeRect);
-      for(int i=0; i<roi.rows; i+=2) {
-        roi[i].setTo(0);
-      }
+      const Value xPupil = NominalLeftEyeCenX + _eyeParams[Left][PupilShiftX] - PupilWidth/2;
+      const Value yPupil = NominalEyeCenY + _eyeParams[Left][PupilShiftY] - _eyeParams[Left][PupilHeight]/2;
+      const cv::Rect pupilRect(xPupil,yPupil,PupilWidth,_eyeParams[Left][PupilHeight]);
+      
+      DrawEye(faceImg, eyeRect, pupilRect, !ScanlinesAsPostProcess);
     }
     
     // Draw right eye
     {
-      const Value x = NominalRightEyeCenX-EyeWidth/2;
-      const Value y = NominalEyeCenY - _eyeParams[Right][EyeHeight]/2;
-      const cv::Rect eyeRect(x, y, EyeWidth, _eyeParams[Right][EyeHeight]);
-      cv::rectangle(faceImg, eyeRect, 255);
+      const Value xEye = NominalRightEyeCenX-EyeWidth/2;
+      const Value yEye = NominalEyeCenY - _eyeParams[Right][EyeHeight]/2;
+      const cv::Rect eyeRect(xEye, yEye, EyeWidth, _eyeParams[Right][EyeHeight]);
       
-      // Set every other row to 0 to get interlaced appearance
-      cv::Mat roi = faceImg(eyeRect);
-      for(int i=0; i<roi.rows; i+=2) {
-        roi[i].setTo(0);
-      }
-    }
-    
-    // Draw left pupil
-    {
-      const x = NominalLeftEyeCenX + _eyeParams[Left][PupilShiftX] - PupilWidth/2;
-      const y = NominalEyeCenY + _eyeParams[Left][PupilShiftY] - _eyeParams[Left][PupilHeight]/2;
-      const cv::Rect pupilRect(x,y,PupilWidth,_eyeParams[Left][PupilHeight]);
-      cv::rectangle(faceImg, eyeRect, 0);
-    }
-    
-    // Draw right pupil
-    {
-      const x = NominalRightEyeCenX + _eyeParams[Right][PupilShiftX] - PupilWidth/2;
-      const y = NominalEyeCenY + _eyeParams[Right][PupilShiftY] - _eyeParams[Right][PupilHeight]/2;
-      const cv::Rect pupilRect(x,y,PupilWidth,_eyeParams[Right][PupilHeight]);
-      cv::rectangle(faceImg, eyeRect, 0);
+      const Value xPupil = NominalRightEyeCenX + _eyeParams[Right][PupilShiftX] - PupilWidth/2;
+      const Value yPupil = NominalEyeCenY + _eyeParams[Right][PupilShiftY] - _eyeParams[Right][PupilHeight]/2;
+      const cv::Rect pupilRect(xPupil,yPupil,PupilWidth,_eyeParams[Right][PupilHeight]);
+      
+      DrawEye(faceImg, eyeRect, pupilRect, !ScanlinesAsPostProcess);
     }
     
     // Rotate entire face
     if(_faceAngle_deg != 0) {
-      int len = std::max(src.cols, src.rows);
-      cv::Point2f pt(len/2., len/2.);
-      cv::Mat R = cv::getRotationMatrix2D(cv::Point2f(HEIGHT/2, WIDTH/2), _faceAngle_deg, 1.0);
-      cv::warpAffine(faceImg, faceImg, R, cv::Size(WIDTH, HEIGHT));
+      // Note negative angle to get mirroring
+      cv::Mat R = cv::getRotationMatrix2D(cv::Point2f(WIDTH/2,HEIGHT/2), _faceAngle_deg, 1.0);
+      cv::warpAffine(faceImg, faceImg, R, cv::Size(WIDTH, HEIGHT), cv::INTER_NEAREST);
     }
     
+    if(ScanlinesAsPostProcess) {
+      // Apply interlacing / scanlines at the end
+      // TODO: Switch odd/even periodically to avoid burn-in?
+      for(s32 i=0; i<HEIGHT; i+=2) {
+        faceImg.row(i).setTo(0);
+      }
+    }
     return faceImg;
   } // DrawFace()
   
@@ -149,19 +170,23 @@ namespace Cozmo {
       return;
     }
     
-    for(int whichEye=0; whichEye < 2; ++whichEye)
+    for(int iWhichEye=0; iWhichEye < 2; ++iWhichEye)
     {
+      WhichEye whichEye = static_cast<WhichEye>(iWhichEye);
+      
       for(int iParam=0; iParam < NumParameters; ++iParam)
       {
-        if(iParam == BrowAngle) {
+        Parameter param = static_cast<Parameter>(iParam);
+        
+        if(param == BrowAngle) {
           // Special case: angle blending
-          SetParameter(whichEye, iParam, BlendAngleHelper(face1.GetParameter(whichEye, iParam),
-                                                          face2.GetParameter(whichEye, iParam),
+          SetParameter(whichEye, param, BlendAngleHelper(face1.GetParameter(whichEye, param),
+                                                          face2.GetParameter(whichEye, param),
                                                           blendFraction));
         } else {
           // Regular linear interpolation
-          SetParameter(whichEye, iParam, LinearBlendHelper(face1.GetParameter(whichEye, iParam),
-                                                           face2.GetParameter(whichEye, iParam),
+          SetParameter(whichEye, param, LinearBlendHelper(face1.GetParameter(whichEye, param),
+                                                           face2.GetParameter(whichEye, param),
                                                            blendFraction));
         }
       } // for each parameter

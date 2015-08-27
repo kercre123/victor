@@ -36,9 +36,12 @@ namespace Anki {
     public:
       Animation();
 
+      // For reading canned animations from files
       Result DefineFromJson(const std::string& name, Json::Value& json);
 
-      //Result AddKeyFrame(const HeadAngleKeyFrame& kf);
+      // For defining animations at runtime (e.g. procedural faces)
+      template<class KeyFrameType>
+      Result AddKeyFrame(const KeyFrameType& kf);
 
       Result Init();
       Result Update(Robot& robot);
@@ -57,7 +60,7 @@ namespace Anki {
 
       // Internal templated class for storing/accessing various "tracks", which
       // hold different types of KeyFrames.
-      template<typename FRAME_TYPE>
+      template<class FRAME_TYPE>
       class Track {
       public:
         void Init();
@@ -118,6 +121,9 @@ namespace Anki {
       Track<DeviceAudioKeyFrame>    _deviceAudioTrack;
       Track<RobotAudioKeyFrame>     _robotAudioTrack;
 
+      template<class KeyFrameType>
+      Track<KeyFrameType>& GetTrack();
+      
       // TODO: Remove this once we aren't playing robot audio on the device
       TimeStamp_t _playedRobotAudio_ms;
 
@@ -140,6 +146,16 @@ namespace Anki {
       
     }; // class Animation
 
+    template<class KeyFrameType>
+    Result Animation::AddKeyFrame(const KeyFrameType& kf)
+    {
+      Result addResult = GetTrack<KeyFrameType>().AddKeyFrame(kf);
+      if(RESULT_OK != addResult) {
+        PRINT_NAMED_ERROR("Animiation.AddKeyFrame.Failed", "");
+      }
+      return addResult;
+    }
+    
   } // namespace Cozmo
 } // namespace Anki
 

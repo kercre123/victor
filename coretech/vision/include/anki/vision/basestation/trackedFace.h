@@ -15,6 +15,7 @@
 
 #include "anki/common/basestation/math/point.h"
 #include "anki/common/basestation/math/rect.h"
+#include "anki/common/basestation/math/pose.h"
 #include "anki/common/shared/radians.h"
 
 #include "anki/vision/basestation/visionMarker.h"
@@ -85,8 +86,12 @@ namespace Vision {
     
     void SetRect(Rectangle<f32>&& rect);
     
-    void SetHeadPose(Radians yaw, Radians pitch, Radians roll);
+    Radians GetHeadYaw()   const;
+    Radians GetHeadPitch() const;
+    Radians GetHeadRoll()  const;
     
+    const Pose3d& GetHeadPose() const;
+    void SetHeadPose(Pose3d& pose);
   private:
     
     ID_t _id;
@@ -102,7 +107,7 @@ namespace Vision {
     
     std::array<Feature, NumFeatures> _features;
     
-    Radians _headYaw, _headPitch, _headRoll;
+    Pose3d _headPose;
     
   }; // class TrackedFace
   
@@ -178,10 +183,25 @@ namespace Vision {
     _rect = rect;
   }
   
-  inline void TrackedFace::SetHeadPose(Radians yaw, Radians pitch, Radians roll) {
-    _headYaw   = yaw;
-    _headPitch = pitch;
-    _headRoll  = roll;
+  inline Radians TrackedFace::GetHeadYaw()   const {
+    return _headPose.GetRotation().GetAngleAroundYaxis();
+  }
+  
+  inline Radians TrackedFace::GetHeadPitch() const {
+    return _headPose.GetRotation().GetAngleAroundXaxis();
+  }
+  
+  inline Radians TrackedFace::GetHeadRoll()  const {
+    return _headPose.GetRotation().GetAngleAroundZaxis();
+  }
+
+  
+  inline const Pose3d& TrackedFace::GetHeadPose() const {
+    return _headPose;
+  }
+  
+  inline void TrackedFace::SetHeadPose(Pose3d &pose) {
+    _headPose = pose;
   }
   
   inline const Point2f& TrackedFace::GetLeftEyeCenter() const {

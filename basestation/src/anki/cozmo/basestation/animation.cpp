@@ -182,6 +182,51 @@ namespace Cozmo {
     return RESULT_OK;
   }
   
+  template<>
+  Animation::Track<HeadAngleKeyFrame>& Animation::GetTrack() {
+    return _headTrack;
+  }
+  
+  template<>
+  Animation::Track<LiftHeightKeyFrame>& Animation::GetTrack() {
+    return _liftTrack;
+  }
+  
+  template<>
+  Animation::Track<FaceAnimationKeyFrame>& Animation::GetTrack() {
+    return _faceAnimTrack;
+  }
+  
+  template<>
+  Animation::Track<FacePositionKeyFrame>& Animation::GetTrack() {
+    return _facePosTrack;
+  }
+  
+  template<>
+  Animation::Track<DeviceAudioKeyFrame>& Animation::GetTrack() {
+    return _deviceAudioTrack;
+  }
+  
+  template<>
+  Animation::Track<RobotAudioKeyFrame>& Animation::GetTrack() {
+    return _robotAudioTrack;
+  }
+  
+  template<>
+  Animation::Track<BackpackLightsKeyFrame>& Animation::GetTrack() {
+    return _backpackLightsTrack;
+  }
+  
+  template<>
+  Animation::Track<BodyMotionKeyFrame>& Animation::GetTrack() {
+    return _bodyPosTrack;
+  }
+  
+  template<>
+  Animation::Track<BlinkKeyFrame>& Animation::GetTrack() {
+    return _blinkTrack;
+  }
+  
   /*
   Result Animation::AddKeyFrame(const HeadAngleKeyFrame& kf)
   {
