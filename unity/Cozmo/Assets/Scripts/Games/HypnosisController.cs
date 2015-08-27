@@ -41,40 +41,9 @@ public class HypnosisController : GameController {
     base.Enter_BUILDING();
   }
 
-  bool RotateClockWise(float curRot, float newRot) {
-    float r1 = curRot - newRot;
-    float r2 = newRot - curRot;
-    if (r1 < 0.0f) {
-      r1 += 360.0f;
-    }
-    if (r2 < 0.0f) {
-      r2 += 360.0f;
-    }
-    return r2 < r1;
-  }
-
   protected override void Update_BUILDING() {
     base.Update_BUILDING();
-    //robot.DriveWheels(15.0f, -10.0f);
-    float cozmo_angle = (robot.Rotation.eulerAngles.z + 90.0f) % 360.0f;
-    float phone_angle = (Input.gyro.attitude.eulerAngles.z);
-    Debug.Log("cozmo: " + cozmo_angle + ", phone: " + phone_angle);
-    float delta = phone_angle - cozmo_angle;
-    if (Mathf.Abs(delta) > 20.0f) {
-      if (RotateClockWise(cozmo_angle, phone_angle)) {
-        robot.DriveWheels(25.0f, -25.0f);
-      }
-      else {
-        robot.DriveWheels(-25.0f, 25.0f);
-      }
-    }
-    else {
-      robot.DriveWheels(0.0f, 0.0f);
-    }
-
-    if (Input.touchCount > 0) {
-      robot.DriveWheels(40.0f, 40.0f);
-    }
+    robot.DriveWheels(15.0f, -10.0f);
 
     foreach (KeyValuePair<int, ActiveBlock> activeBlock in robot.activeBlocks) {
       for (int j = 0; j < activeBlock.Value.lights.Length; ++j) {
