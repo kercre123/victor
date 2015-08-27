@@ -29,7 +29,9 @@ namespace Vision {
   {
   public:
     
-    using ID_t = long long;
+    using ID_t = int64_t;
+    
+    static const ID_t UnknownFace = -1;
     
     // Constructor:
     TrackedFace();
@@ -50,8 +52,6 @@ namespace Vision {
     void SetIsBeingTracked(bool tf);
     
     const Rectangle<f32>& GetRect() const;
-    
-    ObservedMarker GetMarker(Camera& camera) const;
     
     // NOTE: Left/right are from viewer's perspective! (i.e. as seen in the image)
     

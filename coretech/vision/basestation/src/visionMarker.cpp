@@ -19,7 +19,6 @@ namespace Anki {
   namespace Vision{
   
     const Marker::Code Marker::ANY_CODE = s16_MAX;
-    const Marker::Code Marker::FACE_CODE = s16_MIN;
     
     Marker::Marker(const Code& withCode)
     : _code(withCode)
@@ -31,9 +30,6 @@ namespace Anki {
     {
       if(_code >= 0 && _code < NUM_MARKER_TYPES) {
         return MarkerTypeStrings[_code];
-      }
-      else if(_code == FACE_CODE) {
-        return "HUMAN_FACE_MARKER";
       }
       else {
         PRINT_NAMED_ERROR("Marker.GetCodeName", "Could not look up name for code=%d.\n", _code);

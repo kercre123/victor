@@ -33,7 +33,6 @@ namespace Anki {
     public:
       using Code = s16; // TODO: this should be an Embedded::VisionMarkerType
       static const Code ANY_CODE;
-      static const Code FACE_CODE;
 
       Marker(const Code& code);
       
@@ -83,17 +82,6 @@ namespace Anki {
       
       bool           _used;
     }; // class ObservedMarker
-    
-    class ObservedHumanFace : public ObservedMarker
-    {
-    public:
-      
-      virtual bool GetPose(Pose3d& pose) const override {
-        // Compute pose using roll/pitch/yaw
-        return true;
-      }
-      
-    }; // class ObservedHumanFace
     
     
     class KnownMarker : public Marker

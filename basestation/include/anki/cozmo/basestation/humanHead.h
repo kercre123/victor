@@ -29,7 +29,7 @@ namespace Cozmo {
     
     using Type = ObjectType;
     
-    HumanHead(Type faceType = ObjectType::HumanFace_Unknown);
+    HumanHead(Type faceType);
   
     virtual ~HumanHead();
     

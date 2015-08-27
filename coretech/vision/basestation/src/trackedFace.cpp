@@ -24,14 +24,6 @@ namespace Vision {
     
   }
   
-  ObservedMarker TrackedFace::GetMarker(Camera& camera) const
-  {
-    Quad2f quad;
-    GetRect().GetQuad(quad);
-    
-    return ObservedMarker(GetTimeStamp(), Marker::FACE_CODE, quad, camera);
-  }
-  
 } // namespace Vision
 } // namespace Anki
 

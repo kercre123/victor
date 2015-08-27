@@ -8,19 +8,26 @@
 namespace Anki {
 namespace Cozmo {
   
+  // Forward declaration:
+  class Robot;
+  
   class FaceWorld
   {
   public:
     
-    FaceWorld();
+    FaceWorld(Robot& robot);
     
     Result UpdateFace(Vision::TrackedFace& face);
   
-    const Vision::TrackedFace& GetFace(Vision::TrackedFace::ID_t faceID) const;
+    // Returns nullptr if not found
+    const Vision::TrackedFace* GetFace(Vision::TrackedFace::ID_t faceID) const;
     
   private:
     
+    Robot& _robot;
     std::map<Vision::TrackedFace::ID_t, Vision::TrackedFace> _knownFaces;
+    
+    Result UpdateFaceTracking(const Vision::TrackedFace& face);
     
   }; // class FaceWorld
   

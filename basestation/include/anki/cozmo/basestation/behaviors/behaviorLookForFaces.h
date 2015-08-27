@@ -44,7 +44,7 @@ namespace Cozmo {
     
   private:
     
-    void HandleRobotObservedObject(const ExternalInterface::RobotObservedObject& msg);
+    void HandleRobotObservedFace(const ExternalInterface::RobotObservedFace& msg);
     void HandleRobotCompletedAction(const ExternalInterface::RobotCompletedAction& msg);
     
     void SetNextMovementTime();

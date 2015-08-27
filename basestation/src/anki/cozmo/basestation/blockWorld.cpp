@@ -170,12 +170,6 @@ namespace Anki
       _objectLibrary[ObjectFamily::Charger].AddObject(new Charger());
       
       
-      //////////////////////////////////////////////////////////////////////////
-      // Faces
-      //
-      _objectLibrary[ObjectFamily::HumanHead].AddObject(new HumanHead());
-
-      
     } // BlockWorld() Constructor
     
     BlockWorld::~BlockWorld()
@@ -641,7 +635,7 @@ namespace Anki
           msg.headTiltAngle_rad = headAngle;
           msg.bodyPanAngle_rad = 0.f;
           
-          if(false == _robot->IsTrackingObjectWithHeadOnly()) {
+          if(false == _robot->IsTrackingWithHeadOnly()) {
             // Also rotate ("pan") body:
             const Radians panAngle = std::atan2(yDist, xDist);// - _robot->GetPose().GetRotationAngle<'Z'>();
             msg.bodyPanAngle_rad = panAngle.ToFloat();
@@ -1632,12 +1626,7 @@ namespace Anki
         // Note that this removes markers from the list that it uses
         numObjectsObserved += UpdateObjectPoses(currentObsMarkers, ObjectFamily::Charger, atTimestamp);
         
-        //
-        // Find any observed human heads from the remaining "markers"
-        //
-        // Note that this removes markers from the list that it uses
-        numObjectsObserved += UpdateObjectPoses(currentObsMarkers, ObjectFamily::HumanHead, atTimestamp);
-        
+
         // TODO: Deal with unknown markers?
         
         // Keep track of how many markers went unused by either robot or block
@@ -1678,8 +1667,7 @@ namespace Anki
         // NOTE: This assumes all other objects are DockableObjects below!!! (Becuase of IsBeingCarried() check)
         // TODO: How can we delete Mat objects (like platforms) whose positions we drive through
         if(objectsByFamily.first != ObjectFamily::Mat &&
-           objectsByFamily.first != ObjectFamily::MarkerlessObject &&
-           objectsByFamily.first != ObjectFamily::HumanHead)
+           objectsByFamily.first != ObjectFamily::MarkerlessObject)
         {
           for(auto & objectsByType : objectsByFamily.second)
           {

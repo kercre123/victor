@@ -57,6 +57,7 @@ namespace Anki {
     , _syncTimeAcknowledged(false)
     , _msgHandler(msgHandler)
     , _blockWorld(this)
+    , _faceWorld(*this)
     , _visionProcessor(dataPlatform)
     , _behaviorMgr(*this)
     , _isBehaviorMgrEnabled(false)
@@ -525,9 +526,7 @@ namespace Anki {
       // If this is not a face marker and "Vision while moving" is disabled and
       // we aren't picking/placing, check to see if the robot's body or head are
       // moving too fast to queue this marker
-      if(markerOrig.GetCode() != Vision::Marker::FACE_CODE &&
-         !_visionWhileMovingEnabled &&
-         !IsPickingOrPlacing())
+      if(!_visionWhileMovingEnabled && !IsPickingOrPlacing())
       {
         TimeStamp_t t_prev, t_next;
         RobotPoseStamp p_prev, p_next;
@@ -1144,23 +1143,40 @@ namespace Anki {
       
     Result Robot::EnableTrackToObject(const u32 objectID, bool headOnly)
     {
-      _trackHeadToObjectID = objectID;
+      _trackToObjectID = objectID;
       
-      if(_blockWorld.GetObjectByID(_trackHeadToObjectID) != nullptr) {
-        _trackObjectWithHeadOnly = headOnly;
+      if(_blockWorld.GetObjectByID(_trackToObjectID) != nullptr) {
+        _trackWithHeadOnly = headOnly;
+        _trackToFaceID = Vision::TrackedFace::UnknownFace;
         return RESULT_OK;
       } else {
-        PRINT_NAMED_ERROR("Robot.TrackHeadToObject",
-                          "Cannot track head to object ID=%d, which does not exist.\n",
+        PRINT_NAMED_ERROR("Robot.EnableTrackToObject.UnknownObject",
+                          "Cannot track to object ID=%d, which does not exist.\n",
                           objectID);
-        _trackHeadToObjectID.UnSet();
+        _trackToObjectID.UnSet();
         return RESULT_FAIL;
       }
     }
-      
+    
+    Result Robot::EnableTrackToFace(Vision::TrackedFace::ID_t faceID, bool headOnly)
+    {
+      _trackToFaceID = faceID;
+      if(_faceWorld.GetFace(_trackToFaceID) != nullptr) {
+        _trackWithHeadOnly = headOnly;
+        _trackToObjectID.UnSet();
+        return RESULT_OK;
+      } else {
+        PRINT_NAMED_ERROR("Robot.EnableTrackToFace.UnknownFace",
+                          "Cannot track to face ID=%lld, which does not exist.",
+                          faceID);
+        _trackToFaceID = Vision::TrackedFace::UnknownFace;
+        return RESULT_FAIL;
+      }
+    }
+    
     Result Robot::DisableTrackToObject()
     {
-      _trackHeadToObjectID.UnSet();
+      _trackToObjectID.UnSet();
       return RESULT_OK;
     }
       

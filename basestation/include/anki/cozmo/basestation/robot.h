@@ -85,9 +85,12 @@ namespace Anki {
       bool HasReceivedRobotState() const;
       
       // Accessors
-      const RobotID_t        GetID()           const;
-      BlockWorld&            GetBlockWorld()   {return _blockWorld;}
-      const BlockWorld&      GetBlockWorld() const { return _blockWorld;}
+      const RobotID_t        GetID()         const;
+      BlockWorld&            GetBlockWorld()       {return _blockWorld;}
+      const BlockWorld&      GetBlockWorld() const {return _blockWorld;}
+      
+      FaceWorld&             GetFaceWorld()        {return _faceWorld;}
+      const FaceWorld&       GetFaceWorld()  const {return _faceWorld;}
       
       //
       // Localization
@@ -364,8 +367,13 @@ namespace Anki {
       Result EnableTrackToObject(const u32 objectID, bool headOnly);
       Result DisableTrackToObject();
       
-      const ObjectID& GetTrackToObject() const { return _trackHeadToObjectID; }
-      bool    IsTrackingObjectWithHeadOnly() const { return _trackObjectWithHeadOnly; }
+
+      
+      Result EnableTrackToFace(const Vision::TrackedFace::ID_t, bool headOnly);
+      Result DisableTrackToFace();
+      const ObjectID& GetTrackToObject() const { return _trackToObjectID; }
+      const Vision::TrackedFace::ID_t GetTrackToFace() const { return _trackToFaceID; }
+      bool  IsTrackingWithHeadOnly() const { return _trackWithHeadOnly; }
       
       Result DriveWheels(const f32 lwheel_speed_mmps,
                          const f32 rwheel_speed_mmps);
@@ -691,9 +699,10 @@ namespace Anki {
       const Vision::KnownMarker*  _carryingMarker;
       bool                        _lastPickOrPlaceSucceeded;
       
-      // Object to keep head tracked to this object whenever it is observed
-      ObjectID                    _trackHeadToObjectID;
-      bool                        _trackObjectWithHeadOnly;
+      // Object/Face to track head to whenever it is observed
+      ObjectID                    _trackToObjectID;
+      Vision::TrackedFace::ID_t   _trackToFaceID;
+      bool                        _trackWithHeadOnly;
       
       /*
       // Plan a path to the pre-ascent/descent pose (depending on current

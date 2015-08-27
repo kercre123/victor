@@ -47,7 +47,7 @@ namespace Cozmo {
     // this is to match Marker coordinates, where the marker is in the X-Z plane,
     // so we want the face to also be in the X-Z plane
     static const std::map<HumanHead::Type, Point3f> Sizes = {
-      {HumanHead::Type::HumanFace_Unknown, {148.f, 225.f, 195.f}},
+      {ObjectType::Unknown, {148.f, 225.f, 195.f}},
     };
     
     auto iter = Sizes.find(type);
@@ -64,7 +64,7 @@ namespace Cozmo {
   
   
   HumanHead::HumanHead(Type type)
-  : ObservableObject(ObjectFamily::HumanHead,type)
+  : ObservableObject(ObjectFamily::Unknown,type)
   , _size(GetSizeByType(_type))
   {
     _canonicalCorners = {{
@@ -80,7 +80,7 @@ namespace Cozmo {
     
     // Add the face as a "marker" at a known location on the head:
     const Pose3d facePose(0, Z_AXIS_3D(), {0,0.5f*_size.y(),0.f});
-    AddMarker(Vision::Marker::FACE_CODE, facePose, _size.x()); // Using entire head width for face size
+    AddMarker(-1, facePose, _size.x()); // Using entire head width for face size
     
   } // MarkerlessObject(type) Constructor
   
