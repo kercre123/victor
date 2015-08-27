@@ -47,25 +47,9 @@ public class CozmoWalkerController : GameController {
 
   protected override void Update_PLAYING() {
     base.Update_PLAYING();
-    float cozmo_angle = (robot.Rotation.eulerAngles.z + 90.0f) % 360.0f;
-    float phone_angle = (Input.gyro.attitude.eulerAngles.z);
-    Debug.Log("cozmo: " + cozmo_angle + ", phone: " + phone_angle);
-    float delta = phone_angle - cozmo_angle;
-    if (Mathf.Abs(delta) > 20.0f) {
-      if (RotateClockWise(cozmo_angle, phone_angle)) {
-        robot.DriveWheels(25.0f, -25.0f);
-      }
-      else {
-        robot.DriveWheels(-25.0f, 25.0f);
-      }
-    }
-    else {
-      robot.DriveWheels(0.0f, 0.0f);
-    }
-
-    if (Input.touchCount > 0 || Input.GetMouseButton(0)) {
-      robot.DriveWheels(40.0f, 40.0f);
-    }
+    ProcessMovement();
+    ProcessForkLift();
+    ProcessHeadAngle();
   }
 
   protected override void Exit_PLAYING(bool overrideStars = false) {
@@ -100,15 +84,54 @@ public class CozmoWalkerController : GameController {
     base.RefreshHUD();
   }
 
+  private void ProcessMovement() {
+    float cozmo_angle = (robot.Rotation.eulerAngles.z + 90.0f) % 360.0f; // normalize to [0, 360)
+    float phone_angle = (Input.gyro.attitude.eulerAngles.z);
+    float delta = phone_angle - cozmo_angle;
+
+    // prioritize rotation of cozmo over going forward.
+
+    float leftSpeed = 0.0f;
+    float rightSpeed = 0.0f;
+
+    if (Mathf.Abs(delta) > 15.0f) {
+      if (RotateClockWise(cozmo_angle, phone_angle)) {
+        leftSpeed += 45.0f;
+        rightSpeed += -45.0f;
+      }
+      else {
+        leftSpeed += -45.0f;
+        rightSpeed += 45.0f;
+      }
+    }
+
+    if (Input.touchCount > 0 || Input.GetMouseButton(0)) {
+      leftSpeed += 140.0f;
+      rightSpeed += 140.0f;
+    }
+    robot.DriveWheels(leftSpeed, rightSpeed);
+  }
+
+  private void ProcessForkLift() {
+    
+  }
+
+  private void ProcessHeadAngle() {
+    
+  }
+
+  // curRot and newRot should be [0, 360.0f)
   private bool RotateClockWise(float curRot, float newRot) {
     float r1 = curRot - newRot;
     float r2 = newRot - curRot;
+
+    // normalize to [0, 360.0f)
     if (r1 < 0.0f) {
       r1 += 360.0f;
     }
     if (r2 < 0.0f) {
       r2 += 360.0f;
     }
-    return r2 < r1;
+    return r2 > r1;
   }
 }
