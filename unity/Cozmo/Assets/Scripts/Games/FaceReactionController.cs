@@ -18,6 +18,7 @@ public class FaceReactionController : GameController {
   private bool turningLeft = false;
   private bool lookingUpToSearch = false;
   private float faceSeenTime = 0.0f;
+  private ObservedObject foundFace = null;
 
   public enum FaceReactionState {
     NONE,
@@ -207,22 +208,31 @@ public class FaceReactionController : GameController {
   }
 
   private void Update_SEARCH_FOR_FACE() {
-    Debug.Log(faceSeenTime);
+    bool faceSeenThisFrame = false;
     // HACK: shouldn't have to use accumulators when the face detection
     // is more reliable (not as many false positives)
-    if (robot.markersVisibleObjects.Count > 0 && robot.markersVisibleObjects[0].isFace) {
-      if (faceSeenTime > 1.5f) {
-        Debug.Log("we found a face!");
-        nextState = FaceReactionState.ALIGN_TO_FACE;
+    for (int i = 0; i < robot.markersVisibleObjects.Count; ++i) {
+      if (robot.markersVisibleObjects[i].isFace) {
+        if (faceSeenTime > 1.5f) {
+          Debug.Log("we found a face!");
+          nextState = FaceReactionState.ALIGN_TO_FACE;
+          foundFace = robot.markersVisibleObjects[i];
+        }
+        faceSeenThisFrame = true;
+        faceSeenTime += Time.deltaTime;
       }
-      faceSeenTime += Time.deltaTime;
     }
-    else {
+
+    if (faceSeenThisFrame == false) {
       faceSeenTime = Mathf.Max(0.0f, faceSeenTime - Time.deltaTime * 1.5f);
     }
 
-    if (faceSeenTime > 0.0f)
+    // only continue to next rotation or look up and down state if we
+    // stop seeing a face. TODO: make it so that actions are canceled if
+    // we see a face.
+    if (faceSeenTime > 0.0f) {
       return;
+    }
 
     if (robot.IsHeadAngleRequestUnderway())
       return;
@@ -253,7 +263,7 @@ public class FaceReactionController : GameController {
   private void Enter_ALIGN_TO_FACE() {
     SetBackpackColors(new Color(1.0f, 1.0f, 0.0f));
     alignToFaceWaiting = true;
-    robot.FaceObject(robot.markersVisibleObjects[0]);
+    robot.FaceObject(foundFace);
   }
 
   private void Update_ALIGN_TO_FACE() {
