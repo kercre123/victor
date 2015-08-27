@@ -21,6 +21,12 @@ namespace Anki {
 namespace Cozmo {
   
 using namespace ExternalInterface;
+  
+static std::vector<std::string> _animReactions = {
+  "Fear",
+  "shocked",
+  "VeryIrritated",
+};
 
 BehaviorReactToPickup::BehaviorReactToPickup(Robot& robot, const Json::Value& config)
   : IReactionaryBehavior(robot, config)
@@ -29,13 +35,13 @@ BehaviorReactToPickup::BehaviorReactToPickup(Robot& robot, const Json::Value& co
   _name = "ReactToPickup";
   
   // These are the tags that should trigger this behavior to be switched to immediately
-  auto triggerTags = { MessageEngineToGameTag::ActiveObjectMoved };
+  auto triggerTags = { MessageEngineToGameTag::RobotPickedUp };
   _engineToGameTags = triggerTags;
   
   // We're going to subscribe to our trigger events, plus others
   std::vector<MessageEngineToGameTag> subscribedEvents = triggerTags;
   subscribedEvents.insert(subscribedEvents.end(), {
-    MessageEngineToGameTag::ActiveObjectStoppedMoving,
+    MessageEngineToGameTag::RobotPutDown,
     MessageEngineToGameTag::RobotCompletedAction,
   });
   
@@ -88,7 +94,13 @@ IBehavior::Status BehaviorReactToPickup::Update(float currentTime_sec)
     }
     case State::IsPickedUp:
     {
-      _robot.GetActionList().QueueActionNow(0, new PlayAnimationAction("majorWin"));
+      static u32 animIndex = 0;
+      // For now we simply rotate through the animations we want to play when picked up
+      if (0 != _animReactions.size())
+      {
+        _robot.GetActionList().QueueActionNow(0, new PlayAnimationAction(_animReactions[animIndex]));
+        animIndex = ++animIndex % _animReactions.size();
+      }
       _waitingForAnimComplete = true;
       _currentState = State::PlayingAnimation;
       return Status::Running;
@@ -138,12 +150,12 @@ void BehaviorReactToPickup::HandleMovedEvent(const AnkiEvent<MessageEngineToGame
   // We want to get these messages, even when not running
   switch (event.GetData().GetTag())
   {
-    case MessageEngineToGameTag::ActiveObjectMoved:
+    case MessageEngineToGameTag::RobotPickedUp:
     {
       _isInAir = true;
       break;
     }
-    case MessageEngineToGameTag::ActiveObjectStoppedMoving:
+    case MessageEngineToGameTag::RobotPutDown:
     {
       _isInAir = false;
       break;
