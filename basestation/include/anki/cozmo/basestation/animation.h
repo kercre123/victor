@@ -114,6 +114,7 @@ namespace Anki {
       Track<LiftHeightKeyFrame>     _liftTrack;
       //Track<FaceImageKeyFrame>      _faceImageTrack;
       Track<FaceAnimationKeyFrame>  _faceAnimTrack;
+      Track<ProceduralFaceKeyFrame> _proceduralFaceTrack;
       Track<FacePositionKeyFrame>   _facePosTrack;
       Track<BlinkKeyFrame>          _blinkTrack;
       Track<BackpackLightsKeyFrame> _backpackLightsTrack;

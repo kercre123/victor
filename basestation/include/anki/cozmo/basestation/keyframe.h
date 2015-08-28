@@ -20,6 +20,7 @@
 #include "anki/common/basestation/colorRGBA.h"
 
 #include "anki/cozmo/basestation/comms/robot/robotMessages.h"
+#include "anki/cozmo/basestation/proceduralFace.h"
 
 #include "anki/cozmo/shared/cozmoTypes.h"
 #include "anki/cozmo/shared/ledTypes.h"
@@ -263,6 +264,26 @@ namespace Anki {
       
     }; // class FaceAnimationKeyFrame
     
+    
+    class ProceduralFaceKeyFrame : public IKeyFrame
+    {
+    public:
+      ProceduralFaceKeyFrame(const ProceduralFace& face) : _procFace(face) { }
+      
+      virtual RobotMessage* GetStreamMessage() override;
+      
+      static const std::string& GetClassName() {
+        static const std::string ClassName("ProceduralFaceKeyFrame");
+        return ClassName;
+      }
+
+    protected:
+      virtual Result SetMembersFromJson(const Json::Value &jsonRoot) override;
+      
+    private:
+      ProceduralFace _procFace;
+      MessageAnimKeyFrame_FaceImage _faceImageMsg;
+    };
     
     // A FacePositionKeyFrame sets the center of the currently displayed face
     // image/sprite, in LED screen coordinates.

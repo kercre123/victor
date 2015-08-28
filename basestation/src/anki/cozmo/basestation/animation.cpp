@@ -227,6 +227,11 @@ namespace Cozmo {
     return _blinkTrack;
   }
   
+  template<>
+  Animation::Track<ProceduralFaceKeyFrame>& Animation::GetTrack() {
+    return _proceduralFaceTrack;
+  }
+  
   /*
   Result Animation::AddKeyFrame(const HeadAngleKeyFrame& kf)
   {
@@ -241,6 +246,7 @@ namespace Cozmo {
 _headTrack.__METHOD__() __COMBINE_WITH__ \
 _liftTrack.__METHOD__() __COMBINE_WITH__ \
 _faceAnimTrack.__METHOD__() __COMBINE_WITH__ \
+_proceduralFaceTrack.__METHOD__() __COMBINE_WITH__ \
 _facePosTrack.__METHOD__() __COMBINE_WITH__ \
 _deviceAudioTrack.__METHOD__() __COMBINE_WITH__ \
 _robotAudioTrack.__METHOD__() __COMBINE_WITH__ \
@@ -456,23 +462,15 @@ _blinkTrack.__METHOD__()
         PRINT_NAMED_INFO("Animation.Update", "Streaming FaceAnimationKeyFrame at t=%dms.\n",
                          _streamingTime_ms - _startTime_ms);
 #       endif
-      } else if(_faceAnimTrack.IsEmpty()) {
-        // Use procedural face
-        std::vector<u8> rleFrame;
-        FaceAnimationManager::CompressRLE(robot.GetProceduralFace().GetFace(), rleFrame);
-        
-        if(rleFrame.size() >= sizeof(_proceduralFaceStreamMsg.image)) {
-          PRINT_NAMED_ERROR("FaceAnimationKeyFrame.GetStreamMessage",
-                            "Procedural RLE frame is too large to fit in message (%lu>=%lu).\n",
-                            rleFrame.size(), sizeof(_proceduralFaceStreamMsg.image));
-        } else {
-          
-          _proceduralFaceStreamMsg.image.fill(0); // Necessary??
-          std::copy(rleFrame.begin(), rleFrame.end(), _proceduralFaceStreamMsg.image.begin());
-          BufferMessageToSend(&_proceduralFaceStreamMsg);
-        }
       }
       
+      if(BufferMessageToSend(_proceduralFaceTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms))) {
+#       if DEBUG_ANIMATIONS
+        PRINT_NAMED_INFO("Animation.Update", "Streaming ProceduralFaceKeyFrame at t=%dms.\n",
+                         _streamingTime_ms - _startTime_ms);
+#       endif
+      }
+    
       if(BufferMessageToSend(_blinkTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms))) {
 #       if DEBUG_ANIMATIONS
         PRINT_NAMED_INFO("Animation.Update", "Streaming BlinkKeyFrame at t=%dms.\n",

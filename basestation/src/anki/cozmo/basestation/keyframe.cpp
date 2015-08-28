@@ -288,6 +288,42 @@ return RESULT_FAIL; \
       }
     }
     
+#pragma mark -
+#pragma mark ProceduralFaceKeyFrame
+    
+    Result ProceduralFaceKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot)
+    {
+      // TODO: Implement!
+      PRINT_NAMED_ERROR("ProceduralFaceKeyFrame.SetMembersFromJson.NotSupported",
+                        "This method needs to be added once animation tool can generate "
+                        "procedural face parameters.");
+      return RESULT_FAIL;
+    }
+    
+    RobotMessage* ProceduralFaceKeyFrame::GetStreamMessage()
+    {
+      std::vector<u8> rleData;
+      Result rleResult = FaceAnimationManager::CompressRLE(_procFace.GetFace(), rleData);
+      
+      if(RESULT_OK != rleResult) {
+        PRINT_NAMED_ERROR("ProceduralFaceKeyFrame.GetStreamMesssage",
+                          "Failed to get RLE frame from procedural face.");
+        return nullptr;
+      }
+      
+      if(rleData.size() >= sizeof(_faceImageMsg.image)) {
+        PRINT_NAMED_ERROR("ProceduralFaceKeyFrame.GetStreamMessage",
+                          "RLE frame for procedural face too large to fit in message (%lu>=%lu).",
+                          rleData.size(), sizeof(_faceImageMsg.image));
+        return nullptr;
+      }
+      
+      _faceImageMsg.image.fill(0);
+      std::copy(rleData.begin(), rleData.end(), _faceImageMsg.image.begin());
+      
+      return &_faceImageMsg;
+    }
+    
 #pragma mark - 
 #pragma mark RobotAudioKeyFrame
     
