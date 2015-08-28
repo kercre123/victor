@@ -150,17 +150,16 @@ namespace Cozmo {
       return Status::Complete;
     }
     
+    if(_interrupted) {
+      // If we are in the middle of picking up a block, we can immediately interrupt.
+      // Otherwise we will wait until placing completes which switches us back to
+      // PickingUpBlock, so we can then get here
+      return Status::Complete;
+    }
+    
     switch(_currentState)
     {
       case State::PickingUpBlock:
-        if(_interrupted) {
-          // If we are in the middle of picking up a block, we can immediately interrupt.
-          // Otherwise we will wait until placing completes which switches us back to
-          // PickingUpBlock, so we can then get here
-          return Status::Complete;
-        }
-        break;
-        
       case State::PlacingBlock:
         
         break;

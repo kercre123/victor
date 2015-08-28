@@ -13,10 +13,9 @@
 #define __Cozmo_Basestation_Behaviors_BehaviorInterface_H__
 
 #include "anki/cozmo/basestation/actionContainers.h"
-
 #include "util/random/randomGenerator.h"
-
 #include "json/json.h"
+#include <set>
 
 // This macro uses PRINT_NAMED_INFO if the supplied define (first arg) evaluates to true, and PRINT_NAMED_DEBUG otherwise
 // All args following the first are passed directly to the chosen print macro
@@ -31,6 +30,10 @@ namespace Cozmo {
   // Forward declarations
   class Robot;
   class Reward;
+  namespace ExternalInterface {
+    enum class MessageEngineToGameTag : uint8_t;
+    enum class MessageGameToEngineTag : uint8_t;
+  }
   
   // Base Behavior Interface specification
   class IBehavior
@@ -94,6 +97,23 @@ namespace Cozmo {
     bool _isRunning;
     
   }; // class IBehavior
+  
+  
+  class IReactionaryBehavior : public IBehavior
+  {
+  public:
+    using EngineToGameTag = ExternalInterface::MessageEngineToGameTag;
+    using GameToEngineTag = ExternalInterface::MessageGameToEngineTag;
+    
+    IReactionaryBehavior(Robot& robot, const Json::Value& config) : IBehavior(robot, config) { }
+    
+    virtual const std::set<EngineToGameTag>& GetEngineToGameTags() const { return _engineToGameTags; }
+    virtual const std::set<GameToEngineTag>& GetGameToEngineTags() const { return _gameToEngineTags; }
+    
+  protected:
+    std::set<EngineToGameTag> _engineToGameTags;
+    std::set<GameToEngineTag> _gameToEngineTags;
+  }; // class IReactionaryBehavior
 
 } // namespace Cozmo
 } // namespace Anki

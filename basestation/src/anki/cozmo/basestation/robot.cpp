@@ -177,6 +177,15 @@ namespace Anki {
         // Robot is being picked up: de-localize it and clear all known objects
         Delocalize();
         _blockWorld.ClearAllExistingObjects();
+        
+        if (_externalInterface != nullptr) {
+          _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotPickedUp(GetID())));
+        }
+      }
+      else if (true == _isPickedUp && false == t) {
+        if (_externalInterface != nullptr) {
+          _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotPutDown(GetID())));
+        }
       }
       _isPickedUp = t;
     }
