@@ -126,6 +126,8 @@ public class GameController : MonoBehaviour {
     set { scores[0] = value; }
   }
 
+  protected int lastLeader = -1;
+
   protected int stars = 0;
   protected bool win = false;
 

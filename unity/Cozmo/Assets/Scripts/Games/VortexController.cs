@@ -133,6 +133,7 @@ public class VortexController : GameController {
   [SerializeField] float cozmoTimePerTap = 1.25f;
   [SerializeField] float cozmoPredicitveLeadTime = 5f;
   [SerializeField] float cozmoExpectationDelay = 1f;
+  public CozmoUtil.RobotPose[] robotPoses = new CozmoUtil.RobotPose[3];
 
   #endregion
 
@@ -365,7 +366,7 @@ public class VortexController : GameController {
 
   void CubeSpotted() {
     Debug.Log("Setting robot position");
-    SetRobotStartingPosition();
+    SetRobotStartingPositions();
     if (GameLayoutTracker.instance != null)
       GameLayoutTracker.instance.CubeSpotted -= CubeSpotted;
   }
@@ -1028,17 +1029,12 @@ public class VortexController : GameController {
       dragCount = 0;
       dragCountMax = UnityEngine.Random.Range(2, 4);
       wheel.DragStart(startDragPos, Time.time);
-
-
-
-//      Vector3 startWorld = Camera.main.ScreenToWorldPoint(startDragPos);
-//      Vector3 endWorld = Camera.main.ScreenToWorldPoint(startDragPos);
-//      startWorld.z = 1f;
-//      endWorld.z = 1f;
-//      Debug.DrawLine(startWorld, endWorld, (dragCount % 2 == 0) ? Color.green : Color.blue, 30f);
     }
     else {
       wheel.Unlock();
+      CozmoEmotionManager.instance.SetEmotionTurnInPlace("YOUR_TURN", GetPoseFromPlayerIndex(currentPlayerIndex).rad, true, true, true);
+      // setting the head angle to ~35 degrees
+      robot.SetHeadAngle(.61f, true);
     }
 
     wheel.Focus();
@@ -1093,6 +1089,29 @@ public class VortexController : GameController {
     return index;
   }
 
+  int GetPoseIndex(int playerIndex) {
+    int index = playerIndex;
+    switch (playerIndex) {
+    case 1:
+      index = 0;
+      break;
+    case 2:
+      index = 1;
+      break;
+    case 3:
+      index = 2;
+      break;
+    default:
+      break;
+    }
+    return index;
+  }
+
+  CozmoUtil.RobotPose GetPoseFromPlayerIndex(int playerIndex) {
+
+    return robotPoses[GetPoseIndex(playerIndex)];
+  }
+
   void Update_REQUEST_SPIN() {
     
     //cozmo's automated spinWheel dragging
@@ -1141,6 +1160,31 @@ public class VortexController : GameController {
         }
       }
     }
+    else {
+      // face hunt
+      // only note faces when within 45 degrees of desired rotation
+      float current = robot.poseAngle_rad;
+      float target = GetPoseFromPlayerIndex(currentPlayerIndex).rad;
+      float angle_between = Mathf.Atan2(Mathf.Sin(current - target), Mathf.Cos(current - target));
+      Debug.Log("angle_between " + angle_between);
+      float diff = Mathf.Abs(current - target);
+      angle_between = diff > Mathf.PI ? diff - 2 * Mathf.PI : diff;
+      Debug.Log("angle_between2 " + angle_between);
+      if (Mathf.Abs(angle_between) < (Mathf.PI / 4.0f)) {
+        for (int i = 0; i < robot.markersVisibleObjects.Count; ++i) {
+          if (robot.markersVisibleObjects[i].isFace) {
+            //get angle to that and set robotpos
+            Vector3 target_pos = new Vector3(robot.markersVisibleObjects[i].WorldPosition.x, robot.markersVisibleObjects[i].WorldPosition.y, 0);
+            Vector3 robot_pos = new Vector3(robot.WorldPosition.x, robot.WorldPosition.y, 0);
+            Vector3 to_target = target_pos - robot_pos;
+            to_target = to_target.normalized;
+            robotPoses[GetPoseIndex(currentPlayerIndex)].rad = Mathf.Acos(Vector3.Dot(Vector3.right, to_target));
+            Debug.Log("Setting desired rad to " + robotPoses[GetPoseIndex(currentPlayerIndex)].rad);
+          }
+        }
+      }
+
+    }
 
     int newNumber = wheel.GetDisplayedNumber();
     //Debug.Log("Update_SPINNING lightingMax("+lightingMax+") wheel.Speed("+wheel.Speed+") newNumber("+newNumber+") lastNumber("+lastNumber+")");
@@ -1171,7 +1215,12 @@ public class VortexController : GameController {
 
   void Enter_SPINNING() {
 
-    SetRobotEmotion("WATCH_SPIN", false, false);
+    if (cozmoIndex == currentPlayerIndex) {
+      SetRobotEmotion("WATCH_SPIN", false, false);
+    }
+    else {
+      CozmoEmotionManager.instance.SetEmotionTurnInPlace("WATCH_SPIN", robotPoses[0].rad, true, false, true);
+    }
 
     lightingBall.Radius = wheelLightningRadii[currentWheelIndex];
 
@@ -1488,6 +1537,15 @@ public class VortexController : GameController {
 
 
     PlayRoundCompleteLights();
+    int high_score = -1;
+    for (int i = 0; i < scores.Count; i++) {
+      if (scores[i] > high_score) {
+        high_score = scores[i];
+        lastLeader = i;
+      }
+    }
+
+    Debug.Log("last leader index is: " + lastLeader);
 
     //only winner is given points per round in winnerElimination
     if (settings.winnerEliminated) {
@@ -1914,7 +1972,7 @@ public class VortexController : GameController {
           RobotEngineManager.instance.SuccessOrFailure -= CheckForGotoStartCompletion;
       }
       else { //try again to go to the start spot
-        robot.GotoPose(markx_mm, marky_mm, mark_rad);
+        robot.GotoPose(robotPoses[0].x_mm, robotPoses[0].y_mm, robotPoses[0].rad);
       }
       break;
     case RobotActionType.DRIVE_TO_POSE:
@@ -1924,7 +1982,7 @@ public class VortexController : GameController {
           RobotEngineManager.instance.SuccessOrFailure -= CheckForGotoStartCompletion;
       }
       else { //try again to go to the start spot
-        robot.GotoPose(markx_mm, marky_mm, mark_rad);
+        robot.GotoPose(robotPoses[0].x_mm, robotPoses[0].y_mm, robotPoses[0].rad);
       }
       break;
     }
@@ -1960,7 +2018,7 @@ public class VortexController : GameController {
       if (index == cozmoIndex) { // cozmo
         //SetRobotEmotion ("LETS_PLAY");
         Debug.LogError("lets play!");
-        CozmoEmotionManager.instance.SetEmotionReturnToPose("LETS_PLAY", markx_mm, marky_mm, mark_rad);
+        CozmoEmotionManager.instance.SetEmotionReturnToPose("LETS_PLAY", markx_mm, marky_mm, mark_rad, true, true);
         atYourMark = false;
       }
       else {
@@ -2042,13 +2100,17 @@ public class VortexController : GameController {
     }
   }
 
-  public void SetRobotStartingPosition() {
-    mark_rad = robot.poseAngle_rad + (3.0f * Mathf.PI) / 2.0f;
-    mark_rad = mark_rad < 2.0f * Mathf.PI ? mark_rad : mark_rad - 2.0f * Mathf.PI;
-    Vector2 cozmo_desired_facing = MathUtil.RotateVector2d(Vector3.right, mark_rad);
-    Vector2 offset = new Vector2(robot.WorldPosition.x, robot.WorldPosition.y) - (50 * cozmo_desired_facing.normalized);
-    markx_mm = offset.x;
-    marky_mm = offset.y;
+  public void SetRobotStartingPositions() {
+    for (int i = 0; i < 3; i++) {
+      float[] rads = new float [3]{ (3.0f * Mathf.PI) / 2.0f, 0f, Mathf.PI };
+      float mark_rad = robot.poseAngle_rad + rads[i];
+      mark_rad = mark_rad < 2.0f * Mathf.PI ? mark_rad : mark_rad - 2.0f * Mathf.PI;
+      robotPoses[i].rad = mark_rad;
+      Vector2 cozmo_desired_facing = MathUtil.RotateVector2d(Vector3.right, mark_rad);
+      Vector2 offset = new Vector2(robot.WorldPosition.x, robot.WorldPosition.y) - (50 * cozmo_desired_facing.normalized);
+      robotPoses[i].x_mm = offset.x;
+      robotPoses[i].y_mm = offset.y;
+    }
   }
 
   #endregion
