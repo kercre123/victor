@@ -1,0 +1,25 @@
+/** Clad definitions of all messages sent from the Cozmo engine to the robot
+ * This file is used on both the RTIP and WiFi chips on the robot but because we use explicit union tags, we don't have
+ * to recompile the code in lock step.
+ */
+ 
+ 
+namespace Anki {
+namespace Cozmo {
+
+
+
+
+/** Pipe from engine to robot.
+ * This cannot be an auto union because we need explicit tag values to partition the RTIP and WiFi code
+ * and to make debugging from message dumps more sane.
+ */
+union EngineToRobot {
+
+message 
+
+}
+
+
+} // namespace Cozmo
+} // namespace Anki

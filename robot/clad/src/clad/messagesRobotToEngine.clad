@@ -1,14 +1,121 @@
 /** Clad definitions of all messages sent from the Cozmo robot to the Cozmo engine
+ * This file is used on both the RTIP and WiFi chips on the robot but because we use explicit union tags, we don't have
+ * to recompile the code in lock step.
  */
 
-#include "messagesRtipToEngine.clad"
-#include "messagesWiFiToEngine.clad"
+
+#include "robotStatusFlag.clad"
+#include "activeObjectTypes.clad"
+#include "rtipTraces.clad"
+#include "imageChunk.clad"
 
 namespace Anki {
 namespace Cozmo {
 
+/// *************** RTIP to Engine messages ******************************* ///
+// Structure definition for convenience
+message RobotPose
+{
+  float_32 x,
+  float_32 y,
+  float_32 z,
+  float_32 angle,
+  float_32 pitch,
+}
+ 
+message RobotState
+{
+  uint_32 timestamp,
+  uint_32 pose_frame_id,
+  RobotPose pose,
+  float_32 lwheel_speed_mmps,
+  float_32 rwheel_speed_mmps,
+  float_32 headAngle,
+  float_32 liftAngle,
+  float_32 rawGyroZ,
+  float_32 rawAccelY,
+  RobotStatusFlag status, // RobotStatusFlag packs as a uint_16
+  uint_16 lastPathID,
+  int_8   currPathSegment, // -1 if not traversing a path
+  uint_8  numFreeSegmentSlots,
+  uint_8  battVolt10x,
+}
 
-union RobotToEnginePipe {
+message PrintTraceInt
+{
+  RtipTrace name,
+  int32     value
+}
+
+message PrintTraceDouble
+{
+  RtipTrace name,
+  float_64  value
+}
+
+message MainCycleTimeError
+{
+  uint_32 numMainTooLongErrors,
+  uint_32 avgMainTooLateTime,
+  uint_32 numMainTooLateErrors,
+  uint_32 avgMainTooLongTime,
+}
+
+message GoalPose
+{
+  RobotPose pose,
+  bool followingMarkerNormal, 
+}
+
+// ----- Active object messages ------
+
+// Convenience structure definition
+message ActiveAccel
+{
+  float_32 x,
+  float_32 y,
+  float_32 z
+}
+
+message ActiveObjectMoved
+{
+  uint_32     objectID,
+  ActiveAccel accel,
+  UpAxis      upAxis
+}
+
+message ActiveObjectStoppedMoving
+{
+  uint_32 objectID,
+  UpAxis  upAxis,
+  bool    rolled
+}
+
+message ActiveObjectTapped
+{
+  uint_32 objectID,
+  uint_8  numTaps,
+}
+
+message AnimationState {
+  uint_32 timestamp,
+  int_32  numAnimBytesPlayed,
+  RobotStatusFlag status, // RobotStatusFlag packs as a uint_16
+}
+
+message PrintText
+{
+  int_8  logLevel,
+  uint_8 text[uint_8],
+}
+
+/// *************** Overall message pipe ******************************* ///
+
+/** Pipe from robot to engine.
+ * This cannot be an auto union because we need explicit tag values to partition the RTIP and WiFi code
+ * and to make debugging from message dumps more sane.
+ */
+union RobotToEngine {
   // From RTIP
   RobotState                 state               = 0x00,
   PrintTraceInt              traceInt            = 0x01,
