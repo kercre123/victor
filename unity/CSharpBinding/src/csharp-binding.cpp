@@ -41,6 +41,10 @@ bool initialized = false;
 
 UnityLoggerProvider logger_provider;
 
+void Unity_DAS_Log(int level, const char* eventName, const char* eventValue) {
+  
+}
+
 int cozmo_set_log_callback(LogCallback callback, int min_log_level)
 {
     logger_provider.SetMinLogLevel(min_log_level);

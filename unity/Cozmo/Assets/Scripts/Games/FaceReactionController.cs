@@ -298,8 +298,6 @@ public class FaceReactionController : GameController {
   }
 
   private void Enter_REACT_TO_FACE() {
-    int index = Random.Range(0, RobotEngineManager.instance.robotAnimationNames.Count);
-    //SendAnimation(RobotEngineManager.instance.robotAnimationNames[index]);
     int fixedIndex = Random.Range(0, 5);
     switch (fixedIndex) {
     case 0:
