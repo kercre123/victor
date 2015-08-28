@@ -307,6 +307,7 @@
               '<(webots_path)/lib/libCppController.dylib',
               '<@(opencv_libs)',
               '$(SDKROOT)/System/Library/Frameworks/OpenGL.framework',
+              '$(SDKROOT)/System/Library/Frameworks/GLUT.framework',              
             ],
           }, # end cozmo_physics
 

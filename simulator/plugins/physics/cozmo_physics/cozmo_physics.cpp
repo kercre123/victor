@@ -12,6 +12,7 @@
 
 #include <ode/ode.h>
 #include <plugins/physics.h>
+#include <GLUT/GLUT.h>
 
 #include "cozmo_physics.h"
 #include <map>
@@ -366,13 +367,34 @@ void webots_physics_step() {
 }
 
 
-void draw_cuboid(float x_dim, float y_dim, float z_dim)
+void drawTextAtOffset(std::string s, float x_off, float y_off, float z_off)
+{
+  glPushMatrix();
+  glTranslatef(x_off, y_off, z_off);
+  
+  glRasterPos2i(0,0);
+  
+  void * font = GLUT_BITMAP_9_BY_15;
+  for (std::string::iterator i = s.begin(); i != s.end(); ++i)
+  {
+    char c = *i;
+    //glColor3d(1.0, 0.0, 0.0);
+    glutBitmapCharacter(font, c);
+  }
+  
+  glPopMatrix();
+}
+
+
+void draw_cuboid(int id, float x_dim, float y_dim, float z_dim)
 {
   
    // Webots hack
   float halfX = x_dim*0.5;
   float halfY = y_dim*0.5;
   float halfZ = z_dim*0.5;
+  
+  drawTextAtOffset(std::to_string(id), 1.2*halfX, 1.2*halfY, 1.2*halfZ);
   
   // TOP
   glBegin(GL_LINE_LOOP);
@@ -664,7 +686,7 @@ void webots_physics_draw(int pass, const char *view) {
           draw_robot(Anki::Cozmo::VIZ_ROBOT_MARKER_SMALL_TRIANGLE);
           break;
         case Anki::Cozmo::VIZ_OBJECT_CUBOID:
-          draw_cuboid(obj->x_size_m, obj->y_size_m, obj->z_size_m);
+          draw_cuboid(obj->objectID - Anki::Cozmo::VizObjectBaseID[Anki::Cozmo::VIZ_OBJECT_CUBOID], obj->x_size_m, obj->y_size_m, obj->z_size_m);
           
           
           // AXES:
