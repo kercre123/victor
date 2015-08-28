@@ -49,6 +49,18 @@ namespace Cozmo {
     
   private:
     
+    typedef enum {
+      DONT_CARE_IF_OBJECT_ON_TOP,
+      OBJECT_ON_TOP,
+      NO_OBJECT_ON_TOP
+    } ObjectOnTopStatus;
+    
+    typedef enum {
+      MESSY,
+      NEAT,
+      COMPLETE
+    } BlockLightState;
+    
     // Dispatch handlers based on tag of passed-in event
     void EventHandler(const AnkiEvent<ExternalInterface::MessageEngineToGame>& event);
     
@@ -65,7 +77,34 @@ namespace Cozmo {
     Result SelectNextPlacement();
     Result FindEmptyPlacementPose(const ObjectID& nearObjectID, Pose3d& pose);
     
-    f32 GetNeatnessScore(ObjectID whichObject);
+    // Gets the object within objectSet that is closest to the robot and
+    // 1) at the specified heighLevel (0 == equal same as robot, 1 == high dock height) and
+    // 2) honors the ObjectOnTopStatus
+    Result GetClosestObjectInSet(const std::set<ObjectID>& objectSet, u8 heightLevel, ObjectOnTopStatus ootStatus, ObjectID &objID);
+    
+    void SetBlockLightState(const std::set<ObjectID>& objectSet,  BlockLightState state);
+    void SetBlockLightState(const ObjectID& objID, BlockLightState state);
+    
+    // Updates all block lights according to messy/neat state
+    void UpdateBlockLights();
+    
+    // Set/Unset the location of the last pick or place failure
+    void SetLastPickOrPlaceFailure(const ObjectID& objectID, const Pose3d& pose);
+    void UnsetLastPickOrPlaceFailure();
+    
+    // Deletes the object if it was also the previous object that the robot
+    // had failed to pick or place from the same robot pose.
+    void DeleteObjectIfFailedToPickOrPlaceAgain(const ObjectID& objectID);
+    
+    // Checks if blocks are "aligned".
+    // A messy block that is aligned with a neat block should be considered neat
+    bool AreAligned(const ObjectID& o1, const ObjectID& o2);
+    
+    // Checks the neatness of any blocks that it has observed within the last second
+    void VerifyNeatness();
+    
+    // Returns neatness score of object
+    f32 GetNeatnessScore(const ObjectID& whichObject);
     
     // Goal is to move objects from messy to neat
     std::set<ObjectID> _messyObjects;
@@ -97,6 +136,15 @@ namespace Cozmo {
     ObjectID _objectToPlaceOn;
     ObjectID _lastObjectPlacedOnGround;
     ObjectID _anchorObject; // the object the arrangement is anchored to
+    
+    // If it fails to pickup or place the same object a certain number of times in a row
+    // then delete the object. Assuming that the failures are due to not being able to see
+    // an object where it used to be.
+    ObjectID _lastObjectFailedToPickOrPlace;
+    Pose3d _lastPoseWhereFailedToPickOrPlace;
+ 
+    // ID tag of last queued action
+    u32 _lastActionTag;
     
     void UpdateName();
     

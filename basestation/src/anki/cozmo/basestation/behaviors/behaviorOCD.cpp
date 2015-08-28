@@ -319,8 +319,9 @@ namespace Cozmo {
       _anchorObject = _objectToPickUp;
     }
     
-    _robot.GetActionList().QueueActionNow(IBehavior::sActionSlot,
-                                          new DriveToPickAndPlaceObjectAction(_objectToPickUp));
+    IActionRunner* pickupAction = new DriveToPickAndPlaceObjectAction(_objectToPickUp);
+    _lastActionTag = pickupAction->GetTag();
+    _robot.GetActionList().QueueActionNow(IBehavior::sActionSlot, pickupAction);
     
     _currentState = State::PickingUpBlock;
     
@@ -348,35 +349,87 @@ namespace Cozmo {
     
     pose = nearObject->GetPose();
     
-    Vec3f T(2*nearObject->GetSize().x(), 0, pose.GetTranslation().z());
-    Pose3d poseNextTo(0, Z_AXIS_3D(), T);
-    pose.PreComposeWith(poseNextTo);
-    if(nullptr != _robot.GetBlockWorld().FindObjectClosestTo(pose, nearObject->GetSize())) {
-      // Spot along x axis is full, try -x
-      T.x() *= -1.f;
-      poseNextTo.SetTranslation(T);
-      pose = poseNextTo * nearObject->GetPose();
-      if(nullptr != _robot.GetBlockWorld().FindObjectClosestTo(pose, nearObject->GetSize())) {
-        // Spot along -x axis is full, try y
-        T.x() = 0.f;
-        T.y() = 2*nearObject->GetSize().y();
-        poseNextTo.SetTranslation(T);
-        pose = poseNextTo * nearObject->GetPose();
-        if(nullptr != _robot.GetBlockWorld().FindObjectClosestTo(pose, nearObject->GetSize())) {
-          // Spot along y axis is full, try -1
-          T.y() *= -1.f;
-          poseNextTo.SetTranslation(T);
-          pose = poseNextTo * nearObject->GetPose();
-          if(nullptr != _robot.GetBlockWorld().FindObjectClosestTo(pose, nearObject->GetSize())) {
-            
-            return RESULT_FAIL;
-          }
-        }
+    BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "FindEmptyPlacementPose","Block pose: (%f, %f, %f)",
+                           pose.GetTranslation().x(), pose.GetTranslation().y(), RAD_TO_DEG_F32(pose.GetRotationAngle<'Z'>().ToFloat()));
+    
+    
+    std::set<ObjectID> ignoreIDs;
+    ignoreIDs.insert(_robot.GetCarryingObject());
+    
+    Pose3d testPose(pose);
+    f32 closestDistToRobot = std::numeric_limits<f32>::max();
+    
+    // Test spot along +x axis
+    Vec3f T(2*nearObject->GetSize().x(), 0, testPose.GetTranslation().z());
+    Pose3d poseNextTo(0, Z_AXIS_3D(), T, pose.GetParent());
+    testPose.PreComposeWith(poseNextTo);
+    if(nullptr == _robot.GetBlockWorld().FindObjectClosestTo(testPose, nearObject->GetSize(), ignoreIDs)) {
+      f32 distToRobot = ComputeDistanceBetween(_robot.GetPose(), testPose);
+      if ( distToRobot < closestDistToRobot) {
+        closestDistToRobot = distToRobot;
+        pose = testPose;
       }
     }
+    BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.FindEmptyPlacementPose.TestPose+X", "(%f %f %f) - %f",
+                           testPose.GetTranslation().x(), testPose.GetTranslation().y(), RAD_TO_DEG_F32(testPose.GetRotationAngle<'Z'>().ToFloat()), closestDistToRobot);
+  
+    // Test spot along -x axis
+    T.x() *= -1.f;
+    poseNextTo.SetTranslation(T);
+    testPose = nearObject->GetPose();
+    testPose.PreComposeWith(poseNextTo);
+    if(nullptr == _robot.GetBlockWorld().FindObjectClosestTo(testPose, nearObject->GetSize(), ignoreIDs)) {
+      f32 distToRobot = ComputeDistanceBetween(_robot.GetPose(), testPose);
+      if ( distToRobot < closestDistToRobot) {
+        closestDistToRobot = distToRobot;
+        pose = testPose;
+      }
+    }
+    BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.FindEmptyPlacementPose.TestPose-X", "(%f %f %f) - %f",
+                           testPose.GetTranslation().x(), testPose.GetTranslation().y(), RAD_TO_DEG_F32(testPose.GetRotationAngle<'Z'>().ToFloat()), closestDistToRobot);
+    
+    // Test spot along +y axis
+    T.x() = 0.f;
+    T.y() = 2*nearObject->GetSize().y();
+    poseNextTo.SetTranslation(T);
+    testPose = nearObject->GetPose();
+    testPose.PreComposeWith(poseNextTo);
+    if(nullptr == _robot.GetBlockWorld().FindObjectClosestTo(testPose, nearObject->GetSize(), ignoreIDs)) {
+      f32 distToRobot = ComputeDistanceBetween(_robot.GetPose(), testPose);
+      if ( distToRobot < closestDistToRobot) {
+        closestDistToRobot = distToRobot;
+        pose = testPose;
+      }
+    }
+    BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.FindEmptyPlacementPose.TestPose+Y", "(%f %f %f) - %f",
+                                                testPose.GetTranslation().x(), testPose.GetTranslation().y(), RAD_TO_DEG_F32(testPose.GetRotationAngle<'Z'>().ToFloat()), closestDistToRobot);
+    
+    // Test spot along -y axis
+    T.y() *= -1.f;
+    poseNextTo.SetTranslation(T);
+    testPose = nearObject->GetPose();
+    testPose.PreComposeWith(poseNextTo);
+    if(nullptr == _robot.GetBlockWorld().FindObjectClosestTo(testPose, nearObject->GetSize(), ignoreIDs)) {
+      f32 distToRobot = ComputeDistanceBetween(_robot.GetPose(), testPose);
+      if ( distToRobot < closestDistToRobot) {
+        closestDistToRobot = distToRobot;
+        pose = testPose;
+      }
+    }
+    BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.FindEmptyPlacementPose.TestPose-Y", "(%f %f %f) - %f",
+                           testPose.GetTranslation().x(), testPose.GetTranslation().y(), RAD_TO_DEG_F32(testPose.GetRotationAngle<'Z'>().ToFloat()), closestDistToRobot);
+    
+    // If no empty pose found, return fail
+    if (closestDistToRobot == std::numeric_limits<f32>::max()) {
+      return RESULT_FAIL;
+    }
+
+    BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "FindEmptyPlacementPose","Placement pose: (%f, %f, %f), distFromRobot %f",
+                           pose.GetTranslation().x(), pose.GetTranslation().y(), RAD_TO_DEG_F32(pose.GetRotationAngle<'Z'>().ToFloat()), closestDistToRobot);
     
     return RESULT_OK;
   } // FindEmptyPlacementPose()
+  
   
   Result BehaviorOCD::SelectNextPlacement()
   {
@@ -390,12 +443,13 @@ namespace Cozmo {
     
     if(carriedObjectID != _objectToPickUp) {
       PRINT_NAMED_WARNING("BehaviorOCD.SelectNextPlacement.UnexpectedID",
-                          "Expecting object being carried to match object set to be picked up.");
+                          "Expecting object being carried to match object set to be picked up (carried %d, objectToPickup %d).",
+                          carriedObjectID.GetValue(), _objectToPlaceOn.GetValue());
     }
     
     ObservableObject* carriedObject = _robot.GetBlockWorld().GetObjectByID(carriedObjectID);
     if(carriedObject == nullptr) {
-      PRINT_NAMED_ERROR("BehaviorOCD.SelectNextPlacement.InvalidCarriedObject", "");
+      PRINT_NAMED_ERROR("BehaviorOCD.SelectNextPlacement.InvalidCarriedObject", "ID %d", carriedObjectID.GetValue());
       return RESULT_FAIL;
     }
     
@@ -403,40 +457,10 @@ namespace Cozmo {
     {
       case Arrangement::StacksOfTwo:
       {
-        BlockWorld& blockWorld = _robot.GetBlockWorld();
-        
-        // Pick the closest neatened object that's on the ground without anything on top yet...
-        f32 closestDistSq = std::numeric_limits<f32>::max();
-        for(auto & neatObjectID : _neatObjects) {
-          ObservableObject* neatObject = blockWorld.GetObjectByID(neatObjectID);
-          if(neatObject == nullptr) {
-            PRINT_NAMED_ERROR("BehaviorOCD.SelectNextPlacement.InvalidObjectID",
-                              "No object ID = %d", neatObjectID.GetValue());
-            return RESULT_FAIL;
-          }
-          
-          // Get pose of this neat object w.r.t. robot pose
-          Pose3d poseWrtRobot;
-          if(false == neatObject->GetPose().GetWithRespectTo(_robot.GetPose(), poseWrtRobot)) {
-            PRINT_NAMED_ERROR("BehaviorOCD.SelectNextPlacement.PoseFail",
-                              "Could not get object %d's pose w.r.t. robot.",
-                              neatObject->GetID().GetValue());
-            return RESULT_FAIL;
-          }
-          
-          // Make sure it's approximately at the same height as the robot
-          if(NEAR(poseWrtRobot.GetTranslation().z(), neatObject->GetSize().z()*0.5f, 10.f)) {
-            // See if there's anything on top of it
-            ObservableObject* onTop = blockWorld.FindObjectOnTopOf(*neatObject, 15.f);
-            if(onTop == nullptr) {
-              const f32 currentDistSq = poseWrtRobot.GetTranslation().LengthSq();
-              if(currentDistSq < closestDistSq) {
-                closestDistSq = currentDistSq;
-                _objectToPlaceOn = neatObjectID;
-              }
-            }
-          }
-        } // for each neat object
+        // Find closest neat block that doesn't have a block on top
+        if (GetClosestObjectInSet(_neatObjects, 0, NO_OBJECT_ON_TOP, _objectToPlaceOn) != RESULT_OK) {
+          return RESULT_FAIL;
+        }
         
         if(_objectToPlaceOn.IsSet()) {
           // Found a neat object with nothing on top. Stack on top of it:
@@ -445,7 +469,16 @@ namespace Cozmo {
                            _objectToPlaceOn.GetValue());
         } else {
           // ... if there isn't one, then place this block on the ground
-          // at the same orientation as the last block placed
+          // at the same orientation as the last block placed.
+          // If lastObjectPlacedOnGround is not set, it may be because this
+          // is the first block to be placed on ground, or the last one was moved.
+          // See if there exists a complete neat stack and set relative to that.
+          
+          // Find closest neat block that does have a block on top
+          if (GetClosestObjectInSet(_neatObjects, 0, OBJECT_ON_TOP, _lastObjectPlacedOnGround) != RESULT_OK) {
+            return RESULT_FAIL;
+          }
+          
           if(_lastObjectPlacedOnGround.IsSet()) {
             Pose3d pose;
             Result result = FindEmptyPlacementPose(_lastObjectPlacedOnGround, pose);
@@ -534,12 +567,329 @@ namespace Cozmo {
     
     _currentState = State::PlacingBlock;
     
+    _lastActionTag = placementAction->GetTag();
     Result queueResult = _robot.GetActionList().QueueActionNow(IBehavior::sActionSlot, placementAction);
     
     return queueResult;
   } // SelectNextPlacement()
   
 
+  // TODO: Move this to blockworld?
+  // Returns RESULT_FAIL if there are non-existant objects in the set.
+  // objectID is unset if none of the object in set met criteria.
+  Result BehaviorOCD::GetClosestObjectInSet(const std::set<ObjectID>& objectSet, u8 heightLevel, ObjectOnTopStatus ootStatus, ObjectID& objectID)
+  {
+    BlockWorld& blockWorld = _robot.GetBlockWorld();
+    objectID.UnSet();
+    
+    // Pick the closest neatened object that's on the ground without anything on top yet...
+    f32 closestDistSq = std::numeric_limits<f32>::max();
+    for(auto & objID : objectSet) {
+      ObservableObject* oObject = blockWorld.GetObjectByID(objID);
+      if(oObject == nullptr) {
+        PRINT_NAMED_ERROR("BehaviorOCD.GetClosestObject.InvalidObjectID",
+                          "No object ID = %d", objID.GetValue());
+        return RESULT_FAIL;
+      }
+      
+      // Get pose of this neat object w.r.t. robot pose
+      Pose3d poseWrtRobot;
+      if(false == oObject->GetPose().GetWithRespectTo(_robot.GetPose(), poseWrtRobot)) {
+        PRINT_NAMED_ERROR("BehaviorOCD.GetClosestObject.PoseFail",
+                          "Could not get object %d's pose w.r.t. robot.",
+                          oObject->GetID().GetValue());
+        return RESULT_FAIL;
+      }
+      
+      // Make sure it's approximately at the same height as the robot
+      if(NEAR(poseWrtRobot.GetTranslation().z(), oObject->GetSize().z()*(heightLevel + 0.5f), 10.f)) {
+        // See if there's anything on top of it
+        ObservableObject* onTop = blockWorld.FindObjectOnTopOf(*oObject, 15.f);
+        if((ootStatus == DONT_CARE_IF_OBJECT_ON_TOP) || (ootStatus == OBJECT_ON_TOP && onTop != nullptr) || (ootStatus == NO_OBJECT_ON_TOP && onTop == nullptr)) {
+          const f32 currentDistSq = poseWrtRobot.GetTranslation().LengthSq();
+          if(currentDistSq < closestDistSq) {
+            closestDistSq = currentDistSq;
+            objectID = objID;
+          }
+        }
+      }
+    } // for each neat object
+    
+    return RESULT_OK;
+  }
+  
+
+  
+  void BehaviorOCD::SetBlockLightState(const std::set<ObjectID>& objectSet,  BlockLightState state)
+  {
+    for (auto& objID : objectSet)
+    {
+      SetBlockLightState(objID, state);
+    }
+  }
+  
+  void BehaviorOCD::SetBlockLightState(const ObjectID& objID, BlockLightState state)
+  {
+    switch(state) {
+      case MESSY:
+        // TODO: Get "messy" color and on/off settings from config
+        _robot.SetObjectLights(objID, WhichBlockLEDs::ALL, NamedColors::RED, NamedColors::BLACK, 200, 200, 50, 50, false, MakeRelativeMode::RELATIVE_LED_MODE_OFF, {});
+        break;
+      case NEAT:
+        // TODO: Get "neat" color and on/off settings from config
+        _robot.SetObjectLights(objID, WhichBlockLEDs::ALL, NamedColors::CYAN, NamedColors::BLACK, 10, 10, 2000, 2000, false, MakeRelativeMode::RELATIVE_LED_MODE_OFF, {});
+        break;
+      case COMPLETE:
+        _robot.SetObjectLights(objID, WhichBlockLEDs::ALL, NamedColors::GREEN, NamedColors::GREEN, 200, 200, 50, 50, false, MakeRelativeMode::RELATIVE_LED_MODE_OFF, {});
+        break;
+      default:
+        break;
+    }
+  }
+  
+  void BehaviorOCD::UpdateBlockLights()
+  {
+    if (_neatObjects.size() >= 4) {
+      for (auto& obj : _neatObjects) {
+        SetBlockLightState(obj, COMPLETE);
+      }
+    } else {
+      for (auto& obj : _neatObjects) {
+        SetBlockLightState(obj, NEAT);
+      }
+      for (auto& obj : _messyObjects) {
+        SetBlockLightState(obj, MESSY);
+      }
+    }
+  }
+  
+  
+  // If they have roughly the same neatness score and they're poses are roughly axis aligned at
+  // distance of approximately two block widths
+  bool BehaviorOCD::AreAligned(const ObjectID& o1, const ObjectID& o2)
+  {
+    f32 scoreDiff = fabs(GetNeatnessScore(o1) - GetNeatnessScore(o2));
+    if (scoreDiff > 0.1) {
+      return false;
+    }
+    
+    BlockWorld& blockWorld = _robot.GetBlockWorld();
+    ObservableObject* obj1 = blockWorld.GetObjectByID(o1);
+    ObservableObject* obj2 = blockWorld.GetObjectByID(o2);
+    
+    
+    const Vec3f distThresh = obj1->GetSize();
+    Pose3d testPose(obj1->GetPose());
+    
+    // Test spot along +x axis
+    Vec3f T(2*obj1->GetSize().x(), 0, testPose.GetTranslation().z());
+    Pose3d poseNextTo(0, Z_AXIS_3D(), T, obj1->GetPose().GetParent());
+    testPose.PreComposeWith(poseNextTo);
+    if(obj2 == blockWorld.FindObjectClosestTo(testPose, distThresh)) {
+      return true;
+    }
+    BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.AreAligned.TestPose+X", "(%f %f %f)",
+                           testPose.GetTranslation().x(), testPose.GetTranslation().y(), RAD_TO_DEG_F32(testPose.GetRotationAngle<'Z'>().ToFloat()));
+    
+    // Test spot along -x axis
+    T.x() *= -1.f;
+    poseNextTo.SetTranslation(T);
+    testPose = obj1->GetPose();
+    testPose.PreComposeWith(poseNextTo);
+    if(obj2 == blockWorld.FindObjectClosestTo(testPose, distThresh)) {
+      return true;
+    }
+    BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.AreAligned.TestPose-X", "(%f %f %f)",
+                           testPose.GetTranslation().x(), testPose.GetTranslation().y(), RAD_TO_DEG_F32(testPose.GetRotationAngle<'Z'>().ToFloat()));
+    
+    // Test spot along +y axis
+    T.x() = 0.f;
+    T.y() = 2*obj1->GetSize().y();
+    poseNextTo.SetTranslation(T);
+    testPose = obj1->GetPose();
+    testPose.PreComposeWith(poseNextTo);
+    if(obj2 == blockWorld.FindObjectClosestTo(testPose, distThresh)) {
+      return true;
+    }
+    BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.AreAligned.TestPose+Y", "(%f %f %f)",
+                           testPose.GetTranslation().x(), testPose.GetTranslation().y(), RAD_TO_DEG_F32(testPose.GetRotationAngle<'Z'>().ToFloat()));
+    
+    // Test spot along -y axis
+    T.y() *= -1.f;
+    poseNextTo.SetTranslation(T);
+    testPose = obj1->GetPose();
+    testPose.PreComposeWith(poseNextTo);
+    if(obj2 == blockWorld.FindObjectClosestTo(testPose, distThresh)) {
+      return true;
+    }
+    BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.AreAligned.TestPose-Y", "(%f %f %f)",
+                           testPose.GetTranslation().x(), testPose.GetTranslation().y(), RAD_TO_DEG_F32(testPose.GetRotationAngle<'Z'>().ToFloat()));
+
+    return false;
+    
+  }
+  
+  
+  // Verify that objects observed in the last second are in the correct state (i.e. neat or messy)
+  void BehaviorOCD::VerifyNeatness()
+  {
+    switch(_currentArrangement)
+    {
+      case Arrangement::StacksOfTwo:
+      {
+        const f32 MIN_NEATNESS_SCORE = 0.8f;
+        const f32 RECENTLY_OBSERVED_TIME_THRESH_MS = 1000.f;
+        
+        TimeStamp_t lastMsgRecvdTime = _robot.GetLastMsgTimestamp();
+        const BlockWorld& blockWorld = _robot.GetBlockWorld();
+
+        // A messy block can become a neat block if it has a high neatness score and it's
+        // 1) on top of a neat block, or
+        // 2) under a neat block, or
+        // 2) aligned with a neat block from another stack
+        bool foundMessyToNeat = false;
+        for (auto objID = _messyObjects.begin(); objID != _messyObjects.end(); ) {
+          ObservableObject* oObject = blockWorld.GetObjectByID(*objID);
+          if (oObject == nullptr) {
+            PRINT_NAMED_ERROR("BehaviorOCD.VerifyNeatness.InvalidObject","Object %d", objID->GetValue());
+          }
+          else if (lastMsgRecvdTime - oObject->GetLastObservedTime() < RECENTLY_OBSERVED_TIME_THRESH_MS) {
+          
+            f32 score = GetNeatnessScore(*objID);
+            if (score > MIN_NEATNESS_SCORE) {
+              // 1) Check if on top of a neat block
+              
+              // Get pose of this neat object w.r.t. robot pose
+              Pose3d poseWrtRobot;
+              if(false == oObject->GetPose().GetWithRespectTo(_robot.GetPose(), poseWrtRobot)) {
+                PRINT_NAMED_ERROR("BehaviorOCD.VerifyNeatness.PoseFail",
+                                  "Could not get object %d's pose w.r.t. robot.",
+                                  oObject->GetID().GetValue());
+                ++objID;
+                continue;
+              }
+              
+              // Make sure it's approximately at high dock height
+              if(NEAR(poseWrtRobot.GetTranslation().z(), oObject->GetSize().z()*(1.5f), 10.f)) {
+                
+                // If so look for a nearby neat block below it.
+                Vec3f distThresh(0.5f * oObject->GetSize().x(),
+                                 0.5f * oObject->GetSize().y(),
+                                 1.5f * oObject->GetSize().z());
+                std::set<ObjectID> ignoreIDs;
+                ignoreIDs.insert(*objID);
+                ObservableObject* objBelow = blockWorld.FindObjectClosestTo(oObject->GetPose(), distThresh, ignoreIDs);
+                if (objBelow == nullptr) {
+                  ++objID;
+                  continue;
+                }
+                
+                Vec3f vecBetween = ComputeVectorBetween( objBelow->GetPose(), oObject->GetPose());
+                vecBetween.Abs();
+                if (vecBetween.x() < 0.5f*(oObject->GetSize().x()) &&
+                    vecBetween.y() < 0.5f*(oObject->GetSize().y()) &&
+                    vecBetween.z() > 0.5f*(oObject->GetSize().z()) ) {
+                  PRINT_NAMED_INFO("BehaviorOCD.VerifyNeatness.MessyToNeat(1)", "Object %d", objID->GetValue());
+                  foundMessyToNeat = true;
+                }
+              }
+
+              
+              // 2) Check if block on top is neat
+              // 3) Check if aligned with a neat block from another stack
+              if (!foundMessyToNeat) {
+                for (auto& neatBlockID : _neatObjects) {
+                  ObservableObject* objectOnTop = blockWorld.FindObjectOnTopOf(*oObject, 15.f);
+                  if ((objectOnTop && (objectOnTop->GetID() == neatBlockID)) ||
+                      AreAligned(neatBlockID, *objID)) {
+                    PRINT_NAMED_INFO("BehaviorOCD.VerifyNeatness.MessyToNeat(2)", "Object %d", objID->GetValue());
+                    foundMessyToNeat = true;
+                    break;
+                  }
+                }
+              }
+              
+              if (foundMessyToNeat) {
+                if ((_currentState == State::PickingUpBlock) && (*objID == _objectToPickUp)) {
+                  // Robot is trying to pickup the messy block that we're about to make clean,
+                  // so cancel it.
+                  _robot.GetActionList().Cancel(_lastActionTag);
+                }
+                _neatObjects.insert(*objID);
+                objID = _messyObjects.erase(objID);
+                UpdateBlockLights();
+                continue;
+              }
+            }
+          }
+          ++objID;
+        }
+        
+        // A neat block can become messy if it has a low neatness score
+        for (auto objID = _neatObjects.begin(); objID != _neatObjects.end(); ) {
+          ObservableObject* oObject = blockWorld.GetObjectByID(*objID);
+          if (oObject == nullptr) {
+            PRINT_NAMED_ERROR("BehaviorOCD.VerifyNeatness.InvalidObject","Object %d", objID->GetValue());
+            continue;
+          }
+          else if (lastMsgRecvdTime - oObject->GetLastObservedTime() < RECENTLY_OBSERVED_TIME_THRESH_MS) {
+            
+            f32 score = GetNeatnessScore(*objID);
+            if (score < MIN_NEATNESS_SCORE) {
+              PRINT_NAMED_INFO("BehaviorOCD.VerifyNeatness.NeatToMessy", "Object %d", objID->GetValue());
+              if ((_currentState == State::PlacingBlock) && (*objID == _objectToPlaceOn)) {
+                // Robot is trying to pickup the messy block that we're about to make clean,
+                // so cancel it.
+                _robot.GetActionList().Cancel(_lastActionTag);
+              }
+              _messyObjects.insert(*objID);
+              objID = _neatObjects.erase(objID);
+              UpdateBlockLights();
+              continue;
+            }
+          }
+          ++objID;
+        }
+        
+        break;
+      } // end case Arrangement::StacksOfTwo
+        
+      case Arrangement::Line:
+      {
+        // TODO...
+        PRINT_NAMED_ERROR("BehaviorOCD.VerifyNeatness.Line", "TO BE IMPLEMENTED");
+        break;
+      }
+      default:
+        PRINT_NAMED_ERROR("BehaviorOCD.VerifyNeatness.InvalidState", "");
+        break;
+ 
+    }  // end switch
+    
+  }
+  
+  void BehaviorOCD::UnsetLastPickOrPlaceFailure()
+  {
+    _lastObjectFailedToPickOrPlace.UnSet();
+  }
+  
+  void BehaviorOCD::SetLastPickOrPlaceFailure(const ObjectID& objectID, const Pose3d& pose)
+  {
+    _lastObjectFailedToPickOrPlace = objectID;
+    _lastPoseWhereFailedToPickOrPlace = pose;
+  }
+  
+  void BehaviorOCD::DeleteObjectIfFailedToPickOrPlaceAgain(const ObjectID& objectID)
+  {
+    if (objectID.IsSet() &&
+        (_lastObjectFailedToPickOrPlace == objectID) &&
+        ComputeDistanceBetween(_robot.GetPose(), _lastPoseWhereFailedToPickOrPlace) < 5) {
+      PRINT_NAMED_INFO("BehaviorOCD::DeleteObjectIfFailedToPickOrPlaceAgain", "Deleting object %d", objectID.GetValue());
+      _robot.GetBlockWorld().ClearObject(objectID);
+    }
+  }
+  
+  
   Result BehaviorOCD::HandleActionCompleted(const ExternalInterface::RobotCompletedAction &msg)
   {
     Result lastResult = RESULT_OK;
@@ -560,12 +910,15 @@ namespace Cozmo {
             case RobotActionType::PICKUP_OBJECT_LOW:
               BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.HandleActionCompleted.PickupSuccessful", "");
               // We're done picking up the block, figure out where to put it
+              UnsetLastPickOrPlaceFailure();
               SelectNextPlacement();
               _currentState = State::PlacingBlock;
               break;
               
             case RobotActionType::PICK_AND_PLACE_INCOMPLETE:
               // We failed to pick up or place the last block, try again?
+              DeleteObjectIfFailedToPickOrPlaceAgain(_objectToPickUp);
+              SetLastPickOrPlaceFailure(_objectToPickUp, _robot.GetPose());
               SelectNextObjectToPickUp();
               break;
               
@@ -577,6 +930,8 @@ namespace Cozmo {
         } else {
           BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.HandleActionCompleted.PickupFailure", "Trying again");
           // We failed to pick up or place the last block, try again?
+          DeleteObjectIfFailedToPickOrPlaceAgain(_objectToPickUp);
+          SetLastPickOrPlaceFailure(_objectToPickUp, _robot.GetPose());
           lastResult = SelectNextObjectToPickUp();
         }
         break;
@@ -598,15 +953,22 @@ namespace Cozmo {
               _messyObjects.erase(_objectToPickUp);
               _neatObjects.insert(_objectToPickUp);
               
-              // TODO: Get "neat" color and on/off settings from config
-              _robot.SetObjectLights(_objectToPickUp, WhichBlockLEDs::ALL, NamedColors::CYAN, NamedColors::BLACK, 10, 10, 2000, 2000, false, MakeRelativeMode::RELATIVE_LED_MODE_OFF, {});
+              // If there are 4 neatObjects then set done color on all neat blocks
+              if (_neatObjects.size() >= 4) {
+                SetBlockLightState(_neatObjects, COMPLETE);
+              } else {
+                SetBlockLightState(_objectToPickUp, NEAT);
+              }
               
               lastResult = SelectNextObjectToPickUp();
+              UnsetLastPickOrPlaceFailure();
               _currentState = State::PickingUpBlock;
               break;
               
             case RobotActionType::PICK_AND_PLACE_INCOMPLETE:
               // We failed to place the last block, try again?
+              DeleteObjectIfFailedToPickOrPlaceAgain(_objectToPlaceOn);
+              SetLastPickOrPlaceFailure(_objectToPlaceOn, _robot.GetPose());
               lastResult = SelectNextPlacement();
               break;
               
@@ -617,6 +979,8 @@ namespace Cozmo {
         } else {
           BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.HandleActionCompleted.PlacementFailure", "Trying again");
           // We failed to place the last block, try again?
+          DeleteObjectIfFailedToPickOrPlaceAgain(_objectToPlaceOn);
+          SetLastPickOrPlaceFailure(_objectToPlaceOn, _robot.GetPose());
           lastResult = SelectNextPlacement();
         }
         break;
@@ -639,6 +1003,11 @@ namespace Cozmo {
     ObjectID objectID;
     objectID = msg.objectID;
     
+    if ((_neatObjects.count(objectID)>0) && (objectID == _objectToPlaceOn) && !_robot.IsPickingOrPlacing()) {
+      PRINT_NAMED_INFO("HandleObjectMoved.ResetObjectToPlaceOn", "id %d", _objectToPlaceOn.GetValue());
+      _objectToPlaceOn.UnSet();
+    }
+    
     if(_neatObjects.count(objectID)>0 && objectID != _objectToPlaceOn)
     {
       BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.HandleObjectMoved", "Neat object %d moved, making messy.", msg.objectID);
@@ -650,12 +1019,16 @@ namespace Cozmo {
       
       _neatObjects.erase(objectID);
       _messyObjects.insert(objectID);
+
+      SetBlockLightState(objectID, MESSY);
       
-      // TODO: Get "messy" color and on/off settings from config
-      _robot.SetObjectLights(objectID, WhichBlockLEDs::ALL, NamedColors::RED, NamedColors::BLACK, 200, 200, 50, 50, false, MakeRelativeMode::RELATIVE_LED_MODE_OFF, {});
+      // If blocks were complete before this then, set the NEAT colors on remaining neat blocks
+      if (_neatObjects.size() == 3) {
+        SetBlockLightState(_neatObjects, NEAT);
+      }
       
       // TODO: Should this be "now" or "next"?
-      lastResult = _robot.GetActionList().QueueActionNow(IBehavior::sActionSlot, new PlayAnimationAction("Irritated"));
+      lastResult = _robot.GetActionList().QueueActionNext(IBehavior::sActionSlot, new PlayAnimationAction("MinorIrritation"));
     }
     
     return lastResult;
@@ -680,6 +1053,9 @@ namespace Cozmo {
       
     }
     
+    
+    VerifyNeatness();
+    
     return RESULT_OK;
   }
   
@@ -696,13 +1072,24 @@ namespace Cozmo {
       _lastObjectPlacedOnGround.UnSet();
     }
     
+    if(_objectToPickUp == objectID) {
+      BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.HandleDeletedObject", "About to delete object to pickup, clearing.");
+      _objectToPickUp.UnSet();
+    }
+
+    if(_objectToPlaceOn == objectID) {
+      BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.HandleDeletedObject", "About to delete object to place on, clearing.");
+      _objectToPlaceOn.UnSet();
+    }
+    
+    
     _messyObjects.erase(objectID);
     _neatObjects.erase(objectID);
     
     return RESULT_OK;
   }
   
-  f32 BehaviorOCD::GetNeatnessScore(ObjectID whichObject)
+  f32 BehaviorOCD::GetNeatnessScore(const ObjectID& whichObject)
   {
     ObservableObject* object = _robot.GetBlockWorld().GetObjectByID(whichObject);
     if(object == nullptr) {
@@ -713,16 +1100,12 @@ namespace Cozmo {
     }
     
     // See how far away the object is from being aligned with the coordinate axes
-    Radians angle = object->GetPose().GetRotationAngle<'Z'>();
+    f32 angle = std::fabs(object->GetPose().GetRotationAngle<'Z'>().getDegrees());
     
-    f32 diffFrom90deg;
-    if(angle < 0) {
-      diffFrom90deg = std::fmod(angle.getDegrees(), -90.f);
-    } else {
-      diffFrom90deg = std::fmod(angle.getDegrees(), 90.f);
-    }
+    f32 diffFrom90deg = std::fmod(angle, 90.f);
+    diffFrom90deg = MIN(diffFrom90deg, 90 - diffFrom90deg);
     
-    const f32 score = 1.f - diffFrom90deg/90.f;
+    const f32 score = 1.f - diffFrom90deg/45.f;
     return score;
   }
   

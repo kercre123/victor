@@ -1944,7 +1944,7 @@ namespace Anki
                 if(ignoreIDs.find(objectsByID.first) == ignoreIDs.end()) {
                   Vec3f dist = ComputeVectorBetween(pose, objectsByID.second->GetPose());
                   dist.Abs();
-                  if(dist < closestDist) {
+                  if(dist.Length() < closestDist.Length()) {
                     closestDist = dist;
                     matchingObject = objectsByID.second;
                   }

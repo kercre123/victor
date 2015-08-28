@@ -53,6 +53,8 @@ namespace Cozmo {
     _behaviorChooser->AddBehavior(new BehaviorLookAround(_robot, config));
     _behaviorChooser->AddBehavior(new BehaviorFidget(_robot, config));
     
+    _robot.SetIdleAnimation("Idle");
+    
     _isInitialized = true;
     
     _lastSwitchTime_sec = 0.f;
