@@ -197,11 +197,11 @@ namespace Cozmo {
     switch(_currentArrangement)
     {
       case Arrangement::Line:
-        _stateName += "-LINE";
+        _stateName += "LINE";
         break;
         
       case Arrangement::StacksOfTwo:
-        _stateName += "-STACKS_OF_TWO";
+        _stateName += "STACKS_OF_TWO";
         break;
         
       default:
