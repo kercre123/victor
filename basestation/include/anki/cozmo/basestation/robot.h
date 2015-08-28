@@ -402,6 +402,9 @@ namespace Anki {
       const std::string GetStreamingAnimationName() const;
       
       const ProceduralFace& GetProceduralFace() const { return _proceduralFace; }
+      const ProceduralFace& GetLastProceduralFace() const { return _lastProceduralFace; }
+      void SetProceduralFace(const ProceduralFace& face);
+      void MarkProceduralFaceAsSent();
       
       // Returns the number of animation bytes played on the robot since
       // it was initialized with SyncTime.
@@ -747,7 +750,7 @@ namespace Anki {
       
       CannedAnimationContainer _cannedAnimations;
       AnimationStreamer        _animationStreamer;
-      ProceduralFace           _proceduralFace;
+      ProceduralFace           _proceduralFace, _lastProceduralFace;
       s32 _numFreeAnimationBytes;
       s32 _numAnimationBytesPlayed;
       s32 _numAnimationBytesStreamed;

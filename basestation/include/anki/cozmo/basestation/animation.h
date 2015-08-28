@@ -22,6 +22,7 @@
 #include "anki/common/basestation/jsonTools.h"
 
 #include "anki/cozmo/basestation/keyframe.h"
+#include "anki/cozmo/basestation/proceduralFace.h"
 
 #include <list>
 
@@ -34,7 +35,8 @@ namespace Anki {
     class Animation
     {
     public:
-      Animation();
+
+      Animation(const std::string& name = "");
 
       // For reading canned animations from files
       Result DefineFromJson(const std::string& name, Json::Value& json);
@@ -63,9 +65,11 @@ namespace Anki {
       template<class FRAME_TYPE>
       class Track {
       public:
+        static const size_t MAX_FRAMES_PER_TRACK = 100;
+        
         void Init();
 
-        Result AddKeyFrame(const FRAME_TYPE& keyFrame) { _frames.emplace_back(keyFrame); return RESULT_OK; }
+        Result AddKeyFrame(const FRAME_TYPE& keyFrame);
         Result AddKeyFrame(const Json::Value& jsonRoot);
 
         // Return the Streaming message for the current KeyFrame if it is time,
@@ -76,7 +80,7 @@ namespace Anki {
         // Get a reference to the current KeyFrame in the track
         FRAME_TYPE& GetCurrentKeyFrame() { return *_frameIter; }
 
-        void MoveToNextKeyFrame() { ++_frameIter; }
+        void MoveToNextKeyFrame();
 
         bool HasFramesLeft() const { return _frameIter != _frames.end(); }
 
@@ -85,7 +89,7 @@ namespace Anki {
         void Clear() { _frames.clear(); _frameIter = _frames.end(); }
 
       private:
-        using FrameList = std::vector<FRAME_TYPE>;
+        using FrameList = std::list<FRAME_TYPE>;
         FrameList                    _frames;
         typename FrameList::iterator _frameIter;
       }; // class Animation::Track
@@ -130,6 +134,7 @@ namespace Anki {
 
       bool _endOfAnimationSent;
       
+      ProceduralFace _proceduralFace;
       MessageAnimKeyFrame_FaceImage _proceduralFaceStreamMsg;
       
       bool BufferMessageToSend(RobotMessage* msg);
@@ -155,8 +160,36 @@ namespace Anki {
       Result addResult = GetTrack<KeyFrameType>().AddKeyFrame(kf);
       if(RESULT_OK != addResult) {
         PRINT_NAMED_ERROR("Animiation.AddKeyFrame.Failed", "");
+      } else {
+        // If we add a keyframe after initialization (at which time this animation
+        // could have been empty), make sure to mark that we haven't yet sent
+        // end of animation.
+        _endOfAnimationSent = false;
       }
+      
       return addResult;
+    }
+    
+    template<typename FRAME_TYPE>
+    Result Animation::Track<FRAME_TYPE>::AddKeyFrame(const FRAME_TYPE& keyFrame)
+    {
+      if(_frames.size() > MAX_FRAMES_PER_TRACK) {
+        PRINT_NAMED_ERROR("Animation.Track.AddKeyFrame.TooManyFrames",
+                          "There are already %lu frames in %s track. Refusing to add more.",
+                          _frames.size(), keyFrame.GetClassName().c_str());
+        return RESULT_FAIL;
+      }
+      
+      _frames.emplace_back(keyFrame);
+      
+      // If we just added the first keyframe (e.g. after deleting the last remaining
+      // keyframe in a "Live" track), we need to reset the frameIter to point
+      // back to the beginning.
+      if(_frames.size() == 1) {
+        _frameIter = _frames.begin();
+      }
+      
+      return RESULT_OK;
     }
     
   } // namespace Cozmo

@@ -54,6 +54,18 @@ namespace Cozmo {
   }
   
   template<typename FRAME_TYPE>
+  void Animation::Track<FRAME_TYPE>::MoveToNextKeyFrame()
+  {
+    if(_frameIter->IsLive()) {
+      // Live frames get removed from the track once played
+      _frameIter = _frames.erase(_frameIter);
+    } else {
+      // For canned frames, we just move to the next one in the track
+      ++_frameIter;
+    }
+  }
+  
+  template<typename FRAME_TYPE>
   RobotMessage* Animation::Track<FRAME_TYPE>::GetCurrentStreamingMessage(TimeStamp_t startTime_ms,
                                                                          TimeStamp_t currTime_ms)
   {
@@ -76,8 +88,12 @@ namespace Cozmo {
   template<typename FRAME_TYPE>
   Result Animation::Track<FRAME_TYPE>::AddKeyFrame(const Json::Value &jsonRoot)
   {
-    _frames.emplace_back();
-    Result lastResult = _frames.back().DefineFromJson(jsonRoot);
+    Result lastResult = AddKeyFrame(FRAME_TYPE());
+    if(RESULT_OK != lastResult) {
+      return lastResult;
+    }
+    
+    lastResult = _frames.back().DefineFromJson(jsonRoot);
     
 #   if DEBUG_ANIMATIONS
     PRINT_NAMED_INFO("Animation.Track.AddKeyFrame",
@@ -106,12 +122,12 @@ namespace Cozmo {
 #pragma mark -
 #pragma mark Animation
   
-  Animation::Animation()
-  : _isInitialized(false)
+  Animation::Animation(const std::string& name)
+  : _name(name)
+  , _isInitialized(false)
   {
     
   }
-  
   
   Result Animation::DefineFromJson(const std::string& name, Json::Value &jsonRoot)
   {
@@ -278,7 +294,9 @@ _blinkTrack.__METHOD__()
       _sendBuffer.clear();
     }
     
-    _endOfAnimationSent = false;
+    // If this is an empty (e.g. live) animation, there is no need to
+    // send end of animation keyframe until we actually send a keyframe
+    _endOfAnimationSent = IsEmpty();
     
     _isInitialized = true;
     
@@ -562,7 +580,7 @@ _blinkTrack.__METHOD__()
   
   bool Animation::IsFinished() const
   {
-    return _endOfAnimationSent && AllTracksBuffered();
+    return _endOfAnimationSent && AllTracksBuffered() && _sendBuffer.empty();
   }
   
 } // namespace Cozmo

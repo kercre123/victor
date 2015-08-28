@@ -85,6 +85,12 @@ namespace Cozmo {
     cv::Mat_<u8> GetFace() const;
     
     void MimicHumanFace(const Vision::TrackedFace& trackedFace);
+
+    bool HasBeenSentToRobot() const;
+    void MarkAsSentToRobot(bool tf);
+    
+    TimeStamp_t GetTimeStamp() const;
+    void SetTimeStamp(TimeStamp_t t);
     
   private:
     
@@ -93,6 +99,8 @@ namespace Cozmo {
     
     Value _faceAngle_deg;
     
+    bool _sentToRobot;
+    TimeStamp_t _timestamp;
   }; // class ProceduralFace
   
   
@@ -114,6 +122,22 @@ namespace Cozmo {
   
   inline ProceduralFace::Value ProceduralFace::GetFaceAngle() const {
     return _faceAngle_deg;
+  }
+  
+  inline bool ProceduralFace::HasBeenSentToRobot() const {
+    return _sentToRobot;
+  }
+  
+  inline void ProceduralFace::MarkAsSentToRobot(bool tf) {
+    _sentToRobot = tf;
+  }
+  
+  inline TimeStamp_t ProceduralFace::GetTimeStamp() const {
+    return _timestamp;
+  }
+  
+  inline void ProceduralFace::SetTimeStamp(TimeStamp_t t) {
+    _timestamp = t;
   }
   
 } // namespace Cozmo

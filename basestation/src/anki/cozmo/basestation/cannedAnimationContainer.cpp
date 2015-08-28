@@ -25,6 +25,7 @@ namespace Cozmo {
    
     // Add special animation for procedural animation:
     AddAnimation(FaceAnimationManager::ProceduralAnimName);
+    
     Animation* anim = GetAnimation(FaceAnimationManager::ProceduralAnimName);
     assert(anim != nullptr);
     FaceAnimationKeyFrame kf(FaceAnimationManager::ProceduralAnimName);
@@ -41,7 +42,7 @@ namespace Cozmo {
     
     auto retVal = _animations.find(name);
     if(retVal == _animations.end()) {
-      _animations.emplace(name,Animation());
+      _animations.emplace(name,Animation(name));
     }
     
     return lastResult;

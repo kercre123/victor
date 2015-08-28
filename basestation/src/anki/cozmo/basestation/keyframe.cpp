@@ -45,6 +45,7 @@ namespace Anki {
     IKeyFrame::IKeyFrame()
     : _triggerTime_ms(0)
     , _isValid(false)
+    , _isLive(false)
     {
       
     }
@@ -56,7 +57,7 @@ namespace Anki {
     
     bool IKeyFrame::IsTimeToPlay(TimeStamp_t startTime_ms, TimeStamp_t currTime_ms) const
     {
-      return (GetTriggerTime() + startTime_ms <= currTime_ms);
+      return IsLive() || (GetTriggerTime() + startTime_ms <= currTime_ms);
     }
     
     Result IKeyFrame::DefineFromJson(const Json::Value &json)

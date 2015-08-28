@@ -29,9 +29,10 @@ namespace Cozmo {
   BehaviorLookForFaces::BehaviorLookForFaces(Robot &robot, const Json::Value& config)
   : IBehavior(robot, config)
   , _currentState(State::LOOKING_AROUND)
+  , _trackingTimeout_sec(3.f)
   , _animationStarted(false)
   {
-    
+    // TODO: Init timeouts, etc, from Json config
     
   }
   
@@ -50,6 +51,10 @@ namespace Cozmo {
       this->HandleRobotCompletedAction(event.GetData().Get_RobotCompletedAction());
     };
     _eventHandles.emplace_back(_robot.GetExternalInterface()->Subscribe(ExternalInterface::MessageEngineToGameTag::RobotCompletedAction, cbActionCompleted));
+    
+    // Make sure the robot's idle animation is set to use Live, since we are
+    // going to stream live face mimicking
+    _robot.SetIdleAnimation(AnimationStreamer::LiveAnimation);
     
     return RESULT_OK;
   }
@@ -91,6 +96,11 @@ namespace Cozmo {
       case State::TRACKING_FACE:
         if(_currentTime_sec - _lastSeen_sec > _trackingTimeout_sec) {
           _robot.DisableTrackToObject();
+          
+          PRINT_NAMED_INFO("BehaviorLookForFaces.Update.DisablingTracking",
+                           "Current t=%.2f - lastSeen time=%.2f > timeout=%.2f. "
+                           "Switching back to looking around.",
+                           _currentTime_sec, _lastSeen_sec, _trackingTimeout_sec);
           _currentState = State::LOOKING_AROUND;
           SetNextMovementTime();
         }
@@ -200,6 +210,8 @@ namespace Cozmo {
         
         _baselineEyeHeight = GetEyeHeight(face);
         
+        PRINT_NAMED_INFO("BehaviorLookForFaces.HandleRobotObservedFace.SwitchToTracking",
+                         "Observed face %llu while looking around, switching to tracking.", faceID);
         _currentState = State::TRACKING_FACE;
         break;
       }
@@ -246,44 +258,12 @@ namespace Cozmo {
           // If face angle is rotated, mirror the rotation
           _crntProceduralFace.SetFaceAngle(faceAngle.getDegrees());
           
-          ProceduralFace streamingFace;
-          MessageAnimKeyFrame_FaceImage keyframeMsg;
-          std::vector<u8> rleData;
+          _crntProceduralFace.SetTimeStamp(face->GetTimeStamp());
+          _crntProceduralFace.MarkAsSentToRobot(false);
+          _robot.SetProceduralFace(_crntProceduralFace);
           
-          // Stream this face, interpolating from last
-          TimeStamp_t time = _lastSeen_ms + FaceImageKeyFrame::SAMPLE_LENGTH_MS;
-          while(time < face->GetTimeStamp()) {
-            // Get the interpolated procedural face
-            const f32 blendFraction = (static_cast<f32>(time - _lastSeen_ms) /
-                                       static_cast<f32>(face->GetTimeStamp() - _lastSeen_ms));
-            streamingFace.Interpolate(_lastProceduralFace, _crntProceduralFace, blendFraction);
-            
-            // Get the image for that face
-            cv::Mat_<u8> faceImg = streamingFace.GetFace();
-            //static int fileCtr=0;
-            //cv::imwrite("/Users/andrew/temp/faceImg_" + std::to_string(fileCtr++) + ".png", faceImg);
-
-            FaceAnimationManager::getInstance()->AddImage(FaceAnimationManager::ProceduralAnimName, faceImg);
-            
-            /*
-            PRINT_NAMED_INFO("BehaviorLookForFaces.HandleRobotObservedFace.StreamingProceduralFace",
-                             "Streaming face at t=%d from interval [%d %d], with blendFraction=%.2f [ProceduralFaceAnim=%dframes long]",
-                             time, _lastSeen_ms, face->GetTimeStamp(), blendFraction,
-                             FaceAnimationManager::getInstance()->GetNumFrames(FaceAnimationManager::ProceduralAnimName));
-            */
-            
-            time += FaceImageKeyFrame::SAMPLE_LENGTH_MS;
-          }
+          PRINT_NAMED_INFO("BehaviorLookForFaces.HandleRobotObservedFace.UpdatedProceduralFace", "");
           
-          // Update the stored face and time for next time
-          _lastSeen_ms = face->GetTimeStamp();
-          std::swap(_lastProceduralFace, _crntProceduralFace);
-          
-          if(!_animationStarted) {
-            _robot.GetActionList().Cancel(IBehavior::sActionSlot, RobotActionType::PLACE_OBJECT_LOW);
-            _robot.GetActionList().QueueActionNow(IBehavior::sActionSlot, new PlayAnimationAction(FaceAnimationManager::ProceduralAnimName));
-            _animationStarted = true;
-          }
         }
         break;
         
@@ -310,6 +290,8 @@ namespace Cozmo {
       if(_currentState == State::MOVING) {
         // Only switch back to looking around state if we didn't see a face
         // while we were moving (and thus are now in FACE_TRACKING state)
+        PRINT_NAMED_INFO("BehaviorLookForFaces.HandleRobotCompletedAction.DoneMoving",
+                         "Switching back to looking around.");
         _currentState = State::LOOKING_AROUND;
       }
     }

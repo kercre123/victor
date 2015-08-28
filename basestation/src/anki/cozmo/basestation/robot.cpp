@@ -113,6 +113,9 @@ namespace Anki {
       // Initializes _pose, _poseOrigins, and _worldOrigin:
       Delocalize();
       
+      _proceduralFace.MarkAsSentToRobot(true);
+      _lastProceduralFace.MarkAsSentToRobot(false);
+      
       // The call to Delocalize() will increment frameID, but we want it to be
       // initialzied to 0, to match the physical robot's initialization
       _frameId = 0;
@@ -1215,6 +1218,30 @@ namespace Anki {
     Result Robot::SetIdleAnimation(const std::string &animName)
     {
       return _animationStreamer.SetIdleAnimation(animName);
+    }
+    
+    void Robot::SetProceduralFace(const ProceduralFace& face)
+    {
+      // First one
+      if(_lastProceduralFace.GetTimeStamp() == 0) {
+        _lastProceduralFace = face;
+        _lastProceduralFace.MarkAsSentToRobot(true);
+        _proceduralFace.MarkAsSentToRobot(true);
+      } else {
+        if(_proceduralFace.HasBeenSentToRobot()) {
+          // If the current face has already been sent, make it the
+          // last procedural face (sent). Otherwise, we'll just
+          // replace the current face and leave "last" as is.
+          std::swap(_lastProceduralFace, _proceduralFace);
+        }
+        _proceduralFace = face;
+        _proceduralFace.MarkAsSentToRobot(false);
+      }
+    }
+    
+    void Robot::MarkProceduralFaceAsSent()
+    {
+      _proceduralFace.MarkAsSentToRobot(true);
     }
     
     const std::string Robot::GetStreamingAnimationName() const

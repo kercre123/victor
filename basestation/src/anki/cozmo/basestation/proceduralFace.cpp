@@ -16,6 +16,8 @@ namespace Cozmo {
   void ProceduralFace::Reset()
   {
     _faceAngle_deg = 0;
+    _sentToRobot = false;
+    _timestamp = 0;
     
     for(int whichEye=0; whichEye<2; ++whichEye) {
       _eyeParams[whichEye].fill(0);
@@ -159,7 +161,7 @@ namespace Cozmo {
   
   
   void ProceduralFace::Interpolate(const ProceduralFace& face1, const ProceduralFace& face2,
-                                   const float blendFraction)
+                                   float blendFraction)
   {
     assert(blendFraction >= 0.f && blendFraction <= 1.f);
     
