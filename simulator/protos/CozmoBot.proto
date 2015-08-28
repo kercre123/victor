@@ -75,7 +75,7 @@ Supervisor {
   
   %{ if not fields.vizMode.value then }%
   physics Physics {
-    density 1000
+    density 0.1  # This value needs to be small for some reason otherwise it starts doing the slow-mo rocking thing
     #mass 0.17 # about 6 ounces
   }
   %{ end }%
@@ -173,7 +173,7 @@ Supervisor {
 		  %{ if not fields.vizMode.value then }%
 		  boundingObject USE BODY_SHAPE
 		  physics Physics {
-			 density 1000
+			 density 5000
 		  }
 		  %{ end }%
 		} # BODY Solid
@@ -196,6 +196,7 @@ Supervisor {
 			    }
 			    PositionSensor {
 			      name "HeadMotorPosSensor"
+			      resolution 0.001
 			    }
 			  ]
 			  %{ end }%
@@ -642,7 +643,7 @@ Supervisor {
 		  %{ if not fields.vizMode.value then }%
 	          boundingObject USE BACKPACK_GROUP
 		  physics Physics {
-			density 5000
+			density 2000
 		  }
 		  %{ end }%
 		} # BACKPACK Solid
@@ -769,6 +770,7 @@ Supervisor {
 		    }
   		    PositionSensor {
 		      name "LeftWheelMotorPosSensor"
+		      resolution 0.001
 		    }
 		  ]
 		  
@@ -809,6 +811,7 @@ Supervisor {
 		    }
 		    PositionSensor {
 		      name "RightWheelMotorPosSensor"
+		      resolution 0.001
 		    }		    
 		  ]
 		  animatedGeometry USE ANIMATED_SHAPE
@@ -859,6 +862,7 @@ Supervisor {
 		    }
 		    PositionSensor {
 		      name "LeftWheelMotorPosSensor"
+		      resolution 0.001
 		    }
 		  ]
 		  endPoint Solid {
@@ -933,6 +937,7 @@ Supervisor {
 		    }
 		    PositionSensor {
 		      name "RightWheelMotorPosSensor"
+		      resolution 0.001
 		    }
 		  ]
 		  endPoint Solid {
@@ -1062,6 +1067,7 @@ Supervisor {
 					  }
 					  PositionSensor {
 					    name "LiftMotorPosSensor"
+					    resolution 0.001
 					  }
 					]
 					%{ end }%

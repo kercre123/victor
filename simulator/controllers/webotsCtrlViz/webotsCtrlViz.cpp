@@ -451,9 +451,10 @@ namespace Anki {
               msg.status & IS_ANIMATING_IDLE ? "ANIM_IDLE" : "");
       DrawText(TEXT_LABEL_STATUS_FLAG_2, Anki::NamedColors::GREEN, txt);
       
-      sprintf(txt, "        %7s %7s",
+      sprintf(txt, "        %7s %7s %6s",
               msg.status & LIFT_IN_POS ? "" : "LIFTING",
-              msg.status & HEAD_IN_POS ? "" : "HEADING");
+              msg.status & HEAD_IN_POS ? "" : "HEADING",
+              msg.status & IS_MOVING ? "MOVING" : "");
       DrawText(TEXT_LABEL_STATUS_FLAG_3, Anki::NamedColors::GREEN, txt);
     }
     
