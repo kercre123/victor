@@ -129,6 +129,8 @@ namespace Anki {
 
       bool _endOfAnimationSent;
       
+      MessageAnimKeyFrame_FaceImage _proceduralFaceStreamMsg;
+      
       bool BufferMessageToSend(RobotMessage* msg);
       Result SendBufferedMessages(Robot& robot);
       

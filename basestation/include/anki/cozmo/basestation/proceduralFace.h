@@ -9,6 +9,12 @@
 #include <array>
 
 namespace Anki {
+  
+  // Forward declaration:
+  namespace Vision {
+    class TrackedFace;
+  }
+  
 namespace Cozmo {
 
   class ProceduralFace
@@ -73,8 +79,12 @@ namespace Cozmo {
                      const ProceduralFace& face2,
                      float fraction);
     
+    void Blink(const ProceduralFace& face, float fraction);
+    
+    // Actually draw the face with the current parameters
     cv::Mat_<u8> GetFace() const;
     
+    void MimicHumanFace(const Vision::TrackedFace& trackedFace);
     
   private:
     

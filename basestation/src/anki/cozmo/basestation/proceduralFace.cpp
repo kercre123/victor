@@ -1,5 +1,7 @@
 #include "proceduralFace.h"
 
+#include "anki/vision/basestation/trackedFace.h"
+
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
@@ -195,6 +197,51 @@ namespace Cozmo {
     SetFaceAngle(BlendAngleHelper(face1.GetFaceAngle(), face2.GetFaceAngle(), blendFraction));
     
   } // Interpolate()
+  
+  
+  void ProceduralFace::Blink(const ProceduralFace& face, float fraction)
+  {
+    // TODO: Implement blinking
+  }
+  
+  void ProceduralFace::MimicHumanFace(const Vision::TrackedFace& face)
+  {
+    using Face = Vision::TrackedFace;
+    
+    // If eyebrows have raised/lowered (based on distance from eyes), mimic their position:
+    const Face::Feature& leftEyeBrow  = face.GetFeature(Face::FeatureName::LeftEyebrow);
+    const Face::Feature& rightEyeBrow = face.GetFeature(Face::FeatureName::RightEyebrow);
+    
+    const f32 leftEyebrowHeight  = GetAverageHeight(leftEyeBrow, face.GetLeftEyeCenter(), faceAngle);
+    const f32 rightEyebrowHeight = GetAverageHeight(rightEyeBrow, face.GetRightEyeCenter(), faceAngle);
+    
+    // Map current eyebrow heights onto Cozmo's face, based on measured baseline values
+    const f32 distLeftEyeTopToImageTop = static_cast<f32>(ProceduralFace::NominalEyeCenY - GetParameter(WhichEye::Left, EyeHeight)/2);
+    _crntProceduralFace.SetParameter(WhichEye::Left, Parameter::BrowShiftY,
+                                     (_baselineLeftEyebrowHeight-leftEyebrowHeight)/_baselineLeftEyebrowHeight *
+                                     distLeftEyeTopToImageTop);
+    
+    const f32 distRightEyeTopToImageTop = static_cast<f32>(NominalEyeCenY - _crntProceduralFace.GetParameter(WhichEye::Left, EyeHeight)/2);
+    _crntProceduralFace.SetParameter(WhichEye::Right, Parameter::BrowShiftY,
+                                     (_baselineRightEyebrowHeight-rightEyebrowHeight)/_baselineRightEyebrowHeight *
+                                     distRightEyeTopToImageTop);
+    
+    const f32 eyeHeightFraction = GetEyeHeight(face)/_baselineEyeHeight;
+    _crntProceduralFace.SetParameter(WhichEye::Left, Parameter::EyeHeight,
+                                     static_cast<f32>(ProceduralFace::NominalEyeHeight)*eyeHeightFraction);
+    
+    _crntProceduralFace.SetParameter(WhichEye::Right, Parameter::EyeHeight,
+                                     static_cast<f32>(NominalEyeHeight)*eyeHeightFraction);
+    
+    _crntProceduralFace.SetParameter(WhichEye::Left, Parameter::PupilHeight,
+                                     static_cast<f32>(NominalPupilHeight)*eyeHeightFraction);
+    
+    _crntProceduralFace.SetParameter(WhichEye::Right, Parameter::PupilHeight,
+                                     static_cast<f32>(NominalPupilHeight)*eyeHeightFraction);
+    
+    // If face angle is rotated, mirror the rotation
+    _crntProceduralFace.SetFaceAngle(faceAngle.getDegrees());
+  }
 
 } // namespace Cozmo
 } // namespace Anki

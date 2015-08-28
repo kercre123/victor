@@ -456,6 +456,21 @@ _blinkTrack.__METHOD__()
         PRINT_NAMED_INFO("Animation.Update", "Streaming FaceAnimationKeyFrame at t=%dms.\n",
                          _streamingTime_ms - _startTime_ms);
 #       endif
+      } else if(_faceAnimTrack.IsEmpty()) {
+        // Use procedural face
+        std::vector<u8> rleFrame;
+        FaceAnimationManager::CompressRLE(robot.GetProceduralFace().GetFace(), rleFrame);
+        
+        if(rleFrame.size() >= sizeof(_proceduralFaceStreamMsg.image)) {
+          PRINT_NAMED_ERROR("FaceAnimationKeyFrame.GetStreamMessage",
+                            "Procedural RLE frame is too large to fit in message (%lu>=%lu).\n",
+                            rleFrame.size(), sizeof(_proceduralFaceStreamMsg.image));
+        } else {
+          
+          _proceduralFaceStreamMsg.image.fill(0); // Necessary??
+          std::copy(rleFrame.begin(), rleFrame.end(), _proceduralFaceStreamMsg.image.begin());
+          BufferMessageToSend(&_proceduralFaceStreamMsg);
+        }
       }
       
       if(BufferMessageToSend(_blinkTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms))) {

@@ -43,6 +43,7 @@
 #include "anki/cozmo/basestation/visionProcessingThread.h"
 #include "anki/cozmo/basestation/actionContainers.h"
 #include "anki/cozmo/basestation/animationStreamer.h"
+#include "anki/cozmo/basestation/proceduralFace.h"
 #include "anki/cozmo/basestation/cannedAnimationContainer.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/ramp.h"
@@ -400,6 +401,8 @@ namespace Anki {
       // Returns "" if no non-idle animation is streaming.
       const std::string GetStreamingAnimationName() const;
       
+      const ProceduralFace& GetProceduralFace() const { return _proceduralFace; }
+      
       // Returns the number of animation bytes played on the robot since
       // it was initialized with SyncTime.
       s32 GetNumAnimationBytesPlayed() const;
@@ -744,6 +747,7 @@ namespace Anki {
       
       CannedAnimationContainer _cannedAnimations;
       AnimationStreamer        _animationStreamer;
+      ProceduralFace           _proceduralFace;
       s32 _numFreeAnimationBytes;
       s32 _numAnimationBytesPlayed;
       s32 _numAnimationBytesStreamed;
