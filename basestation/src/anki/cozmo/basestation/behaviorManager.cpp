@@ -69,6 +69,8 @@ namespace Cozmo {
     _behaviorChooser->AddBehavior(new BehaviorFidget(_robot, config));
   }
   
+  // The AddReactionaryBehavior wrapper is responsible for setting up the callbacks so that important events will be
+  // reacted to correctly - events will be given to the Chooser which may return a behavior to force switch to
   void BehaviorManager::AddReactionaryBehavior(IReactionaryBehavior* behavior)
   {
     // We map reactionary behaviors to the tag types they're going to care about

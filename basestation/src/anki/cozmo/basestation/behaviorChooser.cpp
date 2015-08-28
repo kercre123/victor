@@ -90,6 +90,8 @@ IReactionaryBehavior* ReactionaryBehaviorChooser::_GetReactionaryBehavior(const 
                                                                           std::function<const std::set<typename EventType::Tag>&(const IReactionaryBehavior&)> getTagSet
                                                                           ) const
 {
+  // Note this current implementation simply returns the first behavior in the list that cares about this event. There
+  // could be others but simply the first is returned.
   for (auto& behavior : _reactionaryBehaviorList)
   {
     if (0 != getTagSet(*behavior).count(event.GetData().GetTag()))
