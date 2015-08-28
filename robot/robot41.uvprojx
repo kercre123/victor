@@ -560,36 +560,6 @@
               <FilePath>.\k02_hal\lib\drivers\fsl_dac_irq.c</FilePath>
             </File>
             <File>
-              <FileName>fsl_dspi_edma_master_driver.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\k02_hal\lib\drivers\fsl_dspi_edma_master_driver.c</FilePath>
-            </File>
-            <File>
-              <FileName>fsl_dspi_edma_shared_function.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\k02_hal\lib\drivers\fsl_dspi_edma_shared_function.c</FilePath>
-            </File>
-            <File>
-              <FileName>fsl_dspi_edma_slave_driver.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\k02_hal\lib\drivers\fsl_dspi_edma_slave_driver.c</FilePath>
-            </File>
-            <File>
-              <FileName>fsl_dspi_master_driver.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\k02_hal\lib\drivers\fsl_dspi_master_driver.c</FilePath>
-            </File>
-            <File>
-              <FileName>fsl_dspi_shared_function.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\k02_hal\lib\drivers\fsl_dspi_shared_function.c</FilePath>
-            </File>
-            <File>
-              <FileName>fsl_dspi_slave_driver.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\k02_hal\lib\drivers\fsl_dspi_slave_driver.c</FilePath>
-            </File>
-            <File>
               <FileName>fsl_edma_common.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\k02_hal\lib\drivers\fsl_edma_common.c</FilePath>
@@ -628,26 +598,6 @@
               <FileName>fsl_gpio_irq.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\k02_hal\lib\drivers\fsl_gpio_irq.c</FilePath>
-            </File>
-            <File>
-              <FileName>fsl_i2c_common.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\k02_hal\lib\drivers\fsl_i2c_common.c</FilePath>
-            </File>
-            <File>
-              <FileName>fsl_i2c_master_driver.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\k02_hal\lib\drivers\fsl_i2c_master_driver.c</FilePath>
-            </File>
-            <File>
-              <FileName>fsl_i2c_shared_function.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\k02_hal\lib\drivers\fsl_i2c_shared_function.c</FilePath>
-            </File>
-            <File>
-              <FileName>fsl_i2c_slave_driver.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\k02_hal\lib\drivers\fsl_i2c_slave_driver.c</FilePath>
             </File>
             <File>
               <FileName>fsl_lptmr_common.c</FileName>
@@ -693,21 +643,6 @@
               <FileName>fsl_pit_irq.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\k02_hal\lib\drivers\fsl_pit_irq.c</FilePath>
-            </File>
-            <File>
-              <FileName>fsl_uart_common.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\k02_hal\lib\drivers\fsl_uart_common.c</FilePath>
-            </File>
-            <File>
-              <FileName>fsl_uart_driver.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\k02_hal\lib\drivers\fsl_uart_driver.c</FilePath>
-            </File>
-            <File>
-              <FileName>fsl_uart_edma_driver.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\k02_hal\lib\drivers\fsl_uart_edma_driver.c</FilePath>
             </File>
             <File>
               <FileName>fsl_wdog_common.c</FileName>
@@ -783,11 +718,6 @@
               <FileName>fsl_hwtimer_systick.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\k02_hal\lib\hal\fsl_hwtimer_systick.c</FilePath>
-            </File>
-            <File>
-              <FileName>fsl_i2c_hal.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\k02_hal\lib\hal\fsl_i2c_hal.c</FilePath>
             </File>
             <File>
               <FileName>fsl_interrupt_manager.c</FileName>
@@ -873,16 +803,6 @@
               <FileName>fsl_mcg_hal_modes.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\k02_hal\lib\hal\fsl_mcg_hal_modes.c</FilePath>
-            </File>
-            <File>
-              <FileName>fsl_dspi_common.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\k02_hal\lib\drivers\fsl_dspi_common.c</FilePath>
-            </File>
-            <File>
-              <FileName>fsl_dspi_edma_irq.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\k02_hal\lib\drivers\fsl_dspi_edma_irq.c</FilePath>
             </File>
             <File>
               <FileName>fsl_clock_manager.c</FileName>

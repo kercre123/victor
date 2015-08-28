@@ -6,8 +6,13 @@
 
 #include "spi.h"
 
-void setup_dma(void);
-  
+
+/*
+  In the final version, we will use the EOQ flag to mark when
+  the buffer has finished, and then we will clear the CONT_SCKE flag from MCR
+  so it doesn't keep clocking the Espressif.
+*/
+
 void spi_init(void) {
   // Turn on power to DMA, PORTC and SPI0
   SIM_SCGC6 |= SIM_SCGC6_SPI0_MASK | SIM_SCGC6_DMAMUX_MASK;
@@ -28,7 +33,7 @@ void spi_init(void) {
              SPI_MCR_CLR_TXF_MASK | 
              SPI_MCR_CLR_RXF_MASK;
   SPI0_CTAR0 = SPI_CTAR_LSBFE_MASK | 
-               SPI_CTAR_BR(3) | 
+               SPI_CTAR_BR(1) | 
                SPI_CTAR_CPOL_MASK |
                SPI_CTAR_CPHA_MASK |
                SPI_CTAR_FMSZ(15);
@@ -50,16 +55,18 @@ void spi_init(void) {
     }
 
     static int toggle = 0;
+    static unsigned char k = 0;
 
     while (SPI0_SR & SPI_SR_TFFF_MASK)
     {
-      SPI0_PUSHR = SPI_PUSHR_CONT_MASK | SPI_PUSHR_PCS(toggle) | 0x8000;
+      SPI0_PUSHR = SPI_PUSHR_CONT_MASK | SPI_PUSHR_PCS(toggle) | 0x5500 | k++;
       toggle ^= 2;
       tx_idx = (tx_idx + 1) % size;
 
       SPI0_SR = SPI_SR_TFFF_MASK;
     }
     
-    BOARD_I2C_DELAY ;
+    for (int i = 0; i < 5; i++)
+      BOARD_I2C_DELAY ;
   }
 }
