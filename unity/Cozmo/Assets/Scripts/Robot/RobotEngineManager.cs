@@ -460,8 +460,9 @@ public class RobotEngineManager : MonoBehaviour {
     if (current == null)
       return;
 
-    bool success = (message.result == ActionResult.SUCCESS);
+
     RobotActionType action_type = (RobotActionType)message.actionType;
+    bool success = (message.result == ActionResult.SUCCESS) || (action_type == RobotActionType.PLAY_ANIMATION && message.result == ActionResult.CANCELLED);
     //Debug.Log("Action completed " + success);
     current.selectedObjects.Clear();
     current.targetLockedObject = null;

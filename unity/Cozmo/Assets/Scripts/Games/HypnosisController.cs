@@ -23,6 +23,7 @@ public class HypnosisController : GameController {
   private int mostRecentTappedID = -1;
   private ObservedObject tranceTarget = null;
   private bool searchTurnRight = false;
+  private float tranceSpeed = 25.0f;
 
   protected override void OnEnable() {
     base.OnEnable();
@@ -85,6 +86,23 @@ public class HypnosisController : GameController {
     }
     else {
       UpdatePlayState();
+    }
+
+    if (Input.GetKeyDown(KeyCode.Alpha1)) {
+      tranceSpeed = 10.0f;
+    }
+
+    if (Input.GetKeyDown(KeyCode.Alpha2)) {
+      tranceSpeed = 15.0f;
+    }
+
+    if (Input.GetKeyDown(KeyCode.Alpha3)) {
+      tranceSpeed = 25.0f;
+    }
+
+    if (Input.GetKeyDown(KeyCode.Alpha4)) {
+      tranceSpeed = 300.0f;
+      Debug.LogWarning("DEMON SPEED");
     }
   }
 
@@ -338,7 +356,7 @@ public class HypnosisController : GameController {
       // we are reasonably aligned to it so move forward
       float distance = Vector3.Distance(robot.WorldPosition, robot.activeBlocks[mostRecentTappedID].WorldPosition);
       if (distance > 100.0f) {
-        robot.DriveWheels(15.0f, 15.0f);
+        robot.DriveWheels(tranceSpeed, tranceSpeed);
       }
       else {
         robot.DriveWheels(0.0f, 0.0f);
@@ -348,10 +366,10 @@ public class HypnosisController : GameController {
       // we need to turn to face it
       ComputeTurnDirection();
       if (searchTurnRight) {
-        robot.DriveWheels(15.0f, -10.0f);
+        robot.DriveWheels(25.0f, -20.0f);
       }
       else {
-        robot.DriveWheels(-10.0f, 15.0f);
+        robot.DriveWheels(-20.0f, 25.0f);
       }
     }
 

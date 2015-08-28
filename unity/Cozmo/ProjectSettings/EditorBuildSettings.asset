@@ -19,3 +19,5 @@ EditorBuildSettings:
     path: Assets/Scenes/Vortex.unity
   - enabled: 1
     path: Assets/Scenes/Hypnosis.unity
+  - enabled: 1
+    path: Assets/Scenes/FaceReaction.unity
