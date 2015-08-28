@@ -409,7 +409,7 @@ namespace Anki
             // Otherwise, add a new object
 #         endif // ONLY_ALLOW_ONE_OBJECT_PER_TYPE
             
-          if(!_canAddObjects) {
+          if(!_canAddObjects && objSeen->GetFamily() != ObjectFamily::HumanHead) {
             PRINT_NAMED_WARNING("BlockWorld.AddAndUpdateObject.AddingDisabled",
                                 "Saw a new %s%s object, but adding objects is disabled.\n",
                                 objSeen->IsActive() ? "active " : "",
@@ -1997,7 +1997,7 @@ namespace Anki
     
     void BlockWorld::ClearObjectsByFamily(const ObjectFamily family)
     {
-      if(_canDeleteObjects) {
+      if(_canDeleteObjects || family == ObjectFamily::HumanHead) {
         ObjectsMapByFamily_t::iterator objectsWithFamily = _existingObjects.find(family);
         if(objectsWithFamily != _existingObjects.end()) {
           for(auto & objectsByType : objectsWithFamily->second) {
@@ -2017,7 +2017,7 @@ namespace Anki
     
     void BlockWorld::ClearObjectsByType(const ObjectType type)
     {
-      if(_canDeleteObjects) {
+      if(_canDeleteObjects || type == ObjectType::HumanFace_Known || type == ObjectType::HumanFace_Unknown) {
         for(auto & objectsByFamily : _existingObjects) {
           ObjectsMapByType_t::iterator objectsWithType = objectsByFamily.second.find(type);
           if(objectsWithType != objectsByFamily.second.end()) {
@@ -2049,7 +2049,7 @@ namespace Anki
             
             // Allow deletion of specific object ID iff deletion is enable OR if
             // this object is being deleted because it wasn't observed enought times
-            if(_canDeleteObjects ||
+            if(_canDeleteObjects || objectWithIdIter->second->GetFamily() == ObjectFamily::HumanHead ||
                objectWithIdIter->second->GetNumTimesObserved() < MIN_TIMES_TO_OBSERVE_OBJECT)
             {
               // Remove the object from the world
@@ -2080,7 +2080,7 @@ namespace Anki
     {
       ObservableObject* object = objIter->second;
       
-      if(_canDeleteObjects || object->GetNumTimesObserved() < MIN_TIMES_TO_OBSERVE_OBJECT) {
+      if(_canDeleteObjects || object->GetNumTimesObserved() < MIN_TIMES_TO_OBSERVE_OBJECT || fromFamily == ObjectFamily::HumanHead) {
         ClearObjectHelper(object);
         
         return _existingObjects[fromFamily][withType].erase(objIter);
@@ -2098,7 +2098,7 @@ namespace Anki
                                  const ObjectType&   withType,
                                  const ObjectFamily& fromFamily)
     {
-      if(_canDeleteObjects || object->GetNumTimesObserved() < MIN_TIMES_TO_OBSERVE_OBJECT) {
+      if(_canDeleteObjects || object->GetNumTimesObserved() < MIN_TIMES_TO_OBSERVE_OBJECT || fromFamily == ObjectFamily::HumanHead) {
         ObjectID objID = object->GetID();
         ClearObjectHelper(object);
         
