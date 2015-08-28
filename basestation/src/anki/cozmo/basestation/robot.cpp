@@ -919,6 +919,11 @@ namespace Anki {
         const IBehavior* behavior = _behaviorMgr.GetCurrentBehavior();
         if(behavior != nullptr) {
           behaviorName = behavior->GetName();
+          const std::string& stateName = behavior->GetStateName();
+          if (!stateName.empty())
+          {
+            behaviorName += "-" + stateName;
+          }
         }
       }
       

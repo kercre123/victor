@@ -79,6 +79,7 @@ namespace Cozmo {
     virtual bool GetRewardBid(Reward& reward) = 0;
     
     virtual const std::string& GetName() const { return _name; }
+    virtual const std::string& GetStateName() const { return _stateName; }
     
     // All behaviors run in a single "slot" in the AcitonList. (This seems icky.)
     static const ActionList::SlotHandle sActionSlot;
@@ -90,7 +91,8 @@ namespace Cozmo {
     // A random number generator for all behaviors to share
     Util::RandomGenerator _rng;
     
-    std::string _name;
+    std::string _name = "no_name";
+    std::string _stateName = "";
     
   private:
     
