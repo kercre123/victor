@@ -1033,6 +1033,8 @@ public class VortexController : GameController {
     else {
       wheel.Unlock();
       CozmoEmotionManager.instance.SetEmotionTurnInPlace("YOUR_TURN", GetPoseFromPlayerIndex(currentPlayerIndex).rad, true, true, true);
+      // setting the head angle to ~35 degrees
+      robot.SetHeadAngle(.61f, true);
     }
 
     wheel.Focus();
@@ -1087,10 +1089,12 @@ public class VortexController : GameController {
     return index;
   }
 
-  CozmoUtil.RobotPose GetPoseFromPlayerIndex(int playerIndex) {
-
+  int GetPoseIndex(int playerIndex) {
     int index = playerIndex;
     switch (playerIndex) {
+    case 1:
+      index = 0;
+      break;
     case 2:
       index = 1;
       break;
@@ -1100,8 +1104,12 @@ public class VortexController : GameController {
     default:
       break;
     }
+    return index;
+  }
 
-    return robotPoses[index];
+  CozmoUtil.RobotPose GetPoseFromPlayerIndex(int playerIndex) {
+
+    return robotPoses[GetPoseIndex(playerIndex)];
   }
 
   void Update_REQUEST_SPIN() {
@@ -1151,6 +1159,31 @@ public class VortexController : GameController {
           PlaceCozmoTouch(currentPos);
         }
       }
+    }
+    else {
+      // face hunt
+      // only note faces when within 45 degrees of desired rotation
+      float current = robot.poseAngle_rad;
+      float target = GetPoseFromPlayerIndex(currentPlayerIndex).rad;
+      float angle_between = Mathf.Atan2(Mathf.Sin(current - target), Mathf.Cos(current - target));
+      Debug.Log("angle_between " + angle_between);
+      float diff = Mathf.Abs(current - target);
+      angle_between = diff > Mathf.PI ? diff - 2 * Mathf.PI : diff;
+      Debug.Log("angle_between2 " + angle_between);
+      if (Mathf.Abs(angle_between) < (Mathf.PI / 4.0f)) {
+        for (int i = 0; i < robot.markersVisibleObjects.Count; ++i) {
+          if (robot.markersVisibleObjects[i].isFace) {
+            //get angle to that and set robotpos
+            Vector3 target_pos = new Vector3(robot.markersVisibleObjects[i].WorldPosition.x, robot.markersVisibleObjects[i].WorldPosition.y, 0);
+            Vector3 robot_pos = new Vector3(robot.WorldPosition.x, robot.WorldPosition.y, 0);
+            Vector3 to_target = target_pos - robot_pos;
+            to_target = to_target.normalized;
+            robotPoses[GetPoseIndex(currentPlayerIndex)].rad = Mathf.Acos(Vector3.Dot(Vector3.right, to_target));
+            Debug.Log("Setting desired rad to " + robotPoses[GetPoseIndex(currentPlayerIndex)].rad);
+          }
+        }
+      }
+
     }
 
     int newNumber = wheel.GetDisplayedNumber();
