@@ -249,7 +249,7 @@ public class CozmoEmotionManager : MonoBehaviour {
     }
   }
 
-  public void SetEmotionReturnToPose(string emotion_state, float x_mm, float y_mm, float rad, bool stopPreviousAnim = false) {
+  public void SetEmotionReturnToPose(string emotion_state, float x_mm, float y_mm, float rad, bool stopPreviousAnim = false, bool reverse_order = false) {
     if (robot == null)
       return;
 
@@ -273,11 +273,20 @@ public class CozmoEmotionManager : MonoBehaviour {
         GotoPoseMessage.y_mm = y_mm;
         GotoPoseMessage.rad = rad;
 
-        QueueCompoundActionsMessage.actions[0].playAnimation = PlayAnimationMessage;
-        QueueCompoundActionsMessage.actionTypes[0] = Anki.Cozmo.RobotActionType.PLAY_ANIMATION;
+        if (!reverse_order) {
+          QueueCompoundActionsMessage.actions[0].playAnimation = PlayAnimationMessage;
+          QueueCompoundActionsMessage.actionTypes[0] = Anki.Cozmo.RobotActionType.PLAY_ANIMATION;
+       
+          QueueCompoundActionsMessage.actions[1].goToPose = GotoPoseMessage;
+          QueueCompoundActionsMessage.actionTypes[1] = Anki.Cozmo.RobotActionType.DRIVE_TO_POSE;
+        }
+        else {
+          QueueCompoundActionsMessage.actions[0].goToPose = GotoPoseMessage;
+          QueueCompoundActionsMessage.actionTypes[0] = Anki.Cozmo.RobotActionType.DRIVE_TO_POSE;
 
-        QueueCompoundActionsMessage.actions[1].goToPose = GotoPoseMessage;
-        QueueCompoundActionsMessage.actionTypes[1] = Anki.Cozmo.RobotActionType.DRIVE_TO_POSE;
+          QueueCompoundActionsMessage.actions[1].playAnimation = PlayAnimationMessage;
+          QueueCompoundActionsMessage.actionTypes[1] = Anki.Cozmo.RobotActionType.PLAY_ANIMATION;
+        }
 
         QueueCompoundActionsMessage.numRetries = 0;
         QueueCompoundActionsMessage.inSlot = 0;
@@ -300,7 +309,7 @@ public class CozmoEmotionManager : MonoBehaviour {
     }
   }
 
-  public void SetEmotionTurnInPlace(string emotion_state, float rad, bool stopPreviousAnim = false) {
+  public void SetEmotionTurnInPlace(string emotion_state, float rad, bool stopPreviousAnim = false, bool reverseOrder = false, bool isParallel = false) {
     if (robot == null)
       return;
 
@@ -322,16 +331,25 @@ public class CozmoEmotionManager : MonoBehaviour {
         TurnInPlaceMessage.angle_rad = rad;
         TurnInPlaceMessage.robotID = robot.ID;
 
-        QueueCompoundActionsMessage.actions[0].playAnimation = PlayAnimationMessage;
-        QueueCompoundActionsMessage.actionTypes[0] = Anki.Cozmo.RobotActionType.PLAY_ANIMATION;
+        if (!reverseOrder) {
+          QueueCompoundActionsMessage.actions[0].playAnimation = PlayAnimationMessage;
+          QueueCompoundActionsMessage.actionTypes[0] = Anki.Cozmo.RobotActionType.PLAY_ANIMATION;
 
-        QueueCompoundActionsMessage.actions[1].turnInPlace = TurnInPlaceMessage;
-        QueueCompoundActionsMessage.actionTypes[1] = Anki.Cozmo.RobotActionType.TURN_IN_PLACE;
+          QueueCompoundActionsMessage.actions[1].turnInPlace = TurnInPlaceMessage;
+          QueueCompoundActionsMessage.actionTypes[1] = Anki.Cozmo.RobotActionType.TURN_IN_PLACE;
+        }
+        else {
+          QueueCompoundActionsMessage.actions[0].turnInPlace = TurnInPlaceMessage;
+          QueueCompoundActionsMessage.actionTypes[0] = Anki.Cozmo.RobotActionType.TURN_IN_PLACE;
+
+          QueueCompoundActionsMessage.actions[1].playAnimation = PlayAnimationMessage;
+          QueueCompoundActionsMessage.actionTypes[1] = Anki.Cozmo.RobotActionType.PLAY_ANIMATION;
+        }
 
         QueueCompoundActionsMessage.numRetries = 0;
         QueueCompoundActionsMessage.inSlot = 0;
         QueueCompoundActionsMessage.robotID = robot.ID;
-        QueueCompoundActionsMessage.parallel = false;
+        QueueCompoundActionsMessage.parallel = isParallel;
 
         if (stopPreviousAnim) {
           QueueCompoundActionsMessage.position = Anki.Cozmo.QueueActionPosition.NOW_AND_CLEAR_REMAINING;

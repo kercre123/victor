@@ -2,8 +2,8 @@
 CozmoWorldInfo {
 }
 Viewpoint {
-  orientation 0.605217 -0.416098 -0.678657 1.58377
-  position -1.15581 -0.534641 0.716561
+  orientation 0.77018 -0.314158 -0.555092 1.26745
+  position -1.00872 -1.11554 1.31571
 }
 Background {
   skyColor [
@@ -49,7 +49,17 @@ LightCube {
   ID 3
 }
 Face {
-  translation 0.2 0 0.1
+  translation -0.0901083 -0.403012 0.24
+  rotation 0 0 1 3.1416
+  image "face02.png"
+}
+Face {
+  translation 0.36 2.93856e-07 0.22
+  rotation 0 0 1 1.5708
+  image "face02.png"
+}
+Face {
+  translation -0.36 2.93856e-07 0.22
   rotation 0 0 1 1.5708
   image "face02.png"
 }
