@@ -32,6 +32,8 @@ extern "C" {
     
     // Update tick; only call if cozmo_startup succeeded.
     int cozmo_update(float current_time);
+  
+    void Unity_DAS_Log(int level, const char* eventName, const char* eventValue);
 
 #ifndef _cplusplus
 }
