@@ -383,8 +383,8 @@ namespace Anki {
         //////////////////////////////////////////////////////////////
         if (IMUFilter::IsPickedUp() && !wasPickedUp_) {
           // Stop wheels
-          PathFollower::ClearPath();
-          SteeringController::ExecuteDirectDrive(0, 0);
+          AnimationController::Clear();
+          PickAndPlaceController::Reset();
           SpeedController::SetBothDesiredAndCurrentUserSpeed(0);
         }
         wasPickedUp_ = IMUFilter::IsPickedUp();
