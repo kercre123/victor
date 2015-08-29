@@ -32,8 +32,8 @@ void spi_init(void) {
              SPI_MCR_SMPL_PT(0) | 
              SPI_MCR_CLR_TXF_MASK | 
              SPI_MCR_CLR_RXF_MASK;
-  SPI0_CTAR0 = SPI_CTAR_LSBFE_MASK | 
-               SPI_CTAR_BR(1) | 
+  SPI0_CTAR0 = //SPI_CTAR_LSBFE_MASK | 
+               SPI_CTAR_BR(2) | 
                SPI_CTAR_CPOL_MASK |
                SPI_CTAR_CPHA_MASK |
                SPI_CTAR_FMSZ(15);
@@ -55,18 +55,20 @@ void spi_init(void) {
     }
 
     static int toggle = 0;
-    static unsigned char k = 0;
 
     while (SPI0_SR & SPI_SR_TFFF_MASK)
     {
-      SPI0_PUSHR = SPI_PUSHR_CONT_MASK | SPI_PUSHR_PCS(toggle) | 0x5500 | k++;
-      toggle ^= 2;
+      SPI0_PUSHR = SPI_PUSHR_CONT_MASK | SPI_PUSHR_PCS(toggle) | spi_buff[tx_idx];
+      
+      toggle = ~toggle;
       tx_idx = (tx_idx + 1) % size;
 
       SPI0_SR = SPI_SR_TFFF_MASK;
     }
     
-    for (int i = 0; i < 5; i++)
+    /*
+    for (int i = 0; i < 800; i++)
       BOARD_I2C_DELAY ;
+    */
   }
 }
