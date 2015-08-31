@@ -109,20 +109,24 @@ LOCAL void i2spiTask(os_event_t *event)
 LOCAL void dmaisr(void* arg) {
 	//Grab int status
 	const uint32 slc_intr_status = READ_PERI_REG(SLC_INT_STATUS);
+	//clear all intr flags
+	WRITE_PERI_REG(SLC_INT_CLR, slc_intr_status);
+
+  //os_put_hex(slc_intr_status, 8); os_put_char('\r'); os_put_char('\n');
+
   if (slc_intr_status & SLC_TX_EOF_INT_ST) { // Receive complete interrupt
     if (system_os_post(I2SPI_PRIO, TASK_SIG_I2SPI_RX, READ_PERI_REG(SLC_TX_EOF_DES_ADDR)) == false)
     {
       os_put_char('!'); os_put_char('I'); os_put_char('R');
     }
   }
-	if (slc_intr_status & SLC_RX_EOF_INT_ST) { // Transmit complete interrupt
+  if (slc_intr_status & SLC_RX_EOF_INT_ST)
+  { // Transmit complete interrupt
     if (system_os_post(I2SPI_PRIO, TASK_SIG_I2SPI_TX, READ_PERI_REG(SLC_RX_EOF_DES_ADDR)) == false)
     {
       os_put_char('!'); os_put_char('I'); os_put_char('T');
     }
-	}
-  //clear all intr flags
-  WRITE_PERI_REG(SLC_INT_CLR, 0xffffffff);
+  }
 }
 
 
@@ -223,14 +227,14 @@ int8_t ICACHE_FLASH_ATTR i2spiInit() {
 			I2S_I2S_RX_WFULL_INT_CLR|I2S_I2S_PUT_DATA_INT_CLR|I2S_I2S_TAKE_DATA_INT_CLR);
 
 	//trans master&rece slave,MSB shift,right_first,msb right
-	CLEAR_PERI_REG_MASK(I2SCONF, I2S_TRANS_SLAVE_MOD|
+	CLEAR_PERI_REG_MASK(I2SCONF, I2S_RECE_SLAVE_MOD|I2S_TRANS_SLAVE_MOD|
 						(I2S_BITS_MOD<<I2S_BITS_MOD_S)|
 						(I2S_BCK_DIV_NUM <<I2S_BCK_DIV_NUM_S)|
 						(I2S_CLKM_DIV_NUM<<I2S_CLKM_DIV_NUM_S));
 	SET_PERI_REG_MASK(I2SCONF, I2S_RIGHT_FIRST|I2S_MSB_RIGHT|I2S_RECE_SLAVE_MOD|I2S_TRANS_SLAVE_MOD|
-						I2S_RECE_MSB_SHIFT|I2S_TRANS_MSB_SHIFT|
-						((16&I2S_BCK_DIV_NUM )<<I2S_BCK_DIV_NUM_S)|
-						((16&I2S_CLKM_DIV_NUM)<<I2S_CLKM_DIV_NUM_S));
+						//I2S_RECE_MSB_SHIFT|I2S_TRANS_MSB_SHIFT|
+						((8   &I2S_BCK_DIV_NUM )<<I2S_BCK_DIV_NUM_S)|
+						((1&I2S_CLKM_DIV_NUM)<<I2S_CLKM_DIV_NUM_S));
 
 
 	//No idea if ints are needed...
@@ -241,7 +245,8 @@ int8_t ICACHE_FLASH_ATTR i2spiInit() {
 			I2S_I2S_RX_WFULL_INT_CLR|I2S_I2S_PUT_DATA_INT_CLR|I2S_I2S_TAKE_DATA_INT_CLR);
 	//enable int
 	SET_PERI_REG_MASK(I2SINT_ENA,   I2S_I2S_TX_REMPTY_INT_ENA|I2S_I2S_TX_WFULL_INT_ENA|
-	I2S_I2S_RX_REMPTY_INT_ENA|I2S_I2S_TX_PUT_DATA_INT_ENA|I2S_I2S_RX_TAKE_DATA_INT_ENA);
+	I2S_I2S_RX_REMPTY_INT_ENA|I2S_I2S_RX_WFULL_INT_ENA|I2S_I2S_TX_PUT_DATA_INT_ENA|I2S_I2S_RX_TAKE_DATA_INT_ENA);
+
 
 	return 0;
 }
