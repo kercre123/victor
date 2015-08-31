@@ -174,7 +174,7 @@ public class ActiveBlock : ObservedObject {
   }
 
   public void Tapped(G2U.ActiveObjectTapped message) {
-    Debug.Log("Tapped Message Received for ActiveBlock(" + ID + "): " + message.numTaps + " taps");
+    DAS.Debug("ActiveBlock", "Tapped Message Received for ActiveBlock(" + ID + "): " + message.numTaps + " taps");
     if (TappedAction != null)
       TappedAction(ID, message.numTaps);
   }
@@ -196,8 +196,6 @@ public class ActiveBlock : ObservedObject {
     SetAllActiveObjectLEDsMessage.relativeToX = relativeToX;
     SetAllActiveObjectLEDsMessage.relativeToY = relativeToY;
 
-    //Debug.Log( "SetAllActiveObjectLEDs for Object with ID: " + ID );
-
     RobotEngineManager.instance.Message.SetAllActiveObjectLEDs = SetAllActiveObjectLEDsMessage;
     RobotEngineManager.instance.SendMessage();
 
@@ -217,8 +215,6 @@ public class ActiveBlock : ObservedObject {
 
   public void SetLEDs(uint onColor = 0, uint offColor = 0, byte whichLEDs = byte.MaxValue, uint onPeriod_ms = Light.FOREVER, uint offPeriod_ms = 0, 
                       uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0, byte turnOffUnspecifiedLEDs = 1) {
-
-    //Debug.Log("SetLEDs transitionOnPeriod_ms("+transitionOnPeriod_ms+")");
 
     for (int i = 0; i < lights.Length; ++i) {
       if (lights[i].Position((Light.PositionFlag)whichLEDs)) {
@@ -272,7 +268,7 @@ public class ActiveBlock : ObservedObject {
     if (typeIndex >= (int)Mode.Count)
       typeIndex = 0;
     
-    Debug.Log("active block id(" + ID + ") from " + mode + " to " + (ActiveBlock.Mode)typeIndex);
+    DAS.Debug("ActiveBlock", "active block id(" + ID + ") from " + mode + " to " + (ActiveBlock.Mode)typeIndex);
     
     SetMode((ActiveBlock.Mode)typeIndex, playSound);
   }

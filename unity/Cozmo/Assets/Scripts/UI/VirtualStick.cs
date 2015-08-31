@@ -141,9 +141,7 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
         if (bg.rect.height > 0f)
           res.y /= bg.rect.height * 0.5f;
       }
-      
-      //Debug.Log("res.x("+res.x+") deadZone.x("+deadZone.x+")");
-      
+
       if (deadZoneRadial && !horizontalOnly && !verticalOnly && !SideModeEngaged && !VertModeEngaged) {
         if (res.magnitude < deadZone.x) {
           res = Vector2.zero;
@@ -276,7 +274,6 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 
     float dpi = Screen.dpi;
 
-    //Debug.Log("ResizeToScreen dpi("+dpi+")"); //326
     if (dpi == 0f)
       return;
 
@@ -404,10 +401,7 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
       }
 
       bg.anchoredPosition = smallScreenAnchorPos;
-      //Debug.Log("pivot("+bg.pivot+") smallScreenAnchorPos("+smallScreenAnchorPos+")");
     }
-
-    //Debug.Log("screenHeightInches("+screenHeightInches+") dynamic("+dynamic+")");
 
     stick.anchoredPosition = Vector2.zero;
   }
@@ -428,8 +422,6 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 
     stickImageThrown.enabled = thrown;
     stickImageNeutral.enabled = !thrown;
-
-    //Debug.Log("RefreshStickImages thrown("+thrown+") throwVector("+throwVector.x +", "+throwVector.y+") SideModeEngaged("+SideModeEngaged+")");
 
     if (thrown) {
       float angle = Vector2.Angle(Vector3.up, throwVector);
@@ -723,12 +715,12 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
   }
 
   public void AbsorbSwipeRequest() {
-    Debug.Log("AbsorbSwipeRequest()");
+    DAS.Debug("VirtualStick", "AbsorbSwipeRequest()");
     SwipeRequest = false;
   }
 
   public void AbsorbDoubleTap() {
-    Debug.Log("AbsorbDoubleTap()");
+    DAS.Debug("VirtualStick", "AbsorbDoubleTap()");
     DoubleTapped = false;
   }
 
@@ -736,9 +728,6 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 
     Vector2 localTouchPos;
     RectTransformUtility.ScreenPointToLocalPointInRectangle(rTrans, eventData.position, canvasCamera, out localTouchPos);
-    //Debug.Log("OnPointerDown eventData.position("+eventData.position+") localTouchPos("+localTouchPos+") canvasCamera("+canvasCamera+")");
-    //Vector2 pointerPos = eventData.position * screenScaleFactor;
-
     float newTime = Time.time;
     if (doubleTapDelayMax > 0f) {
       if (pointerDownTime != 0f && (newTime - pointerDownTime) <= doubleTapDelayMax) {
@@ -750,7 +739,6 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 
     if (dynamic) {
       bg.anchoredPosition = localTouchPos - ZoneCenter;//pointerPos - ZoneCenter;
-      //Debug.Log("bg.anchoredPosition("+bg.anchoredPosition+") position("+pointerPos+") ZoneCenter("+ZoneCenter+")");
       stick.anchoredPosition = Vector2.zero;
     }
     
@@ -777,8 +765,6 @@ public class VirtualStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IP
 
     wasClockwise = false;
     wasCounterClockwise = false;
-
-    //Debug.Log ("Joystick OnPointerDown pointerPos(" + pointerPos + ") ZoneCenter("+ZoneCenter+") disallowSwipeForThisTouch("+disallowSwipeForThisTouch+")");
   }
 
   public void OnDrag(PointerEventData eventData) {

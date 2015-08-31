@@ -79,9 +79,7 @@ public class OptionsScreen : MonoBehaviour {
 
   void Awake() {
     if (instance != null) {
-      //Debug.Log("OptionsScreen destroying old options, because scene specific layouts might differ.");
       GameObject.Destroy(instance.gameObject);
-      //return;
     }
     instance = this;
     DontDestroyOnLoad(gameObject);
@@ -107,32 +105,26 @@ public class OptionsScreen : MonoBehaviour {
 
     if (toggle_reverseLikeACar != null) {
       toggle_reverseLikeACar.isOn = PlayerPrefs.GetInt("ReverseLikeACar", REVERSE_LIKE_A_CAR) == 1;
-      //Debug.Log("Init toggle_reverseLikeACar.isOn("+toggle_reverseLikeACar.isOn+")");
     }
 
     if (toggle_debug != null) {
       toggle_debug.isOn = PlayerPrefs.GetInt("ShowDebugInfo", 0) == 1;
-      //Debug.Log("Init toggle_debug.isOn("+toggle_debug.isOn+")");
     }
 
     if (toggle_flushLogs != null) {
       toggle_flushLogs.isOn = PlayerPrefs.GetInt("FlushLogs", 1) == 1;
-      //Debug.Log("Init toggle_debug.isOn("+toggle_debug.isOn+")");
     }
 
     if (toggle_vision != null) {
       toggle_vision.isOn = PlayerPrefs.GetInt("VisionDisabled" + GetVisionSelected().ToString(), 0) == 1;
-      //Debug.Log("Init toggle_debug.isOn("+toggle_debug.isOn+")");
     }
 
     if (toggle_visionFade != null) {
       toggle_visionFade.isOn = PlayerPrefs.GetInt("VisionFadeDisabled" + GetVisionSelected().ToString(), 0) == 1;
-      //Debug.Log("Init toggle_debug.isOn("+toggle_debug.isOn+")");
     }
 
     if (toggle_userTestMode != null) {
       toggle_userTestMode.isOn = PlayerPrefs.GetInt("UserTestMode", 0) == 1;
-      //Debug.Log("Init toggle_debug.isOn("+toggle_debug.isOn+")");
     }
 
     if (toggle_autoCollect != null) {
@@ -485,7 +477,6 @@ public class OptionsScreen : MonoBehaviour {
 
   void ToggleUserTestMode(bool val) {
     PlayerPrefs.SetInt("UserTestMode", val ? 1 : 0);
-    //Debug.Log("ToggleUserTestMode("+val+")");
   }
 
   void ToggleVisionRecording(bool val) {
@@ -495,7 +486,6 @@ public class OptionsScreen : MonoBehaviour {
 
   void ToggleEnergyHuntAutoCollect(bool val) {
     PlayerPrefs.SetInt("EnergyHuntAutoCollect", val ? 1 : 0);
-    //Debug.Log("ToggleUserTestMode("+val+")");
   }
 
   void ToggleAssitedControls(bool val) {

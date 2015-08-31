@@ -91,7 +91,7 @@ public class ProjectBuilder {
       }
     }
     
-    Debug.Log(String.Format("platform: {0} | config: {1} | buildPath: {2} | enabledDebugging: {3}", platform, config, buildPath, enableDebugging));
+    DAS.Debug("ProjectBuilder", String.Format("platform: {0} | config: {1} | buildPath: {2} | enabledDebugging: {3}", platform, config, buildPath, enableDebugging));
     iOSSdkVersion saveIOSSDKVersion = PlayerSettings.iOS.sdkVersion;
     ScriptCallOptimizationLevel saveIOSScriptLevel = PlayerSettings.iOS.scriptCallOptimization;
 
@@ -144,7 +144,7 @@ public class ProjectBuilder {
 
     return result;
   }
-          
+
 
   /// <summary>
   /// returns build options apropriate for the given build config

@@ -12,10 +12,10 @@ public class CommandLineBuild {
     string[] argv = new string[0];
     try {
       argv = System.Environment.GetCommandLineArgs();
-      Debug.Log("args: " + System.Environment.CommandLine);
+      DAS.Debug("ActiveBlock", "args: " + System.Environment.CommandLine);
       for (int k = 0; k < argv.Length; ++k) {
         string arg = argv[k];
-        Debug.Log("arg => " + arg);
+        DAS.Debug("ActiveBlock", "arg => " + arg);
       }
     }
     catch (UnityException ex) {

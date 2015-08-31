@@ -94,7 +94,7 @@ public class BuildActions : GameActions {
       LayoutErrorType errorType;
 
       if (!tracker.PredictDropValidation(robot.carryingObject, out error, out errorType, out approveStandardDrop)) {
-        Debug.Log("PredictDropValidation failed for robot.carryingObject(" + robot.carryingObject + ") error(" + error + ")");
+        DAS.Debug("BuildActions", "PredictDropValidation failed for robot.carryingObject(" + robot.carryingObject + ") error(" + error + ")");
 
         if (!approveStandardDrop) {
           //set error text message
@@ -133,7 +133,7 @@ public class BuildActions : GameActions {
       string error;
       LayoutErrorType errorType;
       if (!tracker.PredictStackValidation(robot.carryingObject, selectedObject, out error, out errorType, true)) {
-        Debug.Log("PredictStackValidation failed for robot.carryingObject(" + robot.carryingObject + ") error(" + error + ")");
+        DAS.Debug("BuildActions", "PredictStackValidation failed for robot.carryingObject(" + robot.carryingObject + ") error(" + error + ")");
         
         //set error text message
         tracker.SetMessage(error, Color.red);

@@ -65,7 +65,5 @@ public class CameraPortFromRectTransform : MonoBehaviour {
 
     cam.rect = rect; 
 
-    //Debug.Log("CameraPortFromRectTransform cam.rect("+cam.rect+") rect("+rect+") rectTransform.rect("+rectTransform.rect+")");
-
   }
 }

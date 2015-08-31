@@ -47,26 +47,14 @@ class NetworkManager {
     // Auto-detect local IP
     IPAddress foundIpAddress = IPAddress.Loopback;
     _listenAddressStr = foundIpAddress.ToString();
-//    if (_listenAddressStr == "") {
-//      IPHostEntry host;
-//      host = Dns.GetHostEntry(Dns.GetHostName());
-//      foreach (IPAddress ip in host.AddressList) {
-//        if (ip.AddressFamily == AddressFamily.InterNetwork && !ip.ToString().Contains("127.0.0.1")) {
-//          _listenAddressStr = ip.ToString();
-//          foundIpAddress = ip;
-//          break;
-//        }
-//      }
-//    }
     try {
-      //Debug.Log(String.Format("listening on {0} : {1}", _listenAddressStr, _listenPort));
       IPAddress listenAddress = foundIpAddress;
       _tcpServer = new TcpListener(listenAddress, _listenPort);
       _tcpServer.Start();
       isActive = true;
     }
     catch (Exception e) {
-      Debug.Log("SocketException: " + e.ToString());
+      DAS.Debug("NetworkManager", "SocketException: " + e.ToString());
     }
       
   }
@@ -79,7 +67,7 @@ class NetworkManager {
     if (_tcpServer != null) {
       _tcpServer.Stop();
     }
-    Debug.Log(String.Format("connection closed {0} : {1}", _listenAddressStr, _listenPort));
+    DAS.Debug("NetworkManager", String.Format("connection closed {0} : {1}", _listenAddressStr, _listenPort));
   }
 
     
@@ -102,12 +90,12 @@ class NetworkManager {
         ThreadStart job = new ThreadStart(connectionHandler.ThreadEntry);
         Thread thread = new Thread(job);
         thread.Start();
-        Debug.Log("new connection accepted");
+        DAS.Debug("NetworkManager", "new connection accepted");
         _threads.Add(thread);
       }
     }
     catch (Exception e) {
-      Debug.Log("SocketException: " + e.ToString());
+      DAS.Debug("NetworkManager", "SocketException: " + e.ToString());
     }
       
   }

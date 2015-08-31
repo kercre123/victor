@@ -46,7 +46,6 @@ public class RobotEngineManager : MonoBehaviour {
   public event Action<bool,string> RobotCompletedAnimation;
   public event Action<bool,uint> RobotCompletedCompoundAction;
 
-  private bool cozmoLoggingStarted = false;
   private bool cozmoBindingStarted = false;
   private ChannelBase channel = null;
   private float lastRobotStateMessage = 0;
@@ -88,9 +87,6 @@ public class RobotEngineManager : MonoBehaviour {
       instance = this;
       DontDestroyOnLoad(gameObject);
     }
-    
-    CozmoLogging.OpenLogFile();
-    cozmoLoggingStarted = true;
 
     TextAsset config = configuration;
 
@@ -99,7 +95,7 @@ public class RobotEngineManager : MonoBehaviour {
     }
 
     if (config == null) {
-      Debug.LogError("Error initializing CozmoBinding: No configuration.", this);
+      DAS.Error("RobotEngineManager", "Error initializing CozmoBinding: No configuration.");
     }
     else {
       CozmoBinding.Startup(config.text);
@@ -117,9 +113,6 @@ public class RobotEngineManager : MonoBehaviour {
   }
 
   private void OnDisable() {
-    if (cozmoLoggingStarted) {
-      CozmoLogging.CloseLogFile();
-    }
     
     if (channel != null) {
       if (channel.IsActive) {
@@ -154,7 +147,7 @@ public class RobotEngineManager : MonoBehaviour {
     Profiler.BeginSample("isRobotConnected");
     float robotStateTimeout = 20f;
     if (isRobotConnected && lastRobotStateMessage + robotStateTimeout < Time.realtimeSinceStartup) {
-      Debug.LogError("No robot state for " + robotStateTimeout.ToString("0.00") + " seconds.", this);
+      DAS.Error("RobotEngineManager", "No robot state for " + robotStateTimeout.ToString("0.00") + " seconds.");
       Disconnect();
       Disconnected(DisconnectionReason.RobotConnectionTimedOut);
     }
@@ -180,7 +173,7 @@ public class RobotEngineManager : MonoBehaviour {
       imageBasePath = Path.Combine(Application.persistentDataPath, DateTime.Now.ToString("robovi\\sion_yyyy-MM-dd_HH-mm-ss"));
       try {
         
-        Debug.Log("Saving robot screenshots to \"" + imageBasePath + "\"", this);
+        DAS.Debug("RobotEngineManager", "Saving robot screenshots to \"" + imageBasePath + "\"");
         Directory.CreateDirectory(imageBasePath);
         
         imageDirectoryCreated = true;
@@ -225,7 +218,7 @@ public class RobotEngineManager : MonoBehaviour {
       float limit = Time.realtimeSinceStartup + 2.0f;
       while (channel.HasPendingOperations) {
         if (limit < Time.realtimeSinceStartup) {
-          Debug.LogWarning("Not waiting for disconnect to finish sending.", this);
+          DAS.Warn("RobotEngineManager", "Not waiting for disconnect to finish sending.");
           break;
         }
         System.Threading.Thread.Sleep(500);
@@ -250,7 +243,7 @@ public class RobotEngineManager : MonoBehaviour {
   }
 
   private void Disconnected(DisconnectionReason reason) {
-    Debug.Log("Disconnected: " + reason.ToString());
+    DAS.Debug("RobotEngineManager", "Disconnected: " + reason.ToString());
     isRobotConnected = false;
     Application.LoadLevel("Shell");
 
@@ -262,7 +255,7 @@ public class RobotEngineManager : MonoBehaviour {
 
   public void SendMessage() {
     if (!IsConnected) {
-      Debug.LogWarning("Message not sent because not connected");
+      DAS.Warn("RobotEngineManager", "Message not sent because not connected");
       return;
     }
 
@@ -329,7 +322,7 @@ public class RobotEngineManager : MonoBehaviour {
       ReceivedSpecificMessage(message.AnimationAvailable);
       break;
     default:
-      Debug.LogWarning(message.GetTag() + " is not supported", this);
+      DAS.Warn("RobotEngineManager", message.GetTag() + " is not supported");
       break;
     }
   }
@@ -356,11 +349,11 @@ public class RobotEngineManager : MonoBehaviour {
   }
 
   private void ReceivedSpecificMessage(G2U.UiDeviceConnected message) {
-    Debug.Log("Device connected: " + message.deviceID.ToString());
+    DAS.Debug("RobotEngineManager", "Device connected: " + message.deviceID.ToString());
   }
 
   private void ReceivedSpecificMessage(G2U.RobotDisconnected message) {
-    Debug.LogError("Robot " + message.robotID + " disconnected after " + message.timeSinceLastMsg_sec.ToString("0.00") + " seconds.", this);
+    DAS.Error("RobotEngineManager", "Robot " + message.robotID + " disconnected after " + message.timeSinceLastMsg_sec.ToString("0.00") + " seconds.");
     Disconnect();
     Disconnected(DisconnectionReason.RobotDisconnected);
   }
@@ -407,8 +400,6 @@ public class RobotEngineManager : MonoBehaviour {
   private void ReceivedSpecificMessage(G2U.RobotObservedObject message) {
     if (current == null)
       return;
-    //Debug.Log( "box found with ID:" + message.objectID + " at " + Time.time );
-
     current.UpdateObservedObjectInfo(message);
   }
 
@@ -417,10 +408,7 @@ public class RobotEngineManager : MonoBehaviour {
       return;
 
     if (current.selectedObjects.Count == 0 && !current.isBusy) {
-      //Debug.Log( "no box found" );
-
       current.ClearObservedObjects();
-      //current.lastObjectHeadTracked = null;
     }
   }
 
@@ -428,7 +416,7 @@ public class RobotEngineManager : MonoBehaviour {
     if (current == null)
       return;
 
-    Debug.Log("Deleted object with ID " + message.objectID);
+    DAS.Debug("RobotEngineManager", "Deleted object with ID " + message.objectID);
 
     ObservedObject deleted = current.knownObjects.Find(x => x == message.objectID);
 
@@ -463,7 +451,6 @@ public class RobotEngineManager : MonoBehaviour {
 
     RobotActionType action_type = (RobotActionType)message.actionType;
     bool success = (message.result == ActionResult.SUCCESS) || (action_type == RobotActionType.PLAY_ANIMATION && message.result == ActionResult.CANCELLED);
-    //Debug.Log("Action completed " + success);
     current.selectedObjects.Clear();
     current.targetLockedObject = null;
 
@@ -518,7 +505,7 @@ public class RobotEngineManager : MonoBehaviour {
 
   private void ReceivedSpecificMessage(G2U.RobotState message) {
     if (!isRobotConnected) {
-      Debug.Log("Robot " + message.robotID.ToString() + " sent first state message.");
+      DAS.Debug("RobotEngineManager", "Robot " + message.robotID.ToString() + " sent first state message.");
       isRobotConnected = true;
 
       AddRobot(message.robotID);
@@ -531,7 +518,7 @@ public class RobotEngineManager : MonoBehaviour {
     lastRobotStateMessage = Time.realtimeSinceStartup;
 
     if (!robots.ContainsKey(message.robotID)) {
-      Debug.Log("adding robot with ID: " + message.robotID);
+      DAS.Debug("RobotEngineManager", "adding robot with ID: " + message.robotID);
       
       AddRobot(message.robotID);
     }
@@ -639,8 +626,6 @@ public class RobotEngineManager : MonoBehaviour {
     if (current == null)
       return;
 
-    //Debug.Log("ReceivedSpecificMessage ImageChunk message.ncols("+message.ncols+") message.nrows("+message.nrows+")");
-
     switch (message.imageEncoding) {
     case ImageEncodingClad.JPEGColor:
       ColorJpeg(message);
@@ -652,7 +637,7 @@ public class RobotEngineManager : MonoBehaviour {
       MinipegGray(message);
       break;
     default:
-      Debug.LogWarning(message.imageEncoding + " is not supported", this);
+      DAS.Warn("RobotEngineManager", message.imageEncoding + " is not supported");
       break;
     }
   }
@@ -711,7 +696,7 @@ public class RobotEngineManager : MonoBehaviour {
       header = minipeg_header80;
     }
     else {
-      Debug.LogError("Unknown minipeg quality " + qual.ToString());
+      DAS.Error("RobotEngineManager", "Unknown minipeg quality " + qual.ToString());
       return false;
     }
 
@@ -888,7 +873,7 @@ public class RobotEngineManager : MonoBehaviour {
 
   public void SetRobotVolume() {
     SetRobotVolumeMessage.volume = OptionsScreen.GetRobotVolume();
-    Debug.Log("Set Robot Volume " + SetRobotVolumeMessage.volume);
+    DAS.Debug("RobotEngineManager", "Set Robot Volume " + SetRobotVolumeMessage.volume);
 
     Message.SetRobotVolume = SetRobotVolumeMessage;
     SendMessage();
