@@ -106,7 +106,7 @@ message AnimationState {
 message PrintText
 {
   int_8  logLevel,
-  uint_8 text[uint_8],
+  string text[uint_8],
 }
 
 /// *************** Overall message pipe ******************************* ///
