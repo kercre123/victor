@@ -9,7 +9,7 @@ public class ChangeCubeModeButton : MonoBehaviour {
     if (GameActions.instance == null || robot == null || robot.carryingObject == null)
       return;
 
-    Debug.Log("ChangeCubeModeButton.ChangeMode()");
+    DAS.Debug("ChangeCubeModeButton", "ChangeCubeModeButton.ChangeMode()");
     GameActions.instance.Change(true, robot.carryingObject);
   }
 }

@@ -293,7 +293,7 @@ public class GoldRushController : GameController {
   Vector2 cozmoForwardWhenPickUp = Vector2.right;
 
   protected override void Enter_PRE_GAME() {
-    Debug.Log("Enter_PRE_GAME");
+    DAS.Debug("GoldRushController", "Enter_PRE_GAME");
     base.Enter_PRE_GAME();
 
     if (robot == null)
@@ -320,7 +320,7 @@ public class GoldRushController : GameController {
   }
 
   protected override void Exit_PRE_GAME() {
-    Debug.Log("Exit_PRE_GAME");
+    DAS.Debug("GoldRushController", "Exit_PRE_GAME");
     //hintMessage.KillMessage ();
     base.Exit_PRE_GAME();
 
@@ -358,7 +358,6 @@ public class GoldRushController : GameController {
   void RefreshGameProps() {
     if (robot == null)
       return;
-    //Debug.Log("RefreshGameProps robot.knownObjects.Count("+robot.knownObjects.Count+")");
     for (int i = 0; i < robot.knownObjects.Count; i++) {
       ObservedObject obj = robot.knownObjects[i];
       if (obj.isActive && goldExtractingObject == null) {
@@ -372,7 +371,7 @@ public class GoldRushController : GameController {
   }
 
   void CheckForStackSuccess(bool success, RobotActionType action_type) {
-    Debug.Log("action type is: " + action_type);
+    DAS.Debug("GoldRushController", "action type is: " + action_type);
     if (success) { // hardcoded until we get enums over from the engine
       switch (buildState) {
       case BuildState.WAITING_TO_PICKUP_BLOCK:
@@ -594,7 +593,7 @@ public class GoldRushController : GameController {
               EnterPlayState(PlayState.CAN_EXTRACT);
             }
             foundItems.Add(robot.carryingObject);
-            Debug.Log("found!");
+            DAS.Debug("GoldRushController", "found!");
           }
           else if (distance <= detectRadius) {
             //float warmthFactor = Mathf.Clamp01((distance - findRadius) / (detectRadius - findRadius));
@@ -644,7 +643,6 @@ public class GoldRushController : GameController {
     Vector2 home_base_pos = Vector2.zero;
     if (goldCollectingObject != null && robot.knownObjects.Find(x => x == goldCollectingObject) != null) {
       home_base_pos = robot.knownObjects.Find(x => x == goldCollectingObject).WorldPosition;
-      //Debug.Log("home_base_pos: "+home_base_pos.ToString());
     }
     Vector2 collector_pos = (Vector2)robot.WorldPosition + (Vector2)robot.Forward * CozmoUtil.CARRIED_OBJECT_HORIZONTAL_OFFSET;
     float distance = (home_base_pos - collector_pos).magnitude;
@@ -666,11 +664,11 @@ public class GoldRushController : GameController {
     Vector2 home_base_pos = Vector2.zero;
     if (goldCollectingObject != null && robot.knownObjects.Find(x => x == goldCollectingObject) != null) {
       home_base_pos = robot.knownObjects.Find(x => x == goldCollectingObject).WorldPosition;
-      Debug.Log("home_base_pos: " + home_base_pos.ToString());
+      DAS.Debug("GoldRushController", "home_base_pos: " + home_base_pos.ToString());
     }
     Vector2 collector_pos = (Vector2)robot.WorldPosition + (Vector2)robot.Forward * CozmoUtil.CARRIED_OBJECT_HORIZONTAL_OFFSET;
     float distance = (home_base_pos - collector_pos).magnitude;
-    //Debug.Log ("distance: " + distance);
+
     if (distance > returnRadius) {
       EnterPlayState(PlayState.RETURNING);
     }

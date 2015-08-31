@@ -21,7 +21,7 @@ public class DebugButton : MonoBehaviour {
       GameData.Game game = GameData.instance.games[i];
       for (int j = 0; j < game.levels.Length; j++) {
         string stars_string = game.name + game.levels[j].name + GameController.STARS_END;
-        Debug.Log(game.name + game.levels[j].name + ", current stars: " + PlayerPrefs.GetInt(stars_string, 0));
+        DAS.Debug("DebugButton", game.name + game.levels[j].name + ", current stars: " + PlayerPrefs.GetInt(stars_string, 0));
         PlayerPrefs.SetInt(stars_string, 0);
       }
     }

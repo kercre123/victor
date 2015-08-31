@@ -172,9 +172,6 @@ public class Robot : IDisposable {
   public ObservedObject targetLockedObject {
     get { return _targetLockedObject; }
     set {
-
-      //Debug.Log("Robot targetLockedObject = " + (value != null ? value.RobotID.ToString() : "null") );
-
       _targetLockedObject = value;
     }
   }
@@ -302,19 +299,6 @@ public class Robot : IDisposable {
 
   public bool isBusy {
     get {
-      /*if (localBusyOverride
-         || localBusyTimer > 0f
-         || Status(RobotStatusFlagClad.IS_PERFORMING_ACTION)
-         || (Status(RobotStatusFlagClad.IS_ANIMATING) && !Status (RobotStatusFlagClad.IS_ANIMATING_IDLE))
-         || Status(RobotStatusFlagClad.IS_PICKED_UP))
-      {
-        Debug.Log (localBusyOverride ? "localBusyOverride" :
-        localBusyTimer > 0f ? " localBusyTimer > 0f" :
-        Status(RobotStatusFlagClad.IS_PERFORMING_ACTION) ? " IS_PERFORMING_ACTION" :
-        Status(RobotStatusFlagClad.IS_ANIMATING) && !Status (RobotStatusFlagClad.IS_ANIMATING_IDLE) ? " IS_ANIMATING" :
-        Status(RobotStatusFlagClad.IS_PICKED_UP) ? " IS_PICKED_UP" : "");
-      }*/
-
       return localBusyOverride
       || localBusyTimer > 0f
       || Status(RobotStatusFlagClad.PerformingAction)
@@ -328,8 +312,6 @@ public class Robot : IDisposable {
       if (value) {
         DriveWheels(0, 0); 
       }
-
-      //Debug.Log("isBusy = " + value);
     }
   }
 
@@ -429,13 +411,11 @@ public class Robot : IDisposable {
 
     if (objectPertinenceOverride >= 0) {
       observedObjectListType = (ObservedObjectListType)objectPertinenceOverride;
-      //Debug.Log("CozmoVision.OnEnable observedObjectListType("+observedObjectListType+")");
     }
 
     float objectPertinenceRangeOverride = OptionsScreen.GetMaxDistanceInCubeLengths() * CozmoUtil.BLOCK_LENGTH_MM;
     if (objectPertinenceRangeOverride >= 0) {
       objectPertinenceRange = objectPertinenceRangeOverride;
-      //Debug.Log("CozmoVision.OnEnable objectPertinenceRange("+objectPertinenceRangeOverride+")");
     }
   }
 
@@ -447,7 +427,7 @@ public class Robot : IDisposable {
     if (!initializing) {
       TurnOffAllLights(true);
       SetObjectAdditionAndDeletion(true, true);
-      Debug.Log("Robot data cleared");
+      DAS.Debug("Robot", "Robot data cleared");
     }
 
     selectedObjects.Clear();
@@ -487,8 +467,6 @@ public class Robot : IDisposable {
     for (int i = 0; i < lights.Length; ++i) {
       lights[i].ClearData();
     }
-    //wasLoc = false;
-    //Debug.Log( "Robot data cleared IsLocalized("+IsLocalized()+")" );
   }
 
   public void ClearObservedObjects() {
@@ -527,9 +505,6 @@ public class Robot : IDisposable {
     LastRotation = Rotation;
     Rotation = new Quaternion(message.pose_quaternion1, message.pose_quaternion2, message.pose_quaternion3, message.pose_quaternion0);
 
-    //bool isLoc = IsLocalized();
-    ///if(wasLoc != isLoc)  Debug.Log("robot.UpdateInfo IsLocalized("+IsLocalized()+") knownObjects("+knownObjects.Count+")");
-    //wasLoc = isLoc;
   }
 
   public void UpdateLightMessages(bool now = false) {
@@ -554,7 +529,6 @@ public class Robot : IDisposable {
   }
 
   public void UpdateObservedObjectInfo(G2U.RobotObservedObject message) {
-    //Debug.Log( "UpdateObservedObjectInfo received message about ObservedObject with objectFamily("+message.objectFamily+") objectID("+message.objectID+")" );
 
     if (message.objectFamily == Anki.Cozmo.ObjectFamily.Mat) {
       Debug.LogWarning("UpdateObservedObjectInfo received message about the Mat!");
@@ -572,14 +546,12 @@ public class Robot : IDisposable {
   }
 
   private void AddActiveBlock(ActiveBlock activeBlock, G2U.RobotObservedObject message) {
-    //Debug.Log( "AddActiveBlock" );
     bool newBlock = false;
     if (activeBlock == null) {
       activeBlock = new ActiveBlock(message.objectID, message.objectFamily, message.objectType);
 
       activeBlocks.Add(activeBlock, activeBlock);
       knownObjects.Add(activeBlock);
-      //Debug.Log( "knownObjects.Add( activeBlock );" );
       newBlock = true;
     }
 
@@ -598,8 +570,6 @@ public class Robot : IDisposable {
       knownObject = new ObservedObject(message.objectID, message.objectFamily, message.objectType);
       
       knownObjects.Add(knownObject);
-      //Debug.Log( "knownObjects.Add( knownObject );" );
-
       newBlock = true;
     }
     
@@ -624,7 +594,6 @@ public class Robot : IDisposable {
   }
 
   public void DriveWheels(float leftWheelSpeedMmps, float rightWheelSpeedMmps) {
-    //Debug.Log("DriveWheels(leftWheelSpeedMmps:"+leftWheelSpeedMmps+", rightWheelSpeedMmps:"+rightWheelSpeedMmps+")");
     DriveWheelsMessage.lwheel_speed_mmps = leftWheelSpeedMmps;
     DriveWheelsMessage.rwheel_speed_mmps = rightWheelSpeedMmps;
 
@@ -633,7 +602,7 @@ public class Robot : IDisposable {
   }
 
   public void PlaceObjectOnGroundHere() {
-    Debug.Log("Place Object " + carryingObject + " On Ground Here");
+    DAS.Debug("Robot", "Place Object " + carryingObject + " On Ground Here");
 
     RobotEngineManager.instance.Message.PlaceObjectOnGroundHere = PlaceObjectOnGroundHereMessage;
     RobotEngineManager.instance.SendMessage();
@@ -645,7 +614,7 @@ public class Robot : IDisposable {
     CancelActionMessage.robotID = ID;
     CancelActionMessage.actionType = actionType;
 
-    Debug.Log("CancelAction actionType(" + actionType + ")");
+    DAS.Debug("Robot", "CancelAction actionType(" + actionType + ")");
 
     RobotEngineManager.instance.Message.CancelAction = CancelActionMessage;
     RobotEngineManager.instance.SendMessage();
@@ -676,7 +645,6 @@ public class Robot : IDisposable {
   /// <param name="angleFactor">Angle factor.</param> usually from -1 (MIN_HEAD_ANGLE) to 1 (MAX_HEAD_ANGLE)
   /// <param name="useExactAngle">If set to <c>true</c> angleFactor is treated as an exact angle in radians.</param>
   public void SetHeadAngle(float angleFactor = -0.8f, bool useExactAngle = false, float accelRadSec = 2f, float maxSpeedFactor = 1f) {
-    //Debug.Log("SetHeadAngle("+angleFactor+")");
 
     float radians = angleFactor;
 
@@ -696,8 +664,6 @@ public class Robot : IDisposable {
 
     headAngleRequested = radians;
     lastHeadAngleRequestTime = Time.time;
-
-    //Debug.Log( "Set Head Angle " + radians + " headAngle_rad: " + headAngle_rad + " headTrackingObject: " + headTrackingObject );
 
     SetHeadAngleMessage.angle_rad = radians;
 
@@ -729,7 +695,7 @@ public class Robot : IDisposable {
     TrackToObjectMessage.robotID = ID;
     TrackToObjectMessage.headOnly = headOnly;
 
-    Debug.Log("Track Head To Object " + TrackToObjectMessage.objectID);
+    DAS.Debug("Robot", "Track Head To Object " + TrackToObjectMessage.objectID);
 
     RobotEngineManager.instance.Message.TrackToObject = TrackToObjectMessage;
     RobotEngineManager.instance.SendMessage();
@@ -743,7 +709,7 @@ public class Robot : IDisposable {
     FaceObjectMessage.turnAngleTol = Mathf.Deg2Rad; //one degree seems to work?
     FaceObjectMessage.headTrackWhenDone = System.Convert.ToByte(headTrackWhenDone);
     
-    Debug.Log("Face Object " + FaceObjectMessage.objectID);
+    DAS.Debug("Robot", "Face Object " + FaceObjectMessage.objectID);
 
     RobotEngineManager.instance.Message.FaceObject = FaceObjectMessage;
     RobotEngineManager.instance.SendMessage();
@@ -754,7 +720,7 @@ public class Robot : IDisposable {
     PickAndPlaceObjectMessage.usePreDockPose = System.Convert.ToByte(usePreDockPose);
     PickAndPlaceObjectMessage.useManualSpeed = System.Convert.ToByte(useManualSpeed);
     
-    Debug.Log("Pick And Place Object " + PickAndPlaceObjectMessage.objectID + " usePreDockPose " + PickAndPlaceObjectMessage.usePreDockPose + " useManualSpeed " + PickAndPlaceObjectMessage.useManualSpeed);
+    DAS.Debug("Robot", "Pick And Place Object " + PickAndPlaceObjectMessage.objectID + " usePreDockPose " + PickAndPlaceObjectMessage.usePreDockPose + " useManualSpeed " + PickAndPlaceObjectMessage.useManualSpeed);
 
     RobotEngineManager.instance.Message.PickAndPlaceObject = PickAndPlaceObjectMessage;
     RobotEngineManager.instance.SendMessage();
@@ -767,7 +733,7 @@ public class Robot : IDisposable {
     RollObjectMessage.usePreDockPose = System.Convert.ToByte(usePreDockPose);
     RollObjectMessage.useManualSpeed = System.Convert.ToByte(useManualSpeed);
 
-    Debug.Log("Roll Object " + RollObjectMessage.objectID + " usePreDockPose " + RollObjectMessage.usePreDockPose + " useManualSpeed " + RollObjectMessage.useManualSpeed);
+    DAS.Debug("Robot", "Roll Object " + RollObjectMessage.objectID + " usePreDockPose " + RollObjectMessage.usePreDockPose + " useManualSpeed " + RollObjectMessage.useManualSpeed);
     
     RobotEngineManager.instance.Message.RollObject = RollObjectMessage;
     RobotEngineManager.instance.SendMessage();
@@ -777,9 +743,6 @@ public class Robot : IDisposable {
 
   public void TapBlockOnGround(int taps) {
     TapBlockMessage.numTaps = System.Convert.ToByte(taps);
-    
-    //Debug.Log( "TapBlockOnGround numTaps(" + TapBlockMessage.numTaps + ")" );
-    
     RobotEngineManager.instance.Message.TapBlockOnGround = TapBlockMessage;
     RobotEngineManager.instance.SendMessage();
     
@@ -793,7 +756,7 @@ public class Robot : IDisposable {
     PlaceObjectOnGroundMessage.level = System.Convert.ToByte(level);
     PlaceObjectOnGroundMessage.useManualSpeed = System.Convert.ToByte(useManualSpeed);
     
-    Debug.Log("Drop Object At Pose " + position + " useManualSpeed " + useManualSpeed);
+    DAS.Debug("Robot", "Drop Object At Pose " + position + " useManualSpeed " + useManualSpeed);
     
     RobotEngineManager.instance.Message.PlaceObjectOnGround = PlaceObjectOnGroundMessage;
     RobotEngineManager.instance.SendMessage();
@@ -830,7 +793,7 @@ public class Robot : IDisposable {
     GotoPoseMessage.y_mm = y_mm;
     GotoPoseMessage.rad = rad;
 
-    Debug.Log("Go to Pose: x: " + GotoPoseMessage.x_mm + " y: " + GotoPoseMessage.y_mm + " useManualSpeed: " + GotoPoseMessage.useManualSpeed + " level: " + GotoPoseMessage.level);
+    DAS.Debug("Robot", "Go to Pose: x: " + GotoPoseMessage.x_mm + " y: " + GotoPoseMessage.y_mm + " useManualSpeed: " + GotoPoseMessage.useManualSpeed + " level: " + GotoPoseMessage.level);
 
     RobotEngineManager.instance.Message.GotoPose = GotoPoseMessage;
     RobotEngineManager.instance.SendMessage();
@@ -861,8 +824,6 @@ public class Robot : IDisposable {
     liftHeightRequested = height_factor;
     lastLiftHeightRequestTime = Time.time;
 
-    //Debug.Log( "Set Lift Height " + height_factor );
-
     SetLiftHeightMessage.accel_rad_per_sec2 = 5f;
     SetLiftHeightMessage.max_speed_rad_per_sec = 10f;
     SetLiftHeightMessage.height_mm = (height_factor * (CozmoUtil.MAX_LIFT_HEIGHT_MM - CozmoUtil.MIN_LIFT_HEIGHT_MM)) + CozmoUtil.MIN_LIFT_HEIGHT_MM;
@@ -872,7 +833,7 @@ public class Robot : IDisposable {
   }
 
   public void SetRobotCarryingObject(int objectID = -1) {
-    Debug.Log("Set Robot Carrying Object: " + objectID);
+    DAS.Debug("Robot", "Set Robot Carrying Object: " + objectID);
     
     SetRobotCarryingObjectMessage.robotID = ID;
     SetRobotCarryingObjectMessage.objectID = objectID;
@@ -887,7 +848,7 @@ public class Robot : IDisposable {
   }
 
   public void ClearAllBlocks() {
-    Debug.Log("Clear All Blocks");
+    DAS.Debug("Robot", "Clear All Blocks");
     ClearAllBlocksMessage.robotID = ID;
     RobotEngineManager.instance.Message.ClearAllBlocks = ClearAllBlocksMessage;
     RobotEngineManager.instance.SendMessage();
@@ -898,7 +859,6 @@ public class Robot : IDisposable {
   }
 
   public void ClearAllObjects() {
-    //Debug.Log( "Clear All Objects" );
     ClearAllObjectsMessage.robotID = ID;
     RobotEngineManager.instance.Message.ClearAllObjects = ClearAllObjectsMessage;
     RobotEngineManager.instance.SendMessage();
@@ -910,8 +870,6 @@ public class Robot : IDisposable {
 
   
   public void VisionWhileMoving(bool enable) {
-    //Debug.Log( "Vision While Moving " + enable );
-
     VisionWhileMovingMessage.enable = System.Convert.ToByte(enable);
 
     RobotEngineManager.instance.Message.VisionWhileMoving = VisionWhileMovingMessage;
@@ -931,7 +889,7 @@ public class Robot : IDisposable {
     RobotEngineManager.instance.Message.ImageRequest = ImageRequestMessage;
     RobotEngineManager.instance.SendMessage();
     
-    Debug.Log("image request message sent with " + mode + " at " + resolution);
+    DAS.Debug("Robot", "image request message sent with " + mode + " at " + resolution);
   }
 
   public void StopAllMotors() {
@@ -941,15 +899,13 @@ public class Robot : IDisposable {
   public void TurnInPlace(float angle_rad) {
     TurnInPlaceMessage.robotID = ID;
     TurnInPlaceMessage.angle_rad = angle_rad;
-    
-    //Debug.Log( "TurnInPlace(robotID:" + ID + ", angle_rad:" + angle_rad + ")" );
 
     RobotEngineManager.instance.Message.TurnInPlace = TurnInPlaceMessage;
     RobotEngineManager.instance.SendMessage();
   }
 
   public void TraverseObject(int objectID, bool usePreDockPose = false, bool useManualSpeed = false) {
-    Debug.Log("Traverse Object " + objectID + " useManualSpeed " + useManualSpeed + " usePreDockPose " + usePreDockPose);
+    DAS.Debug("Robot", "Traverse Object " + objectID + " useManualSpeed " + useManualSpeed + " usePreDockPose " + usePreDockPose);
 
     TraverseObjectMessage.useManualSpeed = System.Convert.ToByte(useManualSpeed);
     TraverseObjectMessage.usePreDockPose = System.Convert.ToByte(usePreDockPose);

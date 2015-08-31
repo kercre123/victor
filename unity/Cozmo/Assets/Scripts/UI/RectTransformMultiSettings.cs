@@ -25,7 +25,6 @@ public class RectTransformSettings {
 /// </summary>
 [ExecuteInEditMode] 
 public class RectTransformMultiSettings : MonoBehaviour {
-  [SerializeField] bool debug = false;
   [SerializeField] List<RectTransformSettings> screenSettings = new List<RectTransformSettings>();
 
   bool smallScreen = false;
@@ -35,34 +34,25 @@ public class RectTransformMultiSettings : MonoBehaviour {
     get {
       if (_rTrans == null) {
         _rTrans = transform as RectTransform;
-        if (debug)
-          Debug.Log(gameObject.name + " _rTrans = transform as RectTransform;");
       }
       return _rTrans;
     }
   }
 
   void Awake() {
-    if (debug)
-      Debug.Log(gameObject.name + " Awake");
+      
   }
 
   void OnEnable() {
-    if (debug)
-      Debug.Log(gameObject.name + " OnEnable");
     RefreshSettingsToScreen();
     ScreenMultiSettingsDetector.ShareSettings += RefreshSettingsToScreen;
   }
 
   void OnDisable() {
-    if (debug)
-      Debug.Log(gameObject.name + " OnDisable");
     ScreenMultiSettingsDetector.ShareSettings -= RefreshSettingsToScreen;
   }
 
   void OnDestroy() {
-    if (debug)
-      Debug.Log(gameObject.name + " OnDestroy");
   }
 
   void RefreshSettingsToScreen() {
@@ -89,9 +79,6 @@ public class RectTransformMultiSettings : MonoBehaviour {
     rTrans.pivot = settings.pivot;
     rTrans.sizeDelta = settings.sizeDelta;
     rTrans.localScale = settings.localScale;
-    
-    if (debug)
-      Debug.Log(gameObject.name + " LoadSettings for screenMode(" + ScreenMultiSettingsDetector.CurrentIndex + ")");
   }
 
   void SaveSettings(RectTransformSettings settings) {
@@ -106,8 +93,6 @@ public class RectTransformMultiSettings : MonoBehaviour {
     settings.pivot = rTrans.pivot;
     settings.sizeDelta = rTrans.sizeDelta;
     settings.localScale = rTrans.localScale;
-    if (debug)
-      Debug.Log(gameObject.name + " SaveSettings for screenMode(" + ScreenMultiSettingsDetector.CurrentIndex + ")");
   }
 
   bool SettingsAreDifferent(RectTransformSettings settings) {
@@ -135,9 +120,6 @@ public class RectTransformMultiSettings : MonoBehaviour {
 
   //this is called from the custom inspector RectTransformMultiSettingsEditor whenever settings are changed
   public void SaveCurrentSettings() {
-    if (debug)
-      Debug.Log(gameObject.name + " SaveCurrentSettings for screenMode(" + ScreenMultiSettingsDetector.CurrentIndex + ")");
-
     int index = ScreenMultiSettingsDetector.CurrentIndex;
     while (screenSettings.Count <= index) {
       RectTransformSettings newSettings = new RectTransformSettings();

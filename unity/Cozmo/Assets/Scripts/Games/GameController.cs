@@ -424,7 +424,7 @@ public class GameController : MonoBehaviour {
   }
 
   void RobotCompletedAnimation(bool success, string animName) {
-    Debug.Log("RobotCompletedAnimation(" + success + ", " + animName + ")");
+    DAS.Debug("GameController", "RobotCompletedAnimation(" + success + ", " + animName + ")");
     if (emotionWaitLimiterRoutine != null)
       StopCoroutine(emotionWaitLimiterRoutine);
     emotionWaitLimiterRoutine = null;
@@ -433,7 +433,7 @@ public class GameController : MonoBehaviour {
   }
 
   void RobotCompletedCompoundAction(bool success, uint tagId) {
-    Debug.Log("RobotCompletedAnimation(" + success + ", " + tagId + ")");
+    DAS.Debug("GameController", "RobotCompletedAnimation(" + success + ", " + tagId + ")");
     if (emotionWaitLimiterRoutine != null)
       StopCoroutine(emotionWaitLimiterRoutine);
     emotionWaitLimiterRoutine = null;
@@ -492,7 +492,6 @@ public class GameController : MonoBehaviour {
   }
 
   protected virtual void Enter_BUILDING() {
-    //Debug.Log(gameObject.name + " Enter_BUILDING");
 
     if (playButton != null)
       playButton.gameObject.SetActive(true);
@@ -501,12 +500,10 @@ public class GameController : MonoBehaviour {
   }
 
   protected virtual void Update_BUILDING() {
-    //Debug.Log(gameObject.name + " Update_BUILDING");
+
   }
 
   protected virtual void Exit_BUILDING() {
-    //Debug.Log(gameObject.name + " Exit_BUILDING");
-
     if (playButton != null)
       playButton.gameObject.SetActive(false);
     if (robot != null)
@@ -514,7 +511,6 @@ public class GameController : MonoBehaviour {
   }
 
   protected virtual void Enter_PRE_GAME() {
-    //Debug.Log(gameObject.name + " Enter_PRE_GAME");
 
     if (countdownText != null) {
       countdownText.gameObject.SetActive(false);
@@ -533,7 +529,7 @@ public class GameController : MonoBehaviour {
   }
 
   protected virtual void Update_PRE_GAME() {
-    //Debug.Log(gameObject.name + " Update_PRE_GAME");
+
     //add game specific intro messaging in an override of this method
     // for instance, if this game requires a certain action to start, tell them here: 'pick up X to begin!'
     //  or if this game has a count-down before start, we display that count down here
@@ -542,7 +538,6 @@ public class GameController : MonoBehaviour {
       if (coundownTimer == 0f) {
         if (instructionsSound != null)
           AudioManager.PlayOneShot(instructionsSound);
-        //Debug.Log("gameStartingIn stateTimer("+stateTimer+")");
         if (gameStartingIn != null)
           AudioManager.PlayAudioClip(gameStartingIn, instructionsDelay, AudioManager.Source.Notification);
         lastTimerSeconds = 0;
@@ -555,7 +550,6 @@ public class GameController : MonoBehaviour {
 
         int remaining = Mathf.CeilToInt(Mathf.Clamp((countdownToStart + gameStartingInDelay + instructionsDelay) - coundownTimer, 0f, countdownToStart));
 
-        //Debug.Log("PlayCountdownAudio stateTimer("+stateTimer+")");
         PlayCountdownAudio(remaining);
         
         if (countdownText != null) {
@@ -567,7 +561,6 @@ public class GameController : MonoBehaviour {
   }
 
   protected virtual void Exit_PRE_GAME() {
-    //Debug.Log(gameObject.name + " Exit_PRE_GAME");
     if (countdownText != null) {
       countdownText.gameObject.SetActive(false);
     }
@@ -578,7 +571,6 @@ public class GameController : MonoBehaviour {
     timerEventIndex = 0;
     bonusTime = 0;
 
-    //Debug.Log(gameObject.name + " Enter_PLAYING");
     if (gameStartSound != null)
       AudioManager.PlayOneShot(gameStartSound);
 
@@ -591,7 +583,6 @@ public class GameController : MonoBehaviour {
   }
 
   protected virtual void Update_PLAYING() {
-    //Debug.Log(gameObject.name + " Update_PLAYING");
   }
 
   protected virtual void Exit_PLAYING(bool overrideStars = false) {
@@ -616,7 +607,6 @@ public class GameController : MonoBehaviour {
         savedStars = stars;
     }
 
-    //Debug.Log(gameObject.name + " Exit_PLAYING");
     if (textScore != null)
       textScore.gameObject.SetActive(false);
 
@@ -625,8 +615,7 @@ public class GameController : MonoBehaviour {
   }
 
   protected virtual void Enter_RESULTS() {
-
-    //Debug.Log(gameObject.name + " Enter_RESULTS");
+    
     StartCoroutine(PopInStars());
     if (resultsPanel != null)
       resultsPanel.gameObject.SetActive(true);
@@ -665,7 +654,6 @@ public class GameController : MonoBehaviour {
   }
 
   protected virtual void Update_RESULTS() {
-    //Debug.Log(gameObject.name + " Update_RESULTS");
 
     if (playAgainButton != null) {
       playAgainButton.interactable = IsGameReady();
@@ -677,7 +665,6 @@ public class GameController : MonoBehaviour {
   }
 
   protected virtual void Exit_RESULTS() {
-    //Debug.Log(gameObject.name + " Exit_RESULTS");
 
     if (resultsPanel != null)
       resultsPanel.gameObject.SetActive(false);
@@ -758,7 +745,6 @@ public class GameController : MonoBehaviour {
     if (robot == null)
       return;
 
-    //Debug.Log("SetRobotEmotion("+animName+")");
     CozmoEmotionManager.SetEmotion(animName, stopPriorAnim);
 
     if (emotionWaitLimiterRoutine != null)

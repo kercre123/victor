@@ -173,7 +173,7 @@ public class RobotEngineManager : MonoBehaviour {
       imageBasePath = Path.Combine(Application.persistentDataPath, DateTime.Now.ToString("robovi\\sion_yyyy-MM-dd_HH-mm-ss"));
       try {
         
-        Debug.Log("Saving robot screenshots to \"" + imageBasePath + "\"", this);
+        DAS.Debug("RobotEngineManager", "Saving robot screenshots to \"" + imageBasePath + "\"");
         Directory.CreateDirectory(imageBasePath);
         
         imageDirectoryCreated = true;
@@ -243,7 +243,7 @@ public class RobotEngineManager : MonoBehaviour {
   }
 
   private void Disconnected(DisconnectionReason reason) {
-    Debug.Log("Disconnected: " + reason.ToString());
+    DAS.Debug("RobotEngineManager", "Disconnected: " + reason.ToString());
     isRobotConnected = false;
     Application.LoadLevel("Shell");
 
@@ -349,7 +349,7 @@ public class RobotEngineManager : MonoBehaviour {
   }
 
   private void ReceivedSpecificMessage(G2U.UiDeviceConnected message) {
-    Debug.Log("Device connected: " + message.deviceID.ToString());
+    DAS.Debug("RobotEngineManager", "Device connected: " + message.deviceID.ToString());
   }
 
   private void ReceivedSpecificMessage(G2U.RobotDisconnected message) {
@@ -400,8 +400,6 @@ public class RobotEngineManager : MonoBehaviour {
   private void ReceivedSpecificMessage(G2U.RobotObservedObject message) {
     if (current == null)
       return;
-    //Debug.Log( "box found with ID:" + message.objectID + " at " + Time.time );
-
     current.UpdateObservedObjectInfo(message);
   }
 
@@ -410,10 +408,7 @@ public class RobotEngineManager : MonoBehaviour {
       return;
 
     if (current.selectedObjects.Count == 0 && !current.isBusy) {
-      //Debug.Log( "no box found" );
-
       current.ClearObservedObjects();
-      //current.lastObjectHeadTracked = null;
     }
   }
 
@@ -421,7 +416,7 @@ public class RobotEngineManager : MonoBehaviour {
     if (current == null)
       return;
 
-    Debug.Log("Deleted object with ID " + message.objectID);
+    DAS.Debug("RobotEngineManager", "Deleted object with ID " + message.objectID);
 
     ObservedObject deleted = current.knownObjects.Find(x => x == message.objectID);
 
@@ -456,7 +451,6 @@ public class RobotEngineManager : MonoBehaviour {
 
     RobotActionType action_type = (RobotActionType)message.actionType;
     bool success = (message.result == ActionResult.SUCCESS) || (action_type == RobotActionType.PLAY_ANIMATION && message.result == ActionResult.CANCELLED);
-    //Debug.Log("Action completed " + success);
     current.selectedObjects.Clear();
     current.targetLockedObject = null;
 
@@ -511,7 +505,7 @@ public class RobotEngineManager : MonoBehaviour {
 
   private void ReceivedSpecificMessage(G2U.RobotState message) {
     if (!isRobotConnected) {
-      Debug.Log("Robot " + message.robotID.ToString() + " sent first state message.");
+      DAS.Debug("RobotEngineManager", "Robot " + message.robotID.ToString() + " sent first state message.");
       isRobotConnected = true;
 
       AddRobot(message.robotID);
@@ -524,7 +518,7 @@ public class RobotEngineManager : MonoBehaviour {
     lastRobotStateMessage = Time.realtimeSinceStartup;
 
     if (!robots.ContainsKey(message.robotID)) {
-      Debug.Log("adding robot with ID: " + message.robotID);
+      DAS.Debug("RobotEngineManager", "adding robot with ID: " + message.robotID);
       
       AddRobot(message.robotID);
     }
@@ -631,8 +625,6 @@ public class RobotEngineManager : MonoBehaviour {
   private void ReceivedSpecificMessage(G2U.ImageChunk message) {
     if (current == null)
       return;
-
-    //Debug.Log("ReceivedSpecificMessage ImageChunk message.ncols("+message.ncols+") message.nrows("+message.nrows+")");
 
     switch (message.imageEncoding) {
     case ImageEncodingClad.JPEGColor:
@@ -881,7 +873,7 @@ public class RobotEngineManager : MonoBehaviour {
 
   public void SetRobotVolume() {
     SetRobotVolumeMessage.volume = OptionsScreen.GetRobotVolume();
-    Debug.Log("Set Robot Volume " + SetRobotVolumeMessage.volume);
+    DAS.Debug("RobotEngineManager", "Set Robot Volume " + SetRobotVolumeMessage.volume);
 
     Message.SetRobotVolume = SetRobotVolumeMessage;
     SendMessage();

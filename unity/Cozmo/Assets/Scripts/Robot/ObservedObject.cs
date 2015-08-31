@@ -144,7 +144,7 @@ public class ObservedObject {
     else if (objectType == ObjectType.Block_BULLSEYE2 || objectType == ObjectType.Block_BULLSEYE2_INVERTED) {
       cubeType = CubeType.BULLS_EYE;
     }
-	else if (objectType == ObjectType.Block_FLAG || objectType == ObjectType.Block_FLAG2 || objectType == ObjectType.Block_FLAG_INVERTED) {
+    else if (objectType == ObjectType.Block_FLAG || objectType == ObjectType.Block_FLAG2 || objectType == ObjectType.Block_FLAG_INVERTED) {
       cubeType = CubeType.FLAG;
     }
     else {
@@ -152,7 +152,7 @@ public class ObservedObject {
       Debug.LogWarning("Object " + ID + " with type " + objectType + " is unsupported"); 
     }
 
-    Debug.Log("ObservedObject cubeType(" + cubeType + ") from objectFamily(" + objectFamily + ") objectType(" + objectType + ")");
+    DAS.Debug("ObservedObject", "ObservedObject cubeType(" + cubeType + ") from objectFamily(" + objectFamily + ") objectType(" + objectType + ")");
 
     SetTargetingScoreSettings();
   }

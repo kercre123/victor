@@ -33,17 +33,16 @@ public class PlayerRelativeControls : MonoBehaviour {
 
   void OnEnable() {
     //reset default state for this control scheme test
-    Debug.Log("PlayerRelativeControls OnEnable");
+    DAS.Debug("PlayerRelativeControls", "PlayerRelativeControls OnEnable");
     Input.compass.enabled = true;
 
     moveCommandLastFrame = false;
     if (robot != null) {
       robotStartHeading = MathUtil.ClampAngle180(robot.poseAngle_rad * Mathf.Rad2Deg);
-      //Debug.Log("frame("+Time.frameCount+") robotFacing(" + robotFacing + ")");
     }
 
     compassStartHeading = MathUtil.ClampAngle180(-Input.compass.trueHeading);
-    Debug.Log("frame(" + Time.frameCount + ") robotStartHeading(" + robotStartHeading + ") compassStartHeading(" + compassStartHeading + ")");
+    DAS.Debug("PlayerRelativeControls", "frame(" + Time.frameCount + ") robotStartHeading(" + robotStartHeading + ") compassStartHeading(" + compassStartHeading + ")");
   }
 
   Robot robot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.current : null; } }
@@ -53,8 +52,6 @@ public class PlayerRelativeControls : MonoBehaviour {
       return;
 
     robotFacing = MathUtil.ClampAngle180(robot.poseAngle_rad * Mathf.Rad2Deg);
-    //robotFacingStale = false;
-    //Debug.Log("frame("+Time.frameCount+") robotFacing(" + robotFacing + ")");
 
     //take our v-pad control axes and calc translate to robot
     inputs = Vector2.zero;
@@ -79,7 +76,7 @@ public class PlayerRelativeControls : MonoBehaviour {
     float throwAngle = Vector2.Angle(Vector2.up, inputs.normalized) * -Mathf.Sign(Vector2.Dot(inputs.normalized, Vector2.right));
     float relativeAngle = MathUtil.AngleDelta(screenToRobot, throwAngle);
 
-    Debug.Log("RobotRelativeControls relativeScreenFacing(" + relativeScreenFacing + ") relativeRobotFacing(" + relativeRobotFacing + ") screenToRobot(" + screenToRobot + ") throwAngle(" + throwAngle + ") relativeAngle(" + relativeAngle + ")");
+    DAS.Debug("PlayerRelativeControls", "RobotRelativeControls relativeScreenFacing(" + relativeScreenFacing + ") relativeRobotFacing(" + relativeRobotFacing + ") screenToRobot(" + screenToRobot + ") throwAngle(" + throwAngle + ") relativeAngle(" + relativeAngle + ")");
     inputs = Quaternion.AngleAxis(-screenToRobot, Vector3.forward) * inputs;
 
     CozmoUtil.CalcWheelSpeedsForPlayerRelInputs(inputs, out leftWheelSpeed, out rightWheelSpeed);
@@ -93,7 +90,7 @@ public class PlayerRelativeControls : MonoBehaviour {
 
   void OnDisable() {
     //clean up this controls test if needed
-    Debug.Log("RobotRelativeControls OnDisable");
+    DAS.Debug("PlayerRelativeControls", "RobotRelativeControls OnDisable");
     
     if (robot != null && RobotEngineManager.instance.IsConnected) {
       robot.DriveWheels(0f, 0f);

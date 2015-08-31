@@ -180,7 +180,7 @@ public class UdpChannel : ChannelBase {
         int realPort = ((IPEndPoint)mainServer.LocalEndPoint).Port;
 
         // set up advertisement message
-        Debug.Log("Advertising IP: " + localIP);
+        DAS.Debug("UdpChannel", "Advertising IP: " + localIP);
         int length = Encoding.UTF8.GetByteCount(localIP);
         if (length + 1 > advertisementRegistrationMessage.ip.Length) {
           Debug.LogError("Advertising host is too long: " +
@@ -217,7 +217,7 @@ public class UdpChannel : ChannelBase {
       IsActive = true;
       IsConnected = false;
 
-      Debug.Log("UdpConnection: Listening on " + mainServer.LocalEndPoint.ToString() + ".");
+      DAS.Debug("UdpChannel", "UdpConnection: Listening on " + mainServer.LocalEndPoint.ToString() + ".");
     }
   }
 
@@ -231,7 +231,7 @@ public class UdpChannel : ChannelBase {
           Destroy(DisconnectionReason.ConnectionLost);
           IsActive = false;
           IsConnected = false;
-          Debug.Log("UdpConnection: Disconnected manually.");
+          DAS.Debug("UdpChannel", "UdpConnection: Disconnected manually.");
         }
       }
     }
@@ -309,7 +309,7 @@ public class UdpChannel : ChannelBase {
   private void InternalUpdate() {
     if (!IsConnected && (connectionState == ConnectionState.Connected)) {
       IsConnected = true;
-      Debug.Log("UdpConnection: Connected to " + mainEndPoint.ToString() + ".");
+      DAS.Debug("UdpChannel", "UdpConnection: Connected to " + mainEndPoint.ToString() + ".");
       try {
         RaiseConnectedToClient(mainEndPoint.ToString());
       }

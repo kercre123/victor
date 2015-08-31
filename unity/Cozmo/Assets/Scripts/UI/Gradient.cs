@@ -140,7 +140,6 @@ public class Gradient : BaseVertexEffect {
   }
 
   Color LerpColorArray(float t) {
-    //Debug.Log("LerpColorArray("+t+")");
     if (colors == null || colors.Length == 0)
       return Color.white;
     if (t == 0f || colors.Length == 1)
@@ -155,7 +154,6 @@ public class Gradient : BaseVertexEffect {
     float t1 = t % stretch;
     int i = Mathf.Clamp(Mathf.FloorToInt(t / stretch), 0, colors.Length - 2);
 
-    //Debug.Log("LerpColorArray("+t+") i("+i+") t1("+t1+")");
     return Color.Lerp(colors[i], colors[i + 1], t1);
   }
 
