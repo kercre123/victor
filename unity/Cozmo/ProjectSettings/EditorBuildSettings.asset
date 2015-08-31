@@ -18,8 +18,12 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Vortex.unity
   - enabled: 1
-    path: Assets/Scenes/Hypnosis.unity
+    path: Assets/Scenes/ShakeShake.unity
   - enabled: 1
     path: Assets/Scenes/FaceReaction.unity
   - enabled: 1
     path: Assets/Scenes/CozmoWalker.unity
+  - enabled: 1
+    path: Assets/Scenes/ShakeShake.unity
+  - enabled: 1
+    path: Assets/Scenes/Hypnosis.unity

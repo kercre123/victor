@@ -27,14 +27,15 @@ public class HypnosisController : GameController {
 
   protected override void OnEnable() {
     base.OnEnable();
-    ActiveBlock.TappedAction += BlockTapped;
     robot.VisionWhileMoving(true);
+    ActiveBlock.TappedAction += BlockTapped;
     RobotEngineManager.instance.SuccessOrFailure += RobotEngineMessages;
   }
 
   protected override void OnDisable() {
     base.OnDisable();
     ActiveBlock.TappedAction -= BlockTapped;
+    RobotEngineManager.instance.SuccessOrFailure -= RobotEngineMessages;
   }
 
   protected override void Enter_BUILDING() {
