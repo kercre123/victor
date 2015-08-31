@@ -518,6 +518,7 @@
         '../../vision/basestation/src',
         '../../vision/include',
         '<@(opencv_includes)',
+        '<(coretech_external_path)/matconvnet/matlab/src/bits',
       ],
       'direct_dependent_settings': {
         'include_dirs': [

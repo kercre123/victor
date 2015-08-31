@@ -23,7 +23,6 @@ computeGradMag = false;
 computeGradMagWeights = false;
 saveTree = true;
 boxFilterWidth = round(workingResolution/2); % for illumination normalizatio for NearestNeighbor
-probeRegion = VisionMarkerTrained.ProbeRegion;
 
 % Now using unpadded images to train
 %imageCoords = [-VisionMarkerTrained.FiducialPaddingFraction ...
@@ -133,7 +132,7 @@ if strcmp(perturbationType, 'shift')
   yShift = [0 perturbSigma*sin(angle(1:end-1))];
 end
 
-[xgrid,ygrid] = meshgrid(linspace(probeRegion(1),probeRegion(2),workingResolution)); %1:workingResolution);
+[xgrid,ygrid] = VisionMarkerTrained.GetProbeGrid();
 xgrid = xgrid(:);
 ygrid = ygrid(:);
 
