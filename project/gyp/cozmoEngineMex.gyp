@@ -96,6 +96,8 @@
     'include_dirs': [
       '<(matlabRootDir)/extern/include',
       '../../include',
+      '<(coretechDir)/common/include',
+      '<(coretechDir)/vision/include',
       '<@(opencv_includes)',
     ],
     'libraries': [
@@ -194,6 +196,78 @@
         '<(ce-util_gyp_path):utilEmbedded',
       ],
     }, # end mexUnique
+    
+    {
+      'target_name': 'mexRegionprops',
+      'sources': [
+        '<(coretechDir)/vision/robot/mex/mexRegionprops.cpp',
+        '<@(common_mex_sources)',
+      ],
+      'dependencies': [
+        '<(ce-cti_gyp_path):ctiCommon',
+        '<(ce-cti_gyp_path):ctiCommonRobot',
+        '<(ce-util_gyp_path):jsoncpp',
+        '<(ce-util_gyp_path):util',
+        '<(ce-util_gyp_path):utilEmbedded',
+      ],
+    }, # end mexRegionprops
+    
+    {
+      'target_name': 'mexHist',
+      'sources': [
+        '<(coretechDir)/vision/robot/mex/mexHist.cpp',
+        '<@(common_mex_sources)',
+      ],
+      'dependencies': [
+        '<(ce-cti_gyp_path):ctiCommon',
+        '<(ce-cti_gyp_path):ctiCommonRobot',
+        '<(ce-util_gyp_path):jsoncpp',
+        '<(ce-util_gyp_path):util',
+        '<(ce-util_gyp_path):utilEmbedded',
+      ],
+    }, # end mexHist
+    
+    {
+      'target_name': 'mexRefineQuadrilateral',
+      'sources': [
+        '<(coretechDir)/vision/robot/mex/mexRefineQuadrilateral.cpp',
+        '<@(common_mex_sources)',
+      ],
+      'dependencies': [
+        '<(ce-cti_gyp_path):ctiCommonRobot',
+        '<(ce-cti_gyp_path):ctiVisionRobot',
+        '<(ce-util_gyp_path):jsoncpp',
+        '<(ce-util_gyp_path):util',
+        '<(ce-util_gyp_path):utilEmbedded',
+      ],
+    }, # end mexRefineQuadrilateral
+    
+    {
+      'target_name': 'mexClosestIndex',
+      'sources': [
+        '<(coretechDir)/vision/robot/mex/mexClosestIndex.cpp',
+        '<@(common_mex_sources)',
+      ],
+      'dependencies': [
+        '<(ce-cti_gyp_path):ctiCommonRobot',
+        '<(ce-util_gyp_path):jsoncpp',
+        '<(ce-util_gyp_path):util',
+        '<(ce-util_gyp_path):utilEmbedded',
+      ],
+    }, # end mexClosestIndex
+    
+    {
+      'target_name': 'mexCameraCapture',
+      'sources': [
+        '<(coretechDir)/vision/matlab/CameraCapture/mexCameraCapture.cpp',
+        '<@(common_mex_sources)',
+      ],
+      'dependencies': [
+        '<(ce-cti_gyp_path):ctiCommonRobot',
+        '<(ce-cti_gyp_path):ctiVisionRobot',
+      ],
+    }, # end mexCameraCapture
+    
 
   ] # end targets
 
