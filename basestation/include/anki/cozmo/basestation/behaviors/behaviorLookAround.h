@@ -85,6 +85,7 @@ private:
   Pose3d GetDestinationPose(Destination destination);
   void ResetBehavior(float currentTime_sec);
   Destination GetNextDestination(Destination oldDest);
+  void UpdateSafeRegion(const Vec3f& objectPosition);
   
   void HandleObjectObserved(const AnkiEvent<ExternalInterface::MessageEngineToGame>& event);
   void HandleCompletedAction(const AnkiEvent<ExternalInterface::MessageEngineToGame>& event);
