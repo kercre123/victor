@@ -191,17 +191,20 @@ namespace Cozmo {
           }
           ++framesAdded;
         }
-        
+#       if DEBUG_ANIMATION_STREAMING
         PRINT_NAMED_INFO("AnimationStreamer.UpdateLiveAnimation.AddedInterpolatedFaces",
                          "Added %d interpolated procedural faces from t=[%d,%d]",
                          framesAdded, lastFace.GetTimeStamp(), nextFace.GetTimeStamp());
+#       endif
       } else {
         // Otherwise, just cut to the current face immediately, w/o interpolation
         ProceduralFaceKeyFrame kf(nextFace);
         kf.SetIsLive(true);
         _liveAnimation.AddKeyFrame(kf);
         
+#       if DEBUG_ANIMATION_STREAMING
         PRINT_NAMED_INFO("AnimationStreamer.UpdateLiveAnimation.AddedSingleFace", "");
+#       endif
       }
       
       robot.MarkProceduralFaceAsSent();

@@ -30,7 +30,6 @@ namespace Cozmo {
   : IBehavior(robot, config)
   , _currentState(State::LOOKING_AROUND)
   , _trackingTimeout_sec(3.f)
-  , _animationStarted(false)
   {
     // TODO: Init timeouts, etc, from Json config
     
@@ -172,6 +171,28 @@ namespace Cozmo {
     return maxY - minY;
   }
   
+  void BehaviorLookForFaces::UpdateBaselineFace(const Vision::TrackedFace* face)
+  {
+    using Face = Vision::TrackedFace;
+    
+    _firstSeen_ms = _lastSeen_ms = face->GetTimeStamp();
+    _robot.EnableTrackToFace(face->GetID(), false);
+    
+    const Radians& faceAngle = face->GetHeadRoll();
+    
+    // Record baseline eyebrow heights to compare to for checking if they've
+    // raised/lowered in the future
+    const Face::Feature& leftEyeBrow  = face->GetFeature(Face::FeatureName::LeftEyebrow);
+    const Face::Feature& rightEyeBrow = face->GetFeature(Face::FeatureName::RightEyebrow);
+    
+    // TODO: Roll correction (normalize roll before checking height?)
+    _baselineLeftEyebrowHeight = GetAverageHeight(leftEyeBrow, face->GetLeftEyeCenter(), faceAngle);
+    _baselineRightEyebrowHeight = GetAverageHeight(rightEyeBrow, face->GetRightEyeCenter(), faceAngle);
+    
+    _baselineEyeHeight = GetEyeHeight(face);
+    
+    _baselineIntraEyeDistance = face->GetIntraEyeDistance();
+  }
   
   void BehaviorLookForFaces::HandleRobotObservedFace(const ExternalInterface::RobotObservedFace &msg)
   {
@@ -185,8 +206,6 @@ namespace Cozmo {
                         faceID);
       return;
     }
-  
-    const Radians& faceAngle = face->GetHeadRoll();
     
     _lastSeen_sec = _currentTime_sec;
     
@@ -196,19 +215,7 @@ namespace Cozmo {
       case State::MOVING:
       {
         // If we aren't already tracking, start tracking the next face we see
-        _firstSeen_ms = _lastSeen_ms = face->GetTimeStamp();
-        _robot.EnableTrackToFace(faceID, false);
-        
-        // Record baseline eyebrow heights to compare to for checking if they've
-        // raised/lowered in the future
-        const Face::Feature& leftEyeBrow  = face->GetFeature(Face::FeatureName::LeftEyebrow);
-        const Face::Feature& rightEyeBrow = face->GetFeature(Face::FeatureName::RightEyebrow);
-      
-        // TODO: Roll correction (normalize roll before checking height?)
-        _baselineLeftEyebrowHeight = GetAverageHeight(leftEyeBrow, face->GetLeftEyeCenter(), faceAngle);
-        _baselineRightEyebrowHeight = GetAverageHeight(rightEyeBrow, face->GetRightEyeCenter(), faceAngle);
-        
-        _baselineEyeHeight = GetEyeHeight(face);
+        UpdateBaselineFace(face);
         
         PRINT_NAMED_INFO("BehaviorLookForFaces.HandleRobotObservedFace.SwitchToTracking",
                          "Observed face %llu while looking around, switching to tracking.", faceID);
@@ -217,9 +224,16 @@ namespace Cozmo {
       }
         
       case State::TRACKING_FACE:
-        //TODO: if(faceID == _robot.GetTrackToFace())
-        //if(!_animationStarted)
+        if(faceID != _robot.GetTrackToFace()) {
+          PRINT_NAMED_INFO("BehaviorLookForFaces.HandleRobotObservedFace.UpdatingBaseline",
+                           "ID changed from %llu to %llu, updating baseline face.",
+                           _robot.GetTrackToFace(), faceID);
+          UpdateBaselineFace(face);
+        }
+        
         {
+          const Radians& faceAngle = face->GetHeadRoll();
+          
           // If eyebrows have raised/lowered (based on distance from eyes), mimic their position:
           const Face::Feature& leftEyeBrow  = face->GetFeature(Face::FeatureName::LeftEyebrow);
           const Face::Feature& rightEyeBrow = face->GetFeature(Face::FeatureName::RightEyebrow);
@@ -229,31 +243,35 @@ namespace Cozmo {
           const f32 leftEyebrowHeight  = GetAverageHeight(leftEyeBrow, face->GetLeftEyeCenter(), faceAngle);
           const f32 rightEyebrowHeight = GetAverageHeight(rightEyeBrow, face->GetRightEyeCenter(), faceAngle);
           
+          const f32 distanceNorm = 1.f;// face->GetIntraEyeDistance() / _baselineIntraEyeDistance;
+          
           // Map current eyebrow heights onto Cozmo's face, based on measured baseline values
           const f32 distLeftEyeTopToImageTop = static_cast<f32>(ProceduralFace::NominalEyeCenY - _crntProceduralFace.GetParameter(ProceduralFace::WhichEye::Left, ProceduralFace::EyeHeight)/2);
           _crntProceduralFace.SetParameter(ProceduralFace::WhichEye::Left,
                                            ProceduralFace::Parameter::BrowShiftY,
                                            (_baselineLeftEyebrowHeight-leftEyebrowHeight)/_baselineLeftEyebrowHeight *
-                                           distLeftEyeTopToImageTop);
+                                           distLeftEyeTopToImageTop * distanceNorm);
           
           const f32 distRightEyeTopToImageTop = static_cast<f32>(ProceduralFace::NominalEyeCenY - _crntProceduralFace.GetParameter(ProceduralFace::WhichEye::Left, ProceduralFace::EyeHeight)/2);
           _crntProceduralFace.SetParameter(ProceduralFace::WhichEye::Right,
                                            ProceduralFace::Parameter::BrowShiftY,
                                            (_baselineRightEyebrowHeight-rightEyebrowHeight)/_baselineRightEyebrowHeight *
-                                           distRightEyeTopToImageTop);
+                                           distRightEyeTopToImageTop * distanceNorm);
           
-          const f32 eyeHeightFraction = GetEyeHeight(face)/_baselineEyeHeight;
+          const f32 eyeHeightFraction = GetEyeHeight(face)/_baselineEyeHeight * distanceNorm;
           _crntProceduralFace.SetParameter(ProceduralFace::WhichEye::Left, ProceduralFace::Parameter::EyeHeight,
                                            static_cast<f32>(ProceduralFace::NominalEyeHeight)*eyeHeightFraction);
           
           _crntProceduralFace.SetParameter(ProceduralFace::WhichEye::Right, ProceduralFace::Parameter::EyeHeight,
                                            static_cast<f32>(ProceduralFace::NominalEyeHeight)*eyeHeightFraction);
           
-          _crntProceduralFace.SetParameter(ProceduralFace::WhichEye::Left, ProceduralFace::Parameter::PupilHeight,
-                                           static_cast<f32>(ProceduralFace::NominalPupilHeight)*eyeHeightFraction);
+          _crntProceduralFace.SetParameter(ProceduralFace::WhichEye::Left,
+                                           ProceduralFace::Parameter::PupilHeightFraction,
+                                           static_cast<f32>(ProceduralFace::NominalPupilHeightFrac)*eyeHeightFraction);
           
-          _crntProceduralFace.SetParameter(ProceduralFace::WhichEye::Right, ProceduralFace::Parameter::PupilHeight,
-                                           static_cast<f32>(ProceduralFace::NominalPupilHeight)*eyeHeightFraction);
+          _crntProceduralFace.SetParameter(ProceduralFace::WhichEye::Right,
+                                           ProceduralFace::Parameter::PupilHeightFraction,
+                                           static_cast<f32>(ProceduralFace::NominalPupilHeightFrac)*eyeHeightFraction);
           
           // If face angle is rotated, mirror the rotation
           _crntProceduralFace.SetFaceAngle(faceAngle.getDegrees());
@@ -294,14 +312,6 @@ namespace Cozmo {
                          "Switching back to looking around.");
         _currentState = State::LOOKING_AROUND;
       }
-    }
-    else if(msg.actionType == RobotActionType::PLAY_ANIMATION) {
-      if(msg.completionInfo.animName != FaceAnimationManager::ProceduralAnimName) {
-        PRINT_NAMED_ERROR("BehaviorLookForFaces.HandleRobotCompletedAction.UnexpectedAnimationCompleted",
-                          "Unexpected '%s' animation finished.", msg.completionInfo.animName.c_str());
-      }
-      _animationStarted = false;
-      FaceAnimationManager::getInstance()->ClearAnimation(FaceAnimationManager::ProceduralAnimName);
     }
   }
 } // namespace Cozmo

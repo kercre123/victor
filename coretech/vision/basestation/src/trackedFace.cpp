@@ -24,6 +24,16 @@ namespace Vision {
     
   }
   
+  f32 TrackedFace::GetIntraEyeDistance() const
+  {
+    const f32 imageDist = (GetLeftEyeCenter() - GetRightEyeCenter()).Length();
+    
+    const f32 roll = GetHeadRoll().ToFloat();
+    const f32 yaw  = GetHeadYaw().ToFloat();
+    
+    return imageDist / std::cos(roll) / std::cos(yaw);
+  }
+  
 } // namespace Vision
 } // namespace Anki
 

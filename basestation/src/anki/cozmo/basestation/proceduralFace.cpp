@@ -1,4 +1,4 @@
-#include "proceduralFace.h"
+#include "anki/cozmo/basestation/proceduralFace.h"
 
 #include "anki/vision/basestation/trackedFace.h"
 
@@ -8,6 +8,8 @@
 namespace Anki {
 namespace Cozmo {
 
+  const ProceduralFace::Value ProceduralFace::MaxFaceAngle = 30.f; // Not sure why I can't set this one here
+  
   ProceduralFace::ProceduralFace()
   {
     Reset();
@@ -22,7 +24,29 @@ namespace Cozmo {
     for(int whichEye=0; whichEye<2; ++whichEye) {
       _eyeParams[whichEye].fill(0);
       _eyeParams[whichEye][EyeHeight] = NominalEyeHeight;
-      _eyeParams[whichEye][PupilHeight] = NominalPupilHeight;
+      _eyeParams[whichEye][PupilHeightFraction] = NominalPupilHeightFrac;
+    }
+  }
+
+  
+  void ProceduralFace::SetFaceAngle(Value angle_deg) {
+    _faceAngle_deg = std::max(-MaxFaceAngle, std::min(MaxFaceAngle, angle_deg));
+  }
+  
+  const ProceduralFace::ValueLimits& ProceduralFace::GetLimits(Parameter param)
+  {
+    static const std::map<Parameter, ValueLimits> LUT = {
+      {EyeHeight, {0.125f*static_cast<f32>(HEIGHT), 0.667f*static_cast<f32>(HEIGHT)}},
+      {PupilHeightFraction, {0.2f, 0.85f}}
+    };
+    
+    auto iter = LUT.find(param);
+    if(iter == LUT.end()) {
+      static ValueLimits NoLimits(std::numeric_limits<Value>::min(),
+                                  std::numeric_limits<Value>::max());
+      return NoLimits;
+    } else {
+      return iter->second;
     }
   }
   
@@ -90,9 +114,10 @@ namespace Cozmo {
       const Value yEye = NominalEyeCenY - _eyeParams[Left][EyeHeight]/2;
       const cv::Rect eyeRect(xEye, yEye, EyeWidth, _eyeParams[Left][EyeHeight]);
 
+      const Value pupilHeight = _eyeParams[Left][PupilHeightFraction]*_eyeParams[Left][EyeHeight];
       const Value xPupil = NominalLeftEyeCenX + _eyeParams[Left][PupilShiftX] - PupilWidth/2;
-      const Value yPupil = NominalEyeCenY + _eyeParams[Left][PupilShiftY] - _eyeParams[Left][PupilHeight]/2;
-      const cv::Rect pupilRect(xPupil,yPupil,PupilWidth,_eyeParams[Left][PupilHeight]);
+      const Value yPupil = NominalEyeCenY + _eyeParams[Left][PupilShiftY] - pupilHeight*0.5f;
+      const cv::Rect pupilRect(xPupil,yPupil,PupilWidth,pupilHeight);
       
       DrawEye(faceImg, eyeRect, pupilRect, !ScanlinesAsPostProcess);
     }
@@ -103,9 +128,10 @@ namespace Cozmo {
       const Value yEye = NominalEyeCenY - _eyeParams[Right][EyeHeight]/2;
       const cv::Rect eyeRect(xEye, yEye, EyeWidth, _eyeParams[Right][EyeHeight]);
       
+      const Value pupilHeight = _eyeParams[Right][PupilHeightFraction]*_eyeParams[Right][EyeHeight];
       const Value xPupil = NominalRightEyeCenX + _eyeParams[Right][PupilShiftX] - PupilWidth/2;
-      const Value yPupil = NominalEyeCenY + _eyeParams[Right][PupilShiftY] - _eyeParams[Right][PupilHeight]/2;
-      const cv::Rect pupilRect(xPupil,yPupil,PupilWidth,_eyeParams[Right][PupilHeight]);
+      const Value yPupil = NominalEyeCenY + _eyeParams[Right][PupilShiftY] - pupilHeight*0.5f;
+      const cv::Rect pupilRect(xPupil,yPupil,PupilWidth, pupilHeight);
       
       DrawEye(faceImg, eyeRect, pupilRect, !ScanlinesAsPostProcess);
     }
@@ -167,10 +193,16 @@ namespace Cozmo {
     
     // Special cases, no blending required:
     if(blendFraction == 0.f) {
+      // Preserve original timestamp
+      TimeStamp_t t = GetTimeStamp();
       *this = face1;
+      this->SetTimeStamp(t);
       return;
     } else if(blendFraction == 1.f) {
+      // Preserve original timestamp
+      TimeStamp_t t = GetTimeStamp();
       *this = face2;
+      this->SetTimeStamp(t);
       return;
     }
     
@@ -210,39 +242,7 @@ namespace Cozmo {
   {
     using Face = Vision::TrackedFace;
     
-    // If eyebrows have raised/lowered (based on distance from eyes), mimic their position:
-    const Face::Feature& leftEyeBrow  = face.GetFeature(Face::FeatureName::LeftEyebrow);
-    const Face::Feature& rightEyeBrow = face.GetFeature(Face::FeatureName::RightEyebrow);
-    
-    const f32 leftEyebrowHeight  = GetAverageHeight(leftEyeBrow, face.GetLeftEyeCenter(), faceAngle);
-    const f32 rightEyebrowHeight = GetAverageHeight(rightEyeBrow, face.GetRightEyeCenter(), faceAngle);
-    
-    // Map current eyebrow heights onto Cozmo's face, based on measured baseline values
-    const f32 distLeftEyeTopToImageTop = static_cast<f32>(ProceduralFace::NominalEyeCenY - GetParameter(WhichEye::Left, EyeHeight)/2);
-    _crntProceduralFace.SetParameter(WhichEye::Left, Parameter::BrowShiftY,
-                                     (_baselineLeftEyebrowHeight-leftEyebrowHeight)/_baselineLeftEyebrowHeight *
-                                     distLeftEyeTopToImageTop);
-    
-    const f32 distRightEyeTopToImageTop = static_cast<f32>(NominalEyeCenY - _crntProceduralFace.GetParameter(WhichEye::Left, EyeHeight)/2);
-    _crntProceduralFace.SetParameter(WhichEye::Right, Parameter::BrowShiftY,
-                                     (_baselineRightEyebrowHeight-rightEyebrowHeight)/_baselineRightEyebrowHeight *
-                                     distRightEyeTopToImageTop);
-    
-    const f32 eyeHeightFraction = GetEyeHeight(face)/_baselineEyeHeight;
-    _crntProceduralFace.SetParameter(WhichEye::Left, Parameter::EyeHeight,
-                                     static_cast<f32>(ProceduralFace::NominalEyeHeight)*eyeHeightFraction);
-    
-    _crntProceduralFace.SetParameter(WhichEye::Right, Parameter::EyeHeight,
-                                     static_cast<f32>(NominalEyeHeight)*eyeHeightFraction);
-    
-    _crntProceduralFace.SetParameter(WhichEye::Left, Parameter::PupilHeight,
-                                     static_cast<f32>(NominalPupilHeight)*eyeHeightFraction);
-    
-    _crntProceduralFace.SetParameter(WhichEye::Right, Parameter::PupilHeight,
-                                     static_cast<f32>(NominalPupilHeight)*eyeHeightFraction);
-    
-    // If face angle is rotated, mirror the rotation
-    _crntProceduralFace.SetFaceAngle(faceAngle.getDegrees());
+    // TODO Implement mimicking here and use from BehaviorLookForFaces / BehaviorMimicFace
   }
 
 } // namespace Cozmo

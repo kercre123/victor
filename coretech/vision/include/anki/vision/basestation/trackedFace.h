@@ -92,6 +92,9 @@ namespace Vision {
     
     const Pose3d& GetHeadPose() const;
     void SetHeadPose(Pose3d& pose);
+    
+    f32 GetIntraEyeDistance() const;
+    
   private:
     
     ID_t _id;

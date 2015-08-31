@@ -20,23 +20,25 @@ namespace Cozmo {
   class ProceduralFace
   {
   public:
-    using Value = int;
+    using Value = f32;
     
     static const int WIDTH  = FaceAnimationManager::IMAGE_WIDTH;
     static const int HEIGHT = FaceAnimationManager::IMAGE_HEIGHT;
  
     // Nominal positions/sizes for everything (these are things that aren't
     // parameterized at dynamically, but could be if we want)
-    static const Value NominalLeftEyeCenX  = WIDTH/4;
-    static const Value NominalRightEyeCenX = 3*WIDTH/4;
-    static const Value NominalEyeCenY = 2*HEIGHT/3;
-    static const Value NominalEyeHeight = HEIGHT/2;
-    static const Value NominalEyebrowHeight = (NominalEyeCenY - NominalEyeHeight/2)/2; // Halfway between top of eye and top of screen
-    static const Value EyeWidth  = WIDTH/3;
-    static const Value EyebrowHalfLength = EyeWidth/2;
-    static const Value PupilWidth = EyeWidth/3;
-    static const Value NominalPupilHeight = NominalEyeHeight/2;
-    static const Value EyebrowThickness = 2;
+    static constexpr Value NominalLeftEyeCenX    = 0.25f*static_cast<f32>(WIDTH);
+    static constexpr Value NominalRightEyeCenX   = 0.75f*static_cast<f32>(WIDTH);
+    static constexpr Value NominalEyeCenY        = 0.667f*static_cast<f32>(HEIGHT);
+    static constexpr Value NominalEyeHeight      = 0.5f*static_cast<f32>(HEIGHT);
+    static constexpr Value NominalEyebrowHeight  = 0.6f*(NominalEyeCenY - 0.5f*NominalEyeHeight);
+    static constexpr Value EyeWidth              = 0.333f*static_cast<f32>(WIDTH);
+    static constexpr Value EyebrowHalfLength     = 0.5f*static_cast<f32>(EyeWidth);
+    static constexpr Value PupilWidth            = 0.33f*static_cast<f32>(EyeWidth);
+    static constexpr Value NominalPupilHeightFrac= 0.5f;
+    static constexpr Value EyebrowThickness      = 2.f;
+    
+    static const     Value MaxFaceAngle;  // Not sure why I can't set this one as constexpr here??
     
     static const bool ScanlinesAsPostProcess = true;
     
@@ -45,7 +47,7 @@ namespace Cozmo {
       BrowShiftX, // From nominal position
       BrowShiftY, //    "
       EyeHeight,
-      PupilHeight,
+      PupilHeightFraction, // Relative to current eye height
       PupilShiftX, // From nominal position
       PupilShiftY, //   "
       
@@ -94,6 +96,9 @@ namespace Cozmo {
     
   private:
     
+    using ValueLimits = std::pair<Value,Value>;
+    static const ValueLimits& GetLimits(Parameter param);
+    
     // Container for the parameters for both eyes
     std::array<std::array<Value, NumParameters>, 2> _eyeParams;
     
@@ -108,16 +113,13 @@ namespace Cozmo {
   
   inline void ProceduralFace::SetParameter(WhichEye whichEye, Parameter param, Value value)
   {
-    _eyeParams[whichEye][param] = value;
+    const ValueLimits& lims = GetLimits(param);
+    _eyeParams[whichEye][param] = std::max(lims.first, std::min(lims.second, value));
   }
   
   inline ProceduralFace::Value ProceduralFace::GetParameter(WhichEye whichEye, Parameter param) const
   {
     return _eyeParams[whichEye][param];
-  }
-  
-  inline void ProceduralFace::SetFaceAngle(Value angle_deg) {
-    _faceAngle_deg = angle_deg;
   }
   
   inline ProceduralFace::Value ProceduralFace::GetFaceAngle() const {

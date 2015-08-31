@@ -48,6 +48,8 @@ namespace Cozmo {
     void HandleRobotObservedFace(const ExternalInterface::RobotObservedFace& msg);
     void HandleRobotCompletedAction(const ExternalInterface::RobotCompletedAction& msg);
     
+    void UpdateBaselineFace(const Vision::TrackedFace* face);
+    
     void SetNextMovementTime();
     
     enum class State {
@@ -71,10 +73,9 @@ namespace Cozmo {
     ProceduralFace _lastProceduralFace, _crntProceduralFace;;
     
     f32 _baselineEyeHeight;
+    f32 _baselineIntraEyeDistance;
     f32 _baselineLeftEyebrowHeight;
     f32 _baselineRightEyebrowHeight;
-    
-    bool _animationStarted;
     
     u32 _movementActionTag;
     
