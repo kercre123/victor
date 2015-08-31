@@ -40,7 +40,7 @@ public class FindMissingScriptsRecursively : EditorWindow {
           s = t.parent.name + "/" + s;
           t = t.parent;
         }
-        DAS.Debug("FindMissingScriptsRecrusively", s + " has an empty script attached in position: " + i, g);
+        DAS.Debug("FindMissingScriptsRecrusively", s + " has an empty script attached in position: " + i);
       }
     }
     // Now recurse through each child GO (if there are any):

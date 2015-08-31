@@ -95,7 +95,7 @@ public class RobotEngineManager : MonoBehaviour {
     }
 
     if (config == null) {
-      DAS.Error("RobotEngineManager", "Error initializing CozmoBinding: No configuration.", this);
+      DAS.Error("RobotEngineManager", "Error initializing CozmoBinding: No configuration.");
     }
     else {
       CozmoBinding.Startup(config.text);
@@ -147,7 +147,7 @@ public class RobotEngineManager : MonoBehaviour {
     Profiler.BeginSample("isRobotConnected");
     float robotStateTimeout = 20f;
     if (isRobotConnected && lastRobotStateMessage + robotStateTimeout < Time.realtimeSinceStartup) {
-      DAS.Error("RobotEngineManager", "No robot state for " + robotStateTimeout.ToString("0.00") + " seconds.", this);
+      DAS.Error("RobotEngineManager", "No robot state for " + robotStateTimeout.ToString("0.00") + " seconds.");
       Disconnect();
       Disconnected(DisconnectionReason.RobotConnectionTimedOut);
     }
@@ -322,7 +322,7 @@ public class RobotEngineManager : MonoBehaviour {
       ReceivedSpecificMessage(message.AnimationAvailable);
       break;
     default:
-      DAS.Warn("RobotEngineManager", message.GetTag() + " is not supported", this);
+      DAS.Warn("RobotEngineManager", message.GetTag() + " is not supported");
       break;
     }
   }
@@ -353,7 +353,7 @@ public class RobotEngineManager : MonoBehaviour {
   }
 
   private void ReceivedSpecificMessage(G2U.RobotDisconnected message) {
-    DAS.Error("RobotEngineManager", "Robot " + message.robotID + " disconnected after " + message.timeSinceLastMsg_sec.ToString("0.00") + " seconds.", this);
+    DAS.Error("RobotEngineManager", "Robot " + message.robotID + " disconnected after " + message.timeSinceLastMsg_sec.ToString("0.00") + " seconds.");
     Disconnect();
     Disconnected(DisconnectionReason.RobotDisconnected);
   }
@@ -637,7 +637,7 @@ public class RobotEngineManager : MonoBehaviour {
       MinipegGray(message);
       break;
     default:
-      DAS.Warn("RobotEngineManager", message.imageEncoding + " is not supported", this);
+      DAS.Warn("RobotEngineManager", message.imageEncoding + " is not supported");
       break;
     }
   }
