@@ -81,8 +81,4 @@ char fullMessage[kMaxFullSize]{0};
     length = kMaxFullSize - 1;
     fullMessage[length] = 0;
   }
-  std::lock_guard<std::mutex> lock(_mutex);
-  if (logCallback != nullptr) {
-    logCallback(logLevel, fullMessage);
-  }
 }

@@ -62,7 +62,6 @@ public:
   // error == 5
   inline void SetMinLogLevel(int logLevel) {minLogLevel = logLevel; };
   
-  inline void SetCallback(LogCallback callback) { logCallback = callback; }
 private:
   void Write(int logLevel, const char* logLevelName, const char* eventName,
     const std::vector<std::pair<const char*, const char*>>& keyValues,
@@ -70,7 +69,6 @@ private:
 
   std::mutex _mutex;
   int minLogLevel;
-  LogCallback logCallback;
 };
 
 } // end namespace Cozmo
