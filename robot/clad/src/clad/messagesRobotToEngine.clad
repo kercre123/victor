@@ -116,7 +116,7 @@ message PrintText
  * and to make debugging from message dumps more sane.
  */
 union RobotToEngine {
-  // From RTIP
+  // From RTIP 0x00 to 0x7F
   RobotState                 state               = 0x00,
   PrintTraceInt              traceInt            = 0x01,
   PrintTraceDouble           traceDbl            = 0x02
@@ -125,10 +125,10 @@ union RobotToEngine {
   ActiveObjectMoved          activeObjectMoved   = 0x05,
   ActiveObjectStoppedMoving  activeObjectStopped = 0x06,
   ActiveObjectTapped         activeObjectTapped  = 0x07,
-  // From WiFi
-  AnimationState             animState           = 0x10,
-  PrintText                  print               = 0x11,
-  ImageChunk                 image               = 0x12,
+  // From WiFi 0x80 to 0xFE
+  AnimationState             animState           = 0x80,
+  PrintText                  print               = 0x81,
+  ImageChunk                 image               = 0x82,
 }
 
 
