@@ -177,11 +177,9 @@ public class ActionSliderPanel : ActionPanel {
 
       if (actionAnimation != null && secondaryActionsAvailableLastFrame != actionsAvailable) {
         if (actionsAvailable) {
-          //Debug.Log("actionAnimation.CrossFade(actionSheenAnim.name, 0.5f, PlayMode.StopAll);");
           actionAnimation.CrossFade(actionSheenAnim.name, 0.5f, PlayMode.StopAll);
         }
         else {
-          //Debug.Log("actionAnimation.CrossFade(actionIdleAnim.name, 0.5f, PlayMode.StopAll);");
           actionAnimation.CrossFade(actionIdleAnim.name, 0.5f, PlayMode.StopAll);
         }
       }
@@ -222,7 +220,6 @@ public class ActionSliderPanel : ActionPanel {
     else {
       actionSlider.SetMode(centerAction, val);
     }
-    //Debug.Log("ToggleInteract("+val+")");
   }
 
   private void RefreshSliderMode() {
@@ -257,7 +254,6 @@ public class ActionSliderPanel : ActionPanel {
     else if (currentButton.mode != lastMode) {
       SlideOutSound();
     }
-    //Debug.Log("RefreshSliderMode currentMode("+currentMode+","+currentButton+")");
     actionSlider.SetMode(currentButton, actionSlider.Pressed);
   }
 

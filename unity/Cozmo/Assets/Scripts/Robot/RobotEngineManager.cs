@@ -218,7 +218,7 @@ public class RobotEngineManager : MonoBehaviour {
       float limit = Time.realtimeSinceStartup + 2.0f;
       while (channel.HasPendingOperations) {
         if (limit < Time.realtimeSinceStartup) {
-          Debug.LogWarning("Not waiting for disconnect to finish sending.", this);
+          DAS.Warn("RobotEngineManager", "Not waiting for disconnect to finish sending.");
           break;
         }
         System.Threading.Thread.Sleep(500);
@@ -255,7 +255,7 @@ public class RobotEngineManager : MonoBehaviour {
 
   public void SendMessage() {
     if (!IsConnected) {
-      Debug.LogWarning("Message not sent because not connected");
+      DAS.Warn("RobotEngineManager", "Message not sent because not connected");
       return;
     }
 
@@ -322,7 +322,7 @@ public class RobotEngineManager : MonoBehaviour {
       ReceivedSpecificMessage(message.AnimationAvailable);
       break;
     default:
-      Debug.LogWarning(message.GetTag() + " is not supported", this);
+      DAS.Warn("RobotEngineManager", message.GetTag() + " is not supported", this);
       break;
     }
   }
@@ -637,7 +637,7 @@ public class RobotEngineManager : MonoBehaviour {
       MinipegGray(message);
       break;
     default:
-      Debug.LogWarning(message.imageEncoding + " is not supported", this);
+      DAS.Warn("RobotEngineManager", message.imageEncoding + " is not supported", this);
       break;
     }
   }

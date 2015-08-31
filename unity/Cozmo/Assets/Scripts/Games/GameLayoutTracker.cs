@@ -555,7 +555,7 @@ public class GameLayoutTracker : MonoBehaviour {
           robot.PickAndPlaceObject(nextObjectToPlace);
         }
         else {
-          Debug.LogWarning("frame(" + Time.frameCount + ") GetObservedObjectForNextLayoutBlock could not find an apt nextObject to place.");
+          DAS.Warn("GameLayoutTracker", "frame(" + Time.frameCount + ") GetObservedObjectForNextLayoutBlock could not find an apt nextObject to place.");
         }
       }
       RefreshValidationSounds();
@@ -1203,7 +1203,7 @@ public class GameLayoutTracker : MonoBehaviour {
     List<BuildInstructionsCube> layoutBlocksOnGround = currentLayout.Blocks.FindAll(x => x.cubeBelow == null && x.Validated);
 
     if (layoutBlocksOnGround.Count == 0) {
-      Debug.LogWarning("layoutBlocksOnGround's count is 0");
+      DAS.Warn("GameLayoutTracker", "layoutBlocksOnGround's count is 0");
       return Vector3.zero;
     }
 

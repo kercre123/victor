@@ -572,7 +572,7 @@ public class GoldRushController : GameController {
     if (!success && playState == PlayState.AUTO_DEPOSITING && action_type == RobotActionType.DRIVE_TO_POSE) {
       // failed our autodeposit, try again
       SendRobotToCollector();
-      Debug.LogWarning("Robot failed to drivetopose during auto-deposit");
+      DAS.Warn("GoldRushController", "Robot failed to drivetopose during auto-deposit");
     }
   }
 

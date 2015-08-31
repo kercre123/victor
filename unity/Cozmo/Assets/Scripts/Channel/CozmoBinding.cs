@@ -39,7 +39,7 @@ public static class CozmoBinding {
 
   public static void Startup(string configurationData) {
     if (initialized) {
-      Debug.LogWarning("Reinitializing because Startup was called twice...");
+      DAS.Warn("CozmoBinding", "Reinitializing because Startup was called twice...");
       Shutdown();
     }
 
@@ -51,7 +51,7 @@ public static class CozmoBinding {
 #endif
     
     if (result != AnkiResult.RESULT_OK) {
-      Debug.LogError("CozmoBinding.Startup [cozmo_startup]: error code " + result.ToString());
+      DAS.Error("CozmoBinding", "CozmoBinding.Startup [cozmo_startup]: error code " + result.ToString());
     }
     else {
       initialized = true;

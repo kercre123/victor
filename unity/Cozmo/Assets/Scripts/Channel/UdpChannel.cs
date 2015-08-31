@@ -251,7 +251,7 @@ public class UdpChannel : ChannelBase {
     lock (sync) {
       // about to be disconnected; ignore
       if (connectionState != ConnectionState.Connected) {
-        Debug.LogWarning("Ignoring message of type " + message.GetType().FullName + " because the connection is about to disconnect.");
+        DAS.Warn("UdpChannel", "Ignoring message of type " + message.GetType().FullName + " because the connection is about to disconnect.");
         return;
       }
 
@@ -326,7 +326,7 @@ public class UdpChannel : ChannelBase {
     IsActive = (connectionState != ConnectionState.Disconnected);
 
     if (wasActive && !IsActive) {
-      Debug.LogWarning("UdpConnection: Disconnected. Reason is " + currentDisconnectionReason.ToString() + "."); 
+      DAS.Warn("UdpChannel", "UdpConnection: Disconnected. Reason is " + currentDisconnectionReason.ToString() + "."); 
 
       try {
         RaiseDisconnectedFromClient(currentDisconnectionReason);

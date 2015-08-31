@@ -531,7 +531,7 @@ public class Robot : IDisposable {
   public void UpdateObservedObjectInfo(G2U.RobotObservedObject message) {
 
     if (message.objectFamily == Anki.Cozmo.ObjectFamily.Mat) {
-      Debug.LogWarning("UpdateObservedObjectInfo received message about the Mat!");
+      DAS.Warn("Robot", "UpdateObservedObjectInfo received message about the Mat!");
       return;
     }
 

@@ -122,7 +122,7 @@ public class CozmoAssistedControls : MonoBehaviour {
         if (collided && potentialCollisionTime < Time.realtimeSinceStartup) {
           // make our adjustements
           RobotEngineManager.instance.VisualizeQuad(24, CozmoPalette.ColorToUInt(Color.red), robotVerts[0], robotVerts[1], robotVerts[3], robotVerts[2]);
-          Debug.LogWarning("min_overlap: " + min_overlap + ", normal: " + min_overlap_axis);
+          DAS.Warn("CozmoAssistedControls", "min_overlap: " + min_overlap + ", normal: " + min_overlap_axis);
           if (!sawCollsionLastFrame) {
             sawCollsionLastFrame = true;
             potentialCollisionTime = Time.realtimeSinceStartup + lookAheadSeconds;
