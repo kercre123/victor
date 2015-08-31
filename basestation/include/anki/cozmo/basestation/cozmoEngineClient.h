@@ -42,7 +42,7 @@ class CozmoEngineClient : public CozmoEngine
 {
 public:
 
-  CozmoEngineClient(IExternalInterface* externalInterface, Data::DataPlatform* dataPlatform);
+  CozmoEngineClient(IExternalInterface* externalInterface, Util::Data::DataPlatform* dataPlatform);
   ~CozmoEngineClient();
   virtual bool IsHost() const override { return false; }
 

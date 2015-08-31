@@ -398,8 +398,8 @@
         'SYSTEM_ROOT_PATH=<(cti-cozmo_engine_path)'
       ],
       'dependencies': [
-        '<(cti-util_gyp_path):util',
         '<(cti-util_gyp_path):jsoncpp',
+        '<(cti-util_gyp_path):util',
       ],
       'type': '<(common_library_type)',
       'conditions': [
@@ -550,6 +550,7 @@
       },
       'dependencies': [
         'ctiCommonRobot',
+        '<(cti-util_gyp_path):jsoncpp',
       ],
       'type': '<(vision_robot_library_type)',
     },

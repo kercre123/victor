@@ -20,7 +20,8 @@ namespace Cozmo {
   
 
   
-CozmoEngineImpl::CozmoEngineImpl(IExternalInterface* externalInterface, Data::DataPlatform* dataPlatform)
+CozmoEngineImpl::CozmoEngineImpl(IExternalInterface* externalInterface,
+                                 Util::Data::DataPlatform* dataPlatform)
 : _isInitialized(false)
 , _externalInterface(externalInterface)
 , _dataPlatform(dataPlatform)

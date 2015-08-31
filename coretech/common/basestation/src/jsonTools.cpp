@@ -73,7 +73,7 @@ namespace JsonTools
   
   template<>
   size_t GetValue<size_t>(const Json::Value& node) {
-    return node.asInt64();
+    return node.asUInt();
   }
   
   // Char

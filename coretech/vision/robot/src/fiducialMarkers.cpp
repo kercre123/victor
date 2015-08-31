@@ -27,7 +27,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #endif 
 
 #if RECOGNITION_METHOD == RECOGNITION_METHOD_CNN
-#  include "anki/common/basestation/platformPathManager.h"
+#  include "anki/common/basestation/utils/data/dataPlatform.h"
 #endif
 
 #define INITIALIZE_WITH_DEFINITION_TYPE 0

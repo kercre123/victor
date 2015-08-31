@@ -22,13 +22,14 @@
 
 #include "util/logging/logging.h"
 #include "anki/common/basestation/utils/helpers/boundedWhile.h"
+#include "anki/common/basestation/utils/data/dataPlatform.h"
 
 #include "anki/cozmo/basestation/viz/vizManager.h"
 
 namespace Anki {
 namespace Cozmo {
   
-  VisionProcessingThread::VisionProcessingThread(Data::DataPlatform* dataPlatform)
+  VisionProcessingThread::VisionProcessingThread(Util::Data::DataPlatform* dataPlatform)
   : _visionSystem(new VisionSystem(dataPlatform))
   , _isCamCalibSet(false)
   , _running(false)
