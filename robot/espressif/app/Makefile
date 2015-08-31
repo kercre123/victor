@@ -51,6 +51,7 @@ COMPONENTS_eagle.app.v6 = \
 
 LINKFLAGS_eagle.app.v6 = \
 	-L../lib        \
+	-L/opt/xtensa-lx106-elf/xtensa-lx106-elf/sysroot/usr/lib/ \
 	-nostdlib	\
     -T$(LD_FILE)   \
 	-Wl,--no-check-sections	\
