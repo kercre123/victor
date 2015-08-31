@@ -82,7 +82,7 @@ public class Gradient : BaseVertexEffect {
       }
 
       if (length == 0f) {
-        Debug.LogError("bad verts, gradient undefined!");
+        DAS.Error("Gradient", "bad verts, gradient undefined!");
         return;
       }
 

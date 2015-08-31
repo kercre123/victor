@@ -183,7 +183,7 @@ public class UdpChannel : ChannelBase {
         DAS.Debug("UdpChannel", "Advertising IP: " + localIP);
         int length = Encoding.UTF8.GetByteCount(localIP);
         if (length + 1 > advertisementRegistrationMessage.ip.Length) {
-          Debug.LogError("Advertising host is too long: " +
+          DAS.Error("UdpChannel", "Advertising host is too long: " +
           advertisementRegistrationMessage.ip.Length.ToString() + " bytes allowed, " +
           length.ToString() + " bytes used.");
           DestroySynchronously(DisconnectionReason.FailedToAdvertise);
@@ -269,7 +269,7 @@ public class UdpChannel : ChannelBase {
 
         if (connectionState == ConnectionState.Advertising) {
           if (startAdvertiseTime + AdvertiseTimeout < lastUpdateTime) {
-            Debug.LogError("Connection attempt timed out after " + (lastUpdateTime - startAdvertiseTime).ToString("0.00") + " seconds.");
+            DAS.Error("UdpChannel", "Connection attempt timed out after " + (lastUpdateTime - startAdvertiseTime).ToString("0.00") + " seconds.");
             DestroySynchronously(DisconnectionReason.ConnectionLost);
             return;
           }
@@ -286,7 +286,7 @@ public class UdpChannel : ChannelBase {
 
         if (connectionState == ConnectionState.Connected) {
           if (lastReceiveTime + ReceiveTimeout < lastUpdateTime) {
-            Debug.LogError("Connection timed out after " + (lastUpdateTime - lastReceiveTime).ToString("0.00") + " seconds.");
+            DAS.Error("UdpChannel", "Connection timed out after " + (lastUpdateTime - lastReceiveTime).ToString("0.00") + " seconds.");
             DestroySynchronously(DisconnectionReason.ConnectionLost);
             return;
           }
@@ -484,7 +484,7 @@ public class UdpChannel : ChannelBase {
           sentBuffers.Enqueue(state);
         }
         else {
-          Debug.LogError("Disconnecting. Too many messages queued to send. (" + MaxQueuedSends.ToString() + " messages allowed.)");
+          DAS.Error("UdpChannel", "Disconnecting. Too many messages queued to send. (" + MaxQueuedSends.ToString() + " messages allowed.)");
           DestroySynchronously(DisconnectionReason.ConnectionThrottled);
           return;
         }
@@ -647,7 +647,7 @@ public class UdpChannel : ChannelBase {
             }
 
             if (receivedMessages.Count >= MaxQueuedReceives) {
-              Debug.LogError("Too many messages received too quickly. (" + MaxQueuedReceives.ToString() + " messages allowed.)");
+              DAS.Error("UdpChannel", "Too many messages received too quickly. (" + MaxQueuedReceives.ToString() + " messages allowed.)");
               Destroy(DisconnectionReason.ConnectionThrottled);
               return;
             }

@@ -31,7 +31,7 @@ public class ActionSlider {
 
   public void SetMode(ActionButton button, bool down) {
     if (button == null) {
-      Debug.LogError("Slider was given a current action of null");
+      DAS.Error("ActionSliderPanel", "Slider was given a current action of null");
       return;
     }
 

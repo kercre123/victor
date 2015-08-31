@@ -209,7 +209,7 @@ public class GoldRushController : GameController {
       successOrFailureGameObject = text.gameObject;
     }
     else {
-      Debug.LogError("unable to find object of type SuccessOrFailureText");
+      DAS.Error("GoldRushController", "unable to find object of type SuccessOrFailureText");
     }
 
     if (successOrFailureGameObject != null) {
@@ -845,7 +845,7 @@ public class GoldRushController : GameController {
       UpdateReturning(true);
       yield return 0;
     }
-    //Debug.LogError("should be cancelling action");
+
     robot.CancelAction(RobotActionType.DRIVE_TO_OBJECT);
     EnterPlayState(PlayState.DEPOSITING);
 

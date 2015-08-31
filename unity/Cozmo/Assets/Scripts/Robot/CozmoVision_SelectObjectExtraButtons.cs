@@ -72,7 +72,7 @@ public class CozmoVision_SelectObjectExtraButtons : CozmoVision_SelectObject {
       }
       
       if (box == null) {
-        Debug.LogError("box shouldn't be null here!");
+        DAS.Error("CozmoVision_SelectObjectExtraButtons", "box shouldn't be null here!");
         continue;
       }
       

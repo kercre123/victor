@@ -70,7 +70,7 @@ public static class CozmoBinding {
 #endif
 
       if (result != AnkiResult.RESULT_OK) {
-        Debug.LogError("CozmoBinding.Shutdown [cozmo_shutdown]: error code " + result.ToString());
+        DAS.Error("CozmoBinding", "CozmoBinding.Shutdown [cozmo_shutdown]: error code " + result.ToString());
       }
     }
   }
@@ -84,7 +84,7 @@ public static class CozmoBinding {
       Profiler.EndSample();
 #endif
       if (result != AnkiResult.RESULT_OK) {
-        Debug.LogError("CozmoBinding.Update [cozmo_update]: error code " + result.ToString());
+        DAS.Error("CozmoBinding", "CozmoBinding.Update [cozmo_update]: error code " + result.ToString());
       }
     }
   }

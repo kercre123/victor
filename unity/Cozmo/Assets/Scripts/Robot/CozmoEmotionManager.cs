@@ -147,7 +147,7 @@ public class CozmoEmotionManager : MonoBehaviour {
         return last_anim_name;
       }
       else {
-        Debug.LogError("tring to send animation for emotion type " + emotion_state + ", and the current machine has no anim mapped");
+        DAS.Error("CozmoEmotionManager", "tring to send animation for emotion type " + emotion_state + ", and the current machine has no anim mapped");
       }
     }
 
@@ -288,7 +288,7 @@ public class CozmoEmotionManager : MonoBehaviour {
         RobotEngineManager.instance.SendMessage();
       }
       else {
-        Debug.LogError("tring to send animation for emotion type " + emotion_state + ", and the current machine has no anim mapped");
+        DAS.Error("CozmoEmotionManager", "tring to send animation for emotion type " + emotion_state + ", and the current machine has no anim mapped");
       }
     }
   }
@@ -346,7 +346,7 @@ public class CozmoEmotionManager : MonoBehaviour {
         RobotEngineManager.instance.SendMessage();
       }
       else {
-        Debug.LogError("tring to send animation for emotion type " + emotion_state + ", and the current machine has no anim mapped");
+        DAS.Error("CozmoEmotionManager", "tring to send animation for emotion type " + emotion_state + ", and the current machine has no anim mapped");
       }
     }
   }

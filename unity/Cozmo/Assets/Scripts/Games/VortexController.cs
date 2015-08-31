@@ -1880,7 +1880,7 @@ public class VortexController : GameController {
   }
 
   void CheckForGotoStartCompletion(bool success, RobotActionType action_type) {
-    Debug.LogError("got " + action_type);
+    DAS.Error("VortextController", "got " + action_type);
     switch (action_type) {
     case RobotActionType.COMPOUND:
       if (success) {
@@ -1934,7 +1934,7 @@ public class VortexController : GameController {
     if (state == GameState.PRE_GAME) {
       if (index == cozmoIndex) { // cozmo
         //SetRobotEmotion ("LETS_PLAY");
-        Debug.LogError("lets play!");
+        DAS.Error("VortextController", "lets play!");
         CozmoEmotionManager.instance.SetEmotionReturnToPose("LETS_PLAY", markx_mm, marky_mm, mark_rad, true, true);
         atYourMark = false;
       }

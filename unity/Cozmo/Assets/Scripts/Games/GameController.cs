@@ -194,11 +194,11 @@ public class GameController : MonoBehaviour {
         levelData = GameData.instance.levelData[currentGameName + currentLevelNumber];
       }
       else {
-        Debug.LogError("GameData does not contain level: " + currentGameName + currentLevelNumber);
+        DAS.Error("GameController", "GameData does not contain level: " + currentGameName + currentLevelNumber);
       }
     }
     else {
-      Debug.LogError("GameData is not in scene");
+      DAS.Error("GameController", "GameData is not in scene");
     }
 
     if (textError != null)

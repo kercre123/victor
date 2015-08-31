@@ -33,7 +33,7 @@ public class ScreenMessage : MonoBehaviour {
 
   public void ShowMessage(string message, Color color) {
     if (text == null) {
-      Debug.LogError("text is null for some reason");
+      DAS.Error("SendMessage", "text is null for some reason");
       return;
     }
     text.text = message;
@@ -43,7 +43,7 @@ public class ScreenMessage : MonoBehaviour {
 
   public void KillMessage() {
     if (text == null) {
-      Debug.LogError("text is null for some reason");
+      DAS.Error("SendMessage", "text is null for some reason");
       return;
     }
     text.text = string.Empty;

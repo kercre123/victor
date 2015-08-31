@@ -95,7 +95,7 @@ public class RobotEngineManager : MonoBehaviour {
     }
 
     if (config == null) {
-      Debug.LogError("Error initializing CozmoBinding: No configuration.", this);
+      DAS.Error("RobotEngineManager", "Error initializing CozmoBinding: No configuration.", this);
     }
     else {
       CozmoBinding.Startup(config.text);
@@ -147,7 +147,7 @@ public class RobotEngineManager : MonoBehaviour {
     Profiler.BeginSample("isRobotConnected");
     float robotStateTimeout = 20f;
     if (isRobotConnected && lastRobotStateMessage + robotStateTimeout < Time.realtimeSinceStartup) {
-      Debug.LogError("No robot state for " + robotStateTimeout.ToString("0.00") + " seconds.", this);
+      DAS.Error("RobotEngineManager", "No robot state for " + robotStateTimeout.ToString("0.00") + " seconds.", this);
       Disconnect();
       Disconnected(DisconnectionReason.RobotConnectionTimedOut);
     }
@@ -353,7 +353,7 @@ public class RobotEngineManager : MonoBehaviour {
   }
 
   private void ReceivedSpecificMessage(G2U.RobotDisconnected message) {
-    Debug.LogError("Robot " + message.robotID + " disconnected after " + message.timeSinceLastMsg_sec.ToString("0.00") + " seconds.", this);
+    DAS.Error("RobotEngineManager", "Robot " + message.robotID + " disconnected after " + message.timeSinceLastMsg_sec.ToString("0.00") + " seconds.", this);
     Disconnect();
     Disconnected(DisconnectionReason.RobotDisconnected);
   }
@@ -696,7 +696,7 @@ public class RobotEngineManager : MonoBehaviour {
       header = minipeg_header80;
     }
     else {
-      Debug.LogError("Unknown minipeg quality " + qual.ToString());
+      DAS.Error("RobotEngineManager", "Unknown minipeg quality " + qual.ToString());
       return false;
     }
 
