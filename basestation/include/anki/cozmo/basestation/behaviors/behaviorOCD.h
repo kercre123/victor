@@ -76,6 +76,7 @@ namespace Cozmo {
     Result SelectNextObjectToPickUp();
     Result SelectNextPlacement();
     Result FindEmptyPlacementPose(const ObjectID& nearObjectID, Pose3d& pose);
+    void ComputeAlignedPoses(const Pose3d& basePose, f32 distance, std::vector<Pose3d> &alignedPoses);
     
     // Gets the object within objectSet that is closest to the robot and
     // 1) at the specified heighLevel (0 == equal same as robot, 1 == high dock height) and

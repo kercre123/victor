@@ -337,6 +337,42 @@ namespace Cozmo {
     return RESULT_OK;
   } // SelectNextObjectToPickUp()
   
+  
+  void BehaviorOCD::ComputeAlignedPoses(const Pose3d& basePose, f32 distance, std::vector<Pose3d> &alignedPoses)
+  {
+    alignedPoses.clear();
+    Pose3d alignedPose(basePose);
+   
+    // Test spot along +x axis
+    Vec3f T(distance, 0, alignedPose.GetTranslation().z());
+    Pose3d poseNextTo(0, Z_AXIS_3D(), T, basePose.GetParent());
+    alignedPose.PreComposeWith(poseNextTo);
+    alignedPoses.push_back(alignedPose);
+    
+    // Test spot along -x axis
+    T.x() *= -1.f;
+    poseNextTo.SetTranslation(T);
+    alignedPose = basePose;
+    alignedPose.PreComposeWith(poseNextTo);
+    alignedPoses.push_back(alignedPose);
+    
+    // Test spot along +y axis
+    T.x() = 0.f;
+    T.y() = distance;
+    poseNextTo.SetTranslation(T);
+    alignedPose = basePose;
+    alignedPose.PreComposeWith(poseNextTo);
+    alignedPoses.push_back(alignedPose);
+    
+    // Test spot along -y axis
+    T.y() *= -1.f;
+    poseNextTo.SetTranslation(T);
+    alignedPose = basePose;
+    alignedPose.PreComposeWith(poseNextTo);
+    alignedPoses.push_back(alignedPose);
+  }
+  
+  
   // Return a pose "next to" the given object, along the x or y axes.
   // Simply fails if all of the 4 check locations (+/-x, +/-y) have objects in them.
   Result BehaviorOCD::FindEmptyPlacementPose(const ObjectID& nearObjectID, Pose3d& pose)
@@ -347,22 +383,21 @@ namespace Cozmo {
       return RESULT_FAIL;
     }
     
-    pose = nearObject->GetPose();
-    
     BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "FindEmptyPlacementPose","Block pose: (%f, %f, %f)",
-                           pose.GetTranslation().x(), pose.GetTranslation().y(), RAD_TO_DEG_F32(pose.GetRotationAngle<'Z'>().ToFloat()));
+                           nearObject->GetPose().GetTranslation().x(),
+                           nearObject->GetPose().GetTranslation().y(),
+                           RAD_TO_DEG_F32(nearObject->GetPose().GetRotationAngle<'Z'>().ToFloat()));
     
+    // Get all aligned poses
+    std::vector<Pose3d> alignedPoses;
+    ComputeAlignedPoses(nearObject->GetPose(), 2*nearObject->GetSize().x(), alignedPoses);
     
+    // Find closest empty pose
     std::set<ObjectID> ignoreIDs;
     ignoreIDs.insert(_robot.GetCarryingObject());
-    
-    Pose3d testPose(pose);
     f32 closestDistToRobot = std::numeric_limits<f32>::max();
     
-    // Test spot along +x axis
-    Vec3f T(2*nearObject->GetSize().x(), 0, testPose.GetTranslation().z());
-    Pose3d poseNextTo(0, Z_AXIS_3D(), T, pose.GetParent());
-    testPose.PreComposeWith(poseNextTo);
+    for (auto& testPose : alignedPoses) {
     if(nullptr == _robot.GetBlockWorld().FindObjectClosestTo(testPose, nearObject->GetSize(), ignoreIDs)) {
       f32 distToRobot = ComputeDistanceBetween(_robot.GetPose(), testPose);
       if ( distToRobot < closestDistToRobot) {
@@ -370,54 +405,9 @@ namespace Cozmo {
         pose = testPose;
       }
     }
-    BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.FindEmptyPlacementPose.TestPose+X", "(%f %f %f) - %f",
-                           testPose.GetTranslation().x(), testPose.GetTranslation().y(), RAD_TO_DEG_F32(testPose.GetRotationAngle<'Z'>().ToFloat()), closestDistToRobot);
-  
-    // Test spot along -x axis
-    T.x() *= -1.f;
-    poseNextTo.SetTranslation(T);
-    testPose = nearObject->GetPose();
-    testPose.PreComposeWith(poseNextTo);
-    if(nullptr == _robot.GetBlockWorld().FindObjectClosestTo(testPose, nearObject->GetSize(), ignoreIDs)) {
-      f32 distToRobot = ComputeDistanceBetween(_robot.GetPose(), testPose);
-      if ( distToRobot < closestDistToRobot) {
-        closestDistToRobot = distToRobot;
-        pose = testPose;
-      }
-    }
-    BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.FindEmptyPlacementPose.TestPose-X", "(%f %f %f) - %f",
-                           testPose.GetTranslation().x(), testPose.GetTranslation().y(), RAD_TO_DEG_F32(testPose.GetRotationAngle<'Z'>().ToFloat()), closestDistToRobot);
-    
-    // Test spot along +y axis
-    T.x() = 0.f;
-    T.y() = 2*nearObject->GetSize().y();
-    poseNextTo.SetTranslation(T);
-    testPose = nearObject->GetPose();
-    testPose.PreComposeWith(poseNextTo);
-    if(nullptr == _robot.GetBlockWorld().FindObjectClosestTo(testPose, nearObject->GetSize(), ignoreIDs)) {
-      f32 distToRobot = ComputeDistanceBetween(_robot.GetPose(), testPose);
-      if ( distToRobot < closestDistToRobot) {
-        closestDistToRobot = distToRobot;
-        pose = testPose;
-      }
-    }
-    BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.FindEmptyPlacementPose.TestPose+Y", "(%f %f %f) - %f",
+      BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.FindEmptyPlacementPose.TestPose", "(%f %f %f) - %f",
                                                 testPose.GetTranslation().x(), testPose.GetTranslation().y(), RAD_TO_DEG_F32(testPose.GetRotationAngle<'Z'>().ToFloat()), closestDistToRobot);
-    
-    // Test spot along -y axis
-    T.y() *= -1.f;
-    poseNextTo.SetTranslation(T);
-    testPose = nearObject->GetPose();
-    testPose.PreComposeWith(poseNextTo);
-    if(nullptr == _robot.GetBlockWorld().FindObjectClosestTo(testPose, nearObject->GetSize(), ignoreIDs)) {
-      f32 distToRobot = ComputeDistanceBetween(_robot.GetPose(), testPose);
-      if ( distToRobot < closestDistToRobot) {
-        closestDistToRobot = distToRobot;
-        pose = testPose;
       }
-    }
-    BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.FindEmptyPlacementPose.TestPose-Y", "(%f %f %f) - %f",
-                           testPose.GetTranslation().x(), testPose.GetTranslation().y(), RAD_TO_DEG_F32(testPose.GetRotationAngle<'Z'>().ToFloat()), closestDistToRobot);
     
     // If no empty pose found, return fail
     if (closestDistToRobot == std::numeric_limits<f32>::max()) {
@@ -677,53 +667,18 @@ namespace Cozmo {
     ObservableObject* obj1 = blockWorld.GetObjectByID(o1);
     ObservableObject* obj2 = blockWorld.GetObjectByID(o2);
     
+    // Find aligned poses
+    std::vector<Pose3d> alignedPoses;
+    ComputeAlignedPoses(obj1->GetPose(), 2*obj1->GetSize().x(), alignedPoses);
     
-    const Vec3f distThresh = obj1->GetSize();
-    Pose3d testPose(obj1->GetPose());
-    
-    // Test spot along +x axis
-    Vec3f T(2*obj1->GetSize().x(), 0, testPose.GetTranslation().z());
-    Pose3d poseNextTo(0, Z_AXIS_3D(), T, obj1->GetPose().GetParent());
-    testPose.PreComposeWith(poseNextTo);
-    if(obj2 == blockWorld.FindObjectClosestTo(testPose, distThresh)) {
+    // Check if object 2 is at any of them
+    for (auto& testPose : alignedPoses) {
+      if(obj2 == blockWorld.FindObjectClosestTo(testPose, obj1->GetSize() * 0.5f)) {
       return true;
     }
-    BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.AreAligned.TestPose+X", "(%f %f %f)",
+      BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.AreAligned.TestPose", "(%f %f %f)",
                            testPose.GetTranslation().x(), testPose.GetTranslation().y(), RAD_TO_DEG_F32(testPose.GetRotationAngle<'Z'>().ToFloat()));
-    
-    // Test spot along -x axis
-    T.x() *= -1.f;
-    poseNextTo.SetTranslation(T);
-    testPose = obj1->GetPose();
-    testPose.PreComposeWith(poseNextTo);
-    if(obj2 == blockWorld.FindObjectClosestTo(testPose, distThresh)) {
-      return true;
     }
-    BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.AreAligned.TestPose-X", "(%f %f %f)",
-                           testPose.GetTranslation().x(), testPose.GetTranslation().y(), RAD_TO_DEG_F32(testPose.GetRotationAngle<'Z'>().ToFloat()));
-    
-    // Test spot along +y axis
-    T.x() = 0.f;
-    T.y() = 2*obj1->GetSize().y();
-    poseNextTo.SetTranslation(T);
-    testPose = obj1->GetPose();
-    testPose.PreComposeWith(poseNextTo);
-    if(obj2 == blockWorld.FindObjectClosestTo(testPose, distThresh)) {
-      return true;
-    }
-    BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.AreAligned.TestPose+Y", "(%f %f %f)",
-                           testPose.GetTranslation().x(), testPose.GetTranslation().y(), RAD_TO_DEG_F32(testPose.GetRotationAngle<'Z'>().ToFloat()));
-    
-    // Test spot along -y axis
-    T.y() *= -1.f;
-    poseNextTo.SetTranslation(T);
-    testPose = obj1->GetPose();
-    testPose.PreComposeWith(poseNextTo);
-    if(obj2 == blockWorld.FindObjectClosestTo(testPose, distThresh)) {
-      return true;
-    }
-    BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.AreAligned.TestPose-Y", "(%f %f %f)",
-                           testPose.GetTranslation().x(), testPose.GetTranslation().y(), RAD_TO_DEG_F32(testPose.GetRotationAngle<'Z'>().ToFloat()));
 
     return false;
     
