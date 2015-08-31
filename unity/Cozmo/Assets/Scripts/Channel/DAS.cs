@@ -5,7 +5,7 @@ using UnityEngine;
 public static class DAS {
 
   public static void Event(string eventName, string eventValue) {
-    #if DAS_ENABLED && !UNITY_EDITOR && (UNITY_ANDROID || UNITY_IPHONE || UNITY_STANDALONE)
+    #if !UNITY_EDITOR && (UNITY_ANDROID || UNITY_IPHONE || UNITY_STANDALONE)
     Unity_DAS_Event(eventName, eventValue);
     #else
     UnityEngine.Debug.Log(string.Format("DAS [{0}] {1} - {2}", 3, eventName, eventValue));
@@ -13,7 +13,7 @@ public static class DAS {
   }
 
   public static void Error(string eventName, string eventValue) {
-    #if DAS_ENABLED && !UNITY_EDITOR && (UNITY_ANDROID || UNITY_IPHONE || UNITY_STANDALONE)
+    #if !UNITY_EDITOR && (UNITY_ANDROID || UNITY_IPHONE || UNITY_STANDALONE)
     Unity_DAS_LogE(eventName, eventValue);
     #else
     UnityEngine.Debug.LogError(string.Format("DAS [{0}] {1} - {2}", 5, eventName, eventValue));
@@ -21,7 +21,7 @@ public static class DAS {
   }
 
   public static void Warn(string eventName, string eventValue) {
-    #if DAS_ENABLED && !UNITY_EDITOR && (UNITY_ANDROID || UNITY_IPHONE || UNITY_STANDALONE)
+    #if !UNITY_EDITOR && (UNITY_ANDROID || UNITY_IPHONE || UNITY_STANDALONE)
     Unity_DAS_LogW(eventName, eventValue);
     #else
     UnityEngine.Debug.LogWarning(string.Format("DAS [{0}] {1} - {2}", 4, eventName, eventValue));
@@ -29,7 +29,7 @@ public static class DAS {
   }
 
   public static void Info(string eventName, string eventValue) {
-    #if DAS_ENABLED && !UNITY_EDITOR && (UNITY_ANDROID || UNITY_IPHONE || UNITY_STANDALONE)
+    #if !UNITY_EDITOR && (UNITY_ANDROID || UNITY_IPHONE || UNITY_STANDALONE)
     Unity_DAS_LogI(eventName, eventValue);
     #else
     UnityEngine.Debug.Log(string.Format("DAS [{0}] {1} - {2}", 2, eventName, eventValue));
@@ -37,7 +37,7 @@ public static class DAS {
   }
 
   public static void Debug(string eventName, string eventValue) {
-    #if DAS_ENABLED && !UNITY_EDITOR && (UNITY_ANDROID || UNITY_IPHONE || UNITY_STANDALONE)
+    #if !UNITY_EDITOR && (UNITY_ANDROID || UNITY_IPHONE || UNITY_STANDALONE)
     Unity_DAS_LogD(eventName, eventValue);
     #else
     UnityEngine.Debug.Log(string.Format("DAS [{0}] {1} - {2}", 1, eventName, eventValue));

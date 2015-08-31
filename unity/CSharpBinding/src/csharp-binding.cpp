@@ -14,7 +14,6 @@
 
 #include "anki/common/basestation/jsonTools.h"
 #include "util/logging/logging.h"
-#include "unity-logger-provider.h"
 
 #include <algorithm>
 #include <string>
@@ -39,31 +38,24 @@ using namespace Anki::Cozmo::CSharpBinding;
 
 bool initialized = false;
 
-UnityLoggerProvider logger_provider;
-
 void Unity_DAS_Event(const char* eventName, const char* eventValue) {
-  std::vector<std::pair<const char*, const char*>> keyValues;
-  logger_provider.PrintEvent(eventName, keyValues, eventValue);
+  PRINT_NAMED_EVENT(eventName, "%s", eventValue);
 }
 
 void Unity_DAS_LogE(const char* eventName, const char* eventValue) {
-  std::vector<std::pair<const char*, const char*>> keyValues;
-  logger_provider.PrintLogE(eventName, keyValues, eventValue);
+  PRINT_NAMED_ERROR(eventName, "%s", eventValue);
 }
 
 void Unity_DAS_LogW(const char* eventName, const char* eventValue) {
-  std::vector<std::pair<const char*, const char*>> keyValues;
-  logger_provider.PrintLogW(eventName, keyValues, eventValue);
+  PRINT_NAMED_WARNING(eventName, "%s", eventValue);
 }
 
 void Unity_DAS_LogI(const char* eventName, const char* eventValue) {
-  std::vector<std::pair<const char*, const char*>> keyValues;
-  logger_provider.PrintLogI(eventName, keyValues, eventValue);
+  PRINT_NAMED_INFO(eventName, "%s", eventValue);
 }
 
 void Unity_DAS_LogD(const char* eventName, const char* eventValue) {
-  std::vector<std::pair<const char*, const char*>> keyValues;
-  logger_provider.PrintLogD(eventName, keyValues, eventValue);
+  PRINT_NAMED_DEBUG(eventName, "%s", eventValue);
 }
 
 int cozmo_startup(const char *configuration_data)
