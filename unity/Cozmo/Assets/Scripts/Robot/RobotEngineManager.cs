@@ -46,7 +46,6 @@ public class RobotEngineManager : MonoBehaviour {
   public event Action<bool,string> RobotCompletedAnimation;
   public event Action<bool,uint> RobotCompletedCompoundAction;
 
-  private bool cozmoLoggingStarted = false;
   private bool cozmoBindingStarted = false;
   private ChannelBase channel = null;
   private float lastRobotStateMessage = 0;
@@ -88,9 +87,6 @@ public class RobotEngineManager : MonoBehaviour {
       instance = this;
       DontDestroyOnLoad(gameObject);
     }
-    
-    CozmoLogging.OpenLogFile();
-    cozmoLoggingStarted = true;
 
     TextAsset config = configuration;
 
@@ -117,9 +113,6 @@ public class RobotEngineManager : MonoBehaviour {
   }
 
   private void OnDisable() {
-    if (cozmoLoggingStarted) {
-      CozmoLogging.CloseLogFile();
-    }
     
     if (channel != null) {
       if (channel.IsActive) {

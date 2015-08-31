@@ -66,18 +66,6 @@ void Unity_DAS_LogD(const char* eventName, const char* eventValue) {
   logger_provider.PrintLogD(eventName, keyValues, eventValue);
 }
 
-int cozmo_set_log_callback(LogCallback callback, int min_log_level)
-{
-    logger_provider.SetMinLogLevel(min_log_level);
-    logger_provider.SetCallback(callback);
-    
-    if (callback != nullptr) {
-        Anki::Util::gLoggerProvider = &logger_provider;
-    }
-    
-    return (int)RESULT_OK;
-}
-
 int cozmo_startup(const char *configuration_data)
 {
     int result = (int)RESULT_OK;

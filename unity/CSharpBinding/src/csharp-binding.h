@@ -14,15 +14,7 @@
 #ifndef _cplusplus
 extern "C" {
 #endif
-    
-    // Sets a logging callback, that may be called on any Unity thread.
-    // Can call independent of cozmo_startup/cozmo_shutdown.
-// may need __stdcall on certain platforms
-#define CSHARP_BINDING_CALLING_CONVENTION
-//#define CSHARP_BINDING_CALLING_CONVENTION __stdcall
-  typedef void (CSHARP_BINDING_CALLING_CONVENTION *LogCallback)(int log_level, const char* buffer);
-  int cozmo_set_log_callback(LogCallback callback, int min_log_level);
-    
+
   // Hook for initialization code. If this errors out, do not run anything else.
   int cozmo_startup(const char *configuration_data);
     
