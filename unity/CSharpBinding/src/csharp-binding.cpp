@@ -41,8 +41,29 @@ bool initialized = false;
 
 UnityLoggerProvider logger_provider;
 
-void Unity_DAS_Log(int level, const char* eventName, const char* eventValue) {
-  
+void Unity_DAS_Event(const char* eventName, const char* eventValue) {
+  std::vector<std::pair<const char*, const char*>> keyValues;
+  logger_provider.PrintEvent(eventName, keyValues, eventValue);
+}
+
+void Unity_DAS_LogE(const char* eventName, const char* eventValue) {
+  std::vector<std::pair<const char*, const char*>> keyValues;
+  logger_provider.PrintLogE(eventName, keyValues, eventValue);
+}
+
+void Unity_DAS_LogW(const char* eventName, const char* eventValue) {
+  std::vector<std::pair<const char*, const char*>> keyValues;
+  logger_provider.PrintLogW(eventName, keyValues, eventValue);
+}
+
+void Unity_DAS_LogI(const char* eventName, const char* eventValue) {
+  std::vector<std::pair<const char*, const char*>> keyValues;
+  logger_provider.PrintLogI(eventName, keyValues, eventValue);
+}
+
+void Unity_DAS_LogD(const char* eventName, const char* eventValue) {
+  std::vector<std::pair<const char*, const char*>> keyValues;
+  logger_provider.PrintLogD(eventName, keyValues, eventValue);
 }
 
 int cozmo_set_log_callback(LogCallback callback, int min_log_level)

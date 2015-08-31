@@ -3,49 +3,60 @@ using System.Runtime.InteropServices;
 using UnityEngine;
 
 public static class DAS {
-  public const int LogLevelDebug = 0;
-  public const int LogLevelInfo = 1;
-  public const int LogLevelEvent = 2;
-  public const int LogLevelWarn = 3;
-  public const int LogLevelError = 4;
-
-  public static void Debug(string eventName, string eventValue) {
-    PrintLn(LogLevelDebug, eventName, eventValue);
-  }
-
-  public static void Info(string eventName, string eventValue) {
-    PrintLn(LogLevelInfo, eventName, eventValue);
-  }
 
   public static void Event(string eventName, string eventValue) {
-    PrintLn(LogLevelEvent, eventName, eventValue);
-  }
-
-  public static void Warn(string eventName, string eventValue) {
-    #if UNITY_EDITOR
-    UnityEngine.Debug.LogWarning(eventName + " " + eventValue);
+    #if DAS_ENABLED && !UNITY_EDITOR && (UNITY_ANDROID || UNITY_IPHONE || UNITY_STANDALONE)
+    Unity_DAS_Event(eventName, eventValue);
     #else
-    PrintLn(LogLevelWarn, eventName, eventValue);
+    UnityEngine.Debug.Log(string.Format("DAS [{0}] {1} - {2}", 3, eventName, eventValue));
     #endif
   }
 
   public static void Error(string eventName, string eventValue) {
-    #if UNITY_EDITOR
-    UnityEngine.Debug.LogError(eventName + " " + eventValue);
+    #if DAS_ENABLED && !UNITY_EDITOR && (UNITY_ANDROID || UNITY_IPHONE || UNITY_STANDALONE)
+    Unity_DAS_LogE(eventName, eventValue);
     #else
-    PrintLn(LogLevelError, eventName, eventValue);
+    UnityEngine.Debug.LogError(string.Format("DAS [{0}] {1} - {2}", 5, eventName, eventValue));
     #endif
   }
 
-  public static void PrintLn(int dasLogLevel, string eventName, string eventValue) {
+  public static void Warn(string eventName, string eventValue) {
     #if DAS_ENABLED && !UNITY_EDITOR && (UNITY_ANDROID || UNITY_IPHONE || UNITY_STANDALONE)
-    Unity_DAS_Log(dasLogLevel, eventName, eventValue);
+    Unity_DAS_LogW(eventName, eventValue);
     #else
-    UnityEngine.Debug.Log(string.Format("DAS [{0}] {1} - {2}", dasLogLevel, eventName, eventValue));
+    UnityEngine.Debug.LogWarning(string.Format("DAS [{0}] {1} - {2}", 4, eventName, eventValue));
+    #endif
+  }
+
+  public static void Info(string eventName, string eventValue) {
+    #if DAS_ENABLED && !UNITY_EDITOR && (UNITY_ANDROID || UNITY_IPHONE || UNITY_STANDALONE)
+    Unity_DAS_LogI(eventName, eventValue);
+    #else
+    UnityEngine.Debug.Log(string.Format("DAS [{0}] {1} - {2}", 2, eventName, eventValue));
+    #endif
+  }
+
+  public static void Debug(string eventName, string eventValue) {
+    #if DAS_ENABLED && !UNITY_EDITOR && (UNITY_ANDROID || UNITY_IPHONE || UNITY_STANDALONE)
+    Unity_DAS_LogD(eventName, eventValue);
+    #else
+    UnityEngine.Debug.Log(string.Format("DAS [{0}] {1} - {2}", 1, eventName, eventValue));
     #endif
   }
 
   [DllImport("__Internal")]
-  private static extern void Unity_DAS_Log(int level, string eventName, string eventValue);
+  private static extern void Unity_DAS_Event(string eventName, string eventValue);
+
+  [DllImport("__Internal")]
+  private static extern void Unity_DAS_LogE(string eventName, string eventValue);
+
+  [DllImport("__Internal")]
+  private static extern void Unity_DAS_LogW(string eventName, string eventValue);
+
+  [DllImport("__Internal")]
+  private static extern void Unity_DAS_LogI(string eventName, string eventValue);
+
+  [DllImport("__Internal")]
+  private static extern void Unity_DAS_LogD(string eventName, string eventValue);
 
 }

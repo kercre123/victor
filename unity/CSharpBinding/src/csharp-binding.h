@@ -20,20 +20,28 @@ extern "C" {
 // may need __stdcall on certain platforms
 #define CSHARP_BINDING_CALLING_CONVENTION
 //#define CSHARP_BINDING_CALLING_CONVENTION __stdcall
-    typedef void (CSHARP_BINDING_CALLING_CONVENTION *LogCallback)(int log_level, const char* buffer);
-    int cozmo_set_log_callback(LogCallback callback, int min_log_level);
+  typedef void (CSHARP_BINDING_CALLING_CONVENTION *LogCallback)(int log_level, const char* buffer);
+  int cozmo_set_log_callback(LogCallback callback, int min_log_level);
     
-    // Hook for initialization code. If this errors out, do not run anything else.
-    int cozmo_startup(const char *configuration_data);
+  // Hook for initialization code. If this errors out, do not run anything else.
+  int cozmo_startup(const char *configuration_data);
     
-    // Hook for deinitialization. Should be fine to call startup after this call, even on failure.
-    // Return value is just for informational purposes. Should never fail, even if not initialized.
-    int cozmo_shutdown();
+  // Hook for deinitialization. Should be fine to call startup after this call, even on failure.
+  // Return value is just for informational purposes. Should never fail, even if not initialized.
+  int cozmo_shutdown();
     
-    // Update tick; only call if cozmo_startup succeeded.
-    int cozmo_update(float current_time);
+  // Update tick; only call if cozmo_startup succeeded.
+  int cozmo_update(float current_time);
   
-    void Unity_DAS_Log(int level, const char* eventName, const char* eventValue);
+  void Unity_DAS_Event(const char* eventName, const char* eventValue);
+  
+  void Unity_DAS_LogE(const char* eventName, const char* eventValue);
+  
+  void Unity_DAS_LogW(const char* eventName, const char* eventValue);
+  
+  void Unity_DAS_LogI(const char* eventName, const char* eventValue);
+  
+  void Unity_DAS_LogD(const char* eventName, const char* eventValue);
 
 #ifndef _cplusplus
 }
