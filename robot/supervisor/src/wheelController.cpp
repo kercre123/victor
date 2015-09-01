@@ -107,7 +107,7 @@ namespace Anki {
       // Piecewise linear
       f32 out_ol = 0;
       if (x > 10) {
-        out_ol = 0.003450556 * x + 0.116538794;
+        out_ol = 0.003319096 * x + 0.10109226;
       } else {
         // power = speed  * 0.2 power /  10 mm/s
         out_ol = 0.02 * x;
@@ -132,7 +132,7 @@ namespace Anki {
       // Piecewise linear
       f32 out_ol = 0;
       if (x > 10) {
-        out_ol = 0.00341819896 * x + 0.11461574729;
+        out_ol = 0.00336296136 * x + 0.10104465883;
       } else {
         // power = speed  * 0.2 power /  10 mm/s
         out_ol = 0.02 * x;
