@@ -20,11 +20,6 @@
 namespace Anki {
   namespace Cozmo {
     
-    // Instantiate static const MarkerlessObject types here:
-    // NOTE: Yes, there's only one type (PROX_OBSTACLE) but if we ever decide to have
-    //       objects of different shapes, this makes it easier.
-    const MarkerlessObject::Type MarkerlessObject::Type::PROX_OBSTACLE("PROX_OBSTACLE");
-    
     const std::vector<Point3f>& MarkerlessObject::GetCanonicalCorners() const
     {
       static const std::vector<Point3f> CanonicalCorners = {{
@@ -44,14 +39,14 @@ namespace Anki {
     static const Point3f& GetSizeByType(MarkerlessObject::Type type)
     {
       static const std::map<MarkerlessObject::Type, Point3f> Sizes = {
-        {MarkerlessObject::Type::PROX_OBSTACLE, {10.f, 24.f, 50.f}},
+        {MarkerlessObject::Type::ProxObstacle, {10.f, 24.f, 50.f}},
       };
     
       auto iter = Sizes.find(type);
       if(iter == Sizes.end()) {
         PRINT_NAMED_ERROR("MarkerlessObject.GetSizeByType.UndefinedType",
                           "No size defined for type %s (%d).\n",
-                          type.GetName().c_str(), type.GetValue());
+                          ObjectTypeToString(type), type);
         static const Point3f DefaultSize(0.f,0.f,0.f);
         return DefaultSize;
       } else {
@@ -61,7 +56,7 @@ namespace Anki {
     
     
     MarkerlessObject::MarkerlessObject(Type type)
-    : _type(type)
+    : ObservableObject(ObjectFamily::MarkerlessObject, ObjectType::ProxObstacle)
     , _size(GetSizeByType(_type))
     {
       _canonicalCorners = {{

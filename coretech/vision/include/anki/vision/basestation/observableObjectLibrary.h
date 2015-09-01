@@ -25,19 +25,20 @@
 namespace Anki {
   namespace Vision {
     
+    template<class ObsObjectType>
     class ObservableObjectLibrary
     {
     public:
+      
+      //using ObsObjectType = ObsObjectType;
       
       ObservableObjectLibrary(){};
       
       u32 GetNumObjects() const;
       
-      //bool IsInitialized() const;
-      
       // Add an object to the known list. Note that this permits addition of
       // objects at run time.
-      void AddObject(const ObservableObject* object);
+      void AddObject(const ObsObjectType* object);
       
       // Groups markers referring to the same type, and clusters them into
       // observed objects, returned in objectsSeen.  Used markers will be
@@ -45,32 +46,27 @@ namespace Anki {
       // to this library will remain.  If seenOnlyBy is not ANY_CAMERA, only markers
       // seen by that camera will be considered and objectSeen poses will be returned
       // wrt to that camera. If seenOnlyBy is ANY_CAMERA, the poses are returned wrt the world.
-      void CreateObjectsFromMarkers(const std::list<ObservedMarker*>& markers,
-                                    std::vector<ObservableObject*>& objectsSeen,
-                                    const CameraID_t seenOnlyBy = ANY_CAMERA) const;
-      
-      // Only one object in a library can have each type. Return a pointer to
-      // that object, or NULL if none exists.
-      const ObservableObject* GetObjectWithType(const ObjectType type) const;
+      Result CreateObjectsFromMarkers(const std::list<ObservedMarker*>& markers,
+                                      std::vector<ObsObjectType*>& objectsSeen,
+                                      const CameraID_t seenOnlyBy = ANY_CAMERA) const;
       
       // Return a pointer to a vector of pointers to known objects with at
       // least one of the specified markers or codes on it. If  there is no
       // object with that marker/code, a NULL pointer is returned.
-      std::set<const ObservableObject*> const& GetObjectsWithMarker(const Marker& marker) const;
-      std::set<const ObservableObject*> const& GetObjectsWithCode(const Marker::Code& code) const;
+      std::set<const ObsObjectType*> const& GetObjectsWithMarker(const Marker& marker) const;
+      std::set<const ObsObjectType*> const& GetObjectsWithCode(const Marker::Code& code) const;
       
     protected:
       
-      static const std::set<const ObservableObject*> sEmptyObjectVector;
+      static const std::set<const ObsObjectType*> sEmptyObjectVector;
       
-      //std::list<const ObservableObject*> knownObjects_;
-      std::map<ObjectType, const ObservableObject*> _knownObjects;
+      std::list<const ObsObjectType*> _knownObjects;
       
       // Store a list of pointers to all objects that have at least one marker
       // with that code.  You can then use the objects' GetMarkersWithCode()
       // method to get the list of markers on each object.
-      //std::map<Marker::Code, std::vector<const ObservableObject*> > _objectsWithCode;
-      std::map<Marker::Code, std::set<const ObservableObject*> > _objectsWithCode;
+      //std::map<Marker::Code, std::vector<const ObsObjectType*> > _objectsWithCode;
+      std::map<Marker::Code, std::set<const ObsObjectType*> > _objectsWithCode;
       
       // A PoseCluster is a pairing of a single pose and all the marker matches
       // that imply that pose
@@ -105,12 +101,11 @@ namespace Anki {
       }; // class PoseCluster
       
       void ClusterObjectPoses(const std::vector<PoseMatchPair>& possiblePoses,
-                              const ObservableObject*         libObject,
+                              const ObsObjectType*         libObject,
                               const float distThreshold, const Radians angleThreshold,
                               std::vector<PoseCluster>& poseClusters) const;
       
     }; // class ObservableObjectLibrary
-    
     
   } // namespace Vision
 } // namespace Anki

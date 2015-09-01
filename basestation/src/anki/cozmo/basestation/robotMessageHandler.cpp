@@ -120,21 +120,15 @@ namespace Anki {
       // Check for invalid msgID
       if (msgID >= RobotMessage::NUM_MSG_IDS || msgID == 0) {
         PRINT_NAMED_ERROR("RobotMessageHandler.InvalidMsgId",
-                          "Received msgID is invalid (Msg %d, MaxValidID %d)\n",
-                          msgID,
-                          RobotMessage::NUM_MSG_IDS
-                          );
+          "Received msgID is invalid (Msg %d, MaxValidID %d)", msgID,RobotMessage::NUM_MSG_IDS);
         return RESULT_FAIL;
       }
       
       // Check that the msg size matches expected size
       if(lookupTable_[msgID].size != packet.bufferSize-1) {
         PRINT_NAMED_ERROR("RobotMessageHandler.MessageBufferWrongSize",
-                          "Buffer's size does not match expected size for this message ID. (Msg %d, expected %d, recvd %d)",
-                          msgID,
-                          lookupTable_[msgID].size,
-                          packet.bufferSize - 1
-                          );
+          "Buffer's size does not match expected size for this message ID. (Msg %d, expected %d, recvd %d)",
+          msgID, lookupTable_[msgID].size, packet.bufferSize - 1 );
         return RESULT_FAIL;
       }
       
@@ -142,16 +136,13 @@ namespace Anki {
       //Robot* robot = RobotManager::getInstance()->GetRobotByID(robotID);
       Robot* robot = _robotMgr->GetRobotByID(robotID);
       if(robot == NULL) {
-        PRINT_NAMED_ERROR("MessageFromInvalidRobotSource",
-                          "Message %d received from invalid robot source ID %d.",
-                          msgID, robotID);
+        PRINT_NAMED_ERROR("MessageFromInvalidRobotSource", "Message %d received from invalid robot source ID %d.", msgID, robotID);
         return RESULT_FAIL;
       }
       
       if(this->lookupTable_[msgID].ProcessPacketAs == nullptr) {
         PRINT_NAMED_ERROR("RobotMessageHandler.ProcessPacket.NullProcessPacketFcn",
-                          "Message %d received by robot %d, but no ProcessPacketAs function defined for it.",
-                          msgID, robotID);
+          "Message %d received by robot %d, but no ProcessPacketAs function defined for it.", msgID, robotID);
         return RESULT_FAIL;
       }
       
@@ -201,7 +192,7 @@ namespace Anki {
       
       // TODO: Do something with face detections
       
-      PRINT_INFO("Robot %d reported seeing a face at (x,y,w,h)=(%d,%d,%d,%d).\n",
+      PRINT_INFO("Robot %d reported seeing a face at (x,y,w,h)=(%d,%d,%d,%d).",
                  robot->GetID(), msg.x_upperLeft, msg.y_upperLeft, msg.width, msg.height);
       
       
@@ -225,8 +216,7 @@ namespace Anki {
     Result RobotMessageHandler::ProcessMessage(Robot* robot, MessageCameraCalibration const& msg)
     {
       PRINT_NAMED_INFO("RobotMessageHandler.CameraCalibration",
-                       "Received new %dx%d camera calibration from robot.\n",
-                       msg.ncols, msg.nrows);
+        "Received new %dx%d camera calibration from robot.", msg.ncols, msg.nrows);
       
       // Convert calibration message into a calibration object to pass to
       // the robot
@@ -254,7 +244,7 @@ namespace Anki {
                        "  wheel speeds (l=%f, r=%f)\n"
                        "  headAngle %f\n"
                        "  liftAngle %f\n"
-                       "  liftHeight %f\n"
+                       "  liftHeight %f"
                        ,robot->GetID()
                        ,msg.pose_x, msg.pose_y, msg.pose_z, msg.pose_angle, msg.pose_frame_id
                        ,msg.lwheel_speed_mmps, msg.rwheel_speed_mmps
@@ -334,7 +324,7 @@ namespace Anki {
         uiImgChunk.ncols = Vision::CameraResInfo[msg.resolution].width;
         assert(uiImgChunk.data.size() == msg.data.size());
         uiImgChunk.chunkSize = msg.chunkSize;
-        uiImgChunk.imageEncoding = msg.imageEncoding;
+        uiImgChunk.imageEncoding = (ImageEncodingClad)msg.imageEncoding;
         uiImgChunk.imageChunkCount = msg.imageChunkCount;
         uiImgChunk.chunkId = msg.chunkId;
         std::copy(msg.data.begin(), msg.data.end(),
@@ -396,7 +386,7 @@ namespace Anki {
     Result RobotMessageHandler::ProcessMessage(Robot* robot, MessageTrackerQuad const& msg)
     {
       /*
-      PRINT_INFO("TrackerQuad: (%d,%d) (%d,%d) (%d,%d) (%d,%d)\n",
+      PRINT_INFO("TrackerQuad: (%d,%d) (%d,%d) (%d,%d) (%d,%d)",
                  msg.topLeft_x, msg.topLeft_y,
                  msg.topRight_x, msg.topRight_y,
                  msg.bottomRight_x, msg.bottomRight_y,
@@ -438,7 +428,7 @@ namespace Anki {
     {
       const char* successStr = (msg.didSucceed ? "succeeded" : "failed");
       PRINT_STREAM_INFO("RobotMessageHandler.ProcessMessage.MessageBlockPlaced", "Robot " << robot->GetID() << " reported it " << successStr << " placing block. "
-                 "Stopping docking and turning on Look-for-Markers mode.\n");
+                 "Stopping docking and turning on Look-for-Markers mode.");
       
       Result lastResult = RESULT_OK;
       if(msg.didSucceed) {
@@ -457,7 +447,7 @@ namespace Anki {
     
     Result RobotMessageHandler::ProcessMessage(Robot* robot, MessageRampTraverseStart const& msg)
     {
-      PRINT_STREAM_INFO("Robot %d reported it started traversing a ramp.\n", robot->GetID());
+      PRINT_NAMED_INFO("RobotMessageHandler.ProcessMessage", "Robot %d reported it started traversing a ramp.", robot->GetID());
 
       robot->SetOnRamp(true);
       
@@ -466,8 +456,7 @@ namespace Anki {
     
     Result RobotMessageHandler::ProcessMessage(Robot* robot, MessageRampTraverseComplete const& msg)
     {
-      PRINT_STREAM_INFO("RobotMessageHandler.ProcessMessage."
-                        "MessageRampTraverseComplete", "Robot " << robot->GetID() << " reported it completed traversing a ramp.");
+      PRINT_NAMED_INFO("RobotMessageHandler.ProcessMessage.", "Robot %d reported it completed traversing a ramp.", robot->GetID());
 
       robot->SetOnRamp(false);
       
@@ -476,8 +465,7 @@ namespace Anki {
     
     Result RobotMessageHandler::ProcessMessage(Robot* robot, MessageBridgeTraverseStart const& msg)
     {
-      PRINT_STREAM_INFO("RobotMessageHandler.ProcessMessage."
-                        "MessageBridgeTraverseStart", "Robot " << robot->GetID() << " reported it started traversing a bridge.");
+      PRINT_NAMED_INFO("RobotMessageHandler.ProcessMessage.", "Robot %d reported it started traversing a bridge.", robot->GetID());
       
       // TODO: What does this message trigger?
       //robot->SetOnBridge(true);
@@ -487,9 +475,7 @@ namespace Anki {
     
     Result RobotMessageHandler::ProcessMessage(Robot* robot, MessageBridgeTraverseComplete const& msg)
     {
-      PRINT_STREAM_INFO("RobotMessageHandler.ProcessMessage."
-                        "MessageBridgeTraverseComplete",
-                        "Robot " << robot->GetID() << " reported it completed traversing a bridge.");
+      PRINT_NAMED_INFO("RobotMessageHandler.ProcessMessage.", "Robot %d reported it completed traversing a bridge.", robot->GetID());
       
       // TODO: What does this message trigger?
       //robot->SetOnBridge(false);
@@ -502,11 +488,11 @@ namespace Anki {
       Result lastResult = RESULT_OK;
     
       if (msg.numMainTooLongErrors > 0) {
-        PRINT_NAMED_WARNING("* * * MainCycleTooLong * * *", "Num errors: %d, Avg time: %d us\n", msg.numMainTooLongErrors, msg.avgMainTooLongTime);
+        PRINT_NAMED_WARNING("* * * MainCycleTooLong * * *", "Num errors: %d, Avg time: %d us", msg.numMainTooLongErrors, msg.avgMainTooLongTime);
       }
       
       if (msg.numMainTooLateErrors > 0) {
-        PRINT_NAMED_WARNING("* * * MainCycleTooLate * * *", "Num errors: %d, Avg time: %d us\n", msg.numMainTooLateErrors, msg.avgMainTooLateTime);
+        PRINT_NAMED_WARNING("* * * MainCycleTooLate * * *", "Num errors: %d, Avg time: %d us", msg.numMainTooLateErrors, msg.avgMainTooLateTime);
       }
       
       return lastResult;
@@ -576,8 +562,7 @@ namespace Anki {
     
     Result RobotMessageHandler::ProcessMessage(Robot* robot, MessagePlaySoundOnBaseStation const& msg)
     {
-      PRINT_NAMED_ERROR("RobotMessageHandler.ProcessMessage",
-                        "MessagePlaySoundOnBaseStation is deprecated!\n");
+      PRINT_NAMED_ERROR("RobotMessageHandler.ProcessMessage", "MessagePlaySoundOnBaseStation is deprecated!");
       return RESULT_FAIL;
     }
     
@@ -591,7 +576,7 @@ namespace Anki {
     {
       Anki::Pose3d p(msg.pose_angle, Z_AXIS_3D(),
                      Vec3f(msg.pose_x, msg.pose_y, msg.pose_z));
-      //PRINT_INFO("Goal pose: x=%f y=%f %f deg (%d)\n", msg.pose_x, msg.pose_y, RAD_TO_DEG_F32(msg.pose_angle), msg.followingMarkerNormal);
+      //PRINT_INFO("Goal pose: x=%f y=%f %f deg (%d)", msg.pose_x, msg.pose_y, RAD_TO_DEG_F32(msg.pose_angle), msg.followingMarkerNormal);
       if (msg.followingMarkerNormal) {
         VizManager::getInstance()->DrawPreDockPose(100, p, NamedColors::RED);
       } else {
@@ -603,7 +588,7 @@ namespace Anki {
     
     Result RobotMessageHandler::ProcessMessage(Robot* robot, MessageSyncTimeAck const& msg)
     {
-      PRINT_STREAM_INFO("RobotMessageHandler.ProcessMessage.MessageSyncTimeAck", "SyncTime acknowledged");
+      PRINT_NAMED_INFO("RobotMessageHandler.ProcessMessage.MessageSyncTimeAck", "SyncTime acknowledged");
       robot->SetSyncTimeAcknowledged(true);
 
       return RESULT_OK;
@@ -622,11 +607,11 @@ namespace Anki {
       // to find the object in blockworld (which has its own bookkeeping ID) that
       // has the matching active ID
      
-      const BlockWorld::ObjectsMapByType_t& activeBlocksByType = robot->GetBlockWorld().GetExistingObjectsByFamily(BlockWorld::ObjectFamily::ACTIVE_BLOCKS);
+      const BlockWorld::ObjectsMapByType_t& activeBlocksByType = robot->GetBlockWorld().GetExistingObjectsByFamily(ObjectFamily::LightCube);
       
       for(auto objectsByID : activeBlocksByType) {
         for(auto objectWithID : objectsByID.second) {
-          Vision::ObservableObject* object = objectWithID.second;
+          ObservableObject* object = objectWithID.second;
           assert(object->IsActive());
           if(object->GetActiveID() == msg.objectID) {
             // TODO: Mark object as de-localized
@@ -638,7 +623,7 @@ namespace Anki {
             assert(actionObject != nullptr);
             if(actionObject->IsBeingCarried() == false) {
               robot->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::ActiveObjectMoved(
-                robot->GetID(), objectWithID.first, msg.xAccel, msg.yAccel, msg.zAccel, msg.upAxis
+                robot->GetID(), objectWithID.first, msg.xAccel, msg.yAccel, msg.zAccel, (UpAxisClad)msg.upAxis
               )));
             }
             
@@ -653,11 +638,11 @@ namespace Anki {
     
     Result RobotMessageHandler::ProcessMessage(Robot* robot, MessageActiveObjectStoppedMoving const& msg)
     {
-      const BlockWorld::ObjectsMapByType_t& activeBlocksByType = robot->GetBlockWorld().GetExistingObjectsByFamily(BlockWorld::ObjectFamily::ACTIVE_BLOCKS);
+      const BlockWorld::ObjectsMapByType_t& activeBlocksByType = robot->GetBlockWorld().GetExistingObjectsByFamily(ObjectFamily::LightCube);
       
       for(auto objectsByID : activeBlocksByType) {
         for(auto objectWithID : objectsByID.second) {
-          Vision::ObservableObject* object = objectWithID.second;
+          ObservableObject* object = objectWithID.second;
           assert(object->IsActive());
           if(object->GetActiveID() == msg.objectID) {
             // TODO: Mark object as de-localized
@@ -666,7 +651,7 @@ namespace Anki {
                               "Received message that Object " << objectWithID.first.GetValue() << " (Active ID " << msg.objectID << ") stopped moving.");
             
             robot->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::ActiveObjectStoppedMoving(
-              robot->GetID(), objectWithID.first, msg.upAxis, msg.rolled
+              robot->GetID(), objectWithID.first, (UpAxisClad)msg.upAxis, msg.rolled
             )));
             return RESULT_OK;
           }
@@ -680,11 +665,11 @@ namespace Anki {
     
     Result RobotMessageHandler::ProcessMessage(Robot* robot, MessageActiveObjectTapped const& msg)
     {
-      const BlockWorld::ObjectsMapByType_t& activeBlocksByType = robot->GetBlockWorld().GetExistingObjectsByFamily(BlockWorld::ObjectFamily::ACTIVE_BLOCKS);
+      const BlockWorld::ObjectsMapByType_t& activeBlocksByType = robot->GetBlockWorld().GetExistingObjectsByFamily(ObjectFamily::LightCube);
       
       for(auto objectsByID : activeBlocksByType) {
         for(auto objectWithID : objectsByID.second) {
-          Vision::ObservableObject* object = objectWithID.second;
+          ObservableObject* object = objectWithID.second;
           assert(object->IsActive());
           if(object->GetActiveID() == msg.objectID) {
 

@@ -21,16 +21,11 @@ namespace Anki {
   
   namespace Cozmo {
     
-    const FlatMat::Type FlatMat::Type::LETTERS_4x4("LETTERS_4x4");
-    const FlatMat::Type FlatMat::Type::ANKI_LOGO_8BIT("ANKI_LOGO_8BIT");
-    const FlatMat::Type FlatMat::Type::LAVA_PLAYTEST("LAVA_PLAYTEST");
-    const FlatMat::Type FlatMat::Type::GEARS_4x4("GEARS_4x4");
-    
     static const Point3f& GetSizeByType(FlatMat::Type type)
     {
-      static const std::map<FlatMat::Type, Point3f> Sizes = {
-        {FlatMat::Type::LETTERS_4x4, {1000.f, 1000.f, 2.5f}},
-        {FlatMat::Type::GEARS_4x4,   {1000.f, 1000.f, 2.5f}},
+      static const std::map<ObjectType, Point3f> Sizes = {
+        {ObjectType::FlatMat_LETTERS_4x4, {1000.f, 1000.f, 2.5f}},
+        {ObjectType::FlatMat_GEARS_4x4,   {1000.f, 1000.f, 2.5f}},
       };
       
       auto iter = Sizes.find(type);
@@ -46,16 +41,15 @@ namespace Anki {
     
     
     FlatMat::FlatMat(Type type)
-    : MatPiece(GetSizeByType(type))
-    , _type(type)
+    : MatPiece(type, GetSizeByType(type))
     {
-      if(Type::LETTERS_4x4 == _type) {
+      if(ObjectType::FlatMat_LETTERS_4x4 == _type) {
 #         include "anki/cozmo/basestation/Mat_Letters_30mm_4x4.def"
-      } else if(Type::LAVA_PLAYTEST == _type) {
+      } else if(Type::FlatMat_LAVA_PLAYTEST == _type) {
 #         include "anki/cozmo/basestation/Mat_LavaPlayTest.def"
-      } else if(Type::ANKI_LOGO_8BIT == _type) {
+      } else if(Type::FlatMat_ANKI_LOGO_8BIT == _type) {
 //#         include "anki/cozmo/basestation/Mat_AnkiLogoPlus8Bits_8x8.def"
-      } else if(Type::GEARS_4x4 == _type) {
+      } else if(Type::FlatMat_GEARS_4x4 == _type) {
 #         include "anki/cozmo/basestation/Mat_Gears_30mm_4x4.def"
       } else {
           PRINT_NAMED_ERROR("FlatMat.UnrecognizedType", "Unknown FlatMat type specified at construction.\n");
@@ -67,7 +61,7 @@ namespace Anki {
     void FlatMat::GetCanonicalUnsafeRegions(const f32 padding_mm,
                                             std::vector<Quad3f>& regions) const
     {
-      if(Type::LAVA_PLAYTEST == _type) {
+      if(Type::FlatMat_LAVA_PLAYTEST == _type) {
         // Unsafe regions on the Lava play test mat are the lava regions
         regions = {{
           Quad3f({-500.f - padding_mm,  45.f + padding_mm, 0.f},

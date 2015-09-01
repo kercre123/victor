@@ -83,18 +83,6 @@ namespace Anki {
 #pragma mark -
 #pragma mark Helpers
     
-    static s32 RandHelper(const s32 minLimit, const s32 maxLimit)
-    {
-      assert(maxLimit > minLimit);
-      
-      const s32 num = (std::rand() % (maxLimit - minLimit + 1)) + minLimit;
-      
-      assert(num >= minLimit && num <= maxLimit);
-      
-      return num;
-    }
-    
-    
     // Helper macro used in SetMembersFromJson() overrides below to look for
     // member variable in Json node and fail if it doesn't exist
 #define GET_MEMBER_FROM_JSON_AND_STORE_IN(__JSON__, __NAME__, __MEMBER_NAME__) do { \
@@ -129,8 +117,8 @@ return RESULT_FAIL; \
       
       // Add variability:
       if(_angleVariability_deg > 0) {
-        _streamHeadMsg.angle_deg = static_cast<s8>(RandHelper(_angle_deg - _angleVariability_deg,
-                                                              _angle_deg + _angleVariability_deg));
+        _streamHeadMsg.angle_deg = static_cast<s8>(_rng.RandIntInRange(_angle_deg - _angleVariability_deg,
+                                                                       _angle_deg + _angleVariability_deg));
       } else {
         _streamHeadMsg.angle_deg = _angle_deg;
       }
@@ -159,8 +147,8 @@ return RESULT_FAIL; \
       
       // Add variability:
       if(_heightVariability_mm > 0) {
-        _streamLiftMsg.height_mm = static_cast<s8>(RandHelper(_height_mm - _heightVariability_mm,
-                                                              _height_mm + _heightVariability_mm));
+        _streamLiftMsg.height_mm = static_cast<s8>(_rng.RandIntInRange(_height_mm - _heightVariability_mm,
+                                                                       _height_mm + _heightVariability_mm));
       } else {
         _streamLiftMsg.height_mm = _height_mm;
       }
@@ -373,7 +361,7 @@ return RESULT_FAIL; \
           // Special case: there's only one audio option 
           _selectedAudioIndex = 0;
         } else {
-          _selectedAudioIndex = RandHelper(0, static_cast<s32>(_audioReferences.size()-1));
+          _selectedAudioIndex = _rng.RandIntInRange(0, static_cast<s32>(_audioReferences.size()-1));
         }
       }
       

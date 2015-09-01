@@ -34,14 +34,20 @@
       '<(coretech_external_path)/opencv-2.4.8/modules/flann/include',
     ],
     'opencv_libs': [
-      '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_core.dylib',
-      '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_imgproc.dylib',
-      '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_highgui.dylib',
-      '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_calib3d.dylib',
-      '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_contrib.dylib',
-      '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_objdetect.dylib',
-      '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_video.dylib',
-      '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_features2d.dylib',
+      'libzlib.a',
+      'liblibjpeg.a',
+      'liblibpng.a',
+      'liblibtiff.a',
+      'liblibjasper.a',
+      'libIlmImf.a',
+      'libopencv_core.a',
+      'libopencv_imgproc.a',
+      'libopencv_highgui.a',
+      'libopencv_calib3d.a',
+      'libopencv_contrib.a',
+      'libopencv_objdetect.a',
+      'libopencv_video.a',
+      'libopencv_features2d.a',
     ],
 
     'webots_includes': [
@@ -195,6 +201,10 @@
           'xcode_settings': {
             'OTHER_CFLAGS': ['-O0'],
             'OTHER_CPLUSPLUSFLAGS': ['-O0'],
+            'OTHER_LDFLAGS': [
+              '-L<(coretech_external_path)/build/opencv-2.4.8/lib/Debug',
+              '-L<(coretech_external_path)/build/opencv-2.4.8/3rdparty/lib/Debug',
+            ],
            },
           'defines': [
             '_LIBCPP_DEBUG=0',
@@ -207,6 +217,10 @@
           'xcode_settings': {
             'OTHER_CFLAGS': ['-Os'],
             'OTHER_CPLUSPLUSFLAGS': ['-Os'],
+            'OTHER_LDFLAGS': [
+              '-L<(coretech_external_path)/build/opencv-2.4.8/lib/Release',
+              '-L<(coretech_external_path)/build/opencv-2.4.8/3rdparty/lib/Release',
+            ],
            },
           'defines': [
             'NDEBUG=1',
@@ -219,6 +233,10 @@
           'xcode_settings': {
             'OTHER_CFLAGS': ['-Os'],
             'OTHER_CPLUSPLUSFLAGS': ['-Os'],
+            'OTHER_LDFLAGS': [
+              '-L<(coretech_external_path)/build/opencv-2.4.8/lib/Release',
+              '-L<(coretech_external_path)/build/opencv-2.4.8/3rdparty/lib/Release',
+            ],
            },
           'defines': [
             'NDEBUG=1',
@@ -411,6 +429,10 @@
             ],
             'libraries': [
               '<(ce-gtest_path)/gtest.framework',
+              '$(SDKROOT)/System/Library/Frameworks/Cocoa.framework',
+              '$(SDKROOT)/System/Library/Frameworks/AppKit.framework',
+              '$(SDKROOT)/System/Library/Frameworks/QTKit.framework',
+              '$(SDKROOT)/System/Library/Frameworks/QuartzCore.framework',
               '<@(opencv_libs)',
             ],
             'copies': [
@@ -451,7 +473,6 @@
                   'ln',
                   '-s',
                   '-f',
-                  '-h',
                   '<@(_inputs)',
                   '<@(_outputs)',
                 ],
@@ -468,7 +489,6 @@
                   'ln',
                   '-s',
                   '-f',
-                  '-h',
                   '<@(_inputs)',
                   '<@(_outputs)',
                 ],

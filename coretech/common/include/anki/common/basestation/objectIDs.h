@@ -1,40 +1,33 @@
 /**
- * File: objectTypesAndIDs.h
+ * File: objectIDs.h
  *
  * Author: Andrew Stein
  * Date:   7/17/2014
  *
- * Description: Base classes for inheritable, strongly-typed, unique values.
- *              Not using regular enums allows them to be used more rigorously
- *              as keys for containers (without being interchangeable).  Not
- *              using C++11 enum classes allows them to be subclassed and 
- *              extended with new "enumerated" values more easily.
- *
- *              - ObjectIDs are meant to be unique integer values for storing
- *                an identifier for an instance of an object.
- *
- *              - ObjectTypes are unique values from a given set (generally
- *                created by instantiating static const instances of the classes
- *                with a value coming from the current value of a static counter.
- *
+ * Description: Base class for inheritable, strongly-typed, unique values, used
+ *              for unique ObjectIDs for now. Using a full class instead of just
+ *              an int provides for strong typing and runtime ID generation.
+ *              Still, this is a bit gross and could probably be refactored/removed.
  *
  * Copyright: Anki, Inc. 2014
  **/
 
-#ifndef ANKI_CORETECH_COMMON_OBJECTTYPESANDIDS_H
-#define ANKI_CORETECH_COMMON_OBJECTTYPESANDIDS_H
+#ifndef __Anki_Common_ObjectIDs_H__
+#define __Anki_Common_ObjectIDs_H__
 
 #include <limits>
 #include <map>
 #include <set>
 #include <string>
+#include <utility>
 
 namespace Anki {
   
-  template<typename StorageType>
+  template<typename StorageType_>
   class UniqueEnumeratedValue
   {
   public:
+    using StorageType = StorageType_;
     
     UniqueEnumeratedValue() : _value(UNKNOWN_VALUE) { }
     
@@ -43,8 +36,8 @@ namespace Anki {
     bool operator!=(const UniqueEnumeratedValue& other) const { return _value != other._value; }
     bool operator< (const UniqueEnumeratedValue& other) const { return _value <  other._value; }
     
-    bool operator==(const StorageType value) const { return _value == value; }
-    bool operator!=(const StorageType value) const { return _value != value; }
+    bool operator==(const StorageType_ value) const { return _value == value; }
+    bool operator!=(const StorageType_ value) const { return _value != value; }
     bool operator< (const StorageType value) const { return _value <  value; }
 
     //
@@ -65,6 +58,9 @@ namespace Anki {
       _value = value;
       return *this;
     }
+    
+    template<typename FwdType>
+    explicit UniqueEnumeratedValue(FwdType&& value) : _value(std::forward<FwdType>(value)) { }
     
     bool IsUnknown() const { return _value == UNKNOWN_VALUE; }
     
@@ -94,47 +90,9 @@ namespace Anki {
 
   }; // class UniqueEnumeratedValue
   
-  class ObjectType : public UniqueEnumeratedValue<int>
-  {
-  public:
-    using StorageType = int;
-    
-    ObjectType();
-    ~ObjectType();
-    
-    const std::string& GetName() const { return _name; }
-    
-    static int GetNumTypes();
-    
-    static ObjectType GetInvalidType();
-    
-    static ObjectType GetTypeByName(const std::string& name);
-    
-  protected:
-    
-    // Derived classes can use this, but otherwise we do not want to provide a
-    // way to construct a named ObjectType dynamically at runtime. That's the
-    // whole point of this class (to be static unique named types).
-    ObjectType(const std::string& name);
-    
-    static StorageType UniqueTypeCounter;
-    
-    // NOTE: Using static method with static variable inside to ensure the
-    // set gets instantiated when needed instead of dangerously relying on static
-    // initialization order.
-    static std::map<std::string, ObjectType*>& GetTypeNames();
-    
-    std::string _name;
-    
-    // Note: No Set() for ObjectType
-    
-  }; // class ObjectType
-  
-  
   class ObjectID : public UniqueEnumeratedValue<int>
   {
   public:
-    using StorageType = int;
     
     static StorageType UniqueIDCounter;
     
@@ -142,10 +100,13 @@ namespace Anki {
     
     void Set();
     
-    using UniqueEnumeratedValue<int>::operator=;
+    using UniqueEnumeratedValue<StorageType>::operator=;
+    
+    ObjectID() = default;
+    ObjectID(StorageType value) : UniqueEnumeratedValue<StorageType>(value) { }
     
   }; // class ObjectID
   
 } // namespace Anki
 
-#endif // ANKI_CORETECH_COMMON_OBJECTTYPESANDIDS_H
+#endif // __Anki_Common_ObjectIDs_H__

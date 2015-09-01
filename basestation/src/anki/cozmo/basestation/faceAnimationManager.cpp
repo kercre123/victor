@@ -153,7 +153,7 @@ namespace Cozmo {
                                       fullFilename.c_str(),
                                       img.cols, img.rows,
                                       IMAGE_WIDTH, IMAGE_HEIGHT);
-                    return;
+                    continue;
                   }
                   
                   // Binarize

@@ -32,8 +32,10 @@
 #include "anki/cozmo/basestation/faceAnimationManager.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "clad/externalInterface/messageEngineToGame.h"
+#include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/cozmo/basestation/data/dataPlatform.h"
 #include "util/fileUtils/fileUtils.h"
+
 #include <fstream>
 #include <dirent.h>
 #include <sys/stat.h>
@@ -55,10 +57,11 @@ namespace Anki {
     , _msgHandler(msgHandler)
     , _blockWorld(this)
     , _visionProcessor(dataPlatform)
+    , _behaviorMgr(*this)
+    , _isBehaviorMgrEnabled(false)
 #   if !ASYNC_VISION_PROCESSING
     , _haveNewImage(false)
 #   endif
-    , _behaviorMgr(this)
     , _wheelsLocked(false)
     , _headLocked(false)
     , _liftLocked(false)
@@ -101,7 +104,7 @@ namespace Anki {
     , _numAnimationBytesStreamed(0)
     {
       _poseHistory = new RobotPoseHistory();
-      
+      PRINT_NAMED_INFO("Robot.Robot", "Created");
       _pose.SetName("Robot_" + std::to_string(_ID));
       _driveCenterPose.SetName("RobotDriveCenter_" + std::to_string(_ID));
       
@@ -124,6 +127,21 @@ namespace Anki {
 
 
       ReadAnimationDir(false);
+      
+      // Read in behavior manager Json
+      Json::Value behaviorConfig;
+      if (nullptr != _dataPlatform)
+      {
+        const std::string jsonFilename = "config/basestation/config/behavior_config.json";
+        const bool success = _dataPlatform->readAsJson(Data::Scope::Resources, jsonFilename, behaviorConfig);
+        if (!success)
+        {
+          PRINT_NAMED_ERROR("Robot.BehaviorConfigJsonNotFound",
+                            "Behavior Json config file %s not found.",
+                            jsonFilename.c_str());
+        }
+      }
+      _behaviorMgr.Init(behaviorConfig);
       
       SetHeadAngle(_currentHeadAngle);
       _pdo = new PathDolerOuter(msgHandler, robotID);
@@ -159,6 +177,15 @@ namespace Anki {
         // Robot is being picked up: de-localize it and clear all known objects
         Delocalize();
         _blockWorld.ClearAllExistingObjects();
+        
+        if (_externalInterface != nullptr) {
+          _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotPickedUp(GetID())));
+        }
+      }
+      else if (true == _isPickedUp && false == t) {
+        if (_externalInterface != nullptr) {
+          _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotPutDown(GetID())));
+        }
       }
       _isPickedUp = t;
     }
@@ -320,7 +347,7 @@ namespace Anki {
         
         const f32 distanceTraveled = (Point2f(msg.pose_x, msg.pose_y) - _rampStartPosition).Length();
         
-        Ramp* ramp = dynamic_cast<Ramp*>(_blockWorld.GetObjectByIDandFamily(_rampID, BlockWorld::ObjectFamily::RAMPS));
+        Ramp* ramp = dynamic_cast<Ramp*>(_blockWorld.GetObjectByIDandFamily(_rampID, ObjectFamily::Ramp));
         if(ramp == nullptr) {
           PRINT_NAMED_ERROR("Robot.UpdateFullRobotState.NoRampWithID",
                             "Updating robot %d's state while on a ramp, but Ramp object with ID=%d not found in the world.\n",
@@ -639,7 +666,7 @@ namespace Anki {
         
         
         // Block Markers
-        std::set<const Vision::ObservableObject*> const& blocks = _blockWorld.GetObjectLibrary(BlockWorld::ObjectFamily::BLOCKS).GetObjectsWithMarker(marker);
+        std::set<const ObservableObject*> const& blocks = _blockWorld.GetObjectLibrary(ObjectFamily::Block).GetObjectsWithMarker(marker);
         for(auto block : blocks) {
           std::vector<Vision::KnownMarker*> const& blockMarkers = block->GetMarkersWithCode(marker.GetCode());
           
@@ -665,7 +692,7 @@ namespace Anki {
         
         
         // Mat Markers
-        std::set<const Vision::ObservableObject*> const& mats = _blockWorld.GetObjectLibrary(BlockWorld::ObjectFamily::MATS).GetObjectsWithMarker(marker);
+        std::set<const ObservableObject*> const& mats = _blockWorld.GetObjectLibrary(ObjectFamily::Mat).GetObjectsWithMarker(marker);
         for(auto mat : mats) {
           std::vector<Vision::KnownMarker*> const& matMarkers = mat->GetMarkersWithCode(marker.GetCode());
           
@@ -885,8 +912,24 @@ namespace Anki {
       // module(s) would do.  e.g. Some combination of game state, build planner,
       // personality planner, etc.
       
-      _behaviorMgr.Update();
+      std::string behaviorName("<disabled>");
+      if(_isBehaviorMgrEnabled) {
+        _behaviorMgr.Update(BaseStationTimer::getInstance()->GetCurrentTimeInSeconds());
+        
+        const IBehavior* behavior = _behaviorMgr.GetCurrentBehavior();
+        if(behavior != nullptr) {
+          behaviorName = behavior->GetName();
+          const std::string& stateName = behavior->GetStateName();
+          if (!stateName.empty())
+          {
+            behaviorName += "-" + stateName;
+          }
+        }
+      }
       
+      VizManager::getInstance()->SetText(VizManager::BEHAVIOR_STATE, NamedColors::MAGENTA,
+                                         "Behavior: %s", behaviorName.c_str());
+
       
       //////// Update Robot's State Machine /////////////
       Result actionResult = _actionList.Update(*this);
@@ -1421,7 +1464,7 @@ namespace Anki {
                               "Refusing to localize to %s because "
                               "Robot %d's Z axis would not be well aligned with the world Z axis. "
                               "(angle=%.1fdeg, axis=(%.3f,%.3f,%.3f)\n",
-                              existingMatPiece->GetType().GetName().c_str(), GetID(),
+                              ObjectTypeToString(existingMatPiece->GetType()), GetID(),
                               rotAngle.getDegrees(), rotAxis.x(), rotAxis.y(), rotAxis.z());
           return RESULT_FAIL;
         }
@@ -1441,7 +1484,7 @@ namespace Anki {
         // the origins so that we use it as the world origin
         PRINT_NAMED_INFO("Robot.LocalizeToMat.LocalizingToFirstFixedMat",
                          "Localizing robot %d to fixed %s mat for the first time.\n",
-                         GetID(), existingMatPiece->GetType().GetName().c_str());
+                         GetID(), ObjectTypeToString(existingMatPiece->GetType()));
         
         if((lastResult = UpdateWorldOrigin(robotPoseWrtMat)) != RESULT_OK) {
           PRINT_NAMED_ERROR("Robot.LocalizeToMat.SetPoseOriginFailure",
@@ -1457,7 +1500,7 @@ namespace Anki {
         // to this mat's origin (whether mat is fixed or not)
         PRINT_NAMED_INFO("Robot.LocalizeToMat.LocalizingRobotFirstTime",
                          "Localizing robot %d for the first time (to %s mat).\n",
-                         GetID(), existingMatPiece->GetType().GetName().c_str());
+                         GetID(), ObjectTypeToString(existingMatPiece->GetType()));
         
         if((lastResult = UpdateWorldOrigin(robotPoseWrtMat)) != RESULT_OK) {
           PRINT_NAMED_ERROR("Robot.LocalizeToMat.SetPoseOriginFailure",
@@ -1611,7 +1654,7 @@ namespace Anki {
       
       // We are either transition onto or off of a ramp
       
-      Ramp* ramp = dynamic_cast<Ramp*>(_blockWorld.GetObjectByIDandFamily(_rampID, BlockWorld::ObjectFamily::RAMPS));
+      Ramp* ramp = dynamic_cast<Ramp*>(_blockWorld.GetObjectByIDandFamily(_rampID, ObjectFamily::Ramp));
       if(ramp == nullptr) {
         PRINT_NAMED_ERROR("Robot.SetOnRamp.NoRampWithID",
                           "Robot %d is transitioning on/off of a ramp, but Ramp object with ID=%d not found in the world.\n",
@@ -1773,7 +1816,7 @@ namespace Anki {
     
     void Robot::SetCarryingObject(ObjectID carryObjectID)
     {
-      Vision::ObservableObject* object = _blockWorld.GetObjectByID(carryObjectID);
+      ObservableObject* object = _blockWorld.GetObjectByID(carryObjectID);
       if(object == nullptr) {
         PRINT_NAMED_ERROR("Robot.SetCarryingObject",
                           "Object %d no longer exists in the world. Can't set it as robot's carried object.\n",
@@ -1808,7 +1851,7 @@ namespace Anki {
     
     void Robot::UnSetCarryingObject()
     {
-      Vision::ObservableObject* object = _blockWorld.GetObjectByID(_carryingObjectID);
+      ObservableObject* object = _blockWorld.GetObjectByID(_carryingObjectID);
       if(object == nullptr) {
         PRINT_NAMED_ERROR("Robot.UnSetCarryingObject",
                           "Object %d robot %d thought it was carrying no longer exists in the world.\n",
@@ -1886,7 +1929,7 @@ namespace Anki {
       // TODO: Do we need to be able to handle non-actionable objects on top of actionable ones?
 
       const f32 STACKED_HEIGHT_TOL_MM = 15.f; // TODO: make this a parameter somewhere
-      Vision::ObservableObject* objectOnTop = _blockWorld.FindObjectOnTopOf(*object, STACKED_HEIGHT_TOL_MM);
+      ObservableObject* objectOnTop = _blockWorld.FindObjectOnTopOf(*object, STACKED_HEIGHT_TOL_MM);
       if(objectOnTop != nullptr) {
         ActionableObject* actionObjectOnTop = dynamic_cast<ActionableObject*>(objectOnTop);
         if(actionObjectOnTop != nullptr) {
@@ -1993,16 +2036,27 @@ namespace Anki {
     }
     
     
-    void Robot::StartBehaviorMode(BehaviorManager::Mode mode)
+    void Robot::StartBehavior(const std::string& behaviorName)
     {
-      _behaviorMgr.StartMode(mode);
+      if(behaviorName == "NONE") {
+        PRINT_NAMED_INFO("Robot.StartBehavior.DisablingBehaviorManager", "\n");
+        _isBehaviorMgrEnabled = false;
+      } else {
+        _isBehaviorMgrEnabled = true;
+        if(behaviorName == "AUTO") {
+          PRINT_NAMED_INFO("Robot.StartBehavior.EnablingAutoBehaviorSelection", "\n");
+        } else {
+          if(RESULT_OK != _behaviorMgr.SelectNextBehavior(behaviorName, BaseStationTimer::getInstance()->GetCurrentTimeInSeconds())) {
+            PRINT_NAMED_ERROR("Robot.StartBehavior.Fail", "\n");
+          } else {
+            PRINT_NAMED_INFO("Robot.StartBehavior.Success",
+                             "Switching to behavior '%s'\n",
+                             behaviorName.c_str());
+          }
+        }
+      }
+      
     }
-    
-    void Robot::SetBehaviorState(BehaviorManager::BehaviorState state)
-    {
-      _behaviorMgr.SetNextState(state);
-    }
-    
     
     // ============ Messaging ================
     
@@ -2697,7 +2751,7 @@ namespace Anki {
       
     ActiveCube* Robot::GetActiveObject(const ObjectID objectID)
     {
-      Vision::ObservableObject* object = GetBlockWorld().GetObjectByIDandFamily(objectID,BlockWorld::ObjectFamily::ACTIVE_BLOCKS);
+      ObservableObject* object = GetBlockWorld().GetObjectByIDandFamily(objectID,ObjectFamily::LightCube);
      
       if(object == nullptr) {
         PRINT_NAMED_ERROR("Robot.GetActiveObject",
@@ -2897,7 +2951,7 @@ namespace Anki {
       /*
       // Need to determing the blockID (meaning its internal "active" ID) from the
       // objectID known to the robot / UI
-      Vision::ObservableObject* object = _blockWorld.GetObjectByIDandFamily(objectID, BlockWorld::ObjectFamily::ACTIVE_BLOCKS);
+      Vision::ObservableObject* object = _blockWorld.GetObjectByIDandFamily(objectID, ObjectFamily::ACTIVE_BLOCKS);
       if(!object->IsActive()) {
         PRINT_NAMED_ERROR("Robot.SendSetObjectLights",
                           "Object %d does not appear to be an active object.\n", objectID.GetValue());
@@ -2957,17 +3011,11 @@ namespace Anki {
     }
       
     f32 Robot::GetDriveCenterOffset() const {
-      if (_isPhysical) {
-        f32 driveCenterOffset = DRIVE_CENTER_OFFSET;
-        if (IsCarryingObject()) {
-          driveCenterOffset = 0;
-        }
-        return driveCenterOffset;
+      f32 driveCenterOffset = DRIVE_CENTER_OFFSET;
+      if (IsCarryingObject()) {
+        driveCenterOffset = 0;
       }
-      
-      // TODO: Simulated robot Webots proto needs to be updated with treads.
-      //       Til then assume no drive center offset.
-      return 0.f;
+      return driveCenterOffset;
     }
     
   } // namespace Cozmo
