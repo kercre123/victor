@@ -92,6 +92,10 @@ public class ShakeShakeController : GameController {
       }
     }
     DAS.Debug("ShakeShakeController", "current score: " + currentScore);
+
+    // update cozmo state (do I see a blue block?)
+    // only change the blue block and add score if it successfully picks it up and puts it back down
+    // if we detect a failure we restart the pick up -> set down state
   }
 
   protected override void Exit_PLAYING(bool overrideStars = false) {
