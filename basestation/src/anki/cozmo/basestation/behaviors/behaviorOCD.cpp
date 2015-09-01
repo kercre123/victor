@@ -27,6 +27,7 @@ namespace Cozmo {
   : IBehavior(robot, config)
   , _lastHandlerResult(RESULT_OK)
   , _currentArrangement(Arrangement::StacksOfTwo)
+  , _irritationLevel(0)
   {
     _name = "OCD";
     // Register callbacks:
@@ -116,6 +117,7 @@ namespace Cozmo {
         
         // TODO: Find a good place to put down this object
         // For now, just put it down right _here_
+        PRINT_NAMED_WARNING("BehaviorOCD.Init.PlacingBlockDown", "Make sure this pose is clear!");
         lastResult = _robot.GetActionList().QueueActionNow(IBehavior::sActionSlot, new PlaceObjectOnGroundAction());
         if(lastResult != RESULT_OK) {
           PRINT_NAMED_ERROR("BehaviorOCD.Init.PlacementFailed",
@@ -161,7 +163,7 @@ namespace Cozmo {
     {
       case State::PickingUpBlock:
       case State::PlacingBlock:
-        
+      case State::Irritated:
         break;
         
       default:
@@ -215,6 +217,10 @@ namespace Cozmo {
         
       case State::PlacingBlock:
         _stateName += "-PLACING";
+        break;
+        
+      case State::Irritated:
+        _stateName += "-Irritated";
         break;
         
       default:
@@ -321,7 +327,7 @@ namespace Cozmo {
     IActionRunner* pickupAction = new DriveToPickAndPlaceObjectAction(_objectToPickUp);
     _lastActionTag = pickupAction->GetTag();
     _robot.GetActionList().QueueActionNow(IBehavior::sActionSlot, pickupAction);
-    
+
     _currentState = State::PickingUpBlock;
     
     if (nullptr == object) {
@@ -395,18 +401,18 @@ namespace Cozmo {
     std::set<ObjectID> ignoreIDs;
     ignoreIDs.insert(_robot.GetCarryingObject());
     f32 closestDistToRobot = std::numeric_limits<f32>::max();
-    
+   
     for (auto& testPose : alignedPoses) {
-    if(nullptr == _robot.GetBlockWorld().FindObjectClosestTo(testPose, nearObject->GetSize(), ignoreIDs)) {
-      f32 distToRobot = ComputeDistanceBetween(_robot.GetPose(), testPose);
-      if ( distToRobot < closestDistToRobot) {
-        closestDistToRobot = distToRobot;
-        pose = testPose;
+      if(nullptr == _robot.GetBlockWorld().FindObjectClosestTo(testPose, nearObject->GetSize(), ignoreIDs)) {
+        f32 distToRobot = ComputeDistanceBetween(_robot.GetPose(), testPose);
+        if ( distToRobot < closestDistToRobot) {
+          closestDistToRobot = distToRobot;
+          pose = testPose;
+        }
       }
-    }
       BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.FindEmptyPlacementPose.TestPose", "(%f %f %f) - %f",
-                                                testPose.GetTranslation().x(), testPose.GetTranslation().y(), RAD_TO_DEG_F32(testPose.GetRotationAngle<'Z'>().ToFloat()), closestDistToRobot);
-      }
+                             testPose.GetTranslation().x(), testPose.GetTranslation().y(), RAD_TO_DEG_F32(testPose.GetRotationAngle<'Z'>().ToFloat()), closestDistToRobot);
+    }
     
     // If no empty pose found, return fail
     if (closestDistToRobot == std::numeric_limits<f32>::max()) {
@@ -673,10 +679,10 @@ namespace Cozmo {
     // Check if object 2 is at any of them
     for (auto& testPose : alignedPoses) {
       if(obj2 == blockWorld.FindObjectClosestTo(testPose, obj1->GetSize() * 0.5f)) {
-      return true;
-    }
+        return true;
+      }
       BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.AreAligned.TestPose", "(%f %f %f)",
-                           testPose.GetTranslation().x(), testPose.GetTranslation().y(), RAD_TO_DEG_F32(testPose.GetRotationAngle<'Z'>().ToFloat()));
+                             testPose.GetTranslation().x(), testPose.GetTranslation().y(), RAD_TO_DEG_F32(testPose.GetRotationAngle<'Z'>().ToFloat()));
     }
 
     return false;
@@ -939,6 +945,37 @@ namespace Cozmo {
         }
         break;
       } // case PlacingBlock
+      case State::Irritated:
+      {
+          switch(msg.actionType) {
+            case RobotActionType::PLAY_ANIMATION:
+              if (msg.idTag == _lastActionTag) {
+                BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.HandleActionCompleted.IrritatedAnimComplete", "");
+              } else {
+                BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.HandleActionCompleted.UnknownAnimCompleted", "");
+              }
+              
+              switch(_returnToState) {
+                case State::PickingUpBlock:
+                case State::PlacingBlock:
+                  if (_irritationLevel > 0) {
+                    PlayAnimation("VeryIrritated");
+                  } else {
+                    _returnToState == State::PickingUpBlock ? SelectNextObjectToPickUp() : SelectNextPlacement();
+                  }
+                  _irritationLevel = 0;
+                  break;
+                default:
+                  BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.HandleActionCompleted.UnexpectedReturnToState", "%d", _returnToState);
+                  break;
+              }
+              
+              break;
+            default:
+              break;
+          }
+
+      }
     } // switch(_currentState)
     
     UpdateName();
@@ -981,8 +1018,19 @@ namespace Cozmo {
         SetBlockLightState(_neatObjects, NEAT);
       }
       
-      // TODO: Should this be "now" or "next"?
-      lastResult = _robot.GetActionList().QueueActionNext(IBehavior::sActionSlot, new PlayAnimationAction("MinorIrritation"));
+      // Increase irritation level
+      ++_irritationLevel;
+      
+      if (_currentState != State::Irritated) {
+        // Queue irritated animation
+        PlayAnimation("MinorIrritation");
+        
+        // Set state to return to after frustration
+        _returnToState = _currentState;
+        _currentState = State::Irritated;
+        UpdateName();
+      }
+
     }
     
     return lastResult;
@@ -1061,6 +1109,15 @@ namespace Cozmo {
     
     const f32 score = 1.f - diffFrom90deg/45.f;
     return score;
+  }
+  
+  
+  void BehaviorOCD::PlayAnimation(const std::string& animName)
+  {
+    BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.PlayAnimation", "%s", animName.c_str());
+    PlayAnimationAction* animAction = new PlayAnimationAction(animName.c_str());
+    _lastActionTag = animAction->GetTag();
+    _robot.GetActionList().QueueActionNow(IBehavior::sActionSlot, animAction);
   }
   
 } // namespace Cozmo

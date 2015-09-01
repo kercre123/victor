@@ -115,10 +115,12 @@ namespace Cozmo {
     // forth between picking up and placing blocks
     enum class State {
       PickingUpBlock,
-      PlacingBlock
+      PlacingBlock,
+      Irritated
     };
     
     State _currentState;
+    State _returnToState;
     bool  _interrupted;
     
     Result _lastHandlerResult;
@@ -147,7 +149,11 @@ namespace Cozmo {
     // ID tag of last queued action
     u32 _lastActionTag;
     
+    u8 _irritationLevel;
+    
     void UpdateName();
+    
+    void PlayAnimation(const std::string& animName);
     
   }; // class BehaviorOCD
 
