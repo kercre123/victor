@@ -487,7 +487,7 @@ namespace Cozmo {
             // This is the first object placed, just re-orient it to leave it in
             // the same position but aligned to the coordinate system (i.e. no rotation)
             Pose3d pose = carriedObject->GetPose().GetWithRespectToOrigin();
-            pose.RotateBy(pose.GetRotation().GetInverse());
+            pose.SetRotation(0, Z_AXIS_3D());
             
             placementAction = new PlaceObjectOnGroundAtPoseAction(_robot, pose);
             BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.SelectNextPlacement.STACKS_OF_TWO",
