@@ -24,10 +24,15 @@ namespace cv {
 }
 
 namespace Anki {
+  
+  // Forward declaration
+  namespace Util {
+  namespace Data {
+    class DataPlatform;
+  }
+  }
+  
 namespace Cozmo {
-namespace Data {
-class DataPlatform;
-}
 
   // NOTE: this is a singleton class
   class FaceAnimationManager
@@ -40,7 +45,7 @@ class DataPlatform;
     inline static FaceAnimationManager* getInstance();
     static void removeInstance();
     
-    void ReadFaceAnimationDir(Data::DataPlatform* dataPlatform);
+    void ReadFaceAnimationDir(Util::Data::DataPlatform* dataPlatform);
 
     // Get a pointer to an RLE-compressed frame for the given animation.
     // Returns nullptr if animation or frame do not exist.

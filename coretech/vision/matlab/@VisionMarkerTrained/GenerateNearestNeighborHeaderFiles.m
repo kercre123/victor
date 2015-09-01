@@ -3,7 +3,8 @@ function [nearestNeighborString, markerDefString] = GenerateNearestNeighborHeade
 writeFiles = false;
 projectRoot = fullfile(fileparts(mfilename('fullpath')), '..', '..', '..', '..');
 markerDefFile = 'coretech/vision/include/anki/vision/MarkerCodeDefinitions.h';
-nearestNeighborDataFile = 'include/anki/cozmo/robot/nearestNeighborLibraryData.h';
+nearestNeighborDataFile = 'include/anki/cozmo/robot/nearestNeighborLibraryData.h'; % embed in code
+%nearestNeighborDataFile = 'resources/config/basestation/vision/nnLibrary/nnLibrary.bin'; % binary data file
 nnLibrary = [];
 useHoG = false;
 
@@ -14,6 +15,9 @@ parseVarargin(varargin{:});
 labels = nnLibrary.labelNames;
 
 [numDimensions, numDataPoints] = size(nnLibrary.probeValues);
+
+[~,~,ext] = fileparts(nearestNeighborDataFile);
+writeBinaryDataFile = strcmp(ext, '.bin');
 
 if useHoG
   if ~isfield(nnLibrary, 'probeHoG')
@@ -34,108 +38,14 @@ nearestNeighborString = sprintf( [...
     'namespace Anki {\n' ...
     'namespace Embedded {\n\n' ...
     'const s32 NUM_MARKERS_IN_LIBRARY = %d;\n' ...
-    'const s32 NUM_PROBES = %d;\n' ...
-    'const s32 NUM_HOG_DIMENSIONS = %d;\n' ...
-    'const s32 NN_NUM_FRACTIONAL_BITS = %d;\n\n'], ...
+    'const s32 DATA_DIMENSION = %d;\n' ...
+    'const s32 NUM_HOG_DIMENSIONS = %d;\n'], ...
     mfilename, datestr(now), 15-numFractionalBits, numFractionalBits, ...
-    numDataPoints, numDimensions, numHoGdims, numFractionalBits);
+    numDataPoints, numDimensions, numHoGdims);
 
 %% Probe point pattern
 
-numPoints = length(VisionMarkerTrained.ProbePattern.x);
-x_str = cell(1, numPoints);
-y_str = cell(1, numPoints);
-
-for i_pt = 1:numPoints
-    x = VisionMarkerTrained.ProbePattern.x(i_pt);
-    x_str{i_pt} = sprintf('  %5d, // X[%d] = %.4f\n', ...
-        FixedPoint(x, numFractionalBits), i_pt, x);
-    
-    y = VisionMarkerTrained.ProbePattern.y(i_pt);
-    y_str{i_pt} = sprintf('  %5d, // Y[%d] = %.4f\n', ...
-        FixedPoint(y, numFractionalBits), i_pt, y);
-end
-        
-nearestNeighborString = [nearestNeighborString sprintf([ ...
-    '// Note: the probe points included the center (0,0) point\n' ...
-    'const u32 NUM_PROBE_POINTS = %d;\n' ...
-    'const s16 ProbePoints_X[NUM_PROBE_POINTS] = {\n' ...
-    '%s' ...
-    '};\n' ...
-    'const s16 ProbePoints_Y[NUM_PROBE_POINTS] = {\n' ...
-    '%s' ...
-    '};\n\n'], ...
-    numPoints, [x_str{:}], [y_str{:}])];
-
-
-%% Threshold Probe Locations
-
-numProbes = length(VisionMarkerTrained.BrightProbes.x);
-assert(length(VisionMarkerTrained.DarkProbes.x)==numProbes, ...
-    'Must have same number of dark and bright probes.');
-
-dark_xStr = cell(1, numProbes);
-dark_yStr = cell(1, numProbes);
-
-bright_xStr = cell(1, numProbes);
-bright_yStr = cell(1, numProbes);
-
-for i = 1:numProbes
-    dark_xStr{i} = sprintf('  %5d, // X = %.4f\n', ...
-        FixedPoint(VisionMarkerTrained.DarkProbes.x(i), numFractionalBits), ...
-        VisionMarkerTrained.DarkProbes.x(i));
-    dark_yStr{i} = sprintf('  %5d, // Y = %.4f\n', ...
-        FixedPoint(VisionMarkerTrained.DarkProbes.y(i), numFractionalBits), ...
-        VisionMarkerTrained.DarkProbes.y(i));
-    
-    bright_xStr{i} = sprintf('  %5d, // X = %.4f\n', ...
-        FixedPoint(VisionMarkerTrained.BrightProbes.x(i), numFractionalBits), ...
-        VisionMarkerTrained.BrightProbes.x(i));
-    bright_yStr{i} = sprintf('  %5d, // Y = %.4f\n', ...
-        FixedPoint(VisionMarkerTrained.BrightProbes.y(i), numFractionalBits), ...
-        VisionMarkerTrained.BrightProbes.y(i));
-end
-
-nearestNeighborString = [nearestNeighborString sprintf([ ...
-    'const u32 NUM_THRESHOLD_PROBES = %d;\n' ...
-    'const s16 ThresholdDarkProbe_X[NUM_THRESHOLD_PROBES] = {\n' ...
-    '%s' ...
-    '};\n\n' ...
-    'const s16 ThresholdDarkProbe_Y[NUM_THRESHOLD_PROBES] = {\n' ...
-    '%s' ...
-    '};\n\n' ...
-    'const s16 ThresholdBrightProbe_X[NUM_THRESHOLD_PROBES] = {\n' ...
-    '%s' ...
-    '};\n\n'...
-    'const s16 ThresholdBrightProbe_Y[NUM_THRESHOLD_PROBES] = {\n' ...
-    '%s' ...
-    '};\n\n'], ...
-    numProbes, [dark_xStr{:}], [dark_yStr{:}], [bright_xStr{:}], [bright_yStr{:}])];
-
-%% Probe Center Locations
-numProbes = VisionMarkerTrained.ProbeParameters.GridSize^2;
-assert(numel(nnLibrary.xgrid) == numProbes, 'Given library has wrong number of probes.');
-
-center_xStr = cell(1, numProbes);
-center_yStr = cell(1, numProbes);
-
-for i = 1:numProbes
-    center_xStr{i} = sprintf('  %5d, // X = %.4f\n', ...
-        FixedPoint(nnLibrary.xgrid(i), numFractionalBits), ...
-        nnLibrary.xgrid(i));
-    center_yStr{i} = sprintf('  %5d, // Y = %.4f\n', ...
-        FixedPoint(nnLibrary.ygrid(i), numFractionalBits), ...
-        nnLibrary.ygrid(i));
-end
-
-nearestNeighborString = [nearestNeighborString sprintf([ ...
-    'const s16 ProbeCenters_X[NUM_PROBES] = {\n' ...
-    '%s' ...
-    '};\n\n' ...
-    'const s16 ProbeCenters_Y[NUM_PROBES] = {\n' ...
-    '%s' ...
-    '};\n\n'], ...
-    [center_xStr{:}], [center_yStr{:}])];
+VisionMarkerTrained.GenerateProbeDefinitionFiles('writeFiles', writeFiles);
 
 %% Enums and LUTs
 numLabels = length(labels);
@@ -237,25 +147,27 @@ if useHoG
   dataDimStr = 'NUM_HOG_DIMENSIONS';
 else
   data = nnLibrary.probeValues;
-  dataDimStr = 'NUM_PROBES';
+  dataDimStr = 'DATA_DIMENSION';
 end
 
-nearestNeighborString = [nearestNeighborString sprintf([ ...
-  'const u8 NearestNeighborData[NUM_MARKERS_IN_LIBRARY*%s] = {\n' ...
-  '%s' ...
-  '};\n\n'], dataDimStr, sprintf('%d, ', data))];
-
-if ~useHoG
+if ~writeBinaryDataFile
   nearestNeighborString = [nearestNeighborString sprintf([ ...
-    'const u8 NearestNeighborWeights[NUM_MARKERS_IN_LIBRARY*NUM_PROBES] = {\n' ...
+    'const u8 NearestNeighborData[NUM_MARKERS_IN_LIBRARY*%s] = {\n' ...
     '%s' ...
-    '};\n\n'], sprintf('%d, ', im2uint8(nnLibrary.gradMagWeights)))];
+    '};\n\n'], dataDimStr, sprintf('%d, ', data))];
+  
+  if ~useHoG
+    nearestNeighborString = [nearestNeighborString sprintf([ ...
+      'const u8 NearestNeighborWeights[NUM_MARKERS_IN_LIBRARY*DATA_DIMENSION] = {\n' ...
+      '%s' ...
+      '};\n\n'], sprintf('%d, ', im2uint8(nnLibrary.gradMagWeights)))];
+  end
+  
+  nearestNeighborString = [nearestNeighborString sprintf([ ...
+    'const u16 NearestNeighborLabels[NUM_MARKERS_IN_LIBRARY] = {\n' ...
+    '%s' ...
+    '};\n\n'], sprintf('%d, ', nnLibrary.labels-1))];
 end
-
-nearestNeighborString = [nearestNeighborString sprintf([ ...
-  'const u16 NearestNeighborLabels[NUM_MARKERS_IN_LIBRARY] = {\n' ...
-  '%s' ...
-  '};\n\n'], sprintf('%d, ', nnLibrary.labels-1))];
 
 %% Marker Type Definitions
 % Different file now!
@@ -316,26 +228,59 @@ nearestNeighborString = [nearestNeighborString sprintf([ ...
 
 
 if writeFiles 
-   
-    nearestNeighborDataFile = fullfile(projectRoot, nearestNeighborDataFile);
-    fid = fopen(nearestNeighborDataFile, 'wt');
+  
+  nearestNeighborDataFile = fullfile(projectRoot, nearestNeighborDataFile);
+  
+  if writeBinaryDataFile
+    fid = fopen(nearestNeighborDataFile, 'wb');
     if fid == -1
-        error('Could not open "%s" for writing nearest neighbor data file.', nearestNeighborDataFile);
+      error('Could not open "%s" for writing binary nearest neighbor data file.', nearestNeighborDataFile);
     else
-        fprintf(fid, '%s', nearestNeighborString);
-        fclose(fid);
-        fprintf('Wrote nearest neighbor data to "%s".\n', nearestNeighborDataFile);
+      fwrite(fid, data, 'uint8');
+      fclose(fid);
     end
     
-    markerDefFile = fullfile(projectRoot, markerDefFile);
-    fid = fopen(markerDefFile, 'wt');
+    [p,f,e] = fileparts(nearestNeighborDataFile);
+    weightsFile = fullfile(p, [f '_weights' e]);
+    fid = fopen(weightsFile, 'wb');
     if fid == -1
-        error('Could not open "%s" for writing marker definition file.', markerDefFile);
+      error('Could not open "%s" for writing binary nearest neighbor weights file.', weightsFile);
     else
-        fprintf(fid, '%s', markerDefString);
-        fclose(fid);
-        fprintf('Wrote marker definitions to "%s".\n', markerDefFile);
+      fwrite(fid, im2uint8(nnLibrary.gradMagWeights), 'uint8');
+      fclose(fid);
     end
+    
+    labelsFile = fullfile(p, [f '_labels' e]);
+    fid = fopen(labelsFile, 'wb');
+    if fid == -1
+      error('Could not open "%s" for writing binary nearest neighbor labels file.', labelsFile);
+    else
+      fwrite(fid, uint16(nnLibrary.labels)-1, 'uint16');
+      fclose(fid);
+    end
+    
+    fprintf('Wrote binary nearest neighbor data to "%s".\n', nearestNeighborDataFile);
+  else 
+    
+    fid = fopen(nearestNeighborDataFile, 'wt');
+    if fid == -1
+      error('Could not open "%s" for writing nearest neighbor data file.', nearestNeighborDataFile);
+    else
+      fprintf(fid, '%s', nearestNeighborString);
+      fclose(fid);
+      fprintf('Wrote nearest neighbor data to "%s".\n', nearestNeighborDataFile);
+    end
+  end
+  
+  markerDefFile = fullfile(projectRoot, markerDefFile);
+  fid = fopen(markerDefFile, 'wt');
+  if fid == -1
+    error('Could not open "%s" for writing marker definition file.', markerDefFile);
+  else
+    fprintf(fid, '%s', markerDefString);
+    fclose(fid);
+    fprintf('Wrote marker definitions to "%s".\n', markerDefFile);
+  end
     
 end % IF writeFiles
 

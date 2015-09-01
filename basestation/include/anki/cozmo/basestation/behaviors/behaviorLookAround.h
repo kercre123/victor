@@ -68,13 +68,17 @@ private:
   constexpr static f32 kDegreesRotatePerSec = 25;
   // The default radius (in mm) we assume exists for us to move around in
   constexpr static f32 kDefaultSafeRadius = 250;
+  // Number of destinations we want to reach before resting for a bit (needs to be at least 2)
+  constexpr static u32 kDestinationsToReach = 6;
   
   State _currentState = State::Inactive;
   Destination _currentDestination = Destination::North;
+  Destination _lastDestination = Destination::Center;
   f32 _lastLookAroundTime = 0;
   Pose3d _moveAreaCenter;
   f32 _safeRadius = kDefaultSafeRadius;
   u32 _currentDriveActionID = 0;
+  u32 _numDestinationsLeft = kDestinationsToReach;
   
   std::vector<Signal::SmartHandle> _eventHandles;
   std::set<ObjectID> _recentObjects;
@@ -84,7 +88,7 @@ private:
   void StartMoving();
   Pose3d GetDestinationPose(Destination destination);
   void ResetBehavior(float currentTime_sec);
-  Destination GetNextDestination(Destination oldDest);
+  Destination GetNextDestination(Destination current, Destination previous);
   void UpdateSafeRegion(const Vec3f& objectPosition);
   
   void HandleObjectObserved(const AnkiEvent<ExternalInterface::MessageEngineToGame>& event);

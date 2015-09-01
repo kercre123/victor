@@ -51,20 +51,17 @@
 #include "visionParameters.h"
 
 
-namespace Anki {
+namespace Anki {  
 namespace Cozmo {
     
-// Forward declaration:
-class Robot;
-namespace Data {
-class DataPlatform;
-}
+  // Forward declaration:
+  class Robot;
 
-class VisionSystem
+  class VisionSystem
   {
   public:
 
-    VisionSystem(Data::DataPlatform* dataPlatform);
+    VisionSystem(const std::string& dataPath);
     ~VisionSystem();
     
     enum Mode {
@@ -230,7 +227,7 @@ class VisionSystem
     //
     
     bool _isInitialized;
-  Data::DataPlatform* _dataPlatform;
+    const std::string _dataPath;
     
     // Just duplicating this from HAL for vision functions to work with less re-writing
     struct CameraInfo {

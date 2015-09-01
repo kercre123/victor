@@ -12,11 +12,10 @@
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 
-
 namespace Anki {
   namespace Cozmo {
     
-    RobotManager::RobotManager(IExternalInterface* externalInterface, Data::DataPlatform* dataPlatform)
+    RobotManager::RobotManager(IExternalInterface* externalInterface, Util::Data::DataPlatform* dataPlatform)
     : _externalInterface(externalInterface)
     , _dataPlatform(dataPlatform)
     , _robotEventHandler(*this, externalInterface)

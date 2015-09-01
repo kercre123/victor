@@ -55,7 +55,7 @@ namespace Anki {
         GameMessageHandler _msgHandler;
         GameComms *_gameComms = nullptr;
 
-        Data::DataPlatform* _dataPlatform = nullptr;
+        Util::Data::DataPlatform* _dataPlatform = nullptr;
       } // private namespace
 
     
@@ -536,11 +536,11 @@ namespace Anki {
     }
 
     
-    void UiGameController::SetDataPlatform(Data::DataPlatform* dataPlatform) {
+    void UiGameController::SetDataPlatform(Util::Data::DataPlatform* dataPlatform) {
       _dataPlatform = dataPlatform;
     }
     
-    Data::DataPlatform* UiGameController::GetDataPlatform()
+    Util::Data::DataPlatform* UiGameController::GetDataPlatform()
     {
       return _dataPlatform;
     }

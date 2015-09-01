@@ -19,7 +19,6 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/common/basestation/mailbox_impl.h"
 #include "anki/vision/basestation/image_impl.h"
-#include "anki/cozmo/basestation/data/dataPlatform.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/quad_impl.h"
 
@@ -68,9 +67,9 @@ namespace Cozmo {
   
   using namespace Embedded;
   
-  VisionSystem::VisionSystem(Data::DataPlatform* dataPlatform)
+  VisionSystem::VisionSystem(const std::string& dataPath)
   : _isInitialized(false)
-  , _dataPlatform(dataPlatform)
+  , _dataPath(dataPath)
   , _headCamInfo(nullptr)
   {
     
@@ -398,25 +397,36 @@ namespace Cozmo {
 #else
     const CornerMethod cornerMethod = CORNER_METHOD_LAPLACIAN_PEAKS; // {CORNER_METHOD_LAPLACIAN_PEAKS, CORNER_METHOD_LINE_FITS};
     
-    const Result result = DetectFiducialMarkers(
-                                                grayscaleImage,
+    // TODO: Merge the fiducial detectio parameters structs
+    Embedded::FiducialDetectionParameters embeddedParams;
+    embeddedParams.scaleImage_numPyramidLevels = parameters.scaleImage_numPyramidLevels;
+    embeddedParams.scaleImage_thresholdMultiplier = parameters.scaleImage_thresholdMultiplier;
+    embeddedParams.component1d_minComponentWidth = parameters.component1d_minComponentWidth;
+    embeddedParams.component1d_maxSkipDistance =  parameters.component1d_maxSkipDistance;
+    embeddedParams.component_minimumNumPixels = parameters.component_minimumNumPixels;
+    embeddedParams.component_maximumNumPixels = parameters.component_maximumNumPixels;
+    embeddedParams.component_sparseMultiplyThreshold = parameters.component_sparseMultiplyThreshold;
+    embeddedParams.component_solidMultiplyThreshold = parameters.component_solidMultiplyThreshold;
+    embeddedParams.component_minHollowRatio = parameters.component_minHollowRatio;
+    embeddedParams.cornerMethod = cornerMethod;
+    embeddedParams.minLaplacianPeakRatio = parameters.minLaplacianPeakRatio;
+    embeddedParams.quads_minQuadArea = parameters.quads_minQuadArea;
+    embeddedParams.quads_quadSymmetryThreshold = parameters.quads_quadSymmetryThreshold;
+    embeddedParams.quads_minDistanceFromImageEdge = parameters.quads_minDistanceFromImageEdge;
+    embeddedParams.decode_minContrastRatio = parameters.decode_minContrastRatio;
+    embeddedParams.maxConnectedComponentSegments = parameters.maxConnectedComponentSegments;
+    embeddedParams.maxExtractedQuads = parameters.maxExtractedQuads;
+    embeddedParams.refine_quadRefinementIterations = parameters.quadRefinementIterations;
+    embeddedParams.refine_numRefinementSamples = parameters.numRefinementSamples;
+    embeddedParams.refine_quadRefinementMaxCornerChange = parameters.quadRefinementMaxCornerChange;
+    embeddedParams.refine_quadRefinementMinCornerChange = parameters.quadRefinementMinCornerChange;
+    embeddedParams.returnInvalidMarkers = parameters.keepUnverifiedMarkers;
+    embeddedParams.doCodeExtraction = true;
+    
+    const Result result = DetectFiducialMarkers(grayscaleImage,
                                                 markers,
                                                 homographies,
-                                                parameters.scaleImage_numPyramidLevels, parameters.scaleImage_thresholdMultiplier,
-                                                parameters.component1d_minComponentWidth, parameters.component1d_maxSkipDistance,
-                                                parameters.component_minimumNumPixels, parameters.component_maximumNumPixels,
-                                                parameters.component_sparseMultiplyThreshold, parameters.component_solidMultiplyThreshold,
-                                                parameters.component_minHollowRatio,
-                                                cornerMethod, parameters.minLaplacianPeakRatio,
-                                                parameters.quads_minQuadArea, parameters.quads_quadSymmetryThreshold, parameters.quads_minDistanceFromImageEdge,
-                                                parameters.decode_minContrastRatio,
-                                                parameters.maxConnectedComponentSegments,
-                                                parameters.maxExtractedQuads,
-                                                parameters.quadRefinementIterations,
-                                                parameters.numRefinementSamples,
-                                                parameters.quadRefinementMaxCornerChange,
-                                                parameters.quadRefinementMinCornerChange,
-                                                parameters.keepUnverifiedMarkers,
+                                                embeddedParams,
                                                 ccmScratch, onchipScratch, offchipScratch);
 #endif
     
@@ -1477,6 +1487,8 @@ namespace Cozmo {
       _snapshotROI = Embedded::Rectangle<s32>(-1, -1, -1, -1);
       _snapshot = NULL;
       
+      VisionMarker::SetDataPath(_dataPath);
+      
       _isInitialized = true;
     }
     
@@ -2226,8 +2238,7 @@ namespace Cozmo {
       // TODO: (AS) move _faceCascade to header, and load data at appropriate time (constructor?)
       static cv::CascadeClassifier _faceCascade;
       if(_faceCascade.empty()) {
-        const std::string cascadeFilename = _dataPlatform->pathToResource(Data::Scope::Resources,
-          "config/basestation/config/haarcascade_frontalface_alt2.xml");
+        const std::string cascadeFilename = _dataPath + "/haarcascade_frontalface_alt2.xml";
         const bool loadResult = _faceCascade.load(cascadeFilename);
         AnkiConditionalError(loadResult == true, "VisionSystem.Update.LoadFaceCascade",
                              "Failed to load face cascade from %s\n", cascadeFilename.c_str());
