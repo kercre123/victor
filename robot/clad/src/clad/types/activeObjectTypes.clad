@@ -53,15 +53,14 @@ enum uint_8 MakeRelativeMode
 }
 
 enum uint_8 UpAxis {
-  UP_AXIS_Xneg = 0,
-  UP_AXIS_Xpos,
-  UP_AXIS_Yneg,
-  UP_AXIS_Ypos,
-  UP_AXIS_Zneg,
-  UP_AXIS_Zpos,
-  NUM_UP_AXES,
-  UP_AXIS_UNKNOWN,
-  // UP_UPDATE_CLAD = liftTestFlag.clad
+  XNegative,
+  XPositive,
+  YNegative,
+  YPositive,
+  ZNegative,
+  ZPositive,
+  NumAxes,
+  Unknown
 }
 
 } // namespace Cozmo

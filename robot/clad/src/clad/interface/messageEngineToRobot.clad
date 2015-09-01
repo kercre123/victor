@@ -1,0 +1,284 @@
+/** Clad definitions of all messages sent from the Cozmo engine to the robot
+ * This file is used on both the RTIP and WiFi chips on the robot but because we use explicit union tags, we don't have
+ * to recompile the code in lock step.
+ */
+ 
+#include "types/imageTypes.clad"
+#include "types/carryState.clad"
+#include "types/lightState.clad"
+#include "types/animationKeyFrames.clad"
+ 
+namespace Anki {
+namespace Cozmo {
+
+/** Pipe from engine to robot.
+ * This cannot be an auto union because we need explicit tag values to partition the RTIP and WiFi code
+ * and to make debugging from message dumps more sane.
+ */
+
+message DriveWheels
+{
+  float_32 lwheel_speed_mmps,
+  float_32 rwheel_speed_mmps,
+}
+
+message DriveWheelsCurvature
+{
+  int_16  speed_mmPerSec,      // Commanded speed in mm/sec
+  uint_16 accel_mmPerSec2,     // Commanded max absolute value of...
+  uint_16 decel_mmPerSec2      // ...acceleration/deceleration in mm/sec^2
+  int_16  curvatureRadius_mm   // +ve: curves left, -ve: curves right, ...
+                               // ...u16_MAX: point turn left, 16_MIN: point ...
+                               // ...turn right, 0: straight
+}
+
+message MoveLift
+{
+  float_32 speed_rad_per_sec,
+}
+
+message MoveHead
+{
+  float_32 speed_rad_per_sec,
+}
+
+message SetLiftHeight
+{
+  float_32 height_mm,
+  float_32 max_speed_rad_per_sec,
+  float_32 accel_rad_per_sec2,
+  float_32 duration_sec,
+}
+
+message SetHeadAngle
+{
+  float_32 angle_rad,
+  float_32 max_speed_rad_per_sec,
+  float_32 accel_rad_per_sec2,
+  float_32 duration_sec,
+}
+
+message HeadAngleUpdate 
+{
+  float_32 newAngle,
+}
+
+message PanAndTiltHead
+{
+  float_32 bodyPanAngle_rad,
+  float_32 headTiltAngle_rad,
+}
+
+message TurnInPlaceAtSpeed
+{
+  float_32 speed_rad_per_sec,
+  float_32 accel_rad_per_sec2,
+}
+
+message StopAllMotors
+{
+}
+
+message ClearPath
+{
+  uint_16 pathID,
+}
+
+message PathSegmentSpeed
+{
+  float_32 targetSpeed,
+  float_32 accel,
+  float_32 decel,
+}
+
+message AppendPathSegmentLine
+{
+  float_32 x_start_mm,
+  float_32 y_start_mm,
+  float_32 x_end_mm,
+  float_32 y_end_mm,
+  PathSegmentSpeed speed,
+}
+
+message AppendPathSegmentArc
+{
+  float_32 x_center_mm,
+  float_32 y_center_mm,
+  float_32 radius_mm,
+  float_32 startRad,
+  float_32 sweepRad,
+  PathSegmentSpeed speed,
+}
+
+messages AppendPathSegmentPointTurn
+{
+  float_32 x_center_mm,
+  float_32 y_center_mm,
+  float_32 targetRad,
+  PathSegmentSpeed speed, // targetSpeed indicates rotational speed in rad/s
+  bool     useShortestDir
+}
+
+messages TrimPath
+{
+  uint_8 numPopFrontSegments,
+  uint_8 numPopBackSegments,
+}
+
+messages ExecutePath
+{
+  uint_16 pathID,
+  bool    useManualSpeed,
+}
+
+message DockWithObject
+{
+  float_32 horizontalOffset_mm, // Offset wrt to docking object. Don't know if this will work yet.
+  uint_8   dockAction,
+  bool     useManualSpeed,
+}
+
+message AbortDocking
+{
+}
+
+message PlaceObjectOnGround
+{
+  float_32 rel_x_mm,  // Distance of object face center in forward axis
+  float_32 rel_y_mm,  // Distance of object face center in horizontal axis. (Left of robot is +ve)
+  float_32 rel_angle, // Angle between of object face normal and robot. (Block normal pointing right of robot is +ve)
+  bool     useManualSpeed,
+}
+
+message AbsoluteLocalizationUpdate
+{
+  uint_32 pose_frame_id,
+  float_32 xPosition,
+  float_32 yPosition,
+  float_32 headingAngle,
+}
+
+message SyncTime
+{
+  uint_32 robotID,
+  uint_32 syncTime,
+}
+
+message ImageRequest
+{
+  ImageSendMode  sendMode,
+  ImageResultion resolution,
+}
+
+message StartTestMode
+{
+  int_32 parameters[10], // A pile of parameters
+  uint_8 mode,
+}
+
+message ControllerGains
+{
+  float_32 kp,
+  float_32 ki,
+  float_32 kd,
+  float_32 maxIntegralError
+}
+
+message SteeringControllerGains
+{
+  float_32 k1,
+  float_32 k2,
+}
+
+message DockingErrorSignal
+{
+  float_32 x_distErr,
+  float_32 y_horErr,
+  float_32 z_height,
+  f32 angleErr,
+  bool didTrackingSucceed,
+  bool isApproximate,
+}
+
+message BackpackLights
+{
+  LightState lights[5],
+}
+
+message BlockLights
+{
+  LightState lights[4],
+  uint_32    blockID,
+}
+
+message FlashBlockIDs
+{
+  uint_32 blockID, // Place holder
+}
+
+message AbortAnimation
+{
+}
+
+
+
+/// *************** Overall message pipe ******************************* ///
+
+/** Pipe from engine to robot.
+ * This cannot be an auto union because we need explicit tag values to partition the RTIP and WiFi code
+ * and to make debugging from message dumps more sane.
+ */
+union EngineToRobot
+{
+  // To RTIP. 0x00 to 0x7f
+  DriveWheels                   drive                       = 0x00,
+  DriveWheelsCurvature          driveCurvature              = 0x01,
+  MoveLift                      moveLift                    = 0x02,
+  MoveHead                      moveHead                    = 0x03,
+  SetLiftHeight                 liftHeight                  = 0x04,
+  SetHeadAngle                  headAngle                   = 0x05,
+  HeadAngleUpdate               headAngleUpdate             = 0x06
+  PanAndTilt                    panAndTiltHead              = 0x07,
+  TurnInPlaceAtSpeed            turnInPlaceAtSpeed          = 0x08,
+  StopAllMotors                 stop                        = 0x09,
+  ClearPath                     clearPath                   = 0x0A,
+  AppendPathSegmentLine         appendPathSegLine           = 0x0B,
+  AppendPathSegmentArc          appendPathSegArc            = 0x0C,
+  AppendPathSegmentPointTurn    appendPathSegPointTurn      = 0x0D,
+  TrimPath                      trimPath                    = 0x0E,
+  ExecutePath                   executePath                 = 0x0E,
+  DockWithObject                dockWithObject              = 0x0F,
+  AbortDocking                  abortDocking                = 0x10,
+  PlaceObjectOnGround           placeObjectOnGround         = 0x11,
+  AbsoluteLocalizationUpdate    absLocalizationUpdate       = 0x12,
+  SyncTime                      syncTimeRTIP                = 0x13,
+  StartTestMode                 startTestModeRTIP           = 0x14,
+  ControllerGains               setWheelControllerGains     = 0x15,
+  ControllerGains               setHeadControllerGains      = 0x16,
+  ControllerGains               setLiftControllerGains      = 0x17,
+  SteeringControllerGains       setSteeringControllerGains  = 0x18,
+  DockingErrorSignal            dockingErrorSignal          = 0x19,
+  CarryState                    setCarryState               = 0x1A,
+  
+  // To WiFi 0x80 to 0xFE
+  SyncTime                      syncTimeWiFi                = 0x80,
+  ImageRequest                  ImageRequest                = 0x81,
+  StartTestMode                 startTestModeWiFi           = 0x82,
+  BackpackLights                setBackpackLights           = 0x83,
+  BlockLights                   setBlockLights              = 0x84,
+  FlashBlockIDs                 flashBlockIDs               = 0x85,
+  AbortAnimation                abortAnimation              = 0x86,
+  AnimKeyFrame::AudioSample     animAudioSample             = 0x87,
+  AnimKeyFrame::AudioSilence    animAudioSilence            = 0x88,
+  AnimKeyFrame::HeadAngle       animHeadAngle               = 0x89,
+  AnimKeyFrame::LiftHeight      animLiftHeight              = 0x8A,
+  AnimKeyFrame::FacePosition    animFacePosition            = 0x8B,
+  AnimKeyFrame::Blink           animBlink                   = 0x8C,
+  AnimKeyFrame::FaceImage       animFaceImage               = 0x8D,
+  AnimKeyFrame::BackpackLights  animBackpackLights          = 0x8E,
+  AnimKeyFrame::BodyMotion      animBodyMotion              = 0x8F,
+  AnimKeyFrame::EndOfAnimation  animEndOfAnimation          = 0x90,
+}
+
+} // namespace Cozmo
+} // namespace Anki

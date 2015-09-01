@@ -1,8 +1,0 @@
-/** Enums to define things to trace from the RTIP.
- * These traces replace printing text with a manigble level of overhead.
- */
- 
-enum uint_32 RtipTrace
-{
-  // Add trace enums with friendly names here.
-}

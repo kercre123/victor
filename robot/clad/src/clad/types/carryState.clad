@@ -1,0 +1,18 @@
+/** Flags for different things the robot could be carrying.
+ */
+ 
+namespace Anki {
+namespace Cozmo {
+
+ 
+enum uint_8 CarryState
+{
+  CARRY_NONE = 0,
+  CARRY_1_BLOCK,
+  CARRY_2_BLOCK,
+  NUM_CARRY_STATES
+}
+
+
+} // namespace Cozmo
+} // namespace Anki

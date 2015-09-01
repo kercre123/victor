@@ -38,6 +38,12 @@ enum uint_8 ImageEncoding
   JPEGMinimizedColor, // Minimized grayscale JPEG - no header, no footer, no byte stuffing - with added color data
 }
 
+enum uint_8 ImageSendMode {
+    Off,
+    Stream,
+    SingleShot
+}
+
 
 message ImageChunk {
   uint_32 timestamp,
@@ -46,7 +52,7 @@ message ImageChunk {
   ImageResolution resolution,
   uint_8 imageChunkCount,
   uint_8 chunkId,
-  uint_8 data[uint16],
+  uint_8 data[uint_16], // Needs to be limited to 1200
 }
 
 

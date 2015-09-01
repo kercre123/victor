@@ -1,0 +1,68 @@
+/** Clad message definitions for the messages sent from the WiFi to the engine.
+ */
+
+
+namespace Anki {
+namespace Cozmo {
+
+namespace AnimKeyFrame {
+
+  AudioSample
+  {
+    uint_8 sample[800]
+  }
+
+  AudioSilence
+  {
+  }
+
+  HeadAngle
+  {
+    uint_16 time_ms,
+    int_8   angle_deg,
+  }
+
+  LiftHeight
+  {
+    uint_16 time_ms,
+    uint_8  height_mm,
+  }
+
+  FacePosition
+  {
+    int8 xCen,
+    int8 yCen,
+  }
+  
+  Blink
+  {
+    bool enable,
+    bool blinkNow,
+  }
+  
+  FaceImage
+  {
+    uint_8 image[uint_16], // Needs to be limited to MAX_FACE_FRAME_SIZE
+  }
+  
+  BackpackLights
+  {
+    uint_32 colors[5],
+  }
+  
+  BodyMotion
+  {
+    int_16 speed,              // Commanded speed in mm/sec or deg/sec
+    int_16 curvatureRadius_mm, // +ve: curves left, -ve: curves right, ...
+                               // ...u16_MAX/MIN: drive straight...
+                               // ...0: turn in place (+ve speed: left, -ve speed: right)
+  }
+  
+  EndOfAnimation
+  {
+  }
+
+} // namespace AnimKeyFrame
+
+} // namespace Cozmo
+} // namespace Anki

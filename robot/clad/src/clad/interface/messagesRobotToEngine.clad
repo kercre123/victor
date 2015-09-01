@@ -4,10 +4,10 @@
  */
 
 
-#include "robotStatusFlag.clad"
-#include "activeObjectTypes.clad"
-#include "rtipTraces.clad"
-#include "imageChunk.clad"
+#include "types/robotStatusFlag.clad"
+#include "types/activeObjectTypes.clad"
+#include "types/rtipTraces.clad"
+#include "types/imageTypes.clad"
 
 namespace Anki {
 namespace Cozmo {

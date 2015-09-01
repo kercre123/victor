@@ -1,0 +1,15 @@
+/** Enums to define things to trace from the RTIP.
+ * These traces replace printing text with a acceptable level of overhead.
+ */
+
+namespace Anki {
+namespace Cozmo {
+
+enum uint_32 RtipTrace
+{
+  // Add trace enums with friendly names here.
+}
+
+
+} // namespace Cozmo
+} // namespace Anki

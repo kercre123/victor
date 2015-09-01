@@ -1,0 +1,20 @@
+/** Flags for different things the robot could be carrying..
+ */
+ 
+namespace Anki {
+namespace Cozmo {
+
+ 
+message LightState
+{
+  uint_32 onColor,
+  uint_32 offColor,
+  uint_32 onPeriod_ms,
+  uint_32 offPeriod_ms,
+  uint_32 transitionOnPeriod_ms,
+  uint_32 transitionOffPeriod_ms,
+}
+
+
+} // namespace Cozmo
+} // namespace Anki
