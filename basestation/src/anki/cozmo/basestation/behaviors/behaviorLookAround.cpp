@@ -104,6 +104,7 @@ IBehavior::Status BehaviorLookAround::Update(float currentTime_sec)
       // This is the last update before we stop running, so store off time
       _lastLookAroundTime = currentTime_sec;
       
+      // Reset our number of destinations for next time we run this behavior
       _numDestinationsLeft = kDestinationsToReach;
       
       break; // Jump down and return Status::Complete
@@ -184,6 +185,8 @@ void BehaviorLookAround::StartMoving()
 Pose3d BehaviorLookAround::GetDestinationPose(BehaviorLookAround::Destination destination)
 {
   Pose3d destPose(_moveAreaCenter);
+  
+  // Our destination regions are 90 degrees, so we randomly pick up to 90 degrees to vary our destination
   s32 randAngleMod = _rng.RandInt(90);
   switch (destination)
   {
