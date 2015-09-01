@@ -41,14 +41,20 @@
     ],
     
     'opencv_libs': [
-      '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_core.dylib',
-      '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_imgproc.dylib',
-      '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_highgui.dylib',
-      '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_calib3d.dylib',
-      '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_contrib.dylib',
-      '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_objdetect.dylib',
-      '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_video.dylib',
-      '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_features2d.dylib',
+      'libzlib.a',
+      'liblibjpeg.a',
+      'liblibpng.a',
+      'liblibtiff.a',
+      'liblibjasper.a',
+      'libIlmImf.a',
+      'libopencv_core.a',
+      'libopencv_imgproc.a',
+      'libopencv_highgui.a',
+      'libopencv_calib3d.a',
+      'libopencv_contrib.a',
+      'libopencv_objdetect.a',
+      'libopencv_video.a',
+      'libopencv_features2d.a',
     ],
 
     'compiler_flags': [
@@ -70,7 +76,7 @@
     ],
     
     'linker_flags' : [
-        '-g'
+        '-g',
     ],
 
     # Set default ARCHS based on platform
@@ -105,6 +111,7 @@
       '<(matlabRootDir)/bin/maci64/libmx.dylib',
       '<(matlabRootDir)/bin/maci64/libmex.dylib',
       '<(matlabRootDir)/bin/maci64/libeng.dylib',
+      '$(SDKROOT)/System/Library/Frameworks/AppKit.framework',
     ],
     'xcode_settings': {
       'OTHER_CFLAGS': ['<@(compiler_c_flags)'],
@@ -129,6 +136,10 @@
           'xcode_settings': {
             'OTHER_CFLAGS': ['-O0'],
             'OTHER_CPLUSPLUSFLAGS': ['-O0'],
+            'OTHER_LDFLAGS': [
+              '-L<(coretech_external_path)/build/opencv-2.4.8/lib/Debug',
+              '-L<(coretech_external_path)/build/opencv-2.4.8/3rdparty/lib/Debug',
+            ],
            },
           'defines': [
             '_LIBCPP_DEBUG=0',
@@ -261,6 +272,10 @@
       'sources': [
         '<(coretechDir)/vision/matlab/CameraCapture/mexCameraCapture.cpp',
         '<@(common_mex_sources)',
+      ],
+      'libraries': [
+        '$(SDKROOT)/System/Library/Frameworks/QTKit.framework',
+        '$(SDKROOT)/System/Library/Frameworks/CoreVideo.framework',
       ],
       'dependencies': [
         '<(ce-cti_gyp_path):ctiCommonRobot',
