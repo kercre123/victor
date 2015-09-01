@@ -44,7 +44,7 @@ enum uint_8 ImageSendMode {
     SingleShot
 }
 
-message ImageChunk {
+structure ImageChunk {
   uint_32 timestamp,
   uint_32 imageId,
   ImageEncoding imageEncoding,

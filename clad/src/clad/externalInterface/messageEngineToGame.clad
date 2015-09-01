@@ -5,8 +5,8 @@
 
 #include "clad/types/actionTypes.clad"
 #include "clad/types/robotStatusFlag.clad"
-#include "clad/types/cameraSettings.clad"
-#include "clad/types/upAxis.clad"
+#include "clad/types/activeObjectTypes.clad"
+#include "clad/types/imageTypes.clad"
 #include "clad/types/objectTypes.clad"
 #include "clad/types/objectFamilies.clad"
 #include "clad/externalInterface/messageShared.clad"
@@ -110,7 +110,7 @@ message ImageChunk {
     uint_16 nrows,
     uint_16 ncols,
     uint_16 chunkSize,
-    ImageEncodingClad imageEncoding,
+    ImageEncoding imageEncoding,
     uint_8 imageChunkCount,
     uint_8 chunkId,
     uint_8 data[1300] // Should match R2B MessageImageChunk size!
@@ -214,13 +214,13 @@ message ActiveObjectMoved {
     float_32 xAccel,
     float_32 yAccel,
     float_32 zAccel,
-    UpAxisClad upAxis
+    UpAxis   upAxis
 }
 
 message ActiveObjectStoppedMoving {
     uint_8   robotID,
     uint_32  objectID,
-    UpAxisClad upAxis,
+    UpAxis   upAxis,
     bool     rolled
 }
 
