@@ -21,7 +21,6 @@
 #include "anki/vision/basestation/image_impl.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/quad_impl.h"
-#include "anki/common/basestation/utils/data/dataPlatform.h"
 
 //
 // Embedded implementation holdovers:
@@ -68,9 +67,9 @@ namespace Cozmo {
   
   using namespace Embedded;
   
-  VisionSystem::VisionSystem(Util::Data::DataPlatform* dataPlatform)
+  VisionSystem::VisionSystem(const std::string& dataPath)
   : _isInitialized(false)
-  , _dataPlatform(dataPlatform)
+  , _dataPath(dataPath)
   , _headCamInfo(nullptr)
   {
     
@@ -1488,8 +1487,7 @@ namespace Cozmo {
       _snapshotROI = Embedded::Rectangle<s32>(-1, -1, -1, -1);
       _snapshot = NULL;
       
-      
-      VisionMarker::SetDataPath(_dataPlatform->pathToResource(Util::Data::Scope::Resources, "basestation"));
+      VisionMarker::SetDataPath(_dataPath);
       
       _isInitialized = true;
     }
@@ -2240,8 +2238,7 @@ namespace Cozmo {
       // TODO: (AS) move _faceCascade to header, and load data at appropriate time (constructor?)
       static cv::CascadeClassifier _faceCascade;
       if(_faceCascade.empty()) {
-        const std::string cascadeFilename = _dataPlatform->pathToResource(Util::Data::Scope::Resources,
-          "config/basestation/config/haarcascade_frontalface_alt2.xml");
+        const std::string cascadeFilename = _dataPath + "/haarcascade_frontalface_alt2.xml";
         const bool loadResult = _faceCascade.load(cascadeFilename);
         AnkiConditionalError(loadResult == true, "VisionSystem.Update.LoadFaceCascade",
                              "Failed to load face cascade from %s\n", cascadeFilename.c_str());

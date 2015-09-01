@@ -51,14 +51,7 @@
 #include "visionParameters.h"
 
 
-namespace Anki {
-  
-  namespace Util {
-  namespace Data {
-    class DataPlatform;
-  }
-  }
-  
+namespace Anki {  
 namespace Cozmo {
     
   // Forward declaration:
@@ -68,7 +61,7 @@ namespace Cozmo {
   {
   public:
 
-    VisionSystem(Util::Data::DataPlatform* dataPlatform);
+    VisionSystem(const std::string& dataPath);
     ~VisionSystem();
     
     enum Mode {
@@ -234,7 +227,7 @@ namespace Cozmo {
     //
     
     bool _isInitialized;
-    Util::Data::DataPlatform* _dataPlatform;
+    const std::string _dataPath;
     
     // Just duplicating this from HAL for vision functions to work with less re-writing
     struct CameraInfo {

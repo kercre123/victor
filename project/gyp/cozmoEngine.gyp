@@ -33,6 +33,7 @@
       '<(coretech_external_path)/opencv-2.4.8/modules/features2d/include',
       '<(coretech_external_path)/opencv-2.4.8/modules/flann/include',
     ],
+    
     'opencv_libs': [
       'libzlib.a',
       'liblibjpeg.a',
@@ -386,7 +387,6 @@
               '<@(opencv_includes)',
             ],
             'dependencies': [
-              #'<(ce-cti_gyp_path):ctiCommon', # now needed for DataPlatform
               '<(ce-cti_gyp_path):ctiCommonRobot',
               '<(ce-cti_gyp_path):ctiVisionRobot',
               '<(ce-cti_gyp_path):ctiMessagingRobot',
