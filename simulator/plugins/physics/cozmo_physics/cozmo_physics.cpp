@@ -371,17 +371,13 @@ void drawTextAtOffset(std::string s, float x_off, float y_off, float z_off)
 {
   glPushMatrix();
   glTranslatef(x_off, y_off, z_off);
-  
   glRasterPos2i(0,0);
-  
   void * font = GLUT_BITMAP_9_BY_15;
   for (std::string::iterator i = s.begin(); i != s.end(); ++i)
   {
     char c = *i;
-    //glColor3d(1.0, 0.0, 0.0);
     glutBitmapCharacter(font, c);
   }
-  
   glPopMatrix();
 }
 
@@ -395,6 +391,7 @@ void draw_cuboid(int id, float x_dim, float y_dim, float z_dim)
   float halfZ = z_dim*0.5;
   
   drawTextAtOffset(std::to_string(id), 1.2*halfX, 1.2*halfY, 1.2*halfZ);
+  drawTextAtOffset(std::to_string(id), -1.2*halfX, -1.2*halfY, -1.2*halfZ);
   
   // TOP
   glBegin(GL_LINE_LOOP);
