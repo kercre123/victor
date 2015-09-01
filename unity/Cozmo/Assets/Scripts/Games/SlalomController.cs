@@ -89,9 +89,6 @@ public class SlalomController : GameController {
   }
 
   int GetNextIndex(bool actual = false) {
-
-    //if(actual) Debug.Log("start GetNextIndex("+actual+") forward("+forward+") currentObstacleIndex("+currentObstacleIndex+") currentLap("+currentLap+")");
-
     int nextIndex = 0;
     if (forward) {
       nextIndex = currentObstacleIndex + 1;
@@ -107,7 +104,6 @@ public class SlalomController : GameController {
 
         if (actual) {
           currentLap++;
-          //Debug.Log("currentLap("+currentLap+")");
         }
       }
     }
@@ -125,28 +121,22 @@ public class SlalomController : GameController {
         }
       }
     }
-
-    //if(actual) Debug.Log("finish GetNextIndex("+actual+") forward("+forward+") nextIndex("+nextIndex+") currentLap("+currentLap+")");
-
     return nextIndex;
   }
 
   void LapComplete() {
-    //score += pointsPerObstacle;
-    //Debug.Log("LapComplete scores[0](" + scores[0].ToString() + ")");
-    //PlayOneShot(playerScoreSound);
     int lapsRemaining = (int)((float)levelData.scoreToWin / ((float)pointsPerObstacle * obstacles.Count)) - currentLap;
     if (lapsRemaining == 0) {
       if (finalLapSound != null)
         AudioManager.PlayAudioClip(finalLapSound, edgeTriggeredDelay, AudioManager.Source.Notification);
-      Debug.Log("final lap");
+      DAS.Debug("Slalom", "final lap");
     }
     else {
       if (lapsRemainingSound.Length > 0 && lapsRemaining > 0 && lapsRemaining < timerSounds.Length && timerSounds[lapsRemaining].sound != null) {
         lapsRemainingSound[0] = timerSounds[lapsRemaining].sound;
         AudioManager.PlayAudioClips(lapsRemainingSound, edgeTriggeredDelay, 0.05f, false, false, AudioManager.Source.Notification);
       }
-      Debug.Log((lapsRemaining + 1) + " laps remaining");
+      DAS.Debug("Slalom", (lapsRemaining + 1) + " laps remaining");
     }
   }
 
@@ -312,28 +302,14 @@ public class SlalomController : GameController {
     }
 
     if (currentObstacle == null) {
-      Debug.LogError("currentObstacle is null");
+      DAS.Error("Slalom", "currentObstacle is null");
       return;
     }
-
-    //Debug.Log("PrepareGameForPlay currentEdge("+currentEdge+") nextEdge("+nextEdge+") onNextObstacle("+onNextObstacle+")");
 
     Vector2 startToFirst = currentObstacle.WorldPosition - startingPos;
     Vector3 cross = Vector3.Cross(startingFacing, Vector3.forward);
     
     clockwise = Vector3.Dot(startToFirst, cross) > 0f;
-
-//    //shift this up so we can see better
-//    startingPos += Vector3.forward * CozmoUtil.BLOCK_LENGTH_MM;
-//
-//    Vector3 facingLocation = startingPos + startingFacing * CozmoUtil.BLOCK_LENGTH_MM * 10f;
-//    RobotEngineManager.instance.VisualizeQuad(11, CozmoPalette.ColorToUInt(Color.blue), startingPos, startingPos, facingLocation, facingLocation);
-//
-//    Vector3 crossLocation = startingPos + (Vector3)cross * CozmoUtil.BLOCK_LENGTH_MM * 10f;
-//
-//    RobotEngineManager.instance.VisualizeQuad(12, CozmoPalette.ColorToUInt(Color.green), startingPos, startingPos, crossLocation, crossLocation);
-//
-//    RobotEngineManager.instance.VisualizeQuad(13, CozmoPalette.ColorToUInt(Color.yellow), startingPos, startingPos, currentObstacle.WorldPosition, currentObstacle.WorldPosition);
 
     currentEdgeIndex = startingEdgeIndex;
     bool onNextObstacle;
@@ -374,7 +350,6 @@ public class SlalomController : GameController {
     float newAngle = Vector3.Angle(edgeVector, obstacleToRobotPos.normalized);
 
     if (newAngle < 10f) {
-      //Debug.Log("Update_PLAYING AdvanceEdge because clockwise("+clockwise+") newAngle("+newAngle+") edgeVector("+edgeVector+")");
       AdvanceEdge();
     }
 
@@ -427,7 +402,7 @@ public class SlalomController : GameController {
     OnActiveBlockRolled(observedObject as ActiveBlock);
   }
 
-  private Vector2 GetEdgeVector(ActiveBlock obstacle, int edgeIndex, bool clock, ActiveBlock previous, bool debug = false) {
+  private Vector2 GetEdgeVector(ActiveBlock obstacle, int edgeIndex, bool clock, ActiveBlock previous) {
 
     float angle = idealEdgeAngles[edgeIndex] * (clock ? -1f : 1f);
 
@@ -448,9 +423,6 @@ public class SlalomController : GameController {
         edge = edgeVectors[i];
       }
     }
-
-    if (debug)
-      Debug.Log("GetEdgeVector obstacle(" + obstacle + ") edgeIndex(" + edgeIndex + ") clock(" + clock + ") previous(" + previous + ") angle(" + angle + ") idealEdge(" + idealEdge + ") edge(" + edge + ") currentToLast(" + currentToLast.normalized + ")");
 
     return edge;
   }
@@ -481,8 +453,6 @@ public class SlalomController : GameController {
       AudioManager.PlayOneShot(cornerTriggeredSound, 0f, currentEdgeIndex == 0 ? 4 : currentEdgeIndex);
 
     timeOfLastEdgeCrossing = Time.time;
-
-    //Debug.Log("AdvanceEdge obstacleAdvanced("+obstacleAdvanced+") clockwise("+clockwise+") currentEdge("+currentEdge+") nextEdge("+nextEdge+") nextEdgeIsOnNextObstacle("+nextEdgeIsOnNextObstacle+")");
 
     UpdateCubeLights(currentEdgeIndex, nextEdge, nextEdgeIsOnNextObstacle, preview);
     if (!preview)
@@ -542,7 +512,7 @@ public class SlalomController : GameController {
     }
   }
 
-  private void UpdateCubeLights(int edge, int next, bool nextEdgeOnNextObstacle, bool preview = false, bool debug = false) {
+  private void UpdateCubeLights(int edge, int next, bool nextEdgeOnNextObstacle, bool preview = false) {
     if (robot == null)
       return;
     if (currentObstacle == null)
@@ -550,14 +520,14 @@ public class SlalomController : GameController {
     if (nextObstacle == null)
       return;
 
-    Vector2 edgeVector = GetEdgeVector(currentObstacle, edge, clockwise, previousObstacle, debug);
+    Vector2 edgeVector = GetEdgeVector(currentObstacle, edge, clockwise, previousObstacle);
     Vector2 nextEdgeVector = Vector3.zero;
 
     if (nextEdgeOnNextObstacle) {
-      nextEdgeVector = GetEdgeVector(nextObstacle, next, !clockwise, currentObstacle, debug);
+      nextEdgeVector = GetEdgeVector(nextObstacle, next, !clockwise, currentObstacle);
     }
     else {
-      nextEdgeVector = GetEdgeVector(currentObstacle, next, clockwise, previousObstacle, debug);
+      nextEdgeVector = GetEdgeVector(currentObstacle, next, clockwise, previousObstacle);
     }
 
     for (int obstacleIndex = 0; obstacleIndex < obstacles.Count; obstacleIndex++) {
@@ -572,16 +542,11 @@ public class SlalomController : GameController {
       if (obstacle == currentObstacle) {
         float angleFromNorth = MathUtil.SignedVectorAngle(obstacleNorth, edgeVector, Vector3.forward);
         currentTopLightIndex = ActiveBlock.Light.GetIndexForEdgeClosestToAngle(angleFromNorth);
-        if (debug)
-          Debug.Log("obstacle(" + obstacle + ") angleFromNorth(" + angleFromNorth + ") index(" + currentTopLightIndex + ") currentObstacle(" + currentObstacle + ") nextObstacle(" + nextObstacle + ")");
       }
 
       if (obstacle == (nextEdgeOnNextObstacle ? nextObstacle : currentObstacle)) {
         float angleFromNorth = MathUtil.SignedVectorAngle(obstacleNorth, nextEdgeVector, Vector3.forward);
         nextTopLightIndex = ActiveBlock.Light.GetIndexForEdgeClosestToAngle(angleFromNorth);
-
-        if (debug)
-          Debug.Log("obstacle(" + obstacle + ") angleFromNorth(" + angleFromNorth + ") index(" + nextTopLightIndex + ") currentObstacle(" + currentObstacle + ") nextObstacle(" + nextObstacle + ")");
       }
 
       //refresh light settings

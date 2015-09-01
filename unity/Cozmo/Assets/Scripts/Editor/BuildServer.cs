@@ -31,7 +31,6 @@ class BuildServer {
   /// </summary>
   static BuildServer() {
 
-    //Debug.Log("build server starting");
     _syncQueue = new Queue<Action>();
     _networkManager = new NetworkManager();
     _networkManager.StartListening();

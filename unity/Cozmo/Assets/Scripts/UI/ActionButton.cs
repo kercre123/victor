@@ -261,7 +261,6 @@ public class ActionButton : MonoBehaviour {
   private void DefaultAction(bool onRelease, ObservedObject selectedObject) {
     if (onRelease && robot != null) {
       robot.searching = false;
-      //Debug.Log( "On Release" );
     }
   }
 }

@@ -214,7 +214,7 @@ public class FaceReactionController : GameController {
     for (int i = 0; i < robot.markersVisibleObjects.Count; ++i) {
       if (robot.markersVisibleObjects[i].isFace) {
         if (faceSeenTime > 1.5f) {
-          Debug.Log("we found a face!");
+          DAS.Debug("FaceReactionController", "we found a face!");
           nextState = FaceReactionState.ALIGN_TO_FACE;
           foundFace = robot.markersVisibleObjects[i];
         }
@@ -269,7 +269,7 @@ public class FaceReactionController : GameController {
   private void Update_ALIGN_TO_FACE() {
     if (playStateTimer > 3.0f) {
       nextState = FaceReactionState.SEARCH_FOR_FACE;
-      Debug.Log("align to face took too long... going back to search");
+      DAS.Debug("FaceReactionController", "align to face took too long... going back to search");
       return;
     }
     if (!alignToFaceWaiting) {
@@ -283,7 +283,7 @@ public class FaceReactionController : GameController {
 
   private void Enter_MOVE_TOWARD_FACE() {
     SetBackpackColors(new Color(1.0f, 0.0f, 0.0f));
-    Debug.Log("moving toward face");
+    DAS.Debug("FaceReactionController", "moving toward face");
     robot.DriveWheels(20.0f, 20.0f);
   }
 
@@ -298,8 +298,6 @@ public class FaceReactionController : GameController {
   }
 
   private void Enter_REACT_TO_FACE() {
-    int index = Random.Range(0, RobotEngineManager.instance.robotAnimationNames.Count);
-    //SendAnimation(RobotEngineManager.instance.robotAnimationNames[index]);
     int fixedIndex = Random.Range(0, 5);
     switch (fixedIndex) {
     case 0:
@@ -349,7 +347,7 @@ public class FaceReactionController : GameController {
   private void RobotEngineMessages(bool success, RobotActionType action_type) {
     if (success && action_type == RobotActionType.FACE_OBJECT) {
       alignToFaceWaiting = false;
-      Debug.Log("Align to face successful!");
+      DAS.Debug("FaceReactionController", "Align to face successful!");
     }
     if (success && action_type == RobotActionType.PLAY_ANIMATION) {
       animationPlaying = false;

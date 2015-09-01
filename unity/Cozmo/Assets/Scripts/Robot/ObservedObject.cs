@@ -139,27 +139,27 @@ public class ObservedObject {
     }
     else if (objectFamily == ObjectFamily.HumanHead) {
       cubeType = CubeType.FACE;
-      Debug.LogWarning("FACE " + ID + " !!!"); 
+      DAS.Warn("ObservedObject", "FACE " + ID + " !!!"); 
     }
     else if (objectType == ObjectType.Block_BULLSEYE2 || objectType == ObjectType.Block_BULLSEYE2_INVERTED) {
       cubeType = CubeType.BULLS_EYE;
     }
-	else if (objectType == ObjectType.Block_FLAG || objectType == ObjectType.Block_FLAG2 || objectType == ObjectType.Block_FLAG_INVERTED) {
+    else if (objectType == ObjectType.Block_FLAG || objectType == ObjectType.Block_FLAG2 || objectType == ObjectType.Block_FLAG_INVERTED) {
       cubeType = CubeType.FLAG;
     }
     else {
       cubeType = CubeType.UNKNOWN;
-      Debug.LogWarning("Object " + ID + " with type " + objectType + " is unsupported"); 
+      DAS.Warn("ObservedObject", "Object " + ID + " with type " + objectType + " is unsupported"); 
     }
 
-    Debug.Log("ObservedObject cubeType(" + cubeType + ") from objectFamily(" + objectFamily + ") objectType(" + objectType + ")");
+    DAS.Debug("ObservedObject", "ObservedObject cubeType(" + cubeType + ") from objectFamily(" + objectFamily + ") objectType(" + objectType + ")");
 
     SetTargetingScoreSettings();
   }
 
   public static implicit operator uint(ObservedObject observedObject) {
     if (observedObject == null) {
-      Debug.LogWarning("converting null ObservedObject into uint: returning uint.MaxValue");
+      DAS.Warn("ObservedObject", "converting null ObservedObject into uint: returning uint.MaxValue");
       return uint.MaxValue;
     }
     

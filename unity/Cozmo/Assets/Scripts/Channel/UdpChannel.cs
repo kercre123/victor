@@ -180,10 +180,10 @@ public class UdpChannel : ChannelBase {
         int realPort = ((IPEndPoint)mainServer.LocalEndPoint).Port;
 
         // set up advertisement message
-        Debug.Log("Advertising IP: " + localIP);
+        DAS.Debug("UdpChannel", "Advertising IP: " + localIP);
         int length = Encoding.UTF8.GetByteCount(localIP);
         if (length + 1 > advertisementRegistrationMessage.ip.Length) {
-          Debug.LogError("Advertising host is too long: " +
+          DAS.Error("UdpChannel", "Advertising host is too long: " +
           advertisementRegistrationMessage.ip.Length.ToString() + " bytes allowed, " +
           length.ToString() + " bytes used.");
           DestroySynchronously(DisconnectionReason.FailedToAdvertise);
@@ -217,7 +217,7 @@ public class UdpChannel : ChannelBase {
       IsActive = true;
       IsConnected = false;
 
-      Debug.Log("UdpConnection: Listening on " + mainServer.LocalEndPoint.ToString() + ".");
+      DAS.Debug("UdpChannel", "UdpConnection: Listening on " + mainServer.LocalEndPoint.ToString() + ".");
     }
   }
 
@@ -231,7 +231,7 @@ public class UdpChannel : ChannelBase {
           Destroy(DisconnectionReason.ConnectionLost);
           IsActive = false;
           IsConnected = false;
-          Debug.Log("UdpConnection: Disconnected manually.");
+          DAS.Debug("UdpChannel", "UdpConnection: Disconnected manually.");
         }
       }
     }
@@ -251,7 +251,7 @@ public class UdpChannel : ChannelBase {
     lock (sync) {
       // about to be disconnected; ignore
       if (connectionState != ConnectionState.Connected) {
-        Debug.LogWarning("Ignoring message of type " + message.GetType().FullName + " because the connection is about to disconnect.");
+        DAS.Warn("UdpChannel", "Ignoring message of type " + message.GetType().FullName + " because the connection is about to disconnect.");
         return;
       }
 
@@ -269,7 +269,7 @@ public class UdpChannel : ChannelBase {
 
         if (connectionState == ConnectionState.Advertising) {
           if (startAdvertiseTime + AdvertiseTimeout < lastUpdateTime) {
-            Debug.LogError("Connection attempt timed out after " + (lastUpdateTime - startAdvertiseTime).ToString("0.00") + " seconds.");
+            DAS.Error("UdpChannel", "Connection attempt timed out after " + (lastUpdateTime - startAdvertiseTime).ToString("0.00") + " seconds.");
             DestroySynchronously(DisconnectionReason.ConnectionLost);
             return;
           }
@@ -286,7 +286,7 @@ public class UdpChannel : ChannelBase {
 
         if (connectionState == ConnectionState.Connected) {
           if (lastReceiveTime + ReceiveTimeout < lastUpdateTime) {
-            Debug.LogError("Connection timed out after " + (lastUpdateTime - lastReceiveTime).ToString("0.00") + " seconds.");
+            DAS.Error("UdpChannel", "Connection timed out after " + (lastUpdateTime - lastReceiveTime).ToString("0.00") + " seconds.");
             DestroySynchronously(DisconnectionReason.ConnectionLost);
             return;
           }
@@ -309,7 +309,7 @@ public class UdpChannel : ChannelBase {
   private void InternalUpdate() {
     if (!IsConnected && (connectionState == ConnectionState.Connected)) {
       IsConnected = true;
-      Debug.Log("UdpConnection: Connected to " + mainEndPoint.ToString() + ".");
+      DAS.Debug("UdpChannel", "UdpConnection: Connected to " + mainEndPoint.ToString() + ".");
       try {
         RaiseConnectedToClient(mainEndPoint.ToString());
       }
@@ -326,7 +326,7 @@ public class UdpChannel : ChannelBase {
     IsActive = (connectionState != ConnectionState.Disconnected);
 
     if (wasActive && !IsActive) {
-      Debug.LogWarning("UdpConnection: Disconnected. Reason is " + currentDisconnectionReason.ToString() + "."); 
+      DAS.Warn("UdpChannel", "UdpConnection: Disconnected. Reason is " + currentDisconnectionReason.ToString() + "."); 
 
       try {
         RaiseDisconnectedFromClient(currentDisconnectionReason);
@@ -484,7 +484,7 @@ public class UdpChannel : ChannelBase {
           sentBuffers.Enqueue(state);
         }
         else {
-          Debug.LogError("Disconnecting. Too many messages queued to send. (" + MaxQueuedSends.ToString() + " messages allowed.)");
+          DAS.Error("UdpChannel", "Disconnecting. Too many messages queued to send. (" + MaxQueuedSends.ToString() + " messages allowed.)");
           DestroySynchronously(DisconnectionReason.ConnectionThrottled);
           return;
         }
@@ -647,7 +647,7 @@ public class UdpChannel : ChannelBase {
             }
 
             if (receivedMessages.Count >= MaxQueuedReceives) {
-              Debug.LogError("Too many messages received too quickly. (" + MaxQueuedReceives.ToString() + " messages allowed.)");
+              DAS.Error("UdpChannel", "Too many messages received too quickly. (" + MaxQueuedReceives.ToString() + " messages allowed.)");
               Destroy(DisconnectionReason.ConnectionThrottled);
               return;
             }

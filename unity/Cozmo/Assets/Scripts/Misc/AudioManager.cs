@@ -34,7 +34,7 @@ public class AudioManager : MonoBehaviour {
 
   private static AudioSource PlayAudioClip(AudioClip clip, float delay, bool oneShot, bool loop, bool deferred, Source source, float pitch, float volume) {
     if (instance == null) {
-      Debug.LogWarning("AudioManager is null");
+      DAS.Warn("AudioManager", "AudioManager is null");
       return null;
     }
     
@@ -101,7 +101,7 @@ public class AudioManager : MonoBehaviour {
 
   public static void Stop(AudioClip clip) {
     if (instance == null) {
-      Debug.LogWarning("AudioManager is null");
+      DAS.Warn("AudioManager", "AudioManager is null");
       return;
     }
 
@@ -115,7 +115,7 @@ public class AudioManager : MonoBehaviour {
 
   public static void Stop(Source source = Source.Count) {
     if (instance == null) {
-      Debug.LogWarning("AudioManager is null");
+      DAS.Warn("AudioManager", "AudioManager is null");
       return;
     }
 

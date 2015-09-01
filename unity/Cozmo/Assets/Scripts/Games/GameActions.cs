@@ -67,7 +67,6 @@ public class GameActions : MonoBehaviour {
   }
 
   protected virtual void OnEnable() {
-    //Debug.Log(gameObject.name + " GameActions OnEnable instance = this;");
     instance = this;
 
     activeBlockModeDelay = 0f;
@@ -79,7 +78,6 @@ public class GameActions : MonoBehaviour {
 
   public virtual void OnDisable() {
     if (instance == this) {
-      //Debug.Log(gameObject.name + " GameActions OnDisable instance = null;");
       instance = null;
     }
   }
@@ -200,7 +198,7 @@ public class GameActions : MonoBehaviour {
 
     ActionButtonClick();
 
-    Debug.Log("PickUp");
+    DAS.Debug("GameActions", "PickUp");
 
     robot.PickAndPlaceObject(selectedObject);
 
@@ -216,7 +214,7 @@ public class GameActions : MonoBehaviour {
 
     ActionButtonClick();
 
-    Debug.Log("Drop");
+    DAS.Debug("GameActions", "Drop");
 
     robot.PlaceObjectOnGroundHere();
 
@@ -232,7 +230,7 @@ public class GameActions : MonoBehaviour {
 
     ActionButtonClick();
 
-    Debug.Log("Stack");
+    DAS.Debug("GameActions", "Stack");
 
     robot.PickAndPlaceObject(selectedObject);
 
@@ -249,7 +247,7 @@ public class GameActions : MonoBehaviour {
 
     ActionButtonClick();
 
-    Debug.Log("Roll");
+    DAS.Debug("GameActions", "Roll");
 
     robot.RollObject(selectedObject);
 
@@ -265,7 +263,7 @@ public class GameActions : MonoBehaviour {
 
     ActionButtonClick();
 
-    Debug.Log("Align");
+    DAS.Debug("GameActions", "Align");
   }
 
   public virtual void Change(bool onRelease, ObservedObject selectedObject) {
@@ -274,7 +272,7 @@ public class GameActions : MonoBehaviour {
 
     ActionButtonClick();
 
-    Debug.Log("Change");
+    DAS.Debug("GameActions", "Change");
 
     ActiveBlock activeBlock = selectedObject as ActiveBlock;
 
@@ -287,7 +285,7 @@ public class GameActions : MonoBehaviour {
 
     CancelButtonClick();
 
-    Debug.Log("Cancel");
+    DAS.Debug("GameActions", "Cancel");
     
     robot.CancelAction();
   }
@@ -297,7 +295,6 @@ public class GameActions : MonoBehaviour {
       return;
 
     robot.searching = true;
-    //Debug.Log( "On Press" );
   }
 
   #endregion

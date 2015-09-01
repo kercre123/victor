@@ -12,7 +12,6 @@ public class BuildInstructionsCube : MonoBehaviour {
 
   #region INSPECTOR FIELDS
 
-  [SerializeField] bool debug = false;
   [SerializeField] VectrosityCube vCube;
   [SerializeField] MeshRenderer meshCube;
   [SerializeField] public CubeType cubeType = 0;
@@ -135,8 +134,6 @@ public class BuildInstructionsCube : MonoBehaviour {
   void Refresh() {
 
     if (Application.isPlaying) {
-      if (debug)
-        Debug.Log("vCube.SetColor(" + baseColor.ToString() + ")");
       vCube.SetColor(baseColor);
 
       if (Highlighted) {
@@ -336,23 +333,18 @@ public class BuildInstructionsCube : MonoBehaviour {
       vCube.CreateWireFrame();
     initialized = true;
     Refresh();
-    
-    //Debug.Log(gameObject.name + " BuildInstructionsCube.Initialize");
+
   }
 
-  public bool SatisfiedByObject(ObservedObject obj, float flatFudge, float verticalFudge, float angleFudge, bool allowCardinalAngleOffsets = true, bool debug = false) {
+  public bool SatisfiedByObject(ObservedObject obj, float flatFudge, float verticalFudge, float angleFudge, bool allowCardinalAngleOffsets = true) {
 
-    if (!MatchesObject(obj, true, debug)) {
+    if (!MatchesObject(obj, true)) {
       return false;
     }
-    if (!ignorePosition && !MatchesPosition(obj, obj.WorldPosition, flatFudge, verticalFudge, debug)) {
-      if (debug)
-        Debug.Log("SatisfiedByObject failed because obj(" + obj + ").cubeType(" + obj.cubeType + ") MatchesPosition failed against " + gameObject.name);
+    if (!ignorePosition && !MatchesPosition(obj, obj.WorldPosition, flatFudge, verticalFudge)) {
       return false;
     }
     if (!MatchesRotation(obj.Rotation, angleFudge, allowCardinalAngleOffsets)) {
-      if (debug)
-        Debug.Log("SatisfiedByObject failed to satisfy because obj(" + obj + ")'s rotation doesnt match " + gameObject.name);
       return false;
     }
 
@@ -371,22 +363,16 @@ public class BuildInstructionsCube : MonoBehaviour {
     return true;
   }
 
-  public bool MatchesObject(ObservedObject obj, bool ignoreColor = true, bool debug = false) {
+  public bool MatchesObject(ObservedObject obj, bool ignoreColor = true) {
     if (obj == null) {
-      if (debug)
-        Debug.Log("MatchesObject failed because obj is null and therefore cannot possibly match " + gameObject.name);
       return false;
     }
     if (obj.cubeType != cubeType) {
-      if (debug)
-        Debug.Log("MatchesObject failed because obj(" + obj + ").cubeType(" + obj.cubeType + ") doesn't match " + gameObject.name);
       return false;
     }
     if (!ignoreColor && obj.isActive) {
       ActiveBlock activeBlock = obj as ActiveBlock;
       if (activeBlock.mode != activeBlockMode) {
-        if (debug)
-          Debug.Log("MatchesObject failed because activeBlock(" + obj + ").mode(" + activeBlock.mode + ") doesn't match " + gameObject.name);
         return false;
       }
     }
@@ -394,31 +380,23 @@ public class BuildInstructionsCube : MonoBehaviour {
     return true;
   }
 
-  public bool MatchesPosition(Vector3 actualPos, float flatFudge, float verticalFudge, bool debug = false) {
-    return MatchesPosition(null, actualPos, flatFudge, verticalFudge, debug);
+  public bool MatchesPosition(Vector3 actualPos, float flatFudge, float verticalFudge) {
+    return MatchesPosition(null, actualPos, flatFudge, verticalFudge);
   }
 
   //handing through observedObject solely for debugging
-  public bool MatchesPosition(ObservedObject obj, Vector3 actualPos, float flatFudge, float verticalFudge, bool debug = false) {
+  public bool MatchesPosition(ObservedObject obj, Vector3 actualPos, float flatFudge, float verticalFudge) {
   
     Vector3 idealPos = WorldPosition;
     
     Vector3 error = actualPos - idealPos;
     
     if (Mathf.Abs(error.z) > (verticalFudge * CozmoUtil.BLOCK_LENGTH_MM)) {
-      if (debug)
-        Debug.Log("MatchesPosition failed because actualPos.z(" + actualPos.z + ") is too far from idealPos.z(" + idealPos.z + ")");
-//      VisualizeLayoutCube(idealPos, Color.magenta);
-//      VisualizeActualCube(obj, Color.cyan);
       return false;
     }
     float flatRange = ((Vector2)error).magnitude;
     float rangeFudge = flatFudge * CozmoUtil.BLOCK_LENGTH_MM;
     if (flatRange > rangeFudge) {
-//      VisualizeLayoutCube(idealPos, Color.magenta);
-//      VisualizeActualCube(obj, Color.cyan);
-      if (debug)
-        Debug.Log("MatchesPosition failed because flatRange(" + flatRange + ") is higher than rangeFudge(" + rangeFudge + ")");
       return false;
     }
     

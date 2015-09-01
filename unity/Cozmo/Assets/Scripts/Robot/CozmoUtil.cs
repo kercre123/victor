@@ -23,6 +23,12 @@ public static class CozmoUtil {
   public const float HEAD_ANGLE_REQUEST_TIME = 3f;
   public const float CARRIED_OBJECT_HEIGHT = 75f;
 
+  public struct RobotPose {
+    public float x_mm;
+    public float y_mm;
+    public float rad;
+  }
+
   //this is fudged
   public const float CARRIED_OBJECT_VERTICAL_OFFSET = -15f;
 
@@ -91,8 +97,6 @@ public static class CozmoUtil {
         leftWheelSpeed = speedB;
       }
     }
-
-    //Debug.Log("CalcWheelSpeedsFromBotRelativeInputsB speed("+speed+") turn("+turn+")");
   }
 
   public static void CalcWheelSpeedsForThumbStickInputs(Vector2 inputs, out float leftWheelSpeed, out float rightWheelSpeed, float maxAngle, float maxTurnFactor, bool reverse = false) {
@@ -134,8 +138,6 @@ public static class CozmoUtil {
 
     leftWheelSpeed = turn >= 0f ? speedA : speedB;
     rightWheelSpeed = turn < 0f ? speedA : speedB;
-
-    //Debug.Log("CalcDriveWheelSpeedsForInputs speed("+speed+") turn("+turn+")");
   }
 
   public static void CalcTurnInPlaceWheelSpeeds(float x, out float leftWheelSpeed, out float rightWheelSpeed, float maxTurnFactor) {
@@ -189,8 +191,6 @@ public static class CozmoUtil {
     
     leftWheelSpeed = turn >= 0f ? speedA : speedB;
     rightWheelSpeed = turn < 0f ? speedA : speedB;
-    
-    //Debug.Log("CalcDriveWheelSpeedsForInputs speed("+speed+") turn("+turn+")");
   }
 
   public static void CalcWheelSpeedsForPlayerRelInputs(Vector2 inputs, out float leftWheelSpeed, out float rightWheelSpeed) {
@@ -220,16 +220,10 @@ public static class CozmoUtil {
 
     leftWheelSpeed = clock ? speedA : speedB;
     rightWheelSpeed = clock ? speedB : speedA;
-    
-    //Debug.Log("CalcDriveWheelSpeedsForInputs speed("+speed+") turn("+turn+")");
   }
 
   public static T GetCopyOf<T>(Component comp, T other) where T : Component {
     Type type = comp.GetType();
-    //if(type != other.GetType()) {
-    //  Debug.LogError("GetCopyOf type mis-match");
-    //  return null; // type mis-match
-    //}
     BindingFlags flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Default | BindingFlags.DeclaredOnly;
     PropertyInfo[] pinfos = type.GetProperties(flags);
     foreach (var pinfo in pinfos) {

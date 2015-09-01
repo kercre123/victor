@@ -129,25 +129,9 @@ public class CozmoEmotionManager : MonoBehaviour {
       // send approriate animation
       if (instance.currentEmotionMachine.HasAnimForState(emotion_state)) {
         string last_anim_name = string.Empty;
-        //Debug.Log("sending emotion type: " + emotion_state);
         List<CozmoAnimation> anims = instance.currentEmotionMachine.GetAnimsForType(emotion_state);
         CozmoEmotionState emo_state = instance.currentEmotionMachine.GetStateForName(emotion_state);
         if (emo_state.playAllAnims) {
-          /*
-          for (int i = 0; i < anims.Count; i++)
-          {
-            CozmoAnimation anim = anims [i];
-            if (i == 0)
-            {
-              instance.SendAnimation (anim, clear_current);
-            }
-            else
-            {
-              instance.SendAnimation (anim, false);
-            }
-            last_anim_name = anim.animName;
-          }
-          */
           instance.SendAnimations(anims, clear_current);
         }
         else {
@@ -159,11 +143,11 @@ public class CozmoEmotionManager : MonoBehaviour {
             instance.SendAnimation(next_anims[rand_index], false);
           }
         }
-        Debug.Log("setting emotion to " + emotion_state);
+        DAS.Debug("CozmoEmotionManager", "setting emotion to " + emotion_state);
         return last_anim_name;
       }
       else {
-        Debug.LogError("tring to send animation for emotion type " + emotion_state + ", and the current machine has no anim mapped");
+        DAS.Error("CozmoEmotionManager", "tring to send animation for emotion type " + emotion_state + ", and the current machine has no anim mapped");
       }
     }
 
@@ -179,7 +163,7 @@ public class CozmoEmotionManager : MonoBehaviour {
     //if (stopPreviousAnim && robot.isBusy && robot.Status(Anki.Cozmo.RobotStatusFlagClad.Animating)) {
     //  robot.CancelAction(Anki.Cozmo.RobotActionType.PLAY_ANIMATION);
     //}
-    Debug.Log("Sending " + anim.animName + " with " + anim.numLoops + " loop" + (anim.numLoops != 1 ? "s" : ""));
+    DAS.Debug("CozmoEmotionManager", "Sending " + anim.animName + " with " + anim.numLoops + " loop" + (anim.numLoops != 1 ? "s" : ""));
     PlayAnimationMessage.animationName = anim.animName;
     PlayAnimationMessage.numLoops = anim.numLoops;
     PlayAnimationMessage.robotID = robot.ID;
@@ -212,7 +196,7 @@ public class CozmoEmotionManager : MonoBehaviour {
     
     for (int i = 0; i < anims.Count; i++) {
       CozmoAnimation anim = anims[i];
-      Debug.Log("Sending " + anim.animName + " with " + anim.numLoops + " loop" + (anim.numLoops != 1 ? "s" : ""));
+      DAS.Debug("CozmoEmotionManager", "Sending " + anim.animName + " with " + anim.numLoops + " loop" + (anim.numLoops != 1 ? "s" : ""));
       PlayAnimationMessages[i].animationName = anim.animName;
       PlayAnimationMessages[i].numLoops = anim.numLoops;
       PlayAnimationMessages[i].robotID = robot.ID;
@@ -249,7 +233,7 @@ public class CozmoEmotionManager : MonoBehaviour {
     }
   }
 
-  public void SetEmotionReturnToPose(string emotion_state, float x_mm, float y_mm, float rad, bool stopPreviousAnim = false) {
+  public void SetEmotionReturnToPose(string emotion_state, float x_mm, float y_mm, float rad, bool stopPreviousAnim = false, bool reverse_order = false) {
     if (robot == null)
       return;
 
@@ -262,7 +246,7 @@ public class CozmoEmotionManager : MonoBehaviour {
         if (stopPreviousAnim && robot.isBusy && robot.Status(Anki.Cozmo.RobotStatusFlagClad.Animating)) {
           robot.CancelAction(Anki.Cozmo.RobotActionType.PLAY_ANIMATION);
         }
-        Debug.Log("Sending " + anim.animName + " with " + anim.numLoops + " loop" + (anim.numLoops != 1 ? "s" : ""));
+        DAS.Debug("CozmoEmotionManager", "Sending " + anim.animName + " with " + anim.numLoops + " loop" + (anim.numLoops != 1 ? "s" : ""));
         PlayAnimationMessage.animationName = anim.animName;
         PlayAnimationMessage.numLoops = anim.numLoops;
         PlayAnimationMessage.robotID = robot.ID;
@@ -273,11 +257,20 @@ public class CozmoEmotionManager : MonoBehaviour {
         GotoPoseMessage.y_mm = y_mm;
         GotoPoseMessage.rad = rad;
 
-        QueueCompoundActionsMessage.actions[0].playAnimation = PlayAnimationMessage;
-        QueueCompoundActionsMessage.actionTypes[0] = Anki.Cozmo.RobotActionType.PLAY_ANIMATION;
+        if (!reverse_order) {
+          QueueCompoundActionsMessage.actions[0].playAnimation = PlayAnimationMessage;
+          QueueCompoundActionsMessage.actionTypes[0] = Anki.Cozmo.RobotActionType.PLAY_ANIMATION;
+       
+          QueueCompoundActionsMessage.actions[1].goToPose = GotoPoseMessage;
+          QueueCompoundActionsMessage.actionTypes[1] = Anki.Cozmo.RobotActionType.DRIVE_TO_POSE;
+        }
+        else {
+          QueueCompoundActionsMessage.actions[0].goToPose = GotoPoseMessage;
+          QueueCompoundActionsMessage.actionTypes[0] = Anki.Cozmo.RobotActionType.DRIVE_TO_POSE;
 
-        QueueCompoundActionsMessage.actions[1].goToPose = GotoPoseMessage;
-        QueueCompoundActionsMessage.actionTypes[1] = Anki.Cozmo.RobotActionType.DRIVE_TO_POSE;
+          QueueCompoundActionsMessage.actions[1].playAnimation = PlayAnimationMessage;
+          QueueCompoundActionsMessage.actionTypes[1] = Anki.Cozmo.RobotActionType.PLAY_ANIMATION;
+        }
 
         QueueCompoundActionsMessage.numRetries = 0;
         QueueCompoundActionsMessage.inSlot = 0;
@@ -295,12 +288,12 @@ public class CozmoEmotionManager : MonoBehaviour {
         RobotEngineManager.instance.SendMessage();
       }
       else {
-        Debug.LogError("tring to send animation for emotion type " + emotion_state + ", and the current machine has no anim mapped");
+        DAS.Error("CozmoEmotionManager", "tring to send animation for emotion type " + emotion_state + ", and the current machine has no anim mapped");
       }
     }
   }
 
-  public void SetEmotionTurnInPlace(string emotion_state, float rad, bool stopPreviousAnim = false) {
+  public void SetEmotionTurnInPlace(string emotion_state, float rad, bool stopPreviousAnim = false, bool reverseOrder = false, bool isParallel = false) {
     if (robot == null)
       return;
 
@@ -313,7 +306,7 @@ public class CozmoEmotionManager : MonoBehaviour {
         if (stopPreviousAnim && robot.isBusy && robot.Status(Anki.Cozmo.RobotStatusFlagClad.Animating)) {
           robot.CancelAction(Anki.Cozmo.RobotActionType.PLAY_ANIMATION);
         }
-        Debug.Log("Sending " + anim.animName + " with " + anim.numLoops + " loop" + (anim.numLoops != 1 ? "s" : ""));
+        DAS.Debug("CozmoEmotionManager", "Sending " + anim.animName + " with " + anim.numLoops + " loop" + (anim.numLoops != 1 ? "s" : ""));
         PlayAnimationMessage.animationName = anim.animName;
         PlayAnimationMessage.numLoops = anim.numLoops;
         PlayAnimationMessage.robotID = robot.ID;
@@ -322,16 +315,25 @@ public class CozmoEmotionManager : MonoBehaviour {
         TurnInPlaceMessage.angle_rad = rad;
         TurnInPlaceMessage.robotID = robot.ID;
 
-        QueueCompoundActionsMessage.actions[0].playAnimation = PlayAnimationMessage;
-        QueueCompoundActionsMessage.actionTypes[0] = Anki.Cozmo.RobotActionType.PLAY_ANIMATION;
+        if (!reverseOrder) {
+          QueueCompoundActionsMessage.actions[0].playAnimation = PlayAnimationMessage;
+          QueueCompoundActionsMessage.actionTypes[0] = Anki.Cozmo.RobotActionType.PLAY_ANIMATION;
 
-        QueueCompoundActionsMessage.actions[1].turnInPlace = TurnInPlaceMessage;
-        QueueCompoundActionsMessage.actionTypes[1] = Anki.Cozmo.RobotActionType.TURN_IN_PLACE;
+          QueueCompoundActionsMessage.actions[1].turnInPlace = TurnInPlaceMessage;
+          QueueCompoundActionsMessage.actionTypes[1] = Anki.Cozmo.RobotActionType.TURN_IN_PLACE;
+        }
+        else {
+          QueueCompoundActionsMessage.actions[0].turnInPlace = TurnInPlaceMessage;
+          QueueCompoundActionsMessage.actionTypes[0] = Anki.Cozmo.RobotActionType.TURN_IN_PLACE;
+
+          QueueCompoundActionsMessage.actions[1].playAnimation = PlayAnimationMessage;
+          QueueCompoundActionsMessage.actionTypes[1] = Anki.Cozmo.RobotActionType.PLAY_ANIMATION;
+        }
 
         QueueCompoundActionsMessage.numRetries = 0;
         QueueCompoundActionsMessage.inSlot = 0;
         QueueCompoundActionsMessage.robotID = robot.ID;
-        QueueCompoundActionsMessage.parallel = false;
+        QueueCompoundActionsMessage.parallel = isParallel;
 
         if (stopPreviousAnim) {
           QueueCompoundActionsMessage.position = Anki.Cozmo.QueueActionPosition.NOW_AND_CLEAR_REMAINING;
@@ -344,7 +346,7 @@ public class CozmoEmotionManager : MonoBehaviour {
         RobotEngineManager.instance.SendMessage();
       }
       else {
-        Debug.LogError("tring to send animation for emotion type " + emotion_state + ", and the current machine has no anim mapped");
+        DAS.Error("CozmoEmotionManager", "tring to send animation for emotion type " + emotion_state + ", and the current machine has no anim mapped");
       }
     }
   }

@@ -60,11 +60,6 @@ public class Intro : MonoBehaviour {
     simIP.Rebuild(CanvasUpdate.PreRender);
     visualizerIP.Rebuild(CanvasUpdate.PreRender);
 
-    /*if (robot != null) {
-      Debug.Log("knownObjects cleared!");
-      robot.knownObjects.Clear();
-    }*/
-
   }
 
   private void Start() {
@@ -153,7 +148,7 @@ public class Intro : MonoBehaviour {
 
   private void RobotConnected(int robotID) {
     if (!RobotEngineManager.instance.robots.ContainsKey(robotID)) {
-      Debug.LogError("Unknown robot connected: " + robotID.ToString());
+      DAS.Error("Intro", "Unknown robot connected: " + robotID.ToString());
       return;
     }
 
