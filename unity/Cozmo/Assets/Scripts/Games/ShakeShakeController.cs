@@ -76,6 +76,7 @@ public class ShakeShakeController : GameController {
       BlockData bData = new BlockData();
       bData.SetNewColor(Color.white); // start all blocks as white
       blockData.Add(activeBlock.Key, bData);
+      Debug.Log(activeBlock.Key);
     }
   }
 
@@ -93,24 +94,24 @@ public class ShakeShakeController : GameController {
       float rand = Random.Range(0.0f, 1.0f);
 
       if (rand < 0.01f) {
-        ChangeBlockTo(Color.green, Color.yellow);
+        ChangeFirstBlockTo(Color.green, Color.yellow, 2.0f);
       }
       else if (rand < 0.02f && blueBlockCount < 3) { 
-        //ChangeBlockTo(Color.green, Color.blue);
+        //ChangeFirstBlockTo(Color.green, Color.blue, 2.0f);
       }
       else if (rand < 0.03f) {
-        ChangeBlockTo(Color.green, Color.white);
+        ChangeFirstBlockTo(Color.green, Color.white, 2.0f);
       }
     }
 
     // process white blocks
-    ChangeBlocksIf(Color.white, Color.green, 2.0f);
+    ChangeBlocksTo(Color.white, Color.green, 2.0f);
 
     // process yellow blocks
-    ChangeBlocksIf(Color.yellow, Color.red, 1.0f);
+    ChangeBlocksTo(Color.yellow, Color.red, 1.0f);
 
     // process red blocks
-    ChangeBlocksIf(Color.red, Color.white, 2.0f);
+    ChangeBlocksTo(Color.red, Color.white, 2.0f);
 
     // process blue blocks
 
@@ -166,20 +167,16 @@ public class ShakeShakeController : GameController {
     return counter;
   }
 
-  // picks the first color it finds of colorFrom and
-  // changes it to colorTo
-  private void ChangeBlockTo(Color colorFrom, Color colorTo) {
+  private void ChangeFirstBlockTo(Color colorFrom, Color colorTo, float timeThreshold) {
     foreach (KeyValuePair<int, BlockData> bData in blockData) {
-      if (bData.Value.currentColor == colorFrom) {
+      if (bData.Value.currentColor == colorFrom && Time.time - bData.Value.lastColorChangeTime > timeThreshold) {
         bData.Value.SetNewColor(colorTo);
         return;
       }
     }
   }
 
-  // finds all blocks of colorFrom that has been that color for longer
-  // than timeThreshold and changes them to colorTo
-  private void ChangeBlocksIf(Color colorFrom, Color colorTo, float timeThreshold) {
+  private void ChangeBlocksTo(Color colorFrom, Color colorTo, float timeThreshold) {
     foreach (KeyValuePair<int, BlockData> bData in blockData) {
       if (bData.Value.currentColor == colorFrom && Time.time - bData.Value.lastColorChangeTime > timeThreshold) {
         bData.Value.SetNewColor(colorTo);
@@ -189,6 +186,7 @@ public class ShakeShakeController : GameController {
 
   private void BlockTapped(int blockID, int numTapped) {
     BlockData bData = null;
+    DAS.Debug("ShakeShakeController", "Block tapped callback " + blockID);
     if (blockData.TryGetValue(blockID, out bData)) {
       if (bData.currentColor == Color.green) {
         currentScore++;
