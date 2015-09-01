@@ -22,17 +22,28 @@
 
 #include "util/logging/logging.h"
 #include "anki/common/basestation/utils/helpers/boundedWhile.h"
+#include "anki/common/basestation/utils/data/dataPlatform.h"
 
 #include "anki/cozmo/basestation/viz/vizManager.h"
 
 namespace Anki {
 namespace Cozmo {
   
-  VisionProcessingThread::VisionProcessingThread(Data::DataPlatform* dataPlatform)
-  : _visionSystem(new VisionSystem(dataPlatform))
+  VisionProcessingThread::VisionProcessingThread(Util::Data::DataPlatform* dataPlatform)
+  : _visionSystem(nullptr)
   , _isCamCalibSet(false)
   , _running(false)
   {
+    std::string dataPath("");
+    if(dataPlatform != nullptr) {
+      dataPath = dataPlatform->pathToResource(Util::Data::Scope::Resources,
+                                              "/config/basestation/vision");
+    } else {
+      PRINT_NAMED_WARNING("VisionProcessingThread.Constructor.NullDataPlatform",
+                          "Insantiating VisionSystem with a empty DataPath.");
+    }
+    
+    _visionSystem = new VisionSystem(dataPath);
     
   } // VisionSystem()
 

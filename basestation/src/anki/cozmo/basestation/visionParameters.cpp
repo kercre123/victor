@@ -74,7 +74,8 @@ namespace Anki {
         
         maxConnectedComponentSegments = 39000; // 322*240/2 = 38640
         
-        // TODO: Benchmark quad refinement so we can enable this by default
+        // Maximum number of refinement iterations (i.e. if convergence is not
+        // detected in the meantime according to minCornerChange parameter below)
         quadRefinementIterations = 25;
         
         // TODO: Could this be fewer samples?

@@ -33,6 +33,7 @@
       '<(coretech_external_path)/opencv-2.4.8/modules/features2d/include',
       '<(coretech_external_path)/opencv-2.4.8/modules/flann/include',
     ],
+    
     'opencv_libs': [
       'libzlib.a',
       'liblibjpeg.a',
@@ -327,7 +328,7 @@
               '$(SDKROOT)/System/Library/Frameworks/OpenGL.framework',
             ],
           }, # end cozmo_physics
-
+ 
           {
             'target_name': 'webotsCtrlLightCube',
             'type': 'executable',
@@ -400,6 +401,7 @@
             'libraries': [
               '<(webots_path)/lib/libCppController.dylib',
               '<@(opencv_libs)',
+              '$(SDKROOT)/System/Library/Frameworks/AppKit.framework',
             ],
           }, # end controller Robot
 

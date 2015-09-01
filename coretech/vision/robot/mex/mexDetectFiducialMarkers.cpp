@@ -55,9 +55,12 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
   Anki::SetCoreTechPrintFunctionPtr(mexPrintf);
 
+  Anki::Embedded::FiducialDetectionParameters params;
+  
   const s32 maxMarkers = 500;
-  const s32 maxExtractedQuads = 5000;
-  const s32 maxConnectedComponentSegments = 0xFFFFF; // 0xFFFFF is a little over one million
+  params.maxExtractedQuads = 5000;
+  params.maxConnectedComponentSegments = 0xFFFFF; // 0xFFFFF is a little over one million
+
   const s32 bufferSize = 100000000;
 
   AnkiConditionalErrorAndReturn(nrhs >= 21 && nrhs <= 22 && nlhs >= 2 && nlhs <= 4, "mexDetectFiducialMarkers", "Call this function as following: [quads, markerTypes, <markerNames>, <markerValidity>] = mexDetectFiducialMarkers(uint8(image), useIntegralImageFiltering, scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_minHollowRatio, minLaplacianPeakRatio, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio, quadRefinementIterations, numRefinementSamples, quadRefinementMaxCornerChange, quadRefinementMinCornerChange, returnInvalidMarkers, <cornerMethod>);");
@@ -65,32 +68,36 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   MemoryStack memory(mxMalloc(bufferSize), bufferSize);
   AnkiConditionalErrorAndReturn(memory.IsValid(), "mexDetectFiducialMarkers", "Memory could not be allocated");
 
-  Array<u8> image                             = mxArrayToArray<u8>(prhs[0], memory);
-  const bool useIntegralImageFiltering        = static_cast<bool>(Round<s32>(mxGetScalar(prhs[1])));
-  const s32 scaleImage_numPyramidLevels       = static_cast<s32>(mxGetScalar(prhs[2]));
-  const s32 scaleImage_thresholdMultiplier    = Round<s32>(pow(2.0,16)*mxGetScalar(prhs[3])); // Convert from double to SQ15.16
-  const s16 component1d_minComponentWidth     = static_cast<s16>(mxGetScalar(prhs[4]));
-  const s16 component1d_maxSkipDistance       = static_cast<s16>(mxGetScalar(prhs[5]));
-  const s32 component_minimumNumPixels        = static_cast<s32>(mxGetScalar(prhs[6]));
-  const s32 component_maximumNumPixels        = static_cast<s32>(mxGetScalar(prhs[7]));
-  const s32 component_sparseMultiplyThreshold = Round<s32>(pow(2.0,5)*mxGetScalar(prhs[8])); // Convert from double to SQ26.5
-  const s32 component_solidMultiplyThreshold  = Round<s32>(pow(2.0,5)*mxGetScalar(prhs[9])); // Convert from double to SQ26.5
-  const f32 component_minHollowRatio          = static_cast<f32>(mxGetScalar(prhs[10]));
-  const s32 minLaplacianPeakRatio             = static_cast<s32>(mxGetScalar(prhs[11]));
-  const s32 quads_minQuadArea                 = static_cast<s32>(mxGetScalar(prhs[12]));
-  const s32 quads_quadSymmetryThreshold       = Round<s32>(pow(2.0,8)*mxGetScalar(prhs[13])); // Convert from double to SQ23.8
-  const s32 quads_minDistanceFromImageEdge    = static_cast<s32>(mxGetScalar(prhs[14]));
-  const f32 decode_minContrastRatio           = static_cast<f32>(mxGetScalar(prhs[15]));
-  const s32 quadRefinementIterations          = static_cast<s32>(mxGetScalar(prhs[16]));
-  const s32 numRefinementSamples              = static_cast<s32>(mxGetScalar(prhs[17]));
-  const f32 quadRefinementMaxCornerChange     = static_cast<f32>(mxGetScalar(prhs[18]));
-  const f32 quadRefinementMinCornerChange     = static_cast<f32>(mxGetScalar(prhs[19]));
-  const bool returnInvalidMarkers             = static_cast<bool>(Round<s32>(mxGetScalar(prhs[20])));
   
-  CornerMethod cornerMethod = CORNER_METHOD_LAPLACIAN_PEAKS; // {CORNER_METHOD_LAPLACIAN_PEAKS, CORNER_METHOD_LINE_FITS};
-  if(nrhs >= 22)
-    cornerMethod = static_cast<CornerMethod>(Round<s32>(mxGetScalar(prhs[21])));
-
+  
+  Array<u8> image                             = mxArrayToArray<u8>(prhs[0], memory);
+  params.useIntegralImageFiltering        = static_cast<bool>(Round<s32>(mxGetScalar(prhs[1])));
+  params.scaleImage_numPyramidLevels       = static_cast<s32>(mxGetScalar(prhs[2]));
+  params.scaleImage_thresholdMultiplier    = Round<s32>(pow(2.0,16)*mxGetScalar(prhs[3])); // Convert from double to SQ15.16
+  params.component1d_minComponentWidth     = static_cast<s16>(mxGetScalar(prhs[4]));
+  params.component1d_maxSkipDistance       = static_cast<s16>(mxGetScalar(prhs[5]));
+  params.component_minimumNumPixels        = static_cast<s32>(mxGetScalar(prhs[6]));
+  params.component_maximumNumPixels        = static_cast<s32>(mxGetScalar(prhs[7]));
+  params.component_sparseMultiplyThreshold = Round<s32>(pow(2.0,5)*mxGetScalar(prhs[8])); // Convert from double to SQ26.5
+  params.component_solidMultiplyThreshold  = Round<s32>(pow(2.0,5)*mxGetScalar(prhs[9])); // Convert from double to SQ26.5
+  params.component_minHollowRatio          = static_cast<f32>(mxGetScalar(prhs[10]));
+  params.minLaplacianPeakRatio             = static_cast<s32>(mxGetScalar(prhs[11]));
+  params.quads_minQuadArea                 = static_cast<s32>(mxGetScalar(prhs[12]));
+  params.quads_quadSymmetryThreshold       = Round<s32>(pow(2.0,8)*mxGetScalar(prhs[13])); // Convert from double to SQ23.8
+  params.quads_minDistanceFromImageEdge    = static_cast<s32>(mxGetScalar(prhs[14]));
+  params.decode_minContrastRatio           = static_cast<f32>(mxGetScalar(prhs[15]));
+  params.refine_quadRefinementIterations          = static_cast<s32>(mxGetScalar(prhs[16]));
+  params.refine_numRefinementSamples              = static_cast<s32>(mxGetScalar(prhs[17]));
+  params.refine_quadRefinementMaxCornerChange     = static_cast<f32>(mxGetScalar(prhs[18]));
+  params.refine_quadRefinementMinCornerChange     = static_cast<f32>(mxGetScalar(prhs[19]));
+  params.returnInvalidMarkers             = static_cast<bool>(Round<s32>(mxGetScalar(prhs[20])));
+  params.doCodeExtraction                 = true;
+  
+  params.cornerMethod = CORNER_METHOD_LAPLACIAN_PEAKS; // {CORNER_METHOD_LAPLACIAN_PEAKS, CORNER_METHOD_LINE_FITS};
+  if(nrhs >= 22) {
+    params.cornerMethod = static_cast<CornerMethod>(Round<s32>(mxGetScalar(prhs[21])));
+  }
+  
   AnkiConditionalErrorAndReturn(image.IsValid(), "mexDetectFiducialMarkers", "Could not allocate image");
 
   MemoryStack scratch0(mxCalloc(bufferSize,1), bufferSize);
@@ -106,7 +113,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   AnkiConditionalErrorAndReturn(scratch3.IsValid(), "mexDetectFiducialMarkers", "Scratch3 could not be allocated");
 
   FixedLengthList<VisionMarker> markers(maxMarkers, scratch0);
-  FixedLengthList<Array<f32>> homographies(maxMarkers, scratch0);
+  FixedLengthList<Array<f32> > homographies(maxMarkers, scratch0);
 
   markers.set_size(maxMarkers);
   homographies.set_size(maxMarkers);
@@ -121,22 +128,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
       image,
       markers,
       homographies,
-      useIntegralImageFiltering,
-      scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier,
-      component1d_minComponentWidth, component1d_maxSkipDistance,
-      component_minimumNumPixels, component_maximumNumPixels,
-      component_sparseMultiplyThreshold, component_solidMultiplyThreshold,
-      component_minHollowRatio,
-      cornerMethod, minLaplacianPeakRatio,
-      quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge,
-      decode_minContrastRatio,
-      maxConnectedComponentSegments,
-      maxExtractedQuads,
-      quadRefinementIterations,
-      numRefinementSamples,
-      quadRefinementMaxCornerChange,
-      quadRefinementMinCornerChange,
-      returnInvalidMarkers,
+      params,
       scratch1,
       scratch2,
       scratch3);

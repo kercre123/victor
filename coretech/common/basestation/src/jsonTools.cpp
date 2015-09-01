@@ -71,6 +71,11 @@ namespace JsonTools
     return node.asInt();
   }
   
+  template<>
+  size_t GetValue<size_t>(const Json::Value& node) {
+    return node.asUInt();
+  }
+  
   // Char
   template<>
   char GetValue<char>(const Json::Value& node) {

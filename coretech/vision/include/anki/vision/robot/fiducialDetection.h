@@ -24,52 +24,42 @@ namespace Anki
     
     enum CornerMethod {
       CORNER_METHOD_LAPLACIAN_PEAKS = 0,
-      CORNER_METHOD_LINE_FITS = 1};
+      CORNER_METHOD_LINE_FITS = 1
+    };
 
+    struct FiducialDetectionParameters {
+      bool useIntegralImageFiltering;
+      s32 scaleImage_numPyramidLevels;
+      s32 scaleImage_thresholdMultiplier;
+      s16 component1d_minComponentWidth;
+      s16 component1d_maxSkipDistance;
+      s32 component_minimumNumPixels;
+      s32 component_maximumNumPixels;
+      s32 component_sparseMultiplyThreshold;
+      s32 component_solidMultiplyThreshold;
+      f32 component_minHollowRatio;
+      CornerMethod cornerMethod;
+      s32 minLaplacianPeakRatio;
+      s32 quads_minQuadArea;
+      s32 quads_quadSymmetryThreshold;
+      s32 quads_minDistanceFromImageEdge;
+      f32 decode_minContrastRatio;
+      s32 maxConnectedComponentSegments;
+      s32 maxExtractedQuads;
+      s32 refine_quadRefinementIterations;
+      s32 refine_numRefinementSamples;
+      f32 refine_quadRefinementMaxCornerChange;
+      f32 refine_quadRefinementMinCornerChange;
+      bool returnInvalidMarkers;
+      bool doCodeExtraction;
+    };
+    
     // The primary wrapper function for detecting fiducial markers in an image
     Result DetectFiducialMarkers(
       const Array<u8> &image,
       FixedLengthList<VisionMarker> &markers,
       FixedLengthList<Array<f32> > &homographies,
-      const s32 scaleImage_numPyramidLevels, const s32 scaleImage_thresholdMultiplier,
-      const s16 component1d_minComponentWidth, const s16 component1d_maxSkipDistance,
-      const s32 component_minimumNumPixels, const s32 component_maximumNumPixels,
-      const s32 component_sparseMultiplyThreshold, const s32 component_solidMultiplyThreshold,
-      const f32 component_minHollowRatio,
-      const CornerMethod cornerMethod, const s32 minLaplacianPeakRatio,
-      const s32 quads_minQuadArea, const s32 quads_quadSymmetryThreshold, const s32 quads_minDistanceFromImageEdge,
-      const f32 decode_minContrastRatio,
-      const s32 maxConnectedComponentSegments, //< If this number is above 2^16-1, then it will use 25% more memory per component
-      const s32 maxExtractedQuads,
-      const s32 refine_quadRefinementIterations,
-      const s32 refine_numRefinementSamples,
-      const f32 refine_quadRefinementMaxCornerChange,
-      const f32 refine_quadRefinementMinCornerChange,
-      const bool returnInvalidMarkers,
-      MemoryStack scratchCcm,
-      MemoryStack scratchOnchip,
-      MemoryStack scratchOffChip);
-
-    Result DetectFiducialMarkers(
-      const Array<u8> &image,
-      FixedLengthList<VisionMarker> &markers,
-      FixedLengthList<Array<f32> > &homographies,
-      const bool useIntegralImageFiltering,
-      const s32 scaleImage_numPyramidLevels, const s32 scaleImage_thresholdMultiplier,
-      const s16 component1d_minComponentWidth, const s16 component1d_maxSkipDistance,
-      const s32 component_minimumNumPixels, const s32 component_maximumNumPixels,
-      const s32 component_sparseMultiplyThreshold, const s32 component_solidMultiplyThreshold,
-      const f32 component_minHollowRatio,
-      const CornerMethod cornerMethod, const s32 minLaplacianPeakRatio,
-      const s32 quads_minQuadArea, const s32 quads_quadSymmetryThreshold, const s32 quads_minDistanceFromImageEdge,
-      const f32 decode_minContrastRatio,
-      const s32 maxConnectedComponentSegments, //< If this number is above 2^16-1, then it will use 25% more memory per component
-      const s32 maxExtractedQuads,
-      const s32 refine_quadRefinementIterations,
-      const s32 refine_numRefinementSamples,
-      const f32 refine_quadRefinementMaxCornerChange,
-      const f32 refine_quadRefinementMinCornerChange,
-      const bool returnInvalidMarkers,
+      const FiducialDetectionParameters& params,
       MemoryStack scratchCcm,
       MemoryStack scratchOnchip,
       MemoryStack scratchOffChip);
