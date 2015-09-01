@@ -114,7 +114,6 @@ public class RobotRelativeControls : MonoBehaviour {
 
   void OnEnable() {
     //reset default state for this control scheme test
-    //Debug.Log("RobotRelativeControls OnEnable");
 
     lastInputs = Vector2.zero;
 
@@ -125,7 +124,6 @@ public class RobotRelativeControls : MonoBehaviour {
 
     maxTurnFactor = PlayerPrefs.GetFloat("MaxTurnFactor", OptionsScreen.DEFAULT_MAX_TURN_FACTOR);
     reverseLikeACar = PlayerPrefs.GetInt("ReverseLikeACar", OptionsScreen.REVERSE_LIKE_A_CAR) == 1;
-    //Debug.Log(gameObject.name + " OnEnable reverseLikeACar("+reverseLikeACar+")");
     targetLock = null;
     lastTargetLock = null;
 
@@ -211,11 +209,9 @@ public class RobotRelativeControls : MonoBehaviour {
 
     if (Input.touchCount > 0) {
       timeSinceInput = 0f;
-      //Debug.Log("Input.touchCount("+Input.touchCount+") timeSinceInput = 0f;");
     }
     if (Quaternion.Angle(Input.gyro.attitude, lastAttitude) >= 1f) {
       timeSinceInput = 0f;
-      //Debug.Log("attitude changed! timeSinceInput = 0f;");
     }
 
     lastAttitude = Input.gyro.attitude;
@@ -245,10 +241,8 @@ public class RobotRelativeControls : MonoBehaviour {
       if (!newLock)
         CheckSwapTargetLock(targetSwapDirection);
 
-      //robot.TrackHeadToObject( targetLock );
     }
-//    Debug.Log("hiddenInputField.text: " +hiddenInputField.text);
-//    hiddenInputField.text = string.Empty;
+
 
     if (PlayerPrefs.GetInt("CozmoAssistedControls", 0) == 0) {
       bool stopped = inputs.sqrMagnitude == 0f && moveCommandLastFrame;
@@ -296,15 +290,10 @@ public class RobotRelativeControls : MonoBehaviour {
 
   void OnDisable() {
     //clean up this controls test if needed
-    //Debug.Log("RobotRelativeControls OnDisable");
 
     if (robot != null && RobotEngineManager.instance.IsConnected) {
       robot.DriveWheels(0f, 0f);
     }
-
-//    if(recorder != null) {
-//      recorder.enabled = false;
-//    }
 
     ShowSticks(false);
   }
@@ -332,7 +321,7 @@ public class RobotRelativeControls : MonoBehaviour {
     float turnSoFar = MathUtil.AngleDelta(robotStartTurnFacing, robotFacing);
     if (Mathf.Abs(turnSoFar) < 180f)
       return true;
-    //Debug.Log("frame(" + Time.frameCount + ") EndSwipe turnSoFar(" + turnSoFar + ")");
+
     aboutFace = false;
     robot.DriveWheels(0f, 0f);
 
@@ -396,7 +385,7 @@ public class RobotRelativeControls : MonoBehaviour {
       turn = turn * turn;
       inputs.x = turn * Mathf.Sign(Vector2.Dot(atTarget, robotRight));
       if (debugTargetLock)
-        Debug.Log("frame(" + Time.frameCount + ") time(" + Time.timeSinceLevelLoad + ") snapHeadingToSelectedObject turn(" + turn + ") selected(" + robot.selectedObjects[0] + ") robot.Rotation(" + robot.Rotation + ")");
+        DAS.Debug("RobotRelativeControls", "frame(" + Time.frameCount + ") time(" + Time.timeSinceLevelLoad + ") snapHeadingToSelectedObject turn(" + turn + ") selected(" + robot.selectedObjects[0] + ") robot.Rotation(" + robot.Rotation + ")");
     }
   
     Debug.DrawRay(Vector3.zero, atTarget.normalized * 5f, Color.cyan);
@@ -425,7 +414,6 @@ public class RobotRelativeControls : MonoBehaviour {
           swipeTurnIndex++;
         }
         swipeTurning = true;
-        //Debug.Log("frame("+Time.frameCount+") swipeTurning begin swipeTurnIndex("+swipeTurnIndex+")");
         horizontalStick.AbsorbSwipeRequest();
       }
     }
@@ -446,19 +434,16 @@ public class RobotRelativeControls : MonoBehaviour {
       }
       
       if (!horizontalStick.SwipeActive || Mathf.Abs(turnSoFar) > goalAngle) {
-        //Debug.Log("frame("+Time.frameCount+") EndSwipe turnSoFar(" + turnSoFar + ") goalAngle(" + goalAngle + ")");
         horizontalStick.EndSwipe();
         swipeTurning = false;
       }
       else if (!horizontalStick.IsPressed) {
-        //Debug.Log("frame("+Time.frameCount+") swipeTurning turnSoFar(" + turnSoFar + ") goalAngle(" + goalAngle + ") input.x("+horizontalStick.Horizontal+")");
         inputs.x = horizontalStick.Horizontal;
       }
     }
     //for now lets ignore stick hor while swipe input is still underway
     else {
       inputs.x = horizontalStick.Horizontal;
-      //Debug.Log("frame("+Time.frameCount+") input.x("+horizontalStick.Horizontal+")");
     }
   }
 
@@ -494,8 +479,6 @@ public class RobotRelativeControls : MonoBehaviour {
 
     inputs.x += h;
     inputs.x = Mathf.Clamp(inputs.x, -1f, 1f);
-
-    //if(gyroInputs.Horizontal != 0f) Debug.Log("gyroInputs.Horizontal("+gyroInputs.Horizontal+")");
   }
 
   Vector2 CheckGyroTargetSwap() {
@@ -524,12 +507,6 @@ public class RobotRelativeControls : MonoBehaviour {
   void CheckVerticalDebugAxis() {
     if (inputs.y == 0f) {
       inputs.y = Input.GetKey(KeyCode.W) ? 1f : Input.GetKey(KeyCode.S) ? -1f : 0f;
-      /*
-      if( hiddenInputField != null )
-      {
-        inputs.y = hiddenInputField.text.Contains("w") ? 1f : hiddenInputField.text.Contains("s") ? -1f : 0f;
-      }
-      */
 
     }
   }
@@ -537,12 +514,6 @@ public class RobotRelativeControls : MonoBehaviour {
   void CheckDebugHorizontalAxesTurning() {
     if (inputs.x == 0f) {
       inputs.x = Input.GetKey(KeyCode.D) ? 1f : Input.GetKey(KeyCode.A) ? -1f : 0f;
-      /*
-      if( hiddenInputField != null )
-      {
-        inputs.x = hiddenInputField.text.Contains("d") ? 1f : hiddenInputField.text.Contains("a") ? -1f : 0f;
-      }
-      */
     }
   }
 
@@ -618,12 +589,8 @@ public class RobotRelativeControls : MonoBehaviour {
       });
     }
 
-    //robot.selectedObjects.Clear();
-    /*robot.selectedObjects.Remove(potential[0]);
-    robot.selectedObjects.Insert(0, potential[0]);*/
     robot.targetLockedObject = potential[0];
     targetLock = potential[0];
-    //Debug.Log("frame("+Time.frameCount+") swapped oldLock("+oldLock+") newLock("+targetLock+", "+targetLock.ObjectType+", "+targetLock.Family+", "+targetLock.WorldPosition+") direction("+direction+") from potential("+potential.Count+")");
   }
 
   bool TargetIsInDirectionFromTargetLock(ObservedObject obj, ObservedObject locked, Vector3 direction) {
@@ -696,7 +663,7 @@ public class RobotRelativeControls : MonoBehaviour {
     leftWheelSpeed += 1f;
     rightWheelSpeed += 1f;
     debugOverride = true;
-    Debug.Log(gameObject.name + " NudgeForward");
+    DAS.Debug("RobotRelativeControls", gameObject.name + " NudgeForward");
   }
 
   public void NudgeBackwards() {
@@ -707,7 +674,7 @@ public class RobotRelativeControls : MonoBehaviour {
     leftWheelSpeed -= 1f;
     rightWheelSpeed -= 1f;
     debugOverride = true;
-    Debug.Log(gameObject.name + " NudgeBackwards");
+    DAS.Debug("RobotRelativeControls", gameObject.name + " NudgeBackwards");
   }
 
   public void NudgeRight() {
@@ -718,7 +685,7 @@ public class RobotRelativeControls : MonoBehaviour {
     leftWheelSpeed += 1f;
     rightWheelSpeed -= 1f;
     debugOverride = true;
-    Debug.Log(gameObject.name + " NudgeRight");
+    DAS.Debug("RobotRelativeControls", gameObject.name + " NudgeRight");
   }
 
   public void NudgeLeft() {
@@ -729,7 +696,7 @@ public class RobotRelativeControls : MonoBehaviour {
     leftWheelSpeed -= 1f;
     rightWheelSpeed += 1f;
     debugOverride = true;
-    Debug.Log(gameObject.name + " NudgeRight");
+    DAS.Debug("RobotRelativeControls", gameObject.name + " NudgeRight");
   }
 
   public void ReverseButtonPressed(bool pressed) {

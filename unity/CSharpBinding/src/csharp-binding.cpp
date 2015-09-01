@@ -14,7 +14,6 @@
 
 #include "anki/common/basestation/jsonTools.h"
 #include "util/logging/logging.h"
-#include "unity-logger-provider.h"
 
 #include <algorithm>
 #include <string>
@@ -39,18 +38,24 @@ using namespace Anki::Cozmo::CSharpBinding;
 
 bool initialized = false;
 
-UnityLoggerProvider logger_provider;
+void Unity_DAS_Event(const char* eventName, const char* eventValue) {
+  PRINT_NAMED_EVENT(eventName, "%s", eventValue);
+}
 
-int cozmo_set_log_callback(LogCallback callback, int min_log_level)
-{
-    logger_provider.SetMinLogLevel(min_log_level);
-    logger_provider.SetCallback(callback);
-    
-    if (callback != nullptr) {
-        Anki::Util::gLoggerProvider = &logger_provider;
-    }
-    
-    return (int)RESULT_OK;
+void Unity_DAS_LogE(const char* eventName, const char* eventValue) {
+  PRINT_NAMED_ERROR(eventName, "%s", eventValue);
+}
+
+void Unity_DAS_LogW(const char* eventName, const char* eventValue) {
+  PRINT_NAMED_WARNING(eventName, "%s", eventValue);
+}
+
+void Unity_DAS_LogI(const char* eventName, const char* eventValue) {
+  PRINT_NAMED_INFO(eventName, "%s", eventValue);
+}
+
+void Unity_DAS_LogD(const char* eventName, const char* eventValue) {
+  PRINT_NAMED_DEBUG(eventName, "%s", eventValue);
 }
 
 int cozmo_startup(const char *configuration_data)

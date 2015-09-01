@@ -56,7 +56,6 @@ public class DynamicSliderFrame : MonoBehaviour, IPointerDownHandler, IPointerUp
       localPointerPos.y -= rTrans.sizeDelta.y * 0.5f;
       sliderTrans.anchoredPosition = localPointerPos;
 
-      //Debug.Log("DynamicSliderFrame sliderTrans.anchoredPosition("+sliderTrans.anchoredPosition+") eventData.position("+eventData.position+") localPointerPos("+localPointerPos+")");
       if (hintsToHide != null) {
         hintsToHide.gameObject.SetActive(false);
       }
@@ -104,6 +103,5 @@ public class DynamicSliderFrame : MonoBehaviour, IPointerDownHandler, IPointerUp
 
   void RefreshToScreenSettings() {
     dynamic = ScreenMultiSettingsDetector.CurrentIndex == 0;
-    //Debug.Log(gameObject.name + " RefreshToScreenSettings dynamic("+dynamic+")" );
   }
 }

@@ -2,46 +2,43 @@
 using UnityEngine.UI;
 using System.Collections;
 
-public class ObservedObjectBox1 : ObservedObjectButton
-{
+public class ObservedObjectBox1 : ObservedObjectButton {
   protected Vector3[] corners;
 
-  protected override void Initialize()
-  {
-    if( initialized ) return;
+  protected override void Initialize() {
+    if (initialized)
+      return;
     
     corners = new Vector3[4];
     
     base.Initialize();
-  } 
+  }
 
-  public virtual Vector3 position
-  {
-    get
-    {
-      if( !initialized ) Initialize();
+  public virtual Vector3 position {
+    get {
+      if (!initialized)
+        Initialize();
       
-      rectTransform.GetWorldCorners( corners );
+      rectTransform.GetWorldCorners(corners);
       
-      if( corners.Length > 3 )
-      {
-        return ( corners[2] + corners[3] ) * 0.5f;
+      if (corners.Length > 3) {
+        return (corners[2] + corners[3]) * 0.5f;
       }
 
-      Debug.LogWarning( "Did not find 4 corners for " + transform.name );
+      DAS.Warn("ObservedObjectBox1", "Did not find 4 corners for " + transform.name);
       return Vector3.zero;
     }
   }
 
-  public bool IsInside( RectTransform reticle, Camera camera )
-  {
-    if( !initialized ) Initialize();
+  public bool IsInside(RectTransform reticle, Camera camera) {
+    if (!initialized)
+      Initialize();
 
-    rectTransform.GetWorldCorners( corners );
+    rectTransform.GetWorldCorners(corners);
 
-    for( int i = 0; i < corners.Length; ++i )
-    {
-      if( !RectTransformUtility.RectangleContainsScreenPoint( reticle, corners[i], camera ) ) return false;
+    for (int i = 0; i < corners.Length; ++i) {
+      if (!RectTransformUtility.RectangleContainsScreenPoint(reticle, corners[i], camera))
+        return false;
     }
     return true;
   }

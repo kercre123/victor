@@ -33,7 +33,7 @@ public class CozmoEmotionMachine : MonoBehaviour {
     // populate our helper look up
     for (int i = 0; i < emotionStates.Count; i++) {
       if (string.IsNullOrEmpty(emotionStates[i].stateName)) {
-        Debug.LogError("trying to add state with no name");
+        DAS.Error("CozmoEmotionMachine", "trying to add state with no name");
       }
       else {
         if (!statesByName.ContainsKey(emotionStates[i].stateName)) {
@@ -41,7 +41,7 @@ public class CozmoEmotionMachine : MonoBehaviour {
           statesByName.Add(emotionStates[i].stateName, emotionStates[i]);
         }
         else {
-          Debug.LogError("trying to add " + emotionStates[i].stateName + " more than once");
+          DAS.Error("CozmoEmotionMachine", "trying to add " + emotionStates[i].stateName + " more than once");
         }
       }
     }

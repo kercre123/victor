@@ -19,7 +19,6 @@ public class GameObjectSelector : MonoBehaviour {
 
     set {
       if (value != _index) {
-        //if(_index >= 0 && _index < gameObjects.Length) Debug.Log(gameObject.name + " GameObjectSelector changed from " + gameObjects[_index].name + " to " + gameObjects[value].name );
         _index = value;
         Refresh();
       }
@@ -72,7 +71,6 @@ public class GameObjectSelector : MonoBehaviour {
   }
 
   public void SetScreenIndex(int i) {
-    //Debug.Log(gameObject.name + " SetScreenIndex("+i+")");
     index = Mathf.Clamp(i, 0, gameObjects.Length - 1);
     set = true;
   }

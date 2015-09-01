@@ -32,7 +32,7 @@ public class SceneLoader : MonoBehaviour {
       RobotEngineManager.instance.Disconnect();
     }
 
-    Debug.Log("SceneLoader Application.LoadLevel(" + scene + ")");
+    DAS.Debug("SceneLoader", "SceneLoader Application.LoadLevel(" + scene + ")");
     Application.LoadLevel(scene);
   }
 }

@@ -14,55 +14,54 @@ public class LineManager : MonoBehaviour {
   static int lineCount = 0;
   bool destroyed = false;
 
-  void Awake () {
+  void Awake() {
     Initialize();
     DontDestroyOnLoad(this);
   }
-  
-  void Initialize () {
+
+  void Initialize() {
     lines = new List<VectorLine>();
     transforms = new List<Transform>();
     lineCount = 0;
-    //Debug.Log("frame("+Time.frameCount+") LineManager.Initialize enabled = false;");
     enabled = false;
   }
 
-  public void AddLine (VectorLine vectorLine, Transform thisTransform, float time) {
+  public void AddLine(VectorLine vectorLine, Transform thisTransform, float time) {
     if (time > 0.0f) {  // Needs to be before the line check, to accommodate re-added lines
-      StartCoroutine (DisableLine (vectorLine, time, false));
+      StartCoroutine(DisableLine(vectorLine, time, false));
     }
     for (int i = 0; i < lineCount; i++) {
       if (vectorLine == lines[i]) {
         return;
       }
     }
-    lines.Add (vectorLine);
-    transforms.Add (thisTransform);
+    lines.Add(vectorLine);
+    transforms.Add(thisTransform);
     
     if (++lineCount == 1) {
-      //Debug.Log("frame("+Time.frameCount+") LineManager.AddLine enabled = true;");
       enabled = true;
     }
   }
-  
-  public void DisableLine (VectorLine vectorLine, float time) {
-    StartCoroutine (DisableLine (vectorLine, time, false));
+
+  public void DisableLine(VectorLine vectorLine, float time) {
+    StartCoroutine(DisableLine(vectorLine, time, false));
   }
-  
-  IEnumerator DisableLine (VectorLine vectorLine, float time, bool remove) {
+
+  IEnumerator DisableLine(VectorLine vectorLine, float time, bool remove) {
     yield return new WaitForSeconds(time);
     if (remove) {
-      RemoveLine (vectorLine);
+      RemoveLine(vectorLine);
     }
     else {
-      RemoveLine (vectorLine);
-      VectorLine.Destroy (ref vectorLine);
+      RemoveLine(vectorLine);
+      VectorLine.Destroy(ref vectorLine);
     }
     vectorLine = null;
   }
 
-  void LateUpdate () {
-    if (!VectorLine.camTransformExists) return;
+  void LateUpdate() {
+    if (!VectorLine.camTransformExists)
+      return;
     
     // Draw3DAuto lines
     for (int i = 0; i < lineCount; i++) {
@@ -70,7 +69,7 @@ public class LineManager : MonoBehaviour {
         lines[i].Draw3D();
       }
       else {
-        RemoveLine (i--);
+        RemoveLine(i--);
       }
     }
     
@@ -84,55 +83,51 @@ public class LineManager : MonoBehaviour {
     // Always redraw dynamic objects
     VectorManager.DrawArrayLines2();
   }
-  
-  void RemoveLine (int i) {
-    lines.RemoveAt (i);
-    transforms.RemoveAt (i);
+
+  void RemoveLine(int i) {
+    lines.RemoveAt(i);
+    transforms.RemoveAt(i);
     --lineCount;
     DisableIfUnused();
   }
-  
-  public void RemoveLine (VectorLine vectorLine) {
+
+  public void RemoveLine(VectorLine vectorLine) {
     for (int i = 0; i < lineCount; i++) {
       if (vectorLine == lines[i]) {
-        RemoveLine (i);
+        RemoveLine(i);
         break;
       }
     }
   }
-  
-  public void DisableIfUnused () {
+
+  public void DisableIfUnused() {
     if (!destroyed) { // Prevent possible null reference exceptions
       if (lineCount <= 0 && VectorManager.arrayCount <= 0 && VectorManager.arrayCount2 <= 0) {
-        //Debug.Log("frame("+Time.frameCount+") LineManager.DisableIfUnused enabled = false;");
-
         enabled = false;
       }
     }
   }
-  
-  public void EnableIfUsed () {
+
+  public void EnableIfUsed() {
     if (VectorManager.arrayCount >= 1 || VectorManager.arrayCount2 >= 1) {
-      //Debug.Log("frame("+Time.frameCount+") LineManager.EnableIfUsed enabled = true;");  
       enabled = true;
     }
   }
-  
-  public void StartCheckDistance () {
+
+  public void StartCheckDistance() {
     InvokeRepeating("CheckDistance", .01f, VectorManager.distanceCheckFrequency);
   }
-  
-  void CheckDistance () {
+
+  void CheckDistance() {
     VectorManager.CheckDistance();
   }
-  
-  void OnDestroy () {
+
+  void OnDestroy() {
     destroyed = true;
   }
-  
-  void OnLevelWasLoaded () {
-    if(lineCount <= 0 && VectorManager.arrayCount <= 0 && VectorManager.arrayCount2 <= 0)
-    {  
+
+  void OnLevelWasLoaded() {
+    if (lineCount <= 0 && VectorManager.arrayCount <= 0 && VectorManager.arrayCount2 <= 0) {  
       Initialize();
     }
   }

@@ -394,8 +394,7 @@ public class SpinWheel : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
 
     state = SpinWheelState.SPINNING;
 
-    Debug.Log("SpinStart PredictedNumber(" + PredictedNumber + ") Previous(" + PredictedPreviousNumber + ") Next(" + PredictedNextNumber + ")");
-    //Debug.Log("predictedData.timeAfterLastPeg(" + predictedData.timeAfterLastPeg + ") lastAngle/sliceArc (" + MathUtil.ClampAngle0_360(-predictedData.lastAngle) / sliceArc + ") lastPeg(" + predictedData.lastPegTouched + ")");
+    DAS.Debug("SpinWheel", "SpinStart PredictedNumber(" + PredictedNumber + ") Previous(" + PredictedPreviousNumber + ") Next(" + PredictedNextNumber + ")");
 
     float finalAngle = MathUtil.ClampAngle0_360(-predictedData.lastAngle) / sliceArc;
     float positionFudgeFactor = finalAngle - Mathf.FloorToInt(finalAngle);
@@ -406,7 +405,7 @@ public class SpinWheel : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
       
       PredictedPreviousNumberWeight = .5f + (positionFudgeFactor / 2.0f);
       PredictedNextNumberWeight = 1.0f - PredictedPreviousNumberWeight;
-      Debug.Log("previous was touched last(" + PredictedPreviousNumberWeight + ") nextSliceIndex(" + nextSliceIndex + ") previousSliceIndex(" + previousSliceIndex + ")");
+      DAS.Debug("SpinWheel", "previous was touched last(" + PredictedPreviousNumberWeight + ") nextSliceIndex(" + nextSliceIndex + ") previousSliceIndex(" + previousSliceIndex + ")");
  
     }
     else {
@@ -414,7 +413,7 @@ public class SpinWheel : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
         positionFudgeFactor = 1.0f - positionFudgeFactor;
       PredictedNextNumberWeight = .5f + (positionFudgeFactor / 2.0f);
       PredictedPreviousNumberWeight = 1.0f - PredictedNextNumberWeight;
-      Debug.Log("next was touched last (" + PredictedNextNumberWeight + ") previousSliceIndex(" + previousSliceIndex + ") nextSliceIndex(" + nextSliceIndex + ")");
+      DAS.Debug("SpinWheel", "next was touched last (" + PredictedNextNumberWeight + ") previousSliceIndex(" + previousSliceIndex + ") nextSliceIndex(" + nextSliceIndex + ")");
     }
 
   }
@@ -453,11 +452,6 @@ public class SpinWheel : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
 
       slices[i].SetColors(imageColor, textColor, outlineColor);
     }
-
-    //float realTotal = Time.time - SpinStartTime;
-
-    //Debug.Log("SpinEnd totalTime("+displayData.totalTime+") realTotal("+realTotal+")");
-
     
     state = SpinWheelState.FINISHED;
   }
@@ -768,7 +762,6 @@ public class SpinWheel : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
 
   public void Lock() {
     InitData();
-    //Debug.Log("Lock wheel("+gameObject.name+")");
     state = SpinWheelState.LOCKED;
     displayData.angularVel = 0f;
     dragImage.enabled = false;
@@ -777,7 +770,6 @@ public class SpinWheel : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
 
   public void AutomatedMode() {
     InitData();
-    //Debug.Log("Lock wheel("+gameObject.name+")");
     state = SpinWheelState.AUTOMATED;
     displayData.angularVel = 0f;
     dragImage.enabled = false;
@@ -831,7 +823,6 @@ public class SpinWheel : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
   }
 
   public void Unlock() {
-    //Debug.Log("Unlock wheel("+gameObject.name+")");
     state = SpinWheelState.UNLOCKED;
 
     dragImage.enabled = true;
@@ -853,7 +844,6 @@ public class SpinWheel : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
 
   public void ResetWheel() {
     InitData();
-    //Debug.Log("ResetWheel("+gameObject.name+")");
     displayData.angularVel = 0f;
     displayData.wheelAngle = -sliceArc * 0.5f;
 
@@ -870,12 +860,10 @@ public class SpinWheel : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
   }
 
   public void OnSubmitNumSlices() {
-    //Debug.Log("OnSubmitNumSlices");
     int newSlices;
     
     if (int.TryParse(inputField_numSlices.text, out newSlices)) {
       if (newSlices != numSlices) {
-        //Debug.Log("SetNumSlices");
         SetNumSlices(newSlices);
       }
     }
@@ -883,7 +871,6 @@ public class SpinWheel : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
 
   
   public void DragStart(Vector2 position, float time) {
-    //Debug.Log ("SpinWheel StartDrag");
     RectTransformUtility.ScreenPointToLocalPointInRectangle(rTrans, position, canvas.renderMode != RenderMode.ScreenSpaceOverlay ? canvas.worldCamera : null, out lastTouchPos);
 
     displayData.angularVel = 0f;
@@ -892,8 +879,6 @@ public class SpinWheel : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
   }
 
   public void DragUpdate(Vector2 position, float time) {
-    //Debug.Log ("SpinWheel DragUpdate position("+position+") time("+time+")");    
-    
     Vector2 touchPos;
     RectTransformUtility.ScreenPointToLocalPointInRectangle(rTrans, position, canvas.renderMode != RenderMode.ScreenSpaceOverlay ? canvas.worldCamera : null, out touchPos);
     float deltaAngle = MathUtil.SignedVectorAngle(lastTouchPos, touchPos, Vector3.forward);
@@ -940,15 +925,6 @@ public class SpinWheel : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
     if (Mathf.Abs(displayData.angularVel) < minStartingVelocity) {
       displayData.angularVel = minStartingVelocity * Mathf.Sign(displayData.angularVel);
     }
-    
-//    string debugString = "SpinWheel DragEnd angularVelocity("+displayData.angularVel+") samples["+samples.Count+"] { ";
-//    for(int i=0;i<samples.Count;i++) {
-//      debugString += (samples[i].deltaAngle / samples[i].deltaTime);
-//      if(i<samples.Count-1) debugString += ", ";
-//    }
-//    debugString += "}";
-//    
-//    Debug.Log(debugString);
 
     SpinStart();
   }

@@ -57,58 +57,6 @@ public class CozmoAssistedControls : MonoBehaviour {
     robotVerts[2] = pos - lowerLength * heading_norm - halfWidth * heading_right;
     robotVerts[3] = pos - lowerLength * heading_norm + halfWidth * heading_right;
 
-    //wheelSpeeds[0] = debugLeft;
-    //wheelSpeeds[1] = debugRight;
-
-/*
-    if (vectorSet)
-    {
-      //Vector3.
-      Vector2 turnVector = new Vector2(robot.Right.x, robot.Right.y);
-      Vector2 robot_pos2 = new Vector2(robot.WorldPosition.x, robot.WorldPosition.y);
-      Vector2 point1 = robot_pos2 + 100*turnVector;
-      Vector2 point2 = robot_pos2 - 100*turnVector;
-
-      // get our line equations
-
-      float A1 = point1.y - point2.y;
-      float B1 = point2.x - point1.x;
-      float C1 = A1*point2.x + B1*point2.y;
-
-      float A2 = lastTurnPoints[0].y - lastTurnPoints[1].y;
-      float B2 = lastTurnPoints[1].x - lastTurnPoints[0].x;
-      float C2 = A2*lastTurnPoints[1].x + B2*lastTurnPoints[1].y;
-
-      float determinate = A1*B2 - A2*B1;
-      if(determinate != 0)
-      {      
-        float x = (B2*C1 - B1*C2)/determinate;
-        float y = (A1*C2 - A2*C1)/determinate;
-        //RobotEngineManager.instance.VisualizeQuad(29, CozmoPalette.ColorToUInt(Color.blue), new Vector3(x-10,y+10,0), new Vector3(x+10,y+10,0),new Vector3(x+10,y-10,0), new Vector3(x-10,y-10,0));
-      //  RobotEngineManager.instance.VisualizeQuad(counter, CozmoPalette.ColorToUInt(Color.red), new Vector3(point1.x,point1.y,0), new Vector3(point1.x,point1.y,0),new Vector3(point2.x,point2.y,0), new Vector3(point2.x,point2.y,0));
-        counter++;
-        //Debug.Log("radius: " + (robot.WorldPosition-new Vector3(x,y,0)).magnitude);
-      }
-
-      lastTurnPoints[0] = point1;
-      lastTurnPoints[1] = point2;
-
-    }
-    else
-    {
-      vectorSet = true;
-      Vector2 turnVector = new Vector2(robot.Right.x, robot.Right.y);
-      Vector2 robot_pos2 = new Vector2(robot.WorldPosition.x, robot.WorldPosition.y);
-      Vector2 point1 = robot_pos2 + 1000*turnVector;
-      Vector2 point2 = robot_pos2 - 1000*turnVector;
-      lastTurnPoints[0] = point1;
-      lastTurnPoints[1] = point2;
-    }
-
-    */
-
-
-
     Vector3 left = pos - 5 * heading_right;
     Vector3 right = pos + 5 * heading_right;
     RobotEngineManager.instance.VisualizeQuad(25, CozmoPalette.ColorToUInt(Color.blue), left, right, right + heading, left + heading);
@@ -174,7 +122,7 @@ public class CozmoAssistedControls : MonoBehaviour {
         if (collided && potentialCollisionTime < Time.realtimeSinceStartup) {
           // make our adjustements
           RobotEngineManager.instance.VisualizeQuad(24, CozmoPalette.ColorToUInt(Color.red), robotVerts[0], robotVerts[1], robotVerts[3], robotVerts[2]);
-          Debug.LogWarning("min_overlap: " + min_overlap + ", normal: " + min_overlap_axis);
+          DAS.Warn("CozmoAssistedControls", "min_overlap: " + min_overlap + ", normal: " + min_overlap_axis);
           if (!sawCollsionLastFrame) {
             sawCollsionLastFrame = true;
             potentialCollisionTime = Time.realtimeSinceStartup + lookAheadSeconds;
@@ -195,7 +143,7 @@ public class CozmoAssistedControls : MonoBehaviour {
             
             GetCircleOriginForPoints(new_desired_pos, out circle_center);
             float radius = (circle_center - robot.WorldPosition).magnitude;
-            Debug.Log("to_center: " + radius);
+            DAS.Debug("CozmoAssistedControls", "to_center: " + radius);
             float new_right_speed = (left_speed / (23.25f + radius)) * (radius - 23.25f);
 
             wheelSpeeds[1] = new_right_speed;
@@ -207,7 +155,7 @@ public class CozmoAssistedControls : MonoBehaviour {
 
             GetCircleOriginForPoints(new_desired_pos, out circle_center);
             float radius = (circle_center - robot.WorldPosition).magnitude;
-            Debug.Log("to_center: " + radius);
+            DAS.Debug("CozmoAssistedControls", "to_center: " + radius);
 
             float new_left_speed = (right_speed / (23.25f + radius)) * (radius - 23.25f);
 
@@ -220,18 +168,18 @@ public class CozmoAssistedControls : MonoBehaviour {
 
         }
         else if (potentialCollisionTime >= Time.realtimeSinceStartup) {
-          Debug.Log("saw collision, still in tweak window, potentialCollisionTime: " + potentialCollisionTime + ", realtimeSinceStartup:" + Time.realtimeSinceStartup);
+          DAS.Debug("CozmoAssistedControls", "saw collision, still in tweak window, potentialCollisionTime: " + potentialCollisionTime + ", realtimeSinceStartup:" + Time.realtimeSinceStartup);
           // stay on course
           wheelSpeeds = lastWheelSpeeds;
           RobotEngineManager.instance.VisualizeQuad(24, CozmoPalette.ColorToUInt(Color.blue), robotVerts[0], robotVerts[1], robotVerts[3], robotVerts[2]);
         }
         else if (collided) {
-          Debug.Log("saw collision, outside tweak window, potentialCollisionTime: " + potentialCollisionTime + ", realtimeSinceStartup:" + Time.realtimeSinceStartup);
+          DAS.Debug("CozmoAssistedControls", "saw collision, outside tweak window, potentialCollisionTime: " + potentialCollisionTime + ", realtimeSinceStartup:" + Time.realtimeSinceStartup);
         }
         else {
           sawCollsionLastFrame = false;
         }
-        Debug.Log("wheelSpeeds[0]: " + wheelSpeeds[0] + ", wheelSpeeds[1]: " + wheelSpeeds[1]);
+        DAS.Debug("CozmoAssistedControls", "wheelSpeeds[0]: " + wheelSpeeds[0] + ", wheelSpeeds[1]: " + wheelSpeeds[1]);
       }
     }
 

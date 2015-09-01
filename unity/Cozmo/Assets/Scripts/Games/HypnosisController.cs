@@ -102,7 +102,7 @@ public class HypnosisController : GameController {
 
     if (Input.GetKeyDown(KeyCode.Alpha4)) {
       tranceSpeed = 300.0f;
-      Debug.LogWarning("DEMON SPEED");
+      DAS.Warn("HypnosisController", "DEMON SPEED");
     }
   }
 

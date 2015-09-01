@@ -72,14 +72,12 @@ public class CozmoVision_SelectObjectExtraButtons : CozmoVision_SelectObject {
       }
       
       if (box == null) {
-        Debug.LogError("box shouldn't be null here!");
+        DAS.Error("CozmoVision_SelectObjectExtraButtons", "box shouldn't be null here!");
         continue;
       }
       
       unassignedActiveObjectBoxes.Remove(box);
-      
-      //Debug.Log("frame("+Time.frameCount+") box("+box.gameObject.name+") linked to button("+button.gameObject.name+")");
-      
+
       button.observedObject = box.observedObject;
       button.box = box;
       button.SetText(box.text.text);
@@ -97,7 +95,6 @@ public class CozmoVision_SelectObjectExtraButtons : CozmoVision_SelectObject {
         button.line.points2.Add(boxPosition);
         button.line.SetColor(box.color);
         button.line.Draw();
-        //Debug.Log("drawing line from("+buttonPosition+") to("+boxPosition+")");
       }
       else {
         button.line.points2.Clear();
