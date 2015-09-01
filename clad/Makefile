@@ -1,9 +1,14 @@
 # CLAD makefile by Pauley
-CLAD_CPP=../tools/anki-util/tools/message-buffers/emitters/CPP_emitter.py
-CLAD_C=../tools/anki-util/tools/message-buffers/emitters/C_emitter.py
-CLAD_CSHARP=../tools/anki-util/tools/message-buffers/emitters/CSharp_emitter.py
-CLAD_CPP_DECL=emitters/cozmo_CPP_declarations_emitter.py
-CLAD_CPP_SWITCH=emitters/cozmo_CPP_switch_emitter.py
+
+CLAD_BASE_DIR=../tools/anki-util/tools/message-buffers
+CLAD_EMITTER_DIR=$(CLAD_BASE_DIR)/emitters
+CLAD_LIB_DIR=$(CLAD_BASE_DIR)/clad
+CLAD_DEPENDENCIES=$(CLAD_LIB_DIR)/*.py
+CLAD_CPP=$(CLAD_EMITTER_DIR)/CPP_emitter.py
+CLAD_C=$(CLAD_EMITTER_DIR)/C_emitter.py
+CLAD_CSHARP=$(CLAD_EMITTER_DIR)/CSharp_emitter.py
+CLAD_CPP_DECL=$(CLAD_EMITTER_DIR)/specialized/cozmo_CPP_declarations_emitter.py
+CLAD_CPP_SWITCH=$(CLAD_EMITTER_DIR)/specialized/cozmo_CPP_switch_emitter.py
 INPUT_DIR=./src/
 ROBOT_CLAD_SRC=../robot/clad/src/
 OUTPUT_DIR:=../generated/clad/
@@ -24,7 +29,6 @@ vpath %.h $(OUTPUT_DIR)/engine/
 vpath %.cpp $(OUTPUT_DIR)/engine/
 vpath %.cs $(OUTPUT_DIR_CSHARP)
 
-
 .PHONY: show clean
 
 all: cpp
@@ -35,7 +39,7 @@ cpp: $(OUTPUT_H_AND_CPP)
 
 c: $(OUTPUT_H_AND_C)
 
-%.h %.cpp : %.clad
+%.h %.cpp : %.clad $(CLAD_DEPENDENCIES) $(CLAD_CPP) $(CLAD_CPP_DECL) $(CLAD_CPP_SWITCH)
 	#mkdir -p $(OUTPUT_DIR)/engine/$(dir $<)
 	if test -f $(OUTPUT_DIR)engine/$*.h; then chmod -f 777 $(OUTPUT_DIR)engine/$*.h; fi
 	if test -f $(OUTPUT_DIR)engine/$*.cpp; then chmod -f 777 $(OUTPUT_DIR)engine/$*.cpp; fi
@@ -45,7 +49,7 @@ c: $(OUTPUT_H_AND_C)
 	chmod -f 555 $(OUTPUT_DIR)engine/$*.h
 	chmod -f 555 $(OUTPUT_DIR)engine/$*.cpp
 
-%.h %.c : %.clad
+%.h %.c : %.clad $(CLAD_DEPENDENCIES) $(CLAD_C)
 	#mkdir -p $(OUTPUT_DIR)/robot/$(dir $<)
 	if test -f $(OUTPUT_DIR)robot/$*.h; then chmod -f 777 $(OUTPUT_DIR)robot/$*.h; fi
 	if test -f $(OUTPUT_DIR)robot/$*.c; then chmod -f 777 $(OUTPUT_DIR)robot/$*.c; fi
@@ -53,7 +57,7 @@ c: $(OUTPUT_H_AND_C)
 	chmod -f 555 $(OUTPUT_DIR)robot/$*.h
 	chmod -f 555 $(OUTPUT_DIR)robot/$*.c
 
-%.cs : %.clad
+%.cs : %.clad $(CLAD_DEPENDENCIES) $(CLAD_CSHARP)
 	#mkdir -p $(OUTPUT_DIR)/$(dir $<)
 	if test -f $(OUTPUT_DIR_CSHARP)/$*.cs; then chmod -f 777 $(OUTPUT_DIR_CSHARP)/$*.cs; fi
 	$(CLAD_CSHARP) -C $(INPUT_DIR) -I $(ROBOT_CLAD_SRC) -o $(OUTPUT_DIR_CSHARP)/ $*.clad
