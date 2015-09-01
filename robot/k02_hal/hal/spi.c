@@ -26,14 +26,13 @@ void spi_init(void) {
   PORTC_PCR7 = PORT_PCR_MUX(2); // SPI0_SIN
 
   // Configure SPI perf to the magical value of magicalness
-  SPI0_MCR = SPI_MCR_MSTR_MASK | 
+  SPI0_MCR = SPI_MCR_MSTR_MASK |
              SPI_MCR_CONT_SCKE_MASK |
              SPI_MCR_DCONF(0) | 
              SPI_MCR_SMPL_PT(0) | 
              SPI_MCR_CLR_TXF_MASK | 
              SPI_MCR_CLR_RXF_MASK;
-  SPI0_CTAR0 = //SPI_CTAR_LSBFE_MASK | 
-               SPI_CTAR_BR(2) | 
+  SPI0_CTAR0 = SPI_CTAR_BR(0) | 
                SPI_CTAR_CPOL_MASK |
                SPI_CTAR_CPHA_MASK |
                SPI_CTAR_FMSZ(15);
@@ -65,10 +64,5 @@ void spi_init(void) {
 
       SPI0_SR = SPI_SR_TFFF_MASK;
     }
-    
-    /*
-    for (int i = 0; i < 800; i++)
-      BOARD_I2C_DELAY ;
-    */
   }
 }
