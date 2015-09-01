@@ -245,6 +245,8 @@ namespace Anki {
                     const FastPolygon& poly,
                     const ColorRGBA& color);
       
+      void ErasePoly(u32 polyID);
+      
       // Erases the quad with the specified type and ID
       void EraseQuad(const u32 quadType, const u32 quadID);
       
@@ -257,6 +259,16 @@ namespace Anki {
       void EraseAllPlannerObstacles(const bool isReplan);
       
       void EraseAllMatMarkers();
+      
+      // ==== Circle functions =====
+      template<typename T>
+      void DrawXYCircle(u32 polyID,
+                      const ColorRGBA& color,
+                      const Point<2, T>& center,
+                      const T radius,
+                      u32 numSegments = 20);
+      
+      void EraseCircle(u32 polyID);
     
       // ==== Text functions =====
       void SetText(const TextLabelType& labelType, const ColorRGBA& color, const char* format, ...);
@@ -323,6 +335,8 @@ namespace Anki {
       // Stores the maximum ID permitted for a given VizObject type
       u32 _VizObjectMaxID[NUM_VIZ_OBJECT_TYPES];
       
+      // TODO: Won't need this offest once Polygon is implmeneted correctly (not drawing with path)
+      const u32 _polyIDOffset = 2200;
     }; // class VizManager
     
     
@@ -414,7 +428,7 @@ namespace Anki {
       Planning::Path polyPath;
 
       // hack! don't want to collide with path ids
-      u32 pathId = __polyID + 2200;
+      u32 pathId = __polyID + _polyIDOffset;
 
       size_t numPts = poly.size();
 
@@ -510,6 +524,41 @@ namespace Anki {
       DrawQuad(VIZ_QUAD_POSE_MARKER, quadID, quad, 0.5f, color);
     }
     
+    template <typename T>
+    void VizManager::DrawXYCircle(u32 polyID,
+                                const ColorRGBA& color,
+                                const Point<2, T>& center,
+                                const T radius,
+                                u32 numSegments)
+    {
+      // Note we create the polygon clockwise intentionally
+      T anglePerSegment = static_cast<T>(-2) * static_cast<T>(PI) / static_cast<T>(numSegments);
+      
+      // Use the tangential and radial factors to draw the segments without recalculating every time.
+      // Algorithm found here: http://slabode.exofire.net/circle_draw.shtml
+      T tangentialFactor = std::tan(anglePerSegment);
+      T radialFactor = std::cos(anglePerSegment);
+      
+      // Start at angle 0
+      T newX = radius;
+      T newY = 0;
+      
+      Polygon<2, T> newCircle;
+      for (u32 i=0; i<numSegments; ++i)
+      {
+        newCircle.push_back(Point<2,T>(newX + center.x(), newY + center.y()));
+        
+        T tx = -newY;
+        T ty = newX;
+        
+        newX += tx * tangentialFactor;
+        newY += ty * tangentialFactor;
+        
+        newX *= radialFactor;
+        newY *= radialFactor;
+      }
+      DrawPoly(polyID, newCircle, color);
+    }
   } // namespace Cozmo
 } // namespace Anki
 

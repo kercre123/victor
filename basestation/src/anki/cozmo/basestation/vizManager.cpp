@@ -341,6 +341,12 @@ namespace Anki {
     }
   
     
+    void VizManager::ErasePoly(u32 __polyID)
+    {
+      u32 pathId = __polyID + _polyIDOffset;
+      // TODO: For now polys are drawn using the path drawing logic, but when it gets implmeneted properly this should be updated
+      ErasePath(pathId);
+    }
     
     
     // ================== Object drawing methods ====================
@@ -549,6 +555,13 @@ namespace Anki {
     void VizManager::EraseAllMatMarkers()
     {
       EraseAllQuadsWithType(VIZ_QUAD_MAT_MARKER);
+    }
+    
+    // =============== Circle methods ==================
+    
+    void VizManager::EraseCircle(u32 polyID)
+    {
+      ErasePoly(polyID);
     }
 
     

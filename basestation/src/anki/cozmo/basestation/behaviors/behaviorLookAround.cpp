@@ -16,7 +16,16 @@
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/common/shared/radians.h"
+#include "anki/common/robot/config.h"
 #include "clad/externalInterface/messageEngineToGame.h"
+
+
+#define SAFE_ZONE_VIZ (ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ERRORS_AND_WARNS_AND_ASSERTS)
+
+#if SAFE_ZONE_VIZ
+#include "anki/cozmo/basestation/viz/vizManager.h"
+#include "anki/common/basestation/math/polygon_impl.h"
+#endif
 
 namespace Anki {
 namespace Cozmo {
@@ -84,6 +93,10 @@ Result BehaviorLookAround::Init()
 
 IBehavior::Status BehaviorLookAround::Update(float currentTime_sec)
 {
+#if SAFE_ZONE_VIZ
+  Point2f center = { _moveAreaCenter.GetTranslation().x(), _moveAreaCenter.GetTranslation().y() };
+  VizManager::getInstance()->DrawXYCircle(_robot.GetID(), NamedColors::GREEN, center, _safeRadius);
+#endif
   switch (_currentState)
   {
     case State::Inactive:
@@ -151,6 +164,10 @@ IBehavior::Status BehaviorLookAround::Update(float currentTime_sec)
                         "Reached unknown state %d.", _currentState);
     }
   }
+  
+#if SAFE_ZONE_VIZ
+  VizManager::getInstance()->EraseCircle(_robot.GetID());
+#endif
   
   return Status::Complete;
 }
