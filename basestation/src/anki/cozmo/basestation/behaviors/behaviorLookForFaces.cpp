@@ -31,6 +31,8 @@ namespace Cozmo {
   , _currentState(State::LOOKING_AROUND)
   , _trackingTimeout_sec(3.f)
   {
+    _name = "LookForFaces";
+
     // TODO: Init timeouts, etc, from Json config
     
   }
