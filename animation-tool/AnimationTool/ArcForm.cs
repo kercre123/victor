@@ -129,9 +129,13 @@ namespace AnimationTool
             this.Controls.Add(this.timeLabel);
             this.Controls.Add(this.speedTextBox);
             this.Controls.Add(this.timeTextBox);
+            this.MaximizeBox = false;
+            this.MinimizeBox = false;
             this.Name = "ArcForm";
+            this.ShowIcon = false;
             this.ResumeLayout(false);
             this.PerformLayout();
+
         }
 
         public DialogResult Open(double maxTime, int speed, int radius, double time, IWin32Window parent)

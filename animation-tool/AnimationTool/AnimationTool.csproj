@@ -63,6 +63,15 @@
     <Compile Include="..\..\unity\Cozmo\Assets\Scripts\Channel\UdpChannel.cs">
       <Link>DoNotEdit\Channel\UdpChannel.cs</Link>
     </Compile>
+    <Compile Include="SequencerChartForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="XYChartForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FaceTrackBarForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="FaceForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -161,6 +170,15 @@
     <EmbeddedResource Include="ChangeDurationForm.resx">
       <DependentUpon>ChangeDurationForm.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="SequencerChartForm.resx">
+      <DependentUpon>SequencerChartForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="XYChartForm.resx">
+      <DependentUpon>XYChartForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FaceTrackBarForm.resx">
+      <DependentUpon>FaceTrackBarForm.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="FaceForm.resx">
       <DependentUpon>FaceForm.cs</DependentUpon>
     </EmbeddedResource>
@@ -182,6 +200,9 @@
     </Compile>
     <EmbeddedResource Include="StraightForm.resx">
       <DependentUpon>StraightForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="TurnInPlaceForm.resx">
+      <DependentUpon>TurnInPlaceForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="VolumeForm.resx">
       <DependentUpon>VolumeForm.cs</DependentUpon>

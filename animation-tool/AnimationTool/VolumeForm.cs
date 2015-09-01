@@ -69,9 +69,13 @@ namespace AnimationTool
             this.Controls.Add(this.button);
             this.Controls.Add(this.label);
             this.Controls.Add(this.textBox);
+            this.MaximizeBox = false;
+            this.MinimizeBox = false;
             this.Name = "VolumeForm";
+            this.ShowIcon = false;
             this.ResumeLayout(false);
             this.PerformLayout();
+
         }
 
         public DialogResult Open(double volume, IWin32Window parent)

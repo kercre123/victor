@@ -110,7 +110,11 @@ namespace AnimationTool
             {
                 if (!file.IsReadOnly)
                 {
-                    file.Delete();
+                    try
+                    {
+                        file.Delete();
+                    }
+                    catch (Exception) { }
                 }
             }
 

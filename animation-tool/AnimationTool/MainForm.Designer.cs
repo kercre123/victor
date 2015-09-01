@@ -57,8 +57,8 @@ namespace AnimationTool
             this.settingsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.durationToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.rootDirectoryToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.animationToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.setIPAddressToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.animationToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.playAnimationToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.connectionToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.pHeadAngle = new System.Windows.Forms.Panel();
@@ -216,21 +216,21 @@ namespace AnimationTool
             // durationToolStripMenuItem
             // 
             this.durationToolStripMenuItem.Name = "durationToolStripMenuItem";
-            this.durationToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.durationToolStripMenuItem.Size = new System.Drawing.Size(150, 22);
             this.durationToolStripMenuItem.Text = "Duration";
             this.durationToolStripMenuItem.Click += new System.EventHandler(this.ChangeDuration);
             // 
             // rootDirectoryToolStripMenuItem
             // 
             this.rootDirectoryToolStripMenuItem.Name = "rootDirectoryToolStripMenuItem";
-            this.rootDirectoryToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.rootDirectoryToolStripMenuItem.Size = new System.Drawing.Size(150, 22);
             this.rootDirectoryToolStripMenuItem.Text = "Root Directory";
             this.rootDirectoryToolStripMenuItem.Click += new System.EventHandler(this.SetRootDirectory);
             // 
             // setIPAddressToolStripMenuItem
             // 
             this.setIPAddressToolStripMenuItem.Name = "setIPAddressToolStripMenuItem";
-            this.setIPAddressToolStripMenuItem.Size = new System.Drawing.Size(193, 22);
+            this.setIPAddressToolStripMenuItem.Size = new System.Drawing.Size(150, 22);
             this.setIPAddressToolStripMenuItem.Text = "Engine IP";
             this.setIPAddressToolStripMenuItem.Click += new System.EventHandler(this.SetIPAddress);
             // 
@@ -245,7 +245,7 @@ namespace AnimationTool
             // playAnimationToolStripMenuItem
             // 
             this.playAnimationToolStripMenuItem.Name = "playAnimationToolStripMenuItem";
-            this.playAnimationToolStripMenuItem.ShortcutKeyDisplayString = System.Windows.Forms.Keys.Space.ToString();
+            this.playAnimationToolStripMenuItem.ShortcutKeyDisplayString = "Space";
             this.playAnimationToolStripMenuItem.Size = new System.Drawing.Size(193, 22);
             this.playAnimationToolStripMenuItem.Text = "Play Animation";
             this.playAnimationToolStripMenuItem.Click += new System.EventHandler(this.PlayAnimation);
@@ -253,7 +253,7 @@ namespace AnimationTool
             // connectionToolStripMenuItem
             // 
             this.connectionToolStripMenuItem.Name = "connectionToolStripMenuItem";
-            this.connectionToolStripMenuItem.Size = new System.Drawing.Size(75, 22);
+            this.connectionToolStripMenuItem.Size = new System.Drawing.Size(99, 22);
             this.connectionToolStripMenuItem.Text = "[Disconnected]";
             // 
             // pHeadAngle
@@ -872,7 +872,7 @@ namespace AnimationTool
             // 
             // pAudioDeviceSide
             // 
-            this.pAudioDeviceSide.BackColor = System.Drawing.SystemColors.AppWorkspace;
+            this.pAudioDeviceSide.BackColor = System.Drawing.SystemColors.Control;
             this.pAudioDeviceSide.Controls.Add(this.cbAudioDevice);
             this.pAudioDeviceSide.Dock = System.Windows.Forms.DockStyle.Right;
             this.pAudioDeviceSide.Location = new System.Drawing.Point(1170, 0);
