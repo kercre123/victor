@@ -29,6 +29,9 @@
 // Luxand FaceSDK
 #  include <LuxandFaceSDK.h>
 
+#elif FACE_TRACKER_PROVIDER == FACE_TRACKER_OPENCV
+// Nothing extra to include here
+
 #else 
 #  error Unknown FACE_TRACKER_PROVIDER set!
 #endif
@@ -646,6 +649,125 @@ namespace Vision {
     
   }
 
+#elif FACE_TRACKER_PROVIDER == FACE_TRACKER_OPENCV
+  
+  class FaceTracker::Impl
+  {
+  public:
+    Impl(const std::string& modelPath);
+    
+    Result Update(const Vision::Image& frameOrig);
+    
+    std::list<TrackedFace> GetFaces() const;
+    
+    void EnableDisplay(bool enabled) { }
+    
+  private:
+    
+    bool _isInitialized;
+    
+    cv::CascadeClassifier _faceCascade;
+    
+    u32 _faceCtr;
+    
+    std::map<TrackedFace::ID_t, TrackedFace> _faces;
+    
+  }; // class FaceTracker::Impl
+  
+  
+  FaceTracker::Impl::Impl(const std::string& modelPath)
+  : _isInitialized(false)
+  , _faceCtr(0)
+  {
+    std::string pathSep = "";
+    if(modelPath.back() != '/') {
+      pathSep = "/";
+    }
+    
+    const std::string cascadeFilename = modelPath + pathSep + "haarcascade_frontalface_alt2.xml";
+    
+    const bool loadSuccess = _faceCascade.load(cascadeFilename);
+    if(!loadSuccess) {
+      PRINT_NAMED_ERROR("VisionSystem.Update.LoadFaceCascade",
+                        "Failed to load face cascade from %s\n",
+                        cascadeFilename.c_str());
+    }
+    
+    _isInitialized = true;
+  }
+  
+  Result FaceTracker::Impl::Update(const Vision::Image& frame)
+  {
+    std::vector<cv::Rect> newFaceRects;
+    _faceCascade.detectMultiScale(frame.get_CvMat_(), newFaceRects, 1.1, 2, 0, cv::Size(15,15));
+    
+    // Match detections to existing faces if they overlap enough
+    const f32 intersectionOverUnionThreshold = 0.5f;
+    
+    // Keep a list of existing faces to check and remove any that we find matches
+    // for in the loop below
+    std::list<std::map<TrackedFace::ID_t,TrackedFace>::iterator> existingFacesToCheck;
+    for(auto iter = _faces.begin(); iter != _faces.end(); ++iter) {
+      existingFacesToCheck.emplace_back(iter);
+    }
+    
+    for(auto & newFaceRect : newFaceRects)
+    {
+      Rectangle<f32> rect_f32(newFaceRect);
+      
+      bool matchFound = false;
+      for(auto existingIter = existingFacesToCheck.begin();
+          !matchFound && existingIter != existingFacesToCheck.end(); )
+      {
+        TrackedFace& existingFace = (*existingIter)->second;
+        const Rectangle<f32>& existingRect = existingFace.GetRect();
+        const f32 intersectionArea = existingRect.Intersect(rect_f32).area();
+        const f32 unionArea = existingRect.area() + rect_f32.area() - intersectionArea;
+        const f32 IoU = intersectionArea / unionArea; // "intersection over union" score
+        
+        if(IoU > intersectionOverUnionThreshold) {
+          // Update existing face and remove it from additional checking for matches
+          existingFace.SetRect(std::move(rect_f32));
+          existingFace.SetTimeStamp(frame.GetTimestamp());
+          existingIter = existingFacesToCheck.erase(existingIter);
+          matchFound = true;
+          break;
+        } else {
+          ++existingIter;
+        }
+      } // for each existing face
+      
+      if(!matchFound) {
+        // Add as new face
+        TrackedFace newFace;
+        
+        newFace.SetRect(Rectangle<f32>(newFaceRect));
+        newFace.SetID(_faceCtr++);
+        newFace.SetTimeStamp(frame.GetTimestamp());
+        _faces.emplace(newFace.GetID(), newFace);
+      }
+    }
+    
+    // Remove any faces we are no longer seeing
+    for(auto oldFace : existingFacesToCheck) {
+      _faces.erase(oldFace);
+    }
+    
+    return RESULT_OK;
+  } // Update()
+  
+  std::list<TrackedFace> FaceTracker::Impl::GetFaces() const
+  {
+    std::list<TrackedFace> faces;
+    
+    for(auto & existingFace : _faces) {
+      faces.emplace_back(existingFace.second);
+    }
+    
+    return faces;
+  }
+
+  
   
 #else
 #  error Unknown FACE_TRACKER_PROVIDER!

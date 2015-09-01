@@ -21,8 +21,9 @@
 // Available Face Trackers to select from:
 #define FACE_TRACKER_FACIOMETRIC 0
 #define FACE_TRACKER_FACESDK     1
+#define FACE_TRACKER_OPENCV      2
 
-#define FACE_TRACKER_PROVIDER FACE_TRACKER_FACIOMETRIC
+#define FACE_TRACKER_PROVIDER FACE_TRACKER_OPENCV
 
 namespace Anki {
 namespace Vision {
