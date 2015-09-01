@@ -5,7 +5,7 @@ namespace Anki {
 namespace Cozmo {
 
  
-message LightState
+structure LightState
 {
   uint_32 onColor,
   uint_32 offColor,
