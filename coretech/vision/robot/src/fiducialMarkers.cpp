@@ -26,10 +26,6 @@ For internal use only. No part of this code may be used without a signed non-dis
 #  include "anki/cozmo/robot/nearestNeighborLibraryData.h"
 #endif 
 
-#if RECOGNITION_METHOD == RECOGNITION_METHOD_CNN
-#  include "anki/common/basestation/utils/data/dataPlatform.h"
-#endif
-
 #define INITIALIZE_WITH_DEFINITION_TYPE 0
 //#define NUM_BITS 25 // TODO: make general
 #define NUM_BITS MAX_FIDUCIAL_MARKER_BITS // TODO: Why do we need a separate NUM_BITS?
@@ -522,11 +518,11 @@ namespace Anki
     }
 
     
-    Util::Data::DataPlatform* VisionMarker::_dataPlatform = nullptr;
+    std::string VisionMarker::_dataPath("");
     
-    void VisionMarker::SetDataPlatform(Util::Data::DataPlatform* dataPlatform)
+    void VisionMarker::SetDataPath(const std::string& dataPath)
     {
-      _dataPlatform = dataPlatform;
+      _dataPath = dataPath;
     }
     
     VisionMarker::VisionMarker()
@@ -657,13 +653,11 @@ namespace Anki
     {
       static Vision::ConvolutionalNeuralNet cnn;
       if(!cnn.IsLoaded()) {
-        AnkiConditionalErrorAndReturnValue(_dataPlatform != nullptr, cnn,
-                                           "VisionMarker.GetCNN.NoDataPlatform",
-                                           "DataPlatform must be set before calling GetCNN.");
+        AnkiConditionalErrorAndReturnValue(_dataPath.empty() == false, cnn,
+                                           "VisionMarker.GetCNN.NoDataPath",
+                                           "DataPath must be set before calling GetCNN.");
         
-        const std::string cnnDir = _dataPlatform->pathToResource(Util::Data::Scope::Resources,
-                                                                 "basestation/visionMarkerCNN");
-        Result loadResult = cnn.Load(cnnDir);
+        Result loadResult = cnn.Load(_dataPath + "/visionMarkerCNN");
 
         AnkiConditionalError(loadResult == RESULT_OK,
                              "VisionMarker.GetCNN.LoadFailed",

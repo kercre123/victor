@@ -55,14 +55,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #define NUM_BYTES_bitsBuffer (sizeof(FiducialMarkerParserBit)*MAX_FIDUCIAL_MARKER_BITS + MEMORY_ALIGNMENT + 32)
 
 namespace Anki
-{
-  // Forward declaration:
-  namespace Util {
-  namespace Data {
-    class DataPlatform;
-  }
-  }
-  
+{ 
   namespace Embedded
   {
     class VisionMarker;
@@ -206,14 +199,14 @@ namespace Anki
       static const s16 ProbeCenters_X[];
       static const s16 ProbeCenters_Y[];
 
-      static void SetDataPlatform(Util::Data::DataPlatform* dataPlatform);
+      static void SetDataPath(const std::string& dataPath);
       
     protected:
       // The constructor isn't always called, so initialize has to be checked in multiple places
       // TODO: make less hacky
       void Initialize();
 
-      static Util::Data::DataPlatform* _dataPlatform;
+      static std::string _dataPath;
       
       //Result ComputeThreshold(const Array <u8> &image, const Array<f32> &homography,
       //  const f32 minContrastRatio, bool &isHighContrast, u8 &meanGrayvalueThreshold);

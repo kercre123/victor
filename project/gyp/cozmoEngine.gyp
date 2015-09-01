@@ -327,7 +327,7 @@
               '$(SDKROOT)/System/Library/Frameworks/OpenGL.framework',
             ],
           }, # end cozmo_physics
-
+ 
           {
             'target_name': 'webotsCtrlLightCube',
             'type': 'executable',
@@ -386,6 +386,7 @@
               '<@(opencv_includes)',
             ],
             'dependencies': [
+              #'<(ce-cti_gyp_path):ctiCommon', # now needed for DataPlatform
               '<(ce-cti_gyp_path):ctiCommonRobot',
               '<(ce-cti_gyp_path):ctiVisionRobot',
               '<(ce-cti_gyp_path):ctiMessagingRobot',
@@ -400,6 +401,7 @@
             'libraries': [
               '<(webots_path)/lib/libCppController.dylib',
               '<@(opencv_libs)',
+              '$(SDKROOT)/System/Library/Frameworks/AppKit.framework',
             ],
           }, # end controller Robot
 

@@ -1488,7 +1488,8 @@ namespace Cozmo {
       _snapshotROI = Embedded::Rectangle<s32>(-1, -1, -1, -1);
       _snapshot = NULL;
       
-      VisionMarker::SetDataPlatform(_dataPlatform);
+      
+      VisionMarker::SetDataPath(_dataPlatform->pathToResource(Util::Data::Scope::Resources, "basestation"));
       
       _isInitialized = true;
     }

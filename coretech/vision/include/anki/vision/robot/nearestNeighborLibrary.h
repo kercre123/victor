@@ -32,12 +32,11 @@ namespace Embedded {
   public:
     NearestNeighborLibrary();
     
-    NearestNeighborLibrary(Util::Data::DataPlatform* dataPlatform,
+    NearestNeighborLibrary(const std::string& dataPath,
                            const s32 numDataPoints, const s32 dataDim,
                            const s16* probeCenters_X, const s16* probeCenters_Y,
                            const s16* probePoints_X, const s16* probePoints_Y,
                            const s32 numProbePoints, const s32 numFractionalBits);
-
     
     NearestNeighborLibrary(const u8* data,
                            const u8* weights,

@@ -7,8 +7,6 @@
 #include "anki/common/robot/fixedLengthList.h"
 #include "anki/common/robot/errorHandling.h"
 
-#include "anki/common/basestation/utils/data/dataPlatform.h"
-
 #include <array>
 
 #define USE_EARLY_EXIT_DISTANCE_COMPUTATION 1
@@ -27,7 +25,7 @@ namespace Embedded {
     
   }
   
-  NearestNeighborLibrary::NearestNeighborLibrary(Util::Data::DataPlatform* dataPlatform,
+  NearestNeighborLibrary::NearestNeighborLibrary(const std::string& dataPath,
                                                  const s32 numDataPoints, const s32 dataDim,
                                                  const s16* probeCenters_X, const s16* probeCenters_Y,
                                                  const s16* probePoints_X, const s16* probePoints_Y,
@@ -50,13 +48,12 @@ namespace Embedded {
   , _numFractionalBits(numFractionalBits)
   , _useHoG(false)
   {
-    const std::string nnLibPath("config/basestation/vision/nnLibrary");
+    const std::string nnLibPath(dataPath + "/nnLibrary");
    
-    AnkiConditionalErrorAndReturn(dataPlatform != nullptr,
-                                  "NearestNeighborLibrary.Constructor.NullDataPlatform", "");
+    AnkiConditionalErrorAndReturn(dataPath.empty() == false,
+                                  "NearestNeighborLibrary.Constructor.EmptyDataPath", "");
     
-    std::string dataFile = dataPlatform->pathToResource(Util::Data::Scope::Resources,
-                                                        nnLibPath + "/nnLibrary.bin");
+    std::string dataFile = nnLibPath + "/nnLibrary.bin";
     
     FILE* fp = fopen(dataFile.c_str(), "rb");
     AnkiConditionalErrorAndReturn(fp, "NearestNeighborLibrary.Constructor.MissingFile",
@@ -65,8 +62,7 @@ namespace Embedded {
     fclose(fp);
     
 #   if USE_WEIGHTS
-    dataFile = dataPlatform->pathToResource(Util::Data::Scope::Resources,
-                                            nnLibPath + "/nnLibrary_weights.bin");
+    dataFile = nnLibPath + "/nnLibrary_weights.bin";
     AnkiConditionalErrorAndReturn(fp, "NearestNeighborLibrary.Constructor.MissingFile",
                                   "Unable to find NN library weights file '%s'.", dataFile.c_str());
     fp = fopen(dataFile.c_str(), "rb");
@@ -74,8 +70,7 @@ namespace Embedded {
     fclose(fp);
 #   endif
     
-    dataFile = dataPlatform->pathToResource(Util::Data::Scope::Resources,
-                                            nnLibPath + "/nnLibrary_labels.bin");
+    dataFile = nnLibPath + "/nnLibrary_labels.bin";
     AnkiConditionalErrorAndReturn(fp, "NearestNeighborLibrary.Constructor.MissingFile",
                                   "Unable to find NN library labels file '%s'.", dataFile.c_str());
     fp = fopen(dataFile.c_str(), "rb");
