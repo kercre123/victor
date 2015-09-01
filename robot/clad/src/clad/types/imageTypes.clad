@@ -44,7 +44,6 @@ enum uint_8 ImageSendMode {
     SingleShot
 }
 
-
 message ImageChunk {
   uint_32 timestamp,
   uint_32 imageId,
@@ -54,7 +53,6 @@ message ImageChunk {
   uint_8 chunkId,
   uint_8 data[uint_16], // Needs to be limited to 1200
 }
-
 
 } // namespace Cozmo
 } // namespace Anki

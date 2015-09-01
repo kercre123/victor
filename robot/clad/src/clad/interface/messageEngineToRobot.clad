@@ -3,10 +3,10 @@
  * to recompile the code in lock step.
  */
  
-#include "types/imageTypes.clad"
-#include "types/carryState.clad"
-#include "types/lightState.clad"
-#include "types/animationKeyFrames.clad"
+#include "clad/types/imageTypes.clad"
+#include "clad/types/carryState.clad"
+#include "clad/types/lightState.clad"
+#include "clad/types/animationKeyFrames.clad"
  
 namespace Anki {
 namespace Cozmo {
@@ -26,7 +26,7 @@ message DriveWheelsCurvature
 {
   int_16  speed_mmPerSec,      // Commanded speed in mm/sec
   uint_16 accel_mmPerSec2,     // Commanded max absolute value of...
-  uint_16 decel_mmPerSec2      // ...acceleration/deceleration in mm/sec^2
+  uint_16 decel_mmPerSec2,      // ...acceleration/deceleration in mm/sec^2
   int_16  curvatureRadius_mm   // +ve: curves left, -ve: curves right, ...
                                // ...u16_MAX: point turn left, 16_MIN: point ...
                                // ...turn right, 0: straight
@@ -63,7 +63,7 @@ message HeadAngleUpdate
   float_32 newAngle,
 }
 
-message PanAndTiltHead
+message PanAndTilt
 {
   float_32 bodyPanAngle_rad,
   float_32 headTiltAngle_rad,
@@ -110,7 +110,7 @@ message AppendPathSegmentArc
   PathSegmentSpeed speed,
 }
 
-messages AppendPathSegmentPointTurn
+message AppendPathSegmentPointTurn
 {
   float_32 x_center_mm,
   float_32 y_center_mm,
@@ -119,13 +119,13 @@ messages AppendPathSegmentPointTurn
   bool     useShortestDir
 }
 
-messages TrimPath
+message TrimPath
 {
   uint_8 numPopFrontSegments,
   uint_8 numPopBackSegments,
 }
 
-messages ExecutePath
+message ExecutePath
 {
   uint_16 pathID,
   bool    useManualSpeed,
@@ -167,7 +167,7 @@ message SyncTime
 message ImageRequest
 {
   ImageSendMode  sendMode,
-  ImageResultion resolution,
+  ImageResolution resolution,
 }
 
 message StartTestMode
@@ -195,7 +195,7 @@ message DockingErrorSignal
   float_32 x_distErr,
   float_32 y_horErr,
   float_32 z_height,
-  f32 angleErr,
+  float_32 angleErr,
   bool didTrackingSucceed,
   bool isApproximate,
 }
@@ -237,7 +237,7 @@ union EngineToRobot
   MoveHead                      moveHead                    = 0x03,
   SetLiftHeight                 liftHeight                  = 0x04,
   SetHeadAngle                  headAngle                   = 0x05,
-  HeadAngleUpdate               headAngleUpdate             = 0x06
+  HeadAngleUpdate               headAngleUpdate             = 0x06,
   PanAndTilt                    panAndTiltHead              = 0x07,
   TurnInPlaceAtSpeed            turnInPlaceAtSpeed          = 0x08,
   StopAllMotors                 stop                        = 0x09,

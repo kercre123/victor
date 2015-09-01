@@ -7,50 +7,50 @@ namespace Cozmo {
 
 namespace AnimKeyFrame {
 
-  AudioSample
+  message AudioSample
   {
     uint_8 sample[800]
   }
 
-  AudioSilence
+  message AudioSilence
   {
   }
 
-  HeadAngle
+  message HeadAngle
   {
     uint_16 time_ms,
     int_8   angle_deg,
   }
 
-  LiftHeight
+  message LiftHeight
   {
     uint_16 time_ms,
     uint_8  height_mm,
   }
 
-  FacePosition
+  message FacePosition
   {
-    int8 xCen,
-    int8 yCen,
+    int_8 xCen,
+    int_8 yCen,
   }
   
-  Blink
+  message Blink
   {
     bool enable,
     bool blinkNow,
   }
   
-  FaceImage
+  message FaceImage
   {
     uint_8 image[uint_16], // Needs to be limited to MAX_FACE_FRAME_SIZE
   }
   
-  BackpackLights
+  message BackpackLights
   {
     uint_32 colors[5],
   }
   
-  BodyMotion
+  message BodyMotion
   {
     int_16 speed,              // Commanded speed in mm/sec or deg/sec
     int_16 curvatureRadius_mm, // +ve: curves left, -ve: curves right, ...
@@ -58,7 +58,7 @@ namespace AnimKeyFrame {
                                // ...0: turn in place (+ve speed: left, -ve speed: right)
   }
   
-  EndOfAnimation
+  message EndOfAnimation
   {
   }
 

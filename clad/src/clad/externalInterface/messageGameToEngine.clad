@@ -4,8 +4,7 @@
 // Copyright: Anki Inc (c) 2015
 
 #include "clad/types/actionTypes.clad"
-#include "clad/types/imageSendMode.clad"
-#include "clad/types/cameraSettings.clad"
+#include "clad/types/imageTypes.clad"
 #include "clad/types/testMode.clad"
 #include "clad/externalInterface/messageShared.clad"
 
@@ -134,7 +133,7 @@ message ImageRequest {
 message SetRobotImageSendMode {
     uint_8 robotID,
     ImageSendMode mode,
-    CameraResolutionClad resolution
+    ImageResolution resolution
 }
 
 // SaveImages
