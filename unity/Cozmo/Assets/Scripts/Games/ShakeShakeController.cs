@@ -73,7 +73,9 @@ public class ShakeShakeController : GameController {
     // spawn UI
     // create block game states
     foreach (KeyValuePair<int, ActiveBlock> activeBlock in robot.activeBlocks) {
-      blockData.Add(activeBlock.Key, new BlockData());
+      BlockData bData = new BlockData();
+      bData.SetNewColor(Color.white); // start all blocks as white
+      blockData.Add(activeBlock.Key, bData);
     }
   }
 
@@ -82,8 +84,35 @@ public class ShakeShakeController : GameController {
     // update UI
 
     // update block game states
-    int greenBlockCount = 0;
-    int blueBlockCount = 0;
+    int greenBlockCount = CountBlocks(Color.green);
+    int blueBlockCount = CountBlocks(Color.blue);
+
+
+    // process green blocks
+    if (greenBlockCount > 1) {
+      float rand = Random.Range(0.0f, 1.0f);
+
+      if (rand < 0.01f) {
+        ChangeBlockTo(Color.green, Color.yellow);
+      }
+      else if (rand < 0.02f && blueBlockCount < 3) { 
+        //ChangeBlockTo(Color.green, Color.blue);
+      }
+      else if (rand < 0.03f) {
+        ChangeBlockTo(Color.green, Color.white);
+      }
+    }
+
+    // process white blocks
+    ChangeBlocksIf(Color.white, Color.green, 2.0f);
+
+    // process yellow blocks
+    ChangeBlocksIf(Color.yellow, Color.red, 1.0f);
+
+    // process red blocks
+    ChangeBlocksIf(Color.red, Color.white, 2.0f);
+
+    // process blue blocks
 
     // update block colors
     foreach (KeyValuePair<int, BlockData> bData in blockData) {
@@ -93,9 +122,6 @@ public class ShakeShakeController : GameController {
     }
     DAS.Debug("ShakeShakeController", "current score: " + currentScore);
 
-    // update cozmo state (do I see a blue block?)
-    // only change the blue block and add score if it successfully picks it up and puts it back down
-    // if we detect a failure we restart the pick up -> set down state
   }
 
   protected override void Exit_PLAYING(bool overrideStars = false) {
@@ -128,6 +154,37 @@ public class ShakeShakeController : GameController {
 
   protected override void RefreshHUD() {
     base.RefreshHUD();
+  }
+
+  private int CountBlocks(Color color) {
+    int counter = 0;
+    foreach (KeyValuePair<int, BlockData> bData in blockData) {
+      if (bData.Value.currentColor == color) {
+        counter++;
+      }
+    }
+    return counter;
+  }
+
+  // picks the first color it finds of colorFrom and
+  // changes it to colorTo
+  private void ChangeBlockTo(Color colorFrom, Color colorTo) {
+    foreach (KeyValuePair<int, BlockData> bData in blockData) {
+      if (bData.Value.currentColor == colorFrom) {
+        bData.Value.SetNewColor(colorTo);
+        return;
+      }
+    }
+  }
+
+  // finds all blocks of colorFrom that has been that color for longer
+  // than timeThreshold and changes them to colorTo
+  private void ChangeBlocksIf(Color colorFrom, Color colorTo, float timeThreshold) {
+    foreach (KeyValuePair<int, BlockData> bData in blockData) {
+      if (bData.Value.currentColor == colorFrom && Time.time - bData.Value.lastColorChangeTime > timeThreshold) {
+        bData.Value.SetNewColor(colorTo);
+      }
+    }
   }
 
   private void BlockTapped(int blockID, int numTapped) {
