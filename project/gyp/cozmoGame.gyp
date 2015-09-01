@@ -336,6 +336,11 @@
             'dependencies': [
               '<(cg-mex_gyp_path):mexDetectFiducialMarkers',
               '<(cg-mex_gyp_path):mexUnique',
+              '<(cg-mex_gyp_path):mexCameraCapture',
+              '<(cg-mex_gyp_path):mexHist',
+              '<(cg-mex_gyp_path):mexClosestIndex',
+              '<(cg-mex_gyp_path):mexRegionprops',
+              '<(cg-mex_gyp_path):mexRefineQuadrilateral',
             ],
           },
         ],

@@ -22,21 +22,24 @@
 #include <thread>
 
 namespace Anki {
+  
+  // Forward declarations
+  namespace Util {
+  namespace Data {
+    class DataPlatform;
+  }
+  }
+  
 namespace Cozmo {
   
-// Forward declarations
-namespace Data {
-  class DataPlatform;
-}
-
 class CozmoAPI : private Util::noncopyable
 {
 public:
   // When the engine should run in a separate thread
-  Result StartRun(Data::DataPlatform* dataPlatform, const Json::Value& config);
+  Result StartRun(Util::Data::DataPlatform* dataPlatform, const Json::Value& config);
   
   // When manual control over updating the engine is desired:
-  Result Start(Data::DataPlatform* dataPlatform, const Json::Value& config);
+  Result Start(Util::Data::DataPlatform* dataPlatform, const Json::Value& config);
   Result Update(const double currentTime_sec);
   
   // Destroys any running thread and game instance
@@ -48,7 +51,8 @@ private:
   class CozmoInstanceRunner
   {
   public:
-    CozmoInstanceRunner(Data::DataPlatform* dataPlatform, const Json::Value& config, Result& initResult);
+    CozmoInstanceRunner(Util::Data::DataPlatform* dataPlatform,
+                        const Json::Value& config, Result& initResult);
     
     void Run();
     
