@@ -243,3 +243,4 @@ project/gyp/build
 generated/clad
 generated/webots/src/plugins/physics/physics.c
 resources/config/faciometric
+resources/config/basestation/vision/faciometric

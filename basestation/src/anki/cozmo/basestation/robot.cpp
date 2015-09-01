@@ -34,7 +34,7 @@
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
-#include "anki/cozmo/basestation/data/dataPlatform.h"
+#include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "util/fileUtils/fileUtils.h"
 
 #include <fstream>
@@ -48,7 +48,7 @@ namespace Anki {
   namespace Cozmo {
     
     Robot::Robot(const RobotID_t robotID, IRobotMessageHandler* msgHandler,
-      IExternalInterface* externalInterface, Data::DataPlatform* dataPlatform)
+                 IExternalInterface* externalInterface, Util::Data::DataPlatform* dataPlatform)
     : _externalInterface(externalInterface)
     , _dataPlatform(dataPlatform)
     , _ID(robotID)
@@ -124,7 +124,7 @@ namespace Anki {
         // Read planner motion primitives
         // TODO: Use different motions primitives depending on the type/personality of this robot
         // TODO: Stop storing *cozmo* motion primitives in a coretech location
-        const bool success = _dataPlatform->readAsJson(Data::Scope::Resources, "config/basestation/config/cozmo_mprim.json", mprims);
+        const bool success = _dataPlatform->readAsJson(Util::Data::Scope::Resources, "config/basestation/config/cozmo_mprim.json", mprims);
         if(!success) {
           PRINT_NAMED_ERROR("Robot.MotionPrimitiveJsonParseFailure", "Failed to load motion primitives, Planner likely won't work.");
         }
@@ -138,7 +138,7 @@ namespace Anki {
       if (nullptr != _dataPlatform)
       {
         const std::string jsonFilename = "config/basestation/config/behavior_config.json";
-        const bool success = _dataPlatform->readAsJson(Data::Scope::Resources, jsonFilename, behaviorConfig);
+        const bool success = _dataPlatform->readAsJson(Util::Data::Scope::Resources, jsonFilename, behaviorConfig);
         if (!success)
         {
           PRINT_NAMED_ERROR("Robot.BehaviorConfigJsonNotFound",
@@ -243,7 +243,7 @@ namespace Anki {
       if(_stateSaveMode != SAVE_OFF)
       {
         // Make sure image capture folder exists
-        std::string robotStateCaptureDir = _dataPlatform->pathToResource(Data::Scope::Cache, AnkiUtil::kP_ROBOT_STATE_CAPTURE_DIR);
+        std::string robotStateCaptureDir = _dataPlatform->pathToResource(Util::Data::Scope::Cache, AnkiUtil::kP_ROBOT_STATE_CAPTURE_DIR);
         if (!Util::FileUtils::CreateDirectory(robotStateCaptureDir, false, true)) {
           PRINT_NAMED_ERROR("Robot.UpdateFullRobotState.CreateDirFailed","%s", robotStateCaptureDir.c_str());
         }
@@ -272,7 +272,7 @@ namespace Anki {
         
         Json::Value json = msg.CreateJson();
         PRINT_NAMED_INFO("Robot.UpdateFullRobotState", "Writing RobotState JSON to file %s", msgFilename.c_str());
-        _dataPlatform->writeAsJson(Data::Scope::Cache, msgFilename, json);
+        _dataPlatform->writeAsJson(Util::Data::Scope::Cache, msgFilename, json);
 #if(0)
         // Compose line for IMU output file.
         // Used for determining delay constant in image timestamp.
@@ -1345,7 +1345,7 @@ namespace Anki {
       FaceAnimationManager::getInstance()->ReadFaceAnimationDir(_dataPlatform);
       
       const std::string animationFolder =
-        _dataPlatform->pathToResource(Data::Scope::Resources, "assets/animations/");
+        _dataPlatform->pathToResource(Util::Data::Scope::Resources, "assets/animations/");
       std::string animationId;
       s32 loadedFileCount = 0;
       DIR* dir = opendir(animationFolder.c_str());
@@ -2337,7 +2337,7 @@ namespace Anki {
       if (_imageSaveMode != SAVE_OFF) {
         
         // Make sure image capture folder exists
-        std::string imageCaptureDir = _dataPlatform->pathToResource(Data::Scope::Cache, AnkiUtil::kP_IMG_CAPTURE_DIR);
+        std::string imageCaptureDir = _dataPlatform->pathToResource(Util::Data::Scope::Cache, AnkiUtil::kP_IMG_CAPTURE_DIR);
         if (!Util::FileUtils::CreateDirectory(imageCaptureDir, false, true)) {
           PRINT_NAMED_WARNING("Robot.ProcessImage.CreateDirFailed","%s",imageCaptureDir.c_str());
         }

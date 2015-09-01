@@ -18,7 +18,8 @@ namespace Anki {
 namespace Cozmo {
   
 
-CozmoEngineHostImpl::CozmoEngineHostImpl(IExternalInterface* externalInterface,Data::DataPlatform* dataPlatform)
+CozmoEngineHostImpl::CozmoEngineHostImpl(IExternalInterface* externalInterface,
+                                         Util::Data::DataPlatform* dataPlatform)
 : CozmoEngineImpl(externalInterface, dataPlatform)
 , _isListeningForRobots(false)
 , _robotAdvertisementService("RobotAdvertisementService")

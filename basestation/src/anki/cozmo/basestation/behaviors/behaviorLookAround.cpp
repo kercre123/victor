@@ -16,7 +16,16 @@
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/common/shared/radians.h"
+#include "anki/common/robot/config.h"
 #include "clad/externalInterface/messageEngineToGame.h"
+
+
+#define SAFE_ZONE_VIZ (ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ERRORS_AND_WARNS_AND_ASSERTS)
+
+#if SAFE_ZONE_VIZ
+#include "anki/cozmo/basestation/viz/vizManager.h"
+#include "anki/common/basestation/math/polygon_impl.h"
+#endif
 
 namespace Anki {
 namespace Cozmo {
@@ -84,6 +93,10 @@ Result BehaviorLookAround::Init()
 
 IBehavior::Status BehaviorLookAround::Update(float currentTime_sec)
 {
+#if SAFE_ZONE_VIZ
+  Point2f center = { _moveAreaCenter.GetTranslation().x(), _moveAreaCenter.GetTranslation().y() };
+  VizManager::getInstance()->DrawXYCircle(_robot.GetID(), NamedColors::GREEN, center, _safeRadius);
+#endif
   switch (_currentState)
   {
     case State::Inactive:
@@ -95,6 +108,8 @@ IBehavior::Status BehaviorLookAround::Update(float currentTime_sec)
     }
     case State::StartLooking:
     {
+      IActionRunner* moveHeadAction = new MoveHeadToAngleAction(0);
+      _robot.GetActionList().QueueActionAtEnd(0, moveHeadAction);
       StartMoving();
       _currentState = State::LookingForObject;
     }
@@ -150,6 +165,10 @@ IBehavior::Status BehaviorLookAround::Update(float currentTime_sec)
     }
   }
   
+#if SAFE_ZONE_VIZ
+  VizManager::getInstance()->EraseCircle(_robot.GetID());
+#endif
+  
   return Status::Complete;
 }
   
@@ -173,17 +192,17 @@ Pose3d BehaviorLookAround::GetDestinationPose(BehaviorLookAround::Destination de
     }
     case Destination::West:
     {
-      destPose.RotateBy(Rotation3d(DEG_TO_RAD(90), Z_AXIS_3D()));
+      destPose.SetRotation(destPose.GetRotation() * Rotation3d(DEG_TO_RAD(90), Z_AXIS_3D()));
       break;
     }
     case Destination::South:
     {
-      destPose.RotateBy(Rotation3d(DEG_TO_RAD(180), Z_AXIS_3D()));
+      destPose.SetRotation(destPose.GetRotation() * Rotation3d(DEG_TO_RAD(180), Z_AXIS_3D()));
       break;
     }
     case Destination::East:
     {
-      destPose.RotateBy(Rotation3d(DEG_TO_RAD(-90), Z_AXIS_3D()));
+      destPose.SetRotation(destPose.GetRotation() * Rotation3d(DEG_TO_RAD(-90), Z_AXIS_3D()));
       break;
     }
     case Destination::Count:
@@ -197,7 +216,7 @@ Pose3d BehaviorLookAround::GetDestinationPose(BehaviorLookAround::Destination de
   
   if (Destination::Center != destination)
   {
-    destPose.SetTranslation(destPose * Point3f(_safeRadius, 0, 0));
+    destPose.SetTranslation(destPose.GetTranslation() + destPose.GetRotation() * Point3f(_safeRadius, 0, 0));
   }
   
   return destPose;
@@ -235,10 +254,42 @@ void BehaviorLookAround::HandleObjectObserved(const AnkiEvent<MessageEngineToGam
   
   const RobotObservedObject& msg = event.GetData().Get_RobotObservedObject();
   
+  static const std::set<ObjectFamily> familyList = { ObjectFamily::Block, ObjectFamily::LightCube };
+  
   // We'll get continuous updates about objects in view, so only care about new ones whose markers we can see
-  if (0 == _oldBoringObjects.count(msg.objectID) && msg.markersVisible)
+  if (familyList.count(msg.objectFamily) > 0 && msg.markersVisible && 0 == _oldBoringObjects.count(msg.objectID))
   {
     _recentObjects.insert(msg.objectID);
+    
+    ObservableObject* object = _robot.GetBlockWorld().GetObjectByID(msg.objectID);
+    if (nullptr != object)
+    {
+      UpdateSafeRegion(object->GetPose().GetTranslation());
+    }
+  }
+}
+  
+void BehaviorLookAround::UpdateSafeRegion(const Vec3f& objectPosition)
+{
+  Vec3f translationDiff = objectPosition - _moveAreaCenter.GetTranslation();
+  // We're only going to care about the XY plane distance
+  translationDiff.z() = 0;
+  const f32 distanceSqr = translationDiff.LengthSq();
+  
+  // If the distance between our safe area center and the object we're seeing exceeds our current safe radius,
+  // update our center point and safe radius to include the object's location
+  if (_safeRadius * _safeRadius < distanceSqr)
+  {
+    const f32 distance = std::sqrt(distanceSqr);
+    
+    // Ratio is ratio of distance to new center point to distance of observed object
+    const f32 newCenterRatio = 0.5f - _safeRadius / (2.0f * distance);
+    
+    // The new center is calculated as: C1 = C0 + (ObjectPosition - C0) * Ratio
+    _moveAreaCenter.SetTranslation(_moveAreaCenter.GetTranslation() + translationDiff * newCenterRatio);
+    
+    // The new radius is simply half the distance between the far side of the previus circle and the observed object
+    _safeRadius = 0.5f * (distance + _safeRadius);
   }
 }
   

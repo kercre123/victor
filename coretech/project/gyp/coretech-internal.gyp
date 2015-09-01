@@ -397,57 +397,6 @@
             ],
           }, # end unittest target
 
-          {
-            'target_name': 'mexDetectFiducialMarkers',
-            'type': 'shared_library',
-            'variables': {
-              'mac_target_archs': [ '$(ARCHS_STANDARD)' ]
-            },
-            'include_dirs': [
-              '/Applications/MATLAB_R2015a.app/extern/include',
-              '../../include',
-              '<@(opencv_includes)',
-            ],
-            'sources': [
-              '../../vision/robot/mex/mexDetectFiducialMarkers.cpp',
-              '../../common/matlab/mex/mexWrappers.cpp',
-              '../../common/shared/src/matlabConverters.cpp',
-              '../../common/shared/src/sharedMatlabInterface.cpp',
-              '../../common/robot/src/matlabInterface.cpp'
-            ],
-            'dependencies': [
-              'ctiCommon',
-              'ctiCommonRobot',
-              'ctiVision',
-              'ctiVisionRobot',
-              '<(cti-util_gyp_path):jsoncpp',
-              '<(cti-util_gyp_path):util',
-              '<(cti-util_gyp_path):utilEmbedded',
-            ],
-            'libraries': [
-              '<@(opencv_libs)',
-              '/Applications/MATLAB_R2015a.app/bin/maci64/libmx.dylib',
-              '/Applications/MATLAB_R2015a.app/bin/maci64/libmex.dylib',
-              '/Applications/MATLAB_R2015a.app/bin/maci64/libeng.dylib',
-            ],
-            'defines': [
-              'ANKICORETECH_USE_MATLAB=1',
-              'ANKICORETECH_USE_GTEST=0',
-              'ANKICORETECH_USE_OPENCV=1',
-              'ANKICORETECH_EMBEDDED_USE_MATLAB=1',
-              'ANKICORETECH_EMBEDDED_USE_GTEST=0',
-              'ANKICORETECH_EMBEDDED_USE_OPENCV=1',
-            ],
-            'actions': [
-              {
-                'action_name' : 'renameMex',
-                'inputs': ['<(PRODUCT_DIR)/libmexDetectFiducialMarkers.dylib'],
-                'outputs': ['<(PRODUCT_DIR)/mexDetectFiducialMarkers.mexmaci64'],
-                'action': ['cp', '<(_inputs)', '<(_outputs)']
-              },
-            ]
-          }, # end mexDetectFiducialMarkers
-
         ], # end targets
       },
     ] # end if mac
@@ -484,8 +433,8 @@
         'SYSTEM_ROOT_PATH=<(cti-cozmo_engine_path)'
       ],
       'dependencies': [
-        '<(cti-util_gyp_path):util',
         '<(cti-util_gyp_path):jsoncpp',
+        '<(cti-util_gyp_path):util',
       ],
       'type': '<(common_library_type)',
       'conditions': [
@@ -604,6 +553,7 @@
         '../../vision/basestation/src',
         '../../vision/include',
         '<@(opencv_includes)',
+        '<(coretech_external_path)/matconvnet/matlab/src/bits',
         '<@(faciometric_includes)',
         '<@(facesdk_includes)',
       ],
@@ -640,6 +590,7 @@
       },
       'dependencies': [
         'ctiCommonRobot',
+        '<(cti-util_gyp_path):jsoncpp',
       ],
       'type': '<(vision_robot_library_type)',
     },

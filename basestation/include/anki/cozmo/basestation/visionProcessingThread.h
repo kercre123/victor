@@ -25,19 +25,24 @@
 #include <mutex>
 
 namespace Anki {
+  
+  // Forward declaration
+  namespace Util {
+  namespace Data {
+    class DataPlatform;
+  }
+  }
+  
 namespace Cozmo {
   
 // Forward declaration
 class VisionSystem;
-namespace Data {
-class DataPlatform;
-}
 
 class VisionProcessingThread
   {
   public:
     
-    VisionProcessingThread(Data::DataPlatform* dataPlatform);
+    VisionProcessingThread(Util::Data::DataPlatform* dataPlatform);
     ~VisionProcessingThread();
     
     //

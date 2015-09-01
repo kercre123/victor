@@ -29,7 +29,7 @@ class MessageGameToEngine;
 class CozmoEngineHostImpl : public CozmoEngineImpl
 {
 public:
-  CozmoEngineHostImpl(IExternalInterface* externalInterface, Data::DataPlatform* dataPlatform);
+  CozmoEngineHostImpl(IExternalInterface* externalInterface, Util::Data::DataPlatform* dataPlatform);
 
   Result StartBasestation();
 

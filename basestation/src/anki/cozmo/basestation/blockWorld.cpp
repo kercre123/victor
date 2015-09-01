@@ -143,7 +143,7 @@ namespace Anki
       // Mat Pieces
       //
       
-      // Flag mats:
+      // Flat mats:
       //_objectLibrary[ObjectFamily::Mat].AddObject(new FlatMat(ObjectType::FlatMat_LETTERS_4x4));
       _objectLibrary[ObjectFamily::Mat].AddObject(new FlatMat(ObjectType::FlatMat_GEARS_4x4));
       
