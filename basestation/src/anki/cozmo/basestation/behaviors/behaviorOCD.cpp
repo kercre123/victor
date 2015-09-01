@@ -150,17 +150,16 @@ namespace Cozmo {
       return Status::Complete;
     }
     
+    if(_interrupted) {
+      // If we are in the middle of picking up a block, we can immediately interrupt.
+      // Otherwise we will wait until placing completes which switches us back to
+      // PickingUpBlock, so we can then get here
+      return Status::Complete;
+    }
+    
     switch(_currentState)
     {
       case State::PickingUpBlock:
-        if(_interrupted) {
-          // If we are in the middle of picking up a block, we can immediately interrupt.
-          // Otherwise we will wait until placing completes which switches us back to
-          // PickingUpBlock, so we can then get here
-          return Status::Complete;
-        }
-        break;
-        
       case State::PlacingBlock:
         
         break;
@@ -193,15 +192,15 @@ namespace Cozmo {
   
   void BehaviorOCD::UpdateName()
   {
-    _name = "OCD";
+    _stateName = "";
     switch(_currentArrangement)
     {
       case Arrangement::Line:
-        _name += "-LINE";
+        _stateName += "LINE";
         break;
         
       case Arrangement::StacksOfTwo:
-        _name += "-STACKS_OF_TWO";
+        _stateName += "STACKS_OF_TWO";
         break;
         
       default:
@@ -211,11 +210,11 @@ namespace Cozmo {
     switch(_currentState)
     {
       case State::PickingUpBlock:
-        _name += "-PICKING";
+        _stateName += "-PICKING";
         break;
         
       case State::PlacingBlock:
-        _name += "-PLACING";
+        _stateName += "-PLACING";
         break;
         
       default:

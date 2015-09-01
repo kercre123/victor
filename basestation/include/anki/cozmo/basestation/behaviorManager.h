@@ -17,6 +17,7 @@
 #define COZMO_BEHAVIOR_MANAGER_H
 
 #include "anki/common/types.h"
+#include "anki/cozmo/basestation/behaviorChooser.h"
 
 #include "anki/cozmo/shared/cozmoTypes.h"
 
@@ -24,18 +25,21 @@
 #include "clad/types/objectFamilies.h"
 
 #include "util/random/randomGenerator.h"
+#include "util/signals/simpleSignal_fwd.h"
 
 #include "json/json.h"
 
 #include <unordered_map>
 #include <string>
 #include <random>
+#include <vector>
 
 namespace Anki {
 namespace Cozmo {
   
   // Forward declaration
   class IBehavior;
+  class IReactionaryBehavior;
   class IBehaviorChooser;
   class Reward;
   class Robot;
@@ -90,12 +94,15 @@ namespace Cozmo {
     
     void SwitchToNextBehavior();
     Result InitNextBehaviorHelper(float currentTime_sec);
+    void SetupBehaviorChooser(const Json::Value &config);
+    void AddReactionaryBehavior(IReactionaryBehavior* behavior);
     
     // How we store and choose next behavior
     IBehaviorChooser* _behaviorChooser;
     
     IBehavior* _currentBehavior = nullptr;
     IBehavior* _nextBehavior = nullptr;
+    IBehavior* _forceSwitchBehavior = nullptr;
     
     // Minimum amount of time to stay in each behavior
     float _minBehaviorTime_sec;
@@ -103,6 +110,9 @@ namespace Cozmo {
     
     // For random numbers
     Util::RandomGenerator _rng;
+    
+    // For storing event handlers
+    std::vector<Signal::SmartHandle> _eventHandlers;
     
   }; // class BehaviorManager
   

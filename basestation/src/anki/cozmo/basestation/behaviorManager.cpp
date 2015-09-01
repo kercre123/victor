@@ -11,15 +11,17 @@
  **/
 
 #include "anki/cozmo/basestation/behaviorManager.h"
-#include "anki/cozmo/basestation/behaviorChooser.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 
 #include "anki/cozmo/basestation/behaviors/behaviorOCD.h"
 #include "anki/cozmo/basestation/behaviors/behaviorLookForFaces.h"
 #include "anki/cozmo/basestation/behaviors/behaviorFidget.h"
 #include "anki/cozmo/basestation/behaviors/behaviorLookAround.h"
+#include "anki/cozmo/basestation/behaviors/behaviorReactToPickup.h"
 
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/events/ankiEvent.h"
+#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 
 #include "util/logging/logging.h"
 #include "util/helpers/templateHelpers.h"
@@ -34,7 +36,7 @@ namespace Cozmo {
   : _isInitialized(false)
   , _forceReInit(false)
   , _robot(robot)
-  , _behaviorChooser(new SimpleBehaviorChooser)
+  , _behaviorChooser(new ReactionaryBehaviorChooser)
   , _minBehaviorTime_sec(5)
   {
 
@@ -48,18 +50,61 @@ namespace Cozmo {
     
     // TODO: Only load behaviors specified by Json?
     
-    _behaviorChooser->AddBehavior(new BehaviorOCD(_robot, config));
-    //AddBehavior(new BehaviorLookForFaces(_robot, config));
-    _behaviorChooser->AddBehavior(new BehaviorLookAround(_robot, config));
-    _behaviorChooser->AddBehavior(new BehaviorFidget(_robot, config));
-    
-    _robot.SetIdleAnimation("Idle");
+    SetupBehaviorChooser(config);
     
     _isInitialized = true;
     
     _lastSwitchTime_sec = 0.f;
     
     return RESULT_OK;
+  }
+  
+  void BehaviorManager::SetupBehaviorChooser(const Json::Value &config)
+  {
+    AddReactionaryBehavior(new BehaviorReactToPickup(_robot, config));
+    
+    _behaviorChooser->AddBehavior(new BehaviorOCD(_robot, config));
+    //AddBehavior(new BehaviorLookForFaces(_robot, config));
+    _behaviorChooser->AddBehavior(new BehaviorLookAround(_robot, config));
+    _behaviorChooser->AddBehavior(new BehaviorFidget(_robot, config));
+  }
+  
+  // The AddReactionaryBehavior wrapper is responsible for setting up the callbacks so that important events will be
+  // reacted to correctly - events will be given to the Chooser which may return a behavior to force switch to
+  void BehaviorManager::AddReactionaryBehavior(IReactionaryBehavior* behavior)
+  {
+    // We map reactionary behaviors to the tag types they're going to care about
+    _behaviorChooser->AddReactionaryBehavior(behavior);
+    
+    // If we don't have an external interface (Unit tests), bail early; we can't setup callbacks
+    if (!_robot.HasExternalInterface()) {
+      return;
+    }
+    
+    // Callback for EngineToGame event that a reactionary behavior (possibly) cares about
+    auto reactionsEngineToGameCallback = [this](const AnkiEvent<ExternalInterface::MessageEngineToGame>& event)
+    {
+      _forceSwitchBehavior = _behaviorChooser->GetReactionaryBehavior(event);
+    };
+    
+    // Subscribe our own callback to these events
+    IExternalInterface* interface = _robot.GetExternalInterface();
+    for (auto tag : behavior->GetEngineToGameTags())
+    {
+      _eventHandlers.push_back(interface->Subscribe(tag, reactionsEngineToGameCallback));
+    }
+    
+    // Callback for GameToEngine event that a reactionary behavior (possibly) cares about
+    auto reactionsGameToEngineCallback = [this](const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+    {
+      _forceSwitchBehavior = _behaviorChooser->GetReactionaryBehavior(event);
+    };
+    
+    // Subscribe our own callback to these events
+    for (auto tag : behavior->GetGameToEngineTags())
+    {
+      _eventHandlers.push_back(interface->Subscribe(tag, reactionsGameToEngineCallback));
+    }
   }
   
   BehaviorManager::~BehaviorManager()
@@ -69,6 +114,11 @@ namespace Cozmo {
   
   void BehaviorManager::SwitchToNextBehavior()
   {
+    // If we're currently running our forced behavior but now switching away, clear it
+    if (_currentBehavior == _forceSwitchBehavior)
+    {
+      _forceSwitchBehavior = nullptr;
+    }
     _currentBehavior = _nextBehavior;
     _nextBehavior = nullptr;
   }
@@ -82,7 +132,19 @@ namespace Cozmo {
       return RESULT_FAIL;
     }
     
-    if(nullptr == _currentBehavior ||
+    // If we happen to have a behavior we really want to switch to, do so
+    if (nullptr != _forceSwitchBehavior && _currentBehavior != _forceSwitchBehavior)
+    {
+      _nextBehavior = _forceSwitchBehavior;
+      
+      lastResult = InitNextBehaviorHelper(currentTime_sec);
+      if(lastResult != RESULT_OK) {
+        PRINT_NAMED_WARNING("BehaviorManager.Update.InitForcedBehavior",
+                            "Failed trying to force next behavior, continuing with current.");
+        lastResult = RESULT_OK;
+      }
+    }
+    else if (nullptr == _currentBehavior ||
        currentTime_sec - _lastSwitchTime_sec > _minBehaviorTime_sec)
     {
       // We've been in the current behavior long enough to consider switching
