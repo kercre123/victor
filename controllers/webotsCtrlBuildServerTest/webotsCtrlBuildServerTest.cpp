@@ -44,7 +44,7 @@ int main(int argc, char **argv)
   std::string filesPath = path + "temp";
   std::string cachePath = path + "temp";
   std::string externalPath = path + "temp";
-  Data::DataPlatform dataPlatform(filesPath, cachePath, externalPath, resourcePath);
+  Util::Data::DataPlatform dataPlatform(filesPath, cachePath, externalPath, resourcePath);
 
   
   // Create specified test controller.
