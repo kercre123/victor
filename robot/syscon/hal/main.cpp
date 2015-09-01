@@ -70,9 +70,9 @@ int main(void)
   g_dataToHead.common.source = SPI_SOURCE_BODY;
   g_dataToHead.tail = 0x84;
 
+  u32 timerStart = GetCounter();
   for (;;)
   {
-    u32 timerStart = GetCounter();
     g_dataToBody.common.source = SPI_SOURCE_CLEAR;
 
     // Only call every loop through - not all the time
@@ -96,8 +96,12 @@ int main(void)
     BatteryUpdate();
 
     // Update at 200Hz (5ms delay)
-    while ((GetCounter() - timerStart) < CYCLES_MS(35.0f / 7.0f))
-      ;
+    
+    u32 timerNow;
+    do {
+      timerNow = GetCounter();
+    } while ((timerNow - timerStart) < CYCLES_MS(5.0f));
+    timerStart = timerNow;
  
     // Verify the source
     if (g_dataToBody.common.source != SPI_SOURCE_HEAD)
