@@ -186,42 +186,50 @@ Pose3d BehaviorLookAround::GetDestinationPose(BehaviorLookAround::Destination de
 {
   Pose3d destPose(_moveAreaCenter);
   
-  // Our destination regions are 90 degrees, so we randomly pick up to 90 degrees to vary our destination
-  s32 randAngleMod = _rng.RandInt(90);
+  s32 baseAngleDegrees = 0;
+  bool shouldRotate = true;
   switch (destination)
   {
     case Destination::Center:
     {
-      // Don't need to rotate here
+      shouldRotate = false;
       break;
     }
     case Destination::East:
     {
-      destPose.SetRotation(destPose.GetRotation() * Rotation3d(DEG_TO_RAD(-45 + randAngleMod), Z_AXIS_3D()));
+      baseAngleDegrees = -45;
       break;
     }
     case Destination::North:
     {
-      destPose.SetRotation(destPose.GetRotation() * Rotation3d(DEG_TO_RAD(45 + randAngleMod), Z_AXIS_3D()));
+      baseAngleDegrees = 45;
       break;
     }
     case Destination::West:
     {
-      destPose.SetRotation(destPose.GetRotation() * Rotation3d(DEG_TO_RAD(135 + randAngleMod), Z_AXIS_3D()));
+      baseAngleDegrees = 135;
       break;
     }
     case Destination::South:
     {
-      destPose.SetRotation(destPose.GetRotation() * Rotation3d(DEG_TO_RAD(-135 + randAngleMod), Z_AXIS_3D()));
+      baseAngleDegrees = -135;
       break;
     }
     case Destination::Count:
     default:
     {
+      shouldRotate = false;
       PRINT_NAMED_ERROR("LookAround_Behavior.GetDestinationPose.InvalidDestination",
                         "Reached invalid destination %d.", destination);
       break;
     }
+  }
+  
+  if (shouldRotate)
+  {
+    // Our destination regions are 90 degrees, so we randomly pick up to 90 degrees to vary our destination
+    s32 randAngleMod = _rng.RandInt(90);
+    destPose.SetRotation(destPose.GetRotation() * Rotation3d(DEG_TO_RAD(baseAngleDegrees + randAngleMod), Z_AXIS_3D()));
   }
   
   if (Destination::Center != destination)
