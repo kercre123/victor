@@ -728,7 +728,6 @@ namespace Vision {
         if(IoU > intersectionOverUnionThreshold) {
           // Update existing face and remove it from additional checking for matches
           existingFace.SetRect(std::move(rect_f32));
-          existingFace.SetTimeStamp(frame.GetTimestamp());
           existingIter = existingFacesToCheck.erase(existingIter);
           matchFound = true;
           break;
@@ -743,7 +742,6 @@ namespace Vision {
         
         newFace.SetRect(Rectangle<f32>(newFaceRect));
         newFace.SetID(_faceCtr++);
-        newFace.SetTimeStamp(frame.GetTimestamp());
         _faces.emplace(newFace.GetID(), newFace);
       }
     }
@@ -751,6 +749,22 @@ namespace Vision {
     // Remove any faces we are no longer seeing
     for(auto oldFace : existingFacesToCheck) {
       _faces.erase(oldFace);
+    }
+    
+    // Update all existing faces
+    for(auto & facePair : _faces)
+    {
+      TrackedFace& face = facePair.second;
+      
+      face.SetTimeStamp(frame.GetTimestamp());
+      
+      // Just use assumed eye locations within the rectangle
+      // TODO: Use OpenCV's eye detector?
+      face.SetLeftEyeCenter(Point2f(face.GetRect().GetXmid() - .25f*face.GetRect().GetWidth(),
+                                    face.GetRect().GetYmid() - .125f*face.GetRect().GetHeight()));
+      face.SetRightEyeCenter(Point2f(face.GetRect().GetXmid() + .25f*face.GetRect().GetWidth(),
+                                     face.GetRect().GetYmid() - .125f*face.GetRect().GetHeight()));
+      
     }
     
     return RESULT_OK;

@@ -3,6 +3,8 @@
 
 #include "anki/vision/basestation/trackedFace.h"
 
+#include "anki/cozmo/basestation/viz/vizManager.h"
+
 #include <map>
 
 namespace Anki {
@@ -17,7 +19,8 @@ namespace Cozmo {
     
     FaceWorld(Robot& robot);
     
-    Result UpdateFace(Vision::TrackedFace& face);
+    Result Update();
+    Result AddOrUpdateFace(Vision::TrackedFace& face);
   
     // Returns nullptr if not found
     const Vision::TrackedFace* GetFace(Vision::TrackedFace::ID_t faceID) const;
@@ -25,7 +28,16 @@ namespace Cozmo {
   private:
     
     Robot& _robot;
-    std::map<Vision::TrackedFace::ID_t, Vision::TrackedFace> _knownFaces;
+    struct KnownFace {
+      Vision::TrackedFace      face;
+      VizManager::Handle_t     vizHandle;
+
+      KnownFace(Vision::TrackedFace& faceIn);
+    };
+    
+    std::map<Vision::TrackedFace::ID_t, KnownFace> _knownFaces;
+    
+    TimeStamp_t _deletionTimeout_ms;
     
     Result UpdateFaceTracking(const Vision::TrackedFace& face);
     

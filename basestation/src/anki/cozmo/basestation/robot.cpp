@@ -511,6 +511,31 @@ namespace Anki {
       return headAngSpeed;
     }
 
+    Vision::Camera Robot::GetHistoricalCamera(RobotPoseStamp* p, TimeStamp_t t)
+    {
+      Vision::Camera camera(GetCamera());
+      
+      // Compute pose from robot body to camera
+      // Start with canonical (untilted) headPose
+      Pose3d camPose(_headCamPose);
+      
+      // Rotate that by the given angle
+      RotationVector3d Rvec(-p->GetHeadAngle(), Y_AXIS_3D());
+      camPose.RotateBy(Rvec);
+      
+      // Precompute with robot body to neck pose
+      camPose.PreComposeWith(_neckPose);
+      
+      // Set parent pose to be the historical robot pose
+      camPose.SetParent(&(p->GetPose()));
+      
+      camPose.SetName("PoseHistoryCamera_" + std::to_string(t));
+      
+      // Update the head camera's pose
+      camera.SetPose(camPose);
+      
+      return camera;
+    }
     
     Result Robot::QueueObservedMarker(const Vision::ObservedMarker& markerOrig)
     {
@@ -595,31 +620,12 @@ namespace Anki {
         return RESULT_FAIL;
       }
       
-      // Update the marker's camera to use a pose from pose history
-      Vision::Camera camera(GetCamera()); // = marker.GetSeenBy();
-      
-      // Compute pose from robot body to camera
-      // Start with canonical (untilted) headPose
-      Pose3d camPose(_headCamPose);
-      
-      // Rotate that by the given angle
-      RotationVector3d Rvec(-p->GetHeadAngle(), Y_AXIS_3D());
-      camPose.RotateBy(Rvec);
-      
-      // Precompute with robot body to neck pose
-      camPose.PreComposeWith(_neckPose);
-      
-      // Set parent pose to be the historical robot pose
-      camPose.SetParent(&(p->GetPose()));
-      
-      camPose.SetName("PoseHistoryCamera_" + std::to_string(markerOrig.GetTimeStamp()));
-      
-      // Update the head camera's pose
-      camera.SetPose(camPose);
-      
-      // Create a new marker with the updated camera
+      // Update the marker's camera to use a pose from pose history, and
+      // create a new marker with the updated camera
       Vision::ObservedMarker marker(markerOrig.GetTimeStamp(), markerOrig.GetCode(),
-                                    markerOrig.GetImageCorners(), camera, markerOrig.GetUserHandle());
+                                    markerOrig.GetImageCorners(),
+                                    GetHistoricalCamera(p, markerOrig.GetTimeStamp()),
+                                    markerOrig.GetUserHandle());
       
       // Queue the marker for processing by the blockWorld
       _blockWorld.QueueObservedMarker(poseKey, marker);
@@ -801,8 +807,28 @@ namespace Anki {
                            GetID(), faceDetection.x_upperLeft, faceDetection.y_upperLeft, faceDetection.width, faceDetection.height);
           */
           
-          Result result = _faceWorld.UpdateFace(faceDetection);
-          if(result != RESULT_OK) {
+          Result lastResult;
+          
+          // Get historical robot pose at specified timestamp to make sure we've
+          // got a robot/camera in pose history
+          TimeStamp_t t;
+          RobotPoseStamp* p = nullptr;
+          HistPoseKey poseKey;
+          lastResult = ComputeAndInsertPoseIntoHistory(faceDetection.GetTimeStamp(),
+                                                       t, &p, &poseKey, true);
+          if(lastResult != RESULT_OK) {
+            PRINT_NAMED_WARNING("Robot.Update.HistoricalPoseNotFound",
+                                "For face seen at time: %d, hist: %d to %d\n",
+                                faceDetection.GetTimeStamp(),
+                                _poseHistory->GetOldestTimeStamp(),
+                                _poseHistory->GetNewestTimeStamp());
+            return lastResult;
+          }
+
+          faceDetection.UpdateTranslation(GetHistoricalCamera(p, t));
+          
+          lastResult = _faceWorld.AddOrUpdateFace(faceDetection);
+          if(lastResult != RESULT_OK) {
             PRINT_NAMED_ERROR("Robot.Update.FailedToUpdateFace",
                               "Got FaceDetection from vision processing but failed to update it.");
           }
@@ -851,7 +877,14 @@ namespace Anki {
         // (Note that we're only doing this if the vision processor completed)
         
         uint32_t numBlocksObserved = 0;
-        _blockWorld.Update(numBlocksObserved);
+
+        if(RESULT_OK != _blockWorld.Update(numBlocksObserved)) {
+          PRINT_NAMED_WARNING("Robot.Update.BlockWorldUpdateFailed", "");
+        }
+        
+        if(RESULT_OK != _faceWorld.Update()) {
+          PRINT_NAMED_WARNING("Robot.Update.FaceWorldUpdateFailed", "");
+        }
 
       } // if(_visionProcessor.WasLastImageProcessed())
       } // if (GetCamera().IsCalibrated())

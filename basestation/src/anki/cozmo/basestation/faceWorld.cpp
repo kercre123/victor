@@ -9,8 +9,17 @@
 namespace Anki {
 namespace Cozmo {
   
+  FaceWorld::KnownFace::KnownFace(Vision::TrackedFace& faceIn)
+  : face(faceIn)
+  , vizHandle(VizManager::INVALID_HANDLE)
+  {
+  
+  }
+
+  
   FaceWorld::FaceWorld(Robot& robot)
   : _robot(robot)
+  , _deletionTimeout_ms(3000)
   {
     
   }
@@ -54,7 +63,7 @@ namespace Cozmo {
     return RESULT_OK;
   } // UpdateFaceTracking()
   
-  Result FaceWorld::UpdateFace(Vision::TrackedFace& face)
+  Result FaceWorld::AddOrUpdateFace(Vision::TrackedFace& face)
   {
     auto insertResult = _knownFaces.insert({face.GetID(), face});
     
@@ -64,6 +73,14 @@ namespace Cozmo {
       // Update the existing face:
       insertResult.first->second = face;
     }
+
+    // Draw 3D face
+    static const Point3f humanHeadSize{148.f, 225.f, 195.f};
+    KnownFace& knownFace = insertResult.first->second;
+    Pose3d vizPose = knownFace.face.GetHeadPose().GetWithRespectToOrigin();
+    knownFace.vizHandle = VizManager::getInstance()->DrawHumanHead(static_cast<u32>(knownFace.face.GetID()),
+                                                                   humanHeadSize, vizPose,
+                                                                   NamedColors::GREEN);
     
     if((_robot.GetTrackToFace() != Vision::TrackedFace::UnknownFace) &&
        (_robot.GetTrackToFace() == face.GetID()))
@@ -77,6 +94,28 @@ namespace Cozmo {
 
     return RESULT_OK;
   }
+  
+  Result FaceWorld::Update()
+  {
+    // Delete any faces we haven't seen in awhile
+    for(auto faceIter = _knownFaces.begin(); faceIter != _knownFaces.end(); )
+    {
+      if(_robot.GetLastImageTimeStamp() - faceIter->second.face.GetTimeStamp() > _deletionTimeout_ms) {
+        
+        PRINT_NAMED_INFO("FaceWorld.Update.DeletingFace",
+                         "Removing face %llu at t=%d, because it hasn't been seen since t=%d.",
+                         faceIter->first, _robot.GetLastImageTimeStamp(),
+                         faceIter->second.face.GetTimeStamp());
+        
+        VizManager::getInstance()->EraseVizObject(faceIter->second.vizHandle);
+        faceIter = _knownFaces.erase(faceIter);
+      } else {
+        ++faceIter;
+      }
+    }
+    
+    return RESULT_OK;
+  } // Update()
     
   const Vision::TrackedFace* FaceWorld::GetFace(Vision::TrackedFace::ID_t faceID) const
   {
@@ -84,7 +123,7 @@ namespace Cozmo {
     if(faceIter == _knownFaces.end()) {
       return nullptr;
     } else {
-      return &faceIter->second;
+      return &faceIter->second.face;
     }
   }
 
