@@ -22,7 +22,7 @@ namespace Cozmo {
 
 #pragma mark --- CozmoAPI Methods ---
 
-Result CozmoAPI::StartRun(Data::DataPlatform* dataPlatform, const Json::Value& config)
+Result CozmoAPI::StartRun(Util::Data::DataPlatform* dataPlatform, const Json::Value& config)
 {
   // If there's already a thread running, we'll kill and restart
   if (_cozmoRunnerThread.joinable())
@@ -45,7 +45,7 @@ Result CozmoAPI::StartRun(Data::DataPlatform* dataPlatform, const Json::Value& c
   return gameInitResult;
 }
 
-Result CozmoAPI::Start(Data::DataPlatform* dataPlatform, const Json::Value& config)
+Result CozmoAPI::Start(Util::Data::DataPlatform* dataPlatform, const Json::Value& config)
 {
   // If we have a joinable thread already, we can't start
   if (_cozmoRunnerThread.joinable())
@@ -101,7 +101,8 @@ void CozmoAPI::Clear()
 
 #pragma mark --- CozmoInstanceRunner Methods ---
 
-CozmoAPI::CozmoInstanceRunner::CozmoInstanceRunner(Data::DataPlatform* dataPlatform, const Json::Value& config, Result& initResult)
+  CozmoAPI::CozmoInstanceRunner::CozmoInstanceRunner(Util::Data::DataPlatform* dataPlatform,
+                                                     const Json::Value& config, Result& initResult)
   : _cozmoInstance(dataPlatform)
 {
   initResult = _cozmoInstance.Init(config);

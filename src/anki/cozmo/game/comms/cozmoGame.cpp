@@ -31,7 +31,7 @@ namespace Cozmo {
   
 #pragma mark - CozmoGame Implementation
     
-  CozmoGameImpl::CozmoGameImpl(Data::DataPlatform* dataPlatform)
+  CozmoGameImpl::CozmoGameImpl(Util::Data::DataPlatform* dataPlatform)
   : _isHost(true)
   , _isEngineStarted(false)
   , _runState(CozmoGame::STOPPED)
@@ -624,7 +624,7 @@ namespace Cozmo {
   
 #pragma mark - CozmoGame Wrappers
   
-  CozmoGame::CozmoGame(Data::DataPlatform* dataPlatform)
+  CozmoGame::CozmoGame(Util::Data::DataPlatform* dataPlatform)
   : _impl(nullptr)
   {
     _impl = new CozmoGameImpl(dataPlatform);
