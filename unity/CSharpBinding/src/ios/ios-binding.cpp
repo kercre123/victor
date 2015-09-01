@@ -16,7 +16,7 @@
 #include "anki/common/basestation/jsonTools.h"
 #include "util/logging/logging.h"
 #include "util/logging/printfLoggerProvider.h"
-#include "anki/cozmo/basestation/data/dataPlatform.h"
+#include "anki/common/basestation/utils/data/dataPlatform.h"
 #include <algorithm>
 #include <string>
 #include <vector>
@@ -26,7 +26,7 @@ using namespace Anki::Cozmo;
 using namespace Anki::Cozmo::CSharpBinding;
 
 CozmoAPI* gameAPI = nullptr;
-Anki::Cozmo::Data::DataPlatform* dataPlatform = nullptr;
+Anki::Util::Data::DataPlatform* dataPlatform = nullptr;
 
 const char* ROBOT_ADVERTISING_HOST_IP = "127.0.0.1";
 const char* VIZ_HOST_IP = "127.0.0.1";
