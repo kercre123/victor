@@ -23,26 +23,29 @@ For internal use only. No part of this code may be used without a signed non-dis
 #define MAX_FIDUCIAL_MARKER_BITS 25
 #define MAX_FIDUCIAL_MARKER_BIT_PROBE_LOCATIONS 81
 
-// Set to 1 to use two "red/black" verification trees
-// Set to 0 to use (older) one-vs-all verifiers for each class
-#define USE_RED_BLACK_VERIFICATION_TREES 1
-
 // Available marker recognition methods
 #define RECOGNITION_METHOD_DECISION_TREES   0
 #define RECOGNITION_METHOD_NEAREST_NEIGHBOR 1
 #define RECOGNITION_METHOD_CNN              2
 
 // Choose the recognition method here to be one from the above list
-#define RECOGNITION_METHOD RECOGNITION_METHOD_CNN
+#define RECOGNITION_METHOD RECOGNITION_METHOD_NEAREST_NEIGHBOR
 
-// Includes required by the various methods
+// Settings/includes required by the various methods
 #if RECOGNITION_METHOD == RECOGNITION_METHOD_NEAREST_NEIGHBOR
 #  include "anki/vision/robot/nearestNeighborLibrary.h"
+#  include "anki/vision/basestation/convolutionalNeuralNet.h"
+
 #elif RECOGNITION_METHOD == RECOGNITION_METHOD_DECISION_TREES
 #  include "anki/vision/robot/decisionTree_vision.h"
 #  include "anki/vision/robot/visionMarkerDecisionTrees.h"
+   // Set to 1 to use two "red/black" verification trees
+   // Set to 0 to use (older) one-vs-all verifiers for each class
+#  define USE_RED_BLACK_VERIFICATION_TREES 1
+
 #elif RECOGNITION_METHOD == RECOGNITION_METHOD_CNN
 #  include "anki/vision/basestation/convolutionalNeuralNet.h"
+
 #else
 #  error Invalid RECOGNITION_METHOD set!
 #endif
@@ -53,6 +56,13 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 namespace Anki
 {
+  // Forward declaration:
+  namespace Util {
+  namespace Data {
+    class DataPlatform;
+  }
+  }
+  
   namespace Embedded
   {
     class VisionMarker;
@@ -176,6 +186,7 @@ namespace Anki
       // Output probevalues should already have NUM_PROBES elements in it
       static Result GetProbeValues(const Array<u8> &image,
                                    const Array<f32> &homography,
+                                   const bool doIlluminatioNormalization,
                                    cv::Mat_<u8> &probeValues);
 
       static const s32 NUM_FRACTIONAL_BITS;
@@ -194,12 +205,16 @@ namespace Anki
       static const u32 NUM_PROBES;
       static const s16 ProbeCenters_X[];
       static const s16 ProbeCenters_Y[];
+
+      static void SetDataPlatform(Util::Data::DataPlatform* dataPlatform);
       
     protected:
       // The constructor isn't always called, so initialize has to be checked in multiple places
       // TODO: make less hacky
       void Initialize();
 
+      static Util::Data::DataPlatform* _dataPlatform;
+      
       //Result ComputeThreshold(const Array <u8> &image, const Array<f32> &homography,
       //  const f32 minContrastRatio, bool &isHighContrast, u8 &meanGrayvalueThreshold);
 

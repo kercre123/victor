@@ -17,8 +17,8 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include "anki/common/robot/matlabInterface.h"
 
-#if USE_NEAREST_NEIGHBOR_RECOGNITION
-#  define NEAREST_NEIGHBOR_DISTANCE_THRESHOLD 45 // TODO: Make this a VisionParameter and pass it in dynamically
+#if RECOGNITION_METHOD == RECOGNITION_METHOD_NEAREST_NEIGHBOR
+#  define NEAREST_NEIGHBOR_DISTANCE_THRESHOLD 50 // TODO: Make this a VisionParameter and pass it in dynamically
 #endif
 
 //#define SHOW_DRAWN_COMPONENTS
@@ -393,7 +393,7 @@ namespace Anki
               // the marker
               lastResult = currentMarker.Extract(image,
                                                  refinedHomography,
-#                                                if USE_NEAREST_NEIGHBOR_RECOGNITION
+#if RECOGNITION_METHOD == RECOGNITION_METHOD_NEAREST_NEIGHBOR
                                                  NEAREST_NEIGHBOR_DISTANCE_THRESHOLD,
 #                                                else
                                                  meanGrayvalueThreshold,

@@ -1488,6 +1488,8 @@ namespace Cozmo {
       _snapshotROI = Embedded::Rectangle<s32>(-1, -1, -1, -1);
       _snapshot = NULL;
       
+      VisionMarker::SetDataPlatform(_dataPlatform);
+      
       _isInitialized = true;
     }
     

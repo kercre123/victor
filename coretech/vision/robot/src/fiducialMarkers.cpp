@@ -521,19 +521,27 @@ namespace Anki
       return true;
     }
 
+    
+    Util::Data::DataPlatform* VisionMarker::_dataPlatform = nullptr;
+    
+    void VisionMarker::SetDataPlatform(Util::Data::DataPlatform* dataPlatform)
+    {
+      _dataPlatform = dataPlatform;
+    }
+    
     VisionMarker::VisionMarker()
     : corners(Point<f32>(-1.0f,-1.0f), Point<f32>(-1.0f,-1.0f), Point<f32>(-1.0f,-1.0f), Point<f32>(-1.0f,-1.0f))
-    , validity(UNKNOWN)
     , markerType(Anki::Vision::MARKER_UNKNOWN)
     , observedOrientation(0)
+    , validity(UNKNOWN)
     {
       Initialize();
     }
 
     VisionMarker::VisionMarker(const Quadrilateral<s16> &corners, const ValidityCode validity)
-    : validity(validity)
-    , markerType(Anki::Vision::MARKER_UNKNOWN)
+    : markerType(Anki::Vision::MARKER_UNKNOWN)
     , observedOrientation(0)
+    , validity(validity)
     {
       this->corners.SetCast<s16>(corners);
       
@@ -542,9 +550,9 @@ namespace Anki
 
     VisionMarker::VisionMarker(const Quadrilateral<f32> &corners, const ValidityCode validity)
     : corners(corners)
-    , validity(UNKNOWN)
     , markerType(Anki::Vision::MARKER_UNKNOWN)
     , observedOrientation(0)
+    , validity(UNKNOWN)
     {
       Initialize();
     }
@@ -607,6 +615,15 @@ namespace Anki
 #   if RECOGNITION_METHOD == RECOGNITION_METHOD_NEAREST_NEIGHBOR
     NearestNeighborLibrary& VisionMarker::GetNearestNeighborLibrary()
     {
+      /* Use data loaded from binary files, using data platform (needs work!)
+      static NearestNeighborLibrary nearestNeighborLibrary(_dataPlatform,
+                                                           NUM_MARKERS_IN_LIBRARY,
+                                                           NUM_PROBES,
+                                                           ProbeCenters_X, ProbeCenters_Y,
+                                                           ProbePoints_X,  ProbePoints_Y,
+                                                           NUM_PROBE_POINTS,
+                                                           NUM_FRACTIONAL_BITS);
+       */
       
       static NearestNeighborLibrary nearestNeighborLibrary(NearestNeighborData,
                                                            NearestNeighborWeights,
@@ -639,8 +656,13 @@ namespace Anki
     Vision::ConvolutionalNeuralNet& VisionMarker::GetCNN()
     {
       static Vision::ConvolutionalNeuralNet cnn;
-      if(!cnn.IsLoaded()) { 
-        const std::string cnnDir = PREPEND_SCOPED_PATH(Resource, "basestation/visionMarkerCNN");
+      if(!cnn.IsLoaded()) {
+        AnkiConditionalErrorAndReturnValue(_dataPlatform != nullptr, cnn,
+                                           "VisionMarker.GetCNN.NoDataPlatform",
+                                           "DataPlatform must be set before calling GetCNN.");
+        
+        const std::string cnnDir = _dataPlatform->pathToResource(Util::Data::Scope::Resources,
+                                                                 "basestation/visionMarkerCNN");
         Result loadResult = cnn.Load(cnnDir);
 
         AnkiConditionalError(loadResult == RESULT_OK,
@@ -689,6 +711,7 @@ namespace Anki
     
     Result VisionMarker::GetProbeValues(const Array<u8> &image,
                                         const Array<f32> &homography,
+                                        const bool doIlluminationNormalization,
                                         cv::Mat_<u8> &probeValues)
     {
       const s32 imageHeight = image.get_size(0);
@@ -790,22 +813,28 @@ namespace Anki
       // Illumination normalization code (assuming we are not using the same filtering used
       // by the fiducial detector to improve quad refinment precision)
       
-      // TODO: Make this a member of the class and pre-allocate it?
-      cv::Mat_<s32> _probeFiltering;
-      
-      cv::Mat_<u8> temp(VisionMarker::GRIDSIZE, VisionMarker::GRIDSIZE, probeValues.data);
-      //cv::imshow("Original ProbeValues", temp);
-      
-      // TODO: Would it be faster to box filter and subtract it from the original?
-      static cv::Mat_<s16> kernel;
-      if(kernel.empty()) {
-        kernel = cv::Mat_<s16>(VisionMarker::GRIDSIZE/2,VisionMarker::GRIDSIZE/2);
-        kernel = -1;
-        kernel(VisionMarker::GRIDSIZE/4-1,VisionMarker::GRIDSIZE/4-1) = VisionMarker::NUM_PROBES/4 - 1;
+      if(doIlluminationNormalization)
+      {
+        // TODO: Make this a member of the class and pre-allocate it?
+        cv::Mat_<s32> _probeFiltering;
+        
+        cv::Mat_<u8> temp(VisionMarker::GRIDSIZE, VisionMarker::GRIDSIZE, probeValues.data);
+        //cv::imshow("Original ProbeValues", temp);
+        
+        // TODO: Would it be faster to box filter and subtract it from the original?
+        static cv::Mat_<s16> kernel;
+        if(kernel.empty()) {
+          assert(VisionMarker::GRIDSIZE % 2 == 0);
+          const s32 halfSize = VisionMarker::GRIDSIZE/2;
+          kernel = cv::Mat_<s16>(halfSize-1,halfSize-1);
+          kernel = -1;
+          kernel((halfSize-1)/2,(halfSize-1)/2) = kernel.rows*kernel.cols - 1;
+        }
+        cv::filter2D(temp, _probeFiltering, _probeFiltering.depth(), kernel,
+                     cv::Point(-1,-1), 0, cv::BORDER_REPLICATE);
+        //cv::imshow("ProbeFiltering", _probeFiltering);
+        cv::normalize(_probeFiltering, temp, 255.f, 0.f, CV_MINMAX);
       }
-      cv::filter2D(temp, _probeFiltering, _probeFiltering.depth(), kernel, cv::Point(-1,-1), 0, cv::BORDER_REPLICATE);
-      //cv::imshow("ProbeFiltering", _probeFiltering);
-      cv::normalize(_probeFiltering, temp, 255.f, 0.f, CV_MINMAX);
       
       return RESULT_OK;
     } // VisionMarker::GetProbeValues()
@@ -813,7 +842,8 @@ namespace Anki
     
     Vision::MarkerType VisionMarker::RemoveOrientation(Vision::MarkerType orientedMarker)
     {
-#     if RECOGNITION_METHOD == RECOGNITION_METHOD_NEAREST_NEIGHBOR
+#     if RECOGNITION_METHOD == RECOGNITION_METHOD_NEAREST_NEIGHBOR || \
+         RECOGNITION_METHOD == RECOGNITION_METHOD_CNN
       return RemoveOrientationLUT[orientedMarker];
 #     elif RECOGNITION_METHOD == RECOGNITION_METHOD_DECISION_TREES
       return VisionMarkerDecisionTree::RemoveOrientationLUT[orientedMarker];
@@ -1259,7 +1289,7 @@ namespace Anki
       std::string className;
       size_t classLabel;
       static cv::Mat_<u8> _probeValues(VisionMarker::GRIDSIZE, VisionMarker::GRIDSIZE);
-      VisionMarker::GetProbeValues(image, homography, _probeValues);
+      VisionMarker::GetProbeValues(image, homography, true, _probeValues);
       lastResult = cnn.Run(_probeValues, classLabel, className);
       
 #       if DO_RECOGNITION_TIMING
@@ -1284,6 +1314,22 @@ namespace Anki
         // 1. Get the unoriented type
         this->markerType = RemoveOrientationLUT[selectedLabel];
         
+#if 0
+        // DEBUG!
+        //         ||
+        //   markerType == Vision::MARKER_LIGHTNINGBOLT_02)
+        {
+          printf("Seeing %s with Distance = %d\n", Vision::MarkerTypeStrings[markerType], distance);
+          
+        }
+        
+        cv::Mat_<u8> temp(32, 32, VisionMarker::GetNearestNeighborLibrary()._probeValues.data);
+        if(markerType == Vision::MARKER_LIGHTNINGBOLTHOLLOW_05) {
+          cv::imwrite("/Users/andrew/temp/wrongMarker.png", temp);
+        } else if(markerType == Vision::MARKER_INVERTED_LIGHTNINGBOLT_02) {
+          cv::imwrite("/Users/andrew/temp/rightMarker.png", temp);          
+        }
+#endif
         // 2. Reorder the original detected corners to the canonical ordering for
         // this type
         const Quadrilateral<f32> initQuad = this->corners;
@@ -1298,6 +1344,7 @@ namespace Anki
         // Mark this as a valid marker (note that reaching this point should
         // be the only way isValid is true.
         this->validity = VALID;
+        
       } else {
         /* Disabling this since it's overly verbose now that we're using the
            the voting scheme and lots of things don't get majority vote.

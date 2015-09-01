@@ -7,17 +7,19 @@
 #include "anki/common/robot/fixedLengthList.h"
 #include "anki/common/robot/errorHandling.h"
 
+#include "anki/common/basestation/utils/data/dataPlatform.h"
 
 #include <array>
 
 #define USE_EARLY_EXIT_DISTANCE_COMPUTATION 1
 #define USE_WEIGHTS 1
+#define USE_ILLUMINATION_NORMALIZATION 1
 
 namespace Anki {
 namespace Embedded {
   
   NearestNeighborLibrary::NearestNeighborLibrary()
-  : _labels(NULL)
+  : _isInitialized(false)
   , _probeXOffsets(NULL)
   , _probeYOffsets(NULL)
   , _useHoG(false)
@@ -25,6 +27,65 @@ namespace Embedded {
     
   }
   
+  NearestNeighborLibrary::NearestNeighborLibrary(Util::Data::DataPlatform* dataPlatform,
+                                                 const s32 numDataPoints, const s32 dataDim,
+                                                 const s16* probeCenters_X, const s16* probeCenters_Y,
+                                                 const s16* probePoints_X, const s16* probePoints_Y,
+                                                 const s32 numProbePoints, const s32 numFractionalBits)
+  : _isInitialized(false)
+  , _probeValues(1, dataDim)
+  , _data(numDataPoints, dataDim)
+# if USE_WEIGHTS
+  , _weights(numDataPoints, dataDim)
+  , _totalWeight(numDataPoints, 1)
+# endif
+  , _numDataPoints(numDataPoints)
+  , _dataDimension(dataDim)
+  , _labels(1, numDataPoints)
+  , _probeXCenters(probeCenters_X)
+  , _probeYCenters(probeCenters_Y)
+  , _probeXOffsets(probePoints_X)
+  , _probeYOffsets(probePoints_Y)
+  , _numProbeOffsets(numProbePoints)
+  , _numFractionalBits(numFractionalBits)
+  , _useHoG(false)
+  {
+    const std::string nnLibPath("config/basestation/vision/nnLibrary");
+   
+    AnkiConditionalErrorAndReturn(dataPlatform != nullptr,
+                                  "NearestNeighborLibrary.Constructor.NullDataPlatform", "");
+    
+    std::string dataFile = dataPlatform->pathToResource(Util::Data::Scope::Resources,
+                                                        nnLibPath + "/nnLibrary.bin");
+    
+    FILE* fp = fopen(dataFile.c_str(), "rb");
+    AnkiConditionalErrorAndReturn(fp, "NearestNeighborLibrary.Constructor.MissingFile",
+                                  "Unable to find NN library data file '%s'.", dataFile.c_str());
+    fread(_data.data, numDataPoints*dataDim, sizeof(u8), fp);
+    fclose(fp);
+    
+#   if USE_WEIGHTS
+    dataFile = dataPlatform->pathToResource(Util::Data::Scope::Resources,
+                                            nnLibPath + "/nnLibrary_weights.bin");
+    AnkiConditionalErrorAndReturn(fp, "NearestNeighborLibrary.Constructor.MissingFile",
+                                  "Unable to find NN library weights file '%s'.", dataFile.c_str());
+    fp = fopen(dataFile.c_str(), "rb");
+    fread(_weights.data, numDataPoints*dataDim, sizeof(u8), fp);
+    fclose(fp);
+#   endif
+    
+    dataFile = dataPlatform->pathToResource(Util::Data::Scope::Resources,
+                                            nnLibPath + "/nnLibrary_labels.bin");
+    AnkiConditionalErrorAndReturn(fp, "NearestNeighborLibrary.Constructor.MissingFile",
+                                  "Unable to find NN library labels file '%s'.", dataFile.c_str());
+    fp = fopen(dataFile.c_str(), "rb");
+    fread(_labels.data, numDataPoints, sizeof(u16), fp);
+    fclose(fp);
+    
+    Init();
+    
+    _isInitialized = true;
+  }
   
   NearestNeighborLibrary::NearestNeighborLibrary(const u8* data,
                                                  const u8* weights,
@@ -33,14 +94,16 @@ namespace Embedded {
                                                  const s16* probeCenters_X, const s16* probeCenters_Y,
                                                  const s16* probePoints_X, const s16* probePoints_Y,
                                                  const s32 numProbePoints, const s32 numFractionalBits)
-  : _data(numDataPoints, dataDim, const_cast<u8*>(data))
+  : _isInitialized(true)
+  , _probeValues(1, dataDim)
+  , _data(numDataPoints, dataDim)
 # if USE_WEIGHTS
   , _weights(numDataPoints, dataDim, const_cast<u8*>(weights))
   , _totalWeight(numDataPoints, 1)
 # endif
   , _numDataPoints(numDataPoints)
   , _dataDimension(dataDim)
-  , _labels(labels)
+  , _labels(1, numDataPoints, const_cast<u16*>(labels))
   , _probeXCenters(probeCenters_X)
   , _probeYCenters(probeCenters_Y)
   , _probeXOffsets(probePoints_X)
@@ -48,14 +111,31 @@ namespace Embedded {
   , _numProbeOffsets(numProbePoints)
   , _numFractionalBits(numFractionalBits)
   , _useHoG(false)
-  , _probeValues(1, _dataDimension)
+  //, _probeValues(1, _dataDimension)
+  {
+    const cv::Mat_<u8> temp(numDataPoints, dataDim, const_cast<u8*>(data));
+    temp.copyTo(_data);
+    
+    Init();
+  }
+  
+  void NearestNeighborLibrary::Init()
   {
 #   if USE_WEIGHTS
     // Sum all the weights for each example in the library along the columns:
     cv::reduce(_weights, _totalWeight, 1, CV_REDUCE_SUM);
 #   endif
+    
+#   if USE_ILLUMINATION_NORMALIZATION
+    // Normalize all the stored data
+    assert(_data.isContinuous());
+    for(s32 iPoint=0; iPoint<_data.rows; ++iPoint)
+    {
+      u8* data_i = _data.ptr(iPoint);
+      NormalizeIllumination(data_i, 32);
+    }
+#   endif
   }
-  
   
   NearestNeighborLibrary::NearestNeighborLibrary(const u8* HoGdata,
                                                  const u16* labels,
@@ -64,10 +144,12 @@ namespace Embedded {
                                                  const s16* probePoints_X, const s16* probePoints_Y,
                                                  const s32 numProbePoints, const s32 numFractionalBits,
                                                  const s32 numHogScales, const s32 numHogOrientations)
-  : _data(numDataPoints, dataDim, const_cast<u8*>(HoGdata))
+  : _isInitialized(true)
+  , _probeValues(1, dataDim)
+  , _data(numDataPoints, dataDim, const_cast<u8*>(HoGdata))
   , _numDataPoints(numDataPoints)
   , _dataDimension(dataDim)
-  , _labels(labels)
+  , _labels(1, numDataPoints, const_cast<u16*>(labels))
   , _probeXCenters(probeCenters_X)
   , _probeYCenters(probeCenters_Y)
   , _probeXOffsets(probePoints_X)
@@ -77,7 +159,7 @@ namespace Embedded {
   , _useHoG(true)
   , _numHogScales(numHogScales)
   , _numHogOrientations(numHogOrientations)
-  , _probeValues(1, _dataDimension)
+  //  , _probeValues(1, _dataDimension)
   , _probeHoG(16, _numHogScales*_numHogOrientations)
   , _probeHoG_F32(16, _numHogScales*_numHogOrientations)
   {
@@ -91,6 +173,9 @@ namespace Embedded {
                                                     s32 &label, s32 &closestDistance)
 
   {
+    AnkiConditionalErrorAndReturnValue(_isInitialized, RESULT_FAIL,
+                                       "NearestNeighborLibrary.GetNearestNeighbor.NotInitialized", "");
+    
     // Set these return values up front, in case of failure
 #   if USE_EARLY_EXIT_DISTANCE_COMPUTATION
     closestDistance = distThreshold;
@@ -100,7 +185,9 @@ namespace Embedded {
     
     label = -1;
     
-    Result lastResult = VisionMarker::GetProbeValues(image, homography, _probeValues);
+    Result lastResult = VisionMarker::GetProbeValues(image, homography,
+                                                     USE_ILLUMINATION_NORMALIZATION,
+                                                     _probeValues);
     
     AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
                                        "NearestNeighborLibrary.GetNearestNeighbor",
@@ -260,7 +347,20 @@ namespace Embedded {
     } // for each example
     
     if(closestIndex != -1) {
-      label = _labels[closestIndex];
+      label = _labels.at<u16>(closestIndex);
+      
+      /* DEBUG: Save out matches
+      {
+        static s32 matchCount = 0;
+        const std::string savePrefix("/Users/andrew/temp/matches/match");
+        cv::imwrite(savePrefix + std::to_string(matchCount) + "_library" +
+                    std::to_string(closestIndex) + ".png", _data.row(closestIndex).reshape(1, 32));
+        cv::imwrite(savePrefix + std::to_string(matchCount)  + "_observed.png",
+                    _probeValues.reshape(1,32));
+        ++matchCount;
+      }
+       */
+      
       if(_useHoG) {
         closestDistance /= _probeHoG.rows * _probeHoG.cols;
       }
@@ -269,7 +369,37 @@ namespace Embedded {
     return RESULT_OK;
   } // GetNearestNeighbor()
   
-  
+  Result NearestNeighborLibrary::NormalizeIllumination(u8* data, s32 gridSize)
+  {
+    assert(gridSize % 2 == 0);
+    
+    cv::Mat_<u8> temp(gridSize, gridSize, data);
+    //cv::imshow("Original ProbeValues", temp);
+    
+    // TODO: Would it be faster to box filter and subtract it from the original?
+    static cv::Mat_<s16> kernel;
+    if(kernel.empty()) {
+      const s32 halfSize = gridSize/2;
+      /*
+       // Even sized kernel
+       kernel = cv::Mat_<s16>(halfSize,halfSize);
+       kernel = -1;
+       kernel(kernel.rows/2,kernel.cols/2) = kernel.rows*kernel.cols - 1;
+       */
+      // Odd sized kernel
+      kernel = cv::Mat_<s16>(halfSize-1,halfSize-1);
+      kernel = -1;
+      kernel((kernel.rows-1)/2,(kernel.cols-1)/2) = kernel.rows*kernel.cols - 1;
+    }
+    
+    cv::filter2D(temp, _probeFiltering, _probeFiltering.depth(), kernel,
+                 cv::Point(-1,-1), 0, cv::BORDER_REPLICATE);
+    //cv::imshow("ProbeFiltering", _probeFiltering);
+    cv::normalize(_probeFiltering, temp, 255.f, 0.f, CV_MINMAX);
+
+    return RESULT_OK;
+  }
+
   Result NearestNeighborLibrary::GetProbeHoG()
   {
     static const s32 gridSize = static_cast<s32>(sqrt(static_cast<f64>(_dataDimension)));
