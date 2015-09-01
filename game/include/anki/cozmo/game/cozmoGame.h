@@ -24,15 +24,19 @@ namespace Anki {
     class Image;
   }
   
+  namespace Util {
+  namespace Data {
+    class DataPlatform;
+  }
+  }
+  
 namespace Cozmo {
 
   // Forward declarations:
   class CozmoEngineHost;
   class CozmoGameImpl;
 
-namespace Data {
-class DataPlatform;
-}
+
   
   // Common API whether host or client
   class CozmoGame
@@ -52,7 +56,7 @@ class DataPlatform;
       ,ENGINE_RUNNING
     };
     
-    CozmoGame(Data::DataPlatform* dataPlatform);
+    CozmoGame(Util::Data::DataPlatform* dataPlatform);
     ~CozmoGame();
     
     Result Init(const Json::Value& config);
