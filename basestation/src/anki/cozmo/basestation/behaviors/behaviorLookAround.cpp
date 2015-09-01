@@ -21,16 +21,11 @@
 namespace Anki {
 namespace Cozmo {
   
-// Time to wait before looking around again in seconds
-const float BehaviorLookAround::kLookAroundCooldownDuration = 20.0f;
-const float BehaviorLookAround::kDegreesRotatePerSec = 25.0f;
-  
 using namespace ExternalInterface;
 
 BehaviorLookAround::BehaviorLookAround(Robot& robot, const Json::Value& config)
   : IBehavior(robot, config)
-  , _currentState(State::Inactive)
-  , _lastLookAroundTime(0.f)
+  , _moveAreaCenter(robot.GetPose())
 {
   _name = "LookAround";
   
@@ -44,6 +39,12 @@ BehaviorLookAround::BehaviorLookAround(Robot& robot, const Json::Value& config)
     // Register for RobotCompletedAction Event
     _eventHandles.push_back(interface->Subscribe(MessageEngineToGameTag::RobotCompletedAction,
                                                  std::bind(&BehaviorLookAround::HandleCompletedAction, this, std::placeholders::_1)));
+    
+    // Register for RobotPutDown Event
+    _eventHandles.push_back(interface->Subscribe(MessageEngineToGameTag::RobotPutDown,
+                                                 std::bind(&BehaviorLookAround::HandleRobotPutDown, this, std::placeholders::_1)));
+    
+    
   }
 }
 
@@ -60,7 +61,6 @@ bool BehaviorLookAround::IsRunnable(float currentTime_sec) const
       break;
     }
     case State::StartLooking:
-    case State::ContinueLooking:
     case State::LookingForObject:
     case State::ExamineFoundObject:
     case State::WaitToFinishExamining:
@@ -84,38 +84,23 @@ Result BehaviorLookAround::Init()
 
 IBehavior::Status BehaviorLookAround::Update(float currentTime_sec)
 {
-  static Radians lastHeading;
-  
   switch (_currentState)
   {
     case State::Inactive:
     {
+      // This is the last update before we stop running, so store off time
+      _lastLookAroundTime = currentTime_sec;
+      
       break; // Jump down and return Status::Complete
     }
     case State::StartLooking:
     {
-      _totalRotation = 0;
-      lastHeading = _robot.GetPose().GetRotationAngle<'Z'>();
-    }
-    // NOTE INTENTIONAL FALLTHROUGH
-    case State::ContinueLooking:
-    {
-      _robot.TurnInPlaceAtSpeed(DEG_TO_RAD(kDegreesRotatePerSec), DEG_TO_RAD(1440));
+      StartMoving();
       _currentState = State::LookingForObject;
     }
     // NOTE INTENTIONAL FALLTHROUGH
     case State::LookingForObject:
     {
-      Radians newHeading = _robot.GetPose().GetRotationAngle<'Z'>();
-      _totalRotation += fabsf((newHeading - lastHeading).getDegrees());
-      lastHeading = newHeading;
-      
-      if (_totalRotation > 360.f)
-      {
-        ResetBehavior(currentTime_sec);
-        break; // Jump down and return Status::Complete
-      }
-      
       if (0 < _recentObjects.size())
       {
         _currentState = State::ExamineFoundObject;
@@ -124,20 +109,27 @@ IBehavior::Status BehaviorLookAround::Update(float currentTime_sec)
     }
     case State::ExamineFoundObject:
     {
-      _robot.StopAllMotors();
+      _robot.GetActionList().Cancel();
+      bool queuedFaceObjectAction = false;
       while (!_recentObjects.empty())
       {
         auto iter = _recentObjects.begin();
         ObjectID objID = *iter;
-        IActionRunner* faceObjectAction = new FaceObjectAction(objID, DEG_TO_RAD(5), DEG_TO_RAD(1440));
-        IActionRunner* moveHeadAction = new MoveHeadToAngleAction(0);
+        IActionRunner* faceObjectAction = new FaceObjectAction(objID, Vision::Marker::ANY_CODE, DEG_TO_RAD(5), DEG_TO_RAD(1440), true);
         
         _robot.GetActionList().QueueActionAtEnd(0, faceObjectAction);
-        _robot.GetActionList().QueueActionAtEnd(0, moveHeadAction);
+        queuedFaceObjectAction = true;
         
         ++_numObjectsToLookAt;
         _oldBoringObjects.insert(objID);
         _recentObjects.erase(iter);
+      }
+      
+      // If we queued up some face object actions, add a move head action at the end to go back to normal
+      if (queuedFaceObjectAction)
+      {
+        IActionRunner* moveHeadAction = new MoveHeadToAngleAction(0);
+        _robot.GetActionList().QueueActionAtEnd(0, moveHeadAction);
       }
       _currentState = State::WaitToFinishExamining;
       
@@ -147,7 +139,7 @@ IBehavior::Status BehaviorLookAround::Update(float currentTime_sec)
     {
       if (0 == _numObjectsToLookAt)
       {
-        _currentState = State::ContinueLooking;
+        _currentState = State::StartLooking;
       }
       return Status::Running;
     }
@@ -159,6 +151,56 @@ IBehavior::Status BehaviorLookAround::Update(float currentTime_sec)
   }
   
   return Status::Complete;
+}
+  
+void BehaviorLookAround::StartMoving()
+{
+  IActionRunner* goToPoseAction = new DriveToPoseAction(GetDestinationPose(_currentDestination), false, false);
+  _currentDriveActionID = goToPoseAction->GetTag();
+  _robot.GetActionList().QueueActionAtEnd(0, goToPoseAction);
+}
+  
+Pose3d BehaviorLookAround::GetDestinationPose(BehaviorLookAround::Destination destination)
+{
+  Pose3d destPose(_moveAreaCenter);
+  switch (destination)
+  {
+    case Destination::North:
+    case Destination::Center:
+    {
+      // Don't need to rotate here
+      break;
+    }
+    case Destination::West:
+    {
+      destPose.RotateBy(Rotation3d(DEG_TO_RAD(90), Z_AXIS_3D()));
+      break;
+    }
+    case Destination::South:
+    {
+      destPose.RotateBy(Rotation3d(DEG_TO_RAD(180), Z_AXIS_3D()));
+      break;
+    }
+    case Destination::East:
+    {
+      destPose.RotateBy(Rotation3d(DEG_TO_RAD(-90), Z_AXIS_3D()));
+      break;
+    }
+    case Destination::Count:
+    default:
+    {
+      PRINT_NAMED_ERROR("LookAround_Behavior.GetDestinationPose.InvalidDestination",
+                        "Reached invalid destination %d.", destination);
+      break;
+    }
+  }
+  
+  if (Destination::Center != destination)
+  {
+    destPose.SetTranslation(destPose * Point3f(_safeRadius, 0, 0));
+  }
+  
+  return destPose;
 }
 
 Result BehaviorLookAround::Interrupt(float currentTime_sec)
@@ -172,6 +214,7 @@ void BehaviorLookAround::ResetBehavior(float currentTime_sec)
   _lastLookAroundTime = currentTime_sec;
   _currentState = State::Inactive;
   _robot.StopAllMotors();
+  _robot.GetActionList().Cancel();
   _recentObjects.clear();
   _oldBoringObjects.clear();
   _numObjectsToLookAt = 0;
@@ -218,6 +261,72 @@ void BehaviorLookAround::HandleCompletedAction(const AnkiEvent<MessageEngineToGa
     {
       --_numObjectsToLookAt;
     }
+  }
+  else if (msg.idTag == _currentDriveActionID)
+  {
+    if (ActionResult::SUCCESS == msg.result)
+    {
+      // If we're back to center, time to go inactive
+      if (Destination::Center == _currentDestination)
+      {
+        _currentState = State::Inactive;
+      }
+      else
+      {
+        _currentState = State::StartLooking;
+      }
+      
+      // If this was a successful drive action, move on to the next destination
+      _currentDestination = GetNextDestination(_currentDestination);
+    }
+    else
+    {
+      // We didn't succeed for some reason - try again
+      _currentState = State::StartLooking;
+    }
+  }
+}
+  
+BehaviorLookAround::Destination BehaviorLookAround::GetNextDestination(BehaviorLookAround::Destination oldDest)
+{
+  switch (oldDest)
+  {
+    case Destination::North:
+    {
+      return Destination::West;
+    }
+    case Destination::West:
+    {
+      return Destination::South;
+    }
+    case Destination::South:
+    {
+      return Destination::East;
+    }
+    case Destination::East:
+    {
+      return Destination::Center;
+    }
+    case Destination::Center:
+    {
+      return Destination::North;
+    }
+    default:
+    {
+      PRINT_NAMED_ERROR("LookAround_Behavior.GetDestinationPose.InvalidDestination",
+                        "Reached invalid destination %d.", oldDest);
+      return Destination::North;
+    }
+  }
+}
+  
+void BehaviorLookAround::HandleRobotPutDown(const AnkiEvent<MessageEngineToGame>& event)
+{
+  const RobotPutDown& msg = event.GetData().Get_RobotPutDown();
+  if (_robot.GetID() == msg.robotID)
+  {
+    _moveAreaCenter = _robot.GetPose();
+    _safeRadius = kDefaultSafeRadius;
   }
 }
 
