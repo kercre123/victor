@@ -1,4 +1,20 @@
+/**
+ * File: convolutionalNeuralNet.cpp
+ *
+ * Author: Andrew Stein
+ * Created: 08/13/15
+ *
+ * Description: Wrapper for Convolutional Neural Net recognition.
+ *
+ * Copyright: Anki, Inc. 2015
+ *
+ **/
+
 #include "anki/vision/basestation/convolutionalNeuralNet.h"
+
+// TODO: Remove this once everyone has matConvNet in coretech-external
+#if ENABLE_CNN
+
 #include "anki/vision/basestation/image.h"
 
 #include "anki/common/basestation/jsonTools.h"
@@ -806,3 +822,5 @@ if(!JsonTools::GetValueOptional(jsonNode, QUOTE(__NAME__), __NAME__)) { \
   
 } // namespace Vision
 } // namespace Anki
+
+#endif // ENABLE_CNN

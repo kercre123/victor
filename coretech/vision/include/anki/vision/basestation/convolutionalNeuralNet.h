@@ -1,10 +1,25 @@
-#ifndef ANKI_CORETECH_VISION_BASESTATION_CNN_H
-#define ANKI_CORETECH_VISION_BASESTATION_CNN_H
+/**
+ * File: convolutionalNeuralNet.h
+ *
+ * Author: Andrew Stein
+ * Created: 08/13/15
+ *
+ * Description: Wrapper for Convolutional Neural Net recognition.
+ *
+ * Copyright: Anki, Inc. 2015
+ *
+ **/
+
+#ifndef __Anki_Vision_Basestation_CNN_H__
+#define __Anki_Vision_Basestation_CNN_H__
 
 #include "anki/common/types.h"
 
 #include <string>
 #include <vector>
+
+// TODO: Remove this once everyone has matConvNet in coretech-external
+#define ENABLE_CNN 0
 
 // Forward declaration
 namespace cv {
@@ -48,4 +63,4 @@ namespace Vision {
 } // namespace Vision
 } // namespace Anki
 
-#endif // ANKI_CORETECH_VISION_BASESTATION_CNN_H
+#endif // __Anki_Vision_Basestation_CNN_H__
