@@ -714,9 +714,6 @@ namespace Anki
                                         const bool doIlluminationNormalization,
                                         cv::Mat_<u8> &probeValues)
     {
-      const s32 imageHeight = image.get_size(0);
-      const s32 imageWidth = image.get_size(1);
-      
       AnkiConditionalErrorAndReturnValue(AreValid(image, homography),
                                          RESULT_FAIL_INVALID_OBJECT, "VisionMarker::GetProbeValues", "Invalid objects");
       
@@ -779,7 +776,7 @@ namespace Anki
           // 2. Sample the image
           
           // This should only fail if there's a bug in the quad extraction
-          AnkiAssert(warpedY >= 0  && warpedX >= 0 && warpedY < imageHeight && warpedX < imageWidth);
+          AnkiAssert(warpedY >= 0  && warpedX >= 0 && warpedY < image.get_size(0) && warpedX < image.get_size(1));
           
           const u8 imageValue = *image.Pointer(warpedY, warpedX);
           
