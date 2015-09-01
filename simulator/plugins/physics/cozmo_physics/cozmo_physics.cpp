@@ -382,16 +382,13 @@ void drawTextAtOffset(std::string s, float x_off, float y_off, float z_off)
 }
 
 
-void draw_cuboid(int id, float x_dim, float y_dim, float z_dim)
+void draw_cuboid(float x_dim, float y_dim, float z_dim)
 {
   
    // Webots hack
   float halfX = x_dim*0.5;
   float halfY = y_dim*0.5;
   float halfZ = z_dim*0.5;
-  
-  drawTextAtOffset(std::to_string(id), 1.2*halfX, 1.2*halfY, 1.2*halfZ);
-  drawTextAtOffset(std::to_string(id), -1.2*halfX, -1.2*halfY, -1.2*halfZ);
   
   // TOP
   glBegin(GL_LINE_LOOP);
@@ -683,9 +680,14 @@ void webots_physics_draw(int pass, const char *view) {
           draw_robot(Anki::Cozmo::VIZ_ROBOT_MARKER_SMALL_TRIANGLE);
           break;
         case Anki::Cozmo::VIZ_OBJECT_CUBOID:
-          draw_cuboid(obj->objectID - Anki::Cozmo::VizObjectBaseID[Anki::Cozmo::VIZ_OBJECT_CUBOID], obj->x_size_m, obj->y_size_m, obj->z_size_m);
+        {
+          draw_cuboid(obj->x_size_m, obj->y_size_m, obj->z_size_m);
           
-          
+          // Object ID label
+          std::string idString = std::to_string(obj->objectID - Anki::Cozmo::VizObjectBaseID[Anki::Cozmo::VIZ_OBJECT_CUBOID]);
+          drawTextAtOffset(idString, 0.6*obj->x_size_m, 0.6*obj->y_size_m, 0.6*obj->z_size_m);
+          drawTextAtOffset(idString, -0.6*obj->x_size_m, -0.6*obj->y_size_m, -0.6*obj->z_size_m);
+
           // AXES:
           glColor4ub(255, 0, 0, 255);
           glBegin(GL_LINES);
@@ -706,6 +708,7 @@ void webots_physics_draw(int pass, const char *view) {
           glEnd();
           
           break;
+        }
         case Anki::Cozmo::VIZ_OBJECT_RAMP:
         {
           float slopeLength = obj->params[0]*obj->x_size_m;
