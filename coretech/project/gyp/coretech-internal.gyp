@@ -64,6 +64,14 @@
       'libopencv_features2d.a',
     ],
 
+
+
+
+
+    # Here we pick which face library to use and set its path/includes/libs
+    # as needed:
+    'face_library' : 'opencv', # one of: 'opencv', 'faciometric', or 'facesdk'
+       
     'faciometric_path' : [
       '<(coretech_external_path)/IntraFace',
     ],
@@ -77,9 +85,11 @@
     ],
 
     'facesdk_includes': [
-      '<(coretech_external_path)/Luxand_FaceSDK/include/C',
+      # Defined conditionally below
     ],
     
+    
+      
     'compiler_flags': [
       '-Wno-deprecated-declarations', # Supressed until system() usage is removed
       '-fdiagnostics-show-category=name',
@@ -124,18 +134,23 @@
     'arch_group%': '<(arch_group)',
     'conditions': [
       # Face libraries, depending on platform:
-      ['OS=="mac"', {
+      ['OS=="mac" and face_library=="faciometric"', {
         'faciometric_includes': [
           '<(faciometric_path)/osx_demo_126/include',
           '<(faciometric_path)/osx_demo_126/3rdparty/Eigen3/include',
         ],
       }],
-      ['OS=="ios"', {
+      ['OS=="ios" and face_library=="faciometric"', {
         'faciometric_includes': [
           '<(faciometric_path)/IntraFace_126_iOS_Anki/Library/3rdparty/include',
         ],
         'faciometric_libs': [
           '<(faciometric_path)/IntraFace_126_iOS_Anki/Library/intraface.framework',
+        ],
+      }],
+      ['face_library=="facesdk"', {
+        'facesdk_includes': [
+          '<(coretech_external_path)/Luxand_FaceSDK/include/C',
         ],
       }],
       ['OS=="android"', {
@@ -230,7 +245,11 @@
       'OTHER_CFLAGS': ['<@(compiler_c_flags)'],
       'OTHER_CPLUSPLUSFLAGS': ['<@(compiler_cpp_flags)'],
       'ALWAYS_SEARCH_USER_PATHS': 'NO',
-      'FRAMEWORK_SEARCH_PATHS': '<(faciometric_path)/IntraFace_126_iOS_Anki/Library',
+      'conditions': [
+        ['face_library=="faciometric"', {
+           'FRAMEWORK_SEARCH_PATHS': '<(faciometric_path)/IntraFace_126_iOS_Anki/Library',
+        }],
+      ],
       'CLANG_CXX_LANGUAGE_STANDARD':'c++11',
       'CLANG_CXX_LIBRARY':'libc++',
       'DEBUG_INFORMATION_FORMAT': 'dwarf',
