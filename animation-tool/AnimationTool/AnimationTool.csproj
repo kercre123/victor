@@ -48,6 +48,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\..\unity\Cozmo\Assets\Scripts\Channel\DAS.cs">
+      <Link>DoNotEdit\Channel\DAS.cs</Link>
+    </Compile>
     <Compile Include="..\..\unity\Cozmo\Assets\Scripts\Generated\clad\**\*.cs">
       <Link>DoNotEdit\clad\%(RecursiveDir)%(FileName)%(Extension)</Link>
     </Compile>
@@ -59,6 +62,9 @@
     </Compile>
     <Compile Include="..\..\unity\Cozmo\Assets\Scripts\Channel\UdpChannel.cs">
       <Link>DoNotEdit\Channel\UdpChannel.cs</Link>
+    </Compile>
+    <Compile Include="FaceForm.cs">
+      <SubType>Form</SubType>
     </Compile>
     <Compile Include="RobotSettings.cs" />
   </ItemGroup>
@@ -154,6 +160,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="ChangeDurationForm.resx">
       <DependentUpon>ChangeDurationForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FaceForm.resx">
+      <DependentUpon>FaceForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="IPForm.resx">
       <DependentUpon>IPForm.cs</DependentUpon>
