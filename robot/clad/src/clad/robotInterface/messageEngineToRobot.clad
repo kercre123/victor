@@ -5,7 +5,7 @@
  
 #include "clad/types/imageTypes.clad"
 #include "clad/types/robotStatusAndActions.clad"
-#include "clad/types/lightState.clad"
+#include "clad/types/ledTypes.clad"
 #include "clad/types/animationKeyFrames.clad"
 #include "clad/types/robotTestModes.clad"
  

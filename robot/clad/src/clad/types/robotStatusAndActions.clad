@@ -71,6 +71,5 @@ structure RobotState
   uint_8  battVolt10x,
 }
 
-
 } // namespace Cozmo
 } // namespace Anki

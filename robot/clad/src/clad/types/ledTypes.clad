@@ -1,0 +1,52 @@
+/** Flags for different things the robot could be carrying..
+ */
+ 
+namespace Anki {
+namespace Cozmo {
+
+// Health / direction bar on the top of the backpack
+enum uint_8 LEDId {
+  // Directional arrangement
+  LED_BACKPACK_BACK = 0,
+  LED_BACKPACK_MIDDLE,
+  LED_BACKPACK_FRONT,
+  LED_BACKPACK_LEFT,
+  LED_BACKPACK_RIGHT,  
+  NUM_BACKPACK_LEDS
+}
+
+// The color format is identical to HTML Hex Triplets (RGB)
+enum uint_32 LEDColor {
+  LED_CURRENT_COLOR = 0xffffffff, // Don't change color: leave as is
+  LED_OFF =   0x000000,
+  LED_RED =   0xff0000,
+  LED_GREEN = 0x00ff00,
+  LED_YELLOW= 0xffff00,
+  LED_BLUE =  0x0000ff,
+  LED_PURPLE= 0xff00ff,
+  LED_CYAN =  0x00ffff,
+  LED_WHITE = 0xffffff
+}
+ 
+enum uint_8 LEDState {
+  LED_STATE_OFF = 0,
+  LED_STATE_ON,
+  LED_STATE_TURNING_ON,
+  LED_STATE_TURNING_OFF
+}
+ 
+structure LightState
+{
+  uint_32  onColor,
+  uint_32  offColor,
+  uint_32  onPeriod_ms,
+  uint_32  offPeriod_ms,
+  uint_32  transitionOnPeriod_ms,
+  uint_32  transitionOffPeriod_ms,
+  uint_32  nextSwitchTime,
+  LEDState state
+}
+
+
+} // namespace Cozmo
+} // namespace Anki
