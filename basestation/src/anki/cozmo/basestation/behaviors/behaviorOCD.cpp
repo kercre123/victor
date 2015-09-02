@@ -681,8 +681,8 @@ namespace Cozmo {
       if(obj2 == blockWorld.FindObjectClosestTo(testPose, obj1->GetSize() * 0.5f)) {
         return true;
       }
-      BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.AreAligned.TestPose", "(%f %f %f)",
-                             testPose.GetTranslation().x(), testPose.GetTranslation().y(), RAD_TO_DEG_F32(testPose.GetRotationAngle<'Z'>().ToFloat()));
+      //BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.AreAligned.TestPose", "(%f %f %f)",
+      //                       testPose.GetTranslation().x(), testPose.GetTranslation().y(), RAD_TO_DEG_F32(testPose.GetRotationAngle<'Z'>().ToFloat()));
     }
 
     return false;
@@ -958,7 +958,7 @@ namespace Cozmo {
               switch(_returnToState) {
                 case State::PickingUpBlock:
                 case State::PlacingBlock:
-                  if (_irritationLevel > 0) {
+                  if (_irritationLevel > 1) {
                     PlayAnimation("VeryIrritated");
                   } else {
                     _returnToState == State::PickingUpBlock ? SelectNextObjectToPickUp() : SelectNextPlacement();
@@ -972,6 +972,7 @@ namespace Cozmo {
               
               break;
             default:
+              BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.HandleActionCompleted.UnexpectedActionCompleteDuringIrritated", "action %d", msg.actionType);
               break;
           }
 
