@@ -63,33 +63,15 @@
       'libopencv_video.a',
       'libopencv_features2d.a',
     ],
-
-
-
-
-
+    
     # Here we pick which face library to use and set its path/includes/libs
-    # as needed:
-    'face_library' : 'opencv', # one of: 'opencv', 'faciometric', or 'facesdk'
-       
-    'faciometric_path' : [
-      '<(coretech_external_path)/IntraFace',
-    ],
-
-    'faciometric_includes': [
-      # Defined conditionally below, depending on platform
-    ],
+    # initially to empty. They will be filled in below in the 'conditions' as
+    # needed:
+    'face_library' : 'facesdk', # one of: 'opencv', 'faciometric', or 'facesdk'
+    'face_library_path':      [ ],
+    'face_library_includes' : [ ],
+    'face_library_libs':      [ ],
     
-    'faciometric_libs': [
-      # Defined conditionally below, depending on platform
-    ],
-
-    'facesdk_includes': [
-      # Defined conditionally below
-    ],
-    
-    
-      
     'compiler_flags': [
       '-Wno-deprecated-declarations', # Supressed until system() usage is removed
       '-fdiagnostics-show-category=name',
@@ -134,22 +116,27 @@
     'arch_group%': '<(arch_group)',
     'conditions': [
       # Face libraries, depending on platform:
+      ['face_library=="faciometric"', {
+        'face_library_path': [
+          '<(coretech_external_path)/IntraFace',
+        ]
+      }],
       ['OS=="mac" and face_library=="faciometric"', {
-        'faciometric_includes': [
-          '<(faciometric_path)/osx_demo_126/include',
-          '<(faciometric_path)/osx_demo_126/3rdparty/Eigen3/include',
+        'face_library_includes': [
+          '<(face_library_path)/osx_demo_126/include',
+          '<(face_library_path)/osx_demo_126/3rdparty/Eigen3/include',
         ],
       }],
       ['OS=="ios" and face_library=="faciometric"', {
-        'faciometric_includes': [
-          '<(faciometric_path)/IntraFace_126_iOS_Anki/Library/3rdparty/include',
+        'face_library_includes': [
+          '<(face_library_path)/IntraFace_126_iOS_Anki/Library/3rdparty/include',
         ],
-        'faciometric_libs': [
-          '<(faciometric_path)/IntraFace_126_iOS_Anki/Library/intraface.framework',
+        'face_library_libs': [
+          '<(face_library_path)/IntraFace_126_iOS_Anki/Library/intraface.framework',
         ],
       }],
       ['face_library=="facesdk"', {
-        'facesdk_includes': [
+        'face_library_includes': [
           '<(coretech_external_path)/Luxand_FaceSDK/include/C',
         ],
       }],
@@ -247,7 +234,7 @@
       'ALWAYS_SEARCH_USER_PATHS': 'NO',
       'conditions': [
         ['face_library=="faciometric"', {
-           'FRAMEWORK_SEARCH_PATHS': '<(faciometric_path)/IntraFace_126_iOS_Anki/Library',
+           'FRAMEWORK_SEARCH_PATHS': '<(face_library_path)/IntraFace_126_iOS_Anki/Library',
         }],
       ],
       'CLANG_CXX_LANGUAGE_STANDARD':'c++11',
@@ -573,11 +560,10 @@
         '../../vision/include',
         '<@(opencv_includes)',
         '<(coretech_external_path)/matconvnet/matlab/src/bits',
-        '<@(faciometric_includes)',
-        '<@(facesdk_includes)',
+        '<@(face_library_includes)',
       ],
       'libraries': [
-        '<@(faciometric_libs)',
+        '<@(face_library_libs)',
       ],
       'direct_dependent_settings': {
         'include_dirs': [

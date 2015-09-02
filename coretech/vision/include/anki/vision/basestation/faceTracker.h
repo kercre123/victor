@@ -19,11 +19,14 @@
 #include <list>
 
 // Available Face Trackers to select from:
+// NOTE: You will now also have to set "face_library" in coretech-internal.gyp
+//       AND cozmoGame.gyp correspondingly to get these to work (which also
+//       requires you actually have the 3rd party SDKs in coretech-external.
 #define FACE_TRACKER_FACIOMETRIC 0
 #define FACE_TRACKER_FACESDK     1
 #define FACE_TRACKER_OPENCV      2
 
-#define FACE_TRACKER_PROVIDER FACE_TRACKER_OPENCV
+#define FACE_TRACKER_PROVIDER FACE_TRACKER_FACESDK
 
 namespace Anki {
 namespace Vision {
