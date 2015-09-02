@@ -85,9 +85,6 @@
 		46D2C2F71B4FA57000FC7553 /* libutilEmbedded.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 46D2C2F61B4FA57000FC7553 /* libutilEmbedded.a */; };
 		46D2C2F91B4FA6AC00FC7553 /* libctiCommonRobot.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 46D2C2F81B4FA6AC00FC7553 /* libctiCommonRobot.a */; };
 		46D2C2FE1B4FAA0800FC7553 /* libctiVisionRobot.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 46D2C2FD1B4FAA0800FC7553 /* libctiVisionRobot.a */; };
-		49109E031B8BA48D00827BBF /* libfsdk-static.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 49109E021B8BA48D00827BBF /* libfsdk-static.a */; };
-		49109E071B8BAFB400827BBF /* intraface.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 49109E061B8BAFB400827BBF /* intraface.framework */; };
-		49109E081B8BAFB400827BBF /* intraface.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 49109E061B8BAFB400827BBF /* intraface.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		491A6D981B5F1D64003E91FB /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 491A6D971B5F1D64003E91FB /* Security.framework */; };
 		5623C57617FDCB0800090B9E /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1D30AB110D05D00D00671497 /* Foundation.framework */; };
 		5623C57717FDCB0800090B9E /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 830B5C100E5ED4C100C7819F /* UIKit.framework */; };
@@ -129,7 +126,6 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
-				49109E081B8BAFB400827BBF /* intraface.framework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -293,7 +289,6 @@
 				46D2C2F91B4FA6AC00FC7553 /* libctiCommonRobot.a in Frameworks */,
 				46D2C2EF1B4FA4E900FC7553 /* libCSharpBinding.a in Frameworks */,
 				46D2C2401B4F9D6B00FC7553 /* libcozmoEngine.a in Frameworks */,
-				49109E031B8BA48D00827BBF /* libfsdk-static.a in Frameworks */,
 				46D2C2411B4F9D6B00FC7553 /* libcozmoGame.a in Frameworks */,
 				46D2C2421B4F9D6B00FC7553 /* libctiCommon.a in Frameworks */,
 				46D2C2431B4F9D6B00FC7553 /* libctiMessaging.a in Frameworks */,
@@ -305,7 +300,6 @@
 				46D2C2F71B4FA57000FC7553 /* libutilEmbedded.a in Frameworks */,
 				462D5BC51B0576230027DC17 /* libopencv_video.a in Frameworks */,
 				462D5BC61B0576230027DC17 /* libopencv_features2d.a in Frameworks */,
-				49109E071B8BAFB400827BBF /* intraface.framework in Frameworks */,
 				462D5BBB1B0576230027DC17 /* libopencv_calib3d.a in Frameworks */,
 				462D5BBC1B0576230027DC17 /* libopencv_highgui.a in Frameworks */,
 				462D5BBD1B0576230027DC17 /* libopencv_core.a in Frameworks */,
