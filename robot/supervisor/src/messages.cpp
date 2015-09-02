@@ -120,7 +120,7 @@ namespace Anki {
           case SetBlockLights_ID:
           case FlashBlockIDs_ID:
           case SetBlockBeingCarried_ID:
-            return true;
+            return false;
             
           default:
             break;
