@@ -173,15 +173,15 @@ namespace Anki {
     } // ProcessMessages()
     
     
+    // TODO: Remove this once we get rid of MessageVisionMarker fully
     // Convert a MessageVisionMarker into a VisionMarker object and hand it off
     // to the BlockWorld
     Result RobotMessageHandler::ProcessMessage(Robot* robot, const MessageVisionMarker& msg)
     {
       Result retVal = RESULT_FAIL;
       
-      CORETECH_ASSERT(robot != NULL);
-      
-      retVal = robot->QueueObservedMarker(msg);
+      PRINT_NAMED_ERROR("RobotMessageHandler.ProcessMessage.MessageVisionMarker",
+                        "We should not be receiving this message from anywhere.");
       
       return retVal;
     } // ProcessMessage(MessageVisionMarker)

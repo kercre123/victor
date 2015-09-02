@@ -275,7 +275,7 @@ namespace Anki {
           // Current action just finished, pop it
           PopCurrentAction();
           
-          if(actionResult != ActionResult::SUCCESS) {
+          if(actionResult != ActionResult::SUCCESS && actionResult != ActionResult::CANCELLED) {
             lastResult = RESULT_FAIL;
           }
           

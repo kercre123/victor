@@ -20,6 +20,7 @@
 #include "anki/common/basestation/colorRGBA.h"
 
 #include "anki/cozmo/basestation/comms/robot/robotMessages.h"
+#include "anki/cozmo/basestation/proceduralFace.h"
 
 #include "anki/cozmo/shared/cozmoTypes.h"
 #include "anki/cozmo/shared/ledTypes.h"
@@ -47,6 +48,8 @@ namespace Anki {
       
       bool IsValid() const { return _isValid; }
       
+      // Returns true if current time has reached frame's "trigger" time, relative
+      // to the given start time, or if this has been set as a "Live" keyframe
       bool IsTimeToPlay(TimeStamp_t startTime_ms, TimeStamp_t currTime_ms) const;
       
       // Returns the time to trigger whatever change is implied by the KeyFrame
@@ -55,6 +58,11 @@ namespace Anki {
       // Set all members from Json. Calls virtual SetMembersFromJson() method so
       // subclasses can specify how to populate their members.
       Result DefineFromJson(const Json::Value &json);
+      
+      // The trigger time for "live" keyframes is irrelevant; they are always
+      // ready to play.
+      bool IsLive() const { return _isLive; }
+      void SetIsLive(bool tf) { _isLive = tf; }
       
       // Fill some kind of message for streaming and return it. Return nullptr
       // if not available.
@@ -79,6 +87,7 @@ namespace Anki {
       
       TimeStamp_t   _triggerTime_ms;
       bool          _isValid;
+      bool          _isLive;
       
     }; // class IKeyFrame
     
@@ -240,7 +249,7 @@ namespace Anki {
     class FaceAnimationKeyFrame : public IKeyFrame
     {
     public:
-      FaceAnimationKeyFrame() { }
+      FaceAnimationKeyFrame(const std::string& faceAnimName = "") : _animName(faceAnimName) { }
       
       virtual RobotMessage* GetStreamMessage() override;
       
@@ -249,7 +258,7 @@ namespace Anki {
         return ClassName;
       }
 
-      virtual bool IsDone() override { return _curFrame >= _numFrames; }
+      virtual bool IsDone() override;
       
     protected:
       virtual Result SetMembersFromJson(const Json::Value &jsonRoot) override;
@@ -257,13 +266,32 @@ namespace Anki {
     private:
       std::string  _animName;
       
-      s32 _numFrames;
       s32 _curFrame;
       
       MessageAnimKeyFrame_FaceImage _faceImageMsg;
       
     }; // class FaceAnimationKeyFrame
     
+    
+    class ProceduralFaceKeyFrame : public IKeyFrame
+    {
+    public:
+      ProceduralFaceKeyFrame(const ProceduralFace& face) : _procFace(face) { }
+      
+      virtual RobotMessage* GetStreamMessage() override;
+      
+      static const std::string& GetClassName() {
+        static const std::string ClassName("ProceduralFaceKeyFrame");
+        return ClassName;
+      }
+
+    protected:
+      virtual Result SetMembersFromJson(const Json::Value &jsonRoot) override;
+      
+    private:
+      ProceduralFace _procFace;
+      MessageAnimKeyFrame_FaceImage _faceImageMsg;
+    };
     
     // A FacePositionKeyFrame sets the center of the currently displayed face
     // image/sprite, in LED screen coordinates.

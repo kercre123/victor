@@ -3,7 +3,7 @@
 
     'engine_source': 'cozmoEngine.lst',
     'engine_test_source': 'cozmoEngine-test.lst',
-    'energy_library_type': 'static_library',
+    'engine_library_type': 'static_library',
     'ctrlLightCube_source': 'ctrlLightCube.lst',
     'ctrlRobot_source': 'ctrlRobot.lst',
     'ctrlViz_source': 'ctrlViz.lst',
@@ -56,7 +56,7 @@
       '<(webots_path)/include/ode',
       '<(webots_path)/include',
     ],
-
+  
     'compiler_flags': [
       '-Wno-deprecated-declarations', # Supressed until system() usage is removed
       '-fdiagnostics-show-category=name',
@@ -83,10 +83,10 @@
     'compiler_cpp_flags' : [
       '-std=c++11',
       '-stdlib=libc++',
-      '<@(compiler_flags)'
+      '<@(compiler_flags)',
     ],
     'linker_flags' : [
-        '-g'
+        '-g',
     ],
 
     # Set default ARCHS based on platform
@@ -560,8 +560,10 @@
         '<(ce-cti_gyp_path):ctiMessaging',
         '<(ce-cti_gyp_path):ctiPlanning',
         '<(ce-cti_gyp_path):ctiVision',
+        '<(ce-cti_gyp_path):ctiCommonRobot',
+        '<(ce-cti_gyp_path):ctiVisionRobot',
       ],
-      'type': '<(energy_library_type)',
+      'type': '<(engine_library_type)',
     },
     
 
