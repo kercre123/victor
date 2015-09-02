@@ -137,10 +137,6 @@ public class ObservedObject {
     if (objectFamily == ObjectFamily.LightCube) {
       cubeType = CubeType.LIGHT_CUBE;
     }
-    else if (objectFamily == ObjectFamily.HumanHead) {
-      cubeType = CubeType.FACE;
-      DAS.Warn("ObservedObject", "FACE " + ID + " !!!"); 
-    }
     else if (objectType == ObjectType.Block_BULLSEYE2 || objectType == ObjectType.Block_BULLSEYE2_INVERTED) {
       cubeType = CubeType.BULLS_EYE;
     }
