@@ -134,8 +134,14 @@ namespace Cozmo {
                          faceIter->first, _robot.GetLastImageTimeStamp(),
                          faceIter->second.face.GetTimeStamp());
         
+        if(_robot.GetExternalInterface()) {
+          using namespace ExternalInterface;
+          _robot.GetExternalInterface()->Broadcast(MessageEngineToGame(RobotDeletedFace(faceIter->second.face.GetID(), _robot.GetID())));
+        }
+        
         VizManager::getInstance()->EraseVizObject(faceIter->second.vizHandle);
         faceIter = _knownFaces.erase(faceIter);
+
       } else {
         ++faceIter;
       }

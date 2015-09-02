@@ -155,6 +155,12 @@ message RobotObservedFace {
 // TODO: Add expression / landmark locations
 }
 
+// RobotDeletedFace
+message RobotDeletedFace {
+    int_64  faceID,
+    uint_32 robotID
+}
+
 // RobotObservedNothing
 message RobotObservedNothing {
     uint_32 robotID
