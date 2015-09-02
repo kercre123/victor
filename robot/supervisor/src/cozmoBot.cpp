@@ -255,6 +255,21 @@ namespace Anki {
             avgMainTooLateTime_ = (u32)((f32)(avgMainTooLateTime_ * (mainTooLateCnt_ - 1) + timeBetweenCycles)) / mainTooLateCnt_;
           }
         }
+ 
+
+/*
+        // Test code for measuring number of mainExecution tics per second
+        static u32 cnt = 0;
+        static u32 startTime = 0;
+        const u32 interval_seconds = 5;
+        
+        if (++cnt == (200 * interval_seconds)) {
+          u32 numTicsPerSec = (cnt * 1000000) / (cycleStartTime - startTime);
+          PRINT("TicsPerSec %d\n", numTicsPerSec);
+          startTime = cycleStartTime;
+          cnt = 0;
+        }
+*/
         
         //////////////////////////////////////////////////////////////
         // Test Mode
