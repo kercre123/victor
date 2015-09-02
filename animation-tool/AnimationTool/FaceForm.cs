@@ -112,7 +112,6 @@ namespace AnimationTool
             // 
             this.browAngle.CheckBoxVisible = true;
             this.browAngle.ClientSize = new System.Drawing.Size(480, 50);
-            this.browAngle.ControlBox = false;
             this.browAngle.LeftLabel = "Angle (deg)";
             this.browAngle.LeftMaximum = 90;
             this.browAngle.LeftMinimum = 0;
@@ -121,15 +120,12 @@ namespace AnimationTool
             this.browAngle.RightLabel = "Angle (deg)";
             this.browAngle.RightMaximum = 90;
             this.browAngle.RightMinimum = 0;
-            this.browAngle.ShowInTaskbar = false;
-            this.browAngle.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;
-            this.browAngle.Visible = false;
             // 
             // browX
             // 
             this.browX.CheckBoxVisible = true;
             this.browX.ClientSize = new System.Drawing.Size(480, 50);
-            this.browX.ControlBox = false;
+
             this.browX.LeftLabel = "X";
             this.browX.LeftMaximum = 90;
             this.browX.LeftMinimum = 0;
@@ -138,15 +134,11 @@ namespace AnimationTool
             this.browX.RightLabel = "X";
             this.browX.RightMaximum = 100;
             this.browX.RightMinimum = 0;
-            this.browX.ShowInTaskbar = false;
-            this.browX.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;
-            this.browX.Visible = false;
             // 
             // browY
             // 
             this.browY.CheckBoxVisible = true;
             this.browY.ClientSize = new System.Drawing.Size(480, 50);
-            this.browY.ControlBox = false;
             this.browY.LeftLabel = "Y";
             this.browY.LeftMaximum = 90;
             this.browY.LeftMinimum = 0;
@@ -155,15 +147,11 @@ namespace AnimationTool
             this.browY.RightLabel = "Y";
             this.browY.RightMaximum = 100;
             this.browY.RightMinimum = 0;
-            this.browY.ShowInTaskbar = false;
-            this.browY.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;
-            this.browY.Visible = false;
             // 
             // face
             // 
             this.face.CheckBoxVisible = false;
             this.face.ClientSize = new System.Drawing.Size(480, 50);
-            this.face.ControlBox = false;
             this.face.LeftLabel = "Y";
             this.face.LeftMaximum = 90;
             this.face.LeftMinimum = 0;
@@ -172,15 +160,11 @@ namespace AnimationTool
             this.face.RightLabel = "Angle (deg)";
             this.face.RightMaximum = 90;
             this.face.RightMinimum = 0;
-            this.face.ShowInTaskbar = false;
-            this.face.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;
-            this.face.Visible = false;
             // 
             // browLength
             // 
             this.browLength.CheckBoxVisible = true;
             this.browLength.ClientSize = new System.Drawing.Size(480, 50);
-            this.browLength.ControlBox = false;
             this.browLength.LeftLabel = "Length";
             this.browLength.LeftMaximum = 90;
             this.browLength.LeftMinimum = 0;
@@ -189,9 +173,6 @@ namespace AnimationTool
             this.browLength.RightLabel = "Length";
             this.browLength.RightMaximum = 100;
             this.browLength.RightMinimum = 0;
-            this.browLength.ShowInTaskbar = false;
-            this.browLength.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;
-            this.browLength.Visible = false;
             // 
             // pupilLabel
             // 
@@ -217,7 +198,6 @@ namespace AnimationTool
             // 
             this.eyeHeight.CheckBoxVisible = true;
             this.eyeHeight.ClientSize = new System.Drawing.Size(480, 50);
-            this.eyeHeight.ControlBox = false;
             this.eyeHeight.LeftLabel = "Height";
             this.eyeHeight.LeftMaximum = 90;
             this.eyeHeight.LeftMinimum = 0;
@@ -226,15 +206,11 @@ namespace AnimationTool
             this.eyeHeight.RightLabel = "Height";
             this.eyeHeight.RightMaximum = 90;
             this.eyeHeight.RightMinimum = 0;
-            this.eyeHeight.ShowInTaskbar = false;
-            this.eyeHeight.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;
-            this.eyeHeight.Visible = false;
             // 
             // eyeWidth
             // 
             this.eyeWidth.CheckBoxVisible = true;
             this.eyeWidth.ClientSize = new System.Drawing.Size(480, 50);
-            this.eyeWidth.ControlBox = false;
             this.eyeWidth.LeftLabel = "Width";
             this.eyeWidth.LeftMaximum = 90;
             this.eyeWidth.LeftMinimum = 0;
@@ -243,15 +219,11 @@ namespace AnimationTool
             this.eyeWidth.RightLabel = "Width";
             this.eyeWidth.RightMaximum = 90;
             this.eyeWidth.RightMinimum = 0;
-            this.eyeWidth.ShowInTaskbar = false;
-            this.eyeWidth.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;
-            this.eyeWidth.Visible = false;
             // 
             // eyeY
             // 
             this.eyeY.CheckBoxVisible = true;
             this.eyeY.ClientSize = new System.Drawing.Size(480, 50);
-            this.eyeY.ControlBox = false;
             this.eyeY.LeftLabel = "Y";
             this.eyeY.LeftMaximum = 90;
             this.eyeY.LeftMinimum = 0;
@@ -260,15 +232,11 @@ namespace AnimationTool
             this.eyeY.RightLabel = "Y";
             this.eyeY.RightMaximum = 90;
             this.eyeY.RightMinimum = 0;
-            this.eyeY.ShowInTaskbar = false;
-            this.eyeY.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;
-            this.eyeY.Visible = false;
             // 
             // pupilX
             // 
             this.pupilX.CheckBoxVisible = true;
             this.pupilX.ClientSize = new System.Drawing.Size(480, 50);
-            this.pupilX.ControlBox = false;
             this.pupilX.LeftLabel = "X";
             this.pupilX.LeftMaximum = 90;
             this.pupilX.LeftMinimum = 0;
@@ -277,15 +245,11 @@ namespace AnimationTool
             this.pupilX.RightLabel = "X";
             this.pupilX.RightMaximum = 90;
             this.pupilX.RightMinimum = 0;
-            this.pupilX.ShowInTaskbar = false;
-            this.pupilX.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;
-            this.pupilX.Visible = false;
             // 
             // pupilY
             // 
             this.pupilY.CheckBoxVisible = true;
             this.pupilY.ClientSize = new System.Drawing.Size(480, 50);
-            this.pupilY.ControlBox = false;
             this.pupilY.LeftLabel = "Y";
             this.pupilY.LeftMaximum = 90;
             this.pupilY.LeftMinimum = 0;
@@ -294,15 +258,11 @@ namespace AnimationTool
             this.pupilY.RightLabel = "Y";
             this.pupilY.RightMaximum = 90;
             this.pupilY.RightMinimum = 0;
-            this.pupilY.ShowInTaskbar = false;
-            this.pupilY.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;
-            this.pupilY.Visible = false;
             // 
             // pupilSize
             // 
             this.pupilSize.CheckBoxVisible = true;
             this.pupilSize.ClientSize = new System.Drawing.Size(480, 50);
-            this.pupilSize.ControlBox = false;
             this.pupilSize.LeftLabel = "Size";
             this.pupilSize.LeftMaximum = 90;
             this.pupilSize.LeftMinimum = 0;
@@ -311,9 +271,6 @@ namespace AnimationTool
             this.pupilSize.RightLabel = "Size";
             this.pupilSize.RightMaximum = 90;
             this.pupilSize.RightMinimum = 0;
-            this.pupilSize.ShowInTaskbar = false;
-            this.pupilSize.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;
-            this.pupilSize.Visible = false;
             // 
             // FaceForm
             // 

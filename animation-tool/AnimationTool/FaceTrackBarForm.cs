@@ -5,7 +5,7 @@ using System.Net;
 
 namespace AnimationTool
 {
-    public class FaceTrackBarForm : Form
+    public class FaceTrackBarForm : ContainerControl
     {
         private TextBox leftTextBox;
         private TrackBar leftTrackBar;
@@ -187,17 +187,17 @@ namespace AnimationTool
             // checkBox
             // 
             this.checkBox.AutoSize = true;
+            this.checkBox.Checked = true;
+            this.checkBox.CheckState = System.Windows.Forms.CheckState.Checked;
             this.checkBox.Location = new System.Drawing.Point(235, 20);
             this.checkBox.Name = "checkBox";
             this.checkBox.Size = new System.Drawing.Size(15, 14);
             this.checkBox.TabIndex = 7;
             this.checkBox.UseVisualStyleBackColor = true;
-            this.checkBox.Checked = true;
             // 
-            // FacePanel
+            // FaceTrackBarForm
             // 
-            this.ClientSize = new System.Drawing.Size(480, 50);
-            this.ControlBox = false;
+            this.BackColor = System.Drawing.SystemColors.Control;
             this.Controls.Add(this.checkBox);
             this.Controls.Add(this.rightLabel);
             this.Controls.Add(this.rightTrackBar);
@@ -206,9 +206,7 @@ namespace AnimationTool
             this.Controls.Add(this.leftTrackBar);
             this.Controls.Add(this.leftTextBox);
             this.Name = "FacePanel";
-            this.ShowInTaskbar = false;
-            this.TopLevel = false;
-            this.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;
+            this.Size = new System.Drawing.Size(480, 50);
             ((System.ComponentModel.ISupportInitialize)(this.leftTrackBar)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.rightTrackBar)).EndInit();
             this.ResumeLayout(false);

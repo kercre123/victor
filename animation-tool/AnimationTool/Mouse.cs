@@ -130,17 +130,17 @@ namespace AnimationTool
                 else
                 {
                     //Otherwise we unselect everything and select the current one
-                    if (curChart.Name != "cFaceAnimation")
+                    if (curChart.Name != "cFaceAnimationImage")
                     {
                         ActionManager.Do(new SelectDataPoint(curDataPoint, curChart));
                     }
                     else
                     {
-                        ActionManager.Do(new FaceAnimation.SelectDataPoint(curDataPoint, curChart, pbFaceAnimation));
+                        ActionManager.Do(new FaceAnimation.SelectDataPoint(curDataPoint, curChart, faceAnimationImage.pictureBox));
 
                         if (curPreviewBar != null)
                         {
-                            ActionManager.Do(new FaceAnimation.SelectDataPoint(curPreviewBar, null, pbFaceAnimation));
+                            ActionManager.Do(new FaceAnimation.SelectDataPoint(curPreviewBar, null, faceAnimationImage.pictureBox));
                         }
                     }
                 }
@@ -243,9 +243,9 @@ namespace AnimationTool
                         bool left = curPreviewBar.YValues[0] > mouseXValue;
                         bool right = curPreviewBar.YValues[1] < mouseXValue;
 
-                        if (ActionManager.Do(new FaceAnimation.MoveSelectedPreviewBar(curPreviewBar, curDataPoint, left, right, pbFaceAnimation)))
+                        if (ActionManager.Do(new FaceAnimation.MoveSelectedPreviewBar(curPreviewBar, curDataPoint, left, right, faceAnimationImage.pictureBox)))
                         {
-                            cFaceAnimation.Refresh();
+                            cFaceAnimationImage.Refresh();
                         }
                     }
                     else // else moving data points
@@ -276,6 +276,8 @@ namespace AnimationTool
 
         private void Sequencer_MouseDown(object sender, MouseEventArgs e)
         {
+            DAS.Debug("called", "");
+
             if (e.Button != MouseButtons.Left) return;
 
             curDataPoint = null;
@@ -420,13 +422,13 @@ namespace AnimationTool
                     {
                         Sequencer.AddDataPoint add = null;
 
-                        if (curChart.Name != "cFaceAnimation")
+                        if (curChart.Name != "cFaceAnimationImage")
                         {
                             add = new Sequencer.AddDataPoint(curChart, extraData, mouseXValue, true, ModifierKeys != Keys.Shift);
                         }
                         else
                         {
-                            add = new Sequencer.AddDataPoint(curChart, extraData, mouseXValue, pbFaceAnimation, ModifierKeys != Keys.Shift);
+                            add = new Sequencer.AddDataPoint(curChart, extraData, mouseXValue, faceAnimationImage.pictureBox, ModifierKeys != Keys.Shift);
                         }
 
                         ActionManager.Do(add);

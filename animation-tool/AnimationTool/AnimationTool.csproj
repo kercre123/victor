@@ -63,14 +63,11 @@
     <Compile Include="..\..\unity\Cozmo\Assets\Scripts\Channel\UdpChannel.cs">
       <Link>DoNotEdit\Channel\UdpChannel.cs</Link>
     </Compile>
-    <Compile Include="SequencerChartForm.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="XYChartForm.cs">
-      <SubType>Form</SubType>
+    <Compile Include="ChartForm.cs">
+      <SubType>Component</SubType>
     </Compile>
     <Compile Include="FaceTrackBarForm.cs">
-      <SubType>Form</SubType>
+      <SubType>Component</SubType>
     </Compile>
     <Compile Include="FaceForm.cs">
       <SubType>Form</SubType>
@@ -170,11 +167,8 @@
     <EmbeddedResource Include="ChangeDurationForm.resx">
       <DependentUpon>ChangeDurationForm.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="SequencerChartForm.resx">
-      <DependentUpon>SequencerChartForm.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="XYChartForm.resx">
-      <DependentUpon>XYChartForm.cs</DependentUpon>
+    <EmbeddedResource Include="ChartForm.resx">
+      <DependentUpon>ChartForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="FaceTrackBarForm.resx">
       <DependentUpon>FaceTrackBarForm.cs</DependentUpon>

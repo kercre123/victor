@@ -69,21 +69,38 @@ namespace AnimationTool
             }
         }
 
-        private void FaceCheckBox(object o, EventArgs e)
+        private void FaceAnimationImageCheckBox(object o, EventArgs e)
         {
             CheckBox checkBox = o as CheckBox;
 
-            if (checkBox == null || cFaceAnimation == null || checkBox.Checked != cFaceAnimation.Enabled) return;
+            if (checkBox == null || cFaceAnimationImage == null || checkBox.Checked != cFaceAnimationImage.Enabled) return;
 
-            if (cFaceAnimation.Enabled)
+            if (cFaceAnimationImage.Enabled)
             {
-                ActionManager.Do(new DisableChart(cFaceAnimation, checkBox));
+                ActionManager.Do(new DisableChart(cFaceAnimationImage, checkBox));
             }
             else
             {
-                ActionManager.Do(new Sequencer.EnableChart(cFaceAnimation, checkBox));
+                ActionManager.Do(new Sequencer.EnableChart(cFaceAnimationImage, checkBox));
             }
         }
+
+        private void FaceAnimationDataCheckBox(object o, EventArgs e)
+        {
+            CheckBox checkBox = o as CheckBox;
+
+            if (checkBox == null || cFaceAnimationData == null || checkBox.Checked != cFaceAnimationData.Enabled) return;
+
+            if (cFaceAnimationData.Enabled)
+            {
+                ActionManager.Do(new DisableChart(cFaceAnimationData, checkBox));
+            }
+            else
+            {
+                ActionManager.Do(new Sequencer.EnableChart(cFaceAnimationData, checkBox));
+            }
+        }
+
         private void BodyMotionCheckBox(object o, EventArgs e)
         {
             CheckBox checkBox = o as CheckBox;
@@ -99,6 +116,5 @@ namespace AnimationTool
                 ActionManager.Do(new Sequencer.EnableChart(cBodyMotion, checkBox));
             }
         }
-
     }
 }

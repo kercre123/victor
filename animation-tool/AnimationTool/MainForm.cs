@@ -94,6 +94,7 @@ namespace AnimationTool
             FormClosing += (unused1, unused2) => robotEngineMessenger.Stop();
             Application.ApplicationExit += (unused1, unused2) => robotEngineMessenger.Stop();
             Application.Idle += UpdateConnectionText;
+            Resize += MainForm_Resize;
 
             Sequencer.AddDataPoint.ChangeDuration += ChangeDuration;
 
@@ -119,6 +120,21 @@ namespace AnimationTool
             }
 
             InitializeComponent();
+
+            headAngle.panel.Controls.Add(cHeadAngle);
+            headAngle.checkBox.CheckedChanged += HeadAngleCheckBox;
+            liftHeight.panel.Controls.Add(cLiftHeight);
+            liftHeight.checkBox.CheckedChanged += LiftHeightCheckBox;
+            bodyMotion.panel.Controls.Add(cBodyMotion);
+            bodyMotion.checkBox.CheckedChanged += BodyMotionCheckBox;
+            faceAnimationData.panel.Controls.Add(cFaceAnimationData);
+            faceAnimationData.checkBox.CheckedChanged += FaceAnimationDataCheckBox;
+            faceAnimationImage.panel.Controls.Add(cFaceAnimationImage);
+            faceAnimationImage.checkBox.CheckedChanged += FaceAnimationImageCheckBox;
+            audioRobot.panel.Controls.Add(cAudioRobot);
+            audioRobot.checkBox.CheckedChanged += AudioRobotCheckBox;
+            audioDevice.panel.Controls.Add(cAudioDevice);
+            audioDevice.checkBox.CheckedChanged += AudioDeviceCheckBox;
         }
 
         private void MainForm_Load(object sender, EventArgs e)
@@ -138,8 +154,8 @@ namespace AnimationTool
             cHeadAngle.ChartAreas[0].AxisX.LabelStyle.Interval = interval;
             cHeadAngle.ChartAreas[0].AxisY.Minimum = -25;
             cHeadAngle.ChartAreas[0].AxisY.Maximum = 34;
-            ActionManager.Do(new DisableChart(cHeadAngle, cbHeadAngle), true);
-            ActionManager.Do(new EnableChart(cHeadAngle, cbHeadAngle), true);
+            ActionManager.Do(new DisableChart(cHeadAngle, headAngle.checkBox), true);
+            ActionManager.Do(new EnableChart(cHeadAngle, headAngle.checkBox), true);
             channelList.Add(cHeadAngle);
 
             //Lift Chart
@@ -149,8 +165,8 @@ namespace AnimationTool
             cLiftHeight.ChartAreas[0].AxisX.LabelStyle.Interval = interval;
             cLiftHeight.ChartAreas[0].AxisY.Minimum = 31;
             cLiftHeight.ChartAreas[0].AxisY.Maximum = 92;
-            ActionManager.Do(new DisableChart(cLiftHeight, cbLift), true);
-            ActionManager.Do(new EnableChart(cLiftHeight, cbLift), true);
+            ActionManager.Do(new DisableChart(cLiftHeight, liftHeight.checkBox), true);
+            ActionManager.Do(new EnableChart(cLiftHeight, liftHeight.checkBox), true);
             channelList.Add(cLiftHeight);
 
             //Body Chart
@@ -158,26 +174,35 @@ namespace AnimationTool
             cBodyMotion.ChartAreas[0].AxisY.Minimum = 0;
             cBodyMotion.ChartAreas[0].AxisY.Maximum = Properties.Settings.Default.maxTime;
             cBodyMotion.ChartAreas[0].AxisY.LabelStyle.Interval = interval;
-            ActionManager.Do(new DisableChart(cBodyMotion, cbBodyMotion), true);
-            ActionManager.Do(new Sequencer.EnableChart(cBodyMotion, cbBodyMotion), true);
+            ActionManager.Do(new DisableChart(cBodyMotion, bodyMotion.checkBox), true);
+            ActionManager.Do(new Sequencer.EnableChart(cBodyMotion, bodyMotion.checkBox), true);
             channelList.Add(cBodyMotion);
 
-            //Face Animation Chart
-            cFaceAnimation.Series[0].Points.Clear();
-            cFaceAnimation.ChartAreas[0].AxisY.Minimum = 0;
-            cFaceAnimation.ChartAreas[0].AxisY.Maximum = Properties.Settings.Default.maxTime;
-            cFaceAnimation.ChartAreas[0].AxisY.LabelStyle.Interval = interval;
-            ActionManager.Do(new DisableChart(cFaceAnimation, cbFaceAnimation), true);
-            ActionManager.Do(new FaceAnimation.EnableChart(cFaceAnimation, cbFaceAnimation), true);
-            channelList.Add(cFaceAnimation);
+            //Face Animation Data Chart
+            cFaceAnimationData.Series[0].Points.Clear();
+            cFaceAnimationData.ChartAreas[0].AxisY.Minimum = 0;
+            cFaceAnimationData.ChartAreas[0].AxisY.Maximum = Properties.Settings.Default.maxTime;
+            cFaceAnimationData.ChartAreas[0].AxisY.LabelStyle.Interval = interval;
+            ActionManager.Do(new DisableChart(cFaceAnimationData, faceAnimationData.checkBox), true);
+            ActionManager.Do(new FaceAnimation.EnableChart(cFaceAnimationData, faceAnimationData.checkBox), true);
+            channelList.Add(cFaceAnimationData);
+
+            //Face Animation Image Chart
+            cFaceAnimationImage.Series[0].Points.Clear();
+            cFaceAnimationImage.ChartAreas[0].AxisY.Minimum = 0;
+            cFaceAnimationImage.ChartAreas[0].AxisY.Maximum = Properties.Settings.Default.maxTime;
+            cFaceAnimationImage.ChartAreas[0].AxisY.LabelStyle.Interval = interval;
+            ActionManager.Do(new DisableChart(cFaceAnimationImage, faceAnimationImage.checkBox), true);
+            ActionManager.Do(new FaceAnimation.EnableChart(cFaceAnimationImage, faceAnimationImage.checkBox), true);
+            channelList.Add(cFaceAnimationImage);
 
             //Audio Robot Chart
             cAudioRobot.Series[0].Points.Clear();
             cAudioRobot.ChartAreas[0].AxisY.Minimum = 0;
             cAudioRobot.ChartAreas[0].AxisY.Maximum = Properties.Settings.Default.maxTime;
             cAudioRobot.ChartAreas[0].AxisY.LabelStyle.Interval = interval;
-            ActionManager.Do(new DisableChart(cAudioRobot, cbAudioRobot), true);
-            ActionManager.Do(new Sequencer.EnableChart(cAudioRobot, cbAudioRobot), true);
+            ActionManager.Do(new DisableChart(cAudioRobot, audioRobot.checkBox), true);
+            ActionManager.Do(new Sequencer.EnableChart(cAudioRobot, audioRobot.checkBox), true);
             channelList.Add(cAudioRobot);
 
             //Audio Robot Device
@@ -185,8 +210,8 @@ namespace AnimationTool
             cAudioDevice.ChartAreas[0].AxisY.Minimum = 0;
             cAudioDevice.ChartAreas[0].AxisY.Maximum = Properties.Settings.Default.maxTime;
             cAudioDevice.ChartAreas[0].AxisY.LabelStyle.Interval = interval;
-            ActionManager.Do(new DisableChart(cAudioDevice, cbAudioDevice), true);
-            ActionManager.Do(new Sequencer.EnableChart(cAudioDevice, cbAudioDevice), true);
+            ActionManager.Do(new DisableChart(cAudioDevice, audioDevice.checkBox), true);
+            ActionManager.Do(new Sequencer.EnableChart(cAudioDevice, audioDevice.checkBox), true);
             channelList.Add(cAudioDevice);
 
             if (!File.Exists(currentFile))
@@ -233,9 +258,9 @@ namespace AnimationTool
             {
                 if (curDataPoint != null && curPreviewBar != null && curPreviewBar.MarkerColor == SelectDataPoint.MarkerColor)
                 {
-                    if (ActionManager.Do(new FaceAnimation.MoveSelectedPreviewBar(curPreviewBar, curDataPoint, left, right, pbFaceAnimation)))
+                    if (ActionManager.Do(new FaceAnimation.MoveSelectedPreviewBar(curPreviewBar, curDataPoint, left, right, faceAnimationImage.pictureBox)))
                     {
-                        cFaceAnimation.Refresh();
+                        cFaceAnimationImage.Refresh();
                     }
                 }
                 else if (ActionManager.Do(new MoveSelectedDataPointsOfSelectedCharts(channelList, left, right, up, down)))
@@ -422,6 +447,21 @@ namespace AnimationTool
             }
 
             //connectionTextComponent.Text = connectionText;
+        }
+
+        private void MainForm_Resize(object sender, EventArgs e)
+        {
+            if (headAngle.Size.Width != Size.Width - 35)
+            {
+                headAngle.Size = new System.Drawing.Size(Size.Width - 35, headAngle.Size.Height);
+                liftHeight.Size = new System.Drawing.Size(Size.Width - 35, liftHeight.Size.Height);
+                bodyMotion.Size = new System.Drawing.Size(Size.Width - 35, bodyMotion.Size.Height);
+                faceAnimationData.Size = new System.Drawing.Size(Size.Width - 35, faceAnimationData.Size.Height);
+                faceAnimationImage.Size = new System.Drawing.Size(Size.Width - 35, faceAnimationImage.Size.Height);
+                audioRobot.Size = new System.Drawing.Size(Size.Width - 35, audioRobot.Size.Height);
+                audioDevice.Size = new System.Drawing.Size(Size.Width - 35, audioDevice.Size.Height);
+                OnSizeChanged(e);
+            }
         }
     }
 }
