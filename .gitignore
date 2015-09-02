@@ -243,3 +243,5 @@ project/gyp/build
 generated/clad
 generated/webots/src/plugins/physics/physics.c
 robot/generated/clad
+resources/config/faciometric
+resources/config/basestation/vision/faciometric

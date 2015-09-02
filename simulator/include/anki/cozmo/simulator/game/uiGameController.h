@@ -13,7 +13,7 @@
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/basestation/objectIDs.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
-#include "anki/cozmo/basestation/data/dataPlatform.h"
+#include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/types/imageSendMode.h"
@@ -54,8 +54,8 @@ public:
   void Init();
   s32 Update();
   
-  void SetDataPlatform(Data::DataPlatform* dataPlatform);
-  Data::DataPlatform* GetDataPlatform();
+  void SetDataPlatform(Util::Data::DataPlatform* dataPlatform);
+  Util::Data::DataPlatform* GetDataPlatform();
   
   void QuitWebots(s32 status);
   void QuitController(s32 status);

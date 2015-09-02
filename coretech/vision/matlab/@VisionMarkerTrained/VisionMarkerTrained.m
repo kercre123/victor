@@ -16,7 +16,7 @@ classdef VisionMarkerTrained
             fullfile(VisionMarkerTrained.RootImageDir, 'creepTest/withFiducials/rotated')};
                 
         ProbeParameters = struct( ...
-            'GridSize', 32, ...            %'Radius', 0.02, ...  % As a fraction of a canonical unit square 
+            'GridSize', 32, ...       %'Radius', 0.02, ...  % As a fraction of a canonical unit square 
             'NumAngles', 4, ...       % How many samples around ring to sample
             'Method', 'mean');        % How to combine points in a probe
                 
@@ -61,12 +61,15 @@ classdef VisionMarkerTrained
         corners = GetFiducialCorners(imageSize, isPadded);
         [threshold, bright, dark] = ComputeThreshold(img, tform, method);
         outputString = GenerateHeaderFiles(varargin);
-        [nearestNeighborString, markerDefString] = GenerateNearestNeighborHeaderFiles(varargin)
+        [nearestNeighborString, markerDefString] = GenerateNearestNeighborHeaderFiles(varargin);
+        [probeDefString] = GenerateProbeDefinitionFiles(varargin);
         
         [numMulticlassNodes, numVerificationNodes] = GetNumTreeNodes(tree);
 
         CreateTestImage(varargin);
         CreatePrintableCodeSheet(varargin);
+
+        [xgrid,ygrid] = GetProbeGrid(workingResolution);
         
         [probeValues, X, Y] = GetProbeValues(img, tform);
         

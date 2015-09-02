@@ -16,7 +16,8 @@ namespace Anki {
 namespace Cozmo {
   
 
-CozmoEngineClient::CozmoEngineClient(IExternalInterface* externalInterface, Data::DataPlatform* dataPlatform)
+  CozmoEngineClient::CozmoEngineClient(IExternalInterface* externalInterface,
+                                       Util::Data::DataPlatform* dataPlatform)
 : CozmoEngine(externalInterface, dataPlatform)
 {
   _clientImpl = new CozmoEngineClientImpl(_externalInterface, dataPlatform);

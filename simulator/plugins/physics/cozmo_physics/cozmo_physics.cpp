@@ -127,7 +127,7 @@ namespace Anki {
     
     void ProcessVizEraseObjectMessage(const VizEraseObject& msg)
     {
-      PRINT("Processing EraseObject\n");
+      PRINT("Processing EraseObject %d\n", msg.objectID);
       
       if (msg.objectID == ALL_OBJECT_IDs) {
         objectMap_.clear();
@@ -272,6 +272,9 @@ namespace Anki {
     void ProcessVizTrackerQuadMessage(const VizTrackerQuad& msg){};
     void ProcessVizVisionMarkerMessage(const VizVisionMarker& msg){};
     void ProcessVizCameraQuadMessage(const VizCameraQuad& msg) {};
+    void ProcessVizCameraLineMessage(const VizCameraLine& msg) {};
+    void ProcessVizCameraOvalMessage(const VizCameraOval& msg) {};
+    void ProcessVizCameraTextMessage(const VizCameraText& msg) {};
     void ProcessVizRobotStateMessage(const VizRobotState& msg) {};
     
   } // namespace Cozmo
@@ -407,9 +410,6 @@ void draw_cuboid(float x_dim, float y_dim, float z_dim)
   glVertex3f( -halfX, -halfY,  -halfZ );
   
   glEnd();
-
-  
-  glFlush();
 }
 
 
@@ -450,9 +450,6 @@ void draw_ramp(float platformLength, float slopeLength, float width, float heigh
   glVertex3f( 0, -halfY,  0 );
   
   glEnd();
-  
-  
-  glFlush();
 
 }
 
@@ -487,7 +484,7 @@ void draw_head(float width, float height, float depth)
     
   }
   glEnd();
-  
+
 }
 
 // x,y,z: Position of tetrahedron main tip with respect to its origin
@@ -711,6 +708,8 @@ void webots_physics_draw(int pass, const char *view) {
           PRINT("Unknown objectTypeID %d\n", obj->objectTypeID);
           break;
       }
+      
+      glFlush();
       
       glPopMatrix();
       

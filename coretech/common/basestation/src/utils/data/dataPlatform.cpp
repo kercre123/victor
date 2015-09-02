@@ -11,14 +11,14 @@
 */
 
 
-#include "dataPlatform.h"
+#include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "json/json.h"
 #include "util/logging/logging.h"
 #include "util/helpers/includeFstream.h"
 #include "util/fileUtils/fileUtils.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Util {
 namespace Data {
 
 
@@ -121,5 +121,5 @@ bool DataPlatform::writeAsJson(const Scope& resourceScope, const std::string& re
 
 
 } // end namespace Data
-} // end namespace Cozmo
+} // end namespace Util
 } // end namespace Anki

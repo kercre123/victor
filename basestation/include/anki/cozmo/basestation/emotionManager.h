@@ -64,7 +64,7 @@ namespace Cozmo {
   private:
     
     // Event handlers
-    void HandleRobotObservedFace(const ExternalInterface::RobotObservedObject& msg);
+    void HandleRobotObservedFace(const ExternalInterface::RobotObservedFace& msg);
     
     Robot& _robot;
     Json::Value _config;

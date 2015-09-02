@@ -10,7 +10,7 @@
  **/
 
 #include "anki/cozmo/basestation/faceAnimationManager.h"
-#include "anki/cozmo/basestation/data/dataPlatform.h"
+#include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "util/logging/logging.h"
 #include "opencv2/highgui/highgui.hpp"
 #include <sys/stat.h>
@@ -27,9 +27,11 @@ namespace Anki {
 namespace Cozmo {
 
   FaceAnimationManager* FaceAnimationManager::_singletonInstance = nullptr;
+  const std::string FaceAnimationManager::ProceduralAnimName("_PROCEDURAL_");
   
   FaceAnimationManager::FaceAnimationManager()
   {
+    _availableAnimations[ProceduralAnimName];
   }
   
   void FaceAnimationManager::removeInstance()
@@ -43,10 +45,10 @@ namespace Cozmo {
   
   
   // Read the animations in a dir
-  void FaceAnimationManager::ReadFaceAnimationDir(Data::DataPlatform* dataPlatform)
+  void FaceAnimationManager::ReadFaceAnimationDir(Util::Data::DataPlatform* dataPlatform)
   {
     if (dataPlatform == nullptr) { return; }
-    const std::string animationFolder = dataPlatform->pathToResource(Data::Scope::Resources, "assets/faceAnimations/");
+    const std::string animationFolder = dataPlatform->pathToResource(Util::Data::Scope::Resources, "assets/faceAnimations/");
 
     DIR* dir = opendir(animationFolder.c_str());
     if ( dir != nullptr) {
@@ -54,6 +56,12 @@ namespace Cozmo {
       while ( (ent = readdir(dir)) != nullptr) {
         if (ent->d_type == DT_DIR && ent->d_name[0] != '.') {
           const std::string animName(ent->d_name);
+          if(animName == ProceduralAnimName) {
+            PRINT_NAMED_ERROR("FaceAnimationManager.ReadFaceAnimationDir.ReservedName",
+                              "'_PROCEDURAL_' is a reserved face animation name. Ignoring.");
+            continue;
+          }
+          
           std::string fullDirName = animationFolder + ent->d_name;
           struct stat attrib{0};
           int result = stat(fullDirName.c_str(), &attrib);
@@ -183,18 +191,51 @@ namespace Cozmo {
     
   } // ReadFaceAnimationDir()
   
-
-  u32 FaceAnimationManager::GetNumFrames(const std::string &animName) const
+  FaceAnimationManager::AvailableAnim* FaceAnimationManager::GetAnimationByName(const std::string& name)
   {
-
-    auto animIter = _availableAnimations.find(animName);
+    auto animIter = _availableAnimations.find(name);
     if(animIter == _availableAnimations.end()) {
+      PRINT_NAMED_WARNING("FaceAnimationManager.GetAnimationByName.UnknownName",
+                          "Unknown animation requested: %s", name.c_str());
+      return nullptr;
+    } else {
+      return &animIter->second;
+    }
+  }
+  
+  Result FaceAnimationManager::AddImage(const std::string& animName, const cv::Mat& faceImg)
+  {
+    AvailableAnim* anim = GetAnimationByName(animName);
+    if(nullptr == anim) {
+      return RESULT_FAIL;
+    }
+    
+    anim->rleFrames.push_back({});
+    CompressRLE(faceImg > 128, anim->rleFrames.back());
+    return RESULT_OK;
+  }
+
+  Result FaceAnimationManager::ClearAnimation(const std::string& animName)
+  {
+    AvailableAnim* anim = GetAnimationByName(animName);
+    if(anim == nullptr) {
+      return RESULT_FAIL;
+    } else {
+      anim->rleFrames.clear();
+      return RESULT_OK;
+    }
+  }
+  
+  u32 FaceAnimationManager::GetNumFrames(const std::string &animName)
+  {
+    AvailableAnim* anim = GetAnimationByName(animName);
+    if(nullptr == anim) {
       PRINT_NAMED_WARNING("FaceAnimationManager.GetNumFrames",
                           "Unknown animation requested: %s",
                           animName.c_str());
       return 0;
     } else {
-      return static_cast<u32>(animIter->second.GetNumFrames());
+      return static_cast<u32>(anim->GetNumFrames());
     }
   } // GetNumFrames()
   

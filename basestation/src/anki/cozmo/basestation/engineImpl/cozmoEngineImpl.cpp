@@ -13,18 +13,19 @@
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 
-#define ASYNCHRONOUS_DEVICE_VISION 0
-
 namespace Anki {
 namespace Cozmo {
   
 
   
-CozmoEngineImpl::CozmoEngineImpl(IExternalInterface* externalInterface, Data::DataPlatform* dataPlatform)
+CozmoEngineImpl::CozmoEngineImpl(IExternalInterface* externalInterface,
+                                 Util::Data::DataPlatform* dataPlatform)
 : _isInitialized(false)
 , _externalInterface(externalInterface)
 , _dataPlatform(dataPlatform)
+#if DEVICE_VISION_MODE != DEVICE_VISION_MODE_OFF
 , _deviceVisionThread(dataPlatform)
+#endif
 {
   if (Anki::Util::gTickTimeProvider == nullptr) {
     Anki::Util::gTickTimeProvider = BaseStationTimer::getInstance();
@@ -117,12 +118,12 @@ Result CozmoEngineImpl::Init(const Json::Value& config)
     return lastResult;
   }
 
-#   if ASYNCHRONOUS_DEVICE_VISION
+# if DEVICE_VISION_MODE == DEVICE_VISION_MODE_ASYNC
   // TODO: Only start when needed?
   _deviceVisionThread.Start(deviceCamCalib);
-#   else 
+# elif DEVICE_VISION_MODE == DEVICE_VISION_MODE_SYNC
   _deviceVisionThread.SetCameraCalibration(deviceCamCalib);
-#   endif
+# endif
 
   _isInitialized = true;
 
@@ -209,9 +210,9 @@ void CozmoEngineImpl::ProcessDeviceImage(const Vision::Image &image)
   // Process image within the detection rectangle with vision processing thread:
   static const Cozmo::MessageRobotState bogusState; // req'd by API, but not really necessary for marker detection
 
-#   if ASYNCHRONOUS_DEVICE_VISION
+# if DEVICE_VISION_MODE == DEVICE_VISION_MODE_ASYNC
   _deviceVisionThread.SetNextImage(image, bogusState);
-#   else
+# elif DEVICE_VISION_MODE == DEVICE_VISION_MODE_SYNC
   _deviceVisionThread.Update(image, bogusState);
 
   MessageVisionMarker msg;
@@ -225,8 +226,8 @@ void CozmoEngineImpl::ProcessDeviceImage(const Vision::Image &image)
       msg.x_imgLowerRight, msg.y_imgLowerRight
     )));
   }
-
-#   endif
+# endif // DEVICE_VISION_MODE
+  
 }
   
 

@@ -39,6 +39,19 @@ namespace Anki {
     
   }
   
+  template<typename T>
+  Rectangle<T>::Rectangle(const Point2<T>& upperLeft, const Point2<T>& lowerRight)
+  {
+    x = upperLeft.x();
+    y = upperLeft.y();
+    
+    Point2<T> WH(lowerRight);
+    WH -= upperLeft;
+    width = WH.x();
+    height = WH.y();
+  }
+  
+  
 #if ANKICORETECH_USE_OPENCV
   template<typename T>
   Rectangle<T>::Rectangle(const cv::Rect_<T>& cvRect)

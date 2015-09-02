@@ -63,10 +63,10 @@ namespace Cozmo {
   {
     AddReactionaryBehavior(new BehaviorReactToPickup(_robot, config));
     
-    _behaviorChooser->AddBehavior(new BehaviorOCD(_robot, config));
-    //AddBehavior(new BehaviorLookForFaces(_robot, config));
-    _behaviorChooser->AddBehavior(new BehaviorLookAround(_robot, config));
-    _behaviorChooser->AddBehavior(new BehaviorFidget(_robot, config));
+    //_behaviorChooser->AddBehavior(new BehaviorOCD(_robot, config));
+    _behaviorChooser->AddBehavior(new BehaviorLookForFaces(_robot, config));
+    //_behaviorChooser->AddBehavior(new BehaviorLookAround(_robot, config));
+    //_behaviorChooser->AddBehavior(new BehaviorFidget(_robot, config));
   }
   
   // The AddReactionaryBehavior wrapper is responsible for setting up the callbacks so that important events will be
