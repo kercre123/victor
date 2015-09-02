@@ -676,18 +676,14 @@ namespace Vision {
   : _isInitialized(false)
   , _faceCtr(0)
   {
-    std::string pathSep = "";
-    if(modelPath.back() != '/') {
-      pathSep = "/";
-    }
-    
-    const std::string cascadeFilename = modelPath + pathSep + "haarcascade_frontalface_alt2.xml";
+    const std::string cascadeFilename = modelPath + "/haarcascade_frontalface_alt2.xml";
     
     const bool loadSuccess = _faceCascade.load(cascadeFilename);
     if(!loadSuccess) {
       PRINT_NAMED_ERROR("VisionSystem.Update.LoadFaceCascade",
                         "Failed to load face cascade from %s\n",
                         cascadeFilename.c_str());
+      return;
     }
     
     _isInitialized = true;
@@ -695,6 +691,11 @@ namespace Vision {
   
   Result FaceTracker::Impl::Update(const Vision::Image& frame)
   {
+    if(!_isInitialized) {
+      PRINT_NAMED_ERROR("FaceTracker.Impl.Update.Uninitialized", "");
+      return RESULT_FAIL;
+    }
+    
     std::vector<cv::Rect> newFaceRects;
     _faceCascade.detectMultiScale(frame.get_CvMat_(), newFaceRects, 1.1, 2, 0, cv::Size(15,15));
     

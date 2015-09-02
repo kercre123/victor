@@ -82,23 +82,18 @@ TEST(BlockWorld, AddAndRemoveObject)
   const f32 xcen = camCalib.GetCenter_x();
   const f32 ycen = camCalib.GetCenter_y();
   
-  MessageVisionMarker markerMsg;
-  markerMsg.timestamp = 0;
-  markerMsg.x_imgUpperLeft  = xcen - halfWidth;
-  markerMsg.y_imgUpperLeft  = ycen - halfHeight;
-  markerMsg.x_imgLowerLeft  = xcen - halfWidth;
-  markerMsg.y_imgLowerLeft  = ycen + halfHeight;
-  markerMsg.x_imgUpperRight = xcen + halfWidth;
-  markerMsg.y_imgUpperRight = ycen - halfHeight;
-  markerMsg.x_imgLowerRight = xcen + halfWidth;
-  markerMsg.y_imgLowerRight = ycen + halfHeight;
-  markerMsg.markerType = testCode;
+  Quad2f corners;
+  corners[Quad::TopLeft]    = {xcen - halfWidth, ycen - halfHeight};
+  corners[Quad::BottomLeft] = {xcen - halfWidth, ycen + halfHeight};
+  corners[Quad::TopRight]   = {xcen + halfWidth, ycen - halfHeight};
+  corners[Quad::BottomRight]= {xcen + halfWidth, ycen + halfHeight};
+  Vision::ObservedMarker marker(0, testCode, corners, robot.GetCamera());
   
   // Enable "vision while moving" so that we don't have to deal with trying to compute
   // angular velocities, since we don't have real state history to do so.
   robot.EnableVisionWhileMoving(true);
   
-  lastResult = robot.QueueObservedMarker(markerMsg);
+  lastResult = robot.QueueObservedMarker(marker);
   ASSERT_EQ(lastResult, RESULT_OK);
   
   // Tick the robot, which will tick the BlockWorld, which will use the queued marker
@@ -266,7 +261,11 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
     Json::Value jsonMessages = jsonData["VisionMarkers"];
     ASSERT_EQ(NumMarkers, jsonMessages.size());
     
-    std::vector<MessageVisionMarker> messages;
+    
+    ASSERT_TRUE(false);
+    // THIS NEEDS TO BE UPDATED NOW THAT VisionMarkerMessage IS BOGUS!
+    /*
+    std::vector<Vision::ObservedMarker> messages;
     messages.reserve(jsonMessages.size());
     
     for(auto & jsonMsg : jsonMessages) {
@@ -280,6 +279,7 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
       MessageVisionMarker msg(jsonMsg);
       msg.timestamp = currentTimeStamp;
       
+      Vision::ObservedMarker marker();
       // If we are not checking robot pose, don't queue mat markers
       const bool isMatMarker = !robot.GetBlockWorld().GetObjectLibrary(ObjectFamily::Mat).GetObjectsWithCode(msg.markerType).empty();
       if(!checkRobotPose && isMatMarker) {
@@ -290,7 +290,7 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
       }
       
     } // for each VisionMarker in the jsonFile
-    
+    */
     
     // Process all the markers we've queued
     //uint32_t numObjectsObserved = 0;
