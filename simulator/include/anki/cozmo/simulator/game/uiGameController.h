@@ -69,6 +69,7 @@ protected:
   // Message handlers
   virtual void HandleRobotStateUpdate(ExternalInterface::RobotState const& msg){};
   virtual void HandleRobotObservedObject(ExternalInterface::RobotObservedObject const& msg){};
+  virtual void HandleRobotObservedFace(ExternalInterface::RobotObservedFace const& msg){};
   virtual void HandleRobotObservedNothing(ExternalInterface::RobotObservedNothing const& msg){};
   virtual void HandleRobotDeletedObject(ExternalInterface::RobotDeletedObject const& msg){};
   virtual void HandleRobotConnection(const ExternalInterface::RobotAvailable& msgIn){};

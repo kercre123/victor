@@ -324,6 +324,14 @@ void RobotEventHandler::HandleActionEvents(const AnkiEvent<ExternalInterface::Me
       newAction = GetFaceObjectActionHelper(robot, event.GetData().Get_FaceObject());
       break;
     }
+    case ExternalInterface::MessageGameToEngineTag::FacePose:
+    {
+      const ExternalInterface::FacePose& facePose = event.GetData().Get_FacePose();
+      newAction = new FacePoseAction(Pose3d(0, Z_AXIS_3D(), {facePose.world_x, facePose.world_y, facePose.world_z}),
+                                     Radians(facePose.turnAngleTol),
+                                     Radians(facePose.maxTurnAngle));
+      break;
+    }
     case ExternalInterface::MessageGameToEngineTag::TurnInPlace:
     {
       newAction = new TurnInPlaceAction(event.GetData().Get_TurnInPlace().angle_rad,

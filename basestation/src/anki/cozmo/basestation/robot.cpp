@@ -825,8 +825,12 @@ namespace Anki {
             return lastResult;
           }
 
+          // Use a camera from the robot's pose history to estimate the head's
+          // 3D translation, w.r.t. that camera. Also puts the face's pose in
+          // the camera's pose chain.
           faceDetection.UpdateTranslation(GetHistoricalCamera(p, t));
           
+          // Now use the faceDetection to update FaceWorld:
           lastResult = _faceWorld.AddOrUpdateFace(faceDetection);
           if(lastResult != RESULT_OK) {
             PRINT_NAMED_ERROR("Robot.Update.FailedToUpdateFace",

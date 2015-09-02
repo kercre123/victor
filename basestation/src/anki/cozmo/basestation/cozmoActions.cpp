@@ -753,7 +753,114 @@ namespace Anki {
       
       return result;
     } // TurnInPlaceAction::CheckIfDone()
+
     
+#pragma mark ---- FacePoseAction ----
+    
+    FacePoseAction::FacePoseAction(const Pose3d& pose, Radians turnAngleTol, Radians maxTurnAngle)
+    : _compoundAction{}
+    , _poseWrtRobot(pose)
+    , _isPoseSet(true)
+    , _turnAngleTol(turnAngleTol.getAbsoluteVal())
+    , _maxTurnAngle(maxTurnAngle.getAbsoluteVal())
+    {
+
+    }
+    
+    FacePoseAction::FacePoseAction(Radians turnAngleTol, Radians maxTurnAngle)
+    : _compoundAction{}
+    , _isPoseSet(false)
+    , _turnAngleTol(turnAngleTol.getAbsoluteVal())
+    , _maxTurnAngle(maxTurnAngle.getAbsoluteVal())
+    {
+      
+    }
+    
+    void FacePoseAction::Reset()
+    {
+      IAction::Reset();
+      _compoundAction.ClearActions();
+    }
+    
+    Radians FacePoseAction::GetHeadAngle(f32 heightDiff)
+    {
+      const f32 distanceXY = Point2f(_poseWrtRobot.GetTranslation()).Length();
+      const Radians headAngle = std::atan2(heightDiff, distanceXY);
+      return headAngle;
+    }
+    
+    void FacePoseAction::SetPose(const Pose3d& pose)
+    {
+      _poseWrtRobot = pose;
+      _isPoseSet = true;
+    }
+    
+    ActionResult FacePoseAction::Init(Robot &robot)
+    {
+      if(!_isPoseSet) {
+        PRINT_NAMED_ERROR("FacePoseAction.Init.PoseNotSet", "");
+        return ActionResult::FAILURE_ABORT;
+      }
+      
+      if(false == _poseWrtRobot.GetWithRespectTo(robot.GetPose(), _poseWrtRobot))
+      {
+        PRINT_NAMED_ERROR("FacePoseAction.Init.PoseOriginFailure",
+                          "Could not get pose w.r.t. robot pose.");
+        return ActionResult::FAILURE_ABORT;
+      }
+      
+      if(_maxTurnAngle > 0)
+      {
+        // Compute the required angle to face the object
+        const Radians turnAngle = std::atan2(_poseWrtRobot.GetTranslation().y(),
+                                             _poseWrtRobot.GetTranslation().x());
+        
+        PRINT_NAMED_INFO("FaceObjectAction.Init.TurnAngle",
+                         "Computed turn angle = %.1fdeg\n", turnAngle.getDegrees());
+        
+        if(turnAngle.getAbsoluteVal() < _maxTurnAngle) {
+          if(turnAngle.getAbsoluteVal() > _turnAngleTol) {
+            _compoundAction.AddAction(new TurnInPlaceAction(turnAngle, false));
+          } else {
+            PRINT_NAMED_INFO("FaceObjectAction.Init.NoTurnNeeded",
+                             "Required turn angle of %.1fdeg is within tolerance of %.1fdeg. Not turning.\n",
+                             turnAngle.getDegrees(), _turnAngleTol.getDegrees());
+          }
+        } else {
+          PRINT_NAMED_ERROR("FaceObjectAction.Init.RequiredTurnTooLarge",
+                            "Required turn angle of %.1fdeg is larger than max angle of %.1fdeg.\n",
+                            turnAngle.getDegrees(), _maxTurnAngle.getDegrees());
+          return ActionResult::FAILURE_ABORT;
+        }
+      }
+      
+      // Compute the required head angle to face the object
+      // NOTE: It would be more accurate to take head tilt into account, but I'm
+      //  just using neck joint height as an approximation for the camera's
+      //  current height, since its actual height changes slightly as the head
+      //  rotates around the neck.
+      const f32 heightDiff = _poseWrtRobot.GetTranslation().z() - NECK_JOINT_POSITION[2];
+      Radians headAngle = GetHeadAngle(heightDiff);
+      
+      _compoundAction.AddAction(new MoveHeadToAngleAction(headAngle));
+      
+      // Prevent the compound action from signaling completion
+      _compoundAction.SetIsPartOfCompoundAction(true);
+      
+      return ActionResult::SUCCESS;
+    } // FacePoseAction::Init()
+    
+    
+    ActionResult FacePoseAction::CheckIfDone(Robot& robot)
+    {
+      return _compoundAction.Update(robot);
+    }
+    
+    const std::string& FacePoseAction::GetName() const
+    {
+      static const std::string name("FacePoseAction");
+      return name;
+    }
     
 #pragma mark ---- FaceObjectAction ----
     
@@ -768,12 +875,10 @@ namespace Anki {
     FaceObjectAction::FaceObjectAction(ObjectID objectID, Vision::Marker::Code whichCode,
                                        Radians turnAngleTol,
                                        Radians maxTurnAngle, bool headTrackWhenDone)
-    : _compoundAction{}
+    : FacePoseAction(turnAngleTol, maxTurnAngle)
     , _compoundActionDone(false)
     , _objectID(objectID)
     , _whichCode(whichCode)
-    , _turnAngleTol(turnAngleTol.getAbsoluteVal())
-    , _maxTurnAngle(maxTurnAngle.getAbsoluteVal())
     , _waitToVerifyTime(-1.f)
     , _headTrackWhenDone(headTrackWhenDone)
     {
@@ -782,9 +887,21 @@ namespace Anki {
     
     void FaceObjectAction::Reset()
     {
-      IAction::Reset();
-      _compoundAction.ClearActions();
+      FacePoseAction::Reset();
       _compoundActionDone = false;
+    }
+    
+    Radians FaceObjectAction::GetHeadAngle(f32 heightDiff)
+    {
+      // TODO: Just commanding fixed head angle depending on height of object.
+      //       Verify this is ok with the wide angle lens. If not, dynamically compute
+      //       head angle so that it is at the bottom (for high blocks) or top (for low blocks)
+      //       of the image.
+      Radians headAngle = DEG_TO_RAD_F32(-15);
+      if (heightDiff > 0) {
+        headAngle = DEG_TO_RAD_F32(17);
+      }
+      return headAngle;
     }
     
     ActionResult FaceObjectAction::Init(Robot &robot)
@@ -854,52 +971,13 @@ namespace Anki {
         }
       }
       
-      if(_maxTurnAngle > 0)
-      {
-        // Compute the required angle to face the object
-        const Radians turnAngle = std::atan2(objectPoseWrtRobot.GetTranslation().y(),
-                                             objectPoseWrtRobot.GetTranslation().x());
-        
-        PRINT_NAMED_INFO("FaceObjectAction.Init.TurnAngle",
-                         "Computed turn angle = %.1fdeg\n", turnAngle.getDegrees());
-        
-        if(turnAngle.getAbsoluteVal() < _maxTurnAngle) {
-          if(turnAngle.getAbsoluteVal() > _turnAngleTol) {
-            _compoundAction.AddAction(new TurnInPlaceAction(turnAngle, false));
-          } else {
-            PRINT_NAMED_INFO("FaceObjectAction.Init.NoTurnNeeded",
-                             "Required turn angle of %.1fdeg is within tolerance of %.1fdeg. Not turning.\n",
-                             turnAngle.getDegrees(), _turnAngleTol.getDegrees());
-          }
-        } else {
-          PRINT_NAMED_ERROR("FaceObjectAction.Init.RequiredTurnTooLarge",
-                            "Required turn angle of %.1fdeg is larger than max angle of %.1fdeg.\n",
-                            turnAngle.getDegrees(), _maxTurnAngle.getDegrees());
-          return ActionResult::FAILURE_ABORT;
-        }
-      } // if(_maxTurnAngle > 0)
-    
-      // Compute the required head angle to face the object
-      // NOTE: It would be more accurate to take head tilt into account, but I'm
-      //  just using neck joint height as an approximation for the camera's
-      //  current height, since its actual height changes slightly as the head
-      //  rotates around the neck.
-      const f32 heightDiff = objectPoseWrtRobot.GetTranslation().z() - NECK_JOINT_POSITION[2];
-      //const f32 distanceXY = Point2f(objectPoseWrtRobot.GetTranslation()).Length();
-      //const Radians headAngle = std::atan2(heightDiff, distanceXY);
+      // Have to set the parent class's pose before calling its Init()
+      SetPose(objectPoseWrtRobot);
       
-      // TODO: Just commanding fixed head angle depending on height of object.
-      //       Verify this is ok with the wide angle lens. If not, dynamically compute
-      //       head angle so that it is at the bottom (for high blocks) or top (for low blocks)
-      //       of the image.
-      Radians headAngle = DEG_TO_RAD_F32(-15);
-      if (heightDiff > 0) {
-        headAngle = DEG_TO_RAD_F32(17);
+      ActionResult facePoseInitResult = FacePoseAction::Init(robot);
+      if(ActionResult::SUCCESS != facePoseInitResult) {
+        return facePoseInitResult;
       }
-      _compoundAction.AddAction(new MoveHeadToAngleAction(headAngle));
-      
-      // Prevent the compound action from signaling completion
-      _compoundAction.SetIsPartOfCompoundAction(true);
       
       // Can't track head to an object and face it
       robot.DisableTrackToObject();
@@ -914,7 +992,7 @@ namespace Anki {
     {
       // Tick the compound action until it completes
       if(!_compoundActionDone) {
-        ActionResult compoundResult = _compoundAction.Update(robot);
+        ActionResult compoundResult = FacePoseAction::CheckIfDone(robot);
         
         if(compoundResult != ActionResult::SUCCESS) {
           return compoundResult;

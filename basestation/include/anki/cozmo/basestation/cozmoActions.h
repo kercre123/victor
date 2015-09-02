@@ -240,9 +240,39 @@ namespace Anki {
     }; // class MoveLiftToHeightAction
     
     
+    // Tilt head and rotate body to face the given pose.
+    // Use angles specified at construction to control the body rotation.
+    class FacePoseAction : public IAction
+    {
+    public:
+      FacePoseAction(const Pose3d& pose, Radians turnAngleTol, Radians maxTurnAngle);
+      
+      virtual const std::string& GetName() const override;
+      virtual RobotActionType GetType() const override { return RobotActionType::FACE_POSE; }
+      
+    protected:
+      virtual ActionResult Init(Robot& robot) override;
+      virtual ActionResult CheckIfDone(Robot& robot) override;
+      virtual void Reset() override;
+      
+      FacePoseAction(Radians turnAngleTol, Radians maxTurnAngle);
+      void SetPose(const Pose3d& pose);
+      virtual Radians GetHeadAngle(f32 heightDiff);
+      
+      CompoundActionParallel _compoundAction;
+      
+    private:
+      Pose3d _poseWrtRobot;
+      bool   _isPoseSet;
+      
+      Radians              _turnAngleTol;
+      Radians              _maxTurnAngle;
+    }; // class FacePoseAction
+    
+    
     // Tilt head and rotate body to face the specified (marker on an) object.
     // Use angles specified at construction to control the body rotation.
-    class FaceObjectAction : public IAction
+    class FaceObjectAction : public FacePoseAction
     {
     public:
       // If facing the object requires less than turnAngleTol turn, then no
@@ -267,6 +297,8 @@ namespace Anki {
       virtual ActionResult CheckIfDone(Robot& robot) override;
       virtual void Reset() override;
       
+      virtual Radians GetHeadAngle(f32 heightDiff) override;
+      
       // Reduce delays from their defaults
       virtual f32 GetStartDelayInSeconds() const override { return 0.0f; }
       
@@ -278,13 +310,10 @@ namespace Anki {
       // Override to allow wheel control while facing the object
       virtual bool ShouldLockWheels() const override { return false; }
       
-      CompoundActionParallel _compoundAction;
-      bool                   _compoundActionDone;
+      bool                 _compoundActionDone;
       
       ObjectID             _objectID;
       Vision::Marker::Code _whichCode;
-      Radians              _turnAngleTol;
-      Radians              _maxTurnAngle;
       f32                  _waitToVerifyTime;
       bool                 _headTrackWhenDone;
       
