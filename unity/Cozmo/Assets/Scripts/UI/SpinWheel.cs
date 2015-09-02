@@ -183,6 +183,8 @@ public class SpinWheel : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
 
   public float TotalRotations { get; private set; }
 
+  public bool SpinClockWise { get { return displayData.angularVel < 0; } }
+
   #endregion
 
   #region PRIVATE MEMBERS

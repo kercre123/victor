@@ -129,6 +129,8 @@ public class VortexController : GameController {
   [SerializeField] float scoreScaleBase = 0.75f;
   [SerializeField] float scoreScaleMax = 1f;
   [SerializeField] float cozmoPredictiveAccuracy = .75f;
+  [SerializeField] float cozmoEarlyGuess = .1f;
+  [SerializeField] float cozmoEarlyGuessTime = 3f;
   [SerializeField] float cozmoTimeFirstTap = 1.5f;
   [SerializeField] float cozmoTimePerTap = 1.25f;
   [SerializeField] float cozmoPredicitveLeadTime = 5f;
@@ -200,6 +202,7 @@ public class VortexController : GameController {
   float predictedDuration = -1f;
   float predictedTimeAfterLastPeg = -1f;
   float predictedTimeMovingBackwards = 0f;
+  bool predictedEarly = false;
 
   List<int> playersThatAreCorrect = new List<int>();
   List<int> playersThatAreWrong = new List<int>();
@@ -1114,10 +1117,10 @@ public class VortexController : GameController {
       float current = robot.poseAngle_rad;
       float target = GetPoseFromPlayerIndex(currentPlayerIndex).rad;
       float angle_between = Mathf.Atan2(Mathf.Sin(current - target), Mathf.Cos(current - target));
-      DAS.Debug("Vortex", "angle_between " + angle_between);
+      //DAS.Debug("Vortex", "angle_between " + angle_between);
       float diff = Mathf.Abs(current - target);
       angle_between = diff > Mathf.PI ? diff - 2 * Mathf.PI : diff;
-      DAS.Debug("Vortex", "angle_between2 " + angle_between);
+      //DAS.Debug("Vortex", "angle_between2 " + angle_between);
       if (Mathf.Abs(angle_between) < (Mathf.PI / 4.0f)) {
         for (int i = 0; i < robot.markersVisibleObjects.Count; ++i) {
           if (robot.markersVisibleObjects[i].isFace) {
@@ -1235,10 +1238,16 @@ public class VortexController : GameController {
       if (lightingMax == 0) {
         lightingBall.SingleLightningBolt();
       }
-
-      lightIndex++;
-      if (lightIndex >= 4)
-        lightIndex = 0;
+      if (wheel.SpinClockWise) {
+        lightIndex--;
+        if (lightIndex < 0)
+          lightIndex = 3;
+      }
+      else {
+        lightIndex++;
+        if (lightIndex >= 4)
+          lightIndex = 0;
+      }
     }
 
 
@@ -1278,12 +1287,22 @@ public class VortexController : GameController {
           predictedDuration = wheel.TotalDuration;
           predictedTimeAfterLastPeg = wheel.TimeAfterLastPeg;
           predictedTimeMovingBackwards = wheel.TimeMovingBackwards;
+          if (UnityEngine.Random.Range(0.0f, 1.0f) < cozmoEarlyGuess) {
+            predictedEarly = true;
+          }
+          else {
+            predictedEarly = false;
+          }
         }
       }
   
       if (cozmoTapsSubmitted < 0 && predictedNum > 0) {
         float time = Time.time - wheel.SpinStartTime;
-        float timeToBid = predictedDuration - predictedTimeAfterLastPeg - predictedTimeMovingBackwards - cozmoPredicitveLeadTime;
+        float earlyTime = 0;
+        if (predictedEarly) {
+          earlyTime = cozmoEarlyGuessTime;
+        }
+        float timeToBid = predictedDuration - predictedTimeAfterLastPeg - predictedTimeMovingBackwards - cozmoPredicitveLeadTime - earlyTime;
         if (time > timeToBid) {
   
           cozmoTapsSubmitted = 0;
@@ -1437,7 +1456,7 @@ public class VortexController : GameController {
           SetRobotEmotion("MINOR_FAIL");
         }
         else {
-          SetRobotEmotion("MINOR_FAIL");
+          SetRobotEmotion("MAJOR_FAIL");
         }
   
       }
