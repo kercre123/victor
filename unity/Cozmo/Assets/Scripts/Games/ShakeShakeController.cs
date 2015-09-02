@@ -8,6 +8,7 @@ public class ShakeShakeController : GameController {
   private bool gameOver = false;
   private bool gameReady = false;
   private int currentScore = 0;
+  private bool resettingBlueBlock = false;
 
   private class BlockData {
     public float lastColorChangeTime;
@@ -76,7 +77,6 @@ public class ShakeShakeController : GameController {
       BlockData bData = new BlockData();
       bData.SetNewColor(Color.white); // start all blocks as white
       blockData.Add(activeBlock.Key, bData);
-      Debug.Log(activeBlock.Key);
     }
   }
 
@@ -88,18 +88,17 @@ public class ShakeShakeController : GameController {
     int greenBlockCount = CountBlocks(Color.green);
     int blueBlockCount = CountBlocks(Color.blue);
 
-
     // process green blocks
     if (greenBlockCount > 1) {
       float rand = Random.Range(0.0f, 1.0f);
 
-      if (rand < 0.01f) {
+      if (rand < 0.03f * Time.deltaTime) {
         ChangeFirstBlockTo(Color.green, Color.yellow, 2.0f);
       }
-      else if (rand < 0.02f && blueBlockCount < 3) { 
-        //ChangeFirstBlockTo(Color.green, Color.blue, 2.0f);
+      else if (rand < 0.05f * Time.deltaTime && blueBlockCount < 3) { 
+        ChangeFirstBlockTo(Color.green, Color.blue, 2.0f);
       }
-      else if (rand < 0.03f) {
+      else if (rand < 0.1f * Time.deltaTime) {
         ChangeFirstBlockTo(Color.green, Color.white, 2.0f);
       }
     }
@@ -114,6 +113,15 @@ public class ShakeShakeController : GameController {
     ChangeBlocksTo(Color.red, Color.white, 2.0f);
 
     // process blue blocks
+    if (resettingBlueBlock == false) {
+      for (int i = 0; i < robot.markersVisibleObjects.Count; ++i) {
+        if (blockData[robot.markersVisibleObjects[i].ID].currentColor == Color.blue) {
+          resettingBlueBlock = true;
+          robot.PickAndPlaceObject(robot.markersVisibleObjects[i]);
+          break;
+        }
+      }
+    }
 
     // update block colors
     foreach (KeyValuePair<int, BlockData> bData in blockData) {
@@ -186,7 +194,6 @@ public class ShakeShakeController : GameController {
 
   private void BlockTapped(int blockID, int numTapped) {
     BlockData bData = null;
-    DAS.Debug("ShakeShakeController", "Block tapped callback " + blockID);
     if (blockData.TryGetValue(blockID, out bData)) {
       if (bData.currentColor == Color.green) {
         currentScore++;
@@ -197,6 +204,13 @@ public class ShakeShakeController : GameController {
           currentScore = 0;
         }
       }
+    }
+  }
+
+  private void RobotEngineMessages(bool success, RobotActionType action_type) {
+    if (success && action_type == RobotActionType.PICKUP_OBJECT_HIGH) {
+      resettingBlueBlock = false;
+      currentScore += 10;
     }
   }
 

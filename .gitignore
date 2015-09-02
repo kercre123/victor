@@ -156,6 +156,7 @@ unity/Cozmo/*.proj
 unity/Cozmo/*.csproj
 unity/Cozmo/*.userprefs
 unity/Cozmo/*.obj
+unity/Cozmo/obj/*
 
 # Visual studio
 *.userprefs
