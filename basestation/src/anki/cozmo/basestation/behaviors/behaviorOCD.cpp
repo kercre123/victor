@@ -453,7 +453,7 @@ namespace Cozmo {
       case Arrangement::StacksOfTwo:
       {
         // Find closest neat block that doesn't have a block on top
-        if (GetClosestObjectInSet(_neatObjects, 0, NO_OBJECT_ON_TOP, _objectToPlaceOn) != RESULT_OK) {
+        if (GetClosestObjectInSet(_neatObjects, 0, ObjectOnTopStatus::NoObjectOnTop, _objectToPlaceOn) != RESULT_OK) {
           return RESULT_FAIL;
         }
         
@@ -470,7 +470,7 @@ namespace Cozmo {
           // See if there exists a complete neat stack and set relative to that.
           
           // Find closest neat block that does have a block on top
-          if (GetClosestObjectInSet(_neatObjects, 0, OBJECT_ON_TOP, _lastObjectPlacedOnGround) != RESULT_OK) {
+          if (GetClosestObjectInSet(_neatObjects, 0, ObjectOnTopStatus::ObjectOnTop, _lastObjectPlacedOnGround) != RESULT_OK) {
             return RESULT_FAIL;
           }
           
@@ -600,7 +600,7 @@ namespace Cozmo {
       if(NEAR(poseWrtRobot.GetTranslation().z(), oObject->GetSize().z()*(heightLevel + 0.5f), 10.f)) {
         // See if there's anything on top of it
         ObservableObject* onTop = blockWorld.FindObjectOnTopOf(*oObject, 15.f);
-        if((ootStatus == DONT_CARE_IF_OBJECT_ON_TOP) || (ootStatus == OBJECT_ON_TOP && onTop != nullptr) || (ootStatus == NO_OBJECT_ON_TOP && onTop == nullptr)) {
+        if((ootStatus == ObjectOnTopStatus::DontCareIfObjectOnTop) || (ootStatus == ObjectOnTopStatus::ObjectOnTop && onTop != nullptr) || (ootStatus == ObjectOnTopStatus::NoObjectOnTop && onTop == nullptr)) {
           const f32 currentDistSq = poseWrtRobot.GetTranslation().LengthSq();
           if(currentDistSq < closestDistSq) {
             closestDistSq = currentDistSq;
@@ -626,15 +626,15 @@ namespace Cozmo {
   void BehaviorOCD::SetBlockLightState(const ObjectID& objID, BlockLightState state)
   {
     switch(state) {
-      case MESSY:
+      case BlockLightState::Messy:
         // TODO: Get "messy" color and on/off settings from config
         _robot.SetObjectLights(objID, WhichBlockLEDs::ALL, NamedColors::RED, NamedColors::BLACK, 200, 200, 50, 50, false, MakeRelativeMode::RELATIVE_LED_MODE_OFF, {});
         break;
-      case NEAT:
+      case BlockLightState::Neat:
         // TODO: Get "neat" color and on/off settings from config
         _robot.SetObjectLights(objID, WhichBlockLEDs::ALL, NamedColors::CYAN, NamedColors::BLACK, 10, 10, 2000, 2000, false, MakeRelativeMode::RELATIVE_LED_MODE_OFF, {});
         break;
-      case COMPLETE:
+      case BlockLightState::Complete:
         _robot.SetObjectLights(objID, WhichBlockLEDs::ALL, NamedColors::GREEN, NamedColors::GREEN, 200, 200, 50, 50, false, MakeRelativeMode::RELATIVE_LED_MODE_OFF, {});
         break;
       default:
@@ -644,16 +644,16 @@ namespace Cozmo {
   
   void BehaviorOCD::UpdateBlockLights()
   {
-    if (_neatObjects.size() >= 4) {
+    if (_messyObjects.empty()) {
       for (auto& obj : _neatObjects) {
-        SetBlockLightState(obj, COMPLETE);
+        SetBlockLightState(obj, BlockLightState::Complete);
       }
     } else {
       for (auto& obj : _neatObjects) {
-        SetBlockLightState(obj, NEAT);
+        SetBlockLightState(obj, BlockLightState::Neat);
       }
       for (auto& obj : _messyObjects) {
-        SetBlockLightState(obj, MESSY);
+        SetBlockLightState(obj, BlockLightState::Messy);
       }
     }
   }
@@ -798,7 +798,7 @@ namespace Cozmo {
             if (score < MIN_NEATNESS_SCORE) {
               PRINT_NAMED_INFO("BehaviorOCD.VerifyNeatness.NeatToMessy", "Object %d", objID->GetValue());
               if ((_currentState == State::PlacingBlock) && (*objID == _objectToPlaceOn)) {
-                // Robot is trying to pickup the messy block that we're about to make clean,
+                // Robot is trying to place a block on neat block they're we're about to make messy,
                 // so cancel it.
                 _robot.GetActionList().Cancel(_lastActionTag);
               }
@@ -913,12 +913,7 @@ namespace Cozmo {
               _messyObjects.erase(_objectToPickUp);
               _neatObjects.insert(_objectToPickUp);
               
-              // If there are 4 neatObjects then set done color on all neat blocks
-              if (_neatObjects.size() >= 4) {
-                SetBlockLightState(_neatObjects, COMPLETE);
-              } else {
-                SetBlockLightState(_objectToPickUp, NEAT);
-              }
+              UpdateBlockLights();
               
               lastResult = SelectNextObjectToPickUp();
               UnsetLastPickOrPlaceFailure();
@@ -1004,11 +999,11 @@ namespace Cozmo {
       _neatObjects.erase(objectID);
       _messyObjects.insert(objectID);
 
-      SetBlockLightState(objectID, MESSY);
+      SetBlockLightState(objectID, BlockLightState::Messy);
       
       // If blocks were complete before this then, set the NEAT colors on remaining neat blocks
       if (_neatObjects.size() == 3) {
-        SetBlockLightState(_neatObjects, NEAT);
+        SetBlockLightState(_neatObjects, BlockLightState::Neat);
       }
       
       // Increase irritation level

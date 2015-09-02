@@ -49,17 +49,17 @@ namespace Cozmo {
     
   private:
     
-    typedef enum {
-      DONT_CARE_IF_OBJECT_ON_TOP,
-      OBJECT_ON_TOP,
-      NO_OBJECT_ON_TOP
-    } ObjectOnTopStatus;
+    enum class ObjectOnTopStatus {
+      DontCareIfObjectOnTop,
+      ObjectOnTop,
+      NoObjectOnTop
+    };
     
-    typedef enum {
-      MESSY,
-      NEAT,
-      COMPLETE
-    } BlockLightState;
+    enum class BlockLightState {
+      Messy,
+      Neat,
+      Complete
+    };
     
     // Dispatch handlers based on tag of passed-in event
     void EventHandler(const AnkiEvent<ExternalInterface::MessageEngineToGame>& event);
