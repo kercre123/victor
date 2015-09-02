@@ -14,33 +14,6 @@ namespace Cozmo {
 namespace RobotInterface {
 
 /// *************** RTIP to Engine messages ******************************* ///
-// Structure definition for convenience
-structure RobotPose
-{
-  float_32 x,
-  float_32 y,
-  float_32 z,
-  float_32 angle,
-  float_32 pitch,
-}
- 
-message RobotState
-{
-  uint_32 timestamp,
-  uint_32 pose_frame_id,
-  RobotPose pose,
-  float_32 lwheel_speed_mmps,
-  float_32 rwheel_speed_mmps,
-  float_32 headAngle,
-  float_32 liftAngle,
-  float_32 rawGyroZ,
-  float_32 rawAccelY,
-  RobotStatusFlag status, // RobotStatusFlag packs as a uint_16
-  uint_16 lastPathID,
-  int_8   currPathSegment, // -1 if not traversing a path
-  uint_8  numFreeSegmentSlots,
-  uint_8  battVolt10x,
-}
 
 message PrintTraceInt
 {
