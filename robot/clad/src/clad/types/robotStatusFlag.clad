@@ -6,7 +6,7 @@
 namespace Anki {
 namespace Cozmo {
 
-enum uint_16 RobotStatusFlagClad {
+enum uint_16 RobotStatusFlag {
     Nothing            = 0x00000000,
     Moving             = 0x00000001,  // Head, lift, or wheels
     CarryingBlock      = 0x00000002,

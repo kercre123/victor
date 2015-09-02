@@ -4,10 +4,10 @@
  */
 
 
-#include "types/robotStatusFlag.clad"
-#include "types/activeObjectTypes.clad"
-#include "types/rtipTraces.clad"
-#include "types/imageTypes.clad"
+#include "clad/types/robotStatusFlag.clad"
+#include "clad/types/activeObjectTypes.clad"
+#include "clad/types/rtipTraces.clad"
+#include "clad/types/imageTypes.clad"
 
 namespace Anki {
 namespace Cozmo {
@@ -44,7 +44,7 @@ message RobotState
 message PrintTraceInt
 {
   RtipTrace name,
-  int32     value
+  int_32    value
 }
 
 message PrintTraceDouble
@@ -119,7 +119,7 @@ union RobotToEngine {
   // From RTIP 0x00 to 0x7F
   RobotState                 state               = 0x00,
   PrintTraceInt              traceInt            = 0x01,
-  PrintTraceDouble           traceDbl            = 0x02
+  PrintTraceDouble           traceDbl            = 0x02,
   MainCycleTimeError         mainCycleTimeError  = 0x03,
   GoalPose                   goalPose            = 0x04,
   ActiveObjectMoved          activeObjectMoved   = 0x05,
@@ -127,7 +127,7 @@ union RobotToEngine {
   ActiveObjectTapped         activeObjectTapped  = 0x07,
   // From WiFi 0x80 to 0xFE
   AnimationState             animState           = 0x80,
-  PrintText                  print               = 0x81,
+  PrintText                  printText           = 0x81,
   ImageChunk                 image               = 0x82,
 }
 

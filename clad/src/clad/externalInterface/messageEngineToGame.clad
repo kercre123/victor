@@ -103,20 +103,6 @@ message RobotImage_640x480 {
 }
 */
 
-// ImageChunk
-message ImageChunk {
-    uint_32 imageId,
-    uint_32 frameTimeStamp,
-    uint_16 nrows,
-    uint_16 ncols,
-    uint_16 chunkSize,
-    ImageEncoding imageEncoding,
-    uint_8 imageChunkCount,
-    uint_8 chunkId,
-    uint_8 data[1300] // Should match R2B MessageImageChunk size!
-}
-
-
 // ObjectVisionMarker for telling the UI that an object
 //  with specified ID was seen at a particular location in the image
 message RobotObservedObject {
