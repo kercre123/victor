@@ -70,10 +70,11 @@ ADD_MESSAGE_MEMBER(u8, numFreeSegmentSlots)
 ADD_MESSAGE_MEMBER(u8, battVolt10x)
 END_MESSAGE_DEFINITION(RobotState)
 
-
+// TODO: Remove this message entirely (robot no longer does vision processing!)
 // VisionMarker
 //#define VISION_MARKER_CODE_LENGTH 11 // ceil( (9*9 + 4)/8 )
 START_TIMESTAMPED_MESSAGE_DEFINITION(VisionMarker, 1)
+/*
 // TODO: make the corner coordinates fixed point
 ADD_MESSAGE_MEMBER(f32, x_imgUpperLeft)
 ADD_MESSAGE_MEMBER(f32, y_imgUpperLeft)
@@ -85,6 +86,7 @@ ADD_MESSAGE_MEMBER(f32, x_imgLowerRight)
 ADD_MESSAGE_MEMBER(f32, y_imgLowerRight)
 ADD_MESSAGE_MEMBER(s16, markerType)
 //ADD_MESSAGE_MEMBER_ARRAY(u8, code, VISION_MARKER_CODE_LENGTH)
+*/
 END_MESSAGE_DEFINITION(VisionMarker)
 
 /*

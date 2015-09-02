@@ -38,6 +38,7 @@ namespace Anki {
   public:
     Rectangle();
     Rectangle(T x, T y, T width, T height);
+    Rectangle(const Point2<T>& upperLeft, const Point2<T>& lowerRight);
     
     // Construct bounding boxes:
     Rectangle(const Quadrilateral<2,T>& quad);

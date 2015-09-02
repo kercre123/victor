@@ -32,6 +32,8 @@
 
 #include "anki/common/basestation/jsonTools.h"
 
+#include <opencv2/core/core.hpp>
+
 #include <cassert>
 
 namespace Anki {
@@ -43,6 +45,7 @@ namespace Anki {
     IKeyFrame::IKeyFrame()
     : _triggerTime_ms(0)
     , _isValid(false)
+    , _isLive(false)
     {
       
     }
@@ -54,7 +57,7 @@ namespace Anki {
     
     bool IKeyFrame::IsTimeToPlay(TimeStamp_t startTime_ms, TimeStamp_t currTime_ms) const
     {
-      return (GetTriggerTime() + startTime_ms <= currTime_ms);
+      return IsLive() || (GetTriggerTime() + startTime_ms <= currTime_ms);
     }
     
     Result IKeyFrame::DefineFromJson(const Json::Value &json)
@@ -232,16 +235,24 @@ return RESULT_FAIL; \
         _animName = _animName.substr(lastSlash+1, std::string::npos);
       }
       
-      _numFrames = FaceAnimationManager::getInstance()->GetNumFrames(_animName);
       _curFrame = 0;
       
       return RESULT_OK;
     }
     
+    bool FaceAnimationKeyFrame::IsDone()
+    {
+      // Note the dynamic check for num frames, since (in the case of streaming
+      // procedural animations) the number of keyframes could be increasing
+      // while we're playing and thus isn't known up front.
+      return _curFrame >= FaceAnimationManager::getInstance()->GetNumFrames(_animName);
+    }
+    
     RobotMessage* FaceAnimationKeyFrame::GetStreamMessage()
     {
       // Populate the message with the next chunk of audio data and send it out
-      if(_curFrame < _numFrames)
+      
+      if(!IsDone()) 
       {
         const std::vector<u8>* rleFrame = FaceAnimationManager::getInstance()->GetFrame(_animName, _curFrame);
         
@@ -262,8 +273,8 @@ return RESULT_FAIL; \
         
         if(rleFrame->size() >= sizeof(_faceImageMsg.image)) {
           PRINT_NAMED_ERROR("FaceAnimationKeyFrame.GetStreamMessage",
-                            "RLE frame %d for animation %s too large to fit in message (>=%lu).\n",
-                            _curFrame, _animName.c_str(), sizeof(_faceImageMsg.image));
+                            "RLE frame %d for animation %s too large to fit in message (%lu>=%lu).\n",
+                            _curFrame, _animName.c_str(), rleFrame->size(), sizeof(_faceImageMsg.image));
           return nullptr;
         }
         
@@ -276,6 +287,42 @@ return RESULT_FAIL; \
         _curFrame = 0;
         return nullptr;
       }
+    }
+    
+#pragma mark -
+#pragma mark ProceduralFaceKeyFrame
+    
+    Result ProceduralFaceKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot)
+    {
+      // TODO: Implement!
+      PRINT_NAMED_ERROR("ProceduralFaceKeyFrame.SetMembersFromJson.NotSupported",
+                        "This method needs to be added once animation tool can generate "
+                        "procedural face parameters.");
+      return RESULT_FAIL;
+    }
+    
+    RobotMessage* ProceduralFaceKeyFrame::GetStreamMessage()
+    {
+      std::vector<u8> rleData;
+      Result rleResult = FaceAnimationManager::CompressRLE(_procFace.GetFace(), rleData);
+      
+      if(RESULT_OK != rleResult) {
+        PRINT_NAMED_ERROR("ProceduralFaceKeyFrame.GetStreamMesssage",
+                          "Failed to get RLE frame from procedural face.");
+        return nullptr;
+      }
+      
+      if(rleData.size() >= sizeof(_faceImageMsg.image)) {
+        PRINT_NAMED_ERROR("ProceduralFaceKeyFrame.GetStreamMessage",
+                          "RLE frame for procedural face too large to fit in message (%lu>=%lu).",
+                          rleData.size(), sizeof(_faceImageMsg.image));
+        return nullptr;
+      }
+      
+      _faceImageMsg.image.fill(0);
+      std::copy(rleData.begin(), rleData.end(), _faceImageMsg.image.begin());
+      
+      return &_faceImageMsg;
     }
     
 #pragma mark - 

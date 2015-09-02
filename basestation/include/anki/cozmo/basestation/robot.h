@@ -38,10 +38,12 @@
 #include "anki/cozmo/shared/ledTypes.h"
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/blockWorld.h"
+#include "anki/cozmo/basestation/faceWorld.h"
 #include "anki/cozmo/basestation/comms/robot/robotMessages.h"
 #include "anki/cozmo/basestation/visionProcessingThread.h"
 #include "anki/cozmo/basestation/actionContainers.h"
 #include "anki/cozmo/basestation/animationStreamer.h"
+#include "anki/cozmo/basestation/proceduralFace.h"
 #include "anki/cozmo/basestation/cannedAnimationContainer.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/ramp.h"
@@ -89,9 +91,12 @@ namespace Cozmo {
     bool HasReceivedRobotState() const;
     
     // Accessors
-    const RobotID_t        GetID()           const;
-    BlockWorld&            GetBlockWorld()   {return _blockWorld;}
-    const BlockWorld&      GetBlockWorld() const { return _blockWorld;}
+    const RobotID_t        GetID()         const;
+    BlockWorld&            GetBlockWorld()       {return _blockWorld;}
+    const BlockWorld&      GetBlockWorld() const {return _blockWorld;}
+    
+    FaceWorld&             GetFaceWorld()        {return _faceWorld;}
+    const FaceWorld&       GetFaceWorld()  const {return _faceWorld;}
     
     //
     // Localization
@@ -130,8 +135,12 @@ namespace Cozmo {
     Vision::Camera&                   GetCamera();
     void                              SetCameraCalibration(const Vision::CameraCalibration& calib);
     const Vision::CameraCalibration&  GetCameraCalibration() const;
-   
-    Result QueueObservedMarker(const MessageVisionMarker& msg);
+    Vision::Camera                    GetHistoricalCamera(RobotPoseStamp* p, TimeStamp_t t);
+    
+    // Queue an observed vision marker for processing with BlockWorld.
+    // Note that this is a NON-const reference: the marker's camera will be updated
+    // to use a pose from pose history.
+    Result QueueObservedMarker(const Vision::ObservedMarker& marker);
     
     // Get a *copy* of the current image on this robot's vision processing thread
     bool GetCurrentImage(Vision::Image& img, TimeStamp_t newerThan);
@@ -365,8 +374,13 @@ namespace Cozmo {
     Result EnableTrackToObject(const u32 objectID, bool headOnly);
     Result DisableTrackToObject();
     
-    const ObjectID& GetTrackToObject() const { return _trackHeadToObjectID; }
-    bool    IsTrackingObjectWithHeadOnly() const { return _trackObjectWithHeadOnly; }
+    
+    
+    Result EnableTrackToFace(const Vision::TrackedFace::ID_t, bool headOnly);
+    Result DisableTrackToFace();
+    const ObjectID& GetTrackToObject() const { return _trackToObjectID; }
+    const Vision::TrackedFace::ID_t GetTrackToFace() const { return _trackToFaceID; }
+    bool  IsTrackingWithHeadOnly() const { return _trackWithHeadOnly; }
     
     Result DriveWheels(const f32 lwheel_speed_mmps,
                        const f32 rwheel_speed_mmps);
@@ -392,6 +406,11 @@ namespace Cozmo {
     // Returns name of currently streaming animation. Does not include idle animation.
     // Returns "" if no non-idle animation is streaming.
     const std::string GetStreamingAnimationName() const;
+    
+    const ProceduralFace& GetProceduralFace() const { return _proceduralFace; }
+    const ProceduralFace& GetLastProceduralFace() const { return _lastProceduralFace; }
+    void SetProceduralFace(const ProceduralFace& face);
+    void MarkProceduralFaceAsSent();
     
     // Returns the number of animation bytes played on the robot since
     // it was initialized with SyncTime.
@@ -544,7 +563,7 @@ namespace Cozmo {
     // Send a message to the physical robot
     Result SendMessage(const RobotMessage& message,
                        bool reliable = true, bool hot = false) const;
-
+    
     // Events
     using RobotWorldOriginChangedSignal = Signal::Signal<void (RobotID_t)>;
     RobotWorldOriginChangedSignal& OnRobotWorldOriginChanged() { return _robotWorldOriginChangedSignal; }
@@ -569,17 +588,20 @@ namespace Cozmo {
     
     // A reference to the MessageHandler that the robot uses for outgoing comms
     IRobotMessageHandler* _msgHandler;
-          
+    
     // A reference to the BlockWorld the robot lives in
     BlockWorld        _blockWorld;
     
+    // A container for faces/people the robot knows about
+    FaceWorld         _faceWorld;
+    
     VisionProcessingThread _visionProcessor;
     //Vision::PanTiltTracker _faceTracker;
-#     if !ASYNC_VISION_PROCESSING
+#   if !ASYNC_VISION_PROCESSING
     Vision::Image     _image;
     MessageRobotState _robotStateForImage;
     bool              _haveNewImage;
-#     endif
+#   endif
     
     BehaviorManager  _behaviorMgr;
     bool             _isBehaviorMgrEnabled;
@@ -685,22 +707,23 @@ namespace Cozmo {
     ObjectID                    _dockObjectID;
     const Vision::KnownMarker*  _dockMarker;
     ObjectID                    _carryingObjectID;
-    ObjectID                    _carryingObjectOnTopID; 
+    ObjectID                    _carryingObjectOnTopID;
     const Vision::KnownMarker*  _carryingMarker;
     bool                        _lastPickOrPlaceSucceeded;
     
-    // Object to keep head tracked to this object whenever it is observed
-    ObjectID                    _trackHeadToObjectID;
-    bool                        _trackObjectWithHeadOnly;
+    // Object/Face to track head to whenever it is observed
+    ObjectID                    _trackToObjectID;
+    Vision::TrackedFace::ID_t   _trackToFaceID;
+    bool                        _trackWithHeadOnly;
     
     /*
-    // Plan a path to the pre-ascent/descent pose (depending on current
-    // height of the robot) and then go up or down the ramp.
-    Result ExecuteRampingSequence(Ramp* ramp);
-    
-    // Plan a path to the nearest (?) pre-crossing pose of the specified bridge
-    // object, then cross it.
-    Result ExecuteBridgeCrossingSequence(ActionableObject* object);
+     // Plan a path to the pre-ascent/descent pose (depending on current
+     // height of the robot) and then go up or down the ramp.
+     Result ExecuteRampingSequence(Ramp* ramp);
+     
+     // Plan a path to the nearest (?) pre-crossing pose of the specified bridge
+     // object, then cross it.
+     Result ExecuteBridgeCrossingSequence(ActionableObject* object);
      */
     
     // A place to store reaction callback functions, indexed by the type of
@@ -733,6 +756,7 @@ namespace Cozmo {
     
     CannedAnimationContainer _cannedAnimations;
     AnimationStreamer        _animationStreamer;
+    ProceduralFace           _proceduralFace, _lastProceduralFace;
     s32 _numFreeAnimationBytes;
     s32 _numAnimationBytesPlayed;
     s32 _numAnimationBytesStreamed;
