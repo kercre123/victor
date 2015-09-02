@@ -43,8 +43,6 @@
 
 #include "anki/cozmo/shared/cozmoTypes.h"
 
-#include "anki/cozmo/basestation/comms/robot/robotMessages.h"
-
 #include "anki/vision/basestation/camera.h"
 #include "anki/vision/basestation/cameraCalibration.h"
 #include "anki/vision/basestation/image.h"
@@ -94,7 +92,7 @@ namespace Cozmo {
     // NOTE: It is important the passed-in robot state message be passed by
     //   value and NOT by reference, since the vision system can be interrupted
     //   by main execution (which updates the state).
-    Result Update(const MessageRobotState robotState,
+    Result Update(const RobotState robotState,
                   const Vision::Image&    inputImg);
     
     void StopTracking();

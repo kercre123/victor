@@ -21,7 +21,7 @@
 #include "anki/cozmo/basestation/actionableObject.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
 
-#include "anki/cozmo/shared/activeBlockTypes.h"
+#include "clad/types/activeObjectTypes.h"
 
 namespace Anki {
   

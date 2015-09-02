@@ -34,12 +34,11 @@
 #include "anki/vision/basestation/visionMarker.h"
 #include "anki/planning/shared/path.h"
 #include "anki/cozmo/shared/cozmoTypes.h"
-#include "anki/cozmo/shared/activeBlockTypes.h"
+#include "clad/types/activeObjectTypes.h"
 #include "anki/cozmo/shared/ledTypes.h"
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/faceWorld.h"
-#include "anki/cozmo/basestation/comms/robot/robotMessages.h"
 #include "anki/cozmo/basestation/visionProcessingThread.h"
 #include "anki/cozmo/basestation/actionContainers.h"
 #include "anki/cozmo/basestation/animationStreamer.h"
@@ -49,7 +48,8 @@
 #include "anki/cozmo/basestation/ramp.h"
 #include "anki/cozmo/basestation/soundManager.h"
 #include "util/signals/simpleSignal.hpp"
-#include "clad/types/imageSendMode.h"
+#include "clad/types/robotStatusAndActions.h"
+#include "clad/types/imageTypes.h"
 #include <queue>
 #include <unordered_map>
 #include <time.h>
@@ -86,7 +86,7 @@ namespace Cozmo {
     
     Result Update();
     
-    Result UpdateFullRobotState(const MessageRobotState& msg);
+    Result UpdateFullRobotState(const RobotState& msg);
     
     bool HasReceivedRobotState() const;
     

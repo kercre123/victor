@@ -24,7 +24,8 @@
 #include "anki/messaging/shared/UdpClient.h"
 #include "anki/cozmo/shared/VizStructs.h"
 #include "anki/cozmo/shared/cozmoTypes.h"
-#include "anki/cozmo/basestation/comms/robot/robotMessages.h"
+#include "clad/types/imageTypes.h"
+#include "clad/types/robotStatusAndActions.h"
  
 namespace Anki {
   
@@ -318,7 +319,7 @@ namespace Anki {
                      const TimeStamp_t timestamp,
                      const Vision::ImageEncoding_t encoding);
       
-      void SendImageChunk(const RobotID_t robotID, MessageImageChunk robotImageChunk);
+      void SendImageChunk(const RobotID_t robotID, ImageChunk robotImageChunk);
       
       void SendVisionMarker(const u16 topLeft_x, const u16 topLeft_y,
                             const u16 topRight_x, const u16 topRight_y,
@@ -331,7 +332,7 @@ namespace Anki {
                            const u16 bottomRight_x, const u16 bottomRight_y,
                            const u16 bottomLeft_x, const u16 bottomLeft_y);
       
-      void SendRobotState(const MessageRobotState &msg,
+      void SendRobotState(const RobotState &msg,
                           const s32 &numAnimBytesFree,
                           const u8 &videoFramefateHz);
       
