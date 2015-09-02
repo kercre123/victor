@@ -9,6 +9,11 @@ public class ShakeShakeController : GameController {
   private bool gameReady = false;
   private int currentScore = 0;
   private bool resettingBlueBlock = false;
+  private int resettingBlockID = 0;
+  private int scoreLastFrame = 0;
+
+  [SerializeField]
+  UnityEngine.UI.Text scoreText;
 
   private class BlockData {
     public float lastColorChangeTime;
@@ -26,11 +31,13 @@ public class ShakeShakeController : GameController {
     base.OnEnable();
     robot.VisionWhileMoving(true);
     ActiveBlock.TappedAction += BlockTapped;
+    RobotEngineManager.instance.SuccessOrFailure += RobotEngineMessages;
   }
 
   protected override void OnDisable() {
     base.OnDisable();
     ActiveBlock.TappedAction -= BlockTapped;
+    RobotEngineManager.instance.SuccessOrFailure -= RobotEngineMessages;
   }
 
   protected override void Enter_BUILDING() {
@@ -92,13 +99,13 @@ public class ShakeShakeController : GameController {
     if (greenBlockCount > 1) {
       float rand = Random.Range(0.0f, 1.0f);
 
-      if (rand < 0.03f * Time.deltaTime) {
-        ChangeFirstBlockTo(Color.green, Color.yellow, 2.0f);
+      if (rand < 0.01f * Time.deltaTime * 30.0f) {
+        ChangeFirstBlockTo(Color.green, Color.magenta, 2.0f);
       }
-      else if (rand < 0.05f * Time.deltaTime && blueBlockCount < 3) { 
+      else if (rand < 0.015f * Time.deltaTime * 30.0f && blueBlockCount < 2) { 
         ChangeFirstBlockTo(Color.green, Color.blue, 2.0f);
       }
-      else if (rand < 0.1f * Time.deltaTime) {
+      else if (rand < 0.02f * Time.deltaTime * 30.0f) {
         ChangeFirstBlockTo(Color.green, Color.white, 2.0f);
       }
     }
@@ -106,8 +113,8 @@ public class ShakeShakeController : GameController {
     // process white blocks
     ChangeBlocksTo(Color.white, Color.green, 2.0f);
 
-    // process yellow blocks
-    ChangeBlocksTo(Color.yellow, Color.red, 1.0f);
+    // process magenta blocks
+    ChangeBlocksTo(Color.magenta, Color.red, 1.0f);
 
     // process red blocks
     ChangeBlocksTo(Color.red, Color.white, 2.0f);
@@ -115,9 +122,12 @@ public class ShakeShakeController : GameController {
     // process blue blocks
     if (resettingBlueBlock == false) {
       for (int i = 0; i < robot.markersVisibleObjects.Count; ++i) {
+        if (blockData.ContainsKey(robot.markersVisibleObjects[i].ID) == false)
+          continue;
         if (blockData[robot.markersVisibleObjects[i].ID].currentColor == Color.blue) {
           resettingBlueBlock = true;
           robot.PickAndPlaceObject(robot.markersVisibleObjects[i]);
+          resettingBlockID = robot.markersVisibleObjects[i].ID;
           break;
         }
       }
@@ -125,12 +135,23 @@ public class ShakeShakeController : GameController {
 
     // update block colors
     foreach (KeyValuePair<int, BlockData> bData in blockData) {
+      if (robot.activeBlocks.ContainsKey(bData.Key) == false)
+        continue;
       for (int j = 0; j < robot.activeBlocks[bData.Key].lights.Length; ++j) {
         robot.activeBlocks[bData.Key].lights[j].onColor = CozmoPalette.ColorToUInt(bData.Value.currentColor);
       }
     }
-    DAS.Debug("ShakeShakeController", "current score: " + currentScore);
 
+    scoreText.text = currentScore.ToString();
+    int deltaScore = currentScore - scoreLastFrame;
+    if (deltaScore > 0) {
+      scoreText.color = Color.green;
+    }
+    else if (deltaScore < 0) {
+      scoreText.color = Color.red;
+    }
+    scoreText.color = Color.Lerp(scoreText.color, Color.white, Time.deltaTime);
+    scoreLastFrame = currentScore;
   }
 
   protected override void Exit_PLAYING(bool overrideStars = false) {
@@ -208,9 +229,29 @@ public class ShakeShakeController : GameController {
   }
 
   private void RobotEngineMessages(bool success, RobotActionType action_type) {
-    if (success && action_type == RobotActionType.PICKUP_OBJECT_HIGH) {
-      resettingBlueBlock = false;
-      currentScore += 10;
+    DAS.Debug("ShakeShakeController", "RobotEngineMessage: " + action_type);
+
+    if (success) {
+      if (action_type == RobotActionType.PICK_AND_PLACE_OBJECT ||
+          action_type == RobotActionType.PICKUP_OBJECT_LOW ||
+          action_type == RobotActionType.PICKUP_OBJECT_HIGH) {
+        resettingBlueBlock = false;
+        currentScore += 10;
+        robot.PlaceObjectOnGroundHere();
+        blockData[resettingBlockID].SetNewColor(Color.white);
+        DAS.Debug("ShakeShakeController", "Success pick up and place object");
+      }
+
+    }
+
+    if (!success) {
+      if (action_type == RobotActionType.PICK_AND_PLACE_OBJECT ||
+          action_type == RobotActionType.PICKUP_OBJECT_LOW ||
+          action_type == RobotActionType.PICKUP_OBJECT_HIGH ||
+          action_type == RobotActionType.PICK_AND_PLACE_INCOMPLETE) {
+        DAS.Warn("ShakeShakeController", "Failed to pick up and place object");
+        resettingBlueBlock = false;
+      }
     }
   }
 
