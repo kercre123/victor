@@ -67,7 +67,7 @@
     # Here we pick which face library to use and set its path/includes/libs
     # initially to empty. They will be filled in below in the 'conditions' as
     # needed:
-    'face_library' : 'facesdk', # one of: 'opencv', 'faciometric', or 'facesdk'
+    'face_library' : 'opencv', # one of: 'opencv', 'faciometric', or 'facesdk'
     'face_library_path':      [ ],
     'face_library_includes' : [ ],
     'face_library_libs':      [ ],
