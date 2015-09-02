@@ -4,14 +4,6 @@ cozmoDir = fileparts(which(mfilename)); % excludes 'matlab'
 addpath(genpath(fullfile(cozmoDir, 'matlab')));
 %addpath(fullfile(cozmoDir, 'build', 'cmake-mac', 'lib', 'anki', 'cozmo-engine', 'mex'));
 
-% Figure out the nonsensical build products directory :-/
-buildProductRoot = getdirnames(fullfile(cozmoDir, 'build', 'mac', 'derived-data'), 'CozmoWorkspace_MAC-*', true);
-assert(iscell(buildProductRoot) && length(buildProductRoot)==1, ...
-  'Failed to find single build product root.');
-
-% This is where mex products end up
-addpath(fullfile(buildProductRoot{1}, 'Build', 'Products', 'Debug'));
-
 % addpath(genpath(fullfile(cozmoDir, 'systemTests')));
 
 % coretechLibs = dir(fullfile(cozmoDir, 'coretech'));
@@ -31,5 +23,13 @@ addpath(fullfile(buildProductRoot{1}, 'Build', 'Products', 'Debug'));
 %run(fullfile(cozmoDir, '..', 'coretech-external', 'matlab', 'initExternalPath.m'));
 
 run(fullfile(cozmoDir, 'lib', 'anki', 'cozmo-engine', 'matlab', 'initCozmoPath.m'));
+
+% Figure out the nonsensical build products directory :-/
+buildProductRoot = getdirnames(fullfile(cozmoDir, 'build', 'mac', 'derived-data'), 'CozmoWorkspace_MAC-*', true);
+assert(iscell(buildProductRoot) && length(buildProductRoot)==1, ...
+  'Failed to find single build product root.');
+
+% This is where mex products end up
+addpath(fullfile(buildProductRoot{1}, 'Build', 'Products', 'Debug'));
 
 end % initCozmoPath()

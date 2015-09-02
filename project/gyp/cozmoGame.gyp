@@ -53,7 +53,16 @@
     'webots_includes': [
       '<(webots_path)/include/controller/cpp',
     ],
-
+    
+    # Here we pick which face library to use and set its path/includes/libs
+    # initially to empty. They will be filled in below in the 'conditions' as
+    # needed:
+    # (NOTE: This is duplicated from coretech-internal.gyp!)
+    'face_library' : 'opencv', # one of: 'opencv', 'faciometric', or 'facesdk'
+    'face_library_path':      [ ],
+    'face_library_includes' : [ ],
+    'face_library_libs':      [ ],
+    
     'compiler_flags': [
       '-Wdeprecated-declarations',
       '-fdiagnostics-show-category=name',
@@ -83,7 +92,7 @@
       '<@(compiler_flags)'
     ],
     'linker_flags' : [
-        '-g'
+        '-g',
     ],
 
     # Set default ARCHS based on platform
@@ -96,7 +105,48 @@
 
     # Copy overridden vars into this scope
     'arch_group%': '<(arch_group)',
+    
     'conditions': [
+      # Face libraries, depending on platform:
+      ['face_library=="faciometric"', {
+        'face_library_path': [
+          '<(coretech_external_path)/IntraFace',
+        ],
+      }],
+      ['OS=="mac" and face_library=="facesdk"', {
+        'face_library_libs': [
+          '<(coretech_external_path)/Luxand_FaceSDK/bin/osx_x86_64/libfsdk.dylib',
+        ],
+      }],
+      ['OS=="mac" and face_library=="faciometric"', {
+        'face_library_includes': [
+          '<(face_library_path)/osx_demo_126/include',
+        ],
+        'face_library_libs': [
+          '<(face_library_path)/osx_demo_126/lib/libintraface_core126.dylib',
+          '<(face_library_path)/osx_demo_126/lib/libintraface_emo126.dylib',
+          '<(face_library_path)/osx_demo_126/lib/libintraface_gaze126.dylib',
+        ],
+      }],
+      ['OS=="ios" and face_library=="facesdk"', {
+        'face_library_libs': [
+          # TODO: handle different architectures
+          '<(coretech_external_path)/Luxand_FaceSDK/bin/iOS/libfsdk-static.a',
+        ],
+      }],
+      ['OS=="ios" and face_library=="faciometric"', {
+        'face_library_libs': [
+          '<(face_library_path)/IntraFace_126_iOS_Anki/Library/intraface.framework',
+        ],
+      }],
+      ['OS=="android" and face_library=="facesdk"', {
+        'face_library_libs': [
+          # TODO: handle different architectures
+          '<(coretech_external_path)/Luxand_FaceSDK/bin/Android/armeabi-v7a/libfsdk.so',
+          '<(coretech_external_path)/Luxand_FaceSDK/bin/Android/armeabi-v7a/libstlport_shared.so',
+        ],
+      }],
+      
       ['OS=="ios" and arch_group=="universal"', {
         'target_archs%': ['armv7', 'arm64'],
       }],
@@ -336,6 +386,11 @@
             'dependencies': [
               '<(cg-mex_gyp_path):mexDetectFiducialMarkers',
               '<(cg-mex_gyp_path):mexUnique',
+              '<(cg-mex_gyp_path):mexCameraCapture',
+              '<(cg-mex_gyp_path):mexHist',
+              '<(cg-mex_gyp_path):mexClosestIndex',
+              '<(cg-mex_gyp_path):mexRegionprops',
+              '<(cg-mex_gyp_path):mexRefineQuadrilateral',
             ],
           },
         ],
@@ -391,6 +446,7 @@
               '$(SDKROOT)/System/Library/Frameworks/QTKit.framework',
               '$(SDKROOT)/System/Library/Frameworks/QuartzCore.framework',
               '<@(opencv_libs)',
+              '<@(face_library_libs)',
             ],
           }, # end controller Game Engine
 
@@ -633,7 +689,67 @@
                   '<@(_outputs)',
                 ],
               },
-            ],
+
+              # Face-library-specific actions:
+    
+              {
+                # The FacioMetric dynamic libs are expected to be in a "lib"
+                # subdirectory of the executable directory, so make a symlink
+                # to their location in the same directory where we put the
+                # game engine controller
+                'action_name': 'create_symlink_webotsCtrlGameEngine_facioMetricLibs',
+                'inputs': [ ],
+                'outputs': [ ],
+                'conditions': [
+                  ['face_library=="faciometric"', {
+                    'action': [
+                      'ln',
+                      '-s',
+                      '-f',
+                      '<(face_library_path)/osx_demo_126/lib',
+                      '../../simulator/controllers/webotsCtrlGameEngine/lib',
+                    ],
+                  },
+                  { # else
+                    'action': [
+                      'echo',
+                      '"Skipping Faciometric-specific action."'
+                    ],
+                  }],
+                ],
+              },
+              
+              
+              {
+                # The FaceSDK dynamic libs are expected to be in the
+                # subdirectory with the executable, so make a symlink
+                # to their location in the same directory where we put the
+                # game engine controller
+                'action_name': 'create_symlink_webotsCtrlGameEngine_facesdkLibs',
+                'inputs': [ ],
+                'outputs': [ ],
+                'conditions': [
+                  ['face_library=="facesdk"', {
+                    'action': [
+                      'ln',
+                      '-s',
+                      '-f',
+                      '<(face_library_libs)',
+                      '../../simulator/controllers/webotsCtrlGameEngine/',
+                    ],
+                  },
+                  { # else
+                    'action': [
+                      'echo',
+                      '"Skipping FaceSDK-specific action."'
+                    ],
+                  }],
+                ],
+              },
+              
+            ], # actions
+           
+            
             
           }, # end webotsControllers
 
@@ -685,6 +801,31 @@
         '<(cg-cti_gyp_path):ctiVision',
       ],
       'type': '<(game_library_type)',
+      
+      'conditions': [
+        ['face_library=="faciometric"', {
+          # Copy FacioMetric's models into the resources so they are available at runtime.
+          # This is a little icky since it reaches into cozmo engine...
+          'actions': [
+            {
+              'action_name': 'copy_faciometric_models',
+              'inputs': [
+                '<(face_library_path)/models',
+              ],
+              'outputs': [
+                '../../lib/anki/cozmo-engine/resources/config/basestation/vision/faciometric',
+              ],
+              'action': [
+                'cp',
+                '-R',
+                '<@(_inputs)',
+                '<@(_outputs)',
+              ],
+            },
+          ],
+        }],
+      ] #'conditions'
+
     },
     
 
