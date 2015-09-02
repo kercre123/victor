@@ -461,6 +461,26 @@ message TapBlockOnGround {
   uint_8   numTaps
 }
 
+// DisplayProceduralFace
+message DisplayProceduralFace {
+  float_32 faceAngle,       // Degrees
+  float_32 leftBrowAngle,   //    "
+  float_32 rightBrowAngle,  //    "
+  float_32 leftBrowShiftX,  // From nominal position
+  float_32 rightBrowShiftX, //    "
+  float_32 leftBrowShiftY,  //    "
+  float_32 rightBrowShiftY, //    "
+  float_32 leftEyeHeight,
+  float_32 rightEyeHeight,
+  float_32 leftPupilHeightFraction,  // Relative to current eye height
+  float_32 rightPupilHeightFraction, //   "
+  float_32 leftPupilShiftX,  // From nominal position
+  float_32 rightPupilShiftX, //   "
+  float_32 leftPupilShiftY,  //   "
+  float_32 rightPupilShiftY, //   "
+  uint_8 robotID
+}
+
 // VisualizeQuad
 //  Draws the specified quadrilateral using the Visualization system.
 //  The quadID will be created if new or replaced if it already exists (i.e., you
