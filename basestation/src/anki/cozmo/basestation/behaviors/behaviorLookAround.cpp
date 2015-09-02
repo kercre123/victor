@@ -177,7 +177,38 @@ IBehavior::Status BehaviorLookAround::Update(float currentTime_sec)
   
 void BehaviorLookAround::StartMoving()
 {
-  IActionRunner* goToPoseAction = new DriveToPoseAction(GetDestinationPose(_currentDestination), false, false);
+  // Check for a collision-free pose
+  Pose3d destPose;
+  const int MAX_NUM_CONSIDERED_DEST_POSES = 10;
+  for (int i = MAX_NUM_CONSIDERED_DEST_POSES; i > 0; --i) {
+    destPose = GetDestinationPose(_currentDestination);
+    
+    // Get robot bounding box at destPose
+    Quad2f robotQuad = _robot.GetBoundingQuadXY(destPose);
+    
+    std::set<ObjectFamily> ignoreFamilies;
+    std::set<ObjectType> ignoreTypes;
+    std::set<ObjectID> ignoreIDs;
+    std::vector<ObservableObject*> existingObjects;
+    _robot.GetBlockWorld().FindIntersectingObjects(robotQuad,
+                                                   existingObjects,
+                                                   10,
+                                                   ignoreFamilies,
+                                                   ignoreTypes,
+                                                   ignoreIDs);
+    
+    if (existingObjects.empty()) {
+      break;
+    }
+    
+    if (i == 1) {
+      PRINT_NAMED_WARNING("BehaviorLookAround.StartMoving.NoDestPoseFound", "attempts %d", MAX_NUM_CONSIDERED_DEST_POSES);
+      return;
+    }
+  }
+  
+  
+  IActionRunner* goToPoseAction = new DriveToPoseAction(destPose, false, false);
   _currentDriveActionID = goToPoseAction->GetTag();
   _robot.GetActionList().QueueActionAtEnd(0, goToPoseAction, 3);
 }
