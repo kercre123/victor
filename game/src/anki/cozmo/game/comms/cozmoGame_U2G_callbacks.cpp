@@ -233,6 +233,11 @@ namespace Cozmo {
     // Handled in RobotEventHandler::HandleActionEvents
   }
   
+  void CozmoGameImpl::Process_FacePose(ExternalInterface::FacePose const& msg)
+  {
+    // Handled in RobotEventHandler::HandleActionEvents
+  }
+  
   void CozmoGameImpl::Process_StopAllMotors(ExternalInterface::StopAllMotors const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
