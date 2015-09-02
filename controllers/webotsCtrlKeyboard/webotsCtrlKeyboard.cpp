@@ -1148,6 +1148,22 @@ namespace Anki {
                 SendAnimation("ANIM_ALERT", 1);
                 break;
               }
+              case (s32)'*':
+              {
+                // Send a procedural face
+                using namespace ExternalInterface;
+                DisplayProceduralFace msg;
+                msg.robotID = 1;
+                msg.leftEyeHeight = static_cast<f32>(rand())/static_cast<f32>(RAND_MAX) * 40 + 20;
+                msg.rightEyeHeight = static_cast<f32>(rand())/static_cast<f32>(RAND_MAX) * 40 + 20;
+
+                // Random face angle between -30 and 30:
+                msg.faceAngle = static_cast<f32>(rand())/static_cast<f32>(RAND_MAX) * 60.f - 30.f;
+
+                SendMessage(MessageGameToEngine(std::move(msg)));
+                
+                break;
+              }
               case (s32)'^':
               {
                 // Send whatever animation is specified in the animationToSendName field
