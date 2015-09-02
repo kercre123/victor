@@ -11,7 +11,7 @@
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "json/json.h"
-#include "anki/cozmo/basestation/data/dataPlatform.h"
+#include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
 #include "util/logging/printfLoggerProvider.h"
@@ -94,7 +94,7 @@ int main(int argc, char **argv)
   std::string filesPath = path + "files";
   std::string cachePath = path + "temp";
   std::string externalPath = path + "temp";
-  Data::DataPlatform dataPlatform(filesPath, cachePath, externalPath, resourcePath);
+  Util::Data::DataPlatform dataPlatform(filesPath, cachePath, externalPath, resourcePath);
 
   // Start with a step so that we can attach to the process here for debugging
   basestationController.step(BS_TIME_STEP);
@@ -102,7 +102,8 @@ int main(int argc, char **argv)
   // Get configuration JSON
   Json::Value config;
 
-  if (!dataPlatform.readAsJson(Data::Scope::Resources, "config/basestation/config/configuration.json", config)) {
+  if (!dataPlatform.readAsJson(Util::Data::Scope::Resources,
+                               "config/basestation/config/configuration.json", config)) {
     PRINT_NAMED_ERROR("webotsCtrlGameEngine.main.loadConfig", "Failed to parse Json file config/basestation/config/configuration.json");
   }
 
