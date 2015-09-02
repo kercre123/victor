@@ -1,0 +1,99 @@
+/** Cozmo robot test modes
+ * @author Daniel Casner
+ */
+
+namespace Anki {
+namespace Cozmo {
+
+enum uint_8 TestMode {
+  TM_NONE,
+
+  // Attempts to dock to a block that is placed in front of it and then place it on a block behind it.
+  TM_PICK_AND_PLACE,
+
+  // Follows a changing straight line path. Tests path following during docking.
+  TM_DOCK_PATH,
+
+  // Follows an example path. Requires localization
+  TM_PATH_FOLLOW,
+
+  // Cycles through PathFollower convenience functions: DriveStraight, DriveArc, DrivePointTurn
+  TM_PATH_FOLLOW_CONVENIENCE_FUNCTIONS,
+
+  // Tests ExecuteDirectDrive() or open loop control via HAL::MotorSetPower()
+  TM_DIRECT_DRIVE,
+
+  // Moves lift up and down
+  TM_LIFT,
+
+  // Toggles between 3 main lift heights: low dock, carry, and high dock
+  TM_LIFT_TOGGLE,
+
+  // Tilts head up and down
+  TM_HEAD,
+
+  // Prints gyro/accel data
+  TM_IMU,
+
+  // Cycles through all known animations
+  TM_ANIMATION,
+
+  // Cycle through all LEDs with different colors
+  TM_LIGHTS,
+
+  // Draw and blink a test face
+  TM_FACE_DISPLAY,
+  
+  // Drives slow and then stops.
+  // Drives fast and then stops.
+  // Reports stopping distance and time (in tics).
+  TM_STOP_TEST,
+
+  // Drives all motors at max power simultaneously.
+  TM_MAX_POWER_TEST,
+
+  // Turns on face tracking
+  TM_FACE_TRACKING,
+
+  // TM_UPDATE_CLAD = testMode.clad
+
+  TM_NUM_TESTS
+}
+
+enum uint_8 DriveTestFlags {
+    EnableDirectHalTest = 0x01,    // When enabled, speed parameter (p3) is interpretted as a percentage power value
+    EnableCycleSpeedsTest = 0x02,  // When enabled, cycles through different motor power values going up by powerPercentStep (p2)
+    EnableToggleDirection = 0x04   // When enabled, toggles direction going at the specified speed (p3)
+}
+
+enum uint_8 LiftTestFlags {
+    TestPower,
+    TestHeights,
+    Nodding,
+    DisableMotor
+}
+
+enum uint_8 HeadTestFlags {
+    TestPower,
+    TestAngles,
+    Nodding
+}
+
+enum uint_8 IMUTestFlags {
+    DoTurns = 0x01
+}
+
+enum uint_8 LightTestFlags {
+    CycleAll = 0x01
+}
+
+message StartControllerTestMode
+{
+  int_32 p1,
+  int_32 p2,
+  int_32 p3,
+  TestMode mode,
+}
+
+} // namespace Cozmo
+} // namespace Anki

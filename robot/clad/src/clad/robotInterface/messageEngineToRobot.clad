@@ -4,9 +4,10 @@
  */
  
 #include "clad/types/imageTypes.clad"
-#include "clad/types/carryState.clad"
+#include "clad/types/robotStatusAndActions.clad"
 #include "clad/types/lightState.clad"
 #include "clad/types/animationKeyFrames.clad"
+#include "clad/types/robotTestModes.clad"
  
 namespace Anki {
 namespace Cozmo {
@@ -135,8 +136,8 @@ message ExecutePath
 message DockWithObject
 {
   float_32 horizontalOffset_mm, // Offset wrt to docking object. Don't know if this will work yet.
-  uint_8   dockAction,
-  bool     useManualSpeed,
+  DockAction action,
+  bool       useManualSpeed,
 }
 
 message AbortDocking
@@ -169,12 +170,6 @@ message ImageRequest
 {
   ImageSendMode  sendMode,
   ImageResolution resolution,
-}
-
-message StartControllerTestMode
-{
-  int_32 parameters[3],
-  uint_8 mode,
 }
 
 enum uint_8 ControllerChannel

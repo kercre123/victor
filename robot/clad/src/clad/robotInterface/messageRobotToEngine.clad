@@ -4,7 +4,7 @@
  */
 
 
-#include "clad/types/robotStatusFlag.clad"
+#include "clad/types/robotStatusAndActions.clad"
 #include "clad/types/activeObjectTypes.clad"
 #include "clad/types/rtipTraces.clad"
 #include "clad/types/imageTypes.clad"

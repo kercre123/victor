@@ -5,7 +5,7 @@
 
 #include "clad/types/actionTypes.clad"
 #include "clad/types/imageTypes.clad"
-#include "clad/types/testMode.clad"
+#include "clad/types/robotTestModes.clad"
 #include "clad/externalInterface/messageShared.clad"
 
 namespace Anki {
@@ -326,7 +326,7 @@ message StartTestMode {
     int_32 p1,
     int_32 p2,
     int_32 p3,
-    TestModeClad mode
+    TestMode mode
 }
 
 // IMURequest

@@ -4,7 +4,7 @@
 // Copyright: Anki Inc (c) 2015
 
 #include "clad/types/actionTypes.clad"
-#include "clad/types/robotStatusFlag.clad"
+#include "clad/types/robotStatusAndActions.clad"
 #include "clad/types/activeObjectTypes.clad"
 #include "clad/types/imageTypes.clad"
 #include "clad/types/objectTypes.clad"
