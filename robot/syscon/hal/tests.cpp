@@ -139,7 +139,7 @@ static void TestMotors() {
     Motors::update();
 
     Motors::printEncodersRaw();
-    MicroWait(5000000);
+    MicroWait(500000);
 
     Battery::update();
   }
@@ -162,13 +162,22 @@ static void TestLights() {
   }
 }
 
+static void TestEncoders() {
+  for(;;) {
+    uint32_t values[4];
+    Motors::getRawValues(values);
+    Lights::manage(values);
+  }
+}
+
 void TestFixtures::run() {
-#if defined(DO_MOTOR_TESTING)
-	TestMotors();
+#if defined(DO_ENCODER_TESTING)
+  TestEncoders();
+#elif defined(DO_MOTOR_TESTING)
+  TestMotors();
 #elif defined(DO_GEAR_RATIO_TESTING)
 #elif defined(DO_FIXED_DISTANCE_TESTING)
 #elif defined(DO_LIGHTS_TESTING)
-	TestLights();
+  TestLights();
 #endif
 }
-

@@ -108,6 +108,13 @@ MotorInfo m_motors[MOTOR_COUNT] =
     PIN_LIFT_N1,
     PIN_LIFT_N2,
     PIN_LIFT_P,
+/*
+#ifdef ROBOT4
+    true,
+#else
+    false,
+#endif
+*/
     false,
     0,
     PIN_ENCODER_LIFTA,
@@ -420,6 +427,21 @@ void Motors::update()
   g_dataToHead.positions[1] = (s32)TO_FIXED_8_24_TO_16_16(tmp);
   g_dataToHead.positions[2] = m_motors[2].position;
   g_dataToHead.positions[3] = m_motors[3].position;
+}
+
+void Motors::getRawValues(uint32_t *positions)
+{
+  Fixed64 tmp1, tmp2;
+  tmp1 = METERS_PER_TICK;
+  tmp1 *= m_motors[0].position;
+
+  tmp2 = METERS_PER_TICK;
+  tmp2 *= m_motors[1].position;
+
+  positions[0] = (Fixed)TO_FIXED_8_24_TO_16_16(tmp1);
+  positions[1] = (Fixed)TO_FIXED_8_24_TO_16_16(tmp2);
+  positions[2] = (int)m_motors[2].position;
+  positions[3] = (int)m_motors[3].position;
 }
 
 void Motors::printEncodersRaw()

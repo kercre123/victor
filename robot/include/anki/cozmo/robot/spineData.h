@@ -53,6 +53,7 @@ union GlobalDataToHead
     GlobalCommon common;
     Fixed speeds[4];
     Fixed positions[4];
+    Fixed IBat; // This no longer exists here
     Fixed VBat;
     Fixed VExt;
     u8    chargeStat;

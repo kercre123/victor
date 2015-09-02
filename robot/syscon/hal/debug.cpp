@@ -59,10 +59,13 @@ void UART::print( const char* fmt, ...)
   char out[256];
   char *p = out;
    
+  // Initialize the UART for the specified baudrate
+  NRF_UART0->BAUDRATE = DEBUG_BAUDRATE;
+
   // Configure port for transmission
   NRF_UART0->PSELRXD = 0xFFFFFFFF;
   NRF_UART0->PSELTXD = PIN_TX_VEXT;
-  nrf_gpio_cfg_output(PIN_TX_VEXT);  
+  nrf_gpio_cfg_output(PIN_TX_VEXT);
   DISABLE_UART_IRQ;
 
   vsnprintf(out, sizeof(out), fmt, vl);

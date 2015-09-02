@@ -377,7 +377,7 @@ namespace Anki {
         MARK_NEXT_TIME_PROFILE(CozmoBot, CUBES);
         Anki::Cozmo::HAL::ManageCubes();
         
-
+        
         //////////////////////////////////////////////////////////////
         // Pickup reaction
         //////////////////////////////////////////////////////////////

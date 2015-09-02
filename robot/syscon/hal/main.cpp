@@ -72,7 +72,6 @@ int main(void)
     }
     
     // Update at 200Hz (5ms delay)
-    
     u32 timerNow;
     do {
       timerNow = GetCounter();
