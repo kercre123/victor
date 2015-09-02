@@ -111,6 +111,11 @@ namespace Anki {
       HandleRobotObservedObject(msg);
     }
     
+    void UiGameController::HandleRobotObservedFaceBase(ExternalInterface::RobotObservedFace const& msg)
+    {
+      HandleRobotObservedFace(msg);
+    }
+    
     void UiGameController::HandleRobotObservedNothingBase(ExternalInterface::RobotObservedNothing const& msg)
     {
       _currentlyObservedObject.Reset();
@@ -325,6 +330,9 @@ namespace Anki {
           case ExternalInterface::MessageEngineToGame::Tag::RobotObservedObject:
             HandleRobotObservedObjectBase(message.Get_RobotObservedObject());
             break;
+          case ExternalInterface::MessageEngineToGame::Tag::RobotObservedFace:
+            HandleRobotObservedFaceBase(message.Get_RobotObservedFace());
+            break;
           case ExternalInterface::MessageEngineToGame::Tag::UiDeviceAvailable:
             HandleUiDeviceConnectionBase(message.Get_UiDeviceAvailable());
             break;
@@ -349,7 +357,7 @@ namespace Anki {
           case ExternalInterface::MessageEngineToGame::Tag::ActiveObjectTapped:
             HandleActiveObjectTappedBase(message.Get_ActiveObjectTapped());
             break;
-        case ExternalInterface::MessageEngineToGame::Tag::AnimationAvailable:
+          case ExternalInterface::MessageEngineToGame::Tag::AnimationAvailable:
             HandleAnimationAvailableBase(message.Get_AnimationAvailable());
             break;
           default:

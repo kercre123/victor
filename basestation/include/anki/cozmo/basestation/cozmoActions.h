@@ -245,6 +245,7 @@ namespace Anki {
     class FacePoseAction : public IAction
     {
     public:
+      // Note that the rotation in formation in pose will be ignored
       FacePoseAction(const Pose3d& pose, Radians turnAngleTol, Radians maxTurnAngle);
       
       virtual const std::string& GetName() const override;

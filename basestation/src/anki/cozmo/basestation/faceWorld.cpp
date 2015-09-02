@@ -65,16 +65,17 @@ namespace Cozmo {
   
   Result FaceWorld::AddOrUpdateFace(Vision::TrackedFace& face)
   {
-    // The incoming TrackedFace is w.r.t. the arbitrary historical origin of the
-    // camera that observed them. Hook them up to the current robot origin now:
-    Pose3d headPose = face.GetHeadPose();
-    if(headPose.GetParent() == nullptr || headPose.GetParent()->IsOrigin())
+    // The incoming TrackedFace is w.r.t. the arbitrary historical camera
+    // that observed it. Make w.r.t. robot world origin now:
+    if(face.GetHeadPose().GetParent() == nullptr || face.GetHeadPose().GetParent()->IsOrigin())
     {
       PRINT_NAMED_ERROR("FaceWorld.AddOrUpdateFace.BadPoseParent",
                         "TrackedFace's head pose parent should not be null or an origin.");
       return RESULT_FAIL;
     }
-    headPose.SetParent(_robot.GetWorldOrigin());
+    Pose3d headPose = face.GetHeadPose().GetWithRespectToOrigin(); // w.r.t. *historical* origin!
+    headPose.SetParent(_robot.GetWorldOrigin()); // transfer to robot world origin
+
     face.SetHeadPose(headPose);
 
     auto insertResult = _knownFaces.insert({face.GetID(), face});

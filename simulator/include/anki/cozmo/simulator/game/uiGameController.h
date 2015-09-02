@@ -175,6 +175,7 @@ protected:
 private:
   void HandleRobotStateUpdateBase(ExternalInterface::RobotState const& msg);
   void HandleRobotObservedObjectBase(ExternalInterface::RobotObservedObject const& msg);
+  void HandleRobotObservedFaceBase(ExternalInterface::RobotObservedFace const& msg);
   void HandleRobotObservedNothingBase(ExternalInterface::RobotObservedNothing const& msg);
   void HandleRobotDeletedObjectBase(ExternalInterface::RobotDeletedObject const& msg);
   void HandleRobotConnectionBase(ExternalInterface::RobotAvailable const& msgIn);

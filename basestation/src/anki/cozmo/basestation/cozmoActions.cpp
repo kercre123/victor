@@ -802,7 +802,11 @@ namespace Anki {
         return ActionResult::FAILURE_ABORT;
       }
       
-      if(false == _poseWrtRobot.GetWithRespectTo(robot.GetPose(), _poseWrtRobot))
+      if(_poseWrtRobot.GetParent() == nullptr) {
+        PRINT_NAMED_INFO("FacePoseAction.SetPose.AssumingRobotOriginAsParent", "");
+        _poseWrtRobot.SetParent(robot.GetWorldOrigin());
+      }
+      else if(false == _poseWrtRobot.GetWithRespectTo(robot.GetPose(), _poseWrtRobot))
       {
         PRINT_NAMED_ERROR("FacePoseAction.Init.PoseOriginFailure",
                           "Could not get pose w.r.t. robot pose.");
