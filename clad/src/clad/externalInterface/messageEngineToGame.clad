@@ -143,9 +143,8 @@ message RobotObservedObject {
 
 // RobotObservedFace
 message RobotObservedFace {
-    int_64 faceID,
-    uint_32 robotID
-/*
+    int_64   faceID,
+    uint_32  robotID,
     float_32 world_x,        // absolute 3D position in world coords
     float_32 world_y,        //     "
     float_32 world_z,        //     "
@@ -153,8 +152,13 @@ message RobotObservedFace {
     float_32 quaternion1,    //     "
     float_32 quaternion2,    //     "
     float_32 quaternion3     //     "
-*/
 // TODO: Add expression / landmark locations
+}
+
+// RobotDeletedFace
+message RobotDeletedFace {
+    int_64  faceID,
+    uint_32 robotID
 }
 
 // RobotObservedNothing

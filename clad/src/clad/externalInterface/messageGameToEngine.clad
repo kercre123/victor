@@ -80,6 +80,18 @@ message FaceObject {
     uint_8   headTrackWhenDone
 }
 
+// FacePose
+//  Tell the robot to turn and tilt his head to face a give 3D pose in world
+//  coordinates.
+message FacePose {
+    float_32 world_x,
+    float_32 world_y,
+    float_32 world_z,
+    float_32 turnAngleTol,
+    float_32 maxTurnAngle,
+    uint_8   robotID
+}
+
 // MoveHead
 message MoveHead {
     float_32 speed_rad_per_sec
@@ -478,6 +490,7 @@ message EraseQuad {
 
 structure RobotActionUnion {
   FaceObject         faceObject,
+  FacePose           facePose,
   GotoPose           goToPose,
   GotoObject         goToObject,
   PlayAnimation      playAnimation,
