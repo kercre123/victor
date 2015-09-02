@@ -52,6 +52,14 @@ enum uint_8 MakeRelativeMode
   RELATIVE_LED_MODE_BY_SIDE
 }
 
+// Convenience structure definition
+structure ActiveAccel
+{
+  float_32 x,
+  float_32 y,
+  float_32 z
+}
+
 enum uint_8 UpAxis {
   XNegative,
   XPositive,

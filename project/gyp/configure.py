@@ -156,6 +156,9 @@ def main(scriptArgs):
   if (subprocess.call(['make', '--silent'], cwd=os.path.join(projectRoot, 'clad')) != 0):
     UtilLog.error("error compiling clad files")
     return False
+  if (subprocess.call(['make', '--silent', 'INPUT_DIR=../robot/clad/src'], cwd=os.path.join(projectRoot, 'clad')) != 0):
+    UtilLog.error("error compiling clad files")
+    return False
 
   # update file lists
   generator = updateFileLists.FileListGenerator(options)

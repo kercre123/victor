@@ -11,10 +11,11 @@
 
 namespace Anki {
 namespace Cozmo {
+namespace RobotInterface {
 
 /// *************** RTIP to Engine messages ******************************* ///
 // Structure definition for convenience
-message RobotPose
+structure RobotPose
 {
   float_32 x,
   float_32 y,
@@ -68,14 +69,6 @@ message GoalPose
 }
 
 // ----- Active object messages ------
-
-// Convenience structure definition
-message ActiveAccel
-{
-  float_32 x,
-  float_32 y,
-  float_32 z
-}
 
 message ActiveObjectMoved
 {
@@ -132,6 +125,6 @@ union RobotToEngine {
 }
 
 
-
+} // namespace RobotInterface
 } // namespace Cozmo
 } // namespace Anki

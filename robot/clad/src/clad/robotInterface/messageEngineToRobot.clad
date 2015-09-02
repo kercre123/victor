@@ -10,6 +10,7 @@
  
 namespace Anki {
 namespace Cozmo {
+namespace RobotInterface {
 
 /** Pipe from engine to robot.
  * This cannot be an auto union because we need explicit tag values to partition the RTIP and WiFi code
@@ -170,10 +171,18 @@ message ImageRequest
   ImageResolution resolution,
 }
 
-message StartTestMode
+message StartControllerTestMode
 {
-  int_32 parameters[10], // A pile of parameters
+  int_32 parameters[3],
   uint_8 mode,
+}
+
+enum uint_8 ControllerChannel
+{
+  wheel,
+  head,
+  lift,
+  stearing
 }
 
 message ControllerGains
@@ -181,13 +190,8 @@ message ControllerGains
   float_32 kp,
   float_32 ki,
   float_32 kd,
-  float_32 maxIntegralError
-}
-
-message SteeringControllerGains
-{
-  float_32 k1,
-  float_32 k2,
+  float_32 maxIntegralError,
+  ControllerChannel controller
 }
 
 message DockingErrorSignal
@@ -251,34 +255,30 @@ union EngineToRobot
   AbortDocking                  abortDocking                = 0x11,
   PlaceObjectOnGround           placeObjectOnGround         = 0x12,
   AbsoluteLocalizationUpdate    absLocalizationUpdate       = 0x13,
-  SyncTime                      syncTimeRTIP                = 0x14,
-  StartTestMode                 startTestModeRTIP           = 0x15,
-  ControllerGains               setWheelControllerGains     = 0x16,
-  ControllerGains               setHeadControllerGains      = 0x17,
-  ControllerGains               setLiftControllerGains      = 0x18,
-  SteeringControllerGains       setSteeringControllerGains  = 0x19,
-  DockingErrorSignal            dockingErrorSignal          = 0x1A,
-  CarryState                    setCarryState               = 0x1B,
+  StartControllerTestMode       startControllerTestMode     = 0x14,
+  ControllerGains               setControllerGains          = 0x15,
+  DockingErrorSignal            dockingErrorSignal          = 0x16,
+  CarryState                    setCarryState               = 0x17,
   
   // To WiFi 0x80 to 0xFE
-  SyncTime                      syncTimeWiFi                = 0x80,
+  SyncTime                      syncTime                    = 0x80,
   ImageRequest                  ImageRequest                = 0x81,
-  StartTestMode                 startTestModeWiFi           = 0x82,
-  BackpackLights                setBackpackLights           = 0x83,
-  BlockLights                   setBlockLights              = 0x84,
-  FlashBlockIDs                 flashBlockIDs               = 0x85,
-  AbortAnimation                abortAnimation              = 0x86,
-  AnimKeyFrame::AudioSample     animAudioSample             = 0x87,
-  AnimKeyFrame::AudioSilence    animAudioSilence            = 0x88,
-  AnimKeyFrame::HeadAngle       animHeadAngle               = 0x89,
-  AnimKeyFrame::LiftHeight      animLiftHeight              = 0x8A,
-  AnimKeyFrame::FacePosition    animFacePosition            = 0x8B,
-  AnimKeyFrame::Blink           animBlink                   = 0x8C,
-  AnimKeyFrame::FaceImage       animFaceImage               = 0x8D,
-  AnimKeyFrame::BackpackLights  animBackpackLights          = 0x8E,
-  AnimKeyFrame::BodyMotion      animBodyMotion              = 0x8F,
-  AnimKeyFrame::EndOfAnimation  animEndOfAnimation          = 0x90,
+  BackpackLights                setBackpackLights           = 0x82,
+  BlockLights                   setBlockLights              = 0x83,
+  FlashBlockIDs                 flashBlockIDs               = 0x84,
+  AbortAnimation                abortAnimation              = 0x85,
+  AnimKeyFrame::AudioSample     animAudioSample             = 0x86,
+  AnimKeyFrame::AudioSilence    animAudioSilence            = 0x87,
+  AnimKeyFrame::HeadAngle       animHeadAngle               = 0x88,
+  AnimKeyFrame::LiftHeight      animLiftHeight              = 0x89,
+  AnimKeyFrame::FacePosition    animFacePosition            = 0x8A,
+  AnimKeyFrame::Blink           animBlink                   = 0x8B,
+  AnimKeyFrame::FaceImage       animFaceImage               = 0x8C,
+  AnimKeyFrame::BackpackLights  animBackpackLights          = 0x8D,
+  AnimKeyFrame::BodyMotion      animBodyMotion              = 0x8E,
+  AnimKeyFrame::EndOfAnimation  animEndOfAnimation          = 0x8F,
 }
 
+} // namespace Robot Interface
 } // namespace Cozmo
 } // namespace Anki

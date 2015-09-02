@@ -42,7 +42,7 @@ c: $(OUTPUT_H_AND_C)
 	#mkdir -p $(OUTPUT_DIR)/engine/$(dir $<)
 	if test -f $(OUTPUT_DIR)engine/$*.h; then chmod -f 777 $(OUTPUT_DIR)engine/$*.h; fi
 	if test -f $(OUTPUT_DIR)engine/$*.cpp; then chmod -f 777 $(OUTPUT_DIR)engine/$*.cpp; fi
-	$(CLAD_CPP) -C $(INPUT_DIR) -I $(ROBOT_CLAD_SRC) -o $(OUTPUT_DIR)/engine/ $*.clad
+	$(CLAD_CPP) --output-union-helper-constructors -C $(INPUT_DIR) -I $(ROBOT_CLAD_SRC) -o $(OUTPUT_DIR)/engine/ $*.clad
 	$(CLAD_CPP_DECL) -C $(INPUT_DIR) -I $(INCLUDE_DIRS)  -I $(ROBOT_CLAD_SRC) -o $(OUTPUT_DIR)/engine/ $*.clad
 	$(CLAD_CPP_SWITCH) -C $(INPUT_DIR) -I $(INCLUDE_DIRS) -I $(ROBOT_CLAD_SRC) -o $(OUTPUT_DIR)/engine/ $*.clad
 	chmod -f 555 $(OUTPUT_DIR)engine/$*.h
