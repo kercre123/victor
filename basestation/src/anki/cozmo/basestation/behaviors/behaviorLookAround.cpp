@@ -113,8 +113,9 @@ IBehavior::Status BehaviorLookAround::Update(float currentTime_sec)
     {
       IActionRunner* moveHeadAction = new MoveHeadToAngleAction(0);
       _robot.GetActionList().QueueActionAtEnd(0, moveHeadAction);
-      StartMoving();
+      if (StartMoving() == RESULT_OK) {
       _currentState = State::LookingForObject;
+    }
     }
     // NOTE INTENTIONAL FALLTHROUGH
     case State::LookingForObject:
@@ -175,11 +176,11 @@ IBehavior::Status BehaviorLookAround::Update(float currentTime_sec)
   return Status::Complete;
 }
   
-void BehaviorLookAround::StartMoving()
+Result BehaviorLookAround::StartMoving()
 {
   // Check for a collision-free pose
   Pose3d destPose;
-  const int MAX_NUM_CONSIDERED_DEST_POSES = 10;
+  const int MAX_NUM_CONSIDERED_DEST_POSES = 30;
   for (int i = MAX_NUM_CONSIDERED_DEST_POSES; i > 0; --i) {
     destPose = GetDestinationPose(_currentDestination);
     
@@ -203,7 +204,7 @@ void BehaviorLookAround::StartMoving()
     
     if (i == 1) {
       PRINT_NAMED_WARNING("BehaviorLookAround.StartMoving.NoDestPoseFound", "attempts %d", MAX_NUM_CONSIDERED_DEST_POSES);
-      return;
+      return RESULT_FAIL;
     }
   }
   
@@ -211,6 +212,7 @@ void BehaviorLookAround::StartMoving()
   IActionRunner* goToPoseAction = new DriveToPoseAction(destPose, false, false);
   _currentDriveActionID = goToPoseAction->GetTag();
   _robot.GetActionList().QueueActionAtEnd(0, goToPoseAction, 3);
+  return RESULT_OK;
 }
   
 Pose3d BehaviorLookAround::GetDestinationPose(BehaviorLookAround::Destination destination)
