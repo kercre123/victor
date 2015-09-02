@@ -951,25 +951,17 @@ namespace Cozmo {
             case RobotActionType::PLAY_ANIMATION:
               if (msg.idTag == _lastActionTag) {
                 BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.HandleActionCompleted.IrritatedAnimComplete", "");
-              } else {
-                BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.HandleActionCompleted.UnknownAnimCompleted", "");
-              }
               
-              switch(_returnToState) {
-                case State::PickingUpBlock:
-                case State::PlacingBlock:
                   if (_irritationLevel > 1) {
                     PlayAnimation("VeryIrritated");
                   } else {
-                    _returnToState == State::PickingUpBlock ? SelectNextObjectToPickUp() : SelectNextPlacement();
+                  _robot.IsCarryingObject() ? SelectNextPlacement() : SelectNextObjectToPickUp();
                   }
                   _irritationLevel = 0;
-                  break;
-                default:
-                  BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.HandleActionCompleted.UnexpectedReturnToState", "%d", _returnToState);
-                  break;
-              }
               
+              } else {
+                BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.HandleActionCompleted.UnknownAnimCompleted", "");
+              }
               break;
             default:
               BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.HandleActionCompleted.UnexpectedActionCompleteDuringIrritated", "action %d", msg.actionType);
@@ -1026,8 +1018,6 @@ namespace Cozmo {
         // Queue irritated animation
         PlayAnimation("MinorIrritation");
         
-        // Set state to return to after frustration
-        _returnToState = _currentState;
         _currentState = State::Irritated;
         UpdateName();
       }

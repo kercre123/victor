@@ -120,7 +120,6 @@ namespace Cozmo {
     };
     
     State _currentState;
-    State _returnToState;
     bool  _interrupted;
     
     Result _lastHandlerResult;
