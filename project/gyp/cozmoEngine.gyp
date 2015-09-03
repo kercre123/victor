@@ -495,6 +495,22 @@
                   '<@(_outputs)',
                 ],
               },
+              {
+                'action_name': 'create_symlink_resources_pocketsphinx',
+                'inputs': [
+                  '<(coretech_external_path)/pocketsphinx/pocketsphinx/model/en-us',
+                ],
+                'outputs': [
+                  '<(PRODUCT_DIR)/resources/pocketsphinx',
+                ],
+                'action': [
+                  'ln',
+                  '-s',
+                  '-f',
+                  '<@(_inputs)',
+                  '<@(_outputs)',
+                ],
+              },
             ],
           }, # end unittest target
 
