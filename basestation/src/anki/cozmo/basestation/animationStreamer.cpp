@@ -164,49 +164,42 @@ namespace Cozmo {
        lastFace.HasBeenSentToRobot() == true &&
        nextTime > lastTime)
     {
-      if(nextTime - lastTime < 4*IKeyFrame::SAMPLE_LENGTH_MS)
+      // Either interpolate from the last procedural face's timestamp if it's not too
+      // old, or for a fixed max duration so we get a smooth change but don't
+      // queue up tons of frames right now trying to get to the current face
+      // (which would cause an unwanted delay).
+      const TimeStamp_t lastInterpTime = std::max(lastTime, nextTime - 4*IKeyFrame::SAMPLE_LENGTH_MS);
+      
+      ProceduralFace proceduralFace;
+      proceduralFace.SetTimeStamp(lastInterpTime);
+      int framesAdded = 0;
+      while(proceduralFace.GetTimeStamp() < nextTime)
       {
-        // If last face isn't too old, interpolate from its timestamp to
-        // the current face's timestamp.
-        ProceduralFace proceduralFace;
-        proceduralFace.SetTimeStamp(lastTime);
-        int framesAdded = 0;
-        while(proceduralFace.GetTimeStamp() < nextTime)
-        {
-          // Increment interpolation time
-          proceduralFace.SetTimeStamp(proceduralFace.GetTimeStamp() + IKeyFrame::SAMPLE_LENGTH_MS);
-
-          // Interpolate based on time
-          const f32 blendFraction = std::min(1.f, (static_cast<f32>(proceduralFace.GetTimeStamp() - lastTime) /
-                                                   static_cast<f32>(nextTime - lastTime)));
-
-          proceduralFace.Interpolate(lastFace, nextFace, blendFraction);
-          
-          // Add this procedural face as a keyframe in the live animation
-          ProceduralFaceKeyFrame kf(proceduralFace);
-          kf.SetIsLive(true);
-          if(RESULT_OK != _liveAnimation.AddKeyFrame(kf)) {
-            PRINT_NAMED_ERROR("AnimationStreamer.UpdateLiveAnimation.AddFrameFaile", "");
-            return RESULT_FAIL;
-          }
-          ++framesAdded;
-        }
-#       if DEBUG_ANIMATION_STREAMING
-        PRINT_NAMED_INFO("AnimationStreamer.UpdateLiveAnimation.AddedInterpolatedFaces",
-                         "Added %d interpolated procedural faces from t=[%d,%d]",
-                         framesAdded, lastFace.GetTimeStamp(), nextFace.GetTimeStamp());
-#       endif
-      } else {
-        // Otherwise, just cut to the current face immediately, w/o interpolation
-        ProceduralFaceKeyFrame kf(nextFace);
-        kf.SetIsLive(true);
-        _liveAnimation.AddKeyFrame(kf);
+        // Increment interpolation time
+        proceduralFace.SetTimeStamp(proceduralFace.GetTimeStamp() + IKeyFrame::SAMPLE_LENGTH_MS);
         
-#       if DEBUG_ANIMATION_STREAMING
-        PRINT_NAMED_INFO("AnimationStreamer.UpdateLiveAnimation.AddedSingleFace", "");
-#       endif
+        // Interpolate based on time
+        const f32 blendFraction = std::min(1.f, (static_cast<f32>(proceduralFace.GetTimeStamp() - lastInterpTime) /
+                                                 static_cast<f32>(nextTime - lastInterpTime)));
+        
+        proceduralFace.Interpolate(lastFace, nextFace, blendFraction);
+        
+        // Add this procedural face as a keyframe in the live animation
+        ProceduralFaceKeyFrame kf(proceduralFace);
+        kf.SetIsLive(true);
+        if(RESULT_OK != _liveAnimation.AddKeyFrame(kf)) {
+          PRINT_NAMED_ERROR("AnimationStreamer.UpdateLiveAnimation.AddFrameFaile", "");
+          return RESULT_FAIL;
+        }
+        ++framesAdded;
       }
       
+#     if DEBUG_ANIMATION_STREAMING
+      PRINT_NAMED_INFO("AnimationStreamer.UpdateLiveAnimation.AddedInterpolatedFaces",
+                       "Added %d interpolated procedural faces from t=[%d,%d]",
+                       framesAdded, lastFace.GetTimeStamp(), nextFace.GetTimeStamp());
+#     endif
+
       robot.MarkProceduralFaceAsSent();
     }
     

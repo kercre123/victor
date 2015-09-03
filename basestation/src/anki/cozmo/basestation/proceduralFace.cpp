@@ -21,10 +21,14 @@ namespace Cozmo {
     _sentToRobot = false;
     _timestamp = 0;
     
-    for(int whichEye=0; whichEye<2; ++whichEye) {
+    for(int iWhichEye=0; iWhichEye<2; ++iWhichEye) {
+      const WhichEye whichEye = static_cast<WhichEye>(iWhichEye);
+      
       _eyeParams[whichEye].fill(0);
-      _eyeParams[whichEye][EyeHeight] = NominalEyeHeight;
-      _eyeParams[whichEye][PupilHeightFraction] = NominalPupilHeightFrac;
+      SetParameter(whichEye, Parameter::EyeWidth, NominalEyeWidth);
+      SetParameter(whichEye, Parameter::EyeHeight, NominalEyeHeight);
+      SetParameter(whichEye, Parameter::PupilHeightFraction, NominalPupilHeightFrac);
+      SetParameter(whichEye, Parameter::PupilWidthFraction, NominalPupilWidthFrac);
     }
   }
 
@@ -36,8 +40,10 @@ namespace Cozmo {
   const ProceduralFace::ValueLimits& ProceduralFace::GetLimits(Parameter param)
   {
     static const std::map<Parameter, ValueLimits> LUT = {
-      {EyeHeight, {0.125f*static_cast<f32>(HEIGHT), 0.667f*static_cast<f32>(HEIGHT)}},
-      {PupilHeightFraction, {0.2f, 0.85f}}
+      {Parameter::EyeHeight, {0.125f*static_cast<f32>(HEIGHT), 0.667f*static_cast<f32>(HEIGHT)}},
+      {Parameter::EyeWidth,  {0.125f*static_cast<f32>(WIDTH), 0.4f*static_cast<f32>(WIDTH)}},
+      {Parameter::PupilHeightFraction, {0.25f, 0.7f}},
+      {Parameter::PupilWidthFraction,  {0.25f, 0.75f}},
     };
     
     auto iter = LUT.find(param);
@@ -50,9 +56,24 @@ namespace Cozmo {
     }
   }
   
-  inline static void DrawEye(cv::Mat_<u8>& faceImg, const cv::Rect& eyeRect, const cv::Rect& pupilRect, bool interlace)
+  void ProceduralFace::DrawEye(WhichEye whichEye, cv::Mat_<u8>& faceImg) const
   {
     static const cv::Rect imgRect(0,0,ProceduralFace::WIDTH, ProceduralFace::HEIGHT);
+    assert(faceImg.rows == ProceduralFace::HEIGHT &&
+           faceImg.cols == ProceduralFace::WIDTH);
+    
+    const Value EyeCenX = (whichEye == Left ? NominalLeftEyeCenX : NominalRightEyeCenX);
+    
+    const Value xEye = EyeCenX-GetParameter(whichEye, Parameter::EyeWidth)/2;
+    const Value yEye = NominalEyeCenY - GetParameter(whichEye, Parameter::EyeHeight)/2;
+    const cv::Rect eyeRect(xEye, yEye, GetParameter(whichEye, Parameter::EyeWidth),
+                           GetParameter(whichEye, Parameter::EyeHeight));
+    
+    const Value pupilHeight = GetParameter(whichEye, Parameter::PupilHeightFraction)*GetParameter(whichEye,Parameter::EyeHeight);
+    const Value pupilWidth  = GetParameter(whichEye, Parameter::PupilWidthFraction)*GetParameter(whichEye,Parameter::EyeWidth);
+    const Value xPupil = EyeCenX + GetParameter(whichEye,Parameter::PupilShiftX) - pupilWidth/2;
+    const Value yPupil = NominalEyeCenY + GetParameter(whichEye,Parameter::PupilShiftY) - pupilHeight*0.5f;
+    const cv::Rect pupilRect(xPupil,yPupil,pupilWidth,pupilHeight);
     
     // Fill eye
     cv::Mat_<u8> roi = faceImg(eyeRect & imgRect);
@@ -69,7 +90,7 @@ namespace Cozmo {
       btmLine[roi.cols-1-j] = 0;
     }
     
-    if(interlace) {
+    if(!ScanlinesAsPostProcess) {
       // Set every other row to 0 to get interlaced appearance
       for(int i=0; i<roi.rows; i+=2) {
         roi.row(i).setTo(0);
@@ -79,6 +100,18 @@ namespace Cozmo {
     // Black out pupil
     roi = faceImg(pupilRect & imgRect);
     roi.setTo(0);
+  } // DrawEye()
+  
+  void ProceduralFace::DrawEyeBrow(WhichEye whichEye, cv::Mat_<u8> &faceImg) const
+  {
+    const Value EyeCenX = (whichEye==Left ? NominalLeftEyeCenX : NominalRightEyeCenX);
+    const float cosAngle = std::cos(DEG_TO_RAD(static_cast<float>(GetParameter(whichEye,Parameter::BrowAngle))));
+    const float sinAngle = std::sin(DEG_TO_RAD(static_cast<float>(GetParameter(whichEye,Parameter::BrowAngle))));
+    const Value x = EyeCenX   + GetParameter(whichEye,Parameter::BrowShiftX);
+    const Value y = NominalEyebrowHeight + GetParameter(whichEye,Parameter::BrowShiftY);
+    const cv::Point leftPoint(x-EyebrowHalfLength*cosAngle, y-EyebrowHalfLength*sinAngle);
+    const cv::Point rightPoint(x+EyebrowHalfLength*cosAngle, y+EyebrowHalfLength*sinAngle);
+    cv::line(faceImg, leftPoint, rightPoint, 255, EyebrowThickness, 4);
   }
   
   cv::Mat_<u8> ProceduralFace::GetFace() const
@@ -86,55 +119,10 @@ namespace Cozmo {
     cv::Mat_<u8> faceImg(HEIGHT, WIDTH);
     faceImg.setTo(0);
     
-    // Draw left eyebrow
-    {
-      const float cosAngle = std::cos(DEG_TO_RAD(static_cast<float>(_eyeParams[Left][BrowAngle])));
-      const float sinAngle = std::sin(DEG_TO_RAD(static_cast<float>(_eyeParams[Left][BrowAngle])));
-      const Value x = NominalLeftEyeCenX   + _eyeParams[Left][BrowShiftX];
-      const Value y = NominalEyebrowHeight + _eyeParams[Left][BrowShiftY];
-      const cv::Point leftPoint(x-EyebrowHalfLength*cosAngle, y-EyebrowHalfLength*sinAngle);
-      const cv::Point rightPoint(x+EyebrowHalfLength*cosAngle, y+EyebrowHalfLength*sinAngle);
-      cv::line(faceImg, leftPoint, rightPoint, 255, EyebrowThickness, 4);
-    }
-    
-    // Draw right eyebrow
-    {
-      const float cosAngle = std::cos(DEG_TO_RAD(static_cast<float>(_eyeParams[Right][BrowAngle])));
-      const float sinAngle = std::sin(DEG_TO_RAD(static_cast<float>(_eyeParams[Right][BrowAngle])));
-      const Value x = NominalRightEyeCenX  + _eyeParams[Right][BrowShiftX];
-      const Value y = NominalEyebrowHeight + _eyeParams[Right][BrowShiftY];
-      const cv::Point leftPoint(x-EyebrowHalfLength*cosAngle, y-EyebrowHalfLength*sinAngle);
-      const cv::Point rightPoint(x+EyebrowHalfLength*cosAngle, y+EyebrowHalfLength*sinAngle);
-      cv::line(faceImg, leftPoint, rightPoint, 255, EyebrowThickness, 4);
-    }
-    
-    // Draw left eye
-    {
-      const Value xEye = NominalLeftEyeCenX-EyeWidth/2;
-      const Value yEye = NominalEyeCenY - _eyeParams[Left][EyeHeight]/2;
-      const cv::Rect eyeRect(xEye, yEye, EyeWidth, _eyeParams[Left][EyeHeight]);
-
-      const Value pupilHeight = _eyeParams[Left][PupilHeightFraction]*_eyeParams[Left][EyeHeight];
-      const Value xPupil = NominalLeftEyeCenX + _eyeParams[Left][PupilShiftX] - PupilWidth/2;
-      const Value yPupil = NominalEyeCenY + _eyeParams[Left][PupilShiftY] - pupilHeight*0.5f;
-      const cv::Rect pupilRect(xPupil,yPupil,PupilWidth,pupilHeight);
-      
-      DrawEye(faceImg, eyeRect, pupilRect, !ScanlinesAsPostProcess);
-    }
-    
-    // Draw right eye
-    {
-      const Value xEye = NominalRightEyeCenX-EyeWidth/2;
-      const Value yEye = NominalEyeCenY - _eyeParams[Right][EyeHeight]/2;
-      const cv::Rect eyeRect(xEye, yEye, EyeWidth, _eyeParams[Right][EyeHeight]);
-      
-      const Value pupilHeight = _eyeParams[Right][PupilHeightFraction]*_eyeParams[Right][EyeHeight];
-      const Value xPupil = NominalRightEyeCenX + _eyeParams[Right][PupilShiftX] - PupilWidth/2;
-      const Value yPupil = NominalEyeCenY + _eyeParams[Right][PupilShiftY] - pupilHeight*0.5f;
-      const cv::Rect pupilRect(xPupil,yPupil,PupilWidth, pupilHeight);
-      
-      DrawEye(faceImg, eyeRect, pupilRect, !ScanlinesAsPostProcess);
-    }
+    DrawEyeBrow(Left, faceImg);
+    DrawEyeBrow(Right, faceImg);
+    DrawEye(Left, faceImg);
+    DrawEye(Right, faceImg);
     
     // Rotate entire face
     if(_faceAngle_deg != 0) {
@@ -210,11 +198,11 @@ namespace Cozmo {
     {
       WhichEye whichEye = static_cast<WhichEye>(iWhichEye);
       
-      for(int iParam=0; iParam < NumParameters; ++iParam)
+      for(int iParam=0; iParam < static_cast<int>(Parameter::NumParameters); ++iParam)
       {
         Parameter param = static_cast<Parameter>(iParam);
         
-        if(param == BrowAngle) {
+        if(param == Parameter::BrowAngle) {
           // Special case: angle blending
           SetParameter(whichEye, param, BlendAngleHelper(face1.GetParameter(whichEye, param),
                                                           face2.GetParameter(whichEye, param),
