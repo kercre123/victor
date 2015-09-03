@@ -254,6 +254,15 @@ namespace AnimationTool.Sequencer
         }
     }
 
+    public class ExtraFaceAnimationProceduralData : ExtraData
+    {
+        public ExtraFaceAnimationProceduralData()
+        {
+            Length = MoveSelectedDataPoints.DELTA_X;
+            Exists = true;
+        }
+    }
+
     public class ExtraBodyMotionData : ExtraData
     {
         protected static Assembly assembly = Assembly.GetExecutingAssembly();

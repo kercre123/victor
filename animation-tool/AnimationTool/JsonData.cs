@@ -76,6 +76,33 @@ namespace AnimationTool
     }
 
     [Serializable]
+    public class FaceAnimationDataPointData : PointData
+    {
+        public const string NAME = "FaceAnimationDataKeyFrame";
+
+        public float faceAngle;
+        public float leftBrowAngle;
+        public float rightBrowAngle;
+        public float leftBrowShiftX;
+        public float rightBrowShiftX;
+        public float leftBrowShiftY;
+        public float rightBrowShiftY;
+        public float leftEyeHeight;
+        public float rightEyeHeight;
+        public float leftPupilHeightFraction;
+        public float rightPupilHeightFraction;
+        public float leftPupilShiftX;
+        public float rightPupilShiftX;
+        public float leftPupilShiftY;
+        public float rightPupilShiftY;
+
+        public FaceAnimationDataPointData()
+        {
+            Name = NAME;
+        }
+    }
+
+    [Serializable]
     public class BodyMotionPointData : PointData
     {
         public object radius_mm;

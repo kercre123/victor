@@ -15,98 +15,17 @@ namespace AnimationTool
         private CheckBox checkBox;
         private TextBox rightTextBox;
 
-        public string LeftLabel
-        {
-            get
-            {
-                return leftLabel.Text;
-            }
+        public string LeftLabel { get { return leftLabel.Text; } set { leftLabel.Text = value; } }
+        public int LeftValue { get { return leftTrackBar.Value; } }
+        public int LeftMinimum { get { return leftTrackBar.Minimum; } set { leftTrackBar.Minimum = value; } }
+        public int LeftMaximum { get { return leftTrackBar.Maximum; } set { leftTrackBar.Maximum = value; } }
 
-            set
-            {
-                leftLabel.Text = value;
-            }
-        }
+        public string RightLabel { get { return rightLabel.Text; } set { rightLabel.Text = value; } }
+        public int RightValue { get { return rightTrackBar.Value; } }
+        public int RightMinimum { get { return rightTrackBar.Minimum; } set { rightTrackBar.Minimum = value; } }
+        public int RightMaximum { get { return rightTrackBar.Maximum; } set { rightTrackBar.Maximum = value; } }
 
-        public int LeftMinimum
-        {
-            get
-            {
-                return leftTrackBar.Minimum;
-            }
-
-            set
-            {
-                leftTrackBar.Minimum = value;
-            }
-        }
-
-        public int LeftMaximum
-        {
-            get
-            {
-                return leftTrackBar.Maximum;
-            }
-
-            set
-            {
-                leftTrackBar.Maximum = value;
-            }
-        }
-
-        public string RightLabel
-        {
-            get
-            {
-                return rightLabel.Text;
-            }
-
-            set
-            {
-                rightLabel.Text = value;
-            }
-        }
-
-        public int RightMinimum
-        {
-            get
-            {
-                return rightTrackBar.Minimum;
-            }
-
-            set
-            {
-                rightTrackBar.Minimum = value;
-            }
-        }
-
-        public int RightMaximum
-        {
-            get
-            {
-                return rightTrackBar.Maximum;
-            }
-
-            set
-            {
-                rightTrackBar.Maximum = value;
-            }
-        }
-
-        public bool CheckBoxVisible
-        {
-            get
-            {
-                return checkBox.Visible && checkBox.Enabled;
-            }
-
-            set
-            {
-                checkBox.Visible = value;
-                checkBox.Enabled = value;
-                checkBox.Checked = value;
-            }
-        }
+        public bool CheckBoxVisible { get { return checkBox.Visible; } set { checkBox.Visible = value; } }
 
         public FaceTrackBarForm()
         {
@@ -115,6 +34,7 @@ namespace AnimationTool
 
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FaceTrackBarForm));
             this.leftTextBox = new System.Windows.Forms.TextBox();
             this.leftTrackBar = new System.Windows.Forms.TrackBar();
             this.leftLabel = new System.Windows.Forms.Label();
@@ -133,7 +53,7 @@ namespace AnimationTool
             this.leftTextBox.Size = new System.Drawing.Size(30, 20);
             this.leftTextBox.TabIndex = 0;
             this.leftTextBox.Text = "000";
-            this.leftTextBox.TextChanged += new System.EventHandler(this.textBox_TextChanged);
+            this.leftTextBox.TextChanged += new System.EventHandler(this.LeftTextBox_TextChanged);
             // 
             // leftTrackBar
             // 
@@ -145,6 +65,7 @@ namespace AnimationTool
             this.leftTrackBar.Size = new System.Drawing.Size(200, 45);
             this.leftTrackBar.TabIndex = 0;
             this.leftTrackBar.TickStyle = System.Windows.Forms.TickStyle.None;
+            this.leftTrackBar.ValueChanged += new System.EventHandler(this.LeftTrackBar_TextChanged);
             // 
             // leftLabel
             // 
@@ -175,6 +96,7 @@ namespace AnimationTool
             this.rightTrackBar.Size = new System.Drawing.Size(200, 45);
             this.rightTrackBar.TabIndex = 0;
             this.rightTrackBar.TickStyle = System.Windows.Forms.TickStyle.None;
+            this.rightTrackBar.ValueChanged += new System.EventHandler(this.RightTrackBar_TextChanged);
             // 
             // rightTextBox
             // 
@@ -183,10 +105,13 @@ namespace AnimationTool
             this.rightTextBox.Size = new System.Drawing.Size(30, 20);
             this.rightTextBox.TabIndex = 4;
             this.rightTextBox.Text = "000";
+            this.rightTextBox.TextChanged += new System.EventHandler(this.RightTextBox_TextChanged);
             // 
             // checkBox
             // 
             this.checkBox.AutoSize = true;
+            this.checkBox.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("checkBox.BackgroundImage")));
+            this.checkBox.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
             this.checkBox.Checked = true;
             this.checkBox.CheckState = System.Windows.Forms.CheckState.Checked;
             this.checkBox.Location = new System.Drawing.Point(235, 20);
@@ -198,6 +123,7 @@ namespace AnimationTool
             // FaceTrackBarForm
             // 
             this.BackColor = System.Drawing.SystemColors.Control;
+            this.ClientSize = new System.Drawing.Size(464, 61);
             this.Controls.Add(this.checkBox);
             this.Controls.Add(this.rightLabel);
             this.Controls.Add(this.rightTrackBar);
@@ -205,20 +131,69 @@ namespace AnimationTool
             this.Controls.Add(this.leftLabel);
             this.Controls.Add(this.leftTrackBar);
             this.Controls.Add(this.leftTextBox);
-            this.Name = "FacePanel";
-            this.Size = new System.Drawing.Size(480, 50);
+            this.Name = "FaceTrackBarForm";
             ((System.ComponentModel.ISupportInitialize)(this.leftTrackBar)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.rightTrackBar)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
-
         }
 
-        private void textBox_TextChanged(object sender, EventArgs e)
+        private void LeftTrackBar_TextChanged(object sender, EventArgs e)
+        {
+            if (leftTextBox.Text != leftTrackBar.Value.ToString())
+            {
+                leftTextBox.Text = leftTrackBar.Value.ToString();
+
+                if (checkBox.Visible && checkBox.Checked)
+                {
+                    rightTextBox.Text = leftTextBox.Text;
+                }
+            }
+        }
+
+        private void RightTrackBar_TextChanged(object sender, EventArgs e)
+        {
+            if (rightTextBox.Text != rightTrackBar.Value.ToString())
+            {
+                rightTextBox.Text = rightTrackBar.Value.ToString();
+
+                if (checkBox.Visible && checkBox.Checked)
+                {
+                    leftTextBox.Text = rightTextBox.Text;
+                }
+            }
+        }
+
+        private void LeftTextBox_TextChanged(object sender, EventArgs e)
         {
             try
             {
-                IPAddress.Parse(this.leftTextBox.Text);
+                if (leftTrackBar.Value != Convert.ToInt32(leftTextBox.Text))
+                {
+                    leftTrackBar.Value = Convert.ToInt32(leftTextBox.Text);
+
+                    if (checkBox.Visible && checkBox.Checked)
+                    {
+                        rightTrackBar.Value = leftTrackBar.Value;
+                    }
+                }
+            }
+            catch (Exception) { }
+        }
+
+        private void RightTextBox_TextChanged(object sender, EventArgs e)
+        {
+            try
+            {
+                if (rightTrackBar.Value != Convert.ToInt32(rightTextBox.Text))
+                {
+                    rightTrackBar.Value = Convert.ToInt32(rightTextBox.Text);
+
+                    if (checkBox.Visible && checkBox.Checked)
+                    {
+                        leftTrackBar.Value = rightTrackBar.Value;
+                    }
+                }
             }
             catch (Exception) { }
         }

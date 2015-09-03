@@ -276,8 +276,6 @@ namespace AnimationTool
 
         private void Sequencer_MouseDown(object sender, MouseEventArgs e)
         {
-            DAS.Debug("called", "");
-
             if (e.Button != MouseButtons.Left) return;
 
             curDataPoint = null;
@@ -341,6 +339,9 @@ namespace AnimationTool
                     case "cAudioDevice":
                         ShowVolumeForm();
                         break;
+                    case "cFaceAnimationData":
+                        ShowFaceDataForm();
+                        break;
                 }
             }
 
@@ -387,10 +388,15 @@ namespace AnimationTool
                     Sequencer.ExtraData extraData = null;
 
                     bool body = false;
+                    bool faceAnimationData = false;
 
                     switch (curChart.Name)
                     {
-                        case "cFaceAnimation":
+                        case "cFaceAnimationData":
+                            faceAnimationData = true;
+                            extraData = new Sequencer.ExtraFaceAnimationProceduralData();
+                            break;
+                        case "cFaceAnimationImage":
                             extraData = Sequencer.ExtraFaceAnimationData.SelectFaceFolder(selectFolder);
                             break;
                         case "cAudioRobot":
@@ -401,7 +407,6 @@ namespace AnimationTool
                             body = true;
                             bodyForm.StartPosition = FormStartPosition.CenterParent;
                             DialogResult result = bodyForm.ShowDialog(curChart);
-                            double maxTime = Sequencer.ExtraData.GetDistanceFromNextRight(curDataPoint, curPoints);
 
                             if (result == DialogResult.OK) // straight
                             {
@@ -438,6 +443,11 @@ namespace AnimationTool
                             curDataPoint = add.dataPoint;
                             ShowBodyForm();
                         }
+                        else if (faceAnimationData)
+                        {
+                            curDataPoint = add.dataPoint;
+                            ShowFaceDataForm();
+                        }
                     }
                 }
                 else
@@ -452,6 +462,14 @@ namespace AnimationTool
             if (volumeForm.Open(extraData.Volume, curChart) == DialogResult.OK)
             {
                 extraData.Volume = volumeForm.Volume;
+            }
+        }
+
+        private void ShowFaceDataForm(Sequencer.ExtraFaceAnimationProceduralData extraData)
+        {
+            if (faceForm.Open() == DialogResult.OK)
+            {
+
             }
         }
 
@@ -490,6 +508,21 @@ namespace AnimationTool
             Sequencer.ExtraAudioData extraData = Sequencer.ExtraData.Entries[curDataPoint.GetCustomProperty(Sequencer.ExtraData.Key)] as Sequencer.ExtraAudioData;
 
             ShowVolumeForm(extraData);
+
+            // Hack: update info 
+            ActionManager.Do(new Sequencer.MoveDataPoint(curDataPoint, curDataPoint.YValues[0] + MoveSelectedDataPoints.DELTA_X));
+            ActionManager.Do(new Sequencer.MoveDataPoint(curDataPoint, curDataPoint.YValues[0] - MoveSelectedDataPoints.DELTA_X));
+
+            curChart.Refresh();
+        }
+
+        private void ShowFaceDataForm()
+        {
+            if (curDataPoint == null || curChart == null) return;
+
+            Sequencer.ExtraFaceAnimationProceduralData extraData = Sequencer.ExtraData.Entries[curDataPoint.GetCustomProperty(Sequencer.ExtraData.Key)] as Sequencer.ExtraFaceAnimationProceduralData;
+
+            ShowFaceDataForm(extraData);
 
             // Hack: update info 
             ActionManager.Do(new Sequencer.MoveDataPoint(curDataPoint, curDataPoint.YValues[0] + MoveSelectedDataPoints.DELTA_X));

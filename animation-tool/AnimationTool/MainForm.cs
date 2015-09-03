@@ -18,6 +18,7 @@ namespace AnimationTool
         StraightForm straightForm;
         ArcForm arcForm;
         TurnInPlaceForm turnInPlaceForm;
+        FaceForm faceForm;
         IPForm ipForm;
 
         OpenFileDialog openFile;
@@ -78,6 +79,7 @@ namespace AnimationTool
             ActionManager singleton = new ActionManager();
             changeDurationForm = new ChangeDurationForm();
             ipForm = new IPForm();
+            faceForm = new FaceForm();
             bodyForm = new BodyForm();
             volumeForm = new VolumeForm();
             straightForm = new StraightForm();
