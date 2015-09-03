@@ -23,3 +23,5 @@ EditorBuildSettings:
     path: Assets/Scenes/FaceReaction.unity
   - enabled: 1
     path: Assets/Scenes/CozmoWalker.unity
+  - enabled: 1
+    path: Assets/Scenes/ShakeShake.unity
