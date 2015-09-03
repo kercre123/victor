@@ -30,6 +30,7 @@ protected:
 
   virtual void HandleImageChunk(ExternalInterface::ImageChunk const& msg) override;
   virtual void HandleRobotObservedObject(ExternalInterface::RobotObservedObject const& msg) override;
+  virtual void HandleRobotObservedFace(ExternalInterface::RobotObservedFace const& msg) override;
   
 }; // class WebotsKeyboardController
 } // namespace Cozmo
