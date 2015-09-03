@@ -91,12 +91,52 @@ namespace Anki {
         return LookupTable_[msgID].size;
       }
 
+      
+      // Checks whitelist of all messages that are allowed to
+      // be processed while the robot is picked up.
+      bool IgnoreMessageDuringPickup(const ID msgID) {
+        
+        if (!IMUFilter::IsPickedUp()) {
+          return false;
+        }
+        
+        switch(msgID) {
+          case MoveHead_ID:
+          case SetHeadAngle_ID:
+          case StopAllMotors_ID:
+          case ClearPath_ID:
+          case AbsLocalizationUpdate_ID:
+          case SyncTime_ID:
+          case HeadAngleUpdate_ID:
+          case ImageRequest_ID:
+          case SetHeadlight_ID:
+          case SetDefaultLights_ID:
+          case SetWheelControllerGains_ID:
+          case SetLiftControllerGains_ID:
+          case SetHeadControllerGains_ID:
+          case SetSteeringControllerGains_ID:
+          case SetCarryState_ID:
+          case SetBackpackLights_ID:
+          case SetBlockLights_ID:
+          case FlashBlockIDs_ID:
+          case SetBlockBeingCarried_ID:
+            return false;
+            
+          default:
+            break;
+        }
+        
+        return true;
+      }
+      
       void ProcessMessage(const ID msgID, const u8* buffer)
       {
         if(LookupTable_[msgID].dispatchFcn != NULL) {
           //PRINT("ProcessMessage(): Dispatching message with ID=%d.\n", msgID);
 
-          (*LookupTable_[msgID].dispatchFcn)(buffer);
+          if (!IgnoreMessageDuringPickup(msgID)) {
+            (*LookupTable_[msgID].dispatchFcn)(buffer);
+          }
 
           // Treat any message as a ping
           lastPingTime_ = HAL::GetTimeStamp();

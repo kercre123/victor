@@ -18,7 +18,7 @@ namespace Anki {
 #if(1)
     // Cozmo v4 #1
     const f32 HEAD_CAM_YAW_CORR = DEG_TO_RAD_F32(0.f);
-    const f32 HEAD_CAM_PITCH_CORR = DEG_TO_RAD_F32(-2.f);
+    const f32 HEAD_CAM_PITCH_CORR = DEG_TO_RAD_F32(2.f);
     const f32 HEAD_CAM_ROLL_CORR = DEG_TO_RAD_F32(0.f);
     const f32 HEAD_CAM_TRANS_X_CORR = -1.f;
 

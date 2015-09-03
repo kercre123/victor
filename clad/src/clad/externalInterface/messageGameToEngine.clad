@@ -6,6 +6,7 @@
 #include "clad/types/actionTypes.clad"
 #include "clad/types/imageTypes.clad"
 #include "clad/types/robotTestModes.clad"
+#include "clad/types/proceduralEyeParameters.clad"
 #include "clad/externalInterface/messageShared.clad"
 
 namespace Anki {
@@ -77,6 +78,18 @@ message FaceObject {
     float_32 maxTurnAngle,
     uint_8   robotID,
     uint_8   headTrackWhenDone
+}
+
+// FacePose
+//  Tell the robot to turn and tilt his head to face a give 3D pose in world
+//  coordinates.
+message FacePose {
+    float_32 world_x,
+    float_32 world_y,
+    float_32 world_z,
+    float_32 turnAngleTol,
+    float_32 maxTurnAngle,
+    uint_8   robotID
 }
 
 // MoveHead
@@ -448,6 +461,14 @@ message TapBlockOnGround {
   uint_8   numTaps
 }
 
+// DisplayProceduralFace
+message DisplayProceduralFace {
+  float_32 faceAngle,        // Degrees
+  float_32 leftEye[uint_8],  // TODO: make this fixed length = ProceduralEyeParameter::NumParameters
+  float_32 rightEye[uint_8], //
+  uint_8   robotID
+}
+
 // VisualizeQuad
 //  Draws the specified quadrilateral using the Visualization system.
 //  The quadID will be created if new or replaced if it already exists (i.e., you
@@ -477,6 +498,7 @@ message EraseQuad {
 
 structure RobotActionUnion {
   FaceObject         faceObject,
+  FacePose           facePose,
   GotoPose           goToPose,
   GotoObject         goToObject,
   PlayAnimation      playAnimation,

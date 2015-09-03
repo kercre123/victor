@@ -248,13 +248,13 @@ namespace Cozmo {
           const f32 distanceNorm = 1.f;// face->GetIntraEyeDistance() / _baselineIntraEyeDistance;
           
           // Map current eyebrow heights onto Cozmo's face, based on measured baseline values
-          const f32 distLeftEyeTopToImageTop = static_cast<f32>(ProceduralFace::NominalEyeCenY - _crntProceduralFace.GetParameter(ProceduralFace::WhichEye::Left, ProceduralFace::EyeHeight)/2);
+          const f32 distLeftEyeTopToImageTop = static_cast<f32>(ProceduralFace::NominalEyeCenY - _crntProceduralFace.GetParameter(ProceduralFace::WhichEye::Left, ProceduralFace::Parameter::EyeHeight)/2);
           _crntProceduralFace.SetParameter(ProceduralFace::WhichEye::Left,
                                            ProceduralFace::Parameter::BrowShiftY,
                                            (_baselineLeftEyebrowHeight-leftEyebrowHeight)/_baselineLeftEyebrowHeight *
                                            distLeftEyeTopToImageTop * distanceNorm);
           
-          const f32 distRightEyeTopToImageTop = static_cast<f32>(ProceduralFace::NominalEyeCenY - _crntProceduralFace.GetParameter(ProceduralFace::WhichEye::Left, ProceduralFace::EyeHeight)/2);
+          const f32 distRightEyeTopToImageTop = static_cast<f32>(ProceduralFace::NominalEyeCenY - _crntProceduralFace.GetParameter(ProceduralFace::WhichEye::Left, ProceduralFace::Parameter::EyeHeight)/2);
           _crntProceduralFace.SetParameter(ProceduralFace::WhichEye::Right,
                                            ProceduralFace::Parameter::BrowShiftY,
                                            (_baselineRightEyebrowHeight-rightEyebrowHeight)/_baselineRightEyebrowHeight *

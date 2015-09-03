@@ -41,6 +41,12 @@ message GoalPose
   bool followingMarkerNormal, 
 }
 
+message DataDump
+{
+  uint_32 id,
+  uint_8  data[uint_8],
+}
+
 // ----- Active object messages ------
 
 message ActiveObjectMoved
@@ -91,6 +97,8 @@ union RobotToEngine {
   ActiveObjectMoved          activeObjectMoved   = 0x05,
   ActiveObjectStoppedMoving  activeObjectStopped = 0x06,
   ActiveObjectTapped         activeObjectTapped  = 0x07,
+  DataDump                   dataDump            = 0x08,
+  
   // From WiFi 0x80 to 0xFE
   AnimationState             animState           = 0x80,
   PrintText                  printText           = 0x81,

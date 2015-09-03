@@ -12,6 +12,7 @@
 
 #include <ode/ode.h>
 #include <plugins/physics.h>
+#include <GLUT/GLUT.h>
 
 #include "cozmo_physics.h"
 #include <map>
@@ -369,6 +370,21 @@ void webots_physics_step() {
 }
 
 
+void drawTextAtOffset(std::string s, float x_off, float y_off, float z_off)
+{
+  glPushMatrix();
+  glTranslatef(x_off, y_off, z_off);
+  glRasterPos2i(0,0);
+  void * font = GLUT_BITMAP_9_BY_15;
+  for (std::string::iterator i = s.begin(); i != s.end(); ++i)
+  {
+    char c = *i;
+    glutBitmapCharacter(font, c);
+  }
+  glPopMatrix();
+}
+
+
 void draw_cuboid(float x_dim, float y_dim, float z_dim)
 {
   
@@ -661,9 +677,14 @@ void webots_physics_draw(int pass, const char *view) {
           draw_robot(Anki::Cozmo::VIZ_ROBOT_MARKER_SMALL_TRIANGLE);
           break;
         case Anki::Cozmo::VIZ_OBJECT_CUBOID:
+        {
           draw_cuboid(obj->x_size_m, obj->y_size_m, obj->z_size_m);
           
-          
+          // Object ID label
+          std::string idString = std::to_string(obj->objectID - Anki::Cozmo::VizObjectBaseID[Anki::Cozmo::VIZ_OBJECT_CUBOID]);
+          drawTextAtOffset(idString, 0.6*obj->x_size_m, 0.6*obj->y_size_m, 0.6*obj->z_size_m);
+          drawTextAtOffset(idString, -0.6*obj->x_size_m, -0.6*obj->y_size_m, -0.6*obj->z_size_m);
+
           // AXES:
           glColor4ub(255, 0, 0, 255);
           glBegin(GL_LINES);
@@ -684,6 +705,7 @@ void webots_physics_draw(int pass, const char *view) {
           glEnd();
           
           break;
+        }
         case Anki::Cozmo::VIZ_OBJECT_RAMP:
         {
           float slopeLength = obj->params[0]*obj->x_size_m;

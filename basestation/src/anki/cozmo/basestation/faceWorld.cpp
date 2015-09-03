@@ -65,6 +65,19 @@ namespace Cozmo {
   
   Result FaceWorld::AddOrUpdateFace(Vision::TrackedFace& face)
   {
+    // The incoming TrackedFace is w.r.t. the arbitrary historical camera
+    // that observed it. Make w.r.t. robot world origin now:
+    if(face.GetHeadPose().GetParent() == nullptr || face.GetHeadPose().GetParent()->IsOrigin())
+    {
+      PRINT_NAMED_ERROR("FaceWorld.AddOrUpdateFace.BadPoseParent",
+                        "TrackedFace's head pose parent should not be null or an origin.");
+      return RESULT_FAIL;
+    }
+    Pose3d headPose = face.GetHeadPose().GetWithRespectToOrigin(); // w.r.t. *historical* origin!
+    headPose.SetParent(_robot.GetWorldOrigin()); // transfer to robot world origin
+
+    face.SetHeadPose(headPose);
+
     auto insertResult = _knownFaces.insert({face.GetID(), face});
     
     if(insertResult.second) {
@@ -77,9 +90,9 @@ namespace Cozmo {
     // Draw 3D face
     static const Point3f humanHeadSize{148.f, 225.f, 195.f};
     KnownFace& knownFace = insertResult.first->second;
-    Pose3d vizPose = knownFace.face.GetHeadPose().GetWithRespectToOrigin();
     knownFace.vizHandle = VizManager::getInstance()->DrawHumanHead(static_cast<u32>(knownFace.face.GetID()),
-                                                                   humanHeadSize, vizPose,
+                                                                   humanHeadSize,
+                                                                   knownFace.face.GetHeadPose(),
                                                                    NamedColors::GREEN);
     
     if((_robot.GetTrackToFace() != Vision::TrackedFace::UnknownFace) &&
@@ -89,8 +102,22 @@ namespace Cozmo {
       //UpdateFaceTracking(face);
     }
     
-    // Send out an event about this face
-    _robot.GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotObservedFace(face.GetID(), _robot.GetID())));
+    // Send out an event about this face being observed
+    if(_robot.HasExternalInterface())
+    {
+      using namespace ExternalInterface;
+      const Vec3f& trans = face.GetHeadPose().GetTranslation();
+      const UnitQuaternion<f32>& q = face.GetHeadPose().GetRotation().GetQuaternion();
+      _robot.GetExternalInterface()->Broadcast(MessageEngineToGame(RobotObservedFace(face.GetID(),
+                                                                                     _robot.GetID(),
+                                                                                     trans.x(),
+                                                                                     trans.y(),
+                                                                                     trans.z(),
+                                                                                     q.w(),
+                                                                                     q.x(),
+                                                                                     q.y(),
+                                                                                     q.z())));
+    }
 
     return RESULT_OK;
   }
@@ -107,8 +134,14 @@ namespace Cozmo {
                          faceIter->first, _robot.GetLastImageTimeStamp(),
                          faceIter->second.face.GetTimeStamp());
         
+        if(_robot.GetExternalInterface()) {
+          using namespace ExternalInterface;
+          _robot.GetExternalInterface()->Broadcast(MessageEngineToGame(RobotDeletedFace(faceIter->second.face.GetID(), _robot.GetID())));
+        }
+        
         VizManager::getInstance()->EraseVizObject(faceIter->second.vizHandle);
         faceIter = _knownFaces.erase(faceIter);
+
       } else {
         ++faceIter;
       }

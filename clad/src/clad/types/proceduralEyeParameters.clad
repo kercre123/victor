@@ -1,0 +1,25 @@
+// Procedural eye parameter  definition file
+//  for the C-Like Abstract Data language
+// Author: Andrew Stein
+// Copyright: Anki Inc (c) 2015
+
+namespace Anki {
+namespace Cozmo {
+
+// These are the names of procedural eye parameters we can control on Cozmo's face.
+enum uint_8 ProceduralEyeParameter {
+    BrowAngle=0, // Degrees
+    BrowShiftX,  // From nominal position
+    BrowShiftY,  //    "
+    EyeHeight,
+    EyeWidth,
+    PupilWidthFraction,  // Relative to current eye width
+    PupilHeightFraction, // Relative to current eye height
+    PupilShiftX, // From nominal position
+    PupilShiftY, //   "
+
+    NumParameters
+}
+
+} // namespace Cozmo
+} // namespace Anki

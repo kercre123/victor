@@ -3,6 +3,7 @@
 
 #include "anki/common/types.h"
 #include "anki/cozmo/basestation/faceAnimationManager.h"
+#include "clad/types/proceduralEyeParameters.h"
 
 #include <opencv2/core/core.hpp>
 
@@ -32,9 +33,9 @@ namespace Cozmo {
     static constexpr Value NominalEyeCenY        = 0.667f*static_cast<f32>(HEIGHT);
     static constexpr Value NominalEyeHeight      = 0.5f*static_cast<f32>(HEIGHT);
     static constexpr Value NominalEyebrowHeight  = 0.6f*(NominalEyeCenY - 0.5f*NominalEyeHeight);
-    static constexpr Value EyeWidth              = 0.333f*static_cast<f32>(WIDTH);
-    static constexpr Value EyebrowHalfLength     = 0.5f*static_cast<f32>(EyeWidth);
-    static constexpr Value PupilWidth            = 0.33f*static_cast<f32>(EyeWidth);
+    static constexpr Value NominalEyeWidth       = 0.333f*static_cast<f32>(WIDTH);
+    static constexpr Value EyebrowHalfLength     = 0.5f*static_cast<f32>(NominalEyeWidth);
+    static constexpr Value NominalPupilWidthFrac = 0.33f;
     static constexpr Value NominalPupilHeightFrac= 0.5f;
     static constexpr Value EyebrowThickness      = 2.f;
     
@@ -42,17 +43,7 @@ namespace Cozmo {
     
     static const bool ScanlinesAsPostProcess = true;
     
-    enum Parameter {
-      BrowAngle = 0, // Degrees
-      BrowShiftX, // From nominal position
-      BrowShiftY, //    "
-      EyeHeight,
-      PupilHeightFraction, // Relative to current eye height
-      PupilShiftX, // From nominal position
-      PupilShiftY, //   "
-      
-      NumParameters
-    };
+    using Parameter = ProceduralEyeParameter;
     
     enum WhichEye {
       Left,
@@ -99,8 +90,11 @@ namespace Cozmo {
     using ValueLimits = std::pair<Value,Value>;
     static const ValueLimits& GetLimits(Parameter param);
     
+    void DrawEye(WhichEye whichEye, cv::Mat_<u8>& faceImg) const;
+    void DrawEyeBrow(WhichEye whichEye, cv::Mat_<u8>& faceImg) const;
+    
     // Container for the parameters for both eyes
-    std::array<std::array<Value, NumParameters>, 2> _eyeParams;
+    std::array<std::array<Value, static_cast<size_t>(Parameter::NumParameters)>, 2> _eyeParams;
     
     Value _faceAngle_deg;
     
@@ -114,12 +108,12 @@ namespace Cozmo {
   inline void ProceduralFace::SetParameter(WhichEye whichEye, Parameter param, Value value)
   {
     const ValueLimits& lims = GetLimits(param);
-    _eyeParams[whichEye][param] = std::max(lims.first, std::min(lims.second, value));
+    _eyeParams[whichEye][static_cast<size_t>(param)] = std::max(lims.first, std::min(lims.second, value));
   }
   
   inline ProceduralFace::Value ProceduralFace::GetParameter(WhichEye whichEye, Parameter param) const
   {
-    return _eyeParams[whichEye][param];
+    return _eyeParams[whichEye][static_cast<size_t>(param)];
   }
   
   inline ProceduralFace::Value ProceduralFace::GetFaceAngle() const {

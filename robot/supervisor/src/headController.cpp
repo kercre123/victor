@@ -14,7 +14,7 @@ namespace HeadController {
     namespace {
       
       // TODO: Ideally, this value should be calibrated
-      const Radians HEAD_CAL_OFFSET = DEG_TO_RAD(3);
+      const Radians HEAD_CAL_OFFSET = DEG_TO_RAD(0);
       
       const Radians ANGLE_TOLERANCE = DEG_TO_RAD(2.f);
       

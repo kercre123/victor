@@ -12,6 +12,7 @@
 
 #include "util/logging/logging.h"
 #include "anki/common/basestation/array2d_impl.h"
+#include "anki/common/basestation/utils/helpers/printByteArray.h"
 #include "anki/vision/CameraSettings.h"
 #include "anki/vision/basestation/image.h"
 #include "anki/cozmo/basestation/blockWorld.h"
@@ -594,6 +595,15 @@ namespace Anki {
       return RESULT_OK;
     }
 
+    Result RobotMessageHandler::ProcessMessage(Robot* robot, MessageDataDump const& msg)
+    {
+      char buf[msg.size * 2 + 1];
+      FormatBytesAsHex((char *)msg.data.data(), std::min((int)msg.size, (int)msg.data.size()), buf, (int)sizeof(buf));
+      PRINT_NAMED_INFO("RobotMessageHandler.ProcessMessage.MessageDataDump", "ID: %d, size: %d, data: %s", msg.id, msg.size, buf);
+
+      return RESULT_OK;
+    }
+    
     Result RobotMessageHandler::ProcessMessage(Robot* robot, MessageBlockIDFlashStarted const& msg)
     {
       printf("TODO: MessageBlockIDFlashStarted at time %d ms\n", msg.timestamp);
