@@ -135,7 +135,8 @@ public class VortexController : GameController {
   [SerializeField] float cozmoTimePerTap = 1.25f;
   [SerializeField] float cozmoPredicitveLeadTime = 5f;
   [SerializeField] float cozmoExpectationDelay = 1f;
-  public CozmoUtil.RobotPose[] robotPoses = new CozmoUtil.RobotPose[3];
+  public CozmoUtil.RobotPose[] defaultRobotPoses = new CozmoUtil.RobotPose[3];
+  public Face[] actualFaces = new Face[3];
 
   #endregion
 
@@ -348,6 +349,10 @@ public class VortexController : GameController {
       playerInputs.Add(new VortexInput());
 
     playAgainButton.gameObject.SetActive(false);
+
+    for (int i = 0; i < actualFaces.Length; i++) {
+      actualFaces[i] = null;
+    }
   }
 
   protected override void OnDisable() {
@@ -987,7 +992,14 @@ public class VortexController : GameController {
     }
     else {
       wheel.Unlock();
-      CozmoEmotionManager.instance.SetEmotionTurnInPlace("YOUR_TURN", GetPoseFromPlayerIndex(currentPlayerIndex).rad, true, true, true);
+      if (actualFaces[GetPoseIndex(currentPlayerIndex)] != null) {
+        Debug.Log("should be tracking to head");
+        robot.FacePose(actualFaces[GetPoseIndex(currentPlayerIndex)]);
+      }
+      else {
+        Debug.Log("should be tracking to default");
+        CozmoEmotionManager.instance.SetEmotionTurnInPlace("YOUR_TURN", GetPoseFromPlayerIndex(currentPlayerIndex).rad, true, true, true);
+      }
       // setting the head angle to ~35 degrees
       robot.SetHeadAngle(.61f, true);
     }
@@ -1064,7 +1076,7 @@ public class VortexController : GameController {
 
   CozmoUtil.RobotPose GetPoseFromPlayerIndex(int playerIndex) {
 
-    return robotPoses[GetPoseIndex(playerIndex)];
+    return defaultRobotPoses[GetPoseIndex(playerIndex)];
   }
 
   void Update_REQUEST_SPIN() {
@@ -1116,25 +1128,24 @@ public class VortexController : GameController {
       // only note faces when within 45 degrees of desired rotation
       float current = robot.poseAngle_rad;
       float target = GetPoseFromPlayerIndex(currentPlayerIndex).rad;
-      float angle_between = Mathf.Atan2(Mathf.Sin(current - target), Mathf.Cos(current - target));
+      //float angle_between = Mathf.Atan2 (Mathf.Sin (current - target), Mathf.Cos (current - target));
       //DAS.Debug("Vortex", "angle_between " + angle_between);
       float diff = Mathf.Abs(current - target);
-      angle_between = diff > Mathf.PI ? diff - 2 * Mathf.PI : diff;
+      float angle_between = diff > Mathf.PI ? diff - 2 * Mathf.PI : diff;
       //DAS.Debug("Vortex", "angle_between2 " + angle_between);
       if (Mathf.Abs(angle_between) < (Mathf.PI / 4.0f)) {
-        for (int i = 0; i < robot.markersVisibleObjects.Count; ++i) {
-          if (robot.markersVisibleObjects[i].isFace) {
-            //get angle to that and set robotpos
-            Vector3 target_pos = new Vector3(robot.markersVisibleObjects[i].WorldPosition.x, robot.markersVisibleObjects[i].WorldPosition.y, 0);
-            Vector3 robot_pos = new Vector3(robot.WorldPosition.x, robot.WorldPosition.y, 0);
-            Vector3 to_target = target_pos - robot_pos;
-            to_target = to_target.normalized;
-            robotPoses[GetPoseIndex(currentPlayerIndex)].rad = Mathf.Acos(Vector3.Dot(Vector3.right, to_target));
-            DAS.Debug("Vortex", "Setting desired rad to " + robotPoses[GetPoseIndex(currentPlayerIndex)].rad);
+        for (int i = 0; i < robot.faceObjects.Count; ++i) {
+          // check the angle, with z flattened
+          Face face = robot.faceObjects[i];
+          Vector2 cozmoToFace = new Vector3(face.WorldPosition.x - robot.WorldPosition.x, face.WorldPosition.y - robot.WorldPosition.y);
+          Vector2 root_dir = MathUtil.RotateVector2d(Vector2.right, GetPoseFromPlayerIndex(currentPlayerIndex).rad);
+          float face_angle_diff = Mathf.Acos(Vector2.Dot(cozmoToFace, root_dir));
+          if (face_angle_diff < (Mathf.PI / 4.0f)) {
+            actualFaces[GetPoseIndex(currentPlayerIndex)] = face;
+            Debug.Log("found a face");
           }
         }
       }
-
     }
 
     int newNumber = wheel.GetDisplayedNumber();
@@ -1170,7 +1181,7 @@ public class VortexController : GameController {
       SetRobotEmotion("WATCH_SPIN", false, false);
     }
     else {
-      CozmoEmotionManager.instance.SetEmotionTurnInPlace("WATCH_SPIN", robotPoses[0].rad, true, false, true);
+      CozmoEmotionManager.instance.SetEmotionTurnInPlace("WATCH_SPIN", defaultRobotPoses[0].rad, true, false, true);
     }
 
     lightingBall.Radius = wheelLightningRadii[currentWheelIndex];
@@ -1911,7 +1922,7 @@ public class VortexController : GameController {
         }
       }
       else { //try again to go to the start spot
-        robot.GotoPose(robotPoses[0].x_mm, robotPoses[0].y_mm, robotPoses[0].rad);
+        robot.GotoPose(defaultRobotPoses[0].x_mm, defaultRobotPoses[0].y_mm, defaultRobotPoses[0].rad);
       }
       break;
     case RobotActionType.DRIVE_TO_POSE:
@@ -1921,7 +1932,7 @@ public class VortexController : GameController {
           RobotEngineManager.instance.SuccessOrFailure -= CheckForGotoStartCompletion;
       }
       else { //try again to go to the start spot
-        robot.GotoPose(robotPoses[0].x_mm, robotPoses[0].y_mm, robotPoses[0].rad);
+        robot.GotoPose(defaultRobotPoses[0].x_mm, defaultRobotPoses[0].y_mm, defaultRobotPoses[0].rad);
       }
       break;
     }
@@ -2043,11 +2054,11 @@ public class VortexController : GameController {
       float[] rads = new float [3]{ (3.0f * Mathf.PI) / 2.0f, 0f, Mathf.PI };
       float mark_rad = robot.poseAngle_rad + rads[i];
       mark_rad = mark_rad < 2.0f * Mathf.PI ? mark_rad : mark_rad - 2.0f * Mathf.PI;
-      robotPoses[i].rad = mark_rad;
+      defaultRobotPoses[i].rad = mark_rad;
       Vector2 cozmo_desired_facing = MathUtil.RotateVector2d(Vector3.right, mark_rad);
       Vector2 offset = new Vector2(robot.WorldPosition.x, robot.WorldPosition.y) - (50 * cozmo_desired_facing.normalized);
-      robotPoses[i].x_mm = offset.x;
-      robotPoses[i].y_mm = offset.y;
+      defaultRobotPoses[i].x_mm = offset.x;
+      defaultRobotPoses[i].y_mm = offset.y;
     }
   }
 
