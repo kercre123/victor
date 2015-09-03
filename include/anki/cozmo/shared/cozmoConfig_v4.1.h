@@ -17,7 +17,7 @@ const f32 WHEEL_BASE_MM      = 48.f;
 // located for the treaded robot when not carrying a block.
 // (If you were to model the treaded robot as a two-wheel robot,
 // the drive center is the location between the two wheels)
-const f32 DRIVE_CENTER_OFFSET = -15.f;
+const f32 DRIVE_CENTER_OFFSET = -17.f;
 
 // The height of the lift (specifically upper wrist joint) at various configurations
 // Actual limit in proto is closer to 20.4mm, but there is a weird
@@ -27,16 +27,16 @@ const f32 DRIVE_CENTER_OFFSET = -15.f;
 
 // Cozmo v3.2, with clutch-less lift and stronger motor
 // These are heights of the wrist joint.
-const f32 LIFT_HEIGHT_LOWDOCK  = 30.f;
-const f32 LIFT_HEIGHT_HIGHDOCK = 76.f;
-const f32 LIFT_HEIGHT_CARRY    = 92.f;
-const f32 LIFT_HEIGHT_LOW_ROLL = 68.f;
+const f32 LIFT_HEIGHT_LOWDOCK  = 33.f;
+const f32 LIFT_HEIGHT_HIGHDOCK = 83.f; // 76.f;
+const f32 LIFT_HEIGHT_CARRY    = 97.f; // 92.f;
+const f32 LIFT_HEIGHT_LOW_ROLL = 73.f; // 68.f;
 
 // Distance between the robot origin and the distance along the robot's x-axis
 // to the lift when it is in the low docking position.
-const f32 ORIGIN_TO_LOW_LIFT_DIST_MM = 16.f;
-const f32 ORIGIN_TO_HIGH_LIFT_DIST_MM = 13.f;
-const f32 ORIGIN_TO_HIGH_PLACEMENT_DIST_MM = 16.f;
+const f32 ORIGIN_TO_LOW_LIFT_DIST_MM = 20.f;
+const f32 ORIGIN_TO_HIGH_LIFT_DIST_MM = 17.f;
+const f32 ORIGIN_TO_HIGH_PLACEMENT_DIST_MM = 20.f;
 const f32 ORIGIN_TO_LOW_ROLL_DIST_MM = 13.f;
 
 // Distance between the lift shoulder joint and the lift "wrist" joint where arm attaches to fork assembly
@@ -63,7 +63,7 @@ const f32 NECK_JOINT_POSITION[3] = {-13.f, 0.f, 34.5f + WHEEL_RAD_TO_MM};
 const f32 HEAD_CAM_POSITION[3]   = {17.7f, 0.f, -8.f};
 
 // Upper shoulder joint relative to robot origin
-const f32 LIFT_BASE_POSITION[3]  = {-41.0f, 0.f, 30.5f + WHEEL_RAD_TO_MM};
+const f32 LIFT_BASE_POSITION[3]  = {-41.0f, 0.f, 31.3f + WHEEL_RAD_TO_MM}; // relative to robot origin
 
 // IMU position relative to neck joint
 const f32 IMU_POSITION[3] = {5.8f, 0.f, -13.5f};

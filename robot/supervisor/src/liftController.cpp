@@ -78,8 +78,8 @@ namespace Anki {
         const f32 ANTI_GRAVITY_POWER_BIAS = 0.15f;
 #else
         // Cozmo 4.1 - smooth gearbox
-        f32 Kp_ = 2.3f;    // proportional control constant
-        f32 Kd_ = 3000.f;  // derivative gain
+        f32 Kp_ = 2.5f;    // proportional control constant
+        f32 Kd_ = 400.f;  // derivative gain
         f32 Ki_ = 0.1f;    // integral control constant
         f32 angleErrorSum_ = 0.f;
         f32 MAX_ERROR_SUM = 4.f;
