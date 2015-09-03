@@ -30,6 +30,18 @@
 namespace Anki {
   namespace Cozmo {
     
+    // Base IDs for each VizObject type
+    const u32 VizObjectBaseID[NUM_VIZ_OBJECT_TYPES+1] = {
+      0,    // VIZ_OJECT_ROBOT
+      1000, // VIZ_OBJECT_CUBOID
+      2000, // VIZ_OBJECT_RAMP
+      3000, // VIZ_OBJECT_CHARGER
+      4000, // VIZ_OJECT_PREDOCKPOSE
+      5000, // VIZ_OBJECT_HUMAN_HEAD
+      6000, // VIZ_OBJECT_CAMERA_FACE
+      u32_MAX - 100 // Last valid object ID allowed
+    };
+    
     VizManager* VizManager::_singletonInstance = nullptr;
     
     const VizManager::Handle_t VizManager::INVALID_HANDLE = u32_MAX;

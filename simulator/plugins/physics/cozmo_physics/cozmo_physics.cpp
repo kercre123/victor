@@ -17,7 +17,7 @@
 #include <map>
 #include <vector>
 
-#include "anki/cozmo/shared/VizStructs.h"
+#include "clad/types/vizTypes.h"
 #include "anki/messaging/shared/UdpServer.h"
 
 #include "anki/common/basestation/colorRGBA.h"

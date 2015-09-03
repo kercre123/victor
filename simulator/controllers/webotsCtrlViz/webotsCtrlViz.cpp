@@ -21,7 +21,7 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/cozmo/shared/cozmoTypes.h"
-#include "anki/cozmo/shared/VizStructs.h"
+#include "clad/types/vizTypes.h"
 #include "anki/messaging/shared/UdpServer.h"
 #include "anki/messaging/shared/UdpClient.h"
 #include "anki/vision/CameraSettings.h"

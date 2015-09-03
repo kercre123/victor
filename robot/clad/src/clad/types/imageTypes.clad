@@ -51,7 +51,7 @@ message ImageChunk {
   ImageResolution resolution,
   uint_8 imageChunkCount,
   uint_8 chunkId,
-  uint_8 data[uint_16], // Needs to be limited to 1200
+  uint_8 data[uint_16:1200],
 }
 
 } // namespace Cozmo

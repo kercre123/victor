@@ -5,6 +5,8 @@
 
 #include "clad/types/robotStatusAndActions.clad"
 #include "clad/types/imageTypes.clad"
+#include "clad/types/objectTypes.clad"
+#include "clad/types/vizTypes.clad"
 
 namespace Anki {
 namespace Cozmo {
@@ -13,20 +15,20 @@ namespace Viz {
 // VizObject
 message Object
 {
-  uint_32  objectID,
-  uint_32  objectTypeID,
-  uint_32  color,
-  float_32 x_size_m,
-  float_32 y_size_m,
-  float_32 z_size_m,
-  float_32 x_trans_m,
-  float_32 y_trans_m,
-  float_32 z_trans_m,
-  float_32 rot_deg,
-  float_32 rot_axis_x,
-  float_32 rot_axis_y,
-  float_32 rot_axis_z,
-  float_32 objParameters[4] // for object-specific parameters
+  uint_32    objectID,
+  ObjectType objectTypeID,
+  uint_32    color,
+  float_32   x_size_m,
+  float_32   y_size_m,
+  float_32   z_size_m,
+  float_32   x_trans_m,
+  float_32   y_trans_m,
+  float_32   z_trans_m,
+  float_32   rot_deg,
+  float_32   rot_axis_x,
+  float_32   rot_axis_y,
+  float_32   rot_axis_z,
+  float_32   objParameters[4] // for object-specific parameters
 }
 
 // VizQuad

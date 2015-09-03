@@ -1,7 +1,7 @@
 #include <cstdlib>
 #include "anki/messaging/shared/UdpClient.h"
 #include "anki/cozmo/robot/hal.h"
-#include "anki/cozmo/shared/VizStructs.h"
+#include "clad/types/vizTypes.h"
 #include "anki/cozmo/simulator/robot/sim_viz.h"
 
 namespace Anki {
