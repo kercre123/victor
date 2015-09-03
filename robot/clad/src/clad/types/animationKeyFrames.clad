@@ -55,7 +55,7 @@ namespace AnimKeyFrame {
   
   message FaceImage
   {
-    uint_8 image[uint_16], // Needs to be limited to MAX_FACE_FRAME_SIZE
+    uint_8 image[uint_16:1024], // Needs to be limited to MAX_FACE_FRAME_SIZE
   }
   
   message BackpackLights

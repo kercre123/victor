@@ -5,7 +5,7 @@
 namespace Anki {
 namespace Cozmo {
 
-enum uint_32 RtipTrace
+enum uint_16 RtipTrace
 {
   RTIP_DUMMY_TRACE,
   // Add trace enums with friendly names here.

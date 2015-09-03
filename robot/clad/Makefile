@@ -1,10 +1,12 @@
 # CLAD makefile by Pauley
+# Customized for Robot by Daniel
 
 CLAD_BASE_DIR=../../tools/anki-util/tools/message-buffers
 CLAD_EMITTER_DIR=$(CLAD_BASE_DIR)/emitters
 CLAD_LIB_DIR=$(CLAD_BASE_DIR)/clad
 CLAD_DEPENDENCIES=$(CLAD_LIB_DIR)/*.py
 CLAD_CPP=$(CLAD_EMITTER_DIR)/CPP_emitter.py
+CLAD_CPPLITE=$(CLAD_EMITTER_DIR)/CPPLite_emitter.py
 CLAD_C=$(CLAD_EMITTER_DIR)/C_emitter.py
 CLAD_CSHARP=$(CLAD_EMITTER_DIR)/CSharp_emitter.py
 CLAD_CPP_DECL=$(CLAD_EMITTER_DIR)/specialized/cozmo_CPP_declarations_emitter.py
@@ -38,13 +40,13 @@ cpp: $(OUTPUT_H_AND_CPP)
 
 c: $(OUTPUT_H_AND_C)
 
-%.h %.cpp : %.clad $(CLAD_DEPENDENCIES) $(CLAD_CPP) $(CLAD_CPP_DECL) $(CLAD_CPP_SWITCH)
+%.h %.cpp : %.clad $(CLAD_DEPENDENCIES) $(CLAD_CPPLITE) $(CLAD_CPP_DECL) $(CLAD_CPP_SWITCH)
 	#mkdir -p $(OUTPUT_DIR)/engine/$(dir $<)
 	if test -f $(OUTPUT_DIR)engine/$*.h; then chmod -f 777 $(OUTPUT_DIR)engine/$*.h; fi
 	if test -f $(OUTPUT_DIR)engine/$*.cpp; then chmod -f 777 $(OUTPUT_DIR)engine/$*.cpp; fi
-	$(CLAD_CPP) --output-union-helper-constructors -C $(INPUT_DIR) -I $(ROBOT_CLAD_SRC) -o $(OUTPUT_DIR)/engine/ $*.clad
-	$(CLAD_CPP_DECL) -C $(INPUT_DIR) -I $(INCLUDE_DIRS)  -I $(ROBOT_CLAD_SRC) -o $(OUTPUT_DIR)/engine/ $*.clad
-	$(CLAD_CPP_SWITCH) -C $(INPUT_DIR) -I $(INCLUDE_DIRS) -I $(ROBOT_CLAD_SRC) -o $(OUTPUT_DIR)/engine/ $*.clad
+	$(CLAD_CPPLITE)    -C $(INPUT_DIR) -o $(OUTPUT_DIR)/engine/ $*.clad
+	$(CLAD_CPP_DECL)   -C $(INPUT_DIR) -I $(INCLUDE_DIRS) -o $(OUTPUT_DIR)/engine/ $*.clad
+	$(CLAD_CPP_SWITCH) -C $(INPUT_DIR) -I $(INCLUDE_DIRS) -o $(OUTPUT_DIR)/engine/ $*.clad
 	chmod -f 555 $(OUTPUT_DIR)engine/$*.h
 	chmod -f 555 $(OUTPUT_DIR)engine/$*.cpp
 

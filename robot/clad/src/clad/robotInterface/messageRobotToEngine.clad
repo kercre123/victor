@@ -17,14 +17,14 @@ namespace RobotInterface {
 
 message PrintTraceInt
 {
+  int_32    value,
   RtipTrace name,
-  int_32    value
 }
 
 message PrintTraceDouble
 {
+  float_64  value,
   RtipTrace name,
-  float_64  value
 }
 
 message MainCycleTimeError
@@ -47,6 +47,21 @@ message DataDump
   uint_8  data[uint_8],
 }
 
+
+/// *************** WiFi to Engine messages ******************************* ///
+
+message PrintText
+{
+  int_8  logLevel,
+  string text,
+}
+
+message AnimationState {
+  uint_32 timestamp,
+  int_32  numAnimBytesPlayed,
+  RobotStatusFlag status, // RobotStatusFlag packs as a uint_16
+}
+
 // ----- Active object messages ------
 
 message ActiveObjectMoved
@@ -67,18 +82,6 @@ message ActiveObjectTapped
 {
   uint_32 objectID,
   uint_8  numTaps,
-}
-
-message AnimationState {
-  uint_32 timestamp,
-  int_32  numAnimBytesPlayed,
-  RobotStatusFlag status, // RobotStatusFlag packs as a uint_16
-}
-
-message PrintText
-{
-  int_8  logLevel,
-  string text[uint_8],
 }
 
 /// *************** Overall message pipe ******************************* ///

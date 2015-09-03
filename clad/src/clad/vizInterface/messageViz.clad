@@ -226,7 +226,7 @@ message TrackerQuad
 
 message FaceDetection
 {
-  uint 16 x_upperLeft,
+  uint_16 x_upperLeft,
   uint_16 y_upperLeft,
   uint_16 width,
   uint_16 height,
