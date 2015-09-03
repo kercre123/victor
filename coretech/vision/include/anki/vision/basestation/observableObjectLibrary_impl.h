@@ -59,12 +59,12 @@ namespace Vision {
     }
   }
   
-  void ObservableObjectLibrary::CreateObjectsFromMarkers(const std::list<ObservedMarker*>& markers,
-                                                         std::multimap<f32, ObservableObject*>& objectsSeen,
-                                                         const CameraID_t seenOnlyBy) const
+  template<class ObsObjectType>
+  Result ObservableObjectLibrary<ObsObjectType>::CreateObjectsFromMarkers(const std::list<ObservedMarker*>& markers,
+                                                                          std::multimap<f32, ObsObjectType*>& objectsSeen,
+                                                                          const CameraID_t seenOnlyBy) const
   {
-    // Group the markers by object type
-    std::map<ObjectType, std::vector<const ObservedMarker*>> markersWithObjectType;
+    std::map<const ObsObjectType*, std::vector<const ObservedMarker*>> markersByLibObject;
     
     for(auto marker : markers) {
       
@@ -75,52 +75,51 @@ namespace Vision {
       if(seenOnlyBy == ANY_CAMERA || marker->GetSeenBy().GetID() == seenOnlyBy)
       {
         // Find all objects which use this marker...
-        std::set<const ObservableObject*> const& objectsWithMarker = GetObjectsWithMarker(*marker);
+        std::set<const ObsObjectType*> const& objectsWithMarker = GetObjectsWithMarker(*marker);
         
         // ...if there are any, add this marker to the list of observed markers
         // that corresponds to this object type.
         if(!objectsWithMarker.empty()) {
           if(objectsWithMarker.size() > 1) {
-            CORETECH_THROW("Having multiple objects in the library with the "
-                           "same marker is not yet supported.");
-            
-            /*
-             for(auto object : *objectsWithMarker) {
-             markersWithObjectID[object->GetID()].push_back(&marker);
-             }
-             */
+            PRINT_NAMED_ERROR("ObservableObjectLibrary.CreateObjectFromMarkers.MultipleLibObjectsWithMarker",
+                              "Having multiple objects in the library with the "
+                              "same marker ('%s') is not supported.",
+                              marker->GetCodeName());
+            return RESULT_FAIL;
           }
-          markersWithObjectType[(*objectsWithMarker.begin())->GetType()].push_back(marker);
+          markersByLibObject[*objectsWithMarker.begin()].push_back(marker);
+          
           marker->MarkUsed(true);
         } // IF objectsWithMarker != NULL
       } // IF seenOnlyBy
       
     } // For each marker we saw
+
     
     // Now go through each object type we saw a marker for, and use the
     // corresponding observed markers to create a list of possible poses
     // for that object. Then cluster the possible poses into one or more
     // object instances of that type, returned in the "objectsSeen" vector.
-    for(auto & objTypeMarkersPair : markersWithObjectType)
+    for(auto & libObjectMarkersPair : markersByLibObject)
     {
       // A place to store the possible poses together with the observed/known
       // markers that implied them
       std::vector<PoseMatchPair> possiblePoses;
       
-      const Vision::ObservableObject* libObject = GetObjectWithType(objTypeMarkersPair.first);
+      const ObsObjectType* libObject = libObjectMarkersPair.first;
       
       // Get timestamp of the observed markers so that I can set the
       // lastSeenTime of the observable object.
-      auto obsMarker = objTypeMarkersPair.second.begin();
+      auto obsMarker = libObjectMarkersPair.second.begin();
       const TimeStamp_t observedTime = (*obsMarker)->GetTimeStamp();
       
       // Check that all remaining markers also have the same timestamp (which
       // they now should, since we are processing grouped by timestamp)
-      while(++obsMarker != objTypeMarkersPair.second.end()) {
+      while(++obsMarker != libObjectMarkersPair.second.end()) {
         CORETECH_ASSERT(observedTime == (*obsMarker)->GetTimeStamp());
       }
       
-      for(auto obsMarker : objTypeMarkersPair.second)
+      for(auto obsMarker : libObjectMarkersPair.second)
       {
         // For each observed marker, we add to the list of possible poses
         // (each paired with the observed/known marker match from which the
@@ -153,7 +152,7 @@ namespace Vision {
         // its pose to the computed pose, in _historical_ world frame (since
         // it is computed w.r.t. a camera from a pose in history).
         //objectsSeen.push_back(libObject->CloneType());
-        ObservableObject* newObject = libObject->CloneType();
+        ObsObjectType* newObject = libObject->CloneType();
         const f32 observedDistSq = poseCluster.GetPose().GetTranslation().LengthSq();
         Pose3d newPose = poseCluster.GetPose().GetWithRespectToOrigin();
         newObject->SetPose(newPose);
@@ -193,6 +192,7 @@ namespace Vision {
       
     } // FOR each objectType
     
+    return RESULT_OK;
   } // CreateObjectsFromMarkers()
 
 #if 0

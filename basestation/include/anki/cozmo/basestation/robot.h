@@ -109,6 +109,10 @@ namespace Cozmo {
       
     // Set the object we are localized to
     Result                 SetLocalizedTo(const ObservableObject* object);
+    
+    // Get the squared distance to the closest, most recently observed marker
+    // on the object we are localized to
+    f32                    GetLocalizedToDistanceSq() const;
   
     // TODO: Can this be removed in favor of the more general LocalizeToObject() below?
     Result LocalizeToMat(const MatPiece* matSeen, MatPiece* existinMatPiece);

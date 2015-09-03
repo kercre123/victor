@@ -2724,7 +2724,7 @@ namespace Anki {
     void Robot::GetBoundingBox(const Pose3d& atPose, std::array<Point3f,8>& corners,
                                const Point3f& padding_mm) const
     {
-      static const std::array<Point3f,8> CanonicalCorners = {
+      static const std::array<Point3f,8> CanonicalCorners = {{
         Point3f(ROBOT_BOUNDING_X_FRONT, -0.5f*ROBOT_BOUNDING_Y,  0.f),
         Point3f(ROBOT_BOUNDING_X_FRONT,  0.5f*ROBOT_BOUNDING_Y,  0.f),
         Point3f(ROBOT_BOUNDING_X_FRONT, -0.5f*ROBOT_BOUNDING_Y,  ROBOT_BOUNDING_Z),
@@ -2733,7 +2733,7 @@ namespace Anki {
         Point3f(ROBOT_BOUNDING_X_FRONT-ROBOT_BOUNDING_X,  0.5f*ROBOT_BOUNDING_Y,  0.f),
         Point3f(ROBOT_BOUNDING_X_FRONT-ROBOT_BOUNDING_X, -0.5f*ROBOT_BOUNDING_Y,  ROBOT_BOUNDING_Z),
         Point3f(ROBOT_BOUNDING_X_FRONT-ROBOT_BOUNDING_X,  0.5f*ROBOT_BOUNDING_Y,  ROBOT_BOUNDING_Z)
-      };
+      }};
       
       // Start with canonical corners
       std::copy(CanonicalCorners.begin(), CanonicalCorners.end(), corners.begin());

@@ -48,9 +48,9 @@ namespace Anki {
       // to this library will remain.  If seenOnlyBy is not ANY_CAMERA, only markers
       // seen by that camera will be considered and objectSeen poses will be returned
       // wrt to that camera. If seenOnlyBy is ANY_CAMERA, the poses are returned wrt the world.
-      void CreateObjectsFromMarkers(const std::list<ObservedMarker*>& markers,
-                                    std::multimap<f32, ObsObjectType*>& objectsSeen,
-                                    const CameraID_t seenOnlyBy = ANY_CAMERA) const;
+      Result CreateObjectsFromMarkers(const std::list<ObservedMarker*>& markers,
+                                     std::multimap<f32, ObsObjectType*>& objectsSeen,
+                                     const CameraID_t seenOnlyBy = ANY_CAMERA) const;
       
       // Return a pointer to a vector of pointers to known objects with at
       // least one of the specified markers or codes on it. If  there is no

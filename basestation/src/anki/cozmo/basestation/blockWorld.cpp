@@ -235,12 +235,12 @@ namespace Anki
       }
     }
     
-    void BlockWorld::FindOverlappingObjects(const Vision::ObservableObject* objectExisting,
-                                            const std::multimap<f32, Vision::ObservableObject*>& objectsSeen,
-                                            std::vector<Vision::ObservableObject*>& overlappingSeenObjects) const
+    void BlockWorld::FindOverlappingObjects(const ObservableObject* objectExisting,
+                                            const std::multimap<f32, ObservableObject*>& objectsSeen,
+                                            std::vector<ObservableObject*>& overlappingSeenObjects) const
     {
       for(auto objectToCheckPair : objectsSeen) {
-        Vision::ObservableObject* objectToCheck = objectToCheckPair.second;
+        ObservableObject* objectToCheck = objectToCheckPair.second;
         CheckForOverlapHelper(objectExisting, objectToCheck, overlappingSeenObjects);
       }
     }
@@ -314,7 +314,7 @@ namespace Anki
       
       for(auto objSeenPair : objectsSeen) {
 
-        Vision::ObservableObject* objSeen = objSeenPair.second;
+        ObservableObject* objSeen = objSeenPair.second;
         
         //const float minDimSeen = objSeen->GetMinDim();
         
@@ -322,8 +322,8 @@ namespace Anki
         //std::vector<ObservableObject*> overlappingObjects;
         //FindOverlappingObjects(objSeen, objectsExisting, overlappingObjects);
         ObservableObject* matchingObject = FindClosestMatchingObject(*objSeen,
-                                                                             objSeen->GetSameDistanceTolerance(),
-                                                                             objSeen->GetSameAngleTolerance());
+                                                                     objSeen->GetSameDistanceTolerance(),
+                                                                     objSeen->GetSameAngleTolerance());
         
         // If this is the object we're carrying, do nothing and continue to the next observed object
         if ((matchingObject != nullptr) && (matchingObject->GetID() == _robot->GetCarryingObject())) {
@@ -546,7 +546,7 @@ namespace Anki
             if(localizeResult != RESULT_OK) {
               PRINT_NAMED_ERROR("BlockWorld.AddAndUpdateObjects.LocalizeFailure",
                                 "Failed to localize to %s object %d.\n",
-                                matchingObject->GetType().GetName().c_str(),
+                                ObjectTypeToString(matchingObject->GetType()),
                                 matchingObject->GetID().GetValue());
               return localizeResult;
             }
@@ -1350,7 +1350,7 @@ namespace Anki
         // robot's current "world" origin, [TODO:] in which case we will update the pose
         // of the mat we are on w.r.t. that world.
         for(auto matSeenPair : matsSeen) {
-          Vision::ObservableObject* matSeen = matSeenPair.second;
+          ObservableObject* matSeen = matSeenPair.second;
           
           if(matSeen != matToLocalizeTo) {
             

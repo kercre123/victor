@@ -278,9 +278,9 @@ namespace Anki
       void AddNewObject(ObjectsMapByType_t& existingFamily, ObservableObject* object);
       
       //template<class ObjectType>
-      void AddAndUpdateObjects(const std::vector<ObservableObject*>& objectsSeen,
-                               const ObjectFamily& inFamily,
-                               const TimeStamp_t atTimestamp);
+      Result AddAndUpdateObjects(const std::multimap<f32, ObservableObject*>& objectsSeen,
+                                 const ObjectFamily& inFamily,
+                                 const TimeStamp_t atTimestamp);
       
       // Remove all posekey-marker pairs from the map if marker is marked used
       void RemoveUsedMarkers(PoseKeyObsMarkerMap_t& poseKeyObsMarkerMap);
