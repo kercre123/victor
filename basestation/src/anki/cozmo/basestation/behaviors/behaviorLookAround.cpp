@@ -204,6 +204,9 @@ Result BehaviorLookAround::StartMoving()
     
     if (i == 1) {
       PRINT_NAMED_WARNING("BehaviorLookAround.StartMoving.NoDestPoseFound", "attempts %d", MAX_NUM_CONSIDERED_DEST_POSES);
+      
+      // Try another destination
+      _currentDestination = GetNextDestination(_currentDestination);
       return RESULT_FAIL;
     }
   }
@@ -389,15 +392,14 @@ void BehaviorLookAround::HandleCompletedAction(const AnkiEvent<MessageEngineToGa
     }
     
     // If this was a successful drive action, move on to the next destination
-    Destination newLast = _currentDestination;
-    _currentDestination = GetNextDestination(_currentDestination, _lastDestination);
-    _lastDestination = newLast;
+    _currentDestination = GetNextDestination(_currentDestination);
   }
 }
   
-BehaviorLookAround::Destination BehaviorLookAround::GetNextDestination(BehaviorLookAround::Destination current,
-                                                                       BehaviorLookAround::Destination previous)
+BehaviorLookAround::Destination BehaviorLookAround::GetNextDestination(BehaviorLookAround::Destination current)
 {
+  static BehaviorLookAround::Destination previous = BehaviorLookAround::Destination::Center;
+  
   // If we've visited enough destinations, go back to center
   if (1 == _numDestinationsLeft)
   {
@@ -414,6 +416,7 @@ BehaviorLookAround::Destination BehaviorLookAround::GetNextDestination(BehaviorL
   
   all.erase(current);
   all.erase(previous);
+  previous = current;
   
   // Pick a random destination from the remaining options
   s32 randIndex = _rng.RandInt(static_cast<s32>(all.size()));

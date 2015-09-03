@@ -73,7 +73,6 @@ private:
   
   State _currentState = State::Inactive;
   Destination _currentDestination = Destination::North;
-  Destination _lastDestination = Destination::Center;
   f32 _lastLookAroundTime = 0;
   Pose3d _moveAreaCenter;
   f32 _safeRadius = kDefaultSafeRadius;
@@ -88,7 +87,7 @@ private:
   Result StartMoving();
   Pose3d GetDestinationPose(Destination destination);
   void ResetBehavior(float currentTime_sec);
-  Destination GetNextDestination(Destination current, Destination previous);
+  Destination GetNextDestination(Destination current);
   void UpdateSafeRegion(const Vec3f& objectPosition);
   
   void HandleObjectObserved(const AnkiEvent<ExternalInterface::MessageEngineToGame>& event);
