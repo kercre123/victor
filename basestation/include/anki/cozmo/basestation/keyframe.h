@@ -276,22 +276,40 @@ namespace Anki {
     class ProceduralFaceKeyFrame : public IKeyFrame
     {
     public:
+      ProceduralFaceKeyFrame() { }
       ProceduralFaceKeyFrame(const ProceduralFace& face) : _procFace(face) { }
       
+      // Returns message for the face stored in this message
       virtual RobotMessage* GetStreamMessage() override;
+      
+      // Returns message for the face interpolated between the stored face in this
+      // keyframe and the one in the next keyframe.
+      RobotMessage* GetInterpolatedStreamMessage(const ProceduralFaceKeyFrame& nextFrame);
       
       static const std::string& GetClassName() {
         static const std::string ClassName("ProceduralFaceKeyFrame");
         return ClassName;
       }
+      
+      virtual bool IsDone() override;
 
     protected:
       virtual Result SetMembersFromJson(const Json::Value &jsonRoot) override;
       
     private:
-      ProceduralFace _procFace;
+      ProceduralFace  _procFace;
+      TimeStamp_t     _currentTime_ms;
+      bool            _isDone;
+    
       MessageAnimKeyFrame_FaceImage _faceImageMsg;
-    };
+      
+      // This is what actually populates the message to stream, and is used
+      // by GetStreamMessage() and GetInterpolatedStreamMessage().
+      RobotMessage* GetStreamMessageHelper(const ProceduralFace& procFace);
+      
+      void Reset();
+      
+    }; // class ProceduralFaceKeyFrame
     
     // A FacePositionKeyFrame sets the center of the currently displayed face
     // image/sprite, in LED screen coordinates.

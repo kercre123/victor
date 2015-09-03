@@ -294,26 +294,76 @@ return RESULT_FAIL; \
     
     Result ProceduralFaceKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot)
     {
-      // TODO: Implement!
-      PRINT_NAMED_ERROR("ProceduralFaceKeyFrame.SetMembersFromJson.NotSupported",
-                        "This method needs to be added once animation tool can generate "
-                        "procedural face parameters.");
-      return RESULT_FAIL;
+      for(int iParam=0; iParam < static_cast<int>(ProceduralFace::Parameter::NumParameters); ++iParam)
+      {
+        ProceduralEyeParameter param = static_cast<ProceduralEyeParameter>(iParam);
+        
+        ProceduralFace::Value value;
+        std::string paramName = ProceduralEyeParameterToString(param);
+        
+        // Left
+        if(!JsonTools::GetValueOptional(jsonRoot, "left" + paramName, value)) {
+          PRINT_NAMED_WARNING("ProceduralFaceKeyFrame.SetMembersFromJson.MissingParam",
+                              "Missing 'left%s' parameter.",
+                              paramName.c_str());
+        } else {
+          _procFace.SetParameter(ProceduralFace::Left, param, value);
+        }
+        
+        // Right
+        if(!JsonTools::GetValueOptional(jsonRoot, "right" + paramName, value)) {
+          PRINT_NAMED_WARNING("ProceduralFaceKeyFrame.SetMembersFromJson.MissingParam",
+                              "Missing 'right%s' parameter.",
+                              paramName.c_str());
+        } else {
+          _procFace.SetParameter(ProceduralFace::Right, param, value);
+        }
+        
+      }
+      
+      ProceduralFace::Value angle;
+      if(!JsonTools::GetValueOptional(jsonRoot, "faceAngle_deg", angle)) {
+        PRINT_NAMED_ERROR("ProceduralFaceKeyFrame.SetMembersFromJson.MissingParam",
+                          "Missing 'faceAngle_deg' parameter - will use 0.");
+        angle = 0;
+      }
+
+      _procFace.SetFaceAngle(angle);
+
+      Reset();
+      
+      return RESULT_OK;
     }
     
-    RobotMessage* ProceduralFaceKeyFrame::GetStreamMessage()
+    void ProceduralFaceKeyFrame::Reset()
+    {
+      _currentTime_ms = GetTriggerTime();
+      _isDone = false;
+    }
+    
+    bool ProceduralFaceKeyFrame::IsDone()
+    {
+      bool retVal = _isDone;
+      if(_isDone) {
+        // This sets _isDone back to false!
+        Reset();
+      }
+      return retVal;
+    }
+    
+    RobotMessage* ProceduralFaceKeyFrame::GetStreamMessageHelper(const ProceduralFace& procFace)
     {
       std::vector<u8> rleData;
-      Result rleResult = FaceAnimationManager::CompressRLE(_procFace.GetFace(), rleData);
+      Result rleResult = FaceAnimationManager::CompressRLE(procFace.GetFace(), rleData);
       
       if(RESULT_OK != rleResult) {
-        PRINT_NAMED_ERROR("ProceduralFaceKeyFrame.GetStreamMesssage",
+        PRINT_NAMED_ERROR("ProceduralFaceKeyFrame.GetStreamMesssageHelper",
                           "Failed to get RLE frame from procedural face.");
         return nullptr;
       }
       
       if(rleData.size() >= sizeof(_faceImageMsg.image)) {
-        PRINT_NAMED_ERROR("ProceduralFaceKeyFrame.GetStreamMessage",
+        PRINT_NAMED_ERROR("ProceduralFaceKeyFrame.GetStreamMessageHelper",
                           "RLE frame for procedural face too large to fit in message (%lu>=%lu).",
                           rleData.size(), sizeof(_faceImageMsg.image));
         return nullptr;
@@ -325,7 +375,31 @@ return RESULT_FAIL; \
       return &_faceImageMsg;
     }
     
-#pragma mark - 
+    RobotMessage* ProceduralFaceKeyFrame::GetStreamMessage()
+    {
+      _isDone = true;
+      return GetStreamMessageHelper(_procFace);
+    }
+    
+    RobotMessage* ProceduralFaceKeyFrame::GetInterpolatedStreamMessage(const ProceduralFaceKeyFrame& nextFrame)
+    {
+      // The interpolation fraction is how far along in time we are from this frame's
+      // trigger time (which currentTime was initialized to) and the next frame's
+      // trigger time.
+      const f32 fraction = std::min(1.f, static_cast<f32>(_currentTime_ms - GetTriggerTime()) / static_cast<f32>(nextFrame.GetTriggerTime() - GetTriggerTime()));
+      
+      ProceduralFace interpFace;
+      interpFace.Interpolate(_procFace, nextFrame._procFace, fraction);
+      
+      _currentTime_ms += IKeyFrame::SAMPLE_LENGTH_MS;
+      if(_currentTime_ms >= nextFrame.GetTriggerTime()) {
+        _isDone = true;
+      }
+      
+      return GetStreamMessageHelper(interpFace);
+    }
+    
+#pragma mark -
 #pragma mark RobotAudioKeyFrame
     
     //

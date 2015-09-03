@@ -85,6 +85,45 @@ namespace Cozmo {
     return msg;
   }
   
+  // Specialization for ProceduralFace track because it needs look-back for interpolation
+  template<>
+  RobotMessage* Animation::Track<ProceduralFaceKeyFrame>::GetCurrentStreamingMessage(TimeStamp_t startTime_ms,
+                                                                                     TimeStamp_t currTime_ms)
+  {
+    RobotMessage* msg = nullptr;
+    
+    if(HasFramesLeft()) {
+      ProceduralFaceKeyFrame& currentKeyFrame = GetCurrentKeyFrame();
+      if(currentKeyFrame.IsTimeToPlay(startTime_ms, currTime_ms))
+      {
+        if(currentKeyFrame.IsLive()) {
+          // The AnimationStreamer will take care of interpolation for live
+          // live streaming
+          // TODO: Maybe we could also do it here somehow?
+          msg = currentKeyFrame.GetStreamMessage();
+          
+        } else {
+          auto nextIter = _frameIter;
+          ++nextIter;
+          if(nextIter != _frames.end()) {
+            // If we have another frame coming, use it to interpolate.
+            // This will only be "done" once 
+            msg = currentKeyFrame.GetInterpolatedStreamMessage(*nextIter);
+          } else {
+            // Otherwise, we'll just send the last frame
+            msg = currentKeyFrame.GetStreamMessage();
+          }
+        }
+          
+        if(currentKeyFrame.IsDone()) {
+          MoveToNextKeyFrame();
+        }
+      }
+    }
+    
+    return msg;
+  }
+  
   template<typename FRAME_TYPE>
   Result Animation::Track<FRAME_TYPE>::AddKeyFrame(const Json::Value &jsonRoot)
   {
@@ -179,6 +218,8 @@ namespace Cozmo {
         addResult = _backpackLightsTrack.AddKeyFrame(jsonFrame);
       } else if(frameName == BodyMotionKeyFrame::GetClassName()) {
         addResult = _bodyPosTrack.AddKeyFrame(jsonFrame);
+      } else if(frameName == ProceduralFaceKeyFrame::GetClassName()) {
+        addResult = _proceduralFaceTrack.AddKeyFrame(jsonFrame);
       } else {
         PRINT_NAMED_ERROR("Animation.DefineFromJson.UnrecognizedFrameName",
                           "Frame %d in '%s' animation has unrecognized name '%s'.\n",
