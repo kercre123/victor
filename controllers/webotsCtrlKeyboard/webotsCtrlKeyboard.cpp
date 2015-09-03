@@ -20,6 +20,7 @@
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/block.h"
 #include "clad/types/actionTypes.h"
+#include "clad/types/proceduralEyeParameters.h"
 #include <stdio.h>
 #include <string.h>
 #include <fstream>
@@ -1146,6 +1147,32 @@ namespace Anki {
               case (s32)'%':
               {
                 SendAnimation("ANIM_ALERT", 1);
+                break;
+              }
+              case (s32)'*':
+              {
+                // Send a procedural face
+                using namespace ExternalInterface;
+                using Param = ProceduralEyeParameter;
+                DisplayProceduralFace msg;
+                msg.robotID = 1;
+                msg.leftEye.resize(static_cast<size_t>(Param::NumParameters));
+                msg.rightEye.resize(static_cast<size_t>(Param::NumParameters));
+                auto SetHelper = [&msg](Param param, f32 min, f32 max) {
+                  msg.leftEye[static_cast<size_t>(param)] = static_cast<f32>(rand())/static_cast<f32>(RAND_MAX) * (max-min) + min;
+                  msg.rightEye[static_cast<size_t>(param)] = static_cast<f32>(rand())/static_cast<f32>(RAND_MAX) * (max-min) + min;
+                };
+                
+                SetHelper(Param::EyeWidth, 20, 60);
+                SetHelper(Param::EyeHeight, 20, 40);
+                SetHelper(Param::PupilWidthFraction,  0.f, 1.f);
+                SetHelper(Param::PupilHeightFraction, 0.f, 1.f);
+                
+                // Random face angle between -30 and 30:
+                msg.faceAngle = static_cast<f32>(rand())/static_cast<f32>(RAND_MAX) * 60.f - 30.f;
+
+                SendMessage(MessageGameToEngine(std::move(msg)));
+                
                 break;
               }
               case (s32)'^':
