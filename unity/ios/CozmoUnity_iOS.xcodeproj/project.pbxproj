@@ -845,10 +845,7 @@
 				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				COPY_PHASE_STRIP = NO;
-				FRAMEWORK_SEARCH_PATHS = (
-					"$(inherited)",
-					"/Users/andrew/Code/coretech-external/IntraFace/IntraFace_126_iOS_Anki/Library",
-				);
+				FRAMEWORK_SEARCH_PATHS = "$(inherited)";
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_CPP_EXCEPTIONS = NO;
 				GCC_OPTIMIZATION_LEVEL = 0;
@@ -866,7 +863,6 @@
 					"$(inherited)",
 					"$(SRCROOT)/opencv",
 					"$(ANKI_BUILD_UNITY_XCODE_BUILD_DIR)/Libraries",
-					"/Users/andrew/Code/coretech-external/Luxand_FaceSDK/bin/iOS",
 				);
 				ONLY_ACTIVE_ARCH = NO;
 				OTHER_CFLAGS = "-mno-thumb";
@@ -898,10 +894,7 @@
 				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				COPY_PHASE_STRIP = YES;
-				FRAMEWORK_SEARCH_PATHS = (
-					"$(inherited)",
-					"/Users/andrew/Code/coretech-external/IntraFace/IntraFace_126_iOS_Anki/Library",
-				);
+				FRAMEWORK_SEARCH_PATHS = "$(inherited)";
 				GCC_ENABLE_CPP_EXCEPTIONS = NO;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = UnityBuild/Classes/Prefix.pch;
@@ -916,7 +909,6 @@
 					"$(inherited)",
 					"$(SRCROOT)/opencv",
 					"$(ANKI_BUILD_UNITY_XCODE_BUILD_DIR)/Libraries",
-					"/Users/andrew/Code/coretech-external/Luxand_FaceSDK/bin/iOS",
 				);
 				ONLY_ACTIVE_ARCH = NO;
 				OTHER_CFLAGS = "-mno-thumb";
