@@ -156,6 +156,7 @@ unity/Cozmo/*.proj
 unity/Cozmo/*.csproj
 unity/Cozmo/*.userprefs
 unity/Cozmo/*.obj
+unity/Cozmo/obj/*
 
 # Visual studio
 *.userprefs
@@ -174,3 +175,7 @@ unity/Cozmo/Assets/WellFired/shared/compiled.meta
 unity/Cozmo/Assets/WellFired/shared/compiled/runtime.meta
 unity/Cozmo/Assets/WellFired/shared/compiled/runtime/ProcessRunner.meta
 unity/Cozmo/Assets/Scripts/Generated.meta
+
+UnityDASDll/UnityDASDll/obj/*
+UnityDASDll/UnityDASDll/bin/*
+
