@@ -697,7 +697,7 @@ namespace Cozmo {
     {
       case Arrangement::StacksOfTwo:
       {
-        const f32 MIN_NEATNESS_SCORE = 0.8f;
+        const f32 MIN_NEATNESS_SCORE = 0.7f;
         const f32 RECENTLY_OBSERVED_TIME_THRESH_MS = 1000.f;
         
         TimeStamp_t lastMsgRecvdTime = _robot.GetLastMsgTimestamp();
@@ -796,7 +796,7 @@ namespace Cozmo {
             
             f32 score = GetNeatnessScore(*objID);
             if (score < MIN_NEATNESS_SCORE) {
-              PRINT_NAMED_INFO("BehaviorOCD.VerifyNeatness.NeatToMessy", "Object %d", objID->GetValue());
+              PRINT_NAMED_INFO("BehaviorOCD.VerifyNeatness.NeatToMessy", "Object %d, score %f", objID->GetValue(), score);
               if ((_currentState == State::PlacingBlock) && (*objID == _objectToPlaceOn)) {
                 // Robot is trying to place a block on neat block that we're about to make messy,
                 // so cancel it.
@@ -1000,12 +1000,7 @@ namespace Cozmo {
       _neatObjects.erase(objectID);
       _messyObjects.insert(objectID);
 
-      SetBlockLightState(objectID, BlockLightState::Messy);
-      
-      // If blocks were complete before this then, set the NEAT colors on remaining neat blocks
-      if (_neatObjects.size() == 3) {
-        SetBlockLightState(_neatObjects, BlockLightState::Neat);
-      }
+      UpdateBlockLights();
       
       // Increase irritation level
       ++_irritationLevel;
