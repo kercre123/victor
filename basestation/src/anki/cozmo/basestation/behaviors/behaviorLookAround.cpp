@@ -16,7 +16,16 @@
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/common/shared/radians.h"
+#include "anki/common/robot/config.h"
 #include "clad/externalInterface/messageEngineToGame.h"
+
+
+#define SAFE_ZONE_VIZ (ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ERRORS_AND_WARNS_AND_ASSERTS)
+
+#if SAFE_ZONE_VIZ
+#include "anki/cozmo/basestation/viz/vizManager.h"
+#include "anki/common/basestation/math/polygon_impl.h"
+#endif
 
 namespace Anki {
 namespace Cozmo {
@@ -84,6 +93,10 @@ Result BehaviorLookAround::Init()
 
 IBehavior::Status BehaviorLookAround::Update(float currentTime_sec)
 {
+#if SAFE_ZONE_VIZ
+  Point2f center = { _moveAreaCenter.GetTranslation().x(), _moveAreaCenter.GetTranslation().y() };
+  VizManager::getInstance()->DrawXYCircle(_robot.GetID(), NamedColors::GREEN, center, _safeRadius);
+#endif
   switch (_currentState)
   {
     case State::Inactive:
@@ -91,12 +104,18 @@ IBehavior::Status BehaviorLookAround::Update(float currentTime_sec)
       // This is the last update before we stop running, so store off time
       _lastLookAroundTime = currentTime_sec;
       
+      // Reset our number of destinations for next time we run this behavior
+      _numDestinationsLeft = kDestinationsToReach;
+      
       break; // Jump down and return Status::Complete
     }
     case State::StartLooking:
     {
-      StartMoving();
+      IActionRunner* moveHeadAction = new MoveHeadToAngleAction(0);
+      _robot.GetActionList().QueueActionAtEnd(0, moveHeadAction);
+      if (StartMoving() == RESULT_OK) {
       _currentState = State::LookingForObject;
+    }
     }
     // NOTE INTENTIONAL FALLTHROUGH
     case State::LookingForObject:
@@ -150,54 +169,111 @@ IBehavior::Status BehaviorLookAround::Update(float currentTime_sec)
     }
   }
   
+#if SAFE_ZONE_VIZ
+  VizManager::getInstance()->EraseCircle(_robot.GetID());
+#endif
+  
   return Status::Complete;
 }
   
-void BehaviorLookAround::StartMoving()
+Result BehaviorLookAround::StartMoving()
 {
-  IActionRunner* goToPoseAction = new DriveToPoseAction(GetDestinationPose(_currentDestination), false, false);
+  // Check for a collision-free pose
+  Pose3d destPose;
+  const int MAX_NUM_CONSIDERED_DEST_POSES = 30;
+  for (int i = MAX_NUM_CONSIDERED_DEST_POSES; i > 0; --i) {
+    destPose = GetDestinationPose(_currentDestination);
+    
+    // Get robot bounding box at destPose
+    Quad2f robotQuad = _robot.GetBoundingQuadXY(destPose);
+    
+    std::set<ObjectFamily> ignoreFamilies;
+    std::set<ObjectType> ignoreTypes;
+    std::set<ObjectID> ignoreIDs;
+    std::vector<ObservableObject*> existingObjects;
+    _robot.GetBlockWorld().FindIntersectingObjects(robotQuad,
+                                                   existingObjects,
+                                                   10,
+                                                   ignoreFamilies,
+                                                   ignoreTypes,
+                                                   ignoreIDs);
+    
+    if (existingObjects.empty()) {
+      break;
+    }
+    
+    if (i == 1) {
+      PRINT_NAMED_WARNING("BehaviorLookAround.StartMoving.NoDestPoseFound", "attempts %d", MAX_NUM_CONSIDERED_DEST_POSES);
+      
+      // Try another destination
+      _currentDestination = GetNextDestination(_currentDestination);
+      return RESULT_FAIL;
+    }
+  }
+  
+  
+  IActionRunner* goToPoseAction = new DriveToPoseAction(destPose, false, false);
   _currentDriveActionID = goToPoseAction->GetTag();
-  _robot.GetActionList().QueueActionAtEnd(0, goToPoseAction);
+  _robot.GetActionList().QueueActionAtEnd(0, goToPoseAction, 3);
+  return RESULT_OK;
 }
   
 Pose3d BehaviorLookAround::GetDestinationPose(BehaviorLookAround::Destination destination)
 {
   Pose3d destPose(_moveAreaCenter);
+  
+  s32 baseAngleDegrees = 0;
+  bool shouldRotate = true;
   switch (destination)
   {
-    case Destination::North:
     case Destination::Center:
     {
-      // Don't need to rotate here
-      break;
-    }
-    case Destination::West:
-    {
-      destPose.RotateBy(Rotation3d(DEG_TO_RAD(90), Z_AXIS_3D()));
-      break;
-    }
-    case Destination::South:
-    {
-      destPose.RotateBy(Rotation3d(DEG_TO_RAD(180), Z_AXIS_3D()));
+      shouldRotate = false;
       break;
     }
     case Destination::East:
     {
-      destPose.RotateBy(Rotation3d(DEG_TO_RAD(-90), Z_AXIS_3D()));
+      baseAngleDegrees = -45;
+      break;
+    }
+    case Destination::North:
+    {
+      baseAngleDegrees = 45;
+      break;
+    }
+    case Destination::West:
+    {
+      baseAngleDegrees = 135;
+      break;
+    }
+    case Destination::South:
+    {
+      baseAngleDegrees = -135;
       break;
     }
     case Destination::Count:
     default:
     {
+      shouldRotate = false;
       PRINT_NAMED_ERROR("LookAround_Behavior.GetDestinationPose.InvalidDestination",
                         "Reached invalid destination %d.", destination);
       break;
     }
   }
   
+  if (shouldRotate)
+  {
+    // Our destination regions are 90 degrees, so we randomly pick up to 90 degrees to vary our destination
+    s32 randAngleMod = _rng.RandInt(90);
+    destPose.SetRotation(destPose.GetRotation() * Rotation3d(DEG_TO_RAD(baseAngleDegrees + randAngleMod), Z_AXIS_3D()));
+  }
+  
   if (Destination::Center != destination)
   {
-    destPose.SetTranslation(destPose * Point3f(_safeRadius, 0, 0));
+    // The multiplier amount of change we want to vary the radius by (-0.25 means from 75% to 100% of radius)
+    static const f32 radiusVariation = -0.25f;
+    f32 distMod = _rng.RandDbl() * radiusVariation * _safeRadius;
+    destPose.SetTranslation(destPose.GetTranslation() + destPose.GetRotation() * Point3f(_safeRadius + distMod, 0, 0));
   }
   
   return destPose;
@@ -235,10 +311,42 @@ void BehaviorLookAround::HandleObjectObserved(const AnkiEvent<MessageEngineToGam
   
   const RobotObservedObject& msg = event.GetData().Get_RobotObservedObject();
   
+  static const std::set<ObjectFamily> familyList = { ObjectFamily::Block, ObjectFamily::LightCube };
+  
   // We'll get continuous updates about objects in view, so only care about new ones whose markers we can see
-  if (0 == _oldBoringObjects.count(msg.objectID) && msg.markersVisible)
+  if (familyList.count(msg.objectFamily) > 0 && msg.markersVisible && 0 == _oldBoringObjects.count(msg.objectID))
   {
     _recentObjects.insert(msg.objectID);
+    
+    ObservableObject* object = _robot.GetBlockWorld().GetObjectByID(msg.objectID);
+    if (nullptr != object)
+    {
+      UpdateSafeRegion(object->GetPose().GetTranslation());
+    }
+  }
+}
+  
+void BehaviorLookAround::UpdateSafeRegion(const Vec3f& objectPosition)
+{
+  Vec3f translationDiff = objectPosition - _moveAreaCenter.GetTranslation();
+  // We're only going to care about the XY plane distance
+  translationDiff.z() = 0;
+  const f32 distanceSqr = translationDiff.LengthSq();
+  
+  // If the distance between our safe area center and the object we're seeing exceeds our current safe radius,
+  // update our center point and safe radius to include the object's location
+  if (_safeRadius * _safeRadius < distanceSqr)
+  {
+    const f32 distance = std::sqrt(distanceSqr);
+    
+    // Ratio is ratio of distance to new center point to distance of observed object
+    const f32 newCenterRatio = 0.5f - _safeRadius / (2.0f * distance);
+    
+    // The new center is calculated as: C1 = C0 + (ObjectPosition - C0) * Ratio
+    _moveAreaCenter.SetTranslation(_moveAreaCenter.GetTranslation() + translationDiff * newCenterRatio);
+    
+    // The new radius is simply half the distance between the far side of the previus circle and the observed object
+    _safeRadius = 0.5f * (distance + _safeRadius);
   }
 }
   
@@ -264,60 +372,58 @@ void BehaviorLookAround::HandleCompletedAction(const AnkiEvent<MessageEngineToGa
   }
   else if (msg.idTag == _currentDriveActionID)
   {
-    if (ActionResult::SUCCESS == msg.result)
+    // If we're back to center, time to go inactive
+    if (Destination::Center == _currentDestination)
     {
-      // If we're back to center, time to go inactive
-      if (Destination::Center == _currentDestination)
-      {
-        _currentState = State::Inactive;
-      }
-      else
-      {
-        _currentState = State::StartLooking;
-      }
-      
-      // If this was a successful drive action, move on to the next destination
-      _currentDestination = GetNextDestination(_currentDestination);
+      _currentState = State::Inactive;
     }
     else
     {
-      // We didn't succeed for some reason - try again
       _currentState = State::StartLooking;
     }
+    
+    if (_numDestinationsLeft > 0)
+    {
+      --_numDestinationsLeft;
+    }
+    else
+    {
+      PRINT_NAMED_WARNING("BehaviorLookAround.HandleCompletedAction", "Getting unexpected DriveAction completion messages");
+    }
+    
+    // If this was a successful drive action, move on to the next destination
+    _currentDestination = GetNextDestination(_currentDestination);
   }
 }
   
-BehaviorLookAround::Destination BehaviorLookAround::GetNextDestination(BehaviorLookAround::Destination oldDest)
+BehaviorLookAround::Destination BehaviorLookAround::GetNextDestination(BehaviorLookAround::Destination current)
 {
-  switch (oldDest)
+  static BehaviorLookAround::Destination previous = BehaviorLookAround::Destination::Center;
+  
+  // If we've visited enough destinations, go back to center
+  if (1 == _numDestinationsLeft)
   {
-    case Destination::North:
-    {
-      return Destination::West;
-    }
-    case Destination::West:
-    {
-      return Destination::South;
-    }
-    case Destination::South:
-    {
-      return Destination::East;
-    }
-    case Destination::East:
-    {
-      return Destination::Center;
-    }
-    case Destination::Center:
-    {
-      return Destination::North;
-    }
-    default:
-    {
-      PRINT_NAMED_ERROR("LookAround_Behavior.GetDestinationPose.InvalidDestination",
-                        "Reached invalid destination %d.", oldDest);
-      return Destination::North;
-    }
+    return Destination::Center;
   }
+  
+  // Otherwise pick a new place that doesn't include the center
+  std::set<Destination> all = {
+    Destination::North,
+    Destination::West,
+    Destination::South,
+    Destination::East
+  };
+  
+  all.erase(current);
+  all.erase(previous);
+  previous = current;
+  
+  // Pick a random destination from the remaining options
+  s32 randIndex = _rng.RandInt(static_cast<s32>(all.size()));
+  auto newDestIter = all.begin();
+  while (randIndex-- > 0) { newDestIter++; }
+  
+  return *newDestIter;
 }
   
 void BehaviorLookAround::HandleRobotPutDown(const AnkiEvent<MessageEngineToGame>& event)

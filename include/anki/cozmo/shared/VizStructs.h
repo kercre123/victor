@@ -27,6 +27,7 @@ namespace Anki {
       VIZ_OBJECT_CHARGER,      
       VIZ_OBJECT_PREDOCKPOSE,
       VIZ_OBJECT_HUMAN_HEAD,
+      VIZ_OBJECT_CAMERA_FACE,
       
       NUM_VIZ_OBJECT_TYPES
     };
@@ -39,6 +40,7 @@ namespace Anki {
       3000, // VIZ_OBJECT_CHARGER
       4000, // VIZ_OJECT_PREDOCKPOSE
       5000, // VIZ_OBJECT_HUMAN_HEAD
+      6000, // VIZ_OBJECT_CAMERA_FACE
       u32_MAX - 100 // Last valid object ID allowed
     };
     

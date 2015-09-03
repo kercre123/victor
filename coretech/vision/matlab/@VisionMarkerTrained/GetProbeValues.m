@@ -17,8 +17,7 @@ img = im2double(img);
 
 N = VisionMarkerTrained.ProbeParameters.GridSize;
 
-[xgrid,ygrid] = meshgrid(linspace(VisionMarkerTrained.ProbeRegion(1), ...
-    VisionMarkerTrained.ProbeRegion(2), N)); 
+[xgrid,ygrid] = VisionMarkerTrained.GetProbeGrid();
 
 pattern = VisionMarkerTrained.ProbePattern;
 X = pattern.x(ones(N^2,1),:) + xgrid(:)*ones(1,length(pattern.x));

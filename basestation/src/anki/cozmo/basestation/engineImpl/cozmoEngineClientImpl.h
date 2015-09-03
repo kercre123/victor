@@ -20,7 +20,7 @@ namespace Cozmo {
 class CozmoEngineClientImpl : public CozmoEngineImpl
 {
 public:
-  CozmoEngineClientImpl(IExternalInterface* externalInterface, Data::DataPlatform* dataPlatform);
+  CozmoEngineClientImpl(IExternalInterface* externalInterface, Util::Data::DataPlatform* dataPlatform);
 
 protected:
 

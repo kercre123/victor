@@ -63,7 +63,15 @@
       'libopencv_video.a',
       'libopencv_features2d.a',
     ],
-
+    
+    # Here we pick which face library to use and set its path/includes/libs
+    # initially to empty. They will be filled in below in the 'conditions' as
+    # needed:
+    'face_library' : 'opencv', # one of: 'opencv', 'faciometric', or 'facesdk'
+    'face_library_path':      [ ],
+    'face_library_includes' : [ ],
+    'face_library_libs':      [ ],
+    
     'compiler_flags': [
       '-Wno-deprecated-declarations', # Supressed until system() usage is removed
       '-fdiagnostics-show-category=name',
@@ -107,6 +115,35 @@
     # Copy overridden vars into this scope
     'arch_group%': '<(arch_group)',
     'conditions': [
+      # Face libraries, depending on platform:
+      ['face_library=="faciometric"', {
+        'face_library_path': [
+          '<(coretech_external_path)/IntraFace',
+        ]
+      }],
+      ['OS=="mac" and face_library=="faciometric"', {
+        'face_library_includes': [
+          '<(face_library_path)/osx_demo_126/include',
+          '<(face_library_path)/osx_demo_126/3rdparty/Eigen3/include',
+        ],
+      }],
+      ['OS=="ios" and face_library=="faciometric"', {
+        'face_library_includes': [
+          '<(face_library_path)/IntraFace_126_iOS_Anki/Library/3rdparty/include',
+        ],
+        'face_library_libs': [
+          '<(face_library_path)/IntraFace_126_iOS_Anki/Library/intraface.framework',
+        ],
+      }],
+      ['face_library=="facesdk"', {
+        'face_library_includes': [
+          '<(coretech_external_path)/Luxand_FaceSDK/include/C',
+        ],
+      }],
+      ['OS=="android"', {
+
+      }],
+    
       ['OS=="ios" and arch_group=="universal"', {
         'target_archs%': ['armv7', 'arm64'],
       }],
@@ -170,7 +207,7 @@
       ],
       ['OS=="ios"', {
         'compiler_flags': [
-        '-fobjc-arc',
+          '-fobjc-arc',
         ]
       }],
       ['OS=="ios" or OS=="mac"', {
@@ -195,7 +232,11 @@
       'OTHER_CFLAGS': ['<@(compiler_c_flags)'],
       'OTHER_CPLUSPLUSFLAGS': ['<@(compiler_cpp_flags)'],
       'ALWAYS_SEARCH_USER_PATHS': 'NO',
-      # 'FRAMEWORK_SEARCH_PATHS':'../../libs/framework/',
+      'conditions': [
+        ['face_library=="faciometric"', {
+           'FRAMEWORK_SEARCH_PATHS': '<(face_library_path)/IntraFace_126_iOS_Anki/Library',
+        }],
+      ],
       'CLANG_CXX_LANGUAGE_STANDARD':'c++11',
       'CLANG_CXX_LIBRARY':'libc++',
       'DEBUG_INFORMATION_FORMAT': 'dwarf',
@@ -362,57 +403,6 @@
             ],
           }, # end unittest target
 
-          {
-            'target_name': 'mexDetectFiducialMarkers',
-            'type': 'shared_library',
-            'variables': {
-              'mac_target_archs': [ '$(ARCHS_STANDARD)' ]
-            },
-            'include_dirs': [
-              '/Applications/MATLAB_R2015a.app/extern/include',
-              '../../include',
-              '<@(opencv_includes)',
-            ],
-            'sources': [
-              '../../vision/robot/mex/mexDetectFiducialMarkers.cpp',
-              '../../common/matlab/mex/mexWrappers.cpp',
-              '../../common/shared/src/matlabConverters.cpp',
-              '../../common/shared/src/sharedMatlabInterface.cpp',
-              '../../common/robot/src/matlabInterface.cpp'
-            ],
-            'dependencies': [
-              'ctiCommon',
-              'ctiCommonRobot',
-              'ctiVision',
-              'ctiVisionRobot',
-              '<(cti-util_gyp_path):jsoncpp',
-              '<(cti-util_gyp_path):util',
-              '<(cti-util_gyp_path):utilEmbedded',
-            ],
-            'libraries': [
-              '<@(opencv_libs)',
-              '/Applications/MATLAB_R2015a.app/bin/maci64/libmx.dylib',
-              '/Applications/MATLAB_R2015a.app/bin/maci64/libmex.dylib',
-              '/Applications/MATLAB_R2015a.app/bin/maci64/libeng.dylib',
-            ],
-            'defines': [
-              'ANKICORETECH_USE_MATLAB=1',
-              'ANKICORETECH_USE_GTEST=0',
-              'ANKICORETECH_USE_OPENCV=1',
-              'ANKICORETECH_EMBEDDED_USE_MATLAB=1',
-              'ANKICORETECH_EMBEDDED_USE_GTEST=0',
-              'ANKICORETECH_EMBEDDED_USE_OPENCV=1',
-            ],
-            'actions': [
-              {
-                'action_name' : 'renameMex',
-                'inputs': ['<(PRODUCT_DIR)/libmexDetectFiducialMarkers.dylib'],
-                'outputs': ['<(PRODUCT_DIR)/mexDetectFiducialMarkers.mexmaci64'],
-                'action': ['cp', '<(_inputs)', '<(_outputs)']
-              },
-            ]
-          }, # end mexDetectFiducialMarkers
-
         ], # end targets
       },
     ] # end if mac
@@ -449,8 +439,8 @@
         'SYSTEM_ROOT_PATH=<(cti-cozmo_engine_path)'
       ],
       'dependencies': [
-        '<(cti-util_gyp_path):util',
         '<(cti-util_gyp_path):jsoncpp',
+        '<(cti-util_gyp_path):util',
       ],
       'type': '<(common_library_type)',
       'conditions': [
@@ -569,6 +559,11 @@
         '../../vision/basestation/src',
         '../../vision/include',
         '<@(opencv_includes)',
+        '<(coretech_external_path)/matconvnet/matlab/src/bits',
+        '<@(face_library_includes)',
+      ],
+      'libraries': [
+        '<@(face_library_libs)',
       ],
       'direct_dependent_settings': {
         'include_dirs': [
@@ -600,6 +595,7 @@
       },
       'dependencies': [
         'ctiCommonRobot',
+        '<(cti-util_gyp_path):jsoncpp',
       ],
       'type': '<(vision_robot_library_type)',
     },

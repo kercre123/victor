@@ -29,6 +29,8 @@ namespace Cozmo {
   class AnimationStreamer
   {
   public:
+    static const std::string LiveAnimation;
+    
     AnimationStreamer(CannedAnimationContainer& container);
     
     // Sets an animation to be streamed and how many times to stream it.
@@ -38,6 +40,7 @@ namespace Cozmo {
     
     // Sets the "idle" animation that will be streamed (in a loop) when no other
     // animation is streaming. Use empty string ("") to disable.
+    // Use static LiveAnimation above to use live procedural animation (default).
     Result SetIdleAnimation(const std::string& name);
     
     // If any animation is set for streaming and isn't done yet, stream it.
@@ -50,9 +53,13 @@ namespace Cozmo {
     
   private:
     
-    CannedAnimationContainer& _animationContainer;
+    Result UpdateLiveAnimation(Robot& robot);
     
-    Animation* _idleAnimation;
+    CannedAnimationContainer& _animationContainer;
+
+    Animation      _liveAnimation;
+
+    Animation* _idleAnimation; // default points to "live" animation
     Animation* _streamingAnimation;
     
     bool _isIdling;

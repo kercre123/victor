@@ -3,7 +3,7 @@
 
     'engine_source': 'cozmoEngine.lst',
     'engine_test_source': 'cozmoEngine-test.lst',
-    'energy_library_type': 'static_library',
+    'engine_library_type': 'static_library',
     'ctrlLightCube_source': 'ctrlLightCube.lst',
     'ctrlRobot_source': 'ctrlRobot.lst',
     'ctrlViz_source': 'ctrlViz.lst',
@@ -33,6 +33,7 @@
       '<(coretech_external_path)/opencv-2.4.8/modules/features2d/include',
       '<(coretech_external_path)/opencv-2.4.8/modules/flann/include',
     ],
+    
     'opencv_libs': [
       'libzlib.a',
       'liblibjpeg.a',
@@ -55,7 +56,7 @@
       '<(webots_path)/include/ode',
       '<(webots_path)/include',
     ],
-
+  
     'compiler_flags': [
       '-Wno-deprecated-declarations', # Supressed until system() usage is removed
       '-fdiagnostics-show-category=name',
@@ -82,10 +83,10 @@
     'compiler_cpp_flags' : [
       '-std=c++11',
       '-stdlib=libc++',
-      '<@(compiler_flags)'
+      '<@(compiler_flags)',
     ],
     'linker_flags' : [
-        '-g'
+        '-g',
     ],
 
     # Set default ARCHS based on platform
@@ -325,9 +326,10 @@
               '<(webots_path)/lib/libCppController.dylib',
               '<@(opencv_libs)',
               '$(SDKROOT)/System/Library/Frameworks/OpenGL.framework',
+              '$(SDKROOT)/System/Library/Frameworks/GLUT.framework',              
             ],
           }, # end cozmo_physics
-
+ 
           {
             'target_name': 'webotsCtrlLightCube',
             'type': 'executable',
@@ -400,6 +402,7 @@
             'libraries': [
               '<(webots_path)/lib/libCppController.dylib',
               '<@(opencv_libs)',
+              '$(SDKROOT)/System/Library/Frameworks/AppKit.framework',
             ],
           }, # end controller Robot
 
@@ -557,8 +560,10 @@
         '<(ce-cti_gyp_path):ctiMessaging',
         '<(ce-cti_gyp_path):ctiPlanning',
         '<(ce-cti_gyp_path):ctiVision',
+        '<(ce-cti_gyp_path):ctiCommonRobot',
+        '<(ce-cti_gyp_path):ctiVisionRobot',
       ],
-      'type': '<(energy_library_type)',
+      'type': '<(engine_library_type)',
     },
     
 
