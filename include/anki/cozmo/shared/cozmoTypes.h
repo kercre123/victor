@@ -125,7 +125,7 @@ namespace Anki {
       IS_PROX_FORWARD_BLOCKED = 0x00000010,
       IS_PROX_SIDE_BLOCKED    = 0x00000020,
       IS_ANIMATING            = 0x00000040,
-      IS_PERFORMING_ACTION    = 0x00000080,
+      IS_PATHING              = 0x00000080,
       LIFT_IN_POS             = 0x00000100,
       HEAD_IN_POS             = 0x00000200,
       IS_ANIM_BUFFER_FULL     = 0x00000400,
