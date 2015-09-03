@@ -659,7 +659,7 @@ namespace Cozmo {
   }
   
   
-  // If they have roughly the same neatness score and they're poses are roughly axis aligned at
+  // If they have roughly the same neatness score and their poses are roughly axis aligned at
   // distance of approximately two block widths
   bool BehaviorOCD::AreAligned(const ObjectID& o1, const ObjectID& o2)
   {
@@ -798,7 +798,7 @@ namespace Cozmo {
             if (score < MIN_NEATNESS_SCORE) {
               PRINT_NAMED_INFO("BehaviorOCD.VerifyNeatness.NeatToMessy", "Object %d", objID->GetValue());
               if ((_currentState == State::PlacingBlock) && (*objID == _objectToPlaceOn)) {
-                // Robot is trying to place a block on neat block they're we're about to make messy,
+                // Robot is trying to place a block on neat block that we're about to make messy,
                 // so cancel it.
                 _robot.GetActionList().Cancel(_lastActionTag);
               }
@@ -841,9 +841,10 @@ namespace Cozmo {
   
   void BehaviorOCD::DeleteObjectIfFailedToPickOrPlaceAgain(const ObjectID& objectID)
   {
+    const f32 SAME_POSE_DIST_THRESH_MM = 5;
     if (objectID.IsSet() &&
         (_lastObjectFailedToPickOrPlace == objectID) &&
-        ComputeDistanceBetween(_robot.GetPose(), _lastPoseWhereFailedToPickOrPlace) < 5) {
+        ComputeDistanceBetween(_robot.GetPose(), _lastPoseWhereFailedToPickOrPlace) < SAME_POSE_DIST_THRESH_MM) {
       PRINT_NAMED_INFO("BehaviorOCD::DeleteObjectIfFailedToPickOrPlaceAgain", "Deleting object %d", objectID.GetValue());
       _robot.GetBlockWorld().ClearObject(objectID);
     }
