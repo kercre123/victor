@@ -626,6 +626,23 @@
                 ],
               },
               {
+                'action_name': 'create_symlink_resources_pocketsphinx',
+                'inputs': [
+                  '<(coretech_external_path)/pocketsphinx/pocketsphinx/model/en-us',
+                ],
+                'outputs': [
+                  '../../simulator/controllers/webotsCtrlGameEngine/resources/pocketsphinx',
+                ],
+                'action': [
+                  'ln',
+                  '-s',
+                  '-f',
+                  '-h',
+                  '<@(_inputs)',
+                  '<@(_outputs)',
+                ],
+              },
+              {
                 'action_name': 'create_symlink_webotsCtrlRobot',
                 'inputs': [
                   '<(PRODUCT_DIR)/webotsCtrlRobot',
