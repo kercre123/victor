@@ -19,10 +19,14 @@
 #include <unordered_map>
 
 namespace Anki {
-  namespace Cozmo {
+  
+  namespace Util {
   namespace Data {
-  class DataPlatform;
+    class DataPlatform;
   }
+  }
+  
+  namespace Cozmo {
 
   // NOTE: this is a singleton class
     class SoundManager
@@ -39,7 +43,7 @@ namespace Anki {
       // Get the total number of sounds currently available in SoundManager
       size_t GetNumAvailableSounds() const;
       
-      void LoadSounds(Data::DataPlatform* dataPlatform);
+      void LoadSounds(Util::Data::DataPlatform* dataPlatform);
       
       // Volume for Play() methods is expressed a percentage of saved volume
       bool Play(const std::string& name, const u8 numLoops=1, const u8 volume = 100);

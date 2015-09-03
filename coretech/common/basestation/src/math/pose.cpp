@@ -503,8 +503,7 @@ namespace Anki {
     Pose3d pose2mod(pose2);
     if(pose1.GetParent() != pose2.GetParent()) {
       if(pose1.GetParent() == nullptr || false == pose2.GetWithRespectTo(*pose1.GetParent(), pose2mod)) {
-        PRINT_NAMED_ERROR("ComputeDistanceBetween", "Could not get pose2 w.r.t. pose1's parent.\n");
-        return -1.f;
+        CORETECH_THROW("ComputeVectorBetween.NoCommonParent: Could not get pose2 w.r.t. pose1's parent.");
       }
     }
     

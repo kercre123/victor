@@ -143,7 +143,7 @@ namespace Anki
       // Mat Pieces
       //
       
-      // Flag mats:
+      // Flat mats:
       //_objectLibrary[ObjectFamily::Mat].AddObject(new FlatMat(ObjectType::FlatMat_LETTERS_4x4));
       _objectLibrary[ObjectFamily::Mat].AddObject(new FlatMat(ObjectType::FlatMat_GEARS_4x4));
       
@@ -169,12 +169,6 @@ namespace Anki
       //
       _objectLibrary[ObjectFamily::Charger].AddObject(new Charger());
       
-      
-      //////////////////////////////////////////////////////////////////////////
-      // Faces
-      //
-      _objectLibrary[ObjectFamily::HumanHead].AddObject(new HumanHead());
-
       
     } // BlockWorld() Constructor
     
@@ -242,11 +236,30 @@ namespace Anki
     
     
     void BlockWorld::FindIntersectingObjects(const ObservableObject* objectSeen,
+                                             std::vector<ObservableObject*>& intersectingExistingObjects,
+                                             f32 padding_mm,
                                              const std::set<ObjectFamily>& ignoreFamiles,
                                              const std::set<ObjectType>& ignoreTypes,
-                                             const std::set<ObjectID>& ignoreIDs,
-                                             std::vector<ObservableObject*>& intersectingExistingObjects,
-                                             f32 padding_mm) const
+                                             const std::set<ObjectID>& ignoreIDs) const
+    {
+      Quad2f quadSeen = objectSeen->GetBoundingQuadXY(objectSeen->GetPose(), padding_mm);
+      
+      FindIntersectingObjects(quadSeen,
+                              intersectingExistingObjects,
+                              padding_mm,
+                              ignoreFamiles,
+                              ignoreTypes,
+                              ignoreIDs);
+      
+    } // FindIntersectingObjects()
+    
+    
+    void BlockWorld::FindIntersectingObjects(const Quad2f& quad,
+                                             std::vector<ObservableObject *> &intersectingExistingObjects,
+                                             f32 padding_mm,
+                                             const std::set<ObjectFamily> &ignoreFamiles,
+                                             const std::set<ObjectType> &ignoreTypes,
+                                             const std::set<ObjectID> &ignoreIDs) const
     {
       for(auto & objectsByFamily : _existingObjects)
       {
@@ -262,11 +275,10 @@ namespace Anki
                 if(useID) {
                   ObservableObject* objExist = objectAndId.second;
                   
-                  // Get quads of both objects and check for intersection
+                  // Get quad of object and check for intersection
                   Quad2f quadExist = objExist->GetBoundingQuadXY(objExist->GetPose(), padding_mm);
-                  Quad2f quadSeen = objectSeen->GetBoundingQuadXY(objectSeen->GetPose(), padding_mm);
                   
-                  if( quadExist.Intersects(quadSeen) ) {
+                  if( quadExist.Intersects(quad) ) {
                     intersectingExistingObjects.push_back(objExist);
                   }
                 } // if useID
@@ -275,10 +287,8 @@ namespace Anki
           }  // for each type
         }  // if not ignoreFamily
       } // for each family
-      
-    } // FindIntersectingObjects()
-
-
+    }
+    
     void BlockWorld::AddAndUpdateObjects(const std::vector<ObservableObject*>& objectsSeen,
                                          const ObjectFamily& inFamily,
                                          const TimeStamp_t atTimestamp)
@@ -641,7 +651,7 @@ namespace Anki
           msg.headTiltAngle_rad = headAngle;
           msg.bodyPanAngle_rad = 0.f;
           
-          if(false == _robot->IsTrackingObjectWithHeadOnly()) {
+          if(false == _robot->IsTrackingWithHeadOnly()) {
             // Also rotate ("pan") body:
             const Radians panAngle = std::atan2(yDist, xDist);// - _robot->GetPose().GetRotationAngle<'Z'>();
             msg.bodyPanAngle_rad = panAngle.ToFloat();
@@ -1471,7 +1481,7 @@ namespace Anki
             // Ignore the mat object that the robot is localized to (?)
             ignoreIDs.insert(_robot->GetLocalizedTo());
           }
-          FindIntersectingObjects(m, ignoreFamilies, ignoreTypes, ignoreIDs, existingObjects, 0);
+          FindIntersectingObjects(m, existingObjects, 0, ignoreFamilies, ignoreTypes, ignoreIDs);
           if (!existingObjects.empty()) {
             delete m;
             return RESULT_OK;
@@ -1632,12 +1642,7 @@ namespace Anki
         // Note that this removes markers from the list that it uses
         numObjectsObserved += UpdateObjectPoses(currentObsMarkers, ObjectFamily::Charger, atTimestamp);
         
-        //
-        // Find any observed human heads from the remaining "markers"
-        //
-        // Note that this removes markers from the list that it uses
-        numObjectsObserved += UpdateObjectPoses(currentObsMarkers, ObjectFamily::HumanHead, atTimestamp);
-        
+
         // TODO: Deal with unknown markers?
         
         // Keep track of how many markers went unused by either robot or block
@@ -1678,8 +1683,7 @@ namespace Anki
         // NOTE: This assumes all other objects are DockableObjects below!!! (Becuase of IsBeingCarried() check)
         // TODO: How can we delete Mat objects (like platforms) whose positions we drive through
         if(objectsByFamily.first != ObjectFamily::Mat &&
-           objectsByFamily.first != ObjectFamily::MarkerlessObject &&
-           objectsByFamily.first != ObjectFamily::HumanHead)
+           objectsByFamily.first != ObjectFamily::MarkerlessObject)
         {
           for(auto & objectsByType : objectsByFamily.second)
           {
@@ -1944,7 +1948,7 @@ namespace Anki
                 if(ignoreIDs.find(objectsByID.first) == ignoreIDs.end()) {
                   Vec3f dist = ComputeVectorBetween(pose, objectsByID.second->GetPose());
                   dist.Abs();
-                  if(dist < closestDist) {
+                  if(dist.Length() < closestDist.Length()) {
                     closestDist = dist;
                     matchingObject = objectsByID.second;
                   }

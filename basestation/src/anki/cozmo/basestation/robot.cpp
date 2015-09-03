@@ -18,6 +18,7 @@
 #include "anki/common/basestation/math/point.h"
 #include "anki/common/basestation/math/quad_impl.h"
 #include "anki/common/basestation/math/point_impl.h"
+#include "anki/common/basestation/math/rect_impl.h"
 #include "anki/common/basestation/math/poseBase_impl.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/vision/CameraSettings.h"
@@ -33,7 +34,7 @@
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
-#include "anki/cozmo/basestation/data/dataPlatform.h"
+#include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "util/fileUtils/fileUtils.h"
 
 #include <fstream>
@@ -47,7 +48,7 @@ namespace Anki {
   namespace Cozmo {
     
     Robot::Robot(const RobotID_t robotID, IRobotMessageHandler* msgHandler,
-      IExternalInterface* externalInterface, Data::DataPlatform* dataPlatform)
+                 IExternalInterface* externalInterface, Util::Data::DataPlatform* dataPlatform)
     : _externalInterface(externalInterface)
     , _dataPlatform(dataPlatform)
     , _ID(robotID)
@@ -56,6 +57,7 @@ namespace Anki {
     , _syncTimeAcknowledged(false)
     , _msgHandler(msgHandler)
     , _blockWorld(this)
+    , _faceWorld(*this)
     , _visionProcessor(dataPlatform)
     , _behaviorMgr(*this)
     , _isBehaviorMgrEnabled(false)
@@ -111,6 +113,9 @@ namespace Anki {
       // Initializes _pose, _poseOrigins, and _worldOrigin:
       Delocalize();
       
+      _proceduralFace.MarkAsSentToRobot(true);
+      _lastProceduralFace.MarkAsSentToRobot(false);
+      
       // The call to Delocalize() will increment frameID, but we want it to be
       // initialzied to 0, to match the physical robot's initialization
       _frameId = 0;
@@ -119,7 +124,7 @@ namespace Anki {
         // Read planner motion primitives
         // TODO: Use different motions primitives depending on the type/personality of this robot
         // TODO: Stop storing *cozmo* motion primitives in a coretech location
-        const bool success = _dataPlatform->readAsJson(Data::Scope::Resources, "config/basestation/config/cozmo_mprim.json", mprims);
+        const bool success = _dataPlatform->readAsJson(Util::Data::Scope::Resources, "config/basestation/config/cozmo_mprim.json", mprims);
         if(!success) {
           PRINT_NAMED_ERROR("Robot.MotionPrimitiveJsonParseFailure", "Failed to load motion primitives, Planner likely won't work.");
         }
@@ -133,7 +138,7 @@ namespace Anki {
       if (nullptr != _dataPlatform)
       {
         const std::string jsonFilename = "config/basestation/config/behavior_config.json";
-        const bool success = _dataPlatform->readAsJson(Data::Scope::Resources, jsonFilename, behaviorConfig);
+        const bool success = _dataPlatform->readAsJson(Util::Data::Scope::Resources, jsonFilename, behaviorConfig);
         if (!success)
         {
           PRINT_NAMED_ERROR("Robot.BehaviorConfigJsonNotFound",
@@ -177,6 +182,15 @@ namespace Anki {
         // Robot is being picked up: de-localize it and clear all known objects
         Delocalize();
         _blockWorld.ClearAllExistingObjects();
+        
+        if (_externalInterface != nullptr) {
+          _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotPickedUp(GetID())));
+        }
+      }
+      else if (true == _isPickedUp && false == t) {
+        if (_externalInterface != nullptr) {
+          _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotPutDown(GetID())));
+        }
       }
       _isPickedUp = t;
     }
@@ -229,7 +243,7 @@ namespace Anki {
       if(_stateSaveMode != SAVE_OFF)
       {
         // Make sure image capture folder exists
-        std::string robotStateCaptureDir = _dataPlatform->pathToResource(Data::Scope::Cache, AnkiUtil::kP_ROBOT_STATE_CAPTURE_DIR);
+        std::string robotStateCaptureDir = _dataPlatform->pathToResource(Util::Data::Scope::Cache, AnkiUtil::kP_ROBOT_STATE_CAPTURE_DIR);
         if (!Util::FileUtils::CreateDirectory(robotStateCaptureDir, false, true)) {
           PRINT_NAMED_ERROR("Robot.UpdateFullRobotState.CreateDirFailed","%s", robotStateCaptureDir.c_str());
         }
@@ -258,7 +272,7 @@ namespace Anki {
         
         Json::Value json = msg.CreateJson();
         PRINT_NAMED_INFO("Robot.UpdateFullRobotState", "Writing RobotState JSON to file %s", msgFilename.c_str());
-        _dataPlatform->writeAsJson(Data::Scope::Cache, msgFilename, json);
+        _dataPlatform->writeAsJson(Util::Data::Scope::Cache, msgFilename, json);
 #if(0)
         // Compose line for IMU output file.
         // Used for determining delay constant in image timestamp.
@@ -497,8 +511,33 @@ namespace Anki {
       return headAngSpeed;
     }
 
+    Vision::Camera Robot::GetHistoricalCamera(RobotPoseStamp* p, TimeStamp_t t)
+    {
+      Vision::Camera camera(GetCamera());
+      
+      // Compute pose from robot body to camera
+      // Start with canonical (untilted) headPose
+      Pose3d camPose(_headCamPose);
+      
+      // Rotate that by the given angle
+      RotationVector3d Rvec(-p->GetHeadAngle(), Y_AXIS_3D());
+      camPose.RotateBy(Rvec);
+      
+      // Precompute with robot body to neck pose
+      camPose.PreComposeWith(_neckPose);
+      
+      // Set parent pose to be the historical robot pose
+      camPose.SetParent(&(p->GetPose()));
+      
+      camPose.SetName("PoseHistoryCamera_" + std::to_string(t));
+      
+      // Update the head camera's pose
+      camera.SetPose(camPose);
+      
+      return camera;
+    }
     
-    Result Robot::QueueObservedMarker(const MessageVisionMarker& msg)
+    Result Robot::QueueObservedMarker(const Vision::ObservedMarker& markerOrig)
     {
       Result lastResult = RESULT_OK;
       
@@ -507,25 +546,24 @@ namespace Anki {
       TimeStamp_t t;
       RobotPoseStamp* p = nullptr;
       HistPoseKey poseKey;
-      lastResult = ComputeAndInsertPoseIntoHistory(msg.timestamp, t, &p, &poseKey, true);
+      lastResult = ComputeAndInsertPoseIntoHistory(markerOrig.GetTimeStamp(), t, &p, &poseKey, true);
       if(lastResult != RESULT_OK) {
         PRINT_NAMED_WARNING("Robot.QueueObservedMarker.HistoricalPoseNotFound",
                             "Time: %d, hist: %d to %d\n",
-                            msg.timestamp, _poseHistory->GetOldestTimeStamp(),
+                            markerOrig.GetTimeStamp(),
+                            _poseHistory->GetOldestTimeStamp(),
                             _poseHistory->GetNewestTimeStamp());
         return lastResult;
       }
       
       // If we get here, ComputeAndInsertPoseIntoHistory() should have succeeded
       // and this should be true
-      assert(msg.timestamp == t);
+      assert(markerOrig.GetTimeStamp() == t);
       
       // If this is not a face marker and "Vision while moving" is disabled and
       // we aren't picking/placing, check to see if the robot's body or head are
       // moving too fast to queue this marker
-      if(msg.markerType != Vision::Marker::FACE_CODE &&
-         !_visionWhileMovingEnabled &&
-         !IsPickingOrPlacing())
+      if(!_visionWhileMovingEnabled && !IsPickingOrPlacing())
       {
         TimeStamp_t t_prev, t_next;
         RobotPoseStamp p_prev, p_next;
@@ -582,47 +620,12 @@ namespace Anki {
         return RESULT_FAIL;
       }
       
-      Vision::Camera camera(GetCamera());
-      
-      // Get corners
-      Quad2f corners;
-      
-      corners[Quad::TopLeft].x()     = msg.x_imgUpperLeft;
-      corners[Quad::TopLeft].y()     = msg.y_imgUpperLeft;
-      
-      corners[Quad::BottomLeft].x()  = msg.x_imgLowerLeft;
-      corners[Quad::BottomLeft].y()  = msg.y_imgLowerLeft;
-      
-      corners[Quad::TopRight].x()    = msg.x_imgUpperRight;
-      corners[Quad::TopRight].y()    = msg.y_imgUpperRight;
-      
-      corners[Quad::BottomRight].x() = msg.x_imgLowerRight;
-      corners[Quad::BottomRight].y() = msg.y_imgLowerRight;
-      
-      
-     
-      
-      // Compute pose from robot body to camera
-      // Start with canonical (untilted) headPose
-      Pose3d camPose(_headCamPose);
-      
-      // Rotate that by the given angle
-      RotationVector3d Rvec(-p->GetHeadAngle(), Y_AXIS_3D());
-      camPose.RotateBy(Rvec);
-      
-      // Precompute with robot body to neck pose
-      camPose.PreComposeWith(_neckPose);
-      
-      // Set parent pose to be the historical robot pose
-      camPose.SetParent(&(p->GetPose()));
-      
-      camPose.SetName("PoseHistoryCamera_" + std::to_string(msg.timestamp));
-      
-      // Update the head camera's pose
-      camera.SetPose(camPose);
-      
-      // Create observed marker
-      Vision::ObservedMarker marker(t, msg.markerType, corners, camera);
+      // Update the marker's camera to use a pose from pose history, and
+      // create a new marker with the updated camera
+      Vision::ObservedMarker marker(markerOrig.GetTimeStamp(), markerOrig.GetCode(),
+                                    markerOrig.GetImageCorners(),
+                                    GetHistoricalCamera(p, markerOrig.GetTimeStamp()),
+                                    markerOrig.GetUserHandle());
       
       // Queue the marker for processing by the blockWorld
       _blockWorld.QueueObservedMarker(poseKey, marker);
@@ -778,8 +781,9 @@ namespace Anki {
         
         ////////// Check for any messages from the Vision Thread ////////////
         
-        MessageVisionMarker visionMarker;
+        Vision::ObservedMarker visionMarker;
         while(true == _visionProcessor.CheckMailbox(visionMarker)) {
+          
           Result lastResult = QueueObservedMarker(visionMarker);
           if(lastResult != RESULT_OK) {
             PRINT_NAMED_ERROR("Robot.Update.FailedToQueueVisionMarker",
@@ -787,71 +791,56 @@ namespace Anki {
             return lastResult;
           }
           
-          VizManager::getInstance()->SendVisionMarker(visionMarker.x_imgUpperLeft,  visionMarker.y_imgUpperLeft,
-                                                      visionMarker.x_imgUpperRight, visionMarker.y_imgUpperRight,
-                                                      visionMarker.x_imgLowerRight, visionMarker.y_imgLowerRight,
-                                                      visionMarker.x_imgLowerLeft,  visionMarker.y_imgLowerLeft,
-                                                      visionMarker.markerType != Vision::MARKER_UNKNOWN);
+          const Quad2f& corners = visionMarker.GetImageCorners();
+          VizManager::getInstance()->SendVisionMarker(corners[Quad::TopLeft].x(),  corners[Quad::TopLeft].y(),
+                                                      corners[Quad::TopRight].x(),  corners[Quad::TopRight].y(),
+                                                      corners[Quad::BottomRight].x(),  corners[Quad::BottomRight].y(),
+                                                      corners[Quad::BottomLeft].x(),  corners[Quad::BottomLeft].y(),
+                                                      visionMarker.GetCode() != Vision::MARKER_UNKNOWN);
         }
         
-        MessageFaceDetection faceDetection;
-        //std::vector<Rectangle<s32> > faceTargets;
+        Vision::TrackedFace faceDetection;
         while(true == _visionProcessor.CheckMailbox(faceDetection)) {
           /*
           PRINT_NAMED_INFO("Robot.Update",
                            "Robot %d reported seeing a face at (x,y,w,h)=(%d,%d,%d,%d).",
                            GetID(), faceDetection.x_upperLeft, faceDetection.y_upperLeft, faceDetection.width, faceDetection.height);
           */
-          const u16 left_x   = faceDetection.x_upperLeft;
-          const u16 right_x  = left_x + faceDetection.width;
-          const u16 top_y    = faceDetection.y_upperLeft;
-          const u16 bottom_y = top_y + faceDetection.height;
-
-          if(faceDetection.visualize > 0) {
-            // Send tracker quad info to viz
-            VizManager::getInstance()->SendTrackerQuad(left_x, top_y,
-                                                       right_x, top_y,
-                                                       right_x, bottom_y,
-                                                       left_x, bottom_y);
-          }
           
-          // Create a "visionMarker" message from the face detection so we will
-          // add this face to BlockWorld
-          MessageVisionMarker markerMsg;
-          markerMsg.x_imgUpperLeft  = left_x;
-          markerMsg.y_imgUpperLeft  = top_y;
-          markerMsg.x_imgUpperRight = right_x;
-          markerMsg.y_imgUpperRight = top_y;
-          markerMsg.x_imgLowerLeft  = left_x;
-          markerMsg.y_imgLowerLeft  = bottom_y;
-          markerMsg.x_imgLowerRight = right_x;
-          markerMsg.y_imgLowerRight = bottom_y;
-          markerMsg.timestamp = faceDetection.timestamp;
-          markerMsg.markerType = Vision::Marker::FACE_CODE; // TODO: Use face identity when we have recognition?
+          Result lastResult;
           
-          Result lastResult = QueueObservedMarker(markerMsg);
+          // Get historical robot pose at specified timestamp to make sure we've
+          // got a robot/camera in pose history
+          TimeStamp_t t;
+          RobotPoseStamp* p = nullptr;
+          HistPoseKey poseKey;
+          lastResult = ComputeAndInsertPoseIntoHistory(faceDetection.GetTimeStamp(),
+                                                       t, &p, &poseKey, true);
           if(lastResult != RESULT_OK) {
-            PRINT_NAMED_ERROR("Robot.Update.FailedToQueueFaceVisionMarker",
-                              "Got FaceDetection message from vision processing thread "
-                              "but failed to queue it as a VisionMarker.");
+            PRINT_NAMED_WARNING("Robot.Update.HistoricalPoseNotFound",
+                                "For face seen at time: %d, hist: %d to %d\n",
+                                faceDetection.GetTimeStamp(),
+                                _poseHistory->GetOldestTimeStamp(),
+                                _poseHistory->GetNewestTimeStamp());
             return lastResult;
           }
+
+          // Use a camera from the robot's pose history to estimate the head's
+          // 3D translation, w.r.t. that camera. Also puts the face's pose in
+          // the camera's pose chain.
+          faceDetection.UpdateTranslation(GetHistoricalCamera(p, t));
           
-          /*
-          // Signal the detection of a face
-          CozmoEngineSignals::RobotObservedFaceSignal().emit(GetID(),
-                                                                faceDetection.x_upperLeft,
-                                                                faceDetection.y_upperLeft,
-                                                                faceDetection.width,
-                                                                faceDetection.height);
-           */
+          // Now use the faceDetection to update FaceWorld:
+          lastResult = _faceWorld.AddOrUpdateFace(faceDetection);
+          if(lastResult != RESULT_OK) {
+            PRINT_NAMED_ERROR("Robot.Update.FailedToUpdateFace",
+                              "Got FaceDetection from vision processing but failed to update it.");
+          }
           
-          /*
-          faceTargets.emplace_back(faceDetection.x_upperLeft,
-                                   faceDetection.y_upperLeft,
-                                   faceDetection.width,
-                                   faceDetection.height);
-           */
+          VizManager::getInstance()->DrawCameraFace(faceDetection,
+                                                    faceDetection.IsBeingTracked() ?
+                                                    NamedColors::GREEN : NamedColors::RED);
+
         }
         
         MessageTrackerQuad trackerQuad;
@@ -892,7 +881,14 @@ namespace Anki {
         // (Note that we're only doing this if the vision processor completed)
         
         uint32_t numBlocksObserved = 0;
-        _blockWorld.Update(numBlocksObserved);
+
+        if(RESULT_OK != _blockWorld.Update(numBlocksObserved)) {
+          PRINT_NAMED_WARNING("Robot.Update.BlockWorldUpdateFailed", "");
+        }
+        
+        if(RESULT_OK != _faceWorld.Update()) {
+          PRINT_NAMED_WARNING("Robot.Update.FaceWorldUpdateFailed", "");
+        }
 
       } // if(_visionProcessor.WasLastImageProcessed())
       } // if (GetCamera().IsCalibrated())
@@ -910,6 +906,11 @@ namespace Anki {
         const IBehavior* behavior = _behaviorMgr.GetCurrentBehavior();
         if(behavior != nullptr) {
           behaviorName = behavior->GetName();
+          const std::string& stateName = behavior->GetStateName();
+          if (!stateName.empty())
+          {
+            behaviorName += "-" + stateName;
+          }
         }
       }
       
@@ -1196,23 +1197,40 @@ namespace Anki {
       
     Result Robot::EnableTrackToObject(const u32 objectID, bool headOnly)
     {
-      _trackHeadToObjectID = objectID;
+      _trackToObjectID = objectID;
       
-      if(_blockWorld.GetObjectByID(_trackHeadToObjectID) != nullptr) {
-        _trackObjectWithHeadOnly = headOnly;
+      if(_blockWorld.GetObjectByID(_trackToObjectID) != nullptr) {
+        _trackWithHeadOnly = headOnly;
+        _trackToFaceID = Vision::TrackedFace::UnknownFace;
         return RESULT_OK;
       } else {
-        PRINT_NAMED_ERROR("Robot.TrackHeadToObject",
-                          "Cannot track head to object ID=%d, which does not exist.\n",
+        PRINT_NAMED_ERROR("Robot.EnableTrackToObject.UnknownObject",
+                          "Cannot track to object ID=%d, which does not exist.\n",
                           objectID);
-        _trackHeadToObjectID.UnSet();
+        _trackToObjectID.UnSet();
         return RESULT_FAIL;
       }
     }
-      
+    
+    Result Robot::EnableTrackToFace(Vision::TrackedFace::ID_t faceID, bool headOnly)
+    {
+      _trackToFaceID = faceID;
+      if(_faceWorld.GetFace(_trackToFaceID) != nullptr) {
+        _trackWithHeadOnly = headOnly;
+        _trackToObjectID.UnSet();
+        return RESULT_OK;
+      } else {
+        PRINT_NAMED_ERROR("Robot.EnableTrackToFace.UnknownFace",
+                          "Cannot track to face ID=%lld, which does not exist.",
+                          faceID);
+        _trackToFaceID = Vision::TrackedFace::UnknownFace;
+        return RESULT_FAIL;
+      }
+    }
+    
     Result Robot::DisableTrackToObject()
     {
-      _trackHeadToObjectID.UnSet();
+      _trackToObjectID.UnSet();
       return RESULT_OK;
     }
       
@@ -1251,6 +1269,30 @@ namespace Anki {
     Result Robot::SetIdleAnimation(const std::string &animName)
     {
       return _animationStreamer.SetIdleAnimation(animName);
+    }
+    
+    void Robot::SetProceduralFace(const ProceduralFace& face)
+    {
+      // First one
+      if(_lastProceduralFace.GetTimeStamp() == 0) {
+        _lastProceduralFace = face;
+        _lastProceduralFace.MarkAsSentToRobot(true);
+        _proceduralFace.MarkAsSentToRobot(true);
+      } else {
+        if(_proceduralFace.HasBeenSentToRobot()) {
+          // If the current face has already been sent, make it the
+          // last procedural face (sent). Otherwise, we'll just
+          // replace the current face and leave "last" as is.
+          std::swap(_lastProceduralFace, _proceduralFace);
+        }
+        _proceduralFace = face;
+        _proceduralFace.MarkAsSentToRobot(false);
+      }
+    }
+    
+    void Robot::MarkProceduralFaceAsSent()
+    {
+      _proceduralFace.MarkAsSentToRobot(true);
     }
     
     const std::string Robot::GetStreamingAnimationName() const
@@ -1307,7 +1349,7 @@ namespace Anki {
       FaceAnimationManager::getInstance()->ReadFaceAnimationDir(_dataPlatform);
       
       const std::string animationFolder =
-        _dataPlatform->pathToResource(Data::Scope::Resources, "assets/animations/");
+        _dataPlatform->pathToResource(Util::Data::Scope::Resources, "assets/animations/");
       std::string animationId;
       s32 loadedFileCount = 0;
       DIR* dir = opendir(animationFolder.c_str());
@@ -2299,7 +2341,7 @@ namespace Anki {
       if (_imageSaveMode != SAVE_OFF) {
         
         // Make sure image capture folder exists
-        std::string imageCaptureDir = _dataPlatform->pathToResource(Data::Scope::Cache, AnkiUtil::kP_IMG_CAPTURE_DIR);
+        std::string imageCaptureDir = _dataPlatform->pathToResource(Util::Data::Scope::Cache, AnkiUtil::kP_IMG_CAPTURE_DIR);
         if (!Util::FileUtils::CreateDirectory(imageCaptureDir, false, true)) {
           PRINT_NAMED_WARNING("Robot.ProcessImage.CreateDirFailed","%s",imageCaptureDir.c_str());
         }

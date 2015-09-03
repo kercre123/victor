@@ -752,7 +752,7 @@ namespace Anki {
           //AnkiWarn("QuadRefinement.CornersConverged",
           //printf("Corner change at iteration %d = %f which is less than "
           //         "convergence tolerance of %f. Stopping iterations.\n",
-          //         iteration, currentCornerChange, CornerConvergenceTolerance);
+          //         iteration, currentCornerChange, minCornerChange);
 
           EndBenchmark("vme_quadrefine_mainLoop_finalize");
           break;

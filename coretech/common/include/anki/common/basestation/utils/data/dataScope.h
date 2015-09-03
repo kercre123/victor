@@ -10,11 +10,11 @@
 *
 */
 
-#ifndef _Anki_Cozmo_Basestation_Data_DataScope_H__
-#define _Anki_Cozmo_Basestation_Data_DataScope_H__
+#ifndef _Anki_Common_Basestation_Utils_Data_DataScope_H__
+#define _Anki_Common_Basestation_Utils_Data_DataScope_H__
 
 namespace Anki {
-namespace Cozmo {
+namespace Util {
 namespace Data {
 
 enum class Scope {
@@ -27,10 +27,10 @@ enum class Scope {
 
 
 } // end namespace Data
-} // end namespace Cozmo
+} // end namespace Util
 } // end namespace Anki
 
 
 
 
-#endif //_Anki_Cozmo_Basestation_Data_DataScope_H__
+#endif //_Anki_Common_Basestation_Utils_Data_DataScope_H__

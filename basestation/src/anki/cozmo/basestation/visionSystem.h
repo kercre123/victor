@@ -45,26 +45,25 @@
 
 #include "anki/cozmo/basestation/comms/robot/robotMessages.h"
 
+#include "anki/vision/basestation/camera.h"
 #include "anki/vision/basestation/cameraCalibration.h"
 #include "anki/vision/basestation/image.h"
+#include "anki/vision/basestation/faceTracker.h"
 
 #include "visionParameters.h"
 
 
-namespace Anki {
+namespace Anki {  
 namespace Cozmo {
     
-// Forward declaration:
-class Robot;
-namespace Data {
-class DataPlatform;
-}
+  // Forward declaration:
+  class Robot;
 
-class VisionSystem
+  class VisionSystem
   {
   public:
 
-    VisionSystem(Data::DataPlatform* dataPlatform);
+    VisionSystem(const std::string& dataPath);
     ~VisionSystem();
     
     enum Mode {
@@ -210,10 +209,11 @@ class VisionSystem
     // that message into the passed-in message struct.
     //bool CheckMailbox(ImageChunk&          msg);
     bool CheckMailbox(MessageDockingErrorSignal&  msg);
-    bool CheckMailbox(MessageFaceDetection&       msg);
-    bool CheckMailbox(MessageVisionMarker&        msg);
+    //bool CheckMailbox(MessageFaceDetection&       msg);
+    bool CheckMailbox(Vision::ObservedMarker&     msg);
     bool CheckMailbox(MessageTrackerQuad&         msg);
     bool CheckMailbox(MessagePanAndTiltHead&      msg);
+    bool CheckMailbox(Vision::TrackedFace&        msg);
     
   protected:
     
@@ -230,7 +230,7 @@ class VisionSystem
     //
     
     bool _isInitialized;
-  Data::DataPlatform* _dataPlatform;
+    const std::string _dataPath;
     
     // Just duplicating this from HAL for vision functions to work with less re-writing
     struct CameraInfo {
@@ -242,6 +242,10 @@ class VisionSystem
       
       CameraInfo(const Vision::CameraCalibration& camCalib);
     } *_headCamInfo;
+    
+    // Bogus camera object to reference in Vision::ObservedMarkers until we have
+    // fully moved embedded vision code into basestation
+    Vision::Camera _camera;
     
     enum VignettingCorrection
     {
@@ -344,6 +348,8 @@ class VisionSystem
     s32                             _snapshotSubsample;
     Embedded::Array<u8>*            _snapshot;
 
+    // FaceTracking
+    Vision::FaceTracker*            _faceTracker;
 
     struct VisionMemory {
       /* 10X the memory for debugging on a PC
@@ -355,7 +361,6 @@ class VisionSystem
       static const s32 ONCHIP_BUFFER_SIZE  = 600000;
       static const s32 CCM_BUFFER_SIZE     = 200000; 
 
-      
       static const s32 MAX_MARKERS = 100; // TODO: this should probably be in visionParameters
       
       OFFCHIP char offchipBuffer[OFFCHIP_BUFFER_SIZE];
@@ -430,8 +435,10 @@ class VisionSystem
     Mailbox<MessageDockingErrorSignal>   _dockingMailbox;
     Mailbox<MessageTrackerQuad>          _trackerMailbox;
     Mailbox<MessagePanAndTiltHead>       _panTiltMailbox;
-    MultiMailbox<MessageVisionMarker,  DetectFiducialMarkersParameters::MAX_MARKERS>   _visionMarkerMailbox;
-    MultiMailbox<MessageFaceDetection, FaceDetectionParameters::MAX_FACE_DETECTIONS>   _faceDetectMailbox;
+    MultiMailbox<Vision::ObservedMarker, DetectFiducialMarkersParameters::MAX_MARKERS>   _visionMarkerMailbox;
+    //MultiMailbox<MessageFaceDetection, FaceDetectionParameters::MAX_FACE_DETECTIONS>   _faceDetectMailbox;
+    
+    MultiMailbox<Vision::TrackedFace, FaceDetectionParameters::MAX_FACE_DETECTIONS> _faceMailbox;
     
   }; // class VisionSystem
   

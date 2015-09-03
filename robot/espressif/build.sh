@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+export PATH=/opt/xtensa-lx106-elf/bin:$PATH
 cd app
 clear
 make COMPILE=gcc BOOT=new APP=1 SPI_SPEED=20 SPI_MODE=QIO SPI_SIZE_MAP=3 && \

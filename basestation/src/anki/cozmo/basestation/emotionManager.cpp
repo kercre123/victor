@@ -61,16 +61,13 @@ namespace Cozmo {
   }
   
   
-  void EmotionManager::HandleRobotObservedFace(const ExternalInterface::RobotObservedObject &msg)
+  void EmotionManager::HandleRobotObservedFace(const ExternalInterface::RobotObservedFace &msg)
   {
-    if(msg.objectFamily == ObjectFamily::HumanHead)
-    {
-      // TODO: Get extra happy if we _recognize_ the face?
-      
-      // TODO: Use config file to determine adjustment factors:
-      //AdjustEmotion(LONELY, _config[AnkiUtil::kP_EMO_MGR_SEE_FACE_LONELY_ADJUSTMENT]);
-      AdjustEmotion(LONELY, 0.5f);
-    }
+    // TODO: Get extra happy if we _recognize_ the face?
+    
+    // TODO: Use config file to determine adjustment factors:
+    //AdjustEmotion(LONELY, _config[AnkiUtil::kP_EMO_MGR_SEE_FACE_LONELY_ADJUSTMENT]);
+    AdjustEmotion(LONELY, 0.5f);
   }
   
   

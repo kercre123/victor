@@ -55,7 +55,7 @@ namespace Anki {
         GameMessageHandler _msgHandler;
         GameComms *_gameComms = nullptr;
 
-        Data::DataPlatform* _dataPlatform = nullptr;
+        Util::Data::DataPlatform* _dataPlatform = nullptr;
       } // private namespace
 
     
@@ -109,6 +109,11 @@ namespace Anki {
 
       
       HandleRobotObservedObject(msg);
+    }
+    
+    void UiGameController::HandleRobotObservedFaceBase(ExternalInterface::RobotObservedFace const& msg)
+    {
+      HandleRobotObservedFace(msg);
     }
     
     void UiGameController::HandleRobotObservedNothingBase(ExternalInterface::RobotObservedNothing const& msg)
@@ -325,6 +330,9 @@ namespace Anki {
           case ExternalInterface::MessageEngineToGame::Tag::RobotObservedObject:
             HandleRobotObservedObjectBase(message.Get_RobotObservedObject());
             break;
+          case ExternalInterface::MessageEngineToGame::Tag::RobotObservedFace:
+            HandleRobotObservedFaceBase(message.Get_RobotObservedFace());
+            break;
           case ExternalInterface::MessageEngineToGame::Tag::UiDeviceAvailable:
             HandleUiDeviceConnectionBase(message.Get_UiDeviceAvailable());
             break;
@@ -349,7 +357,7 @@ namespace Anki {
           case ExternalInterface::MessageEngineToGame::Tag::ActiveObjectTapped:
             HandleActiveObjectTappedBase(message.Get_ActiveObjectTapped());
             break;
-        case ExternalInterface::MessageEngineToGame::Tag::AnimationAvailable:
+          case ExternalInterface::MessageEngineToGame::Tag::AnimationAvailable:
             HandleAnimationAvailableBase(message.Get_AnimationAvailable());
             break;
           default:
@@ -536,11 +544,11 @@ namespace Anki {
     }
 
     
-    void UiGameController::SetDataPlatform(Data::DataPlatform* dataPlatform) {
+    void UiGameController::SetDataPlatform(Util::Data::DataPlatform* dataPlatform) {
       _dataPlatform = dataPlatform;
     }
     
-    Data::DataPlatform* UiGameController::GetDataPlatform()
+    Util::Data::DataPlatform* UiGameController::GetDataPlatform()
     {
       return _dataPlatform;
     }
@@ -918,6 +926,7 @@ namespace Anki {
     void UiGameController::SendStartTestMode(TestModeClad mode, s32 p1, s32 p2, s32 p3)
     {
       ExternalInterface::StartTestMode m;
+      m.robotID = 1;
       m.mode = mode;
       m.p1 = p1;
       m.p2 = p2;

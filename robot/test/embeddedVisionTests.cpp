@@ -3488,47 +3488,52 @@ GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageGeneration)
 
 GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
 {
-  const s32 scaleImage_thresholdMultiplier = 65536; // 1.0*(2^16)=65536
-  //const s32 scaleImage_thresholdMultiplier = 49152; // .75*(2^16)=49152
-  const s32 scaleImage_numPyramidLevels = 3;
+  Anki::Embedded::FiducialDetectionParameters params;
 
-  const s32 component1d_minComponentWidth = 0;
-  const s32 component1d_maxSkipDistance = 0;
+  params.scaleImage_thresholdMultiplier = 65536; // 1.0*(2^16)=65536
+  //const s32 scaleImage_thresholdMultiplier = 49152; // .75*(2^16)=49152
+  params.scaleImage_numPyramidLevels = 3;
+
+  params.component1d_minComponentWidth = 0;
+  params.component1d_maxSkipDistance = 0;
 
   const f32 minSideLength = 0.01f*MAX(newFiducials_320x240_HEIGHT,newFiducials_320x240_WIDTH);
   const f32 maxSideLength = 0.97f*MIN(newFiducials_320x240_HEIGHT,newFiducials_320x240_WIDTH);
 
-  const bool useIntegralImageFiltering = true;
+  params.useIntegralImageFiltering = true;
 
-  const s32 component_minimumNumPixels = Round<s32>(minSideLength*minSideLength - (0.8f*minSideLength)*(0.8f*minSideLength));
-  const s32 component_maximumNumPixels = Round<s32>(maxSideLength*maxSideLength - (0.8f*maxSideLength)*(0.8f*maxSideLength));
-  const s32 component_sparseMultiplyThreshold = 1000 << 5;
-  const s32 component_solidMultiplyThreshold = 2 << 5;
+  params.component_minimumNumPixels = Round<s32>(minSideLength*minSideLength - (0.8f*minSideLength)*(0.8f*minSideLength));
+  params.component_maximumNumPixels = Round<s32>(maxSideLength*maxSideLength - (0.8f*maxSideLength)*(0.8f*maxSideLength));
+  params.component_sparseMultiplyThreshold = 1000 << 5;
+  params.component_solidMultiplyThreshold = 2 << 5;
 
-  //const s32 component_percentHorizontal = 1 << 7; // 0.5, in SQ 23.8
-  //const s32 component_percentVertical = 1 << 7; // 0.5, in SQ 23.8
-  const f32 component_minHollowRatio = 1.0f;
+  //params.component_percentHorizontal = 1 << 7; // 0.5, in SQ 23.8
+  //params.component_percentVertical = 1 << 7; // 0.5, in SQ 23.8
+  params.component_minHollowRatio = 1.0f;
 
-  const s32 minLaplacianPeakRatio = 5;
+  params.minLaplacianPeakRatio = 5;
 
-  const s32 maxExtractedQuads = 1000/2;
-  const s32 quads_minQuadArea = 100/4;
-  const s32 quads_quadSymmetryThreshold = 384;
-  const s32 quads_minDistanceFromImageEdge = 2;
+  params.maxExtractedQuads = 1000/2;
+  params.quads_minQuadArea = 100/4;
+  params.quads_quadSymmetryThreshold = 384;
+  params.quads_minDistanceFromImageEdge = 2;
 
-  const f32 decode_minContrastRatio = 1.25;
+  params.decode_minContrastRatio = 1.25;
 
   const s32 maxMarkers = 100;
-  //const s32 maxConnectedComponentSegments = 5000; // 25000/4 = 6250
-  const s32 maxConnectedComponentSegments = 39000; // 322*240/2 = 38640
-  //const s32 maxConnectedComponentSegments = 70000;
+  //params.maxConnectedComponentSegments = 5000; // 25000/4 = 6250
+  params.maxConnectedComponentSegments = 39000; // 322*240/2 = 38640
+  //params.maxConnectedComponentSegments = 70000;
 
-  const s32 quadRefinementIterations = 5;
-  const s32 numRefinementSamples = 100;
-  const f32 quadRefinementMaxCornerChange = 5.f;
-  const f32 quadRefinementMinCornerChange = .005f;
+  params.refine_quadRefinementIterations = 5;
+  params.refine_numRefinementSamples = 100;
+  params.refine_quadRefinementMaxCornerChange = 5.f;
+  params.refine_quadRefinementMinCornerChange = .005f;
   
-  const CornerMethod cornerMethod = CORNER_METHOD_LAPLACIAN_PEAKS; // {CORNER_METHOD_LAPLACIAN_PEAKS, CORNER_METHOD_LINE_FITS};
+  params.cornerMethod = CORNER_METHOD_LAPLACIAN_PEAKS; // {CORNER_METHOD_LAPLACIAN_PEAKS, CORNER_METHOD_LINE_FITS};
+  
+  params.doCodeExtraction = true;
+  params.returnInvalidMarkers = false;
 
   MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
   MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
@@ -3566,22 +3571,7 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
       image,
       markers,
       homographies,
-      useIntegralImageFiltering,
-      scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier,
-      component1d_minComponentWidth, component1d_maxSkipDistance,
-      component_minimumNumPixels, component_maximumNumPixels,
-      component_sparseMultiplyThreshold, component_solidMultiplyThreshold,
-      component_minHollowRatio,
-      cornerMethod, minLaplacianPeakRatio,
-      quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge,
-      decode_minContrastRatio,
-      maxConnectedComponentSegments,
-      maxExtractedQuads,
-      quadRefinementIterations,
-      numRefinementSamples,
-      quadRefinementMaxCornerChange,
-      quadRefinementMinCornerChange,
-      false,
+      params,
       scratchCcm,
       scratchOnchip,
       scratchOffchip);
@@ -3610,7 +3600,7 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
   } // Send stuff to Matlab
   */
   
-  if(scaleImage_thresholdMultiplier == 65536) {
+  if(params.scaleImage_thresholdMultiplier == 65536) {
     // Grab the ground truth markers types and locations from the
     // auto-generated header file
 #include "data/newFiducials_320x240_markers.h"
@@ -3685,44 +3675,48 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
 GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark)
 {
   // Don't check if the markers were correctly detected, just check the timing
+  Anki::Embedded::FiducialDetectionParameters params;
 
-  const s32 scaleImage_thresholdMultiplier = 65536; // 1.0*(2^16)=65536
-  //const s32 scaleImage_thresholdMultiplier = 49152; // .75*(2^16)=49152
-  const s32 scaleImage_numPyramidLevels = 3;
+  params.scaleImage_thresholdMultiplier = 65536; // 1.0*(2^16)=65536
+  //params.scaleImage_thresholdMultiplier = 49152; // .75*(2^16)=49152
+  params.scaleImage_numPyramidLevels = 3;
 
-  const s32 component1d_minComponentWidth = 0;
-  const s32 component1d_maxSkipDistance = 0;
+  params.component1d_minComponentWidth = 0;
+  params.component1d_maxSkipDistance = 0;
 
   const f32 minSideLength = 0.01f*MAX(simpleFiducials_320x240_HEIGHT,simpleFiducials_320x240_WIDTH);
   const f32 maxSideLength = 0.97f*MIN(simpleFiducials_320x240_HEIGHT,simpleFiducials_320x240_WIDTH);
 
-  const s32 component_minimumNumPixels = Round<s32>(minSideLength*minSideLength - (0.8f*minSideLength)*(0.8f*minSideLength));
-  const s32 component_maximumNumPixels = Round<s32>(maxSideLength*maxSideLength - (0.8f*maxSideLength)*(0.8f*maxSideLength));
-  const s32 component_sparseMultiplyThreshold = 1000 << 5;
-  const s32 component_solidMultiplyThreshold = 2 << 5;
+  params.component_minimumNumPixels = Round<s32>(minSideLength*minSideLength - (0.8f*minSideLength)*(0.8f*minSideLength));
+  params.component_maximumNumPixels = Round<s32>(maxSideLength*maxSideLength - (0.8f*maxSideLength)*(0.8f*maxSideLength));
+  params.component_sparseMultiplyThreshold = 1000 << 5;
+  params.component_solidMultiplyThreshold = 2 << 5;
 
-  const f32 component_minHollowRatio = 1.0f;
+  params.component_minHollowRatio = 1.0f;
 
-  const s32 maxExtractedQuads = 1000/2;
-  const s32 quads_minQuadArea = 100/4;
-  const s32 quads_quadSymmetryThreshold = 384;
-  const s32 quads_minDistanceFromImageEdge = 2;
+  params.maxExtractedQuads = 1000/2;
+  params.quads_minQuadArea = 100/4;
+  params.quads_quadSymmetryThreshold = 384;
+  params.quads_minDistanceFromImageEdge = 2;
 
-  const f32 decode_minContrastRatio = 1.25;
+  params.decode_minContrastRatio = 1.25;
 
   const s32 maxMarkers = 100;
-  //const s32 maxConnectedComponentSegments = 5000; // 25000/4 = 6250
-  const s32 maxConnectedComponentSegments = 39000; // 322*240/2 = 38640
-  //const s32 maxConnectedComponentSegments = 70000;
+  //params.maxConnectedComponentSegments = 5000; // 25000/4 = 6250
+  params.maxConnectedComponentSegments = 39000; // 322*240/2 = 38640
+  //params.maxConnectedComponentSegments = 70000;
 
-  const CornerMethod cornerMethod = CORNER_METHOD_LAPLACIAN_PEAKS; // {CORNER_METHOD_LAPLACIAN_PEAKS, CORNER_METHOD_LINE_FITS};
+  params.cornerMethod = CORNER_METHOD_LAPLACIAN_PEAKS; // {CORNER_METHOD_LAPLACIAN_PEAKS, CORNER_METHOD_LINE_FITS};
 
-  const s32 minLaplacianPeakRatio = 5;
+  params.minLaplacianPeakRatio = 5;
+  
+  params.returnInvalidMarkers = false;
+  params.doCodeExtraction = true;
 
-  const s32 quadRefinementIterations = 5;
-  const s32 numRefinementSamples = 100;
-  const f32 quadRefinementMaxCornerChange = 5.f;
-  const f32 quadRefinementMinCornerChange = .005f;
+  params.refine_quadRefinementIterations = 5;
+  params.refine_numRefinementSamples = 100;
+  params.refine_quadRefinementMaxCornerChange = 5.f;
+  params.refine_quadRefinementMinCornerChange = .005f;
 
   MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
   MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
@@ -3765,21 +3759,7 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark)
       image,
       markers,
       homographies,
-      scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier,
-      component1d_minComponentWidth, component1d_maxSkipDistance,
-      component_minimumNumPixels, component_maximumNumPixels,
-      component_sparseMultiplyThreshold, component_solidMultiplyThreshold,
-      component_minHollowRatio,
-      cornerMethod, minLaplacianPeakRatio,
-      quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge,
-      decode_minContrastRatio,
-      maxConnectedComponentSegments,
-      maxExtractedQuads,
-      quadRefinementIterations,
-      numRefinementSamples,
-      quadRefinementMaxCornerChange,
-      quadRefinementMinCornerChange,
-      false,
+      params,
       scratchCcm,
       scratchOnchip,
       scratchOffchip);
@@ -3819,36 +3799,36 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark640)
 {
   // Don't check if the markers were correctly detected, just check the timing
 
-  const s32 scaleImage_thresholdMultiplier = 65536; // 1.0*(2^16)=65536
-  //const s32 scaleImage_thresholdMultiplier = 49152; // .75*(2^16)=49152
-  const s32 scaleImage_numPyramidLevels = 3;
+  params.scaleImage_thresholdMultiplier = 65536; // 1.0*(2^16)=65536
+  //params.scaleImage_thresholdMultiplier = 49152; // .75*(2^16)=49152
+  params.scaleImage_numPyramidLevels = 3;
 
-  const s32 component1d_minComponentWidth = 0;
-  const s32 component1d_maxSkipDistance = 0;
+  params.component1d_minComponentWidth = 0;
+  params.component1d_maxSkipDistance = 0;
 
   const f32 minSideLength = 0.01f*MAX(simpleFiducials_320x240_HEIGHT,simpleFiducials_320x240_WIDTH);
   const f32 maxSideLength = 0.97f*MIN(simpleFiducials_320x240_HEIGHT,simpleFiducials_320x240_WIDTH);
 
-  const s32 component_minimumNumPixels = Round<s32>(minSideLength*minSideLength - (0.8f*minSideLength)*(0.8f*minSideLength));
-  const s32 component_maximumNumPixels = Round<s32>(maxSideLength*maxSideLength - (0.8f*maxSideLength)*(0.8f*maxSideLength));
-  const s32 component_sparseMultiplyThreshold = 1000 << 5;
-  const s32 component_solidMultiplyThreshold = 2 << 5;
+  params.component_minimumNumPixels = Round<s32>(minSideLength*minSideLength - (0.8f*minSideLength)*(0.8f*minSideLength));
+  params.component_maximumNumPixels = Round<s32>(maxSideLength*maxSideLength - (0.8f*maxSideLength)*(0.8f*maxSideLength));
+  params.component_sparseMultiplyThreshold = 1000 << 5;
+  params.component_solidMultiplyThreshold = 2 << 5;
 
   const f32 component_minHollowRatio = 1.0f;
 
-  const s32 maxExtractedQuads = 1000/2;
-  const s32 quads_minQuadArea = 100/4;
-  const s32 quads_quadSymmetryThreshold = 384;
-  const s32 quads_minDistanceFromImageEdge = 2;
+  params.maxExtractedQuads = 1000/2;
+  params.quads_minQuadArea = 100/4;
+  params.quads_quadSymmetryThreshold = 384;
+  params.quads_minDistanceFromImageEdge = 2;
 
   const f32 decode_minContrastRatio = 1.25;
 
-  const s32 maxMarkers = 100;
+  params.maxMarkers = 100;
 
-  const s32 maxConnectedComponentSegments = 39000 * 16; // 322*240/2 = 38640
+  params.maxConnectedComponentSegments = 39000 * 16; // 322*240/2 = 38640
 
-  const s32 quadRefinementIterations = 5;
-  const s32 numRefinementSamples = 100;
+  params.quadRefinementIterations = 5;
+  params.numRefinementSamples = 100;
   const f32 quadRefinementMaxCornerChange = 5.f;
   const f32 quadRefinementMinCornerChange = .005f;
 
