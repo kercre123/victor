@@ -7,6 +7,7 @@
 #include "clad/types/imageSendMode.clad"
 #include "clad/types/cameraSettings.clad"
 #include "clad/types/testMode.clad"
+#include "clad/types/proceduralEyeParameters.clad"
 #include "clad/externalInterface/messageShared.clad"
 
 namespace Anki {
@@ -463,22 +464,10 @@ message TapBlockOnGround {
 
 // DisplayProceduralFace
 message DisplayProceduralFace {
-  float_32 faceAngle,       // Degrees
-  float_32 leftBrowAngle,   //    "
-  float_32 rightBrowAngle,  //    "
-  float_32 leftBrowShiftX,  // From nominal position
-  float_32 rightBrowShiftX, //    "
-  float_32 leftBrowShiftY,  //    "
-  float_32 rightBrowShiftY, //    "
-  float_32 leftEyeHeight,
-  float_32 rightEyeHeight,
-  float_32 leftPupilHeightFraction,  // Relative to current eye height
-  float_32 rightPupilHeightFraction, //   "
-  float_32 leftPupilShiftX,  // From nominal position
-  float_32 rightPupilShiftX, //   "
-  float_32 leftPupilShiftY,  //   "
-  float_32 rightPupilShiftY, //   "
-  uint_8 robotID
+  float_32 faceAngle,        // Degrees
+  float_32 leftEye[uint_8],  // TODO: make this fixed length = ProceduralEyeParameter::NumParameters
+  float_32 rightEye[uint_8], //
+  uint_8   robotID
 }
 
 // VisualizeQuad

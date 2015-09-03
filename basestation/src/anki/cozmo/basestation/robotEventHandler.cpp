@@ -466,26 +466,18 @@ void RobotEventHandler::HandleDisplayProceduralFace(const AnkiEvent<ExternalInte
   
   ProceduralFace procFace;
   using Param = ProceduralFace::Parameter;
-  procFace.SetParameter(ProceduralFace::Left,  Param::BrowAngle, msg.leftBrowAngle);
-  procFace.SetParameter(ProceduralFace::Right, Param::BrowAngle, msg.rightBrowAngle);
-  
-  procFace.SetParameter(ProceduralFace::Left,  Param::BrowShiftX, msg.leftBrowShiftX);
-  procFace.SetParameter(ProceduralFace::Right, Param::BrowShiftX, msg.rightBrowShiftX);
-  
-  procFace.SetParameter(ProceduralFace::Left,  Param::BrowShiftY, msg.leftBrowShiftY);
-  procFace.SetParameter(ProceduralFace::Right, Param::BrowShiftY, msg.rightBrowShiftY);
-  
-  procFace.SetParameter(ProceduralFace::Left,  Param::EyeHeight, msg.leftEyeHeight);
-  procFace.SetParameter(ProceduralFace::Right, Param::EyeHeight, msg.rightEyeHeight);
-  
-  procFace.SetParameter(ProceduralFace::Left,  Param::PupilHeightFraction, msg.leftPupilHeightFraction);
-  procFace.SetParameter(ProceduralFace::Right, Param::PupilHeightFraction, msg.rightPupilHeightFraction);
-  
-  procFace.SetParameter(ProceduralFace::Left,  Param::PupilShiftX, msg.leftPupilShiftX);
-  procFace.SetParameter(ProceduralFace::Right, Param::PupilShiftX, msg.rightPupilShiftX);
-  
-  procFace.SetParameter(ProceduralFace::Left,  Param::PupilShiftY, msg.leftPupilShiftY);
-  procFace.SetParameter(ProceduralFace::Right, Param::PupilShiftY, msg.rightPupilShiftY);
+  const size_t N = static_cast<size_t>(Param::NumParameters);
+  if(msg.leftEye.size() < N || msg.rightEye.size() < N) {
+    PRINT_NAMED_ERROR("RobotEventHandler.HandleDisplayProceduralFace.WrongArrayLength",
+                      "Expecting leftEye / rightEye array lengths to be %lu, not %lu / %lu.",
+                      N, msg.leftEye.size(), msg.rightEye.size());
+    return;
+  }
+    
+  for(int iParam = 0; iParam < N; ++iParam) {
+    procFace.SetParameter(ProceduralFace::Left,  static_cast<Param>(iParam), msg.leftEye[iParam]);
+    procFace.SetParameter(ProceduralFace::Right, static_cast<Param>(iParam), msg.rightEye[iParam]);
+  }
   
   procFace.SetFaceAngle(msg.faceAngle);
   procFace.SetTimeStamp(robot->GetLastMsgTimestamp());
