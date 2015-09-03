@@ -236,11 +236,30 @@ namespace Anki
     
     
     void BlockWorld::FindIntersectingObjects(const ObservableObject* objectSeen,
+                                             std::vector<ObservableObject*>& intersectingExistingObjects,
+                                             f32 padding_mm,
                                              const std::set<ObjectFamily>& ignoreFamiles,
                                              const std::set<ObjectType>& ignoreTypes,
-                                             const std::set<ObjectID>& ignoreIDs,
-                                             std::vector<ObservableObject*>& intersectingExistingObjects,
-                                             f32 padding_mm) const
+                                             const std::set<ObjectID>& ignoreIDs) const
+    {
+      Quad2f quadSeen = objectSeen->GetBoundingQuadXY(objectSeen->GetPose(), padding_mm);
+      
+      FindIntersectingObjects(quadSeen,
+                              intersectingExistingObjects,
+                              padding_mm,
+                              ignoreFamiles,
+                              ignoreTypes,
+                              ignoreIDs);
+      
+    } // FindIntersectingObjects()
+    
+    
+    void BlockWorld::FindIntersectingObjects(const Quad2f& quad,
+                                             std::vector<ObservableObject *> &intersectingExistingObjects,
+                                             f32 padding_mm,
+                                             const std::set<ObjectFamily> &ignoreFamiles,
+                                             const std::set<ObjectType> &ignoreTypes,
+                                             const std::set<ObjectID> &ignoreIDs) const
     {
       for(auto & objectsByFamily : _existingObjects)
       {
@@ -256,11 +275,10 @@ namespace Anki
                 if(useID) {
                   ObservableObject* objExist = objectAndId.second;
                   
-                  // Get quads of both objects and check for intersection
+                  // Get quad of object and check for intersection
                   Quad2f quadExist = objExist->GetBoundingQuadXY(objExist->GetPose(), padding_mm);
-                  Quad2f quadSeen = objectSeen->GetBoundingQuadXY(objectSeen->GetPose(), padding_mm);
                   
-                  if( quadExist.Intersects(quadSeen) ) {
+                  if( quadExist.Intersects(quad) ) {
                     intersectingExistingObjects.push_back(objExist);
                   }
                 } // if useID
@@ -269,10 +287,8 @@ namespace Anki
           }  // for each type
         }  // if not ignoreFamily
       } // for each family
-      
-    } // FindIntersectingObjects()
-
-
+    }
+    
     void BlockWorld::AddAndUpdateObjects(const std::vector<ObservableObject*>& objectsSeen,
                                          const ObjectFamily& inFamily,
                                          const TimeStamp_t atTimestamp)
@@ -1465,7 +1481,7 @@ namespace Anki
             // Ignore the mat object that the robot is localized to (?)
             ignoreIDs.insert(_robot->GetLocalizedTo());
           }
-          FindIntersectingObjects(m, ignoreFamilies, ignoreTypes, ignoreIDs, existingObjects, 0);
+          FindIntersectingObjects(m, existingObjects, 0, ignoreFamilies, ignoreTypes, ignoreIDs);
           if (!existingObjects.empty()) {
             delete m;
             return RESULT_OK;
@@ -1932,7 +1948,7 @@ namespace Anki
                 if(ignoreIDs.find(objectsByID.first) == ignoreIDs.end()) {
                   Vec3f dist = ComputeVectorBetween(pose, objectsByID.second->GetPose());
                   dist.Abs();
-                  if(dist < closestDist) {
+                  if(dist.Length() < closestDist.Length()) {
                     closestDist = dist;
                     matchingObject = objectsByID.second;
                   }

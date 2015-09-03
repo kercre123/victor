@@ -85,7 +85,7 @@ private:
   std::set<ObjectID> _oldBoringObjects;
   u32 _numObjectsToLookAt = 0;
   
-  void StartMoving();
+  Result StartMoving();
   Pose3d GetDestinationPose(Destination destination);
   void ResetBehavior(float currentTime_sec);
   Destination GetNextDestination(Destination current, Destination previous);
