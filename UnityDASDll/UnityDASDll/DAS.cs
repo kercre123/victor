@@ -2,27 +2,51 @@
 using System.Runtime.InteropServices;
 using UnityEngine;
 
-#if !UNITY_EDITOR && (UNITY_ANDROID || UNITY_IPHONE || UNITY_STANDALONE)
-public static class DAS {
-   
+public static partial class DAS {
+
   public static void Event(string eventName, string eventValue, UnityEngine.Object context = null) {
-    Unity_DAS_Event(eventName, eventValue);
+    if (Application.isEditor) {
+      UnityEngine.Debug.Log(string.Format("DAS [{0}] {1} - {2}", 3, eventName, eventValue), context);
+    }
+    else {
+      Unity_DAS_Event(eventName, eventValue);
+    }
   }
 
   public static void Error(string eventName, string eventValue, UnityEngine.Object context = null) {
-    Unity_DAS_LogE(eventName, eventValue); 
+    if (Application.isEditor) {
+      UnityEngine.Debug.LogError(string.Format("DAS [{0}] {1} - {2}", 5, eventName, eventValue), context);
+    }
+    else {
+      Unity_DAS_LogE(eventName, eventValue);
+    }
   }
 
   public static void Warn(string eventName, string eventValue, UnityEngine.Object context = null) {
-    Unity_DAS_LogW(eventName, eventValue);
+    if (Application.isEditor) {
+      UnityEngine.Debug.LogWarning(string.Format("DAS [{0}] {1} - {2}", 4, eventName, eventValue), context);
+    }
+    else {
+      Unity_DAS_LogW(eventName, eventValue);
+    }
   }
 
   public static void Info(string eventName, string eventValue, UnityEngine.Object context = null) {
-    Unity_DAS_LogI(eventName, eventValue);
+    if (Application.isEditor) {
+      UnityEngine.Debug.Log(string.Format("DAS [{0}] {1} - {2}", 2, eventName, eventValue), context);
+    }
+    else {
+      Unity_DAS_LogI(eventName, eventValue);
+    }
   }
 
   public static void Debug(string eventName, string eventValue, UnityEngine.Object context = null) {
-    Unity_DAS_LogD(eventName, eventValue);
+    if (Application.isEditor) {
+      UnityEngine.Debug.Log(string.Format("DAS [{0}] {1} - {2}", 1, eventName, eventValue), context);
+    }
+    else {
+      Unity_DAS_LogD(eventName, eventValue);
+    }
   }
 
   [DllImport("__Internal")]
@@ -41,4 +65,3 @@ public static class DAS {
   private static extern void Unity_DAS_LogD(string eventName, string eventValue);
 
 }
-#endif
