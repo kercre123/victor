@@ -18,12 +18,25 @@
 #include "anki/common/robot/array2d_declarations.h"
 
 namespace Anki {
+  
+  namespace Util {
+  namespace Data {
+    class DataPlatform;
+  }
+  }
+  
 namespace Embedded {
   
   class NearestNeighborLibrary
   {
   public:
     NearestNeighborLibrary();
+    
+    NearestNeighborLibrary(const std::string& dataPath,
+                           const s32 numDataPoints, const s32 dataDim,
+                           const s16* probeCenters_X, const s16* probeCenters_Y,
+                           const s16* probePoints_X, const s16* probePoints_Y,
+                           const s32 numProbePoints, const s32 numFractionalBits);
     
     NearestNeighborLibrary(const u8* data,
                            const u8* weights,
@@ -50,19 +63,22 @@ namespace Embedded {
     
   protected:
     
-    Result GetProbeValues(const Array<u8> &image,
-                        const Array<f32> &homography);
+    void Init();
+    Result NormalizeIllumination(u8* data, s32 gridSize);
     
     Result GetProbeHoG();
     
-    const cv::Mat_<u8> _data;    // numDataPoints rows x dataDimension cols
-    const cv::Mat_<u8> _weights; // numDataPoints rows x dataDimension cols
+    bool _isInitialized;
+    cv::Mat_<u8> _probeValues;
+    
+    cv::Mat_<u8> _data;    // numDataPoints rows x dataDimension cols
+    cv::Mat_<u8> _weights; // numDataPoints rows x dataDimension cols
     cv::Mat_<s32> _totalWeight; // 1 row x dataDimension cols
     
     s32 _numDataPoints;
     s32 _dataDimension;
     
-    const u16 * restrict _labels; // numDataPoints in length
+    cv::Mat_<u16> _labels; // numDataPoints in length
     
     const s16 * restrict _probeXCenters;
     const s16 * restrict _probeYCenters;
@@ -77,7 +93,7 @@ namespace Embedded {
     s32 _numHogScales;
     s32 _numHogOrientations;
     
-    cv::Mat_<u8> _probeValues;
+    //cv::Mat_<u8> _probeValues;
     cv::Mat_<s32>_probeFiltering;
     
     cv::Mat_<u8> _probeHoG;

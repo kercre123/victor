@@ -3,7 +3,7 @@
 
     'engine_source': 'cozmoEngine.lst',
     'engine_test_source': 'cozmoEngine-test.lst',
-    'energy_library_type': 'static_library',
+    'engine_library_type': 'static_library',
     'ctrlLightCube_source': 'ctrlLightCube.lst',
     'ctrlRobot_source': 'ctrlRobot.lst',
     'ctrlViz_source': 'ctrlViz.lst',
@@ -33,15 +33,22 @@
       '<(coretech_external_path)/opencv-2.4.8/modules/features2d/include',
       '<(coretech_external_path)/opencv-2.4.8/modules/flann/include',
     ],
+    
     'opencv_libs': [
-      '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_core.dylib',
-      '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_imgproc.dylib',
-      '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_highgui.dylib',
-      '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_calib3d.dylib',
-      '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_contrib.dylib',
-      '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_objdetect.dylib',
-      '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_video.dylib',
-      '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_features2d.dylib',
+      'libzlib.a',
+      'liblibjpeg.a',
+      'liblibpng.a',
+      'liblibtiff.a',
+      'liblibjasper.a',
+      'libIlmImf.a',
+      'libopencv_core.a',
+      'libopencv_imgproc.a',
+      'libopencv_highgui.a',
+      'libopencv_calib3d.a',
+      'libopencv_contrib.a',
+      'libopencv_objdetect.a',
+      'libopencv_video.a',
+      'libopencv_features2d.a',
     ],
 
     'webots_includes': [
@@ -49,28 +56,25 @@
       '<(webots_path)/include/ode',
       '<(webots_path)/include',
     ],
-
+  
     'compiler_flags': [
-      '-Wno-unused-function',
-      '-Wno-overloaded-virtual',
-      '-Wno-deprecated-declarations',
-      '-Wno-unused-variable',
-      # '-fdiagnostics-show-category=name',
-      # '-Wall',
-      # '-Woverloaded-virtual',
-      # '-Werror',
-      # '-Wundef',
-      # '-Wheader-guard',
-      # '-fsigned-char',
-      # '-fvisibility-inlines-hidden',
-      # '-fvisibility=default',
-      # '-Wshorten-64-to-32',
-      # '-Winit-self',
-      # '-Wconditional-uninitialized',
-      # '-Wno-deprecated-register',
-      # '-Wformat',
-      # '-Werror=format-security',
-      # '-g',
+      '-Wno-deprecated-declarations', # Supressed until system() usage is removed
+      '-fdiagnostics-show-category=name',
+      '-Wall',
+      '-Woverloaded-virtual',
+      '-Werror',
+      # '-Wundef', # Disabled until define usage is refactored to code standards (ANS: common.h ODE inside Webots fails this)
+      '-Wheader-guard',
+      '-fsigned-char',
+      '-fvisibility-inlines-hidden',
+      '-fvisibility=default',
+      '-Wshorten-64-to-32',
+      '-Winit-self',
+      '-Wconditional-uninitialized', 
+      # '-Wno-deprecated-register', # Disabled until this warning actually needs to be supressed
+      '-Wformat',
+      '-Werror=format-security',
+      '-g',
     ],
     'compiler_c_flags' : [
       '-std=c11',
@@ -79,10 +83,10 @@
     'compiler_cpp_flags' : [
       '-std=c++11',
       '-stdlib=libc++',
-      '<@(compiler_flags)'
+      '<@(compiler_flags)',
     ],
     'linker_flags' : [
-        '-g'
+        '-g',
     ],
 
     # Set default ARCHS based on platform
@@ -198,6 +202,10 @@
           'xcode_settings': {
             'OTHER_CFLAGS': ['-O0'],
             'OTHER_CPLUSPLUSFLAGS': ['-O0'],
+            'OTHER_LDFLAGS': [
+              '-L<(coretech_external_path)/build/opencv-2.4.8/lib/Debug',
+              '-L<(coretech_external_path)/build/opencv-2.4.8/3rdparty/lib/Debug',
+            ],
            },
           'defines': [
             '_LIBCPP_DEBUG=0',
@@ -210,6 +218,10 @@
           'xcode_settings': {
             'OTHER_CFLAGS': ['-Os'],
             'OTHER_CPLUSPLUSFLAGS': ['-Os'],
+            'OTHER_LDFLAGS': [
+              '-L<(coretech_external_path)/build/opencv-2.4.8/lib/Release',
+              '-L<(coretech_external_path)/build/opencv-2.4.8/3rdparty/lib/Release',
+            ],
            },
           'defines': [
             'NDEBUG=1',
@@ -222,6 +234,10 @@
           'xcode_settings': {
             'OTHER_CFLAGS': ['-Os'],
             'OTHER_CPLUSPLUSFLAGS': ['-Os'],
+            'OTHER_LDFLAGS': [
+              '-L<(coretech_external_path)/build/opencv-2.4.8/lib/Release',
+              '-L<(coretech_external_path)/build/opencv-2.4.8/3rdparty/lib/Release',
+            ],
            },
           'defines': [
             'NDEBUG=1',
@@ -305,15 +321,15 @@
             ],
             'defines': [
               'MACOS',
-              'dDOUBLE',
             ],
             'libraries': [
               '<(webots_path)/lib/libCppController.dylib',
               '<@(opencv_libs)',
               '$(SDKROOT)/System/Library/Frameworks/OpenGL.framework',
+              '$(SDKROOT)/System/Library/Frameworks/GLUT.framework',              
             ],
           }, # end cozmo_physics
-
+ 
           {
             'target_name': 'webotsCtrlLightCube',
             'type': 'executable',
@@ -386,6 +402,7 @@
             'libraries': [
               '<(webots_path)/lib/libCppController.dylib',
               '<@(opencv_libs)',
+              '$(SDKROOT)/System/Library/Frameworks/AppKit.framework',
             ],
           }, # end controller Robot
 
@@ -415,6 +432,10 @@
             ],
             'libraries': [
               '<(ce-gtest_path)/gtest.framework',
+              '$(SDKROOT)/System/Library/Frameworks/Cocoa.framework',
+              '$(SDKROOT)/System/Library/Frameworks/AppKit.framework',
+              '$(SDKROOT)/System/Library/Frameworks/QTKit.framework',
+              '$(SDKROOT)/System/Library/Frameworks/QuartzCore.framework',
               '<@(opencv_libs)',
             ],
             'copies': [
@@ -423,6 +444,57 @@
                   '<(ce-gtest_path)/gtest.framework',
                 ],
                 'destination': '<(PRODUCT_DIR)',
+              },
+            ],
+            'actions': [
+              # { # in engine only mode, we do not know where the assets are
+              #   'action_name': 'create_symlink_resources_assets',
+              #   'inputs': [
+              #     '<(cozmo_asset_path)',
+              #   ],
+              #   'outputs': [
+              #     '<(PRODUCT_DIR)/resources/assets',
+              #   ],
+              #   'action': [
+              #     'ln',
+              #     '-s',
+              #     '-f',
+              #     '-h',
+              #     '<@(_inputs)',
+              #     '<@(_outputs)',
+              #   ],
+              # },
+              {
+                'action_name': 'create_symlink_resources_configs',
+                'inputs': [
+                  '<(cozmo_engine_path)/resources/config',
+                ],
+                'outputs': [
+                  '<(PRODUCT_DIR)/resources/config',
+                ],
+                'action': [
+                  'ln',
+                  '-s',
+                  '-f',
+                  '<@(_inputs)',
+                  '<@(_outputs)',
+                ],
+              },
+              {
+                'action_name': 'create_symlink_resources_test',
+                'inputs': [
+                  '<(cozmo_engine_path)/resources/test',
+                ],
+                'outputs': [
+                  '<(PRODUCT_DIR)/resources/test',
+                ],
+                'action': [
+                  'ln',
+                  '-s',
+                  '-f',
+                  '<@(_inputs)',
+                  '<@(_outputs)',
+                ],
               },
             ],
           }, # end unittest target
@@ -473,6 +545,7 @@
           '../../basestation/include',
           '../../include',
           '../../generated/clad/engine',
+          '../../basestation/src',
         ],
         'defines': [
           'COZMO_BASESTATION'
@@ -487,8 +560,10 @@
         '<(ce-cti_gyp_path):ctiMessaging',
         '<(ce-cti_gyp_path):ctiPlanning',
         '<(ce-cti_gyp_path):ctiVision',
+        '<(ce-cti_gyp_path):ctiCommonRobot',
+        '<(ce-cti_gyp_path):ctiVisionRobot',
       ],
-      'type': '<(energy_library_type)',
+      'type': '<(engine_library_type)',
     },
     
 

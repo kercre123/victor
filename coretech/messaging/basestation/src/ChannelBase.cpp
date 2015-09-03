@@ -133,7 +133,7 @@ void ChannelBase::PushIncomingPacket(const IncomingPacket& packet)
   _incomingPacketQueue.push_back(packet);
 }
 
-void ChannelBase::EmplaceIncomingPacket(const IncomingPacket&& packet)
+void ChannelBase::EmplaceIncomingPacket(IncomingPacket&& packet)
 {
   _incomingPacketQueue.emplace_back(packet);
 }

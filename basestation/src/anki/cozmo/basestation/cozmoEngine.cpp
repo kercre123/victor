@@ -11,29 +11,26 @@
 
 #include "anki/cozmo/basestation/cozmoEngine.h"
 #include "anki/cozmo/basestation/engineImpl/cozmoEngineImpl.h"
+#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "anki/cozmo/basestation/events/ankiEvent.h"
+#include "clad/externalInterface/messageGameToEngine.h"
+#include "util/logging/logging.h"
 
 
 namespace Anki {
 namespace Cozmo {
 
-CozmoEngine::CozmoEngine(IExternalInterface* externalInterface)
+CozmoEngine::CozmoEngine(IExternalInterface* externalInterface,
+                         Util::Data::DataPlatform* dataPlatform)
 : _impl(nullptr)
 , _externalInterface(externalInterface)
-, _loggerProvider()
+, _dataPlatform(dataPlatform)
 {
-  _loggerProvider.SetMinLogLevel(0);
-  if (Anki::Util::gLoggerProvider == nullptr) {
-    Anki::Util::gLoggerProvider = &_loggerProvider;
-  }
   ASSERT_NAMED(externalInterface != nullptr, "Cozmo.Engine.ExternalInterface.nullptr");
 }
 
 CozmoEngine::~CozmoEngine()
 {
-  if (Anki::Util::gLoggerProvider == &_loggerProvider) {
-    Anki::Util::gLoggerProvider = nullptr;
-  }
-
   if(_impl != nullptr) {
     delete _impl;
     _impl = nullptr;
@@ -41,6 +38,7 @@ CozmoEngine::~CozmoEngine()
 }
 
 Result CozmoEngine::Init(const Json::Value& config) {
+
   return _impl->Init(config);
 }
 
@@ -69,7 +67,7 @@ void CozmoEngine::ProcessDeviceImage(const Vision::Image &image) {
 void CozmoEngine::StartAnimationTool() {
   _impl->StartAnimationTool();
 }
-  
+
 
 } // namespace Cozmo
 } // namespace Anki

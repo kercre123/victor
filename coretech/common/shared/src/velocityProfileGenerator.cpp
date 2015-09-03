@@ -29,12 +29,44 @@ namespace Anki {
   {
     targetReached_ = true;
   }
+
+  void VelocityProfileGenerator::StartProfile(float startVel,
+                                              float startPos,
+                                              float endVel,
+                                              float accel,
+                                              float timeStep)
+  {
+    noTargetMode_ = true;
+    
+    startVel_ = startVel;
+    currVel_ = startVel;
+    currPos_ = startPos;
+    endVel_ = endVel;
+    maxReachableVel_ = endVel;
+    accel_ = fabs(accel);
+    timeStep_ = fabs(timeStep);
+    
+    // Compute change in velocity per timestep
+    deltaVelPerTimeStepStart_ = accel_ * timeStep_ * (endVel_ - startVel_ > 0 ? 1.f : -1.f);
+    
+    targetReached_ = false;
+    
+    
+    // Set values that don't really apply in noTargetMode to 0, even though 0 is wrong,
+    // but at least they're not random values from the last time StartProfile was called.
+    totalDistToTarget_ = 0;
+    startAccelDist_ = 0;
+    endAccelDist_ = 0;
+    deltaVelPerTimeStepEnd_ = 0;
+  }
   
   void VelocityProfileGenerator::StartProfile(float startVel, float startPos,
                                               float maxSpeed, float accel,
                                               float endVel, float endPos,
                                               float timeStep)
   {
+    noTargetMode_ = false;
+    
     startVel_ = startVel;
     startPos_ = startPos;
     maxVel_ = fabs(maxSpeed);
@@ -43,11 +75,12 @@ namespace Anki {
     endPos_ = endPos;
     timeStep_ = fabs(timeStep);
 
-    assert(maxVel_ >= fabs(endVel_));
+    assert(maxVel_ >= endVel_);
     assert(accel_ > 0);
     assert(timeStep_ > 0);
     
-    // Compute direction, maxVel, and endVel based on startPos and endPos
+    // Compute direction based on startPos and endPos
+    // and use it to determine sign of maxVel and endVel.
     float direction = 1;
     if (startPos > endPos) {
       direction = -1;
@@ -98,9 +131,23 @@ namespace Anki {
       decelDistToTarget_ = (maxReachableVel_*maxReachableVel_ - endVel_*endVel_) / (2*accel_);
     }
     
+    
+    // Compute whether or not initial "acceleration" phase should actually
+    // accelerate or decelerate.
+    float startAccDirection = 1;
+    if (startVel_ > maxReachableVel_) {
+      startAccDirection = -1;
+    }
+
+    // Do same for "deceleration" phase
+    float endAccDirection = -1;
+    if (endVel_ > maxReachableVel_) {
+      endAccDirection = 1;
+    }
+    
     // Compute change in velocity per timestep
-    deltaVelPerTimeStepStart_ = accel_ * timeStep_ * direction;
-    deltaVelPerTimeStepEnd_ = -deltaVelPerTimeStepStart_;
+    deltaVelPerTimeStepStart_ = accel_ * timeStep_ * startAccDirection;
+    deltaVelPerTimeStepEnd_ = ABS(deltaVelPerTimeStepStart_) * endAccDirection;
     
     // Init state vars
     targetReached_ = false;
@@ -205,6 +252,9 @@ namespace Anki {
                                                             float duration,
                                                             float timeStep)
   {
+    
+    noTargetMode_ = false;
+    
     startVel_ = vel_start;
     startPos_ = pos_start;
     maxVel_ = fabsf(vel_max);
@@ -337,6 +387,24 @@ namespace Anki {
   float VelocityProfileGenerator::Step(float &currVel, float &currPos)
   {
     currTime_ += timeStep_;
+    
+    // If in noTargetMode, the logic is much simpler
+    if (noTargetMode_) {
+      currPos_ += currVel_ * timeStep_;
+      
+      // If endVel not yet reached then update velocity
+      if (currVel_ != endVel_) {
+        currVel_ += deltaVelPerTimeStepStart_;
+        if ((maxReachableVel_ > endVel_) != (currVel_ > endVel_)) {
+          currVel_ = endVel_;
+        }
+      }
+      
+      currVel = currVel_;
+      currPos = currPos_;
+      return currTime_;
+    }
+    
     
     // If target already reached, then return final position.
     if (targetReached_) {

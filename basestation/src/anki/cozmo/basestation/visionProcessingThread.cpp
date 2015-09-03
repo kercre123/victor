@@ -22,17 +22,28 @@
 
 #include "util/logging/logging.h"
 #include "anki/common/basestation/utils/helpers/boundedWhile.h"
+#include "anki/common/basestation/utils/data/dataPlatform.h"
 
 #include "anki/cozmo/basestation/viz/vizManager.h"
 
 namespace Anki {
 namespace Cozmo {
   
-  VisionProcessingThread::VisionProcessingThread()
+  VisionProcessingThread::VisionProcessingThread(Util::Data::DataPlatform* dataPlatform)
   : _visionSystem(nullptr)
   , _isCamCalibSet(false)
   , _running(false)
   {
+    std::string dataPath("");
+    if(dataPlatform != nullptr) {
+      dataPath = dataPlatform->pathToResource(Util::Data::Scope::Resources,
+                                              "/config/basestation/vision");
+    } else {
+      PRINT_NAMED_WARNING("VisionProcessingThread.Constructor.NullDataPlatform",
+                          "Insantiating VisionSystem with a empty DataPath.");
+    }
+    
+    _visionSystem = new VisionSystem(dataPath);
     
   } // VisionSystem()
 
@@ -45,14 +56,18 @@ namespace Cozmo {
   void VisionProcessingThread::Start()
   {
     if(!_isCamCalibSet) {
-      PRINT_NAMED_ERROR("VisionProcessingThread.Start", "Camera calibration must be set to start VisionProcessingThread.\n");
+      PRINT_NAMED_ERROR("VisionProcessingThread.Start",
+                        "Camera calibration must be set to start VisionProcessingThread.");
       return;
     }
     
     if(_running) {
       PRINT_NAMED_INFO("VisionProcessingThread.Start.Restarting",
-                       "Thread already started, call Stop() and then restarting.\n");
+                       "Thread already started, call Stop() and then restarting.");
       Stop();
+    } else {
+      PRINT_NAMED_INFO("VisionProcessingThread.Start",
+                       "Starting vision processing thread.");
     }
     
     _running = true;
@@ -214,8 +229,7 @@ namespace Cozmo {
                                       const MessageRobotState& robotState)
   {
     if(_isCamCalibSet) {
-      if(_visionSystem == nullptr) {
-        _visionSystem = new VisionSystem();
+      if(!_visionSystem->IsInitialized()) {
         _visionSystem->Init(_camCalib);
         
         // Wait for initialization to complete (i.e. Matlab to start up, if needed)
@@ -239,11 +253,8 @@ namespace Cozmo {
 
   void VisionProcessingThread::Processor()
   {
-    PRINT_STREAM_INFO("VisionProcessingThread.Processor", "Starting Robot VisionProcessingThread::Processor thread...");
-    
-    if(_visionSystem == nullptr) {
-      _visionSystem = new VisionSystem();
-    }
+    PRINT_NAMED_INFO("VisionProcessingThread.Processor",
+                     "Starting Robot VisionProcessingThread::Processor thread...");
     
     _visionSystem->Init(_camCalib);
     
@@ -289,19 +300,21 @@ namespace Cozmo {
       _visionSystem = nullptr;
     }
     
-    PRINT_STREAM_INFO("VisionProcessingThread.Processor", "Terminated Robot VisionProcessingThread::Processor thread");
+    PRINT_NAMED_INFO("VisionProcessingThread.Processor",
+                     "Terminated Robot VisionProcessingThread::Processor thread");
   } // Processor()
 
-  
+  /*
   bool VisionProcessingThread::CheckMailbox(MessageFaceDetection& msg)
   {
-    AnkiConditionalErrorAndReturnValue(_visionSystem != nullptr /*&& _visionSystem->IsInitialized()*/, false,
+    AnkiConditionalErrorAndReturnValue(_visionSystem != nullptr, // && _visionSystem->IsInitialized(), false,
                                        "VisionProcessingThread.CheckMailbox.NullVisionSystem",
                                        "CheckMailbox called before vision system instantiated.");// and initialized.");
     return _visionSystem->CheckMailbox(msg);
   }
+  */
   
-  bool VisionProcessingThread::CheckMailbox(MessageVisionMarker& msg)
+  bool VisionProcessingThread::CheckMailbox(Vision::ObservedMarker& msg)
   {
     AnkiConditionalErrorAndReturnValue(_visionSystem != nullptr /*&& _visionSystem->IsInitialized()*/, false,
                                        "VisionProcessingThread.CheckMailbox.NullVisionSystem",
@@ -326,6 +339,14 @@ namespace Cozmo {
   }
   
   bool VisionProcessingThread::CheckMailbox(MessagePanAndTiltHead& msg)
+  {
+    AnkiConditionalErrorAndReturnValue(_visionSystem != nullptr /*& _visionSystem->IsInitialized()*/, false,
+                                       "VisionProcessingThread.CheckMailbox.NullVisionSystem",
+                                       "CheckMailbox called before vision system instantiated.");// and initialized.");
+    return _visionSystem->CheckMailbox(msg);
+  }
+  
+  bool VisionProcessingThread::CheckMailbox(Vision::TrackedFace& msg)
   {
     AnkiConditionalErrorAndReturnValue(_visionSystem != nullptr /*& _visionSystem->IsInitialized()*/, false,
                                        "VisionProcessingThread.CheckMailbox.NullVisionSystem",

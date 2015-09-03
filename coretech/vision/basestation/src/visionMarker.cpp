@@ -19,7 +19,6 @@ namespace Anki {
   namespace Vision{
   
     const Marker::Code Marker::ANY_CODE = s16_MAX;
-    const Marker::Code Marker::FACE_CODE = s16_MIN;
     
     Marker::Marker(const Code& withCode)
     : _code(withCode)
@@ -32,20 +31,27 @@ namespace Anki {
       if(_code >= 0 && _code < NUM_MARKER_TYPES) {
         return MarkerTypeStrings[_code];
       }
-      else if(_code == FACE_CODE) {
-        return "HUMAN_FACE_MARKER";
-      }
       else {
         PRINT_NAMED_ERROR("Marker.GetCodeName", "Could not look up name for code=%d.\n", _code);
         return MarkerTypeStrings[MARKER_UNKNOWN];
       }
     }
     
-    ObservedMarker::ObservedMarker(const TimeStamp_t t, const Code& withCode, const Quad2f& corners, const Camera& seenBy)
+    ObservedMarker::ObservedMarker()
+    : Marker(MARKER_UNKNOWN)
+    , _userHandle(UnknownHandle)
+    {
+    
+    }
+    
+    ObservedMarker::ObservedMarker(const TimeStamp_t t, const Code& withCode,
+                                   const Quad2f& corners, const Camera& seenBy,
+                                   UserHandle userHandle)
     : Marker(withCode)
     , _observationTime(t)
     , _imgCorners(corners)
     , _seenByCam(seenBy)
+    , _userHandle(userHandle)
     , _used(false)
     {
 
@@ -132,8 +138,7 @@ namespace Anki {
       
       Vec3f normal( CrossProduct(edge2, edge1) );
       
-      const f32 normalLength = normal.MakeUnitLength();
-      CORETECH_ASSERT(normalLength > 0.f);
+      CORETECH_ASSERT(normal.MakeUnitLength() > 0.f);
       
       return normal;
     } // ComputeNormalHelper()

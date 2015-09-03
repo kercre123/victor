@@ -57,29 +57,12 @@ namespace Anki
     class BlockWorld
     {
     public:
-     
-      class ObjectFamily : public UniqueEnumeratedValue<int>
-      {
-      public:
-        ObjectFamily();
-        
-        // Define new ObjectFamilies here:
-        // (and be sure to instantiate them in the .cpp file)
-        static const ObjectFamily MATS;                // Fixed mats, platforms, and bridges.
-        static const ObjectFamily RAMPS;               // Ramps
-        static const ObjectFamily CHARGERS;            // Chargers
-        static const ObjectFamily BLOCKS;              // Blocks
-        static const ObjectFamily ACTIVE_BLOCKS;       // Blocks with LEDs
-        static const ObjectFamily MARKERLESS_OBJECTS;  // Obstacles that are detected by means other than camera (e.g. prox obstacles)
-        static const ObjectFamily HUMAN_HEADS;
-        
-      protected:
-        static int UniqueFamilyCounter;
-      }; // class ObjectFamily
       
-      using ObjectsMapByID_t     = std::map<ObjectID, Vision::ObservableObject*>;
+      using ObjectsMapByID_t     = std::map<ObjectID, ObservableObject*>;
       using ObjectsMapByType_t   = std::map<ObjectType, ObjectsMapByID_t >;
       using ObjectsMapByFamily_t = std::map<ObjectFamily, ObjectsMapByType_t>;
+      
+      using ObservableObjectLibrary = Vision::ObservableObjectLibrary<ObservableObject>;
       
       BlockWorld(Robot* robot);
       ~BlockWorld();
@@ -92,15 +75,14 @@ namespace Anki
       void ClearAllObservedMarkers();
       
       Result QueueObservedMarker(HistPoseKey& poseKey, Vision::ObservedMarker& marker);
-      
-      
+
       //
       // Object Access
       //
       
       // Clearing objects: all, by type, by family, or by ID
       void ClearAllExistingObjects();
-      void ClearObjectsByFamily(const BlockWorld::ObjectFamily family);
+      void ClearObjectsByFamily(const ObjectFamily family);
       void ClearObjectsByType(const ObjectType type);
       bool ClearObject(const ObjectID withID); // Returns true if object with ID is found and cleared, false otherwise.
       
@@ -111,7 +93,7 @@ namespace Anki
                                              const ObjectFamily&  fromFamily);
       
       // Clear an object when you have just the pointer and its family
-      void ClearObject(Vision::ObservableObject* object,
+      void ClearObject(ObservableObject* object,
                        const ObjectType&    withType,
                        const ObjectFamily&  fromFamily);
       
@@ -119,7 +101,7 @@ namespace Anki
       // Get objects that exist in the world, by family, type, ID, etc.
       // NOTE: Like IDs, object types are unique across objects so they can be
       //       used without specifying which family.
-      const Vision::ObservableObjectLibrary& GetObjectLibrary(ObjectFamily whichFamily) const;
+      const ObservableObjectLibrary& GetObjectLibrary(ObjectFamily whichFamily) const;
       const ObjectsMapByFamily_t& GetAllExistingObjects() const;
       const ObjectsMapByType_t& GetExistingObjectsByFamily(const ObjectFamily whichFamily) const;
       const ObjectsMapByID_t& GetExistingObjectsByType(const ObjectType whichType) const;
@@ -127,11 +109,20 @@ namespace Anki
       // Return a pointer to an object with the specified ID. If that object
       // does not exist, nullptr is returned.  Be sure to ALWAYS check
       // for the return being null!
-      Vision::ObservableObject* GetObjectByID(const ObjectID objectID) const;
+      ObservableObject* GetObjectByID(const ObjectID objectID) const;
       
       // Same as above, but only searches a given family of objects
-      Vision::ObservableObject* GetObjectByIDandFamily(const ObjectID objectID, const ObjectFamily inFamily) const;
-            
+      ObservableObject* GetObjectByIDandFamily(const ObjectID objectID, const ObjectFamily inFamily) const;
+      
+      // Store your own objects, with a handle you can use to refer to them.
+      // The BlockWorld ObjectID is returned.
+      // (This gives BlockWorld responsibility for the deleting as well.)
+      ObjectID AddObject(ObservableObject* object,
+                         ObjectFamily inFamily,
+                         long long userHandle);
+      ObservableObject* GetObjectByUserHandle(long long userHandle,
+                                              const ObjectFamily inFamily);
+      
       // Finds all blocks in the world whose centers are within the specified
       // heights off the ground (z dimension, relative to world origin!) and
       // returns a vector of quads of their outlines on the ground plane (z=0).
@@ -143,31 +134,48 @@ namespace Anki
                                     const f32 maxHeight,
                                     const f32 padding,
                                     std::vector<std::pair<Quad2f,ObjectID> >& boundingBoxes,
-                                    const std::set<ObjectFamily>& ignoreFamilies = {ObjectFamily::MATS},
+                                    const std::set<ObjectFamily>& ignoreFamilies = {ObjectFamily::Mat},
                                     const std::set<ObjectType>& ignoreTypes = std::set<ObjectType>(),
                                     const std::set<ObjectID>& ignoreIDs = std::set<ObjectID>()) const;
 
       // Finds an object nearest the specified distance (and optionally, rotation -- not implemented yet)
       // of the given pose. Returns nullptr if no objects match. Returns closest
       // if multiple matches are found.
-      Vision::ObservableObject* FindObjectClosestTo(const Pose3d& pose,
-                                                    const Vec3f&  distThreshold,
-                                                    const std::set<ObjectID>& ignoreIDs = std::set<ObjectID>(),
-                                                    const std::set<ObjectType>& ignoreTypes = std::set<ObjectType>(),
-                                                    const std::set<ObjectFamily>& ignoreFamilies = std::set<ObjectFamily>()) const;
+      ObservableObject* FindObjectClosestTo(const Pose3d& pose,
+                                            const Vec3f&  distThreshold,
+                                            const std::set<ObjectID>& ignoreIDs = std::set<ObjectID>(),
+                                            const std::set<ObjectType>& ignoreTypes = std::set<ObjectType>(),
+                                            const std::set<ObjectFamily>& ignoreFamilies = std::set<ObjectFamily>()) const;
       
       // Finds a matching object (one with the same type) that is closest to the
       // given object, within the specified distance and angle thresholds.
       // Returns nullptr if none found.
-      Vision::ObservableObject* FindClosestMatchingObject(const Vision::ObservableObject& object,
-                                                          const Vec3f& distThreshold,
-                                                          const Radians& angleThreshold);
+      ObservableObject* FindClosestMatchingObject(const ObservableObject& object,
+                                                  const Vec3f& distThreshold,
+                                                  const Radians& angleThreshold);
+      
+      // Finds existing objects whose XY bounding boxes intersect with objectSeen's
+      // XY bounding box, with the exception of those that are of ignoreFamilies or
+      // ignoreTypes.
+      void FindIntersectingObjects(const ObservableObject* objectSeen,
+                                   std::vector<ObservableObject*>& intersectingExistingObjects,
+                                   f32 padding_mm,
+                                   const std::set<ObjectFamily>& ignoreFamilies = {ObjectFamily::Mat},
+                                   const std::set<ObjectType>& ignoreTypes = std::set<ObjectType>(),
+                                   const std::set<ObjectID>& ignoreIDs = std::set<ObjectID>()) const;
+      
+      void FindIntersectingObjects(const Quad2f& quad,
+                                   std::vector<ObservableObject *> &intersectingExistingObjects,
+                                   f32 padding,
+                                   const std::set<ObjectFamily> &ignoreFamiles = {ObjectFamily::Mat},
+                                   const std::set<ObjectType> &ignoreTypes = std::set<ObjectType>(),
+                                   const std::set<ObjectID> &ignoreIDs = std::set<ObjectID>()) const;
       
       // Find an object on top of the given object, using a given height tolerance
       // between the top of the given object on bottom and the bottom of existing
       // candidate objects on top. Returns nullptr if no object is found.
-      Vision::ObservableObject* FindObjectOnTopOf(const Vision::ObservableObject& objectOnBottom,
-                                                  f32 zTolerance) const;
+      ObservableObject* FindObjectOnTopOf(const ObservableObject& objectOnBottom,
+                                          f32 zTolerance) const;
       
       // Wrapper for above that returns bounding boxes of objects that are
       // obstacles given the robot's current z height. Objects being carried
@@ -234,26 +242,26 @@ namespace Anki
       
       // Finds existing objects that overlap with and are of the same type as objectSeen,
       // where overlap is defined by the IsSameAs() function.
-      void FindOverlappingObjects(const Vision::ObservableObject* objectSeen,
+      void FindOverlappingObjects(const ObservableObject* objectSeen,
                                   const ObjectsMapByType_t& objectsExisting,
-                                  std::vector<Vision::ObservableObject*>& overlappingExistingObjects) const;
+                                  std::vector<ObservableObject*>& overlappingExistingObjects) const;
       
-      void FindOverlappingObjects(const Vision::ObservableObject* objectExisting,
-                                  const std::vector<Vision::ObservableObject*>& objectsSeen,
-                                  std::vector<Vision::ObservableObject*>& overlappingSeenObjects) const;
+      void FindOverlappingObjects(const ObservableObject* objectExisting,
+                                  const std::vector<ObservableObject*>& objectsSeen,
+                                  std::vector<ObservableObject*>& overlappingSeenObjects) const;
       
-      void FindOverlappingObjects(const Vision::ObservableObject* objectExisting,
-                                  const std::multimap<f32, Vision::ObservableObject*>& objectsSeen,
-                                  std::vector<Vision::ObservableObject*>& overlappingSeenObjects) const;
+      void FindOverlappingObjects(const ObservableObject* objectExisting,
+                                  const std::multimap<f32, ObservableObject*>& objectsSeen,
+                                  std::vector<ObservableObject*>& overlappingSeenObjects) const;
       
       // Finds existing objects whose XY bounding boxes intersect with objectSeen's
       // XY bounding box, with the exception of those that are of ignoreFamilies or
       // ignoreTypes.
-      void FindIntersectingObjects(const Vision::ObservableObject* objectSeen,
+      void FindIntersectingObjects(const ObservableObject* objectSeen,
                                    const std::set<ObjectFamily>& ignoreFamilies,
                                    const std::set<ObjectType>& ignoreTypes,
                                    const std::set<ObjectID>& ignoreIDs,
-                                   std::vector<Vision::ObservableObject*>& intersectingExistingObjects,
+                                   std::vector<ObservableObject*>& intersectingExistingObjects,
                                    f32 padding_mm) const;
       
       // 1. Looks for objects that should have been seen (markers should have been visible
@@ -266,13 +274,13 @@ namespace Anki
       
       // Helpers for actually inserting a new object into a new family using
       // its type and ID. Object's ID will be set if it isn't already.
-      void AddNewObject(const ObjectFamily toFamily, Vision::ObservableObject* object);
-      void AddNewObject(ObjectsMapByType_t& existingFamily, Vision::ObservableObject* object);
+      void AddNewObject(const ObjectFamily toFamily, ObservableObject* object);
+      void AddNewObject(ObjectsMapByType_t& existingFamily, ObservableObject* object);
       
       //template<class ObjectType>
-      Result AddAndUpdateObjects(const std::multimap<f32, Vision::ObservableObject*>& objectsSeen,
-                                 const ObjectFamily& inFamily,
-                                 const TimeStamp_t atTimestamp);
+      void AddAndUpdateObjects(const std::vector<ObservableObject*>& objectsSeen,
+                               const ObjectFamily& inFamily,
+                               const TimeStamp_t atTimestamp);
       
       // Remove all posekey-marker pairs from the map if marker is marked used
       void RemoveUsedMarkers(PoseKeyObsMarkerMap_t& poseKeyObsMarkerMap);
@@ -282,10 +290,10 @@ namespace Anki
       void GetObsMarkerList(const PoseKeyObsMarkerMap_t& poseKeyObsMarkerMap,
                             std::list<Vision::ObservedMarker*>& lst);
       
-      void ClearObjectHelper(Vision::ObservableObject* object);
+      void ClearObjectHelper(ObservableObject* object);
       ObjectsMapByID_t::iterator ClearObject(ObjectsMapByID_t::iterator objectIter, ObjectsMapByID_t& inContainer);
       
-      void UpdateTrackToObject(const Vision::ObservableObject* observedObject);
+      void UpdateTrackToObject(const ObservableObject* observedObject);
       
       //
       // Member Variables
@@ -303,10 +311,10 @@ namespace Anki
       // Store all known observable objects (these are everything we know about,
       // separated by class of object, not necessarily what we've actually seen
       // yet, but what everything we are aware of)
-      std::map<ObjectFamily, Vision::ObservableObjectLibrary> _objectLibrary;
-      //Vision::ObservableObjectLibrary blockLibrary_;
-      //Vision::ObservableObjectLibrary matLibrary_;
-      //Vision::ObservableObjectLibrary rampLibrary_;
+      std::map<ObjectFamily, ObservableObjectLibrary> _objectLibrary;
+      //Vision::Vision::ObservableObjectLibrary blockLibrary_;
+      //Vision::Vision::ObservableObjectLibrary matLibrary_;
+      //Vision::Vision::ObservableObjectLibrary rampLibrary_;
       
       
       // Store all observed objects, indexed first by Type, then by ID
@@ -336,13 +344,13 @@ namespace Anki
     }; // class BlockWorld
 
     
-    inline const Vision::ObservableObjectLibrary& BlockWorld::GetObjectLibrary(ObjectFamily whichFamily) const
+    inline const BlockWorld::ObservableObjectLibrary& BlockWorld::GetObjectLibrary(ObjectFamily whichFamily) const
     {
       auto objectsWithFamilyIter = _objectLibrary.find(whichFamily);
       if(objectsWithFamilyIter != _objectLibrary.end()) {
         return objectsWithFamilyIter->second;
       } else {
-        static const Vision::ObservableObjectLibrary EmptyObjectLibrary;
+        static const ObservableObjectLibrary EmptyObjectLibrary;
         return EmptyObjectLibrary;
       }
     }
@@ -377,7 +385,7 @@ namespace Anki
       return EmptyObjectMapByID;
     }
     
-    inline Vision::ObservableObject* BlockWorld::GetObjectByID(const ObjectID objectID) const
+    inline ObservableObject* BlockWorld::GetObjectByID(const ObjectID objectID) const
     {
       // TODO: Maintain a separate map indexed directly by ID so we don't have to loop over the outer maps?
       
@@ -394,7 +402,7 @@ namespace Anki
       return nullptr;
     }
     
-    inline Vision::ObservableObject* BlockWorld::GetObjectByIDandFamily(const ObjectID objectID, const ObjectFamily inFamily) const
+    inline ObservableObject* BlockWorld::GetObjectByIDandFamily(const ObjectID objectID, const ObjectFamily inFamily) const
     {
       // TODO: Maintain a separate map indexed directly by ID so we don't have to loop over the outer maps?
       
@@ -409,7 +417,7 @@ namespace Anki
       return nullptr;
     }
     
-    inline void BlockWorld::AddNewObject(ObjectsMapByType_t& existingFamily, Vision::ObservableObject* object)
+    inline void BlockWorld::AddNewObject(ObjectsMapByType_t& existingFamily, ObservableObject* object)
     {
       if(!object->GetID().IsSet()) {
         object->SetID();
@@ -418,7 +426,7 @@ namespace Anki
       existingFamily[object->GetType()][object->GetID()] = object;
     }
     
-    inline void BlockWorld::AddNewObject(const ObjectFamily toFamily, Vision::ObservableObject* object)
+    inline void BlockWorld::AddNewObject(const ObjectFamily toFamily, ObservableObject* object)
     {
       AddNewObject(_existingObjects[toFamily], object);
     }

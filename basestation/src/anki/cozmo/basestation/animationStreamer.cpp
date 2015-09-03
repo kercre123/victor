@@ -9,12 +9,16 @@
 namespace Anki {
 namespace Cozmo {
 
+  const std::string AnimationStreamer::LiveAnimation = "_LIVE_";
+  
   AnimationStreamer::AnimationStreamer(CannedAnimationContainer& container)
   : _animationContainer(container)
-  , _idleAnimation(nullptr)
+  , _liveAnimation(LiveAnimation)
+  , _idleAnimation(&_liveAnimation)
   , _streamingAnimation(nullptr)
   , _isIdling(false)
   , _numLoops(1)
+  , _loopCtr(0)
   {
     
   }
@@ -62,6 +66,9 @@ namespace Cozmo {
                        "Disabling idle animation.\n");
 #     endif
       _idleAnimation = nullptr;
+      return RESULT_OK;
+    } else if(name == LiveAnimation) {
+      _idleAnimation = &_liveAnimation;
       return RESULT_OK;
     }
     
@@ -115,7 +122,19 @@ namespace Cozmo {
         _isIdling = false;
       }
     } else if(_idleAnimation != nullptr) {
-      if(!robot.IsAnimating() && (_idleAnimation->IsFinished() || !_isIdling)) {
+      
+      // Update the live animation if we're using it
+      if(_idleAnimation == &_liveAnimation)
+      {
+        lastResult = UpdateLiveAnimation(robot);
+        if(RESULT_OK != lastResult) {
+          PRINT_NAMED_ERROR("AnimationStreamer.Update.LiveUpdateFailed",
+                            "Failed updating live animation from current robot state.");
+          return lastResult;
+        }
+      }
+      
+      if((!robot.IsAnimating() && _idleAnimation->IsFinished()) || !_isIdling) {
 #       if DEBUG_ANIMATION_STREAMING
         PRINT_NAMED_INFO("AnimationStreamer.Update.IdleAnimInit",
                          "(Re-)Initializing idle animation: '%s'.\n",
@@ -127,12 +146,75 @@ namespace Cozmo {
         _idleAnimation->Init();
         _isIdling = true;
       }
+      
       _idleAnimation->Update(robot);
     }
     
     return lastResult;
   } // AnimationStreamer::Update()
   
+  Result AnimationStreamer::UpdateLiveAnimation(Robot& robot)
+  {
+    // Use procedural face
+    const ProceduralFace& nextFace = robot.GetProceduralFace();
+    const ProceduralFace& lastFace = robot.GetLastProceduralFace();
+    const TimeStamp_t lastTime = lastFace.GetTimeStamp();
+    const TimeStamp_t nextTime = nextFace.GetTimeStamp();
+    if(nextFace.HasBeenSentToRobot() == false &&
+       lastFace.HasBeenSentToRobot() == true &&
+       nextTime > lastTime)
+    {
+      // Either interpolate from the last procedural face's timestamp if it's not too
+      // old, or for a fixed max duration so we get a smooth change but don't
+      // queue up tons of frames right now trying to get to the current face
+      // (which would cause an unwanted delay).
+      const TimeStamp_t lastInterpTime = std::max(lastTime, nextTime - 4*IKeyFrame::SAMPLE_LENGTH_MS);
+      
+      ProceduralFace proceduralFace;
+      proceduralFace.SetTimeStamp(lastInterpTime);
+      int framesAdded = 0;
+      while(proceduralFace.GetTimeStamp() < nextTime)
+      {
+        // Increment interpolation time
+        proceduralFace.SetTimeStamp(proceduralFace.GetTimeStamp() + IKeyFrame::SAMPLE_LENGTH_MS);
+        
+        // Interpolate based on time
+        const f32 blendFraction = std::min(1.f, (static_cast<f32>(proceduralFace.GetTimeStamp() - lastInterpTime) /
+                                                 static_cast<f32>(nextTime - lastInterpTime)));
+        
+        proceduralFace.Interpolate(lastFace, nextFace, blendFraction);
+        
+        // Add this procedural face as a keyframe in the live animation
+        ProceduralFaceKeyFrame kf(proceduralFace);
+        kf.SetIsLive(true);
+        if(RESULT_OK != _liveAnimation.AddKeyFrame(kf)) {
+          PRINT_NAMED_ERROR("AnimationStreamer.UpdateLiveAnimation.AddFrameFaile", "");
+          return RESULT_FAIL;
+        }
+        ++framesAdded;
+      }
+      
+#     if DEBUG_ANIMATION_STREAMING
+      PRINT_NAMED_INFO("AnimationStreamer.UpdateLiveAnimation.AddedInterpolatedFaces",
+                       "Added %d interpolated procedural faces from t=[%d,%d]",
+                       framesAdded, lastFace.GetTimeStamp(), nextFace.GetTimeStamp());
+#     endif
+
+      robot.MarkProceduralFaceAsSent();
+    }
+    
+    return RESULT_OK;
+  }
+  
+  bool AnimationStreamer::IsIdleAnimating() const
+  {
+    return _isIdling;
+  }
+
+  const std::string AnimationStreamer::GetStreamingAnimationName() const
+  {
+    return _streamingAnimation ? _streamingAnimation->GetName() : "";
+  }
   
 } // namespace Cozmo
 } // namespace Anki

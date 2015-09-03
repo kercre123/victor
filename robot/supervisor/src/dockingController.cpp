@@ -212,27 +212,6 @@ namespace Anki {
         
         return RESULT_OK;
       }
-      
-      static Result GetWithRespectToRobot(const Embedded::Array<f32>&  rotationWrtCamera,
-                                   const Embedded::Point3<f32>& translationWrtCamera,
-                                   Embedded::Array<f32>&        rotationWrtRobot,
-                                   Embedded::Point3<f32>&       translationWrtRobot)
-      {
-        Embedded::Point3<f32> TcamWrtRobot;
-        
-        Result lastResult;
-        if((lastResult = GetCamPoseWrtRobot(RcamWrtRobot_, TcamWrtRobot)) != RESULT_OK) {
-          return lastResult;
-        }
-        
-        if((lastResult = Embedded::Matrix::Multiply(RcamWrtRobot_, rotationWrtCamera, rotationWrtRobot)) != RESULT_OK) {
-          return lastResult;
-        }
-        
-        translationWrtRobot = RcamWrtRobot_*translationWrtCamera + TcamWrtRobot;
-        
-        return RESULT_OK;
-      }
 
       
       // Returns true if the last known pose of the marker is fully within

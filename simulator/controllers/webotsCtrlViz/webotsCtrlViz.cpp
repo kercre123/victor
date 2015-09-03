@@ -60,6 +60,7 @@ namespace Anki {
         TEXT_LABEL_VID_RATE,
         TEXT_LABEL_STATUS_FLAG,
         TEXT_LABEL_STATUS_FLAG_2,
+        TEXT_LABEL_STATUS_FLAG_3,
         TEXT_LABEL_DOCK_ERROR_SIGNAL,
         NUM_TEXT_LABELS
       } VizTextLabelType;
@@ -323,6 +324,40 @@ namespace Anki {
       camDisp->drawLine(msg.xUpperRight, msg.yUpperRight, msg.xUpperLeft, msg.yUpperLeft);
     }
     
+    void ProcessVizCameraLineMessage(const VizCameraLine& msg)
+    {
+      camDisp->setColor(msg.color >> 8);
+      u8 alpha = msg.color & 0xff;
+      if(alpha < 0xff) {
+        const f32 oneOver255 = 1.f / 255.f;
+        camDisp->setAlpha(oneOver255 * static_cast<f32>(alpha));
+      }
+      camDisp->drawLine(msg.xStart, msg.yStart, msg.xEnd, msg.yEnd);
+    }
+    
+    void ProcessVizCameraOvalMessage(const VizCameraOval& msg)
+    {
+      camDisp->setColor(msg.color >> 8);
+      u8 alpha = msg.color & 0xff;
+      if(alpha < 0xff) {
+        const f32 oneOver255 = 1.f / 255.f;
+        camDisp->setAlpha(oneOver255 * static_cast<f32>(alpha));
+      }
+      camDisp->drawOval(std::round(msg.xCen), std::round(msg.yCen),
+                        std::round(msg.xRad), std::round(msg.yRad));
+    }
+    
+    void ProcessVizCameraTextMessage(const VizCameraText& msg)
+    {
+      camDisp->setColor(msg.color>>8);
+      u8 alpha = msg.color & 0xff;
+      if(alpha < 0xff) {
+        const f32 oneOver255 = 1.f / 255.f;
+        camDisp->setAlpha(oneOver255 * static_cast<f32>(alpha));
+      }
+      camDisp->drawText(msg.text, msg.x, msg.y);
+    }
+    
     void ProcessVizImageChunkMessage(const VizImageChunk& msg)
     {
       // TODO: Support timestamps
@@ -405,15 +440,22 @@ namespace Anki {
               msg.videoFramerateHZ, msg.numAnimBytesFree);
       DrawText(TEXT_LABEL_VID_RATE, Anki::NamedColors::GREEN, txt);
       
-      sprintf(txt, "Status: %5s %5s",
+      sprintf(txt, "Status: %5s %5s %7s",
               msg.status & IS_CARRYING_BLOCK ? "CARRY" : "",
-              msg.status & IS_PICKING_OR_PLACING ? "PAP" : "");
+              msg.status & IS_PICKING_OR_PLACING ? "PAP" : "",
+              msg.status & IS_PICKED_UP ? "PICKDUP" : "");
       DrawText(TEXT_LABEL_STATUS_FLAG, Anki::NamedColors::GREEN, txt);
-      
-      sprintf(txt, "        %7s %7s",
-              msg.status & LIFT_IN_POS ? "" : "LIFTING",
-              msg.status & HEAD_IN_POS ? "" : "HEADING");
+
+      sprintf(txt, "        %5s %9s",
+              msg.status & IS_ANIMATING ? "ANIM" : "",
+              msg.status & IS_ANIMATING_IDLE ? "ANIM_IDLE" : "");
       DrawText(TEXT_LABEL_STATUS_FLAG_2, Anki::NamedColors::GREEN, txt);
+      
+      sprintf(txt, "        %7s %7s %6s",
+              msg.status & LIFT_IN_POS ? "" : "LIFTING",
+              msg.status & HEAD_IN_POS ? "" : "HEADING",
+              msg.status & IS_MOVING ? "MOVING" : "");
+      DrawText(TEXT_LABEL_STATUS_FLAG_3, Anki::NamedColors::GREEN, txt);
     }
     
     
@@ -474,6 +516,9 @@ int main(int argc, char **argv)
         case VizTrackerQuad_ID:
         case VizVisionMarker_ID:
         case VizCameraQuad_ID:
+        case VizCameraLine_ID:
+        case VizCameraOval_ID:
+        case VizCameraText_ID:
         case VizRobotState_ID:
           (*Anki::Cozmo::DispatchTable_[msgID])((unsigned char*)(data + 1));
           break;

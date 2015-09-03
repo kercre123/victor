@@ -15,14 +15,10 @@
  **/
 
 #include "visionSystem.h"
-
 #include "anki/cozmo/basestation/comms/robot/robotMessages.h"
 #include "anki/cozmo/basestation/robot.h"
-
 #include "anki/common/basestation/mailbox_impl.h"
 #include "anki/vision/basestation/image_impl.h"
-
-#include "anki/common/basestation/platformPathManager.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/quad_impl.h"
 
@@ -58,6 +54,8 @@
 //#include "localization.h"
 //#include "visionDebugStream.h"
 
+
+
 #if USE_MATLAB_TRACKER || USE_MATLAB_DETECTOR
 #include "matlabVisionProcessor.h"
 #endif
@@ -71,17 +69,26 @@ namespace Cozmo {
   
   using namespace Embedded;
   
-  VisionSystem::VisionSystem()
+  VisionSystem::VisionSystem(const std::string& dataPath)
   : _isInitialized(false)
+  , _dataPath(dataPath)
   , _headCamInfo(nullptr)
   {
+    PRINT_NAMED_INFO("VisionSystem.Constructor", "");
     
+    PRINT_NAMED_INFO("VisionSystem.Constructor.InstantiatingFaceTracker",
+                     "With model path %s.", _dataPath.c_str());
+    _faceTracker = new Vision::FaceTracker(_dataPath);
+    PRINT_NAMED_INFO("VisionSystem.Constructor.DoneInstantiatingFaceTracker", "");
   } // VisionSystem()
   
   VisionSystem::~VisionSystem()
   {
     if(_headCamInfo != nullptr) {
       delete _headCamInfo;
+    }
+    if(_faceTracker != nullptr) {
+      delete _faceTracker;
     }
   }
   
@@ -323,6 +330,7 @@ namespace Cozmo {
     return retVal;
   }
   
+  /*
   bool VisionSystem::CheckMailbox(MessageFaceDetection&       msg)
   {
     bool retVal = false;
@@ -331,8 +339,9 @@ namespace Cozmo {
     }
     return retVal;
   }
+   */
   
-  bool VisionSystem::CheckMailbox(MessageVisionMarker&        msg)
+  bool VisionSystem::CheckMailbox(Vision::ObservedMarker&        msg)
   {
     bool retVal = false;
     if(IsInitialized()) {
@@ -355,6 +364,15 @@ namespace Cozmo {
     bool retVal = false;
     if(IsInitialized()) {
       retVal = _panTiltMailbox.getMessage(msg);
+    }
+    return retVal;
+  }
+  
+  bool VisionSystem::CheckMailbox(Vision::TrackedFace&      msg)
+  {
+    bool retVal = false;
+    if(IsInitialized()) {
+      retVal = _faceMailbox.getMessage(msg);
     }
     return retVal;
   }
@@ -400,25 +418,36 @@ namespace Cozmo {
 #else
     const CornerMethod cornerMethod = CORNER_METHOD_LAPLACIAN_PEAKS; // {CORNER_METHOD_LAPLACIAN_PEAKS, CORNER_METHOD_LINE_FITS};
     
-    const Result result = DetectFiducialMarkers(
-                                                grayscaleImage,
+    // TODO: Merge the fiducial detectio parameters structs
+    Embedded::FiducialDetectionParameters embeddedParams;
+    embeddedParams.scaleImage_numPyramidLevels = parameters.scaleImage_numPyramidLevels;
+    embeddedParams.scaleImage_thresholdMultiplier = parameters.scaleImage_thresholdMultiplier;
+    embeddedParams.component1d_minComponentWidth = parameters.component1d_minComponentWidth;
+    embeddedParams.component1d_maxSkipDistance =  parameters.component1d_maxSkipDistance;
+    embeddedParams.component_minimumNumPixels = parameters.component_minimumNumPixels;
+    embeddedParams.component_maximumNumPixels = parameters.component_maximumNumPixels;
+    embeddedParams.component_sparseMultiplyThreshold = parameters.component_sparseMultiplyThreshold;
+    embeddedParams.component_solidMultiplyThreshold = parameters.component_solidMultiplyThreshold;
+    embeddedParams.component_minHollowRatio = parameters.component_minHollowRatio;
+    embeddedParams.cornerMethod = cornerMethod;
+    embeddedParams.minLaplacianPeakRatio = parameters.minLaplacianPeakRatio;
+    embeddedParams.quads_minQuadArea = parameters.quads_minQuadArea;
+    embeddedParams.quads_quadSymmetryThreshold = parameters.quads_quadSymmetryThreshold;
+    embeddedParams.quads_minDistanceFromImageEdge = parameters.quads_minDistanceFromImageEdge;
+    embeddedParams.decode_minContrastRatio = parameters.decode_minContrastRatio;
+    embeddedParams.maxConnectedComponentSegments = parameters.maxConnectedComponentSegments;
+    embeddedParams.maxExtractedQuads = parameters.maxExtractedQuads;
+    embeddedParams.refine_quadRefinementIterations = parameters.quadRefinementIterations;
+    embeddedParams.refine_numRefinementSamples = parameters.numRefinementSamples;
+    embeddedParams.refine_quadRefinementMaxCornerChange = parameters.quadRefinementMaxCornerChange;
+    embeddedParams.refine_quadRefinementMinCornerChange = parameters.quadRefinementMinCornerChange;
+    embeddedParams.returnInvalidMarkers = parameters.keepUnverifiedMarkers;
+    embeddedParams.doCodeExtraction = true;
+    
+    const Result result = DetectFiducialMarkers(grayscaleImage,
                                                 markers,
                                                 homographies,
-                                                parameters.scaleImage_numPyramidLevels, parameters.scaleImage_thresholdMultiplier,
-                                                parameters.component1d_minComponentWidth, parameters.component1d_maxSkipDistance,
-                                                parameters.component_minimumNumPixels, parameters.component_maximumNumPixels,
-                                                parameters.component_sparseMultiplyThreshold, parameters.component_solidMultiplyThreshold,
-                                                parameters.component_minHollowRatio,
-                                                cornerMethod, parameters.minLaplacianPeakRatio,
-                                                parameters.quads_minQuadArea, parameters.quads_quadSymmetryThreshold, parameters.quads_minDistanceFromImageEdge,
-                                                parameters.decode_minContrastRatio,
-                                                parameters.maxConnectedComponentSegments,
-                                                parameters.maxExtractedQuads,
-                                                parameters.quadRefinementIterations,
-                                                parameters.numRefinementSamples,
-                                                parameters.quadRefinementMaxCornerChange,
-                                                parameters.quadRefinementMinCornerChange,
-                                                parameters.keepUnverifiedMarkers,
+                                                embeddedParams,
                                                 ccmScratch, onchipScratch, offchipScratch);
 #endif
     
@@ -989,7 +1018,7 @@ namespace Cozmo {
     // MatlabVisualization::SendTrackerPrediction_Before(grayscaleImage, currentQuad);
     Anki::Quad2f vizQuad;
     GetVizQuad(currentQuad, vizQuad);
-    VizManager::getInstance()->DrawCameraQuad(9999, vizQuad, NamedColors::BLUE);
+    VizManager::getInstance()->DrawCameraQuad(vizQuad, NamedColors::BLUE);
     
     // Ask VisionState how much we've moved since last call (in robot coordinates)
     Radians theta_robot;
@@ -1152,7 +1181,7 @@ namespace Cozmo {
     // TODO: Re-enable tracker prediction viz on basestation
     //MatlabVisualization::SendTrackerPrediction_After(GetTrackerQuad(scratch));
     GetVizQuad(GetTrackerQuad(scratch), vizQuad);
-    VizManager::getInstance()->DrawCameraQuad(9999, vizQuad, NamedColors::GREEN);
+    VizManager::getInstance()->DrawCameraQuad(vizQuad, NamedColors::GREEN);
     
     return result;
   } // TrackerPredictionUpdate()
@@ -1478,6 +1507,14 @@ namespace Cozmo {
       _isSnapshotReady = NULL;
       _snapshotROI = Embedded::Rectangle<s32>(-1, -1, -1, -1);
       _snapshot = NULL;
+      
+      // NOTE: we do NOT want to give our bogus camera its own calibration, b/c the camera
+      // gets copied out in Vision::ObservedMarkers we leave in the mailbox for
+      // the main engine thread. We don't want it referring to any memory allocated
+      // here.
+      _camera.SetSharedCalibration(&camCalib);
+      
+      VisionMarker::SetDataPath(_dataPath);
       
       _isInitialized = true;
     }
@@ -1953,31 +1990,21 @@ namespace Cozmo {
       {
         const VisionMarker& crntMarker = _memory._markers[i_marker];
         
-        // TODO: Let the robot do the ignoring of VisionMarkers in its mailbox
-        //if (!Localization::IsOnRamp() && !IMUFilter::IsPickedUp()) {
-        // Create a vision marker message and process it (which just queues it
-        // in the mailbox to be picked up and sent out by main execution)
-        {
-          MessageVisionMarker msg;
-          msg.timestamp  = imageTimeStamp;
-          msg.markerType = crntMarker.markerType;
-          
-          msg.x_imgLowerLeft  = crntMarker.corners[Embedded::Quadrilateral<f32>::BottomLeft].x;
-          msg.y_imgLowerLeft  = crntMarker.corners[Embedded::Quadrilateral<f32>::BottomLeft].y;
-          
-          msg.x_imgUpperLeft  = crntMarker.corners[Embedded::Quadrilateral<f32>::TopLeft].x;
-          msg.y_imgUpperLeft  = crntMarker.corners[Embedded::Quadrilateral<f32>::TopLeft].y;
-          
-          msg.x_imgUpperRight = crntMarker.corners[Embedded::Quadrilateral<f32>::TopRight].x;
-          msg.y_imgUpperRight = crntMarker.corners[Embedded::Quadrilateral<f32>::TopRight].y;
-          
-          msg.x_imgLowerRight = crntMarker.corners[Embedded::Quadrilateral<f32>::BottomRight].x;
-          msg.y_imgLowerRight = crntMarker.corners[Embedded::Quadrilateral<f32>::BottomRight].y;
-          
-          //HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::VisionMarker),&msg);
-          _visionMarkerMailbox.putMessage(msg);
-          //}
-        }
+        // Construct a basestation quad from an embedded one:
+        Quad2f quad({crntMarker.corners[Embedded::Quadrilateral<f32>::TopLeft].x,
+          crntMarker.corners[Embedded::Quadrilateral<f32>::TopLeft].y},
+                    {crntMarker.corners[Embedded::Quadrilateral<f32>::BottomLeft].x,
+                      crntMarker.corners[Embedded::Quadrilateral<f32>::BottomLeft].y},
+                    {crntMarker.corners[Embedded::Quadrilateral<f32>::TopRight].x,
+                      crntMarker.corners[Embedded::Quadrilateral<f32>::TopRight].y},
+                    {crntMarker.corners[Embedded::Quadrilateral<f32>::BottomRight].x,
+                      crntMarker.corners[Embedded::Quadrilateral<f32>::BottomRight].y});
+        
+        Vision::ObservedMarker obsMarker(imageTimeStamp, crntMarker.markerType,
+                                         quad, _camera);
+        
+        _visionMarkerMailbox.putMessage(obsMarker);
+        
         
         // Was the desired marker found? If so, start tracking it -- if not already in tracking mode!
         if(!(_mode & TRACKING)          &&
@@ -2224,34 +2251,13 @@ namespace Cozmo {
     
     if(_mode & DETECTING_FACES) {
       Simulator::SetFaceDetectionReadyTime();
+  
+      _faceTracker->Update(inputImage);
       
-      static cv::CascadeClassifier _faceCascade;
-      if(_faceCascade.empty()) {
-        const std::string cascadeFilename = PREPEND_SCOPED_PATH(Config, "haarcascade_frontalface_alt2.xml");
-        const bool loadResult = _faceCascade.load(cascadeFilename);
-        AnkiConditionalError(loadResult == true, "VisionSystem.Update.LoadFaceCascade",
-                             "Failed to load face cascade from %s\n", cascadeFilename.c_str());
-      }
-      
-      std::vector<cv::Rect> faces;
-      
-      cv::Mat equalizedImage;
-      cv::equalizeHist(inputImage.get_CvMat_(), equalizedImage);
-      
-      _faceCascade.detectMultiScale(equalizedImage, faces,
-                                    1.1, 2, 0|CV_HAAR_SCALE_IMAGE, cv::Size(30, 30));
-      
-      for(auto & currentFace : faces)
+      for(auto & currentFace : _faceTracker->GetFaces())
       {
-        MessageFaceDetection msg;
-        msg.timestamp   = inputImage.GetTimestamp();
-        msg.width       = static_cast<u16>(currentFace.width);
-        msg.height      = static_cast<u16>(currentFace.height);
-        msg.x_upperLeft = static_cast<u16>(currentFace.x);
-        msg.y_upperLeft = static_cast<u16>(currentFace.y);
-        msg.visualize   = static_cast<u8>(true);
-        
-        _faceDetectMailbox.putMessage(msg);
+        _faceMailbox.putMessage(currentFace);
+
       } // for each face detection
       
     } // if(_mode & DETECTING_FACES)

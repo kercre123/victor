@@ -28,6 +28,7 @@ enum int_32 RobotActionType {
     TRAVERSE_OBJECT,
     DRIVE_TO_AND_TRAVERSE_OBJECT,
     FACE_OBJECT,
+    FACE_POSE,
     VISUALLY_VERIFY_OBJECT,
     PLAY_ANIMATION,
     PLAY_SOUND,
@@ -57,7 +58,8 @@ structure ActionCompletedStruct {
 }
 
 enum uint_8 QueueActionPosition {
-    NOW = 0,
+    NOW = 0, // Queue now, but leave rest of queue intact
+    NOW_AND_CLEAR_REMAINING, // Queue now and clear rest of queue
     NEXT,
     AT_END
 }

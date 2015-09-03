@@ -13,23 +13,39 @@
 #ifndef __Anki_Cozmo_Basestation_ExternalInterface_ExternalInterface_H__
 #define __Anki_Cozmo_Basestation_ExternalInterface_ExternalInterface_H__
 
+#include "anki/cozmo/basestation/events/ankiEventMgr.h"
+
 #include <vector>
 
 namespace Anki {
 namespace Cozmo {
 
-
 //forward declarations
 namespace ExternalInterface {
 class MessageEngineToGame;
 class MessageGameToEngine;
+enum class MessageEngineToGameTag : uint8_t;
+enum class MessageGameToEngineTag : uint8_t;
 } // end namespace ExternalInterface
 
 
 class IExternalInterface {
 public:
   virtual ~IExternalInterface() {};
-  virtual void DeliverToGame(const ExternalInterface::MessageEngineToGame&& message) = 0;
+  
+  virtual void Broadcast(const ExternalInterface::MessageGameToEngine& message) = 0;
+  virtual void Broadcast(ExternalInterface::MessageGameToEngine&& message) = 0;
+  
+  virtual void Broadcast(const ExternalInterface::MessageEngineToGame& message) = 0;
+  virtual void Broadcast(ExternalInterface::MessageEngineToGame&& message) = 0;
+  
+  virtual Signal::SmartHandle Subscribe(const ExternalInterface::MessageEngineToGameTag& tagType, std::function<void(const AnkiEvent<ExternalInterface::MessageEngineToGame>&)> messageHandler) = 0;
+  
+  virtual Signal::SmartHandle Subscribe(const ExternalInterface::MessageGameToEngineTag& tagType, std::function<void(const AnkiEvent<ExternalInterface::MessageGameToEngine>&)> messageHandler) = 0;
+  
+protected:
+  virtual void DeliverToGame(const ExternalInterface::MessageEngineToGame& message) = 0;
+  
   //virtual bool HasMoreMessagesForEngine() const;
   //virtual const MessageGameToEngine GetNextUndeliveredMessage();
   //virtual void GetNextUndeliveredMessages();
@@ -37,8 +53,8 @@ public:
 
 
 class SimpleExternalInterface : public IExternalInterface {
-public:
-  void DeliverToGame(const ExternalInterface::MessageEngineToGame&& message) override;
+protected:
+  void DeliverToGame(const ExternalInterface::MessageEngineToGame& message) override;
 
 };
 

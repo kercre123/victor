@@ -32,6 +32,8 @@
 
 #include "anki/common/basestation/jsonTools.h"
 
+#include <opencv2/core/core.hpp>
+
 #include <cassert>
 
 namespace Anki {
@@ -43,6 +45,7 @@ namespace Anki {
     IKeyFrame::IKeyFrame()
     : _triggerTime_ms(0)
     , _isValid(false)
+    , _isLive(false)
     {
       
     }
@@ -54,7 +57,7 @@ namespace Anki {
     
     bool IKeyFrame::IsTimeToPlay(TimeStamp_t startTime_ms, TimeStamp_t currTime_ms) const
     {
-      return (GetTriggerTime() + startTime_ms <= currTime_ms);
+      return IsLive() || (GetTriggerTime() + startTime_ms <= currTime_ms);
     }
     
     Result IKeyFrame::DefineFromJson(const Json::Value &json)
@@ -82,18 +85,6 @@ namespace Anki {
     
 #pragma mark -
 #pragma mark Helpers
-    
-    static s32 RandHelper(const s32 minLimit, const s32 maxLimit)
-    {
-      assert(maxLimit > minLimit);
-      
-      const s32 num = (std::rand() % (maxLimit - minLimit + 1)) + minLimit;
-      
-      assert(num >= minLimit && num <= maxLimit);
-      
-      return num;
-    }
-    
     
     // Helper macro used in SetMembersFromJson() overrides below to look for
     // member variable in Json node and fail if it doesn't exist
@@ -129,8 +120,8 @@ return RESULT_FAIL; \
       
       // Add variability:
       if(_angleVariability_deg > 0) {
-        _streamHeadMsg.angle_deg = static_cast<s8>(RandHelper(_angle_deg - _angleVariability_deg,
-                                                              _angle_deg + _angleVariability_deg));
+        _streamHeadMsg.angle_deg = static_cast<s8>(_rng.RandIntInRange(_angle_deg - _angleVariability_deg,
+                                                                       _angle_deg + _angleVariability_deg));
       } else {
         _streamHeadMsg.angle_deg = _angle_deg;
       }
@@ -159,8 +150,8 @@ return RESULT_FAIL; \
       
       // Add variability:
       if(_heightVariability_mm > 0) {
-        _streamLiftMsg.height_mm = static_cast<s8>(RandHelper(_height_mm - _heightVariability_mm,
-                                                              _height_mm + _heightVariability_mm));
+        _streamLiftMsg.height_mm = static_cast<s8>(_rng.RandIntInRange(_height_mm - _heightVariability_mm,
+                                                                       _height_mm + _heightVariability_mm));
       } else {
         _streamLiftMsg.height_mm = _height_mm;
       }
@@ -244,16 +235,24 @@ return RESULT_FAIL; \
         _animName = _animName.substr(lastSlash+1, std::string::npos);
       }
       
-      _numFrames = FaceAnimationManager::getInstance()->GetNumFrames(_animName);
       _curFrame = 0;
       
       return RESULT_OK;
     }
     
+    bool FaceAnimationKeyFrame::IsDone()
+    {
+      // Note the dynamic check for num frames, since (in the case of streaming
+      // procedural animations) the number of keyframes could be increasing
+      // while we're playing and thus isn't known up front.
+      return _curFrame >= FaceAnimationManager::getInstance()->GetNumFrames(_animName);
+    }
+    
     RobotMessage* FaceAnimationKeyFrame::GetStreamMessage()
     {
       // Populate the message with the next chunk of audio data and send it out
-      if(_curFrame < _numFrames)
+      
+      if(!IsDone()) 
       {
         const std::vector<u8>* rleFrame = FaceAnimationManager::getInstance()->GetFrame(_animName, _curFrame);
         
@@ -274,8 +273,8 @@ return RESULT_FAIL; \
         
         if(rleFrame->size() >= sizeof(_faceImageMsg.image)) {
           PRINT_NAMED_ERROR("FaceAnimationKeyFrame.GetStreamMessage",
-                            "RLE frame %d for animation %s too large to fit in message (>=%lu).\n",
-                            _curFrame, _animName.c_str(), sizeof(_faceImageMsg.image));
+                            "RLE frame %d for animation %s too large to fit in message (%lu>=%lu).\n",
+                            _curFrame, _animName.c_str(), rleFrame->size(), sizeof(_faceImageMsg.image));
           return nullptr;
         }
         
@@ -288,6 +287,42 @@ return RESULT_FAIL; \
         _curFrame = 0;
         return nullptr;
       }
+    }
+    
+#pragma mark -
+#pragma mark ProceduralFaceKeyFrame
+    
+    Result ProceduralFaceKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot)
+    {
+      // TODO: Implement!
+      PRINT_NAMED_ERROR("ProceduralFaceKeyFrame.SetMembersFromJson.NotSupported",
+                        "This method needs to be added once animation tool can generate "
+                        "procedural face parameters.");
+      return RESULT_FAIL;
+    }
+    
+    RobotMessage* ProceduralFaceKeyFrame::GetStreamMessage()
+    {
+      std::vector<u8> rleData;
+      Result rleResult = FaceAnimationManager::CompressRLE(_procFace.GetFace(), rleData);
+      
+      if(RESULT_OK != rleResult) {
+        PRINT_NAMED_ERROR("ProceduralFaceKeyFrame.GetStreamMesssage",
+                          "Failed to get RLE frame from procedural face.");
+        return nullptr;
+      }
+      
+      if(rleData.size() >= sizeof(_faceImageMsg.image)) {
+        PRINT_NAMED_ERROR("ProceduralFaceKeyFrame.GetStreamMessage",
+                          "RLE frame for procedural face too large to fit in message (%lu>=%lu).",
+                          rleData.size(), sizeof(_faceImageMsg.image));
+        return nullptr;
+      }
+      
+      _faceImageMsg.image.fill(0);
+      std::copy(rleData.begin(), rleData.end(), _faceImageMsg.image.begin());
+      
+      return &_faceImageMsg;
     }
     
 #pragma mark - 
@@ -309,7 +344,7 @@ return RESULT_FAIL; \
       return _audioReferences[_selectedAudioIndex].name;
     }
     
-    Result RobotAudioKeyFrame::AddAudioRef(const std::string& name)
+    Result RobotAudioKeyFrame::AddAudioRef(const std::string& name, const f32 volume)
     {
       // TODO: Compute number of samples for this audio ID
       // TODO: Catch failure if ID is invalid
@@ -326,6 +361,7 @@ return RESULT_FAIL; \
       
       audioRef.name = name;
       audioRef.numSamples = duration_ms / SAMPLE_LENGTH_MS;
+      audioRef.volume = volume;
       _audioReferences.push_back(audioRef);
       
       return RESULT_OK;
@@ -333,6 +369,11 @@ return RESULT_FAIL; \
     
     Result RobotAudioKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot)
     {
+      // Get volume
+      f32 volume = 1.0;
+      JsonTools::GetValueOptional(jsonRoot, "volume", volume);
+      
+      
       if(!jsonRoot.isMember("audioName")) {
         PRINT_NAMED_ERROR("RobotAudioKeyFrame.SetMembersFromJson.MissingAudioName",
                           "No 'audioName' field in Json frame.\n");
@@ -342,13 +383,13 @@ return RESULT_FAIL; \
       const Json::Value& jsonAudioNames = jsonRoot["audioName"];
       if(jsonAudioNames.isArray()) {
         for(s32 i=0; i<jsonAudioNames.size(); ++i) {
-          Result addResult = AddAudioRef(jsonAudioNames[i].asString());
+          Result addResult = AddAudioRef(jsonAudioNames[i].asString(), volume);
           if(addResult != RESULT_OK) {
             return addResult;
           }
         }
       } else {
-        Result addResult = AddAudioRef(jsonAudioNames.asString());
+        Result addResult = AddAudioRef(jsonAudioNames.asString(), volume);
         if(addResult != RESULT_OK) {
           return addResult;
         }
@@ -367,7 +408,7 @@ return RESULT_FAIL; \
           // Special case: there's only one audio option 
           _selectedAudioIndex = 0;
         } else {
-          _selectedAudioIndex = RandHelper(0, _audioReferences.size()-1);
+          _selectedAudioIndex = _rng.RandIntInRange(0, static_cast<s32>(_audioReferences.size()-1));
         }
       }
       
@@ -377,7 +418,10 @@ return RESULT_FAIL; \
         // TODO: Get next chunk of audio from wwise or something?
         //wwise::GetNextSample(_audioSampleMsg.sample, 800);
         
-        if (!SoundManager::getInstance()->GetSoundSample(_audioReferences[_selectedAudioIndex].name, _sampleIndex, _audioSampleMsg)) {
+        if (!SoundManager::getInstance()->GetSoundSample(_audioReferences[_selectedAudioIndex].name,
+                                                         _sampleIndex,
+                                                         _audioReferences[_selectedAudioIndex].volume,
+                                                         _audioSampleMsg)) {
           PRINT_NAMED_WARNING("RobotAudioKeyFrame.GetStreamMessage.MissingSample", "Index %d", _sampleIndex);
         }
         
@@ -522,28 +566,6 @@ return RESULT_FAIL; \
     
 #pragma mark -
 #pragma mark BackpackLightsKeyFrame
-    
-    static u32 GetColorAsU32(Json::Value& json)
-    {
-      u32 retVal = 0;
-      
-      if(json.isString()) {
-        Json::Value temp; // can't seem to turn input json into array directly
-        const ColorRGBA color( NamedColors::GetByString(json.asString()));
-        retVal = u32(color);
-        
-      } else if(json.isArray() && json.size() == 3) {
-        const ColorRGBA color(static_cast<u8>(json[0].asUInt()),
-                              static_cast<u8>(json[1].asUInt()),
-                              static_cast<u8>(json[2].asUInt()));
-        retVal = u32(color);
-      } else {
-        PRINT_NAMED_WARNING("GetColor", "Expecting color in Json to be a string or 3-element array, not changing.\n");
-      }
-      
-      return retVal;
-    } // GetColor()
-    
     
     Result BackpackLightsKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot)
     {

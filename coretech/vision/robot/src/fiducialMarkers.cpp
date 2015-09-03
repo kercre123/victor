@@ -22,7 +22,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #include <assert.h>
 
-#if USE_NEAREST_NEIGHBOR_RECOGNITION
+#if RECOGNITION_METHOD == RECOGNITION_METHOD_NEAREST_NEIGHBOR || RECOGNITION_METHOD == RECOGNITION_METHOD_CNN
 #  include "anki/cozmo/robot/nearestNeighborLibraryData.h"
 #endif 
 
@@ -31,6 +31,8 @@ For internal use only. No part of this code may be used without a signed non-dis
 #define NUM_BITS MAX_FIDUCIAL_MARKER_BITS // TODO: Why do we need a separate NUM_BITS?
 
 #define OUTPUT_FAILED_MARKER_STEPS
+
+#define DO_RECOGNITION_TIMING 0
 
 #if defined(THIS_IS_PETES_BOARD)
 #undef OUTPUT_FAILED_MARKER_STEPS
@@ -44,11 +46,14 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #define DEBUG_BRIGHT_DARK_PAIRS 0
 
+
+#include <chrono>
+
 namespace Anki
 {
   namespace Embedded
   {
-#   if !USE_NEAREST_NEIGHBOR_RECOGNITION
+#   if RECOGNITION_METHOD == RECOGNITION_METHOD_DECISION_TREES
     FiducialMarkerDecisionTree VisionMarker::multiClassTrees[VisionMarkerDecisionTree::NUM_TREES];
 
     bool VisionMarker::areTreesInitialized = false;
@@ -137,9 +142,6 @@ namespace Anki
     {
       s32 accumulator = 0;
 
-      const s32 imageHeight = image.get_size(0);
-      const s32 imageWidth = image.get_size(1);
-
       const f32 h00 = homography[0][0];
       const f32 h10 = homography[1][0];
       const f32 h20 = homography[2][0];
@@ -184,7 +186,7 @@ namespace Anki
         // 2. Sample the image
 
         // This should only fail if there's a bug in the quad extraction
-        AnkiAssert(warpedY >= 0  && warpedX >= 0 && warpedY < imageHeight && warpedX < imageWidth);
+        AnkiAssert(warpedY >= 0  && warpedX >= 0 && warpedY < image.get_size(0) && warpedX < image.get_size(1)); // Verify y against image height and x against width
 
         const s16 imageValue = static_cast<s16>(*image.Pointer(warpedY, warpedX));
 
@@ -515,33 +517,39 @@ namespace Anki
       return true;
     }
 
-    VisionMarker::VisionMarker()
+    
+    std::string VisionMarker::_dataPath("");
+    
+    void VisionMarker::SetDataPath(const std::string& dataPath)
     {
-      this->corners = Quadrilateral<f32>(Point<f32>(-1.0f,-1.0f), Point<f32>(-1.0f,-1.0f), Point<f32>(-1.0f,-1.0f), Point<f32>(-1.0f,-1.0f));
-      this->validity = UNKNOWN;
-      this->markerType = Anki::Vision::MARKER_UNKNOWN;
-      this->observedOrientation = 0;
-
+      _dataPath = dataPath;
+    }
+    
+    VisionMarker::VisionMarker()
+    : corners(Point<f32>(-1.0f,-1.0f), Point<f32>(-1.0f,-1.0f), Point<f32>(-1.0f,-1.0f), Point<f32>(-1.0f,-1.0f))
+    , markerType(Anki::Vision::MARKER_UNKNOWN)
+    , observedOrientation(0)
+    , validity(UNKNOWN)
+    {
       Initialize();
     }
 
     VisionMarker::VisionMarker(const Quadrilateral<s16> &corners, const ValidityCode validity)
+    : markerType(Anki::Vision::MARKER_UNKNOWN)
+    , observedOrientation(0)
+    , validity(validity)
     {
       this->corners.SetCast<s16>(corners);
-      this->validity = validity;
-      this->markerType = Anki::Vision::MARKER_UNKNOWN;
-      this->observedOrientation = 0;
-
+      
       Initialize();
     } // VisionMarker::VisionMarker()
 
     VisionMarker::VisionMarker(const Quadrilateral<f32> &corners, const ValidityCode validity)
+    : corners(corners)
+    , markerType(Anki::Vision::MARKER_UNKNOWN)
+    , observedOrientation(0)
+    , validity(UNKNOWN)
     {
-      this->corners = corners;
-      this->validity = validity;
-      this->markerType = Anki::Vision::MARKER_UNKNOWN;
-      this->observedOrientation = 0;
-
       Initialize();
     }
 
@@ -600,9 +608,18 @@ namespace Anki
       return RESULT_OK;
     }
 
-#   if USE_NEAREST_NEIGHBOR_RECOGNITION
+#   if RECOGNITION_METHOD == RECOGNITION_METHOD_NEAREST_NEIGHBOR
     NearestNeighborLibrary& VisionMarker::GetNearestNeighborLibrary()
     {
+      /* Use data loaded from binary files, using data platform (needs work!)
+      static NearestNeighborLibrary nearestNeighborLibrary(_dataPlatform,
+                                                           NUM_MARKERS_IN_LIBRARY,
+                                                           NUM_PROBES,
+                                                           ProbeCenters_X, ProbeCenters_Y,
+                                                           ProbePoints_X,  ProbePoints_Y,
+                                                           NUM_PROBE_POINTS,
+                                                           NUM_FRACTIONAL_BITS);
+       */
       
       static NearestNeighborLibrary nearestNeighborLibrary(NearestNeighborData,
                                                            NearestNeighborWeights,
@@ -612,7 +629,7 @@ namespace Anki
                                                            ProbeCenters_X, ProbeCenters_Y,
                                                            ProbePoints_X,  ProbePoints_Y,
                                                            NUM_PROBE_POINTS,
-                                                           NN_NUM_FRACTIONAL_BITS);
+                                                           NUM_FRACTIONAL_BITS);
       
       /*
       // HoG version:
@@ -629,13 +646,32 @@ namespace Anki
       
       return nearestNeighborLibrary;
     }
-#   endif
+    
+#   elif RECOGNITION_METHOD == RECOGNITION_METHOD_CNN
+    
+    Vision::ConvolutionalNeuralNet& VisionMarker::GetCNN()
+    {
+      static Vision::ConvolutionalNeuralNet cnn;
+      if(!cnn.IsLoaded()) {
+        AnkiConditionalErrorAndReturnValue(_dataPath.empty() == false, cnn,
+                                           "VisionMarker.GetCNN.NoDataPath",
+                                           "DataPath must be set before calling GetCNN.");
+        
+        Result loadResult = cnn.Load(_dataPath + "/visionMarkerCNN");
+
+        AnkiConditionalError(loadResult == RESULT_OK,
+                             "VisionMarker.GetCNN.LoadFailed",
+                             "Failed to load CNN from '%s'.\n", cnnDir.c_str());
+      }
+      return cnn;
+    }
+    
+#   endif // #if RECOGNITION_METHOD == RECOGNITION_METHOD_NEAREST_NEIGHBOR
 
     
     void VisionMarker::Initialize()
-    {
-      
-#     if !USE_NEAREST_NEIGHBOR_RECOGNITION
+    {     
+#     if RECOGNITION_METHOD == RECOGNITION_METHOD_DECISION_TREES
       
       if(VisionMarker::areTreesInitialized == false) {
         using namespace VisionMarkerDecisionTree;
@@ -653,16 +689,154 @@ namespace Anki
         
         VisionMarker::areTreesInitialized = true;
       } // IF trees initialized
+
+#     elif RECOGNITION_METHOD == RECOGNITION_METHOD_NEAREST_NEIGHBOR
+
+      // Nothing to do here?
       
-#     endif // USE_NEAREST_NEIGHBOR_RECOGNITION
+#     elif RECOGNITION_METHOD == RECOGNITION_METHOD_CNN
+    
+      // Nothing to do here?
+      
+#     endif // #if RECOGNITION_METHOD == ?
       
     }
     
+    
+    Result VisionMarker::GetProbeValues(const Array<u8> &image,
+                                        const Array<f32> &homography,
+                                        const bool doIlluminationNormalization,
+                                        cv::Mat_<u8> &probeValues)
+    {
+      AnkiConditionalErrorAndReturnValue(AreValid(image, homography),
+                                         RESULT_FAIL_INVALID_OBJECT, "VisionMarker::GetProbeValues", "Invalid objects");
+      
+      // This function is optimized for 9 or fewer probes, but this is not a big issue
+      AnkiAssert(VisionMarker::NUM_PROBE_POINTS <= 9);
+      
+      const s32 numProbeOffsets = VisionMarker::NUM_PROBE_POINTS;
+      const s32 numProbes = VisionMarker::NUM_PROBES;
+      
+      const f32 h00 = homography[0][0];
+      const f32 h10 = homography[1][0];
+      const f32 h20 = homography[2][0];
+      const f32 h01 = homography[0][1];
+      const f32 h11 = homography[1][1];
+      const f32 h21 = homography[2][1];
+      const f32 h02 = homography[0][2];
+      const f32 h12 = homography[1][2];
+      const f32 h22 = homography[2][2];
+      
+      const f32 fixedPointDivider = 1.0f / static_cast<f32>(1 << VisionMarker::NUM_FRACTIONAL_BITS);
+      
+      AnkiConditionalErrorAndReturnValue(probeValues.rows*probeValues.cols == VisionMarker::NUM_PROBES,
+                                         RESULT_FAIL_INVALID_SIZE,
+                                         "VisionMarker.GetProbeValues",
+                                         "Output probeValues matrix should have %d elements, not %d.\n",
+                                         VisionMarker::NUM_PROBES, probeValues.rows*probeValues.cols);
+      
+      u8* restrict pProbeData = probeValues[0];
+      
+      f32 probeXOffsetsF32[9];
+      f32 probeYOffsetsF32[9];
+      
+      for(s32 iOffset=0; iOffset<numProbeOffsets; iOffset++) {
+        probeXOffsetsF32[iOffset] = static_cast<f32>(VisionMarker::ProbePoints_X[iOffset]) * fixedPointDivider;
+        probeYOffsetsF32[iOffset] = static_cast<f32>(VisionMarker::ProbePoints_Y[iOffset]) * fixedPointDivider;
+      }
+      
+      //u8 minValue = u8_MAX;
+      //u8 maxValue = 0;
+      
+      for(s32 iProbe=0; iProbe<numProbes; ++iProbe)
+      {
+        const f32 xCenter = static_cast<f32>(VisionMarker::ProbeCenters_X[iProbe]) * fixedPointDivider;
+        const f32 yCenter = static_cast<f32>(VisionMarker::ProbeCenters_Y[iProbe]) * fixedPointDivider;
+        
+        u32 accumulator = 0;
+        for(s32 iOffset=0; iOffset<numProbeOffsets; iOffset++) {
+          // 1. Map each probe to its warped locations
+          const f32 x = xCenter + probeXOffsetsF32[iOffset];
+          const f32 y = yCenter + probeYOffsetsF32[iOffset];
+          
+          const f32 homogenousDivisor = 1.0f / (h20*x + h21*y + h22);
+          
+          const f32 warpedXf = (h00 * x + h01 *y + h02) * homogenousDivisor;
+          const f32 warpedYf = (h10 * x + h11 *y + h12) * homogenousDivisor;
+          
+          const s32 warpedX = Round<s32>(warpedXf);
+          const s32 warpedY = Round<s32>(warpedYf);
+          
+          // 2. Sample the image
+          
+          // This should only fail if there's a bug in the quad extraction
+          AnkiAssert(warpedY >= 0  && warpedX >= 0 && warpedY < image.get_size(0) && warpedX < image.get_size(1));
+          
+          const u8 imageValue = *image.Pointer(warpedY, warpedX);
+          
+          accumulator += imageValue;
+        } // for each probe offset
+        
+        pProbeData[iProbe] = static_cast<u8>(accumulator / numProbeOffsets);
+        
+        /*
+         // Keep track of min/max for normalization below
+         if(pProbeData[iProbe] < minValue) {
+         minValue = pProbeData[iProbe];
+         } else if(pProbeData[iProbe] > maxValue) {
+         maxValue = pProbeData[iProbe];
+         }
+         */
+      } // for each probe
+      
+      /*
+       // Normalization to scale between 0 and 255:
+       AnkiConditionalErrorAndReturnValue(maxValue > minValue, RESULT_FAIL,
+       "NearestNeighborLibrary.GetProbeValues",
+       "Probe max (%d) <= min (%d).\n", maxValue, minValue);
+       const s32 divisor = static_cast<s32>(maxValue - minValue);
+       AnkiAssert(divisor > 0);
+       for(s32 iProbe=0; iProbe<numProbes; ++iProbe) {
+       pProbeData[iProbe] = (255*static_cast<s32>(pProbeData[iProbe] - minValue)) / divisor;
+       }
+       */
+      
+      // Illumination normalization code (assuming we are not using the same filtering used
+      // by the fiducial detector to improve quad refinment precision)
+      
+      if(doIlluminationNormalization)
+      {
+        // TODO: Make this a member of the class and pre-allocate it?
+        cv::Mat_<s32> _probeFiltering;
+        
+        cv::Mat_<u8> temp(VisionMarker::GRIDSIZE, VisionMarker::GRIDSIZE, probeValues.data);
+        //cv::imshow("Original ProbeValues", temp);
+        
+        // TODO: Would it be faster to box filter and subtract it from the original?
+        static cv::Mat_<s16> kernel;
+        if(kernel.empty()) {
+          assert(VisionMarker::GRIDSIZE % 2 == 0);
+          const s32 halfSize = VisionMarker::GRIDSIZE/2;
+          kernel = cv::Mat_<s16>(halfSize-1,halfSize-1);
+          kernel = -1;
+          kernel((halfSize-1)/2,(halfSize-1)/2) = kernel.rows*kernel.cols - 1;
+        }
+        cv::filter2D(temp, _probeFiltering, _probeFiltering.depth(), kernel,
+                     cv::Point(-1,-1), 0, cv::BORDER_REPLICATE);
+        //cv::imshow("ProbeFiltering", _probeFiltering);
+        cv::normalize(_probeFiltering, temp, 255.f, 0.f, CV_MINMAX);
+      }
+      
+      return RESULT_OK;
+    } // VisionMarker::GetProbeValues()
+    
+    
     Vision::MarkerType VisionMarker::RemoveOrientation(Vision::MarkerType orientedMarker)
     {
-#     if USE_NEAREST_NEIGHBOR_RECOGNITION
+#     if RECOGNITION_METHOD == RECOGNITION_METHOD_NEAREST_NEIGHBOR || \
+         RECOGNITION_METHOD == RECOGNITION_METHOD_CNN
       return RemoveOrientationLUT[orientedMarker];
-#     else
+#     elif RECOGNITION_METHOD == RECOGNITION_METHOD_DECISION_TREES
       return VisionMarkerDecisionTree::RemoveOrientationLUT[orientedMarker];
 #     endif
     }
@@ -737,7 +911,7 @@ namespace Anki
       const Array<f32> &homography, const f32 minContrastRatio,
       f32& brightValue, f32& darkValue, bool& enoughContrast)
     {
-#     if !USE_NEAREST_NEIGHBOR_RECOGNITION
+#     if RECOGNITION_METHOD == RECOGNITION_METHOD_DECISION_TREES
       using namespace VisionMarkerDecisionTree;
 #     endif
 
@@ -745,8 +919,10 @@ namespace Anki
 
       Initialize();
 
+#if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ERRORS_AND_WARNS_AND_ASSERTS
       const s32 imageHeight = image.get_size(0);
       const s32 imageWidth = image.get_size(1);
+#endif
 
       const f32 h00 = homography[0][0];
       const f32 h10 = homography[1][0];
@@ -760,15 +936,9 @@ namespace Anki
 
       f32 fixedPointDivider;
 
-#     if USE_NEAREST_NEIGHBOR_RECOGNITION
-      const s32 numFracBits = GetNearestNeighborLibrary().GetNumFractionalBits();
-#     else
-      const s32 numFracBits = VisionMarker::multiClassTrees[0].get_numFractionalBits();
-#     endif
+      AnkiAssert(VisionMarker::NUM_FRACTIONAL_BITS >= 0);
 
-      AnkiAssert(numFracBits >= 0);
-
-      fixedPointDivider = 1.0f / static_cast<f32>(1 << numFracBits);
+      fixedPointDivider = 1.0f / static_cast<f32>(1 << VisionMarker::NUM_FRACTIONAL_BITS);
 
       f32 probePointsX_F32[NUM_PROBE_POINTS];
       f32 probePointsY_F32[NUM_PROBE_POINTS];
@@ -1003,7 +1173,7 @@ namespace Anki
                                  const f32 minContrastRatio,
                                  MemoryStack scratch)
     {
-#     if !USE_NEAREST_NEIGHBOR_RECOGNITION
+#     if RECOGNITION_METHOD == RECOGNITION_METHOD_DECISION_TREES
       using namespace VisionMarkerDecisionTree;
 #     endif
 
@@ -1021,16 +1191,29 @@ namespace Anki
       bool verified = false;
       OrientedMarkerLabel selectedLabel = MARKER_UNKNOWN;
       
-#     if USE_NEAREST_NEIGHBOR_RECOGNITION
+      
+#     if RECOGNITION_METHOD == RECOGNITION_METHOD_NEAREST_NEIGHBOR
 
       BeginBenchmark("vme_classify_nn");
       
+#       if DO_RECOGNITION_TIMING
+        const std::chrono::steady_clock::time_point startTime = std::chrono::steady_clock::now();
+#       endif
+      
       s32 label=-1;
       s32 distance = grayvalueThreshold;
+      
       lastResult = VisionMarker::GetNearestNeighborLibrary().GetNearestNeighbor(image, homography, grayvalueThreshold, label, distance);
+      
       AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
                                          "VisionMarker.Extract",
                                          "Failed finding nearest neighbor.\n");
+      
+#       if DO_RECOGNITION_TIMING
+        const std::chrono::steady_clock::time_point endTime = std::chrono::steady_clock::now();
+        const std::chrono::milliseconds nnTime = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
+        CoreTechPrint("GetNearestNeighbor() Time: %dms\n", nnTime);
+#       endif
       
       if(label != -1) {
         AnkiConditionalWarn(distance < grayvalueThreshold, "VisionMarker.Extract",
@@ -1044,7 +1227,7 @@ namespace Anki
       
       BeginBenchmark("vme_verify");
       
-#     else
+#     elif RECOGNITION_METHOD == RECOGNITION_METHOD_DECISION_TREES
       BeginBenchmark("vme_classify_tree");
       
       AnkiAssert(NUM_TREES <= u8_MAX);
@@ -1086,6 +1269,33 @@ namespace Anki
                   selectedLabel != MARKER_INVALID_000 &&
                   selectedLabel != MARKER_UNKNOWN);
       
+#     elif RECOGNITION_METHOD == RECOGNITION_METHOD_CNN
+      
+      Vision::ConvolutionalNeuralNet& cnn = VisionMarker::GetCNN();
+      
+#       if DO_RECOGNITION_TIMING
+        const std::chrono::steady_clock::time_point startTime = std::chrono::steady_clock::now();
+#       endif
+      
+      std::string className;
+      size_t classLabel;
+      static cv::Mat_<u8> _probeValues(VisionMarker::GRIDSIZE, VisionMarker::GRIDSIZE);
+      VisionMarker::GetProbeValues(image, homography, true, _probeValues);
+      lastResult = cnn.Run(_probeValues, classLabel, className);
+      
+#       if DO_RECOGNITION_TIMING
+        const std::chrono::steady_clock::time_point endTime = std::chrono::steady_clock::now();
+        const std::chrono::milliseconds nnTime = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
+        CoreTechPrint("CNN.Run() Time: %dms\n", nnTime);
+#       endif
+      
+      AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
+                                         "VisionMarker.Extract.CNNFail",
+                                         "ConvolutionalNeuralNet.Run failed.\n");
+      
+      verified = true;
+      selectedLabel = static_cast<OrientedMarkerLabel>(classLabel);
+      
 #     endif // USE_NEAREST_NEIGHBOR_RECOGNITION
       
       if(verified)
@@ -1095,6 +1305,22 @@ namespace Anki
         // 1. Get the unoriented type
         this->markerType = RemoveOrientationLUT[selectedLabel];
         
+#if 0
+        // DEBUG!
+        //         ||
+        //   markerType == Vision::MARKER_LIGHTNINGBOLT_02)
+        {
+          printf("Seeing %s with Distance = %d\n", Vision::MarkerTypeStrings[markerType], distance);
+          
+        }
+        
+        cv::Mat_<u8> temp(32, 32, VisionMarker::GetNearestNeighborLibrary()._probeValues.data);
+        if(markerType == Vision::MARKER_LIGHTNINGBOLTHOLLOW_05) {
+          cv::imwrite("/Users/andrew/temp/wrongMarker.png", temp);
+        } else if(markerType == Vision::MARKER_INVERTED_LIGHTNINGBOLT_02) {
+          cv::imwrite("/Users/andrew/temp/rightMarker.png", temp);          
+        }
+#endif
         // 2. Reorder the original detected corners to the canonical ordering for
         // this type
         const Quadrilateral<f32> initQuad = this->corners;
@@ -1109,6 +1335,7 @@ namespace Anki
         // Mark this as a valid marker (note that reaching this point should
         // be the only way isValid is true.
         this->validity = VALID;
+        
       } else {
         /* Disabling this since it's overly verbose now that we're using the
            the voting scheme and lots of things don't get majority vote.

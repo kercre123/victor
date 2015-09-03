@@ -4,6 +4,11 @@
 // Copyright: Anki Inc (c) 2015
 
 #include "clad/types/actionTypes.clad"
+#include "clad/types/robotStatusFlag.clad"
+#include "clad/types/cameraSettings.clad"
+#include "clad/types/upAxis.clad"
+#include "clad/types/objectTypes.clad"
+#include "clad/types/objectFamilies.clad"
 #include "clad/externalInterface/messageShared.clad"
 
 namespace Anki {
@@ -67,8 +72,16 @@ message RobotState {
     int_32   carryingObjectID,      // will be -1 if not carrying object
     int_32   carryingObjectOnTopID, // will be -1 if no object on top of object being carried
     int_32   headTrackingObjectID,  // will be -1 if head is not tracking to any object
-    uint_32  status,                // See RobotStatusFlag in cozmoTypes.h
-    uint_32  gameStatus,            // See GameStatusFlag in cozmoTypes.h
+    uint_16  status,                // See RobotStatusFlag in cozmoTypes.h
+    uint_8   gameStatus,            // See GameStatusFlag in cozmoTypes.h
+    uint_8   robotID
+}
+
+message RobotPickedUp {
+    uint_8   robotID
+}
+
+message RobotPutDown {
     uint_8   robotID
 }
 
@@ -97,19 +110,20 @@ message ImageChunk {
     uint_16 nrows,
     uint_16 ncols,
     uint_16 chunkSize,
-    uint_8 imageEncoding,
+    ImageEncodingClad imageEncoding,
     uint_8 imageChunkCount,
     uint_8 chunkId,
-    uint_8 data[1400] // Should match R2B MessageImageChunk size!
+    uint_8 data[1300] // Should match R2B MessageImageChunk size!
 }
 
 
-// ObjectVisionMarker for telling the UI that an object
-//  with specified ID was seen at a particular location in the image
+// RobotObservedObject for signaling that an object
+//  with specified ID/Type/Family was seen at a particular location in the image
+//  and the world
 message RobotObservedObject {
     uint_32 robotID,
-    uint_32 objectFamily,
-    uint_32 objectType,
+    ObjectFamily objectFamily,
+    ObjectType   objectType,
     int_32  objectID,        // signed to match U2G::PickAndPlaceObject which has the option to have objectID<0
     float_32 img_topLeft_x,  // position in image coords
     float_32 img_topLeft_y,  //     "
@@ -125,6 +139,26 @@ message RobotObservedObject {
     float_32 topFaceOrientation_rad, // absolute orienation of top face, iff isActive==true
     uint_8   markersVisible, // Observed via markers vs. "should" be visible based on previous observation
     uint_8   isActive
+}
+
+// RobotObservedFace
+message RobotObservedFace {
+    int_64   faceID,
+    uint_32  robotID,
+    float_32 world_x,        // absolute 3D position in world coords
+    float_32 world_y,        //     "
+    float_32 world_z,        //     "
+    float_32 quaternion0,    // quaternion for 3D rotation (4 elements)
+    float_32 quaternion1,    //     "
+    float_32 quaternion2,    //     "
+    float_32 quaternion3     //     "
+// TODO: Add expression / landmark locations
+}
+
+// RobotDeletedFace
+message RobotDeletedFace {
+    int_64  faceID,
+    uint_32 robotID
 }
 
 // RobotObservedNothing
@@ -159,9 +193,10 @@ message DeviceDetectedVisionMarker {
 // TODO: Add action type, more informative result codes...
 message RobotCompletedAction {
     uint_32 robotID,
+    uint_32 idTag,                        // The identifier of the specific action that completed
     RobotActionType  actionType,          // see enum in actionTypes.def
     ActionResult  result,                 //  "
-    ActionCompletedStruct completionInfo //  "
+    ActionCompletedStruct completionInfo  //  "
 }
 
 
@@ -200,13 +235,13 @@ message ActiveObjectMoved {
     float_32 xAccel,
     float_32 yAccel,
     float_32 zAccel,
-    uint_8   upAxis    // See UpAxis type in ActiveBlockTypes.h
+    UpAxisClad upAxis
 }
 
 message ActiveObjectStoppedMoving {
     uint_8   robotID,
     uint_32  objectID,
-    uint_8   upAxis,
+    UpAxisClad upAxis,
     bool     rolled
 }
 

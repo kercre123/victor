@@ -469,7 +469,7 @@ void Motors::printEncodersRaw()
       '0' + nrf_gpio_pin_read(ENCODER_HEADB_PIN),
       (Fixed)TO_FIXED_8_24_TO_16_16(tmp1),
       (Fixed)TO_FIXED_8_24_TO_16_16(tmp2),
-      m_motors[2].position, m_motors[3].position);
+      (int)m_motors[2].position, (int)m_motors[3].position);
 }
 
 

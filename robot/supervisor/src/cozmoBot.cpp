@@ -74,9 +74,9 @@ namespace Anki {
         u32 avgMainTooLateTime_ = 0;
         u32 lastCycleStartTime_ = 0;
         u32 lastMainCycleTimeErrorReportTime_ = 0;
-        const u32 MAIN_TOO_LATE_TIME_THRESH = TIME_STEP * 1500;  // Normal cycle time plus 50% margin
-        const u32 MAIN_TOO_LONG_TIME_THRESH = 400;
-        const u32 MAIN_CYCLE_ERROR_REPORTING_PERIOD = 1000000;
+        const u32 MAIN_TOO_LATE_TIME_THRESH_USEC = TIME_STEP * 1500;  // Normal cycle time plus 50% margin
+        const u32 MAIN_TOO_LONG_TIME_THRESH_USEC = 700;
+        const u32 MAIN_CYCLE_ERROR_REPORTING_PERIOD_USEC = 1000000;
 
       } // Robot private namespace
 
@@ -250,11 +250,26 @@ namespace Anki {
         u32 cycleStartTime = HAL::GetMicroCounter();
         if (lastCycleStartTime_ != 0) {
           u32 timeBetweenCycles = cycleStartTime - lastCycleStartTime_;
-          if (timeBetweenCycles > MAIN_TOO_LATE_TIME_THRESH) {
+          if (timeBetweenCycles > MAIN_TOO_LATE_TIME_THRESH_USEC) {
             ++mainTooLateCnt_;
             avgMainTooLateTime_ = (u32)((f32)(avgMainTooLateTime_ * (mainTooLateCnt_ - 1) + timeBetweenCycles)) / mainTooLateCnt_;
           }
         }
+ 
+
+/*
+        // Test code for measuring number of mainExecution tics per second
+        static u32 cnt = 0;
+        static u32 startTime = 0;
+        const u32 interval_seconds = 5;
+        
+        if (++cnt == (200 * interval_seconds)) {
+          u32 numTicsPerSec = (cnt * 1000000) / (cycleStartTime - startTime);
+          PRINT("TicsPerSec %d\n", numTicsPerSec);
+          startTime = cycleStartTime;
+          cnt = 0;
+        }
+*/
         
         //////////////////////////////////////////////////////////////
         // Test Mode
@@ -383,8 +398,8 @@ namespace Anki {
         //////////////////////////////////////////////////////////////
         if (IMUFilter::IsPickedUp() && !wasPickedUp_) {
           // Stop wheels
-          PathFollower::ClearPath();
-          SteeringController::ExecuteDirectDrive(0, 0);
+          AnimationController::Clear();
+          PickAndPlaceController::Reset();
           SpeedController::SetBothDesiredAndCurrentUserSpeed(0);
         }
         wasPickedUp_ = IMUFilter::IsPickedUp();
@@ -417,7 +432,7 @@ namespace Anki {
         // Check if main took too long
         u32 cycleEndTime = HAL::GetMicroCounter();
         u32 cycleTime = cycleEndTime - cycleStartTime;
-        if (cycleTime > MAIN_TOO_LONG_TIME_THRESH) {
+        if (cycleTime > MAIN_TOO_LONG_TIME_THRESH_USEC) {
           ++mainTooLongCnt_;
           avgMainTooLongTime_ = (u32)((f32)(avgMainTooLongTime_ * (mainTooLongCnt_ - 1) + cycleTime)) / mainTooLongCnt_;
         }
@@ -425,7 +440,7 @@ namespace Anki {
         
         // Report main cycle time error
         if ((mainTooLateCnt_ > 0 || mainTooLongCnt_ > 0) &&
-            (cycleEndTime - lastMainCycleTimeErrorReportTime_ > MAIN_CYCLE_ERROR_REPORTING_PERIOD)) {
+            (cycleEndTime - lastMainCycleTimeErrorReportTime_ > MAIN_CYCLE_ERROR_REPORTING_PERIOD_USEC)) {
           Messages::MainCycleTimeError m;
           m.numMainTooLateErrors = mainTooLateCnt_;
           m.avgMainTooLateTime = avgMainTooLateTime_;

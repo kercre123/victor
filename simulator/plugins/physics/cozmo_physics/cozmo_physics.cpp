@@ -12,6 +12,7 @@
 
 #include <ode/ode.h>
 #include <plugins/physics.h>
+#include <GLUT/GLUT.h>
 
 #include "cozmo_physics.h"
 #include <map>
@@ -127,7 +128,7 @@ namespace Anki {
     
     void ProcessVizEraseObjectMessage(const VizEraseObject& msg)
     {
-      PRINT("Processing EraseObject\n");
+      PRINT("Processing EraseObject %d\n", msg.objectID);
       
       if (msg.objectID == ALL_OBJECT_IDs) {
         objectMap_.clear();
@@ -272,6 +273,9 @@ namespace Anki {
     void ProcessVizTrackerQuadMessage(const VizTrackerQuad& msg){};
     void ProcessVizVisionMarkerMessage(const VizVisionMarker& msg){};
     void ProcessVizCameraQuadMessage(const VizCameraQuad& msg) {};
+    void ProcessVizCameraLineMessage(const VizCameraLine& msg) {};
+    void ProcessVizCameraOvalMessage(const VizCameraOval& msg) {};
+    void ProcessVizCameraTextMessage(const VizCameraText& msg) {};
     void ProcessVizRobotStateMessage(const VizRobotState& msg) {};
     
   } // namespace Cozmo
@@ -366,6 +370,21 @@ void webots_physics_step() {
 }
 
 
+void drawTextAtOffset(std::string s, float x_off, float y_off, float z_off)
+{
+  glPushMatrix();
+  glTranslatef(x_off, y_off, z_off);
+  glRasterPos2i(0,0);
+  void * font = GLUT_BITMAP_9_BY_15;
+  for (std::string::iterator i = s.begin(); i != s.end(); ++i)
+  {
+    char c = *i;
+    glutBitmapCharacter(font, c);
+  }
+  glPopMatrix();
+}
+
+
 void draw_cuboid(float x_dim, float y_dim, float z_dim)
 {
   
@@ -407,9 +426,6 @@ void draw_cuboid(float x_dim, float y_dim, float z_dim)
   glVertex3f( -halfX, -halfY,  -halfZ );
   
   glEnd();
-
-  
-  glFlush();
 }
 
 
@@ -450,9 +466,6 @@ void draw_ramp(float platformLength, float slopeLength, float width, float heigh
   glVertex3f( 0, -halfY,  0 );
   
   glEnd();
-  
-  
-  glFlush();
 
 }
 
@@ -460,9 +473,7 @@ void draw_head(float width, float height, float depth)
 {
   const float back_scale = 0.8f;
   const float r_hor_front = width*0.5f;
-  const float r_hor_back  = r_hor_front*0.8f;
   const float r_ver_front = height*0.5f;
-  const float r_ver_back  = r_ver_front*0.8f;
   
   const int N = 20;
 
@@ -489,7 +500,7 @@ void draw_head(float width, float height, float depth)
     
   }
   glEnd();
-  
+
 }
 
 // x,y,z: Position of tetrahedron main tip with respect to its origin
@@ -666,9 +677,14 @@ void webots_physics_draw(int pass, const char *view) {
           draw_robot(Anki::Cozmo::VIZ_ROBOT_MARKER_SMALL_TRIANGLE);
           break;
         case Anki::Cozmo::VIZ_OBJECT_CUBOID:
+        {
           draw_cuboid(obj->x_size_m, obj->y_size_m, obj->z_size_m);
           
-          
+          // Object ID label
+          std::string idString = std::to_string(obj->objectID - Anki::Cozmo::VizObjectBaseID[Anki::Cozmo::VIZ_OBJECT_CUBOID]);
+          drawTextAtOffset(idString, 0.6*obj->x_size_m, 0.6*obj->y_size_m, 0.6*obj->z_size_m);
+          drawTextAtOffset(idString, -0.6*obj->x_size_m, -0.6*obj->y_size_m, -0.6*obj->z_size_m);
+
           // AXES:
           glColor4ub(255, 0, 0, 255);
           glBegin(GL_LINES);
@@ -689,6 +705,7 @@ void webots_physics_draw(int pass, const char *view) {
           glEnd();
           
           break;
+        }
         case Anki::Cozmo::VIZ_OBJECT_RAMP:
         {
           float slopeLength = obj->params[0]*obj->x_size_m;
@@ -713,6 +730,8 @@ void webots_physics_draw(int pass, const char *view) {
           PRINT("Unknown objectTypeID %d\n", obj->objectTypeID);
           break;
       }
+      
+      glFlush();
       
       glPopMatrix();
       

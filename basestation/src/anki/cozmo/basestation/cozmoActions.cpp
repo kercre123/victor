@@ -22,7 +22,8 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
-#include "messageEngineToGame.h"
+#include "util/random/randomGenerator.h"
+#include "clad/externalInterface/messageEngineToGame.h"
 #include <iomanip>
 
 namespace Anki {
@@ -691,14 +692,16 @@ namespace Anki {
 
 #pragma mark ---- TurnInPlaceAction ----
     
-    TurnInPlaceAction::TurnInPlaceAction(const Radians& angle)
+    TurnInPlaceAction::TurnInPlaceAction(const Radians& angle, const bool isAbsolute, const Radians& variability)
     : DriveToPoseAction(false, false)
     , _turnAngle(angle)
+    , _variability(variability)
+    , _isAbsoluteAngle(isAbsolute)
     , _startedTraversingPath(false)
     {
       
     }
-    
+
     const std::string& TurnInPlaceAction::GetName() const
     {
       static const std::string name("TurnInPlaceAction");
@@ -709,10 +712,20 @@ namespace Anki {
     {
       // Compute a goal pose rotated by specified angle around robot's
       // _current_ pose, taking into account the current driveCenter offset
-      const Radians heading = robot.GetPose().GetRotationAngle<'Z'>();
+      Radians heading = 0;
+      if (!_isAbsoluteAngle) {
+        heading = robot.GetPose().GetRotationAngle<'Z'>();
+      }
       Pose3d rotatedPose;
       Pose3d dcPose = robot.GetDriveCenterPose();
-      dcPose.SetRotation(heading + _turnAngle, Z_AXIS_3D());
+      
+      Radians newAngle(heading);
+      newAngle += _turnAngle;
+      if(_variability != 0) {
+        newAngle += _rng.RandDblInRange(-_variability.ToDouble(),
+                                         _variability.ToDouble());
+      }
+      dcPose.SetRotation(newAngle, Z_AXIS_3D());
       robot.ComputeOriginPose(dcPose, rotatedPose);
       
       SetGoal(rotatedPose);
@@ -740,7 +753,118 @@ namespace Anki {
       
       return result;
     } // TurnInPlaceAction::CheckIfDone()
+
     
+#pragma mark ---- FacePoseAction ----
+    
+    FacePoseAction::FacePoseAction(const Pose3d& pose, Radians turnAngleTol, Radians maxTurnAngle)
+    : _compoundAction{}
+    , _poseWrtRobot(pose)
+    , _isPoseSet(true)
+    , _turnAngleTol(turnAngleTol.getAbsoluteVal())
+    , _maxTurnAngle(maxTurnAngle.getAbsoluteVal())
+    {
+
+    }
+    
+    FacePoseAction::FacePoseAction(Radians turnAngleTol, Radians maxTurnAngle)
+    : _compoundAction{}
+    , _isPoseSet(false)
+    , _turnAngleTol(turnAngleTol.getAbsoluteVal())
+    , _maxTurnAngle(maxTurnAngle.getAbsoluteVal())
+    {
+      
+    }
+    
+    void FacePoseAction::Reset()
+    {
+      IAction::Reset();
+      _compoundAction.ClearActions();
+    }
+    
+    Radians FacePoseAction::GetHeadAngle(f32 heightDiff)
+    {
+      const f32 distanceXY = Point2f(_poseWrtRobot.GetTranslation()).Length();
+      const Radians headAngle = std::atan2(heightDiff, distanceXY);
+      return headAngle;
+    }
+    
+    void FacePoseAction::SetPose(const Pose3d& pose)
+    {
+      _poseWrtRobot = pose;
+      _isPoseSet = true;
+    }
+    
+    ActionResult FacePoseAction::Init(Robot &robot)
+    {
+      if(!_isPoseSet) {
+        PRINT_NAMED_ERROR("FacePoseAction.Init.PoseNotSet", "");
+        return ActionResult::FAILURE_ABORT;
+      }
+      
+      if(_poseWrtRobot.GetParent() == nullptr) {
+        PRINT_NAMED_INFO("FacePoseAction.SetPose.AssumingRobotOriginAsParent", "");
+        _poseWrtRobot.SetParent(robot.GetWorldOrigin());
+      }
+      else if(false == _poseWrtRobot.GetWithRespectTo(robot.GetPose(), _poseWrtRobot))
+      {
+        PRINT_NAMED_ERROR("FacePoseAction.Init.PoseOriginFailure",
+                          "Could not get pose w.r.t. robot pose.");
+        return ActionResult::FAILURE_ABORT;
+      }
+      
+      if(_maxTurnAngle > 0)
+      {
+        // Compute the required angle to face the object
+        const Radians turnAngle = std::atan2(_poseWrtRobot.GetTranslation().y(),
+                                             _poseWrtRobot.GetTranslation().x());
+        
+        PRINT_NAMED_INFO("FaceObjectAction.Init.TurnAngle",
+                         "Computed turn angle = %.1fdeg\n", turnAngle.getDegrees());
+        
+        if(turnAngle.getAbsoluteVal() < _maxTurnAngle) {
+          if(turnAngle.getAbsoluteVal() > _turnAngleTol) {
+            _compoundAction.AddAction(new TurnInPlaceAction(turnAngle, false));
+          } else {
+            PRINT_NAMED_INFO("FaceObjectAction.Init.NoTurnNeeded",
+                             "Required turn angle of %.1fdeg is within tolerance of %.1fdeg. Not turning.\n",
+                             turnAngle.getDegrees(), _turnAngleTol.getDegrees());
+          }
+        } else {
+          PRINT_NAMED_ERROR("FaceObjectAction.Init.RequiredTurnTooLarge",
+                            "Required turn angle of %.1fdeg is larger than max angle of %.1fdeg.\n",
+                            turnAngle.getDegrees(), _maxTurnAngle.getDegrees());
+          return ActionResult::FAILURE_ABORT;
+        }
+      }
+      
+      // Compute the required head angle to face the object
+      // NOTE: It would be more accurate to take head tilt into account, but I'm
+      //  just using neck joint height as an approximation for the camera's
+      //  current height, since its actual height changes slightly as the head
+      //  rotates around the neck.
+      const f32 heightDiff = _poseWrtRobot.GetTranslation().z() - NECK_JOINT_POSITION[2];
+      Radians headAngle = GetHeadAngle(heightDiff);
+      
+      _compoundAction.AddAction(new MoveHeadToAngleAction(headAngle));
+      
+      // Prevent the compound action from signaling completion
+      _compoundAction.SetIsPartOfCompoundAction(true);
+      
+      return ActionResult::SUCCESS;
+    } // FacePoseAction::Init()
+    
+    
+    ActionResult FacePoseAction::CheckIfDone(Robot& robot)
+    {
+      return _compoundAction.Update(robot);
+    }
+    
+    const std::string& FacePoseAction::GetName() const
+    {
+      static const std::string name("FacePoseAction");
+      return name;
+    }
     
 #pragma mark ---- FaceObjectAction ----
     
@@ -755,12 +879,10 @@ namespace Anki {
     FaceObjectAction::FaceObjectAction(ObjectID objectID, Vision::Marker::Code whichCode,
                                        Radians turnAngleTol,
                                        Radians maxTurnAngle, bool headTrackWhenDone)
-    : _compoundAction{}
+    : FacePoseAction(turnAngleTol, maxTurnAngle)
     , _compoundActionDone(false)
     , _objectID(objectID)
     , _whichCode(whichCode)
-    , _turnAngleTol(turnAngleTol.getAbsoluteVal())
-    , _maxTurnAngle(maxTurnAngle.getAbsoluteVal())
     , _waitToVerifyTime(-1.f)
     , _headTrackWhenDone(headTrackWhenDone)
     {
@@ -769,16 +891,28 @@ namespace Anki {
     
     void FaceObjectAction::Reset()
     {
-      IAction::Reset();
-      _compoundAction.ClearActions();
+      FacePoseAction::Reset();
       _compoundActionDone = false;
+    }
+    
+    Radians FaceObjectAction::GetHeadAngle(f32 heightDiff)
+    {
+      // TODO: Just commanding fixed head angle depending on height of object.
+      //       Verify this is ok with the wide angle lens. If not, dynamically compute
+      //       head angle so that it is at the bottom (for high blocks) or top (for low blocks)
+      //       of the image.
+      Radians headAngle = DEG_TO_RAD_F32(-15);
+      if (heightDiff > 0) {
+        headAngle = DEG_TO_RAD_F32(17);
+      }
+      return headAngle;
     }
     
     ActionResult FaceObjectAction::Init(Robot &robot)
     {
       _waitToVerifyTime = -1.f;
       
-      Vision::ObservableObject* object = robot.GetBlockWorld().GetObjectByID(_objectID);
+      ObservableObject* object = robot.GetBlockWorld().GetObjectByID(_objectID);
       if(object == nullptr) {
         PRINT_NAMED_ERROR("FaceObjectAction.Init.ObjectNotFound",
                           "Object with ID=%d no longer exists in the world.\n",
@@ -841,52 +975,13 @@ namespace Anki {
         }
       }
       
-      if(_maxTurnAngle > 0)
-      {
-        // Compute the required angle to face the object
-        const Radians turnAngle = std::atan2(objectPoseWrtRobot.GetTranslation().y(),
-                                             objectPoseWrtRobot.GetTranslation().x());
-        
-        PRINT_NAMED_INFO("FaceObjectAction.Init.TurnAngle",
-                         "Computed turn angle = %.1fdeg\n", turnAngle.getDegrees());
-        
-        if(turnAngle.getAbsoluteVal() < _maxTurnAngle) {
-          if(turnAngle.getAbsoluteVal() > _turnAngleTol) {
-            _compoundAction.AddAction(new TurnInPlaceAction(turnAngle));
-          } else {
-            PRINT_NAMED_INFO("FaceObjectAction.Init.NoTurnNeeded",
-                             "Required turn angle of %.1fdeg is within tolerance of %.1fdeg. Not turning.\n",
-                             turnAngle.getDegrees(), _turnAngleTol.getDegrees());
-          }
-        } else {
-          PRINT_NAMED_ERROR("FaceObjectAction.Init.RequiredTurnTooLarge",
-                            "Required turn angle of %.1fdeg is larger than max angle of %.1fdeg.\n",
-                            turnAngle.getDegrees(), _maxTurnAngle.getDegrees());
-          return ActionResult::FAILURE_ABORT;
-        }
-      } // if(_maxTurnAngle > 0)
-    
-      // Compute the required head angle to face the object
-      // NOTE: It would be more accurate to take head tilt into account, but I'm
-      //  just using neck joint height as an approximation for the camera's
-      //  current height, since its actual height changes slightly as the head
-      //  rotates around the neck.
-      const f32 heightDiff = objectPoseWrtRobot.GetTranslation().z() - NECK_JOINT_POSITION[2];
-      //const f32 distanceXY = Point2f(objectPoseWrtRobot.GetTranslation()).Length();
-      //const Radians headAngle = std::atan2(heightDiff, distanceXY);
+      // Have to set the parent class's pose before calling its Init()
+      SetPose(objectPoseWrtRobot);
       
-      // TODO: Just commanding fixed head angle depending on height of object.
-      //       Verify this is ok with the wide angle lens. If not, dynamically compute
-      //       head angle so that it is at the bottom (for high blocks) or top (for low blocks)
-      //       of the image.
-      Radians headAngle = DEG_TO_RAD_F32(-15);
-      if (heightDiff > 0) {
-        headAngle = DEG_TO_RAD_F32(17);
+      ActionResult facePoseInitResult = FacePoseAction::Init(robot);
+      if(ActionResult::SUCCESS != facePoseInitResult) {
+        return facePoseInitResult;
       }
-      _compoundAction.AddAction(new MoveHeadToAngleAction(headAngle));
-      
-      // Prevent the compound action from signaling completion
-      _compoundAction.SetIsPartOfCompoundAction(true);
       
       // Can't track head to an object and face it
       robot.DisableTrackToObject();
@@ -901,7 +996,7 @@ namespace Anki {
     {
       // Tick the compound action until it completes
       if(!_compoundActionDone) {
-        ActionResult compoundResult = _compoundAction.Update(robot);
+        ActionResult compoundResult = FacePoseAction::CheckIfDone(robot);
         
         if(compoundResult != ActionResult::SUCCESS) {
           return compoundResult;
@@ -928,7 +1023,7 @@ namespace Anki {
       // can continue with our additional checks:
       
       // Verify that we can see the object we were interested in
-      Vision::ObservableObject* object = robot.GetBlockWorld().GetObjectByID(_objectID);
+      ObservableObject* object = robot.GetBlockWorld().GetObjectByID(_objectID);
       if(object == nullptr) {
         PRINT_NAMED_ERROR("FaceObjectAction.CheckIfDone.ObjectNotFound",
                           "Object with ID=%d no longer exists in the world.\n",
@@ -1036,9 +1131,10 @@ namespace Anki {
     
 #pragma mark ---- MoveHeadToAngleAction ----
     
-    MoveHeadToAngleAction::MoveHeadToAngleAction(const Radians& headAngle, const f32 tolerance)
+    MoveHeadToAngleAction::MoveHeadToAngleAction(const Radians& headAngle, const f32 tolerance, const Radians& variability)
     : _headAngle(headAngle)
     , _angleTolerance(tolerance)
+    , _variability(variability)
     , _name("MoveHeadTo" + std::to_string(std::round(RAD_TO_DEG(_headAngle.ToFloat()))) + "DegAction")
     , _inPosition(false)
     {
@@ -1058,7 +1154,8 @@ namespace Anki {
     bool MoveHeadToAngleAction::IsHeadInPosition(const Robot& robot) const
     {
       const bool inPosition = (!robot.IsHeadMoving() &&
-                               NEAR(robot.GetHeadAngle(), _headAngle.ToFloat(), _angleTolerance.ToFloat()));
+                               NEAR(robot.GetHeadAngle(), _headAngleWithVariation.ToFloat(),
+                                    _angleTolerance.ToFloat()));
       
       return inPosition;
     }
@@ -1071,8 +1168,15 @@ namespace Anki {
       _inPosition = IsHeadInPosition(robot);
       
       if(!_inPosition) {
+        _headAngleWithVariation = _headAngle;
+        if(_variability > 0) {
+          _headAngleWithVariation += _rng.RandDblInRange(-_variability.ToDouble(),
+                                                          _variability.ToDouble());
+          _headAngleWithVariation = CLIP(_headAngleWithVariation, MIN_HEAD_ANGLE, MAX_HEAD_ANGLE);
+        }
+        
         // TODO: Add ability to specify speed/accel
-        if(robot.MoveHeadToAngle(_headAngle.ToFloat(), 10, 20) != RESULT_OK) {
+        if(robot.MoveHeadToAngle(_headAngleWithVariation.ToFloat(), 10, 20) != RESULT_OK) {
           result = ActionResult::FAILURE_ABORT;
         }
       }
@@ -1095,8 +1199,8 @@ namespace Anki {
         result = ActionResult::SUCCESS;
       } else {
         PRINT_NAMED_INFO("MoveHeadToAngleAction.CheckIfDone",
-                         "Waiting for head to get in position: %.1fdeg vs. %.1fdeg\n",
-                         RAD_TO_DEG(robot.GetHeadAngle()), _headAngle.getDegrees());
+                         "Waiting for head to get in position: %.1fdeg vs. %.1fdeg(+/-%.1f)\n",
+                         RAD_TO_DEG(robot.GetHeadAngle()), _headAngle.getDegrees(), _variability.getDegrees());
       }
       
       return result;
@@ -1104,9 +1208,10 @@ namespace Anki {
          
 #pragma mark ---- MoveLiftToHeightAction ----
                                 
-    MoveLiftToHeightAction::MoveLiftToHeightAction(const f32 height_mm, const f32 tolerance_mm)
+    MoveLiftToHeightAction::MoveLiftToHeightAction(const f32 height_mm, const f32 tolerance_mm, const f32 variability)
     : _height_mm(height_mm)
     , _heightTolerance(tolerance_mm)
+    , _variability(variability)
     , _name("MoveLiftTo" + std::to_string(_height_mm) + "mmAction")
     , _inPosition(false)
     {
@@ -1114,7 +1219,7 @@ namespace Anki {
     }
     
     MoveLiftToHeightAction::MoveLiftToHeightAction(const Preset preset, const f32 tolerance_mm)
-    : MoveLiftToHeightAction(GetPresetHeight(preset), tolerance_mm)
+    : MoveLiftToHeightAction(GetPresetHeight(preset), tolerance_mm, 0.f)
     {
       _name = "MoveLiftTo";
       _name += GetPresetName(preset);
@@ -1154,7 +1259,7 @@ namespace Anki {
     
     bool MoveLiftToHeightAction::IsLiftInPosition(const Robot& robot) const
     {
-      const bool inPosition = (NEAR(_height_mm, robot.GetLiftHeight(), _heightTolerance) &&
+      const bool inPosition = (NEAR(_heightWithVariation, robot.GetLiftHeight(), _heightTolerance) &&
                                !robot.IsLiftMoving());
       
       return inPosition;
@@ -1172,17 +1277,23 @@ namespace Anki {
         // Absolute values here shouldn't be necessary, since these are supposed
         // to be the lowest and highest possible lift settings, but just in case...
         if( std::abs(currentHeight-low) < std::abs(carry-currentHeight)) {
-          _height_mm = low;
+          _heightWithVariation = low;
         } else {
-          _height_mm = carry;
+          _heightWithVariation = carry;
         }
+      } else {
+        _heightWithVariation = _height_mm;
+        if(_variability > 0.f) {
+          _heightWithVariation += _rng.RandDblInRange(-_variability, _variability);
+        }
+        _heightWithVariation = CLIP(_heightWithVariation, LIFT_HEIGHT_LOWDOCK, LIFT_HEIGHT_CARRY);
       }
       
       _inPosition = IsLiftInPosition(robot);
       
       if(!_inPosition) {
         // TODO: Add ability to specify speed/accel
-        if(robot.MoveLiftToHeight(_height_mm, 10, 20) != RESULT_OK) {
+        if(robot.MoveLiftToHeight(_heightWithVariation, 10, 20) != RESULT_OK) {
           result = ActionResult::FAILURE_ABORT;
         }
       }
@@ -1213,8 +1324,8 @@ namespace Anki {
         result = ActionResult::SUCCESS;
       } else {
         PRINT_NAMED_INFO("MoveLiftToHeightAction.CheckIfDone",
-                         "Waiting for lift to get in position: %.1fmm vs. %.1fmm\n",
-                         robot.GetLiftHeight(), _height_mm);
+                         "Waiting for lift to get in position: %.1fmm vs. %.1fmm(+/-%.1f)\n",
+                         robot.GetLiftHeight(), _height_mm, _variability);
       }
       
       return result;
@@ -1501,7 +1612,7 @@ namespace Anki {
       }
     }
     
-    void PickAndPlaceObjectAction::EmitCompletionSignal(Robot& robot, ActionResult result) const
+    void PickAndPlaceObjectAction::GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const
     {
       switch(_dockAction)
       {
@@ -1518,12 +1629,8 @@ namespace Anki {
             const u8 numObjects = 1 + (carryObjectOnTop >=0 ? 1 : 0);
             
             // TODO: Be able to fill in add'l objects carried in signal
-            ActionCompletedStruct completionInfo;
             completionInfo.numObjects = numObjects;
             completionInfo.objectIDs = {{carryObject, carryObjectOnTop, -1, -1, -1}};
-            robot.GetExternalInterface()->DeliverToGame(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotCompletedAction(
-              robot.GetID(), GetType(), result, completionInfo
-            )));
             
             return;
           }
@@ -1533,7 +1640,7 @@ namespace Anki {
         case DA_PLACE_LOW:
         {
           // TODO: Be able to fill in more objects in the stack
-          Vision::ObservableObject* object = robot.GetBlockWorld().GetObjectByID(_dockObjectID);
+          ObservableObject* object = robot.GetBlockWorld().GetObjectByID(_dockObjectID);
           if(object == nullptr) {
             PRINT_NAMED_ERROR("PickAndPlaceObjectAction.EmitCompletionSignal",
                               "Docking object %d not found in world after placing.\n",
@@ -1553,10 +1660,6 @@ namespace Anki {
               ++completionInfo.numObjects;
               object = robot.GetBlockWorld().FindObjectOnTopOf(*object, 15.f);
             }
-
-            robot.GetExternalInterface()->DeliverToGame(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotCompletedAction(
-              robot.GetID(), GetType(), result, completionInfo
-            )));
             return;
           }
           break;
@@ -1566,7 +1669,7 @@ namespace Anki {
                             "Dock action not set before filling completion signal.\n");
       }
       
-      IDockAction::EmitCompletionSignal(robot, result);
+      IDockAction::GetCompletionStruct(robot, completionInfo);
     }
     
     Result PickAndPlaceObjectAction::SelectDockAction(Robot& robot, ActionableObject* object)
@@ -1629,7 +1732,7 @@ namespace Anki {
           // We should _not_ still see a object with the
           // same type as the one we were supposed to pick up in that
           // block's original position because we should now be carrying it.
-          Vision::ObservableObject* carryObject = blockWorld.GetObjectByID(robot.GetCarryingObject());
+          ObservableObject* carryObject = blockWorld.GetObjectByID(robot.GetCarryingObject());
           if(carryObject == nullptr) {
             PRINT_NAMED_ERROR("PickAndPlaceObjectAction.Verify.CarryObjectNoLongerExists",
                               "Object %d we were carrying no longer exists in the world.\n",
@@ -1642,7 +1745,7 @@ namespace Anki {
           
           Vec3f Tdiff;
           Radians angleDiff;
-          Vision::ObservableObject* objectInOriginalPose = nullptr;
+          ObservableObject* objectInOriginalPose = nullptr;
           for(auto object : objectsWithType) {
             // TODO: is it safe to always have useAbsRotation=true here?
             Vec3f Tdiff;
@@ -1824,7 +1927,7 @@ namespace Anki {
       }
     }
     
-    void RollObjectAction::EmitCompletionSignal(Robot& robot, ActionResult result) const
+    void RollObjectAction::GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const
     {
       switch(_dockAction)
       {
@@ -1834,16 +1937,9 @@ namespace Anki {
             PRINT_NAMED_ERROR("RollObjectAction.EmitCompletionSignal",
                               "Expecting robot to think it's not carrying object for roll action.\n");
           } else {
-            ActionCompletedStruct completionInfo;
             completionInfo.numObjects = 1;
             completionInfo.objectIDs.fill(-1);
             completionInfo.objectIDs[0] = _dockObjectID;
-            
-            // TODO: Be able to fill in add'l objects carried in signal
-            robot.GetExternalInterface()->DeliverToGame(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotCompletedAction(
-              robot.GetID(), GetType(), result, completionInfo
-            )));
-            
             return;
           }
           break;
@@ -1853,7 +1949,7 @@ namespace Anki {
                             "Dock action not set before filling completion signal.\n");
       }
       
-      IDockAction::EmitCompletionSignal(robot, result);
+      IDockAction::GetCompletionStruct(robot, completionInfo);
     }
     
     Result RollObjectAction::SelectDockAction(Robot& robot, ActionableObject* object)
@@ -2248,22 +2344,22 @@ namespace Anki {
           return ActionResult::FAILURE_ABORT;
         }
         
-        if(object->GetType() == Bridge::Type::LONG_BRIDGE ||
-           object->GetType() == Bridge::Type::SHORT_BRIDGE)
+        if(object->GetType() == ObjectType::Bridge_LONG ||
+           object->GetType() == ObjectType::Bridge_SHORT)
         {
           _chosenAction = new CrossBridgeAction(_objectID, _useManualSpeed);
         }
-        else if(object->GetType() == Ramp::Type::BASIC_RAMP) {
+        else if(object->GetType() == ObjectType::Ramp_Basic) {
           _chosenAction = new AscendOrDescendRampAction(_objectID, _useManualSpeed);
         }
-        else if(object->GetType() == Charger::Type::BASIC_CHARGER) {
+        else if(object->GetType() == ObjectType::Charger_Basic) {
           _chosenAction = new MountChargerAction(_objectID, _useManualSpeed);
         }
         else {
           PRINT_NAMED_ERROR("TraverseObjectAction.Init.CannotTraverseObjectType",
                             "Robot %d was asked to traverse object ID=%d of type %s, but "
                             "that traversal is not defined.\n", robot.GetID(),
-                            object->GetID().GetValue(), object->GetType().GetName().c_str());
+                            object->GetID().GetValue(), ObjectTypeToString(object->GetType()));
           
           return ActionResult::FAILURE_ABORT;
         }
@@ -2289,7 +2385,7 @@ namespace Anki {
     
     ActionResult PlayAnimationAction::Init(Robot& robot)
     {
-      if(robot.IsAnimating()) {
+      if(robot.IsAnimating() && !robot.IsIdleAnimating()) {
         //PRINT_NAMED_INFO("PlanAnimationAction.Init.Waiting",
         //                 "Waiting for robot to stop animating before playing this animation.\n");
         return ActionResult::RUNNING;
@@ -2303,7 +2399,10 @@ namespace Anki {
     
     ActionResult PlayAnimationAction::CheckIfDone(Robot& robot)
     {
-      if(robot.IsAnimating()) {
+      // Check if StreamingAnimation is not yet null and the name still matches to avoid
+      // prematurely deleting looping animations.
+      if(robot.IsAnimating() ||
+         (robot.GetStreamingAnimationName() == _animName)) {
         return ActionResult::RUNNING;
       } else {
         return ActionResult::SUCCESS;
@@ -2318,13 +2417,9 @@ namespace Anki {
       }
     }
     
-    void PlayAnimationAction::EmitCompletionSignal(Robot& robot, ActionResult result) const
+    void PlayAnimationAction::GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const
     {
-      ActionCompletedStruct completionInfo;
       completionInfo.animName = _animName;
-      robot.GetExternalInterface()->DeliverToGame(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotCompletedAction(
-        robot.GetID(), GetType(), result, completionInfo
-      )));
     }
     
 #pragma mark ---- PlaySoundAction ----

@@ -18,13 +18,12 @@
 
 #include "anki/cozmo/basestation/viz/vizManager.h"
 #include "util/logging/logging.h"
-#include "anki/common/basestation/utils/fileManagement.h"
 #include "anki/common/basestation/exceptions.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/polygon_impl.h"
-
+#include "anki/common/basestation/math/rect_impl.h"
 #include "anki/vision/basestation/imageIO.h"
-
+#include "anki/vision/basestation/faceTracker.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
 
 
@@ -280,6 +279,82 @@ namespace Anki {
       return vizID;
     }
     
+    void VizManager::DrawCameraOval(const Point2f &center,
+                                    float xRadius, float yRadius,
+                                    const Anki::ColorRGBA &color)
+    {
+      VizCameraOval v;
+      v.xCen = center.x();
+      v.yCen = center.y();
+      v.xRad = xRadius;
+      v.yRad = yRadius;
+      v.color = u32(color);
+      
+      SendMessage(GET_MESSAGE_ID(VizCameraOval), &v);
+    }
+    
+    void VizManager::DrawCameraLine(const Point2f& start,
+                                    const Point2f& end,
+                                    const ColorRGBA& color)
+    {
+      VizCameraLine v;
+      v.color  = u32(color);
+      v.xStart = start.x();
+      v.yStart = start.y();
+      v.xEnd   = end.x();
+      v.yEnd   = end.y();
+      
+      SendMessage( GET_MESSAGE_ID(VizCameraLine), &v );
+    }
+    
+    void VizManager::DrawCameraText(const Point2f& position,
+                                    const std::string& text,
+                                    const ColorRGBA& color)
+    {
+      VizCameraText v;
+      v.color = u32(color);
+      v.x = std::round(position.x());
+      v.y = std::round(position.y());
+      snprintf(v.text, sizeof(v.text), "%s", text.c_str());
+      
+      SendMessage(GET_MESSAGE_ID(VizCameraText), &v);
+    }
+    
+    void VizManager::DrawCameraFace(const Vision::TrackedFace& face,
+                                    const ColorRGBA& color)
+    {
+      // Draw eyes
+      DrawCameraOval(face.GetLeftEyeCenter(), 1, 1, color);
+      DrawCameraOval(face.GetRightEyeCenter(), 1, 1, color);
+      
+      // Draw features
+      for(s32 iFeature=0; iFeature<(s32)Vision::TrackedFace::NumFeatures; ++iFeature)
+      {
+        Vision::TrackedFace::FeatureName featureName = (Vision::TrackedFace::FeatureName)iFeature;
+        const Vision::TrackedFace::Feature& feature = face.GetFeature(featureName);
+        
+        for(size_t crntPoint=0, nextPoint=1; nextPoint < feature.size(); ++crntPoint, ++nextPoint) {
+          DrawCameraLine(feature[crntPoint], feature[nextPoint], color);
+        }
+      }
+      
+      // Draw name
+      std::string name;
+      if(face.GetID() < 0) {
+        name = "Unknown";
+      } else if(face.GetName().empty()) {
+        name = "Face" + std::to_string(face.GetID());
+      } else {
+        name = face.GetName();
+      }
+      DrawCameraText(Point2f(face.GetRect().GetX(), face.GetRect().GetYmax()), name, color);
+      
+      // Draw bounding rectangle (?)
+      Quad2f quad;
+      face.GetRect().GetQuad(quad);
+      DrawCameraQuad(quad, color);
+    }
+    
     void VizManager::EraseRobot(const u32 robotID)
     {
       CORETECH_ASSERT(robotID < _VizObjectMaxID[VIZ_OBJECT_ROBOT]);
@@ -344,6 +419,12 @@ namespace Anki {
     }
   
     
+    void VizManager::ErasePoly(u32 __polyID)
+    {
+      u32 pathId = __polyID + _polyIDOffset;
+      // TODO: For now polys are drawn using the path drawing logic, but when it gets implmeneted properly this should be updated
+      ErasePath(pathId);
+    }
     
     
     // ================== Object drawing methods ====================
@@ -553,6 +634,13 @@ namespace Anki {
     {
       EraseAllQuadsWithType(VIZ_QUAD_MAT_MARKER);
     }
+    
+    // =============== Circle methods ==================
+    
+    void VizManager::EraseCircle(u32 polyID)
+    {
+      ErasePoly(polyID);
+    }
 
     
     // =============== Text methods ==================
@@ -603,6 +691,7 @@ namespace Anki {
     
 
     void VizManager::SendRobotState(const MessageRobotState &msg,
+                                    const s32 &numAnimBytesFree,
                                     const u8 &videoFramefateHz)
     {
       VizRobotState m;
@@ -622,8 +711,8 @@ namespace Anki {
       m.proxRight = msg.proxRight;
       m.battVolt10x = msg.battVolt10x;
       m.status = msg.status;
-      m.numAnimBytesFree = msg.numAnimBytesFree;
       
+      m.numAnimBytesFree = numAnimBytesFree;
       m.videoFramerateHZ = videoFramefateHz;
       
       SendMessage( GET_MESSAGE_ID(VizRobotState), &m);

@@ -60,7 +60,7 @@ ADD_MESSAGE_MEMBER(f32, liftHeight) // TODO: Need this?
 ADD_MESSAGE_MEMBER(f32, rawGyroZ)
 ADD_MESSAGE_MEMBER(f32, rawAccelY)
 ADD_MESSAGE_MEMBER(u32, status)  // See RobotStatusFlag
-ADD_MESSAGE_MEMBER(s32, numAnimBytesFree)
+ADD_MESSAGE_MEMBER(s32, numAnimBytesPlayed)
 ADD_MESSAGE_MEMBER(u16, lastPathID)
 ADD_MESSAGE_MEMBER(u8, proxLeft)
 ADD_MESSAGE_MEMBER(u8, proxForward)
@@ -70,10 +70,11 @@ ADD_MESSAGE_MEMBER(u8, numFreeSegmentSlots)
 ADD_MESSAGE_MEMBER(u8, battVolt10x)
 END_MESSAGE_DEFINITION(RobotState)
 
-
+// TODO: Remove this message entirely (robot no longer does vision processing!)
 // VisionMarker
 //#define VISION_MARKER_CODE_LENGTH 11 // ceil( (9*9 + 4)/8 )
 START_TIMESTAMPED_MESSAGE_DEFINITION(VisionMarker, 1)
+/*
 // TODO: make the corner coordinates fixed point
 ADD_MESSAGE_MEMBER(f32, x_imgUpperLeft)
 ADD_MESSAGE_MEMBER(f32, y_imgUpperLeft)
@@ -85,6 +86,7 @@ ADD_MESSAGE_MEMBER(f32, x_imgLowerRight)
 ADD_MESSAGE_MEMBER(f32, y_imgLowerRight)
 ADD_MESSAGE_MEMBER(s16, markerType)
 //ADD_MESSAGE_MEMBER_ARRAY(u8, code, VISION_MARKER_CODE_LENGTH)
+*/
 END_MESSAGE_DEFINITION(VisionMarker)
 
 /*
@@ -149,13 +151,14 @@ END_MESSAGE_DEFINITION(RobotAvailable)
 
 
 // PrintText
+// add log level here
 #define PRINT_TEXT_MSG_LENGTH 50
 START_MESSAGE_DEFINITION(PrintText, 1)
 ADD_MESSAGE_MEMBER_ARRAY(u8, text, PRINT_TEXT_MSG_LENGTH)
 END_MESSAGE_DEFINITION(PrintText)
 
 // ImageChunk
-#define IMAGE_CHUNK_SIZE 1400
+#define IMAGE_CHUNK_SIZE 1300
 START_MESSAGE_DEFINITION(ImageChunk, 1)
 ADD_MESSAGE_MEMBER(u32, imageId)
 ADD_MESSAGE_MEMBER(TimeStamp_t, frameTimeStamp)
@@ -227,6 +230,14 @@ END_MESSAGE_DEFINITION(GoalPose)
 // SyncTimeAck
 START_MESSAGE_DEFINITION(SyncTimeAck, 1)
 END_MESSAGE_DEFINITION(SyncTimeAck)
+
+// DataDump
+START_MESSAGE_DEFINITION(DataDump, 1)
+ADD_MESSAGE_MEMBER(u32, id)
+ADD_MESSAGE_MEMBER(u32, size)
+ADD_MESSAGE_MEMBER_ARRAY(u8, data, 256)
+END_MESSAGE_DEFINITION(DataDump)
+
 
 
 // ----- Active object messages ------

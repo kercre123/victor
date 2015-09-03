@@ -17,7 +17,7 @@
 #include "anki/cozmo/basestation/actionInterface.h"
 #include "anki/cozmo/basestation/compoundActions.h"
 #include "anki/common/types.h"
-#include "anki/common/basestation/objectTypesAndIDs.h"
+#include "anki/common/basestation/objectIDs.h"
 #include "anki/common/basestation/math/pose.h"
 #include "util/signals/simpleSignal_fwd.h"
 #include "clad/types/actionTypes.h"
@@ -150,7 +150,7 @@ namespace Anki {
     class TurnInPlaceAction : public DriveToPoseAction
     {
     public:
-      TurnInPlaceAction(const Radians& angle);
+      TurnInPlaceAction(const Radians& angle, const bool isAbsolute, const Radians& variability = 0);
       
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::TURN_IN_PLACE; }
@@ -162,6 +162,8 @@ namespace Anki {
       
     private:
       Radians _turnAngle;
+      Radians _variability;
+      bool    _isAbsoluteAngle;
       bool    _startedTraversingPath;
       
     }; // class TurnInPlaceAction
@@ -170,7 +172,8 @@ namespace Anki {
     class MoveHeadToAngleAction : public IAction
     {
     public:
-      MoveHeadToAngleAction(const Radians& headAngle, const f32 tolerance = DEG_TO_RAD(2.f));
+      MoveHeadToAngleAction(const Radians& headAngle, const f32 tolerance = DEG_TO_RAD(2.f),
+                            const Radians& variability = 0);
       
       virtual const std::string& GetName() const override { return _name; }
       virtual RobotActionType GetType() const override { return RobotActionType::MOVE_HEAD_TO_ANGLE; }
@@ -186,6 +189,9 @@ namespace Anki {
       
       Radians     _headAngle;
       Radians     _angleTolerance;
+      Radians     _variability;
+      Radians     _headAngleWithVariation;
+      
       std::string _name;
       bool        _inPosition;
       
@@ -205,7 +211,7 @@ namespace Anki {
         OUT_OF_FOV // Moves to low or carry, depending on which is closer to current height
       };
       
-      MoveLiftToHeightAction(const f32 height_mm, const f32 tolerance_mm = 5.f);
+      MoveLiftToHeightAction(const f32 height_mm, const f32 tolerance_mm = 5.f, const f32 variability = 0);
       MoveLiftToHeightAction(const Preset preset, const f32 tolerance_mm = 5.f);
       
       virtual const std::string& GetName() const override { return _name; };
@@ -225,15 +231,49 @@ namespace Anki {
       
       f32          _height_mm;
       f32          _heightTolerance;
+      f32          _variability;
+      f32          _heightWithVariation;
+      
       std::string  _name;
       bool         _inPosition;
       
     }; // class MoveLiftToHeightAction
     
     
+    // Tilt head and rotate body to face the given pose.
+    // Use angles specified at construction to control the body rotation.
+    class FacePoseAction : public IAction
+    {
+    public:
+      // Note that the rotation in formation in pose will be ignored
+      FacePoseAction(const Pose3d& pose, Radians turnAngleTol, Radians maxTurnAngle);
+      
+      virtual const std::string& GetName() const override;
+      virtual RobotActionType GetType() const override { return RobotActionType::FACE_POSE; }
+      
+    protected:
+      virtual ActionResult Init(Robot& robot) override;
+      virtual ActionResult CheckIfDone(Robot& robot) override;
+      virtual void Reset() override;
+      
+      FacePoseAction(Radians turnAngleTol, Radians maxTurnAngle);
+      void SetPose(const Pose3d& pose);
+      virtual Radians GetHeadAngle(f32 heightDiff);
+      
+      CompoundActionParallel _compoundAction;
+      
+    private:
+      Pose3d _poseWrtRobot;
+      bool   _isPoseSet;
+      
+      Radians              _turnAngleTol;
+      Radians              _maxTurnAngle;
+    }; // class FacePoseAction
+    
+    
     // Tilt head and rotate body to face the specified (marker on an) object.
     // Use angles specified at construction to control the body rotation.
-    class FaceObjectAction : public IAction
+    class FaceObjectAction : public FacePoseAction
     {
     public:
       // If facing the object requires less than turnAngleTol turn, then no
@@ -258,6 +298,8 @@ namespace Anki {
       virtual ActionResult CheckIfDone(Robot& robot) override;
       virtual void Reset() override;
       
+      virtual Radians GetHeadAngle(f32 heightDiff) override;
+      
       // Reduce delays from their defaults
       virtual f32 GetStartDelayInSeconds() const override { return 0.0f; }
       
@@ -269,13 +311,10 @@ namespace Anki {
       // Override to allow wheel control while facing the object
       virtual bool ShouldLockWheels() const override { return false; }
       
-      CompoundActionParallel _compoundAction;
-      bool                   _compoundActionDone;
+      bool                 _compoundActionDone;
       
       ObjectID             _objectID;
       Vision::Marker::Code _whichCode;
-      Radians              _turnAngleTol;
-      Radians              _maxTurnAngle;
       f32                  _waitToVerifyTime;
       bool                 _headTrackWhenDone;
       
@@ -358,7 +397,7 @@ namespace Anki {
     class PickAndPlaceObjectAction : public IDockAction
     {
     public:
-      PickAndPlaceObjectAction(ObjectID objectID, const bool useManualSpeed);
+      PickAndPlaceObjectAction(ObjectID objectID, const bool useManualSpeed = false);
       virtual ~PickAndPlaceObjectAction();
       
       virtual const std::string& GetName() const override;
@@ -367,11 +406,9 @@ namespace Anki {
       // on what we were doing.
       virtual RobotActionType GetType() const override;
       
-      // Override completion signal to fill in information about objects picked
-      // or placed
-      virtual void EmitCompletionSignal(Robot& robot, ActionResult result) const override;
-      
     protected:
+      
+      virtual void GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const override;
       
       virtual PreActionPose::ActionType GetPreActionType() override { return PreActionPose::DOCKING; }
       
@@ -408,10 +445,10 @@ namespace Anki {
       // Override to determine type (low roll, or potentially other rolls) dynamically depending
       // on what we were doing.
       virtual RobotActionType GetType() const override;
-      
+
       // Override completion signal to fill in information about rolled objects
-      virtual void EmitCompletionSignal(Robot& robot, ActionResult result) const override;
-      
+      virtual void GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const override;
+
     protected:
       
       virtual PreActionPose::ActionType GetPreActionType() override { return PreActionPose::DOCKING; }
@@ -448,9 +485,9 @@ namespace Anki {
       // determined dynamically
       virtual RobotActionType GetType() const override { return _actions.back().second->GetType(); }
       
-      // Use PickAndPlaceObjectAction's completion signal
-      virtual void EmitCompletionSignal(Robot& robot, ActionResult result) const override {
-        return _actions.back().second->EmitCompletionSignal(robot, result);
+      // Use PickAndPlaceObjectAction's completion info
+      virtual void GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const override {
+        _actions.back().second->GetCompletionStruct(robot, completionInfo);
       }
       
     };
@@ -474,8 +511,8 @@ namespace Anki {
       virtual RobotActionType GetType() const override { return _actions.back().second->GetType(); }
       
       // Use RollObjectAction's completion signal
-      virtual void EmitCompletionSignal(Robot& robot, ActionResult result) const override {
-        return _actions.back().second->EmitCompletionSignal(robot, result);
+      virtual void GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const override {
+        _actions.back().second->GetCompletionStruct(robot, completionInfo);
       }
       
     };
@@ -512,7 +549,7 @@ namespace Anki {
     class PlaceObjectOnGroundAtPoseAction : public CompoundActionSequential
     {
     public:
-      PlaceObjectOnGroundAtPoseAction(const Robot& robot, const Pose3d& placementPose, const bool useManualSpeed)
+      PlaceObjectOnGroundAtPoseAction(const Robot& robot, const Pose3d& placementPose, const bool useManualSpeed = false)
       : CompoundActionSequential({
         new DriveToPlaceCarriedObjectAction(robot, placementPose, useManualSpeed),
         new PlaceObjectOnGroundAction()})
@@ -649,7 +686,7 @@ namespace Anki {
       virtual const std::string& GetName() const override { return _name; }
       virtual RobotActionType GetType() const override { return RobotActionType::PLAY_ANIMATION; }
       
-      virtual void EmitCompletionSignal(Robot& robot, ActionResult result) const override;
+      virtual void GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const override;
       
     protected:
       

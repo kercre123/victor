@@ -47,13 +47,7 @@ namespace Anki {
 #include "anki/cozmo/basestation/BlockDefinitions.h"
       
       // Enumerated block types
-      class Type : public ObjectType {
-        Type(const std::string& name) : ObjectType(name) { }
-      public:
-        static const Type INVALID;
-#define BLOCK_DEFINITION_MODE BLOCK_ENUM_MODE
-#include "anki/cozmo/basestation/BlockDefinitions.h"
-      };
+      using Type = Cozmo::ObjectType;
       
       // NOTE: if the ordering of these is modified, you must also update
       //       the static OppositeFaceLUT.
@@ -143,16 +137,12 @@ namespace Anki {
       virtual void Visualize(const ColorRGBA& color) override;
       virtual void EraseVisualization() override;
       
-      virtual ObjectType GetType() const override { return _type; }
-
     protected:
       
       Block(const ObjectType type);
       
       // Make this protected so we have to use public AddFace() method
-      using Vision::ObservableObject::AddMarker;
-      
-      const ObjectType _type;
+      using ActionableObject::AddMarker;
       
       //std::map<Vision::Marker::Code, std::vector<FaceName> > facesWithCode;
       
@@ -207,7 +197,14 @@ namespace Anki {
     {
     public:
       
-      Block_Cube1x1(Type type) : Block_Cube1x1(static_cast<ObjectType>(type)) { }
+      Block_Cube1x1(Type type)
+      : Block(type)
+      {
+        // The sizes specified by the block definitions should
+        // agree with this being a cube (all dimensions the same)
+        CORETECH_ASSERT(_size.x() == _size.y())
+        CORETECH_ASSERT(_size.y() == _size.z())
+      }
       
       virtual std::vector<RotationMatrix3d> const& GetRotationAmbiguities() const override;
       
@@ -216,17 +213,7 @@ namespace Anki {
         return new Block_Cube1x1(this->_type);
       }
       
-    protected:
-      
-      Block_Cube1x1(ObjectType type)
-      : Block(type)
-      {
-        // The sizes specified by the block definitions should
-        // agree with this being a cube (all dimensions the same)
-        CORETECH_ASSERT(_size.x() == _size.y())
-        CORETECH_ASSERT(_size.y() == _size.z())
-      }
-            
+
     };
     
     /*
@@ -250,8 +237,12 @@ namespace Anki {
     class Block_2x1 : public Block
     {
     public:
-      // Public constructor forcing caller to use valid Block::Type
-      Block_2x1(Type type) : Block_2x1(static_cast<ObjectType>(type)) { }
+      
+      Block_2x1(Type type)
+      : Block(type)
+      {
+        
+      }
       
       virtual std::vector<RotationMatrix3d> const& GetRotationAmbiguities() const override;
       
@@ -262,11 +253,7 @@ namespace Anki {
       
     protected:
       // Protected constructor using generic ObjectType
-      Block_2x1(ObjectType type)
-      : Block(type)
-      {
-
-      }
+      
       
     };
     
@@ -277,7 +264,7 @@ namespace Anki {
     public:
       static const s32 NUM_LEDS = 4;
       
-      ActiveCube(Type type) : ActiveCube(static_cast<ObjectType>(type)) { }
+      ActiveCube(Type type);
       
       virtual std::vector<RotationMatrix3d> const& GetRotationAmbiguities() const override;
       
@@ -370,7 +357,6 @@ namespace Anki {
       void FillMessage(MessageSetBlockLights& msg) const;
       
     protected:
-      ActiveCube(ObjectType type);
       
       // TODO: Promote to Block object
       const Vision::KnownMarker& GetTopMarker(Pose3d& markerPoseWrtOrigin) const;

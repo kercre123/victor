@@ -4,19 +4,23 @@
 #ifndef USER_CONFIG_H_
 #define USER_CONFIG_H_
 
-#define COZMO_AS_AP
+/// Put format strings in flash rather than needing to load them into program memory
+#define USE_OPTIMIZE_PRINTF
+/// Add missing prototype of os_printf_plus
+extern int os_printf_plus(const char * format, ...) __attribute__ ((format (printf, 1, 2)));
 
-#ifdef COZMO_AS_AP
+/// Based on 1MB flash map
+#define USER_NV_PARAM_START 0x7d000
+#define USER_NV_START_SEC   0x7d
 
+#define AP_MAX_CONNECTIONS 8
 #define AP_SSID_FMT "AnkiEspressif%02x%02x"
 #define AP_KEY      "2manysecrets"
 #define AP_IP       "172.31.1.1"
 #define AP_NETMASK  "255.255.255.0"
-#define AP_GATEWAY  "0.0.0.0"
-#define DHCP_START  "171.31.1.2"
-#define DHCP_END    "172.31.1.9"
-
-#else
+#define AP_GATEWAY  "172.31.1.1"
+#define DHCP_START  "171.31.1.10"
+#define DHCP_END    "172.31.1.15"
 
 #define STATION_SSID "AnkiRobits"
 #define STATION_KEY  "KlaatuBaradaNikto!"
@@ -24,6 +28,22 @@
 #define STATION_NETMASK "255.255.248.0"
 #define STATION_GATEWAY "192.168.2.1"
 
-#endif
+/** WiFi fix rate configuration
+ * This is a custom API added by Espressif for Anki 2015-07-21
+ */
+enum FIXED_RATE {
+          PHY_RATE_48    =    0x8,
+          PHY_RATE_24    =    0x9,
+          PHY_RATE_12    =    0xA,
+          PHY_RATE_6     =    0xB,
+          PHY_RATE_54    =    0xC,
+          PHY_RATE_36    =    0xD,
+          PHY_RATE_18    =    0xE,
+          PHY_RATE_9     =    0xF,
+};
+/** Set the WiFi to operate at a fixed rate rather than negotiating
+ * @param A value from FIXED_RATE enum.
+ */
+void wifi_set_user_fixed_rate(u8 rate);
 
 #endif

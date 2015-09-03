@@ -11,14 +11,16 @@
  **/
 
 #include <fstream>
-#include "gtest/gtest.h"
-
+#include "util/helpers/includeGTest.h"
 #include "json/json.h"
-
 #include "anki/common/basestation/jsonTools.h"
-#include "anki/common/basestation/platformPathManager.h"
 
 using namespace std;
+
+#ifndef TEST_DATA_PATH
+#error No TEST_DATA_PATH defined. You may need to re-run cmake.
+#endif
+#define TEST_PRIM_FILE "/planning/matlab/test_mprim.json"
 
 GTEST_TEST(TestConfigTreeJsonCpp, JsonCppWorks)
 {
@@ -26,7 +28,7 @@ GTEST_TEST(TestConfigTreeJsonCpp, JsonCppWorks)
   Json::Reader reader;
 
   using namespace Anki;
-  ifstream configFileStream(PlatformPathManager::getInstance()->PrependPath(PlatformPathManager::Test, "coretech/common/basestation/config/test.json"));
+  ifstream configFileStream((std::string(QUOTE(TEST_DATA_PATH)) + std::string("/common/basestation/config/test.json")).c_str());
 
   ASSERT_TRUE(reader.parse(configFileStream, root))
     << "Failed to parse configuration\n"
@@ -60,7 +62,7 @@ GTEST_TEST(TestConfigTreeJsonCpp, OptionalValues)
   Json::Reader reader;
 
   using namespace Anki;
-  ifstream configFileStream(PlatformPathManager::getInstance()->PrependPath(PlatformPathManager::Test, "coretech/common/basestation/config/test.json"));
+  ifstream configFileStream((std::string(QUOTE(TEST_DATA_PATH)) + std::string("/common/basestation/config/test.json")).c_str());
 
   ASSERT_TRUE(reader.parse(configFileStream, root))
     << "Failed to parse configuration\n"

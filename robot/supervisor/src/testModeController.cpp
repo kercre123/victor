@@ -159,6 +159,8 @@ namespace Anki {
         const f32 LIFT_DES_LOW_HEIGHT = LIFT_HEIGHT_LOWDOCK + 10;
         LiftTestFlags liftTestMode_ = LiftTF_TEST_POWER;
         s32 liftNodCycleTime_ms_ = 2000;
+        f32 avgLiftSpeed_ = 0;
+        f32 startLiftHeightMM_ = 0;
         //// End of LiftTest  //////
         
         
@@ -226,9 +228,6 @@ namespace Anki {
         //const Vision::MarkerType BLOCK_TO_PLACE_ON = Vision::MARKER_ANGRYFACE;
         const Vision::MarkerType BLOCK_TO_PLACE_ON = Vision::MARKER_SQUAREPLUSCORNERS;
         
-        // The width of the marker
-        const f32 BLOCK_MARKER_WIDTH = DEFAULT_BLOCK_MARKER_WIDTH_MM;
-        
         // This pick up action depends on whether the block is expected to be on
         // the ground or on top of another block.
         // If DA_PICKUP_HIGH, the place part of this test will just the block on the ground.
@@ -238,9 +237,6 @@ namespace Anki {
         const f32 PLACE_ON_GROUND_DIST_X = 100;
         const f32 PLACE_ON_GROUND_DIST_Y = -10;
         const f32 PLACE_ON_GROUND_DIST_ANG = 0;
-        
-        // Set to true if you want to manually specify the speed at which to dock to block
-        bool useManualSpeed_ = false;
         ////// End of PickAndPlaceTest ////
         
         
@@ -260,10 +256,6 @@ namespace Anki {
         const f32 IT_MAX_ROT_VEL = 1.5f;
         const f32 IT_ROT_ACCEL = 10.f;
         ///// End of IMUTest /////
-        
-        ///////// AnimationTest ////////
-        //AnimationID_t AT_currAnim;
-        const u32 AT_periodTics = 2000;
         
         
         /////// LightTest ////////
@@ -695,6 +687,8 @@ namespace Anki {
         if (liftTestMode_ == LiftTF_TEST_POWER || liftTestMode_ == LiftTF_DISABLE_MOTOR) {
           LiftController::Disable();
         }
+        avgLiftSpeed_ = 0;
+        startLiftHeightMM_ = 0;
         return RESULT_OK;
       }
       
@@ -776,18 +770,22 @@ namespace Anki {
         
         
 
-        // Print speed
-        if (ticCnt2_++ >= printCyclePeriod_) {
-          f32 lSpeed = HAL::MotorGetSpeed(HAL::MOTOR_LIFT);
-          f32 lSpeed_filt = LiftController::GetAngularVelocity();
-          f32 lPos = LiftController::GetAngleRad(); // HAL::MotorGetPosition(HAL::MOTOR_LIFT);
-          f32 lHeight = LiftController::GetHeightMM();
-          if (ABS(lSpeed) > 0.001 || ABS(lSpeed_filt) > 0.001) {
-            PRINT("Lift speed %f rad/s, filt_speed %f rad/s, position %f rad, %f mm\n", lSpeed, lSpeed_filt, lPos, lHeight);
+        // Print speed at the end of a continuous segment of non-zero speeds
+        f32 lSpeed = HAL::MotorGetSpeed(HAL::MOTOR_LIFT);
+        if (ABS(lSpeed) > 0.001) {
+          // Is this the start of a sequence of non-zero lift speeds?
+          if (avgLiftSpeed_ == 0) {
+            startLiftHeightMM_ = LiftController::GetHeightMM();
           }
+          avgLiftSpeed_ += lSpeed;
+          ++ticCnt2_;
+        } else if (avgLiftSpeed_ != 0) {
+          avgLiftSpeed_ /= ticCnt2_;
+          PRINT("Avg lift speed %f rad/s, height change %f mm\n", avgLiftSpeed_, LiftController::GetHeightMM() - startLiftHeightMM_);
+          avgLiftSpeed_ = 0;
           ticCnt2_ = 0;
         }
-
+        
         
         return RESULT_OK;
       }

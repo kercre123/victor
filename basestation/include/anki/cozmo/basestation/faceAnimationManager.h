@@ -24,22 +24,29 @@ namespace cv {
 }
 
 namespace Anki {
-namespace Cozmo {
   
+  // Forward declaration
+  namespace Util {
+  namespace Data {
+    class DataPlatform;
+  }
+  }
+  
+namespace Cozmo {
+
   // NOTE: this is a singleton class
   class FaceAnimationManager
   {
   public:
     static const s32 IMAGE_WIDTH = 128;
     static const s32 IMAGE_HEIGHT = 64;
+    static const std::string ProceduralAnimName;
     
     // Get a pointer to the singleton instance
     inline static FaceAnimationManager* getInstance();
     static void removeInstance();
     
-    // Set the root directory of animations, and trigger a read of available
-    // animations in it.
-    bool SetRootDir(const std::string dir="");
+    void ReadFaceAnimationDir(Util::Data::DataPlatform* dataPlatform);
 
     // Get a pointer to an RLE-compressed frame for the given animation.
     // Returns nullptr if animation or frame do not exist.
@@ -47,7 +54,13 @@ namespace Cozmo {
     
     // Return the total number of frames in the given animation. Returns 0 if the
     // animation doesn't exist.
-    u32  GetNumFrames(const std::string& animName) const;
+    u32  GetNumFrames(const std::string& animName);
+    
+    // Ability to add keyframes at runtime, for procedural face streaming
+    Result AddImage(const std::string& animName, const cv::Mat& faceImg);
+    
+    // Remove all frames from an existing animation
+    Result ClearAnimation(const std::string& animName);
     
     // Clear all FaceAnimations
     void Clear();
@@ -63,10 +76,7 @@ namespace Cozmo {
     FaceAnimationManager();
     
     static FaceAnimationManager* _singletonInstance;
-    
-    bool         _hasRootDir;
-    std::string  _rootDir;
-    
+
     struct AvailableAnim {
       time_t lastLoadedTime;
       //std::vector<std::string> filenames;
@@ -74,10 +84,11 @@ namespace Cozmo {
       size_t GetNumFrames() const { return rleFrames.size(); }
     };
     
+    AvailableAnim* GetAnimationByName(const std::string& name);
+    
     std::unordered_map<std::string, AvailableAnim> _availableAnimations;
     
-     Result ReadFaceAnimationDir();
-    
+
   }; // class FaceAnimationManager
   
   

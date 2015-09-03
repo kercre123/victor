@@ -139,7 +139,16 @@ typedef struct {
     int                      buff_uart_no;  //indicate which uart use tx/rx buffer
 } UartDevice;
 
+/** Call before any other UART functions to set up the UARTs.
+ * @param uart0_br Primary UART baud rate
+ * @param uart1_br Secondary (debug) UART baud rate
+ */
 void uart_init(UartBautRate uart0_br, UartBautRate uart1_br);
+
+/** Call after all OS tasks etc. have been set up to start the UART driver operation.
+ * This should be called after uart_init and before any other uart driver functionality (except debug printing) is used.
+ */
+void uart_start();
 
 /** Queue a UART packet for transmission
  * @param data A pointer to the packet payload

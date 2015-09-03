@@ -42,7 +42,7 @@
 
 #define UNWRAP(...) __VA_ARGS__
 #define START_BLOCK_DEFINITION(__NAME__, __SIZE__, __COLOR__) \
-{Block::Type::__NAME__, {.name = QUOTE(__NAME__), .color = NamedColors::__COLOR__, .size = {UNWRAP __SIZE__}, .faces = {
+{Block::Type::Block_##__NAME__, {.name = QUOTE(__NAME__), .color = NamedColors::__COLOR__, .size = {UNWRAP __SIZE__}, .faces = {
 
 #define ADD_FACE_CODE(__WHICHFACE__, __SIZE__, __CODE__) \
 {.whichFace = __WHICHFACE__, .size = __SIZE__, .code = __CODE__},

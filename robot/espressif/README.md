@@ -5,38 +5,61 @@ The instructions are primarily for building on Linux, as of this writing, Ubuntu
 
 ##How to build a build environment.
 
-###STEP 0: Environment
-Install needed packages which may include the following among others
+###System dependancies
+Install needed packages which may include the following among others. There will likely be some iteration with
+installint system dependancies while trying to build the toolchain.
 
+#### 32-bit Linux
 ```
-build-essential gperf bison flex texinfo libtool libncurses5-dev wget gawk libc6-dev-amd64 python-serial libexpat-dev libisl-dev libcloog-isl-dev libmpc-dev
+git autoconf build-essential gperf bison flex texinfo libtool libtool-bin libncurses5-dev wget gawk libc6
+```
+#### 64-bit Linux
+```
+git autoconf build-essential gperf bison flex texinfo libtool libtool-bin libncurses5-dev wget gawk libc6-dev-amd64 libexpat-dev
+```
+#### OSX Homebrew
+```
+gperf bison flex texinfo libtool wget gawk crosstool-ng autoconf automake gcc
 ```
 
-Some iteration between building the xtensa toolchain and installing system packages will almost doubtless be needed to
-make this work.
+### Python
+The Anki scripts are written primarily targetting python3 but the Espressif scripts target python2 so you'll need to
+have both installed and have ```python2``` and ```python3``` in your path. On OSX you need to create a python2 symlink
+```
+cd /usr/bin
+sudo ln -s python python2
+```
 
-### STEP 1: Checkout coretech-external
-Most of the packages have already been collected in the [coretech-external repository](https://github.com/anki/coretech-external).
+Python serial will also be required. If pip is not already installed running
+```
+sudo easy_install pip
+```
+Install pyserial by running
+```
+sudo pip install pyserial  # for python2 for programming the Espressif
+sudo pip3 install pyserial # Optionally for python3 for running test scripts etc.
+```
 
-After setting up coretech-external, you need to add an environmental variable ```CORETECH_EXTERNAL_DIR``` to tell
-scripts where to find it.
+### Checkout and build crosstool-NG toolchain
+Setup a folder for it to live in
+```
+sudo mkdir -p /opt/Espressif
+sudo chown `whoami`: /opt/Espressif
+```
+Checkout the Espressif C++ crosstool-NG repository / branch
+```
+cd /opt/Espressif
+git clone -b lx106 git://github.com/jcmvbkbc/crosstool-NG.git
+cd crosstool-NG
+git checkout lx106-g++ # Checkout the branch which includes C++ compiler in addition to C99 compiler
+./bootstrap
+./configure --prefix=`pwd`
+make
+make install
+./ct-ng xtensa-lx106-elf
+./ct-ng build
+```
 
-###STEP 2: Build the xtensa-toolchain
-Get and build a copy of the xtensa build toolchain here:
-https://github.com/jcmvbkbc/xtensa-toolchain-build
-... you're building the lx106 version.  You will also need the patched GCC here: https://github.com/jcmvbkbc/gcc-xtensa/commits/call0-4.8.2
-The commands you will need are as follows:
-```
-cd $CORETECH_EXTERNAL_DIR/espressif/xtensa-toolchain-build
-git clone --depth=1 https://github.com/jcmvbkbc/gcc-xtensa.git gcc-4.9.1
-./prepare.sh lx106
-./build-elf.sh lx106
-```
-Now install the xtensa toolchain:
-```
-sudo cp -r build-lx106/root/* /usr/local/
-```
-This is where you will probably have to iterate with installing system dependancies.
 
 ## Build the firmware
 
@@ -51,10 +74,3 @@ Firmware may be installed onto a module by running:
 ./burn.sh <COM PORT>
 ```
 Where _COM PORT_ is the serial port the ESP8266 programming port is connected to.
-
-********************************************************************************
-
-
-
-##Appendix A: Building on OSX.
-See [cnlohr's instructions](https://github.com/cnlohr/ws2812esp8266/blob/master/README.md)

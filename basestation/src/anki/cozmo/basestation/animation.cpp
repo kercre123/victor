@@ -15,6 +15,7 @@
 
 #include "anki/cozmo/basestation/animation.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/shared/cozmoEngineConfig.h"
 
 #include "anki/cozmo/shared/cozmoTypes.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
@@ -35,8 +36,7 @@
 namespace Anki {
 namespace Cozmo {
   
-  const s32 Animation::MAX_BYTES_FOR_RELIABLE_TRANSPORT = 2000;
-  const s32 Animation::MAX_FRAMES_TO_SEND = 10;
+  const s32 Animation::MAX_BYTES_FOR_RELIABLE_TRANSPORT = (1000/2) * BS_TIME_STEP; // Don't send more than 1000 bytes every 2ms
   
 #pragma mark -
 #pragma mark Animation::Track
@@ -51,6 +51,18 @@ namespace Cozmo {
 #   endif
     
     _frameIter = _frames.begin();
+  }
+  
+  template<typename FRAME_TYPE>
+  void Animation::Track<FRAME_TYPE>::MoveToNextKeyFrame()
+  {
+    if(_frameIter->IsLive()) {
+      // Live frames get removed from the track once played
+      _frameIter = _frames.erase(_frameIter);
+    } else {
+      // For canned frames, we just move to the next one in the track
+      ++_frameIter;
+    }
   }
   
   template<typename FRAME_TYPE>
@@ -76,8 +88,12 @@ namespace Cozmo {
   template<typename FRAME_TYPE>
   Result Animation::Track<FRAME_TYPE>::AddKeyFrame(const Json::Value &jsonRoot)
   {
-    _frames.emplace_back();
-    Result lastResult = _frames.back().DefineFromJson(jsonRoot);
+    Result lastResult = AddKeyFrame(FRAME_TYPE());
+    if(RESULT_OK != lastResult) {
+      return lastResult;
+    }
+    
+    lastResult = _frames.back().DefineFromJson(jsonRoot);
     
 #   if DEBUG_ANIMATIONS
     PRINT_NAMED_INFO("Animation.Track.AddKeyFrame",
@@ -106,12 +122,12 @@ namespace Cozmo {
 #pragma mark -
 #pragma mark Animation
   
-  Animation::Animation()
-  : _isInitialized(false)
+  Animation::Animation(const std::string& name)
+  : _name(name)
+  , _isInitialized(false)
   {
     
   }
-  
   
   Result Animation::DefineFromJson(const std::string& name, Json::Value &jsonRoot)
   {
@@ -182,6 +198,56 @@ namespace Cozmo {
     return RESULT_OK;
   }
   
+  template<>
+  Animation::Track<HeadAngleKeyFrame>& Animation::GetTrack() {
+    return _headTrack;
+  }
+  
+  template<>
+  Animation::Track<LiftHeightKeyFrame>& Animation::GetTrack() {
+    return _liftTrack;
+  }
+  
+  template<>
+  Animation::Track<FaceAnimationKeyFrame>& Animation::GetTrack() {
+    return _faceAnimTrack;
+  }
+  
+  template<>
+  Animation::Track<FacePositionKeyFrame>& Animation::GetTrack() {
+    return _facePosTrack;
+  }
+  
+  template<>
+  Animation::Track<DeviceAudioKeyFrame>& Animation::GetTrack() {
+    return _deviceAudioTrack;
+  }
+  
+  template<>
+  Animation::Track<RobotAudioKeyFrame>& Animation::GetTrack() {
+    return _robotAudioTrack;
+  }
+  
+  template<>
+  Animation::Track<BackpackLightsKeyFrame>& Animation::GetTrack() {
+    return _backpackLightsTrack;
+  }
+  
+  template<>
+  Animation::Track<BodyMotionKeyFrame>& Animation::GetTrack() {
+    return _bodyPosTrack;
+  }
+  
+  template<>
+  Animation::Track<BlinkKeyFrame>& Animation::GetTrack() {
+    return _blinkTrack;
+  }
+  
+  template<>
+  Animation::Track<ProceduralFaceKeyFrame>& Animation::GetTrack() {
+    return _proceduralFaceTrack;
+  }
+  
   /*
   Result Animation::AddKeyFrame(const HeadAngleKeyFrame& kf)
   {
@@ -196,6 +262,7 @@ namespace Cozmo {
 _headTrack.__METHOD__() __COMBINE_WITH__ \
 _liftTrack.__METHOD__() __COMBINE_WITH__ \
 _faceAnimTrack.__METHOD__() __COMBINE_WITH__ \
+_proceduralFaceTrack.__METHOD__() __COMBINE_WITH__ \
 _facePosTrack.__METHOD__() __COMBINE_WITH__ \
 _deviceAudioTrack.__METHOD__() __COMBINE_WITH__ \
 _robotAudioTrack.__METHOD__() __COMBINE_WITH__ \
@@ -227,9 +294,9 @@ _blinkTrack.__METHOD__()
       _sendBuffer.clear();
     }
     
-    _numAudioFramesBufferedToSend = 0;
-    
-    _endOfAnimationSent = false;
+    // If this is an empty (e.g. live) animation, there is no need to
+    // send end of animation keyframe until we actually send a keyframe
+    _endOfAnimationSent = IsEmpty();
     
     _isInitialized = true;
     
@@ -245,9 +312,54 @@ _blinkTrack.__METHOD__()
     return false;
   }
   
+  Result Animation::SendBufferedMessages(Robot& robot)
+  {
+    // Empty out anything waiting in the send buffer:
+    RobotMessage* msg = nullptr;
+    while(!_sendBuffer.empty()) {
+#     if DEBUG_ANIMATIONS
+      PRINT_NAMED_INFO("Animation.SendBufferedMessages",
+                       "Send buffer length=%lu.\n", _sendBuffer.size());
+#     endif
+      
+
+      msg = _sendBuffer.front();
+      const s32 numBytesRequired = msg->GetSize() + sizeof(RobotMessage::ID);
+      if(numBytesRequired <= _numBytesToSend) {
+        Result sendResult = robot.SendMessage(*msg);
+        if(sendResult != RESULT_OK) {
+          return sendResult;
+        }
+        
+        _numBytesToSend -= numBytesRequired;
+        
+        // Increment total number of bytes streamed to robot
+        robot.IncrementNumAnimationBytesStreamed(numBytesRequired);
+        
+        _sendBuffer.pop_front();
+      } else {
+        // Out of bytes to send, continue on next Update()
+#         if DEBUG_ANIMATIONS
+        PRINT_NAMED_INFO("Animation.SendBufferedMessages",
+                         "Ran out of bytes to send from buffer, will continue next Update().\n");
+#         endif
+        return RESULT_OK;
+      }
+    }
+    
+    // Sanity check
+    // If we got here, we've finished streaming out everything in the send
+    // buffer -- i.e., all the frames associated with the last audio keyframe
+    assert(_numBytesToSend >= 0);
+    assert(_sendBuffer.empty());
+    
+    return RESULT_OK;
+  }
   
   Result Animation::Update(Robot& robot)
   {
+    Result lastResult = RESULT_OK;
+    
     if(!_isInitialized) {
       PRINT_NAMED_ERROR("Animation.Update", "Animation must be initialized before it can be played/updated.\n");
       return RESULT_FAIL;
@@ -266,10 +378,41 @@ _blinkTrack.__METHOD__()
       _deviceAudioTrack.MoveToNextKeyFrame();
     }
     
+    // Compute number of bytes free in robot animation buffer.
+    // This is a lower bound since this is computed from a delayed measure
+    // of the number of animation bytes already played on the robot.
+    s32 totalNumBytesStreamed = robot.GetNumAnimationBytesStreamed();
+    s32 totalNumBytesPlayed = robot.GetNumAnimationBytesPlayed();
+    bool overflow = (totalNumBytesStreamed < 0) && (totalNumBytesPlayed > 0);
+    assert((totalNumBytesStreamed >= totalNumBytesPlayed) || overflow);
+    
+    s32 minBytesFreeInRobotBuffer = KEYFRAME_BUFFER_SIZE - (totalNumBytesStreamed - totalNumBytesPlayed);
+    if (overflow) {
+      // Computation for minBytesFreeInRobotBuffer still works out in overflow case
+      PRINT_NAMED_INFO("Animation.Update.BytesStreamedOverflow", "free %d (streamed = %d, played %d)", minBytesFreeInRobotBuffer, totalNumBytesStreamed, totalNumBytesPlayed);
+    }
+    assert(minBytesFreeInRobotBuffer >= 0);
+    
+    // Reset the number of bytes we can send each Update() as a form of
+    // flow control: Don't send frames if robot has no space for them, and be
+    // careful not to overwhelm reliable transport either, in terms of bytes or
+    // sheer number of messages. These get decremenged on each call to
+    // SendBufferedMessages() below
+    _numBytesToSend = std::min(Animation::MAX_BYTES_FOR_RELIABLE_TRANSPORT,
+                               minBytesFreeInRobotBuffer);
+    
+    
+    // Send anything still left in the buffer after last Update()
+    lastResult = SendBufferedMessages(robot);
+    if(RESULT_OK != lastResult) {
+      PRINT_NAMED_ERROR("Animation.Update.SendBufferedMessagesFailed", "\n");
+      return lastResult;
+    }
+    
     // Add more stuff to the send buffer. Note that we are not counting individual
     // keyframes here, but instead _audio_ keyframes (with which we will buffer
-    // any co-timed keyframes from other tracks)
-    while(_numAudioFramesBufferedToSend < (ANIMATION_PREROLL_LENGTH+1) && !AllTracksBuffered())
+    // any co-timed keyframes from other tracks).
+    while(_sendBuffer.empty() && !AllTracksBuffered())
     {
 #     if DEBUG_ANIMATIONS
       //PRINT_NAMED_INFO("Animation.Update", "%d bytes left to send this Update.\n",
@@ -295,8 +438,6 @@ _blinkTrack.__METHOD__()
         //PRINT_NAMED_INFO("Animation.Update", "Streaming AudioSilenceKeyFrame.\n");
         BufferMessageToSend(&_silenceMsg);
       }
-      
-      ++_numAudioFramesBufferedToSend;
       
       // Increment fake "streaming" time, so we can evaluate below whether
       // it's time to stream out any of the other tracks. Note that it is still
@@ -341,6 +482,13 @@ _blinkTrack.__METHOD__()
 #       endif
       }
       
+      if(BufferMessageToSend(_proceduralFaceTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms))) {
+#       if DEBUG_ANIMATIONS
+        PRINT_NAMED_INFO("Animation.Update", "Streaming ProceduralFaceKeyFrame at t=%dms.\n",
+                         _streamingTime_ms - _startTime_ms);
+#       endif
+      }
+    
       if(BufferMessageToSend(_blinkTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms))) {
 #       if DEBUG_ANIMATIONS
         PRINT_NAMED_INFO("Animation.Update", "Streaming BlinkKeyFrame at t=%dms.\n",
@@ -362,7 +510,21 @@ _blinkTrack.__METHOD__()
 #       endif
       }
       
-    } // while(numAudioFramesToBuffer > 0)
+      // Send out as much as we can from the send buffer. If we manage to send
+      // the entire buffer out, we will proceed with putting more into the buffer
+      // the next time through this while loop. Otherwise, we will exit the while
+      // loop and continue trying to empty the buffer on the next Update().
+      // Doing this guarantees we don't try to buffer another message pointer from
+      // the same frame before sending the last one (which is important because we
+      // re-use message structs inside the keyframes and don't want pointers
+      // getting reassigned before they get sent out!)
+      lastResult = SendBufferedMessages(robot);
+      if(RESULT_OK != lastResult) {
+        PRINT_NAMED_ERROR("Animation.Update.SendBufferedMessagesFailed", "\n");
+        return lastResult;
+      }
+      
+    } // while(buffering frames)
     
 #   if PLAY_ROBOT_AUDIO_ON_DEVICE && !defined(ANKI_IOS_BUILD)
     if(_robotAudioTrack.HasFramesLeft())
@@ -377,62 +539,7 @@ _blinkTrack.__METHOD__()
       }
     }
 #   endif
-    
-    // FlowControl: Don't send frames if robot has no space for them, and be
-    // careful not to overwhel reliable transport either, in terms of bytes or
-    // sheer number of messages
-    s32 numBytesToSend = std::min(Animation::MAX_BYTES_FOR_RELIABLE_TRANSPORT,
-                                  robot.GetNumAnimationBytesFree());
-    
-    s32 numFramesToSend = Animation::MAX_FRAMES_TO_SEND;
-    
-    // Empty out anything waiting in the send buffer:
-    RobotMessage* msg = nullptr;
-    while(!_sendBuffer.empty()) {
-#     if DEBUG_ANIMATIONS
-      PRINT_NAMED_INFO("Animation.Update", "Send buffer length=%lu.\n", _sendBuffer.size());
-#     endif
-      
-      if(numFramesToSend > 0) {
-        msg = _sendBuffer.front();
-        const s32 numBytesRequired = msg->GetSize() + sizeof(RobotMessage::ID);
-        if(numBytesRequired <= numBytesToSend) {
-          Result sendResult = robot.SendMessage(*msg);
-          if(sendResult != RESULT_OK) {
-            return sendResult;
-          }
-          numBytesToSend -= numBytesRequired;
-          --numFramesToSend;
-          
-          // If the message we just sent was an audio keyframe, decrement the
-          // counter tracking how many audio frames are queued in the send buffer
-          if(msg->GetID() == RobotMessage::AnimKeyFrame_AudioSample_ID ||
-             msg->GetID() == RobotMessage::AnimKeyFrame_AudioSilence_ID)
-          {
-            --_numAudioFramesBufferedToSend;
-          }
-          
-          _sendBuffer.pop_front();
-        } else {
-          // Out of bytes to send, continue on next Update()
-#         if DEBUG_ANIMATIONS
-          PRINT_NAMED_INFO("Animation.Update", "Ran out of bytes to send from buffer, will continue next Update().\n");
-#         endif
-          return RESULT_OK;
-        }
-      } else {
-        // Out of frames to send, continue on next Update()
-#       if DEBUG_ANIMATIONS
-        PRINT_NAMED_INFO("Animation.Update", "Ran out of frames to send from buffer, will continue next Update().\n");
-#       endif
-        return RESULT_OK;
-      }
-    }
-    
-    // If we got here, we've finished streaming out everything in the send
-    // buffer -- i.e., all the frames associated with the last audio keyframe
-    assert(numFramesToSend >= 0 && numBytesToSend >= 0);
-    assert(_sendBuffer.empty());
+
     
     // Send an end-of-animation keyframe when done
     if(AllTracksBuffered() && _sendBuffer.empty() && !_endOfAnimationSent)
@@ -443,9 +550,12 @@ _blinkTrack.__METHOD__()
 #     endif
       
       MessageAnimKeyFrame_EndOfAnimation endMsg;
-      Result sendResult = robot.SendMessage(endMsg);
-      if(sendResult != RESULT_OK) { return sendResult; }
+      lastResult = robot.SendMessage(endMsg);
+      if(lastResult != RESULT_OK) { return lastResult; }
       _endOfAnimationSent = true;
+      
+      // Increment running total of bytes streamed
+      robot.IncrementNumAnimationBytesStreamed(endMsg.GetSize() + sizeof(RobotMessage::ID));
     }
     
     return RESULT_OK;
@@ -470,7 +580,7 @@ _blinkTrack.__METHOD__()
   
   bool Animation::IsFinished() const
   {
-    return _endOfAnimationSent && AllTracksBuffered();
+    return _endOfAnimationSent && AllTracksBuffered() && _sendBuffer.empty();
   }
   
 } // namespace Cozmo

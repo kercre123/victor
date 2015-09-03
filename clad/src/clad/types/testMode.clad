@@ -1,0 +1,63 @@
+// File: testMode
+// Author: damjan stulic
+// Created: 8/13/15
+// Copyright: Anki, inc. 2015
+
+namespace Anki {
+namespace Cozmo {
+
+enum uint_8 TestModeClad {
+    NoTest,
+
+    // Attempts to dock to a block that is placed in front of it and then place it on a block behind it.
+    PickAndPlace,
+
+    // Follows a changing straight line path. Tests path following during docking.
+    DockPath,
+
+    // Follows an example path. Requires localization
+    PathFollow,
+
+    // Cycles through PathFollower convenience functions: DriveStraight, DriveArc, DrivePointTurn
+    PathFollowConvenienceFunctions,
+
+    // Tests ExecuteDirectDrive() or open loop control via HAL::MotorSetPower()
+    DirectDrive,
+
+    // Moves lift up and down
+    Lift,
+
+    // Toggles between 3 main lift heights: low dock, carry, and high dock
+    LiftToggle,
+
+    // Tilts head up and down
+    Head,
+
+    // Prints gyro/accel data
+    Imu,
+
+    // Cycles through all known animations
+    Animation,
+
+    // Cycle through all LEDs with different colors
+    Lights,
+
+    // Draw and blink a test face
+    FaceDisplay,
+
+    // Drives slow and then stops.
+    // Drives fast and then stops.
+    // Reports stopping distance and time (in tics).
+    StopTest,
+
+    // Drives all motors at max power simultaneously.
+    MaxPowerTest,
+
+    // Turns on face tracking
+    FaceTracking,
+
+    NumTests
+}
+
+} // namespace Cozmo
+} // namespace Anki

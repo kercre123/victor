@@ -12,12 +12,13 @@
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 
-
 namespace Anki {
   namespace Cozmo {
     
-    RobotManager::RobotManager(IExternalInterface* externalInterface)
+    RobotManager::RobotManager(IExternalInterface* externalInterface, Util::Data::DataPlatform* dataPlatform)
     : _externalInterface(externalInterface)
+    , _dataPlatform(dataPlatform)
+    , _robotEventHandler(*this, externalInterface)
     {
       
     }
@@ -31,7 +32,7 @@ namespace Anki {
       
       if (_robots.find(withID) == _robots.end()) {
         PRINT_STREAM_INFO("RobotManager.AddRobot", "Adding robot with ID=" << withID);
-        _robots[withID] = new Robot(withID, msgHandler, _externalInterface);
+        _robots[withID] = new Robot(withID, msgHandler, _externalInterface, _dataPlatform);
         _IDs.push_back(withID);
       } else {
         PRINT_STREAM_WARNING("RobotManager.AddRobot.AlreadyAdded", "Robot with ID " << withID << " already exists. Ignoring.");
@@ -44,7 +45,7 @@ namespace Anki {
       auto iter = _robots.find(withID);
       if(iter != _robots.end()) {
         PRINT_NAMED_INFO("RobotManager.RemoveRobot", "Removing robot with ID=%d\n", withID);
-        
+        delete(iter->second);
         iter = _robots.erase(iter);
         
         // Find the ID. This is inefficient, but this isn't a long list
@@ -116,7 +117,7 @@ namespace Anki {
             PRINT_NAMED_WARNING("RobotManager.UpdateAllRobots.FailIOTimeout", "Signaling robot disconnect\n");
             //CozmoEngineSignals::RobotDisconnectedSignal().emit(r->first);
             _robotDisconnectedSignal.emit(r->first);
-            _externalInterface->DeliverToGame(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotDisconnected(r->first, 0.0f)));
+            _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotDisconnected(r->first, 0.0f)));
             
             delete r->second;
             r = _robots.erase(r);

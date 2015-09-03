@@ -1,26 +1,45 @@
 #include <array>
 #include <fstream>
-
 #include "gtest/gtest.h"
 #include "json/json.h"
-
 #include "anki/common/types.h"
 #include "anki/common/basestation/jsonTools.h"
-#include "anki/common/basestation/platformPathManager.h"
+#include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/poseBase_impl.h"
 #include "anki/common/robot/matlabInterface.h"
-
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotManager.h"
-
 #include "anki/cozmo/basestation/ramp.h"
-
 #include "anki/cozmo/shared/cozmoConfig.h"
+#include "util/logging/logging.h"
+#include "util/logging/printfLoggerProvider.h"
+#include "util/fileUtils/fileUtils.h"
+#include "anki/cozmo/basestation/robotMessageHandler.h"
+#include <unistd.h>
 
-#include "robotMessageHandler.h"
-#include "pathPlanner.h"
+Anki::Util::Data::DataPlatform* dataPlatform = nullptr;
+Anki::Util::PrintfLoggerProvider* loggerProvider = nullptr;
+
+TEST(DataPlatform, ReadWrite)
+{
+  ASSERT_TRUE(dataPlatform != nullptr);
+  Json::Value config;
+  const bool readSuccess = dataPlatform->readAsJson(
+    Anki::Util::Data::Scope::Resources,
+    "config/basestation/config/configuration.json",
+    config);
+  EXPECT_TRUE(readSuccess);
+
+  config["blah"] = 7;
+  const bool writeSuccess = dataPlatform->writeAsJson(Anki::Util::Data::Scope::Cache, "someRandomFolder/A/writeTest.json", config);
+  EXPECT_TRUE(writeSuccess);
+
+  std::string someRandomFolder = dataPlatform->pathToResource(Anki::Util::Data::Scope::Cache, "someRandomFolder");
+  Anki::Util::FileUtils::RemoveDirectory(someRandomFolder);
+}
+
 
 TEST(Cozmo, SimpleCozmoTest)
 {
@@ -35,7 +54,7 @@ TEST(BlockWorld, AddAndRemoveObject)
   Result lastResult;
   
   MessageHandlerStub  msgHandler;
-  Robot robot(1, &msgHandler, nullptr);
+  Robot robot(1, &msgHandler, nullptr, nullptr);
   
   BlockWorld& blockWorld = robot.GetBlockWorld();
   
@@ -49,11 +68,10 @@ TEST(BlockWorld, AddAndRemoveObject)
   ASSERT_EQ(lastResult, RESULT_OK);
 
   // Fake an observation of a block:
-  const Block::Type testType = Block::Type::BULLSEYE2;
+  const ObjectType testType = ObjectType::Block_BULLSEYE2;
   Block_Cube1x1 testCube(testType);
   Vision::Marker::Code testCode = testCube.GetMarker(Block::FaceName::FRONT_FACE).GetCode();
   
-  const Vision::Camera& camera = robot.GetCamera();
   const Vision::CameraCalibration camCalib(HEAD_CAM_CALIB_HEIGHT, HEAD_CAM_CALIB_WIDTH,
                                            HEAD_CAM_CALIB_FOCAL_LENGTH_X, HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
                                            HEAD_CAM_CALIB_CENTER_X, HEAD_CAM_CALIB_CENTER_Y);
@@ -64,23 +82,18 @@ TEST(BlockWorld, AddAndRemoveObject)
   const f32 xcen = camCalib.GetCenter_x();
   const f32 ycen = camCalib.GetCenter_y();
   
-  MessageVisionMarker markerMsg;
-  markerMsg.timestamp = 0;
-  markerMsg.x_imgUpperLeft  = xcen - halfWidth;
-  markerMsg.y_imgUpperLeft  = ycen - halfHeight;
-  markerMsg.x_imgLowerLeft  = xcen - halfWidth;
-  markerMsg.y_imgLowerLeft  = ycen + halfHeight;
-  markerMsg.x_imgUpperRight = xcen + halfWidth;
-  markerMsg.y_imgUpperRight = ycen - halfHeight;
-  markerMsg.x_imgLowerRight = xcen + halfWidth;
-  markerMsg.y_imgLowerRight = ycen + halfHeight;
-  markerMsg.markerType = testCode;
+  Quad2f corners;
+  corners[Quad::TopLeft]    = {xcen - halfWidth, ycen - halfHeight};
+  corners[Quad::BottomLeft] = {xcen - halfWidth, ycen + halfHeight};
+  corners[Quad::TopRight]   = {xcen + halfWidth, ycen - halfHeight};
+  corners[Quad::BottomRight]= {xcen + halfWidth, ycen + halfHeight};
+  Vision::ObservedMarker marker(0, testCode, corners, robot.GetCamera());
   
   // Enable "vision while moving" so that we don't have to deal with trying to compute
   // angular velocities, since we don't have real state history to do so.
   robot.EnableVisionWhileMoving(true);
   
-  lastResult = robot.QueueObservedMarker(markerMsg);
+  lastResult = robot.QueueObservedMarker(marker);
   ASSERT_EQ(lastResult, RESULT_OK);
   
   // Tick the robot, which will tick the BlockWorld, which will use the queued marker
@@ -95,7 +108,7 @@ TEST(BlockWorld, AddAndRemoveObject)
   ASSERT_NE(objByIdIter->second, nullptr);
   
   ObjectID objID = objByIdIter->second->GetID();
-  Vision::ObservableObject* object = blockWorld.GetObjectByID(objID);
+  ObservableObject* object = blockWorld.GetObjectByID(objID);
   ASSERT_NE(object, nullptr);
   ASSERT_EQ(object->GetID(), objID);
   ASSERT_EQ(object->GetType(), testType);
@@ -121,7 +134,7 @@ class BlockWorldTest : public ::testing::TestWithParam<const char*>
 
 #define DISPLAY_ERRORS 0
 
-// This is the parameterized test, instantied with a list of Json files below
+// This is the parameterized test, instantiated with a list of Json files below
 TEST_P(BlockWorldTest, BlockAndRobotLocalization)
 {
   using namespace Anki;
@@ -146,17 +159,16 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
   Json::Value jsonRoot;
   std::vector<std::string> jsonFileList;
   
-  const std::string subPath("basestation/test/blockWorldTests/");
-  const std::string jsonFilename = PREPEND_SCOPED_PATH(Test, subPath + GetParam());
-  
+  const std::string subPath("test/blockWorldTests/");
+  const std::string jsonFilename = subPath + GetParam();
+
   fprintf(stdout, "\n\nLoading JSON file '%s'\n", jsonFilename.c_str());
-  
-  std::ifstream jsonFile(jsonFilename);
-  bool jsonParseResult = reader.parse(jsonFile, jsonRoot);
+
+  const bool jsonParseResult = dataPlatform->readAsJson(Anki::Util::Data::Scope::Resources, jsonFilename, jsonRoot);
   ASSERT_TRUE(jsonParseResult);
 
   // Create the modules we need (and stubs of those we don't)
-  RobotManager        robotMgr(nullptr);
+  RobotManager        robotMgr(nullptr, nullptr);
   MessageHandlerStub  msgHandler;
  
   robotMgr.AddRobot(0, &msgHandler);
@@ -249,7 +261,11 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
     Json::Value jsonMessages = jsonData["VisionMarkers"];
     ASSERT_EQ(NumMarkers, jsonMessages.size());
     
-    std::vector<MessageVisionMarker> messages;
+    
+    ASSERT_TRUE(false);
+    // THIS NEEDS TO BE UPDATED NOW THAT VisionMarkerMessage IS BOGUS!
+    /*
+    std::vector<Vision::ObservedMarker> messages;
     messages.reserve(jsonMessages.size());
     
     for(auto & jsonMsg : jsonMessages) {
@@ -263,8 +279,9 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
       MessageVisionMarker msg(jsonMsg);
       msg.timestamp = currentTimeStamp;
       
+      Vision::ObservedMarker marker();
       // If we are not checking robot pose, don't queue mat markers
-      const bool isMatMarker = !robot.GetBlockWorld().GetObjectLibrary(BlockWorld::ObjectFamily::MATS).GetObjectsWithCode(msg.markerType).empty();
+      const bool isMatMarker = !robot.GetBlockWorld().GetObjectLibrary(ObjectFamily::Mat).GetObjectsWithCode(msg.markerType).empty();
       if(!checkRobotPose && isMatMarker) {
         fprintf(stdout, "Skipping mat marker with code = %d ('%s'), since we are not checking robot pose.\n",
                 msg.markerType, Vision::MarkerTypeStrings[msg.markerType]);
@@ -273,7 +290,7 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
       }
       
     } // for each VisionMarker in the jsonFile
-    
+    */
     
     // Process all the markers we've queued
     //uint32_t numObjectsObserved = 0;
@@ -317,24 +334,30 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
       // block
       for(int i_object=0; i_object<numObjectsTrue; ++i_object)
       {
-        ObjectType objectType;
+        ObjectType objectType = ObjectType::Invalid;
         std::string objectTypeString;
         ASSERT_TRUE(JsonTools::GetValueOptional(jsonObject[i_object], "Type", objectTypeString));
 
         // Use the "Name" as the object family in blockworld
         std::string objectFamilyString;
         ASSERT_TRUE(JsonTools::GetValueOptional(jsonObject[i_object], "ObjectName", objectFamilyString));
-        BlockWorld::ObjectFamily objectFamily;
+        ObjectFamily objectFamily;
         if(objectFamilyString == "Block") {
-          objectFamily = BlockWorld::ObjectFamily::BLOCKS;
+          objectFamily = ObjectFamily::Block;
         } else if(objectFamilyString == "Ramp") {
-          objectFamily = BlockWorld::ObjectFamily::RAMPS;
+          objectFamily = ObjectFamily::Ramp;
         }
-        objectType = ObjectType::GetTypeByName(objectTypeString);
+        
+        // TODO: Need a (CLAD-generated) way to lookup ObjectType by string
+        //objectType = GetObjectType ObjectType::GetTypeByName(objectTypeString);
 
-        ASSERT_TRUE(objectType.IsSet());
+        ASSERT_TRUE(objectType != ObjectType::Unknown);
+        ASSERT_TRUE(objectType != ObjectType::Invalid);
 
-        const Vision::ObservableObject* libObject = robot.GetBlockWorld().GetObjectLibrary(objectFamily).GetObjectWithType(objectType);
+        const ObservableObject* libObject = NULL;
+        
+        // TODO: Need a way to get object by type
+        //const ObservableObject* libObject = robot.GetBlockWorld().GetObjectLibrary(objectFamily).GetObjectWithType(objectType);
 
         /*
         int blockTypeAsInt;
@@ -344,7 +367,7 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
         
         // The ground truth block type should be known to the block world
         ASSERT_TRUE(libObject != NULL);
-        Vision::ObservableObject* groundTruthObject = libObject->CloneType();
+        ObservableObject* groundTruthObject = libObject->CloneType();
         
         // Set its pose to what is listed in the json file
         Pose3d objectPose;
@@ -500,8 +523,71 @@ INSTANTIATE_TEST_CASE_P(JsonFileBased, BlockWorldTest,
                         ::testing::ValuesIn(visionTestJsonFiles));
 */
 
+#define CONFIGROOT "ANKICONFIGROOT"
+#define WORKROOT "ANKIWORKROOT"
+
 int main(int argc, char ** argv)
 {
+  //LEAKING HERE
+  loggerProvider = new Anki::Util::PrintfLoggerProvider();
+  loggerProvider->SetMinLogLevel(0);
+  Anki::Util::gLoggerProvider = loggerProvider;
+
+
+  std::string configRoot;
+  char* configRootChars = getenv(CONFIGROOT);
+  if (configRootChars != NULL) {
+    configRoot = configRootChars;
+  }
+
+  std::string workRoot;
+  char* workRootChars = getenv(WORKROOT);
+  if (workRootChars != NULL)
+    workRoot = workRootChars;
+
+  std::string resourcePath;
+  std::string filesPath;
+  std::string cachePath;
+  std::string externalPath;
+
+  if (configRoot.empty() || workRoot.empty()) {
+    char cwdPath[1256];
+    getcwd(cwdPath, 1255);
+    PRINT_NAMED_INFO("CozmoTests.main","cwdPath %s", cwdPath);
+    PRINT_NAMED_INFO("CozmoTests.main","executable name %s", argv[0]);
+/*  // still troubleshooting different run time environments,
+    // need to find a way to detect where the resources folder is located on disk.
+    // currently this is relative to the executable.
+    // Another option is to pass it in through the environment variables.
+    // Get the last position of '/'
+    std::string aux(argv[0]);
+#if defined(_WIN32) || defined(WIN32)
+    size_t pos = aux.rfind('\\');
+#else
+    size_t pos = aux.rfind('/');
+#endif
+    std::string path = aux.substr(0,pos);
+*/
+    std::string path = cwdPath;
+    resourcePath = path + "/resources";
+    filesPath = path + "/files";
+    cachePath = path + "/temp";
+    externalPath = path + "/temp";
+  } else {
+    resourcePath = configRoot + "/resources";
+    filesPath = workRoot + "/files";
+    cachePath = workRoot + "/temp";
+    externalPath = workRoot + "/temp";
+  }
+  //LEAKING HERE
+  dataPlatform = new Anki::Util::Data::DataPlatform(filesPath, cachePath, externalPath, resourcePath);
+
+  //// should we do this here? clean previously dirty folders?
+  //std::string cache = dataPlatform->pathToResource(Anki::Cozmo::Data::Scope::Cache, "");
+  //Anki::Util::FileUtils::RemoveDirectory(cache);
+  //std::string files = dataPlatform->pathToResource(Anki::Cozmo::Data::Scope::Output, "");
+  //Anki::Util::FileUtils::RemoveDirectory(files);
+
   ::testing::InitGoogleTest(&argc, argv);
 
   return RUN_ALL_TESTS();

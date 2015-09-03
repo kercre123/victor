@@ -4,6 +4,10 @@
 // Copyright: Anki Inc (c) 2015
 
 #include "clad/types/actionTypes.clad"
+#include "clad/types/imageSendMode.clad"
+#include "clad/types/cameraSettings.clad"
+#include "clad/types/testMode.clad"
+#include "clad/types/proceduralEyeParameters.clad"
 #include "clad/externalInterface/messageShared.clad"
 
 namespace Anki {
@@ -46,9 +50,18 @@ message DriveWheels {
 }
 
 // TurnInPlace
-//  Turn the specified number of radians, *relative to the robot's current heading*
+// If isAbsolute == 0, turns the specified number of radians, *relative to the robot's current heading*
+// If isAbsolute != 0, turns to the specified absolute orientation.
 message TurnInPlace {
-    float_32 angle_rad, // postive turns left negative turns right
+    float_32 angle_rad, // relative mode: postive turns left negative turns right
+    uint_8 isAbsolute,    // 0: angle_rad is relative to current orientation, 1: angle_rad is absolute angle to turn to
+    uint_8 robotID
+}
+
+// TurnInPlaceAtSpeed
+message TurnInPlaceAtSpeed {
+    float_32 speed_rad_per_sec,
+    float_32 accel_rad_per_sec2,
     uint_8 robotID
 }
 
@@ -68,6 +81,18 @@ message FaceObject {
     uint_8   headTrackWhenDone
 }
 
+// FacePose
+//  Tell the robot to turn and tilt his head to face a give 3D pose in world
+//  coordinates.
+message FacePose {
+    float_32 world_x,
+    float_32 world_y,
+    float_32 world_z,
+    float_32 turnAngleTol,
+    float_32 maxTurnAngle,
+    uint_8   robotID
+}
+
 // MoveHead
 message MoveHead {
     float_32 speed_rad_per_sec
@@ -82,14 +107,16 @@ message MoveLift {
 message SetLiftHeight {
     float_32 height_mm,
     float_32 max_speed_rad_per_sec,
-    float_32 accel_rad_per_sec2
+    float_32 accel_rad_per_sec2,
+    float_32 duration_sec
 }
 
 // SetHeadAngle
 message SetHeadAngle {
     float_32 angle_rad,
     float_32 max_speed_rad_per_sec,
-    float_32 accel_rad_per_sec2
+    float_32 accel_rad_per_sec2,
+    float_32 duration_sec
 }
 
 // TrackToObject
@@ -110,7 +137,7 @@ message StopAllMotors {
 // ImageRequest
 message ImageRequest {
     uint_8 robotID,
-    uint_8 mode // See ImageSendMode_t in cozmoTypes.h
+    ImageSendMode mode
 }
 
 // SetRobotImageSendMode
@@ -118,8 +145,9 @@ message ImageRequest {
 //       It is intended for dev use since the robot will likely always stream
 //       its image in the product.
 message SetRobotImageSendMode {
-    uint_8 mode, // See ImageSendMode_t in cozmoTypes.h
-    uint_8 resolution
+    uint_8 robotID,
+    ImageSendMode mode,
+    CameraResolutionClad resolution
 }
 
 // SaveImages
@@ -234,13 +262,10 @@ message VisionWhileMoving {
 }
 
 // ExecuteBehavior
+// Use "NONE" to disable behaviors.
+// Use "AUTO" to enable automatic behavior selection.
 message ExecuteBehavior {
-    uint_8 behaviorMode
-}
-
-// SetBehaviorState
-message SetBehaviorState {
-    uint_8 behaviorState
+    string behaviorName
 }
 
 // AbortPath
@@ -304,12 +329,18 @@ message SetSteeringControllerGains {
   float_32 k2
 }
 
+// SetRobotVolume
+message SetRobotVolume {
+  float_32 volume
+}
+
 // StartTestMode
 message StartTestMode {
+    uint_8  robotID,
     int_32 p1,
     int_32 p2,
     int_32 p3,
-    uint_8 mode
+    TestModeClad mode
 }
 
 // IMURequest
@@ -431,6 +462,14 @@ message TapBlockOnGround {
   uint_8   numTaps
 }
 
+// DisplayProceduralFace
+message DisplayProceduralFace {
+  float_32 faceAngle,        // Degrees
+  float_32 leftEye[uint_8],  // TODO: make this fixed length = ProceduralEyeParameter::NumParameters
+  float_32 rightEye[uint_8], //
+  uint_8   robotID
+}
+
 // VisualizeQuad
 //  Draws the specified quadrilateral using the Visualization system.
 //  The quadID will be created if new or replaced if it already exists (i.e., you
@@ -456,6 +495,42 @@ message VisualizeQuad {
 //  Erase the visualized quad with the specified ID
 message EraseQuad {
   uint_32 quadID
+}
+
+structure RobotActionUnion {
+  FaceObject         faceObject,
+  FacePose           facePose,
+  GotoPose           goToPose,
+  GotoObject         goToObject,
+  PlayAnimation      playAnimation,
+  PickAndPlaceObject pickAndPlaceObject,
+  RollObject         rollObject,
+  SetLiftHeight      setLiftHeight,
+  SetHeadAngle       setHeadAngle,
+  TurnInPlace        turnInPlace
+}
+
+// QueueSingleAction
+message QueueSingleAction {
+  uint_8  robotID,
+  uint_32 idTag,  // caller-specified identifier that will be returned with the completion message
+  uint_32 inSlot,
+  uint_8  numRetries,
+  QueueActionPosition    position,
+  RobotActionType        actionType,
+  RobotActionUnion       action
+}
+
+// QueueCompoundAction
+message QueueCompoundAction {
+  uint_8  robotID,
+  uint_32 idTag,   // caller-specified identifier that will be returned with the completion message
+  uint_32 inSlot,
+  uint_8  numRetries,
+  bool  parallel,  // false means sequential
+  QueueActionPosition    position,
+  RobotActionType        actionTypes[uint_8],
+  RobotActionUnion       actions[uint_8]
 }
 
 // keep empty to generate an auto-union that includes all messages in this file

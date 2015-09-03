@@ -33,7 +33,6 @@ namespace Anki {
         // Used when calling SetDesiredHeight with just a height:
         const f32 DEFAULT_START_ACCEL_FRAC = 0.25f;
         const f32 DEFAULT_END_ACCEL_FRAC   = 0.25f;
-        const f32 DEFAULT_DURATION_SEC     = 0.5f;
         
         // Only angles greater than this can contribute to error
         // TODO: Find out what this actually is
@@ -59,7 +58,9 @@ namespace Anki {
         
         // Constant power bias to counter gravity
         const f32 ANTI_GRAVITY_POWER_BIAS = 0.0f;
-#else
+        
+#elif defined(COZMO_ROBOT_V40)
+        // Cozmo 4.0
         f32 Kp_ = 3.f;    // proportional control constant
         f32 Kd_ = 1250.f;  // derivative gain
         f32 Ki_ = 0.1f; //0.05f;   // integral control constant
@@ -73,6 +74,23 @@ namespace Anki {
         const f32 SPEED_TO_POWER_OL_GAIN_DOWN = 0.0521f;
         const f32 BASE_POWER_DOWN[NUM_CARRY_STATES] = {0.1389f, 0.05f, 0.f};
 
+        // Constant power bias to counter gravity
+        const f32 ANTI_GRAVITY_POWER_BIAS = 0.15f;
+#else
+        // Cozmo 4.1 - smooth gearbox
+        f32 Kp_ = 2.5f;    // proportional control constant
+        f32 Kd_ = 400.f;  // derivative gain
+        f32 Ki_ = 0.1f;    // integral control constant
+        f32 angleErrorSum_ = 0.f;
+        f32 MAX_ERROR_SUM = 4.f;
+        
+        // Open loop gain
+        // power_open_loop = SPEED_TO_POWER_OL_GAIN * desiredSpeed + BASE_POWER
+        const f32 SPEED_TO_POWER_OL_GAIN_UP = 0.0702f;
+        const f32 BASE_POWER_UP[NUM_CARRY_STATES] = {0.1455f, 0.3082f, 0.37f}; // 0.3082 and 0.37f are guesstimates
+        const f32 SPEED_TO_POWER_OL_GAIN_DOWN = 0.0753f;
+        const f32 BASE_POWER_DOWN[NUM_CARRY_STATES] = {0.0412f, 0.f, 0.f};
+        
         // Constant power bias to counter gravity
         const f32 ANTI_GRAVITY_POWER_BIAS = 0.15f;
 #endif
@@ -406,6 +424,15 @@ namespace Anki {
           }
         }
 #endif
+        // Check if already at desired height
+        if (inPosition_ &&
+            (Height2Rad(newDesiredHeight) == desiredAngle_) &&
+            (ABS((desiredAngle_ - currentAngle_).ToFloat()) < ANGLE_TOLERANCE) ) {
+          #if(DEBUG_LIFT_CONTROLLER)
+          PRINT("LIFT: Already at desired height %f\n", newDesiredHeight);
+          #endif
+          return;
+        }
         
         desiredHeight_ = newDesiredHeight;
         
@@ -449,7 +476,7 @@ namespace Anki {
                             CONTROL_DT);
         }
         
-#if(DEBUG_HEAD_CONTROLLER)
+#if DEBUG_LIFT_CONTROLLER
         PRINT("LIFT VPG (fixedDuration): startVel %f, startPos %f, acc_start_frac %f, acc_end_frac %f, endPos %f, duration %f\n",
               startRadSpeed, startRad, acc_start_frac, acc_end_frac, desiredAngle_.ToFloat(), duration_seconds);
 #endif

@@ -91,7 +91,7 @@ namespace Anki {
                                                     size_t& selectedIndex)
     {
       // Select the closest
-      const Pose3d* closestPose;
+      const Pose3d* closestPose = nullptr;
       
       selectedIndex = 0;
       bool foundTarget = false;
@@ -121,6 +121,7 @@ namespace Anki {
       } // for each targetPose
     
       CORETECH_ASSERT(foundTarget);
+      CORETECH_ASSERT(closestPose);
       
       return this->GetPlan(path, startPose, *closestPose);
     }

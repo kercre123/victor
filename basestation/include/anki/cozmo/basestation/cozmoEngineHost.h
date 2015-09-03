@@ -43,7 +43,7 @@ class CozmoEngineHost : public CozmoEngine
 {
 public:
 
-  CozmoEngineHost(IExternalInterface* externalInterface);
+  CozmoEngineHost(IExternalInterface* externalInterface, Util::Data::DataPlatform* dataPlatform);
   ~CozmoEngineHost();
 
   virtual bool IsHost() const override { return true; }
@@ -72,9 +72,9 @@ public:
   // TODO: Promote to base class when we pull robots' visionProcessingThreads out of basestation and distribute across devices
   virtual bool GetCurrentRobotImage(RobotID_t robotId, Vision::Image& img, TimeStamp_t newerThanTime) override;
 
-  void SetImageSendMode(RobotID_t robotID, Cozmo::ImageSendMode_t newMode) override;
 protected:
   CozmoEngineHostImpl* _hostImpl;
+  
 }; // class CozmoEngineHost
   
 

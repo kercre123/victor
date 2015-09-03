@@ -11,15 +11,19 @@
 
 #include "anki/cozmo/basestation/cozmoEngineHost.h"
 #include "anki/cozmo/basestation/engineImpl/cozmoEngineHostImpl.h"
+#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+
+#include "clad/externalInterface/messageGameToEngine.h"
 
 namespace Anki {
 namespace Cozmo {
   
 
-CozmoEngineHost::CozmoEngineHost(IExternalInterface* externalInterface)
-: CozmoEngine(externalInterface)
+CozmoEngineHost::CozmoEngineHost(IExternalInterface* externalInterface,
+                                 Util::Data::DataPlatform* dataPlatform)
+: CozmoEngine(externalInterface, dataPlatform)
 {
-  _hostImpl = new CozmoEngineHostImpl(_externalInterface);
+  _hostImpl = new CozmoEngineHostImpl(_externalInterface, dataPlatform);
   assert(_hostImpl != nullptr);
   _impl = _hostImpl;
 }
@@ -45,11 +49,6 @@ bool CozmoEngineHost::GetCurrentRobotImage(RobotID_t robotID, Vision::Image& img
   return _hostImpl->GetCurrentRobotImage(robotID, img, newerThanTime);
 }
 
-void CozmoEngineHost::SetImageSendMode(RobotID_t robotID, Cozmo::ImageSendMode_t newMode)
-{
-  _hostImpl->SetImageSendMode(robotID, newMode);
-}
-
 bool CozmoEngineHost::ConnectToRobot(AdvertisingRobot whichRobot)
 {
   return _hostImpl->ConnectToRobot(whichRobot);
@@ -59,7 +58,7 @@ Robot* CozmoEngineHost::GetFirstRobot() {
   return _hostImpl->GetFirstRobot();
 }
 
-int    CozmoEngineHost::GetNumRobots() const {
+int CozmoEngineHost::GetNumRobots() const {
   return _hostImpl->GetNumRobots();
 }
 
@@ -70,6 +69,7 @@ Robot* CozmoEngineHost::GetRobotByID(const RobotID_t robotID) {
 std::vector<RobotID_t> const& CozmoEngineHost::GetRobotIDList() const {
   return _hostImpl->GetRobotIDList();
 }
+  
 
 } // namespace Cozmo
 } // namespace Anki

@@ -14,13 +14,15 @@
 #define ANKI_COZMO_ACTION_INTERFACE_H
 
 #include "anki/common/types.h"
-#include "anki/common/basestation/objectTypesAndIDs.h"
+#include "anki/common/basestation/objectIDs.h"
 #include "anki/common/basestation/math/pose.h"
 
 #include "anki/cozmo/shared/cozmoTypes.h"
 
 #include "anki/cozmo/basestation/actionableObject.h"
 #include "clad/types/actionTypes.h"
+
+#include "util/random/randomGenerator.h"
 
 #include <list>
 
@@ -50,6 +52,12 @@ namespace Anki {
       ActionResult Update(Robot& robot);
       
       void Cancel() { _isCancelled = true; }
+      
+      // Tags can be used to identify specific actions. A unique tag is assigned
+      // at construction, or it can be overridden with SetTag(). The Tag is
+      // returned in the ActionCompletion signal as well.
+      void SetTag(u32 tag) { _idTag = tag; }
+      u32  GetTag() const  { return _idTag; }
       
       // Derived classes can implement any required cleanup by overriding this
       // method. It is called when Update() is about return anything other than
@@ -95,13 +103,12 @@ namespace Anki {
       // Used (e.g. in initialization of CompoundActions) to specify that a
       // consituent action is part of a compound action
       void SetIsPartOfCompoundAction(bool tf) { _isPartOfCompoundAction = tf; }
-      
-      // This is called when the action stops running, as long as it is not
-      // marked as being part of a compound action. By default a RobotCompletedAction
-      // signal is emitted with the robot ID, the result of GetType(), and a success
-      // flag. Override in derived classes to fill in other fields of the signal
-      // as needed.
-      virtual void EmitCompletionSignal(Robot& robot, ActionResult result) const;
+
+      // Override this to fill in the ActionCompletedStruct emitted as part of the
+      // completion signal with an action finishes. Note that this public because
+      // subclasses that are composed of other actions may want to make use of
+      // the completion info of their constituent actions.
+      virtual void GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const;
 
     protected:
       
@@ -113,6 +120,12 @@ namespace Anki {
       void SetStatus(const std::string& msg);
       
     private:
+      
+      // This is called when the action stops running, as long as it is not
+      // marked as being part of a compound action. This calls the overload-able
+      // GetCompletionStruct() method above.
+      void EmitCompletionSignal(Robot& robot, ActionResult result) const;
+
       u8            _numRetriesRemaining;
       
       std::string   _statusMsg;
@@ -120,6 +133,10 @@ namespace Anki {
       bool          _isPartOfCompoundAction;
       bool          _isRunning;
       bool          _isCancelled;
+      
+      u32           _idTag;
+      
+      static u32    sTagCounter;
       
 #   if USE_ACTION_CALLBACKS
     public:
@@ -184,6 +201,9 @@ namespace Anki {
       virtual f32 GetTimeoutInSeconds()          const { return 30.f; }
       
       virtual void Reset() override;
+      
+      // A random number generator all subclasses can share
+      Util::RandomGenerator _rng;
       
     private:
       

@@ -19,21 +19,30 @@
 #include "anki/vision/basestation/cameraCalibration.h"
 #include "anki/vision/basestation/image.h"
 #include "anki/vision/basestation/visionMarker.h"
+#include "anki/vision/basestation/faceTracker.h"
 
 #include <thread>
 #include <mutex>
 
-namespace Anki {  
-namespace Cozmo {
+namespace Anki {
   
   // Forward declaration
-  class VisionSystem;
+  namespace Util {
+  namespace Data {
+    class DataPlatform;
+  }
+  }
   
-  class VisionProcessingThread
+namespace Cozmo {
+  
+// Forward declaration
+class VisionSystem;
+
+class VisionProcessingThread
   {
   public:
     
-    VisionProcessingThread();
+    VisionProcessingThread(Util::Data::DataPlatform* dataPlatform);
     ~VisionProcessingThread();
     
     //
@@ -72,10 +81,11 @@ namespace Cozmo {
     // that message into the passed-in message struct.
     //bool CheckMailbox(ImageChunk&          msg);
     bool CheckMailbox(MessageDockingErrorSignal&  msg);
-    bool CheckMailbox(MessageFaceDetection&       msg);
-    bool CheckMailbox(MessageVisionMarker&        msg);
+    //bool CheckMailbox(MessageFaceDetection&       msg);
+    bool CheckMailbox(Vision::ObservedMarker&     msg);
     bool CheckMailbox(MessageTrackerQuad&         msg);
     bool CheckMailbox(MessagePanAndTiltHead&      msg);
+    bool CheckMailbox(Vision::TrackedFace&        msg);
     
     // If the current image is newer than the specified timestamp, copy it into
     // the given img and return true.

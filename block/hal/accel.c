@@ -1,5 +1,6 @@
 #include "hal.h"
 #include "hal_delay.h"
+#include <intrins.h>  // for _nop_() delay
 
 //GPIO_PIN_SOURCE(SDA, P0, 0)
 //GPIO_PIN_SOURCE(SCL, P0, 1)
@@ -123,7 +124,7 @@ static void DriveSCL(u8 b)
     GPIO_SET(GPIO_SCL, PIN_SCL);
   else
     GPIO_RESET(GPIO_SCL, PIN_SCL);
-  delay_us(I2C_WAIT);
+  _nop_();
 }
 
 
@@ -133,7 +134,7 @@ static void DriveSDA(u8 b)
     GPIO_SET(GPIO_SDA, PIN_SDA);
   else
     GPIO_RESET(GPIO_SDA, PIN_SDA);
-  delay_us(I2C_WAIT);
+  _nop_();
 }
 
 // Read SDA bit
@@ -162,7 +163,7 @@ static u8 Read(u8 ack)
 {
   u8 b = 0, i;
   PIN_IN(P0DIR, PIN_SDA);
-  delay_us(I2C_WAIT);
+  _nop_();
   for (i = 0; i < 8; i++)
   {
     b <<= 1;
@@ -171,7 +172,7 @@ static u8 Read(u8 ack)
     DriveSCL(0);
   }
   PIN_OUT(P0DIR, PIN_SDA);
-  delay_us(I2C_WAIT);
+  _nop_();
   // send Ack or Nak
   DriveSDA(ack);
   DriveSCL(1);
@@ -194,11 +195,11 @@ static u8 Write(u8 b)
   
   DriveSDA(0);
   PIN_IN(P0DIR, PIN_SDA);
-  delay_us(I2C_WAIT);
+  _nop_();
   DriveSCL(1); 
   b = ReadSDA();
   PIN_OUT(P0DIR, PIN_SDA);
-  delay_us(I2C_WAIT);
+  _nop_();
   DriveSCL(0);
   
   return b;
@@ -535,12 +536,23 @@ u8 ReadFifoTaps()
 u8 GetTaps()
 {
   u8 dat = DataRead(ACC_FIFO_STATUS);
-  //puthex(dat);
-  //putstring(",,\r\n");
+  static u8 howMany = 0;
+//  PutHex(dat);
+//  PutString("\r\n");
   if(!!(dat & 1<<7)) // overrun
   {
     // Reset FIFO
     DataWrite(FIFO_CONFIG_1, FIFO_STREAM | FIFO_Z);
+    howMany++;
+    if(howMany > 1) // reset if we've had more than 1 overrun. expect 1 during startup
+    {  
+      #ifndef DO_MISSED_PACKET_TEST
+      // Pet watchdog (reset block)
+      WDSV = 1;
+      WDSV = 0;
+      delay_ms(100);
+      #endif
+    }
   }
   else
   {

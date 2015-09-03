@@ -22,10 +22,39 @@ file(GLOB_RECURSE HEADER_FILES_BLEMGR "BLEManager/*.h")
 
 include_directories(.)
 
+####################
+# Begin FacioMetric Stuff
+
+file(GLOB RESOURCE_FILES
+  ${FACIO_METRIC_DIR}/CommonFiles/ResourceFiles/*.bin
+  ${FACIO_METRIC_DIR}/Anki/ResourceFiles/*.gns
+)
+
+set_source_files_properties(${RESOURCE_FILES}
+  PROPERTIES
+  MACOSX_PACKAGE_LOCATION Resources
+)
+
+set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} 
+  -finalize 
+  -prefinalized-library 
+  ${FACIO_METRIC_DIR}/Anki/Library/liblibintraface_core122.a 
+  -prefinalized-library 
+  ${FACIO_METRIC_DIR}/Anki/Library/liblibintraface_license_anki.a 
+  -prefinalized-library 
+  ${FACIO_METRIC_DIR}/Anki/Library/liblibintraface_emo122.a 
+  -finalized-product 
+  "${BUILT_PRODUCTS_DIR}/${EXECUTABLE_PATH}""
+)
+
+# End FacioMetric Stuff
+####################
+
 add_library(Cozmo_Basestation
   ${SOURCE_FILES} 
   ${PRIVATE_HEADER_FILES}
   ${PUBLIC_HEADER_FILES}
+  ${RESOURCE_FILES}
 )
 
 if(NOT ANKI_IOS_BUILD)
@@ -44,6 +73,7 @@ target_link_libraries(Cozmo_Basestation
   Clad_Support_Cpp
   util
   ${ZLIB_LIBRARY}
+
 )
 
 add_dependencies(Cozmo_Basestation

@@ -76,7 +76,7 @@ namespace Anki {
       
       // Derived classes can instantiate the MatPiece by defining its size.
       // Generic mat pieces are not instantiable.
-      MatPiece(const Point3f& size);
+      MatPiece(ObjectType type, const Point3f& size);
 
       virtual const std::vector<Point3f>& GetCanonicalCorners() const override;
       

@@ -1,0 +1,22 @@
+// Cozmo known object family definitions file
+//  for the C-Like Abstract Data language
+// Author: Andrew Stein
+// Copyright: Anki Inc (c) 2015
+
+namespace Anki {
+namespace Cozmo {
+
+  // TODO: change to int_16 or uint_8
+  enum int_32 ObjectFamily {
+    Invalid = -1,
+    Unknown = 0,
+    Block,
+    LightCube,
+    Ramp,
+    Charger,
+    Mat,
+    MarkerlessObject
+  } // enum class ObjectFamily
+  
+} // namespace Cozmo
+} // namespace Anki

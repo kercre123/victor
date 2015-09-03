@@ -210,8 +210,8 @@ robot/fpga/synlog.tcl
 **.dump
 *.htm
 block/build/
-*.m51
-*.m51
+block/lst/
+robot/**/build/
 rx-packet-log.txt
 coretech/project/gyp/common-robot.lst
 coretech/project/gyp/common-shared-test.lst
@@ -242,3 +242,5 @@ coretech/project/gyp/build
 project/gyp/build
 generated/clad
 generated/webots/src/plugins/physics/physics.c
+resources/config/faciometric
+resources/config/basestation/vision/faciometric

@@ -28,16 +28,20 @@
 #include "anki/cozmo/basestation/robotMessageHandler.h"
 #include "anki/cozmo/basestation/recording/playback.h"
 
-#define ASYNCHRONOUS_DEVICE_VISION 0
+#define DEVICE_VISION_MODE_OFF   0
+#define DEVICE_VISION_MODE_SYNC  1
+#define DEVICE_VISION_MODE_ASYNC 2
+
+#define DEVICE_VISION_MOIDE DEVICE_VISION_MODE_OFF
 
 namespace Anki {
 namespace Cozmo {
-  
+
 class CozmoEngineImpl
 {
 public:
 
-  CozmoEngineImpl(IExternalInterface* externalInterface);
+  CozmoEngineImpl(IExternalInterface* externalInterface, Util::Data::DataPlatform* dataPlatform);
   virtual ~CozmoEngineImpl();
 
   virtual Result Init(const Json::Value& config);
@@ -78,6 +82,8 @@ protected:
   MultiClientChannel        _robotChannel;
 
   IExternalInterface* _externalInterface;
+  Util::Data::DataPlatform* _dataPlatform;
+  
   /*
   // TODO: Merge this into RobotManager
   // Each engine can potetnailly talk to multiple physical robots.
@@ -90,7 +96,9 @@ protected:
   std::map<AdvertisingRobot, RobotContainer> _connectedRobots;
   */
 
+# if DEVISION_VISION_MODE != DEVICE_VISION_MODE_OFF
   VisionProcessingThread    _deviceVisionThread;
+# endif
 
   std::vector<Signal::SmartHandle> _signalHandles;
 

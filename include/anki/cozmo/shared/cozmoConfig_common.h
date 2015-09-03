@@ -4,8 +4,8 @@
  *
  **************************************************************************/
 
-const f32 MIN_HEAD_ANGLE = DEG_TO_RAD(-25.f);
-const f32 MAX_HEAD_ANGLE = DEG_TO_RAD( 35.f);
+const f32 MIN_HEAD_ANGLE = DEG_TO_RAD(-20.f);
+const f32 MAX_HEAD_ANGLE = DEG_TO_RAD( 45.f);
 
 // Head angle may exceed limits by this amount before
 // it is considered to be out of calibration.
@@ -80,13 +80,12 @@ const f32 ONE_OVER_CONTROL_DT = 1.0f/CONTROL_DT;
  *
  **************************************************************************/
 
+// Streaming KeyFrame buffer size, in bytes
+const s32 KEYFRAME_BUFFER_SIZE = 16384;
+
 const s32 MAX_FACE_FRAME_SIZE = 1024;
 
-const u32 AUDIO_SAMPLE_SIZE = 400;
-
-// Streamed animation will not play until we've got this many _audio_ keyframes
-// buffered.
-const s32 ANIMATION_PREROLL_LENGTH = 5;
+const u32 AUDIO_SAMPLE_SIZE = 800;
 
 /***************************************************************************
  *
@@ -116,13 +115,13 @@ const u16 ROBOT_RADIO_BASE_PORT = 5551;
 
 /*
  THESE LATENCY VALUES ARE NOT BEING USED -- SEE ALSO multiClientChannel.h
- 
+
  // Expected message receive latency
  // It is assumed that this value does not fluctuate greatly.
  // The more inaccurate this value is, the more invalid our
  // handling of messages will be.
  const f32 MSG_RECEIVE_LATENCY_SEC = 0.03;
- 
+
  // The effective latency of vehicle messages for basestation modelling purposes
  // This is twice the MSG_RECEIVE_LATENCY_SEC so that the basestation maintains a model
  // of the system one message cycle latency in the future. This way, commanded actions are applied
@@ -163,4 +162,3 @@ const u32 UI_MESSAGE_SERVER_LISTEN_PORT = 5200;
 
 // Number of frames to skip when streaming images to basestation
 const u8 IMG_STREAM_SKIP_FRAMES = 2;
-

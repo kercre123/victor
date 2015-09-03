@@ -16,27 +16,41 @@
 #define AUDIO_DMA_STREAM  DMA1_Stream4
 #define AUDIO_DMA_IRQ     DMA1_Stream4_IRQn
 
-static const int8_t ima_index_table[] = {
-  -1, -1, -1, -1, 2, 4, 6, 8,
-  -1, -1, -1, -1, 2, 4, 6, 8
-}; 
-static const uint16_t ima_step_table[] = {
-  7, 8, 9, 10, 11, 12, 13, 14, 16, 17, 
-  19, 21, 23, 25, 28, 31, 34, 37, 41, 45, 
-  50, 55, 60, 66, 73, 80, 88, 97, 107, 118, 
-  130, 143, 157, 173, 190, 209, 230, 253, 279, 307,
-  337, 371, 408, 449, 494, 544, 598, 658, 724, 796,
-  876, 963, 1060, 1166, 1282, 1411, 1552, 1707, 1878, 2066, 
-  2272, 2499, 2749, 3024, 3327, 3660, 4026, 4428, 4871, 5358,
-  5894, 6484, 7132, 7845, 8630, 9493, 10442, 11487, 12635, 13899, 
-  15289, 16818, 18500, 20350, 22385, 24623, 27086, 29794, 32767
+static int16_t MuLawDecompressTable[] =
+{
+       0,     16,     32,     48,     64,     80,     96,    112,
+     128,    144,    160,    176,    192,    208,    224,    240,
+     256,    272,    288,    304,    320,    336,    352,    368,
+     384,    400,    416,    432,    448,    464,    480,    496,
+     512,    544,    576,    608,    640,    672,    704,    736,
+     768,    800,    832,    864,    896,    928,    960,    992,
+    1024,   1088,   1152,   1216,   1280,   1344,   1408,   1472,
+    1536,   1600,   1664,   1728,   1792,   1856,   1920,   1984,
+    2048,   2176,   2304,   2432,   2560,   2688,   2816,   2944,
+    3072,   3200,   3328,   3456,   3584,   3712,   3840,   3968,
+    4096,   4352,   4608,   4864,   5120,   5376,   5632,   5888,
+    6144,   6400,   6656,   6912,   7168,   7424,   7680,   7936,
+    8192,   8704,   9216,   9728,  10240,  10752,  11264,  11776,
+   12288,  12800,  13312,  13824,  14336,  14848,  15360,  15872,
+   16384,  17408,  18432,  19456,  20480,  21504,  22528,  23552,
+   24576,  25600,  26624,  27648,  28672,  29696,  30720,  31744,
+      -1,    -17,    -33,    -49,    -65,    -81,    -97,   -113,
+    -129,   -145,   -161,   -177,   -193,   -209,   -225,   -241,
+    -257,   -273,   -289,   -305,   -321,   -337,   -353,   -369,
+    -385,   -401,   -417,   -433,   -449,   -465,   -481,   -497,
+    -513,   -545,   -577,   -609,   -641,   -673,   -705,   -737,
+    -769,   -801,   -833,   -865,   -897,   -929,   -961,   -993,
+   -1025,  -1089,  -1153,  -1217,  -1281,  -1345,  -1409,  -1473,
+   -1537,  -1601,  -1665,  -1729,  -1793,  -1857,  -1921,  -1985,
+   -2049,  -2177,  -2305,  -2433,  -2561,  -2689,  -2817,  -2945,
+   -3073,  -3201,  -3329,  -3457,  -3585,  -3713,  -3841,  -3969,
+   -4097,  -4353,  -4609,  -4865,  -5121,  -5377,  -5633,  -5889,
+   -6145,  -6401,  -6657,  -6913,  -7169,  -7425,  -7681,  -7937,
+   -8193,  -8705,  -9217,  -9729, -10241, -10753, -11265, -11777,
+  -12289, -12801, -13313, -13825, -14337, -14849, -15361, -15873,
+  -16385, -17409, -18433, -19457, -20481, -21505, -22529, -23553,
+  -24577, -25601, -26625, -27649, -28673, -29697, -30721, -31745,
 };
-
-typedef struct {
-  uint8_t index;
-  int16_t predictor;
-  uint8_t samples[400];
-} AudioChunk;
 
 namespace Anki
 {
@@ -50,7 +64,7 @@ namespace Anki
 
       typedef int16_t AudioSample;
 
-      const int ADPCMFreq       = 24000;
+      const int InputFreq       = 24000;
       const int SampleRate      = 48000;
       const int BufferLength    = 1600;       // 33.3ms at 24khz
       const float PLL_Dilate    = 1.555456f;  // No clue why this is nessessary
@@ -165,44 +179,19 @@ namespace Anki
 
         AudioSample *output = m_audioWorking;
         const u8 *input = msg->sample;
-        bool toggle = false;
+        int16_t sample = 0;
         int error = 0;
-
+        
         // Previous samples for gaussian filtering
-        int valpred = msg->predictor;
-        int index = msg->index;
-
         for (int rem = BufferLength; rem > 0; rem--) {
-          error += ADPCMFreq;
+          error += InputFreq;
 
           if (error >= SampleRate) {
-            int delta = toggle ? (*(input++) >> 4) : (*input & 0xF);
-            toggle = !toggle;
-
+            sample = MuLawDecompressTable[*(input++)];
             error -= SampleRate;
-
-            int step = ima_step_table[index];
-            index += ima_index_table[delta];
-
-            if (index < 0) index = 0;
-            else if (index > 88) index = 88;
-
-            bool sign = ((delta & 8) == 8);
-            delta = delta & 7;
-
-            int vpdiff = step >> 3;
-            if (delta & 4) vpdiff += step;
-            if (delta & 2) vpdiff += step >> 1;
-            if (delta & 1) vpdiff += step >> 2;
-
-            if (sign) valpred -= vpdiff;
-            else valpred += vpdiff;
-
-            if (valpred > 32767) valpred = 32767;
-            else if (valpred < -32768) valpred = -32768;
           }
 
-          *(output++) = valpred >> 3;
+          *(output++) = sample;
         }
 
         m_AudioRendered = true;

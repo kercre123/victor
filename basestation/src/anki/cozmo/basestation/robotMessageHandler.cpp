@@ -11,8 +11,8 @@
  **/
 
 #include "util/logging/logging.h"
-#include "anki/common/basestation/utils/fileManagement.h"
 #include "anki/common/basestation/array2d_impl.h"
+#include "anki/common/basestation/utils/helpers/printByteArray.h"
 #include "anki/vision/CameraSettings.h"
 #include "anki/vision/basestation/image.h"
 #include "anki/cozmo/basestation/blockWorld.h"
@@ -23,8 +23,10 @@
 #include "anki/cozmo/basestation/viz/vizManager.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "opencv2/imgproc/imgproc.hpp"
-#include "messageEngineToGame.h"
-#include <fstream>
+#include "anki/common/basestation/utils/data/dataPlatform.h"
+#include "clad/externalInterface/messageEngineToGame.h"
+#include "util/helpers/includeFstream.h"
+#include "util/fileUtils/fileUtils.h"
 
 // Uncomment to allow interprocess access to the camera stream (e.g. Matlab)
 //#define STREAM_IMAGES_VIA_FILESYSTEM 1
@@ -35,21 +37,24 @@
 namespace Anki {
   namespace Cozmo {
     
-    RobotMessageHandler::RobotMessageHandler()
-    : channel_(NULL), robotMgr_(NULL)
+    RobotMessageHandler::RobotMessageHandler(Util::Data::DataPlatform* dataPlatform)
+    : _channel(NULL)
+    , _robotMgr(NULL)
+    , _dataPlatform(dataPlatform)
     {
       
     }
+
     Result RobotMessageHandler::Init(Comms::IChannel* channel,
                                      RobotManager*  robotMgr)
     {
       Result retVal = RESULT_OK;
       
       //TODO: PRINT_NAMED_DEBUG("RobotMessageHandler", "Initializing comms");
-      channel_ = channel;
-      robotMgr_ = robotMgr;
+      _channel = channel;
+      _robotMgr = robotMgr;
       
-      isInitialized_ = true;
+      _isInitialized = true;
       
       return retVal;
     }
@@ -65,12 +70,12 @@ namespace Anki {
       p.reliable = reliable;
       p.hot = hot;
       
-      return channel_->Send(p) > 0 ? RESULT_OK : RESULT_FAIL;
+      return _channel->Send(p) > 0 ? RESULT_OK : RESULT_FAIL;
     }
 
     Result RobotMessageHandler::ProcessPacket(const Comms::IncomingPacket& packet)
     {
-      if(robotMgr_ == NULL) {
+      if(_robotMgr == NULL) {
         PRINT_STREAM_ERROR("RobotMessageHandler.NullRobotManager",
                           "RobotManager NULL when RobotMessageHandler::ProcessPacket() called.");
         return RESULT_FAIL;
@@ -78,7 +83,7 @@ namespace Anki {
       
       switch (packet.tag) {
         case Comms::IncomingPacket::Tag::Connected:
-          if (!robotMgr_->DoesRobotExist(static_cast<RobotID_t>(packet.sourceId))) {
+          if (!_robotMgr->DoesRobotExist(static_cast<RobotID_t>(packet.sourceId))) {
             PRINT_STREAM_ERROR("RobotMessageHandler.Connected",
                                "Incoming connection not found for robot id " << packet.sourceId << ", address " << packet.sourceAddress << ". Disconnecting.");
             return RESULT_FAIL;
@@ -90,7 +95,7 @@ namespace Anki {
         case Comms::IncomingPacket::Tag::Disconnected:
           PRINT_STREAM_INFO("RobotMessageHandler.Disconnected",
                              "Disconnected from connection id " << packet.sourceId << ", address " << packet.sourceAddress << ".");
-          robotMgr_->RemoveRobot(static_cast<RobotID_t>(packet.sourceId));
+          _robotMgr->RemoveRobot(static_cast<RobotID_t>(packet.sourceId));
           return RESULT_OK;
         
         case Comms::IncomingPacket::Tag::NormalMessage:
@@ -98,7 +103,7 @@ namespace Anki {
         
         // should be handled internally by MultiClientChannel, but in case it's a different IChannel
         case Comms::IncomingPacket::Tag::ConnectionRequest:
-          channel_->RefuseIncomingConnection(packet.sourceAddress);
+          _channel->RefuseIncomingConnection(packet.sourceAddress);
           return RESULT_OK;
         
         default:
@@ -116,38 +121,29 @@ namespace Anki {
       // Check for invalid msgID
       if (msgID >= RobotMessage::NUM_MSG_IDS || msgID == 0) {
         PRINT_NAMED_ERROR("RobotMessageHandler.InvalidMsgId",
-                          "Received msgID is invalid (Msg %d, MaxValidID %d)\n",
-                          msgID,
-                          RobotMessage::NUM_MSG_IDS
-                          );
+          "Received msgID is invalid (Msg %d, MaxValidID %d)", msgID,RobotMessage::NUM_MSG_IDS);
         return RESULT_FAIL;
       }
       
       // Check that the msg size matches expected size
       if(lookupTable_[msgID].size != packet.bufferSize-1) {
         PRINT_NAMED_ERROR("RobotMessageHandler.MessageBufferWrongSize",
-                          "Buffer's size does not match expected size for this message ID. (Msg %d, expected %d, recvd %d)",
-                          msgID,
-                          lookupTable_[msgID].size,
-                          packet.bufferSize - 1
-                          );
+          "Buffer's size does not match expected size for this message ID. (Msg %d, expected %d, recvd %d)",
+          msgID, lookupTable_[msgID].size, packet.bufferSize - 1 );
         return RESULT_FAIL;
       }
       
       const RobotID_t robotID = packet.sourceId;
       //Robot* robot = RobotManager::getInstance()->GetRobotByID(robotID);
-      Robot* robot = robotMgr_->GetRobotByID(robotID);
+      Robot* robot = _robotMgr->GetRobotByID(robotID);
       if(robot == NULL) {
-        PRINT_NAMED_ERROR("MessageFromInvalidRobotSource",
-                          "Message %d received from invalid robot source ID %d.",
-                          msgID, robotID);
+        PRINT_NAMED_ERROR("MessageFromInvalidRobotSource", "Message %d received from invalid robot source ID %d.", msgID, robotID);
         return RESULT_FAIL;
       }
       
       if(this->lookupTable_[msgID].ProcessPacketAs == nullptr) {
         PRINT_NAMED_ERROR("RobotMessageHandler.ProcessPacket.NullProcessPacketFcn",
-                          "Message %d received by robot %d, but no ProcessPacketAs function defined for it.",
-                          msgID, robotID);
+          "Message %d received by robot %d, but no ProcessPacketAs function defined for it.", msgID, robotID);
         return RESULT_FAIL;
       }
       
@@ -162,11 +158,11 @@ namespace Anki {
     {
       Result retVal = RESULT_FAIL;
       
-      if(isInitialized_) {
+      if(_isInitialized) {
         retVal = RESULT_OK;
         
         Comms::IncomingPacket packet;
-        while (channel_->PopIncomingPacket(packet)) {
+        while (_channel->PopIncomingPacket(packet)) {
           if(ProcessPacket(packet) != RESULT_OK) {
             retVal = RESULT_FAIL;
           }
@@ -177,15 +173,15 @@ namespace Anki {
     } // ProcessMessages()
     
     
+    // TODO: Remove this once we get rid of MessageVisionMarker fully
     // Convert a MessageVisionMarker into a VisionMarker object and hand it off
     // to the BlockWorld
     Result RobotMessageHandler::ProcessMessage(Robot* robot, const MessageVisionMarker& msg)
     {
       Result retVal = RESULT_FAIL;
       
-      CORETECH_ASSERT(robot != NULL);
-      
-      retVal = robot->QueueObservedMarker(msg);
+      PRINT_NAMED_ERROR("RobotMessageHandler.ProcessMessage.MessageVisionMarker",
+                        "We should not be receiving this message from anywhere.");
       
       return retVal;
     } // ProcessMessage(MessageVisionMarker)
@@ -197,7 +193,7 @@ namespace Anki {
       
       // TODO: Do something with face detections
       
-      PRINT_INFO("Robot %d reported seeing a face at (x,y,w,h)=(%d,%d,%d,%d).\n",
+      PRINT_INFO("Robot %d reported seeing a face at (x,y,w,h)=(%d,%d,%d,%d).",
                  robot->GetID(), msg.x_upperLeft, msg.y_upperLeft, msg.width, msg.height);
       
       
@@ -221,8 +217,7 @@ namespace Anki {
     Result RobotMessageHandler::ProcessMessage(Robot* robot, MessageCameraCalibration const& msg)
     {
       PRINT_NAMED_INFO("RobotMessageHandler.CameraCalibration",
-                       "Received new %dx%d camera calibration from robot.\n",
-                       msg.ncols, msg.nrows);
+        "Received new %dx%d camera calibration from robot.", msg.ncols, msg.nrows);
       
       // Convert calibration message into a calibration object to pass to
       // the robot
@@ -250,7 +245,7 @@ namespace Anki {
                        "  wheel speeds (l=%f, r=%f)\n"
                        "  headAngle %f\n"
                        "  liftAngle %f\n"
-                       "  liftHeight %f\n"
+                       "  liftHeight %f"
                        ,robot->GetID()
                        ,msg.pose_x, msg.pose_y, msg.pose_z, msg.pose_angle, msg.pose_frame_id
                        ,msg.lwheel_speed_mmps, msg.rwheel_speed_mmps
@@ -322,7 +317,7 @@ namespace Anki {
                                                             msg.chunkId, msg.data, msg.chunkSize );
 
       IExternalInterface* externalInterface = robot->GetExternalInterface();
-      if (externalInterface != nullptr && robot->GetImageSendMode() != ISM_OFF) {
+      if (externalInterface != nullptr && robot->GetImageSendMode() != ImageSendMode::Off) {
         ExternalInterface::ImageChunk uiImgChunk;
         uiImgChunk.imageId = msg.imageId;
         uiImgChunk.frameTimeStamp = msg.frameTimeStamp;
@@ -330,7 +325,7 @@ namespace Anki {
         uiImgChunk.ncols = Vision::CameraResInfo[msg.resolution].width;
         assert(uiImgChunk.data.size() == msg.data.size());
         uiImgChunk.chunkSize = msg.chunkSize;
-        uiImgChunk.imageEncoding = msg.imageEncoding;
+        uiImgChunk.imageEncoding = (ImageEncodingClad)msg.imageEncoding;
         uiImgChunk.imageChunkCount = msg.imageChunkCount;
         uiImgChunk.chunkId = msg.chunkId;
         std::copy(msg.data.begin(), msg.data.end(),
@@ -338,14 +333,14 @@ namespace Anki {
 
         ExternalInterface::MessageEngineToGame msgWrapper;
         msgWrapper.Set_ImageChunk(uiImgChunk);
-        robot->GetExternalInterface()->DeliverToGame(std::move(msgWrapper));
+        robot->GetExternalInterface()->Broadcast(std::move(msgWrapper));
 
         const bool wasLastChunk = uiImgChunk.chunkId == uiImgChunk.imageChunkCount-1;
 
-        if(wasLastChunk && robot->GetImageSendMode() == ISM_SINGLE_SHOT) {
+        if(wasLastChunk && robot->GetImageSendMode() == ImageSendMode::SingleShot) {
           // We were just in single-image send mode, and the image got sent, so
           // go back to "off". (If in stream mode, stay in stream mode.)
-          robot->SetImageSendMode(ISM_OFF);
+          robot->SetImageSendMode(ImageSendMode::Off);
         }
       }
       VizManager::getInstance()->SendImageChunk(robot->GetID(), msg);
@@ -392,7 +387,7 @@ namespace Anki {
     Result RobotMessageHandler::ProcessMessage(Robot* robot, MessageTrackerQuad const& msg)
     {
       /*
-      PRINT_INFO("TrackerQuad: (%d,%d) (%d,%d) (%d,%d) (%d,%d)\n",
+      PRINT_INFO("TrackerQuad: (%d,%d) (%d,%d) (%d,%d) (%d,%d)",
                  msg.topLeft_x, msg.topLeft_y,
                  msg.topRight_x, msg.topRight_y,
                  msg.bottomRight_x, msg.bottomRight_y,
@@ -434,7 +429,7 @@ namespace Anki {
     {
       const char* successStr = (msg.didSucceed ? "succeeded" : "failed");
       PRINT_STREAM_INFO("RobotMessageHandler.ProcessMessage.MessageBlockPlaced", "Robot " << robot->GetID() << " reported it " << successStr << " placing block. "
-                 "Stopping docking and turning on Look-for-Markers mode.\n");
+                 "Stopping docking and turning on Look-for-Markers mode.");
       
       Result lastResult = RESULT_OK;
       if(msg.didSucceed) {
@@ -453,7 +448,7 @@ namespace Anki {
     
     Result RobotMessageHandler::ProcessMessage(Robot* robot, MessageRampTraverseStart const& msg)
     {
-      PRINT_STREAM_INFO("Robot %d reported it started traversing a ramp.\n", robot->GetID());
+      PRINT_NAMED_INFO("RobotMessageHandler.ProcessMessage", "Robot %d reported it started traversing a ramp.", robot->GetID());
 
       robot->SetOnRamp(true);
       
@@ -462,8 +457,7 @@ namespace Anki {
     
     Result RobotMessageHandler::ProcessMessage(Robot* robot, MessageRampTraverseComplete const& msg)
     {
-      PRINT_STREAM_INFO("RobotMessageHandler.ProcessMessage."
-                        "MessageRampTraverseComplete", "Robot " << robot->GetID() << " reported it completed traversing a ramp.");
+      PRINT_NAMED_INFO("RobotMessageHandler.ProcessMessage.", "Robot %d reported it completed traversing a ramp.", robot->GetID());
 
       robot->SetOnRamp(false);
       
@@ -472,8 +466,7 @@ namespace Anki {
     
     Result RobotMessageHandler::ProcessMessage(Robot* robot, MessageBridgeTraverseStart const& msg)
     {
-      PRINT_STREAM_INFO("RobotMessageHandler.ProcessMessage."
-                        "MessageBridgeTraverseStart", "Robot " << robot->GetID() << " reported it started traversing a bridge.");
+      PRINT_NAMED_INFO("RobotMessageHandler.ProcessMessage.", "Robot %d reported it started traversing a bridge.", robot->GetID());
       
       // TODO: What does this message trigger?
       //robot->SetOnBridge(true);
@@ -483,9 +476,7 @@ namespace Anki {
     
     Result RobotMessageHandler::ProcessMessage(Robot* robot, MessageBridgeTraverseComplete const& msg)
     {
-      PRINT_STREAM_INFO("RobotMessageHandler.ProcessMessage."
-                        "MessageBridgeTraverseComplete",
-                        "Robot " << robot->GetID() << " reported it completed traversing a bridge.");
+      PRINT_NAMED_INFO("RobotMessageHandler.ProcessMessage.", "Robot %d reported it completed traversing a bridge.", robot->GetID());
       
       // TODO: What does this message trigger?
       //robot->SetOnBridge(false);
@@ -539,15 +530,14 @@ namespace Anki {
       if (msg.chunkId == msg.totalNumChunks - 1) {
         
         // Make sure image capture folder exists
-        if (!Anki::DirExists(AnkiUtil::kP_IMU_LOGS_DIR)) {
-          if (!MakeDir(AnkiUtil::kP_IMU_LOGS_DIR)) {
-            PRINT_NAMED_WARNING("Robot.ProcessIMUDataChunk.CreateDirFailed","");
-          }
+        std::string imuLogsDir = _dataPlatform->pathToResource(Util::Data::Scope::Cache, AnkiUtil::kP_IMU_LOGS_DIR);
+        if (!Util::FileUtils::CreateDirectory(imuLogsDir, false, true)) {
+          PRINT_NAMED_ERROR("Robot.ProcessIMUDataChunk.CreateDirFailed","%s", imuLogsDir.c_str());
         }
         
         // Create image file
-        char logFilename[64];
-        snprintf(logFilename, sizeof(logFilename), "%s/robot%d_imu%d.m", AnkiUtil::kP_IMU_LOGS_DIR, robot->GetID(), imuSeqID);
+        char logFilename[564];
+        snprintf(logFilename, sizeof(logFilename), "%s/robot%d_imu%d.m", imuLogsDir.c_str(), robot->GetID(), imuSeqID);
         PRINT_STREAM_INFO("RobotMessageHandler.ProcessMessage.MessageIMUDataChunk", "Printing imu log to " << logFilename << " (dataSize = " << dataSize << ")");
         
         std::ofstream oFile(logFilename);
@@ -573,8 +563,7 @@ namespace Anki {
     
     Result RobotMessageHandler::ProcessMessage(Robot* robot, MessagePlaySoundOnBaseStation const& msg)
     {
-      PRINT_NAMED_ERROR("RobotMessageHandler.ProcessMessage",
-                        "MessagePlaySoundOnBaseStation is deprecated!\n");
+      PRINT_NAMED_ERROR("RobotMessageHandler.ProcessMessage", "MessagePlaySoundOnBaseStation is deprecated!");
       return RESULT_FAIL;
     }
     
@@ -588,7 +577,7 @@ namespace Anki {
     {
       Anki::Pose3d p(msg.pose_angle, Z_AXIS_3D(),
                      Vec3f(msg.pose_x, msg.pose_y, msg.pose_z));
-      //PRINT_INFO("Goal pose: x=%f y=%f %f deg (%d)\n", msg.pose_x, msg.pose_y, RAD_TO_DEG_F32(msg.pose_angle), msg.followingMarkerNormal);
+      //PRINT_INFO("Goal pose: x=%f y=%f %f deg (%d)", msg.pose_x, msg.pose_y, RAD_TO_DEG_F32(msg.pose_angle), msg.followingMarkerNormal);
       if (msg.followingMarkerNormal) {
         VizManager::getInstance()->DrawPreDockPose(100, p, NamedColors::RED);
       } else {
@@ -600,12 +589,21 @@ namespace Anki {
     
     Result RobotMessageHandler::ProcessMessage(Robot* robot, MessageSyncTimeAck const& msg)
     {
-      PRINT_STREAM_INFO("RobotMessageHandler.ProcessMessage.MessageSyncTimeAck", "SyncTime acknowledged");
+      PRINT_NAMED_INFO("RobotMessageHandler.ProcessMessage.MessageSyncTimeAck", "SyncTime acknowledged");
       robot->SetSyncTimeAcknowledged(true);
 
       return RESULT_OK;
     }
 
+    Result RobotMessageHandler::ProcessMessage(Robot* robot, MessageDataDump const& msg)
+    {
+      char buf[msg.size * 2 + 1];
+      FormatBytesAsHex((char *)msg.data.data(), std::min((int)msg.size, (int)msg.data.size()), buf, (int)sizeof(buf));
+      PRINT_NAMED_INFO("RobotMessageHandler.ProcessMessage.MessageDataDump", "ID: %d, size: %d, data: %s", msg.id, msg.size, buf);
+
+      return RESULT_OK;
+    }
+    
     Result RobotMessageHandler::ProcessMessage(Robot* robot, MessageBlockIDFlashStarted const& msg)
     {
       printf("TODO: MessageBlockIDFlashStarted at time %d ms\n", msg.timestamp);
@@ -619,11 +617,11 @@ namespace Anki {
       // to find the object in blockworld (which has its own bookkeeping ID) that
       // has the matching active ID
      
-      const BlockWorld::ObjectsMapByType_t& activeBlocksByType = robot->GetBlockWorld().GetExistingObjectsByFamily(BlockWorld::ObjectFamily::ACTIVE_BLOCKS);
+      const BlockWorld::ObjectsMapByType_t& activeBlocksByType = robot->GetBlockWorld().GetExistingObjectsByFamily(ObjectFamily::LightCube);
       
       for(auto objectsByID : activeBlocksByType) {
         for(auto objectWithID : objectsByID.second) {
-          Vision::ObservableObject* object = objectWithID.second;
+          ObservableObject* object = objectWithID.second;
           assert(object->IsActive());
           if(object->GetActiveID() == msg.objectID) {
             printf("Received message that Object %d (Active ID %d) moved.\n",
@@ -633,8 +631,8 @@ namespace Anki {
             ActionableObject* actionObject = dynamic_cast<ActionableObject*>(object);
             assert(actionObject != nullptr);
             if(actionObject->IsBeingCarried() == false) {
-              robot->GetExternalInterface()->DeliverToGame(ExternalInterface::MessageEngineToGame(ExternalInterface::ActiveObjectMoved(
-                robot->GetID(), objectWithID.first, msg.xAccel, msg.yAccel, msg.zAccel, msg.upAxis
+              robot->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::ActiveObjectMoved(
+                robot->GetID(), objectWithID.first, msg.xAccel, msg.yAccel, msg.zAccel, (UpAxisClad)msg.upAxis
               )));
             }
             
@@ -650,11 +648,11 @@ namespace Anki {
     
     Result RobotMessageHandler::ProcessMessage(Robot* robot, MessageActiveObjectStoppedMoving const& msg)
     {
-      const BlockWorld::ObjectsMapByType_t& activeBlocksByType = robot->GetBlockWorld().GetExistingObjectsByFamily(BlockWorld::ObjectFamily::ACTIVE_BLOCKS);
+      const BlockWorld::ObjectsMapByType_t& activeBlocksByType = robot->GetBlockWorld().GetExistingObjectsByFamily(ObjectFamily::LightCube);
       
       for(auto objectsByID : activeBlocksByType) {
         for(auto objectWithID : objectsByID.second) {
-          Vision::ObservableObject* object = objectWithID.second;
+          ObservableObject* object = objectWithID.second;
           assert(object->IsActive());
           if(object->GetActiveID() == msg.objectID) {
             // TODO: Mark object as de-localized
@@ -662,8 +660,8 @@ namespace Anki {
                               "MessageActiveObjectStoppedMoving",
                               "Received message that Object " << objectWithID.first.GetValue() << " (Active ID " << msg.objectID << ") stopped moving.");
             
-            robot->GetExternalInterface()->DeliverToGame(ExternalInterface::MessageEngineToGame(ExternalInterface::ActiveObjectStoppedMoving(
-              robot->GetID(), objectWithID.first, msg.upAxis, msg.rolled
+            robot->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::ActiveObjectStoppedMoving(
+              robot->GetID(), objectWithID.first, (UpAxisClad)msg.upAxis, msg.rolled
             )));
             return RESULT_OK;
           }
@@ -677,11 +675,11 @@ namespace Anki {
     
     Result RobotMessageHandler::ProcessMessage(Robot* robot, MessageActiveObjectTapped const& msg)
     {
-      const BlockWorld::ObjectsMapByType_t& activeBlocksByType = robot->GetBlockWorld().GetExistingObjectsByFamily(BlockWorld::ObjectFamily::ACTIVE_BLOCKS);
+      const BlockWorld::ObjectsMapByType_t& activeBlocksByType = robot->GetBlockWorld().GetExistingObjectsByFamily(ObjectFamily::LightCube);
       
       for(auto objectsByID : activeBlocksByType) {
         for(auto objectWithID : objectsByID.second) {
-          Vision::ObservableObject* object = objectWithID.second;
+          ObservableObject* object = objectWithID.second;
           assert(object->IsActive());
           if(object->GetActiveID() == msg.objectID) {
 
@@ -689,7 +687,7 @@ namespace Anki {
                               "MessageActiveObjectTapped",
                               "Received message that object " << objectWithID.first.GetValue() << " (Active ID " << msg.objectID << ") was tapped " << (uint32_t)msg.numTaps << " times.");
             
-            robot->GetExternalInterface()->DeliverToGame(ExternalInterface::MessageEngineToGame(ExternalInterface::ActiveObjectTapped(
+            robot->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::ActiveObjectTapped(
               robot->GetID(), objectWithID.first, msg.numTaps
             )));
 

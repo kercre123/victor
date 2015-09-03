@@ -13,16 +13,19 @@
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 
-#define ASYNCHRONOUS_DEVICE_VISION 0
-
 namespace Anki {
 namespace Cozmo {
   
 
   
-CozmoEngineImpl::CozmoEngineImpl(IExternalInterface* externalInterface)
+CozmoEngineImpl::CozmoEngineImpl(IExternalInterface* externalInterface,
+                                 Util::Data::DataPlatform* dataPlatform)
 : _isInitialized(false)
 , _externalInterface(externalInterface)
+, _dataPlatform(dataPlatform)
+#if DEVICE_VISION_MODE != DEVICE_VISION_MODE_OFF
+, _deviceVisionThread(dataPlatform)
+#endif
 {
   if (Anki::Util::gTickTimeProvider == nullptr) {
     Anki::Util::gTickTimeProvider = BaseStationTimer::getInstance();
@@ -115,12 +118,12 @@ Result CozmoEngineImpl::Init(const Json::Value& config)
     return lastResult;
   }
 
-#   if ASYNCHRONOUS_DEVICE_VISION
+# if DEVICE_VISION_MODE == DEVICE_VISION_MODE_ASYNC
   // TODO: Only start when needed?
   _deviceVisionThread.Start(deviceCamCalib);
-#   else 
+# elif DEVICE_VISION_MODE == DEVICE_VISION_MODE_SYNC
   _deviceVisionThread.SetCameraCalibration(deviceCamCalib);
-#   endif
+# endif
 
   _isInitialized = true;
 
@@ -187,7 +190,7 @@ Result CozmoEngineImpl::Update(const BaseStationTime_t currTime_ns)
   std::vector<Comms::ConnectionId> advertisingRobots;
   _robotChannel.GetAdvertisingConnections(advertisingRobots);
   for(auto robot : advertisingRobots) {
-    _externalInterface->DeliverToGame(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotAvailable(robot)));
+    _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotAvailable(robot)));
   }
 
   // TODO: Handle images coming from connected robots
@@ -207,15 +210,15 @@ void CozmoEngineImpl::ProcessDeviceImage(const Vision::Image &image)
   // Process image within the detection rectangle with vision processing thread:
   static const Cozmo::MessageRobotState bogusState; // req'd by API, but not really necessary for marker detection
 
-#   if ASYNCHRONOUS_DEVICE_VISION
+# if DEVICE_VISION_MODE == DEVICE_VISION_MODE_ASYNC
   _deviceVisionThread.SetNextImage(image, bogusState);
-#   else
+# elif DEVICE_VISION_MODE == DEVICE_VISION_MODE_SYNC
   _deviceVisionThread.Update(image, bogusState);
 
   MessageVisionMarker msg;
   while(_deviceVisionThread.CheckMailbox(msg)) {
     // Pass marker detections along to UI/game for use
-    _externalInterface->DeliverToGame(ExternalInterface::MessageEngineToGame(ExternalInterface::DeviceDetectedVisionMarker(
+    _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::DeviceDetectedVisionMarker(
       msg.markerType,
       msg.x_imgUpperLeft,  msg.y_imgUpperLeft,
       msg.x_imgLowerLeft,  msg.y_imgLowerLeft,
@@ -223,8 +226,8 @@ void CozmoEngineImpl::ProcessDeviceImage(const Vision::Image &image)
       msg.x_imgLowerRight, msg.y_imgLowerRight
     )));
   }
-
-#   endif
+# endif // DEVICE_VISION_MODE
+  
 }
   
 

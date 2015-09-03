@@ -23,7 +23,7 @@
 
 #if(USE_OVERLAY_DISPLAY)
 #include "anki/cozmo/robot/hal.h"
-#include "anki/cozmo/simulator/sim_overlayDisplay.h"
+#include "anki/cozmo/simulator/robot/sim_overlayDisplay.h"
 #endif
 
 namespace Anki {
@@ -41,16 +41,6 @@ namespace Anki {
       namespace {
         
         const f32 BIG_RADIUS = 5000;
-        
-        // Value ranging from 0 to 1.
-        // The lower the value the more the expected distance approaches
-        // the distance expected of a two-wheeled no-slip robot.
-        // The higher the value the more the expected distance approaches
-        // the distance of the wheel that moved the most.
-        // (i.e. Assumes the faster wheel drags the slower wheel along.
-        // How correct is this assumption? Who knows?)
-        // TODO: This value may change for different durometer treads
-        const f32 SLIP_FACTOR = 0.7f;
         
         // private members
         ::Anki::Embedded::Pose2d currMatPose;
@@ -626,6 +616,17 @@ namespace Anki {
             
            
 #if(1)
+              
+              // Value ranging from 0 to 1.
+              // The lower the value the more the expected distance approaches
+              // the distance expected of a two-wheeled no-slip robot.
+              // The higher the value the more the expected distance approaches
+              // the distance of the wheel that moved the most.
+              // (i.e. Assumes the faster wheel drags the slower wheel along.
+              // How correct is this assumption? Who knows?)
+              // TODO: This value may change for different durometer treads
+              //const f32 SLIP_FACTOR = 0.7f;
+              
             // For treaded robot, assuming there is more slip of the slower tread than
             // there is on the faster one, thus making the total distance travelled
             // per tic closer to the maximum distance traversed by a wheel than
