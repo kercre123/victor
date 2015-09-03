@@ -321,6 +321,12 @@ public class RobotEngineManager : MonoBehaviour {
     case G2U.MessageEngineToGame.Tag.AnimationAvailable:
       ReceivedSpecificMessage(message.AnimationAvailable);
       break;
+    case G2U.MessageEngineToGame.Tag.RobotObservedFace:
+      ReceivedSpecificMessage(message.RobotObservedFace);
+      break;
+    case G2U.MessageEngineToGame.Tag.RobotDeletedFace:
+      ReceivedSpecificMessage(message.RobotDeletedFace);
+      break;
     default:
       DAS.Warn("RobotEngineManager", message.GetTag() + " is not supported");
       break;
@@ -524,6 +530,14 @@ public class RobotEngineManager : MonoBehaviour {
     }
     
     robots[message.robotID].UpdateInfo(message);
+  }
+
+  private void ReceivedSpecificMessage(G2U.RobotObservedFace message) {
+
+  }
+
+  private void ReceivedSpecificMessage(G2U.RobotDeletedFace message) {
+
   }
 
   private Texture2D texture;
