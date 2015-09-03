@@ -14,7 +14,9 @@
 #ifndef ANKI_COZMO_BASESTATION_VISION_PROC_THREAD_H
 #define ANKI_COZMO_BASESTATION_VISION_PROC_THREAD_H
 
-#include "anki/cozmo/basestation/comms/robot/robotMessages.h"
+#include "clad/robotInterface/messageRobotToEngine.h"
+#include "clad/robotInterface/messageEngineToRobot.h"
+#include "clad/vizInterface/messageViz.h"
 
 #include "anki/vision/basestation/cameraCalibration.h"
 #include "anki/vision/basestation/image.h"
@@ -53,7 +55,7 @@ class VisionProcessingThread
     void Stop();
     
     void SetNextImage(const Vision::Image& image,
-                      const MessageRobotState& robotState);
+                      const RobotState& robotState);
     
     //
     // Synchronous operation
@@ -61,7 +63,7 @@ class VisionProcessingThread
     void SetCameraCalibration(const Vision::CameraCalibration& camCalib);
     
     void Update(const Vision::Image& image,
-                const MessageRobotState& robotState);
+                const RobotState& robotState);
 
     
     void SetMarkerToTrack(const Vision::Marker::Code&  markerToTrack,
@@ -80,11 +82,11 @@ class VisionProcessingThread
     // These return true if a mailbox messages was available, and they copy
     // that message into the passed-in message struct.
     //bool CheckMailbox(ImageChunk&          msg);
-    bool CheckMailbox(MessageDockingErrorSignal&  msg);
-    //bool CheckMailbox(MessageFaceDetection&       msg);
+    bool CheckMailbox(DockingErrorSignal&  msg);
+    //bool CheckMailbox(FaceDetection&       msg);
     bool CheckMailbox(Vision::ObservedMarker&     msg);
-    bool CheckMailbox(MessageTrackerQuad&         msg);
-    bool CheckMailbox(MessagePanAndTiltHead&      msg);
+    bool CheckMailbox(Viz::TrackerQuad&         msg);
+    bool CheckMailbox(PanAndTiltHead&      msg);
     bool CheckMailbox(Vision::TrackedFace&        msg);
     
     // If the current image is newer than the specified timestamp, copy it into
@@ -109,8 +111,8 @@ class VisionProcessingThread
     Vision::Image _nextImg;
     Vision::Image _lastImg; // the last image we processed
     
-    MessageRobotState _currentRobotState;
-    MessageRobotState _nextRobotState;
+    RobotState _currentRobotState;
+    RobotState _nextRobotState;
     
     std::thread _processingThread;
     

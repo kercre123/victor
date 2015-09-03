@@ -15,12 +15,14 @@
  **/
 
 #include "visionSystem.h"
-#include "anki/cozmo/basestation/comms/robot/robotMessages.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/common/basestation/mailbox_impl.h"
 #include "anki/vision/basestation/image_impl.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/quad_impl.h"
+#include "clad/vizInterface/messageViz.h"
+#include "clad/robotInterface/messageEngineToRobot.h"
+#include "clad/types/robotStatusAndActions.h"
 
 //
 // Embedded implementation holdovers:
@@ -237,7 +239,7 @@ namespace Cozmo {
 #endif
   } // GetTrackerQuad()
   
-  Result VisionSystem::UpdateRobotState(const MessageRobotState newRobotState)
+  Result VisionSystem::UpdateRobotState(const RobotState newRobotState)
   {
     _prevRobotState = _robotState;
     _robotState     = newRobotState;
@@ -321,7 +323,7 @@ namespace Cozmo {
   }
   
 
-  bool VisionSystem::CheckMailbox(MessageDockingErrorSignal&  msg)
+  bool VisionSystem::CheckMailbox(DockingErrorSignal&  msg)
   {
     bool retVal = false;
     if(IsInitialized()) {
@@ -331,7 +333,7 @@ namespace Cozmo {
   }
   
   /*
-  bool VisionSystem::CheckMailbox(MessageFaceDetection&       msg)
+  bool VisionSystem::CheckMailbox(Viz::FaceDetection&       msg)
   {
     bool retVal = false;
     if(IsInitialized()) {

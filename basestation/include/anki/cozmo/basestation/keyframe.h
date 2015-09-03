@@ -19,11 +19,11 @@
 
 #include "anki/common/basestation/colorRGBA.h"
 
-#include "anki/cozmo/basestation/comms/robot/robotMessages.h"
 #include "anki/cozmo/basestation/proceduralFace.h"
 
 #include "anki/cozmo/shared/cozmoTypes.h"
-#include "anki/cozmo/shared/ledTypes.h"
+#include "clad/types/animationKeyFrames.h"
+#include "clad/types/ledTypes.h"
 
 #include "anki/cozmo/basestation/soundManager.h"
 
@@ -116,7 +116,7 @@ namespace Anki {
       s8          _angle_deg;
       u8          _angleVariability_deg;
       
-      MessageAnimKeyFrame_HeadAngle _streamHeadMsg;
+      AnimKeyFrame::HeadAngle _streamHeadMsg;
       
     }; // class HeadAngleKeyFrame
     
@@ -143,7 +143,7 @@ namespace Anki {
       u8          _height_mm;
       u8          _heightVariability_mm;
       
-      MessageAnimKeyFrame_LiftHeight _streamLiftMsg;
+      AnimKeyFrame::LiftHeight _streamLiftMsg;
       
     }; // class LiftHeightKeyFrame
     
@@ -208,7 +208,7 @@ namespace Anki {
       
       s32 _sampleIndex;
       
-      MessageAnimKeyFrame_AudioSample  _audioSampleMsg;
+      AnimKeyFrame::AudioSample  _audioSampleMsg;
       
     }; // class RobotAudioKeyFrame
     
@@ -235,7 +235,7 @@ namespace Anki {
     private:
       u32 _imageID;
       
-      MessageAnimKeyFrame_FaceImage _streamMsg;
+      AnimKeyFrame::FaceImage _streamMsg;
       
     }; // class FaceImageKeyFrame
     
@@ -268,7 +268,7 @@ namespace Anki {
       
       s32 _curFrame;
       
-      MessageAnimKeyFrame_FaceImage _faceImageMsg;
+      AnimKeyFrame::FaceImage _faceImageMsg;
       
     }; // class FaceAnimationKeyFrame
     
@@ -290,7 +290,7 @@ namespace Anki {
       
     private:
       ProceduralFace _procFace;
-      MessageAnimKeyFrame_FaceImage _faceImageMsg;
+      AnimKeyFrame::FaceImage _faceImageMsg;
     };
     
     // A FacePositionKeyFrame sets the center of the currently displayed face
@@ -312,7 +312,7 @@ namespace Anki {
       
     private:
       
-      MessageAnimKeyFrame_FacePosition _streamMsg;
+      AnimKeyFrame::FacePosition _streamMsg;
       
     }; // class FacePositionKeyFrame
     
@@ -340,7 +340,7 @@ namespace Anki {
       s32 _duration_ms;
       s32 _curTime_ms;
       
-      MessageAnimKeyFrame_Blink _streamMsg;
+      AnimKeyFrame::Blink _streamMsg;
 
     }; // class BlinkKeyFrame
     
@@ -363,7 +363,7 @@ namespace Anki {
       
     private:
       
-      MessageAnimKeyFrame_BackpackLights _streamMsg;
+      AnimKeyFrame::BackpackLights _streamMsg;
       
     }; // class BackpackLightsKeyFrame
     
@@ -392,8 +392,8 @@ namespace Anki {
       s32 _durationTime_ms;
       s32 _currentTime_ms;
       
-      MessageAnimKeyFrame_BodyMotion _streamMsg;
-      MessageAnimKeyFrame_BodyMotion _stopMsg;
+      AnimKeyFrame::BodyMotion _streamMsg;
+      AnimKeyFrame::BodyMotion _stopMsg;
       
     }; // class BodyMotionKeyFrame
     

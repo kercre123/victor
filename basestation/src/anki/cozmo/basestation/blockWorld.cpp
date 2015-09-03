@@ -11,7 +11,6 @@
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/mat.h"
 #include "anki/cozmo/basestation/markerlessObject.h"
-#include "anki/cozmo/basestation/comms/robot/robotMessages.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "bridge.h"
 #include "flatMat.h"
@@ -23,6 +22,7 @@
 #include "anki/cozmo/basestation/viz/vizManager.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "clad/externalInterface/messageEngineToGame.h"
+#include "clad/robotInterface/messageEngineToRobot.h"
 
 #include "anki/vision/basestation/observableObjectLibrary_impl.h"
 // The amount of time a proximity obstacle exists beyond the latest detection
@@ -631,7 +631,7 @@ namespace Anki
           const f32 minDist = std::sqrt(minDistSq);
           const f32 headAngle = std::atan(zDist/(minDist + 1e-6f));
           //_robot->MoveHeadToAngle(headAngle, 5.f, 2.f);
-          MessagePanAndTiltHead msg;
+          PanAndTiltHead msg;
           msg.headTiltAngle_rad = headAngle;
           msg.bodyPanAngle_rad = 0.f;
           

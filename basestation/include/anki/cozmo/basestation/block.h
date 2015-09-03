@@ -14,7 +14,7 @@
 
 #include "anki/vision/basestation/observableObject.h"
 
-#include "anki/cozmo/basestation/comms/robot/robotMessages.h"
+#include "clad/robotInterface/messageEngineToRobot.h"
 
 #include "anki/vision/MarkerCodeDefinitions.h"
 
@@ -348,7 +348,7 @@ namespace Anki {
       
       // Populate a message specifying the current state of the block, for sending
       // out to actually set the physical block to match
-      void FillMessage(MessageSetBlockLights& msg) const;
+      void FillMessage(SetBlockLights& msg) const;
       
     protected:
       

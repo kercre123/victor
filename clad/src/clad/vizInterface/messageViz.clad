@@ -224,6 +224,15 @@ message TrackerQuad
   int_16 bottomLeft_y,
 }
 
+message FaceDetection
+{
+  uint 16 x_upperLeft,
+  uint_16 y_upperLeft,
+  uint_16 width,
+  uint_16 height,
+  bool    visualize
+}
+
 // keep empty to generate an auto-union that includes all messages in this file
 // if you do not want to include messages in this union, use the keyword "structure" instead of "message"
 union MessageViz { }

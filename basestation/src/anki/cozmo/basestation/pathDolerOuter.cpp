@@ -15,7 +15,7 @@
 #include <assert.h>
 
 #include "util/logging/logging.h"
-#include "anki/cozmo/basestation/comms/robot/robotMessages.h"
+#include "clad/robotInterface/messageEngineToRobot.h"
 
 #include "robotMessageHandler.h"
 #include "pathDolerOuter.h"
@@ -69,7 +69,7 @@ void PathDolerOuter::Dole(size_t numToDole)
 
     case Planning::PST_LINE:
     {
-      MessageAppendPathSegmentLine m;
+      AppendPathSegmentLine m;
       const Planning::PathSegmentDef::s_line* l = &(path_.GetSegmentConstRef(i).GetDef().line);
       m.x_start_mm = l->startPt_x;
       m.y_start_mm = l->startPt_y;
@@ -88,7 +88,7 @@ void PathDolerOuter::Dole(size_t numToDole)
     }
     case Planning::PST_ARC:
     {
-      MessageAppendPathSegmentArc m;
+      AppendPathSegmentArc m;
       const Planning::PathSegmentDef::s_arc* a = &(path_.GetSegmentConstRef(i).GetDef().arc);
       m.x_center_mm = a->centerPt_x;
       m.y_center_mm = a->centerPt_y;
@@ -108,7 +108,7 @@ void PathDolerOuter::Dole(size_t numToDole)
     }
     case Planning::PST_POINT_TURN:
     {
-      MessageAppendPathSegmentPointTurn m;
+      AppendPathSegmentPointTurn m;
       const Planning::PathSegmentDef::s_turn* t = &(path_.GetSegmentConstRef(i).GetDef().turn);
       m.x_center_mm = t->x;
       m.y_center_mm = t->y;
