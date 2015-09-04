@@ -50,6 +50,34 @@
       'libopencv_features2d.a',
     ],
 
+    'sphinx_libs': [
+      'libpocketSphinx.a',
+      'libsphinxad.a',
+      'libsphinxBase.a',
+    ],
+
+    'cte_lib_search_path_mac_debug': [
+      '<(coretech_external_path)/build/opencv-2.4.8/lib/Debug',
+      '<(coretech_external_path)/build/opencv-2.4.8/3rdparty/lib/Debug',
+      '<(coretech_external_path)/pocketsphinx/pocketsphinx/generated/mac/DerivedData/Debug',
+    ],
+
+    'cte_lib_search_path_mac_release': [
+      '<(coretech_external_path)/build/opencv-2.4.8/lib/Release',
+      '<(coretech_external_path)/build/opencv-2.4.8/3rdparty/lib/Release',
+      '<(coretech_external_path)/pocketsphinx/pocketsphinx/generated/mac/DerivedData/Release',
+    ],
+
+    'cte_lib_search_path_ios_debug': [
+      '<(coretech_external_path)/build/opencv-ios/multiArchLibs',
+      '<(coretech_external_path)/pocketsphinx/pocketsphinx/generated/ios/DerivedData/Debug-iphoneos',
+    ],
+
+    'cte_lib_search_path_ios_release': [
+      '<(coretech_external_path)/build/opencv-ios/multiArchLibs',
+      '<(coretech_external_path)/pocketsphinx/pocketsphinx/generated/ios/DerivedData/Release-iphoneos',
+    ],
+
     'webots_includes': [
       '<(webots_path)/include/controller/cpp',
     ],
@@ -244,15 +272,24 @@
     },
     'configurations': {
       'Debug': {
+          'conditions': [
+            ['OS=="ios"', {
+              'xcode_settings': {
+                'LIBRARY_SEARCH_PATHS': [ '<@(cte_lib_search_path_ios_debug)', '<(webots_path)/lib/' ],
+              },
+            }],
+            ['OS=="mac"', {
+              'xcode_settings': {
+                'LIBRARY_SEARCH_PATHS': [ '<@(cte_lib_search_path_mac_debug)', '<(webots_path)/lib/' ],
+              },
+            }],
+          ],
           'cflags': ['-O0'],
           'cflags_cc': ['-O0'],
           'xcode_settings': {
             'OTHER_CFLAGS': ['-O0'],
             'OTHER_CPLUSPLUSFLAGS': ['-O0'],
-            'OTHER_LDFLAGS': [
-              '-L<(coretech_external_path)/build/opencv-2.4.8/lib/Debug',
-              '-L<(coretech_external_path)/build/opencv-2.4.8/3rdparty/lib/Debug',
-            ],
+            'OTHER_LDFLAGS': ['<@(linker_flags)'],
            },
           'defines': [
             '_LIBCPP_DEBUG=0',
@@ -260,15 +297,24 @@
           ],
       },
       'Profile': {
+          'conditions': [
+            ['OS=="ios"', {
+              'xcode_settings': {
+                'LIBRARY_SEARCH_PATHS': [ '<@(cte_lib_search_path_ios_release)', '<(webots_path)/lib/' ],
+              },
+            }],
+            ['OS=="mac"', {
+              'xcode_settings': {
+                'LIBRARY_SEARCH_PATHS': [ '<@(cte_lib_search_path_mac_release)', '<(webots_path)/lib/' ],
+              },
+            }],
+          ],
           'cflags': ['-Os'],
           'cflags_cc': ['-Os'],
           'xcode_settings': {
             'OTHER_CFLAGS': ['-Os'],
             'OTHER_CPLUSPLUSFLAGS': ['-Os'],
-            'OTHER_LDFLAGS': [
-              '-L<(coretech_external_path)/build/opencv-2.4.8/lib/Release',
-              '-L<(coretech_external_path)/build/opencv-2.4.8/3rdparty/lib/Release',
-            ],
+            'OTHER_LDFLAGS': ['<@(linker_flags)'],
            },
           'defines': [
             'NDEBUG=1',
@@ -276,15 +322,24 @@
           ],
       },
       'Release': {
+          'conditions': [
+            ['OS=="ios"', {
+              'xcode_settings': {
+                'LIBRARY_SEARCH_PATHS': [ '<@(cte_lib_search_path_ios_release)', '<(webots_path)/lib/' ],
+              },
+            }],
+            ['OS=="mac"', {
+              'xcode_settings': {
+                'LIBRARY_SEARCH_PATHS': [ '<@(cte_lib_search_path_mac_release)', '<(webots_path)/lib/' ],
+              },
+            }],
+          ],
           'cflags': ['-Os'],
           'cflags_cc': ['-Os'],
           'xcode_settings': {
             'OTHER_CFLAGS': ['-Os'],
             'OTHER_CPLUSPLUSFLAGS': ['-Os'],
-            'OTHER_LDFLAGS': [
-              '-L<(coretech_external_path)/build/opencv-2.4.8/lib/Release',
-              '-L<(coretech_external_path)/build/opencv-2.4.8/3rdparty/lib/Release',
-            ],
+            'OTHER_LDFLAGS': ['<@(linker_flags)'],
            },
           'defines': [
             'NDEBUG=1',
@@ -440,11 +495,13 @@
             ],
             'sources': [ '<!@(cat <(ctrlGameEngine_source))' ],
             'libraries': [
-              '<(webots_path)/lib/libCppController.dylib',
+              'libCppController.dylib',
               '$(SDKROOT)/System/Library/Frameworks/Cocoa.framework',
               '$(SDKROOT)/System/Library/Frameworks/AppKit.framework',
               '$(SDKROOT)/System/Library/Frameworks/QTKit.framework',
               '$(SDKROOT)/System/Library/Frameworks/QuartzCore.framework',
+              '$(SDKROOT)/System/Library/Frameworks/OpenAL.framework',
+              '<@(sphinx_libs)',
               '<@(opencv_libs)',
               '<@(face_library_libs)',
             ],
@@ -469,7 +526,7 @@
             ],
             'sources': [ '<!@(cat <(ctrlKeyboard_source))' ],
             'libraries': [
-              '<(webots_path)/lib/libCppController.dylib',
+              'libCppController.dylib',
               '<@(opencv_libs)',
             ],
           }, # end controller Keyboard
@@ -493,11 +550,20 @@
             ],
             'sources': [ '<!@(cat <(ctrlBuildServerTest_source))' ],
             'libraries': [
-              '<(webots_path)/lib/libCppController.dylib',
+              'libCppController.dylib',
               '<@(opencv_libs)',
             ],
           }, # end controller Keyboard
 
+          {
+            'target_name': 'allUnitTests',
+            'type': 'none',
+            'dependencies': [
+              '<(cg-ce_gyp_path):cozmoEngineUnitTest',
+              '<(cg-cti_gyp_path):ctiUnitTest',
+              '<(cg-util_gyp_path):UtilUnitTest',
+            ],
+          },
 
           {
             'target_name': 'webotsControllers',
