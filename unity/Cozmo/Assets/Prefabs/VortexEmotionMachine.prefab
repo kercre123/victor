@@ -59,7 +59,7 @@ MonoBehaviour:
   - stateName: YOUR_TURN
     playAllAnims: 0
     emotionAnims:
-    - animName: ANIM_TEST_SPINNER
+    - animName: YourTurn
       numLoops: 1
   - stateName: SPIN_WHEEL
     playAllAnims: 0
