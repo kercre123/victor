@@ -32,14 +32,14 @@ namespace Cozmo {
     static constexpr Value NominalRightEyeCenX   = 0.75f*static_cast<f32>(WIDTH);
     static constexpr Value NominalEyeCenY        = 0.6f*static_cast<f32>(HEIGHT);
     static constexpr Value EyebrowThickness      = 2.f;
-    static constexpr s32 MinEyeHeightPix = HEIGHT/8;
-    static constexpr s32 MaxEyeHeightPix = 5*HEIGHT/8;
-    static constexpr s32 MinEyeWidthPix  = WIDTH/5;
-    static constexpr s32 MaxEyeWidthPix  = 2*WIDTH/5;
-    static constexpr s32 MaxBrowAngle    = -10; // Degrees (symmtric, also used for -ve angle)
-    static constexpr s32 EyebrowHalfLength = (MaxEyeWidthPix - MinEyeWidthPix)/2;
-    static constexpr s32 MaxFaceAngle = 25;  // Not sure why I can't set this one as constexpr here??
-    
+    static constexpr s32   MinEyeHeightPix       = HEIGHT/8;
+    static constexpr s32   MaxEyeHeightPix       = 5*HEIGHT/8;
+    static constexpr s32   MinEyeWidthPix        = WIDTH/5;
+    static constexpr s32   MaxEyeWidthPix        = 2*WIDTH/5;
+    static constexpr s32   EyebrowHalfLength     = (MaxEyeWidthPix + MinEyeWidthPix)/4; // Half the average eye width
+    static constexpr s32   MaxBrowAngle          = 15; // Degrees (symmtric, also used for -ve angle)
+    static constexpr s32   MaxFaceAngle          = 25; //   "
+
     static const bool ScanlinesAsPostProcess = true;
     
     using Parameter = ProceduralEyeParameter;
@@ -63,13 +63,16 @@ namespace Cozmo {
     Value GetFaceAngle() const;
     
     // Set this face's parameters to values interpolated from two other faces.
-    // When BlendFraction == 0.0, the parameters will be equal to face1's.
-    // When BlendFraction == 1.0, the parameters will be equal to face2's.
-    // TODO: Support other types of interpolation besides simple linear
-    // Note: 0.0 <= BlendFraction <= 1.0!
+    //   When BlendFraction == 0.0, the parameters will be equal to face1's.
+    //   When BlendFraction == 1.0, the parameters will be equal to face2's.
+    //   TODO: Support other types of interpolation besides simple linear
+    //   Note: 0.0 <= BlendFraction <= 1.0!
+    // If usePupilSaccades==true, pupil positions don't interpolate smoothly but
+    //   instead jump when fraction crossed 0.5.
     void Interpolate(const ProceduralFace& face1,
                      const ProceduralFace& face2,
-                     float fraction);
+                     float fraction,
+                     bool usePupilSaccades = true);
     
     // Closes eyes and switches interlacing
     void Blink();

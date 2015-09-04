@@ -169,7 +169,7 @@ namespace Cozmo {
   
   
   void ProceduralFace::Interpolate(const ProceduralFace& face1, const ProceduralFace& face2,
-                                   float blendFraction)
+                                   float blendFraction, bool usePupilSaccades)
   {
     assert(blendFraction >= 0.f && blendFraction <= 1.f);
     
@@ -201,6 +201,12 @@ namespace Cozmo {
           SetParameter(whichEye, param, BlendAngleHelper(face1.GetParameter(whichEye, param),
                                                           face2.GetParameter(whichEye, param),
                                                           blendFraction));
+        } else if(usePupilSaccades && (param == Parameter::PupilCenX || param == Parameter::PupilCenY)) {
+          // Special case: pupils saccade rather than moving slowly. So immediately
+          // jump to new position halfway between the two frames
+          SetParameter(whichEye, param, (blendFraction <= .5f ?
+                                         face1.GetParameter(whichEye, param) :
+                                         face2.GetParameter(whichEye, param)));
         } else {
           // Regular linear interpolation
           SetParameter(whichEye, param, LinearBlendHelper(face1.GetParameter(whichEye, param),

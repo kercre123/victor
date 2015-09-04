@@ -112,6 +112,7 @@ namespace Anki {
     Point<N,T>& operator+= (const Point<N,T> &other);
     Point<N,T>& operator-= (const Point<N,T> &other);
     Point<N,T>& operator*= (const Point<N,T> &other);
+    Point<N,T>& operator/= (const Point<N,T> &other);
     Point<N,T>  operator-() const;
     
     // Comparison

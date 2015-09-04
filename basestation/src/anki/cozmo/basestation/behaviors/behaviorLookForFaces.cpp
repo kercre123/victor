@@ -19,6 +19,8 @@
 #include "anki/cozmo/basestation/keyframe.h"
 #include "anki/cozmo/basestation/faceAnimationManager.h"
 
+#include "anki/common/basestation/math/point_impl.h"
+
 #include "anki/cozmo/shared/cozmoConfig.h"
 
 #include <opencv2/highgui/highgui.hpp>
@@ -268,19 +270,43 @@ namespace Cozmo {
                                            rightEyebrowHeightScale);
           
           const f32 expectedEyeHeight = distanceNorm * _baselineEyeHeight;
-          const f32 eyeHeightFraction = 1.5*(GetEyeHeight(face) - expectedEyeHeight)/expectedEyeHeight;
+          const f32 eyeHeightFraction = 1.25*(GetEyeHeight(face) - expectedEyeHeight)/expectedEyeHeight;
+          
+          for(auto whichEye : {ProceduralFace::WhichEye::Left, ProceduralFace::WhichEye::Right}) {
+            _crntProceduralFace.SetParameter(whichEye, ProceduralFace::Parameter::EyeHeight,
+                                             eyeHeightFraction);
+            _crntProceduralFace.SetParameter(whichEye, ProceduralFace::Parameter::PupilHeight,
+                                             eyeHeightFraction);
+          }
+          // Adjust pupil positions depending on where face is in the image
+          Point2f newPupilPos(face->GetLeftEyeCenter());
+          newPupilPos += face->GetRightEyeCenter();
+          newPupilPos *= 0.5f;
+          
+          Point2f imageHalfSize(_robot.GetCamera().GetCalibration().GetNcols()/2,
+                                _robot.GetCamera().GetCalibration().GetNrows()/2);
+          newPupilPos -= imageHalfSize; // make relative to image center
+          newPupilPos /= imageHalfSize; // scale to be between -1 and 1
+          newPupilPos *= .8f; // magic value to make it more realistic
+          
+          for(auto whichEye : {ProceduralFace::WhichEye::Left, ProceduralFace::WhichEye::Right}) {
+            _crntProceduralFace.SetParameter(whichEye, ProceduralFace::Parameter::EyeHeight,
+                                             eyeHeightFraction);
+            _crntProceduralFace.SetParameter(whichEye, ProceduralFace::Parameter::PupilHeight,
+                                             eyeHeightFraction);
 
-          _crntProceduralFace.SetParameter(ProceduralFace::WhichEye::Left, ProceduralFace::Parameter::EyeHeight,
-                                           eyeHeightFraction);
-          
-          _crntProceduralFace.SetParameter(ProceduralFace::WhichEye::Right, ProceduralFace::Parameter::EyeHeight,
-                                           eyeHeightFraction);
-          
-          _crntProceduralFace.SetParameter(ProceduralFace::WhichEye::Left, ProceduralFace::Parameter::PupilHeight,
-                                           eyeHeightFraction);
-          
-          _crntProceduralFace.SetParameter(ProceduralFace::WhichEye::Right, ProceduralFace::Parameter::PupilHeight,
-                                           eyeHeightFraction);
+            // To get saccade-like movement, only update the pupils if they new position is
+            // different enough
+            Point2f pupilChange(newPupilPos);
+            pupilChange.x() -= _crntProceduralFace.GetParameter(whichEye, ProceduralFace::Parameter::PupilCenX);
+            pupilChange.y() -= _crntProceduralFace.GetParameter(whichEye, ProceduralFace::Parameter::PupilCenY);
+            if(pupilChange.Length() > .15f) { // TODO: Tune this parameter to get nice-looking saccades
+              _crntProceduralFace.SetParameter(whichEye, ProceduralFace::Parameter::PupilCenX,
+                                               -newPupilPos.x());
+              _crntProceduralFace.SetParameter(whichEye, ProceduralFace::Parameter::PupilCenY,
+                                               newPupilPos.y());
+            }
+          }
           
           // If face angle is rotated, mirror the rotation
           _crntProceduralFace.SetFaceAngle(faceAngle.getDegrees()/static_cast<f32>(ProceduralFace::MaxFaceAngle));
