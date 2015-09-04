@@ -16,12 +16,12 @@ namespace AnimationTool
         private TextBox rightTextBox;
 
         public string LeftLabel { get { return leftLabel.Text; } set { leftLabel.Text = value; } }
-        public int LeftValue { get { return leftTrackBar.Value; } }
+        public float LeftValue { get { return leftTrackBar.Value * 0.01f; } }
         public int LeftMinimum { get { return leftTrackBar.Minimum; } set { leftTrackBar.Minimum = value; } }
         public int LeftMaximum { get { return leftTrackBar.Maximum; } set { leftTrackBar.Maximum = value; } }
 
         public string RightLabel { get { return rightLabel.Text; } set { rightLabel.Text = value; } }
-        public int RightValue { get { return rightTrackBar.Value; } }
+        public float RightValue { get { return rightTrackBar.Value * 0.01f; } }
         public int RightMinimum { get { return rightTrackBar.Minimum; } set { rightTrackBar.Minimum = value; } }
         public int RightMaximum { get { return rightTrackBar.Maximum; } set { rightTrackBar.Maximum = value; } }
 
@@ -33,7 +33,7 @@ namespace AnimationTool
         {
             InitializeComponent();
 
-            Changed = false;
+            Changed = true;
         }
 
         private void InitializeComponent()

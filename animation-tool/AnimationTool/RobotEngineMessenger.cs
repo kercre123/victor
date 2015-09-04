@@ -354,6 +354,7 @@ namespace AnimationTool
                 message.DisplayProceduralFace = displayProceduralFace;
                 channel.Send(message);
                 faceForm.Changed = false;
+                Console.WriteLine("called");
             }
         }
     }
