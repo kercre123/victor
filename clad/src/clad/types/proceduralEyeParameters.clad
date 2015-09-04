@@ -8,15 +8,15 @@ namespace Cozmo {
 
 // These are the names of procedural eye parameters we can control on Cozmo's face.
 enum uint_8 ProceduralEyeParameter {
-    BrowAngle=0, // Degrees
-    BrowShiftX,  // From nominal position
-    BrowShiftY,  //    "
+    BrowAngle=0,
+    BrowCenX,
+    BrowCenY,
     EyeHeight,
     EyeWidth,
-    PupilWidthFraction,  // Relative to current eye width
-    PupilHeightFraction, // Relative to current eye height
-    PupilShiftX, // From nominal position
-    PupilShiftY, //   "
+    PupilWidth,
+    PupilHeight,
+    PupilCenX,
+    PupilCenY,   
 
     NumParameters
 }

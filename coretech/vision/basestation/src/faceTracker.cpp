@@ -307,8 +307,22 @@ namespace Vision {
       // Estimating the headpose
       facio::HeadPose headPose;
       _hpe->estimateHP(landmarks, headPose);
-      RotationMatrix3d Rmat;
-      Rmat.get_CvMatx_() = headPose.rot;
+      
+      // Construct a rotation matrix from the cv::Mat from faciometric. First
+      // constructing a SmallSquareMatrix and then constructing an Rmat forces
+      // a renormalization.
+      SmallSquareMatrix<3,f32> Rtemp;
+      Rtemp.get_CvMatx_() = headPose.rot;
+      RotationMatrix3d Rmat(Rtemp);
+      
+      // Set the observed head orientation
+      face.SetHeadOrientation(Rmat.GetAngleAroundZaxis(), Rmat.GetAngleAroundXaxis(), Rmat.GetAngleAroundYaxis());
+      
+      // Set the initial head pose with the same orientation. Later, we will hook
+      // this up to the robot's (historical) camera and then get w.r.t. origin.
+      // We store the head orientation w.r.t. camera above separately so that it
+      // is preserved.
+      Rmat *= RotationMatrix3d(-M_PI_2, X_AXIS_3D());
       Pose3d pose(Rmat, {});
       face.SetHeadPose(pose);
       // TODO: Hook up pose parent to camera?

@@ -152,10 +152,14 @@ namespace Cozmo {
   inline static f32 GetEyeHeight(const Vision::TrackedFace* face)
   {
     RotationMatrix2d R(-face->GetHeadRoll());
-    f32 maxY = std::numeric_limits<f32>::min();
-    f32 minY = std::numeric_limits<f32>::max();
+    
+    f32 avgEyeHeight = 0.f;
+    
     for(auto iFeature : {Vision::TrackedFace::FeatureName::LeftEye, Vision::TrackedFace::FeatureName::RightEye})
     {
+      f32 maxY = std::numeric_limits<f32>::min();
+      f32 minY = std::numeric_limits<f32>::max();
+      
       for(auto point : face->GetFeature(iFeature)) {
         point = R*point;
         if(point.y() < minY) {
@@ -165,12 +169,12 @@ namespace Cozmo {
           maxY = point.y();
         }
       }
+      
+      avgEyeHeight += maxY - minY;
     }
-    if(maxY < minY) {
-      PRINT_NAMED_ERROR("GetEyeHeight.NegativeHeight", "");
-      return 0.f;
-    }
-    return maxY - minY;
+    
+    avgEyeHeight *= 0.5f;
+    return avgEyeHeight;
   }
   
   void BehaviorLookForFaces::UpdateBaselineFace(const Vision::TrackedFace* face)
@@ -239,50 +243,52 @@ namespace Cozmo {
           // If eyebrows have raised/lowered (based on distance from eyes), mimic their position:
           const Face::Feature& leftEyeBrow  = face->GetFeature(Face::FeatureName::LeftEyebrow);
           const Face::Feature& rightEyeBrow = face->GetFeature(Face::FeatureName::RightEyebrow);
-          //const Face::Feature& leftEye      = face->GetFeature(Face::FeatureName::LeftEye);
-          //const Face::Feature& rightEye     = face->GetFeature(Face::FeatureName::RightEye);
         
           const f32 leftEyebrowHeight  = GetAverageHeight(leftEyeBrow, face->GetLeftEyeCenter(), faceAngle);
           const f32 rightEyebrowHeight = GetAverageHeight(rightEyeBrow, face->GetRightEyeCenter(), faceAngle);
           
-          const f32 distanceNorm = 1.f;// face->GetIntraEyeDistance() / _baselineIntraEyeDistance;
+          const f32 distanceNorm =  face->GetIntraEyeDistance() / _baselineIntraEyeDistance;
+          
+          // Get expected height based on intra-eye distance
+          const f32 expectedLeftEyebrowHeight = distanceNorm * _baselineLeftEyebrowHeight;
+          const f32 expectedRightEyebrowHeight = distanceNorm * _baselineRightEyebrowHeight;
+          
+          // Compare measured distance to expected
+          const f32 leftEyebrowHeightScale = (leftEyebrowHeight - expectedLeftEyebrowHeight)/expectedLeftEyebrowHeight;
+          const f32 rightEyebrowHeightScale = (rightEyebrowHeight - expectedRightEyebrowHeight)/expectedRightEyebrowHeight;
           
           // Map current eyebrow heights onto Cozmo's face, based on measured baseline values
-          const f32 distLeftEyeTopToImageTop = static_cast<f32>(ProceduralFace::NominalEyeCenY - _crntProceduralFace.GetParameter(ProceduralFace::WhichEye::Left, ProceduralFace::Parameter::EyeHeight)/2);
           _crntProceduralFace.SetParameter(ProceduralFace::WhichEye::Left,
-                                           ProceduralFace::Parameter::BrowShiftY,
-                                           (_baselineLeftEyebrowHeight-leftEyebrowHeight)/_baselineLeftEyebrowHeight *
-                                           distLeftEyeTopToImageTop * distanceNorm);
+                                           ProceduralFace::Parameter::BrowCenY,
+                                           leftEyebrowHeightScale);
           
-          const f32 distRightEyeTopToImageTop = static_cast<f32>(ProceduralFace::NominalEyeCenY - _crntProceduralFace.GetParameter(ProceduralFace::WhichEye::Left, ProceduralFace::Parameter::EyeHeight)/2);
           _crntProceduralFace.SetParameter(ProceduralFace::WhichEye::Right,
-                                           ProceduralFace::Parameter::BrowShiftY,
-                                           (_baselineRightEyebrowHeight-rightEyebrowHeight)/_baselineRightEyebrowHeight *
-                                           distRightEyeTopToImageTop * distanceNorm);
+                                           ProceduralFace::Parameter::BrowCenY,
+                                           rightEyebrowHeightScale);
           
-          const f32 eyeHeightFraction = GetEyeHeight(face)/_baselineEyeHeight * distanceNorm;
+          const f32 expectedEyeHeight = distanceNorm * _baselineEyeHeight;
+          const f32 eyeHeightFraction = 1.5*(GetEyeHeight(face) - expectedEyeHeight)/expectedEyeHeight;
+
           _crntProceduralFace.SetParameter(ProceduralFace::WhichEye::Left, ProceduralFace::Parameter::EyeHeight,
-                                           static_cast<f32>(ProceduralFace::NominalEyeHeight)*eyeHeightFraction);
+                                           eyeHeightFraction);
           
           _crntProceduralFace.SetParameter(ProceduralFace::WhichEye::Right, ProceduralFace::Parameter::EyeHeight,
-                                           static_cast<f32>(ProceduralFace::NominalEyeHeight)*eyeHeightFraction);
+                                           eyeHeightFraction);
           
-          _crntProceduralFace.SetParameter(ProceduralFace::WhichEye::Left,
-                                           ProceduralFace::Parameter::PupilHeightFraction,
-                                           static_cast<f32>(ProceduralFace::NominalPupilHeightFrac)*eyeHeightFraction);
+          _crntProceduralFace.SetParameter(ProceduralFace::WhichEye::Left, ProceduralFace::Parameter::PupilHeight,
+                                           eyeHeightFraction);
           
-          _crntProceduralFace.SetParameter(ProceduralFace::WhichEye::Right,
-                                           ProceduralFace::Parameter::PupilHeightFraction,
-                                           static_cast<f32>(ProceduralFace::NominalPupilHeightFrac)*eyeHeightFraction);
+          _crntProceduralFace.SetParameter(ProceduralFace::WhichEye::Right, ProceduralFace::Parameter::PupilHeight,
+                                           eyeHeightFraction);
           
           // If face angle is rotated, mirror the rotation
-          _crntProceduralFace.SetFaceAngle(faceAngle.getDegrees());
+          _crntProceduralFace.SetFaceAngle(faceAngle.getDegrees()/static_cast<f32>(ProceduralFace::MaxFaceAngle));
           
           _crntProceduralFace.SetTimeStamp(face->GetTimeStamp());
           _crntProceduralFace.MarkAsSentToRobot(false);
           _robot.SetProceduralFace(_crntProceduralFace);
           
-          PRINT_NAMED_INFO("BehaviorLookForFaces.HandleRobotObservedFace.UpdatedProceduralFace", "");
+          //PRINT_NAMED_INFO("BehaviorLookForFaces.HandleRobotObservedFace.UpdatedProceduralFace", "");
           
         }
         break;

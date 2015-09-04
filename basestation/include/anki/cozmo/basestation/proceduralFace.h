@@ -30,16 +30,15 @@ namespace Cozmo {
     // parameterized at dynamically, but could be if we want)
     static constexpr Value NominalLeftEyeCenX    = 0.25f*static_cast<f32>(WIDTH);
     static constexpr Value NominalRightEyeCenX   = 0.75f*static_cast<f32>(WIDTH);
-    static constexpr Value NominalEyeCenY        = 0.667f*static_cast<f32>(HEIGHT);
-    static constexpr Value NominalEyeHeight      = 0.5f*static_cast<f32>(HEIGHT);
-    static constexpr Value NominalEyebrowHeight  = 0.6f*(NominalEyeCenY - 0.5f*NominalEyeHeight);
-    static constexpr Value NominalEyeWidth       = 0.333f*static_cast<f32>(WIDTH);
-    static constexpr Value EyebrowHalfLength     = 0.5f*static_cast<f32>(NominalEyeWidth);
-    static constexpr Value NominalPupilWidthFrac = 0.33f;
-    static constexpr Value NominalPupilHeightFrac= 0.5f;
+    static constexpr Value NominalEyeCenY        = 0.6f*static_cast<f32>(HEIGHT);
     static constexpr Value EyebrowThickness      = 2.f;
-    
-    static const     Value MaxFaceAngle;  // Not sure why I can't set this one as constexpr here??
+    static constexpr s32 MinEyeHeightPix = HEIGHT/8;
+    static constexpr s32 MaxEyeHeightPix = 5*HEIGHT/8;
+    static constexpr s32 MinEyeWidthPix  = WIDTH/5;
+    static constexpr s32 MaxEyeWidthPix  = 2*WIDTH/5;
+    static constexpr s32 MaxBrowAngle    = -10; // Degrees (symmtric, also used for -ve angle)
+    static constexpr s32 EyebrowHalfLength = (MaxEyeWidthPix - MinEyeWidthPix)/2;
+    static constexpr s32 MaxFaceAngle = 25;  // Not sure why I can't set this one as constexpr here??
     
     static const bool ScanlinesAsPostProcess = true;
     
@@ -59,8 +58,8 @@ namespace Cozmo {
     void  SetParameter(WhichEye whichEye, Parameter param, Value value);
     Value GetParameter(WhichEye whichEye, Parameter param) const;
     
-    // Get/Set the overall angle of the whole face
-    void SetFaceAngle(Value angle_deg);
+    // Get/Set the overall angle of the whole face (still using parameter on interval [-1,1]
+    void SetFaceAngle(Value value);
     Value GetFaceAngle() const;
     
     // Set this face's parameters to values interpolated from two other faces.
@@ -72,7 +71,8 @@ namespace Cozmo {
                      const ProceduralFace& face2,
                      float fraction);
     
-    void Blink(const ProceduralFace& face, float fraction);
+    // Closes eyes and switches interlacing
+    void Blink();
     
     // Actually draw the face with the current parameters
     cv::Mat_<u8> GetFace() const;
@@ -85,19 +85,22 @@ namespace Cozmo {
     TimeStamp_t GetTimeStamp() const;
     void SetTimeStamp(TimeStamp_t t);
     
-  private:
+    // To avoid burn-in this switches which scanlines to use (odd or even), e.g.
+    // to be called each time we blink.
+    void SwitchInterlacing();
     
-    using ValueLimits = std::pair<Value,Value>;
-    static const ValueLimits& GetLimits(Parameter param);
+  private:
+
+    static const cv::Rect imgRect;
     
     void DrawEye(WhichEye whichEye, cv::Mat_<u8>& faceImg) const;
-    void DrawEyeBrow(WhichEye whichEye, cv::Mat_<u8>& faceImg) const;
     
     // Container for the parameters for both eyes
     std::array<std::array<Value, static_cast<size_t>(Parameter::NumParameters)>, 2> _eyeParams;
     
-    Value _faceAngle_deg;
+    Value _faceAngle;
     
+    u8   _firstScanLine;
     bool _sentToRobot;
     TimeStamp_t _timestamp;
   }; // class ProceduralFace
@@ -107,8 +110,9 @@ namespace Cozmo {
   
   inline void ProceduralFace::SetParameter(WhichEye whichEye, Parameter param, Value value)
   {
-    const ValueLimits& lims = GetLimits(param);
-    _eyeParams[whichEye][static_cast<size_t>(param)] = std::max(lims.first, std::min(lims.second, value));
+    //const ValueLimits& lims = GetLimits(param);
+    //_eyeParams[whichEye][static_cast<size_t>(param)] = std::max(lims.first, std::min(lims.second, value));
+    _eyeParams[whichEye][static_cast<size_t>(param)] = std::max(-1.f, std::min(1.f, value));
   }
   
   inline ProceduralFace::Value ProceduralFace::GetParameter(WhichEye whichEye, Parameter param) const
@@ -117,7 +121,11 @@ namespace Cozmo {
   }
   
   inline ProceduralFace::Value ProceduralFace::GetFaceAngle() const {
-    return _faceAngle_deg;
+    return _faceAngle;
+  }
+  
+  inline void ProceduralFace::SetFaceAngle(Value angle) {
+    _faceAngle = std::max(-1.f, std::min(1.f, angle));
   }
   
   inline bool ProceduralFace::HasBeenSentToRobot() const {
@@ -135,6 +143,11 @@ namespace Cozmo {
   inline void ProceduralFace::SetTimeStamp(TimeStamp_t t) {
     _timestamp = t;
   }
+  
+  inline void ProceduralFace::SwitchInterlacing() {
+    _firstScanLine = 1 - _firstScanLine;
+  }
+  
   
 } // namespace Cozmo
 } // namespace Anki
