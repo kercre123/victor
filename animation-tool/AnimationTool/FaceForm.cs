@@ -34,6 +34,29 @@ namespace AnimationTool
         public KeyValuePair<int, int> PupilY { get { return new KeyValuePair<int, int>(pupilY.LeftValue, pupilY.RightValue); } }
         public KeyValuePair<int, int> PupilSize { get { return new KeyValuePair<int, int>(pupilSize.LeftValue, pupilSize.RightValue); } }
         public KeyValuePair<int, int> BrowY { get { return new KeyValuePair<int, int>(browY.LeftValue, browY.RightValue); } }
+        public KeyValuePair<int, int> BrowAngle { get { return new KeyValuePair<int, int>(browAngle.LeftValue, browAngle.RightValue); } }
+        public int FaceAngle { get { return face.RightValue; } }
+        public int FaceY { get { return face.LeftValue; } }
+
+        public bool Changed
+        {
+            get
+            {
+                return browLength.Changed || eyeHeight.Changed || eyeWidth.Changed || eyeY.Changed || pupilX.Changed || pupilY.Changed || pupilSize.Changed || browY.Changed;
+            }
+
+            set
+            {
+                browLength.Changed = value;
+                eyeHeight.Changed = value;
+                eyeWidth.Changed = value;
+                eyeY.Changed = value;
+                pupilX.Changed = value;
+                pupilY.Changed = value;
+                pupilSize.Changed = value;
+                browY.Changed = value;
+            }
+        }
 
         public FaceForm()
         {

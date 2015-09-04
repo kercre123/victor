@@ -3,6 +3,7 @@ using System.IO;
 using System.Net;
 using System.Threading;
 using Anki.Cozmo.ExternalInterface;
+using Anki.Cozmo;
 
 namespace AnimationTool
 {
@@ -283,10 +284,7 @@ namespace AnimationTool
 
         private void RaiseConnectionTextUpdate(string newDisconnectionText)
         {
-            if (channel == null)
-            {
-                return;
-            }
+            if (channel == null) return;
 
             string newConnectionText;
 
@@ -328,6 +326,34 @@ namespace AnimationTool
                 {
                     callback(ConnectionText);
                 }
+            }
+        }
+
+        public void AnimateFace(FaceForm faceForm)
+        {
+            if (faceForm.Changed && channel.IsConnected)
+            {
+                DisplayProceduralFace displayProceduralFace = new DisplayProceduralFace();
+                displayProceduralFace.leftEye = new float[(int)ProceduralEyeParameter.NumParameters];
+                displayProceduralFace.rightEye = new float[(int)ProceduralEyeParameter.NumParameters];
+
+                displayProceduralFace.faceAngle = faceForm.FaceAngle;
+                displayProceduralFace.leftEye[(int)ProceduralEyeParameter.BrowAngle] = faceForm.BrowAngle.Key;
+                displayProceduralFace.rightEye[(int)ProceduralEyeParameter.BrowAngle] = faceForm.BrowAngle.Value;
+                displayProceduralFace.leftEye[(int)ProceduralEyeParameter.BrowShiftY] = faceForm.BrowY.Key;
+                displayProceduralFace.rightEye[(int)ProceduralEyeParameter.BrowShiftY] = faceForm.BrowY.Value;
+                displayProceduralFace.leftEye[(int)ProceduralEyeParameter.EyeHeight] = faceForm.EyeHeight.Key;
+                displayProceduralFace.rightEye[(int)ProceduralEyeParameter.EyeHeight] = faceForm.EyeHeight.Value;
+                displayProceduralFace.leftEye[(int)ProceduralEyeParameter.EyeWidth] = faceForm.EyeWidth.Key;
+                displayProceduralFace.rightEye[(int)ProceduralEyeParameter.EyeHeight] = faceForm.EyeWidth.Value;
+                displayProceduralFace.leftEye[(int)ProceduralEyeParameter.PupilHeightFraction] = faceForm.PupilY.Key;
+                displayProceduralFace.rightEye[(int)ProceduralEyeParameter.PupilHeightFraction] = faceForm.PupilY.Value;
+                displayProceduralFace.leftEye[(int)ProceduralEyeParameter.PupilWidthFraction] = faceForm.PupilX.Key;
+                displayProceduralFace.rightEye[(int)ProceduralEyeParameter.PupilWidthFraction] = faceForm.PupilX.Value;
+
+                message.DisplayProceduralFace = displayProceduralFace;
+                channel.Send(message);
+                faceForm.Changed = false;
             }
         }
     }

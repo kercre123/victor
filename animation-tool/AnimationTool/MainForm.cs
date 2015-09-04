@@ -96,6 +96,7 @@ namespace AnimationTool
             FormClosing += (unused1, unused2) => robotEngineMessenger.Stop();
             Application.ApplicationExit += (unused1, unused2) => robotEngineMessenger.Stop();
             Application.Idle += UpdateConnectionText;
+            Application.Idle += FaceAnimation;
             Resize += MainForm_Resize;
 
             Sequencer.AddDataPoint.ChangeDuration += ChangeDuration;
@@ -437,6 +438,11 @@ namespace AnimationTool
         private void UpdateConnectionText(object o, EventArgs e)
         {
             connectionToolStripMenuItem.Text = robotEngineMessenger.ConnectionText;
+        }
+
+        private void FaceAnimation(object o, EventArgs e)
+        {
+            robotEngineMessenger.AnimateFace(faceForm);
         }
 
         private void ChangeConnectionText(string connectionText)

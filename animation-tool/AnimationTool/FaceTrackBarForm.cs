@@ -27,9 +27,13 @@ namespace AnimationTool
 
         public bool CheckBoxVisible { get { return checkBox.Visible; } set { checkBox.Visible = value; } }
 
+        public bool Changed = false;
+
         public FaceTrackBarForm()
         {
             InitializeComponent();
+
+            Changed = false;
         }
 
         private void InitializeComponent()
@@ -148,6 +152,8 @@ namespace AnimationTool
                 {
                     rightTextBox.Text = leftTextBox.Text;
                 }
+
+                Changed = true;
             }
         }
 
@@ -161,6 +167,8 @@ namespace AnimationTool
                 {
                     leftTextBox.Text = rightTextBox.Text;
                 }
+
+                Changed = true;
             }
         }
 
@@ -176,6 +184,8 @@ namespace AnimationTool
                     {
                         rightTrackBar.Value = leftTrackBar.Value;
                     }
+
+                    Changed = true;
                 }
             }
             catch (Exception) { }
@@ -193,6 +203,8 @@ namespace AnimationTool
                     {
                         leftTrackBar.Value = rightTrackBar.Value;
                     }
+
+                    Changed = true;
                 }
             }
             catch (Exception) { }
