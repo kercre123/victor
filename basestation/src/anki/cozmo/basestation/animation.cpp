@@ -57,13 +57,25 @@ namespace Cozmo {
   void Animation::Track<FRAME_TYPE>::MoveToNextKeyFrame()
   {
     if(_frameIter->IsLive()) {
-      // Live frames get removed from the track once played
-      _frameIter = _frames.erase(_frameIter);
-    } else {
-      // For canned frames, we just move to the next one in the track
-      ++_frameIter;
+      // Now that we've buffered this frame, add it to the list of frames we
+      // can delete next time it's safe (i.e. next time the send buffer is
+      // empty, meaning we've sent out the message it contains)
+      _liveFramesToClear.push(_frameIter);
+    }
+
+    ++_frameIter;
+  }
+  
+  template<typename FRAME_TYPE>
+  void Animation::Track<FRAME_TYPE>::ClearPlayedLiveFrames()
+  {
+    // If there are any live frames to clear, do so now:
+    while(!_liveFramesToClear.empty()) {
+      _frames.erase(_liveFramesToClear.front()); // Erase the frame
+      _liveFramesToClear.pop(); // Remove it from the list to erase
     }
   }
+  
   
   template<typename FRAME_TYPE>
   RobotMessage* Animation::Track<FRAME_TYPE>::GetCurrentStreamingMessage(TimeStamp_t startTime_ms,
@@ -394,6 +406,10 @@ _blinkTrack.__METHOD__()
     assert(_numBytesToSend >= 0);
     assert(_sendBuffer.empty());
     
+    // If there's nothing waiting to go out, we are safe to clean out Live frames
+    // that have already been seen
+    ALL_TRACKS(ClearPlayedLiveFrames, ;);
+    
     return RESULT_OK;
   }
   
@@ -580,7 +596,6 @@ _blinkTrack.__METHOD__()
       }
     }
 #   endif
-
     
     // Send an end-of-animation keyframe when done
     if(AllTracksBuffered() && _sendBuffer.empty() && !_endOfAnimationSent)

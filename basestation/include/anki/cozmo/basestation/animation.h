@@ -25,6 +25,7 @@
 #include "anki/cozmo/basestation/proceduralFace.h"
 
 #include <list>
+#include <queue>
 
 namespace Anki {
   namespace Cozmo {
@@ -88,10 +89,15 @@ namespace Anki {
 
         void Clear() { _frames.clear(); _frameIter = _frames.end(); }
 
+        void ClearPlayedLiveFrames();
+        
       private:
         using FrameList = std::list<FRAME_TYPE>;
         FrameList                    _frames;
         typename FrameList::iterator _frameIter;
+        
+        std::queue<typename FrameList::iterator> _liveFramesToClear;
+        
       }; // class Animation::Track
 
       // Name of this animation

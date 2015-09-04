@@ -30,6 +30,7 @@ namespace Cozmo {
   : IBehavior(robot, config)
   , _currentState(State::LOOKING_AROUND)
   , _trackingTimeout_sec(3.f)
+  , _isAnimating(false)
   {
     _name = "LookForFaces";
 
@@ -288,6 +289,23 @@ namespace Cozmo {
           _crntProceduralFace.MarkAsSentToRobot(false);
           _robot.SetProceduralFace(_crntProceduralFace);
           
+          if(!_isAnimating) {
+            Pose3d headWrtRobot;
+            if(false == face->GetHeadPose().GetWithRespectTo(_robot.GetPose(), headWrtRobot)) {
+              PRINT_NAMED_ERROR("BehaviorLookForFaces.HandleRobotObservedFace.PoseWrtFail","");
+            } else if(headWrtRobot.GetTranslation().Length() < 300.f) {
+              // The head is very close (scary!). Move backward along the line from the
+              // robot to the head.
+              PRINT_NAMED_INFO("BehaviorLookForFaces.HandleRobotObservedFace.Shocked",
+                               "Head is %.1fmm away: playing shocked anim.",
+                               headWrtRobot.GetTranslation().Length());
+              PlayAnimationAction* animAction = new PlayAnimationAction("shocked");
+              _animationActionTag = animAction->GetTag();
+              _robot.GetActionList().QueueActionNow(IBehavior::sActionSlot, animAction);
+              _isAnimating = true;
+            }
+          }
+          
           //PRINT_NAMED_INFO("BehaviorLookForFaces.HandleRobotObservedFace.UpdatedProceduralFace", "");
           
         }
@@ -320,6 +338,12 @@ namespace Cozmo {
                          "Switching back to looking around.");
         _currentState = State::LOOKING_AROUND;
       }
+    }
+    
+    else if(msg.actionType == RobotActionType::PLAY_ANIMATION && msg.idTag == _animationActionTag)
+    {
+      _robot.SetProceduralFace(_crntProceduralFace);
+      _isAnimating = false;
     }
   }
 } // namespace Cozmo
