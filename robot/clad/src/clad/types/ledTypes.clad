@@ -25,7 +25,8 @@ enum uint_32 LEDColor {
   LED_BLUE =  0x0000ff,
   LED_PURPLE= 0xff00ff,
   LED_CYAN =  0x00ffff,
-  LED_WHITE = 0xffffff
+  LED_WHITE = 0xffffff,
+  LED_IR    = 0xff000000,
 }
  
 enum uint_8 LEDState {
@@ -44,7 +45,8 @@ structure LightState
   uint_32  transitionOnPeriod_ms,
   uint_32  transitionOffPeriod_ms,
   uint_32  nextSwitchTime,
-  LEDState state
+  LEDState state,
+  uint_8   PADDING[3],
 }
 
 

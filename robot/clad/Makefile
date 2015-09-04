@@ -10,7 +10,7 @@ CLAD_CPPLITE=$(CLAD_EMITTER_DIR)/CPPLite_emitter.py
 CLAD_C=$(CLAD_EMITTER_DIR)/C_emitter.py
 CLAD_CSHARP=$(CLAD_EMITTER_DIR)/CSharp_emitter.py
 CLAD_CPP_DECL=$(CLAD_EMITTER_DIR)/specialized/cozmo_CPP_declarations_emitter.py
-CLAD_CPP_SWITCH=$(CLAD_EMITTER_DIR)/specialized/cozmo_CPP_switch_emitter.py
+CLAD_CPP_SWITCH=$(CLAD_EMITTER_DIR)/specialized/cozmo_CPPLite_switch_emitter.py
 INPUT_DIR=./src/
 OUTPUT_DIR:=../generated/clad/
 OUTPUT_DIR_CSHARP=../generated/clad/unity/
@@ -26,8 +26,8 @@ OUTPUT_FILES=$(OUTPUT_H_AND_CPP)
 vpath %.clad $(INPUT_DIR)
 vpath %.h $(OUTPUT_DIR)/robot/
 vpath %.c $(OUTPUT_DIR)/robot/
-vpath %.h $(OUTPUT_DIR)/engine/
-vpath %.cpp $(OUTPUT_DIR)/engine/
+vpath %.h $(OUTPUT_DIR)/robot/
+vpath %.cpp $(OUTPUT_DIR)/robot/
 vpath %.cs $(OUTPUT_DIR_CSHARP)
 
 .PHONY: show clean
@@ -41,14 +41,14 @@ cpp: $(OUTPUT_H_AND_CPP)
 c: $(OUTPUT_H_AND_C)
 
 %.h %.cpp : %.clad $(CLAD_DEPENDENCIES) $(CLAD_CPPLITE) $(CLAD_CPP_DECL) $(CLAD_CPP_SWITCH)
-	#mkdir -p $(OUTPUT_DIR)/engine/$(dir $<)
-	if test -f $(OUTPUT_DIR)engine/$*.h; then chmod -f 777 $(OUTPUT_DIR)engine/$*.h; fi
-	if test -f $(OUTPUT_DIR)engine/$*.cpp; then chmod -f 777 $(OUTPUT_DIR)engine/$*.cpp; fi
-	$(CLAD_CPPLITE)    -C $(INPUT_DIR) -o $(OUTPUT_DIR)/engine/ $*.clad
-	$(CLAD_CPP_DECL)   -C $(INPUT_DIR) -I $(INCLUDE_DIRS) -o $(OUTPUT_DIR)/engine/ $*.clad
-	$(CLAD_CPP_SWITCH) -C $(INPUT_DIR) -I $(INCLUDE_DIRS) -o $(OUTPUT_DIR)/engine/ $*.clad
-	chmod -f 555 $(OUTPUT_DIR)engine/$*.h
-	chmod -f 555 $(OUTPUT_DIR)engine/$*.cpp
+	#mkdir -p $(OUTPUT_DIR)/robot/$(dir $<)
+	if test -f $(OUTPUT_DIR)robot/$*.h; then chmod -f 777 $(OUTPUT_DIR)robot/$*.h; fi
+	if test -f $(OUTPUT_DIR)robot/$*.cpp; then chmod -f 777 $(OUTPUT_DIR)robot/$*.cpp; fi
+	$(CLAD_CPPLITE)    -C $(INPUT_DIR) -o $(OUTPUT_DIR)/robot/ $*.clad
+	$(CLAD_CPP_DECL)   -C $(INPUT_DIR) -I $(INCLUDE_DIRS) -o $(OUTPUT_DIR)/robot/ $*.clad
+	$(CLAD_CPP_SWITCH) -C $(INPUT_DIR) -I $(INCLUDE_DIRS) -o $(OUTPUT_DIR)/robot/ $*.clad
+	chmod -f 555 $(OUTPUT_DIR)robot/$*.h
+	chmod -f 555 $(OUTPUT_DIR)robot/$*.cpp
 
 %.h %.c : %.clad $(CLAD_DEPENDENCIES) $(CLAD_C)
 	#mkdir -p $(OUTPUT_DIR)/robot/$(dir $<)

@@ -40,7 +40,7 @@
 #include "anki/vision/CameraSettings.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoTypes.h"
-#include "anki/cozmo/shared/ledTypes.h"
+#include "clad/types/ledTypes.h"
 
 // Set to 0 if you want to read printf output in a terminal and you're not
 // using UART as radio. The radio is effectively disabled in this case.
