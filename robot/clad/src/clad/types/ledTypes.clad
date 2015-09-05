@@ -1,4 +1,4 @@
-/** Flags for different things the robot could be carrying..
+/** Types and structures for controlling LEDs on the robot and accessories
  */
  
 namespace Anki {

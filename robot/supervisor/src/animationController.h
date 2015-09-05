@@ -32,16 +32,16 @@ namespace Anki {
       Result Init();
 
       // Buffer up a new KeyFrame for playing, using a KeyFrame message
-      Result BufferKeyFrame(const Messages::AnimKeyFrame_HeadAngle&      msg);
-      Result BufferKeyFrame(const Messages::AnimKeyFrame_LiftHeight&     msg);
-      Result BufferKeyFrame(const Messages::AnimKeyFrame_AudioSample&    msg);
-      Result BufferKeyFrame(const Messages::AnimKeyFrame_AudioSilence&   msg);
-      Result BufferKeyFrame(const Messages::AnimKeyFrame_FaceImage&      msg);
-      Result BufferKeyFrame(const Messages::AnimKeyFrame_FacePosition&   msg);
-      Result BufferKeyFrame(const Messages::AnimKeyFrame_Blink&          msg);
-      Result BufferKeyFrame(const Messages::AnimKeyFrame_BackpackLights& msg);
-      Result BufferKeyFrame(const Messages::AnimKeyFrame_BodyMotion&     msg);
-      Result BufferKeyFrame(const Messages::AnimKeyFrame_EndOfAnimation& msg);
+      Result BufferKeyFrame(const AnimKeyFrame::HeadAngle&      msg);
+      Result BufferKeyFrame(const AnimKeyFrame::LiftHeight&     msg);
+      Result BufferKeyFrame(const AnimKeyFrame::AudioSample&    msg);
+      Result BufferKeyFrame(const AnimKeyFrame::AudioSilence&   msg);
+      Result BufferKeyFrame(const AnimKeyFrame::FaceImage&      msg);
+      Result BufferKeyFrame(const AnimKeyFrame::FacePosition&   msg);
+      Result BufferKeyFrame(const AnimKeyFrame::Blink&          msg);
+      Result BufferKeyFrame(const AnimKeyFrame::BackpackLights& msg);
+      Result BufferKeyFrame(const AnimKeyFrame::BodyMotion&     msg);
+      Result BufferKeyFrame(const AnimKeyFrame::EndOfAnimation& msg);
 
       // Plays any buffered keyframes available, if enough of a pre-roll is
       // buffered up or we've received all the keyframes for the animation

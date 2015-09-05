@@ -8,6 +8,7 @@
 #include "clad/types/activeObjectTypes.clad"
 #include "clad/types/rtipTraces.clad"
 #include "clad/types/imageTypes.clad"
+#include "clad/types/dockingSignals.clad"
 
 namespace Anki {
 namespace Cozmo {
@@ -35,12 +36,6 @@ message MainCycleTimeError
   uint_32 avgMainTooLongTime,
 }
 
-message GoalPose
-{
-  RobotPose pose,
-  bool followingMarkerNormal, 
-}
-
 message DataDump
 {
   uint_32 id,
@@ -56,32 +51,28 @@ message PrintText
   string text,
 }
 
-message AnimationState {
+message AnimationState
+{
   uint_32 timestamp,
   int_32  numAnimBytesPlayed,
   RobotStatusFlag status, // RobotStatusFlag packs as a uint_16
 }
 
-// ----- Active object messages ------
-
-message ActiveObjectMoved
+message CameraCalibration
 {
-  uint_32     objectID,
-  ActiveAccel accel,
-  UpAxis      upAxis
+  float_32 focalLength_x,
+  float_32 focalLength_y,
+  float_32 center_x,
+  float_32 center_y,
+  float_32 skew,
+  uint_16  nrows,
+  uint_16  ncols,
+  bool     isPhysicalRobots,
 }
 
-message ActiveObjectStoppedMoving
+message RobotAvailable
 {
-  uint_32 objectID,
-  UpAxis  upAxis,
-  bool    rolled
-}
-
-message ActiveObjectTapped
-{
-  uint_32 objectID,
-  uint_8  numTaps,
+  uint_32 robotID,
 }
 
 /// *************** Overall message pipe ******************************* ///
@@ -92,20 +83,28 @@ message ActiveObjectTapped
  */
 union RobotToEngine {
   // From RTIP 0x00 to 0x7F
-  RobotState                 state               = 0x00,
-  PrintTraceInt              traceInt            = 0x01,
-  PrintTraceDouble           traceDbl            = 0x02,
-  MainCycleTimeError         mainCycleTimeError  = 0x03,
-  GoalPose                   goalPose            = 0x04,
-  ActiveObjectMoved          activeObjectMoved   = 0x05,
-  ActiveObjectStoppedMoving  activeObjectStopped = 0x06,
-  ActiveObjectTapped         activeObjectTapped  = 0x07,
-  DataDump                   dataDump            = 0x08,
+  RobotState                 state                  = 0x00,
+  PrintTraceInt              traceInt               = 0x01,
+  PrintTraceDouble           traceDbl               = 0x02,
+  MainCycleTimeError         mainCycleTimeError     = 0x03,
+  GoalPose                   goalPose               = 0x04,
+  ActiveObjectMoved          activeObjectMoved      = 0x05,
+  ActiveObjectStoppedMoving  activeObjectStopped    = 0x06,
+  ActiveObjectTapped         activeObjectTapped     = 0x07,
+  DataDump                   dataDump               = 0x08,
+  BlockPickedUp              blockPickedUp          = 0x09,
+  BlockPlaced                blockPlaced            = 0x0A,
+  RampTraverseStart          rampTraverseStarted    = 0x0B,
+  RampTraverseComplete       rampTraverseCompleted  = 0x0C,
+  BridgeTraverseStart        bridgeTraverseStarted  = 0x0D,
+  BridgeTraverseComplete     bridgeTraverseCompleted= 0x0E,
   
   // From WiFi 0x80 to 0xFE
-  AnimationState             animState           = 0x80,
-  PrintText                  printText           = 0x81,
-  ImageChunk                 image               = 0x82,
+  AnimationState             animState              = 0x80,
+  PrintText                  printText              = 0x81,
+  ImageChunk                 image                  = 0x82,
+  CameraCalibration          cameraCalibration      = 0x83,
+  RobotAvailable             robotAvailable         = 0x84,
 }
 
 

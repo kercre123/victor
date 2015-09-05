@@ -7,19 +7,18 @@ namespace Anki {
 namespace Cozmo {
 
 enum uint_16 RobotStatusFlag {
-    Nothing            = 0x00000000,
-    Moving             = 0x00000001,  // Head, lift, or wheels
-    CarryingBlock      = 0x00000002,
-    PickingOrPlacing   = 0x00000004,
-    PickedUp           = 0x00000008,
-    ProxForwardBlocked = 0x00000010,
-    ProxSideBlocked    = 0x00000020,
-    Animating          = 0x00000040,
-    PerformingAction   = 0x00000080,
-    LiftInPos          = 0x00000100,
-    HeadInPos          = 0x00000200,
-    AnimBufferFull     = 0x00000400,
-    AnimatingIdle      = 0x00000800
+    IS_MOVING               = 0x00000001,  // Head, lift, or wheels
+    IS_CARRYING_BLOCK       = 0x00000002,
+    IS_PICKING_OR_PLACING   = 0x00000004,
+    IS_PICKED_UP            = 0x00000008,
+    IS_PROX_FORWARD_BLOCKED = 0x00000010,
+    IS_PROX_SIDE_BLOCKED    = 0x00000020,
+    IS_ANIMATING            = 0x00000040,
+    IS_PERFORMING_ACTION    = 0x00000080,
+    LIFT_IN_POS             = 0x00000100,
+    HEAD_IN_POS             = 0x00000200,
+    IS_ANIM_BUFFER_FULL     = 0x00000400,
+    IS_ANIMATING_IDLE       = 0x00000800
 }
 
 enum uint_8 DockAction
@@ -50,7 +49,7 @@ structure RobotPose
   float_32 y,
   float_32 z,
   float_32 angle,
-  float_32 pitch,
+  float_32 pitch_angle,
 }
  
 structure RobotState
@@ -62,6 +61,7 @@ structure RobotState
   float_32 rwheel_speed_mmps,
   float_32 headAngle,
   float_32 liftAngle,
+  float_32 liftHeight,
   float_32 rawGyroZ,
   float_32 rawAccelY,
   RobotStatusFlag status, // RobotStatusFlag packs as a uint_16

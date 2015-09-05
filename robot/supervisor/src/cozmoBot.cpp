@@ -8,7 +8,6 @@
 #include "imuFilter.h"
 #include "pickAndPlaceController.h"
 #include "dockingController.h"
-#include "eyeController.h"
 #include "headController.h"
 #include "liftController.h"
 #include "testModeController.h"
@@ -160,10 +159,6 @@ namespace Anki {
         lastResult = PathFollower::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
                                            "Robot::Init()", "PathFollower System init failed.\n");
-
-        lastResult = EyeController::Init();
-        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
-                                           "Robot::Init()", "EyeController init failed.\n");
 
         lastResult = BackpackLightController::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
@@ -327,7 +322,6 @@ namespace Anki {
           AnimationController::Clear();
         }
         MARK_NEXT_TIME_PROFILE(CozmoBot, EYEHEADLIFT);
-        EyeController::Update(); 
         HeadController::Update();
         LiftController::Update();
 
@@ -354,10 +348,10 @@ namespace Anki {
             if(MotorCalibrationUpdate()) {
               // Once initialization is done, broadcast a message that this robot
               // is ready to go
-              Messages::RobotAvailable msg;
+              RobotInterface::RobotAvailable msg;
               msg.robotID = HAL::GetIDCard()->esn;
               PRINT("Robot %d broadcasting availability message.\n", msg.robotID);
-              HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::RobotAvailable), &msg);
+              RobotInterface::SendMessage(msg);
 
               // Start test mode
               if (DEFAULT_TEST_MODE != TM_NONE) {
@@ -441,13 +435,13 @@ namespace Anki {
         // Report main cycle time error
         if ((mainTooLateCnt_ > 0 || mainTooLongCnt_ > 0) &&
             (cycleEndTime - lastMainCycleTimeErrorReportTime_ > MAIN_CYCLE_ERROR_REPORTING_PERIOD_USEC)) {
-          Messages::MainCycleTimeError m;
+          RobotInterface::MainCycleTimeError m;
           m.numMainTooLateErrors = mainTooLateCnt_;
           m.avgMainTooLateTime = avgMainTooLateTime_;
           m.numMainTooLongErrors = mainTooLongCnt_;
           m.avgMainTooLongTime = avgMainTooLongTime_;
 
-          HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::MainCycleTimeError), &m);
+          RobotInterface::SendMessage(m);
 
           mainTooLateCnt_ = 0;
           avgMainTooLateTime_ = 0;

@@ -22,6 +22,7 @@
 #include "anki/vision/MarkerCodeDefinitions.h"
 #include "anki/common/robot/geometry_declarations.h"
 #include "anki/cozmo/shared/cozmoTypes.h"
+#include "clad/types/dockingSignals.h"
 
 namespace Anki {
   namespace Cozmo {
@@ -62,12 +63,12 @@ namespace Anki {
       bool IsCarryingBlock();
       bool DidLastActionSucceed();
 
-      void SetCarryState(CarryState_t state);
-      CarryState_t GetCarryState();
+      void SetCarryState(CarryState state);
+      CarryState GetCarryState();
       
       // Starts the docking process, relying on the relative pose of the marker to be
       // transmitted from cozmo-engine immediately after calling this.
-      void DockToBlock(const bool useManualSpeed, const DockAction_t action);
+      void DockToBlock(const bool useManualSpeed, const DockAction action);
        
       // Places block on ground and backs out.
       void PlaceOnGround(const f32 rel_x, const f32 rel_y, const f32 rel_angle, const bool useManualSpeed);

@@ -7,7 +7,6 @@ namespace Cozmo {
 
 enum uint_8 ImageResolution
 {
-  ImageEncodingNone = 0,
   VerificationSnapshot, // 16 x 16
   QQQQVGA,   // 40 x 30
   QQQVGA,    // 80 x 60
@@ -27,31 +26,37 @@ enum uint_8 ImageResolution
 enum uint_8 ImageEncoding
 {
   // Image encodings pack into high nibble 
-  RawGray, // no compression
-  RawRGB, // no compression, just [RGBRGBRG...]
-  YUYV,
-  BAYER,
-  JPEGGray,
-  JPEGColor,
-  JPEGColorHalfWidth,
-  JPEGMinimizedGray,  // Minimized grayscale JPEG - no header, no footer, no byte stuffing
-  JPEGMinimizedColor, // Minimized grayscale JPEG - no header, no footer, no byte stuffing - with added color data
+  IE_None,
+  IE_RawGray, // no compression
+  IE_RawRGB, // no compression, just [RGBRGBRG...]
+  IE_YUYV,
+  IE_BAYER,
+  IE_JPEGGray,
+  IE_JPEGColor,
+  IE_JPEGColorHalfWidth,
+  IE_JPEGMinimizedGray,  // Minimized grayscale JPEG - no header, no footer, no byte stuffing
+  IE_JPEGMinimizedColor, // Minimized grayscale JPEG - no header, no footer, no byte stuffing - with added color data
 }
 
 enum uint_8 ImageSendMode {
-    Off,
-    Stream,
-    SingleShot
+    ISM_OFF,
+    ISM_STREAM,
+    ISM_SINGLE_SHOT,
+}
+
+enum uint_32 ImageConstants
+{
+  IMAGE_CHUNK_SIZE = 1200
 }
 
 message ImageChunk {
-  uint_32 timestamp,
+  uint_32 frameTimeStamp,
   uint_32 imageId,
   ImageEncoding imageEncoding,
   ImageResolution resolution,
   uint_8 imageChunkCount,
   uint_8 chunkId,
-  uint_8 data[uint_16:1200],
+  uint_8 data[uint_16:1200], // ^ IMAGE_CHUNK_SIZE above
 }
 
 } // namespace Cozmo

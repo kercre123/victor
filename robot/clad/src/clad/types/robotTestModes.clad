@@ -61,30 +61,30 @@ enum uint_8 TestMode {
 }
 
 enum uint_8 DriveTestFlags {
-    EnableDirectHalTest = 0x01,    // When enabled, speed parameter (p3) is interpretted as a percentage power value
-    EnableCycleSpeedsTest = 0x02,  // When enabled, cycles through different motor power values going up by powerPercentStep (p2)
-    EnableToggleDirection = 0x04   // When enabled, toggles direction going at the specified speed (p3)
+      DTF_ENABLE_DIRECT_HAL_TEST = 0x01,    // When enabled, speed parameter (p3) is interpretted as a percentage power value
+      DTF_ENABLE_CYCLE_SPEEDS_TEST = 0x02,  // When enabled, cycles through different motor power values going up by powerPercentStep (p2)
+      DTF_ENABLE_TOGGLE_DIR = 0x04          // When enabled, toggles direction going at the specified speed (p3)
 }
-
+    
 enum uint_8 LiftTestFlags {
-    TestPower,
-    TestHeights,
-    Nodding,
-    DisableMotor
+  LiftTF_TEST_POWER = 0,
+  LiftTF_TEST_HEIGHTS,
+  LiftTF_NODDING,
+  LiftTF_DISABLE_MOTOR
 }
 
 enum uint_8 HeadTestFlags {
-    TestPower,
-    TestAngles,
-    Nodding
+  HTF_TEST_POWER = 0,
+  HTF_TEST_ANGLES,
+  HTF_NODDING
 }
 
 enum uint_8 IMUTestFlags {
-    DoTurns = 0x01
+  ITF_DO_TURNS = 0x01
 }
 
 enum uint_8 LightTestFlags {
-    CycleAll = 0x01
+  LTF_CYCLE_ALL = 0x01
 }
 
 message StartControllerTestMode

@@ -29,8 +29,6 @@
  *
  **/
 
-#include "messages.h"
-
 #ifndef ANKI_COZMO_ROBOT_HARDWAREINTERFACE_H
 #define ANKI_COZMO_ROBOT_HARDWAREINTERFACE_H
 #include "anki/common/robot/config.h"
@@ -40,6 +38,9 @@
 #include "anki/vision/CameraSettings.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoTypes.h"
+
+#include "clad/types/animationKeyFrames.h"
+#include "clad/types/imageTypes.h"
 #include "clad/types/ledTypes.h"
 
 // Set to 0 if you want to read printf output in a terminal and you're not
@@ -241,7 +242,7 @@ namespace Anki
 
       // Play one frame of audio or silence
       // @param frame - a pointer to an audio frame or NULL to play one frame of silence
-      void AudioPlayFrame(Messages::AnimKeyFrame_AudioSample *msg);
+      void AudioPlayFrame(AnimKeyFrame::AudioSample *msg);
       void AudioPlaySilence();
 
 // #pragma mark --- Flash Memory ---
@@ -359,7 +360,7 @@ namespace Anki
       //u32 CameraGetReceivedLines(CameraID cameraID);
 
       // Set the streaming mode of camera images
-      void SetImageSendMode(const ImageSendMode_t mode, const Vision::CameraResolution res);
+      void SetImageSendMode(const ImageSendMode mode, const ImageResolution res);
 
       /////////////////////////////////////////////////////////////////////
       // PROXIMITY SENSORS
@@ -472,16 +473,7 @@ namespace Anki
        * @param hot Specify if the message is hot and needs to be sent imeediately. Default false.
        * @return True if sucessfully queued, false otherwise
        */
-      bool RadioSendMessage(const int msgID, const void *buffer, const bool reliable=true, const bool hot=false);
-
-      /** Special method for sending images (from long execution) for thread safety.
-       * This method always sends the message as unreliable and hot but is queued until the main execution thread picks
-       * it up and sends it through reliable transport.
-       * @param chunkData a pointer to the imageChunk Message data
-       * @param length The number of bytes of chunk data to send
-       * @return true if the message was successfully queued, false otherwise.
-       */
-      bool RadioSendImageChunk(const void* chunkData, const uint16_t length);
+      bool RadioSendMessage(const void *buffer, const u16 size, const int msgID, const bool reliable=true, const bool hot=false);
 
       /////////////////////////////////////////////////////////////////////
       // BLOCK COMMS

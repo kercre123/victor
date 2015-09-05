@@ -8,6 +8,7 @@
 #include "clad/types/ledTypes.clad"
 #include "clad/types/animationKeyFrames.clad"
 #include "clad/types/robotTestModes.clad"
+#include "clad/types/dockingSignals.clad"
  
 namespace Anki {
 namespace Cozmo {
@@ -133,25 +134,6 @@ message ExecutePath
   bool    useManualSpeed,
 }
 
-message DockWithObject
-{
-  float_32 horizontalOffset_mm, // Offset wrt to docking object. Don't know if this will work yet.
-  DockAction action,
-  bool       useManualSpeed,
-}
-
-message AbortDocking
-{
-}
-
-message PlaceObjectOnGround
-{
-  float_32 rel_x_mm,  // Distance of object face center in forward axis
-  float_32 rel_y_mm,  // Distance of object face center in horizontal axis. (Left of robot is +ve)
-  float_32 rel_angle, // Angle between of object face normal and robot. (Block normal pointing right of robot is +ve)
-  bool     useManualSpeed,
-}
-
 message AbsoluteLocalizationUpdate
 {
   uint_32 pose_frame_id,
@@ -189,16 +171,6 @@ message ControllerGains
   ControllerChannel controller
 }
 
-message DockingErrorSignal
-{
-  float_32 x_distErr,
-  float_32 y_horErr,
-  float_32 z_height,
-  float_32 angleErr,
-  bool didTrackingSucceed,
-  bool isApproximate,
-}
-
 message BackpackLights
 {
   LightState lights[5],
@@ -213,6 +185,12 @@ message BlockLights
 message FlashBlockIDs
 {
   uint_32 blockID, // Place holder
+}
+
+message SetBlockBeingCarried
+{
+  uint_32 blockID,
+  bool    isBeingCarried,
 }
 
 message AbortAnimation
@@ -257,21 +235,22 @@ union EngineToRobot
   
   // To WiFi 0x80 to 0xFE
   SyncTime                      syncTime                    = 0x80,
-  ImageRequest                  ImageRequest                = 0x81,
+  ImageRequest                  imageRequest                = 0x81,
   BackpackLights                setBackpackLights           = 0x82,
   BlockLights                   setBlockLights              = 0x83,
   FlashBlockIDs                 flashBlockIDs               = 0x84,
-  AbortAnimation                abortAnimation              = 0x85,
-  AnimKeyFrame::AudioSample     animAudioSample             = 0x86,
-  AnimKeyFrame::AudioSilence    animAudioSilence            = 0x87,
-  AnimKeyFrame::HeadAngle       animHeadAngle               = 0x88,
-  AnimKeyFrame::LiftHeight      animLiftHeight              = 0x89,
-  AnimKeyFrame::FacePosition    animFacePosition            = 0x8A,
-  AnimKeyFrame::Blink           animBlink                   = 0x8B,
-  AnimKeyFrame::FaceImage       animFaceImage               = 0x8C,
-  AnimKeyFrame::BackpackLights  animBackpackLights          = 0x8D,
-  AnimKeyFrame::BodyMotion      animBodyMotion              = 0x8E,
-  AnimKeyFrame::EndOfAnimation  animEndOfAnimation          = 0x8F,
+  SetBlockBeingCarried          setBlockBeingCarried        = 0x85,
+  AbortAnimation                abortAnimation              = 0x90,
+  AnimKeyFrame::AudioSample     animAudioSample             = 0x91,
+  AnimKeyFrame::AudioSilence    animAudioSilence            = 0x92,
+  AnimKeyFrame::HeadAngle       animHeadAngle               = 0x93,
+  AnimKeyFrame::LiftHeight      animLiftHeight              = 0x94,
+  AnimKeyFrame::FacePosition    animFacePosition            = 0x95,
+  AnimKeyFrame::Blink           animBlink                   = 0x96,
+  AnimKeyFrame::FaceImage       animFaceImage               = 0x97,
+  AnimKeyFrame::BackpackLights  animBackpackLights          = 0x98,
+  AnimKeyFrame::BodyMotion      animBodyMotion              = 0x99,
+  AnimKeyFrame::EndOfAnimation  animEndOfAnimation          = 0x9A,
 }
 
 } // namespace Robot Interface

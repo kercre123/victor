@@ -71,5 +71,25 @@ enum uint_8 UpAxis {
   Unknown
 }
 
+message ActiveObjectMoved
+{
+  uint_32     objectID,
+  ActiveAccel accel,
+  UpAxis      upAxis
+}
+
+message ActiveObjectStoppedMoving
+{
+  uint_32 objectID,
+  UpAxis  upAxis,
+  bool    rolled
+}
+
+message ActiveObjectTapped
+{
+  uint_32 objectID,
+  uint_8  numTaps,
+}
+
 } // namespace Cozmo
 } // namespace Anki

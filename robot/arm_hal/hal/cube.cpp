@@ -4,6 +4,8 @@
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/spineData.h"
 #include "hal/portable.h"
+#include "messages.h"
+#include "clad/types/activeObjectTypes.h"
 
 //#define OLD_CUBE_EXPERIMENT 1 // for testing
 
@@ -73,15 +75,13 @@ namespace Anki
         memcpy(&g_AccelStatus[id], (void*)&g_dataToHead.cubeStatus, sizeof(AcceleratorPacket));
         
         if (count) {
-          Messages::ActiveObjectTapped m;
+          ActiveObjectTapped m;
           m.numTaps = count;
           m.objectID = id;
-          RadioSendMessage(GET_MESSAGE_ID(Messages::ActiveObjectTapped), &m);
+          RobotInterface::SendMessage(m);
         }
         #endif
       }
-
-      #ifndef OLD_CUBE_EXPERIMENT
 
       Result SetBlockLight(const u8 blockID, const u32* onColor, const u32* offColor,
                            const u32* onPeriod_ms, const u32* offPeriod_ms,
@@ -112,30 +112,6 @@ namespace Anki
         
         return RESULT_OK;
       }
-      #else
-
-      Result SetBlockLight(const u8 blockID, const u32* onColor, const u32* offColor,
-                           const u32* onPeriod_ms, const u32* offPeriod_ms,
-                           const u32* transitionOnPeriod_ms, const u32* transitionOffPeriod_ms)
-      {
-         u8 buffer[256];
-         const u32 size = Messages::GetSize(Messages::SetBlockLights_ID);
-         Anki::Cozmo::Messages::SetBlockLights m;
-         m.blockID = blockID;
-
-         for (int i=0; i<NUM_BLOCK_LEDS; ++i) {
-           m.onColor[i] = onColor[i];
-           m.offColor[i] = offColor[i];
-           m.onPeriod_ms[i] = onPeriod_ms[i];
-           m.offPeriod_ms[i] = offPeriod_ms[i];
-           m.transitionOnPeriod_ms[i] = (transitionOnPeriod_ms == NULL ? 0 : transitionOnPeriod_ms[i]);
-           m.transitionOffPeriod_ms[i] = (transitionOffPeriod_ms == NULL ? 0 : transitionOffPeriod_ms[i]);
-         }
-         buffer[0] = Messages::SetBlockLights_ID;
-         memcpy(buffer + 1, &m, size);
-         return RadioSendPacket(buffer, size+1, blockID + 1) ? RESULT_OK : RESULT_FAIL;
-      }
-#endif
     }
   }
 }

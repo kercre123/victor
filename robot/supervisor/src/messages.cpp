@@ -23,7 +23,7 @@
 #include "testModeController.h"
 #include "animationController.h"
 #include "backpackLightController.h"
-#include "anki/cozmo/shared/activeBlockTypes.h"
+#include "clad/types/activeObjectTypes.h"
 
 #define SEND_TEXT_REDIRECT_TO_STDOUT 0
 
@@ -34,30 +34,11 @@ namespace Anki {
 
       namespace {
 
-        // 4. Fill in the message information lookup table:
-        typedef struct {
-          u8 priority;
-          u16 size;
-          void (*dispatchFcn)(const u8* buffer);
-        } TableEntry;
-
-        const size_t NUM_TABLE_ENTRIES = NUM_MSG_IDS + 1;
-        const TableEntry LookupTable_[NUM_TABLE_ENTRIES] = {
-          {0, 0, 0}, // Empty entry for NO_MESSAGE_ID
-#define MESSAGE_DEFINITION_MODE MESSAGE_TABLE_DEFINITION_MODE
-#include "anki/cozmo/shared/MessageDefinitionsB2R.def"
-
-#define MESSAGE_DEFINITION_MODE MESSAGE_TABLE_DEFINITION_NO_FUNC_MODE
-#include "anki/cozmo/shared/MessageDefinitionsR2B.def"
-          {0, 0, 0} // Final dummy entry without comma at end
-        };
-
         u8 pktBuffer_[2048];
-        u8 msgBuff_[2048];
 
         // For waiting for a particular message ID
         const u32 LOOK_FOR_MESSAGE_TIMEOUT = 1000000;
-        ID lookForID_ = NO_MESSAGE_ID;
+        RobotInterface::EngineToRobot::Tag lookForID_ = RobotInterface::EngineToRobot::INVALID;
         u32 lookingStartTime_ = 0;
 
         static RobotState robotState_;
@@ -76,7 +57,6 @@ namespace Anki {
 
       } // private namespace
 
-
 // #pragma mark --- Messages Method Implementations ---
 
       Result Init()
@@ -85,43 +65,31 @@ namespace Anki {
         ReliableConnection_Init(&connection, NULL); // We only have one connection so dest pointer is superfluous
         return RESULT_OK;
       }
-
-      u16 GetSize(const ID msgID)
-      {
-        return LookupTable_[msgID].size;
-      }
-
       
       // Checks whitelist of all messages that are allowed to
       // be processed while the robot is picked up.
-      bool IgnoreMessageDuringPickup(const ID msgID) {
+      bool IgnoreMessageDuringPickup(const RobotInterface::EngineToRobot::Tag msgID) {
         
         if (!IMUFilter::IsPickedUp()) {
           return false;
         }
         
         switch(msgID) {
-          case MoveHead_ID:
-          case SetHeadAngle_ID:
-          case StopAllMotors_ID:
-          case ClearPath_ID:
-          case AbsLocalizationUpdate_ID:
-          case SyncTime_ID:
-          case HeadAngleUpdate_ID:
-          case ImageRequest_ID:
-          case SetHeadlight_ID:
-          case SetDefaultLights_ID:
-          case SetWheelControllerGains_ID:
-          case SetLiftControllerGains_ID:
-          case SetHeadControllerGains_ID:
-          case SetSteeringControllerGains_ID:
-          case SetCarryState_ID:
-          case SetBackpackLights_ID:
-          case SetBlockLights_ID:
-          case FlashBlockIDs_ID:
-          case SetBlockBeingCarried_ID:
+          case RobotInterface::EngineToRobot::Tag_moveHead:
+          case RobotInterface::EngineToRobot::Tag_headAngle:
+          case RobotInterface::EngineToRobot::Tag_headAngleUpdate:
+          case RobotInterface::EngineToRobot::Tag_stop:
+          case RobotInterface::EngineToRobot::Tag_clearPath:
+          case RobotInterface::EngineToRobot::Tag_absLocalizationUpdate:
+          case RobotInterface::EngineToRobot::Tag_syncTime:
+          case RobotInterface::EngineToRobot::Tag_imageRequest:
+          case RobotInterface::EngineToRobot::Tag_setControllerGains:
+          case RobotInterface::EngineToRobot::Tag_setCarryState:
+          case RobotInterface::EngineToRobot::Tag_setBackpackLights:
+          case RobotInterface::EngineToRobot::Tag_setBlockLights:
+          case RobotInterface::EngineToRobot::Tag_flashBlockIDs:
+          case RobotInterface::EngineToRobot::Tag_setBlockBeingCarried:
             return false;
-            
           default:
             break;
         }
@@ -129,41 +97,39 @@ namespace Anki {
         return true;
       }
       
-      void ProcessMessage(const ID msgID, const u8* buffer)
+      void ProcessBadTag_EngineToRobot(RobotInterface::EngineToRobot::Tag badTag)
       {
-        if(LookupTable_[msgID].dispatchFcn != NULL) {
-          //PRINT("ProcessMessage(): Dispatching message with ID=%d.\n", msgID);
-
-          if (!IgnoreMessageDuringPickup(msgID)) {
-            (*LookupTable_[msgID].dispatchFcn)(buffer);
-          }
-
-          // Treat any message as a ping
-          lastPingTime_ = HAL::GetTimeStamp();
-          //PRINT("Received message, kicking ping time at %d\n", lastPingTime_);
+        PRINT("Received message with bad tag %02x\n", badTag);
+      }
+      
+      void ProcessMessage(RobotInterface::EngineToRobot& msg)
+      {
+        if (!IgnoreMessageDuringPickup(msg.tag))
+        {
+          #include "clad/robotInterface/messageEngineToRobot_switch.def"
         }
-
-        if(lookForID_ != NO_MESSAGE_ID) {
-
-          // See if this was the message we were told to look for
-          if(msgID == lookForID_) {
-            lookForID_ = NO_MESSAGE_ID;
+        lastPingTime_ = HAL::GetTimeStamp();
+        if (lookForID_ != RobotInterface::EngineToRobot::INVALID)
+        {
+          if (msg.tag == lookForID_)
+          {
+            lookForID_ = RobotInterface::EngineToRobot::INVALID;
           }
         }
       } // ProcessMessage()
 
-      void LookForID(const ID msgID) {
+      void LookForID(const RobotInterface::EngineToRobot::Tag msgID) {
         lookForID_ = msgID;
         lookingStartTime_ = HAL::GetMicroCounter();
       }
 
       bool StillLookingForID(void) {
-        if(lookForID_ == NO_MESSAGE_ID) {
+        if(lookForID_ == RobotInterface::EngineToRobot::INVALID) {
           return false;
         }
         else if(HAL::GetMicroCounter() - lookingStartTime_ > LOOK_FOR_MESSAGE_TIMEOUT) {
             PRINT("Timed out waiting for message ID %d.\n", lookForID_);
-            lookForID_ = NO_MESSAGE_ID;
+            lookForID_ = RobotInterface::EngineToRobot::INVALID;
 
           return false;
         }
@@ -181,10 +147,10 @@ namespace Anki {
 
         robotState_.pose_frame_id = Localization::GetPoseFrameId();
 
-        Localization::GetCurrentMatPose(robotState_.pose_x, robotState_.pose_y, poseAngle);
-        robotState_.pose_z = 0;
-        robotState_.pose_angle = poseAngle.ToFloat();
-        robotState_.pose_pitch_angle = IMUFilter::GetPitch();
+        Localization::GetCurrentMatPose(robotState_.pose.x, robotState_.pose.y, poseAngle);
+        robotState_.pose.z = 0;
+        robotState_.pose.angle = poseAngle.ToFloat();
+        robotState_.pose.pitch_angle = IMUFilter::GetPitch();
 
         WheelController::GetFilteredWheelSpeeds(robotState_.lwheel_speed_mmps, robotState_.rwheel_speed_mmps);
 
@@ -221,8 +187,6 @@ namespace Anki {
         robotState_.status |=  (LiftController::IsInPosition() ? LIFT_IN_POS : 0);
         robotState_.status |=  (HeadController::IsInPosition() ? HEAD_IN_POS : 0);
         robotState_.status |= (AnimationController::IsBufferFull() ? IS_ANIM_BUFFER_FULL : 0);
-
-        robotState_.numAnimBytesPlayed = AnimationController::GetTotalNumBytesPlayed();
       }
 
       RobotState const& GetRobotStateMsg() {
@@ -233,7 +197,7 @@ namespace Anki {
 // #pragma --- Message Dispatch Functions ---
 
 
-      void ProcessSyncTimeMessage(const SyncTime& msg)
+      void Process_syncTime(const RobotInterface::SyncTime& msg)
       {
 
         PRINT("Robot received SyncTime message from basestation with ID=%d and syncTime=%d.\n",
@@ -251,17 +215,11 @@ namespace Anki {
 
         // Reset number of bytes played in animation buffer
         AnimationController::ClearNumBytesPlayed();
-        
-        // Send ACK back to basestation
-        Messages::SyncTimeAck stMsg;
-        if(!HAL::RadioSendMessage(SyncTimeAck_ID, &stMsg)) {
-          PRINT("Failed to send sync time ack message.\n");
-        }
 
       } // ProcessRobotInit()
 
 
-      void ProcessAbsLocalizationUpdateMessage(const AbsLocalizationUpdate& msg)
+      void Process_absLocalizationUpdate(const RobotInterface::AbsLocalizationUpdate& msg)
       {
         // Don't modify localization while running path following test.
         // The point of the test is to see how well it follows a path
@@ -295,13 +253,9 @@ namespace Anki {
       } // ProcessAbsLocalizationUpdateMessage()
 
 
-      void ProcessDockingErrorSignalMessage(const DockingErrorSignal& msg)
+      void Process_dockingErrorSignal(const DockingErrorSignal& msg)
       {
         DockingController::SetDockingErrorSignalMessage(msg);
-      }
-
-      void ProcessFaceDetectionMessage(const FaceDetection& msg)
-      {
       }
 
       void ProcessBTLEMessages()
@@ -333,39 +287,39 @@ namespace Anki {
         }
       }
 
-      void ProcessClearPathMessage(const ClearPath& msg) {
+      void Process_clearPath(const RobotInterface::ClearPath& msg) {
         SpeedController::SetUserCommandedDesiredVehicleSpeed(0);
         PathFollower::ClearPath();
         //SteeringController::ExecuteDirectDrive(0,0);
       }
 
-      void ProcessAppendPathSegmentArcMessage(const AppendPathSegmentArc& msg) {
+      void Process_appendPathSegmentArc(const RobotInterface::AppendPathSegmentArc& msg) {
         PathFollower::AppendPathSegment_Arc(0, msg.x_center_mm, msg.y_center_mm,
                                             msg.radius_mm, msg.startRad, msg.sweepRad,
                                             msg.targetSpeed, msg.accel, msg.decel);
       }
 
-      void ProcessAppendPathSegmentLineMessage(const AppendPathSegmentLine& msg) {
+      void Process_appendPathSegmentLine(const RobotInterface::AppendPathSegmentLine& msg) {
         PathFollower::AppendPathSegment_Line(0, msg.x_start_mm, msg.y_start_mm,
                                              msg.x_end_mm, msg.y_end_mm,
                                              msg.targetSpeed, msg.accel, msg.decel);
       }
 
-      void ProcessAppendPathSegmentPointTurnMessage(const AppendPathSegmentPointTurn& msg) {
+      void Process_appendPathSegmentPointTurn(const RobotInterface::AppendPathSegmentPointTurn& msg) {
         PathFollower::AppendPathSegment_PointTurn(0, msg.x_center_mm, msg.y_center_mm, msg.targetRad,
                                                   msg.targetSpeed, msg.accel, msg.decel, msg.useShortestDir);
       }
 
-      void ProcessTrimPathMessage(const TrimPath& msg) {
+      void Process_trimPath(const RobotInterface::TrimPath& msg) {
         PathFollower::TrimPath(msg.numPopFrontSegments, msg.numPopBackSegments);
       }
 
-      void ProcessExecutePathMessage(const ExecutePath& msg) {
+      void Process_executePath(const RobotInterface::ExecutePath& msg) {
         PRINT("Starting path %d\n", msg.pathID);
         PathFollower::StartPathTraversal(msg.pathID, msg.useManualSpeed);
       }
 
-      void ProcessDockWithObjectMessage(const DockWithObject& msg)
+      void Process_dockWithObject(const DockWithObject& msg)
       {
           PRINT("RECVD DockToBlock (action %d, manualSpeed %d)\n", msg.dockAction, msg.useManualSpeed);
 
@@ -373,13 +327,13 @@ namespace Anki {
                                               static_cast<DockAction_t>(msg.dockAction));
       }
 
-      void ProcessPlaceObjectOnGroundMessage(const PlaceObjectOnGround& msg)
+      void Process_placeObjectOnGround(const PlaceObjectOnGround& msg)
       {
         //PRINT("Received PlaceOnGround message.\n");
         PickAndPlaceController::PlaceOnGround(msg.rel_x_mm, msg.rel_y_mm, msg.rel_angle, msg.useManualSpeed);
       }
 
-      void ProcessDriveWheelsMessage(const DriveWheels& msg) {
+      void Process_drive(const RobotInterface::DriveWheels& msg) {
 
         // Do not process external drive commands if following a test path
         if (PathFollower::IsTraversingPath()) {
@@ -401,7 +355,7 @@ namespace Anki {
         SteeringController::ExecuteDirectDrive(msg.lwheel_speed_mmps, msg.rwheel_speed_mmps);
       }
 
-      void ProcessDriveWheelsCurvatureMessage(const DriveWheelsCurvature& msg) {
+      void Process_driveCurvature(const RobotInterface::DriveWheelsCurvature& msg) {
         /*
         PathFollower::ClearPath();
 
@@ -411,42 +365,52 @@ namespace Anki {
         */
       }
 
-      void ProcessMoveLiftMessage(const MoveLift& msg) {
+      void Process_moveLift(const RobotInterface::MoveLift& msg) {
         LiftController::SetAngularVelocity(msg.speed_rad_per_sec);
       }
 
-      void ProcessMoveHeadMessage(const MoveHead& msg) {
+      void Process_moveHead(const RobotInterface::MoveHead& msg) {
         HeadController::SetAngularVelocity(msg.speed_rad_per_sec);
       }
 
-      void ProcessSetLiftHeightMessage(const SetLiftHeight& msg) {
+      void Process_liftHeight(const RobotInterface::SetLiftHeight& msg) {
         PRINT("Moving lift to %f (maxSpeed %f, duration %f)\n", msg.height_mm, msg.max_speed_rad_per_sec, msg.duration_sec);
         LiftController::SetMaxSpeedAndAccel(msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2);
         LiftController::SetDesiredHeight(msg.height_mm, 0.1f, 0.1f, msg.duration_sec);
       }
 
-      void ProcessSetHeadAngleMessage(const SetHeadAngle& msg) {
+      void Process_headAngle(const RobotInterface::SetHeadAngle& msg) {
         PRINT("Moving head to %f (maxSpeed %f, duration %f)\n", msg.angle_rad, msg.max_speed_rad_per_sec, msg.duration_sec);
         HeadController::SetMaxSpeedAndAccel(msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2);
         HeadController::SetDesiredAngle(msg.angle_rad, 0.1f, 0.1f, msg.duration_sec);
       }
+      
+      void Process_headAngleUpdate(const RobotInterface::HeadAngleUpdate& msg) {
+        HeadController::SetAngleRad(msg.newAngle);
+      }
 
-      void ProcessTurnInPlaceAtSpeedMessage(const TurnInPlaceAtSpeed& msg) {
+      void Process_panAndTiltHead(const RobotInterface::PanAndTiltHead& msg)
+      {
+        // TODO: Move this to some kind of VisualInterestTrackingController or something
+
+        HeadController::SetDesiredAngle(msg.headTiltAngle_rad, 0.1f, 0.1f, 0.1f);
+        if(msg.bodyPanAngle_rad != 0.f) {
+          SteeringController::ExecutePointTurn(msg.bodyPanAngle_rad, 50.f, 10.f, 10.f, true);
+        }
+      }
+
+      void Process_turnInPlaceAtSpeed(const RobotInterface::TurnInPlaceAtSpeed& msg) {
         PRINT("Turning in place at %f rad/s (%f rad/s2)\n", msg.speed_rad_per_sec, msg.accel_rad_per_sec2);
         SteeringController::ExecutePointTurn(msg.speed_rad_per_sec, msg.accel_rad_per_sec2);
       }
       
-      void ProcessStopAllMotorsMessage(const StopAllMotors& msg) {
+      void Process_stop(const RobotInterface::StopAllMotors& msg) {
         SteeringController::ExecuteDirectDrive(0,0);
         LiftController::SetAngularVelocity(0);
         HeadController::SetAngularVelocity(0);
       }
 
-      void ProcessHeadAngleUpdateMessage(const HeadAngleUpdate& msg) {
-        HeadController::SetAngleRad(msg.newAngle);
-      }
-
-      void ProcessStartTestModeMessage(const StartTestMode& msg)
+      void Process_startControllerTestMode(const StartControllerTestMode& msg)
       {
         if (msg.mode < TM_NUM_TESTS) {
           TestModeController::Start((TestMode)(msg.mode), msg.p1, msg.p2, msg.p3);
@@ -455,7 +419,7 @@ namespace Anki {
         }
       }
 
-      void ProcessImageRequestMessage(const ImageRequest& msg)
+      void Process_imageRequest(const ImageRequest& msg)
       {
         PRINT("Image requested (mode: %d, resolution: %d)\n", msg.imageSendMode, msg.resolution);
 
@@ -517,64 +481,38 @@ namespace Anki {
         }
       } // ProcessImageRequestMessage()
 
-      void ProcessSetHeadlightMessage(const SetHeadlight& msg) {
-        HAL::SetHeadlights(msg.intensity > 0);
-      }
-
-      void ProcessSetDefaultLightsMessage(const SetDefaultLights& msg) {
-        /*
-        u32 lColor = msg.eye_left_color;
-        HAL::SetLED(LED_LEFT_EYE_TOP, lColor);
-        HAL::SetLED(LED_LEFT_EYE_RIGHT, lColor);
-        HAL::SetLED(LED_LEFT_EYE_BOTTOM, lColor);
-        HAL::SetLED(LED_LEFT_EYE_LEFT, lColor);
-
-        u32 rColor = msg.eye_right_color;
-        HAL::SetLED(LED_RIGHT_EYE_TOP, rColor);
-        HAL::SetLED(LED_RIGHT_EYE_RIGHT, rColor);
-        HAL::SetLED(LED_RIGHT_EYE_BOTTOM, rColor);
-        HAL::SetLED(LED_RIGHT_EYE_LEFT, rColor);
-         */
-        for(s32 i=0; i<NUM_BACKPACK_LEDS; ++i) {
-          HAL::SetLED((LEDId)i, msg.color>>8);
+      void Process_setControllerGains(const Anki::Cozmo::RobotInterface::ControllerGains& msg) {
+        switch (msg.controller)
+        {
+          case wheel:
+          {
+            WheelController::SetGains(msg.kp, msg.ki, msg.maxIntegralError,
+                                      msg.kp, msg.ki, msg.maxIntegralError);
+            break;
+          }
+          case head:
+          {
+            HeadController::SetGains(msg.kp, msg.ki, msg.kd, msg.maxIntegralError);
+            break;
+          }
+          case lift:
+          {
+            LiftController::SetGains(msg.kp, msg.ki, msg.kd, msg.maxIntegralError);
+            break;
+          }
+          case stearing:
+          {
+            SteeringController::SetGains(msg.kp, msg.ki); // Coopting structure
+            break;
+          }
+          default:
+          {
+            PRINT("SetControllerGains invalid controller: %d\n", msg.controller);
+          }
         }
       }
 
-      void ProcessSetWheelControllerGainsMessage(const SetWheelControllerGains& msg) {
-        WheelController::SetGains(msg.kpLeft, msg.kiLeft, msg.maxIntegralErrorLeft,
-                                  msg.kpRight, msg.kiRight, msg.maxIntegralErrorRight);
-      }
-
-      void ProcessSetHeadControllerGainsMessage(const SetHeadControllerGains& msg) {
-        HeadController::SetGains(msg.kp, msg.ki, msg.kd, msg.maxIntegralError);
-      }
-
-      void ProcessSetLiftControllerGainsMessage(const SetLiftControllerGains& msg) {
-        LiftController::SetGains(msg.kp, msg.ki, msg.kd, msg.maxIntegralError);
-      }
-
-      void ProcessSetSteeringControllerGainsMessage(const SetSteeringControllerGains& msg) {
-        SteeringController::SetGains(msg.k1, msg.k2);
-      }
-
-      void ProcessSetVisionSystemParamsMessage(const SetVisionSystemParams& msg) {
-        PRINT("Deprecated SetVisionSystemParams message received!\n");
-      }
-
-      void ProcessSetFaceDetectParamsMessage(const SetFaceDetectParams& msg) {
-        PRINT("Deprecated SetVisionSystemParams message received!\n");
-      }
-
-      void ProcessIMURequestMessage(const IMURequest& msg) {
-        IMUFilter::RecordAndSend(msg.length_ms);
-      }
-
-
-      void ProcessFaceTrackingMessage(const FaceTracking& msg)
-      {
-      }
-
-      void ProcessAbortDockingMessage(const AbortDocking& msg)
+      void Process_abortDocking(const AbortDocking& msg)
       {
         DockingController::ResetDocker();
       }
@@ -583,16 +521,16 @@ namespace Anki {
       // Animation related:
       //
 
-//      void ProcessPlayAnimationMessage(const PlayAnimation& msg) {
+//      void ProcessPlayAnimation(const PlayAnimation& msg) {
 //        //PRINT("Processing play animation message\n");
 //        AnimationController::Play((AnimationID_t)msg.animationID, msg.numLoops);
 //      }
 
-//      void ProcessTransitionToStateAnimationMessage(const TransitionToStateAnimation& msg) {
+//      void ProcessTransitionToStateAnimation(const TransitionToStateAnimation& msg) {
 //        AnimationController::TransitionAndPlay(msg.transitionAnimID, msg.stateAnimID);
 //      }
 
-      void ProcessAbortAnimationMessage(const AbortAnimation& msg)
+      void Process_abortAnimation(const RobotInterface::AbortAnimation& msg)
       {
         AnimationController::Clear();
       }
@@ -606,36 +544,26 @@ namespace Anki {
         }
       }
 
-#     define DEFINE_PROCESS_KEYFRAME_METHOD(__MSG_TYPE__) \
-void Process##__MSG_TYPE__##Message(const __MSG_TYPE__& msg) { ProcessAnimKeyFrameHelper(msg); }
+#     define DEFINE_PROCESS_KEYFRAME_METHOD(__TAG__, __MSG_TYPE__) \
+void Process##__TAG__##(const __MSG_TYPE__& msg) { ProcessAnimKeyFrameHelper(msg); }
 
-      DEFINE_PROCESS_KEYFRAME_METHOD(AnimKeyFrame_AudioSample)
-      DEFINE_PROCESS_KEYFRAME_METHOD(AnimKeyFrame_AudioSilence)
-      DEFINE_PROCESS_KEYFRAME_METHOD(AnimKeyFrame_FaceImage)
-      DEFINE_PROCESS_KEYFRAME_METHOD(AnimKeyFrame_FacePosition)
-      DEFINE_PROCESS_KEYFRAME_METHOD(AnimKeyFrame_HeadAngle)
-      DEFINE_PROCESS_KEYFRAME_METHOD(AnimKeyFrame_LiftHeight)
-      DEFINE_PROCESS_KEYFRAME_METHOD(AnimKeyFrame_BackpackLights)
-      DEFINE_PROCESS_KEYFRAME_METHOD(AnimKeyFrame_BodyMotion)
-      DEFINE_PROCESS_KEYFRAME_METHOD(AnimKeyFrame_EndOfAnimation)
-      DEFINE_PROCESS_KEYFRAME_METHOD(AnimKeyFrame_Blink)
+      DEFINE_PROCESS_KEYFRAME_METHOD(animAudioSample,    AnimKeyFrame::AudioSample)
+      DEFINE_PROCESS_KEYFRAME_METHOD(animAudioSilence,   AnimKeyFrame::AudioSilence)
+      DEFINE_PROCESS_KEYFRAME_METHOD(animFaceImage,      AnimKeyFrame::FaceImage)
+      DEFINE_PROCESS_KEYFRAME_METHOD(animFacePosition,   AnimKeyFrame::FacePosition)
+      DEFINE_PROCESS_KEYFRAME_METHOD(animHeadAngle,      AnimKeyFrame::HeadAngle)
+      DEFINE_PROCESS_KEYFRAME_METHOD(animLiftHeight,     AnimKeyFrame::LiftHeight)
+      DEFINE_PROCESS_KEYFRAME_METHOD(animBackpackLights, AnimKeyFrame::BackpackLights)
+      DEFINE_PROCESS_KEYFRAME_METHOD(animBodyMotion,     AnimKeyFrame::BodyMotion)
+      DEFINE_PROCESS_KEYFRAME_METHOD(animEndOfAnimation, AnimKeyFrame::EndOfAnimation)
+      DEFINE_PROCESS_KEYFRAME_METHOD(animBlink,          AnimKeyFrame::Blink)
 
-      void ProcessPanAndTiltHeadMessage(const PanAndTiltHead& msg)
-      {
-        // TODO: Move this to some kind of VisualInterestTrackingController or something
-
-        HeadController::SetDesiredAngle(msg.headTiltAngle_rad, 0.1f, 0.1f, 0.1f);
-        if(msg.bodyPanAngle_rad != 0.f) {
-          SteeringController::ExecutePointTurn(msg.bodyPanAngle_rad, 50.f, 10.f, 10.f, true);
-        }
-      }
-
-      void ProcessSetCarryStateMessage(const SetCarryState& msg)
+      void Process_setCarryState(const SetCarryState& msg)
       {
         PickAndPlaceController::SetCarryState((CarryState_t)msg.state);
       }
 
-      void ProcessSetBackpackLightsMessage(const SetBackpackLights& msg)
+      void Process_setBackpackLights(const RobotInterface::SetBackpackLights& msg)
       {
         for(s32 i=0; i<NUM_BACKPACK_LEDS; ++i) {
           BackpackLightController::SetParams((LEDId)i, msg.onColor[i], msg.offColor[i],
@@ -644,15 +572,9 @@ void Process##__MSG_TYPE__##Message(const __MSG_TYPE__& msg) { ProcessAnimKeyFra
         }
       }
 
-      void ProcessTapBlockOnGroundMessage(const TapBlockOnGround& msg)
-      {
-        LiftController::TapBlockOnGround(msg.numTaps);
-      }
-
-
       // --------- Block control messages ----------
 
-      void ProcessFlashBlockIDsMessage(const FlashBlockIDs& msg)
+      void Process_flashBlockIDs(const RobotInterface::FlashBlockIDs& msg)
       {
         // Start flash pattern on blocks
         HAL::FlashBlockIDs();
@@ -663,14 +585,14 @@ void Process##__MSG_TYPE__##Message(const __MSG_TYPE__& msg) { ProcessAnimKeyFra
         HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::BlockIDFlashStarted), &m);
       }
 
-      void ProcessSetBlockLightsMessage(const SetBlockLights& msg)
+      void Process_setBlockLights(const RobotInterface::SetBlockLights& msg)
       {
         HAL::SetBlockLight(msg.blockID, msg.onColor, msg.offColor, msg.onPeriod_ms, msg.offPeriod_ms,
                            msg.transitionOnPeriod_ms, msg.transitionOffPeriod_ms);
       }
 
 
-      void ProcessSetBlockBeingCarriedMessage(const SetBlockBeingCarried& msg)
+      void Process_setBlockBeingCarried(const RobotInterface::SetBlockBeingCarried& msg)
       {
         // TODO: need to add this hal.h and implement
         // HAL::SetBlockBeingCarried(msg.blockID, msg.isBeingCarried);
@@ -701,10 +623,14 @@ void Process##__MSG_TYPE__##Message(const __MSG_TYPE__& msg) { ProcessAnimKeyFra
           }
         }
 
-        if(HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::RobotState), m, false, false) == true) {
+        if(RobotInterface::SendMessage(m, false, false) == true) {
           // Update send history
           robotStateSendHist_[robotStateSendHistIdx_] = m->timestamp;
           if (++robotStateSendHistIdx_ > 1) robotStateSendHistIdx_ = 0;
+          AnimationState am;
+          am.timestamp = m->timestamp;
+          am.numAnimBytesPlayed = AnimationController::GetTotalNumBytesPlayed();
+          RobotInterface::SendMessage(am, false, false);
           return RESULT_OK;
         } else {
           return RESULT_FAIL;
@@ -729,45 +655,24 @@ void Process##__MSG_TYPE__##Message(const __MSG_TYPE__& msg) { ProcessAnimKeyFra
 
       int SendText(const char *format, va_list vaList)
       {
-        #define MAX_SEND_TEXT_LENGTH 512
-        char text[MAX_SEND_TEXT_LENGTH];
-        memset(text, 0, MAX_SEND_TEXT_LENGTH);
+        RobotInterface::PrintText m;
+        int len;
+        m.logLevel = 0;
+                
+        #define MAX_SEND_TEXT_LENGTH 255 // uint_8 definition in messageRobotToEngine.clad
+        memset(m.text, 0, MAX_SEND_TEXT_LENGTH);
 
         // Create formatted text
-        vsnprintf(text, MAX_SEND_TEXT_LENGTH, format, vaList);
-
-        // Breakup and send in multiple messages if necessary
-        Messages::PrintText m;
-        const size_t tempBytesLeftToSend = strlen(text);
-        AnkiAssert(tempBytesLeftToSend < s32_MAX);
-        s32 bytesLeftToSend = static_cast<s32>(tempBytesLeftToSend);
-        u8 numMsgs = 0;
-        while(bytesLeftToSend > 0) {
-          memset(m.text, 0, PRINT_TEXT_MSG_LENGTH);
-          size_t currPacketBytes = MIN(PRINT_TEXT_MSG_LENGTH, bytesLeftToSend);
-          memcpy(m.text, text + numMsgs*PRINT_TEXT_MSG_LENGTH, currPacketBytes);
-
-          bytesLeftToSend -= PRINT_TEXT_MSG_LENGTH;
-
-          HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::PrintText), &m);
-          numMsgs++;
+        len = vsnprintf(mtext, MAX_SEND_TEXT_LENGTH, format, vaList);
+        
+        if (len > 0)
+        {
+          m.text_length = len;
+          RobotInterface::SendMessage(m);
         }
 
         return 0;
       }
-
-      /*
-      bool CheckMailbox(BlockMarkerObserved& msg)
-      {
-        return blockMarkerMailbox_.getMessage(msg);
-      }
-
-      bool CheckMailbox(MatMarkerObserved&   msg)
-      {
-        return matMarkerMailbox_.getMessage(msg);
-      }
-       */
-
 
       bool ReceivedInit()
       {
@@ -869,9 +774,8 @@ void Process##__MSG_TYPE__##Message(const __MSG_TYPE__& msg) { ProcessAnimKeyFra
     } // namespace Messages
 
     namespace HAL {
-      bool RadioSendMessage(const int msgID, const void *buffer, const bool reliable, const bool hot)
+      bool RadioSendMessage(const void *buffer, const u16 size, const int msgID, const bool reliable, const bool hot)
       {
-        const u32 size = Messages::GetSize((const Messages::ID)msgID);
         if (RadioIsConnected())
         {
           if (reliable)
@@ -901,11 +805,6 @@ void Process##__MSG_TYPE__##Message(const __MSG_TYPE__& msg) { ProcessAnimKeyFra
       }
 
 #ifndef SIMULATOR
-      bool RadioSendImageChunk(const void* chunkData, const uint16_t length)
-      {
-        bool result = ReliableTransport_SendMessage((uint8_t*)chunkData, length, &connection, eRMT_SingleUnreliableMessage, true, Messages::ImageChunk_ID);
-        return result;
-      }
 
       void FlashBlockIDs()
       {
@@ -926,17 +825,21 @@ bool UnreliableTransport_SendPacket(uint8_t* buffer, uint16_t bufferSize)
 
 void Receiver_ReceiveData(uint8_t* buffer, uint16_t bufferSize, ReliableConnection* connection)
 {
-  const Anki::Cozmo::Messages::ID msgID = static_cast<Anki::Cozmo::Messages::ID>(buffer[0]);
-  const u32 size = Anki::Cozmo::Messages::GetSize(msgID);
-
-  if ((size + 1) == bufferSize)
+  Anki::Cozmo::RobotInterface::EngineToRobot msgBuf;
+  
+  // Copy into structured memory  
+  memcpy(msgBuf.GetBuffer(), buffer, bufferSize);
+  if (!msgBuf.IsValid())
   {
-    memcpy(Anki::Cozmo::Messages::msgBuff_, buffer+1, bufferSize-1); // Copy message into aligned memory
-    Anki::Cozmo::Messages::ProcessMessage(msgID, Anki::Cozmo::Messages::msgBuff_);
+    Anki::Cozmo::PRINT("Receiver got %02x[%d] invald\n", buffer[0], bufferSize);
+  }
+  else if (msgBuf.Size() != bufferSize)
+  {
+    Anki::Cozmo::PRINT("Parsed message size error %d != %d\n", bufferSize, msgBuf.Size());
   }
   else
   {
-    Anki::Cozmo::PRINT("Receiver got %d expeted len %d was %d\n", msgID, size, bufferSize);
+    Anki::Cozmo::ProcessMessage(msgBuf);
   }
 }
 

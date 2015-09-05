@@ -12,7 +12,7 @@
  *
  **/
 
-#include "anki/cozmo/shared/ledTypes.h"
+#include "clad/types/ledTypes.h"
 
 namespace Anki {
   namespace Cozmo {

@@ -4,6 +4,7 @@
 #include "anki/common/shared/radians.h"
 #include "anki/common/shared/velocityProfileGenerator.h"
 #include "anki/common/robot/errorHandling.h"
+#include "messages.h"
 
 #define DEBUG_HEAD_CONTROLLER 0
 
