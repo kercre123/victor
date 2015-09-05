@@ -145,9 +145,6 @@ namespace Anki {
         
         f32 headCamFOV_ver_;
         f32 headCamFOV_hor_;
-        const int BUFFER_SIZE = 256;
-        u8 buffer[BUFFER_SIZE];
-        Embedded::MemoryStack scratch_(buffer, BUFFER_SIZE);
         
         Messages::DockingErrorSignal dockingErrSignalMsg_;
         bool dockingErrSignalMsgReady_ = false;
@@ -317,12 +314,6 @@ namespace Anki {
       
       Result Init()
       {
-        scratch_ = Embedded::MemoryStack(buffer, BUFFER_SIZE);
-        
-        AnkiConditionalErrorAndReturnValue(scratch_.IsValid(), RESULT_FAIL_MEMORY,
-                                           "DockingController::Init()",
-                                           "Failed to create %d-sized memory stack.\n", BUFFER_SIZE);
-        
         const HAL::CameraInfo* headCamInfo = HAL::GetHeadCamInfo();
 
         AnkiConditionalErrorAndReturnValue(headCamInfo != NULL, RESULT_FAIL_INVALID_OBJECT,
