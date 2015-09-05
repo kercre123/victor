@@ -9,6 +9,7 @@ namespace Anki {
 namespace Cozmo {
 
   //const ProceduralFace::Value ProceduralFace::MaxFaceAngle = 30.f; // Not sure why I can't set this one here
+  u8 ProceduralFace::_firstScanLine = 0;
   
   const cv::Rect ProceduralFace::imgRect(0,0,ProceduralFace::WIDTH, ProceduralFace::HEIGHT);
   
@@ -22,7 +23,6 @@ namespace Cozmo {
     _faceAngle = 0;
     _sentToRobot = false;
     _timestamp = 0;
-    _firstScanLine = 0;
 
     _eyeParams[Left].fill(0);
     _eyeParams[Right].fill(0);
@@ -66,23 +66,26 @@ namespace Cozmo {
     
     // Fill eye
     cv::Mat_<u8> roi = faceImg(eyeRect & imgRect);
-    roi.setTo(255);
-    
-    // Remove a few pixels from the four corners
-    const s32 NumCornerPixels = 3; // TODO: Make this a static const parameter?
-    u8* topLine = roi.ptr(0);
-    u8* btmLine = roi.ptr(roi.rows-1);
-    for(s32 j=0; j<NumCornerPixels; ++j) {
-      topLine[j] = 0;
-      btmLine[j] = 0;
-      topLine[roi.cols-1-j] = 0;
-      btmLine[roi.cols-1-j] = 0;
-    }
-    
-    if(!ScanlinesAsPostProcess) {
-      // Set every other row to 0 to get interlaced appearance
-      for(int i=_firstScanLine; i<roi.rows; i+=2) {
-        roi.row(i).setTo(0);
+    if(!roi.empty())
+    {
+      roi.setTo(255);
+      
+      // Remove a few pixels from the four corners
+      const s32 NumCornerPixels = 3; // TODO: Make this a static const parameter?
+      u8* topLine = roi.ptr(0);
+      u8* btmLine = roi.ptr(roi.rows-1);
+      for(s32 j=0; j<NumCornerPixels; ++j) {
+        topLine[j] = 0;
+        btmLine[j] = 0;
+        topLine[roi.cols-1-j] = 0;
+        btmLine[roi.cols-1-j] = 0;
+      }
+      
+      if(!ScanlinesAsPostProcess) {
+        // Set every other row to 0 to get interlaced appearance
+        for(int i=_firstScanLine; i<roi.rows; i+=2) {
+          roi.row(i).setTo(0);
+        }
       }
     }
     

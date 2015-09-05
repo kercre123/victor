@@ -241,6 +241,8 @@ namespace Cozmo {
         }
         
         {
+          ProceduralFace prevProcFace(_crntProceduralFace);
+          
           const Radians& faceAngle = face->GetHeadRoll();
           
           // If eyebrows have raised/lowered (based on distance from eyes), mimic their position:
@@ -270,13 +272,13 @@ namespace Cozmo {
                                            rightEyebrowHeightScale);
           
           const f32 expectedEyeHeight = distanceNorm * _baselineEyeHeight;
-          const f32 eyeHeightFraction = 1.25*(GetEyeHeight(face) - expectedEyeHeight)/expectedEyeHeight;
+          const f32 eyeHeightFraction = (GetEyeHeight(face) - expectedEyeHeight)/expectedEyeHeight + .1f; // bias a little larger
           
           for(auto whichEye : {ProceduralFace::WhichEye::Left, ProceduralFace::WhichEye::Right}) {
             _crntProceduralFace.SetParameter(whichEye, ProceduralFace::Parameter::EyeHeight,
                                              eyeHeightFraction);
             _crntProceduralFace.SetParameter(whichEye, ProceduralFace::Parameter::PupilHeight,
-                                             eyeHeightFraction);
+                                             std::max(.25f, std::min(.75f,eyeHeightFraction)));
           }
           // Adjust pupil positions depending on where face is in the image
           Point2f newPupilPos(face->GetLeftEyeCenter());
@@ -300,7 +302,7 @@ namespace Cozmo {
             Point2f pupilChange(newPupilPos);
             pupilChange.x() -= _crntProceduralFace.GetParameter(whichEye, ProceduralFace::Parameter::PupilCenX);
             pupilChange.y() -= _crntProceduralFace.GetParameter(whichEye, ProceduralFace::Parameter::PupilCenY);
-            if(pupilChange.Length() > .15f) { // TODO: Tune this parameter to get nice-looking saccades
+            if(pupilChange.Length() > .15f) { // TODO: Tune this parameter to get better-looking saccades
               _crntProceduralFace.SetParameter(whichEye, ProceduralFace::Parameter::PupilCenX,
                                                -newPupilPos.x());
               _crntProceduralFace.SetParameter(whichEye, ProceduralFace::Parameter::PupilCenY,
@@ -308,8 +310,15 @@ namespace Cozmo {
             }
           }
           
-          // If face angle is rotated, mirror the rotation
-          _crntProceduralFace.SetFaceAngle(faceAngle.getDegrees()/static_cast<f32>(ProceduralFace::MaxFaceAngle));
+          // If face angle is rotated, mirror the rotation (with a deadzone)
+          if(std::abs(faceAngle.getDegrees()) > 5) {
+            _crntProceduralFace.SetFaceAngle(faceAngle.getDegrees()/static_cast<f32>(ProceduralFace::MaxFaceAngle));
+          } else {
+            _crntProceduralFace.SetFaceAngle(0);
+          }
+          
+          // Smoothing
+          _crntProceduralFace.Interpolate(prevProcFace, _crntProceduralFace, 0.9f);
           
           _crntProceduralFace.SetTimeStamp(face->GetTimeStamp());
           _crntProceduralFace.MarkAsSentToRobot(false);

@@ -29,6 +29,7 @@
 //#include <cassert>
 
 #define DEBUG_ANIMATIONS 0
+
 // Until we have a speaker in the robot, use this to play RobotAudioKeyFrames using
 // the device's SoundManager
 #define PLAY_ROBOT_AUDIO_ON_DEVICE 1
@@ -51,29 +52,38 @@ namespace Cozmo {
 #   endif
     
     _frameIter = _frames.begin();
+    _lastClearedLiveFrame = _frameIter;
   }
   
   template<typename FRAME_TYPE>
   void Animation::Track<FRAME_TYPE>::MoveToNextKeyFrame()
   {
-    if(_frameIter->IsLive()) {
-      // Now that we've buffered this frame, add it to the list of frames we
-      // can delete next time it's safe (i.e. next time the send buffer is
-      // empty, meaning we've sent out the message it contains)
-      _liveFramesToClear.push(_frameIter);
-    }
-
     ++_frameIter;
   }
   
   template<typename FRAME_TYPE>
   void Animation::Track<FRAME_TYPE>::ClearPlayedLiveFrames()
   {
-    // If there are any live frames to clear, do so now:
-    while(!_liveFramesToClear.empty()) {
-      _frames.erase(_liveFramesToClear.front()); // Erase the frame
-      _liveFramesToClear.pop(); // Remove it from the list to erase
+#   if DEBUG_ANIMATIONS
+    s32 numCleared = 0;
+#   endif
+    
+    while(_lastClearedLiveFrame != _frameIter) {
+      if(_lastClearedLiveFrame->IsLive()){
+        _lastClearedLiveFrame = _frames.erase(_lastClearedLiveFrame);
+#       if DEBUG_ANIMATIONS
+        ++numCleared;
+#       endif
+      } else {
+        ++_lastClearedLiveFrame;
+      }
     }
+   
+#   if DEBUG_ANIMATIONS
+    if(numCleared > 0) {
+      PRINT_NAMED_INFO("Animation.Track.ClearPlayedLiveFrames", "Cleared %d frames.", numCleared);
+    }
+#   endif
   }
   
   
@@ -367,15 +377,19 @@ _blinkTrack.__METHOD__()
   
   Result Animation::SendBufferedMessages(Robot& robot)
   {
+#   if DEBUG_ANIMATIONS
+    s32 numSent = 0;
+#   endif
+    
     // Empty out anything waiting in the send buffer:
     RobotMessage* msg = nullptr;
-    while(!_sendBuffer.empty()) {
+    while(!_sendBuffer.empty())
+    {
 #     if DEBUG_ANIMATIONS
       PRINT_NAMED_INFO("Animation.SendBufferedMessages",
                        "Send buffer length=%lu.\n", _sendBuffer.size());
 #     endif
-      
-
+     
       msg = _sendBuffer.front();
       const s32 numBytesRequired = msg->GetSize() + sizeof(RobotMessage::ID);
       if(numBytesRequired <= _numBytesToSend) {
@@ -383,6 +397,10 @@ _blinkTrack.__METHOD__()
         if(sendResult != RESULT_OK) {
           return sendResult;
         }
+        
+#       if DEBUG_ANIMATIONS
+        ++numSent;
+#       endif
         
         _numBytesToSend -= numBytesRequired;
         
@@ -392,10 +410,12 @@ _blinkTrack.__METHOD__()
         _sendBuffer.pop_front();
       } else {
         // Out of bytes to send, continue on next Update()
-#         if DEBUG_ANIMATIONS
+#       if DEBUG_ANIMATIONS
         PRINT_NAMED_INFO("Animation.SendBufferedMessages",
-                         "Ran out of bytes to send from buffer, will continue next Update().\n");
-#         endif
+                         "Sent %d messages, but ran out of bytes to send from "
+                         "buffer. %lu remain, so will continue next Update().",
+                         numSent, _sendBuffer.size());
+#       endif
         return RESULT_OK;
       }
     }
@@ -409,6 +429,14 @@ _blinkTrack.__METHOD__()
     // If there's nothing waiting to go out, we are safe to clean out Live frames
     // that have already been seen
     ALL_TRACKS(ClearPlayedLiveFrames, ;);
+    
+#   if DEBUG_ANIMATIONS
+    if(numSent > 0) {
+      PRINT_NAMED_INFO("Animation.SendBufferedMessages.Sent",
+                       "Sent %d messages, %lu remain in buffer.",
+                       numSent, _sendBuffer.size());
+    }
+#   endif
     
     return RESULT_OK;
   }
@@ -601,8 +629,15 @@ _blinkTrack.__METHOD__()
     if(AllTracksBuffered() && _sendBuffer.empty() && !_endOfAnimationSent)
     {
 #     if DEBUG_ANIMATIONS
-      PRINT_NAMED_INFO("Animation.Update", "Streaming EndOfAnimation at t=%dms.\n",
+      static TimeStamp_t lastEndOfAnimTime = 0;
+      PRINT_NAMED_INFO("Animation.Update", "Streaming EndOfAnimation at t=%dms.",
                        _streamingTime_ms - _startTime_ms);
+      
+      if(_streamingTime_ms - _startTime_ms == lastEndOfAnimTime) {
+        PRINT_NAMED_ERROR("Animation.Update", "Already sent end of animatino at t=%dms.",
+                          lastEndOfAnimTime);
+      }
+      lastEndOfAnimTime = _streamingTime_ms - _startTime_ms;
 #     endif
       
       MessageAnimKeyFrame_EndOfAnimation endMsg;

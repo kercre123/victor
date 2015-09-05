@@ -95,8 +95,7 @@ namespace Anki {
         using FrameList = std::list<FRAME_TYPE>;
         FrameList                    _frames;
         typename FrameList::iterator _frameIter;
-        
-        std::queue<typename FrameList::iterator> _liveFramesToClear;
+        typename FrameList::iterator _lastClearedLiveFrame;
         
       }; // class Animation::Track
 
@@ -193,6 +192,7 @@ namespace Anki {
       // back to the beginning.
       if(_frames.size() == 1) {
         _frameIter = _frames.begin();
+        _lastClearedLiveFrame = _frameIter;
       }
       
       return RESULT_OK;

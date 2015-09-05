@@ -83,7 +83,7 @@ namespace Anki {
     }
     
     if(needsRenormalization) {
-      CoreTechPrint("Renormalizing a %dD rotation matrix.\n", DIM);
+      //CoreTechPrint("Renormalizing a %dD rotation matrix.\n", DIM);
       RenormalizeHelper(*this);
     }
   }

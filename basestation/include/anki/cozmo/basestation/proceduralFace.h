@@ -32,8 +32,8 @@ namespace Cozmo {
     static constexpr Value NominalRightEyeCenX   = 0.75f*static_cast<f32>(WIDTH);
     static constexpr Value NominalEyeCenY        = 0.6f*static_cast<f32>(HEIGHT);
     static constexpr Value EyebrowThickness      = 2.f;
-    static constexpr s32   MinEyeHeightPix       = HEIGHT/8;
-    static constexpr s32   MaxEyeHeightPix       = 5*HEIGHT/8;
+    static constexpr s32   MinEyeHeightPix       = 0;
+    static constexpr s32   MaxEyeHeightPix       = 3*HEIGHT/4;
     static constexpr s32   MinEyeWidthPix        = WIDTH/5;
     static constexpr s32   MaxEyeWidthPix        = 2*WIDTH/5;
     static constexpr s32   EyebrowHalfLength     = (MaxEyeWidthPix + MinEyeWidthPix)/4; // Half the average eye width
@@ -90,7 +90,7 @@ namespace Cozmo {
     
     // To avoid burn-in this switches which scanlines to use (odd or even), e.g.
     // to be called each time we blink.
-    void SwitchInterlacing();
+    static void SwitchInterlacing();
     
   private:
 
@@ -103,7 +103,7 @@ namespace Cozmo {
     
     Value _faceAngle;
     
-    u8   _firstScanLine;
+    static u8 _firstScanLine;
     bool _sentToRobot;
     TimeStamp_t _timestamp;
   }; // class ProceduralFace
