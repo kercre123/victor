@@ -1578,44 +1578,24 @@ namespace Anki {
       } // if robot is on ramp
 #     endif
       
-      /*
-      if(!_localizedToFixedObject && !existingObject->IsMoveable()) {
-        // If we have not yet seen a fixed mat, and this is a fixed mat, rejigger
-        // the origins so that we use it as the world origin
-        PRINT_NAMED_INFO("Robot.LocalizeToMat.LocalizingToFirstFixedMat",
-                         "Localizing robot %d to fixed %s mat for the first time.\n",
-                         GetID(), existingObject->GetType().GetName().c_str());
-        
-        if((lastResult = UpdateWorldOrigin(robotPoseWrtObject)) != RESULT_OK) {
-          PRINT_NAMED_ERROR("Robot.LocalizeToMat.SetPoseOriginFailure",
-                            "Failed to update robot %d's pose origin when (re-)localizing it.\n", GetID());
-          return lastResult;
-        }
-        
-        _localizedToFixedObject = true;
-      }
-      else if(IsLocalized() == false) {
-        // If the robot is not yet localized, it is about to be, so we need to
+#     if 0 // TODO: Put this back?
+      if(existingObject->GetID() != _localizedToID) {
+        // Localizing to a different object than we were, so we need to
         // update pose origins so that anything it has seen so far becomes rooted
-        // to this mat's origin (whether object is moveable or not)
-        PRINT_NAMED_INFO("Robot.LocalizeToObject.LocalizingRobotFirstTime",
-                         "Localizing robot %d for the first time (to %s mat).\n",
-                         GetID(), existingObject->GetType().GetName().c_str());
+        // to this object's origin
+        PRINT_NAMED_INFO("Robot.LocalizeToObject.UpdatingWorldOrigin",
+                         "Switching robot %d's world origin from object %d to %d.",
+                         GetID(), _localizedToID.GetValue(), existingObject->GetID().GetValue());
         
         if((lastResult = UpdateWorldOrigin(robotPoseWrtObject)) != RESULT_OK) {
           PRINT_NAMED_ERROR("Robot.LocalizeToObject.SetPoseOriginFailure",
                             "Failed to update robot %d's pose origin when (re-)localizing it.\n", GetID());
           return lastResult;
-        }
         
-        if(!existingObject->IsMoveable()) {
-          // If this also happens to be an unmoveable object, then we have now localized
-          // to a fixed object. Yay.
-          _localizedToFixedObject = true;
         }
       }
-       */
-      
+#     endif
+
       // Add the new vision-based pose to the robot's history. Note that we use
       // the pose w.r.t. the origin for storing poses in history.
       //RobotPoseStamp p(robot->GetPoseFrameID(), robotPoseWrtMat.GetWithRespectToOrigin(), posePtr->GetHeadAngle(), posePtr->GetLiftAngle());

@@ -40,6 +40,8 @@
 //  2 = turn this on for physical and simulatd robots
 #define ONLY_ALLOW_ONE_OBJECT_PER_TYPE 0
 
+#define ENABLE_BLOCK_BASED_LOCALIZATION 0
+
 #define DEBUG_ROBOT_POSE_UPDATES 0
 #if DEBUG_ROBOT_POSE_UPDATES
 #  define PRINT_LOCALIZATION_INFO(...) PRINT_NAMED_INFO("Localization", __VA_ARGS__)
@@ -496,7 +498,11 @@ namespace Anki
           // info, and if the robot isn't already localized to an object or if
           // this object has been seen more recently than the one the robot is
           // localized to.
+#         if ENABLE_BLOCK_BASED_LOCALIZATION
           bool useThisObjectToLocalize = !haveLocalizedRobotToObject && matchingObject->CanBeUsedForLocalization();
+#         else 
+          bool useThisObjectToLocalize = false;
+#         endif
           
           // If we're about to use this object for localization and it's a different
           // object than the robot is already localize to, then we need to decide
