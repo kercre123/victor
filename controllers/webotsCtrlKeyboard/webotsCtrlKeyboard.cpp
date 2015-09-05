@@ -856,9 +856,21 @@ namespace Anki {
               case (s32)'P':
               {
                 bool usePreDockPose = !(modifier_key & webots::Supervisor::KEYBOARD_SHIFT);
-                bool useManualSpeed = (modifier_key & webots::Supervisor::KEYBOARD_ALT);
+                //bool useManualSpeed = (modifier_key & webots::Supervisor::KEYBOARD_ALT);
                 
-                SendPickAndPlaceSelectedObject(usePreDockPose, useManualSpeed);
+                // Hijacking ALT key for low placement
+                bool useManualSpeed = false;
+                bool placeOnGroundAtOffset = (modifier_key & webots::Supervisor::KEYBOARD_ALT);
+
+                f32 placementOffsetX_mm = 0;
+                if (placeOnGroundAtOffset) {
+                  placementOffsetX_mm = root_->getField("placeOnGroundOffsetX_mm")->getSFFloat();
+                }
+                
+                SendPickAndPlaceSelectedObject(usePreDockPose,
+                                               placementOffsetX_mm, 0, 0,
+                                               placeOnGroundAtOffset,
+                                               useManualSpeed);
                 break;
               }
                 
@@ -1498,7 +1510,7 @@ namespace Anki {
                 case GC_BUTTON_RB:
                 {
                   bool usePreDockPose = !LT_held;
-                  SendPickAndPlaceSelectedObject(usePreDockPose, false);
+                  SendPickAndPlaceSelectedObject(usePreDockPose);
                   break;
                 }
                 case GC_BUTTON_DIR_UP:
