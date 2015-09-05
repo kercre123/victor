@@ -106,9 +106,19 @@ IActionRunner* GetPickAndPlaceActionHelper(Robot& robot, const ExternalInterface
   }
   
   if(static_cast<bool>(msg.usePreDockPose)) {
-    return new DriveToPickAndPlaceObjectAction(selectedObjectID, msg.useManualSpeed);
+    return new DriveToPickAndPlaceObjectAction(selectedObjectID,
+                                               msg.useManualSpeed,
+                                               msg.placementOffsetX_mm,
+                                               msg.placementOffsetY_mm,
+                                               msg.placementOffsetAngle_rad,
+                                               msg.placeOnGroundIfCarrying);
   } else {
-    PickAndPlaceObjectAction* action = new PickAndPlaceObjectAction(selectedObjectID, msg.useManualSpeed);
+    PickAndPlaceObjectAction* action = new PickAndPlaceObjectAction(selectedObjectID,
+                                                                    msg.useManualSpeed,
+                                                                    msg.placementOffsetX_mm,
+                                                                    msg.placementOffsetY_mm,
+                                                                    msg.placementOffsetAngle_rad,
+                                                                    msg.placeOnGroundIfCarrying);
     action->SetPreActionPoseAngleTolerance(-1.f); // disable pre-action pose distance check
     return action;
   }

@@ -117,7 +117,10 @@ namespace Cozmo {
                             const f32                  markerWidth_mm,
                             const Embedded::Point2f&   imageCenter,
                             const f32                  radius,
-                            const bool                 checkAngleX);
+                            const bool                 checkAngleX,
+                            const f32                  postOffsetX_mm = 0,
+                            const f32                  postOffsetY_mm = 0,
+                            const f32                  posttOffsetAngle_rad = 0);
     
     u32 DownsampleHelper(const Embedded::Array<u8>& imageIn,
                          Embedded::Array<u8>&       imageOut,
@@ -308,6 +311,9 @@ namespace Cozmo {
       Embedded::Point2f         imageCenter;
       f32                       imageSearchRadius;
       bool                      checkAngleX;
+      f32                       postOffsetX_mm;
+      f32                       postOffsetY_mm;
+      f32                       postOffsetAngle_rad;
       
       MarkerToTrack();
       bool IsSpecified() const {

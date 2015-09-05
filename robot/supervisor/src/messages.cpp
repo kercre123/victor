@@ -369,8 +369,7 @@ namespace Anki {
       {
           PRINT("RECVD DockToBlock (action %d, manualSpeed %d)\n", msg.dockAction, msg.useManualSpeed);
 
-          PickAndPlaceController::DockToBlock(msg.useManualSpeed,
-                                              static_cast<DockAction_t>(msg.dockAction));
+          PickAndPlaceController::DockToBlock(static_cast<DockAction_t>(msg.dockAction), msg.useManualSpeed);
       }
 
       void ProcessPlaceObjectOnGroundMessage(const PlaceObjectOnGround& msg)

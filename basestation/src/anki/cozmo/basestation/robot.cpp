@@ -747,6 +747,30 @@ namespace Anki {
     }
     
     
+    // Given a pose wrt camera, convert it to be wrt robot with the given head angle.
+    // TODO: There's a better way to do this, but brain tired.
+    static Pose3d GetPoseWrtCameraWrtRobot(const Pose3d& poseWrtCam,
+                                           const f32 headAngleRad)
+    {
+      const f32 cosH = cosf(headAngleRad);
+      const f32 sinH = sinf(headAngleRad);
+
+      RotationMatrix3d rotMat({0, sinH, cosH,
+                              -1, 0, 0,
+                               0, -cosH, sinH});
+      Pose3d camWrtRobotPose(rotMat,
+                              {HEAD_CAM_POSITION[0]*cosH - HEAD_CAM_POSITION[2]*sinH + NECK_JOINT_POSITION[0],
+                                0,
+                                HEAD_CAM_POSITION[2]*cosH + HEAD_CAM_POSITION[0]*sinH + NECK_JOINT_POSITION[2]});
+      
+      Pose3d poseWrtRobot = poseWrtCam;
+      poseWrtRobot.PreComposeWith(camWrtRobotPose);
+      
+      return poseWrtRobot;
+    }
+
+    
+    
     Result Robot::Update(void)
     {
 #if(0)
@@ -859,6 +883,26 @@ namespace Anki {
           if (_isPhysical) {
             dockingErrorSignal.x_distErr -= DOCKING_LATERAL_OFFSET_HACK;
           }
+          
+          // Convert from camera frame to robot frame
+          Anki::Cozmo::RobotPoseStamp p;
+          TimeStamp_t t;
+          _poseHistory->GetRawPoseAt(dockingErrorSignal.timestamp, t, p);
+          
+          
+          if (dockingErrorSignal.isApproximate) {
+            // TODO: Still needed?
+            dockingErrorSignal.x_distErr += HEAD_CAM_POSITION[0]*cosf(p.GetHeadAngle()) + NECK_JOINT_POSITION[0];
+          } else {
+            Pose3d poseWrtCam(dockingErrorSignal.angleErr, Y_AXIS_3D(),
+                              {dockingErrorSignal.x_distErr, dockingErrorSignal.y_horErr, dockingErrorSignal.z_height});
+            Pose3d poseWrtRobot = GetPoseWrtCameraWrtRobot(poseWrtCam, p.GetHeadAngle());
+            
+            dockingErrorSignal.x_distErr = poseWrtRobot.GetTranslation().x();
+            dockingErrorSignal.y_horErr = poseWrtRobot.GetTranslation().y();
+            dockingErrorSignal.z_height = poseWrtRobot.GetTranslation().z();
+          }
+          
           
           // Visualize docking error signal
           VizManager::getInstance()->SetDockingError(dockingErrorSignal.x_distErr,
@@ -1767,9 +1811,18 @@ namespace Anki {
                                  const Vision::KnownMarker* marker,
                                  const Vision::KnownMarker* marker2,
                                  const DockAction_t dockAction,
+                                 const f32 placementOffsetX_mm,
+                                 const f32 placementOffsetY_mm,
+                                 const f32 placementOffsetAngle_rad,
                                  const bool useManualSpeed)
     {
-      return DockWithObject(objectID, marker, marker2, dockAction, 0, 0, u8_MAX, useManualSpeed);
+      return DockWithObject(objectID,
+                            marker,
+                            marker2,
+                            dockAction,
+                            0, 0, u8_MAX,
+                            placementOffsetX_mm, placementOffsetY_mm, placementOffsetAngle_rad,
+                            useManualSpeed);
     }
     
     Result Robot::DockWithObject(const ObjectID objectID,
@@ -1779,6 +1832,9 @@ namespace Anki {
                                  const u16 image_pixel_x,
                                  const u16 image_pixel_y,
                                  const u8 pixel_radius,
+                                 const f32 placementOffsetX_mm,
+                                 const f32 placementOffsetY_mm,
+                                 const f32 placementOffsetAngle_rad,
                                  const bool useManualSpeed)
     {
       ActionableObject* object = dynamic_cast<ActionableObject*>(_blockWorld.GetObjectByID(objectID));
@@ -1818,7 +1874,8 @@ namespace Anki {
                                    dockAction == DA_CROSS_BRIDGE);
         
         // Tell the VisionSystem to start tracking this marker:
-        _visionProcessor.SetMarkerToTrack(marker->GetCode(), marker->GetSize(), image_pixel_x, image_pixel_y, checkAngleX);
+        _visionProcessor.SetMarkerToTrack(marker->GetCode(), marker->GetSize(), image_pixel_x, image_pixel_y, checkAngleX,
+                                          placementOffsetX_mm, placementOffsetY_mm, placementOffsetAngle_rad);
       }
       
       return sendResult;

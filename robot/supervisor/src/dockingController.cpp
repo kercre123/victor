@@ -143,7 +143,6 @@ namespace Anki {
         bool markerOutOfFOV_ = false;
         const f32 MARKER_WIDTH = 25.f;
         
-        Embedded::Array<f32> RcamWrtRobot_;
         f32 headCamFOV_ver_;
         f32 headCamFOV_hor_;
         const int BUFFER_SIZE = 256;
@@ -171,46 +170,6 @@ namespace Anki {
       
       f32 GetHorizontalFOV() {
         return headCamFOV_hor_;
-      }
-      
-      template<typename PRECISION>
-      static Result GetCamPoseWrtRobot(Embedded::Array<PRECISION>& RcamWrtRobot,
-                                       Embedded::Point3<PRECISION>& TcamWrtRobot)
-      {
-        AnkiConditionalErrorAndReturnValue(RcamWrtRobot.get_size(0)==3 &&
-                                           RcamWrtRobot.get_size(1)==3,
-                                           RESULT_FAIL_INVALID_SIZE,
-                                           "VisionSystem::GetCamPoseWrtRobot",
-                                           "Rotation matrix must already be 3x3.");
-        
-        const f32 headAngle = HeadController::GetAngleRad();
-        const f32 cosH = cosf(headAngle);
-        const f32 sinH = sinf(headAngle);
-        
-        RcamWrtRobot[0][0] = 0;  RcamWrtRobot[0][1] = sinH;  RcamWrtRobot[0][2] = cosH;
-        RcamWrtRobot[1][0] = -1; RcamWrtRobot[1][1] = 0;     RcamWrtRobot[1][2] = 0;
-        RcamWrtRobot[2][0] = 0;  RcamWrtRobot[2][1] = -cosH; RcamWrtRobot[2][2] = sinH;
-        
-        TcamWrtRobot.x = HEAD_CAM_POSITION[0]*cosH - HEAD_CAM_POSITION[2]*sinH + NECK_JOINT_POSITION[0];
-        TcamWrtRobot.y = 0;
-        TcamWrtRobot.z = HEAD_CAM_POSITION[2]*cosH + HEAD_CAM_POSITION[0]*sinH + NECK_JOINT_POSITION[2];
-        
-        return RESULT_OK;
-      }
-      
-      static Result GetWithRespectToRobot(const Embedded::Point3<f32>& pointWrtCamera,
-                                   Embedded::Point3<f32>&       pointWrtRobot)
-      {
-        Embedded::Point3<f32> TcamWrtRobot;
-        
-        Result lastResult;
-        if((lastResult = GetCamPoseWrtRobot(RcamWrtRobot_, TcamWrtRobot)) != RESULT_OK) {
-          return lastResult;
-        }
-        
-        pointWrtRobot = RcamWrtRobot_*pointWrtCamera + TcamWrtRobot;
-        
-        return RESULT_OK;
       }
 
       
@@ -370,12 +329,6 @@ namespace Anki {
                                            "DockingController::Init()",
                                            "NULL head cam info!\n");
         
-        RcamWrtRobot_ = Embedded::Array<f32>(3,3, scratch_);
-
-        AnkiConditionalErrorAndReturnValue(RcamWrtRobot_.IsValid(), RESULT_FAIL_MEMORY,
-                                           "DockingController::Init()",
-                                           "Failed to allocate 3x3 rotation matrix.\n");
-        
         // Compute FOV from focal length (currently used for tracker prediciton)
         headCamFOV_ver_ = 2.f * atanf(static_cast<f32>(headCamInfo->nrows) /
                                       (2.f * headCamInfo->focalLength_y));
@@ -415,21 +368,6 @@ namespace Anki {
           if(dockingErrSignalMsg_.didTrackingSucceed) {
             
             //PRINT("ErrSignal %d (msgTime %d)\n", HAL::GetMicroCounter(), dockingErrSignalMsg_.timestamp);
-            
-            // Convert from camera coordinates to robot coordinates
-            if(dockingErrSignalMsg_.isApproximate)
-            {
-              dockingErrSignalMsg_.x_distErr += HEAD_CAM_POSITION[0]*cosf(HeadController::GetAngleRad()) + NECK_JOINT_POSITION[0];
-            }
-            else {
-              Embedded::Point3<f32> tempPoint;
-              GetWithRespectToRobot(Embedded::Point3<f32>(dockingErrSignalMsg_.x_distErr, dockingErrSignalMsg_.y_horErr, dockingErrSignalMsg_.z_height),
-                                                  tempPoint);
-              
-              dockingErrSignalMsg_.x_distErr = tempPoint.x;
-              dockingErrSignalMsg_.y_horErr  = tempPoint.y;
-              dockingErrSignalMsg_.z_height  = tempPoint.z;
-            }
             
             // Update last observed marker pose
             lastMarkerDistX_ = dockingErrSignalMsg_.x_distErr;
@@ -498,10 +436,6 @@ namespace Anki {
                 }
 
               }
-              /* Now done on basestation directly
-              // Send to basestation for visualization
-              HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::DockingErrorSignal), &dockMsg);
-               */
               continue;
             }
 
@@ -879,7 +813,7 @@ namespace Anki {
         lastDockingErrorSignalRecvdTime_ = HAL::GetTimeStamp();
         doHighDockLiftTracking_ = false;
         mode_ = LOOKING_FOR_BLOCK;
-        
+        markerlessDocking_ = false;
         success_ = false;
       }
       

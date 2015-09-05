@@ -1334,13 +1334,22 @@ namespace Anki {
     
 #pragma mark ---- IDockAction ----
     
-    IDockAction::IDockAction(ObjectID objectID, const bool useManualSpeed)
+    IDockAction::IDockAction(ObjectID objectID,
+                             const bool useManualSpeed,
+                             const f32 placementOffsetX_mm,
+                             const f32 placementOffsetY_mm,
+                             const f32 placementOffsetAngle_rad,
+                             const f32 placeObjectOnGroundIfCarrying)
     : _dockObjectID(objectID)
     , _dockMarker(nullptr)
     , _preActionPoseAngleTolerance(DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE)
     , _wasPickingOrPlacing(false)
     , _useManualSpeed(useManualSpeed)
     , _visuallyVerifyAction(nullptr)
+    , _placementOffsetX_mm(placementOffsetX_mm)
+    , _placementOffsetY_mm(placementOffsetY_mm)
+    , _placementOffsetAngle_rad(placementOffsetAngle_rad)
+    , _placeObjectOnGroundIfCarrying(placeObjectOnGroundIfCarrying)
     {
       
     }
@@ -1483,7 +1492,13 @@ namespace Anki {
                              _dockMarker->GetCode(),
                              Vision::MarkerTypeStrings[_dockMarker->GetCode()], _dockAction);
             
-            if(robot.DockWithObject(_dockObjectID, _dockMarker, _dockMarker2, _dockAction, _useManualSpeed) == RESULT_OK)
+            if(robot.DockWithObject(_dockObjectID,
+                                    _dockMarker, _dockMarker2,
+                                    _dockAction,
+                                    _placementOffsetX_mm,
+                                    _placementOffsetY_mm,
+                                    _placementOffsetAngle_rad,
+                                    _useManualSpeed) == RESULT_OK)
             {
               //NOTE: Any completion (success or failure) after this point should tell
               // the robot to stop tracking and go back to looking for markers!
@@ -1558,8 +1573,13 @@ namespace Anki {
     
 #pragma mark ---- PickAndPlaceObjectAction ----
     
-    PickAndPlaceObjectAction::PickAndPlaceObjectAction(ObjectID objectID, const bool useManualSpeed)
-    : IDockAction(objectID, useManualSpeed)
+    PickAndPlaceObjectAction::PickAndPlaceObjectAction(ObjectID objectID,
+                                                       const bool useManualSpeed,
+                                                       const f32 placementOffsetX_mm,
+                                                       const f32 placementOffsetY_mm,
+                                                       const f32 placementOffsetAngle_rad,
+                                                       const bool placeObjectOnGroundIfCarrying)
+    : IDockAction(objectID, useManualSpeed, placementOffsetX_mm, placementOffsetY_mm, placementOffsetAngle_rad, placeObjectOnGroundIfCarrying)
     , _placementVerifyAction(nullptr)
     , _verifyComplete(false)
     {
@@ -1698,7 +1718,8 @@ namespace Anki {
           _dockAction = DA_PICKUP_HIGH;
         }
       } else if (robot.IsCarryingObject()) {
-        _dockAction = DA_PLACE_HIGH;
+        
+        _dockAction = _placeObjectOnGroundIfCarrying ? DA_PLACE_LOW : DA_PLACE_HIGH;
         
         // Need to record the object we are currently carrying because it
         // will get unset when the robot unattaches it during placement, and

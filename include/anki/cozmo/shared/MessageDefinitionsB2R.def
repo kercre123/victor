@@ -145,7 +145,6 @@ END_MESSAGE_DEFINITION(ExecutePath)
 
 // DockWithObject
 START_MESSAGE_DEFINITION(DockWithObject, 1)
-ADD_MESSAGE_MEMBER(f32, horizontalOffset_mm)  // Offset wrt to docking object. Don't know if this will work yet.
 ADD_MESSAGE_MEMBER(u8, dockAction)  // See DockAction_t
 ADD_MESSAGE_MEMBER(u8, useManualSpeed)
 END_MESSAGE_DEFINITION(DockWithObject)
