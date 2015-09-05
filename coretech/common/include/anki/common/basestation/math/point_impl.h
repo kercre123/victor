@@ -224,6 +224,15 @@ namespace Anki {
   }
   
   template<PointDimType N, typename T>
+  Point<N,T>& Point<N,T>::operator/= (const Point<N,T> &other)
+  {
+    for(PointDimType i=0; i<N; ++i) {
+      this->data[i] /= other[i];
+    }
+    return *this;
+  }
+  
+  template<PointDimType N, typename T>
   Point<N,T> Point<N,T>::operator-() const
   {
     Point<N,T> p;

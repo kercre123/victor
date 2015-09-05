@@ -126,7 +126,7 @@ namespace EyeController {
     _blinkIndex = 0;
     _blinkStart_ms = HAL::GetTimeStamp();
     
-    _enable = true;
+    _enable = false;
     
     return RESULT_OK;
     
