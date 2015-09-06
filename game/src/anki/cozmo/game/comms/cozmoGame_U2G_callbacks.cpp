@@ -775,6 +775,16 @@ namespace Cozmo {
   {
     // Handled in RobotEventHandler::HandleQueueCompoundAction
   }
-  
+
+
+void CozmoGameImpl::Process_KeyWordRecognitionDisabled(const ExternalInterface::KeyWordRecognitionDisabled& msg)
+{
+  // ignored here..
+}
+void CozmoGameImpl::Process_KeyWordRecognitionEnabled(const ExternalInterface::KeyWordRecognitionEnabled& msg)
+{
+  // ignored here..
+}
+
 }
 }
