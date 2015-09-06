@@ -42,6 +42,7 @@ private:
   IExternalInterface* _externalInterface;
   std::vector<Signal::SmartHandle> _signalHandles;
   std::vector<std::pair<std::string, KeyWord> > _translationPairs;
+  bool _started;
 
   // private members for keyword search
   static const uint32 adbuffSize = 2048;

@@ -27,6 +27,7 @@ namespace Cozmo {
 
 Recognizer::Recognizer(IExternalInterface* externalInterface)
 : _externalInterface(externalInterface)
+, _started(false)
 , ps(nullptr)
 , config(nullptr)
 , ad(nullptr)
@@ -53,8 +54,37 @@ Recognizer::~Recognizer()
   CleanUp();
 }
 
+void sphinxLogger(void* user_data, err_lvl_t level, const char* format, ...)
+{
+  va_list args;
+  va_start(args, format);
+  switch (level){
+    case ERR_DEBUG:
+      //Util::sDebugV("KeywordRecognizer.sphinx", {{}}, format, args);
+      break;
+    case ERR_INFO:
+      //Util::sInfoV("KeywordRecognizer.sphinx", {{}}, format, args);
+      break;
+    case ERR_INFOCONT:
+      //Util::sInfoV("KeywordRecognizer.sphinx", {{}}, format, args);
+      break;
+    case ERR_WARN:
+      Util::sWarningV("KeywordRecognizer.sphinx", {{}}, format, args);
+      break;
+    case ERR_ERROR:
+    case ERR_FATAL:
+    case ERR_MAX:
+      Util::sErrorV("KeywordRecognizer.sphinx", {{}}, format, args);
+      break;
+  }
+  va_end(args);
+}
+
 void Recognizer::Init(const std::string& hmmFile, const std::string& file, const std::string& dictFile)
 {
+  err_set_logfp(nullptr);
+  err_set_callback(sphinxLogger, nullptr);
+
   config =
     cmd_ln_init(nullptr, ps_args(), true, "-hmm", hmmFile.c_str(),
       "-kws", file.c_str(),
@@ -95,6 +125,9 @@ void Recognizer::Start()
   if (ps == nullptr) {
     return;
   }
+  if (_started) {
+    return;
+  }
   if ((ad = ad_open_dev(cmd_ln_str_r(config, "-adcdev"),
     (int) cmd_ln_float32_r(config, "-samprate"))) == nullptr) {
     PRINT_NAMED_ERROR("KeywordRecognizer", "Failed to open audio device");
@@ -107,11 +140,15 @@ void Recognizer::Start()
     PRINT_NAMED_ERROR("KeywordRecognizer", "Failed to start utterance");
   }
   utt_started = false;
+  _started = true;
 }
 
 void Recognizer::Update(unsigned int millisecondsPassed)
 {
   if (ps == nullptr) {
+    return;
+  }
+  if (!_started) {
     return;
   }
   if ((k = ad_read(ad, adbuf, adbuffSize)) < 0) {
@@ -144,8 +181,12 @@ void Recognizer::Stop()
   if (ps == nullptr) {
     return;
   }
+  if (!_started) {
+    return;
+  }
   ps_end_utt(ps);
   ad_close(ad);
+  _started = false;
 }
 
 void Recognizer::TranslateHypothesisToEvent(const char* hypothesis, int32_t score)
