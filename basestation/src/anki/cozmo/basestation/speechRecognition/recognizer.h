@@ -16,7 +16,10 @@
 
 #include <sphinxbase/ad.h>
 #include <pocketsphinx.h>
+#include "util/signals/simpleSignal_fwd.h"
+#include "clad/types/keyWords.h"
 #include <string>
+#include <vector>
 
 namespace Anki {
 namespace Cozmo {
@@ -35,7 +38,10 @@ public:
 
 private:
 
+  void TranslateHypothesisToEvent(const char* hypothesis, int32_t score);
   IExternalInterface* _externalInterface;
+  std::vector<Signal::SmartHandle> _signalHandles;
+  std::vector<std::pair<std::string, KeyWord> > _translationPairs;
 
   // private members for keyword search
   static const uint32 adbuffSize = 2048;

@@ -285,6 +285,7 @@ Result CozmoEngineHostImpl::UpdateInternal(const BaseStationTime_t currTime_ns)
   // robots in the world.
   _robotMgr.UpdateAllRobots();
 
+  _keywordRecognizer->Update((uint32_t)(BaseStationTimer::getInstance()->GetTimeSinceLastTickInSeconds() * 1000.0f));
   return RESULT_OK;
 } // UpdateInternal()
 
