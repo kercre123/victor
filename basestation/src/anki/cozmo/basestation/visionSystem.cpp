@@ -321,11 +321,11 @@ namespace Cozmo {
   }
   
 
-  bool VisionSystem::CheckMailbox(MessageDockingErrorSignal&  msg)
+  bool VisionSystem::CheckMailbox(std::pair<Pose3d, TimeStamp_t>& markerPoseWrtCamera)
   {
     bool retVal = false;
     if(IsInitialized()) {
-      retVal = _dockingMailbox.getMessage(msg);
+      retVal = _dockingMailbox.getMessage(markerPoseWrtCamera);
     }
     return retVal;
   }
@@ -1186,6 +1186,7 @@ namespace Cozmo {
     return result;
   } // TrackerPredictionUpdate()
   
+#if 0 // No longer using FillDockErrMsg (it gets filled by robot)
   void VisionSystem::FillDockErrMsg(const Embedded::Quadrilateral<f32>& currentQuad,
                                     MessageDockingErrorSignal& dockErrMsg,
                                     MemoryStack scratch)
@@ -1293,6 +1294,7 @@ namespace Cozmo {
     
 #endif // if USE_APPROXIMATE_DOCKING_ERROR_SIGNAL
   } // FillDockErrMsg()
+#endif // #if 0 around FillDockErrMsg()
   
 #if 0
 #pragma mark --- Public VisionSystem API Implementations ---
@@ -2196,14 +2198,43 @@ namespace Cozmo {
       // Create docking error signal from tracker
       //
       
-      MessageDockingErrorSignal dockErrMsg;
-      dockErrMsg.timestamp = imageTimeStamp;
-      dockErrMsg.didTrackingSucceed = static_cast<u8>(converged);
-      
       if(converged)
       {
         Embedded::Quadrilateral<f32> currentQuad = GetTrackerQuad(_memory._onchipScratch);
-        FillDockErrMsg(currentQuad, dockErrMsg, _memory._onchipScratch);
+       
+        //FillDockErrMsg(currentQuad, dockErrMsg, _memory._onchipScratch);
+        
+        // Convert to Pose3d and put it in the docking mailbox for the robot to
+        // get and send off to the real robot for docking. Note the pose should
+        // really have the camera pose as its parent, but we'll let the robot
+        // take care of that, since the vision system is running off on its own
+        // thread.
+        Array<f32> R(3,3,_memory._onchipScratch);
+        lastResult = _tracker.GetRotationMatrix(R);
+        if(RESULT_OK != lastResult) {
+          PRINT_NAMED_ERROR("VisionSystem.Update.TrackerRotationFail",
+                            "Could not get Rotation matrix from 6DoF tracker.");
+          return lastResult;
+        }
+        RotationMatrix3d Rmat{
+          R[0][0], R[0][1], R[0][2],
+          R[1][0], R[1][1], R[1][2],
+          R[2][0], R[2][1], R[2][2]
+        };
+        Pose3d markerPoseWrtCamera(Rmat, {
+          _tracker.GetTranslation().x, _tracker.GetTranslation().y, _tracker.GetTranslation().z
+        });
+        
+        // Add docking offset:
+        if(_markerToTrack.postOffsetAngle_rad != 0.f ||
+           _markerToTrack.postOffsetX_mm != 0.f ||
+           _markerToTrack.postOffsetY_mm != 0.f)
+        {
+          Pose3d offsetPoseWrtMarker(_markerToTrack.postOffsetAngle_rad, Y_AXIS_3D(),
+                                     {_markerToTrack.postOffsetX_mm, _markerToTrack.postOffsetY_mm, 0.f},
+                                     &markerPoseWrtCamera);
+          markerPoseWrtCamera = offsetPoseWrtMarker.GetWithRespectToOrigin();
+        }
         
         // Send tracker quad if image streaming
         if (_imageSendMode == ISM_STREAM) {
@@ -2229,7 +2260,7 @@ namespace Cozmo {
         // Reset the failure counter
         _numTrackFailures = 0;
         
-        _dockingMailbox.putMessage(dockErrMsg);
+        _dockingMailbox.putMessage({markerPoseWrtCamera, imageTimeStamp});
       }
       else {
         _numTrackFailures += 1;

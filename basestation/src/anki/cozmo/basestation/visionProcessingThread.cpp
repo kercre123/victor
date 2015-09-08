@@ -329,12 +329,12 @@ namespace Cozmo {
     return _visionSystem->CheckMailbox(msg);
   }
   
-  bool VisionProcessingThread::CheckMailbox(MessageDockingErrorSignal& msg)
+  bool VisionProcessingThread::CheckMailbox(std::pair<Pose3d, TimeStamp_t>& markerPoseWrtCamera)
   {
     AnkiConditionalErrorAndReturnValue(_visionSystem != nullptr /*&& _visionSystem->IsInitialized()*/, false,
                                        "VisionProcessingThread.CheckMailbox.NullVisionSystem",
                                        "CheckMailbox called before vision system instantiated.");// and initialized.");
-    return _visionSystem->CheckMailbox(msg);
+    return _visionSystem->CheckMailbox(markerPoseWrtCamera);
   }
   
   bool VisionProcessingThread::CheckMailbox(MessageTrackerQuad& msg)

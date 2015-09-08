@@ -86,7 +86,7 @@ class VisionProcessingThread
     // These return true if a mailbox messages was available, and they copy
     // that message into the passed-in message struct.
     //bool CheckMailbox(ImageChunk&          msg);
-    bool CheckMailbox(MessageDockingErrorSignal&  msg);
+    bool CheckMailbox(std::pair<Pose3d, TimeStamp_t>& markerPoseWrtCamera);
     //bool CheckMailbox(MessageFaceDetection&       msg);
     bool CheckMailbox(Vision::ObservedMarker&     msg);
     bool CheckMailbox(MessageTrackerQuad&         msg);

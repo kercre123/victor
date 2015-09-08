@@ -523,7 +523,7 @@ namespace Anki {
       RotationVector3d Rvec(-p->GetHeadAngle(), Y_AXIS_3D());
       camPose.RotateBy(Rvec);
       
-      // Precompute with robot body to neck pose
+      // Precompose with robot body to neck pose
       camPose.PreComposeWith(_neckPose);
       
       // Set parent pose to be the historical robot pose
@@ -746,31 +746,6 @@ namespace Anki {
        */
     }
     
-    
-    // Given a pose wrt camera, convert it to be wrt robot with the given head angle.
-    // TODO: There's a better way to do this, but brain tired.
-    static Pose3d GetPoseWrtCameraWrtRobot(const Pose3d& poseWrtCam,
-                                           const f32 headAngleRad)
-    {
-      const f32 cosH = cosf(headAngleRad);
-      const f32 sinH = sinf(headAngleRad);
-
-      RotationMatrix3d rotMat({0, sinH, cosH,
-                              -1, 0, 0,
-                               0, -cosH, sinH});
-      Pose3d camWrtRobotPose(rotMat,
-                              {HEAD_CAM_POSITION[0]*cosH - HEAD_CAM_POSITION[2]*sinH + NECK_JOINT_POSITION[0],
-                                0,
-                                HEAD_CAM_POSITION[2]*cosH + HEAD_CAM_POSITION[0]*sinH + NECK_JOINT_POSITION[2]});
-      
-      Pose3d poseWrtRobot = poseWrtCam;
-      poseWrtRobot.PreComposeWith(camWrtRobotPose);
-      
-      return poseWrtRobot;
-    }
-
-    
-    
     Result Robot::Update(void)
     {
 #if(0)
@@ -876,41 +851,52 @@ namespace Anki {
                                                      trackerQuad.bottomLeft_x, trackerQuad.bottomLeft_y);
         }
         
-        MessageDockingErrorSignal dockingErrorSignal;
-        if(true == _visionProcessor.CheckMailbox(dockingErrorSignal)) {
-          
-          // HACK: Robot seems to dock slightly to the right rather consistently
-          if (_isPhysical) {
-            dockingErrorSignal.x_distErr -= DOCKING_LATERAL_OFFSET_HACK;
-          }
+        //MessageDockingErrorSignal dockingErrorSignal;
+        std::pair<Pose3d, TimeStamp_t> markerPoseWrtCamera;
+        if(true == _visionProcessor.CheckMailbox(markerPoseWrtCamera)) {
           
           // Convert from camera frame to robot frame
           Anki::Cozmo::RobotPoseStamp p;
           TimeStamp_t t;
-          _poseHistory->GetRawPoseAt(dockingErrorSignal.timestamp, t, p);
+          _poseHistory->GetRawPoseAt(markerPoseWrtCamera.second, t, p);
           
+          // Hook the pose coming out of the vision system up to the historical
+          // camera at that timestamp
+          Vision::Camera histCamera(GetHistoricalCamera(&p, t));
+          markerPoseWrtCamera.first.SetParent(&histCamera.GetPose());
+          /*
+          // Get the pose w.r.t. the (historical) robot pose instead of the camera pose
+          Pose3d markerPoseWrtRobot;
+          if(false == markerPoseWrtCamera.first.GetWithRespectTo(p.GetPose(), markerPoseWrtRobot)) {
+            PRINT_NAMED_ERROR("Robot.Update.PoseOriginFail",
+                              "Could not get marker pose w.r.t. robot.");
+            return RESULT_FAIL;
+          }
+          */
+          //Pose3d poseWrtRobot = poseWrtCam;
+          //poseWrtRobot.PreComposeWith(camWrtRobotPose);
+          Pose3d markerPoseWrtRobot(markerPoseWrtCamera.first);
+          markerPoseWrtRobot.PreComposeWith(histCamera.GetPose());
           
-          if (dockingErrorSignal.isApproximate) {
-            // TODO: Still needed?
-            dockingErrorSignal.x_distErr += HEAD_CAM_POSITION[0]*cosf(p.GetHeadAngle()) + NECK_JOINT_POSITION[0];
-          } else {
-            Pose3d poseWrtCam(dockingErrorSignal.angleErr, Y_AXIS_3D(),
-                              {dockingErrorSignal.x_distErr, dockingErrorSignal.y_horErr, dockingErrorSignal.z_height});
-            Pose3d poseWrtRobot = GetPoseWrtCameraWrtRobot(poseWrtCam, p.GetHeadAngle());
-            
-            dockingErrorSignal.x_distErr = poseWrtRobot.GetTranslation().x();
-            dockingErrorSignal.y_horErr = poseWrtRobot.GetTranslation().y();
-            dockingErrorSignal.z_height = poseWrtRobot.GetTranslation().z();
+          MessageDockingErrorSignal dockErrMsg;
+          dockErrMsg.timestamp = markerPoseWrtCamera.second;
+          dockErrMsg.x_distErr = markerPoseWrtRobot.GetTranslation().x();
+          dockErrMsg.y_horErr  = markerPoseWrtRobot.GetTranslation().y();
+          dockErrMsg.z_height  = markerPoseWrtRobot.GetTranslation().z();
+          dockErrMsg.angleErr  = markerPoseWrtRobot.GetRotation().GetAngleAroundZaxis().ToFloat() + M_PI_2;
+          
+          // HACK: Robot seems to dock slightly to the right rather consistently
+          if (_isPhysical) {
+            dockErrMsg.x_distErr -= DOCKING_LATERAL_OFFSET_HACK;
           }
           
-          
           // Visualize docking error signal
-          VizManager::getInstance()->SetDockingError(dockingErrorSignal.x_distErr,
-                                                     dockingErrorSignal.y_horErr,
-                                                     dockingErrorSignal.angleErr);
+          VizManager::getInstance()->SetDockingError(dockErrMsg.x_distErr,
+                                                     dockErrMsg.y_horErr,
+                                                     dockErrMsg.angleErr);
           
           // Try to use this for closed-loop control by sending it on to the robot
-          SendMessage(dockingErrorSignal);
+          SendMessage(dockErrMsg);
           
         }
         

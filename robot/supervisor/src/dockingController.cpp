@@ -120,7 +120,7 @@ namespace Anki {
         // Start raising lift for high dock only when
         // the block is at least START_LIFT_TRACKING_DIST_MM close and START_LIFT_TRACKING_HEIGHT_MM high
         const f32 START_LIFT_TRACKING_DIST_MM = 80.f;
-        const f32 START_LIFT_TRACKING_HEIGHT_MM = 44.f;
+        //const f32 START_LIFT_TRACKING_HEIGHT_MM = 44.f;
         
         // First commanded lift height when START_LIFT_TRACKING_DIST_MM is reached
         const f32 START_LIFT_HEIGHT_MM = LIFT_HEIGHT_HIGHDOCK - 15.f;
@@ -355,82 +355,44 @@ namespace Anki {
           lastTime = currTime;
 #endif
           
+          //PRINT("ErrSignal %d (msgTime %d)\n", HAL::GetMicroCounter(), dockingErrSignalMsg_.timestamp);
           
-          if(dockingErrSignalMsg_.didTrackingSucceed) {
-            
-            //PRINT("ErrSignal %d (msgTime %d)\n", HAL::GetMicroCounter(), dockingErrSignalMsg_.timestamp);
-            
-            // Update last observed marker pose
-            lastMarkerDistX_ = dockingErrSignalMsg_.x_distErr;
-            lastMarkerDistY_ = dockingErrSignalMsg_.y_horErr;
-            lastMarkerAng_ = dockingErrSignalMsg_.angleErr;
-            
-            
-            // Check if we are beyond point of no return distance
-            if (pastPointOfNoReturn_) {
+          // Update last observed marker pose
+          lastMarkerDistX_ = dockingErrSignalMsg_.x_distErr;
+          lastMarkerDistY_ = dockingErrSignalMsg_.y_horErr;
+          lastMarkerAng_ = dockingErrSignalMsg_.angleErr;
+          
+          
+          // Check if we are beyond point of no return distance
+          if (pastPointOfNoReturn_) {
 #if(DEBUG_DOCK_CONTROLLER)
-              PRINT("DockingController: Ignoring error msg because past point of no return (%f < %d)\n", dockingErrSignalMsg_.x_distErr, pointOfNoReturnDistMM_);
+            PRINT("DockingController: Ignoring error msg because past point of no return (%f < %d)\n", dockingErrSignalMsg_.x_distErr, pointOfNoReturnDistMM_);
 #endif
-              break; // out of while
-            }
-            
-            
+            break; // out of while
+          }
+          
+          
 #if(DEBUG_DOCK_CONTROLLER)
-            PRINT("Received%sdocking error signal: x_distErr=%f, y_horErr=%f, "
-                  "z_height=%f, angleErr=%fdeg\n",
-                  (dockMsg.isApproximate ? " approximate " : " "),
-                  dockingErrSignalMsg_.x_distErr, dockingErrSignalMsg_.y_horErr,
-                  dockingErrSignalMsg_.z_height, RAD_TO_DEG_F32(dockingErrSignalMsg_.angleErr));
+          PRINT("Received%sdocking error signal: x_distErr=%f, y_horErr=%f, "
+                "z_height=%f, angleErr=%fdeg\n",
+                (dockMsg.isApproximate ? " approximate " : " "),
+                dockingErrSignalMsg_.x_distErr, dockingErrSignalMsg_.y_horErr,
+                dockingErrSignalMsg_.z_height, RAD_TO_DEG_F32(dockingErrSignalMsg_.angleErr));
 #endif
+          
+          // Check that error signal is plausible
+          // If not, treat as if tracking failed.
+          // TODO: Get tracker to detect these situations and not even send the error message here.
+          if (dockingErrSignalMsg_.x_distErr > 0.f && ABS(dockingErrSignalMsg_.angleErr) < 0.75f*PIDIV2_F) {
             
-            // Check that error signal is plausible
-            // If not, treat as if tracking failed.
-            // TODO: Get tracker to detect these situations and not even send the error message here.
-            if (dockingErrSignalMsg_.x_distErr > 0.f && ABS(dockingErrSignalMsg_.angleErr) < 0.75f*PIDIV2_F) {
-             
-              // Update time that last good error signal was received
-              lastDockingErrorSignalRecvdTime_ = HAL::GetTimeStamp();
-              
-              // Set relative block pose to start/continue docking
-              SetRelDockPose(dockingErrSignalMsg_.x_distErr, dockingErrSignalMsg_.y_horErr, dockingErrSignalMsg_.angleErr, dockingErrSignalMsg_.timestamp);
-
-              if(!dockingErrSignalMsg_.isApproximate) // will be -1 if not computed
-              {
-                // If we have the height of the marker for docking, we can also
-                // compute the head angle to keep it centered
-                HeadController::SetMaxSpeedAndAccel(2.5, 10);
-                //f32 desiredHeadAngle = atan_fast( (dockMsg.z_height - NECK_JOINT_POSITION[2])/dockMsg.x_distErr);
-                
-                // Make sure bottom of camera FOV doesn't tilt below the bottom of the block
-                // or that the camera FOV center doesn't tilt below the marker center.
-                // Otherwise try to maintain the lowest tilt possible
-                
-                // Compute angle the head needs to face such that the bottom of the marker
-                // is at the bottom of the image.
-                //f32 minDesiredHeadAngle1 = atan_fast( (dockMsg.z_height - NECK_JOINT_POSITION[2] - 20.f)/dockMsg.x_distErr) + 0.5f*GetVerticalFOV(); // TODO: Marker size should come from VisionSystem?
-                
-                // Compute the angle the head needs to face such that it is looking
-                // directly at the center of the marker
-                //f32 minDesiredHeadAngle2 = atan_fast( (dockMsg.z_height - NECK_JOINT_POSITION[2])/dockMsg.x_distErr);
-                
-                // Use the min of both angles
-                //f32 desiredHeadAngle = MIN(minDesiredHeadAngle1, minDesiredHeadAngle2);
-                
-                // KEVIN: Lens is wide enough now that we don't really need to do head tracking.
-                //        Docking is smoother without it!
-                //HeadController::SetDesiredAngle(desiredHeadAngle);
-                //PRINT("desHeadAngle %f (min1: %f, min2: %f)\n", desiredHeadAngle, minDesiredHeadAngle1, minDesiredHeadAngle2);
-
-                // If docking to a high block, assumes we're trying to pick it up!
-                if (dockingErrSignalMsg_.z_height > START_LIFT_TRACKING_HEIGHT_MM) {
-                  doHighDockLiftTracking_ = true;
-                }
-
-              }
-              continue;
-            }
-
-          }  // IF tracking succeeded
+            // Update time that last good error signal was received
+            lastDockingErrorSignalRecvdTime_ = HAL::GetTimeStamp();
+            
+            // Set relative block pose to start/continue docking
+            SetRelDockPose(dockingErrSignalMsg_.x_distErr, dockingErrSignalMsg_.y_horErr, dockingErrSignalMsg_.angleErr, dockingErrSignalMsg_.timestamp);
+            
+            continue;
+          }
           
           if ((!pastPointOfNoReturn_) && (!markerOutOfFOV_)) {
             SpeedController::SetUserCommandedDesiredVehicleSpeed(0);

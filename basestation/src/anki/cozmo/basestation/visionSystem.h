@@ -211,12 +211,12 @@ namespace Cozmo {
     // These return true if a mailbox messages was available, and they copy
     // that message into the passed-in message struct.
     //bool CheckMailbox(ImageChunk&          msg);
-    bool CheckMailbox(MessageDockingErrorSignal&  msg);
+    bool CheckMailbox(std::pair<Pose3d, TimeStamp_t>& markerPoseWrtCamera);
     //bool CheckMailbox(MessageFaceDetection&       msg);
-    bool CheckMailbox(Vision::ObservedMarker&     msg);
+    bool CheckMailbox(Vision::ObservedMarker&     observedMarker);
     bool CheckMailbox(MessageTrackerQuad&         msg);
     bool CheckMailbox(MessagePanAndTiltHead&      msg);
-    bool CheckMailbox(Vision::TrackedFace&        msg);
+    bool CheckMailbox(Vision::TrackedFace&        trackedFace);
     
   protected:
     
@@ -438,7 +438,7 @@ namespace Cozmo {
     // system communicates to main execution:
     //MultiMailbox<Messages::BlockMarkerObserved, MAX_BLOCK_MARKER_MESSAGES> blockMarkerMailbox_;
     //Mailbox<Messages::MatMarkerObserved>    matMarkerMailbox_;
-    Mailbox<MessageDockingErrorSignal>   _dockingMailbox;
+    Mailbox<std::pair<Pose3d, TimeStamp_t> > _dockingMailbox; // holds timestamped marker pose w.r.t. camera
     Mailbox<MessageTrackerQuad>          _trackerMailbox;
     Mailbox<MessagePanAndTiltHead>       _panTiltMailbox;
     MultiMailbox<Vision::ObservedMarker, DetectFiducialMarkersParameters::MAX_MARKERS>   _visionMarkerMailbox;
