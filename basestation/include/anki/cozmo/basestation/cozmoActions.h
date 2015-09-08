@@ -96,7 +96,7 @@ namespace Anki {
     class DriveToObjectAction : public IAction //: public DriveToPoseAction
     {
     public:
-      DriveToObjectAction(const ObjectID& objectID, const PreActionPose::ActionType& actionType, const bool useManualSpeed = false);
+      DriveToObjectAction(const ObjectID& objectID, const PreActionPose::ActionType& actionType, const f32 predockOffsetDistX_mm = 0, const bool useManualSpeed = false);
       DriveToObjectAction(const ObjectID& objectID, const f32 distance_mm, const bool useManualSpeed = false);
       
       // TODO: Add version where marker code is specified instead of action?
@@ -122,6 +122,7 @@ namespace Anki {
       ObjectID                   _objectID;
       PreActionPose::ActionType  _actionType;
       f32                        _distance_mm;
+      f32                        _predockOffsetDistX_mm;
       bool                       _useManualSpeed;
       CompoundActionSequential   _compoundAction;
       
@@ -493,7 +494,7 @@ namespace Anki {
                                       const f32 placementOffsetAngle_rad = 0,
                                       const bool placeObjectOnGroundIfCarrying = false)
       : CompoundActionSequential({
-        new DriveToObjectAction(objectID, PreActionPose::DOCKING, useManualSpeed),
+        new DriveToObjectAction(objectID, PreActionPose::DOCKING, placementOffsetX_mm, useManualSpeed),
         //new VisuallyVerifyObjectAction(objectID),
         new PickAndPlaceObjectAction(objectID, useManualSpeed, placementOffsetX_mm, placementOffsetY_mm, placementOffsetAngle_rad, placeObjectOnGroundIfCarrying)})
       {
@@ -519,7 +520,7 @@ namespace Anki {
     public:
       DriveToRollObjectAction(const ObjectID& objectID, const bool useManualSpeed = false)
       : CompoundActionSequential({
-        new DriveToObjectAction(objectID, PreActionPose::DOCKING, useManualSpeed),
+        new DriveToObjectAction(objectID, PreActionPose::DOCKING, 0, useManualSpeed),
         new RollObjectAction(objectID, useManualSpeed)})
       {
         
@@ -685,7 +686,7 @@ namespace Anki {
     public:
       DriveToAndTraverseObjectAction(const ObjectID& objectID, const bool useManualSpeed = false)
       : CompoundActionSequential({
-        new DriveToObjectAction(objectID, PreActionPose::ENTRY, useManualSpeed),
+        new DriveToObjectAction(objectID, PreActionPose::ENTRY, 0, useManualSpeed),
         new TraverseObjectAction(objectID, useManualSpeed)})
       {
         
