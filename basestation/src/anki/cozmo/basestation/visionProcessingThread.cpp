@@ -136,13 +136,19 @@ namespace Cozmo {
                         const f32                    markerWidth_mm,
                         const Point2f&               imageCenter,
                         const f32                    radius,
-                        const bool                   checkAngleX)
+                        const bool                   checkAngleX,
+                        const f32                    postOffsetX_mm,
+                        const f32                    postOffsetY_mm,
+                        const f32                    postOffsetAngle_rad)
   {
     if(_visionSystem != nullptr) {
       Embedded::Point2f pt(imageCenter.x(), imageCenter.y());
       Vision::MarkerType markerType = static_cast<Vision::MarkerType>(markerToTrack);
       _visionSystem->SetMarkerToTrack(markerType, markerWidth_mm,
-                                      pt, radius, checkAngleX);
+                                      pt, radius, checkAngleX,
+                                      postOffsetX_mm,
+                                      postOffsetY_mm,
+                                      postOffsetAngle_rad);
     } else {
       PRINT_NAMED_ERROR("VisionProcessingThread.SetMarkerToTrack.NullVisionSystem", "Cannot set vision marker to track before vision system is instantiated.\n");
     }

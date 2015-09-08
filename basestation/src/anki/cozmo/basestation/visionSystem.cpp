@@ -1537,13 +1537,19 @@ namespace Cozmo {
                                         const f32 markerWidth_mm,
                                         const Embedded::Point2f& atImageCenter,
                                         const f32 imageSearchRadius,
-                                        const bool checkAngleX)
+                                        const bool checkAngleX,
+                                        const f32 postOffsetX_mm,
+                                        const f32 postOffsetY_mm,
+                                        const f32 postOffsetAngle_rad)
   {
     _newMarkerToTrack.type              = markerTypeToTrack;
     _newMarkerToTrack.width_mm          = markerWidth_mm;
     _newMarkerToTrack.imageCenter       = atImageCenter;
     _newMarkerToTrack.imageSearchRadius = imageSearchRadius;
     _newMarkerToTrack.checkAngleX       = checkAngleX;
+    _newMarkerToTrack.postOffsetX_mm    = postOffsetX_mm;
+    _newMarkerToTrack.postOffsetY_mm    = postOffsetY_mm;
+    _newMarkerToTrack.postOffsetAngle_rad = postOffsetAngle_rad;
     
     // Next call to Update(), we will call UpdateMarkerToTrack() and
     // actually replace the current _markerToTrack with the one set here.
@@ -2239,7 +2245,10 @@ namespace Cozmo {
                            _markerToTrack.width_mm,
                            _markerToTrack.imageCenter,
                            _markerToTrack.imageSearchRadius,
-                           _markerToTrack.checkAngleX);
+                           _markerToTrack.checkAngleX,
+                           _markerToTrack.postOffsetX_mm,
+                           _markerToTrack.postOffsetY_mm,
+                           _markerToTrack.postOffsetAngle_rad);
         }
       }
       

@@ -71,7 +71,10 @@ class VisionProcessingThread
                           const f32                    markerWidth_mm,
                           const Point2f&               imageCenter,
                           const f32                    radius,
-                          const bool                   checkAngleX);
+                          const bool                   checkAngleX,
+                          const f32                    postOffsetX_mm = 0,
+                          const f32                    postOffsetY_mm = 0,
+                          const f32                    postOffsetAngle_rad = 0);
     
     // Enable/disable different types of processing
     void EnableMarkerDetection(bool tf);
