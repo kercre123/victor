@@ -1037,7 +1037,8 @@ public class Robot : IDisposable {
   }
 
   public void StartFaceAwareness() {
-    //StartFaceTrackingMessage.timeout_sec = ID;
+    StartFaceTrackingMessage.timeout_sec = byte.MaxValue;
+
     RobotEngineManager.instance.Message.StartFaceTracking = StartFaceTrackingMessage;
     RobotEngineManager.instance.SendMessage();
   }
