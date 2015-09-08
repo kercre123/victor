@@ -57,7 +57,8 @@ void Head::TxRx()
   // Initialize the UART for the specified baudrate
   // Mike noticed the baud rate is almost rate*268 - it's actually (2^28 / 1MHz)
   NRF_UART0->BAUDRATE = UART_BAUDRATE;
-
+  MicroWait(80); // Give the uart some time to catch up
+  
   NRF_UART0->EVENTS_RXDRDY = 0;
   NRF_UART0->EVENTS_TXDRDY = 0;
   ENABLE_UART_IRQ;
@@ -83,7 +84,6 @@ void UART0_IRQHandler()
   if (NRF_UART0->EVENTS_TXDRDY) {
     NRF_UART0->EVENTS_TXDRDY = 0;
 
-    
     if (TxRxIdx < sizeof(g_dataToHead)) {
       NRF_UART0->TXD = TxRxBuffer[TxRxIdx++];
     } else {
