@@ -1672,10 +1672,12 @@ namespace Cozmo {
            _markerToTrack.postOffsetX_mm != 0.f ||
            _markerToTrack.postOffsetY_mm != 0.f)
         {
+          // Note that the tracker effectively uses camera coordinates for the
+          // marker, so the requested "X" offset (which is distance away from
+          // the marker's face) is along its negative "Z" axis.
           Pose3d offsetPoseWrtMarker(_markerToTrack.postOffsetAngle_rad, Y_AXIS_3D(),
-                                     {_markerToTrack.postOffsetX_mm, _markerToTrack.postOffsetY_mm, 0.f},
-                                     &markerPoseWrtCamera);
-          markerPoseWrtCamera = offsetPoseWrtMarker.GetWithRespectToOrigin();
+                                     {-_markerToTrack.postOffsetY_mm, 0.f, -_markerToTrack.postOffsetX_mm});
+          markerPoseWrtCamera *= offsetPoseWrtMarker;
         }
         
         // Send tracker quad if image streaming
