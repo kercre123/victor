@@ -8,6 +8,20 @@ public class PatternPlayController : GameController {
   private bool gameOver = false;
   private bool gameReady = false;
 
+  private struct BlockLights {
+    public bool front;
+    public bool back;
+    public bool left;
+    public bool right;
+  }
+
+  private class RowBlockPattern {
+    // left to right pattern relative to the robot.
+    public List<BlockLights> blocks = new List<BlockLights>();
+  }
+
+  private List<RowBlockPattern> seenPatterns = new List<RowBlockPattern>();
+
   protected override void OnEnable() {
     base.OnEnable();
     robot.VisionWhileMoving(true);
@@ -27,7 +41,6 @@ public class PatternPlayController : GameController {
 
   protected override void Update_BUILDING() {
     base.Update_BUILDING();
-    robot.DriveWheels(15.0f, -15.0f);
 
     foreach (KeyValuePair<int, ActiveBlock> activeBlock in robot.activeBlocks) {
       for (int j = 0; j < activeBlock.Value.lights.Length; ++j) {
@@ -38,7 +51,6 @@ public class PatternPlayController : GameController {
     // makes sure cozmo sees all 4 blocks first.
     if (robot.activeBlocks.Count >= 4) {
       gameReady = true;
-      robot.DriveWheels(0.0f, 0.0f);
     }
   }
 
@@ -60,7 +72,15 @@ public class PatternPlayController : GameController {
 
   protected override void Enter_PLAYING() {
     base.Enter_PLAYING();
-
+    RowBlockPattern currentPattern = null;
+    if (ValidPatternSeen(out currentPattern)) {
+      if (NewPatternSeen()) {
+        // play joy.
+      }
+      else {
+        // play meh.
+      }
+    }
   }
 
   protected override void Update_PLAYING() {
@@ -100,11 +120,32 @@ public class PatternPlayController : GameController {
   }
 
   private void BlockTapped(int blockID, int numTapped) {
+    if (gameReady == false)
+      return;
+
+    DAS.Debug("PatternPlayController", blockID + " " + robot.activeBlocks[blockID].Forward);
 
   }
 
   private void RobotEngineMessages(bool success, RobotActionType action_type) {
 
+  }
+
+  private bool ValidPatternSeen(out RowBlockPattern patternSeen) {
+    patternSeen = new RowBlockPattern();
+
+    // check rotation alignment (within certain angle mod by 90 degrees)
+
+    // check position alignment (within certain x threshold)
+
+    // check for pattern
+
+
+    return false;
+  }
+
+  private bool NewPatternSeen() {
+    return false;
   }
 
 }
