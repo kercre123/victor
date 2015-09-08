@@ -71,3 +71,9 @@ void UART::print( const char* fmt, ...)
   vsnprintf(out, sizeof(out), fmt, vl);
   while (*p) put(*(p++));
 }
+
+void UART::dump(int count, char* data) {
+  while(count-- > 0) {
+    print("%2x ", *(data++));
+  }
+}

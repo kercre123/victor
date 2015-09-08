@@ -39,6 +39,8 @@ uint32_t isqrt(uint32_t a_nInput)
     return res;
 }
 
+#include <stdio.h>
+
 namespace Anki
 {
   namespace Cozmo
@@ -67,7 +69,7 @@ namespace Anki
         if (id >= MAX_CUBES) {
           return ;
         }
-        
+
         uint8_t shocks = g_dataToHead.cubeStatus.shockCount;
         uint8_t count = shocks - g_AccelStatus[id].shockCount;
         memcpy(&g_AccelStatus[id], (void*)&g_dataToHead.cubeStatus, sizeof(AcceleratorPacket));

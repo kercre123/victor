@@ -84,7 +84,8 @@ int main(void)
       // Turn off the system if it hasn't talked to the head for a minute
       if(++failedTransferCount > MAX_FAILED_TRANSFER_COUNT)
       {
-        //Battery::powerOff();
+        Battery::powerOff();
+        return -1;
       }
     } else {
       failedTransferCount = 0;

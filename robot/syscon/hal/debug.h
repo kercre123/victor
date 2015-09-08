@@ -9,6 +9,7 @@ namespace UART {
   bool waitIdle();
   int get();
   void print( const char* fmt, ...);
+  void dump(int count, char* data);
 }
   
 #endif
