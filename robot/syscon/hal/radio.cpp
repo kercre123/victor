@@ -77,7 +77,7 @@ extern "C" void uesb_event_handler(void)
   {
     uesb_payload_t rx_payload;
     uesb_read_rx_payload(&rx_payload);
-    uint8_t addr = rx_payload.address - 0xC2;
+    uint8_t addr = rx_payload.pipe - 1;
     
     if (addr < MAX_CUBES) {
       memcpy((uint8_t*)&cubeRx[addr], rx_payload.data, sizeof(AcceleratorPacket));
