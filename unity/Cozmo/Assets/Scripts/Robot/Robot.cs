@@ -215,6 +215,7 @@ public class Robot : IDisposable {
   private U2G.SetBackpackLEDs SetBackpackLEDsMessage;
   private U2G.SetObjectAdditionAndDeletion SetObjectAdditionAndDeletionMessage;
   private U2G.StartFaceTracking StartFaceTrackingMessage;
+  private U2G.ExecuteBehavior ExecuteBehaviorMessage;
 
   private ObservedObject _carryingObject;
 
@@ -367,6 +368,7 @@ public class Robot : IDisposable {
     SetBackpackLEDsMessage = new U2G.SetBackpackLEDs();
     SetObjectAdditionAndDeletionMessage = new U2G.SetObjectAdditionAndDeletion();
     StartFaceTrackingMessage = new U2G.StartFaceTracking();
+    ExecuteBehaviorMessage = new U2G.ExecuteBehavior();
 
     lights = new Light[SetBackpackLEDsMessage.onColor.Length];
 
@@ -1005,5 +1007,14 @@ public class Robot : IDisposable {
 
     if (now)
       UpdateLightMessages(now);
+  }
+
+  public void ExecuteBehavior(string behaviorName) {
+    ExecuteBehaviorMessage.behaviorName = behaviorName;
+    
+    DAS.Debug("Robot", "Execute Behavior " + ExecuteBehaviorMessage.behaviorName);
+
+    RobotEngineManager.instance.Message.ExecuteBehavior = ExecuteBehaviorMessage;
+    RobotEngineManager.instance.SendMessage();
   }
 }
