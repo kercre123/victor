@@ -8,6 +8,8 @@ public class PatternPlayController : GameController {
   private bool gameOver = false;
   private bool gameReady = false;
 
+  private bool animationPlaying = false;
+
   // block lights relative to cozmo.
   // front is the light facing cozmo.
   // left is the light left of cozmo etc.
@@ -102,6 +104,7 @@ public class PatternPlayController : GameController {
         robot.activeBlocks[blockConfig.Key].lights[i].onColor = CozmoPalette.ColorToUInt(Color.black);
       }
 
+      // setting onColor based on if cozmo sees the block or not.
       Color onColor = Color.white;
 
       for (int i = 0; i < robot.markersVisibleObjects.Count; ++i) {
@@ -141,11 +144,15 @@ public class PatternPlayController : GameController {
     // check cozmo vision for patterns.
     RowBlockPattern currentPattern = null;
     if (ValidPatternSeen(out currentPattern)) {
-      if (NewPatternSeen()) {
-        // play joy.
-      }
-      else {
-        // play meh.
+      if (!animationPlaying) {
+        if (NewPatternSeen(currentPattern)) {
+          // play joy.
+          SendAnimation("winMatch");
+        }
+        else {
+          // play meh.
+          SendAnimation("Satisfaction");
+        }
       }
     }
   }
@@ -191,24 +198,119 @@ public class PatternPlayController : GameController {
   }
 
   private void RobotEngineMessages(bool success, RobotActionType action_type) {
-
+    DAS.Debug("PatternPlayController", "RobotEngineMessage: " + action_type);
+    if (action_type == RobotActionType.PLAY_ANIMATION) {
+      animationPlaying = false;
+    }
   }
 
   private bool ValidPatternSeen(out RowBlockPattern patternSeen) {
     patternSeen = new RowBlockPattern();
 
-    // check rotation alignment (within certain angle mod by 90 degrees)
+    // need at least 2 to form a pattern.
+    if (robot.markersVisibleObjects.Count < 2)
+      return false;
+
+    // check rotation alignment
 
     // check position alignment (within certain x threshold)
 
     // check for pattern
 
+    for (int i = 0; i < robot.markersVisibleObjects.Count; ++i) {
+      Vector3 relativeForward = robot.Rotation * robot.activeBlocks[robot.markersVisibleObjects[i].ID].Forward;
+      BlockLights blockLight;
+
+      // logic for relative LEDs... should be refactored to be not as ugly.
+      switch (blockLightConfigs[robot.markersVisibleObjects[i].ID]) {
+      case BlockLightConfig.NONE:
+        break;
+      case BlockLightConfig.ONE:
+        if (relativeForward.x > 0.9f) {
+          blockLight.left = true;
+        }
+        if (relativeForward.x < -0.9f) {
+          blockLight.right = true;
+        }
+        if (relativeForward.y > 0.9f) {
+          blockLight.front = true;
+        }
+        if (relativeForward.y < -0.9f) {
+          blockLight.back = true;
+        }
+        break;
+      case BlockLightConfig.TWO:
+        if (relativeForward.x > 0.9f) {
+          blockLight.left = true;
+          blockLight.back = true;
+        }
+        if (relativeForward.x < -0.9f) {
+          blockLight.right = true;
+          blockLight.front = true;
+        }
+        if (relativeForward.y > 0.9f) {
+          blockLight.front = true;
+          blockLight.left = true;
+        }
+        if (relativeForward.y < -0.9f) {
+          blockLight.back = true;
+          blockLight.right = true;
+        }
+        break;
+      case BlockLightConfig.THREE:
+        if (relativeForward.x > 0.9f) {
+          blockLight.left = true;
+          blockLight.back = true;
+          blockLight.right = true;
+        }
+        if (relativeForward.x < -0.9f) {
+          blockLight.right = true;
+          blockLight.front = true;
+          blockLight.left = true;
+        }
+        if (relativeForward.y > 0.9f) {
+          blockLight.front = true;
+          blockLight.left = true;
+          blockLight.back = true;
+        }
+        if (relativeForward.y < -0.9f) {
+          blockLight.back = true;
+          blockLight.right = true;
+          blockLight.front = true;
+        }
+        break;
+      case BlockLightConfig.FOUR:
+        blockLight.back = true;
+        blockLight.front = true;
+        blockLight.left = true;
+        blockLight.right = true;
+        break;
+      case BlockLightConfig.OPPOSITE:
+        if (relativeForward.x > 0.9f || relativeForward.x < -0.9f) {
+          blockLight.left = true;
+          blockLight.right = true;
+        }
+        if (relativeForward.y > 0.9f || relativeForward.y < -0.9f) {
+          blockLight.front = true;
+          blockLight.back = true;
+        }
+        break;
+      }
+    }
 
     return false;
   }
 
-  private bool NewPatternSeen() {
-    return false;
+  private bool NewPatternSeen(RowBlockPattern patternSeen) {
+    return seenPatterns.Contains(patternSeen);
+  }
+
+  private void SendAnimation(string animName) {
+    animationPlaying = true;
+    CozmoAnimation newAnimation = new CozmoAnimation();
+    newAnimation.animName = animName;
+    newAnimation.numLoops = 1;
+    CozmoEmotionManager.instance.SendAnimation(newAnimation);
   }
 
 }
