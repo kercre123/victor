@@ -53,9 +53,15 @@ union GlobalDataToHead
     GlobalCommon common;
     Fixed speeds[4];
     Fixed positions[4];
+#ifdef ROBOT41
+    Fixed _unused;
+    Fixed VBat;
+    Fixed VExt;
+#else
     Fixed IBat;
     Fixed VBat;
     Fixed Vusb;
+#endif
     u8    chargeStat;
 
     u8                cubeToUpdate;

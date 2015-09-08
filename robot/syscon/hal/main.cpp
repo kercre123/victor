@@ -10,37 +10,14 @@
 #include "lights.h"
 #include "tests.h"
 #include "radio.h"
+#include "drop.h"
 
 #include "anki/cozmo/robot/spineData.h"
 
-const u32 MAX_FAILED_TRANSFER_COUNT = 10;
+const u32 MAX_FAILED_TRANSFER_COUNT = 12000;
 
 GlobalDataToHead g_dataToHead;
 GlobalDataToBody g_dataToBody;
-
-void EncoderIRQTest(void) {
-  static bool direction = false;
-  static int counter = 0;
-  int now = GetCounter();
-  
-  UART::print("\r\nForward: ");
-  Motors::setPower(2, 0x6800);
-  Motors::update();
-  MicroWait(50000);
-  Motors::update();
-
-  MicroWait(500000);
-  Motors::printEncodersRaw();
-
-  UART::print("  Backward: ");
-  Motors::setPower(2, -0x6800);
-  Motors::update();
-  MicroWait(50000);
-  Motors::update();
-
-  MicroWait(500000);
-  Motors::printEncodersRaw();
-}
 
 int main(void)
 {
@@ -48,10 +25,12 @@ int main(void)
   u32 failedTransferCount = 0;
 
   // Initialize the hardware peripherals
-  BatteryInit();
+  Drop::init();
+  Battery::init();
   TimerInit();
   Motors::init();   // Must init before power goes on
   Head::init();
+  Lights::init();
 
   UART::print("\r\nUnbrick me now...");
   u32 t = GetCounter();
@@ -61,11 +40,9 @@ int main(void)
 
   // Finish booting up
   Radio::init();
-  PowerOn();
+  Battery::powerOn();
 
-  #ifdef TESTS_ENABLED
   TestFixtures::run();
-  #endif
 
   g_dataToHead.common.source = SPI_SOURCE_BODY;
   g_dataToHead.tail = 0x84;
@@ -76,14 +53,16 @@ int main(void)
     g_dataToBody.common.source = SPI_SOURCE_CLEAR;
 
     // Only call every loop through - not all the time
+    Motors::update();
     Radio::manage();
-
+    Battery::update();
 
     #ifndef BACKPACK_DEMO
     Lights::manage(g_dataToBody.backpackColors);
     #endif
+
     // If we're not on the charge contacts, exchange data with the head board
-    if (!IsOnContacts())
+    if (!Battery::onContacts)
     {
       Head::TxRx();
     }
@@ -92,11 +71,7 @@ int main(void)
       Head::spokenTo = false;
     }
     
-    Motors::update();
-    BatteryUpdate();
-
     // Update at 200Hz (5ms delay)
-    
     u32 timerNow;
     do {
       timerNow = GetCounter();
@@ -106,14 +81,10 @@ int main(void)
     // Verify the source
     if (g_dataToBody.common.source != SPI_SOURCE_HEAD)
     {
+      // Turn off the system if it hasn't talked to the head for a minute
       if(++failedTransferCount > MAX_FAILED_TRANSFER_COUNT)
       {
-        // Perform a full system reset in order to reinitialize the head board
-        //NVIC_SystemReset();
-
-        // Stop all motors
-        for (int i = 0; i < MOTOR_COUNT; i++)
-          Motors::setPower(i, 0);
+        //Battery::powerOff();
       }
     } else {
       failedTransferCount = 0;

@@ -2,6 +2,7 @@
 #define MOTORS_H
 
 #include "portable.h"
+#include <stdint.h>
 
 #define MOTOR_COUNT 4
 
@@ -20,7 +21,8 @@ namespace Motors {
 
   // Print the raw encoder input values over the UART
   void printEncodersRaw();
-
+  void getRawValues(uint32_t *positions);
+  
   // Print the motor encoder value in binary
   void printEncoder(u8 motorID);
 
