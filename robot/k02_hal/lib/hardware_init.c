@@ -45,18 +45,12 @@ void hardware_init(void)
     }
 
     /* Setup board clock source. */
-    g_xtal0ClkFreq = 8000000U;
+    g_xtal0ClkFreq = 9600000U;
     g_xtalRtcClkFreq = 32768U;
-
-    for (i = 0; i < HW_PORT_INSTANCE_COUNT; i++)
-    {
-        configure_gpio_pins(i);
-    }
 }
 
 void dbg_uart_init(void)
 {
     configure_uart_pins(BOARD_DEBUG_UART_INSTANCE);
-
-    DbgConsole_Init(BOARD_DEBUG_UART_INSTANCE, BOARD_DEBUG_UART_BAUD, kDebugConsoleUART);
+    DbgConsole_Init(BOARD_DEBUG_UART_INSTANCE, 3000000 /*BOARD_DEBUG_UART_BAUD*/, kDebugConsoleUART);
 }
