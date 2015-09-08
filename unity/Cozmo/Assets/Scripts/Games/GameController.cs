@@ -340,6 +340,7 @@ public class GameController : MonoBehaviour {
       Update_RESULTS();
       break;
     }
+    Update_ALL();
   }
 
   void ExitState() {
@@ -676,6 +677,9 @@ public class GameController : MonoBehaviour {
       if (robotBusyDuringResults)
         robot.isBusy = false;
     }
+  }
+
+  protected virtual void Update_ALL() {
   }
 
   protected virtual bool IsGameReady() {

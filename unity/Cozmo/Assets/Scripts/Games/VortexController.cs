@@ -137,6 +137,7 @@ public class VortexController : GameController {
   [SerializeField] float cozmoExpectationDelay = 1f;
   public CozmoUtil.RobotPose[] defaultRobotPoses = new CozmoUtil.RobotPose[3];
   public Face[] actualFaces = new Face[3];
+  public float minFaceMovementSqd_mm = 900;
 
   #endregion
 
@@ -995,6 +996,7 @@ public class VortexController : GameController {
       if (actualFaces[GetPoseIndex(currentPlayerIndex)] != null) {
         Debug.Log("should be tracking to head");
         robot.FacePose(actualFaces[GetPoseIndex(currentPlayerIndex)]);
+        actualFaces[GetPoseIndex(currentPlayerIndex)] = null;
       }
       else {
         Debug.Log("should be tracking to default");
@@ -1120,30 +1122,6 @@ public class VortexController : GameController {
         }
         else {  
           PlaceCozmoTouch(currentPos);
-        }
-      }
-    }
-    else {
-      // face hunt
-      // only note faces when within 45 degrees of desired rotation
-      float current = robot.poseAngle_rad;
-      float target = GetPoseFromPlayerIndex(currentPlayerIndex).rad;
-      //float angle_between = Mathf.Atan2 (Mathf.Sin (current - target), Mathf.Cos (current - target));
-      //DAS.Debug("Vortex", "angle_between " + angle_between);
-      float diff = Mathf.Abs(current - target);
-      float angle_between = diff > Mathf.PI ? diff - 2 * Mathf.PI : diff;
-      //DAS.Debug("Vortex", "angle_between2 " + angle_between);
-      if (Mathf.Abs(angle_between) < (Mathf.PI / 4.0f)) {
-        for (int i = 0; i < robot.faceObjects.Count; ++i) {
-          // check the angle, with z flattened
-          Face face = robot.faceObjects[i];
-          Vector2 cozmoToFace = new Vector3(face.WorldPosition.x - robot.WorldPosition.x, face.WorldPosition.y - robot.WorldPosition.y);
-          Vector2 root_dir = MathUtil.RotateVector2d(Vector2.right, GetPoseFromPlayerIndex(currentPlayerIndex).rad);
-          float face_angle_diff = Mathf.Acos(Vector2.Dot(cozmoToFace, root_dir));
-          if (face_angle_diff < (Mathf.PI / 4.0f)) {
-            actualFaces[GetPoseIndex(currentPlayerIndex)] = face;
-            Debug.Log("found a face");
-          }
         }
       }
     }
@@ -1751,6 +1729,89 @@ public class VortexController : GameController {
       robot.SetBackpackLEDs();
     }
     
+  }
+
+
+  protected override void Update_ALL() {
+    base.Update_ALL();
+    int pose_index = CheckFaceNeedsUpdate();
+    if (pose_index >= 0) {
+      // check for faces in our quadrant, grab closest one if it exists
+      float closest_face = float.MaxValue;
+      int face_index = -1;
+      for (int i = 0; i < robot.faceObjects.Count; i++) {
+        Face pos_face = robot.faceObjects[i];
+        float face_y = pos_face.WorldPosition.y;
+        float face_x = pos_face.WorldPosition.x;
+        if (pose_index == 0) {
+          if (face_y < 0 && face_x < face_y && face_x > -face_y) {
+            // in our range, check distance
+            float distance_sq = (robot.WorldPosition - pos_face.WorldPosition).sqrMagnitude;
+            if (distance_sq < closest_face) {
+              closest_face = distance_sq;
+              face_index = i;
+            }
+          }
+        }
+        else if (pose_index == 1) {
+          if (face_x > 0 && face_y < face_x && face_y > -face_x) {
+            // in our range, check distance
+            float distance_sq = (robot.WorldPosition - pos_face.WorldPosition).sqrMagnitude;
+            if (distance_sq < closest_face) {
+              closest_face = distance_sq;
+              face_index = i;
+            }
+          }
+        }
+        else if (pose_index == 2) {
+          if (face_x < 0 && face_y < -face_x && face_y > face_x) {
+            // in our range, check distance
+            float distance_sq = (robot.WorldPosition - pos_face.WorldPosition).sqrMagnitude;
+            // only change if current is null or the distance between the "old" and "new" (likely the same face)
+            // is greater than our threshold
+            bool betterThanOld = (actualFaces[pose_index] == null)
+                                 || ((pos_face.WorldPosition - actualFaces[pose_index]).sqrMagnitude > minFaceMovementSqd_mm);
+            if (betterThanOld && distance_sq < closest_face) {
+              closest_face = distance_sq;
+              face_index = i;
+            }
+          }
+        }
+      }
+
+      if (face_index >= 0) {
+        Face face = robot.faceObjects[face_index];
+        actualFaces[pose_index] = new Face(face.ID, face.WorldPosition.x, face.WorldPosition.y, face.WorldPosition.z);
+      }
+
+    }
+  }
+  // returns pose index if we find a face in cozmo's direction
+  int CheckFaceNeedsUpdate() {
+    int pose_index = -1;
+    if (robot.faceObjects.Count == 0)
+      return pose_index;
+
+    // determine which pose index cozmo is facing:
+    //    0: 45 degrees about negative y axis
+    //    1: 45 degrees about positive x axis
+    //    2: 45 degrees about negative x axis
+    float pi = Mathf.PI;
+    if (robot.poseAngle_rad > pi / 4 && robot.poseAngle_rad < (3f * pi) / 4.0f) {
+      pose_index = 0;
+    }
+    else if (robot.poseAngle_rad < pi / 4 || robot.poseAngle_rad > (7f * pi) / 4.0f) {
+      pose_index = 1;
+    }
+    else if (robot.poseAngle_rad > (3f * pi) / 4.0f && robot.poseAngle_rad < (7f * pi) / 4.0f) {
+      pose_index = 2;
+    }
+    else {
+      return pose_index;
+    }
+
+    return pose_index;
+      
   }
 
   void PlaceTokens() {
