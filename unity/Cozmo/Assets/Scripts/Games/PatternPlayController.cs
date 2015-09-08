@@ -8,6 +8,9 @@ public class PatternPlayController : GameController {
   private bool gameOver = false;
   private bool gameReady = false;
 
+  // block lights relative to cozmo.
+  // front is the light facing cozmo.
+  // left is the light left of cozmo etc.
   private struct BlockLights {
     public bool front;
     public bool back;
@@ -15,11 +18,22 @@ public class PatternPlayController : GameController {
     public bool right;
   }
 
+  // light configuration enums.
+  private enum BlockLightConfig {
+    NONE,
+    ONE,
+    TWO,
+    THREE,
+    FOUR,
+    OPPOSITE
+  }
+
   private class RowBlockPattern {
-    // left to right pattern relative to the robot.
+    // left to right pattern relative to cozmo.
     public List<BlockLights> blocks = new List<BlockLights>();
   }
 
+  private Dictionary<int, BlockLightConfig> blockLightConfigs = new Dictionary<int, BlockLightConfig>();
   private List<RowBlockPattern> seenPatterns = new List<RowBlockPattern>();
 
   protected override void OnEnable() {
@@ -72,6 +86,59 @@ public class PatternPlayController : GameController {
 
   protected override void Enter_PLAYING() {
     base.Enter_PLAYING();
+    foreach (KeyValuePair<int, ActiveBlock> activeBlock in robot.activeBlocks) {
+      blockLightConfigs.Add(activeBlock.Key, BlockLightConfig.NONE);
+    }
+    robot.SetHeadAngle(-0.5f);
+    robot.SetLiftHeight(2.0f);
+  }
+
+  protected override void Update_PLAYING() {
+    base.Update_PLAYING();
+
+    // update lights
+    foreach (KeyValuePair<int, BlockLightConfig> blockConfig in blockLightConfigs) {
+      for (int i = 0; i < robot.activeBlocks[blockConfig.Key].lights.Length; ++i) {
+        robot.activeBlocks[blockConfig.Key].lights[i].onColor = CozmoPalette.ColorToUInt(Color.black);
+      }
+
+      Color onColor = Color.white;
+
+      for (int i = 0; i < robot.markersVisibleObjects.Count; ++i) {
+        if (robot.markersVisibleObjects[i].ID == blockConfig.Key) {
+          onColor = Color.blue;
+          break;
+        }
+      }
+
+      switch (blockConfig.Value) {
+      case BlockLightConfig.NONE:
+        break;
+      case BlockLightConfig.ONE:
+        robot.activeBlocks[blockConfig.Key].lights[1].onColor = CozmoPalette.ColorToUInt(onColor);
+        break;
+      case BlockLightConfig.TWO:
+        robot.activeBlocks[blockConfig.Key].lights[0].onColor = CozmoPalette.ColorToUInt(onColor);
+        robot.activeBlocks[blockConfig.Key].lights[1].onColor = CozmoPalette.ColorToUInt(onColor);
+        break;
+      case BlockLightConfig.THREE:
+        robot.activeBlocks[blockConfig.Key].lights[0].onColor = CozmoPalette.ColorToUInt(onColor);
+        robot.activeBlocks[blockConfig.Key].lights[1].onColor = CozmoPalette.ColorToUInt(onColor);
+        robot.activeBlocks[blockConfig.Key].lights[3].onColor = CozmoPalette.ColorToUInt(onColor);
+        break;
+      case BlockLightConfig.FOUR:
+        for (int i = 0; i < robot.activeBlocks[blockConfig.Key].lights.Length; ++i) {
+          robot.activeBlocks[blockConfig.Key].lights[i].onColor = CozmoPalette.ColorToUInt(onColor);
+        }
+        break;
+      case BlockLightConfig.OPPOSITE:
+        robot.activeBlocks[blockConfig.Key].lights[1].onColor = CozmoPalette.ColorToUInt(onColor);
+        robot.activeBlocks[blockConfig.Key].lights[3].onColor = CozmoPalette.ColorToUInt(onColor);
+        break;
+      }
+    }
+
+    // check cozmo vision for patterns.
     RowBlockPattern currentPattern = null;
     if (ValidPatternSeen(out currentPattern)) {
       if (NewPatternSeen()) {
@@ -81,10 +148,6 @@ public class PatternPlayController : GameController {
         // play meh.
       }
     }
-  }
-
-  protected override void Update_PLAYING() {
-    base.Update_PLAYING();
   }
 
   protected override void Exit_PLAYING(bool overrideStars = false) {
@@ -123,8 +186,8 @@ public class PatternPlayController : GameController {
     if (gameReady == false)
       return;
 
-    DAS.Debug("PatternPlayController", blockID + " " + robot.activeBlocks[blockID].Forward);
-
+    // go to the next light configuration
+    blockLightConfigs[blockID] = (BlockLightConfig)(((int)blockLightConfigs[blockID] + numTapped) % System.Enum.GetNames(typeof(BlockLightConfig)).Length);
   }
 
   private void RobotEngineMessages(bool success, RobotActionType action_type) {
