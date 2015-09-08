@@ -78,7 +78,6 @@ public class ShakeShakeController : GameController {
 
   protected override void Enter_PLAYING() {
     base.Enter_PLAYING();
-    // spawn UI
     // create block game states
     foreach (KeyValuePair<int, ActiveBlock> activeBlock in robot.activeBlocks) {
       BlockData bData = new BlockData();
@@ -89,8 +88,6 @@ public class ShakeShakeController : GameController {
 
   protected override void Update_PLAYING() {
     base.Update_PLAYING();
-    // update UI
-
     // update block game states
     int greenBlockCount = CountBlocks(Color.green);
     int blueBlockCount = CountBlocks(Color.blue);
@@ -142,6 +139,7 @@ public class ShakeShakeController : GameController {
       }
     }
 
+    // update UI
     scoreText.text = currentScore.ToString();
     int deltaScore = currentScore - scoreLastFrame;
     if (deltaScore > 0) {
