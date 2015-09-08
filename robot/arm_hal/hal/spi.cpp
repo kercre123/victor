@@ -193,10 +193,6 @@ void DMA_HANDLER_TX(void)
   DMA_STREAM_RX->CR |= DMA_SxCR_EN; // Enable DMA
 }
 
-void * _memcpy ( void * destination, const void * source, size_t num ) {
-  return memcpy(destination, source, num);
-}
-
 // DMA receive Completed IRQ Handler
 // This is where we synchronize MainExecution with the body board.
 extern "C"
@@ -218,7 +214,7 @@ void DMA_HANDLER_RX(void)
       GlobalDataToHead* dataToHead = (GlobalDataToHead*)(((u8*)&m_DMAtoHead)+i);
       if (dataToHead->common.common == SPI_SOURCE_BODY) {
         //memcpy((void*)&g_dataToHead, dataToHead, sizeof(g_dataToHead) - i);
-        _memcpy((void*)&g_dataToHead, ((u8*)&m_DMAtoHead) + i, sizeof(g_dataToHead) - i);
+        memcpy((void*)&g_dataToHead, ((u8*)&m_DMAtoHead) + i, sizeof(g_dataToHead) - i);
         break ;
       }
     }

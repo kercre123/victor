@@ -12,12 +12,7 @@
 extern GlobalDataToHead g_dataToHead;
 extern GlobalDataToBody g_dataToBody;
 
-
-
-
 #define ABS(x) ((x) < 0 ? -(x) : (x))
-
-#define ROBOT4 // robot 4.0
 
 enum MotorID
 {
@@ -67,11 +62,7 @@ const Fixed RADIANS_PER_LIFT_TICK = TO_FIXED((0.25 * 3.14159265359) / 172.68);
 
 // Given a gear ratio of 348.77:1 and 8 encoder ticks per revolution, we
 // compute the radians per tick on the head as:
-#ifdef ROBOT4
 const Fixed RADIANS_PER_HEAD_TICK = TO_FIXED((0.125 * 3.14159265359) / 348.77);
-#else 
-const Fixed RADIANS_PER_HEAD_TICK = TO_FIXED((0.125 * 3.14159265359) / 324.0);
-#endif  
 // If no encoder activity for 200ms, we may as well be stopped
 const u32 ENCODER_TIMEOUT_COUNT = 200 * COUNT_PER_MS;
 const u32 ENCODER_NONE = 0xFF;
@@ -108,14 +99,11 @@ MotorInfo m_motors[MOTOR_COUNT] =
     PIN_LIFT_N1,
     PIN_LIFT_N2,
     PIN_LIFT_P,
-/*
-#ifdef ROBOT4
-    true,
+#ifdef ROBOT41
+    false,
 #else
-    false,
+    true,
 #endif
-*/
-    false,
     0,
     PIN_ENCODER_LIFTA,
     PIN_ENCODER_LIFTB,
@@ -126,11 +114,7 @@ MotorInfo m_motors[MOTOR_COUNT] =
     PIN_HEAD_N1,
     PIN_HEAD_N2,
     PIN_HEAD_P,
-#ifdef ROBOT4
     false,
-#else
-    true,
-#endif 
     0,
     PIN_ENCODER_HEADA,
     PIN_ENCODER_HEADB,
