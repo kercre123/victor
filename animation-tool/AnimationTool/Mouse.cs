@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Windows.Forms;
 using System.Windows.Forms.DataVisualization.Charting;
+using Anki.Cozmo;
 
 namespace AnimationTool
 {
@@ -467,9 +468,28 @@ namespace AnimationTool
 
         private void ShowProceduralFaceForm(Sequencer.ExtraProceduralFaceData extraData)
         {
-            if (faceForm.Open() == DialogResult.OK)
+            if (faceForm.Open(extraData) == DialogResult.OK)
             {
+                extraData.faceAngle_deg = faceForm.FaceAngle_deg;
 
+                extraData.leftBrowAngle = faceForm.Eyes[(int)ProceduralEyeParameter.BrowAngle].LeftValue;
+                extraData.rightBrowAngle = faceForm.Eyes[(int)ProceduralEyeParameter.BrowAngle].RightValue;
+                extraData.leftBrowCenX = faceForm.Eyes[(int)ProceduralEyeParameter.BrowCenX].LeftValue;
+                extraData.rightBrowCenX = faceForm.Eyes[(int)ProceduralEyeParameter.BrowCenX].RightValue;
+                extraData.leftBrowCenY = faceForm.Eyes[(int)ProceduralEyeParameter.BrowCenY].LeftValue;
+                extraData.rightBrowCenY = faceForm.Eyes[(int)ProceduralEyeParameter.BrowCenY].RightValue;
+
+                extraData.leftEyeHeight = faceForm.Eyes[(int)ProceduralEyeParameter.EyeHeight].LeftValue;
+                extraData.rightEyeHeight = faceForm.Eyes[(int)ProceduralEyeParameter.EyeHeight].RightValue;
+
+                extraData.leftPupilHeight = faceForm.Eyes[(int)ProceduralEyeParameter.PupilHeight].LeftValue;
+                extraData.rightPupilHeight = faceForm.Eyes[(int)ProceduralEyeParameter.PupilHeight].RightValue;
+                extraData.leftPupilWidth = faceForm.Eyes[(int)ProceduralEyeParameter.PupilWidth].LeftValue;
+                extraData.rightPupilWidth = faceForm.Eyes[(int)ProceduralEyeParameter.PupilWidth].RightValue;
+                extraData.leftPupilCenX = faceForm.Eyes[(int)ProceduralEyeParameter.PupilCenX].LeftValue;
+                extraData.rightPupilCenX = faceForm.Eyes[(int)ProceduralEyeParameter.PupilCenX].RightValue;
+                extraData.leftPupilCenY = faceForm.Eyes[(int)ProceduralEyeParameter.PupilCenY].LeftValue;
+                extraData.rightPupilCenY = faceForm.Eyes[(int)ProceduralEyeParameter.PupilCenY].RightValue;
             }
             else
             {

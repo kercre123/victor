@@ -267,6 +267,8 @@ namespace AnimationTool.Sequencer
 
         public float leftEyeHeight;
         public float rightEyeHeight;
+        public float leftEyeWidth;
+        public float rightEyeWidth;
 
         public float leftPupilHeight;
         public float rightPupilHeight;
@@ -299,6 +301,8 @@ namespace AnimationTool.Sequencer
 
             leftEyeHeight = data.leftEyeHeight;
             rightEyeHeight = data.rightEyeHeight;
+            leftEyeWidth = data.leftEyeWidth;
+            rightEyeWidth = data.rightEyeWidth;
 
             leftPupilHeight = data.leftPupilHeight;
             rightPupilHeight = data.rightPupilHeight;

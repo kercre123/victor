@@ -24,7 +24,7 @@ namespace AnimationTool
 
         public FaceTrackBarForm[] Eyes { get; private set; }
 
-        public float FaceAngle { get { return face.RightValue; } }
+        public float FaceAngle_deg { get { return face.RightValue; } }
         public float FaceY { get { return face.LeftValue; } }
 
         public bool Changed
@@ -68,18 +68,41 @@ namespace AnimationTool
             Eyes[(int)ProceduralEyeParameter.BrowAngle] = browAngle;
             Eyes[(int)ProceduralEyeParameter.BrowCenX] = browX;
             Eyes[(int)ProceduralEyeParameter.BrowCenY] = browY;
+
             Eyes[(int)ProceduralEyeParameter.EyeHeight] = eyeHeight;
             Eyes[(int)ProceduralEyeParameter.EyeWidth] = eyeWidth;
+
             Eyes[(int)ProceduralEyeParameter.PupilCenY] = pupilY;
             Eyes[(int)ProceduralEyeParameter.PupilCenX] = pupilX;
             Eyes[(int)ProceduralEyeParameter.PupilHeight] = pupilSize;
             Eyes[(int)ProceduralEyeParameter.PupilWidth] = pupilSize;
         }
 
-        public DialogResult Open()
+        public DialogResult Open(Sequencer.ExtraProceduralFaceData extraData)
         {
             button.Enabled = true;
             Changed = true;
+
+            face.RightValue = extraData.faceAngle_deg;
+
+            browAngle.LeftValue = extraData.leftBrowAngle;
+            browAngle.RightValue = extraData.rightBrowAngle;
+            browY.LeftValue = extraData.leftBrowCenY;
+            browY.RightValue = extraData.rightBrowCenY;
+            browX.LeftValue = extraData.leftBrowCenX;
+            browX.RightValue = extraData.rightBrowCenX;
+
+            eyeHeight.LeftValue = extraData.leftEyeHeight;
+            eyeHeight.RightValue = extraData.rightEyeHeight;
+            eyeWidth.LeftValue = extraData.leftEyeWidth;
+            eyeWidth.RightValue = extraData.rightEyeWidth;
+
+            pupilY.LeftValue = extraData.leftPupilCenY;
+            pupilY.RightValue = extraData.rightPupilCenY;
+            pupilX.LeftValue = extraData.leftPupilCenX;
+            pupilX.RightValue = extraData.rightPupilCenX;
+            pupilSize.LeftValue = extraData.leftPupilHeight;
+            pupilSize.RightValue = extraData.rightPupilHeight;
 
             for (int i = 0; i < Eyes.Length; ++i)
             {
@@ -89,7 +112,7 @@ namespace AnimationTool
                     LastRightEye[i] = Eyes[i].RightValue;
                 }
             }
-            LastFaceAngle = FaceAngle;
+            LastFaceAngle = FaceAngle_deg;
 
             return ShowDialog();
         }

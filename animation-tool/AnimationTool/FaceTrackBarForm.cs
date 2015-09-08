@@ -16,12 +16,12 @@ namespace AnimationTool
         private TextBox rightTextBox;
 
         public string LeftLabel { get { return leftLabel.Text; } set { leftLabel.Text = value; } }
-        public float LeftValue { get { return leftTrackBar.Value * 0.01f; } }
+        public float LeftValue { get { return leftTrackBar.Value * 0.01f; } set { leftTrackBar.Value = (int)(value * 100); } }
         public int LeftMinimum { get { return leftTrackBar.Minimum; } set { leftTrackBar.Minimum = value; } }
         public int LeftMaximum { get { return leftTrackBar.Maximum; } set { leftTrackBar.Maximum = value; } }
 
         public string RightLabel { get { return rightLabel.Text; } set { rightLabel.Text = value; } }
-        public float RightValue { get { return rightTrackBar.Value * 0.01f; } }
+        public float RightValue { get { return rightTrackBar.Value * 0.01f; } set { rightTrackBar.Value = (int)(value * 100); } }
         public int RightMinimum { get { return rightTrackBar.Minimum; } set { rightTrackBar.Minimum = value; } }
         public int RightMaximum { get { return rightTrackBar.Maximum; } set { rightTrackBar.Maximum = value; } }
 

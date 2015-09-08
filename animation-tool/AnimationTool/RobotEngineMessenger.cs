@@ -358,7 +358,7 @@ namespace AnimationTool
             if (channel.IsConnected && faceForm.Changed)
             {
                 displayProceduralFaceMessage.robotID = 1;
-                displayProceduralFaceMessage.faceAngle = faceForm.FaceAngle;
+                displayProceduralFaceMessage.faceAngle = faceForm.FaceAngle_deg;
 
                 for (int i = 0; i < displayProceduralFaceMessage.leftEye.Length; ++i)
                 {
