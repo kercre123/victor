@@ -11,7 +11,8 @@ namespace ExternalInterface {
 
 
 message KeyWordRecognized {
-  KeyWord keyWord
+  KeyWord keyWord,
+  int_32  score
 }
 
 

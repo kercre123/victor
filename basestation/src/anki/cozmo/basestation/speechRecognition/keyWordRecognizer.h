@@ -1,5 +1,5 @@
 /**
-* File: recognizer
+* File: KeyWordRecognizer
 *
 * Author: damjan stulic
 * Created: 9/3/15
@@ -11,8 +11,8 @@
 */
 
 
-#ifndef __Anki_cozmo_Basestation_SpeechRecognition_Recognizer_H__
-#define __Anki_cozmo_Basestation_SpeechRecognition_Recognizer_H__
+#ifndef __Anki_cozmo_Basestation_SpeechRecognition_KeyWordRecognizer_H__
+#define __Anki_cozmo_Basestation_SpeechRecognition_KeyWordRecognizer_H__
 
 #include <sphinxbase/ad.h>
 #include <pocketsphinx.h>
@@ -26,10 +26,13 @@ namespace Cozmo {
 
 class IExternalInterface;
 
-class Recognizer {
+namespace SpeechRecognition {
+
+
+class KeyWordRecognizer {
 public:
-  Recognizer(IExternalInterface* externalInterface);
-  ~Recognizer();
+  KeyWordRecognizer(IExternalInterface* externalInterface);
+  ~KeyWordRecognizer();
   void Init(const std::string& hmmFile, const std::string& file, const std::string& dictFile);
   void CleanUp();
   void Start();
@@ -56,9 +59,10 @@ private:
   //char const *hyp;
 };
 
+} // end namespace SpeechRecognition
 } // end namespace Cozmo
 } // end namespace Anki
 
 
 
-#endif //__Anki_cozmo_Basestation_SpeechRecognition_Recognizer_H__
+#endif //__Anki_cozmo_Basestation_SpeechRecognition_KeyWordRecognizer_H__

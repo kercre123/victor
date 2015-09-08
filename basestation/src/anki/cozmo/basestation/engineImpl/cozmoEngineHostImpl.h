@@ -21,8 +21,10 @@ namespace Cozmo {
 
 template <typename Type>
 class AnkiEvent;
-class Recognizer;
 
+namespace SpeechRecognition {
+class KeyWordRecognizer;
+}
 namespace ExternalInterface {
 class MessageGameToEngine;
 }
@@ -70,7 +72,7 @@ protected:
   Comms::AdvertisementService  _robotAdvertisementService;
   RobotManager                 _robotMgr;
   RobotMessageHandler          _robotMsgHandler;
-  Recognizer* _keywordRecognizer;
+  SpeechRecognition::KeyWordRecognizer* _keywordRecognizer;
 
   std::map<AdvertisingRobot, bool> _forceAddedRobots;
   BaseStationTime_t _lastAnimationFolderScan;

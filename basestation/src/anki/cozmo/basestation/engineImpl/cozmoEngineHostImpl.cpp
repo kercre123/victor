@@ -12,7 +12,7 @@
 #include "anki/cozmo/basestation/engineImpl/cozmoEngineHostImpl.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
-#include "anki/cozmo/basestation/speechRecognition/recognizer.h"
+#include "anki/cozmo/basestation/speechRecognition/keyWordRecognizer.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 
@@ -27,7 +27,7 @@ CozmoEngineHostImpl::CozmoEngineHostImpl(IExternalInterface* externalInterface,
 , _robotAdvertisementService("RobotAdvertisementService")
 , _robotMgr(externalInterface, dataPlatform)
 , _robotMsgHandler(dataPlatform)
-, _keywordRecognizer(new Recognizer(externalInterface))
+, _keywordRecognizer(new SpeechRecognition::KeyWordRecognizer(externalInterface))
 , _lastAnimationFolderScan(0)
 , _animationReloadActive(false)
 {

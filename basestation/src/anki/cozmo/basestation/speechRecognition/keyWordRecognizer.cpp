@@ -10,7 +10,7 @@
 *
 */
 
-#include "anki/cozmo/basestation/speechRecognition/recognizer.h"
+#include "anki/cozmo/basestation/speechRecognition/keyWordRecognizer.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
@@ -23,9 +23,9 @@
 
 namespace Anki {
 namespace Cozmo {
+namespace SpeechRecognition {
 
-
-Recognizer::Recognizer(IExternalInterface* externalInterface)
+KeyWordRecognizer::KeyWordRecognizer(IExternalInterface* externalInterface)
 : _externalInterface(externalInterface)
 , _started(false)
 , ps(nullptr)
@@ -49,7 +49,7 @@ Recognizer::Recognizer(IExternalInterface* externalInterface)
   };
 }
 
-Recognizer::~Recognizer()
+KeyWordRecognizer::~KeyWordRecognizer()
 {
   CleanUp();
 }
@@ -80,7 +80,7 @@ void sphinxLogger(void* user_data, err_lvl_t level, const char* format, ...)
   va_end(args);
 }
 
-void Recognizer::Init(const std::string& hmmFile, const std::string& file, const std::string& dictFile)
+void KeyWordRecognizer::Init(const std::string& hmmFile, const std::string& file, const std::string& dictFile)
 {
   err_set_logfp(nullptr);
   err_set_callback(sphinxLogger, nullptr);
@@ -114,13 +114,13 @@ void Recognizer::Init(const std::string& hmmFile, const std::string& file, const
 
 }
 
-void Recognizer::CleanUp()
+void KeyWordRecognizer::CleanUp()
 {
   ps_free(ps);
   cmd_ln_free_r(config);
 }
 
-void Recognizer::Start()
+void KeyWordRecognizer::Start()
 {
   if (ps == nullptr) {
     return;
@@ -143,7 +143,7 @@ void Recognizer::Start()
   _started = true;
 }
 
-void Recognizer::Update(unsigned int millisecondsPassed)
+void KeyWordRecognizer::Update(unsigned int millisecondsPassed)
 {
   if (ps == nullptr) {
     return;
@@ -176,7 +176,7 @@ void Recognizer::Update(unsigned int millisecondsPassed)
   }
 }
 
-void Recognizer::Stop()
+void KeyWordRecognizer::Stop()
 {
   if (ps == nullptr) {
     return;
@@ -189,20 +189,21 @@ void Recognizer::Stop()
   _started = false;
 }
 
-void Recognizer::TranslateHypothesisToEvent(const char* hypothesis, int32_t score)
+void KeyWordRecognizer::TranslateHypothesisToEvent(const char* hypothesis, int32_t score)
 {
   std::string hyp(hypothesis);
   for (const auto& translationPair : _translationPairs) {
     if (hyp.find(translationPair.first) != std::string::npos) {
       PRINT_NAMED_INFO("KeywordRecognizer", "keyword [%s], recognized in hypothesis [%s]", translationPair.first.c_str(), hypothesis);
       _externalInterface->Broadcast(
-        ExternalInterface::MessageEngineToGame(ExternalInterface::KeyWordRecognized(translationPair.second))
+        ExternalInterface::MessageEngineToGame(ExternalInterface::KeyWordRecognized(translationPair.second, score))
       );
       return;
     }
   }
 }
 
+} // end namespace SpeechRecognition
 } // end namespace Cozmo
 } // end namespace Anki
 
