@@ -78,6 +78,9 @@ namespace Cozmo {
     f32 _baselineRightEyebrowHeight;
     
     u32 _movementActionTag;
+    u32 _animationActionTag;
+    
+    bool _isAnimating;
     
     std::vector<::Signal::SmartHandle> _eventHandles;
     
