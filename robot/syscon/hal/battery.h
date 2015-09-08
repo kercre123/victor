@@ -11,6 +11,9 @@ namespace Battery {
   // Turn on power to the head
   void powerOn();
 
+  // Completely disable the machine
+  void powerOff();
+
   // Are we on the contacts right now?
   #define IsOnContacts() m_onContacts
 

@@ -98,6 +98,16 @@ void Battery::powerOn()
   nrf_gpio_pin_clear(PIN_nVDDs_EN);
 }
 
+void Battery::powerOff()
+{
+  // Shutdown the extra things
+  MicroWait(10000);
+  nrf_gpio_pin_set(PIN_nVDDs_EN);
+
+  MicroWait(10000);
+  nrf_gpio_pin_clear(PIN_PWR_EN);
+}
+
 void Battery::update()
 {
   if (!NRF_ADC->EVENTS_END) {

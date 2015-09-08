@@ -63,16 +63,24 @@ namespace Anki
         }
 
         uint8_t id = g_dataToHead.cubeToUpdate;
+
+        static int counts[MAX_CUBES] = {0,0,0,0};
+        static int taps[MAX_CUBES] = {0,0,0,0};
+        counts[id]++;
+        
+        FacePrintf("%i %i\n%i %i\n%i %i\n%i %i\n", taps[0], counts[0], taps[1], counts[1], taps[2], counts[2], taps[3], counts[3]);
         
         if (id >= MAX_CUBES) {
           return ;
         }
-
+        
         uint8_t shocks = g_dataToHead.cubeStatus.shockCount;
         uint8_t count = shocks - g_AccelStatus[id].shockCount;
         memcpy(&g_AccelStatus[id], (void*)&g_dataToHead.cubeStatus, sizeof(AcceleratorPacket));
         
         if (count) {
+          taps[id]+= count;
+
           Messages::ActiveObjectTapped m;
           m.numTaps = count;
           m.objectID = id;

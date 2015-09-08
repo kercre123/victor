@@ -14,7 +14,7 @@
 
 #include "anki/cozmo/robot/spineData.h"
 
-const u32 MAX_FAILED_TRANSFER_COUNT = 10;
+const u32 MAX_FAILED_TRANSFER_COUNT = 12000;
 
 GlobalDataToHead g_dataToHead;
 GlobalDataToBody g_dataToBody;
@@ -81,14 +81,10 @@ int main(void)
     // Verify the source
     if (g_dataToBody.common.source != SPI_SOURCE_HEAD)
     {
+      // Turn off the system if it hasn't talked to the head for a minute
       if(++failedTransferCount > MAX_FAILED_TRANSFER_COUNT)
       {
-        // Perform a full system reset in order to reinitialize the head board
-        //NVIC_SystemReset();
-
-        // Stop all motors
-        for (int i = 0; i < MOTOR_COUNT; i++)
-          Motors::setPower(i, 0);
+        //Battery::powerOff();
       }
     } else {
       failedTransferCount = 0;
