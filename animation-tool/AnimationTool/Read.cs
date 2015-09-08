@@ -31,7 +31,7 @@ namespace AnimationTool
                 return;
             }
 
-            ActionManager.Do(new Sequencer.EnableChart(cAudioRobot, cbAudioRobot), true);
+            ActionManager.Do(new Sequencer.EnableChart(cAudioRobot, audioRobot.checkBox), true);
             ActionManager.Do(new Sequencer.AddDataPoint(cAudioRobot, extraData, current.triggerTime_ms * 0.001D, false), true);
         }
 
@@ -48,7 +48,7 @@ namespace AnimationTool
                 return;
             }
 
-            ActionManager.Do(new Sequencer.EnableChart(cAudioDevice, cbAudioDevice), true);
+            ActionManager.Do(new Sequencer.EnableChart(cAudioDevice, audioDevice.checkBox), true);
             ActionManager.Do(new Sequencer.AddDataPoint(cAudioDevice, extraData, current.triggerTime_ms * 0.001D, false), true);
         }
 
@@ -56,7 +56,7 @@ namespace AnimationTool
         {
             if (current == null) return;
 
-            ActionManager.Do(new EnableChart(cLiftHeight, cbLift), true);
+            ActionManager.Do(new EnableChart(cLiftHeight, liftHeight.checkBox), true);
 
             if (next == null) // if last point, move to correct y
             {
@@ -71,7 +71,7 @@ namespace AnimationTool
             }
         }
 
-        private void ReadFaceAnimationFromFile(FaceAnimationPointData current)
+        private void ReadFaceAnimationImageFromFile(FaceAnimationPointData current)
         {
             if (current == null) return;
 
@@ -83,8 +83,18 @@ namespace AnimationTool
                 return;
             }
 
-            ActionManager.Do(new FaceAnimation.EnableChart(cFaceAnimation, cbFaceAnimation), true);
+            ActionManager.Do(new FaceAnimation.EnableChart(cFaceAnimation, faceAnimation.checkBox), true);
             ActionManager.Do(new Sequencer.AddDataPoint(cFaceAnimation, extraData, current.triggerTime_ms * 0.001D, false), true);
+        }
+
+        private void ReadProceduralFaceFromFile(ProceduralFacePointData current)
+        {
+            if (current == null) return;
+
+            Sequencer.ExtraProceduralFaceData extraData = new Sequencer.ExtraProceduralFaceData(current);
+
+            ActionManager.Do(new FaceAnimation.EnableChart(cProceduralFace, faceAnimation.checkBox), true);
+            ActionManager.Do(new Sequencer.AddDataPoint(cProceduralFace, extraData, current.triggerTime_ms * 0.001D, false), true);
         }
 
         private void ReadBodyMotionFromFile(BodyMotionPointData current)
@@ -119,7 +129,7 @@ namespace AnimationTool
             }
 
             extraData.Length = current.durationTime_ms * 0.001D;
-            ActionManager.Do(new Sequencer.EnableChart(cBodyMotion, cbBodyMotion), true);
+            ActionManager.Do(new Sequencer.EnableChart(cBodyMotion, bodyMotion.checkBox), true);
             ActionManager.Do(new Sequencer.AddDataPoint(cBodyMotion, extraData, current.triggerTime_ms * 0.001D, false), true);
         }
 
@@ -127,7 +137,7 @@ namespace AnimationTool
         {
             if (current == null) return;
 
-            ActionManager.Do(new EnableChart(cHeadAngle, cbHeadAngle), true);
+            ActionManager.Do(new EnableChart(cHeadAngle, headAngle.checkBox), true);
 
             if (next == null) // if last point, move to correct y
             {
@@ -183,7 +193,10 @@ namespace AnimationTool
                             ReadAudioDeviceFromFile(points[i] as AudioDevicePointData);
                             break;
                         case FaceAnimationPointData.NAME:
-                            ReadFaceAnimationFromFile(points[i] as FaceAnimationPointData);
+                            ReadFaceAnimationImageFromFile(points[i] as FaceAnimationPointData);
+                            break;
+                        case ProceduralFacePointData.NAME:
+                            ReadProceduralFaceFromFile(points[i] as ProceduralFacePointData);
                             break;
                         case BodyMotionPointData.NAME:
                             ReadBodyMotionFromFile(points[i] as BodyMotionPointData);
@@ -226,22 +239,25 @@ namespace AnimationTool
                     switch (chart.Name)
                     {
                         case "cHeadAngle":
-                            ActionManager.Do(new DisableChart(cHeadAngle, cbHeadAngle));
+                            ActionManager.Do(new DisableChart(cHeadAngle, headAngle.checkBox));
                             break;
                         case "cLiftHeight":
-                            ActionManager.Do(new DisableChart(cLiftHeight, cbLift));
+                            ActionManager.Do(new DisableChart(cLiftHeight, liftHeight.checkBox));
                             break;
                         case "cAudioRobot":
-                            ActionManager.Do(new DisableChart(cAudioRobot, cbAudioRobot));
+                            ActionManager.Do(new DisableChart(cAudioRobot, audioRobot.checkBox));
                             break;
                         case "cAudioDevice":
-                            ActionManager.Do(new DisableChart(cAudioDevice, cbAudioDevice));
+                            ActionManager.Do(new DisableChart(cAudioDevice, audioDevice.checkBox));
                             break;
                         case "cFaceAnimation":
-                            ActionManager.Do(new DisableChart(cFaceAnimation, cbFaceAnimation));
+                            ActionManager.Do(new DisableChart(cFaceAnimation, faceAnimation.checkBox));
+                            break;
+                        case "cProceduralFace":
+                            ActionManager.Do(new DisableChart(cProceduralFace, proceduralFace.checkBox));
                             break;
                         case "cBodyMotion":
-                            ActionManager.Do(new DisableChart(cBodyMotion, cbBodyMotion));
+                            ActionManager.Do(new DisableChart(cBodyMotion, bodyMotion.checkBox));
                             break;
                     }
                 }

@@ -44,7 +44,6 @@ namespace AnimationTool
             this.label = new System.Windows.Forms.Label();
             this.button = new System.Windows.Forms.Button();
             this.SuspendLayout();
-
             // 
             // textBox
             // 
@@ -81,9 +80,13 @@ namespace AnimationTool
             this.Controls.Add(this.button);
             this.Controls.Add(this.label);
             this.Controls.Add(this.textBox);
+            this.MaximizeBox = false;
+            this.MinimizeBox = false;
             this.Name = "IPForm";
+            this.ShowIcon = false;
             this.ResumeLayout(false);
             this.PerformLayout();
+
         }
 
         private void textBox_TextChanged(object sender, EventArgs e)

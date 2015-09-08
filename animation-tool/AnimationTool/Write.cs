@@ -72,6 +72,16 @@ namespace AnimationTool
                                 points.Add(WriteFaceAnimationToFile(current));
                             }
                             break;
+                        case "cProceduralFace":
+                            for (int i = 0; i < chart.Series[0].Points.Count; ++i)
+                            {
+                                DataPoint current = chart.Series[0].Points[i];
+
+                                if (current.IsEmpty) continue;
+
+                                points.Add(WriteProceduralFaceToFile(current));
+                            }
+                            break;
                         case "cBodyMotion":
                             for (int i = 0; i < chart.Series[0].Points.Count; ++i)
                             {
@@ -205,6 +215,38 @@ namespace AnimationTool
             {
                 MessageBox.Show(extraData.FileNameWithPath + " is not in root directory " + Sequencer.ExtraFaceAnimationData.FullPath);
             }
+
+            return pointData;
+        }
+
+        private ProceduralFacePointData WriteProceduralFaceToFile(DataPoint current)
+        {
+            ProceduralFacePointData pointData = new ProceduralFacePointData();
+            Sequencer.ExtraProceduralFaceData extraData = Sequencer.ExtraData.Entries[current.GetCustomProperty(Sequencer.ExtraData.Key)] as Sequencer.ExtraProceduralFaceData;
+
+            pointData.triggerTime_ms = (int)(current.YValues[0] * 1000); // convert to ms
+            pointData.durationTime_ms = (int)(extraData.Length * 1000); // convert to ms
+
+            pointData.faceAngle_deg = extraData.faceAngle_deg;
+
+            pointData.leftBrowAngle = extraData.leftBrowAngle;
+            pointData.rightBrowAngle = extraData.rightBrowAngle;
+            pointData.leftBrowCenX = extraData.leftBrowCenX;
+            pointData.rightBrowCenX = extraData.rightBrowCenX;
+            pointData.leftBrowCenY = extraData.leftBrowCenY;
+            pointData.rightBrowCenY = extraData.rightBrowCenY;
+
+            pointData.leftEyeHeight = extraData.leftEyeHeight;
+            pointData.rightEyeHeight = extraData.rightEyeHeight;
+
+            pointData.leftPupilHeight = extraData.leftPupilHeight;
+            pointData.rightPupilHeight = extraData.rightPupilHeight;
+            pointData.leftPupilWidth = extraData.leftPupilWidth;
+            pointData.rightPupilWidth = extraData.rightPupilWidth;
+            pointData.leftPupilCenX = extraData.leftPupilCenX;
+            pointData.rightPupilCenX = extraData.rightPupilCenX;
+            pointData.leftPupilCenY = extraData.leftPupilCenY;
+            pointData.rightPupilCenY = extraData.rightPupilCenY;
 
             return pointData;
         }

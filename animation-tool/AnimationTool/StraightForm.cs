@@ -83,14 +83,13 @@ namespace AnimationTool
             // button
             // 
             this.button.DialogResult = System.Windows.Forms.DialogResult.OK;
+            this.button.Enabled = false;
             this.button.Location = new System.Drawing.Point(91, 64);
             this.button.Name = "button";
             this.button.Size = new System.Drawing.Size(100, 23);
             this.button.TabIndex = 4;
             this.button.Text = "OK";
             this.button.UseVisualStyleBackColor = true;
-            this.button.Enabled = false;
-            this.button.DialogResult = DialogResult.OK;
             // 
             // StraightForm
             // 
@@ -102,9 +101,13 @@ namespace AnimationTool
             this.Controls.Add(this.timeLabel);
             this.Controls.Add(this.speedTextBox);
             this.Controls.Add(this.timeTextBox);
+            this.MaximizeBox = false;
+            this.MinimizeBox = false;
             this.Name = "StraightForm";
+            this.ShowIcon = false;
             this.ResumeLayout(false);
             this.PerformLayout();
+
         }
 
         public DialogResult Open(double maxTime, int speed, double time, IWin32Window parent)

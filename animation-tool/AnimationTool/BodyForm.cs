@@ -27,33 +27,33 @@ namespace AnimationTool
             // 
             // straightButton
             // 
+            this.straightButton.DialogResult = System.Windows.Forms.DialogResult.OK;
             this.straightButton.Location = new System.Drawing.Point(12, 12);
             this.straightButton.Name = "straightButton";
             this.straightButton.Size = new System.Drawing.Size(100, 23);
             this.straightButton.TabIndex = 2;
             this.straightButton.Text = "Straight";
             this.straightButton.UseVisualStyleBackColor = true;
-            this.straightButton.DialogResult = DialogResult.OK;
             // 
             // arcButton
             // 
+            this.arcButton.DialogResult = System.Windows.Forms.DialogResult.No;
             this.arcButton.Location = new System.Drawing.Point(12, 41);
             this.arcButton.Name = "arcButton";
             this.arcButton.Size = new System.Drawing.Size(100, 23);
             this.arcButton.TabIndex = 3;
             this.arcButton.Text = "Arc";
             this.arcButton.UseVisualStyleBackColor = true;
-            this.arcButton.DialogResult = DialogResult.No;
             // 
             // turnInPlaceButton
             // 
+            this.turnInPlaceButton.DialogResult = System.Windows.Forms.DialogResult.Yes;
             this.turnInPlaceButton.Location = new System.Drawing.Point(12, 70);
             this.turnInPlaceButton.Name = "turnInPlaceButton";
             this.turnInPlaceButton.Size = new System.Drawing.Size(100, 23);
             this.turnInPlaceButton.TabIndex = 3;
             this.turnInPlaceButton.Text = "Turn In Place";
             this.turnInPlaceButton.UseVisualStyleBackColor = true;
-            this.turnInPlaceButton.DialogResult = DialogResult.Yes;
             // 
             // BodyForm
             // 
@@ -61,8 +61,12 @@ namespace AnimationTool
             this.Controls.Add(this.straightButton);
             this.Controls.Add(this.arcButton);
             this.Controls.Add(this.turnInPlaceButton);
+            this.MaximizeBox = false;
+            this.MinimizeBox = false;
             this.Name = "BodyForm";
+            this.ShowIcon = false;
             this.ResumeLayout(false);
+
         }
     }
 }
