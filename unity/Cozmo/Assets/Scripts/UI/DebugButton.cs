@@ -26,4 +26,16 @@ public class DebugButton : MonoBehaviour {
       }
     }
   }
+
+  public void EnableBehaviors() {
+    if (robot != null) {
+      robot.ExecuteBehavior("AUTO");
+    }
+  }
+
+  public void DisableBehaviors() {
+    if (robot != null) {
+      robot.ExecuteBehavior("NONE");
+    }
+  }
 }
