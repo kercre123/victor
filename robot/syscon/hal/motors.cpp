@@ -88,7 +88,11 @@ MotorInfo m_motors[MOTOR_COUNT] =
     PIN_RIGHT_N1,
     PIN_RIGHT_N2,
     PIN_RIGHT_P,
+#ifdef ROBOT41
     false,
+#else
+    true,
+#endif
     0,
     PIN_ENCODER_RIGHT,
     ENCODER_NONE,
