@@ -73,8 +73,6 @@ namespace Anki
         memcpy(&g_AccelStatus[id], (void*)&g_dataToHead.cubeStatus, sizeof(AcceleratorPacket));
         
         if (count) {
-          taps[id]+= count;
-
           Messages::ActiveObjectTapped m;
           m.numTaps = count;
           m.objectID = id;
