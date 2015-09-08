@@ -113,8 +113,9 @@ IBehavior::Status BehaviorLookAround::Update(float currentTime_sec)
     {
       IActionRunner* moveHeadAction = new MoveHeadToAngleAction(0);
       _robot.GetActionList().QueueActionAtEnd(0, moveHeadAction);
-      StartMoving();
+      if (StartMoving() == RESULT_OK) {
       _currentState = State::LookingForObject;
+    }
     }
     // NOTE INTENTIONAL FALLTHROUGH
     case State::LookingForObject:
@@ -175,11 +176,46 @@ IBehavior::Status BehaviorLookAround::Update(float currentTime_sec)
   return Status::Complete;
 }
   
-void BehaviorLookAround::StartMoving()
+Result BehaviorLookAround::StartMoving()
 {
-  IActionRunner* goToPoseAction = new DriveToPoseAction(GetDestinationPose(_currentDestination), false, false);
+  // Check for a collision-free pose
+  Pose3d destPose;
+  const int MAX_NUM_CONSIDERED_DEST_POSES = 30;
+  for (int i = MAX_NUM_CONSIDERED_DEST_POSES; i > 0; --i) {
+    destPose = GetDestinationPose(_currentDestination);
+    
+    // Get robot bounding box at destPose
+    Quad2f robotQuad = _robot.GetBoundingQuadXY(destPose);
+    
+    std::set<ObjectFamily> ignoreFamilies;
+    std::set<ObjectType> ignoreTypes;
+    std::set<ObjectID> ignoreIDs;
+    std::vector<ObservableObject*> existingObjects;
+    _robot.GetBlockWorld().FindIntersectingObjects(robotQuad,
+                                                   existingObjects,
+                                                   10,
+                                                   ignoreFamilies,
+                                                   ignoreTypes,
+                                                   ignoreIDs);
+    
+    if (existingObjects.empty()) {
+      break;
+    }
+    
+    if (i == 1) {
+      PRINT_NAMED_WARNING("BehaviorLookAround.StartMoving.NoDestPoseFound", "attempts %d", MAX_NUM_CONSIDERED_DEST_POSES);
+      
+      // Try another destination
+      _currentDestination = GetNextDestination(_currentDestination);
+      return RESULT_FAIL;
+    }
+  }
+  
+  
+  IActionRunner* goToPoseAction = new DriveToPoseAction(destPose, false, false);
   _currentDriveActionID = goToPoseAction->GetTag();
   _robot.GetActionList().QueueActionAtEnd(0, goToPoseAction, 3);
+  return RESULT_OK;
 }
   
 Pose3d BehaviorLookAround::GetDestinationPose(BehaviorLookAround::Destination destination)
@@ -356,15 +392,14 @@ void BehaviorLookAround::HandleCompletedAction(const AnkiEvent<MessageEngineToGa
     }
     
     // If this was a successful drive action, move on to the next destination
-    Destination newLast = _currentDestination;
-    _currentDestination = GetNextDestination(_currentDestination, _lastDestination);
-    _lastDestination = newLast;
+    _currentDestination = GetNextDestination(_currentDestination);
   }
 }
   
-BehaviorLookAround::Destination BehaviorLookAround::GetNextDestination(BehaviorLookAround::Destination current,
-                                                                       BehaviorLookAround::Destination previous)
+BehaviorLookAround::Destination BehaviorLookAround::GetNextDestination(BehaviorLookAround::Destination current)
 {
+  static BehaviorLookAround::Destination previous = BehaviorLookAround::Destination::Center;
+  
   // If we've visited enough destinations, go back to center
   if (1 == _numDestinationsLeft)
   {
@@ -381,6 +416,7 @@ BehaviorLookAround::Destination BehaviorLookAround::GetNextDestination(BehaviorL
   
   all.erase(current);
   all.erase(previous);
+  previous = current;
   
   // Pick a random destination from the remaining options
   s32 randIndex = _rng.RandInt(static_cast<s32>(all.size()));

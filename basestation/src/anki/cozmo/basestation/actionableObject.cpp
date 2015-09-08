@@ -90,7 +90,7 @@ namespace Anki {
         //   paths on other sides of the object unnecessarily.
         
         //   (Assumes obstacles are w.r.t. origin...)
-        const Point2f xyStart(preActionPose.GetPose().GetWithRespectToOrigin().GetTranslation());
+        Point2f xyStart(preActionPose.GetPose().GetWithRespectToOrigin().GetTranslation());
         const Point2f xyEnd(preActionPose.GetMarker()->GetPose().GetWithRespectToOrigin().GetTranslation());
         
         const f32 stepSize = 10.f; // 1cm
@@ -98,10 +98,15 @@ namespace Anki {
         stepVec -= xyStart;
         const f32 lineLength = stepVec.MakeUnitLength();
         Vec2f offsetVec(stepVec.y(), -stepVec.x());
-        const s32 numSteps = std::floor(lineLength / stepSize);
-        stepVec *= stepSize;
         offsetVec *= 0.5f*ROBOT_BOUNDING_Y;
-
+        const s32 numSteps = std::floor(lineLength / stepSize);
+        
+        // Pull back xyStart to the rear of the robot's bounding box when the robot is at the preaction pose.
+        xyStart -= (stepVec * (ROBOT_BOUNDING_X - ROBOT_BOUNDING_X_FRONT));
+        
+        stepVec *= stepSize;
+        
+        
         bool pathClear = true;
         Point2f currentPoint(xyStart);
         Point2f currentPointL(xyStart + offsetVec);

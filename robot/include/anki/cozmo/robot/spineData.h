@@ -27,10 +27,13 @@ enum SPISource
   SPI_SOURCE_CLEAR = 0
 };
 
-struct GlobalCommon
+union GlobalCommon
 {
-  SPISource source;
-  uint8_t SYNC[3];
+  struct {
+    SPISource source;
+    uint8_t SYNC[3];
+  };
+  uint32_t common;
 };
 
 struct AcceleratorPacket {

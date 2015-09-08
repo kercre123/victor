@@ -19,6 +19,8 @@
 #include "anki/cozmo/basestation/keyframe.h"
 #include "anki/cozmo/basestation/faceAnimationManager.h"
 
+#include "anki/common/basestation/math/point_impl.h"
+
 #include "anki/cozmo/shared/cozmoConfig.h"
 
 #include <opencv2/highgui/highgui.hpp>
@@ -30,6 +32,7 @@ namespace Cozmo {
   : IBehavior(robot, config)
   , _currentState(State::LOOKING_AROUND)
   , _trackingTimeout_sec(3.f)
+  , _isAnimating(false)
   {
     _name = "LookForFaces";
 
@@ -152,10 +155,14 @@ namespace Cozmo {
   inline static f32 GetEyeHeight(const Vision::TrackedFace* face)
   {
     RotationMatrix2d R(-face->GetHeadRoll());
-    f32 maxY = std::numeric_limits<f32>::min();
-    f32 minY = std::numeric_limits<f32>::max();
+    
+    f32 avgEyeHeight = 0.f;
+    
     for(auto iFeature : {Vision::TrackedFace::FeatureName::LeftEye, Vision::TrackedFace::FeatureName::RightEye})
     {
+      f32 maxY = std::numeric_limits<f32>::min();
+      f32 minY = std::numeric_limits<f32>::max();
+      
       for(auto point : face->GetFeature(iFeature)) {
         point = R*point;
         if(point.y() < minY) {
@@ -165,12 +172,12 @@ namespace Cozmo {
           maxY = point.y();
         }
       }
+      
+      avgEyeHeight += maxY - minY;
     }
-    if(maxY < minY) {
-      PRINT_NAMED_ERROR("GetEyeHeight.NegativeHeight", "");
-      return 0.f;
-    }
-    return maxY - minY;
+    
+    avgEyeHeight *= 0.5f;
+    return avgEyeHeight;
   }
   
   void BehaviorLookForFaces::UpdateBaselineFace(const Vision::TrackedFace* face)
@@ -234,55 +241,107 @@ namespace Cozmo {
         }
         
         {
+          ProceduralFace prevProcFace(_crntProceduralFace);
+          
           const Radians& faceAngle = face->GetHeadRoll();
           
           // If eyebrows have raised/lowered (based on distance from eyes), mimic their position:
           const Face::Feature& leftEyeBrow  = face->GetFeature(Face::FeatureName::LeftEyebrow);
           const Face::Feature& rightEyeBrow = face->GetFeature(Face::FeatureName::RightEyebrow);
-          //const Face::Feature& leftEye      = face->GetFeature(Face::FeatureName::LeftEye);
-          //const Face::Feature& rightEye     = face->GetFeature(Face::FeatureName::RightEye);
         
           const f32 leftEyebrowHeight  = GetAverageHeight(leftEyeBrow, face->GetLeftEyeCenter(), faceAngle);
           const f32 rightEyebrowHeight = GetAverageHeight(rightEyeBrow, face->GetRightEyeCenter(), faceAngle);
           
-          const f32 distanceNorm = 1.f;// face->GetIntraEyeDistance() / _baselineIntraEyeDistance;
+          const f32 distanceNorm =  face->GetIntraEyeDistance() / _baselineIntraEyeDistance;
+          
+          // Get expected height based on intra-eye distance
+          const f32 expectedLeftEyebrowHeight = distanceNorm * _baselineLeftEyebrowHeight;
+          const f32 expectedRightEyebrowHeight = distanceNorm * _baselineRightEyebrowHeight;
+          
+          // Compare measured distance to expected
+          const f32 leftEyebrowHeightScale = (leftEyebrowHeight - expectedLeftEyebrowHeight)/expectedLeftEyebrowHeight;
+          const f32 rightEyebrowHeightScale = (rightEyebrowHeight - expectedRightEyebrowHeight)/expectedRightEyebrowHeight;
           
           // Map current eyebrow heights onto Cozmo's face, based on measured baseline values
-          const f32 distLeftEyeTopToImageTop = static_cast<f32>(ProceduralFace::NominalEyeCenY - _crntProceduralFace.GetParameter(ProceduralFace::WhichEye::Left, ProceduralFace::EyeHeight)/2);
           _crntProceduralFace.SetParameter(ProceduralFace::WhichEye::Left,
-                                           ProceduralFace::Parameter::BrowShiftY,
-                                           (_baselineLeftEyebrowHeight-leftEyebrowHeight)/_baselineLeftEyebrowHeight *
-                                           distLeftEyeTopToImageTop * distanceNorm);
-          
-          const f32 distRightEyeTopToImageTop = static_cast<f32>(ProceduralFace::NominalEyeCenY - _crntProceduralFace.GetParameter(ProceduralFace::WhichEye::Left, ProceduralFace::EyeHeight)/2);
-          _crntProceduralFace.SetParameter(ProceduralFace::WhichEye::Right,
-                                           ProceduralFace::Parameter::BrowShiftY,
-                                           (_baselineRightEyebrowHeight-rightEyebrowHeight)/_baselineRightEyebrowHeight *
-                                           distRightEyeTopToImageTop * distanceNorm);
-          
-          const f32 eyeHeightFraction = GetEyeHeight(face)/_baselineEyeHeight * distanceNorm;
-          _crntProceduralFace.SetParameter(ProceduralFace::WhichEye::Left, ProceduralFace::Parameter::EyeHeight,
-                                           static_cast<f32>(ProceduralFace::NominalEyeHeight)*eyeHeightFraction);
-          
-          _crntProceduralFace.SetParameter(ProceduralFace::WhichEye::Right, ProceduralFace::Parameter::EyeHeight,
-                                           static_cast<f32>(ProceduralFace::NominalEyeHeight)*eyeHeightFraction);
-          
-          _crntProceduralFace.SetParameter(ProceduralFace::WhichEye::Left,
-                                           ProceduralFace::Parameter::PupilHeightFraction,
-                                           static_cast<f32>(ProceduralFace::NominalPupilHeightFrac)*eyeHeightFraction);
+                                           ProceduralFace::Parameter::BrowCenY,
+                                           leftEyebrowHeightScale);
           
           _crntProceduralFace.SetParameter(ProceduralFace::WhichEye::Right,
-                                           ProceduralFace::Parameter::PupilHeightFraction,
-                                           static_cast<f32>(ProceduralFace::NominalPupilHeightFrac)*eyeHeightFraction);
+                                           ProceduralFace::Parameter::BrowCenY,
+                                           rightEyebrowHeightScale);
           
-          // If face angle is rotated, mirror the rotation
-          _crntProceduralFace.SetFaceAngle(faceAngle.getDegrees());
+          const f32 expectedEyeHeight = distanceNorm * _baselineEyeHeight;
+          const f32 eyeHeightFraction = (GetEyeHeight(face) - expectedEyeHeight)/expectedEyeHeight + .1f; // bias a little larger
+          
+          for(auto whichEye : {ProceduralFace::WhichEye::Left, ProceduralFace::WhichEye::Right}) {
+            _crntProceduralFace.SetParameter(whichEye, ProceduralFace::Parameter::EyeHeight,
+                                             eyeHeightFraction);
+            _crntProceduralFace.SetParameter(whichEye, ProceduralFace::Parameter::PupilHeight,
+                                             std::max(.25f, std::min(.75f,eyeHeightFraction)));
+          }
+          // Adjust pupil positions depending on where face is in the image
+          Point2f newPupilPos(face->GetLeftEyeCenter());
+          newPupilPos += face->GetRightEyeCenter();
+          newPupilPos *= 0.5f;
+          
+          Point2f imageHalfSize(_robot.GetCamera().GetCalibration().GetNcols()/2,
+                                _robot.GetCamera().GetCalibration().GetNrows()/2);
+          newPupilPos -= imageHalfSize; // make relative to image center
+          newPupilPos /= imageHalfSize; // scale to be between -1 and 1
+          newPupilPos *= .8f; // magic value to make it more realistic
+          
+          for(auto whichEye : {ProceduralFace::WhichEye::Left, ProceduralFace::WhichEye::Right}) {
+            _crntProceduralFace.SetParameter(whichEye, ProceduralFace::Parameter::EyeHeight,
+                                             eyeHeightFraction);
+            _crntProceduralFace.SetParameter(whichEye, ProceduralFace::Parameter::PupilHeight,
+                                             eyeHeightFraction);
+
+            // To get saccade-like movement, only update the pupils if they new position is
+            // different enough
+            Point2f pupilChange(newPupilPos);
+            pupilChange.x() -= _crntProceduralFace.GetParameter(whichEye, ProceduralFace::Parameter::PupilCenX);
+            pupilChange.y() -= _crntProceduralFace.GetParameter(whichEye, ProceduralFace::Parameter::PupilCenY);
+            if(pupilChange.Length() > .15f) { // TODO: Tune this parameter to get better-looking saccades
+              _crntProceduralFace.SetParameter(whichEye, ProceduralFace::Parameter::PupilCenX,
+                                               -newPupilPos.x());
+              _crntProceduralFace.SetParameter(whichEye, ProceduralFace::Parameter::PupilCenY,
+                                               newPupilPos.y());
+            }
+          }
+          
+          // If face angle is rotated, mirror the rotation (with a deadzone)
+          if(std::abs(faceAngle.getDegrees()) > 5) {
+            _crntProceduralFace.SetFaceAngle(faceAngle.getDegrees()/static_cast<f32>(ProceduralFace::MaxFaceAngle));
+          } else {
+            _crntProceduralFace.SetFaceAngle(0);
+          }
+          
+          // Smoothing
+          _crntProceduralFace.Interpolate(prevProcFace, _crntProceduralFace, 0.9f);
           
           _crntProceduralFace.SetTimeStamp(face->GetTimeStamp());
           _crntProceduralFace.MarkAsSentToRobot(false);
           _robot.SetProceduralFace(_crntProceduralFace);
           
-          PRINT_NAMED_INFO("BehaviorLookForFaces.HandleRobotObservedFace.UpdatedProceduralFace", "");
+          if(!_isAnimating) {
+            Pose3d headWrtRobot;
+            if(false == face->GetHeadPose().GetWithRespectTo(_robot.GetPose(), headWrtRobot)) {
+              PRINT_NAMED_ERROR("BehaviorLookForFaces.HandleRobotObservedFace.PoseWrtFail","");
+            } else if(headWrtRobot.GetTranslation().Length() < 300.f) {
+              // The head is very close (scary!). Move backward along the line from the
+              // robot to the head.
+              PRINT_NAMED_INFO("BehaviorLookForFaces.HandleRobotObservedFace.Shocked",
+                               "Head is %.1fmm away: playing shocked anim.",
+                               headWrtRobot.GetTranslation().Length());
+              PlayAnimationAction* animAction = new PlayAnimationAction("shocked");
+              _animationActionTag = animAction->GetTag();
+              _robot.GetActionList().QueueActionNow(IBehavior::sActionSlot, animAction);
+              _isAnimating = true;
+            }
+          }
+          
+          //PRINT_NAMED_INFO("BehaviorLookForFaces.HandleRobotObservedFace.UpdatedProceduralFace", "");
           
         }
         break;
@@ -314,6 +373,12 @@ namespace Cozmo {
                          "Switching back to looking around.");
         _currentState = State::LOOKING_AROUND;
       }
+    }
+    
+    else if(msg.actionType == RobotActionType::PLAY_ANIMATION && msg.idTag == _animationActionTag)
+    {
+      _robot.SetProceduralFace(_crntProceduralFace);
+      _isAnimating = false;
     }
   }
 } // namespace Cozmo

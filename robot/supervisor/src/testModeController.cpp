@@ -159,6 +159,8 @@ namespace Anki {
         const f32 LIFT_DES_LOW_HEIGHT = LIFT_HEIGHT_LOWDOCK + 10;
         LiftTestFlags liftTestMode_ = LiftTF_TEST_POWER;
         s32 liftNodCycleTime_ms_ = 2000;
+        f32 avgLiftSpeed_ = 0;
+        f32 startLiftHeightMM_ = 0;
         //// End of LiftTest  //////
         
         
@@ -685,6 +687,8 @@ namespace Anki {
         if (liftTestMode_ == LiftTF_TEST_POWER || liftTestMode_ == LiftTF_DISABLE_MOTOR) {
           LiftController::Disable();
         }
+        avgLiftSpeed_ = 0;
+        startLiftHeightMM_ = 0;
         return RESULT_OK;
       }
       
@@ -766,18 +770,22 @@ namespace Anki {
         
         
 
-        // Print speed
-        if (ticCnt2_++ >= printCyclePeriod_) {
-          f32 lSpeed = HAL::MotorGetSpeed(HAL::MOTOR_LIFT);
-          f32 lSpeed_filt = LiftController::GetAngularVelocity();
-          f32 lPos = LiftController::GetAngleRad(); // HAL::MotorGetPosition(HAL::MOTOR_LIFT);
-          f32 lHeight = LiftController::GetHeightMM();
-          if (ABS(lSpeed) > 0.001 || ABS(lSpeed_filt) > 0.001) {
-            PRINT("Lift speed %f rad/s, filt_speed %f rad/s, position %f rad, %f mm\n", lSpeed, lSpeed_filt, lPos, lHeight);
+        // Print speed at the end of a continuous segment of non-zero speeds
+        f32 lSpeed = HAL::MotorGetSpeed(HAL::MOTOR_LIFT);
+        if (ABS(lSpeed) > 0.001) {
+          // Is this the start of a sequence of non-zero lift speeds?
+          if (avgLiftSpeed_ == 0) {
+            startLiftHeightMM_ = LiftController::GetHeightMM();
           }
+          avgLiftSpeed_ += lSpeed;
+          ++ticCnt2_;
+        } else if (avgLiftSpeed_ != 0) {
+          avgLiftSpeed_ /= ticCnt2_;
+          PRINT("Avg lift speed %f rad/s, height change %f mm\n", avgLiftSpeed_, LiftController::GetHeightMM() - startLiftHeightMM_);
+          avgLiftSpeed_ = 0;
           ticCnt2_ = 0;
         }
-
+        
         
         return RESULT_OK;
       }

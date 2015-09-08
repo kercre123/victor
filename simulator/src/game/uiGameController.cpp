@@ -926,6 +926,7 @@ namespace Anki {
     void UiGameController::SendStartTestMode(TestModeClad mode, s32 p1, s32 p2, s32 p3)
     {
       ExternalInterface::StartTestMode m;
+      m.robotID = 1;
       m.mode = mode;
       m.p1 = p1;
       m.p2 = p2;
