@@ -254,12 +254,60 @@ namespace AnimationTool.Sequencer
         }
     }
 
-    public class ExtraFaceAnimationProceduralData : ExtraData
+    public class ExtraProceduralFaceData : ExtraData
     {
-        public ExtraFaceAnimationProceduralData()
+        public float faceAngle_deg;
+
+        public float leftBrowAngle;
+        public float rightBrowAngle;
+        public float leftBrowCenX;
+        public float rightBrowCenX;
+        public float leftBrowCenY;
+        public float rightBrowCenY;
+
+        public float leftEyeHeight;
+        public float rightEyeHeight;
+
+        public float leftPupilHeight;
+        public float rightPupilHeight;
+        public float leftPupilWidth;
+        public float rightPupilWidth;
+        public float leftPupilCenX;
+        public float rightPupilCenX;
+        public float leftPupilCenY;
+        public float rightPupilCenY;
+
+        public ExtraProceduralFaceData()
         {
             Length = MoveSelectedDataPoints.DELTA_X;
             Exists = true;
+        }
+
+        public ExtraProceduralFaceData(ProceduralFacePointData data)
+        {
+            Length = MoveSelectedDataPoints.DELTA_X;
+            Exists = true;
+
+            faceAngle_deg = data.faceAngle_deg;
+
+            leftBrowAngle = data.leftBrowAngle;
+            rightBrowAngle = data.rightBrowAngle;
+            leftBrowCenX = data.leftBrowCenX;
+            rightBrowCenX = data.rightBrowCenX;
+            leftBrowCenY = data.leftBrowCenY;
+            rightBrowCenY = data.rightBrowCenY;
+
+            leftEyeHeight = data.leftEyeHeight;
+            rightEyeHeight = data.rightEyeHeight;
+
+            leftPupilHeight = data.leftPupilHeight;
+            rightPupilHeight = data.rightPupilHeight;
+            leftPupilWidth = data.leftPupilWidth;
+            rightPupilWidth = data.rightPupilWidth;
+            leftPupilCenX = data.leftPupilCenX;
+            rightPupilCenX = data.rightPupilCenX;
+            leftPupilCenY = data.leftPupilCenY;
+            rightPupilCenY = data.rightPupilCenY;
         }
     }
 

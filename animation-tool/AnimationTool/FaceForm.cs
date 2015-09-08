@@ -1,8 +1,5 @@
-﻿using System;
-using System.Windows.Forms;
-using System.Drawing;
-using System.Net;
-using System.Collections.Generic;
+﻿using System.Windows.Forms;
+using Anki.Cozmo;
 
 namespace AnimationTool
 {
@@ -23,16 +20,10 @@ namespace AnimationTool
         private FaceTrackBarForm pupilX;
         private FaceTrackBarForm pupilY;
         private FaceTrackBarForm pupilSize;
-        private FaceTrackBarForm browY; 
+        private FaceTrackBarForm browY;
 
-        public KeyValuePair<float, float> EyeHeight { get { return new KeyValuePair<float, float>(eyeHeight.LeftValue, eyeHeight.RightValue); } }
-        public KeyValuePair<float, float> EyeWidth { get { return new KeyValuePair<float, float>(eyeWidth.LeftValue, eyeWidth.RightValue); } }
-        public KeyValuePair<float, float> EyeY { get { return new KeyValuePair<float, float>(eyeY.LeftValue, eyeY.RightValue); } }
-        public KeyValuePair<float, float> PupilX { get { return new KeyValuePair<float, float>(pupilX.LeftValue, pupilX.RightValue); } }
-        public KeyValuePair<float, float> PupilY { get { return new KeyValuePair<float, float>(pupilY.LeftValue, pupilY.RightValue); } }
-        public KeyValuePair<float, float> PupilSize { get { return new KeyValuePair<float, float>(pupilSize.LeftValue, pupilSize.RightValue); } }
-        public KeyValuePair<float, float> BrowY { get { return new KeyValuePair<float, float>(browY.LeftValue, browY.RightValue); } }
-        public KeyValuePair<float, float> BrowAngle { get { return new KeyValuePair<float, float>(browAngle.LeftValue, browAngle.RightValue); } }
+        public FaceTrackBarForm[] Eyes { get; private set; }
+
         public float FaceAngle { get { return face.RightValue; } }
         public float FaceY { get { return face.LeftValue; } }
 
@@ -40,35 +31,65 @@ namespace AnimationTool
         {
             get
             {
-                return browLength.Changed || eyeHeight.Changed || eyeWidth.Changed || eyeY.Changed || pupilX.Changed || pupilY.Changed || 
-                    pupilSize.Changed || browY.Changed || face.Changed || browAngle.Changed || browX.Changed;
+                for(int i = 0; i < Eyes.Length; ++i)
+                {
+                    if (Eyes[i].Changed)
+                    {
+                        return true;
+                    }
+                }
+
+                return face.Changed;
             }
 
             set
             {
-                browLength.Changed = value;
-                eyeHeight.Changed = value;
-                eyeWidth.Changed = value;
-                eyeY.Changed = value;
-                pupilX.Changed = value;
-                pupilY.Changed = value;
-                pupilSize.Changed = value;
-                browY.Changed = value;
                 face.Changed = value;
-                browAngle.Changed = value;
-                browX.Changed = value;
+
+                for(int i = 0; i < Eyes.Length; ++i)
+                {
+                    Eyes[i].Changed = value;
+                }
             }
         }
+
+        public float LastFaceAngle { get; private set; }
+        public float[] LastLeftEye { get; private set; }
+        public float[] LastRightEye { get; private set; }
 
         public FaceForm()
         {
             InitializeComponent();
+
+            Eyes = new FaceTrackBarForm[(int)ProceduralEyeParameter.NumParameters];
+            LastLeftEye = new float[(int)ProceduralEyeParameter.NumParameters];
+            LastRightEye = new float[(int)ProceduralEyeParameter.NumParameters];
+
+            Eyes[(int)ProceduralEyeParameter.BrowAngle] = browAngle;
+            Eyes[(int)ProceduralEyeParameter.BrowCenX] = browX;
+            Eyes[(int)ProceduralEyeParameter.BrowCenY] = browY;
+            Eyes[(int)ProceduralEyeParameter.EyeHeight] = eyeHeight;
+            Eyes[(int)ProceduralEyeParameter.EyeWidth] = eyeWidth;
+            Eyes[(int)ProceduralEyeParameter.PupilCenY] = pupilY;
+            Eyes[(int)ProceduralEyeParameter.PupilCenX] = pupilX;
+            Eyes[(int)ProceduralEyeParameter.PupilHeight] = pupilSize;
+            Eyes[(int)ProceduralEyeParameter.PupilWidth] = pupilSize;
         }
 
         public DialogResult Open()
         {
             button.Enabled = true;
             Changed = true;
+
+            for (int i = 0; i < Eyes.Length; ++i)
+            {
+                if (Eyes[i] != null)
+                {
+                    LastLeftEye[i] = Eyes[i].LeftValue;
+                    LastRightEye[i] = Eyes[i].RightValue;
+                }
+            }
+            LastFaceAngle = FaceAngle;
 
             return ShowDialog();
         }

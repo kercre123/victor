@@ -71,7 +71,7 @@ namespace AnimationTool
             }
         }
 
-        private void ReadFaceAnimationFromFile(FaceAnimationPointData current)
+        private void ReadFaceAnimationImageFromFile(FaceAnimationPointData current)
         {
             if (current == null) return;
 
@@ -83,8 +83,18 @@ namespace AnimationTool
                 return;
             }
 
-            ActionManager.Do(new FaceAnimation.EnableChart(cFaceAnimationImage, faceAnimationImage.checkBox), true);
-            ActionManager.Do(new Sequencer.AddDataPoint(cFaceAnimationImage, extraData, current.triggerTime_ms * 0.001D, false), true);
+            ActionManager.Do(new FaceAnimation.EnableChart(cFaceAnimation, faceAnimation.checkBox), true);
+            ActionManager.Do(new Sequencer.AddDataPoint(cFaceAnimation, extraData, current.triggerTime_ms * 0.001D, false), true);
+        }
+
+        private void ReadProceduralFaceFromFile(ProceduralFacePointData current)
+        {
+            if (current == null) return;
+
+            Sequencer.ExtraProceduralFaceData extraData = new Sequencer.ExtraProceduralFaceData(current);
+
+            ActionManager.Do(new FaceAnimation.EnableChart(cProceduralFace, faceAnimation.checkBox), true);
+            ActionManager.Do(new Sequencer.AddDataPoint(cProceduralFace, extraData, current.triggerTime_ms * 0.001D, false), true);
         }
 
         private void ReadBodyMotionFromFile(BodyMotionPointData current)
@@ -183,7 +193,10 @@ namespace AnimationTool
                             ReadAudioDeviceFromFile(points[i] as AudioDevicePointData);
                             break;
                         case FaceAnimationPointData.NAME:
-                            ReadFaceAnimationFromFile(points[i] as FaceAnimationPointData);
+                            ReadFaceAnimationImageFromFile(points[i] as FaceAnimationPointData);
+                            break;
+                        case ProceduralFacePointData.NAME:
+                            ReadProceduralFaceFromFile(points[i] as ProceduralFacePointData);
                             break;
                         case BodyMotionPointData.NAME:
                             ReadBodyMotionFromFile(points[i] as BodyMotionPointData);
@@ -238,7 +251,10 @@ namespace AnimationTool
                             ActionManager.Do(new DisableChart(cAudioDevice, audioDevice.checkBox));
                             break;
                         case "cFaceAnimation":
-                            ActionManager.Do(new DisableChart(cFaceAnimationImage, faceAnimationImage.checkBox));
+                            ActionManager.Do(new DisableChart(cFaceAnimation, faceAnimation.checkBox));
+                            break;
+                        case "cProceduralFace":
+                            ActionManager.Do(new DisableChart(cProceduralFace, proceduralFace.checkBox));
                             break;
                         case "cBodyMotion":
                             ActionManager.Do(new DisableChart(cBodyMotion, bodyMotion.checkBox));

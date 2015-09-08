@@ -73,15 +73,15 @@ namespace AnimationTool
         {
             CheckBox checkBox = o as CheckBox;
 
-            if (checkBox == null || cFaceAnimationImage == null || checkBox.Checked != cFaceAnimationImage.Enabled) return;
+            if (checkBox == null || cFaceAnimation == null || checkBox.Checked != cFaceAnimation.Enabled) return;
 
-            if (cFaceAnimationImage.Enabled)
+            if (cFaceAnimation.Enabled)
             {
-                ActionManager.Do(new DisableChart(cFaceAnimationImage, checkBox));
+                ActionManager.Do(new DisableChart(cFaceAnimation, checkBox));
             }
             else
             {
-                ActionManager.Do(new Sequencer.EnableChart(cFaceAnimationImage, checkBox));
+                ActionManager.Do(new Sequencer.EnableChart(cFaceAnimation, checkBox));
             }
         }
 
@@ -89,15 +89,15 @@ namespace AnimationTool
         {
             CheckBox checkBox = o as CheckBox;
 
-            if (checkBox == null || cFaceAnimationData == null || checkBox.Checked != cFaceAnimationData.Enabled) return;
+            if (checkBox == null || cProceduralFace == null || checkBox.Checked != cProceduralFace.Enabled) return;
 
-            if (cFaceAnimationData.Enabled)
+            if (cProceduralFace.Enabled)
             {
-                ActionManager.Do(new DisableChart(cFaceAnimationData, checkBox));
+                ActionManager.Do(new DisableChart(cProceduralFace, checkBox));
             }
             else
             {
-                ActionManager.Do(new Sequencer.EnableChart(cFaceAnimationData, checkBox));
+                ActionManager.Do(new Sequencer.EnableChart(cProceduralFace, checkBox));
             }
         }
 

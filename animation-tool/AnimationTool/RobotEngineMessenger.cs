@@ -4,6 +4,7 @@ using System.Net;
 using System.Threading;
 using Anki.Cozmo.ExternalInterface;
 using Anki.Cozmo;
+using UnityEngine;
 
 namespace AnimationTool
 {
@@ -31,10 +32,15 @@ namespace AnimationTool
         private string queuedAnimationName = null;
         private bool isReadyToSend = false;
         private int lastStateMessage = 0;
+        private DisplayProceduralFace displayProceduralFaceMessage;
 
         public RobotEngineMessenger()
         {
             this.ConnectionText = "[Disconnected]";
+
+            displayProceduralFaceMessage = new DisplayProceduralFace();
+            displayProceduralFaceMessage.leftEye = new float[(int)ProceduralEyeParameter.NumParameters];
+            displayProceduralFaceMessage.rightEye = new float[(int)ProceduralEyeParameter.NumParameters];
         }
 
         public void Start()
@@ -329,32 +335,47 @@ namespace AnimationTool
             }
         }
 
+        public void SetToPreviousFace(FaceForm faceForm)
+        {
+            if (channel.IsConnected)
+            {
+                displayProceduralFaceMessage.robotID = 1;
+                displayProceduralFaceMessage.faceAngle = faceForm.LastFaceAngle;
+
+                for (int i = 0; i < displayProceduralFaceMessage.leftEye.Length; ++i)
+                {
+                    displayProceduralFaceMessage.leftEye[i] = faceForm.LastLeftEye[i];
+                    displayProceduralFaceMessage.rightEye[i] = faceForm.LastRightEye[i];
+                }
+
+                message.DisplayProceduralFace = displayProceduralFaceMessage;
+                channel.Send(message);
+            }
+        }
+
         public void AnimateFace(FaceForm faceForm)
         {
-            if (faceForm.Changed && channel.IsConnected)
+            if (channel.IsConnected && faceForm.Changed)
             {
-                DisplayProceduralFace displayProceduralFace = new DisplayProceduralFace();
-                displayProceduralFace.leftEye = new float[(int)ProceduralEyeParameter.NumParameters];
-                displayProceduralFace.rightEye = new float[(int)ProceduralEyeParameter.NumParameters];
+                displayProceduralFaceMessage.robotID = 1;
+                displayProceduralFaceMessage.faceAngle = faceForm.FaceAngle;
 
-                displayProceduralFace.faceAngle = faceForm.FaceAngle;
-                displayProceduralFace.leftEye[(int)ProceduralEyeParameter.BrowAngle] = faceForm.BrowAngle.Key;
-                displayProceduralFace.rightEye[(int)ProceduralEyeParameter.BrowAngle] = faceForm.BrowAngle.Value;
-                displayProceduralFace.leftEye[(int)ProceduralEyeParameter.BrowShiftY] = faceForm.BrowY.Key;
-                displayProceduralFace.rightEye[(int)ProceduralEyeParameter.BrowShiftY] = faceForm.BrowY.Value;
-                displayProceduralFace.leftEye[(int)ProceduralEyeParameter.EyeHeight] = faceForm.EyeHeight.Key;
-                displayProceduralFace.rightEye[(int)ProceduralEyeParameter.EyeHeight] = faceForm.EyeHeight.Value;
-                displayProceduralFace.leftEye[(int)ProceduralEyeParameter.EyeWidth] = faceForm.EyeWidth.Key;
-                displayProceduralFace.rightEye[(int)ProceduralEyeParameter.EyeHeight] = faceForm.EyeWidth.Value;
-                displayProceduralFace.leftEye[(int)ProceduralEyeParameter.PupilHeightFraction] = faceForm.PupilY.Key;
-                displayProceduralFace.rightEye[(int)ProceduralEyeParameter.PupilHeightFraction] = faceForm.PupilY.Value;
-                displayProceduralFace.leftEye[(int)ProceduralEyeParameter.PupilWidthFraction] = faceForm.PupilX.Key;
-                displayProceduralFace.rightEye[(int)ProceduralEyeParameter.PupilWidthFraction] = faceForm.PupilX.Value;
+                for (int i = 0; i < displayProceduralFaceMessage.leftEye.Length; ++i)
+                {
+                    if (faceForm.Eyes[i] != null)
+                    {
+                        displayProceduralFaceMessage.leftEye[i] = faceForm.Eyes[i].LeftValue;
+                        displayProceduralFaceMessage.rightEye[i] = faceForm.Eyes[i].RightValue;
+                    }
+                    else
+                    {
+                        Debug.LogWarning("Missing " + (ProceduralEyeParameter)i + " in message.");
+                    }
+                }
 
-                message.DisplayProceduralFace = displayProceduralFace;
+                message.DisplayProceduralFace = displayProceduralFaceMessage;
                 channel.Send(message);
                 faceForm.Changed = false;
-                Console.WriteLine("called");
             }
         }
     }

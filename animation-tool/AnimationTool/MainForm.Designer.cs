@@ -66,22 +66,22 @@ namespace AnimationTool
             this.connectionToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.cHeadAngle = new System.Windows.Forms.DataVisualization.Charting.Chart();
             this.cBodyMotion = new System.Windows.Forms.DataVisualization.Charting.Chart();
-            this.cFaceAnimationImage = new System.Windows.Forms.DataVisualization.Charting.Chart();
-            this.cFaceAnimationData = new System.Windows.Forms.DataVisualization.Charting.Chart();
+            this.cFaceAnimation = new System.Windows.Forms.DataVisualization.Charting.Chart();
+            this.cProceduralFace = new System.Windows.Forms.DataVisualization.Charting.Chart();
             this.cLiftHeight = new System.Windows.Forms.DataVisualization.Charting.Chart();
             this.cAudioRobot = new System.Windows.Forms.DataVisualization.Charting.Chart();
             this.cAudioDevice = new System.Windows.Forms.DataVisualization.Charting.Chart();
             this.headAngle = new AnimationTool.ChartForm();
             this.liftHeight = new AnimationTool.ChartForm();
             this.bodyMotion = new AnimationTool.ChartForm();
-            this.faceAnimationData = new AnimationTool.ChartForm();
-            this.faceAnimationImage = new AnimationTool.ChartForm();
+            this.proceduralFace = new AnimationTool.ChartForm();
+            this.faceAnimation = new AnimationTool.ChartForm();
             this.audioRobot = new AnimationTool.ChartForm();
             this.audioDevice = new AnimationTool.ChartForm();
             this.menuStrip.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.cHeadAngle)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.cBodyMotion)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.cFaceAnimationImage)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.cFaceAnimation)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.cLiftHeight)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.cAudioRobot)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.cAudioDevice)).BeginInit();
@@ -374,10 +374,10 @@ namespace AnimationTool
             this.cBodyMotion.MouseDown += new System.Windows.Forms.MouseEventHandler(this.Sequencer_MouseDown);
             this.cBodyMotion.MouseMove += new System.Windows.Forms.MouseEventHandler(this.Sequencer_MouseMove);
             // 
-            // cFaceAnimationImage
+            // cFaceAnimation
             // 
-            this.cFaceAnimationImage.BorderlineColor = System.Drawing.Color.Transparent;
-            this.cFaceAnimationImage.BorderlineDashStyle = System.Windows.Forms.DataVisualization.Charting.ChartDashStyle.Solid;
+            this.cFaceAnimation.BorderlineColor = System.Drawing.Color.Transparent;
+            this.cFaceAnimation.BorderlineDashStyle = System.Windows.Forms.DataVisualization.Charting.ChartDashStyle.Solid;
             chartArea3.AxisX.Interval = 1D;
             chartArea3.AxisX.IsLabelAutoFit = false;
             chartArea3.AxisX.LabelAutoFitMaxFontSize = 8;
@@ -394,7 +394,7 @@ namespace AnimationTool
             chartArea3.AxisX.MinorGrid.Interval = 0.1D;
             chartArea3.AxisX.MinorGrid.LineColor = System.Drawing.Color.LightGray;
             chartArea3.AxisX.MinorGrid.LineDashStyle = System.Windows.Forms.DataVisualization.Charting.ChartDashStyle.Dash;
-            chartArea3.AxisX.Title = "Face\\nDisplay\\nImage ";
+            chartArea3.AxisX.Title = "Face\\nDisplay\\n\\n";
             chartArea3.AxisX.TitleFont = new System.Drawing.Font("Verdana", 11F);
             chartArea3.AxisX.TitleForeColor = System.Drawing.Color.LightGray;
             chartArea3.AxisY.IntervalOffset = 1D;
@@ -422,11 +422,11 @@ namespace AnimationTool
             chartArea3.Position.Width = 98F;
             chartArea3.Position.X = 2F;
             chartArea3.Position.Y = 3F;
-            this.cFaceAnimationImage.ChartAreas.Add(chartArea3);
-            this.cFaceAnimationImage.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.cFaceAnimationImage.Location = new System.Drawing.Point(0, 0);
-            this.cFaceAnimationImage.Margin = new System.Windows.Forms.Padding(2);
-            this.cFaceAnimationImage.Name = "cFaceAnimationImage";
+            this.cFaceAnimation.ChartAreas.Add(chartArea3);
+            this.cFaceAnimation.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.cFaceAnimation.Location = new System.Drawing.Point(0, 0);
+            this.cFaceAnimation.Margin = new System.Windows.Forms.Padding(2);
+            this.cFaceAnimation.Name = "cFaceAnimation";
             series3.BorderColor = System.Drawing.Color.DarkBlue;
             series3.ChartArea = "ChartArea1";
             series3.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.RangeBar;
@@ -439,19 +439,19 @@ namespace AnimationTool
             series3.MarkerSize = 8;
             series3.Name = "SeriesKeyframes";
             series3.YValuesPerPoint = 2;
-            this.cFaceAnimationImage.Series.Add(series3);
-            this.cFaceAnimationImage.Size = new System.Drawing.Size(1154, 134);
-            this.cFaceAnimationImage.SuppressExceptions = true;
-            this.cFaceAnimationImage.TabIndex = 4;
-            this.cFaceAnimationImage.MouseClick += new System.Windows.Forms.MouseEventHandler(this.Chart_MouseClick);
-            this.cFaceAnimationImage.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.Sequencer_MouseDoubleClick);
-            this.cFaceAnimationImage.MouseDown += new System.Windows.Forms.MouseEventHandler(this.Sequencer_MouseDown);
-            this.cFaceAnimationImage.MouseMove += new System.Windows.Forms.MouseEventHandler(this.Sequencer_MouseMove);
+            this.cFaceAnimation.Series.Add(series3);
+            this.cFaceAnimation.Size = new System.Drawing.Size(1154, 134);
+            this.cFaceAnimation.SuppressExceptions = true;
+            this.cFaceAnimation.TabIndex = 4;
+            this.cFaceAnimation.MouseClick += new System.Windows.Forms.MouseEventHandler(this.Chart_MouseClick);
+            this.cFaceAnimation.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.Sequencer_MouseDoubleClick);
+            this.cFaceAnimation.MouseDown += new System.Windows.Forms.MouseEventHandler(this.Sequencer_MouseDown);
+            this.cFaceAnimation.MouseMove += new System.Windows.Forms.MouseEventHandler(this.Sequencer_MouseMove);
             // 
-            // cFaceAnimationData
+            // cProceduralFace
             // 
-            this.cFaceAnimationData.BorderlineColor = System.Drawing.Color.Transparent;
-            this.cFaceAnimationData.BorderlineDashStyle = System.Windows.Forms.DataVisualization.Charting.ChartDashStyle.Solid;
+            this.cProceduralFace.BorderlineColor = System.Drawing.Color.Transparent;
+            this.cProceduralFace.BorderlineDashStyle = System.Windows.Forms.DataVisualization.Charting.ChartDashStyle.Solid;
             chartArea7.AxisX.Interval = 1D;
             chartArea7.AxisX.IsLabelAutoFit = false;
             chartArea7.AxisX.LabelAutoFitMaxFontSize = 8;
@@ -468,7 +468,7 @@ namespace AnimationTool
             chartArea7.AxisX.MinorGrid.Interval = 0.1D;
             chartArea7.AxisX.MinorGrid.LineColor = System.Drawing.Color.LightGray;
             chartArea7.AxisX.MinorGrid.LineDashStyle = System.Windows.Forms.DataVisualization.Charting.ChartDashStyle.Dash;
-            chartArea7.AxisX.Title = "Face\\nDisplay\\n ";
+            chartArea7.AxisX.Title = "Face\\nRig\\n\\n";
             chartArea7.AxisX.TitleFont = new System.Drawing.Font("Verdana", 11F);
             chartArea7.AxisX.TitleForeColor = System.Drawing.Color.LightGray;
             chartArea7.AxisY.IntervalOffset = 1D;
@@ -496,11 +496,11 @@ namespace AnimationTool
             chartArea7.Position.Width = 98F;
             chartArea7.Position.X = 2F;
             chartArea7.Position.Y = 3F;
-            this.cFaceAnimationData.ChartAreas.Add(chartArea7);
-            this.cFaceAnimationData.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.cFaceAnimationData.Location = new System.Drawing.Point(0, 0);
-            this.cFaceAnimationData.Margin = new System.Windows.Forms.Padding(2);
-            this.cFaceAnimationData.Name = "cFaceAnimationData";
+            this.cProceduralFace.ChartAreas.Add(chartArea7);
+            this.cProceduralFace.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.cProceduralFace.Location = new System.Drawing.Point(0, 0);
+            this.cProceduralFace.Margin = new System.Windows.Forms.Padding(2);
+            this.cProceduralFace.Name = "cProceduralFace";
             series7.BorderColor = System.Drawing.Color.DarkBlue;
             series7.ChartArea = "ChartArea1";
             series7.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.RangeBar;
@@ -513,14 +513,14 @@ namespace AnimationTool
             series7.MarkerSize = 8;
             series7.Name = "SeriesKeyframes";
             series7.YValuesPerPoint = 2;
-            this.cFaceAnimationData.Series.Add(series7);
-            this.cFaceAnimationData.Size = new System.Drawing.Size(1154, 134);
-            this.cFaceAnimationData.SuppressExceptions = true;
-            this.cFaceAnimationData.TabIndex = 4;
-            this.cFaceAnimationData.MouseClick += new System.Windows.Forms.MouseEventHandler(this.Chart_MouseClick);
-            this.cFaceAnimationData.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.Sequencer_MouseDoubleClick);
-            this.cFaceAnimationData.MouseDown += new System.Windows.Forms.MouseEventHandler(this.Sequencer_MouseDown);
-            this.cFaceAnimationData.MouseMove += new System.Windows.Forms.MouseEventHandler(this.Sequencer_MouseMove);
+            this.cProceduralFace.Series.Add(series7);
+            this.cProceduralFace.Size = new System.Drawing.Size(1154, 134);
+            this.cProceduralFace.SuppressExceptions = true;
+            this.cProceduralFace.TabIndex = 4;
+            this.cProceduralFace.MouseClick += new System.Windows.Forms.MouseEventHandler(this.Chart_MouseClick);
+            this.cProceduralFace.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.Sequencer_MouseDoubleClick);
+            this.cProceduralFace.MouseDown += new System.Windows.Forms.MouseEventHandler(this.Sequencer_MouseDown);
+            this.cProceduralFace.MouseMove += new System.Windows.Forms.MouseEventHandler(this.Sequencer_MouseMove);
             // 
             // cLiftHeight
             // 
@@ -756,19 +756,19 @@ namespace AnimationTool
             this.bodyMotion.Size = new System.Drawing.Size(1280, 100);
             this.bodyMotion.TabIndex = 9;
             // 
-            // faceAnimationData
+            // proceduralFace
             // 
-            this.faceAnimationData.Location = new System.Drawing.Point(0, 415);
-            this.faceAnimationData.Name = "faceAnimationData";
-            this.faceAnimationData.Size = new System.Drawing.Size(1280, 100);
-            this.faceAnimationData.TabIndex = 9;
+            this.proceduralFace.Location = new System.Drawing.Point(0, 415);
+            this.proceduralFace.Name = "proceduralFace";
+            this.proceduralFace.Size = new System.Drawing.Size(1280, 100);
+            this.proceduralFace.TabIndex = 9;
             // 
-            // faceAnimationImage
+            // faceAnimation
             // 
-            this.faceAnimationImage.Location = new System.Drawing.Point(0, 521);
-            this.faceAnimationImage.Name = "faceAnimationImage";
-            this.faceAnimationImage.Size = new System.Drawing.Size(1280, 100);
-            this.faceAnimationImage.TabIndex = 9;
+            this.faceAnimation.Location = new System.Drawing.Point(0, 521);
+            this.faceAnimation.Name = "faceAnimation";
+            this.faceAnimation.Size = new System.Drawing.Size(1280, 100);
+            this.faceAnimation.TabIndex = 9;
             // 
             // audioRobot
             // 
@@ -792,8 +792,8 @@ namespace AnimationTool
             this.Controls.Add(this.headAngle);
             this.Controls.Add(this.liftHeight);
             this.Controls.Add(this.bodyMotion);
-            this.Controls.Add(this.faceAnimationData);
-            this.Controls.Add(this.faceAnimationImage);
+            this.Controls.Add(this.proceduralFace);
+            this.Controls.Add(this.faceAnimation);
             this.Controls.Add(this.audioRobot);
             this.Controls.Add(this.audioDevice);
             this.KeyPreview = true;
@@ -806,7 +806,7 @@ namespace AnimationTool
             this.menuStrip.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.cHeadAngle)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.cBodyMotion)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.cFaceAnimationImage)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.cFaceAnimation)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.cLiftHeight)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.cAudioRobot)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.cAudioDevice)).EndInit();
@@ -834,8 +834,8 @@ namespace AnimationTool
         private Chart cHeadAngle;
         private Chart cLiftHeight;
         private Chart cBodyMotion;
-        private Chart cFaceAnimationImage;
-        private Chart cFaceAnimationData;
+        private Chart cFaceAnimation;
+        private Chart cProceduralFace;
         private Chart cAudioRobot;
         private Chart cAudioDevice;
         private ToolStripMenuItem playAnimationToolStripMenuItem;
@@ -844,8 +844,8 @@ namespace AnimationTool
         private ChartForm headAngle;
         private ChartForm liftHeight;
         private ChartForm bodyMotion;
-        private ChartForm faceAnimationData;
-        private ChartForm faceAnimationImage;
+        private ChartForm proceduralFace;
+        private ChartForm faceAnimation;
         private ChartForm audioRobot;
         private ChartForm audioDevice;
     }

@@ -76,27 +76,29 @@ namespace AnimationTool
     }
 
     [Serializable]
-    public class FaceAnimationDataPointData : PointData
+    public class ProceduralFacePointData : PointData
     {
-        public const string NAME = "FaceAnimationDataKeyFrame";
+        public const string NAME = "ProceduralFaceKeyFrame";
 
-        public float faceAngle;
+        public float faceAngle_deg;
         public float leftBrowAngle;
         public float rightBrowAngle;
-        public float leftBrowShiftX;
-        public float rightBrowShiftX;
-        public float leftBrowShiftY;
-        public float rightBrowShiftY;
+        public float leftBrowCenX;
+        public float rightBrowCenX;
+        public float leftBrowCenY;
+        public float rightBrowCenY;
         public float leftEyeHeight;
         public float rightEyeHeight;
-        public float leftPupilHeightFraction;
-        public float rightPupilHeightFraction;
-        public float leftPupilShiftX;
-        public float rightPupilShiftX;
-        public float leftPupilShiftY;
-        public float rightPupilShiftY;
+        public float leftPupilHeight;
+        public float rightPupilHeight;
+        public float leftPupilWidth;
+        public float rightPupilWidth;
+        public float leftPupilCenX;
+        public float rightPupilCenX;
+        public float leftPupilCenY;
+        public float rightPupilCenY;
 
-        public FaceAnimationDataPointData()
+        public ProceduralFacePointData()
         {
             Name = NAME;
         }

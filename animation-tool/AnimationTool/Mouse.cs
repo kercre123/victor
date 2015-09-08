@@ -130,17 +130,17 @@ namespace AnimationTool
                 else
                 {
                     //Otherwise we unselect everything and select the current one
-                    if (curChart.Name != "cFaceAnimationImage")
+                    if (curChart.Name != "cFaceAnimation")
                     {
                         ActionManager.Do(new SelectDataPoint(curDataPoint, curChart));
                     }
                     else
                     {
-                        ActionManager.Do(new FaceAnimation.SelectDataPoint(curDataPoint, curChart, faceAnimationImage.pictureBox));
+                        ActionManager.Do(new FaceAnimation.SelectDataPoint(curDataPoint, curChart, faceAnimation.pictureBox));
 
                         if (curPreviewBar != null)
                         {
-                            ActionManager.Do(new FaceAnimation.SelectDataPoint(curPreviewBar, null, faceAnimationImage.pictureBox));
+                            ActionManager.Do(new FaceAnimation.SelectDataPoint(curPreviewBar, null, faceAnimation.pictureBox));
                         }
                     }
                 }
@@ -243,9 +243,9 @@ namespace AnimationTool
                         bool left = curPreviewBar.YValues[0] > mouseXValue;
                         bool right = curPreviewBar.YValues[1] < mouseXValue;
 
-                        if (ActionManager.Do(new FaceAnimation.MoveSelectedPreviewBar(curPreviewBar, curDataPoint, left, right, faceAnimationImage.pictureBox)))
+                        if (ActionManager.Do(new FaceAnimation.MoveSelectedPreviewBar(curPreviewBar, curDataPoint, left, right, faceAnimation.pictureBox)))
                         {
-                            cFaceAnimationImage.Refresh();
+                            cFaceAnimation.Refresh();
                         }
                     }
                     else // else moving data points
@@ -339,7 +339,7 @@ namespace AnimationTool
                     case "cAudioDevice":
                         ShowVolumeForm();
                         break;
-                    case "cFaceAnimationData":
+                    case "cProceduralFace":
                         ShowFaceDataForm();
                         break;
                 }
@@ -392,11 +392,11 @@ namespace AnimationTool
 
                     switch (curChart.Name)
                     {
-                        case "cFaceAnimationData":
+                        case "cProceduralFace":
                             faceAnimationData = true;
-                            extraData = new Sequencer.ExtraFaceAnimationProceduralData();
+                            extraData = new Sequencer.ExtraProceduralFaceData();
                             break;
-                        case "cFaceAnimationImage":
+                        case "cFaceAnimation":
                             extraData = Sequencer.ExtraFaceAnimationData.SelectFaceFolder(selectFolder);
                             break;
                         case "cAudioRobot":
@@ -427,13 +427,13 @@ namespace AnimationTool
                     {
                         Sequencer.AddDataPoint add = null;
 
-                        if (curChart.Name != "cFaceAnimationImage")
+                        if (curChart.Name != "cFaceAnimation")
                         {
                             add = new Sequencer.AddDataPoint(curChart, extraData, mouseXValue, true, ModifierKeys != Keys.Shift);
                         }
                         else
                         {
-                            add = new Sequencer.AddDataPoint(curChart, extraData, mouseXValue, faceAnimationImage.pictureBox, ModifierKeys != Keys.Shift);
+                            add = new Sequencer.AddDataPoint(curChart, extraData, mouseXValue, faceAnimation.pictureBox, ModifierKeys != Keys.Shift);
                         }
 
                         ActionManager.Do(add);
@@ -465,11 +465,15 @@ namespace AnimationTool
             }
         }
 
-        private void ShowFaceDataForm(Sequencer.ExtraFaceAnimationProceduralData extraData)
+        private void ShowProceduralFaceForm(Sequencer.ExtraProceduralFaceData extraData)
         {
             if (faceForm.Open() == DialogResult.OK)
             {
 
+            }
+            else
+            {
+                robotEngineMessenger.SetToPreviousFace(faceForm); // Else if cancelled, set back to previous face
             }
         }
 
@@ -520,9 +524,9 @@ namespace AnimationTool
         {
             if (curDataPoint == null || curChart == null) return;
 
-            Sequencer.ExtraFaceAnimationProceduralData extraData = Sequencer.ExtraData.Entries[curDataPoint.GetCustomProperty(Sequencer.ExtraData.Key)] as Sequencer.ExtraFaceAnimationProceduralData;
+            Sequencer.ExtraProceduralFaceData extraData = Sequencer.ExtraData.Entries[curDataPoint.GetCustomProperty(Sequencer.ExtraData.Key)] as Sequencer.ExtraProceduralFaceData;
 
-            ShowFaceDataForm(extraData);
+            ShowProceduralFaceForm(extraData);
 
             // Hack: update info 
             ActionManager.Do(new Sequencer.MoveDataPoint(curDataPoint, curDataPoint.YValues[0] + MoveSelectedDataPoints.DELTA_X));
