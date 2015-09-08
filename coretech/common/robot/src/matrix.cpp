@@ -38,6 +38,29 @@ namespace Anki {
 
         return RESULT_OK;
       } // GetEulerAngles()
+      
+      Result GetRotationMatrix(const f32 angle_x, const f32 angle_y, const f32 angle_z,
+                               Array<f32>& R)
+      {
+        AnkiConditionalErrorAndReturnValue(R.IsValid() && AreEqualSize(3, 3, R),
+                                           RESULT_FAIL_INVALID_SIZE,
+                                           "GetRotationMatrix",
+                                           "R should be a valid 3x3 Array.");
+        
+        const f32 cY = cosf(angle_y);
+        const f32 sY = -sinf(angle_y);
+        const f32 cX = cosf(angle_x);
+        const f32 sX = -sinf(angle_x);
+        const f32 cZ = cosf(angle_z);
+        const f32 sZ = -sinf(angle_z);
+        
+        R[0][0] = cY*cZ;  R[0][1] = sX*sY*cZ - cX*sZ;  R[0][2] = cX*sY*cZ + sX*sZ;
+        R[1][0] = cY*sZ;  R[1][1] = sX*sY*sZ + cX*cZ;  R[1][2] = cX*sY*sZ - sX*cZ;
+        R[2][0] = -sY;    R[2][1] = sX*cY;             R[2][2] = cX*cY;
+        
+        return RESULT_OK;
+      }
+      
     } // namespace Matrix
   } // namespace Embedded
 } // namespace Anki
