@@ -54,7 +54,7 @@ union GlobalDataToHead
     Fixed speeds[4];
     Fixed positions[4];
 #ifdef ROBOT41
-    Fixed IBat;
+    Fixed _unused;
     Fixed VBat;
     Fixed VExt;
 #else

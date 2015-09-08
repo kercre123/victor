@@ -6,6 +6,9 @@
 #define DEBUG_BAUDRATE NRF_BAUD(1000000)
 #define CYCLES_MS(ms) (int)(32768 * 256.0f * ms / 1000.0f)
 
+// ROBOT41 is defined in the project GCC settings in keil.
+// If you want to change this, make sure you know that.
+
 //#define NATHAN_WANTS_DEMO
 //#define BACKPACK_DEMO
 //#define DEBUG_MESSAGES
