@@ -75,20 +75,23 @@ message ActiveObjectMoved
 {
   uint_32     objectID,
   ActiveAccel accel,
-  UpAxis      upAxis
+  UpAxis      upAxis,
+  uint_8 robotID,
 }
 
 message ActiveObjectStoppedMoving
 {
   uint_32 objectID,
   UpAxis  upAxis,
-  bool    rolled
+  bool    rolled,
+  uint_8 robotID,
 }
 
 message ActiveObjectTapped
 {
   uint_32 objectID,
   uint_8  numTaps,
+  uint_8 robotID,
 }
 
 } // namespace Cozmo
