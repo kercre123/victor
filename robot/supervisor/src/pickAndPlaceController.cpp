@@ -178,12 +178,15 @@ namespace Anki {
                 dockOffsetDistX_ = ORIGIN_TO_HIGH_LIFT_DIST_MM;
                 break;
               case DA_PLACE_LOW:
+                LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY);
+                dockOffsetDistX_ += ORIGIN_TO_LOW_LIFT_DIST_MM;
+                break;
               case DA_PLACE_LOW_BLIND:
                 LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY);
                 break;
               case DA_PLACE_HIGH:
                 LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY);
-                dockOffsetDistX_ = ORIGIN_TO_HIGH_PLACEMENT_DIST_MM;
+                dockOffsetDistX_ += ORIGIN_TO_HIGH_PLACEMENT_DIST_MM;
                 break;
               case DA_ROLL_LOW:
                 LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY);
