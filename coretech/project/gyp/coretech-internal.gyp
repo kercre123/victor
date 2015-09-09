@@ -1,6 +1,7 @@
 {
   'includes': [
-    'face-library.gypi'
+    'face-library.gypi',
+    'opencv.gypi',
   ],
   
   'variables': {
@@ -38,36 +39,6 @@
       'ANKICORETECH_EMBEDDED_USE_OPENCV=1',
     ],
 
-    # TODO: should this be passed in, or shared?
-    'opencv_includes': [
-      # '<(coretech_external_path)/opencv-2.4.8/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/core/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/highgui/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/imgproc/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/contrib/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/calib3d/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/objdetect/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/video/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/features2d/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/flann/include',
-    ],
-    'opencv_libs': [
-      'libzlib.a',
-      'liblibjpeg.a',
-      'liblibpng.a',
-      'liblibtiff.a',
-      'liblibjasper.a',
-      'libIlmImf.a',
-      'libopencv_core.a',
-      'libopencv_imgproc.a',
-      'libopencv_highgui.a',
-      'libopencv_calib3d.a',
-      'libopencv_contrib.a',
-      'libopencv_objdetect.a',
-      'libopencv_video.a',
-      'libopencv_features2d.a',
-    ],
-    
     'compiler_flags': [
       '-Wno-deprecated-declarations', # Supressed until system() usage is removed
       '-fdiagnostics-show-category=name',
@@ -221,10 +192,6 @@
           'xcode_settings': {
             'OTHER_CFLAGS': ['-O0'],
             'OTHER_CPLUSPLUSFLAGS': ['-O0'],
-            'OTHER_LDFLAGS': [
-              '-L<(coretech_external_path)/build/opencv-2.4.8/lib/Debug',
-              '-L<(coretech_external_path)/build/opencv-2.4.8/3rdparty/lib/Debug',
-            ],
            },
           'defines': [
             '_LIBCPP_DEBUG=0',
@@ -237,10 +204,6 @@
           'xcode_settings': {
             'OTHER_CFLAGS': ['-Os'],
             'OTHER_CPLUSPLUSFLAGS': ['-Os'],
-            'OTHER_LDFLAGS': [
-              '-L<(coretech_external_path)/build/opencv-2.4.8/lib/Release',
-              '-L<(coretech_external_path)/build/opencv-2.4.8/3rdparty/lib/Release',
-            ],
            },
           'defines': [
             'NDEBUG=1',
@@ -253,10 +216,6 @@
           'xcode_settings': {
             'OTHER_CFLAGS': ['-Os'],
             'OTHER_CPLUSPLUSFLAGS': ['-Os'],
-            'OTHER_LDFLAGS': [
-              '-L<(coretech_external_path)/build/opencv-2.4.8/lib/Release',
-              '-L<(coretech_external_path)/build/opencv-2.4.8/3rdparty/lib/Release',
-            ],
            },
           'defines': [
             'NDEBUG=1',
@@ -531,7 +490,7 @@
         '<@(face_library_includes)',
       ],
       'conditions': [
-        ['face_library=="facesdk"', {
+        ['OS=="ios" and face_library=="facesdk"', {
           'libraries': [
             '<@(face_library_libs)',
           ],

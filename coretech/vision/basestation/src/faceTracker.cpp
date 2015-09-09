@@ -410,6 +410,8 @@ namespace Vision {
   {
     //if(_sdm) delete _sdm; // points to a singleton, so don't delete, call ~SDM();
     //_sdm->~SDM();
+
+    Util::SafeDelete(_hpe);
     
     Util::SafeDelete(_hpe);
     
