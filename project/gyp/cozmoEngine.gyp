@@ -1,5 +1,6 @@
 {
-  'includes' : [
+  'includes': [
+    '../../coretech/project/gyp/face-library.gypi',
     '../../coretech/project/gyp/opencv.gypi',
   ],
   
@@ -458,6 +459,7 @@
               '$(SDKROOT)/System/Library/Frameworks/QTKit.framework',
               '$(SDKROOT)/System/Library/Frameworks/QuartzCore.framework',
               '<@(opencv_libs)',
+              '<@(face_library_libs)',
             ],
             'copies': [
               {
