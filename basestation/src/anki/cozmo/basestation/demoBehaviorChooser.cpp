@@ -38,6 +38,7 @@ Result DemoBehaviorChooser::Update(double currentTime_sec)
   {
     case DemoState::Faces:
     {
+      // TODO: Fix up EmotionManager and add logic here to change _demoState when appropriate
       break;
     }
     case DemoState::Blocks:
