@@ -69,7 +69,7 @@ namespace AnimationTool
             }
         }
 
-        private void FaceCheckBox(object o, EventArgs e)
+        private void FaceAnimationCheckBox(object o, EventArgs e)
         {
             CheckBox checkBox = o as CheckBox;
 
@@ -84,6 +84,23 @@ namespace AnimationTool
                 ActionManager.Do(new Sequencer.EnableChart(cFaceAnimation, checkBox));
             }
         }
+
+        private void ProceduralFaceCheckBox(object o, EventArgs e)
+        {
+            CheckBox checkBox = o as CheckBox;
+
+            if (checkBox == null || cProceduralFace == null || checkBox.Checked != cProceduralFace.Enabled) return;
+
+            if (cProceduralFace.Enabled)
+            {
+                ActionManager.Do(new DisableChart(cProceduralFace, checkBox));
+            }
+            else
+            {
+                ActionManager.Do(new Sequencer.EnableChart(cProceduralFace, checkBox));
+            }
+        }
+
         private void BodyMotionCheckBox(object o, EventArgs e)
         {
             CheckBox checkBox = o as CheckBox;
@@ -99,6 +116,5 @@ namespace AnimationTool
                 ActionManager.Do(new Sequencer.EnableChart(cBodyMotion, checkBox));
             }
         }
-
     }
 }
