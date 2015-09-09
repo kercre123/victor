@@ -368,8 +368,7 @@ namespace AnimationTool
             string face = path + "\\faceAnimations";
             string sounds = path + "\\sounds";
 
-            return !string.IsNullOrEmpty(path) && Directory.Exists(path) && Directory.Exists(json) &&
-                Directory.Exists(face) && Directory.Exists(sounds);
+            return !string.IsNullOrEmpty(path) && Directory.Exists(path) && Directory.Exists(json) && Directory.Exists(face) && Directory.Exists(sounds);
         }
 
         private void OpenFile(object o, EventArgs e)
@@ -432,7 +431,7 @@ namespace AnimationTool
 
         private void SetIPAddress(object o, EventArgs e)
         {
-            DialogResult result = ipForm.Open(Location, robotEngineMessenger);
+            ipForm.Open(Location, robotEngineMessenger);
         }
 
         private void UpdateConnectionText(object o, EventArgs e)

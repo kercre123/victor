@@ -194,14 +194,14 @@ namespace AnimationTool
             isReadyToSend = false;
         }
 
-        void ConnectedToClient(string connectionID)
+        private void ConnectedToClient(string connectionID)
         {
             Console.WriteLine("Connected.");
             StartEngine(RobotSettings.VizHostIPAddress);
             ForceAddRobot(RobotSettings.RobotId, RobotSettings.RobotIPAddress, RobotSettings.RobotIsSimulated);
         }
 
-        void StartEngine(string vizHostIP)
+        private void StartEngine(string vizHostIP)
         {
             StartEngine startEngineMessage = new StartEngine();
             startEngineMessage.asHost = 1;
@@ -222,7 +222,7 @@ namespace AnimationTool
             channel.Send(message);
         }
 
-        void ForceAddRobot(int robotID, string robotIP, bool robotIsSimulated)
+        private void ForceAddRobot(int robotID, string robotIP, bool robotIsSimulated)
         {
             if (robotID < 0 || robotID > 255)
             {
@@ -254,7 +254,7 @@ namespace AnimationTool
             channel.Send(message);
         }
 
-        void ReceivedMessage(MessageEngineToGame message)
+        private void ReceivedMessage(MessageEngineToGame message)
         {
             switch (message.GetTag())
             {
