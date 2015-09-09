@@ -1,4 +1,8 @@
 {
+  'includes': [
+    '../../coretech/project/gyp/face-library.gypi'
+  ],
+  
   'variables': {
 
     'engine_source': 'cozmoEngine.lst',
@@ -491,6 +495,7 @@
               '$(SDKROOT)/System/Library/Frameworks/QTKit.framework',
               '$(SDKROOT)/System/Library/Frameworks/QuartzCore.framework',
               '<@(opencv_libs)',
+              '<@(face_library_libs)',
             ],
             'copies': [
               {
