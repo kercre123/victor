@@ -23,6 +23,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #else
 #define OFFCHIP
 #define ONCHIP
+#define CCM
 #endif
 
 #if defined(_MSC_VER) // We're using the MSVC compiler
