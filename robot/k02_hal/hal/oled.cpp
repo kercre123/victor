@@ -201,6 +201,7 @@ void FlipOLED(void) {
 
 void i2c_init()
 {
+  // AHHHHHH DO NO USE!
   #ifdef SOFT_RESET
   // Toggle the reset bit
   PORT_HAL_SetMuxMode(PORTC_BASE, 10, kPortMuxAsGpio);

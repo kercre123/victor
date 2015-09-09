@@ -9,6 +9,7 @@
 #include "anki/cozmo/robot/hal.h"
 
 void dac_init() {
+  // AHHHHHH DO NO USE!
   SIM_SCGC6 |= SIM_SCGC6_DAC0_MASK;
 
   DAC0_C0 = DAC_C0_DACEN_MASK | DAC_C0_DACRFS_MASK;

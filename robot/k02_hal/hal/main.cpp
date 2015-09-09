@@ -61,14 +61,14 @@ int main (void)
 
   PRINTF("\r\nTesting self-contained project file.\n\n\r");
 
-  //dac_init();
-  spi_init();
-  //i2c_init();
-  //uart_init();  
   TimerInit();
   PowerInit();
   //I2CInit();
   //CameraInit();
+  //dac_init();
+  spi_init();
+  //i2c_init();
+  //uart_init();  
   
   for (;;) ;
 }

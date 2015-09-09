@@ -3,6 +3,7 @@
 
 #include "board.h"
 #include "fsl_debug_console.h"
+#include "anki/cozmo/robot/hal.h"
 
 #include "spi.h"
 
@@ -20,14 +21,14 @@ void spi_init(void) {
 
   // Turn on power to DMA, PORTC and SPI0
   SIM_SCGC6 |= SIM_SCGC6_SPI0_MASK | SIM_SCGC6_DMAMUX_MASK;
-  SIM_SCGC5 |= SIM_SCGC5_PORTC_MASK;
+  SIM_SCGC5 |= SIM_SCGC5_PORTE_MASK | SIM_SCGC5_PORTD_MASK;
   SIM_SCGC7 |= SIM_SCGC7_DMA_MASK;
 
   // Configure SPI pins
-  PORTC_PCR3 = PORT_PCR_MUX(2); // SPI0_PCS1
-  PORTC_PCR5 = PORT_PCR_MUX(2); // SPI0_SCK
-  PORTC_PCR6 = PORT_PCR_MUX(2); // SPI0_SOUT
-  PORTC_PCR7 = PORT_PCR_MUX(2); // SPI0_SIN
+  PORTD_PCR4  = PORT_PCR_MUX(2); // SPI0_PCS1
+  PORTE_PCR17 = PORT_PCR_MUX(2); // SPI0_SCK
+  PORTE_PCR18 = PORT_PCR_MUX(2); // SPI0_SOUT
+  PORTE_PCR19 = PORT_PCR_MUX(2); // SPI0_SIN
 
   // Configure SPI perf to the magical value of magicalness
   SPI0_MCR = SPI_MCR_MSTR_MASK |
@@ -35,7 +36,7 @@ void spi_init(void) {
              SPI_MCR_SMPL_PT(0) | 
              SPI_MCR_CLR_TXF_MASK | 
              SPI_MCR_CLR_RXF_MASK;
-  SPI0_CTAR0 = SPI_CTAR_BR(3) | 
+  SPI0_CTAR0 = SPI_CTAR_BR(1) | 
                SPI_CTAR_CPOL_MASK |
                SPI_CTAR_CPHA_MASK |
                SPI_CTAR_FMSZ(15);
@@ -59,6 +60,8 @@ void spi_init(void) {
         (~i & 0xFFFF);
   }
 
+  Anki::Cozmo::HAL::MicroWait(10000);
+  
   while(true) {
     // attempt to silence early clocking
     for(int i = 0; i < size; ) {
