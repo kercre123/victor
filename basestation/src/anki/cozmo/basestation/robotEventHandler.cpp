@@ -179,6 +179,15 @@ IActionRunner* GetFaceObjectActionHelper(Robot& robot, const ExternalInterface::
                               msg.headTrackWhenDone);
 }
   
+IActionRunner* GetFacePoseActionHelper(Robot& robot, const ExternalInterface::FacePose& facePose)
+{
+  Pose3d pose(0, Z_AXIS_3D(), {facePose.world_x, facePose.world_y, facePose.world_z},
+              robot.GetWorldOrigin());
+  return new FacePoseAction(pose,
+                            Radians(facePose.turnAngleTol),
+                            Radians(facePose.maxTurnAngle));
+}
+  
 IActionRunner* CreateNewActionByType(Robot& robot,
                                      const RobotActionType actionType,
                                      const ExternalInterface::RobotActionUnion& actionUnion)
@@ -208,6 +217,9 @@ IActionRunner* CreateNewActionByType(Robot& robot,
       
     case RobotActionType::FACE_OBJECT:
       return GetFaceObjectActionHelper(robot, actionUnion.faceObject);
+      
+    case RobotActionType::FACE_POSE:
+      return GetFacePoseActionHelper(robot, actionUnion.facePose);
       
     case RobotActionType::ROLL_OBJECT_LOW:
       return GetRollObjectActionHelper(robot, actionUnion.rollObject);
@@ -343,11 +355,7 @@ void RobotEventHandler::HandleActionEvents(const AnkiEvent<ExternalInterface::Me
     case ExternalInterface::MessageGameToEngineTag::FacePose:
     {
       const ExternalInterface::FacePose& facePose = event.GetData().Get_FacePose();
-      Pose3d pose(0, Z_AXIS_3D(), {facePose.world_x, facePose.world_y, facePose.world_z},
-                  robotPointer->GetWorldOrigin());
-      newAction = new FacePoseAction(pose,
-                                     Radians(facePose.turnAngleTol),
-                                     Radians(facePose.maxTurnAngle));
+      newAction = GetFacePoseActionHelper(robot, facePose);
       break;
     }
     case ExternalInterface::MessageGameToEngineTag::TurnInPlace:
