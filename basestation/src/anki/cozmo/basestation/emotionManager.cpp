@@ -21,28 +21,62 @@ namespace Cozmo {
   const EmotionManager::Value EmotionManager::MIN_VALUE = 0.f;
   
   EmotionManager::Value DefaultEmotionEvolution(EmotionManager::Value currentValue,
-                                                f32 currentTime_sec,
+                                                f64 currentTime_sec,
                                                 f32 factor)
   {
     // this just ignores time and blindly tends things towards zero...
     return currentValue * factor;
   }
   
-  EmotionManager::EmotionManager(Robot& robot, const Json::Value& config)
+  EmotionManager::EmotionManager(Robot& robot)
   : _robot(robot)
-  , _config(config)
   , _emoState{} // init with all zeros
   {
-    // TODO: Set evolution functions based on config information
-    auto sadnessEvolveFcn = [&config](Value value, f32 t) {
-      return DefaultEmotionEvolution(value,t,config["SadnessDecayRate"].asFloat());
-    };
-    SetEvolutionFunction(SAD, sadnessEvolveFcn);
-    
     
   }
   
-  Result EmotionManager::Update(const float currentTime_sec)
+  Result EmotionManager::Init(const Json::Value& config)
+  {
+    // TODO: Set evolution functions based on config information
+    auto sadDecayRateName = "SadnessDecayRate";
+    if (config.isMember(sadDecayRateName))
+      {
+      auto sadnessEvolveFcn = [&](Value value, f64 t) {
+        return DefaultEmotionEvolution(value,t,config[sadDecayRateName].asFloat());
+      };
+      SetEvolutionFunction(SAD, sadnessEvolveFcn);
+    }
+    else
+    {
+      PRINT_NAMED_ERROR("EmotionManager.Init.Sad", "Missing config key %s", sadDecayRateName);
+    }
+    
+    auto scaredName = "scared";
+    auto resetDurationName = "reset_duration";
+    if (config.isMember(scaredName) && config[scaredName].isMember(resetDurationName))
+    {
+      auto scaredResetTime = config[scaredName][resetDurationName].asFloat();
+      auto scaredEvolveFcn = [scaredResetTime] (Value value, f64 t) {
+        static auto lastReset = t;
+        if (t - lastReset >= scaredResetTime)
+        {
+          lastReset = t;
+          return Value(0);
+        }
+        return value;
+      };
+      
+      SetEvolutionFunction(SCARED, scaredEvolveFcn);
+    }
+    else
+    {
+      PRINT_NAMED_ERROR("EmotionManager.Init.Scared", "Missing config key %s.%s", scaredName, resetDurationName);
+    }
+    
+    return Result::RESULT_OK;
+  }
+  
+  Result EmotionManager::Update(double currentTime_sec)
   {
     // Update emotions according to any evolution functions that are set
     for(auto & fcnPair : _evolutionFunctions)

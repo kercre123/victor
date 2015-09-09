@@ -83,7 +83,11 @@ Result DemoBehaviorChooser::Update(double currentTime_sec)
   {
     case DemoState::Faces:
     {
-      // TODO: Fix up EmotionManager and add logic here to change _demoState when appropriate
+      if (_robot.GetEmotionManager().GetEmotion(EmotionManager::SCARED) == 1.0f)
+      {
+        _demoState = DemoState::Blocks;
+        initBlocksTime = currentTime_sec;
+      }
       break;
     }
     case DemoState::Blocks:

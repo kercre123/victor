@@ -14,6 +14,7 @@
 
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/cozmoActions.h"
+#include "anki/cozmo/basestation/emotionManager.h"
 #include "anki/cozmo/basestation/events/ankiEventMgr.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/keyframe.h"
@@ -338,6 +339,7 @@ namespace Cozmo {
               _animationActionTag = animAction->GetTag();
               _robot.GetActionList().QueueActionNow(IBehavior::sActionSlot, animAction);
               _isAnimating = true;
+              _robot.GetEmotionManager().AdjustEmotion(EmotionManager::SCARED, EmotionManager::Value(0.34));
             }
           }
           
