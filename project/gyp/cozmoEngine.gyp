@@ -432,6 +432,7 @@
             'libraries': [
               'libCppController.dylib',
               '<@(opencv_libs)',
+              '<@(face_library_libs)',
             ],
           }, # end controller viz
 

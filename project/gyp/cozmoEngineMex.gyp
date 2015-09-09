@@ -1,4 +1,8 @@
 {
+  'includes': [
+    '../../coretech/project/gyp/face-library.gypi'
+  ],
+  
   'variables': {
 
     # TODO: should this be passed in, or shared?
@@ -108,10 +112,11 @@
     ],
     'libraries': [
       '<@(opencv_libs)',
-      '<(matlabRootDir)/bin/maci64/libmx.dylib',
-      '<(matlabRootDir)/bin/maci64/libmex.dylib',
-      '<(matlabRootDir)/bin/maci64/libeng.dylib',
+      'libmx.dylib',
+      'libmex.dylib',
+      'libeng.dylib',
       '$(SDKROOT)/System/Library/Frameworks/AppKit.framework',
+      '<@(face_library_libs)',
     ],
     'xcode_settings': {
       'OTHER_CFLAGS': ['<@(compiler_c_flags)'],
@@ -139,6 +144,7 @@
             'OTHER_LDFLAGS': [
               '-L<(coretech_external_path)/build/opencv-2.4.8/lib/Debug',
               '-L<(coretech_external_path)/build/opencv-2.4.8/3rdparty/lib/Debug',
+              '-L<(matlabRootDir)/bin/maci64',
             ],
            },
           'defines': [
