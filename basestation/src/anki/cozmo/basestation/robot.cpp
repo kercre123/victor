@@ -523,7 +523,7 @@ namespace Anki {
       RotationVector3d Rvec(-p->GetHeadAngle(), Y_AXIS_3D());
       camPose.RotateBy(Rvec);
       
-      // Precompute with robot body to neck pose
+      // Precompose with robot body to neck pose
       camPose.PreComposeWith(_neckPose);
       
       // Set parent pose to be the historical robot pose
@@ -746,7 +746,6 @@ namespace Anki {
        */
     }
     
-    
     Result Robot::Update(void)
     {
 #if(0)
@@ -852,21 +851,52 @@ namespace Anki {
                                                      trackerQuad.bottomLeft_x, trackerQuad.bottomLeft_y);
         }
         
-        MessageDockingErrorSignal dockingErrorSignal;
-        if(true == _visionProcessor.CheckMailbox(dockingErrorSignal)) {
+        //MessageDockingErrorSignal dockingErrorSignal;
+        std::pair<Pose3d, TimeStamp_t> markerPoseWrtCamera;
+        if(true == _visionProcessor.CheckMailbox(markerPoseWrtCamera)) {
+          
+          // Convert from camera frame to robot frame
+          Anki::Cozmo::RobotPoseStamp p;
+          TimeStamp_t t;
+          _poseHistory->GetRawPoseAt(markerPoseWrtCamera.second, t, p);
+          
+          // Hook the pose coming out of the vision system up to the historical
+          // camera at that timestamp
+          Vision::Camera histCamera(GetHistoricalCamera(&p, t));
+          markerPoseWrtCamera.first.SetParent(&histCamera.GetPose());
+          /*
+          // Get the pose w.r.t. the (historical) robot pose instead of the camera pose
+          Pose3d markerPoseWrtRobot;
+          if(false == markerPoseWrtCamera.first.GetWithRespectTo(p.GetPose(), markerPoseWrtRobot)) {
+            PRINT_NAMED_ERROR("Robot.Update.PoseOriginFail",
+                              "Could not get marker pose w.r.t. robot.");
+            return RESULT_FAIL;
+          }
+          */
+          //Pose3d poseWrtRobot = poseWrtCam;
+          //poseWrtRobot.PreComposeWith(camWrtRobotPose);
+          Pose3d markerPoseWrtRobot(markerPoseWrtCamera.first);
+          markerPoseWrtRobot.PreComposeWith(histCamera.GetPose());
+          
+          MessageDockingErrorSignal dockErrMsg;
+          dockErrMsg.timestamp = markerPoseWrtCamera.second;
+          dockErrMsg.x_distErr = markerPoseWrtRobot.GetTranslation().x();
+          dockErrMsg.y_horErr  = markerPoseWrtRobot.GetTranslation().y();
+          dockErrMsg.z_height  = markerPoseWrtRobot.GetTranslation().z();
+          dockErrMsg.angleErr  = markerPoseWrtRobot.GetRotation().GetAngleAroundZaxis().ToFloat() + M_PI_2;
           
           // HACK: Robot seems to dock slightly to the right rather consistently
           if (_isPhysical) {
-            dockingErrorSignal.x_distErr -= DOCKING_LATERAL_OFFSET_HACK;
+            dockErrMsg.x_distErr -= DOCKING_LATERAL_OFFSET_HACK;
           }
           
           // Visualize docking error signal
-          VizManager::getInstance()->SetDockingError(dockingErrorSignal.x_distErr,
-                                                     dockingErrorSignal.y_horErr,
-                                                     dockingErrorSignal.angleErr);
+          VizManager::getInstance()->SetDockingError(dockErrMsg.x_distErr,
+                                                     dockErrMsg.y_horErr,
+                                                     dockErrMsg.angleErr);
           
           // Try to use this for closed-loop control by sending it on to the robot
-          SendMessage(dockingErrorSignal);
+          SendMessage(dockErrMsg);
           
         }
         
@@ -1767,9 +1797,18 @@ namespace Anki {
                                  const Vision::KnownMarker* marker,
                                  const Vision::KnownMarker* marker2,
                                  const DockAction_t dockAction,
+                                 const f32 placementOffsetX_mm,
+                                 const f32 placementOffsetY_mm,
+                                 const f32 placementOffsetAngle_rad,
                                  const bool useManualSpeed)
     {
-      return DockWithObject(objectID, marker, marker2, dockAction, 0, 0, u8_MAX, useManualSpeed);
+      return DockWithObject(objectID,
+                            marker,
+                            marker2,
+                            dockAction,
+                            0, 0, u8_MAX,
+                            placementOffsetX_mm, placementOffsetY_mm, placementOffsetAngle_rad,
+                            useManualSpeed);
     }
     
     Result Robot::DockWithObject(const ObjectID objectID,
@@ -1779,6 +1818,9 @@ namespace Anki {
                                  const u16 image_pixel_x,
                                  const u16 image_pixel_y,
                                  const u8 pixel_radius,
+                                 const f32 placementOffsetX_mm,
+                                 const f32 placementOffsetY_mm,
+                                 const f32 placementOffsetAngle_rad,
                                  const bool useManualSpeed)
     {
       ActionableObject* object = dynamic_cast<ActionableObject*>(_blockWorld.GetObjectByID(objectID));
@@ -1818,7 +1860,8 @@ namespace Anki {
                                    dockAction == DA_CROSS_BRIDGE);
         
         // Tell the VisionSystem to start tracking this marker:
-        _visionProcessor.SetMarkerToTrack(marker->GetCode(), marker->GetSize(), image_pixel_x, image_pixel_y, checkAngleX);
+        _visionProcessor.SetMarkerToTrack(marker->GetCode(), marker->GetSize(), image_pixel_x, image_pixel_y, checkAngleX,
+                                          placementOffsetX_mm, placementOffsetY_mm, placementOffsetAngle_rad);
       }
       
       return sendResult;

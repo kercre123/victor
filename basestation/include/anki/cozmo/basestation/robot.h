@@ -264,6 +264,9 @@ namespace Cozmo {
                               const u16 image_pixel_x,
                               const u16 image_pixel_y,
                               const u8 pixel_radius,
+                              const f32 placementOffsetX_mm = 0,
+                              const f32 placementOffsetY_mm = 0,
+                              const f32 placementOffsetAngle_rad = 0,
                               const bool useManualSpeed = false);
     
     // Same as above but without specifying image location for marker
@@ -271,6 +274,9 @@ namespace Cozmo {
                           const Vision::KnownMarker* marker,
                           const Vision::KnownMarker* marker2,
                           const DockAction_t dockAction,
+                          const f32 placementOffsetX_mm = 0,
+                          const f32 placementOffsetY_mm = 0,
+                          const f32 placementOffsetAngle_rad = 0,
                           const bool useManualSpeed = false);
     
     // Transitions the object that robot was docking with to the one that it

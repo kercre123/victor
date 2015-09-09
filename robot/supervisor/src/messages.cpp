@@ -217,9 +217,10 @@ namespace Anki {
         robotState_.status |= (IMUFilter::IsPickedUp() ? IS_PICKED_UP : 0);
         //robotState_.status |= (ProxSensors::IsForwardBlocked() ? IS_PROX_FORWARD_BLOCKED : 0);
         //robotState_.status |= (ProxSensors::IsSideBlocked() ? IS_PROX_SIDE_BLOCKED : 0);
+        robotState_.status |= (PathFollower::IsTraversingPath() ? IS_PATHING : 0);
         robotState_.status |= (AnimationController::IsPlaying() ? IS_ANIMATING : 0);
-        robotState_.status |=  (LiftController::IsInPosition() ? LIFT_IN_POS : 0);
-        robotState_.status |=  (HeadController::IsInPosition() ? HEAD_IN_POS : 0);
+        robotState_.status |= (LiftController::IsInPosition() ? LIFT_IN_POS : 0);
+        robotState_.status |= (HeadController::IsInPosition() ? HEAD_IN_POS : 0);
         robotState_.status |= (AnimationController::IsBufferFull() ? IS_ANIM_BUFFER_FULL : 0);
 
         robotState_.numAnimBytesPlayed = AnimationController::GetTotalNumBytesPlayed();
@@ -369,8 +370,7 @@ namespace Anki {
       {
           PRINT("RECVD DockToBlock (action %d, manualSpeed %d)\n", msg.dockAction, msg.useManualSpeed);
 
-          PickAndPlaceController::DockToBlock(msg.useManualSpeed,
-                                              static_cast<DockAction_t>(msg.dockAction));
+          PickAndPlaceController::DockToBlock(static_cast<DockAction_t>(msg.dockAction), msg.useManualSpeed);
       }
 
       void ProcessPlaceObjectOnGroundMessage(const PlaceObjectOnGround& msg)

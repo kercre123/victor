@@ -3906,6 +3906,33 @@ GTEST_TEST(CoreTech_Common, ComputeHomography)
   GTEST_RETURN_HERE;
 } // GTEST_TEST(CoreTech_Common, ComputeHomography)
 
+
+GTEST_TEST(CoreTech_Common, EulerAngles)
+{
+  const f32 angleX = .345f;
+  const f32 angleY = -.521f;
+  const f32 angleZ = 1.83f;
+  
+  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
+  
+  ASSERT_TRUE(scratchOnchip.IsValid());
+  
+  Array<f32> R(3, 3, scratchOnchip);
+  
+  Result lastResult = Matrix::GetRotationMatrix(angleX, angleY, angleZ, R);
+  ASSERT_TRUE(lastResult == RESULT_OK);
+  
+  f32 checkX=0.f, checkY=0.f, checkZ=0.f;
+  lastResult = Matrix::GetEulerAngles(R, checkX, checkY, checkZ);
+  ASSERT_TRUE(lastResult == RESULT_OK);
+  
+  ASSERT_TRUE(ABS(angleX - checkX) < 1e-6f);
+  ASSERT_TRUE(ABS(angleY - checkY) < 1e-6f);
+  ASSERT_TRUE(ABS(angleZ - checkZ) < 1e-6f);
+  
+}
+
+
 GTEST_TEST(CoreTech_Common, MemoryStack)
 {
   ASSERT_TRUE(MEMORY_ALIGNMENT == 16);
@@ -5131,6 +5158,7 @@ s32 RUN_ALL_COMMON_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   CALL_GTEST_TEST(CoreTech_Common, ArraySpecifiedClass);
   CALL_GTEST_TEST(CoreTech_Common, ArrayAlignment1);
   CALL_GTEST_TEST(CoreTech_Common, MemoryStackAlignment);
+  CALL_GTEST_TEST(CoreTech_Common, EulerAngles);
 
 #ifdef TEST_BENCHMARKING
   CALL_GTEST_TEST(CoreTech_Common, Benchmarking);

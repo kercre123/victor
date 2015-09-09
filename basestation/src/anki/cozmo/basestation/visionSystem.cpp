@@ -60,10 +60,6 @@
 #include "matlabVisionProcessor.h"
 #endif
 
-#if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_AFFINE && !USE_APPROXIMATE_DOCKING_ERROR_SIGNAL
-#error Affine tracker requires that USE_APPROXIMATE_DOCKING_ERROR_SIGNAL = 1.
-#endif
-
 namespace Anki {
 namespace Cozmo {
   
@@ -321,11 +317,11 @@ namespace Cozmo {
   }
   
 
-  bool VisionSystem::CheckMailbox(MessageDockingErrorSignal&  msg)
+  bool VisionSystem::CheckMailbox(std::pair<Pose3d, TimeStamp_t>& markerPoseWrtCamera)
   {
     bool retVal = false;
     if(IsInitialized()) {
-      retVal = _dockingMailbox.getMessage(msg);
+      retVal = _dockingMailbox.getMessage(markerPoseWrtCamera);
     }
     return retVal;
   }
@@ -606,84 +602,6 @@ namespace Cozmo {
     return MatlabVisionProcessor::InitTemplate(grayscaleImage, trackingQuad, ccmScratch);
 #endif
     
-#if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SLOW || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_AFFINE || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_PROJECTIVE
-    // TODO: At some point template initialization should happen at full detection resolution but for
-    //       now, we have to downsample to tracking resolution
-    
-    Array<u8> grayscaleImageSmall(parameters.trackingImageHeight, parameters.trackingImageWidth, ccmScratch);
-    u32 downsampleFactor = DownsampleHelper(grayscaleImage, grayscaleImageSmall, ccmScratch);
-    
-    AnkiAssert(downsampleFactor > 0);
-    // Note that the templateRegion and the trackingQuad are both at DETECTION_RESOLUTION, not
-    // necessarily the resolution of the frame.
-    //const u32 downsampleFactor = parameters.detectionWidth / parameters.trackingImageWidth;
-    //const u32 downsamplePower = Log2u32(downsampleFactor);
-    
-    /*Quadrilateral<f32> trackingQuadSmall;
-     
-     for(s32 i=0; i<4; ++i) {
-     trackingQuadSmall[i].x = trackingQuad[i].x / downsampleFactor;
-     trackingQuadSmall[i].y = trackingQuad[i].y / downsampleFactor;
-     }*/
-    
-#endif // #if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SLOW || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_AFFINE || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_PROJECTIVE
-    
-#if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SLOW
-    tracker = TemplateTracker::LucasKanadeTracker_Slow(
-                                                       grayscaleImageSmall,
-                                                       trackingQuad,
-                                                       parameters.scaleTemplateRegionPercent,
-                                                       parameters.numPyramidLevels,
-                                                       Transformations::TRANSFORM_TRANSLATION,
-                                                       0.0,
-                                                       onchipMemory);
-#elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_AFFINE
-    tracker = TemplateTracker::LucasKanadeTracker_Affine(
-                                                         grayscaleImageSmall,
-                                                         trackingQuad,
-                                                         parameters.scaleTemplateRegionPercent,
-                                                         parameters.numPyramidLevels,
-                                                         Transformations::TRANSFORM_AFFINE,
-                                                         onchipMemory);
-#elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_PROJECTIVE
-    tracker = TemplateTracker::LucasKanadeTracker_Projective(
-                                                             grayscaleImageSmall,
-                                                             trackingQuad,
-                                                             parameters.scaleTemplateRegionPercent,
-                                                             parameters.numPyramidLevels,
-                                                             Transformations::TRANSFORM_PROJECTIVE,
-                                                             onchipMemory);
-#elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PROJECTIVE
-    tracker = TemplateTracker::LucasKanadeTracker_SampledProjective(
-                                                                    grayscaleImage,
-                                                                    trackingQuad,
-                                                                    parameters.scaleTemplateRegionPercent,
-                                                                    parameters.numPyramidLevels,
-                                                                    Transformations::TRANSFORM_PROJECTIVE,
-                                                                    parameters.maxSamplesAtBaseLevel,
-                                                                    ccmScratch,
-                                                                    onchipMemory,
-                                                                    offchipMemory);
-#elif DOCKING_ALGORITHM == DOCKING_BINARY_TRACKER
-#ifdef USE_HEADER_TEMPLATE
-    tracker = TemplateTracker::BinaryTracker(
-                                             Vision::MARKER_BATTERIES,
-                                             grayscaleImage,
-                                             trackingQuad,
-                                             parameters.scaleTemplateRegionPercent,
-                                             parameters.edgeDetectionParams_template,
-                                             onchipMemory, offchipMemory);
-#else // #ifdef USE_HEADER_TEMPLATE
-    tracker = TemplateTracker::BinaryTracker(
-                                             grayscaleImage,
-                                             trackingQuad,
-                                             parameters.scaleTemplateRegionPercent,
-                                             parameters.edgeDetectionParams_template,
-                                             onchipMemory, offchipMemory);
-#endif // #ifdef USE_HEADER_TEMPLATE ... #else
-    
-#elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PLANAR6DOF
-    
     tracker = TemplateTracker::LucasKanadeTracker_SampledPlanar6dof(grayscaleImage,
                                                                     trackingQuad,
                                                                     parameters.scaleTemplateRegionPercent,
@@ -710,9 +628,6 @@ namespace Cozmo {
      const f32 tz_max = 150.f;
      tracker.SetGainScheduling(tz_min, tz_max, Kp_min, Kp_max);
      */
-#else
-#error Unknown DOCKING_ALGORITHM.
-#endif
     
     if(!tracker.IsValid()) {
       PRINT_NAMED_ERROR("VisionSystem.InitTemplate", "Failed to initialize valid tracker.");
@@ -750,103 +665,11 @@ namespace Cozmo {
     return MatlabVisionProcessor::TrackTemplate(grayscaleImage, converged, ccmScratch);
 #endif
     
-#if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SLOW || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_AFFINE || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_PROJECTIVE
-    // TODO: At some point template initialization should happen at full detection resolution
-    //       but for now, we have to downsample to tracking resolution
-    Array<u8> grayscaleImageSmall(parameters.trackingImageHeight, parameters.trackingImageWidth, ccmScratch);
-    DownsampleHelper(grayscaleImage, grayscaleImageSmall, ccmScratch);
-    
-    //DebugStream::SendArray(grayscaleImageSmall);
-#endif
-    
     trackingSucceeded = false;
     s32 verify_meanAbsoluteDifference;
     s32 verify_numInBounds;
     s32 verify_numSimilarPixels;
-    
-#if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SLOW
-    const Result trackerResult = tracker.UpdateTrack(
-                                                     grayscaleImage,
-                                                     parameters.maxIterations,
-                                                     parameters.convergenceTolerance,
-                                                     parameters.useWeights,
-                                                     trackingSucceeded,
-                                                     onchipScratch);
-    
-#elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_AFFINE
-    const Result trackerResult = tracker.UpdateTrack(
-                                                     grayscaleImageSmall,
-                                                     parameters.maxIterations,
-                                                     parameters.convergenceTolerance,
-                                                     parameters.verify_maxPixelDifference,
-                                                     trackingSucceeded,
-                                                     verify_meanAbsoluteDifference,
-                                                     verify_numInBounds,
-                                                     verify_numSimilarPixels,
-                                                     onchipScratch);
-    
-    //tracker.get_transformation().Print("track");
-    
-#elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_PROJECTIVE
-    const Result trackerResult = tracker.UpdateTrack(
-                                                     grayscaleImageSmall,
-                                                     parameters.maxIterations,
-                                                     parameters.convergenceTolerance,
-                                                     parameters.verify_maxPixelDifference,
-                                                     trackingSucceeded,
-                                                     verify_meanAbsoluteDifference,
-                                                     verify_numInBounds,
-                                                     verify_numSimilarPixels,
-                                                     onchipScratch);
-    
-    //tracker.get_transformation().Print("track");
-    
-#elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PROJECTIVE
-    
-    const Result trackerResult = tracker.UpdateTrack(
-                                                     grayscaleImage,
-                                                     parameters.maxIterations,
-                                                     parameters.convergenceTolerance,
-                                                     parameters.verify_maxPixelDifference,
-                                                     trackingSucceeded,
-                                                     verify_meanAbsoluteDifference,
-                                                     verify_numInBounds,
-                                                     verify_numSimilarPixels,
-                                                     onchipScratch);
-    
-    //tracker.get_transformation().Print("track");
-    
-#elif DOCKING_ALGORITHM == DOCKING_BINARY_TRACKER
-    s32 numMatches = -1;
-    
-    const Result trackerResult = tracker.UpdateTrack_Normal(
-                                                            grayscaleImage,
-                                                            parameters.edgeDetectionParams_update,
-                                                            parameters.matching_maxTranslationDistance,
-                                                            parameters.matching_maxProjectiveDistance,
-                                                            parameters.verify_maxTranslationDistance,
-                                                            parameters.verify_maxPixelDifference,
-                                                            parameters.verify_coordinateIncrement,
-                                                            numMatches,
-                                                            verify_meanAbsoluteDifference,
-                                                            verify_numInBounds,
-                                                            verify_numSimilarPixels,
-                                                            ccmScratch, offchipScratch);
-    
-    //tracker.get_transformation().Print("track");
-    
-    const s32 numTemplatePixels = tracker.get_numTemplatePixels();
-    
-    const f32 percentMatchedPixels = static_cast<f32>(numMatches) / static_cast<f32>(numTemplatePixels);
-    
-    if(percentMatchedPixels >= parameters.percentMatchedPixelsThreshold) {
-      trackingSucceeded = true;
-    } else {
-      trackingSucceeded = false;
-    }
-    
-#elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PLANAR6DOF
-    
+        
     const Radians initAngleX(tracker.get_angleX());
     const Radians initAngleY(tracker.get_angleY());
     const Radians initAngleZ(tracker.get_angleZ());
@@ -925,51 +748,10 @@ namespace Cozmo {
       trackingSucceeded = true;
     }
     
-#else
-#error Unknown DOCKING_ALGORITHM!
-#endif
-    
     if(trackerResult != RESULT_OK) {
       return RESULT_FAIL;
     }
-    
-    // Sanity check on tracker result
-#if DOCKING_ALGORITHM != DOCKING_LUCAS_KANADE_SAMPLED_PLANAR6DOF
-    
-    // Check for a super shrunk or super large template
-    // (I don't think this works for planar 6dof homographies?  Try dividing by h22?)
-#warning broken
-    /*{
-     // TODO: make not hacky
-     const Array<f32> &homography = tracker.get_transformation().get_homography();
-     
-     const s32 numValues = 4;
-     const s32 numMaxValues = 2;
-     f32 values[numValues] = {ABS(homography[0][0]), ABS(homography[0][1]), ABS(homography[1][0]), ABS(homography[1][1])};
-     s32 maxInds[numMaxValues] = {0, 1};
-     for(s32 i=1; i<numValues; i++) {
-     if(values[i] > values[maxInds[0]]) {
-     maxInds[0] = i;
-     }
-     }
-     
-     for(s32 i=0; i<numValues; i++) {
-     if(i == maxInds[0])
-     continue;
-     
-     if(values[i] > values[maxInds[1]]) {
-     maxInds[1] = i;
-     }
-     }
-     
-     const f32 secondValue = values[maxInds[1]];
-     
-     if(secondValue < 0.1f || secondValue > 40.0f) {
-     converged = false;
-     }
-     }*/
-#endif // #if DOCKING_ALGORITHM != DOCKING_LUCAS_KANADE_SAMPLED_PLANAR6DOF
-    
+
     EndBenchmark("VisionSystem_TrackTemplate");
     
     // TODO: Re-enable tracker debugstream/vizualization on basestation
@@ -1026,12 +808,10 @@ namespace Cozmo {
     
     GetPoseChange(T_fwd_robot, T_hor_robot, theta_robot);
     
-#if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PLANAR6DOF
-    
-#if USE_MATLAB_TRACKER
+#   if USE_MATLAB_TRACKER
     MatlabVisionProcessor::UpdateTracker(T_fwd_robot, T_hor_robot,
                                          theta_robot, theta_head);
-#else
+#   else
     Radians theta_head2 = GetCurrentHeadAngle();
     Radians theta_head1 = GetPreviousHeadAngle();
     
@@ -1090,93 +870,7 @@ namespace Cozmo {
       result = RESULT_OK;
     }
     
-#endif // #if USE_MATLAB_TRACKER
-    
-#else
-    const Quadrilateral<f32> sortedQuad  = currentQuad.ComputeClockwiseCorners<f32>();
-    
-    f32 dx = sortedQuad[3].x - sortedQuad[0].x;
-    f32 dy = sortedQuad[3].y - sortedQuad[0].y;
-    const f32 observedVerticalSize_pix = sqrtf( dx*dx + dy*dy );
-    
-    // Compare observed vertical size to actual block marker size (projected
-    // to be orthogonal to optical axis, using head angle) to approximate the
-    // distance to the marker along the camera's optical axis
-    Radians theta_head = GetCurrentHeadAngle();
-    const f32 cosHeadAngle = cosf(theta_head.ToFloat());
-    const f32 sinHeadAngle = sinf(theta_head.ToFloat());
-    const f32 d = (trackingMarkerWidth_mm* cosHeadAngle *
-                   _headCamInfo->focalLength_y /
-                   observedVerticalSize_pix);
-    
-    // Convert to how much we've moved along (and orthogonal to) the camera's optical axis
-    const f32 T_fwd_cam =  T_fwd_robot*cosHeadAngle;
-    const f32 T_ver_cam = -T_fwd_robot*sinHeadAngle;
-    
-    // Predict approximate horizontal shift from two things:
-    // 1. The rotation of the robot
-    //    Compute pixel-per-degree of the camera and multiply by degrees rotated
-    // 2. Convert horizontal shift of the robot to pixel shift, using
-    //    focal length
-    f32 horizontalShift_pix = (static_cast<f32>(_headCamInfo->ncols/2) * theta_robot.ToFloat() /
-                               _headCamFOV_hor) + (T_hor_robot*_headCamInfo->focalLength_x/d);
-    
-    // Predict approximate scale change by comparing the distance to the
-    // object before and after forward motion
-    const f32 scaleChange = d / (d - T_fwd_cam);
-    
-    // Predict approximate vertical shift in the camera plane by comparing
-    // vertical motion (orthogonal to camera's optical axis) to the focal
-    // length
-    const f32 verticalShift_pix = T_ver_cam * _headCamInfo->focalLength_y/d;
-    
-    PRINT("Adjusting transformation: %.3fpix H shift for %.3fdeg rotation, "
-          "%.3f scaling and %.3f V shift for %.3f translation forward (%.3f cam)\n",
-          horizontalShift_pix, theta_robot.getDegrees(), scaleChange,
-          verticalShift_pix, T_fwd_robot, T_fwd_cam);
-    
-    // Adjust the Transformation
-    // Note: UpdateTransformation is doing *inverse* composition (thus using the negatives)
-    if(_tracker.get_transformation().get_transformType() == Transformations::TRANSFORM_TRANSLATION) {
-      Array<f32> update(1,2,scratch);
-      update[0][0] = -horizontalShift_pix;
-      update[0][1] = -verticalShift_pix;
-      
-#if USE_MATLAB_TRACKER
-      MatlabVisionProcessor::UpdateTracker(update);
-#else
-      _tracker.UpdateTransformation(update, 1.f, scratch,
-                                    Transformations::TRANSFORM_TRANSLATION);
-#endif
-    }
-    else {
-      // Inverse update we are composing is:
-      //
-      //                  [s 0 0]^(-1)     [0 0 h_shift]^(-1)
-      //   updateMatrix = [0 s 0]       *  [0 0 v_shift]
-      //                  [0 0 1]          [0 0    1   ]
-      //
-      //      [1/s  0  -h_shift/s]   [ update_0  update_1  update_2 ]
-      //   =  [ 0  1/2 -v_shift/s] = [ update_3  update_4  update_5 ]
-      //      [ 0   0      1     ]   [    0         0         1     ]
-      //
-      // Note: UpdateTransformation adds 1.0 to the diagonal scale terms
-      Array<f32> update(1,6,scratch);
-      update.Set(0.f);
-      update[0][0] = 1.f/scaleChange - 1.f;               // first row, first col
-      update[0][2] = -horizontalShift_pix/scaleChange;    // first row, last col
-      update[0][4] = 1.f/scaleChange - 1.f;               // second row, second col
-      update[0][5] = -verticalShift_pix/scaleChange;      // second row, last col
-      
-#if USE_MATLAB_TRACKER
-      MatlabVisionProcessor::UpdateTracker(update);
-#else
-      _tracker.UpdateTransformation(update, 1.f, scratch,
-                                    Transformations::TRANSFORM_AFFINE);
-#endif
-    } // if(tracker transformation type == TRANSLATION...)
-    
-#endif // if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PLANAR6DOF
+#   endif // #if USE_MATLAB_TRACKER
     
     // TODO: Re-enable tracker prediction viz on basestation
     //MatlabVisualization::SendTrackerPrediction_After(GetTrackerQuad(scratch));
@@ -1186,113 +880,6 @@ namespace Cozmo {
     return result;
   } // TrackerPredictionUpdate()
   
-  void VisionSystem::FillDockErrMsg(const Embedded::Quadrilateral<f32>& currentQuad,
-                                    MessageDockingErrorSignal& dockErrMsg,
-                                    MemoryStack scratch)
-  {
-    dockErrMsg.isApproximate = false;
-    
-#if USE_APPROXIMATE_DOCKING_ERROR_SIGNAL
-    dockErrMsg.isApproximate = true;
-    
-    const bool useTopBar = false; // TODO: pass in? make a docker parameter?
-    const f32 focalLength_x = _headCamInfo->focalLength_x;
-    const f32 imageResolutionWidth_pix = _detectionParameters.detectionWidth;
-    
-    Quadrilateral<f32> sortedQuad = currentQuad.ComputeClockwiseCorners<f32>();
-    const Point<f32>& lineLeft  = (useTopBar ? sortedQuad[0] : sortedQuad[3]); // topLeft  or bottomLeft
-    const Point<f32>& lineRight = (useTopBar ? sortedQuad[1] : sortedQuad[2]); // topRight or bottomRight
-    
-    AnkiAssert(lineRight.x > lineLeft.x);
-    
-    //L = sqrt(sum( (upperRight-upperLeft).^2) );
-    const f32 lineDx = lineRight.x - lineLeft.x;
-    const f32 lineDy = lineRight.y - lineLeft.y;
-    const f32 lineLength = sqrtf(lineDx*lineDx + lineDy*lineDy);
-    
-    // Get the angle from vertical of the top or bottom bar of the marker
-    //we're tracking
-    
-    //angleError = -asin( (upperRight(2)-upperLeft(2)) / L);
-    //const f32 angleError = -asinf( (upperRight.y-upperLeft.y) / lineLength);
-    const f32 angleError = -asinf( (lineRight.y-lineLeft.y) / lineLength) * 4;  // Multiply by scalar which makes angleError a little more accurate.  TODO: Something smarter than this.
-    
-    //currentDistance = BlockMarker3D.ReferenceWidth * this.calibration.fc(1) / L;
-    const f32 distanceError = trackingMarkerWidth_mm * focalLength_x / lineLength;
-    
-    //ANS: now returning error in terms of camera. mainExecution converts to robot coords
-    // //distError = currentDistance - CozmoDocker.LIFT_DISTANCE;
-    // const f32 distanceError = currentDistance - cozmoLiftDistanceInMM;
-    
-    // TODO: should I be comparing to ncols/2 or calibration center?
-    
-    //midPointErr = -( (upperRight(1)+upperLeft(1))/2 - this.trackingResolution(1)/2 );
-    f32 midpointError = ( (lineRight.x+lineLeft.x)/2 - imageResolutionWidth_pix/2 );
-    
-    //midPointErr = midPointErr * currentDistance / this.calibration.fc(1);
-    midpointError *= distanceError / focalLength_x;
-    
-    // Go ahead and put the errors in the robot centric coordinates (other
-    // than taking head angle into account)
-    dockErrMsg.x_distErr = distanceError;
-    dockErrMsg.y_horErr  = -midpointError;
-    dockErrMsg.angleErr  = angleError;
-    dockErrMsg.z_height  = -1.f; // unknown for approximate error signal
-    
-#elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PLANAR6DOF
-    
-#if USE_MATLAB_TRACKER
-    MatlabVisionProcessor::ComputeProjectiveDockingSignal(currentQuad,
-                                                          dockErrMsg.x_distErr,
-                                                          dockErrMsg.y_horErr,
-                                                          dockErrMsg.z_height,
-                                                          dockErrMsg.angleErr);
-#else
-    // Despite the names, fill the elements of the message with camera-centric coordinates
-    dockErrMsg.x_distErr = _tracker.GetTranslation().x;
-    dockErrMsg.y_horErr  = _tracker.GetTranslation().y;
-    dockErrMsg.z_height  = _tracker.GetTranslation().z;
-    
-    dockErrMsg.angleErr  = _tracker.get_angleY();
-    
-#endif // if USE_MATLAB_TRACKER
-    
-#elif DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_PROJECTIVE || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PROJECTIVE || DOCKING_ALGORITHM == DOCKING_BINARY_TRACKER
-    
-#if USE_MATLAB_TRACKER
-    MatlabVisionProcessor::ComputeProjectiveDockingSignal(currentQuad,
-                                                          dockErrMsg.x_distErr,
-                                                          dockErrMsg.y_horErr,
-                                                          dockErrMsg.z_height,
-                                                          dockErrMsg.angleErr);
-#else
-    
-    // Compute the current pose of the block relative to the camera:
-    Array<P3P_PRECISION> R = Array<P3P_PRECISION>(3,3, scratch);
-    Point3<P3P_PRECISION> T;
-    Quadrilateral<P3P_PRECISION> currentQuad_atPrecision(Point<P3P_PRECISION>(currentQuad[0].x, currentQuad[0].y),
-                                                         Point<P3P_PRECISION>(currentQuad[1].x, currentQuad[1].y),
-                                                         Point<P3P_PRECISION>(currentQuad[2].x, currentQuad[2].y),
-                                                         Point<P3P_PRECISION>(currentQuad[3].x, currentQuad[3].y));
-    
-#warning broken
-    /*P3P::computePose(currentQuad_atPrecision,
-     _canonicalMarker3d[0], _canonicalMarker3d[1],
-     _canonicalMarker3d[2], _canonicalMarker3d[3],
-     _headCamInfo->focalLength_x, _headCamInfo->focalLength_y,
-     _headCamInfo->center_x, _headCamInfo->center_y,
-     R, T, scratch);*/
-    
-    // Extract what we need for the docking error signal from the block's pose:
-    dockErrMsg.x_distErr = T.x;
-    dockErrMsg.y_horErr  = T.y;
-    dockErrMsg.z_height  = T.z;
-    dockErrMsg.angleErr  = asinf(R[2][0]);
-    
-#endif // if USE_MATLAB_TRACKER
-    
-#endif // if USE_APPROXIMATE_DOCKING_ERROR_SIGNAL
-  } // FillDockErrMsg()
   
 #if 0
 #pragma mark --- Public VisionSystem API Implementations ---
@@ -1537,13 +1124,19 @@ namespace Cozmo {
                                         const f32 markerWidth_mm,
                                         const Embedded::Point2f& atImageCenter,
                                         const f32 imageSearchRadius,
-                                        const bool checkAngleX)
+                                        const bool checkAngleX,
+                                        const f32 postOffsetX_mm,
+                                        const f32 postOffsetY_mm,
+                                        const f32 postOffsetAngle_rad)
   {
     _newMarkerToTrack.type              = markerTypeToTrack;
     _newMarkerToTrack.width_mm          = markerWidth_mm;
     _newMarkerToTrack.imageCenter       = atImageCenter;
     _newMarkerToTrack.imageSearchRadius = imageSearchRadius;
     _newMarkerToTrack.checkAngleX       = checkAngleX;
+    _newMarkerToTrack.postOffsetX_mm    = postOffsetX_mm;
+    _newMarkerToTrack.postOffsetY_mm    = postOffsetY_mm;
+    _newMarkerToTrack.postOffsetAngle_rad = postOffsetAngle_rad;
     
     // Next call to Update(), we will call UpdateMarkerToTrack() and
     // actually replace the current _markerToTrack with the one set here.
@@ -1559,150 +1152,7 @@ namespace Cozmo {
     return _memory._markers;
   } // GetObservedMarkerList()
   
-  /*
-   Result VisionSystem::GetVisionMarkerPoseNearestTo(const Embedded::Point3<f32>&  atPosition,
-   const Vision::MarkerType&     withType,
-   const f32                     maxDistance_mm,
-   Embedded::Array<f32>&         rotationWrtRobot,
-   Embedded::Point3<f32>&        translationWrtRobot,
-   bool&                         markerFound)
-   {
-   using namespace Embedded;
-   
-   Result lastResult = RESULT_OK;
-   markerFound = false;
-   
-   if(_memory._markers.get_size() > 0)
-   {
-   FixedLengthList<VisionMarker*> markersWithType(_memory._markers.get_size(),
-   _memory._onchipScratch);
-   
-   AnkiConditionalErrorAndReturnValue(markersWithType.IsValid(),
-   RESULT_FAIL_MEMORY,
-   "GetVisionMarkerPoseNearestTo",
-   "Failed to allocate markersWithType FixedLengthList.");
-   
-   // Find all markers with specified type
-   s32 numFound = 0;
-   VisionMarker  * restrict pMarker = _memory._markers.Pointer(0);
-   VisionMarker* * restrict pMarkerWithType = markersWithType.Pointer(0);
-   
-   for(s32 i=0; i<_memory._markers.get_size(); ++i)
-   {
-   if(pMarker[i].markerType == withType) {
-   pMarkerWithType[numFound++] = pMarker + i;
-   }
-   }
-   markersWithType.set_size(numFound);
-   
-   // If any were found, find the one that is closest to the specified
-   // 3D point and within the specified max distance
-   if(numFound > 0) {
-   // Create a little MemoryStack for allocating temporary
-   // rotation matrix
-   const s32 SCRATCH_BUFFER_SIZE = 128;
-   char scratchBuffer[SCRATCH_BUFFER_SIZE];
-   MemoryStack scratch(scratchBuffer, SCRATCH_BUFFER_SIZE);
-   
-   // Create temporary pose storage (wrt camera)
-   Embedded::Point3<f32> translationWrtCamera;
-   Array<f32> rotationWrtCamera(3,3,scratch);
-   AnkiConditionalErrorAndReturnValue(rotationWrtCamera.IsValid(),
-   RESULT_FAIL_MEMORY,
-   "GetVisionMarkerPoseNearestTo",
-   "Failed to allocate rotationWrtCamera Array.");
-   
-   VisionMarker* const* restrict pMarkerWithType = markersWithType.Pointer(0);
-   
-   f32 closestDistance = maxDistance_mm;
-   
-   for(s32 i=0; i<numFound; ++i) {
-   // Compute this marker's pose WRT camera
-   if((lastResult = GetVisionMarkerPose(*(pMarkerWithType[i]), true,
-   rotationWrtCamera, translationWrtCamera)) != RESULT_OK) {
-   return lastResult;
-   }
-   
-   // Convert it to pose WRT robot
-   if((lastResult = GetWithRespectToRobot(rotationWrtCamera, translationWrtCamera,
-   rotationWrtRobot, translationWrtRobot)) != RESULT_OK) {
-   return lastResult;
-   }
-   
-   // See how far it is from the specified position
-   const f32 currentDistance = (translationWrtRobot - atPosition).Length();
-   if(currentDistance < closestDistance) {
-   closestDistance = currentDistance;
-   markerFound = true;
-   }
-   } // for each marker with type
-   } // if numFound > 0
-   } // if(VisionMemory::_markers.get_size() > 0)
-   
-   return RESULT_OK;
-   } // GetVisionMarkerPoseNearestTo()
-   
-   template<typename PRECISION>
-   static Result GetCamPoseWrtRobot(Array<PRECISION>& RcamWrtRobot,
-   Embedded::Point3<PRECISION>& TcamWrtRobot)
-   {
-   AnkiConditionalErrorAndReturnValue(RcamWrtRobot.get_size(0)==3 &&
-   RcamWrtRobot.get_size(1)==3,
-   RESULT_FAIL_INVALID_SIZE,
-   "VisionSystem::GetCamPoseWrtRobot",
-   "Rotation matrix must already be 3x3.");
-   
-   const f32 headAngle = HeadController::GetAngleRad();
-   const f32 cosH = cosf(headAngle);
-   const f32 sinH = sinf(headAngle);
-   
-   RcamWrtRobot[0][0] = 0;  RcamWrtRobot[0][1] = sinH;  RcamWrtRobot[0][2] = cosH;
-   RcamWrtRobot[1][0] = -1; RcamWrtRobot[1][1] = 0;     RcamWrtRobot[1][2] = 0;
-   RcamWrtRobot[2][0] = 0;  RcamWrtRobot[2][1] = -cosH; RcamWrtRobot[2][2] = sinH;
-   
-   TcamWrtRobot.x = HEAD_CAM_POSITION[0]*cosH - HEAD_CAM_POSITION[2]*sinH + NECK_JOINT_POSITION[0];
-   TcamWrtRobot.y = 0;
-   TcamWrtRobot.z = HEAD_CAM_POSITION[2]*cosH + HEAD_CAM_POSITION[0]*sinH + NECK_JOINT_POSITION[2];
-   
-   return RESULT_OK;
-   }
-   
-   Result GetWithRespectToRobot(const Embedded::Point3<f32>& pointWrtCamera,
-   Embedded::Point3<f32>&       pointWrtRobot)
-   {
-   Point3<f32> TcamWrtRobot;
-   
-   Result lastResult;
-   if((lastResult = GetCamPoseWrtRobot(_RcamWrtRobot, TcamWrtRobot)) != RESULT_OK) {
-   return lastResult;
-   }
-   
-   pointWrtRobot = _RcamWrtRobot*pointWrtCamera + TcamWrtRobot;
-   
-   return RESULT_OK;
-   }
-   
-   Result GetWithRespectToRobot(const Embedded::Array<f32>&  rotationWrtCamera,
-   const Embedded::Point3<f32>& translationWrtCamera,
-   Embedded::Array<f32>&        rotationWrtRobot,
-   Embedded::Point3<f32>&       translationWrtRobot)
-   {
-   Point3<f32> TcamWrtRobot;
-   
-   Result lastResult;
-   if((lastResult = GetCamPoseWrtRobot(_RcamWrtRobot, TcamWrtRobot)) != RESULT_OK) {
-   return lastResult;
-   }
-   
-   if((lastResult = Matrix::Multiply(_RcamWrtRobot, rotationWrtCamera, rotationWrtRobot)) != RESULT_OK) {
-   return lastResult;
-   }
-   
-   translationWrtRobot = _RcamWrtRobot*translationWrtCamera + TcamWrtRobot;
-   
-   return RESULT_OK;
-   }
-   */
+  
   Result VisionSystem::GetVisionMarkerPose(const Embedded::VisionMarker& marker,
                                            const bool ignoreOrientation,
                                            Embedded::Array<f32>&  rotation,
@@ -2190,14 +1640,45 @@ namespace Cozmo {
       // Create docking error signal from tracker
       //
       
-      MessageDockingErrorSignal dockErrMsg;
-      dockErrMsg.timestamp = imageTimeStamp;
-      dockErrMsg.didTrackingSucceed = static_cast<u8>(converged);
-      
       if(converged)
       {
         Embedded::Quadrilateral<f32> currentQuad = GetTrackerQuad(_memory._onchipScratch);
-        FillDockErrMsg(currentQuad, dockErrMsg, _memory._onchipScratch);
+       
+        //FillDockErrMsg(currentQuad, dockErrMsg, _memory._onchipScratch);
+        
+        // Convert to Pose3d and put it in the docking mailbox for the robot to
+        // get and send off to the real robot for docking. Note the pose should
+        // really have the camera pose as its parent, but we'll let the robot
+        // take care of that, since the vision system is running off on its own
+        // thread.
+        Array<f32> R(3,3,_memory._onchipScratch);
+        lastResult = _tracker.GetRotationMatrix(R);
+        if(RESULT_OK != lastResult) {
+          PRINT_NAMED_ERROR("VisionSystem.Update.TrackerRotationFail",
+                            "Could not get Rotation matrix from 6DoF tracker.");
+          return lastResult;
+        }
+        RotationMatrix3d Rmat{
+          R[0][0], R[0][1], R[0][2],
+          R[1][0], R[1][1], R[1][2],
+          R[2][0], R[2][1], R[2][2]
+        };
+        Pose3d markerPoseWrtCamera(Rmat, {
+          _tracker.GetTranslation().x, _tracker.GetTranslation().y, _tracker.GetTranslation().z
+        });
+        
+        // Add docking offset:
+        if(_markerToTrack.postOffsetAngle_rad != 0.f ||
+           _markerToTrack.postOffsetX_mm != 0.f ||
+           _markerToTrack.postOffsetY_mm != 0.f)
+        {
+          // Note that the tracker effectively uses camera coordinates for the
+          // marker, so the requested "X" offset (which is distance away from
+          // the marker's face) is along its negative "Z" axis.
+          Pose3d offsetPoseWrtMarker(_markerToTrack.postOffsetAngle_rad, Y_AXIS_3D(),
+                                     {-_markerToTrack.postOffsetY_mm, 0.f, -_markerToTrack.postOffsetX_mm});
+          markerPoseWrtCamera *= offsetPoseWrtMarker;
+        }
         
         // Send tracker quad if image streaming
         if (_imageSendMode == ISM_STREAM) {
@@ -2223,7 +1704,7 @@ namespace Cozmo {
         // Reset the failure counter
         _numTrackFailures = 0;
         
-        _dockingMailbox.putMessage(dockErrMsg);
+        _dockingMailbox.putMessage({markerPoseWrtCamera, imageTimeStamp});
       }
       else {
         _numTrackFailures += 1;
@@ -2239,7 +1720,10 @@ namespace Cozmo {
                            _markerToTrack.width_mm,
                            _markerToTrack.imageCenter,
                            _markerToTrack.imageSearchRadius,
-                           _markerToTrack.checkAngleX);
+                           _markerToTrack.checkAngleX,
+                           _markerToTrack.postOffsetX_mm,
+                           _markerToTrack.postOffsetY_mm,
+                           _markerToTrack.postOffsetAngle_rad);
         }
       }
       

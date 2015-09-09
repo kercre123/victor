@@ -145,7 +145,6 @@ END_MESSAGE_DEFINITION(ExecutePath)
 
 // DockWithObject
 START_MESSAGE_DEFINITION(DockWithObject, 1)
-ADD_MESSAGE_MEMBER(f32, horizontalOffset_mm)  // Offset wrt to docking object. Don't know if this will work yet.
 ADD_MESSAGE_MEMBER(u8, dockAction)  // See DockAction_t
 ADD_MESSAGE_MEMBER(u8, useManualSpeed)
 END_MESSAGE_DEFINITION(DockWithObject)
@@ -261,8 +260,6 @@ ADD_MESSAGE_MEMBER(f32, x_distErr)
 ADD_MESSAGE_MEMBER(f32, y_horErr)
 ADD_MESSAGE_MEMBER(f32, z_height)
 ADD_MESSAGE_MEMBER(f32, angleErr) // in radians
-ADD_MESSAGE_MEMBER(u8,  didTrackingSucceed)
-ADD_MESSAGE_MEMBER(u8,  isApproximate)
 END_MESSAGE_DEFINITION(DockingErrorSignal)
 
 // TODO: Remove this message (keeping for now to avoid changing ID ordering for python)

@@ -365,10 +365,11 @@ namespace Anki {
     
 #pragma mark ---- DriveToObjectAction ----
     
-    DriveToObjectAction::DriveToObjectAction(const ObjectID& objectID, const PreActionPose::ActionType& actionType, const bool useManualSpeed)
+    DriveToObjectAction::DriveToObjectAction(const ObjectID& objectID, const PreActionPose::ActionType& actionType, const f32 predockOffsetDistX_mm, const bool useManualSpeed)
     : _objectID(objectID)
     , _actionType(actionType)
     , _distance_mm(-1.f)
+    , _predockOffsetDistX_mm(predockOffsetDistX_mm)
     , _useManualSpeed(useManualSpeed)
     {
       // NOTE: _goalPose will be set later, when we check preconditions
@@ -378,6 +379,7 @@ namespace Anki {
     : _objectID(objectID)
     , _actionType(PreActionPose::ActionType::NONE)
     , _distance_mm(distance)
+    , _predockOffsetDistX_mm(0)
     , _useManualSpeed(useManualSpeed)
     {
       // NOTE: _goalPose will be set later, when we check preconditions
@@ -410,7 +412,8 @@ namespace Anki {
       object->GetCurrentPreActionPoses(possiblePreActionPoses, {_actionType},
                                        std::set<Vision::Marker::Code>(),
                                        obstacles,
-                                       &robot.GetPose());
+                                       &robot.GetPose(),
+                                       _predockOffsetDistX_mm);
       
       if(possiblePreActionPoses.empty()) {
         PRINT_NAMED_ERROR("DriveToObjectAction.CheckPreconditions.NoPreActionPoses",
@@ -626,7 +629,7 @@ namespace Anki {
 #pragma mark ---- DriveToPlaceCarriedObjectAction ----
     
     DriveToPlaceCarriedObjectAction::DriveToPlaceCarriedObjectAction(const Robot& robot, const Pose3d& placementPose, const bool useManualSpeed)
-    : DriveToObjectAction(robot.GetCarryingObject(), PreActionPose::PLACEMENT, useManualSpeed)
+    : DriveToObjectAction(robot.GetCarryingObject(), PreActionPose::PLACEMENT, 0, useManualSpeed)
     , _placementPose(placementPose)
     {
 
@@ -1334,13 +1337,22 @@ namespace Anki {
     
 #pragma mark ---- IDockAction ----
     
-    IDockAction::IDockAction(ObjectID objectID, const bool useManualSpeed)
+    IDockAction::IDockAction(ObjectID objectID,
+                             const bool useManualSpeed,
+                             const f32 placementOffsetX_mm,
+                             const f32 placementOffsetY_mm,
+                             const f32 placementOffsetAngle_rad,
+                             const f32 placeObjectOnGroundIfCarrying)
     : _dockObjectID(objectID)
     , _dockMarker(nullptr)
     , _preActionPoseAngleTolerance(DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE)
     , _wasPickingOrPlacing(false)
     , _useManualSpeed(useManualSpeed)
     , _visuallyVerifyAction(nullptr)
+    , _placementOffsetX_mm(placementOffsetX_mm)
+    , _placementOffsetY_mm(placementOffsetY_mm)
+    , _placementOffsetAngle_rad(placementOffsetAngle_rad)
+    , _placeObjectOnGroundIfCarrying(placeObjectOnGroundIfCarrying)
     {
       
     }
@@ -1385,7 +1397,7 @@ namespace Anki {
       std::vector<std::pair<Quad2f, ObjectID> > obstacles;
       robot.GetBlockWorld().GetObstacles(obstacles);
       dockObject->GetCurrentPreActionPoses(preActionPoses, {GetPreActionType()},
-                                           std::set<Vision::Marker::Code>(), obstacles);
+                                           std::set<Vision::Marker::Code>(), obstacles, nullptr, _placementOffsetX_mm);
       
       if(preActionPoses.empty()) {
         PRINT_NAMED_ERROR("IDockAction.Init.NoPreActionPoses",
@@ -1483,7 +1495,13 @@ namespace Anki {
                              _dockMarker->GetCode(),
                              Vision::MarkerTypeStrings[_dockMarker->GetCode()], _dockAction);
             
-            if(robot.DockWithObject(_dockObjectID, _dockMarker, _dockMarker2, _dockAction, _useManualSpeed) == RESULT_OK)
+            if(robot.DockWithObject(_dockObjectID,
+                                    _dockMarker, _dockMarker2,
+                                    _dockAction,
+                                    _placementOffsetX_mm,
+                                    _placementOffsetY_mm,
+                                    _placementOffsetAngle_rad,
+                                    _useManualSpeed) == RESULT_OK)
             {
               //NOTE: Any completion (success or failure) after this point should tell
               // the robot to stop tracking and go back to looking for markers!
@@ -1558,8 +1576,13 @@ namespace Anki {
     
 #pragma mark ---- PickAndPlaceObjectAction ----
     
-    PickAndPlaceObjectAction::PickAndPlaceObjectAction(ObjectID objectID, const bool useManualSpeed)
-    : IDockAction(objectID, useManualSpeed)
+    PickAndPlaceObjectAction::PickAndPlaceObjectAction(ObjectID objectID,
+                                                       const bool useManualSpeed,
+                                                       const f32 placementOffsetX_mm,
+                                                       const f32 placementOffsetY_mm,
+                                                       const f32 placementOffsetAngle_rad,
+                                                       const bool placeObjectOnGroundIfCarrying)
+    : IDockAction(objectID, useManualSpeed, placementOffsetX_mm, placementOffsetY_mm, placementOffsetAngle_rad, placeObjectOnGroundIfCarrying)
     , _placementVerifyAction(nullptr)
     , _verifyComplete(false)
     {
@@ -1698,7 +1721,8 @@ namespace Anki {
           _dockAction = DA_PICKUP_HIGH;
         }
       } else if (robot.IsCarryingObject()) {
-        _dockAction = DA_PLACE_HIGH;
+        
+        _dockAction = _placeObjectOnGroundIfCarrying ? DA_PLACE_LOW : DA_PLACE_HIGH;
         
         // Need to record the object we are currently carrying because it
         // will get unset when the robot unattaches it during placement, and
