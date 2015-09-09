@@ -1892,6 +1892,8 @@ namespace Anki
                                                             f32 zTolerance) const
     {
       Point3f sameDistTol(objectOnBottom.GetSize());
+      sameDistTol.x() *= 0.5f;  // An object should only be considered to be on top if it's midpoint is actually on top of the bottom object's top surface.
+      sameDistTol.y() *= 0.5f;
       sameDistTol.z() = zTolerance;
       sameDistTol = objectOnBottom.GetPose().GetRotation() * sameDistTol;
       sameDistTol.Abs();

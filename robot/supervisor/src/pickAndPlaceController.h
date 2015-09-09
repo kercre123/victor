@@ -66,9 +66,15 @@ namespace Anki {
       CarryState_t GetCarryState();
       
       // Starts the docking process, relying on the relative pose of the marker to be
-      // transmitted from cozmo-engine immediately after calling this.
-      void DockToBlock(const bool useManualSpeed, const DockAction_t action);
-       
+      // transmitted from cozmo-engine immediately after calling this. (Except for DA_PLACE_LOW_BLIND)
+      // If DA_PLACE_LOW_BLIND, rel_* parameters are wrt to current robot pose. Otherwise, rel_* params
+      // are ignored.
+      void DockToBlock(const DockAction_t action,
+                       const f32 rel_x = 0,
+                       const f32 rel_y = 0,
+                       const f32 rel_angle = 0,
+                       const bool useManualSpeed = false);
+      
       // Places block on ground and backs out.
       void PlaceOnGround(const f32 rel_x, const f32 rel_y, const f32 rel_angle, const bool useManualSpeed);
       

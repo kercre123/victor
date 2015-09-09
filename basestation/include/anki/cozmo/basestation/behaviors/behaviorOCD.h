@@ -75,7 +75,7 @@ namespace Cozmo {
     Result SelectArrangement();
     Result SelectNextObjectToPickUp();
     Result SelectNextPlacement();
-    Result FindEmptyPlacementPose(const ObjectID& nearObjectID, Pose3d& pose);
+    Result FindEmptyPlacementPose(const ObjectID& nearObjectID, const f32 offset_mm, Pose3d& pose);
     void ComputeAlignedPoses(const Pose3d& basePose, f32 distance, std::vector<Pose3d> &alignedPoses);
     
     // Gets the object within objectSet that is closest to the robot and

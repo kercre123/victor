@@ -102,8 +102,19 @@ protected:
   void SendSetHeadlights(u8 intensity);
   void SendExecutePathToPose(const Pose3d& p, const bool useManualSpeed);
   void SendPlaceObjectOnGroundSequence(const Pose3d& p, const bool useManualSpeed);
-  void SendPickAndPlaceObject(const s32 objectID, const bool usePreDockPose, const bool useManualSpeed);
-  void SendPickAndPlaceSelectedObject(const bool usePreDockPose, const bool useManualSpeed);
+  void SendPickAndPlaceObject(const s32 objectID,
+                              const bool usePreDockPose,
+                              const f32 placementOffsetX_mm = 0,
+                              const f32 placementOffsetY_mm = 0,
+                              const f32 placementOffsetAngle_rad = 0,
+                              const bool placeOnGroundIfCarrying = false,
+                              const bool useManualSpeed = 0);
+  void SendPickAndPlaceSelectedObject(const bool usePreDockPose,
+                                      const f32 placementOffsetX_mm = 0,
+                                      const f32 placementOffsetY_mm = 0,
+                                      const f32 placementOffsetAngle_rad = 0,
+                                      const bool placeOnGroundIfCarrying = false,
+                                      const bool useManualSpeed = false);
   void SendRollObject(const s32 objectID, const bool usePreDockPose, const bool useManualSpeed);
   void SendRollSelectedObject(const bool usePreDockPose, const bool useManualSpeed);
   void SendTraverseSelectedObject(const bool usePreDockPose, const bool useManualSpeed);

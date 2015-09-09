@@ -67,7 +67,7 @@ private:
   // How fast to rotate when looking around
   constexpr static f32 kDegreesRotatePerSec = 25;
   // The default radius (in mm) we assume exists for us to move around in
-  constexpr static f32 kDefaultSafeRadius = 250;
+  constexpr static f32 kDefaultSafeRadius = 150;
   // Number of destinations we want to reach before resting for a bit (needs to be at least 2)
   constexpr static u32 kDestinationsToReach = 6;
   
