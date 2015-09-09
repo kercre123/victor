@@ -21,7 +21,6 @@ For internal use only. No part of this code may be used without a signed non-dis
 #ifdef STM32F429_439xx  // Early version with external memory
 #define ONCHIP __attribute__((section("ONCHIP")))
 #else
-#define OFFCHIP
 #define ONCHIP
 #endif
 
