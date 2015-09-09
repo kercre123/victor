@@ -12,8 +12,6 @@
 #include "anki/cozmo/shared/cozmoTypes.h"
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/basestation/objectIDs.h"
-#include "anki/cozmo/basestation/behaviorManager.h"
-#include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/types/imageSendMode.h"
@@ -25,6 +23,14 @@
 #include <unordered_set>
 
 namespace Anki {
+  
+  // Forward declaration:
+  namespace Util {
+    namespace Data {
+      class DataPlatform;
+    }
+  }
+  
 namespace Cozmo {
 
 class UiGameController {
