@@ -328,17 +328,12 @@
               ['exclude', 'run_coreTechPlanningTests.cpp'],
               ['exclude', 'run_coreTechPlanningStandalone.cpp'],
             ],
+            'xcode_settings': {
+              'FRAMEWORK_SEARCH_PATHS':'<(cti-gtest_path)',
+            },
             'libraries': [
               '<(cti-gtest_path)/gtest.framework',
               '<@(opencv_libs)',
-            ],
-            'copies': [
-              {
-                'files': [
-                  '<(cti-gtest_path)/gtest.framework',
-                ],
-                'destination': '<(PRODUCT_DIR)',
-              },
             ],
           }, # end unittest target
 
