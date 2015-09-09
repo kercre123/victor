@@ -19,7 +19,6 @@
 #include "anki/vision/basestation/cameraCalibration.h"
 #include "anki/vision/basestation/image.h"
 #include "anki/vision/basestation/visionMarker.h"
-#include "anki/vision/basestation/faceTracker.h"
 
 #include <thread>
 #include <mutex>
@@ -31,6 +30,10 @@ namespace Anki {
   namespace Data {
     class DataPlatform;
   }
+  }
+  
+  namespace Vision {
+    class TrackedFace;
   }
   
 namespace Cozmo {

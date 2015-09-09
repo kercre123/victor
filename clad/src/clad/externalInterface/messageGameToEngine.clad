@@ -9,6 +9,7 @@
 #include "clad/types/testMode.clad"
 #include "clad/types/proceduralEyeParameters.clad"
 #include "clad/externalInterface/messageShared.clad"
+#include "clad/externalInterface/keyWordRecognitionState.clad"
 
 namespace Anki {
 namespace Cozmo {

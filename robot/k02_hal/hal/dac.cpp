@@ -1,12 +1,12 @@
 #include <string.h>
 #include <stdint.h>
+#include <math.h>
 
 #include "board.h"
 #include "fsl_debug_console.h"
 
 #include "dac.h"
-
-#include <math.h>
+#include "anki/cozmo/robot/hal.h"
 
 void dac_init() {
   SIM_SCGC6 |= SIM_SCGC6_DAC0_MASK;
@@ -19,7 +19,7 @@ void dac_init() {
       DAC0_DAT0L = k;
       DAC0_DAT0H = k >> 8;
       
-      BOARD_I2C_DELAY;
+      Anki::Cozmo::HAL::MicroWait(80);
     }
   }
 }

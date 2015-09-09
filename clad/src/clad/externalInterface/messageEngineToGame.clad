@@ -10,6 +10,7 @@
 #include "clad/types/objectTypes.clad"
 #include "clad/types/objectFamilies.clad"
 #include "clad/externalInterface/messageShared.clad"
+#include "clad/externalInterface/keyWordRecognized.clad"
 
 namespace Anki {
 namespace Cozmo {

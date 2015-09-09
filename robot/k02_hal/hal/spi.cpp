@@ -35,7 +35,7 @@ void spi_init(void) {
              SPI_MCR_SMPL_PT(0) | 
              SPI_MCR_CLR_TXF_MASK | 
              SPI_MCR_CLR_RXF_MASK;
-  SPI0_CTAR0 = SPI_CTAR_BR(0) | 
+  SPI0_CTAR0 = SPI_CTAR_BR(3) | 
                SPI_CTAR_CPOL_MASK |
                SPI_CTAR_CPHA_MASK |
                SPI_CTAR_FMSZ(15);
@@ -60,14 +60,6 @@ void spi_init(void) {
   }
 
   while(true) {
-    /*
-    BOARD_I2C_DELAY;
-    BOARD_I2C_DELAY;
-    BOARD_I2C_DELAY;
-    BOARD_I2C_DELAY;
-    BOARD_I2C_DELAY;
-    */
-    
     // attempt to silence early clocking
     for(int i = 0; i < size; ) {
       while (SPI0_SR & SPI_SR_RFDF_MASK)

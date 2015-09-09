@@ -86,9 +86,12 @@ namespace Vision {
     
     void SetRect(Rectangle<f32>&& rect);
     
+    // These are w.r.t. the original observer (i.e. the camera at observation time)
     Radians GetHeadYaw()   const;
     Radians GetHeadPitch() const;
     Radians GetHeadRoll()  const;
+    
+    void SetHeadOrientation(Radians roll, Radians pitch, Radians yaw);
     
     const Pose3d& GetHeadPose() const;
     void SetHeadPose(Pose3d& pose);
@@ -111,6 +114,8 @@ namespace Vision {
     Point2f _leftEyeCen, _rightEyeCen;
     
     std::array<Feature, NumFeatures> _features;
+    
+    Radians _roll, _pitch, _yaw;
     
     Pose3d _headPose;
     
@@ -189,17 +194,24 @@ namespace Vision {
   }
   
   inline Radians TrackedFace::GetHeadYaw()   const {
-    return _headPose.GetRotation().GetAngleAroundYaxis();
+    return _yaw;
   }
   
   inline Radians TrackedFace::GetHeadPitch() const {
-    return _headPose.GetRotation().GetAngleAroundXaxis();
+    return _pitch;
   }
   
   inline Radians TrackedFace::GetHeadRoll()  const {
-    return _headPose.GetRotation().GetAngleAroundZaxis();
+    return _roll;
   }
 
+  inline void TrackedFace::SetHeadOrientation(Radians roll, Radians pitch, Radians yaw) {
+    _roll = roll;
+    _pitch = pitch;
+    _yaw = yaw;
+    //PRINT_NAMED_INFO("TrackedFace.SetHeadOrientation", "Roll=%.1fdeg, Pitch=%.1fdeg, Yaw=%.1fdeg",
+    //                 _roll.getDegrees(), _pitch.getDegrees(), _yaw.getDegrees());
+  }
   
   inline const Pose3d& TrackedFace::GetHeadPose() const {
     return _headPose;

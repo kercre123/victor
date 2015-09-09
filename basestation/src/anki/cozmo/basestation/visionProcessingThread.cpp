@@ -15,6 +15,7 @@
 #include "visionSystem.h"
 
 #include "anki/vision/basestation/image_impl.h"
+#include "anki/vision/basestation/trackedFace.h"
 #include "anki/vision/markerCodeDefinitions.h"
 
 #include "anki/common/basestation/math/point_impl.h"

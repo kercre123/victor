@@ -45,10 +45,10 @@ void Radio::init() {
     5,
     {0xE7,0xE7,0xE7,0xE7},
     {0xC2,0xC2,0xC2,0xC2},
-#ifndef BACKPACK_DEMO
+#ifdef ROBOT41
     {0xE7,0xC2,0xC3,0xC4,0xC5,0xC6,0xC7,0xC8},
 #else
-    {0xE7,0xC0,0xC3,0xC4,0xC5,0xC6,0xC7,0xC8},
+    {0xE6,0xC9,0xCA,0xCB,0xCC,0xCD,0xCE,0xCF},
 #endif
     0x3F,
     3
@@ -77,32 +77,21 @@ extern "C" void uesb_event_handler(void)
   {
     uesb_payload_t rx_payload;
     uesb_read_rx_payload(&rx_payload);
-    uint8_t addr = rx_payload.data[sizeof(AcceleratorPacket)] - 0xC2;
+    uint8_t addr = rx_payload.pipe - 1;
     
     if (addr < MAX_CUBES) {
       memcpy((uint8_t*)&cubeRx[addr], rx_payload.data, sizeof(AcceleratorPacket));
     }
 
     #ifdef DEBUG_MESSAGES
-    UART::put("\r\nRx");
-    UART::hex((uint8_t)addr);
-    UART::put(":");
-    UART::dump((uint8_t*)rx_payload.data, rx_payload.length);
+    UART::print("\r\nRx %x: ..", (uint8_t)addr);
+    UART::dump(rx_payload.length, (char*)rx_payload.data);
     #endif
   }
 }
 
 #include "nrf_gpio.h"
 #include "hardware.h"
-
-static int lastC = GetCounter();
-
-void BenchMark() {
-    static int lastC = GetCounter();
-    int currentC = GetCounter();
-    UART::print("%i\n\r", (int)((currentC - lastC) / 256.0f / 32768.0f * 1000));
-    lastC = currentC;
-}
 
 extern "C" void BlinkPack(int toggle) {
   #if defined(BACKPACK_DEMO)

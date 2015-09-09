@@ -83,7 +83,7 @@ namespace Anki {
     }
     
     if(needsRenormalization) {
-      CoreTechPrint("Renormalizing a %dD rotation matrix.\n", DIM);
+      //CoreTechPrint("Renormalizing a %dD rotation matrix.\n", DIM);
       RenormalizeHelper(*this);
     }
   }
@@ -127,7 +127,6 @@ namespace Anki {
   RotationMatrixBase<DIM>::RotationMatrixBase(const SmallSquareMatrix<DIM, float> &matrix)
   : SmallSquareMatrix<DIM, float>(matrix)
   {
-    CORETECH_ASSERT(this->IsValid());
     this->Renormalize();
   }
   
@@ -135,7 +134,7 @@ namespace Anki {
   RotationMatrixBase<DIM>::RotationMatrixBase(std::initializer_list<float> initValues)
   : SmallSquareMatrix<DIM,float>(initValues)
   {
-    CORETECH_ASSERT(this->IsValid());
+    this->Renormalize();
   }
   
   template<MatDimType DIM>

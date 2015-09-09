@@ -3,6 +3,7 @@
 
 #include "board.h"
 #include "oled.h"
+#include "anki/cozmo/robot/hal.h"
 
 #define SOFT_RESET
 
@@ -205,7 +206,7 @@ void i2c_init()
   PORT_HAL_SetMuxMode(PORTC_BASE, 10, kPortMuxAsGpio);
   GPIO_DRV_WritePinOutput(OLED_RST, 0);
   GPIO_DRV_SetPinDir(OLED_RST, kGpioDigitalOutput); 
-  BOARD_I2C_DELAY;
+  Anki::Cozmo::HAL::MicroWait(80);
   GPIO_DRV_WritePinOutput(OLED_RST, 1);
   #endif
 

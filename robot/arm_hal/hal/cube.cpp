@@ -39,6 +39,8 @@ uint32_t isqrt(uint32_t a_nInput)
     return res;
 }
 
+#include <stdio.h>
+
 namespace Anki
 {
   namespace Cozmo

@@ -67,6 +67,9 @@ namespace Cozmo {
     u32 _numLoops;
     u32 _loopCtr;
     
+    Util::RandomGenerator _rng;
+    int _nextBlink_ms;
+    
   }; // class AnimationStreamer
   
 } // namespace Cozmo

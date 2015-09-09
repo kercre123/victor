@@ -8,7 +8,10 @@
 namespace Anki {
 namespace Cozmo {
 
-  const ProceduralFace::Value ProceduralFace::MaxFaceAngle = 30.f; // Not sure why I can't set this one here
+  //const ProceduralFace::Value ProceduralFace::MaxFaceAngle = 30.f; // Not sure why I can't set this one here
+  u8 ProceduralFace::_firstScanLine = 0;
+  
+  const cv::Rect ProceduralFace::imgRect(0,0,ProceduralFace::WIDTH, ProceduralFace::HEIGHT);
   
   ProceduralFace::ProceduralFace()
   {
@@ -17,124 +20,118 @@ namespace Cozmo {
   
   void ProceduralFace::Reset()
   {
-    _faceAngle_deg = 0;
+    _faceAngle = 0;
     _sentToRobot = false;
     _timestamp = 0;
-    
-    for(int iWhichEye=0; iWhichEye<2; ++iWhichEye) {
-      const WhichEye whichEye = static_cast<WhichEye>(iWhichEye);
-      
-      _eyeParams[whichEye].fill(0);
-      SetParameter(whichEye, Parameter::EyeWidth, NominalEyeWidth);
-      SetParameter(whichEye, Parameter::EyeHeight, NominalEyeHeight);
-      SetParameter(whichEye, Parameter::PupilHeightFraction, NominalPupilHeightFrac);
-      SetParameter(whichEye, Parameter::PupilWidthFraction, NominalPupilWidthFrac);
-    }
+
+    _eyeParams[Left].fill(0);
+    _eyeParams[Right].fill(0);
   }
 
   
-  void ProceduralFace::SetFaceAngle(Value angle_deg) {
-    _faceAngle_deg = std::max(-MaxFaceAngle, std::min(MaxFaceAngle, angle_deg));
-  }
-  
-  const ProceduralFace::ValueLimits& ProceduralFace::GetLimits(Parameter param)
+
+  inline const s32 GetScaledValue(ProceduralFace::Value value, s32 min, s32 max)
   {
-    static const std::map<Parameter, ValueLimits> LUT = {
-      {Parameter::EyeHeight, {0.125f*static_cast<f32>(HEIGHT), 0.667f*static_cast<f32>(HEIGHT)}},
-      {Parameter::EyeWidth,  {0.125f*static_cast<f32>(WIDTH), 0.4f*static_cast<f32>(WIDTH)}},
-      {Parameter::PupilHeightFraction, {0.25f, 0.7f}},
-      {Parameter::PupilWidthFraction,  {0.25f, 0.75f}},
-    };
+    // Input is [-1,1]. Make [0,1]
+    value += 1;
+    value *= .5f;
     
-    auto iter = LUT.find(param);
-    if(iter == LUT.end()) {
-      static ValueLimits NoLimits(std::numeric_limits<Value>::min(),
-                                  std::numeric_limits<Value>::max());
-      return NoLimits;
-    } else {
-      return iter->second;
-    }
+    return static_cast<s32>(value * static_cast<ProceduralFace::Value>(max-min)) + min;
   }
-  
+
   void ProceduralFace::DrawEye(WhichEye whichEye, cv::Mat_<u8>& faceImg) const
   {
-    static const cv::Rect imgRect(0,0,ProceduralFace::WIDTH, ProceduralFace::HEIGHT);
     assert(faceImg.rows == ProceduralFace::HEIGHT &&
            faceImg.cols == ProceduralFace::WIDTH);
     
-    const Value EyeCenX = (whichEye == Left ? NominalLeftEyeCenX : NominalRightEyeCenX);
+    const s32 NominalEyeCenX = (whichEye == Left ? NominalLeftEyeCenX : NominalRightEyeCenX);
     
-    const Value xEye = EyeCenX-GetParameter(whichEye, Parameter::EyeWidth)/2;
-    const Value yEye = NominalEyeCenY - GetParameter(whichEye, Parameter::EyeHeight)/2;
-    const cv::Rect eyeRect(xEye, yEye, GetParameter(whichEye, Parameter::EyeWidth),
-                           GetParameter(whichEye, Parameter::EyeHeight));
+    const s32 eyeWidthPix = GetScaledValue(GetParameter(whichEye, Parameter::EyeWidth),
+                                            MinEyeWidthPix, MaxEyeWidthPix);
     
-    const Value pupilHeight = GetParameter(whichEye, Parameter::PupilHeightFraction)*GetParameter(whichEye,Parameter::EyeHeight);
-    const Value pupilWidth  = GetParameter(whichEye, Parameter::PupilWidthFraction)*GetParameter(whichEye,Parameter::EyeWidth);
-    const Value xPupil = EyeCenX + GetParameter(whichEye,Parameter::PupilShiftX) - pupilWidth/2;
-    const Value yPupil = NominalEyeCenY + GetParameter(whichEye,Parameter::PupilShiftY) - pupilHeight*0.5f;
-    const cv::Rect pupilRect(xPupil,yPupil,pupilWidth,pupilHeight);
+    const s32 eyeHeightPix = GetScaledValue(GetParameter(whichEye, Parameter::EyeHeight),
+                                            MinEyeHeightPix, MaxEyeHeightPix);
+    
+    const s32 xEye = NominalEyeCenX - eyeWidthPix/2;
+    const s32 yEye = NominalEyeCenY - eyeHeightPix/2;
+    const cv::Rect eyeRect(xEye, yEye, eyeWidthPix, eyeHeightPix);
+    
+    const s32 pupilHeightPix = GetScaledValue(GetParameter(whichEye, Parameter::PupilHeight), 0, eyeHeightPix);
+    const s32 pupilWidthPix  = GetScaledValue(GetParameter(whichEye, Parameter::PupilWidth), 0, eyeWidthPix);
+    const s32 pupilCenXPix   = GetParameter(whichEye, Parameter::PupilCenX) * static_cast<f32>(eyeWidthPix/2);
+    const s32 pupilCenYPix   = GetParameter(whichEye, Parameter::PupilCenY) * static_cast<f32>(eyeHeightPix/2);
+    const s32 xPupil = NominalEyeCenX + pupilCenXPix - pupilWidthPix/2;
+    const s32 yPupil = NominalEyeCenY + pupilCenYPix - pupilHeightPix/2;
+    const cv::Rect pupilRect(xPupil,yPupil,pupilWidthPix,pupilHeightPix);
     
     // Fill eye
     cv::Mat_<u8> roi = faceImg(eyeRect & imgRect);
-    roi.setTo(255);
-    
-    // Remove a few pixels from the four corners
-    const s32 NumCornerPixels = 3; // TODO: Make this a static const parameter?
-    u8* topLine = roi.ptr(0);
-    u8* btmLine = roi.ptr(roi.rows-1);
-    for(s32 j=0; j<NumCornerPixels; ++j) {
-      topLine[j] = 0;
-      btmLine[j] = 0;
-      topLine[roi.cols-1-j] = 0;
-      btmLine[roi.cols-1-j] = 0;
-    }
-    
-    if(!ScanlinesAsPostProcess) {
-      // Set every other row to 0 to get interlaced appearance
-      for(int i=0; i<roi.rows; i+=2) {
-        roi.row(i).setTo(0);
+    if(!roi.empty())
+    {
+      roi.setTo(255);
+      
+      // Remove a few pixels from the four corners
+      const s32 NumCornerPixels = 3; // TODO: Make this a static const parameter?
+      u8* topLine = roi.ptr(0);
+      u8* btmLine = roi.ptr(roi.rows-1);
+      for(s32 j=0; j<NumCornerPixels; ++j) {
+        topLine[j] = 0;
+        btmLine[j] = 0;
+        topLine[roi.cols-1-j] = 0;
+        btmLine[roi.cols-1-j] = 0;
+      }
+      
+      if(!ScanlinesAsPostProcess) {
+        // Set every other row to 0 to get interlaced appearance
+        for(int i=_firstScanLine; i<roi.rows; i+=2) {
+          roi.row(i).setTo(0);
+        }
       }
     }
     
     // Black out pupil
     roi = faceImg(pupilRect & imgRect);
     roi.setTo(0);
-  } // DrawEye()
-  
-  void ProceduralFace::DrawEyeBrow(WhichEye whichEye, cv::Mat_<u8> &faceImg) const
-  {
-    const Value EyeCenX = (whichEye==Left ? NominalLeftEyeCenX : NominalRightEyeCenX);
-    const float cosAngle = std::cos(DEG_TO_RAD(static_cast<float>(GetParameter(whichEye,Parameter::BrowAngle))));
-    const float sinAngle = std::sin(DEG_TO_RAD(static_cast<float>(GetParameter(whichEye,Parameter::BrowAngle))));
-    const Value x = EyeCenX   + GetParameter(whichEye,Parameter::BrowShiftX);
-    const Value y = NominalEyebrowHeight + GetParameter(whichEye,Parameter::BrowShiftY);
-    const cv::Point leftPoint(x-EyebrowHalfLength*cosAngle, y-EyebrowHalfLength*sinAngle);
-    const cv::Point rightPoint(x+EyebrowHalfLength*cosAngle, y+EyebrowHalfLength*sinAngle);
+    
+    // Eyebrow:
+    const f32 browAngleRad = DEG_TO_RAD(static_cast<f32>(GetScaledValue(GetParameter(whichEye, Parameter::BrowAngle),
+                                                                        -MaxBrowAngle, MaxBrowAngle)));
+    const float cosAngle = std::cos(browAngleRad);
+    const float sinAngle = std::sin(browAngleRad);
+    
+    const s32 browXPosPix = GetScaledValue(GetParameter(whichEye, Parameter::BrowCenX),
+                                           -eyeWidthPix/2, eyeWidthPix/2) + NominalEyeCenX;
+    const s32 browYPosPix = GetScaledValue(-GetParameter(whichEye, Parameter::BrowCenY),
+                                            1, NominalEyeCenY-eyeHeightPix/2);
+
+    const cv::Point leftPoint(browXPosPix-EyebrowHalfLength*cosAngle,  browYPosPix-EyebrowHalfLength*sinAngle);
+    const cv::Point rightPoint(browXPosPix+EyebrowHalfLength*cosAngle, browYPosPix+EyebrowHalfLength*sinAngle);
     cv::line(faceImg, leftPoint, rightPoint, 255, EyebrowThickness, 4);
-  }
+    
+  } // DrawEye()
   
   cv::Mat_<u8> ProceduralFace::GetFace() const
   {
     cv::Mat_<u8> faceImg(HEIGHT, WIDTH);
     faceImg.setTo(0);
     
-    DrawEyeBrow(Left, faceImg);
-    DrawEyeBrow(Right, faceImg);
+    //DrawEyeBrow(Left, faceImg);
+    //DrawEyeBrow(Right, faceImg);
     DrawEye(Left, faceImg);
     DrawEye(Right, faceImg);
     
     // Rotate entire face
-    if(_faceAngle_deg != 0) {
+    if(_faceAngle != 0) {
       // Note negative angle to get mirroring
-      cv::Mat R = cv::getRotationMatrix2D(cv::Point2f(WIDTH/2,HEIGHT/2), _faceAngle_deg, 1.0);
+      const f32 faceAngleDeg = GetScaledValue(_faceAngle, -MaxFaceAngle, MaxFaceAngle);
+      cv::Mat R = cv::getRotationMatrix2D(cv::Point2f(WIDTH/2,HEIGHT/2), faceAngleDeg, 1.0);
       cv::warpAffine(faceImg, faceImg, R, cv::Size(WIDTH, HEIGHT), cv::INTER_NEAREST);
     }
     
     if(ScanlinesAsPostProcess) {
       // Apply interlacing / scanlines at the end
       // TODO: Switch odd/even periodically to avoid burn-in?
-      for(s32 i=0; i<HEIGHT; i+=2) {
+      for(s32 i=_firstScanLine; i<HEIGHT; i+=2) {
         faceImg.row(i).setTo(0);
       }
     }
@@ -175,7 +172,7 @@ namespace Cozmo {
   
   
   void ProceduralFace::Interpolate(const ProceduralFace& face1, const ProceduralFace& face2,
-                                   float blendFraction)
+                                   float blendFraction, bool usePupilSaccades)
   {
     assert(blendFraction >= 0.f && blendFraction <= 1.f);
     
@@ -207,6 +204,12 @@ namespace Cozmo {
           SetParameter(whichEye, param, BlendAngleHelper(face1.GetParameter(whichEye, param),
                                                           face2.GetParameter(whichEye, param),
                                                           blendFraction));
+        } else if(usePupilSaccades && (param == Parameter::PupilCenX || param == Parameter::PupilCenY)) {
+          // Special case: pupils saccade rather than moving slowly. So immediately
+          // jump to new position halfway between the two frames
+          SetParameter(whichEye, param, (blendFraction <= .5f ?
+                                         face1.GetParameter(whichEye, param) :
+                                         face2.GetParameter(whichEye, param)));
         } else {
           // Regular linear interpolation
           SetParameter(whichEye, param, LinearBlendHelper(face1.GetParameter(whichEye, param),
@@ -221,9 +224,11 @@ namespace Cozmo {
   } // Interpolate()
   
   
-  void ProceduralFace::Blink(const ProceduralFace& face, float fraction)
+  void ProceduralFace::Blink()
   {
-    // TODO: Implement blinking
+    SetParameter(Left, Parameter::EyeHeight, -1.f);
+    SetParameter(Right, Parameter::EyeHeight, -1.f);
+    SwitchInterlacing();
   }
   
   void ProceduralFace::MimicHumanFace(const Vision::TrackedFace& face)

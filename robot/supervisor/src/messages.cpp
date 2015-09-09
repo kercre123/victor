@@ -718,7 +718,7 @@ void Process##__MSG_TYPE__##Message(const __MSG_TYPE__& msg) { ProcessAnimKeyFra
         va_start(argptr, format);
 #if SEND_TEXT_REDIRECT_TO_STDOUT
         // print to console - works in webots environment.
-        printf(format, argptr);
+        vprintf(format, argptr);
 #else
         SendText(format, argptr);
 #endif
