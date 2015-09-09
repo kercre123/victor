@@ -2,6 +2,7 @@
 using System.Windows.Forms;
 using System.Windows.Forms.DataVisualization.Charting;
 using Anki.Cozmo;
+using System.Drawing;
 
 namespace AnimationTool
 {
@@ -341,7 +342,7 @@ namespace AnimationTool
                         ShowVolumeForm();
                         break;
                     case "cProceduralFace":
-                        ShowFaceDataForm();
+                        ShowProceduralFaceForm();
                         break;
                 }
             }
@@ -442,12 +443,26 @@ namespace AnimationTool
                         if (body)
                         {
                             curDataPoint = add.dataPoint;
-                            ShowBodyForm();
+                            ShowBodyForm(true);
                         }
                         else if (faceAnimationData)
                         {
                             curDataPoint = add.dataPoint;
-                            ShowFaceDataForm();
+                            DataPoint previous = null;
+
+                            for (int i = 0; i < curPoints.Count - 1; ++i)
+                            {
+                                if (curPoints[i + 1] == curDataPoint)
+                                {
+                                    if (!curPoints[i].IsEmpty && curPoints[i].Color != Color.Red)
+                                    {
+                                        previous = curPoints[i];
+                                    }
+                                    break;
+                                }
+                            }
+
+                            ShowProceduralFaceForm(previous);
                         }
                     }
                 }
@@ -466,9 +481,9 @@ namespace AnimationTool
             }
         }
 
-        private void ShowProceduralFaceForm(Sequencer.ExtraProceduralFaceData extraData)
+        private void ShowProceduralFaceForm(Sequencer.ExtraProceduralFaceData previous, Sequencer.ExtraProceduralFaceData extraData)
         {
-            if (faceForm.Open(extraData) == DialogResult.OK)
+            if (faceForm.Open(previous != null ? previous : extraData) == DialogResult.OK)
             {
                 extraData.faceAngle_deg = faceForm.FaceAngle_deg;
 
@@ -493,20 +508,28 @@ namespace AnimationTool
             }
             else
             {
+                if (previous != null)
+                {
+                    ActionManager.Do(new RemoveDataPoint(curDataPoint, curChart), true);
+                }
                 robotEngineMessenger.SetToPreviousFace(faceForm); // Else if cancelled, set back to previous face
             }
         }
 
-        private void ShowStraightForm(Sequencer.ExtraStraightData straightData, double maxTime)
+        private void ShowStraightForm(Sequencer.ExtraStraightData straightData, double maxTime, bool add)
         {
             if (straightForm.Open(maxTime, straightData.Speed_mms, straightData.Length, curChart) == DialogResult.OK)
             {
                 straightData.Length = straightForm.Time;
                 straightData.Speed_mms = straightForm.Speed;
             }
+            else if(add)
+            {
+                ActionManager.Do(new RemoveDataPoint(curDataPoint, curChart), true);
+            }
         }
 
-        private void ShowArcForm(Sequencer.ExtraArcData arcData, double maxTime)
+        private void ShowArcForm(Sequencer.ExtraArcData arcData, double maxTime, bool add)
         {
             if (arcForm.Open(maxTime, arcData.Speed_mms, arcData.Radius_mm, arcData.Length, curChart) == DialogResult.OK)
             {
@@ -514,14 +537,22 @@ namespace AnimationTool
                 arcData.Speed_mms = arcForm.Speed;
                 arcData.Radius_mm = arcForm.Radius;
             }
+            else if (add)
+            {
+                ActionManager.Do(new RemoveDataPoint(curDataPoint, curChart), true);
+            }
         }
 
-        private void ShowTurnInPlaceForm(Sequencer.ExtraTurnInPlaceData turnInPlaceData, double maxTime)
+        private void ShowTurnInPlaceForm(Sequencer.ExtraTurnInPlaceData turnInPlaceData, double maxTime, bool add)
         {
             if (turnInPlaceForm.Open(maxTime, turnInPlaceData.Angle_deg, turnInPlaceData.Length, curChart) == DialogResult.OK)
             {
                 turnInPlaceData.Length = turnInPlaceForm.Time;
                 turnInPlaceData.Angle_deg = turnInPlaceForm.Angle;
+            }
+            else if (add)
+            {
+                ActionManager.Do(new RemoveDataPoint(curDataPoint, curChart), true);
             }
         }
         
@@ -540,13 +571,14 @@ namespace AnimationTool
             curChart.Refresh();
         }
 
-        private void ShowFaceDataForm()
+        private void ShowProceduralFaceForm(DataPoint previous = null)
         {
             if (curDataPoint == null || curChart == null) return;
 
             Sequencer.ExtraProceduralFaceData extraData = Sequencer.ExtraData.Entries[curDataPoint.GetCustomProperty(Sequencer.ExtraData.Key)] as Sequencer.ExtraProceduralFaceData;
+            Sequencer.ExtraProceduralFaceData previousData = previous != null ? Sequencer.ExtraData.Entries[previous.GetCustomProperty(Sequencer.ExtraData.Key)] as Sequencer.ExtraProceduralFaceData : null;
 
-            ShowProceduralFaceForm(extraData);
+            ShowProceduralFaceForm(previousData, extraData);
 
             // Hack: update info 
             ActionManager.Do(new Sequencer.MoveDataPoint(curDataPoint, curDataPoint.YValues[0] + MoveSelectedDataPoints.DELTA_X));
@@ -555,7 +587,7 @@ namespace AnimationTool
             curChart.Refresh();
         }
 
-        private void ShowBodyForm()
+        private void ShowBodyForm(bool add = false)
         {
             if (curDataPoint == null || curChart == null) return;
 
@@ -566,7 +598,7 @@ namespace AnimationTool
 
             if (straightData != null)
             {
-                ShowStraightForm(straightData, maxTime);
+                ShowStraightForm(straightData, maxTime, add);
             }
             else
             {
@@ -574,7 +606,7 @@ namespace AnimationTool
 
                 if (arcData != null)
                 {
-                    ShowArcForm(arcData, maxTime);
+                    ShowArcForm(arcData, maxTime, add);
                 }
                 else
                 {
@@ -582,7 +614,7 @@ namespace AnimationTool
 
                     if (turnInPlaceData != null)
                     {
-                        ShowTurnInPlaceForm(turnInPlaceData, maxTime);
+                        ShowTurnInPlaceForm(turnInPlaceData, maxTime, add);
                     }
                 }
             }

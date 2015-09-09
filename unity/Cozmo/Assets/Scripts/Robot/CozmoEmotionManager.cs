@@ -19,6 +19,7 @@ public class CozmoEmotionManager : MonoBehaviour {
   private U2G.SetIdleAnimation SetIdleAnimationMessage;
   private U2G.GotoPose GotoPoseMessage;
   private U2G.TurnInPlace TurnInPlaceMessage;
+  private U2G.FacePose FacePoseMessage;
   CozmoEmotionMachine currentEmotionMachine;
 
   public enum EmotionType {
@@ -73,6 +74,7 @@ public class CozmoEmotionManager : MonoBehaviour {
     SetIdleAnimationMessage = new U2G.SetIdleAnimation();
     GotoPoseMessage = new U2G.GotoPose();
     TurnInPlaceMessage = new U2G.TurnInPlace();
+    FacePoseMessage = new U2G.FacePose();
     QueueCompoundActionsMessage = new U2G.QueueCompoundAction();
     QueueCompoundActionsMessage.actions = new U2G.RobotActionUnion[2];
     QueueCompoundActionsMessage.actions[0] = new U2G.RobotActionUnion();
@@ -293,7 +295,7 @@ public class CozmoEmotionManager : MonoBehaviour {
     }
   }
 
-  public void SetEmotionTurnInPlace(string emotion_state, float rad, bool stopPreviousAnim = false, bool reverseOrder = false, bool isParallel = false) {
+  public void SetEmotionTurnInPlace(string emotion_state, float rad, bool stopPreviousAction = false, bool reverseOrder = false, bool isParallel = false) {
     if (robot == null)
       return;
 
@@ -303,7 +305,7 @@ public class CozmoEmotionManager : MonoBehaviour {
         List<CozmoAnimation> anims = instance.currentEmotionMachine.GetAnimsForType(emotion_state);
         int rand_index = UnityEngine.Random.Range(0, anims.Count - 1);
         CozmoAnimation anim = anims[rand_index];
-        if (stopPreviousAnim && robot.isBusy && robot.Status(Anki.Cozmo.RobotStatusFlagClad.Animating)) {
+        if (stopPreviousAction && robot.isBusy && robot.Status(Anki.Cozmo.RobotStatusFlagClad.Animating)) {
           robot.CancelAction(Anki.Cozmo.RobotActionType.PLAY_ANIMATION);
         }
         DAS.Debug("CozmoEmotionManager", "Sending " + anim.animName + " with " + anim.numLoops + " loop" + (anim.numLoops != 1 ? "s" : ""));
@@ -335,7 +337,68 @@ public class CozmoEmotionManager : MonoBehaviour {
         QueueCompoundActionsMessage.robotID = robot.ID;
         QueueCompoundActionsMessage.parallel = isParallel;
 
-        if (stopPreviousAnim) {
+        if (stopPreviousAction) {
+          QueueCompoundActionsMessage.position = Anki.Cozmo.QueueActionPosition.NOW_AND_CLEAR_REMAINING;
+        }
+        else {
+          QueueCompoundActionsMessage.position = Anki.Cozmo.QueueActionPosition.NEXT;
+        }
+
+        RobotEngineManager.instance.Message.QueueCompoundAction = QueueCompoundActionsMessage;
+        RobotEngineManager.instance.SendMessage();
+      }
+      else {
+        DAS.Error("CozmoEmotionManager", "tring to send animation for emotion type " + emotion_state + ", and the current machine has no anim mapped");
+      }
+    }
+  }
+
+  public void SetEmotionFacePose(string emotion_state, Face face, bool stopPreviousAction = false, bool reverseOrder = false, bool isParallel = false) {
+    if (robot == null)
+      return;
+
+    if (instance.currentEmotionMachine != null) {
+      // send approriate animation
+      if (instance.currentEmotionMachine.HasAnimForState(emotion_state)) {
+        List<CozmoAnimation> anims = instance.currentEmotionMachine.GetAnimsForType(emotion_state);
+        int rand_index = UnityEngine.Random.Range(0, anims.Count - 1);
+        CozmoAnimation anim = anims[rand_index];
+        if (stopPreviousAction && robot.isBusy && robot.Status(Anki.Cozmo.RobotStatusFlagClad.Animating)) {
+          robot.CancelAction(Anki.Cozmo.RobotActionType.PLAY_ANIMATION);
+        }
+        DAS.Debug("CozmoEmotionManager", "Sending " + anim.animName + " with " + anim.numLoops + " loop" + (anim.numLoops != 1 ? "s" : ""));
+        PlayAnimationMessage.animationName = anim.animName;
+        PlayAnimationMessage.numLoops = anim.numLoops;
+        PlayAnimationMessage.robotID = robot.ID;
+
+        FacePoseMessage.maxTurnAngle = float.MaxValue;
+        FacePoseMessage.robotID = robot.ID;
+        FacePoseMessage.turnAngleTol = Mathf.Deg2Rad; //one degree seems to work?
+        FacePoseMessage.world_x = face.WorldPosition.x;
+        FacePoseMessage.world_y = face.WorldPosition.y;
+        FacePoseMessage.world_z = face.WorldPosition.z;
+
+        if (!reverseOrder) {
+          QueueCompoundActionsMessage.actions[0].playAnimation = PlayAnimationMessage;
+          QueueCompoundActionsMessage.actionTypes[0] = Anki.Cozmo.RobotActionType.PLAY_ANIMATION;
+
+          QueueCompoundActionsMessage.actions[1].facePose = FacePoseMessage;
+          QueueCompoundActionsMessage.actionTypes[1] = Anki.Cozmo.RobotActionType.FACE_POSE;
+        }
+        else {
+          QueueCompoundActionsMessage.actions[0].facePose = FacePoseMessage;
+          QueueCompoundActionsMessage.actionTypes[0] = Anki.Cozmo.RobotActionType.FACE_POSE;
+
+          QueueCompoundActionsMessage.actions[1].playAnimation = PlayAnimationMessage;
+          QueueCompoundActionsMessage.actionTypes[1] = Anki.Cozmo.RobotActionType.PLAY_ANIMATION;
+        }
+
+        QueueCompoundActionsMessage.numRetries = 0;
+        QueueCompoundActionsMessage.inSlot = 0;
+        QueueCompoundActionsMessage.robotID = robot.ID;
+        QueueCompoundActionsMessage.parallel = isParallel;
+
+        if (stopPreviousAction) {
           QueueCompoundActionsMessage.position = Anki.Cozmo.QueueActionPosition.NOW_AND_CLEAR_REMAINING;
         }
         else {
