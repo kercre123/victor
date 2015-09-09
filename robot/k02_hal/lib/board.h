@@ -44,10 +44,106 @@
     #define BOARD_DEBUG_UART_BASEADDR   UART1_BASE
 #endif
 #ifndef BOARD_DEBUG_UART_BAUD
-    #define BOARD_DEBUG_UART_BAUD       3000000
+    #define BOARD_DEBUG_UART_BAUD       115200
 #endif
 
 #define BOARD_USE_UART
+
+/* Define the port interrupt number for the board switches */
+#define BOARD_SW_IRQ_NUM        PORTB_IRQn
+
+/* Define feature for the low_power_demo */
+#define FSL_FEATURE_HAS_VLLS2 (1)
+
+/* Define print statement to inform user which switch to press for 
+ * low_power_demo 
+ */
+#define PRINT_INT_SW_NUM \
+  printf("SW3")
+      
+#define PRINT_LLWU_SW_NUM \
+  printf("SW2")
+      
+/* Define print statement to inform user which switch to press for stopwatch
+ * functionality in quick start demo 
+ */
+#define PRINT_STOPWATCH_SW_NUM \
+  printf("SW2")
+
+/* The FXOS8700 i2c instance and slave address */
+#define BOARD_FXOS8700_I2C_INSTANCE        0
+#define BOARD_ACCEL_ADDR_ACTUAL         (0x1C)
+#define BOARD_FXOS8700_I2C_ADDR         (0x1C)
+#define BOARD_ACCEL_I2C_ADDR            (BOARD_ACCEL_ADDR_ACTUAL << 1)
+
+#define BOARD_I2C_GPIO_SCL              GPIO_MAKE_PIN(HW_GPIOB, 2)
+#define BOARD_I2C_GPIO_SDA              GPIO_MAKE_PIN(HW_GPIOB, 3)
+#define BOARD_I2C_DELAY \
+    do \
+    { \
+        int32_t i; \
+        for (i = 0; i < 500; i++) \
+        { \
+            __asm("nop"); \
+        } \
+    } while (0)
+
+/* The instances of peripherals used for dac_adc_demo */
+#define BOARD_DAC_DEMO_DAC_INSTANCE     0U
+#define BOARD_DAC_DEMO_ADC_INSTANCE     0U
+#define BOARD_DAC_DEMO_ADC_CHANNEL      8U
+
+/* The i2c instance used for i2c DAC demo */
+#define BOARD_DAC_I2C_INSTANCE          0
+
+/* The i2c instance used for i2c communication demo */
+#define BOARD_I2C_COMM_INSTANCE         0
+
+/* The Flextimer instance/channel used for board */
+#define BOARD_FTM_INSTANCE              0
+#define BOARD_FTM_CHANNEL               5
+
+/* ADC0 input channel */
+#define BOARD_ADC0_INPUT_CHAN           0
+
+/* board led color mapping */
+#define BOARD_GPIO_LED_RED              kGpioLED2
+#define BOARD_GPIO_LED_GREEN            kGpioLED1
+#define BOARD_GPIO_LED_BLUE             kGpioLED3
+        
+#define DISABLE_DEBUG_CONSOLE_TX PORT_HAL_SetMuxMode(PORTE_BASE, 0, kPortPinDisabled)
+#define DISABLE_DEBUG_CONSOLE_RX PORT_HAL_SetMuxMode(PORTE_BASE, 1, kPortPinDisabled)
+        
+#define DISABLE_SW_INTERRUPT PORT_HAL_SetPinIntMode(PORTB_BASE, 17, kPortIntDisabled)
+#define DISABLE_SW_PIN PORT_HAL_SetMuxMode(PORTB_BASE, 17, kPortPinDisabled)
+#define ENABLE_SW_PIN PORT_HAL_SetMuxMode(PORTB_BASE, 17, kPortMuxAsGpio)
+        
+#define LED1_EN (PORT_HAL_SetMuxMode(PORTA_BASE, 2, kPortMuxAsGpio)) 	/*!< Enable target LED0 */
+#define LED2_EN (PORT_HAL_SetMuxMode(PORTA_BASE, 1, kPortMuxAsGpio)) 	/*!< Enable target LED1 */
+#define LED3_EN (PORT_HAL_SetMuxMode(PORTD_BASE, 5, kPortMuxAsGpio)) 	/*!< Enable target LED2 */
+        
+#define LED1_DIS (PORT_HAL_SetMuxMode(PORTA_BASE, 2, kPortPinDisabled)) 	/*!< Disable target LED0 */
+#define LED2_DIS (PORT_HAL_SetMuxMode(PORTA_BASE, 1, kPortPinDisabled)) 	/*!< Disable target LED1 */
+#define LED3_DIS (PORT_HAL_SetMuxMode(PORTD_BASE, 5, kPortPinDisabled)) 	/*!< Disable target LED2 */
+
+#define LED1_OFF (GPIO_DRV_WritePinOutput(ledPins[0].pinName, 1))       /*!< Turn off target LED0 */
+#define LED2_OFF (GPIO_DRV_WritePinOutput(ledPins[1].pinName, 1))       /*!< Turn off target LED1 */
+#define LED3_OFF (GPIO_DRV_WritePinOutput(ledPins[2].pinName, 1))       /*!< Turn off target LED2 */
+
+#define LED1_ON (GPIO_DRV_WritePinOutput(ledPins[0].pinName, 0))        /*!< Turn on target LED0 */
+#define LED2_ON (GPIO_DRV_WritePinOutput(ledPins[1].pinName, 0))        /*!< Turn on target LED1 */
+#define LED3_ON (GPIO_DRV_WritePinOutput(ledPins[2].pinName, 0))        /*!< Turn on target LED2 */
+
+#define LED1_TOGGLE (GPIO_DRV_TogglePinOutput(kGpioLED1))               /*!< Toggle target LED0 */
+#define LED2_TOGGLE (GPIO_DRV_TogglePinOutput(kGpioLED2))               /*!< Toggle target LED1 */
+#define LED3_TOGGLE (GPIO_DRV_TogglePinOutput(kGpioLED3))               /*!< Toggle target LED2 */
+#define LED4_TOGGLE (GPIO_DRV_TogglePinOutput(kGpioLED4))               /*!< Toggle target LED3 */
+        
+#define OFF_ALL_LEDS  \
+                           LED1_OFF;\
+                           LED2_OFF;\
+                           LED3_OFF;\
+                           LED4_OFF;
 
 #if defined(__cplusplus)
 extern "C" {

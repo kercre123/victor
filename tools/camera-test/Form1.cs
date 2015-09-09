@@ -27,7 +27,7 @@ namespace BlueCode
             // Necessary to keep up with 3mbps
             serialPort1.ReadBufferSize = 262144;
             serialPort1.ReceivedBytesThreshold = 256;
-            serialPort1.BaudRate = 3000000;
+            serialPort1.BaudRate = 3686400;
 
             serialPort1.PortName = COMSelector.Text;
             serialPort1.Open();
@@ -45,8 +45,8 @@ namespace BlueCode
             }
         }
 
-        private const int IMGX = 640;
-        private const int IMGY = 480;
+        private const int IMGX = 320;
+        private const int IMGY = 240;
 
         private const int IMGFX = IMGX;
         private const int IMGFY = IMGY;
@@ -56,8 +56,13 @@ namespace BlueCode
         private const bool MULTIFRAME = false;
 
         // Based on fixed size chunks of 1414 (+1 message type) bytes
-        private const int WAITING = -4;
-        private const int MAXLEN = 100000;
+        private static readonly byte [] HEADER = { 0xBE, 0xEF, 0x87, 0x05, 0x00, 0x00, 0x4B };
+        private const int WAITING = -7;
+        private const int HEADERLEN = 14, CHUNKLEN = 1400, PACKETLEN = HEADERLEN + CHUNKLEN;
+
+        private const int MAX_CHUNKS = 16;
+        private const int MAXLEN = CHUNKLEN * MAX_CHUNKS;
+        private byte[] m_header = new byte[HEADERLEN];
         private byte[] m_image = new byte[MAXLEN];
         private byte[] m_readyImage = null;
         private int m_imageLen = 0, m_readyLen = 0, m_chunk = 0;
@@ -66,9 +71,6 @@ namespace BlueCode
         private int m_recvstate = WAITING;
         private int m_skipped = 0;
         private int m_frame = -1;
-
-        private int m_chunkLen = 0, m_chunklets = 0, m_check = 0, m_bigcheck = 0;
-        private bool m_lastChunk = false;
 
         private Image m_bitmap = new Bitmap(IMGX * SCALEX, IMGY * SCALEY);
 
@@ -82,90 +84,9 @@ namespace BlueCode
             byte[] buf = new byte[count];
             serialPort1.Read(buf, 0, count);
 
-            int idx = 0;
-
-            while (count-- > 0)
-            {
-                byte c = buf[idx++];
-
-                // Wait for header
-                if (m_recvstate < -1)
-                {
-                    // Test that byte is part of the header
-                    if (c == 0xA5)
-                    {
-                        m_recvstate = -1;
-                    }
-                    else
-                    {
-                        m_skipped++;
-                        m_recvstate = WAITING;  // Bad byte, back to waiting
-                    }
-
-                    // Fill in header
-                }
-                else if (m_recvstate == -1)
-                {
-                    m_check = 0;
-                    m_chunkLen = (c & 0x7f);
-                    m_lastChunk = 0 != (c & 0x80);
-                    m_chunklets++;
-                    m_recvstate++;
-                }
-                // Past header, copy image data
-                else if (m_recvstate < m_chunkLen)
-                {
-                    m_check += c;
-                    m_image[m_imageLen + m_recvstate] = c;
-                    m_recvstate++;
-                }
-                // At end of chunklet, return to waiting - optionally display what we've got
-                else
-                {
-                    m_imageLen += m_chunkLen;
-
-                    if ((m_check & 255) != c)
-                        Console.WriteLine("My check = " + (m_check & 255) + " vs " + c);
-                    m_bigcheck += m_check;
-
-                    if (m_lastChunk)
-                    {
-                        m_readyImage = m_image;
-                        m_readyLen = m_imageLen;
-
-                        int check = 0;
-                        for (int i = 0; i < m_imageLen; i++)
-                            check += m_image[i];
-
-                        //if ((m_bigcheck & 255) != (check & 255))
-                        //    Console.WriteLine("Bad frame sum: K02 says " + (m_bigcheck & 255) + " vs " + (check & 255));
-
-                        m_image = new byte[MAXLEN];
-
-                        this.scanPicBox.BeginInvoke(
-                        (MethodInvoker)delegate()
-                        {
-                            scanPicBox.Refresh();
-                        });
-                        Console.WriteLine("EOF at " + m_imageLen + " bytes in " + m_chunklets + " chunklets at " + DateTime.Now.Millisecond + "ms");
-                        m_bigcheck = m_chunklets = m_imageLen = 0;
-                    }
-
-                    if (m_skipped > 0)
-                        System.Console.WriteLine("Skipped " + m_skipped + " frame " + m_frame);
-                    m_skipped = 0;
-                    m_recvstate = WAITING;
-                }
-            }
+            receive(buf, count, false);
         }
- 
-#if false
-        private static readonly byte [] HEADER = { 0xBE, 0xEF, 0xF0, 0xFF };
-        private const int HEADERLEN = 14, CHUNKLEN = 1300, PACKETLEN = HEADERLEN + CHUNKLEN;
 
-        private const int MAX_CHUNKS = 16;
-        private byte[] m_header = new byte[HEADERLEN];
-        
         private Object m_receiveLock = new Object();
         private bool m_eof;
         private void receive(byte[] buf, int count, bool skipheader)
@@ -265,7 +186,7 @@ namespace BlueCode
                 }
             }
         }
-#endif
+
         // Turn a fully assembled MINIPEG_GRAY image into a JPEG with header and footer
         private byte[] miniGrayToJpeg(byte[] bin, int len)
         {
@@ -276,8 +197,8 @@ namespace BlueCode
 	            0x0E, 0x0D, 0x0E, 0x12, 0x11, 0x10, 0x13, 0x18, 0x28, 0x1A, 0x18, 0x16, 0x16, 0x18, 0x31, 0x23, 
 	            0x25, 0x1D, 0x28, 0x3A, 0x33, 0x3D, 0x3C, 0x39, 0x33, 0x38, 0x37, 0x40, 0x48, 0x5C, 0x4E, 0x40, 
 	            0x44, 0x57, 0x45, 0x37, 0x38, 0x50, 0x6D, 0x51, 0x57, 0x5F, 0x62, 0x67, 0x68, 0x67, 0x3E, 0x4D, 
-	            0x71, 0x79, 0x70, 0x64, 0x78, 0x5C, 0x65, 0x67, 0x63, 0xFF, 0xC0, 0x00, 0x0B, 0x08, 0x00, 0xF0, // 0x5E = Height x Width
-	            0x01, 0x40, 0x01, 0x01, 0x11, 0x00, 0xFF, 0xC4, 0x00, 0xD2, 0x00, 0x00, 0x01, 0x05, 0x01, 0x01, 
+	            0x71, 0x79, 0x70, 0x64, 0x78, 0x5C, 0x65, 0x67, 0x63, 0xFF, 0xC0, 0x00, 0x0B, 0x08, 0x01, 0x28, // 0x5E = Height x Width
+	            0x01, 0x90, 0x01, 0x01, 0x11, 0x00, 0xFF, 0xC4, 0x00, 0xD2, 0x00, 0x00, 0x01, 0x05, 0x01, 0x01, 
 	            0x01, 0x01, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x02, 0x03, 0x04, 
 	            0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x10, 0x00, 0x02, 0x01, 0x03, 0x03, 0x02, 0x04, 0x03, 
 	            0x05, 0x05, 0x04, 0x04, 0x00, 0x00, 0x01, 0x7D, 0x01, 0x02, 0x03, 0x00, 0x04, 0x11, 0x05, 0x12, 
@@ -295,7 +216,7 @@ namespace BlueCode
             };
 
             // Allocate enough space for worst case expansion
-            byte[] bout = new byte[len * 2 + header.Length];
+            byte[] bout = new byte[len * 2 + HEADER.Length];
 
             int off = header.Length;
             Array.Copy(header, bout, off);
@@ -308,10 +229,7 @@ namespace BlueCode
             {
                 bout[off++] = bin[i];
                 if (bin[i] == 0xff)
-                {
                     bout[off++] = 0;
-                    //Console.WriteLine("Stuffed at " + i);
-                }
             }
 
             bout[off++] = 0xFF;
@@ -420,14 +338,14 @@ namespace BlueCode
             {
                 Byte[] buf = m_udp.EndReceive(ar, ref m_ep);
 
-                if (buf.Length == 0x534)
+                if (buf.Length == 1432)
                 {
-                    //receive(buf, buf.Length, true);
+                    receive(buf, buf.Length, true);
                 }
                 else
                 {
                     ; // Console.WriteLine(System.Text.Encoding.Default.GetString(buf));
-                    if (buf.Length > 0x534)
+                    if (buf.Length > 1415)
                         Console.WriteLine("WTF buffer is " + buf.Length);
                 }
             }

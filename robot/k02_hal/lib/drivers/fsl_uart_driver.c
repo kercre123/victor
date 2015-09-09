@@ -105,8 +105,8 @@ uart_status_t UART_DRV_Init(uint32_t instance, uart_state_t * uartStatePtr,
     UART_HAL_Init(baseAddr);
 
     /* Create Semaphore for txIrq and rxIrq. */
-    //OSA_SemaCreate(&uartStatePtr->txIrqSync, 0);
-    //OSA_SemaCreate(&uartStatePtr->rxIrqSync, 0);
+    OSA_SemaCreate(&uartStatePtr->txIrqSync, 0);
+    OSA_SemaCreate(&uartStatePtr->rxIrqSync, 0);
 
     /* UART clock source is either system or bus clock depending on instance */
     uartSourceClock = CLOCK_SYS_GetUartFreq(instance);
@@ -208,8 +208,8 @@ void UART_DRV_Deinit(uint32_t instance)
     UART_HAL_DisableReceiver(baseAddr);
 
     /* Destroy TX and RX sema. */
-    //OSA_SemaDestroy(&uartState->txIrqSync);
-    //OSA_SemaDestroy(&uartState->rxIrqSync);
+    OSA_SemaDestroy(&uartState->txIrqSync);
+    OSA_SemaDestroy(&uartState->rxIrqSync);
 
 #if FSL_FEATURE_UART_HAS_FIFO
     /* Disable the FIFOs; should be done after disabling the TX/RX */
@@ -286,11 +286,11 @@ uart_status_t UART_DRV_SendDataBlocking(uint32_t instance,
 
     if (retVal == kStatus_UART_Success)
     {
-        /* Wait until the transmit is complete.
+        /* Wait until the transmit is complete. */
         do
         {
             syncStatus = OSA_SemaWait(&uartState->txIrqSync, timeout);
-        }while(syncStatus == kStatus_OSA_Idle); */
+        }while(syncStatus == kStatus_OSA_Idle);
 
         if (syncStatus != kStatus_OSA_Success)
         {
@@ -443,11 +443,11 @@ uart_status_t UART_DRV_ReceiveDataBlocking(uint32_t instance, uint8_t * rxBuff,
     if (retVal == kStatus_UART_Success)
     {
         /* Wait until all the data is received or for timeout.*/
-        /*do
+        do
         {
             syncStatus = OSA_SemaWait(&uartState->rxIrqSync, timeout);
         }while(syncStatus == kStatus_OSA_Idle);
-        */
+
         if (syncStatus != kStatus_OSA_Success)
         {
             /* Disable receive data full and rx overrun interrupt */
@@ -668,7 +668,7 @@ static void UART_DRV_CompleteSendData(uint32_t instance)
     /* Signal the synchronous completion object. */
     if (uartState->isTxBlocking)
     {
-        //OSA_SemaPost(&uartState->txIrqSync);
+        OSA_SemaPost(&uartState->txIrqSync);
     }
 
     /* Update the information of the module driver state */
@@ -771,7 +771,7 @@ static void UART_DRV_CompleteReceiveData(uint32_t instance)
     /* Signal the synchronous completion object. */
     if (uartState->isRxBlocking)
     {
-        //OSA_SemaPost(&uartState->rxIrqSync);
+        OSA_SemaPost(&uartState->rxIrqSync);
     }
 
     /* Update the information of the module driver state */

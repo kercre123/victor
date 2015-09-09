@@ -182,14 +182,14 @@ extern "C" {
 /* SIM_SOPT2: PLLFLLSEL=0,TRACECLKSEL=0,CLKOUTSEL=0 */
   #define SYSTEM_SIM_SOPT2_VALUE       0x00U               /* SIM_SOPT2 */
 #elif (CLOCK_SETUP == 1)
-  #define DEFAULT_SYSTEM_CLOCK         96000000u           /* Default System clock value */
-  #define MCG_MODE                     MCG_MODE_FEI /* Clock generator mode */
-  /* MCG_C1: CLKS=0,FRDIV=0,IREFS=1,IRCLKEN=1,IREFSTEN=0 */
-  #define SYSTEM_MCG_C1_VALUE          0x06U               /* MCG_C1 */
+  #define DEFAULT_SYSTEM_CLOCK         80000000u           /* Default System clock value */
+  #define MCG_MODE                     MCG_MODE_FEE /* Clock generator mode */
+  /* MCG_C1: CLKS=0,FRDIV=3,IREFS=0,IRCLKEN=1,IREFSTEN=0 */
+  #define SYSTEM_MCG_C1_VALUE          0x1AU               /* MCG_C1 */
   /* MCG_C2: LOCRE0=0,FCFTRIM=0,RANGE=2,HGO=0,EREFS=1,LP=0,IRCS=0 */
   #define SYSTEM_MCG_C2_VALUE          0x24U               /* MCG_C2 */
-  /* MCG_C4: DMX32=1,DRST_DRS=3,FCTRIM=0,SCFTRIM=0 */
-  #define SYSTEM_MCG_C4_VALUE          0xE0U               /* MCG_C4 */
+  /* MCG_C4: DMX32=0,DRST_DRS=3,FCTRIM=0,SCFTRIM=0 */
+  #define SYSTEM_MCG_C4_VALUE          0x60U               /* MCG_C4 */
   /* MCG_SC: ATME=0,ATMS=0,ATMF=0,FLTPRSRV=0,FCRDIV=0,LOCS0=0 */
   #define SYSTEM_MCG_SC_VALUE          0x00U               /* MCG_SC */
 /* MCG_C5:  */
