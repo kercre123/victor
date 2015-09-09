@@ -508,6 +508,7 @@
             'libraries': [
               'libCppController.dylib',
               '<@(opencv_libs)',
+              '<@(face_library_libs)',
             ],
           }, # end controller Keyboard
 
@@ -517,7 +518,7 @@
             'include_dirs': [
               '<@(webots_includes)',
               '<@(opencv_includes)',
-              '<(cti-cozmo_engine_path)/simulator/include'
+              '<(cti-cozmo_engine_path)/simulator/include',
             ],
             'dependencies': [
               'cozmoGame',
@@ -759,7 +760,8 @@
                 # The FacioMetric dynamic libs are expected to be in a "lib"
                 # subdirectory of the executable directory, so make a symlink
                 # to their location in the same directory where we put the
-                # game engine controller
+                # game engine and keyboard controller, since those both depend
+                # on the vision libraries, which pull in faciometric stuff
                 'action_name': 'create_symlink_webotsCtrlGameEngine_facioMetricLibs',
                 'inputs': [ ],
                 'outputs': [ ],
@@ -778,6 +780,28 @@
                       'echo',
                       '"Skipping Faciometric-specific action."'
                     ],
+                  }],
+                ],
+              },
+              {
+                'action_name': 'create_symlink_webotsCtrlKeyboard_facioMetricLibs',
+                'inputs': [ ],
+                'outputs': [ ],
+                'conditions': [
+                  ['face_library=="faciometric"', {
+                    'action': [
+                      'ln',
+                      '-s',
+                      '-f',
+                      '<(face_library_lib_path)',
+                      '../../simulator/controllers/webotsCtrlKeyboard/',
+                    ],
+                  },
+                  { # else
+                    'action': [
+                      'echo',
+                        '"Skipping Faciometric-specific action."'
+                      ],
                   }],
                 ],
               },
