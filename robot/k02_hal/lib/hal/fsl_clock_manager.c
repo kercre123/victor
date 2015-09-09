@@ -135,11 +135,11 @@ clock_manager_error_code_t CLOCK_SYS_UpdateConfiguration(uint8_t targetConfigInd
         (policy == kClockManagerPolicyForcible))
     {
         /* clock mode switch. */
-        OSA_EnterCritical(kCriticalDisableInt);
+        //OSA_EnterCritical(kCriticalDisableInt);
         CLOCK_SYS_SetConfiguration(&g_clockState.configTable[targetConfigIndex]);
 
         g_clockState.curConfigIndex = targetConfigIndex;
-        OSA_ExitCritical(kCriticalDisableInt);
+        //OSA_ExitCritical(kCriticalDisableInt);
 
         notifyStruct.notifyType = kClockManagerNotifyAfter;
 
