@@ -22,16 +22,20 @@
 #if FACE_TRACKER_PROVIDER == FACE_TRACKER_FACIOMETRIC
 // FacioMetric
 #  define ESTIMATE_EMOTION 0
-#  define ESTIMATE_GAZE 0
+#  define ESTIMATE_GAZE    0
+#  define DO_RECOGNITION   0
 
 #  include <intraface/core/core.h>
 #  include <intraface/core/LocalManager.h>
-#  include <intraface/facerecog/SubjectSerializer.h>
-#  include <intraface/facerecog/FaceRecog.h>
-#  include <intraface/facerecog/SubjectRecogData.h>
-#  include <intraface/facerecog/Macros.h>
-#  include <fstream>
-#  include <dirent.h>
+
+#  if DO_RECOGNITION
+#    include <intraface/facerecog/SubjectSerializer.h>
+#    include <intraface/facerecog/FaceRecog.h>
+#    include <intraface/facerecog/SubjectRecogData.h>
+#    include <intraface/facerecog/Macros.h>
+#    include <fstream>
+#    include <dirent.h>
+#  endif
 
 #  if ESTIMATE_GAZE
 #    include <intraface/gaze/gaze.h>
@@ -99,9 +103,11 @@ namespace Vision {
     facio::emoScores _Emo; // Emotions to show
 #   endif
     
+#   if DO_RECOGNITION
     facio::FaceRecog* _fr;
     std::vector<facio::SubjectRecogData> _recognizableFaces;
     std::string _recognizedFacesPath;
+#   endif
     
     //const std::string _modelPath;
     
@@ -122,6 +128,7 @@ namespace Vision {
   facio::LocalManager FaceTracker::Impl::_lm;
   
   
+# if DO_RECOGNITION
   //! This function gives a vector with all the files inside a given folder
   /*!
    \param path  Path of the folder you want to search the files.
@@ -342,6 +349,8 @@ namespace Vision {
     return subjectCreated;
   } // enrollSubject()
   
+# endif // DO_RECOGNITION
+  
   FaceTracker::Impl::Impl(const std::string& modelPath)
   //: _displayEnabled(false)
   {
@@ -384,12 +393,15 @@ namespace Vision {
     _ed  = new ED((subPath + "emo_model.bin").c_str(), &_lm);
 #   endif
     
+#   if DO_RECOGNITION
     // Initialize Face Recognition
     _fr = new facio::FaceRecog(subPath);
 
     // Load any faces we already know about
     _recognizedFacesPath = subPath + "fr_data";
     _recognizableFaces = loadEnrolledSubjectsFromFolder(_recognizedFacesPath);
+#   endif
+    
   }
   
   
@@ -410,7 +422,9 @@ namespace Vision {
     Util::SafeDelete(_ed);
 #   endif
     
+#   if DO_RECOGNITION
     Util::SafeDelete(_fr);
+#   endif
     
   }
   
@@ -599,6 +613,7 @@ namespace Vision {
       _ge->compute(landmarks, irises, headPose, gazes);
 #     endif
       
+#     if DO_RECOGNITION
       // Save ImRawData to create the subject in the future for several frames
       // and store it to the vector
       facio::ImRawData ird;
@@ -627,6 +642,7 @@ namespace Vision {
           return RESULT_FAIL;
         }
       }
+#     endif // DO_RECOGNITION
       
     } // for each face
     
