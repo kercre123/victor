@@ -30,6 +30,8 @@
 #  include <intraface/facerecog/FaceRecog.h>
 #  include <intraface/facerecog/SubjectRecogData.h>
 #  include <intraface/facerecog/Macros.h>
+#  include <fstream>
+#  include <dirent.h>
 
 #  if ESTIMATE_GAZE
 #    include <intraface/gaze/gaze.h>
@@ -97,6 +99,10 @@ namespace Vision {
     facio::emoScores _Emo; // Emotions to show
 #   endif
     
+    facio::FaceRecog* _fr;
+    std::vector<facio::SubjectRecogData> _recognizableFaces;
+    std::string _recognizedFacesPath;
+    
     //const std::string _modelPath;
     
     static int _faceCtr;
@@ -116,6 +122,226 @@ namespace Vision {
   facio::LocalManager FaceTracker::Impl::_lm;
   
   
+  //! This function gives a vector with all the files inside a given folder
+  /*!
+   \param path  Path of the folder you want to search the files.
+   
+   \return std::vector<std::string> Vector containing all the files inside the given folder
+   */
+  std::vector<std::string> getSubjectsPaths(std::string path)
+  {
+    
+    DIR*    dir;
+    dirent* pdir;
+    std::vector<std::string> files;
+    
+    dir = opendir(path.c_str());
+    
+    
+    if (dir == NULL) // if pent has not been initialised correctly
+    {
+      printf ("ERROR! Couldn't get Library");
+      exit (0);
+    }
+    
+    
+    while ((pdir = readdir(dir))) {
+      std::string s(pdir->d_name);
+      if(s.substr(s.find_last_of(".") + 1) == "dat")
+      {
+        files.push_back(path + "/" + s);
+      }
+    }
+    
+    return files;
+  } // getSubjectsPaths()
+  
+  
+  //! This function loads all the subject files from the given folder
+  /*!
+   \param folder Path of the folder you want to search the files.
+   
+   \return std::vector<facio::SubjectRecogData> Vector containing the loaded subjects
+   */
+  std::vector<facio::SubjectRecogData> loadEnrolledSubjectsFromFolder(std::string folder)
+  {
+    
+    std::vector<facio::SubjectRecogData> vectorSubjectRecogData;
+    
+    //Init SubjectSerializer
+    std::unique_ptr<facio::SubjectSerializer> subjectSerializer(new facio::SubjectSerializer());
+    
+    //Get the path of the subjects
+    std::vector<std::string> subjectsPaths = getSubjectsPaths(folder);
+    
+    for (int i=0; i< (int) subjectsPaths.size();i++)
+    {
+      //We load every subject
+      std::ifstream infile (subjectsPaths[i],std::ifstream::binary);
+      
+      if(infile.is_open()){
+        
+        char* bufferSizeMetaData = new char[sizeof(size_t)];
+        char* bufferSizeData = new char[sizeof(size_t)];
+        
+        //We get the MetaData of the subject
+        infile.read(bufferSizeMetaData, (long)sizeof(size_t));
+        size_t* sizeMetadata = (size_t *) bufferSizeMetaData;
+        
+        char *bufferMetaData = new char[*sizeMetadata];
+        infile.read(bufferMetaData,(long)*sizeMetadata);
+        
+        //We get the Data of the subject
+        infile.read(bufferSizeData, (long)sizeof(size_t));
+        size_t* sizeData = (size_t *) bufferSizeData;
+        
+        char *bufferData = new char[*sizeData];
+        infile.read(bufferData,(long)*sizeData);
+        
+        //Close file
+        infile.close();
+        
+        facio::SubjectRecogData subjectData;
+        
+        //Now we deserialize the data (It will return 1 if everything is correct
+        int successDeserialize = subjectSerializer->deserialize(bufferMetaData, bufferData, subjectData);
+        if( successDeserialize == 0){
+          //We add the current Deserialized subject to the vector
+          vectorSubjectRecogData.push_back(subjectData);
+          
+        }else{
+          std::cout << "There was a problem deserializing the subject with error: " << successDeserialize << std::endl;
+        }
+      }
+    }
+    
+    return vectorSubjectRecogData;
+  } // loadEnrolledSubjectsFromFolder()
+  
+  
+  //! This function perfom the recognition of the subject
+  /*!
+   \param faceRecog  Recognizer object to create the subject and perform the recognition.
+   \param imRDList  Vector containing the ImRawData necessary to create the subject that will be recognized.
+   \param vectorSubjectRecogData  Vector containing all the subject to recognize with.
+   */
+  int doRecognition(facio::FaceRecog &faceRecog,
+                     std::vector<facio::ImRawData> imRDList,
+                     std::vector<facio::SubjectRecogData> vectorSubjectRecogData,
+                     std::vector<float>& scores)
+  {
+    // Index of the subject recornized (if it is not recognized it will be set to -1)
+    int subject = -1;
+    
+    bool status = false;
+    
+    //Perform recognition
+    std::cout << "Performing recognition with " << imRDList.size() << " images" << std::endl;
+    //We prepare the subject that we will recognize
+    facio::SubjectRecogData subjectDataToRecognize;
+    std::string label("ToRecognize");
+    
+    bool subjectCreated = faceRecog.processSubjectRecogData(imRDList, label, subjectDataToRecognize);
+    
+    if(subjectCreated){
+      
+      //Perform recodnition
+      status = faceRecog.predict(subjectDataToRecognize, vectorSubjectRecogData, subject, scores);
+      if(status)
+      {
+        if (subject != -1) {
+          std::cout << vectorSubjectRecogData[subject].getLabel() << std::endl;
+        } else {
+          std::cout << "Subject not found" << std::endl;
+        }
+        for (int i = 0; i < (int) scores.size(); i++) {
+          std::cout << "Subject " << vectorSubjectRecogData[i].getLabel() << " with score " << scores[i] << std::endl;
+        }
+      }
+      else
+      {
+        std::cout<<"No valid inputs in predict function"<<std::endl;
+      }
+      
+    }else{
+      std::cout << "The subject could not be created for recognition." << std::endl;
+    }
+    
+    return subject;
+  } // doRecognition()
+  
+  //! This function asks for a name and enrolls de subject to the given folder
+  /*!
+   \param faceRecog  Recognizer that will create the subject that we will enroll.
+   \param imRDList  Vector containing the ImRawData necessary to create the subject that we will enroll.
+   \param folder Path of the folder we save the enrolled objects.
+   */
+  bool enrollSubject(facio::FaceRecog &faceRecog,
+                     std::vector<facio::ImRawData> imRDList,
+                     std::string folder,
+                     std::vector<facio::SubjectRecogData>& knownFaces)
+  {
+    std::string name;
+    facio::SubjectRecogData subjectDataToEnroll;
+    
+    //Get the name of the person
+    std::cout << "Name: " << std::endl;
+    std::cin >> name;
+    
+    // Fill the subjectDataToEnroll with the information
+    bool subjectCreated = faceRecog.processSubjectRecogData(imRDList, name, subjectDataToEnroll);
+    
+    
+    if(subjectCreated){
+      //Store in the given vector
+      knownFaces.push_back(subjectDataToEnroll);
+      
+      //Variables to save the information
+      char *subjectMetaData;
+      size_t subjectMetaDataSize;
+      char *subjectData;
+      size_t subjectDataSize;
+      
+      //Init SubjectSerializer
+      std::unique_ptr<facio::SubjectSerializer> subjectSerializer(new facio::SubjectSerializer());
+      
+      //We serialize the subject to save it to a file
+      if(subjectSerializer->serialize(subjectDataToEnroll,subjectMetaData, subjectMetaDataSize, subjectData, subjectDataSize) == 1){
+        
+        std::string fileToSave = folder+"/"+name+".dat";
+        
+        //Now we save the serialized data to a file for later use
+        std::ofstream outfile (fileToSave,std::ofstream::binary);
+        
+        //If we can open file
+        if(outfile.is_open()){
+          //Save size of metadata
+          outfile.write((char*)&subjectMetaDataSize,(long)sizeof(size_t));
+          //Save metadata
+          outfile.write(subjectMetaData,subjectMetaDataSize);
+          //Save size of data
+          outfile.write((char*)&subjectDataSize,(long)sizeof(size_t));
+          //Save data
+          outfile.write(subjectData,subjectDataSize);
+          
+          //Close file
+          outfile.close();
+          
+          //Enrollment done
+          std::cout << "You have successfully enrolled " << name << " to the following path " << fileToSave <<  std::endl;
+        }
+        else{
+          std::cout << "There was a problem, and you could not enroll "<< name << " to the data base" << std::endl;
+        }
+      }
+    }
+    else{
+      std::cout << "The subject could not be created for recognition." << std::endl;
+    }
+    
+    return subjectCreated;
+  } // enrollSubject()
+  
   FaceTracker::Impl::Impl(const std::string& modelPath)
   //: _displayEnabled(false)
   {
@@ -129,7 +355,7 @@ namespace Vision {
                         "Failed to load face cascade from %s\n",
                         cascadeFilename.c_str());
     }
-
+    
     // Tracker object, we are using a unique pointer(http://en.cppreference.com/w/cpp/memory/unique_ptr)
     // Please notice that the SDM class does not have an explicit constructor.
     // To get an instance of the SDM class, please use the function SDM::getInstance
@@ -158,15 +384,21 @@ namespace Vision {
     _ed  = new ED((subPath + "emo_model.bin").c_str(), &_lm);
 #   endif
     
+    // Initialize Face Recognition
+    _fr = new facio::FaceRecog(subPath);
+
+    // Load any faces we already know about
+    _recognizedFacesPath = subPath + "fr_data";
+    _recognizableFaces = loadEnrolledSubjectsFromFolder(_recognizedFacesPath);
   }
   
-
+  
   
   FaceTracker::Impl::~Impl()
   {
     //if(_sdm) delete _sdm; // points to a singleton, so don't delete, call ~SDM();
     //_sdm->~SDM();
-
+    
     Util::SafeDelete(_hpe);
     
 #   if ESTIMATE_GAZE
@@ -177,7 +409,9 @@ namespace Vision {
 #   if ESTIMATE_EMOTION
     Util::SafeDelete(_ed);
 #   endif
-
+    
+    Util::SafeDelete(_fr);
+    
   }
   
   // For arbitrary indices
@@ -210,7 +444,7 @@ namespace Vision {
     if(closed) {
       pointVec.emplace_back(x[fromIndex], y[fromIndex]);
     }
-
+    
     return pointVec;
   }
   
@@ -364,6 +598,36 @@ namespace Vision {
       facio::EyeGazes gazes;
       _ge->compute(landmarks, irises, headPose, gazes);
 #     endif
+      
+      // Save ImRawData to create the subject in the future for several frames
+      // and store it to the vector
+      facio::ImRawData ird;
+      ird.im = frame.clone();
+      ird.lmks = landmarks.clone();
+      ird.score = score;
+      ird.hpData.rot = headPose.rot.clone();
+      ird.hpData.angles = headPose.angles;
+      ird.hpData.xyz = headPose.xyz;
+      std::vector<facio::ImRawData> currentRecogData{ird};
+
+      // Vector of the scores resulting from the recognition
+      std::vector<float> scores;
+      
+      // Index of the subject recornized (if it is not recognized it will be set to -1)
+      int subject = doRecognition(*_fr, currentRecogData, _recognizableFaces, scores);
+      
+      if(subject != -1) {
+        face.SetID(subject);
+      } else {
+        if(false == enrollSubject(*_fr, currentRecogData, _recognizedFacesPath,
+                                  _recognizableFaces))
+        {
+          PRINT_NAMED_ERROR("FaceTracker.Impl.Update",
+                            "Failed to enroll new subject.");
+          return RESULT_FAIL;
+        }
+      }
+      
     } // for each face
     
     return RESULT_OK;
