@@ -24,6 +24,11 @@ PROTO WebotsKeyboardController [
   # At 0, it won't turn at all.
   field SFFloat steeringCurvature 1.0
 
+  # Offset at which to place an object on the ground
+  # when performing pickAndPlace on an object with placeObjectOnGroundIfCarrying enabled.
+  # Only works if actually carrying an object!
+  field SFFloat placeOnGroundOffsetX_mm 88
+
   # Hacky way for me to modify values that I want to send to robot via keyboard controller
   field SFFloat lWheelKp 0.0005
   field SFFloat lWheelKi 0.00005

@@ -93,7 +93,7 @@ namespace AnimationTool
 
             Sequencer.ExtraProceduralFaceData extraData = new Sequencer.ExtraProceduralFaceData(current);
 
-            ActionManager.Do(new FaceAnimation.EnableChart(cProceduralFace, faceAnimation.checkBox), true);
+            ActionManager.Do(new Sequencer.EnableChart(cProceduralFace, proceduralFace.checkBox), true);
             ActionManager.Do(new Sequencer.AddDataPoint(cProceduralFace, extraData, current.triggerTime_ms * 0.001D, false), true);
         }
 
