@@ -776,10 +776,20 @@ namespace Anki {
       SendMessage(message);
     }
     
-    void UiGameController::SendPickAndPlaceObject(const s32 objectID, const bool usePreDockPose, const bool useManualSpeed)
+    void UiGameController::SendPickAndPlaceObject(const s32 objectID,
+                                                  const bool usePreDockPose,
+                                                  const f32 placementOffsetX_mm,
+                                                  const f32 placementOffsetY_mm,
+                                                  const f32 placementOffsetAngle_rad,
+                                                  const bool placeOnGroundIfCarrying,
+                                                  const bool useManualSpeed)
     {
       ExternalInterface::PickAndPlaceObject m;
       m.usePreDockPose = static_cast<u8>(usePreDockPose);
+      m.placeOnGroundIfCarrying = static_cast<u8>(placeOnGroundIfCarrying);
+      m.placementOffsetX_mm = placementOffsetX_mm;
+      m.placementOffsetY_mm = placementOffsetY_mm;
+      m.placementOffsetAngle_rad = placementOffsetAngle_rad;
       m.useManualSpeed = static_cast<u8>(useManualSpeed);
       m.objectID = objectID;
       ExternalInterface::MessageGameToEngine message;
@@ -787,9 +797,20 @@ namespace Anki {
       SendMessage(message);
     }
     
-    void UiGameController::SendPickAndPlaceSelectedObject(const bool usePreDockPose, const bool useManualSpeed)
+    void UiGameController::SendPickAndPlaceSelectedObject(const bool usePreDockPose,
+                                                          const f32 placementOffsetX_mm,
+                                                          const f32 placementOffsetY_mm,
+                                                          const f32 placementOffsetAngle_rad,
+                                                          const bool placeOnGroundIfCarrying,
+                                                          const bool useManualSpeed)
     {
-      SendPickAndPlaceObject(-1, usePreDockPose, useManualSpeed);
+      SendPickAndPlaceObject(-1,
+                             usePreDockPose,
+                             placementOffsetX_mm,
+                             placementOffsetY_mm,
+                             placementOffsetAngle_rad,
+                             placeOnGroundIfCarrying,
+                             useManualSpeed);
     }
 
     void UiGameController::SendRollObject(const s32 objectID, const bool usePreDockPose, const bool useManualSpeed)

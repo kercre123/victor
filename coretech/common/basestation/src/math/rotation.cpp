@@ -576,6 +576,33 @@ namespace Anki {
     
   }
   
+  RotationMatrix3d::RotationMatrix3d(const Radians& angleX, const Radians& angleY, const Radians& angleZ)
+  {
+    // For reference: http://staff.city.ac.uk/~sbbh653/publications/euler.pdf
+    
+    const f32 cY = std::cos(angleY.ToFloat());
+    const f32 sY = std::sin(angleY.ToFloat());
+    const f32 cX = std::cos(angleX.ToFloat());
+    const f32 sX = std::sin(angleX.ToFloat());
+    const f32 cZ = std::cos(angleZ.ToFloat());
+    const f32 sZ = std::sin(angleZ.ToFloat());
+    
+    // First row
+    operator()(0,0) = cY*cZ;
+    operator()(0,1) = sX*sY*cZ - cX*sZ;
+    operator()(0,2) = cX*sY*cZ + sX*sZ;
+    
+    // Second row
+    operator()(1,0) = cY*sZ;
+    operator()(1,1) = sX*sY*sZ + cX*cZ;
+    operator()(1,2) = cX*sY*sZ - sX*cZ;
+    
+    // Third row
+    operator()(2,0) = -sY;
+    operator()(2,1) = sX*cY;
+    operator()(2,2) = cX*cY;
+  }
+  
   RotationMatrix3d::RotationMatrix3d(std::initializer_list<float> initVals)
   : RotationMatrixBase<3>(initVals)
   {
@@ -607,46 +634,74 @@ namespace Anki {
   {
     return Radians( std::acos(0.5f*(this->Trace() - 1.f)) );
   }
-  
-  /*
-  // This is not working yet: perhaps because of a different definition of
-  // angle signs implicit in the way I did Euler angles inside of planar6dof
-  // tracker on the robot -- which is where this code originated.
-  void RotationMatrix3d::GetEulerAngles(Radians& angle_x, Radians& angle_y, Radians& angle_z) const
+
+  bool RotationMatrix3d::GetEulerAngles(Radians& angle_x,
+                                        Radians& angle_y,
+                                        Radians& angle_z,
+                                        Radians* angle_x2,
+                                        Radians* angle_y2,
+                                        Radians* angle_z2) const
   {
+    // For reference: http://staff.city.ac.uk/~sbbh653/publications/euler.pdf
+    
+    bool inGimbalLock = false;
+    
     const f32 R20 = (*this)(2,0);
     
-    if(fabs(fabs(R20) - 1.f) < 1e-6f) { // TODO: change to some utility macro/function like FLT_NEAR
-      
+    if(FLT_NEAR(std::abs(R20), 1.f))
+    {
+      // In gimbal lock, angle Z is arbitrary. Choose 0 by convention.
+      inGimbalLock = true;
       angle_z = 0.f;
+      
       const f32 R01 = (*this)(0,1);
       const f32 R02 = (*this)(0,2);
       
       if(R20 > 0) { // R(2,0) = +1
-        angle_y = M_PI_2;
-        angle_x = atan2f(R01, R02);
-      } else { // R(2,0) = -1
         angle_y = -M_PI_2;
-        angle_x = atan2f(-R01, -R02);
+        angle_x = std::atan2f(-R01, -R02);
+      } else { // R(2,0) = -1
+        angle_y = M_PI_2;
+        angle_x = std::atan2f(R01, R02);
       }
       
+      // Alternate solution is same in this case
+      if(angle_x2!=nullptr) {
+        *angle_x2 = angle_x;
+      }
+      if(angle_y2!=nullptr) {
+        *angle_y2 = angle_y;
+      }
+      if(angle_z2!=nullptr) {
+        *angle_z2 = angle_z;
+      }
+
     } else {
-      angle_y = -asinf(R20);
+      angle_y = -std::asinf(R20);
       
       const f32 R21 = (*this)(2,1);
       const f32 R22 = (*this)(2,2);
       const f32 R10 = (*this)(1,0);
       const f32 R00 = (*this)(0,0);
       
-      const f32 inv_cy = 1.f / cosf(angle_y.ToFloat());
-      angle_x = -atan2f(-R21*inv_cy, R22*inv_cy);
-      angle_z = -atan2f(-R10*inv_cy, R00*inv_cy);
+      const f32 inv_cy = 1.f / std::cosf(angle_y.ToFloat());
+      angle_x = std::atan2f(R21*inv_cy, R22*inv_cy);
+      angle_z = std::atan2f(R10*inv_cy, R00*inv_cy);
       
+      if(angle_x2 != nullptr) {
+        // If any is requested non-null, all must be
+        assert(angle_y2 != nullptr && angle_z2 != nullptr);
+        *angle_y2 = M_PI - angle_y;
+        
+        const f32 inv_cy2 = 1.f / std::cos(angle_y2->ToFloat());
+        *angle_x2 = std::atan2f(R21*inv_cy2, R22*inv_cy2);
+        *angle_z2 = std::atan2f(R10*inv_cy2, R00*inv_cy2);
+      }
     }
     
+    return inGimbalLock;
   } // RotationMatrix3d::GetEulerAngles()
-   */
-  
+
 
   Radians RotationMatrix3d::GetAngleAroundXaxis() const
   {

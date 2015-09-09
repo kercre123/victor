@@ -56,14 +56,14 @@ BehaviorLookAround::BehaviorLookAround(Robot& robot, const Json::Value& config)
     
   }
 }
-
+  
 bool BehaviorLookAround::IsRunnable(float currentTime_sec) const
 {
   switch (_currentState)
   {
     case State::Inactive:
     {
-      if (_lastLookAroundTime + kLookAroundCooldownDuration < currentTime_sec)
+      if ((_lastLookAroundTime == 0.f) || (_lastLookAroundTime + kLookAroundCooldownDuration < currentTime_sec))
       {
         return true;
       }
@@ -114,8 +114,8 @@ IBehavior::Status BehaviorLookAround::Update(float currentTime_sec)
       IActionRunner* moveHeadAction = new MoveHeadToAngleAction(0);
       _robot.GetActionList().QueueActionAtEnd(0, moveHeadAction);
       if (StartMoving() == RESULT_OK) {
-      _currentState = State::LookingForObject;
-    }
+        _currentState = State::LookingForObject;
+      }
     }
     // NOTE INTENTIONAL FALLTHROUGH
     case State::LookingForObject:
@@ -207,6 +207,14 @@ Result BehaviorLookAround::StartMoving()
       
       // Try another destination
       _currentDestination = GetNextDestination(_currentDestination);
+      
+      // Kinda hacky, but if we're on the last destination to go to, just quit because we're
+      // it always returns Center on the last destination and if we couldn't get there in
+      // in this loop it probably won't happen in the next.
+      if (_numDestinationsLeft == 1) {
+        _currentState = State::Inactive;
+      }
+      
       return RESULT_FAIL;
     }
   }

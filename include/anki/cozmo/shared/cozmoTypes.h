@@ -19,7 +19,8 @@ namespace Anki {
       DA_PICKUP_LOW = 0,  // Docking to block at level 0
       DA_PICKUP_HIGH,     // Docking to block at level 1
       DA_PLACE_HIGH,      // Placing block atop another block at level 0
-      DA_PLACE_LOW,       // Placing block on level 0
+      DA_PLACE_LOW,       // Placing block on level 0 (while docking to a block)
+      DA_PLACE_LOW_BLIND, // Placing block on level 0 (relative to some pose)
       DA_ROLL_LOW,        // Rolling a block at level 0 by pulling it towards you
       DA_RAMP_ASCEND,     // Going up a ramp
       DA_RAMP_DESCEND,    // Going down a ramp
@@ -125,7 +126,7 @@ namespace Anki {
       IS_PROX_FORWARD_BLOCKED = 0x00000010,
       IS_PROX_SIDE_BLOCKED    = 0x00000020,
       IS_ANIMATING            = 0x00000040,
-      IS_PERFORMING_ACTION    = 0x00000080,
+      IS_PATHING              = 0x00000080,
       LIFT_IN_POS             = 0x00000100,
       HEAD_IN_POS             = 0x00000200,
       IS_ANIM_BUFFER_FULL     = 0x00000400,

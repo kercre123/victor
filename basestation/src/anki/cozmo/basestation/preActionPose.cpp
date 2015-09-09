@@ -101,11 +101,19 @@ namespace Anki {
     
     
     PreActionPose::PreActionPose(const PreActionPose& canonicalPose,
-                                 const Pose3d& markerParentPose)
+                                 const Pose3d& markerParentPose,
+                                 const f32 offset_mm)
     : _type(canonicalPose.GetActionType())
     , _marker(canonicalPose.GetMarker())
-    , _poseWrtMarkerParent(markerParentPose*canonicalPose._poseWrtMarkerParent)
+    //, _poseWrtMarkerParent(markerParentPose*canonicalPose._poseWrtMarkerParent)
     {
+      // Extend pose translation by offset
+      Vec3f trans = canonicalPose._poseWrtMarkerParent.GetTranslation();
+      f32 length = trans.MakeUnitLength();
+      trans = trans * (length + offset_mm);
+      Pose3d canonicalPoseWithOffset(canonicalPose._poseWrtMarkerParent.GetRotationMatrix(), trans);
+      _poseWrtMarkerParent = markerParentPose * canonicalPoseWithOffset;
+      
       _poseWrtMarkerParent.SetParent(markerParentPose.GetParent());
       _poseWrtMarkerParent.SetName("PreActionPose");
       
