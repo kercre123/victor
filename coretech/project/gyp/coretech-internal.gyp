@@ -1,4 +1,9 @@
 {
+  'includes': [
+    'face-library.gypi',
+    'opencv.gypi',
+  ],
+  
   'variables': {
 
     'common_library_type': 'static_library',
@@ -34,44 +39,6 @@
       'ANKICORETECH_EMBEDDED_USE_OPENCV=1',
     ],
 
-    # TODO: should this be passed in, or shared?
-    'opencv_includes': [
-      # '<(coretech_external_path)/opencv-2.4.8/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/core/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/highgui/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/imgproc/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/contrib/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/calib3d/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/objdetect/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/video/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/features2d/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/flann/include',
-    ],
-    'opencv_libs': [
-      'libzlib.a',
-      'liblibjpeg.a',
-      'liblibpng.a',
-      'liblibtiff.a',
-      'liblibjasper.a',
-      'libIlmImf.a',
-      'libopencv_core.a',
-      'libopencv_imgproc.a',
-      'libopencv_highgui.a',
-      'libopencv_calib3d.a',
-      'libopencv_contrib.a',
-      'libopencv_objdetect.a',
-      'libopencv_video.a',
-      'libopencv_features2d.a',
-    ],
-    
-    # Here we pick which face library to use and set its path/includes/libs
-    # initially to empty. They will be filled in below in the 'conditions' as
-    # needed:
-    'face_library' : 'opencv', # one of: 'opencv', 'faciometric', or 'facesdk'
-    'face_library_path':      [ ],
-    'face_library_includes' : [ ],
-    'face_library_libs':      [ ],
-    
     'compiler_flags': [
       '-Wno-deprecated-declarations', # Supressed until system() usage is removed
       '-fdiagnostics-show-category=name',
@@ -115,34 +82,6 @@
     # Copy overridden vars into this scope
     'arch_group%': '<(arch_group)',
     'conditions': [
-      # Face libraries, depending on platform:
-      ['face_library=="faciometric"', {
-        'face_library_path': [
-          '<(coretech_external_path)/IntraFace',
-        ]
-      }],
-      ['OS=="mac" and face_library=="faciometric"', {
-        'face_library_includes': [
-          '<(face_library_path)/osx_demo_126/include',
-          '<(face_library_path)/osx_demo_126/3rdparty/Eigen3/include',
-        ],
-      }],
-      ['OS=="ios" and face_library=="faciometric"', {
-        'face_library_includes': [
-          '<(face_library_path)/IntraFace_126_iOS_Anki/Library/3rdparty/include',
-        ],
-        'face_library_libs': [
-          '<(face_library_path)/IntraFace_126_iOS_Anki/Library/intraface.framework',
-        ],
-      }],
-      ['face_library=="facesdk"', {
-        'face_library_includes': [
-          '<(coretech_external_path)/Luxand_FaceSDK/include/C',
-        ],
-      }],
-      ['OS=="android"', {
-
-      }],
     
       ['OS=="ios" and arch_group=="universal"', {
         'target_archs%': ['armv7', 'arm64'],
@@ -562,8 +501,12 @@
         '<(coretech_external_path)/matconvnet/matlab/src/bits',
         '<@(face_library_includes)',
       ],
-      'libraries': [
-        '<@(face_library_libs)',
+      'conditions': [
+        ['face_library=="facesdk"', {
+          'libraries': [
+            '<@(face_library_libs)',
+          ],
+        }],
       ],
       'direct_dependent_settings': {
         'include_dirs': [
