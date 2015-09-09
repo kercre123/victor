@@ -198,7 +198,6 @@
                 'LIBRARY_SEARCH_PATHS': [
                   '<@(cte_lib_search_path_ios_debug)',
                   '<(webots_path)/lib/',
-                  '<(face_library_lib_path)',
                 ],
               },
             }],
@@ -207,7 +206,6 @@
                 'LIBRARY_SEARCH_PATHS': [
                   '<@(cte_lib_search_path_mac_debug)',
                   '<(webots_path)/lib/',
-                  '<(face_library_lib_path)',
                 ],
               },
             }],
@@ -231,7 +229,6 @@
                 'LIBRARY_SEARCH_PATHS': [
                   '<@(cte_lib_search_path_ios_release)',
                   '<(webots_path)/lib/',
-                  '<(face_library_lib_path)',
                 ],
               },
             }],
@@ -240,7 +237,6 @@
                 'LIBRARY_SEARCH_PATHS': [
                   '<@(cte_lib_search_path_mac_release)',
                   '<(webots_path)/lib/',
-                  '<(face_library_lib_path)',
                 ],
               },
             }],
@@ -264,7 +260,6 @@
                 'LIBRARY_SEARCH_PATHS': [
                   '<@(cte_lib_search_path_ios_release)',
                   '<(webots_path)/lib/',
-                  '<(face_library_lib_path)',
                 ],
               },
             }],
@@ -273,7 +268,6 @@
                 'LIBRARY_SEARCH_PATHS': [
                   '<@(cte_lib_search_path_mac_release)',
                   '<(webots_path)/lib/',
-                  '<(face_library_lib_path)',
                 ],
               },
             }],
