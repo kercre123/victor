@@ -1,6 +1,7 @@
 {
-  'includes' : [
+  'includes': [
     '../../lib/anki/cozmo-engine/coretech/project/gyp/opencv.gypi',
+    '../../lib/anki/cozmo-engine/coretech/project/gyp/face-library.gypi'
   ],
 
   'variables': {
@@ -49,15 +50,6 @@
       '<(webots_path)/include/controller/cpp',
     ],
     
-    # Here we pick which face library to use and set its path/includes/libs
-    # initially to empty. They will be filled in below in the 'conditions' as
-    # needed:
-    # (NOTE: This is duplicated from coretech-internal.gyp!)
-    'face_library' : 'opencv', # one of: 'opencv', 'faciometric', or 'facesdk'
-    'face_library_path':      [ ],
-    'face_library_includes' : [ ],
-    'face_library_libs':      [ ],
-    
     'compiler_flags': [
       '-Wdeprecated-declarations',
       '-fdiagnostics-show-category=name',
@@ -102,46 +94,7 @@
     'arch_group%': '<(arch_group)',
     
     'conditions': [
-      # Face libraries, depending on platform:
-      ['face_library=="faciometric"', {
-        'face_library_path': [
-          '<(coretech_external_path)/IntraFace',
-        ],
-      }],
-      ['OS=="mac" and face_library=="facesdk"', {
-        'face_library_libs': [
-          '<(coretech_external_path)/Luxand_FaceSDK/bin/osx_x86_64/libfsdk.dylib',
-        ],
-      }],
-      ['OS=="mac" and face_library=="faciometric"', {
-        'face_library_includes': [
-          '<(face_library_path)/osx_demo_126/include',
-        ],
-        'face_library_libs': [
-          '<(face_library_path)/osx_demo_126/lib/libintraface_core126.dylib',
-          '<(face_library_path)/osx_demo_126/lib/libintraface_emo126.dylib',
-          '<(face_library_path)/osx_demo_126/lib/libintraface_gaze126.dylib',
-        ],
-      }],
-      ['OS=="ios" and face_library=="facesdk"', {
-        'face_library_libs': [
-          # TODO: handle different architectures
-          '<(coretech_external_path)/Luxand_FaceSDK/bin/iOS/libfsdk-static.a',
-        ],
-      }],
-      ['OS=="ios" and face_library=="faciometric"', {
-        'face_library_libs': [
-          '<(face_library_path)/IntraFace_126_iOS_Anki/Library/intraface.framework',
-        ],
-      }],
-      ['OS=="android" and face_library=="facesdk"', {
-        'face_library_libs': [
-          # TODO: handle different architectures
-          '<(coretech_external_path)/Luxand_FaceSDK/bin/Android/armeabi-v7a/libfsdk.so',
-          '<(coretech_external_path)/Luxand_FaceSDK/bin/Android/armeabi-v7a/libstlport_shared.so',
-        ],
-      }],
-      
+    
       ['OS=="ios" and arch_group=="universal"', {
         'target_archs%': ['armv7', 'arm64'],
       }],
@@ -242,12 +195,20 @@
           'conditions': [
             ['OS=="ios"', {
               'xcode_settings': {
-                'LIBRARY_SEARCH_PATHS': [ '<@(cte_lib_search_path_ios_debug)', '<(webots_path)/lib/' ],
+                'LIBRARY_SEARCH_PATHS': [
+                  '<@(cte_lib_search_path_ios_debug)',
+                  '<(webots_path)/lib/',
+                  '<(face_library_lib_path)',
+                ],
               },
             }],
             ['OS=="mac"', {
               'xcode_settings': {
-                'LIBRARY_SEARCH_PATHS': [ '<@(cte_lib_search_path_mac_debug)', '<(webots_path)/lib/' ],
+                'LIBRARY_SEARCH_PATHS': [
+                  '<@(cte_lib_search_path_mac_debug)',
+                  '<(webots_path)/lib/',
+                  '<(face_library_lib_path)',
+                ],
               },
             }],
           ],
@@ -267,12 +228,20 @@
           'conditions': [
             ['OS=="ios"', {
               'xcode_settings': {
-                'LIBRARY_SEARCH_PATHS': [ '<@(cte_lib_search_path_ios_release)', '<(webots_path)/lib/' ],
+                'LIBRARY_SEARCH_PATHS': [
+                  '<@(cte_lib_search_path_ios_release)',
+                  '<(webots_path)/lib/',
+                  '<(face_library_lib_path)',
+                ],
               },
             }],
             ['OS=="mac"', {
               'xcode_settings': {
-                'LIBRARY_SEARCH_PATHS': [ '<@(cte_lib_search_path_mac_release)', '<(webots_path)/lib/' ],
+                'LIBRARY_SEARCH_PATHS': [
+                  '<@(cte_lib_search_path_mac_release)',
+                  '<(webots_path)/lib/',
+                  '<(face_library_lib_path)',
+                ],
               },
             }],
           ],
@@ -292,12 +261,20 @@
           'conditions': [
             ['OS=="ios"', {
               'xcode_settings': {
-                'LIBRARY_SEARCH_PATHS': [ '<@(cte_lib_search_path_ios_release)', '<(webots_path)/lib/' ],
+                'LIBRARY_SEARCH_PATHS': [
+                  '<@(cte_lib_search_path_ios_release)',
+                  '<(webots_path)/lib/',
+                  '<(face_library_lib_path)',
+                ],
               },
             }],
             ['OS=="mac"', {
               'xcode_settings': {
-                'LIBRARY_SEARCH_PATHS': [ '<@(cte_lib_search_path_mac_release)', '<(webots_path)/lib/' ],
+                'LIBRARY_SEARCH_PATHS': [
+                  '<@(cte_lib_search_path_mac_release)',
+                  '<(webots_path)/lib/',
+                  '<(face_library_lib_path)',
+                ],
               },
             }],
           ],
@@ -860,7 +837,7 @@
             {
               'action_name': 'copy_faciometric_models',
               'inputs': [
-                '<(face_library_path)/models',
+                '<(face_library_path)/Demo/models',
               ],
               'outputs': [
                 '../../lib/anki/cozmo-engine/resources/config/basestation/vision/faciometric',
