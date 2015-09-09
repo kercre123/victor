@@ -121,7 +121,7 @@ IBehavior* DemoBehaviorChooser::ChooseNextBehavior(double currentTime_sec) const
 
 Result DemoBehaviorChooser::AddBehaviorLookAround(BehaviorLookAround* behavior)
 {
-  Result addResult = AddBehavior(behavior);
+  Result addResult = ReactionaryBehaviorChooser::AddBehavior(behavior);
   if (Result::RESULT_OK == addResult)
   {
     _behaviorLookAround = behavior;
@@ -131,7 +131,7 @@ Result DemoBehaviorChooser::AddBehaviorLookAround(BehaviorLookAround* behavior)
 
 Result DemoBehaviorChooser::AddBehaviorLookForFaces(BehaviorLookForFaces* behavior)
 {
-  Result addResult = AddBehavior(behavior);
+  Result addResult = ReactionaryBehaviorChooser::AddBehavior(behavior);
   if (Result::RESULT_OK == addResult)
   {
     _behaviorLookForFaces = behavior;
@@ -141,7 +141,7 @@ Result DemoBehaviorChooser::AddBehaviorLookForFaces(BehaviorLookForFaces* behavi
 
 Result DemoBehaviorChooser::AddBehaviorOCD(BehaviorOCD* behavior)
 {
-  Result addResult = AddBehavior(behavior);
+  Result addResult = ReactionaryBehaviorChooser::AddBehavior(behavior);
   if (Result::RESULT_OK == addResult)
   {
     _behaviorOCD = behavior;
@@ -151,12 +151,18 @@ Result DemoBehaviorChooser::AddBehaviorOCD(BehaviorOCD* behavior)
 
 Result DemoBehaviorChooser::AddBehaviorFidget(BehaviorFidget* behavior)
 {
-  Result addResult = AddBehavior(behavior);
+  Result addResult = ReactionaryBehaviorChooser::AddBehavior(behavior);
   if (Result::RESULT_OK == addResult)
   {
     _behaviorFidget = behavior;
   }
   return addResult;
+}
+  
+Result DemoBehaviorChooser::AddBehavior(IBehavior* newBehavior)
+{
+  PRINT_NAMED_ERROR("DemoBehaviorChooser.AddBehavior", "DemoBehaviorChooser has unique methods for adding behaviors. Use those instead.");
+  return Result::RESULT_FAIL;
 }
 
 } // namespace Cozmo

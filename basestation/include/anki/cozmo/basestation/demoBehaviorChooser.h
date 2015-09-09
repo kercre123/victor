@@ -34,8 +34,8 @@ public:
   DemoBehaviorChooser(Robot& robot);
   
   virtual IBehavior* ChooseNextBehavior(double currentTime_sec) const override;
-  
   virtual Result Update(double currentTime_sec) override;
+  virtual Result AddBehavior(IBehavior* newBehavior) override;
   
   Result AddBehaviorLookAround(BehaviorLookAround* behavior);
   Result AddBehaviorLookForFaces(BehaviorLookForFaces* behavior);
