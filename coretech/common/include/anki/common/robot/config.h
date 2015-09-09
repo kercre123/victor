@@ -13,7 +13,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #ifndef _ANKICORETECHEMBEDDED_COMMON_CONFIG_H_
 #define _ANKICORETECHEMBEDDED_COMMON_CONFIG_H_
 
-//
+// 
 // Compiler-specific configuration, with various defines that make different compilers work on the same code
 //
 
