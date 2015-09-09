@@ -60,12 +60,6 @@ namespace Vision {
   
 #if FACE_TRACKER_PROVIDER == FACE_TRACKER_FACIOMETRIC
   
-  static const cv::Scalar BLUE(255, 0, 0); ///< Definition of the blue color
-  static const cv::Scalar GREEN(0, 255, 0); ///< Definition of the green color
-  static const cv::Scalar RED(0, 0, 255); ///< Definition of the red color
-  static const cv::Scalar FACECOLOR(50, 255, 50); ///< Definition of the face color
-  static const cv::Scalar GAZECOLOR(255, 0, 255); ///< Definition of the gaze color
-  
   class FaceTracker::Impl
   {
   public:
