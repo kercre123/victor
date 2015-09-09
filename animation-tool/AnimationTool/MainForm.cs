@@ -131,9 +131,9 @@ namespace AnimationTool
             bodyMotion.panel.Controls.Add(cBodyMotion);
             bodyMotion.checkBox.CheckedChanged += BodyMotionCheckBox;
             proceduralFace.panel.Controls.Add(cProceduralFace);
-            proceduralFace.checkBox.CheckedChanged += FaceAnimationDataCheckBox;
+            proceduralFace.checkBox.CheckedChanged += ProceduralFaceCheckBox;
             faceAnimation.panel.Controls.Add(cFaceAnimation);
-            faceAnimation.checkBox.CheckedChanged += FaceAnimationImageCheckBox;
+            faceAnimation.checkBox.CheckedChanged += FaceAnimationCheckBox;
             audioRobot.panel.Controls.Add(cAudioRobot);
             audioRobot.checkBox.CheckedChanged += AudioRobotCheckBox;
             audioDevice.panel.Controls.Add(cAudioDevice);
@@ -187,7 +187,7 @@ namespace AnimationTool
             cProceduralFace.ChartAreas[0].AxisY.Maximum = Properties.Settings.Default.maxTime;
             cProceduralFace.ChartAreas[0].AxisY.LabelStyle.Interval = interval;
             ActionManager.Do(new DisableChart(cProceduralFace, proceduralFace.checkBox), true);
-            ActionManager.Do(new FaceAnimation.EnableChart(cProceduralFace, proceduralFace.checkBox), true);
+            ActionManager.Do(new Sequencer.EnableChart(cProceduralFace, proceduralFace.checkBox), true);
             channelList.Add(cProceduralFace);
 
             //Face Animation Image Chart

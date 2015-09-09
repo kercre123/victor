@@ -225,7 +225,7 @@ namespace AnimationTool
             Sequencer.ExtraProceduralFaceData extraData = Sequencer.ExtraData.Entries[current.GetCustomProperty(Sequencer.ExtraData.Key)] as Sequencer.ExtraProceduralFaceData;
 
             pointData.triggerTime_ms = (int)(current.YValues[0] * 1000); // convert to ms
-            pointData.durationTime_ms = (int)(extraData.Length * 1000); // convert to ms
+            pointData.durationTime_ms = 0;
 
             pointData.faceAngle_deg = extraData.faceAngle_deg;
 
