@@ -79,6 +79,7 @@ int main (void)
 
   TimerInit();
   PowerInit();
+    
   //I2CInit();
   //CameraInit();
   //dac_init();
