@@ -769,8 +769,8 @@
                       'ln',
                       '-s',
                       '-f',
-                      '<(face_library_path)/osx_demo_126/lib',
-                      '../../simulator/controllers/webotsCtrlGameEngine/lib',
+                      '<(face_library_lib_path)',
+                      '../../simulator/controllers/webotsCtrlGameEngine/',
                     ],
                   },
                   { # else
