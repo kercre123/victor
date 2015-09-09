@@ -24,7 +24,7 @@ namespace Cozmo {
 // forward declarations
 class IBehavior;
 class BehaviorLookAround;
-class BehaviorLookForFaces;
+class BehaviorInteractWithFaces;
 class BehaviorOCD;
 class BehaviorFidget;
 class Robot;
@@ -54,7 +54,7 @@ protected:
   
   // Note these are for easy access - the inherited _behaviorList owns the memory
   BehaviorLookAround* _behaviorLookAround = nullptr;
-  BehaviorLookForFaces* _behaviorLookForFaces = nullptr;
+  BehaviorInteractWithFaces* _behaviorInteractWithFaces = nullptr;
   BehaviorOCD* _behaviorOCD = nullptr;
   BehaviorFidget* _behaviorFidget = nullptr;
   

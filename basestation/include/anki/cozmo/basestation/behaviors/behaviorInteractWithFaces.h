@@ -1,17 +1,16 @@
 /**
- * File: behaviorLookForFaces.h
+ * File: behaviorInteractWithFaces.h
  *
  * Author: Andrew Stein
  * Date:   7/30/15
  *
- * Description: Defines Cozmo's "LookForFaces" behavior, which searches for people's
- *              faces and tracks/interacts with them if it finds one.
+ * Description: Defines Cozmo's "InteractWithFaces" behavior, which tracks/interacts with faces if it finds one.
  *
  * Copyright: Anki, Inc. 2015
  **/
 
-#ifndef __Cozmo_Basestation_Behaviors_BehaviorLookForFaces_H__
-#define __Cozmo_Basestation_Behaviors_BehaviorLookForFaces_H__
+#ifndef __Cozmo_Basestation_Behaviors_BehaviorInteractWithFaces_H__
+#define __Cozmo_Basestation_Behaviors_BehaviorInteractWithFaces_H__
 
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/cozmo/basestation/proceduralFace.h"
@@ -21,11 +20,11 @@
 namespace Anki {
 namespace Cozmo {
   
-  class BehaviorLookForFaces : public IBehavior
+  class BehaviorInteractWithFaces : public IBehavior
   {
   public:
     
-    BehaviorLookForFaces(Robot& robot, const Json::Value& config);
+    BehaviorInteractWithFaces(Robot& robot, const Json::Value& config);
     
     virtual Result Init() override;
     
@@ -37,7 +36,7 @@ namespace Cozmo {
     virtual Result Interrupt(double currentTime_sec) override;
     
     virtual const std::string& GetName() const override {
-      static const std::string name("LookForFaces");
+      static const std::string name("InteractWithFaces");
       return name;
     }
     
@@ -84,9 +83,9 @@ namespace Cozmo {
     
     std::vector<::Signal::SmartHandle> _eventHandles;
     
-  }; // BehaviorLookForFaces
+  }; // BehaviorInteractWithFaces
   
 } // namespace Cozmo
 } // namespace Anki
 
-#endif // __Cozmo_Basestation_Behaviors_BehaviorLookForFaces_H__
+#endif // __Cozmo_Basestation_Behaviors_BehaviorInteractWithFaces_H__

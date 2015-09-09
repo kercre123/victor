@@ -235,7 +235,7 @@ namespace Cozmo {
   {
     using Face = Vision::TrackedFace;
     
-    // TODO Implement mimicking here and use from BehaviorLookForFaces / BehaviorMimicFace
+    // TODO Implement mimicking here and use from BehaviorInteractWithFaces / BehaviorMimicFace
   }
 
 } // namespace Cozmo
