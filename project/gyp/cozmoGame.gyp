@@ -472,7 +472,6 @@
             'libraries': [
               'libCppController.dylib',
               '<@(opencv_libs)',
-              '<@(face_library_libs)',
             ],
           }, # end controller Keyboard
 
@@ -785,7 +784,7 @@
                       'ln',
                       '-s',
                       '-f',
-                      '<(face_library_libs)',
+                      '<(face_library_lib_path)/libfsdk.dylib',
                       '../../simulator/controllers/webotsCtrlGameEngine/',
                     ],
                   },
