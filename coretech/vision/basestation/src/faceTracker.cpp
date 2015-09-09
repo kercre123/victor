@@ -23,7 +23,7 @@
 // FacioMetric
 #  define ESTIMATE_EMOTION 0
 #  define ESTIMATE_GAZE    0
-#  define DO_RECOGNITION   0
+#  define DO_RECOGNITION   1
 
 #  include <intraface/core/core.h>
 #  include <intraface/core/LocalManager.h>
