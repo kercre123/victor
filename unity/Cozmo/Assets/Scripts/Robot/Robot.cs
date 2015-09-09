@@ -154,6 +154,8 @@ public class Robot : IDisposable {
 
   public Dictionary<int, ActiveBlock> activeBlocks { get; private set; }
 
+  public List<Face> faceObjects { get; private set; }
+
   public Light[] lights { get; private set; }
 
   private bool lightsChanged {
@@ -196,6 +198,7 @@ public class Robot : IDisposable {
   private U2G.SetHeadAngle SetHeadAngleMessage;
   private U2G.TrackToObject TrackToObjectMessage;
   private U2G.FaceObject FaceObjectMessage;
+  private U2G.FacePose FacePoseMessage;
   private U2G.PickAndPlaceObject PickAndPlaceObjectMessage;
   private U2G.RollObject RollObjectMessage;
   private U2G.TapBlockOnGround TapBlockMessage;
@@ -342,6 +345,7 @@ public class Robot : IDisposable {
     lastMarkersVisibleObjects = new List<ObservedObject>(initialSize);
     knownObjects = new List<ObservedObject>(initialSize);
     activeBlocks = new Dictionary<int, ActiveBlock>();
+    faceObjects = new List< global::Face>();
 
     DriveWheelsMessage = new U2G.DriveWheels();
     PlaceObjectOnGroundHereMessage = new U2G.PlaceObjectOnGroundHere();
@@ -349,6 +353,7 @@ public class Robot : IDisposable {
     SetHeadAngleMessage = new U2G.SetHeadAngle();
     TrackToObjectMessage = new U2G.TrackToObject();
     FaceObjectMessage = new U2G.FaceObject();
+    FacePoseMessage = new G2U.FacePose();
     PickAndPlaceObjectMessage = new U2G.PickAndPlaceObject();
     RollObjectMessage = new U2G.RollObject();
     TapBlockMessage = new U2G.TapBlockOnGround();
@@ -595,6 +600,37 @@ public class Robot : IDisposable {
     }
   }
 
+  public void UpdateObservedFaceInfo(G2U.RobotObservedFace message) {
+    //DAS.Debug ("Robot", "saw a face at " + message.faceID);
+    Face face = faceObjects.Find(x => x.ID == message.faceID);
+    AddObservedFace(face != null ? face : null, message);
+  }
+
+  private void AddObservedFace(Face faceObject, G2U.RobotObservedFace message) {
+
+    bool newFace = false;
+    if (faceObject == null) {
+      faceObject = new Face(message);
+
+      //activeBlocks.Add(activeBlock, activeBlock);
+      faceObjects.Add(faceObject);
+      newFace = true;
+    }
+    else {
+      faceObject.UpdateInfo(message);
+    }
+
+
+    //foreach (Face face in faceObjects) {
+    //	DAS.Debug ("Robot", "face spotted at " + face.WorldPosition.ToString ());
+    //}
+
+    if (newFace) {
+      if (ObservedObject.SignificantChangeDetected != null)
+        ObservedObject.SignificantChangeDetected();
+    }
+  }
+
   public void DriveWheels(float leftWheelSpeedMmps, float rightWheelSpeedMmps) {
     DriveWheelsMessage.lwheel_speed_mmps = leftWheelSpeedMmps;
     DriveWheelsMessage.rwheel_speed_mmps = rightWheelSpeedMmps;
@@ -714,6 +750,18 @@ public class Robot : IDisposable {
     DAS.Debug("Robot", "Face Object " + FaceObjectMessage.objectID);
 
     RobotEngineManager.instance.Message.FaceObject = FaceObjectMessage;
+    RobotEngineManager.instance.SendMessage();
+  }
+
+  public void FacePose(Face face) {
+    FacePoseMessage.maxTurnAngle = float.MaxValue;
+    FacePoseMessage.robotID = ID;
+    FacePoseMessage.turnAngleTol = Mathf.Deg2Rad; //one degree seems to work?
+    FacePoseMessage.world_x = face.WorldPosition.x;
+    FacePoseMessage.world_y = face.WorldPosition.y;
+    FacePoseMessage.world_z = face.WorldPosition.z;
+
+    RobotEngineManager.instance.Message.FacePose = FacePoseMessage;
     RobotEngineManager.instance.SendMessage();
   }
 
@@ -989,7 +1037,8 @@ public class Robot : IDisposable {
   }
 
   public void StartFaceAwareness() {
-    //StartFaceTrackingMessage.timeout_sec = ID;
+    StartFaceTrackingMessage.timeout_sec = byte.MaxValue;
+
     RobotEngineManager.instance.Message.StartFaceTracking = StartFaceTrackingMessage;
     RobotEngineManager.instance.SendMessage();
   }
