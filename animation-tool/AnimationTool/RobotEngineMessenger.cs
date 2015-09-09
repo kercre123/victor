@@ -3,6 +3,8 @@ using System.IO;
 using System.Net;
 using System.Threading;
 using Anki.Cozmo.ExternalInterface;
+using Anki.Cozmo;
+using UnityEngine;
 
 namespace AnimationTool
 {
@@ -30,10 +32,15 @@ namespace AnimationTool
         private string queuedAnimationName = null;
         private bool isReadyToSend = false;
         private int lastStateMessage = 0;
+        private DisplayProceduralFace displayProceduralFaceMessage;
 
         public RobotEngineMessenger()
         {
             this.ConnectionText = "[Disconnected]";
+
+            displayProceduralFaceMessage = new DisplayProceduralFace();
+            displayProceduralFaceMessage.leftEye = new float[(int)ProceduralEyeParameter.NumParameters];
+            displayProceduralFaceMessage.rightEye = new float[(int)ProceduralEyeParameter.NumParameters];
         }
 
         public void Start()
@@ -283,10 +290,7 @@ namespace AnimationTool
 
         private void RaiseConnectionTextUpdate(string newDisconnectionText)
         {
-            if (channel == null)
-            {
-                return;
-            }
+            if (channel == null) return;
 
             string newConnectionText;
 
@@ -328,6 +332,50 @@ namespace AnimationTool
                 {
                     callback(ConnectionText);
                 }
+            }
+        }
+
+        public void SetToPreviousFace(FaceForm faceForm)
+        {
+            if (channel.IsConnected)
+            {
+                displayProceduralFaceMessage.robotID = 1;
+                displayProceduralFaceMessage.faceAngle = faceForm.LastFaceAngle;
+
+                for (int i = 0; i < displayProceduralFaceMessage.leftEye.Length; ++i)
+                {
+                    displayProceduralFaceMessage.leftEye[i] = faceForm.LastLeftEye[i];
+                    displayProceduralFaceMessage.rightEye[i] = faceForm.LastRightEye[i];
+                }
+
+                message.DisplayProceduralFace = displayProceduralFaceMessage;
+                channel.Send(message);
+            }
+        }
+
+        public void AnimateFace(FaceForm faceForm)
+        {
+            if (channel.IsConnected && faceForm.Changed)
+            {
+                displayProceduralFaceMessage.robotID = 1;
+                displayProceduralFaceMessage.faceAngle = faceForm.FaceAngle_deg;
+
+                for (int i = 0; i < displayProceduralFaceMessage.leftEye.Length; ++i)
+                {
+                    if (faceForm.Eyes[i] != null)
+                    {
+                        displayProceduralFaceMessage.leftEye[i] = faceForm.Eyes[i].LeftValue;
+                        displayProceduralFaceMessage.rightEye[i] = faceForm.Eyes[i].RightValue;
+                    }
+                    else
+                    {
+                        Debug.LogWarning("Missing " + (ProceduralEyeParameter)i + " in message.");
+                    }
+                }
+
+                message.DisplayProceduralFace = displayProceduralFaceMessage;
+                channel.Send(message);
+                faceForm.Changed = false;
             }
         }
     }

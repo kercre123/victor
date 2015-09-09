@@ -137,6 +137,8 @@ class GamePlatformConfiguration(object):
             if not os.environ.get("CORETECH_EXTERNAL_DIR"):
                 sys.exit('ERROR: Environment variable "CORETECH_EXTERNAL_DIR" must be defined.')
             self.unity_opencv_symlink_target = os.path.join(os.environ.get("CORETECH_EXTERNAL_DIR"), 'build', 'opencv-ios', 'multiArchLibs')
+            self.unity_sphinx_symlink = os.path.join(self.unity_xcode_project_dir, 'sphinx')
+            self.unity_sphinx_symlink_target = os.path.join(os.environ.get("CORETECH_EXTERNAL_DIR"), 'pocketsphinx/pocketsphinx/generated/ios/DerivedData/Release-iphoneos')
             
             self.unity_build_symlink = os.path.join(self.unity_xcode_project_dir, 'UnityBuild')
             self.artifact_dir = os.path.join(self.platform_build_dir, 'app-{0}'.format(self.platform))
@@ -195,6 +197,7 @@ class GamePlatformConfiguration(object):
             ankibuild.util.File.mkdir_p(self.unity_build_dir)
             ankibuild.util.File.ln_s(self.platform_output_dir, self.unity_output_symlink)
             ankibuild.util.File.ln_s(self.unity_opencv_symlink_target, self.unity_opencv_symlink)
+            ankibuild.util.File.ln_s(self.unity_sphinx_symlink_target, self.unity_sphinx_symlink)
             ankibuild.util.File.write(self.config_path, '\n'.join(xcconfig))
             ankibuild.util.File.mkdir_p(self.artifact_dir)
         else:
