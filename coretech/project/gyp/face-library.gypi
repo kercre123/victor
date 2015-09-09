@@ -13,26 +13,14 @@
       
   'conditions': [
     # Face libraries, depending on platform:
+    
+    # Faciometric:
     ['face_library=="faciometric"', {
       'face_library_path': [
         '<(coretech_external_path)/IntraFace_126_FaceRecog_OSX_3weeks',
       ],
     }],
   
-    ['face_library=="facesdk"', {
-      'face_library_includes': [
-        '<(coretech_external_path)/Luxand_FaceSDK/include/C',
-      ],
-    }],
-      
-    ['OS=="mac" and face_library=="facesdk"', {
-      'face_library_libs': [
-        'libfsdk.dylib',
-      ],
-      'face_library_lib_path': [
-        '<(coretech_external_path)/Luxand_FaceSDK/bin/osx_x86_64',
-      ]
-    }],
     ['OS=="mac" and face_library=="faciometric"', {
       'face_library_includes': [
         '<(face_library_path)/Demo/include',
@@ -48,15 +36,7 @@
         #'libintraface_gaze126.dylib',
       ],
     }],
-    ['OS=="ios" and face_library=="facesdk"', {
-      'face_library_lib_path': [
-        '<(coretech_external_path)/Luxand_FaceSDK/bin/iOS',
-      ],
-      'face_library_libs': [
-        # TODO: handle different architectures
-        'libfsdk-static.a',
-      ],
-    }],
+    
     ['OS=="ios" and face_library=="faciometric"', {
       'face_library_includes': [
         '<(face_library_path)/IntraFace_126_iOS_Anki/Library/3rdparty/include',
@@ -68,6 +48,33 @@
         'intraface.framework',
       ],
     }],
+    
+    # FaceSDK:
+    ['face_library=="facesdk"', {
+      'face_library_includes': [
+        '<(coretech_external_path)/Luxand_FaceSDK/include/C',
+      ],
+    }],
+      
+    ['OS=="mac" and face_library=="facesdk"', {
+      'face_library_libs': [
+        'libfsdk.dylib',
+      ],
+      'face_library_lib_path': [
+        '<(coretech_external_path)/Luxand_FaceSDK/bin/osx_x86_64',
+      ]
+    }],
+    
+    ['OS=="ios" and face_library=="facesdk"', {
+      'face_library_lib_path': [
+        '<(coretech_external_path)/Luxand_FaceSDK/bin/iOS',
+      ],
+      'face_library_libs': [
+        # TODO: handle different architectures
+        'libfsdk-static.a',
+      ],
+    }],
+    
     ['OS=="android" and face_library=="facesdk"', {
       'face_library_lib_path': [
         '<(coretech_external_path)/Luxand_FaceSDK/bin/Android/armeabi-v7a',
@@ -85,7 +92,7 @@
 'target_defaults': {
   'xcode_settings': {
     'conditions': [
-      ['face_library=="faciometric"', {
+      ['OS=="ios" and face_library=="faciometric"', {
          'FRAMEWORK_SEARCH_PATHS': '<(face_library_path)/IntraFace_126_iOS_Anki/Library',
       }],
     ],
@@ -93,46 +100,19 @@
   
   'configurations': {
     'Debug': {
-      'conditions': [
-        ['OS=="ios"', {
-          'xcode_settings': {
-            'LIBRARY_SEARCH_PATHS': ['<(face_library_lib_path)'],
-          },
-        }],
-        ['OS=="mac"', {
-          'xcode_settings': {
-            'LIBRARY_SEARCH_PATHS': ['<(face_library_lib_path)'],
-          },
-        }],
-      ],
+      'xcode_settings': {
+        'LIBRARY_SEARCH_PATHS': ['<(face_library_lib_path)'],
+      },
     },
     'Profile': {
-      'conditions': [
-        ['OS=="ios"', {
-          'xcode_settings': {
-            'LIBRARY_SEARCH_PATHS': ['<(face_library_lib_path)'],
-          },
-        }],
-        ['OS=="mac"', {
-          'xcode_settings': {
-            'LIBRARY_SEARCH_PATHS': ['<(face_library_lib_path)'],
-          },
-        }],
-      ],
+      'xcode_settings': {
+        'LIBRARY_SEARCH_PATHS': ['<(face_library_lib_path)'],
+      },
     },
     'Release': {
-      'conditions': [
-        ['OS=="ios"', {
-          'xcode_settings': {
-            'LIBRARY_SEARCH_PATHS': ['<(face_library_lib_path)'],
-          },
-        }],
-        ['OS=="mac"', {
-          'xcode_settings': {
-            'LIBRARY_SEARCH_PATHS': ['<(face_library_lib_path)'],
-          },
-        }],
-      ],
+      'xcode_settings': {
+        'LIBRARY_SEARCH_PATHS': ['<(face_library_lib_path)'],
+      },
     },
   }, # configurations
   
