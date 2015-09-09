@@ -1,4 +1,8 @@
 {
+  'includes' : [
+    '../../coretech/project/gyp/opencv.gypi',
+  ],
+
   'variables': {
 
     # TODO: should this be passed in, or shared?
@@ -25,38 +29,7 @@
     
     # TODO: Get this programmatically (via configure.py?) using a call to <(matlabRootDir)/bin/mexext
     'mexext' : ['mexmaci64'],  
-    
-    # TODO: should this be passed in, or shared?
-    'opencv_includes': [
-      # '<(coretech_external_path)/opencv-2.4.8/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/core/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/highgui/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/imgproc/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/contrib/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/calib3d/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/objdetect/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/video/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/features2d/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/flann/include',
-    ],
-    
-    'opencv_libs': [
-      'libzlib.a',
-      'liblibjpeg.a',
-      'liblibpng.a',
-      'liblibtiff.a',
-      'liblibjasper.a',
-      'libIlmImf.a',
-      'libopencv_core.a',
-      'libopencv_imgproc.a',
-      'libopencv_highgui.a',
-      'libopencv_calib3d.a',
-      'libopencv_contrib.a',
-      'libopencv_objdetect.a',
-      'libopencv_video.a',
-      'libopencv_features2d.a',
-    ],
-
+   
     'compiler_flags': [
       '-Wno-unused-function',
       '-Wno-overloaded-virtual',
@@ -108,16 +81,16 @@
     ],
     'libraries': [
       '<@(opencv_libs)',
-      '<(matlabRootDir)/bin/maci64/libmx.dylib',
-      '<(matlabRootDir)/bin/maci64/libmex.dylib',
-      '<(matlabRootDir)/bin/maci64/libeng.dylib',
-      '$(SDKROOT)/System/Library/Frameworks/AppKit.framework',
+      'libmx.dylib',
+      'libmex.dylib',
+      'libeng.dylib',
+      'AppKit.framework',
     ],
     'xcode_settings': {
       'OTHER_CFLAGS': ['<@(compiler_c_flags)'],
       'OTHER_CPLUSPLUSFLAGS': ['<@(compiler_cpp_flags)'],
       'ALWAYS_SEARCH_USER_PATHS': 'NO',
-      # 'FRAMEWORK_SEARCH_PATHS':'../../libs/framework/',
+      'FRAMEWORK_SEARCH_PATHS':'$(SDKROOT)/System/Library/Frameworks',
       'CLANG_CXX_LANGUAGE_STANDARD':'c++11',
       'CLANG_CXX_LIBRARY':'libc++',
       'DEBUG_INFORMATION_FORMAT': 'dwarf',
@@ -136,9 +109,8 @@
           'xcode_settings': {
             'OTHER_CFLAGS': ['-O0'],
             'OTHER_CPLUSPLUSFLAGS': ['-O0'],
-            'OTHER_LDFLAGS': [
-              '-L<(coretech_external_path)/build/opencv-2.4.8/lib/Debug',
-              '-L<(coretech_external_path)/build/opencv-2.4.8/3rdparty/lib/Debug',
+            'LIBRARY_SEARCH_PATHS': [
+              '<(matlabRootDir)/bin/maci64'
             ],
            },
           'defines': [
@@ -152,6 +124,9 @@
           'xcode_settings': {
             'OTHER_CFLAGS': ['-Os'],
             'OTHER_CPLUSPLUSFLAGS': ['-Os'],
+            'LIBRARY_SEARCH_PATHS': [
+              '<(matlabRootDir)/bin/maci64'
+            ],
            },
           'defines': [
             'NDEBUG=1',
@@ -164,6 +139,9 @@
           'xcode_settings': {
             'OTHER_CFLAGS': ['-Os'],
             'OTHER_CPLUSPLUSFLAGS': ['-Os'],
+            'LIBRARY_SEARCH_PATHS': [
+              '<(matlabRootDir)/bin/maci64'
+            ],
            },
           'defines': [
             'NDEBUG=1',
