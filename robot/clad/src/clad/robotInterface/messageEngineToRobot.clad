@@ -89,7 +89,7 @@ message ClearPath
 
 message PathSegmentSpeed
 {
-  float_32 targetSpeed,
+  float_32 target,
   float_32 accel,
   float_32 decel,
 }
@@ -136,6 +136,7 @@ message ExecutePath
 
 message AbsoluteLocalizationUpdate
 {
+  uint_32 timestamp,
   uint_32 pose_frame_id,
   float_32 xPosition,
   float_32 yPosition,
@@ -156,10 +157,10 @@ message ImageRequest
 
 enum uint_8 ControllerChannel
 {
-  wheel,
-  head,
-  lift,
-  stearing
+  controller_wheel,
+  controller_head,
+  controller_lift,
+  controller_stearing
 }
 
 message ControllerGains

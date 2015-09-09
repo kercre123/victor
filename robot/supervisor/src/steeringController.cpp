@@ -180,7 +180,7 @@ namespace Anki {
       if (maxRotationWheelSpeedDiff > 0) {
         wheelSpeedDiff = *higherWheelSpeed - *lowerWheelSpeed;
         if (wheelSpeedDiff > maxRotationWheelSpeedDiff) {
-          f32 speedAdjust = 0.5*(wheelSpeedDiff - maxRotationWheelSpeedDiff);
+          f32 speedAdjust = 0.5f*(wheelSpeedDiff - maxRotationWheelSpeedDiff);
           *higherWheelSpeed -= speedAdjust;
           *lowerWheelSpeed += speedAdjust;
           PRINT("  Wheel speed adjust: (%f, %f), adjustment %f\n", *higherWheelSpeed, *lowerWheelSpeed, speedAdjust);

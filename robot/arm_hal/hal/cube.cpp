@@ -83,9 +83,7 @@ namespace Anki
         #endif
       }
 
-      Result SetBlockLight(const u8 blockID, const u32* onColor, const u32* offColor,
-                           const u32* onPeriod_ms, const u32* offPeriod_ms,
-                           const u32* transitionOnPeriod_ms, const u32* transitionOffPeriod_ms)
+      Result SetBlockLight(const u32 blockID, const LightState& lights)
       {
         if (blockID >= MAX_CUBES) {
           return RESULT_FAIL;
@@ -93,10 +91,10 @@ namespace Anki
        
         uint8_t *light  = g_LedStatus[blockID].ledStatus;
         uint32_t sum = 0;
-        int order[] = {0,3,2,1};
+        static const int order[] = {0,3,2,1};
         
         for (int c = 0; c < NUM_BLOCK_LEDS; c++) {
-          uint32_t color = onColor[order[c]];
+          uint32_t color = lights[order[c]].onColor;
           
           for (int ch = 24; ch > 0; ch -= 8) {
             uint8_t status = (color >> ch) & 0xFF;

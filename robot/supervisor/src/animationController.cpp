@@ -5,9 +5,6 @@
 #include "anki/common/shared/radians.h"
 #include "anki/common/shared/velocityProfileGenerator.h"
 
-#include "clad/types/animationKeyFrames.h"
-
-#include "eyeController.h"
 #include "headController.h"
 #include "liftController.h"
 #include "localization.h"
@@ -386,11 +383,6 @@ namespace AnimationController {
     
   }
   
-  static inline void SetTypeIndicator(Messages::ID msgType)
-  {
-    CopyIntoBuffer((u8*)&msgType, sizeof(msgType));
-  }
-  
   static void GetFromBuffer(u8* data, s32 numBytes)
   {
     assert(numBytes < sizeof(_keyFrameBuffer));
@@ -418,18 +410,10 @@ namespace AnimationController {
     assert(_currentBufferPos >= 0 && _currentBufferPos < sizeof(_keyFrameBuffer));
   }
   
-  static inline Messages::ID GetTypeIndicator()
-  {
-    Messages::ID msgID;
-    GetFromBuffer((u8*)&msgID, sizeof(Messages::ID));
-    return msgID;
-  }
-  
-  template<typename MSG_TYPE>
-  static inline Result BufferKeyFrameHelper(const MSG_TYPE& msg, Messages::ID msgID)
+  inline Result BufferKeyFrame(const RobotInterface::EngineToRobot& msg)
   {
     const s32 numBytesAvailable = GetNumBytesAvailable();
-    const s32 numBytesNeeded = Messages::GetSize(msgID) + sizeof(Messages::ID);
+    const s32 numBytesNeeded = msg.Size();
     if(numBytesAvailable < numBytesNeeded) {
       // Only print the error message if we haven't already done so this tick,
       // to prevent spamming that could clog reliable UDP
@@ -441,129 +425,10 @@ namespace AnimationController {
       }
       return RESULT_FAIL;
     }
-    SetTypeIndicator(msgID);
-    CopyIntoBuffer((u8*)&msg, Messages::GetSize(msgID));
+    CopyIntoBuffer(msg.GetBuffer(), msg.Size());
     return RESULT_OK;
   }
-  
-  Result BufferKeyFrame(const AnimKeyFrame::EndOfAnimation& msg)
-  {
-    Result lastResult = BufferKeyFrameHelper(msg, GET_MESSAGE_ID(AnimKeyFrame::EndOfAnimation));
-    if(RESULT_OK != lastResult) {
-      return lastResult;
-    }
     
-#   if DEBUG_ANIMATION_CONTROLLER
-    PRINT("Buffering EndOfAnimation KeyFrame\n");
-#   endif
-    _haveReceivedTerminationFrame = true;
-    ++_numAudioFramesBuffered;
-    return RESULT_OK;
-  }
-  
-  Result BufferKeyFrame(const AnimKeyFrame::AudioSample& msg)
-  {
-    Result lastResult = BufferKeyFrameHelper(msg, GET_MESSAGE_ID(AnimKeyFrame::AudioSample));
-    if(RESULT_OK != lastResult) {
-      return lastResult;
-    }
-    
-    //PRINT("Buffering AudioSample KeyFrame\n");
-    ++_numAudioFramesBuffered;
-    return RESULT_OK;
-  }
-  
-  Result BufferKeyFrame(const AnimKeyFrame::AudioSilence& msg)
-  {
-    Result lastResult = BufferKeyFrameHelper(msg, GET_MESSAGE_ID(AnimKeyFrame::AudioSilence));
-    if(RESULT_OK != lastResult) {
-      return lastResult;
-    }
-    
-    //PRINT("Buffering AudioSilence KeyFrame\n");
-    ++_numAudioFramesBuffered;
-    return RESULT_OK;
-  }
-
-  Result BufferKeyFrame(const AnimKeyFrame::HeadAngle& msg) {
-    Result lastResult = BufferKeyFrameHelper(msg, GET_MESSAGE_ID(AnimKeyFrame::HeadAngle));
-    if(RESULT_OK != lastResult) {
-      return lastResult;
-    }
-#   if DEBUG_ANIMATION_CONTROLLER
-    PRINT("Buffering HeadAngle KeyFrame\n");
-#   endif
-    return RESULT_OK;
-  }
-  
-  Result BufferKeyFrame(const AnimKeyFrame::LiftHeight& msg) {
-    Result lastResult = BufferKeyFrameHelper(msg, GET_MESSAGE_ID(AnimKeyFrame::LiftHeight));
-    if(RESULT_OK != lastResult) {
-      return lastResult;
-    }
-#   if DEBUG_ANIMATION_CONTROLLER
-    PRINT("Buffering LiftHeight KeyFrame\n");
-#   endif
-    return RESULT_OK;
-  }
-  
-  Result BufferKeyFrame(const AnimKeyFrame::FaceImage& msg) {
-    Result lastResult = BufferKeyFrameHelper(msg, GET_MESSAGE_ID(AnimKeyFrame::FaceImage));
-    if(RESULT_OK != lastResult) {
-      return lastResult;
-    }
-#   if DEBUG_ANIMATION_CONTROLLER
-    PRINT("Buffering FaceImage KeyFrame\n");
-#   endif
-    return RESULT_OK;
-  }
-  
-  Result BufferKeyFrame(const AnimKeyFrame::FacePosition& msg) {
-    Result lastResult = BufferKeyFrameHelper(msg, GET_MESSAGE_ID(AnimKeyFrame::FacePosition));
-    if(RESULT_OK != lastResult) {
-      return lastResult;
-    }
-#   if DEBUG_ANIMATION_CONTROLLER
-    PRINT("Buffering FacePosition KeyFrame\n");
-#   endif
-    return RESULT_OK;
-  }
-  
-  Result BufferKeyFrame(const AnimKeyFrame::BackpackLights& msg) {
-    Result lastResult = BufferKeyFrameHelper(msg, GET_MESSAGE_ID(AnimKeyFrame::BackpackLights));
-    if(RESULT_OK != lastResult) {
-      return lastResult;
-    }
-#   if DEBUG_ANIMATION_CONTROLLER
-    PRINT("Buffering BackpackLights KeyFrame\n");
-#   endif
-    return RESULT_OK;
-  }
-  
-  Result BufferKeyFrame(const AnimKeyFrame::BodyMotion& msg) {
-    Result lastResult = BufferKeyFrameHelper(msg, GET_MESSAGE_ID(AnimKeyFrame::BodyMotion));
-    if(RESULT_OK != lastResult) {
-      return lastResult;
-    }
-#   if DEBUG_ANIMATION_CONTROLLER
-    PRINT("Buffering BodyMotion KeyFrame\n");
-#   endif
-    return RESULT_OK;
-  }
-  
-  Result BufferKeyFrame(const AnimKeyFrame::Blink& msg)
-  {
-    Result lastResult = BufferKeyFrameHelper(msg, GET_MESSAGE_ID(AnimKeyFrame::Blink));
-    if(RESULT_OK != lastResult) {
-      return lastResult;
-    }
-#   if DEBUG_ANIMATION_CONTROLLER
-    PRINT("Buffering Blink KeyFrame\n");
-#   endif
-    return RESULT_OK;
-  }
-  
-  
   bool IsBufferFull()
   {
     return GetNumBytesAvailable() > 0;
@@ -840,9 +705,9 @@ namespace AnimationController {
                   HAL::FaceBlink();
                 } else {
                   if(msg.enable) {
-                    EyeController::Enable();
+                    //EyeController::Enable();
                   } else {
-                    EyeController::Disable();
+                    //EyeController::Disable();
                   }
                 }
                 _tracksInUse |= BLINK_TRACK;

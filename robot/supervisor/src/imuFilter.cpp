@@ -20,6 +20,7 @@
 #include "liftController.h"
 #include "wheelController.h"
 #include "anki/cozmo/robot/hal.h"
+#include "messages.h"
 
 // For event callbacks
 #include "testModeController.h"
@@ -75,13 +76,6 @@ namespace Anki {
         const u32 MOTION_DETECT_TIMEOUT_US = 500000;
         const f32 ACCEL_MOTION_THRESHOLD = 60.f;
         const f32 GYRO_MOTION_THRESHOLD = 0.24f;
-        
-        
-        // Recorded buffer
-        bool isRecording_ = false;
-        u8 recordDataIdx_ = 0;
-        Messages::IMUDataChunk imuChunkMsg_;
-
         
         // ====== Event detection vars ======
         enum IMUEvent {
@@ -666,41 +660,6 @@ namespace Anki {
         
         //UpdateEventDetection();
         
-        
-        // Recording IMU data for sending to basestation
-        if (isRecording_) {
-          
-          // Scale accel range of -20000 to +20000mm/s2 (roughly -2g to +2g) to be between -127 and +127
-          const f32 accScaleFactor = 127.f/20000.f;
-          /*
-          imuChunkMsg_.aX[recordDataIdx_] = (accel_robot_frame_filt[0] * accScaleFactor);
-          imuChunkMsg_.aY[recordDataIdx_] = (accel_robot_frame_filt[1] * accScaleFactor);
-          imuChunkMsg_.aZ[recordDataIdx_] = (accel_robot_frame_filt[2] * accScaleFactor);
-           */
-          imuChunkMsg_.aX[recordDataIdx_] = (pdFiltAccX_aligned_ * accScaleFactor);
-          imuChunkMsg_.aY[recordDataIdx_] = (pdFiltAccY_aligned_ * accScaleFactor);
-          imuChunkMsg_.aZ[recordDataIdx_] = (pdFiltAccZ_aligned_ * accScaleFactor);
-
-          // Scale gyro range of -2pi to +2pi rad/s to be between -127 and +127
-          const f32 gyroScaleFactor = 127.f/(2.f*PI_F);
-          imuChunkMsg_.gX[recordDataIdx_] = (gyro_robot_frame_filt[0] * gyroScaleFactor);
-          imuChunkMsg_.gY[recordDataIdx_] = (gyro_robot_frame_filt[1] * gyroScaleFactor);
-          imuChunkMsg_.gZ[recordDataIdx_] = (gyro_robot_frame_filt[2] * gyroScaleFactor);
-
-          // Send message when it's full
-          if (++recordDataIdx_ == IMU_CHUNK_SIZE) {
-            HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::IMUDataChunk), &imuChunkMsg_);
-            recordDataIdx_ = 0;
-            ++imuChunkMsg_.chunkId;
-            
-            if (imuChunkMsg_.chunkId == imuChunkMsg_.totalNumChunks) {
-              PRINT("IMU RECORDING COMPLETE (time %dms)\n", HAL::GetTimeStamp());
-              isRecording_ = false;
-            }
-          }
-        }
-        
-        
         return retVal;
         
       } // Update()
@@ -729,17 +688,6 @@ namespace Anki {
       bool IsPickedUp()
       {
         return pickedUp_;
-      }
-      
-      
-      void RecordAndSend(const u32 length_ms)
-      {
-        PRINT("STARTING IMU RECORDING (time = %dms)\n", HAL::GetTimeStamp());
-        isRecording_ = true;
-        recordDataIdx_ = 0;
-        imuChunkMsg_.seqId++;
-        imuChunkMsg_.chunkId=0;
-        imuChunkMsg_.totalNumChunks = length_ms / (TIME_STEP * IMU_CHUNK_SIZE);
       }
       
     } // namespace IMUFilter
