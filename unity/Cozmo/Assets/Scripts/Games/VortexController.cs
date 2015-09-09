@@ -319,7 +319,10 @@ public class VortexController : GameController {
       imagePlayerBidBGs[i].gameObject.SetActive(false);
     }
 
-    robot.StartFaceAwareness();
+    if (robot != null) {
+      RobotEngineManager.instance.SuccessOrFailure += ResetFaceAwareness;
+      robot.StartFaceAwareness();
+    }
     
 
     foreach (Image image in imageInputLocked)
@@ -366,6 +369,10 @@ public class VortexController : GameController {
     //revert to single player incase this ever matters to other games
     PlayerPrefs.SetInt("NumberOfPlayers", 1);
     PlayerPrefs.SetInt("VortexWithoutCozmo", 0);
+
+    if (robot != null) {
+      RobotEngineManager.instance.SuccessOrFailure -= ResetFaceAwareness;
+    }
     
   }
 
@@ -998,7 +1005,7 @@ public class VortexController : GameController {
       if (actualFaces[GetPoseIndex(currentPlayerIndex)] != null) {
         // Debug.Log("should be tracking to head");
         robot.FacePose(actualFaces[GetPoseIndex(currentPlayerIndex)]);
-        actualFaces[GetPoseIndex(currentPlayerIndex)] = null;
+        CozmoEmotionManager.instance.SetEmotionFacePose("YOUR_TURN", actualFaces[GetPoseIndex(currentPlayerIndex)], true, true);
       }
       else {
         //Debug.Log("should be tracking to default");
@@ -1743,15 +1750,11 @@ public class VortexController : GameController {
       // check for faces in our quadrant, grab closest one if it exists
       float closest_face = float.MaxValue;
       int face_index = -1;
-      if (pose_index == 0) {
-        Debug.Log("pose index 0");
-      }
       for (int i = 0; i < robot.faceObjects.Count; i++) {
         Face pos_face = robot.faceObjects[i];
         float face_y = pos_face.WorldPosition.y;
         float face_x = pos_face.WorldPosition.x;
         if (pose_index == 0) {
-          Debug.Log("face_x: " + face_x + ", face_y:" + face_y);
           if (face_y < 0 && face_x > face_y && face_x < -face_y) {
             // in our range, check distance
             float distance_sq = (robot.WorldPosition - pos_face.WorldPosition).sqrMagnitude;
@@ -1798,6 +1801,9 @@ public class VortexController : GameController {
         DAS.Error("VortexController", "Got new face for pose index " + pose_index.ToString());
         Face face = robot.faceObjects[face_index];
         actualFaces[pose_index] = new Face(face.ID, face.WorldPosition.x, face.WorldPosition.y, face.WorldPosition.z);
+        if (playState == VortexState.REQUEST_SPIN && pose_index == GetPoseIndex(currentPlayerIndex)) {
+          CozmoEmotionManager.instance.SetEmotionFacePose("YOUR_TURN", actualFaces[pose_index], true, true);
+        }
       }
 
     }
@@ -1986,8 +1992,14 @@ public class VortexController : GameController {
     }
   }
 
+  void ResetFaceAwareness(bool success, RobotActionType action_type) {
+    if (robot != null) {
+      robot.StartFaceAwareness();
+    }
+  }
+
   void CheckForGotoStartCompletion(bool success, RobotActionType action_type) {
-    DAS.Error("VortextController", "got " + action_type);
+    // DAS.Error("VortextController", "got " + action_type);
     switch (action_type) {
     case RobotActionType.COMPOUND:
       if (success) {
