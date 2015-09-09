@@ -51,6 +51,8 @@ void hardware_init(void)
 
 void dbg_uart_init(void)
 {
-    configure_uart_pins(BOARD_DEBUG_UART_INSTANCE);
+    // UART1 TX on PTE16 Alt 3
+    PORT_HAL_SetMuxMode(PORTE_BASE,16u,kPortMuxAlt3);
+
     DbgConsole_Init(BOARD_DEBUG_UART_INSTANCE, 3000000 /*BOARD_DEBUG_UART_BAUD*/, kDebugConsoleUART);
 }

@@ -42,6 +42,5 @@
 
 void configure_uart_pins(uint32_t instance)
 {
-  // UART1 TX on PTE16 Alt 3
-  PORT_HAL_SetMuxMode(PORTE_BASE,16u,kPortMuxAlt3);
+
 }
