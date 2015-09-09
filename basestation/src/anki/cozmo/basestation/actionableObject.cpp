@@ -96,13 +96,15 @@ namespace Anki {
         const f32 stepSize = 10.f; // 1cm
         Vec2f   stepVec(xyEnd);
         stepVec -= xyStart;
-        const f32 lineLength = stepVec.MakeUnitLength();
+        f32 lineLength = stepVec.MakeUnitLength();
         Vec2f offsetVec(stepVec.y(), -stepVec.x());
         offsetVec *= 0.5f*ROBOT_BOUNDING_Y;
-        const s32 numSteps = std::floor(lineLength / stepSize);
         
         // Pull back xyStart to the rear of the robot's bounding box when the robot is at the preaction pose.
         xyStart -= (stepVec * (ROBOT_BOUNDING_X - ROBOT_BOUNDING_X_FRONT));
+        lineLength += (ROBOT_BOUNDING_X - ROBOT_BOUNDING_X_FRONT);
+        
+        const s32 numSteps = std::floor(lineLength / stepSize);
         
         stepVec *= stepSize;
         
