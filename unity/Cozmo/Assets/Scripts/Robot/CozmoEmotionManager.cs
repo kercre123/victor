@@ -305,9 +305,6 @@ public class CozmoEmotionManager : MonoBehaviour {
         List<CozmoAnimation> anims = instance.currentEmotionMachine.GetAnimsForType(emotion_state);
         int rand_index = UnityEngine.Random.Range(0, anims.Count - 1);
         CozmoAnimation anim = anims[rand_index];
-        if (stopPreviousAction && robot.isBusy && robot.Status(Anki.Cozmo.RobotStatusFlagClad.Animating)) {
-          robot.CancelAction(Anki.Cozmo.RobotActionType.PLAY_ANIMATION);
-        }
         DAS.Debug("CozmoEmotionManager", "Sending " + anim.animName + " with " + anim.numLoops + " loop" + (anim.numLoops != 1 ? "s" : ""));
         PlayAnimationMessage.animationName = anim.animName;
         PlayAnimationMessage.numLoops = anim.numLoops;
@@ -363,9 +360,6 @@ public class CozmoEmotionManager : MonoBehaviour {
         List<CozmoAnimation> anims = instance.currentEmotionMachine.GetAnimsForType(emotion_state);
         int rand_index = UnityEngine.Random.Range(0, anims.Count - 1);
         CozmoAnimation anim = anims[rand_index];
-        if (stopPreviousAction && robot.isBusy && robot.Status(Anki.Cozmo.RobotStatusFlagClad.Animating)) {
-          robot.CancelAction(Anki.Cozmo.RobotActionType.PLAY_ANIMATION);
-        }
         DAS.Debug("CozmoEmotionManager", "Sending " + anim.animName + " with " + anim.numLoops + " loop" + (anim.numLoops != 1 ? "s" : ""));
         PlayAnimationMessage.animationName = anim.animName;
         PlayAnimationMessage.numLoops = anim.numLoops;
@@ -397,6 +391,7 @@ public class CozmoEmotionManager : MonoBehaviour {
         QueueCompoundActionsMessage.inSlot = 0;
         QueueCompoundActionsMessage.robotID = robot.ID;
         QueueCompoundActionsMessage.parallel = isParallel;
+        QueueCompoundActionsMessage.idTag = 77;
 
         if (stopPreviousAction) {
           QueueCompoundActionsMessage.position = Anki.Cozmo.QueueActionPosition.NOW_AND_CLEAR_REMAINING;

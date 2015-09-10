@@ -138,6 +138,7 @@ public class VortexController : GameController {
   public CozmoUtil.RobotPose[] defaultRobotPoses = new CozmoUtil.RobotPose[3];
   public Face[] actualFaces = new Face[3];
   public float minFaceMovementSqd_mm = 900;
+  public float faceUpdateFreq = 1.0f;
 
   #endregion
 
@@ -221,7 +222,7 @@ public class VortexController : GameController {
   ObservedObject humanHead;
 
   float frequency = 0.1f;
-  float headTimer = 0f;
+  float faceUpdateTimer = 0f;
   float turnStartAngle = 0f;
 
   float fadeTimer = 1f;
@@ -452,7 +453,7 @@ public class VortexController : GameController {
       
     }
 
-    headTimer = 0.1f;
+    faceUpdateTimer = 0.1f;
 
     imageGear.color = gearDefaultColor;
 
@@ -1005,6 +1006,7 @@ public class VortexController : GameController {
       if (actualFaces[GetPoseIndex(currentPlayerIndex)] != null) {
         // Debug.Log("should be tracking to head");
         robot.FacePose(actualFaces[GetPoseIndex(currentPlayerIndex)]);
+        faceUpdateTimer = Time.realtimeSinceStartup;
         CozmoEmotionManager.instance.SetEmotionFacePose("YOUR_TURN", actualFaces[GetPoseIndex(currentPlayerIndex)], true, true);
       }
       else {
@@ -1759,8 +1761,7 @@ public class VortexController : GameController {
             // in our range, check distance
             float distance_sq = (robot.WorldPosition - pos_face.WorldPosition).sqrMagnitude;
             bool betterThanOld = (actualFaces[pose_index] == null)
-                                 || (((pos_face.WorldPosition - actualFaces[pose_index].WorldPosition).sqrMagnitude > minFaceMovementSqd_mm)
-                                 && ((robot.WorldPosition - actualFaces[pose_index].WorldPosition).sqrMagnitude > closest_face));
+                                 || (((pos_face.WorldPosition - actualFaces[pose_index].WorldPosition).sqrMagnitude > minFaceMovementSqd_mm));
             if (betterThanOld && distance_sq < closest_face) {
               closest_face = distance_sq;
               face_index = i;
@@ -1772,8 +1773,7 @@ public class VortexController : GameController {
             // in our range, check distance
             float distance_sq = (robot.WorldPosition - pos_face.WorldPosition).sqrMagnitude;
             bool betterThanOld = (actualFaces[pose_index] == null)
-                                 || (((pos_face.WorldPosition - actualFaces[pose_index].WorldPosition).sqrMagnitude > minFaceMovementSqd_mm)
-                                 && ((robot.WorldPosition - actualFaces[pose_index].WorldPosition).sqrMagnitude > closest_face));
+                                 || (((pos_face.WorldPosition - actualFaces[pose_index].WorldPosition).sqrMagnitude > minFaceMovementSqd_mm));
             if (betterThanOld && distance_sq < closest_face) {
               closest_face = distance_sq;
               face_index = i;
@@ -1787,8 +1787,7 @@ public class VortexController : GameController {
             // only change if current is null or the distance between the "old" and "new" (likely the same face)
             // is greater than our threshold
             bool betterThanOld = (actualFaces[pose_index] == null)
-                                 || (((pos_face.WorldPosition - actualFaces[pose_index].WorldPosition).sqrMagnitude > minFaceMovementSqd_mm)
-                                 && ((robot.WorldPosition - actualFaces[pose_index].WorldPosition).sqrMagnitude > closest_face));
+                                 || (((pos_face.WorldPosition - actualFaces[pose_index].WorldPosition).sqrMagnitude > minFaceMovementSqd_mm));
             if (betterThanOld && distance_sq < closest_face) {
               closest_face = distance_sq;
               face_index = i;
@@ -1801,8 +1800,9 @@ public class VortexController : GameController {
         DAS.Error("VortexController", "Got new face for pose index " + pose_index.ToString());
         Face face = robot.faceObjects[face_index];
         actualFaces[pose_index] = new Face(face.ID, face.WorldPosition.x, face.WorldPosition.y, face.WorldPosition.z);
-        if (playState == VortexState.REQUEST_SPIN && pose_index == GetPoseIndex(currentPlayerIndex)) {
+        if (playState == VortexState.REQUEST_SPIN && pose_index == GetPoseIndex(currentPlayerIndex) && Time.realtimeSinceStartup - faceUpdateTimer > faceUpdateFreq) {
           CozmoEmotionManager.instance.SetEmotionFacePose("YOUR_TURN", actualFaces[pose_index], true, true);
+          faceUpdateTimer = Time.realtimeSinceStartup;
         }
       }
 
