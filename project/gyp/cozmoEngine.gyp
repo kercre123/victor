@@ -397,6 +397,31 @@
               'libCppController.dylib',
               '<@(opencv_libs)',
             ],
+            'conditions': [
+              # For some reason, need to link directly against FacioMetric libs
+              # when using them for recognition, which also means they have to be
+              # present (symlinked) in the executable dir
+              ['face_library == "faciometric"', {
+                'libraries': [
+                  '<@(face_library_libs)',
+                ],
+                'actions' : [
+                  {
+                    'action_name': 'create_symlink_webotsCtrlViz_faciometricLibs',
+                      'inputs': [ ],
+                      'outputs': [ ],
+                      'action': [
+                        'ln',
+                        '-s',
+                        '-h',
+                        '-f',
+                        '<(face_library_lib_path)',
+                        '../../simulator/controllers/webotsCtrlViz/',
+                      ],
+                  },
+                ], # actions
+              }], # conditions
+            ],
           }, # end controller viz
 
           {

@@ -217,9 +217,15 @@ namespace Vision {
           vectorSubjectRecogData.push_back(subjectData);
           
         }else{
-          std::cout << "There was a problem deserializing the subject with error: " << successDeserialize << std::endl;
+          PRINT_STREAM_INFO("FaceTracker.loadEnrolledSubjectsFromFolder",
+                            "There was a problem deserializing the subject with error: " << successDeserialize);
         }
       }
+    }
+    
+    if(!vectorSubjectRecogData.empty()) {
+      PRINT_NAMED_INFO("FaceTracker.loadEnrolledSubjectsFromFolder.Success",
+                       "Loaded %lu subjects", vectorSubjectRecogData.size());
     }
     
     return vectorSubjectRecogData;
@@ -243,7 +249,10 @@ namespace Vision {
     bool status = false;
     
     //Perform recognition
-    std::cout << "Performing recognition with " << imRDList.size() << " images" << std::endl;
+    PRINT_NAMED_INFO("FaceTracker.doRecognition",
+                     "Performing recognition with %lu images.",
+                     imRDList.size());
+    
     //We prepare the subject that we will recognize
     facio::SubjectRecogData subjectDataToRecognize;
     std::string label("ToRecognize");
@@ -257,21 +266,23 @@ namespace Vision {
       if(status)
       {
         if (subject != -1) {
-          std::cout << vectorSubjectRecogData[subject].getLabel() << std::endl;
+          PRINT_NAMED_INFO("FaceTracker.doRecognition", "Recognized: %s",
+                           vectorSubjectRecogData[subject].getLabel().c_str());
         } else {
-          std::cout << "Subject not found" << std::endl;
+          PRINT_NAMED_INFO("FaceTracker.doRecognition", "Subject not found");
         }
         for (int i = 0; i < (int) scores.size(); i++) {
-          std::cout << "Subject " << vectorSubjectRecogData[i].getLabel() << " with score " << scores[i] << std::endl;
+          PRINT_NAMED_INFO("FaceTracker.doRecognition", "Subject %s with score %f",
+                           vectorSubjectRecogData[i].getLabel().c_str(), scores[i]);
         }
       }
       else
       {
-        std::cout<<"No valid inputs in predict function"<<std::endl;
+        PRINT_NAMED_ERROR("FaceTracker.doRecognition.InvalidInputs", "");
       }
       
     }else{
-      std::cout << "The subject could not be created for recognition." << std::endl;
+      PRINT_NAMED_ERROR("FaceTracker.doRecognition.CouldNotCreateSubject", "");
     }
     
     return subject;
@@ -284,16 +295,18 @@ namespace Vision {
    \param folder Path of the folder we save the enrolled objects.
    */
   bool enrollSubject(facio::FaceRecog &faceRecog,
+                     std::string name,
                      std::vector<facio::ImRawData> imRDList,
                      std::string folder,
                      std::vector<facio::SubjectRecogData>& knownFaces)
   {
-    std::string name;
     facio::SubjectRecogData subjectDataToEnroll;
-    
+   
+    /*
     //Get the name of the person
     std::cout << "Name: " << std::endl;
     std::cin >> name;
+    */
     
     // Fill the subjectDataToEnroll with the information
     bool subjectCreated = faceRecog.processSubjectRecogData(imRDList, name, subjectDataToEnroll);
@@ -335,15 +348,19 @@ namespace Vision {
           outfile.close();
           
           //Enrollment done
-          std::cout << "You have successfully enrolled " << name << " to the following path " << fileToSave <<  std::endl;
+          PRINT_NAMED_INFO("FaceTracker.enrollSubject.Success",
+                           "Successfully enrolled %s to the following path: %s",
+                           name.c_str(), fileToSave.c_str());
         }
         else{
-          std::cout << "There was a problem, and you could not enroll "<< name << " to the data base" << std::endl;
+          PRINT_NAMED_ERROR("FaceTracker.enrollSubject.Fail",
+                            "Could not enroll %s to the database", name.c_str());
         }
       }
     }
     else{
-      std::cout << "The subject could not be created for recognition." << std::endl;
+      PRINT_NAMED_ERROR("FaceTracker.enrollSubject.Fail",
+                        "The subject could not be created for recognition.");
     }
     
     return subjectCreated;
@@ -354,7 +371,7 @@ namespace Vision {
   FaceTracker::Impl::Impl(const std::string& modelPath)
   //: _displayEnabled(false)
   {
-    const std::string subPath = modelPath + "/faciometric/";
+    const std::string subPath = modelPath + "/faciometric/models/";
     
     const std::string cascadeFilename = subPath + "haarcascade_frontalface_alt2.xml";
     
@@ -394,12 +411,13 @@ namespace Vision {
 #   endif
     
 #   if DO_RECOGNITION
+    
+    // Load any faces we already know about
+    _recognizedFacesPath = subPath + "subjects";
+    _recognizableFaces = loadEnrolledSubjectsFromFolder(_recognizedFacesPath);
+    
     // Initialize Face Recognition
     _fr = new facio::FaceRecog(subPath);
-
-    // Load any faces we already know about
-    _recognizedFacesPath = subPath + "fr_data";
-    _recognizableFaces = loadEnrolledSubjectsFromFolder(_recognizedFacesPath);
 #   endif
     
   }
@@ -630,13 +648,18 @@ namespace Vision {
       // Vector of the scores resulting from the recognition
       std::vector<float> scores;
       
-      // Index of the subject recornized (if it is not recognized it will be set to -1)
-      int subject = doRecognition(*_fr, currentRecogData, _recognizableFaces, scores);
+      int subject = -1;
+      
+      if(!_recognizableFaces.empty()) {
+        // Index of the subject recornized (if it is not recognized it will be set to -1)
+        subject = doRecognition(*_fr, currentRecogData, _recognizableFaces, scores);
+      }
       
       if(subject != -1) {
         face.SetID(subject);
       } else {
-        if(false == enrollSubject(*_fr, currentRecogData, _recognizedFacesPath,
+        if(false == enrollSubject(*_fr, "Person" + std::to_string(_faceCtr++),
+                                  currentRecogData, _recognizedFacesPath,
                                   _recognizableFaces))
         {
           PRINT_NAMED_ERROR("FaceTracker.Impl.Update",
