@@ -45,6 +45,10 @@ namespace Cozmo {
       NUM_MOODS
     };
     
+    enum class EmotionEvent {
+      CloseFace,
+    };
+    
     EmotionManager(Robot &robot);
     
     Result Init(const Json::Value& config);
@@ -63,6 +67,8 @@ namespace Cozmo {
     // Update the current emotions as a function of time
     Result Update(double currentTime_sec);
     
+    void HandleEmotionalMoment(EmotionEvent event);
+    
   private:
     
     // Event handlers
@@ -79,6 +85,8 @@ namespace Cozmo {
     std::map<Emotion, EmotionEvolutionFunction> _evolutionFunctions;
     
     void SetEvolutionFunction(Emotion emotion, EmotionEvolutionFunction fcn);
+    
+    std::map<Emotion, std::map<EmotionEvent, Value> > _emotionEventImpacts;
   }; // class EmotionManager
   
   

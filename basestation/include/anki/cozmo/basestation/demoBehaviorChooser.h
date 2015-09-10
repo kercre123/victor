@@ -45,12 +45,13 @@ protected:
     Rest
   };
   
-  // Amount of time to stay in the Blocks DemoState while waiting for some blocks that need fixing
-  constexpr static f32 kBlocksBoredomTime = 30;
+  // Amount of time in seconds to stay in the Blocks DemoState while waiting for some blocks that need fixing
+  constexpr static f32 kBlocksBoredomTime = 60;
   
   Robot& _robot;
   
-  DemoState _demoState = DemoState::Faces;
+  // TODO: Make this start with DemoState::Faces once the InteractWithFaces behavior works
+  DemoState _demoState = DemoState::Blocks;
   
   // Note these are for easy access - the inherited _behaviorList owns the memory
   BehaviorLookAround* _behaviorLookAround = nullptr;

@@ -83,7 +83,7 @@ Result DemoBehaviorChooser::Update(double currentTime_sec)
   {
     case DemoState::Faces:
     {
-      if (_robot.GetEmotionManager().GetEmotion(EmotionManager::SCARED) == 1.0f)
+      if (_robot.GetEmotionManager().GetEmotion(EmotionManager::SCARED) == EmotionManager::MAX_VALUE)
       {
         _demoState = DemoState::Blocks;
         initBlocksTime = currentTime_sec;

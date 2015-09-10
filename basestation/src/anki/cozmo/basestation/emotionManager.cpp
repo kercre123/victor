@@ -51,27 +51,40 @@ namespace Cozmo {
       PRINT_NAMED_ERROR("EmotionManager.Init.Sad", "Missing config key %s", sadDecayRateName);
     }
     
-    auto scaredName = "scared";
-    auto resetDurationName = "reset_duration";
-    if (config.isMember(scaredName) && config[scaredName].isMember(resetDurationName))
+    auto scaredName = "Scared";
+    if (config.isMember(scaredName))
     {
-      auto scaredResetTime = config[scaredName][resetDurationName].asFloat();
-      auto scaredEvolveFcn = [scaredResetTime] (Value value, f64 t) {
-        static auto lastReset = t;
-        if (t - lastReset >= scaredResetTime)
-        {
-          lastReset = t;
-          return Value(0);
-        }
-        return value;
-      };
+      auto resetDurationName = "ResetDuration";
+      if (config[scaredName].isMember(resetDurationName))
+      {
+        auto scaredResetTime = config[scaredName][resetDurationName].asFloat();
+        auto scaredEvolveFcn = [scaredResetTime] (Value value, f64 t) {
+          static auto lastReset = t;
+          if (t - lastReset >= scaredResetTime)
+          {
+            lastReset = t;
+            return Value(0);
+          }
+          return value;
+        };
+        
+        SetEvolutionFunction(SCARED, scaredEvolveFcn);
+      }
+      else
+      {
+        PRINT_NAMED_ERROR("EmotionManager.Init.Scared", "Missing config key %s.%s", scaredName, resetDurationName);
+      }
       
-      SetEvolutionFunction(SCARED, scaredEvolveFcn);
-    }
-    else
-    {
-      PRINT_NAMED_ERROR("EmotionManager.Init.Scared", "Missing config key %s.%s", scaredName, resetDurationName);
-    }
+      auto closeFaceName = "CloseFace";
+      if (config[scaredName].isMember(closeFaceName))
+      {
+        _emotionEventImpacts[Emotion::SCARED][EmotionEvent::CloseFace] = Value(config[scaredName][closeFaceName].asFloat());
+      }
+      else
+      {
+        PRINT_NAMED_ERROR("EmotionManager.Init.Scared", "Missing config key %s.%s", scaredName, closeFaceName);
+      }
+    } // if config::scared exits
     
     return Result::RESULT_OK;
   }
@@ -108,6 +121,22 @@ namespace Cozmo {
   void EmotionManager::SetEvolutionFunction(Emotion emotion, EmotionEvolutionFunction fcn)
   {
     _evolutionFunctions[emotion] = fcn;
+  }
+  
+  
+  void EmotionManager::HandleEmotionalMoment(EmotionEvent event)
+  {
+    // Go through all the Emotions that have event values
+    for (auto emotionEventValue : _emotionEventImpacts)
+    {
+      // If we have a Value associated with this event for this emotion
+      Emotion curEmotion = emotionEventValue.first;
+      auto iter = emotionEventValue.second.find(event);
+      if (emotionEventValue.second.end() != iter)
+      {
+        AdjustEmotion(curEmotion, (*iter).second);
+      }
+    }
   }
   
 } // namespace Cozmo

@@ -1,6 +1,6 @@
 {
-  "scared" : {
-    "boo_increase" : 0.34,
-    "reset_duration" : 30
+  "Scared" : {
+    "CloseFace" : 0.34,
+    "ResetDuration" : 30
   }
 }

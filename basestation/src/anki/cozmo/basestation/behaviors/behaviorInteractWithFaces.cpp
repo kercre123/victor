@@ -338,7 +338,7 @@ namespace Cozmo {
               _animationActionTag = animAction->GetTag();
               _robot.GetActionList().QueueActionNow(IBehavior::sActionSlot, animAction);
               _isAnimating = true;
-              _robot.GetEmotionManager().AdjustEmotion(EmotionManager::SCARED, EmotionManager::Value(0.34));
+              _robot.GetEmotionManager().HandleEmotionalMoment(EmotionManager::EmotionEvent::CloseFace);
             }
           }
           
