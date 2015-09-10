@@ -182,22 +182,12 @@
         <Ww>
           <count>0</count>
           <WinNumber>1</WinNumber>
-          <ItemText>g_dataToHead</ItemText>
+          <ItemText>m_DMAtoHead</ItemText>
         </Ww>
         <Ww>
           <count>1</count>
           <WinNumber>1</WinNumber>
-          <ItemText>m_DMAtoHead</ItemText>
-        </Ww>
-        <Ww>
-          <count>2</count>
-          <WinNumber>1</WinNumber>
-          <ItemText>dataToHead-&gt;cubeToUpdate</ItemText>
-        </Ww>
-        <Ww>
-          <count>3</count>
-          <WinNumber>1</WinNumber>
-          <ItemText>g_dataToHead.cubeToUpdate</ItemText>
+          <ItemText>dataToHead</ItemText>
         </Ww>
       </WatchWindow1>
       <MemoryWindow1>
