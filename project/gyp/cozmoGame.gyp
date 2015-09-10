@@ -443,6 +443,35 @@
               '<@(opencv_libs)',
               '<@(face_library_libs)',
             ],
+            'actions': [
+              {
+                'action_name': 'create_symlink_webotsCtrlEnginefaceLibraryLibs',
+                'inputs': [ ],
+                'outputs': [ ],
+                
+                'conditions': [
+                  ['face_library=="faciometric"', {
+                    'action': [
+                      'ln',
+                      '-s',
+                      '-h',
+                      '-f',
+                      '<(face_library_lib_path)',
+                      '../../simulator/controllers/webotsCtrlGameEngine/',
+                    ],
+                  }],
+                  ['face_library=="facesdk"', {
+                    'action': [
+                      'ln',
+                      '-s',
+                      '-f',
+                      '<(face_library_lib_path)/libfsdk.dylib',
+                      '../../simulator/controllers/webotsCtrlGameEngine/',
+                    ],
+                  }],
+                ], # conditions
+              },
+            ] # actions
           }, # end controller Game Engine
 
           {
@@ -466,6 +495,31 @@
             'libraries': [
               'libCppController.dylib',
               '<@(opencv_libs)',
+            ],
+            'conditions': [
+              # For some reason, need to link directly against FacioMetric libs
+              # when using them for recognition, which also means they have to be
+              # present (symlinked) in the executable dir
+              ['face_library == "faciometric"', {
+                'libraries': [
+                  '<@(face_library_libs)',
+                ],
+                'actions' : [
+                  {
+                    'action_name': 'create_symlink_webotsCtrlKeyboard_faciometricLibs',
+                    'inputs': [ ],
+                    'outputs': [ ],
+                    'action': [
+                      'ln',
+                      '-s',
+                      '-h',
+                      '-f',
+                      '<(face_library_lib_path)',
+                      '../../simulator/controllers/webotsCtrlKeyboard/',
+                    ],
+                  },
+                ], # actions
+              }], # conditions
             ],
           }, # end controller Keyboard
 
@@ -710,90 +764,8 @@
                   '<@(_outputs)',
                 ],
               },
-
-              # Face-library-specific actions:
-    
-              {
-                # The FacioMetric dynamic libs are expected to be in a "lib"
-                # subdirectory of the executable directory, so make a symlink
-                # to their location in the same directory where we put the
-                # game engine and keyboard controller, since those both depend
-                # on the vision libraries, which pull in faciometric stuff
-                'action_name': 'create_symlink_webotsCtrlGameEngine_facioMetricLibs',
-                'inputs': [ ],
-                'outputs': [ ],
-                'conditions': [
-                  ['face_library=="faciometric"', {
-                    'action': [
-                      'ln',
-                      '-s',
-                      '-f',
-                      '<(face_library_lib_path)',
-                      '../../simulator/controllers/webotsCtrlGameEngine/',
-                    ],
-                  },
-                  { # else
-                    'action': [
-                      'echo',
-                      '"Skipping Faciometric-specific action."'
-                    ],
-                  }],
-                ],
-              },
-              {
-                'action_name': 'create_symlink_webotsCtrlKeyboard_facioMetricLibs',
-                'inputs': [ ],
-                'outputs': [ ],
-                'conditions': [
-                  ['face_library=="faciometric"', {
-                    'action': [
-                      'ln',
-                      '-s',
-                      '-f',
-                      '<(face_library_lib_path)',
-                      '../../simulator/controllers/webotsCtrlKeyboard/',
-                    ],
-                  },
-                  { # else
-                    'action': [
-                      'echo',
-                        '"Skipping Faciometric-specific action."'
-                      ],
-                  }],
-                ],
-              },
-              
-              
-              {
-                # The FaceSDK dynamic libs are expected to be in the
-                # subdirectory with the executable, so make a symlink
-                # to their location in the same directory where we put the
-                # game engine controller
-                'action_name': 'create_symlink_webotsCtrlGameEngine_facesdkLibs',
-                'inputs': [ ],
-                'outputs': [ ],
-                'conditions': [
-                  ['face_library=="facesdk"', {
-                    'action': [
-                      'ln',
-                      '-s',
-                      '-f',
-                      '<(face_library_lib_path)/libfsdk.dylib',
-                      '../../simulator/controllers/webotsCtrlGameEngine/',
-                    ],
-                  },
-                  { # else
-                    'action': [
-                      'echo',
-                      '"Skipping FaceSDK-specific action."'
-                    ],
-                  }],
-                ],
-              },
               
             ], # actions
-           
-            
             
           }, # end webotsControllers
 
