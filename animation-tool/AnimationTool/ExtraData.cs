@@ -266,6 +266,9 @@ namespace AnimationTool.Sequencer
         {
             Length = MoveSelectedDataPoints.DELTA_X;
             Exists = true;
+
+            leftEye = new float[(int)ProceduralEyeParameter.NumParameters];
+            rightEye = new float[(int)ProceduralEyeParameter.NumParameters];
         }
 
         public ExtraProceduralFaceData(ProceduralFacePointData data)
@@ -277,9 +280,10 @@ namespace AnimationTool.Sequencer
             rightEye = new float[(int)ProceduralEyeParameter.NumParameters];
 
             faceAngle = data.faceAngle;
+
             if (data.faceAngle_deg != 999) faceAngle = data.faceAngle_deg;
 
-            for (int i = 0; data.leftEye != null && i < data.leftEye.Length; ++i)
+            for (int i = 0; data.leftEye != null && i < data.leftEye.Length && i < leftEye.Length; ++i)
             {
                 leftEye[i] = data.leftEye[i];
                 rightEye[i] = data.rightEye[i];

@@ -227,7 +227,15 @@ namespace AnimationTool
             pointData.triggerTime_ms = (int)(current.YValues[0] * 1000); // convert to ms
             pointData.durationTime_ms = 0;
 
-            pointData.faceAngle_deg = extraData.faceAngle_deg;
+            pointData.faceAngle = extraData.faceAngle;
+
+            for (int i = 0; i < extraData.leftEye.Length; ++i)
+            {
+                pointData.leftEye[i] = extraData.leftEye[i];
+                pointData.rightEye[i] = extraData.rightEye[i];
+            }
+
+            pointData.faceAngle_deg = 999;
 
             pointData.leftBrowAngle = 999;
             pointData.rightBrowAngle = 999;

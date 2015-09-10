@@ -335,59 +335,48 @@ namespace AnimationTool
             }
         }
 
-        public void SetToPreviousFace(FaceForm faceForm)
+        public void AnimateFace(Sequencer.ExtraProceduralFaceData data)
         {
-            if (channel.IsConnected)
+            if (channel == null || !channel.IsConnected || data == null) return;
+
+            displayProceduralFaceMessage.robotID = 1;
+            displayProceduralFaceMessage.faceAngle = data.faceAngle;
+
+            for (int i = 0; i < displayProceduralFaceMessage.leftEye.Length; ++i)
             {
-                displayProceduralFaceMessage.robotID = 1;
-                displayProceduralFaceMessage.faceAngle = faceForm.LastFaceAngle;
-
-                for (int i = 0; i < displayProceduralFaceMessage.leftEye.Length; ++i)
-                {
-                    displayProceduralFaceMessage.leftEye[i] = faceForm.LastLeftEye[i];
-                    displayProceduralFaceMessage.rightEye[i] = faceForm.LastRightEye[i];
-                }
-
-                message.DisplayProceduralFace = displayProceduralFaceMessage;
-                channel.Send(message);
+                displayProceduralFaceMessage.leftEye[i] = data.leftEye[i];
+                displayProceduralFaceMessage.rightEye[i] = data.rightEye[i];
             }
+
+            message.DisplayProceduralFace = displayProceduralFaceMessage;
+            channel.Send(message);
         }
 
         public void AnimateFace(FaceForm faceForm)
         {
-            if (channel.IsConnected && faceForm.Changed)
-            {
-                displayProceduralFaceMessage.robotID = 1;
-                displayProceduralFaceMessage.faceAngle = faceForm.FaceAngle_deg;
+            if (channel == null || !channel.IsConnected || faceForm == null || !faceForm.Changed) return;
 
-                for (int i = 0; i < displayProceduralFaceMessage.leftEye.Length; ++i)
+            displayProceduralFaceMessage.robotID = 1;
+            displayProceduralFaceMessage.faceAngle = faceForm.faceAngle;
+
+            for (int i = 0; i < displayProceduralFaceMessage.leftEye.Length; ++i)
+            {
+                if (faceForm.eyes[i] != null)
                 {
-                    if (faceForm.Eyes[i] != null)
-                    {
-                        displayProceduralFaceMessage.leftEye[i] = faceForm.Eyes[i].LeftValue;
-                        displayProceduralFaceMessage.rightEye[i] = faceForm.Eyes[i].RightValue;
-                    }
-                    else
-                    {
-                        Debug.LogWarning("Missing " + (ProceduralEyeParameter)i + " in message.");
-                    }
+                    displayProceduralFaceMessage.leftEye[i] = faceForm.eyes[i].LeftValue;
+                    displayProceduralFaceMessage.rightEye[i] = faceForm.eyes[i].RightValue;
                 }
-
-                message.DisplayProceduralFace = displayProceduralFaceMessage;
-                channel.Send(message);
-                faceForm.Changed = false;
+                else
+                {
+                    Debug.LogWarning("Missing " + (ProceduralEyeParameter)i + " in message.");
+                    displayProceduralFaceMessage.leftEye[i] = 0;
+                    displayProceduralFaceMessage.rightEye[i] = 0;
+                }
             }
-        }
 
-        public void AnimateFace(Sequencer.ExtraProceduralFaceData data)
-        {
-            if (channel.IsConnected)
-            {
-                displayProceduralFaceMessage.robotID = 1;
-
-                message.DisplayProceduralFace = displayProceduralFaceMessage;
-                channel.Send(message);
-            }
+            message.DisplayProceduralFace = displayProceduralFaceMessage;
+            channel.Send(message);
+            faceForm.Changed = false;
         }
     }
 }

@@ -135,6 +135,11 @@ namespace AnimationTool
                     if (curChart.Name != "cFaceAnimation")
                     {
                         ActionManager.Do(new SelectDataPoint(curDataPoint, curChart));
+
+                        if (curChart.Name == "cProceduralFace")
+                        {
+                            robotEngineMessenger.AnimateFace(Sequencer.ExtraData.Entries[curDataPoint.GetCustomProperty(Sequencer.ExtraData.Key)] as Sequencer.ExtraProceduralFaceData);
+                        }
                     }
                     else
                     {
@@ -485,14 +490,14 @@ namespace AnimationTool
         {
             if (faceForm.Open(previous != null ? previous : extraData) == DialogResult.OK)
             {
-                extraData.faceAngle_deg = faceForm.FaceAngle_deg;
+                extraData.faceAngle = faceForm.faceAngle;
 
                 for (int i = 0; i < extraData.leftEye.Length; ++i)
                 {
-                    if (faceForm.Eyes[i] != null)
+                    if (faceForm.eyes[i] != null)
                     {
-                        extraData.leftEye[i] = faceForm.Eyes[i].LeftValue;
-                        extraData.rightEye[i] = faceForm.Eyes[i].RightValue;
+                        extraData.leftEye[i] = faceForm.eyes[i].LeftValue;
+                        extraData.rightEye[i] = faceForm.eyes[i].RightValue;
                     }
                 }
             }
@@ -502,7 +507,7 @@ namespace AnimationTool
                 {
                     ActionManager.Do(new RemoveDataPoint(curDataPoint, curChart), true);
                 }
-                robotEngineMessenger.SetToPreviousFace(faceForm); // Else if cancelled, set back to previous face
+                robotEngineMessenger.AnimateFace(previous != null ? previous : extraData); // Else if cancelled, set back to previous face
             }
         }
 
