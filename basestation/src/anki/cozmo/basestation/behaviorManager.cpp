@@ -61,15 +61,10 @@ namespace Cozmo {
   
   void BehaviorManager::SetupBehaviorChooser(const Json::Value &config)
   {
-    DemoBehaviorChooser* newDemoChooser = new DemoBehaviorChooser(_robot);
+    DemoBehaviorChooser* newDemoChooser = new DemoBehaviorChooser(_robot, config);
     _behaviorChooser = newDemoChooser;
     
     AddReactionaryBehavior(new BehaviorReactToPickup(_robot, config));
-    
-    newDemoChooser->AddBehaviorOCD(new BehaviorOCD(_robot, config));
-    newDemoChooser->AddBehaviorFidget(new BehaviorFidget(_robot, config));
-    newDemoChooser->AddBehaviorLookAround(new BehaviorLookAround(_robot, config));
-    newDemoChooser->AddBehaviorLookForFaces(new BehaviorLookForFaces(_robot, config));
   }
   
   // The AddReactionaryBehavior wrapper is responsible for setting up the callbacks so that important events will be

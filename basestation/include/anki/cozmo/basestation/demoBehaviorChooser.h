@@ -14,6 +14,7 @@
 #define __Cozmo_Basestation_DemoBehaviorChooser_H__
 
 #include "anki/cozmo/basestation/behaviorChooser.h"
+#include "json/json.h"
 #include "util/signals/simpleSignal_fwd.h"
 
 
@@ -31,16 +32,11 @@ class Robot;
 class DemoBehaviorChooser : public ReactionaryBehaviorChooser
 {
 public:
-  DemoBehaviorChooser(Robot& robot);
+  DemoBehaviorChooser(Robot& robot, const Json::Value& config);
   
   virtual IBehavior* ChooseNextBehavior(double currentTime_sec) const override;
   virtual Result Update(double currentTime_sec) override;
   virtual Result AddBehavior(IBehavior* newBehavior) override;
-  
-  Result AddBehaviorLookAround(BehaviorLookAround* behavior);
-  Result AddBehaviorLookForFaces(BehaviorLookForFaces* behavior);
-  Result AddBehaviorOCD(BehaviorOCD* behavior);
-  Result AddBehaviorFidget(BehaviorFidget* behavior);
   
 protected:
   enum class DemoState {
@@ -61,6 +57,8 @@ protected:
   BehaviorLookForFaces* _behaviorLookForFaces = nullptr;
   BehaviorOCD* _behaviorOCD = nullptr;
   BehaviorFidget* _behaviorFidget = nullptr;
+  
+  void SetupBehaviors(Robot& robot, const Json::Value& config);
   
 }; // class DemoBehaviorChooser
   

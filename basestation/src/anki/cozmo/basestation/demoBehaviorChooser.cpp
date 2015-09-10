@@ -23,15 +23,60 @@
 namespace Anki {
 namespace Cozmo {
   
-DemoBehaviorChooser::DemoBehaviorChooser(Robot& robot)
+DemoBehaviorChooser::DemoBehaviorChooser(Robot& robot, const Json::Value& config)
   : ReactionaryBehaviorChooser()
   , _robot(robot)
 {
+  SetupBehaviors(robot, config);
+}
+  
+void DemoBehaviorChooser::SetupBehaviors(Robot& robot, const Json::Value& config)
+{
+  // Setup LookForFaces behavior
+  _behaviorLookForFaces = new BehaviorLookForFaces(robot, config);
+  Result addResult = ReactionaryBehaviorChooser::AddBehavior(_behaviorLookForFaces);
+  if (Result::RESULT_OK != addResult)
+  {
+    PRINT_NAMED_ERROR("DemoBehaviorChooser.SetupBehaviors", "BehaviorLookForFaces was not created properly.");
+    return;
+  }
+  
+  // Setup OCD behavior
+  _behaviorOCD = new BehaviorOCD(robot, config);
+  addResult = ReactionaryBehaviorChooser::AddBehavior(_behaviorOCD);
+  if (Result::RESULT_OK != addResult)
+  {
+    PRINT_NAMED_ERROR("DemoBehaviorChooser.SetupBehaviors", "BehaviorOCD was not created properly.");
+    return;
+  }
+  
+  // Setup LookAround behavior
+  _behaviorLookAround = new BehaviorLookAround(robot, config);
+  addResult = ReactionaryBehaviorChooser::AddBehavior(_behaviorLookAround);
+  if (Result::RESULT_OK != addResult)
+  {
+    PRINT_NAMED_ERROR("DemoBehaviorChooser.SetupBehaviors", "BehaviorLookAround was not created properly.");
+    return;
+  }
+  
+  // Setup Fidget behavior
+  _behaviorFidget = new BehaviorFidget(robot, config);
+  addResult = ReactionaryBehaviorChooser::AddBehavior(_behaviorFidget);
+  if (Result::RESULT_OK != addResult)
+  {
+    PRINT_NAMED_ERROR("DemoBehaviorChooser.SetupBehaviors", "BehaviorFidget was not created properly.");
+    return;
+  }
 }
   
 Result DemoBehaviorChooser::Update(double currentTime_sec)
 {
   Result updateResult = ReactionaryBehaviorChooser::Update(currentTime_sec);
+  if (Result::RESULT_OK != updateResult)
+  {
+    return updateResult;
+  }
+  
   static double initBlocksTime = currentTime_sec;
   
   switch (_demoState)
@@ -61,7 +106,8 @@ Result DemoBehaviorChooser::Update(double currentTime_sec)
       PRINT_NAMED_ERROR("DemoBehaviorChooser.Update", "Chooser in unhandled state!");
     }
   }
-  return updateResult;
+  
+  return Result::RESULT_OK;
 }
   
 IBehavior* DemoBehaviorChooser::ChooseNextBehavior(double currentTime_sec) const
@@ -118,46 +164,6 @@ IBehavior* DemoBehaviorChooser::ChooseNextBehavior(double currentTime_sec) const
   }
   
   return nullptr;
-}
-
-Result DemoBehaviorChooser::AddBehaviorLookAround(BehaviorLookAround* behavior)
-{
-  Result addResult = ReactionaryBehaviorChooser::AddBehavior(behavior);
-  if (Result::RESULT_OK == addResult)
-  {
-    _behaviorLookAround = behavior;
-  }
-  return addResult;
-}
-
-Result DemoBehaviorChooser::AddBehaviorLookForFaces(BehaviorLookForFaces* behavior)
-{
-  Result addResult = ReactionaryBehaviorChooser::AddBehavior(behavior);
-  if (Result::RESULT_OK == addResult)
-  {
-    _behaviorLookForFaces = behavior;
-  }
-  return addResult;
-}
-
-Result DemoBehaviorChooser::AddBehaviorOCD(BehaviorOCD* behavior)
-{
-  Result addResult = ReactionaryBehaviorChooser::AddBehavior(behavior);
-  if (Result::RESULT_OK == addResult)
-  {
-    _behaviorOCD = behavior;
-  }
-  return addResult;
-}
-
-Result DemoBehaviorChooser::AddBehaviorFidget(BehaviorFidget* behavior)
-{
-  Result addResult = ReactionaryBehaviorChooser::AddBehavior(behavior);
-  if (Result::RESULT_OK == addResult)
-  {
-    _behaviorFidget = behavior;
-  }
-  return addResult;
 }
   
 Result DemoBehaviorChooser::AddBehavior(IBehavior* newBehavior)
