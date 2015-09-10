@@ -72,6 +72,29 @@ TEST(BlockWorld, AddAndRemoveObject)
   Block_Cube1x1 testCube(testType);
   Vision::Marker::Code testCode = testCube.GetMarker(Block::FaceName::FRONT_FACE).GetCode();
   
+  
+  /***************************************************************************
+   *
+   *                          Camera Calibration
+   *
+   **************************************************************************/
+  
+  // Calibration values from Sept 1, 2015 - on 4.1 robot headboard with SSID 3a97
+  const u16 HEAD_CAM_CALIB_WIDTH  = 400;
+  const u16 HEAD_CAM_CALIB_HEIGHT = 296;
+  const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_X = 278.065116921f;
+  const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_Y = 278.867229568f;
+  const f32 HEAD_CAM_CALIB_CENTER_X       = 197.801561858f;
+  const f32 HEAD_CAM_CALIB_CENTER_Y       = 151.672492176f;
+  /*
+  const f32 HEAD_CAM_CALIB_DISTORTION[NUM_RADIAL_DISTORTION_COEFFS] = {
+    0.11281163f,
+    -0.31673507f,
+    -0.00226334f,
+    0.00200109f
+  };
+  */
+  
   const Vision::CameraCalibration camCalib(HEAD_CAM_CALIB_HEIGHT, HEAD_CAM_CALIB_WIDTH,
                                            HEAD_CAM_CALIB_FOCAL_LENGTH_X, HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
                                            HEAD_CAM_CALIB_CENTER_X, HEAD_CAM_CALIB_CENTER_Y);

@@ -17,13 +17,27 @@
 #include "anki/common/basestation/math/rotation.h"
 
 #include "util/logging/logging.h"
-
+#include "util/helpers/templateHelpers.h"
 
 #if FACE_TRACKER_PROVIDER == FACE_TRACKER_FACIOMETRIC
 // FacioMetric
-#  include <intraface/gaze/gaze.h>
+#  define ESTIMATE_EMOTION 0
+#  define ESTIMATE_GAZE 0
+
+#  include <intraface/core/core.h>
 #  include <intraface/core/LocalManager.h>
-#  include <intraface/emo/EmoDet.h>
+#  include <intraface/facerecog/SubjectSerializer.h>
+#  include <intraface/facerecog/FaceRecog.h>
+#  include <intraface/facerecog/SubjectRecogData.h>
+#  include <intraface/facerecog/Macros.h>
+
+#  if ESTIMATE_GAZE
+#    include <intraface/gaze/gaze.h>
+#  endif
+
+#  if ESTIMATE_EMOTION
+#    include <intraface/emo/EmoDet.h>
+#  endif
 
 #elif FACE_TRACKER_PROVIDER == FACE_TRACKER_FACESDK
 // Luxand FaceSDK
@@ -64,27 +78,32 @@ namespace Vision {
     std::list<TrackedFace> GetFaces() const;
     
   private:
-    using SDM = facio::FaceAlignmentSDM<facio::AlignmentFeature, facio::NO_CONTOUR, facio::LocalManager>;
-    using IE  = facio::IrisEstimator<facio::IrisFeature, facio::LocalManager>;
-    using HPE = facio::HPEstimatorProcrustes<facio::LocalManager>;
-    using GE  = facio::DMGazeEstimation<facio::LocalManager>;
-    using ED  = facio::EmoDet<facio::LocalManager>;
-    
-    //const std::string _modelPath;
-    
     // License manager:
     static facio::LocalManager _lm;
     
+    // OpenCV face detector:
     cv::CascadeClassifier _faceCascade;
     
-    static SDM* _sdm;
-    //std::unique_ptr<SDM> _sdm;
-    IE*  _ie;
-    HPE* _hpe;
-    GE*  _ge;
-    ED*  _ed;
+    using SDM = facio::FaceAlignmentSDM<facio::AlignmentFeature, facio::NO_CONTOUR, facio::LocalManager>;
+    using HPE = facio::HPEstimatorProcrustes<facio::LocalManager>;
     
+    static SDM* _sdm;
+    HPE* _hpe;
+    
+#   if ESTIMATE_GAZE
+    using IE  = facio::IrisEstimator<facio::IrisFeature, facio::LocalManager>;
+    using GE  = facio::DMGazeEstimation<facio::LocalManager>;
+    IE*  _ie;
+    GE*  _ge;
+#   endif
+    
+#   if ESTIMATE_EMOTION
+    using ED  = facio::EmoDet<facio::LocalManager>;
+    ED*  _ed;
     facio::emoScores _Emo; // Emotions to show
+#   endif
+    
+    //const std::string _modelPath;
     
     static int _faceCtr;
     
@@ -125,6 +144,7 @@ namespace Vision {
       _sdm = SDM::getInstance((subPath + "tracker_model49.bin").c_str(), &_lm);
     }
     
+#   if ESTIMATE_GAZE
     // Create an instance of the class IrisEstimator
     PRINT_NAMED_INFO("FaceTrackerImpl.Constructor.InstantiateIE", "");
     _ie  = new IE((subPath + "iris_model.bin").c_str(), &_lm);
@@ -132,14 +152,17 @@ namespace Vision {
     // Create an instance of the class GazeEstimator
     PRINT_NAMED_INFO("FaceTrackerImpl.Constructor.InstantiateGE", "");
     _ge  = new GE((subPath + "gaze_model.bin").c_str(), &_lm);
+#   endif
     
     // Create an instance of the class HPEstimatorProcrustes
     PRINT_NAMED_INFO("FaceTrackerImpl.Constructor.InstantiateHPE", "");
     _hpe = new HPE((subPath + "hp_model.bin").c_str(), &_lm);
     
+#   if ESTIMATE_EMOTION
     // Create an instance of the class EmoDet
     PRINT_NAMED_INFO("FaceTrackerImpl.Constructor.InstantiateED", "");
     _ed  = new ED((subPath + "emo_model.bin").c_str(), &_lm);
+#   endif
     
   }
   
@@ -149,11 +172,18 @@ namespace Vision {
   {
     //if(_sdm) delete _sdm; // points to a singleton, so don't delete, call ~SDM();
     //_sdm->~SDM();
+
+    Util::SafeDelete(_hpe);
     
-    if(_ie)  delete _ie;
-    if(_hpe) delete _hpe;
-    if(_ge)  delete _ge;
-    if(_ed)  delete _ed;
+#   if ESTIMATE_GAZE
+    Util::SafeDelete(_ie);
+    Util::SafeDelete(_ge);
+#   endif
+    
+#   if ESTIMATE_EMOTION
+    Util::SafeDelete(_ed);
+#   endif
+
   }
   
   // For arbitrary indices
@@ -301,9 +331,11 @@ namespace Vision {
       // Update the TrackedFace::Features from the FacioMetric landmarks:
       UpdateFaceFeatures(landmarks, face);
       
+#     if ESTIMATE_EMOTION
       // Computing the Emotion information & Predicting the emotion information
       _ed->predict(frame, landmarks, &_Emo);
-     
+#     endif
+      
       // Estimating the headpose
       facio::HeadPose headPose;
       _hpe->estimateHP(landmarks, headPose);
@@ -327,6 +359,7 @@ namespace Vision {
       face.SetHeadPose(pose);
       // TODO: Hook up pose parent to camera?
      
+#     if ESTIMATE_GAZE
       // Estimating the irises
       facio::Irisesf irises;
       _ie->detect(frame, landmarks, irises);
@@ -334,9 +367,10 @@ namespace Vision {
       face.SetRightEyeCenter(irises.right.center);
       
       // Estimating the gaze, the gaze information is stored in the struct 'egs'
-      //facio::EyeGazes gazes;
-      //_ge->compute(landmarks, irises, headPose, gazes);
-    }
+      facio::EyeGazes gazes;
+      _ge->compute(landmarks, irises, headPose, gazes);
+#     endif
+    } // for each face
     
     return RESULT_OK;
   } // Update()
