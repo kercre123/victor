@@ -1,18 +1,9 @@
-
 /***************************************************************************
  *
  *                          Physical Robot Geometry
  *
  **************************************************************************/
-
-const f32 WHEEL_DIAMETER_MM  = 29.f;
-const f32 HALF_WHEEL_CIRCUM  = WHEEL_DIAMETER_MM * M_PI_2;
-const f32 WHEEL_RAD_TO_MM    = WHEEL_DIAMETER_MM / 2.f;  // or HALF_WHEEL_CIRCUM / PI;
-const f32 WHEEL_DIST_MM      = 47.7f; // approx distance b/w the center of the front treads
-const f32 WHEEL_DIST_HALF_MM = WHEEL_DIST_MM / 2.f;
-const f32 WHEEL_BASE_MM      = 48.f;
-
-
+/*
 // The x-offset from robot origin that the robot's drive center is
 // located for the treaded robot when not carrying a block.
 // (If you were to model the treaded robot as a two-wheel robot,
@@ -32,13 +23,6 @@ const f32 LIFT_HEIGHT_HIGHDOCK = 76.f;
 const f32 LIFT_HEIGHT_CARRY    = 92.f;
 const f32 LIFT_HEIGHT_LOW_ROLL = 68.f;
 
-// Distance between the robot origin and the distance along the robot's x-axis
-// to the lift when it is in the low docking position.
-const f32 ORIGIN_TO_LOW_LIFT_DIST_MM = 16.f;
-const f32 ORIGIN_TO_HIGH_LIFT_DIST_MM = 13.f;
-const f32 ORIGIN_TO_HIGH_PLACEMENT_DIST_MM = 16.f;
-const f32 ORIGIN_TO_LOW_ROLL_DIST_MM = 13.f;
-
 // Distance between the lift shoulder joint and the lift "wrist" joint where arm attaches to fork assembly
 const f32 LIFT_ARM_LENGTH = 66.f;
 
@@ -56,7 +40,7 @@ const f32 LIFT_XBAR_HEIGHT_WRT_WRIST_JOINT = -20.f;
 // The distance along the x axis from the wrist joint to the front of the lifter plate
 const f32 LIFT_FRONT_WRT_WRIST_JOINT = 4.f;
 
-  // Neck joint relative to robot origin
+// Neck joint relative to robot origin
 const f32 NECK_JOINT_POSITION[3] = {-13.f, 0.f, 34.5f + WHEEL_RAD_TO_MM};
 
 // camera relative to neck joint
@@ -67,30 +51,4 @@ const f32 LIFT_BASE_POSITION[3]  = {-41.0f, 0.f, 30.5f + WHEEL_RAD_TO_MM};
 
 // IMU position relative to neck joint
 const f32 IMU_POSITION[3] = {5.8f, 0.f, -13.5f};
-
-
-
-/***************************************************************************
- *
- *                          Camera Calibration
- *
- **************************************************************************/
-
-static const u8 NUM_RADIAL_DISTORTION_COEFFS = 4;
-
-// Calibration values from August 11, 2015 - on headboard with SSID 3a99
-const u16 HEAD_CAM_CALIB_WIDTH  = 400;
-const u16 HEAD_CAM_CALIB_HEIGHT = 296;
-const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_X = 273.316765624f;
-const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_Y = 274.838250766f;
-const f32 HEAD_CAM_CALIB_CENTER_X       = 199.638842523f;
-const f32 HEAD_CAM_CALIB_CENTER_Y       = 160.682934109f;
-const f32 HEAD_CAM_CALIB_DISTORTION[NUM_RADIAL_DISTORTION_COEFFS] = {
-  0.03956f,
-  -0.08955f,
-  0.00044f,
-  0.00188f
-};
-
-
-
+*/

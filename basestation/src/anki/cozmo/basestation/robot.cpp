@@ -884,12 +884,7 @@ namespace Anki {
           dockErrMsg.y_horErr  = markerPoseWrtRobot.GetTranslation().y();
           dockErrMsg.z_height  = markerPoseWrtRobot.GetTranslation().z();
           dockErrMsg.angleErr  = markerPoseWrtRobot.GetRotation().GetAngleAroundZaxis().ToFloat() + M_PI_2;
-          
-          // HACK: Robot seems to dock slightly to the right rather consistently
-          if (_isPhysical) {
-            dockErrMsg.x_distErr -= DOCKING_LATERAL_OFFSET_HACK;
-          }
-          
+                    
           // Visualize docking error signal
           VizManager::getInstance()->SetDockingError(dockErrMsg.x_distErr,
                                                      dockErrMsg.y_horErr,
