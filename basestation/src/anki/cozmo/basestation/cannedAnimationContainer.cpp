@@ -69,7 +69,10 @@ namespace Cozmo {
     std::vector<std::string> v;
     v.reserve(_animations.size());
     for (std::unordered_map<std::string, Animation>::iterator i=_animations.begin(); i != _animations.end(); ++i) {
-      v.push_back(i->first);
+      // Don't include procedural animation name in list of available animations
+      if (i->first != FaceAnimationManager::ProceduralAnimName) {
+        v.push_back(i->first);
+      }
     }
     return v;
   }
