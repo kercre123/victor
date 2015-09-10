@@ -229,24 +229,24 @@ namespace AnimationTool
 
             pointData.faceAngle_deg = extraData.faceAngle_deg;
 
-            pointData.leftBrowAngle = extraData.leftBrowAngle;
-            pointData.rightBrowAngle = extraData.rightBrowAngle;
-            pointData.leftBrowCenX = extraData.leftBrowCenX;
-            pointData.rightBrowCenX = extraData.rightBrowCenX;
-            pointData.leftBrowCenY = extraData.leftBrowCenY;
-            pointData.rightBrowCenY = extraData.rightBrowCenY;
+            pointData.leftBrowAngle = 999;
+            pointData.rightBrowAngle = 999;
+            pointData.leftBrowCenX = 999;
+            pointData.rightBrowCenX = 999;
+            pointData.leftBrowCenY = 999;
+            pointData.rightBrowCenY = 999;
 
-            pointData.leftEyeHeight = extraData.leftEyeHeight;
-            pointData.rightEyeHeight = extraData.rightEyeHeight;
+            pointData.leftEyeHeight = 999;
+            pointData.rightEyeHeight = 999;
 
-            pointData.leftPupilHeight = extraData.leftPupilHeight;
-            pointData.rightPupilHeight = extraData.rightPupilHeight;
-            pointData.leftPupilWidth = extraData.leftPupilWidth;
-            pointData.rightPupilWidth = extraData.rightPupilWidth;
-            pointData.leftPupilCenX = extraData.leftPupilCenX;
-            pointData.rightPupilCenX = extraData.rightPupilCenX;
-            pointData.leftPupilCenY = extraData.leftPupilCenY;
-            pointData.rightPupilCenY = extraData.rightPupilCenY;
+            pointData.leftPupilHeight = 999;
+            pointData.rightPupilHeight = 999;
+            pointData.leftPupilWidth = 999;
+            pointData.rightPupilWidth = 999;
+            pointData.leftPupilCenX = 999;
+            pointData.rightPupilCenX = 999;
+            pointData.leftPupilCenY = 999;
+            pointData.rightPupilCenY = 999;
 
             return pointData;
         }

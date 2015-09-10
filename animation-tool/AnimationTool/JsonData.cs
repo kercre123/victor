@@ -103,6 +103,11 @@ namespace AnimationTool
         public float leftPupilCenY;
         public float rightPupilCenY;
 
+        public float faceAngle;
+
+        public float[] leftEye;
+        public float[] rightEye;
+
         public ProceduralFacePointData()
         {
             Name = NAME;
