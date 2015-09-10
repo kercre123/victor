@@ -823,7 +823,6 @@ namespace Vision {
       
       // Update the timestamp
       face.SetTimeStamp(frameOrig.GetTimestamp());
-
       
       TFacePosition facePos;
       res = FSDK_GetTrackerFacePosition(_tracker, 0, IDs[iFace], &facePos);
@@ -854,6 +853,13 @@ namespace Vision {
         
         face.SetRightEyeCenter(Point2f(features[FSDKP_RIGHT_EYE].x,
                                           features[FSDKP_RIGHT_EYE].y));
+        
+        // Set the observed head orientation
+        // NOTE: FaceSDK doesn't have head pose estimation, so just use angle of the
+        // line connecting the eyes as a proxy for roll
+        Point2f eyeLine(face.GetRightEyeCenter());
+        eyeLine -= face.GetLeftEyeCenter();
+        face.SetHeadOrientation(std::atan2f(eyeLine.y(), eyeLine.x()), 0, 0);
         
         face.SetFeature(TrackedFace::LeftEyebrow, GetFeatureHelper(features, {
           FSDKP_LEFT_EYEBROW_OUTER_CORNER,
