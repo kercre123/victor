@@ -1,4 +1,9 @@
 {
+  'includes': [
+    '../../lib/anki/cozmo-engine/coretech/project/gyp/opencv.gypi',
+    '../../lib/anki/cozmo-engine/coretech/project/gyp/face-library.gypi'
+  ],
+
   'variables': {
 
     'game_source': 'cozmoGame.lst',
@@ -19,37 +24,6 @@
       'ANKICORETECH_EMBEDDED_USE_OPENCV=1',
     ],
 
-    # TODO: should this be passed in, or shared?
-    'opencv_includes': [
-      # '<(coretech_external_path)/opencv-2.4.8/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/core/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/highgui/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/imgproc/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/contrib/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/calib3d/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/objdetect/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/video/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/features2d/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/flann/include',
-    ],
-
-    'opencv_libs': [
-      'libzlib.a',
-      'liblibjpeg.a',
-      'liblibpng.a',
-      'liblibtiff.a',
-      'liblibjasper.a',
-      'libIlmImf.a',
-      'libopencv_core.a',
-      'libopencv_imgproc.a',
-      'libopencv_highgui.a',
-      'libopencv_calib3d.a',
-      'libopencv_contrib.a',
-      'libopencv_objdetect.a',
-      'libopencv_video.a',
-      'libopencv_features2d.a',
-    ],
-
     'sphinx_libs': [
       'libpocketSphinx.a',
       'libsphinxad.a',
@@ -57,39 +31,24 @@
     ],
 
     'cte_lib_search_path_mac_debug': [
-      '<(coretech_external_path)/build/opencv-2.4.8/lib/Debug',
-      '<(coretech_external_path)/build/opencv-2.4.8/3rdparty/lib/Debug',
       '<(coretech_external_path)/pocketsphinx/pocketsphinx/generated/mac/DerivedData/Debug',
     ],
 
     'cte_lib_search_path_mac_release': [
-      '<(coretech_external_path)/build/opencv-2.4.8/lib/Release',
-      '<(coretech_external_path)/build/opencv-2.4.8/3rdparty/lib/Release',
       '<(coretech_external_path)/pocketsphinx/pocketsphinx/generated/mac/DerivedData/Release',
     ],
 
     'cte_lib_search_path_ios_debug': [
-      '<(coretech_external_path)/build/opencv-ios/multiArchLibs',
       '<(coretech_external_path)/pocketsphinx/pocketsphinx/generated/ios/DerivedData/Debug-iphoneos',
     ],
 
     'cte_lib_search_path_ios_release': [
-      '<(coretech_external_path)/build/opencv-ios/multiArchLibs',
       '<(coretech_external_path)/pocketsphinx/pocketsphinx/generated/ios/DerivedData/Release-iphoneos',
     ],
 
     'webots_includes': [
       '<(webots_path)/include/controller/cpp',
     ],
-    
-    # Here we pick which face library to use and set its path/includes/libs
-    # initially to empty. They will be filled in below in the 'conditions' as
-    # needed:
-    # (NOTE: This is duplicated from coretech-internal.gyp!)
-    'face_library' : 'opencv', # one of: 'opencv', 'faciometric', or 'facesdk'
-    'face_library_path':      [ ],
-    'face_library_includes' : [ ],
-    'face_library_libs':      [ ],
     
     'compiler_flags': [
       '-Wdeprecated-declarations',
@@ -135,46 +94,7 @@
     'arch_group%': '<(arch_group)',
     
     'conditions': [
-      # Face libraries, depending on platform:
-      ['face_library=="faciometric"', {
-        'face_library_path': [
-          '<(coretech_external_path)/IntraFace',
-        ],
-      }],
-      ['OS=="mac" and face_library=="facesdk"', {
-        'face_library_libs': [
-          '<(coretech_external_path)/Luxand_FaceSDK/bin/osx_x86_64/libfsdk.dylib',
-        ],
-      }],
-      ['OS=="mac" and face_library=="faciometric"', {
-        'face_library_includes': [
-          '<(face_library_path)/osx_demo_126/include',
-        ],
-        'face_library_libs': [
-          '<(face_library_path)/osx_demo_126/lib/libintraface_core126.dylib',
-          '<(face_library_path)/osx_demo_126/lib/libintraface_emo126.dylib',
-          '<(face_library_path)/osx_demo_126/lib/libintraface_gaze126.dylib',
-        ],
-      }],
-      ['OS=="ios" and face_library=="facesdk"', {
-        'face_library_libs': [
-          # TODO: handle different architectures
-          '<(coretech_external_path)/Luxand_FaceSDK/bin/iOS/libfsdk-static.a',
-        ],
-      }],
-      ['OS=="ios" and face_library=="faciometric"', {
-        'face_library_libs': [
-          '<(face_library_path)/IntraFace_126_iOS_Anki/Library/intraface.framework',
-        ],
-      }],
-      ['OS=="android" and face_library=="facesdk"', {
-        'face_library_libs': [
-          # TODO: handle different architectures
-          '<(coretech_external_path)/Luxand_FaceSDK/bin/Android/armeabi-v7a/libfsdk.so',
-          '<(coretech_external_path)/Luxand_FaceSDK/bin/Android/armeabi-v7a/libstlport_shared.so',
-        ],
-      }],
-      
+    
       ['OS=="ios" and arch_group=="universal"', {
         'target_archs%': ['armv7', 'arm64'],
       }],
@@ -275,12 +195,20 @@
           'conditions': [
             ['OS=="ios"', {
               'xcode_settings': {
-                'LIBRARY_SEARCH_PATHS': [ '<@(cte_lib_search_path_ios_debug)', '<(webots_path)/lib/' ],
+                'LIBRARY_SEARCH_PATHS': [
+                  '<@(cte_lib_search_path_ios_debug)',
+                  '<(webots_path)/lib/',
+                  '<(face_library_lib_path)',
+                ],
               },
             }],
             ['OS=="mac"', {
               'xcode_settings': {
-                'LIBRARY_SEARCH_PATHS': [ '<@(cte_lib_search_path_mac_debug)', '<(webots_path)/lib/' ],
+                'LIBRARY_SEARCH_PATHS': [
+                  '<@(cte_lib_search_path_mac_debug)',
+                  '<(webots_path)/lib/',
+                  '<(face_library_lib_path)',
+                ],
               },
             }],
           ],
@@ -300,12 +228,20 @@
           'conditions': [
             ['OS=="ios"', {
               'xcode_settings': {
-                'LIBRARY_SEARCH_PATHS': [ '<@(cte_lib_search_path_ios_release)', '<(webots_path)/lib/' ],
+                'LIBRARY_SEARCH_PATHS': [
+                  '<@(cte_lib_search_path_ios_release)',
+                  '<(webots_path)/lib/',
+                  '<(face_library_lib_path)',
+                ],
               },
             }],
             ['OS=="mac"', {
               'xcode_settings': {
-                'LIBRARY_SEARCH_PATHS': [ '<@(cte_lib_search_path_mac_release)', '<(webots_path)/lib/' ],
+                'LIBRARY_SEARCH_PATHS': [
+                  '<@(cte_lib_search_path_mac_release)',
+                  '<(webots_path)/lib/',
+                  '<(face_library_lib_path)',
+                ],
               },
             }],
           ],
@@ -325,12 +261,20 @@
           'conditions': [
             ['OS=="ios"', {
               'xcode_settings': {
-                'LIBRARY_SEARCH_PATHS': [ '<@(cte_lib_search_path_ios_release)', '<(webots_path)/lib/' ],
+                'LIBRARY_SEARCH_PATHS': [
+                  '<@(cte_lib_search_path_ios_release)',
+                  '<(webots_path)/lib/',
+                  '<(face_library_lib_path)',
+                ],
               },
             }],
             ['OS=="mac"', {
               'xcode_settings': {
-                'LIBRARY_SEARCH_PATHS': [ '<@(cte_lib_search_path_mac_release)', '<(webots_path)/lib/' ],
+                'LIBRARY_SEARCH_PATHS': [
+                  '<@(cte_lib_search_path_mac_release)',
+                  '<(webots_path)/lib/',
+                  '<(face_library_lib_path)',
+                ],
               },
             }],
           ],
@@ -893,7 +837,7 @@
             {
               'action_name': 'copy_faciometric_models',
               'inputs': [
-                '<(face_library_path)/models',
+                '<(face_library_path)/Demo/models',
               ],
               'outputs': [
                 '../../lib/anki/cozmo-engine/resources/config/basestation/vision/faciometric',

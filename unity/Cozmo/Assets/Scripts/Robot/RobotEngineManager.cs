@@ -285,6 +285,9 @@ public class RobotEngineManager : MonoBehaviour {
     case G2U.MessageEngineToGame.Tag.RobotObservedObject:
       ReceivedSpecificMessage(message.RobotObservedObject);
       break;
+    case G2U.MessageEngineToGame.Tag.RobotObservedFace:
+      ReceivedSpecificMessage(message.RobotObservedFace);
+      break;
     case G2U.MessageEngineToGame.Tag.RobotObservedNothing:
       ReceivedSpecificMessage(message.RobotObservedNothing);
       break;
@@ -309,6 +312,9 @@ public class RobotEngineManager : MonoBehaviour {
     case G2U.MessageEngineToGame.Tag.RobotDeletedObject:
       ReceivedSpecificMessage(message.RobotDeletedObject);
       break;
+    case G2U.MessageEngineToGame.Tag.RobotDeletedFace:
+      ReceivedSpecificMessage(message.RobotDeletedFace);
+      break;
     case G2U.MessageEngineToGame.Tag.ActiveObjectMoved:
       ReceivedSpecificMessage(message.ActiveObjectMoved);
       break;
@@ -320,12 +326,6 @@ public class RobotEngineManager : MonoBehaviour {
       break;
     case G2U.MessageEngineToGame.Tag.AnimationAvailable:
       ReceivedSpecificMessage(message.AnimationAvailable);
-      break;
-    case G2U.MessageEngineToGame.Tag.RobotObservedFace:
-      ReceivedSpecificMessage(message.RobotObservedFace);
-      break;
-    case G2U.MessageEngineToGame.Tag.RobotDeletedFace:
-      ReceivedSpecificMessage(message.RobotDeletedFace);
       break;
     default:
       DAS.Warn("RobotEngineManager", message.GetTag() + " is not supported");
@@ -409,6 +409,12 @@ public class RobotEngineManager : MonoBehaviour {
     current.UpdateObservedObjectInfo(message);
   }
 
+  private void ReceivedSpecificMessage(G2U.RobotObservedFace message) {
+    if (current == null)
+      return;
+    current.UpdateObservedFaceInfo(message);
+  }
+
   private void ReceivedSpecificMessage(G2U.RobotObservedNothing message) {
     if (current == null)
       return;
@@ -448,6 +454,19 @@ public class RobotEngineManager : MonoBehaviour {
 
     if (current.activeBlocks.ContainsKey((int)message.objectID))
       current.activeBlocks.Remove((int)message.objectID);
+  }
+
+  private void ReceivedSpecificMessage(G2U.RobotDeletedFace message) {
+    if (current == null)
+      return;
+		
+    Face deleted = current.faceObjects.Find(x => x == message.faceID);
+
+    if (deleted != null) {
+      DAS.Debug("RobotEngineManager", "Deleted face with ID " + message.faceID);
+      current.faceObjects.Remove(deleted);
+    }
+
   }
 
   private void ReceivedSpecificMessage(G2U.RobotCompletedAction message) {
@@ -530,14 +549,6 @@ public class RobotEngineManager : MonoBehaviour {
     }
     
     robots[message.robotID].UpdateInfo(message);
-  }
-
-  private void ReceivedSpecificMessage(G2U.RobotObservedFace message) {
-
-  }
-
-  private void ReceivedSpecificMessage(G2U.RobotDeletedFace message) {
-
   }
 
   private Texture2D texture;

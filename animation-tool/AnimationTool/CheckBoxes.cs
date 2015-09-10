@@ -69,7 +69,7 @@ namespace AnimationTool
             }
         }
 
-        private void FaceAnimationImageCheckBox(object o, EventArgs e)
+        private void FaceAnimationCheckBox(object o, EventArgs e)
         {
             CheckBox checkBox = o as CheckBox;
 
@@ -85,7 +85,7 @@ namespace AnimationTool
             }
         }
 
-        private void FaceAnimationDataCheckBox(object o, EventArgs e)
+        private void ProceduralFaceCheckBox(object o, EventArgs e)
         {
             CheckBox checkBox = o as CheckBox;
 
