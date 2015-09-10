@@ -215,6 +215,7 @@ public class Robot : IDisposable {
   private U2G.SetBackpackLEDs SetBackpackLEDsMessage;
   private U2G.SetObjectAdditionAndDeletion SetObjectAdditionAndDeletionMessage;
   private U2G.StartFaceTracking StartFaceTrackingMessage;
+  private U2G.StopFaceTracking StopFaceTrackingMessage;
   private U2G.ExecuteBehavior ExecuteBehaviorMessage;
 
   private ObservedObject _carryingObject;
@@ -368,6 +369,7 @@ public class Robot : IDisposable {
     SetBackpackLEDsMessage = new U2G.SetBackpackLEDs();
     SetObjectAdditionAndDeletionMessage = new U2G.SetObjectAdditionAndDeletion();
     StartFaceTrackingMessage = new U2G.StartFaceTracking();
+    StopFaceTrackingMessage = new U2G.StopFaceTracking();
     ExecuteBehaviorMessage = new U2G.ExecuteBehavior();
 
     lights = new Light[SetBackpackLEDsMessage.onColor.Length];
@@ -991,6 +993,11 @@ public class Robot : IDisposable {
   public void StartFaceAwareness() {
     //StartFaceTrackingMessage.timeout_sec = ID;
     RobotEngineManager.instance.Message.StartFaceTracking = StartFaceTrackingMessage;
+    RobotEngineManager.instance.SendMessage();
+  }
+
+  public void StopFaceAwareness() {
+    RobotEngineManager.instance.Message.StopFaceTracking = StopFaceTrackingMessage;
     RobotEngineManager.instance.SendMessage();
   }
 
