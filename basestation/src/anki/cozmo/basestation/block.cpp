@@ -147,7 +147,7 @@ namespace Anki {
       // relative to the face when we put down the block -- one for each
       // orientation of the block
       {
-        const f32 DefaultPrePlacementDistance = ORIGIN_TO_LOW_LIFT_DIST_MM - DRIVE_CENTER_OFFSET;
+        const f32 DefaultPrePlacementDistance = ORIGIN_TO_LIFT_FRONT_FACE_DIST_MM - DRIVE_CENTER_OFFSET;
         for(auto const& Rvec : preActionPoseRotations) {
           Pose3d prePlacementPose(M_PI_2, Z_AXIS_3D(),  {{0.f, -DefaultPrePlacementDistance, -halfHeight}}, &marker->GetPose());
           prePlacementPose.RotateBy(Rvec);

@@ -47,7 +47,7 @@ Result SimpleBehaviorChooser::AddBehavior(IBehavior* newBehavior)
   return Result::RESULT_OK;
 }
   
-IBehavior* SimpleBehaviorChooser::ChooseNextBehavior(float currentTime_sec) const
+IBehavior* SimpleBehaviorChooser::ChooseNextBehavior(double currentTime_sec) const
 {
   for (auto behavior : _behaviorList)
   {

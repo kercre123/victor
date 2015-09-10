@@ -64,7 +64,7 @@ namespace Cozmo {
   }
   
   
-  IBehavior::Status BehaviorLookForFaces::Update(float currentTime_sec)
+  IBehavior::Status BehaviorLookForFaces::Update(double currentTime_sec)
   {
     _currentTime_sec = currentTime_sec;
     
@@ -123,7 +123,7 @@ namespace Cozmo {
     return Status::Running;
   } // Update()
   
-  Result BehaviorLookForFaces::Interrupt(float currentTime_sec)
+  Result BehaviorLookForFaces::Interrupt(double currentTime_sec)
   {
     _robot.DisableTrackToObject();
     _currentState = State::INTERRUPTED;

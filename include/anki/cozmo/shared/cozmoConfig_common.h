@@ -4,6 +4,14 @@
  *
  **************************************************************************/
 
+const f32 WHEEL_DIAMETER_MM  = 29.f;
+const f32 HALF_WHEEL_CIRCUM  = WHEEL_DIAMETER_MM * M_PI_2;
+const f32 WHEEL_RAD_TO_MM    = WHEEL_DIAMETER_MM / 2.f;  // or HALF_WHEEL_CIRCUM / PI;
+const f32 WHEEL_DIST_MM      = 47.7f; // approx distance b/w the center of the front treads
+const f32 WHEEL_DIST_HALF_MM = WHEEL_DIST_MM / 2.f;
+const f32 WHEEL_BASE_MM      = 48.f;
+
+
 const f32 MIN_HEAD_ANGLE = DEG_TO_RAD(-20.f);
 const f32 MAX_HEAD_ANGLE = DEG_TO_RAD( 45.f);
 
@@ -14,6 +22,55 @@ const f32 HEAD_ANGLE_LIMIT_MARGIN = DEG_TO_RAD(2.0f);
 // Safe head angle for the proximity sensors to be usable with the lift
 // either up or down
 const f32 HEAD_ANGLE_WHILE_FOLLOWING_PATH = -0.32f;
+
+// Theoretically equivalent to ORIGIN_TO_LOW_LIFT_DIST_MM...
+const f32 ORIGIN_TO_LIFT_FRONT_FACE_DIST_MM = 29.f;
+
+// The x-offset from robot origin that the robot's drive center is
+// located for the treaded robot when not carrying a block.
+// (If you were to model the treaded robot as a two-wheel robot,
+// the drive center is the location between the two wheels)
+const f32 DRIVE_CENTER_OFFSET = -17.f;
+
+// The height of the lift at various configurations
+// Actual limit in proto is closer to 20.4mm, but there is a weird
+// issue with moving the lift when it is at a limit. The lift arm
+// flies off of the robot and comes back! So for now, we just don't
+// drive the lift down that far. We also skip calibration in sim.
+const f32 LIFT_HEIGHT_LOWDOCK  = 32.f;
+const f32 LIFT_HEIGHT_HIGHDOCK = 76.f;
+const f32 LIFT_HEIGHT_CARRY    = 90.f;
+const f32 LIFT_HEIGHT_LOW_ROLL = 68.f;
+
+// Distance between the lift shoulder joint and the lift "wrist" joint where arm attaches to fork assembly
+const f32 LIFT_ARM_LENGTH = 66.f;
+
+// Height of the lifter front assembly above the gripper, used to compute
+// the overall height of the robot when the lift is up (i.e. the height is
+// is the lift height plus this)
+const f32 LIFT_HEIGHT_ABOVE_GRIPPER = 5.f; // approximate
+
+// The lift height is defined as the height of the upper lift arm's wrist joint plus this offset.
+const f32 LIFT_FORK_HEIGHT_REL_TO_ARM_END = 0;
+
+// The height of the top of the lift crossbar with respect to the wrist joint
+const f32 LIFT_XBAR_HEIGHT_WRT_WRIST_JOINT = -20.f;
+
+// The distance along the x axis from the wrist joint to the front of the lifter plate
+const f32 LIFT_FRONT_WRT_WRIST_JOINT = 4.f;
+
+// Neck joint relative to robot origin
+const f32 NECK_JOINT_POSITION[3] = {-13.f, 0.f, 34.5f + WHEEL_RAD_TO_MM};
+
+// camera relative to neck joint
+const f32 HEAD_CAM_POSITION[3]   = {17.7f, 0.f, -8.f};
+
+// Upper shoulder joint relative to robot origin
+const f32 LIFT_BASE_POSITION[3]  = {-41.0f, 0.f, 31.3f + WHEEL_RAD_TO_MM}; // relative to robot origin
+
+// IMU position relative to neck joint
+const f32 IMU_POSITION[3] = {5.8f, 0.f, -13.5f};
+
 
 /***************************************************************************
  *
@@ -41,6 +98,15 @@ const f32 MARKER_TO_OFF_BRIDGE_POSE_DIST = 80.f;
 // achieve before we can consider it aligned with the charger enough
 // to drive forward/reverse on to it.
 const f32 CHARGER_ALIGNED_MARKER_DISTANCE = 100.f;
+
+
+/***************************************************************************
+ *
+ *                          Camera Calibration
+ *
+ **************************************************************************/
+
+const u8 NUM_RADIAL_DISTORTION_COEFFS = 4;
 
 
 /***************************************************************************

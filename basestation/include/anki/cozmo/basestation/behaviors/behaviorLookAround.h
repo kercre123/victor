@@ -32,14 +32,14 @@ class BehaviorLookAround : public IBehavior
 public:
   BehaviorLookAround(Robot& robot, const Json::Value& config);
   
-  virtual bool IsRunnable(float currentTime_sec) const override;
+  virtual bool IsRunnable(double currentTime_sec) const override;
   
   virtual Result Init() override;
   
-  virtual Status Update(float currentTime_sec) override;
+  virtual Status Update(double currentTime_sec) override;
   
   // Finish placing current object if there is one, otherwise good to go
-  virtual Result Interrupt(float currentTime_sec) override;
+  virtual Result Interrupt(double currentTime_sec) override;
   
   virtual bool GetRewardBid(Reward& reward) override;
   

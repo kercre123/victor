@@ -477,6 +477,9 @@
               ['exclude', 'run_m4_embeddedTests.cpp'],
               ['exclude', 'resaveBlockImages.m'],
             ],
+            'xcode_settings': {
+              'FRAMEWORK_SEARCH_PATHS':'<(ce-gtest_path)',
+            },
             'libraries': [
               '<(ce-gtest_path)/gtest.framework',
               '$(SDKROOT)/System/Library/Frameworks/Cocoa.framework',
@@ -485,14 +488,6 @@
               '$(SDKROOT)/System/Library/Frameworks/QuartzCore.framework',
               '<@(opencv_libs)',
               '<@(face_library_libs)',
-            ],
-            'copies': [
-              {
-                'files': [
-                  '<(ce-gtest_path)/gtest.framework',
-                ],
-                'destination': '<(PRODUCT_DIR)',
-              },
             ],
             'actions': [
               # { # in engine only mode, we do not know where the assets are
@@ -524,6 +519,7 @@
                   'ln',
                   '-s',
                   '-f',
+                  '-h',
                   '<@(_inputs)',
                   '<@(_outputs)',
                 ],
@@ -540,6 +536,7 @@
                   'ln',
                   '-s',
                   '-f',
+                  '-h',
                   '<@(_inputs)',
                   '<@(_outputs)',
                 ],
@@ -556,6 +553,7 @@
                   'ln',
                   '-s',
                   '-f',
+                  '-h',
                   '<@(_inputs)',
                   '<@(_outputs)',
                 ],
