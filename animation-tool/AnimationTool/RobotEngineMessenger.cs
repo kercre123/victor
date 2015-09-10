@@ -54,8 +54,8 @@ namespace AnimationTool
         {
             lock (sync)
             {
-                if (!running)
-                    return;
+                if (!running) return;
+
                 running = false;
             }
             thread.Join();
@@ -138,7 +138,7 @@ namespace AnimationTool
                     Console.Write("WARNING: Not waiting for disconnect to finish sending.");
                     break;
                 }
-                System.Threading.Thread.Sleep(500);
+                Thread.Sleep(500);
             }
             channel = null;
         }

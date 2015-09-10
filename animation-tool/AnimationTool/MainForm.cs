@@ -467,7 +467,6 @@ namespace AnimationTool
                 faceAnimation.Size = new System.Drawing.Size(Size.Width - 35, faceAnimation.Size.Height);
                 audioRobot.Size = new System.Drawing.Size(Size.Width - 35, audioRobot.Size.Height);
                 audioDevice.Size = new System.Drawing.Size(Size.Width - 35, audioDevice.Size.Height);
-                OnSizeChanged(e);
             }
         }
     }
