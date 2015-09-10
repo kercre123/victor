@@ -378,5 +378,16 @@ namespace AnimationTool
                 faceForm.Changed = false;
             }
         }
+
+        public void AnimateFace(Sequencer.ExtraProceduralFaceData data)
+        {
+            if (channel.IsConnected)
+            {
+                displayProceduralFaceMessage.robotID = 1;
+
+                message.DisplayProceduralFace = displayProceduralFaceMessage;
+                channel.Send(message);
+            }
+        }
     }
 }
