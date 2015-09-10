@@ -22,7 +22,6 @@
 
 #include "anki/common/types.h"
 #include "anki/cozmo/shared/cozmoTypes.h"
-
 #include "messages.h"
 
 namespace Anki {

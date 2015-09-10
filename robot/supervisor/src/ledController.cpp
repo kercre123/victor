@@ -38,7 +38,7 @@ namespace Cozmo {
     return result;
   }
 
-  bool GetCurrentLEDcolor(LEDParams_t& ledParams, TimeStamp_t currentTime,
+  bool GetCurrentLEDcolor(LightState& ledParams, TimeStamp_t currentTime,
                           u32& newColor)
   {
     bool colorUpdated = false;

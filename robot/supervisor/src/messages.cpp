@@ -288,19 +288,19 @@ namespace Anki {
         //SteeringController::ExecuteDirectDrive(0,0);
       }
 
-      void Process_appendPathSegmentArc(const RobotInterface::AppendPathSegmentArc& msg) {
+      void Process_appendPathSegArc(const RobotInterface::AppendPathSegmentArc& msg) {
         PathFollower::AppendPathSegment_Arc(0, msg.x_center_mm, msg.y_center_mm,
                                             msg.radius_mm, msg.startRad, msg.sweepRad,
                                             msg.speed.target, msg.speed.accel, msg.speed.decel);
       }
 
-      void Process_appendPathSegmentLine(const RobotInterface::AppendPathSegmentLine& msg) {
+      void Process_appendPathSegLine(const RobotInterface::AppendPathSegmentLine& msg) {
         PathFollower::AppendPathSegment_Line(0, msg.x_start_mm, msg.y_start_mm,
                                              msg.x_end_mm, msg.y_end_mm,
                                              msg.speed.target, msg.speed.accel, msg.speed.decel);
       }
 
-      void Process_appendPathSegmentPointTurn(const RobotInterface::AppendPathSegmentPointTurn& msg) {
+      void Process_appendPathSegPointTurn(const RobotInterface::AppendPathSegmentPointTurn& msg) {
         PathFollower::AppendPathSegment_PointTurn(0, msg.x_center_mm, msg.y_center_mm, msg.targetRad,
                                                   msg.speed.target, msg.speed.accel, msg.speed.decel, msg.useShortestDir);
       }
@@ -393,6 +393,13 @@ namespace Anki {
           SteeringController::ExecutePointTurn(msg.bodyPanAngle_rad, 50.f, 10.f, 10.f, true);
         }
       }
+      
+      void Process_setCarryState(const CarryState& state)
+      {
+        PickAndPlaceController::SetCarryState(state);
+      }
+      
+      
 
       void Process_turnInPlaceAtSpeed(const RobotInterface::TurnInPlaceAtSpeed& msg) {
         PRINT("Turning in place at %f rad/s (%f rad/s2)\n", msg.speed_rad_per_sec, msg.accel_rad_per_sec2);

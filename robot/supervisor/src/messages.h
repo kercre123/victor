@@ -46,6 +46,8 @@ namespace Anki {
       void ProcessUARTMessages();
 
       void ProcessMessage(RobotInterface::EngineToRobot& msg);
+      
+      void Process_anim(const RobotInterface::EngineToRobot& msg);
 
       // Start looking for a particular message ID
       void LookForID(const RobotInterface::EngineToRobot::Tag msgID);

@@ -83,7 +83,7 @@ namespace Anki
         #endif
       }
 
-      Result SetBlockLight(const u32 blockID, const LightState& lights)
+      Result SetBlockLight(const u32 blockID, const LightState* lights)
       {
         if (blockID >= MAX_CUBES) {
           return RESULT_FAIL;
