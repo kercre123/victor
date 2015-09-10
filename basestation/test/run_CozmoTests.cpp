@@ -4,7 +4,7 @@
 #include "json/json.h"
 #include "anki/common/types.h"
 #include "anki/common/basestation/jsonTools.h"
-#include "anki/cozmo/basestation/data/dataPlatform.h"
+#include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/poseBase_impl.h"
 #include "anki/common/robot/matlabInterface.h"
@@ -19,7 +19,7 @@
 #include "anki/cozmo/basestation/robotMessageHandler.h"
 #include <unistd.h>
 
-Anki::Cozmo::Data::DataPlatform* dataPlatform = nullptr;
+Anki::Util::Data::DataPlatform* dataPlatform = nullptr;
 Anki::Util::PrintfLoggerProvider* loggerProvider = nullptr;
 
 TEST(DataPlatform, ReadWrite)
@@ -27,16 +27,16 @@ TEST(DataPlatform, ReadWrite)
   ASSERT_TRUE(dataPlatform != nullptr);
   Json::Value config;
   const bool readSuccess = dataPlatform->readAsJson(
-    Anki::Cozmo::Data::Scope::Resources,
+    Anki::Util::Data::Scope::Resources,
     "config/basestation/config/configuration.json",
     config);
   EXPECT_TRUE(readSuccess);
 
   config["blah"] = 7;
-  const bool writeSuccess = dataPlatform->writeAsJson(Anki::Cozmo::Data::Scope::Cache, "someRandomFolder/A/writeTest.json", config);
+  const bool writeSuccess = dataPlatform->writeAsJson(Anki::Util::Data::Scope::Cache, "someRandomFolder/A/writeTest.json", config);
   EXPECT_TRUE(writeSuccess);
 
-  std::string someRandomFolder = dataPlatform->pathToResource(Anki::Cozmo::Data::Scope::Cache, "someRandomFolder");
+  std::string someRandomFolder = dataPlatform->pathToResource(Anki::Util::Data::Scope::Cache, "someRandomFolder");
   Anki::Util::FileUtils::RemoveDirectory(someRandomFolder);
 }
 
@@ -72,6 +72,29 @@ TEST(BlockWorld, AddAndRemoveObject)
   Block_Cube1x1 testCube(testType);
   Vision::Marker::Code testCode = testCube.GetMarker(Block::FaceName::FRONT_FACE).GetCode();
   
+  
+  /***************************************************************************
+   *
+   *                          Camera Calibration
+   *
+   **************************************************************************/
+  
+  // Calibration values from Sept 1, 2015 - on 4.1 robot headboard with SSID 3a97
+  const u16 HEAD_CAM_CALIB_WIDTH  = 400;
+  const u16 HEAD_CAM_CALIB_HEIGHT = 296;
+  const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_X = 278.065116921f;
+  const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_Y = 278.867229568f;
+  const f32 HEAD_CAM_CALIB_CENTER_X       = 197.801561858f;
+  const f32 HEAD_CAM_CALIB_CENTER_Y       = 151.672492176f;
+  /*
+  const f32 HEAD_CAM_CALIB_DISTORTION[NUM_RADIAL_DISTORTION_COEFFS] = {
+    0.11281163f,
+    -0.31673507f,
+    -0.00226334f,
+    0.00200109f
+  };
+  */
+  
   const Vision::CameraCalibration camCalib(HEAD_CAM_CALIB_HEIGHT, HEAD_CAM_CALIB_WIDTH,
                                            HEAD_CAM_CALIB_FOCAL_LENGTH_X, HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
                                            HEAD_CAM_CALIB_CENTER_X, HEAD_CAM_CALIB_CENTER_Y);
@@ -82,23 +105,18 @@ TEST(BlockWorld, AddAndRemoveObject)
   const f32 xcen = camCalib.GetCenter_x();
   const f32 ycen = camCalib.GetCenter_y();
   
-  MessageVisionMarker markerMsg;
-  markerMsg.timestamp = 0;
-  markerMsg.x_imgUpperLeft  = xcen - halfWidth;
-  markerMsg.y_imgUpperLeft  = ycen - halfHeight;
-  markerMsg.x_imgLowerLeft  = xcen - halfWidth;
-  markerMsg.y_imgLowerLeft  = ycen + halfHeight;
-  markerMsg.x_imgUpperRight = xcen + halfWidth;
-  markerMsg.y_imgUpperRight = ycen - halfHeight;
-  markerMsg.x_imgLowerRight = xcen + halfWidth;
-  markerMsg.y_imgLowerRight = ycen + halfHeight;
-  markerMsg.markerType = testCode;
+  Quad2f corners;
+  corners[Quad::TopLeft]    = {xcen - halfWidth, ycen - halfHeight};
+  corners[Quad::BottomLeft] = {xcen - halfWidth, ycen + halfHeight};
+  corners[Quad::TopRight]   = {xcen + halfWidth, ycen - halfHeight};
+  corners[Quad::BottomRight]= {xcen + halfWidth, ycen + halfHeight};
+  Vision::ObservedMarker marker(0, testCode, corners, robot.GetCamera());
   
   // Enable "vision while moving" so that we don't have to deal with trying to compute
   // angular velocities, since we don't have real state history to do so.
   robot.EnableVisionWhileMoving(true);
   
-  lastResult = robot.QueueObservedMarker(markerMsg);
+  lastResult = robot.QueueObservedMarker(marker);
   ASSERT_EQ(lastResult, RESULT_OK);
   
   // Tick the robot, which will tick the BlockWorld, which will use the queued marker
@@ -169,7 +187,7 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
 
   fprintf(stdout, "\n\nLoading JSON file '%s'\n", jsonFilename.c_str());
 
-  const bool jsonParseResult = dataPlatform->readAsJson(Anki::Cozmo::Data::Scope::Resources, jsonFilename, jsonRoot);
+  const bool jsonParseResult = dataPlatform->readAsJson(Anki::Util::Data::Scope::Resources, jsonFilename, jsonRoot);
   ASSERT_TRUE(jsonParseResult);
 
   // Create the modules we need (and stubs of those we don't)
@@ -266,7 +284,11 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
     Json::Value jsonMessages = jsonData["VisionMarkers"];
     ASSERT_EQ(NumMarkers, jsonMessages.size());
     
-    std::vector<MessageVisionMarker> messages;
+    
+    ASSERT_TRUE(false);
+    // THIS NEEDS TO BE UPDATED NOW THAT VisionMarkerMessage IS BOGUS!
+    /*
+    std::vector<Vision::ObservedMarker> messages;
     messages.reserve(jsonMessages.size());
     
     for(auto & jsonMsg : jsonMessages) {
@@ -280,6 +302,7 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
       MessageVisionMarker msg(jsonMsg);
       msg.timestamp = currentTimeStamp;
       
+      Vision::ObservedMarker marker();
       // If we are not checking robot pose, don't queue mat markers
       const bool isMatMarker = !robot.GetBlockWorld().GetObjectLibrary(ObjectFamily::Mat).GetObjectsWithCode(msg.markerType).empty();
       if(!checkRobotPose && isMatMarker) {
@@ -290,7 +313,7 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
       }
       
     } // for each VisionMarker in the jsonFile
-    
+    */
     
     // Process all the markers we've queued
     //uint32_t numObjectsObserved = 0;
@@ -580,7 +603,7 @@ int main(int argc, char ** argv)
     externalPath = workRoot + "/temp";
   }
   //LEAKING HERE
-  dataPlatform = new Anki::Cozmo::Data::DataPlatform(filesPath, cachePath, externalPath, resourcePath);
+  dataPlatform = new Anki::Util::Data::DataPlatform(filesPath, cachePath, externalPath, resourcePath);
 
   //// should we do this here? clean previously dirty folders?
   //std::string cache = dataPlatform->pathToResource(Anki::Cozmo::Data::Scope::Cache, "");

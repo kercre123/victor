@@ -23,20 +23,29 @@
 #include <thread>
 #include <mutex>
 
-namespace Anki {  
+namespace Anki {
+  
+  // Forward declaration
+  namespace Util {
+  namespace Data {
+    class DataPlatform;
+  }
+  }
+  
+  namespace Vision {
+    class TrackedFace;
+  }
+  
 namespace Cozmo {
   
 // Forward declaration
 class VisionSystem;
-namespace Data {
-class DataPlatform;
-}
 
 class VisionProcessingThread
   {
   public:
     
-    VisionProcessingThread(Data::DataPlatform* dataPlatform);
+    VisionProcessingThread(Util::Data::DataPlatform* dataPlatform);
     ~VisionProcessingThread();
     
     //
@@ -62,7 +71,10 @@ class VisionProcessingThread
                           const f32                    markerWidth_mm,
                           const Point2f&               imageCenter,
                           const f32                    radius,
-                          const bool                   checkAngleX);
+                          const bool                   checkAngleX,
+                          const f32                    postOffsetX_mm = 0,
+                          const f32                    postOffsetY_mm = 0,
+                          const f32                    postOffsetAngle_rad = 0);
     
     // Enable/disable different types of processing
     void EnableMarkerDetection(bool tf);
@@ -74,11 +86,12 @@ class VisionProcessingThread
     // These return true if a mailbox messages was available, and they copy
     // that message into the passed-in message struct.
     //bool CheckMailbox(ImageChunk&          msg);
-    bool CheckMailbox(MessageDockingErrorSignal&  msg);
-    bool CheckMailbox(MessageFaceDetection&       msg);
-    bool CheckMailbox(MessageVisionMarker&        msg);
+    bool CheckMailbox(std::pair<Pose3d, TimeStamp_t>& markerPoseWrtCamera);
+    //bool CheckMailbox(MessageFaceDetection&       msg);
+    bool CheckMailbox(Vision::ObservedMarker&     msg);
     bool CheckMailbox(MessageTrackerQuad&         msg);
     bool CheckMailbox(MessagePanAndTiltHead&      msg);
+    bool CheckMailbox(Vision::TrackedFace&        msg);
     
     // If the current image is newer than the specified timestamp, copy it into
     // the given img and return true.

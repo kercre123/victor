@@ -41,6 +41,14 @@
 #include "util/signals/simpleSignal_fwd.h"
 
 namespace Anki {
+  
+  // Forward declaration:
+  namespace Util {
+  namespace Data {
+    class DataPlatform;
+  }
+  }
+  
 namespace Cozmo {
   
 // Forward declarations
@@ -49,16 +57,15 @@ class CozmoEngineImpl;
 class CozmoEngineHostImpl;
 class CozmoEngineClientImpl;
 class IExternalInterface;
-namespace Data {
-class DataPlatform;
-}
+
 
 // Abstract base engine class
 class CozmoEngine
 {
 public:
 
-  CozmoEngine(IExternalInterface* externalInterface, Data::DataPlatform* dataPlatform);
+  CozmoEngine(IExternalInterface* externalInterface,
+              Util::Data::DataPlatform* dataPlatform);
   virtual ~CozmoEngine();
 
   virtual bool IsHost() const = 0;
@@ -107,7 +114,7 @@ protected:
   
   std::vector<::Signal::SmartHandle> _signalHandles;
   
-  Data::DataPlatform* _dataPlatform;
+  Util::Data::DataPlatform* _dataPlatform;
 }; // class CozmoEngine
   
 

@@ -13,7 +13,7 @@
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/basestation/objectIDs.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
-#include "anki/cozmo/basestation/data/dataPlatform.h"
+#include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/types/imageSendMode.h"
@@ -54,8 +54,8 @@ public:
   void Init();
   s32 Update();
   
-  void SetDataPlatform(Data::DataPlatform* dataPlatform);
-  Data::DataPlatform* GetDataPlatform();
+  void SetDataPlatform(Util::Data::DataPlatform* dataPlatform);
+  Util::Data::DataPlatform* GetDataPlatform();
   
   void QuitWebots(s32 status);
   void QuitController(s32 status);
@@ -69,6 +69,7 @@ protected:
   // Message handlers
   virtual void HandleRobotStateUpdate(ExternalInterface::RobotState const& msg){};
   virtual void HandleRobotObservedObject(ExternalInterface::RobotObservedObject const& msg){};
+  virtual void HandleRobotObservedFace(ExternalInterface::RobotObservedFace const& msg){};
   virtual void HandleRobotObservedNothing(ExternalInterface::RobotObservedNothing const& msg){};
   virtual void HandleRobotDeletedObject(ExternalInterface::RobotDeletedObject const& msg){};
   virtual void HandleRobotConnection(const ExternalInterface::RobotAvailable& msgIn){};
@@ -101,8 +102,19 @@ protected:
   void SendSetHeadlights(u8 intensity);
   void SendExecutePathToPose(const Pose3d& p, const bool useManualSpeed);
   void SendPlaceObjectOnGroundSequence(const Pose3d& p, const bool useManualSpeed);
-  void SendPickAndPlaceObject(const s32 objectID, const bool usePreDockPose, const bool useManualSpeed);
-  void SendPickAndPlaceSelectedObject(const bool usePreDockPose, const bool useManualSpeed);
+  void SendPickAndPlaceObject(const s32 objectID,
+                              const bool usePreDockPose,
+                              const f32 placementOffsetX_mm = 0,
+                              const f32 placementOffsetY_mm = 0,
+                              const f32 placementOffsetAngle_rad = 0,
+                              const bool placeOnGroundIfCarrying = false,
+                              const bool useManualSpeed = 0);
+  void SendPickAndPlaceSelectedObject(const bool usePreDockPose,
+                                      const f32 placementOffsetX_mm = 0,
+                                      const f32 placementOffsetY_mm = 0,
+                                      const f32 placementOffsetAngle_rad = 0,
+                                      const bool placeOnGroundIfCarrying = false,
+                                      const bool useManualSpeed = false);
   void SendRollObject(const s32 objectID, const bool usePreDockPose, const bool useManualSpeed);
   void SendRollSelectedObject(const bool usePreDockPose, const bool useManualSpeed);
   void SendTraverseSelectedObject(const bool usePreDockPose, const bool useManualSpeed);
@@ -174,6 +186,7 @@ protected:
 private:
   void HandleRobotStateUpdateBase(ExternalInterface::RobotState const& msg);
   void HandleRobotObservedObjectBase(ExternalInterface::RobotObservedObject const& msg);
+  void HandleRobotObservedFaceBase(ExternalInterface::RobotObservedFace const& msg);
   void HandleRobotObservedNothingBase(ExternalInterface::RobotObservedNothing const& msg);
   void HandleRobotDeletedObjectBase(ExternalInterface::RobotDeletedObject const& msg);
   void HandleRobotConnectionBase(ExternalInterface::RobotAvailable const& msgIn);

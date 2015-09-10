@@ -58,7 +58,15 @@ namespace Anki {
         
         // Constant power bias to counter gravity
         const f32 ANTI_GRAVITY_POWER_BIAS = 0.0f;
-#else
+        
+        // The height of the "fingers"
+        const f32 LIFT_FINGER_HEIGHT = 3.8f;
+        
+        // Calibration offset
+        const f32 LIFT_CAL_OFFSET = 0; //mm
+        
+#elif defined(COZMO_ROBOT_V40)
+        // Cozmo 4.0
         f32 Kp_ = 3.f;    // proportional control constant
         f32 Kd_ = 1250.f;  // derivative gain
         f32 Ki_ = 0.1f; //0.05f;   // integral control constant
@@ -74,6 +82,29 @@ namespace Anki {
 
         // Constant power bias to counter gravity
         const f32 ANTI_GRAVITY_POWER_BIAS = 0.15f;
+
+        // Calibration offset
+        const f32 LIFT_CAL_OFFSET = 0;
+#else
+        // Cozmo 4.1 - smooth gearbox
+        f32 Kp_ = 2.5f;    // proportional control constant
+        f32 Kd_ = 400.f;  // derivative gain
+        f32 Ki_ = 0.1f;    // integral control constant
+        f32 angleErrorSum_ = 0.f;
+        f32 MAX_ERROR_SUM = 4.f;
+        
+        // Open loop gain
+        // power_open_loop = SPEED_TO_POWER_OL_GAIN * desiredSpeed + BASE_POWER
+        const f32 SPEED_TO_POWER_OL_GAIN_UP = 0.0702f;
+        const f32 BASE_POWER_UP[NUM_CARRY_STATES] = {0.1455f, 0.3082f, 0.37f}; // 0.3082 and 0.37f are guesstimates
+        const f32 SPEED_TO_POWER_OL_GAIN_DOWN = 0.0753f;
+        const f32 BASE_POWER_DOWN[NUM_CARRY_STATES] = {0.0412f, 0.f, 0.f};
+        
+        // Constant power bias to counter gravity
+        const f32 ANTI_GRAVITY_POWER_BIAS = 0.15f;
+        
+        // Calibration offset
+        const f32 LIFT_CAL_OFFSET = -8; //mm
 #endif
         // Angle of the main lift arm.
         // On the real robot, this is the angle between the lower lift joint on the robot body
@@ -138,7 +169,7 @@ namespace Anki {
 
       // Returns the angle between the shoulder joint and the wrist joint.
       f32 Height2Rad(f32 height_mm) {
-        height_mm = CLIP(height_mm, LIFT_HEIGHT_LOWDOCK, LIFT_HEIGHT_CARRY);
+        height_mm = CLIP(height_mm, LIFT_HEIGHT_LOWDOCK + LIFT_CAL_OFFSET, LIFT_HEIGHT_CARRY);
         return asinf((height_mm - LIFT_BASE_POSITION[2] - LIFT_FORK_HEIGHT_REL_TO_ARM_END)/LIFT_ARM_LENGTH);
       }
       
@@ -150,7 +181,7 @@ namespace Anki {
       Result Init()
       {
         // Init consts
-        LIFT_ANGLE_LOW_LIMIT = Height2Rad(LIFT_HEIGHT_LOWDOCK);
+        LIFT_ANGLE_LOW_LIMIT = Height2Rad(LIFT_HEIGHT_LOWDOCK + LIFT_CAL_OFFSET);
         return RESULT_OK;
       }
       

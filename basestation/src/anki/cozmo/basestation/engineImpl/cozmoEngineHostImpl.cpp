@@ -11,6 +11,8 @@
 
 #include "anki/cozmo/basestation/engineImpl/cozmoEngineHostImpl.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "anki/common/basestation/utils/data/dataPlatform.h"
+#include "anki/cozmo/basestation/speechRecognition/keyWordRecognizer.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 
@@ -18,12 +20,14 @@ namespace Anki {
 namespace Cozmo {
   
 
-CozmoEngineHostImpl::CozmoEngineHostImpl(IExternalInterface* externalInterface,Data::DataPlatform* dataPlatform)
+CozmoEngineHostImpl::CozmoEngineHostImpl(IExternalInterface* externalInterface,
+                                         Util::Data::DataPlatform* dataPlatform)
 : CozmoEngineImpl(externalInterface, dataPlatform)
 , _isListeningForRobots(false)
 , _robotAdvertisementService("RobotAdvertisementService")
 , _robotMgr(externalInterface, dataPlatform)
 , _robotMsgHandler(dataPlatform)
+, _keywordRecognizer(new SpeechRecognition::KeyWordRecognizer(externalInterface))
 , _lastAnimationFolderScan(0)
 , _animationReloadActive(false)
 {
@@ -50,8 +54,17 @@ CozmoEngineHostImpl::CozmoEngineHostImpl(IExternalInterface* externalInterface,D
 
 }
 
+CozmoEngineHostImpl::~CozmoEngineHostImpl()
+{
+  delete _keywordRecognizer;
+  _keywordRecognizer = nullptr;
+}
 Result CozmoEngineHostImpl::InitInternal()
 {
+  std::string hmmFolder = _dataPlatform->pathToResource(Util::Data::Scope::Resources, "pocketsphinx/en-us");
+  std::string keywordFile = _dataPlatform->pathToResource(Util::Data::Scope::Resources, "config/basestation/config/cozmoPhrases.txt");
+  std::string dictFile = _dataPlatform->pathToResource(Util::Data::Scope::Resources, "pocketsphinx/cmudict-en-us.dict");
+  _keywordRecognizer->Init(hmmFolder, keywordFile, dictFile);
   Result lastResult = _robotMsgHandler.Init(&_robotChannel, &_robotMgr);
 
   return lastResult;
@@ -272,6 +285,7 @@ Result CozmoEngineHostImpl::UpdateInternal(const BaseStationTime_t currTime_ns)
   // robots in the world.
   _robotMgr.UpdateAllRobots();
 
+  _keywordRecognizer->Update((uint32_t)(BaseStationTimer::getInstance()->GetTimeSinceLastTickInSeconds() * 1000.0f));
   return RESULT_OK;
 } // UpdateInternal()
 

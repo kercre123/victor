@@ -143,12 +143,8 @@ namespace Anki {
         bool markerOutOfFOV_ = false;
         const f32 MARKER_WIDTH = 25.f;
         
-        Embedded::Array<f32> RcamWrtRobot_;
         f32 headCamFOV_ver_;
         f32 headCamFOV_hor_;
-        const int BUFFER_SIZE = 256;
-        u8 buffer[BUFFER_SIZE];
-        Embedded::MemoryStack scratch_(buffer, BUFFER_SIZE);
         
         Messages::DockingErrorSignal dockingErrSignalMsg_;
         bool dockingErrSignalMsgReady_ = false;
@@ -171,46 +167,6 @@ namespace Anki {
       
       f32 GetHorizontalFOV() {
         return headCamFOV_hor_;
-      }
-      
-      template<typename PRECISION>
-      static Result GetCamPoseWrtRobot(Embedded::Array<PRECISION>& RcamWrtRobot,
-                                       Embedded::Point3<PRECISION>& TcamWrtRobot)
-      {
-        AnkiConditionalErrorAndReturnValue(RcamWrtRobot.get_size(0)==3 &&
-                                           RcamWrtRobot.get_size(1)==3,
-                                           RESULT_FAIL_INVALID_SIZE,
-                                           "VisionSystem::GetCamPoseWrtRobot",
-                                           "Rotation matrix must already be 3x3.");
-        
-        const f32 headAngle = HeadController::GetAngleRad();
-        const f32 cosH = cosf(headAngle);
-        const f32 sinH = sinf(headAngle);
-        
-        RcamWrtRobot[0][0] = 0;  RcamWrtRobot[0][1] = sinH;  RcamWrtRobot[0][2] = cosH;
-        RcamWrtRobot[1][0] = -1; RcamWrtRobot[1][1] = 0;     RcamWrtRobot[1][2] = 0;
-        RcamWrtRobot[2][0] = 0;  RcamWrtRobot[2][1] = -cosH; RcamWrtRobot[2][2] = sinH;
-        
-        TcamWrtRobot.x = HEAD_CAM_POSITION[0]*cosH - HEAD_CAM_POSITION[2]*sinH + NECK_JOINT_POSITION[0];
-        TcamWrtRobot.y = 0;
-        TcamWrtRobot.z = HEAD_CAM_POSITION[2]*cosH + HEAD_CAM_POSITION[0]*sinH + NECK_JOINT_POSITION[2];
-        
-        return RESULT_OK;
-      }
-      
-      static Result GetWithRespectToRobot(const Embedded::Point3<f32>& pointWrtCamera,
-                                   Embedded::Point3<f32>&       pointWrtRobot)
-      {
-        Embedded::Point3<f32> TcamWrtRobot;
-        
-        Result lastResult;
-        if((lastResult = GetCamPoseWrtRobot(RcamWrtRobot_, TcamWrtRobot)) != RESULT_OK) {
-          return lastResult;
-        }
-        
-        pointWrtRobot = RcamWrtRobot_*pointWrtCamera + TcamWrtRobot;
-        
-        return RESULT_OK;
       }
 
       
@@ -358,23 +314,11 @@ namespace Anki {
       
       Result Init()
       {
-        scratch_ = Embedded::MemoryStack(buffer, BUFFER_SIZE);
-        
-        AnkiConditionalErrorAndReturnValue(scratch_.IsValid(), RESULT_FAIL_MEMORY,
-                                           "DockingController::Init()",
-                                           "Failed to create %d-sized memory stack.\n", BUFFER_SIZE);
-        
         const HAL::CameraInfo* headCamInfo = HAL::GetHeadCamInfo();
 
         AnkiConditionalErrorAndReturnValue(headCamInfo != NULL, RESULT_FAIL_INVALID_OBJECT,
                                            "DockingController::Init()",
                                            "NULL head cam info!\n");
-        
-        RcamWrtRobot_ = Embedded::Array<f32>(3,3, scratch_);
-
-        AnkiConditionalErrorAndReturnValue(RcamWrtRobot_.IsValid(), RESULT_FAIL_MEMORY,
-                                           "DockingController::Init()",
-                                           "Failed to allocate 3x3 rotation matrix.\n");
         
         // Compute FOV from focal length (currently used for tracker prediciton)
         headCamFOV_ver_ = 2.f * atanf(static_cast<f32>(headCamInfo->nrows) /
@@ -411,101 +355,74 @@ namespace Anki {
           lastTime = currTime;
 #endif
           
+          //PRINT("ErrSignal %d (msgTime %d)\n", HAL::GetMicroCounter(), dockingErrSignalMsg_.timestamp);
           
-          if(dockingErrSignalMsg_.didTrackingSucceed) {
-            
-            //PRINT("ErrSignal %d (msgTime %d)\n", HAL::GetMicroCounter(), dockingErrSignalMsg_.timestamp);
-            
-            // Convert from camera coordinates to robot coordinates
-            if(dockingErrSignalMsg_.isApproximate)
-            {
-              dockingErrSignalMsg_.x_distErr += HEAD_CAM_POSITION[0]*cosf(HeadController::GetAngleRad()) + NECK_JOINT_POSITION[0];
-            }
-            else {
-              Embedded::Point3<f32> tempPoint;
-              GetWithRespectToRobot(Embedded::Point3<f32>(dockingErrSignalMsg_.x_distErr, dockingErrSignalMsg_.y_horErr, dockingErrSignalMsg_.z_height),
-                                                  tempPoint);
-              
-              dockingErrSignalMsg_.x_distErr = tempPoint.x;
-              dockingErrSignalMsg_.y_horErr  = tempPoint.y;
-              dockingErrSignalMsg_.z_height  = tempPoint.z;
-            }
-            
-            // Update last observed marker pose
-            lastMarkerDistX_ = dockingErrSignalMsg_.x_distErr;
-            lastMarkerDistY_ = dockingErrSignalMsg_.y_horErr;
-            lastMarkerAng_ = dockingErrSignalMsg_.angleErr;
-            
-            
-            // Check if we are beyond point of no return distance
-            if (pastPointOfNoReturn_) {
+          // Update last observed marker pose
+          lastMarkerDistX_ = dockingErrSignalMsg_.x_distErr;
+          lastMarkerDistY_ = dockingErrSignalMsg_.y_horErr;
+          lastMarkerAng_ = dockingErrSignalMsg_.angleErr;
+          
+          
+          // Check if we are beyond point of no return distance
+          if (pastPointOfNoReturn_) {
 #if(DEBUG_DOCK_CONTROLLER)
-              PRINT("DockingController: Ignoring error msg because past point of no return (%f < %d)\n", dockingErrSignalMsg_.x_distErr, pointOfNoReturnDistMM_);
+            PRINT("DockingController: Ignoring error msg because past point of no return (%f < %d)\n", dockingErrSignalMsg_.x_distErr, pointOfNoReturnDistMM_);
 #endif
-              break; // out of while
-            }
-            
-            
+            break; // out of while
+          }
+          
+          
 #if(DEBUG_DOCK_CONTROLLER)
-            PRINT("Received%sdocking error signal: x_distErr=%f, y_horErr=%f, "
-                  "z_height=%f, angleErr=%fdeg\n",
-                  (dockMsg.isApproximate ? " approximate " : " "),
-                  dockingErrSignalMsg_.x_distErr, dockingErrSignalMsg_.y_horErr,
-                  dockingErrSignalMsg_.z_height, RAD_TO_DEG_F32(dockingErrSignalMsg_.angleErr));
+          PRINT("Received%sdocking error signal: x_distErr=%f, y_horErr=%f, "
+                "z_height=%f, angleErr=%fdeg\n",
+                (dockMsg.isApproximate ? " approximate " : " "),
+                dockingErrSignalMsg_.x_distErr, dockingErrSignalMsg_.y_horErr,
+                dockingErrSignalMsg_.z_height, RAD_TO_DEG_F32(dockingErrSignalMsg_.angleErr));
 #endif
+          
+          // Check that error signal is plausible
+          // If not, treat as if tracking failed.
+          // TODO: Get tracker to detect these situations and not even send the error message here.
+          if (dockingErrSignalMsg_.x_distErr > 0.f && ABS(dockingErrSignalMsg_.angleErr) < 0.75f*PIDIV2_F) {
             
-            // Check that error signal is plausible
-            // If not, treat as if tracking failed.
-            // TODO: Get tracker to detect these situations and not even send the error message here.
-            if (dockingErrSignalMsg_.x_distErr > 0.f && ABS(dockingErrSignalMsg_.angleErr) < 0.75f*PIDIV2_F) {
-             
-              // Update time that last good error signal was received
-              lastDockingErrorSignalRecvdTime_ = HAL::GetTimeStamp();
-              
-              // Set relative block pose to start/continue docking
-              SetRelDockPose(dockingErrSignalMsg_.x_distErr, dockingErrSignalMsg_.y_horErr, dockingErrSignalMsg_.angleErr, dockingErrSignalMsg_.timestamp);
-
-              if(!dockingErrSignalMsg_.isApproximate) // will be -1 if not computed
-              {
-                // If we have the height of the marker for docking, we can also
-                // compute the head angle to keep it centered
-                HeadController::SetMaxSpeedAndAccel(2.5, 10);
-                //f32 desiredHeadAngle = atan_fast( (dockMsg.z_height - NECK_JOINT_POSITION[2])/dockMsg.x_distErr);
-                
-                // Make sure bottom of camera FOV doesn't tilt below the bottom of the block
-                // or that the camera FOV center doesn't tilt below the marker center.
-                // Otherwise try to maintain the lowest tilt possible
-                
-                // Compute angle the head needs to face such that the bottom of the marker
-                // is at the bottom of the image.
-                //f32 minDesiredHeadAngle1 = atan_fast( (dockMsg.z_height - NECK_JOINT_POSITION[2] - 20.f)/dockMsg.x_distErr) + 0.5f*GetVerticalFOV(); // TODO: Marker size should come from VisionSystem?
-                
-                // Compute the angle the head needs to face such that it is looking
-                // directly at the center of the marker
-                //f32 minDesiredHeadAngle2 = atan_fast( (dockMsg.z_height - NECK_JOINT_POSITION[2])/dockMsg.x_distErr);
-                
-                // Use the min of both angles
-                //f32 desiredHeadAngle = MIN(minDesiredHeadAngle1, minDesiredHeadAngle2);
-                
-                // KEVIN: Lens is wide enough now that we don't really need to do head tracking.
-                //        Docking is smoother without it!
-                //HeadController::SetDesiredAngle(desiredHeadAngle);
-                //PRINT("desHeadAngle %f (min1: %f, min2: %f)\n", desiredHeadAngle, minDesiredHeadAngle1, minDesiredHeadAngle2);
-
-                // If docking to a high block, assumes we're trying to pick it up!
-                if (dockingErrSignalMsg_.z_height > START_LIFT_TRACKING_HEIGHT_MM) {
-                  doHighDockLiftTracking_ = true;
-                }
-
-              }
-              /* Now done on basestation directly
-              // Send to basestation for visualization
-              HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::DockingErrorSignal), &dockMsg);
-               */
-              continue;
+            // Update time that last good error signal was received
+            lastDockingErrorSignalRecvdTime_ = HAL::GetTimeStamp();
+            
+            // Set relative block pose to start/continue docking
+            SetRelDockPose(dockingErrSignalMsg_.x_distErr, dockingErrSignalMsg_.y_horErr, dockingErrSignalMsg_.angleErr, dockingErrSignalMsg_.timestamp);
+            
+            // If we have the height of the marker for docking, we can also
+            // compute the head angle to keep it centered
+            //HeadController::SetMaxSpeedAndAccel(2.5, 10);
+            //f32 desiredHeadAngle = atan_fast( (dockMsg.z_height - NECK_JOINT_POSITION[2])/dockMsg.x_distErr);
+            
+            // Make sure bottom of camera FOV doesn't tilt below the bottom of the block
+            // or that the camera FOV center doesn't tilt below the marker center.
+            // Otherwise try to maintain the lowest tilt possible
+            
+            // Compute angle the head needs to face such that the bottom of the marker
+            // is at the bottom of the image.
+            //f32 minDesiredHeadAngle1 = atan_fast( (dockMsg.z_height - NECK_JOINT_POSITION[2] - 20.f)/dockMsg.x_distErr) + 0.5f*GetVerticalFOV(); // TODO: Marker size should come from VisionSystem?
+            
+            // Compute the angle the head needs to face such that it is looking
+            // directly at the center of the marker
+            //f32 minDesiredHeadAngle2 = atan_fast( (dockMsg.z_height - NECK_JOINT_POSITION[2])/dockMsg.x_distErr);
+            
+            // Use the min of both angles
+            //f32 desiredHeadAngle = MIN(minDesiredHeadAngle1, minDesiredHeadAngle2);
+            
+            // KEVIN: Lens is wide enough now that we don't really need to do head tracking.
+            //        Docking is smoother without it!
+            //HeadController::SetDesiredAngle(desiredHeadAngle);
+            //PRINT("desHeadAngle %f (min1: %f, min2: %f)\n", desiredHeadAngle, minDesiredHeadAngle1, minDesiredHeadAngle2);
+            
+            // If docking to a high block, assumes we're trying to pick it up!
+            if (dockingErrSignalMsg_.z_height > START_LIFT_TRACKING_HEIGHT_MM) {
+              doHighDockLiftTracking_ = true;
             }
-
-          }  // IF tracking succeeded
+            
+            continue;
+          }
           
           if ((!pastPointOfNoReturn_) && (!markerOutOfFOV_)) {
             SpeedController::SetUserCommandedDesiredVehicleSpeed(0);
@@ -879,7 +796,7 @@ namespace Anki {
         lastDockingErrorSignalRecvdTime_ = HAL::GetTimeStamp();
         doHighDockLiftTracking_ = false;
         mode_ = LOOKING_FOR_BLOCK;
-        
+        markerlessDocking_ = false;
         success_ = false;
       }
       

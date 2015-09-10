@@ -37,7 +37,7 @@ namespace Anki {
       if (GetSupervisor()->getTime() - start_time > timeout) {
         if (!cond) {
           PRINT_STREAM_WARNING("CONDITION_WITH_TIMEOUT_ASSERT", "(" << condAsString << ") still false after " << timeout << " seconds. (" << file << "." << func << "." << line << ")");
-          _result = -1;
+          _result = 255;
           CST_EXIT();
         }
       }

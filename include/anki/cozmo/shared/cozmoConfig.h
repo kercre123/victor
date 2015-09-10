@@ -7,18 +7,29 @@
 namespace Anki {
 namespace Cozmo {
 
+#include "anki/cozmo/shared/cozmoConfig_common.h"
+  
+#ifdef COZMO_ROBOT
+  // Robot
 #ifdef SIMULATOR
-    // Simulated robot
-    #include "anki/cozmo/shared/cozmoConfig_sim.h"
-#elif defined(COZMO_ROBOT_V40)
-    #include "anki/cozmo/shared/cozmoConfig_v4.0.h"
-#else // COZMO_BASESTATION?
-    // Engine / App
-    // Include the file for whichever robot you want to be controlling with the app
-    #include "anki/cozmo/shared/cozmoConfig_v4.0.h"
+#include "anki/cozmo/shared/cozmoConfig_sim.h"
+#else
+#include "anki/cozmo/shared/cozmoConfig_v4.1.h"
 #endif
-    
-    #include "anki/cozmo/shared/cozmoConfig_common.h"
+  
+#else // COZMO_BASESTATION
+  // Engine / App
+
+  // If there are config values that need to differ between sim and physical robot
+  // they can be referenced via namespace
+  namespace RobotConfigSim {
+    #include "anki/cozmo/shared/cozmoConfig_sim.h"
+  }
+  namespace RobotConfigPhys {
+    #include "anki/cozmo/shared/cozmoConfig_v4.1.h"
+  }
+
+#endif
 
 } // namespace Cozmo
 } // namespace Anki

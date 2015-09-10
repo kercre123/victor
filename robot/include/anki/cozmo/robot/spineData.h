@@ -27,10 +27,13 @@ enum SPISource
   SPI_SOURCE_CLEAR = 0
 };
 
-struct GlobalCommon
+union GlobalCommon
 {
-  SPISource source;
-  uint8_t SYNC[3];
+  struct {
+    SPISource source;
+    uint8_t SYNC[3];
+  };
+  uint32_t common;
 };
 
 struct AcceleratorPacket {
@@ -50,9 +53,15 @@ union GlobalDataToHead
     GlobalCommon common;
     Fixed speeds[4];
     Fixed positions[4];
+#ifdef ROBOT41
+    Fixed _unused;
+    Fixed VBat;
+    Fixed VExt;
+#else
     Fixed IBat;
     Fixed VBat;
     Fixed Vusb;
+#endif
     u8    chargeStat;
 
     u8                cubeToUpdate;

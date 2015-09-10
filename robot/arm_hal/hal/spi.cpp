@@ -210,12 +210,15 @@ void DMA_HANDLER_RX(void)
   if (!g_runMainExec)
   {
     // XXX: There is a timing error causing an off-by-one, but I have to get into Kevin's hands
-    if (m_DMAtoHead.common.source == SPI_SOURCE_BODY) {
-      memcpy((void*)&g_dataToHead, (u8*)&m_DMAtoHead, sizeof(g_dataToHead));
-    } else if (m_DMAtoHead.common.SYNC[0] == SPI_SOURCE_BODY) {
-      memcpy((void*)&g_dataToHead, ((u8*)&m_DMAtoHead) + 1, sizeof(g_dataToHead) - 1);
+    for (int i = 0; i < 2; i++) {
+      GlobalDataToHead* dataToHead = (GlobalDataToHead*)(((u8*)&m_DMAtoHead)+i);
+      if (dataToHead->common.common == SPI_SOURCE_BODY) {
+        //memcpy((void*)&g_dataToHead, dataToHead, sizeof(g_dataToHead) - i);
+        memcpy((void*)&g_dataToHead, ((u8*)&m_DMAtoHead) + i, sizeof(g_dataToHead) - i);
+        break ;
+      }
     }
-    
+       
     memcpy((void*)&m_DMAtoBody, (void*)&g_dataToBody, sizeof(m_DMAtoBody));
   }
     

@@ -12,6 +12,7 @@
 
 #include "util/logging/logging.h"
 #include "anki/common/basestation/array2d_impl.h"
+#include "anki/common/basestation/utils/helpers/printByteArray.h"
 #include "anki/vision/CameraSettings.h"
 #include "anki/vision/basestation/image.h"
 #include "anki/cozmo/basestation/blockWorld.h"
@@ -22,7 +23,7 @@
 #include "anki/cozmo/basestation/viz/vizManager.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "opencv2/imgproc/imgproc.hpp"
-#include "anki/cozmo/basestation/data/dataPlatform.h"
+#include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "util/helpers/includeFstream.h"
 #include "util/fileUtils/fileUtils.h"
@@ -36,7 +37,7 @@
 namespace Anki {
   namespace Cozmo {
     
-    RobotMessageHandler::RobotMessageHandler(Data::DataPlatform* dataPlatform)
+    RobotMessageHandler::RobotMessageHandler(Util::Data::DataPlatform* dataPlatform)
     : _channel(NULL)
     , _robotMgr(NULL)
     , _dataPlatform(dataPlatform)
@@ -172,15 +173,15 @@ namespace Anki {
     } // ProcessMessages()
     
     
+    // TODO: Remove this once we get rid of MessageVisionMarker fully
     // Convert a MessageVisionMarker into a VisionMarker object and hand it off
     // to the BlockWorld
     Result RobotMessageHandler::ProcessMessage(Robot* robot, const MessageVisionMarker& msg)
     {
       Result retVal = RESULT_FAIL;
       
-      CORETECH_ASSERT(robot != NULL);
-      
-      retVal = robot->QueueObservedMarker(msg);
+      PRINT_NAMED_ERROR("RobotMessageHandler.ProcessMessage.MessageVisionMarker",
+                        "We should not be receiving this message from anywhere.");
       
       return retVal;
     } // ProcessMessage(MessageVisionMarker)
@@ -529,7 +530,7 @@ namespace Anki {
       if (msg.chunkId == msg.totalNumChunks - 1) {
         
         // Make sure image capture folder exists
-        std::string imuLogsDir = _dataPlatform->pathToResource(Data::Scope::Cache, AnkiUtil::kP_IMU_LOGS_DIR);
+        std::string imuLogsDir = _dataPlatform->pathToResource(Util::Data::Scope::Cache, AnkiUtil::kP_IMU_LOGS_DIR);
         if (!Util::FileUtils::CreateDirectory(imuLogsDir, false, true)) {
           PRINT_NAMED_ERROR("Robot.ProcessIMUDataChunk.CreateDirFailed","%s", imuLogsDir.c_str());
         }
@@ -594,6 +595,15 @@ namespace Anki {
       return RESULT_OK;
     }
 
+    Result RobotMessageHandler::ProcessMessage(Robot* robot, MessageDataDump const& msg)
+    {
+      char buf[msg.size * 2 + 1];
+      FormatBytesAsHex((char *)msg.data.data(), std::min((int)msg.size, (int)msg.data.size()), buf, (int)sizeof(buf));
+      PRINT_NAMED_INFO("RobotMessageHandler.ProcessMessage.MessageDataDump", "ID: %d, size: %d, data: %s", msg.id, msg.size, buf);
+
+      return RESULT_OK;
+    }
+    
     Result RobotMessageHandler::ProcessMessage(Robot* robot, MessageBlockIDFlashStarted const& msg)
     {
       printf("TODO: MessageBlockIDFlashStarted at time %d ms\n", msg.timestamp);

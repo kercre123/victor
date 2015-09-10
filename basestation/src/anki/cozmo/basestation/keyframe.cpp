@@ -32,6 +32,8 @@
 
 #include "anki/common/basestation/jsonTools.h"
 
+#include <opencv2/core/core.hpp>
+
 #include <cassert>
 
 namespace Anki {
@@ -43,6 +45,7 @@ namespace Anki {
     IKeyFrame::IKeyFrame()
     : _triggerTime_ms(0)
     , _isValid(false)
+    , _isLive(false)
     {
       
     }
@@ -54,7 +57,7 @@ namespace Anki {
     
     bool IKeyFrame::IsTimeToPlay(TimeStamp_t startTime_ms, TimeStamp_t currTime_ms) const
     {
-      return (GetTriggerTime() + startTime_ms <= currTime_ms);
+      return IsLive() || (GetTriggerTime() + startTime_ms <= currTime_ms);
     }
     
     Result IKeyFrame::DefineFromJson(const Json::Value &json)
@@ -232,16 +235,24 @@ return RESULT_FAIL; \
         _animName = _animName.substr(lastSlash+1, std::string::npos);
       }
       
-      _numFrames = FaceAnimationManager::getInstance()->GetNumFrames(_animName);
       _curFrame = 0;
       
       return RESULT_OK;
     }
     
+    bool FaceAnimationKeyFrame::IsDone()
+    {
+      // Note the dynamic check for num frames, since (in the case of streaming
+      // procedural animations) the number of keyframes could be increasing
+      // while we're playing and thus isn't known up front.
+      return _curFrame >= FaceAnimationManager::getInstance()->GetNumFrames(_animName);
+    }
+    
     RobotMessage* FaceAnimationKeyFrame::GetStreamMessage()
     {
       // Populate the message with the next chunk of audio data and send it out
-      if(_curFrame < _numFrames)
+      
+      if(!IsDone()) 
       {
         const std::vector<u8>* rleFrame = FaceAnimationManager::getInstance()->GetFrame(_animName, _curFrame);
         
@@ -262,8 +273,8 @@ return RESULT_FAIL; \
         
         if(rleFrame->size() >= sizeof(_faceImageMsg.image)) {
           PRINT_NAMED_ERROR("FaceAnimationKeyFrame.GetStreamMessage",
-                            "RLE frame %d for animation %s too large to fit in message (>=%lu).\n",
-                            _curFrame, _animName.c_str(), sizeof(_faceImageMsg.image));
+                            "RLE frame %d for animation %s too large to fit in message (%lu>=%lu).\n",
+                            _curFrame, _animName.c_str(), rleFrame->size(), sizeof(_faceImageMsg.image));
           return nullptr;
         }
         
@@ -278,7 +289,149 @@ return RESULT_FAIL; \
       }
     }
     
-#pragma mark - 
+#pragma mark -
+#pragma mark ProceduralFaceKeyFrame
+    
+    static Result SetEyeArrayHelper(ProceduralFace::WhichEye whichEye,
+                                  const Json::Value& jsonRoot,
+                                    ProceduralFace& face)
+    {
+      std::array<ProceduralFace::Value,static_cast<size_t>(ProceduralEyeParameter::NumParameters)> eyeArray;
+      const char* eyeStr = (whichEye == ProceduralFace::WhichEye::Left ?
+                            "leftEye" : "rightEye");
+      
+      if(JsonTools::GetArrayOptional(jsonRoot, eyeStr, eyeArray)) {
+        for(s32 i=0; i<eyeArray.size(); ++i)
+        {
+          face.SetParameter(whichEye,
+                            static_cast<ProceduralFace::Parameter>(i),
+                            eyeArray[i]);
+        }
+      }
+      
+      return RESULT_OK;
+    }
+    
+    Result ProceduralFaceKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot)
+    {
+      
+      ProceduralFace::Value angle;
+      if(!JsonTools::GetValueOptional(jsonRoot, "faceAngle", angle)) {
+        if(JsonTools::GetValueOptional(jsonRoot, "faceAngle_deg", angle)) {
+          PRINT_NAMED_WARNING("ProceduralFaceKeyFrame.SetMembersFromJson.OldAngleName",
+                              "Animation JSON memeber 'faceAngle_deg' is deprecated. "
+                              "Please update to 'faceAngle'.");
+        } else {
+          PRINT_NAMED_WARNING("ProceduralFaceKeyFrame.SetMembersFromJson.MissingParam",
+                              "Missing 'faceAngle' parameter - will use 0.");
+          angle = 0;
+        }
+      }
+      
+      _procFace.SetFaceAngle(angle);
+      
+      //
+      // Individual members for each parameter
+      // TODO: Remove support for these old-style Json files?
+      //
+      for(int iParam=0; iParam < static_cast<int>(ProceduralFace::Parameter::NumParameters); ++iParam)
+      {
+        ProceduralEyeParameter param = static_cast<ProceduralEyeParameter>(iParam);
+        
+        ProceduralFace::Value value;
+        std::string paramName = ProceduralEyeParameterToString(param);
+        
+        // Left
+        if(JsonTools::GetValueOptional(jsonRoot, "left" + paramName, value)) {
+          _procFace.SetParameter(ProceduralFace::Left, param, value);
+        }
+        
+        // Right
+        if(JsonTools::GetValueOptional(jsonRoot, "right" + paramName, value)) {
+          _procFace.SetParameter(ProceduralFace::Right, param, value);
+        }
+      }
+      
+      //
+      // Single array for left and right eye, indexed by enum value
+      //  Note: these will overwrite any individual values found above.
+      Result lastResult = SetEyeArrayHelper(ProceduralFace::WhichEye::Left,
+                                            jsonRoot, _procFace);
+      if(RESULT_OK == lastResult) {
+        lastResult = SetEyeArrayHelper(ProceduralFace::WhichEye::Right,
+                                     jsonRoot, _procFace);
+      }
+
+      Reset();
+      
+      return lastResult;
+    }
+    
+    void ProceduralFaceKeyFrame::Reset()
+    {
+      _currentTime_ms = GetTriggerTime();
+      _isDone = false;
+    }
+    
+    bool ProceduralFaceKeyFrame::IsDone()
+    {
+      bool retVal = _isDone;
+      if(_isDone) {
+        // This sets _isDone back to false!
+        Reset();
+      }
+      return retVal;
+    }
+    
+    RobotMessage* ProceduralFaceKeyFrame::GetStreamMessageHelper(const ProceduralFace& procFace)
+    {
+      std::vector<u8> rleData;
+      Result rleResult = FaceAnimationManager::CompressRLE(procFace.GetFace(), rleData);
+      
+      if(RESULT_OK != rleResult) {
+        PRINT_NAMED_ERROR("ProceduralFaceKeyFrame.GetStreamMesssageHelper",
+                          "Failed to get RLE frame from procedural face.");
+        return nullptr;
+      }
+      
+      if(rleData.size() >= sizeof(_faceImageMsg.image)) {
+        PRINT_NAMED_ERROR("ProceduralFaceKeyFrame.GetStreamMessageHelper",
+                          "RLE frame for procedural face too large to fit in message (%lu>=%lu).",
+                          rleData.size(), sizeof(_faceImageMsg.image));
+        return nullptr;
+      }
+      
+      _faceImageMsg.image.fill(0);
+      std::copy(rleData.begin(), rleData.end(), _faceImageMsg.image.begin());
+      
+      return &_faceImageMsg;
+    }
+    
+    RobotMessage* ProceduralFaceKeyFrame::GetStreamMessage()
+    {
+      _isDone = true;
+      return GetStreamMessageHelper(_procFace);
+    }
+    
+    RobotMessage* ProceduralFaceKeyFrame::GetInterpolatedStreamMessage(const ProceduralFaceKeyFrame& nextFrame)
+    {
+      // The interpolation fraction is how far along in time we are from this frame's
+      // trigger time (which currentTime was initialized to) and the next frame's
+      // trigger time.
+      const f32 fraction = std::min(1.f, static_cast<f32>(_currentTime_ms - GetTriggerTime()) / static_cast<f32>(nextFrame.GetTriggerTime() - GetTriggerTime()));
+      
+      ProceduralFace interpFace;
+      interpFace.Interpolate(_procFace, nextFrame._procFace, fraction);
+      
+      _currentTime_ms += IKeyFrame::SAMPLE_LENGTH_MS;
+      if(_currentTime_ms >= nextFrame.GetTriggerTime()) {
+        _isDone = true;
+      }
+      
+      return GetStreamMessageHelper(interpFace);
+    }
+    
+#pragma mark -
 #pragma mark RobotAudioKeyFrame
     
     //

@@ -90,18 +90,25 @@ namespace Anki {
         //   paths on other sides of the object unnecessarily.
         
         //   (Assumes obstacles are w.r.t. origin...)
-        const Point2f xyStart(preActionPose.GetPose().GetWithRespectToOrigin().GetTranslation());
+        Point2f xyStart(preActionPose.GetPose().GetWithRespectToOrigin().GetTranslation());
         const Point2f xyEnd(preActionPose.GetMarker()->GetPose().GetWithRespectToOrigin().GetTranslation());
         
         const f32 stepSize = 10.f; // 1cm
         Vec2f   stepVec(xyEnd);
         stepVec -= xyStart;
-        const f32 lineLength = stepVec.MakeUnitLength();
+        f32 lineLength = stepVec.MakeUnitLength();
         Vec2f offsetVec(stepVec.y(), -stepVec.x());
-        const s32 numSteps = std::floor(lineLength / stepSize);
-        stepVec *= stepSize;
         offsetVec *= 0.5f*ROBOT_BOUNDING_Y;
-
+        
+        // Pull back xyStart to the rear of the robot's bounding box when the robot is at the preaction pose.
+        xyStart -= (stepVec * (ROBOT_BOUNDING_X - ROBOT_BOUNDING_X_FRONT));
+        lineLength += (ROBOT_BOUNDING_X - ROBOT_BOUNDING_X_FRONT);
+        
+        const s32 numSteps = std::floor(lineLength / stepSize);
+        
+        stepVec *= stepSize;
+        
+        
         bool pathClear = true;
         Point2f currentPoint(xyStart);
         Point2f currentPointL(xyStart + offsetVec);
@@ -178,7 +185,8 @@ namespace Anki {
                                                     const std::set<PreActionPose::ActionType>& withAction,
                                                     const std::set<Vision::Marker::Code>& withCode,
                                                     const std::vector<std::pair<Quad2f,ObjectID> >& obstacles,
-                                                    const Pose3d* reachableFromPose)
+                                                    const Pose3d* reachableFromPose,
+                                                    const f32 offset_mm)
     {
       const Pose3d& relToObjectPose = GetPose();
       
@@ -187,7 +195,7 @@ namespace Anki {
         if((withCode.empty()   || withCode.count(preActionPose.GetMarker()->GetCode()) > 0) &&
            (withAction.empty() || withAction.count(preActionPose.GetActionType()) > 0))
         {
-          PreActionPose currentPose(preActionPose, relToObjectPose);
+          PreActionPose currentPose(preActionPose, relToObjectPose, offset_mm);
           
           if(IsPreActionPoseValid(currentPose, reachableFromPose, obstacles)) {
             preActionPoses.emplace_back(currentPose);

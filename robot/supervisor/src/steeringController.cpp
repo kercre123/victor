@@ -306,6 +306,15 @@ namespace Anki {
     }
     
     
+    void SetSteerMode(SteerMode mode)
+    {
+      if (mode != SM_PATH_FOLLOW) {
+        PathFollower::ClearPath();
+      }
+      
+      currSteerMode_ = mode;
+    }
+    
     void ManagePathFollow()
     {
       f32 pathDistErr = 0, pathRadErr = 0;
@@ -351,7 +360,7 @@ namespace Anki {
     void ExecuteDirectDrive(f32 left_vel, f32 right_vel, f32 left_accel, f32 right_accel)
     {
       //PRINT("DIRECT DRIVE %f %f\n", left_vel, right_vel);
-      currSteerMode_ = SM_DIRECT_DRIVE;
+      SetSteerMode(SM_DIRECT_DRIVE);
       
       // Get current desired wheel speeds
       f32 currLeftVel, currRightVel;
@@ -443,7 +452,12 @@ namespace Anki {
     
     }
     
-    
+    void ExitPointTurn()
+    {
+      SetSteerMode(SM_PATH_FOLLOW);
+      currAngularVel_ = 0;
+      startedPointTurn_ = false;
+    }
     
     void ExecutePointTurn(f32 targetAngle, f32 maxAngularVel, f32 angularAccel, f32 angularDecel, bool useShortestDir)
     {
@@ -460,7 +474,7 @@ namespace Anki {
       angularDistTraversed_ = 0;
       
       if (ABS(angularDistExpected_) < POINT_TURN_TARGET_DIST_STOP_RAD) {
-        currSteerMode_ = SM_PATH_FOLLOW;
+        ExitPointTurn();
 #if(DEBUG_STEERING_CONTROLLER)
         PRINT("POINT TURN: Already at destination\n");
 #endif
@@ -489,13 +503,6 @@ namespace Anki {
                         maxAngularVel_ > 0 ? POINT_TURN_TERMINAL_VEL_RAD_PER_S : -POINT_TURN_TERMINAL_VEL_RAD_PER_S,
                         destAngle,
                         CONTROL_DT);
-    }
-
-    void ExitPointTurn()
-    {
-      currSteerMode_ = SM_PATH_FOLLOW;
-      currAngularVel_ = 0;
-      startedPointTurn_ = false;
     }
     
     // Position-controlled point turn update

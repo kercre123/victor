@@ -46,6 +46,7 @@ RobotEventHandler::RobotEventHandler(RobotManager& manager, IExternalInterface* 
       ExternalInterface::MessageGameToEngineTag::TraverseObject,
       ExternalInterface::MessageGameToEngineTag::PlayAnimation,
       ExternalInterface::MessageGameToEngineTag::FaceObject,
+      ExternalInterface::MessageGameToEngineTag::FacePose,
       ExternalInterface::MessageGameToEngineTag::TurnInPlace,
     };
     
@@ -63,8 +64,13 @@ RobotEventHandler::RobotEventHandler(RobotManager& manager, IExternalInterface* 
     auto queueCompoundActionCallback = std::bind(&RobotEventHandler::HandleQueueCompoundAction, this, std::placeholders::_1);
     _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::QueueCompoundAction, queueCompoundActionCallback));
     
+    // Custom handler for SetLiftHeight
     auto setLiftHeightCallback = std::bind(&RobotEventHandler::HandleSetLiftHeight, this, std::placeholders::_1);
     _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::SetLiftHeight, setLiftHeightCallback));
+    
+    // Custom handler for DisplayProceduralFace
+    auto dispProcFaceCallback = std::bind(&RobotEventHandler::HandleDisplayProceduralFace, this, std::placeholders::_1);
+    _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::DisplayProceduralFace, dispProcFaceCallback));
   }
 }
   
@@ -100,9 +106,19 @@ IActionRunner* GetPickAndPlaceActionHelper(Robot& robot, const ExternalInterface
   }
   
   if(static_cast<bool>(msg.usePreDockPose)) {
-    return new DriveToPickAndPlaceObjectAction(selectedObjectID, msg.useManualSpeed);
+    return new DriveToPickAndPlaceObjectAction(selectedObjectID,
+                                               msg.useManualSpeed,
+                                               msg.placementOffsetX_mm,
+                                               msg.placementOffsetY_mm,
+                                               msg.placementOffsetAngle_rad,
+                                               msg.placeOnGroundIfCarrying);
   } else {
-    PickAndPlaceObjectAction* action = new PickAndPlaceObjectAction(selectedObjectID, msg.useManualSpeed);
+    PickAndPlaceObjectAction* action = new PickAndPlaceObjectAction(selectedObjectID,
+                                                                    msg.useManualSpeed,
+                                                                    msg.placementOffsetX_mm,
+                                                                    msg.placementOffsetY_mm,
+                                                                    msg.placementOffsetAngle_rad,
+                                                                    msg.placeOnGroundIfCarrying);
     action->SetPreActionPoseAngleTolerance(-1.f); // disable pre-action pose distance check
     return action;
   }
@@ -163,6 +179,15 @@ IActionRunner* GetFaceObjectActionHelper(Robot& robot, const ExternalInterface::
                               msg.headTrackWhenDone);
 }
   
+IActionRunner* GetFacePoseActionHelper(Robot& robot, const ExternalInterface::FacePose& facePose)
+{
+  Pose3d pose(0, Z_AXIS_3D(), {facePose.world_x, facePose.world_y, facePose.world_z},
+              robot.GetWorldOrigin());
+  return new FacePoseAction(pose,
+                            Radians(facePose.turnAngleTol),
+                            Radians(facePose.maxTurnAngle));
+}
+  
 IActionRunner* CreateNewActionByType(Robot& robot,
                                      const RobotActionType actionType,
                                      const ExternalInterface::RobotActionUnion& actionUnion)
@@ -192,6 +217,9 @@ IActionRunner* CreateNewActionByType(Robot& robot,
       
     case RobotActionType::FACE_OBJECT:
       return GetFaceObjectActionHelper(robot, actionUnion.faceObject);
+      
+    case RobotActionType::FACE_POSE:
+      return GetFacePoseActionHelper(robot, actionUnion.facePose);
       
     case RobotActionType::ROLL_OBJECT_LOW:
       return GetRollObjectActionHelper(robot, actionUnion.rollObject);
@@ -324,6 +352,12 @@ void RobotEventHandler::HandleActionEvents(const AnkiEvent<ExternalInterface::Me
       newAction = GetFaceObjectActionHelper(robot, event.GetData().Get_FaceObject());
       break;
     }
+    case ExternalInterface::MessageGameToEngineTag::FacePose:
+    {
+      const ExternalInterface::FacePose& facePose = event.GetData().Get_FacePose();
+      newAction = GetFacePoseActionHelper(robot, facePose);
+      break;
+    }
     case ExternalInterface::MessageGameToEngineTag::TurnInPlace:
     {
       newAction = new TurnInPlaceAction(event.GetData().Get_TurnInPlace().angle_rad,
@@ -434,6 +468,39 @@ void RobotEventHandler::HandleSetLiftHeight(const AnkiEvent<ExternalInterface::M
       robot->MoveLiftToHeight(msg.height_mm, msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2, msg.duration_sec);
     }
   }
+}
+  
+void RobotEventHandler::HandleDisplayProceduralFace(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+{
+  const ExternalInterface::DisplayProceduralFace& msg = event.GetData().Get_DisplayProceduralFace();
+
+  Robot* robot = _robotManager.GetRobotByID(msg.robotID);
+  
+  // We need a robot
+  if (nullptr == robot)
+  {
+    return;
+  }
+  
+  ProceduralFace procFace;
+  using Param = ProceduralFace::Parameter;
+  const size_t N = static_cast<size_t>(Param::NumParameters);
+  if(msg.leftEye.size() < N || msg.rightEye.size() < N) {
+    PRINT_NAMED_ERROR("RobotEventHandler.HandleDisplayProceduralFace.WrongArrayLength",
+                      "Expecting leftEye / rightEye array lengths to be %lu, not %lu / %lu.",
+                      N, msg.leftEye.size(), msg.rightEye.size());
+    return;
+  }
+    
+  for(int iParam = 0; iParam < N; ++iParam) {
+    procFace.SetParameter(ProceduralFace::Left,  static_cast<Param>(iParam), msg.leftEye[iParam]);
+    procFace.SetParameter(ProceduralFace::Right, static_cast<Param>(iParam), msg.rightEye[iParam]);
+  }
+  
+  procFace.SetFaceAngle(msg.faceAngle);
+  procFace.SetTimeStamp(robot->GetLastMsgTimestamp());
+  
+  robot->SetProceduralFace(procFace);
 }
 
 } // namespace Cozmo

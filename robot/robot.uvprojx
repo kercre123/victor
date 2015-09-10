@@ -177,7 +177,7 @@
           </Flash1>
           <bUseTDR>1</bUseTDR>
           <Flash2>BIN\UL2CM3.DLL</Flash2>
-          <Flash3></Flash3>
+          <Flash3>"" ()</Flash3>
           <Flash4></Flash4>
           <pFcarmOut></pFcarmOut>
           <pFcarmGrp></pFcarmGrp>
@@ -367,7 +367,7 @@
             <v6LangP>0</v6LangP>
             <VariousControls>
               <MiscControls>--asm</MiscControls>
-              <Define>USE_STDPERIPH_DRIVER,STM32F429_439xx,COZMO_ROBOT,ROBOT_HARDWARE,CORETECH_ROBOT,COZMO_ROBOT_V40</Define>
+              <Define>USE_STDPERIPH_DRIVER,STM32F429_439xx,COZMO_ROBOT,ROBOT_HARDWARE,CORETECH_ROBOT,COZMO_ROBOT_V41</Define>
               <Undefine></Undefine>
               <IncludePath>.\arm_hal;.\arm_hal\lib;..\include;..\coretech\common\include;..\coretech\messaging\include;..\coretech\planning\include;..\coretech\vision\include;.\supervisor\src;.\include;..\tools\anki-util\source\anki</IncludePath>
             </VariousControls>

@@ -46,7 +46,7 @@ namespace Anki {
     
     //The gains for the steering controller
     //Heading tracking gain K1, Crosstrack approach rate K2
-    const float DEFAULT_STEERING_K1 = 0.1f;
+    const float DEFAULT_STEERING_K1 = 0.12f;
     const float DEFAULT_STEERING_K2 = 12.f; //5.0f; //2.0f
 
     // Set maximum rotation speed

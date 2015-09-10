@@ -10,17 +10,16 @@
 *
 */
 
-#ifndef _Anki_Cozmo_Basestation_Data_DataPlatform_H__
-#define _Anki_Cozmo_Basestation_Data_DataPlatform_H__
+#ifndef _Anki_Common_Basestation_Utils_Data_DataPlatform_H__
+#define _Anki_Common_Basestation_Utils_Data_DataPlatform_H__
 
-#include "dataScope.h"
+#include "anki/common/basestation/utils/data/dataScope.h"
 #include "json/json-forwards.h"
 #include <string>
 
 namespace Anki {
-namespace Cozmo {
+namespace Util {
 namespace Data {
-
 
 class DataPlatform {
 public:
@@ -48,10 +47,10 @@ private:
 };
 
 } // end namespace Data
-} // end namespace Cozmo
+} // end namespace Util
 } // end namespace Anki
 
 
 
 
-#endif //_Anki_Cozmo_Basestation_Data_DataPlatform_H__
+#endif //_Anki_Common_Basestation_Utils_Data_DataPlatform_H__

@@ -13,7 +13,7 @@
 #include "anki/cozmo/basestation/keyframe.h"
 #include "util/logging/logging.h"
 #include "anki/common/basestation/exceptions.h"
-#include "anki/cozmo/basestation/data/dataPlatform.h"
+#include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "adpcm.h"
 
 #include <thread>
@@ -176,10 +176,10 @@ namespace Anki {
     }
 
 
-    void SoundManager::LoadSounds(Data::DataPlatform* dataPlatform)
+    void SoundManager::LoadSounds(Util::Data::DataPlatform* dataPlatform)
     {
       if (dataPlatform == nullptr) { return; }
-      const std::string folder = dataPlatform->pathToResource(Data::Scope::Resources, "assets/sounds/");
+      const std::string folder = dataPlatform->pathToResource(Util::Data::Scope::Resources, "assets/sounds/");
       ReadSoundDir(folder, "robot/", true);
       ReadSoundDir(folder, "device/", false);
     }

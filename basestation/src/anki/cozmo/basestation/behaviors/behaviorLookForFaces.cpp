@@ -16,8 +16,14 @@
 #include "anki/cozmo/basestation/cozmoActions.h"
 #include "anki/cozmo/basestation/events/ankiEventMgr.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "anki/cozmo/basestation/keyframe.h"
+#include "anki/cozmo/basestation/faceAnimationManager.h"
+
+#include "anki/common/basestation/math/point_impl.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
+
+#include <opencv2/highgui/highgui.hpp>
 
 namespace Anki {
 namespace Cozmo {
@@ -25,8 +31,12 @@ namespace Cozmo {
   BehaviorLookForFaces::BehaviorLookForFaces(Robot &robot, const Json::Value& config)
   : IBehavior(robot, config)
   , _currentState(State::LOOKING_AROUND)
+  , _trackingTimeout_sec(3.f)
+  , _isAnimating(false)
   {
     _name = "LookForFaces";
+
+    // TODO: Init timeouts, etc, from Json config
     
   }
   
@@ -36,46 +46,65 @@ namespace Cozmo {
     
     // Set up signal handlers for while we are running
     
-    //TODO: Remove once Lee's Events are in
     auto cbObservedObject = [this](const AnkiEvent<ExternalInterface::MessageEngineToGame>& event) {
-      this->HandleRobotObservedObject(event.GetData().Get_RobotObservedObject());
+      this->HandleRobotObservedFace(event.GetData().Get_RobotObservedFace());
     };
-    _eventHandles.push_back(_robot.GetExternalInterface()->Subscribe(ExternalInterface::MessageEngineToGameTag::RobotObservedObject, cbObservedObject));
+    _eventHandles.push_back(_robot.GetExternalInterface()->Subscribe(ExternalInterface::MessageEngineToGameTag::RobotObservedFace, cbObservedObject));
     
     auto cbActionCompleted = [this](const AnkiEvent<ExternalInterface::MessageEngineToGame>& event) {
       this->HandleRobotCompletedAction(event.GetData().Get_RobotCompletedAction());
     };
     _eventHandles.emplace_back(_robot.GetExternalInterface()->Subscribe(ExternalInterface::MessageEngineToGameTag::RobotCompletedAction, cbActionCompleted));
     
+    // Make sure the robot's idle animation is set to use Live, since we are
+    // going to stream live face mimicking
+    _robot.SetIdleAnimation(AnimationStreamer::LiveAnimation);
+    
     return RESULT_OK;
   }
   
   
-  IBehavior::Status BehaviorLookForFaces::Update(float currentTime_sec)
+  IBehavior::Status BehaviorLookForFaces::Update(double currentTime_sec)
   {
+    _currentTime_sec = currentTime_sec;
+    
     switch(_currentState)
     {
       case State::LOOKING_AROUND:
         
         if(currentTime_sec - _lastLookAround_sec > _nextMovementTime_sec)
         {
+          /*
           // Time to move again: tilt head and move body by a random amount
           // TODO: Get the angle limits from config
-          const f32 headAngle_deg = _rng.RandIntInRange(0, MAX_HEAD_ANGLE);
-          const f32 bodyAngle_deg = _rng.RandIntInRange(-90, 90);
-          
+          // TODO: re-enable random looking around (turned off for debugging streaming)
+          const f32 headAngle_deg = 0; //_rng.RandIntInRange(0, MAX_HEAD_ANGLE);
+          const f32 bodyAngle_deg = 0; //_rng.RandIntInRange(-90, 90);
+           
           MoveHeadToAngleAction* moveHeadAction    = new MoveHeadToAngleAction(DEG_TO_RAD(headAngle_deg));
           TurnInPlaceAction*     turnInPlaceAction = new TurnInPlaceAction(DEG_TO_RAD(bodyAngle_deg), false);
           
-          _robot.GetActionList().QueueActionNow(IBehavior::sActionSlot,
-                                                new CompoundActionParallel({moveHeadAction, turnInPlaceAction}));
+          CompoundActionParallel* action = new CompoundActionParallel({moveHeadAction, turnInPlaceAction});
+          _movementActionTag = action->GetTag();
+          _robot.GetActionList().QueueActionNow(IBehavior::sActionSlot, action);
+          */
+          _currentState = State::MOVING;
         }
 
         break;
         
+      case State::MOVING:
+        // Nothing to do, just waiting for action to complete
+        break;
+        
       case State::TRACKING_FACE:
-        if(_lastSeen_ms - _firstSeen_ms > SEC_TO_MILIS(_trackingTimeout_sec)) {
+        if(_currentTime_sec - _lastSeen_sec > _trackingTimeout_sec) {
           _robot.DisableTrackToObject();
+          
+          PRINT_NAMED_INFO("BehaviorLookForFaces.Update.DisablingTracking",
+                           "Current t=%.2f - lastSeen time=%.2f > timeout=%.2f. "
+                           "Switching back to looking around.",
+                           _currentTime_sec, _lastSeen_sec, _trackingTimeout_sec);
           _currentState = State::LOOKING_AROUND;
           SetNextMovementTime();
         }
@@ -94,7 +123,7 @@ namespace Cozmo {
     return Status::Running;
   } // Update()
   
-  Result BehaviorLookForFaces::Interrupt(float currentTime_sec)
+  Result BehaviorLookForFaces::Interrupt(double currentTime_sec)
   {
     _robot.DisableTrackToObject();
     _currentState = State::INTERRUPTED;
@@ -111,54 +140,216 @@ namespace Cozmo {
 #pragma mark -
 #pragma mark Signal Handlers
   
-  void BehaviorLookForFaces::HandleRobotObservedObject(const ExternalInterface::RobotObservedObject &msg)
+  inline static f32 GetAverageHeight(const Vision::TrackedFace::Feature& feature,
+                                     const Point2f relativeTo, const Radians& faceAngle_rad)
   {
-    // we only care about observed faces
-    if(msg.objectFamily == ObjectFamily::HumanHead)
-    {
-      ObjectID objectID;
-      objectID = msg.objectID;
-      
-      switch(_currentState)
-      {
-        case State::LOOKING_AROUND:
-        {
-          ObservableObject* object = _robot.GetBlockWorld().GetObjectByID(objectID);
-          if(object == nullptr) {
-            PRINT_NAMED_ERROR("BehaviorLookForFaces.HandleRobotObservedObject.InvalidID",
-                              "Could not get object %d.\n", msg.objectID);
-            return;
-          }
-          
-          // If we aren't already tracking, start tracking the next face we see
-          _firstSeen_ms = _lastSeen_ms = object->GetLastObservedTime();
-          _robot.EnableTrackToObject(objectID, false);
-          
-          break;
-        }
-          
-        case State::TRACKING_FACE:
-          if(objectID == _robot.GetTrackToObject()) {
-            ObservableObject* object = _robot.GetBlockWorld().GetObjectByID(objectID);
-            if(object == nullptr) {
-              PRINT_NAMED_ERROR("BehaviorLookForFaces.HandleRobotObservedObject.InvalidID",
-                                "Could not get object %d.\n", msg.objectID);
-              return;
-            }
-            _lastSeen_ms = object->GetLastObservedTime();
-            
-            //
-            // TODO: Get head pose / expression and mimic
-            //
-            
-          }
-          break;
-          
-        default:
-          PRINT_NAMED_ERROR("BehaviorLookForFaces.HandleRobotObservedObject.UnknownState",
-                            "Reached state = %d\n", _currentState);
-      }
+    f32 height = 0.f;
+    for(auto point : feature) {
+      point -= relativeTo;
+      height += -point.x()*std::sin(-faceAngle_rad.ToFloat()) + -point.y()*std::cos(-faceAngle_rad.ToFloat());
     }
+    height /= static_cast<f32>(feature.size());
+    return height;
+  }
+  
+  inline static f32 GetEyeHeight(const Vision::TrackedFace* face)
+  {
+    RotationMatrix2d R(-face->GetHeadRoll());
+    
+    f32 avgEyeHeight = 0.f;
+    
+    for(auto iFeature : {Vision::TrackedFace::FeatureName::LeftEye, Vision::TrackedFace::FeatureName::RightEye})
+    {
+      f32 maxY = std::numeric_limits<f32>::min();
+      f32 minY = std::numeric_limits<f32>::max();
+      
+      for(auto point : face->GetFeature(iFeature)) {
+        point = R*point;
+        if(point.y() < minY) {
+          minY = point.y();
+        }
+        if(point.y() > maxY) {
+          maxY = point.y();
+        }
+      }
+      
+      avgEyeHeight += maxY - minY;
+    }
+    
+    avgEyeHeight *= 0.5f;
+    return avgEyeHeight;
+  }
+  
+  void BehaviorLookForFaces::UpdateBaselineFace(const Vision::TrackedFace* face)
+  {
+    using Face = Vision::TrackedFace;
+    
+    _firstSeen_ms = _lastSeen_ms = face->GetTimeStamp();
+    _robot.EnableTrackToFace(face->GetID(), false);
+    
+    const Radians& faceAngle = face->GetHeadRoll();
+    
+    // Record baseline eyebrow heights to compare to for checking if they've
+    // raised/lowered in the future
+    const Face::Feature& leftEyeBrow  = face->GetFeature(Face::FeatureName::LeftEyebrow);
+    const Face::Feature& rightEyeBrow = face->GetFeature(Face::FeatureName::RightEyebrow);
+    
+    // TODO: Roll correction (normalize roll before checking height?)
+    _baselineLeftEyebrowHeight = GetAverageHeight(leftEyeBrow, face->GetLeftEyeCenter(), faceAngle);
+    _baselineRightEyebrowHeight = GetAverageHeight(rightEyeBrow, face->GetRightEyeCenter(), faceAngle);
+    
+    _baselineEyeHeight = GetEyeHeight(face);
+    
+    _baselineIntraEyeDistance = face->GetIntraEyeDistance();
+  }
+  
+  void BehaviorLookForFaces::HandleRobotObservedFace(const ExternalInterface::RobotObservedFace &msg)
+  {
+    using Face = Vision::TrackedFace;
+    
+    Face::ID_t faceID = static_cast<Face::ID_t>(msg.faceID);
+    const Face* face = _robot.GetFaceWorld().GetFace(faceID);
+    if(face == nullptr) {
+      PRINT_NAMED_ERROR("BehaviorLookForFaces.HandleRobotObservedFace.InvalidFaceID",
+                        "Got event that face ID %lld was observed, but it wasn't found.",
+                        faceID);
+      return;
+    }
+    
+    _lastSeen_sec = _currentTime_sec;
+    
+    switch(_currentState)
+    {
+      case State::LOOKING_AROUND:
+      case State::MOVING:
+      {
+        // If we aren't already tracking, start tracking the next face we see
+        UpdateBaselineFace(face);
+        
+        PRINT_NAMED_INFO("BehaviorLookForFaces.HandleRobotObservedFace.SwitchToTracking",
+                         "Observed face %llu while looking around, switching to tracking.", faceID);
+        _currentState = State::TRACKING_FACE;
+        break;
+      }
+        
+      case State::TRACKING_FACE:
+        if(faceID != _robot.GetTrackToFace()) {
+          PRINT_NAMED_INFO("BehaviorLookForFaces.HandleRobotObservedFace.UpdatingBaseline",
+                           "ID changed from %llu to %llu, updating baseline face.",
+                           _robot.GetTrackToFace(), faceID);
+          UpdateBaselineFace(face);
+        }
+        
+        {
+          ProceduralFace prevProcFace(_crntProceduralFace);
+          
+          const Radians& faceAngle = face->GetHeadRoll();
+          
+          // If eyebrows have raised/lowered (based on distance from eyes), mimic their position:
+          const Face::Feature& leftEyeBrow  = face->GetFeature(Face::FeatureName::LeftEyebrow);
+          const Face::Feature& rightEyeBrow = face->GetFeature(Face::FeatureName::RightEyebrow);
+        
+          const f32 leftEyebrowHeight  = GetAverageHeight(leftEyeBrow, face->GetLeftEyeCenter(), faceAngle);
+          const f32 rightEyebrowHeight = GetAverageHeight(rightEyeBrow, face->GetRightEyeCenter(), faceAngle);
+          
+          const f32 distanceNorm =  face->GetIntraEyeDistance() / _baselineIntraEyeDistance;
+          
+          // Get expected height based on intra-eye distance
+          const f32 expectedLeftEyebrowHeight = distanceNorm * _baselineLeftEyebrowHeight;
+          const f32 expectedRightEyebrowHeight = distanceNorm * _baselineRightEyebrowHeight;
+          
+          // Compare measured distance to expected
+          const f32 leftEyebrowHeightScale = (leftEyebrowHeight - expectedLeftEyebrowHeight)/expectedLeftEyebrowHeight;
+          const f32 rightEyebrowHeightScale = (rightEyebrowHeight - expectedRightEyebrowHeight)/expectedRightEyebrowHeight;
+          
+          // Map current eyebrow heights onto Cozmo's face, based on measured baseline values
+          _crntProceduralFace.SetParameter(ProceduralFace::WhichEye::Left,
+                                           ProceduralFace::Parameter::BrowCenY,
+                                           leftEyebrowHeightScale);
+          
+          _crntProceduralFace.SetParameter(ProceduralFace::WhichEye::Right,
+                                           ProceduralFace::Parameter::BrowCenY,
+                                           rightEyebrowHeightScale);
+          
+          const f32 expectedEyeHeight = distanceNorm * _baselineEyeHeight;
+          const f32 eyeHeightFraction = (GetEyeHeight(face) - expectedEyeHeight)/expectedEyeHeight + .1f; // bias a little larger
+          
+          for(auto whichEye : {ProceduralFace::WhichEye::Left, ProceduralFace::WhichEye::Right}) {
+            _crntProceduralFace.SetParameter(whichEye, ProceduralFace::Parameter::EyeHeight,
+                                             eyeHeightFraction);
+            _crntProceduralFace.SetParameter(whichEye, ProceduralFace::Parameter::PupilHeight,
+                                             std::max(.25f, std::min(.75f,eyeHeightFraction)));
+          }
+          // Adjust pupil positions depending on where face is in the image
+          Point2f newPupilPos(face->GetLeftEyeCenter());
+          newPupilPos += face->GetRightEyeCenter();
+          newPupilPos *= 0.5f;
+          
+          Point2f imageHalfSize(_robot.GetCamera().GetCalibration().GetNcols()/2,
+                                _robot.GetCamera().GetCalibration().GetNrows()/2);
+          newPupilPos -= imageHalfSize; // make relative to image center
+          newPupilPos /= imageHalfSize; // scale to be between -1 and 1
+          newPupilPos *= .8f; // magic value to make it more realistic
+          
+          for(auto whichEye : {ProceduralFace::WhichEye::Left, ProceduralFace::WhichEye::Right}) {
+            _crntProceduralFace.SetParameter(whichEye, ProceduralFace::Parameter::EyeHeight,
+                                             eyeHeightFraction);
+            _crntProceduralFace.SetParameter(whichEye, ProceduralFace::Parameter::PupilHeight,
+                                             eyeHeightFraction);
+
+            // To get saccade-like movement, only update the pupils if they new position is
+            // different enough
+            Point2f pupilChange(newPupilPos);
+            pupilChange.x() -= _crntProceduralFace.GetParameter(whichEye, ProceduralFace::Parameter::PupilCenX);
+            pupilChange.y() -= _crntProceduralFace.GetParameter(whichEye, ProceduralFace::Parameter::PupilCenY);
+            if(pupilChange.Length() > .15f) { // TODO: Tune this parameter to get better-looking saccades
+              _crntProceduralFace.SetParameter(whichEye, ProceduralFace::Parameter::PupilCenX,
+                                               -newPupilPos.x());
+              _crntProceduralFace.SetParameter(whichEye, ProceduralFace::Parameter::PupilCenY,
+                                               newPupilPos.y());
+            }
+          }
+          
+          // If face angle is rotated, mirror the rotation (with a deadzone)
+          if(std::abs(faceAngle.getDegrees()) > 5) {
+            _crntProceduralFace.SetFaceAngle(faceAngle.getDegrees()/static_cast<f32>(ProceduralFace::MaxFaceAngle));
+          } else {
+            _crntProceduralFace.SetFaceAngle(0);
+          }
+          
+          // Smoothing
+          _crntProceduralFace.Interpolate(prevProcFace, _crntProceduralFace, 0.9f);
+          
+          _crntProceduralFace.SetTimeStamp(face->GetTimeStamp());
+          _crntProceduralFace.MarkAsSentToRobot(false);
+          _robot.SetProceduralFace(_crntProceduralFace);
+          
+          if(!_isAnimating) {
+            Pose3d headWrtRobot;
+            if(false == face->GetHeadPose().GetWithRespectTo(_robot.GetPose(), headWrtRobot)) {
+              PRINT_NAMED_ERROR("BehaviorLookForFaces.HandleRobotObservedFace.PoseWrtFail","");
+            } else if(headWrtRobot.GetTranslation().Length() < 300.f) {
+              // The head is very close (scary!). Move backward along the line from the
+              // robot to the head.
+              PRINT_NAMED_INFO("BehaviorLookForFaces.HandleRobotObservedFace.Shocked",
+                               "Head is %.1fmm away: playing shocked anim.",
+                               headWrtRobot.GetTranslation().Length());
+              PlayAnimationAction* animAction = new PlayAnimationAction("shocked");
+              _animationActionTag = animAction->GetTag();
+              _robot.GetActionList().QueueActionNow(IBehavior::sActionSlot, animAction);
+              _isAnimating = true;
+            }
+          }
+          
+          //PRINT_NAMED_INFO("BehaviorLookForFaces.HandleRobotObservedFace.UpdatedProceduralFace", "");
+          
+        }
+        break;
+        
+      default:
+        PRINT_NAMED_ERROR("BehaviorLookForFaces.HandleRobotObservedFace.UnknownState",
+                          "Reached state = %d\n", _currentState);
+    } // switch(_currentState)
   }
   
   void BehaviorLookForFaces::SetNextMovementTime()
@@ -171,10 +362,23 @@ namespace Cozmo {
   
   void BehaviorLookForFaces::HandleRobotCompletedAction(const ExternalInterface::RobotCompletedAction& msg)
   {
-    if(msg.actionType == RobotActionType::COMPOUND)
+    if(msg.actionType == RobotActionType::COMPOUND && msg.idTag == _movementActionTag)
     {
       // Last movement finished: set next time to move
       SetNextMovementTime();
+      if(_currentState == State::MOVING) {
+        // Only switch back to looking around state if we didn't see a face
+        // while we were moving (and thus are now in FACE_TRACKING state)
+        PRINT_NAMED_INFO("BehaviorLookForFaces.HandleRobotCompletedAction.DoneMoving",
+                         "Switching back to looking around.");
+        _currentState = State::LOOKING_AROUND;
+      }
+    }
+    
+    else if(msg.actionType == RobotActionType::PLAY_ANIMATION && msg.idTag == _animationActionTag)
+    {
+      _robot.SetProceduralFace(_crntProceduralFace);
+      _isAnimating = false;
     }
   }
 } // namespace Cozmo

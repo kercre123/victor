@@ -96,7 +96,7 @@ namespace Anki {
     class DriveToObjectAction : public IAction //: public DriveToPoseAction
     {
     public:
-      DriveToObjectAction(const ObjectID& objectID, const PreActionPose::ActionType& actionType, const bool useManualSpeed = false);
+      DriveToObjectAction(const ObjectID& objectID, const PreActionPose::ActionType& actionType, const f32 predockOffsetDistX_mm = 0, const bool useManualSpeed = false);
       DriveToObjectAction(const ObjectID& objectID, const f32 distance_mm, const bool useManualSpeed = false);
       
       // TODO: Add version where marker code is specified instead of action?
@@ -122,6 +122,7 @@ namespace Anki {
       ObjectID                   _objectID;
       PreActionPose::ActionType  _actionType;
       f32                        _distance_mm;
+      f32                        _predockOffsetDistX_mm;
       bool                       _useManualSpeed;
       CompoundActionSequential   _compoundAction;
       
@@ -240,9 +241,40 @@ namespace Anki {
     }; // class MoveLiftToHeightAction
     
     
+    // Tilt head and rotate body to face the given pose.
+    // Use angles specified at construction to control the body rotation.
+    class FacePoseAction : public IAction
+    {
+    public:
+      // Note that the rotation in formation in pose will be ignored
+      FacePoseAction(const Pose3d& pose, Radians turnAngleTol, Radians maxTurnAngle);
+      
+      virtual const std::string& GetName() const override;
+      virtual RobotActionType GetType() const override { return RobotActionType::FACE_POSE; }
+      
+    protected:
+      virtual ActionResult Init(Robot& robot) override;
+      virtual ActionResult CheckIfDone(Robot& robot) override;
+      virtual void Reset() override;
+      
+      FacePoseAction(Radians turnAngleTol, Radians maxTurnAngle);
+      void SetPose(const Pose3d& pose);
+      virtual Radians GetHeadAngle(f32 heightDiff);
+      
+      CompoundActionParallel _compoundAction;
+      
+    private:
+      Pose3d _poseWrtRobot;
+      bool   _isPoseSet;
+      
+      Radians              _turnAngleTol;
+      Radians              _maxTurnAngle;
+    }; // class FacePoseAction
+    
+    
     // Tilt head and rotate body to face the specified (marker on an) object.
     // Use angles specified at construction to control the body rotation.
-    class FaceObjectAction : public IAction
+    class FaceObjectAction : public FacePoseAction
     {
     public:
       // If facing the object requires less than turnAngleTol turn, then no
@@ -267,6 +299,8 @@ namespace Anki {
       virtual ActionResult CheckIfDone(Robot& robot) override;
       virtual void Reset() override;
       
+      virtual Radians GetHeadAngle(f32 heightDiff) override;
+      
       // Reduce delays from their defaults
       virtual f32 GetStartDelayInSeconds() const override { return 0.0f; }
       
@@ -278,13 +312,10 @@ namespace Anki {
       // Override to allow wheel control while facing the object
       virtual bool ShouldLockWheels() const override { return false; }
       
-      CompoundActionParallel _compoundAction;
-      bool                   _compoundActionDone;
+      bool                 _compoundActionDone;
       
       ObjectID             _objectID;
       Vision::Marker::Code _whichCode;
-      Radians              _turnAngleTol;
-      Radians              _maxTurnAngle;
       f32                  _waitToVerifyTime;
       bool                 _headTrackWhenDone;
       
@@ -314,7 +345,12 @@ namespace Anki {
     class IDockAction : public IAction
     {
     public:
-      IDockAction(ObjectID objectID, const bool useManualSpeed);
+      IDockAction(ObjectID objectID,
+                  const bool useManualSpeed = false,
+                  const f32 placeObjectOnGround = false,
+                  const f32 placementOffsetX_mm = 0,
+                  const f32 placementOffsetY_mm = 0,
+                  const f32 placementOffsetAngle_rad = 0);
       
       virtual ~IDockAction();
       
@@ -359,6 +395,10 @@ namespace Anki {
       bool                        _wasPickingOrPlacing;
       bool                        _useManualSpeed;
       VisuallyVerifyObjectAction* _visuallyVerifyAction;
+      f32                         _placementOffsetX_mm;
+      f32                         _placementOffsetY_mm;
+      f32                         _placementOffsetAngle_rad;
+      bool                        _placeObjectOnGroundIfCarrying;
     }; // class IDockAction
 
     
@@ -367,7 +407,12 @@ namespace Anki {
     class PickAndPlaceObjectAction : public IDockAction
     {
     public:
-      PickAndPlaceObjectAction(ObjectID objectID, const bool useManualSpeed = false);
+      PickAndPlaceObjectAction(ObjectID objectID,
+                               const bool useManualSpeed = false,
+                               const f32 placementOffsetX_mm = 0,
+                               const f32 placementOffsetY_mm = 0,
+                               const f32 placementOffsetAngle_rad = 0,
+                               const bool placeObjectOnGroundIfCarrying = false);
       virtual ~PickAndPlaceObjectAction();
       
       virtual const std::string& GetName() const override;
@@ -442,11 +487,16 @@ namespace Anki {
     class DriveToPickAndPlaceObjectAction : public CompoundActionSequential
     {
     public:
-      DriveToPickAndPlaceObjectAction(const ObjectID& objectID, const bool useManualSpeed = false)
+      DriveToPickAndPlaceObjectAction(const ObjectID& objectID,
+                                      const bool useManualSpeed = false,
+                                      const f32 placementOffsetX_mm = 0,
+                                      const f32 placementOffsetY_mm = 0,
+                                      const f32 placementOffsetAngle_rad = 0,
+                                      const bool placeObjectOnGroundIfCarrying = false)
       : CompoundActionSequential({
-        new DriveToObjectAction(objectID, PreActionPose::DOCKING, useManualSpeed),
+        new DriveToObjectAction(objectID, PreActionPose::DOCKING, placementOffsetX_mm, useManualSpeed),
         //new VisuallyVerifyObjectAction(objectID),
-        new PickAndPlaceObjectAction(objectID, useManualSpeed)})
+        new PickAndPlaceObjectAction(objectID, useManualSpeed, placementOffsetX_mm, placementOffsetY_mm, placementOffsetAngle_rad, placeObjectOnGroundIfCarrying)})
       {
 
       }
@@ -470,7 +520,7 @@ namespace Anki {
     public:
       DriveToRollObjectAction(const ObjectID& objectID, const bool useManualSpeed = false)
       : CompoundActionSequential({
-        new DriveToObjectAction(objectID, PreActionPose::DOCKING, useManualSpeed),
+        new DriveToObjectAction(objectID, PreActionPose::DOCKING, 0, useManualSpeed),
         new RollObjectAction(objectID, useManualSpeed)})
       {
         
@@ -636,7 +686,7 @@ namespace Anki {
     public:
       DriveToAndTraverseObjectAction(const ObjectID& objectID, const bool useManualSpeed = false)
       : CompoundActionSequential({
-        new DriveToObjectAction(objectID, PreActionPose::ENTRY, useManualSpeed),
+        new DriveToObjectAction(objectID, PreActionPose::ENTRY, 0, useManualSpeed),
         new TraverseObjectAction(objectID, useManualSpeed)})
       {
         

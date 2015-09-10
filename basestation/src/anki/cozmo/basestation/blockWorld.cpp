@@ -143,7 +143,7 @@ namespace Anki
       // Mat Pieces
       //
       
-      // Flag mats:
+      // Flat mats:
       //_objectLibrary[ObjectFamily::Mat].AddObject(new FlatMat(ObjectType::FlatMat_LETTERS_4x4));
       _objectLibrary[ObjectFamily::Mat].AddObject(new FlatMat(ObjectType::FlatMat_GEARS_4x4));
       
@@ -169,12 +169,6 @@ namespace Anki
       //
       _objectLibrary[ObjectFamily::Charger].AddObject(new Charger());
       
-      
-      //////////////////////////////////////////////////////////////////////////
-      // Faces
-      //
-      _objectLibrary[ObjectFamily::HumanHead].AddObject(new HumanHead());
-
       
     } // BlockWorld() Constructor
     
@@ -242,11 +236,30 @@ namespace Anki
     
     
     void BlockWorld::FindIntersectingObjects(const ObservableObject* objectSeen,
+                                             std::vector<ObservableObject*>& intersectingExistingObjects,
+                                             f32 padding_mm,
                                              const std::set<ObjectFamily>& ignoreFamiles,
                                              const std::set<ObjectType>& ignoreTypes,
-                                             const std::set<ObjectID>& ignoreIDs,
-                                             std::vector<ObservableObject*>& intersectingExistingObjects,
-                                             f32 padding_mm) const
+                                             const std::set<ObjectID>& ignoreIDs) const
+    {
+      Quad2f quadSeen = objectSeen->GetBoundingQuadXY(objectSeen->GetPose(), padding_mm);
+      
+      FindIntersectingObjects(quadSeen,
+                              intersectingExistingObjects,
+                              padding_mm,
+                              ignoreFamiles,
+                              ignoreTypes,
+                              ignoreIDs);
+      
+    } // FindIntersectingObjects()
+    
+    
+    void BlockWorld::FindIntersectingObjects(const Quad2f& quad,
+                                             std::vector<ObservableObject *> &intersectingExistingObjects,
+                                             f32 padding_mm,
+                                             const std::set<ObjectFamily> &ignoreFamiles,
+                                             const std::set<ObjectType> &ignoreTypes,
+                                             const std::set<ObjectID> &ignoreIDs) const
     {
       for(auto & objectsByFamily : _existingObjects)
       {
@@ -262,11 +275,10 @@ namespace Anki
                 if(useID) {
                   ObservableObject* objExist = objectAndId.second;
                   
-                  // Get quads of both objects and check for intersection
+                  // Get quad of object and check for intersection
                   Quad2f quadExist = objExist->GetBoundingQuadXY(objExist->GetPose(), padding_mm);
-                  Quad2f quadSeen = objectSeen->GetBoundingQuadXY(objectSeen->GetPose(), padding_mm);
                   
-                  if( quadExist.Intersects(quadSeen) ) {
+                  if( quadExist.Intersects(quad) ) {
                     intersectingExistingObjects.push_back(objExist);
                   }
                 } // if useID
@@ -275,10 +287,8 @@ namespace Anki
           }  // for each type
         }  // if not ignoreFamily
       } // for each family
-      
-    } // FindIntersectingObjects()
-
-
+    }
+    
     void BlockWorld::AddAndUpdateObjects(const std::vector<ObservableObject*>& objectsSeen,
                                          const ObjectFamily& inFamily,
                                          const TimeStamp_t atTimestamp)
@@ -409,7 +419,7 @@ namespace Anki
             // Otherwise, add a new object
 #         endif // ONLY_ALLOW_ONE_OBJECT_PER_TYPE
             
-          if(!_canAddObjects && objSeen->GetFamily() != ObjectFamily::HumanHead) {
+          if(!_canAddObjects) {
             PRINT_NAMED_WARNING("BlockWorld.AddAndUpdateObject.AddingDisabled",
                                 "Saw a new %s%s object, but adding objects is disabled.\n",
                                 objSeen->IsActive() ? "active " : "",
@@ -641,7 +651,7 @@ namespace Anki
           msg.headTiltAngle_rad = headAngle;
           msg.bodyPanAngle_rad = 0.f;
           
-          if(false == _robot->IsTrackingObjectWithHeadOnly()) {
+          if(false == _robot->IsTrackingWithHeadOnly()) {
             // Also rotate ("pan") body:
             const Radians panAngle = std::atan2(yDist, xDist);// - _robot->GetPose().GetRotationAngle<'Z'>();
             msg.bodyPanAngle_rad = panAngle.ToFloat();
@@ -1471,7 +1481,7 @@ namespace Anki
             // Ignore the mat object that the robot is localized to (?)
             ignoreIDs.insert(_robot->GetLocalizedTo());
           }
-          FindIntersectingObjects(m, ignoreFamilies, ignoreTypes, ignoreIDs, existingObjects, 0);
+          FindIntersectingObjects(m, existingObjects, 0, ignoreFamilies, ignoreTypes, ignoreIDs);
           if (!existingObjects.empty()) {
             delete m;
             return RESULT_OK;
@@ -1632,12 +1642,7 @@ namespace Anki
         // Note that this removes markers from the list that it uses
         numObjectsObserved += UpdateObjectPoses(currentObsMarkers, ObjectFamily::Charger, atTimestamp);
         
-        //
-        // Find any observed human heads from the remaining "markers"
-        //
-        // Note that this removes markers from the list that it uses
-        numObjectsObserved += UpdateObjectPoses(currentObsMarkers, ObjectFamily::HumanHead, atTimestamp);
-        
+
         // TODO: Deal with unknown markers?
         
         // Keep track of how many markers went unused by either robot or block
@@ -1678,8 +1683,7 @@ namespace Anki
         // NOTE: This assumes all other objects are DockableObjects below!!! (Becuase of IsBeingCarried() check)
         // TODO: How can we delete Mat objects (like platforms) whose positions we drive through
         if(objectsByFamily.first != ObjectFamily::Mat &&
-           objectsByFamily.first != ObjectFamily::MarkerlessObject &&
-           objectsByFamily.first != ObjectFamily::HumanHead)
+           objectsByFamily.first != ObjectFamily::MarkerlessObject)
         {
           for(auto & objectsByType : objectsByFamily.second)
           {
@@ -1888,6 +1892,8 @@ namespace Anki
                                                             f32 zTolerance) const
     {
       Point3f sameDistTol(objectOnBottom.GetSize());
+      sameDistTol.x() *= 0.5f;  // An object should only be considered to be on top if it's midpoint is actually on top of the bottom object's top surface.
+      sameDistTol.y() *= 0.5f;
       sameDistTol.z() = zTolerance;
       sameDistTol = objectOnBottom.GetPose().GetRotation() * sameDistTol;
       sameDistTol.Abs();
@@ -1944,7 +1950,7 @@ namespace Anki
                 if(ignoreIDs.find(objectsByID.first) == ignoreIDs.end()) {
                   Vec3f dist = ComputeVectorBetween(pose, objectsByID.second->GetPose());
                   dist.Abs();
-                  if(dist < closestDist) {
+                  if(dist.Length() < closestDist.Length()) {
                     closestDist = dist;
                     matchingObject = objectsByID.second;
                   }
@@ -1997,7 +2003,7 @@ namespace Anki
     
     void BlockWorld::ClearObjectsByFamily(const ObjectFamily family)
     {
-      if(_canDeleteObjects || family == ObjectFamily::HumanHead) {
+      if(_canDeleteObjects) {
         ObjectsMapByFamily_t::iterator objectsWithFamily = _existingObjects.find(family);
         if(objectsWithFamily != _existingObjects.end()) {
           for(auto & objectsByType : objectsWithFamily->second) {
@@ -2017,7 +2023,7 @@ namespace Anki
     
     void BlockWorld::ClearObjectsByType(const ObjectType type)
     {
-      if(_canDeleteObjects || type == ObjectType::HumanFace_Known || type == ObjectType::HumanFace_Unknown) {
+      if(_canDeleteObjects) {
         for(auto & objectsByFamily : _existingObjects) {
           ObjectsMapByType_t::iterator objectsWithType = objectsByFamily.second.find(type);
           if(objectsWithType != objectsByFamily.second.end()) {
@@ -2049,7 +2055,7 @@ namespace Anki
             
             // Allow deletion of specific object ID iff deletion is enable OR if
             // this object is being deleted because it wasn't observed enought times
-            if(_canDeleteObjects || objectWithIdIter->second->GetFamily() == ObjectFamily::HumanHead ||
+            if(_canDeleteObjects ||
                objectWithIdIter->second->GetNumTimesObserved() < MIN_TIMES_TO_OBSERVE_OBJECT)
             {
               // Remove the object from the world
@@ -2080,7 +2086,7 @@ namespace Anki
     {
       ObservableObject* object = objIter->second;
       
-      if(_canDeleteObjects || object->GetNumTimesObserved() < MIN_TIMES_TO_OBSERVE_OBJECT || fromFamily == ObjectFamily::HumanHead) {
+      if(_canDeleteObjects || object->GetNumTimesObserved() < MIN_TIMES_TO_OBSERVE_OBJECT) {
         ClearObjectHelper(object);
         
         return _existingObjects[fromFamily][withType].erase(objIter);
@@ -2098,7 +2104,7 @@ namespace Anki
                                  const ObjectType&   withType,
                                  const ObjectFamily& fromFamily)
     {
-      if(_canDeleteObjects || object->GetNumTimesObserved() < MIN_TIMES_TO_OBSERVE_OBJECT || fromFamily == ObjectFamily::HumanHead) {
+      if(_canDeleteObjects || object->GetNumTimesObserved() < MIN_TIMES_TO_OBSERVE_OBJECT) {
         ObjectID objID = object->GetID();
         ClearObjectHelper(object);
         

@@ -40,7 +40,7 @@ matlab.mat
 *.xccheckout
 xcuserdata
 *.moved-aside
-
+RTE
 # MSVC
 *.res
 *.user
@@ -209,3 +209,5 @@ coretech/project/gyp/build
 project/gyp/build
 generated/clad
 generated/webots/src/plugins/physics/physics.c
+resources/config/faciometric
+resources/config/basestation/vision/faciometric

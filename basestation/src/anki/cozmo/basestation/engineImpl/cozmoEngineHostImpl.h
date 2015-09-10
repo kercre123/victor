@@ -22,6 +22,9 @@ namespace Cozmo {
 template <typename Type>
 class AnkiEvent;
 
+namespace SpeechRecognition {
+class KeyWordRecognizer;
+}
 namespace ExternalInterface {
 class MessageGameToEngine;
 }
@@ -29,8 +32,8 @@ class MessageGameToEngine;
 class CozmoEngineHostImpl : public CozmoEngineImpl
 {
 public:
-  CozmoEngineHostImpl(IExternalInterface* externalInterface, Data::DataPlatform* dataPlatform);
-
+  CozmoEngineHostImpl(IExternalInterface* externalInterface, Util::Data::DataPlatform* dataPlatform);
+  ~CozmoEngineHostImpl();
   Result StartBasestation();
 
   void ForceAddRobot(AdvertisingRobot robotID,
@@ -69,6 +72,7 @@ protected:
   Comms::AdvertisementService  _robotAdvertisementService;
   RobotManager                 _robotMgr;
   RobotMessageHandler          _robotMsgHandler;
+  SpeechRecognition::KeyWordRecognizer* _keywordRecognizer;
 
   std::map<AdvertisingRobot, bool> _forceAddedRobots;
   BaseStationTime_t _lastAnimationFolderScan;

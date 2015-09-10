@@ -1,4 +1,8 @@
 {
+  'includes' : [
+    '../../coretech/project/gyp/opencv.gypi',
+  ],
+
   'variables': {
 
     # TODO: should this be passed in, or shared?
@@ -25,32 +29,7 @@
     
     # TODO: Get this programmatically (via configure.py?) using a call to <(matlabRootDir)/bin/mexext
     'mexext' : ['mexmaci64'],  
-    
-    # TODO: should this be passed in, or shared?
-    'opencv_includes': [
-      # '<(coretech_external_path)/opencv-2.4.8/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/core/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/highgui/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/imgproc/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/contrib/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/calib3d/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/objdetect/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/video/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/features2d/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/flann/include',
-    ],
-    
-    'opencv_libs': [
-      '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_core.dylib',
-      '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_imgproc.dylib',
-      '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_highgui.dylib',
-      '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_calib3d.dylib',
-      '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_contrib.dylib',
-      '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_objdetect.dylib',
-      '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_video.dylib',
-      '<(coretech_external_path)/build/opencv-2.4.8/lib/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)/libopencv_features2d.dylib',
-    ],
-
+   
     'compiler_flags': [
       '-Wno-unused-function',
       '-Wno-overloaded-virtual',
@@ -70,7 +49,7 @@
     ],
     
     'linker_flags' : [
-        '-g'
+        '-g',
     ],
 
     # Set default ARCHS based on platform
@@ -96,19 +75,22 @@
     'include_dirs': [
       '<(matlabRootDir)/extern/include',
       '../../include',
+      '<(coretechDir)/common/include',
+      '<(coretechDir)/vision/include',
       '<@(opencv_includes)',
     ],
     'libraries': [
       '<@(opencv_libs)',
-      '<(matlabRootDir)/bin/maci64/libmx.dylib',
-      '<(matlabRootDir)/bin/maci64/libmex.dylib',
-      '<(matlabRootDir)/bin/maci64/libeng.dylib',
+      'libmx.dylib',
+      'libmex.dylib',
+      'libeng.dylib',
+      'AppKit.framework',
     ],
     'xcode_settings': {
       'OTHER_CFLAGS': ['<@(compiler_c_flags)'],
       'OTHER_CPLUSPLUSFLAGS': ['<@(compiler_cpp_flags)'],
       'ALWAYS_SEARCH_USER_PATHS': 'NO',
-      # 'FRAMEWORK_SEARCH_PATHS':'../../libs/framework/',
+      'FRAMEWORK_SEARCH_PATHS':'$(SDKROOT)/System/Library/Frameworks',
       'CLANG_CXX_LANGUAGE_STANDARD':'c++11',
       'CLANG_CXX_LIBRARY':'libc++',
       'DEBUG_INFORMATION_FORMAT': 'dwarf',
@@ -127,6 +109,9 @@
           'xcode_settings': {
             'OTHER_CFLAGS': ['-O0'],
             'OTHER_CPLUSPLUSFLAGS': ['-O0'],
+            'LIBRARY_SEARCH_PATHS': [
+              '<(matlabRootDir)/bin/maci64'
+            ],
            },
           'defines': [
             '_LIBCPP_DEBUG=0',
@@ -139,6 +124,9 @@
           'xcode_settings': {
             'OTHER_CFLAGS': ['-Os'],
             'OTHER_CPLUSPLUSFLAGS': ['-Os'],
+            'LIBRARY_SEARCH_PATHS': [
+              '<(matlabRootDir)/bin/maci64'
+            ],
            },
           'defines': [
             'NDEBUG=1',
@@ -151,6 +139,9 @@
           'xcode_settings': {
             'OTHER_CFLAGS': ['-Os'],
             'OTHER_CPLUSPLUSFLAGS': ['-Os'],
+            'LIBRARY_SEARCH_PATHS': [
+              '<(matlabRootDir)/bin/maci64'
+            ],
            },
           'defines': [
             'NDEBUG=1',
@@ -194,6 +185,82 @@
         '<(ce-util_gyp_path):utilEmbedded',
       ],
     }, # end mexUnique
+    
+    {
+      'target_name': 'mexRegionprops',
+      'sources': [
+        '<(coretechDir)/vision/robot/mex/mexRegionprops.cpp',
+        '<@(common_mex_sources)',
+      ],
+      'dependencies': [
+        '<(ce-cti_gyp_path):ctiCommon',
+        '<(ce-cti_gyp_path):ctiCommonRobot',
+        '<(ce-util_gyp_path):jsoncpp',
+        '<(ce-util_gyp_path):util',
+        '<(ce-util_gyp_path):utilEmbedded',
+      ],
+    }, # end mexRegionprops
+    
+    {
+      'target_name': 'mexHist',
+      'sources': [
+        '<(coretechDir)/vision/robot/mex/mexHist.cpp',
+        '<@(common_mex_sources)',
+      ],
+      'dependencies': [
+        '<(ce-cti_gyp_path):ctiCommon',
+        '<(ce-cti_gyp_path):ctiCommonRobot',
+        '<(ce-util_gyp_path):jsoncpp',
+        '<(ce-util_gyp_path):util',
+        '<(ce-util_gyp_path):utilEmbedded',
+      ],
+    }, # end mexHist
+    
+    {
+      'target_name': 'mexRefineQuadrilateral',
+      'sources': [
+        '<(coretechDir)/vision/robot/mex/mexRefineQuadrilateral.cpp',
+        '<@(common_mex_sources)',
+      ],
+      'dependencies': [
+        '<(ce-cti_gyp_path):ctiCommonRobot',
+        '<(ce-cti_gyp_path):ctiVisionRobot',
+        '<(ce-util_gyp_path):jsoncpp',
+        '<(ce-util_gyp_path):util',
+        '<(ce-util_gyp_path):utilEmbedded',
+      ],
+    }, # end mexRefineQuadrilateral
+    
+    {
+      'target_name': 'mexClosestIndex',
+      'sources': [
+        '<(coretechDir)/vision/robot/mex/mexClosestIndex.cpp',
+        '<@(common_mex_sources)',
+      ],
+      'dependencies': [
+        '<(ce-cti_gyp_path):ctiCommonRobot',
+        '<(ce-util_gyp_path):jsoncpp',
+        '<(ce-util_gyp_path):util',
+        '<(ce-util_gyp_path):utilEmbedded',
+      ],
+    }, # end mexClosestIndex
+    
+    {
+      'target_name': 'mexCameraCapture',
+      'sources': [
+        '<(coretechDir)/vision/matlab/CameraCapture/mexCameraCapture.cpp',
+        '<@(common_mex_sources)',
+      ],
+      'libraries': [
+        '$(SDKROOT)/System/Library/Frameworks/QTKit.framework',
+        '$(SDKROOT)/System/Library/Frameworks/CoreVideo.framework',
+      ],
+      'dependencies': [
+        '<(ce-cti_gyp_path):ctiCommonRobot',
+        '<(ce-cti_gyp_path):ctiVisionRobot',
+      ],
+    }, # end mexCameraCapture
+    
 
   ] # end targets
 

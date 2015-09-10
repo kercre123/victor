@@ -60,7 +60,8 @@ namespace Anki {
       // canonical pre-action pose and the currennt pose of its marker's
       // parent. Probably not generally useful, but used by ActionableObject.
       PreActionPose(const PreActionPose& canonicalPose,
-                    const Pose3d& markerParentPose);
+                    const Pose3d& markerParentPose,
+                    const f32 offset_mm = 0);
       
       // Get the type of action associated with this PreActionPose
       ActionType GetActionType() const;

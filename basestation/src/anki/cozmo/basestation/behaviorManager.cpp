@@ -11,6 +11,7 @@
  **/
 
 #include "anki/cozmo/basestation/behaviorManager.h"
+#include "anki/cozmo/basestation/demoBehaviorChooser.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 
 #include "anki/cozmo/basestation/behaviors/behaviorOCD.h"
@@ -36,7 +37,6 @@ namespace Cozmo {
   : _isInitialized(false)
   , _forceReInit(false)
   , _robot(robot)
-  , _behaviorChooser(new ReactionaryBehaviorChooser)
   , _minBehaviorTime_sec(5)
   {
 
@@ -61,12 +61,10 @@ namespace Cozmo {
   
   void BehaviorManager::SetupBehaviorChooser(const Json::Value &config)
   {
-    AddReactionaryBehavior(new BehaviorReactToPickup(_robot, config));
+    DemoBehaviorChooser* newDemoChooser = new DemoBehaviorChooser(_robot, config);
+    _behaviorChooser = newDemoChooser;
     
-    _behaviorChooser->AddBehavior(new BehaviorOCD(_robot, config));
-    //AddBehavior(new BehaviorLookForFaces(_robot, config));
-    _behaviorChooser->AddBehavior(new BehaviorLookAround(_robot, config));
-    _behaviorChooser->AddBehavior(new BehaviorFidget(_robot, config));
+    AddReactionaryBehavior(new BehaviorReactToPickup(_robot, config));
   }
   
   // The AddReactionaryBehavior wrapper is responsible for setting up the callbacks so that important events will be
@@ -123,7 +121,7 @@ namespace Cozmo {
     _nextBehavior = nullptr;
   }
   
-  Result BehaviorManager::Update(float currentTime_sec)
+  Result BehaviorManager::Update(double currentTime_sec)
   {
     Result lastResult = RESULT_OK;
     
@@ -131,6 +129,8 @@ namespace Cozmo {
       PRINT_NAMED_ERROR("BehaviorManager.Update.NotInitialized", "");
       return RESULT_FAIL;
     }
+    
+    _behaviorChooser->Update(currentTime_sec);
     
     // If we happen to have a behavior we really want to switch to, do so
     if (nullptr != _forceSwitchBehavior && _currentBehavior != _forceSwitchBehavior)
@@ -155,16 +155,16 @@ namespace Cozmo {
         lastResult = RESULT_OK;
       }
       
-      std::string nextName("none");
-      if (nullptr != _nextBehavior)
-      {
-        nextName = _nextBehavior->GetName();
-      }
-      BEHAVIOR_VERBOSE_PRINT(DEBUG_BEHAVIOR_MGR, "BehaviorManager.Update.SelectedNext",
-                          "Selected next behavior '%s' at t=%.1f, last was t=%.1f",
-                          nextName.c_str(), currentTime_sec, _lastSwitchTime_sec);
       
-      _lastSwitchTime_sec = currentTime_sec;
+      if (_currentBehavior != _nextBehavior && nullptr != _nextBehavior)
+      {
+        std::string nextName = _nextBehavior->GetName();
+        BEHAVIOR_VERBOSE_PRINT(DEBUG_BEHAVIOR_MGR, "BehaviorManager.Update.SelectedNext",
+                               "Selected next behavior '%s' at t=%.1f, last was t=%.1f",
+                               nextName.c_str(), currentTime_sec, _lastSwitchTime_sec);
+        
+        _lastSwitchTime_sec = currentTime_sec;
+      }
     }
     
     if(nullptr != _currentBehavior) {
@@ -243,7 +243,7 @@ namespace Cozmo {
     return initResult;
   }
   
-  Result BehaviorManager::SelectNextBehavior(float currentTime_sec)
+  Result BehaviorManager::SelectNextBehavior(double currentTime_sec)
   {
     
     _nextBehavior = _behaviorChooser->ChooseNextBehavior(currentTime_sec);
@@ -257,7 +257,7 @@ namespace Cozmo {
     
   } // SelectNextBehavior()
   
-  Result BehaviorManager::SelectNextBehavior(const std::string& name, float currentTime_sec)
+  Result BehaviorManager::SelectNextBehavior(const std::string& name, double currentTime_sec)
   {
     _nextBehavior = _behaviorChooser->GetBehaviorByName(name);
     if(nullptr == _nextBehavior) {

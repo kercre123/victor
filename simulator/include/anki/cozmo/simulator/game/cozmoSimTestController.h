@@ -69,7 +69,7 @@ protected:
   
   virtual s32 UpdateInternal() = 0;
   
-  int _result;
+  u8 _result;
   
   bool IsTrueBeforeTimeout(bool cond,
                            std::string condAsString,

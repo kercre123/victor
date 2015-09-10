@@ -20,7 +20,7 @@ WorldInfo {
       material1 "cmat_floor"
       material2 "highfriction"
       coulombFriction [
-        200
+        20
       ]
       bounce 0.01
     }
@@ -28,7 +28,7 @@ WorldInfo {
       material1 "cmat_ramp"
       material2 "highfriction"
       coulombFriction [
-        500
+        20
       ]
       bounce 0.01
     }
@@ -36,7 +36,7 @@ WorldInfo {
       material1 "cmat_block"
       material2 "highfriction"
       coulombFriction [
-        50
+        20
       ]
       bounce 0.01
     }
@@ -68,7 +68,7 @@ WorldInfo {
       material1 "cmat_floor"
       material2 "cmat_block"
       coulombFriction [
-        10
+        3
       ]
       bounce 0.001
     }
