@@ -10,7 +10,7 @@ PROTO CozmoBot [
   # CVGA Crop:
   field SFInt32  cameraWidth  400
   field SFInt32  cameraHeight 296
-  field SFFloat  fieldOfView  1.2
+  field SFFloat  fieldOfView  1.21
 
   # QVGA Crop:
 #  field SFInt32  cameraWidth  320
@@ -228,12 +228,13 @@ Supervisor {
 				  Camera {
 						name "HeadCamera"
 						# Note: 8.8mm to lens face, 5.8mm to PCB mount, optical center = ?
-						translation 0.0058 0 -0.006
+						#translation 0.0177 0 -0.008
+						translation 0.010 0 -0.008
 						rotation 0.57735 -0.57735 -0.57735 2.0944
 						width IS cameraWidth
 						height IS cameraHeight
 						fieldOfView IS fieldOfView
-						near 0.018
+						near 0.012
 						antiAliasing TRUE
 						
 						%{ if fields.vizMode.value or fields.hideCameraDisplay.value then }%
@@ -1039,7 +1040,7 @@ Supervisor {
 	
 	
 		DEF LIFT Transform {
-		  translation -0.04 0 0.0295
+		  translation -0.041 0 0.0305
 	  
 		  children [
 				Shape {
@@ -1415,6 +1416,7 @@ Supervisor {
 							}
 						]
 					}
+					contactMaterial "noFriction"
 					physics Physics {
 						density 1000
 					}
