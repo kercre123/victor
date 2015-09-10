@@ -552,6 +552,11 @@ public class Robot : IDisposable {
 
       AddObservedObject(knownObject, message);
     }
+      
+    // HACK: This is to solve an edge case where there is a partially observed object but no
+    // actual observed object so the markersVisible list is not being properly cleared since
+    // ObservedNothing is not being sent from engine.
+    ClearObservedObjects();
   }
 
   private void AddActiveBlock(ActiveBlock activeBlock, G2U.RobotObservedObject message) {

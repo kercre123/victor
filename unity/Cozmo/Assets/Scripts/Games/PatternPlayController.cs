@@ -99,9 +99,6 @@ public class PatternPlayController : GameController {
   protected override void Update_PLAYING() {
     base.Update_PLAYING();
 
-    // HACK: since clear is only being properly called in the image sends.
-    robot.ClearObservedObjects();
-
     // update lights
     foreach (KeyValuePair<int, BlockLightConfig> blockConfig in blockLightConfigs) {
       for (int i = 0; i < robot.activeBlocks[blockConfig.Key].lights.Length; ++i) {
