@@ -220,15 +220,8 @@ namespace Cozmo {
     if(_nextBehavior != _currentBehavior || _forceReInit)
     {
       _forceReInit = false;
-      initResult = _nextBehavior->Init();
-      if(initResult != RESULT_OK) {
-        PRINT_NAMED_ERROR("BehaviorManager.InitNextBehaviorHelper.InitFailed",
-                          "Failed to initialize %s behavior.",
-                          _nextBehavior->GetName().c_str());
-        _nextBehavior = nullptr;
-      } else if(nullptr != _currentBehavior) {
-        // We've successfully initialized the next behavior to run, so interrupt
-        // the current behavior that's running if there is one. It will continue
+      if(nullptr != _currentBehavior) {
+        // Interrupt the current behavior that's running if there is one. It will continue
         // to run on calls to Update() until it completes and then we will switch
         // to the selected next behavior
         initResult = _currentBehavior->Interrupt(currentTime_sec);
@@ -236,9 +229,19 @@ namespace Cozmo {
         if (nullptr != _nextBehavior)
         {
           BEHAVIOR_VERBOSE_PRINT(DEBUG_BEHAVIOR_MGR, "BehaviorManger.InitNextBehaviorHelper.Selected",
-                           "Selected %s to run next.", _nextBehavior->GetName().c_str());
+                                 "Selected %s to run next.", _nextBehavior->GetName().c_str());
         }
       }
+      // Initialize the next behavior
+      // TODO: Should this be done only after currBehavior::Update() returns Complete or Failure?
+      //       i.e. Can it move to SwitchToNextBehavior?
+      if ((initResult = _nextBehavior->Init()) != RESULT_OK) {
+        PRINT_NAMED_ERROR("BehaviorManager.InitNextBehaviorHelper.InitFailed",
+                          "Failed to initialize %s behavior.",
+                          _nextBehavior->GetName().c_str());
+        _nextBehavior = nullptr;
+      }
+      
     }
     return initResult;
   }
