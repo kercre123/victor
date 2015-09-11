@@ -492,7 +492,7 @@ namespace AnimationTool
             {
                 extraData.faceAngle = faceForm.faceAngle;
 
-                for (int i = 0; i < extraData.leftEye.Length; ++i)
+                for (int i = 0; i < extraData.leftEye.Length && i < faceForm.eyes.Length; ++i)
                 {
                     if (faceForm.eyes[i] != null)
                     {

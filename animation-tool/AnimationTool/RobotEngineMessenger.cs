@@ -342,7 +342,7 @@ namespace AnimationTool
             displayProceduralFaceMessage.robotID = 1;
             displayProceduralFaceMessage.faceAngle = data.faceAngle;
 
-            for (int i = 0; i < displayProceduralFaceMessage.leftEye.Length; ++i)
+            for (int i = 0; i < displayProceduralFaceMessage.leftEye.Length && i < data.leftEye.Length; ++i)
             {
                 displayProceduralFaceMessage.leftEye[i] = data.leftEye[i];
                 displayProceduralFaceMessage.rightEye[i] = data.rightEye[i];
@@ -359,7 +359,7 @@ namespace AnimationTool
             displayProceduralFaceMessage.robotID = 1;
             displayProceduralFaceMessage.faceAngle = faceForm.faceAngle;
 
-            for (int i = 0; i < displayProceduralFaceMessage.leftEye.Length; ++i)
+            for (int i = 0; i < displayProceduralFaceMessage.leftEye.Length && i < faceForm.eyes.Length; ++i)
             {
                 if (faceForm.eyes[i] != null)
                 {

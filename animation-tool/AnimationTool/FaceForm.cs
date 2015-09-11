@@ -78,7 +78,7 @@ namespace AnimationTool
 
             face.RightValue = extraData.faceAngle;
 
-            for (int i = 0; i < eyes.Length; ++i)
+            for (int i = 0; i < eyes.Length && i < extraData.leftEye.Length; ++i)
             {
                 if (eyes[i] != null)
                 {

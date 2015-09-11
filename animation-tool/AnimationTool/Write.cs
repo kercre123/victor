@@ -229,7 +229,7 @@ namespace AnimationTool
 
             pointData.faceAngle = extraData.faceAngle;
 
-            for (int i = 0; i < extraData.leftEye.Length; ++i)
+            for (int i = 0; i < extraData.leftEye.Length && i < pointData.leftEye.Length; ++i)
             {
                 pointData.leftEye[i] = (float)Math.Round(extraData.leftEye[i], 2);
                 pointData.rightEye[i] = (float)Math.Round(extraData.rightEye[i], 2);

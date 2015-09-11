@@ -193,7 +193,7 @@ namespace AnimationTool.Sequencer
             int count = 0;
             Images = new Dictionary<double, string>();
 
-            if(!Directory.Exists(path))
+            if (!Directory.Exists(path))
             {
                 return length;
             }
@@ -289,7 +289,7 @@ namespace AnimationTool.Sequencer
                 rightEye[i] = data.rightEye[i];
             }
 
-            for (int i = 0; i < leftEye.Length; ++i)
+            for (int i = 0; i < leftEye.Length && i < data.leftEye.Length; ++i)
             {
                 switch (i)
                 {
