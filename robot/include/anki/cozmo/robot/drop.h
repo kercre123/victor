@@ -39,9 +39,9 @@ ct_assert(sizeof(DropToRTIP) == DROP_SIZE);
 
 typedef enum
 {
-  ToRTIP_empty = 0x00; ///< No payload here
-  ToRRIP_msg   = 0x01; ///< Message to main loop dispatch on RTIP
-  ToRTIP_i2c   = 0x02; ///< I2C write data command
+  ToRTIP_empty = 0x00, ///< No payload here
+  ToRRIP_msg   = 0x01, ///< Message to main loop dispatch on RTIP
+  ToRTIP_i2c   = 0x02, ///< I2C write data command
 } ToRTIPPayloadTag;
 
 /// Message receive buffer size on the RTIP
@@ -49,15 +49,17 @@ typedef enum
 /// The frequency with which we are allowed to send RTIP_MSG_BUF_SIZE bytes of data in miliseconds
 #define RTIP_MSG_INTERVAL_MS (7)
 
+#define DROP_TO_WIFI_MAX_PAYLOAD (DROP_SIZE - 2)
+
 /// Drop structure for transfers from RTIP to WiFi
 typedef struct 
 {
-  uint8_t payload[DROP_SIZE-2]; ///< Variable payload for message
+  uint8_t payload[DROP_TO_WIFI_MAX_PAYLOAD]; ///< Variable payload for message
   uint8_t msgLen;  ///< Number of bytes of message data following JPEG data
   uint8_t droplet; ///< Droplet enum / length field
 } DropToWiFi;
 
-assert(sizeof(DropToWiFi) == DROP_SIZE);
+ct_assert(sizeof(DropToWiFi) == DROP_SIZE);
 
 /// Droplet bit masks and flags.
 typedef enum

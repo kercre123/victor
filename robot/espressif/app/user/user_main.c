@@ -138,6 +138,8 @@ static void ICACHE_FLASH_ATTR system_init_done(void)
   // Enable UART0 RX interrupt
   // Only after clientInit
   uart_start();
+  // Enable I2SPI start only after clientInit
+  i2spiStart();
 
   // Set up shared background tasks
   task0Init();

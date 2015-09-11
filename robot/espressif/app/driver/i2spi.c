@@ -30,13 +30,7 @@ speed.
 #include "driver/sdio_slv.h"
 #include "driver/i2spi.h"
 #include "driver/i2s_ets.h"
-
-/// SLC can only move 256 byte chunks so that's what we use
-#define DMA_BUF_SIZE (256)
-/// How often we will garuntee servicing the DMA buffers
-#defien DMA_SERVICE_INTERVAL_MS (5)
-/// How many buffers are required given the above constraints. + 1 for ceiling function
-#define DMA_BUF_COUNT ((DROP_SIZE * DROPS_PER_SECOND * DMA_SERVICE_INTERVAL_MS / 1000 / DMA_BUF_SIZE) + 1)
+#include "client.h"
 
 /// Signals to the I2SPI task
 enum 
@@ -70,13 +64,56 @@ static void inline prepSdioQueue(struct sdio_queue* desc)
 }
 
 
+
+/** Processes an incomming drop from the RTIP to the WiFi
+ * @param drop A pointer to a complete drop
+ * @warning Call from a task not an ISR.
+ */
+static void processDrop(DropToWiFi* drop)
+{
+#define PACKET_SIZE 1420
+  static uint8  packet[PACKET_SIZE];
+  static uint16 len = 0;
+  const uint8 rxJpegLen = drop->droplet & jpegLenMask;
+  os_memcpy(packet + len, drop->payload, rxJpegLen);
+  len += rxJpegLen;
+  if ((PACKET_SIZE - len) < DROP_TO_WIFI_MAX_PAYLOAD) // Couldn't handle another drop to send the packet
+  {
+    clientQueuePacket(packet, len);
+    len = 0;
+  }
+}
+
+/** Collects and passes along drops collected from DMA buffers
+ * @param buf A pointer to the DMA buffer data
+ * @warning Call from a task not an ISR
+ */
+static void collectDrops(uint8* buf)
+{
+  static DropToWiFi drop; // The drop we are receiving into when bridging buffers
+  static uint8 phase = 0; // Tracks the offset in the DMA buffer of the start of next drop
+  if (phase > 0) // Finishing a drop started last buffer
+  {
+    os_memcpy(((uint8*)&drop) + phase, buf, DROP_SIZE - phase);
+    processDrop(&drop);
+    phase += DROP_SIZE - phase;
+  }
+  while (phase < (DMA_BUF_SIZE - DROP_SIZE)) // While there are whole drops in the buffer
+  {
+    processDrop((DropToWiFi*)(buf + phase)); // No need to copy, just process in place
+    phase += DROP_SIZE;
+  }
+  // Last partial drop in the buffer
+  os_memcpy(&drop, buf + phase, DMA_BUF_SIZE - phase);
+}
+
 LOCAL void i2spiTask(os_event_t *event)
 {
   struct sdio_queue* desc = (struct sdio_queue*)(event->par);
   
   if (desc == NULL)
   {
-    os_printf("ERROR: I2SPI task got null descriptor with signal %d\r\n", event->sig);
+    os_printf("ERROR: I2SPI task got null descriptor with signal %u\r\n", (unsigned int)event->sig);
     return;
   }
   
@@ -84,20 +121,22 @@ LOCAL void i2spiTask(os_event_t *event)
   {
     case TASK_SIG_I2SPI_RX:
     {
-      XXX Handle RXing data
+      collectDrops((uint8*)(desc->buf_ptr));
       break;
     }
     case TASK_SIG_I2SPI_TX:
     {
-      XXX Handle returned TX buffer
-      prepSdioQueue(desc);
+      //XXX Handle returned TX buffer
       break;
     }
     default:
     {
-      os_printf("ERROR: Unexpected I2SPI task signal signal: %d, %08x\r\n", event->sig, event->par);
+      os_printf("ERROR: Unexpected I2SPI task signal signal: %u, %08x\r\n",
+                (unsigned int)event->sig, (unsigned int)event->par);
     }
   }
+  // Reset the buffer for reuse
+  prepSdioQueue(desc);
 }
 
 
@@ -133,11 +172,6 @@ LOCAL void dmaisr(void* arg) {
 //Initialize I2S subsystem for DMA circular buffer use
 int8_t ICACHE_FLASH_ATTR i2spiInit() {
   int i;
-
-  transmitInd     = 0;
-  receiveInd      = 0;
-  transmitSeqNo   = 0;
-  lastSeqNo       = 0;
 
   system_os_task(i2spiTask, I2SPI_PRIO, i2spiTaskQ, I2SPI_TASK_QUEUE_LEN);
 
@@ -268,5 +302,6 @@ void ICACHE_FLASH_ATTR i2spiStop(void)
 
 bool i2spiQueueMessage(uint8_t* msgData, uint8_t msgLen, ToRTIPPayloadTag tag)
 {
-  XXX Implement queing message data
+  //XXX Implement queing message data
+  return false;
 }

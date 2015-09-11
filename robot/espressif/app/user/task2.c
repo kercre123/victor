@@ -8,40 +8,11 @@
 #include "mem.h"
 #include "task2.h"
 #include "client.h"
-#include "driver/i2s.h"
 
 #define task2QueueLen 8 ///< Maximum number of task 2 subtasks which can be in the queue
 os_event_t task2Queue[task2QueueLen]; ///< Memory for the task 2 queue
 
 static bool i2sStarted;
-
-/// Callback to process incoming radio data
-void clientRecvCallback(char* data, unsigned short len)
-{
-  if (len > I2SPI_MAX_PAYLOAD)
-  {
-    os_printf("Received data too long for i2s transaction\r\n");
-  }
-  else
-  {
-    /*if (i2sQueueTx((I2SPIPayload*)data, TagAudioData) == false)
-    {
-      os_printf("Couldn't queue I2SPI tx\r\n");
-    }*/
-    if (i2sStarted == false)
-    {
-      os_printf("Starting I2S transfer\r\n");
-      i2sStarted = true;
-      i2sStart();
-    }
-  }
-}
-
-/// Callback to process incoming I2SPI data
-void i2sRecvCallback(I2SPIPayload* payload, I2SPIPayloadTag tag)
-{
-  clientQueuePacket((uint8*)payload, sizeof(I2SPIPayload));
-}
 
 /** Execution of task2 code must return in less than 2 miliseconds
 */

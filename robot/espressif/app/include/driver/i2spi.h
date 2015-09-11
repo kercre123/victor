@@ -5,6 +5,13 @@
 
 #include "anki/cozmo/robot/drop.h" ///< I2SPI transaction contract
 
+/// SLC can only move 256 byte chunks so that's what we use
+#define DMA_BUF_SIZE (256)
+/// How often we will garuntee servicing the DMA buffers
+#define DMA_SERVICE_INTERVAL_MS (5)
+/// How many buffers are required given the above constraints. + 1 for ceiling function
+#define DMA_BUF_COUNT ((DROP_SIZE * DROPS_PER_SECOND * DMA_SERVICE_INTERVAL_MS / 1000 / DMA_BUF_SIZE) + 1)
+
 /// Task priority level for processing I2SPI data
 #define I2SPI_PRIO USER_TASK_PRIO_2
 

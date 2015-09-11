@@ -12,7 +12,7 @@
 #include "task0.h"
 #include "nv_params.h"
 #include "upgrade_controller.h"
-#include "driver/i2s.h"
+#include "driver/i2spi.h"
 
 /// Flash sector size for erasing, 4KB
 #define FLASH_SECTOR_SIZE 4096
@@ -339,7 +339,7 @@ LOCAL void ICACHE_FLASH_ATTR upccReceiveCallback(void *arg, char *usrdata, unsig
           }
           else
           {
-            i2sStop();
+            i2spiStop();
           }
         }
       }
