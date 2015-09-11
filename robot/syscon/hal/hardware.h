@@ -9,9 +9,8 @@
 // ROBOT41 is defined in the project GCC settings in keil.
 // If you want to change this, make sure you know that.
 
-//#define NATHAN_WANTS_DEMO
-//#define BACKPACK_DEMO
 //#define DEBUG_MESSAGES
+//#define RADIO_TIMING_TEST
 
 enum e_nrf_gpio {
 #ifdef ROBOT41
@@ -22,6 +21,7 @@ enum e_nrf_gpio {
   PIN_ENCODER_HEADB   = 24,
   PIN_ENCODER_LIFTA   = 30, // ENC4
   PIN_ENCODER_LIFTB   = 29,
+  
 
   // Motors + charge OK signal
   PIN_LEFT_P          = 19,
