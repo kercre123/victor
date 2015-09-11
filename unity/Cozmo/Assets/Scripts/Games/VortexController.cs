@@ -1012,7 +1012,7 @@ public class VortexController : GameController {
         CozmoEmotionManager.instance.SetEmotionTurnInPlace("YOUR_TURN", GetPoseFromPlayerIndex(currentPlayerIndex).rad, true, true, true);
       }
       // setting the head angle to ~35 degrees
-      robot.SetHeadAngle(.61f, true);
+      robot.SetHeadAngle(.61f, null, true);
     }
 
     wheel.Focus();
