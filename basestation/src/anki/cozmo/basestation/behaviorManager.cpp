@@ -110,15 +110,24 @@ namespace Cozmo {
     Util::SafeDelete(_behaviorChooser);
   }
   
-  void BehaviorManager::SwitchToNextBehavior()
+  void BehaviorManager::SwitchToNextBehavior(double currentTime_sec)
   {
     // If we're currently running our forced behavior but now switching away, clear it
     if (_currentBehavior == _forceSwitchBehavior)
     {
       _forceSwitchBehavior = nullptr;
     }
-    _currentBehavior = _nextBehavior;
-    _nextBehavior = nullptr;
+    
+    // Initialize next behavior and make it the current one
+    if (nullptr != _nextBehavior && _currentBehavior != _nextBehavior) {
+      if (_nextBehavior->Init(currentTime_sec) != RESULT_OK) {
+        PRINT_NAMED_ERROR("BehaviorManager.SwitchToNextBehavior.InitFailed",
+                          "Failed to initialize %s behavior.",
+                          _nextBehavior->GetName().c_str());
+      }
+      _currentBehavior = _nextBehavior;
+      _nextBehavior = nullptr;
+    }
   }
   
   Result BehaviorManager::Update(double currentTime_sec)
@@ -181,7 +190,7 @@ namespace Cozmo {
         case IBehavior::Status::Complete:
           // Behavior complete, switch to next
           _currentBehavior->SetIsRunning(false);
-          SwitchToNextBehavior();
+          SwitchToNextBehavior(currentTime_sec);
           break;
           
         case IBehavior::Status::Failure:
@@ -205,7 +214,7 @@ namespace Cozmo {
     }
     else if(nullptr != _nextBehavior) {
       // No current behavior, but next behavior defined, so switch to it.
-      SwitchToNextBehavior();
+      SwitchToNextBehavior(currentTime_sec);
     }
     
     return lastResult;
@@ -232,16 +241,6 @@ namespace Cozmo {
                                  "Selected %s to run next.", _nextBehavior->GetName().c_str());
         }
       }
-      // Initialize the next behavior
-      // TODO: Should this be done only after currBehavior::Update() returns Complete or Failure?
-      //       i.e. Can it move to SwitchToNextBehavior?
-      if ((initResult = _nextBehavior->Init(currentTime_sec)) != RESULT_OK) {
-        PRINT_NAMED_ERROR("BehaviorManager.InitNextBehaviorHelper.InitFailed",
-                          "Failed to initialize %s behavior.",
-                          _nextBehavior->GetName().c_str());
-        _nextBehavior = nullptr;
-      }
-      
     }
     return initResult;
   }
