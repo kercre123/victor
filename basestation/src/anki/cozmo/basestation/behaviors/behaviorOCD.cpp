@@ -107,10 +107,9 @@ namespace Cozmo {
     // As long as we're not lined up to play an irritated behavior go to the appropriate state
     // based on current carry state.
     _animActionTags.clear();
-    f32 currTime = GetCurrTimeInSeconds();
-    if (currTime - _lastNeatBlockDisturbedTime < kMajorIrritationTimeIntervalSec) {
+    if (currentTime_sec - _lastNeatBlockDisturbedTime < kMajorIrritationTimeIntervalSec) {
       PlayAnimation("MinorIrritation");
-    } else if (currTime - _lastNewBlockObservedTime < kExcitedAboutNewBlockTimeIntervalSec) {
+    } else if (currentTime_sec - _lastNewBlockObservedTime < kExcitedAboutNewBlockTimeIntervalSec) {
       PlayAnimation("Demo_Look_Around_See_Something_A");
     } else {
       if(_robot.IsCarryingObject()) {
