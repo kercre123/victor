@@ -116,7 +116,7 @@ namespace Cozmo {
     enum class State {
       PickingUpBlock,
       PlacingBlock,
-      Irritated
+      Animating
     };
     
     State _currentState;
@@ -147,6 +147,7 @@ namespace Cozmo {
  
     // ID tag of last queued action
     u32 _lastActionTag;
+    std::map<u32, std::string> _animActionTags;
     
     u8 _irritationLevel;
     
