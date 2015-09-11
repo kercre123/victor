@@ -212,34 +212,6 @@ namespace Anki {
         ////// End of PathFollowConvenienceFuncTest ////
         
         
-        //////// PickAndPlaceTest /////////
-        enum {
-          PAP_WAITING_FOR_PICKUP_BLOCK,
-          PAP_WAITING_FOR_PLACEMENT_BLOCK,
-          PAP_DOCKING,
-          PAP_PLACING
-        };
-        u8 pickAndPlaceState_ = PAP_WAITING_FOR_PICKUP_BLOCK;
-        
-        // The block to pick up
-        const Vision::MarkerType BLOCK_TO_PICK_UP = Vision::MARKER_FIRE;
-        
-        // The block to place the picked up block on
-        //const Vision::MarkerType BLOCK_TO_PLACE_ON = Vision::MARKER_ANGRYFACE;
-        const Vision::MarkerType BLOCK_TO_PLACE_ON = Vision::MARKER_SQUAREPLUSCORNERS;
-        
-        // This pick up action depends on whether the block is expected to be on
-        // the ground or on top of another block.
-        // If DA_PICKUP_HIGH, the place part of this test will just the block on the ground.
-        const DockAction_t PICKUP_ACTION = DA_PICKUP_HIGH;
-        
-        // Relative pose of desired block placement on ground
-        const f32 PLACE_ON_GROUND_DIST_X = 100;
-        const f32 PLACE_ON_GROUND_DIST_Y = -10;
-        const f32 PLACE_ON_GROUND_DIST_ANG = 0;
-        ////// End of PickAndPlaceTest ////
-        
-        
         //////// StopTest /////////
         bool ST_go;
         f32 ST_speed;
@@ -317,71 +289,23 @@ namespace Anki {
       }
       
       
-      Result PickAndPlaceTestInit()
+      Result PlaceOnGroundTestInit(s32 x_offset_mm, s32 y_offset_mm, s32 angle_offset_degrees)
       {
-        /*
-        PRINT("\n==== Starting PickAndPlaceTest =====\n");
+        PRINT("\n==== Starting PlaceBlockOnGroundTest (xOffset %d mm, yOffset %d mm, angleOffset %d degrees) =====\n",
+              x_offset_mm, y_offset_mm, angle_offset_degrees);
         ticCnt_ = 0;
-        pickAndPlaceState_ = PAP_WAITING_FOR_PICKUP_BLOCK;
-        return RESULT_OK;
-         */
-        
-        PRINT("\n==== PickAndPlaceTest DISABLED =====\n");
-        Reset();
+        PickAndPlaceController::PlaceOnGround(x_offset_mm, y_offset_mm, DEG_TO_RAD_F32(angle_offset_degrees), false);
         return RESULT_OK;
       }
       
-      Result PickAndPlaceTestUpdate()
-      {
-        switch(pickAndPlaceState_)
+      Result PlaceOnGroundTestUpdate()
         {
-          case PAP_WAITING_FOR_PICKUP_BLOCK:
-          {
-            PRINT("PAPT: Docking to block %d\n", BLOCK_TO_PICK_UP);
-            //PickAndPlaceController::DockToBlock(BLOCK_TO_PICK_UP, Vision::MARKER_UNKNOWN, BLOCK_MARKER_WIDTH, useManualSpeed_, PICKUP_ACTION);
-            pickAndPlaceState_ = PAP_DOCKING;
-            break;
-          }
-          case PAP_DOCKING:
             if (!PickAndPlaceController::IsBusy()) {
-              if (PickAndPlaceController::DidLastActionSucceed()) {
-                if (PICKUP_ACTION == DA_PICKUP_LOW) {
-                  PRINT("PAPT: Placing on other block %d\n", BLOCK_TO_PLACE_ON);
-                  //PickAndPlaceController::DockToBlock(BLOCK_TO_PLACE_ON, Vision::MARKER_UNKNOWN, BLOCK_MARKER_WIDTH, useManualSpeed_, DA_PLACE_HIGH);
-                } else {
-                  PRINT("PAPT: Placing on ground\n");
-                  PickAndPlaceController::PlaceOnGround(PLACE_ON_GROUND_DIST_X, PLACE_ON_GROUND_DIST_Y, PLACE_ON_GROUND_DIST_ANG, false);
-                }
-                pickAndPlaceState_ = PAP_PLACING;
-              } else {
-                pickAndPlaceState_ = PAP_WAITING_FOR_PICKUP_BLOCK;
-              }
-            }
-            break;
-          case PAP_PLACING:
-            if (!PickAndPlaceController::IsBusy()) {
-              if (PickAndPlaceController::DidLastActionSucceed()) {
-                PRINT("PAPT: Success\n");
-                pickAndPlaceState_ = PAP_WAITING_FOR_PICKUP_BLOCK;
-              } else {
-                if (PICKUP_ACTION == DA_PICKUP_LOW) {
-                  //PickAndPlaceController::DockToBlock(BLOCK_TO_PLACE_ON, Vision::MARKER_UNKNOWN, BLOCK_MARKER_WIDTH, useManualSpeed_, DA_PLACE_HIGH);
-                  //pickAndPlaceState_ = PAP_PLACING;
-                } else {
-                  PickAndPlaceController::PlaceOnGround(PLACE_ON_GROUND_DIST_X, PLACE_ON_GROUND_DIST_Y, PLACE_ON_GROUND_DIST_ANG, false);
-                }
-              }
-            }
-            break;
-          default:
-            PRINT("WTF?\n");
-            break;
+          PRINT("PlaceBlockOnGround: %s\n", PickAndPlaceController::DidLastActionSucceed() ? "SUCCESS" : "FAILED");
         }
         return RESULT_OK;
       }
 
-      
-      
       
       // Commands a path and executes it
       Result DockPathTestInit()
@@ -1215,9 +1139,9 @@ namespace Anki {
             ret = Reset();
             updateFunc = NULL;
             break;
-          case TM_PICK_AND_PLACE:
-            ret = PickAndPlaceTestInit();
-            updateFunc = PickAndPlaceTestUpdate;
+          case TM_PLACE_BLOCK_ON_GROUND:
+            ret = PlaceOnGroundTestInit(p1,p2,p3);
+            updateFunc = PlaceOnGroundTestUpdate;
             break;
           case TM_DOCK_PATH:
             ret = DockPathTestInit();
