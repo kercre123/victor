@@ -1,18 +1,10 @@
-
 /***************************************************************************
  *
  *                          Physical Robot Geometry
  *
  **************************************************************************/
 
-const f32 WHEEL_DIAMETER_MM  = 28.4f;  // This should be in sync with the CozmoBot proto file
-const f32 HALF_WHEEL_CIRCUM  = WHEEL_DIAMETER_MM * M_PI_2;
-const f32 WHEEL_RAD_TO_MM    = WHEEL_DIAMETER_MM / 2.f;  // or HALF_WHEEL_CIRCUM / PI;
-const f32 WHEEL_DIST_MM      = 47.7f; // distance b/w the front wheels
-const f32 WHEEL_DIST_HALF_MM = WHEEL_DIST_MM / 2.f;
-const f32 WHEEL_BASE_MM      = 30.f;
-
-
+/*
 // The x-offset from robot origin that the robot's drive center is
 // located for the treaded robot when not carrying a block.
 // (If you were to model the treaded robot as a two-wheel robot,
@@ -30,13 +22,6 @@ const f32 LIFT_HEIGHT_LOWDOCK  = 29.f;
 const f32 LIFT_HEIGHT_HIGHDOCK = 73.f;
 const f32 LIFT_HEIGHT_CARRY    = 88.f;
 const f32 LIFT_HEIGHT_LOW_ROLL = 68.f;
-
-// Distance between the robot origin and the distance along the robot's x-axis
-// to the lift when it is in the low docking position.
-const f32 ORIGIN_TO_LOW_LIFT_DIST_MM = 24.f;
-const f32 ORIGIN_TO_HIGH_LIFT_DIST_MM = 14.f;
-const f32 ORIGIN_TO_HIGH_PLACEMENT_DIST_MM = 12.f;
-const f32 ORIGIN_TO_LOW_ROLL_DIST_MM = 14.f;
 
 // Distance between the lift shoulder joint and the lift "wrist" joint where arm attaches to fork assembly
 const f32 LIFT_ARM_LENGTH = 64.f;
@@ -66,19 +51,7 @@ const f32 HEAD_CAM_POSITION[3]   = {4.8f, 0.f, -6.f}; // camera/PCB interface re
 const f32 LIFT_BASE_POSITION[3]  = {-40.0f, 0.f, 29.5f + WHEEL_RAD_TO_MM}; // relative to robot origin
 
 const f32 IMU_POSITION[3] = {5.8f, 0.f, -13.5f};  // relative to neck joint
-
-
-/***************************************************************************
- *
- *                          Camera Calibration
- *
- **************************************************************************/
-
-const u8 NUM_RADIAL_DISTORTION_COEFFS = 4;
-
-// Calibration data for real robot(s):
-// NOTE that simulated camera calibration is computed dynamically from the FOV.
-
+*/
 
 /***************************************************************************
  *
@@ -88,4 +61,3 @@ const u8 NUM_RADIAL_DISTORTION_COEFFS = 4;
 
 // Simulated camera's frame rate, specified by its period in milliseconds
 const s32 VISION_TIME_STEP = 65; // This should be a multiple of the world's basic time step!
-

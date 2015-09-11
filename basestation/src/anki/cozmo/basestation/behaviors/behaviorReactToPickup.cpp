@@ -55,7 +55,7 @@ BehaviorReactToPickup::BehaviorReactToPickup(Robot& robot, const Json::Value& co
   }
 }
 
-bool BehaviorReactToPickup::IsRunnable(float currentTime_sec) const
+bool BehaviorReactToPickup::IsRunnable(double currentTime_sec) const
 {
   switch (_currentState)
   {
@@ -79,7 +79,7 @@ Result BehaviorReactToPickup::Init()
   return Result::RESULT_OK;
 }
 
-IBehavior::Status BehaviorReactToPickup::Update(float currentTime_sec)
+IBehavior::Status BehaviorReactToPickup::Update(double currentTime_sec)
 {
   switch (_currentState)
   {
@@ -132,7 +132,7 @@ IBehavior::Status BehaviorReactToPickup::Update(float currentTime_sec)
   return Status::Complete;
 }
 
-Result BehaviorReactToPickup::Interrupt(float currentTime_sec)
+Result BehaviorReactToPickup::Interrupt(double currentTime_sec)
 {
   // We don't want to be interrupted unless we're done reacting
   if (State::Inactive != _currentState)

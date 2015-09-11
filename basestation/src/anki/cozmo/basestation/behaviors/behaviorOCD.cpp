@@ -88,7 +88,7 @@ namespace Cozmo {
 #pragma mark -
 #pragma mark Inherited Virtual Implementations
   
-  bool BehaviorOCD::IsRunnable(float currentTime_sec) const
+  bool BehaviorOCD::IsRunnable(double currentTime_sec) const
   {
     // We can only run this behavior when there are at least two "messy" blocks present,
     // or when there is at least one messy block while we've got any neat blocks
@@ -140,7 +140,7 @@ namespace Cozmo {
   } // Init()
 
   
-  IBehavior::Status BehaviorOCD::Update(float currentTime_sec)
+  IBehavior::Status BehaviorOCD::Update(double currentTime_sec)
   {
     // Check to see if we had any problems with any handlers
     if(_lastHandlerResult != RESULT_OK) {
@@ -177,7 +177,7 @@ namespace Cozmo {
     return Status::Running;
   }
   
-  Result BehaviorOCD::Interrupt(float currentTime_sec)
+  Result BehaviorOCD::Interrupt(double currentTime_sec)
   {
     _interrupted = true;
     return RESULT_OK;

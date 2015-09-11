@@ -57,7 +57,7 @@ BehaviorLookAround::BehaviorLookAround(Robot& robot, const Json::Value& config)
   }
 }
   
-bool BehaviorLookAround::IsRunnable(float currentTime_sec) const
+bool BehaviorLookAround::IsRunnable(double currentTime_sec) const
 {
   switch (_currentState)
   {
@@ -91,7 +91,7 @@ Result BehaviorLookAround::Init()
   return Result::RESULT_OK;
 }
 
-IBehavior::Status BehaviorLookAround::Update(float currentTime_sec)
+IBehavior::Status BehaviorLookAround::Update(double currentTime_sec)
 {
 #if SAFE_ZONE_VIZ
   Point2f center = { _moveAreaCenter.GetTranslation().x(), _moveAreaCenter.GetTranslation().y() };
@@ -287,7 +287,7 @@ Pose3d BehaviorLookAround::GetDestinationPose(BehaviorLookAround::Destination de
   return destPose;
 }
 
-Result BehaviorLookAround::Interrupt(float currentTime_sec)
+Result BehaviorLookAround::Interrupt(double currentTime_sec)
 {
   ResetBehavior(currentTime_sec);
   return Result::RESULT_OK;

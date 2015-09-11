@@ -72,7 +72,7 @@ namespace Cozmo {
     void Interpolate(const ProceduralFace& face1,
                      const ProceduralFace& face2,
                      float fraction,
-                     bool usePupilSaccades = true);
+                     bool usePupilSaccades = false);
     
     // Closes eyes and switches interlacing
     void Blink();

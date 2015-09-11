@@ -1,4 +1,9 @@
 {
+  'includes': [
+    '../../coretech/project/gyp/face-library.gypi',
+    '../../coretech/project/gyp/opencv.gypi',
+  ],
+  
   'variables': {
 
     'engine_source': 'cozmoEngine.lst',
@@ -19,62 +24,25 @@
       'ANKICORETECH_EMBEDDED_USE_GTEST=1',
       'ANKICORETECH_EMBEDDED_USE_OPENCV=1',
     ],
-
-    # TODO: should this be passed in, or shared?
-    'opencv_includes': [
-      # '<(coretech_external_path)/opencv-2.4.8/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/core/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/highgui/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/imgproc/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/contrib/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/calib3d/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/objdetect/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/video/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/features2d/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/flann/include',
-    ],
     
     'pocketsphinx_includes':[
       '<(coretech_external_path)/pocketsphinx/sphinxbase/include',
       '<(coretech_external_path)/pocketsphinx/pocketsphinx/include',
     ],
 
-    'opencv_libs': [
-      'libzlib.a',
-      'liblibjpeg.a',
-      'liblibpng.a',
-      'liblibtiff.a',
-      'liblibjasper.a',
-      'libIlmImf.a',
-      'libopencv_core.a',
-      'libopencv_imgproc.a',
-      'libopencv_highgui.a',
-      'libopencv_calib3d.a',
-      'libopencv_contrib.a',
-      'libopencv_objdetect.a',
-      'libopencv_video.a',
-      'libopencv_features2d.a',
-    ],
-
     'cte_lib_search_path_mac_debug': [
-      '<(coretech_external_path)/build/opencv-2.4.8/lib/Debug',
-      '<(coretech_external_path)/build/opencv-2.4.8/3rdparty/lib/Debug',
       '<(coretech_external_path)/pocketsphinx/pocketsphinx/generated/mac/DerivedData/Debug',
     ],
 
     'cte_lib_search_path_mac_release': [
-      '<(coretech_external_path)/build/opencv-2.4.8/lib/Release',
-      '<(coretech_external_path)/build/opencv-2.4.8/3rdparty/lib/Release',
       '<(coretech_external_path)/pocketsphinx/pocketsphinx/generated/mac/DerivedData/Release',
     ],
 
     'cte_lib_search_path_ios_debug': [
-      '<(coretech_external_path)/build/opencv-ios/multiArchLibs',
       '<(coretech_external_path)/pocketsphinx/pocketsphinx/generated/ios/DerivedData/Debug-iphoneos',
     ],
 
     'cte_lib_search_path_ios_release': [
-      '<(coretech_external_path)/build/opencv-ios/multiArchLibs',
       '<(coretech_external_path)/pocketsphinx/pocketsphinx/generated/ios/DerivedData/Release-iphoneos',
     ],
 
@@ -429,6 +397,31 @@
               'libCppController.dylib',
               '<@(opencv_libs)',
             ],
+            'conditions': [
+              # For some reason, need to link directly against FacioMetric libs
+              # when using them for recognition, which also means they have to be
+              # present (symlinked) in the executable dir
+              ['face_library == "faciometric"', {
+                'libraries': [
+                  '<@(face_library_libs)',
+                ],
+                'actions' : [
+                  {
+                    'action_name': 'create_symlink_webotsCtrlViz_faciometricLibs',
+                      'inputs': [ ],
+                      'outputs': [ ],
+                      'action': [
+                        'ln',
+                        '-s',
+                        '-h',
+                        '-f',
+                        '<(face_library_lib_path)',
+                        '../../simulator/controllers/webotsCtrlViz/',
+                      ],
+                  },
+                ], # actions
+              }], # conditions
+            ],
           }, # end controller viz
 
           {
@@ -484,6 +477,9 @@
               ['exclude', 'run_m4_embeddedTests.cpp'],
               ['exclude', 'resaveBlockImages.m'],
             ],
+            'xcode_settings': {
+              'FRAMEWORK_SEARCH_PATHS':'<(ce-gtest_path)',
+            },
             'libraries': [
               '<(ce-gtest_path)/gtest.framework',
               '$(SDKROOT)/System/Library/Frameworks/Cocoa.framework',
@@ -491,14 +487,7 @@
               '$(SDKROOT)/System/Library/Frameworks/QTKit.framework',
               '$(SDKROOT)/System/Library/Frameworks/QuartzCore.framework',
               '<@(opencv_libs)',
-            ],
-            'copies': [
-              {
-                'files': [
-                  '<(ce-gtest_path)/gtest.framework',
-                ],
-                'destination': '<(PRODUCT_DIR)',
-              },
+              '<@(face_library_libs)',
             ],
             'actions': [
               # { # in engine only mode, we do not know where the assets are
@@ -530,6 +519,7 @@
                   'ln',
                   '-s',
                   '-f',
+                  '-h',
                   '<@(_inputs)',
                   '<@(_outputs)',
                 ],
@@ -546,6 +536,7 @@
                   'ln',
                   '-s',
                   '-f',
+                  '-h',
                   '<@(_inputs)',
                   '<@(_outputs)',
                 ],
@@ -562,9 +553,36 @@
                   'ln',
                   '-s',
                   '-f',
+                  '-h',
                   '<@(_inputs)',
                   '<@(_outputs)',
                 ],
+              },
+              {
+                'action_name': 'create_symlink_engineUnitTestfaceLibraryLibs',
+                'inputs': [ ],
+                'outputs': [ ],
+                'conditions': [
+                  ['face_library=="faciometric"', {
+                    'action': [
+                      'ln',
+                      '-s',
+                      '-h',
+                      '-f',
+                      '<(face_library_lib_path)',
+                      '<(PRODUCT_DIR)/',
+                    ],
+                  }],
+                  ['face_library=="facesdk"', {
+                    'action': [
+                      'ln',
+                      '-s',
+                      '-f',
+                      '<(face_library_lib_path)/libfsdk.dylib',
+                      '<(PRODUCT_DIR)',
+                    ],
+                  }],
+                ], # conditions
               },
             ],
           }, # end unittest target
