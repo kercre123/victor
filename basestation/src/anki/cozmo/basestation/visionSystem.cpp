@@ -69,13 +69,10 @@ namespace Cozmo {
   : _isInitialized(false)
   , _dataPath(dataPath)
   , _headCamInfo(nullptr)
+  , _faceTracker(nullptr)
   {
     PRINT_NAMED_INFO("VisionSystem.Constructor", "");
-    
-    PRINT_NAMED_INFO("VisionSystem.Constructor.InstantiatingFaceTracker",
-                     "With model path %s.", _dataPath.c_str());
-    _faceTracker = new Vision::FaceTracker(_dataPath);
-    PRINT_NAMED_INFO("VisionSystem.Constructor.DoneInstantiatingFaceTracker", "");
+   
   } // VisionSystem()
   
   VisionSystem::~VisionSystem()
@@ -197,6 +194,14 @@ namespace Cozmo {
   Result VisionSystem::StartDetectingFaces()
   {
     EnableModeHelper(DETECTING_FACES);
+    
+    if(_faceTracker == nullptr) {
+      PRINT_NAMED_INFO("VisionSystem.Constructor.InstantiatingFaceTracker",
+                       "With model path %s.", _dataPath.c_str());
+      _faceTracker = new Vision::FaceTracker(_dataPath);
+      PRINT_NAMED_INFO("VisionSystem.Constructor.DoneInstantiatingFaceTracker", "");
+    }
+    
     return RESULT_OK;
   }
   
@@ -1736,6 +1741,12 @@ namespace Cozmo {
     if(_mode & DETECTING_FACES) {
       Simulator::SetFaceDetectionReadyTime();
   
+      if(_faceTracker == nullptr) {
+        PRINT_NAMED_ERROR("VisionSystem.Update.NullFaceTracker",
+                          "In detecting faces mode, but face tracker is null.");
+        return RESULT_FAIL;
+      }
+      
       _faceTracker->Update(inputImage);
       
       for(auto & currentFace : _faceTracker->GetFaces())

@@ -84,8 +84,10 @@ int main(void)
       // Turn off the system if it hasn't talked to the head for a minute
       if(++failedTransferCount > MAX_FAILED_TRANSFER_COUNT)
       {
+        #ifndef RADIO_TIMING_TEST
         Battery::powerOff();
         return -1;
+        #endif
       }
     } else {
       failedTransferCount = 0;

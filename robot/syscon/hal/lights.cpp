@@ -84,6 +84,9 @@ extern "C" void RTC1_IRQHandler() {
   if (++divider < tickDivider)
     divider = 0;
   
+  #ifdef RADIO_TIMING_TEST
+  return ;
+  #endif
   // Blacken everything out
   lights_off();
 
