@@ -234,22 +234,6 @@ namespace Anki
         
         // Set exposure - let it get picked up during next vblank
       }
-
-      // XXX: Don't need in HAL anymore
-      const CameraInfo* GetHeadCamInfo(void)
-      {
-        static CameraInfo s_headCamInfo = {
-          HEAD_CAM_CALIB_FOCAL_LENGTH_X,
-          HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
-          HEAD_CAM_CALIB_CENTER_X,
-          HEAD_CAM_CALIB_CENTER_Y,
-          0.f,
-          HEAD_CAM_CALIB_HEIGHT,
-          HEAD_CAM_CALIB_WIDTH
-        };
-
-        return &s_headCamInfo;
-      }
     }
   }
 }
