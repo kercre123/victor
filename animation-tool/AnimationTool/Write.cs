@@ -227,26 +227,13 @@ namespace AnimationTool
             pointData.triggerTime_ms = (int)(current.YValues[0] * 1000); // convert to ms
             pointData.durationTime_ms = 0;
 
-            pointData.faceAngle_deg = extraData.faceAngle_deg;
+            pointData.faceAngle = extraData.faceAngle;
 
-            pointData.leftBrowAngle = extraData.leftBrowAngle;
-            pointData.rightBrowAngle = extraData.rightBrowAngle;
-            pointData.leftBrowCenX = extraData.leftBrowCenX;
-            pointData.rightBrowCenX = extraData.rightBrowCenX;
-            pointData.leftBrowCenY = extraData.leftBrowCenY;
-            pointData.rightBrowCenY = extraData.rightBrowCenY;
-
-            pointData.leftEyeHeight = extraData.leftEyeHeight;
-            pointData.rightEyeHeight = extraData.rightEyeHeight;
-
-            pointData.leftPupilHeight = extraData.leftPupilHeight;
-            pointData.rightPupilHeight = extraData.rightPupilHeight;
-            pointData.leftPupilWidth = extraData.leftPupilWidth;
-            pointData.rightPupilWidth = extraData.rightPupilWidth;
-            pointData.leftPupilCenX = extraData.leftPupilCenX;
-            pointData.rightPupilCenX = extraData.rightPupilCenX;
-            pointData.leftPupilCenY = extraData.leftPupilCenY;
-            pointData.rightPupilCenY = extraData.rightPupilCenY;
+            for (int i = 0; i < extraData.leftEye.Length && i < pointData.leftEye.Length; ++i)
+            {
+                pointData.leftEye[i] = (float)Math.Round(extraData.leftEye[i], 2);
+                pointData.rightEye[i] = (float)Math.Round(extraData.rightEye[i], 2);
+            }
 
             return pointData;
         }
