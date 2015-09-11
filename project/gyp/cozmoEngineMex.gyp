@@ -1,6 +1,7 @@
 {
   'includes' : [
     '../../coretech/project/gyp/opencv.gypi',
+    '../../coretech/project/gyp/face-library.gypi',
   ],
 
   'variables': {
@@ -85,6 +86,7 @@
       'libmex.dylib',
       'libeng.dylib',
       'AppKit.framework',
+      '<@(face_library_libs)',
     ],
     'xcode_settings': {
       'OTHER_CFLAGS': ['<@(compiler_c_flags)'],

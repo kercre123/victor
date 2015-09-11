@@ -192,10 +192,6 @@
           'xcode_settings': {
             'OTHER_CFLAGS': ['-O0'],
             'OTHER_CPLUSPLUSFLAGS': ['-O0'],
-            'OTHER_LDFLAGS': [
-              '-L<(coretech_external_path)/build/opencv-2.4.8/lib/Debug',
-              '-L<(coretech_external_path)/build/opencv-2.4.8/3rdparty/lib/Debug',
-            ],
            },
           'defines': [
             '_LIBCPP_DEBUG=0',
@@ -208,10 +204,6 @@
           'xcode_settings': {
             'OTHER_CFLAGS': ['-Os'],
             'OTHER_CPLUSPLUSFLAGS': ['-Os'],
-            'OTHER_LDFLAGS': [
-              '-L<(coretech_external_path)/build/opencv-2.4.8/lib/Release',
-              '-L<(coretech_external_path)/build/opencv-2.4.8/3rdparty/lib/Release',
-            ],
            },
           'defines': [
             'NDEBUG=1',
@@ -224,10 +216,6 @@
           'xcode_settings': {
             'OTHER_CFLAGS': ['-Os'],
             'OTHER_CPLUSPLUSFLAGS': ['-Os'],
-            'OTHER_LDFLAGS': [
-              '-L<(coretech_external_path)/build/opencv-2.4.8/lib/Release',
-              '-L<(coretech_external_path)/build/opencv-2.4.8/3rdparty/lib/Release',
-            ],
            },
           'defines': [
             'NDEBUG=1',
@@ -335,6 +323,34 @@
               '<(cti-gtest_path)/gtest.framework',
               '<@(opencv_libs)',
             ],
+            'actions' : [
+              {
+                'action_name': 'create_symlink_ctiUnitTestFaceLibraryLibs',
+                'inputs': [ ],
+                'outputs': [ ],
+                'conditions': [
+                  ['face_library=="faciometric"', {
+                    'action': [
+                      'ln',
+                      '-s',
+                      '-h',
+                      '-f',
+                      '<(face_library_lib_path)',
+                      '<(PRODUCT_DIR)/',
+                    ],
+                  }],
+                  ['face_library=="facesdk"', {
+                    'action': [
+                      'ln',
+                      '-s',
+                      '-f',
+                      '<(face_library_lib_path)/libfsdk.dylib',
+                      '<(PRODUCT_DIR)',
+                    ],
+                  }],
+                ], # conditions
+              },
+            ] # actions
           }, # end unittest target
 
         ], # end targets
@@ -497,7 +513,7 @@
         '<@(face_library_includes)',
       ],
       'conditions': [
-        ['face_library=="facesdk"', {
+        ['OS=="ios" and face_library=="facesdk"', {
           'libraries': [
             '<@(face_library_libs)',
           ],
