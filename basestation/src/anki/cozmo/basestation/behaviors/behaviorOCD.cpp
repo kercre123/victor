@@ -98,7 +98,7 @@ namespace Cozmo {
     return (_messyObjects.size() >= 2) || (!_neatObjects.empty() && !_messyObjects.empty()) || (!_animActionTags.empty());
   }
   
-  Result BehaviorOCD::Init()
+  Result BehaviorOCD::Init(double currentTime_sec)
   {
     Result lastResult = RESULT_OK;
     

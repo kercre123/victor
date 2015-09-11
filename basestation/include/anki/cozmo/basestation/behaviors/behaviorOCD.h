@@ -38,7 +38,7 @@ namespace Cozmo {
     
     virtual bool IsRunnable(double currentTime_sec) const override;
 
-    virtual Result Init() override;
+    virtual Result Init(double currentTime_sec) override;
     
     virtual Status Update(double currentTime_sec) override;
     

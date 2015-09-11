@@ -74,7 +74,7 @@ bool BehaviorReactToPickup::IsRunnable(double currentTime_sec) const
   return false;
 }
 
-Result BehaviorReactToPickup::Init()
+Result BehaviorReactToPickup::Init(double currentTime_sec)
 {
   return Result::RESULT_OK;
 }

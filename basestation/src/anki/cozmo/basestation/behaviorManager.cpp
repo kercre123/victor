@@ -235,7 +235,7 @@ namespace Cozmo {
       // Initialize the next behavior
       // TODO: Should this be done only after currBehavior::Update() returns Complete or Failure?
       //       i.e. Can it move to SwitchToNextBehavior?
-      if ((initResult = _nextBehavior->Init()) != RESULT_OK) {
+      if ((initResult = _nextBehavior->Init(currentTime_sec)) != RESULT_OK) {
         PRINT_NAMED_ERROR("BehaviorManager.InitNextBehaviorHelper.InitFailed",
                           "Failed to initialize %s behavior.",
                           _nextBehavior->GetName().c_str());
