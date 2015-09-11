@@ -54,8 +54,8 @@ namespace AnimationTool
         {
             lock (sync)
             {
-                if (!running)
-                    return;
+                if (!running) return;
+
                 running = false;
             }
             thread.Join();
@@ -138,7 +138,7 @@ namespace AnimationTool
                     Console.Write("WARNING: Not waiting for disconnect to finish sending.");
                     break;
                 }
-                System.Threading.Thread.Sleep(500);
+                Thread.Sleep(500);
             }
             channel = null;
         }
@@ -194,14 +194,14 @@ namespace AnimationTool
             isReadyToSend = false;
         }
 
-        void ConnectedToClient(string connectionID)
+        private void ConnectedToClient(string connectionID)
         {
             Console.WriteLine("Connected.");
             StartEngine(RobotSettings.VizHostIPAddress);
             ForceAddRobot(RobotSettings.RobotId, RobotSettings.RobotIPAddress, RobotSettings.RobotIsSimulated);
         }
 
-        void StartEngine(string vizHostIP)
+        private void StartEngine(string vizHostIP)
         {
             StartEngine startEngineMessage = new StartEngine();
             startEngineMessage.asHost = 1;
@@ -222,7 +222,7 @@ namespace AnimationTool
             channel.Send(message);
         }
 
-        void ForceAddRobot(int robotID, string robotIP, bool robotIsSimulated)
+        private void ForceAddRobot(int robotID, string robotIP, bool robotIsSimulated)
         {
             if (robotID < 0 || robotID > 255)
             {
@@ -254,7 +254,7 @@ namespace AnimationTool
             channel.Send(message);
         }
 
-        void ReceivedMessage(MessageEngineToGame message)
+        private void ReceivedMessage(MessageEngineToGame message)
         {
             switch (message.GetTag())
             {
@@ -335,48 +335,48 @@ namespace AnimationTool
             }
         }
 
-        public void SetToPreviousFace(FaceForm faceForm)
+        public void AnimateFace(Sequencer.ExtraProceduralFaceData data)
         {
-            if (channel.IsConnected)
+            if (channel == null || !channel.IsConnected || data == null) return;
+
+            displayProceduralFaceMessage.robotID = 1;
+            displayProceduralFaceMessage.faceAngle = data.faceAngle;
+
+            for (int i = 0; i < displayProceduralFaceMessage.leftEye.Length && i < data.leftEye.Length; ++i)
             {
-                displayProceduralFaceMessage.robotID = 1;
-                displayProceduralFaceMessage.faceAngle = faceForm.LastFaceAngle;
-
-                for (int i = 0; i < displayProceduralFaceMessage.leftEye.Length; ++i)
-                {
-                    displayProceduralFaceMessage.leftEye[i] = faceForm.LastLeftEye[i];
-                    displayProceduralFaceMessage.rightEye[i] = faceForm.LastRightEye[i];
-                }
-
-                message.DisplayProceduralFace = displayProceduralFaceMessage;
-                channel.Send(message);
+                displayProceduralFaceMessage.leftEye[i] = data.leftEye[i];
+                displayProceduralFaceMessage.rightEye[i] = data.rightEye[i];
             }
+
+            message.DisplayProceduralFace = displayProceduralFaceMessage;
+            channel.Send(message);
         }
 
         public void AnimateFace(FaceForm faceForm)
         {
-            if (channel.IsConnected && faceForm.Changed)
+            if (channel == null || !channel.IsConnected || faceForm == null || !faceForm.Changed) return;
+
+            displayProceduralFaceMessage.robotID = 1;
+            displayProceduralFaceMessage.faceAngle = faceForm.faceAngle;
+
+            for (int i = 0; i < displayProceduralFaceMessage.leftEye.Length && i < faceForm.eyes.Length; ++i)
             {
-                displayProceduralFaceMessage.robotID = 1;
-                displayProceduralFaceMessage.faceAngle = faceForm.FaceAngle_deg;
-
-                for (int i = 0; i < displayProceduralFaceMessage.leftEye.Length; ++i)
+                if (faceForm.eyes[i] != null)
                 {
-                    if (faceForm.Eyes[i] != null)
-                    {
-                        displayProceduralFaceMessage.leftEye[i] = faceForm.Eyes[i].LeftValue;
-                        displayProceduralFaceMessage.rightEye[i] = faceForm.Eyes[i].RightValue;
-                    }
-                    else
-                    {
-                        Debug.LogWarning("Missing " + (ProceduralEyeParameter)i + " in message.");
-                    }
+                    displayProceduralFaceMessage.leftEye[i] = faceForm.eyes[i].LeftValue;
+                    displayProceduralFaceMessage.rightEye[i] = faceForm.eyes[i].RightValue;
                 }
-
-                message.DisplayProceduralFace = displayProceduralFaceMessage;
-                channel.Send(message);
-                faceForm.Changed = false;
+                else
+                {
+                    Debug.LogWarning("Missing " + (ProceduralEyeParameter)i + " in message.");
+                    displayProceduralFaceMessage.leftEye[i] = 0;
+                    displayProceduralFaceMessage.rightEye[i] = 0;
+                }
             }
+
+            message.DisplayProceduralFace = displayProceduralFaceMessage;
+            channel.Send(message);
+            faceForm.Changed = false;
         }
     }
 }
