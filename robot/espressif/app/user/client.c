@@ -31,7 +31,7 @@ static void ICACHE_FLASH_ATTR udpServerRecvCB(void *arg, char *usrdata, unsigned
 
   haveClient = true;
 
-  uartQueuePacket((uint8*)usrdata, len); // Pass to M4
+  //clientRecvCallback(usrdata, len);
 }
 
 

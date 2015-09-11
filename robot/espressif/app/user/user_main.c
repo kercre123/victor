@@ -8,9 +8,11 @@
 #include "user_interface.h"
 #include "client.h"
 #include "driver/uart.h"
-#include "driver/spi.h"
+#include "driver/i2spi.h"
+#include "gpio.h"
 #include "nv_params.h"
 #include "task0.h"
+#include "task2.h"
 #include "telnet.h"
 #include "upgrade_controller.h"
 #include "user_config.h"
@@ -87,7 +89,6 @@ void ICACHE_FLASH_ATTR wifi_event_callback(System_Event_t *evt)
       os_printf("AP station %d jointed: " MACSTR "\r\n",
                 evt->event_info.sta_connected.aid,
                 MAC2STR(evt->event_info.sta_connected.mac));
-      // Fix the wifi rate rather than allowing negotiation
       break;
     }
     case EVENT_SOFTAPMODE_STADISCONNECTED:
@@ -129,9 +130,16 @@ static void ICACHE_FLASH_ATTR system_init_done(void)
   // Setup Basestation client
   clientInit();
 
+  // Initalize i2SPI interface
+  i2spiInit();
+
+  // Setup high priority task
+  //task2Init();
   // Enable UART0 RX interrupt
   // Only after clientInit
   uart_start();
+  // Enable I2SPI start only after clientInit
+  i2spiStart();
 
   // Set up shared background tasks
   task0Init();
@@ -162,9 +170,9 @@ user_init(void)
     REG_SET_BIT(0x3ff00014, BIT(0)); //< Set CPU frequency to 160MHz
     err = system_update_cpu_freq(160);
 
-    gpio_init();
+    uart_init(BIT_RATE_115200, BIT_RATE_115200);
 
-    uart_init(BIT_RATE_5000000, BIT_RATE_115200);
+    gpio_init();
 
     os_printf("Espressif booting up...\r\nCPU set freq rslt = %d\r\n", err);
 

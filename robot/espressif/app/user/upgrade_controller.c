@@ -10,9 +10,9 @@
 #include "espconn.h"
 #include "upgrade.h"
 #include "task0.h"
-#include "driver/spi.h"
 #include "nv_params.h"
 #include "upgrade_controller.h"
+#include "driver/i2spi.h"
 
 /// Flash sector size for erasing, 4KB
 #define FLASH_SECTOR_SIZE 4096
@@ -246,11 +246,11 @@ LOCAL bool upgradeTask(uint32_t param)
         // TODO check new firmware integrity
         // TODO restart with new firmware
       }
-      if (flags & UPCMD_FPGA_FW)
+      if (flags & UPCMD_RTIP_FW)
       {
         // TODO check new firmware integrity
-        // TODO Reboot the FPGA with new firmware
-        os_printf("UP: FPGA upgrade complete\r\n\t");
+        // TODO Reboot the RTIP with new firmware
+        os_printf("UP: RTIP upgrade complete\r\n\t");
         printUpgradeState();
         resetUpgradeState();
       }
@@ -336,6 +336,10 @@ LOCAL void ICACHE_FLASH_ATTR upccReceiveCallback(void *arg, char *usrdata, unsig
             os_printf("ERROR: Couldn't queue upgrade task\r\n");
             resetUpgradeState();
             return;
+          }
+          else
+          {
+            i2spiStop();
           }
         }
       }
