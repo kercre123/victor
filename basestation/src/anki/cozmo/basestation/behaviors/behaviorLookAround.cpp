@@ -88,6 +88,9 @@ bool BehaviorLookAround::IsRunnable(double currentTime_sec) const
 
 Result BehaviorLookAround::Init()
 {
+  // Update explorable area center to current robot pose
+  _moveAreaCenter = _robot.GetPose();
+  
   _currentState = State::StartLooking;
   return Result::RESULT_OK;
 }
