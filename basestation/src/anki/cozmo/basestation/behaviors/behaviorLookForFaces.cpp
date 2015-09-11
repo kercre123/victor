@@ -40,7 +40,7 @@ namespace Cozmo {
     
   }
   
-  Result BehaviorLookForFaces::Init()
+  Result BehaviorLookForFaces::Init(double currentTime_sec)
   {
     _currentState = State::LOOKING_AROUND;
     
