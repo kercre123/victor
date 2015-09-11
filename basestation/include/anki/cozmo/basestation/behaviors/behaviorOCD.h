@@ -49,6 +49,18 @@ namespace Cozmo {
     
   private:
     
+    // Offset at which low block should be placed wrt
+    // another low block. (Twice block width)
+    constexpr static f32 kLowPlacementOffsetMM = 88.f;
+    
+    // If neat block is disturbed within this amount of time of
+    // another neat block being disturbed then escalate to major irritation animation.
+    constexpr static f32 kMajorIrritationTimeIntervalSec = 5.f;
+    
+    // If a new block was observed within this amount of time before
+    // Init() is called then do the 'oooo' animation.
+    constexpr static f32 kExcitedAboutNewBlockTimeIntervalSec = 2.f;
+    
     enum class ObjectOnTopStatus {
       DontCareIfObjectOnTop,
       ObjectOnTop,

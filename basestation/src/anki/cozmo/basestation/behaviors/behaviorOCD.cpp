@@ -24,11 +24,6 @@
 
 #define DEBUG_OCD_BEHAVIOR 0
 
-#define PLACEMENT_OFFSET_MM 88.f  // Twice block width
-
-#define MAJOR_IRRITATION_TIME_INTERVAL_SEC    5.f
-#define EXCITED_ABOUT_NEW_BLOCK_INTERVAL_SEC  2.f
-
 namespace Anki {
 namespace Cozmo {
   
@@ -113,9 +108,9 @@ namespace Cozmo {
     // based on current carry state.
     _animActionTags.clear();
     f32 currTime = GetCurrTimeInSeconds();
-    if (currTime - _lastNeatBlockDisturbedTime < MAJOR_IRRITATION_TIME_INTERVAL_SEC) {
+    if (currTime - _lastNeatBlockDisturbedTime < kMajorIrritationTimeIntervalSec) {
       PlayAnimation("MinorIrritation");
-    } else if (currTime - _lastNewBlockObservedTime < EXCITED_ABOUT_NEW_BLOCK_INTERVAL_SEC) {
+    } else if (currTime - _lastNewBlockObservedTime < kExcitedAboutNewBlockTimeIntervalSec) {
       PlayAnimation("Demo_Look_Around_See_Something_A");
     } else {
       if(_robot.IsCarryingObject()) {
@@ -496,7 +491,7 @@ namespace Cozmo {
           
           if(_lastObjectPlacedOnGround.IsSet()) {
             Pose3d pose;
-            Result result = FindEmptyPlacementPose(_lastObjectPlacedOnGround, PLACEMENT_OFFSET_MM, pose);
+            Result result = FindEmptyPlacementPose(_lastObjectPlacedOnGround, kLowPlacementOffsetMM, pose);
             if(RESULT_OK != result) {
               PRINT_NAMED_ERROR("BehaviorOCD.SelectNextPlacement.NoEmptyPosesFound", "");
               return result;
@@ -505,7 +500,7 @@ namespace Cozmo {
             // Place block at specified offset from lastObjectPlacedOnGround.
             placementAction = new DriveToPickAndPlaceObjectAction(_lastObjectPlacedOnGround,
                                                                   false,
-                                                                  PLACEMENT_OFFSET_MM,
+                                                                  kLowPlacementOffsetMM,
                                                                   0,
                                                                   0,
                                                                   true);
@@ -544,7 +539,7 @@ namespace Cozmo {
           // TODO: Find closest available free space near the last object we placed on the ground
 
           Pose3d pose;
-          Result result = FindEmptyPlacementPose(_lastObjectPlacedOnGround, PLACEMENT_OFFSET_MM, pose);
+          Result result = FindEmptyPlacementPose(_lastObjectPlacedOnGround, kLowPlacementOffsetMM, pose);
           if(RESULT_OK != result) {
             PRINT_NAMED_ERROR("BehaviorOCD.SelectNextPlacement.NoEmptyPosesFound", "");
             return result;
@@ -1068,7 +1063,7 @@ namespace Cozmo {
       f32 currTime = GetCurrTimeInSeconds();
       if(IsRunning()) {
         // Queue irritated animation
-        if (currTime - _lastNeatBlockDisturbedTime > MAJOR_IRRITATION_TIME_INTERVAL_SEC) {
+        if (currTime - _lastNeatBlockDisturbedTime > kMajorIrritationTimeIntervalSec) {
           PlayAnimation("MinorIrritation");
         } else {
           PlayAnimation("VeryIrritated");
