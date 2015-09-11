@@ -16,6 +16,7 @@
 #include <string.h>
 
 #include "anki/cozmo/simulator/game/cozmoSimTestController.h"
+#include "anki/common/basestation/utils/data/dataPlatform.h"
 
 #if (DO_NOT_QUIT_WEBOTS == 1)
 #define QUIT_WEBOTS(status) return status;
