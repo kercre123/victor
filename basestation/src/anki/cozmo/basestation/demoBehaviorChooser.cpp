@@ -13,7 +13,7 @@
 #include "anki/cozmo/basestation/demoBehaviorChooser.h"
 
 #include "anki/cozmo/basestation/behaviors/behaviorLookAround.h"
-#include "anki/cozmo/basestation/behaviors/behaviorLookForFaces.h"
+#include "anki/cozmo/basestation/behaviors/behaviorInteractWithFaces.h"
 #include "anki/cozmo/basestation/behaviors/behaviorOCD.h"
 #include "anki/cozmo/basestation/behaviors/behaviorFidget.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
@@ -32,12 +32,12 @@ DemoBehaviorChooser::DemoBehaviorChooser(Robot& robot, const Json::Value& config
   
 void DemoBehaviorChooser::SetupBehaviors(Robot& robot, const Json::Value& config)
 {
-  // Setup LookForFaces behavior
-  _behaviorLookForFaces = new BehaviorLookForFaces(robot, config);
-  Result addResult = ReactionaryBehaviorChooser::AddBehavior(_behaviorLookForFaces);
+  // Setup InteractWithFaces behavior
+  _behaviorInteractWithFaces = new BehaviorInteractWithFaces(robot, config);
+  Result addResult = ReactionaryBehaviorChooser::AddBehavior(_behaviorInteractWithFaces);
   if (Result::RESULT_OK != addResult)
   {
-    PRINT_NAMED_ERROR("DemoBehaviorChooser.SetupBehaviors", "BehaviorLookForFaces was not created properly.");
+    PRINT_NAMED_ERROR("DemoBehaviorChooser.SetupBehaviors", "BehaviorInteractWithFaces was not created properly.");
     return;
   }
   
@@ -83,7 +83,11 @@ Result DemoBehaviorChooser::Update(double currentTime_sec)
   {
     case DemoState::Faces:
     {
-      // TODO: Fix up EmotionManager and add logic here to change _demoState when appropriate
+      if (_robot.GetEmotionManager().GetEmotion(EmotionManager::SCARED) == EmotionManager::MAX_VALUE)
+      {
+        _demoState = DemoState::Blocks;
+        initBlocksTime = currentTime_sec;
+      }
       break;
     }
     case DemoState::Blocks:
@@ -129,17 +133,17 @@ IBehavior* DemoBehaviorChooser::ChooseNextBehavior(double currentTime_sec) const
     }
     case DemoState::Faces:
     {
-      if (runnable(_behaviorLookForFaces))
+      if (runnable(_behaviorInteractWithFaces))
       {
-        return _behaviorLookForFaces;
+        return _behaviorInteractWithFaces;
       }
       break;
     }
     case DemoState::Rest:
     {
-      if (runnable(_behaviorLookForFaces))
+      if (runnable(_behaviorInteractWithFaces))
       {
-        return _behaviorLookForFaces;
+        return _behaviorInteractWithFaces;
       }
       else if (runnable(_behaviorOCD))
       {

@@ -1,19 +1,19 @@
 /**
- * File: behaviorLookForFaces.cpp
+ * File: behaviorInteractWithFaces.cpp
  *
  * Author: Andrew Stein
  * Date:   7/30/15
  *
- * Description: Implements Cozmo's "LookForFaces" behavior, which searches for people's
- *              faces and tracks/interacts with them if it finds one.
+ * Description: Implements Cozmo's "InteractWithFaces" behavior, which tracks/interacts with faces if it finds one.
  *
  * Copyright: Anki, Inc. 2015
  **/
 
-#include "anki/cozmo/basestation/behaviors/behaviorLookForFaces.h"
+#include "anki/cozmo/basestation/behaviors/behaviorInteractWithFaces.h"
 
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/cozmoActions.h"
+#include "anki/cozmo/basestation/emotionManager.h"
 #include "anki/cozmo/basestation/events/ankiEventMgr.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/keyframe.h"
@@ -28,19 +28,19 @@
 namespace Anki {
 namespace Cozmo {
 
-  BehaviorLookForFaces::BehaviorLookForFaces(Robot &robot, const Json::Value& config)
+  BehaviorInteractWithFaces::BehaviorInteractWithFaces(Robot &robot, const Json::Value& config)
   : IBehavior(robot, config)
   , _currentState(State::LOOKING_AROUND)
   , _trackingTimeout_sec(3.f)
   , _isAnimating(false)
   {
-    _name = "LookForFaces";
+    _name = "InteractWithFaces";
 
     // TODO: Init timeouts, etc, from Json config
     
   }
   
-  Result BehaviorLookForFaces::Init(double currentTime_sec)
+  Result BehaviorInteractWithFaces::Init(double currentTime_sec)
   {
     _currentState = State::LOOKING_AROUND;
     
@@ -64,7 +64,7 @@ namespace Cozmo {
   }
   
   
-  IBehavior::Status BehaviorLookForFaces::Update(double currentTime_sec)
+  IBehavior::Status BehaviorInteractWithFaces::Update(double currentTime_sec)
   {
     _currentTime_sec = currentTime_sec;
     
@@ -101,7 +101,7 @@ namespace Cozmo {
         if(_currentTime_sec - _lastSeen_sec > _trackingTimeout_sec) {
           _robot.DisableTrackToObject();
           
-          PRINT_NAMED_INFO("BehaviorLookForFaces.Update.DisablingTracking",
+          PRINT_NAMED_INFO("BehaviorInteractWithFaces.Update.DisablingTracking",
                            "Current t=%.2f - lastSeen time=%.2f > timeout=%.2f. "
                            "Switching back to looking around.",
                            _currentTime_sec, _lastSeen_sec, _trackingTimeout_sec);
@@ -123,7 +123,7 @@ namespace Cozmo {
     return Status::Running;
   } // Update()
   
-  Result BehaviorLookForFaces::Interrupt(double currentTime_sec)
+  Result BehaviorInteractWithFaces::Interrupt(double currentTime_sec)
   {
     _robot.DisableTrackToObject();
     _currentState = State::INTERRUPTED;
@@ -131,7 +131,7 @@ namespace Cozmo {
     return RESULT_OK;
   }
   
-  bool BehaviorLookForFaces::GetRewardBid(Reward& reward)
+  bool BehaviorInteractWithFaces::GetRewardBid(Reward& reward)
   {
     // TODO: Fill reward  in...
     return true;
@@ -180,7 +180,7 @@ namespace Cozmo {
     return avgEyeHeight;
   }
   
-  void BehaviorLookForFaces::UpdateBaselineFace(const Vision::TrackedFace* face)
+  void BehaviorInteractWithFaces::UpdateBaselineFace(const Vision::TrackedFace* face)
   {
     using Face = Vision::TrackedFace;
     
@@ -203,14 +203,14 @@ namespace Cozmo {
     _baselineIntraEyeDistance = face->GetIntraEyeDistance();
   }
   
-  void BehaviorLookForFaces::HandleRobotObservedFace(const ExternalInterface::RobotObservedFace &msg)
+  void BehaviorInteractWithFaces::HandleRobotObservedFace(const ExternalInterface::RobotObservedFace &msg)
   {
     using Face = Vision::TrackedFace;
     
     Face::ID_t faceID = static_cast<Face::ID_t>(msg.faceID);
     const Face* face = _robot.GetFaceWorld().GetFace(faceID);
     if(face == nullptr) {
-      PRINT_NAMED_ERROR("BehaviorLookForFaces.HandleRobotObservedFace.InvalidFaceID",
+      PRINT_NAMED_ERROR("BehaviorInteractWithFaces.HandleRobotObservedFace.InvalidFaceID",
                         "Got event that face ID %lld was observed, but it wasn't found.",
                         faceID);
       return;
@@ -226,7 +226,7 @@ namespace Cozmo {
         // If we aren't already tracking, start tracking the next face we see
         UpdateBaselineFace(face);
         
-        PRINT_NAMED_INFO("BehaviorLookForFaces.HandleRobotObservedFace.SwitchToTracking",
+        PRINT_NAMED_INFO("BehaviorInteractWithFaces.HandleRobotObservedFace.SwitchToTracking",
                          "Observed face %llu while looking around, switching to tracking.", faceID);
         _currentState = State::TRACKING_FACE;
         break;
@@ -234,7 +234,7 @@ namespace Cozmo {
         
       case State::TRACKING_FACE:
         if(faceID != _robot.GetTrackToFace()) {
-          PRINT_NAMED_INFO("BehaviorLookForFaces.HandleRobotObservedFace.UpdatingBaseline",
+          PRINT_NAMED_INFO("BehaviorInteractWithFaces.HandleRobotObservedFace.UpdatingBaseline",
                            "ID changed from %llu to %llu, updating baseline face.",
                            _robot.GetTrackToFace(), faceID);
           UpdateBaselineFace(face);
@@ -327,32 +327,33 @@ namespace Cozmo {
           if(!_isAnimating) {
             Pose3d headWrtRobot;
             if(false == face->GetHeadPose().GetWithRespectTo(_robot.GetPose(), headWrtRobot)) {
-              PRINT_NAMED_ERROR("BehaviorLookForFaces.HandleRobotObservedFace.PoseWrtFail","");
+              PRINT_NAMED_ERROR("BehaviorInteractWithFaces.HandleRobotObservedFace.PoseWrtFail","");
             } else if(headWrtRobot.GetTranslation().Length() < 300.f) {
               // The head is very close (scary!). Move backward along the line from the
               // robot to the head.
-              PRINT_NAMED_INFO("BehaviorLookForFaces.HandleRobotObservedFace.Shocked",
+              PRINT_NAMED_INFO("BehaviorInteractWithFaces.HandleRobotObservedFace.Shocked",
                                "Head is %.1fmm away: playing shocked anim.",
                                headWrtRobot.GetTranslation().Length());
               PlayAnimationAction* animAction = new PlayAnimationAction("shocked");
               _animationActionTag = animAction->GetTag();
               _robot.GetActionList().QueueActionNow(IBehavior::sActionSlot, animAction);
               _isAnimating = true;
+              _robot.GetEmotionManager().HandleEmotionalMoment(EmotionManager::EmotionEvent::CloseFace);
             }
           }
           
-          //PRINT_NAMED_INFO("BehaviorLookForFaces.HandleRobotObservedFace.UpdatedProceduralFace", "");
+          //PRINT_NAMED_INFO("BehaviorInteractWithFaces.HandleRobotObservedFace.UpdatedProceduralFace", "");
           
         }
         break;
         
       default:
-        PRINT_NAMED_ERROR("BehaviorLookForFaces.HandleRobotObservedFace.UnknownState",
+        PRINT_NAMED_ERROR("BehaviorInteractWithFaces.HandleRobotObservedFace.UnknownState",
                           "Reached state = %d\n", _currentState);
     } // switch(_currentState)
   }
   
-  void BehaviorLookForFaces::SetNextMovementTime()
+  void BehaviorInteractWithFaces::SetNextMovementTime()
   {
     // TODO: Get the timing variability from config
     const f32 minTime_sec = 0.2f;
@@ -360,7 +361,7 @@ namespace Cozmo {
     _nextMovementTime_sec = _rng.RandDblInRange(minTime_sec, maxTime_sec);
   }
   
-  void BehaviorLookForFaces::HandleRobotCompletedAction(const ExternalInterface::RobotCompletedAction& msg)
+  void BehaviorInteractWithFaces::HandleRobotCompletedAction(const ExternalInterface::RobotCompletedAction& msg)
   {
     if(msg.actionType == RobotActionType::COMPOUND && msg.idTag == _movementActionTag)
     {
@@ -369,7 +370,7 @@ namespace Cozmo {
       if(_currentState == State::MOVING) {
         // Only switch back to looking around state if we didn't see a face
         // while we were moving (and thus are now in FACE_TRACKING state)
-        PRINT_NAMED_INFO("BehaviorLookForFaces.HandleRobotCompletedAction.DoneMoving",
+        PRINT_NAMED_INFO("BehaviorInteractWithFaces.HandleRobotCompletedAction.DoneMoving",
                          "Switching back to looking around.");
         _currentState = State::LOOKING_AROUND;
       }

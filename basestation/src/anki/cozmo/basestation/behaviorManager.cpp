@@ -15,7 +15,7 @@
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 
 #include "anki/cozmo/basestation/behaviors/behaviorOCD.h"
-#include "anki/cozmo/basestation/behaviors/behaviorLookForFaces.h"
+#include "anki/cozmo/basestation/behaviors/behaviorInteractWithFaces.h"
 #include "anki/cozmo/basestation/behaviors/behaviorFidget.h"
 #include "anki/cozmo/basestation/behaviors/behaviorLookAround.h"
 #include "anki/cozmo/basestation/behaviors/behaviorReactToPickup.h"
