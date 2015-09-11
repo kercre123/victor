@@ -231,6 +231,52 @@ namespace Vision {
     return vectorSubjectRecogData;
   } // loadEnrolledSubjectsFromFolder()
   
+  Result saveSubjectData(facio::SubjectRecogData& subjectDataToEnroll, std::string fileToSave)
+  {
+    //Variables to save the information
+    char *subjectMetaData;
+    size_t subjectMetaDataSize;
+    char *subjectData;
+    size_t subjectDataSize;
+
+    //Init SubjectSerializer
+    std::unique_ptr<facio::SubjectSerializer> subjectSerializer(new facio::SubjectSerializer());
+    
+    //We serialize the subject to save it to a file
+    if(subjectSerializer->serialize(subjectDataToEnroll,subjectMetaData, subjectMetaDataSize, subjectData, subjectDataSize) == 1){
+      
+      //Now we save the serialized data to a file for later use
+      std::ofstream outfile (fileToSave,std::ofstream::binary);
+      
+      //If we can open file
+      if(outfile.is_open()){
+        //Save size of metadata
+        outfile.write((char*)&subjectMetaDataSize,(long)sizeof(size_t));
+        //Save metadata
+        outfile.write(subjectMetaData,subjectMetaDataSize);
+        //Save size of data
+        outfile.write((char*)&subjectDataSize,(long)sizeof(size_t));
+        //Save data
+        outfile.write(subjectData,subjectDataSize);
+        
+        //Close file
+        outfile.close();
+        
+        //Enrollment done
+        PRINT_NAMED_INFO("FaceTracker.saveSubjectData.Success",
+                         "Successfully enrolled %s to the following path: %s",
+                         subjectDataToEnroll.getLabel().c_str(), fileToSave.c_str());
+      }
+      else{
+        PRINT_NAMED_ERROR("FaceTracker.saveSubjectData.Fail",
+                          "Could not open file %s", fileToSave.c_str());
+        return RESULT_FAIL;
+      }
+    }
+    
+    return RESULT_OK;
+  } // saveSubjectData()
+  
   
   //! This function perfom the recognition of the subject
   /*!
@@ -249,9 +295,11 @@ namespace Vision {
     bool status = false;
     
     //Perform recognition
+    /*
     PRINT_NAMED_INFO("FaceTracker.doRecognition",
                      "Performing recognition with %lu images.",
                      imRDList.size());
+     */
     
     //We prepare the subject that we will recognize
     facio::SubjectRecogData subjectDataToRecognize;
@@ -262,12 +310,19 @@ namespace Vision {
     if(subjectCreated){
       
       //Perform recodnition
+
       status = faceRecog.predict(subjectDataToRecognize, vectorSubjectRecogData, subject, scores);
+      
+      // Debug:
+      //saveSubjectData(subjectDataToRecognize, "/Users/andrew/temp/toRecognize.dat");
+      //saveSubjectData(vectorSubjectRecogData[0], "/Users/andrew/temp/enrolledFace.dat");
+      
       if(status)
-      {
+      {/*
         if (subject != -1) {
-          PRINT_NAMED_INFO("FaceTracker.doRecognition", "Recognized: %s",
-                           vectorSubjectRecogData[subject].getLabel().c_str());
+          PRINT_NAMED_INFO("FaceTracker.doRecognition", "Recognized: %s with score %f",
+                           vectorSubjectRecogData[subject].getLabel().c_str(),
+                           scores[subject]);
         } else {
           PRINT_NAMED_INFO("FaceTracker.doRecognition", "Subject not found");
         }
@@ -275,6 +330,7 @@ namespace Vision {
           PRINT_NAMED_INFO("FaceTracker.doRecognition", "Subject %s with score %f",
                            vectorSubjectRecogData[i].getLabel().c_str(), scores[i]);
         }
+         */
       }
       else
       {
@@ -311,52 +367,19 @@ namespace Vision {
     // Fill the subjectDataToEnroll with the information
     bool subjectCreated = faceRecog.processSubjectRecogData(imRDList, name, subjectDataToEnroll);
     
-    
     if(subjectCreated){
       //Store in the given vector
       knownFaces.push_back(subjectDataToEnroll);
+
+      PRINT_NAMED_INFO("FaceTracker.enrollSubject.SubjectAdded",
+                       "Added subject with label %s and name %s.",
+                       subjectDataToEnroll.getLabel().c_str(),
+                       name.c_str());
+
+      // Uncomment to save each subject as they are enrolled (for use on next run)
+      //std::string fileToSave = folder+"/"+name+".dat";
+      //saveSubjectData(subjectDataToEnroll, fileToSave);
       
-      //Variables to save the information
-      char *subjectMetaData;
-      size_t subjectMetaDataSize;
-      char *subjectData;
-      size_t subjectDataSize;
-      
-      //Init SubjectSerializer
-      std::unique_ptr<facio::SubjectSerializer> subjectSerializer(new facio::SubjectSerializer());
-      
-      //We serialize the subject to save it to a file
-      if(subjectSerializer->serialize(subjectDataToEnroll,subjectMetaData, subjectMetaDataSize, subjectData, subjectDataSize) == 1){
-        
-        std::string fileToSave = folder+"/"+name+".dat";
-        
-        //Now we save the serialized data to a file for later use
-        std::ofstream outfile (fileToSave,std::ofstream::binary);
-        
-        //If we can open file
-        if(outfile.is_open()){
-          //Save size of metadata
-          outfile.write((char*)&subjectMetaDataSize,(long)sizeof(size_t));
-          //Save metadata
-          outfile.write(subjectMetaData,subjectMetaDataSize);
-          //Save size of data
-          outfile.write((char*)&subjectDataSize,(long)sizeof(size_t));
-          //Save data
-          outfile.write(subjectData,subjectDataSize);
-          
-          //Close file
-          outfile.close();
-          
-          //Enrollment done
-          PRINT_NAMED_INFO("FaceTracker.enrollSubject.Success",
-                           "Successfully enrolled %s to the following path: %s",
-                           name.c_str(), fileToSave.c_str());
-        }
-        else{
-          PRINT_NAMED_ERROR("FaceTracker.enrollSubject.Fail",
-                            "Could not enroll %s to the database", name.c_str());
-        }
-      }
     }
     else{
       PRINT_NAMED_ERROR("FaceTracker.enrollSubject.Fail",
@@ -576,7 +599,10 @@ namespace Vision {
         TrackedFace newFace;
         
         newFace.SetRect(Rectangle<f32>(newFaceRect));
+        
+#       if !DO_RECOGNITION
         newFace.SetID(_faceCtr++);
+#       endif
         
         _faces.emplace_back(newFace, landmarks);
       }
@@ -655,10 +681,13 @@ namespace Vision {
         subject = doRecognition(*_fr, currentRecogData, _recognizableFaces, scores);
       }
       
-      if(subject != -1) {
+      const float scoreThreshold = 0.9f;
+      if(subject != -1 && scores[subject] > scoreThreshold) {
         face.SetID(subject);
+        face.SetName(_recognizableFaces[subject].getLabel());
       } else {
-        if(false == enrollSubject(*_fr, "Person" + std::to_string(_faceCtr++),
+        std::string newName("Person" + std::to_string(_faceCtr++));
+        if(false == enrollSubject(*_fr, newName,
                                   currentRecogData, _recognizedFacesPath,
                                   _recognizableFaces))
         {
@@ -666,6 +695,8 @@ namespace Vision {
                             "Failed to enroll new subject.");
           return RESULT_FAIL;
         }
+        face.SetID(_recognizableFaces.size()-1);
+        face.SetName(_recognizableFaces.back().getLabel());
       }
 #     endif // DO_RECOGNITION
       
