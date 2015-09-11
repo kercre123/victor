@@ -135,6 +135,11 @@ namespace AnimationTool
                     if (curChart.Name != "cFaceAnimation")
                     {
                         ActionManager.Do(new SelectDataPoint(curDataPoint, curChart));
+
+                        if (curChart.Name == "cProceduralFace")
+                        {
+                            robotEngineMessenger.AnimateFace(Sequencer.ExtraData.Entries[curDataPoint.GetCustomProperty(Sequencer.ExtraData.Key)] as Sequencer.ExtraProceduralFaceData);
+                        }
                     }
                     else
                     {
@@ -485,26 +490,16 @@ namespace AnimationTool
         {
             if (faceForm.Open(previous != null ? previous : extraData) == DialogResult.OK)
             {
-                extraData.faceAngle_deg = faceForm.FaceAngle_deg;
+                extraData.faceAngle = faceForm.faceAngle;
 
-                extraData.leftBrowAngle = faceForm.Eyes[(int)ProceduralEyeParameter.BrowAngle].LeftValue;
-                extraData.rightBrowAngle = faceForm.Eyes[(int)ProceduralEyeParameter.BrowAngle].RightValue;
-                extraData.leftBrowCenX = faceForm.Eyes[(int)ProceduralEyeParameter.BrowCenX].LeftValue;
-                extraData.rightBrowCenX = faceForm.Eyes[(int)ProceduralEyeParameter.BrowCenX].RightValue;
-                extraData.leftBrowCenY = faceForm.Eyes[(int)ProceduralEyeParameter.BrowCenY].LeftValue;
-                extraData.rightBrowCenY = faceForm.Eyes[(int)ProceduralEyeParameter.BrowCenY].RightValue;
-
-                extraData.leftEyeHeight = faceForm.Eyes[(int)ProceduralEyeParameter.EyeHeight].LeftValue;
-                extraData.rightEyeHeight = faceForm.Eyes[(int)ProceduralEyeParameter.EyeHeight].RightValue;
-
-                extraData.leftPupilHeight = faceForm.Eyes[(int)ProceduralEyeParameter.PupilHeight].LeftValue;
-                extraData.rightPupilHeight = faceForm.Eyes[(int)ProceduralEyeParameter.PupilHeight].RightValue;
-                extraData.leftPupilWidth = faceForm.Eyes[(int)ProceduralEyeParameter.PupilWidth].LeftValue;
-                extraData.rightPupilWidth = faceForm.Eyes[(int)ProceduralEyeParameter.PupilWidth].RightValue;
-                extraData.leftPupilCenX = faceForm.Eyes[(int)ProceduralEyeParameter.PupilCenX].LeftValue;
-                extraData.rightPupilCenX = faceForm.Eyes[(int)ProceduralEyeParameter.PupilCenX].RightValue;
-                extraData.leftPupilCenY = faceForm.Eyes[(int)ProceduralEyeParameter.PupilCenY].LeftValue;
-                extraData.rightPupilCenY = faceForm.Eyes[(int)ProceduralEyeParameter.PupilCenY].RightValue;
+                for (int i = 0; i < extraData.leftEye.Length && i < faceForm.eyes.Length; ++i)
+                {
+                    if (faceForm.eyes[i] != null)
+                    {
+                        extraData.leftEye[i] = faceForm.eyes[i].LeftValue;
+                        extraData.rightEye[i] = faceForm.eyes[i].RightValue;
+                    }
+                }
             }
             else
             {
@@ -512,7 +507,7 @@ namespace AnimationTool
                 {
                     ActionManager.Do(new RemoveDataPoint(curDataPoint, curChart), true);
                 }
-                robotEngineMessenger.SetToPreviousFace(faceForm); // Else if cancelled, set back to previous face
+                robotEngineMessenger.AnimateFace(previous != null ? previous : extraData); // Else if cancelled, set back to previous face
             }
         }
 
