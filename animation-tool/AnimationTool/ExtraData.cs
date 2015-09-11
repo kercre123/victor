@@ -8,6 +8,7 @@ using System.IO;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Reflection;
+using Anki.Cozmo;
 
 namespace AnimationTool.Sequencer
 {
@@ -192,7 +193,7 @@ namespace AnimationTool.Sequencer
             int count = 0;
             Images = new Dictionary<double, string>();
 
-            if(!Directory.Exists(path))
+            if (!Directory.Exists(path))
             {
                 return length;
             }
@@ -256,33 +257,18 @@ namespace AnimationTool.Sequencer
 
     public class ExtraProceduralFaceData : ExtraData
     {
-        public float faceAngle_deg;
+        public float faceAngle;
 
-        public float leftBrowAngle;
-        public float rightBrowAngle;
-        public float leftBrowCenX;
-        public float rightBrowCenX;
-        public float leftBrowCenY;
-        public float rightBrowCenY;
-
-        public float leftEyeHeight;
-        public float rightEyeHeight;
-        public float leftEyeWidth;
-        public float rightEyeWidth;
-
-        public float leftPupilHeight;
-        public float rightPupilHeight;
-        public float leftPupilWidth;
-        public float rightPupilWidth;
-        public float leftPupilCenX;
-        public float rightPupilCenX;
-        public float leftPupilCenY;
-        public float rightPupilCenY;
+        public float[] leftEye;
+        public float[] rightEye;
 
         public ExtraProceduralFaceData()
         {
             Length = MoveSelectedDataPoints.DELTA_X;
             Exists = true;
+
+            leftEye = new float[(int)ProceduralEyeParameter.NumParameters];
+            rightEye = new float[(int)ProceduralEyeParameter.NumParameters];
         }
 
         public ExtraProceduralFaceData(ProceduralFacePointData data)
@@ -290,28 +276,16 @@ namespace AnimationTool.Sequencer
             Length = MoveSelectedDataPoints.DELTA_X;
             Exists = true;
 
-            faceAngle_deg = data.faceAngle_deg;
+            leftEye = new float[(int)ProceduralEyeParameter.NumParameters];
+            rightEye = new float[(int)ProceduralEyeParameter.NumParameters];
 
-            leftBrowAngle = data.leftBrowAngle;
-            rightBrowAngle = data.rightBrowAngle;
-            leftBrowCenX = data.leftBrowCenX;
-            rightBrowCenX = data.rightBrowCenX;
-            leftBrowCenY = data.leftBrowCenY;
-            rightBrowCenY = data.rightBrowCenY;
+            faceAngle = data.faceAngle;
 
-            leftEyeHeight = data.leftEyeHeight;
-            rightEyeHeight = data.rightEyeHeight;
-            leftEyeWidth = data.leftEyeWidth;
-            rightEyeWidth = data.rightEyeWidth;
-
-            leftPupilHeight = data.leftPupilHeight;
-            rightPupilHeight = data.rightPupilHeight;
-            leftPupilWidth = data.leftPupilWidth;
-            rightPupilWidth = data.rightPupilWidth;
-            leftPupilCenX = data.leftPupilCenX;
-            rightPupilCenX = data.rightPupilCenX;
-            leftPupilCenY = data.leftPupilCenY;
-            rightPupilCenY = data.rightPupilCenY;
+            for (int i = 0; data.leftEye != null && i < data.leftEye.Length && i < leftEye.Length; ++i)
+            {
+                leftEye[i] = data.leftEye[i];
+                rightEye[i] = data.rightEye[i];
+            }
         }
     }
 
