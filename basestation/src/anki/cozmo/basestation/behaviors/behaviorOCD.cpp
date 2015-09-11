@@ -20,9 +20,14 @@
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 
+#include "anki/common/basestation/utils/timer.h"
+
 #define DEBUG_OCD_BEHAVIOR 0
 
 #define PLACEMENT_OFFSET_MM 88.f  // Twice block width
+
+#define MAJOR_IRRITATION_TIME_INTERVAL_SEC    5.f
+#define EXCITED_ABOUT_NEW_BLOCK_INTERVAL_SEC  2.f
 
 namespace Anki {
 namespace Cozmo {
@@ -31,7 +36,8 @@ namespace Cozmo {
   : IBehavior(robot, config)
   , _lastHandlerResult(RESULT_OK)
   , _currentArrangement(Arrangement::StacksOfTwo)
-  , _irritationLevel(0)
+  , _lastNeatBlockDisturbedTime(0)
+  , _lastNewBlockObservedTime(0)
   {
     _name = "OCD";
     // Register callbacks:
@@ -106,8 +112,11 @@ namespace Cozmo {
     // As long as we're not lined up to play an irritated behavior go to the appropriate state
     // based on current carry state.
     _animActionTags.clear();
-    if (_irritationLevel > 0) {
+    f32 currTime = GetCurrTimeInSeconds();
+    if (currTime - _lastNeatBlockDisturbedTime < MAJOR_IRRITATION_TIME_INTERVAL_SEC) {
       PlayAnimation("MinorIrritation");
+    } else if (currTime - _lastNewBlockObservedTime < EXCITED_ABOUT_NEW_BLOCK_INTERVAL_SEC) {
+      PlayAnimation("Demo_Look_Around_See_Something_A");
     } else {
       if(_robot.IsCarryingObject()) {
         // Make sure whatever the robot is carrying is some kind of block...
@@ -965,9 +974,14 @@ namespace Cozmo {
               
               UpdateBlockLights();
               
+              // Randomly celebrate a placement
+              if (rand() % 3 == 0) {
+                PlayAnimation("Demo_OCD_Successfully_Neat");
+              } else {
                 lastResult = SelectNextObjectToPickUp();
                 UnsetLastPickOrPlaceFailure();
                 _currentState = State::PickingUpBlock;
+              }
               break;
               
             case RobotActionType::PICK_AND_PLACE_INCOMPLETE:
@@ -996,13 +1010,6 @@ namespace Cozmo {
           case RobotActionType::PLAY_ANIMATION:
             if (_animActionTags.count(msg.idTag) > 0) {
               BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.HandleActionCompleted.AnimCompleted", "%s (result %d)", msg.completionInfo.animName.c_str(), msg.result);
-              
-              // Reset irritation level if this was a successfully completed irritation animation
-              if (msg.result == ActionResult::SUCCESS) {
-                if (msg.completionInfo.animName == "VeryIrritated" || msg.completionInfo.animName == "MinorIrritation") {
-                  _irritationLevel = 0;
-                }
-              }
               
               // Erase this animation action and resume pickOrPlace if there are no more animations pending
               _animActionTags.erase(msg.idTag);
@@ -1056,20 +1063,19 @@ namespace Cozmo {
       _messyObjects.insert(objectID);
 
       UpdateBlockLights();
+
       
-      // Increase irritation level
-      ++_irritationLevel;
-      
-      
+      f32 currTime = GetCurrTimeInSeconds();
       if(IsRunning()) {
         // Queue irritated animation
-        if (_irritationLevel > 1) {
-          PlayAnimation("VeryIrritated");
-        } else {
+        if (currTime - _lastNeatBlockDisturbedTime > MAJOR_IRRITATION_TIME_INTERVAL_SEC) {
           PlayAnimation("MinorIrritation");
+        } else {
+          PlayAnimation("VeryIrritated");
         }
       }
-
+      _lastNeatBlockDisturbedTime = currTime;
+      
     }
     
     return lastResult;
@@ -1091,6 +1097,7 @@ namespace Cozmo {
         BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.HandleObservedObject",
                          "Adding observed object %d to messy list.", msg.objectID);
         UpdateBlockLights();
+        _lastNewBlockObservedTime = GetCurrTimeInSeconds();
       }
       
     }
@@ -1168,6 +1175,11 @@ namespace Cozmo {
     _animActionTags[animAction->GetTag()] = animName;
     _robot.GetActionList().QueueActionNow(IBehavior::sActionSlot, animAction);
     UpdateName();
+  }
+  
+  f32 BehaviorOCD::GetCurrTimeInSeconds()
+  {
+    return BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   }
   
 } // namespace Cozmo

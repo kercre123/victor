@@ -108,6 +108,9 @@ namespace Cozmo {
     // Returns neatness score of object
     f32 GetNeatnessScore(const ObjectID& whichObject);
     
+    // TODO: Move this to IBehavior?
+    f32 GetCurrTimeInSeconds();
+    
     // Goal is to move objects from messy to neat
     std::set<ObjectID> _messyObjects;
     std::set<ObjectID> _neatObjects;
@@ -150,7 +153,8 @@ namespace Cozmo {
     u32 _lastActionTag;
     std::map<u32, std::string> _animActionTags;
     
-    u8 _irritationLevel;
+    f32 _lastNeatBlockDisturbedTime;
+    f32 _lastNewBlockObservedTime;
     
     void UpdateName();
     
