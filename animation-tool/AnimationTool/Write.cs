@@ -235,27 +235,6 @@ namespace AnimationTool
                 pointData.rightEye[i] = (float)Math.Round(extraData.rightEye[i], 2);
             }
 
-            pointData.faceAngle_deg = 999;
-
-            pointData.leftBrowAngle = 999;
-            pointData.rightBrowAngle = 999;
-            pointData.leftBrowCenX = 999;
-            pointData.rightBrowCenX = 999;
-            pointData.leftBrowCenY = 999;
-            pointData.rightBrowCenY = 999;
-
-            pointData.leftEyeHeight = 999;
-            pointData.rightEyeHeight = 999;
-
-            pointData.leftPupilHeight = 999;
-            pointData.rightPupilHeight = 999;
-            pointData.leftPupilWidth = 999;
-            pointData.rightPupilWidth = 999;
-            pointData.leftPupilCenX = 999;
-            pointData.rightPupilCenX = 999;
-            pointData.leftPupilCenY = 999;
-            pointData.rightPupilCenY = 999;
-
             return pointData;
         }
 

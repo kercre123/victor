@@ -281,55 +281,10 @@ namespace AnimationTool.Sequencer
 
             faceAngle = data.faceAngle;
 
-            if (data.faceAngle_deg != 999) faceAngle = data.faceAngle_deg;
-
             for (int i = 0; data.leftEye != null && i < data.leftEye.Length && i < leftEye.Length; ++i)
             {
                 leftEye[i] = data.leftEye[i];
                 rightEye[i] = data.rightEye[i];
-            }
-
-            for (int i = 0; i < leftEye.Length && i < data.leftEye.Length; ++i)
-            {
-                switch (i)
-                {
-                    case (int)ProceduralEyeParameter.BrowAngle:
-                        if (data.leftBrowAngle != 999) leftEye[i] = data.leftBrowAngle;
-                        if (data.rightBrowAngle != 999) rightEye[i] = data.rightBrowAngle;
-                        break;
-                    case (int)ProceduralEyeParameter.BrowCenX:
-                        if (data.leftBrowCenX != 999) leftEye[i] = data.leftBrowCenX;
-                        if (data.rightBrowCenX != 999) rightEye[i] = data.rightBrowCenX;
-                        break;
-                    case (int)ProceduralEyeParameter.BrowCenY:
-                        if (data.leftBrowCenY != 999) leftEye[i] = data.leftBrowCenY;
-                        if (data.rightBrowCenY != 999) rightEye[i] = data.rightBrowCenY;
-                        break;
-                    case (int)ProceduralEyeParameter.EyeHeight:
-                        if (data.leftEyeHeight != 999) leftEye[i] = data.leftEyeHeight;
-                        if (data.rightEyeHeight != 999) rightEye[i] = data.rightEyeHeight;
-                        break;
-                    case (int)ProceduralEyeParameter.EyeWidth:
-                        if (data.leftEyeWidth != 999) leftEye[i] = data.leftEyeWidth;
-                        if (data.rightEyeWidth != 999) rightEye[i] = data.rightEyeWidth;
-                        break;
-                    case (int)ProceduralEyeParameter.PupilCenX:
-                        if (data.leftPupilCenX != 999) leftEye[i] = data.leftPupilCenX;
-                        if (data.rightPupilCenX != 999) rightEye[i] = data.rightPupilCenX;
-                        break;
-                    case (int)ProceduralEyeParameter.PupilCenY:
-                        if (data.leftPupilCenY != 999) leftEye[i] = data.leftPupilCenY;
-                        if (data.rightPupilCenY != 999) rightEye[i] = data.rightPupilCenY;
-                        break;
-                    case (int)ProceduralEyeParameter.PupilHeight:
-                        if (data.leftPupilHeight != 999) leftEye[i] = data.leftPupilHeight;
-                        if (data.rightPupilHeight != 999) rightEye[i] = data.rightPupilHeight;
-                        break;
-                    case (int)ProceduralEyeParameter.PupilWidth:
-                        if (data.leftPupilWidth != 999) leftEye[i] = data.leftPupilWidth;
-                        if (data.rightPupilWidth != 999) rightEye[i] = data.rightPupilWidth;
-                        break;
-                }
             }
         }
     }
