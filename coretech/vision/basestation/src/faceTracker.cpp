@@ -65,6 +65,7 @@ namespace Anki {
 namespace Vision {
   
 #if FACE_TRACKER_PROVIDER == FACE_TRACKER_FACIOMETRIC
+#pragma mark - FacioMetric-Based FaceTracker
   
   class FaceTracker::Impl
   {
@@ -716,6 +717,7 @@ namespace Vision {
   }
 
 #elif FACE_TRACKER_PROVIDER == FACE_TRACKER_FACESDK
+#pragma mark - FaceSDK-Based FaceTracker
   
   class FaceTracker::Impl
   {
@@ -1031,6 +1033,7 @@ namespace Vision {
   }
 
 #elif FACE_TRACKER_PROVIDER == FACE_TRACKER_OPENCV
+#pragma mark - OpenCV-Based FaceTracker
   
   class FaceTracker::Impl
   {
@@ -1048,6 +1051,7 @@ namespace Vision {
     bool _isInitialized;
     
     cv::CascadeClassifier _faceCascade;
+    cv::CascadeClassifier _eyeCascade;
     
     u32 _faceCtr;
     
@@ -1060,13 +1064,23 @@ namespace Vision {
   : _isInitialized(false)
   , _faceCtr(0)
   {
-    const std::string cascadeFilename = modelPath + "/haarcascade_frontalface_alt2.xml";
+    const std::string faceCascadeFilename = modelPath + "/haarcascade_frontalface_alt2.xml";
     
-    const bool loadSuccess = _faceCascade.load(cascadeFilename);
+    bool loadSuccess = _faceCascade.load(faceCascadeFilename);
     if(!loadSuccess) {
-      PRINT_NAMED_ERROR("VisionSystem.Update.LoadFaceCascade",
+      PRINT_NAMED_ERROR("FaceTracker.Impl.LoadFaceCascade",
                         "Failed to load face cascade from %s\n",
-                        cascadeFilename.c_str());
+                        faceCascadeFilename.c_str());
+      return;
+    }
+    
+    const std::string eyeCascadeFilename = modelPath + "/haarcascade_eye_tree_eyeglasses.xml";
+    
+    loadSuccess = _eyeCascade.load(eyeCascadeFilename);
+    if(!loadSuccess) {
+      PRINT_NAMED_ERROR("FaceTracker.Impl.LoadEyeCascade",
+                        "Failed to load eye cascade from %s\n",
+                        eyeCascadeFilename.c_str());
       return;
     }
     
@@ -1142,10 +1156,36 @@ namespace Vision {
       
       // Just use assumed eye locations within the rectangle
       // TODO: Use OpenCV's eye detector?
-      face.SetLeftEyeCenter(Point2f(face.GetRect().GetXmid() - .25f*face.GetRect().GetWidth(),
-                                    face.GetRect().GetYmid() - .125f*face.GetRect().GetHeight()));
-      face.SetRightEyeCenter(Point2f(face.GetRect().GetXmid() + .25f*face.GetRect().GetWidth(),
-                                     face.GetRect().GetYmid() - .125f*face.GetRect().GetHeight()));
+      std::vector<cv::Rect> eyeRects;
+      const cv::Rect_<float>& faceRect = face.GetRect().get_CvRect_();
+      cv::Mat faceRoi = frame.get_CvMat_()(faceRect);
+      _eyeCascade.detectMultiScale(faceRoi, eyeRects, 1.1, 2, 0, cv::Size(5,5),
+                                    cv::Size(faceRoi.cols/4,faceRoi.rows/4));
+      if(eyeRects.size() == 2) {
+        // Iff we find two eyes within the face rectangle, use them
+        cv::Rect& leftEyeRect = eyeRects[0];
+        cv::Rect& rightEyeRect = eyeRects[1];
+        if(eyeRects[0].x > eyeRects[1].x) {
+          std::swap(leftEyeRect, rightEyeRect);
+        }
+        
+        face.SetLeftEyeCenter(Point2f(faceRect.x + leftEyeRect.x + leftEyeRect.width/2,
+                                      faceRect.y + leftEyeRect.y + leftEyeRect.height/2));
+        face.SetRightEyeCenter(Point2f(faceRect.x + rightEyeRect.x + rightEyeRect.width/2,
+                                       faceRect.y + rightEyeRect.y + rightEyeRect.height/2));
+        
+        // Use the line connecting the eyes to estimate head roll:
+        Point2f eyeLine(face.GetRightEyeCenter());
+        eyeLine -= face.GetLeftEyeCenter();
+        face.SetHeadOrientation(std::atan2f(eyeLine.y(), eyeLine.x()), 0, 0);
+                                
+      } else {
+        // Otherwise, just use assumed fake eye locations
+        face.SetLeftEyeCenter(Point2f(face.GetRect().GetXmid() - .25f*face.GetRect().GetWidth(),
+                                      face.GetRect().GetYmid() - .125f*face.GetRect().GetHeight()));
+        face.SetRightEyeCenter(Point2f(face.GetRect().GetXmid() + .25f*face.GetRect().GetWidth(),
+                                       face.GetRect().GetYmid() - .125f*face.GetRect().GetHeight()));
+      }
       
     }
     
