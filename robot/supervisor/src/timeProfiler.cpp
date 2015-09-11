@@ -119,14 +119,22 @@ namespace Cozmo {
   }
   
   void TimeProfiler::PrintStats() {
+    TimeProfileStat msg;
     u32 *avgTimes;
     u32 *maxTimes;
     
     u32 numProfiles = ComputeStats(&avgTimes, &maxTimes);
-
-    PRINT("TimeProfiler %s stats:\n", name_);
+    
+    msg.isHeader = true;
+    msg.profName_length = strncpy(msg.profName, name_, 255);
+    RobotInterface::SendMessage(msg);
+    msg.isHeader = false;
+    
     for (u32 i=0; i<numProfiles; ++i) {
-      PRINT(" %s: avg %d us, max %d us\n", timeProfName_[i], avgTimes[i], maxTimes[i]);
+      msg.profName_length = strncpy(msg.profName, timeProfName_[i]);
+      msg.avg = avgTimes[i];
+      msg.max = maxTimes[i];
+      RobotInterface::SendMessage(msg);
     }
   }
   
