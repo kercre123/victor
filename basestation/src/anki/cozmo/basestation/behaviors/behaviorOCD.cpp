@@ -18,6 +18,8 @@
 #include "anki/cozmo/basestation/events/ankiEventMgr.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 
+#include "anki/cozmo/shared/cozmoConfig.h"
+
 #define DEBUG_OCD_BEHAVIOR 0
 
 #define PLACEMENT_OFFSET_MM 88.f  // Twice block width
@@ -870,7 +872,7 @@ namespace Cozmo {
     _lastPoseWhereFailedToPickOrPlace = pose;
   }
   
-  void BehaviorOCD::DeleteObjectIfFailedToPickOrPlaceAgain(const ObjectID& objectID)
+  bool BehaviorOCD::DeleteObjectIfFailedToPickOrPlaceAgain(const ObjectID& objectID)
   {
     const f32 SAME_POSE_DIST_THRESH_MM = 5;
     if (objectID.IsSet() &&
@@ -878,7 +880,9 @@ namespace Cozmo {
         ComputeDistanceBetween(_robot.GetPose(), _lastPoseWhereFailedToPickOrPlace) < SAME_POSE_DIST_THRESH_MM) {
       PRINT_NAMED_INFO("BehaviorOCD::DeleteObjectIfFailedToPickOrPlaceAgain", "Deleting object %d", objectID.GetValue());
       _robot.GetBlockWorld().ClearObject(objectID);
+      return true;
     }
+    return false;
   }
   
   
@@ -922,9 +926,23 @@ namespace Cozmo {
         } else {
           BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.HandleActionCompleted.PickupFailure", "Trying again");
           // We failed to pick up or place the last block, try again?
-          DeleteObjectIfFailedToPickOrPlaceAgain(_objectToPickUp);
+          if (DeleteObjectIfFailedToPickOrPlaceAgain(_objectToPickUp)) {
+            // It's possible that we've just deleted the last messy block here
+            // because it wasn't where we thought it was, so update lights.
+            UpdateBlockLights();
+            if (_messyObjects.empty()) {
+              PlayAnimation("Demo_OCD_All_Blocks_Neat_Celebration");
+            }
+          }
           SetLastPickOrPlaceFailure(_objectToPickUp, _robot.GetPose());
-          lastResult = SelectNextObjectToPickUp();
+          
+          // This isn't foolproof, but use lift height to check if this failure occured
+          // during pickup verification.
+          if (_robot.GetLiftHeight() > LIFT_HEIGHT_HIGHDOCK) {
+            PlayAnimation("Demo_OCD_PickUp_Fail");
+          } else {
+            lastResult = SelectNextObjectToPickUp();
+          }
         }
         break;
       } // case PickingUpBlock
@@ -947,9 +965,9 @@ namespace Cozmo {
               
               UpdateBlockLights();
               
-              lastResult = SelectNextObjectToPickUp();
-              UnsetLastPickOrPlaceFailure();
-              _currentState = State::PickingUpBlock;
+                lastResult = SelectNextObjectToPickUp();
+                UnsetLastPickOrPlaceFailure();
+                _currentState = State::PickingUpBlock;
               break;
               
             case RobotActionType::PICK_AND_PLACE_INCOMPLETE:

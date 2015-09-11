@@ -95,7 +95,8 @@ namespace Cozmo {
     
     // Deletes the object if it was also the previous object that the robot
     // had failed to pick or place from the same robot pose.
-    void DeleteObjectIfFailedToPickOrPlaceAgain(const ObjectID& objectID);
+    // Returns true if object deleted.
+    bool DeleteObjectIfFailedToPickOrPlaceAgain(const ObjectID& objectID);
     
     // Checks if blocks are "aligned".
     // A messy block that is aligned with a neat block should be considered neat
