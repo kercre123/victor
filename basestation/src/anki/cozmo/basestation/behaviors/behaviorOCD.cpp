@@ -65,19 +65,19 @@ namespace Cozmo {
     switch(event.GetData().GetTag())
     {
       case ExternalInterface::MessageEngineToGameTag::RobotCompletedAction:
-        _lastHandlerResult= HandleActionCompleted(event.GetData().Get_RobotCompletedAction());
+        _lastHandlerResult= HandleActionCompleted(event.GetData().Get_RobotCompletedAction(), event.GetCurrentTime());
         break;
         
       case ExternalInterface::MessageEngineToGameTag::RobotObservedObject:
-        _lastHandlerResult= HandleObservedObject(event.GetData().Get_RobotObservedObject());
+        _lastHandlerResult= HandleObservedObject(event.GetData().Get_RobotObservedObject(), event.GetCurrentTime());
         break;
         
       case ExternalInterface::MessageEngineToGameTag::RobotDeletedObject:
-        _lastHandlerResult= HandleDeletedObject(event.GetData().Get_RobotDeletedObject());
+        _lastHandlerResult= HandleDeletedObject(event.GetData().Get_RobotDeletedObject(), event.GetCurrentTime());
         break;
         
       case ExternalInterface::MessageEngineToGameTag::ActiveObjectMoved:
-        _lastHandlerResult= HandleObjectMoved(event.GetData().Get_ActiveObjectMoved());
+        _lastHandlerResult= HandleObjectMoved(event.GetData().Get_ActiveObjectMoved(), event.GetCurrentTime());
         break;
         
       default:
@@ -889,7 +889,7 @@ namespace Cozmo {
   }
   
   
-  Result BehaviorOCD::HandleActionCompleted(const ExternalInterface::RobotCompletedAction &msg)
+  Result BehaviorOCD::HandleActionCompleted(const ExternalInterface::RobotCompletedAction &msg, double currentTime_sec)
   {
     Result lastResult = RESULT_OK;
     
@@ -1029,7 +1029,7 @@ namespace Cozmo {
   } // HandleActionCompleted()
   
   
-  Result BehaviorOCD::HandleObjectMoved(const ExternalInterface::ActiveObjectMoved &msg)
+  Result BehaviorOCD::HandleObjectMoved(const ExternalInterface::ActiveObjectMoved &msg, double currentTime_sec)
   {
     Result lastResult = RESULT_OK;
     
@@ -1059,16 +1059,15 @@ namespace Cozmo {
       UpdateBlockLights();
 
       
-      f32 currTime = GetCurrTimeInSeconds();
       if(IsRunning()) {
         // Queue irritated animation
-        if (currTime - _lastNeatBlockDisturbedTime > kMajorIrritationTimeIntervalSec) {
+        if (currentTime_sec - _lastNeatBlockDisturbedTime > kMajorIrritationTimeIntervalSec) {
           PlayAnimation("MinorIrritation");
         } else {
           PlayAnimation("VeryIrritated");
         }
       }
-      _lastNeatBlockDisturbedTime = currTime;
+      _lastNeatBlockDisturbedTime = currentTime_sec;
       
     }
     
@@ -1076,7 +1075,7 @@ namespace Cozmo {
   }
   
   
-  Result BehaviorOCD::HandleObservedObject(const ExternalInterface::RobotObservedObject &msg)
+  Result BehaviorOCD::HandleObservedObject(const ExternalInterface::RobotObservedObject &msg, double currentTime_sec)
   {
     // if the object is a BLOCK or ACTIVE_BLOCK, add its ID to the list we care about
     // iff we haven't already seen and neatened it (if it's in our neat list,
@@ -1091,7 +1090,7 @@ namespace Cozmo {
         BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.HandleObservedObject",
                          "Adding observed object %d to messy list.", msg.objectID);
         UpdateBlockLights();
-        _lastNewBlockObservedTime = GetCurrTimeInSeconds();
+        _lastNewBlockObservedTime = currentTime_sec;
       }
       
     }
@@ -1102,7 +1101,7 @@ namespace Cozmo {
     return RESULT_OK;
   }
   
-  Result BehaviorOCD::HandleDeletedObject(const ExternalInterface::RobotDeletedObject &msg)
+  Result BehaviorOCD::HandleDeletedObject(const ExternalInterface::RobotDeletedObject &msg, double currentTime_sec)
   {
     // remove the object if we knew about it
     ObjectID objectID;
@@ -1170,11 +1169,7 @@ namespace Cozmo {
     _robot.GetActionList().QueueActionNow(IBehavior::sActionSlot, animAction);
     UpdateName();
   }
-  
-  f32 BehaviorOCD::GetCurrTimeInSeconds()
-  {
-    return BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  }
+
   
 } // namespace Cozmo
 } // namespace Anki

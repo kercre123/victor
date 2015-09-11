@@ -78,11 +78,11 @@ namespace Cozmo {
     
     // Handlers for signals coming from the engine
     // TODO: These need to be some kind of _internal_ signal or event
-    Result HandleObjectMoved(const ExternalInterface::ActiveObjectMoved &msg);
-    Result HandleObservedObject(const ExternalInterface::RobotObservedObject &msg);
-    Result HandleDeletedObject(const ExternalInterface::RobotDeletedObject &msg);
+    Result HandleObjectMoved(const ExternalInterface::ActiveObjectMoved &msg, double currentTime_sec);
+    Result HandleObservedObject(const ExternalInterface::RobotObservedObject &msg, double currentTime_sec);
+    Result HandleDeletedObject(const ExternalInterface::RobotDeletedObject &msg, double currentTime_sec);
     
-    Result HandleActionCompleted(const ExternalInterface::RobotCompletedAction &msg);
+    Result HandleActionCompleted(const ExternalInterface::RobotCompletedAction &msg, double currentTime_sec);
     
     Result SelectArrangement();
     Result SelectNextObjectToPickUp();
@@ -119,9 +119,6 @@ namespace Cozmo {
     
     // Returns neatness score of object
     f32 GetNeatnessScore(const ObjectID& whichObject);
-    
-    // TODO: Move this to IBehavior?
-    f32 GetCurrTimeInSeconds();
     
     // Goal is to move objects from messy to neat
     std::set<ObjectID> _messyObjects;
