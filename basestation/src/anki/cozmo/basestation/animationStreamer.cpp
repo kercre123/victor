@@ -180,7 +180,8 @@ namespace Cozmo {
       const f32 blendFraction = std::min(1.f, (static_cast<f32>(proceduralFace.GetTimeStamp() - lastInterpTime) /
                                                static_cast<f32>(nextTime - lastInterpTime)));
       
-      proceduralFace.Interpolate(lastFace, nextFace, blendFraction);
+      const bool useSaccades = true;
+      proceduralFace.Interpolate(lastFace, nextFace, blendFraction, useSaccades);
       
       // Add this procedural face as a keyframe in the live animation
       ProceduralFaceKeyFrame kf(proceduralFace);

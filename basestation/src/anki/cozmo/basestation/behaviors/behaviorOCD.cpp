@@ -20,6 +20,8 @@
 
 #define DEBUG_OCD_BEHAVIOR 0
 
+#define PLACEMENT_OFFSET_MM 88.f  // Twice block width
+
 namespace Anki {
 namespace Cozmo {
   
@@ -86,7 +88,7 @@ namespace Cozmo {
 #pragma mark -
 #pragma mark Inherited Virtual Implementations
   
-  bool BehaviorOCD::IsRunnable(float currentTime_sec) const
+  bool BehaviorOCD::IsRunnable(double currentTime_sec) const
   {
     // We can only run this behavior when there are at least two "messy" blocks present,
     // or when there is at least one messy block while we've got any neat blocks
@@ -138,7 +140,7 @@ namespace Cozmo {
   } // Init()
 
   
-  IBehavior::Status BehaviorOCD::Update(float currentTime_sec)
+  IBehavior::Status BehaviorOCD::Update(double currentTime_sec)
   {
     // Check to see if we had any problems with any handlers
     if(_lastHandlerResult != RESULT_OK) {
@@ -175,7 +177,7 @@ namespace Cozmo {
     return Status::Running;
   }
   
-  Result BehaviorOCD::Interrupt(float currentTime_sec)
+  Result BehaviorOCD::Interrupt(double currentTime_sec)
   {
     _interrupted = true;
     return RESULT_OK;
@@ -380,7 +382,7 @@ namespace Cozmo {
   
   // Return a pose "next to" the given object, along the x or y axes.
   // Simply fails if all of the 4 check locations (+/-x, +/-y) have objects in them.
-  Result BehaviorOCD::FindEmptyPlacementPose(const ObjectID& nearObjectID, Pose3d& pose)
+  Result BehaviorOCD::FindEmptyPlacementPose(const ObjectID& nearObjectID, const f32 offset_mm, Pose3d& pose)
   {
     ObservableObject* nearObject = _robot.GetBlockWorld().GetObjectByID(nearObjectID);
     if(nearObject == nullptr) {
@@ -395,7 +397,7 @@ namespace Cozmo {
     
     // Get all aligned poses
     std::vector<Pose3d> alignedPoses;
-    ComputeAlignedPoses(nearObject->GetPose(), 2*nearObject->GetSize().x(), alignedPoses);
+    ComputeAlignedPoses(nearObject->GetPose(), offset_mm, alignedPoses);
     
     // Find closest empty pose
     std::set<ObjectID> ignoreIDs;
@@ -476,13 +478,20 @@ namespace Cozmo {
           
           if(_lastObjectPlacedOnGround.IsSet()) {
             Pose3d pose;
-            Result result = FindEmptyPlacementPose(_lastObjectPlacedOnGround, pose);
+            Result result = FindEmptyPlacementPose(_lastObjectPlacedOnGround, PLACEMENT_OFFSET_MM, pose);
             if(RESULT_OK != result) {
               PRINT_NAMED_ERROR("BehaviorOCD.SelectNextPlacement.NoEmptyPosesFound", "");
               return result;
             }
-            
-            placementAction = new PlaceObjectOnGroundAtPoseAction(_robot, pose);
+
+            // Place block at specified offset from lastObjectPlacedOnGround.
+            placementAction = new DriveToPickAndPlaceObjectAction(_lastObjectPlacedOnGround,
+                                                                  false,
+                                                                  PLACEMENT_OFFSET_MM,
+                                                                  0,
+                                                                  0,
+                                                                  true);
+
             BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.SelectNextPlacement.STACKS_OF_TWO",
                              "Placing object on ground at (%.1f,%.1f,%.1f) @ %.1fdeg (near object %d)",
                              pose.GetTranslation().x(), pose.GetTranslation().y(), pose.GetTranslation().z(),
@@ -517,7 +526,7 @@ namespace Cozmo {
           // TODO: Find closest available free space near the last object we placed on the ground
 
           Pose3d pose;
-          Result result = FindEmptyPlacementPose(_lastObjectPlacedOnGround, pose);
+          Result result = FindEmptyPlacementPose(_lastObjectPlacedOnGround, PLACEMENT_OFFSET_MM, pose);
           if(RESULT_OK != result) {
             PRINT_NAMED_ERROR("BehaviorOCD.SelectNextPlacement.NoEmptyPosesFound", "");
             return result;
@@ -697,7 +706,7 @@ namespace Cozmo {
     {
       case Arrangement::StacksOfTwo:
       {
-        const f32 MIN_NEATNESS_SCORE = 0.8f;
+        const f32 MIN_NEATNESS_SCORE = 0.7f;
         const f32 RECENTLY_OBSERVED_TIME_THRESH_MS = 1000.f;
         
         TimeStamp_t lastMsgRecvdTime = _robot.GetLastMsgTimestamp();
@@ -796,7 +805,7 @@ namespace Cozmo {
             
             f32 score = GetNeatnessScore(*objID);
             if (score < MIN_NEATNESS_SCORE) {
-              PRINT_NAMED_INFO("BehaviorOCD.VerifyNeatness.NeatToMessy", "Object %d", objID->GetValue());
+              PRINT_NAMED_INFO("BehaviorOCD.VerifyNeatness.NeatToMessy", "Object %d, score %f", objID->GetValue(), score);
               if ((_currentState == State::PlacingBlock) && (*objID == _objectToPlaceOn)) {
                 // Robot is trying to place a block on neat block that we're about to make messy,
                 // so cancel it.
@@ -1000,12 +1009,7 @@ namespace Cozmo {
       _neatObjects.erase(objectID);
       _messyObjects.insert(objectID);
 
-      SetBlockLightState(objectID, BlockLightState::Messy);
-      
-      // If blocks were complete before this then, set the NEAT colors on remaining neat blocks
-      if (_neatObjects.size() == 3) {
-        SetBlockLightState(_neatObjects, BlockLightState::Neat);
-      }
+      UpdateBlockLights();
       
       // Increase irritation level
       ++_irritationLevel;

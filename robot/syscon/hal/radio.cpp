@@ -14,6 +14,8 @@ extern "C" {
 #include "timer.h"
 #include "head.h"
 
+#include "nrf_gpio.h"
+
 // Blinky status lights!
 #include "anki/cozmo/robot/spineData.h"
 
@@ -24,10 +26,10 @@ extern "C" {
 extern GlobalDataToHead g_dataToHead;
 extern GlobalDataToBody g_dataToBody;
 
-#ifndef BACKPACK_DEMO
-const uint8_t     cubePipe[] = {1,2,3,4};
-#else
+#ifndef RADIO_TIMING_TEST
 const uint8_t     cubePipe[] = {1};
+#else
+const uint8_t     cubePipe[] = {1,2,3,4};
 #endif
 
 #define MAX_CUBES sizeof(cubePipe)
@@ -45,10 +47,12 @@ void Radio::init() {
     5,
     {0xE7,0xE7,0xE7,0xE7},
     {0xC2,0xC2,0xC2,0xC2},
-#ifdef ROBOT41
-    {0xE7,0xC2,0xC3,0xC4,0xC5,0xC6,0xC7,0xC8},
-#else
+#ifdef RADIO_TIMING_TEST
+    {0xE7,0xC1,0xC3,0xC4,0xC5,0xC6,0xC7,0xC8},
+#elif defined(ROBOT41)
     {0xE6,0xC9,0xCA,0xCB,0xCC,0xCD,0xCE,0xCF},
+#else
+    {0xE7,0xC2,0xC3,0xC4,0xC5,0xC6,0xC7,0xC8},
 #endif
     0x3F,
     3
@@ -58,15 +62,7 @@ void Radio::init() {
   uesb_start();
   
   memset(cubeRx, 0, sizeof(cubeRx));
-  #if defined(NATHAN_WANTS_DEMO) || defined(BACKPACK_DEMO)
-  for (int g = 0; g < MAX_CUBES; g++) {
-    cubeTx[g].ledStatus[2] = 0xFF;
-    //memset(cubeTx[g].ledStatus, 0xFF, 12);
-    cubeTx[g].ledDark = 0;
-  }
-  #else
   memset(cubeTx, 0, sizeof(cubeTx));
-  #endif
 }
 
 extern "C" void uesb_event_handler(void)
@@ -77,7 +73,7 @@ extern "C" void uesb_event_handler(void)
   {
     uesb_payload_t rx_payload;
     uesb_read_rx_payload(&rx_payload);
-    uint8_t addr = rx_payload.pipe - 1;
+    uint8_t addr = rx_payload.data[sizeof(AcceleratorPacket)] - 0xC2;
     
     if (addr < MAX_CUBES) {
       memcpy((uint8_t*)&cubeRx[addr], rx_payload.data, sizeof(AcceleratorPacket));
@@ -88,21 +84,10 @@ extern "C" void uesb_event_handler(void)
     UART::dump(rx_payload.length, (char*)rx_payload.data);
     #endif
   }
-}
-
-#include "nrf_gpio.h"
-#include "hardware.h"
-
-extern "C" void BlinkPack(int toggle) {
-  #if defined(BACKPACK_DEMO)
-  nrf_gpio_pin_set(PIN_LED2);
-  nrf_gpio_cfg_output(PIN_LED2);
-
-  if (toggle) {
-    nrf_gpio_cfg_input(PIN_LED1, NRF_GPIO_PIN_NOPULL);
-  } else {
+  #ifdef RADIO_TIMING_TEST
+  else
+  {
     nrf_gpio_pin_clear(PIN_LED1);
-    nrf_gpio_cfg_output(PIN_LED1);
   }
   #endif
 }
@@ -118,9 +103,7 @@ void Radio::manage() {
     
     // Transmit to cube our line status
     if (g_dataToBody.cubeToUpdate < MAX_CUBES) {
-      #if !defined(BACKPACK_DEMO) && !defined(NATHAN_WANTS_DEMO)
       memcpy(&cubeTx[g_dataToBody.cubeToUpdate], &g_dataToBody.cubeStatus, sizeof(LEDPacket));
-      #endif
     }
   }
   
@@ -132,9 +115,14 @@ void Radio::manage() {
   if (currentCube < MAX_CUBES)
   {
     #ifdef DEBUG_MESSAGES
-    UART::put("\r\nTx");
-    UART::dec(currentCube);
+    UART::print("\r\nTx %i", currentCube);
     #endif
+
+#ifdef RADIO_TIMING_TEST
+    nrf_gpio_pin_set(PIN_LED1);
+    nrf_gpio_cfg_output(PIN_LED1);
+    memset(cubeTx[currentCube].ledStatus, 0xFF, 12);
+#endif
     
     uesb_write_tx_payload(cubePipe[currentCube], (uint8_t*)&cubeTx[currentCube], sizeof(LEDPacket));
   }

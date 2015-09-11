@@ -36,14 +36,14 @@ namespace Cozmo {
     BehaviorOCD(Robot& robot, const Json::Value& config);
     virtual ~BehaviorOCD() { }
     
-    virtual bool IsRunnable(float currentTime_sec) const override;
+    virtual bool IsRunnable(double currentTime_sec) const override;
 
     virtual Result Init() override;
     
-    virtual Status Update(float currentTime_sec) override;
+    virtual Status Update(double currentTime_sec) override;
     
     // Finish placing current object if there is one, otherwise good to go
-    virtual Result Interrupt(float currentTime_sec) override;
+    virtual Result Interrupt(double currentTime_sec) override;
     
     virtual bool GetRewardBid(Reward& reward) override;
     
@@ -75,7 +75,7 @@ namespace Cozmo {
     Result SelectArrangement();
     Result SelectNextObjectToPickUp();
     Result SelectNextPlacement();
-    Result FindEmptyPlacementPose(const ObjectID& nearObjectID, Pose3d& pose);
+    Result FindEmptyPlacementPose(const ObjectID& nearObjectID, const f32 offset_mm, Pose3d& pose);
     void ComputeAlignedPoses(const Pose3d& basePose, f32 distance, std::vector<Pose3d> &alignedPoses);
     
     // Gets the object within objectSet that is closest to the robot and

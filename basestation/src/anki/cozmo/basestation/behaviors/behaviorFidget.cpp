@@ -77,7 +77,7 @@ namespace Cozmo {
     return RESULT_OK;
   }
   
-  IBehavior::Status BehaviorFidget::Update(float currentTime_sec)
+  IBehavior::Status BehaviorFidget::Update(double currentTime_sec)
   {
     if(_interrupted) {
       // TODO: Do we need to cancel the last commanded fidget action?
@@ -121,7 +121,7 @@ namespace Cozmo {
     return Status::Running;
   } // Update()
   
-  Result BehaviorFidget::Interrupt(float currentTime_sec)
+  Result BehaviorFidget::Interrupt(double currentTime_sec)
   {
     // Mark the behavior as interrupted so it will return COMPLETE on next update
     _interrupted = true;

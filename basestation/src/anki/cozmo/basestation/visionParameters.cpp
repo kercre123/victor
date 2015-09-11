@@ -101,14 +101,11 @@ namespace Anki {
 #if 0
 #pragma mark --- TrackerParameters ---
 #endif
-      
-      
-#if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PLANAR6DOF
+    
       const f32 TrackerParameters::MIN_TRACKER_DISTANCE = 10.f;
       const f32 TrackerParameters::MAX_TRACKER_DISTANCE = 200.f;
       const f32 TrackerParameters::MAX_BLOCK_DOCKING_ANGLE = DEG_TO_RAD(45);
       const f32 TrackerParameters::MAX_DOCKING_FOV_ANGLE = DEG_TO_RAD(60);
-#endif
       
       TrackerParameters::TrackerParameters()
       : isInitialized(false)
@@ -125,50 +122,9 @@ namespace Anki {
         // which just makes the mean of the pixels within the tracking quad equal 128.
         normalizationFilterWidthFraction = -1.f; //0.5f;
         
-#if DOCKING_ALGORITHM == DOCKING_BINARY_TRACKER
-        // Binary tracker works at QVGA (unlike LK)
-        trackingResolution = Vision::CAMERA_RES_QVGA;
-        
-        trackingImageWidth  = Vision::CameraResInfo[trackingResolution].width;
-        trackingImageHeight = Vision::CameraResInfo[trackingResolution].height;
-        scaleTemplateRegionPercent = 1.1f;
-        
-        
-        edgeDetectionParams_template = TemplateTracker::BinaryTracker::EdgeDetectionParameters(
-          TemplateTracker::BinaryTracker::EDGE_TYPE_GRAYVALUE,
-          4,    // s32 threshold_yIncrement; //< How many pixels to use in the y direction (4 is a good value?)
-          4,    // s32 threshold_xIncrement; //< How many pixels to use in the x direction (4 is a good value?)
-          0.1f, // f32 threshold_blackPercentile; //< What percentile of histogram energy is black? (.1 is a good value)
-          0.9f, // f32 threshold_whitePercentile; //< What percentile of histogram energy is white? (.9 is a good value)
-          0.8f, // f32 threshold_scaleRegionPercent; //< How much to scale template bounding box (.8 is a good value)
-          2,    // s32 minComponentWidth; //< The smallest horizontal size of a component (1 to 4 is good)
-          500,  // s32 maxDetectionsPerType; //< As many as you have memory and time for (500 is good)
-          1,    // s32 combHalfWidth; //< How far apart to compute the derivative difference (1 is good)
-          10,   // s32 combResponseThreshold; //< The minimum absolute-value response to start an edge component (20 is good)
-          1     // s32 everyNLines; //< As many as you have time for
-        );
-        
-        edgeDetectionParams_update = edgeDetectionParams_template;
-        edgeDetectionParams_update.maxDetectionsPerType = 2500;
-          
-        matching_maxTranslationDistance     = 7;
-        matching_maxProjectiveDistance      = 7;
-        verify_maxTranslationDistance = 2;
-        verify_maxPixelDifference = 50;
-        verify_coordinateIncrement = 3;
-        percentMatchedPixelsThreshold       = 0.02f; // TODO: pick a reasonable value
-        
-#else
         // LK tracker parameter initialization
-        
-#if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PROJECTIVE || DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PLANAR6DOF
         trackingResolution   = resolution;
         numPyramidLevels     = 3; // TODO: Compute from resolution to get down to a given size?
-#else
-        //trackingResolution   = Vision::CAMERA_RES_QQQVGA; // 80x60
-        trackingResolution   = Vision::CAMERA_RES_QQVGA; // 160x120
-        numPyramidLevels     = 3;
-#endif // DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PROJECTIVE
         
         trackingImageWidth   = Vision::CameraResInfo[trackingResolution].width;
         trackingImageHeight  = Vision::CameraResInfo[trackingResolution].height;
@@ -177,7 +133,6 @@ namespace Anki {
         verify_maxPixelDifference = 30;
         useWeights                = true;
        
-#if DOCKING_ALGORITHM == DOCKING_LUCAS_KANADE_SAMPLED_PLANAR6DOF
         convergenceTolerance_angle    = DEG_TO_RAD(0.05);
         convergenceTolerance_distance = 0.05f; // mm
         
@@ -196,14 +151,7 @@ namespace Anki {
         successTolerance_angle        = DEG_TO_RAD(30);
         successTolerance_distance     = 20.f;
         successTolerance_matchingPixelsFraction = 0.75f;
-#else
-        scaleTemplateRegionPercent    = 1.1f;
-        convergenceTolerance          = 1.f;
-        maxSamplesAtBaseLevel         = 500;
-#endif
         
-        
-#endif // if DOCKING_ALGORITHM == DOCKING_BINARY_TRACKER
         isInitialized = true;
       }
       

@@ -50,6 +50,27 @@ namespace Anki
       extern volatile ONCHIP GlobalDataToHead g_dataToHead;
       extern volatile ONCHIP GlobalDataToBody g_dataToBody;
 
+      void DisplayStatus(int id) {
+        static char cnt[4];
+        char msg[512];
+        char *wr = msg;
+        
+        cnt[id]++;
+        
+        for (int b = 0; b < 6; b++)
+          wr += sprintf(wr, "%2x ", ((u8*)&g_dataToHead.cubeStatus)[b]);
+        
+        for (int i = 0; i < 4; i++) {
+          wr += sprintf(wr, "\n%2x:", cnt[i]);
+          for (int b = 0; b < 6; b++) {
+            wr += sprintf(wr, " %2x", ((u8*)&g_AccelStatus[i])[b]);
+          }
+        }
+
+        FacePrintf(msg);
+      }
+        
+      
       void ManageCubes(void) {
         #ifndef OLD_CUBE_EXPERIMENT
         // LED status
@@ -74,6 +95,8 @@ namespace Anki
         uint8_t count = shocks - g_AccelStatus[id].shockCount;
         memcpy(&g_AccelStatus[id], (void*)&g_dataToHead.cubeStatus, sizeof(AcceleratorPacket));
         
+        //DisplayStatus(id);
+
         if (count) {
           Messages::ActiveObjectTapped m;
           m.numTaps = count;

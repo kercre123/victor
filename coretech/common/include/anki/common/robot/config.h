@@ -13,7 +13,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #ifndef _ANKICORETECHEMBEDDED_COMMON_CONFIG_H_
 #define _ANKICORETECHEMBEDDED_COMMON_CONFIG_H_
 
-//
+// 
 // Compiler-specific configuration, with various defines that make different compilers work on the same code
 //
 
@@ -21,7 +21,9 @@ For internal use only. No part of this code may be used without a signed non-dis
 #ifdef STM32F429_439xx  // Early version with external memory
 #define ONCHIP __attribute__((section("ONCHIP")))
 #else
+#define OFFCHIP
 #define ONCHIP
+#define CCM
 #endif
 
 #if defined(_MSC_VER) // We're using the MSVC compiler
