@@ -1441,22 +1441,32 @@ public class VortexController : GameController {
   
       // cozmo reaction
       if (playersThatAreCorrect.Contains(1)) {
-        if (playersThatAreCorrect[0] == cozmoIndex) {
-          // major win
-          SetRobotEmotion("MAJOR_WIN");
+        if (predictedEarly) {
+          SetRobotEmotion("EARLY_RISK_WIN");
         }
         else {
-          // minor win
-          SetRobotEmotion("MINOR_WIN");
+          if (playersThatAreCorrect[0] == cozmoIndex) {
+            // major win
+            SetRobotEmotion("MAJOR_WIN");
+          }
+          else {
+            // minor win
+            SetRobotEmotion("MINOR_WIN");
+          }
         }
       }
       else if (playersThatAreWrong.Contains(1)) {
-        if (scores[cozmoIndex] < Math.Abs(settings.pointsIncorrectPenalty)) {
-          // minor loss
-          SetRobotEmotion("MINOR_FAIL");
+        if (predictedEarly) {
+          SetRobotEmotion("EARLY_RISK_LOSE");
         }
         else {
-          SetRobotEmotion("MAJOR_FAIL");
+          if (scores[cozmoIndex] < Math.Abs(settings.pointsIncorrectPenalty)) {
+            // minor loss
+            SetRobotEmotion("MINOR_FAIL");
+          }
+          else {
+            SetRobotEmotion("MAJOR_FAIL");
+          }
         }
   
       }
@@ -1799,8 +1809,19 @@ public class VortexController : GameController {
       if (face_index >= 0) {
         DAS.Error("VortexController", "Got new face for pose index " + pose_index.ToString());
         Face face = robot.faceObjects[face_index];
+        Face old_face = null;
+        if (actualFaces[pose_index] != null) {
+          old_face = new Face(actualFaces[pose_index].ID, actualFaces[pose_index].WorldPosition.x, actualFaces[pose_index].WorldPosition.y, actualFaces[pose_index].WorldPosition.z);
+        }
         actualFaces[pose_index] = new Face(face.ID, face.WorldPosition.x, face.WorldPosition.y, face.WorldPosition.z);
         if (playState == VortexState.REQUEST_SPIN && pose_index == GetPoseIndex(currentPlayerIndex) && Time.realtimeSinceStartup - faceUpdateTimer > faceUpdateFreq) {
+          if (old_face == null) {
+            DAS.Error("VortexController", "actualFaces[pose_index] == null");
+          }
+          else {
+            DAS.Error("VortexController", "diff: " + (face.WorldPosition - old_face.WorldPosition).sqrMagnitude);
+          }
+
           CozmoEmotionManager.instance.SetEmotionFacePose("YOUR_TURN", actualFaces[pose_index], true, true);
           faceUpdateTimer = Time.realtimeSinceStartup;
         }
@@ -1963,10 +1984,10 @@ public class VortexController : GameController {
     switch (cozmoExpectation) {
     case CozmoExpectation.EXPECT_WIN_RIGHT:
     case CozmoExpectation.EXPECT_WIN_WRONG:
-      CozmoEmotionManager.SetEmotion("EXPECT_REWARD");
+      //CozmoEmotionManager.SetEmotion("EXPECT_REWARD");
       break;
     case CozmoExpectation.KNOWS_WRONG:
-      CozmoEmotionManager.SetEmotion("KNOWS_WRONG");
+      //CozmoEmotionManager.SetEmotion("KNOWS_WRONG");
       break;
     default:
       break;
@@ -2002,7 +2023,7 @@ public class VortexController : GameController {
     // DAS.Error("VortextController", "got " + action_type);
     switch (action_type) {
     case RobotActionType.COMPOUND:
-      if (success) {
+      if (success && !atYourMark) {
         atYourMark = true;
         if (RobotEngineManager.instance != null)
           RobotEngineManager.instance.SuccessOrFailure -= CheckForGotoStartCompletion;
@@ -2059,7 +2080,7 @@ public class VortexController : GameController {
       if (index == cozmoIndex) { // cozmo
         //SetRobotEmotion ("LETS_PLAY");
 //        DAS.Error("VortextController", "lets play!");
-        CozmoEmotionManager.SetEmotion("LETS_PLAY", true);
+        //CozmoEmotionManager.SetEmotion("LETS_PLAY", true);
       }
       else {
         DAS.Debug("Vortex", "PlayerInputTap validating playerIndex(" + index + ")");
