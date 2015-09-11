@@ -68,7 +68,7 @@ namespace Cozmo {
 
   }
   
-  Result BehaviorFidget::Init()
+  Result BehaviorFidget::Init(double currentTime_sec)
   {
     _interrupted = false;
     _nextFidgetWait_sec = 0.f;

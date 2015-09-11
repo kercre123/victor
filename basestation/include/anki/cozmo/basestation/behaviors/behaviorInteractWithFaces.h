@@ -26,7 +26,7 @@ namespace Cozmo {
     
     BehaviorInteractWithFaces(Robot& robot, const Json::Value& config);
     
-    virtual Result Init() override;
+    virtual Result Init(double currentTime_sec) override;
     
     // Always runnable for now?
     virtual bool IsRunnable(double currentTime_sec) const override { return true; }

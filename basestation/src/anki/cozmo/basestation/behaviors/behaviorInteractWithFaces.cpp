@@ -40,7 +40,7 @@ namespace Cozmo {
     
   }
   
-  Result BehaviorInteractWithFaces::Init()
+  Result BehaviorInteractWithFaces::Init(double currentTime_sec)
   {
     _currentState = State::LOOKING_AROUND;
     

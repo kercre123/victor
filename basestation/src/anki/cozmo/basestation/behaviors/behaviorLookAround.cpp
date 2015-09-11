@@ -15,6 +15,7 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/common/shared/radians.h"
 #include "anki/common/robot/config.h"
 #include "clad/externalInterface/messageEngineToGame.h"
@@ -85,8 +86,11 @@ bool BehaviorLookAround::IsRunnable(double currentTime_sec) const
   return false;
 }
 
-Result BehaviorLookAround::Init()
+Result BehaviorLookAround::Init(double currentTime_sec)
 {
+  // Update explorable area center to current robot pose
+  _moveAreaCenter = _robot.GetPose();
+  
   _currentState = State::StartLooking;
   return Result::RESULT_OK;
 }
@@ -113,6 +117,8 @@ IBehavior::Status BehaviorLookAround::Update(double currentTime_sec)
     {
       IActionRunner* moveHeadAction = new MoveHeadToAngleAction(0);
       _robot.GetActionList().QueueActionAtEnd(0, moveHeadAction);
+      IActionRunner* moveLiftAction = new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK);
+      _robot.GetActionList().QueueActionAtEnd(0, moveLiftAction);
       if (StartMoving() == RESULT_OK) {
         _currentState = State::LookingForObject;
       }
