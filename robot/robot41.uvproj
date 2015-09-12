@@ -428,6 +428,11 @@
               <FileType>8</FileType>
               <FilePath>.\k02_hal\hal\enjpeg.cpp</FilePath>
             </File>
+            <File>
+              <FileName>power.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\k02_hal\hal\power.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
