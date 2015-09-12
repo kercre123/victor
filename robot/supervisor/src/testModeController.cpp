@@ -299,8 +299,8 @@ namespace Anki {
       }
       
       Result PlaceOnGroundTestUpdate()
-        {
-            if (!PickAndPlaceController::IsBusy()) {
+      {
+        if (!PickAndPlaceController::IsBusy()) {
           PRINT("PlaceBlockOnGround: %s\n", PickAndPlaceController::DidLastActionSucceed() ? "SUCCESS" : "FAILED");
         }
         return RESULT_OK;
@@ -524,9 +524,6 @@ namespace Anki {
       {
         // Change direction (or at least print speed
         if (ticCnt_++ >= WHEEL_TOGGLE_DIRECTION_PERIOD_MS / TIME_STEP) {
-
-          f32 lSpeed = HAL::MotorGetSpeed(HAL::MOTOR_LEFT_WHEEL);
-          f32 rSpeed = HAL::MotorGetSpeed(HAL::MOTOR_RIGHT_WHEEL);
           
           f32 lSpeed_filt, rSpeed_filt;
           WheelController::GetFilteredWheelSpeeds(lSpeed_filt,rSpeed_filt);
@@ -550,6 +547,9 @@ namespace Anki {
 
           wheelTargetDir_ = wheelPower_ <= wheelTargetPower_ ? 1 : -1;
           
+#if (DISABLE_PRINT_MACROS == 0)
+          f32 lSpeed = HAL::MotorGetSpeed(HAL::MOTOR_LEFT_WHEEL);
+          f32 rSpeed = HAL::MotorGetSpeed(HAL::MOTOR_RIGHT_WHEEL);
           if (enableDirectHALTest_) {
             PRINT("Going %s %.3f power (currSpeed %.2f %.2f, filtSpeed %.2f %.2f)\n",
                   wheelTargetDir_ > 0 ? "forward" : "reverse",
@@ -561,6 +561,7 @@ namespace Anki {
                   wheelSpeed_mmps_,
                   lSpeed, rSpeed, lSpeed_filt, rSpeed_filt);
           }
+#endif // DISABLE_PRINT_MACROS
           
           ticCnt_ = 0;
         }
@@ -747,6 +748,7 @@ namespace Anki {
         }
 
 
+#if (DISABLE_PRINT_MACROS == 0)
         // Print height and speed
         if (ticCnt2_++ >= printCyclePeriod_) {
           f32 lSpeed = HAL::MotorGetSpeed(HAL::MOTOR_LIFT);
@@ -755,6 +757,7 @@ namespace Anki {
           PRINT("Lift speed %f rad/s, height %f mm\n", lSpeed, lPos);
           ticCnt2_ = 0;
         }
+#endif
 
 
         
@@ -845,6 +848,7 @@ namespace Anki {
         }
         
         
+#if (DISABLE_PRINT_MACROS == 0)
         // Print speed
         if (ticCnt2_++ >= printCyclePeriod_) {
           f32 hSpeed = HAL::MotorGetSpeed(HAL::MOTOR_HEAD);
@@ -856,6 +860,7 @@ namespace Anki {
           }
           ticCnt2_ = 0;
         }
+#endif
         
         
         return RESULT_OK;
@@ -887,6 +892,7 @@ namespace Anki {
           }
         }
         
+#if (DISABLE_PRINT_MACROS == 0)
         // Print gyro readings
         if (++ticCnt_ >= 200 / TIME_STEP) {
           
@@ -906,6 +912,7 @@ namespace Anki {
           
           ticCnt_ = 0;
         }
+#endif
 
         return RESULT_OK;
       }
