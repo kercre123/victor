@@ -1059,6 +1059,8 @@ namespace Cozmo {
       _messyObjects.insert(objectID);
       
       if(IsRunning()) {
+        UpdateBlockLights();
+        
         // Queue irritated animation
         if (currentTime_sec - _lastNeatBlockDisturbedTime > kMajorIrritationTimeIntervalSec) {
           PlayAnimation("MinorIrritation");
@@ -1089,6 +1091,9 @@ namespace Cozmo {
         BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.HandleObservedObject",
                          "Adding observed object %d to messy list.", msg.objectID);
         _lastNewBlockObservedTime = currentTime_sec;
+        if (IsRunning()) {
+          UpdateBlockLights();
+        }
       }
     }
     
