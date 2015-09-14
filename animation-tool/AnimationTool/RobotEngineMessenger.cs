@@ -1,51 +1,73 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Threading;
 using Anki.Cozmo.ExternalInterface;
 using Anki.Cozmo;
 using UnityEngine;
+using System.Windows.Forms;
 
 namespace AnimationTool
 {
-    public class RobotEngineMessenger
+    public class RobotEngineMessenger : IDisposable
     {
         /// <summary>
         /// Occurs on an unspecified thread. May be called even after -=.
         /// </summary>
-        public event Action<string> ConnectionTextUpdate;
-        public string ConnectionText { get; private set; }
-        private bool wasShowingDisconnect = false;
-
         private object sync = new object();
+        private ChannelBase channel = new UdpChannel();
         private Thread thread = null;
-        private bool running = false;
+        private bool isStarted = false;
+        private bool isStopping = false;
         private static readonly TimeSpan ThreadTick = TimeSpan.FromMilliseconds(100);
 
         private const int ConnectionRetryCount = 3;
         private int connectionTries = 0;
         private static readonly TimeSpan MaxStateMessageWaitTime = TimeSpan.FromSeconds(5);
 
-        private ChannelBase channel = null;
-        private MessageGameToEngine message = new MessageGameToEngine();
         private bool resetRequested = false;
         private string queuedAnimationName = null;
+        private List<MessageGameToEngine> outgoingQueue = new List<MessageGameToEngine>();
         private bool isReadyToSend = false;
         private int lastStateMessage = 0;
-        private DisplayProceduralFace displayProceduralFaceMessage;
+
+        public event Action<string> ConnectionTextUpdate;
+        private string connectionText;
+        private bool wasShowingDisconnect = false;
+
+        public string ConnectionText
+        {
+            get
+            {
+                lock (sync)
+                {
+                    return connectionText;
+                }
+            }
+        }
 
         public RobotEngineMessenger()
         {
-            this.ConnectionText = "[Disconnected]";
+            this.connectionText = "[Disconnected]";
+        }
 
-            displayProceduralFaceMessage = new DisplayProceduralFace();
-            displayProceduralFaceMessage.leftEye = new float[(int)ProceduralEyeParameter.NumParameters];
-            displayProceduralFaceMessage.rightEye = new float[(int)ProceduralEyeParameter.NumParameters];
+        public void Dispose()
+        {
+            Stop();
         }
 
         public void Start()
         {
-            running = true;
+            lock (sync)
+            {
+                if (isStarted)
+                {
+                    return;
+                }
+
+                isStarted = true;
+            }
             thread = new Thread(MainLoop);
             thread.Start();
         }
@@ -54,9 +76,10 @@ namespace AnimationTool
         {
             lock (sync)
             {
-                if (!running) return;
+                if (isStopping)
+                    return;
 
-                running = false;
+                isStopping = true;
             }
             thread.Join();
         }
@@ -78,16 +101,26 @@ namespace AnimationTool
             }
         }
 
+        public void SendMessage(MessageGameToEngine message)
+        {
+            lock (sync)
+            {
+                outgoingQueue.Add(message);
+                connectionTries = 0;
+            }
+        }
+
         private void MainLoop()
         {
             StartChannel();
             string currentAnimation = null;
+            List<MessageGameToEngine> waitingQueue = new List<MessageGameToEngine>();
             while (true)
             {
                 bool wantReset;
                 lock (sync)
                 {
-                    if (!running)
+                    if (isStopping)
                     {
                         break;
                     }
@@ -95,6 +128,9 @@ namespace AnimationTool
                     queuedAnimationName = null;
                     wantReset = resetRequested;
                     resetRequested = false;
+
+                    waitingQueue.AddRange(outgoingQueue);
+                    outgoingQueue.Clear();
                 }
 
                 if (wantReset)
@@ -102,11 +138,33 @@ namespace AnimationTool
                     channel.Disconnect();
                     isReadyToSend = false;
                 }
+
                 channel.Update();
-                if (!string.IsNullOrEmpty(currentAnimation) && TrySendAnimation(currentAnimation))
+
+                if (!string.IsNullOrEmpty(currentAnimation) || waitingQueue.Count != 0)
                 {
-                    currentAnimation = null;
+                    if (!EnsureConnected())
+                    {
+                        currentAnimation = null;
+                        waitingQueue.Clear();
+                    }
                 }
+
+                if (channel.IsConnected && isReadyToSend)
+                {
+                    if (!string.IsNullOrEmpty(currentAnimation))
+                    {
+                        SendRawAnimation(currentAnimation);
+                        currentAnimation = null;
+                    }
+
+                    foreach (MessageGameToEngine message in waitingQueue)
+                    {
+                        channel.Send(message);
+                    }
+                    waitingQueue.Clear();
+                }
+
                 RaiseConnectionTextUpdate();
 
                 Thread.Sleep(ThreadTick);
@@ -140,10 +198,9 @@ namespace AnimationTool
                 }
                 Thread.Sleep(500);
             }
-            channel = null;
         }
 
-        private bool TrySendAnimation(string animationName)
+        private bool EnsureConnected()
         {
             if (IsLagging())
             {
@@ -157,23 +214,18 @@ namespace AnimationTool
                 if (connectionTries > ConnectionRetryCount)
                 {
                     Console.WriteLine("WARNING: Gave up trying to connect after " + ConnectionRetryCount + " attempts.");
-                    return true;
+                    return false;
                 }
 
                 channel.Connect(RobotSettings.DeviceId, RobotSettings.GetNextFreePort(), RobotSettings.AdvertisingIPAddress, RobotSettings.AdvertisingPort);
                 channel.Update();
             }
-
-            if (channel.IsConnected && isReadyToSend)
-            {
-                SendRawAnimation(animationName);
-                return true;
-            }
-            return false;
+            return true;
         }
 
         private void SendRawAnimation(string animationName)
         {
+            MessageGameToEngine message = new MessageGameToEngine();
             ReadAnimationFile readAnimationMessage = new ReadAnimationFile();
             message.ReadAnimationFile = readAnimationMessage;
             channel.Send(message);
@@ -183,6 +235,7 @@ namespace AnimationTool
             animationMessage.animationName = animationName;
             animationMessage.numLoops = 1;
 
+            message = new MessageGameToEngine();
             message.PlayAnimation = animationMessage;
             channel.Send(message);
         }
@@ -218,6 +271,7 @@ namespace AnimationTool
             }
             startEngineMessage.vizHostIP[length] = 0;
 
+            MessageGameToEngine message = new MessageGameToEngine();
             message.StartEngine = startEngineMessage;
             channel.Send(message);
         }
@@ -250,23 +304,30 @@ namespace AnimationTool
             forceAddRobotMessage.robotID = (byte)robotID;
             forceAddRobotMessage.isSimulated = robotIsSimulated ? (byte)1 : (byte)0;
 
+            MessageGameToEngine message = new MessageGameToEngine();
             message.ForceAddRobot = forceAddRobotMessage;
             channel.Send(message);
         }
 
-        private void ReceivedMessage(MessageEngineToGame message)
+        private void ReceivedMessage(MessageEngineToGame incomingMessage)
         {
-            switch (message.GetTag())
+            switch (incomingMessage.GetTag())
             {
                 case MessageEngineToGame.Tag.RobotAvailable:
-                    this.message.ConnectToRobot = new ConnectToRobot();
-                    this.message.ConnectToRobot.robotID = RobotSettings.RobotId;
-                    channel.Send(this.message);
+                    {
+                        MessageGameToEngine message = new MessageGameToEngine();
+                        message.ConnectToRobot = new ConnectToRobot();
+                        message.ConnectToRobot.robotID = RobotSettings.RobotId;
+                        channel.Send(message);
+                    }
                     break;
                 case MessageEngineToGame.Tag.UiDeviceAvailable:
-                    this.message.ConnectToUiDevice = new ConnectToUiDevice();
-                    this.message.ConnectToUiDevice.deviceID = (byte)(message.UiDeviceAvailable.deviceID);
-                    channel.Send(this.message);
+                    {
+                        MessageGameToEngine message = new MessageGameToEngine();
+                        message.ConnectToUiDevice = new ConnectToUiDevice();
+                        message.ConnectToUiDevice.deviceID = (byte)(incomingMessage.UiDeviceAvailable.deviceID);
+                        channel.Send(message);
+                    }
                     break;
                 case MessageEngineToGame.Tag.RobotState:
                     if (channel.IsConnected)
@@ -280,7 +341,10 @@ namespace AnimationTool
 
         private bool IsLagging()
         {
-            return (channel.IsConnected && isReadyToSend && Environment.TickCount - lastStateMessage > MaxStateMessageWaitTime.TotalMilliseconds);
+            lock (sync)
+            {
+                return (channel.IsConnected && isReadyToSend && Environment.TickCount - lastStateMessage > MaxStateMessageWaitTime.TotalMilliseconds);
+            }
         }
 
         private void RaiseConnectionTextUpdate()
@@ -290,8 +354,6 @@ namespace AnimationTool
 
         private void RaiseConnectionTextUpdate(string newDisconnectionText)
         {
-            if (channel == null) return;
-
             string newConnectionText;
 
             if (IsLagging())
@@ -320,63 +382,19 @@ namespace AnimationTool
             }
             else
             {
-                newConnectionText = ConnectionText;
+                newConnectionText = connectionText;
             }
             wasShowingDisconnect = channel.IsActive;
 
-            if (newConnectionText != ConnectionText)
+            if (newConnectionText != connectionText)
             {
-                ConnectionText = newConnectionText;
+                connectionText = newConnectionText;
                 Action<string> callback = ConnectionTextUpdate;
                 if (callback != null)
                 {
-                    callback(ConnectionText);
+                    callback(connectionText);
                 }
             }
-        }
-
-        public void AnimateFace(Sequencer.ExtraProceduralFaceData data)
-        {
-            if (channel == null || !channel.IsConnected || data == null) return;
-
-            displayProceduralFaceMessage.robotID = 1;
-            displayProceduralFaceMessage.faceAngle = data.faceAngle;
-
-            for (int i = 0; i < displayProceduralFaceMessage.leftEye.Length && i < data.leftEye.Length; ++i)
-            {
-                displayProceduralFaceMessage.leftEye[i] = data.leftEye[i];
-                displayProceduralFaceMessage.rightEye[i] = data.rightEye[i];
-            }
-
-            message.DisplayProceduralFace = displayProceduralFaceMessage;
-            channel.Send(message);
-        }
-
-        public void AnimateFace(FaceForm faceForm)
-        {
-            if (channel == null || !channel.IsConnected || faceForm == null || !faceForm.Changed) return;
-
-            displayProceduralFaceMessage.robotID = 1;
-            displayProceduralFaceMessage.faceAngle = faceForm.faceAngle;
-
-            for (int i = 0; i < displayProceduralFaceMessage.leftEye.Length && i < faceForm.eyes.Length; ++i)
-            {
-                if (faceForm.eyes[i] != null)
-                {
-                    displayProceduralFaceMessage.leftEye[i] = faceForm.eyes[i].LeftValue;
-                    displayProceduralFaceMessage.rightEye[i] = faceForm.eyes[i].RightValue;
-                }
-                else
-                {
-                    Debug.LogWarning("Missing " + (ProceduralEyeParameter)i + " in message.");
-                    displayProceduralFaceMessage.leftEye[i] = 0;
-                    displayProceduralFaceMessage.rightEye[i] = 0;
-                }
-            }
-
-            message.DisplayProceduralFace = displayProceduralFaceMessage;
-            channel.Send(message);
-            faceForm.Changed = false;
         }
     }
 }

@@ -4,6 +4,9 @@ using System.ComponentModel;
 using System.Windows.Forms;
 using System.Windows.Forms.DataVisualization.Charting;
 using System.IO;
+using Anki.Cozmo.ExternalInterface;
+using Anki.Cozmo;
+using UnityEngine;
 
 namespace AnimationTool
 {
@@ -441,7 +444,7 @@ namespace AnimationTool
 
         private void FaceAnimation(object o, EventArgs e)
         {
-            robotEngineMessenger.AnimateFace(faceForm);
+            AnimateFace(faceForm);
         }
 
         private void ChangeConnectionText(string connectionText)
@@ -468,6 +471,59 @@ namespace AnimationTool
                 audioRobot.Size = new System.Drawing.Size(Size.Width - 35, audioRobot.Size.Height);
                 audioDevice.Size = new System.Drawing.Size(Size.Width - 35, audioDevice.Size.Height);
             }
+        }
+
+
+        public void AnimateFace(Sequencer.ExtraProceduralFaceData data)
+        {
+            if (data == null) return;
+
+            DisplayProceduralFace displayProceduralFaceMessage = new DisplayProceduralFace();
+            displayProceduralFaceMessage.leftEye = new float[(int)ProceduralEyeParameter.NumParameters];
+            displayProceduralFaceMessage.rightEye = new float[(int)ProceduralEyeParameter.NumParameters];
+            displayProceduralFaceMessage.robotID = 1;
+            displayProceduralFaceMessage.faceAngle = data.faceAngle;
+
+            for (int i = 0; i < displayProceduralFaceMessage.leftEye.Length && i < data.leftEye.Length; ++i)
+            {
+                displayProceduralFaceMessage.leftEye[i] = data.leftEye[i];
+                displayProceduralFaceMessage.rightEye[i] = data.rightEye[i];
+            }
+
+            MessageGameToEngine message = new MessageGameToEngine();
+            message.DisplayProceduralFace = displayProceduralFaceMessage;
+            robotEngineMessenger.SendMessage(message);
+        }
+
+        public void AnimateFace(FaceForm faceForm)
+        {
+            if (faceForm == null || !faceForm.Changed) return;
+
+            DisplayProceduralFace displayProceduralFaceMessage = new DisplayProceduralFace();
+            displayProceduralFaceMessage.leftEye = new float[(int)ProceduralEyeParameter.NumParameters];
+            displayProceduralFaceMessage.rightEye = new float[(int)ProceduralEyeParameter.NumParameters];
+            displayProceduralFaceMessage.robotID = 1;
+            displayProceduralFaceMessage.faceAngle = faceForm.faceAngle;
+
+            for (int i = 0; i < displayProceduralFaceMessage.leftEye.Length && i < faceForm.eyes.Length; ++i)
+            {
+                if (faceForm.eyes[i] != null)
+                {
+                    displayProceduralFaceMessage.leftEye[i] = faceForm.eyes[i].LeftValue;
+                    displayProceduralFaceMessage.rightEye[i] = faceForm.eyes[i].RightValue;
+                }
+                else
+                {
+                    Debug.LogWarning("Missing " + (ProceduralEyeParameter)i + " in message.");
+                    displayProceduralFaceMessage.leftEye[i] = 0;
+                    displayProceduralFaceMessage.rightEye[i] = 0;
+                }
+            }
+
+            MessageGameToEngine message = new MessageGameToEngine();
+            message.DisplayProceduralFace = displayProceduralFaceMessage;
+            robotEngineMessenger.SendMessage(message);
+            faceForm.Changed = false;
         }
     }
 }

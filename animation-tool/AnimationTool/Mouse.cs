@@ -138,7 +138,7 @@ namespace AnimationTool
 
                         if (curChart.Name == "cProceduralFace")
                         {
-                            robotEngineMessenger.AnimateFace(Sequencer.ExtraData.Entries[curDataPoint.GetCustomProperty(Sequencer.ExtraData.Key)] as Sequencer.ExtraProceduralFaceData);
+                            AnimateFace(Sequencer.ExtraData.Entries[curDataPoint.GetCustomProperty(Sequencer.ExtraData.Key)] as Sequencer.ExtraProceduralFaceData);
                         }
                     }
                     else
@@ -507,7 +507,7 @@ namespace AnimationTool
                 {
                     ActionManager.Do(new RemoveDataPoint(curDataPoint, curChart), true);
                 }
-                robotEngineMessenger.AnimateFace(previous != null ? previous : extraData); // Else if cancelled, set back to previous face
+                AnimateFace(previous != null ? previous : extraData); // Else if cancelled, set back to previous face
             }
         }
 
