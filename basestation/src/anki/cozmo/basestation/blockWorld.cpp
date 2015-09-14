@@ -1737,7 +1737,7 @@ namespace Anki
                      ((robotBottom >= blockBottom) && (robotBottom <= blockTop)));
                      */
                     
-                    const bool bboxIntersects   = objectBBox.Intersects(_robot->GetBoundingQuadXY());
+                    const bool bboxIntersects   = objectBBox.Intersects(_robot->GetBoundingQuadXY(ROBOT_BBOX_PADDING_FOR_OBJECT_DELETION));
                     
                     if( inSamePlane && bboxIntersects )
                     {

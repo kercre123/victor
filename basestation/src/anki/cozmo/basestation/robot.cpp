@@ -2538,7 +2538,7 @@ namespace Anki {
       using namespace Quad;
       for(CornerName iCorner = FirstCorner; iCorner < NumCorners; ++iCorner) {
         // Rotate to given pose
-        boundingQuad[iCorner] = R * CanonicalBoundingBoxXY[iCorner];
+        boundingQuad[iCorner] = R * boundingQuad[iCorner];
       }
       
       // Re-center
