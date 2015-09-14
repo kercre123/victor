@@ -484,7 +484,7 @@ public class VortexController : GameController {
       }
       else if (!robot.isBusy && !playerMockBlocks[cozmoIndex].Validated) {
         //robot.TapBlockOnGround(1);
-        //robot.isBusy = true;
+        robot.isBusy = true;
         CozmoEmotionManager.instance.SetEmotionReturnToPose("TAP_ONE", markx_mm, marky_mm, mark_rad, true, true);
 
       }
@@ -2035,7 +2035,7 @@ public class VortexController : GameController {
         atYourMark = true;
         if (RobotEngineManager.instance != null)
           RobotEngineManager.instance.SuccessOrFailure -= CheckForGotoStartCompletion;
-        
+        robot.isBusy = false;
         CozmoEmotionManager.SetEmotion("TAP_ONE", true);
         if (fakeCozmoTaps) {
           StartCoroutine(TapAfterDelay(1, cozmoTimeFirstTap));
@@ -2045,11 +2045,17 @@ public class VortexController : GameController {
         robot.GotoPose(defaultRobotPoses[0].x_mm, defaultRobotPoses[0].y_mm, defaultRobotPoses[0].rad);
       }
       break;
+    
     case RobotActionType.DRIVE_TO_POSE:
-      if (success) {
+      if (success && !atYourMark) {
         atYourMark = true;
         if (RobotEngineManager.instance != null)
           RobotEngineManager.instance.SuccessOrFailure -= CheckForGotoStartCompletion;
+        robot.isBusy = false;
+        CozmoEmotionManager.SetEmotion("TAP_ONE", true);
+        if (fakeCozmoTaps) {
+          StartCoroutine(TapAfterDelay(1, cozmoTimeFirstTap));
+        }
       }
       else { //try again to go to the start spot
         robot.GotoPose(defaultRobotPoses[0].x_mm, defaultRobotPoses[0].y_mm, defaultRobotPoses[0].rad);
