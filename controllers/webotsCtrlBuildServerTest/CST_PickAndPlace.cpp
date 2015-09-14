@@ -30,7 +30,7 @@ namespace Cozmo {
   private:
     
     // TODO: This should be 6 but marker detection range needs to be improved!
-    const u32 NUM_BLOCKS_EXPECTED_ON_START = 3;
+    const u32 NUM_BLOCKS_EXPECTED_ON_START = 6;
     
     virtual s32 UpdateInternal() override;
     
