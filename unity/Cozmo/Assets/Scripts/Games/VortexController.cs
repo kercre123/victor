@@ -712,7 +712,6 @@ public class VortexController : GameController {
       SetRobotEmotion("WIN_MATCH");
     }
     else {
-      // cozmo lost
       SetRobotEmotion("LOSE_MATCH");
     }
 
@@ -1460,12 +1459,21 @@ public class VortexController : GameController {
           SetRobotEmotion("EARLY_RISK_LOSE");
         }
         else {
-          if (scores[cozmoIndex] < Math.Abs(settings.pointsIncorrectPenalty)) {
-            // minor loss
-            SetRobotEmotion("MINOR_FAIL");
+          // cozmo lost
+          if (playersThatAreWrong.Count == 1) {
+            SetRobotEmotion("ONLY_WRONG");
+          }
+          else if (playersThatAreCorrect.Count == 0) {
+            SetRobotEmotion("ALL_WRONG");
           }
           else {
-            SetRobotEmotion("MAJOR_FAIL");
+            if (scores[cozmoIndex] < Math.Abs(settings.pointsIncorrectPenalty)) {
+              // minor loss
+              SetRobotEmotion("MINOR_FAIL");
+            }
+            else {
+              SetRobotEmotion("MAJOR_FAIL");
+            }
           }
         }
   
