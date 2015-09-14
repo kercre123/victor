@@ -25,23 +25,22 @@ enum uint_8 ImageResolution
 
 enum uint_8 ImageEncoding
 {
-  // Image encodings pack into high nibble 
-  IE_None,
-  IE_RawGray, // no compression
-  IE_RawRGB, // no compression, just [RGBRGBRG...]
-  IE_YUYV,
-  IE_BAYER,
-  IE_JPEGGray,
-  IE_JPEGColor,
-  IE_JPEGColorHalfWidth,
-  IE_JPEGMinimizedGray,  // Minimized grayscale JPEG - no header, no footer, no byte stuffing
-  IE_JPEGMinimizedColor, // Minimized grayscale JPEG - no header, no footer, no byte stuffing - with added color data
+  Nothing,
+  RawGray, // no compression
+  RawRGB,  // no compression, just [RGBRGBRG...]
+  YUYV,
+  BAYER,
+  JPEGGray,
+  JPEGColor,
+  JPEGColorHalfWidth,
+  JPEGMinimizedGray, // Minimized grayscale JPEG - no header, no footer, no byte stuffing
+  JPEGMinimizedColor // Minimized grayscale JPEG - no header, no footer, no byte stuffing, with added color data
 }
 
 enum uint_8 ImageSendMode {
-    ISM_OFF,
-    ISM_STREAM,
-    ISM_SINGLE_SHOT,
+    Off,
+    Stream,
+    SingleShot
 }
 
 enum uint_32 ImageConstants

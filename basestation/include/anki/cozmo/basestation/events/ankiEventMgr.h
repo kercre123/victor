@@ -12,17 +12,15 @@
  * COZMO_PUBLIC_HEADER
  **/
 
-#ifndef ANKI_COZMO_EVENTMGR_H
-#define ANKI_COZMO_EVENTMGR_H
+#ifndef __Anki_Cozmo_Basestation_Events_AnkiEventMgr_H__
+#define __Anki_Cozmo_Basestation_Events_AnkiEventMgr_H__
 
 #pragma mark
 
 #include "anki/cozmo/basestation/events/ankiEvent.h"
-#include "anki/cozmo/shared/cozmoTypes.h"
 #include "util/signals/simpleSignal.hpp"
 #include "util/helpers/noncopyable.h"
-
-#include <map>
+#include <unordered_map>
 #include <functional>
 
 namespace Anki {
@@ -40,11 +38,10 @@ public:
   void Broadcast(const EventDataType& event);
   
   // Allows subscribing to events by type with the passed in function
-  Signal::SmartHandle Subcribe(u32 type, SubscriberFunction function);
+  Signal::SmartHandle Subcribe(uint32_t type, SubscriberFunction function);
   
 private:
-  std::map<u32, EventHandlerSignal>  _eventHandlerMap;
-  
+  std::unordered_map<uint32_t, EventHandlerSignal>  _eventHandlerMap;
 }; // class AnkiEventMgr
   
   
@@ -52,7 +49,7 @@ private:
 template <typename DataType>
 void AnkiEventMgr<DataType>::Broadcast(const EventDataType& event)
 {
-  typename std::map<u32, EventHandlerSignal>::iterator iter = _eventHandlerMap.find(event.GetType());
+  auto iter = _eventHandlerMap.find(event.GetType());
   if (iter != _eventHandlerMap.end())
   {
     iter->second.emit(event);
@@ -60,7 +57,7 @@ void AnkiEventMgr<DataType>::Broadcast(const EventDataType& event)
 }
   
 template <typename DataType>
-Signal::SmartHandle AnkiEventMgr<DataType>::Subcribe(u32 type, SubscriberFunction function)
+Signal::SmartHandle AnkiEventMgr<DataType>::Subcribe(uint32_t type, SubscriberFunction function)
 {
   return _eventHandlerMap[type].ScopedSubscribe(function);
 }
@@ -68,4 +65,4 @@ Signal::SmartHandle AnkiEventMgr<DataType>::Subcribe(u32 type, SubscriberFunctio
 } // namespace Cozmo
 } // namespace Anki
 
-#endif //  ANKI_COZMO_EVENTMGR_H
+#endif //  __Anki_Cozmo_Basestation_Events_AnkiEventMgr_H__

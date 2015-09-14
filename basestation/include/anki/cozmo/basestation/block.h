@@ -348,9 +348,10 @@ namespace Anki {
       
       // Populate a message specifying the current state of the block, for sending
       // out to actually set the physical block to match
-      void FillMessage(SetBlockLights& msg) const;
-      
-    protected:
+      //void FillMessage(SetBlockLights& msg) const;
+
+      // TODO: Make protected/private
+    //protected:
       
       // TODO: Promote to Block object
       const Vision::KnownMarker& GetTopMarker(Pose3d& markerPoseWrtOrigin) const;

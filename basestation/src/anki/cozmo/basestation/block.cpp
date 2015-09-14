@@ -923,6 +923,7 @@ namespace Anki {
       return (WhichBlockLEDs)rotatedWhichLEDs;
     }
     
+/*
     void ActiveCube::FillMessage(MessageSetBlockLights& m) const
     {
       m.blockID = _activeID;
@@ -953,6 +954,7 @@ namespace Anki {
 #     endif 
       
     }
-    
+*/
+
   } // namespace Cozmo
 } // namespace Anki

@@ -312,7 +312,7 @@ void CozmoEngineHostImpl::SetImageSendMode(RobotID_t robotID, ImageSendMode newM
     return robot->SetImageSendMode(newMode);
   }
 }
-void CozmoEngineHostImpl::SetRobotImageSendMode(RobotID_t robotID, ImageSendMode newMode, CameraResolutionClad resolution)
+void CozmoEngineHostImpl::SetRobotImageSendMode(RobotID_t robotID, ImageSendMode newMode, ImageResolution resolution)
 {
   Robot* robot = GetRobotByID(robotID);
 
@@ -324,8 +324,7 @@ void CozmoEngineHostImpl::SetRobotImageSendMode(RobotID_t robotID, ImageSendMode
       robot->GetBlockWorld().EnableDraw(true);
     }
 
-    robot->RequestImage((ImageSendMode_t)newMode,
-      (Vision::CameraResolution)resolution);
+    robot->RequestImage(newMode, resolution);
   }
 
 }

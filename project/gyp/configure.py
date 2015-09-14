@@ -168,7 +168,7 @@ def main(scriptArgs):
   generator.processFolder(['robot/sim_hal', 'robot/supervisor/src', 'simulator/src/robot', 'simulator/controllers/webotsCtrlRobot'],
    ['project/gyp/ctrlRobot.lst'])
   generator.processFolder(['simulator/controllers/webotsCtrlViz'], ['project/gyp/ctrlViz.lst'])
-  generator.processFolder(['clad/src'], ['project/gyp/clad.lst'])
+  generator.processFolder(['clad/src', 'robot/clad/src'], ['project/gyp/clad.lst'])
   webotsPhysicsPath = os.path.join(projectRoot, 'generated/webots/src/plugins/physics/')
   # copy the webots' physics.c into the generated folder
   util.File.mkdir_p(webotsPhysicsPath)
