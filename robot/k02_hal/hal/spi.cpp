@@ -4,6 +4,7 @@
 #include "board.h"
 #include "fsl_debug_console.h"
 #include "anki/cozmo/robot/hal.h"
+#include "hal/portable.h"
 
 #include "spi.h"
 
@@ -14,10 +15,72 @@
   so it doesn't keep clocking the Espressif.
 */
 
+void bit_bang_test(void) {
+  const int DELAY = 100;
+  const int EARLY_CLOCKS = 10;
+  const int TRANSFER_SIZE = 96;
+  const int LATE_CLOCKS = 12;
+  const int PACKET_DELAY = 1000000;
+  
+  GPIO_PIN_SOURCE(PCS1, PTD,  4);
+  GPIO_PIN_SOURCE( SCK, PTE, 17);
+  GPIO_PIN_SOURCE(SOUT, PTE, 18);
+  GPIO_PIN_SOURCE( SIN, PTE, 19);
+
+  GPIO_OUT(GPIO_PCS1, PIN_PCS1);
+  GPIO_OUT(GPIO_SCK, PIN_SCK);
+  GPIO_OUT(GPIO_SOUT, PIN_SOUT);
+  GPIO_IN(GPIO_SIN, PIN_SIN);
+
+  PORTD_PCR4  = PORT_PCR_MUX(1);
+  PORTE_PCR17 = PORT_PCR_MUX(1);
+  PORTE_PCR18 = PORT_PCR_MUX(1);
+  PORTE_PCR19 = PORT_PCR_MUX(1);
+
+  bool WS = false;
+
+  for(;;) {
+    for(int ec = 0; ec < EARLY_CLOCKS; ec++) {
+      GPIO_RESET(GPIO_SCK, PIN_SCK);
+      Anki::Cozmo::HAL::MicroWait(DELAY);
+      GPIO_SET(GPIO_SCK, PIN_SCK);
+      Anki::Cozmo::HAL::MicroWait(DELAY);
+    }
+    for(uint16_t w = 0; w < TRANSFER_SIZE;w++) {
+      if (WS) {
+        GPIO_SET(GPIO_PCS1, PIN_PCS1);
+      } else {
+        GPIO_RESET(GPIO_PCS1, PIN_PCS1);
+      }
+      WS = !WS;
+
+      for(int b = 0; b < 16; b++) {
+        if ((w >> b) & 1) {
+          GPIO_SET(GPIO_SOUT, PIN_SOUT);
+        } else {
+          GPIO_RESET(GPIO_SOUT, PIN_SOUT);
+        }
+        
+        GPIO_RESET(GPIO_SCK, PIN_SCK);
+        Anki::Cozmo::HAL::MicroWait(DELAY);
+        GPIO_SET(GPIO_SCK, PIN_SCK);
+        Anki::Cozmo::HAL::MicroWait(DELAY);
+      }
+    }
+    for(int ec = 0; ec < LATE_CLOCKS; ec++) {
+      GPIO_RESET(GPIO_SCK, PIN_SCK);
+      Anki::Cozmo::HAL::MicroWait(DELAY);
+      GPIO_SET(GPIO_SCK, PIN_SCK);
+      Anki::Cozmo::HAL::MicroWait(DELAY);
+    }
+    Anki::Cozmo::HAL::MicroWait(PACKET_DELAY);
+  }
+}
 
 void spi_init(void) {
   Anki::Cozmo::HAL::MicroWait(1000000);
 
+  
   const int size = 96;
   uint32_t spi_buff[size]; // 512 bytes
 
@@ -26,6 +89,8 @@ void spi_init(void) {
   SIM_SCGC5 |= SIM_SCGC5_PORTE_MASK | SIM_SCGC5_PORTD_MASK;
   SIM_SCGC7 |= SIM_SCGC7_DMA_MASK;
 
+  bit_bang_test();
+  
   // Configure SPI pins
   PORTD_PCR4  = PORT_PCR_MUX(2); // SPI0_PCS1
   PORTE_PCR17 = PORT_PCR_MUX(2); // SPI0_SCK
@@ -57,7 +122,7 @@ void spi_init(void) {
     spi_buff[i] = 
         i |
         SPI_PUSHR_CONT_MASK | 
-        SPI_PUSHR_PCS((i & 1) ? ~0: 0);// | 
+        SPI_PUSHR_PCS((i & 1) ? ~0: 0) | 
         (i == (size-1) ? SPI_PUSHR_EOQ_MASK : 0);
   }
   
@@ -66,8 +131,7 @@ void spi_init(void) {
   while(true) {
     while (false && SPI0_SR & SPI_SR_RFDF_MASK)
     {
-      //spi_buff[rx_idx] &= ~0xFFFF;
-      spi_buff[rx_idx] |= SPI0_POPR;
+      spi_buff[rx_idx] = (spi_buff[rx_idx] & ~ 0xFFFF) | SPI0_POPR;
       rx_idx = (rx_idx + 1) % size;
       SPI0_SR = SPI_SR_RFDF_MASK;
     }
@@ -86,7 +150,7 @@ void SPI0_IRQHandler(void) {
     // When the EOQ flag is set, clear our continuous clock mode.
     while (SPI0_SR & SPI_SR_EOQF_MASK)
     {
-      SPI0_MCR &= ~SPI_MCR_CONT_SCKE_MASK;
+      //SPI0_MCR &= ~SPI_MCR_CONT_SCKE_MASK;
       SPI0_SR = SPI_SR_EOQF_MASK;
     }
 }
