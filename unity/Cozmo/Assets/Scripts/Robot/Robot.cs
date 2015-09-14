@@ -20,9 +20,8 @@ public class Robot : IDisposable {
       TWO = 0x02,
       THREE = 0x04,
       FOUR = 0x08,
-      ALL = 0xff}
-
-    ;
+      ALL = 0xff
+    }
 
     private PositionFlag IndexToPosition(int i) {
       switch (i) {
@@ -105,6 +104,8 @@ public class Robot : IDisposable {
     public const uint FOREVER = 2147483647;
     private bool initialized = false;
   }
+
+  public delegate void RobotCallback(bool success);
 
   public byte ID { get; private set; }
 
@@ -250,6 +251,8 @@ public class Robot : IDisposable {
     OBSERVED_RECENTLY
   }
 
+  private List<KeyValuePair<RobotActionType, RobotCallback>> robotCallbacks = new List<KeyValuePair<RobotActionType, RobotCallback>>();
+
   protected ObservedObjectListType observedObjectListType = ObservedObjectListType.MARKERS_SEEN;
   protected float objectPertinenceRange = 220f;
   
@@ -388,15 +391,27 @@ public class Robot : IDisposable {
     RobotEngineManager.instance.DisconnectedFromClient += Reset;
 
     RefreshObjectPertinence();
+    RobotEngineManager.instance.SuccessOrFailure += RobotEngineMessages;
   }
 
   public void Dispose() {
     RobotEngineManager.instance.DisconnectedFromClient -= Reset;
+    RobotEngineManager.instance.SuccessOrFailure -= RobotEngineMessages;
   }
 
   public void CooldownTimers(float delta) {
     if (localBusyTimer > 0f) {
       localBusyTimer -= delta;
+    }
+  }
+
+  private void RobotEngineMessages(bool success, RobotActionType messageType) {
+    for (int i = 0; i < robotCallbacks.Count; ++i) {
+      if (messageType == robotCallbacks[i].Key) {
+        robotCallbacks[i].Value(success);
+        robotCallbacks.RemoveAt(i);
+        i--;
+      }
     }
   }
 
@@ -665,6 +680,17 @@ public class Robot : IDisposable {
     RobotEngineManager.instance.SendMessage();
   }
 
+  public void SendAnimation(string animName, RobotCallback callback = null) {
+    CozmoAnimation newAnimation = new CozmoAnimation();
+    newAnimation.animName = animName;
+    newAnimation.numLoops = 1;
+    CozmoEmotionManager.instance.SendAnimation(newAnimation);
+
+    if (callback != null) {
+      robotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.PLAY_ANIMATION, callback));
+    }
+  }
+
   public float GetHeadAngleFactor() {
 
     float angle = IsHeadAngleRequestUnderway() ? headAngleRequested : headAngle_rad;
@@ -689,7 +715,11 @@ public class Robot : IDisposable {
   /// </summary>
   /// <param name="angleFactor">Angle factor.</param> usually from -1 (MIN_HEAD_ANGLE) to 1 (MAX_HEAD_ANGLE)
   /// <param name="useExactAngle">If set to <c>true</c> angleFactor is treated as an exact angle in radians.</param>
-  public void SetHeadAngle(float angleFactor = -0.8f, bool useExactAngle = false, float accelRadSec = 2f, float maxSpeedFactor = 1f) {
+  public void SetHeadAngle(float angleFactor = -0.8f, 
+                           Robot.RobotCallback onComplete = null,
+                           bool useExactAngle = false, 
+                           float accelRadSec = 2f, 
+                           float maxSpeedFactor = 1f) {
 
     float radians = angleFactor;
 
@@ -717,6 +747,10 @@ public class Robot : IDisposable {
 
     RobotEngineManager.instance.Message.SetHeadAngle = SetHeadAngleMessage;
     RobotEngineManager.instance.SendMessage();
+
+    if (onComplete != null) {
+      robotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.MOVE_HEAD_TO_ANGLE, onComplete));
+    }
   }
 
   public void TrackToObject(ObservedObject observedObject, bool headOnly = true) {
@@ -785,7 +819,7 @@ public class Robot : IDisposable {
     localBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
   }
 
-  public void RollObject(ObservedObject selectedObject, bool usePreDockPose = true, bool useManualSpeed = false) {
+  public void RollObject(ObservedObject selectedObject, bool usePreDockPose = true, bool useManualSpeed = false, RobotCallback callback = null) {
     RollObjectMessage.objectID = selectedObject;
     RollObjectMessage.usePreDockPose = System.Convert.ToByte(usePreDockPose);
     RollObjectMessage.useManualSpeed = System.Convert.ToByte(useManualSpeed);
@@ -796,6 +830,9 @@ public class Robot : IDisposable {
     RobotEngineManager.instance.SendMessage();
 
     localBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
+    if (callback != null) {
+      robotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.ROLL_OBJECT_LOW, callback));
+    }
   }
 
   public void TapBlockOnGround(int taps) {
@@ -819,6 +856,7 @@ public class Robot : IDisposable {
     RobotEngineManager.instance.SendMessage();
     
     localBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
+
   }
 
   public Vector3 NudgePositionOutOfObjects(Vector3 position) {
@@ -874,7 +912,7 @@ public class Robot : IDisposable {
     return (Time.time < lastLiftHeightRequestTime + CozmoUtil.LIFT_REQUEST_TIME) ? liftHeightRequested : liftHeight_factor;
   }
 
-  public void SetLiftHeight(float height_factor) {
+  public void SetLiftHeight(float height_factor, RobotCallback callback = null) {
     if ((Time.time < lastLiftHeightRequestTime + CozmoUtil.LIFT_REQUEST_TIME && height_factor == liftHeightRequested) || liftHeight_factor == height_factor)
       return;
 
@@ -887,6 +925,10 @@ public class Robot : IDisposable {
 
     RobotEngineManager.instance.Message.SetLiftHeight = SetLiftHeightMessage;
     RobotEngineManager.instance.SendMessage();
+
+    if (callback != null) {
+      robotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.MOVE_LIFT_TO_HEIGHT, callback));
+    }
   }
 
   public void SetRobotCarryingObject(int objectID = -1) {

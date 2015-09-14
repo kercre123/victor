@@ -43,14 +43,12 @@ public class PatternPlayController : GameController {
     base.OnEnable();
     robot.VisionWhileMoving(true);
     ActiveBlock.TappedAction += BlockTapped;
-    RobotEngineManager.instance.SuccessOrFailure += RobotEngineMessages;
     robot.StopFaceAwareness();
   }
 
   protected override void OnDisable() {
     base.OnDisable();
     ActiveBlock.TappedAction -= BlockTapped;
-    RobotEngineManager.instance.SuccessOrFailure -= RobotEngineMessages;
   }
 
   protected override void Enter_BUILDING() {
@@ -203,13 +201,10 @@ public class PatternPlayController : GameController {
     blockLightConfigs[blockID] = (BlockLightConfig)(((int)blockLightConfigs[blockID] + numTapped) % System.Enum.GetNames(typeof(BlockLightConfig)).Length);
   }
 
-  private void RobotEngineMessages(bool success, RobotActionType action_type) {
-    DAS.Debug("PatternPlayController", "RobotEngineMessage: " + action_type);
-    if (action_type == RobotActionType.PLAY_ANIMATION) {
-      animationPlaying = false;
-      lastAnimationFinishedTime = Time.time;
-      ResetLookHeadForkLift();
-    }
+  private void DonePlayingAnimation(bool success) {
+    animationPlaying = false;
+    lastAnimationFinishedTime = Time.time;
+    ResetLookHeadForkLift();
   }
 
   private bool ValidPatternSeen(out RowBlockPattern patternSeen) {
@@ -371,10 +366,7 @@ public class PatternPlayController : GameController {
 
   private void SendAnimation(string animName) {
     animationPlaying = true;
-    CozmoAnimation newAnimation = new CozmoAnimation();
-    newAnimation.animName = animName;
-    newAnimation.numLoops = 1;
-    CozmoEmotionManager.instance.SendAnimation(newAnimation);
+    robot.SendAnimation(animName, DonePlayingAnimation);
   }
 
   private void ResetLookHeadForkLift() {

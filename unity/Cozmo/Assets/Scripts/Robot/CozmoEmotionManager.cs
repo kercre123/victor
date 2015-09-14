@@ -41,9 +41,8 @@ public class CozmoEmotionManager : MonoBehaviour {
     MAJOR_FAIL,
     WIN_MATCH,
     LOSE_MATCH,
-    TAUNT}
-
-  ;
+    TAUNT
+  }
 
   public enum EmotionIntensity {
     MILD,
