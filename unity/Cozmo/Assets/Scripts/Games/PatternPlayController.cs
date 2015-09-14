@@ -212,6 +212,12 @@ public class PatternPlayController : GameController {
     }
   }
 
+  private void DonePlayingAnimation(bool success) {
+    animationPlaying = false;
+    lastAnimationFinishedTime = Time.time;
+    ResetLookHeadForkLift();
+  }
+
   private bool ValidPatternSeen(out RowBlockPattern patternSeen) {
     patternSeen = new RowBlockPattern();
     // need at least 2 to form a pattern.
@@ -371,10 +377,7 @@ public class PatternPlayController : GameController {
 
   private void SendAnimation(string animName) {
     animationPlaying = true;
-    CozmoAnimation newAnimation = new CozmoAnimation();
-    newAnimation.animName = animName;
-    newAnimation.numLoops = 1;
-    CozmoEmotionManager.instance.SendAnimation(newAnimation);
+    robot.SendAnimation(animName, DonePlayingAnimation);
   }
 
   private void ResetLookHeadForkLift() {
