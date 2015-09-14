@@ -138,6 +138,7 @@ public class VortexController : GameController {
   public CozmoUtil.RobotPose[] defaultRobotPoses = new CozmoUtil.RobotPose[3];
   public Face[] actualFaces = new Face[3];
   public float minFaceMovementSqd_mm = 900;
+  public float faceUpdateFreq = 1.0f;
 
   #endregion
 
@@ -221,7 +222,7 @@ public class VortexController : GameController {
   ObservedObject humanHead;
 
   float frequency = 0.1f;
-  float headTimer = 0f;
+  float faceUpdateTimer = 0f;
   float turnStartAngle = 0f;
 
   float fadeTimer = 1f;
@@ -452,7 +453,7 @@ public class VortexController : GameController {
       
     }
 
-    headTimer = 0.1f;
+    faceUpdateTimer = 0.1f;
 
     imageGear.color = gearDefaultColor;
 
@@ -1005,6 +1006,7 @@ public class VortexController : GameController {
       if (actualFaces[GetPoseIndex(currentPlayerIndex)] != null) {
         // Debug.Log("should be tracking to head");
         robot.FacePose(actualFaces[GetPoseIndex(currentPlayerIndex)]);
+        faceUpdateTimer = Time.realtimeSinceStartup;
         CozmoEmotionManager.instance.SetEmotionFacePose("YOUR_TURN", actualFaces[GetPoseIndex(currentPlayerIndex)], true, true);
       }
       else {
@@ -1439,22 +1441,32 @@ public class VortexController : GameController {
   
       // cozmo reaction
       if (playersThatAreCorrect.Contains(1)) {
-        if (playersThatAreCorrect[0] == cozmoIndex) {
-          // major win
-          SetRobotEmotion("MAJOR_WIN");
+        if (predictedEarly) {
+          SetRobotEmotion("EARLY_RISK_WIN");
         }
         else {
-          // minor win
-          SetRobotEmotion("MINOR_WIN");
+          if (playersThatAreCorrect[0] == cozmoIndex) {
+            // major win
+            SetRobotEmotion("MAJOR_WIN");
+          }
+          else {
+            // minor win
+            SetRobotEmotion("MINOR_WIN");
+          }
         }
       }
       else if (playersThatAreWrong.Contains(1)) {
-        if (scores[cozmoIndex] < Math.Abs(settings.pointsIncorrectPenalty)) {
-          // minor loss
-          SetRobotEmotion("MINOR_FAIL");
+        if (predictedEarly) {
+          SetRobotEmotion("EARLY_RISK_LOSE");
         }
         else {
-          SetRobotEmotion("MAJOR_FAIL");
+          if (scores[cozmoIndex] < Math.Abs(settings.pointsIncorrectPenalty)) {
+            // minor loss
+            SetRobotEmotion("MINOR_FAIL");
+          }
+          else {
+            SetRobotEmotion("MAJOR_FAIL");
+          }
         }
   
       }
@@ -1759,8 +1771,7 @@ public class VortexController : GameController {
             // in our range, check distance
             float distance_sq = (robot.WorldPosition - pos_face.WorldPosition).sqrMagnitude;
             bool betterThanOld = (actualFaces[pose_index] == null)
-                                 || (((pos_face.WorldPosition - actualFaces[pose_index].WorldPosition).sqrMagnitude > minFaceMovementSqd_mm)
-                                 && ((robot.WorldPosition - actualFaces[pose_index].WorldPosition).sqrMagnitude > closest_face));
+                                 || (((pos_face.WorldPosition - actualFaces[pose_index].WorldPosition).sqrMagnitude > minFaceMovementSqd_mm));
             if (betterThanOld && distance_sq < closest_face) {
               closest_face = distance_sq;
               face_index = i;
@@ -1772,8 +1783,7 @@ public class VortexController : GameController {
             // in our range, check distance
             float distance_sq = (robot.WorldPosition - pos_face.WorldPosition).sqrMagnitude;
             bool betterThanOld = (actualFaces[pose_index] == null)
-                                 || (((pos_face.WorldPosition - actualFaces[pose_index].WorldPosition).sqrMagnitude > minFaceMovementSqd_mm)
-                                 && ((robot.WorldPosition - actualFaces[pose_index].WorldPosition).sqrMagnitude > closest_face));
+                                 || (((pos_face.WorldPosition - actualFaces[pose_index].WorldPosition).sqrMagnitude > minFaceMovementSqd_mm));
             if (betterThanOld && distance_sq < closest_face) {
               closest_face = distance_sq;
               face_index = i;
@@ -1787,8 +1797,7 @@ public class VortexController : GameController {
             // only change if current is null or the distance between the "old" and "new" (likely the same face)
             // is greater than our threshold
             bool betterThanOld = (actualFaces[pose_index] == null)
-                                 || (((pos_face.WorldPosition - actualFaces[pose_index].WorldPosition).sqrMagnitude > minFaceMovementSqd_mm)
-                                 && ((robot.WorldPosition - actualFaces[pose_index].WorldPosition).sqrMagnitude > closest_face));
+                                 || (((pos_face.WorldPosition - actualFaces[pose_index].WorldPosition).sqrMagnitude > minFaceMovementSqd_mm));
             if (betterThanOld && distance_sq < closest_face) {
               closest_face = distance_sq;
               face_index = i;
@@ -1800,9 +1809,21 @@ public class VortexController : GameController {
       if (face_index >= 0) {
         DAS.Error("VortexController", "Got new face for pose index " + pose_index.ToString());
         Face face = robot.faceObjects[face_index];
+        Face old_face = null;
+        if (actualFaces[pose_index] != null) {
+          old_face = new Face(actualFaces[pose_index].ID, actualFaces[pose_index].WorldPosition.x, actualFaces[pose_index].WorldPosition.y, actualFaces[pose_index].WorldPosition.z);
+        }
         actualFaces[pose_index] = new Face(face.ID, face.WorldPosition.x, face.WorldPosition.y, face.WorldPosition.z);
-        if (playState == VortexState.REQUEST_SPIN && pose_index == GetPoseIndex(currentPlayerIndex)) {
+        if (playState == VortexState.REQUEST_SPIN && pose_index == GetPoseIndex(currentPlayerIndex) && Time.realtimeSinceStartup - faceUpdateTimer > faceUpdateFreq) {
+          if (old_face == null) {
+            DAS.Error("VortexController", "actualFaces[pose_index] == null");
+          }
+          else {
+            DAS.Error("VortexController", "diff: " + (face.WorldPosition - old_face.WorldPosition).sqrMagnitude);
+          }
+
           CozmoEmotionManager.instance.SetEmotionFacePose("YOUR_TURN", actualFaces[pose_index], true, true);
+          faceUpdateTimer = Time.realtimeSinceStartup;
         }
       }
 
@@ -1963,10 +1984,10 @@ public class VortexController : GameController {
     switch (cozmoExpectation) {
     case CozmoExpectation.EXPECT_WIN_RIGHT:
     case CozmoExpectation.EXPECT_WIN_WRONG:
-      CozmoEmotionManager.SetEmotion("EXPECT_REWARD");
+      //CozmoEmotionManager.SetEmotion("EXPECT_REWARD");
       break;
     case CozmoExpectation.KNOWS_WRONG:
-      CozmoEmotionManager.SetEmotion("KNOWS_WRONG");
+      //CozmoEmotionManager.SetEmotion("KNOWS_WRONG");
       break;
     default:
       break;
@@ -2002,7 +2023,7 @@ public class VortexController : GameController {
     // DAS.Error("VortextController", "got " + action_type);
     switch (action_type) {
     case RobotActionType.COMPOUND:
-      if (success) {
+      if (success && !atYourMark) {
         atYourMark = true;
         if (RobotEngineManager.instance != null)
           RobotEngineManager.instance.SuccessOrFailure -= CheckForGotoStartCompletion;
@@ -2059,7 +2080,7 @@ public class VortexController : GameController {
       if (index == cozmoIndex) { // cozmo
         //SetRobotEmotion ("LETS_PLAY");
 //        DAS.Error("VortextController", "lets play!");
-        CozmoEmotionManager.SetEmotion("LETS_PLAY", true);
+        //CozmoEmotionManager.SetEmotion("LETS_PLAY", true);
       }
       else {
         DAS.Debug("Vortex", "PlayerInputTap validating playerIndex(" + index + ")");
