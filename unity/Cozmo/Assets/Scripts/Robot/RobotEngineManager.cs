@@ -418,7 +418,7 @@ public class RobotEngineManager : MonoBehaviour {
   private void ReceivedSpecificMessage(G2U.RobotObservedNothing message) {
     if (current == null)
       return;
-
+    
     if (current.selectedObjects.Count == 0 && !current.isBusy) {
       current.ClearObservedObjects();
     }
@@ -694,11 +694,10 @@ public class RobotEngineManager : MonoBehaviour {
       }
 
       texture.LoadImage(jpegArray);
-      
+      current.ClearObservedObjects();
+
       if (RobotImage != null) {
         RobotImage(sprite);
-        
-        current.ClearObservedObjects();
       }
       
       SaveJpeg(jpegArray, currentImageIndex);
@@ -777,11 +776,9 @@ public class RobotEngineManager : MonoBehaviour {
 
       texture.SetPixels32(color32Array);
       texture.Apply(false);
-      
+      current.ClearObservedObjects();
       if (RobotImage != null) {
         RobotImage(sprite);
-        
-        current.ClearObservedObjects();
       }
     }
   }
@@ -809,11 +806,9 @@ public class RobotEngineManager : MonoBehaviour {
       ResetTexture(message.ncols, message.nrows, TextureFormat.RGB24);
 
       texture.LoadImage(jpegArray);
-
+      current.ClearObservedObjects();
       if (RobotImage != null) {
         RobotImage(sprite);
-        
-        current.ClearObservedObjects();
       }
 
       SaveJpeg(jpegArray, currentImageIndex);

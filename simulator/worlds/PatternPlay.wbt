@@ -1,0 +1,59 @@
+#VRML_SIM V8.2.1 utf8
+CozmoWorldInfo {
+}
+Viewpoint {
+  orientation -0.277597 0.119765 -0.953203 0.850039
+  position 0.259241 0.611955 2.26648
+}
+Background {
+  skyColor [
+    0.4 0.7 1
+  ]
+}
+DirectionalLight {
+  ambientIntensity 0.5
+  direction 2 -2 -1
+  intensity 0.5
+}
+DirectionalLight {
+  ambientIntensity 0.5
+  direction -2 -2 -1
+  intensity 0.5
+}
+DirectionalLight {
+  ambientIntensity 0.5
+  direction 0 2 -1
+  intensity 0.5
+}
+CozmoMat {
+  xSize 2
+  ySize 1.5
+}
+LightCube {
+  translation 0 0.135 0.0219969
+  rotation 0 1 0 0
+}
+LightCube {
+  translation -0.13 0.295 0.0219969
+  rotation 0 1 0 0
+  ID 1
+}
+LightCube {
+  translation 0.178767 0.228711 0.0219969
+  rotation 0 1 0 0
+  ID 2
+}
+LightCube {
+  translation 0.15468 0.058776 0.0219969
+  rotation 0 1 0 0
+  ID 3
+}
+BlockWorldComms {
+}
+DEF Cozmo_1 CozmoBot {
+  rotation 0 0 1 1.5708
+  name "CozmoBot_1"
+  usbChannel 10
+}
+CozmoVizDisplay {
+}
