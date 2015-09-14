@@ -126,6 +126,8 @@ namespace Anki
       
       volatile u8 eof_ = 0;
       
+      void HALExec(u8* buf, int buflen, int eof);
+      
       int JPEGStart(int quality);
       int JPEGCompress(u8* out, u8* in, int pitch);
       int JPEGEnd(u8* out);
@@ -154,11 +156,7 @@ namespace Anki
         
         // TODO: Check that the GPIOs are okay
         //for (u8 i = 1; i; i <<= 1)
-        //  printf("\r\nCam dbus: set %x, got %x", i, CamReadDB(i));    
-   
-        while (1)
-        {
-        }        
+        //  printf("\r\nCam dbus: set %x, got %x", i, CamReadDB(i));           
       }
       
       // Initialize DMA to row buffer, and fire an interrupt at end of each transfer
@@ -238,8 +236,6 @@ namespace Anki
   }
 }
 
-static int STRIPSIZE = 80;
-
 extern "C"
 void DMA0_IRQHandler(void)
 {
@@ -252,6 +248,7 @@ void DMA0_IRQHandler(void)
   static u8 whichbuf = 0;
   static u8 buflen = 0;
   static u8 whichpitch = 0;    // Swizzle pitch (80 or 640)
+  static u8 eof = 0;
   
   // Kludgey look for start of frame
   int now = SysTick->VAL;
@@ -263,28 +260,12 @@ void DMA0_IRQHandler(void)
     line = 232;       // Swizzle buffer delays us by 8 lines
   }
   
-  // Send data, if we have any
-  if (buflen && buflen < 120)
-  {
-    // Temporarily disable current transfer
-    DMA_ERQ = 0;
-    
-    // Kick off DMA transfer
-    DMA_TCD1_SADDR = (uint32_t)&buf[whichbuf][2]; // Offset 2 to make alignment work
-    DMA_TCD1_CITER_ELINKNO = buflen;// Current major loop iteration
-    DMA_TCD1_BITER_ELINKNO = buflen;// Beginning major loop iteration
-    DMA_TCD1_CSR = BM_DMA_TCDn_CSR_DREQ;  // Stop channel and set to end on last major loop iteration
-
-    DMA_ERQ = DMA_ERQ_ERQ1_MASK | DMA_ERQ_ERQ0_MASK;
-  }
-
+  HALExec(&buf[whichbuf][4], buflen, eof);
+  
   // Fill next buffer
   whichbuf ^= 1;
-  u8* p = &buf[whichbuf][2];  // Offset 2 chars to make alignment work
-  
-  // Prepare header (length gets inserted after encoding)
-  p[0] = 0xA5;
-  buflen = 2;
+  u8* p = &buf[whichbuf][4];  // Offset 4 chars to leave room for a UART header
+  buflen = 0;
   
   // Compute swizzle buffer address - this rolling buffer holds exactly 8 lines of video, the minimum for JPEG
   // Addressing the rolling buffer is complicated since we write linearly (640x1) but read macroblocks (80x8)
@@ -297,17 +278,11 @@ void DMA0_IRQHandler(void)
   buflen += JPEGCompress(p + buflen, swizz, pitch);
   if (line == 239) {
     buflen += JPEGEnd(p + buflen);
-    p[1] = (buflen-2) | 0x80;       // Set length, plus flag indicating end of frame
+    eof = 1;
   } else {
-    p[1] = (buflen-2);
+    eof = 0;
   }
-  
-  // Add cheesy checksum
-  int check = 0;
-  for (int i = 2; i < buflen; i++)
-    check += p[i];
-  p[buflen++] = check;
-  
+
   // Copy YUYV data from DMA buffer into swizzle buffer
   for (int y = 0; y < 8; y++)
     for (int x = 0; x < 80; x++)

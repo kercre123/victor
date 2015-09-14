@@ -18,74 +18,59 @@ namespace Anki
   {
     namespace HAL
     {
+      // Import init functions from all HAL components
       void CameraInit(void);
       void TimerInit(void);
       void I2CInit(void);
+      void PowerInit(void);
+      
+      // This method is called at 7.5KHz (once per scan line)
+      // After 7,680 (core) cycles, it is illegal to run any DMA or take any interrupt
+      // So, you must hit all the registers up front in this method, and set up any DMA to finish quickly
+      void HALExec(u8* buf, int buflen, int eof)
+      {
+        // Send data, if we have any
+        if (buflen && buflen < 120)
+        {
+          // Temporarily disable current transfer
+          DMA_ERQ = 0;
+          
+          // I happen to know I can access -1 and -2 (the caller left space for me)
+          buf[-2] = 0xA5;                      // UART header
+          buf[-1] = buflen | (eof ? 0x80 : 0); // Set length, plus flag indicating end of frame
+          
+          // Kick off DMA transfer
+          DMA_TCD1_SADDR = (uint32_t)(buf-2);// Offset -2 to include the header
+          DMA_TCD1_CITER_ELINKNO = buflen+2; // Current major loop iteration
+          DMA_TCD1_BITER_ELINKNO = buflen+2; // Beginning major loop iteration
+          DMA_TCD1_CSR = BM_DMA_TCDn_CSR_DREQ;  // Stop channel and set to end on last major loop iteration
+
+          DMA_ERQ = DMA_ERQ_ERQ1_MASK | DMA_ERQ_ERQ0_MASK;
+        }
+      }
     }
   }
-}
-
-// This powers up the camera, OLED, and ESP8266 while respecting power sequencing rules
-void PowerInit()
-{  
-  // I/Os used during startup
-  GPIO_PIN_SOURCE(POWEREN,    PTA, 2);
-  GPIO_PIN_SOURCE(SCK,        PTE, 17);
-  GPIO_PIN_SOURCE(MOSI,       PTE, 18);
-  GPIO_PIN_SOURCE(CAM_PWDN,   PTA, 1);
- 
-  // Clear any I/Os that are default driven in K02
-  // PTA0-3 are taken care of (SWD and POWER pins)
-  // PTA18 and 19 are driven by default
-  GPIO_IN(PTA, (1<<18) | (1<<19));
-  SOURCE_SETUP(PTA, 18, SourceGPIO);
-  SOURCE_SETUP(PTA, 19, SourceGPIO);
-  
-  // Drive CAM_PWDN once analog power comes on
-  GPIO_SET(GPIO_CAM_PWDN, PIN_CAM_PWDN);
-  GPIO_OUT(GPIO_CAM_PWDN, PIN_CAM_PWDN);
-  SOURCE_SETUP(GPIO_CAM_PWDN, SOURCE_CAM_PWDN, SourceGPIO);
-  
-  // Pull-down SCK during ESP8266 boot
-  GPIO_RESET(GPIO_SCK, PIN_SCK);
-  GPIO_OUT(GPIO_SCK, PIN_SCK);
-  SOURCE_SETUP(GPIO_SCK, SOURCE_SCK, SourceGPIO);    
-  
-  // Pull MOSI low to put ESP8266 into bootloader mode
-  // XXX: Normally, you should drive this high and rely on the cable to enter debug mode!
-  GPIO_IN(GPIO_MOSI, PIN_MOSI);
-  SOURCE_SETUP(GPIO_MOSI, SOURCE_MOSI, SourceGPIO | SourcePullUp);  
-  
-  Anki::Cozmo::HAL::MicroWait(10000);
-  
-  // Turn on 2v8 and 3v3 rails
-  GPIO_SET(GPIO_POWEREN, PIN_POWEREN);
-  GPIO_OUT(GPIO_POWEREN, PIN_POWEREN);
-  SOURCE_SETUP(GPIO_POWEREN, SOURCE_POWEREN, SourceGPIO);    
 }
 
 int main (void)
 {
   using namespace Anki::Cozmo::HAL;
   
-  // Initialize standard SDK demo application pins
+  // Kill this off as soon as we can ditch the Freescale libs
   hardware_init();
-  
-  // Call this function to initialize the console UART. This function
-  // enables the use of STDIO functions (printf, scanf, etc.)
   dbg_uart_init();
 
   PRINTF("\r\nTesting self-contained project file.\n\n\r");
 
   TimerInit();
   PowerInit();
-    
-  //I2CInit();
-  //CameraInit();
+  I2CInit();
+  
   //dac_init();
-  spi_init();
+  spi_init();  
   //i2c_init();
   //uart_init();  
   
+  //CameraInit();
   for (;;) ;
 }
