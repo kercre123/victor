@@ -104,6 +104,8 @@ namespace Cozmo {
     
     _interrupted = false;
     
+    _robot.GetActionList().Cancel();
+    
     UpdateBlockLights();
     
     // As long as we're not lined up to play an irritated behavior go to the appropriate state
@@ -133,7 +135,7 @@ namespace Cozmo {
           // TODO: Find a good place to put down this object
           // For now, just put it down right _here_
           PRINT_NAMED_WARNING("BehaviorOCD.Init.PlacingBlockDown", "Make sure this pose is clear!");
-          lastResult = _robot.GetActionList().QueueActionNow(IBehavior::sActionSlot, new PlaceObjectOnGroundAction());
+          lastResult = _robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, new PlaceObjectOnGroundAction());
           if(lastResult != RESULT_OK) {
             PRINT_NAMED_ERROR("BehaviorOCD.Init.PlacementFailed",
                               "Failed to queue PlaceObjectOnGroundAction.");
@@ -340,9 +342,10 @@ namespace Cozmo {
       _anchorObject = _objectToPickUp;
     }
     
+    _robot.GetActionList().Cancel(_lastActionTag);
     IActionRunner* pickupAction = new DriveToPickAndPlaceObjectAction(_objectToPickUp);
     _lastActionTag = pickupAction->GetTag();
-    _robot.GetActionList().QueueActionNow(IBehavior::sActionSlot, pickupAction);
+    _robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, pickupAction);
 
     _currentState = State::PickingUpBlock;
     
@@ -585,8 +588,9 @@ namespace Cozmo {
     
     _currentState = State::PlacingBlock;
     
+    _robot.GetActionList().Cancel(_lastActionTag);
     _lastActionTag = placementAction->GetTag();
-    Result queueResult = _robot.GetActionList().QueueActionNow(IBehavior::sActionSlot, placementAction);
+    Result queueResult = _robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, placementAction);
     
     return queueResult;
   } // SelectNextPlacement()
@@ -1010,6 +1014,15 @@ namespace Cozmo {
               // Erase this animation action and resume pickOrPlace if there are no more animations pending
               _animActionTags.erase(msg.idTag);
               if (_animActionTags.empty()) {
+                
+                // Set lift to appropriate height in case animation moved it
+                if (_robot.IsCarryingObject() && !NEAR(_robot.GetLiftHeight(), LIFT_HEIGHT_CARRY, 10)) {
+                  _robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, new MoveLiftToHeightAction(LIFT_HEIGHT_CARRY));
+                } else if (!_robot.IsCarryingObject() && !NEAR(_robot.GetLiftHeight(), LIFT_HEIGHT_LOWDOCK, 10)) {
+                  _robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK));
+                }
+                
+                // Do next pick or place action
                 _robot.IsCarryingObject() ? SelectNextPlacement() : SelectNextObjectToPickUp();
               }
               
