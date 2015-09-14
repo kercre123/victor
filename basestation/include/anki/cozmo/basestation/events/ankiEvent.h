@@ -14,8 +14,7 @@
 #ifndef ANKI_COZMO_EVENT_H
 #define ANKI_COZMO_EVENT_H
 
-#include "anki/cozmo/shared/cozmoTypes.h"
-
+#include <stdint.h>
 #include <utility>
 
 
@@ -30,7 +29,7 @@ public:
   // This allows for 'perfect forwarding' where the constructor either uses
   // a standard lvalue version or the c++11 rvalue reference version. Magic!
   template <typename FwdType>
-  AnkiEvent(u32 type, FwdType&& newData)
+  AnkiEvent(uint32_t type, FwdType&& newData)
   : _myType(type)
   , _data( std::forward<FwdType>(newData) )
 { }
@@ -39,8 +38,8 @@ public:
   const DataType& GetData() const { return _data; }
   
 protected:
-  
-  u32 _myType;
+
+  uint32_t _myType;
   DataType _data;
   
 }; // class Event

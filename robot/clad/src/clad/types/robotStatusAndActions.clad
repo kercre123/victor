@@ -64,7 +64,7 @@ structure RobotState
   float_32 liftHeight,
   float_32 rawGyroZ,
   float_32 rawAccelY,
-  RobotStatusFlag status, // RobotStatusFlag packs as a uint_16
+  uint_16 status, // RobotStatusFlag packs as a uint_16
   uint_16 lastPathID,
   int_8   currPathSegment, // -1 if not traversing a path
   uint_8  numFreeSegmentSlots,

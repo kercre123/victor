@@ -51,7 +51,7 @@ public:
   bool GetCurrentRobotImage(RobotID_t robotId, Vision::Image& img, TimeStamp_t newerThanTime);
 
   void SetImageSendMode(RobotID_t robotID, ImageSendMode newMode);
-  void SetRobotImageSendMode(RobotID_t robotID, ImageSendMode newMode, CameraResolutionClad resolution);
+  void SetRobotImageSendMode(RobotID_t robotID, ImageSendMode newMode, ImageResolution resolution);
 
   void StartAnimationTool() override { _animationReloadActive = true; };
 protected:
