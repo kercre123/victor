@@ -2812,27 +2812,22 @@ namespace Anki {
     
     Result Robot::SendAbortAnimation()
     {
-      MessageAbortAnimation m;
-      return _msgHandler->SendMessage(GetID(), m);
+      return SendMessage(RobotInterface::EngineToRobot(RobotInterface::AbortAnimation()));
     }
     
     Result Robot::SendAbortDocking()
     {
-      MessageAbortDocking m;
-      return _msgHandler->SendMessage(GetID(), m);
+      return SendMessage(RobotInterface::EngineToRobot(Anki::Cozmo::AbortDocking()));
     }
  
-    Result Robot::SendSetCarryState(CarryState_t state)
+    Result Robot::SendSetCarryState(CarryState state)
     {
-      MessageSetCarryState m;
-      m.state = state;
-      return _msgHandler->SendMessage(GetID(), m);
+      return SendMessage(RobotInterface::EngineToRobot(Anki::Cozmo::CarryState(state)));
     }
       
     Result Robot::SendFlashObjectIDs()
     {
-      MessageFlashBlockIDs m;
-      return _msgHandler->SendMessage(GetID(), m);
+      return SendMessage(RobotInterface::EngineToRobot(RobotInterface::FlashBlockIDs()));
     }
      
       /*
@@ -2892,10 +2887,17 @@ namespace Anki {
         PRINT_NAMED_ERROR("Robot.SendSetObjectLights", "Null active object pointer provided.\n");
         return RESULT_FAIL_INVALID_OBJECT;
       }
-      
-      MessageSetBlockLights m;
-      activeCube->FillMessage(m);
-      return _msgHandler->SendMessage(GetID(), m);
+      std::array<Anki::Cozmo::LightState, 4> lights;
+      ASSERT_NAMED((int)ActiveObjectConstants::NUM_CUBE_LEDS == 4, "Robot.wrong.number.of.cube.ligths");
+      for (int i = 0; i < (int)ActiveObjectConstants::NUM_CUBE_LEDS; ++i){
+        lights[i].onColor = activeCube->_ledState[i].onColor;
+        lights[i].offColor = activeCube->_ledState[i].offColor;
+        lights[i].onPeriod_ms = activeCube->_ledState[i].onPeriod_ms;
+        lights[i].offPeriod_ms = activeCube->_ledState[i].offPeriod_ms;
+        lights[i].transitionOnPeriod_ms = activeCube->_ledState[i].transitionOnPeriod_ms;
+        lights[i].transitionOffPeriod_ms = activeCube->_ledState[i].transitionOffPeriod_ms;
+      }
+      return SendMessage(RobotInterface::EngineToRobot(RobotInterface::BlockLights(RobotInterface::BlockLights(lights, (uint32_t)activeCube->GetID()))));
     }
       
       
