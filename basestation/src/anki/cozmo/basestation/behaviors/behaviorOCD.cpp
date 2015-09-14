@@ -104,6 +104,8 @@ namespace Cozmo {
     
     _interrupted = false;
     
+    UpdateBlockLights();
+    
     // As long as we're not lined up to play an irritated behavior go to the appropriate state
     // based on current carry state.
     _animActionTags.clear();
@@ -1055,9 +1057,6 @@ namespace Cozmo {
       
       _neatObjects.erase(objectID);
       _messyObjects.insert(objectID);
-
-      UpdateBlockLights();
-
       
       if(IsRunning()) {
         // Queue irritated animation
@@ -1089,14 +1088,13 @@ namespace Cozmo {
       if(insertResult.second) {
         BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.HandleObservedObject",
                          "Adding observed object %d to messy list.", msg.objectID);
-        UpdateBlockLights();
         _lastNewBlockObservedTime = currentTime_sec;
       }
-      
     }
     
-    
-    VerifyNeatness();
+    if (IsRunning()) {
+      VerifyNeatness();
+    }
     
     return RESULT_OK;
   }

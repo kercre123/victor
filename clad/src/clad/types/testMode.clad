@@ -9,8 +9,8 @@ namespace Cozmo {
 enum uint_8 TestModeClad {
     NoTest,
 
-    // Attempts to dock to a block that is placed in front of it and then place it on a block behind it.
-    PickAndPlace,
+    // Goes through motions of placing a block on the ground
+    PlaceBlockOnGround,
 
     // Follows a changing straight line path. Tests path following during docking.
     DockPath,
