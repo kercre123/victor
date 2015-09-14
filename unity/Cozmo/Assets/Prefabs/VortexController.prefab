@@ -4980,20 +4980,14 @@ MonoBehaviour:
   scoreScaleBase: .75
   scoreScaleMax: 1
   cozmoPredictiveAccuracy: .400000006
+  cozmoEarlyGuess: .100000001
+  cozmoEarlyGuessTime: 3
   cozmoTimeFirstTap: 1.5
   cozmoTimePerTap: .449999988
   cozmoPredicitveLeadTime: 7
   cozmoExpectationDelay: 1
-  robotPoses:
-  - x_mm: 0
-    y_mm: 50
-    rad: 4.71238899
-  - x_mm: 0
-    y_mm: 50
-    rad: 0
-  - x_mm: 0
-    y_mm: 50
-    rad: 3.14159274
+  minFaceMovementSqd_mm: 3600
+  faceUpdateFreq: 2
 --- !u!114 &11408142
 MonoBehaviour:
   m_ObjectHideFlags: 1

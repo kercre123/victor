@@ -434,7 +434,7 @@ public class GameController : MonoBehaviour {
   }
 
   void RobotCompletedCompoundAction(bool success, uint tagId) {
-    DAS.Debug("GameController", "RobotCompletedAnimation(" + success + ", " + tagId + ")");
+    DAS.Debug("GameController", "RobotCompletedCompound(" + success + ", " + tagId + ")");
     if (emotionWaitLimiterRoutine != null)
       StopCoroutine(emotionWaitLimiterRoutine);
     emotionWaitLimiterRoutine = null;
