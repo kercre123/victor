@@ -198,7 +198,6 @@
                 'LIBRARY_SEARCH_PATHS': [
                   '<@(cte_lib_search_path_ios_debug)',
                   '<(webots_path)/lib/',
-                  '<(face_library_lib_path)',
                 ],
               },
             }],
@@ -207,7 +206,6 @@
                 'LIBRARY_SEARCH_PATHS': [
                   '<@(cte_lib_search_path_mac_debug)',
                   '<(webots_path)/lib/',
-                  '<(face_library_lib_path)',
                 ],
               },
             }],
@@ -231,7 +229,6 @@
                 'LIBRARY_SEARCH_PATHS': [
                   '<@(cte_lib_search_path_ios_release)',
                   '<(webots_path)/lib/',
-                  '<(face_library_lib_path)',
                 ],
               },
             }],
@@ -240,7 +237,6 @@
                 'LIBRARY_SEARCH_PATHS': [
                   '<@(cte_lib_search_path_mac_release)',
                   '<(webots_path)/lib/',
-                  '<(face_library_lib_path)',
                 ],
               },
             }],
@@ -264,7 +260,6 @@
                 'LIBRARY_SEARCH_PATHS': [
                   '<@(cte_lib_search_path_ios_release)',
                   '<(webots_path)/lib/',
-                  '<(face_library_lib_path)',
                 ],
               },
             }],
@@ -273,7 +268,6 @@
                 'LIBRARY_SEARCH_PATHS': [
                   '<@(cte_lib_search_path_mac_release)',
                   '<(webots_path)/lib/',
-                  '<(face_library_lib_path)',
                 ],
               },
             }],
@@ -449,6 +443,35 @@
               '<@(opencv_libs)',
               '<@(face_library_libs)',
             ],
+            'actions': [
+              {
+                'action_name': 'create_symlink_webotsCtrlEnginefaceLibraryLibs',
+                'inputs': [ ],
+                'outputs': [ ],
+                
+                'conditions': [
+                  ['face_library=="faciometric"', {
+                    'action': [
+                      'ln',
+                      '-s',
+                      '-h',
+                      '-f',
+                      '<(face_library_lib_path)',
+                      '../../simulator/controllers/webotsCtrlGameEngine/',
+                    ],
+                  }],
+                  ['face_library=="facesdk"', {
+                    'action': [
+                      'ln',
+                      '-s',
+                      '-f',
+                      '<(face_library_lib_path)/libfsdk.dylib',
+                      '../../simulator/controllers/webotsCtrlGameEngine/',
+                    ],
+                  }],
+                ], # conditions
+              },
+            ] # actions
           }, # end controller Game Engine
 
           {
@@ -473,6 +496,31 @@
               'libCppController.dylib',
               '<@(opencv_libs)',
             ],
+            'conditions': [
+              # For some reason, need to link directly against FacioMetric libs
+              # when using them for recognition, which also means they have to be
+              # present (symlinked) in the executable dir
+              ['face_library == "faciometric"', {
+                'libraries': [
+                  '<@(face_library_libs)',
+                ],
+                'actions' : [
+                  {
+                    'action_name': 'create_symlink_webotsCtrlKeyboard_faciometricLibs',
+                    'inputs': [ ],
+                    'outputs': [ ],
+                    'action': [
+                      'ln',
+                      '-s',
+                      '-h',
+                      '-f',
+                      '<(face_library_lib_path)',
+                      '../../simulator/controllers/webotsCtrlKeyboard/',
+                    ],
+                  },
+                ], # actions
+              }], # conditions
+            ],
           }, # end controller Keyboard
 
           {
@@ -481,7 +529,7 @@
             'include_dirs': [
               '<@(webots_includes)',
               '<@(opencv_includes)',
-              '<(cti-cozmo_engine_path)/simulator/include'
+              '<(cti-cozmo_engine_path)/simulator/include',
             ],
             'dependencies': [
               'cozmoGame',
@@ -716,67 +764,8 @@
                   '<@(_outputs)',
                 ],
               },
-
-              # Face-library-specific actions:
-    
-              {
-                # The FacioMetric dynamic libs are expected to be in a "lib"
-                # subdirectory of the executable directory, so make a symlink
-                # to their location in the same directory where we put the
-                # game engine controller
-                'action_name': 'create_symlink_webotsCtrlGameEngine_facioMetricLibs',
-                'inputs': [ ],
-                'outputs': [ ],
-                'conditions': [
-                  ['face_library=="faciometric"', {
-                    'action': [
-                      'ln',
-                      '-s',
-                      '-f',
-                      '<(face_library_path)/osx_demo_126/lib',
-                      '../../simulator/controllers/webotsCtrlGameEngine/lib',
-                    ],
-                  },
-                  { # else
-                    'action': [
-                      'echo',
-                      '"Skipping Faciometric-specific action."'
-                    ],
-                  }],
-                ],
-              },
-              
-              
-              {
-                # The FaceSDK dynamic libs are expected to be in the
-                # subdirectory with the executable, so make a symlink
-                # to their location in the same directory where we put the
-                # game engine controller
-                'action_name': 'create_symlink_webotsCtrlGameEngine_facesdkLibs',
-                'inputs': [ ],
-                'outputs': [ ],
-                'conditions': [
-                  ['face_library=="facesdk"', {
-                    'action': [
-                      'ln',
-                      '-s',
-                      '-f',
-                      '<(face_library_libs)',
-                      '../../simulator/controllers/webotsCtrlGameEngine/',
-                    ],
-                  },
-                  { # else
-                    'action': [
-                      'echo',
-                      '"Skipping FaceSDK-specific action."'
-                    ],
-                  }],
-                ],
-              },
               
             ], # actions
-           
-            
             
           }, # end webotsControllers
 

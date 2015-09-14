@@ -81,6 +81,30 @@ MonoBehaviour:
       stars: 0a0000006400000068010000
       scoreToWin: 54
       maxPlayTime: 10
+  - name: FaceReaction
+    levels:
+    - name: 1
+      stars: 0a0000006400000068010000
+      scoreToWin: 54
+      maxPlayTime: 10
+  - name: CozmoWalker
+    levels:
+    - name: 1
+      stars: 0a0000006400000068010000
+      scoreToWin: 54
+      maxPlayTime: 10
+  - name: ShakeShake
+    levels:
+    - name: 1
+      stars: 0a0000006400000068010000
+      scoreToWin: 54
+      maxPlayTime: 10
+  - name: PatternPlay
+    levels:
+    - name: 1
+      stars: 0a0000006400000068010000
+      scoreToWin: 54
+      maxPlayTime: 10
 --- !u!114 &11475924
 MonoBehaviour:
   m_ObjectHideFlags: 1

@@ -25,6 +25,7 @@
 
 #include "anki/common/basestation/math/quad_impl.h"
 #include "anki/common/basestation/math/point_impl.h"
+#include "anki/common/basestation/utils/timer.h"
 
 #if(RUN_UI_MESSAGE_TCP_SERVER)
 #include "anki/cozmo/shared/cozmoConfig.h"
@@ -91,14 +92,14 @@ namespace Anki {
     void UiMessageHandler::Broadcast(const ExternalInterface::MessageGameToEngine& message)
     {
       _eventMgrToEngine.Broadcast(AnkiEvent<ExternalInterface::MessageGameToEngine>(
-        static_cast<u32>(message.GetTag()), message));
+        BaseStationTimer::getInstance()->GetCurrentTimeInSeconds(), static_cast<u32>(message.GetTag()), message));
     } // Broadcast(MessageGameToEngine)
     
     void UiMessageHandler::Broadcast(ExternalInterface::MessageGameToEngine&& message)
     {
       u32 type = static_cast<u32>(message.GetTag());
       _eventMgrToEngine.Broadcast(AnkiEvent<ExternalInterface::MessageGameToEngine>(
-        type, std::move(message)));
+        BaseStationTimer::getInstance()->GetCurrentTimeInSeconds(), type, std::move(message)));
     } // Broadcast(MessageGameToEngine &&)
     
     
@@ -107,7 +108,7 @@ namespace Anki {
     {
       DeliverToGame(message);
       _eventMgrToGame.Broadcast(AnkiEvent<ExternalInterface::MessageEngineToGame>(
-        static_cast<u32>(message.GetTag()), message));
+        BaseStationTimer::getInstance()->GetCurrentTimeInSeconds(), static_cast<u32>(message.GetTag()), message));
     } // Broadcast(MessageEngineToGame)
     
     void UiMessageHandler::Broadcast(ExternalInterface::MessageEngineToGame&& message)
@@ -115,7 +116,7 @@ namespace Anki {
       DeliverToGame(message);
       u32 type = static_cast<u32>(message.GetTag());
       _eventMgrToGame.Broadcast(AnkiEvent<ExternalInterface::MessageEngineToGame>(
-        type, std::move(message)));
+        BaseStationTimer::getInstance()->GetCurrentTimeInSeconds(), type, std::move(message)));
     } // Broadcast(MessageEngineToGame &&)
     
     // Provides a way to subscribe to message types using the AnkiEventMgrs

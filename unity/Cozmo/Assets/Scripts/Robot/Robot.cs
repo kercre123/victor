@@ -218,6 +218,7 @@ public class Robot : IDisposable {
   private U2G.SetBackpackLEDs SetBackpackLEDsMessage;
   private U2G.SetObjectAdditionAndDeletion SetObjectAdditionAndDeletionMessage;
   private U2G.StartFaceTracking StartFaceTrackingMessage;
+  private U2G.StopFaceTracking StopFaceTrackingMessage;
   private U2G.ExecuteBehavior ExecuteBehaviorMessage;
 
   private ObservedObject _carryingObject;
@@ -373,6 +374,7 @@ public class Robot : IDisposable {
     SetBackpackLEDsMessage = new U2G.SetBackpackLEDs();
     SetObjectAdditionAndDeletionMessage = new U2G.SetObjectAdditionAndDeletion();
     StartFaceTrackingMessage = new U2G.StartFaceTracking();
+    StopFaceTrackingMessage = new U2G.StopFaceTracking();
     ExecuteBehaviorMessage = new U2G.ExecuteBehavior();
 
     lights = new Light[SetBackpackLEDsMessage.onColor.Length];
@@ -550,6 +552,11 @@ public class Robot : IDisposable {
 
       AddObservedObject(knownObject, message);
     }
+      
+    // HACK: This is to solve an edge case where there is a partially observed object but no
+    // actual observed object so the markersVisible list is not being properly cleared since
+    // ObservedNothing is not being sent from engine.
+    ClearObservedObjects();
   }
 
   private void AddActiveBlock(ActiveBlock activeBlock, G2U.RobotObservedObject message) {
@@ -1040,6 +1047,11 @@ public class Robot : IDisposable {
     StartFaceTrackingMessage.timeout_sec = byte.MaxValue;
 
     RobotEngineManager.instance.Message.StartFaceTracking = StartFaceTrackingMessage;
+    RobotEngineManager.instance.SendMessage();
+  }
+
+  public void StopFaceAwareness() {
+    RobotEngineManager.instance.Message.StopFaceTracking = StopFaceTrackingMessage;
     RobotEngineManager.instance.SendMessage();
   }
 
