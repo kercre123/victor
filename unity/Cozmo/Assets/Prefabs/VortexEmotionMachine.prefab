@@ -161,6 +161,16 @@ MonoBehaviour:
     emotionAnims:
     - animName: EarlyRiskLose
       numLoops: 1
+  - stateName: ONLY_WRONG
+    playAllAnims: 0
+    emotionAnims:
+    - animName: OnlyWrong
+      numLoops: 1
+  - stateName: ALL_WRONG
+    playAllAnims: 0
+    emotionAnims:
+    - animName: AllWrong
+      numLoops: 1
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1
