@@ -399,7 +399,10 @@ namespace Anki {
         PickAndPlaceController::SetCarryState(state);
       }
       
-      
+      void Process_imuRequest(const Anki::Cozmo::RobotInterface::ImuRequest& msg)
+      {
+        IMUFilter::RecordAndSend(msg.length_ms);
+      }
 
       void Process_turnInPlaceAtSpeed(const RobotInterface::TurnInPlaceAtSpeed& msg) {
         PRINT("Turning in place at %f rad/s (%f rad/s2)\n", msg.speed_rad_per_sec, msg.accel_rad_per_sec2);
@@ -662,7 +665,7 @@ namespace Anki {
       {
         initReceived_ = false;
 
-        HAL::SetImageSendMode(ISM_STREAM, Vision::CAMERA_RES_CVGA);
+        HAL::SetImageSendMode(Stream, CVGA);
       }
 
 

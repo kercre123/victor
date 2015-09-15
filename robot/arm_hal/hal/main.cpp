@@ -59,7 +59,7 @@ namespace Anki
           m_idCard.esn = 1;
       }
       
-      volatile ImageSendMode imageSendMode_ = ISM_STREAM;
+      volatile ImageSendMode imageSendMode_ = Stream;
       volatile ImageResolution captureResolution_ = CVGA;
       void SetImageSendMode(const ImageSendMode mode, const ImageResolution res)
       {
@@ -123,12 +123,12 @@ void StreamJPEG()
   JPEGStart(m->data, WIDTH, HEIGHT, QUALITY);
 
   m->resolution    = CVGA;
-  m->imageEncoding = IE_JPEGMinimizedGray;
+  m->imageEncoding = JPEGMinimizedGray;
   m->imageId = 0;
 
   while (1)
   {
-    if (HAL::imageSendMode_ != ISM_OFF) {
+    if (HAL::imageSendMode_ != Off) {
       
       // Skip frames (to prevent choking the Espressif)
       for (int i = 0; i < FRAMESKIP; i++)
@@ -186,8 +186,8 @@ void StreamJPEG()
         }
       }
       
-      if (HAL::imageSendMode_ == ISM_SINGLE_SHOT) {
-        HAL::imageSendMode_ = ISM_OFF;
+      if (HAL::imageSendMode_ == SingleShot) {
+        HAL::imageSendMode_ = Off;
       }
     } else {
       Yield();

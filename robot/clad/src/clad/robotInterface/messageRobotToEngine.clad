@@ -9,6 +9,7 @@
 #include "clad/types/rtipTraces.clad"
 #include "clad/types/imageTypes.clad"
 #include "clad/types/dockingSignals.clad"
+#include "clad/types/imu.clad"
 
 namespace Anki {
 namespace Cozmo {
@@ -89,23 +90,24 @@ message RobotAvailable
  * and to make debugging from message dumps more sane.
  */
 union RobotToEngine {
-  // From RTIP 0x00 to 0x7F
-  RobotState                 state                  = 0x00,
-  PrintTraceInt              traceInt               = 0x01,
-  PrintTraceDouble           traceDbl               = 0x02,
-  MainCycleTimeError         mainCycleTimeError     = 0x03,
-  GoalPose                   goalPose               = 0x04,
-  ActiveObjectMoved          activeObjectMoved      = 0x05,
-  ActiveObjectStoppedMoving  activeObjectStopped    = 0x06,
-  ActiveObjectTapped         activeObjectTapped     = 0x07,
-  DataDump                   dataDump               = 0x08,
-  BlockPickedUp              blockPickedUp          = 0x09,
-  BlockPlaced                blockPlaced            = 0x0A,
-  RampTraverseStart          rampTraverseStarted    = 0x0B,
-  RampTraverseComplete       rampTraverseCompleted  = 0x0C,
-  BridgeTraverseStart        bridgeTraverseStarted  = 0x0D,
-  BridgeTraverseComplete     bridgeTraverseCompleted= 0x0E,
-  TimeProfileStat            timeProfStat           = 0x0F,
+  // From RTIP 0x01 to 0x7F
+  RobotState                 state                  = 0x01,
+  PrintTraceInt              traceInt               = 0x02,
+  PrintTraceDouble           traceDbl               = 0x03,
+  MainCycleTimeError         mainCycleTimeError     = 0x04,
+  GoalPose                   goalPose               = 0x05,
+  ActiveObjectMoved          activeObjectMoved      = 0x06,
+  ActiveObjectStoppedMoving  activeObjectStopped    = 0x07,
+  ActiveObjectTapped         activeObjectTapped     = 0x08,
+  DataDump                   dataDump               = 0x09,
+  BlockPickedUp              blockPickedUp          = 0x0A,
+  BlockPlaced                blockPlaced            = 0x0B,
+  RampTraverseStart          rampTraverseStarted    = 0x0C,
+  RampTraverseComplete       rampTraverseCompleted  = 0x0D,
+  BridgeTraverseStart        bridgeTraverseStarted  = 0x0E,
+  BridgeTraverseComplete     bridgeTraverseCompleted= 0x0F,
+  TimeProfileStat            timeProfStat           = 0x10,
+  IMUDataChunk               imuDataChunk           = 0x11,
   
   // From WiFi 0x80 to 0xFE
   AnimationState             animState              = 0x80,

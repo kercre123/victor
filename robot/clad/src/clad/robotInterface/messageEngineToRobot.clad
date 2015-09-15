@@ -9,6 +9,7 @@
 #include "clad/types/animationKeyFrames.clad"
 #include "clad/types/robotTestModes.clad"
 #include "clad/types/dockingSignals.clad"
+#include "clad/types/imu.clad"
  
 namespace Anki {
 namespace Cozmo {
@@ -208,31 +209,32 @@ message AbortAnimation
  */
 union EngineToRobot
 {
-  // To RTIP. 0x00 to 0x7f
-  DriveWheels                   drive                       = 0x00,
-  DriveWheelsCurvature          driveCurvature              = 0x01,
-  MoveLift                      moveLift                    = 0x02,
-  MoveHead                      moveHead                    = 0x03,
-  SetLiftHeight                 liftHeight                  = 0x04,
-  SetHeadAngle                  headAngle                   = 0x05,
-  HeadAngleUpdate               headAngleUpdate             = 0x06,
-  PanAndTilt                    panAndTiltHead              = 0x07,
-  TurnInPlaceAtSpeed            turnInPlaceAtSpeed          = 0x08,
-  StopAllMotors                 stop                        = 0x09,
-  ClearPath                     clearPath                   = 0x0A,
-  AppendPathSegmentLine         appendPathSegLine           = 0x0B,
-  AppendPathSegmentArc          appendPathSegArc            = 0x0C,
-  AppendPathSegmentPointTurn    appendPathSegPointTurn      = 0x0D,
-  TrimPath                      trimPath                    = 0x0E,
-  ExecutePath                   executePath                 = 0x0F,
-  DockWithObject                dockWithObject              = 0x10,
-  AbortDocking                  abortDocking                = 0x11,
-  PlaceObjectOnGround           placeObjectOnGround         = 0x12,
-  AbsoluteLocalizationUpdate    absLocalizationUpdate       = 0x13,
-  StartControllerTestMode       startControllerTestMode     = 0x14,
-  ControllerGains               setControllerGains          = 0x15,
-  DockingErrorSignal            dockingErrorSignal          = 0x16,
-  CarryState                    setCarryState               = 0x17,
+  // To RTIP. 0x01 to 0x7f
+  DriveWheels                   drive                       = 0x01,
+  DriveWheelsCurvature          driveCurvature              = 0x02,
+  MoveLift                      moveLift                    = 0x03,
+  MoveHead                      moveHead                    = 0x04,
+  SetLiftHeight                 liftHeight                  = 0x05,
+  SetHeadAngle                  headAngle                   = 0x06,
+  HeadAngleUpdate               headAngleUpdate             = 0x07,
+  PanAndTilt                    panAndTiltHead              = 0x08,
+  TurnInPlaceAtSpeed            turnInPlaceAtSpeed          = 0x09,
+  StopAllMotors                 stop                        = 0x0A,
+  ClearPath                     clearPath                   = 0x0B,
+  AppendPathSegmentLine         appendPathSegLine           = 0x0C,
+  AppendPathSegmentArc          appendPathSegArc            = 0x0D,
+  AppendPathSegmentPointTurn    appendPathSegPointTurn      = 0x0E,
+  TrimPath                      trimPath                    = 0x0F,
+  ExecutePath                   executePath                 = 0x10,
+  DockWithObject                dockWithObject              = 0x11,
+  AbortDocking                  abortDocking                = 0x12,
+  PlaceObjectOnGround           placeObjectOnGround         = 0x13,
+  AbsoluteLocalizationUpdate    absLocalizationUpdate       = 0x14,
+  StartControllerTestMode       startControllerTestMode     = 0x15,
+  ControllerGains               setControllerGains          = 0x16,
+  DockingErrorSignal            dockingErrorSignal          = 0x17,
+  CarryState                    setCarryState               = 0x18,
+  ImuRequest                    imuRequest                  = 0x19,
   
   // To WiFi 0x80 to 0xFE
   SyncTime                      syncTime                    = 0x80,
