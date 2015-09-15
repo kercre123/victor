@@ -193,16 +193,10 @@ Result BehaviorLookAround::StartMoving()
     // Get robot bounding box at destPose
     Quad2f robotQuad = _robot.GetBoundingQuadXY(destPose);
     
-    std::set<ObjectFamily> ignoreFamilies;
-    std::set<ObjectType> ignoreTypes;
-    std::set<ObjectID> ignoreIDs;
     std::vector<ObservableObject*> existingObjects;
     _robot.GetBlockWorld().FindIntersectingObjects(robotQuad,
                                                    existingObjects,
-                                                   10,
-                                                   ignoreFamilies,
-                                                   ignoreTypes,
-                                                   ignoreIDs);
+                                                   10);
     
     if (existingObjects.empty()) {
       break;

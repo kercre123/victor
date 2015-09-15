@@ -124,6 +124,12 @@ namespace Cozmo {
     std::set<ObjectID> _messyObjects;
     std::set<ObjectID> _neatObjects;
     
+    // A map of the number of times an object was observed to be
+    // in a neatness state other than what it currently is stored as
+    // so that VerifyNeatness can convert it only when it has accumulated
+    // a requisite number of observations in the alternate state.
+    std::map<ObjectID, s8> _conversionEvidenceCount;
+    
     // Internally, this behavior is just a little state machine going back and
     // forth between picking up and placing blocks
     enum class State {
@@ -168,6 +174,9 @@ namespace Cozmo {
     void UpdateName();
     
     void PlayAnimation(const std::string& animName);
+    
+    void MakeNeat(const ObjectID& objID);
+    void MakeMessy(const ObjectID& objID);
     
   }; // class BehaviorOCD
 
