@@ -118,7 +118,7 @@ namespace Cozmo {
         if (_interestingFacesOrder.empty() || _interestingFacesOrder.front() != faceID)
         {
           // The face we're tracking doesn't match the first one in our list, so reset our state to select the right one
-          _robot.DisableTrackToObject();
+          _robot.DisableTrackToFace();
           _currentState = State::Inactive;
           break;
         }
@@ -127,7 +127,7 @@ namespace Cozmo {
         auto lastSeen = _interestingFacesData[faceID]._lastSeen_sec;
         if(currentTime_sec - lastSeen > _trackingTimeout_sec)
         {
-          _robot.DisableTrackToObject();
+          _robot.DisableTrackToFace();
           _interestingFacesOrder.erase(_interestingFacesOrder.begin());
           _interestingFacesData.erase(faceID);
           
@@ -146,7 +146,7 @@ namespace Cozmo {
           PRINT_NAMED_ERROR("BehaviorInteractWithFaces.Update.InvalidFaceID",
                             "Updating with face ID %lld, but it wasn't found.",
                             faceID);
-          _robot.DisableTrackToObject();
+          _robot.DisableTrackToFace();
           _currentState = State::Inactive;
           break;
         }
