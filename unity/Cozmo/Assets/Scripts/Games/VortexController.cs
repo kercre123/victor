@@ -1817,7 +1817,7 @@ public class VortexController : GameController {
       }
 
       if (face_index >= 0) {
-        DAS.Error("VortexController", "Got new face for pose index " + pose_index.ToString());
+        //DAS.Error("VortexController", "Got new face for pose index " + pose_index.ToString());
         Face face = robot.faceObjects[face_index];
         Face old_face = null;
         if (actualFaces[pose_index] != null) {
@@ -1826,10 +1826,10 @@ public class VortexController : GameController {
         actualFaces[pose_index] = new Face(face.ID, face.WorldPosition.x, face.WorldPosition.y, face.WorldPosition.z);
         if (playState == VortexState.REQUEST_SPIN && pose_index == GetPoseIndex(currentPlayerIndex) && Time.realtimeSinceStartup - faceUpdateTimer > faceUpdateFreq) {
           if (old_face == null) {
-            DAS.Error("VortexController", "actualFaces[pose_index] == null");
+            //DAS.Error("VortexController", "actualFaces[pose_index] == null");
           }
           else {
-            DAS.Error("VortexController", "diff: " + (face.WorldPosition - old_face.WorldPosition).sqrMagnitude);
+            //DAS.Error("VortexController", "diff: " + (face.WorldPosition - old_face.WorldPosition).sqrMagnitude);
           }
 
           CozmoEmotionManager.instance.SetEmotionFacePose("YOUR_TURN", actualFaces[pose_index], true, true);
