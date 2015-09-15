@@ -15,7 +15,7 @@
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 
 #include "anki/cozmo/basestation/behaviors/behaviorOCD.h"
-#include "anki/cozmo/basestation/behaviors/behaviorLookForFaces.h"
+#include "anki/cozmo/basestation/behaviors/behaviorInteractWithFaces.h"
 #include "anki/cozmo/basestation/behaviors/behaviorFidget.h"
 #include "anki/cozmo/basestation/behaviors/behaviorLookAround.h"
 #include "anki/cozmo/basestation/behaviors/behaviorReactToPickup.h"
@@ -37,7 +37,7 @@ namespace Cozmo {
   : _isInitialized(false)
   , _forceReInit(false)
   , _robot(robot)
-  , _minBehaviorTime_sec(5)
+  , _minBehaviorTime_sec(1)
   {
 
   }
@@ -110,15 +110,24 @@ namespace Cozmo {
     Util::SafeDelete(_behaviorChooser);
   }
   
-  void BehaviorManager::SwitchToNextBehavior()
+  void BehaviorManager::SwitchToNextBehavior(double currentTime_sec)
   {
     // If we're currently running our forced behavior but now switching away, clear it
     if (_currentBehavior == _forceSwitchBehavior)
     {
       _forceSwitchBehavior = nullptr;
     }
-    _currentBehavior = _nextBehavior;
-    _nextBehavior = nullptr;
+    
+    // Initialize next behavior and make it the current one
+    if (nullptr != _nextBehavior && _currentBehavior != _nextBehavior) {
+      if (_nextBehavior->Init(currentTime_sec) != RESULT_OK) {
+        PRINT_NAMED_ERROR("BehaviorManager.SwitchToNextBehavior.InitFailed",
+                          "Failed to initialize %s behavior.",
+                          _nextBehavior->GetName().c_str());
+      }
+      _currentBehavior = _nextBehavior;
+      _nextBehavior = nullptr;
+    }
   }
   
   Result BehaviorManager::Update(double currentTime_sec)
@@ -181,7 +190,7 @@ namespace Cozmo {
         case IBehavior::Status::Complete:
           // Behavior complete, switch to next
           _currentBehavior->SetIsRunning(false);
-          SwitchToNextBehavior();
+          SwitchToNextBehavior(currentTime_sec);
           break;
           
         case IBehavior::Status::Failure:
@@ -205,7 +214,7 @@ namespace Cozmo {
     }
     else if(nullptr != _nextBehavior) {
       // No current behavior, but next behavior defined, so switch to it.
-      SwitchToNextBehavior();
+      SwitchToNextBehavior(currentTime_sec);
     }
     
     return lastResult;
@@ -220,15 +229,8 @@ namespace Cozmo {
     if(_nextBehavior != _currentBehavior || _forceReInit)
     {
       _forceReInit = false;
-      initResult = _nextBehavior->Init();
-      if(initResult != RESULT_OK) {
-        PRINT_NAMED_ERROR("BehaviorManager.InitNextBehaviorHelper.InitFailed",
-                          "Failed to initialize %s behavior.",
-                          _nextBehavior->GetName().c_str());
-        _nextBehavior = nullptr;
-      } else if(nullptr != _currentBehavior) {
-        // We've successfully initialized the next behavior to run, so interrupt
-        // the current behavior that's running if there is one. It will continue
+      if(nullptr != _currentBehavior) {
+        // Interrupt the current behavior that's running if there is one. It will continue
         // to run on calls to Update() until it completes and then we will switch
         // to the selected next behavior
         initResult = _currentBehavior->Interrupt(currentTime_sec);
@@ -236,7 +238,7 @@ namespace Cozmo {
         if (nullptr != _nextBehavior)
         {
           BEHAVIOR_VERBOSE_PRINT(DEBUG_BEHAVIOR_MGR, "BehaviorManger.InitNextBehaviorHelper.Selected",
-                           "Selected %s to run next.", _nextBehavior->GetName().c_str());
+                                 "Selected %s to run next.", _nextBehavior->GetName().c_str());
         }
       }
     }

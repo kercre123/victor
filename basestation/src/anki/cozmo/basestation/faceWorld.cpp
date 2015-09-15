@@ -98,8 +98,7 @@ namespace Cozmo {
     if((_robot.GetTrackToFace() != Vision::TrackedFace::UnknownFace) &&
        (_robot.GetTrackToFace() == face.GetID()))
     {
-      // TODO: Re-enable this
-      //UpdateFaceTracking(face);
+      UpdateFaceTracking(face);
     }
     
     // Send out an event about this face being observed

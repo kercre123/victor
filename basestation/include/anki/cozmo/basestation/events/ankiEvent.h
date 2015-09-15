@@ -30,16 +30,19 @@ public:
   // This allows for 'perfect forwarding' where the constructor either uses
   // a standard lvalue version or the c++11 rvalue reference version. Magic!
   template <typename FwdType>
-  AnkiEvent(u32 type, FwdType&& newData)
-  : _myType(type)
+  AnkiEvent(double _time, u32 type, FwdType&& newData)
+  : _currentTime(_time)
+  , _myType(type)
   , _data( std::forward<FwdType>(newData) )
 { }
   
+  double GetCurrentTime() const { return _currentTime; }
   u32 GetType() const { return _myType; }
   const DataType& GetData() const { return _data; }
   
 protected:
   
+  double _currentTime;
   u32 _myType;
   DataType _data;
   

@@ -38,6 +38,7 @@
 #include "anki/cozmo/shared/ledTypes.h"
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/blockWorld.h"
+#include "anki/cozmo/basestation/emotionManager.h"
 #include "anki/cozmo/basestation/faceWorld.h"
 #include "anki/cozmo/basestation/comms/robot/robotMessages.h"
 #include "anki/cozmo/basestation/visionProcessingThread.h"
@@ -578,6 +579,8 @@ namespace Cozmo {
       ASSERT_NAMED(_externalInterface != nullptr, "Robot.ExternalInterface.nullptr"); return _externalInterface; }
     inline void SetImageSendMode(ImageSendMode newMode) { _imageSendMode = newMode; }
     inline const ImageSendMode GetImageSendMode() const { return _imageSendMode; }
+    
+    inline EmotionManager& GetEmotionManager() { return _emotionMgr; }
   protected:
     IExternalInterface* _externalInterface;
     Util::Data::DataPlatform* _dataPlatform;
@@ -766,6 +769,9 @@ namespace Cozmo {
     s32 _numFreeAnimationBytes;
     s32 _numAnimationBytesPlayed;
     s32 _numAnimationBytesStreamed;
+    
+    ///////// Emotion ////////
+    EmotionManager _emotionMgr;
     
     ///////// Messaging ////////
     // These methods actually do the creation of messages and sending
