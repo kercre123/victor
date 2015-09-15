@@ -112,7 +112,7 @@ namespace Cozmo {
     // based on current carry state.
     _animActionTags.clear();
     if (currentTime_sec - _lastNeatBlockDisturbedTime < kMajorIrritationTimeIntervalSec) {
-      PlayAnimation("MinorIrritation");
+      PlayAnimation("Demo_OCD_Irritation_A");
     } else if (currentTime_sec - _lastNewBlockObservedTime < kExcitedAboutNewBlockTimeIntervalSec) {
       PlayAnimation("Demo_Look_Around_See_Something_A");
     } else {
@@ -1102,7 +1102,7 @@ namespace Cozmo {
         
         // Queue irritated animation
         if (currentTime_sec - _lastNeatBlockDisturbedTime > kMajorIrritationTimeIntervalSec) {
-          PlayAnimation("MinorIrritation");
+          PlayAnimation("Demo_OCD_Irritation_A");
         } else {
           PlayAnimation("VeryIrritated");
         }
