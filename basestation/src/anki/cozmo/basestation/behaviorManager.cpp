@@ -37,7 +37,7 @@ namespace Cozmo {
   : _isInitialized(false)
   , _forceReInit(false)
   , _robot(robot)
-  , _minBehaviorTime_sec(5)
+  , _minBehaviorTime_sec(1)
   {
 
   }
