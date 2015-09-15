@@ -9,11 +9,13 @@ namespace Cozmo {
 enum uint_32 VizConstants
 {
   VIZ_SERVER_PORT = 5252,
+  PHYSICS_PLUGIN_SERVER_PORT = 5253,
   ALL_PATH_IDs    = 0xffffffff,
   ALL_QUAD_IDs    = 0xffffffff,
   ALL_QUAD_TYPEs  = 0xffffffff,
   ALL_OBJECT_IDs  = 0xffffffff,
   OBJECT_ID_RANGE = 0xfffffffe,
+  MaxMessageSize = 2848, // i think the old value was 2600 (ds)
 }
 
 enum uint_32 VizObjectType {

@@ -41,7 +41,7 @@ namespace Anki {
   namespace VizInterface {
   class MessageViz;
   enum class MessageVizTag : uint8_t;
-  } // end namespace RobotInterface
+  } // end namespace VizInterface
 
   // NOTE: this is a singleton class
     class VizManager

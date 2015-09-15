@@ -20,6 +20,7 @@
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "util/signals/simpleSignal.hpp"
 #include "util/helpers/noncopyable.h"
+#include <stdint.h>
 #include <unordered_map>
 #include <functional>
 
@@ -39,6 +40,7 @@ public:
   
   // Allows subscribing to events by type with the passed in function
   Signal::SmartHandle Subcribe(uint32_t type, SubscriberFunction function);
+  void SubscribeForever(uint32_t type, SubscriberFunction function);
   
 private:
   std::unordered_map<uint32_t, EventHandlerSignal>  _eventHandlerMap;
@@ -60,6 +62,12 @@ template <typename DataType>
 Signal::SmartHandle AnkiEventMgr<DataType>::Subcribe(uint32_t type, SubscriberFunction function)
 {
   return _eventHandlerMap[type].ScopedSubscribe(function);
+}
+
+template <typename DataType>
+void AnkiEventMgr<DataType>::SubscribeForever(uint32_t type, SubscriberFunction function)
+{
+  _eventHandlerMap[type].SubscribeForever(function);
 }
 
 } // namespace Cozmo

@@ -327,7 +327,7 @@ namespace Anki {
         led_[index]->set(rgbaColor>>8);
       }
       
-      void SetLED(WhichBlockLEDs whichLEDs, u32 color)
+      void SetLED(WhichCubeLEDs whichLEDs, u32 color)
       {
         static const u8 FIRST_BIT = 0x01;
         u8 shiftedLEDs = static_cast<u8>(whichLEDs);
@@ -432,10 +432,10 @@ namespace Anki {
           // Test: Blink all LEDs in order
           static u32 p=0;
           //static BlockLEDPosition prevIdx = TopFrontLeft, idx = TopFrontLeft;
-          static WhichBlockLEDs prevIdx = WhichBlockLEDs::TOP_UPPER_LEFT, idx = WhichBlockLEDs::TOP_UPPER_LEFT;
+          static WhichCubeLEDs prevIdx = WhichCubeLEDs::TOP_UPPER_LEFT, idx = WhichCubeLEDs::TOP_UPPER_LEFT;
           if (p++ == 100) {
             SetLED(prevIdx, 0);
-            if (idx == WhichBlockLEDs::TOP_UPPER_LEFT) {
+            if (idx == WhichCubeLEDs::TOP_UPPER_LEFT) {
               // Top upper left is green
               SetLED(idx, 0x00ff0000);
             } else {
@@ -445,9 +445,9 @@ namespace Anki {
             prevIdx = idx;
 
             // Increment LED position index
-            idx = static_cast<WhichBlockLEDs>(static_cast<u8>(idx)<<1);
-            if(idx == WhichBlockLEDs::NONE) {
-              idx = WhichBlockLEDs::TOP_UPPER_LEFT;
+            idx = static_cast<WhichCubeLEDs>(static_cast<u8>(idx)<<1);
+            if(idx == WhichCubeLEDs::NONE) {
+              idx = WhichCubeLEDs::TOP_UPPER_LEFT;
             }
             p = 0;
           }

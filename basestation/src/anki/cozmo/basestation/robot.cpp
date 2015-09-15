@@ -2677,7 +2677,7 @@ namespace Anki {
     } // GetActiveObject()
       
     Result Robot::SetObjectLights(const ObjectID& objectID,
-                                  const WhichBlockLEDs whichLEDs,
+                                  const WhichCubeLEDs whichLEDs,
                                   const u32 onColor, const u32 offColor,
                                   const u32 onPeriod_ms, const u32 offPeriod_ms,
                                   const u32 transitionOnPeriod_ms, const u32 transitionOffPeriod_ms,
@@ -2692,7 +2692,7 @@ namespace Anki {
       } else {
         
         // NOTE: if make relative mode is "off", this call doesn't do anything:
-        const WhichBlockLEDs rotatedWhichLEDs = activeCube->MakeWhichLEDsRelativeToXY(whichLEDs,
+        const WhichCubeLEDs rotatedWhichLEDs = activeCube->MakeWhichLEDsRelativeToXY(whichLEDs,
                                                                                       relativeToPoint,
                                                                                       makeRelative);
         
@@ -2875,7 +2875,7 @@ namespace Anki {
         return RESULT_FAIL;
       }
       
-      activeCube->SetLEDs(ActiveCube::WhichBlockLEDs::ALL, color, onPeriod_ms, offPeriod_ms);
+      activeCube->SetLEDs(ActiveCube::WhichCubeLEDs::ALL, color, onPeriod_ms, offPeriod_ms);
       
       return SendSetObjectLights(activeCube);
       */

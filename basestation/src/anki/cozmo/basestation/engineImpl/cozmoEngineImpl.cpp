@@ -96,7 +96,7 @@ Result CozmoEngineImpl::Init(const Json::Value& config)
     PRINT_NAMED_WARNING("CozmoEngineInit.NoVizHostIP",
                         "No VizHostIP member in JSON config file. Not initializing VizManager.");
   } else if(!_config[AnkiUtil::kP_VIZ_HOST_IP].asString().empty()){
-    VizManager::getInstance()->Connect(_config[AnkiUtil::kP_VIZ_HOST_IP].asCString(), VIZ_SERVER_PORT);
+    VizManager::getInstance()->Connect(_config[AnkiUtil::kP_VIZ_HOST_IP].asCString(), (uint16_t)VizConstants::VIZ_SERVER_PORT);
 
     // Erase anything that's still being visualized in case there were leftovers from
     // a previous run?? (We should really be cleaning up after ourselves when

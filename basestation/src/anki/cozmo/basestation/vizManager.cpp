@@ -100,7 +100,7 @@ namespace Anki {
       if (!_isInitialized)
         return;
 
-      const size_t MAX_MESSAGE_SIZE{2848};
+      const size_t MAX_MESSAGE_SIZE{(size_t)VizConstants::MaxMessageSize};
       uint8_t buffer[MAX_MESSAGE_SIZE]{0};
 
       const size_t numWritten = (uint32_t)message.Pack(buffer, MAX_MESSAGE_SIZE);
