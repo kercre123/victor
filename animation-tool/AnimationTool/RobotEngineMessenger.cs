@@ -36,6 +36,8 @@ namespace AnimationTool
         private string connectionText;
         private bool wasShowingDisconnect = false;
 
+        public static RobotEngineMessenger instance;
+
         public string ConnectionText
         {
             get
@@ -50,6 +52,7 @@ namespace AnimationTool
         public RobotEngineMessenger()
         {
             this.connectionText = "[Disconnected]";
+            instance = this;
         }
 
         public void Dispose()

@@ -1,5 +1,7 @@
 ﻿using System.Windows.Forms;
 using Anki.Cozmo;
+using Anki.Cozmo.ExternalInterface;
+using System;
 
 namespace AnimationTool
 {
@@ -26,32 +28,6 @@ namespace AnimationTool
 
         public float faceAngle { get { return face.RightValue; } }
 
-        public bool Changed
-        {
-            get
-            {
-                for(int i = 0; i < eyes.Length; ++i)
-                {
-                    if (eyes[i].Changed)
-                    {
-                        return true;
-                    }
-                }
-
-                return face.Changed;
-            }
-
-            set
-            {
-                face.Changed = value;
-
-                for(int i = 0; i < eyes.Length; ++i)
-                {
-                    eyes[i].Changed = value;
-                }
-            }
-        }
-
         public FaceForm()
         {
             InitializeComponent();
@@ -69,12 +45,37 @@ namespace AnimationTool
             eyes[(int)ProceduralEyeParameter.PupilCenX] = pupilX;
             eyes[(int)ProceduralEyeParameter.PupilHeight] = pupilSize;
             eyes[(int)ProceduralEyeParameter.PupilWidth] = pupilSize;
+
+            for(int i = 0; i < eyes.Length; ++i)
+            {
+                if(eyes[i] != null)
+                {
+                    eyes[i].OnChanged += OnChanged;
+                }
+            }
+
+            OnChanged(null, null);
+        }
+
+        public void Reset()
+        {
+            face.RightValue = 0;
+
+            for (int i = 0; i < eyes.Length; ++i)
+            {
+                if (eyes[i] != null)
+                {
+                    eyes[i].LeftValue = 0;
+                    eyes[i].RightValue = 0;
+                }
+            }
+
+            OnChanged(null, null);
         }
 
         public DialogResult Open(Sequencer.ExtraProceduralFaceData extraData)
         {
             button.Enabled = true;
-            Changed = true;
 
             face.RightValue = extraData.faceAngle;
 
@@ -88,6 +89,55 @@ namespace AnimationTool
             }
 
             return ShowDialog();
+        }
+
+        public void SendMessage(Sequencer.ExtraProceduralFaceData data)
+        {
+            if (data == null) return;
+
+            DisplayProceduralFace displayProceduralFaceMessage = new DisplayProceduralFace();
+            displayProceduralFaceMessage.leftEye = new float[(int)ProceduralEyeParameter.NumParameters];
+            displayProceduralFaceMessage.rightEye = new float[(int)ProceduralEyeParameter.NumParameters];
+            displayProceduralFaceMessage.robotID = 1;
+            displayProceduralFaceMessage.faceAngle = data.faceAngle;
+
+            for (int i = 0; i < displayProceduralFaceMessage.leftEye.Length && i < data.leftEye.Length; ++i)
+            {
+                displayProceduralFaceMessage.leftEye[i] = data.leftEye[i];
+                displayProceduralFaceMessage.rightEye[i] = data.rightEye[i];
+            }
+
+            MessageGameToEngine message = new MessageGameToEngine();
+            message.DisplayProceduralFace = displayProceduralFaceMessage;
+            RobotEngineMessenger.instance.SendMessage(message);
+        }
+
+        private void OnChanged(object sender, EventArgs e)
+        {
+            DisplayProceduralFace displayProceduralFaceMessage = new DisplayProceduralFace();
+            displayProceduralFaceMessage.leftEye = new float[(int)ProceduralEyeParameter.NumParameters];
+            displayProceduralFaceMessage.rightEye = new float[(int)ProceduralEyeParameter.NumParameters];
+            displayProceduralFaceMessage.robotID = 1;
+            displayProceduralFaceMessage.faceAngle = faceAngle;
+
+            for (int i = 0; i < displayProceduralFaceMessage.leftEye.Length && i < eyes.Length; ++i)
+            {
+                if (eyes[i] != null)
+                {
+                    displayProceduralFaceMessage.leftEye[i] = eyes[i].LeftValue;
+                    displayProceduralFaceMessage.rightEye[i] = eyes[i].RightValue;
+                }
+                else
+                {
+                    MessageBox.Show("Missing " + (ProceduralEyeParameter)i + " in message.");
+                    displayProceduralFaceMessage.leftEye[i] = 0;
+                    displayProceduralFaceMessage.rightEye[i] = 0;
+                }
+            }
+
+            MessageGameToEngine message = new MessageGameToEngine();
+            message.DisplayProceduralFace = displayProceduralFaceMessage;
+            RobotEngineMessenger.instance.SendMessage(message);
         }
 
         private void InitializeComponent()
