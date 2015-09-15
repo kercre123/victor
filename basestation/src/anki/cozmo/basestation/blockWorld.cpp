@@ -466,6 +466,32 @@ namespace Anki
           
         } else {
           
+          // Check if there are objects on top of this object that need to be moved since the
+          // object it's resting on has moved.
+          const f32 STACKED_HEIGHT_TOL_MM = 15.f; // TODO: make this a parameter somewhere
+          ObservableObject* objectOnBottom = matchingObject;
+          ObservableObject* objectOnTop = FindObjectOnTopOf(*objectOnBottom, STACKED_HEIGHT_TOL_MM);
+          while(objectOnTop != nullptr) {
+            // If the object was already updated this timestamp then don't bother doing this.
+            if (objectOnTop->GetLastObservedTime() != objSeen->GetLastObservedTime()) {
+              
+              // Get difference in position between top object's pose and the previous pose of the observed bottom object.
+              // Apply difference to the new observed pose to get the new top object pose.
+              Pose3d topPose = objectOnTop->GetPose();
+              Pose3d bottomPose = objectOnBottom->GetPose();
+              Vec3f diff = topPose.GetTranslation() - bottomPose.GetTranslation();
+              topPose.SetTranslation( objSeen->GetPose().GetTranslation() + diff );
+              objectOnTop->SetPose(topPose);
+            }
+            
+            // See if there's an object above this object
+            objectOnBottom = objectOnTop;
+            objectOnTop = FindObjectOnTopOf(*objectOnBottom, STACKED_HEIGHT_TOL_MM);
+          }
+          // TODO: Do the same adjustment for blocks that are _below_ observed blocks? Does this make sense?
+          
+          
+          // Update observed object's pose
           matchingObject->SetPose( objSeen->GetPose() );
           
           // Update lastObserved times of this object
