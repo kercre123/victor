@@ -191,7 +191,7 @@ GTEST_TEST(TestPlanner, ReplanEasy)
 
 
 // some paremeter changes or something broke this test
-GTEST_TEST(TestPlanner, DISABLED_ReplanHard)
+GTEST_TEST(TestPlanner, ReplanHard)
 {
   // Assuming this is running from root/build......
   xythetaEnvironment env;
@@ -211,13 +211,13 @@ GTEST_TEST(TestPlanner, DISABLED_ReplanHard)
   EXPECT_TRUE(planner.Replan());
   EXPECT_TRUE(env.PlanIsSafe(planner.GetPlan(), 0));
 
-  // env.PrintPlan(planner.GetPlan());
+  env.PrintPlan(planner.GetPlan());
 
   env.AddObstacle(Anki::RotatedRectangle(200.0, -10.0, 230.0, -10.0, 20.0));
 
   EXPECT_FALSE(env.PlanIsSafe(planner.GetPlan(), 0)) << "new obstacle should block plan!";
 
-  State_c newRobotPos(31.7*5, -1.35, 0.0736);
+  State_c newRobotPos(137.9, -1.35, 0.0736);
   ASSERT_FALSE(env.IsInCollision(newRobotPos)) << "position "<<newRobotPos<<" should be safe";
   ASSERT_FALSE(env.IsInCollision(env.State_c2State(newRobotPos)));
 
@@ -226,11 +226,15 @@ GTEST_TEST(TestPlanner, DISABLED_ReplanHard)
 
   float distFromPlan = 9999.0;
   int currentPlanIdx = static_cast<int>(env.FindClosestPlanSegmentToPose(planner.GetPlan(), newRobotPos, distFromPlan));
-  ASSERT_EQ(currentPlanIdx, 3) << "should be at action #3 in the plan (plan should have 1 short, then 3 long straights in a row)";
+  ASSERT_EQ(currentPlanIdx, 2)
+    << "should be at action #2 in the plan (plan should start with 3 long actions) d="<<distFromPlan;
 
   EXPECT_LT(distFromPlan, 15.0) << "too far away from plan";
 
   ASSERT_FALSE(env.PlanIsSafe(planner.GetPlan(), 1000.0, currentPlanIdx, lastSafeState, oldPlan));
+
+  std::cout<<"safe section of old plan:\n";
+  env.PrintPlan(oldPlan);
 
   ASSERT_GE(oldPlan.Size(), 1) << "should re-use at least one action from the old plan";
 
@@ -247,6 +251,10 @@ GTEST_TEST(TestPlanner, DISABLED_ReplanHard)
 
   EXPECT_TRUE(planner.Replan());
   EXPECT_TRUE(env.PlanIsSafe(planner.GetPlan(), 0));
+
+  std::cout<<"final plan:\n";
+  env.PrintPlan(planner.GetPlan());
+
 }
 
 
