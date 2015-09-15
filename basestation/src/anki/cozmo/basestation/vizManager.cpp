@@ -10,12 +10,6 @@
  * Copyright: Anki, Inc. 2014
  **/
 
-#include <fstream>
-
-#if ANKICORETECH_USE_OPENCV
-#include <opencv2/highgui/highgui.hpp>
-#endif
-
 #include "anki/cozmo/basestation/viz/vizManager.h"
 #include "util/logging/logging.h"
 #include "anki/common/basestation/exceptions.h"
@@ -25,13 +19,18 @@
 #include "anki/vision/basestation/imageIO.h"
 #include "anki/vision/basestation/faceTracker.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
+#include "clad/vizInterface/messageViz.h"
+#include <fstream>
+#if ANKICORETECH_USE_OPENCV
+#include <opencv2/highgui/highgui.hpp>
+#endif
 
 
 namespace Anki {
   namespace Cozmo {
     
     // Base IDs for each VizObject type
-    const u32 VizObjectBaseID[NUM_VIZ_OBJECT_TYPES+1] = {
+    const u32 VizObjectBaseID[(int)VizObjectType::NUM_VIZ_OBJECT_TYPES+1] = {
       0,    // VIZ_OJECT_ROBOT
       1000, // VIZ_OBJECT_CUBOID
       2000, // VIZ_OBJECT_RAMP
@@ -91,85 +90,61 @@ namespace Anki {
     , _sendImages(false)
     {
       // Compute the max IDs permitted by VizObject type
-      for (u32 i=0; i<NUM_VIZ_OBJECT_TYPES; ++i) {
+      for (u32 i=0; i<(int)VizObjectType::NUM_VIZ_OBJECT_TYPES; ++i) {
         _VizObjectMaxID[i] = VizObjectBaseID[i+1] - VizObjectBaseID[i];
       }
     }
 
-    void VizManager::SendMessage(u8 vizMsgID, void* msg)
+    void VizManager::SendMessage(const VizInterface::MessageViz& message)
     {
       if (!_isInitialized)
         return;
-      
-      //printf("Sending viz msg %d with %d bytes\n", vizMsgID, msgSize + 1);
-      
-      // TODO: Does this work for poorly packed structs?  Just use Andrew's message class creator?
-      u32 msgSize = Anki::Cozmo::VizMsgLookupTable_[vizMsgID].size;
-      
-      _sendBuf[0] = vizMsgID;
-      memcpy(_sendBuf + 1, msg, msgSize);
-      if (_vizClient.Send(_sendBuf, msgSize+1) <= 0) {
-        PRINT_NAMED_WARNING("VizManager.SendMessage.Fail", "Send vizMsgID %d of size %d failed\n", vizMsgID, msgSize+1);
+
+      const size_t MAX_MESSAGE_SIZE{2848};
+      uint8_t buffer[MAX_MESSAGE_SIZE]{0};
+
+      const size_t numWritten = (uint32_t)message.Pack(buffer, MAX_MESSAGE_SIZE);
+      if (_vizClient.Send(buffer, (int)numWritten) <= 0) {
+        PRINT_NAMED_WARNING("VizManager.SendMessage.Fail", "Send vizMsgID %s of size %zd failed\n", VizInterface::MessageVizTagToString(message.GetTag()), numWritten);
       }
     }
 
     
     void VizManager::ShowObjects(bool show)
     {
-      VizShowObjects v;
-      v.show = show ? 1 : 0;
-      
-      SendMessage(GET_MESSAGE_ID(VizShowObjects), &v);
+      SendMessage(VizInterface::MessageViz(VizInterface::ShowObjects(show)));
     }
     
     
     // ===== Robot drawing function =======
     
-    void VizManager::DrawRobot(const u32 robotID,
-                               const Pose3d &pose,
-                               const f32 headAngle,
-                               const f32 liftAngle)
-    {
-      VizSetRobot v;
-      
-      v.robotID = robotID;
-      
-      v.x_trans_m = MM_TO_M(pose.GetTranslation().x());
-      v.y_trans_m = MM_TO_M(pose.GetTranslation().y());
-      v.z_trans_m = MM_TO_M(pose.GetTranslation().z());
-      
-      v.rot_rad = pose.GetRotationAngle().ToFloat();
-      v.rot_axis_x = pose.GetRotationAxis().x();
-      v.rot_axis_y = pose.GetRotationAxis().y();
-      v.rot_axis_z = pose.GetRotationAxis().z();
-
-      v.head_angle = headAngle;
-      v.lift_angle = liftAngle;
-      
-      SendMessage(GET_MESSAGE_ID(VizSetRobot), &v);
+    void VizManager::DrawRobot(const u32 robotID, const Pose3d& pose, const f32 headAngle, const f32 liftAngle) {
+      SendMessage(VizInterface::MessageViz(
+        VizInterface::SetRobot(robotID,
+          (float)MM_TO_M(pose.GetTranslation().x()),
+          (float)MM_TO_M(pose.GetTranslation().y()),
+          (float)MM_TO_M(pose.GetTranslation().z()),
+          pose.GetRotationAngle().ToFloat(),
+          pose.GetRotationAxis().x(), pose.GetRotationAxis().y(), pose.GetRotationAxis().z(),
+          headAngle, liftAngle
+        )
+      );
     }
     
     
     // ===== Convenience object draw functions for specific object types ====
     
-    VizManager::Handle_t VizManager::DrawRobot(const u32 robotID,
-                                               const Pose3d &pose,
-                                               const ColorRGBA& color)
+    VizManager::Handle_t VizManager::DrawRobot(const u32 robotID, const Pose3d& pose, const ColorRGBA& color)
     {
-      if(robotID >= _VizObjectMaxID[VIZ_OBJECT_ROBOT]) {
-        PRINT_NAMED_ERROR("VizManager.DrawRobot.IDtooLarge",
-                          "Specified robot ID=%d larger than maxID=%d\n",
-                          robotID, _VizObjectMaxID[VIZ_OBJECT_ROBOT]);
+      if(robotID >= _VizObjectMaxID[(int)VizObjectType::VIZ_OBJECT_ROBOT]) {
+        PRINT_NAMED_ERROR("VizManager.DrawRobot.IDtooLarge", "Specified robot ID=%d larger than maxID=%d",
+          robotID, _VizObjectMaxID[(int)VizObjectType::VIZ_OBJECT_ROBOT]);
         return INVALID_HANDLE;
       }
       
-      const u32 vizID = VizObjectBaseID[VIZ_OBJECT_ROBOT] + robotID;
+      const u32 vizID = VizObjectBaseID[(int)VizObjectType::VIZ_OBJECT_ROBOT] + robotID;
       Anki::Point3f dims; // junk
-      DrawObject(vizID,
-                 VIZ_OBJECT_ROBOT,
-                 dims,
-                 pose,
-                 color);
+      DrawObject(vizID, VizObjectType::VIZ_OBJECT_ROBOT, dims, pose, color);
       
       return vizID;
     }
@@ -179,56 +154,38 @@ namespace Anki {
                                                 const Pose3d &pose,
                                                 const ColorRGBA& color)
     {
-      if(blockID >= _VizObjectMaxID[VIZ_OBJECT_CUBOID]) {
-        PRINT_NAMED_ERROR("VizManager.DrawCuboid.IDtooLarge",
-                          "Specified block ID=%d larger than maxID=%d\n",
-                          blockID, _VizObjectMaxID[VIZ_OBJECT_CUBOID]);
+      if(blockID >= _VizObjectMaxID[(int)VizObjectType::VIZ_OBJECT_CUBOID]) {
+        PRINT_NAMED_ERROR("VizManager.DrawCuboid.IDtooLarge", "Specified block ID=%d larger than maxID=%d",
+          blockID, _VizObjectMaxID[(int)VizObjectType::VIZ_OBJECT_CUBOID]);
         return INVALID_HANDLE;
       }
       
-      const u32 vizID = VizObjectBaseID[VIZ_OBJECT_CUBOID] + blockID;
-      DrawObject(vizID,
-                 VIZ_OBJECT_CUBOID,
-                 size,
-                 pose,
-                 color);
+      const u32 vizID = VizObjectBaseID[(int)VizObjectType::VIZ_OBJECT_CUBOID] + blockID;
+      DrawObject(vizID, VizObjectType::VIZ_OBJECT_CUBOID, size, pose, color);
       return vizID;
     }
     
-    VizManager::Handle_t VizManager::DrawPreDockPose(const u32 preDockPoseID,
-                                                     const Pose3d &pose,
-                                                     const ColorRGBA& color)
+    VizManager::Handle_t VizManager::DrawPreDockPose(const u32 preDockPoseID, const Pose3d& pose, const ColorRGBA& color)
     {
-      if(preDockPoseID >= _VizObjectMaxID[VIZ_OBJECT_PREDOCKPOSE]) {
-        PRINT_NAMED_ERROR("VizManager.DrawPreDockPose.IDtooLarge",
-                          "Specified robot ID=%d larger than maxID=%d\n",
-                          preDockPoseID, _VizObjectMaxID[VIZ_OBJECT_PREDOCKPOSE]);
+      if(preDockPoseID >= _VizObjectMaxID[(int)VizObjectType::VIZ_OBJECT_PREDOCKPOSE]) {
+        PRINT_NAMED_ERROR("VizManager.DrawPreDockPose.IDtooLarge", "Specified robot ID=%d larger than maxID=%d",
+          preDockPoseID, _VizObjectMaxID[(int)VizObjectType::VIZ_OBJECT_PREDOCKPOSE]);
         return INVALID_HANDLE;
       }
       
-      const u32 vizID = VizObjectBaseID[VIZ_OBJECT_PREDOCKPOSE] + preDockPoseID;
+      const u32 vizID = VizObjectBaseID[(int)VizObjectType::VIZ_OBJECT_PREDOCKPOSE] + preDockPoseID;
       Anki::Point3f dims; // junk
-      DrawObject(vizID,
-                 VIZ_OBJECT_PREDOCKPOSE,
-                 dims,
-                 pose,
-                 color);
+      DrawObject(vizID, VizObjectType::VIZ_OBJECT_PREDOCKPOSE, dims, pose, color);
       
       return vizID;
     }
     
-    VizManager::Handle_t VizManager::DrawRamp(const u32 rampID,
-                                              const f32 platformLength,
-                                              const f32 slopeLength,
-                                              const f32 width,
-                                              const f32 height,
-                                              const Pose3d& pose,
-                                              const ColorRGBA& color)
+    VizManager::Handle_t VizManager::DrawRamp(const u32 rampID, const f32 platformLength, const f32 slopeLength,
+      const f32 width, const f32 height, const Pose3d& pose, const ColorRGBA& color)
     {
-      if(rampID >= _VizObjectMaxID[VIZ_OBJECT_RAMP]) {
-        PRINT_NAMED_ERROR("VizManager.DrawRamp.IDtooLarge",
-                          "Specified ramp ID=%d larger than maxID=%d\n",
-                          rampID, _VizObjectMaxID[VIZ_OBJECT_RAMP]);
+      if (rampID >= _VizObjectMaxID[(int)VizObjectType::VIZ_OBJECT_RAMP]) {
+        PRINT_NAMED_ERROR("VizManager.DrawRamp.IDtooLarge", "Specified ramp ID=%d larger than maxID=%d",
+          rampID, _VizObjectMaxID[(int)VizObjectType::VIZ_OBJECT_RAMP]);
         return INVALID_HANDLE;
       }
       
@@ -238,25 +195,18 @@ namespace Anki {
       // the visuzalization uses).
       f32 params[4] = {slopeLength/platformLength, 0, 0, 0};
       
-      const u32 vizID = VizObjectBaseID[VIZ_OBJECT_RAMP] + rampID;
-      DrawObject(vizID, VIZ_OBJECT_RAMP,
-                 {{platformLength, width, height}}, pose, color, params);
+      const u32 vizID = VizObjectBaseID[(int)VizObjectType::VIZ_OBJECT_RAMP] + rampID;
+      DrawObject(vizID, VizObjectType::VIZ_OBJECT_RAMP, {{platformLength, width, height}}, pose, color, params);
       
       return vizID;
     }
     
-    VizManager::Handle_t VizManager::DrawCharger(const u32 chargerID,
-                                                 const f32 platformLength,
-                                                 const f32 slopeLength,
-                                                 const f32 width,
-                                                 const f32 height,
-                                                 const Pose3d& pose,
-                                                 const ColorRGBA& color)
+    VizManager::Handle_t VizManager::DrawCharger(const u32 chargerID, const f32 platformLength, const f32 slopeLength,
+      const f32 width, const f32 height, const Pose3d& pose, const ColorRGBA& color)
     {
-      if(chargerID >= _VizObjectMaxID[VIZ_OBJECT_CHARGER]) {
-        PRINT_NAMED_ERROR("VizManager.DrawCharger.IDtooLarge",
-                          "Specified charger ID=%d larger than maxID=%d\n",
-                          chargerID, _VizObjectMaxID[VIZ_OBJECT_CHARGER]);
+      if (chargerID >= _VizObjectMaxID[(int)VizObjectType::VIZ_OBJECT_CHARGER]) {
+        PRINT_NAMED_ERROR("VizManager.DrawCharger.IDtooLarge", "Specified charger ID=%d larger than maxID=%d",
+          chargerID, _VizObjectMaxID[(int)VizObjectType::VIZ_OBJECT_CHARGER]);
         return INVALID_HANDLE;
       }
       
@@ -266,28 +216,24 @@ namespace Anki {
       // the visuzalization uses).
       f32 params[4] = {slopeLength/platformLength, 0, 0, 0};
       
-      const u32 vizID = VizObjectBaseID[VIZ_OBJECT_CHARGER] + chargerID;
-      DrawObject(vizID, VIZ_OBJECT_CHARGER,
+      const u32 vizID = VizObjectBaseID[(int)VizObjectType::VIZ_OBJECT_CHARGER] + chargerID;
+      DrawObject(vizID, VizObjectType::VIZ_OBJECT_CHARGER,
                  {{platformLength, width, height}}, pose, color, params);
       
       return vizID;
     }
 
-    VizManager::Handle_t VizManager::DrawHumanHead(const u32 headID,
-                                                   const Point3f& size,
-                                                   const Pose3d& pose,
-                                                   const ColorRGBA& color)
+    VizManager::Handle_t VizManager::DrawHumanHead(const u32 headID, const Point3f& size, const Pose3d& pose, const ColorRGBA& color)
     {
-      if(headID >= _VizObjectMaxID[VIZ_OBJECT_HUMAN_HEAD]) {
-        PRINT_NAMED_ERROR("VizManager.DrawHumanHead.IDtooLarge",
-                          "Specified head ID=%d larger than maxID=%d\n",
-                          headID, _VizObjectMaxID[VIZ_OBJECT_HUMAN_HEAD]);
+      if (headID >= _VizObjectMaxID[(int)VizObjectType::VIZ_OBJECT_HUMAN_HEAD]) {
+        PRINT_NAMED_ERROR("VizManager.DrawHumanHead.IDtooLarge", "Specified head ID=%d larger than maxID=%d",
+          headID, _VizObjectMaxID[(int)VizObjectType::VIZ_OBJECT_HUMAN_HEAD]);
         return INVALID_HANDLE;
 
       }
       
-      const u32 vizID = VizObjectBaseID[VIZ_OBJECT_HUMAN_HEAD] + headID;
-      DrawObject(vizID, VIZ_OBJECT_HUMAN_HEAD, size, pose, color);
+      const u32 vizID = VizObjectBaseID[(int)VizObjectType::VIZ_OBJECT_HUMAN_HEAD] + headID;
+      DrawObject(vizID, VizObjectType::VIZ_OBJECT_HUMAN_HEAD, size, pose, color);
       return vizID;
     }
     
@@ -295,46 +241,23 @@ namespace Anki {
                                     float xRadius, float yRadius,
                                     const Anki::ColorRGBA &color)
     {
-      VizCameraOval v;
-      v.xCen = center.x();
-      v.yCen = center.y();
-      v.xRad = xRadius;
-      v.yRad = yRadius;
-      v.color = u32(color);
-      
-      SendMessage(GET_MESSAGE_ID(VizCameraOval), &v);
+      SendMessage(VizInterface::MessageViz(
+        VizInterface::CameraOval((uint32_t)color, center.x(), center.y(), xRadius, yRadius)));
     }
     
-    void VizManager::DrawCameraLine(const Point2f& start,
-                                    const Point2f& end,
-                                    const ColorRGBA& color)
+    void VizManager::DrawCameraLine(const Point2f& start, const Point2f& end, const ColorRGBA& color)
     {
-      VizCameraLine v;
-      v.color  = u32(color);
-      v.xStart = start.x();
-      v.yStart = start.y();
-      v.xEnd   = end.x();
-      v.yEnd   = end.y();
-      
-      SendMessage( GET_MESSAGE_ID(VizCameraLine), &v );
+      SendMessage(VizInterface::MessageViz(
+        VizInterface::CameraLine((uint32_t)color, start.x(), start.y(), end.x(), end.y())));
     }
     
-    void VizManager::DrawCameraText(const Point2f& position,
-                                    const std::string& text,
-                                    const ColorRGBA& color)
+    void VizManager::DrawCameraText(const Point2f& position, const std::string& text, const ColorRGBA& color)
     {
-      VizCameraText v;
-      v.color = u32(color);
-      v.x = std::round(position.x());
-      v.y = std::round(position.y());
-      snprintf(v.text, sizeof(v.text), "%s", text.c_str());
-      
-      SendMessage(GET_MESSAGE_ID(VizCameraText), &v);
+      SendMessage(VizInterface::MessageViz(
+        VizInterface::CameraText((uint32_t)color, std::round(position.x()), std::round(position.y()), {text})));
     }
     
-    void VizManager::DrawCameraFace(const Vision::TrackedFace& face,
-                                    const ColorRGBA& color)
-    {
+    void VizManager::DrawCameraFace(const Vision::TrackedFace& face, const ColorRGBA& color) {
       // Draw eyes
       DrawCameraOval(face.GetLeftEyeCenter(), 1, 1, color);
       DrawCameraOval(face.GetRightEyeCenter(), 1, 1, color);
@@ -369,25 +292,25 @@ namespace Anki {
     
     void VizManager::EraseRobot(const u32 robotID)
     {
-      CORETECH_ASSERT(robotID < _VizObjectMaxID[VIZ_OBJECT_ROBOT]);
-      EraseVizObject(VizObjectBaseID[VIZ_OBJECT_ROBOT] + robotID);
+      CORETECH_ASSERT(robotID < _VizObjectMaxID[(int)VizObjectType::VIZ_OBJECT_ROBOT]);
+      EraseVizObject(VizObjectBaseID[(int)VizObjectType::VIZ_OBJECT_ROBOT] + robotID);
     }
     
     void VizManager::EraseCuboid(const u32 blockID)
     {
-      CORETECH_ASSERT(blockID < _VizObjectMaxID[VIZ_OBJECT_CUBOID]);
-      EraseVizObject(_VizObjectMaxID[VIZ_OBJECT_CUBOID] + blockID);
+      CORETECH_ASSERT(blockID < _VizObjectMaxID[(int)VizObjectType::VIZ_OBJECT_CUBOID]);
+      EraseVizObject(_VizObjectMaxID[(int)VizObjectType::VIZ_OBJECT_CUBOID] + blockID);
     }
 
     void VizManager::EraseAllCuboids()
     {
-      EraseVizObjectType(VIZ_OBJECT_CUBOID);
+      EraseVizObjectType(VizObjectType::VIZ_OBJECT_CUBOID);
     }
     
     void VizManager::ErasePreDockPose(const u32 preDockPoseID)
     {
-      CORETECH_ASSERT(preDockPoseID < _VizObjectMaxID[VIZ_OBJECT_PREDOCKPOSE]);
-      EraseVizObject(VizObjectBaseID[VIZ_OBJECT_PREDOCKPOSE] + preDockPoseID);
+      CORETECH_ASSERT(preDockPoseID < _VizObjectMaxID[(int)VizObjectType::VIZ_OBJECT_PREDOCKPOSE]);
+      EraseVizObject(VizObjectBaseID[(int)VizObjectType::VIZ_OBJECT_PREDOCKPOSE] + preDockPoseID);
     }
 
 
@@ -442,27 +365,27 @@ namespace Anki {
     // ================== Object drawing methods ====================
     
     void VizManager::DrawObject(const u32 objectID,
-                                const u32 objectTypeID,
-                                const Anki::Point3f &size_mm,
-                                const Anki::Pose3d &pose,
-                                const ColorRGBA& color,
-                                const f32* params)
+      VizObjectType objectTypeID,
+      const Anki::Point3f &size_mm,
+      const Anki::Pose3d &pose,
+      const ColorRGBA& color,
+      const f32* params)
     {
-      VizObject v;
+      VizInterface::Object v;
       v.objectID = objectID;
       v.objectTypeID = objectTypeID;
       
-      v.x_size_m = MM_TO_M(size_mm.x());
-      v.y_size_m = MM_TO_M(size_mm.y());
-      v.z_size_m = MM_TO_M(size_mm.z());
+      v.x_size_m = (float)MM_TO_M(size_mm.x());
+      v.y_size_m = (float)MM_TO_M(size_mm.y());
+      v.z_size_m = (float)MM_TO_M(size_mm.z());
       
-      v.x_trans_m = MM_TO_M(pose.GetTranslation().x());
-      v.y_trans_m = MM_TO_M(pose.GetTranslation().y());
-      v.z_trans_m = MM_TO_M(pose.GetTranslation().z());
+      v.x_trans_m = (float)MM_TO_M(pose.GetTranslation().x());
+      v.y_trans_m = (float)MM_TO_M(pose.GetTranslation().y());
+      v.z_trans_m = (float)MM_TO_M(pose.GetTranslation().z());
       
       
       // TODO: rotation...
-      v.rot_deg = RAD_TO_DEG( pose.GetRotationAngle().ToFloat() );
+      v.rot_deg = (float)RAD_TO_DEG( pose.GetRotationAngle().ToFloat() );
       v.rot_axis_x = pose.GetRotationAxis().x();
       v.rot_axis_y = pose.GetRotationAxis().y();
       v.rot_axis_z = pose.GetRotationAxis().z();
@@ -471,39 +394,30 @@ namespace Anki {
       
       if(params != nullptr) {
         for(s32 i=0; i<4; ++i) {
-          v.params[i] = params[i];
+          v.objParameters[i] = params[i];
         }
       }
       
-      SendMessage( GET_MESSAGE_ID(VizObject), &v );
+      SendMessage(VizInterface::MessageViz(std::move(v)));
     }
     
     
     void VizManager::EraseVizObject(const Handle_t objectID)
     {
-      VizEraseObject v;
-      v.objectID = objectID;
-      
-      SendMessage( GET_MESSAGE_ID(VizEraseObject), &v );
+      SendMessage(VizInterface::MessageViz(VizInterface::EraseObject(objectID, 0, 0)));
     }
     
 
     void VizManager::EraseAllVizObjects()
     {
-      VizEraseObject v;
-      v.objectID = ALL_OBJECT_IDs;
-      
-      SendMessage( GET_MESSAGE_ID(VizEraseObject), &v );
+      SendMessage(VizInterface::MessageViz(VizInterface::EraseObject((uint32_t)VizConstants::ALL_OBJECT_IDs, 0, 0)));
     }
     
     void VizManager::EraseVizObjectType(const VizObjectType type)
     {
-      VizEraseObject v;
-      v.objectID = OBJECT_ID_RANGE;
-      v.lower_bound_id = VizObjectBaseID[type];
-      v.upper_bound_id = VizObjectBaseID[type+1]-1;
-      
-      SendMessage( GET_MESSAGE_ID(VizEraseObject), &v );
+      SendMessage(VizInterface::MessageViz(
+        VizInterface::EraseObject((uint32_t)VizConstants::OBJECT_ID_RANGE,
+          VizObjectBaseID[(int)type], VizObjectBaseID[(int)type+1]-1)));
     }
 
     void VizManager::DrawPlannerObstacle(const bool isReplan,
@@ -550,10 +464,10 @@ namespace Anki {
     
     
     void VizManager::AppendPathSegmentLine(const u32 pathID,
-                                           const f32 x_start_mm, const f32 y_start_mm,
-                                           const f32 x_end_mm, const f32 y_end_mm)
+      const f32 x_start_mm, const f32 y_start_mm,
+      const f32 x_end_mm, const f32 y_end_mm)
     {
-      VizAppendPathSegmentLine v;
+      VizInterface::AppendPathSegmentLine v;
       v.pathID = pathID;
       v.x_start_m = MM_TO_M(x_start_mm);
       v.y_start_m = MM_TO_M(y_start_mm);
@@ -561,54 +475,37 @@ namespace Anki {
       v.x_end_m = MM_TO_M(x_end_mm);
       v.y_end_m = MM_TO_M(y_end_mm);
       v.z_end_m = 0;
-      
-      SendMessage( GET_MESSAGE_ID(VizAppendPathSegmentLine), &v );
+      SendMessage(VizInterface::MessageViz(std::move(v)));
     }
     
     void VizManager::AppendPathSegmentArc(const u32 pathID,
-                                          const f32 x_center_mm, const f32 y_center_mm,
-                                          const f32 radius_mm, const f32 startRad, const f32 sweepRad)
+      const f32 x_center_mm, const f32 y_center_mm,
+      const f32 radius_mm, const f32 startRad, const f32 sweepRad)
     {
-      VizAppendPathSegmentArc v;
+      VizInterface::AppendPathSegmentArc v;
       v.pathID = pathID;
       v.x_center_m = MM_TO_M(x_center_mm);
       v.y_center_m = MM_TO_M(y_center_mm);
       v.radius_m = MM_TO_M(radius_mm);
       v. start_rad = startRad;
       v. sweep_rad = sweepRad;
-      
-      
-      SendMessage( GET_MESSAGE_ID(VizAppendPathSegmentArc), &v );
+      SendMessage(VizInterface::MessageViz(std::move(v)));
     }
     
 
     void VizManager::ErasePath(const u32 pathID)
     {
-      VizErasePath v;
-      v.pathID = pathID;
-
-      // printf("viz: erasing path %u\n", pathID);
-      
-      SendMessage( GET_MESSAGE_ID(VizErasePath), &v );
+      SendMessage(VizInterface::MessageViz(VizInterface::ErasePath(pathID)));
     }
 
     void VizManager::EraseAllPaths()
     {
-      VizErasePath v;
-      v.pathID = ALL_PATH_IDs;
-
-      printf("viz: erasing all paths\n");
-      
-      SendMessage( GET_MESSAGE_ID(VizErasePath), &v );
+      SendMessage(VizInterface::MessageViz(VizInterface::ErasePath((uint32_t)VizConstants::ALL_PATH_IDs)));
     }
     
     void VizManager::SetPathColor(const u32 pathID, const ColorRGBA& color)
     {
-      VizSetPathColor v;
-      v.pathID = pathID;
-      v.colorID = u32(color);
-      
-      SendMessage( GET_MESSAGE_ID(VizSetPathColor), &v );
+      SendMessage(VizInterface::MessageViz(VizInterface::SetPathColor(pathID, (uint32_t)color)));
     }
     
     
@@ -616,35 +513,31 @@ namespace Anki {
     
     void VizManager::EraseQuad(const u32 quadType, const u32 quadID)
     {
-      VizEraseQuad v;
-      v.quadType = quadType;
-      v.quadID = quadID;
-      
-      SendMessage( GET_MESSAGE_ID(VizEraseQuad), &v );
+      SendMessage(VizInterface::MessageViz(VizInterface::EraseQuad(quadType, quadID)));
     }
     
     void VizManager::EraseAllQuadsWithType(const u32 quadType)
     {
-      EraseQuad(quadType, ALL_QUAD_IDs);
+      EraseQuad(quadType, (uint32_t)VizConstants::ALL_QUAD_IDs);
     }
     
     void VizManager::EraseAllQuads()
     {
-      EraseQuad(ALL_QUAD_TYPEs, ALL_QUAD_IDs);
+      EraseQuad((uint32_t)VizConstants::ALL_QUAD_TYPEs, (uint32_t)VizConstants::ALL_QUAD_IDs);
     }
     
     void VizManager::EraseAllPlannerObstacles(const bool isReplan)
     {
       if(isReplan) {
-        EraseAllQuadsWithType(VIZ_QUAD_PLANNER_OBSTACLE_REPLAN);
+        EraseAllQuadsWithType((uint32_t)VizQuadType::VIZ_QUAD_PLANNER_OBSTACLE_REPLAN);
       } else {
-        EraseAllQuadsWithType(VIZ_QUAD_PLANNER_OBSTACLE);
+        EraseAllQuadsWithType((uint32_t)VizQuadType::VIZ_QUAD_PLANNER_OBSTACLE);
       }
     }
     
     void VizManager::EraseAllMatMarkers()
     {
-      EraseAllQuadsWithType(VIZ_QUAD_MAT_MARKER);
+      EraseAllQuadsWithType((uint32_t)VizQuadType::VIZ_QUAD_MAT_MARKER);
     }
     
     // =============== Circle methods ==================
@@ -659,16 +552,12 @@ namespace Anki {
 
     void VizManager::SetText(const TextLabelType& labelType, const ColorRGBA& color, const char* format, ...)
     {
-      VizSetLabel v;
-      v.labelID = labelType;
-      v.colorID = u32(color);
-      
+      char buffer[2048]{0};
       va_list argptr;
       va_start(argptr, format);
-      vsnprintf((char*)v.text, sizeof(v.text), format, argptr);
+      vsnprintf(buffer, 2048, format, argptr);
       va_end(argptr);
-      
-      SendMessage( GET_MESSAGE_ID(VizSetLabel), &v );
+      SendMessage(VizInterface::MessageViz(VizInterface::SetLabel(labelType, (uint32_t)color, {std::string(buffer)})));
     }
     
     
@@ -693,43 +582,18 @@ namespace Anki {
     // ============== Misc. Debug methods =================
     void VizManager::SetDockingError(const f32 x_dist, const f32 y_dist, const f32 angle)
     {
-      VizDockingErrorSignal v;
-      v.x_dist = x_dist;
-      v.y_dist = y_dist;
-      v.angle = angle;
-      
-      SendMessage( GET_MESSAGE_ID(VizDockingErrorSignal), &v );
+      SendMessage(VizInterface::MessageViz(VizInterface::DockingErrorSignal(x_dist, y_dist, angle)));
     }
     
 
-    void VizManager::SendRobotState(const MessageRobotState &msg,
+    void VizManager::SendRobotState(const RobotState &msg,
                                     const s32 &numAnimBytesFree,
                                     const u8 &videoFramefateHz)
     {
-      VizRobotState m;
-      m.pose_frame_id = msg.pose_frame_id;
-      m.pose_x = msg.pose_x;
-      m.pose_y = msg.pose_y;
-      m.pose_z = msg.pose_z;
-      m.pose_angle = msg.pose_angle;
-      m.pose_pitch_angle = msg.pose_pitch_angle;
-      m.lwheel_speed_mmps = msg.lwheel_speed_mmps;
-      m.rwheel_speed_mmps = msg.rwheel_speed_mmps;
-      m.headAngle = msg.headAngle;
-      m.liftHeight = msg.liftHeight;
-      m.lastPathID = msg.lastPathID;
-      m.proxLeft = msg.proxLeft;
-      m.proxForward = msg.proxForward;
-      m.proxRight = msg.proxRight;
-      m.battVolt10x = msg.battVolt10x;
-      m.status = msg.status;
-      
-      m.numAnimBytesFree = numAnimBytesFree;
-      m.videoFramerateHZ = videoFramefateHz;
-      
-      SendMessage( GET_MESSAGE_ID(VizRobotState), &m);
+      SendMessage(VizInterface::MessageViz(VizInterface::RobotStateMessage(msg)));
     } // SendRobotState()
     
+    /*
     void VizManager::SendGreyImage(const RobotID_t robotID,
                                    const u8* data,
                                    const Vision::CameraResolution res,
@@ -753,30 +617,18 @@ namespace Anki {
       const u32 dataLength = Vision::CameraResInfo[res].width * Vision::CameraResInfo[res].height * 3;
       SendImage(robotID, data, dataLength, res, timestamp, Vision::IE_RAW_RGB);
     }
+    */
+
     
-    
-    void VizManager::SendImageChunk(const RobotID_t robotID, MessageImageChunk robotImageChunk)
+    void VizManager::SendImageChunk(const RobotID_t robotID, const ImageChunk& robotImageChunk)
     {
       if(!_sendImages) {
         return;
       }
-      
-      VizImageChunk v;
-      static_assert(robotImageChunk.data.size() == MAX_VIZ_IMAGE_CHUNK_SIZE,
-                    "MessageImageChunk and VizImageChunk must have the same chunk size.");
-      
-      v.chunkSize = robotImageChunk.chunkSize;
-      v.chunkId = robotImageChunk.chunkId;
-      v.chunkCount = robotImageChunk.imageChunkCount;
-      v.imgId = robotImageChunk.imageId;
-      v.resolution = robotImageChunk.resolution;
-      v.encoding = robotImageChunk.imageEncoding;
-      
-      std::copy(robotImageChunk.data.begin(), robotImageChunk.data.end(), v.data);
-      
-      SendMessage( GET_MESSAGE_ID(VizImageChunk), &v );
+      SendMessage(VizInterface::MessageViz(ImageChunk(robotImageChunk)));
     }
     
+/*
     void VizManager::SendImage(const RobotID_t robotID,
                                const u8* data,
                                const u32 dataLength,
@@ -788,7 +640,7 @@ namespace Anki {
         return;
       }
 
-      VizImageChunk v;
+      ImageChunk v;
       v.resolution = res;
       v.imgId = ++(_imgID[robotID]);
       v.chunkId = 0;
@@ -814,10 +666,12 @@ namespace Anki {
         memcpy(v.data, &data[v.chunkId * MAX_VIZ_IMAGE_CHUNK_SIZE], v.chunkSize);
         // printf("Sending CAM image %d chunk %d (size: %d), bytesLeftToSend %d of %d, first/lastByte=%d/%d\n",
         //       v.imgId, v.chunkId, v.chunkSize, bytesToSend, dataLength, v.data[0], v.data[v.chunkSize-1]);
-        SendMessage( GET_MESSAGE_ID(VizImageChunk), &v );
-        
+        SendMessage(VizInterface::MessageViz(std::move(v)));
+
+
         ++v.chunkId;
       }
+*/
 /*
       if (_saveImageMode != SAVE_OFF) {
         
@@ -870,16 +724,18 @@ namespace Anki {
           _saveImageMode = SAVE_OFF;
         }
       }
- */
+ *//*
+
     } // SendImage()
-    
+*/
+
     void VizManager::SendVisionMarker(const u16 topLeft_x, const u16 topLeft_y,
                                       const u16 topRight_x, const u16 topRight_y,
                                       const u16 bottomRight_x, const u16 bottomRight_y,
                                       const u16 bottomLeft_x, const u16 bottomLeft_y,
                                       bool verified)
     {
-      VizVisionMarker v;
+      VizInterface::VisionMarker v;
       v.topLeft_x = topLeft_x;
       v.topLeft_y = topLeft_y;
       v.topRight_x = topRight_x;
@@ -889,8 +745,7 @@ namespace Anki {
       v.bottomLeft_x = bottomLeft_x;
       v.bottomLeft_y = bottomLeft_y;
       v.verified = static_cast<u8>(verified);
-      
-      SendMessage(GET_MESSAGE_ID(VizVisionMarker), &v);
+      SendMessage(VizInterface::MessageViz(std::move(v)));
     }
 
     void VizManager::SendTrackerQuad(const u16 topLeft_x, const u16 topLeft_y,
@@ -898,7 +753,7 @@ namespace Anki {
                                      const u16 bottomRight_x, const u16 bottomRight_y,
                                      const u16 bottomLeft_x, const u16 bottomLeft_y)
     {
-      VizTrackerQuad v;
+      VizInterface::TrackerQuad v;
       v.topLeft_x = topLeft_x;
       v.topLeft_y = topLeft_y;
       v.topRight_x = topRight_x;
@@ -907,8 +762,7 @@ namespace Anki {
       v.bottomRight_y = bottomRight_y;
       v.bottomLeft_x = bottomLeft_x;
       v.bottomLeft_y = bottomLeft_y;
-      
-      SendMessage(GET_MESSAGE_ID(VizTrackerQuad), &v);
+      SendMessage(VizInterface::MessageViz(std::move(v)));
     }
     
     

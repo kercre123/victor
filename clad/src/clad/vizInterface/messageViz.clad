@@ -10,13 +10,18 @@
 
 namespace Anki {
 namespace Cozmo {
-namespace Viz {
+namespace VizInterface {
+
+message RobotStateMessage
+{
+  RobotState state
+}
 
 // VizObject
 message Object
 {
   uint_32    objectID,
-  ObjectType objectTypeID,
+  VizObjectType objectTypeID,
   uint_32    color,
   float_32   x_size_m,
   float_32   y_size_m,
@@ -34,7 +39,7 @@ message Object
 // VizQuad
 message Quad
 {
-  uint_32 quadType,
+  VizQuadType quadType,
   uint_32 quadID,
   uint_32 color,
   float_32 xUpperLeft,

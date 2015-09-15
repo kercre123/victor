@@ -381,7 +381,7 @@ namespace Anki {
       virtual bool ShouldLockWheels() const { return !_useManualSpeed; }
       
       ObjectID                    _dockObjectID;
-      DockAction_t                _dockAction;
+      DockAction                _dockAction;
       const Vision::KnownMarker*  _dockMarker;
       const Vision::KnownMarker*  _dockMarker2;
       Radians                     _preActionPoseAngleTolerance;
