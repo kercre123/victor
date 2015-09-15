@@ -115,8 +115,7 @@ namespace Cozmo {
       {
         auto faceID = _robot.GetTrackToFace();
         // If we aren't tracking the first faceID in the list, something's wrong
-        if (_interestingFacesOrder.end() == _interestingFacesOrder.begin()
-            || *(_interestingFacesOrder.begin()) != faceID)
+        if (_interestingFacesOrder.empty() || _interestingFacesOrder.front() != faceID)
         {
           // The face we're tracking doesn't match the first one in our list, so reset our state to select the right one
           _robot.DisableTrackToObject();
