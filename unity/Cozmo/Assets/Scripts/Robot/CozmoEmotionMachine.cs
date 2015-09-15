@@ -59,10 +59,12 @@ public class CozmoEmotionMachine : MonoBehaviour {
 
   // initailization
   public void StartMachine() {
+    /*
     if (CozmoEmotionManager.instance != null) {
       CozmoEmotionManager.instance.RegisterMachine(this);
       CozmoEmotionManager.instance.SetIdleAnimation(defaultIdleAnimationName);
     }
+    */
     InitializeMachine();
   }
 
