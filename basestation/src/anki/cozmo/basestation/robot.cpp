@@ -1274,6 +1274,12 @@ namespace Anki {
       _trackToObjectID.UnSet();
       return RESULT_OK;
     }
+    
+    Result Robot::DisableTrackToFace()
+    {
+      _trackToFaceID = Vision::TrackedFace::UnknownFace;
+      return RESULT_OK;
+    }
       
     Result Robot::DriveWheels(const f32 lwheel_speed_mmps,
                               const f32 rwheel_speed_mmps)

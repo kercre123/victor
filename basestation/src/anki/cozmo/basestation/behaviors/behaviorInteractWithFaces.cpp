@@ -197,7 +197,7 @@ namespace Cozmo {
   
   Result BehaviorInteractWithFaces::Interrupt(double currentTime_sec)
   {
-    _robot.DisableTrackToObject();
+    _robot.DisableTrackToFace();
     _currentState = State::Interrupted;
     
     return RESULT_OK;
