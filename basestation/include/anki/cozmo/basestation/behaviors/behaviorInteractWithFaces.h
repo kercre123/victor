@@ -14,11 +14,18 @@
 
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/cozmo/basestation/proceduralFace.h"
+#include "anki/vision/basestation/trackedFace.h"
 #include "util/signals/simpleSignal_fwd.h"
 #include "clad/externalInterface/messageEngineToGame.h"
+#include <list>
 
 namespace Anki {
 namespace Cozmo {
+  
+  template<typename> class AnkiEvent;
+  namespace ExternalInterface {
+    class MessageEngineToGame;
+  }
   
   class BehaviorInteractWithFaces : public IBehavior
   {
@@ -28,8 +35,7 @@ namespace Cozmo {
     
     virtual Result Init(double currentTime_sec) override;
     
-    // Always runnable for now?
-    virtual bool IsRunnable(double currentTime_sec) const override { return true; }
+    virtual bool IsRunnable(double currentTime_sec) const;
     
     virtual Status Update(double currentTime_sec) override;
     
@@ -43,31 +49,25 @@ namespace Cozmo {
     virtual bool GetRewardBid(Reward& reward);
     
   private:
+    using Face = Vision::TrackedFace;
     
-    void HandleRobotObservedFace(const ExternalInterface::RobotObservedFace& msg);
-    void HandleRobotCompletedAction(const ExternalInterface::RobotCompletedAction& msg);
+    void HandleRobotObservedFace(const AnkiEvent<ExternalInterface::MessageEngineToGame>& event);
+    void HandleRobotDeletedFace(const AnkiEvent<ExternalInterface::MessageEngineToGame>& event);
+    void HandleRobotCompletedAction(const AnkiEvent<ExternalInterface::MessageEngineToGame>& event);
     
-    void UpdateBaselineFace(const Vision::TrackedFace* face);
+    void UpdateBaselineFace(const Face* face);
     
-    void SetNextMovementTime();
+    void UpdateProceduralFace(ProceduralFace& proceduralFace, const Face& face) const;
     
     enum class State {
-      LOOKING_AROUND,
-      MOVING,
-      TRACKING_FACE,
-      INTERRUPTED
+      Inactive,
+      TrackingFace,
+      Interrupted
     };
     
-    State _currentState;
+    State _currentState = State::Interrupted;
     
-    TimeStamp_t _firstSeen_ms;
-    TimeStamp_t _lastSeen_ms; // in frame (i.e. robot) time
-    
-    f32 _currentTime_sec;
-    f32 _lastSeen_sec; // in engine time
-    f32 _trackingTimeout_sec;
-    f32 _lastLookAround_sec;
-    f32 _nextMovementTime_sec;
+    f32 _trackingTimeout_sec = 3;
     
     ProceduralFace _lastProceduralFace, _crntProceduralFace;;
     
@@ -76,12 +76,24 @@ namespace Cozmo {
     f32 _baselineLeftEyebrowHeight;
     f32 _baselineRightEyebrowHeight;
     
-    u32 _movementActionTag;
     u32 _animationActionTag;
     
-    bool _isAnimating;
+    bool _isAnimating = false;
     
     std::vector<::Signal::SmartHandle> _eventHandles;
+    
+    struct FaceData
+    {
+      double _lastSeen_sec = 0;
+    };
+    
+    std::list<Face::ID_t> _interestingFacesOrder;
+    std::unordered_map<Face::ID_t, FaceData> _interestingFacesData;
+    std::unordered_map<Face::ID_t, double> _cooldownFaces;
+    
+    constexpr static float kFaceInterestingDuration = 30;
+    constexpr static float kFaceCooldownDuration = 30;
+    constexpr static float kMinProceduralFaceWait = 0.15;
     
   }; // BehaviorInteractWithFaces
   

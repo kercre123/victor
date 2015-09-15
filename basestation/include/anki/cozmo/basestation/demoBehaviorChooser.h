@@ -50,8 +50,7 @@ protected:
   
   Robot& _robot;
   
-  // TODO: Make this start with DemoState::Faces once the InteractWithFaces behavior works
-  DemoState _demoState = DemoState::Blocks;
+  DemoState _demoState = DemoState::Faces;
   
   // Note these are for easy access - the inherited _behaviorList owns the memory
   BehaviorLookAround* _behaviorLookAround = nullptr;
@@ -60,6 +59,9 @@ protected:
   BehaviorFidget* _behaviorFidget = nullptr;
   
   void SetupBehaviors(Robot& robot, const Json::Value& config);
+  
+private:
+  using super = ReactionaryBehaviorChooser;
   
 }; // class DemoBehaviorChooser
   
