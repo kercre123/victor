@@ -24,7 +24,7 @@ namespace Anki {
 namespace Cozmo {
   
 DemoBehaviorChooser::DemoBehaviorChooser(Robot& robot, const Json::Value& config)
-  : ReactionaryBehaviorChooser()
+  : super()
   , _robot(robot)
 {
   SetupBehaviors(robot, config);
@@ -34,7 +34,7 @@ void DemoBehaviorChooser::SetupBehaviors(Robot& robot, const Json::Value& config
 {
   // Setup InteractWithFaces behavior
   _behaviorInteractWithFaces = new BehaviorInteractWithFaces(robot, config);
-  Result addResult = ReactionaryBehaviorChooser::AddBehavior(_behaviorInteractWithFaces);
+  Result addResult = super::AddBehavior(_behaviorInteractWithFaces);
   if (Result::RESULT_OK != addResult)
   {
     PRINT_NAMED_ERROR("DemoBehaviorChooser.SetupBehaviors", "BehaviorInteractWithFaces was not created properly.");
@@ -43,7 +43,7 @@ void DemoBehaviorChooser::SetupBehaviors(Robot& robot, const Json::Value& config
   
   // Setup OCD behavior
   _behaviorOCD = new BehaviorOCD(robot, config);
-  addResult = ReactionaryBehaviorChooser::AddBehavior(_behaviorOCD);
+  addResult = super::AddBehavior(_behaviorOCD);
   if (Result::RESULT_OK != addResult)
   {
     PRINT_NAMED_ERROR("DemoBehaviorChooser.SetupBehaviors", "BehaviorOCD was not created properly.");
@@ -52,7 +52,7 @@ void DemoBehaviorChooser::SetupBehaviors(Robot& robot, const Json::Value& config
   
   // Setup LookAround behavior
   _behaviorLookAround = new BehaviorLookAround(robot, config);
-  addResult = ReactionaryBehaviorChooser::AddBehavior(_behaviorLookAround);
+  addResult = super::AddBehavior(_behaviorLookAround);
   if (Result::RESULT_OK != addResult)
   {
     PRINT_NAMED_ERROR("DemoBehaviorChooser.SetupBehaviors", "BehaviorLookAround was not created properly.");
@@ -61,7 +61,7 @@ void DemoBehaviorChooser::SetupBehaviors(Robot& robot, const Json::Value& config
   
   // Setup Fidget behavior
   _behaviorFidget = new BehaviorFidget(robot, config);
-  addResult = ReactionaryBehaviorChooser::AddBehavior(_behaviorFidget);
+  addResult = super::AddBehavior(_behaviorFidget);
   if (Result::RESULT_OK != addResult)
   {
     PRINT_NAMED_ERROR("DemoBehaviorChooser.SetupBehaviors", "BehaviorFidget was not created properly.");
@@ -71,7 +71,7 @@ void DemoBehaviorChooser::SetupBehaviors(Robot& robot, const Json::Value& config
   
 Result DemoBehaviorChooser::Update(double currentTime_sec)
 {
-  Result updateResult = ReactionaryBehaviorChooser::Update(currentTime_sec);
+  Result updateResult = super::Update(currentTime_sec);
   if (Result::RESULT_OK != updateResult)
   {
     return updateResult;
