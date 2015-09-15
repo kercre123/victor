@@ -17,6 +17,7 @@
 #include "anki/vision/basestation/trackedFace.h"
 #include "util/signals/simpleSignal_fwd.h"
 #include "clad/externalInterface/messageEngineToGame.h"
+#include <list>
 
 namespace Anki {
 namespace Cozmo {
@@ -51,6 +52,7 @@ namespace Cozmo {
     using Face = Vision::TrackedFace;
     
     void HandleRobotObservedFace(const AnkiEvent<ExternalInterface::MessageEngineToGame>& event);
+    void HandleRobotDeletedFace(const AnkiEvent<ExternalInterface::MessageEngineToGame>& event);
     void HandleRobotCompletedAction(const AnkiEvent<ExternalInterface::MessageEngineToGame>& event);
     
     void UpdateBaselineFace(const Face* face);
@@ -85,12 +87,13 @@ namespace Cozmo {
       double _lastSeen_sec = 0;
     };
     
-    std::vector<Face::ID_t> _interestingFacesOrder;
+    std::list<Face::ID_t> _interestingFacesOrder;
     std::unordered_map<Face::ID_t, FaceData> _interestingFacesData;
     std::unordered_map<Face::ID_t, double> _cooldownFaces;
     
     constexpr static float kFaceInterestingDuration = 30;
     constexpr static float kFaceCooldownDuration = 30;
+    constexpr static float kMinProceduralFaceWait = 0.15;
     
   }; // BehaviorInteractWithFaces
   

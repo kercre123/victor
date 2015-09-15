@@ -47,6 +47,11 @@ namespace Cozmo {
                                                             this,
                                                             std::placeholders::_1)));
       
+      _eventHandles.push_back(interface->Subscribe(MessageEngineToGameTag::RobotDeletedFace,
+                                                   std::bind(&BehaviorInteractWithFaces::HandleRobotDeletedFace,
+                                                             this,
+                                                             std::placeholders::_1)));
+      
       _eventHandles.push_back(interface->Subscribe(MessageEngineToGameTag::RobotCompletedAction,
                                                    std::bind(&BehaviorInteractWithFaces::HandleRobotCompletedAction,
                                                              this,
@@ -74,6 +79,7 @@ namespace Cozmo {
   
   IBehavior::Status BehaviorInteractWithFaces::Update(double currentTime_sec)
   {
+    static double lastProceduralFaceUpdate = 0;
     switch(_currentState)
     {
       case State::Inactive:
@@ -82,6 +88,7 @@ namespace Cozmo {
         auto iterFirst = _interestingFacesOrder.begin();
         if (_interestingFacesOrder.end() == iterFirst)
         {
+          _currentState = State::Interrupted;
           break;
         }
         
@@ -95,7 +102,7 @@ namespace Cozmo {
           break;
         }
         
-        // If we aren't already tracking, start tracking the next face we see
+        // Start tracking face
         UpdateBaselineFace(face);
         
         PRINT_NAMED_INFO("BehaviorInteractWithFaces.Update.SwitchToTracking",
@@ -109,10 +116,11 @@ namespace Cozmo {
         auto faceID = _robot.GetTrackToFace();
         // If we aren't tracking the first faceID in the list, something's wrong
         if (_interestingFacesOrder.end() == _interestingFacesOrder.begin()
-            || (*_interestingFacesOrder.begin()) != faceID)
+            || *(_interestingFacesOrder.begin()) != faceID)
         {
-          PRINT_NAMED_ERROR("BehaviorInteractWithFaces.Update.TrackingFace.IncorrectFaceID",
-                            "Not expecting to be tracking FaceID %llu", faceID);
+          // The face we're tracking doesn't match the first one in our list, so reset our state to select the right one
+          _robot.DisableTrackToObject();
+          _currentState = State::Inactive;
           break;
         }
         
@@ -139,10 +147,18 @@ namespace Cozmo {
           PRINT_NAMED_ERROR("BehaviorInteractWithFaces.Update.InvalidFaceID",
                             "Updating with face ID %lld, but it wasn't found.",
                             faceID);
+          _robot.DisableTrackToObject();
+          _currentState = State::Inactive;
           break;
         }
         
-        UpdateProceduralFace(_crntProceduralFace, *face);
+        // This is too expensive to do every frame, so use a longer delay
+        if (currentTime_sec - lastProceduralFaceUpdate >= kMinProceduralFaceWait)
+        {
+          // Update cozmo's face based on our currently focused face
+          UpdateProceduralFace(_crntProceduralFace, *face);
+          lastProceduralFaceUpdate = currentTime_sec;
+        }
         
         if(!_isAnimating)
         {
@@ -263,6 +279,7 @@ namespace Cozmo {
     Face::ID_t faceID = static_cast<Face::ID_t>(msg.faceID);
     
     auto iter = _cooldownFaces.find(faceID);
+    // If we have a cooldown entry for this face, check if the cooldown time has passed
     if (_cooldownFaces.end() != iter && (*iter).second < event.GetCurrentTime())
     {
       _cooldownFaces.erase(iter);
@@ -282,6 +299,32 @@ namespace Cozmo {
       _interestingFacesOrder.push_back(faceID);
     }
     _interestingFacesData[faceID]._lastSeen_sec = event.GetCurrentTime();
+  }
+  
+  void BehaviorInteractWithFaces::HandleRobotDeletedFace(const AnkiEvent<MessageEngineToGame>& event)
+  {
+    const RobotDeletedFace& msg = event.GetData().Get_RobotDeletedFace();
+    
+    Face::ID_t faceID = static_cast<Face::ID_t>(msg.faceID);
+    
+    auto dataIter = _interestingFacesData.find(faceID);
+    if (_interestingFacesData.end() != dataIter)
+    {
+      _interestingFacesData.erase(dataIter);
+    }
+    
+    auto orderIter = _interestingFacesOrder.begin();
+    while (_interestingFacesOrder.end() != orderIter)
+    {
+      if ((*orderIter) == faceID)
+      {
+        orderIter = _interestingFacesOrder.erase(orderIter);
+      }
+      else
+      {
+        orderIter++;
+      }
+    }
   }
   
   void BehaviorInteractWithFaces::UpdateProceduralFace(ProceduralFace& proceduralFace, const Face& face) const
