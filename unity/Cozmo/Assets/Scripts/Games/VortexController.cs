@@ -484,8 +484,10 @@ public class VortexController : GameController {
       }
       else if (!robot.isBusy && !playerMockBlocks[cozmoIndex].Validated) {
         //robot.TapBlockOnGround(1);
-        //robot.isBusy = true;
+        //Debug.Log("should be sending goto pose");
+
         CozmoEmotionManager.instance.SetEmotionReturnToPose("TAP_ONE", markx_mm, marky_mm, mark_rad, true, true);
+        robot.isBusy = true;
 
       }
       else if (humanHead == null) {
@@ -1815,7 +1817,7 @@ public class VortexController : GameController {
       }
 
       if (face_index >= 0) {
-        DAS.Error("VortexController", "Got new face for pose index " + pose_index.ToString());
+        //DAS.Error("VortexController", "Got new face for pose index " + pose_index.ToString());
         Face face = robot.faceObjects[face_index];
         Face old_face = null;
         if (actualFaces[pose_index] != null) {
@@ -1824,10 +1826,10 @@ public class VortexController : GameController {
         actualFaces[pose_index] = new Face(face.ID, face.WorldPosition.x, face.WorldPosition.y, face.WorldPosition.z);
         if (playState == VortexState.REQUEST_SPIN && pose_index == GetPoseIndex(currentPlayerIndex) && Time.realtimeSinceStartup - faceUpdateTimer > faceUpdateFreq) {
           if (old_face == null) {
-            DAS.Error("VortexController", "actualFaces[pose_index] == null");
+            //DAS.Error("VortexController", "actualFaces[pose_index] == null");
           }
           else {
-            DAS.Error("VortexController", "diff: " + (face.WorldPosition - old_face.WorldPosition).sqrMagnitude);
+            //DAS.Error("VortexController", "diff: " + (face.WorldPosition - old_face.WorldPosition).sqrMagnitude);
           }
 
           CozmoEmotionManager.instance.SetEmotionFacePose("YOUR_TURN", actualFaces[pose_index], true, true);
@@ -2035,7 +2037,7 @@ public class VortexController : GameController {
         atYourMark = true;
         if (RobotEngineManager.instance != null)
           RobotEngineManager.instance.SuccessOrFailure -= CheckForGotoStartCompletion;
-        
+        robot.isBusy = false;
         CozmoEmotionManager.SetEmotion("TAP_ONE", true);
         if (fakeCozmoTaps) {
           StartCoroutine(TapAfterDelay(1, cozmoTimeFirstTap));
@@ -2045,11 +2047,17 @@ public class VortexController : GameController {
         robot.GotoPose(defaultRobotPoses[0].x_mm, defaultRobotPoses[0].y_mm, defaultRobotPoses[0].rad);
       }
       break;
+    
     case RobotActionType.DRIVE_TO_POSE:
-      if (success) {
+      if (success && !atYourMark) {
         atYourMark = true;
         if (RobotEngineManager.instance != null)
           RobotEngineManager.instance.SuccessOrFailure -= CheckForGotoStartCompletion;
+        robot.isBusy = false;
+        CozmoEmotionManager.SetEmotion("TAP_ONE", true);
+        if (fakeCozmoTaps) {
+          StartCoroutine(TapAfterDelay(1, cozmoTimeFirstTap));
+        }
       }
       else { //try again to go to the start spot
         robot.GotoPose(defaultRobotPoses[0].x_mm, defaultRobotPoses[0].y_mm, defaultRobotPoses[0].rad);
