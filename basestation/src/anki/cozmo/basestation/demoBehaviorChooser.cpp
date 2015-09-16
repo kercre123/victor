@@ -141,13 +141,13 @@ IBehavior* DemoBehaviorChooser::ChooseNextBehavior(double currentTime_sec) const
     }
     case DemoState::Rest:
     {
-      if (runnable(_behaviorInteractWithFaces))
-      {
-        return _behaviorInteractWithFaces;
-      }
-      else if (runnable(_behaviorOCD))
+      if (runnable(_behaviorOCD))
       {
         return _behaviorOCD;
+      }
+      else if (runnable(_behaviorInteractWithFaces))
+      {
+        return _behaviorInteractWithFaces;
       }
       break;
     }

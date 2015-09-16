@@ -173,7 +173,7 @@ namespace Cozmo {
             PRINT_NAMED_INFO("BehaviorInteractWithFaces.HandleRobotObservedFace.Shocked",
                              "Head is %.1fmm away: playing shocked anim.",
                              headWrtRobot.GetTranslation().Length());
-            PlayAnimationAction* animAction = new PlayAnimationAction("shocked");
+            PlayAnimationAction* animAction = new PlayAnimationAction("Demo_Face_Interaction_ShockedScared_A");
             _animationActionTag = animAction->GetTag();
             _robot.GetActionList().QueueActionNow(IBehavior::sActionSlot, animAction);
             _isAnimating = true;
