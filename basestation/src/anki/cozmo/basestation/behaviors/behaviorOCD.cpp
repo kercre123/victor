@@ -114,7 +114,7 @@ namespace Cozmo {
     if (currentTime_sec - _lastNeatBlockDisturbedTime < kMajorIrritationTimeIntervalSec) {
       PlayAnimation("Demo_OCD_Irritation_A");
     } else if (currentTime_sec - _lastNewBlockObservedTime < kExcitedAboutNewBlockTimeIntervalSec) {
-      PlayAnimation("Demo_Look_Around_See_Something_A");
+      PlayAnimation("Demo_OCD_New_Messy_Block");
     } else {
       if(_robot.IsCarryingObject()) {
         // Make sure whatever the robot is carrying is some kind of block...
@@ -855,17 +855,19 @@ namespace Cozmo {
           }
         }
         
-        if (foundMessyToNeat || foundNeatToMessy) {
-          UpdateBlockLights();
-          
-          if (_messyObjects.empty()) {
-            // Blocks are all neatened
-            PlayAnimation("Demo_OCD_All_Blocks_Neat_Celebration");
+        if (IsRunning()) {
+          if (foundMessyToNeat || foundNeatToMessy) {
+            UpdateBlockLights();
+            
+            if (_messyObjects.empty()) {
+              // Blocks are all neatened
+              PlayAnimation("Demo_OCD_All_Blocks_Neat_Celebration");
+            }
           }
-        }
-        
-        if (foundNeatToMessy) {
-          PlayAnimation("Demo_OCD_Confused");
+          
+          if (foundNeatToMessy) {
+            PlayAnimation("Demo_OCD_Confused");
+          }
         }
         
         break;
@@ -979,7 +981,7 @@ namespace Cozmo {
         
       case State::PlacingBlock:
       {
-        if(msg.result == ActionResult::SUCCESS) {
+      if(msg.result == ActionResult::SUCCESS) {
           switch(msg.actionType) {
             case RobotActionType::PLACE_OBJECT_LOW:
               _lastObjectPlacedOnGround = _objectToPickUp;
@@ -995,12 +997,12 @@ namespace Cozmo {
               UpdateBlockLights();
               
               // Randomly celebrate a placement
-              if (rand() % 3 == 0) {
+              //if (rand() % 2 == 0) {
                 PlayAnimation("Demo_OCD_Successfully_Neat");
-              } else {
-                lastResult = SelectNextObjectToPickUp();
-                UnsetLastPickOrPlaceFailure();
-              }
+              //} else {
+              //  lastResult = SelectNextObjectToPickUp();
+              //  UnsetLastPickOrPlaceFailure();
+              //}
               break;
               
             case RobotActionType::PICK_AND_PLACE_INCOMPLETE:
@@ -1050,7 +1052,13 @@ namespace Cozmo {
                 }
                 
                 // Do next pick or place action
-                _robot.IsCarryingObject() ? SelectNextPlacement() : SelectNextObjectToPickUp();
+                if (!_messyObjects.empty()) {
+                  lastResult = _robot.IsCarryingObject() ? SelectNextPlacement() : SelectNextObjectToPickUp();
+                } else {
+                  // If we're done, just go to pickup state.
+                  // Next Update() will return Complete.
+                  _currentState = State::PickingUpBlock;
+                }
               }
               
             } else {
@@ -1137,9 +1145,7 @@ namespace Cozmo {
       }
     }
     
-    if (IsRunning()) {
-      VerifyNeatness();
-    }
+    VerifyNeatness();
     
     return RESULT_OK;
   }
