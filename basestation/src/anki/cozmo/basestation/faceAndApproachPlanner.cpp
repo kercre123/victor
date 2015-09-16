@@ -12,10 +12,12 @@
  **/
 
 
-#include "pathPlanner.h"
+#include "anki/common/basestation/math/point_impl.h"
+#include "anki/common/basestation/math/pose.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
-#include "anki/common/basestation/math/point_impl.h"
+#include "anki/planning/shared/path.h"
+#include "faceAndApproachPlanner.h"
 
 // amount of radians to be off from the desired angle in order to
 // introduce a turn in place action

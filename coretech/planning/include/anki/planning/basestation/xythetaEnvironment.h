@@ -40,9 +40,9 @@ typedef uint8_t StateTheta;
 typedef int16_t StateXY;
 typedef uint8_t ActionID;
 
-class xythetaEnvironment;
 class State;
-class StateID;
+class xythetaEnvironment;
+union StateID;
 
 struct Point
 {
@@ -74,22 +74,35 @@ public:
   StateTheta theta;
 };
 
+union StateIDConverter;
+
 // bit field representation that packs into an int
-class StateID
+union StateID
 {
-  friend bool operator==(const StateID& lhs, const StateID& rhs);
-public:
+  StateID() : v(0) {}
+  StateID(const StateID& other) : v(other.v) {}
+  StateID(const State& state) : s(state) {}
 
-  bool operator<(const StateID& rhs) const;
+  // Allow for conversion freely to/from int
+  StateID(u32 val) : v(val) {}
+  operator u32() { return v; }
+  operator u32() const { return v; }
 
-  StateID() : theta(0), x(0), y(0) {};
-  StateID(const State& state) { *this = state.GetStateID(); };
+  struct S
+  {
+    S() : theta(0), x(0), y(0) {}
+    explicit S(const State& state) : S( state.GetStateID().s ) {}
 
-  // TODO:(bn) check that these are packed properly
-  unsigned int theta : THETA_BITS;
-  signed int x : MAX_XY_BITS;
-  signed int y : MAX_XY_BITS;
+    unsigned int theta : THETA_BITS;
+    signed int x : MAX_XY_BITS;
+    signed int y : MAX_XY_BITS;
+  };
+
+  S s;
+  u32 v;
 };
+
+static_assert(sizeof(StateID::S) == sizeof(u32), "StateID must pack into 32 bits");
 
 // continuous states are set up with the exact state being at the
 // bottom left of the cell // TODO:(bn) think more about that, should probably add half a cell width
@@ -320,22 +333,34 @@ public:
                                       float& distanceToPlan,
                                       bool debug = false) const;
 
-  // Returns true if the plan is safe and complete, false otherwise,
-  // including if the penalty increased by too much (see
-  // REPLAN_PENALTY_BUFFER in the cpp file). This should always return
-  // true immediately after Replan returns true, but if the
-  // environment is updated it can be useful to re-check the plan.
+  // Returns true if the plan is safe and complete, false otherwise, including if the penalty increased by too
+  // much (see REPLAN_PENALTY_BUFFER in the cpp file). This should always return true immediately after Replan
+  // returns true, but if the environment is updated it can be useful to re-check the plan.
   // 
-  // second argument is how much of the path has already been
-  // executed. Note that this is different form the robot's
-  // currentPathSegment because our plans are different from robot
-  // paths
+  // Arguments:
   // 
-  // Second argument value will be set to last valid state along the
-  // path before collision if unsafe (or the goal if safe)
+  // plan - the plan to check, will not be modified
+  //
+  // maxDistancetoFollowOldPlan_mm - Even if the plan is not safe, we may still be able to use part of the old
+  // plan. This is the maximum "amount" of old plan that we want to use, in terms of distance. If this number
+  // were 0, we'd replan without using any of the old plan, which would maximize efficiency of the new plan
+  // (since it isn't artificially limited to follow the old plan), but the robot is currently driving while we
+  // plan, so to avoid a jerky sudden stop, or being in the wrong place, we do want to keep some of the old
+  // plan. If the number were FLT_MAX or something, we could keep the whole old plan, which would be safe, but
+  // might look really dumb in case we need to go a different way after seeing the new obstacle
   // 
-  // Third argument is the valid portion of the plan, up to lastSafeState
-  bool PlanIsSafe(const xythetaPlan& plan, const float maxDistancetoFollowOldPlan_mm, int currentPathIndex = 0) const;
+  // currentPathIndex - The index in the plan that the robot is currently following. The Plan is the full plan
+  // from the last planning cycle, which means that some of it has already been executed. Note that this is
+  // different from the robot's currentPathSegment because our plans are different from robot paths
+  // 
+  // lastSafeState - will be set to the last state which is safe and fits within maxDistancetoFollowOldPlan_mm
+  // (this is where a new plan could start)
+  // 
+  // validPlan - will be set to the potion of the plan which is valid (no collision or increased penalty),
+  // within maxDistancetoFollowOldPlan_mm
+  bool PlanIsSafe(const xythetaPlan& plan,
+                  const float maxDistancetoFollowOldPlan_mm,
+                  int currentPathIndex = 0) const;
   bool PlanIsSafe(const xythetaPlan& plan, 
                   const float maxDistancetoFollowOldPlan_mm,
                   int currentPathIndex,
@@ -374,8 +399,6 @@ public:
   inline static float GetXFromStateID(StateID sid);
   inline static float GetYFromStateID(StateID sid);
   inline static float GetThetaFromStateID(StateID sid);
-
-  // TEMP:  // TODO:(bn) explicit?
 
   inline float GetX_mm(StateXY x) const;
   inline float GetY_mm(StateXY y) const;
@@ -477,22 +500,22 @@ State xythetaEnvironment::State_c2State(const State_c& c) const
 
 State_c xythetaEnvironment::StateID2State_c(StateID sid) const
 {
-  return State_c(GetX_mm(sid.x), GetY_mm(sid.y), GetTheta_c(sid.theta));
+  return State_c(GetX_mm(sid.s.x), GetY_mm(sid.s.y), GetTheta_c(sid.s.theta));
 }
 
 float xythetaEnvironment::GetXFromStateID(StateID sid)
 {
-  return sid.x; //sid & ((1<<MAX_XY_BITS) - 1);
+  return sid.s.x;
 }
 
 float xythetaEnvironment::GetYFromStateID(StateID sid)
 {
-  return sid.y; //(sid >> MAX_XY_BITS) & ((1<<MAX_XY_BITS) - 1);
+  return sid.s.y;
 }
 
 float xythetaEnvironment::GetThetaFromStateID(StateID sid)
 {
-  return sid.theta; //sid >> (2*MAX_XY_BITS);
+  return sid.s.theta;
 }
 
 float xythetaEnvironment::GetX_mm(StateXY x) const

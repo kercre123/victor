@@ -46,19 +46,6 @@ State::State(StateID sid)
 {
 }
 
-bool operator==(const StateID& lhs, const StateID& rhs)
-{
-  // TODO:(bn) efficient comparison of bit fields?
-  return lhs.theta == rhs.theta && lhs.x == rhs.x && lhs.y == rhs.y;
-}
-
-bool operator!=(const StateID& lhs, const StateID& rhs)
-{
-  // TODO:(bn) efficient comparison of bit fields?
-  return lhs.theta != rhs.theta || lhs.x != rhs.x || lhs.y != rhs.y;
-}
-
-
 bool State::Import(const Json::Value& config)
 {
   if(!JsonTools::GetValueOptional(config, "x", x) ||
@@ -76,9 +63,9 @@ StateID State::GetStateID() const
 {
   //return x | y<<MAX_XY_BITS | theta<<(2*MAX_XY_BITS);
   StateID sid;
-  sid.x = x;
-  sid.y = y;
-  sid.theta = theta;
+  sid.s.x = x;
+  sid.s.y = y;
+  sid.s.theta = theta;
   return sid;
 }
 
@@ -92,25 +79,6 @@ bool State::operator!=(const State& other) const
 {
   // TODO:(bn) use union?
   return x!=other.x || y!=other.y || theta!=other.theta;
-}
-
-bool StateID::operator<(const StateID& rhs) const
-{
-  // TODO:(bn) use union?
-  if(x < rhs.x)
-    return true;
-  if(x > rhs.x)
-    return false;
-
-  if(y < rhs.y)
-    return true;
-  if(y > rhs.y)
-    return false;
-
-  if(theta < rhs.theta)
-    return true;
-  // if(theta > rhs.theta)
-  return false;
 }
 
 
@@ -1106,7 +1074,7 @@ void xythetaEnvironment::PrintPlan(const xythetaPlan& plan) const
   for(size_t i=0; i<plan.actions_.size(); ++i) {
     printf("%2lu: (%f, %f, %f [%d]) --> %s (penalty = %f)\n",
            i,
-           curr_c.x_mm, curr_c.y_mm, curr_c.theta, currID.theta, 
+           curr_c.x_mm, curr_c.y_mm, curr_c.theta, currID.s.theta, 
            actionTypes_[plan.actions_[i]].GetName().c_str(),
            plan.penalties_[i]);
     ApplyAction(plan.actions_[i], currID, false);

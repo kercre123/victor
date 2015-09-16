@@ -471,6 +471,7 @@
       'dependencies': [
         'ctiCommon',
         '<(cti-util_gyp_path):jsoncpp',
+        '<(cti-util_gyp_path):util',
       ],
       'defines': [
         'CORETECH_BASESTATION'

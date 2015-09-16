@@ -28,9 +28,9 @@ GTEST_TEST(TestEnvironment, StateIDPacking)
 
   for(size_t i=0; i<states.size(); ++i) {
     StateID id = states[i].GetStateID();
-    EXPECT_EQ(id.x, states[i].x);
-    EXPECT_EQ(id.y, states[i].y);
-    EXPECT_EQ(id.theta, states[i].theta);
+    EXPECT_EQ(id.s.x, states[i].x);
+    EXPECT_EQ(id.s.y, states[i].y);
+    EXPECT_EQ(id.s.theta, states[i].theta);
     State newState(id);
     EXPECT_EQ(states[i], newState);
   }
@@ -97,51 +97,51 @@ GTEST_TEST(TestEnvironment, SuccessorsFromZero)
 
   EXPECT_FALSE(it.Done(env));
   EXPECT_EQ(it.Front().actionID, 0);
-  EXPECT_EQ(it.Front().stateID.x, 1);
-  EXPECT_EQ(it.Front().stateID.y, 0);
-  EXPECT_EQ(it.Front().stateID.theta, 0);
+  EXPECT_EQ(it.Front().stateID.s.x, 1);
+  EXPECT_EQ(it.Front().stateID.s.y, 0);
+  EXPECT_EQ(it.Front().stateID.s.theta, 0);
   it.Next(env);
 
   EXPECT_FALSE(it.Done(env));
   EXPECT_EQ(it.Front().actionID, 1);
-  EXPECT_EQ(it.Front().stateID.x, 5);
-  EXPECT_EQ(it.Front().stateID.y, 0);
-  EXPECT_EQ(it.Front().stateID.theta, 0);
+  EXPECT_EQ(it.Front().stateID.s.x, 5);
+  EXPECT_EQ(it.Front().stateID.s.y, 0);
+  EXPECT_EQ(it.Front().stateID.s.theta, 0);
   it.Next(env);
 
   EXPECT_FALSE(it.Done(env));
   EXPECT_EQ(it.Front().actionID, 2);
-  EXPECT_EQ(it.Front().stateID.x, 5);
-  EXPECT_EQ(it.Front().stateID.y, 1);
-  EXPECT_EQ(it.Front().stateID.theta, 1);
+  EXPECT_EQ(it.Front().stateID.s.x, 5);
+  EXPECT_EQ(it.Front().stateID.s.y, 1);
+  EXPECT_EQ(it.Front().stateID.s.theta, 1);
   it.Next(env);
 
   EXPECT_FALSE(it.Done(env));
   EXPECT_EQ(it.Front().actionID, 3);
-  EXPECT_EQ(it.Front().stateID.x, 5);
-  EXPECT_EQ(it.Front().stateID.y, -1);
-  EXPECT_EQ(it.Front().stateID.theta, 15);
+  EXPECT_EQ(it.Front().stateID.s.x, 5);
+  EXPECT_EQ(it.Front().stateID.s.y, -1);
+  EXPECT_EQ(it.Front().stateID.s.theta, 15);
   it.Next(env);
 
   EXPECT_FALSE(it.Done(env));
   EXPECT_EQ(it.Front().actionID, 4);
-  EXPECT_EQ(it.Front().stateID.x, 0);
-  EXPECT_EQ(it.Front().stateID.y, 0);
-  EXPECT_EQ(it.Front().stateID.theta, 1);
+  EXPECT_EQ(it.Front().stateID.s.x, 0);
+  EXPECT_EQ(it.Front().stateID.s.y, 0);
+  EXPECT_EQ(it.Front().stateID.s.theta, 1);
   it.Next(env);
 
   EXPECT_FALSE(it.Done(env));
   EXPECT_EQ(it.Front().actionID, 5);
-  EXPECT_EQ(it.Front().stateID.x, 0);
-  EXPECT_EQ(it.Front().stateID.y, 0);
-  EXPECT_EQ(it.Front().stateID.theta, 15);
+  EXPECT_EQ(it.Front().stateID.s.x, 0);
+  EXPECT_EQ(it.Front().stateID.s.y, 0);
+  EXPECT_EQ(it.Front().stateID.s.theta, 15);
   it.Next(env);
 
   EXPECT_FALSE(it.Done(env));
   EXPECT_EQ(it.Front().actionID, 6);
-  EXPECT_EQ(it.Front().stateID.x, -1);
-  EXPECT_EQ(it.Front().stateID.y, 0);
-  EXPECT_EQ(it.Front().stateID.theta, 0);
+  EXPECT_EQ(it.Front().stateID.s.x, -1);
+  EXPECT_EQ(it.Front().stateID.s.y, 0);
+  EXPECT_EQ(it.Front().stateID.s.theta, 0);
   it.Next(env);
 
   EXPECT_TRUE(it.Done(env));
@@ -163,51 +163,51 @@ GTEST_TEST(TestEnvironment, SuccessorsFromNonzero)
 
   EXPECT_FALSE(it.Done(env));
   EXPECT_EQ(it.Front().actionID, 0);
-  EXPECT_EQ(it.Front().stateID.x, -12);
-  EXPECT_EQ(it.Front().stateID.y, 106);
-  EXPECT_EQ(it.Front().stateID.theta, 15);
+  EXPECT_EQ(it.Front().stateID.s.x, -12);
+  EXPECT_EQ(it.Front().stateID.s.y, 106);
+  EXPECT_EQ(it.Front().stateID.s.theta, 15);
   it.Next(env);
 
   EXPECT_FALSE(it.Done(env));
   EXPECT_EQ(it.Front().actionID, 1);
-  EXPECT_EQ(it.Front().stateID.x, -10);
-  EXPECT_EQ(it.Front().stateID.y, 105);
-  EXPECT_EQ(it.Front().stateID.theta, 15);
+  EXPECT_EQ(it.Front().stateID.s.x, -10);
+  EXPECT_EQ(it.Front().stateID.s.y, 105);
+  EXPECT_EQ(it.Front().stateID.s.theta, 15);
   it.Next(env);
 
   EXPECT_FALSE(it.Done(env));
   EXPECT_EQ(it.Front().actionID, 2);
-  EXPECT_EQ(it.Front().stateID.x, -11);
-  EXPECT_EQ(it.Front().stateID.y, 106);
-  EXPECT_EQ(it.Front().stateID.theta, 0);
+  EXPECT_EQ(it.Front().stateID.s.x, -11);
+  EXPECT_EQ(it.Front().stateID.s.y, 106);
+  EXPECT_EQ(it.Front().stateID.s.theta, 0);
   it.Next(env);
 
   EXPECT_FALSE(it.Done(env));
   EXPECT_EQ(it.Front().actionID, 3);
-  EXPECT_EQ(it.Front().stateID.x, -11);
-  EXPECT_EQ(it.Front().stateID.y, 105);
-  EXPECT_EQ(it.Front().stateID.theta, 14);
+  EXPECT_EQ(it.Front().stateID.s.x, -11);
+  EXPECT_EQ(it.Front().stateID.s.y, 105);
+  EXPECT_EQ(it.Front().stateID.s.theta, 14);
   it.Next(env);
 
   EXPECT_FALSE(it.Done(env));
   EXPECT_EQ(it.Front().actionID, 4);
-  EXPECT_EQ(it.Front().stateID.x, -14);
-  EXPECT_EQ(it.Front().stateID.y, 107);
-  EXPECT_EQ(it.Front().stateID.theta, 0);
+  EXPECT_EQ(it.Front().stateID.s.x, -14);
+  EXPECT_EQ(it.Front().stateID.s.y, 107);
+  EXPECT_EQ(it.Front().stateID.s.theta, 0);
   it.Next(env);
 
   EXPECT_FALSE(it.Done(env));
   EXPECT_EQ(it.Front().actionID, 5);
-  EXPECT_EQ(it.Front().stateID.x, -14);
-  EXPECT_EQ(it.Front().stateID.y, 107);
-  EXPECT_EQ(it.Front().stateID.theta, 14);
+  EXPECT_EQ(it.Front().stateID.s.x, -14);
+  EXPECT_EQ(it.Front().stateID.s.y, 107);
+  EXPECT_EQ(it.Front().stateID.s.theta, 14);
   it.Next(env);
 
   EXPECT_FALSE(it.Done(env));
   EXPECT_EQ(it.Front().actionID, 6);
-  EXPECT_EQ(it.Front().stateID.x, -16);
-  EXPECT_EQ(it.Front().stateID.y, 108);
-  EXPECT_EQ(it.Front().stateID.theta, 15);
+  EXPECT_EQ(it.Front().stateID.s.x, -16);
+  EXPECT_EQ(it.Front().stateID.s.y, 108);
+  EXPECT_EQ(it.Front().stateID.s.theta, 15);
   it.Next(env);
 
   EXPECT_TRUE(it.Done(env));
