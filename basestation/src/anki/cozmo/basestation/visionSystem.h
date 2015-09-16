@@ -268,6 +268,7 @@ namespace Cozmo {
     Embedded::Array<f32> _RcamWrtRobot;
     
     u32 _mode;
+    u32 _modeBeforeTracking;
     
     // Camera parameters
     // TODO: Should these be moved to (their own struct in) visionParameters.h/cpp?
@@ -444,6 +445,8 @@ namespace Cozmo {
     //MultiMailbox<MessageFaceDetection, FaceDetectionParameters::MAX_FACE_DETECTIONS>   _faceDetectMailbox;
     
     MultiMailbox<Vision::TrackedFace, FaceDetectionParameters::MAX_FACE_DETECTIONS> _faceMailbox;
+    
+    void RestoreNonTrackingMode();
     
   }; // class VisionSystem
   
