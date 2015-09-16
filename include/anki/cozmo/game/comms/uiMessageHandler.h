@@ -60,7 +60,7 @@ namespace Anki {
       
       // As long as there are messages available from the comms object,
       // process them and pass them along to robots.
-      virtual Result ProcessMessages();
+      virtual Result ProcessMessages() override;
       
       virtual void Broadcast(const ExternalInterface::MessageGameToEngine& message) override;
       virtual void Broadcast(ExternalInterface::MessageGameToEngine&& message) override;
@@ -115,7 +115,7 @@ namespace Anki {
       
       // As long as there are messages available from the comms object,
       // process them and pass them along to robots.
-      virtual Result ProcessMessages() {
+      virtual Result ProcessMessages() override {
         return RESULT_OK;
       }
       
