@@ -63,7 +63,7 @@ private:
   };
   
   // How long to wait before we trying to look around again (among other factors)
-  constexpr static f32 kLookAroundCooldownDuration = 11;
+  constexpr static f32 kLookAroundCooldownDuration = 7;
   // How fast to rotate when looking around
   constexpr static f32 kDegreesRotatePerSec = 25;
   // The default radius (in mm) we assume exists for us to move around in
