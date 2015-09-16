@@ -177,6 +177,7 @@
     'ldflags': ['<@(linker_flags)'],
     'defines': ['<@(coretech_defines)'],
     'xcode_settings': {
+      'ENABLE_BITCODE': 'NO',
       'OTHER_CFLAGS': ['<@(compiler_c_flags)'],
       'OTHER_CPLUSPLUSFLAGS': ['<@(compiler_cpp_flags)'],
       'ALWAYS_SEARCH_USER_PATHS': 'NO',

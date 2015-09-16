@@ -248,6 +248,7 @@
       "OS=='ios'",
       {
         'xcode_settings': {
+          'ENABLE_BITCODE': 'NO',
           'SDKROOT': 'iphoneos',
           'VALID_ARCHS' : ['<@(target_archs)']
         },
