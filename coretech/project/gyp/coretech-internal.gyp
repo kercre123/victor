@@ -170,6 +170,7 @@
     'xcode_settings': {
       'OTHER_CFLAGS': ['<@(compiler_c_flags)'],
       'OTHER_CPLUSPLUSFLAGS': ['<@(compiler_cpp_flags)'],
+      'ENABLE_BITCODE': 'NO',
       'ALWAYS_SEARCH_USER_PATHS': 'NO',
       'conditions': [
         ['face_library=="faciometric"', {
@@ -248,7 +249,6 @@
       "OS=='ios'",
       {
         'xcode_settings': {
-          'ENABLE_BITCODE': 'NO',
           'SDKROOT': 'iphoneos',
           'VALID_ARCHS' : ['<@(target_archs)']
         },
