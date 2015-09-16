@@ -150,9 +150,6 @@ public class ActiveBlock : ObservedObject {
   }
 
   public void Moving(G2U.ActiveObjectMoved message) {
-    if (isMoving)
-      return;
-
     isMoving = true;
 
     upAxis = message.upAxis;
@@ -162,9 +159,6 @@ public class ActiveBlock : ObservedObject {
   }
 
   public void StoppedMoving(G2U.ActiveObjectStoppedMoving message) {
-    if (!isMoving)
-      return;
-
     isMoving = false;
 
     if (message.rolled) {

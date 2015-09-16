@@ -38,6 +38,7 @@ public class PatternPlayController : GameController {
 
   private Dictionary<int, BlockLightConfig> blockLightConfigs = new Dictionary<int, BlockLightConfig>();
   private HashSet<RowBlockPattern> seenPatterns = new HashSet<RowBlockPattern>();
+  private Dictionary<int, float> lastFrameZAccel = new Dictionary<int, float>();
 
   protected override void OnEnable() {
     base.OnEnable();
@@ -90,12 +91,20 @@ public class PatternPlayController : GameController {
     base.Enter_PLAYING();
     foreach (KeyValuePair<int, ActiveBlock> activeBlock in robot.activeBlocks) {
       blockLightConfigs.Add(activeBlock.Key, BlockLightConfig.NONE);
+      lastFrameZAccel.Add(activeBlock.Key, 0.0f);
     }
     ResetLookHeadForkLift();
   }
 
   protected override void Update_PLAYING() {
     base.Update_PLAYING();
+
+    // check for light updates
+    foreach (KeyValuePair<int, ActiveBlock> activeBlock in robot.activeBlocks) {
+      if (NextBlockConfig(activeBlock.Value)) {
+        blockLightConfigs[activeBlock.Key] = (BlockLightConfig)(((int)blockLightConfigs[activeBlock.Key] + 1) % System.Enum.GetNames(typeof(BlockLightConfig)).Length);
+      }
+    }
 
     // update lights
     foreach (KeyValuePair<int, BlockLightConfig> blockConfig in blockLightConfigs) {
@@ -193,12 +202,24 @@ public class PatternPlayController : GameController {
     base.RefreshHUD();
   }
 
-  private void BlockTapped(int blockID, int numTapped) {
-    if (gameReady == false)
-      return;
+  private bool NextBlockConfig(ActiveBlock activeBlock) {
+    if (lastFrameZAccel[activeBlock.ID] < -20.0f && activeBlock.zAccel > 10.0f) {
+      lastFrameZAccel[activeBlock.ID] = activeBlock.zAccel;
+      return true;
+    }
+    lastFrameZAccel[activeBlock.ID] = activeBlock.zAccel;
+    return false;
+  }
 
+  private void BlockTapped(int blockID, int numTapped) {
+    /*if (gameReady == false)
+      return;
+    Debug.Log(robot.activeBlocks[blockID].xAccel + " " + robot.activeBlocks[blockID].yAccel + " " + robot.activeBlocks[blockID].zAccel);
+    if (robot.activeBlocks[blockID].xAccel < 30.0f && robot.activeBlocks[blockID].yAccel < 30.0f) {
+      return;
+    }*/
     // go to the next light configuration
-    blockLightConfigs[blockID] = (BlockLightConfig)(((int)blockLightConfigs[blockID] + numTapped) % System.Enum.GetNames(typeof(BlockLightConfig)).Length);
+    //blockLightConfigs[blockID] = (BlockLightConfig)(((int)blockLightConfigs[blockID] + numTapped) % System.Enum.GetNames(typeof(BlockLightConfig)).Length);
   }
 
   private void DonePlayingAnimation(bool success) {
@@ -234,7 +255,7 @@ public class PatternPlayController : GameController {
       float block1 = Vector3.Dot(robot.activeBlocks[robot.markersVisibleObjects[i + 1].ID].WorldPosition, robot.Forward);
 
       if (Mathf.Abs(block0 - block1) > 10.0f) {
-        DAS.Debug("PatternPlayController", "position off: " + Mathf.Abs(block0 - block1));
+        //DAS.Debug("PatternPlayController", "position off: " + Mathf.Abs(block0 - block1));
         return false;
       }
 
