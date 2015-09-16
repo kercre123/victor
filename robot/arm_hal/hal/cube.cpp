@@ -97,12 +97,55 @@ namespace Anki
         
         //DisplayStatus(id);
 
-        if (count) {
+        if (count > 0 && count < 16) {
           Messages::ActiveObjectTapped m;
           m.numTaps = count;
           m.objectID = id;
           RadioSendMessage(GET_MESSAGE_ID(Messages::ActiveObjectTapped), &m);
+        }        
+        
+        
+        // Detect if block moved from accel data
+        const u8 START_MOVING_COUNT_THRESH = 5;  // Determines number of motion tics that much be observed before Moving msg is sent
+        const u8 STOP_MOVING_COUNT_THRESH = 20;  // Determines number of no-motion tics that much be observed before StoppedMoving msg is sent
+        static u8 movingTimeoutCtr[MAX_CUBES] = {0};
+        static bool isMoving[MAX_CUBES] = {false};
+        
+        s8 ax = g_AccelStatus[id].x;
+        s8 ay = g_AccelStatus[id].y;
+        s8 az = g_AccelStatus[id].z;
+        
+        s32 accSqrd = ax*ax + ay*ay + az*az;
+        bool isMovingNow = !NEAR(accSqrd, 64*64, 500);  // 64 == 1g
+        
+        if (isMovingNow) {
+          if (movingTimeoutCtr[id] < STOP_MOVING_COUNT_THRESH) {
+            ++movingTimeoutCtr[id];
+          }
+        } else if (movingTimeoutCtr[id] > 0) {
+          --movingTimeoutCtr[id];
         }
+        
+        if ((movingTimeoutCtr[id] >= START_MOVING_COUNT_THRESH) && !isMoving[id]) {
+          Messages::ActiveObjectMoved m;
+          m.objectID = id;
+          m.xAccel = ax;
+          m.yAccel = ay;
+          m.zAccel = az;
+          m.upAxis = 0;  // This should get processed on engine eventually
+          RadioSendMessage(GET_MESSAGE_ID(Messages::ActiveObjectMoved), &m);
+          isMoving[id] = true;
+          movingTimeoutCtr[id] = STOP_MOVING_COUNT_THRESH;
+        } else if ((movingTimeoutCtr[id] == 0) && isMoving[id]) {
+          Messages::ActiveObjectStoppedMoving m;
+          m.objectID = id;
+          m.upAxis = 0;  // This should get processed on engine eventually
+          m.rolled = 0;  // This should get processed on engine eventually
+          RadioSendMessage(GET_MESSAGE_ID(Messages::ActiveObjectStoppedMoving), &m);
+          isMoving[id] = false;
+        }
+              
+        
         #endif
       }
 
