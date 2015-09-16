@@ -624,16 +624,36 @@ namespace Anki {
           ObservableObject* object = objectWithID.second;
           assert(object->IsActive());
           if(object->GetActiveID() == msg.objectID) {
+            
+            // Compute upAxis
+            // (Didn't bother doing this on robot because of CLAD stuff.
+            //  This will all move to an engine-side accelerometer processing object at some point.)
+            f32 maxAccelVal = 0;
+            UpAxisClad upAxis = UpAxisClad::Unknown;
+            if (fabsf(msg.xAccel) > maxAccelVal) {
+              upAxis = msg.xAccel > 0 ? UpAxisClad::XPositive : UpAxisClad::XNegative;
+              maxAccelVal = fabsf(msg.xAccel);
+            }
+            if (fabsf(msg.yAccel) > maxAccelVal) {
+              upAxis = msg.yAccel > 0 ? UpAxisClad::YPositive : UpAxisClad::YNegative;
+              maxAccelVal = fabsf(msg.yAccel);
+            }
+            if (fabsf(msg.zAccel) > maxAccelVal) {
+              upAxis = msg.zAccel > 0 ? UpAxisClad::ZPositive : UpAxisClad::ZNegative;
+              maxAccelVal = fabsf(msg.zAccel);
+            }
+            
+            
             // TODO: Mark object as de-localized
-            printf("Received message that Object %d (Active ID %d) moved.\n",
-                   objectWithID.first.GetValue(), msg.objectID);
+            printf("Received message that Object %d (Active ID %d) moved. (%f, %f, %f) - upAxis %hhu\n",
+                   objectWithID.first.GetValue(), msg.objectID, msg.xAccel, msg.yAccel, msg.zAccel, upAxis);
             
             // Don't notify game about moving objects that are being carried
             ActionableObject* actionObject = dynamic_cast<ActionableObject*>(object);
             assert(actionObject != nullptr);
             if(actionObject->IsBeingCarried() == false) {
               robot->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::ActiveObjectMoved(
-                robot->GetID(), objectWithID.first, msg.xAccel, msg.yAccel, msg.zAccel, (UpAxisClad)msg.upAxis
+                robot->GetID(), objectWithID.first, msg.xAccel, msg.yAccel, msg.zAccel, upAxis
               )));
             }
             
