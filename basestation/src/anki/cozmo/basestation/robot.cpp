@@ -114,8 +114,9 @@ namespace Anki {
       // Initializes _pose, _poseOrigins, and _worldOrigin:
       Delocalize();
       
-      _proceduralFace.MarkAsSentToRobot(true);
-      _lastProceduralFace.MarkAsSentToRobot(false);
+      _proceduralFace.MarkAsSentToRobot(false);
+      _proceduralFace.SetTimeStamp(1); // Make greater than lastFace's timestamp, so it gets streamed
+      _lastProceduralFace.MarkAsSentToRobot(true);
       
       // The call to Delocalize() will increment frameID, but we want it to be
       // initialzied to 0, to match the physical robot's initialization

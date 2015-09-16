@@ -97,6 +97,7 @@ namespace Cozmo {
     static const cv::Rect imgRect;
     
     void DrawEye(WhichEye whichEye, cv::Mat_<u8>& faceImg) const;
+    s32 GetBrowHeight(const s32 eyeHeightPix, const Value browCenY) const;
     
     // Container for the parameters for both eyes
     std::array<std::array<Value, static_cast<size_t>(Parameter::NumParameters)>, 2> _eyeParams;
@@ -113,8 +114,6 @@ namespace Cozmo {
   
   inline void ProceduralFace::SetParameter(WhichEye whichEye, Parameter param, Value value)
   {
-    //const ValueLimits& lims = GetLimits(param);
-    //_eyeParams[whichEye][static_cast<size_t>(param)] = std::max(lims.first, std::min(lims.second, value));
     _eyeParams[whichEye][static_cast<size_t>(param)] = std::max(-1.f, std::min(1.f, value));
   }
   
