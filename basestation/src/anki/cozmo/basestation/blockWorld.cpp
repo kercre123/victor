@@ -401,7 +401,7 @@ namespace Anki
               if (_robot->GetCarryingObject() == observedObject->GetID()) {
                 PRINT_NAMED_INFO("BlockWorld.AddAndUpdateObjects.SawCarryObject",
                                  "Uncarrying object ID=%d because it was observed\n", (int)observedObject->GetID());
-                _robot->UnSetCarryingObject();
+                _robot->UnSetCarryingObjects();
               }
             } else {
               PRINT_NAMED_WARNING("BlockWorld.AddAndUpdateObjects.UpdatingByType",
@@ -768,7 +768,7 @@ namespace Anki
                         "but wasn't.\n", unobserved.object->GetID().GetValue());
           
           ClearObject(unobserved.object, unobserved.type, unobserved.family);
-        } else if(unobserved.family != ObjectFamily::Mat && unobserved.object->GetID() != _robot->GetCarryingObject()) {
+        } else if(unobserved.family != ObjectFamily::Mat && _robot->GetCarryingObjects().count(unobserved.object->GetID()) == 0) {
           // If the object should _not_ be visible (i.e. none of its markers project
           // into the camera), but some part of the object is within frame, it is
           // close enough, and was seen fairly recently, then
@@ -925,9 +925,7 @@ namespace Anki
 
     void BlockWorld::GetObstacles(std::vector<std::pair<Quad2f,ObjectID> >& boundingBoxes, const f32 padding) const
     {
-      std::set<ObjectID> ignoreIDs = {
-        _robot->GetCarryingObject() // TODO: what if robot is carrying multiple objects?
-      };
+      std::set<ObjectID> ignoreIDs = _robot->GetCarryingObjects();
       
       // If the robot is localized, check to see if it is "on" the mat it is
       // localized to. If so, ignore the mat as an obstacle.
@@ -1872,7 +1870,7 @@ namespace Anki
                            ObjectTypeToString(object->GetType()),
                            object->GetID().GetValue(),
                            _robot->GetID());
-          _robot->UnSetCarryingObject();
+          _robot->UnSetCarryingObjects();
         }
         
         if(_selectedObject == object->GetID()) {

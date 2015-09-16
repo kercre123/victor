@@ -413,12 +413,9 @@ namespace Cozmo {
     ComputeAlignedPoses(nearObject->GetPose(), offset_mm, alignedPoses);
     
     // Find closest empty pose
-    std::set<ObjectID> ignoreIDs;
-    ignoreIDs.insert(_robot.GetCarryingObject());
     f32 closestDistToRobot = std::numeric_limits<f32>::max();
-   
     for (auto& testPose : alignedPoses) {
-      if(nullptr == _robot.GetBlockWorld().FindObjectClosestTo(testPose, nearObject->GetSize(), ignoreIDs)) {
+      if(nullptr == _robot.GetBlockWorld().FindObjectClosestTo(testPose, nearObject->GetSize(), _robot.GetCarryingObjects())) {
         f32 distToRobot = ComputeDistanceBetween(_robot.GetPose(), testPose);
         if ( distToRobot < closestDistToRobot) {
           closestDistToRobot = distToRobot;
