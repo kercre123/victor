@@ -54,17 +54,17 @@ namespace Cozmo {
     GameMessageHandler(); // Force construction with stuff in Init()?
     
     // Set the message handler's communications manager
-    virtual Result Init(Comms::IComms* comms);
+    virtual Result Init(Comms::IComms* comms) override;
     
     virtual bool IsInitialized() const override;
     
     // As long as there are messages available from the comms object,
     // process them and pass them along to robots.
     // Returns RESULT_FAIL if no handler callback was registered for one or more of the received messages.
-    virtual Result ProcessMessages();
+    virtual Result ProcessMessages() override;
     
     // Send a message to a specified ID
-    Result SendMessage(const UserDeviceID_t devID, const ExternalInterface::MessageGameToEngine& msg);
+    Result SendMessage(const UserDeviceID_t devID, const ExternalInterface::MessageGameToEngine& msg) override;
     
     inline void RegisterCallbackForMessage(const std::function<void(const ExternalInterface::MessageEngineToGame&)>& messageCallback)
     {
