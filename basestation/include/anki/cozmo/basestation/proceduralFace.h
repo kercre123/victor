@@ -36,7 +36,7 @@ namespace Cozmo {
     static constexpr s32   MaxEyeHeightPix       = 3*HEIGHT/4;
     static constexpr s32   MinEyeWidthPix        = WIDTH/5;
     static constexpr s32   MaxEyeWidthPix        = 2*WIDTH/5;
-    static constexpr s32   EyebrowHalfLength     = (MaxEyeWidthPix + MinEyeWidthPix)/4; // Half the average eye width
+    static constexpr s32   MaxBrowLengthPix      = MaxEyeWidthPix;
     static constexpr s32   MaxBrowAngle          = 15; // Degrees (symmtric, also used for -ve angle)
     static constexpr s32   MaxFaceAngle          = 25; //   "
 

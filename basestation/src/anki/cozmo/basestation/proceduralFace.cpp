@@ -108,10 +108,12 @@ namespace Cozmo {
                                            -eyeWidthPix/2, eyeWidthPix/2) + NominalEyeCenX;
     const s32 browYPosPix = GetBrowHeight(eyeHeightPix, GetParameter(whichEye, Parameter::BrowCenY));
 
-    const cv::Point leftPoint(browXPosPix-std::round(static_cast<f32>(EyebrowHalfLength)*cosAngle),
-                              browYPosPix-std::round(static_cast<f32>(EyebrowHalfLength)*sinAngle));
-    const cv::Point rightPoint(browXPosPix+std::round(static_cast<f32>(EyebrowHalfLength)*cosAngle),
-                               browYPosPix+std::round(static_cast<f32>(EyebrowHalfLength)*sinAngle));
+    const s32 browHalfLength = GetScaledValue(GetParameter(whichEye, Parameter::BrowLength), 0, MaxBrowLengthPix)/2;
+    
+    const cv::Point leftPoint(browXPosPix-std::round(static_cast<f32>(browHalfLength)*cosAngle),
+                              browYPosPix-std::round(static_cast<f32>(browHalfLength)*sinAngle));
+    const cv::Point rightPoint(browXPosPix+std::round(static_cast<f32>(browHalfLength)*cosAngle),
+                               browYPosPix+std::round(static_cast<f32>(browHalfLength)*sinAngle));
     
     const cv::Point leftPointBtm(leftPoint.x,   leftPoint.y + 3);
     const cv::Point rightPointBtm(rightPoint.x, rightPoint.y + 3);
