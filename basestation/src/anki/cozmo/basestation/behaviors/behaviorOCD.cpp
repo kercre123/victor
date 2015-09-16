@@ -723,6 +723,7 @@ namespace Cozmo {
         const f32 MIN_NEATNESS_SCORE_TO_BECOME_NEAT = 0.8f;
         const f32 RECENTLY_OBSERVED_TIME_THRESH_MS = 1000.f;
         const s8 MIN_NUM_OBS_FOR_CONVERSION = 2;
+        const f32 MAX_OBS_DISTANCE_FOR_CONVERSION_MM = 250;
         
         TimeStamp_t lastMsgRecvdTime = _robot.GetLastMsgTimestamp();
         const BlockWorld& blockWorld = _robot.GetBlockWorld();
@@ -751,7 +752,8 @@ namespace Cozmo {
           if (oObject == nullptr) {
             PRINT_NAMED_ERROR("BehaviorOCD.VerifyNeatness.InvalidObject","Object %d", objID->GetValue());
           }
-          else if (lastMsgRecvdTime - oObject->GetLastObservedTime() < RECENTLY_OBSERVED_TIME_THRESH_MS) {
+          else if ((lastMsgRecvdTime - oObject->GetLastObservedTime() < RECENTLY_OBSERVED_TIME_THRESH_MS) &&
+                   (ComputeDistanceBetween(_robot.GetPose(), oObject->GetPose()) < MAX_OBS_DISTANCE_FOR_CONVERSION_MM)) {
           
             f32 score = GetNeatnessScore(*objID);
             if (score > MIN_NEATNESS_SCORE_TO_BECOME_NEAT) {
@@ -830,7 +832,8 @@ namespace Cozmo {
             PRINT_NAMED_ERROR("BehaviorOCD.VerifyNeatness.InvalidObject","Object %d", objID->GetValue());
             continue;
           }
-          else if (lastMsgRecvdTime - oObject->GetLastObservedTime() < RECENTLY_OBSERVED_TIME_THRESH_MS) {
+          else if ((lastMsgRecvdTime - oObject->GetLastObservedTime() < RECENTLY_OBSERVED_TIME_THRESH_MS) &&
+                   (ComputeDistanceBetween(_robot.GetPose(), oObject->GetPose()) < MAX_OBS_DISTANCE_FOR_CONVERSION_MM)) {
             
             f32 score = GetNeatnessScore(*objID);
             if (score < MIN_NEATNESS_SCORE_TO_STAY_NEAT) {
