@@ -268,7 +268,6 @@ namespace Cozmo {
     Embedded::Array<f32> _RcamWrtRobot;
     
     u32 _mode;
-    u32 _modeBeforeTracking;
     
     // Camera parameters
     // TODO: Should these be moved to (their own struct in) visionParameters.h/cpp?

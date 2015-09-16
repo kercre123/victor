@@ -186,9 +186,6 @@ namespace Cozmo {
   {
     SetMarkerToTrack(Vision::MARKER_UNKNOWN, 0.f, true);
     DisableModeHelper(TRACKING);
-    
-    // Restore whatever we were doing before tracking
-    _mode = _modeBeforeTracking;
   }
   
   Result VisionSystem::StartDetectingFaces()
@@ -1519,13 +1516,8 @@ namespace Cozmo {
           
           trackerJustInitialzed = true;
           
-          // store the current mode so we can put it back when done tracking
-          _modeBeforeTracking = _mode;
-          
           // Template initialization succeeded, switch to tracking mode:
-          // TODO: Log or issue message?
-          // NOTE: this disables any other modes so we are *only* tracking
-          _mode = IDLE;
+          DisableModeHelper(LOOKING_FOR_MARKERS);
           EnableModeHelper(TRACKING);
           
         } // if(isTrackingMarkerSpecified && !isTrackingMarkerFound && markerType == markerToTrack)
