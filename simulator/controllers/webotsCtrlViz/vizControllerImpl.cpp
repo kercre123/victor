@@ -116,7 +116,7 @@ void VizControllerImpl::Init()
 
 void VizControllerImpl::ProcessMessage(VizInterface::MessageViz&& message)
 {
-  uint32_t type = static_cast<u32>(message.GetTag());
+  uint32_t type = static_cast<uint32_t>(message.GetTag());
   _eventMgr.Broadcast(AnkiEvent<VizInterface::MessageViz>(
     type, std::move(message)));
 }

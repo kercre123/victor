@@ -312,6 +312,7 @@
               '<@(opencv_includes)',
             ],
             'dependencies': [
+              'cozmoEngine',
               '<(ce-cti_gyp_path):ctiCommon',
               '<(ce-cti_gyp_path):ctiMessaging',
               '<(ce-util_gyp_path):util',
@@ -357,7 +358,6 @@
             'type': 'executable',
             'include_dirs': [
               '../../include',
-              '../../generated/clad/engine',
               '<@(webots_includes)',
               '<@(opencv_includes)',
             ],

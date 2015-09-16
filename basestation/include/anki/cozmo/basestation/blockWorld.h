@@ -26,7 +26,7 @@
 #include "anki/common/basestation/exceptions.h"
 
 #include "anki/vision/basestation/observableObjectLibrary.h"
-
+#include "anki/cozmo/basestation/namedColors/namedColors.h"
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/mat.h"
 #include "anki/cozmo/shared/cozmoTypes.h"
@@ -34,19 +34,6 @@
 
 namespace Anki
 {
-  
-  namespace NamedColors {
-    // Add some BlockWorld-specific named colors:
-    extern const ColorRGBA EXECUTED_PATH              ;
-    extern const ColorRGBA PREDOCKPOSE                ;
-    extern const ColorRGBA PRERAMPPOSE                ;
-    extern const ColorRGBA SELECTED_OBJECT            ;
-    extern const ColorRGBA BLOCK_BOUNDING_QUAD        ;
-    extern const ColorRGBA OBSERVED_QUAD              ;
-    extern const ColorRGBA ROBOT_BOUNDING_QUAD        ;
-    extern const ColorRGBA REPLAN_BLOCK_BOUNDING_QUAD ;
-  }
-  
   namespace Cozmo
   {
     // Forward declarations:

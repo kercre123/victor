@@ -41,6 +41,7 @@ public:
   // Allows subscribing to events by type with the passed in function
   Signal::SmartHandle Subcribe(uint32_t type, SubscriberFunction function);
   void SubscribeForever(uint32_t type, SubscriberFunction function);
+  void UnsubscribeAll();
   
 private:
   std::unordered_map<uint32_t, EventHandlerSignal>  _eventHandlerMap;
@@ -68,6 +69,12 @@ template <typename DataType>
 void AnkiEventMgr<DataType>::SubscribeForever(uint32_t type, SubscriberFunction function)
 {
   _eventHandlerMap[type].SubscribeForever(function);
+}
+
+template <typename DataType>
+void AnkiEventMgr<DataType>::UnsubscribeAll()
+{
+  _eventHandlerMap.clear();
 }
 
 } // namespace Cozmo
