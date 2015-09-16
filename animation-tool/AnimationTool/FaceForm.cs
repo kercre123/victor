@@ -28,9 +28,13 @@ namespace AnimationTool
 
         public float faceAngle { get { return face.RightValue; } }
 
+        private bool called;
+
         public FaceForm()
         {
             InitializeComponent();
+
+            called = false;
 
             eyes = new FaceTrackBarForm[(int)ProceduralEyeParameter.NumParameters];
 
@@ -54,7 +58,7 @@ namespace AnimationTool
                 }
             }
 
-            OnChanged(null, null);
+            Reset();
         }
 
         public void Reset()
@@ -91,27 +95,6 @@ namespace AnimationTool
             return ShowDialog();
         }
 
-        public void SendMessage(Sequencer.ExtraProceduralFaceData data)
-        {
-            if (data == null) return;
-
-            DisplayProceduralFace displayProceduralFaceMessage = new DisplayProceduralFace();
-            displayProceduralFaceMessage.leftEye = new float[(int)ProceduralEyeParameter.NumParameters];
-            displayProceduralFaceMessage.rightEye = new float[(int)ProceduralEyeParameter.NumParameters];
-            displayProceduralFaceMessage.robotID = 1;
-            displayProceduralFaceMessage.faceAngle = data.faceAngle;
-
-            for (int i = 0; i < displayProceduralFaceMessage.leftEye.Length && i < data.leftEye.Length; ++i)
-            {
-                displayProceduralFaceMessage.leftEye[i] = data.leftEye[i];
-                displayProceduralFaceMessage.rightEye[i] = data.rightEye[i];
-            }
-
-            MessageGameToEngine message = new MessageGameToEngine();
-            message.DisplayProceduralFace = displayProceduralFaceMessage;
-            RobotEngineMessenger.instance.SendMessage(message);
-        }
-
         private void OnChanged(object sender, EventArgs e)
         {
             DisplayProceduralFace displayProceduralFaceMessage = new DisplayProceduralFace();
@@ -137,7 +120,19 @@ namespace AnimationTool
 
             MessageGameToEngine message = new MessageGameToEngine();
             message.DisplayProceduralFace = displayProceduralFaceMessage;
-            RobotEngineMessenger.instance.SendMessage(message);
+
+            if (called)
+            {
+                RobotEngineMessenger.instance.ProceduralFaceQueue.Send(message);
+            }
+            else
+            {
+                for (int i = 0; i < 2; ++i) // HACK: send message twice because first one fails
+                {
+                    RobotEngineMessenger.instance.ConnectionManager.SendMessage(message);
+                    called = true;
+                }
+            }
         }
 
         private void InitializeComponent()

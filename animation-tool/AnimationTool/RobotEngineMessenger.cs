@@ -10,394 +10,78 @@ using System.Windows.Forms;
 
 namespace AnimationTool
 {
-    public class RobotEngineMessenger : IDisposable
+    public class RobotEngineMessenger
     {
-        /// <summary>
-        /// Occurs on an unspecified thread. May be called even after -=.
-        /// </summary>
-        private object sync = new object();
-        private ChannelBase channel = new UdpChannel();
-        private Thread thread = null;
-        private bool isStarted = false;
-        private bool isStopping = false;
-        private static readonly TimeSpan ThreadTick = TimeSpan.FromMilliseconds(100);
+        // Can put TimeSpan.Zero if you want to turn it off
+        private static readonly TimeSpan FixedRefreshRate = TimeSpan.FromSeconds(.25);
+        public static readonly RobotEngineMessenger instance;
 
-        private const int ConnectionRetryCount = 3;
-        private int connectionTries = 0;
-        private static readonly TimeSpan MaxStateMessageWaitTime = TimeSpan.FromSeconds(5);
+        public readonly ConnectionManager ConnectionManager = new ConnectionManager();
 
-        private bool resetRequested = false;
-        private string queuedAnimationName = null;
-        private List<MessageGameToEngine> outgoingQueue = new List<MessageGameToEngine>();
-        private bool isReadyToSend = false;
-        private int lastStateMessage = 0;
+        public readonly SendQueue ProceduralFaceQueue;
+        public readonly SendQueue HeadAngleQueue;
+        public readonly SendQueue LiftHeightQueue;
 
-        public event Action<string> ConnectionTextUpdate;
-        private string connectionText;
-        private bool wasShowingDisconnect = false;
-
-        public static RobotEngineMessenger instance;
-
-        public string ConnectionText
+        static RobotEngineMessenger()
         {
-            get
-            {
-                lock (sync)
-                {
-                    return connectionText;
-                }
-            }
+            instance = new RobotEngineMessenger();
         }
 
         public RobotEngineMessenger()
         {
-            this.connectionText = "[Disconnected]";
-            instance = this;
-        }
-
-        public void Dispose()
-        {
-            Stop();
-        }
-
-        public void Start()
-        {
-            lock (sync)
-            {
-                if (isStarted)
-                {
-                    return;
-                }
-
-                isStarted = true;
-            }
-            thread = new Thread(MainLoop);
-            thread.Start();
-        }
-
-        public void Stop()
-        {
-            lock (sync)
-            {
-                if (isStopping)
-                    return;
-
-                isStopping = true;
-            }
-            thread.Join();
-        }
-
-        public void Reset()
-        {
-            lock (sync)
-            {
-                resetRequested = true;
-            }
+            ProceduralFaceQueue = ConnectionManager.CreateSendQueue(FixedRefreshRate);
+            HeadAngleQueue = ConnectionManager.CreateSendQueue(FixedRefreshRate);
+            LiftHeightQueue = ConnectionManager.CreateSendQueue(FixedRefreshRate);
         }
 
         public void SendAnimation(string animationName)
         {
-            lock (sync)
+            ConnectionManager.SendAnimation(animationName);
+        }
+
+        public void SendProceduralFaceMessage(Sequencer.ExtraProceduralFaceData data)
+        {
+            if (data == null) return;
+
+            DisplayProceduralFace displayProceduralFaceMessage = new DisplayProceduralFace();
+            displayProceduralFaceMessage.leftEye = new float[(int)ProceduralEyeParameter.NumParameters];
+            displayProceduralFaceMessage.rightEye = new float[(int)ProceduralEyeParameter.NumParameters];
+            displayProceduralFaceMessage.robotID = 1;
+            displayProceduralFaceMessage.faceAngle = data.faceAngle;
+
+            for (int i = 0; i < displayProceduralFaceMessage.leftEye.Length && i < data.leftEye.Length; ++i)
             {
-                queuedAnimationName = animationName;
-                connectionTries = 0;
+                displayProceduralFaceMessage.leftEye[i] = data.leftEye[i];
+                displayProceduralFaceMessage.rightEye[i] = data.rightEye[i];
             }
-        }
-
-        public void SendMessage(MessageGameToEngine message)
-        {
-            lock (sync)
-            {
-                outgoingQueue.Add(message);
-                connectionTries = 0;
-            }
-        }
-
-        private void MainLoop()
-        {
-            StartChannel();
-            string currentAnimation = null;
-            List<MessageGameToEngine> waitingQueue = new List<MessageGameToEngine>();
-            while (true)
-            {
-                bool wantReset;
-                lock (sync)
-                {
-                    if (isStopping)
-                    {
-                        break;
-                    }
-                    currentAnimation = queuedAnimationName ?? currentAnimation;
-                    queuedAnimationName = null;
-                    wantReset = resetRequested;
-                    resetRequested = false;
-
-                    waitingQueue.AddRange(outgoingQueue);
-                    outgoingQueue.Clear();
-                }
-
-                if (wantReset)
-                {
-                    channel.Disconnect();
-                    isReadyToSend = false;
-                }
-
-                channel.Update();
-
-                if (!string.IsNullOrEmpty(currentAnimation) || waitingQueue.Count != 0)
-                {
-                    if (!EnsureConnected())
-                    {
-                        currentAnimation = null;
-                        waitingQueue.Clear();
-                    }
-                }
-
-                if (channel.IsConnected && isReadyToSend)
-                {
-                    if (!string.IsNullOrEmpty(currentAnimation))
-                    {
-                        SendRawAnimation(currentAnimation);
-                        currentAnimation = null;
-                    }
-
-                    foreach (MessageGameToEngine message in waitingQueue)
-                    {
-                        channel.Send(message);
-                    }
-                    waitingQueue.Clear();
-                }
-
-                RaiseConnectionTextUpdate();
-
-                Thread.Sleep(ThreadTick);
-            }
-            StopChannel();
-        }
-
-        private void StartChannel()
-        {
-            channel = new UdpChannel();
-            channel.MessageReceived += ReceivedMessage;
-            channel.ConnectedToClient += ConnectedToClient;
-            channel.DisconnectedFromClient += DisconnectedFromClient;
-        }
-
-        private void StopChannel()
-        {
-            channel.MessageReceived -= ReceivedMessage;
-            channel.ConnectedToClient -= ConnectedToClient;
-            channel.DisconnectedFromClient -= DisconnectedFromClient;
-
-            channel.Disconnect();
-            // wait for disconnect packet to be sent off
-            int limit = Environment.TickCount + 2000;
-            while (channel.HasPendingOperations)
-            {
-                if (limit < Environment.TickCount)
-                {
-                    Console.Write("WARNING: Not waiting for disconnect to finish sending.");
-                    break;
-                }
-                Thread.Sleep(500);
-            }
-        }
-
-        private bool EnsureConnected()
-        {
-            if (IsLagging())
-            {
-                channel.Disconnect();
-                isReadyToSend = false;
-                RaiseConnectionTextUpdate("Disconnected: State Timed Out");
-            }
-
-            if (!channel.IsActive)
-            {
-                if (connectionTries > ConnectionRetryCount)
-                {
-                    Console.WriteLine("WARNING: Gave up trying to connect after " + ConnectionRetryCount + " attempts.");
-                    return false;
-                }
-
-                channel.Connect(RobotSettings.DeviceId, RobotSettings.GetNextFreePort(), RobotSettings.AdvertisingIPAddress, RobotSettings.AdvertisingPort);
-                channel.Update();
-            }
-            return true;
-        }
-
-        private void SendRawAnimation(string animationName)
-        {
-            MessageGameToEngine message = new MessageGameToEngine();
-            ReadAnimationFile readAnimationMessage = new ReadAnimationFile();
-            message.ReadAnimationFile = readAnimationMessage;
-            channel.Send(message);
-
-            PlayAnimation animationMessage = new PlayAnimation();
-            animationMessage.robotID = RobotSettings.RobotId;
-            animationMessage.animationName = animationName;
-            animationMessage.numLoops = 1;
-
-            message = new MessageGameToEngine();
-            message.PlayAnimation = animationMessage;
-            channel.Send(message);
-        }
-
-        private void DisconnectedFromClient(DisconnectionReason reason)
-        {
-            Console.WriteLine("Disconnected: " + reason.ToString());
-            RaiseConnectionTextUpdate("Disconnected: " + reason.ToString());
-            isReadyToSend = false;
-        }
-
-        private void ConnectedToClient(string connectionID)
-        {
-            Console.WriteLine("Connected.");
-            StartEngine(RobotSettings.VizHostIPAddress);
-            ForceAddRobot(RobotSettings.RobotId, RobotSettings.RobotIPAddress, RobotSettings.RobotIsSimulated);
-        }
-
-        private void StartEngine(string vizHostIP)
-        {
-            StartEngine startEngineMessage = new StartEngine();
-            startEngineMessage.asHost = 1;
-            int length = 0;
-            if (!string.IsNullOrEmpty(vizHostIP))
-            {
-                length = System.Text.Encoding.UTF8.GetByteCount(vizHostIP);
-                if (length + 1 > startEngineMessage.vizHostIP.Length)
-                {
-                    Console.WriteLine("WARNING: vizHostIP is too long. (" + (length + 1).ToString() + " bytes provided, max " + startEngineMessage.vizHostIP.Length + ".)");
-                    return;
-                }
-                System.Text.Encoding.UTF8.GetBytes(vizHostIP, 0, vizHostIP.Length, startEngineMessage.vizHostIP, 0);
-            }
-            startEngineMessage.vizHostIP[length] = 0;
 
             MessageGameToEngine message = new MessageGameToEngine();
-            message.StartEngine = startEngineMessage;
-            channel.Send(message);
+            message.DisplayProceduralFace = displayProceduralFaceMessage;
+            ProceduralFaceQueue.Send(message);
         }
 
-        private void ForceAddRobot(int robotID, string robotIP, bool robotIsSimulated)
+        public void SendHeadAngleMessage(double angle)
         {
-            if (robotID < 0 || robotID > 255)
-            {
-                Console.WriteLine("WARNING: ID must be between 0 and 255.", "robotID");
-                return;
-            }
-
-            if (string.IsNullOrEmpty(robotIP))
-            {
-                Console.WriteLine("WARNING: robotIP is null");
-                return;
-            }
-
-            ForceAddRobot forceAddRobotMessage = new ForceAddRobot();
-
-            if (System.Text.Encoding.UTF8.GetByteCount(robotIP) + 1 > forceAddRobotMessage.ipAddress.Length)
-            {
-                Console.WriteLine("WARNING: Robot IP address too long.");
-                return;
-            }
-
-            int length = System.Text.Encoding.UTF8.GetBytes(robotIP, 0, robotIP.Length, forceAddRobotMessage.ipAddress, 0);
-            forceAddRobotMessage.ipAddress[length] = 0;
-
-            forceAddRobotMessage.robotID = (byte)robotID;
-            forceAddRobotMessage.isSimulated = robotIsSimulated ? (byte)1 : (byte)0;
+            SetHeadAngle headAngleMessage = new SetHeadAngle();
+            headAngleMessage.angle_rad = (float)((angle * Math.PI) / 180); // convert to radians
+            headAngleMessage.accel_rad_per_sec2 = 2f;
+            headAngleMessage.max_speed_rad_per_sec = 5f;
 
             MessageGameToEngine message = new MessageGameToEngine();
-            message.ForceAddRobot = forceAddRobotMessage;
-            channel.Send(message);
+            message.SetHeadAngle = headAngleMessage;
+            HeadAngleQueue.Send(message);
         }
 
-        private void ReceivedMessage(MessageEngineToGame incomingMessage)
+        public void SendLiftHeightMessage(double height)
         {
-            switch (incomingMessage.GetTag())
-            {
-                case MessageEngineToGame.Tag.RobotAvailable:
-                    {
-                        MessageGameToEngine message = new MessageGameToEngine();
-                        message.ConnectToRobot = new ConnectToRobot();
-                        message.ConnectToRobot.robotID = RobotSettings.RobotId;
-                        channel.Send(message);
-                    }
-                    break;
-                case MessageEngineToGame.Tag.UiDeviceAvailable:
-                    {
-                        MessageGameToEngine message = new MessageGameToEngine();
-                        message.ConnectToUiDevice = new ConnectToUiDevice();
-                        message.ConnectToUiDevice.deviceID = (byte)(incomingMessage.UiDeviceAvailable.deviceID);
-                        channel.Send(message);
-                    }
-                    break;
-                case MessageEngineToGame.Tag.RobotState:
-                    if (channel.IsConnected)
-                    {
-                        isReadyToSend = true;
-                        lastStateMessage = Environment.TickCount;
-                    }
-                    break;
-            }
-        }
+            SetLiftHeight liftHeightMessage = new SetLiftHeight();
+            liftHeightMessage.height_mm = (float)height;
+            liftHeightMessage.accel_rad_per_sec2 = 5f;
+            liftHeightMessage.max_speed_rad_per_sec = 10f;
 
-        private bool IsLagging()
-        {
-            lock (sync)
-            {
-                return (channel.IsConnected && isReadyToSend && Environment.TickCount - lastStateMessage > MaxStateMessageWaitTime.TotalMilliseconds);
-            }
-        }
-
-        private void RaiseConnectionTextUpdate()
-        {
-            RaiseConnectionTextUpdate(null);
-        }
-
-        private void RaiseConnectionTextUpdate(string newDisconnectionText)
-        {
-            string newConnectionText;
-
-            if (IsLagging())
-            {
-                newConnectionText = "[Lagging]";
-            }
-            else if (channel.IsConnected && isReadyToSend)
-            {
-                newConnectionText = "[Connected]";
-            }
-            else if (channel.IsConnected)
-            {
-                newConnectionText = "[Waiting for Robot...]";
-            }
-            else if (channel.IsActive)
-            {
-                newConnectionText = "[Connecting...]";
-            }
-            else if (!string.IsNullOrEmpty(newDisconnectionText))
-            {
-                newConnectionText = newDisconnectionText;
-            }
-            else if (!wasShowingDisconnect)
-            {
-                newConnectionText = "[Disconnected]";
-            }
-            else
-            {
-                newConnectionText = connectionText;
-            }
-            wasShowingDisconnect = channel.IsActive;
-
-            if (newConnectionText != connectionText)
-            {
-                connectionText = newConnectionText;
-                Action<string> callback = ConnectionTextUpdate;
-                if (callback != null)
-                {
-                    callback(connectionText);
-                }
-            }
+            MessageGameToEngine message = new MessageGameToEngine();
+            message.SetLiftHeight = liftHeightMessage;
+            LiftHeightQueue.Send(message);
         }
     }
 }

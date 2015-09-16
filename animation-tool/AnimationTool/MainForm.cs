@@ -75,7 +75,6 @@ namespace AnimationTool
             instance = this;
             Sequencer.ExtraData.Entries = new Dictionary<string, Sequencer.ExtraData>();
             ActionManager actionManager = new ActionManager();
-            RobotEngineMessenger robotEngineMessenger = new RobotEngineMessenger();
 
             changeDurationForm = new ChangeDurationForm();
             ipForm = new IPForm();
@@ -90,10 +89,10 @@ namespace AnimationTool
             saveFileAs = new SaveFileDialog();
             channelList = new List<Component>();
 
-            RobotEngineMessenger.instance.ConnectionTextUpdate += ChangeConnectionText;
-            robotEngineMessenger.Start();
-            FormClosing += (unused1, unused2) => robotEngineMessenger.Stop();
-            Application.ApplicationExit += (unused1, unused2) => robotEngineMessenger.Stop();
+            RobotEngineMessenger.instance.ConnectionManager.ConnectionTextUpdate += ChangeConnectionText;
+            RobotEngineMessenger.instance.ConnectionManager.Start();
+            FormClosing += (unused1, unused2) => RobotEngineMessenger.instance.ConnectionManager.Stop();
+            Application.ApplicationExit += (unused1, unused2) => RobotEngineMessenger.instance.ConnectionManager.Stop();
             Application.Idle += UpdateConnectionText;
             Resize += MainForm_Resize;
 
@@ -435,7 +434,7 @@ namespace AnimationTool
 
         private void UpdateConnectionText(object o, EventArgs e)
         {
-            connectionToolStripMenuItem.Text = RobotEngineMessenger.instance.ConnectionText;
+            connectionToolStripMenuItem.Text = RobotEngineMessenger.instance.ConnectionManager.ConnectionText;
         }
 
         private void ChangeConnectionText(string connectionText)

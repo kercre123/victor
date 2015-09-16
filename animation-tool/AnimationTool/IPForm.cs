@@ -101,7 +101,7 @@ namespace AnimationTool
         private void Button_Click(object sender, EventArgs e)
         {
 			RobotSettings.RobotIPAddress = this.textBox.Text;
-            RobotEngineMessenger.instance.Reset();
+            RobotEngineMessenger.instance.ConnectionManager.Reset();
             Close();
         }
     }

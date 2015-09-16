@@ -150,6 +150,11 @@ namespace AnimationTool
                 {
                     rightTextBox.Text = leftTextBox.Text;
                 }
+
+                if (OnChanged != null)
+                {
+                    OnChanged(null, null);
+                }
             }
         }
 
@@ -162,6 +167,11 @@ namespace AnimationTool
                 if (checkBox.Visible && checkBox.Checked)
                 {
                     leftTextBox.Text = rightTextBox.Text;
+                }
+
+                if (OnChanged != null)
+                {
+                    OnChanged(null, null);
                 }
             }
         }
