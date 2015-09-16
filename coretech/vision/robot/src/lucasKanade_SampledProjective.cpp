@@ -30,7 +30,7 @@ namespace Anki
     namespace TemplateTracker
     {
       LucasKanadeTracker_SampledProjective::LucasKanadeTracker_SampledProjective()
-        : LucasKanadeTracker_Generic(maxSupportedTransformType)
+      : LucasKanadeTracker_Generic(Transformations::TransformType::TRANSFORM_PROJECTIVE)
       {
       }
 

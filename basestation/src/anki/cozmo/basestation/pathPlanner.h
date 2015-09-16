@@ -160,7 +160,7 @@ namespace Anki {
                                   const std::vector<Pose3d>& targetPoses,
                                   size_t& selectedIndex) override;
 
-      virtual void GetTestPath(const Pose3d& startPose, Planning::Path &path);
+      virtual void GetTestPath(const Pose3d& startPose, Planning::Path &path) override;
 
     protected:
       LatticePlannerImpl* impl_;

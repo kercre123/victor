@@ -35,7 +35,7 @@ namespace Cozmo {
     
     virtual Result Init(double currentTime_sec) override;
     
-    virtual bool IsRunnable(double currentTime_sec) const;
+    virtual bool IsRunnable(double currentTime_sec) const override;
     
     virtual Status Update(double currentTime_sec) override;
     
@@ -46,7 +46,7 @@ namespace Cozmo {
       return name;
     }
     
-    virtual bool GetRewardBid(Reward& reward);
+    virtual bool GetRewardBid(Reward& reward) override;
     
   private:
     using Face = Vision::TrackedFace;
