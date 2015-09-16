@@ -1036,7 +1036,7 @@ namespace Cozmo {
       // Initialize the VisionSystem's state (i.e. its "private member variables")
       //
       
-      _mode                      = LOOKING_FOR_MARKERS;
+      _mode                      = LOOKING_FOR_MARKERS | DETECTING_FACES;
       _markerToTrack.Clear();
       _numTrackFailures          = 0;
       
@@ -1051,6 +1051,16 @@ namespace Cozmo {
       if(_headCamInfo == nullptr) {
         PRINT_STREAM_INFO("VisionSystem.Init", "Initialize() - HeadCam Info pointer is NULL!");
         return RESULT_FAIL;
+      }
+      
+      if ((_mode & DETECTING_FACES) == DETECTING_FACES)
+      {
+        Result startFacesResult = StartDetectingFaces();
+        if (Result::RESULT_OK != startFacesResult)
+        {
+          PRINT_NAMED_ERROR("VisionSystem.Init.StartDetectingFaces", "Face tracker not initialized!");
+          return startFacesResult;
+        }
       }
       
       // Compute FOV from focal length (currently used for tracker prediciton)
