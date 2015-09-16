@@ -39,6 +39,18 @@ namespace Cozmo {
     return static_cast<s32>(value * static_cast<ProceduralFace::Value>(max-min)) + min;
   }
   
+  inline const s32 GetScaledValue(ProceduralFace::Value value, s32 min, s32 mid, s32 max)
+  {
+    if(value == 0) {
+      return mid;
+    } else if(value < 0) {
+      return (value + 1.f)*static_cast<ProceduralFace::Value>(mid-min) + min;
+    } else {
+      assert(value > 0);
+      return value*static_cast<ProceduralFace::Value>(max-mid) + mid;
+    }
+  }
+  
   inline s32 ProceduralFace::GetBrowHeight(const s32 eyeHeightPix, const Value browCenY) const
   {
     return GetScaledValue(-browCenY, 1, NominalEyeCenY-std::round(static_cast<f32>(eyeHeightPix)*0.5f));// + _firstScanLine;
@@ -108,7 +120,7 @@ namespace Cozmo {
                                            -eyeWidthPix/2, eyeWidthPix/2) + NominalEyeCenX;
     const s32 browYPosPix = GetBrowHeight(eyeHeightPix, GetParameter(whichEye, Parameter::BrowCenY));
 
-    const s32 browHalfLength = GetScaledValue(GetParameter(whichEye, Parameter::BrowLength), 0, MaxBrowLengthPix)/2;
+    const s32 browHalfLength = GetScaledValue(GetParameter(whichEye, Parameter::BrowLength), 0, MidBrowLengthPix, MaxBrowLengthPix)/2;
     
     const cv::Point leftPoint(browXPosPix-std::round(static_cast<f32>(browHalfLength)*cosAngle),
                               browYPosPix-std::round(static_cast<f32>(browHalfLength)*sinAngle));
