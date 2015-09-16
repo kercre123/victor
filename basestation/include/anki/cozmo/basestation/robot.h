@@ -242,6 +242,7 @@ namespace Cozmo {
     const ObjectID&  GetDockObject()          const {return _dockObjectID;}
     const ObjectID&  GetCarryingObject()      const {return _carryingObjectID;}
     const ObjectID&  GetCarryingObjectOnTop() const {return _carryingObjectOnTopID;}
+    const std::set<ObjectID> GetCarryingObjects() const;
     const Vision::KnownMarker*  GetCarryingMarker() const {return _carryingMarker; }
 
     bool IsCarryingObject()   const {return _carryingObjectID.IsSet(); }
@@ -249,7 +250,7 @@ namespace Cozmo {
     bool IsPickedUp()         const {return _isPickedUp;}
     
     void SetCarryingObject(ObjectID carryObjectID);
-    void UnSetCarryingObject();
+    void UnSetCarryingObjects();
     
     // Tell the physical robot to dock with the specified marker
     // of the specified object that it should currently be seeing.

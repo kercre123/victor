@@ -1646,14 +1646,14 @@ namespace Anki {
             PRINT_NAMED_ERROR("PickAndPlaceObjectAction.EmitCompletionSignal",
                               "Expecting robot to think it's carrying object for pickup action.\n");
           } else {
-            const s32 carryObject = robot.GetCarryingObject().GetValue();
-            const s32 carryObjectOnTop = robot.GetCarryingObjectOnTop().GetValue();
             
-            const u8 numObjects = 1 + (carryObjectOnTop >=0 ? 1 : 0);
-            
-            // TODO: Be able to fill in add'l objects carried in signal
-            completionInfo.numObjects = numObjects;
-            completionInfo.objectIDs = {{carryObject, carryObjectOnTop, -1, -1, -1}};
+            const std::set<ObjectID> carriedObjects = robot.GetCarryingObjects();
+            completionInfo.numObjects = carriedObjects.size();
+            completionInfo.objectIDs.fill(-1);
+            u8 objectCnt = 0;
+            for (auto& objID : carriedObjects) {
+              completionInfo.objectIDs[objectCnt++] = objID.GetValue();
+            }
             
             return;
           }
@@ -1797,7 +1797,7 @@ namespace Anki {
               carryObject->SetPose(objectInOriginalPose->GetPose());
               blockWorld.ClearObject(objectInOriginalPose->GetID());
             }
-            robot.UnSetCarryingObject();
+            robot.UnSetCarryingObjects();
             
             PRINT_STREAM_INFO("PickAndPlaceObjectAction.Verify", "Object pick-up FAILED! (Still seeing object in same place.)");
             result = ActionResult::FAILURE_RETRY;
