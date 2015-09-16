@@ -40,6 +40,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ca8afd5fc2e8643e4b8495b09ce0371b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  robotAnimationNames: []
   configuration: {fileID: 4900000, guid: ce0a268add4e241f8806d3f356ec5b07, type: 3}
   alternateConfiguration: {fileID: 4900000, guid: 3c768bcd97cb04759a11b18842ba70cc,
     type: 3}
@@ -55,7 +56,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 53010a7329b9f46a183f27347bac39c3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  testAnim: ANIM_TEST
+  testAnim: TAP_TWO
 --- !u!224 &22473464
 RectTransform:
   m_ObjectHideFlags: 1
