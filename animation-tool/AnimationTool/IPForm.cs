@@ -12,8 +12,6 @@ namespace AnimationTool
 
         private Button button;
 
-        private RobotEngineMessenger robotEngineMessenger;
-
         public IPForm()
         {
             FormBorderStyle = FormBorderStyle.FixedToolWindow;
@@ -23,11 +21,10 @@ namespace AnimationTool
             InitializeComponent();
         }
 
-        public DialogResult Open(Point location, RobotEngineMessenger robotEngineManager)
+        public DialogResult Open(Point location)
         {
             StartPosition = FormStartPosition.Manual;
             Location = location;
-            this.robotEngineMessenger = robotEngineManager;
             button.Enabled = false;
 
             if (Properties.Settings.Default.IPAddress != null)
@@ -104,7 +101,7 @@ namespace AnimationTool
         private void Button_Click(object sender, EventArgs e)
         {
 			RobotSettings.RobotIPAddress = this.textBox.Text;
-            robotEngineMessenger.Reset();
+            RobotEngineMessenger.instance.ConnectionManager.Reset();
             Close();
         }
     }

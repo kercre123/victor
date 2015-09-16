@@ -82,6 +82,7 @@
     <Compile Include="ChartForm.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="ConnectionManager.cs" />
     <Compile Include="FaceTrackBarForm.cs">
       <SubType>Component</SubType>
     </Compile>

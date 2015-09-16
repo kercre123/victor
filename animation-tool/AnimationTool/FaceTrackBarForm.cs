@@ -27,13 +27,11 @@ namespace AnimationTool
 
         public bool CheckBoxVisible { get { return checkBox.Visible; } set { checkBox.Visible = value; } }
 
-        public bool Changed = false;
+        public EventHandler OnChanged;
 
         public FaceTrackBarForm()
         {
             InitializeComponent();
-
-            Changed = true;
         }
 
         private void InitializeComponent()
@@ -56,8 +54,8 @@ namespace AnimationTool
             this.leftTextBox.Name = "leftTextBox";
             this.leftTextBox.Size = new System.Drawing.Size(30, 20);
             this.leftTextBox.TabIndex = 0;
-            this.leftTextBox.Text = "000";
-            this.leftTextBox.TextChanged += new System.EventHandler(this.LeftTextBox_TextChanged);
+            this.leftTextBox.Text = "0";
+            this.leftTextBox.TextChanged += new System.EventHandler(this.LeftTextBox_Changed);
             // 
             // leftTrackBar
             // 
@@ -69,7 +67,7 @@ namespace AnimationTool
             this.leftTrackBar.Size = new System.Drawing.Size(200, 45);
             this.leftTrackBar.TabIndex = 0;
             this.leftTrackBar.TickStyle = System.Windows.Forms.TickStyle.None;
-            this.leftTrackBar.ValueChanged += new System.EventHandler(this.LeftTrackBar_TextChanged);
+            this.leftTrackBar.ValueChanged += new System.EventHandler(this.LeftTrackBar_Changed);
             // 
             // leftLabel
             // 
@@ -100,7 +98,7 @@ namespace AnimationTool
             this.rightTrackBar.Size = new System.Drawing.Size(200, 45);
             this.rightTrackBar.TabIndex = 0;
             this.rightTrackBar.TickStyle = System.Windows.Forms.TickStyle.None;
-            this.rightTrackBar.ValueChanged += new System.EventHandler(this.RightTrackBar_TextChanged);
+            this.rightTrackBar.ValueChanged += new System.EventHandler(this.RightTrackBar_Changed);
             // 
             // rightTextBox
             // 
@@ -108,8 +106,8 @@ namespace AnimationTool
             this.rightTextBox.Name = "rightTextBox";
             this.rightTextBox.Size = new System.Drawing.Size(30, 20);
             this.rightTextBox.TabIndex = 4;
-            this.rightTextBox.Text = "000";
-            this.rightTextBox.TextChanged += new System.EventHandler(this.RightTextBox_TextChanged);
+            this.rightTextBox.Text = "0";
+            this.rightTextBox.TextChanged += new System.EventHandler(this.RightTextBox_Changed);
             // 
             // checkBox
             // 
@@ -142,7 +140,7 @@ namespace AnimationTool
             this.PerformLayout();
         }
 
-        private void LeftTrackBar_TextChanged(object sender, EventArgs e)
+        private void LeftTrackBar_Changed(object sender, EventArgs e)
         {
             if (leftTextBox.Text != leftTrackBar.Value.ToString())
             {
@@ -153,11 +151,14 @@ namespace AnimationTool
                     rightTextBox.Text = leftTextBox.Text;
                 }
 
-                Changed = true;
+                if (OnChanged != null)
+                {
+                    OnChanged(null, null);
+                }
             }
         }
 
-        private void RightTrackBar_TextChanged(object sender, EventArgs e)
+        private void RightTrackBar_Changed(object sender, EventArgs e)
         {
             if (rightTextBox.Text != rightTrackBar.Value.ToString())
             {
@@ -168,11 +169,14 @@ namespace AnimationTool
                     leftTextBox.Text = rightTextBox.Text;
                 }
 
-                Changed = true;
+                if (OnChanged != null)
+                {
+                    OnChanged(null, null);
+                }
             }
         }
 
-        private void LeftTextBox_TextChanged(object sender, EventArgs e)
+        private void LeftTextBox_Changed(object sender, EventArgs e)
         {
             try
             {
@@ -185,13 +189,16 @@ namespace AnimationTool
                         rightTrackBar.Value = leftTrackBar.Value;
                     }
 
-                    Changed = true;
+                    if (OnChanged != null)
+                    {
+                        OnChanged(null, null);
+                    }
                 }
             }
             catch (Exception) { }
         }
 
-        private void RightTextBox_TextChanged(object sender, EventArgs e)
+        private void RightTextBox_Changed(object sender, EventArgs e)
         {
             try
             {
@@ -204,7 +211,10 @@ namespace AnimationTool
                         leftTrackBar.Value = rightTrackBar.Value;
                     }
 
-                    Changed = true;
+                    if (OnChanged != null)
+                    {
+                        OnChanged(null, null);
+                    }
                 }
             }
             catch (Exception) { }
