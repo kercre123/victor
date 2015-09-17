@@ -273,7 +273,7 @@ public:
     Result DockWithObject(const ObjectID objectID,
                               const Vision::KnownMarker* marker,
                               const Vision::KnownMarker* marker2,
-                              const DockAction_t dockAction,
+                              const DockAction dockAction,
                               const u16 image_pixel_x,
                               const u16 image_pixel_y,
                               const u8 pixel_radius,
@@ -283,7 +283,7 @@ public:
     Result DockWithObject(const ObjectID objectID,
                           const Vision::KnownMarker* marker,
                           const Vision::KnownMarker* marker2,
-                          const DockAction_t dockAction,
+                          const DockAction dockAction,
                           const bool useManualSpeed = false);
     
     // Transitions the object that robot was docking with to the one that it
@@ -524,12 +524,12 @@ public:
     // Color specified as RGBA, where A(lpha) will be ignored
     void SetDefaultLights(const u32 color);
     
-    void SetBackpackLights(const std::array<u32,LEDId::NUM_BACKPACK_LEDS>& onColor,
-                           const std::array<u32,LEDId::NUM_BACKPACK_LEDS>& offColor,
-                           const std::array<u32,LEDId::NUM_BACKPACK_LEDS>& onPeriod_ms,
-                           const std::array<u32,LEDId::NUM_BACKPACK_LEDS>& offPeriod_ms,
-                           const std::array<u32,LEDId::NUM_BACKPACK_LEDS>& transitionOnPeriod_ms,
-                           const std::array<u32,LEDId::NUM_BACKPACK_LEDS>& transitionOffPeriod_ms);
+    void SetBackpackLights(const std::array<u32,(size_t)LEDId::NUM_BACKPACK_LEDS>& onColor,
+                           const std::array<u32,(size_t)LEDId::NUM_BACKPACK_LEDS>& offColor,
+                           const std::array<u32,(size_t)LEDId::NUM_BACKPACK_LEDS>& onPeriod_ms,
+                           const std::array<u32,(size_t)LEDId::NUM_BACKPACK_LEDS>& offPeriod_ms,
+                           const std::array<u32,(size_t)LEDId::NUM_BACKPACK_LEDS>& transitionOnPeriod_ms,
+                           const std::array<u32,(size_t)LEDId::NUM_BACKPACK_LEDS>& transitionOffPeriod_ms);
    
     
     // =========  Block messages  ============
@@ -539,12 +539,12 @@ public:
     
     // Set the LED colors/flashrates individually (ordered by BlockLEDPosition)
     Result SetObjectLights(const ObjectID& objectID,
-                           const std::array<u32,ActiveObjectConstants::NUM_CUBE_LEDS>& onColor,
-                           const std::array<u32,ActiveObjectConstants::NUM_CUBE_LEDS>& offColor,
-                           const std::array<u32,ActiveObjectConstants::NUM_CUBE_LEDS>& onPeriod_ms,
-                           const std::array<u32,ActiveObjectConstants::NUM_CUBE_LEDS>& offPeriod_ms,
-                           const std::array<u32,ActiveObjectConstants::NUM_CUBE_LEDS>& transitionOnPeriod_ms,
-                           const std::array<u32,ActiveObjectConstants::NUM_CUBE_LEDS>& transitionOffPeriod_ms,
+                           const std::array<u32,(size_t)ActiveObjectConstants::NUM_CUBE_LEDS>& onColor,
+                           const std::array<u32,(size_t)ActiveObjectConstants::NUM_CUBE_LEDS>& offColor,
+                           const std::array<u32,(size_t)ActiveObjectConstants::NUM_CUBE_LEDS>& onPeriod_ms,
+                           const std::array<u32,(size_t)ActiveObjectConstants::NUM_CUBE_LEDS>& offPeriod_ms,
+                           const std::array<u32,(size_t)ActiveObjectConstants::NUM_CUBE_LEDS>& transitionOnPeriod_ms,
+                           const std::array<u32,(size_t)ActiveObjectConstants::NUM_CUBE_LEDS>& transitionOffPeriod_ms,
                            const MakeRelativeMode makeRelative,
                            const Point2f& relativeToPoint);
     
@@ -851,7 +851,7 @@ public:
     
     Result SendPlaceObjectOnGround(const f32 rel_x, const f32 rel_y, const f32 rel_angle, const bool useManualSpeed);
 
-    Result SendDockWithObject(const DockAction_t dockAction,
+    Result SendDockWithObject(const DockAction dockAction,
                               const bool useManualSpeed);
     
     Result SendStartFaceTracking(const u8 timeout_sec);
@@ -861,7 +861,7 @@ public:
     Result SendAbortDocking();
     Result SendAbortAnimation();
     
-    Result SendSetCarryState(CarryState_t state);
+    Result SendSetCarryState(CarryState state);
 
     
     // =========  Active Object messages  ============

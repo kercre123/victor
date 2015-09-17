@@ -35,9 +35,12 @@ typedef uint64_t u64;
 typedef int64_t  s64;
 typedef float    f32;
 typedef double   f64;
+
+#ifdef __cplusplus
 // A key associated with each computed pose retrieved from history
 // to be used to check its validity at a later time.
 using HistPoseKey = uint32_t;
+#endif
 
 typedef u32 UserDeviceID_t;
 typedef u32 RobotID_t;

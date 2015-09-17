@@ -21,7 +21,7 @@
 #include "anki/cozmo/basestation/soundManager.h"
 #include "util/logging/logging.h"
 #include "anki/common/basestation/utils/timer.h"
-#include "clad/robotInterface/messageEngineToRobot.h
+#include "clad/robotInterface/messageEngineToRobot.h"
 //#include <cassert>
 
 #define DEBUG_ANIMATIONS 0
@@ -466,14 +466,14 @@ _blinkTrack.__METHOD__()
       PRINT_NAMED_INFO("Animation.Update", "Streaming EndOfAnimation at t=%dms.\n",
                        _streamingTime_ms - _startTime_ms);
 #     endif
-      RobotInterface::EngineToRobot endMsg(AnimKeyFrame::EndOfAnimation());
+      RobotInterface::EngineToRobot endMsg{AnimKeyFrame::EndOfAnimation()};
       size_t endMsgSize = endMsg.Size();
       lastResult = robot.SendMessage(std::move(endMsg));
       if(lastResult != RESULT_OK) { return lastResult; }
       _endOfAnimationSent = true;
       
       // Increment running total of bytes streamed
-      robot.IncrementNumAnimationBytesStreamed(endMsgSize);
+      robot.IncrementNumAnimationBytesStreamed((int32_t)endMsgSize);
     }
     
     return RESULT_OK;

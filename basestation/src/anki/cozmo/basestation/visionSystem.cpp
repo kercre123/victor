@@ -258,17 +258,17 @@ namespace Cozmo {
   {
     AnkiAssert(_havePreviousRobotState);
     
-    angleChange = Radians(_robotState.pose_angle) - Radians(_prevRobotState.pose_angle);
+    angleChange = Radians(_robotState.pose.angle) - Radians(_prevRobotState.pose.angle);
     
     //PRINT_STREAM_INFO("angleChange = %.1f", angleChange.getDegrees());
     
     // Position change in world (mat) coordinates
-    const f32 dx = _robotState.pose_x - _prevRobotState.pose_x;
-    const f32 dy = _robotState.pose_y - _prevRobotState.pose_y;
+    const f32 dx = _robotState.pose.x - _prevRobotState.pose.x;
+    const f32 dy = _robotState.pose.y - _prevRobotState.pose.y;
     
     // Get change in robot coordinates
-    const f32 cosAngle = cosf(-_prevRobotState.pose_angle);
-    const f32 sinAngle = sinf(-_prevRobotState.pose_angle);
+    const f32 cosAngle = cosf(-_prevRobotState.pose.angle);
+    const f32 sinAngle = sinf(-_prevRobotState.pose.angle);
     xChange = dx*cosAngle - dy*sinAngle;
     yChange = dx*sinAngle + dy*cosAngle;
   } // GetPoseChange()
@@ -352,7 +352,7 @@ namespace Cozmo {
     return retVal;
   }
   
-  bool VisionSystem::CheckMailbox(MessageTrackerQuad&         msg)
+  bool VisionSystem::CheckMailbox(VizInterface::TrackerQuad&         msg)
   {
     bool retVal = false;
     if(IsInitialized()) {
@@ -361,7 +361,7 @@ namespace Cozmo {
     return retVal;
   }
   
-  bool VisionSystem::CheckMailbox(MessagePanAndTiltHead&         msg)
+  bool VisionSystem::CheckMailbox(RobotInterface::PanAndTilt&         msg)
   {
     bool retVal = false;
     if(IsInitialized()) {
@@ -1849,7 +1849,7 @@ namespace Cozmo {
 
   
   // This is the regular Update() call
-  Result VisionSystem::Update(const MessageRobotState robotState,
+  Result VisionSystem::Update(const RobotState robotState,
                               const Vision::Image&    inputImage)
   {
     Result lastResult = RESULT_OK;
@@ -2192,7 +2192,7 @@ namespace Cozmo {
       // Create docking error signal from tracker
       //
       
-      MessageDockingErrorSignal dockErrMsg;
+      DockingErrorSignal dockErrMsg;
       dockErrMsg.timestamp = imageTimeStamp;
       dockErrMsg.didTrackingSucceed = static_cast<u8>(converged);
       
@@ -2202,13 +2202,13 @@ namespace Cozmo {
         FillDockErrMsg(currentQuad, dockErrMsg, _memory._onchipScratch);
         
         // Send tracker quad if image streaming
-        if (_imageSendMode == ISM_STREAM) {
+        if (_imageSendMode == ImageSendMode::Stream) {
           f32 scale = 1.f;
           for (u8 s = (u8)Vision::CAMERA_RES_CVGA; s<(u8)_nextSendImageResolution; ++s) {
             scale *= 0.5f;
           }
           
-          MessageTrackerQuad m;
+          VizInterface::TrackerQuad m;
           m.topLeft_x     = static_cast<u16>(currentQuad[Embedded::Quadrilateral<f32>::TopLeft].x * scale);
           m.topLeft_y     = static_cast<u16>(currentQuad[Embedded::Quadrilateral<f32>::TopLeft].y * scale);
           m.topRight_x    = static_cast<u16>(currentQuad[Embedded::Quadrilateral<f32>::TopRight].x * scale);
@@ -2270,9 +2270,9 @@ namespace Cozmo {
     if(_mode & LOOKING_FOR_SALIENCY)
     {
       const bool headSame =  NEAR(_robotState.headAngle, _prevRobotState.headAngle, DEG_TO_RAD(1));
-      const bool poseSame = (NEAR(_robotState.pose_x,    _prevRobotState.pose_x,    1.f) &&
-                             NEAR(_robotState.pose_y,    _prevRobotState.pose_y,    1.f) &&
-                             NEAR(_robotState.pose_angle,_prevRobotState.pose_angle, DEG_TO_RAD(1)));
+      const bool poseSame = (NEAR(_robotState.pose.x,    _prevRobotState.pose.x,    1.f) &&
+                             NEAR(_robotState.pose.y,    _prevRobotState.pose.y,    1.f) &&
+                             NEAR(_robotState.pose.angle,_prevRobotState.pose.angle, DEG_TO_RAD(1)));
       
       //PRINT_STREAM_INFO("pose_angle diff = %.1f\n", RAD_TO_DEG(std::abs(_robotState.pose_angle - _prevRobotState.pose_angle)));
       
