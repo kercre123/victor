@@ -75,7 +75,7 @@ namespace Anki {
       Result retVal = RESULT_FAIL;
       
       ExternalInterface::MessageGameToEngine message;
-      if (message.Unpack(packet.data, Comms::MsgPacket::MAX_SIZE) != packet.dataLen) {
+      if (message.Unpack(packet.data, packet.dataLen) != packet.dataLen) {
         PRINT_STREAM_ERROR("UiMessageHandler.MessageBufferWrongSize",
                           "Buffer's size does not match expected size for this message ID. (Msg " << ExternalInterface::MessageGameToEngineTagToString(message.GetTag()) << ", expected " << message.Size() << ", recvd " << packet.dataLen << ")");
       }

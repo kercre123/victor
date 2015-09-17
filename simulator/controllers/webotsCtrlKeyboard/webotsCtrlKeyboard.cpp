@@ -1043,7 +1043,7 @@ namespace Anki {
                     printf("Updating active block edge\n");
                     msg.onColor = NamedColors::RED;
                     msg.offColor = NamedColors::BLACK;
-                    msg.whichLEDs = static_cast<u8>(WhichBlockLEDs::FRONT);
+                    msg.whichLEDs = static_cast<u8>(WhichCubeLEDs::FRONT);
                     msg.makeRelative = 2;
                     msg.relativeToX = GetRobotPose().GetTranslation().x();
                     msg.relativeToY = GetRobotPose().GetTranslation().y();
@@ -1079,7 +1079,7 @@ namespace Anki {
                            colorList[colorIndex].b());
                     msg.onColor = colorList[colorIndex++];
                     msg.offColor = NamedColors::BLACK;
-                    msg.whichLEDs = static_cast<u8>(WhichBlockLEDs::FRONT);
+                    msg.whichLEDs = static_cast<u8>(WhichCubeLEDs::FRONT);
                     msg.makeRelative = 0;
                     msg.turnOffUnspecifiedLEDs = 1;
                   }
@@ -1554,11 +1554,11 @@ namespace Anki {
           NamedColors::RED, NamedColors::GREEN, NamedColors::BLUE,
           NamedColors::CYAN, NamedColors::ORANGE, NamedColors::YELLOW
         }};
-        static std::vector<WhichBlockLEDs> leds = {{
-          WhichBlockLEDs::BACK,
-          WhichBlockLEDs::LEFT,
-          WhichBlockLEDs::FRONT,
-          WhichBlockLEDs::RIGHT
+        static std::vector<WhichCubeLEDs> leds = {{
+          WhichCubeLEDs::BACK,
+          WhichCubeLEDs::LEFT,
+          WhichCubeLEDs::FRONT,
+          WhichCubeLEDs::RIGHT
         }};
         
         static auto colorIter = colors.begin();
