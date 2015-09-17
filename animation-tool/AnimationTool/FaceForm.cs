@@ -39,6 +39,7 @@ namespace AnimationTool
             eyes = new FaceTrackBarForm[(int)ProceduralEyeParameter.NumParameters];
 
             eyes[(int)ProceduralEyeParameter.BrowAngle] = browAngle;
+            eyes[(int)ProceduralEyeParameter.BrowLength] = browLength;
             eyes[(int)ProceduralEyeParameter.BrowCenX] = browX;
             eyes[(int)ProceduralEyeParameter.BrowCenY] = browY;
 
