@@ -38,11 +38,12 @@
 #include "anki/cozmo/shared/ledTypes.h"
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/blockWorld.h"
+#include "anki/cozmo/basestation/emotionManager.h"
 #include "anki/cozmo/basestation/faceWorld.h"
 #include "anki/cozmo/basestation/comms/robot/robotMessages.h"
 #include "anki/cozmo/basestation/visionProcessingThread.h"
 #include "anki/cozmo/basestation/actionContainers.h"
-#include "anki/cozmo/basestation/animationStreamer.h"
+#include "anki/cozmo/basestation/animation/animationStreamer.h"
 #include "anki/cozmo/basestation/proceduralFace.h"
 #include "anki/cozmo/basestation/cannedAnimationContainer.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
@@ -241,6 +242,7 @@ namespace Cozmo {
     const ObjectID&  GetDockObject()          const {return _dockObjectID;}
     const ObjectID&  GetCarryingObject()      const {return _carryingObjectID;}
     const ObjectID&  GetCarryingObjectOnTop() const {return _carryingObjectOnTopID;}
+    const std::set<ObjectID> GetCarryingObjects() const;
     const Vision::KnownMarker*  GetCarryingMarker() const {return _carryingMarker; }
 
     bool IsCarryingObject()   const {return _carryingObjectID.IsSet(); }
@@ -248,7 +250,7 @@ namespace Cozmo {
     bool IsPickedUp()         const {return _isPickedUp;}
     
     void SetCarryingObject(ObjectID carryObjectID);
-    void UnSetCarryingObject();
+    void UnSetCarryingObjects();
     
     // Tell the physical robot to dock with the specified marker
     // of the specified object that it should currently be seeing.
@@ -578,6 +580,8 @@ namespace Cozmo {
       ASSERT_NAMED(_externalInterface != nullptr, "Robot.ExternalInterface.nullptr"); return _externalInterface; }
     inline void SetImageSendMode(ImageSendMode newMode) { _imageSendMode = newMode; }
     inline const ImageSendMode GetImageSendMode() const { return _imageSendMode; }
+    
+    inline EmotionManager& GetEmotionManager() { return _emotionMgr; }
   protected:
     IExternalInterface* _externalInterface;
     Util::Data::DataPlatform* _dataPlatform;
@@ -766,6 +770,9 @@ namespace Cozmo {
     s32 _numFreeAnimationBytes;
     s32 _numAnimationBytesPlayed;
     s32 _numAnimationBytesStreamed;
+    
+    ///////// Emotion ////////
+    EmotionManager _emotionMgr;
     
     ///////// Messaging ////////
     // These methods actually do the creation of messages and sending

@@ -366,7 +366,7 @@
             <v6Lang>0</v6Lang>
             <v6LangP>0</v6LangP>
             <VariousControls>
-              <MiscControls>-DROBOT41 --asm</MiscControls>
+              <MiscControls>-DROBOT41</MiscControls>
               <Define>NRF51,COZMO_ROBOT</Define>
               <Undefine></Undefine>
               <IncludePath>.\lib\Include;.\lib\Include\app_common;.\lib\Include\ble;.\lib\Include\ble\ble_services;.\lib\Include\ble\rpc;.\lib\Include\gcc;..\..\include;..\..\coretech\common\include;..\supervisor\src;..\include;..\syscon;..\syscon\common</IncludePath>

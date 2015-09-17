@@ -15,6 +15,7 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/common/shared/radians.h"
 #include "anki/common/robot/config.h"
 #include "clad/externalInterface/messageEngineToGame.h"
@@ -85,8 +86,11 @@ bool BehaviorLookAround::IsRunnable(double currentTime_sec) const
   return false;
 }
 
-Result BehaviorLookAround::Init()
+Result BehaviorLookAround::Init(double currentTime_sec)
 {
+  // Update explorable area center to current robot pose
+  ResetSafeRegion();
+  
   _currentState = State::StartLooking;
   return Result::RESULT_OK;
 }
@@ -113,6 +117,8 @@ IBehavior::Status BehaviorLookAround::Update(double currentTime_sec)
     {
       IActionRunner* moveHeadAction = new MoveHeadToAngleAction(0);
       _robot.GetActionList().QueueActionAtEnd(0, moveHeadAction);
+      IActionRunner* moveLiftAction = new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK);
+      _robot.GetActionList().QueueActionAtEnd(0, moveLiftAction);
       if (StartMoving() == RESULT_OK) {
         _currentState = State::LookingForObject;
       }
@@ -187,16 +193,10 @@ Result BehaviorLookAround::StartMoving()
     // Get robot bounding box at destPose
     Quad2f robotQuad = _robot.GetBoundingQuadXY(destPose);
     
-    std::set<ObjectFamily> ignoreFamilies;
-    std::set<ObjectType> ignoreTypes;
-    std::set<ObjectID> ignoreIDs;
     std::vector<ObservableObject*> existingObjects;
     _robot.GetBlockWorld().FindIntersectingObjects(robotQuad,
                                                    existingObjects,
-                                                   10,
-                                                   ignoreFamilies,
-                                                   ignoreTypes,
-                                                   ignoreIDs);
+                                                   10);
     
     if (existingObjects.empty()) {
       break;
@@ -439,9 +439,14 @@ void BehaviorLookAround::HandleRobotPutDown(const AnkiEvent<MessageEngineToGame>
   const RobotPutDown& msg = event.GetData().Get_RobotPutDown();
   if (_robot.GetID() == msg.robotID)
   {
-    _moveAreaCenter = _robot.GetPose();
-    _safeRadius = kDefaultSafeRadius;
+    ResetSafeRegion();
   }
+}
+  
+void BehaviorLookAround::ResetSafeRegion()
+{
+  _moveAreaCenter = _robot.GetPose();
+  _safeRadius = kDefaultSafeRadius;
 }
 
 } // namespace Cozmo

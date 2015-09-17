@@ -23,9 +23,7 @@ namespace Cozmo {
 using namespace ExternalInterface;
   
 static std::vector<std::string> _animReactions = {
-  "Fear",
-  "shocked",
-  "VeryIrritated",
+  "Demo_OCD_Confused",
 };
 
 BehaviorReactToPickup::BehaviorReactToPickup(Robot& robot, const Json::Value& config)
@@ -74,7 +72,7 @@ bool BehaviorReactToPickup::IsRunnable(double currentTime_sec) const
   return false;
 }
 
-Result BehaviorReactToPickup::Init()
+Result BehaviorReactToPickup::Init(double currentTime_sec)
 {
   return Result::RESULT_OK;
 }
@@ -96,7 +94,7 @@ IBehavior::Status BehaviorReactToPickup::Update(double currentTime_sec)
     {
       static u32 animIndex = 0;
       // For now we simply rotate through the animations we want to play when picked up
-      if (0 != _animReactions.size())
+      if (!_animReactions.empty())
       {
         IActionRunner* newAction = new PlayAnimationAction(_animReactions[animIndex]);
         _animTagToWaitFor = newAction->GetTag();

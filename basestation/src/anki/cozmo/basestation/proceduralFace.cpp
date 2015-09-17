@@ -38,6 +38,23 @@ namespace Cozmo {
     
     return static_cast<s32>(value * static_cast<ProceduralFace::Value>(max-min)) + min;
   }
+  
+  inline const s32 GetScaledValue(ProceduralFace::Value value, s32 min, s32 mid, s32 max)
+  {
+    if(value == 0) {
+      return mid;
+    } else if(value < 0) {
+      return (value + 1.f)*static_cast<ProceduralFace::Value>(mid-min) + min;
+    } else {
+      assert(value > 0);
+      return value*static_cast<ProceduralFace::Value>(max-mid) + mid;
+    }
+  }
+  
+  inline s32 ProceduralFace::GetBrowHeight(const s32 eyeHeightPix, const Value browCenY) const
+  {
+    return GetScaledValue(-browCenY, 1, NominalEyeCenY-std::round(static_cast<f32>(eyeHeightPix)*0.5f));// + _firstScanLine;
+  }
 
   void ProceduralFace::DrawEye(WhichEye whichEye, cv::Mat_<u8>& faceImg) const
   {
@@ -72,8 +89,8 @@ namespace Cozmo {
       
       // Remove a few pixels from the four corners
       const s32 NumCornerPixels = 3; // TODO: Make this a static const parameter?
-      u8* topLine = roi.ptr(0);
-      u8* btmLine = roi.ptr(roi.rows-1);
+      u8* topLine = roi.ptr(1-_firstScanLine);
+      u8* btmLine = roi.ptr(roi.rows-1-_firstScanLine);
       for(s32 j=0; j<NumCornerPixels; ++j) {
         topLine[j] = 0;
         btmLine[j] = 0;
@@ -93,7 +110,7 @@ namespace Cozmo {
     roi = faceImg(pupilRect & imgRect);
     roi.setTo(0);
     
-    // Eyebrow:
+    // Eyebrow: (quadrilateral)
     const f32 browAngleRad = DEG_TO_RAD(static_cast<f32>(GetScaledValue(GetParameter(whichEye, Parameter::BrowAngle),
                                                                         -MaxBrowAngle, MaxBrowAngle)));
     const float cosAngle = std::cos(browAngleRad);
@@ -101,12 +118,24 @@ namespace Cozmo {
     
     const s32 browXPosPix = GetScaledValue(GetParameter(whichEye, Parameter::BrowCenX),
                                            -eyeWidthPix/2, eyeWidthPix/2) + NominalEyeCenX;
-    const s32 browYPosPix = GetScaledValue(-GetParameter(whichEye, Parameter::BrowCenY),
-                                            1, NominalEyeCenY-eyeHeightPix/2);
+    const s32 browYPosPix = GetBrowHeight(eyeHeightPix, GetParameter(whichEye, Parameter::BrowCenY));
 
-    const cv::Point leftPoint(browXPosPix-EyebrowHalfLength*cosAngle,  browYPosPix-EyebrowHalfLength*sinAngle);
-    const cv::Point rightPoint(browXPosPix+EyebrowHalfLength*cosAngle, browYPosPix+EyebrowHalfLength*sinAngle);
-    cv::line(faceImg, leftPoint, rightPoint, 255, EyebrowThickness, 4);
+    const s32 browHalfLength = GetScaledValue(GetParameter(whichEye, Parameter::BrowLength), 0, MidBrowLengthPix, MaxBrowLengthPix)/2;
+    
+    if(browHalfLength > 0) {
+      const cv::Point leftPoint(browXPosPix-std::round(static_cast<f32>(browHalfLength)*cosAngle),
+                                browYPosPix-std::round(static_cast<f32>(browHalfLength)*sinAngle));
+      const cv::Point rightPoint(browXPosPix+std::round(static_cast<f32>(browHalfLength)*cosAngle),
+                                 browYPosPix+std::round(static_cast<f32>(browHalfLength)*sinAngle));
+      
+      const cv::Point leftPointBtm(leftPoint.x,   leftPoint.y + 3);
+      const cv::Point rightPointBtm(rightPoint.x, rightPoint.y + 3);
+      
+      const std::vector<std::vector<cv::Point> > eyebrow = {
+        {leftPoint, rightPoint, rightPointBtm, leftPointBtm}
+      };
+      cv::fillPoly(faceImg, eyebrow, 255, 4);
+    }
     
   } // DrawEye()
   
@@ -226,8 +255,23 @@ namespace Cozmo {
   
   void ProceduralFace::Blink()
   {
+    // Figure out the height needed to keep the eyebrows from moving:
+    for(auto whichEye : {Left, Right}) {
+      // Current eye height in pixels:
+      const s32 eyeHeightPix = GetScaledValue(GetParameter(whichEye, Parameter::EyeHeight),
+                                              MinEyeHeightPix, MaxEyeHeightPix);
+      // Current eyebrow Y position in pixels
+      const s32 browYPosPix = GetBrowHeight(eyeHeightPix, GetParameter(whichEye, Parameter::BrowCenY));
+      
+      // Get corresponding parameter value for that same brow height, when
+      // eye is closed (as it will be when we blink)
+      SetParameter(whichEye, Parameter::BrowCenY, 2.f*(1.f-static_cast<f32>(browYPosPix)/static_cast<f32>(ProceduralFace::NominalEyeCenY-1))-1.f);
+    }
+    
+    // Close eyes
     SetParameter(Left, Parameter::EyeHeight, -1.f);
     SetParameter(Right, Parameter::EyeHeight, -1.f);
+
     SwitchInterlacing();
   }
   
@@ -235,7 +279,7 @@ namespace Cozmo {
   {
     using Face = Vision::TrackedFace;
     
-    // TODO Implement mimicking here and use from BehaviorLookForFaces / BehaviorMimicFace
+    // TODO Implement mimicking here and use from BehaviorInteractWithFaces / BehaviorMimicFace
   }
 
 } // namespace Cozmo

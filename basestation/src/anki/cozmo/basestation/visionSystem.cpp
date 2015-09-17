@@ -185,10 +185,21 @@ namespace Cozmo {
   void VisionSystem::StopTracking()
   {
     SetMarkerToTrack(Vision::MARKER_UNKNOWN, 0.f, true);
-    DisableModeHelper(TRACKING);
-    
+    RestoreNonTrackingMode();
+  }
+  
+  void VisionSystem::RestoreNonTrackingMode()
+  {
     // Restore whatever we were doing before tracking
-    _mode = _modeBeforeTracking;
+    if (TRACKING == (_mode & TRACKING))
+    {
+      _mode = _modeBeforeTracking;
+      
+      if (TRACKING == (_mode & TRACKING))
+      {
+        PRINT_NAMED_ERROR("VisionSystem.StopTracking","Restored mode before tracking but it still includes tracking!");
+      }
+    }
   }
   
   Result VisionSystem::StartDetectingFaces()
@@ -280,8 +291,8 @@ namespace Cozmo {
   {
     if(_newMarkerToTrackWasProvided) {
       
+      RestoreNonTrackingMode();
       _mode              |= LOOKING_FOR_MARKERS;
-      _mode              &= ~TRACKING; // disable tracking mode
       _numTrackFailures  =  0;
       
       _markerToTrack = _newMarkerToTrack;
@@ -421,6 +432,7 @@ namespace Cozmo {
     
     // TODO: Merge the fiducial detectio parameters structs
     Embedded::FiducialDetectionParameters embeddedParams;
+    embeddedParams.useIntegralImageFiltering = true;
     embeddedParams.scaleImage_numPyramidLevels = parameters.scaleImage_numPyramidLevels;
     embeddedParams.scaleImage_thresholdMultiplier = parameters.scaleImage_thresholdMultiplier;
     embeddedParams.component1d_minComponentWidth = parameters.component1d_minComponentWidth;
@@ -1035,7 +1047,7 @@ namespace Cozmo {
       // Initialize the VisionSystem's state (i.e. its "private member variables")
       //
       
-      _mode                      = LOOKING_FOR_MARKERS;
+      _mode                      = LOOKING_FOR_MARKERS | DETECTING_FACES;
       _markerToTrack.Clear();
       _numTrackFailures          = 0;
       
@@ -1050,6 +1062,16 @@ namespace Cozmo {
       if(_headCamInfo == nullptr) {
         PRINT_STREAM_INFO("VisionSystem.Init", "Initialize() - HeadCam Info pointer is NULL!");
         return RESULT_FAIL;
+      }
+      
+      if ((_mode & DETECTING_FACES) == DETECTING_FACES)
+      {
+        Result startFacesResult = StartDetectingFaces();
+        if (Result::RESULT_OK != startFacesResult)
+        {
+          PRINT_NAMED_ERROR("VisionSystem.Init.StartDetectingFaces", "Face tracker not initialized!");
+          return startFacesResult;
+        }
       }
       
       // Compute FOV from focal length (currently used for tracker prediciton)

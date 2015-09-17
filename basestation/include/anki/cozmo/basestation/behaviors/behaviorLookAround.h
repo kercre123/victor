@@ -34,7 +34,7 @@ public:
   
   virtual bool IsRunnable(double currentTime_sec) const override;
   
-  virtual Result Init() override;
+  virtual Result Init(double currentTime_sec) override;
   
   virtual Status Update(double currentTime_sec) override;
   
@@ -63,7 +63,7 @@ private:
   };
   
   // How long to wait before we trying to look around again (among other factors)
-  constexpr static f32 kLookAroundCooldownDuration = 11;
+  constexpr static f32 kLookAroundCooldownDuration = 7;
   // How fast to rotate when looking around
   constexpr static f32 kDegreesRotatePerSec = 25;
   // The default radius (in mm) we assume exists for us to move around in
@@ -89,6 +89,7 @@ private:
   void ResetBehavior(float currentTime_sec);
   Destination GetNextDestination(Destination current);
   void UpdateSafeRegion(const Vec3f& objectPosition);
+  void ResetSafeRegion();
   
   void HandleObjectObserved(const AnkiEvent<ExternalInterface::MessageEngineToGame>& event);
   void HandleCompletedAction(const AnkiEvent<ExternalInterface::MessageEngineToGame>& event);

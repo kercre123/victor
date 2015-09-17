@@ -936,27 +936,27 @@ void Receiver_ReceiveData(uint8_t* buffer, uint16_t bufferSize, ReliableConnecti
   }
   else
   {
-    Anki::Cozmo::PRINT("Receiver got %d expeted len %d was %d\n", msgID, size, bufferSize);
+    PRINT("Receiver got %d expeted len %d was %d\n", msgID, size, bufferSize);
   }
 }
 
 void Receiver_OnConnectionRequest(ReliableConnection* connection)
 {
-  Anki::Cozmo::PRINT("ReliableTransport new connection\n");
+  PRINT("ReliableTransport new connection\n");
   ReliableTransport_FinishConnection(connection); // Accept the connection
   Anki::Cozmo::HAL::RadioUpdateState(1, 0);
 }
 
 void Receiver_OnConnected(ReliableConnection* connection)
 {
-  Anki::Cozmo::PRINT("ReliableTransport connection completed\n");
+  PRINT("ReliableTransport connection completed\n");
   Anki::Cozmo::HAL::RadioUpdateState(1, 0);
 }
 
 void Receiver_OnDisconnect(ReliableConnection* connection)
 {
   Anki::Cozmo::HAL::RadioUpdateState(0, 0);   // Must mark connection disconnected BEFORE trying to print
-  Anki::Cozmo::PRINT("ReliableTransport disconnected\n");
+  PRINT("ReliableTransport disconnected\n");
   ReliableConnection_Init(connection, NULL); // Reset the connection
   Anki::Cozmo::HAL::RadioUpdateState(0, 0);
 }

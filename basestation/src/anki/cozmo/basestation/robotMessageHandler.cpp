@@ -537,7 +537,7 @@ namespace Anki {
         
         // Create image file
         char logFilename[564];
-        snprintf(logFilename, sizeof(logFilename), "%s/robot%d_imu%d.m", imuLogsDir.c_str(), robot->GetID(), imuSeqID);
+        snprintf(logFilename, sizeof(logFilename), "%s/robot%d_imu%d.txt", imuLogsDir.c_str(), robot->GetID(), imuSeqID);
         PRINT_STREAM_INFO("RobotMessageHandler.ProcessMessage.MessageIMUDataChunk", "Printing imu log to " << logFilename << " (dataSize = " << dataSize << ")");
         
         std::ofstream oFile(logFilename);
@@ -625,8 +625,8 @@ namespace Anki {
           assert(object->IsActive());
           if(object->GetActiveID() == msg.objectID) {
             // TODO: Mark object as de-localized
-            printf("Received message that Object %d (Active ID %d) moved.\n",
-                   objectWithID.first.GetValue(), msg.objectID);
+            printf("Received message that Object %d (Active ID %d) moved. (%f, %f, %f) - upAxis %u\n",
+                   objectWithID.first.GetValue(), msg.objectID, msg.xAccel, msg.yAccel, msg.zAccel, msg.upAxis);
             
             // Don't notify game about moving objects that are being carried
             ActionableObject* actionObject = dynamic_cast<ActionableObject*>(object);

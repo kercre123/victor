@@ -63,7 +63,7 @@ namespace Cozmo {
     virtual bool IsRunnable(double currentTime_sec) const = 0;
     
     // Will be called upon first switching to a behavior before calling update.
-    virtual Result Init() = 0;
+    virtual Result Init(double currentTime_sec) = 0;
     
     // Step through the behavior and deliver rewards to the robot along the way
     virtual Status Update(double currentTime_sec) = 0;
