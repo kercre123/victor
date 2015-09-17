@@ -306,17 +306,19 @@ public:
     
     Result StopDocking();
     
+    /*
     //
     // Proximity Sensors
     //
     u8   GetProxSensorVal(ProxSensor_t sensor)    const {return _proxVals[sensor];}
     bool IsProxSensorBlocked(ProxSensor_t sensor) const {return _proxBlocked[sensor];}
-    
+
     // Pose of where objects are assumed to be with respect to robot pose when
     // obstacles are detected by proximity sensors
     static const Pose3d ProxDetectTransform[NUM_PROX];
-    
-    
+    */
+
+
     //
     // Vision
     //
@@ -646,11 +648,13 @@ public:
     Vision::CameraCalibration _cameraCalibration;
     Vision::Camera            _camera;
     bool                      _visionWhileMovingEnabled;
-    
+
+    /*
     // Proximity sensors
     std::array<u8,   NUM_PROX>  _proxVals;
     std::array<bool, NUM_PROX>  _proxBlocked;
-    
+    */
+
     // Geometry / Pose
     std::list<Pose3d>_poseOrigins; // placeholder origin poses while robot isn't localized
     Pose3d*          _worldOrigin;
@@ -762,7 +766,9 @@ public:
     void SetLastRecvdPathID(u16 path_id)    {_lastRecvdPathID = path_id;}
     void SetPickingOrPlacing(bool t)        {_isPickingOrPlacing = t;}
     void SetPickedUp(bool t);
+    /*
     void SetProxSensorData(const ProxSensor_t sensor, u8 value, bool blocked) {_proxVals[sensor] = value; _proxBlocked[sensor] = blocked;}
+    */
 
     ///////// Animation /////////
     
