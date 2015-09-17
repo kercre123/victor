@@ -83,6 +83,7 @@ namespace Cozmo {
     Result HandleDeletedObject(const ExternalInterface::RobotDeletedObject &msg, double currentTime_sec);
     
     Result HandleActionCompleted(const ExternalInterface::RobotCompletedAction &msg, double currentTime_sec);
+    Result HandleBlockPlaced(const ExternalInterface::BlockPlaced &msg, double currentTime_sec);
     
     Result SelectArrangement();
     Result SelectNextObjectToPickUp();

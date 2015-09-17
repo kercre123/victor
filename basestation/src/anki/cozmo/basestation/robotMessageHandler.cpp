@@ -422,6 +422,8 @@ namespace Anki {
       // it was docking/tracking
       robot->StopDocking();
       
+      robot->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::BlockPickedUp(msg.didSucceed)));
+      
       return lastResult;
     }
     
@@ -442,6 +444,8 @@ namespace Anki {
       
       robot->StopDocking();
       robot->StartLookingForMarkers();
+      
+      robot->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::BlockPlaced(msg.didSucceed)));
       
       return lastResult;
     }

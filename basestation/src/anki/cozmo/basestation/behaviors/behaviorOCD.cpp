@@ -47,7 +47,8 @@ namespace Cozmo {
       ExternalInterface::MessageEngineToGameTag::RobotCompletedAction,
       ExternalInterface::MessageEngineToGameTag::RobotObservedObject,
       ExternalInterface::MessageEngineToGameTag::RobotDeletedObject,
-      ExternalInterface::MessageEngineToGameTag::ActiveObjectMoved
+      ExternalInterface::MessageEngineToGameTag::ActiveObjectMoved,
+      ExternalInterface::MessageEngineToGameTag::BlockPlaced
     };
     
     // Note we may not have an external interface when running Unit tests
@@ -80,6 +81,10 @@ namespace Cozmo {
         _lastHandlerResult= HandleObjectMoved(event.GetData().Get_ActiveObjectMoved(), event.GetCurrentTime());
         break;
         
+      case ExternalInterface::MessageEngineToGameTag::BlockPlaced:
+        _lastHandlerResult= HandleBlockPlaced(event.GetData().Get_BlockPlaced(), event.GetCurrentTime());
+        break;
+        
       default:
         PRINT_NAMED_ERROR("BehaviorOCD.EventHandler.InvalidTag",
                           "Received unexpected event with tag %hhu.", event.GetData().GetTag());
@@ -95,7 +100,10 @@ namespace Cozmo {
   {
     // We can only run this behavior when there are at least two "messy" blocks present,
     // or when there is at least one messy block while we've got any neat blocks
-    return (_messyObjects.size() >= 2) || (!_neatObjects.empty() && !_messyObjects.empty()) || (!_animActionTags.empty());
+    return (_messyObjects.size() >= 2) ||
+           (!_neatObjects.empty() && !_messyObjects.empty()) ||
+           (_currentState == State::PlacingBlock) ||
+           (!_animActionTags.empty());
   }
   
   Result BehaviorOCD::Init(double currentTime_sec)
@@ -163,7 +171,7 @@ namespace Cozmo {
     }
     
     // Completion trigger is when all (?) blocks make it to his "neat" list
-    if(_messyObjects.empty() && _animActionTags.empty()) {
+    if (!IsRunnable(currentTime_sec)) {
       return Status::Complete;
     }
     
@@ -1029,6 +1037,12 @@ namespace Cozmo {
               break;
           }
         } else {
+          // The block we're placing might've been made neat, but verification later showed that the placement failed.
+          if (_objectToPickUp) {
+            BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.HandleActionCompleted.MakingMessy", "Object %d", _objectToPickUp.GetValue());
+            MakeMessy(_objectToPickUp);
+          }
+          
           BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.HandleActionCompleted.PlacementFailure", "Trying again");
           // We failed to place the last block, try again?
           DeleteObjectIfFailedToPickOrPlaceAgain(_objectToPlaceOn);
@@ -1091,8 +1105,8 @@ namespace Cozmo {
   {
     Result lastResult = RESULT_OK;
     
-    // If a previously-neat object is moved (and it's not the one we are stacking we are
-    // stacking _on_, since we might be the one to move it), move it to the messy list
+    // If a previously-neat object is moved (and it's not the one we are placing or placing
+    // a block _on_, since we might be the one to move it), move it to the messy list
     // and play some kind of irritated animation
     ObjectID objectID;
     objectID = msg.objectID;
@@ -1102,7 +1116,8 @@ namespace Cozmo {
       _objectToPlaceOn.UnSet();
     }
     
-    if(_neatObjects.count(objectID)>0 && objectID != _objectToPlaceOn)
+    if(_neatObjects.count(objectID)>0 &&
+       !( (_currentState == State::PlacingBlock) && (objectID == _objectToPlaceOn || objectID == _objectToPickUp) ) )
     {
       BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.HandleObjectMoved", "Neat object %d moved, making messy.", msg.objectID);
       
@@ -1189,6 +1204,21 @@ namespace Cozmo {
     return RESULT_OK;
   }
   
+  
+  Result BehaviorOCD::HandleBlockPlaced(const ExternalInterface::BlockPlaced &msg, double currentTime_sec)
+  {
+    if (IsRunning()) {
+      if (_objectToPickUp.IsSet()) {
+        BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.HandleBlockPlaced.MakingNeat", "Object %d", _objectToPickUp.GetValue());
+        MakeNeat(_objectToPickUp);
+      } else {
+        BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.HandleBlockPlaced.CarriedObjectUnset", "");
+        return RESULT_FAIL;
+      }
+    }
+    return RESULT_OK;
+  }
+  
   f32 BehaviorOCD::GetNeatnessScore(const ObjectID& whichObject)
   {
     ObservableObject* object = _robot.GetBlockWorld().GetObjectByID(whichObject);
@@ -1230,16 +1260,26 @@ namespace Cozmo {
 
   void BehaviorOCD::MakeNeat(const ObjectID& objID)
   {
-    _neatObjects.insert(objID);
-    _messyObjects.erase(objID);
-    _conversionEvidenceCount[objID] = 0;
+    if (objID.IsSet()) {
+      _neatObjects.insert(objID);
+      _messyObjects.erase(objID);
+      _conversionEvidenceCount[objID] = 0;
+      if (IsRunning()) {
+        SetBlockLightState(objID, BlockLightState::Neat);
+      }
+    }
   }
   
   void BehaviorOCD::MakeMessy(const ObjectID& objID)
   {
-    _messyObjects.insert(objID);
-    _neatObjects.erase(objID);
-    _conversionEvidenceCount[objID] = 0;
+    if (objID.IsSet()) {
+      _messyObjects.insert(objID);
+      _neatObjects.erase(objID);
+      _conversionEvidenceCount[objID] = 0;
+      if (IsRunning()) {
+        SetBlockLightState(objID, BlockLightState::Messy);
+      }
+    }
   }
   
   
