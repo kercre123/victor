@@ -730,7 +730,8 @@ namespace Cozmo {
         const f32 MIN_NEATNESS_SCORE_TO_BECOME_NEAT = 0.8f;
         const f32 RECENTLY_OBSERVED_TIME_THRESH_MS = 1000.f;
         const s8 MIN_NUM_OBS_FOR_CONVERSION = 2;
-        const f32 MAX_OBS_DISTANCE_FOR_CONVERSION_MM = 250;
+        const f32 MAX_OBS_DISTANCE_FOR_CONVERSION_MM = 200;
+        const bool ALLOW_NEAT_BLOCKS_TO_BECOME_MESSY = false;
         
         TimeStamp_t lastMsgRecvdTime = _robot.GetLastMsgTimestamp();
         const BlockWorld& blockWorld = _robot.GetBlockWorld();
@@ -832,6 +833,7 @@ namespace Cozmo {
         }
     
 
+        if (ALLOW_NEAT_BLOCKS_TO_BECOME_MESSY) {
           // A neat block can become messy if it has a low neatness score
           for (auto objID = _neatObjects.begin(); objID != _neatObjects.end(); ++objID) {
             ObservableObject* oObject = blockWorld.GetObjectByID(*objID);
@@ -855,6 +857,8 @@ namespace Cozmo {
               }
             }
           }
+        }
+        
         
         // Convert flagged neat objects
         bool foundNeatToMessy = false;
