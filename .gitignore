@@ -7,6 +7,7 @@
 *.swp
 *.TMP
 matlab.mat
+TAGS
 
 # Webots
 *.wbproj

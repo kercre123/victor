@@ -45,6 +45,10 @@ namespace Anki {
     const f32 ROBOT_BOUNDING_RADIUS  = sqrtf((0.25f*ROBOT_BOUNDING_X*ROBOT_BOUNDING_X) +
                                              (0.25f*ROBOT_BOUNDING_Y*ROBOT_BOUNDING_Y));
   
+    // Apply a conservative negative padding when checking for collisions with known objects to
+    // see if they should be deleted..
+    // (A negative value means it _really_ has to intersect in order for the object to be deleted.)
+    const f32 ROBOT_BBOX_PADDING_FOR_OBJECT_DELETION = -5.f;
     
     /***************************************************************************
      *

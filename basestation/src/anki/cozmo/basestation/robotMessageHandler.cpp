@@ -537,7 +537,7 @@ namespace Anki {
         
         // Create image file
         char logFilename[564];
-        snprintf(logFilename, sizeof(logFilename), "%s/robot%d_imu%d.m", imuLogsDir.c_str(), robot->GetID(), imuSeqID);
+        snprintf(logFilename, sizeof(logFilename), "%s/robot%d_imu%d.txt", imuLogsDir.c_str(), robot->GetID(), imuSeqID);
         PRINT_STREAM_INFO("RobotMessageHandler.ProcessMessage.MessageIMUDataChunk", "Printing imu log to " << logFilename << " (dataSize = " << dataSize << ")");
         
         std::ofstream oFile(logFilename);

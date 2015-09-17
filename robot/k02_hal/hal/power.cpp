@@ -32,7 +32,7 @@ namespace Anki
         // Pull-down SCK during ESP8266 boot
         GPIO_RESET(GPIO_SCK, PIN_SCK);
         GPIO_OUT(GPIO_SCK, PIN_SCK);
-        SOURCE_SETUP(GPIO_SCK, SOURCE_SCK, SourceGPIO);    
+        SOURCE_SETUP(GPIO_SCK, SOURCE_SCK, SourceGPIO);
         
         // Pull MOSI low to put ESP8266 into bootloader mode
         // XXX: Normally, you should drive this high and rely on the cable to enter debug mode!

@@ -67,8 +67,8 @@ namespace Anki {
         
 #elif defined(COZMO_ROBOT_V40)
         // Cozmo 4.0
-        f32 Kp_ = 3.f;    // proportional control constant
-        f32 Kd_ = 1250.f;  // derivative gain
+        f32 Kp_ = 2.5;    // proportional control constant
+        f32 Kd_ = 400.f;  // derivative gain
         f32 Ki_ = 0.1f; //0.05f;   // integral control constant
         f32 angleErrorSum_ = 0.f;
         f32 MAX_ERROR_SUM = 4.f;
@@ -84,7 +84,7 @@ namespace Anki {
         const f32 ANTI_GRAVITY_POWER_BIAS = 0.15f;
 
         // Calibration offset
-        const f32 LIFT_CAL_OFFSET = 0;
+        const f32 LIFT_CAL_OFFSET = -3;
 #else
         // Cozmo 4.1 - smooth gearbox
         f32 Kp_ = 2.5f;    // proportional control constant

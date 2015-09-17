@@ -104,6 +104,7 @@ namespace Anki {
     , _animationStreamer(_cannedAnimations)
     , _numAnimationBytesPlayed(0)
     , _numAnimationBytesStreamed(0)
+    , _emotionMgr(*this)
     {
       _poseHistory = new RobotPoseHistory();
       PRINT_NAMED_INFO("Robot.Robot", "Created");
@@ -133,19 +134,30 @@ namespace Anki {
 
       ReadAnimationDir(false);
       
-      // Read in behavior manager Json
+      // Read in emotion and behavior manager Json
+      Json::Value emotionConfig;
       Json::Value behaviorConfig;
       if (nullptr != _dataPlatform)
       {
-        const std::string jsonFilename = "config/basestation/config/behavior_config.json";
-        const bool success = _dataPlatform->readAsJson(Util::Data::Scope::Resources, jsonFilename, behaviorConfig);
+        std::string jsonFilename = "config/basestation/config/behavior_config.json";
+        bool success = _dataPlatform->readAsJson(Util::Data::Scope::Resources, jsonFilename, behaviorConfig);
         if (!success)
         {
           PRINT_NAMED_ERROR("Robot.BehaviorConfigJsonNotFound",
                             "Behavior Json config file %s not found.",
                             jsonFilename.c_str());
         }
+        
+        jsonFilename = "config/basestation/config/emotion_config.json";
+        success = _dataPlatform->readAsJson(Util::Data::Scope::Resources, jsonFilename, emotionConfig);
+        if (!success)
+        {
+          PRINT_NAMED_ERROR("Robot.EmotionConfigJsonNotFound",
+                            "Emotion Json config file %s not found.",
+                            jsonFilename.c_str());
+        }
       }
+      _emotionMgr.Init(emotionConfig);
       _behaviorMgr.Init(behaviorConfig);
       
       SetHeadAngle(_currentHeadAngle);
@@ -924,9 +936,13 @@ namespace Anki {
       // module(s) would do.  e.g. Some combination of game state, build planner,
       // personality planner, etc.
       
+      const double currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+      
+      _emotionMgr.Update(currentTime);
+      
       std::string behaviorName("<disabled>");
       if(_isBehaviorMgrEnabled) {
-        _behaviorMgr.Update(BaseStationTimer::getInstance()->GetCurrentTimeInSeconds());
+        _behaviorMgr.Update(currentTime);
         
         const IBehavior* behavior = _behaviorMgr.GetCurrentBehavior();
         if(behavior != nullptr) {
@@ -1256,6 +1272,12 @@ namespace Anki {
     Result Robot::DisableTrackToObject()
     {
       _trackToObjectID.UnSet();
+      return RESULT_OK;
+    }
+    
+    Result Robot::DisableTrackToFace()
+    {
+      _trackToFaceID = Vision::TrackedFace::UnknownFace;
       return RESULT_OK;
     }
       
@@ -2522,7 +2544,7 @@ namespace Anki {
       using namespace Quad;
       for(CornerName iCorner = FirstCorner; iCorner < NumCorners; ++iCorner) {
         // Rotate to given pose
-        boundingQuad[iCorner] = R * CanonicalBoundingBoxXY[iCorner];
+        boundingQuad[iCorner] = R * boundingQuad[iCorner];
       }
       
       // Re-center

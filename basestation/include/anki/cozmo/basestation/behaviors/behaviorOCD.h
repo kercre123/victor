@@ -38,7 +38,7 @@ namespace Cozmo {
     
     virtual bool IsRunnable(double currentTime_sec) const override;
 
-    virtual Result Init() override;
+    virtual Result Init(double currentTime_sec) override;
     
     virtual Status Update(double currentTime_sec) override;
     
@@ -48,6 +48,18 @@ namespace Cozmo {
     virtual bool GetRewardBid(Reward& reward) override;
     
   private:
+    
+    // Offset at which low block should be placed wrt
+    // another low block. (Twice block width)
+    constexpr static f32 kLowPlacementOffsetMM = 88.f;
+    
+    // If neat block is disturbed within this amount of time of
+    // another neat block being disturbed then escalate to major irritation animation.
+    constexpr static f32 kMajorIrritationTimeIntervalSec = 5.f;
+    
+    // If a new block was observed within this amount of time before
+    // Init() is called then do the 'oooo' animation.
+    constexpr static f32 kExcitedAboutNewBlockTimeIntervalSec = 2.f;
     
     enum class ObjectOnTopStatus {
       DontCareIfObjectOnTop,
@@ -66,11 +78,11 @@ namespace Cozmo {
     
     // Handlers for signals coming from the engine
     // TODO: These need to be some kind of _internal_ signal or event
-    Result HandleObjectMoved(const ExternalInterface::ActiveObjectMoved &msg);
-    Result HandleObservedObject(const ExternalInterface::RobotObservedObject &msg);
-    Result HandleDeletedObject(const ExternalInterface::RobotDeletedObject &msg);
+    Result HandleObjectMoved(const ExternalInterface::ActiveObjectMoved &msg, double currentTime_sec);
+    Result HandleObservedObject(const ExternalInterface::RobotObservedObject &msg, double currentTime_sec);
+    Result HandleDeletedObject(const ExternalInterface::RobotDeletedObject &msg, double currentTime_sec);
     
-    Result HandleActionCompleted(const ExternalInterface::RobotCompletedAction &msg);
+    Result HandleActionCompleted(const ExternalInterface::RobotCompletedAction &msg, double currentTime_sec);
     
     Result SelectArrangement();
     Result SelectNextObjectToPickUp();
@@ -95,7 +107,8 @@ namespace Cozmo {
     
     // Deletes the object if it was also the previous object that the robot
     // had failed to pick or place from the same robot pose.
-    void DeleteObjectIfFailedToPickOrPlaceAgain(const ObjectID& objectID);
+    // Returns true if object deleted.
+    bool DeleteObjectIfFailedToPickOrPlaceAgain(const ObjectID& objectID);
     
     // Checks if blocks are "aligned".
     // A messy block that is aligned with a neat block should be considered neat
@@ -111,12 +124,18 @@ namespace Cozmo {
     std::set<ObjectID> _messyObjects;
     std::set<ObjectID> _neatObjects;
     
+    // A map of the number of times an object was observed to be
+    // in a neatness state other than what it currently is stored as
+    // so that VerifyNeatness can convert it only when it has accumulated
+    // a requisite number of observations in the alternate state.
+    std::map<ObjectID, s8> _conversionEvidenceCount;
+    
     // Internally, this behavior is just a little state machine going back and
     // forth between picking up and placing blocks
     enum class State {
       PickingUpBlock,
       PlacingBlock,
-      Irritated
+      Animating
     };
     
     State _currentState;
@@ -147,12 +166,17 @@ namespace Cozmo {
  
     // ID tag of last queued action
     u32 _lastActionTag;
+    std::map<u32, std::string> _animActionTags;
     
-    u8 _irritationLevel;
+    f32 _lastNeatBlockDisturbedTime;
+    f32 _lastNewBlockObservedTime;
     
     void UpdateName();
     
     void PlayAnimation(const std::string& animName);
+    
+    void MakeNeat(const ObjectID& objID);
+    void MakeMessy(const ObjectID& objID);
     
   }; // class BehaviorOCD
 

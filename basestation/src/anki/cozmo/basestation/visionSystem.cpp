@@ -421,6 +421,7 @@ namespace Cozmo {
     
     // TODO: Merge the fiducial detectio parameters structs
     Embedded::FiducialDetectionParameters embeddedParams;
+    embeddedParams.useIntegralImageFiltering = true;
     embeddedParams.scaleImage_numPyramidLevels = parameters.scaleImage_numPyramidLevels;
     embeddedParams.scaleImage_thresholdMultiplier = parameters.scaleImage_thresholdMultiplier;
     embeddedParams.component1d_minComponentWidth = parameters.component1d_minComponentWidth;
