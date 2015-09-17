@@ -149,16 +149,16 @@ namespace Cozmo {
         
         // If we've watched this face longer than it's considered interesting, put it on cooldown and go to inactive
         auto watchingFaceDuration = currentTime_sec - _interestingFacesData[faceID]._trackingStart_sec;
-        if (watchingFaceDuration >= kFaceInterestingDuration)
+        if (watchingFaceDuration >= kFaceInterestingDuration_sec)
         {
           _robot.DisableTrackToFace();
           _interestingFacesOrder.erase(_interestingFacesOrder.begin());
           _interestingFacesData.erase(faceID);
-          _cooldownFaces[faceID] = currentTime_sec + kFaceCooldownDuration;
+          _cooldownFaces[faceID] = currentTime_sec + kFaceCooldownDuration_sec;
           
           PRINT_NAMED_INFO("BehaviorInteractWithFaces.Update.FaceOnCooldown",
                            "WatchingFaceDuration %.2f >= InterestingDuration %.2f.",
-                           watchingFaceDuration, kFaceInterestingDuration);
+                           watchingFaceDuration, kFaceInterestingDuration_sec);
           _currentState = State::Inactive;
         }
         
