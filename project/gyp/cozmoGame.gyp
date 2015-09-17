@@ -189,7 +189,6 @@
       #'GCC_PRECOMPILE_PREFIX_HEADER': 'YES',
       'GCC_ENABLE_SYMBOL_SEPARATION': 'YES',
       # 'GENERATE_MASTER_OBJECT_FILE': 'YES',
-      
     },
     'configurations': {
       'Debug': {
