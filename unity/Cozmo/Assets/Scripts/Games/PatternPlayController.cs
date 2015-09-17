@@ -157,8 +157,7 @@ public class PatternPlayController : GameController {
           seenPatterns.Add(currentPattern);
         }
         else {
-          // play meh.
-          SendAnimation("MinorIrritation");
+          // meh.
         }
       }
     }
@@ -218,6 +217,10 @@ public class PatternPlayController : GameController {
   }
 
   private void BlockMoved(int blockID, float xAccel, float yAccel, float zAccel) {
+
+    if (gameReady == false)
+      return;
+
     Debug.Log(blockID + " : " + xAccel + " " + yAccel + " " + zAccel);
     if (lastFrameZAccel[blockID] < -2.0f && zAccel > 2.0f) {
       blockLightConfigs[blockID] = (BlockLightConfig)(((int)blockLightConfigs[blockID] + 1) % System.Enum.GetNames(typeof(BlockLightConfig)).Length);
@@ -362,7 +365,7 @@ public class PatternPlayController : GameController {
         && patternSeen.blocks[0].left == false && patternSeen.blocks[0].right == false) {
       return false;
     }
-    Debug.LogWarning("PATTERN FOUND");
+
     return true;
   }
 
