@@ -151,13 +151,9 @@ namespace Cozmo {
           break;
         }
         
-        // This is too expensive to do every frame, so use a longer delay
-        if (currentTime_sec - lastProceduralFaceUpdate >= kMinProceduralFaceWait)
-        {
-          // Update cozmo's face based on our currently focused face
-          UpdateProceduralFace(_crntProceduralFace, *face);
-          lastProceduralFaceUpdate = currentTime_sec;
-        }
+        // Update cozmo's face based on our currently focused face
+        UpdateProceduralFace(_crntProceduralFace, *face);
+        lastProceduralFaceUpdate = currentTime_sec;
         
         if(!_isAnimating)
         {

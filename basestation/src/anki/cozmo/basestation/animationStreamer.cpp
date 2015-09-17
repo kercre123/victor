@@ -31,7 +31,7 @@ namespace Cozmo {
 #     if DEBUG_ANIMATION_STREAMING
       PRINT_NAMED_INFO("AnimationStreamer.SetStreamingAnimation",
                        "Stopping streaming of animation '%s'.\n",
-                       _streamingAnimation->GetName().c_str());
+                       GetStreamingAnimationName().c_str());
 #     endif
       
       _streamingAnimation = nullptr;
