@@ -128,6 +128,7 @@ public class ActiveBlock : ObservedObject {
   public event Action<ActiveBlock> OnAxisChange;
 
   public static Action<int, int> TappedAction;
+  public static Action<int, float, float, float> MovedAction;
 
   public ActiveBlock(int objectID, ObjectFamily objectFamily, ObjectType objectType) {
     Constructor(objectID, objectFamily, objectType);
@@ -156,6 +157,10 @@ public class ActiveBlock : ObservedObject {
     xAccel = message.xAccel;
     yAccel = message.yAccel;
     zAccel = message.zAccel;
+
+    if (MovedAction != null) {
+      MovedAction(ID, xAccel, yAccel, zAccel);
+    }
   }
 
   public void StoppedMoving(G2U.ActiveObjectStoppedMoving message) {

@@ -44,12 +44,14 @@ public class PatternPlayController : GameController {
     base.OnEnable();
     robot.VisionWhileMoving(true);
     ActiveBlock.TappedAction += BlockTapped;
+    ActiveBlock.MovedAction += BlockMoved;
     robot.StopFaceAwareness();
   }
 
   protected override void OnDisable() {
     base.OnDisable();
     ActiveBlock.TappedAction -= BlockTapped;
+    ActiveBlock.MovedAction -= BlockMoved;
   }
 
   protected override void Enter_BUILDING() {
@@ -98,13 +100,6 @@ public class PatternPlayController : GameController {
 
   protected override void Update_PLAYING() {
     base.Update_PLAYING();
-
-    // check for light updates
-    foreach (KeyValuePair<int, ActiveBlock> activeBlock in robot.activeBlocks) {
-      if (NextBlockConfig(activeBlock.Value)) {
-        blockLightConfigs[activeBlock.Key] = (BlockLightConfig)(((int)blockLightConfigs[activeBlock.Key] + 1) % System.Enum.GetNames(typeof(BlockLightConfig)).Length);
-      }
-    }
 
     // update lights
     foreach (KeyValuePair<int, BlockLightConfig> blockConfig in blockLightConfigs) {
@@ -203,7 +198,7 @@ public class PatternPlayController : GameController {
   }
 
   private bool NextBlockConfig(ActiveBlock activeBlock) {
-    if (lastFrameZAccel[activeBlock.ID] < -20.0f && activeBlock.zAccel > 10.0f) {
+    if (lastFrameZAccel[activeBlock.ID] < -2.0f && activeBlock.zAccel > 2.0f) {
       lastFrameZAccel[activeBlock.ID] = activeBlock.zAccel;
       return true;
     }
@@ -220,6 +215,14 @@ public class PatternPlayController : GameController {
     }*/
     // go to the next light configuration
     //blockLightConfigs[blockID] = (BlockLightConfig)(((int)blockLightConfigs[blockID] + numTapped) % System.Enum.GetNames(typeof(BlockLightConfig)).Length);
+  }
+
+  private void BlockMoved(int blockID, float xAccel, float yAccel, float zAccel) {
+    Debug.Log(blockID + " : " + xAccel + " " + yAccel + " " + zAccel);
+    if (lastFrameZAccel[blockID] < -2.0f && zAccel > 2.0f) {
+      blockLightConfigs[blockID] = (BlockLightConfig)(((int)blockLightConfigs[blockID] + 1) % System.Enum.GetNames(typeof(BlockLightConfig)).Length);
+    }
+    lastFrameZAccel[blockID] = zAccel;
   }
 
   private void DonePlayingAnimation(bool success) {
