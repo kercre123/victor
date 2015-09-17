@@ -1825,13 +1825,14 @@ public class VortexController : GameController {
         }
         actualFaces[pose_index] = new Face(face.ID, face.WorldPosition.x, face.WorldPosition.y, face.WorldPosition.z);
         if (playState == VortexState.REQUEST_SPIN && pose_index == GetPoseIndex(currentPlayerIndex) && Time.realtimeSinceStartup - faceUpdateTimer > faceUpdateFreq) {
+          /*
           if (old_face == null) {
             //DAS.Error("VortexController", "actualFaces[pose_index] == null");
           }
           else {
             //DAS.Error("VortexController", "diff: " + (face.WorldPosition - old_face.WorldPosition).sqrMagnitude);
           }
-
+          */
           CozmoEmotionManager.instance.SetEmotionFacePose("YOUR_TURN", actualFaces[pose_index], true, true);
           faceUpdateTimer = Time.realtimeSinceStartup;
         }
