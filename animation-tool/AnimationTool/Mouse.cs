@@ -75,6 +75,16 @@ namespace AnimationTool
                 {
                     movingDataPointsWithMouse = true;
 
+                    switch (curChart.Name)
+                    {
+                        case "cHeadAngle":
+                            RobotEngineMessenger.instance.SendHeadAngleMessage(curDataPoint.YValues[0]);
+                            break;
+                        case "cLiftHeight":
+                            RobotEngineMessenger.instance.SendLiftHeightMessage(curDataPoint.YValues[0]);
+                            break;
+                    }
+
                     double maxX = curChartArea.AxisX.ValueToPixelPosition(curChartArea.AxisX.Maximum);
                     double minX = curChartArea.AxisX.ValueToPixelPosition(curChartArea.AxisX.Minimum);
                     double minY = 0;
@@ -136,9 +146,19 @@ namespace AnimationTool
                     {
                         ActionManager.Do(new SelectDataPoint(curDataPoint, curChart));
 
-                        if (curChart.Name == "cProceduralFace")
+                        switch (curChart.Name)
                         {
-                            AnimateFace(Sequencer.ExtraData.Entries[curDataPoint.GetCustomProperty(Sequencer.ExtraData.Key)] as Sequencer.ExtraProceduralFaceData);
+                            case "cProceduralFace":
+                                string key = curDataPoint.GetCustomProperty(Sequencer.ExtraData.Key);
+                                Sequencer.ExtraProceduralFaceData data = Sequencer.ExtraData.Entries[key] as Sequencer.ExtraProceduralFaceData;
+                                RobotEngineMessenger.instance.SendProceduralFaceMessage(data);
+                                break;
+                            case "cHeadAngle":
+                                RobotEngineMessenger.instance.SendHeadAngleMessage(curDataPoint.YValues[0]);
+                                break;
+                            case "cLiftHeight":
+                                RobotEngineMessenger.instance.SendLiftHeightMessage(curDataPoint.YValues[0]);
+                                break;
                         }
                     }
                     else
@@ -213,6 +233,16 @@ namespace AnimationTool
                 if (addDataPoint)
                 {
                     ActionManager.Do(new AddDataPoint(curChart, mouseXValue, mouseYValue, true, ModifierKeys != Keys.Shift));
+
+                    switch (curChart.Name)
+                    {
+                        case "cHeadAngle":
+                            RobotEngineMessenger.instance.SendHeadAngleMessage(mouseYValue);
+                            break;
+                        case "cLiftHeight":
+                            RobotEngineMessenger.instance.SendLiftHeightMessage(mouseYValue);
+                            break;
+                    }
                 }
                 else
                 {
@@ -507,7 +537,7 @@ namespace AnimationTool
                 {
                     ActionManager.Do(new RemoveDataPoint(curDataPoint, curChart), true);
                 }
-                AnimateFace(previous != null ? previous : extraData); // Else if cancelled, set back to previous face
+                RobotEngineMessenger.instance.SendProceduralFaceMessage(previous != null ? previous : extraData); // Else if cancelled, set back to previous face
             }
         }
 

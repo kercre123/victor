@@ -355,7 +355,7 @@ namespace Cozmo {
     Robot* robot = GetRobotByID(msg.robotID);
     if(robot != nullptr) {
       if(msg.objectID < 0) {
-        robot->UnSetCarryingObject();
+        robot->UnSetCarryingObjects();
       } else {
         ObjectID whichObject;
         whichObject = msg.objectID;

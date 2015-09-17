@@ -13,11 +13,15 @@ namespace AnimationTool
         private int _currentActionIndex;
         private Action _currentAction { get { return actions == null || currentActionIndex < 0 || currentActionIndex >= actions.Count ? null : actions[currentActionIndex]; } }
 
+        static ActionManager()
+        {
+            instance = new ActionManager();
+        }
+
         public ActionManager()
         {
             _actions = new List<Action>();
             _currentActionIndex = -1;
-            instance = this;
         }
 
         public static void Reset()

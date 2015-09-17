@@ -4,9 +4,6 @@ using System.ComponentModel;
 using System.Windows.Forms;
 using System.Windows.Forms.DataVisualization.Charting;
 using System.IO;
-using Anki.Cozmo.ExternalInterface;
-using Anki.Cozmo;
-using UnityEngine;
 
 namespace AnimationTool
 {
@@ -32,8 +29,6 @@ namespace AnimationTool
         Chart curChart;
         ChartArea curChartArea { get { return curChart != null && curChart.ChartAreas.Count > 0 ? curChart.ChartAreas[0] : null; } }
         DataPointCollection curPoints { get { return curChart != null && curChart.Series.Count > 0 ? curChart.Series[0].Points : null; } }
-
-        RobotEngineMessenger robotEngineMessenger;
 
         string jsonFilePath { get { return rootDirectory + "\\animations"; } }
 
@@ -79,7 +74,8 @@ namespace AnimationTool
         {
             instance = this;
             Sequencer.ExtraData.Entries = new Dictionary<string, Sequencer.ExtraData>();
-            ActionManager singleton = new ActionManager();
+            ActionManager actionManager = new ActionManager();
+
             changeDurationForm = new ChangeDurationForm();
             ipForm = new IPForm();
             faceForm = new FaceForm();
@@ -92,14 +88,12 @@ namespace AnimationTool
             selectFolder = new FolderBrowserDialog();
             saveFileAs = new SaveFileDialog();
             channelList = new List<Component>();
-            robotEngineMessenger = new RobotEngineMessenger();
 
-            robotEngineMessenger.ConnectionTextUpdate += ChangeConnectionText;
-            robotEngineMessenger.Start();
-            FormClosing += (unused1, unused2) => robotEngineMessenger.Stop();
-            Application.ApplicationExit += (unused1, unused2) => robotEngineMessenger.Stop();
+            RobotEngineMessenger.instance.ConnectionManager.ConnectionTextUpdate += ChangeConnectionText;
+            RobotEngineMessenger.instance.ConnectionManager.Start();
+            FormClosing += (unused1, unused2) => RobotEngineMessenger.instance.ConnectionManager.Stop();
+            Application.ApplicationExit += (unused1, unused2) => RobotEngineMessenger.instance.ConnectionManager.Stop();
             Application.Idle += UpdateConnectionText;
-            Application.Idle += FaceAnimation;
             Resize += MainForm_Resize;
 
             Sequencer.AddDataPoint.ChangeDuration += ChangeDuration;
@@ -149,6 +143,7 @@ namespace AnimationTool
 
             ActionManager.Reset();
             Sequencer.ExtraData.Reset();
+            faceForm.Reset();
             channelList.Clear();
 
             double interval = ChangeChartDuration.Clamp(Math.Round(Properties.Settings.Default.maxTime * 0.1, 1), 0.1, 0.5);
@@ -429,22 +424,17 @@ namespace AnimationTool
 
         private void PlayAnimation(object sender, EventArgs e)
         {
-            robotEngineMessenger.SendAnimation(Path.GetFileNameWithoutExtension(currentFile));
+            RobotEngineMessenger.instance.SendAnimation(Path.GetFileNameWithoutExtension(currentFile));
         }
 
         private void SetIPAddress(object o, EventArgs e)
         {
-            ipForm.Open(Location, robotEngineMessenger);
+            ipForm.Open(Location);
         }
 
         private void UpdateConnectionText(object o, EventArgs e)
         {
-            connectionToolStripMenuItem.Text = robotEngineMessenger.ConnectionText;
-        }
-
-        private void FaceAnimation(object o, EventArgs e)
-        {
-            AnimateFace(faceForm);
+            connectionToolStripMenuItem.Text = RobotEngineMessenger.instance.ConnectionManager.ConnectionText;
         }
 
         private void ChangeConnectionText(string connectionText)
@@ -471,59 +461,6 @@ namespace AnimationTool
                 audioRobot.Size = new System.Drawing.Size(Size.Width - 35, audioRobot.Size.Height);
                 audioDevice.Size = new System.Drawing.Size(Size.Width - 35, audioDevice.Size.Height);
             }
-        }
-
-
-        public void AnimateFace(Sequencer.ExtraProceduralFaceData data)
-        {
-            if (data == null) return;
-
-            DisplayProceduralFace displayProceduralFaceMessage = new DisplayProceduralFace();
-            displayProceduralFaceMessage.leftEye = new float[(int)ProceduralEyeParameter.NumParameters];
-            displayProceduralFaceMessage.rightEye = new float[(int)ProceduralEyeParameter.NumParameters];
-            displayProceduralFaceMessage.robotID = 1;
-            displayProceduralFaceMessage.faceAngle = data.faceAngle;
-
-            for (int i = 0; i < displayProceduralFaceMessage.leftEye.Length && i < data.leftEye.Length; ++i)
-            {
-                displayProceduralFaceMessage.leftEye[i] = data.leftEye[i];
-                displayProceduralFaceMessage.rightEye[i] = data.rightEye[i];
-            }
-
-            MessageGameToEngine message = new MessageGameToEngine();
-            message.DisplayProceduralFace = displayProceduralFaceMessage;
-            robotEngineMessenger.SendMessage(message);
-        }
-
-        public void AnimateFace(FaceForm faceForm)
-        {
-            if (faceForm == null || !faceForm.Changed) return;
-
-            DisplayProceduralFace displayProceduralFaceMessage = new DisplayProceduralFace();
-            displayProceduralFaceMessage.leftEye = new float[(int)ProceduralEyeParameter.NumParameters];
-            displayProceduralFaceMessage.rightEye = new float[(int)ProceduralEyeParameter.NumParameters];
-            displayProceduralFaceMessage.robotID = 1;
-            displayProceduralFaceMessage.faceAngle = faceForm.faceAngle;
-
-            for (int i = 0; i < displayProceduralFaceMessage.leftEye.Length && i < faceForm.eyes.Length; ++i)
-            {
-                if (faceForm.eyes[i] != null)
-                {
-                    displayProceduralFaceMessage.leftEye[i] = faceForm.eyes[i].LeftValue;
-                    displayProceduralFaceMessage.rightEye[i] = faceForm.eyes[i].RightValue;
-                }
-                else
-                {
-                    Debug.LogWarning("Missing " + (ProceduralEyeParameter)i + " in message.");
-                    displayProceduralFaceMessage.leftEye[i] = 0;
-                    displayProceduralFaceMessage.rightEye[i] = 0;
-                }
-            }
-
-            MessageGameToEngine message = new MessageGameToEngine();
-            message.DisplayProceduralFace = displayProceduralFaceMessage;
-            robotEngineMessenger.SendMessage(message);
-            faceForm.Changed = false;
         }
     }
 }
