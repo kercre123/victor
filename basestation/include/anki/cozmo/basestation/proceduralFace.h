@@ -36,7 +36,8 @@ namespace Cozmo {
     static constexpr s32   MaxEyeHeightPix       = 3*HEIGHT/4;
     static constexpr s32   MinEyeWidthPix        = WIDTH/5;
     static constexpr s32   MaxEyeWidthPix        = 2*WIDTH/5;
-    static constexpr s32   EyebrowHalfLength     = (MaxEyeWidthPix + MinEyeWidthPix)/4; // Half the average eye width
+    static constexpr s32   MidBrowLengthPix      = (MaxEyeHeightPix + MinEyeWidthPix)/2;
+    static constexpr s32   MaxBrowLengthPix      = MaxEyeWidthPix;
     static constexpr s32   MaxBrowAngle          = 15; // Degrees (symmtric, also used for -ve angle)
     static constexpr s32   MaxFaceAngle          = 25; //   "
 
@@ -97,6 +98,7 @@ namespace Cozmo {
     static const cv::Rect imgRect;
     
     void DrawEye(WhichEye whichEye, cv::Mat_<u8>& faceImg) const;
+    s32 GetBrowHeight(const s32 eyeHeightPix, const Value browCenY) const;
     
     // Container for the parameters for both eyes
     std::array<std::array<Value, static_cast<size_t>(Parameter::NumParameters)>, 2> _eyeParams;
@@ -113,8 +115,6 @@ namespace Cozmo {
   
   inline void ProceduralFace::SetParameter(WhichEye whichEye, Parameter param, Value value)
   {
-    //const ValueLimits& lims = GetLimits(param);
-    //_eyeParams[whichEye][static_cast<size_t>(param)] = std::max(lims.first, std::min(lims.second, value));
     _eyeParams[whichEye][static_cast<size_t>(param)] = std::max(-1.f, std::min(1.f, value));
   }
   

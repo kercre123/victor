@@ -166,7 +166,11 @@ namespace Cozmo {
     // old, or for a fixed max duration so we get a smooth change but don't
     // queue up tons of frames right now trying to get to the current face
     // (which would cause an unwanted delay).
-    const TimeStamp_t lastInterpTime = std::max(lastTime, nextTime - 4*IKeyFrame::SAMPLE_LENGTH_MS);
+    const TimeStamp_t maxDuration = 4*IKeyFrame::SAMPLE_LENGTH_MS;
+    TimeStamp_t lastInterpTime = lastTime;
+    if(nextTime > maxDuration) {
+      lastInterpTime = std::max(lastTime, nextTime - maxDuration);
+    }
     
     ProceduralFace proceduralFace;
     proceduralFace.SetTimeStamp(lastInterpTime);
@@ -206,43 +210,42 @@ namespace Cozmo {
     const TimeStamp_t nextTime = nextFace.GetTimeStamp();
     
     _nextBlink_ms -= BS_TIME_STEP;
-    if(_nextBlink_ms <= 0) { // "time to blink"
-      PRINT_NAMED_INFO("AnimationStreamer.UpdateLiveAnimation.Blink", "");
-      ProceduralFace blinkFace(lastFace);
-      blinkFace.Blink();
-      
-      // Close:
-      blinkFace.SetTimeStamp(lastTime + 150);
-      lastResult = StreamProceduralFace(robot, lastFace, blinkFace, _liveAnimation);
+    
+    if(nextFace.HasBeenSentToRobot() == false &&
+       lastFace.HasBeenSentToRobot() == true &&
+       nextTime > lastTime)
+    {
+      lastResult = StreamProceduralFace(robot, lastFace, nextFace, _liveAnimation);
       if(RESULT_OK != lastResult) {
         return lastResult;
       }
-      
-      // Open:
-      blinkFace.SetTimeStamp(nextTime - 100);
-      lastResult = StreamProceduralFace(robot, blinkFace, nextFace, _liveAnimation);
-      if(RESULT_OK != lastResult) {
-        return lastResult;
-      }
-      
-      _nextBlink_ms = _rng.RandIntInRange(2000, 3000); // Pick random next time to blink
       
       robot.MarkProceduralFaceAsSent();
     }
-    else {
+    else if(_nextBlink_ms <= 0) { // "time to blink"
+      PRINT_NAMED_INFO("AnimationStreamer.UpdateLiveAnimation.Blink", "");
+      ProceduralFace crntFace(nextFace.HasBeenSentToRobot() ? nextFace : lastFace);
+      ProceduralFace blinkFace(crntFace);
+      blinkFace.Blink();
       
-      if(nextFace.HasBeenSentToRobot() == false &&
-         lastFace.HasBeenSentToRobot() == true &&
-         nextTime > lastTime)
-      {
-        lastResult = StreamProceduralFace(robot, lastFace, nextFace, _liveAnimation);
-        if(RESULT_OK != lastResult) {
-          return lastResult;
-        }
-        
-        robot.MarkProceduralFaceAsSent();
+      // Close: interpolate from current face to blink face (eyes closed)
+      blinkFace.SetTimeStamp(crntFace.GetTimeStamp() + 150);
+      lastResult = StreamProceduralFace(robot, crntFace, blinkFace, _liveAnimation);
+      if(RESULT_OK != lastResult) {
+        return lastResult;
       }
+      
+      // Open: interpolate from blink face (eyes closed) back to current face
+      crntFace.SetTimeStamp(blinkFace.GetTimeStamp() + 100);
+      lastResult = StreamProceduralFace(robot, blinkFace, crntFace, _liveAnimation);
+      if(RESULT_OK != lastResult) {
+        return lastResult;
+      }
+      
+      _nextBlink_ms = _rng.RandIntInRange(3000, 4000); // Pick random next time to blink
+      
     }
+
     
     return lastResult;
   }
