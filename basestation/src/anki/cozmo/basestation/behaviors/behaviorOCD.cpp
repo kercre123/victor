@@ -830,31 +830,31 @@ namespace Cozmo {
             foundMessyToNeat = true;
           }
         }
-        
-        
-        // A neat block can become messy if it has a low neatness score
-        for (auto objID = _neatObjects.begin(); objID != _neatObjects.end(); ++objID) {
-          ObservableObject* oObject = blockWorld.GetObjectByID(*objID);
-          if (oObject == nullptr) {
-            PRINT_NAMED_ERROR("BehaviorOCD.VerifyNeatness.InvalidObject","Object %d", objID->GetValue());
-            continue;
-          }
-          else if ((lastMsgRecvdTime - oObject->GetLastObservedTime() < RECENTLY_OBSERVED_TIME_THRESH_MS) &&
-                   (ComputeDistanceBetween(_robot.GetPose(), oObject->GetPose()) < MAX_OBS_DISTANCE_FOR_CONVERSION_MM)) {
-            
-            f32 score = GetNeatnessScore(*objID);
-            if (score < MIN_NEATNESS_SCORE_TO_STAY_NEAT) {
-              PRINT_NAMED_INFO("BehaviorOCD.VerifyNeatness.NeatToMessy", "Object %d, score %f", objID->GetValue(), score);
-              if ((_currentState == State::PlacingBlock) && (*objID == _objectToPlaceOn)) {
-                // Robot is trying to place a block on neat block that we're about to make messy,
-                // so cancel it.
-                _robot.GetActionList().Cancel(_lastActionTag);
-              }
-              --_conversionEvidenceCount[*objID];
+    
+
+          // A neat block can become messy if it has a low neatness score
+          for (auto objID = _neatObjects.begin(); objID != _neatObjects.end(); ++objID) {
+            ObservableObject* oObject = blockWorld.GetObjectByID(*objID);
+            if (oObject == nullptr) {
+              PRINT_NAMED_ERROR("BehaviorOCD.VerifyNeatness.InvalidObject","Object %d", objID->GetValue());
               continue;
             }
+            else if ((lastMsgRecvdTime - oObject->GetLastObservedTime() < RECENTLY_OBSERVED_TIME_THRESH_MS) &&
+                     (ComputeDistanceBetween(_robot.GetPose(), oObject->GetPose()) < MAX_OBS_DISTANCE_FOR_CONVERSION_MM)) {
+              
+              f32 score = GetNeatnessScore(*objID);
+              if (score < MIN_NEATNESS_SCORE_TO_STAY_NEAT) {
+                PRINT_NAMED_INFO("BehaviorOCD.VerifyNeatness.NeatToMessy", "Object %d, score %f", objID->GetValue(), score);
+                if ((_currentState == State::PlacingBlock) && (*objID == _objectToPlaceOn)) {
+                  // Robot is trying to place a block on neat block that we're about to make messy,
+                  // so cancel it.
+                  _robot.GetActionList().Cancel(_lastActionTag);
+                }
+                --_conversionEvidenceCount[*objID];
+                continue;
+              }
+            }
           }
-        }
         
         // Convert flagged neat objects
         bool foundNeatToMessy = false;
@@ -935,6 +935,9 @@ namespace Cozmo {
     {
       case State::PickingUpBlock:
       {
+        if (msg.idTag != _lastActionTag) {
+          break;
+        }
         if(msg.result == ActionResult::SUCCESS) {
           switch(msg.actionType) {
               
@@ -952,20 +955,13 @@ namespace Cozmo {
               SetLastPickOrPlaceFailure(_objectToPickUp, _robot.GetPose());
               SelectNextObjectToPickUp();
               break;
-              
-            case RobotActionType::PLAY_ANIMATION:
-              // This shouldn't happen, but if it happens to be an animation we played in Animation state,
-              // delete it from the set of action tags
-              if (_animActionTags.erase(msg.idTag) > 0) {
-                BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.HandleActionCompleted.AnimCompleteDuringPickingUp", "Unexpectedly received completion from animation %s", msg.completionInfo.animName.c_str());
-              }
-              break;
+
             default:
               // Simply ignore other action completions?
               break;
               
           } // switch(actionType)
-        } else if (msg.idTag == _lastActionTag) {
+        } else {
           BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.HandleActionCompleted.PickupFailure", "Trying again");
           // We failed to pick up or place the last block, try again?
           if (DeleteObjectIfFailedToPickOrPlaceAgain(_objectToPickUp)) {
@@ -974,6 +970,7 @@ namespace Cozmo {
             UpdateBlockLights();
             if (_messyObjects.empty()) {
               PlayAnimation("Demo_OCD_All_Blocks_Neat_Celebration");
+              break;
             }
           }
           SetLastPickOrPlaceFailure(_objectToPickUp, _robot.GetPose());
@@ -991,7 +988,10 @@ namespace Cozmo {
         
       case State::PlacingBlock:
       {
-      if(msg.result == ActionResult::SUCCESS) {
+        if (msg.idTag != _lastActionTag) {
+          break;
+        }
+        if(msg.result == ActionResult::SUCCESS) {
           switch(msg.actionType) {
             case RobotActionType::PLACE_OBJECT_LOW:
               _lastObjectPlacedOnGround = _objectToPickUp;
@@ -1006,13 +1006,11 @@ namespace Cozmo {
               
               UpdateBlockLights();
               
-              // Randomly celebrate a placement
-              //if (rand() % 2 == 0) {
+              if (_messyObjects.empty()) {
+                PlayAnimation("Demo_OCD_All_Blocks_Neat_Celebration");
+              } else {
                 PlayAnimation("Demo_OCD_Successfully_Neat");
-              //} else {
-              //  lastResult = SelectNextObjectToPickUp();
-              //  UnsetLastPickOrPlaceFailure();
-              //}
+              }
               break;
               
             case RobotActionType::PICK_AND_PLACE_INCOMPLETE:
@@ -1022,19 +1020,11 @@ namespace Cozmo {
               lastResult = SelectNextPlacement();
               break;
               
-            case RobotActionType::PLAY_ANIMATION:
-              // This shouldn't happen, but if it happens to be an animation we played in Animation state,
-              // delete it from the set of action tags
-              if (_animActionTags.erase(msg.idTag) > 0) {
-                BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.HandleActionCompleted.AnimCompleteDuringPlacing", "Unexpectedly received completion from animation %s", msg.completionInfo.animName.c_str());
-              }
-              break;
-              
             default:
               // Simply ignore other action completions?
               break;
           }
-        } else if (msg.idTag == _lastActionTag) {
+        } else {
           BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.HandleActionCompleted.PlacementFailure", "Trying again");
           // We failed to place the last block, try again?
           DeleteObjectIfFailedToPickOrPlaceAgain(_objectToPlaceOn);
@@ -1053,7 +1043,7 @@ namespace Cozmo {
               // Erase this animation action and resume pickOrPlace if there are no more animations pending
               _animActionTags.erase(msg.idTag);
               if (_animActionTags.empty()) {
-                
+
                 // Set lift to appropriate height in case animation moved it
                 if (_robot.IsCarryingObject() && !NEAR(_robot.GetLiftHeight(), LIFT_HEIGHT_CARRY, 10)) {
                   _robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, new MoveLiftToHeightAction(LIFT_HEIGHT_CARRY));
@@ -1082,6 +1072,10 @@ namespace Cozmo {
 
       }
     } // switch(_currentState)
+    
+    // Delete anim action tag, in case we somehow missed it.
+    _animActionTags.erase(msg.idTag);
+    
     
     UpdateName();
     
