@@ -122,18 +122,20 @@ namespace Cozmo {
 
     const s32 browHalfLength = GetScaledValue(GetParameter(whichEye, Parameter::BrowLength), 0, MidBrowLengthPix, MaxBrowLengthPix)/2;
     
-    const cv::Point leftPoint(browXPosPix-std::round(static_cast<f32>(browHalfLength)*cosAngle),
-                              browYPosPix-std::round(static_cast<f32>(browHalfLength)*sinAngle));
-    const cv::Point rightPoint(browXPosPix+std::round(static_cast<f32>(browHalfLength)*cosAngle),
-                               browYPosPix+std::round(static_cast<f32>(browHalfLength)*sinAngle));
-    
-    const cv::Point leftPointBtm(leftPoint.x,   leftPoint.y + 3);
-    const cv::Point rightPointBtm(rightPoint.x, rightPoint.y + 3);
-    
-    const std::vector<std::vector<cv::Point> > eyebrow = {
-      {leftPoint, rightPoint, rightPointBtm, leftPointBtm}
-    };
-    cv::fillPoly(faceImg, eyebrow, 255, 4);
+    if(browHalfLength > 0) {
+      const cv::Point leftPoint(browXPosPix-std::round(static_cast<f32>(browHalfLength)*cosAngle),
+                                browYPosPix-std::round(static_cast<f32>(browHalfLength)*sinAngle));
+      const cv::Point rightPoint(browXPosPix+std::round(static_cast<f32>(browHalfLength)*cosAngle),
+                                 browYPosPix+std::round(static_cast<f32>(browHalfLength)*sinAngle));
+      
+      const cv::Point leftPointBtm(leftPoint.x,   leftPoint.y + 3);
+      const cv::Point rightPointBtm(rightPoint.x, rightPoint.y + 3);
+      
+      const std::vector<std::vector<cv::Point> > eyebrow = {
+        {leftPoint, rightPoint, rightPointBtm, leftPointBtm}
+      };
+      cv::fillPoly(faceImg, eyebrow, 255, 4);
+    }
     
   } // DrawEye()
   

@@ -89,6 +89,7 @@ private:
   void ResetBehavior(float currentTime_sec);
   Destination GetNextDestination(Destination current);
   void UpdateSafeRegion(const Vec3f& objectPosition);
+  void ResetSafeRegion();
   
   void HandleObjectObserved(const AnkiEvent<ExternalInterface::MessageEngineToGame>& event);
   void HandleCompletedAction(const AnkiEvent<ExternalInterface::MessageEngineToGame>& event);

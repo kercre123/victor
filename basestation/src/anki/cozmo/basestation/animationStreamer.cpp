@@ -1,5 +1,5 @@
 
-#include "anki/cozmo/basestation/animationStreamer.h"
+#include "anki/cozmo/basestation/animation/animationStreamer.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 
