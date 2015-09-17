@@ -222,7 +222,7 @@ public class PatternPlayController : GameController {
       return;
 
     Debug.Log(blockID + " : " + xAccel + " " + yAccel + " " + zAccel);
-    if (lastFrameZAccel[blockID] < -2.0f && zAccel > 2.0f) {
+    if (lastFrameZAccel[blockID] < -10.0f && zAccel > 10.0f) {
       blockLightConfigs[blockID] = (BlockLightConfig)(((int)blockLightConfigs[blockID] + 1) % System.Enum.GetNames(typeof(BlockLightConfig)).Length);
     }
     lastFrameZAccel[blockID] = zAccel;
