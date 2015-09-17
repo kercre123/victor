@@ -89,7 +89,7 @@ void spi_init(void) {
   SIM_SCGC5 |= SIM_SCGC5_PORTE_MASK | SIM_SCGC5_PORTD_MASK;
   SIM_SCGC7 |= SIM_SCGC7_DMA_MASK;
 
-  bit_bang_test();
+  //bit_bang_test();
   
   // Configure SPI pins
   PORTD_PCR4  = PORT_PCR_MUX(2); // SPI0_PCS1
@@ -122,26 +122,30 @@ void spi_init(void) {
     spi_buff[i] = 
         i |
         SPI_PUSHR_CONT_MASK | 
-        SPI_PUSHR_PCS((i & 1) ? ~0: 0) | 
+        SPI_PUSHR_PCS((i & 1) ? ~0: 0) |
         (i == (size-1) ? SPI_PUSHR_EOQ_MASK : 0);
   }
   
   int rx_idx = 0, tx_idx = 0;
   
   while(true) {
-    while (false && SPI0_SR & SPI_SR_RFDF_MASK)
-    {
-      spi_buff[rx_idx] = (spi_buff[rx_idx] & ~ 0xFFFF) | SPI0_POPR;
-      rx_idx = (rx_idx + 1) % size;
-      SPI0_SR = SPI_SR_RFDF_MASK;
-    }
+    for (int i = 0; i < 96; i++) {
+      while (false && SPI0_SR & SPI_SR_RFDF_MASK)
+      {
+        spi_buff[rx_idx] = (spi_buff[rx_idx] & ~ 0xFFFF) | SPI0_POPR;
+        rx_idx = (rx_idx + 1) % size;
+        SPI0_SR = SPI_SR_RFDF_MASK;
+      }
 
-    while (SPI0_SR & SPI_SR_TFFF_MASK)
-    {
-      SPI0_MCR |= SPI_MCR_CONT_SCKE_MASK;
-      SPI0_PUSHR = spi_buff[tx_idx];
-      tx_idx = (tx_idx + 1) % size;
-      SPI0_SR = SPI_SR_TFFF_MASK;
+      while (SPI0_SR & SPI_SR_TFFF_MASK)
+      {
+        SPI0_MCR |= SPI_MCR_CONT_SCKE_MASK;
+        SPI0_PUSHR = spi_buff[tx_idx];
+        tx_idx = (tx_idx + 1) % size;
+        SPI0_SR = SPI_SR_TFFF_MASK;
+
+        if (!tx_idx) Anki::Cozmo::HAL::MicroWait(10000);
+      }
     }
   }
 }
@@ -150,7 +154,7 @@ void SPI0_IRQHandler(void) {
     // When the EOQ flag is set, clear our continuous clock mode.
     while (SPI0_SR & SPI_SR_EOQF_MASK)
     {
-      //SPI0_MCR &= ~SPI_MCR_CONT_SCKE_MASK;
+      SPI0_MCR &= ~SPI_MCR_CONT_SCKE_MASK;
       SPI0_SR = SPI_SR_EOQF_MASK;
     }
 }
