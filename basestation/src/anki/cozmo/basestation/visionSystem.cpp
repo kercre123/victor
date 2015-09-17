@@ -185,10 +185,21 @@ namespace Cozmo {
   void VisionSystem::StopTracking()
   {
     SetMarkerToTrack(Vision::MARKER_UNKNOWN, 0.f, true);
-    DisableModeHelper(TRACKING);
-    
+    RestoreNonTrackingMode();
+  }
+  
+  void VisionSystem::RestoreNonTrackingMode()
+  {
     // Restore whatever we were doing before tracking
-    _mode = _modeBeforeTracking;
+    if (TRACKING == (_mode & TRACKING))
+    {
+      _mode = _modeBeforeTracking;
+      
+      if (TRACKING == (_mode & TRACKING))
+      {
+        PRINT_NAMED_ERROR("VisionSystem.StopTracking","Restored mode before tracking but it still includes tracking!");
+      }
+    }
   }
   
   Result VisionSystem::StartDetectingFaces()
@@ -280,8 +291,8 @@ namespace Cozmo {
   {
     if(_newMarkerToTrackWasProvided) {
       
+      RestoreNonTrackingMode();
       _mode              |= LOOKING_FOR_MARKERS;
-      _mode              &= ~TRACKING; // disable tracking mode
       _numTrackFailures  =  0;
       
       _markerToTrack = _newMarkerToTrack;

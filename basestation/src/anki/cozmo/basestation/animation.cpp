@@ -560,18 +560,25 @@ _blinkTrack.__METHOD__()
 #       endif
       }
       
+      bool streamedFaceAnimImage = false;
       if(BufferMessageToSend(_faceAnimTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms))) {
+        streamedFaceAnimImage = true;
 #       if DEBUG_ANIMATIONS
         PRINT_NAMED_INFO("Animation.Update", "Streaming FaceAnimationKeyFrame at t=%dms.\n",
                          _streamingTime_ms - _startTime_ms);
 #       endif
       }
-      
-      if(BufferMessageToSend(_proceduralFaceTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms))) {
-#       if DEBUG_ANIMATIONS
-        PRINT_NAMED_INFO("Animation.Update", "Streaming ProceduralFaceKeyFrame at t=%dms.\n",
-                         _streamingTime_ms - _startTime_ms);
-#       endif
+
+      RobotMessage* msg = _proceduralFaceTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms);
+      if(!streamedFaceAnimImage) {
+        // If we streamed a face animation image at this timestep, let it take
+        // precendence and just ignore the procedural face message
+        if(BufferMessageToSend(msg)) {
+#         if DEBUG_ANIMATIONS
+          PRINT_NAMED_INFO("Animation.Update", "Streaming ProceduralFaceKeyFrame at t=%dms.\n",
+                           _streamingTime_ms - _startTime_ms);
+#         endif
+        }
       }
     
       if(BufferMessageToSend(_blinkTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms))) {

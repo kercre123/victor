@@ -5,6 +5,9 @@
 #include "anki/cozmo/robot/spineData.h"
 #include "hal/portable.h"
 
+// When accel processing moves to engine, these can go away
+#include "anki/cozmo/shared/activeBlockTypes.h"
+
 //#define OLD_CUBE_EXPERIMENT 1 // for testing
 
 #define MAX_CUBES 20
@@ -110,11 +113,34 @@ namespace Anki
         const u8 STOP_MOVING_COUNT_THRESH = 20;  // Determines number of no-motion tics that much be observed before StoppedMoving msg is sent
         static u8 movingTimeoutCtr[MAX_CUBES] = {0};
         static bool isMoving[MAX_CUBES] = {false};
+        static UpAxis prevUpAxis[MAX_CUBES] = {UP_AXIS_UNKNOWN};
         
         s8 ax = g_AccelStatus[id].x;
         s8 ay = g_AccelStatus[id].y;
         s8 az = g_AccelStatus[id].z;
         
+        
+        // Compute upAxis
+        // Send ObjectMoved message if upAxis changes
+        s8 maxAccelVal = 0;
+        UpAxis upAxis = UP_AXIS_UNKNOWN;
+        if (abs(ax) > maxAccelVal) {
+          upAxis = ax > 0 ? UP_AXIS_Xpos : UP_AXIS_Xneg;
+          maxAccelVal = abs(ax);
+        }
+        if (abs(ay) > maxAccelVal) {
+          upAxis = ay > 0 ? UP_AXIS_Ypos : UP_AXIS_Yneg;
+          maxAccelVal = abs(ay);
+        }
+        if (abs(az) > maxAccelVal) {
+          upAxis = az > 0 ? UP_AXIS_Zpos : UP_AXIS_Zneg;
+          maxAccelVal = abs(az);
+        }
+        bool upAxisChanged = (prevUpAxis[id] != UP_AXIS_UNKNOWN) && (prevUpAxis[id] != upAxis);
+        prevUpAxis[id] = upAxis;
+        
+        
+        // Compute acceleration due to movement
         s32 accSqrd = ax*ax + ay*ay + az*az;
         bool isMovingNow = !NEAR(accSqrd, 64*64, 500);  // 64 == 1g
         
@@ -126,20 +152,21 @@ namespace Anki
           --movingTimeoutCtr[id];
         }
         
-        if ((movingTimeoutCtr[id] >= START_MOVING_COUNT_THRESH) && !isMoving[id]) {
+        if (upAxisChanged ||
+            ((movingTimeoutCtr[id] >= START_MOVING_COUNT_THRESH) && !isMoving[id])) {
           Messages::ActiveObjectMoved m;
           m.objectID = id;
           m.xAccel = ax;
           m.yAccel = ay;
           m.zAccel = az;
-          m.upAxis = 0;  // This should get processed on engine eventually
+          m.upAxis = upAxis;  // This should get processed on engine eventually
           RadioSendMessage(GET_MESSAGE_ID(Messages::ActiveObjectMoved), &m);
           isMoving[id] = true;
           movingTimeoutCtr[id] = STOP_MOVING_COUNT_THRESH;
         } else if ((movingTimeoutCtr[id] == 0) && isMoving[id]) {
           Messages::ActiveObjectStoppedMoving m;
           m.objectID = id;
-          m.upAxis = 0;  // This should get processed on engine eventually
+          m.upAxis = upAxis;  // This should get processed on engine eventually
           m.rolled = 0;  // This should get processed on engine eventually
           RadioSendMessage(GET_MESSAGE_ID(Messages::ActiveObjectStoppedMoving), &m);
           isMoving[id] = false;
