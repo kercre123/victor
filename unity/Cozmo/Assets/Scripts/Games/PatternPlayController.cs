@@ -43,14 +43,12 @@ public class PatternPlayController : GameController {
   protected override void OnEnable() {
     base.OnEnable();
     robot.VisionWhileMoving(true);
-    ActiveBlock.TappedAction += BlockTapped;
     ActiveBlock.MovedAction += BlockMoved;
     robot.StopFaceAwareness();
   }
 
   protected override void OnDisable() {
     base.OnDisable();
-    ActiveBlock.TappedAction -= BlockTapped;
     ActiveBlock.MovedAction -= BlockMoved;
   }
 
@@ -203,17 +201,6 @@ public class PatternPlayController : GameController {
     }
     lastFrameZAccel[activeBlock.ID] = activeBlock.zAccel;
     return false;
-  }
-
-  private void BlockTapped(int blockID, int numTapped) {
-    /*if (gameReady == false)
-      return;
-    Debug.Log(robot.activeBlocks[blockID].xAccel + " " + robot.activeBlocks[blockID].yAccel + " " + robot.activeBlocks[blockID].zAccel);
-    if (robot.activeBlocks[blockID].xAccel < 30.0f && robot.activeBlocks[blockID].yAccel < 30.0f) {
-      return;
-    }*/
-    // go to the next light configuration
-    //blockLightConfigs[blockID] = (BlockLightConfig)(((int)blockLightConfigs[blockID] + numTapped) % System.Enum.GetNames(typeof(BlockLightConfig)).Length);
   }
 
   private void BlockMoved(int blockID, float xAccel, float yAccel, float zAccel) {
