@@ -1646,14 +1646,14 @@ namespace Anki {
             PRINT_NAMED_ERROR("PickAndPlaceObjectAction.EmitCompletionSignal",
                               "Expecting robot to think it's carrying object for pickup action.\n");
           } else {
-            const s32 carryObject = robot.GetCarryingObject().GetValue();
-            const s32 carryObjectOnTop = robot.GetCarryingObjectOnTop().GetValue();
             
-            const u8 numObjects = 1 + (carryObjectOnTop >=0 ? 1 : 0);
-            
-            // TODO: Be able to fill in add'l objects carried in signal
-            completionInfo.numObjects = numObjects;
-            completionInfo.objectIDs = {{carryObject, carryObjectOnTop, -1, -1, -1}};
+            const std::set<ObjectID> carriedObjects = robot.GetCarryingObjects();
+            completionInfo.numObjects = carriedObjects.size();
+            completionInfo.objectIDs.fill(-1);
+            u8 objectCnt = 0;
+            for (auto& objID : carriedObjects) {
+              completionInfo.objectIDs[objectCnt++] = objID.GetValue();
+            }
             
             return;
           }
@@ -1797,7 +1797,7 @@ namespace Anki {
               carryObject->SetPose(objectInOriginalPose->GetPose());
               blockWorld.ClearObject(objectInOriginalPose->GetID());
             }
-            robot.UnSetCarryingObject();
+            robot.UnSetCarryingObjects();
             
             PRINT_STREAM_INFO("PickAndPlaceObjectAction.Verify", "Object pick-up FAILED! (Still seeing object in same place.)");
             result = ActionResult::FAILURE_RETRY;
@@ -2423,10 +2423,14 @@ namespace Anki {
     
     ActionResult PlayAnimationAction::CheckIfDone(Robot& robot)
     {
-      // Check if StreamingAnimation is not yet null and the name still matches to avoid
-      // prematurely deleting looping animations.
-      if(robot.IsAnimating() ||
-         (robot.GetStreamingAnimationName() == _animName)) {
+      // We are still running this PlayAnimationAction if:
+      // - the robot reports it is still animating - but NOT *idle* animating
+      // - or the animation name still matches the one associated with this action,
+      //   meaning the streamer is still looping and we should not consider this
+      //   action done yet just because the robot is in between loops
+      if((robot.IsAnimating() && !robot.IsIdleAnimating()) ||
+         (robot.GetStreamingAnimationName() == _animName))
+      {
         return ActionResult::RUNNING;
       } else {
         return ActionResult::SUCCESS;

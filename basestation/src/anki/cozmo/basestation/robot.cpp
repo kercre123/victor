@@ -114,8 +114,9 @@ namespace Anki {
       // Initializes _pose, _poseOrigins, and _worldOrigin:
       Delocalize();
       
-      _proceduralFace.MarkAsSentToRobot(true);
-      _lastProceduralFace.MarkAsSentToRobot(false);
+      _proceduralFace.MarkAsSentToRobot(false);
+      _proceduralFace.SetTimeStamp(1); // Make greater than lastFace's timestamp, so it gets streamed
+      _lastProceduralFace.MarkAsSentToRobot(true);
       
       // The call to Delocalize() will increment frameID, but we want it to be
       // initialzied to 0, to match the physical robot's initialization
@@ -1902,6 +1903,18 @@ namespace Anki {
       return SendMessage(msg);
     }
     
+    const std::set<ObjectID> Robot::GetCarryingObjects() const
+    {
+      std::set<ObjectID> objects;
+      if (_carryingObjectID.IsSet()) {
+        objects.insert(_carryingObjectID);
+      }
+      if (_carryingObjectOnTopID.IsSet()) {
+        objects.insert(_carryingObjectOnTopID);
+      }
+      return objects;
+    }
+    
     void Robot::SetCarryingObject(ObjectID carryObjectID)
     {
       ObservableObject* object = _blockWorld.GetObjectByID(carryObjectID);
@@ -1937,34 +1950,41 @@ namespace Anki {
       }
     }
     
-    void Robot::UnSetCarryingObject()
+    void Robot::UnSetCarryingObjects()
     {
-      ObservableObject* object = _blockWorld.GetObjectByID(_carryingObjectID);
-      if(object == nullptr) {
-        PRINT_NAMED_ERROR("Robot.UnSetCarryingObject",
-                          "Object %d robot %d thought it was carrying no longer exists in the world.\n",
-                          _carryingObjectID.GetValue(), GetID());
-      } else {
-        ActionableObject* carriedObject = dynamic_cast<ActionableObject*>(object);
-        if(carriedObject == nullptr) {
-          // This really should not happen
-          PRINT_NAMED_ERROR("Robot.UnSetCarryingObject",
-                            "Carried object %d could not be cast as an ActionableObject.\n",
-                            _carryingObjectID.GetValue());
-        } else if(carriedObject->IsBeingCarried() == false) {
-          PRINT_NAMED_WARNING("Robot.UnSetCarryingObject",
-                              "Robot %d thinks it is carrying object %d but that object "
-                              "does not think it is being carried.\n", GetID(), _carryingObjectID.GetValue());
-          
+      std::set<ObjectID> carriedObjectIDs = GetCarryingObjects();
+      for (auto& objID : carriedObjectIDs) {
+        ObservableObject* object = _blockWorld.GetObjectByID(objID);
+        if(object == nullptr) {
+          PRINT_NAMED_ERROR("Robot.UnSetCarryingObjects",
+                            "Object %d robot %d thought it was carrying no longer exists in the world.\n",
+                            objID.GetValue(), GetID());
         } else {
-          carriedObject->SetBeingCarried(false);
-          
-          // Tell the robot it's not carrying anything
-          SendSetCarryState(CARRY_NONE);
+          ActionableObject* carriedObject = dynamic_cast<ActionableObject*>(object);
+          if(carriedObject == nullptr) {
+            // This really should not happen
+            PRINT_NAMED_ERROR("Robot.UnSetCarryingObjects",
+                              "Carried object %d could not be cast as an ActionableObject.\n",
+                              objID.GetValue());
+          } else if(carriedObject->IsBeingCarried() == false) {
+            PRINT_NAMED_WARNING("Robot.UnSetCarryingObjects",
+                                "Robot %d thinks it is carrying object %d but that object "
+                                "does not think it is being carried.\n", GetID(), objID.GetValue());
+            
+          } else {
+            carriedObject->SetBeingCarried(false);
+          }
         }
       }
+      
+      // Tell the robot it's not carrying anything
+      if (_carryingObjectID.IsSet()) {
+        SendSetCarryState(CARRY_NONE);
+      }
+
       // Even if the above failed, still mark the robot's carry ID as unset
       _carryingObjectID.UnSet();
+      _carryingObjectOnTopID.UnSet();
     }
     
     Result Robot::SetObjectAsAttachedToLift(const ObjectID& objectID, const Vision::KnownMarker* objectMarker)
@@ -2085,7 +2105,7 @@ namespace Anki {
                        object->GetPose().GetTranslation().y(),
                        object->GetPose().GetTranslation().z());
 
-      UnSetCarryingObject(); // also sets carried object as not being carried anymore
+      UnSetCarryingObjects(); // also sets carried objects as not being carried anymore
       _carryingMarker = nullptr;
       
       if(_carryingObjectOnTopID.IsSet()) {

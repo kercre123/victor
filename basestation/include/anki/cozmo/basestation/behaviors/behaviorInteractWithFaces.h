@@ -93,7 +93,6 @@ namespace Cozmo {
     
     constexpr static float kFaceInterestingDuration = 30;
     constexpr static float kFaceCooldownDuration = 30;
-    constexpr static float kMinProceduralFaceWait = 0.15;
     
   }; // BehaviorInteractWithFaces
   
