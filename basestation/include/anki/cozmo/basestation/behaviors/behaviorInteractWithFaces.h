@@ -35,7 +35,7 @@ namespace Cozmo {
     
     virtual Result Init(double currentTime_sec) override;
     
-    virtual bool IsRunnable(double currentTime_sec) const;
+    virtual bool IsRunnable(double currentTime_sec) const override;
     
     virtual Status Update(double currentTime_sec) override;
     
@@ -46,7 +46,7 @@ namespace Cozmo {
       return name;
     }
     
-    virtual bool GetRewardBid(Reward& reward);
+    virtual bool GetRewardBid(Reward& reward) override;
     
   private:
     using Face = Vision::TrackedFace;
@@ -85,14 +85,18 @@ namespace Cozmo {
     struct FaceData
     {
       double _lastSeen_sec = 0;
+      double _trackingStart_sec = 0;
     };
     
     std::list<Face::ID_t> _interestingFacesOrder;
     std::unordered_map<Face::ID_t, FaceData> _interestingFacesData;
     std::unordered_map<Face::ID_t, double> _cooldownFaces;
     
-    constexpr static float kFaceInterestingDuration = 30;
-    constexpr static float kFaceCooldownDuration = 30;
+    // Length of time in seconds to keep interacting with the same face non-stop
+    constexpr static float kFaceInterestingDuration_sec = 20;
+    
+    // Length of time in seconds to ignore a specific face that has hit the kFaceInterestingDuration limit
+    constexpr static float kFaceCooldownDuration_sec = 20;
     
   }; // BehaviorInteractWithFaces
   

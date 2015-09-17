@@ -348,6 +348,12 @@
                       '<(PRODUCT_DIR)',
                     ],
                   }],
+                  ['face_library=="opencv"', {
+                    'action': [
+                    'echo',
+                    'dummyOpenCVCTIAction',
+                    ],
+                  }],
                 ], # conditions
               },
             ] # actions
