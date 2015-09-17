@@ -15,25 +15,16 @@
 
 
 #include "anki/cozmo/basestation/keyframe.h"
-
 #include "anki/cozmo/basestation/robot.h"
-
-#include "robotMessageHandler.h"
-
 #include "anki/cozmo/shared/cozmoTypes.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
-
 #include "anki/cozmo/basestation/soundManager.h"
 #include "anki/cozmo/basestation/faceAnimationManager.h"
-
 #include "util/logging/logging.h"
 #include "anki/common/basestation/colorRGBA.h"
 #include "anki/common/basestation/utils/timer.h"
-
 #include "anki/common/basestation/jsonTools.h"
-
 #include <opencv2/core/core.hpp>
-
 #include <cassert>
 
 namespace Anki {
@@ -100,23 +91,10 @@ return RESULT_FAIL; \
     
 #pragma mark -
 #pragma mark HeadAngleKeyFrame
-    //
-    // HeadAngleKeyFrame
-    //
-    
-    /*
-     HeadAngleKeyFrame::HeadAngleKeyFrame(s8 angle_deg, u8 angle_variability_deg, TimeStamp_t duration)
-     : _durationTime_ms(duration)
-     , _angle_deg(angle_deg)
-     , _angleVariability_deg(angle_variability_deg)
-     {
-     IKeyFrame::SetIsValid(true);
-     }
-     */
-    
-    RobotMessage* HeadAngleKeyFrame::GetStreamMessage()
+
+    RobotInterface::EngineToRobot* HeadAngleKeyFrame::GetStreamMessage()
     {
-      _streamHeadMsg.time_ms = _durationTime_ms;
+      _streamHeadMsg.time_ms = (uint16_t)_durationTime_ms;
       
       // Add variability:
       if(_angleVariability_deg > 0) {
@@ -126,7 +104,7 @@ return RESULT_FAIL; \
         _streamHeadMsg.angle_deg = _angle_deg;
       }
       
-      return &_streamHeadMsg;
+      return new RobotInterface::EngineToRobot(AnimKeyFrame::HeadAngle(_streamHeadMsg));
     }
     
     Result HeadAngleKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot)
@@ -144,19 +122,19 @@ return RESULT_FAIL; \
     // LiftHeightKeyFrame
     //
     
-    RobotMessage* LiftHeightKeyFrame::GetStreamMessage()
+    RobotInterface::EngineToRobot* LiftHeightKeyFrame::GetStreamMessage()
     {
-      _streamLiftMsg.time_ms = _durationTime_ms;
+      _streamLiftMsg.time_ms = (uint16_t)_durationTime_ms;
       
       // Add variability:
       if(_heightVariability_mm > 0) {
-        _streamLiftMsg.height_mm = static_cast<s8>(_rng.RandIntInRange(_height_mm - _heightVariability_mm,
+        _streamLiftMsg.height_mm = (uint8_t)static_cast<s8>(_rng.RandIntInRange(_height_mm - _heightVariability_mm,
                                                                        _height_mm + _heightVariability_mm));
       } else {
         _streamLiftMsg.height_mm = _height_mm;
       }
       
-      return &_streamLiftMsg;
+      return new RobotInterface::EngineToRobot(AnimKeyFrame::LiftHeight(_streamLiftMsg));
     }
     
     Result LiftHeightKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot)
@@ -181,26 +159,26 @@ return RESULT_FAIL; \
       return RESULT_OK;
     }
     
-    RobotMessage* FaceImageKeyFrame::GetStreamMessage()
+    RobotInterface::EngineToRobot* FaceImageKeyFrame::GetStreamMessage()
     {
       // TODO: Fill the message for streaming using the imageID
       // memcpy(_streamMsg.image, LoadFaceImage(_imageID);
       
       // For now, just put some stuff for display in there, using a few hard-coded
       // patterns depending on ID
-      _streamMsg.image.fill(0);
+      _streamMsg.image.clear();
       if(_imageID == 0) {
         // All black
-        _streamMsg.image[0] = 0;
+        _streamMsg.image.push_back(0);
       } else if(_imageID == 1) {
         // All blue
-        _streamMsg.image[0] = 64; // Switch to blue
-        _streamMsg.image[1] = 63; // Fill lines
-        _streamMsg.image[2] = 0;  // Done
+        _streamMsg.image.push_back(64); // Switch to blue
+        _streamMsg.image.push_back(63); // Fill lines
+        _streamMsg.image.push_back(0);  // Done
       } else {
         // Draw "programmer art" face until we get real assets
-        
-        static const u8 simpleFace[] = { 24, 64+24,   // Start 24 lines down and 24 pixels right
+
+        _streamMsg.image = { 24, 64+24,   // Start 24 lines down and 24 pixels right
           64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
           64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
           64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
@@ -210,13 +188,9 @@ return RESULT_FAIL; \
           64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
           64+16, 64+48, 64+16, 64+48+128,  // One line of eyes
           0 };
-        
-        for(s32 i=0; i<sizeof(simpleFace); ++i) {
-          _streamMsg.image[i] = simpleFace[i];
-        }
       }
       
-      return &_streamMsg;
+      return new RobotInterface::EngineToRobot(AnimKeyFrame::FaceImage(_streamMsg));
     }
     
 #pragma mark -
@@ -248,7 +222,7 @@ return RESULT_FAIL; \
       return _curFrame >= FaceAnimationManager::getInstance()->GetNumFrames(_animName);
     }
     
-    RobotMessage* FaceAnimationKeyFrame::GetStreamMessage()
+    RobotInterface::EngineToRobot* FaceAnimationKeyFrame::GetStreamMessage()
     {
       // Populate the message with the next chunk of audio data and send it out
       
@@ -278,11 +252,10 @@ return RESULT_FAIL; \
           return nullptr;
         }
         
-        _faceImageMsg.image.fill(0); // Necessary??
-        std::copy(rleFrame->begin(), rleFrame->end(), _faceImageMsg.image.begin());
+        _faceImageMsg.image = *rleFrame;
         ++_curFrame;
         
-        return &_faceImageMsg;
+        return new RobotInterface::EngineToRobot(AnimKeyFrame::FaceImage(_faceImageMsg));
       } else {
         _curFrame = 0;
         return nullptr;
@@ -351,37 +324,26 @@ return RESULT_FAIL; \
       return retVal;
     }
     
-    RobotMessage* ProceduralFaceKeyFrame::GetStreamMessageHelper(const ProceduralFace& procFace)
+    RobotInterface::EngineToRobot* ProceduralFaceKeyFrame::GetStreamMessageHelper(const ProceduralFace& procFace)
     {
-      std::vector<u8> rleData;
-      Result rleResult = FaceAnimationManager::CompressRLE(procFace.GetFace(), rleData);
+      Result rleResult = FaceAnimationManager::CompressRLE(procFace.GetFace(), _faceImageMsg.image);
       
       if(RESULT_OK != rleResult) {
         PRINT_NAMED_ERROR("ProceduralFaceKeyFrame.GetStreamMesssageHelper",
                           "Failed to get RLE frame from procedural face.");
         return nullptr;
       }
-      
-      if(rleData.size() >= sizeof(_faceImageMsg.image)) {
-        PRINT_NAMED_ERROR("ProceduralFaceKeyFrame.GetStreamMessageHelper",
-                          "RLE frame for procedural face too large to fit in message (%lu>=%lu).",
-                          rleData.size(), sizeof(_faceImageMsg.image));
-        return nullptr;
-      }
-      
-      _faceImageMsg.image.fill(0);
-      std::copy(rleData.begin(), rleData.end(), _faceImageMsg.image.begin());
-      
-      return &_faceImageMsg;
+
+      return new RobotInterface::EngineToRobot(AnimKeyFrame::FaceImage(_faceImageMsg));
     }
     
-    RobotMessage* ProceduralFaceKeyFrame::GetStreamMessage()
+    RobotInterface::EngineToRobot* ProceduralFaceKeyFrame::GetStreamMessage()
     {
       _isDone = true;
       return GetStreamMessageHelper(_procFace);
     }
     
-    RobotMessage* ProceduralFaceKeyFrame::GetInterpolatedStreamMessage(const ProceduralFaceKeyFrame& nextFrame)
+    RobotInterface::EngineToRobot* ProceduralFaceKeyFrame::GetInterpolatedStreamMessage(const ProceduralFaceKeyFrame& nextFrame)
     {
       // The interpolation fraction is how far along in time we are from this frame's
       // trigger time (which currentTime was initialized to) and the next frame's
@@ -474,7 +436,7 @@ return RESULT_FAIL; \
       return RESULT_OK;
     }
     
-    RobotMessage* RobotAudioKeyFrame::GetStreamMessage()
+    RobotInterface::EngineToRobot* RobotAudioKeyFrame::GetStreamMessage()
     {
       if(_sampleIndex == 0) {
         // Select one of the audio names to play
@@ -493,15 +455,13 @@ return RESULT_FAIL; \
         //wwise::GetNextSample(_audioSampleMsg.sample, 800);
         
         if (!SoundManager::getInstance()->GetSoundSample(_audioReferences[_selectedAudioIndex].name,
-                                                         _sampleIndex,
-                                                         _audioReferences[_selectedAudioIndex].volume,
-                                                         _audioSampleMsg)) {
+            (uint32_t)_sampleIndex, _audioReferences[_selectedAudioIndex].volume, _audioSampleMsg)) {
           PRINT_NAMED_WARNING("RobotAudioKeyFrame.GetStreamMessage.MissingSample", "Index %d", _sampleIndex);
         }
         
         ++_sampleIndex;
         
-        return &_audioSampleMsg;
+        return new RobotInterface::EngineToRobot(AnimKeyFrame::AudioSample(_audioSampleMsg));
       } else {
         _sampleIndex = 0;
         return nullptr;
@@ -521,7 +481,7 @@ return RESULT_FAIL; \
       return RESULT_OK;
     }
     
-    RobotMessage* DeviceAudioKeyFrame::GetStreamMessage()
+    RobotInterface::EngineToRobot* DeviceAudioKeyFrame::GetStreamMessage()
     {
       // Device audio is not streamed to the robot, by definition, so it always
       // returns nullptr
@@ -540,12 +500,12 @@ return RESULT_FAIL; \
     // FacePositionKeyFrame
     //
     
-    RobotMessage* FacePositionKeyFrame::GetStreamMessage()
+    RobotInterface::EngineToRobot* FacePositionKeyFrame::GetStreamMessage()
     {
       //_streamMsg.xCen = _xcen;
       //_streamMsg.yCen = _ycen;
       
-      return &_streamMsg;
+      return new RobotInterface::EngineToRobot(AnimKeyFrame::FacePosition(_streamMsg));
     }
     
     Result FacePositionKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot)
@@ -581,31 +541,27 @@ return RESULT_FAIL; \
       }
     }
     
-    RobotMessage* BlinkKeyFrame::GetStreamMessage()
+    RobotInterface::EngineToRobot* BlinkKeyFrame::GetStreamMessage()
     {
-      RobotMessage* returnMessage = nullptr;
       if(_streamMsg.blinkNow) {
         _streamMsg.enable = true;
-        returnMessage = &_streamMsg;
       } else {
         // If not a blink now message, then must be a "disable blink for
         // some duration" keyframe.
         if(_curTime_ms == 0) {
           // Start of the keyframe period: disable blinking
           _streamMsg.enable = false;
-          returnMessage = &_streamMsg;
         } else if(_curTime_ms >= _duration_ms) {
           // Done with disable period: re-enable.
           _streamMsg.enable = true;
-          returnMessage = &_streamMsg;
         } else {
           // Don't do anything in the middle (and return nullptr)
           // Note that we will not advance to next keyframe during this period
           // because IsDone() will be false.
+          return nullptr;
         }
       }
-      
-      return returnMessage;
+      return new RobotInterface::EngineToRobot(AnimKeyFrame::Blink(_streamMsg));
     }
     
     Result BlinkKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot)
@@ -654,20 +610,20 @@ PRINT_NAMED_ERROR("BackpackLightsKeyFrame.SetMembersFromJson", \
 return RESULT_FAIL; \
 } \
 _streamMsg.colors[__LED_NAME__] = u32(color) >> 8; } while(0) // Note we shift the Alpha out, since it's unused
-    
-      GET_COLOR_FROM_JSON(Back,   LED_BACKPACK_BACK);
-      GET_COLOR_FROM_JSON(Front,  LED_BACKPACK_FRONT);
-      GET_COLOR_FROM_JSON(Middle, LED_BACKPACK_MIDDLE);
-      GET_COLOR_FROM_JSON(Left,   LED_BACKPACK_LEFT);
-      GET_COLOR_FROM_JSON(Right,  LED_BACKPACK_RIGHT);
+
+      GET_COLOR_FROM_JSON(Back, (int)LEDId::LED_BACKPACK_BACK);
+      GET_COLOR_FROM_JSON(Front, (int)LEDId::LED_BACKPACK_FRONT);
+      GET_COLOR_FROM_JSON(Middle, (int)LEDId::LED_BACKPACK_MIDDLE);
+      GET_COLOR_FROM_JSON(Left, (int)LEDId::LED_BACKPACK_LEFT);
+      GET_COLOR_FROM_JSON(Right, (int)LEDId::LED_BACKPACK_RIGHT);
       
       return RESULT_OK;
     }
     
     
-    RobotMessage* BackpackLightsKeyFrame::GetStreamMessage()
+    RobotInterface::EngineToRobot* BackpackLightsKeyFrame::GetStreamMessage()
     {
-      return &_streamMsg;
+      return new RobotInterface::EngineToRobot(AnimKeyFrame::BackpackLights(_streamMsg));
     }
   
     
@@ -702,24 +658,24 @@ _streamMsg.colors[__LED_NAME__] = u32(color) >> 8; } while(0) // Note we shift t
           return RESULT_FAIL;
         }
       } else {
-        _streamMsg.curvatureRadius_mm = jsonRoot["radius_mm"].asInt();
+        _streamMsg.curvatureRadius_mm = (uint16_t)jsonRoot["radius_mm"].asInt();
       }
       
       return RESULT_OK;
     }
     
     
-    RobotMessage* BodyMotionKeyFrame::GetStreamMessage()
+    RobotInterface::EngineToRobot* BodyMotionKeyFrame::GetStreamMessage()
     {
       //PRINT_NAMED_INFO("BodyMotionKeyFrame.GetStreamMessage",
       //                 "currentTime=%d, duration=%d\n", _currentTime_ms, _duration_ms);
       
       if(_currentTime_ms == 0) {
         // Send the motion command at the beginning
-        return &_streamMsg;
+        return new RobotInterface::EngineToRobot(AnimKeyFrame::BodyMotion(_streamMsg));
       } else if(_currentTime_ms >= _durationTime_ms) {
         // Send a stop command when the duration has passed
-        return &_stopMsg;
+        return new RobotInterface::EngineToRobot(AnimKeyFrame::BodyMotion(_stopMsg));
       } else {
         // Do nothing in the middle. (Note that IsDone() will return false during
         // this period so the animation track won't advance.)

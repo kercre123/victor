@@ -31,8 +31,14 @@
 
 namespace Anki {
   namespace Cozmo {
-    
-    // Forward declaration
+  // Forward declaration
+  namespace RobotInterface {
+  class EngineToRobot;
+  enum class EngineToRobotTag : uint8_t;
+  }
+
+
+  // Forward declaration
     class Robot;
     class IRobotMessageHandler;
     
@@ -66,7 +72,7 @@ namespace Anki {
       
       // Fill some kind of message for streaming and return it. Return nullptr
       // if not available.
-      virtual RobotMessage* GetStreamMessage() = 0;
+      virtual RobotInterface::EngineToRobot* GetStreamMessage() = 0;
       
       // Whether or not this KeyFrame is "done" after calling GetStreamMessage().
       // Override for special keyframes that need to keep parceling out data into
@@ -101,7 +107,7 @@ namespace Anki {
       
       //HeadAngleKeyFrame(s8 angle_deg, u8 angle_variability_deg, TimeStamp_t duration);
       
-      virtual RobotMessage* GetStreamMessage() override;
+      virtual RobotInterface::EngineToRobot* GetStreamMessage() override;
       
       static const std::string& GetClassName() {
         static const std::string ClassName("HeadAngleKeyFrame");
@@ -128,7 +134,7 @@ namespace Anki {
     public:
       LiftHeightKeyFrame() { }
       
-      virtual RobotMessage* GetStreamMessage() override;
+      virtual RobotInterface::EngineToRobot* GetStreamMessage() override;
       
       static const std::string& GetClassName() {
         static const std::string ClassName("LiftHeightKeyFrame");
@@ -159,7 +165,7 @@ namespace Anki {
       // Play sound on device
       void PlayOnDevice();
       
-      virtual RobotMessage* GetStreamMessage() override;
+      virtual RobotInterface::EngineToRobot* GetStreamMessage() override;
       
       static const std::string& GetClassName() {
         static const std::string ClassName("DeviceAudioKeyFrame");
@@ -182,7 +188,7 @@ namespace Anki {
     public:
       RobotAudioKeyFrame() : _selectedAudioIndex(0), _sampleIndex(0) { }
       
-      virtual RobotMessage* GetStreamMessage() override;
+      virtual RobotInterface::EngineToRobot* GetStreamMessage() override;
       
       static const std::string& GetClassName() {
         static const std::string ClassName("RobotAudioKeyFrame");
@@ -222,7 +228,7 @@ namespace Anki {
     public:
       FaceImageKeyFrame() { }
       
-      virtual RobotMessage* GetStreamMessage() override;
+      virtual RobotInterface::EngineToRobot* GetStreamMessage() override;
       
       static const std::string& GetClassName() {
         static const std::string ClassName("FaceImageKeyFrame");
@@ -251,7 +257,7 @@ namespace Anki {
     public:
       FaceAnimationKeyFrame(const std::string& faceAnimName = "") : _animName(faceAnimName) { }
       
-      virtual RobotMessage* GetStreamMessage() override;
+      virtual RobotInterface::EngineToRobot* GetStreamMessage() override;
       
       static const std::string& GetClassName() {
         static const std::string ClassName("FaceAnimationKeyFrame");
@@ -280,11 +286,11 @@ namespace Anki {
       ProceduralFaceKeyFrame(const ProceduralFace& face) : _procFace(face) { }
       
       // Returns message for the face stored in this message
-      virtual RobotMessage* GetStreamMessage() override;
+      virtual RobotInterface::EngineToRobot* GetStreamMessage() override;
       
       // Returns message for the face interpolated between the stored face in this
       // keyframe and the one in the next keyframe.
-      RobotMessage* GetInterpolatedStreamMessage(const ProceduralFaceKeyFrame& nextFrame);
+      RobotInterface::EngineToRobot* GetInterpolatedStreamMessage(const ProceduralFaceKeyFrame& nextFrame);
       
       static const std::string& GetClassName() {
         static const std::string ClassName("ProceduralFaceKeyFrame");
@@ -305,7 +311,7 @@ namespace Anki {
       
       // This is what actually populates the message to stream, and is used
       // by GetStreamMessage() and GetInterpolatedStreamMessage().
-      RobotMessage* GetStreamMessageHelper(const ProceduralFace& procFace);
+      RobotInterface::EngineToRobot* GetStreamMessageHelper(const ProceduralFace& procFace);
       
       void Reset();
       
@@ -318,7 +324,7 @@ namespace Anki {
     public:
       FacePositionKeyFrame() { }
       
-      virtual RobotMessage* GetStreamMessage() override;
+      virtual RobotInterface::EngineToRobot* GetStreamMessage() override;
       
       static const std::string& GetClassName() {
         static const std::string ClassName("FacePositionKeyFrame");
@@ -341,7 +347,7 @@ namespace Anki {
     public:
       BlinkKeyFrame();
       
-      virtual RobotMessage* GetStreamMessage() override;
+      virtual RobotInterface::EngineToRobot* GetStreamMessage() override;
       
       static const std::string& GetClassName() {
         static const std::string ClassName("BlinkKeyFrame");
@@ -369,7 +375,7 @@ namespace Anki {
     public:
       BackpackLightsKeyFrame() { }
       
-      virtual RobotMessage* GetStreamMessage() override;
+      virtual RobotInterface::EngineToRobot* GetStreamMessage() override;
       
       static const std::string& GetClassName() {
         static const std::string ClassName("BackpackLightsKeyFrame");
@@ -393,7 +399,7 @@ namespace Anki {
     public:
       BodyMotionKeyFrame();
       
-      virtual RobotMessage* GetStreamMessage() override;
+      virtual RobotInterface::EngineToRobot* GetStreamMessage() override;
       
       static const std::string& GetClassName() {
         static const std::string ClassName("BodyMotionKeyFrame");
