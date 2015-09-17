@@ -293,15 +293,21 @@ return RESULT_FAIL; \
 #pragma mark ProceduralFaceKeyFrame
     
     static Result SetEyeArrayHelper(ProceduralFace::WhichEye whichEye,
-                                  const Json::Value& jsonRoot,
+                                    const Json::Value& jsonRoot,
                                     ProceduralFace& face)
     {
-      std::array<ProceduralFace::Value,static_cast<size_t>(ProceduralEyeParameter::NumParameters)> eyeArray;
+      std::vector<ProceduralFace::Value> eyeArray;
       const char* eyeStr = (whichEye == ProceduralFace::WhichEye::Left ?
                             "leftEye" : "rightEye");
-      
-      if(JsonTools::GetArrayOptional(jsonRoot, eyeStr, eyeArray)) {
-        for(s32 i=0; i<eyeArray.size(); ++i)
+      if(JsonTools::GetVectorOptional(jsonRoot, eyeStr, eyeArray)) {
+        const size_t N = static_cast<size_t>(ProceduralFace::Parameter::NumParameters);
+        if(eyeArray.size() != N) {
+          PRINT_NAMED_WARNING("ProceduralFaceKeyFrame.SetEyeArrayHelper.WrongNumParams",
+                              "Unexpected number of parameters for %s array (%lu vs. %lu)",
+                              eyeStr, eyeArray.size(), N);
+        }
+        
+        for(s32 i=0; i<std::min(eyeArray.size(), N); ++i)
         {
           face.SetParameter(whichEye,
                             static_cast<ProceduralFace::Parameter>(i),

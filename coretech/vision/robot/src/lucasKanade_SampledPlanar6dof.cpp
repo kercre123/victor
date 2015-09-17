@@ -51,7 +51,7 @@ namespace Anki
     namespace TemplateTracker
     {
       LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof()
-        : LucasKanadeTracker_Generic(maxSupportedTransformType)
+      : LucasKanadeTracker_Generic(Transformations::TransformType::TRANSFORM_PROJECTIVE)
       {
       }
 
