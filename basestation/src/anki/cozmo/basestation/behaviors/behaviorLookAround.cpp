@@ -89,7 +89,7 @@ bool BehaviorLookAround::IsRunnable(double currentTime_sec) const
 Result BehaviorLookAround::Init(double currentTime_sec)
 {
   // Update explorable area center to current robot pose
-  _moveAreaCenter = _robot.GetPose();
+  ResetSafeRegion();
   
   _currentState = State::StartLooking;
   return Result::RESULT_OK;
@@ -439,9 +439,14 @@ void BehaviorLookAround::HandleRobotPutDown(const AnkiEvent<MessageEngineToGame>
   const RobotPutDown& msg = event.GetData().Get_RobotPutDown();
   if (_robot.GetID() == msg.robotID)
   {
-    _moveAreaCenter = _robot.GetPose();
-    _safeRadius = kDefaultSafeRadius;
+    ResetSafeRegion();
   }
+}
+  
+void BehaviorLookAround::ResetSafeRegion()
+{
+  _moveAreaCenter = _robot.GetPose();
+  _safeRadius = kDefaultSafeRadius;
 }
 
 } // namespace Cozmo
