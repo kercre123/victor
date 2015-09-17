@@ -79,7 +79,6 @@ namespace Cozmo {
   
   IBehavior::Status BehaviorInteractWithFaces::Update(double currentTime_sec)
   {
-    static double lastProceduralFaceUpdate = 0;
     switch(_currentState)
     {
       case State::Inactive:
@@ -101,6 +100,15 @@ namespace Cozmo {
                             faceID);
           break;
         }
+        
+        auto dataIter = _interestingFacesData.find(faceID);
+        if (_interestingFacesData.end() == dataIter)
+        {
+          PRINT_NAMED_ERROR("BehaviorInteractWithFaces.Update.MissingInteractionData",
+                            "Failed to find interaction data associated with faceID %llu", faceID);
+          break;
+        }
+        dataIter->second._trackingStart_sec = currentTime_sec;
         
         // Start tracking face
         UpdateBaselineFace(face);
@@ -139,6 +147,21 @@ namespace Cozmo {
           break;
         }
         
+        // If we've watched this face longer than it's considered interesting, put it on cooldown and go to inactive
+        auto watchingFaceDuration = currentTime_sec - _interestingFacesData[faceID]._trackingStart_sec;
+        if (watchingFaceDuration >= kFaceInterestingDuration)
+        {
+          _robot.DisableTrackToFace();
+          _interestingFacesOrder.erase(_interestingFacesOrder.begin());
+          _interestingFacesData.erase(faceID);
+          _cooldownFaces[faceID] = currentTime_sec + kFaceCooldownDuration;
+          
+          PRINT_NAMED_INFO("BehaviorInteractWithFaces.Update.FaceOnCooldown",
+                           "WatchingFaceDuration %.2f >= InterestingDuration %.2f.",
+                           watchingFaceDuration, kFaceInterestingDuration);
+          _currentState = State::Inactive;
+        }
+        
         // We need a face to work with
         const Face* face = _robot.GetFaceWorld().GetFace(faceID);
         if(face == nullptr)
@@ -153,7 +176,6 @@ namespace Cozmo {
         
         // Update cozmo's face based on our currently focused face
         UpdateProceduralFace(_crntProceduralFace, *face);
-        lastProceduralFaceUpdate = currentTime_sec;
         
         if(!_isAnimating)
         {
@@ -275,7 +297,7 @@ namespace Cozmo {
     
     auto iter = _cooldownFaces.find(faceID);
     // If we have a cooldown entry for this face, check if the cooldown time has passed
-    if (_cooldownFaces.end() != iter && (*iter).second < event.GetCurrentTime())
+    if (_cooldownFaces.end() != iter && iter->second < event.GetCurrentTime())
     {
       _cooldownFaces.erase(iter);
       iter = _cooldownFaces.end();
