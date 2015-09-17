@@ -2424,11 +2424,13 @@ namespace Anki {
     ActionResult PlayAnimationAction::CheckIfDone(Robot& robot)
     {
       // We are still running this PlayAnimationAction if:
-      // - the robot reports it is still animating,
-      // - but that is NOT because it is doing an idle animation, and
-      // - the animation name still matches the one associated with this action.
-      if(robot.IsAnimating() && (robot.IsIdleAnimating()==false) &&
-         (robot.GetStreamingAnimationName() == _animName)) {
+      // - the robot reports it is still animating - but NOT *idle* animating
+      // - or the animation name still matches the one associated with this action,
+      //   meaning the streamer is still looping and we should not consider this
+      //   action done yet just because the robot is in between loops
+      if((robot.IsAnimating() && !robot.IsIdleAnimating()) ||
+         (robot.GetStreamingAnimationName() == _animName))
+      {
         return ActionResult::RUNNING;
       } else {
         return ActionResult::SUCCESS;
