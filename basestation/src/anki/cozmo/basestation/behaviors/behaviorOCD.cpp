@@ -297,6 +297,16 @@ namespace Cozmo {
         return RESULT_FAIL;
       }
       
+      // If there's a messy block on top of this block, don't consider picking up this one next.
+      // Comment this out once we have a robot that can lift two blocks!
+      ObservableObject* objectOnTop = blockWorld.FindObjectOnTopOf(*object, 15.f);
+      if (nullptr != objectOnTop) {
+        if (_messyObjects.count(objectOnTop->GetID()) > 0) {
+          continue;
+        }
+      }
+      
+      
       ActionableObject* actionObject = dynamic_cast<ActionableObject*>(object);
       
       if(actionObject == nullptr) {
