@@ -786,17 +786,17 @@ public:
     Vision::ImageDeChunker& _imageDeChunker;
 
     void InitRobotMessageComponent(RobotInterface::MessageHandler* messageHandler, RobotID_t robotId);
-    void HandleCameraCalibration(const RobotInterface::RobotToEngine& message);
-    void HandlePrint(const RobotInterface::RobotToEngine& message);
-    void HandleBlockPickedUp(const RobotInterface::RobotToEngine& message);
-    void HandleBlockPlaced(const RobotInterface::RobotToEngine& message);
-    void HandleActiveObjectMoved(const RobotInterface::RobotToEngine& message);
-    void HandleActiveObjectStopped(const RobotInterface::RobotToEngine& message);
-    void HandleActiveObjectTapped(const RobotInterface::RobotToEngine& message);
-    void HandleGoalPose(const RobotInterface::RobotToEngine& message);
+    void HandleCameraCalibration(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+    void HandlePrint(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+    void HandleBlockPickedUp(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+    void HandleBlockPlaced(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+    void HandleActiveObjectMoved(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+    void HandleActiveObjectStopped(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+    void HandleActiveObjectTapped(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+    void HandleGoalPose(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     // For processing image chunks arriving from robot.
     // Sends complete images to VizManager for visualization (and possible saving).
-    void HandleImageChunk(const RobotInterface::RobotToEngine& message);
+    void HandleImageChunk(const AnkiEvent<RobotInterface::RobotToEngine>& message);
 
     Result SendAbsLocalizationUpdate(const Pose3d&        pose,
                                      const TimeStamp_t&   t,

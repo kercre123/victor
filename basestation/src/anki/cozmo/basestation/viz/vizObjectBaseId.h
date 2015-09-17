@@ -10,8 +10,8 @@
 *
 */
 
-#ifndef __Cozmo_Basestation_NamedColors_Namedcolors_H__
-#define __Cozmo_Basestation_NamedColors_Namedcolors_H__
+#ifndef __Cozmo_Basestation_Viz_VizObjectBaseId_H__
+#define __Cozmo_Basestation_Viz_VizObjectBaseId_H__
 
 #include "clad/types/vizTypes.h"
 #include <stdint.h>
@@ -25,4 +25,4 @@ extern const uint32_t VizObjectBaseID[(int)VizObjectType::NUM_VIZ_OBJECT_TYPES+1
 } // end namespace Cozmo
 } // end namespace Anki
 
-#endif //__Cozmo_Basestation_NamedColors_Namedcolors_H__
+#endif //__Cozmo_Basestation_Viz_VizObjectBaseId_H__

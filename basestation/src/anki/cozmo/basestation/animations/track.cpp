@@ -18,12 +18,14 @@ namespace Anki {
 namespace Cozmo {
 namespace Animations {
 
-void Track::Init()
+template<typename FRAME_TYPE>
+void Track<FRAME_TYPE>::Init()
 {
   _frameIter = _frames.begin();
 }
 
-void Track::MoveToNextKeyFrame()
+template<typename FRAME_TYPE>
+void Track<FRAME_TYPE>::MoveToNextKeyFrame()
 {
   if(_frameIter->IsLive()) {
     // Live frames get removed from the track once played
@@ -35,7 +37,8 @@ void Track::MoveToNextKeyFrame()
 }
 
 // returns false if frame buffer is full
-bool Track::CheckFrameCount(const char* className)
+template<typename FRAME_TYPE>
+bool Track<FRAME_TYPE>::CheckFrameCount(const char* className)
 {
   if(_frames.size() > MAX_FRAMES_PER_TRACK) {
     PRINT_NAMED_ERROR("Animation.Track.AddKeyFrame.TooManyFrames",

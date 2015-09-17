@@ -395,7 +395,7 @@ namespace Anki {
       return soundIter->second.duration_ms;
     }
 
-    bool SoundManager::GetSoundSample(const std::string& name, const u32 sampleIdx, f32 volume, MessageAnimKeyFrame_AudioSample &msg)
+    bool SoundManager::GetSoundSample(const std::string& name, const u32 sampleIdx, f32 volume, AnimKeyFrame::AudioSample &msg)
     {
       if (_currOpenSoundFileName != name) {
         // Dump file contents to buffer if this is not the same file

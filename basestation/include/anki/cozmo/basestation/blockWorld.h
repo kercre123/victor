@@ -223,9 +223,11 @@ namespace Anki
                                const ObjectFamily& inFamily,
                                const TimeStamp_t atTimestamp);
       
+      /*
       // Adds/Removes proxObstacles based on current sensor readings and age of existing proxObstacles
       Result UpdateProxObstaclePoses();
-      
+      */
+
       // Finds existing objects that overlap with and are of the same type as objectSeen,
       // where overlap is defined by the IsSameAs() function.
       void FindOverlappingObjects(const ObservableObject* objectSeen,

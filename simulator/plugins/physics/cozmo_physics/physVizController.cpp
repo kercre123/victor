@@ -12,10 +12,11 @@
 
 #include "physVizController.h"
 #include "anki/common/constantsAndMacros.h"
-#include "anki/cozmo/basestation/blockWorld.h"
+//#include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/namedColors/namedColors.h"
 #include "anki/cozmo/basestation/viz/vizObjectBaseId.h"
 #include "anki/common/basestation/colorRGBA.h"
+#include "clad/vizInterface/messageViz.h"
 #include <OpenGL/OpenGL.h>
 #include <GLUT/GLUT.h>
 
@@ -85,10 +86,10 @@ void PhysVizController::Draw(int pass, const char *view)
     glLineWidth(2);
 
     // Set default color
-    glColor4ub(NamedColors::DEFAULT.r(),
-      NamedColors::DEFAULT.g(),
-      NamedColors::DEFAULT.b(),
-      NamedColors::DEFAULT.alpha());
+    glColor4ub(::Anki::NamedColors::DEFAULT.r(),
+      ::Anki::NamedColors::DEFAULT.g(),
+      ::Anki::NamedColors::DEFAULT.b(),
+      ::Anki::NamedColors::DEFAULT.alpha());
 
     // Draw path
     for (auto pathMapIt = _pathMap.begin(); pathMapIt != _pathMap.end(); pathMapIt++) {
@@ -120,10 +121,10 @@ void PhysVizController::Draw(int pass, const char *view)
 
       // Restore default color
       //glColor3f(DEFAULT_COLOR[0], DEFAULT_COLOR[1], DEFAULT_COLOR[2]);
-      glColor4ub(NamedColors::DEFAULT.r(),
-        NamedColors::DEFAULT.g(),
-        NamedColors::DEFAULT.b(),
-        NamedColors::DEFAULT.alpha());
+      glColor4ub(::Anki::NamedColors::DEFAULT.r(),
+        ::Anki::NamedColors::DEFAULT.g(),
+        ::Anki::NamedColors::DEFAULT.b(),
+        ::Anki::NamedColors::DEFAULT.alpha());
     }
 
 
@@ -187,13 +188,13 @@ void PhysVizController::Draw(int pass, const char *view)
         }
         case VizObjectType::VIZ_OBJECT_RAMP:
         {
-          float slopeLength = obj->params[0]*obj->x_size_m;
+          float slopeLength = obj->objParameters[0]*obj->x_size_m;
           DrawRamp(obj->x_size_m, slopeLength, obj->y_size_m, obj->z_size_m);
           break;
         }
         case VizObjectType::VIZ_OBJECT_CHARGER:
         {
-          float slopeLength = obj->params[0]*obj->x_size_m;
+          float slopeLength = obj->objParameters[0]*obj->x_size_m;
           DrawRamp(obj->x_size_m, slopeLength, obj->y_size_m, obj->z_size_m);
           break;
         }
@@ -216,10 +217,10 @@ void PhysVizController::Draw(int pass, const char *view)
 
       // Restore default color
       //glColor3f(DEFAULT_COLOR[0], DEFAULT_COLOR[1], DEFAULT_COLOR[2]);
-      glColor4ub(NamedColors::DEFAULT.r(),
-        NamedColors::DEFAULT.g(),
-        NamedColors::DEFAULT.b(),
-        NamedColors::DEFAULT.alpha());
+      glColor4ub(::Anki::NamedColors::DEFAULT.r(),
+        ::Anki::NamedColors::DEFAULT.g(),
+        ::Anki::NamedColors::DEFAULT.b(),
+        ::Anki::NamedColors::DEFAULT.alpha());
 
     } // for each object
 
@@ -247,10 +248,10 @@ void PhysVizController::Draw(int pass, const char *view)
 
         // Restore default color
         //glColor3f(DEFAULT_COLOR[0], DEFAULT_COLOR[1], DEFAULT_COLOR[2]);
-        glColor4ub(NamedColors::DEFAULT.r(),
-          NamedColors::DEFAULT.g(),
-          NamedColors::DEFAULT.b(),
-          NamedColors::DEFAULT.alpha());
+        glColor4ub(::Anki::NamedColors::DEFAULT.r(),
+          ::Anki::NamedColors::DEFAULT.g(),
+          ::Anki::NamedColors::DEFAULT.b(),
+          ::Anki::NamedColors::DEFAULT.alpha());
       } // for each quad
     } // for each quad type
 
@@ -298,7 +299,7 @@ void PhysVizController::ProcessVizQuadMessage(const AnkiEvent<VizInterface::Mess
     payload.xUpperRight, payload.yUpperRight, payload.zUpperRight,
     payload.xLowerRight, payload.yLowerRight, payload.zLowerRight);
 
-  _quadMap[payload.quadType][payload.quadID] = VizInterface::Quad(payload);
+  _quadMap[(int)payload.quadType][payload.quadID] = VizInterface::Quad(payload);
 }
 
 void PhysVizController::ProcessVizEraseObjectMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
@@ -327,7 +328,7 @@ void PhysVizController::ProcessVizEraseObjectMessage(const AnkiEvent<VizInterfac
 
 void PhysVizController::ProcessVizEraseQuadMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
 {
-  const auto& payload = payload.GetData().Get_EraseQuad();
+  const auto& payload = msg.GetData().Get_EraseQuad();
   PRINT("Processing EraseQuad\n");
 
   if(payload.quadType == (uint32_t)VizConstants::ALL_QUAD_TYPEs) {
@@ -348,7 +349,7 @@ void PhysVizController::ProcessVizEraseQuadMessage(const AnkiEvent<VizInterface:
 
 void PhysVizController::ProcessVizAppendPathSegmentLineMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
 {
-  const auto& payload = payload.GetData().Get_AppendPathSegmentLine();
+  const auto& payload = msg.GetData().Get_AppendPathSegmentLine();
   PRINT("Processing AppendLine\n");
 
   std::vector<float> startPt = {payload.x_start_m, payload.y_start_m, payload.z_start_m};

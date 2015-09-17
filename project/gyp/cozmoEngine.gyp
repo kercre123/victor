@@ -314,6 +314,7 @@
             'dependencies': [
               'cozmoEngine',
               '<(ce-cti_gyp_path):ctiCommon',
+              '<(ce-cti_gyp_path):ctiVision',
               '<(ce-cti_gyp_path):ctiMessaging',
               '<(ce-util_gyp_path):util',
             ],

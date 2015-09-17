@@ -32,7 +32,7 @@ MessageHandler::MessageHandler()
 void MessageHandler::Init(Comms::IChannel* channel, RobotManager* robotMgr)
 {
   _channel = channel;
-  _robotManager = _robotManager;
+  _robotManager = robotMgr;
   _isInitialized = true;
 }
 

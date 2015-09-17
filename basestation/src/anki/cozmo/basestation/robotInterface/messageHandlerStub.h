@@ -30,7 +30,7 @@ enum class EngineToRobotTag : uint8_t;
 enum class RobotToEngineTag : uint8_t;
 
 
-class MessageHandlerStub : public IMessageHandler
+class MessageHandlerStub : public MessageHandler
 {
 public:
   MessageHandlerStub() { }

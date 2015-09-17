@@ -1020,7 +1020,7 @@ namespace Cozmo {
     // MatlabVisualization::SendTrackerPrediction_Before(grayscaleImage, currentQuad);
     Anki::Quad2f vizQuad;
     GetVizQuad(currentQuad, vizQuad);
-    VizManager::getInstance()->DrawCameraQuad(vizQuad, NamedColors::BLUE);
+    VizManager::getInstance()->DrawCameraQuad(vizQuad, ::Anki::NamedColors::BLUE);
     
     // Ask VisionState how much we've moved since last call (in robot coordinates)
     Radians theta_robot;
@@ -1183,13 +1183,13 @@ namespace Cozmo {
     // TODO: Re-enable tracker prediction viz on basestation
     //MatlabVisualization::SendTrackerPrediction_After(GetTrackerQuad(scratch));
     GetVizQuad(GetTrackerQuad(scratch), vizQuad);
-    VizManager::getInstance()->DrawCameraQuad(vizQuad, NamedColors::GREEN);
+    VizManager::getInstance()->DrawCameraQuad(vizQuad, ::Anki::NamedColors::GREEN);
     
     return result;
   } // TrackerPredictionUpdate()
   
   void VisionSystem::FillDockErrMsg(const Embedded::Quadrilateral<f32>& currentQuad,
-                                    MessageDockingErrorSignal& dockErrMsg,
+                                    DockingErrorSignal& dockErrMsg,
                                     MemoryStack scratch)
   {
     dockErrMsg.isApproximate = false;

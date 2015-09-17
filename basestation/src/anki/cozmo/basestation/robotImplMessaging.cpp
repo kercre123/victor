@@ -47,36 +47,36 @@ void Robot::InitRobotMessageComponent(RobotInterface::MessageHandler* messageHan
 
   // lambda wrapper to call internal handler
   _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::state,
-    [this](const RobotInterface::RobotToEngine& message){
-      const RobotState& payload = message.Get_state();
+    [this](const AnkiEvent<RobotInterface::RobotToEngine>& message){
+      const RobotState& payload = message.GetData().Get_state();
       UpdateFullRobotState(payload);
     }));
 
 
   // lambda for some simple message handling
   _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::rampTraverseStarted,
-    [this](const RobotInterface::RobotToEngine& message){
+    [this](const AnkiEvent<RobotInterface::RobotToEngine>& message){
       PRINT_NAMED_INFO("RobotMessageHandler.ProcessMessage", "Robot %d reported it started traversing a ramp.", GetID());
       SetOnRamp(true);
     }));
   _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::rampTraverseCompleted,
-    [this](const RobotInterface::RobotToEngine& message){
+    [this](const AnkiEvent<RobotInterface::RobotToEngine>& message){
       PRINT_NAMED_INFO("RobotMessageHandler.ProcessMessage", "Robot %d reported it completed traversing a ramp.", GetID());
       SetOnRamp(false);
     }));
   _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::bridgeTraverseStarted,
-    [this](const RobotInterface::RobotToEngine& message){
+    [this](const AnkiEvent<RobotInterface::RobotToEngine>& message){
       PRINT_NAMED_INFO("RobotMessageHandler.ProcessMessage", "Robot %d reported it started traversing a bridge.", GetID());
       //SetOnBridge(true);
     }));
   _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::bridgeTraverseCompleted,
-    [this](const RobotInterface::RobotToEngine& message){
+    [this](const AnkiEvent<RobotInterface::RobotToEngine>& message){
       PRINT_NAMED_INFO("RobotMessageHandler.ProcessMessage", "Robot %d reported it completed traversing a bridge.", GetID());
       //SetOnBridge(false);
     }));
   _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::mainCycleTimeError,
-    [this](const RobotInterface::RobotToEngine& message){
-      const RobotInterface::MainCycleTimeError& payload = message.Get_mainCycleTimeError();
+    [this](const AnkiEvent<RobotInterface::RobotToEngine>& message){
+      const RobotInterface::MainCycleTimeError& payload = message.GetData().Get_mainCycleTimeError();
       if (payload.numMainTooLongErrors > 0) {
         PRINT_NAMED_WARNING("Robot.MainCycleTooLong", " %d Num errors: %d, Avg time: %d us", GetID(), payload.numMainTooLongErrors, payload.avgMainTooLongTime);
       }
@@ -85,8 +85,8 @@ void Robot::InitRobotMessageComponent(RobotInterface::MessageHandler* messageHan
       }
     }));
   _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::dataDump,
-    [this](const RobotInterface::RobotToEngine& message){
-      const RobotInterface::DataDump& payload = message.Get_dataDump();
+    [this](const AnkiEvent<RobotInterface::RobotToEngine>& message){
+      const RobotInterface::DataDump& payload = message.GetData().Get_dataDump();
       char buf[payload.data.size() * 2 + 1];
       FormatBytesAsHex((char *)payload.data.data(), (int)payload.data.size(), buf, (int)sizeof(buf));
       PRINT_NAMED_INFO("RobotMessageHandler.ProcessMessage.MessageDataDump", "ID: %d, size: %zd, data: %s", GetID(), payload.data.size(), buf);
@@ -95,9 +95,9 @@ void Robot::InitRobotMessageComponent(RobotInterface::MessageHandler* messageHan
 }
 
 
-void Robot::HandleCameraCalibration(const RobotInterface::RobotToEngine& message)
+void Robot::HandleCameraCalibration(const AnkiEvent<RobotInterface::RobotToEngine>& message)
 {
-  const RobotInterface::CameraCalibration& payload = message.Get_cameraCalibration();
+  const RobotInterface::CameraCalibration& payload = message.GetData().Get_cameraCalibration();
   PRINT_NAMED_INFO("RobotMessageHandler.CameraCalibration",
     "Received new %dx%d camera calibration from robot.", payload.ncols, payload.nrows);
 
@@ -115,15 +115,15 @@ void Robot::HandleCameraCalibration(const RobotInterface::RobotToEngine& message
   SetPhysicalRobot(payload.isPhysicalRobots);
 }
 
-void Robot::HandlePrint(const RobotInterface::RobotToEngine& message)
+void Robot::HandlePrint(const AnkiEvent<RobotInterface::RobotToEngine>& message)
 {
-  const RobotInterface::PrintText& payload = message.Get_printText();
+  const RobotInterface::PrintText& payload = message.GetData().Get_printText();
   const u32 MAX_PRINT_STRING_LENGTH = 1024;
   const u32 PRINT_TEXT_MSG_LENGTH = 50;
   static char text[MAX_PRINT_STRING_LENGTH];  // Local storage for large messages which may come across in multiple packets
   static u32 textIdx = 0;
 
-  char *newText = &(payload.text.front());
+  const char *newText = payload.text.c_str();
 
   // If the last byte is 0, it means this is the last packet (possibly of a series of packets).
   if (payload.text[PRINT_TEXT_MSG_LENGTH-1] == 0) {
@@ -152,9 +152,9 @@ void Robot::HandlePrint(const RobotInterface::RobotToEngine& message)
   }
 }
 
-void Robot::HandleBlockPickedUp(const RobotInterface::RobotToEngine& message)
+void Robot::HandleBlockPickedUp(const AnkiEvent<RobotInterface::RobotToEngine>& message)
 {
-  const BlockPickedUp& payload = message.Get_blockPickedUp();
+  const BlockPickedUp& payload = message.GetData().Get_blockPickedUp();
   const char* successStr = (payload.didSucceed ? "succeeded" : "failed");
   PRINT_NAMED_INFO("RobotMessageHandler.ProcessMessage.MessageBlockPickedUp",
     "Robot %d reported it %s picking up block. Stopping docking and turning on Look-for-Markers mode.", GetID(), successStr);
@@ -172,9 +172,9 @@ void Robot::HandleBlockPickedUp(const RobotInterface::RobotToEngine& message)
   StopDocking();
 }
 
-void Robot::HandleBlockPlaced(const RobotInterface::RobotToEngine& message)
+void Robot::HandleBlockPlaced(const AnkiEvent<RobotInterface::RobotToEngine>& message)
 {
-  const BlockPlaced& payload = message.Get_blockPlaced();
+  const BlockPlaced& payload = message.GetData().Get_blockPlaced();
   const char* successStr = (payload.didSucceed ? "succeeded" : "failed");
   PRINT_NAMED_INFO("RobotMessageHandler.ProcessMessage.MessageBlockPlaced",
     "Robot %d reported it %s placing block. Stopping docking and turning on Look-for-Markers mode.", GetID(), successStr);
@@ -192,9 +192,9 @@ void Robot::HandleBlockPlaced(const RobotInterface::RobotToEngine& message)
 
 }
 
-void Robot::HandleActiveObjectMoved(const RobotInterface::RobotToEngine& message)
+void Robot::HandleActiveObjectMoved(const AnkiEvent<RobotInterface::RobotToEngine>& message)
 {
-  const ActiveObjectMoved& payload = message.Get_activeObjectMoved();
+  const ActiveObjectMoved& payload = message.GetData().Get_activeObjectMoved();
   // The message from the robot has the active object ID in it, so we need
   // to find the object in blockworld (which has its own bookkeeping ID) that
   // has the matching active ID
@@ -228,9 +228,9 @@ void Robot::HandleActiveObjectMoved(const RobotInterface::RobotToEngine& message
     "Could not find match for active object ID %d", payload.objectID);
 }
 
-void Robot::HandleActiveObjectStopped(const RobotInterface::RobotToEngine& message)
+void Robot::HandleActiveObjectStopped(const AnkiEvent<RobotInterface::RobotToEngine>& message)
 {
-  const ActiveObjectStoppedMoving& payload = message.Get_activeObjectStopped();
+  const ActiveObjectStoppedMoving& payload = message.GetData().Get_activeObjectStopped();
   const BlockWorld::ObjectsMapByType_t& activeBlocksByType =
     GetBlockWorld().GetExistingObjectsByFamily(ObjectFamily::LightCube);
 
@@ -253,9 +253,9 @@ void Robot::HandleActiveObjectStopped(const RobotInterface::RobotToEngine& messa
     "Could not find match for active object ID %d", payload.objectID);
 }
 
-void Robot::HandleActiveObjectTapped(const RobotInterface::RobotToEngine& message)
+void Robot::HandleActiveObjectTapped(const AnkiEvent<RobotInterface::RobotToEngine>& message)
 {
-  const ActiveObjectTapped& payload = message.Get_activeObjectTapped();
+  const ActiveObjectTapped& payload = message.GetData().Get_activeObjectTapped();
   const BlockWorld::ObjectsMapByType_t& activeBlocksByType =
     GetBlockWorld().GetExistingObjectsByFamily(ObjectFamily::LightCube);
 
@@ -281,25 +281,25 @@ void Robot::HandleActiveObjectTapped(const RobotInterface::RobotToEngine& messag
     "Could not find match for active object ID %d", payload.objectID);
 }
 
-void Robot::HandleGoalPose(const RobotInterface::RobotToEngine& message)
+void Robot::HandleGoalPose(const AnkiEvent<RobotInterface::RobotToEngine>& message)
 {
-  const GoalPose& payload = message.Get_goalPose();
+  const GoalPose& payload = message.GetData().Get_goalPose();
   Anki::Pose3d p(payload.pose.angle, Z_AXIS_3D(),
     Vec3f(payload.pose.x, payload.pose.y, payload.pose.z));
   //PRINT_INFO("Goal pose: x=%f y=%f %f deg (%d)", msg.pose_x, msg.pose_y, RAD_TO_DEG_F32(msg.pose_angle), msg.followingMarkerNormal);
   if (payload.followingMarkerNormal) {
-    VizManager::getInstance()->DrawPreDockPose(100, p, NamedColors::RED);
+    VizManager::getInstance()->DrawPreDockPose(100, p, ::Anki::NamedColors::RED);
   } else {
-    VizManager::getInstance()->DrawPreDockPose(100, p, NamedColors::GREEN);
+    VizManager::getInstance()->DrawPreDockPose(100, p, ::Anki::NamedColors::GREEN);
   }
 }
 
 
 // For processing image chunks arriving from robot.
 // Sends complete images to VizManager for visualization (and possible saving).
-void Robot::HandleImageChunk(const RobotInterface::RobotToEngine& message)
+void Robot::HandleImageChunk(const AnkiEvent<RobotInterface::RobotToEngine>& message)
 {
-  const ImageChunk& payload = message.Get_image();
+  const ImageChunk& payload = message.GetData().Get_image();
   const u16 width  = Vision::CameraResInfo[(int)payload.resolution].width;
   const u16 height = Vision::CameraResInfo[(int)payload.resolution].height;
 

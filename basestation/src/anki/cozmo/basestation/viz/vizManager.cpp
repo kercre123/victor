@@ -94,7 +94,7 @@ namespace Anki {
       uint8_t buffer[MAX_MESSAGE_SIZE]{0};
 
       const size_t numWritten = (uint32_t)message.Pack(buffer, MAX_MESSAGE_SIZE);
-      if (_vizClient.Send(buffer, (int)numWritten) <= 0) {
+      if (_vizClient.Send((const char*)buffer, (int)numWritten) <= 0) {
         PRINT_NAMED_WARNING("VizManager.SendMessage.Fail", "Send vizMsgID %s of size %zd failed\n", VizInterface::MessageVizTagToString(message.GetTag()), numWritten);
       }
     }
@@ -118,7 +118,7 @@ namespace Anki {
           pose.GetRotationAxis().x(), pose.GetRotationAxis().y(), pose.GetRotationAxis().z(),
           headAngle, liftAngle
         )
-      );
+      ));
     }
     
     

@@ -92,16 +92,16 @@ namespace Anki {
       
       Handle_t DrawRobot(const u32 robotID,
                          const Pose3d &pose,
-                         const ColorRGBA& color = NamedColors::DEFAULT);
+                         const ColorRGBA& color = ::Anki::NamedColors::DEFAULT);
       
       Handle_t DrawCuboid(const u32 blockID,
                           const Point3f &size,
                           const Pose3d &pose,
-                          const ColorRGBA& color = NamedColors::DEFAULT);
+                          const ColorRGBA& color = ::Anki::NamedColors::DEFAULT);
       
       Handle_t DrawPreDockPose(const u32 preDockPoseID,
                                const Pose3d &pose,
-                               const ColorRGBA& color = NamedColors::DEFAULT);
+                               const ColorRGBA& color = ::Anki::NamedColors::DEFAULT);
       
       Handle_t DrawRamp(const u32 rampID,
                         const f32 platformLength,
@@ -109,7 +109,7 @@ namespace Anki {
                         const f32 width,
                         const f32 height,
                         const Pose3d& pose,
-                        const ColorRGBA& color = NamedColors::DEFAULT);
+                        const ColorRGBA& color = ::Anki::NamedColors::DEFAULT);
       
       Handle_t DrawCharger(const u32 chargerID,
                            const f32 platformLength,
@@ -117,12 +117,12 @@ namespace Anki {
                            const f32 width,
                            const f32 height,
                            const Pose3d& pose,
-                           const ColorRGBA& color = NamedColors::DEFAULT);
+                           const ColorRGBA& color = ::Anki::NamedColors::DEFAULT);
       
       Handle_t DrawHumanHead(const u32 headID,
                              const Point3f& size,
                              const Pose3d& pose,
-                             const ColorRGBA& color = NamedColors::DEFAULT);
+                             const ColorRGBA& color = ::Anki::NamedColors::DEFAULT);
       
       void DrawCameraFace(const Vision::TrackedFace& face,
                           const ColorRGBA& color);
@@ -147,7 +147,7 @@ namespace Anki {
       void DrawObject(const u32 objectID, VizObjectType objectTypeID,
         const Point3f &size,
         const Pose3d &pose,
-        const ColorRGBA& color = NamedColors::DEFAULT,
+        const ColorRGBA& color = ::Anki::NamedColors::DEFAULT,
         const f32* params = nullptr);
       
       // Erases the object corresponding to the objectID
@@ -164,7 +164,7 @@ namespace Anki {
       
       void DrawPath(const u32 pathID,
                     const Planning::Path& p,
-                    const ColorRGBA& color = NamedColors::DEFAULT);
+                    const ColorRGBA& color = ::Anki::NamedColors::DEFAULT);
       
       // Appends the specified line segment to the path with id pathID
       void AppendPathSegmentLine(const u32 pathID,

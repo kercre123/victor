@@ -33,8 +33,8 @@ public:
   : _myType(type)
   , _data( std::forward<FwdType>(newData) )
 { }
-  
-  u32 GetType() const { return _myType; }
+
+  uint32_t GetType() const { return _myType; }
   const DataType& GetData() const { return _data; }
   
 protected:
