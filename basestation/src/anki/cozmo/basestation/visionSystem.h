@@ -446,6 +446,8 @@ namespace Cozmo {
     
     MultiMailbox<Vision::TrackedFace, FaceDetectionParameters::MAX_FACE_DETECTIONS> _faceMailbox;
     
+    void RestoreNonTrackingMode();
+    
   }; // class VisionSystem
   
       
