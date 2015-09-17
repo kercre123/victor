@@ -81,7 +81,7 @@ void spi_init(void) {
   Anki::Cozmo::HAL::MicroWait(1000000);
 
   
-  const int size = 96;
+  const int size = 256;
   uint32_t spi_buff[size]; // 512 bytes
 
   // Turn on power to DMA, PORTC and SPI0
@@ -104,7 +104,7 @@ void spi_init(void) {
              SPI_MCR_CLR_TXF_MASK |
              SPI_MCR_CLR_RXF_MASK;
 
-  SPI0_CTAR0 = SPI_CTAR_BR(1) |
+  SPI0_CTAR0 = SPI_CTAR_BR(0) |
                SPI_CTAR_CPOL_MASK |
                SPI_CTAR_CPHA_MASK |
                SPI_CTAR_FMSZ(15);
@@ -122,7 +122,7 @@ void spi_init(void) {
     spi_buff[i] = 
         i |
         SPI_PUSHR_CONT_MASK | 
-        SPI_PUSHR_PCS((i & 1) ? ~0: 0) |
+        SPI_PUSHR_PCS((i & 1) ? ~0: 0); //|
         (i == (size-1) ? SPI_PUSHR_EOQ_MASK : 0);
   }
   
