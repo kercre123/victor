@@ -582,6 +582,12 @@
                       '<(PRODUCT_DIR)',
                     ],
                   }],
+                  ['face_library=="opencv"', {
+                    'action': [
+                    'echo',
+                    'dummyOpenCVEngineAction',
+                    ],
+                  }],
                 ], # conditions
               },
             ],
