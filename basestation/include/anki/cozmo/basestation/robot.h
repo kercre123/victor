@@ -833,9 +833,6 @@ public:
     // Sends a path to the robot to be immediately executed
     Result SendExecutePath(const Planning::Path& path, const bool useManualSpeed) const;
     
-    // Turn on/off headlight LEDs
-    Result SendHeadlight(u8 intensity);
-    
     // Sync time with physical robot and trigger it robot to send back camera
     // calibration
     Result SendSyncTime() const;
@@ -853,10 +850,6 @@ public:
 
     Result SendDockWithObject(const DockAction dockAction,
                               const bool useManualSpeed);
-    
-    Result SendStartFaceTracking(const u8 timeout_sec);
-    Result SendStopFaceTracking();
-    Result SendPing();
     
     Result SendAbortDocking();
     Result SendAbortAnimation();

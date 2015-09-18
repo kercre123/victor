@@ -2056,13 +2056,7 @@ namespace Anki {
       
     } // UnattachCarriedObject()
     
-    
-    Result Robot::SetHeadlight(u8 intensity)
-    {
-      return SendHeadlight(intensity);
-    }
-    
-    
+
     void Robot::StartBehavior(const std::string& behaviorName)
     {
       if(behaviorName == "NONE") {
@@ -2324,16 +2318,14 @@ namespace Anki {
     
     Result Robot::StartFaceTracking(u8 timeout_sec)
     {
-      Result lastResult = SendStartFaceTracking(timeout_sec);
       _visionProcessor.EnableFaceDetection(true);
-      return lastResult;
+      return RESULT_OK;
     }
     
     Result Robot::StopFaceTracking()
     {
-      Result lastResult = SendStopFaceTracking();
       _visionProcessor.EnableFaceDetection(false);
-      return lastResult;
+      return RESULT_OK;
     }
     
     Result Robot::StartLookingForMarkers()

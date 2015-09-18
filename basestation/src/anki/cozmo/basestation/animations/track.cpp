@@ -18,35 +18,42 @@ namespace Anki {
 namespace Cozmo {
 namespace Animations {
 
-template<typename FRAME_TYPE>
-void Track<FRAME_TYPE>::Init()
+// Specialization for ProceduralFace track because it needs look-back for interpolation
+template<>
+RobotInterface::EngineToRobot* Animations::Track<ProceduralFaceKeyFrame>::GetCurrentStreamingMessage(TimeStamp_t startTime_ms, TimeStamp_t currTime_ms)
 {
-  _frameIter = _frames.begin();
-}
+  RobotInterface::EngineToRobot* msg = nullptr;
 
-template<typename FRAME_TYPE>
-void Track<FRAME_TYPE>::MoveToNextKeyFrame()
-{
-  if(_frameIter->IsLive()) {
-    // Live frames get removed from the track once played
-    _frameIter = _frames.erase(_frameIter);
-  } else {
-    // For canned frames, we just move to the next one in the track
-    ++_frameIter;
-  }
-}
+  if(HasFramesLeft()) {
+    ProceduralFaceKeyFrame& currentKeyFrame = GetCurrentKeyFrame();
+    if(currentKeyFrame.IsTimeToPlay(startTime_ms, currTime_ms))
+    {
+      if(currentKeyFrame.IsLive()) {
+        // The AnimationStreamer will take care of interpolation for live
+        // live streaming
+        // TODO: Maybe we could also do it here somehow?
+        msg = currentKeyFrame.GetStreamMessage();
 
-// returns false if frame buffer is full
-template<typename FRAME_TYPE>
-bool Track<FRAME_TYPE>::CheckFrameCount(const char* className)
-{
-  if(_frames.size() > MAX_FRAMES_PER_TRACK) {
-    PRINT_NAMED_ERROR("Animation.Track.AddKeyFrame.TooManyFrames",
-      "There are already %lu frames in %s track. Refusing to add more.",
-      _frames.size(), className);
-    return false;
+      } else {
+        auto nextIter = _frameIter;
+        ++nextIter;
+        if(nextIter != _frames.end()) {
+          // If we have another frame coming, use it to interpolate.
+          // This will only be "done" once
+          msg = currentKeyFrame.GetInterpolatedStreamMessage(*nextIter);
+        } else {
+          // Otherwise, we'll just send the last frame
+          msg = currentKeyFrame.GetStreamMessage();
+        }
+      }
+
+      if(currentKeyFrame.IsDone()) {
+        MoveToNextKeyFrame();
+      }
+    }
   }
-  return true;
+
+  return msg;
 }
 
 
