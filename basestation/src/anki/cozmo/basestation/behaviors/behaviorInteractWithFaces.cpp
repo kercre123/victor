@@ -202,8 +202,15 @@ namespace Cozmo {
         break;
       }
       case State::Interrupted:
+      {
+        // Since we're ending being in InteractWithFaces, set our procedural face to be neutral
+        ProceduralFace resetFace;
+        auto oldTimeStamp = _robot.GetProceduralFace().GetTimeStamp();
+        ++oldTimeStamp;
+        resetFace.SetTimeStamp(oldTimeStamp);
+        _robot.SetProceduralFace(resetFace);
         return Status::Complete;
-        
+      }
       default:
         
         return Status::Failure;
