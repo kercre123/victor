@@ -506,6 +506,21 @@ namespace Vision {
     return pointVec;
   }
   
+  static inline Point2f GetFeatureAverageHelper(const float* x, const float* y,
+                                                const int fromIndex, const int toIndex)
+  {
+    Point2f avg(0.f,0.f);
+    
+    for(int i=fromIndex; i<=toIndex; ++i) {
+      avg.x() += x[i];
+      avg.y() += y[i];
+    }
+    
+    avg /= static_cast<float>(toIndex-fromIndex+1);
+    
+    return avg;
+  }
+                                                
   static inline void UpdateFaceFeatures(const cv::Mat& landmarks,
                                         TrackedFace& face)
   {
@@ -521,6 +536,11 @@ namespace Vision {
     face.SetFeature(TrackedFace::Nose,         GetFeatureHelper(x, y, 14, 18));
     face.SetFeature(TrackedFace::LeftEye,      GetFeatureHelper(x, y, 19, 24, true));
     face.SetFeature(TrackedFace::RightEye,     GetFeatureHelper(x, y, 25, 30, true));
+    
+#   if !ESTIMATE_GAZE
+    face.SetLeftEyeCenter(GetFeatureAverageHelper(x, y, 19, 24));
+    face.SetRightEyeCenter(GetFeatureAverageHelper(x, y, 25, 30));
+#   endif
     
     face.SetFeature(TrackedFace::UpperLip, GetFeatureHelper(x, y, {
       31,32,33,34,35,36,37,45,44,43,31}));

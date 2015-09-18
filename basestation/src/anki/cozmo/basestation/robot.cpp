@@ -97,6 +97,7 @@ namespace Anki {
     , _imageSendMode(ImageSendMode::Off)
     , _carryingMarker(nullptr)
     , _lastPickOrPlaceSucceeded(false)
+    , _trackToFaceID(Vision::TrackedFace::UnknownFace)
     , _stateSaveMode(SAVE_OFF)
     , _imageSaveMode(SAVE_OFF)
     , _imgFramePeriod(0)
