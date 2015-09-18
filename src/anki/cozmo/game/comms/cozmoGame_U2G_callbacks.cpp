@@ -485,7 +485,7 @@ namespace Cozmo {
   
   void CozmoGameImpl::Process_ErasePoseMarker(ExternalInterface::ErasePoseMarker const& msg)
   {
-    VizManager::getInstance()->EraseAllQuadsWithType(VIZ_QUAD_POSE_MARKER);
+    VizManager::getInstance()->EraseAllQuadsWithType((uint32_t)VizQuadType::VIZ_QUAD_POSE_MARKER);
   }
 
   void CozmoGameImpl::Process_SetWheelControllerGains(ExternalInterface::SetWheelControllerGains const& msg)
@@ -768,7 +768,7 @@ namespace Cozmo {
   
   void CozmoGameImpl::Process_EraseQuad(ExternalInterface::EraseQuad const& msg)
   {
-    VizManager::getInstance()->EraseQuad(VIZ_QUAD_GENERIC_3D, msg.quadID);
+    VizManager::getInstance()->EraseQuad((uint32_t)VizQuadType::VIZ_QUAD_GENERIC_3D, msg.quadID);
   }
   
   void CozmoGameImpl::Process_QueueSingleAction(const ExternalInterface::QueueSingleAction &msg)
