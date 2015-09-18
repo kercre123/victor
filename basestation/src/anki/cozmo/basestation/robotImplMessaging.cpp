@@ -19,6 +19,10 @@
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/externalInterface/messageEngineToGame.h"
+#include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
+#include "anki/common/basestation/utils/data/dataPlatform.h"
+#include "util/fileUtils/fileUtils.h"
+#include "util/helpers/includeFstream.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -43,7 +47,9 @@ void Robot::InitRobotMessageComponent(RobotInterface::MessageHandler* messageHan
   _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::goalPose,
     std::bind(&Robot::HandleGoalPose, this, std::placeholders::_1)));
   _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::image,
-    std::bind(&Robot::HandleGoalPose, this, std::placeholders::_1)));
+    std::bind(&Robot::HandleImageChunk, this, std::placeholders::_1)));
+  _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::imuDataChunk,
+    std::bind(&Robot::HandleImuData, this, std::placeholders::_1)));
 
   // lambda wrapper to call internal handler
   _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::state,
@@ -359,6 +365,58 @@ void Robot::HandleImageChunk(const AnkiEvent<RobotInterface::RobotToEngine>& mes
 
   } // if(isImageReady)
 
+}
+
+// For processing imu data chunks arriving from robot.
+// Writes the entire log of 3-axis accelerometer and 3-axis
+// gyro readings to a .m file in kP_IMU_LOGS_DIR so they
+// can be read in from Matlab. (See robot/util/imuLogsTool.m)
+void Robot::HandleImuData(const AnkiEvent<RobotInterface::RobotToEngine>& message)
+{
+  const RobotInterface::IMUDataChunk& payload = message.GetData().Get_imuDataChunk();
+
+  // If seqID has changed, then start over.
+  if (payload.seqId != _imuSeqID) {
+    _imuSeqID = payload.seqId;
+    _imuDataSize = 0;
+  }
+
+  // Msgs are guaranteed to be received in order so just append data to array
+  memcpy(_imuData[0] + _imuDataSize, payload.aX.data(), (size_t)IMUConstants::IMU_CHUNK_SIZE);
+  memcpy(_imuData[1] + _imuDataSize, payload.aY.data(), (size_t)IMUConstants::IMU_CHUNK_SIZE);
+  memcpy(_imuData[2] + _imuDataSize, payload.aZ.data(), (size_t)IMUConstants::IMU_CHUNK_SIZE);
+
+  memcpy(_imuData[3] + _imuDataSize, payload.gX.data(), (size_t)IMUConstants::IMU_CHUNK_SIZE);
+  memcpy(_imuData[4] + _imuDataSize, payload.gY.data(), (size_t)IMUConstants::IMU_CHUNK_SIZE);
+  memcpy(_imuData[5] + _imuDataSize, payload.gZ.data(), (size_t)IMUConstants::IMU_CHUNK_SIZE);
+
+  _imuDataSize += (size_t)IMUConstants::IMU_CHUNK_SIZE;
+
+  // When dataSize matches the expected size, print to file
+  if (payload.chunkId == payload.totalNumChunks - 1) {
+
+    // Make sure image capture folder exists
+    std::string imuLogsDir = _dataPlatform->pathToResource(Util::Data::Scope::Cache, AnkiUtil::kP_IMU_LOGS_DIR);
+    if (!Util::FileUtils::CreateDirectory(imuLogsDir, false, true)) {
+      PRINT_NAMED_ERROR("Robot.ProcessIMUDataChunk.CreateDirFailed","%s", imuLogsDir.c_str());
+    }
+
+    // Create image file
+    char logFilename[564];
+    snprintf(logFilename, sizeof(logFilename), "%s/robot%d_imu%d.m", imuLogsDir.c_str(), GetID(), _imuSeqID);
+    PRINT_NAMED_INFO("RobotMessageHandler.ProcessMessage.MessageIMUDataChunk",
+      "Printing imu log to %s (dataSize = %d)", logFilename, _imuDataSize);
+
+    std::ofstream oFile(logFilename);
+    for (u32 axis = 0; axis < 6; ++axis) {
+      oFile << "imuData" << axis << " = [";
+      for (u32 i=0; i<_imuDataSize; ++i) {
+        oFile << (s32)(_imuData[axis][i]) << " ";
+      }
+      oFile << "];\n\n";
+    }
+    oFile.close();
+  }
 }
 
 

@@ -784,8 +784,12 @@ public:
     // (via MessageHandler) to the physical robot
     std::vector<Signal::SmartHandle> _signalHandles;
     Vision::ImageDeChunker& _imageDeChunker;
+    uint8_t _imuSeqID = 0;
+    uint32_t _imuDataSize = 0;
+    int8_t _imuData[6][1024]{{0}};  // first ax, ay, az, gx, gy, gz
 
-    void InitRobotMessageComponent(RobotInterface::MessageHandler* messageHandler, RobotID_t robotId);
+
+  void InitRobotMessageComponent(RobotInterface::MessageHandler* messageHandler, RobotID_t robotId);
     void HandleCameraCalibration(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandlePrint(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleBlockPickedUp(const AnkiEvent<RobotInterface::RobotToEngine>& message);
@@ -797,6 +801,11 @@ public:
     // For processing image chunks arriving from robot.
     // Sends complete images to VizManager for visualization (and possible saving).
     void HandleImageChunk(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+    // For processing imu data chunks arriving from robot.
+    // Writes the entire log of 3-axis accelerometer and 3-axis
+    // gyro readings to a .m file in kP_IMU_LOGS_DIR so they
+    // can be read in from Matlab. (See robot/util/imuLogsTool.m)
+    void HandleImuData(const AnkiEvent<RobotInterface::RobotToEngine>& message);
 
     Result SendAbsLocalizationUpdate(const Pose3d&        pose,
                                      const TimeStamp_t&   t,

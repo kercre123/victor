@@ -342,6 +342,7 @@
               '<@(webots_includes)',
             ],
             'dependencies': [
+              'cozmoEngine',
               '<(ce-cti_gyp_path):ctiCommonRobot',
             ],
             'sources': [ '<!@(cat <(ctrlLightCube_source))' ],

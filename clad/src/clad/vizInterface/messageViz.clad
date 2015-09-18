@@ -110,7 +110,7 @@ message EraseObject
 // EraseQuad
 message EraseQuad
 {
-  uint_32 quadType,
+  VizQuadType quadType,
   uint_32 quadID,
 }
 
