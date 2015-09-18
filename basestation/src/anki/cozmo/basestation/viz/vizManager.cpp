@@ -501,19 +501,19 @@ namespace Anki {
     
     // =============== Quad methods ==================
     
-    void VizManager::EraseQuad(const VizQuadType quadType, const u32 quadID)
+    void VizManager::EraseQuad(const uint32_t quadType, const u32 quadID)
     {
       SendMessage(VizInterface::MessageViz(VizInterface::EraseQuad(quadType, quadID)));
     }
     
-    void VizManager::EraseAllQuadsWithType(const VizQuadType quadType)
+    void VizManager::EraseAllQuadsWithType(const uint32_t quadType)
     {
       EraseQuad(quadType, (uint32_t)VizConstants::ALL_QUAD_IDs);
     }
     
     void VizManager::EraseAllQuads()
     {
-      EraseQuad(VizConstants::ALL_QUAD_TYPEs, (uint32_t)VizConstants::ALL_QUAD_IDs);
+      EraseQuad((uint32_t)VizConstants::ALL_QUAD_TYPEs, (uint32_t)VizConstants::ALL_QUAD_IDs);
     }
     
     void VizManager::EraseAllPlannerObstacles(const bool isReplan)

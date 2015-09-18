@@ -273,10 +273,10 @@ namespace Anki {
       void ErasePoly(u32 polyID);
       
       // Erases the quad with the specified type and ID
-      void EraseQuad(const VizQuadType quadType, const u32 quadID);
+      void EraseQuad(const uint32_t quadType, const u32 quadID);
       
       // Erases all the quads fo the specified type
-      void EraseAllQuadsWithType(const VizQuadType quadType);
+      void EraseAllQuadsWithType(const uint32_t quadType);
       
       // Erases all quads
       void EraseAllQuads();
