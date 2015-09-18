@@ -175,14 +175,21 @@ namespace Cozmo {
     ProceduralFace proceduralFace;
     proceduralFace.SetTimeStamp(lastInterpTime);
 
-    while(proceduralFace.GetTimeStamp() < nextTime)
+    while((proceduralFace.GetTimeStamp() + IKeyFrame::SAMPLE_LENGTH_MS) <= nextTime)
     {
       // Increment interpolation time
-      proceduralFace.SetTimeStamp(proceduralFace.GetTimeStamp() + IKeyFrame::SAMPLE_LENGTH_MS);
+      auto currentBlendFrameTime = proceduralFace.GetTimeStamp() + IKeyFrame::SAMPLE_LENGTH_MS;
+      proceduralFace.SetTimeStamp(currentBlendFrameTime);
       
       // Interpolate based on time
-      const f32 blendFraction = std::min(1.f, (static_cast<f32>(proceduralFace.GetTimeStamp() - lastInterpTime) /
-                                               static_cast<f32>(nextTime - lastInterpTime)));
+      f32 blendFraction = 1.f;
+      // If there are more blending frames after this one actually calculate the blend. Otherwise this is the last
+      // frame and we should finish the interpolation
+      if ((currentBlendFrameTime + IKeyFrame::SAMPLE_LENGTH_MS) <= nextTime)
+      {
+        blendFraction = std::min(1.f, (static_cast<f32>(currentBlendFrameTime - lastInterpTime) /
+                                       static_cast<f32>(nextTime - lastInterpTime)));
+      }
       
       const bool useSaccades = true;
       proceduralFace.Interpolate(lastFace, nextFace, blendFraction, useSaccades);
@@ -213,7 +220,7 @@ namespace Cozmo {
     
     if(nextFace.HasBeenSentToRobot() == false &&
        lastFace.HasBeenSentToRobot() == true &&
-       nextTime > lastTime)
+       nextTime >= (lastTime + IKeyFrame::SAMPLE_LENGTH_MS))
     {
       lastResult = StreamProceduralFace(robot, lastFace, nextFace, _liveAnimation);
       if(RESULT_OK != lastResult) {
