@@ -136,7 +136,8 @@ namespace Cozmo {
     enum class State {
       PickingUpBlock,
       PlacingBlock,
-      Animating
+      Animating,
+      FaceDisturbedBlock
     };
     
     State _currentState;
@@ -158,6 +159,7 @@ namespace Cozmo {
     ObjectID _objectToPlaceOn;
     ObjectID _lastObjectPlacedOnGround;
     ObjectID _anchorObject; // the object the arrangement is anchored to
+    ObjectID _blockToFace;  // the disturbed block that robot should look to before acting irritated
     
     // If it fails to pickup or place the same object a certain number of times in a row
     // then delete the object. Assuming that the failures are due to not being able to see
@@ -175,6 +177,7 @@ namespace Cozmo {
     void UpdateName();
     
     void PlayAnimation(const std::string& animName);
+    void FaceDisturbedBlock(const ObjectID& objID);
     
     void MakeNeat(const ObjectID& objID);
     void MakeMessy(const ObjectID& objID);

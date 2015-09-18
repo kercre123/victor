@@ -120,7 +120,7 @@ namespace Cozmo {
     // based on current carry state.
     _animActionTags.clear();
     if (currentTime_sec - _lastNeatBlockDisturbedTime < kMajorIrritationTimeIntervalSec) {
-      PlayAnimation("Demo_OCD_Irritation_A");
+      PlayAnimation("Demo_OCD_Confused");
     } else if (currentTime_sec - _lastNewBlockObservedTime < kExcitedAboutNewBlockTimeIntervalSec) {
       PlayAnimation("Demo_OCD_New_Messy_Block");
     } else {
@@ -187,6 +187,7 @@ namespace Cozmo {
       case State::PickingUpBlock:
       case State::PlacingBlock:
       case State::Animating:
+      case State::FaceDisturbedBlock:
         break;
         
       default:
@@ -244,6 +245,10 @@ namespace Cozmo {
         
       case State::Animating:
         _stateName += "-Animating";
+        break;
+        
+      case State::FaceDisturbedBlock:
+        _stateName += "-FaceBlock";
         break;
         
       default:
@@ -1060,7 +1065,20 @@ namespace Cozmo {
               
               // Erase this animation action and resume pickOrPlace if there are no more animations pending
               _animActionTags.erase(msg.idTag);
-              if (_animActionTags.empty()) {
+              
+              // If there's a block we should face now (because it was disturbed) then do it.
+              if (_blockToFace.IsSet()) {
+                // Cancel any pending animations
+                for (auto& animTags : _animActionTags) {
+                  _robot.GetActionList().Cancel(animTags.first);
+                }
+                _animActionTags.clear();
+
+                // Face the disturbed block
+                FaceDisturbedBlock(_blockToFace);
+                _blockToFace.UnSet();
+                
+              } else if (_animActionTags.empty()) {
 
                 // Set lift to appropriate height in case animation moved it
                 if (_robot.IsCarryingObject() && !NEAR(_robot.GetLiftHeight(), LIFT_HEIGHT_CARRY, 10)) {
@@ -1084,10 +1102,22 @@ namespace Cozmo {
             }
             break;
           default:
-            BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.HandleActionCompleted.UnexpectedActionCompleteDuringAnimation", "action %d", msg.actionType);
+            //ignore
             break;
         }
-
+        break;
+      }
+      case State::FaceDisturbedBlock:
+      {
+        if (msg.actionType == RobotActionType::FACE_POSE) {
+          if (msg.result != ActionResult::SUCCESS) {
+            BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.HandleActionCompleted.FaceDisturbedBlockFailed", "result %d", msg.result);
+          }
+          PlayAnimation("Demo_OCD_Irritation_A");
+        } else {
+          BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.HandleActionCompleted.UnexpectedActionDuringFaceDisturbedBlock", "action %d", msg.actionType);
+        }
+        break;
       }
     } // switch(_currentState)
     
@@ -1130,13 +1160,30 @@ namespace Cozmo {
       
       if(IsRunning()) {
         UpdateBlockLights();
+
         
-        // Queue irritated animation
-        if (currentTime_sec - _lastNeatBlockDisturbedTime > kMajorIrritationTimeIntervalSec) {
-          PlayAnimation("Demo_OCD_Irritation_A");
-        } else {
-          PlayAnimation("VeryIrritated");
+        if (!_blockToFace.IsSet()) {
+          ObservableObject* oObject = _robot.GetBlockWorld().GetObjectByID(objectID);
+          if (oObject) {
+            // If the block was last observed _very_ recently, then react angrily
+            if (_robot.GetLastMsgTimestamp() - oObject->GetLastObservedTime() < 1000) {
+              if (currentTime_sec - _lastNeatBlockDisturbedTime > kMajorIrritationTimeIntervalSec) {
+                PlayAnimation("Demo_OCD_Irritation_A");
+              } else {
+                PlayAnimation("VeryIrritated");
+              }
+            // otherwise, act confused, face block, and act pissed.
+            } else {
+              PlayAnimation("Demo_OCD_Confused");
+              _blockToFace = objectID;
+            }
+          }
         }
+
+      } else {
+        // Set blockToFace even if behavior is not running so that if Init() is called soon after
+        // it will know which block to face
+        _blockToFace = objectID;
       }
       _lastNeatBlockDisturbedTime = currentTime_sec;
       
@@ -1256,6 +1303,17 @@ namespace Cozmo {
     _animActionTags[animAction->GetTag()] = animName;
     _robot.GetActionList().QueueActionNow(IBehavior::sActionSlot, animAction);
     UpdateName();
+  }
+  
+  void BehaviorOCD::FaceDisturbedBlock(const ObjectID& objID)
+  {
+    ObservableObject* object = _robot.GetBlockWorld().GetObjectByID(objID);
+    if (object) {
+      FacePoseAction* faceObjectAction = new FacePoseAction(object->GetPose(), DEG_TO_RAD_F32(15), PI_F);
+    
+      _robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, faceObjectAction);
+      _currentState = State::FaceDisturbedBlock;
+    }
   }
 
   void BehaviorOCD::MakeNeat(const ObjectID& objID)
