@@ -18,6 +18,9 @@
 #include "anki/common/shared/utilities_shared.h"
 #include "anki/planning/basestation/xythetaEnvironment.h"
 #include "json/json.h"
+#include "util/jsonWriter/jsonWriter.h"
+#include "util/logging/logging.h"
+#include "util/math/numericCast.h"
 #include <fstream>
 #include <iostream>
 #include <math.h>
@@ -48,16 +51,36 @@ State::State(StateID sid)
 
 bool State::Import(const Json::Value& config)
 {
-  if(!JsonTools::GetValueOptional(config, "x", x) ||
-         !JsonTools::GetValueOptional(config, "y", y) ||
-         !JsonTools::GetValueOptional(config, "theta", theta)) {
-    printf("error: could not parse State\n");
-    JsonTools::PrintJson(config, 1);
+  try {
+    if( config.isNull() ) {
+      PRINT_NAMED_ERROR("State.Import.Null", "config value is null");
+      return false;
+    }
+
+    if(!JsonTools::GetValueOptional(config, "x", x) ||
+       !JsonTools::GetValueOptional(config, "y", y) ||
+       !JsonTools::GetValueOptional(config, "theta", theta)) {
+      PRINT_NAMED_ERROR("State.Import.Invalid", "could not parse state, dump follows");
+      JsonTools::PrintJson(config, 1);
+      return false;
+    }
+  }
+  catch( const std::exception&  e ) {
+    PRINT_NAMED_ERROR("State.Import.Exception",
+                      "json exception: %s",
+                      e.what());
     return false;
   }
+
   return true;
 }
 
+void State::Dump(Util::JsonWriter& writer) const
+{
+  writer.AddEntry("x", x);
+  writer.AddEntry("y", y);
+  writer.AddEntry("theta", theta);
+}
 
 StateID State::GetStateID() const
 {
@@ -94,14 +117,71 @@ std::ostream& operator<<(std::ostream& out, const State_c& state)
 
 bool State_c::Import(const Json::Value& config)
 {
-  if(!JsonTools::GetValueOptional(config, "x_mm", x_mm) ||
-         !JsonTools::GetValueOptional(config, "y_mm", y_mm) ||
-         !JsonTools::GetValueOptional(config, "theta_rads", theta)) {
-    printf("error: could not parse State_c\n");
-    JsonTools::PrintJson(config, 1);
+  try {
+    if( config.isNull() ) {
+      PRINT_NAMED_ERROR("State_c.Import.Null", "config value is null");
+      return false;
+    }
+  
+    if(!JsonTools::GetValueOptional(config, "x_mm", x_mm) ||
+       !JsonTools::GetValueOptional(config, "y_mm", y_mm) ||
+       !JsonTools::GetValueOptional(config, "theta_rads", theta)) {
+      PRINT_NAMED_ERROR("State_c.Import.Invalid", "could not parse State_c, dump follows");
+      JsonTools::PrintJson(config, 1);
+      return false;
+    }
+  }
+  catch( const std::exception&  e ) {
+    PRINT_NAMED_ERROR("State_c.Import.Exception",
+                      "json exception: %s",
+                      e.what());
     return false;
   }
+
   return true;
+}
+
+void State_c::Dump(Util::JsonWriter& writer) const
+{
+  writer.AddEntry("x_mm", x_mm);
+  writer.AddEntry("y_mm", y_mm);
+  writer.AddEntry("theta_rads", theta);
+}
+
+bool IntermediatePosition::Import(const Json::Value& config)
+{
+  try {
+    if( config.isNull() ) {
+      PRINT_NAMED_ERROR("IntermediatePosition.Import.Null", "config value is null");
+      return false;
+    }
+
+    if( ! position.Import(config["position"]) ) {
+      return false;
+    }
+  
+    nearestTheta = config["theta"].asInt();
+    oneOverDistanceFromLastPosition = config["inverseDist"].asFloat();
+  }
+  catch( const std::exception&  e ) {
+    PRINT_NAMED_ERROR("IntermediatePosition.Import.Exception",
+                      "json exception: %s",
+                      e.what());
+    return false;
+  }
+
+
+  return true;
+}
+
+void IntermediatePosition::Dump(Util::JsonWriter& writer) const
+{
+  writer.StartGroup("position");
+  position.Dump(writer);
+  writer.EndGroup();
+
+  writer.AddEntry("theta", nearestTheta);
+  writer.AddEntry("inverseDist", oneOverDistanceFromLastPosition);
 }
 
 
@@ -399,29 +479,104 @@ void xythetaPlan::Append(const xythetaPlan& other)
 }
 
 ActionType::ActionType()
-  : extraCostFactor_(0.0)
-  , id_(-1)
-  , name_("<invalid>")
-  , reverse_(false)
+  : _extraCostFactor(0.0)
+  , _id(-1)
+  , _name("<invalid>")
+  , _reverse(false)
 {
 }
 
 bool ActionType::Import(const Json::Value& config)
 {
-  if(!JsonTools::GetValueOptional(config, "extra_cost_factor", extraCostFactor_) ||
-         !JsonTools::GetValueOptional(config, "index", id_) ||
-         !JsonTools::GetValueOptional(config, "name", name_)) {
-    printf("error: could not parse ActionType\n");
-    JsonTools::PrintJson(config, 1);
+  try {
+    if( config.isNull() ) {
+      PRINT_NAMED_ERROR("ActionType.Import.Null", "config value is null");
+      return false;
+    }
+
+    if(!JsonTools::GetValueOptional(config, "extra_cost_factor", _extraCostFactor) ||
+       !JsonTools::GetValueOptional(config, "index", _id) ||
+       !JsonTools::GetValueOptional(config, "name", _name)) {
+      printf("error: could not parse ActionType\n");
+      JsonTools::PrintJson(config, 1);
+      return false;
+    }
+    JsonTools::GetValueOptional(config, "reverse_action", _reverse);
+  }
+  catch( const std::exception&  e ) {
+    PRINT_NAMED_ERROR("ActionType.Import.Exception",
+                      "json exception: %s",
+                      e.what());
     return false;
   }
-  JsonTools::GetValueOptional(config, "reverse_action", reverse_);
 
   return true;
 }
 
+void ActionType::Dump(Util::JsonWriter& writer) const
+{
+  writer.AddEntry("extra_cost_factor", _extraCostFactor);
+  writer.AddEntry("index", _id);
+  writer.AddEntry("name", _name);
+  writer.AddEntry("reverse_action", _reverse);
+}
+
 xythetaEnvironment::~xythetaEnvironment()
 {
+}
+
+RobotActionParams::RobotActionParams()
+{
+  Reset();
+}
+
+void RobotActionParams::Reset()
+{
+  halfWheelBase_mm = 25.0;
+  maxVelocity_mmps = 60.0;
+  maxReverseVelocity_mmps = 25.0;
+  oneOverMaxVelocity = 1.0 / maxVelocity_mmps; 
+}
+
+void RobotActionParams::Dump(Util::JsonWriter& writer) const
+{
+  writer.AddEntry("halfWheelBase_mm", halfWheelBase_mm);
+  writer.AddEntry("maxVelocity_mmps", maxVelocity_mmps);
+  writer.AddEntry("maxReverseVelocity_mmps", maxReverseVelocity_mmps);
+}
+
+bool RobotActionParams::Import(const Json::Value& config)
+{
+  Reset();
+
+  try {
+
+    if( config.isNull() ) {
+      PRINT_NAMED_ERROR("RobotActionParams.Import.Null", "config value is null");
+      return false;
+    }
+  
+    halfWheelBase_mm = config.get("halfWheelBase_mm", halfWheelBase_mm).asFloat();
+    maxVelocity_mmps = config.get("maxVelocity_mmps", maxVelocity_mmps).asFloat();
+    maxReverseVelocity_mmps = config.get("maxReverseVelocity_mmps", maxReverseVelocity_mmps).asFloat();
+
+    if( NEAR_ZERO( maxVelocity_mmps ) ) {
+      PRINT_NAMED_ERROR("RobotActionParams.Import.BadVelocity", "maxVelocity_mmps of %f too close to 0",
+                        maxVelocity_mmps);
+      oneOverMaxVelocity = 1.0f;
+      return false;
+    }
+
+    oneOverMaxVelocity = 1.0 / maxVelocity_mmps;
+  }
+  catch( const std::exception&  e ) {
+    PRINT_NAMED_ERROR("RobotActionParams.Import.Exception",
+                      "json exception: %s",
+                      e.what());
+    return false;
+  }
+
+  return true;
 }
 
 
@@ -432,22 +587,12 @@ xythetaEnvironment::xythetaEnvironment()
 
   radiansPerAngle_ = 2*M_PI/numAngles_;
   oneOverRadiansPerAngle_ = (float)(1.0 / ((double)radiansPerAngle_));
-  // TODO:(bn) params!
-  halfWheelBase_mm_ = 25.0;
-  maxVelocity_mmps_ = 60.0;
-  oneOverMaxVelocity_ = 1.0 / maxVelocity_mmps_;
-  maxReverseVelocity_mmps_ = 25.0;
 }
 
-xythetaEnvironment::xythetaEnvironment(const char* mprimFilename, const char* mapFile)
+xythetaEnvironment::xythetaEnvironment(const char* mprimFilename)
 {
-  Init(mprimFilename, mapFile);
-  halfWheelBase_mm_ = 25.0;
-  maxVelocity_mmps_ = 60.0;
-  oneOverMaxVelocity_ = 1.0 / maxVelocity_mmps_;
-  maxReverseVelocity_mmps_ = 25.0;
+  Init(mprimFilename);
 }
-
 
 bool xythetaEnvironment::Init(const Json::Value& mprimJson)
 {
@@ -460,19 +605,9 @@ size_t xythetaEnvironment::GetNumObstacles() const
   return obstaclesPerAngle_[0].size();
 }
 
-bool xythetaEnvironment::Init(const char* mprimFilename, const char* mapFile)
+bool xythetaEnvironment::Init(const char* mprimFilename)
 {
   if(ReadMotionPrimitives(mprimFilename)) {
-    if(mapFile != NULL) {
-      FILE* fMap = fopen(mapFile, "r");
-      if(!ReadEnvironment(fMap)) {
-        printf("error: could not read environmenn");
-        fclose(fMap);
-        return false;
-      }
-      fclose(fMap);
-    }
-
     numAngles_ = 1<<THETA_BITS;
     obstaclesPerAngle_.resize(numAngles_);
 
@@ -480,7 +615,61 @@ bool xythetaEnvironment::Init(const char* mprimFilename, const char* mapFile)
     oneOverRadiansPerAngle_ = (float)(1.0 / ((double)radiansPerAngle_));
   }
   else {
-    printf("error: could not parse motion primitives!\n");
+    PRINT_NAMED_ERROR("xythetaEnvironemnt.Init.Fail", "could not parse motion primitives");
+    return false;
+  }
+
+  return true;
+}
+
+void xythetaEnvironment::Dump(Util::JsonWriter& writer) const
+{
+  writer.StartGroup("mprim");
+  DumpMotionPrims(writer);
+  writer.EndGroup();
+
+  writer.StartGroup("obstacles");
+  DumpObstacles(writer);
+  writer.EndGroup();
+
+  writer.StartGroup("robotParams");
+  _robotParams.Dump(writer);
+  writer.EndGroup();  
+}
+
+bool xythetaEnvironment::Import(const Json::Value& config)
+{
+  try {
+    if( config.isNull() ) {
+      PRINT_NAMED_ERROR("xythetaEnvironment.Import.Null", "config value is null");
+      return false;
+    }
+
+    if( ! config["mprim"].isNull() ) {
+      if( ! ParseMotionPrims(config["mprim"], true) ) {
+        return false;
+      }
+    }
+
+    if( ! config["obstacles"].isNull() ) {
+      if( ! ParseObstacles(config["obstacles"]) ) {
+        return false;
+      }
+    }
+
+    if( ! config["robotParams"].isNull() ) {
+      if( ! _robotParams.Import(config["robotParams"]) ) {
+        return false;
+      }
+    }
+    else {
+      _robotParams.Reset();
+    }
+  }
+  catch( const std::exception&  e ) {
+    PRINT_NAMED_ERROR("xythetaEnvironment.Import.Exception",
+                      "json exception: %s",
+                      e.what());
     return false;
   }
 
@@ -499,70 +688,218 @@ bool xythetaEnvironment::ReadMotionPrimitives(const char* mprimFilename)
         <<"'\n" << reader.getFormattedErrorMessages()<<endl;
   }
   
-  return ParseMotionPrims(mprimTree);
+  return ParseMotionPrims(mprimTree, false);
 }
 
-bool xythetaEnvironment::ParseMotionPrims(const Json::Value& config)
+bool xythetaEnvironment::ParseMotionPrims(const Json::Value& config, bool useDumpFormat)
 {
-  if(!JsonTools::GetValueOptional(config, "resolution_mm", resolution_mm_) ||
-         !JsonTools::GetValueOptional(config, "num_angles", numAngles_)) {
-    printf("error: could not find key 'resolution_mm' or 'num_angles' in motion primitives\n");
-    JsonTools::PrintJson(config, 1);
-    return false;
-  }
-
-  oneOverResolution_ = (float)(1.0 / ((double)resolution_mm_));
-
-  // parse through the action types
-  if(config["actions"].size() == 0) {
-    printf("empty or non-existant actions section! (old format, perhaps?)\n");
-    return false;
-  }
-
-  for(const auto & actionConfig : config["actions"]) {
-    ActionType at;
-    at.Import(actionConfig);
-    actionTypes_.push_back(at);
-  }
-
-  for(const auto & angle : config["angle_definitions"]) {
-    angles_.push_back(angle.asFloat());
-  }
-
-  if(angles_.size() != numAngles_) {
-    printf("ERROR: numAngles is %u, but we read %lu angle definitions\n",
-               numAngles_,
-               angles_.size());
-    return false;
-  }
-
-  // parse through each starting angle
-  if(config["angles"].size() != numAngles_) {
-    printf("error: could not find key 'angles' in motion primitives\n");
-    JsonTools::PrintJson(config, 1);
-    return false;
-  }
-
-  allMotionPrimitives_.resize(numAngles_);
-
-  unsigned int numPrims = 0;
-
-  for(unsigned int angle = 0; angle < numAngles_; ++angle) {
-    Json::Value prims = config["angles"][angle]["prims"];
-    for(unsigned int i = 0; i < prims.size(); ++i) {
-      MotionPrimitive p;
-      if(!p.Import(prims[i], angle, *this)) {
-        printf("error: failed to import motion primitive\n");
-        return false;
-      }
-      allMotionPrimitives_[angle].push_back(p);
-      numPrims++;
+  try {
+    if(!JsonTools::GetValueOptional(config, "resolution_mm", resolution_mm_) ||
+       !JsonTools::GetValueOptional(config, "num_angles", numAngles_)) {
+      printf("error: could not find key 'resolution_mm' or 'num_angles' in motion primitives\n");
+      JsonTools::PrintJson(config, 1);
+      return false;
     }
-  }
 
-  printf("adeded %d motion primitives\n", numPrims);
+    oneOverResolution_ = (float)(1.0 / ((double)resolution_mm_));
+
+    // parse through the action types
+    if(config["actions"].size() == 0) {
+      printf("empty or non-existant actions section! (old format, perhaps?)\n");
+      return false;
+    }
+
+    for(const auto & actionConfig : config["actions"]) {
+      ActionType at;
+      at.Import(actionConfig);
+      actionTypes_.push_back(at);
+    }
+
+    try {
+      for(const auto & angle : config["angle_definitions"]) {
+        angles_.push_back(angle.asFloat());
+      }
+    }
+    catch( const std::exception&  e ) {
+      PRINT_NAMED_ERROR("ParseMotionPrims.angle_definitions.Exception",
+                        "json exception: %s",
+                        e.what());
+      return false;
+    }
+
+    if(angles_.size() != numAngles_) {
+      printf("ERROR: numAngles is %u, but we read %lu angle definitions\n",
+             numAngles_,
+             angles_.size());
+      return false;
+    }
+
+    // parse through each starting angle
+    if(config["angles"].size() != numAngles_) {
+      printf("error: could not find key 'angles' in motion primitives\n");
+      JsonTools::PrintJson(config, 1);
+      return false;
+    }
+
+    allMotionPrimitives_.resize(numAngles_);
+
+    unsigned int numPrims = 0;
+
+    try {
+      for(unsigned int angle = 0; angle < numAngles_; ++angle) {
+        Json::Value prims = config["angles"][angle]["prims"];
+        for(unsigned int i = 0; i < prims.size(); ++i) {
+          MotionPrimitive p;
+
+          if( useDumpFormat ) {
+            if( ! p.Import(prims[i]) ) {
+              return false;
+            }
+          }
+          else {
+            if(!p.Create(prims[i], angle, *this)) {
+              PRINT_NAMED_ERROR("ParseMotionPrims.CreateFormat.Mprim", "failed to import motion primitive\n");
+              return false;
+            }
+          }
+
+          allMotionPrimitives_[angle].push_back(p);
+          numPrims++;
+        }
+      }
+    }
+    catch( const std::exception&  e ) {
+      PRINT_NAMED_ERROR("ParseMotionPrims.anglesPrims.Exception",
+                        "json exception: %s",
+                        e.what());
+      return false;
+    }
+
+    printf("adeded %d motion primitives\n", numPrims);
+  }
+  catch( const std::exception&  e ) {
+    PRINT_NAMED_ERROR("ParseMotionPrims.Exception",
+                      "json exception: %s",
+                      e.what());
+    return false;
+  }
 
   return true;
+}
+
+void xythetaEnvironment::DumpMotionPrims(Util::JsonWriter& writer) const
+{
+  writer.AddEntry("resolution_mm", resolution_mm_);
+  writer.AddEntry("num_angles", (int)numAngles_);
+
+  writer.StartList("actions");
+  for(const auto& action : actionTypes_) {
+    writer.NextListItem();
+    action.Dump(writer);
+  }
+  writer.EndList();
+
+  writer.StartList("angle_definitions");
+  for(const auto& angleDef : angles_) {
+    writer.AddRawListEntry(angleDef);
+  }
+  writer.EndList();
+
+  writer.StartList("angles");
+  for(unsigned int angle = 0; angle < numAngles_; ++angle) {
+    writer.NextListItem();
+    writer.StartList("prims");
+    for(const auto& prim : allMotionPrimitives_[angle]) {
+      writer.NextListItem();
+      prim.Dump(writer);
+    }
+    writer.EndList();
+  }
+  writer.EndList();  
+}
+
+bool xythetaEnvironment::ParseObstacles(const Json::Value& config)
+{
+  try {
+    if( numAngles_ == 0 || config["angles"].isNull() ) {
+      PRINT_NAMED_ERROR("xythetaEnvironment.ParseObstacles.InvalidObjectAngles",
+                        "numAngles_ = %d",
+                        numAngles_);
+      return false;
+    }
+
+    if( numAngles_ != config["angles"].size() ) {
+      PRINT_NAMED_ERROR("xythetaEnvironment.ParseObstacles.AnglesMismatch",
+                        "this has %d angles, but json has %d",
+                        numAngles_,
+                        config.size());
+      return false;
+    }
+
+    obstaclesPerAngle_.clear();
+    obstaclesPerAngle_.resize(numAngles_);
+
+    for( int theta = 0; theta < numAngles_; ++theta ) {
+
+      if( config["angles"][theta]["obstacles"].isNull() ) {
+        PRINT_NAMED_ERROR("xythetaEnvironment.ParseObstacles.badConfig",
+                          "theta %d contains invalid obstacle (dump follows)",
+                          theta);
+        JsonTools::PrintJson( config["angles"][theta], 3 );
+        return false;
+      }
+
+      for( const auto& obsConfig : config["angles"][theta]["obstacles"] ) {
+        if( obsConfig["cost"].isNull() ) {
+          PRINT_NAMED_ERROR("xythetaEnvironment.ParseObstacles.badConfig",
+                            "theta %d contains invalid obstacle (dump follows)",
+                            theta);
+          JsonTools::PrintJson( obsConfig["cost"], 3 );
+          return false;
+        }
+
+        Cost c = Util::numeric_cast<Cost>(obsConfig["cost"].asFloat());
+        Poly2f p;
+
+        for( const auto& ptConfig : obsConfig["poly"] ) {
+          p.push_back( Point2f{ ptConfig["x"].asFloat(), ptConfig["y"].asFloat() } );
+        }
+
+        obstaclesPerAngle_[theta].push_back( std::make_pair( FastPolygon{ p }, c ) );
+      }
+    }
+  }
+  catch( const std::exception&  e ) {
+    PRINT_NAMED_ERROR("ParseObstacles.Exception",
+                      "json exception: %s",
+                      e.what());
+    return false;
+  }
+
+  return true;
+}
+
+void xythetaEnvironment::DumpObstacles(Util::JsonWriter& writer) const
+{
+  writer.StartList("angles");
+  for(const auto& angle : obstaclesPerAngle_) {
+    writer.NextListItem();
+    writer.StartList("obstacles");
+    for(const auto& obs : angle) {
+      writer.NextListItem();
+      writer.AddEntry("cost", obs.second);
+
+      writer.StartList("poly");      
+      for(const auto pt : obs.first.GetSimplePolygon()) {
+        writer.NextListItem();
+        writer.AddEntry("x", pt.x());
+        writer.AddEntry("y", pt.y());
+      }
+      writer.EndList();
+    }
+    writer.EndList();
+  }
+  writer.EndList();
 }
 
 void xythetaEnvironment::AddObstacle(const Quad2f& quad, Cost cost)
@@ -719,7 +1056,7 @@ const FastPolygon& xythetaEnvironment::AddObstacleWithExpansion(const Poly2f& ob
 }
 
 
-bool MotionPrimitive::Import(const Json::Value& config, StateTheta startingAngle, const xythetaEnvironment& env)
+bool MotionPrimitive::Create(const Json::Value& config, StateTheta startingAngle, const xythetaEnvironment& env)
 {
   startTheta = startingAngle;
 
@@ -755,7 +1092,9 @@ bool MotionPrimitive::Import(const Json::Value& config, StateTheta startingAngle
       float cost = dist;
 
       Radians deltaTheta = Radians(s.theta) - Radians(old.theta);
-      cost += std::abs(deltaTheta.ToFloat()) * env.GetHalfWheelBase_mm() * env.GetOneOverMaxVelocity();
+      cost += std::abs(deltaTheta.ToFloat()) *
+        env._robotParams.halfWheelBase_mm *
+        env._robotParams.oneOverMaxVelocity;
 
       penalty = 1.0 / cost;
     }
@@ -768,12 +1107,12 @@ bool MotionPrimitive::Import(const Json::Value& config, StateTheta startingAngle
     return false;
   }
 
-  double linearSpeed = env.GetMaxVelocity_mmps();
-  double oneOverLinearSpeed = env.GetOneOverMaxVelocity();
+  double linearSpeed = env._robotParams.maxVelocity_mmps;
+  double oneOverLinearSpeed = env._robotParams.oneOverMaxVelocity;
   bool isReverse = env.GetActionType(id).IsReverseAction();
   if(isReverse) {
     linearSpeed = env.GetMaxReverseVelocity_mmps();
-    oneOverLinearSpeed = 1.0 / env.GetMaxReverseVelocity_mmps();
+    oneOverLinearSpeed = 1.0 / env._robotParams.maxReverseVelocity_mmps;
   }
 
   // Compute cost based on the action. Cost is time in seconds
@@ -808,7 +1147,7 @@ bool MotionPrimitive::Import(const Json::Value& config, StateTheta startingAngle
 
     // the radius of the circle that the outer wheel will follow
     double turningRadius = std::abs(config["arc"]["radius_mm"].asDouble());
-    double radius_mm = turningRadius + env.GetHalfWheelBase_mm();
+    double radius_mm = turningRadius + env._robotParams.halfWheelBase_mm;
 
     // the total time is the arclength of the outer wheel arc divided by the max outer wheel speed
     Cost arcTime = deltaTheta * radius_mm * oneOverLinearSpeed;
@@ -839,7 +1178,7 @@ bool MotionPrimitive::Import(const Json::Value& config, StateTheta startingAngle
     Radians startRads(env.GetTheta_c(startTheta));
     double deltaTheta = startRads.angularDistance(env.GetTheta_c(endStateOffset.theta), direction < 0);
 
-    Cost turnTime = std::abs(deltaTheta) * env.GetHalfWheelBase_mm() * oneOverLinearSpeed;
+    Cost turnTime = std::abs(deltaTheta) * env._robotParams.halfWheelBase_mm * oneOverLinearSpeed;
     cost += turnTime;
 
     float rotSpeed = deltaTheta / turnTime;
@@ -880,6 +1219,81 @@ bool MotionPrimitive::Import(const Json::Value& config, StateTheta startingAngle
 
   return true;
 }
+
+bool MotionPrimitive::Import(const Json::Value& config)
+{
+  try {
+    if( config.isNull() ) {
+      return false;
+    }
+
+    if( config["action_index"].isNull() ) {
+      PRINT_NAMED_ERROR("MotionPrimitive.Import.InvalidConfig",
+                        "no action_index in config. dump follows");
+      JsonTools::PrintJson(config, 3);
+      return false;
+    }
+
+    if( config["cost"].isNull() ) {
+      PRINT_NAMED_ERROR("MotionPrimitive.Import.InvalidConfig2",
+                        "missing 'cost' key. Did you mean to call Create() instead of Import()?");
+      JsonTools::PrintJson(config, 3);
+      return false;
+    }
+
+    id = config["action_index"].asInt();
+    startTheta = config["start_theta"].asInt();
+    cost = config["cost"].asFloat();
+    if( ! endStateOffset.Import(config["end_state_offset"]) ) {
+      return false;
+    }
+  
+    if(config["intermediate_poses"].size() <= 1 ) {
+      PRINT_NAMED_ERROR("MotionPrimitive.Import.InvalidConfig3",
+                        "'intermediate_poses' size %d too small (or not a list). Dump follows",
+                        config["intermediate_poses"].size());
+      JsonTools::PrintJson(config["intermediate_poses"], 3);
+      return false;
+    }
+
+    intermediatePositions.clear();
+
+    for(const auto& poseConfig : config["intermediate_poses"]) {
+      IntermediatePosition p;
+      if( ! p.Import( poseConfig ) ) {
+        return false;
+      }
+      intermediatePositions.push_back(p);
+    }
+  }
+  catch( const std::exception&  e ) {
+    PRINT_NAMED_ERROR("MotionPrimitive.Import.Exception",
+                      "json exception: %s",
+                      e.what());
+    return false;
+  }
+
+  return true;
+}
+
+void MotionPrimitive::Dump(Util::JsonWriter& writer) const // TEMP:  // TEMP: all dumps should be const
+{
+  writer.AddEntry("action_index", id);
+  writer.AddEntry("start_theta", startTheta);
+  writer.AddEntry("cost", cost);
+
+  writer.StartGroup("end_state_offset");
+  endStateOffset.Dump(writer);
+  writer.EndGroup();
+
+  writer.StartList("intermediate_poses");
+  for(const auto& pose : intermediatePositions) {
+    writer.NextListItem();
+    pose.Dump(writer);
+  }
+  writer.EndList();
+}
+
 
 u8 MotionPrimitive::AddSegmentsToPath(State_c start, Path& path) const
 {
@@ -1011,31 +1425,6 @@ float xythetaEnvironment::GetDistanceBetween(const State_c& start, const State_c
     + pow(end.y_mm - start.y_mm, 2);
 
   return sqrtf(distSq);
-}
-
-bool xythetaEnvironment::ReadEnvironment(FILE* fEnv)
-{
-  //float x0,y0,x1,y1,len;
-
-  assert(false);
-
-  // TEMP: fix this with polygons
-
-  // while(fscanf(fEnv, "%f %f %f %f %f", &x0, &y0, &x1, &y1, &len) == 5) {
-  //   obstacles_.emplace_back(std::make_pair(RotatedRectangle{x0, y0, x1, y1, len}, FATAL_OBSTACLE_COST));
-  // }
-
-  return true;
-}
-
-void xythetaEnvironment::WriteEnvironment(const char *filename) const
-{
-  // ofstream outfile(filename);
-  // for(const auto& it : obstacles_) {
-  //   it.first.Dump(outfile);
-  // }
-  assert(false);
-  // TEMP: fix this with polygons
 }
 
 SuccessorIterator xythetaEnvironment::GetSuccessors(StateID startID, Cost currG) const

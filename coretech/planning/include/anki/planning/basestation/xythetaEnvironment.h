@@ -18,6 +18,10 @@ namespace Anki
 
 class RotatedRectangle;
 
+namespace Util {
+class JsonWriter;
+}
+
 namespace Planning
 {
 
@@ -63,6 +67,7 @@ public:
 
   // returns true if successful
   bool Import(const Json::Value& config);
+  void Dump(Util::JsonWriter& writer) const;
 
   bool operator==(const State& other) const;
   bool operator!=(const State& other) const;
@@ -115,6 +120,7 @@ public:
 
   // returns true if successful
   bool Import(const Json::Value& config);
+  void Dump(Util::JsonWriter& writer) const;
 
   float x_mm;
   float y_mm;
@@ -123,12 +129,22 @@ public:
 
 struct IntermediatePosition
 {
+  IntermediatePosition()
+    : nearestTheta(0)
+    , oneOverDistanceFromLastPosition(1.0f)
+    {
+    }
+
   IntermediatePosition(State_c s, StateTheta nearestTheta, float d)
     : position(s)
     , nearestTheta(nearestTheta)
     , oneOverDistanceFromLastPosition(d)
     {
     }
+
+  // returns true on success
+  bool Import(const Json::Value& config);
+  void Dump(Util::JsonWriter& writer) const;
 
   State_c position;
   StateTheta nearestTheta;
@@ -141,8 +157,13 @@ public:
 
   MotionPrimitive() {}
 
-  // returns true if successful
-  bool Import(const Json::Value& config, StateTheta startingAngle, const xythetaEnvironment& env);
+  // reads raw primitive config and uses the starting angle and environment to compute what is needed
+  // Returns true if successful
+  bool Create(const Json::Value& config, StateTheta startingAngle, const xythetaEnvironment& env);
+
+  // returns true if successful, reads a complete config as created by the Dump() call
+  bool Import(const Json::Value& config);
+  void Dump(Util::JsonWriter& writer) const;
 
   // returns the minimum PathSegmentOffset associated with this action
   u8 AddSegmentsToPath(State_c start, Path& path) const;
@@ -248,43 +269,70 @@ public:
 
   // returns true if successful
   bool Import(const Json::Value& config);
+  void Dump(Util::JsonWriter& writer) const;
 
-  const std::string& GetName() const {return name_;}
-  Cost GetExtraCostFactor() const {return extraCostFactor_;}  
-  bool IsReverseAction() const {return reverse_;}
+
+  const std::string& GetName() const {return _name;}
+  Cost GetExtraCostFactor() const {return _extraCostFactor;}  
+  bool IsReverseAction() const {return _reverse;}
 
 private:
 
-  Cost extraCostFactor_;
-  ActionID id_;
-  std::string name_;
-  bool reverse_;
+  Cost _extraCostFactor;
+  ActionID _id;
+  std::string _name;
+  bool _reverse;
 };
+
+
+// This struct holds values that the motions will use to calculate costs, based on the turning radius and
+// velocity of the robot
+struct RobotActionParams
+{
+  RobotActionParams();
+
+  void Reset();
+
+  // returns true on success
+  bool Import(const Json::Value& config);
+  void Dump(Util::JsonWriter& writer) const;
+
+  double halfWheelBase_mm;
+  double maxVelocity_mmps;
+  double maxReverseVelocity_mmps;
+  double oneOverMaxVelocity;
+};
+
 
 class xythetaEnvironment
 {
   friend class SuccessorIterator;
+  friend class MotionPrimitive;
 public:
   // for testing, has no prims or map!
   xythetaEnvironment();
 
   // just for now, eventually we won't use filenames like this, obviously......
   // TEMP: remove this and only use Init instead
-  xythetaEnvironment(const char* mprimFilename, const char* mapFile);
+  xythetaEnvironment(const char* mprimFilename);
 
   ~xythetaEnvironment();
 
   // returns true if everything worked
-  bool Init(const char* mprimFilename, const char* mapFile);
+  bool Init(const char* mprimFilename);
 
   // inits with motion primitives and an empty environment
   bool Init(const Json::Value& mprimJson);
 
-  // dumps the obstacles to the given map file
-  void WriteEnvironment(const char* mapFile) const;
-
   // Imports motion primitives from the given json file. Returns true if success
   bool ReadMotionPrimitives(const char* mprimFilename);
+
+  // Dumps the entire environment to JSON. after dumping, deleting, then importing, the environment should be
+  // identical
+  void Dump(Util::JsonWriter& writer) const;
+
+  // Imports the environment from the config. Returns true on success
+  bool Import(const Json::Value& config);
 
   // defaults to a fatal obstacle  // TEMP: will be removed
   void AddObstacle(const RotatedRectangle& rect, Cost cost = FATAL_OBSTACLE_COST);
@@ -429,21 +477,25 @@ public:
   // path. Also updates plan to set the robotPathSegmentIdx_
   void AppendToPath(xythetaPlan& plan, Path& path) const;
 
-  // TODO:(bn) move these??
+  double GetMaxVelocity_mmps() const {return _robotParams.maxVelocity_mmps;}
+  double GetMaxReverseVelocity_mmps() const {return _robotParams.maxReverseVelocity_mmps;}
+  double GetOneOverMaxVelocity() const {return _robotParams.oneOverMaxVelocity;}
 
-  double GetHalfWheelBase_mm() const {return halfWheelBase_mm_;}
-  double GetMaxVelocity_mmps() const {return maxVelocity_mmps_;}
-  double GetMaxReverseVelocity_mmps() const {return maxReverseVelocity_mmps_;}
-
-  double GetOneOverMaxVelocity() const {return oneOverMaxVelocity_;}
+  // TEMP:  // TEMP:  // TEMP: call this with the real values
+  void SetRobotActionParams(double halfWheelBase_mm,
+                            double maxVelocity_mmps,
+                            double maxReverseVelocity_mmps);
 
   float GetResolution_mm() const { return resolution_mm_; }
 
 private:
 
   // returns true on success
-  bool ReadEnvironment(FILE* fEnv);
-  bool ParseMotionPrims(const Json::Value& config);
+  bool ParseMotionPrims(const Json::Value& config, bool useDumpFormat = false);
+  bool ParseObstacles(const Json::Value& config);
+
+  void DumpMotionPrims(Util::JsonWriter& writer) const;
+  void DumpObstacles(Util::JsonWriter& writer) const;
 
   float resolution_mm_;
   float oneOverResolution_;
@@ -456,11 +508,7 @@ private:
   float oneOverRadiansPerAngle_;
 
   // First index is starting angle, second is prim ID
-  std::vector< std::vector<MotionPrimitive> > allMotionPrimitives_;
-
-  // Obstacles per theta. First index is theta, second of pair is cost
-  std::vector< std::vector< std::pair<FastPolygon, Cost> > > obstaclesPerAngle_;
-  
+  std::vector< std::vector<MotionPrimitive> > allMotionPrimitives_;  
 
   // index is actionID
   std::vector<ActionType> actionTypes_;
@@ -470,12 +518,11 @@ private:
   // evenly divided (see docs)  // TODO:(bn) write docs....
   std::vector<float> angles_;
 
-  // robot parameters. These probably don't belong here, but are needed for computing costs
+  // Obstacles per theta. First index is theta, second of pair is cost
+  std::vector< std::vector< std::pair<FastPolygon, Cost> > > obstaclesPerAngle_;
 
-  double halfWheelBase_mm_;
-  double maxVelocity_mmps_;
-  double maxReverseVelocity_mmps_;
-  double oneOverMaxVelocity_;
+  // TODO:(bn) this won't support multiple different robots!
+  RobotActionParams _robotParams;
 };
 
 bool xythetaEnvironment::GetMotion(StateTheta theta, ActionID actionID, MotionPrimitive& prim) const

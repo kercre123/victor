@@ -5,8 +5,8 @@
  * Created: 2015-09-14
  *
  * Description: The context is the interface between the xythetaPlanner and the rest of the world. All
- * parameters and access flows through this context, which makes it easy to save and load the entire context
- * for reproducibilty
+ *              parameters and access flows through this context, which makes it easy to save and load the
+ *              entire context for reproducibilty
  *
  * Copyright: Anki, Inc. 2015
  *
@@ -16,26 +16,27 @@
 #define _ANKICORETECH_PLANNING_XYTHETA_PLANNER_CONTEXT_H_
 
 #include "anki/planning/basestation/xythetaEnvironment.h"
+#include "json/json-forwards.h"
 #include "util/helpers/noncopyable.h"
 
 namespace Anki {
+
+namespace Util {
+class JsonWriter;
+}
+
 namespace Planning {
 
 // Copying the environment would be expensive, and there's no reason we should need to
 struct xythetaPlannerContext : private Util::noncopyable
 {
-  xythetaPlannerContext()
-    {
-      Reset();
-    }
+  xythetaPlannerContext();
 
-  void Reset() {
-    goal = State_c{ 0.0f, 0.0f, 0.0f };
-    start = State_c{ 0.0f, 0.0f, 0.0f };
-    allowFreeTurnInPlaceAtGoal = false;
-    forceReplanFromScratch = false;
-    env.ClearObstacles();
-  }
+  void Reset();
+
+  // returns true if successful
+  bool Import(const Json::Value& config);
+  void Dump(Util::JsonWriter& writer) const;
 
   xythetaEnvironment env;
 

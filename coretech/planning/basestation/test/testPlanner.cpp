@@ -1,5 +1,6 @@
-#include "util/helpers/includeGTest.h" // Used in place of gTest/gTest.h directly to suppress warnings in the header
 #include "anki/common/constantsAndMacros.h"
+#include "util/helpers/includeGTest.h" // Used in place of gTest/gTest.h directly to suppress warnings in the header
+#include "util/logging/logging.h"
 #include <set>
 #include <vector>
 
@@ -10,6 +11,8 @@
 #include "anki/planning/basestation/xythetaEnvironment.h"
 #include "anki/planning/basestation/xythetaPlanner.h"
 #include "anki/planning/basestation/xythetaPlannerContext.h"
+#include "util/jsonWriter/jsonWriter.h"
+#include "json/json.h"
 
 // hack just for unit testing, don't do this outside of tests
 #include "xythetaPlanner_internal.h"
@@ -77,6 +80,71 @@ GTEST_TEST(TestPlanner, PlanAroundBox)
 
   ASSERT_TRUE(planner.Replan());
   EXPECT_TRUE(context.env.PlanIsSafe(planner.GetPlan(), 0));
+}
+
+GTEST_TEST(TestPlanner, PlanAroundBoxDumpAndImportContext)
+{
+  // Assuming this is running from root/build......
+  xythetaPlannerContext context;
+
+  // TODO:(bn) open something saved in the test dir isntead, so we
+  // know not to change or remove it
+  EXPECT_TRUE(context.env.ReadMotionPrimitives((std::string(QUOTE(TEST_DATA_PATH)) + std::string(TEST_PRIM_FILE)).c_str()));
+
+
+  context.env.AddObstacle(Anki::RotatedRectangle(50.0, -10.0, 80.0, -10.0, 20.0));
+
+  xythetaPlanner planner(context);
+
+  State_c start(0, 0, 0);
+  State_c goal(200, 0, 0);
+
+  context.start = start;
+  context.goal = goal;
+  
+  ASSERT_TRUE(planner.GoalIsValid());
+  ASSERT_TRUE(planner.StartIsValid());
+
+  ASSERT_TRUE(planner.Replan());
+  EXPECT_TRUE(context.env.PlanIsSafe(planner.GetPlan(), 0));
+
+  std::stringstream jsonSS;
+  Anki::Util::JsonWriter writer(jsonSS);
+  context.Dump(writer);
+  writer.Close();
+
+  Json::Reader jsonReader;
+  Json::Value config;
+  ASSERT_TRUE( jsonReader.parse(jsonSS.str(), config) ) << "json parsing error";
+
+  xythetaPlannerContext context2;
+  ASSERT_TRUE( context2.Import( config ) );
+
+  xythetaPlanner planner2(context2);
+
+  ASSERT_TRUE(planner2.GoalIsValid());
+  ASSERT_TRUE(planner2.StartIsValid());
+
+  ASSERT_TRUE(planner2.Replan());
+  EXPECT_TRUE(context2.env.PlanIsSafe(planner2.GetPlan(), 0));
+
+  // now check that the plans match. I'm not doing floating point equality here, so they may be a bit
+  // different, but not much
+  
+  float tol = planner.GetFinalCost() * 0.05f;
+  if( tol < 0.1f ) {
+    tol = 0.1f;
+  }
+  EXPECT_NEAR( planner.GetFinalCost(), planner2.GetFinalCost(), tol );
+
+  ASSERT_EQ(planner.GetPlan().actions_.size(), planner2.GetPlan().actions_.size());
+  for(int a=0; a < planner.GetPlan().actions_.size(); ++a) {
+    ASSERT_EQ( planner.GetPlan().actions_[a], planner2.GetPlan().actions_[a] )
+      << "action # "<<a<<" mismatches";
+    ASSERT_NEAR( planner.GetPlan().penalties_[a], planner2.GetPlan().penalties_[a], tol )
+      << "penalty # "<<a<<" mismatches";
+  }
+
 }
 
 GTEST_TEST(TestPlanner, PlanAroundBox_soft)
