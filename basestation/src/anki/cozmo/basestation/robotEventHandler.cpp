@@ -176,6 +176,7 @@ IActionRunner* GetFaceObjectActionHelper(Robot& robot, const ExternalInterface::
   return new FaceObjectAction(objectID,
                               Radians(msg.turnAngleTol),
                               Radians(msg.maxTurnAngle),
+                              msg.visuallyVerifyWhenDone,
                               msg.headTrackWhenDone);
 }
   

@@ -538,7 +538,7 @@ namespace Anki {
       // Make sure we can see the object, unless we are carrying it (i.e. if we
       // are doing a DriveToPlaceCarriedObject action)
       if(!object->IsBeingCarried()) {
-        _compoundAction.AddAction(new VisuallyVerifyObjectAction(_objectID));
+        _compoundAction.AddAction(new FaceObjectAction(_objectID, Radians(0), Radians(0), true, false));
       }
       
       _compoundAction.SetIsPartOfCompoundAction(true);
@@ -822,19 +822,19 @@ namespace Anki {
         const Radians turnAngle = std::atan2(_poseWrtRobot.GetTranslation().y(),
                                              _poseWrtRobot.GetTranslation().x());
         
-        PRINT_NAMED_INFO("FaceObjectAction.Init.TurnAngle",
+        PRINT_NAMED_INFO("FacePoseAction.Init.TurnAngle",
                          "Computed turn angle = %.1fdeg\n", turnAngle.getDegrees());
         
         if(turnAngle.getAbsoluteVal() < _maxTurnAngle) {
           if(turnAngle.getAbsoluteVal() > _turnAngleTol) {
             _compoundAction.AddAction(new TurnInPlaceAction(turnAngle, false));
           } else {
-            PRINT_NAMED_INFO("FaceObjectAction.Init.NoTurnNeeded",
+            PRINT_NAMED_INFO("FacePoseAction.Init.NoTurnNeeded",
                              "Required turn angle of %.1fdeg is within tolerance of %.1fdeg. Not turning.\n",
                              turnAngle.getDegrees(), _turnAngleTol.getDegrees());
           }
         } else {
-          PRINT_NAMED_ERROR("FaceObjectAction.Init.RequiredTurnTooLarge",
+          PRINT_NAMED_ERROR("FacePoseAction.Init.RequiredTurnTooLarge",
                             "Required turn angle of %.1fdeg is larger than max angle of %.1fdeg.\n",
                             turnAngle.getDegrees(), _maxTurnAngle.getDegrees());
           return ActionResult::FAILURE_ABORT;
@@ -868,25 +868,29 @@ namespace Anki {
       static const std::string name("FacePoseAction");
       return name;
     }
-    
+
 #pragma mark ---- FaceObjectAction ----
     
     FaceObjectAction::FaceObjectAction(ObjectID objectID, Radians turnAngleTol,
-                                       Radians maxTurnAngle, bool headTrackWhenDone)
+                                       Radians maxTurnAngle,
+                                       bool visuallyVerifyWhenDone,
+                                       bool headTrackWhenDone)
     : FaceObjectAction(objectID, Vision::Marker::ANY_CODE,
-                       turnAngleTol, maxTurnAngle, headTrackWhenDone)
+                       turnAngleTol, maxTurnAngle, visuallyVerifyWhenDone, headTrackWhenDone)
     {
       
     }
     
     FaceObjectAction::FaceObjectAction(ObjectID objectID, Vision::Marker::Code whichCode,
                                        Radians turnAngleTol,
-                                       Radians maxTurnAngle, bool headTrackWhenDone)
+                                       Radians maxTurnAngle,
+                                       bool visuallyVerifyWhenDone,
+                                       bool headTrackWhenDone)
     : FacePoseAction(turnAngleTol, maxTurnAngle)
-    , _compoundActionDone(false)
+    , _facePoseCompoundActionDone(false)
     , _objectID(objectID)
     , _whichCode(whichCode)
-    , _waitToVerifyTime(-1.f)
+    , _visuallyVerifyWhenDone(visuallyVerifyWhenDone)
     , _headTrackWhenDone(headTrackWhenDone)
     {
 
@@ -895,7 +899,7 @@ namespace Anki {
     void FaceObjectAction::Reset()
     {
       FacePoseAction::Reset();
-      _compoundActionDone = false;
+      _facePoseCompoundActionDone = false;
     }
     
     Radians FaceObjectAction::GetHeadAngle(f32 heightDiff)
@@ -913,7 +917,6 @@ namespace Anki {
     
     ActionResult FaceObjectAction::Init(Robot &robot)
     {
-      _waitToVerifyTime = -1.f;
       
       ObservableObject* object = robot.GetBlockWorld().GetObjectByID(_objectID);
       if(object == nullptr) {
@@ -989,8 +992,9 @@ namespace Anki {
       // Can't track head to an object and face it
       robot.DisableTrackToObject();
       
-      // Get lift out of the way
-      _compoundAction.AddAction(new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::OUT_OF_FOV));
+      if (_visuallyVerifyWhenDone) {
+        _visuallyVerifyAction.AddAction(new VisuallyVerifyObjectAction(_objectID, _whichCode));
+      }
       
       return ActionResult::SUCCESS;
     } // FaceObjectAction::Init()
@@ -998,76 +1002,24 @@ namespace Anki {
     ActionResult FaceObjectAction::CheckIfDone(Robot& robot)
     {
       // Tick the compound action until it completes
-      if(!_compoundActionDone) {
+      if(!_facePoseCompoundActionDone) {
         ActionResult compoundResult = FacePoseAction::CheckIfDone(robot);
         
         if(compoundResult != ActionResult::SUCCESS) {
           return compoundResult;
         } else {
-          _compoundActionDone = true;
+          _facePoseCompoundActionDone = true;
         }
       }
 
-      // While head is moving to verification angle, this shouldn't count towards the waitToVerifyTime
-      if (robot.IsHeadMoving()) {
-        _waitToVerifyTime = -1;
-      }
-
-      const f32 currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-      if(_waitToVerifyTime < 0.f) {
-        _waitToVerifyTime = currentTime + GetWaitToVerifyTime();
-      }
-
-      if(currentTime < _waitToVerifyTime) {
-        return ActionResult::RUNNING;
-      }
-      
       // If we get here, _compoundAction completed returned SUCCESS. So we can
       // can continue with our additional checks:
-      
-      // Verify that we can see the object we were interested in
-      ObservableObject* object = robot.GetBlockWorld().GetObjectByID(_objectID);
-      if(object == nullptr) {
-        PRINT_NAMED_ERROR("FaceObjectAction.CheckIfDone.ObjectNotFound",
-                          "Object with ID=%d no longer exists in the world.\n",
-                          _objectID.GetValue());
-        return ActionResult::FAILURE_ABORT;
-      }
-      
-      const TimeStamp_t lastObserved = object->GetLastObservedTime();
-      if (lastObserved < robot.GetLastImageTimeStamp() - DOCK_OBJECT_LAST_OBSERVED_TIME_THRESH_MS)
-      {
-        PRINT_NAMED_WARNING("FaceObjectAction.CheckIfDone.ObjectNotFound",
-                            "Object still exists, but not seen since %d (Current time = %d)\n",
-                            lastObserved, robot.GetLastImageTimeStamp());
-        return ActionResult::FAILURE_ABORT;
-      }
-      
-      if(_whichCode != Vision::Marker::ANY_CODE) {
-        std::vector<const Vision::KnownMarker*> observedMarkers;
-        object->GetObservedMarkers(observedMarkers, robot.GetLastImageTimeStamp() - DOCK_OBJECT_LAST_OBSERVED_TIME_THRESH_MS);
-        
-        bool markerWithCodeSeen = false;
-        for(auto marker : observedMarkers) {
-          if(marker->GetCode() == _whichCode) {
-            markerWithCodeSeen = true;
-            break;
-          }
-        }
-        
-        if(!markerWithCodeSeen) {
-          // TODO: Find causes of this and turn it back into an error/failure (COZMO-140)
-          
-          std::string observedMarkerNames;
-          for(auto marker : observedMarkers) {
-            observedMarkerNames += Vision::MarkerTypeStrings[marker->GetCode()];
-            observedMarkerNames += " ";
-          }
-          
-          PRINT_NAMED_WARNING("FaceObjectAction.CheckIfDone.MarkerCodeNotSeen",
-                              "Object %d observed, but not expected marker: %s. Instead saw: %s\n",
-                              _objectID.GetValue(), Vision::MarkerTypeStrings[_whichCode], observedMarkerNames.c_str());
-          //return ActionResult::FAILURE_ABORT;
+      if (_visuallyVerifyWhenDone) {
+        ActionResult verificationResult = _visuallyVerifyAction.Update(robot);
+        if (verificationResult != ActionResult::SUCCESS) {
+          return verificationResult;
+        } else {
+          _visuallyVerifyWhenDone = false;
         }
       }
 
@@ -1091,12 +1043,21 @@ namespace Anki {
       return name;
     }
     
+    void FaceObjectAction::GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const
+    {
+      completionInfo.numObjects = 1;
+      completionInfo.objectIDs[0] = _objectID;
+    }
+    
     
 #pragma mark ---- VisuallyVerifyObjectAction ----
     
     VisuallyVerifyObjectAction::VisuallyVerifyObjectAction(ObjectID objectID,
                                                            Vision::Marker::Code whichCode)
-    : FaceObjectAction(objectID, whichCode, 0, 0, false)
+    : _objectID(objectID)
+    , _whichCode(whichCode)
+    , _waitToVerifyTime(-1)
+    , _compoundActionDone(false)
     {
       
     }
@@ -1108,29 +1069,102 @@ namespace Anki {
       return name;
     }
     
-    /*
+
     ActionResult VisuallyVerifyObjectAction::Init(Robot& robot)
     {
-      
+      // Get lift out of the way
+      _compoundAction.AddAction(new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::OUT_OF_FOV));
+      _compoundActionDone = false;
+      _waitToVerifyTime = -1.f;
+      return ActionResult::SUCCESS;
     }
+
     
     ActionResult VisuallyVerifyObjectAction::CheckIfDone(Robot& robot)
     {
-      ActionResult result = SUCCESS;
+
+      ActionResult actionRes = ActionResult::RUNNING;
       
-      if(!_faceObjectComplete) {
-        result = FaceObjectAction::CheckIfDone(robot);
+      if (!_compoundActionDone) {
+        actionRes = _compoundAction.Update(robot);
+        if (actionRes != ActionResult::SUCCESS) {
+          if (actionRes != ActionResult::RUNNING) {
+            PRINT_NAMED_WARNING("VisuallyVerifyObjectAction.CheckIfDone.CompoundActionFailed",
+                              "Failed to move lift out of FOV. Action result = %d\n", actionRes);
+          }
+          return actionRes;
+        }
+        _compoundActionDone = true;
+      }
+
+      
+      // While head is moving to verification angle, this shouldn't count towards the waitToVerifyTime
+      // TODO: Should this check if it's moving at all?
+      if (robot.IsHeadMoving()) {
+        _waitToVerifyTime = -1;
       }
       
-      if(result == SUCCESS) {
-        // Don't keep running FaceObjectAction::CheckIfDone() above
-        _faceObjectComplete = true;
-        
-        
-        
+      const f32 currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+      if(_waitToVerifyTime < 0.f) {
+        _waitToVerifyTime = currentTime + GetWaitToVerifyTime();
       }
+      
+      
+      // Verify that we can see the object we were interested in
+      ObservableObject* object = robot.GetBlockWorld().GetObjectByID(_objectID);
+      if(object == nullptr) {
+        PRINT_NAMED_ERROR("VisuallyVerifyObjectAction.CheckIfDone.ObjectNotFound",
+                          "Object with ID=%d no longer exists in the world.\n",
+                          _objectID.GetValue());
+        return ActionResult::FAILURE_ABORT;
+      }
+      
+      const TimeStamp_t lastObserved = object->GetLastObservedTime();
+      if (lastObserved < robot.GetLastImageTimeStamp() - DOCK_OBJECT_LAST_OBSERVED_TIME_THRESH_MS)
+      {
+        PRINT_NAMED_WARNING("VisuallyVerifyObjectAction.CheckIfDone.ObjectNotFound",
+                            "Object still exists, but not seen since %d (Current time = %d)\n",
+                            lastObserved, robot.GetLastImageTimeStamp());
+        actionRes = ActionResult::FAILURE_ABORT;
+      }
+      
+      if((actionRes != ActionResult::FAILURE_ABORT) && (_whichCode != Vision::Marker::ANY_CODE)) {
+        std::vector<const Vision::KnownMarker*> observedMarkers;
+        object->GetObservedMarkers(observedMarkers, robot.GetLastImageTimeStamp() - DOCK_OBJECT_LAST_OBSERVED_TIME_THRESH_MS);
+        
+        bool markerWithCodeSeen = false;
+        for(auto marker : observedMarkers) {
+          if(marker->GetCode() == _whichCode) {
+            markerWithCodeSeen = true;
+            break;
+          }
+        }
+        
+        if(!markerWithCodeSeen) {
+          // TODO: Find causes of this and turn it back into an error/failure (COZMO-140)
+          
+          std::string observedMarkerNames;
+          for(auto marker : observedMarkers) {
+            observedMarkerNames += Vision::MarkerTypeStrings[marker->GetCode()];
+            observedMarkerNames += " ";
+          }
+          
+          PRINT_NAMED_WARNING("VisuallyVerifyObjectAction.CheckIfDone.MarkerCodeNotSeen",
+                              "Object %d observed, but not expected marker: %s. Instead saw: %s\n",
+                              _objectID.GetValue(), Vision::MarkerTypeStrings[_whichCode], observedMarkerNames.c_str());
+          //return ActionResult::FAILURE_ABORT;
+        }
+      }
+
+      
+      if((currentTime < _waitToVerifyTime) && (actionRes != ActionResult::SUCCESS)) {
+        return ActionResult::RUNNING;
+      }
+
+      
+      return ActionResult::SUCCESS;
     }
-    */
+
     
 #pragma mark ---- MoveHeadToAngleAction ----
     
@@ -1348,7 +1382,7 @@ namespace Anki {
     , _preActionPoseAngleTolerance(DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE)
     , _wasPickingOrPlacing(false)
     , _useManualSpeed(useManualSpeed)
-    , _visuallyVerifyAction(nullptr)
+    , _faceAndVerifyAction(nullptr)
     , _placementOffsetX_mm(placementOffsetX_mm)
     , _placementOffsetY_mm(placementOffsetY_mm)
     , _placementOffsetAngle_rad(placementOffsetAngle_rad)
@@ -1359,17 +1393,17 @@ namespace Anki {
     
     IDockAction::~IDockAction()
     {
-      if(_visuallyVerifyAction != nullptr) {
-        delete _visuallyVerifyAction;
+      if(_faceAndVerifyAction != nullptr) {
+        delete _faceAndVerifyAction;
       }
     }
     
     void IDockAction::Reset()
     {
       IAction::Reset();
-      if(_visuallyVerifyAction != nullptr) {
-        delete _visuallyVerifyAction;
-        _visuallyVerifyAction = nullptr;
+      if(_faceAndVerifyAction != nullptr) {
+        delete _faceAndVerifyAction;
+        _faceAndVerifyAction = nullptr;
       }
     }
     
@@ -1461,11 +1495,12 @@ namespace Anki {
         // Set up a visual verification action to make sure we can still see the correct
         // marker of the selected object before proceeding
         // NOTE: This also disables tracking head to object if there was any
-        _visuallyVerifyAction = new VisuallyVerifyObjectAction(_dockObjectID,
-                                                               _dockMarker->GetCode());
+        _faceAndVerifyAction = new FaceObjectAction(_dockObjectID,
+                                                    _dockMarker->GetCode(),
+                                                    0, 0, true, false);
 
         // Disable the visual verification from issuing a completion signal
-        _visuallyVerifyAction->SetIsPartOfCompoundAction(true);
+        _faceAndVerifyAction->SetIsPartOfCompoundAction(true);
         
         return ActionResult::SUCCESS;
       }
@@ -1479,15 +1514,15 @@ namespace Anki {
       
       // Wait for visual verification to complete successfully before telling
       // robot to dock and continuing to check for completion
-      if(_visuallyVerifyAction != nullptr) {
-        actionResult = _visuallyVerifyAction->Update(robot);
+      if(_faceAndVerifyAction != nullptr) {
+        actionResult = _faceAndVerifyAction->Update(robot);
         if(actionResult == ActionResult::RUNNING) {
           return actionResult;
         } else {
           if(actionResult == ActionResult::SUCCESS) {
             // Finished with visual verification:
-            delete _visuallyVerifyAction;
-            _visuallyVerifyAction = nullptr;
+            delete _faceAndVerifyAction;
+            _faceAndVerifyAction = nullptr;
             actionResult = ActionResult::RUNNING;
             
             PRINT_NAMED_INFO("IDockAction.DockWithObjectHelper.BeginDocking",
@@ -1826,7 +1861,7 @@ namespace Anki {
             if(_placementVerifyAction == nullptr) {
               _placementVerifyAction = new CompoundActionSequential( {
                 new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::OUT_OF_FOV),
-                new VisuallyVerifyObjectAction(_carryObjectID)
+                new FaceObjectAction(_carryObjectID, Radians(0), Radians(0), true, false)
               });
               
               // Disable completion signals since this is inside another action
@@ -2026,7 +2061,7 @@ namespace Anki {
             // If the physical robot thinks it succeeded, move the lift out of the
             // way, and attempt to visually verify
             if(_rollVerifyAction == nullptr) {
-              _rollVerifyAction = new VisuallyVerifyObjectAction(_dockObjectID);
+              _rollVerifyAction = new FaceObjectAction(_dockObjectID, Radians(0), Radians(0), true, false);
               
               // Disable completion signals since this is inside another action
               _rollVerifyAction->SetIsPartOfCompoundAction(true);
@@ -2084,15 +2119,15 @@ namespace Anki {
 #pragma mark ---- PlaceObjectOnGroundAction ----
     
     PlaceObjectOnGroundAction::PlaceObjectOnGroundAction()
-    : _verifyAction(nullptr)
+    : _faceAndVerifyAction(nullptr)
     {
       
     }
     
     PlaceObjectOnGroundAction::~PlaceObjectOnGroundAction()
     {
-      if(_verifyAction != nullptr) {
-        delete _verifyAction;
+      if(_faceAndVerifyAction != nullptr) {
+        delete _faceAndVerifyAction;
       }
     }
     
@@ -2100,9 +2135,9 @@ namespace Anki {
     {
       IAction::Reset();
       
-      if(_verifyAction != nullptr) {
-        delete _verifyAction;
-        _verifyAction = nullptr;
+      if(_faceAndVerifyAction != nullptr) {
+        delete _faceAndVerifyAction;
+        _faceAndVerifyAction = nullptr;
       }
     }
     
@@ -2135,8 +2170,8 @@ namespace Anki {
           result = ActionResult::FAILURE_ABORT;
         }
         
-        _verifyAction = new VisuallyVerifyObjectAction(_carryingObjectID, _carryObjectMarker->GetCode());
-        _verifyAction->SetIsPartOfCompoundAction(true);
+        _faceAndVerifyAction = new FaceObjectAction(_carryingObjectID, _carryObjectMarker->GetCode(), 0, 0, true, false);
+        _faceAndVerifyAction->SetIsPartOfCompoundAction(true);
         
       } // if/else IsCarryingObject()
       
@@ -2164,7 +2199,7 @@ namespace Anki {
         // ID/Type as the one we were supposed to be picking or placing, in the
         // right position.
 
-        actionResult = _verifyAction->Update(robot);
+        actionResult = _faceAndVerifyAction->Update(robot);
 
         if(actionResult != ActionResult::RUNNING && actionResult != ActionResult::SUCCESS) {
           PRINT_NAMED_ERROR("PlaceObjectOnGroundAction.CheckIfDone",
