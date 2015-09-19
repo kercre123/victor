@@ -29,30 +29,6 @@ namespace Anki {
   namespace Cozmo {
     namespace BlockMessages {
       
-      // 1. Initial include just defines the definition modes for use below
-#     include "BlockMessageDefinitions.def"
-      
-      // 2. Define all the message structs:
-#     define MESSAGE_DEFINITION_MODE MESSAGE_STRUCT_DEFINITION_MODE
-#     include "BlockMessageDefinitions.def"
-      
-      // 3. Create the enumerated message IDs:
-      typedef enum {
-        NO_MESSAGE_ID = 0,
-#       undef MESSAGE_DEFINITION_MODE
-#       define MESSAGE_DEFINITION_MODE MESSAGE_ENUM_DEFINITION_MODE
-#     include "BlockMessageDefinitions.def"
-        NUM_BLOCK_MSG_IDS // Final entry without comma at end
-      } ID;
-      
-      
-      // Declare registration functions for message handling callbacks
-#     define MESSAGE_DEFINITION_MODE MESSAGE_REG_CALLBACK_METHODS_MODE
-#     include "BlockMessageDefinitions.def"
-     
-
-      u16 GetSize(const ID msgID);
-      
       Result ProcessMessage(const u8* buffer, const u8 bufferSize);
       
     } // namespace BlockMessages

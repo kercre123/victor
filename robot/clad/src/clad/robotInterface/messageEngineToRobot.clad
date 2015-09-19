@@ -6,6 +6,7 @@
 #include "clad/types/imageTypes.clad"
 #include "clad/types/robotStatusAndActions.clad"
 #include "clad/types/ledTypes.clad"
+#include "clad/types/activeObjectTypes.clad"
 #include "clad/types/animationKeyFrames.clad"
 #include "clad/types/robotTestModes.clad"
 #include "clad/types/dockingSignals.clad"
@@ -178,23 +179,6 @@ message BackpackLights
   LightState lights[5],
 }
 
-message BlockLights
-{
-  LightState lights[4],
-  uint_32    blockID,
-}
-
-message FlashBlockIDs
-{
-  uint_32 blockID, // Place holder
-}
-
-message SetBlockBeingCarried
-{
-  uint_32 blockID,
-  bool    isBeingCarried,
-}
-
 message AbortAnimation
 {
 }
@@ -240,9 +224,9 @@ union EngineToRobot
   SyncTime                      syncTime                    = 0x80,
   ImageRequest                  imageRequest                = 0x81,
   BackpackLights                setBackpackLights           = 0x82,
-  BlockLights                   setBlockLights              = 0x83,
-  FlashBlockIDs                 flashBlockIDs               = 0x84,
-  SetBlockBeingCarried          setBlockBeingCarried        = 0x85,
+  CubeLights                    setCubeLights               = 0x83,
+  FlashObjectIDs                flashObjectIDs              = 0x84,
+  ObjectBeingCarried            setObjectBeingCarried       = 0x85,
   AbortAnimation                abortAnimation              = 0x90,
   AnimKeyFrame::AudioSample     animAudioSample             = 0x91,
   AnimKeyFrame::AudioSilence    animAudioSilence            = 0x92,

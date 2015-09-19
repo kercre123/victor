@@ -5,7 +5,7 @@
 namespace Anki {
 namespace Cozmo {
 
-enum uint_8 ImageResolution
+enum int_8 ImageResolution
 {
   VerificationSnapshot, // 16 x 16
   QQQQVGA,   // 40 x 30
