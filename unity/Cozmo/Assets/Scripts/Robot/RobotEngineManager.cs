@@ -358,7 +358,7 @@ public class RobotEngineManager : MonoBehaviour {
     Disconnected(DisconnectionReason.RobotDisconnected);
   }
 
-  private void ReceivedSpecificMessage(G2U.ActiveObjectMoved message) {
+  private void ReceivedSpecificMessage(ActiveObjectMoved message) {
     if (current == null)
       return;
 
@@ -371,7 +371,7 @@ public class RobotEngineManager : MonoBehaviour {
     }
   }
 
-  private void ReceivedSpecificMessage(G2U.ActiveObjectStoppedMoving message) {
+  private void ReceivedSpecificMessage(ActiveObjectStoppedMoving message) {
     if (current == null)
       return;
 
@@ -384,7 +384,7 @@ public class RobotEngineManager : MonoBehaviour {
     }
   }
 
-  private void ReceivedSpecificMessage(G2U.ActiveObjectTapped message) {
+  private void ReceivedSpecificMessage(ActiveObjectTapped message) {
     if (current == null)
       return;
     
@@ -477,7 +477,7 @@ public class RobotEngineManager : MonoBehaviour {
     }
 
     if (!success) {
-      if (current.Status(RobotStatusFlagClad.CarryingBlock)) {
+      if (current.Status(RobotStatusFlag.IS_CARRYING_BLOCK)) {
         current.SetLiftHeight(1f);
       }
       else {
@@ -622,18 +622,18 @@ public class RobotEngineManager : MonoBehaviour {
     }
   }
 
-  private void ReceivedSpecificMessage(G2U.ImageChunk message) {
+  private void ReceivedSpecificMessage(ImageChunk message) {
     if (current == null)
       return;
 
     switch (message.imageEncoding) {
-    case ImageEncodingClad.JPEGColor:
+    case ImageEncoding.JPEGColor:
       ColorJpeg(message);
       break;
-    case ImageEncodingClad.RawGray:
+    case ImageEncoding.RawGray:
       GrayRaw(message);
       break;
-    case ImageEncodingClad.JPEGMinimizedGray:
+    case ImageEncoding.JPEGMinimizedGray:
       MinipegGray(message);
       break;
     default:
@@ -642,12 +642,12 @@ public class RobotEngineManager : MonoBehaviour {
     }
   }
 
-  private void MinipegGray(G2U.ImageChunk message) {
+  private void MinipegGray(ImageChunk message) {
     if (minipegArray == null || message.imageId != currentImageID || message.frameTimeStamp != currentImageFrameTimeStamp) {
       currentImageID = message.imageId;
       currentImageFrameTimeStamp = message.frameTimeStamp;
       
-      int length = message.chunkSize * message.imageChunkCount;
+      int length = message.data.Length * message.imageChunkCount;
       
       if (minipegArray == null || minipegArray.Length < length) {
         minipegArray = new byte[ length ];
@@ -657,12 +657,13 @@ public class RobotEngineManager : MonoBehaviour {
       currentChunkIndex = 0;
     }
     
-    int chunkLength = Math.Min(minipegArray.Length - currentImageIndex, message.chunkSize);
+    int chunkLength = Math.Min(minipegArray.Length - currentImageIndex, message.data.Length);
     Array.Copy(message.data, 0, minipegArray, currentImageIndex, chunkLength);
     currentImageIndex += chunkLength;
     
     if (++currentChunkIndex == message.imageChunkCount) {
-      ResetTexture(message.ncols, message.nrows, TextureFormat.RGB24, true);
+      ImageDimension dim = ImageDimension.GetDimension(message.resolution);
+      ResetTexture(dim.width, dim.height, TextureFormat.RGB24, true);
 
       if (!MiniGrayToJpeg(minipegArray, ref jpegArray, currentImageIndex)) {
         return;
@@ -723,12 +724,12 @@ public class RobotEngineManager : MonoBehaviour {
     return true;
   }
 
-  private void GrayRaw(G2U.ImageChunk message) {
+  private void GrayRaw(ImageChunk message) {
+    ImageDimension dim = ImageDimension.GetDimension(message.resolution);
     if (color32Array == null || message.imageId != currentImageID || message.frameTimeStamp != currentImageFrameTimeStamp) {
       currentImageID = message.imageId;
       currentImageFrameTimeStamp = message.frameTimeStamp;
-      
-      int length = message.ncols * message.nrows;
+      int length = dim.width * dim.height;
       
       if (color32Array == null || color32Array.Length < length) {
         color32Array = new Color32[ length ];
@@ -737,18 +738,18 @@ public class RobotEngineManager : MonoBehaviour {
       currentImageIndex = 0;
     }
     
-    for (int messageIndex = 0; currentImageIndex < color32Array.Length && messageIndex < message.chunkSize; ++messageIndex, ++currentImageIndex) {
+    for (int messageIndex = 0; currentImageIndex < color32Array.Length && messageIndex < message.data.Length; ++messageIndex, ++currentImageIndex) {
       byte gray = message.data[messageIndex];
       
-      int x = currentImageIndex % message.ncols;
-      int y = currentImageIndex / message.ncols;
-      int index = message.ncols * (message.nrows - y - 1) + x;
+      int x = currentImageIndex % dim.width;
+      int y = currentImageIndex / dim.width;
+      int index = dim.width * (dim.height - y - 1) + x;
       
       color32Array[index] = new Color32(gray, gray, gray, 255);
     }
     
     if (currentImageIndex == color32Array.Length) {
-      ResetTexture(message.ncols, message.nrows, TextureFormat.ARGB32);
+      ResetTexture(dim.width, dim.height, TextureFormat.ARGB32);
 
       texture.SetPixels32(color32Array);
       texture.Apply(false);
@@ -761,12 +762,12 @@ public class RobotEngineManager : MonoBehaviour {
     }
   }
 
-  private void ColorJpeg(G2U.ImageChunk message) {
+  private void ColorJpeg(ImageChunk message) {
     if (jpegArray == null || message.imageId != currentImageID || message.frameTimeStamp != currentImageFrameTimeStamp) {
       currentImageID = message.imageId;
       currentImageFrameTimeStamp = message.frameTimeStamp;
 
-      int length = message.chunkSize * message.imageChunkCount;
+      int length = message.data.Length * message.imageChunkCount;
       
       if (jpegArray == null || jpegArray.Length < length) {
         jpegArray = new byte[ length ];
@@ -776,12 +777,13 @@ public class RobotEngineManager : MonoBehaviour {
       currentChunkIndex = 0;
     }
 
-    int chunkLength = Math.Min(jpegArray.Length - currentImageIndex, message.chunkSize);
+    int chunkLength = Math.Min(jpegArray.Length - currentImageIndex, message.data.Length);
     Array.Copy(message.data, 0, jpegArray, currentImageIndex, chunkLength);
     currentImageIndex += chunkLength;
 
     if (++currentChunkIndex == message.imageChunkCount) {
-      ResetTexture(message.ncols, message.nrows, TextureFormat.RGB24);
+      ImageDimension dim = ImageDimension.GetDimension(message.resolution);
+      ResetTexture(dim.width, dim.height, TextureFormat.RGB24);
 
       texture.LoadImage(jpegArray);
 

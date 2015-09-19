@@ -85,7 +85,7 @@ public class ActiveBlock : ObservedObject {
 
   public bool isMoving { get; private set; }
 
-  public UpAxisClad upAxis { get; private set; }
+  public UpAxis upAxis { get; private set; }
 
   public float xAccel { get; private set; }
 
@@ -132,7 +132,7 @@ public class ActiveBlock : ObservedObject {
   public ActiveBlock(int objectID, ObjectFamily objectFamily, ObjectType objectType) {
     Constructor(objectID, objectFamily, objectType);
 
-    upAxis = UpAxisClad.Unknown;
+    upAxis = UpAxis.Unknown;
     xAccel = byte.MaxValue;
     yAccel = byte.MaxValue;
     zAccel = byte.MaxValue;
@@ -149,19 +149,19 @@ public class ActiveBlock : ObservedObject {
     SetMode(Mode.Off);
   }
 
-  public void Moving(G2U.ActiveObjectMoved message) {
+  public void Moving(ActiveObjectMoved message) {
     if (isMoving)
       return;
 
     isMoving = true;
 
     upAxis = message.upAxis;
-    xAccel = message.xAccel;
-    yAccel = message.yAccel;
-    zAccel = message.zAccel;
+    xAccel = message.accel.x;
+    yAccel = message.accel.y;
+    zAccel = message.accel.z;
   }
 
-  public void StoppedMoving(G2U.ActiveObjectStoppedMoving message) {
+  public void StoppedMoving(ActiveObjectStoppedMoving message) {
     if (!isMoving)
       return;
 
@@ -173,7 +173,7 @@ public class ActiveBlock : ObservedObject {
     }
   }
 
-  public void Tapped(G2U.ActiveObjectTapped message) {
+  public void Tapped(ActiveObjectTapped message) {
     DAS.Debug("ActiveBlock", "Tapped Message Received for ActiveBlock(" + ID + "): " + message.numTaps + " taps");
     if (TappedAction != null)
       TappedAction(ID, message.numTaps);

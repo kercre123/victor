@@ -243,7 +243,7 @@ public class CozmoEmotionManager : MonoBehaviour {
         List<CozmoAnimation> anims = instance.currentEmotionMachine.GetAnimsForType(emotion_state);
         int rand_index = UnityEngine.Random.Range(0, anims.Count - 1);
         CozmoAnimation anim = anims[rand_index];
-        if (stopPreviousAnim && robot.isBusy && robot.Status(Anki.Cozmo.RobotStatusFlagClad.Animating)) {
+        if (stopPreviousAnim && robot.isBusy && robot.Status(Anki.Cozmo.RobotStatusFlag.IS_ANIMATING)) {
           robot.CancelAction(Anki.Cozmo.RobotActionType.PLAY_ANIMATION);
         }
         DAS.Debug("CozmoEmotionManager", "Sending " + anim.animName + " with " + anim.numLoops + " loop" + (anim.numLoops != 1 ? "s" : ""));
@@ -303,7 +303,7 @@ public class CozmoEmotionManager : MonoBehaviour {
         List<CozmoAnimation> anims = instance.currentEmotionMachine.GetAnimsForType(emotion_state);
         int rand_index = UnityEngine.Random.Range(0, anims.Count - 1);
         CozmoAnimation anim = anims[rand_index];
-        if (stopPreviousAnim && robot.isBusy && robot.Status(Anki.Cozmo.RobotStatusFlagClad.Animating)) {
+        if (stopPreviousAnim && robot.isBusy && robot.Status(Anki.Cozmo.RobotStatusFlag.IS_ANIMATING)) {
           robot.CancelAction(Anki.Cozmo.RobotActionType.PLAY_ANIMATION);
         }
         DAS.Debug("CozmoEmotionManager", "Sending " + anim.animName + " with " + anim.numLoops + " loop" + (anim.numLoops != 1 ? "s" : ""));

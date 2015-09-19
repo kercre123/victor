@@ -132,7 +132,7 @@ public class Robot : IDisposable {
 
   public Vector3 Right { get { return Rotation * -Vector3.up; } }
 
-  public RobotStatusFlagClad status { get; private set; }
+  public RobotStatusFlag status { get; private set; }
 
   public GameStatusFlag gameStatus { get; private set; }
 
@@ -302,9 +302,9 @@ public class Robot : IDisposable {
     get {
       return localBusyOverride
       || localBusyTimer > 0f
-      || Status(RobotStatusFlagClad.PerformingAction)
-      || (Status(RobotStatusFlagClad.Animating) && !Status(RobotStatusFlagClad.AnimatingIdle))
-      || Status(RobotStatusFlagClad.PickedUp);
+      || Status(RobotStatusFlag.IS_PERFORMING_ACTION)
+      || (Status(RobotStatusFlag.IS_ANIMATING) && !Status(RobotStatusFlag.IS_ANIMATING_IDLE))
+      || Status(RobotStatusFlag.IS_PICKED_UP);
     }
 
     set {
@@ -316,7 +316,7 @@ public class Robot : IDisposable {
     }
   }
 
-  public bool Status(RobotStatusFlagClad s) {
+  public bool Status(RobotStatusFlag s) {
     return (status & s) == s;
   }
 
@@ -440,7 +440,7 @@ public class Robot : IDisposable {
     lastMarkersVisibleObjects.Clear();
     knownObjects.Clear();
     activeBlocks.Clear();
-    status = RobotStatusFlagClad.Nothing;
+    status = RobotStatusFlag.Nothing;
     gameStatus = GameStatusFlag.Nothing;
     WorldPosition = Vector3.zero;
     Rotation = Quaternion.identity;
@@ -492,7 +492,7 @@ public class Robot : IDisposable {
     leftWheelSpeed_mmps = message.leftWheelSpeed_mmps;
     rightWheelSpeed_mmps = message.rightWheelSpeed_mmps;
     liftHeight_mm = message.liftHeight_mm;
-    status = (RobotStatusFlagClad)message.status;
+    status = (RobotStatusFlag)message.status;
     gameStatus = (GameStatusFlag)message.gameStatus;
     batteryPercent = (message.batteryVoltage / MaxVoltage);
     carryingObjectID = message.carryingObjectID;
@@ -878,7 +878,7 @@ public class Robot : IDisposable {
     RobotEngineManager.instance.SendMessage();
   }
 
-  public void RequestImage(CameraResolutionClad resolution, ImageSendMode mode) {
+  public void RequestImage(ImageResolution resolution, ImageSendMode mode) {
     SetRobotImageSendModeMessage.resolution = resolution;
     SetRobotImageSendModeMessage.mode = mode;
 
