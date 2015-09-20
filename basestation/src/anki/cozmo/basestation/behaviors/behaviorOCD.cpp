@@ -1076,7 +1076,6 @@ namespace Cozmo {
 
                 // Face the disturbed block
                 FaceDisturbedBlock(_blockToFace);
-                _blockToFace.UnSet();
                 
               } else if (_animActionTags.empty()) {
 
@@ -1109,13 +1108,30 @@ namespace Cozmo {
       }
       case State::FaceDisturbedBlock:
       {
-        if (msg.actionType == RobotActionType::FACE_POSE) {
+        if (msg.idTag == _lastActionTag) {
           if (msg.result != ActionResult::SUCCESS) {
             BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.HandleActionCompleted.FaceDisturbedBlockFailed", "result %d", msg.result);
           }
-          PlayAnimation("Demo_OCD_Irritation_A");
-        } else {
-          BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.HandleActionCompleted.UnexpectedActionDuringFaceDisturbedBlock", "action %d", msg.actionType);
+          
+          
+          
+          // If block status is neat then don't play irritation
+          if (_neatObjects.count(_blockToFace) > 0) {
+            // Do next pick or place action
+            if (!_messyObjects.empty()) {
+              lastResult = _robot.IsCarryingObject() ? SelectNextPlacement() : SelectNextObjectToPickUp();
+            } else {
+              // If we're done, just go to pickup state.
+              // Next Update() will return Complete.
+              _currentState = State::PickingUpBlock;
+            }
+          } else {
+            PlayAnimation("Demo_OCD_Irritation_A");
+          }
+          
+          _blockToFace.UnSet();
+          
+          
         }
         break;
       }
@@ -1307,13 +1323,10 @@ namespace Cozmo {
   
   void BehaviorOCD::FaceDisturbedBlock(const ObjectID& objID)
   {
-    ObservableObject* object = _robot.GetBlockWorld().GetObjectByID(objID);
-    if (object) {
-      FacePoseAction* faceObjectAction = new FacePoseAction(object->GetPose(), DEG_TO_RAD_F32(15), PI_F);
-    
-      _robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, faceObjectAction);
-      _currentState = State::FaceDisturbedBlock;
-    }
+    FaceObjectAction* faceObjectAction = new FaceObjectAction(objID, Radians(DEG_TO_RAD_F32(10)), Radians(PI_F), true, false);
+    _robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, faceObjectAction);
+    _currentState = State::FaceDisturbedBlock;
+    _lastActionTag = faceObjectAction->GetTag();
   }
 
   void BehaviorOCD::MakeNeat(const ObjectID& objID)
