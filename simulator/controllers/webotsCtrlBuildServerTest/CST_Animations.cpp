@@ -31,7 +31,7 @@ namespace Cozmo {
     
   private:
     const u32 MIN_NUM_ANIMS_REQUIRED = 10;
-    const u32 NUM_ANIMS_TO_PLAY = 2;
+    const u32 NUM_ANIMS_TO_PLAY = 1;
     
     virtual s32 UpdateInternal() override;
     
@@ -89,7 +89,7 @@ namespace Cozmo {
         
       case TestState::ExecutingTestAnimation:
         // If no action complete message, this will timeout with assert.
-        if (CONDITION_WITH_TIMEOUT_ASSERT(_lastAnimPlayed.empty(), _lastAnimPlayedTime, 5)) {
+        if (CONDITION_WITH_TIMEOUT_ASSERT(_lastAnimPlayed.empty(), _lastAnimPlayedTime, 10)) {
           _testState = TestState::ReadyForNextCommand;
         }
         break;
