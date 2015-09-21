@@ -61,6 +61,10 @@ namespace Cozmo {
     // Init() is called then do the 'oooo' animation.
     constexpr static f32 kExcitedAboutNewBlockTimeIntervalSec = 2.f;
     
+    // Number of blocks that need to be neatly stacked in order to warrant
+    // a celebratory dance.
+    constexpr static u32 kNumBlocksForCelebration = 4;
+    
     enum class ObjectOnTopStatus {
       DontCareIfObjectOnTop,
       ObjectOnTop,

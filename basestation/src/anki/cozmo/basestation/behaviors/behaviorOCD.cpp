@@ -884,11 +884,15 @@ namespace Cozmo {
         
         if (IsRunning()) {
           if (foundMessyToNeat || foundNeatToMessy) {
-            UpdateBlockLights();
             
             if (_messyObjects.empty()) {
               // Blocks are all neatened
-              PlayAnimation("Demo_OCD_All_Blocks_Neat_Celebration");
+              if (_neatObjects.size() == kNumBlocksForCelebration) {
+                UpdateBlockLights();
+                PlayAnimation("Demo_OCD_All_Blocks_Neat_Celebration");
+              } else {
+                PlayAnimation("Demo_OCD_Successfully_Neat");
+              }
             }
           }
           
@@ -984,9 +988,13 @@ namespace Cozmo {
           if (DeleteObjectIfFailedToPickOrPlaceAgain(_objectToPickUp)) {
             // It's possible that we've just deleted the last messy block here
             // because it wasn't where we thought it was, so update lights.
-            UpdateBlockLights();
             if (_messyObjects.empty()) {
-              PlayAnimation("Demo_OCD_All_Blocks_Neat_Celebration");
+              if (_neatObjects.size() == kNumBlocksForCelebration) {
+                UpdateBlockLights();
+                PlayAnimation("Demo_OCD_All_Blocks_Neat_Celebration");
+              } else {
+                _currentState = State::PickingUpBlock;
+              }
               break;
             }
           }
@@ -1021,9 +1029,8 @@ namespace Cozmo {
               // We're done placing the block, mark it as neat and move to next one
               MakeNeat(_objectToPickUp);
               
-              UpdateBlockLights();
-              
-              if (_messyObjects.empty()) {
+              if (_messyObjects.empty() && _neatObjects.size() == kNumBlocksForCelebration) {
+                UpdateBlockLights();
                 PlayAnimation("Demo_OCD_All_Blocks_Neat_Celebration");
               } else {
                 PlayAnimation("Demo_OCD_Successfully_Neat");
