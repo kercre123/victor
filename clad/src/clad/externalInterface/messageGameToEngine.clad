@@ -79,6 +79,7 @@ message FaceObject {
     float_32 turnAngleTol,
     float_32 maxTurnAngle,
     uint_8   robotID,
+    uint_8   visuallyVerifyWhenDone,
     uint_8   headTrackWhenDone
 }
 
