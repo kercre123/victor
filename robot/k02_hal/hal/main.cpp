@@ -67,8 +67,8 @@ int main (void)
   //I2CInit();
   
   //dac_init();
-  //spi_init();  
-  i2c_init();
+  spi_init();  
+  //i2c_init();
   //uart_init();  
   
   //CameraInit();

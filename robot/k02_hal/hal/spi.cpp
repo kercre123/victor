@@ -80,8 +80,7 @@ void bit_bang_test(void) {
 void spi_init(void) {
   Anki::Cozmo::HAL::MicroWait(1000000);
 
-  
-  const int size = 96;
+  const int size = 512;
   uint32_t spi_buff[size]; // 512 bytes
 
   // Turn on power to DMA, PORTC and SPI0
@@ -104,10 +103,10 @@ void spi_init(void) {
              SPI_MCR_CLR_TXF_MASK |
              SPI_MCR_CLR_RXF_MASK;
 
-  SPI0_CTAR0 = SPI_CTAR_BR(1) |
+  SPI0_CTAR0 = SPI_CTAR_BR(2) |
                SPI_CTAR_CPOL_MASK |
                SPI_CTAR_CPHA_MASK |
-               SPI_CTAR_FMSZ(15);
+               SPI_CTAR_FMSZ(7);
   
   SPI0_RSER = SPI_RSER_EOQF_RE_MASK;
 
@@ -119,11 +118,13 @@ void spi_init(void) {
   NVIC_EnableIRQ(SPI0_IRQn);
 
   for (int i = 0; i < size; i++) {
+    int k = i >> 1;
+
     spi_buff[i] = 
-        i |
+        ((~i & 1) ? k : (1 << (k & 7))) |
         SPI_PUSHR_CONT_MASK | 
-        SPI_PUSHR_PCS((i & 1) ? ~0: 0) |
-        (i == (size-1) ? SPI_PUSHR_EOQ_MASK : 0);
+        SPI_PUSHR_PCS((i & 1) ? ~0: 0);// |
+        //(i == (size-1) ? SPI_PUSHR_EOQ_MASK : 0);
   }
   
   int rx_idx = 0, tx_idx = 0;
@@ -154,7 +155,7 @@ void SPI0_IRQHandler(void) {
     // When the EOQ flag is set, clear our continuous clock mode.
     while (SPI0_SR & SPI_SR_EOQF_MASK)
     {
-      SPI0_MCR &= ~SPI_MCR_CONT_SCKE_MASK;
+      //SPI0_MCR &= ~SPI_MCR_CONT_SCKE_MASK;
       SPI0_SR = SPI_SR_EOQF_MASK;
     }
 }
