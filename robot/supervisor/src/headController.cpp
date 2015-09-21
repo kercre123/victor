@@ -113,7 +113,15 @@ namespace HeadController {
     
     void Disable()
     {
-      enable_ = false;
+      if(enable_) {
+        enable_ = false;
+        
+        inPosition_ = true;
+        angleErrorSum_ = 0.f;
+        
+        power_ = 0;
+        HAL::MotorSetPower(HAL::MOTOR_HEAD, power_);
+      }
     }
     
 
