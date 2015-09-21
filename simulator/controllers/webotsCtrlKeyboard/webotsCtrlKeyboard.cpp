@@ -18,9 +18,11 @@
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/vision/basestation/image.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
+#include "anki/cozmo/basestation/demoBehaviorChooser.h"
 #include "anki/cozmo/basestation/block.h"
 #include "clad/types/actionTypes.h"
 #include "clad/types/proceduralEyeParameters.h"
+#include "clad/types/demoBehaviorState.h"
 #include <stdio.h>
 #include <string.h>
 #include <fstream>
@@ -299,6 +301,9 @@ namespace Anki {
         printf("                      Test modes:  Alt + Testmode#\n");
         printf("                Follow test plan:  t\n");
         printf("        Force-add specifed robot:  Shift+r\n");
+        printf("           Set DemoState Default:  j\n");
+        printf("         Set DemoState FacesOnly:  Shift+j\n");
+        printf("        Set DemoState BlocksOnly:  Alt+j\n");
         printf("                      Print help:  ?\n");
         printf("\n");
       }
@@ -1251,6 +1256,26 @@ namespace Anki {
                   SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::FacePose(_lastFace.world_x, _lastFace.world_y, _lastFace.world_z, DEG_TO_RAD(10), M_PI, 1)));
                 } else {
                   SendStartFaceTracking(5);
+                }
+                break;
+              }
+                
+              case (s32)'J':
+              {
+                if (webots::Supervisor::KEYBOARD_SHIFT == modifier_key)
+                {
+                  // Send DemoState FacesOnly
+                  SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::SetDemoState(DemoBehaviorState::FacesOnly)));
+                }
+                else if (webots::Supervisor::KEYBOARD_ALT == modifier_key)
+                {
+                  // Send DemoState BlocksOnly
+                  SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::SetDemoState(DemoBehaviorState::BlocksOnly)));
+                }
+                else
+                {
+                  // Send DemoState Default
+                  SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::SetDemoState(DemoBehaviorState::Default)));
                 }
                 break;
               }
