@@ -33,6 +33,7 @@ namespace Cozmo {
   , _currentArrangement(Arrangement::StacksOfTwo)
   , _lastNeatBlockDisturbedTime(0)
   , _lastNewBlockObservedTime(0)
+  , _inactionStartTime(0)
   {
     _name = "OCD";
     // Register callbacks:
@@ -188,6 +189,20 @@ namespace Cozmo {
       case State::PlacingBlock:
       case State::Animating:
       case State::FaceDisturbedBlock:
+        // Check if inactive for a while
+        if (_robot.GetActionList().IsEmpty()) {
+          if (_inactionStartTime == 0) {
+            _inactionStartTime = currentTime_sec;
+          } else if (currentTime_sec - _inactionStartTime > kInactionFailsafeTimeoutSec) {
+            PRINT_NAMED_WARNING("BehaviorOCD.Update.InactionFailsafe", "Was doing nothing for some reason so starting a pick or place action");
+            if (_robot.IsCarryingObject()) {
+              SelectNextPlacement();
+            } else {
+              SelectNextObjectToPickUp();
+            }
+            _inactionStartTime = 0;
+          }
+        }
         break;
         
       default:
@@ -973,7 +988,7 @@ namespace Cozmo {
             case RobotActionType::PICK_AND_PLACE_INCOMPLETE:
               // We failed to pick up or place the last block, try again?
               DeleteObjectIfFailedToPickOrPlaceAgain(_objectToPickUp);
-              SetLastPickOrPlaceFailure(_objectToPickUp, _robot.GetPose());
+                SetLastPickOrPlaceFailure(_objectToPickUp, _robot.GetPose());
               SelectNextObjectToPickUp();
               break;
 
@@ -992,13 +1007,11 @@ namespace Cozmo {
               if (_neatObjects.size() == kNumBlocksForCelebration) {
                 UpdateBlockLights();
                 PlayAnimation("Demo_OCD_All_Blocks_Neat_Celebration");
-              } else {
-                _currentState = State::PickingUpBlock;
               }
               break;
             }
           }
-          SetLastPickOrPlaceFailure(_objectToPickUp, _robot.GetPose());
+            SetLastPickOrPlaceFailure(_objectToPickUp, _robot.GetPose());
           
           // This isn't foolproof, but use lift height to check if this failure occured
           // during pickup verification.
@@ -1040,7 +1053,7 @@ namespace Cozmo {
             case RobotActionType::PICK_AND_PLACE_INCOMPLETE:
               // We failed to place the last block, try again?
               DeleteObjectIfFailedToPickOrPlaceAgain(_objectToPlaceOn);
-              SetLastPickOrPlaceFailure(_objectToPlaceOn, _robot.GetPose());
+                SetLastPickOrPlaceFailure(_objectToPlaceOn, _robot.GetPose());
               lastResult = SelectNextPlacement();
               break;
               
@@ -1058,7 +1071,7 @@ namespace Cozmo {
           BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.HandleActionCompleted.PlacementFailure", "Trying again");
           // We failed to place the last block, try again?
           DeleteObjectIfFailedToPickOrPlaceAgain(_objectToPlaceOn);
-          SetLastPickOrPlaceFailure(_objectToPlaceOn, _robot.GetPose());
+            SetLastPickOrPlaceFailure(_objectToPlaceOn, _robot.GetPose());
           lastResult = SelectNextPlacement();
         }
         break;
@@ -1117,10 +1130,8 @@ namespace Cozmo {
       {
         if (msg.idTag == _lastActionTag) {
           if (msg.result != ActionResult::SUCCESS) {
-            BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.HandleActionCompleted.FaceDisturbedBlockFailed", "result %d", msg.result);
+            BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.HandleActionCompleted.FaceDisturbedBlockFailed", "Probably because block is no longer there. This is expected. (result %d)", msg.result);
           }
-          
-          
           
           // If block status is neat then don't play irritation
           if (_neatObjects.count(_blockToFace) > 0) {
@@ -1279,8 +1290,10 @@ namespace Cozmo {
   {
     if (IsRunning()) {
       if (_objectToPickUp.IsSet()) {
-        BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.HandleBlockPlaced.MakingNeat", "Object %d", _objectToPickUp.GetValue());
-        MakeNeat(_objectToPickUp);
+        if (msg.didSucceed) {
+          BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.HandleBlockPlaced.MakingNeat", "Object %d", _objectToPickUp.GetValue());
+          MakeNeat(_objectToPickUp);
+        }
       } else {
         BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.HandleBlockPlaced.CarriedObjectUnset", "");
         return RESULT_FAIL;
