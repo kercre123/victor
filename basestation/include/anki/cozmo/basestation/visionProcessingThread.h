@@ -14,31 +14,46 @@
 #ifndef ANKI_COZMO_BASESTATION_VISION_PROC_THREAD_H
 #define ANKI_COZMO_BASESTATION_VISION_PROC_THREAD_H
 
-#include "clad/robotInterface/messageRobotToEngine.h"
-#include "clad/robotInterface/messageEngineToRobot.h"
-#include "clad/vizInterface/messageViz.h"
+//#include "clad/robotInterface/messageRobotToEngine.h"
+//#include "clad/robotInterface/messageEngineToRobot.h"
+//#include "clad/vizInterface/messageViz.h"
 
 #include "anki/vision/basestation/cameraCalibration.h"
 #include "anki/vision/basestation/image.h"
 #include "anki/vision/basestation/visionMarker.h"
 #include "anki/vision/basestation/faceTracker.h"
-
+#include "clad/types/robotStatusAndActions.h"
 #include <thread>
 #include <mutex>
 
 namespace Anki {
   
-  // Forward declaration
-  namespace Util {
-  namespace Data {
-    class DataPlatform;
-  }
-  }
+// Forward declaration
+namespace Util {
+namespace Data {
+  class DataPlatform;
+}
+}
   
 namespace Cozmo {
-  
+
+namespace RobotInterface {
+struct PanAndTilt;
+class EngineToRobot;
+class RobotToEngine;
+enum class EngineToRobotTag : uint8_t;
+enum class RobotToEngineTag : uint8_t;
+} // end namespace RobotInterface
+
+namespace VizInterface {
+class MessageViz;
+struct TrackerQuad;
+enum class MessageVizTag : uint8_t;
+} // end namespace VizInterface
+
 // Forward declaration
 class VisionSystem;
+struct DockingErrorSignal;
 
 class VisionProcessingThread
   {
@@ -85,8 +100,8 @@ class VisionProcessingThread
     bool CheckMailbox(DockingErrorSignal&  msg);
     //bool CheckMailbox(FaceDetection&       msg);
     bool CheckMailbox(Vision::ObservedMarker&     msg);
-    bool CheckMailbox(Viz::TrackerQuad&         msg);
-    bool CheckMailbox(PanAndTiltHead&      msg);
+    bool CheckMailbox(VizInterface::TrackerQuad&         msg);
+    bool CheckMailbox(RobotInterface::PanAndTilt&      msg);
     bool CheckMailbox(Vision::TrackedFace&        msg);
     
     // If the current image is newer than the specified timestamp, copy it into

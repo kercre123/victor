@@ -8,7 +8,7 @@
 
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotManager.h"
-#include "anki/cozmo/basestation/robotMessageHandler.h"
+#include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 
@@ -23,7 +23,7 @@ namespace Anki {
       
     }
     
-    void RobotManager::AddRobot(const RobotID_t withID, IRobotMessageHandler* msgHandler)
+    void RobotManager::AddRobot(const RobotID_t withID, RobotInterface::MessageHandler* msgHandler)
     {
       if(msgHandler == nullptr) {
         PRINT_NAMED_ERROR("RobotManager.AddRobot", "Can't add robot with null message handler.\n");

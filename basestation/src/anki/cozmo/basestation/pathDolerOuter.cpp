@@ -16,14 +16,14 @@
 
 #include "util/logging/logging.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
-
-#include "robotMessageHandler.h"
+#include "anki/cozmo/basestation/robotInterface/messageHandler.h"
+#include "util/math/numericCast.h"
 #include "pathDolerOuter.h"
 
 namespace Anki {
 namespace Cozmo {
 
-PathDolerOuter::PathDolerOuter(IRobotMessageHandler* msgHandler, RobotID_t robotID)
+PathDolerOuter::PathDolerOuter(RobotInterface::MessageHandler* msgHandler, RobotID_t robotID)
   : pathSizeOnBasestation_(0)
   , lastDoledSegmentIdx_(-1)
   , msgHandler_(msgHandler)
@@ -60,27 +60,27 @@ void PathDolerOuter::Dole(size_t numToDole)
          endIdx,
          pathSizeOnBasestation_);
 
-  for(size_t i = lastDoledSegmentIdx_ + 1; i <= endIdx; ++i) {
+  for(size_t i = (size_t)lastDoledSegmentIdx_ + 1; i <= endIdx; ++i) {
 
     printf("PathDolerOuter: doling out basestation idx %zu :  ", i);
-    path_.GetSegmentConstRef(i).Print();
+    path_.GetSegmentConstRef(Util::numeric_cast<uint8_t>(i)).Print();
 
-    switch(path_.GetSegmentConstRef(i).GetType()) {
+    switch(path_.GetSegmentConstRef(Util::numeric_cast<uint8_t>(i)).GetType()) {
 
     case Planning::PST_LINE:
     {
-      AppendPathSegmentLine m;
+      RobotInterface::AppendPathSegmentLine m;
       const Planning::PathSegmentDef::s_line* l = &(path_.GetSegmentConstRef(i).GetDef().line);
       m.x_start_mm = l->startPt_x;
       m.y_start_mm = l->startPt_y;
       m.x_end_mm = l->endPt_x;
       m.y_end_mm = l->endPt_y;
             
-      m.targetSpeed = path_.GetSegmentConstRef(i).GetTargetSpeed();
-      m.accel = path_.GetSegmentConstRef(i).GetAccel();
-      m.decel = path_.GetSegmentConstRef(i).GetDecel();
+      m.speed.target = path_.GetSegmentConstRef(Util::numeric_cast<uint8_t>(i)).GetTargetSpeed();
+      m.speed.accel = path_.GetSegmentConstRef(Util::numeric_cast<uint8_t>(i)).GetAccel();
+      m.speed.decel = path_.GetSegmentConstRef(Util::numeric_cast<uint8_t>(i)).GetDecel();
             
-      if (msgHandler_->SendMessage(robotID_, m) == RESULT_FAIL) {
+      if (msgHandler_->SendMessage(robotID_, RobotInterface::EngineToRobot(std::move(m))) == RESULT_FAIL) {
         printf("ERROR: failed to send message!");
         return;
       }
@@ -88,7 +88,7 @@ void PathDolerOuter::Dole(size_t numToDole)
     }
     case Planning::PST_ARC:
     {
-      AppendPathSegmentArc m;
+      RobotInterface::AppendPathSegmentArc m;
       const Planning::PathSegmentDef::s_arc* a = &(path_.GetSegmentConstRef(i).GetDef().arc);
       m.x_center_mm = a->centerPt_x;
       m.y_center_mm = a->centerPt_y;
@@ -96,11 +96,11 @@ void PathDolerOuter::Dole(size_t numToDole)
       m.startRad = a->startRad;
       m.sweepRad = a->sweepRad;
             
-      m.targetSpeed = path_.GetSegmentConstRef(i).GetTargetSpeed();
-      m.accel = path_.GetSegmentConstRef(i).GetAccel();
-      m.decel = path_.GetSegmentConstRef(i).GetDecel();
+      m.speed.target = path_.GetSegmentConstRef(Util::numeric_cast<uint8_t>(i)).GetTargetSpeed();
+      m.speed.accel = path_.GetSegmentConstRef(Util::numeric_cast<uint8_t>(i)).GetAccel();
+      m.speed.decel = path_.GetSegmentConstRef(Util::numeric_cast<uint8_t>(i)).GetDecel();
             
-      if (msgHandler_->SendMessage(robotID_, m) == RESULT_FAIL) {
+      if (msgHandler_->SendMessage(robotID_, RobotInterface::EngineToRobot(std::move(m))) == RESULT_FAIL) {
         printf("ERROR: failed to send message!");
         return;
       }
@@ -108,17 +108,17 @@ void PathDolerOuter::Dole(size_t numToDole)
     }
     case Planning::PST_POINT_TURN:
     {
-      AppendPathSegmentPointTurn m;
+      RobotInterface::AppendPathSegmentPointTurn m;
       const Planning::PathSegmentDef::s_turn* t = &(path_.GetSegmentConstRef(i).GetDef().turn);
       m.x_center_mm = t->x;
       m.y_center_mm = t->y;
       m.targetRad = t->targetAngle;
             
-      m.targetSpeed = path_.GetSegmentConstRef(i).GetTargetSpeed();
-      m.accel = path_.GetSegmentConstRef(i).GetAccel();
-      m.decel = path_.GetSegmentConstRef(i).GetDecel();
+      m.speed.target = path_.GetSegmentConstRef(Util::numeric_cast<uint8_t>(i)).GetTargetSpeed();
+      m.speed.accel = path_.GetSegmentConstRef(Util::numeric_cast<uint8_t>(i)).GetAccel();
+      m.speed.decel = path_.GetSegmentConstRef(Util::numeric_cast<uint8_t>(i)).GetDecel();
 
-      if (msgHandler_->SendMessage(robotID_, m) == RESULT_FAIL) {
+      if (msgHandler_->SendMessage(robotID_, RobotInterface::EngineToRobot(std::move(m))) == RESULT_FAIL) {
         printf("ERROR: failed to send message!");
         return;
       }
@@ -130,7 +130,7 @@ void PathDolerOuter::Dole(size_t numToDole)
             
     }
     
-    lastDoledSegmentIdx_ = i;
+    lastDoledSegmentIdx_ = Util::numeric_cast<int16_t>(i);
   }
 
 }

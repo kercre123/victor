@@ -1,42 +1,25 @@
 #include "anki/cozmo/shared/cozmoTypes.h"
+#include "clad/types/activeObjectTypes.h"
 #include "BlockMessages.h"
 #include <stdio.h>
 
 namespace Anki {
   namespace Cozmo {
     namespace BlockMessages {
-      
-      
+
       // Auto-gen the ProcessBufferAs_MessageX() method prototypes using macros:
-#     define MESSAGE_DEFINITION_MODE MESSAGE_PROCESS_METHODS_MODE
-#     include "BlockMessageDefinitions.def"
-      
-      
-      // Fill in the message information lookup table for getting size and
-      // ProcesBufferAs_MessageX function pointers according to enumerated
-      // message ID.
-      struct {
-        u8 priority;
-        u16 size;
-        Result (*ProcessPacketAs)(const u8*);
-      } lookupTable_[NUM_BLOCK_MSG_IDS+1] = {
-        {0, 0, 0}, // Empty entry for NO_MESSAGE_ID
-        
-#     define MESSAGE_DEFINITION_MODE MESSAGE_TABLE_DEFINITION_MODE
-#     include "BlockMessageDefinitions.def"
-        
-        {0, 0, 0} // Final dummy entry without comma at end
-      };
-      
-      u16 GetSize(const ID msgID) {
-        return lookupTable_[msgID].size;
-      }
+#     include "clad/types/activeObjectTypes_declarations.def"
+
       
       Result ProcessMessage(const u8* buffer, const u8 bufferSize)
       {
         Result retVal = RESULT_FAIL;
         
-        const u8 msgID = buffer[0];
+	ActiveObjectMessage msg;
+
+	
+	
+	
         
         if(lookupTable_[msgID].size != bufferSize-1) {
           printf("BlockMessages.MessageBufferWrongSize: "

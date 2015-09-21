@@ -11,6 +11,7 @@
 
 #include "anki/cozmo/basestation/engineImpl/cozmoEngineHostImpl.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 
@@ -24,7 +25,7 @@ CozmoEngineHostImpl::CozmoEngineHostImpl(IExternalInterface* externalInterface,
 , _isListeningForRobots(false)
 , _robotAdvertisementService("RobotAdvertisementService")
 , _robotMgr(externalInterface, dataPlatform)
-, _robotMsgHandler(dataPlatform)
+, _robotMsgHandler(*(new RobotInterface::MessageHandler()))
 , _lastAnimationFolderScan(0)
 , _animationReloadActive(false)
 {
@@ -51,11 +52,15 @@ CozmoEngineHostImpl::CozmoEngineHostImpl(IExternalInterface* externalInterface,
 
 }
 
+CozmoEngineHostImpl::~CozmoEngineHostImpl()
+{
+  delete(&_robotMsgHandler);
+}
+
 Result CozmoEngineHostImpl::InitInternal()
 {
-  Result lastResult = _robotMsgHandler.Init(&_robotChannel, &_robotMgr);
-
-  return lastResult;
+  _robotMsgHandler.Init(&_robotChannel, &_robotMgr);
+  return RESULT_OK;
 }
 
 void CozmoEngineHostImpl::ForceAddRobot(AdvertisingRobot robotID,

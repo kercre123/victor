@@ -19,14 +19,14 @@
 
 namespace Anki {
 namespace Cozmo {
-
-class IRobotMessageHandler;
-
+namespace RobotInterface {
+class MessageHandler;
+}
 class PathDolerOuter
 {
 public:
 
-  PathDolerOuter(IRobotMessageHandler* msgHandler, RobotID_t robotID_);
+  PathDolerOuter(RobotInterface::MessageHandler* msgHandler, RobotID_t robotID_);
 
   // Updates the current path and will begins doling it out
   // immediately. NOTE: robot should already have a clear path before
@@ -51,7 +51,7 @@ protected:
   s16 lastDoledSegmentIdx_;
   
   // A reference to the MessageHandler that the robot uses for outgoing comms
-  IRobotMessageHandler* msgHandler_;
+  RobotInterface::MessageHandler* msgHandler_;
   RobotID_t robotID_;
 
 };

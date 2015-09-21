@@ -499,8 +499,8 @@ namespace Anki {
           _ledState[iLED].transitionOnPeriod_ms = transitionOnPeriod_ms;
           _ledState[iLED].transitionOffPeriod_ms = transitionOffPeriod_ms;
         } else if(turnOffUnspecifiedLEDs) {
-          _ledState[iLED].onColor      = NamedColors::BLACK;
-          _ledState[iLED].offColor     = NamedColors::BLACK;
+          _ledState[iLED].onColor      = ::Anki::NamedColors::BLACK;
+          _ledState[iLED].offColor     = ::Anki::NamedColors::BLACK;
           _ledState[iLED].onPeriod_ms  = 1000;
           _ledState[iLED].offPeriod_ms = 1000;
           _ledState[iLED].transitionOnPeriod_ms = 0;
@@ -553,20 +553,20 @@ namespace Anki {
       WhichCubeLEDs referenceLED = WhichCubeLEDs::NONE;
       switch(mode)
       {
-        case RELATIVE_LED_MODE_OFF:
+        case MakeRelativeMode::RELATIVE_LED_MODE_OFF:
           // Nothing to do
           return;
           
-        case RELATIVE_LED_MODE_BY_CORNER:
+        case MakeRelativeMode::RELATIVE_LED_MODE_BY_CORNER:
           referenceLED = GetCornerClosestToXY(xyPosition);
           break;
           
-        case RELATIVE_LED_MODE_BY_SIDE:
+        case MakeRelativeMode::RELATIVE_LED_MODE_BY_SIDE:
           referenceLED = GetFaceClosestToXY(xyPosition);
           break;
           
         default:
-          PRINT_NAMED_ERROR("ActiveCube.MakeStateRelativeToXY", "Unrecognized relateive LED mode %d.\n", mode);
+          PRINT_NAMED_ERROR("ActiveCube.MakeStateRelativeToXY", "Unrecognized relateive LED mode %s.", MakeRelativeModeToString(mode));
           return;
       }
       
@@ -620,20 +620,20 @@ namespace Anki {
       WhichCubeLEDs referenceLED = WhichCubeLEDs::NONE;
       switch(mode)
       {
-        case RELATIVE_LED_MODE_OFF:
+        case MakeRelativeMode::RELATIVE_LED_MODE_OFF:
           // Nothing to do
           return whichLEDs;
           
-        case RELATIVE_LED_MODE_BY_CORNER:
+        case MakeRelativeMode::RELATIVE_LED_MODE_BY_CORNER:
           referenceLED = GetCornerClosestToXY(xyPosition);
           break;
           
-        case RELATIVE_LED_MODE_BY_SIDE:
+        case MakeRelativeMode::RELATIVE_LED_MODE_BY_SIDE:
           referenceLED = GetFaceClosestToXY(xyPosition);
           break;
           
         default:
-          PRINT_NAMED_ERROR("ActiveCube.MakeStateRelativeToXY", "Unrecognized relateive LED mode %d.\n", mode);
+          PRINT_NAMED_ERROR("ActiveCube.MakeStateRelativeToXY", "Unrecognized relateive LED mode %s.", MakeRelativeModeToString(mode));
           return whichLEDs;
       }
       

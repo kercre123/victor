@@ -13,8 +13,7 @@
 #define __Anki_Cozmo_Basestation_EngineImpl_CozmoEngineHostImpl_H__
 
 #include "anki/cozmo/basestation/engineImpl/cozmoEngineImpl.h"
-#include "clad/types/imageSendMode.h"
-#include "clad/types/cameraSettings.h"
+#include "clad/types/imageTypes.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -30,6 +29,7 @@ class CozmoEngineHostImpl : public CozmoEngineImpl
 {
 public:
   CozmoEngineHostImpl(IExternalInterface* externalInterface, Util::Data::DataPlatform* dataPlatform);
+  ~CozmoEngineHostImpl();
 
   Result StartBasestation();
 
@@ -68,7 +68,7 @@ protected:
   bool                         _isListeningForRobots;
   Comms::AdvertisementService  _robotAdvertisementService;
   RobotManager                 _robotMgr;
-  RobotMessageHandler          _robotMsgHandler;
+  RobotInterface::MessageHandler& _robotMsgHandler;
 
   std::map<AdvertisingRobot, bool> _forceAddedRobots;
   BaseStationTime_t _lastAnimationFolderScan;

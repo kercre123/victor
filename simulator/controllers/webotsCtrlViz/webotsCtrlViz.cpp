@@ -28,7 +28,7 @@ int main(int argc, char **argv)
   webots::Supervisor vizSupervisor;
   VizControllerImpl vizController(vizSupervisor);
   const size_t maxPacketSize{(size_t)VizConstants::MaxMessageSize};
-  char data[maxPacketSize];
+  uint8_t data[maxPacketSize]{0};
   size_t numBytesRecvd;
   
   // Setup server to listen for commands
@@ -48,8 +48,8 @@ int main(int argc, char **argv)
   while (vizSupervisor.step(Anki::Cozmo::TIME_STEP) != -1)
   {
     // Any messages received?
-    while ((numBytesRecvd = server.Recv(data, maxPacketSize)) > 0) {
-      physicsClient.Send(data, numBytesRecvd);
+    while ((numBytesRecvd = (size_t)server.Recv((char*)data, maxPacketSize)) > 0) {
+      physicsClient.Send((char*)data, (int)numBytesRecvd);
       vizController.ProcessMessage(VizInterface::MessageViz(data, numBytesRecvd));
     } // while server.Recv
     

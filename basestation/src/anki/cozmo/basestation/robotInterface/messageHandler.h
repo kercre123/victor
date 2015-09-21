@@ -15,6 +15,8 @@
 
 #include "anki/cozmo/basestation/events/ankiMailboxEventMgr.h"
 #include "anki/common/types.h"
+#include "clad/robotInterface/messageEngineToRobot.h"
+#include "clad/robotInterface/messageRobotToEngine.h"
 
 namespace Anki {
 
@@ -29,15 +31,11 @@ class RobotManager;
 
 namespace RobotInterface {
 
-class EngineToRobot;
-class RobotToEngine;
-enum class EngineToRobotTag : uint8_t;
-enum class RobotToEngineTag : uint8_t;
-
 class MessageHandler {
 public:
 
   MessageHandler();
+  virtual ~MessageHandler(){};
 
   virtual void Init(Comms::IChannel* channel, RobotManager* robotMgr);
 

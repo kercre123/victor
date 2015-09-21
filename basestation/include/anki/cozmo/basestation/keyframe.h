@@ -18,22 +18,24 @@
 #define ANKI_COZMO_CANNED_KEYFRAME_H
 
 #include "anki/common/basestation/colorRGBA.h"
-
 #include "anki/cozmo/basestation/proceduralFace.h"
-
 #include "anki/cozmo/shared/cozmoTypes.h"
 #include "clad/types/animationKeyFrames.h"
 #include "clad/types/ledTypes.h"
-#include "clad/robotInterface/messageEngineToRobot.h"
-
 #include "anki/cozmo/basestation/soundManager.h"
-
 #include "util/random/randomGenerator.h"
+#include "json/json-forwards.h"
 
 namespace Anki {
   namespace Cozmo {
-    
-    // Forward declaration
+  // Forward declaration
+  namespace RobotInterface {
+  class EngineToRobot;
+  enum class EngineToRobotTag : uint8_t;
+  }
+
+
+  // Forward declaration
     class Robot;
     class IRobotMessageHandler;
     

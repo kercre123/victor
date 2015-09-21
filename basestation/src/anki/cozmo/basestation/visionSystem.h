@@ -49,6 +49,8 @@
 #include "anki/vision/basestation/faceTracker.h"
 
 #include "visionParameters.h"
+#include "clad/vizInterface/messageViz.h"
+#include "clad/robotInterface/messageEngineToRobot.h"
 
 
 namespace Anki {  
@@ -206,11 +208,11 @@ namespace Cozmo {
     // These return true if a mailbox messages was available, and they copy
     // that message into the passed-in message struct.
     //bool CheckMailbox(ImageChunk&          msg);
-    bool CheckMailbox(MessageDockingErrorSignal&  msg);
+    bool CheckMailbox(DockingErrorSignal&  msg);
     //bool CheckMailbox(MessageFaceDetection&       msg);
     bool CheckMailbox(Vision::ObservedMarker&     msg);
-    bool CheckMailbox(MessageTrackerQuad&         msg);
-    bool CheckMailbox(MessagePanAndTiltHead&      msg);
+    bool CheckMailbox(VizInterface::TrackerQuad& msg);
+    bool CheckMailbox(RobotInterface::PanAndTilt& msg);
     bool CheckMailbox(Vision::TrackedFace&        msg);
     
   protected:
@@ -327,7 +329,7 @@ namespace Cozmo {
     
     // Snapshots of robot state
     bool _wasCalledOnce, _havePreviousRobotState;
-    MessageRobotState _robotState, _prevRobotState;
+    RobotState _robotState, _prevRobotState;
     
     // Parameters defined in visionParameters.h
     DetectFiducialMarkersParameters _detectionParameters;
@@ -336,7 +338,7 @@ namespace Cozmo {
     Vision::CameraResolution        _captureResolution;
     
     // For sending images to basestation
-    ImageSendMode_t                 _imageSendMode = ISM_OFF;
+    ImageSendMode                 _imageSendMode = ImageSendMode::Off;
     Vision::CameraResolution        _nextSendImageResolution = Vision::CAMERA_RES_NONE;
     
     // For taking snapshots
@@ -384,7 +386,7 @@ namespace Cozmo {
     void DisableModeHelper(Mode mode);
     
     Embedded::Quadrilateral<f32> GetTrackerQuad(Embedded::MemoryStack scratch);
-    Result UpdateRobotState(const MessageRobotState newRobotState);
+    Result UpdateRobotState(const RobotState newRobotState);
     void GetPoseChange(f32& xChange, f32& yChange, Radians& angleChange);
     Result UpdateMarkerToTrack();
     Radians GetCurrentHeadAngle();
@@ -420,7 +422,7 @@ namespace Cozmo {
                                    Embedded::MemoryStack scratch);
     
     void FillDockErrMsg(const Embedded::Quadrilateral<f32>& currentQuad,
-                        MessageDockingErrorSignal& dockErrMsg,
+                        DockingErrorSignal& dockErrMsg,
                         Embedded::MemoryStack scratch);
     
     Result TakeSnapshotHelper(const Embedded::Array<u8>& grayscaleImage);
@@ -430,9 +432,9 @@ namespace Cozmo {
     // system communicates to main execution:
     //MultiMailbox<Messages::BlockMarkerObserved, MAX_BLOCK_MARKER_MESSAGES> blockMarkerMailbox_;
     //Mailbox<Messages::MatMarkerObserved>    matMarkerMailbox_;
-    Mailbox<MessageDockingErrorSignal>   _dockingMailbox;
-    Mailbox<MessageTrackerQuad>          _trackerMailbox;
-    Mailbox<MessagePanAndTiltHead>       _panTiltMailbox;
+    Mailbox<DockingErrorSignal>   _dockingMailbox;
+    Mailbox<VizInterface::TrackerQuad>          _trackerMailbox;
+    Mailbox<RobotInterface::PanAndTilt>       _panTiltMailbox;
     MultiMailbox<Vision::ObservedMarker, DetectFiducialMarkersParameters::MAX_MARKERS>   _visionMarkerMailbox;
     //MultiMailbox<MessageFaceDetection, FaceDetectionParameters::MAX_FACE_DETECTIONS>   _faceDetectMailbox;
     

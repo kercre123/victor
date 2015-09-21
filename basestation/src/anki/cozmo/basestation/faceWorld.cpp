@@ -48,17 +48,17 @@ namespace Cozmo {
     
     const f32 headAngle = std::atan(zDist/(minDist + 1e-6f));
     
-    MessagePanAndTiltHead msg;
+    RobotInterface::PanAndTilt msg;
     msg.headTiltAngle_rad = headAngle;
     msg.bodyPanAngle_rad = 0.f;
     
-    if(false == _robot.IsTrackingWithHeadOnly()) {
+    if(!_robot.IsTrackingWithHeadOnly()) {
       // Also rotate ("pan") body:
       const Radians panAngle = std::atan2(yDist, xDist);// - _robot->GetPose().GetRotationAngle<'Z'>();
       msg.bodyPanAngle_rad = panAngle.ToFloat();
     }
     
-    _robot.SendMessage(msg);
+    _robot.SendMessage(RobotInterface::EngineToRobot(std::move(msg)));
     
     return RESULT_OK;
   } // UpdateFaceTracking()
@@ -93,7 +93,7 @@ namespace Cozmo {
     knownFace.vizHandle = VizManager::getInstance()->DrawHumanHead(static_cast<u32>(knownFace.face.GetID()),
                                                                    humanHeadSize,
                                                                    knownFace.face.GetHeadPose(),
-                                                                   NamedColors::GREEN);
+                                                                   ::Anki::NamedColors::GREEN);
     
     if((_robot.GetTrackToFace() != Vision::TrackedFace::UnknownFace) &&
        (_robot.GetTrackToFace() == face.GetID()))

@@ -30,12 +30,12 @@ enum class EngineToRobotTag : uint8_t;
 enum class RobotToEngineTag : uint8_t;
 
 
-class MessageHandlerStub : public IMessageHandler
+class MessageHandlerStub : public MessageHandler
 {
 public:
   MessageHandlerStub() { }
-  Result Init(Comms::IChannel* comms, RobotManager* robotMgr) override { return RESULT_OK; }
-  Result ProcessMessages() override { return RESULT_OK; }
+  void Init(Comms::IChannel* comms, RobotManager* robotMgr) override { }
+  void ProcessMessages() override { }
   Result SendMessage(const RobotID_t robotID, const RobotInterface::EngineToRobot& msg, bool reliable = true, bool hot = false) override
   {
     return RESULT_OK;

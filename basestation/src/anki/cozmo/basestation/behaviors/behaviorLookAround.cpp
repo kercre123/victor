@@ -95,7 +95,7 @@ IBehavior::Status BehaviorLookAround::Update(float currentTime_sec)
 {
 #if SAFE_ZONE_VIZ
   Point2f center = { _moveAreaCenter.GetTranslation().x(), _moveAreaCenter.GetTranslation().y() };
-  VizManager::getInstance()->DrawXYCircle(_robot.GetID(), NamedColors::GREEN, center, _safeRadius);
+  VizManager::getInstance()->DrawXYCircle(_robot.GetID(), ::Anki::NamedColors::GREEN, center, _safeRadius);
 #endif
   switch (_currentState)
   {

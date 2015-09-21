@@ -11,6 +11,7 @@
  **/
 
 #include "anki/cozmo/basestation/viz/vizManager.h"
+#include "anki/cozmo/basestation/viz/vizObjectBaseId.h"
 #include "util/logging/logging.h"
 #include "anki/common/basestation/exceptions.h"
 #include "anki/common/basestation/math/point_impl.h"
@@ -21,6 +22,7 @@
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
 #include "clad/vizInterface/messageViz.h"
 #include <fstream>
+
 #if ANKICORETECH_USE_OPENCV
 #include <opencv2/highgui/highgui.hpp>
 #endif
@@ -28,18 +30,6 @@
 
 namespace Anki {
   namespace Cozmo {
-    
-    // Base IDs for each VizObject type
-    const u32 VizObjectBaseID[(int)VizObjectType::NUM_VIZ_OBJECT_TYPES+1] = {
-      0,    // VIZ_OJECT_ROBOT
-      1000, // VIZ_OBJECT_CUBOID
-      2000, // VIZ_OBJECT_RAMP
-      3000, // VIZ_OBJECT_CHARGER
-      4000, // VIZ_OJECT_PREDOCKPOSE
-      5000, // VIZ_OBJECT_HUMAN_HEAD
-      6000, // VIZ_OBJECT_CAMERA_FACE
-      u32_MAX - 100 // Last valid object ID allowed
-    };
     
     VizManager* VizManager::_singletonInstance = nullptr;
     
@@ -104,7 +94,7 @@ namespace Anki {
       uint8_t buffer[MAX_MESSAGE_SIZE]{0};
 
       const size_t numWritten = (uint32_t)message.Pack(buffer, MAX_MESSAGE_SIZE);
-      if (_vizClient.Send(buffer, (int)numWritten) <= 0) {
+      if (_vizClient.Send((const char*)buffer, (int)numWritten) <= 0) {
         PRINT_NAMED_WARNING("VizManager.SendMessage.Fail", "Send vizMsgID %s of size %zd failed\n", VizInterface::MessageVizTagToString(message.GetTag()), numWritten);
       }
     }
@@ -128,7 +118,7 @@ namespace Anki {
           pose.GetRotationAxis().x(), pose.GetRotationAxis().y(), pose.GetRotationAxis().z(),
           headAngle, liftAngle
         )
-      );
+      ));
     }
     
     
@@ -511,12 +501,12 @@ namespace Anki {
     
     // =============== Quad methods ==================
     
-    void VizManager::EraseQuad(const u32 quadType, const u32 quadID)
+    void VizManager::EraseQuad(const uint32_t quadType, const u32 quadID)
     {
       SendMessage(VizInterface::MessageViz(VizInterface::EraseQuad(quadType, quadID)));
     }
     
-    void VizManager::EraseAllQuadsWithType(const u32 quadType)
+    void VizManager::EraseAllQuadsWithType(const uint32_t quadType)
     {
       EraseQuad(quadType, (uint32_t)VizConstants::ALL_QUAD_IDs);
     }

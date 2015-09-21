@@ -208,11 +208,12 @@ Result CozmoEngineImpl::Update(const BaseStationTime_t currTime_ns)
 void CozmoEngineImpl::ProcessDeviceImage(const Vision::Image &image)
 {
   // Process image within the detection rectangle with vision processing thread:
-  static const Cozmo::MessageRobotState bogusState; // req'd by API, but not really necessary for marker detection
 
 # if DEVICE_VISION_MODE == DEVICE_VISION_MODE_ASYNC
+  static const Cozmo::RobotState bogusState; // req'd by API, but not really necessary for marker detection
   _deviceVisionThread.SetNextImage(image, bogusState);
 # elif DEVICE_VISION_MODE == DEVICE_VISION_MODE_SYNC
+  static const Cozmo::RobotState bogusState; // req'd by API, but not really necessary for marker detection
   _deviceVisionThread.Update(image, bogusState);
 
   MessageVisionMarker msg;

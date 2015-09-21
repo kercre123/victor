@@ -44,6 +44,8 @@ public:
 
   // Allows subscribing to events by type with the passed in function
   Signal::SmartHandle Subcribe(const uint32_t mailbox, const uint32_t type, SubscriberFunction function);
+  void SubscribeForever(const uint32_t mailbox, const uint32_t type, SubscriberFunction function);
+  void UnsubscribeAll();
 
 private:
   std::unordered_map<uint32_t, std::unordered_map<uint32_t, EventHandlerSignal > >  _eventHandlerMap;
@@ -60,7 +62,7 @@ void AnkiMailboxEventMgr<DataType>::Broadcast(const uint32_t mailbox, const Even
     if (mailbox == AnyMailboxId)
     {
       // deliver to all mailboxes
-      for (auto mapPair : iter->second) {
+      for (auto& mapPair : iter->second) {
         mapPair.second.emit(event);
       }
     } else {
@@ -85,6 +87,17 @@ Signal::SmartHandle AnkiMailboxEventMgr<DataType>::Subcribe(const uint32_t mailb
   return _eventHandlerMap[type][mailbox].ScopedSubscribe(function);
 }
 
+template <typename DataType>
+void AnkiMailboxEventMgr<DataType>::SubscribeForever(const uint32_t mailbox, const uint32_t type, SubscriberFunction function)
+{
+  _eventHandlerMap[type][mailbox].SubscribeForever(function);
+}
+
+template <typename DataType>
+void AnkiMailboxEventMgr<DataType>::UnsubscribeAll()
+{
+  _eventHandlerMap.clear();
+}
 
 } // namespace Cozmo
 } // namespace Anki

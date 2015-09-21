@@ -18,7 +18,7 @@
 #include "anki/cozmo/basestation/ramp.h"
 #include "anki/cozmo/basestation/charger.h"
 #include "anki/cozmo/basestation/humanHead.h"
-#include "anki/cozmo/basestation/robotMessageHandler.h"
+#include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "clad/externalInterface/messageEngineToGame.h"
@@ -49,18 +49,7 @@
 
 namespace Anki
 {
-  namespace NamedColors {
-    // Add some BlockWorld-specific named colors:
-    const ColorRGBA EXECUTED_PATH              (1.f, 0.0f, 0.0f, 1.0f);
-    const ColorRGBA PREDOCKPOSE                (1.f, 0.0f, 0.0f, 0.75f);
-    const ColorRGBA PRERAMPPOSE                (0.f, 0.0f, 1.0f, 0.75f);
-    const ColorRGBA SELECTED_OBJECT            (0.f, 1.0f, 0.0f, 0.0f);
-    const ColorRGBA BLOCK_BOUNDING_QUAD        (0.f, 0.0f, 1.0f, 0.75f);
-    const ColorRGBA OBSERVED_QUAD              (1.f, 0.0f, 0.0f, 0.75f);
-    const ColorRGBA ROBOT_BOUNDING_QUAD        (0.f, 0.8f, 0.0f, 0.75f);
-    const ColorRGBA REPLAN_BLOCK_BOUNDING_QUAD (1.f, 0.1f, 1.0f, 0.75f);
-  }
-  
+
   namespace Cozmo
   {
     
@@ -647,7 +636,7 @@ namespace Anki
           const f32 minDist = std::sqrt(minDistSq);
           const f32 headAngle = std::atan(zDist/(minDist + 1e-6f));
           //_robot->MoveHeadToAngle(headAngle, 5.f, 2.f);
-          PanAndTiltHead msg;
+          RobotInterface::PanAndTilt msg;
           msg.headTiltAngle_rad = headAngle;
           msg.bodyPanAngle_rad = 0.f;
           
@@ -662,7 +651,7 @@ namespace Anki
                            RAD_TO_DEG(msg.headTiltAngle_rad),
                            RAD_TO_DEG(msg.bodyPanAngle_rad));
           */
-          _robot->SendMessage(msg);
+          _robot->SendMessage(RobotInterface::EngineToRobot(std::move(msg)));
         }
       } // if/else observedMarkers.empty()
       
@@ -1430,6 +1419,7 @@ namespace Anki
       
     } // UpdateObjectPoses()
 
+    /*
     Result BlockWorld::UpdateProxObstaclePoses()
     {
       TimeStamp_t lastTimestamp = _robot->GetLastMsgTimestamp();
@@ -1505,7 +1495,9 @@ namespace Anki
         {
           for (auto proxObsIter = proxTypeMap->second.begin();
                proxObsIter != proxTypeMap->second.end();
-               /* increment iter in loop, depending on erase*/)
+                   */
+/* increment iter in loop, depending on erase*/    /*
+)
           {
             if (lastTimestamp - proxObsIter->second->GetLastObservedTime() > PROX_OBSTACLE_LIFETIME_MS)
             {
@@ -1522,7 +1514,8 @@ namespace Anki
       
       return RESULT_OK;
     }
-    
+    */
+
     
     Result BlockWorld::Update(uint32_t& numObjectsObserved)
     {
@@ -1779,10 +1772,12 @@ namespace Anki
       // Toss any remaining markers?
       ClearAllObservedMarkers();
       
+      /*
       Result lastResult = UpdateProxObstaclePoses();
       if(lastResult != RESULT_OK) {
         return lastResult;
       }
+      */
 
       return RESULT_OK;
       

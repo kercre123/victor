@@ -16,16 +16,12 @@
 #include "anki/cozmo/basestation/animation.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
-
 #include "anki/cozmo/shared/cozmoTypes.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
-
 #include "anki/cozmo/basestation/soundManager.h"
-
 #include "util/logging/logging.h"
-
 #include "anki/common/basestation/utils/timer.h"
-
+#include "clad/robotInterface/messageEngineToRobot.h"
 //#include <cassert>
 
 #define DEBUG_ANIMATIONS 0
@@ -38,126 +34,7 @@ namespace Cozmo {
   
   const s32 Animation::MAX_BYTES_FOR_RELIABLE_TRANSPORT = (1000/2) * BS_TIME_STEP; // Don't send more than 1000 bytes every 2ms
   
-#pragma mark -
-#pragma mark Animation::Track
-  
-  template<typename FRAME_TYPE>
-  void Animation::Track<FRAME_TYPE>::Init()
-  {
-#   if DEBUG_ANIMATIONS
-    PRINT_NAMED_INFO("Animation.Track.Init", "Initializing %s Track with %lu frames.\n",
-                     FRAME_TYPE::GetClassName().c_str(),
-                     _frames.size());
-#   endif
-    
-    _frameIter = _frames.begin();
-  }
-  
-  template<typename FRAME_TYPE>
-  void Animation::Track<FRAME_TYPE>::MoveToNextKeyFrame()
-  {
-    if(_frameIter->IsLive()) {
-      // Live frames get removed from the track once played
-      _frameIter = _frames.erase(_frameIter);
-    } else {
-      // For canned frames, we just move to the next one in the track
-      ++_frameIter;
-    }
-  }
-  
-  template<typename FRAME_TYPE>
-  RobotMessage* Animation::Track<FRAME_TYPE>::GetCurrentStreamingMessage(TimeStamp_t startTime_ms,
-                                                                         TimeStamp_t currTime_ms)
-  {
-    RobotMessage* msg = nullptr;
-    
-    if(HasFramesLeft()) {
-      FRAME_TYPE& currentKeyFrame = GetCurrentKeyFrame();
-      if(currentKeyFrame.IsTimeToPlay(startTime_ms, currTime_ms))
-      {
-        msg = currentKeyFrame.GetStreamMessage();
-        if(currentKeyFrame.IsDone()) {
-          MoveToNextKeyFrame();
-        }
-      }
-    }
-    
-    return msg;
-  }
-  
-  // Specialization for ProceduralFace track because it needs look-back for interpolation
-  template<>
-  RobotMessage* Animation::Track<ProceduralFaceKeyFrame>::GetCurrentStreamingMessage(TimeStamp_t startTime_ms,
-                                                                                     TimeStamp_t currTime_ms)
-  {
-    RobotMessage* msg = nullptr;
-    
-    if(HasFramesLeft()) {
-      ProceduralFaceKeyFrame& currentKeyFrame = GetCurrentKeyFrame();
-      if(currentKeyFrame.IsTimeToPlay(startTime_ms, currTime_ms))
-      {
-        if(currentKeyFrame.IsLive()) {
-          // The AnimationStreamer will take care of interpolation for live
-          // live streaming
-          // TODO: Maybe we could also do it here somehow?
-          msg = currentKeyFrame.GetStreamMessage();
-          
-        } else {
-          auto nextIter = _frameIter;
-          ++nextIter;
-          if(nextIter != _frames.end()) {
-            // If we have another frame coming, use it to interpolate.
-            // This will only be "done" once 
-            msg = currentKeyFrame.GetInterpolatedStreamMessage(*nextIter);
-          } else {
-            // Otherwise, we'll just send the last frame
-            msg = currentKeyFrame.GetStreamMessage();
-          }
-        }
-          
-        if(currentKeyFrame.IsDone()) {
-          MoveToNextKeyFrame();
-        }
-      }
-    }
-    
-    return msg;
-  }
-  
-  template<typename FRAME_TYPE>
-  Result Animation::Track<FRAME_TYPE>::AddKeyFrame(const Json::Value &jsonRoot)
-  {
-    Result lastResult = AddKeyFrame(FRAME_TYPE());
-    if(RESULT_OK != lastResult) {
-      return lastResult;
-    }
-    
-    lastResult = _frames.back().DefineFromJson(jsonRoot);
-    
-#   if DEBUG_ANIMATIONS
-    PRINT_NAMED_INFO("Animation.Track.AddKeyFrame",
-                     "Adding %s keyframe to track to trigger at %dms.\n",
-                     _frames.back().GetClassName().c_str(),
-                     _frames.back().GetTriggerTime());
-#   endif
-    
-    if(lastResult == RESULT_OK) {
-      if(_frames.size() > 1) {
-        auto nextToLastFrame = _frames.rbegin();
-        ++nextToLastFrame;
-        
-        if(_frames.back().GetTriggerTime() <= nextToLastFrame->GetTriggerTime()) {
-          PRINT_NAMED_ERROR("Animation.Track.AddKeyFrame.BadTriggerTime",
-                            "New keyframe must be after the last keyframe.\n");
-          _frames.pop_back();
-          lastResult = RESULT_FAIL;
-        }
-      }
-    }
-    
-    return lastResult;
-  }
-  
+
 #pragma mark -
 #pragma mark Animation
   
@@ -240,52 +117,52 @@ namespace Cozmo {
   }
   
   template<>
-  Animation::Track<HeadAngleKeyFrame>& Animation::GetTrack() {
+  Animations::Track<HeadAngleKeyFrame>& Animation::GetTrack() {
     return _headTrack;
   }
   
   template<>
-  Animation::Track<LiftHeightKeyFrame>& Animation::GetTrack() {
+  Animations::Track<LiftHeightKeyFrame>& Animation::GetTrack() {
     return _liftTrack;
   }
   
   template<>
-  Animation::Track<FaceAnimationKeyFrame>& Animation::GetTrack() {
+  Animations::Track<FaceAnimationKeyFrame>& Animation::GetTrack() {
     return _faceAnimTrack;
   }
   
   template<>
-  Animation::Track<FacePositionKeyFrame>& Animation::GetTrack() {
+  Animations::Track<FacePositionKeyFrame>& Animation::GetTrack() {
     return _facePosTrack;
   }
   
   template<>
-  Animation::Track<DeviceAudioKeyFrame>& Animation::GetTrack() {
+  Animations::Track<DeviceAudioKeyFrame>& Animation::GetTrack() {
     return _deviceAudioTrack;
   }
   
   template<>
-  Animation::Track<RobotAudioKeyFrame>& Animation::GetTrack() {
+  Animations::Track<RobotAudioKeyFrame>& Animation::GetTrack() {
     return _robotAudioTrack;
   }
   
   template<>
-  Animation::Track<BackpackLightsKeyFrame>& Animation::GetTrack() {
+  Animations::Track<BackpackLightsKeyFrame>& Animation::GetTrack() {
     return _backpackLightsTrack;
   }
   
   template<>
-  Animation::Track<BodyMotionKeyFrame>& Animation::GetTrack() {
+  Animations::Track<BodyMotionKeyFrame>& Animation::GetTrack() {
     return _bodyPosTrack;
   }
   
   template<>
-  Animation::Track<BlinkKeyFrame>& Animation::GetTrack() {
+  Animations::Track<BlinkKeyFrame>& Animation::GetTrack() {
     return _blinkTrack;
   }
   
   template<>
-  Animation::Track<ProceduralFaceKeyFrame>& Animation::GetTrack() {
+  Animations::Track<ProceduralFaceKeyFrame>& Animation::GetTrack() {
     return _proceduralFaceTrack;
   }
   
@@ -344,7 +221,7 @@ _blinkTrack.__METHOD__()
     return RESULT_OK;
   } // Animation::Init()
   
-  bool Animation::BufferMessageToSend(RobotMessage* msg)
+  bool Animation::BufferMessageToSend(RobotInterface::EngineToRobot* msg)
   {
     if(msg != nullptr) {
       _sendBuffer.push_back(msg);
@@ -356,7 +233,7 @@ _blinkTrack.__METHOD__()
   Result Animation::SendBufferedMessages(Robot& robot)
   {
     // Empty out anything waiting in the send buffer:
-    RobotMessage* msg = nullptr;
+    RobotInterface::EngineToRobot* msg = nullptr;
     while(!_sendBuffer.empty()) {
 #     if DEBUG_ANIMATIONS
       PRINT_NAMED_INFO("Animation.SendBufferedMessages",
@@ -365,7 +242,7 @@ _blinkTrack.__METHOD__()
       
 
       msg = _sendBuffer.front();
-      const s32 numBytesRequired = msg->GetSize() + sizeof(RobotMessage::ID);
+      const size_t numBytesRequired = msg->Size();
       if(numBytesRequired <= _numBytesToSend) {
         Result sendResult = robot.SendMessage(*msg);
         if(sendResult != RESULT_OK) {
@@ -375,7 +252,7 @@ _blinkTrack.__METHOD__()
         _numBytesToSend -= numBytesRequired;
         
         // Increment total number of bytes streamed to robot
-        robot.IncrementNumAnimationBytesStreamed(numBytesRequired);
+        robot.IncrementNumAnimationBytesStreamed((int32_t)numBytesRequired);
         
         _sendBuffer.pop_front();
       } else {
@@ -472,12 +349,12 @@ _blinkTrack.__METHOD__()
           // and for now send silence.
           //PRINT_NAMED_INFO("Animation.Update", "Streaming AudioSilenceKeyFrame.\n");
           _robotAudioTrack.MoveToNextKeyFrame();
-          BufferMessageToSend(&_silenceMsg);
+          BufferMessageToSend(new RobotInterface::EngineToRobot(AnimKeyFrame::AudioSilence()));
         }
       } else {
         // No frames left or not time to play next frame yet, so send silence
         //PRINT_NAMED_INFO("Animation.Update", "Streaming AudioSilenceKeyFrame.\n");
-        BufferMessageToSend(&_silenceMsg);
+        BufferMessageToSend(new RobotInterface::EngineToRobot(AnimKeyFrame::AudioSilence()));
       }
       
       // Increment fake "streaming" time, so we can evaluate below whether
@@ -589,14 +466,14 @@ _blinkTrack.__METHOD__()
       PRINT_NAMED_INFO("Animation.Update", "Streaming EndOfAnimation at t=%dms.\n",
                        _streamingTime_ms - _startTime_ms);
 #     endif
-      
-      MessageAnimKeyFrame_EndOfAnimation endMsg;
-      lastResult = robot.SendMessage(endMsg);
+      RobotInterface::EngineToRobot endMsg{AnimKeyFrame::EndOfAnimation()};
+      size_t endMsgSize = endMsg.Size();
+      lastResult = robot.SendMessage(std::move(endMsg));
       if(lastResult != RESULT_OK) { return lastResult; }
       _endOfAnimationSent = true;
       
       // Increment running total of bytes streamed
-      robot.IncrementNumAnimationBytesStreamed(endMsg.GetSize() + sizeof(RobotMessage::ID));
+      robot.IncrementNumAnimationBytesStreamed((int32_t)endMsgSize);
     }
     
     return RESULT_OK;

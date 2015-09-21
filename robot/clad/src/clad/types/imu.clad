@@ -5,7 +5,7 @@
 namespace Anki {
 namespace Cozmo {
   
-enum uint_8 IMU_CONSTANTS
+enum uint_8 IMUConstants
 {
     IMU_CHUNK_SIZE = 32,
 }

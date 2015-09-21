@@ -273,7 +273,7 @@ public:
     Result DockWithObject(const ObjectID objectID,
                               const Vision::KnownMarker* marker,
                               const Vision::KnownMarker* marker2,
-                              const DockAction_t dockAction,
+                              const DockAction dockAction,
                               const u16 image_pixel_x,
                               const u16 image_pixel_y,
                               const u8 pixel_radius,
@@ -283,7 +283,7 @@ public:
     Result DockWithObject(const ObjectID objectID,
                           const Vision::KnownMarker* marker,
                           const Vision::KnownMarker* marker2,
-                          const DockAction_t dockAction,
+                          const DockAction dockAction,
                           const bool useManualSpeed = false);
     
     // Transitions the object that robot was docking with to the one that it
@@ -306,17 +306,19 @@ public:
     
     Result StopDocking();
     
+    /*
     //
     // Proximity Sensors
     //
     u8   GetProxSensorVal(ProxSensor_t sensor)    const {return _proxVals[sensor];}
     bool IsProxSensorBlocked(ProxSensor_t sensor) const {return _proxBlocked[sensor];}
-    
+
     // Pose of where objects are assumed to be with respect to robot pose when
     // obstacles are detected by proximity sensors
     static const Pose3d ProxDetectTransform[NUM_PROX];
-    
-    
+    */
+
+
     //
     // Vision
     //
@@ -522,12 +524,12 @@ public:
     // Color specified as RGBA, where A(lpha) will be ignored
     void SetDefaultLights(const u32 color);
     
-    void SetBackpackLights(const std::array<u32,LEDId::NUM_BACKPACK_LEDS>& onColor,
-                           const std::array<u32,LEDId::NUM_BACKPACK_LEDS>& offColor,
-                           const std::array<u32,LEDId::NUM_BACKPACK_LEDS>& onPeriod_ms,
-                           const std::array<u32,LEDId::NUM_BACKPACK_LEDS>& offPeriod_ms,
-                           const std::array<u32,LEDId::NUM_BACKPACK_LEDS>& transitionOnPeriod_ms,
-                           const std::array<u32,LEDId::NUM_BACKPACK_LEDS>& transitionOffPeriod_ms);
+    void SetBackpackLights(const std::array<u32,(size_t)LEDId::NUM_BACKPACK_LEDS>& onColor,
+                           const std::array<u32,(size_t)LEDId::NUM_BACKPACK_LEDS>& offColor,
+                           const std::array<u32,(size_t)LEDId::NUM_BACKPACK_LEDS>& onPeriod_ms,
+                           const std::array<u32,(size_t)LEDId::NUM_BACKPACK_LEDS>& offPeriod_ms,
+                           const std::array<u32,(size_t)LEDId::NUM_BACKPACK_LEDS>& transitionOnPeriod_ms,
+                           const std::array<u32,(size_t)LEDId::NUM_BACKPACK_LEDS>& transitionOffPeriod_ms);
    
     
     // =========  Block messages  ============
@@ -537,12 +539,12 @@ public:
     
     // Set the LED colors/flashrates individually (ordered by BlockLEDPosition)
     Result SetObjectLights(const ObjectID& objectID,
-                           const std::array<u32,ActiveObjectConstants::NUM_CUBE_LEDS>& onColor,
-                           const std::array<u32,ActiveObjectConstants::NUM_CUBE_LEDS>& offColor,
-                           const std::array<u32,ActiveObjectConstants::NUM_CUBE_LEDS>& onPeriod_ms,
-                           const std::array<u32,ActiveObjectConstants::NUM_CUBE_LEDS>& offPeriod_ms,
-                           const std::array<u32,ActiveObjectConstants::NUM_CUBE_LEDS>& transitionOnPeriod_ms,
-                           const std::array<u32,ActiveObjectConstants::NUM_CUBE_LEDS>& transitionOffPeriod_ms,
+                           const std::array<u32,(size_t)ActiveObjectConstants::NUM_CUBE_LEDS>& onColor,
+                           const std::array<u32,(size_t)ActiveObjectConstants::NUM_CUBE_LEDS>& offColor,
+                           const std::array<u32,(size_t)ActiveObjectConstants::NUM_CUBE_LEDS>& onPeriod_ms,
+                           const std::array<u32,(size_t)ActiveObjectConstants::NUM_CUBE_LEDS>& offPeriod_ms,
+                           const std::array<u32,(size_t)ActiveObjectConstants::NUM_CUBE_LEDS>& transitionOnPeriod_ms,
+                           const std::array<u32,(size_t)ActiveObjectConstants::NUM_CUBE_LEDS>& transitionOffPeriod_ms,
                            const MakeRelativeMode makeRelative,
                            const Point2f& relativeToPoint);
     
@@ -646,11 +648,13 @@ public:
     Vision::CameraCalibration _cameraCalibration;
     Vision::Camera            _camera;
     bool                      _visionWhileMovingEnabled;
-    
+
+    /*
     // Proximity sensors
     std::array<u8,   NUM_PROX>  _proxVals;
     std::array<bool, NUM_PROX>  _proxBlocked;
-    
+    */
+
     // Geometry / Pose
     std::list<Pose3d>_poseOrigins; // placeholder origin poses while robot isn't localized
     Pose3d*          _worldOrigin;
@@ -762,7 +766,9 @@ public:
     void SetLastRecvdPathID(u16 path_id)    {_lastRecvdPathID = path_id;}
     void SetPickingOrPlacing(bool t)        {_isPickingOrPlacing = t;}
     void SetPickedUp(bool t);
+    /*
     void SetProxSensorData(const ProxSensor_t sensor, u8 value, bool blocked) {_proxVals[sensor] = value; _proxBlocked[sensor] = blocked;}
+    */
 
     ///////// Animation /////////
     
@@ -778,19 +784,28 @@ public:
     // (via MessageHandler) to the physical robot
     std::vector<Signal::SmartHandle> _signalHandles;
     Vision::ImageDeChunker& _imageDeChunker;
+    uint8_t _imuSeqID = 0;
+    uint32_t _imuDataSize = 0;
+    int8_t _imuData[6][1024]{{0}};  // first ax, ay, az, gx, gy, gz
 
-    void InitRobotMessageComponent(RobotInterface::MessageHandler* messageHandler, RobotID_t robotId);
-    void HandleCameraCalibration(const RobotInterface::RobotToEngine& message);
-    void HandlePrint(const RobotInterface::RobotToEngine& message);
-    void HandleBlockPickedUp(const RobotInterface::RobotToEngine& message);
-    void HandleBlockPlaced(const RobotInterface::RobotToEngine& message);
-    void HandleActiveObjectMoved(const RobotInterface::RobotToEngine& message);
-    void HandleActiveObjectStopped(const RobotInterface::RobotToEngine& message);
-    void HandleActiveObjectTapped(const RobotInterface::RobotToEngine& message);
-    void HandleGoalPose(const RobotInterface::RobotToEngine& message);
+
+  void InitRobotMessageComponent(RobotInterface::MessageHandler* messageHandler, RobotID_t robotId);
+    void HandleCameraCalibration(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+    void HandlePrint(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+    void HandleBlockPickedUp(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+    void HandleBlockPlaced(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+    void HandleActiveObjectMoved(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+    void HandleActiveObjectStopped(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+    void HandleActiveObjectTapped(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+    void HandleGoalPose(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     // For processing image chunks arriving from robot.
     // Sends complete images to VizManager for visualization (and possible saving).
-    void HandleImageChunk(const RobotInterface::RobotToEngine& message);
+    void HandleImageChunk(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+    // For processing imu data chunks arriving from robot.
+    // Writes the entire log of 3-axis accelerometer and 3-axis
+    // gyro readings to a .m file in kP_IMU_LOGS_DIR so they
+    // can be read in from Matlab. (See robot/util/imuLogsTool.m)
+    void HandleImuData(const AnkiEvent<RobotInterface::RobotToEngine>& message);
 
     Result SendAbsLocalizationUpdate(const Pose3d&        pose,
                                      const TimeStamp_t&   t,
@@ -827,9 +842,6 @@ public:
     // Sends a path to the robot to be immediately executed
     Result SendExecutePath(const Planning::Path& path, const bool useManualSpeed) const;
     
-    // Turn on/off headlight LEDs
-    Result SendHeadlight(u8 intensity);
-    
     // Sync time with physical robot and trigger it robot to send back camera
     // calibration
     Result SendSyncTime() const;
@@ -845,17 +857,13 @@ public:
     
     Result SendPlaceObjectOnGround(const f32 rel_x, const f32 rel_y, const f32 rel_angle, const bool useManualSpeed);
 
-    Result SendDockWithObject(const DockAction_t dockAction,
+    Result SendDockWithObject(const DockAction dockAction,
                               const bool useManualSpeed);
-    
-    Result SendStartFaceTracking(const u8 timeout_sec);
-    Result SendStopFaceTracking();
-    Result SendPing();
     
     Result SendAbortDocking();
     Result SendAbortAnimation();
     
-    Result SendSetCarryState(CarryState_t state);
+    Result SendSetCarryState(CarryState state);
 
     
     // =========  Active Object messages  ============

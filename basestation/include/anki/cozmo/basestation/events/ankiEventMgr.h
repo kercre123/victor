@@ -39,8 +39,9 @@ public:
   void Broadcast(const EventDataType& event);
   
   // Allows subscribing to events by type with the passed in function
-  Signal::SmartHandle Subcribe(uint32_t type, SubscriberFunction function);
-  void SubscribeForever(uint32_t type, SubscriberFunction function);
+  Signal::SmartHandle Subcribe(const uint32_t type, SubscriberFunction function);
+  void SubscribeForever(const uint32_t type, SubscriberFunction function);
+  void UnsubscribeAll();
   
 private:
   std::unordered_map<uint32_t, EventHandlerSignal>  _eventHandlerMap;
@@ -59,15 +60,21 @@ void AnkiEventMgr<DataType>::Broadcast(const EventDataType& event)
 }
   
 template <typename DataType>
-Signal::SmartHandle AnkiEventMgr<DataType>::Subcribe(uint32_t type, SubscriberFunction function)
+Signal::SmartHandle AnkiEventMgr<DataType>::Subcribe(const uint32_t type, SubscriberFunction function)
 {
   return _eventHandlerMap[type].ScopedSubscribe(function);
 }
 
 template <typename DataType>
-void AnkiEventMgr<DataType>::SubscribeForever(uint32_t type, SubscriberFunction function)
+void AnkiEventMgr<DataType>::SubscribeForever(const uint32_t type, SubscriberFunction function)
 {
   _eventHandlerMap[type].SubscribeForever(function);
+}
+
+template <typename DataType>
+void AnkiEventMgr<DataType>::UnsubscribeAll()
+{
+  _eventHandlerMap.clear();
 }
 
 } // namespace Cozmo

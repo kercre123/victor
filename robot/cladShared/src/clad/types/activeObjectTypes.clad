@@ -1,6 +1,8 @@
 /** Clad definitions for blocks
  */
 
+#include "clad/types/ledTypes.clad"
+
 namespace Anki {
 namespace Cozmo {
 
@@ -71,28 +73,58 @@ enum uint_8 UpAxis {
   Unknown
 }
 
-message ActiveObjectMoved
+message CubeLights
+{
+  LightState lights[4],
+  uint_32    objectID,
+}
+
+message FlashObjectIDs
+{
+  uint_32 objectID, // Place holder
+}
+
+message ObjectBeingCarried
+{
+  uint_32 objectID,
+  bool    isBeingCarried,
+}
+
+message ObjectMoved
 {
   uint_32     objectID,
+  uint_32     robotID,
   ActiveAccel accel,
   UpAxis      upAxis,
-  uint_8 robotID,
 }
 
-message ActiveObjectStoppedMoving
+message ObjectStoppedMoving
 {
   uint_32 objectID,
+  uint_32 robotID,
   UpAxis  upAxis,
   bool    rolled,
-  uint_8 robotID,
 }
 
-message ActiveObjectTapped
+message ObjectTapped
 {
   uint_32 objectID,
+  uint_32 robotID,
   uint_8  numTaps,
-  uint_8 robotID,
 }
+
+namespace BlockMessages
+{
+
+ union ActiveObjectMessage {
+      FlashObjectIDs      flashID,
+      CubeLights          setCubeLights,
+      ObjectMoved         objectMoved,
+      ObjectStoppedMoving objectSoppedMoving,
+      ObjectBeingCarried  setObjectBeingCarried,
+      ObjectTapped        objectTapped
+  }
+} // Namespace BlockMessages
 
 } // namespace Cozmo
 } // namespace Anki

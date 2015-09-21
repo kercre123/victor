@@ -12,7 +12,7 @@
  **/
 
 #include "anki/cozmo/basestation/visionProcessingThread.h"
-#include "visionSystem.h"
+#include "anki/cozmo/basestation/visionSystem.h"
 
 #include "anki/vision/basestation/image_impl.h"
 #include "anki/vision/markerCodeDefinitions.h"
@@ -115,7 +115,7 @@ namespace Cozmo {
 
 
   void VisionProcessingThread::SetNextImage(const Vision::Image &image,
-                                            const Anki::Cozmo::MessageRobotState &robotState)
+                                            const RobotState &robotState)
   {
     Lock();
     
@@ -226,7 +226,7 @@ namespace Cozmo {
   }
 
   void VisionProcessingThread::Update(const Vision::Image& image,
-                                      const MessageRobotState& robotState)
+                                      const RobotState& robotState)
   {
     if(_isCamCalibSet) {
       if(!_visionSystem->IsInitialized()) {
@@ -322,7 +322,7 @@ namespace Cozmo {
     return _visionSystem->CheckMailbox(msg);
   }
   
-  bool VisionProcessingThread::CheckMailbox(MessageDockingErrorSignal& msg)
+  bool VisionProcessingThread::CheckMailbox(DockingErrorSignal& msg)
   {
     AnkiConditionalErrorAndReturnValue(_visionSystem != nullptr /*&& _visionSystem->IsInitialized()*/, false,
                                        "VisionProcessingThread.CheckMailbox.NullVisionSystem",
@@ -330,7 +330,7 @@ namespace Cozmo {
     return _visionSystem->CheckMailbox(msg);
   }
   
-  bool VisionProcessingThread::CheckMailbox(MessageTrackerQuad& msg)
+  bool VisionProcessingThread::CheckMailbox(VizInterface::TrackerQuad& msg)
   {
     AnkiConditionalErrorAndReturnValue(_visionSystem != nullptr /*& _visionSystem->IsInitialized()*/, false,
                                        "VisionProcessingThread.CheckMailbox.NullVisionSystem",
@@ -338,7 +338,7 @@ namespace Cozmo {
     return _visionSystem->CheckMailbox(msg);
   }
   
-  bool VisionProcessingThread::CheckMailbox(MessagePanAndTiltHead& msg)
+  bool VisionProcessingThread::CheckMailbox(RobotInterface::PanAndTilt& msg)
   {
     AnkiConditionalErrorAndReturnValue(_visionSystem != nullptr /*& _visionSystem->IsInitialized()*/, false,
                                        "VisionProcessingThread.CheckMailbox.NullVisionSystem",
