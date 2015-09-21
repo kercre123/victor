@@ -22,6 +22,7 @@
 #include "anki/cozmo/basestation/block.h"
 #include "clad/types/actionTypes.h"
 #include "clad/types/proceduralEyeParameters.h"
+#include "clad/types/demoBehaviorState.h"
 #include <stdio.h>
 #include <string.h>
 #include <fstream>
@@ -1264,17 +1265,17 @@ namespace Anki {
                 if (webots::Supervisor::KEYBOARD_SHIFT == modifier_key)
                 {
                   // Send DemoState FacesOnly
-                  SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::SetDemoState(static_cast<uint8_t>(DemoBehaviorChooser::DemoState::FacesOnly))));
+                  SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::SetDemoState(DemoBehaviorState::FacesOnly)));
                 }
                 else if (webots::Supervisor::KEYBOARD_ALT == modifier_key)
                 {
                   // Send DemoState BlocksOnly
-                  SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::SetDemoState(static_cast<uint8_t>(DemoBehaviorChooser::DemoState::BlocksOnly))));
+                  SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::SetDemoState(DemoBehaviorState::BlocksOnly)));
                 }
                 else
                 {
                   // Send DemoState Default
-                  SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::SetDemoState(static_cast<uint8_t>(DemoBehaviorChooser::DemoState::Default))));
+                  SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::SetDemoState(DemoBehaviorState::Default)));
                 }
                 break;
               }
