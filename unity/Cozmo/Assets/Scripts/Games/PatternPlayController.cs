@@ -14,6 +14,8 @@ public class PatternPlayController : GameController {
   private int cozmoEnergyLevel = 0;
   private static int cozmoMaxEnergyLevel = 6;
 
+  private RowBlockPattern lastPatternSeen = null;
+
   // block lights relative to cozmo.
   // front is the light facing cozmo.
   // left is the light left of cozmo etc.
@@ -37,6 +39,33 @@ public class PatternPlayController : GameController {
   private class RowBlockPattern {
     // left to right pattern relative to cozmo.
     public List<BlockLights> blocks = new List<BlockLights>();
+
+    public override bool Equals(System.Object obj) {
+      if (obj == null) {
+        return false;
+      }
+
+      RowBlockPattern p = obj as RowBlockPattern;
+      if ((System.Object)p == null) {
+        return false;
+      }
+      return Equals(p);
+    }
+
+    public bool Equals(RowBlockPattern pattern) {
+      if (pattern == null)
+        return false;
+      
+      for (int i = 0; i < pattern.blocks.Count; ++i) {
+        if (pattern.blocks[i].back != blocks[i].back ||
+            pattern.blocks[i].front != blocks[i].front ||
+            pattern.blocks[i].left != blocks[i].left ||
+            pattern.blocks[i].right != blocks[i].right) {
+          return false;
+        }
+      }
+      return true;
+    }
   }
 
   private Dictionary<int, BlockLightConfig> blockLightConfigs = new Dictionary<int, BlockLightConfig>();
@@ -113,7 +142,7 @@ public class PatternPlayController : GameController {
 
     // update backpack lights
     // iterate through each of the lights and determine if
-    // (a) the light should be on, and if so, which color.
+    // the light should be on, and if so, which color.
 
     for (int i = 0; i < 3; ++i) {
       int localEnergyLevel = cozmoEnergyLevel;
@@ -209,7 +238,6 @@ public class PatternPlayController : GameController {
           seenPatterns.Add(currentPattern);
         }
         else {
-          // meh.
           SendAnimation("Satisfaction");
         }
       }
@@ -276,9 +304,6 @@ public class PatternPlayController : GameController {
     }
 
     Debug.Log(blockID + " : " + xAccel + " " + yAccel + " " + zAccel);
-    /*if (lastFrameZAccel[blockID] < -10.0f && zAccel > 10.0f) {
-      blockLightConfigs[blockID] = (BlockLightConfig)(((int)blockLightConfigs[blockID] + 1) % System.Enum.GetNames(typeof(BlockLightConfig)).Length);
-    }*/
     lastFrameZAccel[blockID] = zAccel;
   }
 
@@ -457,21 +482,12 @@ public class PatternPlayController : GameController {
     foreach (RowBlockPattern pattern in seenPatterns) {
       if (pattern.blocks.Count != patternSeen.blocks.Count)
         continue;
-
-      bool patternFound = true;
-      for (int i = 0; i < pattern.blocks.Count; ++i) {
-        if (pattern.blocks[i].back != patternSeen.blocks[i].back ||
-            pattern.blocks[i].front != patternSeen.blocks[i].front ||
-            pattern.blocks[i].left != patternSeen.blocks[i].left ||
-            pattern.blocks[i].right != patternSeen.blocks[i].right) {
-          patternFound = false;
-          break;
-        }
-      }
-      if (patternFound == true) {
+      
+      if (pattern.Equals(patternSeen)) {
         return true;
       }
     }
+
     return false;
   }
 
@@ -484,5 +500,6 @@ public class PatternPlayController : GameController {
     robot.SetHeadAngle(-0.5f);
     robot.SetLiftHeight(2.0f);
   }
-
+    
 }
+  
