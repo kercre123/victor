@@ -272,7 +272,41 @@ namespace Anki {
     }; // class FacePoseAction
     
     
-        // Tilt head and rotate body to face the specified (marker on an) object.
+    
+    // Verify that an object exists by facing tilting the head to face its
+    // last-known pose and verify that we can still see it. Optionally, you can
+    // also require that a specific marker be seen as well.
+    class VisuallyVerifyObjectAction : public IAction
+    {
+    public:
+      VisuallyVerifyObjectAction(ObjectID objectID,
+                                 Vision::Marker::Code whichCode = Vision::Marker::ANY_CODE);
+      
+      virtual const std::string& GetName() const override;
+      virtual RobotActionType GetType() const override { return RobotActionType::VISUALLY_VERIFY_OBJECT; }
+      
+    protected:
+      virtual ActionResult Init(Robot& robot) override;
+      virtual ActionResult CheckIfDone(Robot& robot) override;
+      virtual bool ShouldLockWheels() const override { return true; }
+      
+      // Max amount of time to wait before verifying after moving head that we are
+      // indeed seeing the object/marker we expect.
+      // TODO: Can this default be reduced?
+      virtual f32 GetWaitToVerifyTime() const { return 0.25f; }
+      
+      ObjectID             _objectID;
+      Vision::Marker::Code _whichCode;
+      f32                  _waitToVerifyTime;
+      
+      
+      MoveLiftToHeightAction  _moveLiftToHeightAction;
+      bool                 _moveLiftToHeightActionDone;
+      
+    }; // class VisuallyVerifyObjectAction
+    
+    
+    // Tilt head and rotate body to face the specified (marker on an) object.
     // Use angles specified at construction to control the body rotation.
     class FaceObjectAction : public FacePoseAction
     {
@@ -313,7 +347,7 @@ namespace Anki {
       
       bool                 _facePoseCompoundActionDone;
       
-      CompoundActionSequential   _visuallyVerifyAction;
+      VisuallyVerifyObjectAction    _visuallyVerifyAction;
       
       ObjectID             _objectID;
       Vision::Marker::Code _whichCode;
@@ -323,39 +357,6 @@ namespace Anki {
     }; // FaceObjectAction
     
     
-    // Verify that an object exists by facing tilting the head to face its
-    // last-known pose and verify that we can still see it. Optionally, you can
-    // also require that a specific marker be seen as well.
-    class VisuallyVerifyObjectAction : public IAction
-    {
-    public:
-      VisuallyVerifyObjectAction(ObjectID objectID,
-                                 Vision::Marker::Code whichCode = Vision::Marker::ANY_CODE);
-      
-      virtual const std::string& GetName() const override;
-      virtual RobotActionType GetType() const override { return RobotActionType::VISUALLY_VERIFY_OBJECT; }
-      
-    protected:
-      virtual ActionResult Init(Robot& robot) override;
-      virtual ActionResult CheckIfDone(Robot& robot) override;
-      virtual bool ShouldLockWheels() const override { return true; }
-      
-      // Max amount of time to wait before verifying after moving head that we are
-      // indeed seeing the object/marker we expect.
-      // TODO: Can this default be reduced?
-      virtual f32 GetWaitToVerifyTime() const { return 0.25f; }
-      
-      ObjectID             _objectID;
-      Vision::Marker::Code _whichCode;
-      f32                  _waitToVerifyTime;
-
-      
-      CompoundActionSequential   _compoundAction;
-      bool                 _compoundActionDone;
-      
-    }; // class VisuallyVerifyObjectAction
-    
-  
     // Interface for actions that involve "docking" with an object
     class IDockAction : public IAction
     {

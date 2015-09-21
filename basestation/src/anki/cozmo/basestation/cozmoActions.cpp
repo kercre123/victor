@@ -888,6 +888,7 @@ namespace Anki {
                                        bool headTrackWhenDone)
     : FacePoseAction(turnAngleTol, maxTurnAngle)
     , _facePoseCompoundActionDone(false)
+    , _visuallyVerifyAction(objectID, whichCode)
     , _objectID(objectID)
     , _whichCode(whichCode)
     , _visuallyVerifyWhenDone(visuallyVerifyWhenDone)
@@ -992,9 +993,8 @@ namespace Anki {
       // Can't track head to an object and face it
       robot.DisableTrackToObject();
       
-      if (_visuallyVerifyWhenDone) {
-        _visuallyVerifyAction.AddAction(new VisuallyVerifyObjectAction(_objectID, _whichCode));
-      }
+      // Disable completion signals since this is inside another action
+      _visuallyVerifyAction.SetIsPartOfCompoundAction(true);
       
       return ActionResult::SUCCESS;
     } // FaceObjectAction::Init()
@@ -1057,7 +1057,8 @@ namespace Anki {
     : _objectID(objectID)
     , _whichCode(whichCode)
     , _waitToVerifyTime(-1)
-    , _compoundActionDone(false)
+    , _moveLiftToHeightAction(MoveLiftToHeightAction::Preset::OUT_OF_FOV)
+    , _moveLiftToHeightActionDone(false)
     {
       
     }
@@ -1073,8 +1074,8 @@ namespace Anki {
     ActionResult VisuallyVerifyObjectAction::Init(Robot& robot)
     {
       // Get lift out of the way
-      _compoundAction.AddAction(new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::OUT_OF_FOV));
-      _compoundActionDone = false;
+      _moveLiftToHeightAction.SetIsPartOfCompoundAction(true);
+      _moveLiftToHeightActionDone = false;
       _waitToVerifyTime = -1.f;
       return ActionResult::SUCCESS;
     }
@@ -1085,8 +1086,8 @@ namespace Anki {
 
       ActionResult actionRes = ActionResult::RUNNING;
       
-      if (!_compoundActionDone) {
-        actionRes = _compoundAction.Update(robot);
+      if (!_moveLiftToHeightActionDone) {
+        actionRes = _moveLiftToHeightAction.Update(robot);
         if (actionRes != ActionResult::SUCCESS) {
           if (actionRes != ActionResult::RUNNING) {
             PRINT_NAMED_WARNING("VisuallyVerifyObjectAction.CheckIfDone.CompoundActionFailed",
@@ -1094,7 +1095,7 @@ namespace Anki {
           }
           return actionRes;
         }
-        _compoundActionDone = true;
+        _moveLiftToHeightActionDone = true;
       }
 
       
@@ -1859,10 +1860,7 @@ namespace Anki {
             // If the physical robot thinks it succeeded, move the lift out of the
             // way, and attempt to visually verify
             if(_placementVerifyAction == nullptr) {
-              _placementVerifyAction = new CompoundActionSequential( {
-                new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::OUT_OF_FOV),
-                new FaceObjectAction(_carryObjectID, Radians(0), Radians(0), true, false)
-              });
+              _placementVerifyAction = new FaceObjectAction(_carryObjectID, Radians(0), Radians(0), true, false);
               
               // Disable completion signals since this is inside another action
               _placementVerifyAction->SetIsPartOfCompoundAction(true);
