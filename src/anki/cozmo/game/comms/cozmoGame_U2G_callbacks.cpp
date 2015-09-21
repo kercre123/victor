@@ -780,6 +780,11 @@ namespace Cozmo {
   {
     // Handled in RobotEventHandler::HandleQueueCompoundAction
   }
+  
+  void CozmoGameImpl::Process_SetDemoState(const ExternalInterface::SetDemoState &msg)
+  {
+    // Handled in DemoBehaviorChooser::HandleSetDemoState
+  }
 
 
 void CozmoGameImpl::Process_KeyWordRecognitionDisabled(const ExternalInterface::KeyWordRecognitionDisabled& msg)
