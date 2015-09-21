@@ -65,6 +65,10 @@ namespace Cozmo {
     // a celebratory dance.
     constexpr static u32 kNumBlocksForCelebration = 4;
     
+    // If the robot is not executing any action for this amount of time,
+    // something went wrong so start it up again.
+    constexpr static f32 kInactionFailsafeTimeoutSec = 1;
+    
     enum class ObjectOnTopStatus {
       DontCareIfObjectOnTop,
       ObjectOnTop,
@@ -177,6 +181,7 @@ namespace Cozmo {
     
     f32 _lastNeatBlockDisturbedTime;
     f32 _lastNewBlockObservedTime;
+    f32 _inactionStartTime;
     
     void UpdateName();
     
