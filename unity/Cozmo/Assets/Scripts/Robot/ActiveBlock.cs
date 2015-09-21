@@ -20,9 +20,9 @@ public class ActiveBlock : ObservedObject {
       LEFT_NORTH = 0x02,
       FRONT_WEST = 0x04,
       RIGHT_SOUTH = 0x08,
-      ALL = 0xff}
+      ALL = 0xff
 
-    ;
+    }
 
     public static PositionFlag IndexToPosition(int i) {
       switch (i) {
