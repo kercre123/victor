@@ -44,6 +44,9 @@ namespace Cozmo {
       return 0;
     } else {
       
+      // Incrememnt the tag counter and keep it from being one of the "special"
+      // values used to indicate "not animating" or "idle animation"
+      ++_tagCtr;
       while(_tagCtr == 0 || _tagCtr == IdleAnimationTag) {
         ++_tagCtr;
       }
