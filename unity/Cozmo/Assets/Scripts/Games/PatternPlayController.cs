@@ -11,7 +11,7 @@ public class PatternPlayController : GameController {
   private bool animationPlaying = false;
   private float lastAnimationFinishedTime = 0.0f;
   private float lastGoodPatternTime = 0.0f;
-  private int cozmoEnergyLevel = 1;
+  private int cozmoEnergyLevel = 0;
   private static int cozmoMaxEnergyLevel = 6;
 
   // block lights relative to cozmo.
@@ -193,13 +193,20 @@ public class PatternPlayController : GameController {
       if (ValidPatternSeen(out currentPattern)) {
         lastGoodPatternTime = Time.time;
         if (!PatternSeen(currentPattern)) {
-          // play joy.
-          SendAnimation("majorWinBeatBox");
-          seenPatterns.Add(currentPattern);
           cozmoEnergyLevel++;
+          Debug.Log(currentPattern.blocks.Count);
+
           if (cozmoEnergyLevel > cozmoMaxEnergyLevel) {
             cozmoEnergyLevel = cozmoMaxEnergyLevel;
           }
+
+          if (cozmoEnergyLevel % 3 == 0) {
+            SendAnimation("Celebration");
+          }
+          else {
+            SendAnimation("majorWinBeatBox");
+          }
+          seenPatterns.Add(currentPattern);
         }
         else {
           // meh.
@@ -339,7 +346,6 @@ public class PatternPlayController : GameController {
       float block1 = Vector3.Dot(robot.activeBlocks[robot.markersVisibleObjects[i + 1].ID].WorldPosition, robot.Forward);
 
       if (Mathf.Abs(block0 - block1) > 10.0f) {
-        //DAS.Debug("PatternPlayController", "position off: " + Mathf.Abs(block0 - block1));
         return false;
       }
 
