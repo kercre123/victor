@@ -506,12 +506,12 @@ namespace Cozmo {
       Point2f pupilChange(newPupilPos);
       pupilChange.x() -= proceduralFace.GetParameter(whichEye, ProceduralFace::Parameter::PupilCenX);
       pupilChange.y() -= proceduralFace.GetParameter(whichEye, ProceduralFace::Parameter::PupilCenY);
-      if(pupilChange.Length() > .15f) { // TODO: Tune this parameter to get better-looking saccades
+      //if(pupilChange.Length() > .15f) { // TODO: Tune this parameter to get better-looking saccades
         proceduralFace.SetParameter(whichEye, ProceduralFace::Parameter::PupilCenX,
                                          -newPupilPos.x());
         proceduralFace.SetParameter(whichEye, ProceduralFace::Parameter::PupilCenY,
                                          newPupilPos.y());
-      }
+      //}
     }
     
     // If face angle is rotated, mirror the rotation (with a deadzone)
