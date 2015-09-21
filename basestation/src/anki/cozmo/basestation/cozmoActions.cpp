@@ -1162,7 +1162,7 @@ namespace Anki {
       }
 
       
-      return ActionResult::SUCCESS;
+      return actionRes;
     }
 
     

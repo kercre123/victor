@@ -140,7 +140,7 @@ IBehavior::Status BehaviorLookAround::Update(double currentTime_sec)
       {
         auto iter = _recentObjects.begin();
         ObjectID objID = *iter;
-        IActionRunner* faceObjectAction = new FaceObjectAction(objID, Vision::Marker::ANY_CODE, DEG_TO_RAD(5), DEG_TO_RAD(1440), true);
+        IActionRunner* faceObjectAction = new FaceObjectAction(objID, Vision::Marker::ANY_CODE, DEG_TO_RAD(5), DEG_TO_RAD(1440), false, true);
         
         _robot.GetActionList().QueueActionAtEnd(0, faceObjectAction);
         queuedFaceObjectAction = true;
