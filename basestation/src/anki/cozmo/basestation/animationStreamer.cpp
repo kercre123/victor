@@ -20,11 +20,12 @@ namespace Cozmo {
   , _isIdling(false)
   , _numLoops(1)
   , _loopCtr(0)
+  , _tagCtr(0)
   {
     
   }
 
-  Result AnimationStreamer::SetStreamingAnimation(const std::string& name, u32 numLoops)
+  u8 AnimationStreamer::SetStreamingAnimation(const std::string& name, u32 numLoops)
   {
     // Special case: stop streaming the current animation
     if(name.empty()) {
@@ -35,26 +36,31 @@ namespace Cozmo {
 #     endif
       
       _streamingAnimation = nullptr;
-      return RESULT_OK;
+      return 0;
     }
     
     _streamingAnimation = _animationContainer.GetAnimation(name);
     if(_streamingAnimation == nullptr) {
-      return RESULT_FAIL;
+      return 0;
     } else {
       
+      while(_tagCtr == 0 || _tagCtr == IdleAnimationTag) {
+        ++_tagCtr;
+      }
+    
       // Get the animation ready to play
-      _streamingAnimation->Init();
+      _streamingAnimation->Init(_tagCtr);
       
       _numLoops = numLoops;
       _loopCtr = 0;
       
 #     if DEBUG_ANIMATION_STREAMING
       PRINT_NAMED_INFO("AnimationStreamer.SetStreamingAnimation",
-                       "Will start streaming '%s' animation %d times.\n",
-                       name.c_str(), numLoops);
+                       "Will start streaming '%s' animation %d times with tag=%d.\n",
+                       name.c_str(), numLoops, _tagCtr);
 #     endif
-      return RESULT_OK;
+    
+      return _tagCtr;
     }
   }
 
@@ -106,7 +112,7 @@ namespace Cozmo {
 #         endif
           
           // Reset the animation so it can be played again:
-          _streamingAnimation->Init();
+          _streamingAnimation->Init(_tagCtr);
           
         } else {
 #         if DEBUG_ANIMATION_STREAMING
@@ -122,7 +128,7 @@ namespace Cozmo {
         lastResult = _streamingAnimation->Update(robot);
         _isIdling = false;
       }
-    } else if(_idleAnimation != nullptr) {
+    } else if(false && _idleAnimation != nullptr) {
       
       // Update the live animation if we're using it
       if(_idleAnimation == &_liveAnimation)
@@ -144,7 +150,7 @@ namespace Cozmo {
         
         // Just finished playing a loop, or we weren't just idling. Either way,
         // (re-)init the animation so it can be played (again)
-        _idleAnimation->Init();
+        _idleAnimation->Init(IdleAnimationTag);
         _isIdling = true;
       }
       

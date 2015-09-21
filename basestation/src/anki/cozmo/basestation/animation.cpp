@@ -192,7 +192,7 @@ _backpackLightsTrack.__METHOD__() __COMBINE_WITH__ \
 _bodyPosTrack.__METHOD__() __COMBINE_WITH__ \
 _blinkTrack.__METHOD__()
   
-  Result Animation::Init()
+  Result Animation::Init(u8 tag)
   {
 #   if DEBUG_ANIMATIONS
     PRINT_NAMED_INFO("Animation.Init", "Initializing animation '%s'\n", GetName().c_str());
@@ -219,6 +219,8 @@ _blinkTrack.__METHOD__()
     // If this is an empty (e.g. live) animation, there is no need to
     // send end of animation keyframe until we actually send a keyframe
     _endOfAnimationSent = IsEmpty();
+    _startOfAnimationSent = false;
+    _startMsg.tag = tag;
     
     _isInitialized = true;
     
@@ -398,6 +400,17 @@ _blinkTrack.__METHOD__()
       // for each one, just once for each audio/silence frame.
       //
       
+      // Note that start of animation message is also sent _after_ audio keyframe,
+      // to keep things consistent in how the robot's AnimationController expects
+      // to receive things
+      if(!_startOfAnimationSent) {
+#       if DEBUG_ANIMATIONS
+        PRINT_NAMED_INFO("Animation.Update.BufferedStartOfAnimation", "Tag=%d", _startMsg.tag);
+#       endif
+        BufferMessageToSend(&_startMsg);
+        _startOfAnimationSent = true;
+      }
+      
       if(BufferMessageToSend(_headTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms))) {
 #       if DEBUG_ANIMATIONS
         PRINT_NAMED_INFO("Animation.Update", "Streaming HeadAngleKeyFrame at t=%dms.\n",
@@ -500,19 +513,18 @@ _blinkTrack.__METHOD__()
                        _streamingTime_ms - _startTime_ms);
       
       if(_streamingTime_ms - _startTime_ms == lastEndOfAnimTime) {
-        PRINT_NAMED_ERROR("Animation.Update", "Already sent end of animatino at t=%dms.",
+        PRINT_NAMED_ERROR("Animation.Update", "Already sent end of animation at t=%dms.",
                           lastEndOfAnimTime);
       }
       lastEndOfAnimTime = _streamingTime_ms - _startTime_ms;
 #     endif
       
-      MessageAnimKeyFrame_EndOfAnimation endMsg;
-      lastResult = robot.SendMessage(endMsg);
+      lastResult = robot.SendMessage(_endMsg);
       if(lastResult != RESULT_OK) { return lastResult; }
       _endOfAnimationSent = true;
       
       // Increment running total of bytes streamed
-      robot.IncrementNumAnimationBytesStreamed(endMsg.GetSize() + sizeof(RobotMessage::ID));
+      robot.IncrementNumAnimationBytesStreamed(_endMsg.GetSize() + sizeof(RobotMessage::ID));
     }
     
     return RESULT_OK;

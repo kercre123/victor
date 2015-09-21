@@ -2442,12 +2442,9 @@ namespace Anki {
     
     ActionResult PlayAnimationAction::Init(Robot& robot)
     {
-      if(robot.IsAnimating() && !robot.IsIdleAnimating()) {
-        //PRINT_NAMED_INFO("PlanAnimationAction.Init.Waiting",
-        //                 "Waiting for robot to stop animating before playing this animation.\n");
-        return ActionResult::RUNNING;
-      }
-      if(robot.PlayAnimation(_animName, _numLoops) == RESULT_OK) {
+      _startedPlaying = false;
+      _animTag = robot.PlayAnimation(_animName, _numLoops);
+      if(_animTag != 0) {
         return ActionResult::SUCCESS;
       } else {
         return ActionResult::FAILURE_ABORT;
@@ -2456,13 +2453,26 @@ namespace Anki {
     
     ActionResult PlayAnimationAction::CheckIfDone(Robot& robot)
     {
-      // We are still running this PlayAnimationAction if:
-      // - the robot reports it is still animating - but NOT *idle* animating
-      // - or the animation name still matches the one associated with this action,
-      //   meaning the streamer is still looping and we should not consider this
-      //   action done yet just because the robot is in between loops
-      if((robot.IsAnimating() && !robot.IsIdleAnimating()) ||
-         (robot.GetStreamingAnimationName() == _animName))
+      // Wait for the current animation tag to match the one corresponding to
+      // this action, so we know the robot has actually started playing _this_
+      // animation.
+      if(!_startedPlaying)
+      {
+        if(robot.GetCurrentAnimationTag() == _animTag) {
+          _startedPlaying = true;
+        } else {
+          PRINT_NAMED_INFO("PlayAnimationAction.CheckIfDone.WaitForStart",
+                           "Waiting for robot to actually start animating '%s' with tag=%d (current=%d).",
+                           _animName.c_str(), _animTag, robot.GetCurrentAnimationTag());
+          return ActionResult::RUNNING;
+        }
+      }
+      
+      // If we've made it this far, we must have started the expected animation,
+      // so just wait for the current animation tag to change to know when it is
+      // done playing on the robot.
+      assert(_startedPlaying);
+      if(robot.GetCurrentAnimationTag() == _animTag)
       {
         return ActionResult::RUNNING;
       } else {

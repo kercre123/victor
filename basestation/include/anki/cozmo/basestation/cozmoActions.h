@@ -734,6 +734,8 @@ namespace Anki {
       std::string   _animName;
       std::string   _name;
       u32           _numLoops;
+      bool          _startedPlaying;
+      u8            _animTag;
       
     }; // class PlayAnimationAction
     

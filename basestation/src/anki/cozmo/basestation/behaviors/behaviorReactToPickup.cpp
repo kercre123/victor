@@ -23,7 +23,7 @@ namespace Cozmo {
 using namespace ExternalInterface;
   
 static std::vector<std::string> _animReactions = {
-  "Demo_OCD_Confused",
+  "Demo_Face_Interaction_ShockedScared_A",
 };
 
 BehaviorReactToPickup::BehaviorReactToPickup(Robot& robot, const Json::Value& config)

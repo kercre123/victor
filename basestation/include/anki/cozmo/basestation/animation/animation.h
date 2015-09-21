@@ -48,7 +48,7 @@ namespace Anki {
       template<class KeyFrameType>
       Result AddKeyFrame(const KeyFrameType& kf);
 
-      Result Init();
+      Result Init(u8 tag);
       Result Update(Robot& robot);
 
       // An animation is Empty if *all* its tracks are empty
@@ -101,7 +101,10 @@ namespace Anki {
       // TODO: Remove this once we aren't playing robot audio on the device
       TimeStamp_t _playedRobotAudio_ms;
 
+      bool _startOfAnimationSent;
       bool _endOfAnimationSent;
+      MessageAnimKeyFrame_StartOfAnimation _startMsg;
+      MessageAnimKeyFrame_EndOfAnimation   _endMsg;
       
       ProceduralFace _proceduralFace;
       MessageAnimKeyFrame_FaceImage _proceduralFaceStreamMsg;
@@ -128,7 +131,7 @@ namespace Anki {
     {
       Result addResult = GetTrack<KeyFrameType>().AddKeyFrame(kf);
       if(RESULT_OK != addResult) {
-        PRINT_NAMED_ERROR("Animiation.AddKeyFrame.Failed", "");
+        PRINT_NAMED_ERROR("Animation.AddKeyFrame.Failed", "");
       } else {
         // If we add a keyframe after initialization (at which time this animation
         // could have been empty), make sure to mark that we haven't yet sent

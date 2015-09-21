@@ -446,9 +446,13 @@ namespace Anki {
               msg.status & IS_PICKED_UP ? "PICKDUP" : "");
       DrawText(TEXT_LABEL_STATUS_FLAG, Anki::NamedColors::GREEN, txt);
 
-      sprintf(txt, "   %5s %9s",
-              msg.status & IS_ANIMATING ? "ANIM" : "",
-              msg.status & IS_ANIMATING_IDLE ? "ANIM_IDLE" : "");
+      if(msg.animTag == 255) {
+        sprintf(txt, "   ANIM_IDLE");
+      } else if(msg.animTag != 0) {
+        sprintf(txt, "   ANIM[%d]", msg.animTag);
+      } else {
+        sprintf(txt, "");
+      }
       DrawText(TEXT_LABEL_STATUS_FLAG_2, Anki::NamedColors::GREEN, txt);
       
       sprintf(txt, "   %4s %7s %7s %6s",
