@@ -206,7 +206,7 @@ namespace Cozmo {
         // Since we're ending being in InteractWithFaces, set our procedural face to be neutral
         ProceduralFace resetFace;
         auto oldTimeStamp = _robot.GetProceduralFace().GetTimeStamp();
-        ++oldTimeStamp;
+        oldTimeStamp += IKeyFrame::SAMPLE_LENGTH_MS;
         resetFace.SetTimeStamp(oldTimeStamp);
         _robot.SetProceduralFace(resetFace);
         return Status::Complete;

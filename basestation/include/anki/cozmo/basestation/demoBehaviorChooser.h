@@ -15,8 +15,10 @@
 
 #include "anki/cozmo/basestation/behaviorChooser.h"
 #include "json/json.h"
+#include "clad/types/demoBehaviorState.h"
 #include "util/signals/simpleSignal_fwd.h"
-
+#include <vector>
+#include <cstdint>
 
 namespace Anki {
 namespace Cozmo {
@@ -28,6 +30,10 @@ class BehaviorInteractWithFaces;
 class BehaviorOCD;
 class BehaviorFidget;
 class Robot;
+namespace ExternalInterface {
+  class MessageGameToEngine;
+}
+template<typename T>class AnkiEvent;
   
 class DemoBehaviorChooser : public ReactionaryBehaviorChooser
 {
@@ -39,18 +45,11 @@ public:
   virtual Result AddBehavior(IBehavior* newBehavior) override;
   
 protected:
-  enum class DemoState {
-    Faces,
-    Blocks,
-    Rest
-  };
-  
-  // Amount of time in seconds to stay in the Blocks DemoState while waiting for some blocks that need fixing
-  constexpr static f32 kBlocksBoredomTime = 60;
-  
   Robot& _robot;
+  std::vector<Signal::SmartHandle> _eventHandlers;
   
-  DemoState _demoState = DemoState::Faces;
+  DemoBehaviorState _demoState = DemoBehaviorState::Default;
+  DemoBehaviorState _requestedState = _demoState;
   
   // Note these are for easy access - the inherited _behaviorList owns the memory
   BehaviorLookAround* _behaviorLookAround = nullptr;
@@ -59,6 +58,7 @@ protected:
   BehaviorFidget* _behaviorFidget = nullptr;
   
   void SetupBehaviors(Robot& robot, const Json::Value& config);
+  void HandleSetDemoState(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
   
 private:
   using super = ReactionaryBehaviorChooser;

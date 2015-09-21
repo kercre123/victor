@@ -173,16 +173,22 @@ namespace Cozmo {
     }
     
     ProceduralFace proceduralFace;
-    proceduralFace.SetTimeStamp(lastInterpTime);
+    proceduralFace.SetTimeStamp(lastInterpTime + IKeyFrame::SAMPLE_LENGTH_MS);
 
-    while(proceduralFace.GetTimeStamp() < nextTime)
+    while(proceduralFace.GetTimeStamp() <= nextTime)
     {
-      // Increment interpolation time
-      proceduralFace.SetTimeStamp(proceduralFace.GetTimeStamp() + IKeyFrame::SAMPLE_LENGTH_MS);
+      // Calculate next interpolation time
+      auto nextInterpFrameTime = proceduralFace.GetTimeStamp() + IKeyFrame::SAMPLE_LENGTH_MS;
       
       // Interpolate based on time
-      const f32 blendFraction = std::min(1.f, (static_cast<f32>(proceduralFace.GetTimeStamp() - lastInterpTime) /
-                                               static_cast<f32>(nextTime - lastInterpTime)));
+      f32 blendFraction = 1.f;
+      // If there are more blending frames after this one actually calculate the blend. Otherwise this is the last
+      // frame and we should finish the interpolation
+      if (nextInterpFrameTime <= nextTime)
+      {
+        blendFraction = std::min(1.f, (static_cast<f32>(proceduralFace.GetTimeStamp() - lastInterpTime) /
+                                       static_cast<f32>(nextTime - lastInterpTime)));
+      }
       
       const bool useSaccades = true;
       proceduralFace.Interpolate(lastFace, nextFace, blendFraction, useSaccades);
@@ -194,6 +200,9 @@ namespace Cozmo {
         PRINT_NAMED_ERROR("AnimationStreamer.UpdateLiveAnimation.AddFrameFaile", "");
         return RESULT_FAIL;
       }
+      
+      // Increment the procedural face time for the next interpolated frame
+      proceduralFace.SetTimeStamp(nextInterpFrameTime);
     }
     
     return RESULT_OK;
@@ -213,7 +222,7 @@ namespace Cozmo {
     
     if(nextFace.HasBeenSentToRobot() == false &&
        lastFace.HasBeenSentToRobot() == true &&
-       nextTime > lastTime)
+       nextTime >= (lastTime + IKeyFrame::SAMPLE_LENGTH_MS))
     {
       lastResult = StreamProceduralFace(robot, lastFace, nextFace, _liveAnimation);
       if(RESULT_OK != lastResult) {
