@@ -405,7 +405,8 @@ namespace Cozmo {
     
     // Plays specified animation numLoops times.
     // If numLoops == 0, animation repeats forever.
-    Result PlayAnimation(const std::string& animName, const u32 numLoops = 1);
+    // Returns the streaming tag, so you can find out when it is done.
+    u8 PlayAnimation(const std::string& animName, const u32 numLoops = 1);
     
     // Set the animation to be played when no other animation has been specified.
     // Use the empty string to disable idle animation.
@@ -443,10 +444,15 @@ namespace Cozmo {
     void ReadAnimationDir(bool playLoadedAnimation);
 
     // Returns true if the robot is currently playing an animation, according
-    // to most recent state message.
+    // to most recent state message. NOTE: Will also be true if the animation
+    // is the "idle" animation!
     bool IsAnimating() const;
     
+    // Returns true iff the robot is currently playing the idle animation.
     bool IsIdleAnimating() const;
+    
+    // Returns the "tag" of the 
+    u8 GetCurrentAnimationTag() const;
 
     Result SyncTime();
     void SetSyncTimeAcknowledged(bool ack);
@@ -684,8 +690,6 @@ namespace Cozmo {
     bool             _isMoving;
     bool             _isHeadMoving;
     bool             _isLiftMoving;
-    bool             _isAnimating;
-    bool             _isIdleAnimating;
     f32              _battVoltage;
     ImageSendMode _imageSendMode;
     // Pose history
@@ -770,6 +774,7 @@ namespace Cozmo {
     s32 _numFreeAnimationBytes;
     s32 _numAnimationBytesPlayed;
     s32 _numAnimationBytesStreamed;
+    u8  _animationTag;
     
     ///////// Emotion ////////
     EmotionManager _emotionMgr;
@@ -930,12 +935,16 @@ namespace Cozmo {
     return SetObjectAsAttachedToLift(_dockObjectID, _dockMarker);
   }
   
+  inline u8 Robot::GetCurrentAnimationTag() const {
+    return _animationTag;
+  }
+  
   inline bool Robot::IsAnimating() const {
-    return _isAnimating;
+    return _animationTag != 0;
   }
   
   inline bool Robot::IsIdleAnimating() const {
-    return _isIdleAnimating;
+    return _animationTag == 255;
   }
   
   inline Result Robot::TurnOffObjectLights(const ObjectID& objectID) {

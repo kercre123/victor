@@ -765,7 +765,7 @@ namespace Vision {
   FaceTracker::Impl::Impl(const std::string& modelPath)
   : _isInitialized(false)
   {
-    int result = FSDK_ActivateLibrary("kGo498FByonCaniP29B7pwzGcHBIZJP5D9N0jcF90UhsR8gEBGyGNEmAB7XzcJxFOm9WpqBEgy6hBahqk/Eot0P1zaoWFoEa2vwitt0S7fukLfPixcwBZxnaCBmoR5NGFBbZYHX1I9vXWASt+MjqfCgpwfjZKI/oWLcGZ3AiFpA=");
+    int result = FSDK_ActivateLibrary("ELkdyOk2HkQzszNuy/UiJi3MeO2CaR14pgUHiledsvUNYPvUlOGXS3bz4f9FxZfmXwFfGO5faL2EHo03ORXu7aPxRFafrUBTWiI2x3sckO4oJBrgqb2kJGpdImPObq5vYeI55m3DWlTp7w6NWyzUxgsqTfwrjoMLFfnhHoHVoNs=");
     
     if(result != FSDKE_OK) {
       PRINT_NAMED_ERROR("FaceTracker.Impl.ActivationFailure",

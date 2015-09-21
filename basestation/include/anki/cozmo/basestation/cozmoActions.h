@@ -272,6 +272,40 @@ namespace Anki {
     }; // class FacePoseAction
     
     
+    
+    // Verify that an object exists by facing tilting the head to face its
+    // last-known pose and verify that we can still see it. Optionally, you can
+    // also require that a specific marker be seen as well.
+    class VisuallyVerifyObjectAction : public IAction
+    {
+    public:
+      VisuallyVerifyObjectAction(ObjectID objectID,
+                                 Vision::Marker::Code whichCode = Vision::Marker::ANY_CODE);
+      
+      virtual const std::string& GetName() const override;
+      virtual RobotActionType GetType() const override { return RobotActionType::VISUALLY_VERIFY_OBJECT; }
+      
+    protected:
+      virtual ActionResult Init(Robot& robot) override;
+      virtual ActionResult CheckIfDone(Robot& robot) override;
+      virtual bool ShouldLockWheels() const override { return true; }
+      
+      // Max amount of time to wait before verifying after moving head that we are
+      // indeed seeing the object/marker we expect.
+      // TODO: Can this default be reduced?
+      virtual f32 GetWaitToVerifyTime() const { return 0.25f; }
+      
+      ObjectID             _objectID;
+      Vision::Marker::Code _whichCode;
+      f32                  _waitToVerifyTime;
+      
+      
+      MoveLiftToHeightAction  _moveLiftToHeightAction;
+      bool                 _moveLiftToHeightActionDone;
+      
+    }; // class VisuallyVerifyObjectAction
+    
+    
     // Tilt head and rotate body to face the specified (marker on an) object.
     // Use angles specified at construction to control the body rotation.
     class FaceObjectAction : public FacePoseAction
@@ -284,14 +318,18 @@ namespace Anki {
       // maxTurnAngle to zero.
       
       FaceObjectAction(ObjectID objectID, Radians turnAngleTol, Radians maxTurnAngle,
+                       bool visuallyVerifyWhenDone = false,
                        bool headTrackWhenDone = false);
       
       FaceObjectAction(ObjectID objectID, Vision::Marker::Code whichCode,
                        Radians turnAngleTol, Radians maxTurnAngle,
+                       bool visuallyVerifyWhenDone = false,
                        bool headTrackWhenDone = false);
       
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::FACE_OBJECT; }
+      
+      virtual void GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const override;
       
     protected:
       
@@ -304,41 +342,19 @@ namespace Anki {
       // Reduce delays from their defaults
       virtual f32 GetStartDelayInSeconds() const override { return 0.0f; }
       
-      // Amount of time to wait before verifying after moving head that we are
-      // indeed seeing the object/marker we expect.
-      // TODO: Can this default be reduced?
-      virtual f32 GetWaitToVerifyTime() const { return 0.25f; }
-      
       // Override to allow wheel control while facing the object
       virtual bool ShouldLockWheels() const override { return false; }
       
-      bool                 _compoundActionDone;
+      bool                 _facePoseCompoundActionDone;
+      
+      VisuallyVerifyObjectAction    _visuallyVerifyAction;
       
       ObjectID             _objectID;
       Vision::Marker::Code _whichCode;
-      f32                  _waitToVerifyTime;
+      bool                 _visuallyVerifyWhenDone;
       bool                 _headTrackWhenDone;
       
     }; // FaceObjectAction
-    
-    
-    // Verify that an object exists by facing tilting the head to face its
-    // last-known pose and verify that we can still see it. Optionally, you can
-    // also require that a specific marker be seen as well.
-    class VisuallyVerifyObjectAction : public FaceObjectAction
-    {
-    public:
-      VisuallyVerifyObjectAction(ObjectID objectID,
-                                 Vision::Marker::Code whichCode = Vision::Marker::ANY_CODE);
-      
-      virtual const std::string& GetName() const override;
-      virtual RobotActionType GetType() const override { return RobotActionType::VISUALLY_VERIFY_OBJECT; }
-      
-    protected:
-      
-      virtual bool ShouldLockWheels() const override { return true; }
-      
-    }; // class VisuallyVerifyObjectAction
     
     
     // Interface for actions that involve "docking" with an object
@@ -394,7 +410,7 @@ namespace Anki {
       f32                         _waitToVerifyTime;
       bool                        _wasPickingOrPlacing;
       bool                        _useManualSpeed;
-      VisuallyVerifyObjectAction* _visuallyVerifyAction;
+      FaceObjectAction*           _faceAndVerifyAction;
       f32                         _placementOffsetX_mm;
       f32                         _placementOffsetY_mm;
       f32                         _placementOffsetAngle_rad;
@@ -494,7 +510,7 @@ namespace Anki {
                                       const f32 placementOffsetAngle_rad = 0,
                                       const bool placeObjectOnGroundIfCarrying = false)
       : CompoundActionSequential({
-        new DriveToObjectAction(objectID, PreActionPose::DOCKING, placementOffsetX_mm, useManualSpeed),
+        new DriveToObjectAction(objectID, PreActionPose::DOCKING, 0.5f*placementOffsetX_mm, useManualSpeed),
         //new VisuallyVerifyObjectAction(objectID),
         new PickAndPlaceObjectAction(objectID, useManualSpeed, placementOffsetX_mm, placementOffsetY_mm, placementOffsetAngle_rad, placeObjectOnGroundIfCarrying)})
       {
@@ -560,7 +576,7 @@ namespace Anki {
       
       ObjectID                    _carryingObjectID;
       const Vision::KnownMarker*  _carryObjectMarker;
-      VisuallyVerifyObjectAction* _verifyAction;
+      FaceObjectAction*           _faceAndVerifyAction;
       
     }; // class PlaceObjectOnGroundAction
     
@@ -718,6 +734,8 @@ namespace Anki {
       std::string   _animName;
       std::string   _name;
       u32           _numLoops;
+      bool          _startedPlaying;
+      u8            _animTag;
       
     }; // class PlayAnimationAction
     

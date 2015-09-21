@@ -91,8 +91,6 @@ namespace Anki {
     , _isPickingOrPlacing(false)
     , _isPickedUp(false)
     , _isMoving(false)
-    , _isAnimating(false)
-    , _isIdleAnimating(false)
     , _battVoltage(5)
     , _imageSendMode(ImageSendMode::Off)
     , _carryingMarker(nullptr)
@@ -105,6 +103,7 @@ namespace Anki {
     , _animationStreamer(_cannedAnimations)
     , _numAnimationBytesPlayed(0)
     , _numAnimationBytesStreamed(0)
+    , _animationTag(0)
     , _emotionMgr(*this)
     {
       _poseHistory = new RobotPoseHistory();
@@ -338,10 +337,9 @@ namespace Anki {
       
       SetPickedUp( msg.status & IS_PICKED_UP );
       
-      _isAnimating = static_cast<bool>(msg.status & IS_ANIMATING);
-      _isIdleAnimating = _animationStreamer.IsIdleAnimating();
-      
       _numAnimationBytesPlayed = msg.numAnimBytesPlayed;
+      
+      _animationTag = msg.animTag;
       
       _battVoltage = (f32)msg.battVolt10x * 0.1f;
       
@@ -472,8 +470,6 @@ namespace Anki {
       // Engine modifications to state message.
       // TODO: Should this just be a different message? Or one that includes the state message from the robot?
       MessageRobotState stateMsg(msg);
-      if (_isIdleAnimating) { stateMsg.status |= IS_ANIMATING_IDLE; }
-      
       
       // Send state to visualizer for displaying
       VizManager::getInstance()->SendRobotState(stateMsg,
@@ -1308,11 +1304,11 @@ namespace Anki {
       return SendPlaceObjectOnGround(0, 0, 0, useManualSpeed);
     }
     
-    Result Robot::PlayAnimation(const std::string& animName, const u32 numLoops)
+    u8 Robot::PlayAnimation(const std::string& animName, const u32 numLoops)
     {
-      Result lastResult = _animationStreamer.SetStreamingAnimation(animName, numLoops);
+      u8 tag = _animationStreamer.SetStreamingAnimation(animName, numLoops);
       _lastPlayedAnimationId = animName;
-      return lastResult;
+      return tag;
     }
     
     Result Robot::SetIdleAnimation(const std::string &animName)
