@@ -154,8 +154,8 @@ namespace AnimationTool
 
         private AudioRobotPointData WriteAudioToFile(AudioRobotPointData pointData, DataPoint current)
         {
-            Sequencer.ExtraAudioData extraData =
-                Sequencer.ExtraData.Entries[current.GetCustomProperty(Sequencer.ExtraData.Key)] as Sequencer.ExtraAudioData;
+            string key = current.GetCustomProperty(Sequencer.ExtraData.Key);
+            Sequencer.ExtraAudioData extraData = Sequencer.ExtraData.Entries[key] as Sequencer.ExtraAudioData;
             pointData.triggerTime_ms = (int)(current.YValues[0] * 1000); // convert to ms
             pointData.durationTime_ms = (int)(extraData.Length * 1000); // convert to ms
             pointData.volume = Math.Round(extraData.Volume, 1);
@@ -197,8 +197,8 @@ namespace AnimationTool
         private FaceAnimationPointData WriteFaceAnimationToFile(DataPoint current)
         {
             FaceAnimationPointData pointData = new FaceAnimationPointData();
-            Sequencer.ExtraFaceAnimationData extraData =
-                Sequencer.ExtraData.Entries[current.GetCustomProperty(Sequencer.ExtraData.Key)] as Sequencer.ExtraFaceAnimationData;
+            string key = current.GetCustomProperty(Sequencer.ExtraData.Key);
+            Sequencer.ExtraFaceAnimationData extraData = Sequencer.ExtraData.Entries[key] as Sequencer.ExtraFaceAnimationData;
             pointData.triggerTime_ms = (int)(current.YValues[0] * 1000); // convert to ms
             pointData.durationTime_ms = (int)(extraData.Length * 1000); // convert to ms
 
@@ -222,7 +222,8 @@ namespace AnimationTool
         private ProceduralFacePointData WriteProceduralFaceToFile(DataPoint current)
         {
             ProceduralFacePointData pointData = new ProceduralFacePointData();
-            Sequencer.ExtraProceduralFaceData extraData = Sequencer.ExtraData.Entries[current.GetCustomProperty(Sequencer.ExtraData.Key)] as Sequencer.ExtraProceduralFaceData;
+            string key = current.GetCustomProperty(Sequencer.ExtraData.Key);
+            Sequencer.ExtraProceduralFaceData extraData = Sequencer.ExtraData.Entries[key] as Sequencer.ExtraProceduralFaceData;
 
             pointData.triggerTime_ms = (int)(current.YValues[0] * 1000); // convert to ms
             pointData.durationTime_ms = 0;

@@ -24,7 +24,7 @@ namespace AnimationTool
         private FaceTrackBarForm pupilSize;
         private FaceTrackBarForm browY;
 
-        public FaceTrackBarForm[] eyes { get; private set; }
+        public readonly FaceTrackBarForm[] eyes;
 
         public float faceAngle { get { return face.RightValue; } }
 
@@ -39,6 +39,7 @@ namespace AnimationTool
             eyes = new FaceTrackBarForm[(int)ProceduralEyeParameter.NumParameters];
 
             eyes[(int)ProceduralEyeParameter.BrowAngle] = browAngle;
+            eyes[(int)ProceduralEyeParameter.BrowLength] = browLength;
             eyes[(int)ProceduralEyeParameter.BrowCenX] = browX;
             eyes[(int)ProceduralEyeParameter.BrowCenY] = browY;
 
