@@ -228,7 +228,7 @@ namespace Cozmo {
   
   void ProceduralFace::MimicHumanFace(const Vision::TrackedFace& face)
   {
-    using Face = Vision::TrackedFace;
+    // using Face = Vision::TrackedFace;
     
     // TODO Implement mimicking here and use from BehaviorLookForFaces / BehaviorMimicFace
   }

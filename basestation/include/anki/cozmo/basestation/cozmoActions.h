@@ -378,7 +378,7 @@ namespace Anki {
       virtual f32 GetVerifyDelayInSeconds() const { return 0.f; }
       
       // Should only lock wheels if we are not using manual speed (i.e. "assisted RC")
-      virtual bool ShouldLockWheels() const { return !_useManualSpeed; }
+      virtual bool ShouldLockWheels() const override { return !_useManualSpeed; }
       
       ObjectID                    _dockObjectID;
       DockAction                _dockAction;
