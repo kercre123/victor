@@ -538,6 +538,10 @@ message QueueCompoundAction {
   RobotActionUnion       actions[uint_8]
 }
 
+message SetDemoState {
+  uint_8  demoState
+}
+
 // keep empty to generate an auto-union that includes all messages in this file
 // if you do not want to include messages in this union, use the keyword "structure" instead of "message"
 union MessageGameToEngine { }
