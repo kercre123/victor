@@ -85,7 +85,7 @@ MonoBehaviour:
     playAllAnims: 0
     emotionAnims:
     - animName: KnowsWrong
-      numLoops: 0
+      numLoops: 1
   - stateName: SHOCKED
     playAllAnims: 0
     emotionAnims:
