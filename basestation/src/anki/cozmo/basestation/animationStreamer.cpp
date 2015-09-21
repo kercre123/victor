@@ -131,7 +131,7 @@ namespace Cozmo {
         lastResult = _streamingAnimation->Update(robot);
         _isIdling = false;
       }
-    } else if(false && _idleAnimation != nullptr) {
+    } else if(_idleAnimation != nullptr) {
       
       // Update the live animation if we're using it
       if(_idleAnimation == &_liveAnimation)
