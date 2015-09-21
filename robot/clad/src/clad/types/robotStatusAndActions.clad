@@ -2,6 +2,7 @@
 // Author: damjan stulic
 // Created: 8/13/15
 // Copyright: Anki, inc. 2015
+// ROBOT_CLAD_SHARED
 
 namespace Anki {
 namespace Cozmo {

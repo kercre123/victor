@@ -1,4 +1,5 @@
 /** Types and structures for controlling LEDs on the robot and accessories
+ * ROBOT_CLAD_SHARED
  */
  
 namespace Anki {

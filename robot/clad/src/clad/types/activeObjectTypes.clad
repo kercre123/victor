@@ -1,4 +1,5 @@
 /** Clad definitions for blocks
+ * ROBOT_CLAD_SHARED
  */
 
 #include "clad/types/ledTypes.clad"

@@ -1,5 +1,6 @@
 /** Cozmo robot test modes
  * @author Daniel Casner
+ * ROBOT_CLAD_SHARED
  */
 
 namespace Anki {
