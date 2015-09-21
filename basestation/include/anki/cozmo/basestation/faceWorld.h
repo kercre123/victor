@@ -41,6 +41,8 @@ namespace Cozmo {
     
     Result UpdateFaceTracking(const Vision::TrackedFace& face);
     
+    Vision::TrackedFace::ID_t _idCtr;
+    
   }; // class FaceWorld
   
 } // namespace Cozmo
