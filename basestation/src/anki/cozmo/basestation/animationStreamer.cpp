@@ -173,21 +173,20 @@ namespace Cozmo {
     }
     
     ProceduralFace proceduralFace;
-    proceduralFace.SetTimeStamp(lastInterpTime);
+    proceduralFace.SetTimeStamp(lastInterpTime + IKeyFrame::SAMPLE_LENGTH_MS);
 
-    while((proceduralFace.GetTimeStamp() + IKeyFrame::SAMPLE_LENGTH_MS) <= nextTime)
+    while(proceduralFace.GetTimeStamp() <= nextTime)
     {
-      // Increment interpolation time
-      auto currentBlendFrameTime = proceduralFace.GetTimeStamp() + IKeyFrame::SAMPLE_LENGTH_MS;
-      proceduralFace.SetTimeStamp(currentBlendFrameTime);
+      // Calculate next interpolation time
+      auto nextInterpFrameTime = proceduralFace.GetTimeStamp() + IKeyFrame::SAMPLE_LENGTH_MS;
       
       // Interpolate based on time
       f32 blendFraction = 1.f;
       // If there are more blending frames after this one actually calculate the blend. Otherwise this is the last
       // frame and we should finish the interpolation
-      if ((currentBlendFrameTime + IKeyFrame::SAMPLE_LENGTH_MS) <= nextTime)
+      if (nextInterpFrameTime <= nextTime)
       {
-        blendFraction = std::min(1.f, (static_cast<f32>(currentBlendFrameTime - lastInterpTime) /
+        blendFraction = std::min(1.f, (static_cast<f32>(proceduralFace.GetTimeStamp() - lastInterpTime) /
                                        static_cast<f32>(nextTime - lastInterpTime)));
       }
       
@@ -201,6 +200,9 @@ namespace Cozmo {
         PRINT_NAMED_ERROR("AnimationStreamer.UpdateLiveAnimation.AddFrameFaile", "");
         return RESULT_FAIL;
       }
+      
+      // Increment the procedural face time for the next interpolated frame
+      proceduralFace.SetTimeStamp(nextInterpFrameTime);
     }
     
     return RESULT_OK;

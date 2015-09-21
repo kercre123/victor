@@ -15,6 +15,7 @@
 
 #include "anki/cozmo/basestation/behaviorChooser.h"
 #include "json/json.h"
+#include "clad/types/demoBehaviorState.h"
 #include "util/signals/simpleSignal_fwd.h"
 #include <vector>
 #include <cstdint>
@@ -43,19 +44,12 @@ public:
   virtual Result Update(double currentTime_sec) override;
   virtual Result AddBehavior(IBehavior* newBehavior) override;
   
-  // State for the Demo Behavior Chooser used to determine which behaviors should be running
-  enum class DemoState : uint8_t {
-    Default,
-    FacesOnly,
-    BlocksOnly
-  };
-  
 protected:
   Robot& _robot;
   std::vector<Signal::SmartHandle> _eventHandlers;
   
-  DemoState _demoState = DemoState::Default;
-  DemoState _requestedState = _demoState;
+  DemoBehaviorState _demoState = DemoBehaviorState::Default;
+  DemoBehaviorState _requestedState = _demoState;
   
   // Note these are for easy access - the inherited _behaviorList owns the memory
   BehaviorLookAround* _behaviorLookAround = nullptr;

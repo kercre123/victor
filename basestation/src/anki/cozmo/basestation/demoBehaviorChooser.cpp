@@ -100,7 +100,7 @@ IBehavior* DemoBehaviorChooser::ChooseNextBehavior(double currentTime_sec) const
   
   switch (_demoState)
   {
-    case DemoState::BlocksOnly:
+    case DemoBehaviorState::BlocksOnly:
     {
       if (runnable(_behaviorOCD))
       {
@@ -108,7 +108,7 @@ IBehavior* DemoBehaviorChooser::ChooseNextBehavior(double currentTime_sec) const
       }
       break;
     }
-    case DemoState::FacesOnly:
+    case DemoBehaviorState::FacesOnly:
     {
       if (runnable(_behaviorInteractWithFaces))
       {
@@ -116,7 +116,7 @@ IBehavior* DemoBehaviorChooser::ChooseNextBehavior(double currentTime_sec) const
       }
       break;
     }
-    case DemoState::Default:
+    case DemoBehaviorState::Default:
     {
       if (runnable(_behaviorOCD))
       {
@@ -156,7 +156,7 @@ Result DemoBehaviorChooser::AddBehavior(IBehavior* newBehavior)
 void DemoBehaviorChooser::HandleSetDemoState(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
 {
   const ExternalInterface::SetDemoState& msg = event.GetData().Get_SetDemoState();
-  _requestedState = static_cast<DemoState>(msg.demoState);
+  _requestedState = msg.demoState;
 }
 
 } // namespace Cozmo
