@@ -469,6 +469,12 @@
                       '../../simulator/controllers/webotsCtrlGameEngine/',
                     ],
                   }],
+                  ['face_library=="opencv"', {
+                    'action': [
+                    'echo',
+                    'dummyOpenCVGameAction',
+                    ],
+                  }],
                 ], # conditions
               },
             ] # actions

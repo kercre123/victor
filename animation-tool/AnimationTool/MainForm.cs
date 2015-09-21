@@ -10,27 +10,27 @@ namespace AnimationTool
     public partial class MainForm : Form
     {
         //This list contains all channels so we can access them directly
-        List<Component> channelList;
+        private List<Component> channelList;
 
-        ChangeDurationForm changeDurationForm;
-        BodyForm bodyForm;
-        VolumeForm volumeForm;
-        StraightForm straightForm;
-        ArcForm arcForm;
-        TurnInPlaceForm turnInPlaceForm;
-        FaceForm faceForm;
-        IPForm ipForm;
+        private ChangeDurationForm changeDurationForm;
+        private BodyForm bodyForm;
+        private VolumeForm volumeForm;
+        private StraightForm straightForm;
+        private ArcForm arcForm;
+        private TurnInPlaceForm turnInPlaceForm;
+        private FaceForm faceForm;
+        private IPForm ipForm;
 
-        OpenFileDialog openFile;
-        FolderBrowserDialog selectFolder;
-        SaveFileDialog saveFileAs;
+        private OpenFileDialog openFile;
+        private FolderBrowserDialog selectFolder;
+        private SaveFileDialog saveFileAs;
 
         //reference to the currently selected Chart
-        Chart curChart;
-        ChartArea curChartArea { get { return curChart != null && curChart.ChartAreas.Count > 0 ? curChart.ChartAreas[0] : null; } }
-        DataPointCollection curPoints { get { return curChart != null && curChart.Series.Count > 0 ? curChart.Series[0].Points : null; } }
+        private Chart curChart;
+        private ChartArea curChartArea { get { return curChart != null && curChart.ChartAreas.Count > 0 ? curChart.ChartAreas[0] : null; } }
+        private DataPointCollection curPoints { get { return curChart != null && curChart.Series.Count > 0 ? curChart.Series[0].Points : null; } }
 
-        string jsonFilePath { get { return rootDirectory + "\\animations"; } }
+        private string jsonFilePath { get { return rootDirectory + "\\animations"; } }
 
         private static MainForm instance;
 
@@ -379,7 +379,7 @@ namespace AnimationTool
                 if (File.Exists(openFile.FileName))
                 {
                     currentFile = openFile.FileName;
-                    MainForm_Load(null, null);
+                    MainForm_Load(o, e);
                 }
             }
         }
@@ -460,6 +460,28 @@ namespace AnimationTool
                 faceAnimation.Size = new System.Drawing.Size(Size.Width - 35, faceAnimation.Size.Height);
                 audioRobot.Size = new System.Drawing.Size(Size.Width - 35, audioRobot.Size.Height);
                 audioDevice.Size = new System.Drawing.Size(Size.Width - 35, audioDevice.Size.Height);
+            }
+        }
+
+        private void ReadAndWritesAllFiles(object sender, EventArgs e)
+        {
+            if (!Directory.Exists(jsonFilePath)) return;
+
+            DirectoryInfo directory = new DirectoryInfo(jsonFilePath);
+
+            foreach (FileInfo file in directory.GetFiles())
+            {
+                if (!file.IsReadOnly)
+                {
+                    currentFile = file.FullName;
+                    string text = File.ReadAllText(currentFile);
+
+                    if (!string.IsNullOrEmpty(text))
+                    {
+                        MainForm_Load(sender, e);
+                        SaveFile(sender, e);
+                    }
+                }
             }
         }
     }
