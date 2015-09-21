@@ -368,6 +368,13 @@ END_MESSAGE_DEFINITION(SetBlockBeingCarried)
 
 /////// Animation KeyFrame Streaming ///////
 
+// AnimKeyFrame_StartOfAnimation
+//  This just lets us keep track of _which_ animation is playing on the robot
+//  by giving it a "random" tag to report back while it is playing.
+START_MESSAGE_DEFINITION(AnimKeyFrame_StartOfAnimation, 1)
+ADD_MESSAGE_MEMBER(u8, tag)
+END_MESSAGE_DEFINITION(AnimKeyFrame_StartOfAnimation)
+
 // AnimKeyFrame_AudioSample
 START_MESSAGE_DEFINITION(AnimKeyFrame_AudioSample, 1)
 ADD_MESSAGE_MEMBER_ARRAY(u8, sample, 800) // TODO: Somehow make this use AUDIO_SAMPLE_SIZE
