@@ -206,6 +206,7 @@ public class VortexController : GameController {
   float predictedTimeAfterLastPeg = -1f;
   float predictedTimeMovingBackwards = 0f;
   bool predictedEarly = false;
+  bool cozmoCanTap = false;
 
   List<int> playersThatAreCorrect = new List<int>();
   List<int> playersThatAreWrong = new List<int>();
@@ -375,6 +376,36 @@ public class VortexController : GameController {
       RobotEngineManager.instance.SuccessOrFailure -= ResetFaceAwareness;
     }
     
+  }
+
+  protected override void CompoundCompleteCallBack(bool success, uint tagId) {
+    CozmoEmotionManager.CompoundActionType type = (CozmoEmotionManager.CompoundActionType)tagId;
+    switch (type) {
+    case CozmoEmotionManager.CompoundActionType.ANIM_TURN_IN_PLACE:
+      if (playState == VortexState.SPINNING) {
+        DAS.Debug("VortexController", "enabling cozmo tap");
+        cozmoCanTap = true;
+      }
+      break;
+    default:
+      break;
+    }
+  }
+
+  protected override void TaggedCompleteCallBack(bool success, uint tagId) {
+    base.TaggedCompleteCallBack(success, tagId);
+    CozmoEmotionManager.CompoundActionType type = (CozmoEmotionManager.CompoundActionType)tagId;
+    switch (type) {
+    case CozmoEmotionManager.CompoundActionType.TURN_IN_PLACE:
+      if (playState == VortexState.SPINNING) {
+        DAS.Debug("VortexController", "enabling cozmo tap");
+        cozmoCanTap = true;
+        CozmoEmotionManager.SetEmotion("WATCH_SPIN");
+      }
+      break;
+    default:
+      break;
+    }
   }
 
   protected override void Enter_BUILDING() {
@@ -1013,9 +1044,12 @@ public class VortexController : GameController {
       else {
         //Debug.Log("should be tracking to default");
         CozmoEmotionManager.instance.SetEmotionTurnInPlace("YOUR_TURN", GetPoseFromPlayerIndex(currentPlayerIndex).rad, true, true, true);
+
+        // setting the head angle to ~35 degrees
+        if (robot != null)
+          robot.SetHeadAngle(.61f, null, true);
       }
-      // setting the head angle to ~35 degrees
-      robot.SetHeadAngle(.61f, null, true);
+
     }
 
     wheel.Focus();
@@ -1169,9 +1203,11 @@ public class VortexController : GameController {
 
     if (cozmoIndex == currentPlayerIndex) {
       SetRobotEmotion("WATCH_SPIN", false, false);
+      cozmoCanTap = true;
     }
     else {
-      CozmoEmotionManager.instance.SetEmotionTurnInPlace("WATCH_SPIN", defaultRobotPoses[0].rad, true, false, true);
+      CozmoEmotionManager.instance.SetTurnInPlace(defaultRobotPoses[0].rad, true);
+      cozmoCanTap = false;
     }
 
     lightingBall.Radius = wheelLightningRadii[currentWheelIndex];
@@ -1304,7 +1340,7 @@ public class VortexController : GameController {
           earlyTime = cozmoEarlyGuessTime;
         }
         float timeToBid = predictedDuration - predictedTimeAfterLastPeg - predictedTimeMovingBackwards - cozmoPredicitveLeadTime - earlyTime;
-        if (time > timeToBid) {
+        if (time > timeToBid && cozmoCanTap) {
   
           cozmoTapsSubmitted = 0;
   
@@ -1992,18 +2028,19 @@ public class VortexController : GameController {
   }
 
   IEnumerator CozmoReaction() {
+    float time = Time.time - wheel.SpinStartTime;
+  
     switch (cozmoExpectation) {
     case CozmoExpectation.EXPECT_WIN_RIGHT:
     case CozmoExpectation.EXPECT_WIN_WRONG:
-      //CozmoEmotionManager.SetEmotion("EXPECT_REWARD");
+      CozmoEmotionManager.SetEmotion("EXPECT_REWARD");
       break;
     case CozmoExpectation.KNOWS_WRONG:
-      //CozmoEmotionManager.SetEmotion("KNOWS_WRONG");
+      CozmoEmotionManager.SetEmotion("KNOWS_WRONG");
       break;
     default:
       break;
     }
-    float time = Time.time - wheel.SpinStartTime;
     yield return new WaitForSeconds(predictedDuration - time - predictedTimeMovingBackwards);
     if (cozmoExpectation == CozmoExpectation.EXPECT_WIN_WRONG) {
       SetRobotEmotion("SHOCKED");
