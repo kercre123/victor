@@ -314,6 +314,7 @@ namespace Cozmo {
     
     // Find the closest object with available pre-action poses
     f32 closestDistSq = std::numeric_limits<f32>::max();
+    bool closestObjectIsAtHighDockHeight = false;
     ObservableObject* object = nullptr;
     for(auto & objectID : _messyObjects)
     {
@@ -346,6 +347,12 @@ namespace Cozmo {
         return RESULT_FAIL;
       }
       
+      // Verify if object is above robot height.
+      // Prioritize objects that are so that we pick them up first.
+      f32 robotHeight = _robot.GetPose().GetTranslation().z();
+      f32 objectHeight = actionObject->GetPose().GetTranslation().z();
+      bool objectAtHighDockHeight = NEAR(objectHeight - robotHeight, 1.5*actionObject->GetSize().z(), 15.f);
+      
       std::vector<PreActionPose> preActionPoses;
       actionObject->GetCurrentPreActionPoses(preActionPoses, {PreActionPose::DOCKING},
                                              std::set<Vision::Marker::Code>(),
@@ -365,8 +372,9 @@ namespace Cozmo {
           }
           
           const f32 currentDistSq = poseWrtRobot.GetTranslation().LengthSq();
-          if(currentDistSq < closestDistSq) {
+          if(currentDistSq < closestDistSq || (objectAtHighDockHeight && !closestObjectIsAtHighDockHeight)) {
             closestDistSq = currentDistSq;
+            closestObjectIsAtHighDockHeight = objectAtHighDockHeight;
             _objectToPickUp = objectID;
           }
         } // for each preAction pose
