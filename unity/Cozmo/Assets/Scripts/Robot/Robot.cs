@@ -1048,22 +1048,13 @@ public class Robot : IDisposable {
 
     SetBackpackLEDsMessage.robotID = ID;
 
-    for (int i = 0, j = 0; i < lights.Length && j < lights.Length; ++i, ++j) {
-      SetBackpackLEDsMessage.onColor[j] = lights[i].onColor;
-      SetBackpackLEDsMessage.offColor[j] = lights[i].offColor;
-      SetBackpackLEDsMessage.onPeriod_ms[j] = lights[i].onPeriod_ms;
-      SetBackpackLEDsMessage.offPeriod_ms[j] = lights[i].offPeriod_ms;
-      SetBackpackLEDsMessage.transitionOnPeriod_ms[j] = lights[i].transitionOnPeriod_ms;
-      SetBackpackLEDsMessage.transitionOffPeriod_ms[j] = lights[i].transitionOffPeriod_ms;
-
-      if (i == 2 && lights.Length > 3) { // HACK: index 2 and 3 are same lights
-        SetBackpackLEDsMessage.onColor[++j] = lights[i].onColor;
-        SetBackpackLEDsMessage.offColor[j] = lights[i].offColor;
-        SetBackpackLEDsMessage.onPeriod_ms[j] = lights[i].onPeriod_ms;
-        SetBackpackLEDsMessage.offPeriod_ms[j] = lights[i].offPeriod_ms;
-        SetBackpackLEDsMessage.transitionOnPeriod_ms[j] = lights[i].transitionOnPeriod_ms;
-        SetBackpackLEDsMessage.transitionOffPeriod_ms[j] = lights[i].transitionOffPeriod_ms;
-      }
+    for (int i = 0; i < lights.Length; ++i) {
+      SetBackpackLEDsMessage.onColor[i] = lights[i].onColor;
+      SetBackpackLEDsMessage.offColor[i] = lights[i].offColor;
+      SetBackpackLEDsMessage.onPeriod_ms[i] = lights[i].onPeriod_ms;
+      SetBackpackLEDsMessage.offPeriod_ms[i] = lights[i].offPeriod_ms;
+      SetBackpackLEDsMessage.transitionOnPeriod_ms[i] = lights[i].transitionOnPeriod_ms;
+      SetBackpackLEDsMessage.transitionOffPeriod_ms[i] = lights[i].transitionOffPeriod_ms;
     }
     
     RobotEngineManager.instance.Message.SetBackpackLEDs = SetBackpackLEDsMessage;

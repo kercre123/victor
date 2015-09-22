@@ -10,6 +10,10 @@ public class PatternPlayController : GameController {
 
   private bool animationPlaying = false;
   private float lastAnimationFinishedTime = 0.0f;
+  private int cozmoEnergyLevel = 0;
+  private static int cozmoMaxEnergyLevel = 6;
+
+  private RowBlockPattern lastPatternSeen = null;
 
   // block lights relative to cozmo.
   // front is the light facing cozmo.
@@ -34,20 +38,61 @@ public class PatternPlayController : GameController {
   private class RowBlockPattern {
     // left to right pattern relative to cozmo.
     public List<BlockLights> blocks = new List<BlockLights>();
+
+    public override bool Equals(System.Object obj) {
+      if (obj == null) {
+        return false;
+      }
+
+      RowBlockPattern p = obj as RowBlockPattern;
+      if ((System.Object)p == null) {
+        return false;
+      }
+      return Equals(p);
+    }
+
+    public bool Equals(RowBlockPattern pattern) {
+      if (pattern == null)
+        return false;
+      
+      for (int i = 0; i < pattern.blocks.Count; ++i) {
+        if (pattern.blocks[i].back != blocks[i].back ||
+            pattern.blocks[i].front != blocks[i].front ||
+            pattern.blocks[i].left != blocks[i].left ||
+            pattern.blocks[i].right != blocks[i].right) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    public override int GetHashCode() {
+      int x = 0;
+      for (int i = 0; i < blocks.Count; ++i) {
+        x ^= System.Convert.ToInt32(blocks[i].back) ^ System.Convert.ToInt32(blocks[i].front) ^
+        System.Convert.ToInt32(blocks[i].left) ^ System.Convert.ToInt32(blocks[i].right);
+      }
+      return x;
+    }
+
   }
 
   private Dictionary<int, BlockLightConfig> blockLightConfigs = new Dictionary<int, BlockLightConfig>();
   private HashSet<RowBlockPattern> seenPatterns = new HashSet<RowBlockPattern>();
+  private Dictionary<int, float> lastFrameZAccel = new Dictionary<int, float>();
+  private Dictionary<int, float> lastTimeTapped = new Dictionary<int, float>();
 
   protected override void OnEnable() {
     base.OnEnable();
     robot.VisionWhileMoving(true);
+    ActiveBlock.MovedAction += BlockMoved;
     ActiveBlock.TappedAction += BlockTapped;
     robot.StopFaceAwareness();
   }
 
   protected override void OnDisable() {
     base.OnDisable();
+    ActiveBlock.MovedAction -= BlockMoved;
     ActiveBlock.TappedAction -= BlockTapped;
   }
 
@@ -60,12 +105,12 @@ public class PatternPlayController : GameController {
 
     foreach (KeyValuePair<int, ActiveBlock> activeBlock in robot.activeBlocks) {
       for (int j = 0; j < activeBlock.Value.lights.Length; ++j) {
-        activeBlock.Value.lights[j].onColor = CozmoPalette.ColorToUInt(new Color(1.0f, 1.0f, 1.0f, 1.0f));
+        activeBlock.Value.lights[j].onColor = CozmoPalette.ColorToUInt(Color.blue);
       }
     }
 
     // makes sure cozmo sees all 4 blocks first.
-    if (robot.activeBlocks.Count >= 4) {
+    if (robot.activeBlocks.Count >= 3) {
       gameReady = true;
     }
   }
@@ -88,8 +133,11 @@ public class PatternPlayController : GameController {
 
   protected override void Enter_PLAYING() {
     base.Enter_PLAYING();
+
     foreach (KeyValuePair<int, ActiveBlock> activeBlock in robot.activeBlocks) {
       blockLightConfigs.Add(activeBlock.Key, BlockLightConfig.NONE);
+      lastFrameZAccel.Add(activeBlock.Key, 30.0f);
+      lastTimeTapped.Add(activeBlock.Key, 0.0f);
     }
     ResetLookHeadForkLift();
   }
@@ -97,23 +145,57 @@ public class PatternPlayController : GameController {
   protected override void Update_PLAYING() {
     base.Update_PLAYING();
 
-    // update lights
+    KeyboardBlockCycle();
+
+    Color[] levelColors = { Color.yellow, Color.green };
+
+    // update backpack lights
+    // iterate through each of the lights and determine if
+    // the light should be on, and if so, which color.
+
+    for (int i = 0; i < 3; ++i) {
+      int localEnergyLevel = cozmoEnergyLevel;
+      int localLoopCount = 0;
+      robot.lights[i].onColor = CozmoPalette.ColorToUInt(Color.black);
+      do {
+        if (localEnergyLevel > i) {
+          robot.lights[i].onColor = CozmoPalette.ColorToUInt(levelColors[localLoopCount]);
+        }
+        localLoopCount++;
+        localEnergyLevel -= 3;
+      } while (localEnergyLevel > i && localLoopCount < levelColors.Length);
+    }
+
+    // update block lights
     foreach (KeyValuePair<int, BlockLightConfig> blockConfig in blockLightConfigs) {
       for (int i = 0; i < robot.activeBlocks[blockConfig.Key].lights.Length; ++i) {
-        robot.activeBlocks[blockConfig.Key].lights[i].onColor = CozmoPalette.ColorToUInt(Color.black);
+        robot.activeBlocks[blockConfig.Key].lights[i].onColor = CozmoPalette.ColorToUInt(new Color(0.0f, 0.0f, 0.2f, 1.0f));
       }
 
       // setting onColor based on if cozmo sees the block or not.
-      Color onColor = Color.white;
+      Color onColor = Color.blue;
+      Color offColor = new Color(0.0f, 0.0f, 0.0f, 1.0f);
 
       for (int i = 0; i < robot.markersVisibleObjects.Count; ++i) {
         if (robot.markersVisibleObjects[i].ID == blockConfig.Key) {
-          if (animationPlaying)
+          if (animationPlaying) {
             onColor = Color.green;
-          else
-            onColor = Color.blue;
+          }
+          else {
+            onColor = Color.white;
+            offColor = new Color(0.1f, 0.1f, 0.1f, 1.0f);
+          }
           break;
         }
+      }
+
+      if (Time.time - lastTimeTapped[blockConfig.Key] < 0.5f || lastFrameZAccel[blockConfig.Key] < 10.0f) {
+        offColor = new Color(0.2f, 0.0f, 0.0f, 1.0f);
+        onColor = new Color(1.0f, 0.5f, 0.0f, 1.0f);
+      }
+
+      for (int i = 0; i < 4; ++i) {
+        robot.activeBlocks[blockConfig.Key].lights[i].onColor = CozmoPalette.ColorToUInt(offColor);
       }
 
       switch (blockConfig.Value) {
@@ -147,14 +229,25 @@ public class PatternPlayController : GameController {
     RowBlockPattern currentPattern = null;
     if (!animationPlaying && Time.time - lastAnimationFinishedTime > 2.0f) {
       if (ValidPatternSeen(out currentPattern)) {
+        lastPatternSeen = currentPattern;
         if (!PatternSeen(currentPattern)) {
-          // play joy.
-          SendAnimation("majorWinBeatBox");
+          cozmoEnergyLevel++;
+          Debug.Log(currentPattern.blocks.Count);
+
+          if (cozmoEnergyLevel > cozmoMaxEnergyLevel) {
+            cozmoEnergyLevel = cozmoMaxEnergyLevel;
+          }
+
+          if (cozmoEnergyLevel % 3 == 0) {
+            SendAnimation("Celebration");
+          }
+          else {
+            SendAnimation("majorWinBeatBox");
+          }
           seenPatterns.Add(currentPattern);
         }
         else {
-          // play meh.
-          SendAnimation("MinorIrritation");
+          SendAnimation("Satisfaction");
         }
       }
     }
@@ -193,12 +286,65 @@ public class PatternPlayController : GameController {
     base.RefreshHUD();
   }
 
-  private void BlockTapped(int blockID, int numTapped) {
+  private bool NextBlockConfig(ActiveBlock activeBlock) {
+    if (lastFrameZAccel[activeBlock.ID] < -2.0f && activeBlock.zAccel > 2.0f) {
+      lastFrameZAccel[activeBlock.ID] = activeBlock.zAccel;
+      return true;
+    }
+    lastFrameZAccel[activeBlock.ID] = activeBlock.zAccel;
+    return false;
+  }
+
+  private void BlockTapped(int blockID, int tappedTimes) {
+    if (gameReady == false)
+      return;
+    if (Time.time - lastTimeTapped[blockID] < 0.5f || lastFrameZAccel[blockID] < 10.0f) {
+      lastTimeTapped[blockID] = Time.time;
+      blockLightConfigs[blockID] = (BlockLightConfig)(((int)blockLightConfigs[blockID] + tappedTimes) % System.Enum.GetNames(typeof(BlockLightConfig)).Length);
+    }
+  }
+
+  private void BlockMoved(int blockID, float xAccel, float yAccel, float zAccel) {
     if (gameReady == false)
       return;
 
-    // go to the next light configuration
-    blockLightConfigs[blockID] = (BlockLightConfig)(((int)blockLightConfigs[blockID] + numTapped) % System.Enum.GetNames(typeof(BlockLightConfig)).Length);
+    if (animationPlaying) {
+      
+    }
+
+    Debug.Log(blockID + " : " + xAccel + " " + yAccel + " " + zAccel);
+    lastFrameZAccel[blockID] = zAccel;
+  }
+
+  private void KeyboardBlockCycle() {
+    int index = -1;
+    int currentIndex = 0;
+    if (Input.GetKeyDown(KeyCode.Alpha1)) {
+      index = 0;
+    }
+
+    if (Input.GetKeyDown(KeyCode.Alpha2)) {
+      index = 1;
+    }
+
+    if (Input.GetKeyDown(KeyCode.Alpha3)) {
+      index = 2;
+    }
+
+    if (Input.GetKeyDown(KeyCode.Alpha4)) {
+      index = 3;
+    }
+
+    if (index != -1) {
+      foreach (KeyValuePair<int, BlockLightConfig> block in blockLightConfigs) {
+        if (currentIndex == index) {
+          blockLightConfigs[block.Key] = (BlockLightConfig)(((int)block.Value + 1) % System.Enum.GetNames(typeof(BlockLightConfig)).Length);
+          break;
+        }
+        currentIndex++; 
+      }
+
+    }
   }
 
   private void DonePlayingAnimation(bool success) {
@@ -234,7 +380,6 @@ public class PatternPlayController : GameController {
       float block1 = Vector3.Dot(robot.activeBlocks[robot.markersVisibleObjects[i + 1].ID].WorldPosition, robot.Forward);
 
       if (Mathf.Abs(block0 - block1) > 10.0f) {
-        DAS.Debug("PatternPlayController", "position off: " + Mathf.Abs(block0 - block1));
         return false;
       }
 
@@ -338,7 +483,7 @@ public class PatternPlayController : GameController {
         && patternSeen.blocks[0].left == false && patternSeen.blocks[0].right == false) {
       return false;
     }
-    Debug.LogWarning("PATTERN FOUND");
+
     return true;
   }
 
@@ -346,21 +491,12 @@ public class PatternPlayController : GameController {
     foreach (RowBlockPattern pattern in seenPatterns) {
       if (pattern.blocks.Count != patternSeen.blocks.Count)
         continue;
-
-      bool patternFound = true;
-      for (int i = 0; i < pattern.blocks.Count; ++i) {
-        if (pattern.blocks[i].back != patternSeen.blocks[i].back ||
-            pattern.blocks[i].front != patternSeen.blocks[i].front ||
-            pattern.blocks[i].left != patternSeen.blocks[i].left ||
-            pattern.blocks[i].right != patternSeen.blocks[i].right) {
-          patternFound = false;
-          break;
-        }
-      }
-      if (patternFound == true) {
+      
+      if (pattern.Equals(patternSeen)) {
         return true;
       }
     }
+
     return false;
   }
 
@@ -373,5 +509,6 @@ public class PatternPlayController : GameController {
     robot.SetHeadAngle(-0.5f);
     robot.SetLiftHeight(2.0f);
   }
-
+    
 }
+  
