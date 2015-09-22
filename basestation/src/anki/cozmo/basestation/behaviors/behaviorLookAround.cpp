@@ -116,9 +116,9 @@ IBehavior::Status BehaviorLookAround::Update(double currentTime_sec)
     case State::StartLooking:
     {
       IActionRunner* moveHeadAction = new MoveHeadToAngleAction(0);
-      _robot.GetActionList().QueueActionAtEnd(0, moveHeadAction);
+      _robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, moveHeadAction);
       IActionRunner* moveLiftAction = new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK);
-      _robot.GetActionList().QueueActionAtEnd(0, moveLiftAction);
+      _robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, moveLiftAction);
       if (StartMoving() == RESULT_OK) {
         _currentState = State::LookingForObject;
       }
@@ -140,9 +140,11 @@ IBehavior::Status BehaviorLookAround::Update(double currentTime_sec)
       {
         auto iter = _recentObjects.begin();
         ObjectID objID = *iter;
-        IActionRunner* faceObjectAction = new FaceObjectAction(objID, Vision::Marker::ANY_CODE, DEG_TO_RAD(5), DEG_TO_RAD(1440), false, true);
+        IActionRunner* faceObjectAction = new FaceObjectAction(objID, Vision::Marker::ANY_CODE, DEG_TO_RAD(2), DEG_TO_RAD(1440), false, true);
         
-        _robot.GetActionList().QueueActionAtEnd(0, faceObjectAction);
+        _robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, faceObjectAction);
+        _robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, new PlayAnimationAction("Demo_Look_Around_See_Something_A"));
+        _robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK));
         queuedFaceObjectAction = true;
         
         ++_numObjectsToLookAt;
@@ -154,7 +156,7 @@ IBehavior::Status BehaviorLookAround::Update(double currentTime_sec)
       if (queuedFaceObjectAction)
       {
         IActionRunner* moveHeadAction = new MoveHeadToAngleAction(0);
-        _robot.GetActionList().QueueActionAtEnd(0, moveHeadAction);
+        _robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, moveHeadAction);
       }
       _currentState = State::WaitToFinishExamining;
       
@@ -222,7 +224,7 @@ Result BehaviorLookAround::StartMoving()
   
   IActionRunner* goToPoseAction = new DriveToPoseAction(destPose, false, false);
   _currentDriveActionID = goToPoseAction->GetTag();
-  _robot.GetActionList().QueueActionAtEnd(0, goToPoseAction, 3);
+  _robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, goToPoseAction, 3);
   return RESULT_OK;
 }
   
