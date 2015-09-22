@@ -64,10 +64,10 @@ int main (void)
 
   TimerInit();
   PowerInit();
-  //I2CInit();
+  I2CInit();
   
-  //dac_init();
   spi_init();  
+  //dac_init();
   //i2c_init();
   //uart_init();  
   
