@@ -20,7 +20,6 @@
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
-#include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "util/random/randomGenerator.h"
 #include "clad/externalInterface/messageEngineToGame.h"
@@ -39,7 +38,7 @@ namespace Anki {
  
     // Helper function for computing the distance-to-preActionPose threshold,
     // given how far robot is from actionObject
-    f32 ComputePreActionPoseDistThreshold(const Robot& robot,
+    f32 ComputePreActionPoseDistThreshold(const Pose3d& preActionPose,
                                           const ActionableObject* actionObject,
                                           const Radians& preActionPoseAngleTolerance)
     {
@@ -49,7 +48,7 @@ namespace Anki {
         // Compute distance threshold to preaction pose based on distance to the
         // object: the further away, the more slop we're allowed.
         Pose3d objectWrtRobot;
-        if(false == actionObject->GetPose().GetWithRespectTo(robot.GetPose(), objectWrtRobot)) {
+        if(false == actionObject->GetPose().GetWithRespectTo(preActionPose, objectWrtRobot)) {
           PRINT_NAMED_ERROR("IDockAction.Init.ObjectPoseOriginProblem",
                             "Could not get object %d's pose w.r.t. robot.\n",
                             actionObject->GetID().GetValue());
@@ -91,18 +90,22 @@ namespace Anki {
     
     DriveToPoseAction::DriveToPoseAction(const Pose3d& pose,
                                          const bool forceHeadDown,
-                                         const bool useManualSpeed)
+                                         const bool useManualSpeed,
+                                         const Point3f& distThreshold,
+                                         const Radians& angleThreshold)
     : DriveToPoseAction(forceHeadDown, useManualSpeed)
     {
-      SetGoal(pose);
+      SetGoal(pose, distThreshold, angleThreshold);
     }
     
     DriveToPoseAction::DriveToPoseAction(const std::vector<Pose3d>& poses,
                                          const bool forceHeadDown,
-                                         const bool useManualSpeed)
+                                         const bool useManualSpeed,
+                                         const Point3f& distThreshold,
+                                         const Radians& angleThreshold)
     : DriveToPoseAction(forceHeadDown, useManualSpeed)
     {
-      SetGoals(poses);
+      SetGoals(poses, distThreshold, angleThreshold);
     }
     
     Result DriveToPoseAction::SetGoal(const Anki::Pose3d& pose)
@@ -434,7 +437,7 @@ namespace Anki {
         f32 closestPoseDist = std::numeric_limits<f32>::max();
         Radians closestPoseAngle = M_PI;
         
-        Point3f preActionPoseDistThresh = ComputePreActionPoseDistThreshold(robot, object,
+        Point3f preActionPoseDistThresh = ComputePreActionPoseDistThreshold(robot.GetPose(), object,
                                                                             DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE);
         
         preActionPoseDistThresh.z() = REACHABLE_PREDOCK_POSE_Z_THRESH_MM;
@@ -531,7 +534,10 @@ namespace Anki {
       
       if(result == ActionResult::SUCCESS) {
         if(!alreadyInPosition) {
-          _compoundAction.AddAction(new DriveToPoseAction(possiblePoses, true, _useManualSpeed));
+          
+          f32 preActionPoseDistThresh = ComputePreActionPoseDistThreshold(possiblePoses[0], object, DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE);
+          
+          _compoundAction.AddAction(new DriveToPoseAction(possiblePoses, true, _useManualSpeed, preActionPoseDistThresh));
         }
       }
       
@@ -1469,7 +1475,7 @@ namespace Anki {
       
       //const f32 closestDist = sqrtf(closestDistSq);
       
-      f32 preActionPoseDistThresh = ComputePreActionPoseDistThreshold(robot, dockObject,
+      f32 preActionPoseDistThresh = ComputePreActionPoseDistThreshold(robot.GetPose(), dockObject,
                                                                       _preActionPoseAngleTolerance);
       
       if(preActionPoseDistThresh > 0.f && closestPoint > preActionPoseDistThresh) {
