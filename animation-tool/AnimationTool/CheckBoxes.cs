@@ -7,9 +7,7 @@ namespace AnimationTool
     {
         private void HeadAngleCheckBox(object o, EventArgs e)
         {
-            CheckBox checkBox = o as CheckBox;
-
-            if (checkBox == null || headAngle.chart == null || checkBox.Checked != headAngle.chart.Enabled) return;
+            if (headAngle.checkBox == null || headAngle.chart == null || headAngle.checkBox.Checked != headAngle.chart.Enabled) return;
 
             if (headAngle.chart.Enabled)
             {
@@ -23,9 +21,7 @@ namespace AnimationTool
 
         private void LiftHeightCheckBox(object o, EventArgs e)
         {
-            CheckBox checkBox = o as CheckBox;
-
-            if (checkBox == null || liftHeight.chart == null || checkBox.Checked != liftHeight.chart.Enabled) return;
+            if (liftHeight.checkBox == null || liftHeight.chart == null || liftHeight.checkBox.Checked != liftHeight.chart.Enabled) return;
 
             if (liftHeight.chart.Enabled)
             {
@@ -39,9 +35,7 @@ namespace AnimationTool
 
         private void AudioRobotCheckBox(object o, EventArgs e)
         {
-            CheckBox checkBox = o as CheckBox;
-
-            if (checkBox == null || audioRobot.chart == null || checkBox.Checked != audioRobot.chart.Enabled) return;
+            if (audioRobot.checkBox == null || audioRobot.chart == null || audioRobot.checkBox.Checked != audioRobot.chart.Enabled) return;
 
             if (audioRobot.chart.Enabled)
             {
@@ -55,9 +49,7 @@ namespace AnimationTool
 
         private void AudioDeviceCheckBox(object o, EventArgs e)
         {
-            CheckBox checkBox = o as CheckBox;
-
-            if (checkBox == null || audioDevice.chart == null || checkBox.Checked != audioDevice.chart.Enabled) return;
+            if (audioDevice.checkBox == null || audioDevice.chart == null || audioDevice.checkBox.Checked != audioDevice.chart.Enabled) return;
 
             if (audioDevice.chart.Enabled)
             {
@@ -71,9 +63,7 @@ namespace AnimationTool
 
         private void FaceAnimationCheckBox(object o, EventArgs e)
         {
-            CheckBox checkBox = o as CheckBox;
-
-            if (checkBox == null || faceAnimation.chart == null || checkBox.Checked != faceAnimation.chart.Enabled) return;
+            if (faceAnimation.checkBox == null || faceAnimation.chart == null || faceAnimation.checkBox.Checked != faceAnimation.chart.Enabled) return;
 
             if (faceAnimation.chart.Enabled)
             {
@@ -87,9 +77,7 @@ namespace AnimationTool
 
         private void ProceduralFaceCheckBox(object o, EventArgs e)
         {
-            CheckBox checkBox = o as CheckBox;
-
-            if (checkBox == null || proceduralFace.chart == null || checkBox.Checked != proceduralFace.chart.Enabled) return;
+            if (proceduralFace.checkBox == null || proceduralFace.chart == null || proceduralFace.checkBox.Checked != proceduralFace.chart.Enabled) return;
 
             if (proceduralFace.chart.Enabled)
             {
@@ -103,9 +91,7 @@ namespace AnimationTool
 
         private void BodyMotionCheckBox(object o, EventArgs e)
         {
-            CheckBox checkBox = o as CheckBox;
-
-            if (checkBox == null || bodyMotion.chart == null || checkBox.Checked != bodyMotion.chart.Enabled) return;
+            if (bodyMotion.checkBox == null || bodyMotion.chart == null || bodyMotion.checkBox.Checked != bodyMotion.chart.Enabled) return;
 
             if (bodyMotion.chart.Enabled)
             {
