@@ -189,7 +189,7 @@ extern "C" {
   /* MCG_C2: LOCRE0=0,FCFTRIM=0,RANGE=2,HGO=0,EREFS=1,LP=0,IRCS=0 */
   #define SYSTEM_MCG_C2_VALUE          0x24U               /* MCG_C2 */
   /* MCG_C4: DMX32=1,DRST_DRS=3,FCTRIM=0,SCFTRIM=0 */
-  #define SYSTEM_MCG_C4_VALUE          0xE0U               /* MCG_C4 */
+  #define SYSTEM_MCG_C4_VALUE          0x60U               /* MCG_C4 */
   /* MCG_SC: ATME=0,ATMS=0,ATMF=0,FLTPRSRV=0,FCRDIV=0,LOCS0=0 */
   #define SYSTEM_MCG_SC_VALUE          0x00U               /* MCG_SC */
 /* MCG_C5:  */

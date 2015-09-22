@@ -80,7 +80,7 @@ void bit_bang_test(void) {
 void spi_init(void) {
   Anki::Cozmo::HAL::MicroWait(1000000);
 
-  const int size = 512;
+  const int size = 192;
   uint32_t spi_buff[size]; // 512 bytes
 
   // Turn on power to DMA, PORTC and SPI0
@@ -103,7 +103,7 @@ void spi_init(void) {
              SPI_MCR_CLR_TXF_MASK |
              SPI_MCR_CLR_RXF_MASK;
 
-  SPI0_CTAR0 = SPI_CTAR_BR(2) |
+  SPI0_CTAR0 = SPI_CTAR_BR(0) |
                SPI_CTAR_CPOL_MASK |
                SPI_CTAR_CPHA_MASK |
                SPI_CTAR_FMSZ(7);
