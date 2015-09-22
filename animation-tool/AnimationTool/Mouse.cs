@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Windows.Forms;
 using System.Windows.Forms.DataVisualization.Charting;
-using Anki.Cozmo;
 using System.Drawing;
 
 namespace AnimationTool
@@ -343,7 +342,7 @@ namespace AnimationTool
 
                     if (mouseXValue >= dp.YValues[0] && mouseXValue < dp.YValues[1])
                     {
-                        if (dp.Color == System.Drawing.Color.Red)
+                        if (dp.Color == Color.Red)
                         {
                             curPreviewBar = dp;
                         }
