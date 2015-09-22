@@ -5,10 +5,10 @@ namespace AnimationTool
 {
     public class ChartForm : ContainerControl
     {
-        public Panel sidePanel;
-        public CheckBox checkBox;
-        public Panel panel;
-        public PictureBox pictureBox;
+        public Panel sidePanel { get; private set; }
+        public CheckBox checkBox { get; private set; }
+        public Panel panel { get; private set; }
+        public PictureBox pictureBox { get; private set; }
         public Chart chart;
 
         public ChartForm()
