@@ -8,7 +8,7 @@
 
 #include "spi.h"
 
-const int TRANSMISSION_SIZE = 192;
+const int TRANSMISSION_SIZE = 98;
 static uint32_t spi_tx_buff[TRANSMISSION_SIZE];
 static uint8_t  spi_rx_buff[TRANSMISSION_SIZE];
 
@@ -16,7 +16,8 @@ static uint8_t  spi_rx_buff[TRANSMISSION_SIZE];
 // 15 = SPI0_TX
 
 static void start_tx() {
-  uint32_t num_words = TRANSMISSION_SIZE;
+  const uint32_t num_words = TRANSMISSION_SIZE;
+  const int transferSize = sizeof(uint32_t);
   
   // Disable DMA
   DMA_ERQ &= ~DMA_ERQ_ERQ3_MASK & ~DMA_ERQ_ERQ2_MASK;
@@ -27,15 +28,15 @@ static void start_tx() {
   
   // Configure source address
   DMA_TCD3_SADDR          = (uint32_t)spi_tx_buff;
-  DMA_TCD3_SOFF           = 1;
-  DMA_TCD3_SLAST          = -num_words;
+  DMA_TCD3_SOFF           = transferSize;
+  DMA_TCD3_SLAST          = -num_words * transferSize;
 
   // Configure source address
   DMA_TCD3_DADDR          = (uint32_t)&(SPI0_PUSHR);
   DMA_TCD3_DOFF           = 0;
   DMA_TCD3_DLASTSGA       = 0;
 
-  DMA_TCD3_NBYTES_MLNO    = 1;                                          // The minor loop moves 32 bytes per transfer
+  DMA_TCD3_NBYTES_MLNO    = transferSize;                               // The minor loop moves 32 bytes per transfer
   DMA_TCD3_BITER_ELINKNO  = num_words;                                  // Major loop iterations
   DMA_TCD3_CITER_ELINKNO  = num_words;                                  // Set current interation count  
   DMA_TCD3_ATTR           = (DMA_ATTR_SSIZE(2) | DMA_ATTR_DSIZE(2));    // Source/destination size (8bit)
@@ -87,8 +88,12 @@ void spi_init(void) {
   for (int i = 0; i < TRANSMISSION_SIZE; i++) {
     int k = i >> 1;
 
-    spi_tx_buff[i] = SPI_PUSHR_CONT_MASK | SPI_PUSHR_PCS((~i & 1) ? ~0: 0);
+    spi_tx_buff[i] = 
+      SPI_PUSHR_CONT_MASK | 
+      SPI_PUSHR_PCS((~i & 1) ? ~0: 0);
   }
 
-  start_tx();
+  //start_tx();
+  
+  for(;;) ;
 }
