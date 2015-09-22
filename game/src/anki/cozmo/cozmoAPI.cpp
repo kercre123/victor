@@ -94,16 +94,29 @@ CozmoAPI::~CozmoAPI()
 void CozmoAPI::Clear()
 {
   // If there is a thread running, kill it first
-  _cozmoRunnerThread = std::thread();
+  if (_cozmoRunnerThread.joinable())
+  {
+    if (nullptr != _cozmoRunner)
+    {
+      _cozmoRunner->Stop();
+    }
+    else
+    {
+      PRINT_NAMED_ERROR("CozmoAPI.Clear", "Running thread has null object... what?");
+    }
+    _cozmoRunnerThread.join();
+    _cozmoRunnerThread = std::thread();
+  }
   
   Util::SafeDelete(_cozmoRunner);
 }
 
 #pragma mark --- CozmoInstanceRunner Methods ---
 
-  CozmoAPI::CozmoInstanceRunner::CozmoInstanceRunner(Util::Data::DataPlatform* dataPlatform,
-                                                     const Json::Value& config, Result& initResult)
-  : _cozmoInstance(dataPlatform)
+CozmoAPI::CozmoInstanceRunner::CozmoInstanceRunner(Util::Data::DataPlatform* dataPlatform,
+                                                   const Json::Value& config, Result& initResult)
+: _cozmoInstance(dataPlatform)
+, _isRunning(true)
 {
   initResult = _cozmoInstance.Init(config);
 }
@@ -112,7 +125,7 @@ void CozmoAPI::CozmoInstanceRunner::Run()
 {
   auto runStart = std::chrono::system_clock::now();
   
-  while(true)
+  while(_isRunning)
   {
     auto tickStart = std::chrono::system_clock::now();
     std::chrono::duration<double> timeSeconds = tickStart - runStart;

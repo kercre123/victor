@@ -20,6 +20,7 @@
 #include "util/helpers/noncopyable.h"
 
 #include <thread>
+#include <atomic>
 
 namespace Anki {
   
@@ -55,12 +56,14 @@ private:
                         const Json::Value& config, Result& initResult);
     
     void Run();
+    void Stop() { _isRunning.store(false); }
     
     // For manually ticking the game
     Result Update(const double currentTime_sec);
     
   private:
     CozmoGame _cozmoInstance;
+    std::atomic<bool> _isRunning;
     
   }; // class CozmoInstanceRunner
   

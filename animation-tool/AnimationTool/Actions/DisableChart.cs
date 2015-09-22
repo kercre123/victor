@@ -11,11 +11,11 @@ namespace AnimationTool
         protected CheckBox checkBox;
         protected UnselectChart unselectChart;
 
-        public DisableChart(Chart chart, CheckBox checkBox)
+        public DisableChart(ChartForm form)
         {
+            chart = form.chart;
+            checkBox = form.checkBox;
             unselectChart = new UnselectChart(chart);
-            this.chart = chart;
-            this.checkBox = checkBox;
         }
 
         public virtual bool Do()

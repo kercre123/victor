@@ -1,17 +1,16 @@
 ﻿using System;
 using System.Windows.Forms;
 using System.Windows.Forms.DataVisualization.Charting;
-using Anki.Cozmo;
 using System.Drawing;
 
 namespace AnimationTool
 {
     partial class MainForm
     {
-        DataPoint curDataPoint; // current selected point
-        DataPoint curPreviewBar;
+        private DataPoint curDataPoint; // current selected point
+        private DataPoint curPreviewBar;
 
-        double GetPixelPositionToValue(Axis axis, double pixel, int round)
+        private double GetPixelPositionToValue(Axis axis, double pixel, int round)
         {
             double value = double.MaxValue;
 
@@ -282,7 +281,7 @@ namespace AnimationTool
 
                         if (ActionManager.Do(new FaceAnimation.MoveSelectedPreviewBar(curPreviewBar, curDataPoint, left, right, faceAnimation.pictureBox)))
                         {
-                            cFaceAnimation.Refresh();
+                            faceAnimation.chart.Refresh();
                         }
                     }
                     else // else moving data points
@@ -343,7 +342,7 @@ namespace AnimationTool
 
                     if (mouseXValue >= dp.YValues[0] && mouseXValue < dp.YValues[1])
                     {
-                        if (dp.Color == System.Drawing.Color.Red)
+                        if (dp.Color == Color.Red)
                         {
                             curPreviewBar = dp;
                         }
