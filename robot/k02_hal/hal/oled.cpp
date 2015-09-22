@@ -87,34 +87,32 @@ static uint8_t ResetCursor[FramePrefixLength+FrameBufferLength] = {
 
 static uint8_t *FrameBuffer = &ResetCursor[FramePrefixLength];
 
-// 14 = SPI0 RX
-
-void DMA_TX_Init(uint32_t num_words) {
+void DMA_TX_Init(const void* source_addr, void* dest_addr, uint32_t num_bytes) {
   // Disable DMA
   DMA_ERQ &= ~DMA_ERQ_ERQ1_MASK;
 
   // DMA source DMA Mux (i2c0)
-  DMAMUX_CHCFG3 = (DMAMUX_CHCFG_ENBL_MASK | DMAMUX_CHCFG_SOURCE(15));  // SPI0 TX
+  DMAMUX_CHCFG1 = (DMAMUX_CHCFG_ENBL_MASK | DMAMUX_CHCFG_SOURCE(18)); 
   
   // Configure source address
-  DMA_TCD3_SADDR          = (uint32_t)source_addr;
-  DMA_TCD3_SOFF           = 1;
-  DMA_TCD3_SLAST          = -num_bytes;
+  DMA_TCD1_SADDR          = (uint32_t)source_addr;
+  DMA_TCD1_SOFF           = 1;
+  DMA_TCD1_SLAST          = -num_bytes;
 
   // Configure source address
-  DMA_TCD3_DADDR          = (uint32_t)dest_addr;
-  DMA_TCD3_DOFF           = 0;
-  DMA_TCD3_DLASTSGA       = 0;
+  DMA_TCD1_DADDR          = (uint32_t)dest_addr;
+  DMA_TCD1_DOFF           = 0;
+  DMA_TCD1_DLASTSGA       = 0;
   
-  DMA_TCD3_NBYTES_MLNO    = 4;                                       // The minor loop moves 32 bytes per transfer
-  DMA_TCD3_BITER_ELINKNO  = num_words;                               // Major loop iterations
-  DMA_TCD3_CITER_ELINKNO  = num_words;                               // Set current interation count  
-  DMA_TCD3_ATTR           = (DMA_ATTR_SSIZE(2) | DMA_ATTR_DSIZE(2)); // Source/destination size (8bit)
+  DMA_TCD1_NBYTES_MLNO    = 1;                                       // The minor loop moves 32 bytes per transfer
+  DMA_TCD1_BITER_ELINKNO  = num_bytes;                               // Major loop iterations
+  DMA_TCD1_CITER_ELINKNO  = num_bytes;                               // Set current interation count  
+  DMA_TCD1_ATTR           = (DMA_ATTR_SSIZE(0) | DMA_ATTR_DSIZE(0)); // Source/destination size (8bit)
  
-  DMA_TCD3_CSR            = DMA_CSR_INTMAJOR_MASK | DMA_CSR_DREQ_MASK; // Enable end of loop DMA interrupt; clear ERQ @ end of major iteration               
+  DMA_TCD1_CSR            = DMA_CSR_INTMAJOR_MASK | DMA_CSR_DREQ_MASK; // Enable end of loop DMA interrupt; clear ERQ @ end of major iteration               
 
   // Enable DMA
-  DMA_ERQ |= DMA_ERQ_ERQ3_MASK;
+  DMA_ERQ |= DMA_ERQ_ERQ1_MASK;
 }
 
 void dequeue() {
