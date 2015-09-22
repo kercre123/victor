@@ -66,6 +66,16 @@ public class PatternPlayController : GameController {
       }
       return true;
     }
+
+    public override int GetHashCode() {
+      int x = 0;
+      for (int i = 0; i < blocks.Count; ++i) {
+        x ^= System.Convert.ToInt32(blocks[i].back) ^ System.Convert.ToInt32(blocks[i].front) ^
+        System.Convert.ToInt32(blocks[i].left) ^ System.Convert.ToInt32(blocks[i].right);
+      }
+      return x;
+    }
+
   }
 
   private Dictionary<int, BlockLightConfig> blockLightConfigs = new Dictionary<int, BlockLightConfig>();
