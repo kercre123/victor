@@ -31,8 +31,8 @@ namespace AnimationTool
                 return;
             }
 
-            ActionManager.Do(new Sequencer.EnableChart(cAudioRobot, audioRobot.checkBox), true);
-            ActionManager.Do(new Sequencer.AddDataPoint(cAudioRobot, extraData, current.triggerTime_ms * 0.001D, false), true);
+            ActionManager.Do(new Sequencer.EnableChart(audioRobot), true);
+            ActionManager.Do(new Sequencer.AddDataPoint(audioRobot.chart, extraData, current.triggerTime_ms * 0.001D, false), true);
         }
 
         private void ReadAudioDeviceFromFile(AudioDevicePointData current)
@@ -48,26 +48,26 @@ namespace AnimationTool
                 return;
             }
 
-            ActionManager.Do(new Sequencer.EnableChart(cAudioDevice, audioDevice.checkBox), true);
-            ActionManager.Do(new Sequencer.AddDataPoint(cAudioDevice, extraData, current.triggerTime_ms * 0.001D, false), true);
+            ActionManager.Do(new Sequencer.EnableChart(audioDevice), true);
+            ActionManager.Do(new Sequencer.AddDataPoint(audioDevice.chart, extraData, current.triggerTime_ms * 0.001D, false), true);
         }
 
         private void ReadLiftHeightFromFile(LiftHeightPointData current, LiftHeightPointData next)
         {
             if (current == null) return;
 
-            ActionManager.Do(new EnableChart(cLiftHeight, liftHeight.checkBox), true);
+            ActionManager.Do(new EnableChart(liftHeight), true);
 
             if (next == null) // if last point, move to correct y
             {
-                DataPoint last = cLiftHeight.Series[0].Points[cLiftHeight.Series[0].Points.Count - 1];
-                double x = cLiftHeight.ChartAreas[0].AxisX.Maximum;
+                DataPoint last = liftHeight.chart.Series[0].Points[liftHeight.chart.Series[0].Points.Count - 1];
+                double x = liftHeight.chart.ChartAreas[0].AxisX.Maximum;
 
                 ActionManager.Do(new MoveDataPoint(last, x, current.height_mm), true);
             }
             else
             {
-                ActionManager.Do(new AddDataPoint(cLiftHeight, next.triggerTime_ms * 0.001D, current.height_mm, false), true);
+                ActionManager.Do(new AddDataPoint(liftHeight.chart, next.triggerTime_ms * 0.001D, current.height_mm, false), true);
             }
         }
 
@@ -83,8 +83,8 @@ namespace AnimationTool
                 return;
             }
 
-            ActionManager.Do(new FaceAnimation.EnableChart(cFaceAnimation, faceAnimation.checkBox), true);
-            ActionManager.Do(new Sequencer.AddDataPoint(cFaceAnimation, extraData, current.triggerTime_ms * 0.001D, false), true);
+            ActionManager.Do(new FaceAnimation.EnableChart(faceAnimation), true);
+            ActionManager.Do(new Sequencer.AddDataPoint(faceAnimation.chart, extraData, current.triggerTime_ms * 0.001D, false), true);
         }
 
         private void ReadProceduralFaceFromFile(ProceduralFacePointData current)
@@ -93,8 +93,8 @@ namespace AnimationTool
 
             Sequencer.ExtraProceduralFaceData extraData = new Sequencer.ExtraProceduralFaceData(current);
 
-            ActionManager.Do(new Sequencer.EnableChart(cProceduralFace, proceduralFace.checkBox), true);
-            ActionManager.Do(new Sequencer.AddDataPoint(cProceduralFace, extraData, current.triggerTime_ms * 0.001D, false), true);
+            ActionManager.Do(new Sequencer.EnableChart(proceduralFace), true);
+            ActionManager.Do(new Sequencer.AddDataPoint(proceduralFace.chart, extraData, current.triggerTime_ms * 0.001D, false), true);
         }
 
         private void ReadBodyMotionFromFile(BodyMotionPointData current)
@@ -129,25 +129,25 @@ namespace AnimationTool
             }
 
             extraData.Length = current.durationTime_ms * 0.001D;
-            ActionManager.Do(new Sequencer.EnableChart(cBodyMotion, bodyMotion.checkBox), true);
-            ActionManager.Do(new Sequencer.AddDataPoint(cBodyMotion, extraData, current.triggerTime_ms * 0.001D, false), true);
+            ActionManager.Do(new Sequencer.EnableChart(bodyMotion), true);
+            ActionManager.Do(new Sequencer.AddDataPoint(bodyMotion.chart, extraData, current.triggerTime_ms * 0.001D, false), true);
         }
 
         private void ReadHeadAngleFromFile(HeadAnglePointData current, HeadAnglePointData next)
         {
             if (current == null) return;
 
-            ActionManager.Do(new EnableChart(cHeadAngle, headAngle.checkBox), true);
+            ActionManager.Do(new EnableChart(headAngle), true);
 
             if (next == null) // if last point, move to correct y
             {
-                DataPoint last = cHeadAngle.Series[0].Points[cHeadAngle.Series[0].Points.Count - 1];
-                double x = cHeadAngle.ChartAreas[0].AxisX.Maximum;
+                DataPoint last = headAngle.chart.Series[0].Points[headAngle.chart.Series[0].Points.Count - 1];
+                double x = headAngle.chart.ChartAreas[0].AxisX.Maximum;
                 ActionManager.Do(new MoveDataPoint(last, x, current.angle_deg), true);
             }
             else
             {
-                ActionManager.Do(new AddDataPoint(cHeadAngle, next.triggerTime_ms * 0.001D, current.angle_deg, false), true);
+                ActionManager.Do(new AddDataPoint(headAngle.chart, next.triggerTime_ms * 0.001D, current.angle_deg, false), true);
             }
         }
 
@@ -239,25 +239,25 @@ namespace AnimationTool
                     switch (chart.Name)
                     {
                         case "cHeadAngle":
-                            ActionManager.Do(new DisableChart(cHeadAngle, headAngle.checkBox));
+                            ActionManager.Do(new DisableChart(headAngle));
                             break;
                         case "cLiftHeight":
-                            ActionManager.Do(new DisableChart(cLiftHeight, liftHeight.checkBox));
+                            ActionManager.Do(new DisableChart(liftHeight));
                             break;
                         case "cAudioRobot":
-                            ActionManager.Do(new DisableChart(cAudioRobot, audioRobot.checkBox));
+                            ActionManager.Do(new DisableChart(audioRobot));
                             break;
                         case "cAudioDevice":
-                            ActionManager.Do(new DisableChart(cAudioDevice, audioDevice.checkBox));
+                            ActionManager.Do(new DisableChart(audioDevice));
                             break;
                         case "cFaceAnimation":
-                            ActionManager.Do(new DisableChart(cFaceAnimation, faceAnimation.checkBox));
+                            ActionManager.Do(new DisableChart(faceAnimation));
                             break;
                         case "cProceduralFace":
-                            ActionManager.Do(new DisableChart(cProceduralFace, proceduralFace.checkBox));
+                            ActionManager.Do(new DisableChart(proceduralFace));
                             break;
                         case "cBodyMotion":
-                            ActionManager.Do(new DisableChart(cBodyMotion, bodyMotion.checkBox));
+                            ActionManager.Do(new DisableChart(bodyMotion));
                             break;
                     }
                 }

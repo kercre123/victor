@@ -9,6 +9,7 @@ namespace AnimationTool
         public CheckBox checkBox;
         public Panel panel;
         public PictureBox pictureBox;
+        public Chart chart;
 
         public ChartForm()
         {

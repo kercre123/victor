@@ -14,10 +14,10 @@ namespace AnimationTool
 
         protected EnableChart() { }
 
-        public EnableChart(Chart chart, CheckBox checkBox)
+        public EnableChart(ChartForm form)
         {
-            this.chart = chart;
-            this.checkBox = checkBox;
+            chart = form.chart;
+            checkBox = form.checkBox;
             removeDataPoints = new List<RemoveDataPoint>();
             unselectAllDataPoints = new UnselectAllDataPoints(chart);
         }

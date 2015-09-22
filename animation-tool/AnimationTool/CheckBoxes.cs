@@ -9,15 +9,15 @@ namespace AnimationTool
         {
             CheckBox checkBox = o as CheckBox;
 
-            if (checkBox == null || cHeadAngle == null || checkBox.Checked != cHeadAngle.Enabled) return;
+            if (checkBox == null || headAngle.chart == null || checkBox.Checked != headAngle.chart.Enabled) return;
 
-            if (cHeadAngle.Enabled)
+            if (headAngle.chart.Enabled)
             {
-                ActionManager.Do(new DisableChart(cHeadAngle, checkBox));
+                ActionManager.Do(new DisableChart(headAngle));
             }
             else
             {
-                ActionManager.Do(new EnableChart(cHeadAngle, checkBox));
+                ActionManager.Do(new EnableChart(headAngle));
             }
         }
 
@@ -25,15 +25,15 @@ namespace AnimationTool
         {
             CheckBox checkBox = o as CheckBox;
 
-            if (checkBox == null || cLiftHeight == null || checkBox.Checked != cLiftHeight.Enabled) return;
+            if (checkBox == null || liftHeight.chart == null || checkBox.Checked != liftHeight.chart.Enabled) return;
 
-            if (cLiftHeight.Enabled)
+            if (liftHeight.chart.Enabled)
             {
-                ActionManager.Do(new DisableChart(cLiftHeight, checkBox));
+                ActionManager.Do(new DisableChart(liftHeight));
             }
             else
             {
-                ActionManager.Do(new EnableChart(cLiftHeight, checkBox));
+                ActionManager.Do(new EnableChart(liftHeight));
             }
         }
 
@@ -41,15 +41,15 @@ namespace AnimationTool
         {
             CheckBox checkBox = o as CheckBox;
 
-            if (checkBox == null || cAudioRobot == null || checkBox.Checked != cAudioRobot.Enabled) return;
+            if (checkBox == null || audioRobot.chart == null || checkBox.Checked != audioRobot.chart.Enabled) return;
 
-            if (cAudioRobot.Enabled)
+            if (audioRobot.chart.Enabled)
             {
-                ActionManager.Do(new DisableChart(cAudioRobot, checkBox));
+                ActionManager.Do(new DisableChart(audioRobot));
             }
             else
             {
-                ActionManager.Do(new Sequencer.EnableChart(cAudioRobot, checkBox));
+                ActionManager.Do(new Sequencer.EnableChart(audioRobot));
             }
         }
 
@@ -57,15 +57,15 @@ namespace AnimationTool
         {
             CheckBox checkBox = o as CheckBox;
 
-            if (checkBox == null || cAudioDevice == null || checkBox.Checked != cAudioDevice.Enabled) return;
+            if (checkBox == null || audioDevice.chart == null || checkBox.Checked != audioDevice.chart.Enabled) return;
 
-            if (cAudioDevice.Enabled)
+            if (audioDevice.chart.Enabled)
             {
-                ActionManager.Do(new DisableChart(cAudioDevice, checkBox));
+                ActionManager.Do(new DisableChart(audioDevice));
             }
             else
             {
-                ActionManager.Do(new Sequencer.EnableChart(cAudioDevice, checkBox));
+                ActionManager.Do(new Sequencer.EnableChart(audioDevice));
             }
         }
 
@@ -73,15 +73,15 @@ namespace AnimationTool
         {
             CheckBox checkBox = o as CheckBox;
 
-            if (checkBox == null || cFaceAnimation == null || checkBox.Checked != cFaceAnimation.Enabled) return;
+            if (checkBox == null || faceAnimation.chart == null || checkBox.Checked != faceAnimation.chart.Enabled) return;
 
-            if (cFaceAnimation.Enabled)
+            if (faceAnimation.chart.Enabled)
             {
-                ActionManager.Do(new DisableChart(cFaceAnimation, checkBox));
+                ActionManager.Do(new DisableChart(faceAnimation));
             }
             else
             {
-                ActionManager.Do(new Sequencer.EnableChart(cFaceAnimation, checkBox));
+                ActionManager.Do(new Sequencer.EnableChart(faceAnimation));
             }
         }
 
@@ -89,15 +89,15 @@ namespace AnimationTool
         {
             CheckBox checkBox = o as CheckBox;
 
-            if (checkBox == null || cProceduralFace == null || checkBox.Checked != cProceduralFace.Enabled) return;
+            if (checkBox == null || proceduralFace.chart == null || checkBox.Checked != proceduralFace.chart.Enabled) return;
 
-            if (cProceduralFace.Enabled)
+            if (proceduralFace.chart.Enabled)
             {
-                ActionManager.Do(new DisableChart(cProceduralFace, checkBox));
+                ActionManager.Do(new DisableChart(proceduralFace));
             }
             else
             {
-                ActionManager.Do(new Sequencer.EnableChart(cProceduralFace, checkBox));
+                ActionManager.Do(new Sequencer.EnableChart(proceduralFace));
             }
         }
 
@@ -105,15 +105,15 @@ namespace AnimationTool
         {
             CheckBox checkBox = o as CheckBox;
 
-            if (checkBox == null || cBodyMotion == null || checkBox.Checked != cBodyMotion.Enabled) return;
+            if (checkBox == null || bodyMotion.chart == null || checkBox.Checked != bodyMotion.chart.Enabled) return;
 
-            if (cBodyMotion.Enabled)
+            if (bodyMotion.chart.Enabled)
             {
-                ActionManager.Do(new DisableChart(cBodyMotion, checkBox));
+                ActionManager.Do(new DisableChart(bodyMotion));
             }
             else
             {
-                ActionManager.Do(new Sequencer.EnableChart(cBodyMotion, checkBox));
+                ActionManager.Do(new Sequencer.EnableChart(bodyMotion));
             }
         }
     }

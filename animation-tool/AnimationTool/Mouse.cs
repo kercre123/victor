@@ -282,7 +282,7 @@ namespace AnimationTool
 
                         if (ActionManager.Do(new FaceAnimation.MoveSelectedPreviewBar(curPreviewBar, curDataPoint, left, right, faceAnimation.pictureBox)))
                         {
-                            cFaceAnimation.Refresh();
+                            faceAnimation.chart.Refresh();
                         }
                     }
                     else // else moving data points

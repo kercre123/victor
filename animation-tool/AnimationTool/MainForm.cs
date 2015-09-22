@@ -120,21 +120,6 @@ namespace AnimationTool
             }
 
             InitializeComponent();
-
-            headAngle.panel.Controls.Add(cHeadAngle);
-            headAngle.checkBox.CheckedChanged += HeadAngleCheckBox;
-            liftHeight.panel.Controls.Add(cLiftHeight);
-            liftHeight.checkBox.CheckedChanged += LiftHeightCheckBox;
-            bodyMotion.panel.Controls.Add(cBodyMotion);
-            bodyMotion.checkBox.CheckedChanged += BodyMotionCheckBox;
-            proceduralFace.panel.Controls.Add(cProceduralFace);
-            proceduralFace.checkBox.CheckedChanged += ProceduralFaceCheckBox;
-            faceAnimation.panel.Controls.Add(cFaceAnimation);
-            faceAnimation.checkBox.CheckedChanged += FaceAnimationCheckBox;
-            audioRobot.panel.Controls.Add(cAudioRobot);
-            audioRobot.checkBox.CheckedChanged += AudioRobotCheckBox;
-            audioDevice.panel.Controls.Add(cAudioDevice);
-            audioDevice.checkBox.CheckedChanged += AudioDeviceCheckBox;
         }
 
         private void MainForm_Load(object sender, EventArgs e)
@@ -149,71 +134,71 @@ namespace AnimationTool
             double interval = ChangeChartDuration.Clamp(Math.Round(Properties.Settings.Default.maxTime * 0.1, 1), 0.1, 0.5);
 
             //Head Chart
-            cHeadAngle.Series[0].Points.Clear();
-            cHeadAngle.ChartAreas[0].AxisX.Minimum = 0;
-            cHeadAngle.ChartAreas[0].AxisX.Maximum = Properties.Settings.Default.maxTime;
-            cHeadAngle.ChartAreas[0].AxisX.LabelStyle.Interval = interval;
-            cHeadAngle.ChartAreas[0].AxisY.Minimum = -25;
-            cHeadAngle.ChartAreas[0].AxisY.Maximum = 34;
-            ActionManager.Do(new DisableChart(cHeadAngle, headAngle.checkBox), true);
-            ActionManager.Do(new EnableChart(cHeadAngle, headAngle.checkBox), true);
-            channelList.Add(cHeadAngle);
+            headAngle.chart.Series[0].Points.Clear();
+            headAngle.chart.ChartAreas[0].AxisX.Minimum = 0;
+            headAngle.chart.ChartAreas[0].AxisX.Maximum = Properties.Settings.Default.maxTime;
+            headAngle.chart.ChartAreas[0].AxisX.LabelStyle.Interval = interval;
+            headAngle.chart.ChartAreas[0].AxisY.Minimum = -25;
+            headAngle.chart.ChartAreas[0].AxisY.Maximum = 34;
+            ActionManager.Do(new DisableChart(headAngle), true);
+            ActionManager.Do(new EnableChart(headAngle), true);
+            channelList.Add(headAngle.chart);
 
             //Lift Chart
-            cLiftHeight.Series[0].Points.Clear();
-            cLiftHeight.ChartAreas[0].AxisX.Minimum = 0;
-            cLiftHeight.ChartAreas[0].AxisX.Maximum = Properties.Settings.Default.maxTime;
-            cLiftHeight.ChartAreas[0].AxisX.LabelStyle.Interval = interval;
-            cLiftHeight.ChartAreas[0].AxisY.Minimum = 31;
-            cLiftHeight.ChartAreas[0].AxisY.Maximum = 92;
-            ActionManager.Do(new DisableChart(cLiftHeight, liftHeight.checkBox), true);
-            ActionManager.Do(new EnableChart(cLiftHeight, liftHeight.checkBox), true);
-            channelList.Add(cLiftHeight);
+            liftHeight.chart.Series[0].Points.Clear();
+            liftHeight.chart.ChartAreas[0].AxisX.Minimum = 0;
+            liftHeight.chart.ChartAreas[0].AxisX.Maximum = Properties.Settings.Default.maxTime;
+            liftHeight.chart.ChartAreas[0].AxisX.LabelStyle.Interval = interval;
+            liftHeight.chart.ChartAreas[0].AxisY.Minimum = 31;
+            liftHeight.chart.ChartAreas[0].AxisY.Maximum = 92;
+            ActionManager.Do(new DisableChart(liftHeight), true);
+            ActionManager.Do(new EnableChart(liftHeight), true);
+            channelList.Add(liftHeight.chart);
 
             //Body Chart
-            cBodyMotion.Series[0].Points.Clear();
-            cBodyMotion.ChartAreas[0].AxisY.Minimum = 0;
-            cBodyMotion.ChartAreas[0].AxisY.Maximum = Properties.Settings.Default.maxTime;
-            cBodyMotion.ChartAreas[0].AxisY.LabelStyle.Interval = interval;
-            ActionManager.Do(new DisableChart(cBodyMotion, bodyMotion.checkBox), true);
-            ActionManager.Do(new Sequencer.EnableChart(cBodyMotion, bodyMotion.checkBox), true);
-            channelList.Add(cBodyMotion);
+            bodyMotion.chart.Series[0].Points.Clear();
+            bodyMotion.chart.ChartAreas[0].AxisY.Minimum = 0;
+            bodyMotion.chart.ChartAreas[0].AxisY.Maximum = Properties.Settings.Default.maxTime;
+            bodyMotion.chart.ChartAreas[0].AxisY.LabelStyle.Interval = interval;
+            ActionManager.Do(new DisableChart(bodyMotion), true);
+            ActionManager.Do(new Sequencer.EnableChart(bodyMotion), true);
+            channelList.Add(bodyMotion.chart);
 
             //Face Animation Data Chart
-            cProceduralFace.Series[0].Points.Clear();
-            cProceduralFace.ChartAreas[0].AxisY.Minimum = 0;
-            cProceduralFace.ChartAreas[0].AxisY.Maximum = Properties.Settings.Default.maxTime;
-            cProceduralFace.ChartAreas[0].AxisY.LabelStyle.Interval = interval;
-            ActionManager.Do(new DisableChart(cProceduralFace, proceduralFace.checkBox), true);
-            ActionManager.Do(new Sequencer.EnableChart(cProceduralFace, proceduralFace.checkBox), true);
-            channelList.Add(cProceduralFace);
+            proceduralFace.chart.Series[0].Points.Clear();
+            proceduralFace.chart.ChartAreas[0].AxisY.Minimum = 0;
+            proceduralFace.chart.ChartAreas[0].AxisY.Maximum = Properties.Settings.Default.maxTime;
+            proceduralFace.chart.ChartAreas[0].AxisY.LabelStyle.Interval = interval;
+            ActionManager.Do(new DisableChart(proceduralFace), true);
+            ActionManager.Do(new Sequencer.EnableChart(proceduralFace), true);
+            channelList.Add(proceduralFace.chart);
 
             //Face Animation Image Chart
-            cFaceAnimation.Series[0].Points.Clear();
-            cFaceAnimation.ChartAreas[0].AxisY.Minimum = 0;
-            cFaceAnimation.ChartAreas[0].AxisY.Maximum = Properties.Settings.Default.maxTime;
-            cFaceAnimation.ChartAreas[0].AxisY.LabelStyle.Interval = interval;
-            ActionManager.Do(new DisableChart(cFaceAnimation, faceAnimation.checkBox), true);
-            ActionManager.Do(new FaceAnimation.EnableChart(cFaceAnimation, faceAnimation.checkBox), true);
-            channelList.Add(cFaceAnimation);
+            faceAnimation.chart.Series[0].Points.Clear();
+            faceAnimation.chart.ChartAreas[0].AxisY.Minimum = 0;
+            faceAnimation.chart.ChartAreas[0].AxisY.Maximum = Properties.Settings.Default.maxTime;
+            faceAnimation.chart.ChartAreas[0].AxisY.LabelStyle.Interval = interval;
+            ActionManager.Do(new DisableChart(faceAnimation), true);
+            ActionManager.Do(new FaceAnimation.EnableChart(faceAnimation), true);
+            channelList.Add(faceAnimation.chart);
 
             //Audio Robot Chart
-            cAudioRobot.Series[0].Points.Clear();
-            cAudioRobot.ChartAreas[0].AxisY.Minimum = 0;
-            cAudioRobot.ChartAreas[0].AxisY.Maximum = Properties.Settings.Default.maxTime;
-            cAudioRobot.ChartAreas[0].AxisY.LabelStyle.Interval = interval;
-            ActionManager.Do(new DisableChart(cAudioRobot, audioRobot.checkBox), true);
-            ActionManager.Do(new Sequencer.EnableChart(cAudioRobot, audioRobot.checkBox), true);
-            channelList.Add(cAudioRobot);
+            audioRobot.chart.Series[0].Points.Clear();
+            audioRobot.chart.ChartAreas[0].AxisY.Minimum = 0;
+            audioRobot.chart.ChartAreas[0].AxisY.Maximum = Properties.Settings.Default.maxTime;
+            audioRobot.chart.ChartAreas[0].AxisY.LabelStyle.Interval = interval;
+            ActionManager.Do(new DisableChart(audioRobot), true);
+            ActionManager.Do(new Sequencer.EnableChart(audioRobot), true);
+            channelList.Add(audioRobot.chart);
 
             //Audio Robot Device
-            cAudioDevice.Series[0].Points.Clear();
-            cAudioDevice.ChartAreas[0].AxisY.Minimum = 0;
-            cAudioDevice.ChartAreas[0].AxisY.Maximum = Properties.Settings.Default.maxTime;
-            cAudioDevice.ChartAreas[0].AxisY.LabelStyle.Interval = interval;
-            ActionManager.Do(new DisableChart(cAudioDevice, audioDevice.checkBox), true);
-            ActionManager.Do(new Sequencer.EnableChart(cAudioDevice, audioDevice.checkBox), true);
-            channelList.Add(cAudioDevice);
+            audioDevice.chart.Series[0].Points.Clear();
+            audioDevice.chart.ChartAreas[0].AxisY.Minimum = 0;
+            audioDevice.chart.ChartAreas[0].AxisY.Maximum = Properties.Settings.Default.maxTime;
+            audioDevice.chart.ChartAreas[0].AxisY.LabelStyle.Interval = interval;
+            ActionManager.Do(new DisableChart(audioDevice), true);
+            ActionManager.Do(new Sequencer.EnableChart(audioDevice), true);
+            channelList.Add(audioDevice.chart);
 
             if (!File.Exists(currentFile))
             {
@@ -261,7 +246,7 @@ namespace AnimationTool
                 {
                     if (ActionManager.Do(new FaceAnimation.MoveSelectedPreviewBar(curPreviewBar, curDataPoint, left, right, faceAnimation.pictureBox)))
                     {
-                        cFaceAnimation.Refresh();
+                        faceAnimation.chart.Refresh();
                     }
                 }
                 else if (ActionManager.Do(new MoveSelectedDataPointsOfSelectedCharts(channelList, left, right, up, down)))
