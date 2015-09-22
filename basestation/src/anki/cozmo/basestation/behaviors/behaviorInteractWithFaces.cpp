@@ -83,6 +83,11 @@ namespace Cozmo {
     {
       case State::Inactive:
       {
+        // If we're still finishing an action, just wait
+        if(_isActing)
+        {
+          break;
+        }
         // If we don't have any faces to care about, we're done here
         auto iterFirst = _interestingFacesOrder.begin();
         if (_interestingFacesOrder.end() == iterFirst)
@@ -177,14 +182,20 @@ namespace Cozmo {
         // Update cozmo's face based on our currently focused face
         UpdateProceduralFace(_crntProceduralFace, *face);
         
-        if(!_isAnimating)
+        if(!_isActing)
         {
           Pose3d headWrtRobot;
-          if(false == face->GetHeadPose().GetWithRespectTo(_robot.GetPose(), headWrtRobot))
+          bool headPoseRetrieveSuccess = face->GetHeadPose().GetWithRespectTo(_robot.GetPose(), headWrtRobot);
+          if(!headPoseRetrieveSuccess)
           {
             PRINT_NAMED_ERROR("BehaviorInteractWithFaces.HandleRobotObservedFace.PoseWrtFail","");
+            break;
           }
-          else if(headWrtRobot.GetTranslation().Length() < 300.f)
+          
+          Vec3f headTranslate = headWrtRobot.GetTranslation();
+          headTranslate.z() = 0.0f; // We only want to work with XY plane distance
+          auto distSqr = headTranslate.LengthSq();
+          if(distSqr < (kTooCloseDistance_mm * kTooCloseDistance_mm))
           {
             // The head is very close (scary!). Move backward along the line from the
             // robot to the head.
@@ -192,10 +203,13 @@ namespace Cozmo {
                              "Head is %.1fmm away: playing shocked anim.",
                              headWrtRobot.GetTranslation().Length());
             PlayAnimationAction* animAction = new PlayAnimationAction("Demo_Face_Interaction_ShockedScared_A");
-            _animationActionTag = animAction->GetTag();
-            _robot.GetActionList().QueueActionNow(IBehavior::sActionSlot, animAction);
-            _isAnimating = true;
+            _robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, animAction);
             _robot.GetEmotionManager().HandleEmotionalMoment(EmotionManager::EmotionEvent::CloseFace);
+            MoveToSafeDistanceFromPoint(headTranslate);
+          }
+          else if (distSqr > (kTooFarDistance_mm * kTooFarDistance_mm))
+          {
+            MoveToSafeDistanceFromPoint(headTranslate);
           }
         }
         
@@ -218,6 +232,28 @@ namespace Cozmo {
     
     return Status::Running;
   } // Update()
+  
+  void BehaviorInteractWithFaces::MoveToSafeDistanceFromPoint(const Vec3f& robotRelativePoint)
+  {
+    Pose3d goalPose = _robot.GetPose();
+    auto pointDistance = robotRelativePoint.Length();
+    // Calculate the ratio of the relative point minus the safe distance to the overall current distance
+    auto distanceRatio = (pointDistance - (kTooFarDistance_mm + kTooCloseDistance_mm) / 2.0f) / pointDistance;
+    
+    // Use the distance ratio to create a goal pose where the translation is the safe distance away from the relative point
+    goalPose.SetTranslation(goalPose.GetTranslation() + goalPose.GetRotation() * (robotRelativePoint * distanceRatio));
+    
+    DriveToPoseAction* driveAction = new DriveToPoseAction(goalPose, false, false);
+    _robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, driveAction);
+    _lastActionTag = driveAction->GetTag();
+    _isActing = true;
+    
+    // Disable our face tracking to allow the drive to pose action to function
+    _robot.DisableTrackToFace();
+    
+    // Set our state back to inactive so we can correctly refocus on a face when we're done moving
+    _currentState = State::Inactive;
+  }
   
   Result BehaviorInteractWithFaces::Interrupt(double currentTime_sec)
   {
@@ -441,10 +477,10 @@ namespace Cozmo {
   {
     const RobotCompletedAction& msg = event.GetData().Get_RobotCompletedAction();
     
-    if(msg.actionType == RobotActionType::PLAY_ANIMATION && msg.idTag == _animationActionTag)
+    if(msg.idTag == _lastActionTag)
     {
       _robot.SetProceduralFace(_crntProceduralFace);
-      _isAnimating = false;
+      _isActing = false;
     }
   }
 } // namespace Cozmo
