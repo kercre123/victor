@@ -149,7 +149,7 @@ public class ActiveBlock : ObservedObject {
     SetMode(Mode.Off);
   }
 
-  public void Moving(ActiveObjectMoved message) {
+  public void Moving(ObjectMoved message) {
     if (isMoving)
       return;
 
@@ -161,7 +161,7 @@ public class ActiveBlock : ObservedObject {
     zAccel = message.accel.z;
   }
 
-  public void StoppedMoving(ActiveObjectStoppedMoving message) {
+  public void StoppedMoving(ObjectStoppedMoving message) {
     if (!isMoving)
       return;
 
@@ -173,7 +173,7 @@ public class ActiveBlock : ObservedObject {
     }
   }
 
-  public void Tapped(ActiveObjectTapped message) {
+  public void Tapped(ObjectTapped message) {
     DAS.Debug("ActiveBlock", "Tapped Message Received for ActiveBlock(" + ID + "): " + message.numTaps + " taps");
     if (TappedAction != null)
       TappedAction(ID, message.numTaps);

@@ -309,14 +309,14 @@ public class RobotEngineManager : MonoBehaviour {
     case G2U.MessageEngineToGame.Tag.RobotDeletedObject:
       ReceivedSpecificMessage(message.RobotDeletedObject);
       break;
-    case G2U.MessageEngineToGame.Tag.ActiveObjectMoved:
-      ReceivedSpecificMessage(message.ActiveObjectMoved);
+    case G2U.MessageEngineToGame.Tag.ObjectMoved:
+      ReceivedSpecificMessage(message.ObjectMoved);
       break;
-    case G2U.MessageEngineToGame.Tag.ActiveObjectStoppedMoving:
-      ReceivedSpecificMessage(message.ActiveObjectStoppedMoving);
+    case G2U.MessageEngineToGame.Tag.ObjectStoppedMoving:
+      ReceivedSpecificMessage(message.ObjectStoppedMoving);
       break;
-    case G2U.MessageEngineToGame.Tag.ActiveObjectTapped:
-      ReceivedSpecificMessage(message.ActiveObjectTapped);
+    case G2U.MessageEngineToGame.Tag.ObjectTapped:
+      ReceivedSpecificMessage(message.ObjectTapped);
       break;
     case G2U.MessageEngineToGame.Tag.AnimationAvailable:
       ReceivedSpecificMessage(message.AnimationAvailable);
@@ -358,7 +358,7 @@ public class RobotEngineManager : MonoBehaviour {
     Disconnected(DisconnectionReason.RobotDisconnected);
   }
 
-  private void ReceivedSpecificMessage(ActiveObjectMoved message) {
+  private void ReceivedSpecificMessage(ObjectMoved message) {
     if (current == null)
       return;
 
@@ -371,7 +371,7 @@ public class RobotEngineManager : MonoBehaviour {
     }
   }
 
-  private void ReceivedSpecificMessage(ActiveObjectStoppedMoving message) {
+  private void ReceivedSpecificMessage(ObjectStoppedMoving message) {
     if (current == null)
       return;
 
@@ -384,7 +384,7 @@ public class RobotEngineManager : MonoBehaviour {
     }
   }
 
-  private void ReceivedSpecificMessage(ActiveObjectTapped message) {
+  private void ReceivedSpecificMessage(ObjectTapped message) {
     if (current == null)
       return;
     

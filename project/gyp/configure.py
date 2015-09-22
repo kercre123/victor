@@ -175,12 +175,6 @@ def main(scriptArgs):
     cwd=os.path.join(options.cozmoEnginePath, 'clad')) != 0):
     UtilLog.error("error compiling clad files")
     return False
-  cmdList = ['make', '--silent', 'OUTPUT_DIR_CSHARP=' + unityGeneratedPath, 'csharp', 'INPUT_DIR=../robot/cladShared/src']
-  if (subprocess.call(cmdList, 
-    cwd=os.path.join(options.cozmoEnginePath, 'clad')) != 0):
-    UtilLog.error("error compiling clad files")
-    return False
-
 
   #generate unity's metafiles
   if (generateUnityMeta.generateMetaFiles(unityGeneratedPath, options.verbose)):
