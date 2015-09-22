@@ -10,7 +10,6 @@ public class PatternPlayController : GameController {
 
   private bool animationPlaying = false;
   private float lastAnimationFinishedTime = 0.0f;
-  private float lastGoodPatternTime = 0.0f;
   private int cozmoEnergyLevel = 0;
   private static int cozmoMaxEnergyLevel = 6;
 
@@ -230,7 +229,7 @@ public class PatternPlayController : GameController {
     RowBlockPattern currentPattern = null;
     if (!animationPlaying && Time.time - lastAnimationFinishedTime > 2.0f) {
       if (ValidPatternSeen(out currentPattern)) {
-        lastGoodPatternTime = Time.time;
+        lastPatternSeen = currentPattern;
         if (!PatternSeen(currentPattern)) {
           cozmoEnergyLevel++;
           Debug.Log(currentPattern.blocks.Count);
