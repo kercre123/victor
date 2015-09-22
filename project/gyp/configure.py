@@ -156,9 +156,6 @@ def main(scriptArgs):
   if (subprocess.call(['make', '--silent'], cwd=os.path.join(projectRoot, 'clad')) != 0):
     UtilLog.error("error compiling clad files")
     return False
-  if (subprocess.call(['make', '--silent', 'INPUT_DIR=../robot/clad/src'], cwd=os.path.join(projectRoot, 'clad')) != 0):
-    UtilLog.error("error compiling clad files")
-    return False
 
   # update file lists
   generator = updateFileLists.FileListGenerator(options)
@@ -168,7 +165,7 @@ def main(scriptArgs):
   generator.processFolder(['robot/sim_hal', 'robot/supervisor/src', 'simulator/src/robot', 'simulator/controllers/webotsCtrlRobot'],
    ['project/gyp/ctrlRobot.lst'])
   generator.processFolder(['simulator/controllers/webotsCtrlViz'], ['project/gyp/ctrlViz.lst'])
-  generator.processFolder(['clad/src', 'robot/clad/src'], ['project/gyp/clad.lst'])
+  generator.processFolder(['clad/src', 'clad/vizSrc', 'robot/clad/src'], ['project/gyp/clad.lst'])
   webotsPhysicsPath = os.path.join(projectRoot, 'generated/webots/src/plugins/physics/')
   # copy the webots' physics.c into the generated folder
   util.File.mkdir_p(webotsPhysicsPath)

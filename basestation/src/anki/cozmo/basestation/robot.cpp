@@ -2697,7 +2697,7 @@ namespace Anki {
           lights[i].transitionOnPeriod_ms = activeCube->_ledState[i].transitionOnPeriod_ms;
           lights[i].transitionOffPeriod_ms = activeCube->_ledState[i].transitionOffPeriod_ms;
         }
-        return SendMessage(RobotInterface::EngineToRobot(RobotInterface::BlockLights(RobotInterface::BlockLights(lights, (uint32_t)activeCube->GetID()))));
+        return SendMessage(RobotInterface::EngineToRobot(CubeLights(lights, (uint32_t)activeCube->GetID())));
       }
     }
       
@@ -2733,7 +2733,7 @@ namespace Anki {
           lights[i].transitionOffPeriod_ms = transitionOffPeriod_ms[i];
         }
 
-        return SendMessage(RobotInterface::EngineToRobot(RobotInterface::BlockLights(lights, (uint32_t)activeCube->GetID())));
+        return SendMessage(RobotInterface::EngineToRobot(CubeLights(lights, (uint32_t)activeCube->GetID())));
       }
 
     }
@@ -2814,7 +2814,7 @@ namespace Anki {
       
     Result Robot::SendFlashObjectIDs()
     {
-      return SendMessage(RobotInterface::EngineToRobot(RobotInterface::FlashBlockIDs()));
+      return SendMessage(RobotInterface::EngineToRobot(FlashObjectIDs()));
     }
      
       /*
@@ -2884,7 +2884,7 @@ namespace Anki {
         lights[i].transitionOnPeriod_ms = activeCube->_ledState[i].transitionOnPeriod_ms;
         lights[i].transitionOffPeriod_ms = activeCube->_ledState[i].transitionOffPeriod_ms;
       }
-      return SendMessage(RobotInterface::EngineToRobot(RobotInterface::BlockLights(RobotInterface::BlockLights(lights, (uint32_t)activeCube->GetID()))));
+      return SendMessage(RobotInterface::EngineToRobot(CubeLights(lights, (uint32_t)activeCube->GetID())));
     }
       
       

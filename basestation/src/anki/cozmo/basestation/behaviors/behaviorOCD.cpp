@@ -42,7 +42,7 @@ namespace Cozmo {
       ExternalInterface::MessageEngineToGameTag::RobotCompletedAction,
       ExternalInterface::MessageEngineToGameTag::RobotObservedObject,
       ExternalInterface::MessageEngineToGameTag::RobotDeletedObject,
-      ExternalInterface::MessageEngineToGameTag::ActiveObjectMoved
+      ExternalInterface::MessageEngineToGameTag::ObjectMoved
     };
     
     // Note we may not have an external interface when running Unit tests
@@ -71,8 +71,8 @@ namespace Cozmo {
         _lastHandlerResult= HandleDeletedObject(event.GetData().Get_RobotDeletedObject());
         break;
         
-      case ExternalInterface::MessageEngineToGameTag::ActiveObjectMoved:
-        _lastHandlerResult= HandleObjectMoved(event.GetData().Get_ActiveObjectMoved());
+      case ExternalInterface::MessageEngineToGameTag::ObjectMoved:
+        _lastHandlerResult= HandleObjectMoved(event.GetData().Get_ObjectMoved());
         break;
         
       default:
@@ -973,7 +973,7 @@ namespace Cozmo {
   } // HandleActionCompleted()
   
   
-  Result BehaviorOCD::HandleObjectMoved(const ActiveObjectMoved &msg)
+  Result BehaviorOCD::HandleObjectMoved(const ObjectMoved &msg)
   {
     Result lastResult = RESULT_OK;
     

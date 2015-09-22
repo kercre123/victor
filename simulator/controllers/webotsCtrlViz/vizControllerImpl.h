@@ -12,6 +12,7 @@
 #ifndef __WebotsCtrlViz_VizControllerImpl_H__
 #define __WebotsCtrlViz_VizControllerImpl_H__
 
+#include "clad/vizInterface/messageViz.h"
 #include "anki/cozmo/basestation/events/ankiEventMgr.h"
 #include "anki/vision/basestation/image.h"
 #include <webots/Supervisor.hpp>
@@ -21,11 +22,6 @@
 
 namespace Anki {
 namespace Cozmo {
-
-namespace VizInterface {
-class MessageViz;
-enum class MessageVizTag : uint8_t;
-} // end namespace VizInterface
 
 struct CozmoBotVizParams
 {

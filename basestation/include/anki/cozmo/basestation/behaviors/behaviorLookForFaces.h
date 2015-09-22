@@ -41,7 +41,7 @@ namespace Cozmo {
       return name;
     }
     
-    virtual bool GetRewardBid(Reward& reward);
+    virtual bool GetRewardBid(Reward& reward) override;
     
   private:
     
