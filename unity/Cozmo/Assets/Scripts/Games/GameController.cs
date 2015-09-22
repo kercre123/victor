@@ -440,6 +440,8 @@ public class GameController : MonoBehaviour {
     emotionWaitLimiterRoutine = null;
 
     waitingForEmoteToFinish = false;
+
+    CompoundCompleteCallBack(success, tagId);
   }
 
   #endregion
@@ -490,6 +492,9 @@ public class GameController : MonoBehaviour {
         textError.color = color;
       }
     }
+  }
+
+  protected virtual void CompoundCompleteCallBack(bool success, uint tagId) {
   }
 
   protected virtual void Enter_BUILDING() {

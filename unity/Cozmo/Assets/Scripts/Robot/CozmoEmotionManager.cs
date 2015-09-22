@@ -22,6 +22,12 @@ public class CozmoEmotionManager : MonoBehaviour {
   private U2G.FacePose FacePoseMessage;
   CozmoEmotionMachine currentEmotionMachine;
 
+  public enum CompoundActionType {
+    ANIM_FACEPOSE = 1,
+    ANIM_TURN_IN_PLACE = 2,
+    NUM_TYPES
+  }
+
   public enum EmotionType {
     NONE,
     IDLE,
@@ -332,6 +338,7 @@ public class CozmoEmotionManager : MonoBehaviour {
         QueueCompoundActionsMessage.inSlot = 0;
         QueueCompoundActionsMessage.robotID = robot.ID;
         QueueCompoundActionsMessage.parallel = isParallel;
+        QueueCompoundActionsMessage.idTag = (uint)CompoundActionType.ANIM_TURN_IN_PLACE;
 
         if (stopPreviousAction) {
           QueueCompoundActionsMessage.position = Anki.Cozmo.QueueActionPosition.NOW_AND_CLEAR_REMAINING;
@@ -390,7 +397,7 @@ public class CozmoEmotionManager : MonoBehaviour {
         QueueCompoundActionsMessage.inSlot = 0;
         QueueCompoundActionsMessage.robotID = robot.ID;
         QueueCompoundActionsMessage.parallel = isParallel;
-        QueueCompoundActionsMessage.idTag = 77;
+        QueueCompoundActionsMessage.idTag = (uint)CompoundActionType.ANIM_FACEPOSE;
 
         if (stopPreviousAction) {
           QueueCompoundActionsMessage.position = Anki.Cozmo.QueueActionPosition.NOW_AND_CLEAR_REMAINING;
