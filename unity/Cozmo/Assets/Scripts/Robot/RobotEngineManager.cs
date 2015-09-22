@@ -45,6 +45,7 @@ public class RobotEngineManager : MonoBehaviour {
   public event Action<bool,RobotActionType> SuccessOrFailure;
   public event Action<bool,string> RobotCompletedAnimation;
   public event Action<bool,uint> RobotCompletedCompoundAction;
+  public event Action<bool,uint> RobotCompletedTaggedAction;
 
   private bool cozmoBindingStarted = false;
   private ChannelBase channel = null;
@@ -498,7 +499,11 @@ public class RobotEngineManager : MonoBehaviour {
       if (RobotCompletedCompoundAction != null) {
         RobotCompletedCompoundAction(success, message.idTag);
       }
-      
+    }
+    else if (message.idTag > 0) {
+      if (RobotCompletedTaggedAction != null) {
+        RobotCompletedTaggedAction(success, message.idTag);
+      }
     }
 
     if (!success) {

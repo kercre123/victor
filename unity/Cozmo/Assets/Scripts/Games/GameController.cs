@@ -217,6 +217,7 @@ public class GameController : MonoBehaviour {
     if (RobotEngineManager.instance != null) {
       RobotEngineManager.instance.RobotCompletedAnimation += RobotCompletedAnimation;
       RobotEngineManager.instance.RobotCompletedCompoundAction += RobotCompletedCompoundAction;
+      RobotEngineManager.instance.RobotCompletedTaggedAction += RobotCompletedTaggedAction;
     }
   }
 
@@ -264,6 +265,7 @@ public class GameController : MonoBehaviour {
     if (RobotEngineManager.instance != null) {
       RobotEngineManager.instance.RobotCompletedAnimation -= RobotCompletedAnimation;
       RobotEngineManager.instance.RobotCompletedCompoundAction -= RobotCompletedCompoundAction;
+      RobotEngineManager.instance.RobotCompletedTaggedAction -= RobotCompletedTaggedAction;
     }
 
     if (emotionWaitLimiterRoutine != null)
@@ -444,6 +446,10 @@ public class GameController : MonoBehaviour {
     CompoundCompleteCallBack(success, tagId);
   }
 
+  void RobotCompletedTaggedAction(bool success, uint tagId) {
+    TaggedCompleteCallBack(success, tagId);
+  }
+
   #endregion
 
   #region PROTECTED METHODS
@@ -495,6 +501,9 @@ public class GameController : MonoBehaviour {
   }
 
   protected virtual void CompoundCompleteCallBack(bool success, uint tagId) {
+  }
+
+  protected virtual void TaggedCompleteCallBack(bool success, uint tagId) {
   }
 
   protected virtual void Enter_BUILDING() {

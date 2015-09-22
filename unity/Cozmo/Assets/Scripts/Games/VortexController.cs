@@ -392,6 +392,22 @@ public class VortexController : GameController {
     }
   }
 
+  protected override void TaggedCompleteCallBack(bool success, uint tagId) {
+    base.TaggedCompleteCallBack(success, tagId);
+    CozmoEmotionManager.CompoundActionType type = (CozmoEmotionManager.CompoundActionType)tagId;
+    switch (type) {
+    case CozmoEmotionManager.CompoundActionType.TURN_IN_PLACE:
+      if (playState == VortexState.SPINNING) {
+        DAS.Debug("VortexController", "enabling cozmo tap");
+        cozmoCanTap = true;
+        CozmoEmotionManager.SetEmotion("WATCH_SPIN");
+      }
+      break;
+    default:
+      break;
+    }
+  }
+
   protected override void Enter_BUILDING() {
     base.Enter_BUILDING();
     if (GameLayoutTracker.instance != null)
@@ -1190,7 +1206,7 @@ public class VortexController : GameController {
       cozmoCanTap = true;
     }
     else {
-      CozmoEmotionManager.instance.SetEmotionTurnInPlace("WATCH_SPIN", defaultRobotPoses[0].rad, true, true, false);
+      CozmoEmotionManager.instance.SetTurnInPlace(defaultRobotPoses[0].rad, true);
       cozmoCanTap = false;
     }
 

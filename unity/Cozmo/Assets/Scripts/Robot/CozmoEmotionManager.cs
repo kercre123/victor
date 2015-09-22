@@ -12,7 +12,7 @@ using System;
 public class CozmoEmotionManager : MonoBehaviour {
  
   public static CozmoEmotionManager instance = null;
-  private U2G.QueueSingleAction QueueSingleAnimMessage;
+  private U2G.QueueSingleAction QueueSingleAction;
   private U2G.QueueCompoundAction QueueCompoundActionsMessage;
   private U2G.PlayAnimation PlayAnimationMessage;
   private U2G.PlayAnimation[] PlayAnimationMessages;
@@ -25,6 +25,8 @@ public class CozmoEmotionManager : MonoBehaviour {
   public enum CompoundActionType {
     ANIM_FACEPOSE = 1,
     ANIM_TURN_IN_PLACE = 2,
+    ANIM = 3,
+    TURN_IN_PLACE = 4,
     NUM_TYPES
   }
 
@@ -70,7 +72,7 @@ public class CozmoEmotionManager : MonoBehaviour {
   public string testAnim = "ANIM_TEST";
 
   void Awake() {
-    QueueSingleAnimMessage = new U2G.QueueSingleAction();
+    QueueSingleAction = new U2G.QueueSingleAction();
     PlayAnimationMessage = new U2G.PlayAnimation();
     PlayAnimationMessages = new U2G.PlayAnimation[2];
     PlayAnimationMessages[0] = new U2G.PlayAnimation();
@@ -175,23 +177,23 @@ public class CozmoEmotionManager : MonoBehaviour {
     PlayAnimationMessage.numLoops = anim.numLoops;
     PlayAnimationMessage.robotID = robot.ID;
 
-    QueueSingleAnimMessage.action.playAnimation = PlayAnimationMessage;
-    QueueSingleAnimMessage.actionType = Anki.Cozmo.RobotActionType.PLAY_ANIMATION;
-    QueueSingleAnimMessage.numRetries = 0;
-    QueueSingleAnimMessage.inSlot = 0;
-    QueueSingleAnimMessage.robotID = robot.ID;
+    QueueSingleAction.action.playAnimation = PlayAnimationMessage;
+    QueueSingleAction.actionType = Anki.Cozmo.RobotActionType.PLAY_ANIMATION;
+    QueueSingleAction.numRetries = 0;
+    QueueSingleAction.inSlot = 0;
+    QueueSingleAction.robotID = robot.ID;
 
     if (stopPreviousAnim) {
-      QueueSingleAnimMessage.position = Anki.Cozmo.QueueActionPosition.NOW_AND_CLEAR_REMAINING;
+      QueueSingleAction.position = Anki.Cozmo.QueueActionPosition.NOW_AND_CLEAR_REMAINING;
     }
     else {
-      QueueSingleAnimMessage.position = Anki.Cozmo.QueueActionPosition.NEXT;
+      QueueSingleAction.position = Anki.Cozmo.QueueActionPosition.NEXT;
     }
 
 
 
 
-    RobotEngineManager.instance.Message.QueueSingleAction = QueueSingleAnimMessage;
+    RobotEngineManager.instance.Message.QueueSingleAction = QueueSingleAction;
     RobotEngineManager.instance.SendMessage();
   }
 
@@ -298,6 +300,35 @@ public class CozmoEmotionManager : MonoBehaviour {
         DAS.Error("CozmoEmotionManager", "tring to send animation for emotion type " + emotion_state + ", and the current machine has no anim mapped");
       }
     }
+  }
+
+  public void SetTurnInPlace(float rad, bool stopPreviousAnim = false) {
+    if (robot == null)
+      return;
+
+    TurnInPlaceMessage.isAbsolute = 1;
+    TurnInPlaceMessage.angle_rad = rad;
+    TurnInPlaceMessage.robotID = robot.ID;
+
+    QueueSingleAction.action.turnInPlace = TurnInPlaceMessage;
+    QueueSingleAction.actionType = Anki.Cozmo.RobotActionType.TURN_IN_PLACE;
+    QueueSingleAction.numRetries = 0;
+    QueueSingleAction.inSlot = 0;
+    QueueSingleAction.idTag = (uint)CompoundActionType.TURN_IN_PLACE;
+    QueueSingleAction.robotID = robot.ID;
+
+    if (stopPreviousAnim) {
+      QueueSingleAction.position = Anki.Cozmo.QueueActionPosition.NOW_AND_CLEAR_REMAINING;
+    }
+    else {
+      QueueSingleAction.position = Anki.Cozmo.QueueActionPosition.NEXT;
+    }
+
+
+
+
+    RobotEngineManager.instance.Message.QueueSingleAction = QueueSingleAction;
+    RobotEngineManager.instance.SendMessage();
   }
 
   public void SetEmotionTurnInPlace(string emotion_state, float rad, bool stopPreviousAction = false, bool reverseOrder = false, bool isParallel = false) {
