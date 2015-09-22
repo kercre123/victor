@@ -1243,6 +1243,20 @@ namespace Cozmo {
     ObjectID objectID;
     objectID = msg.objectID;
 
+    // Make sure this is actually a block
+    ObservableObject* oObject = _robot.GetBlockWorld().GetObjectByID(objectID);
+    if (nullptr == oObject) {
+      PRINT_NAMED_WARNING("BehaviorOCD.HandeObservedObject.InvalidObject", "How'd this happen? (ObjectID %d)", objectID.GetValue());
+      return RESULT_OK;
+    }
+    
+    // Only care about blocks and light cubes
+    if ((oObject->GetFamily() != ObjectFamily::LightCube) &&
+        (oObject->GetFamily() != ObjectFamily::Block)) {
+      return RESULT_OK;
+    }
+    
+    
     if(_neatObjects.count(objectID) == 0) {
       std::pair<std::set<ObjectID>::iterator,bool> insertResult = _messyObjects.insert(objectID);
       _conversionEvidenceCount[objectID] = 0;
