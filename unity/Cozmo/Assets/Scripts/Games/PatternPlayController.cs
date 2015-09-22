@@ -147,7 +147,7 @@ public class PatternPlayController : GameController {
 
     KeyboardBlockCycle();
 
-    Color[] levelColors = { Color.yellow, Color.green };
+    Color[] levelColors = { new Color(0.8f, 0.5f, 0.0f, 1.0f), Color.green };
 
     // update backpack lights
     // iterate through each of the lights and determine if
@@ -183,7 +183,7 @@ public class PatternPlayController : GameController {
           }
           else {
             onColor = Color.white;
-            offColor = new Color(0.1f, 0.1f, 0.1f, 1.0f);
+            offColor = Color.black;
           }
           break;
         }
@@ -232,7 +232,6 @@ public class PatternPlayController : GameController {
         lastPatternSeen = currentPattern;
         if (!PatternSeen(currentPattern)) {
           cozmoEnergyLevel++;
-          Debug.Log(currentPattern.blocks.Count);
 
           if (cozmoEnergyLevel > cozmoMaxEnergyLevel) {
             cozmoEnergyLevel = cozmoMaxEnergyLevel;
