@@ -16,6 +16,7 @@
 #include "anki/cozmo/basestation/actionableObject.h"
 #include "anki/cozmo/basestation/actionInterface.h"
 #include "anki/cozmo/basestation/compoundActions.h"
+#include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/common/types.h"
 #include "anki/common/basestation/objectIDs.h"
 #include "anki/common/basestation/math/pose.h"
@@ -39,13 +40,17 @@ namespace Anki {
     public:
       DriveToPoseAction(const Pose3d& pose,
                         const bool forceHeadDown  = true,
-                        const bool useManualSpeed = false);
+                        const bool useManualSpeed = false,
+                        const Point3f& distThreshold = DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM,
+                        const Radians& angleThreshold = DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD);
       
       DriveToPoseAction(const bool forceHeadDown  = true,
                         const bool useManualSpeed = false); // Note that SetGoal() must be called befure Update()!
       DriveToPoseAction(const std::vector<Pose3d>& poses,
                         const bool forceHeadDown  = true,
-                        const bool useManualSpeed = false);
+                        const bool useManualSpeed = false,
+                        const Point3f& distThreshold = DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM,
+                        const Radians& angleThreshold = DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD);
       
       // TODO: Add methods to adjust the goal thresholds from defaults
       
