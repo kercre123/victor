@@ -12,35 +12,23 @@ CLAD_CSHARP=$(CLAD_EMITTER_DIR)/CSharp_emitter.py
 CLAD_CPP_DECL=$(CLAD_EMITTER_DIR)/specialized/cozmo_CPP_declarations_emitter.py
 CLAD_CPP_SWITCH=$(CLAD_EMITTER_DIR)/specialized/cozmo_CPPLite_switch_emitter.py
 CLAD_CPPLITE_SEND_HELPER=$(CLAD_EMITTER_DIR)/specialized/cozmo_CPPLite_send_helper_emitter.py
-INCLUDE_DIRS=../cladShared/src/ src/
+
 INPUT_DIR=./src/
 OUTPUT_DIR:=../generated/clad/
-OUTPUT_DIR_CSHARP=../generated/clad/unity/
 INPUT_FILES=$(shell cd $(INPUT_DIR); find . -type f -iname '*.clad')
 OUTPUT_CPP=$(patsubst %.clad, %.cpp, $(INPUT_FILES))
-OUTPUT_C=$(patsubst %.clad, %.c, $(INPUT_FILES))
 OUTPUT_H=$(patsubst %.clad, %.h, $(INPUT_FILES))
 OUTPUT_H_AND_CPP=$(OUTPUT_H) $(OUTPUT_CPP)
-OUTPUT_H_AND_C=$(OUTPUT_H) $(OUTPUT_C)
-OUTPUT_CSHARP=$(patsubst %.clad, %.cs, $(INPUT_FILES))
-OUTPUT_FILES=$(OUTPUT_H_AND_CPP)
 
 vpath %.clad $(INPUT_DIR)
 vpath %.h $(OUTPUT_DIR)/robot/
-vpath %.c $(OUTPUT_DIR)/robot/
-vpath %.h $(OUTPUT_DIR)/robot/
 vpath %.cpp $(OUTPUT_DIR)/robot/
-vpath %.cs $(OUTPUT_DIR_CSHARP)
 
 .PHONY: show clean
 
 all: cpp
 
-csharp: $(OUTPUT_CSHARP)
-
 cpp: $(OUTPUT_H_AND_CPP)
-
-c: $(OUTPUT_H_AND_C)
 
 %.h %.cpp : %.clad $(CLAD_DEPENDENCIES) $(CLAD_CPPLITE) $(CLAD_CPP_DECL) $(CLAD_CPP_SWITCH)
 	#mkdir -p $(OUTPUT_DIR)/robot/$(dir $<)
@@ -53,27 +41,12 @@ c: $(OUTPUT_H_AND_C)
 	chmod -f 555 $(OUTPUT_DIR)robot/$*.h
 	chmod -f 555 $(OUTPUT_DIR)robot/$*.cpp
 
-%.h %.c : %.clad $(CLAD_DEPENDENCIES) $(CLAD_C)
-	#mkdir -p $(OUTPUT_DIR)/robot/$(dir $<)
-	if test -f $(OUTPUT_DIR)robot/$*.h; then chmod -f 777 $(OUTPUT_DIR)robot/$*.h; fi
-	if test -f $(OUTPUT_DIR)robot/$*.c; then chmod -f 777 $(OUTPUT_DIR)robot/$*.c; fi
-	$(CLAD_C) -C $(INPUT_DIR) -I $(ROBOT_CLAD_SRC) -o $(OUTPUT_DIR)/robot/ $*.clad
-	chmod -f 555 $(OUTPUT_DIR)robot/$*.h
-	chmod -f 555 $(OUTPUT_DIR)robot/$*.c
-
-%.cs : %.clad $(CLAD_DEPENDENCIES) $(CLAD_CSHARP)
-	#mkdir -p $(OUTPUT_DIR)/$(dir $<)
-	if test -f $(OUTPUT_DIR_CSHARP)/$*.cs; then chmod -f 777 $(OUTPUT_DIR_CSHARP)/$*.cs; fi
-	$(CLAD_CSHARP) -C $(INPUT_DIR) -I $(ROBOT_CLAD_SRC) -o $(OUTPUT_DIR_CSHARP)/ $*.clad
-	chmod -f 555 $(OUTPUT_DIR_CSHARP)/$*.cs
-
 show:
-	echo "*** input_files ***"
+	echo "*** input files ***"
 	echo $(INPUT_FILES)
-	echo "*** output_files ***"
-	echo $(OUTPUT_FILES)
+	echo "*** output files ***"
+	echo $(OUTPUT_H_AND_CPP)
 
 clean:
 	if test -d $(OUTPUT_DIR); then chmod -Rf 777 $(OUTPUT_DIR); fi
-	if test -d $(OUTPUT_DIR_CSHARP); then chmod -Rf 777 $(OUTPUT_DIR_CSHARP); fi
-	rm -rf $(OUTPUT_DIR) $(OUTPUT_DIR_CSHARP)
+	rm -rf $(OUTPUT_DIR)

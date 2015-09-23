@@ -8,7 +8,7 @@ namespace Anki {
 namespace Cozmo {
 
 enum uint_16 RobotStatusFlag {
-Nothing,
+    NoneRobotStatusFlag,
     IS_MOVING               = 0x00000001,  // Head, lift, or wheels
     IS_CARRYING_BLOCK       = 0x00000002,
     IS_PICKING_OR_PLACING   = 0x00000004,

@@ -9,6 +9,7 @@
     'ctrlViz_source': 'ctrlViz.lst',
     'clad_source': 'clad.lst',
     'pluginPhysics_source': 'pluginPhysics.lst',
+    'robot_generated_clad_source': 'robotGeneratedClad.lst',
     
     # TODO: should this be passed in, or shared?
     'coretech_defines': [
@@ -342,7 +343,7 @@
               '<@(webots_includes)',
             ],
             'dependencies': [
-              'cozmoEngine',
+              'robotClad',
               '<(ce-cti_gyp_path):ctiCommonRobot',
             ],
             'sources': [ '<!@(cat <(ctrlLightCube_source))' ],
@@ -397,6 +398,7 @@
               '<(ce-cti_gyp_path):ctiMessagingRobot',
               '<(ce-cti_gyp_path):ctiPlanningRobot',
               '<(ce-util_gyp_path):utilEmbedded',
+              'robotClad',
             ],
             'sources': [ '<!@(cat <(ctrlRobot_source))' ],
             'defines': [
@@ -570,6 +572,23 @@
       'type': '<(engine_library_type)',
     },
     
+    {
+      'target_name': 'robotClad',
+      'sources': [ 
+        '<!@(cat <(robot_generated_clad_source))',
+      ],
+      'include_dirs': [
+        '../../robot/generated/clad/robot',
+      ],
+      'direct_dependent_settings': {
+        'include_dirs': [
+          '../../robot/generated/clad/robot',
+        ],
+      },
+      'dependencies': [
+      ],
+      'type': 'static_library',
+    },
 
 
   ] # end targets
