@@ -66,14 +66,13 @@ namespace Anki {
       
       void ClearNumBytesPlayed();
       
-      // Enable/disable tracks from playing. If the bit for corresponding track is
-      // zero, any keyframes buffered for that track will be ignored.
-      void SetTracksToPlay(u8 tracksToPlay);
-      
-      // Enables/disables the given tracks without changing the others' states
+      // Enables/disables the given tracks without changing the others' states.
+      // Keyframes for disabled tracks that are encountered in the buffer are
+      // discarded (but the numBytesPlayed count is still incremented)
       void EnableTracks(u8 whichTracks);
       void DisableTracks(u8 whichTracks);
       
+      // Return the "tag" from the most recent StartOfAnimation keyframe
       u8 GetCurrentTag();
       
     } // namespace AnimationController

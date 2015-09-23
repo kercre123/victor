@@ -952,11 +952,6 @@ namespace AnimationController {
     
     return RESULT_OK;
   } // Update()
-
-  void SetTracksToPlay(u8 tracksToPlay)
-  {
-    _tracksToPlay = tracksToPlay;
-  }
   
   void EnableTracks(u8 whichTracks)
   {
