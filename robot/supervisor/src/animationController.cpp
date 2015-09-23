@@ -43,7 +43,7 @@ namespace AnimationController {
     bool _isPlaying;
     bool _bufferFullMessagePrintedThisTick;
     
-    AnimTrackFlag _tracksToPlay;
+    s32 _tracksToPlay;
     
     int _tracksInUse = 0;
     
@@ -953,9 +953,19 @@ namespace AnimationController {
     return RESULT_OK;
   } // Update()
 
-  void SetTracksToPlay(AnimTrackFlag tracksToPlay)
+  void SetTracksToPlay(u8 tracksToPlay)
   {
     _tracksToPlay = tracksToPlay;
+  }
+  
+  void EnableTracks(u8 whichTracks)
+  {
+    _tracksToPlay |= whichTracks;
+  }
+  
+  void DisableTracks(u8 whichTracks)
+  {
+    _tracksToPlay &= ~whichTracks;
   }
   
   u8 GetCurrentTag()

@@ -68,7 +68,11 @@ namespace Anki {
       
       // Enable/disable tracks from playing. If the bit for corresponding track is
       // zero, any keyframes buffered for that track will be ignored.
-      void SetTracksToPlay(AnimTrackFlag tracksToPlay);
+      void SetTracksToPlay(u8 tracksToPlay);
+      
+      // Enables/disables the given tracks without changing the others' states
+      void EnableTracks(u8 whichTracks);
+      void DisableTracks(u8 whichTracks);
       
       u8 GetCurrentTag();
       
