@@ -36,6 +36,8 @@ namespace AnimationController {
     s32 _numAudioFramesBuffered; // NOTE: Also counts EndOfAnimationFrames...
     s32 _numBytesPlayed = 0;
 
+    u8  _currentTag = 0;
+    
     bool _isBufferStarved;
     bool _haveReceivedTerminationFrame;
     bool _isPlaying;
@@ -316,6 +318,7 @@ namespace AnimationController {
     
     _currentBufferPos = 0;
     _lastBufferPos = 0;
+    _currentTag = 0;
     
     _numAudioFramesBuffered = 0;
 
@@ -443,6 +446,18 @@ namespace AnimationController {
     CopyIntoBuffer((u8*)&msg, Messages::GetSize(msgID));
     return RESULT_OK;
   }
+  
+  Result BufferKeyFrame(const Messages::AnimKeyFrame_StartOfAnimation& msg)
+  {
+    Result lastResult = BufferKeyFrameHelper(msg, GET_MESSAGE_ID(Messages::AnimKeyFrame_StartOfAnimation));
+    if(RESULT_OK != lastResult) {
+      return lastResult;
+    }
+#   if DEBUG_ANIMATION_CONTROLLER
+    PRINT("Buffering StartOfAnimation KeyFrame with Tag=%d\n", msg.tag);
+#   endif
+    return RESULT_OK;
+}
   
   Result BufferKeyFrame(const Messages::AnimKeyFrame_EndOfAnimation& msg)
   {
@@ -630,14 +645,17 @@ namespace AnimationController {
       {
         START_TIME_PROFILE(Anim, AUDIOPLAY);
         
-        // Next thing in the buffer should be audio or silence:
         Messages::ID msgID = GetTypeIndicator();
-
         
+        // Next thing should be audio sample or silence.
         // If the next message is not audio, then delete it until it is.
-        while(msgID != Messages::AnimKeyFrame_AudioSilence_ID && msgID != Messages::AnimKeyFrame_AudioSample_ID) {
+        while(msgID != Messages::AnimKeyFrame_AudioSilence_ID &&
+              msgID != Messages::AnimKeyFrame_AudioSample_ID)
+        {
           PRINT("Expecting either audio sample or silence next in animation buffer. (Got %d instead). Dumping message. (FYI AudioSample_ID = %d)\n", msgID, Messages::AnimKeyFrame_AudioSample_ID);
+          
           switch (msgID) {
+            DUMP_NEXT_MESSAGE_CASE(StartOfAnimation)
             DUMP_NEXT_MESSAGE_CASE(HeadAngle)
             DUMP_NEXT_MESSAGE_CASE(LiftHeight)
             DUMP_NEXT_MESSAGE_CASE(FacePosition)
@@ -716,6 +734,17 @@ namespace AnimationController {
               
               nextAudioFrameFound = true;
               break;
+              
+            case Messages::AnimKeyFrame_StartOfAnimation_ID:
+            {
+              Messages::AnimKeyFrame_StartOfAnimation msg;
+              GetFromBuffer((u8*)&msg, Messages::GetSize(msgID));
+              _currentTag = msg.tag;
+#             if DEBUG_ANIMATION_CONTROLLER
+              PRINT("AnimationController: StartOfAnimation w/ tag=%d\n", _currentTag);
+#             endif
+              break;
+            }
               
             case Messages::AnimKeyFrame_EndOfAnimation_ID:
             {
@@ -907,9 +936,10 @@ namespace AnimationController {
           _haveReceivedTerminationFrame = false;
           --_numAudioFramesBuffered;
 #         if DEBUG_ANIMATION_CONTROLLER
-          PRINT("Reached animation termination frame (%d frames still buffered, curPos/lastPos = %d/%d).\n",
-                _numAudioFramesBuffered, _currentBufferPos, _lastBufferPos);
+          PRINT("Reached animation %d termination frame (%d frames still buffered, curPos/lastPos = %d/%d).\n",
+                _currentTag, _numAudioFramesBuffered, _currentBufferPos, _lastBufferPos);
 #         endif
+          _currentTag = 0;
         }
 
         // Print time profile stats
@@ -926,6 +956,11 @@ namespace AnimationController {
   void SetTracksToPlay(AnimTrackFlag tracksToPlay)
   {
     _tracksToPlay = tracksToPlay;
+  }
+  
+  u8 GetCurrentTag()
+  {
+    return _currentTag;
   }
   
 } // namespace AnimationController

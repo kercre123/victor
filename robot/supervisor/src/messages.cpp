@@ -91,52 +91,12 @@ namespace Anki {
         return LookupTable_[msgID].size;
       }
 
-      
-      // Checks whitelist of all messages that are allowed to
-      // be processed while the robot is picked up.
-      bool IgnoreMessageDuringPickup(const ID msgID) {
-        
-        if (!IMUFilter::IsPickedUp()) {
-          return false;
-        }
-        
-        switch(msgID) {
-          case MoveHead_ID:
-          case SetHeadAngle_ID:
-          case StopAllMotors_ID:
-          case ClearPath_ID:
-          case AbsLocalizationUpdate_ID:
-          case SyncTime_ID:
-          case HeadAngleUpdate_ID:
-          case ImageRequest_ID:
-          case SetHeadlight_ID:
-          case SetDefaultLights_ID:
-          case SetWheelControllerGains_ID:
-          case SetLiftControllerGains_ID:
-          case SetHeadControllerGains_ID:
-          case SetSteeringControllerGains_ID:
-          case SetCarryState_ID:
-          case SetBackpackLights_ID:
-          case SetBlockLights_ID:
-          case FlashBlockIDs_ID:
-          case SetBlockBeingCarried_ID:
-            return false;
-            
-          default:
-            break;
-        }
-        
-        return true;
-      }
-      
       void ProcessMessage(const ID msgID, const u8* buffer)
       {
         if(LookupTable_[msgID].dispatchFcn != NULL) {
           //PRINT("ProcessMessage(): Dispatching message with ID=%d.\n", msgID);
 
-          if (!IgnoreMessageDuringPickup(msgID)) {
-            (*LookupTable_[msgID].dispatchFcn)(buffer);
-          }
+          (*LookupTable_[msgID].dispatchFcn)(buffer);
 
           // Treat any message as a ping
           lastPingTime_ = HAL::GetTimeStamp();
@@ -218,12 +178,12 @@ namespace Anki {
         //robotState_.status |= (ProxSensors::IsForwardBlocked() ? IS_PROX_FORWARD_BLOCKED : 0);
         //robotState_.status |= (ProxSensors::IsSideBlocked() ? IS_PROX_SIDE_BLOCKED : 0);
         robotState_.status |= (PathFollower::IsTraversingPath() ? IS_PATHING : 0);
-        robotState_.status |= (AnimationController::IsPlaying() ? IS_ANIMATING : 0);
         robotState_.status |= (LiftController::IsInPosition() ? LIFT_IN_POS : 0);
         robotState_.status |= (HeadController::IsInPosition() ? HEAD_IN_POS : 0);
         robotState_.status |= (AnimationController::IsBufferFull() ? IS_ANIM_BUFFER_FULL : 0);
 
         robotState_.numAnimBytesPlayed = AnimationController::GetTotalNumBytesPlayed();
+        robotState_.animTag = AnimationController::GetCurrentTag();
       }
 
       RobotState const& GetRobotStateMsg() {
@@ -609,6 +569,7 @@ namespace Anki {
 #     define DEFINE_PROCESS_KEYFRAME_METHOD(__MSG_TYPE__) \
 void Process##__MSG_TYPE__##Message(const __MSG_TYPE__& msg) { ProcessAnimKeyFrameHelper(msg); }
 
+      DEFINE_PROCESS_KEYFRAME_METHOD(AnimKeyFrame_StartOfAnimation)
       DEFINE_PROCESS_KEYFRAME_METHOD(AnimKeyFrame_AudioSample)
       DEFINE_PROCESS_KEYFRAME_METHOD(AnimKeyFrame_AudioSilence)
       DEFINE_PROCESS_KEYFRAME_METHOD(AnimKeyFrame_FaceImage)

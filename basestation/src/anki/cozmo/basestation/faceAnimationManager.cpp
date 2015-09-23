@@ -11,6 +11,7 @@
 
 #include "anki/cozmo/basestation/faceAnimationManager.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
+#include "anki/cozmo/shared/faceDisplayDecode.h"
 #include "util/logging/logging.h"
 #include "opencv2/highgui/highgui.hpp"
 #include <sys/stat.h>
@@ -349,6 +350,28 @@ namespace Cozmo {
     
     return RESULT_OK;
   }
+  
+  
+  void FaceAnimationManager::DrawFaceRLE(const std::vector<u8>& rleData,
+                                         cv::Mat_<u8>& outImg)
+  {
+    outImg.create(FaceAnimationManager::IMAGE_HEIGHT, FaceAnimationManager::IMAGE_WIDTH);
+    
+    // Clear the display
+    outImg.setTo(0);
+    
+    uint64_t decodedImg[FaceAnimationManager::IMAGE_WIDTH];
+    FaceDisplayDecode(rleData.data(), FaceAnimationManager::IMAGE_HEIGHT, FaceAnimationManager::IMAGE_WIDTH, decodedImg);
+    
+    // Translate from 1-bit/pixel,column-major ordering to 1-byte/pixel, row-major
+    for (u8 i = 0; i < FaceAnimationManager::IMAGE_WIDTH; ++i) {
+      for (u8 j = 0; j < FaceAnimationManager::IMAGE_HEIGHT; ++j) {
+        if ((decodedImg[i] >> j) & 1) {
+          outImg(j,i) = 255;
+        }
+      }
+    }
+  } // DrawFaceRLE()
   
 } // namespace Cozmo
 } // namespace Anki

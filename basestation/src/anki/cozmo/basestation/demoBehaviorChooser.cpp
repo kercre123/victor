@@ -17,24 +17,33 @@
 #include "anki/cozmo/basestation/behaviors/behaviorOCD.h"
 #include "anki/cozmo/basestation/behaviors/behaviorFidget.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "clad/externalInterface/messageGameToEngine.h"
 
 
 namespace Anki {
 namespace Cozmo {
   
 DemoBehaviorChooser::DemoBehaviorChooser(Robot& robot, const Json::Value& config)
-  : ReactionaryBehaviorChooser()
+  : super()
   , _robot(robot)
 {
   SetupBehaviors(robot, config);
+  
+  if (_robot.HasExternalInterface())
+  {
+    _eventHandlers.push_back(_robot.GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::SetDemoState,
+                                                                      std::bind(&DemoBehaviorChooser::HandleSetDemoState,
+                                                                                this, std::placeholders::_1)));
+  }
 }
   
 void DemoBehaviorChooser::SetupBehaviors(Robot& robot, const Json::Value& config)
 {
   // Setup InteractWithFaces behavior
   _behaviorInteractWithFaces = new BehaviorInteractWithFaces(robot, config);
-  Result addResult = ReactionaryBehaviorChooser::AddBehavior(_behaviorInteractWithFaces);
+  Result addResult = super::AddBehavior(_behaviorInteractWithFaces);
   if (Result::RESULT_OK != addResult)
   {
     PRINT_NAMED_ERROR("DemoBehaviorChooser.SetupBehaviors", "BehaviorInteractWithFaces was not created properly.");
@@ -43,7 +52,7 @@ void DemoBehaviorChooser::SetupBehaviors(Robot& robot, const Json::Value& config
   
   // Setup OCD behavior
   _behaviorOCD = new BehaviorOCD(robot, config);
-  addResult = ReactionaryBehaviorChooser::AddBehavior(_behaviorOCD);
+  addResult = super::AddBehavior(_behaviorOCD);
   if (Result::RESULT_OK != addResult)
   {
     PRINT_NAMED_ERROR("DemoBehaviorChooser.SetupBehaviors", "BehaviorOCD was not created properly.");
@@ -52,7 +61,7 @@ void DemoBehaviorChooser::SetupBehaviors(Robot& robot, const Json::Value& config
   
   // Setup LookAround behavior
   _behaviorLookAround = new BehaviorLookAround(robot, config);
-  addResult = ReactionaryBehaviorChooser::AddBehavior(_behaviorLookAround);
+  addResult = super::AddBehavior(_behaviorLookAround);
   if (Result::RESULT_OK != addResult)
   {
     PRINT_NAMED_ERROR("DemoBehaviorChooser.SetupBehaviors", "BehaviorLookAround was not created properly.");
@@ -61,7 +70,7 @@ void DemoBehaviorChooser::SetupBehaviors(Robot& robot, const Json::Value& config
   
   // Setup Fidget behavior
   _behaviorFidget = new BehaviorFidget(robot, config);
-  addResult = ReactionaryBehaviorChooser::AddBehavior(_behaviorFidget);
+  addResult = super::AddBehavior(_behaviorFidget);
   if (Result::RESULT_OK != addResult)
   {
     PRINT_NAMED_ERROR("DemoBehaviorChooser.SetupBehaviors", "BehaviorFidget was not created properly.");
@@ -71,45 +80,13 @@ void DemoBehaviorChooser::SetupBehaviors(Robot& robot, const Json::Value& config
   
 Result DemoBehaviorChooser::Update(double currentTime_sec)
 {
-  Result updateResult = ReactionaryBehaviorChooser::Update(currentTime_sec);
+  Result updateResult = super::Update(currentTime_sec);
   if (Result::RESULT_OK != updateResult)
   {
     return updateResult;
   }
   
-  static double initBlocksTime = currentTime_sec;
-  
-  switch (_demoState)
-  {
-    case DemoState::Faces:
-    {
-      if (_robot.GetEmotionManager().GetEmotion(EmotionManager::SCARED) == EmotionManager::MAX_VALUE)
-      {
-        _demoState = DemoState::Blocks;
-        initBlocksTime = currentTime_sec;
-      }
-      break;
-    }
-    case DemoState::Blocks:
-    {
-      if ((currentTime_sec - initBlocksTime) > kBlocksBoredomTime
-          && nullptr != _behaviorOCD
-          && !_behaviorOCD->IsRunnable(currentTime_sec))
-      {
-        _demoState = DemoState::Rest;
-      }
-      break;
-    }
-    case DemoState::Rest:
-    {
-      // Once we're resting we stay resting
-      break;
-    }
-    default:
-    {
-      PRINT_NAMED_ERROR("DemoBehaviorChooser.Update", "Chooser in unhandled state!");
-    }
-  }
+  _demoState = _requestedState;
   
   return Result::RESULT_OK;
 }
@@ -123,7 +100,7 @@ IBehavior* DemoBehaviorChooser::ChooseNextBehavior(double currentTime_sec) const
   
   switch (_demoState)
   {
-    case DemoState::Blocks:
+    case DemoBehaviorState::BlocksOnly:
     {
       if (runnable(_behaviorOCD))
       {
@@ -131,7 +108,7 @@ IBehavior* DemoBehaviorChooser::ChooseNextBehavior(double currentTime_sec) const
       }
       break;
     }
-    case DemoState::Faces:
+    case DemoBehaviorState::FacesOnly:
     {
       if (runnable(_behaviorInteractWithFaces))
       {
@@ -139,15 +116,15 @@ IBehavior* DemoBehaviorChooser::ChooseNextBehavior(double currentTime_sec) const
       }
       break;
     }
-    case DemoState::Rest:
+    case DemoBehaviorState::Default:
     {
-      if (runnable(_behaviorInteractWithFaces))
-      {
-        return _behaviorInteractWithFaces;
-      }
-      else if (runnable(_behaviorOCD))
+      if (runnable(_behaviorOCD))
       {
         return _behaviorOCD;
+      }
+      else if (runnable(_behaviorInteractWithFaces))
+      {
+        return _behaviorInteractWithFaces;
       }
       break;
     }
@@ -172,8 +149,14 @@ IBehavior* DemoBehaviorChooser::ChooseNextBehavior(double currentTime_sec) const
   
 Result DemoBehaviorChooser::AddBehavior(IBehavior* newBehavior)
 {
-  PRINT_NAMED_ERROR("DemoBehaviorChooser.AddBehavior", "DemoBehaviorChooser has unique methods for adding behaviors. Use those instead.");
+  PRINT_NAMED_ERROR("DemoBehaviorChooser.AddBehavior", "DemoBehaviorChooser does not add behaviors externally.");
   return Result::RESULT_FAIL;
+}
+  
+void DemoBehaviorChooser::HandleSetDemoState(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+{
+  const ExternalInterface::SetDemoState& msg = event.GetData().Get_SetDemoState();
+  _requestedState = msg.demoState;
 }
 
 } // namespace Cozmo

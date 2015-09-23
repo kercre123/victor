@@ -67,11 +67,11 @@ namespace Cozmo {
 
     // Set the message handler's communications manager
     virtual Result Init(Comms::IChannel* comms,
-                        RobotManager*  robotMgr);
+                        RobotManager*  robotMgr) override;
     
     // As long as there are messages available from the comms object,
     // process them and pass them along to robots.
-    virtual Result ProcessMessages();
+    virtual Result ProcessMessages() override;
     
     // Send a message to a specified ID
     virtual Result SendMessage(const RobotID_t robotID, const RobotMessage& msg, bool reliable = true, bool hot = false) override;
@@ -121,14 +121,14 @@ namespace Cozmo {
     MessageHandlerStub() { }
     
     Result Init(Comms::IChannel* comms,
-                RobotManager*  robotMgr)
+                RobotManager*  robotMgr) override
     {
       return RESULT_OK;
     }
     
     // As long as there are messages available from the comms object,
     // process them and pass them along to robots.
-    Result ProcessMessages() {
+    Result ProcessMessages() override {
       return RESULT_OK;
     }
     

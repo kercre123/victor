@@ -61,6 +61,14 @@ namespace Cozmo {
     // Init() is called then do the 'oooo' animation.
     constexpr static f32 kExcitedAboutNewBlockTimeIntervalSec = 2.f;
     
+    // Number of blocks that need to be neatly stacked in order to warrant
+    // a celebratory dance.
+    constexpr static u32 kNumBlocksForCelebration = 4;
+    
+    // If the robot is not executing any action for this amount of time,
+    // something went wrong so start it up again.
+    constexpr static f32 kInactionFailsafeTimeoutSec = 1;
+    
     enum class ObjectOnTopStatus {
       DontCareIfObjectOnTop,
       ObjectOnTop,
@@ -83,6 +91,7 @@ namespace Cozmo {
     Result HandleDeletedObject(const ExternalInterface::RobotDeletedObject &msg, double currentTime_sec);
     
     Result HandleActionCompleted(const ExternalInterface::RobotCompletedAction &msg, double currentTime_sec);
+    Result HandleBlockPlaced(const ExternalInterface::BlockPlaced &msg, double currentTime_sec);
     
     Result SelectArrangement();
     Result SelectNextObjectToPickUp();
@@ -124,12 +133,19 @@ namespace Cozmo {
     std::set<ObjectID> _messyObjects;
     std::set<ObjectID> _neatObjects;
     
+    // A map of the number of times an object was observed to be
+    // in a neatness state other than what it currently is stored as
+    // so that VerifyNeatness can convert it only when it has accumulated
+    // a requisite number of observations in the alternate state.
+    std::map<ObjectID, s8> _conversionEvidenceCount;
+    
     // Internally, this behavior is just a little state machine going back and
     // forth between picking up and placing blocks
     enum class State {
       PickingUpBlock,
       PlacingBlock,
-      Animating
+      Animating,
+      FaceDisturbedBlock
     };
     
     State _currentState;
@@ -151,6 +167,7 @@ namespace Cozmo {
     ObjectID _objectToPlaceOn;
     ObjectID _lastObjectPlacedOnGround;
     ObjectID _anchorObject; // the object the arrangement is anchored to
+    ObjectID _blockToFace;  // the disturbed block that robot should look to before acting irritated
     
     // If it fails to pickup or place the same object a certain number of times in a row
     // then delete the object. Assuming that the failures are due to not being able to see
@@ -164,10 +181,15 @@ namespace Cozmo {
     
     f32 _lastNeatBlockDisturbedTime;
     f32 _lastNewBlockObservedTime;
+    f32 _inactionStartTime;
     
     void UpdateName();
     
     void PlayAnimation(const std::string& animName);
+    void FaceDisturbedBlock(const ObjectID& objID);
+    
+    void MakeNeat(const ObjectID& objID);
+    void MakeMessy(const ObjectID& objID);
     
   }; // class BehaviorOCD
 

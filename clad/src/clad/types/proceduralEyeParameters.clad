@@ -16,7 +16,8 @@ enum uint_8 ProceduralEyeParameter {
     PupilWidth,
     PupilHeight,
     PupilCenX,
-    PupilCenY,   
+    PupilCenY,
+    BrowLength,
 
     NumParameters
 }

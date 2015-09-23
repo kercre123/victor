@@ -72,7 +72,7 @@ public:
                               size_t& selectedIndex);
 
   // return a test path
-  virtual void GetTestPath(const Pose3d& startPose, Planning::Path &path) {}
+  virtual void GetTestPath(const Pose3d& startPose, Planning::Path &path) override {}
       
   void AddIgnoreFamily(const ObjectFamily objFamily)    { _ignoreFamilies.insert(objFamily); }
   void RemoveIgnoreFamily(const ObjectFamily objFamily) { _ignoreFamilies.erase(objFamily); }
