@@ -1,9 +1,24 @@
-#include "anki/planning/basestation/xythetaPlanner.h"
+/**
+ * File: xythetaPlanner.cpp
+ *
+ * Author: Brad Neuman
+ * Created: 2015-09-14
+ *
+ * Description: implementation of the xytheta lattice planner
+ *
+ * Copyright: Anki, Inc. 2015
+ *
+ **/
 
-#include <iostream>
-#include <assert.h>
-#include "xythetaPlanner_internal.h"
 #include "anki/common/basestation/utils/helpers/boundedWhile.h"
+#include "anki/planning/basestation/xythetaPlanner.h"
+#include "anki/planning/basestation/xythetaPlannerContext.h"
+#include "util/helpers/templateHelpers.h"
+#include "util/logging/logging.h"
+#include "xythetaPlanner_internal.h"
+#include <assert.h>
+#include <iostream>
+
 
 namespace Anki {
 namespace Planning {
@@ -11,25 +26,14 @@ namespace Planning {
 #define MAX_HEUR_EXPANSIONS 10000
   
   
-xythetaPlanner::xythetaPlanner(const xythetaEnvironment& env)
+xythetaPlanner::xythetaPlanner(const xythetaPlannerContext& context)
 {
-  _impl = new xythetaPlannerImpl(env);
+  _impl = new xythetaPlannerImpl(context);
 }
 
 xythetaPlanner::~xythetaPlanner()
 {
-  delete _impl;
-  _impl = NULL;
-}
-
-bool xythetaPlanner::SetGoal(const State_c& goal)
-{
-  return _impl->SetGoal(goal);
-}
-
-State_c xythetaPlanner::GetGoal() const
-{
-  return _impl->goal_c_;
+  Util::SafeDelete( _impl );
 }
 
 bool xythetaPlanner::GoalIsValid() const
@@ -37,14 +41,9 @@ bool xythetaPlanner::GoalIsValid() const
   return _impl->GoalIsValid();
 }
 
-bool xythetaPlanner::SetStart(const State_c& start)
+bool xythetaPlanner::StartIsValid() const
 {
-  return _impl->SetStart(start);
-}
-
-void xythetaPlanner::AllowFreeTurnInPlaceAtGoal(bool allow)
-{
-  _impl->freeTurnInPlaceAtGoal_ = allow;
+  return _impl->StartIsValid();
 }
 
 bool xythetaPlanner::Replan(unsigned int maxExpansions)
@@ -58,33 +57,29 @@ bool xythetaPlanner::Replan(unsigned int maxExpansions)
   duration<double> time_d = duration_cast<duration<double>>(end - start);
   double time = time_d.count();
 
-  printf("planning took %f seconds. (%f exps/sec, %f cons/sec, %f checks/sec)\n",
-         time,
-         ((double)_impl->expansions_) / time,
-         ((double)_impl->considerations_) / time,
-         ((double)_impl->collisionChecks_) / time);
+  PRINT_NAMED_INFO("xythetaPlanner.ReplanComplete", 
+                   "planning took %f seconds. (%f exps/sec, %f cons/sec, %f checks/sec)",
+                   time,
+                   ((double)_impl->_expansions) / time,
+                   ((double)_impl->_considerations) / time,
+                   ((double)_impl->_collisionChecks) / time);
 
   return ret;
 }
 
-void xythetaPlanner::SetReplanFromScratch()
-{
-  _impl->fromScratch_ = true;
-}
-
 const xythetaPlan& xythetaPlanner::GetPlan() const
 {
-  return _impl->plan_;
+  return _impl->_plan;
 }
 
 xythetaPlan& xythetaPlanner::GetPlan()
 {
-  return _impl->plan_;
+  return _impl->_plan;
 }
 
 Cost xythetaPlanner::GetFinalCost() const
 {
-  return _impl->finalCost_;
+  return _impl->_finalCost;
 }
 
 void xythetaPlanner::GetTestPlan(xythetaPlan& plan)
@@ -99,79 +94,73 @@ void xythetaPlanner::GetTestPlan(xythetaPlan& plan)
 
 #define PLANNER_DEBUG_PLOT_STATES_CONSIDERED 0
 
-xythetaPlannerImpl::xythetaPlannerImpl(const xythetaEnvironment& env)
-  : start_(0,0,0)
-  , env_(env)
-  , goalChanged_(false)
-  , freeTurnInPlaceAtGoal_(false)
-  , searchNum_(0)
+xythetaPlannerImpl::xythetaPlannerImpl(const xythetaPlannerContext& context)
+  : _context(context)
+  , _start(0,0,0)
+  , _goalChanged(false)
+  , _searchNum(0)
 {
-  startID_ = start_.GetStateID();
+  _startID = _start.GetStateID();
   Reset();
 }
 
-bool xythetaPlannerImpl::SetGoal(const State_c& goal_c)
+bool xythetaPlannerImpl::CheckContextGoal(StateID& goalID, State_c& roundedGoal_c) const
 {
-  if(env_.IsInCollision(goal_c)) {
-    printf("goal is in collision!\n");
+  if( _context.env.IsInCollision( _context.goal ) ) {
+    PRINT_NAMED_INFO("xythetaPlanner.Goal.Invalid", "goal is in collision");
     return false;
   }
 
-  State goal = env_.State_c2State(goal_c);
-
-  if(env_.IsInCollision(goal)) {
-    if(!env_.RoundSafe(goal_c, goal)) {
-      printf("all possible discrete states of goal are in collision!\n");
+  State goal = _context.env.State_c2State( _context.goal );
+  if( _context.env.IsInCollision( goal ) ){
+    if( ! _context.env.RoundSafe( _context.goal, goal ) ) {
+      PRINT_NAMED_INFO("xythetaPlanner.Goal.Invalid", "all possible discrete states of goal are in collision!");
       return false;
     }
 
-    assert(!env_.IsInCollision(goal));
+    assert( ! _context.env.IsInCollision( goal ) );
   }
 
-  goalID_ = goal.GetStateID();
-
-  std::cout<<goal<<std::endl;
+  goalID = goal.GetStateID();
 
   // convert back so this is still lined up perfectly with goalID_
-  goal_c_ = env_.State2State_c(goal);
+  roundedGoal_c = _context.env.State2State_c(goal);
 
-  // TEMP: for now, replan if the goal changes, but this isn't
-  // necessary. Instead, we could just re-order the open list and
-  // continue as usual
-  fromScratch_ = true;
-
-  goalChanged_ = true;
   return true;
 }
 
 bool xythetaPlannerImpl::GoalIsValid() const
 {
-  return !env_.IsInCollision(goal_c_);
+  StateID waste1;
+  State_c waste2;
+
+  return CheckContextGoal(waste1, waste2);
 }
 
-
-bool xythetaPlannerImpl::SetStart(const State_c& start_c)
+bool xythetaPlannerImpl::StartIsValid() const
 {
-  if(env_.IsInCollision(start_c)) {
-    printf("start is in collision!\n");
+  State waste;
+
+  return CheckContextStart(waste);
+}
+
+bool xythetaPlannerImpl::CheckContextStart(State& start) const
+{
+  if( _context.env.IsInCollision( _context.start ) ) {
+    PRINT_NAMED_INFO("xythetaPlanner.Start.Invalid", "start is in collision");
     return false;
   }
 
-  start_ = env_.State_c2State(start_c);
+  start = _context.env.State_c2State( _context.start );
 
-  if(env_.IsInCollision(start_)) {
-    if(!env_.RoundSafe(start_c, start_)) {
-      printf("all possible discrete states of start are in collision!\n");
+  if( _context.env.IsInCollision(start) ) {
+    if( ! _context.env.RoundSafe( _context.start, start ) ) {
+      PRINT_NAMED_INFO("xythetaPlanner.Start.Invalid", "all possible discrete states of start are in collision!");
       return false;
     }
 
-    assert(!env_.IsInCollision(start_));
+    assert( ! _context.env.IsInCollision(start) );
   }
-
-  startID_ = start_.GetStateID();
-
-  // if the start changes, can't re-use anything
-  fromScratch_ = true;
 
   return true;
 }
@@ -179,62 +168,72 @@ bool xythetaPlannerImpl::SetStart(const State_c& start_c)
 
 void xythetaPlannerImpl::Reset()
 {
-  plan_.Clear();
+  _plan.Clear();
 
-  // TODO:(bn) shouln't need to clear these if I use searchNum_
-  // properly
-  table_.Clear();
-  open_.clear();
+  // TODO:(bn) shouln't need to clear these if I use searchNum_ properly
+  _table.Clear();
+  _open.clear();
 
-  expansions_ = 0;
-  considerations_ = 0;
-  collisionChecks_ = 0;
+  _expansions = 0;
+  _considerations = 0;
+  _collisionChecks = 0;
 
-  goalChanged_ = false;
-  fromScratch_ = false;
+  _goalChanged = false;
 
-  finalCost_ = 0.0f;
+  _finalCost = 0.0f;
 }
 
 bool xythetaPlannerImpl::NeedsReplan() const
 {
-  State_c waste1;
-  xythetaPlan waste2;
-  // TODO:(bn) parameter or at least a comment.
-  const float default_maxDistanceToReUse_mm = 60.0;
-  return !env_.PlanIsSafe(plan_, default_maxDistanceToReUse_mm, 0, waste1, waste2);
+  // TODO:(bn) json. This value balances between keeping the old plan (to look smooth) and being dumb by going
+  // too far out of the way, in case the new plan differs from old
+  const float default_maxDistanceToReUse_mm = 60.0f;
+  return ! _context.env.PlanIsSafe( _plan, default_maxDistanceToReUse_mm );
 }
 
-void xythetaPlannerImpl::InitializeHeuristic()
+bool xythetaPlannerImpl::InitializeHeuristic()
 {
-  costOutsideHeurMap_ = 0.0f;
-  heurMap_.clear();
+  _costOutsideHeurMap = 0.0f;
+  _heurMap.clear();
 
-  if(env_.IsInSoftCollision(goalID_)) {
-    costOutsideHeurMap_ = ExpandStatesForHeur(goalID_);
-    printf("expanded penalty states near goal. Cost outside map = %f\n",
-           costOutsideHeurMap_);
+  if( _context.env.IsInSoftCollision( _goalID ) ) {
+    _costOutsideHeurMap = ExpandStatesForHeur( _goalID );
+    PRINT_NAMED_INFO("xythetaPlanner.GoalInSoftCollision.ExpandHeur",
+                     "expanded penalty states near goal. Cost outside map = %f",
+                     _costOutsideHeurMap);
   }
 
-  if(env_.IsInSoftCollision(startID_)) {
-    ExpandStatesForHeur(startID_);
+  if( _context.env.IsInSoftCollision( _startID ) ) {
+    float startPenalty = ExpandStatesForHeur( _startID );
+    PRINT_NAMED_INFO("xythetaPlanner.StartInSoftCollision.ExpandHeur",
+                     "expanded penalty states near start. Cost outside map = %f",
+                     startPenalty);
   }
+
+  if( _costOutsideHeurMap > 1000.0f ) {
+    PRINT_NAMED_WARNING("xythetaPlanner.HuerMap.Fail",
+                        "very high cost of _costOutsideHeurMap = %f, so bailing",
+                        _costOutsideHeurMap);
+    return false;
+  }
+
+  return true;
 }
 
 Cost xythetaPlannerImpl::ExpandStatesForHeur(StateID sid)
 {
-  // NOTE: this function assumes that forwards and backwards actions
-  // are equivalent. More specifically, it assumes that the min cost
-  // path from A to B is the same cost as the min cost path from B to
-  // A.
+  // NOTE: this function assumes that forwards and backwards actions are equivalent. More specifically, it
+  // assumes that the min cost path from A to B is the same cost as the min cost path from B to A.
 
-  // TODO:(bn) put a limit on how many expansions to do here, in case
-  // the environment is pretty filled with obstacles
+  // TEMP: // TEMP: think more about this. This appears to be the cause of the slow planning bug, which
+  // happens because the _costOutsideHeurMap returned by this function is too low when the goal is in
+  // collision during a replan. We may want to split this up into two functions. Need to thin kabout if going
+  // backwards is OK. See TEMP note below
 
   StateID curr(sid);
-  Cost h = heur_internal(curr) + costOutsideHeurMap_;
+  Cost h = heur_internal(curr) + _costOutsideHeurMap;
 
-  heurMap_.insert(std::make_pair(curr, h));
+  _heurMap.insert(std::make_pair(curr, h));
 
   // use a separate open list to track expansions
   OpenList q;
@@ -246,24 +245,24 @@ Cost xythetaPlannerImpl::ExpandStatesForHeur(StateID sid)
     Cost c = q.topF();
     curr = q.pop();
 
-    // TODO:(bn) opt: also bail out early if we reach the start / goal
-    // (whichever we didn't start from)
+    // TODO:(bn) opt: also bail out early if we reach the start / goal (whichever we didn't start from)
 
-    if(!env_.IsInSoftCollision(curr)) {
-      printf("INFO: expanded %u states for heuristic, reached free space with cost of %f and currently have %lu in the heurMap\n",
-             heurExpansions,
-             c,
-             heurMap_.size());
+    if(!_context.env.IsInSoftCollision(curr)) {
+      PRINT_NAMED_INFO("xythetaPlanner.ExpandStatesForHeur", 
+                       "expanded %u states for heuristic, reached free space with cost of %f and have %lu in heurMap",
+                       heurExpansions,
+                       c,
+                       _heurMap.size());
       return c;
     }
 
     // this logic is almost identical to ExpandState
-    SuccessorIterator it = env_.GetSuccessors(curr, c);
+    SuccessorIterator it = _context.env.GetSuccessors(curr, c);
 
-    if(!it.Done(env_))
-      it.Next(env_);
+    if(!it.Done(_context.env))
+      it.Next(_context.env);
 
-    while(!it.Done(env_)) {
+    while(!it.Done(_context.env)) {
 
       StateID nextID = it.Front().stateID;
       float newC = it.Front().g;
@@ -271,22 +270,25 @@ Cost xythetaPlannerImpl::ExpandStatesForHeur(StateID sid)
       // returns FLT_MAX if nextID isn't present
       float oldFval = q.fVal(nextID);
       if(oldFval > newC) {
-        Cost h = heur_internal(nextID) + costOutsideHeurMap_;
+        Cost h = heur_internal(nextID) + _costOutsideHeurMap;
 
-        // it is possible that the start and goal obstacles actually
-        // overlap (or are the same obstacle), so there might already
-        // be an entry in heurMap_. We never want to increase the
-        // heuristic, so check first. Since we call this function for
-        // the goal fist, if anything already exist in the heurMap,
+        // TEMP: // TEMP: // TODO:(bn) find a way to add penalty here. We know there will be penalty. Maybe I
+        // need to split this function up into two, one explicitly for the goal that uses g instead of h for
+        // theur map, and the other for the start. Problem with the slow plan bug is that, for some crazy
+        // reason, when we are holding a block, the _costOutsideHeurMap is way too low.
+
+        // it is possible that the start and goal obstacles actually overlap (or are the same obstacle), so
+        // there might already be an entry in heurMap_. We never want to increase the heuristic, so check
+        // first. Since we call this function for the goal fist, if anything already exist in the heurMap,
         // don't update it)
-        if(heurMap_.count(nextID) == 0) {
-          heurMap_.insert(std::make_pair(nextID, h));
+        if(_heurMap.count(nextID) == 0) {
+          _heurMap.insert(std::make_pair(nextID, h));
         }
 
         q.insert(nextID, newC);
       }
 
-      it.Next(env_);
+      it.Next(_context.env);
     }
 
     heurExpansions++;
@@ -294,82 +296,131 @@ Cost xythetaPlannerImpl::ExpandStatesForHeur(StateID sid)
     
     // Check for too many expansions
     if (heurExpansions > MAX_HEUR_EXPANSIONS) {
-      printf("ERROR: ExpandStatesForHeur() exceeded max allowed expansions of %d\n", MAX_HEUR_EXPANSIONS);
+      PRINT_NAMED_WARNING("xythetaPlanner.ExpandStatesForHeur.ExceededMaxExpansions", 
+                          "exceeded max allowed expansions of %d",
+                          MAX_HEUR_EXPANSIONS);
+      // instead of hanging forever, just return an invalid value, which will trigger a plan failure
+      // TODO:(bn) if we implement ARA* or similar, we should return 0 here instead
       return FLT_MAX;
     }
   }
 
-  printf("WARNING: somehow ran out of open list entries during ExpandStatesForHeur after %u exps!\n",
-         heurExpansions);
+  // We should usually be able to escape form a soft collision, but if we run out of states to expand, it
+  // means we couldn't escape, but hopefully we filled up heurMap enough to plan. This could happen if the
+  // start and goal were both inside a soft obstacle that had a hard obstacle around it
+  PRINT_NAMED_WARNING("xythetaPlanner.ExpandStatesForHeur.EmptyOpenList",
+                      "ran out of open list entries during ExpandStatesForHeur after %u exps!",
+                      heurExpansions);
   return 0.0;
 }
 
 
+
 bool xythetaPlannerImpl::ComputePath(unsigned int maxExpansions)
 {
-  if(fromScratch_ || NeedsReplan()) {
+  bool fromScratch = _context.forceReplanFromScratch;
+
+  // handle context
+  StateID newGoalID;
+  if( ! CheckContextGoal( newGoalID, _goal_c ) ) {
+    // invalid goal
+    return false;
+  }
+
+  if( newGoalID != _goalID ) {
+    _goalChanged = true;
+    _goalID = newGoalID;
+
+    // for now, replan if the goal changes, but this isn't necessary. Instead, we could just re-order the open
+    // list and continue as usual
+    fromScratch = true;
+  }
+
+  State newStart;
+  if( ! CheckContextStart( newStart ) ) {
+    // invalid start
+    return false;
+  }
+
+  StateID newStartID = newStart.GetStateID();
+  if( newStartID != _startID ) {
+    // start has changed, so current expansions are invalid
+    fromScratch = true;
+    _start = newStart;
+    _startID = newStartID;
+  }
+
+
+  if(fromScratch || NeedsReplan()) {
     Reset();
   }
   else {
-    printf("No replan needed!\n");
+    PRINT_NAMED_INFO("xythetaPlanner.ComputePath.NoReplan", "No replan needed");
     return true;
   }
 
-  InitializeHeuristic();
-
-  if(PLANNER_DEBUG_PLOT_STATES_CONSIDERED) {
-    debugExpPlotFile_ = fopen("expanded.txt", "w");
+  if( ! InitializeHeuristic() ) {
+    // invalid heuristic, planning wouldn't work, or would be incredibly slow
+    return false;
   }
 
-  StateID startID = start_.GetStateID();
+  if(PLANNER_DEBUG_PLOT_STATES_CONSIDERED) {
+    _debugExpPlotFile = fopen("expanded.txt", "w");
+  }
+
+  StateID startID = _start.GetStateID();
 
   // push starting state
-  table_.emplace(startID, 
-                 open_.insert(startID, 0.0),
+  _table.emplace(startID, 
+                 _open.insert(startID, 0.0),
                  startID,
                  0, // action doesn't matter
                  0.0,
                  0.0);
 
   bool foundGoal = false;
-  while(!open_.empty()) {
-    StateID sid = open_.pop();
-    if(sid == goalID_) {
+  while( !_open.empty() ) {
+    StateID sid = _open.pop();
+    if(sid == _goalID) {
       foundGoal = true;
-      finalCost_ = table_[sid].g_;
-      printf("expanded goal! cost = %f\n", finalCost_);
+      _finalCost = _table[sid].g_;
+      PRINT_NAMED_INFO("xythetaPlanner.ExpandGoal", 
+                       "expanded goal! cost = %f",
+                       _finalCost);
       break;
     }
 
     ExpandState(sid);
-    expansions_++;
-    if(expansions_ > maxExpansions) {
-      printf("exceeded max expansions of %u!\n", maxExpansions);
+    _expansions++;
+    if(_expansions > maxExpansions) {
+      PRINT_NAMED_WARNING("xythetaPlanner.ExceededMaxExpansions", 
+                          "exceeded max expansions of %u, stopping",
+                          maxExpansions);
       printf("topF =  %8.5f (%8.5f + %8.5f)\n",
-                 open_.topF(),
-                 table_[open_.top()].g_,
-                 open_.topF() -
-                 table_[open_.top()].g_);
+             _open.topF(),
+             _table[_open.top()].g_,
+             _open.topF() -
+             _table[_open.top()].g_);
       return false;
     }
 
     if(PLANNER_DEBUG_PLOT_STATES_CONSIDERED) {
-      State_c c = env_.State2State_c(State(sid));
-      fprintf(debugExpPlotFile_, "%f %f %f %d\n",
+      State_c c = _context.env.State2State_c(State(sid));
+      fprintf(_debugExpPlotFile, "%f %f %f %d\n",
                   c.x_mm,
                   c.y_mm,
                   c.theta,
-                  sid.theta);
+                  sid.s.theta);
     }
 
 
-    if(expansions_ % 10000 == 0) {
-      printf("%8d %8.5f = %8.5f + %8.5f\n",
-                 expansions_,
-                 open_.topF(),
-                 table_[open_.top()].g_,
-                 open_.topF() -
-                 table_[open_.top()].g_);
+    // TODO:(bn) make this a dev option / parameter
+    if(_expansions % 10000 == 0) {
+      printf("PLANDEBUG: %8d %8.5f = %8.5f + %8.5f\n",
+             _expansions,
+             _open.topF(),
+             _table[_open.top()].g_,
+             _open.topF() - _table[_open.top()].g_);
     }
   }
 
@@ -377,54 +428,59 @@ bool xythetaPlannerImpl::ComputePath(unsigned int maxExpansions)
     BuildPlan();
   }
   else {
-    printf("xythetaPlanner: no path found!\n");
+    PRINT_NAMED_INFO("xythetaPlanner.NoPlanFound", "");
   }
 
   if(PLANNER_DEBUG_PLOT_STATES_CONSIDERED) {
-    fclose(debugExpPlotFile_);
+    fclose(_debugExpPlotFile);
   }
 
-  printf("finished after %d expansions. foundGoal = %d\n", expansions_, foundGoal);
+  PRINT_NAMED_INFO("xythetaPlanner.Complete", 
+                   "finished after %d expansions. foundGoal = %d",
+                   _expansions,
+                   foundGoal);
 
   return foundGoal;
 }
 
 void xythetaPlannerImpl::ExpandState(StateID currID)
 {
-  Cost currG = table_[currID].g_;
+  Cost currG = _table[currID].g_;
   
-  SuccessorIterator it = env_.GetSuccessors(currID, currG);
+  SuccessorIterator it = _context.env.GetSuccessors(currID, currG);
 
-  if(!it.Done(env_))
-    it.Next(env_);
+  if(!it.Done( _context.env ))
+    it.Next( _context.env );
 
-  while(!it.Done(env_)) {
-    considerations_++;
+  while(!it.Done( _context.env )) {
+    _considerations++;
 
     StateID nextID = it.Front().stateID;
     float newG = it.Front().g;
 
-    if(freeTurnInPlaceAtGoal_ && currID.x == goalID_.x && currID.y == goalID_.y)
+    if(_context.allowFreeTurnInPlaceAtGoal && currID.s.x == _goalID.s.x && currID.s.y == _goalID.s.y) {
       newG = currG;
+    }
 
-    auto oldEntry = table_.find(nextID);
+    auto oldEntry = _table.find(nextID);
 
-    if(oldEntry == table_.end()) {    
+    if(oldEntry == _table.end()) {
+      // no existing entry, so add a new one
       Cost h = heur(nextID);
       Cost f = newG + h;
-      table_.emplace(nextID,
-                     open_.insert(nextID, f),
+      _table.emplace(nextID,
+                     _open.insert(nextID, f),
                      currID,
                      it.Front().actionID,
                      it.Front().penalty,
                      newG);
     }
-    else if(!oldEntry->second.IsClosed(searchNum_)) {
+    else if(!oldEntry->second.IsClosed(_searchNum)) {
       // only update if g value is lower
       if(newG < oldEntry->second.g_) {
         Cost h = heur(nextID);
         Cost f = newG + h;
-        oldEntry->second.openIt_ = open_.insert(nextID, f);
+        oldEntry->second.openIt_ = _open.insert(nextID, f);
         oldEntry->second.closedIter_ = -1;
         oldEntry->second.backpointer_ = currID;
         oldEntry->second.backpointerAction_ = it.Front().actionID;
@@ -432,32 +488,31 @@ void xythetaPlannerImpl::ExpandState(StateID currID)
       }
     }
 
-    it.Next(env_);    
+    it.Next( _context.env );
   }
 
-  table_[currID].closedIter_ = searchNum_;
+  _table[currID].closedIter_ = _searchNum;
 }
 
 Cost xythetaPlannerImpl::heur(StateID sid)
 {
-  HeurMapIter it = heurMap_.find(sid);
-  if(it != heurMap_.end()) {
+  HeurMapIter it = _heurMap.find(sid);
+  if(it != _heurMap.end()) {
     return it->second;
   }
     
-  return heur_internal(sid) + costOutsideHeurMap_;
+  return heur_internal(sid) + _costOutsideHeurMap;
 }
 
 Cost xythetaPlannerImpl::heur_internal(StateID sid)
 {
   State s(sid);
 
-  // TODO:(bn) opt: consider squaring the entire damn thing so we
-  // don't have to sqrt here. I.e. heur() would return squared value,
-  // and then f = g^2 + h. First, do a profile and see if the sqrt is
-  // taking up any significant amount of time
+  // TODO:(bn) opt: consider squaring the entire damn thing so we don't have to sqrt here (within
+  // GetDistanceBetween). I.e. heur() would return squared value, and then f = g^2 + h. First, do a profile
+  // and see if the sqrt is taking up any significant amount of time
 
-  return env_.GetDistanceBetween(goal_c_, s) * env_.GetOneOverMaxVelocity();
+  return _context.env.GetDistanceBetween(_goal_c, s) * _context.env.GetOneOverMaxVelocity();
 }
 
 void xythetaPlannerImpl::BuildPlan()
@@ -465,34 +520,34 @@ void xythetaPlannerImpl::BuildPlan()
   // start at the goal and go backwards, pushing actions into the plan
   // until we get to the start id
 
-  StateID curr = goalID_;
-  BOUNDED_WHILE(1000, !(curr == startID_)) {
-    auto it = table_.find(curr);
+  StateID curr = _goalID;
+  BOUNDED_WHILE(1000, !(curr == _startID)) {
+    auto it = _table.find(curr);
 
-    assert(it != table_.end());
+    assert(it != _table.end());
 
-    plan_.Push(it->second.backpointerAction_, it->second.penaltyIntoState_);
+    _plan.Push(it->second.backpointerAction_, it->second.penaltyIntoState_);
     curr = it->second.backpointer_;
   }
 
-  std::reverse(plan_.actions_.begin(), plan_.actions_.end());
-  std::reverse(plan_.penalties_.begin(), plan_.penalties_.end());
+  std::reverse(_plan.actions_.begin(), _plan.actions_.end());
+  std::reverse(_plan.penalties_.begin(), _plan.penalties_.end());
 
-  plan_.start_ = start_;
+  _plan.start_ = _start;
 
-  printf("Created plan of length %lu\n", plan_.actions_.size());
+  PRINT_NAMED_INFO("xythetaPlanner.BuildPlan", "Created plan of length %lu", _plan.actions_.size());
 }
 
 void xythetaPlannerImpl::GetTestPlan(xythetaPlan& plan)
 {
   // this is hardcoded for now!
-  assert(env_.GetNumActions() == 9);
+  assert( _context.env.GetNumActions() == 9);
 
   constexpr int numPlans = 4;
   static int whichPlan = 0;
 
   plan.Clear();
-  plan.start_ = start_;
+  plan.start_ = _start;
 
   switch(whichPlan) {
   case 0:
@@ -638,7 +693,8 @@ void xythetaPlannerImpl::GetTestPlan(xythetaPlan& plan)
 
   whichPlan = (whichPlan + 1) % numPlans;
 
-  SetGoal(env_.State2State_c(env_.GetPlanFinalState(plan)));
+  // TODO:(bn) this line below might have been doing something useful....
+  // SetGoal(_context.env.State2State_c(_context.env.GetPlanFinalState(plan)));
 }
 
 }
