@@ -12,26 +12,25 @@ namespace AnimationTool
         protected double xValueOld;
         protected double xValueNew;
 
-        public ScaleAllChartDurations(List<Component> components, double xValueNew)
+        public ScaleAllChartDurations(List<ChartForm> chartForms, double xValueNew)
         {
             scaleChartDurations = new List<ScaleChartDuration>();
 
             this.xValueNew = Math.Round(xValueNew, 1);
             xValueOld = Math.Round(Properties.Settings.Default.maxTime, 1);
 
-            foreach (Chart chart in components)
+            foreach (ChartForm chartForm in chartForms)
             {
-                DataPoint dp = chart.Series[0].Points[0]; // if chart has sequencer point
-                bool sequencer = dp.IsCustomPropertySet(Sequencer.ExtraData.Key) && 
-                    Sequencer.ExtraData.Entries.ContainsKey(dp.GetCustomProperty(Sequencer.ExtraData.Key));
+                DataPoint dp = chartForm.chart.Series[0].Points[0]; // if chart has sequencer point
+                bool sequencer = dp.IsCustomPropertySet(Sequencer.ExtraData.Key) && Sequencer.ExtraData.Entries.ContainsKey(dp.GetCustomProperty(Sequencer.ExtraData.Key));
 
                 if (sequencer)
                 {
-                    scaleChartDurations.Add(new Sequencer.ScaleChartDuration(chart, xValueNew));
+                    scaleChartDurations.Add(new Sequencer.ScaleChartDuration(chartForm.chart, xValueNew));
                 }
                 else // else if XYchart
                 {
-                    scaleChartDurations.Add(new ScaleChartDuration(chart, xValueNew));
+                    scaleChartDurations.Add(new ScaleChartDuration(chartForm.chart, xValueNew));
                 }
             }
         }

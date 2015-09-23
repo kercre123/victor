@@ -8,27 +8,26 @@ namespace AnimationTool
     {
         protected List<RemoveSelectedDataPoints> removeSelectedDataPoints;
 
-        public RemoveSelectedDataPointsOfSelectedCharts(List<Component> components)
+        public RemoveSelectedDataPointsOfSelectedCharts(List<ChartForm> chartForms)
         {
-            if (components == null) return;
+            if (chartForms == null) return;
 
             removeSelectedDataPoints = new List<RemoveSelectedDataPoints>();
 
-            foreach (Chart chart in components)
+            foreach (ChartForm chartForm in chartForms)
             {
-                if (chart.BorderlineColor == SelectChart.borderlineColor)
+                if (chartForm.chart.BorderlineColor == SelectChart.borderlineColor)
                 {
-                    DataPoint dp = chart.Series[0].Points[0]; // if chart has sequencer point
-                    bool sequencer = dp.IsCustomPropertySet(Sequencer.ExtraData.Key) &&
-                        Sequencer.ExtraData.Entries.ContainsKey(dp.GetCustomProperty(Sequencer.ExtraData.Key));
+                    DataPoint dp = chartForm.chart.Series[0].Points[0]; // if chart has sequencer point
+                    bool sequencer = dp.IsCustomPropertySet(Sequencer.ExtraData.Key) && Sequencer.ExtraData.Entries.ContainsKey(dp.GetCustomProperty(Sequencer.ExtraData.Key));
 
                     if (sequencer)
                     {
-                        removeSelectedDataPoints.Add(new Sequencer.RemoveSelectedDataPoints(chart));
+                        removeSelectedDataPoints.Add(new Sequencer.RemoveSelectedDataPoints(chartForm.chart));
                     }
                     else // else if XYchart
                     {
-                        removeSelectedDataPoints.Add(new RemoveSelectedDataPoints(chart));
+                        removeSelectedDataPoints.Add(new RemoveSelectedDataPoints(chartForm.chart));
                     }
                 }
             }
