@@ -440,7 +440,7 @@ public class Robot : IDisposable {
     lastMarkersVisibleObjects.Clear();
     knownObjects.Clear();
     activeBlocks.Clear();
-    status = RobotStatusFlag.Nothing;
+    status = RobotStatusFlag.NoneRobotStatusFlag;
     gameStatus = GameStatusFlag.Nothing;
     WorldPosition = Vector3.zero;
     Rotation = Quaternion.identity;
