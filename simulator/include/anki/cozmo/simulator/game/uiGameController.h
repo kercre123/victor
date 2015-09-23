@@ -130,7 +130,6 @@ protected:
   void SendStartFaceTracking(u8 timeout_sec);
   void SendStopFaceTracking();
   void SendVisionSystemParams();
-  void SendFaceDetectParams();
   void SendForceAddRobot();
   void SendSetIdleAnimation(const std::string &animName);
   void SendQueuePlayAnimAction(const std::string &animName, u32 numLoops, QueueActionPosition pos);

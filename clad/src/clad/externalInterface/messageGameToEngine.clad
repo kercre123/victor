@@ -164,11 +164,6 @@ message EnableDisplay {
     uint_8 enable
 }
 
-// SetHeadlights
-message SetHeadlights {
-    uint_8 intensity
-}
-
 // GotoPose
 message GotoPose {
     float_32 x_mm,
@@ -389,28 +384,6 @@ message StartLookingForMarkers {
 
 // StopLookingForMarkers
 message StopLookingForMarkers {
-}
-
-// SetVisionSystemParams
-message SetVisionSystemParams {
-    int_32 autoexposureOn,
-    float_32 exposureTime,
-    int_32 integerCountsIncrement,
-    float_32 minExposureTime,
-    float_32 maxExposureTime,
-    float_32 percentileToMakeHigh,
-    int_32 limitFramerate,
-    uint_8 highValue
-}
-
-// SetFaceDetectParams
-message SetFaceDetectParams {
-    float_32 scaleFactor,
-    int_32 minNeighbors,
-    int_32 minObjectHeight,
-    int_32 minObjectWidth,
-    int_32 maxObjectHeight,
-    int_32 maxObjectWidth
 }
 
 // SetActiveObjectLEDs
