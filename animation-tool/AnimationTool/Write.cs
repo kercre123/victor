@@ -18,34 +18,34 @@ namespace AnimationTool
 
             List<PointData> points = new List<PointData>();
 
-            foreach (Chart chart in channelList)
+            foreach (ChartForm chartForm in chartForms)
             {
-                if (chart.Enabled)
+                if (chartForm.chart.Enabled)
                 {
-                    switch (chart.Name)
+                    switch (chartForm.chart.Name)
                     {
                         case "cHeadAngle":
-                            for (int i = 0; i < chart.Series[0].Points.Count - 1; ++i)
+                            for (int i = 0; i < chartForm.chart.Series[0].Points.Count - 1; ++i)
                             {
-                                DataPoint current = chart.Series[0].Points[i];
-                                DataPoint next = chart.Series[0].Points[i + 1];
+                                DataPoint current = chartForm.chart.Series[0].Points[i];
+                                DataPoint next = chartForm.chart.Series[0].Points[i + 1];
 
                                 points.Add(WriteHeadAngleToFile(current, next));
                             }
                             break;
                         case "cLiftHeight":
-                            for (int i = 0; i < chart.Series[0].Points.Count - 1; ++i)
+                            for (int i = 0; i < chartForm.chart.Series[0].Points.Count - 1; ++i)
                             {
-                                DataPoint current = chart.Series[0].Points[i];
-                                DataPoint next = chart.Series[0].Points[i + 1];
+                                DataPoint current = chartForm.chart.Series[0].Points[i];
+                                DataPoint next = chartForm.chart.Series[0].Points[i + 1];
 
                                 points.Add(WriteLiftHeightToFile(current, next));
                             }
                             break;
                         case "cAudioRobot":
-                            for (int i = 0; i < chart.Series[0].Points.Count; ++i)
+                            for (int i = 0; i < chartForm.chart.Series[0].Points.Count; ++i)
                             {
-                                DataPoint current = chart.Series[0].Points[i];
+                                DataPoint current = chartForm.chart.Series[0].Points[i];
 
                                 if (current.IsEmpty) continue;
 
@@ -53,9 +53,9 @@ namespace AnimationTool
                             }
                             break;
                         case "cAudioDevice":
-                            for (int i = 0; i < chart.Series[0].Points.Count; ++i)
+                            for (int i = 0; i < chartForm.chart.Series[0].Points.Count; ++i)
                             {
-                                DataPoint current = chart.Series[0].Points[i];
+                                DataPoint current = chartForm.chart.Series[0].Points[i];
 
                                 if (current.IsEmpty) continue;
 
@@ -63,9 +63,9 @@ namespace AnimationTool
                             }
                             break;
                         case "cFaceAnimation":
-                            for (int i = 0; i < chart.Series[0].Points.Count; ++i)
+                            for (int i = 0; i < chartForm.chart.Series[0].Points.Count; ++i)
                             {
-                                DataPoint current = chart.Series[0].Points[i];
+                                DataPoint current = chartForm.chart.Series[0].Points[i];
 
                                 if (current.IsEmpty || current.Color == Color.Red) continue;
 
@@ -73,9 +73,9 @@ namespace AnimationTool
                             }
                             break;
                         case "cProceduralFace":
-                            for (int i = 0; i < chart.Series[0].Points.Count; ++i)
+                            for (int i = 0; i < chartForm.chart.Series[0].Points.Count; ++i)
                             {
-                                DataPoint current = chart.Series[0].Points[i];
+                                DataPoint current = chartForm.chart.Series[0].Points[i];
 
                                 if (current.IsEmpty) continue;
 
@@ -83,9 +83,9 @@ namespace AnimationTool
                             }
                             break;
                         case "cBodyMotion":
-                            for (int i = 0; i < chart.Series[0].Points.Count; ++i)
+                            for (int i = 0; i < chartForm.chart.Series[0].Points.Count; ++i)
                             {
-                                DataPoint current = chart.Series[0].Points[i];
+                                DataPoint current = chartForm.chart.Series[0].Points[i];
 
                                 if (current.IsEmpty) continue;
 

@@ -12,7 +12,7 @@ namespace AnimationTool
         protected Chart chart;
         protected UnselectAllCharts unselectAllCharts;
 
-        public SelectChart(Chart chart, List<Component> charts = null)
+        public SelectChart(Chart chart, List<ChartForm> charts = null)
         {
             this.chart = chart;
 
