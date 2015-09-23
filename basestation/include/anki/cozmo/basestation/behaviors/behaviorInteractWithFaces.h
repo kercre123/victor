@@ -77,8 +77,8 @@ namespace Cozmo {
     f32 _baselineRightEyebrowHeight;
     
     u32 _lastActionTag;
-    
     bool _isActing = false;
+    double _lastGlanceTime = 0;
     
     std::vector<::Signal::SmartHandle> _eventHandles;
     
@@ -103,6 +103,10 @@ namespace Cozmo {
     
     // Distance to trigger Cozmo to get further away from the focused face
     constexpr static float kTooCloseDistance_mm = 300;
+    
+    // Maximum frequency that Cozmo should glance down when interacting with faces (could be longer if he has a stable
+    // face to focus on; this interval shouln't interrupt his interaction)
+    constexpr static float kGlanceDownInterval_sec = 12;
     
   }; // BehaviorInteractWithFaces
   
