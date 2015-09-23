@@ -238,7 +238,9 @@ public class VortexController : GameController {
   float marky_mm = 50;
   float mark_rad = (3.0f * Mathf.PI) / 2.0f;
 
-  void RobotCompletedAnimation(bool success, string animName) {
+  bool idleSet = false;
+
+  void RobotCompletedVortexAnimation(bool success, string animName) {
     switch (animName) {
     case "firstTap":
     case "tapTwoTimes":
@@ -249,6 +251,10 @@ public class VortexController : GameController {
       break;
     default:
       break;
+    }
+    if (!idleSet) {
+      CozmoEmotionManager.instance.SetIdleAnimation(CozmoEmotionManager.instance.GetCurrentDefaultIdle());
+      idleSet = true;
     }
   }
 
@@ -323,6 +329,7 @@ public class VortexController : GameController {
 
     if (robot != null) {
       RobotEngineManager.instance.SuccessOrFailure += ResetFaceAwareness;
+      RobotEngineManager.instance.RobotCompletedAnimation += RobotCompletedVortexAnimation;
       robot.StartFaceAwareness();
     }
     
@@ -374,8 +381,8 @@ public class VortexController : GameController {
 
     if (robot != null) {
       RobotEngineManager.instance.SuccessOrFailure -= ResetFaceAwareness;
+      RobotEngineManager.instance.RobotCompletedAnimation -= RobotCompletedVortexAnimation;
     }
-    
   }
 
   protected override void CompoundCompleteCallBack(bool success, uint tagId) {
@@ -567,9 +574,7 @@ public class VortexController : GameController {
 
     base.Enter_PLAYING();
 
-    if (RobotEngineManager.instance != null) {
-      RobotEngineManager.instance.RobotCompletedAnimation += RobotCompletedAnimation;
-    }
+
 
   }
 
@@ -610,11 +615,6 @@ public class VortexController : GameController {
     if (imageHub != null) {
       imageHub.gameObject.SetActive(false);
     }
-
-    if (RobotEngineManager.instance != null) {
-      RobotEngineManager.instance.RobotCompletedAnimation -= RobotCompletedAnimation;
-    }
-
   }
 
   protected override void Enter_RESULTS() {
