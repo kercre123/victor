@@ -445,4 +445,13 @@ public class CozmoEmotionManager : MonoBehaviour {
       }
     }
   }
+
+  public string GetCurrentDefaultIdle() {
+    if (currentEmotionMachine == null) {
+      return string.Empty;
+    }
+    else {
+      return currentEmotionMachine.defaultIdleAnimationName;
+    }
+  }
 }
