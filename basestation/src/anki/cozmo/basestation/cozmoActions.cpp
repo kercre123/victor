@@ -1193,12 +1193,18 @@ namespace Anki {
                             _headAngle.getDegrees(), RAD_TO_DEG(MAX_HEAD_ANGLE));
         _headAngle = MAX_HEAD_ANGLE;
       }
+      
+      if(_variability > 0) {
+        _headAngle += _rng.RandDblInRange(-_variability.ToDouble(),
+                                                       _variability.ToDouble());
+        _headAngle = CLIP(_headAngle, MIN_HEAD_ANGLE, MAX_HEAD_ANGLE);
+      }
     }
     
     bool MoveHeadToAngleAction::IsHeadInPosition(const Robot& robot) const
     {
       const bool inPosition = (!robot.IsHeadMoving() &&
-                               NEAR(robot.GetHeadAngle(), _headAngleWithVariation.ToFloat(),
+                               NEAR(robot.GetHeadAngle(), _headAngle.ToFloat(),
                                     _angleTolerance.ToFloat()));
       
       return inPosition;
@@ -1212,15 +1218,8 @@ namespace Anki {
       _inPosition = IsHeadInPosition(robot);
       
       if(!_inPosition) {
-        _headAngleWithVariation = _headAngle;
-        if(_variability > 0) {
-          _headAngleWithVariation += _rng.RandDblInRange(-_variability.ToDouble(),
-                                                          _variability.ToDouble());
-          _headAngleWithVariation = CLIP(_headAngleWithVariation, MIN_HEAD_ANGLE, MAX_HEAD_ANGLE);
-        }
-        
         // TODO: Add ability to specify speed/accel
-        if(robot.MoveHeadToAngle(_headAngleWithVariation.ToFloat(), 10, 20) != RESULT_OK) {
+        if(robot.MoveHeadToAngle(_headAngle.ToFloat(), 10, 20) != RESULT_OK) {
           result = ActionResult::FAILURE_ABORT;
         }
       }
