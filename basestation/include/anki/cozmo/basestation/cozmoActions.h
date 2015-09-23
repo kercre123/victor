@@ -196,7 +196,6 @@ namespace Anki {
       Radians     _headAngle;
       Radians     _angleTolerance;
       Radians     _variability;
-      Radians     _headAngleWithVariation;
       
       std::string _name;
       bool        _inPosition;
