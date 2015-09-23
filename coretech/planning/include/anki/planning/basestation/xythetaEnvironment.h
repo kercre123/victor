@@ -327,11 +327,12 @@ public:
   // Imports motion primitives from the given json file. Returns true if success
   bool ReadMotionPrimitives(const char* mprimFilename);
 
-  // Dumps the entire environment to JSON. after dumping, deleting, then importing, the environment should be
-  // identical
+  // Dumps the entire environment to JSON. after dumping, deleting, then importing, the obstacles should be
+  // identical. Does NOT dump motion primitives
   void Dump(Util::JsonWriter& writer) const;
 
-  // Imports the environment from the config. Returns true on success
+  // Imports the environment from the config. Returns true on success, must have matching motion primitives to
+  // work
   bool Import(const Json::Value& config);
 
   // defaults to a fatal obstacle  // TEMP: will be removed
@@ -491,11 +492,13 @@ public:
 private:
 
   // returns true on success
-  bool ParseMotionPrims(const Json::Value& config, bool useDumpFormat = false);
   bool ParseObstacles(const Json::Value& config);
-
-  void DumpMotionPrims(Util::JsonWriter& writer) const;
   void DumpObstacles(Util::JsonWriter& writer) const;
+
+  // These are depricated! Consider removing them. They could come in handy again if we need to dump the fully
+  // parsed-out mprims
+  void DumpMotionPrims(Util::JsonWriter& writer) const;
+  bool ParseMotionPrims(const Json::Value& config, bool useDumpFormat = false);
 
   float resolution_mm_;
   float oneOverResolution_;

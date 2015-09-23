@@ -624,9 +624,9 @@ bool xythetaEnvironment::Init(const char* mprimFilename)
 
 void xythetaEnvironment::Dump(Util::JsonWriter& writer) const
 {
-  writer.StartGroup("mprim");
-  DumpMotionPrims(writer);
-  writer.EndGroup();
+  // writer.StartGroup("mprim");
+  // DumpMotionPrims(writer);
+  // writer.EndGroup();
 
   writer.StartGroup("obstacles");
   DumpObstacles(writer);
@@ -645,11 +645,11 @@ bool xythetaEnvironment::Import(const Json::Value& config)
       return false;
     }
 
-    if( ! config["mprim"].isNull() ) {
-      if( ! ParseMotionPrims(config["mprim"], true) ) {
-        return false;
-      }
-    }
+    // if( ! config["mprim"].isNull() ) {
+    //   if( ! ParseMotionPrims(config["mprim"], true) ) {
+    //     return false;
+    //   }
+    // }
 
     if( ! config["obstacles"].isNull() ) {
       if( ! ParseObstacles(config["obstacles"]) ) {

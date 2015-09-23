@@ -122,6 +122,7 @@ GTEST_TEST(TestEnvironment, DumpAndInit)
   ASSERT_TRUE( jsonReader.parse(jsonSS.str(), config) ) << "json parsing error";
 
   xythetaEnvironment env2;
+  EXPECT_TRUE(env2.ReadMotionPrimitives((std::string(QUOTE(TEST_DATA_PATH)) + std::string(TEST_PRIM_FILE)).c_str()));
   ASSERT_TRUE(env2.Import(config)) << "json import error";
 
   // check that the environments match

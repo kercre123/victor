@@ -99,12 +99,19 @@ public:
                           "Failed to load motion primitives, Planner likely won't work.");
       }
 
-      const std::string envDumpDir("planner/contextDump/");
-      _pathToEnvCache = dataPlatform->pathToResource(Util::Data::Scope::Cache, envDumpDir);
+      if( LATTICE_PLANNER_DUMP_ENV_TO_CACHE ) {
+        const std::string envDumpDir("planner/contextDump/");
+        _pathToEnvCache = dataPlatform->pathToResource(Util::Data::Scope::Cache, envDumpDir);
 
-      if (!Util::FileUtils::CreateDirectory(_pathToEnvCache, false, true)) {
+        if (!Util::FileUtils::CreateDirectory(_pathToEnvCache, false, true)) {
           PRINT_NAMED_ERROR("LatticePlanner.CreateDirFailed","%s", _pathToEnvCache.c_str());
         }
+
+        std::string mprimFilename = "planner/contextDump/mprim.json";
+        if( ! dataPlatform->writeAsJson(Util::Data::Scope::Cache, mprimFilename, mprims) ) {
+          PRINT_NAMED_WARNING("LatticePlanner.MprimpCache", "could not write mprim object to cache");
+        }
+      }
     }
   }
 
