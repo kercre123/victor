@@ -232,6 +232,7 @@ project/gyp/cozmoEngine.lst
 project/gyp/ctrlRobot.lst
 project/gyp/ctrlViz.lst
 project/gyp/clad.lst
+project/gyp/robotGeneratedClad.lst
 coretech/generated/ios
 coretech/generated/mac
 coretech/generated/android
@@ -245,3 +246,4 @@ generated/webots/src/plugins/physics/physics.c
 robot/generated/clad
 resources/config/faciometric
 resources/config/basestation/vision/faciometric
+generated/cladCsharp/clad

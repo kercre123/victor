@@ -152,11 +152,13 @@ def main(scriptArgs):
     shutil.rmtree(os.path.join(projectRoot, 'generated', folder), True)
     return True
 
-  #run clad's make
+  #run engine clad's make
   if (subprocess.call(['make', '--silent'], cwd=os.path.join(projectRoot, 'clad')) != 0):
     UtilLog.error("error compiling clad files")
     return False
-  if (subprocess.call(['make', '--silent', 'INPUT_DIR=../robot/clad/src'], cwd=os.path.join(projectRoot, 'clad')) != 0):
+
+  #run robot clad's make
+  if (subprocess.call(['make', '--silent'], cwd=os.path.join(projectRoot, 'robot/clad')) != 0):
     UtilLog.error("error compiling clad files")
     return False
 
@@ -167,8 +169,9 @@ def main(scriptArgs):
   generator.processFolder(['basestation/test', 'robot/test'], ['project/gyp/cozmoEngine-test.lst'])
   generator.processFolder(['robot/sim_hal', 'robot/supervisor/src', 'simulator/src/robot', 'simulator/controllers/webotsCtrlRobot'],
    ['project/gyp/ctrlRobot.lst'])
+  generator.processFolder(['robot/generated/clad/robot'], ['project/gyp/robotGeneratedClad.lst'])
   generator.processFolder(['simulator/controllers/webotsCtrlViz'], ['project/gyp/ctrlViz.lst'])
-  generator.processFolder(['clad/src', 'robot/clad/src'], ['project/gyp/clad.lst'])
+  generator.processFolder(['clad/src', 'clad/vizSrc', 'robot/clad/src'], ['project/gyp/clad.lst'])
   webotsPhysicsPath = os.path.join(projectRoot, 'generated/webots/src/plugins/physics/')
   # copy the webots' physics.c into the generated folder
   util.File.mkdir_p(webotsPhysicsPath)
