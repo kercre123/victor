@@ -54,7 +54,10 @@ public class PatternPlayController : GameController {
     public bool Equals(RowBlockPattern pattern) {
       if (pattern == null)
         return false;
-      
+
+      if (pattern.blocks.Count != blocks.Count)
+        return false;
+
       for (int i = 0; i < pattern.blocks.Count; ++i) {
         if (pattern.blocks[i].back != blocks[i].back ||
             pattern.blocks[i].front != blocks[i].front ||
@@ -189,10 +192,10 @@ public class PatternPlayController : GameController {
         }
       }
 
-      if (Time.time - lastTimeTapped[blockConfig.Key] < 0.5f || lastFrameZAccel[blockConfig.Key] < 10.0f) {
+      /*if (Time.time - lastTimeTapped[blockConfig.Key] < 0.5f || lastFrameZAccel[blockConfig.Key] < 10.0f) {
         offColor = new Color(0.2f, 0.0f, 0.0f, 1.0f);
         onColor = new Color(1.0f, 0.5f, 0.0f, 1.0f);
-      }
+      }*/
 
       for (int i = 0; i < 4; ++i) {
         robot.activeBlocks[blockConfig.Key].lights[i].onColor = CozmoPalette.ColorToUInt(offColor);
@@ -245,7 +248,7 @@ public class PatternPlayController : GameController {
           }
           seenPatterns.Add(currentPattern);
         }
-        else {
+        else if (lastPatternSeen.Equals(currentPattern) == false) {
           SendAnimation("Satisfaction");
         }
       }
@@ -297,10 +300,18 @@ public class PatternPlayController : GameController {
   private void BlockTapped(int blockID, int tappedTimes) {
     if (gameReady == false)
       return;
-    if (Time.time - lastTimeTapped[blockID] < 0.5f || lastFrameZAccel[blockID] < 10.0f) {
+
+    //blockLightConfigs[blockID] = (BlockLightConfig)(((int)blockLightConfigs[blockID] + tappedTimes) % System.Enum.GetNames(typeof(BlockLightConfig)).Length);
+
+    if (Time.time - lastTimeTapped[blockID] < 0.4f && Time.time - lastTimeTapped[blockID] > 0.15f) {
+      blockLightConfigs[blockID] = (BlockLightConfig)(((int)blockLightConfigs[blockID] + 1) % System.Enum.GetNames(typeof(BlockLightConfig)).Length);
+    }
+    lastTimeTapped[blockID] = Time.time;
+
+    /*if (Time.time - lastTimeTapped[blockID] < 0.5f || lastFrameZAccel[blockID] < 10.0f) {
       lastTimeTapped[blockID] = Time.time;
       blockLightConfigs[blockID] = (BlockLightConfig)(((int)blockLightConfigs[blockID] + tappedTimes) % System.Enum.GetNames(typeof(BlockLightConfig)).Length);
-    }
+    }*/
   }
 
   private void BlockMoved(int blockID, float xAccel, float yAccel, float zAccel) {
@@ -308,7 +319,7 @@ public class PatternPlayController : GameController {
       return;
 
     if (animationPlaying) {
-      
+      // TODO: Interrupt animation because cozmo is upset the pattern may have been messed up.
     }
 
     Debug.Log(blockID + " : " + xAccel + " " + yAccel + " " + zAccel);
@@ -354,26 +365,30 @@ public class PatternPlayController : GameController {
 
   private bool ValidPatternSeen(out RowBlockPattern patternSeen) {
     patternSeen = new RowBlockPattern();
+
     // need at least 2 to form a pattern.
     if (robot.markersVisibleObjects.Count < 2)
       return false;
 
     // check rotation alignment
     for (int i = 0; i < robot.markersVisibleObjects.Count; ++i) {
-      Vector3 relativeForward = robot.Rotation * robot.activeBlocks[robot.markersVisibleObjects[i].ID].Forward;
-      if (Mathf.Abs(relativeForward.x) < 0.95f && Mathf.Abs(relativeForward.y) < 0.95f) {
+      Vector3 relativeForward = Quaternion.Inverse(robot.Rotation) * robot.activeBlocks[robot.markersVisibleObjects[i].ID].Forward;
+      relativeForward.Normalize();
+
+      if (Mathf.Abs(relativeForward.x) <= 0.94f && Mathf.Abs(relativeForward.y) <= 0.94f) {
         // non orthogonal forward vector, let's early out.
         return false;
+
       }
     }
 
     // check position alignment (within certain x threshold)
     for (int i = 0; i < robot.markersVisibleObjects.Count - 1; ++i) {
       Vector3 robotSpaceLocation0 = robot.activeBlocks[robot.markersVisibleObjects[i].ID].WorldPosition - robot.WorldPosition;
-      robotSpaceLocation0 = robot.Rotation * robotSpaceLocation0;
+      robotSpaceLocation0 = Quaternion.Inverse(robot.Rotation) * robotSpaceLocation0;
 
       Vector3 robotSpaceLocation1 = robot.activeBlocks[robot.markersVisibleObjects[i + 1].ID].WorldPosition - robot.WorldPosition;
-      robotSpaceLocation1 = robot.Rotation * robotSpaceLocation1;
+      robotSpaceLocation1 = Quaternion.Inverse(robot.Rotation) * robotSpaceLocation1;
 
       float block0 = Vector3.Dot(robot.activeBlocks[robot.markersVisibleObjects[i].ID].WorldPosition, robot.Forward);
       float block1 = Vector3.Dot(robot.activeBlocks[robot.markersVisibleObjects[i + 1].ID].WorldPosition, robot.Forward);
@@ -386,7 +401,7 @@ public class PatternPlayController : GameController {
 
     // build relative light pattern array
     for (int i = 0; i < robot.markersVisibleObjects.Count; ++i) {
-      Vector3 relativeForward = robot.Rotation * robot.activeBlocks[robot.markersVisibleObjects[i].ID].Forward;
+      Vector3 relativeForward = Quaternion.Inverse(robot.Rotation) * robot.activeBlocks[robot.markersVisibleObjects[i].ID].Forward;
       BlockLights blockLight = new BlockLights();
 
       // logic for relative LEDs... should be refactored to be not as ugly.
@@ -397,13 +412,13 @@ public class PatternPlayController : GameController {
         if (relativeForward.x > 0.9f) {
           blockLight.left = true;
         }
-        if (relativeForward.x < -0.9f) {
+        else if (relativeForward.x < -0.9f) {
           blockLight.right = true;
         }
-        if (relativeForward.y > 0.9f) {
+        else if (relativeForward.y > 0.9f) {
           blockLight.front = true;
         }
-        if (relativeForward.y < -0.9f) {
+        else if (relativeForward.y < -0.9f) {
           blockLight.back = true;
         }
         break;
@@ -412,15 +427,15 @@ public class PatternPlayController : GameController {
           blockLight.left = true;
           blockLight.back = true;
         }
-        if (relativeForward.x < -0.9f) {
+        else if (relativeForward.x < -0.9f) {
           blockLight.right = true;
           blockLight.front = true;
         }
-        if (relativeForward.y > 0.9f) {
+        else if (relativeForward.y > 0.9f) {
           blockLight.front = true;
           blockLight.left = true;
         }
-        if (relativeForward.y < -0.9f) {
+        else if (relativeForward.y < -0.9f) {
           blockLight.back = true;
           blockLight.right = true;
         }
@@ -431,17 +446,17 @@ public class PatternPlayController : GameController {
           blockLight.back = true;
           blockLight.right = true;
         }
-        if (relativeForward.x < -0.9f) {
+        else if (relativeForward.x < -0.9f) {
           blockLight.right = true;
           blockLight.front = true;
           blockLight.left = true;
         }
-        if (relativeForward.y > 0.9f) {
+        else if (relativeForward.y > 0.9f) {
           blockLight.front = true;
           blockLight.left = true;
           blockLight.back = true;
         }
-        if (relativeForward.y < -0.9f) {
+        else if (relativeForward.y < -0.9f) {
           blockLight.back = true;
           blockLight.right = true;
           blockLight.front = true;
@@ -458,7 +473,7 @@ public class PatternPlayController : GameController {
           blockLight.left = true;
           blockLight.right = true;
         }
-        if (relativeForward.y > 0.9f || relativeForward.y < -0.9f) {
+        else if (relativeForward.y > 0.9f || relativeForward.y < -0.9f) {
           blockLight.front = true;
           blockLight.back = true;
         }
@@ -488,14 +503,10 @@ public class PatternPlayController : GameController {
 
   private bool PatternSeen(RowBlockPattern patternSeen) {
     foreach (RowBlockPattern pattern in seenPatterns) {
-      if (pattern.blocks.Count != patternSeen.blocks.Count)
-        continue;
-      
       if (pattern.Equals(patternSeen)) {
         return true;
       }
     }
-
     return false;
   }
 
