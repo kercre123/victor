@@ -11,6 +11,8 @@
 #include "anki/cozmo/shared/activeBlockTypes.h"
 #include "anki/cozmo/shared/ledTypes.h"
 #include "anki/cozmo/robot/ledController.h"
+#include "clad/types/activeObjectTypes.h"
+
 #include <stdio.h>
 #include <assert.h>
 
@@ -70,7 +72,7 @@ namespace Anki {
         BlockState state_ = NORMAL;
         
         webots::LED* led_[NUM_BLOCK_LEDS];
-        LEDParams_t ledParams_[NUM_BLOCK_LEDS];
+        LightState ledParams_[NUM_BLOCK_LEDS];
         
         UpAxis currentUpAxis_;
         
@@ -120,35 +122,35 @@ namespace Anki {
 
       
       // ========== Callbacks for messages from robot =========
-      void ProcessFlashIDMessage(const BlockMessages::FlashID& msg)
+      void Process_flashID(const FlashObjectIDs& msg)
       {
         state_ = FLASHING_ID;
         flashIDStartTime_ = block_controller.getTime();
         //printf("Starting ID flash\n");
       }
       
-      void ProcessSetBlockLightsMessage(const BlockMessages::SetBlockLights& msg)
+      void Process_setCubeLights(const CubeLights& msg)
       {
         // See if the message is actually changing anything about the block's current
         // state. If not, don't update anything.
         bool isDifferent = false;
-        for(int i=0; i<NUM_BLOCK_LEDS && !isDifferent; ++i) {
-          isDifferent = (ledParams_[i].onColor  != msg.onColor[i]  ||
-                         ledParams_[i].offColor != msg.offColor[i] ||
-                         ledParams_[i].onPeriod_ms  != msg.onPeriod_ms[i] ||
-                         ledParams_[i].offPeriod_ms != msg.offPeriod_ms[i] ||
-                         ledParams_[i].transitionOffPeriod_ms != msg.transitionOffPeriod_ms[i] ||
-                         ledParams_[i].transitionOnPeriod_ms  != msg.transitionOnPeriod_ms[i]);
+        for(int i=0; i<NUM_CUBE_LEDS && !isDifferent; ++i) {
+          isDifferent = (ledParams_[i].onColor  != msg.lights[i].onColor  ||
+                         ledParams_[i].offColor != msg.lights[i].offColor ||
+                         ledParams_[i].onPeriod_ms  != msg.lights[i].onPeriod_ms ||
+                         ledParams_[i].offPeriod_ms != msg.lights[i].offPeriod_ms ||
+                         ledParams_[i].transitionOffPeriod_ms != msg.lights[i].transitionOffPeriod_ms ||
+                         ledParams_[i].transitionOnPeriod_ms  != msg.lights[i].transitionOnPeriod_ms);
         }
         
         if(isDifferent) {
-          for(int i=0; i<NUM_BLOCK_LEDS; ++i) {
-            ledParams_[i].onColor  = msg.onColor[i];
-            ledParams_[i].offColor = msg.offColor[i];
-            ledParams_[i].onPeriod_ms = msg.onPeriod_ms[i];
-            ledParams_[i].offPeriod_ms = msg.offPeriod_ms[i];
-            ledParams_[i].transitionOffPeriod_ms = msg.transitionOffPeriod_ms[i];
-            ledParams_[i].transitionOnPeriod_ms  = msg.transitionOnPeriod_ms[i];
+          for(int i=0; i<NUM_CUBE_LEDS; ++i) {
+            ledParams_[i].onColor  = msg.lights[i].onColor;
+            ledParams_[i].offColor = msg.lights[i].offColor;
+            ledParams_[i].onPeriod_ms = msg.lights[i].onPeriod_ms;
+            ledParams_[i].offPeriod_ms = msg.lights[i].offPeriod_ms;
+            ledParams_[i].transitionOffPeriod_ms = msg.lights[i].transitionOffPeriod_ms;
+            ledParams_[i].transitionOnPeriod_ms  = msg.lights[i].transitionOnPeriod_ms;
             
             ledParams_[i].nextSwitchTime = 0; // force immediate upate
             ledParams_[i].state = LEDState_t::LED_STATE_OFF;

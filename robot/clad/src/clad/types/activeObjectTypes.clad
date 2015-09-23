@@ -117,14 +117,12 @@ message ObjectTapped
 namespace BlockMessages
 {
 
- union ActiveObjectMessage {
+ union LightCubeMessage {
       FlashObjectIDs      flashID,
       CubeLights          setCubeLights,
-      ObjectMoved         objectMoved,
-      ObjectStoppedMoving objectSoppedMoving,
       ObjectBeingCarried  setObjectBeingCarried,
-      ObjectTapped        objectTapped
   }
+
 } // Namespace BlockMessages
 
 } // namespace Cozmo

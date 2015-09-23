@@ -8,36 +8,19 @@ namespace Anki {
     namespace BlockMessages {
 
       // Auto-gen the ProcessBufferAs_MessageX() method prototypes using macros:
-#     include "clad/types/activeObjectTypes_declarations.def"
+      #include "clad/types/activeObjectTypes_declarations.def"
 
-      
       Result ProcessMessage(const u8* buffer, const u8 bufferSize)
       {
-        Result retVal = RESULT_FAIL;
+        Result retVal = ;
+        LightCubeMessage msg;
         
-	ActiveObjectMessage msg;
-
-	
-	
-	
+	      memcpy(msg.GetBuffer(), buffer, bufferSize);
         
-        if(lookupTable_[msgID].size != bufferSize-1) {
-          printf("BlockMessages.MessageBufferWrongSize: "
-                 "Buffer's size does not match expected size for this message ID. (Msg %d, expected %d, recvd %d)\n",
-                 msgID,
-                 lookupTable_[msgID].size,
-                 bufferSize - 1
-                 );
-        }
-        else {
-          // This calls the registered callback for the message
-          retVal = (lookupTable_[msgID].ProcessPacketAs)(buffer+1);
-        }
+        #include "clad/types/activeObjectTypes_switch.def"
         
-        return retVal;
-      } // ProcessBuffer()
-      
-      
+        return RESULT_SUCCESS;
+      } // ProcessBuffer()      
       
     } // namespace Messages
   } // namespace Cozmo
