@@ -312,18 +312,7 @@ namespace Cozmo {
   {
     VizManager::getInstance()->ShowObjects(msg.enable);
   }
-  
-  void CozmoGameImpl::Process_SetHeadlights(ExternalInterface::SetHeadlights const& msg)
-  {
-    // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
-    const RobotID_t robotID = 1;
-    Robot* robot = GetRobotByID(robotID);
-    
-    if(robot != nullptr) {
-      robot->SetHeadlight(msg.intensity);
-    }
-  }
-  
+
   void CozmoGameImpl::Process_GotoPose(ExternalInterface::GotoPose const& msg)
   {
     // Handled in RobotEventHandler::HandleActionEvents
@@ -604,48 +593,7 @@ namespace Cozmo {
       robot->StopFaceTracking();
     }
   }
-  
-  void CozmoGameImpl::Process_SetVisionSystemParams(ExternalInterface::SetVisionSystemParams const& msg)
-  {
-    // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
-    const RobotID_t robotID = 1;
-    Robot* robot = GetRobotByID(robotID);
-    
-    if(robot != nullptr) {
-      
-      VisionSystemParams_t p;
-      p.autoexposureOn = msg.autoexposureOn;
-      p.exposureTime = msg.exposureTime;
-      p.integerCountsIncrement = msg.integerCountsIncrement;
-      p.minExposureTime = msg.minExposureTime;
-      p.maxExposureTime = msg.maxExposureTime;
-      p.percentileToMakeHigh = msg.percentileToMakeHigh;
-      p.highValue = msg.highValue;
-      p.limitFramerate = msg.limitFramerate;
-      
-      robot->SendVisionSystemParams(p);
-    }
-  }
-  
-  void CozmoGameImpl::Process_SetFaceDetectParams(ExternalInterface::SetFaceDetectParams const& msg)
-  {
-    // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
-    const RobotID_t robotID = 1;
-    Robot* robot = GetRobotByID(robotID);
-    
-    if(robot != nullptr) {
-      FaceDetectParams_t p;
-      p.scaleFactor = msg.scaleFactor;
-      p.minNeighbors = msg.minNeighbors;
-      p.minObjectHeight = msg.minObjectHeight;
-      p.minObjectWidth = msg.minObjectWidth;
-      p.maxObjectHeight = msg.maxObjectHeight;
-      p.maxObjectWidth = msg.maxObjectWidth;
-      
-      robot->SendFaceDetectParams(p);
-    }
-  }
-  
+
   void CozmoGameImpl::Process_StartLookingForMarkers(ExternalInterface::StartLookingForMarkers const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
@@ -780,6 +728,16 @@ namespace Cozmo {
   {
     // Handled in RobotEventHandler::HandleQueueCompoundAction
   }
-  
+
+  void CozmoGameImpl::Process_ImageChunk(const ImageChunk &msg)
+  {
+    // not handled
+  }
+
+  void CozmoGameImpl::Process_StartControllerTestMode(const StartControllerTestMode &msg)
+  {
+    // not handled
+  }
+
 }
 }
