@@ -147,7 +147,7 @@ public class PatternPlayController : GameController {
 
     foreach (KeyValuePair<int, ActiveBlock> activeBlock in robot.activeBlocks) {
       blockLightConfigs.Add(activeBlock.Key, BlockLightConfig.NONE);
-      lastFrameZAccel.Add(activeBlock.Key, 0.0f);
+      lastFrameZAccel.Add(activeBlock.Key, 30.0f);
       lastTimeTapped.Add(activeBlock.Key, 0.0f);
     }
     ResetLookHeadForkLift();
@@ -244,8 +244,11 @@ public class PatternPlayController : GameController {
     foreach (KeyValuePair<int, BlockLightConfig> blockConfig in blockLightConfigs) {
 
       // setting onColor based on if cozmo sees the block or not.
-      Color enabledColor = new Color(1.0f, 0.5f, 0.0f, 1.0f);
-      Color disabledColor = new Color(0.3f, 0.0f, 0.0f, 1.0f);
+      Color enabledColor;
+      Color disabledColor;
+
+      disabledColor = new Color(0.0f, 0.0f, 0.4f, 1.0f);
+      enabledColor = new Color(0.0f, 0.6f, 1.0f, 1.0f);
 
       for (int i = 0; i < robot.activeBlocks[blockConfig.Key].lights.Length; ++i) {
         robot.activeBlocks[blockConfig.Key].lights[i].onColor = CozmoPalette.ColorToUInt(disabledColor);
@@ -265,7 +268,9 @@ public class PatternPlayController : GameController {
  
       if (currentInputMode == InputMode.TILT) {
         if (Time.time - lastTimeTapped[blockConfig.Key] < 0.3f || lastFrameZAccel[blockConfig.Key] < 10.0f) {
-          disabledColor = Color.blue;
+          enabledColor = new Color(1.0f, 0.5f, 0.0f, 1.0f);
+          disabledColor = new Color(0.3f, 0.0f, 0.0f, 1.0f);
+
         }
       }
 
