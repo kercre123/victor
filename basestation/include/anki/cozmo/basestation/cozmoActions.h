@@ -16,6 +16,7 @@
 #include "anki/cozmo/basestation/actionableObject.h"
 #include "anki/cozmo/basestation/actionInterface.h"
 #include "anki/cozmo/basestation/compoundActions.h"
+#include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/common/types.h"
 #include "anki/common/basestation/objectIDs.h"
 #include "anki/common/basestation/math/pose.h"
@@ -39,18 +40,24 @@ namespace Anki {
     public:
       DriveToPoseAction(const Pose3d& pose,
                         const bool forceHeadDown  = true,
-                        const bool useManualSpeed = false);
+                        const bool useManualSpeed = false,
+                        const Point3f& distThreshold = DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM,
+                        const Radians& angleThreshold = DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD);
       
       DriveToPoseAction(const bool forceHeadDown  = true,
                         const bool useManualSpeed = false); // Note that SetGoal() must be called befure Update()!
       DriveToPoseAction(const std::vector<Pose3d>& poses,
                         const bool forceHeadDown  = true,
-                        const bool useManualSpeed = false);
+                        const bool useManualSpeed = false,
+                        const Point3f& distThreshold = DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM,
+                        const Radians& angleThreshold = DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD);
       
       // TODO: Add methods to adjust the goal thresholds from defaults
       
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::DRIVE_TO_POSE; }
+      
+      virtual u8 GetAnimTracksToDisable() const override { return BODY_TRACK; }
       
     protected:
 
@@ -93,7 +100,7 @@ namespace Anki {
     // specified action type. Drives there using a DriveToPoseAction. Then
     // moves the robot's head to the angle indicated by the pre-action pose
     // (which may be different from the angle used for path following).
-    class DriveToObjectAction : public IAction //: public DriveToPoseAction
+    class DriveToObjectAction : public IAction 
     {
     public:
       DriveToObjectAction(const ObjectID& objectID, const PreActionPose::ActionType& actionType, const f32 predockOffsetDistX_mm = 0, const bool useManualSpeed = false);
@@ -104,6 +111,8 @@ namespace Anki {
       
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::DRIVE_TO_OBJECT; }
+      
+      virtual u8 GetAnimTracksToDisable() const override { return BODY_TRACK; }
       
     protected:
       
@@ -156,6 +165,8 @@ namespace Anki {
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::TURN_IN_PLACE; }
       
+      virtual u8 GetAnimTracksToDisable() const override { return BODY_TRACK; }
+      
     protected:
       
       virtual ActionResult Init(Robot& robot) override;
@@ -179,6 +190,8 @@ namespace Anki {
       virtual const std::string& GetName() const override { return _name; }
       virtual RobotActionType GetType() const override { return RobotActionType::MOVE_HEAD_TO_ANGLE; }
       
+      virtual u8 GetAnimTracksToDisable() const override { return HEAD_TRACK; }
+      
     protected:
       
       virtual ActionResult Init(Robot& robot) override;
@@ -191,7 +204,6 @@ namespace Anki {
       Radians     _headAngle;
       Radians     _angleTolerance;
       Radians     _variability;
-      Radians     _headAngleWithVariation;
       
       std::string _name;
       bool        _inPosition;
@@ -217,6 +229,8 @@ namespace Anki {
       
       virtual const std::string& GetName() const override { return _name; };
       virtual RobotActionType GetType() const override { return RobotActionType::MOVE_LIFT_TO_HEIGHT; }
+      
+      virtual u8 GetAnimTracksToDisable() const override { return LIFT_TRACK; }
       
     protected:
       
@@ -251,6 +265,8 @@ namespace Anki {
       
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::FACE_POSE; }
+      
+      virtual u8 GetAnimTracksToDisable() const override { return BODY_TRACK; }
       
     protected:
       virtual ActionResult Init(Robot& robot) override;
@@ -373,6 +389,10 @@ namespace Anki {
       // Use a value <= 0 to ignore how far away the robot is from the closest
       // PreActionPose and proceed regardless.
       void SetPreActionPoseAngleTolerance(Radians angleTolerance);
+      
+      virtual u8 GetAnimTracksToDisable() const override {
+        return HEAD_TRACK | LIFT_TRACK | BODY_TRACK;
+      }
       
     protected:
       
@@ -510,8 +530,7 @@ namespace Anki {
                                       const f32 placementOffsetAngle_rad = 0,
                                       const bool placeObjectOnGroundIfCarrying = false)
       : CompoundActionSequential({
-        new DriveToObjectAction(objectID, PreActionPose::DOCKING, 0.5f*placementOffsetX_mm, useManualSpeed),
-        //new VisuallyVerifyObjectAction(objectID),
+        new DriveToObjectAction(objectID, PreActionPose::DOCKING, placementOffsetX_mm, useManualSpeed),
         new PickAndPlaceObjectAction(objectID, useManualSpeed, placementOffsetX_mm, placementOffsetY_mm, placementOffsetAngle_rad, placeObjectOnGroundIfCarrying)})
       {
 
@@ -564,6 +583,8 @@ namespace Anki {
       
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::PLACE_OBJECT_LOW; }
+      
+      virtual u8 GetAnimTracksToDisable() const override { return LIFT_TRACK; }
       
     protected:
       

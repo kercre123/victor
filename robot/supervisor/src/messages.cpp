@@ -556,6 +556,16 @@ namespace Anki {
       {
         AnimationController::Clear();
       }
+      
+      void ProcessDisableAnimTracksMessage(const DisableAnimTracks& msg)
+      {
+        AnimationController::DisableTracks(msg.whichTracks);
+      }
+      
+      void ProcessEnableAnimTracksMessage(const EnableAnimTracks& msg)
+      {
+        AnimationController::EnableTracks(msg.whichTracks);
+      }
 
       template<typename KF_TYPE>
       static inline void ProcessAnimKeyFrameHelper(const KF_TYPE& msg)
