@@ -80,6 +80,9 @@ namespace Cozmo {
     s32 _bodyMoveDuration_ms;
     s32 _liftMoveDuration_ms;
     s32 _headMoveDuration_ms;
+    s32 _bodyMoveSpacing_ms;
+    s32 _liftMoveSpacing_ms;
+    s32 _headMoveSpacing_ms;
     
   }; // class AnimationStreamer
   

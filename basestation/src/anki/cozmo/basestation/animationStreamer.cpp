@@ -15,7 +15,7 @@ namespace Cozmo {
   AnimationStreamer::AnimationStreamer(CannedAnimationContainer& container)
   : _animationContainer(container)
   , _liveAnimation(LiveAnimation)
-  , _idleAnimation(&_liveAnimation)
+  , _idleAnimation(nullptr)
   , _streamingAnimation(nullptr)
   , _timeSpentIdling_ms(0)
   , _isIdling(false)
@@ -27,6 +27,9 @@ namespace Cozmo {
   , _bodyMoveDuration_ms(0)
   , _liftMoveDuration_ms(0)
   , _headMoveDuration_ms(0)
+  , _bodyMoveSpacing_ms(0)
+  , _liftMoveSpacing_ms(0)
+  , _headMoveSpacing_ms(0)
   {
     
   }
@@ -240,18 +243,24 @@ namespace Cozmo {
     const s32 kBlinkSpacingMinTime_ms = 3000;
     const s32 kBlinkSpacingMaxTime_ms = 4000;
     const s32 kTimeBeforeWiggleMotions_ms = 1000;
+    const s32 kBodyMovementSpacingMin_ms = 100;
+    const s32 kBodyMovementSpacingMax_ms = 1000;
     const s32 kBodyMovementDurationMin_ms = 250;
-    const s32 kBodyMovementDurationMax_ms = 1000;
+    const s32 kBodyMovementDurationMax_ms = 1500;
     const s32 kBodyMovementSpeedMinMax_mmps = 10;
     const f32 kBodyMovementStraightFraction = 0.5f;
     const f32 kMaxPupilMovement = 0.5f;
     const s32 kLiftMovementDurationMin_ms = 50;
     const s32 kLiftMovementDurationMax_ms = 500;
+    const s32 kLiftMovementSpacingMin_ms = 250;
+    const s32 kLiftMovementSpacingMax_ms = 2000;
     const u8  kLiftHeightMean_mm = 35;
     const u8  kLiftHeightVariability_mm = 8;
     const s32 kHeadMovementDurationMin_ms = 50;
     const s32 kHeadMovementDurationMax_ms = 500;
-    const u8  kHeadAngleVariability_deg = 3;
+    const s32 kHeadMovementSpacingMin_ms = 250;
+    const s32 kHeadMovementSpacingMax_ms = 1000;
+    const u8  kHeadAngleVariability_deg = 6;
     
     // Use procedural face
     const ProceduralFace& lastFace = robot.GetLastProceduralFace();
@@ -276,7 +285,9 @@ namespace Cozmo {
       faceSent = true;
     }
     else if(_nextBlink_ms <= 0) { // "time to blink"
+#     if DEBUG_ANIMATION_STREAMING
       PRINT_NAMED_INFO("AnimationStreamer.UpdateLiveAnimation.Blink", "");
+#     endif
       ProceduralFace crntFace(nextFace.HasBeenSentToRobot() ? nextFace : lastFace);
       ProceduralFace blinkFace(crntFace);
       blinkFace.Blink();
@@ -306,7 +317,7 @@ namespace Cozmo {
     if(_timeSpentIdling_ms >= kTimeBeforeWiggleMotions_ms && !robot.IsPickingOrPlacing())
     {
       // If wheels are available, add a little random movement to keep Cozmo looking alive
-      if(!robot.IsMoving() && _bodyMoveDuration_ms <= 0 && !robot.AreWheelsLocked())
+      if(!robot.IsMoving() && (_bodyMoveDuration_ms+_bodyMoveSpacing_ms) <= 0 && !robot.AreWheelsLocked())
       {
         _bodyMoveDuration_ms = _rng.RandIntInRange(kBodyMovementDurationMin_ms, kBodyMovementDurationMax_ms);
         s16 speed = _rng.RandIntInRange(-kBodyMovementSpeedMinMax_mmps, kBodyMovementSpeedMinMax_mmps);
@@ -342,50 +353,63 @@ namespace Cozmo {
           }
         } // if(!faceSent)
         
+#       if DEBUG_ANIMATION_STREAMING
         PRINT_NAMED_INFO("AnimationStreamer.UpdateLiveAnimation.BodyTwitch",
                          "Speed=%d, curvature=%d, duration=%d",
                          speed, curvature, _bodyMoveDuration_ms);
+#       endif
         BodyMotionKeyFrame kf(speed, curvature, _bodyMoveDuration_ms);
         kf.SetIsLive(true);
         if(RESULT_OK != _liveAnimation.AddKeyFrame(kf)) {
           PRINT_NAMED_ERROR("AnimationStreamer.UpdateLiveAnimation.AddBodyMotionKeyFrameFailed", "");
           return RESULT_FAIL;
         }
+        
+        _bodyMoveSpacing_ms = _rng.RandIntInRange(kBodyMovementSpacingMin_ms, kBodyMovementSpacingMax_ms);
+        
       } else {
         _bodyMoveDuration_ms -= BS_TIME_STEP;
       }
       
       // If lift is available, add a little random movement to keep Cozmo looking alive
-      if(!robot.IsLiftMoving() && _liftMoveDuration_ms <= 0 && !robot.IsLiftLocked() && !robot.IsCarryingObject()) {
+      if(!robot.IsLiftMoving() && (_liftMoveDuration_ms + _liftMoveSpacing_ms) <= 0 && !robot.IsLiftLocked() && !robot.IsCarryingObject()) {
         _liftMoveDuration_ms = _rng.RandIntInRange(kLiftMovementDurationMin_ms, kLiftMovementDurationMax_ms);
 
+#       if DEBUG_ANIMATION_STREAMING
         PRINT_NAMED_INFO("AnimationStreamer.UpdateLiveAnimation.LiftTwitch",
                          "duration=%d", _liftMoveDuration_ms);
-
+#       endif
         LiftHeightKeyFrame kf(kLiftHeightMean_mm, kLiftHeightVariability_mm, _liftMoveDuration_ms);
         kf.SetIsLive(true);
         if(RESULT_OK != _liveAnimation.AddKeyFrame(kf)) {
           PRINT_NAMED_ERROR("AnimationStreamer.UpdateLiveAnimation.AddLiftHeightKeyFrameFailed", "");
           return RESULT_FAIL;
         }
+        
+        _liftMoveSpacing_ms = _rng.RandIntInRange(kLiftMovementSpacingMin_ms, kLiftMovementSpacingMax_ms);
+        
       } else {
         _liftMoveDuration_ms -= BS_TIME_STEP;
       }
       
       // If head is available, add a little random movement to keep Cozmo looking alive
-      if(!robot.IsHeadMoving() && _headMoveDuration_ms <= 0 && !robot.IsHeadLocked()) {
+      if(!robot.IsHeadMoving() && (_headMoveDuration_ms+_headMoveSpacing_ms) <= 0 && !robot.IsHeadLocked()) {
         _headMoveDuration_ms = _rng.RandIntInRange(kHeadMovementDurationMin_ms, kHeadMovementDurationMax_ms);
         const s8 currentAngle_deg = static_cast<s8>(RAD_TO_DEG(robot.GetHeadAngle()));
 
+#       if DEBUG_ANIMATION_STREAMING
         PRINT_NAMED_INFO("AnimationStreamer.UpdateLiveAnimation.HeadTwitch",
                          "duration=%d", _headMoveDuration_ms);
-
+#       endif
         HeadAngleKeyFrame kf(currentAngle_deg, kHeadAngleVariability_deg, _headMoveDuration_ms);
         kf.SetIsLive(true);
         if(RESULT_OK != _liveAnimation.AddKeyFrame(kf)) {
           PRINT_NAMED_ERROR("AnimationStreamer.UpdateLiveAnimation.AddHeadAngleKeyFrameFailed", "");
           return RESULT_FAIL;
         }
+        
+        _headMoveSpacing_ms = _rng.RandIntInRange(kHeadMovementSpacingMin_ms, kHeadMovementSpacingMax_ms);
+        
       } else {
         _headMoveDuration_ms -= BS_TIME_STEP;
       }
