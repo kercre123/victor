@@ -51,7 +51,6 @@ void SetLedValuesByDelta()
   
 }  
 
-
 void InitTimer2()
 {  
   T2PS = 0; // prescaler 1/12 of ckCpu

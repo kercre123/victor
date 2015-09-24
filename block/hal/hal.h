@@ -7,24 +7,33 @@
 #include "hal_delay.h"
 #include "portable.h"
 
-#define BLOCK_ID 0xC5
+// XXX: if timeout, don't send data back
+
+#define BLOCK_ID 0xA3
 #define COMM_CHANNEL 82
+#define TAP_THRESH 10
 
 //#define DO_SIMPLE_LED_TEST
 //#define DO_LED_TEST
 //#define DO_TAPS_TEST
-//#define DO_MISSED_PACKET_TEST
+#define DO_MISSED_PACKET_TEST
 //#define USE_EVAL_BOARD
 
+#define VERIFY_TRANSMITTER
+//#define TIMING_SCOPE_TRIGGER
 //#define STREAM_ACCELEROMETER
 //#define DEBUG_PAYLOAD
 //#define LISTEN_FOREVER
-#define DO_TRANSMITTER_BEHAVIOR
+//#define DO_TRANSMITTER_BEHAVIOR
 //#define DO_LOSSY_TRANSMITTER
 
-//#define USE_UART
 
-#if defined(STREAM_ACCELEROMETER) || defined(DO_TAPS_TEST) || defined(DEBUG_PAYLOAD) || defined(DO_MISSED_PACKET_TEST)
+//#define USE_UART
+#if defined(VERIFY_TRANSMITTER)
+#define LISTEN_FOREVER
+#endif
+
+#if defined(STREAM_ACCELEROMETER) || defined(DO_TAPS_TEST) || defined(DEBUG_PAYLOAD) || defined(DO_MISSED_PACKET_TEST) || defined(VERIFY_TRANSMITTER)
 #define USE_UART
 #endif
 
@@ -57,11 +66,19 @@ void PutHex(char h);
 void RunTests();
 
 // radio.c
-static const u8 RADIO_TIMEOUT_MS = 5;
+static const u8 RADIO_TIMEOUT_MS = 3;
 static const u8 ADDRESS[5] = {BLOCK_ID, 0xC2, 0xC2, 0xC2, 0xC2};
+
+#ifdef VERIFY_TRANSMITTER
+static const u8 TIMER35MS_H = 0x10;
+static const u8 TIMER35MS_L = 0x00;
+static const u8 WAKEUP_OFFSET = 0x00; // 0.75 us per tick, 191.25 on H byte
+#else
 static const u8 TIMER35MS_H = 0xB6;
 static const u8 TIMER35MS_L = 0x4B;
-static const u8 WAKEUP_OFFSET = 0x04; // 0.75 us per tick, 191.25 on H byte
+static const u8 WAKEUP_OFFSET = 0x06; // 0.75 us per tick, 191.25 on H byte
+#endif
+
 static const u8 MAX_MISSED_PACKETS = 3;
 
 typedef enum eRadioTimerState

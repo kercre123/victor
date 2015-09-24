@@ -12,9 +12,26 @@ extern volatile u8 xdata radioPayload[13];
 extern volatile enum eRadioTimerState radioTimerState;
 extern volatile u8 missedPacketCount;
 extern volatile u8 cumMissedPacketCount;
+#ifdef VERIFY_TRANSMITTER
+extern volatile u8 TH1now, TL1now;
+#endif
+
+
+#define SOURCE_PWR      6
+#define PIN_PWR         (1 << SOURCE_PWR)
+#define GPIO_PWR        P0
 
 #ifdef DO_LOSSY_TRANSMITTER
 const u8 skipPacket[6] = {0,0,1,1,1,1};
+#endif
+
+#ifdef VERIFY_TRANSMITTER
+void InitTimer1()
+{  
+  TMOD = (TMOD & ~(3<<4)) | (0x01 << 4); // 16-bit
+  TMOD |= (0<<6); // timer mode
+  TR1 = 1; // start timer
+}
 #endif
 
 void main(void)
@@ -29,6 +46,7 @@ void main(void)
   volatile s8 accData[3];
   volatile u8 tapCount = 0;
   #endif
+
   
   while(hal_clk_get_16m_source() != HAL_CLK_XOSC16M)
   {
@@ -48,6 +66,14 @@ void main(void)
   // Initialize watchdog watchdog
   WDSV = 0; // 2 seconds to get through startup
   WDSV = 1;  
+  
+  #ifdef TIMING_SCOPE_TRIGGER
+  PIN_OUT(P0DIR, PIN_PWR);
+  #endif
+  
+  #ifdef VERIFY_TRANSMITTER 
+  InitTimer1();
+  #endif
   
 #ifdef DO_TRANSMITTER_BEHAVIOR
   // Initalize Timer  
@@ -162,8 +188,10 @@ void main(void)
     #endif
     // Accelerometer read
     //#ifndef USE_EVAL_BOARD
+    #ifndef TIMING_SCOPE_TRIGGER
     ReadAcc(accData);
     tapCount += GetTaps();
+    #endif
     //#endif
     while(radioTimerState == radioSleep);
     {
@@ -171,6 +199,7 @@ void main(void)
     }
     radioTimerState = radioSleep;
     // Turn off lights timer (and lights)
+    
     #ifndef USE_UART
     StopTimer2();  
     #endif
@@ -179,9 +208,23 @@ void main(void)
     #if defined(DO_MISSED_PACKET_TEST)
     PutChar('r');
     #endif 
+    #ifdef TIMING_SCOPE_TRIGGER // toggle pwr pin
+    GPIO_SET(GPIO_PWR, PIN_PWR);
+    #endif
     ReceiveData(RADIO_TIMEOUT_MS, false);
+    #ifdef VERIFY_TRANSMITTER
+    PutHex(TH1now);
+    PutHex(TL1now);
+    if(TH1now<0xB5)
+      PutString("\tXXX\r\n");
+    else
+      PutString("\r\n");
+    #endif
     #if defined(DO_MISSED_PACKET_TEST)
     PutChar('R');
+    #endif
+    #ifdef TIMING_SCOPE_TRIGGER // toggle pwr pin
+    GPIO_RESET(GPIO_PWR, PIN_PWR);
     #endif
     
     #if defined(USE_UART)

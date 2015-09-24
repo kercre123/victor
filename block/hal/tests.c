@@ -13,13 +13,13 @@ void StreamAccelerometer()
     ReadAcc(accData);
     PutDec(accData[0]);
     //puthex(accData[0]-accDataLast[0]);
-    putchar('\t');
+    PutChar('\t');
     PutDec(accData[1]);
     //puthex(accData[1]-accDataLast[1]);
-    putchar('\t');
+    PutChar('\t');
     PutDec(accData[2]);
     //puthex(accData[2]-accDataLast[2]);
-    putstring("\r\n");
+    PutString("\r\n");
     //ReadFifo();
     //memcpy(accDataLast, accData, sizeof(accData));
     //delay_ms(9); // 100 hz loop.

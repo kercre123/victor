@@ -348,12 +348,12 @@ u8 DataReadFifoTaps(u8 addr, u8 numBytes)
     i++;
     if(debounce == 0)
     {
-      if( current-last > 10) // XXX
+      if( current-last > TAP_THRESH) // XXX
       {
         debounce = 45;
         posFirst = true;
       }
-      else if ( current-last < -10)
+      else if ( current-last < -TAP_THRESH)
       {
         debounce = 45;
         posFirst = false;
@@ -362,13 +362,13 @@ u8 DataReadFifoTaps(u8 addr, u8 numBytes)
     }
     else if(debounce > 40)
     {
-      if( current-last > 10 && posFirst == false) // XXX
+      if( current-last > TAP_THRESH && posFirst == false) // XXX
       {
         taps++;
  //       puthex(1);
         debounce = 40;
       }
-      else if ( current-last < -10 && posFirst == true)
+      else if ( current-last < -TAP_THRESH && posFirst == true)
       {
         taps++;
 //        puthex(1);

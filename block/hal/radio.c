@@ -8,6 +8,10 @@ volatile u8 xdata radioPayload[13];
 volatile enum eRadioTimerState radioTimerState = radioSleep;
 volatile u8 missedPacketCount = 0;
 volatile u8 cumMissedPacketCount = 0;
+#ifdef VERIFY_TRANSMITTER
+volatile u8 TH1now, TL1now;
+#endif
+
 
 void InitTimer0()
 {  
@@ -106,12 +110,18 @@ void ReceiveData(u8 msTimeout, bool syncMode)
     {
     }
     // timer reset in radio interrupt
-      TR0 = 1; // turn timer back on
+     TR0 = 1; // turn timer back on
+  }
+  #endif
+  #ifdef LISTEN_FOREVER
+  while(radioBusy)
+  {
+    delay_ms(1);
+    PutChar('.');
   }
   #endif
  
   PowerDownRadio();
-  
 }
 
 
@@ -182,7 +192,13 @@ NRF_ISR()
       TR0 = 0; // Stop timer 
       TL0 = 0xFF - TIMER35MS_L; 
       TH0 = 0xFF - TIMER35MS_H + WAKEUP_OFFSET;
-      TR0 = 1; // Start timer   
+      TR0 = 1; // Start timer
+      #ifdef VERIFY_TRANSMITTER
+      TH1now = TH1;
+      TL1now = TL1;
+      TH1 = 0;
+      TL1 = 0;
+      #endif
       // Read payload
       while(!hal_nrf_rx_fifo_empty())
       {
@@ -223,7 +239,7 @@ T0_ISR()
   // set for 35ms wakeup
   TR0 = 0; // Stop timer 
   TL0 = 0xFF - TIMER35MS_L; 
-  TH0 = 0xFF - TIMER35MS_H;;
+  TH0 = 0xFF - TIMER35MS_H;
   TR0 = 1; // Start timer 
   EA = 1; // enable interrupts  
 }
