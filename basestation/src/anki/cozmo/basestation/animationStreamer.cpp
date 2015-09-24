@@ -276,7 +276,9 @@ namespace Cozmo {
       faceSent = true;
     }
     else if(_nextBlink_ms <= 0) { // "time to blink"
+#     if DEBUG_ANIMATION_STREAMING
       PRINT_NAMED_INFO("AnimationStreamer.UpdateLiveAnimation.Blink", "");
+#     endif
       ProceduralFace crntFace(nextFace.HasBeenSentToRobot() ? nextFace : lastFace);
       ProceduralFace blinkFace(crntFace);
       blinkFace.Blink();
@@ -342,9 +344,11 @@ namespace Cozmo {
           }
         } // if(!faceSent)
         
+#       if DEBUG_ANIMATION_STREAMING
         PRINT_NAMED_INFO("AnimationStreamer.UpdateLiveAnimation.BodyTwitch",
                          "Speed=%d, curvature=%d, duration=%d",
                          speed, curvature, _bodyMoveDuration_ms);
+#       endif
         BodyMotionKeyFrame kf(speed, curvature, _bodyMoveDuration_ms);
         kf.SetIsLive(true);
         if(RESULT_OK != _liveAnimation.AddKeyFrame(kf)) {
@@ -359,9 +363,10 @@ namespace Cozmo {
       if(!robot.IsLiftMoving() && _liftMoveDuration_ms <= 0 && !robot.IsLiftLocked() && !robot.IsCarryingObject()) {
         _liftMoveDuration_ms = _rng.RandIntInRange(kLiftMovementDurationMin_ms, kLiftMovementDurationMax_ms);
 
+#       if DEBUG_ANIMATION_STREAMING
         PRINT_NAMED_INFO("AnimationStreamer.UpdateLiveAnimation.LiftTwitch",
                          "duration=%d", _liftMoveDuration_ms);
-
+#       endif
         LiftHeightKeyFrame kf(kLiftHeightMean_mm, kLiftHeightVariability_mm, _liftMoveDuration_ms);
         kf.SetIsLive(true);
         if(RESULT_OK != _liveAnimation.AddKeyFrame(kf)) {
@@ -377,9 +382,10 @@ namespace Cozmo {
         _headMoveDuration_ms = _rng.RandIntInRange(kHeadMovementDurationMin_ms, kHeadMovementDurationMax_ms);
         const s8 currentAngle_deg = static_cast<s8>(RAD_TO_DEG(robot.GetHeadAngle()));
 
+#       if DEBUG_ANIMATION_STREAMING
         PRINT_NAMED_INFO("AnimationStreamer.UpdateLiveAnimation.HeadTwitch",
                          "duration=%d", _headMoveDuration_ms);
-
+#       endif
         HeadAngleKeyFrame kf(currentAngle_deg, kHeadAngleVariability_deg, _headMoveDuration_ms);
         kf.SetIsLive(true);
         if(RESULT_OK != _liveAnimation.AddKeyFrame(kf)) {
