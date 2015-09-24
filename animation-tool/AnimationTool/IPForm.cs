@@ -86,7 +86,7 @@ namespace AnimationTool
 
         }
 
-        private void textBox_TextChanged(object sender, EventArgs e)
+        private void textBox_TextChanged(object o, EventArgs e)
         {
             button.Enabled = false;
 
@@ -98,7 +98,7 @@ namespace AnimationTool
             catch (Exception) { }
         }
 
-        private void Button_Click(object sender, EventArgs e)
+        private void Button_Click(object o, EventArgs e)
         {
 			RobotSettings.RobotIPAddress = this.textBox.Text;
             RobotEngineMessenger.instance.ConnectionManager.Reset();

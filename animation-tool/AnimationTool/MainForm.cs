@@ -122,7 +122,7 @@ namespace AnimationTool
             InitializeComponent();
         }
 
-        private void MainForm_Load(object sender, EventArgs e)
+        private void MainForm_Load(object o, EventArgs e)
         {
             if (Sequencer.ExtraData.Entries == null || chartForms == null) return;
 
@@ -407,7 +407,7 @@ namespace AnimationTool
             }
         }
 
-        private void PlayAnimation(object sender, EventArgs e)
+        private void PlayAnimation(object o, EventArgs e)
         {
             RobotEngineMessenger.instance.SendAnimation(Path.GetFileNameWithoutExtension(currentFile));
         }
@@ -434,7 +434,7 @@ namespace AnimationTool
             //connectionTextComponent.Text = connectionText;
         }
 
-        private void MainForm_Resize(object sender, EventArgs e)
+        private void MainForm_Resize(object o, EventArgs e)
         {
             int size = (int)(Size.Width * 0.97);
 
@@ -450,7 +450,7 @@ namespace AnimationTool
             }
         }
 
-        private void ReadAndWritesAllFiles(object sender, EventArgs e)
+        private void ReadAndWritesAllFiles(object o, EventArgs e)
         {
             if (!Directory.Exists(jsonFilePath)) return;
 
@@ -465,8 +465,8 @@ namespace AnimationTool
 
                     if (!string.IsNullOrEmpty(text))
                     {
-                        MainForm_Load(sender, e);
-                        SaveFile(sender, e);
+                        MainForm_Load(o, e);
+                        SaveFile(o, e);
                     }
                 }
             }
