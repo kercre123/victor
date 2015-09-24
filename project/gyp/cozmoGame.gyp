@@ -564,6 +564,14 @@
           },
 
           {
+            'target_name': 'allCoretechTools',
+            'type': 'none',
+            'dependencies': [
+              '<(cg-cti_gyp_path):ctiPlanningStandalone',
+            ],            
+          },
+
+          {
             'target_name': 'webotsControllers',
             'type': 'none',
             'dependencies': [
