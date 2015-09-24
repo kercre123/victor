@@ -249,6 +249,10 @@ public class VortexController : GameController {
       DAS.Debug("Vortex", "Animation ended: " + animName);
       StartCoroutine(CozmoReaction());
       break;
+    case "winMatch":
+    case "loseMatch":
+      robot.CancelAction();
+      break;
     default:
       break;
     }
