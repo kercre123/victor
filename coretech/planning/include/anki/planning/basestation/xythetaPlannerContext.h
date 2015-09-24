@@ -34,7 +34,7 @@ struct xythetaPlannerContext : private Util::noncopyable
 
   void Reset();
 
-  // returns true if successful
+  // returns true if successful.
   bool Import(const Json::Value& config);
   void Dump(Util::JsonWriter& writer) const;
 

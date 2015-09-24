@@ -20,6 +20,13 @@
 #include <vector>
 
 namespace Anki {
+
+namespace Util {
+namespace Data {
+class DataPlatform;
+}
+}
+
 namespace Cozmo {
 
 class LatticePlannerImpl;
@@ -30,7 +37,7 @@ class LatticePlanner : public IPathPlanner, private Util::noncopyable
 {
   friend LatticePlannerImpl;
 public:
-  LatticePlanner(const Robot* robot, const Json::Value& mprims);
+  LatticePlanner(const Robot* robot, Util::Data::DataPlatform* dataPlatform);
   virtual ~LatticePlanner();
       
   virtual EPlanStatus GetPlan(Planning::Path &path,

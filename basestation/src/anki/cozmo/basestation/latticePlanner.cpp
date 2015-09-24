@@ -15,6 +15,7 @@
 #include "anki/common/basestation/math/polygon_impl.h"
 #include "anki/common/basestation/math/quad_impl.h"
 #include "anki/common/basestation/math/rotatedRect.h"
+#include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
@@ -24,9 +25,13 @@
 #include "anki/planning/basestation/xythetaPlannerContext.h"
 #include "json/json.h"
 #include "latticePlanner.h"
+#include "util/fileUtils/fileUtils.h"
 #include "util/helpers/templateHelpers.h"
+#include "util/jsonWriter/jsonWriter.h"
 #include "util/logging/logging.h"
 
+// TODO:(bn) ANKI_DEVELOPER_CODE?
+#define LATTICE_PLANNER_DUMP_ENV_TO_CACHE 1
 
 // base padding on the robot footprint
 #define LATTICE_PLANNER_ROBOT_PADDING 7.0
@@ -71,13 +76,44 @@ class LatticePlannerImpl
 {
 public:
 
-  LatticePlannerImpl(const Robot* robot, const Json::Value& mprims, const LatticePlanner* parent)
+  LatticePlannerImpl(const Robot* robot, Util::Data::DataPlatform* dataPlatform, const LatticePlanner* parent)
     : _robot(robot)
     , _planner(_context)
+    , _searchNum(0)
     , _parent(parent)
-    {
-      _context.env.Init(mprims);
+  {
+    if( dataPlatform == nullptr ) {
+      PRINT_NAMED_ERROR("LatticePlanner.InvalidDataPlatform",
+                        "LatticePlanner requires data platform to operate!");
     }
+    else {
+      Json::Value mprims;
+      const bool success = dataPlatform->readAsJson(Util::Data::Scope::Resources,
+                                                    "config/basestation/config/cozmo_mprim.json",
+                                                    mprims);
+      if(success) {
+        _context.env.Init(mprims);
+      }
+      else {
+        PRINT_NAMED_ERROR("LatticePlanner.MotionPrimitiveJsonParseFailure",
+                          "Failed to load motion primitives, Planner likely won't work.");
+      }
+
+      if( LATTICE_PLANNER_DUMP_ENV_TO_CACHE ) {
+        const std::string envDumpDir("planner/contextDump/");
+        _pathToEnvCache = dataPlatform->pathToResource(Util::Data::Scope::Cache, envDumpDir);
+
+        if (!Util::FileUtils::CreateDirectory(_pathToEnvCache, false, true)) {
+          PRINT_NAMED_ERROR("LatticePlanner.CreateDirFailed","%s", _pathToEnvCache.c_str());
+        }
+
+        std::string mprimFilename = "planner/contextDump/mprim.json";
+        if( ! dataPlatform->writeAsJson(Util::Data::Scope::Cache, mprimFilename, mprims) ) {
+          PRINT_NAMED_WARNING("LatticePlanner.MprimpCache", "could not write mprim object to cache");
+        }
+      }
+    }
+  }
 
   // imports and pads obstacles
   void ImportBlockworldObstacles(const bool isReplanning, const ColorRGBA* vizColor = nullptr);
@@ -92,6 +128,10 @@ public:
   xythetaPlan _totalPlan;
   Pose3d _targetPose_orig;
 
+  std::string _pathToEnvCache;
+
+  int _searchNum;
+
   const LatticePlanner* _parent;
 };
 
@@ -99,9 +139,9 @@ public:
 // LatticePlanner functions
 //////////////////////////////////////////////////////////////////////////////// 
 
-LatticePlanner::LatticePlanner(const Robot* robot, const Json::Value& mprims)
+LatticePlanner::LatticePlanner(const Robot* robot, Util::Data::DataPlatform* dataPlatform)
 {
-  _impl = new LatticePlannerImpl(robot, mprims, this);
+  _impl = new LatticePlannerImpl(robot, dataPlatform, this);
 }
 
 
@@ -143,10 +183,6 @@ IPathPlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
   if( ! _impl->_planner.GoalIsValid() ) {
     return PLAN_NEEDED_BUT_GOAL_FAILURE;
   }
-
-  // TEMP: // TEMP: nice, this is already almost here, so move this to context, and do a logrotate kind of
-  // thing
-  // impl_->env_.WriteEnvironment("/Users/bneuman/blockWorld.env");
 
   return GetPlan(path, startPose, true);
 }
@@ -425,6 +461,26 @@ IPathPlanner::EPlanStatus LatticePlannerImpl::GetPlan(Planning::Path &path,
                        _context.goal.x_mm, _context.goal.y_mm, _context.goal.theta);
 
       _context.env.PrepareForPlanning();
+
+      _searchNum++;
+      PRINT_NAMED_INFO("LatticePlannerImpl.GetPlan", "searchNum: %d", _searchNum);
+
+      if( LATTICE_PLANNER_DUMP_ENV_TO_CACHE ) {
+        std::stringstream filenameSS;
+        filenameSS << _pathToEnvCache << "context_" << _searchNum << ".json";
+
+        std::string filename = filenameSS.str();
+
+        if(_searchNum == 1) {
+          PRINT_NAMED_INFO("LatticePlanner.EnvDump",
+                           "dumping planner context to files like '%s'",
+                           filename.c_str());
+        }
+
+        Util::JsonWriter contextDumpWriter(filename);
+        _context.Dump(contextDumpWriter);
+        contextDumpWriter.Close();
+      }
 
       if(!_planner.Replan(LATTICE_PLANNER_MAX_EXPANSIONS)) {
         PRINT_NAMED_WARNING("LatticePlanner.ReplanIfNeeded.PlannerFailed", "plan failed during replanning!\n");

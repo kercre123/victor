@@ -118,6 +118,7 @@ GTEST_TEST(TestPlanner, PlanAroundBoxDumpAndImportContext)
   ASSERT_TRUE( jsonReader.parse(jsonSS.str(), config) ) << "json parsing error";
 
   xythetaPlannerContext context2;
+  EXPECT_TRUE(context2.env.ReadMotionPrimitives((std::string(QUOTE(TEST_DATA_PATH)) + std::string(TEST_PRIM_FILE)).c_str()));
   ASSERT_TRUE( context2.Import( config ) );
 
   xythetaPlanner planner2(context2);
