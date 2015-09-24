@@ -62,21 +62,22 @@ namespace Anki {
     
     Result IKeyFrame::DefineFromJson(const Json::Value &json)
     {
-      Result lastResult = SetMembersFromJson(json);
+      Result lastResult = RESULT_OK;
+      
+      // Read the frame time from the json file as well
+      if(!json.isMember("triggerTime_ms")) {
+        PRINT_NAMED_ERROR("IKeyFrame.ReadFromJson", "Expecting 'triggerTime_ms' field in KeyFrame Json.\n");
+        lastResult = RESULT_FAIL;
+      } else {
+        _triggerTime_ms = json["triggerTime_ms"].asUInt();
+        
+        // Only way to set isValid=true is that SetMembersFromJson succeeded and
+        // triggerTime was found:
+        _isValid = true;
+      }
       
       if(lastResult == RESULT_OK) {
-        
-        // Read the frame time from the json file as well
-        if(!json.isMember("triggerTime_ms")) {
-          PRINT_NAMED_ERROR("IKeyFrame.ReadFromJson", "Expecting 'triggerTime_ms' field in KeyFrame Json.\n");
-          lastResult = RESULT_FAIL;
-        } else {
-          _triggerTime_ms = json["triggerTime_ms"].asUInt();
-          
-          // Only way to set isValid=true is that SetMembersFromJson succeeded and
-          // triggerTime was found:
-          _isValid = true;
-        }
+        lastResult = SetMembersFromJson(json);
       }
       
       return lastResult;
