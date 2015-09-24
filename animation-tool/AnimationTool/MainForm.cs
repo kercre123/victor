@@ -436,15 +436,17 @@ namespace AnimationTool
 
         private void MainForm_Resize(object sender, EventArgs e)
         {
-            if (headAngle.Size.Width != Size.Width - 35)
+            int size = (int)(Size.Width * 0.97);
+
+            if (headAngle.Size.Width != size)
             {
-                headAngle.Size = new System.Drawing.Size(Size.Width - 35, headAngle.Size.Height);
-                liftHeight.Size = new System.Drawing.Size(Size.Width - 35, liftHeight.Size.Height);
-                bodyMotion.Size = new System.Drawing.Size(Size.Width - 35, bodyMotion.Size.Height);
-                proceduralFace.Size = new System.Drawing.Size(Size.Width - 35, proceduralFace.Size.Height);
-                faceAnimation.Size = new System.Drawing.Size(Size.Width - 35, faceAnimation.Size.Height);
-                audioRobot.Size = new System.Drawing.Size(Size.Width - 35, audioRobot.Size.Height);
-                audioDevice.Size = new System.Drawing.Size(Size.Width - 35, audioDevice.Size.Height);
+                headAngle.Size = new System.Drawing.Size(size, headAngle.Size.Height);
+                liftHeight.Size = new System.Drawing.Size(size, liftHeight.Size.Height);
+                bodyMotion.Size = new System.Drawing.Size(size, bodyMotion.Size.Height);
+                proceduralFace.Size = new System.Drawing.Size(size, proceduralFace.Size.Height);
+                faceAnimation.Size = new System.Drawing.Size(size, faceAnimation.Size.Height);
+                audioRobot.Size = new System.Drawing.Size(size, audioRobot.Size.Height);
+                audioDevice.Size = new System.Drawing.Size(size, audioDevice.Size.Height);
             }
         }
 
