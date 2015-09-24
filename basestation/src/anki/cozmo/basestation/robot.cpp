@@ -1410,7 +1410,7 @@ namespace Anki {
 
 
     // Read the animations in a dir
-    void Robot::ReadAnimationDir(bool playLoadedAnimation)
+    void Robot::ReadAnimationDir()
     {
       if (_dataPlatform == nullptr) { return; }
       SoundManager::getInstance()->LoadSounds(_dataPlatform);
@@ -1462,13 +1462,6 @@ namespace Anki {
         for (std::vector<std::string>::iterator i=animNames.begin(); i != animNames.end(); ++i) {
           _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::AnimationAvailable(*i)));
         }
-      }
-
-
-      if (!animationId.empty() && loadedFileCount == 1 && playLoadedAnimation) {
-        // send message to play animation
-        PRINT_NAMED_INFO("Robot.ReadAnimationFile", "playing animation id %s", animationId.c_str());
-        PlayAnimation(animationId, 1);
       }
     }
 

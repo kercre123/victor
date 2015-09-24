@@ -60,7 +60,7 @@ public:
     Robot* robot = _robotMgr.GetFirstRobot();
     if (robot != nullptr) {
       PRINT_NAMED_INFO("CozmoEngineHostImpl.ReloadAnimations", "ReadAnimationDir");
-      robot->ReadAnimationDir(true);
+      robot->ReadAnimationDir();
     }
   };
 protected:
