@@ -520,6 +520,12 @@ return RESULT_FAIL; \
     
     RobotMessage* RobotAudioKeyFrame::GetStreamMessage()
     {
+      if(_audioReferences.empty()) {
+        PRINT_NAMED_ERROR("RobotAudioKeyFrame.GetStreamMessage.EmptyAudioReferences",
+                          "Check to make sure animation loaded successfully - sound file(s) probably not found.");
+        return nullptr;
+      }
+        
       if(_sampleIndex == 0) {
         // Select one of the audio names to play
         if(_audioReferences.size()==1) {
