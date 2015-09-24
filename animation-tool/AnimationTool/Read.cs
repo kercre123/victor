@@ -153,7 +153,7 @@ namespace AnimationTool
 
         private void ReadChartsFromFile(string text)
         {
-            if (text == null || channelList == null) return;
+            if (text == null || chartForms == null) return;
 
             Dictionary<string, PointData[]> animation = null;
 
@@ -168,7 +168,7 @@ namespace AnimationTool
                 return;
             }
 
-            ActionManager.Do(new ChangeAllChartDurations(channelList, GetDurationNeeded(animation)));
+            ActionManager.Do(new ChangeAllChartDurations(chartForms, GetDurationNeeded(animation)));
 
             DisableAllCharts(); // disable all charts, only enable them if the file has points for them
 
@@ -205,7 +205,7 @@ namespace AnimationTool
                 }
             }
 
-            ActionManager.Do(new UnselectAllCharts(channelList), true);
+            ActionManager.Do(new UnselectAllCharts(chartForms), true);
         }
 
         private double GetDurationNeeded(Dictionary<string, PointData[]> animation)
@@ -232,34 +232,11 @@ namespace AnimationTool
 
         private void DisableAllCharts()
         {
-            foreach (Chart chart in channelList)
+            foreach (ChartForm chartForm in chartForms)
             {
-                if (chart.Enabled)
+                if (chartForm.Enabled)
                 {
-                    switch (chart.Name)
-                    {
-                        case "cHeadAngle":
-                            ActionManager.Do(new DisableChart(headAngle));
-                            break;
-                        case "cLiftHeight":
-                            ActionManager.Do(new DisableChart(liftHeight));
-                            break;
-                        case "cAudioRobot":
-                            ActionManager.Do(new DisableChart(audioRobot));
-                            break;
-                        case "cAudioDevice":
-                            ActionManager.Do(new DisableChart(audioDevice));
-                            break;
-                        case "cFaceAnimation":
-                            ActionManager.Do(new DisableChart(faceAnimation));
-                            break;
-                        case "cProceduralFace":
-                            ActionManager.Do(new DisableChart(proceduralFace));
-                            break;
-                        case "cBodyMotion":
-                            ActionManager.Do(new DisableChart(bodyMotion));
-                            break;
-                    }
+                    ActionManager.Do(new DisableChart(chartForm));
                 }
             }
         }

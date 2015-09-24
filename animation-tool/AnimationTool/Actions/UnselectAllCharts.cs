@@ -8,15 +8,15 @@ namespace AnimationTool
     {
         protected List<UnselectChart> unselectCharts;
 
-        public UnselectAllCharts(List<Component> components, Chart ignore = null)
+        public UnselectAllCharts(List<ChartForm> chartForms, Chart ignore = null)
         {
             unselectCharts = new List<UnselectChart>();
 
-            foreach (Chart chart in components)
+            foreach (ChartForm chartForm in chartForms)
             {
-                if (chart == ignore) continue;
+                if (chartForm.chart == ignore) continue;
 
-                unselectCharts.Add(new UnselectChart(chart));
+                unselectCharts.Add(new UnselectChart(chartForm.chart));
             }
         }
 

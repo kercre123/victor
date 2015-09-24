@@ -10,7 +10,7 @@ namespace AnimationTool
     public partial class MainForm : Form
     {
         //This list contains all channels so we can access them directly
-        private List<Component> channelList;
+        private List<ChartForm> chartForms;
 
         private ChangeDurationForm changeDurationForm;
         private BodyForm bodyForm;
@@ -87,7 +87,7 @@ namespace AnimationTool
             openFile = new OpenFileDialog();
             selectFolder = new FolderBrowserDialog();
             saveFileAs = new SaveFileDialog();
-            channelList = new List<Component>();
+            chartForms = new List<ChartForm>();
 
             RobotEngineMessenger.instance.ConnectionManager.ConnectionTextUpdate += ChangeConnectionText;
             RobotEngineMessenger.instance.ConnectionManager.Start();
@@ -124,12 +124,12 @@ namespace AnimationTool
 
         private void MainForm_Load(object sender, EventArgs e)
         {
-            if (Sequencer.ExtraData.Entries == null || channelList == null) return;
+            if (Sequencer.ExtraData.Entries == null || chartForms == null) return;
 
             ActionManager.Reset();
             Sequencer.ExtraData.Reset();
             faceForm.Reset();
-            channelList.Clear();
+            chartForms.Clear();
 
             double interval = ChangeChartDuration.Clamp(Math.Round(Properties.Settings.Default.maxTime * 0.1, 1), 0.1, 0.5);
 
@@ -142,7 +142,7 @@ namespace AnimationTool
             headAngle.chart.ChartAreas[0].AxisY.Maximum = 34;
             ActionManager.Do(new DisableChart(headAngle), true);
             ActionManager.Do(new EnableChart(headAngle), true);
-            channelList.Add(headAngle.chart);
+            chartForms.Add(headAngle);
 
             //Lift Chart
             liftHeight.chart.Series[0].Points.Clear();
@@ -153,7 +153,7 @@ namespace AnimationTool
             liftHeight.chart.ChartAreas[0].AxisY.Maximum = 92;
             ActionManager.Do(new DisableChart(liftHeight), true);
             ActionManager.Do(new EnableChart(liftHeight), true);
-            channelList.Add(liftHeight.chart);
+            chartForms.Add(liftHeight);
 
             //Body Chart
             bodyMotion.chart.Series[0].Points.Clear();
@@ -162,7 +162,7 @@ namespace AnimationTool
             bodyMotion.chart.ChartAreas[0].AxisY.LabelStyle.Interval = interval;
             ActionManager.Do(new DisableChart(bodyMotion), true);
             ActionManager.Do(new Sequencer.EnableChart(bodyMotion), true);
-            channelList.Add(bodyMotion.chart);
+            chartForms.Add(bodyMotion);
 
             //Face Animation Data Chart
             proceduralFace.chart.Series[0].Points.Clear();
@@ -171,7 +171,7 @@ namespace AnimationTool
             proceduralFace.chart.ChartAreas[0].AxisY.LabelStyle.Interval = interval;
             ActionManager.Do(new DisableChart(proceduralFace), true);
             ActionManager.Do(new Sequencer.EnableChart(proceduralFace), true);
-            channelList.Add(proceduralFace.chart);
+            chartForms.Add(proceduralFace);
 
             //Face Animation Image Chart
             faceAnimation.chart.Series[0].Points.Clear();
@@ -180,7 +180,7 @@ namespace AnimationTool
             faceAnimation.chart.ChartAreas[0].AxisY.LabelStyle.Interval = interval;
             ActionManager.Do(new DisableChart(faceAnimation), true);
             ActionManager.Do(new FaceAnimation.EnableChart(faceAnimation), true);
-            channelList.Add(faceAnimation.chart);
+            chartForms.Add(faceAnimation);
 
             //Audio Robot Chart
             audioRobot.chart.Series[0].Points.Clear();
@@ -189,7 +189,7 @@ namespace AnimationTool
             audioRobot.chart.ChartAreas[0].AxisY.LabelStyle.Interval = interval;
             ActionManager.Do(new DisableChart(audioRobot), true);
             ActionManager.Do(new Sequencer.EnableChart(audioRobot), true);
-            channelList.Add(audioRobot.chart);
+            chartForms.Add(audioRobot);
 
             //Audio Robot Device
             audioDevice.chart.Series[0].Points.Clear();
@@ -198,7 +198,7 @@ namespace AnimationTool
             audioDevice.chart.ChartAreas[0].AxisY.LabelStyle.Interval = interval;
             ActionManager.Do(new DisableChart(audioDevice), true);
             ActionManager.Do(new Sequencer.EnableChart(audioDevice), true);
-            channelList.Add(audioDevice.chart);
+            chartForms.Add(audioDevice);
 
             if (!File.Exists(currentFile))
             {
@@ -249,11 +249,11 @@ namespace AnimationTool
                         faceAnimation.chart.Refresh();
                     }
                 }
-                else if (ActionManager.Do(new MoveSelectedDataPointsOfSelectedCharts(channelList, left, right, up, down)))
+                else if (ActionManager.Do(new MoveSelectedDataPointsOfSelectedCharts(chartForms, left, right, up, down)))
                 {
-                    foreach (Chart chart in channelList)
+                    foreach (ChartForm chartForm in chartForms)
                     {
-                        chart.Refresh();
+                        chartForm.chart.Refresh();
                     }
                 }
             }
@@ -261,37 +261,37 @@ namespace AnimationTool
 
         private void Undo(object o, EventArgs e)
         {
-            if (channelList == null) return;
+            if (chartForms == null) return;
 
             ActionManager.Undo();
 
-            foreach (Chart chart in channelList)
+            foreach (ChartForm chartForm in chartForms)
             {
-                chart.Refresh();
+                chartForm.chart.Refresh();
             }
         }
 
         private void Redo(object o, EventArgs e)
         {
-            if (channelList == null) return;
+            if (chartForms == null) return;
 
             ActionManager.Redo();
 
-            foreach (Chart chart in channelList)
+            foreach (ChartForm chartForm in chartForms)
             {
-                chart.Refresh();
+                chartForm.chart.Refresh();
             }
         }
 
         private void Delete(object o, EventArgs e)
         {
-            if (channelList == null) return;
+            if (chartForms == null) return;
 
-            ActionManager.Do(new RemoveSelectedDataPointsOfSelectedCharts(channelList));
+            ActionManager.Do(new RemoveSelectedDataPointsOfSelectedCharts(chartForms));
 
-            foreach (Chart chart in channelList)
+            foreach (ChartForm chartForm in chartForms)
             {
-                chart.Refresh();
+                chartForm.chart.Refresh();
             }
         }
 
@@ -318,11 +318,11 @@ namespace AnimationTool
             {
                 if (result == DialogResult.OK) // truncate
                 {
-                    ActionManager.Do(new TruncateAllChartDurations(channelList, changeDurationForm.Duration));
+                    ActionManager.Do(new TruncateAllChartDurations(chartForms, changeDurationForm.Duration));
                 }
                 else if (result == DialogResult.Yes) // scale
                 {
-                    ActionManager.Do(new ScaleAllChartDurations(channelList, changeDurationForm.Duration));
+                    ActionManager.Do(new ScaleAllChartDurations(chartForms, changeDurationForm.Duration));
                 }
             }
         }

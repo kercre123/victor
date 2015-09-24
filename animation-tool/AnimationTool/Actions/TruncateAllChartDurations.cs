@@ -12,26 +12,25 @@ namespace AnimationTool
         protected double xValueOld;
         protected double xValueNew;
 
-        public TruncateAllChartDurations(List<Component> components, double xValueNew)
+        public TruncateAllChartDurations(List<ChartForm> chartForms, double xValueNew)
         {
             truncateChartDurations = new List<TruncateChartDuration>();
 
             this.xValueNew = Math.Round(xValueNew, 1);
             xValueOld = Math.Round(Properties.Settings.Default.maxTime, 1);
 
-            foreach (Chart chart in components)
+            foreach (ChartForm chartForm in chartForms)
             {
-                DataPoint dp = chart.Series[0].Points[0]; // if chart has sequencer point
-                bool sequencer = dp.IsCustomPropertySet(Sequencer.ExtraData.Key) && 
-                    Sequencer.ExtraData.Entries.ContainsKey(dp.GetCustomProperty(Sequencer.ExtraData.Key));
+                DataPoint dp = chartForm.chart.Series[0].Points[0]; // if chart has sequencer point
+                bool sequencer = dp.IsCustomPropertySet(Sequencer.ExtraData.Key) && Sequencer.ExtraData.Entries.ContainsKey(dp.GetCustomProperty(Sequencer.ExtraData.Key));
 
                 if (sequencer)
                 {
-                    truncateChartDurations.Add(new Sequencer.TruncateChartDuration(chart, xValueNew));
+                    truncateChartDurations.Add(new Sequencer.TruncateChartDuration(chartForm.chart, xValueNew));
                 }
                 else // else if XYchart
                 {
-                    truncateChartDurations.Add(new TruncateChartDuration(chart, xValueNew));
+                    truncateChartDurations.Add(new TruncateChartDuration(chartForm.chart, xValueNew));
                 }
             }
         }

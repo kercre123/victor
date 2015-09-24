@@ -11,26 +11,25 @@ namespace AnimationTool
         protected double xValueOld;
         protected double xValueNew;
 
-        public ChangeAllChartDurations(List<Component> components, double xValueNew)
+        public ChangeAllChartDurations(List<ChartForm> chartForms, double xValueNew)
         {
             changeChartDurations = new List<ChangeChartDuration>();
 
             this.xValueNew = xValueNew;
             xValueOld = Properties.Settings.Default.maxTime;
 
-            foreach (Chart chart in components)
+            foreach (ChartForm c in chartForms)
             {
-                DataPoint dp = chart.Series[0].Points[0]; // if chart has sequencer point
-                bool sequencer = dp.IsCustomPropertySet(Sequencer.ExtraData.Key) &&
-                    Sequencer.ExtraData.Entries.ContainsKey(dp.GetCustomProperty(Sequencer.ExtraData.Key));
+                DataPoint dp = c.chart.Series[0].Points[0]; // if chart has sequencer point
+                bool sequencer = dp.IsCustomPropertySet(Sequencer.ExtraData.Key) && Sequencer.ExtraData.Entries.ContainsKey(dp.GetCustomProperty(Sequencer.ExtraData.Key));
 
                 if (sequencer)
                 {
-                    changeChartDurations.Add(new Sequencer.ChangeChartDuration(chart, xValueNew));
+                    changeChartDurations.Add(new Sequencer.ChangeChartDuration(c.chart, xValueNew));
                 }
                 else // else if XYchart
                 {
-                    changeChartDurations.Add(new ChangeChartDuration(chart, xValueNew));
+                    changeChartDurations.Add(new ChangeChartDuration(c.chart, xValueNew));
                 }
             }
         }

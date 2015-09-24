@@ -33,7 +33,7 @@ namespace AnimationTool
             //Get the sender as the current chart
             curChart = (Chart)sender;
 
-            ActionManager.Do(new SelectChart(curChart, ModifierKeys != Keys.Shift ? channelList : null));
+            ActionManager.Do(new SelectChart(curChart, ModifierKeys != Keys.Shift ? chartForms : null));
 
             ActiveControl = curChart;
 
@@ -103,7 +103,7 @@ namespace AnimationTool
 
                     while ((left || right || up || down) && ++count < 100)
                     {
-                        if (!ActionManager.Do(new MoveSelectedDataPointsOfSelectedCharts(channelList, left, right, up, down)))
+                        if (!ActionManager.Do(new MoveSelectedDataPointsOfSelectedCharts(chartForms, left, right, up, down)))
                         {
                             break;
                         }
@@ -114,9 +114,9 @@ namespace AnimationTool
                         down = curDataPoint.YValues[0] > mouseYValue;
                     }
 
-                    foreach (Chart chart in channelList)
+                    foreach (ChartForm chartForm in chartForms)
                     {
-                        chart.Refresh();
+                        chartForm.chart.Refresh();
                     }
 
                     return;
@@ -291,15 +291,15 @@ namespace AnimationTool
 
                         while ((left || right) && ++count < 100)
                         {
-                            ActionManager.Do(new MoveSelectedDataPointsOfSelectedCharts(channelList, left, right, false, false));
+                            ActionManager.Do(new MoveSelectedDataPointsOfSelectedCharts(chartForms, left, right, false, false));
 
                             left = curDataPoint.YValues[0] > mouseXValue;
                             right = curDataPoint.YValues[1] < mouseXValue;
                         }
 
-                        foreach (Chart chart in channelList)
+                        foreach (ChartForm chartForm in chartForms)
                         {
-                            chart.Refresh();
+                            chartForm.chart.Refresh();
                         }
                     }
 
@@ -320,7 +320,7 @@ namespace AnimationTool
             //Get the sender as the current chart
             curChart = (Chart)sender;
 
-            ActionManager.Do(new SelectChart(curChart, ModifierKeys != Keys.Shift ? channelList : null));
+            ActionManager.Do(new SelectChart(curChart, ModifierKeys != Keys.Shift ? chartForms : null));
 
             ActiveControl = curChart;
 

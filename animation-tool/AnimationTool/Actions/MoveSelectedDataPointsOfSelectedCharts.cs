@@ -15,37 +15,36 @@ namespace AnimationTool
 
         protected List<MoveSelectedDataPoints> moveSelectedDataPoints;
 
-        public MoveSelectedDataPointsOfSelectedCharts(List<Component> components, bool left, bool right, bool up, bool down)
+        public MoveSelectedDataPointsOfSelectedCharts(List<ChartForm> chartForms, bool left, bool right, bool up, bool down)
         {
             this.left = left;
             this.right = right;
             this.up = up;
             this.down = down;
 
-            Initialize(components);
+            Initialize(chartForms);
         }
 
-        private void Initialize(List<Component> components)
+        private void Initialize(List<ChartForm> chartForms)
         {
-            if (components == null) return;
+            if (chartForms == null) return;
 
             moveSelectedDataPoints = new List<MoveSelectedDataPoints>();
 
-            foreach (Chart chart in components)
+            foreach (ChartForm chartForm in chartForms)
             {
-                if (chart.BorderlineColor == SelectChart.borderlineColor)
+                if (chartForm.chart.BorderlineColor == SelectChart.borderlineColor)
                 {
-                    DataPoint dp = chart.Series[0].Points[0]; // if chart has sequencer point
-                    bool sequencer = dp.IsCustomPropertySet(Sequencer.ExtraData.Key) &&
-                        Sequencer.ExtraData.Entries.ContainsKey(dp.GetCustomProperty(Sequencer.ExtraData.Key));
+                    DataPoint dp = chartForm.chart.Series[0].Points[0]; // if chart has sequencer point
+                    bool sequencer = dp.IsCustomPropertySet(Sequencer.ExtraData.Key) && Sequencer.ExtraData.Entries.ContainsKey(dp.GetCustomProperty(Sequencer.ExtraData.Key));
 
                     if (sequencer)
                     {
-                        moveSelectedDataPoints.Add(new Sequencer.MoveSelectedDataPoints(chart, left, right));
+                        moveSelectedDataPoints.Add(new Sequencer.MoveSelectedDataPoints(chartForm.chart, left, right));
                     }
                     else // else if XYchart
                     {
-                        moveSelectedDataPoints.Add(new MoveSelectedDataPoints(chart, left, right, up, down));
+                        moveSelectedDataPoints.Add(new MoveSelectedDataPoints(chartForm.chart, left, right, up, down));
                     }
                 }
             }
