@@ -31,7 +31,7 @@ public class PatternPlayController : GameController {
     DOUBLE
   }
 
-  private InputMode currentInputMode = InputMode.ONE;
+  private InputMode currentInputMode = InputMode.TILT;
 
   // light configuration enums.
   private enum BlockLightConfig {
@@ -147,7 +147,7 @@ public class PatternPlayController : GameController {
 
     foreach (KeyValuePair<int, ActiveBlock> activeBlock in robot.activeBlocks) {
       blockLightConfigs.Add(activeBlock.Key, BlockLightConfig.NONE);
-      lastFrameZAccel.Add(activeBlock.Key, 30.0f);
+      lastFrameZAccel.Add(activeBlock.Key, 0.0f);
       lastTimeTapped.Add(activeBlock.Key, 0.0f);
     }
     ResetLookHeadForkLift();
@@ -242,61 +242,61 @@ public class PatternPlayController : GameController {
   private void SetBlockLights() {
     // update block lights
     foreach (KeyValuePair<int, BlockLightConfig> blockConfig in blockLightConfigs) {
-      for (int i = 0; i < robot.activeBlocks[blockConfig.Key].lights.Length; ++i) {
-        robot.activeBlocks[blockConfig.Key].lights[i].onColor = CozmoPalette.ColorToUInt(new Color(0.0f, 0.0f, 0.2f, 1.0f));
-      }
 
       // setting onColor based on if cozmo sees the block or not.
-      Color onColor = Color.blue;
-      Color offColor = new Color(0.0f, 0.0f, 0.0f, 1.0f);
+      Color enabledColor = new Color(1.0f, 0.5f, 0.0f, 1.0f);
+      Color disabledColor = new Color(0.3f, 0.0f, 0.0f, 1.0f);
+
+      for (int i = 0; i < robot.activeBlocks[blockConfig.Key].lights.Length; ++i) {
+        robot.activeBlocks[blockConfig.Key].lights[i].onColor = CozmoPalette.ColorToUInt(disabledColor);
+      }
 
       for (int i = 0; i < robot.markersVisibleObjects.Count; ++i) {
         if (robot.markersVisibleObjects[i].ID == blockConfig.Key) {
           if (animationPlaying) {
-            onColor = Color.green;
+            enabledColor = Color.green;
           }
           else {
-            onColor = Color.white;
-            offColor = Color.black;
+            enabledColor = Color.white;
           }
           break;
         }
       }
-
+ 
       if (currentInputMode == InputMode.TILT) {
-        if (Time.time - lastTimeTapped[blockConfig.Key] < 0.5f || lastFrameZAccel[blockConfig.Key] < 10.0f) {
-          offColor = new Color(0.2f, 0.0f, 0.0f, 1.0f);
-          onColor = new Color(1.0f, 0.5f, 0.0f, 1.0f);
+        if (Time.time - lastTimeTapped[blockConfig.Key] < 0.3f || lastFrameZAccel[blockConfig.Key] < 10.0f) {
+          disabledColor = Color.blue;
         }
       }
 
       for (int i = 0; i < 4; ++i) {
-        robot.activeBlocks[blockConfig.Key].lights[i].onColor = CozmoPalette.ColorToUInt(offColor);
+        robot.activeBlocks[blockConfig.Key].lights[i].onColor = CozmoPalette.ColorToUInt(disabledColor);
+        robot.activeBlocks[blockConfig.Key].lights[i].offColor = CozmoPalette.ColorToUInt(Color.black);
       }
 
       switch (blockConfig.Value) {
       case BlockLightConfig.NONE:
         break;
       case BlockLightConfig.ONE:
-        robot.activeBlocks[blockConfig.Key].lights[1].onColor = CozmoPalette.ColorToUInt(onColor);
+        robot.activeBlocks[blockConfig.Key].lights[1].onColor = CozmoPalette.ColorToUInt(enabledColor);
         break;
       case BlockLightConfig.TWO:
-        robot.activeBlocks[blockConfig.Key].lights[0].onColor = CozmoPalette.ColorToUInt(onColor);
-        robot.activeBlocks[blockConfig.Key].lights[1].onColor = CozmoPalette.ColorToUInt(onColor);
+        robot.activeBlocks[blockConfig.Key].lights[0].onColor = CozmoPalette.ColorToUInt(enabledColor);
+        robot.activeBlocks[blockConfig.Key].lights[1].onColor = CozmoPalette.ColorToUInt(enabledColor);
         break;
       case BlockLightConfig.THREE:
-        robot.activeBlocks[blockConfig.Key].lights[0].onColor = CozmoPalette.ColorToUInt(onColor);
-        robot.activeBlocks[blockConfig.Key].lights[1].onColor = CozmoPalette.ColorToUInt(onColor);
-        robot.activeBlocks[blockConfig.Key].lights[3].onColor = CozmoPalette.ColorToUInt(onColor);
+        robot.activeBlocks[blockConfig.Key].lights[0].onColor = CozmoPalette.ColorToUInt(enabledColor);
+        robot.activeBlocks[blockConfig.Key].lights[1].onColor = CozmoPalette.ColorToUInt(enabledColor);
+        robot.activeBlocks[blockConfig.Key].lights[3].onColor = CozmoPalette.ColorToUInt(enabledColor);
         break;
       case BlockLightConfig.FOUR:
         for (int i = 0; i < robot.activeBlocks[blockConfig.Key].lights.Length; ++i) {
-          robot.activeBlocks[blockConfig.Key].lights[i].onColor = CozmoPalette.ColorToUInt(onColor);
+          robot.activeBlocks[blockConfig.Key].lights[i].onColor = CozmoPalette.ColorToUInt(enabledColor);
         }
         break;
       case BlockLightConfig.OPPOSITE:
-        robot.activeBlocks[blockConfig.Key].lights[1].onColor = CozmoPalette.ColorToUInt(onColor);
-        robot.activeBlocks[blockConfig.Key].lights[3].onColor = CozmoPalette.ColorToUInt(onColor);
+        robot.activeBlocks[blockConfig.Key].lights[1].onColor = CozmoPalette.ColorToUInt(enabledColor);
+        robot.activeBlocks[blockConfig.Key].lights[3].onColor = CozmoPalette.ColorToUInt(enabledColor);
         break;
       }
     }
@@ -325,7 +325,7 @@ public class PatternPlayController : GameController {
       lastTimeTapped[blockID] = Time.time;
     }
     else if (currentInputMode == InputMode.TILT) {
-      if (Time.time - lastTimeTapped[blockID] < 0.5f || lastFrameZAccel[blockID] < 10.0f) {
+      if (Time.time - lastTimeTapped[blockID] < 0.3f || lastFrameZAccel[blockID] < 10.0f) {
         lastTimeTapped[blockID] = Time.time;
         blockLightConfigs[blockID] = (BlockLightConfig)(((int)blockLightConfigs[blockID] + tappedTimes) % System.Enum.GetNames(typeof(BlockLightConfig)).Length);
       }
