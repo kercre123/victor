@@ -1,9 +1,23 @@
-#include <iostream>
-#include <iomanip>
-#include <fstream>
+/**
+ * File: run_coreTechPlanningStandalone.cpp
+ *
+ * Author: Brad Neuman
+ * Created: 2015-09-23
+ *
+ * Description: Standalone executable for running the planner
+ *
+ * Copyright: Anki, Inc. 2015
+ *
+ **/
 
-#include "anki/planning/basestation/xythetaPlanner.h"
 #include "anki/planning/basestation/xythetaEnvironment.h"
+#include "anki/planning/basestation/xythetaPlanner.h"
+#include "anki/planning/basestation/xythetaPlannerContext.h"
+#include "json/json.h"
+#include <fstream>
+#include <getopt.h>
+#include <iomanip>
+#include <iostream>
 #include <map>
 
 using namespace Anki::Planning;
@@ -20,16 +34,95 @@ void writePath(string filename, const xythetaEnvironment& env, const xythetaPlan
   outfile.close();
 }
 
+void usage()
+{
+  cout<<"usage: ctiPlanningStandalone -p mprim.json [--manual | --context env.json]\n";
+}
+
 int main(int argc, char *argv[])
 {
-  cout<<"Welcome to xythetaPlanner. argc = "<<argc<<endl;
-  if(argc == 3) {
-    cout<<"doing some env stuff!\n";
+  cout<<"Welcome to xythetaPlanner.\n";
 
-    xythetaEnvironment env;
-    if(!env.Init(argv[1], argv[2])) {
+  bool gotMprim = false;
+  xythetaPlannerContext context;
+
+  int doManualPlanner = 0;
+  int doContextPlan = 0;
+  Json::Value contextJson;
+
+  static struct option opts[] = {
+    {"help", no_argument, 0, 'h'},
+    {"mprim", required_argument, 0, 'p'},
+    {"manual", no_argument, &doManualPlanner, 1},
+    {"context", required_argument, 0, 'c'},
+    {0, 0, 0, 0}
+  };
+
+  int option_index = 0;
+
+  while(true) {
+    int c = getopt_long( argc, argv, "hp:c:", opts, &option_index );
+    if (c == -1) {
+      break;
+    }
+    switch(c) {
+      case 0:
+        break;
+
+      case 'h':
+        usage();
+        return 0;
+
+      case 'p':
+        gotMprim = context.env.ReadMotionPrimitives(optarg);
+        if( ! gotMprim ) {
+          cerr<<"Could not read motion primitives from file "<<optarg<<endl;
+          return -1;
+        }
+        break;
+
+      case 'c': {
+        doContextPlan = 1;
+        
+        Json::Reader jsonReader;
+
+        ifstream contextStream(optarg);
+        bool success = jsonReader.parse(contextStream, contextJson);
+        if( ! success ) {
+          cerr<<"Could not read context from file "<<optarg<<endl;
+          return -1;
+        }
+        break;
+      }
+
+      default:
+        usage();
+        return -1;
+    }
+  }
+
+  if( ! gotMprim ) {
+    cerr<<"Must pass in motion primitives!\n";
+    usage();
+    return -1;
+  }
+
+
+  if( doContextPlan ) {
+    bool success = context.Import(contextJson);
+    if( ! success ) {
+      cerr<<"Could not import planner context\n";
       return -1;
     }
+
+    xythetaPlanner planner(context);
+    planner.Replan();
+
+    writePath("path.txt", context.env, planner.GetPlan());
+    cout<<"done! check path.txt\n";
+  }
+
+  if( doManualPlanner ) {
     xythetaPlan plan;
 
     int choice = 0;
@@ -40,32 +133,32 @@ int main(int argc, char *argv[])
     while(choice >= 0) {
       cout<<"current state: "<<curr<<" g = "<<g<<"\nactions:\n";
 
-      SuccessorIterator it = env.GetSuccessors(curr.GetStateID(), g);
+      SuccessorIterator it = context.env.GetSuccessors(curr.GetStateID(), g);
 
-      if(it.Done(env)) {
+      if(it.Done(context.env)) {
         cout<<"  no actions!\n";
         break;
       }
 
-      it.Next(env);
+      it.Next(context.env);
 
       std::map<ActionID, StateID> results;
 
-      while(!it.Done(env)) {
+      while(!it.Done(context.env)) {
         MotionPrimitive prim;
         string name;
-        if(!env.GetMotion(curr.theta, it.Front().actionID, prim)) {
+        if(!context.env.GetMotion(curr.theta, it.Front().actionID, prim)) {
           printf("error: internal error! Could not get primitive id %d at theta %d!\n",
                      it.Front().actionID,
                      curr.theta);
         }
-        name = env.GetActionType(it.Front().actionID).GetName();
+        name = context.env.GetActionType(it.Front().actionID).GetName();
 
         cout<<"  "<<(int)it.Front().actionID<<": "<<left<<setw(22)<<name
             <<State(it.Front().stateID)<<" cost = "
             <<(it.Front().g - g)<<endl;
         results[it.Front().actionID] = it.Front().stateID;
-        it.Next(env);
+        it.Next(context.env);
       }
 
       cout<<" -1: exit\n> ";
@@ -73,64 +166,21 @@ int main(int argc, char *argv[])
 
       if(choice >= 0 && results.count(choice) > 0) {
         plan.Push(choice, 0.0);
-        writePath("path.txt", env, plan);
+        writePath("path.txt", context.env, plan);
 
         curr = State(results[choice]);
       }
     }
 
     printf("complete. Path: \n");
-    env.PrintPlan(plan);
+    context.env.PrintPlan(plan);
 
-    cout<<"final state: "<<env.State2State_c(env.GetPlanFinalState(plan))<<endl;
+    cout<<"final state: "<<context.env.State2State_c(context.env.GetPlanFinalState(plan))<<endl;
 
     printf("\n\nTestPlan:\n");
     for(auto action : plan.actions_) {
       printf("plan.Push(%d);\n", action);
     }
-  }
-  else if(argc == 7 || argc == 6) {
-    cout<<"running planner!\n";
-
-    xythetaEnvironment env;
-    if(!env.Init(argv[1], argv[2])) {
-      return -1;
-    }
-    xythetaPlanner planner(env);
-    //float theta = 0.0;
-    if(argc == 7) {
-      planner.AllowFreeTurnInPlaceAtGoal();
-    }
-
-    State_c goal(atof(argv[3]), atof(argv[4]), atof(argv[5]));
-
-    planner.SetGoal(goal);
-    planner.Replan();
-
-    writePath("path.txt", env, planner.GetPlan());
-    cout<<"done! check path.txt\n";
-  }
-  else if(argc == 9) {
-    xythetaEnvironment env;
-    if(!env.Init(argv[1], argv[2])) {
-      return -1;
-    }
-    xythetaPlanner planner(env);
-    //float theta = 0.0;
-
-    State_c goal(atof(argv[3]), atof(argv[4]), atof(argv[5]));
-    State_c start(atof(argv[6]), atof(argv[7]), atof(argv[8]));
-
-    planner.SetGoal(goal);
-    planner.SetStart(start);
-    // planner.AllowFreeTurnInPlaceAtGoal();
-
-    planner.Replan();
-
-    assert(env.PlanIsSafe(planner.GetPlan(), 0));
-
-    writePath("path.txt", env, planner.GetPlan());
-    cout<<"done! check path.txt\n";
   }
 
   return 0;
