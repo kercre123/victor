@@ -1,6 +1,7 @@
-// SDK Included Files - Please delete me!
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
+
 #include "board.h"
 #include "fsl_debug_console.h"
 
@@ -32,20 +33,7 @@ namespace Anki
         // Send data, if we have any
         if (buflen && buflen < 120)
         {
-          // Temporarily disable current transfer
-          DMA_ERQ = 0;
-          
-          // I happen to know I can access -1 and -2 (the caller left space for me)
-          buf[-2] = 0xA5;                      // UART header
-          buf[-1] = buflen | (eof ? 0x80 : 0); // Set length, plus flag indicating end of frame
-          
-          // Kick off DMA transfer
-          DMA_TCD1_SADDR = (uint32_t)(buf-2);// Offset -2 to include the header
-          DMA_TCD1_CITER_ELINKNO = buflen+2; // Current major loop iteration
-          DMA_TCD1_BITER_ELINKNO = buflen+2; // Beginning major loop iteration
-          DMA_TCD1_CSR = BM_DMA_TCDn_CSR_DREQ;  // Stop channel and set to end on last major loop iteration
-
-          DMA_ERQ = DMA_ERQ_ERQ1_MASK | DMA_ERQ_ERQ0_MASK;
+            TransmitDrop(buf, buflen, eof);
         }
       }
     }
@@ -65,12 +53,15 @@ int main (void)
   TimerInit();
   PowerInit();
   I2CInit();
+
+  // Espressif startup time
+  Anki::Cozmo::HAL::MicroWait(1000000);
   
-  spi_init();  
+  SPIInit();
   //dac_init();
   //i2c_init();
-  //uart_init();  
+  //uart_init();
   
-  //CameraInit();
-  for (;;) ;
+  CameraInit();
+  for(;;) ;
 }

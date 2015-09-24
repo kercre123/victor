@@ -4,34 +4,69 @@
 #include "board.h"
 #include "fsl_debug_console.h"
 #include "anki/cozmo/robot/hal.h"
+#include "anki/cozmo/robot/drop.h"
 #include "hal/portable.h"
 
 #include "spi.h"
 
+const int MAX_JPEG_DATA = 128;
 const int TRANSMISSION_SIZE = 98;
 static uint32_t spi_tx_buff[TRANSMISSION_SIZE];
 static uint8_t  spi_rx_buff[TRANSMISSION_SIZE];
 
-// 14 = SPI0 RX
-// 15 = SPI0_TX
+void Anki::Cozmo::HAL::TransmitDrop(const uint8_t* buf, int buflen, int eof) {
+  DropToWiFi drop;
+  uint8_t* txSrc = (uint8_t*) &drop;
+  uint8_t* txDst = (uint8_t*) spi_tx_buff;
 
-static void start_tx() {
+  // This should be altered to 
+  memcpy(drop.payload, buf, buflen);  
+  drop.droplet = JPEG_LENGTH(buflen) | (eof ? jpegEOF : 0);
+
+  for (int i = 0; i < sizeof(drop); i++, txDst += sizeof(uint32_t))
+    *(txDst) = *(txSrc++);
+
+  // Clear done flags for DMA
+  DMA_CDNE = DMA_CDNE_CDNE(2);
+  DMA_CDNE = DMA_CDNE_CDNE(3);
+
+  // Enable DMA
+  SPIInitDMA();
+  DMA_ERQ |= DMA_ERQ_ERQ2_MASK | DMA_ERQ_ERQ3_MASK;
+}
+
+void Anki::Cozmo::HAL::SPIInitDMA(void) {
   const uint32_t num_words = TRANSMISSION_SIZE;
   const int transferSize = sizeof(uint32_t);
-  
+
   // Disable DMA
   DMA_ERQ &= ~DMA_ERQ_ERQ3_MASK & ~DMA_ERQ_ERQ2_MASK;
 
-  // DMA source DMA Mux (spi rx/tx)
+  // Configure receive buffer
   DMAMUX_CHCFG2 = (DMAMUX_CHCFG_ENBL_MASK | DMAMUX_CHCFG_SOURCE(14)); 
+
+  DMA_TCD2_SADDR          = (uint32_t)&(SPI0_POPR);
+  DMA_TCD2_SOFF           = 0;
+  DMA_TCD2_SLAST          = 0;
+
+  DMA_TCD2_DADDR          = (uint32_t)spi_rx_buff;
+  DMA_TCD2_DOFF           = 1;
+  DMA_TCD2_DLASTSGA       = -num_words;
+
+  DMA_TCD2_NBYTES_MLNO    = transferSize;                               // The minor loop moves 32 bytes per transfer
+  DMA_TCD2_BITER_ELINKNO  = num_words;                                  // Major loop iterations
+  DMA_TCD2_CITER_ELINKNO  = num_words;                                  // Set current interation count  
+  DMA_TCD2_ATTR           = (DMA_ATTR_SSIZE(0) | DMA_ATTR_DSIZE(0));    // Source/destination size (8bit)
+ 
+  DMA_TCD2_CSR            = DMA_CSR_DREQ_MASK;                          // clear ERQ @ end of major iteration               
+
+  // Configure transfer buffer
   DMAMUX_CHCFG3 = (DMAMUX_CHCFG_ENBL_MASK | DMAMUX_CHCFG_SOURCE(15)); 
-  
-  // Configure source address
+
   DMA_TCD3_SADDR          = (uint32_t)spi_tx_buff;
   DMA_TCD3_SOFF           = transferSize;
   DMA_TCD3_SLAST          = -num_words * transferSize;
 
-  // Configure source address
   DMA_TCD3_DADDR          = (uint32_t)&(SPI0_PUSHR);
   DMA_TCD3_DOFF           = 0;
   DMA_TCD3_DLASTSGA       = 0;
@@ -42,21 +77,14 @@ static void start_tx() {
   DMA_TCD3_ATTR           = (DMA_ATTR_SSIZE(2) | DMA_ATTR_DSIZE(2));    // Source/destination size (8bit)
  
   DMA_TCD3_CSR            = DMA_CSR_DREQ_MASK;                          // clear ERQ @ end of major iteration               
-
-  // Enable DMA
-  DMA_ERQ |= DMA_ERQ_ERQ3_MASK;
 }
 
-void spi_init(void) {
-  Anki::Cozmo::HAL::MicroWait(1000000);
-
+void Anki::Cozmo::HAL::SPIInit(void) {
   // Turn on power to DMA, PORTC and SPI0
   SIM_SCGC6 |= SIM_SCGC6_SPI0_MASK | SIM_SCGC6_DMAMUX_MASK;
   SIM_SCGC5 |= SIM_SCGC5_PORTE_MASK | SIM_SCGC5_PORTD_MASK;
   SIM_SCGC7 |= SIM_SCGC7_DMA_MASK;
 
-  //bit_bang_test();
-  
   // Configure SPI pins
   PORTD_PCR4  = PORT_PCR_MUX(2); // SPI0_PCS1
   PORTE_PCR17 = PORT_PCR_MUX(2); // SPI0_SCK
@@ -80,7 +108,6 @@ void spi_init(void) {
               SPI_RSER_TFFF_DIRS_MASK |
               SPI_RSER_RFDF_RE_MASK |
               SPI_RSER_RFDF_DIRS_MASK;
-              
 
   // Clear all status flags
   SPI0_SR = SPI0_SR;
@@ -89,11 +116,8 @@ void spi_init(void) {
     int k = i >> 1;
 
     spi_tx_buff[i] = 
+      (~i & 0xFF) |
       SPI_PUSHR_CONT_MASK | 
       SPI_PUSHR_PCS((~i & 1) ? ~0: 0);
   }
-
-  //start_tx();
-  
-  for(;;) ;
 }
