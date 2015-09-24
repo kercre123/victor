@@ -8,6 +8,8 @@
 
 // TODO:(bn) should these be a full path?
 #include "anki/cozmo/basestation/pathPlanner.h"
+#include "anki/cozmo/basestation/latticePlanner.h"
+#include "anki/cozmo/basestation/faceAndApproachPlanner.h"
 #include "anki/cozmo/basestation/pathDolerOuter.h"
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/block.h"
@@ -120,17 +122,6 @@ namespace Anki {
       // The call to Delocalize() will increment frameID, but we want it to be
       // initialzied to 0, to match the physical robot's initialization
       _frameId = 0;
-      Json::Value mprims;
-      if (_dataPlatform != nullptr){
-        // Read planner motion primitives
-        // TODO: Use different motions primitives depending on the type/personality of this robot
-        // TODO: Stop storing *cozmo* motion primitives in a coretech location
-        const bool success = _dataPlatform->readAsJson(Util::Data::Scope::Resources, "config/basestation/config/cozmo_mprim.json", mprims);
-        if(!success) {
-          PRINT_NAMED_ERROR("Robot.MotionPrimitiveJsonParseFailure", "Failed to load motion primitives, Planner likely won't work.");
-        }
-      }
-
 
       ReadAnimationDir(false);
       
@@ -162,7 +153,7 @@ namespace Anki {
       
       SetHeadAngle(_currentHeadAngle);
       _pdo = new PathDolerOuter(msgHandler, robotID);
-      _longPathPlanner  = new LatticePlanner(this, mprims);
+      _longPathPlanner  = new LatticePlanner(this, _dataPlatform);
       _shortPathPlanner = new FaceAndApproachPlanner;
       _selectedPathPlanner = _longPathPlanner;
       

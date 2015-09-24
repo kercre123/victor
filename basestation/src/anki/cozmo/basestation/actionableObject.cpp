@@ -195,7 +195,9 @@ namespace Anki {
         if((withCode.empty()   || withCode.count(preActionPose.GetMarker()->GetCode()) > 0) &&
            (withAction.empty() || withAction.count(preActionPose.GetActionType()) > 0))
         {
-          PreActionPose currentPose(preActionPose, relToObjectPose, offset_mm);
+          // offset_mm is scaled by some amount because otherwise it might too far to see the marker
+          // it's docking to.
+          PreActionPose currentPose(preActionPose, relToObjectPose, PREACTION_POSE_OFFSET_SCALAR * offset_mm);
           
           if(IsPreActionPoseValid(currentPose, reachableFromPose, obstacles)) {
             preActionPoses.emplace_back(currentPose);
@@ -232,7 +234,10 @@ namespace Anki {
       {
         GetCurrentPreActionPoses(poses, {actionType}, std::set<Vision::Marker::Code>(), obstacles, reachableFrom);
         for(auto & pose : poses) {
-          _vizPreActionPoseHandles.emplace_back(VizManager::getInstance()->DrawPreDockPose(poseID + GetID().GetValue()*100,
+          // TODO: In computing poseID to pass to DrawPreDockPose, multiply object ID by the max number of
+          //       preaction poses we expect to visualize per object. Currently, hardcoded to 48 (4 dock and
+          //       4 roll per side). We probably won't have more than this.
+          _vizPreActionPoseHandles.emplace_back(VizManager::getInstance()->DrawPreDockPose(poseID + GetID().GetValue()*48,
                                                                                            pose.GetPose().GetWithRespectToOrigin(),
                                                                                            PreActionPose::GetVisualizeColor(actionType)));
           ++poseID;

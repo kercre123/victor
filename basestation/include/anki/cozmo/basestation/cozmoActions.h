@@ -530,8 +530,7 @@ namespace Anki {
                                       const f32 placementOffsetAngle_rad = 0,
                                       const bool placeObjectOnGroundIfCarrying = false)
       : CompoundActionSequential({
-        new DriveToObjectAction(objectID, PreActionPose::DOCKING, 0.5f*placementOffsetX_mm, useManualSpeed),
-        //new VisuallyVerifyObjectAction(objectID),
+        new DriveToObjectAction(objectID, PreActionPose::DOCKING, placementOffsetX_mm, useManualSpeed),
         new PickAndPlaceObjectAction(objectID, useManualSpeed, placementOffsetX_mm, placementOffsetY_mm, placementOffsetAngle_rad, placeObjectOnGroundIfCarrying)})
       {
 
