@@ -139,7 +139,7 @@ void CozmoAPI::CozmoInstanceRunner::Run()
       // Don't sleep if we're overtime, but only complain if we're more than 10ms overtime
       if (ms_left < std::chrono::milliseconds(-10))
       {
-        PRINT_NAMED_WARNING("CozmoInstanceRunner.overtime", "over by %lld ms", std::chrono::duration_cast<std::chrono::milliseconds>(-ms_left).count());
+        PRINT_NAMED_WARNING("CozmoInstanceRunner.overtime", "over by %lld ms", (-ms_left).count());
       }
     }
     else
