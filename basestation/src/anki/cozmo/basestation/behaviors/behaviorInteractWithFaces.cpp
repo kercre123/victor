@@ -88,6 +88,26 @@ namespace Cozmo {
         {
           break;
         }
+        
+        // If enough time has passed since we looked down toward the ground, do that now
+        if (currentTime_sec - _lastGlanceTime >= kGlanceDownInterval_sec)
+        {
+          float headAngle = _robot.GetHeadAngle();
+          
+          // Move head down to check for a block
+          MoveHeadToAngleAction* moveHeadAction = new MoveHeadToAngleAction(0);
+          _robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, moveHeadAction);
+          
+          // Now move the head back up to the angle it was previously at
+          moveHeadAction = new MoveHeadToAngleAction(headAngle);
+          
+          _robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, moveHeadAction);
+          _lastActionTag = moveHeadAction->GetTag();
+          _isActing = true;
+          _lastGlanceTime = currentTime_sec;
+          break;
+        }
+        
         // If we don't have any faces to care about, we're done here
         auto iterFirst = _interestingFacesOrder.begin();
         if (_interestingFacesOrder.end() == iterFirst)

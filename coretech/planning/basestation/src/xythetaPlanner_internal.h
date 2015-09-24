@@ -15,6 +15,7 @@
 
 #include "openList.h"
 #include "stateTable.h"
+#include <unordered_map>
 
 namespace Anki
 {
@@ -23,17 +24,15 @@ namespace Planning
 
 struct xythetaPlannerImpl
 {
-  xythetaPlannerImpl(const xythetaEnvironment& env);
-
-  bool SetGoal(const State_c& goal);
-  bool SetStart(const State_c& start);
+  xythetaPlannerImpl(const xythetaPlannerContext& context);
 
   bool GoalIsValid() const;
+  bool StartIsValid() const;
 
+  // This function starts by making a copy of the context, then computes a plan
   bool ComputePath(unsigned int maxExpansions);
 
   // helper functions
-
   void Reset();
 
   void ExpandState(StateID sid);
@@ -44,8 +43,8 @@ struct xythetaPlannerImpl
   // this one computes jsut based on distance
   Cost heur_internal(StateID sid);
 
-  // must be called after start and goal are set
-  void InitializeHeuristic();
+  // must be called after start and goal are set. Returns true if everything is OK, false if we should fail
+  bool InitializeHeuristic();
 
   void BuildPlan();
 
@@ -54,39 +53,59 @@ struct xythetaPlannerImpl
 
   void GetTestPlan(xythetaPlan& plan);
 
-  StateID goalID_;
-  State_c goal_c_;
-  State start_;
-  StateID startID_;
-  const xythetaEnvironment& env_;
-  OpenList open_;
-  StateTable table_;
+
+  //////////////////////////////////////////////////////////////////////////////// 
+  // internal helpers
+  //////////////////////////////////////////////////////////////////////////////// 
+
+  // returns true if goal is valid, false otherwise. Sets values of arguments. If false is returned, may have
+  // set or not set any of the return arguments
+  bool CheckContextGoal(StateID& goalID, State_c& roundedGoal_c) const;
+
+  // same as above, but for the start
+  bool CheckContextStart(State& start) const;
+
+  // Context holds everything that can change outside of planning, and should represent all of the config,
+  // including start, goal, motion primitives, etc. and holds the environment.
+  const xythetaPlannerContext& _context;
+
+  StateID _goalID;
+
+  // This is different from the context continuous state because it was rounded down to goalID_, then
+  // converted back to a continuous state
+  State_c _goal_c;
+
+  State _start;
+  StateID _startID;
+
+  OpenList _open;
+  StateTable _table;
   
-  bool goalChanged_;
-  bool fromScratch_;
+  bool _goalChanged;
   
-  bool freeTurnInPlaceAtGoal_;
+  xythetaPlan _plan;
 
-  xythetaPlan plan_;
+  Cost _finalCost;
 
-  Cost finalCost_;
+  unsigned int _expansions;
+  unsigned int _considerations;
+  unsigned int _collisionChecks;
 
-  unsigned int expansions_;
-  unsigned int considerations_;
-  unsigned int collisionChecks_;
+  unsigned int _searchNum;
 
-  unsigned int searchNum_;
-
+  // assuming that `sid` is in soft collision, this function will do a breadth-first expansion until we
+  // "escape" from the soft penalty. It will add these penalties to a heuristic map, so the heuristic can take
+  // these soft penalties into account
   Cost ExpandStatesForHeur(StateID sid);
 
   // heuristic pre-computation stuff
-  Cost costOutsideHeurMap_;
-  std::map<StateID, Cost> heurMap_;
-  typedef std::map<StateID, Cost>::iterator HeurMapIter;
+  Cost _costOutsideHeurMap;
+  std::unordered_map<u32, Cost> _heurMap; // key is a StateID converted to u32
+  typedef std::unordered_map<u32, Cost>::iterator HeurMapIter;
   
 
   // for debugging only
-  FILE* debugExpPlotFile_;
+  FILE* _debugExpPlotFile;
 };
 
 
