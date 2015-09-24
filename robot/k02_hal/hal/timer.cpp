@@ -13,7 +13,7 @@ namespace Anki
       // Multiply this by SYSTICK to yield microseconds << 32
       const u32 SYSTICK_RECIP = (1000000LL << 32LL) / CORE_CLOCK;
       const u32 MAX_COUNT = (((65536LL << 32LL) / SYSTICK_RECIP)) - 1;
-      
+
       // Initialize system timers, excluding watchdog
       // This must run first in main()
       void TimerInit(void)
@@ -57,4 +57,3 @@ namespace Anki
     }
   }
 }
-

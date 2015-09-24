@@ -4,93 +4,87 @@
 #include "board.h"
 #include "fsl_debug_console.h"
 #include "anki/cozmo/robot/hal.h"
+#include "anki/cozmo/robot/drop.h"
 #include "hal/portable.h"
 
 #include "spi.h"
 
+const int MAX_JPEG_DATA = 128;
+const int TRANSMISSION_SIZE = 98;
+static uint32_t spi_tx_buff[TRANSMISSION_SIZE];
+static uint8_t  spi_rx_buff[TRANSMISSION_SIZE];
 
-/*
-  In the final version, we will use the EOQ flag to mark when
-  the buffer has finished, and then we will clear the CONT_SCKE flag from MCR
-  so it doesn't keep clocking the Espressif.
-*/
+void Anki::Cozmo::HAL::TransmitDrop(const uint8_t* buf, int buflen, int eof) {
+  DropToWiFi drop;
+  uint8_t* txSrc = (uint8_t*) &drop;
+  uint8_t* txDst = (uint8_t*) spi_tx_buff;
 
-void bit_bang_test(void) {
-  const int DELAY = 100;
-  const int EARLY_CLOCKS = 10;
-  const int TRANSFER_SIZE = 96;
-  const int LATE_CLOCKS = 12;
-  const int PACKET_DELAY = 1000000;
-  
-  GPIO_PIN_SOURCE(PCS1, PTD,  4);
-  GPIO_PIN_SOURCE( SCK, PTE, 17);
-  GPIO_PIN_SOURCE(SOUT, PTE, 18);
-  GPIO_PIN_SOURCE( SIN, PTE, 19);
+  // This should be altered to 
+  memcpy(drop.payload, buf, buflen);  
+  drop.droplet = JPEG_LENGTH(buflen) | (eof ? jpegEOF : 0);
 
-  GPIO_OUT(GPIO_PCS1, PIN_PCS1);
-  GPIO_OUT(GPIO_SCK, PIN_SCK);
-  GPIO_OUT(GPIO_SOUT, PIN_SOUT);
-  GPIO_IN(GPIO_SIN, PIN_SIN);
+  for (int i = 0; i < sizeof(drop); i++, txDst += sizeof(uint32_t))
+    *(txDst) = *(txSrc++);
 
-  PORTD_PCR4  = PORT_PCR_MUX(1);
-  PORTE_PCR17 = PORT_PCR_MUX(1);
-  PORTE_PCR18 = PORT_PCR_MUX(1);
-  PORTE_PCR19 = PORT_PCR_MUX(1);
+  // Clear done flags for DMA
+  DMA_CDNE = DMA_CDNE_CDNE(2);
+  DMA_CDNE = DMA_CDNE_CDNE(3);
 
-  bool WS = false;
-
-  for(;;) {
-    for(int ec = 0; ec < EARLY_CLOCKS; ec++) {
-      GPIO_RESET(GPIO_SCK, PIN_SCK);
-      Anki::Cozmo::HAL::MicroWait(DELAY);
-      GPIO_SET(GPIO_SCK, PIN_SCK);
-      Anki::Cozmo::HAL::MicroWait(DELAY);
-    }
-    for(uint16_t w = 0; w < TRANSFER_SIZE;w++) {
-      if (WS) {
-        GPIO_SET(GPIO_PCS1, PIN_PCS1);
-      } else {
-        GPIO_RESET(GPIO_PCS1, PIN_PCS1);
-      }
-      WS = !WS;
-
-      for(int b = 0; b < 16; b++) {
-        if ((w >> b) & 1) {
-          GPIO_SET(GPIO_SOUT, PIN_SOUT);
-        } else {
-          GPIO_RESET(GPIO_SOUT, PIN_SOUT);
-        }
-        
-        GPIO_RESET(GPIO_SCK, PIN_SCK);
-        Anki::Cozmo::HAL::MicroWait(DELAY);
-        GPIO_SET(GPIO_SCK, PIN_SCK);
-        Anki::Cozmo::HAL::MicroWait(DELAY);
-      }
-    }
-    for(int ec = 0; ec < LATE_CLOCKS; ec++) {
-      GPIO_RESET(GPIO_SCK, PIN_SCK);
-      Anki::Cozmo::HAL::MicroWait(DELAY);
-      GPIO_SET(GPIO_SCK, PIN_SCK);
-      Anki::Cozmo::HAL::MicroWait(DELAY);
-    }
-    Anki::Cozmo::HAL::MicroWait(PACKET_DELAY);
-  }
+  // Enable DMA
+  SPIInitDMA();
+  DMA_ERQ |= DMA_ERQ_ERQ2_MASK | DMA_ERQ_ERQ3_MASK;
 }
 
-void spi_init(void) {
-  Anki::Cozmo::HAL::MicroWait(1000000);
+void Anki::Cozmo::HAL::SPIInitDMA(void) {
+  const uint32_t num_words = TRANSMISSION_SIZE;
+  const int transferSize = sizeof(uint32_t);
 
-  
-  const int size = 256;
-  uint32_t spi_buff[size]; // 512 bytes
+  // Disable DMA
+  DMA_ERQ &= ~DMA_ERQ_ERQ3_MASK & ~DMA_ERQ_ERQ2_MASK;
 
+  // Configure receive buffer
+  DMAMUX_CHCFG2 = (DMAMUX_CHCFG_ENBL_MASK | DMAMUX_CHCFG_SOURCE(14)); 
+
+  DMA_TCD2_SADDR          = (uint32_t)&(SPI0_POPR);
+  DMA_TCD2_SOFF           = 0;
+  DMA_TCD2_SLAST          = 0;
+
+  DMA_TCD2_DADDR          = (uint32_t)spi_rx_buff;
+  DMA_TCD2_DOFF           = 1;
+  DMA_TCD2_DLASTSGA       = -num_words;
+
+  DMA_TCD2_NBYTES_MLNO    = transferSize;                               // The minor loop moves 32 bytes per transfer
+  DMA_TCD2_BITER_ELINKNO  = num_words;                                  // Major loop iterations
+  DMA_TCD2_CITER_ELINKNO  = num_words;                                  // Set current interation count  
+  DMA_TCD2_ATTR           = (DMA_ATTR_SSIZE(0) | DMA_ATTR_DSIZE(0));    // Source/destination size (8bit)
+ 
+  DMA_TCD2_CSR            = DMA_CSR_DREQ_MASK;                          // clear ERQ @ end of major iteration               
+
+  // Configure transfer buffer
+  DMAMUX_CHCFG3 = (DMAMUX_CHCFG_ENBL_MASK | DMAMUX_CHCFG_SOURCE(15)); 
+
+  DMA_TCD3_SADDR          = (uint32_t)spi_tx_buff;
+  DMA_TCD3_SOFF           = transferSize;
+  DMA_TCD3_SLAST          = -num_words * transferSize;
+
+  DMA_TCD3_DADDR          = (uint32_t)&(SPI0_PUSHR);
+  DMA_TCD3_DOFF           = 0;
+  DMA_TCD3_DLASTSGA       = 0;
+
+  DMA_TCD3_NBYTES_MLNO    = transferSize;                               // The minor loop moves 32 bytes per transfer
+  DMA_TCD3_BITER_ELINKNO  = num_words;                                  // Major loop iterations
+  DMA_TCD3_CITER_ELINKNO  = num_words;                                  // Set current interation count  
+  DMA_TCD3_ATTR           = (DMA_ATTR_SSIZE(2) | DMA_ATTR_DSIZE(2));    // Source/destination size (8bit)
+ 
+  DMA_TCD3_CSR            = DMA_CSR_DREQ_MASK;                          // clear ERQ @ end of major iteration               
+}
+
+void Anki::Cozmo::HAL::SPIInit(void) {
   // Turn on power to DMA, PORTC and SPI0
   SIM_SCGC6 |= SIM_SCGC6_SPI0_MASK | SIM_SCGC6_DMAMUX_MASK;
   SIM_SCGC5 |= SIM_SCGC5_PORTE_MASK | SIM_SCGC5_PORTD_MASK;
   SIM_SCGC7 |= SIM_SCGC7_DMA_MASK;
 
-  //bit_bang_test();
-  
   // Configure SPI pins
   PORTD_PCR4  = PORT_PCR_MUX(2); // SPI0_PCS1
   PORTE_PCR17 = PORT_PCR_MUX(2); // SPI0_SCK
@@ -102,60 +96,28 @@ void spi_init(void) {
              SPI_MCR_DCONF(0) |
              SPI_MCR_SMPL_PT(0) |
              SPI_MCR_CLR_TXF_MASK |
-             SPI_MCR_CLR_RXF_MASK;
+             SPI_MCR_CLR_RXF_MASK |
+             SPI_MCR_CONT_SCKE_MASK;
 
   SPI0_CTAR0 = SPI_CTAR_BR(0) |
                SPI_CTAR_CPOL_MASK |
                SPI_CTAR_CPHA_MASK |
-               SPI_CTAR_FMSZ(15);
-  
-  SPI0_RSER = SPI_RSER_EOQF_RE_MASK;
+               SPI_CTAR_FMSZ(7);
+
+  SPI0_RSER = SPI_RSER_TFFF_RE_MASK | 
+              SPI_RSER_TFFF_DIRS_MASK |
+              SPI_RSER_RFDF_RE_MASK |
+              SPI_RSER_RFDF_DIRS_MASK;
 
   // Clear all status flags
   SPI0_SR = SPI0_SR;
 
-  // Enable IRQs
-  NVIC_SetPriority(SPI0_IRQn, 0);
-  NVIC_EnableIRQ(SPI0_IRQn);
+  for (int i = 0; i < TRANSMISSION_SIZE; i++) {
+    int k = i >> 1;
 
-  for (int i = 0; i < size; i++) {
-    spi_buff[i] = 
-        i |
-        SPI_PUSHR_CONT_MASK | 
-        SPI_PUSHR_PCS((i & 1) ? ~0: 0); //|
-        (i == (size-1) ? SPI_PUSHR_EOQ_MASK : 0);
-  }
-  
-  int rx_idx = 0, tx_idx = 0;
-  
-  while(true) {
-    for (int i = 0; i < 96; i++) {
-      while (false && SPI0_SR & SPI_SR_RFDF_MASK)
-      {
-        spi_buff[rx_idx] = (spi_buff[rx_idx] & ~ 0xFFFF) | SPI0_POPR;
-        rx_idx = (rx_idx + 1) % size;
-        SPI0_SR = SPI_SR_RFDF_MASK;
-      }
-
-      while (SPI0_SR & SPI_SR_TFFF_MASK)
-      {
-        SPI0_MCR |= SPI_MCR_CONT_SCKE_MASK;
-        SPI0_PUSHR = spi_buff[tx_idx];
-        tx_idx = (tx_idx + 1) % size;
-        SPI0_SR = SPI_SR_TFFF_MASK;
-
-        if (!tx_idx) Anki::Cozmo::HAL::MicroWait(10000);
-      }
-    }
+    spi_tx_buff[i] = 
+      (~i & 0xFF) |
+      SPI_PUSHR_CONT_MASK | 
+      SPI_PUSHR_PCS((~i & 1) ? ~0: 0);
   }
 }
-
-void SPI0_IRQHandler(void) {
-    // When the EOQ flag is set, clear our continuous clock mode.
-    while (SPI0_SR & SPI_SR_EOQF_MASK)
-    {
-      SPI0_MCR &= ~SPI_MCR_CONT_SCKE_MASK;
-      SPI0_SR = SPI_SR_EOQF_MASK;
-    }
-}
-

@@ -76,4 +76,6 @@ typedef struct
   uint32_t status;
 } RTIPState;
 
+#define JPEG_LENGTH(i) ((i >> 2)&jpegLenMask)
+
 #endif

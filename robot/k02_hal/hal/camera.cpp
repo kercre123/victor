@@ -186,17 +186,6 @@ namespace Anki
         DMA_TCD0_BITER_ELINKNO = 1; // Beginning major loop iteration (1 per interrupt)
         DMA_TCD0_DLASTSGA = -sizeof(dmaBuff_);    // Point back at start of buffer after each loop
 
-        // Set up DMA for UART1 transmit (5)
-        UART1_C2 = 0x88;  // DMA on transmit, transmit enabled
-        UART1_C5 = 0x80;
-        DMAMUX_CHCFG1 = DMAMUX_CHCFG_ENBL_MASK | 5;
-        
-        DMA_TCD1_NBYTES_MLNO = 1;        // Number of transfers in minor loop
-        DMA_TCD1_ATTR = DMA_ATTR_SSIZE(0)|DMA_ATTR_DSIZE(0);  // Source 8-bit, dest 8-bit
-        DMA_TCD1_SOFF = 1;          // Source (buffer) increments
-        DMA_TCD1_DOFF = 0;          // Destination (register) doesn't increment
-        DMA_TCD1_DADDR = (uint32_t)&UART1_D;
-
         // Hook DMA request 0 to HSYNC
         const int DMAMUX_PORTA = 49;    // This is not in the .h files for some reason
         DMAMUX_CHCFG0 = DMAMUX_CHCFG_ENBL_MASK | (DMAMUX_PORTA + PORT_INDEX(GPIO_HSYNC));     
@@ -294,6 +283,6 @@ void DMA0_IRQHandler(void)
     line = 0;
   }
 
-  DMA_CDNE = 0;   // Clear done channel 0
+  DMA_CDNE = DMA_CDNE_CDNE(0); // Clear done channel 0
   DMA_CINT = 0;   // Clear interrupt channel 0
 }
