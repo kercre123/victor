@@ -99,6 +99,8 @@ public class PatternPlayController : GameController {
     ActiveBlock.MovedAction += BlockMoved;
     ActiveBlock.TappedAction += BlockTapped;
     robot.StopFaceAwareness();
+    CozmoEmotionManager.instance.SetIdleAnimation("None");
+
   }
 
   protected override void OnDisable() {
@@ -324,7 +326,7 @@ public class PatternPlayController : GameController {
       blockLightConfigs[blockID] = (BlockLightConfig)(((int)blockLightConfigs[blockID] + tappedTimes) % System.Enum.GetNames(typeof(BlockLightConfig)).Length);
     }
     else if (currentInputMode == InputMode.DOUBLE) {
-      if (Time.time - lastTimeTapped[blockID] < 0.4f && Time.time - lastTimeTapped[blockID] > 0.15f) {
+      if (Time.time - lastTimeTapped[blockID] < 0.4f && Time.time - lastTimeTapped[blockID] > 0.1f) {
         blockLightConfigs[blockID] = (BlockLightConfig)(((int)blockLightConfigs[blockID] + 1) % System.Enum.GetNames(typeof(BlockLightConfig)).Length);
       }
       lastTimeTapped[blockID] = Time.time;
