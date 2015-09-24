@@ -123,7 +123,7 @@ namespace Anki {
       // initialzied to 0, to match the physical robot's initialization
       _frameId = 0;
 
-      ReadAnimationDir(false);
+      ReadAnimationDir();
       
       // Read in emotion and behavior manager Json
       Json::Value emotionConfig;
