@@ -59,6 +59,8 @@ namespace Anki {
       // zero, any keyframes buffered for that track will be ignored.
       void SetTracksToPlay(AnimTrackFlag tracksToPlay);
       
+      u8 GetCurrentTag();
+      
     } // namespace AnimationController
   } // namespcae Cozmo
 } // namespace Anki

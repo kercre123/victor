@@ -95,8 +95,6 @@ namespace Anki {
     , _isPickingOrPlacing(false)
     , _isPickedUp(false)
     , _isMoving(false)
-    , _isAnimating(false)
-    , _isIdleAnimating(false)
     , _battVoltage(5)
     , _imageSendMode(ImageSendMode::Off)
     , _carryingMarker(nullptr)
@@ -109,6 +107,8 @@ namespace Anki {
     , _numAnimationBytesPlayed(0)
     , _numAnimationBytesStreamed(0)
     , _imageDeChunker(*(new Vision::ImageDeChunker()))
+    , _animationTag(0)
+    , _emotionMgr(*this)
     {
       _poseHistory = new RobotPoseHistory();
       PRINT_NAMED_INFO("Robot.Robot", "Created");
@@ -119,8 +119,9 @@ namespace Anki {
       Delocalize();
       InitRobotMessageComponent(_msgHandler,robotID);
       
-      _proceduralFace.MarkAsSentToRobot(true);
-      _lastProceduralFace.MarkAsSentToRobot(false);
+      _proceduralFace.MarkAsSentToRobot(false);
+      _proceduralFace.SetTimeStamp(1); // Make greater than lastFace's timestamp, so it gets streamed
+      _lastProceduralFace.MarkAsSentToRobot(true);
       
       // The call to Delocalize() will increment frameID, but we want it to be
       // initialzied to 0, to match the physical robot's initialization
@@ -139,19 +140,30 @@ namespace Anki {
 
       ReadAnimationDir(false);
       
-      // Read in behavior manager Json
+      // Read in emotion and behavior manager Json
+      Json::Value emotionConfig;
       Json::Value behaviorConfig;
       if (nullptr != _dataPlatform)
       {
-        const std::string jsonFilename = "config/basestation/config/behavior_config.json";
-        const bool success = _dataPlatform->readAsJson(Util::Data::Scope::Resources, jsonFilename, behaviorConfig);
+        std::string jsonFilename = "config/basestation/config/behavior_config.json";
+        bool success = _dataPlatform->readAsJson(Util::Data::Scope::Resources, jsonFilename, behaviorConfig);
         if (!success)
         {
           PRINT_NAMED_ERROR("Robot.BehaviorConfigJsonNotFound",
                             "Behavior Json config file %s not found.",
                             jsonFilename.c_str());
         }
+        
+        jsonFilename = "config/basestation/config/emotion_config.json";
+        success = _dataPlatform->readAsJson(Util::Data::Scope::Resources, jsonFilename, emotionConfig);
+        if (!success)
+        {
+          PRINT_NAMED_ERROR("Robot.EmotionConfigJsonNotFound",
+                            "Emotion Json config file %s not found.",
+                            jsonFilename.c_str());
+        }
       }
+      _emotionMgr.Init(emotionConfig);
       _behaviorMgr.Init(behaviorConfig);
       
       SetHeadAngle(_currentHeadAngle);
@@ -333,17 +345,12 @@ namespace Anki {
       
       SetPickedUp((bool)( msg.status & (uint16_t)RobotStatusFlag::IS_PICKED_UP ));
       
-      _isAnimating = static_cast<bool>(msg.status & (uint16_t)RobotStatusFlag::IS_ANIMATING);
-      _isIdleAnimating = _animationStreamer.IsIdleAnimating();
-      
-      //_numAnimationBytesPlayed = msg.numAnimBytesPlayed;
-      
+      _numAnimationBytesPlayed = msg.numAnimBytesPlayed;
+      _animationTag = msg.animTag;
       _battVoltage = (f32)msg.battVolt10x * 0.1f;
-      
       _isMoving = static_cast<bool>(msg.status & (uint16_t)RobotStatusFlag::IS_MOVING);
       _isHeadMoving = !static_cast<bool>(msg.status & (uint16_t)RobotStatusFlag::HEAD_IN_POS);
       _isLiftMoving = !static_cast<bool>(msg.status & (uint16_t)RobotStatusFlag::LIFT_IN_POS);
-      
       _leftWheelSpeed_mmps = msg.lwheel_speed_mmps;
       _rightWheelSpeed_mmps = msg.rwheel_speed_mmps;
       
@@ -466,9 +473,13 @@ namespace Anki {
       
       // Engine modifications to state message.
       // TODO: Should this just be a different message? Or one that includes the state message from the robot?
+<<<<<<< HEAD
       RobotState stateMsg(msg);
       if (_isIdleAnimating) { stateMsg.status |= (uint16_t)RobotStatusFlag::IS_ANIMATING_IDLE; }
       
+=======
+      MessageRobotState stateMsg(msg);
+>>>>>>> master
       
       // Send state to visualizer for displaying
       VizManager::getInstance()->SendRobotState(stateMsg,
@@ -532,7 +543,7 @@ namespace Anki {
       RotationVector3d Rvec(-p->GetHeadAngle(), Y_AXIS_3D());
       camPose.RotateBy(Rvec);
       
-      // Precompute with robot body to neck pose
+      // Precompose with robot body to neck pose
       camPose.PreComposeWith(_neckPose);
       
       // Set parent pose to be the historical robot pose
@@ -755,7 +766,6 @@ namespace Anki {
        */
     }
     
-    
     Result Robot::Update(void)
     {
 #if(0)
@@ -859,6 +869,7 @@ namespace Anki {
                                                      trackerQuad.bottomRight_x, trackerQuad.bottomRight_y,
                                                      trackerQuad.bottomLeft_x, trackerQuad.bottomLeft_y);
         }
+<<<<<<< HEAD
 
         {
           DockingErrorSignal dockingErrorSignal;
@@ -877,6 +888,51 @@ namespace Anki {
             // Try to use this for closed-loop control by sending it on to the robot
             SendMessage(RobotInterface::EngineToRobot(std::move(dockingErrorSignal)));
           }
+=======
+        
+        //MessageDockingErrorSignal dockingErrorSignal;
+        std::pair<Pose3d, TimeStamp_t> markerPoseWrtCamera;
+        if(true == _visionProcessor.CheckMailbox(markerPoseWrtCamera)) {
+          
+          // Convert from camera frame to robot frame
+          Anki::Cozmo::RobotPoseStamp p;
+          TimeStamp_t t;
+          _poseHistory->GetRawPoseAt(markerPoseWrtCamera.second, t, p);
+          
+          // Hook the pose coming out of the vision system up to the historical
+          // camera at that timestamp
+          Vision::Camera histCamera(GetHistoricalCamera(&p, t));
+          markerPoseWrtCamera.first.SetParent(&histCamera.GetPose());
+          /*
+          // Get the pose w.r.t. the (historical) robot pose instead of the camera pose
+          Pose3d markerPoseWrtRobot;
+          if(false == markerPoseWrtCamera.first.GetWithRespectTo(p.GetPose(), markerPoseWrtRobot)) {
+            PRINT_NAMED_ERROR("Robot.Update.PoseOriginFail",
+                              "Could not get marker pose w.r.t. robot.");
+            return RESULT_FAIL;
+          }
+          */
+          //Pose3d poseWrtRobot = poseWrtCam;
+          //poseWrtRobot.PreComposeWith(camWrtRobotPose);
+          Pose3d markerPoseWrtRobot(markerPoseWrtCamera.first);
+          markerPoseWrtRobot.PreComposeWith(histCamera.GetPose());
+          
+          MessageDockingErrorSignal dockErrMsg;
+          dockErrMsg.timestamp = markerPoseWrtCamera.second;
+          dockErrMsg.x_distErr = markerPoseWrtRobot.GetTranslation().x();
+          dockErrMsg.y_horErr  = markerPoseWrtRobot.GetTranslation().y();
+          dockErrMsg.z_height  = markerPoseWrtRobot.GetTranslation().z();
+          dockErrMsg.angleErr  = markerPoseWrtRobot.GetRotation().GetAngleAroundZaxis().ToFloat() + M_PI_2;
+                    
+          // Visualize docking error signal
+          VizManager::getInstance()->SetDockingError(dockErrMsg.x_distErr,
+                                                     dockErrMsg.y_horErr,
+                                                     dockErrMsg.angleErr);
+          
+          // Try to use this for closed-loop control by sending it on to the robot
+          SendMessage(dockErrMsg);
+          
+>>>>>>> master
         }
         {
           RobotInterface::PanAndTilt panTiltHead;
@@ -907,9 +963,13 @@ namespace Anki {
       // module(s) would do.  e.g. Some combination of game state, build planner,
       // personality planner, etc.
       
+      const double currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+      
+      _emotionMgr.Update(currentTime);
+      
       std::string behaviorName("<disabled>");
       if(_isBehaviorMgrEnabled) {
-        _behaviorMgr.Update(BaseStationTimer::getInstance()->GetCurrentTimeInSeconds());
+        _behaviorMgr.Update(currentTime);
         
         const IBehavior* behavior = _behaviorMgr.GetCurrentBehavior();
         if(behavior != nullptr) {
@@ -1241,6 +1301,12 @@ namespace Anki {
       _trackToObjectID.UnSet();
       return RESULT_OK;
     }
+    
+    Result Robot::DisableTrackToFace()
+    {
+      _trackToFaceID = Vision::TrackedFace::UnknownFace;
+      return RESULT_OK;
+    }
       
     Result Robot::DriveWheels(const f32 lwheel_speed_mmps,
                               const f32 rwheel_speed_mmps)
@@ -1267,11 +1333,11 @@ namespace Anki {
       return SendPlaceObjectOnGround(0, 0, 0, useManualSpeed);
     }
     
-    Result Robot::PlayAnimation(const std::string& animName, const u32 numLoops)
+    u8 Robot::PlayAnimation(const std::string& animName, const u32 numLoops)
     {
-      Result lastResult = _animationStreamer.SetStreamingAnimation(animName, numLoops);
+      u8 tag = _animationStreamer.SetStreamingAnimation(animName, numLoops);
       _lastPlayedAnimationId = animName;
-      return lastResult;
+      return tag;
     }
     
     Result Robot::SetIdleAnimation(const std::string &animName)
@@ -1774,10 +1840,23 @@ namespace Anki {
     Result Robot::DockWithObject(const ObjectID objectID,
                                  const Vision::KnownMarker* marker,
                                  const Vision::KnownMarker* marker2,
+<<<<<<< HEAD
                                  const DockAction dockAction,
+=======
+                                 const DockAction_t dockAction,
+                                 const f32 placementOffsetX_mm,
+                                 const f32 placementOffsetY_mm,
+                                 const f32 placementOffsetAngle_rad,
+>>>>>>> master
                                  const bool useManualSpeed)
     {
-      return DockWithObject(objectID, marker, marker2, dockAction, 0, 0, u8_MAX, useManualSpeed);
+      return DockWithObject(objectID,
+                            marker,
+                            marker2,
+                            dockAction,
+                            0, 0, u8_MAX,
+                            placementOffsetX_mm, placementOffsetY_mm, placementOffsetAngle_rad,
+                            useManualSpeed);
     }
     
     Result Robot::DockWithObject(const ObjectID objectID,
@@ -1787,6 +1866,9 @@ namespace Anki {
                                  const u16 image_pixel_x,
                                  const u16 image_pixel_y,
                                  const u8 pixel_radius,
+                                 const f32 placementOffsetX_mm,
+                                 const f32 placementOffsetY_mm,
+                                 const f32 placementOffsetAngle_rad,
                                  const bool useManualSpeed)
     {
       ActionableObject* object = dynamic_cast<ActionableObject*>(_blockWorld.GetObjectByID(objectID));
@@ -1826,7 +1908,8 @@ namespace Anki {
                                    dockAction == DockAction::DA_CROSS_BRIDGE);
         
         // Tell the VisionSystem to start tracking this marker:
-        _visionProcessor.SetMarkerToTrack(marker->GetCode(), marker->GetSize(), image_pixel_x, image_pixel_y, checkAngleX);
+        _visionProcessor.SetMarkerToTrack(marker->GetCode(), marker->GetSize(), image_pixel_x, image_pixel_y, checkAngleX,
+                                          placementOffsetX_mm, placementOffsetY_mm, placementOffsetAngle_rad);
       }
       
       return sendResult;
@@ -1842,6 +1925,18 @@ namespace Anki {
                                      const bool useManualSpeed)
     {
       return SendMessage(RobotInterface::EngineToRobot(::Anki::Cozmo::DockWithObject(0.0f, dockAction, useManualSpeed)));
+    }
+    
+    const std::set<ObjectID> Robot::GetCarryingObjects() const
+    {
+      std::set<ObjectID> objects;
+      if (_carryingObjectID.IsSet()) {
+        objects.insert(_carryingObjectID);
+      }
+      if (_carryingObjectOnTopID.IsSet()) {
+        objects.insert(_carryingObjectOnTopID);
+      }
+      return objects;
     }
     
     void Robot::SetCarryingObject(ObjectID carryObjectID)
@@ -1876,34 +1971,48 @@ namespace Anki {
       }
     }
     
-    void Robot::UnSetCarryingObject()
+    void Robot::UnSetCarryingObjects()
     {
-      ObservableObject* object = _blockWorld.GetObjectByID(_carryingObjectID);
-      if(object == nullptr) {
-        PRINT_NAMED_ERROR("Robot.UnSetCarryingObject",
-                          "Object %d robot %d thought it was carrying no longer exists in the world.\n",
-                          _carryingObjectID.GetValue(), GetID());
-      } else {
-        ActionableObject* carriedObject = dynamic_cast<ActionableObject*>(object);
-        if(carriedObject == nullptr) {
-          // This really should not happen
-          PRINT_NAMED_ERROR("Robot.UnSetCarryingObject",
-                            "Carried object %d could not be cast as an ActionableObject.\n",
-                            _carryingObjectID.GetValue());
-        } else if(carriedObject->IsBeingCarried() == false) {
-          PRINT_NAMED_WARNING("Robot.UnSetCarryingObject",
-                              "Robot %d thinks it is carrying object %d but that object "
-                              "does not think it is being carried.\n", GetID(), _carryingObjectID.GetValue());
-          
+      std::set<ObjectID> carriedObjectIDs = GetCarryingObjects();
+      for (auto& objID : carriedObjectIDs) {
+        ObservableObject* object = _blockWorld.GetObjectByID(objID);
+        if(object == nullptr) {
+          PRINT_NAMED_ERROR("Robot.UnSetCarryingObjects",
+                            "Object %d robot %d thought it was carrying no longer exists in the world.\n",
+                            objID.GetValue(), GetID());
         } else {
+<<<<<<< HEAD
           carriedObject->SetBeingCarried(false);
           
           // Tell the robot it's not carrying anything
           SendSetCarryState(CarryState::CARRY_NONE);
+=======
+          ActionableObject* carriedObject = dynamic_cast<ActionableObject*>(object);
+          if(carriedObject == nullptr) {
+            // This really should not happen
+            PRINT_NAMED_ERROR("Robot.UnSetCarryingObjects",
+                              "Carried object %d could not be cast as an ActionableObject.\n",
+                              objID.GetValue());
+          } else if(carriedObject->IsBeingCarried() == false) {
+            PRINT_NAMED_WARNING("Robot.UnSetCarryingObjects",
+                                "Robot %d thinks it is carrying object %d but that object "
+                                "does not think it is being carried.\n", GetID(), objID.GetValue());
+            
+          } else {
+            carriedObject->SetBeingCarried(false);
+          }
+>>>>>>> master
         }
       }
+      
+      // Tell the robot it's not carrying anything
+      if (_carryingObjectID.IsSet()) {
+        SendSetCarryState(CARRY_NONE);
+      }
+
       // Even if the above failed, still mark the robot's carry ID as unset
       _carryingObjectID.UnSet();
+      _carryingObjectOnTopID.UnSet();
     }
     
     Result Robot::SetObjectAsAttachedToLift(const ObjectID& objectID, const Vision::KnownMarker* objectMarker)
@@ -2024,7 +2133,7 @@ namespace Anki {
                        object->GetPose().GetTranslation().y(),
                        object->GetPose().GetTranslation().z());
 
-      UnSetCarryingObject(); // also sets carried object as not being carried anymore
+      UnSetCarryingObjects(); // also sets carried objects as not being carried anymore
       _carryingMarker = nullptr;
       
       if(_carryingObjectOnTopID.IsSet()) {
@@ -2374,7 +2483,7 @@ namespace Anki {
       using namespace Quad;
       for(CornerName iCorner = FirstCorner; iCorner < NumCorners; ++iCorner) {
         // Rotate to given pose
-        boundingQuad[iCorner] = R * CanonicalBoundingBoxXY[iCorner];
+        boundingQuad[iCorner] = R * boundingQuad[iCorner];
       }
       
       // Re-center

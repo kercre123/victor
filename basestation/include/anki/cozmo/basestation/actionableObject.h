@@ -54,7 +54,8 @@ namespace Anki {
                                     const std::set<PreActionPose::ActionType>& withAction = std::set<PreActionPose::ActionType>(),
                                     const std::set<Vision::Marker::Code>& withCode = std::set<Vision::Marker::Code>(),
                                     const std::vector<std::pair<Quad2f,ObjectID> >& obstacles = std::vector<std::pair<Quad2f,ObjectID> >(),
-                                    const Pose3d* reachableFromPose = nullptr);
+                                    const Pose3d* reachableFromPose = nullptr,
+                                    const f32 offset_mm = 0);
       
       // If the object is selected, draws it using the "selected" color.
       // Otherwise draws it in the object's defined color.
@@ -104,11 +105,11 @@ namespace Anki {
       // the pose must be vertically-oriented to be "valid". ReachableFromPose
       // is not used by default. Derived classes can implement their own
       // specific checks, but note that reachableFromPose could be nullptr
-      // (meaning it was unspecified).
+      // (meaning it was unspecified).     
       virtual bool IsPreActionPoseValid(const PreActionPose& preActionPose,
                                         const Pose3d* reachableFromPose,
                                         const std::vector<std::pair<Quad2f,ObjectID> >& obstacles) const;
-      
+
       // TODO: Define a method for adding LEDs to active objects
       //void AddActiveLED(const Pose3d& poseWrtObject);
       

@@ -390,7 +390,7 @@ namespace Anki
               if (_robot->GetCarryingObject() == observedObject->GetID()) {
                 PRINT_NAMED_INFO("BlockWorld.AddAndUpdateObjects.SawCarryObject",
                                  "Uncarrying object ID=%d because it was observed\n", (int)observedObject->GetID());
-                _robot->UnSetCarryingObject();
+                _robot->UnSetCarryingObjects();
               }
             } else {
               PRINT_NAMED_WARNING("BlockWorld.AddAndUpdateObjects.UpdatingByType",
@@ -455,6 +455,32 @@ namespace Anki
           
         } else {
           
+          // Check if there are objects on top of this object that need to be moved since the
+          // object it's resting on has moved.
+          const f32 STACKED_HEIGHT_TOL_MM = 15.f; // TODO: make this a parameter somewhere
+          ObservableObject* objectOnBottom = matchingObject;
+          ObservableObject* objectOnTop = FindObjectOnTopOf(*objectOnBottom, STACKED_HEIGHT_TOL_MM);
+          while(objectOnTop != nullptr) {
+            // If the object was already updated this timestamp then don't bother doing this.
+            if (objectOnTop->GetLastObservedTime() != objSeen->GetLastObservedTime()) {
+              
+              // Get difference in position between top object's pose and the previous pose of the observed bottom object.
+              // Apply difference to the new observed pose to get the new top object pose.
+              Pose3d topPose = objectOnTop->GetPose();
+              Pose3d bottomPose = objectOnBottom->GetPose();
+              Vec3f diff = topPose.GetTranslation() - bottomPose.GetTranslation();
+              topPose.SetTranslation( objSeen->GetPose().GetTranslation() + diff );
+              objectOnTop->SetPose(topPose);
+            }
+            
+            // See if there's an object above this object
+            objectOnBottom = objectOnTop;
+            objectOnTop = FindObjectOnTopOf(*objectOnBottom, STACKED_HEIGHT_TOL_MM);
+          }
+          // TODO: Do the same adjustment for blocks that are _below_ observed blocks? Does this make sense?
+          
+          
+          // Update observed object's pose
           matchingObject->SetPose( objSeen->GetPose() );
           
           // Update lastObserved times of this object
@@ -731,7 +757,7 @@ namespace Anki
                         "but wasn't.\n", unobserved.object->GetID().GetValue());
           
           ClearObject(unobserved.object, unobserved.type, unobserved.family);
-        } else if(unobserved.family != ObjectFamily::Mat && unobserved.object->GetID() != _robot->GetCarryingObject()) {
+        } else if(unobserved.family != ObjectFamily::Mat && _robot->GetCarryingObjects().count(unobserved.object->GetID()) == 0) {
           // If the object should _not_ be visible (i.e. none of its markers project
           // into the camera), but some part of the object is within frame, it is
           // close enough, and was seen fairly recently, then
@@ -888,9 +914,7 @@ namespace Anki
 
     void BlockWorld::GetObstacles(std::vector<std::pair<Quad2f,ObjectID> >& boundingBoxes, const f32 padding) const
     {
-      std::set<ObjectID> ignoreIDs = {
-        _robot->GetCarryingObject() // TODO: what if robot is carrying multiple objects?
-      };
+      std::set<ObjectID> ignoreIDs = _robot->GetCarryingObjects();
       
       // If the robot is localized, check to see if it is "on" the mat it is
       // localized to. If so, ignore the mat as an obstacle.
@@ -1730,7 +1754,7 @@ namespace Anki
                      ((robotBottom >= blockBottom) && (robotBottom <= blockTop)));
                      */
                     
-                    const bool bboxIntersects   = objectBBox.Intersects(_robot->GetBoundingQuadXY());
+                    const bool bboxIntersects   = objectBBox.Intersects(_robot->GetBoundingQuadXY(ROBOT_BBOX_PADDING_FOR_OBJECT_DELETION));
                     
                     if( inSamePlane && bboxIntersects )
                     {
@@ -1841,7 +1865,7 @@ namespace Anki
                            ObjectTypeToString(object->GetType()),
                            object->GetID().GetValue(),
                            _robot->GetID());
-          _robot->UnSetCarryingObject();
+          _robot->UnSetCarryingObjects();
         }
         
         if(_selectedObject == object->GetID()) {
@@ -1887,6 +1911,8 @@ namespace Anki
                                                             f32 zTolerance) const
     {
       Point3f sameDistTol(objectOnBottom.GetSize());
+      sameDistTol.x() *= 0.5f;  // An object should only be considered to be on top if it's midpoint is actually on top of the bottom object's top surface.
+      sameDistTol.y() *= 0.5f;
       sameDistTol.z() = zTolerance;
       sameDistTol = objectOnBottom.GetPose().GetRotation() * sameDistTol;
       sameDistTol.Abs();

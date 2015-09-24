@@ -17,7 +17,7 @@
 
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/cozmo/shared/cozmoTypes.h"
-#include "anki/cozmo/basestation/animation.h"
+#include "anki/cozmo/basestation/animation/animation.h"
 #include <unordered_map>
 #include <vector>
 

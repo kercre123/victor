@@ -38,10 +38,11 @@
 #include "clad/types/ledTypes.h"
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/blockWorld.h"
+#include "anki/cozmo/basestation/emotionManager.h"
 #include "anki/cozmo/basestation/faceWorld.h"
 #include "anki/cozmo/basestation/visionProcessingThread.h"
 #include "anki/cozmo/basestation/actionContainers.h"
-#include "anki/cozmo/basestation/animationStreamer.h"
+#include "anki/cozmo/basestation/animation/animationStreamer.h"
 #include "anki/cozmo/basestation/proceduralFace.h"
 #include "anki/cozmo/basestation/cannedAnimationContainer.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
@@ -254,6 +255,7 @@ public:
     const ObjectID&  GetDockObject()          const {return _dockObjectID;}
     const ObjectID&  GetCarryingObject()      const {return _carryingObjectID;}
     const ObjectID&  GetCarryingObjectOnTop() const {return _carryingObjectOnTopID;}
+    const std::set<ObjectID> GetCarryingObjects() const;
     const Vision::KnownMarker*  GetCarryingMarker() const {return _carryingMarker; }
 
     bool IsCarryingObject()   const {return _carryingObjectID.IsSet(); }
@@ -261,7 +263,7 @@ public:
     bool IsPickedUp()         const {return _isPickedUp;}
     
     void SetCarryingObject(ObjectID carryObjectID);
-    void UnSetCarryingObject();
+    void UnSetCarryingObjects();
     
     // Tell the physical robot to dock with the specified marker
     // of the specified object that it should currently be seeing.
@@ -277,6 +279,9 @@ public:
                               const u16 image_pixel_x,
                               const u16 image_pixel_y,
                               const u8 pixel_radius,
+                              const f32 placementOffsetX_mm = 0,
+                              const f32 placementOffsetY_mm = 0,
+                              const f32 placementOffsetAngle_rad = 0,
                               const bool useManualSpeed = false);
     
     // Same as above but without specifying image location for marker
@@ -284,6 +289,9 @@ public:
                           const Vision::KnownMarker* marker,
                           const Vision::KnownMarker* marker2,
                           const DockAction dockAction,
+                          const f32 placementOffsetX_mm = 0,
+                          const f32 placementOffsetY_mm = 0,
+                          const f32 placementOffsetAngle_rad = 0,
                           const bool useManualSpeed = false);
     
     // Transitions the object that robot was docking with to the one that it
@@ -412,7 +420,8 @@ public:
     
     // Plays specified animation numLoops times.
     // If numLoops == 0, animation repeats forever.
-    Result PlayAnimation(const std::string& animName, const u32 numLoops = 1);
+    // Returns the streaming tag, so you can find out when it is done.
+    u8 PlayAnimation(const std::string& animName, const u32 numLoops = 1);
     
     // Set the animation to be played when no other animation has been specified.
     // Use the empty string to disable idle animation.
@@ -450,10 +459,15 @@ public:
     void ReadAnimationDir(bool playLoadedAnimation);
 
     // Returns true if the robot is currently playing an animation, according
-    // to most recent state message.
+    // to most recent state message. NOTE: Will also be true if the animation
+    // is the "idle" animation!
     bool IsAnimating() const;
     
+    // Returns true iff the robot is currently playing the idle animation.
     bool IsIdleAnimating() const;
+    
+    // Returns the "tag" of the 
+    u8 GetCurrentAnimationTag() const;
 
     Result SyncTime();
     void SetSyncTimeAcknowledged(bool ack);
@@ -581,6 +595,8 @@ public:
       ASSERT_NAMED(_externalInterface != nullptr, "Robot.ExternalInterface.nullptr"); return _externalInterface; }
     inline void SetImageSendMode(ImageSendMode newMode) { _imageSendMode = newMode; }
     inline const ImageSendMode GetImageSendMode() const { return _imageSendMode; }
+    
+    inline EmotionManager& GetEmotionManager() { return _emotionMgr; }
   protected:
     IExternalInterface* _externalInterface;
     Util::Data::DataPlatform* _dataPlatform;
@@ -685,8 +701,6 @@ public:
     bool             _isMoving;
     bool             _isHeadMoving;
     bool             _isLiftMoving;
-    bool             _isAnimating;
-    bool             _isIdleAnimating;
     f32              _battVoltage;
     ImageSendMode _imageSendMode;
     // Pose history
@@ -773,6 +787,10 @@ public:
     s32 _numFreeAnimationBytes;
     s32 _numAnimationBytesPlayed;
     s32 _numAnimationBytesStreamed;
+    u8  _animationTag;
+    
+    ///////// Emotion ////////
+    EmotionManager _emotionMgr;
     
     ///////// Messaging ////////
     // These methods actually do the creation of messages and sending
@@ -919,31 +937,24 @@ inline void Robot::SetCameraCalibration(const Vision::CameraCalibration& calib)
 inline const Vision::CameraCalibration& Robot::GetCameraCalibration() const
 { return _cameraCalibration; }
 
-inline const f32 Robot::GetHeadAngle() const
-{ return _currentHeadAngle; }
-
-inline const f32 Robot::GetLiftAngle() const
-{ return _currentLiftAngle; }
-
-inline void Robot::SetRamp(const ObjectID& rampID, const Ramp::TraversalDirection direction) {
-  _rampID = rampID;
-  _rampDirection = direction;
-}
-
 inline Result Robot::SetDockObjectAsAttachedToLift(){
   return SetObjectAsAttachedToLift(_dockObjectID, _dockMarker);
 }
 
+inline u8 Robot::GetCurrentAnimationTag() const {
+  return _animationTag;
+}
+
 inline bool Robot::IsAnimating() const {
-  return _isAnimating;
+  return _animationTag != 0;
 }
 
 inline bool Robot::IsIdleAnimating() const {
-  return _isIdleAnimating;
+  return _animationTag == 255;
 }
 
 inline Result Robot::TurnOffObjectLights(const ObjectID& objectID) {
-  return SetObjectLights(objectID, WhichCubeLEDs::ALL, 0, 0, 10000, 10000, 0, 0,
+  return SetObjectLights(objectID, WhichBlockLEDs::ALL, 0, 0, 10000, 10000, 0, 0,
                          false, MakeRelativeMode::RELATIVE_LED_MODE_OFF, {0.f,0.f});
 }
 

@@ -181,10 +181,14 @@ namespace Anki {
                 break;
               case DA_PLACE_LOW:
                 LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY);
+                dockOffsetDistX_ += ORIGIN_TO_LOW_LIFT_DIST_MM;
+                break;
+              case DA_PLACE_LOW_BLIND:
+                LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY);
                 break;
               case DA_PLACE_HIGH:
                 LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY);
-                dockOffsetDistX_ = ORIGIN_TO_HIGH_PLACEMENT_DIST_MM;
+                dockOffsetDistX_ += ORIGIN_TO_HIGH_PLACEMENT_DIST_MM;
                 break;
               case DA_ROLL_LOW:
                 LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY);
@@ -218,7 +222,7 @@ namespace Anki {
 #endif
             if (LiftController::IsInPosition() && HeadController::IsInPosition()) {
               
-              if (action_ == DA_PLACE_LOW) {
+              if (action_ == DA_PLACE_LOW_BLIND) {
                 DockingController::StartDockingToRelPose(dockOffsetDistX_,
                                                          dockOffsetDistY_,
                                                          dockOffsetAng_,
@@ -234,6 +238,7 @@ namespace Anki {
                   case DA_PICKUP_LOW:
                   case DA_PLACE_HIGH:
                     pointOfNoReturnDist = LOW_DOCK_POINT_OF_NO_RETURN_DIST_MM;
+                    break;
                   default:
                     break;
                 }
@@ -318,6 +323,7 @@ namespace Anki {
                   } // PICKUP
                     
                   case DA_PLACE_LOW:
+                  case DA_PLACE_LOW_BLIND:
                   case DA_PLACE_HIGH:
                   case DA_ROLL_LOW:
                   {
@@ -352,6 +358,7 @@ namespace Anki {
             mode_ = MOVING_LIFT_POSTDOCK;
             switch(action_) {
               case DA_PLACE_LOW:
+              case DA_PLACE_LOW_BLIND:
               {
                 LiftController::SetDesiredHeight(LIFT_HEIGHT_LOWDOCK);
                 break;
@@ -407,6 +414,7 @@ namespace Anki {
                 } // HIGH
                 case DA_PICKUP_LOW:
                 case DA_PLACE_LOW:
+                case DA_PLACE_LOW_BLIND:
                 case DA_ROLL_LOW:
                 {
                   HeadController::SetDesiredAngle(DEG_TO_RAD(-15));
@@ -429,6 +437,7 @@ namespace Anki {
                 } // PICKUP
 
                 case DA_PLACE_LOW:
+                case DA_PLACE_LOW_BLIND:
                 case DA_PLACE_HIGH:
                 case DA_ROLL_LOW:
                 {
@@ -594,24 +603,28 @@ namespace Anki {
         return carryState_;
       }
       
-      void DockToBlock(const bool useManualSpeed,
-                       const DockAction action)
+      void DockToBlock(const DockAction action,
+                       const f32 rel_x,
+                       const f32 rel_y,
+                       const f32 rel_angle,
+                       const bool useManualSpeed)
       {
 #if(DEBUG_PAP_CONTROLLER)
         PRINT("PAP: DOCK TO BLOCK (action %d)\n", action);
 #endif
 
-        if (action == DA_PLACE_LOW) {
-          PRINT("WARNING: Invalid action %d for DockToBlock(). Ignoring.\n", action);
-          return;
+        action_ = action;
+
+        if (action_ == DA_PLACE_LOW_BLIND) {
+          dockOffsetDistX_ = rel_x;
+          dockOffsetDistY_ = rel_y;
+          dockOffsetAng_ = rel_angle;
+        } else {
+          dockOffsetDistX_ = 0;
+          dockOffsetDistY_ = 0;
+          dockOffsetAng_ = 0;
         }
         
-        action_ = action;
-        
-        dockOffsetDistX_ = 0;
-        dockOffsetDistY_ = 0;
-        dockOffsetAng_ = 0;
-        
         useManualSpeed_ = useManualSpeed;
         
         relMarkerX_ = -1.f;
@@ -620,22 +633,10 @@ namespace Anki {
         lastActionSucceeded_ = false;
       }
 
-      
       void PlaceOnGround(const f32 rel_x, const f32 rel_y, const f32 rel_angle, const bool useManualSpeed)
       {
-        action_ = DA_PLACE_LOW;
-        dockOffsetDistX_ = rel_x;
-        dockOffsetDistY_ = rel_y;
-        dockOffsetAng_ = rel_angle;
-        
-        useManualSpeed_ = useManualSpeed;
-        
-        relMarkerX_ = -1.f;
-        
-        mode_ = SET_LIFT_PREDOCK;
-        lastActionSucceeded_ = false;
+        DockToBlock(DA_PLACE_LOW_BLIND, rel_x, rel_y, rel_angle, useManualSpeed);
       }
-
       
     } // namespace PickAndPlaceController
   } // namespace Cozmo

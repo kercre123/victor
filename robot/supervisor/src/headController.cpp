@@ -15,7 +15,13 @@ namespace HeadController {
     namespace {
       
       // TODO: Ideally, this value should be calibrated
+#ifdef SIMULATOR
       const Radians HEAD_CAL_OFFSET = DEG_TO_RAD(0);
+#elif defined(COZMO_ROBOT_V40)
+      const Radians HEAD_CAL_OFFSET = DEG_TO_RAD(-4);
+#else
+      const Radians HEAD_CAL_OFFSET = DEG_TO_RAD(2);
+#endif
       
       const Radians ANGLE_TOLERANCE = DEG_TO_RAD(2.f);
       
@@ -108,7 +114,15 @@ namespace HeadController {
     
     void Disable()
     {
-      enable_ = false;
+      if(enable_) {
+        enable_ = false;
+        
+        inPosition_ = true;
+        angleErrorSum_ = 0.f;
+        
+        power_ = 0;
+        HAL::MotorSetPower(HAL::MOTOR_HEAD, power_);
+      }
     }
     
 

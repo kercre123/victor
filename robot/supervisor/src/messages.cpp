@@ -178,9 +178,9 @@ namespace Anki {
         robotState_.status |= (IMUFilter::IsPickedUp() ? IS_PICKED_UP : 0);
         //robotState_.status |= (ProxSensors::IsForwardBlocked() ? IS_PROX_FORWARD_BLOCKED : 0);
         //robotState_.status |= (ProxSensors::IsSideBlocked() ? IS_PROX_SIDE_BLOCKED : 0);
-        robotState_.status |= (AnimationController::IsPlaying() ? IS_ANIMATING : 0);
-        robotState_.status |=  (LiftController::IsInPosition() ? LIFT_IN_POS : 0);
-        robotState_.status |=  (HeadController::IsInPosition() ? HEAD_IN_POS : 0);
+        robotState_.status |= (PathFollower::IsTraversingPath() ? IS_PATHING : 0);
+        robotState_.status |= (LiftController::IsInPosition() ? LIFT_IN_POS : 0);
+        robotState_.status |= (HeadController::IsInPosition() ? HEAD_IN_POS : 0);
         robotState_.status |= (AnimationController::IsBufferFull() ? IS_ANIM_BUFFER_FULL : 0);
       }
 
@@ -319,7 +319,7 @@ namespace Anki {
           PRINT("RECVD DockToBlock (action %d, manualSpeed %d)\n", msg.action, msg.useManualSpeed);
 
           PickAndPlaceController::DockToBlock(msg.useManualSpeed,
-                                              static_cast<DockAction>(msg.action));
+                                              static_cast<DockAction>(msg.action), msg.useManualSpeed);
       }
 
       void Process_placeObjectOnGround(const PlaceObjectOnGround& msg)
@@ -610,6 +610,7 @@ namespace Anki {
           RobotInterface::AnimationState am;
           am.timestamp = m->timestamp;
           am.numAnimBytesPlayed = AnimationController::GetTotalNumBytesPlayed();
+          am.tag = AnimationController::GetCurrentTag();
           RobotInterface::SendMessage(am, false, false);
           return RESULT_OK;
         } else {
@@ -624,7 +625,7 @@ namespace Anki {
         va_start(argptr, format);
 #if SEND_TEXT_REDIRECT_TO_STDOUT
         // print to console - works in webots environment.
-        printf(format, argptr);
+        vprintf(format, argptr);
 #else
         SendText(format, argptr);
 #endif
@@ -824,21 +825,21 @@ void Receiver_ReceiveData(uint8_t* buffer, uint16_t bufferSize, ReliableConnecti
 
 void Receiver_OnConnectionRequest(ReliableConnection* connection)
 {
-  Anki::Cozmo::PRINT("ReliableTransport new connection\n");
+  PRINT("ReliableTransport new connection\n");
   ReliableTransport_FinishConnection(connection); // Accept the connection
   Anki::Cozmo::HAL::RadioUpdateState(1, 0);
 }
 
 void Receiver_OnConnected(ReliableConnection* connection)
 {
-  Anki::Cozmo::PRINT("ReliableTransport connection completed\n");
+  PRINT("ReliableTransport connection completed\n");
   Anki::Cozmo::HAL::RadioUpdateState(1, 0);
 }
 
 void Receiver_OnDisconnect(ReliableConnection* connection)
 {
   Anki::Cozmo::HAL::RadioUpdateState(0, 0);   // Must mark connection disconnected BEFORE trying to print
-  Anki::Cozmo::PRINT("ReliableTransport disconnected\n");
+  PRINT("ReliableTransport disconnected\n");
   ReliableConnection_Init(connection, NULL); // Reset the connection
   Anki::Cozmo::HAL::RadioUpdateState(0, 0);
 }

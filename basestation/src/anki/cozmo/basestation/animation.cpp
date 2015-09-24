@@ -13,7 +13,7 @@
  *
  **/
 
-#include "anki/cozmo/basestation/animation.h"
+#include "anki/cozmo/basestation/animation/animation.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/cozmo/shared/cozmoTypes.h"
@@ -25,6 +25,7 @@
 //#include <cassert>
 
 #define DEBUG_ANIMATIONS 0
+
 // Until we have a speaker in the robot, use this to play RobotAudioKeyFrames using
 // the device's SoundManager
 #define PLAY_ROBOT_AUDIO_ON_DEVICE 1
@@ -33,11 +34,7 @@ namespace Anki {
 namespace Cozmo {
   
   const s32 Animation::MAX_BYTES_FOR_RELIABLE_TRANSPORT = (1000/2) * BS_TIME_STEP; // Don't send more than 1000 bytes every 2ms
-  
 
-#pragma mark -
-#pragma mark Animation
-  
   Animation::Animation(const std::string& name)
   : _name(name)
   , _isInitialized(false)
@@ -188,7 +185,7 @@ _backpackLightsTrack.__METHOD__() __COMBINE_WITH__ \
 _bodyPosTrack.__METHOD__() __COMBINE_WITH__ \
 _blinkTrack.__METHOD__()
   
-  Result Animation::Init()
+  Result Animation::Init(u8 tag)
   {
 #   if DEBUG_ANIMATIONS
     PRINT_NAMED_INFO("Animation.Init", "Initializing animation '%s'\n", GetName().c_str());
@@ -215,6 +212,8 @@ _blinkTrack.__METHOD__()
     // If this is an empty (e.g. live) animation, there is no need to
     // send end of animation keyframe until we actually send a keyframe
     _endOfAnimationSent = IsEmpty();
+    _startOfAnimationSent = false;
+    _startMsg.tag = tag;
     
     _isInitialized = true;
     
@@ -232,6 +231,10 @@ _blinkTrack.__METHOD__()
   
   Result Animation::SendBufferedMessages(Robot& robot)
   {
+#   if DEBUG_ANIMATIONS
+    s32 numSent = 0;
+#   endif
+    
     // Empty out anything waiting in the send buffer:
     RobotInterface::EngineToRobot* msg = nullptr;
     while(!_sendBuffer.empty()) {
@@ -239,8 +242,7 @@ _blinkTrack.__METHOD__()
       PRINT_NAMED_INFO("Animation.SendBufferedMessages",
                        "Send buffer length=%lu.\n", _sendBuffer.size());
 #     endif
-      
-
+     
       msg = _sendBuffer.front();
       const size_t numBytesRequired = msg->Size();
       if(numBytesRequired <= _numBytesToSend) {
@@ -248,6 +250,10 @@ _blinkTrack.__METHOD__()
         if(sendResult != RESULT_OK) {
           return sendResult;
         }
+        
+#       if DEBUG_ANIMATIONS
+        ++numSent;
+#       endif
         
         _numBytesToSend -= numBytesRequired;
         
@@ -257,10 +263,12 @@ _blinkTrack.__METHOD__()
         _sendBuffer.pop_front();
       } else {
         // Out of bytes to send, continue on next Update()
-#         if DEBUG_ANIMATIONS
+#       if DEBUG_ANIMATIONS
         PRINT_NAMED_INFO("Animation.SendBufferedMessages",
-                         "Ran out of bytes to send from buffer, will continue next Update().\n");
-#         endif
+                         "Sent %d messages, but ran out of bytes to send from "
+                         "buffer. %lu remain, so will continue next Update().",
+                         numSent, _sendBuffer.size());
+#       endif
         return RESULT_OK;
       }
     }
@@ -270,6 +278,18 @@ _blinkTrack.__METHOD__()
     // buffer -- i.e., all the frames associated with the last audio keyframe
     assert(_numBytesToSend >= 0);
     assert(_sendBuffer.empty());
+    
+    // If there's nothing waiting to go out, we are safe to clean out Live frames
+    // that have already been seen
+    ALL_TRACKS(ClearPlayedLiveFrames, ;);
+    
+#   if DEBUG_ANIMATIONS
+    if(numSent > 0) {
+      PRINT_NAMED_INFO("Animation.SendBufferedMessages.Sent",
+                       "Sent %d messages, %lu remain in buffer.",
+                       numSent, _sendBuffer.size());
+    }
+#   endif
     
     return RESULT_OK;
   }
@@ -372,6 +392,17 @@ _blinkTrack.__METHOD__()
       // for each one, just once for each audio/silence frame.
       //
       
+      // Note that start of animation message is also sent _after_ audio keyframe,
+      // to keep things consistent in how the robot's AnimationController expects
+      // to receive things
+      if(!_startOfAnimationSent) {
+#       if DEBUG_ANIMATIONS
+        PRINT_NAMED_INFO("Animation.Update.BufferedStartOfAnimation", "Tag=%d", _startMsg.tag);
+#       endif
+        BufferMessageToSend(&_startMsg);
+        _startOfAnimationSent = true;
+      }
+      
       if(BufferMessageToSend(_headTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms))) {
 #       if DEBUG_ANIMATIONS
         PRINT_NAMED_INFO("Animation.Update", "Streaming HeadAngleKeyFrame at t=%dms.\n",
@@ -393,18 +424,25 @@ _blinkTrack.__METHOD__()
 #       endif
       }
       
+      bool streamedFaceAnimImage = false;
       if(BufferMessageToSend(_faceAnimTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms))) {
+        streamedFaceAnimImage = true;
 #       if DEBUG_ANIMATIONS
         PRINT_NAMED_INFO("Animation.Update", "Streaming FaceAnimationKeyFrame at t=%dms.\n",
                          _streamingTime_ms - _startTime_ms);
 #       endif
       }
-      
-      if(BufferMessageToSend(_proceduralFaceTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms))) {
-#       if DEBUG_ANIMATIONS
-        PRINT_NAMED_INFO("Animation.Update", "Streaming ProceduralFaceKeyFrame at t=%dms.\n",
-                         _streamingTime_ms - _startTime_ms);
-#       endif
+
+      RobotMessage* msg = _proceduralFaceTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms);
+      if(!streamedFaceAnimImage) {
+        // If we streamed a face animation image at this timestep, let it take
+        // precendence and just ignore the procedural face message
+        if(BufferMessageToSend(msg)) {
+#         if DEBUG_ANIMATIONS
+          PRINT_NAMED_INFO("Animation.Update", "Streaming ProceduralFaceKeyFrame at t=%dms.\n",
+                           _streamingTime_ms - _startTime_ms);
+#         endif
+        }
       }
     
       if(BufferMessageToSend(_blinkTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms))) {
@@ -457,14 +495,20 @@ _blinkTrack.__METHOD__()
       }
     }
 #   endif
-
     
     // Send an end-of-animation keyframe when done
     if(AllTracksBuffered() && _sendBuffer.empty() && !_endOfAnimationSent)
     {
 #     if DEBUG_ANIMATIONS
-      PRINT_NAMED_INFO("Animation.Update", "Streaming EndOfAnimation at t=%dms.\n",
+      static TimeStamp_t lastEndOfAnimTime = 0;
+      PRINT_NAMED_INFO("Animation.Update", "Streaming EndOfAnimation at t=%dms.",
                        _streamingTime_ms - _startTime_ms);
+      
+      if(_streamingTime_ms - _startTime_ms == lastEndOfAnimTime) {
+        PRINT_NAMED_ERROR("Animation.Update", "Already sent end of animation at t=%dms.",
+                          lastEndOfAnimTime);
+      }
+      lastEndOfAnimTime = _streamingTime_ms - _startTime_ms;
 #     endif
       RobotInterface::EngineToRobot endMsg{AnimKeyFrame::EndOfAnimation()};
       size_t endMsgSize = endMsg.Size();

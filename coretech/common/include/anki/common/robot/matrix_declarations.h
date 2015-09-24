@@ -101,6 +101,10 @@ namespace Anki
       // Compute the three Euler angles from a given 3x3 Rotation Matrix.
       Result GetEulerAngles(const Array<f32>& R, f32& angle_x, f32& angle_y, f32& angle_z);
 
+      // Compute the rotation matrix for given Euler angles.
+      Result GetRotationMatrix(const f32 angle_x, const f32 angle_y, const f32 angle_z,
+                               Array<f32>& R);
+      
       //
       // Linear Algebra and Linear Solvers
       //

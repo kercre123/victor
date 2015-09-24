@@ -2,74 +2,121 @@
 #include "nrf.h"
 #include "nrf_gpio.h"
 
-// XXX: Each channel is binary. No blending is currently supported
-
-#define RED_COLOR_MASK 0xFF << 16
-#define GREEN_COLOR_MASK 0xFF << 8
-#define BLUE_COLOR_MASK 0xFF
+#include "debug.h"
 
 #include "hardware.h"
-
 #include "hal/portable.h"
 
-// Define charlie wiring here:
-charliePlex_s RGBLightPins[numCharlieChannels] =
-{
-	// anode, cath_red, cath_gree, cath_blue
-	{PIN_LED1, PIN_LED2, PIN_LED3, PIN_LED4},
-	{PIN_LED2, PIN_LED1, PIN_LED3, PIN_LED4},
-	{PIN_LED3, PIN_LED1, PIN_LED2, PIN_LED4},
-	{PIN_LED4, PIN_LED1, PIN_LED2, PIN_LED3}
+/*
+NOTE: COMPARE0-3 seemed super twitchy so I decided against using it.
+*/
+
+// 8-bit pseudo log scale.  Gives us full bright
+static const uint8_t AdjustTable[] = {
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,
+  0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02,
+  0x02, 0x02, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x04, 0x04, 0x04, 0x04, 0x04, 0x05, 0x05, 0x05,
+  0x05, 0x06, 0x06, 0x06, 0x07, 0x07, 0x07, 0x08, 0x08, 0x08, 0x09, 0x09, 0x0A, 0x0A, 0x0B, 0x0B,
+  0x0C, 0x0C, 0x0D, 0x0D, 0x0E, 0x0F, 0x0F, 0x10, 0x11, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
+  0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1F, 0x20, 0x21, 0x23, 0x24, 0x26, 0x27, 0x29, 0x2B, 0x2C,
+  0x2E, 0x30, 0x32, 0x34, 0x36, 0x38, 0x3A, 0x3C, 0x3E, 0x40, 0x43, 0x45, 0x47, 0x4A, 0x4C, 0x4F,
+  0x51, 0x54, 0x57, 0x59, 0x5C, 0x5F, 0x62, 0x64, 0x67, 0x6A, 0x6D, 0x70, 0x73, 0x76, 0x79, 0x7C,
+  0x7F, 0x82, 0x85, 0x88, 0x8B, 0x8E, 0x91, 0x94, 0x97, 0x9A, 0x9C, 0x9F, 0xA2, 0xA5, 0xA7, 0xAA,
+  0xAD, 0xAF, 0xB2, 0xB4, 0xB7, 0xB9, 0xBB, 0xBE, 0xC0, 0xC2, 0xC4, 0xC6, 0xC8, 0xCA, 0xCC, 0xCE,
+  0xD0, 0xD2, 0xD3, 0xD5, 0xD7, 0xD8, 0xDA, 0xDB, 0xDD, 0xDE, 0xDF, 0xE1, 0xE2, 0xE3, 0xE4, 0xE5,
+  0xE6, 0xE7, 0xE8, 0xE9, 0xEA, 0xEB, 0xEC, 0xED, 0xED, 0xEE, 0xEF, 0xEF, 0xF0, 0xF1, 0xF1, 0xF2,
+  0xF2, 0xF3, 0xF3, 0xF4, 0xF4, 0xF5, 0xF5, 0xF6, 0xF6, 0xF6, 0xF7, 0xF7, 0xF7, 0xF8, 0xF8, 0xF8,
+  0xF9, 0xF9, 0xF9, 0xF9, 0xFA, 0xFA, 0xFA, 0xFA, 0xFA, 0xFB, 0xFB, 0xFB, 0xFB, 0xFB, 0xFB, 0xFC,
+  0xFC, 0xFC, 0xFC, 0xFC, 0xFC, 0xFC, 0xFC, 0xFC, 0xFD, 0xFD, 0xFD, 0xFD, 0xFD, 0xFD, 0xFD, 0xFD,
+  0xFD, 0xFD, 0xFD, 0xFD, 0xFD, 0xFD, 0xFD, 0xFE, 0xFE, 0xFE, 0xFE, 0xFE, 0xFE, 0xFE, 0xFF, 0xFF
 };
 
-	// Start all pins as input
+// Define charlie wiring here:
+static const charliePlex_s RGBLightPins[] =
+{
+  // anode, cath_red, cath_gree, cath_blue
+  {PIN_LED1, {PIN_LED2, PIN_LED3, PIN_LED4}},
+  {PIN_LED2, {PIN_LED1, PIN_LED3, PIN_LED4}},
+  {PIN_LED3, {PIN_LED1, PIN_LED2, PIN_LED4}},
+  {PIN_LED4, {PIN_LED1, PIN_LED2, PIN_LED3}}
+};
+
+// Timing constants
+static const uint8_t colorMask = 0xFF;
+static const int tickDivider = 16;
+
+// Charlieplexing magic constants
+static const int numCharlieChannels = sizeof(RGBLightPins) / sizeof(RGBLightPins[0]);
+static const int numLightsPerChannel = sizeof(RGBLightPins[0].cathodes);
+static const int numLights = numLightsPerChannel * numCharlieChannels;
+
+static uint8_t colors[numLights]; 
+static int channel = 0;
+
+static void lights_off() {
+  nrf_gpio_cfg_input(PIN_LED1, NRF_GPIO_PIN_NOPULL);
+  nrf_gpio_cfg_input(PIN_LED2, NRF_GPIO_PIN_NOPULL);
+  nrf_gpio_cfg_input(PIN_LED3, NRF_GPIO_PIN_NOPULL);
+  nrf_gpio_cfg_input(PIN_LED4, NRF_GPIO_PIN_NOPULL);
+}
+
+// Start all pins as input
 void Lights::init()
 {
-	nrf_gpio_cfg_input(PIN_LED1, NRF_GPIO_PIN_NOPULL);
-	nrf_gpio_cfg_input(PIN_LED2, NRF_GPIO_PIN_NOPULL);
-	nrf_gpio_cfg_input(PIN_LED3, NRF_GPIO_PIN_NOPULL);
-	nrf_gpio_cfg_input(PIN_LED4, NRF_GPIO_PIN_NOPULL);
-}
-	
-// Configure pins for a particular channel
-static void Lights::setPins(charliePlex_s pins, uint32_t color)
-{
-	Lights::init();
-	
-	// Set anode to output high
-	nrf_gpio_pin_set(pins.anode);
-	nrf_gpio_cfg_output(pins.anode);	
-	// RED
-	if (!!(color & RED_COLOR_MASK))
-	{
-		nrf_gpio_pin_clear(pins.cath_red);
-		nrf_gpio_cfg_output(pins.cath_red);	
-	}
-	// GREEN
-	if (!!(color & GREEN_COLOR_MASK))
-	{
-		nrf_gpio_pin_clear(pins.cath_green);
-		nrf_gpio_cfg_output(pins.cath_green);	
-	}
-	// BLUE
-	if (!!(color & BLUE_COLOR_MASK))
-	{
-		nrf_gpio_pin_clear(pins.cath_blue);
-		nrf_gpio_cfg_output(pins.cath_blue);	
-	}
+  lights_off();
+
+  NRF_RTC1->EVTENSET = RTC_EVTENCLR_TICK_Msk;
+  NRF_RTC1->INTENSET = RTC_INTENSET_TICK_Msk;
+
+  NVIC_SetPriority(RTC1_IRQn, 3);
+  NVIC_EnableIRQ(RTC1_IRQn);
 }
 
-// Manage lights. Each call increments the state machine
-void Lights::manage(volatile uint32_t *colors)
+extern "C" void RTC1_IRQHandler() {
+  static uint8_t pwm[numLights];
+  static int divider = 0;
+
+  if (!NRF_RTC1->EVENTS_TICK)
+    return ;
+
+  NRF_RTC1->EVENTS_TICK = 0;
+
+  if (++divider < tickDivider)
+    divider = 0;
+  
+  #ifdef RADIO_TIMING_TEST
+  return ;
+  #endif
+  // Blacken everything out
+  lights_off();
+
+  // Setup anode
+  nrf_gpio_pin_set(RGBLightPins[channel].anode);
+  nrf_gpio_cfg_output(RGBLightPins[channel].anode);
+  
+  // Set lights for current charlie channel
+  for (int i = 0, index = channel * numLightsPerChannel; i < numLightsPerChannel; i++, index++)
+  {
+    int overflow = pwm[index] + (int)colors[index];
+    pwm[index] = overflow;
+    
+    if (overflow > 0xFF) {
+      nrf_gpio_pin_clear(RGBLightPins[channel].cathodes[i]);
+      nrf_gpio_cfg_output(RGBLightPins[channel].cathodes[i]);
+    }
+  }
+  
+  channel = (channel + 1) % numCharlieChannels;
+}
+
+void Lights::manage(volatile uint32_t *clr)
 {
-	static char charlieChannel = RGB1;	
+  uint8_t *in_colors = (uint8_t*) clr;
 
-	// Set lights for current charlie channel
-	Lights::setPins(RGBLightPins[charlieChannel], colors[charlieChannel]);
-	
-	// Get next charlie channel
-	charlieChannel++;	
-	if(charlieChannel == numCharlieChannels)
-		charlieChannel = RGB1;
-
+  int pos = 0;
+  for (int i = 0; i < numCharlieChannels; i++, in_colors++) {
+    for (int b = 0; b < numLightsPerChannel; b++)
+      colors[pos++] = AdjustTable[*(in_colors++)] & colorMask;
+      ;
+  }
 }

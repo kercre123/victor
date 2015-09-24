@@ -89,12 +89,12 @@ extern "C" {
 #if(USING_UART_RADIO)
 
 #if(DIVERT_PRINT_TO_RADIO)
-#define PRINT(...) Messages::SendText(__VA_ARGS__)
+#define PRINT(...) Anki::Cozmo::Messages::SendText(__VA_ARGS__)
 #define PERIODIC_PRINT(num_calls_between_prints, ...)\
 { \
   static u16 cnt = num_calls_between_prints; \
   if (cnt++ >= num_calls_between_prints) { \
-    Messages::SendText(__VA_ARGS__); \
+    Anki::Cozmo::Messages::SendText(__VA_ARGS__); \
     cnt = 0; \
   } \
 }
@@ -123,12 +123,12 @@ extern "C" {
 
 #if(USING_UART_RADIO && DIVERT_PRINT_TO_RADIO)
 
-#define PRINT(...) Messages::SendText(__VA_ARGS__)
+#define PRINT(...) Anki::Cozmo::Messages::SendText(__VA_ARGS__)
 #define PERIODIC_PRINT(num_calls_between_prints, ...)\
 { \
   static u16 cnt = num_calls_between_prints; \
   if (cnt++ >= num_calls_between_prints) { \
-    Messages::SendText(__VA_ARGS__); \
+    Anki::Cozmo::Messages::SendText(__VA_ARGS__); \
     cnt = 0; \
   } \
 }

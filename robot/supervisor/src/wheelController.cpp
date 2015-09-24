@@ -93,7 +93,16 @@ namespace Anki {
     
     void Disable()
     {
-      enable_ = false;
+      if(enable_) {
+        enable_ = false;
+        
+        ResetIntegralGainSums();
+        power_l_ = 0.f;
+        power_r_ = 0.f;
+        
+        HAL::MotorSetPower(HAL::MOTOR_LEFT_WHEEL, power_l_);
+        HAL::MotorSetPower(HAL::MOTOR_RIGHT_WHEEL, power_r_);
+      }
     }
     
     

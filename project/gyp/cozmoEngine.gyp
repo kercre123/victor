@@ -1,4 +1,9 @@
 {
+  'includes': [
+    '../../coretech/project/gyp/face-library.gypi',
+    '../../coretech/project/gyp/opencv.gypi',
+  ],
+  
   'variables': {
 
     'engine_source': 'cozmoEngine.lst',
@@ -20,36 +25,26 @@
       'ANKICORETECH_EMBEDDED_USE_GTEST=1',
       'ANKICORETECH_EMBEDDED_USE_OPENCV=1',
     ],
-
-    # TODO: should this be passed in, or shared?
-    'opencv_includes': [
-      # '<(coretech_external_path)/opencv-2.4.8/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/core/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/highgui/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/imgproc/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/contrib/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/calib3d/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/objdetect/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/video/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/features2d/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/flann/include',
-    ],
     
-    'opencv_libs': [
-      'libzlib.a',
-      'liblibjpeg.a',
-      'liblibpng.a',
-      'liblibtiff.a',
-      'liblibjasper.a',
-      'libIlmImf.a',
-      'libopencv_core.a',
-      'libopencv_imgproc.a',
-      'libopencv_highgui.a',
-      'libopencv_calib3d.a',
-      'libopencv_contrib.a',
-      'libopencv_objdetect.a',
-      'libopencv_video.a',
-      'libopencv_features2d.a',
+    'pocketsphinx_includes':[
+      '<(coretech_external_path)/pocketsphinx/sphinxbase/include',
+      '<(coretech_external_path)/pocketsphinx/pocketsphinx/include',
+    ],
+
+    'cte_lib_search_path_mac_debug': [
+      '<(coretech_external_path)/pocketsphinx/pocketsphinx/generated/mac/DerivedData/Debug',
+    ],
+
+    'cte_lib_search_path_mac_release': [
+      '<(coretech_external_path)/pocketsphinx/pocketsphinx/generated/mac/DerivedData/Release',
+    ],
+
+    'cte_lib_search_path_ios_debug': [
+      '<(coretech_external_path)/pocketsphinx/pocketsphinx/generated/ios/DerivedData/Debug-iphoneos',
+    ],
+
+    'cte_lib_search_path_ios_release': [
+      '<(coretech_external_path)/pocketsphinx/pocketsphinx/generated/ios/DerivedData/Release-iphoneos',
     ],
 
     'webots_includes': [
@@ -164,8 +159,8 @@
       ],
       ['OS=="ios"', {
         'compiler_flags': [
-        '-fobjc-arc',
-        ]
+          '-fobjc-arc',
+        ],
       }],
       ['OS=="ios" or OS=="mac"', {
         'linker_flags': [
@@ -198,48 +193,75 @@
     },
     'configurations': {
       'Debug': {
+          'conditions': [
+            ['OS=="ios"', {
+              'xcode_settings': {
+                'LIBRARY_SEARCH_PATHS': [ '<@(cte_lib_search_path_ios_debug)', '<(webots_path)/lib/' ],
+              },
+            }],
+            ['OS=="mac"', {
+              'xcode_settings': {
+                'LIBRARY_SEARCH_PATHS': [ '<@(cte_lib_search_path_mac_debug)', '<(webots_path)/lib/' ],
+              },
+            }],
+          ],
           'cflags': ['-O0'],
           'cflags_cc': ['-O0'],
           'xcode_settings': {
             'OTHER_CFLAGS': ['-O0'],
             'OTHER_CPLUSPLUSFLAGS': ['-O0'],
-            'OTHER_LDFLAGS': [
-              '-L<(coretech_external_path)/build/opencv-2.4.8/lib/Debug',
-              '-L<(coretech_external_path)/build/opencv-2.4.8/3rdparty/lib/Debug',
-            ],
-           },
+            'OTHER_LDFLAGS': ['<@(linker_flags)'],
+          },
           'defines': [
             '_LIBCPP_DEBUG=0',
             'DEBUG=1',
           ],
       },
       'Profile': {
+          'conditions': [
+            ['OS=="ios"', {
+              'xcode_settings': {
+                'LIBRARY_SEARCH_PATHS': [ '<@(cte_lib_search_path_ios_release)', '<(webots_path)/lib/' ],
+              },
+            }],
+            ['OS=="mac"', {
+              'xcode_settings': {
+                'LIBRARY_SEARCH_PATHS': [ '<@(cte_lib_search_path_mac_release)', '<(webots_path)/lib/' ],
+              },
+            }],
+          ],
           'cflags': ['-Os'],
           'cflags_cc': ['-Os'],
           'xcode_settings': {
             'OTHER_CFLAGS': ['-Os'],
             'OTHER_CPLUSPLUSFLAGS': ['-Os'],
-            'OTHER_LDFLAGS': [
-              '-L<(coretech_external_path)/build/opencv-2.4.8/lib/Release',
-              '-L<(coretech_external_path)/build/opencv-2.4.8/3rdparty/lib/Release',
-            ],
-           },
+            'OTHER_LDFLAGS': ['<@(linker_flags)'],
+          },
           'defines': [
             'NDEBUG=1',
             'PROFILE=1',
           ],
       },
       'Release': {
+          'conditions': [
+            ['OS=="ios"', {
+              'xcode_settings': {
+                'LIBRARY_SEARCH_PATHS': [ '<@(cte_lib_search_path_ios_release)', '<(webots_path)/lib/' ],
+              },
+            }],
+            ['OS=="mac"', {
+              'xcode_settings': {
+                'LIBRARY_SEARCH_PATHS': [ '<@(cte_lib_search_path_mac_release)', '<(webots_path)/lib/' ],
+              },
+            }],
+          ],
           'cflags': ['-Os'],
           'cflags_cc': ['-Os'],
           'xcode_settings': {
             'OTHER_CFLAGS': ['-Os'],
             'OTHER_CPLUSPLUSFLAGS': ['-Os'],
-            'OTHER_LDFLAGS': [
-              '-L<(coretech_external_path)/build/opencv-2.4.8/lib/Release',
-              '-L<(coretech_external_path)/build/opencv-2.4.8/3rdparty/lib/Release',
-            ],
-           },
+            'OTHER_LDFLAGS': ['<@(linker_flags)'],
+          },
           'defines': [
             'NDEBUG=1',
             'RELEASE=1',
@@ -326,7 +348,7 @@
               'MACOS',
             ],
             'libraries': [
-              '<(webots_path)/lib/libCppController.dylib',
+              'libCppController.dylib',
               '<@(opencv_libs)',
               '$(SDKROOT)/System/Library/Frameworks/OpenGL.framework',
               '$(SDKROOT)/System/Library/Frameworks/GLUT.framework',              
@@ -352,7 +374,7 @@
               'SIMULATOR'
             ],
             'libraries': [
-              '<(webots_path)/lib/libCppController.dylib',
+              'libCppController.dylib',
             ],
           }, # end controller Block
 
@@ -377,8 +399,33 @@
               # 'SIMULATOR'
             ],
             'libraries': [
-              '<(webots_path)/lib/libCppController.dylib',
+              'libCppController.dylib',
               '<@(opencv_libs)',
+            ],
+            'conditions': [
+              # For some reason, need to link directly against FacioMetric libs
+              # when using them for recognition, which also means they have to be
+              # present (symlinked) in the executable dir
+              ['face_library == "faciometric"', {
+                'libraries': [
+                  '<@(face_library_libs)',
+                ],
+                'actions' : [
+                  {
+                    'action_name': 'create_symlink_webotsCtrlViz_faciometricLibs',
+                      'inputs': [ ],
+                      'outputs': [ ],
+                      'action': [
+                        'ln',
+                        '-s',
+                        '-h',
+                        '-f',
+                        '<(face_library_lib_path)',
+                        '../../simulator/controllers/webotsCtrlViz/',
+                      ],
+                  },
+                ], # actions
+              }], # conditions
             ],
           }, # end controller viz
 
@@ -406,7 +453,7 @@
               'SIMULATOR'
             ],
             'libraries': [
-              '<(webots_path)/lib/libCppController.dylib',
+              'libCppController.dylib',
               '<@(opencv_libs)',
               '$(SDKROOT)/System/Library/Frameworks/AppKit.framework',
             ],
@@ -436,6 +483,9 @@
               ['exclude', 'run_m4_embeddedTests.cpp'],
               ['exclude', 'resaveBlockImages.m'],
             ],
+            'xcode_settings': {
+              'FRAMEWORK_SEARCH_PATHS':'<(ce-gtest_path)',
+            },
             'libraries': [
               '<(ce-gtest_path)/gtest.framework',
               '$(SDKROOT)/System/Library/Frameworks/Cocoa.framework',
@@ -443,14 +493,7 @@
               '$(SDKROOT)/System/Library/Frameworks/QTKit.framework',
               '$(SDKROOT)/System/Library/Frameworks/QuartzCore.framework',
               '<@(opencv_libs)',
-            ],
-            'copies': [
-              {
-                'files': [
-                  '<(ce-gtest_path)/gtest.framework',
-                ],
-                'destination': '<(PRODUCT_DIR)',
-              },
+              '<@(face_library_libs)',
             ],
             'actions': [
               # { # in engine only mode, we do not know where the assets are
@@ -482,6 +525,7 @@
                   'ln',
                   '-s',
                   '-f',
+                  '-h',
                   '<@(_inputs)',
                   '<@(_outputs)',
                 ],
@@ -498,9 +542,59 @@
                   'ln',
                   '-s',
                   '-f',
+                  '-h',
                   '<@(_inputs)',
                   '<@(_outputs)',
                 ],
+              },
+              {
+                'action_name': 'create_symlink_resources_pocketsphinx',
+                'inputs': [
+                  '<(coretech_external_path)/pocketsphinx/pocketsphinx/model/en-us',
+                ],
+                'outputs': [
+                  '<(PRODUCT_DIR)/resources/pocketsphinx',
+                ],
+                'action': [
+                  'ln',
+                  '-s',
+                  '-f',
+                  '-h',
+                  '<@(_inputs)',
+                  '<@(_outputs)',
+                ],
+              },
+              {
+                'action_name': 'create_symlink_engineUnitTestfaceLibraryLibs',
+                'inputs': [ ],
+                'outputs': [ ],
+                'conditions': [
+                  ['face_library=="faciometric"', {
+                    'action': [
+                      'ln',
+                      '-s',
+                      '-h',
+                      '-f',
+                      '<(face_library_lib_path)',
+                      '<(PRODUCT_DIR)/',
+                    ],
+                  }],
+                  ['face_library=="facesdk"', {
+                    'action': [
+                      'ln',
+                      '-s',
+                      '-f',
+                      '<(face_library_lib_path)/libfsdk.dylib',
+                      '<(PRODUCT_DIR)',
+                    ],
+                  }],
+                  ['face_library=="opencv"', {
+                    'action': [
+                    'echo',
+                    'dummyOpenCVEngineAction',
+                    ],
+                  }],
+                ], # conditions
               },
             ],
           }, # end unittest target
@@ -545,6 +639,7 @@
         '../../include',
         '../../generated/clad/engine',
         '<@(opencv_includes)',
+        '<@(pocketsphinx_includes)',
       ],
       'direct_dependent_settings': {
         'include_dirs': [

@@ -1,7 +1,11 @@
 products-cozmo
 ==================
 
-The main Cozmo repository
+The Cozmo core engine.
+
+******************************************************************************
+NOTE: These build instructions are outdated, see the readme in anki/cozmo-game
+******************************************************************************
 
 ==================
 

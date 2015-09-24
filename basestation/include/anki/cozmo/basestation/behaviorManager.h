@@ -17,7 +17,6 @@
 #define COZMO_BEHAVIOR_MANAGER_H
 
 #include "anki/common/types.h"
-#include "anki/cozmo/basestation/behaviorChooser.h"
 
 #include "anki/cozmo/shared/cozmoTypes.h"
 
@@ -56,18 +55,18 @@ namespace Cozmo {
     // Calls the currently-selected behavior's Update() method until it
     // returns COMPLETE or FAILURE. Once current behavior completes
     // switches to next behavior (including an "idle" behavior?).
-    Result Update(float currentTime_sec);
+    Result Update(double currentTime_sec);
     
     // Picks next behavior based on robot's current state. This does not
     // transition immediately to running that behavior, but will let the
     // current beheavior know it needs wind down with a call to its
     // Interrupt() method.
-    Result SelectNextBehavior(float currentTime_sec);
+    Result SelectNextBehavior(double currentTime_sec);
     
     // Forcefully select the next behavior by name (versus by letting the
     // selection mechanism choose based on current state). Fails if that
     // behavior does not exist or the selected behavior is not runnable.
-    Result SelectNextBehavior(const std::string& name, float currentTime_sec);
+    Result SelectNextBehavior(const std::string& name, double currentTime_sec);
     
     // Add a new behavior to the available ones to be selected from.
     // The new behavior will be stored in the current IBehaviorChooser, which will
@@ -92,7 +91,7 @@ namespace Cozmo {
     
     Robot& _robot;
     
-    void SwitchToNextBehavior();
+    void SwitchToNextBehavior(double currentTime_sec);
     Result InitNextBehaviorHelper(float currentTime_sec);
     void SetupBehaviorChooser(const Json::Value &config);
     void AddReactionaryBehavior(IReactionaryBehavior* behavior);

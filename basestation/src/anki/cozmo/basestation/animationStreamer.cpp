@@ -1,6 +1,7 @@
 
-#include "anki/cozmo/basestation/animationStreamer.h"
+#include "anki/cozmo/basestation/animation/animationStreamer.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/shared/cozmoEngineConfig.h"
 
 #include "util/logging/logging.h"
 
@@ -19,41 +20,50 @@ namespace Cozmo {
   , _isIdling(false)
   , _numLoops(1)
   , _loopCtr(0)
+  , _tagCtr(0)
   {
     
   }
 
-  Result AnimationStreamer::SetStreamingAnimation(const std::string& name, u32 numLoops)
+  u8 AnimationStreamer::SetStreamingAnimation(const std::string& name, u32 numLoops)
   {
     // Special case: stop streaming the current animation
     if(name.empty()) {
 #     if DEBUG_ANIMATION_STREAMING
       PRINT_NAMED_INFO("AnimationStreamer.SetStreamingAnimation",
                        "Stopping streaming of animation '%s'.\n",
-                       _streamingAnimation->GetName().c_str());
+                       GetStreamingAnimationName().c_str());
 #     endif
       
       _streamingAnimation = nullptr;
-      return RESULT_OK;
+      return 0;
     }
     
     _streamingAnimation = _animationContainer.GetAnimation(name);
     if(_streamingAnimation == nullptr) {
-      return RESULT_FAIL;
+      return 0;
     } else {
       
+      // Incrememnt the tag counter and keep it from being one of the "special"
+      // values used to indicate "not animating" or "idle animation"
+      ++_tagCtr;
+      while(_tagCtr == 0 || _tagCtr == IdleAnimationTag) {
+        ++_tagCtr;
+      }
+    
       // Get the animation ready to play
-      _streamingAnimation->Init();
+      _streamingAnimation->Init(_tagCtr);
       
       _numLoops = numLoops;
       _loopCtr = 0;
       
 #     if DEBUG_ANIMATION_STREAMING
       PRINT_NAMED_INFO("AnimationStreamer.SetStreamingAnimation",
-                       "Will start streaming '%s' animation %d times.\n",
-                       name.c_str(), numLoops);
+                       "Will start streaming '%s' animation %d times with tag=%d.\n",
+                       name.c_str(), numLoops, _tagCtr);
 #     endif
-      return RESULT_OK;
+    
+      return _tagCtr;
     }
   }
 
@@ -105,7 +115,7 @@ namespace Cozmo {
 #         endif
           
           // Reset the animation so it can be played again:
-          _streamingAnimation->Init();
+          _streamingAnimation->Init(_tagCtr);
           
         } else {
 #         if DEBUG_ANIMATION_STREAMING
@@ -143,7 +153,7 @@ namespace Cozmo {
         
         // Just finished playing a loop, or we weren't just idling. Either way,
         // (re-)init the animation so it can be played (again)
-        _idleAnimation->Init();
+        _idleAnimation->Init(IdleAnimationTag);
         _isIdling = true;
       }
       
@@ -153,57 +163,109 @@ namespace Cozmo {
     return lastResult;
   } // AnimationStreamer::Update()
   
-  Result AnimationStreamer::UpdateLiveAnimation(Robot& robot)
+  Result StreamProceduralFace(Robot& robot,
+                              const ProceduralFace& lastFace,
+                              const ProceduralFace& nextFace,
+                              Animation& liveAnimation)
   {
-    // Use procedural face
-    const ProceduralFace& nextFace = robot.GetProceduralFace();
-    const ProceduralFace& lastFace = robot.GetLastProceduralFace();
     const TimeStamp_t lastTime = lastFace.GetTimeStamp();
     const TimeStamp_t nextTime = nextFace.GetTimeStamp();
-    if(nextFace.HasBeenSentToRobot() == false &&
-       lastFace.HasBeenSentToRobot() == true &&
-       nextTime > lastTime)
+    
+    // Either interpolate from the last procedural face's timestamp if it's not too
+    // old, or for a fixed max duration so we get a smooth change but don't
+    // queue up tons of frames right now trying to get to the current face
+    // (which would cause an unwanted delay).
+    const TimeStamp_t maxDuration = 4*IKeyFrame::SAMPLE_LENGTH_MS;
+    TimeStamp_t lastInterpTime = lastTime;
+    if(nextTime > maxDuration) {
+      lastInterpTime = std::max(lastTime, nextTime - maxDuration);
+    }
+    
+    ProceduralFace proceduralFace;
+    proceduralFace.SetTimeStamp(lastInterpTime + IKeyFrame::SAMPLE_LENGTH_MS);
+
+    while(proceduralFace.GetTimeStamp() <= nextTime)
     {
-      // Either interpolate from the last procedural face's timestamp if it's not too
-      // old, or for a fixed max duration so we get a smooth change but don't
-      // queue up tons of frames right now trying to get to the current face
-      // (which would cause an unwanted delay).
-      const TimeStamp_t lastInterpTime = std::max(lastTime, nextTime - 4*IKeyFrame::SAMPLE_LENGTH_MS);
+      // Calculate next interpolation time
+      auto nextInterpFrameTime = proceduralFace.GetTimeStamp() + IKeyFrame::SAMPLE_LENGTH_MS;
       
-      ProceduralFace proceduralFace;
-      proceduralFace.SetTimeStamp(lastInterpTime);
-      int framesAdded = 0;
-      while(proceduralFace.GetTimeStamp() < nextTime)
+      // Interpolate based on time
+      f32 blendFraction = 1.f;
+      // If there are more blending frames after this one actually calculate the blend. Otherwise this is the last
+      // frame and we should finish the interpolation
+      if (nextInterpFrameTime <= nextTime)
       {
-        // Increment interpolation time
-        proceduralFace.SetTimeStamp(proceduralFace.GetTimeStamp() + IKeyFrame::SAMPLE_LENGTH_MS);
-        
-        // Interpolate based on time
-        const f32 blendFraction = std::min(1.f, (static_cast<f32>(proceduralFace.GetTimeStamp() - lastInterpTime) /
-                                                 static_cast<f32>(nextTime - lastInterpTime)));
-        
-        proceduralFace.Interpolate(lastFace, nextFace, blendFraction);
-        
-        // Add this procedural face as a keyframe in the live animation
-        ProceduralFaceKeyFrame kf(proceduralFace);
-        kf.SetIsLive(true);
-        if(RESULT_OK != _liveAnimation.AddKeyFrame(kf)) {
-          PRINT_NAMED_ERROR("AnimationStreamer.UpdateLiveAnimation.AddFrameFaile", "");
-          return RESULT_FAIL;
-        }
-        ++framesAdded;
+        blendFraction = std::min(1.f, (static_cast<f32>(proceduralFace.GetTimeStamp() - lastInterpTime) /
+                                       static_cast<f32>(nextTime - lastInterpTime)));
       }
       
-#     if DEBUG_ANIMATION_STREAMING
-      PRINT_NAMED_INFO("AnimationStreamer.UpdateLiveAnimation.AddedInterpolatedFaces",
-                       "Added %d interpolated procedural faces from t=[%d,%d]",
-                       framesAdded, lastFace.GetTimeStamp(), nextFace.GetTimeStamp());
-#     endif
-
-      robot.MarkProceduralFaceAsSent();
+      const bool useSaccades = true;
+      proceduralFace.Interpolate(lastFace, nextFace, blendFraction, useSaccades);
+      
+      // Add this procedural face as a keyframe in the live animation
+      ProceduralFaceKeyFrame kf(proceduralFace);
+      kf.SetIsLive(true);
+      if(RESULT_OK != liveAnimation.AddKeyFrame(kf)) {
+        PRINT_NAMED_ERROR("AnimationStreamer.UpdateLiveAnimation.AddFrameFaile", "");
+        return RESULT_FAIL;
+      }
+      
+      // Increment the procedural face time for the next interpolated frame
+      proceduralFace.SetTimeStamp(nextInterpFrameTime);
     }
     
     return RESULT_OK;
+  }
+  
+  Result AnimationStreamer::UpdateLiveAnimation(Robot& robot)
+  {
+    Result lastResult = RESULT_OK;
+    
+    // Use procedural face
+    const ProceduralFace& lastFace = robot.GetLastProceduralFace();
+    const TimeStamp_t lastTime = lastFace.GetTimeStamp();
+    const ProceduralFace& nextFace = robot.GetProceduralFace();
+    const TimeStamp_t nextTime = nextFace.GetTimeStamp();
+    
+    _nextBlink_ms -= BS_TIME_STEP;
+    
+    if(nextFace.HasBeenSentToRobot() == false &&
+       lastFace.HasBeenSentToRobot() == true &&
+       nextTime >= (lastTime + IKeyFrame::SAMPLE_LENGTH_MS))
+    {
+      lastResult = StreamProceduralFace(robot, lastFace, nextFace, _liveAnimation);
+      if(RESULT_OK != lastResult) {
+        return lastResult;
+      }
+      
+      robot.MarkProceduralFaceAsSent();
+    }
+    else if(_nextBlink_ms <= 0) { // "time to blink"
+      PRINT_NAMED_INFO("AnimationStreamer.UpdateLiveAnimation.Blink", "");
+      ProceduralFace crntFace(nextFace.HasBeenSentToRobot() ? nextFace : lastFace);
+      ProceduralFace blinkFace(crntFace);
+      blinkFace.Blink();
+      
+      // Close: interpolate from current face to blink face (eyes closed)
+      blinkFace.SetTimeStamp(crntFace.GetTimeStamp() + 150);
+      lastResult = StreamProceduralFace(robot, crntFace, blinkFace, _liveAnimation);
+      if(RESULT_OK != lastResult) {
+        return lastResult;
+      }
+      
+      // Open: interpolate from blink face (eyes closed) back to current face
+      crntFace.SetTimeStamp(blinkFace.GetTimeStamp() + 100);
+      lastResult = StreamProceduralFace(robot, blinkFace, crntFace, _liveAnimation);
+      if(RESULT_OK != lastResult) {
+        return lastResult;
+      }
+      
+      _nextBlink_ms = _rng.RandIntInRange(3000, 4000); // Pick random next time to blink
+      
+    }
+
+    
+    return lastResult;
   }
   
   bool AnimationStreamer::IsIdleAnimating() const

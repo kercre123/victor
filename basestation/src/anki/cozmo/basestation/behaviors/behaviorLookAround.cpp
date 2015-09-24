@@ -15,6 +15,7 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/common/shared/radians.h"
 #include "anki/common/robot/config.h"
 #include "clad/externalInterface/messageEngineToGame.h"
@@ -56,14 +57,14 @@ BehaviorLookAround::BehaviorLookAround(Robot& robot, const Json::Value& config)
     
   }
 }
-
-bool BehaviorLookAround::IsRunnable(float currentTime_sec) const
+  
+bool BehaviorLookAround::IsRunnable(double currentTime_sec) const
 {
   switch (_currentState)
   {
     case State::Inactive:
     {
-      if (_lastLookAroundTime + kLookAroundCooldownDuration < currentTime_sec)
+      if ((_lastLookAroundTime == 0.f) || (_lastLookAroundTime + kLookAroundCooldownDuration < currentTime_sec))
       {
         return true;
       }
@@ -85,13 +86,16 @@ bool BehaviorLookAround::IsRunnable(float currentTime_sec) const
   return false;
 }
 
-Result BehaviorLookAround::Init()
+Result BehaviorLookAround::Init(double currentTime_sec)
 {
+  // Update explorable area center to current robot pose
+  ResetSafeRegion();
+  
   _currentState = State::StartLooking;
   return Result::RESULT_OK;
 }
 
-IBehavior::Status BehaviorLookAround::Update(float currentTime_sec)
+IBehavior::Status BehaviorLookAround::Update(double currentTime_sec)
 {
 #if SAFE_ZONE_VIZ
   Point2f center = { _moveAreaCenter.GetTranslation().x(), _moveAreaCenter.GetTranslation().y() };
@@ -112,10 +116,12 @@ IBehavior::Status BehaviorLookAround::Update(float currentTime_sec)
     case State::StartLooking:
     {
       IActionRunner* moveHeadAction = new MoveHeadToAngleAction(0);
-      _robot.GetActionList().QueueActionAtEnd(0, moveHeadAction);
+      _robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, moveHeadAction);
+      IActionRunner* moveLiftAction = new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK);
+      _robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, moveLiftAction);
       if (StartMoving() == RESULT_OK) {
-      _currentState = State::LookingForObject;
-    }
+        _currentState = State::LookingForObject;
+      }
     }
     // NOTE INTENTIONAL FALLTHROUGH
     case State::LookingForObject:
@@ -134,9 +140,11 @@ IBehavior::Status BehaviorLookAround::Update(float currentTime_sec)
       {
         auto iter = _recentObjects.begin();
         ObjectID objID = *iter;
-        IActionRunner* faceObjectAction = new FaceObjectAction(objID, Vision::Marker::ANY_CODE, DEG_TO_RAD(5), DEG_TO_RAD(1440), true);
+        IActionRunner* faceObjectAction = new FaceObjectAction(objID, Vision::Marker::ANY_CODE, DEG_TO_RAD(2), DEG_TO_RAD(1440), false, true);
         
-        _robot.GetActionList().QueueActionAtEnd(0, faceObjectAction);
+        _robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, faceObjectAction);
+        _robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, new PlayAnimationAction("Demo_Look_Around_See_Something_A"));
+        _robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK));
         queuedFaceObjectAction = true;
         
         ++_numObjectsToLookAt;
@@ -148,7 +156,7 @@ IBehavior::Status BehaviorLookAround::Update(float currentTime_sec)
       if (queuedFaceObjectAction)
       {
         IActionRunner* moveHeadAction = new MoveHeadToAngleAction(0);
-        _robot.GetActionList().QueueActionAtEnd(0, moveHeadAction);
+        _robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, moveHeadAction);
       }
       _currentState = State::WaitToFinishExamining;
       
@@ -187,16 +195,10 @@ Result BehaviorLookAround::StartMoving()
     // Get robot bounding box at destPose
     Quad2f robotQuad = _robot.GetBoundingQuadXY(destPose);
     
-    std::set<ObjectFamily> ignoreFamilies;
-    std::set<ObjectType> ignoreTypes;
-    std::set<ObjectID> ignoreIDs;
     std::vector<ObservableObject*> existingObjects;
     _robot.GetBlockWorld().FindIntersectingObjects(robotQuad,
                                                    existingObjects,
-                                                   10,
-                                                   ignoreFamilies,
-                                                   ignoreTypes,
-                                                   ignoreIDs);
+                                                   10);
     
     if (existingObjects.empty()) {
       break;
@@ -207,6 +209,14 @@ Result BehaviorLookAround::StartMoving()
       
       // Try another destination
       _currentDestination = GetNextDestination(_currentDestination);
+      
+      // Kinda hacky, but if we're on the last destination to go to, just quit because we're
+      // it always returns Center on the last destination and if we couldn't get there in
+      // in this loop it probably won't happen in the next.
+      if (_numDestinationsLeft == 1) {
+        _currentState = State::Inactive;
+      }
+      
       return RESULT_FAIL;
     }
   }
@@ -214,7 +224,7 @@ Result BehaviorLookAround::StartMoving()
   
   IActionRunner* goToPoseAction = new DriveToPoseAction(destPose, false, false);
   _currentDriveActionID = goToPoseAction->GetTag();
-  _robot.GetActionList().QueueActionAtEnd(0, goToPoseAction, 3);
+  _robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, goToPoseAction, 3);
   return RESULT_OK;
 }
   
@@ -279,7 +289,7 @@ Pose3d BehaviorLookAround::GetDestinationPose(BehaviorLookAround::Destination de
   return destPose;
 }
 
-Result BehaviorLookAround::Interrupt(float currentTime_sec)
+Result BehaviorLookAround::Interrupt(double currentTime_sec)
 {
   ResetBehavior(currentTime_sec);
   return Result::RESULT_OK;
@@ -431,9 +441,14 @@ void BehaviorLookAround::HandleRobotPutDown(const AnkiEvent<MessageEngineToGame>
   const RobotPutDown& msg = event.GetData().Get_RobotPutDown();
   if (_robot.GetID() == msg.robotID)
   {
-    _moveAreaCenter = _robot.GetPose();
-    _safeRadius = kDefaultSafeRadius;
+    ResetSafeRegion();
   }
+}
+  
+void BehaviorLookAround::ResetSafeRegion()
+{
+  _moveAreaCenter = _robot.GetPose();
+  _safeRadius = kDefaultSafeRadius;
 }
 
 } // namespace Cozmo

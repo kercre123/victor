@@ -269,12 +269,6 @@ namespace Anki {
         HAL::SetLED(INDICATOR_LED_ID, LED_OFF);
       }
       
-      void StartPickAndPlaceTest()
-      {
-        TestModeController::Start(TM_PICK_AND_PLACE);
-        TurnOffIndicatorLight();
-      }
-      
       void StartPathFollowTest()
       {
         TestModeController::Start(TM_PATH_FOLLOW);
@@ -312,7 +306,7 @@ namespace Anki {
         // TODO: This should probably go somewhere else
         eventActivationCallbacks[UPSIDE_DOWN] = ToggleHeadLights;
         eventActivationCallbacks[RIGHTSIDE_DOWN] = TurnOnIndicatorLight;
-        eventDeactivationCallbacks[RIGHTSIDE_DOWN] = StartPickAndPlaceTest;
+        //eventDeactivationCallbacks[RIGHTSIDE_DOWN] = StartPickAndPlaceTest;
         eventActivationCallbacks[LEFTSIDE_DOWN] = TurnOnIndicatorLight;
         eventDeactivationCallbacks[LEFTSIDE_DOWN] = StartPathFollowTest;
         eventActivationCallbacks[FRONTSIDE_DOWN] = TurnOnIndicatorLight;

@@ -7,7 +7,9 @@
 #include "clad/types/imageTypes.clad"
 #include "clad/types/robotTestModes.clad"
 #include "clad/types/proceduralEyeParameters.clad"
+#include "clad/types/demoBehaviorState.clad"
 #include "clad/externalInterface/messageShared.clad"
+#include "clad/externalInterface/keyWordRecognitionState.clad"
 
 namespace Anki {
 namespace Cozmo {
@@ -77,6 +79,7 @@ message FaceObject {
     float_32 turnAngleTol,
     float_32 maxTurnAngle,
     uint_8   robotID,
+    uint_8   visuallyVerifyWhenDone,
     uint_8   headTrackWhenDone
 }
 
@@ -204,7 +207,11 @@ message SelectNextObject {
 // PickAndPlaceObject
 message PickAndPlaceObject {
     int_32 objectID, // negative value means "currently selected object"
+    float_32 placementOffsetX_mm,  // X-axis offset for object placement (where +x extends out the marker face)
+    float_32 placementOffsetY_mm,  // Y-axis offset for object placement (where +y extends out towards the left if you are facing the marker)
+    float_32 placementOffsetAngle_rad, // Angular offset for object placement (right of marker normal if you are facing marker is +ve)
     uint_8 usePreDockPose,
+    uint_8 placeOnGroundIfCarrying,  // Does PLACE_HIGH if false, otherwise places at placementOffsetX_mm from objectID
     uint_8 useManualSpeed
 }
 
@@ -503,6 +510,10 @@ message QueueCompoundAction {
   QueueActionPosition    position,
   RobotActionType        actionTypes[uint_8],
   RobotActionUnion       actions[uint_8]
+}
+
+message SetDemoState {
+  DemoBehaviorState demoState
 }
 
 // keep empty to generate an auto-union that includes all messages in this file

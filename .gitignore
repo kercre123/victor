@@ -7,6 +7,7 @@
 *.swp
 *.TMP
 matlab.mat
+TAGS
 
 # Webots
 *.wbproj
@@ -40,7 +41,7 @@ matlab.mat
 *.xccheckout
 xcuserdata
 *.moved-aside
-
+RTE
 # MSVC
 *.res
 *.user
@@ -74,11 +75,9 @@ build/xcode*
 project/xcode4/Cozmo/Cozmo.xcodeproj/xcuserdata
 project/xcode4/Cozmo/Cozmo.xcodeproj/project.xcworkspace/xcuserdata
 /build
-simulator/controllers/overlay_display_supervisor/overlay_display_supervisor
 simulator/plugins/physics/cozmo_physics/libcozmo_physics.dylib
-simulator/controllers/block_controller/block_controller
-simulator/controllers/cozmo_c_controller/cozmo_c_controller
-world_comms_controller
+simulator/controllers/webotsCtrlViz/webotsCtrlViz
+simulator/controllers/webotsCtrlViz/lib
 screenshot.png
 rx-packet-log.txt
 blockworld_controller

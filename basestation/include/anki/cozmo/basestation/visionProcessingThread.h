@@ -14,10 +14,6 @@
 #ifndef ANKI_COZMO_BASESTATION_VISION_PROC_THREAD_H
 #define ANKI_COZMO_BASESTATION_VISION_PROC_THREAD_H
 
-//#include "clad/robotInterface/messageRobotToEngine.h"
-//#include "clad/robotInterface/messageEngineToRobot.h"
-//#include "clad/vizInterface/messageViz.h"
-
 #include "anki/vision/basestation/cameraCalibration.h"
 #include "anki/vision/basestation/image.h"
 #include "anki/vision/basestation/visionMarker.h"
@@ -34,6 +30,10 @@ namespace Data {
   class DataPlatform;
 }
 }
+  
+  namespace Vision {
+    class TrackedFace;
+  }
   
 namespace Cozmo {
 
@@ -85,7 +85,10 @@ class VisionProcessingThread
                           const f32                    markerWidth_mm,
                           const Point2f&               imageCenter,
                           const f32                    radius,
-                          const bool                   checkAngleX);
+                          const bool                   checkAngleX,
+                          const f32                    postOffsetX_mm = 0,
+                          const f32                    postOffsetY_mm = 0,
+                          const f32                    postOffsetAngle_rad = 0);
     
     // Enable/disable different types of processing
     void EnableMarkerDetection(bool tf);
@@ -97,8 +100,8 @@ class VisionProcessingThread
     // These return true if a mailbox messages was available, and they copy
     // that message into the passed-in message struct.
     //bool CheckMailbox(ImageChunk&          msg);
-    bool CheckMailbox(DockingErrorSignal&  msg);
-    //bool CheckMailbox(FaceDetection&       msg);
+    bool CheckMailbox(std::pair<Pose3d, TimeStamp_t>& markerPoseWrtCamera);
+    //bool CheckMailbox(MessageFaceDetection&       msg);
     bool CheckMailbox(Vision::ObservedMarker&     msg);
     bool CheckMailbox(VizInterface::TrackerQuad&         msg);
     bool CheckMailbox(RobotInterface::PanAndTilt&      msg);

@@ -63,6 +63,7 @@ message AnimationState
 {
   uint_32 timestamp,
   int_32  numAnimBytesPlayed,
+  uint_8 tag,
   RobotStatusFlag status, // RobotStatusFlag packs as a uint_16
 }
 

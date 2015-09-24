@@ -10,6 +10,7 @@
 #include "clad/types/objectTypes.clad"
 #include "clad/types/objectFamilies.clad"
 #include "clad/externalInterface/messageShared.clad"
+#include "clad/externalInterface/keyWordRecognized.clad"
 
 namespace Anki {
 namespace Cozmo {
@@ -185,7 +186,15 @@ message RobotCompletedAction {
     ActionCompletedStruct completionInfo  //  "
 }
 
+// BlockPickedUp
+message BlockPickedUp {
+    bool didSucceed                       // true if robot thinks it picked up a block (from low or high position)
+}
 
+// BlockPlaced
+message BlockPlaced {
+    bool didSucceed                       // true if robot thinks it placed up a block (from low or high position)
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////  SOUND  ////////////////////////////////////

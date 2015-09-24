@@ -20,25 +20,25 @@ WorldInfo {
       material1 "cmat_floor"
       material2 "highfriction"
       coulombFriction [
-        200
+        20
       ]
-      bounce 0.01
+      bounce 0
     }
     DEF RAMP_FRONTWHEEL ContactProperties {
       material1 "cmat_ramp"
       material2 "highfriction"
       coulombFriction [
-        500
+        20
       ]
-      bounce 0.01
+      bounce 0
     }
     DEF BLOCK_FRONTWHEEL ContactProperties {
       material1 "cmat_block"
       material2 "highfriction"
       coulombFriction [
-        50
+        20
       ]
-      bounce 0.01
+      bounce 0
     }
     DEF BLOCK_REARWHEEL ContactProperties {
       material1 "cmat_block"
@@ -46,7 +46,7 @@ WorldInfo {
       coulombFriction [
         0.0001
       ]
-      bounce 0.001
+      bounce 0
     }
     DEF FLOOR_REARWHEEL ContactProperties {
       material1 "cmat_floor"
@@ -54,7 +54,7 @@ WorldInfo {
       coulombFriction [
         0.0001
       ]
-      bounce 0.001
+      bounce 0
     }
     DEF RAMP_REARWHEEL ContactProperties {
       material1 "cmat_ramp"
@@ -62,15 +62,15 @@ WorldInfo {
       coulombFriction [
         5
       ]
-      bounce 0.001
+      bounce 0
     }
     DEF FLOOR_BLOCK ContactProperties {
       material1 "cmat_floor"
       material2 "cmat_block"
       coulombFriction [
-        10
+        3
       ]
-      bounce 0.001
+      bounce 0
     }
     DEF BLOCK_BLOCK ContactProperties {
       material1 "cmat_block"
@@ -78,7 +78,7 @@ WorldInfo {
       coulombFriction [
         10
       ]
-      bounce 0.001
+      bounce 0
     }
     DEF RAMP_BLOCK ContactProperties {
       material1 "cmat_ramp"
@@ -86,7 +86,7 @@ WorldInfo {
       coulombFriction [
         10
       ]
-      bounce 0.001
+      bounce 0
     }
     DEF RAMP_RAMP ContactProperties {
       material1 "cmat_ramp"
@@ -94,7 +94,7 @@ WorldInfo {
       coulombFriction [
         5000
       ]
-      bounce 0.001
+      bounce 0
     }
     DEF FLOOR_RAMP ContactProperties {
       material1 "cmat_ramp"
@@ -102,7 +102,7 @@ WorldInfo {
       coulombFriction [
         5000
       ]
-      bounce 0.001
+      bounce 0
     }
   ]
 } 

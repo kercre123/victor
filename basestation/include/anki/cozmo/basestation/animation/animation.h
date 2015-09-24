@@ -23,6 +23,7 @@
 #include "anki/cozmo/basestation/proceduralFace.h"
 #include "anki/cozmo/basestation/animations/track.h"
 #include <list>
+#include <queue>
 
 namespace Anki {
 namespace Cozmo {

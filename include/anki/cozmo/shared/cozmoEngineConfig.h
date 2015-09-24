@@ -15,24 +15,10 @@ namespace Anki {
     // Camera pose correction (APPLIES TO PHYSICAL ROBOT ONLY)
     // TODO: The headCamPose is eventually to be calibrated
     //       if it can't be manufactured to sufficient tolerance.
-#if(1)
-    // Cozmo v4 #1
-    const f32 HEAD_CAM_YAW_CORR = DEG_TO_RAD_F32(0.f);
-    const f32 HEAD_CAM_PITCH_CORR = DEG_TO_RAD_F32(2.f);
-    const f32 HEAD_CAM_ROLL_CORR = DEG_TO_RAD_F32(0.f);
-    const f32 HEAD_CAM_TRANS_X_CORR = -1.f;
-
-    
-    // ===  Magic numbers ===
-    
-    // Robot seems to consistently dock to the right
-    const f32 DOCKING_LATERAL_OFFSET_HACK = 0.f;
-#else
     const f32 HEAD_CAM_YAW_CORR = 0.f;
     const f32 HEAD_CAM_PITCH_CORR = 0.f;
     const f32 HEAD_CAM_ROLL_CORR = 0.f;
     const f32 HEAD_CAM_TRANS_X_CORR = 0.f;
-#endif
 
     
     // Resolution of images that are streamed to basestation (dev purposes)
@@ -59,6 +45,10 @@ namespace Anki {
     const f32 ROBOT_BOUNDING_RADIUS  = sqrtf((0.25f*ROBOT_BOUNDING_X*ROBOT_BOUNDING_X) +
                                              (0.25f*ROBOT_BOUNDING_Y*ROBOT_BOUNDING_Y));
   
+    // Apply a conservative negative padding when checking for collisions with known objects to
+    // see if they should be deleted..
+    // (A negative value means it _really_ has to intersect in order for the object to be deleted.)
+    const f32 ROBOT_BBOX_PADDING_FOR_OBJECT_DELETION = -5.f;
     
     /***************************************************************************
      *

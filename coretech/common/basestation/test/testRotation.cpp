@@ -259,53 +259,104 @@ GTEST_TEST(TestRotation, ExtractAnglesFromRotation3d)
   
 } // TestRotation:ExtractAnglesFromRotation3d
 
-/*
+
 GTEST_TEST(TestRotation, EulerAngles)
 {
-  std::vector<f32> testAngles = {
-    0.f, 30.f, 45.f, 60.f, 90.f, 121.f, 147.f, 180.f, 182.f, 233.f, 270.f,
-    291.f, 333.f, 352.f, 360.f, 378.f
-  };
+  {
+    // Rotate 90deg around Z axis:
+    // - Rotate X axis should result in Y axis
+    RotationMatrix3d R(0, 0, M_PI_2);
+    Vec3f axis = R * X_AXIS_3D();
+    EXPECT_TRUE(IsNearlyEqual(axis, Y_AXIS_3D(), 1e-6f));
+    
+    // - Rotate Y axis should result in -X axis
+    axis = R * Y_AXIS_3D();
+    EXPECT_TRUE(IsNearlyEqual(axis, -X_AXIS_3D(), 1e-6f));
+    
+    // - Rotate Z axis should result in Z axis
+    axis = R * Z_AXIS_3D();
+    EXPECT_TRUE(IsNearlyEqual(axis, Z_AXIS_3D(), 1e-6f));
+  }
   
-  const f32 signs[2] = {-1.f, 1.f};
+  {
+    // Rotate 90deg around X axis:
+    // - Rotate X axis should result in X axis
+    RotationMatrix3d R(M_PI_2, 0, 0);
+    Vec3f axis = R * X_AXIS_3D();
+    EXPECT_TRUE(IsNearlyEqual(axis, X_AXIS_3D(), 1e-6f));
+    
+    // - Rotate Y axis should result in Z axis
+    axis = R * Y_AXIS_3D();
+    EXPECT_TRUE(IsNearlyEqual(axis, Z_AXIS_3D(), 1e-6f));
+    
+    // - Rotate Z axis should result in -Y axis
+    axis = R * Z_AXIS_3D();
+    EXPECT_TRUE(IsNearlyEqual(axis, -Y_AXIS_3D(), 1e-6f));
+  }
   
-  const f32 TOLERANCE = 1e-6f;
-  
-  for(auto Xangle : testAngles) {
-    for(auto Xsign : signs) {
-      for(auto Yangle : testAngles) {
-        for(auto Ysign : signs) {
-          for(auto Zangle : testAngles) {
-            for(auto Zsign : signs) {
-              const Radians curXangle = DEG_TO_RAD(Xsign*Xangle);
-              const Radians curYangle = DEG_TO_RAD(Ysign*Yangle);
-              const Radians curZangle = DEG_TO_RAD(Zsign*Zangle);
-              
-              RotationMatrix3d Rx(curXangle, X_AXIS_3D());
-              RotationMatrix3d Ry(curYangle, Y_AXIS_3D());
-              RotationMatrix3d Rz(curZangle, Z_AXIS_3D());
+  {
+    // Rotate 90deg around Y axis:
+    // - Rotate X axis should result in -Z axis
+    RotationMatrix3d R(0, M_PI_2, 0);
+    Vec3f axis = R * X_AXIS_3D();
+    EXPECT_TRUE(IsNearlyEqual(axis, -Z_AXIS_3D(), 1e-6f));
+    
+    // - Rotate Y axis should result in Y axis
+    axis = R * Y_AXIS_3D();
+    EXPECT_TRUE(IsNearlyEqual(axis, Y_AXIS_3D(), 1e-6f));
+    
+    // - Rotate Z axis should result in X axis
+    axis = R * Z_AXIS_3D();
+    EXPECT_TRUE(IsNearlyEqual(axis, X_AXIS_3D(), 1e-6f));
+  }
+} // TestRotation::EulerAngles
 
-              EXPECT_NEAR((Rx.GetAngleAroundXaxis() - curXangle).ToFloat(), 0.f, TOLERANCE);
-              EXPECT_NEAR((Ry.GetAngleAroundYaxis() - curYangle).ToFloat(), 0.f, TOLERANCE);
-              EXPECT_NEAR((Rz.GetAngleAroundZaxis() - curZangle).ToFloat(), 0.f, TOLERANCE);
 
-              RotationMatrix3d R( Rz*Ry*Rx );
-              
-              Radians checkXangle, checkYangle, checkZangle;
-              R.GetEulerAngles(checkXangle, checkYangle, checkZangle);
-              EXPECT_NEAR((checkXangle - curXangle).ToFloat(), 0.f, TOLERANCE);
-              EXPECT_NEAR((checkYangle - curYangle).ToFloat(), 0.f, TOLERANCE);
-              EXPECT_NEAR((checkZangle - curZangle).ToFloat(), 0.f, TOLERANCE);
-            }
-          }
+GTEST_TEST(TestRotation, ToFromEulerAngles)
+{
+  // Will use all combinations of these angles for setting X,Y,Z angles:
+   const std::vector<Radians> angles = {
+     1.83f, .345f,  -.521f, 0, M_PI_2, -M_PI_2, M_PI, -M_PI, M_PI_4, -M_PI_4
+   };
+  
+  for(auto angleX : angles)
+  {
+    for(auto angleY : angles)
+    {
+      for(auto angleZ : angles)
+      {
+        // Construct the rotation matrix
+        RotationMatrix3d R(angleX, angleY, angleZ);
+        
+        // Get the Euler angles from the rotation matrix (allowing for
+        // possible alernate solutions)
+        Radians checkX=0.f, checkY=0.f, checkZ=0.f;
+        Radians checkX2=0.f, checkY2=0.f, checkZ2=0.f; // for alt. solution
+        bool inGimbalLock = R.GetEulerAngles(checkX, checkY, checkZ,
+                                             &checkX2, &checkY2, &checkZ2);
+        
+        // Don't bother even checking when in Gimbal lock (?)
+        if(!inGimbalLock)
+        {
+          // Either solution can be correct for the purpose of unit tests!
+          // Note the use of angle differences, courtesy of the Radians class.
+          const Point3f diff((angleX - checkX).ToFloat(),
+                             (angleY - checkY).ToFloat(),
+                             (angleZ - checkZ).ToFloat());
+          
+          const Point3f diff2((angleX - checkX2).ToFloat(),
+                              (angleY - checkY2).ToFloat(),
+                              (angleZ - checkZ2).ToFloat());
+          
+          EXPECT_TRUE(IsNearlyEqual(diff, {0.f, 0.f, 0.f}, 1e-6f) ||
+                      IsNearlyEqual(diff2, {0.f, 0.f, 0.f}, 1e-6f));
         }
+         
       }
     }
   }
- 
   
-} // TestRotation:EuelerAngles
-*/
+} // TestRotation::ToFromEulerAngles
 
 GTEST_TEST(TestRotation, AxisRotationMatrix3d)
 {

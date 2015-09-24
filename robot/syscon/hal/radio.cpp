@@ -14,6 +14,8 @@ extern "C" {
 #include "timer.h"
 #include "head.h"
 
+#include "nrf_gpio.h"
+
 // Blinky status lights!
 #include "anki/cozmo/robot/spineData.h"
 
@@ -24,10 +26,15 @@ extern "C" {
 extern GlobalDataToHead g_dataToHead;
 extern GlobalDataToBody g_dataToBody;
 
-#ifndef BACKPACK_DEMO
-const uint8_t     cubePipe[] = {1,2,3,4};
+#ifdef RADIO_TIMING_TEST
+  const uint8_t     cubePipe[] = {1};
+  #define RADIO_ADDRS {0xE7,0xC1,0xC3,0xC4,0xC5,0xC6,0xC7,0xC8}
+#elif defined(ROBOT41)
+  const uint8_t     cubePipe[] = {1,2,3,4};
+  #define RADIO_ADDRS {0xE6,0xA2,0xA3,0xA4,0xA5,0xA6,0xA7,0xA8}
 #else
-const uint8_t     cubePipe[] = {1};
+  const uint8_t     cubePipe[] = {1,2,3,4};
+  #define RADIO_ADDRS {0xE7,0xC2,0xC3,0xC4,0xC5,0xC6,0xC7,0xC8}
 #endif
 
 #define MAX_CUBES sizeof(cubePipe)
@@ -45,11 +52,7 @@ void Radio::init() {
     5,
     {0xE7,0xE7,0xE7,0xE7},
     {0xC2,0xC2,0xC2,0xC2},
-#ifndef BACKPACK_DEMO
-    {0xE7,0xC2,0xC3,0xC4,0xC5,0xC6,0xC7,0xC8},
-#else
-    {0xE7,0xC0,0xC3,0xC4,0xC5,0xC6,0xC7,0xC8},
-#endif
+    RADIO_ADDRS,
     0x3F,
     3
   };
@@ -58,15 +61,7 @@ void Radio::init() {
   uesb_start();
   
   memset(cubeRx, 0, sizeof(cubeRx));
-  #if defined(NATHAN_WANTS_DEMO) || defined(BACKPACK_DEMO)
-  for (int g = 0; g < MAX_CUBES; g++) {
-    cubeTx[g].ledStatus[2] = 0xFF;
-    //memset(cubeTx[g].ledStatus, 0xFF, 12);
-    cubeTx[g].ledDark = 0;
-  }
-  #else
   memset(cubeTx, 0, sizeof(cubeTx));
-  #endif
 }
 
 extern "C" void uesb_event_handler(void)
@@ -84,36 +79,14 @@ extern "C" void uesb_event_handler(void)
     }
 
     #ifdef DEBUG_MESSAGES
-    UART::put("\r\nRx");
-    UART::hex((uint8_t)addr);
-    UART::put(":");
-    UART::dump((uint8_t*)rx_payload.data, rx_payload.length);
+    UART::print("\r\nRx %x: ..", (uint8_t)addr);
+    UART::dump(rx_payload.length, (char*)rx_payload.data);
     #endif
   }
-}
-
-#include "nrf_gpio.h"
-#include "hardware.h"
-
-static int lastC = GetCounter();
-
-void BenchMark() {
-    static int lastC = GetCounter();
-    int currentC = GetCounter();
-    UART::print("%i\n\r", (int)((currentC - lastC) / 256.0f / 32768.0f * 1000));
-    lastC = currentC;
-}
-
-extern "C" void BlinkPack(int toggle) {
-  #if defined(BACKPACK_DEMO)
-  nrf_gpio_pin_set(PIN_LED2);
-  nrf_gpio_cfg_output(PIN_LED2);
-
-  if (toggle) {
-    nrf_gpio_cfg_input(PIN_LED1, NRF_GPIO_PIN_NOPULL);
-  } else {
+  #ifdef RADIO_TIMING_TEST
+  else
+  {
     nrf_gpio_pin_clear(PIN_LED1);
-    nrf_gpio_cfg_output(PIN_LED1);
   }
   #endif
 }
@@ -129,9 +102,7 @@ void Radio::manage() {
     
     // Transmit to cube our line status
     if (g_dataToBody.cubeToUpdate < MAX_CUBES) {
-      #if !defined(BACKPACK_DEMO) && !defined(NATHAN_WANTS_DEMO)
       memcpy(&cubeTx[g_dataToBody.cubeToUpdate], &g_dataToBody.cubeStatus, sizeof(LEDPacket));
-      #endif
     }
   }
   
@@ -143,9 +114,14 @@ void Radio::manage() {
   if (currentCube < MAX_CUBES)
   {
     #ifdef DEBUG_MESSAGES
-    UART::put("\r\nTx");
-    UART::dec(currentCube);
+    UART::print("\r\nTx %i", currentCube);
     #endif
+
+#ifdef RADIO_TIMING_TEST
+    nrf_gpio_pin_set(PIN_LED1);
+    nrf_gpio_cfg_output(PIN_LED1);
+    memset(cubeTx[currentCube].ledStatus, 0xFF, 12);
+#endif
     
     uesb_write_tx_payload(cubePipe[currentCube], (uint8_t*)&cubeTx[currentCube], sizeof(LEDPacket));
   }
