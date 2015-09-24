@@ -457,10 +457,7 @@ public:
 
     Result SyncTime();
     void SetSyncTimeAcknowledged(bool ack);
-    
-    // Turn on/off headlight LEDs
-    Result SetHeadlight(u8 intensity);
-    
+
     Result RequestImage(const ImageSendMode mode, const ImageResolution resolution) const;
     
     Result RequestIMU(const u32 length_ms) const;
@@ -477,9 +474,7 @@ public:
     Result SetHeadControllerGains(const f32 kp, const f32 ki, const f32 kd, const f32 maxIntegralError);
     Result SetLiftControllerGains(const f32 kp, const f32 ki, const f32 kd, const f32 maxIntegralError);
     Result SetSteeringControllerGains(const f32 k1, const f32 k2);
-    Result SendVisionSystemParams(VisionSystemParams_t p);
-    Result SendFaceDetectParams(FaceDetectParams_t p);
-    
+
     // =========== Pose history =============
     
     Result AddRawOdomPoseToHistory(const TimeStamp_t t,
