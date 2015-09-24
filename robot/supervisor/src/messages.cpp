@@ -51,6 +51,7 @@ namespace Anki {
         // Flag for receipt of Init message
         bool initReceived_ = false;
 
+        const int IMAGE_SEND_JPEG_COMPRESSION_QUALITY = 50; // 0 to 100
       } // private namespace
 
 // #pragma mark --- Messages Method Implementations ---
@@ -82,9 +83,9 @@ namespace Anki {
           case RobotInterface::EngineToRobot::Tag_setControllerGains:
           case RobotInterface::EngineToRobot::Tag_setCarryState:
           case RobotInterface::EngineToRobot::Tag_setBackpackLights:
-          case RobotInterface::EngineToRobot::Tag_setBlockLights:
-          case RobotInterface::EngineToRobot::Tag_flashBlockIDs:
-          case RobotInterface::EngineToRobot::Tag_setBlockBeingCarried:
+          case RobotInterface::EngineToRobot::Tag_setCubeLights:
+          case RobotInterface::EngineToRobot::Tag_flashObjectIDs:
+          case RobotInterface::EngineToRobot::Tag_setObjectBeingCarried:
             return false;
           default:
             break;
@@ -521,7 +522,7 @@ namespace Anki {
       {
         DockingController::ResetDocker();
       }
-
+
       //
       // Animation related:
       //
@@ -560,19 +561,19 @@ namespace Anki {
 
       // --------- Block control messages ----------
 
-      void Process_flashBlockIDs(const RobotInterface::FlashBlockIDs& msg)
+      void Process_flashObjectIDs(const  FlashObjectIDs& msg)
       {
         // Start flash pattern on blocks
         HAL::FlashBlockIDs();
       }
 
-      void Process_setBlockLights(const RobotInterface::BlockLights& msg)
+      void Process_setCubeLights(const CubeLights& msg)
       {
-        HAL::SetBlockLight(msg.blockID, msg.lights);
+        HAL::SetBlockLight(msg.objectID, msg.lights);
       }
 
 
-      void Process_setBlockBeingCarried(const RobotInterface::SetBlockBeingCarried& msg)
+      void Process_setObjectBeingCarried(const ObjectBeingCarried& msg)
       {
         // TODO: need to add this hal.h and implement
         // HAL::SetBlockBeingCarried(msg.blockID, msg.isBeingCarried);
@@ -672,7 +673,7 @@ namespace Anki {
 #     ifdef SIMULATOR
       Result CompressAndSendImage(const Embedded::Array<u8> &img, const TimeStamp_t captureTime)
       {
-        Messages::ImageChunk m;
+        ImageChunk m;
 
         switch(img.get_size(0)) {
           case 240:
@@ -717,7 +718,7 @@ namespace Anki {
         m.frameTimeStamp = captureTime;
         m.imageId = ++imgID;
         m.chunkId = 0;
-        m.chunkSize = IMAGE_CHUNK_SIZE;
+        m.data_length = IMAGE_CHUNK_SIZE;
         m.imageChunkCount = ceilf((f32)numTotalBytes / IMAGE_CHUNK_SIZE);
         m.imageEncoding = Vision::IE_JPEG_COLOR;
 
@@ -733,14 +734,14 @@ namespace Anki {
 
           if (chunkByteCnt == IMAGE_CHUNK_SIZE) {
             //PRINT("Sending image chunk %d\n", m.chunkId);
-            HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::ImageChunk), &m, false, true);
+            RobotInterface::SendMessage(m, false, true);
             ++m.chunkId;
             chunkByteCnt = 0;
           } else if (totalByteCnt == numTotalBytes) {
             // This should be the last message!
             //PRINT("Sending LAST image chunk %d\n", m.chunkId);
-            m.chunkSize = chunkByteCnt;
-            HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::ImageChunk), &m, false, true);
+            m.data_length = chunkByteCnt;
+            RobotInterface::SendMessage(m, false, true);
           }
         } // for each byte in the compressed buffer
 

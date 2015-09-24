@@ -1,0 +1,24 @@
+/** Messages for the simulated robots to talk to the simulated blocks.
+ * @TODO One way or another this should be refactored so that the firmware and simulator look more similar.
+ */
+
+#include "clad/types/activeObjectTypes.clad"
+
+namespace Anki {
+namespace Cozmo {
+namespace BlockMessages
+{
+
+  union LightCubeMessage
+  {
+    FlashObjectIDs      flashID,
+    CubeLights          setCubeLights,
+    ObjectBeingCarried  setObjectBeingCarried,
+    ObjectMoved         moved,
+    ObjectStoppedMoving stopped,
+    ObjectTapped        tapped,
+  }
+
+} // Namespace BlockMessages
+} // namespace Cozmo
+} // namespace Anki

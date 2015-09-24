@@ -1,25 +1,30 @@
 #include "anki/cozmo/shared/cozmoTypes.h"
-#include "clad/types/activeObjectTypes.h"
+#include "clad/types/lightCubeMessage.h"
 #include "BlockMessages.h"
 #include <stdio.h>
 
 namespace Anki {
   namespace Cozmo {
-    namespace BlockMessages {
-
+    
+    namespace ActiveBlock {
       // Auto-gen the ProcessBufferAs_MessageX() method prototypes using macros:
-      #include "clad/types/activeObjectTypes_declarations.def"
+      #include "clad/types/lightCubeMessage_declarations.def"
+
+      void ProcessBadTag_LightCubeMessage(const BlockMessages::LightCubeMessage::Tag tag);
+    }
+    
+    namespace BlockMessages {
 
       Result ProcessMessage(const u8* buffer, const u8 bufferSize)
       {
-        Result retVal = ;
+        using namespace ActiveBlock;
         LightCubeMessage msg;
         
 	      memcpy(msg.GetBuffer(), buffer, bufferSize);
         
-        #include "clad/types/activeObjectTypes_switch.def"
+        #include "clad/types/lightCubeMessage_switch.def"
         
-        return RESULT_SUCCESS;
+        return RESULT_OK;
       } // ProcessBuffer()      
       
     } // namespace Messages

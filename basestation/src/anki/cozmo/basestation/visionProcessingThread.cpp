@@ -15,7 +15,7 @@
 #include "anki/cozmo/basestation/visionSystem.h"
 
 #include "anki/vision/basestation/image_impl.h"
-#include "anki/vision/markerCodeDefinitions.h"
+#include "anki/vision/MarkerCodeDefinitions.h"
 
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/quad_impl.h"

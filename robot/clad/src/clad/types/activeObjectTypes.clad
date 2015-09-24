@@ -114,16 +114,5 @@ message ObjectTapped
   uint_8  numTaps,
 }
 
-namespace BlockMessages
-{
-
- union LightCubeMessage {
-      FlashObjectIDs      flashID,
-      CubeLights          setCubeLights,
-      ObjectBeingCarried  setObjectBeingCarried,
-  }
-
-} // Namespace BlockMessages
-
 } // namespace Cozmo
 } // namespace Anki

@@ -13,6 +13,7 @@
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/robot/hal.h"
+#include "messages.h"
 #include <stdio.h>
 #include <string>
 

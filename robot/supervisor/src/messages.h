@@ -40,6 +40,8 @@ namespace Anki {
       // manually in messages.cpp).
       #include "clad/robotInterface/messageEngineToRobot_declarations.def"
     
+      void ProcessBadTag_EngineToRobot(const RobotInterface::EngineToRobot::Tag tag);
+    
       Result Init();
 
       void ProcessBTLEMessages();

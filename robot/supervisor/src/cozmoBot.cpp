@@ -36,9 +36,9 @@ namespace Anki {
     
 #ifdef SIMULATOR
     namespace HAL {
-      ImageSendMode_t imageSendMode_;
+      ImageSendMode imageSendMode_;
       Vision::CameraResolution captureResolution_ = Vision::CAMERA_RES_CVGA;
-      void SetImageSendMode(const ImageSendMode_t mode, const Vision::CameraResolution res)
+      void SetImageSendMode(const ImageSendMode mode, const Vision::CameraResolution res)
       {
         imageSendMode_ = mode;
         captureResolution_ = res;
@@ -470,7 +470,7 @@ namespace Anki {
           return retVal;
         }
 
-        if (HAL::imageSendMode_ != ISM_OFF) {
+        if (HAL::imageSendMode_ != Off) {
         
           TimeStamp_t currentTime = HAL::GetTimeStamp();
 
@@ -515,8 +515,8 @@ namespace Anki {
           } // if(lastImageSentTime != currentImageTime)
           
           
-          if (HAL::imageSendMode_ == ISM_SINGLE_SHOT) {
-            HAL::imageSendMode_ = ISM_OFF;
+          if (HAL::imageSendMode_ == SingleShot) {
+            HAL::imageSendMode_ = Off;
           }
           
         } // if (HAL::imageSendMode_ != ISM_OFF)
