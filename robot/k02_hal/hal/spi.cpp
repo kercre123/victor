@@ -15,20 +15,25 @@ static uint32_t spi_tx_buff[TRANSMISSION_SIZE];
 static uint8_t  spi_rx_buff[TRANSMISSION_SIZE];
 
 void Anki::Cozmo::HAL::TransmitDrop(const uint8_t* buf, int buflen, int eof) {
-  DropToWiFi drop;
+  static uint8_t jb = 0;
+	DropToWiFi drop;
   uint8_t* txSrc = (uint8_t*) &drop;
   uint8_t* txDst = (uint8_t*) spi_tx_buff;
 
   // This should be altered to 
+#if 1
   memcpy(drop.payload, buf, buflen);  
   drop.droplet = JPEG_LENGTH(buflen) | (eof ? jpegEOF : 0);
-	/*for (int i=0; i<DROP_TO_WIFI_MAX_PAYLOAD; i++) drop.payload[i] = i+1;
-	drop.msgLen  = 0x80;
-	drop.droplet = 0x81;
+#else
+	for (int i=0; i<72; i++) drop.payload[i] = jb++;
+	drop.msgLen  = 0;
+	drop.droplet = JPEG_LENGTH(72) | (eof ? jpegEOF : 0);
 	drop.tail[0] = 0x90;
 	drop.tail[1] = 0x91;
-	drop.tail[2] = 0x92;*/
-
+	drop.tail[2] = 0x92;
+	if (eof) jb = 0;
+#endif
+	
   for (int i = 0; i < sizeof(drop); i++, txDst += sizeof(uint32_t))
     *(txDst) = *(txSrc++);
 
