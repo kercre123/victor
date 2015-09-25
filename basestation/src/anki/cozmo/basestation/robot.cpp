@@ -37,6 +37,8 @@
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
+#include "anki/vision/basestation/visionMarker.h"
+#include "anki/vision/basestation/observableObjectLibrary_impl.h"
 #include "util/fileUtils/fileUtils.h"
 
 #include <fstream>

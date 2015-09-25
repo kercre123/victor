@@ -53,8 +53,8 @@ int main(void)
     g_dataToBody.common.source = SPI_SOURCE_CLEAR;
 
     // Only call every loop through - not all the time
-    Motors::update();
     Radio::manage();
+    Motors::update();
     Battery::update();
 
     #ifndef BACKPACK_DEMO
@@ -72,11 +72,8 @@ int main(void)
     }
     
     // Update at 200Hz (5ms delay)
-    u32 timerNow;
-    do {
-      timerNow = GetCounter();
-    } while ((timerNow - timerStart) < CYCLES_MS(5.0f));
-    timerStart = timerNow;
+    timerStart += CYCLES_MS(5.0f);
+    while ( timerStart > GetCounter()) ;
  
     // Verify the source
     if (g_dataToBody.common.source != SPI_SOURCE_HEAD)
