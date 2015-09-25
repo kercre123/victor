@@ -292,8 +292,9 @@ namespace Cozmo {
       for(s32 j=0; j<IMAGE_WIDTH; j++) {
         if (!*(pixels++)) { continue ; }
 
-        // If lower half of face disappears, change to 0x8000000000000000L >> (i ^ 63)
-        packed[j] |= 1L << i;
+        // Note the trick here to force compiler to make this 64-bit
+        // (Would like to just do: 1L << i, but compiler optimizes it out...)
+        packed[j] |= 0x8000000000000000L >> (i ^ 63);
       }
     }
 
